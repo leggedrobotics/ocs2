@@ -12,7 +12,7 @@
 #include <cmath>
 #include <Eigen/Dense>
 
-template< class DerivedClassType, size_t BASE_COORD_SIZE, size_t JOINT_COORD_SIZE >
+template< class DerivedClassType, size_t JOINT_COORD_SIZE >
 class ModelKinematicsBase
 {
 public:
@@ -20,9 +20,9 @@ public:
 
 	virtual ~ModelKinematicsBase(){};
 	enum { LF=0,  RF=1,  LH=2,  RH=3,
-		GENERALIZED_COORDINATE_SIZE = BASE_COORD_SIZE + JOINT_COORD_SIZE,
-		BASE_COORDINATE_SIZE        = BASE_COORD_SIZE,
-		JOINT_COORDINATE_SIZE       = JOINT_COORD_SIZE
+		BASE_COORDINATE_SIZE        = 6,
+		JOINT_COORDINATE_SIZE       = JOINT_COORD_SIZE,
+		GENERALIZED_COORDINATE_SIZE = BASE_COORDINATE_SIZE + JOINT_COORD_SIZE
 	};
 
 	typedef Eigen::Matrix<double,GENERALIZED_COORDINATE_SIZE,1> generalized_coordinate_t;

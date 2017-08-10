@@ -9,12 +9,23 @@
 /******************************************************************************************************/
 /******************************************************************************************************/
 template< class DerivedClassType, size_t BASE_COORD_SIZE, size_t JOINT_COORD_SIZE >
-void ModelKinematicsBase<DerivedClassType, BASE_COORD_SIZE, JOINT_COORD_SIZE>::update(const generalized_coordinate_t& generalizedCoordinate)
+void ModelKinematicsBase<DerivedClassType, BASE_COORD_SIZE, JOINT_COORD_SIZE>::update(const ModelKinematicsBase::generalized_coordinate_t& generalizedCoordinate)
 {
-	qBase_  = generalizedCoordinate.head<BASE_COORDINATE_SIZE>();
-	qJoint_ = generalizedCoordinate.tail<JOINT_COORDINATE_SIZE>();
-	b_R_o_  = RotationMatrixOrigintoBase(qBase_.head<3>());
+	qBase_  = generalizedCoordinate.head(BASE_COORDINATE_SIZE);
+	qJoint_ = generalizedCoordinate.tail(JOINT_COORDINATE_SIZE);
+	b_R_o_  = RotationMatrixOrigintoBase(qBase_.head(3));
 }
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+template< class DerivedClassType, size_t BASE_COORD_SIZE, size_t JOINT_COORD_SIZE >
+void ModelKinematicsBase<DerivedClassType, BASE_COORD_SIZE, JOINT_COORD_SIZE>::FootPositionBaseFrame(const joint_coordinate_t& jointCoordinate,
+	const size_t& footIndex, Eigen::Vector3d& footPosition)
+{
+	DerivedClassType::FootPositionBaseFrame(jointCoordinate, footIndex, footPosition);
+}
+
 
 /******************************************************************************************************/
 /******************************************************************************************************/
@@ -34,15 +45,6 @@ void ModelKinematicsBase<DerivedClassType, BASE_COORD_SIZE, JOINT_COORD_SIZE>::f
 	FeetPositionsBaseFrame(qJoint_, feetPositions);
 }
 
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-template< class DerivedClassType, size_t BASE_COORD_SIZE, size_t JOINT_COORD_SIZE >
-void ModelKinematicsBase<DerivedClassType, BASE_COORD_SIZE, JOINT_COORD_SIZE>::FootPositionBaseFrame(const joint_coordinate_t& jointCoordinate,
-		const size_t& footIndex, Eigen::Vector3d& footPosition)
-{
-	DerivedClassType::FootPositionBaseFrame(jointCoordinate, footIndex, footPosition);
-}
 
 /******************************************************************************************************/
 /******************************************************************************************************/
@@ -65,7 +67,7 @@ void ModelKinematicsBase<DerivedClassType, BASE_COORD_SIZE, JOINT_COORD_SIZE>::f
 	Eigen::Vector3d b_footPosition;
 	footPositionBaseFrame(footIndex, b_footPosition);
 	// calculate foot position in Origin frame
-	footPosition = b_R_o_.transpose()*b_footPosition + qBase_.tail<3>();
+	footPosition = b_R_o_.transpose()*b_footPosition + qBase_.tail(3);
 }
 
 /******************************************************************************************************/
@@ -134,9 +136,9 @@ void ModelKinematicsBase<DerivedClassType, BASE_COORD_SIZE, JOINT_COORD_SIZE>::F
 		Eigen::Matrix<double,6,GENERALIZED_COORDINATE_SIZE>& i_J_point)
 {
 	// rotation
-	i_J_point.topRows<3>() << i_R_b,  Eigen::Matrix3d::Zero(),  i_R_b*b_J_point.topRows<3>();
+	i_J_point.topRows(3) << i_R_b,  Eigen::Matrix3d::Zero(),  i_R_b*b_J_point.topRows(3);
 	// translation
-	i_J_point.bottomRows<3>() << -i_R_b*CrossProductMatrix(b_r_point), i_R_b, i_R_b*b_J_point.bottomRows<3>();
+	i_J_point.bottomRows(3) << -i_R_b*CrossProductMatrix(b_r_point), i_R_b, i_R_b*b_J_point.bottomRows(3);
 }
 
 /******************************************************************************************************/

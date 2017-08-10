@@ -43,8 +43,8 @@ public:
 	 * 			 using the internal coordinate values set by update method.
 	 * 			 using the input coordinate values (static function).
 	 */
-	virtual void footPositionBaseFrame(const size_t& footIndex, Eigen::Vector3d& footPosition);
-	virtual void feetPositionsBaseFrame(std::array<Eigen::Vector3d,4>& feetPositions);
+	void footPositionBaseFrame(const size_t& footIndex, Eigen::Vector3d& footPosition);
+	void feetPositionsBaseFrame(std::array<Eigen::Vector3d,4>& feetPositions);
 
 	static void FootPositionBaseFrame(const joint_coordinate_t& jointCoordinate,
 			const size_t& footIndex, Eigen::Vector3d& footPosition);
@@ -65,13 +65,13 @@ public:
 	 * 			 using the internal coordinate values set by update method.
 	 * 			 using the input coordinate values.
 	 */
-	virtual void footPositionOriginFrame(const size_t& footIndex, Eigen::Vector3d& footPosition);
-	virtual void footPositionOriginFrame(const generalized_coordinate_t& generalizedCoordinate,
+	void footPositionOriginFrame(const size_t& footIndex, Eigen::Vector3d& footPosition);
+	void footPositionOriginFrame(const generalized_coordinate_t& generalizedCoordinate,
 			const size_t& footIndex, Eigen::Vector3d& footPosition);
 
-	virtual void feetPositionsOriginFrame(std::array<Eigen::Vector3d,4>& feetPositions);
+	void feetPositionsOriginFrame(std::array<Eigen::Vector3d,4>& feetPositions);
 
-	virtual void feetPositionsOriginFrame(const generalized_coordinate_t& generalizedCoordinate,
+	void feetPositionsOriginFrame(const generalized_coordinate_t& generalizedCoordinate,
 			std::array<Eigen::Vector3d,4>& feetPositions);
 
 	/**

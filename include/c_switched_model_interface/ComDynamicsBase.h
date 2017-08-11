@@ -19,11 +19,12 @@ template< class DerivedClassType, size_t JOINT_COORD_SIZE >
 class ComDynamicsBase
 {
 public:
-
+	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 	typedef typename SwitchedModel<JOINT_COORD_SIZE>::generalized_coordinate_t generalized_coordinate_t;
 	typedef typename SwitchedModel<JOINT_COORD_SIZE>::joint_coordinate_t joint_coordinate_t;
 	typedef typename SwitchedModel<JOINT_COORD_SIZE>::base_coordinate_t base_coordinate_t;
-
+	typedef typename SwitchedModel<JOINT_COORD_SIZE>::scalar_high_t scalar_high_t;
+	typedef typename SwitchedModel<JOINT_COORD_SIZE>::scalar_low_t scalar_low_t;
 	/**
 	 * calculate CoM Jacobian in Base frame
 	 */

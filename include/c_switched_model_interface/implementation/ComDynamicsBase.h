@@ -5,9 +5,6 @@
  *      Author: asutosh
  */
 
-#ifndef COMDYNAMICSBASE_H_
-#define COMDYNAMICSBASE_H_
-
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
@@ -28,5 +25,3 @@ void ComDynamicsBase<DerivedClassType, JOINT_COORD_SIZE>::ComPositionBaseFrame(c
 {
 	DerivedClassType::ComPositionBaseFrame(jointCoordinate, comPosition);
 }
-
-#endif /* COMDYNAMICSBASE_H_ */

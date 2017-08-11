@@ -49,11 +49,6 @@ public:
 			std::array<Eigen::Vector3d,4>& feetPositions);
 
 	/**
-	 * calculate the CoM position in the Base frame
-	 */
-	static void ComPositionBaseFrame(const joint_coordinate_t& jointCoordinate, Eigen::Vector3d& comPosition);
-
-	/**
 	 * calculate the feet position in the Origin frame
 	 * 		+ single foot:
 	 * 			 using the internal coordinate values set by update method.
@@ -78,12 +73,6 @@ public:
 
 	static void FootJacobainBaseFrame(const joint_coordinate_t& jointCoordinate,
 			const size_t& footIndex, Eigen::Matrix<double,6,JOINT_COORD_SIZE>& footJacobain);
-
-	/**
-	 * calculate CoM Jacobian in Base frame
-	 */
-	static void ComJacobainBaseFrame(const joint_coordinate_t& jointCoordinate,
-			Eigen::Matrix<double,6,JOINT_COORD_SIZE>& comJacobain);
 
 	/**
 	 * calculates the Jacobian matrix in the Inertia frame using rotation "i_R_b" from the Base frame to Inertia

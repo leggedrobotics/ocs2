@@ -154,15 +154,6 @@ Eigen::Matrix3d ModelKinematicsBase<DerivedClassType, JOINT_COORD_SIZE>::rotatio
 /******************************************************************************************************/
 /******************************************************************************************************/
 template< class DerivedClassType, size_t JOINT_COORD_SIZE >
-void ModelKinematicsBase<DerivedClassType, JOINT_COORD_SIZE>::ComPositionBaseFrame(const joint_coordinate_t& jointCoordinate, Eigen::Vector3d& comPosition)
-{
-	DerivedClassType::ComPositionBaseFrame(jointCoordinate, comPosition);
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-template< class DerivedClassType, size_t JOINT_COORD_SIZE >
 template <typename Derived>
 Eigen::Matrix3d ModelKinematicsBase<DerivedClassType, JOINT_COORD_SIZE>::RotationMatrixOrigintoBase(const Eigen::DenseBase<Derived>& eulerAngles)
 {

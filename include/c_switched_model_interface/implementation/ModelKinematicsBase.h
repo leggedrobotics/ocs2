@@ -74,7 +74,8 @@ void ModelKinematicsBase<DerivedClassType, JOINT_COORD_SIZE>::footPositionOrigin
 /******************************************************************************************************/
 /******************************************************************************************************/
 template< class DerivedClassType, size_t JOINT_COORD_SIZE >
-void ModelKinematicsBase<DerivedClassType, JOINT_COORD_SIZE>::footPositionOriginFrame(const generalized_coordinate_t& generalizedCoordinate,
+void ModelKinematicsBase<DerivedClassType, JOINT_COORD_SIZE>::footPositionOriginFrame(
+		const generalized_coordinate_t& generalizedCoordinate,
 		const size_t& footIndex, Eigen::Vector3d& footPosition)
 {
 	// update the class
@@ -87,7 +88,8 @@ void ModelKinematicsBase<DerivedClassType, JOINT_COORD_SIZE>::footPositionOrigin
 /******************************************************************************************************/
 /******************************************************************************************************/
 template< class DerivedClassType, size_t JOINT_COORD_SIZE >
-void ModelKinematicsBase<DerivedClassType, JOINT_COORD_SIZE>::feetPositionsOriginFrame(std::array<Eigen::Vector3d,4>& feetPositions)
+void ModelKinematicsBase<DerivedClassType, JOINT_COORD_SIZE>::feetPositionsOriginFrame(
+		std::array<Eigen::Vector3d,4>& feetPositions)
 {
 	for (size_t i=0; i<4; i++)
 		footPositionOriginFrame(i, feetPositions[i]);
@@ -97,7 +99,8 @@ void ModelKinematicsBase<DerivedClassType, JOINT_COORD_SIZE>::feetPositionsOrigi
 /******************************************************************************************************/
 /******************************************************************************************************/
 template< class DerivedClassType, size_t JOINT_COORD_SIZE >
-void ModelKinematicsBase<DerivedClassType, JOINT_COORD_SIZE>::feetPositionsOriginFrame(const generalized_coordinate_t& generalizedCoordinate,
+void ModelKinematicsBase<DerivedClassType, JOINT_COORD_SIZE>::feetPositionsOriginFrame(
+		const generalized_coordinate_t& generalizedCoordinate,
 			std::array<Eigen::Vector3d,4>& feetPositions)
 {
 	// update the class
@@ -110,7 +113,8 @@ void ModelKinematicsBase<DerivedClassType, JOINT_COORD_SIZE>::feetPositionsOrigi
 /******************************************************************************************************/
 /******************************************************************************************************/
 template< class DerivedClassType, size_t JOINT_COORD_SIZE >
-void ModelKinematicsBase<DerivedClassType, JOINT_COORD_SIZE>::footJacobainBaseFrame(const size_t& footIndex, Eigen::Matrix<double,6,JOINT_COORD_SIZE>& footJacobain)
+void ModelKinematicsBase<DerivedClassType, JOINT_COORD_SIZE>::footJacobainBaseFrame(
+		const size_t& footIndex, Eigen::Matrix<double,6,JOINT_COORD_SIZE>& footJacobain)
 {
 	FootJacobainBaseFrame(qJoint_, footIndex, footJacobain);
 }
@@ -119,7 +123,8 @@ void ModelKinematicsBase<DerivedClassType, JOINT_COORD_SIZE>::footJacobainBaseFr
 /******************************************************************************************************/
 /******************************************************************************************************/
 template< class DerivedClassType, size_t JOINT_COORD_SIZE >
-void ModelKinematicsBase<DerivedClassType, JOINT_COORD_SIZE>::FootJacobainBaseFrame(const joint_coordinate_t& jointCoordinate,
+void ModelKinematicsBase<DerivedClassType, JOINT_COORD_SIZE>::FootJacobainBaseFrame(
+		const joint_coordinate_t& jointCoordinate,
 		const size_t& footIndex, Eigen::Matrix<double,6,JOINT_COORD_SIZE>& footJacobain)
 {
 	DerivedClassType::FootJacobainBaseFrame(jointCoordinate, footIndex, footJacobain);

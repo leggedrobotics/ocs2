@@ -8,6 +8,7 @@ find_package(catkin REQUIRED COMPONENTS
     cmake_modules
     c_switched_model_interface
     c_rbd_codegen
+    quadruped_model
 )
 
 ## Eign3
@@ -102,7 +103,7 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wfatal-errors")
 catkin_package(
     INCLUDE_DIRS include
     LIBRARIES c_anymal_switched_model
-    CATKIN_DEPENDS c_switched_model_interface c_rbd_codegen
+    CATKIN_DEPENDS c_switched_model_interface c_rbd_codegen quadruped_model
 #   DEPENDS system_lib
 )
 
@@ -120,13 +121,14 @@ include_directories(include
 ## Declare a C++ library
 add_library(c_anymal_switched_model
     src/kinematics/AnymalKinematics.cpp
+    src/dynamics/AnymalComDynamics.cpp
 )
 
 ## Add cmake target dependencies of the library
 ## as an example, code may need to be generated before libraries
 ## either from message generation or dynamic reconfigure
-add_dependencies(c_anymal_switched_model 
-    ${${PROJECT_NAME}_EXPORTED_TARGETS} 
+add_dependencies(c_anymal_switched_model
+    ${${PROJECT_NAME}_EXPORTED_TARGETS}
     ${catkin_EXPORTED_TARGETS}
 )
 

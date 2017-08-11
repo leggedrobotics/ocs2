@@ -26,10 +26,10 @@ public:
 	AnymalKinematics() {}
 	~AnymalKinematics() {}
 
-	void FootPositionBaseFrame(const joint_coordinate_t& jointCoordinate,
+	static void FootPositionBaseFrame(const joint_coordinate_t& jointCoordinate,
 			const size_t& footIndex, Eigen::Vector3d& footPosition);
 
-	void FootJacobainBaseFrame(const joint_coordinate_t& jointCoordinate,
+	static void FootJacobainBaseFrame(const joint_coordinate_t& jointCoordinate,
 			const size_t& footIndex, Eigen::Matrix<double,6,JOINT_COORDINATE_SIZE>& footJacobain);
 private:
 

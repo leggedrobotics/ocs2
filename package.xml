@@ -4,7 +4,7 @@
   <version>0.0.0</version>
   <description>The c_anymal_switched_model package</description>
 
-  <!-- One maintainer tag required, multiple allowed, one person per tag --> 
+  <!-- One maintainer tag required, multiple allowed, one person per tag -->
   <!-- Example:  -->
   <!-- <maintainer email="jane.doe@example.com">Jane Doe</maintainer> -->
   <maintainer email="farbod@todo.todo">farbod</maintainer>
@@ -39,15 +39,17 @@
   <!--   <run_depend>message_runtime</run_depend> -->
   <!-- Use test_depend for packages you need only for testing: -->
   <!--   <test_depend>gtest</test_depend> -->
-  
+
   <buildtool_depend>catkin</buildtool_depend>
-  
+
   <build_depend>cmake_modules</build_depend>
   <build_depend>c_switched_model_interface</build_depend>
   <build_depend>c_rbd_codegen</build_depend>
+  <build_depend>quadruped_model</build_depend>
 
   <run_depend>c_switched_model_interface</run_depend>
   <run_depend>c_rbd_codegen</run_depend>
+  <run_depend>quadruped_model</run_depend>
 
   <!-- The export tag contains other, unspecified, tags -->
   <export>

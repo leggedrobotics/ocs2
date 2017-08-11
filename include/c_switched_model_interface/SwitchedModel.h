@@ -26,8 +26,6 @@ public:
 	typedef Eigen::Matrix<double,GENERALIZED_COORDINATE_SIZE,1> generalized_coordinate_t;
 	typedef Eigen::Matrix<double,JOINT_COORDINATE_SIZE,1>       joint_coordinate_t;
 	typedef Eigen::Matrix<double,BASE_COORDINATE_SIZE,1>        base_coordinate_t;
-	typedef float scalar_low_t;
-	typedef double scalar_high_t;
 };
 
 #endif /* SWITCHEDMODEL_H_ */

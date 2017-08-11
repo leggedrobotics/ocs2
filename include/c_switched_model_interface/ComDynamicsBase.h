@@ -23,8 +23,7 @@ public:
 	typedef typename SwitchedModel<JOINT_COORD_SIZE>::generalized_coordinate_t generalized_coordinate_t;
 	typedef typename SwitchedModel<JOINT_COORD_SIZE>::joint_coordinate_t joint_coordinate_t;
 	typedef typename SwitchedModel<JOINT_COORD_SIZE>::base_coordinate_t base_coordinate_t;
-	typedef typename SwitchedModel<JOINT_COORD_SIZE>::scalar_high_t scalar_high_t;
-	typedef typename SwitchedModel<JOINT_COORD_SIZE>::scalar_low_t scalar_low_t;
+
 	/**
 	 * calculate CoM Jacobian in Base frame
 	 */
@@ -40,34 +39,34 @@ public:
 	/**
 	 * calculate CoM Inertia
 	 */
-	virtual Eigen::Matrix<scalar_high_t,6,6> comInertia(
-			const Eigen::Matrix<scalar_high_t,12,1>& q) = 0;
+	virtual Eigen::Matrix<double,6,6> comInertia(
+			const Eigen::Matrix<double,12,1>& q) = 0;
 
 	/**
 	 * calculate Com Homogeneous
 	 */
-	virtual Eigen::Matrix<scalar_high_t,4,4> comHomogeneous(
-			const Eigen::Matrix<scalar_high_t,12,1>& q) = 0;
+	virtual Eigen::Matrix<double,4,4> comHomogeneous(
+			const Eigen::Matrix<double,12,1>& q) = 0;
 
 	/**
 	 * calculate CoM Inertia Derivative
 	 */
-	virtual Eigen::Matrix<scalar_high_t,6,6> comInertiaDerivative(
-			const Eigen::Matrix<scalar_high_t,12,1>& q,
-			const Eigen::Matrix<scalar_high_t,12,1>& dq) = 0;
+	virtual Eigen::Matrix<double,6,6> comInertiaDerivative(
+			const Eigen::Matrix<double,12,1>& q,
+			const Eigen::Matrix<double,12,1>& dq) = 0;
 
 	/**
 	 * calculate CoM Momentum Jacobian
 	 */
-	virtual Eigen::Matrix<scalar_high_t,6,12> comMomentumJacobian(
-			const Eigen::Matrix<scalar_high_t,12,1>& q) = 0;
+	virtual Eigen::Matrix<double,6,12> comMomentumJacobian(
+			const Eigen::Matrix<double,12,1>& q) = 0;
 
 	/**
 	 * calculate CoM Momentum Jacobian Derivative
 	 */
-	virtual Eigen::Matrix<scalar_high_t,6,12> comMomentumJacobianDerivative(
-			const Eigen::Matrix<scalar_high_t,12,1>& q,
-			const Eigen::Matrix<scalar_high_t,12,1>& dq) = 0;
+	virtual Eigen::Matrix<double,6,12> comMomentumJacobianDerivative(
+			const Eigen::Matrix<double,12,1>& q,
+			const Eigen::Matrix<double,12,1>& dq) = 0;
 
 	/**
 	 * calculate CoM Velocity in Base Frame

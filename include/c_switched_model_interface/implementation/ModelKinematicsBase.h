@@ -11,8 +11,8 @@
 template< class DerivedClassType, size_t JOINT_COORD_SIZE >
 void ModelKinematicsBase<DerivedClassType, JOINT_COORD_SIZE>::update(const ModelKinematicsBase::generalized_coordinate_t& generalizedCoordinate)
 {
-	qBase_  = generalizedCoordinate.template head<BASE_COORDINATE_SIZE>();
-	qJoint_ = generalizedCoordinate.template tail<JOINT_COORDINATE_SIZE>();
+	qBase_  = generalizedCoordinate.template head<6>();
+	qJoint_ = generalizedCoordinate.template tail<JOINT_COORD_SIZE>();
 	b_R_o_  = RotationMatrixOrigintoBase(qBase_.template head<3>());
 }
 
@@ -110,7 +110,7 @@ void ModelKinematicsBase<DerivedClassType, JOINT_COORD_SIZE>::feetPositionsOrigi
 /******************************************************************************************************/
 /******************************************************************************************************/
 template< class DerivedClassType, size_t JOINT_COORD_SIZE >
-void ModelKinematicsBase<DerivedClassType, JOINT_COORD_SIZE>::footJacobainBaseFrame(const size_t& footIndex, Eigen::Matrix<double,6,JOINT_COORDINATE_SIZE>& footJacobain)
+void ModelKinematicsBase<DerivedClassType, JOINT_COORD_SIZE>::footJacobainBaseFrame(const size_t& footIndex, Eigen::Matrix<double,6,JOINT_COORD_SIZE>& footJacobain)
 {
 	FootJacobainBaseFrame(qJoint_, footIndex, footJacobain);
 }
@@ -120,7 +120,7 @@ void ModelKinematicsBase<DerivedClassType, JOINT_COORD_SIZE>::footJacobainBaseFr
 /******************************************************************************************************/
 template< class DerivedClassType, size_t JOINT_COORD_SIZE >
 void ModelKinematicsBase<DerivedClassType, JOINT_COORD_SIZE>::FootJacobainBaseFrame(const joint_coordinate_t& jointCoordinate,
-		const size_t& footIndex, Eigen::Matrix<double,6,JOINT_COORDINATE_SIZE>& footJacobain)
+		const size_t& footIndex, Eigen::Matrix<double,6,JOINT_COORD_SIZE>& footJacobain)
 {
 	DerivedClassType::FootJacobainBaseFrame(jointCoordinate, footIndex, footJacobain);
 }
@@ -132,8 +132,8 @@ template< class DerivedClassType, size_t JOINT_COORD_SIZE >
 void ModelKinematicsBase<DerivedClassType, JOINT_COORD_SIZE>::FromBaseJacobianToInertiaJacobian(
 		const Eigen::Matrix3d& i_R_b,
 		const Eigen::Vector3d& b_r_point,
-		const Eigen::Matrix<double,6,JOINT_COORDINATE_SIZE>& b_J_point,
-		Eigen::Matrix<double,6,GENERALIZED_COORDINATE_SIZE>& i_J_point)
+		const Eigen::Matrix<double,6,JOINT_COORD_SIZE>& b_J_point,
+		Eigen::Matrix<double,6,JOINT_COORD_SIZE + 6>& i_J_point)
 {
 	// rotation
 	i_J_point.template topRows<3>() << i_R_b,  Eigen::Matrix3d::Zero(),  i_R_b*b_J_point.template topRows<3>();

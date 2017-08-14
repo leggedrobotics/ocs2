@@ -15,6 +15,11 @@
 
 #include "SwitchedModel.h"
 
+/**
+ * ComDynamics Base Class
+ * @tparam DerivedClassType
+ * @tparam JOINT_COORD_SIZE
+ */
 template< class DerivedClassType, size_t JOINT_COORD_SIZE >
 class ComDynamicsBase
 {
@@ -26,50 +31,69 @@ public:
 
 	/**
 	 * calculate CoM Jacobian in Base frame
+	 * @param [in] jointCoordinate
+	 * @param [out] comJacobain
 	 */
 	virtual void comJacobainBaseFrame(const joint_coordinate_t& jointCoordinate,
 			Eigen::Matrix<double,6,JOINT_COORD_SIZE>& comJacobain);
 
 	/**
-	 * calculate CoM Position in Base frame
+	 * Calculate CoM Position in Base frame
+	 * @param [in] jointCoordinate
+	 * @param [out] comPosition
 	 */
 	static void ComPositionBaseFrame(
 			const joint_coordinate_t& jointCoordinate, Eigen::Vector3d& comPosition);
 
 	/**
-	 * calculate CoM Inertia
+	 * Calculate CoM Inertia
+	 * @param [in] q
+	 * @return
 	 */
 	virtual Eigen::Matrix<double,6,6> comInertia(
 			const Eigen::Matrix<double,12,1>& q) = 0;
 
 	/**
-	 * calculate Com Homogeneous
+	 * Calculate Com Homogeneous
+	 * @param [in] q
+	 * @return
 	 */
 	virtual Eigen::Matrix<double,4,4> comHomogeneous(
 			const Eigen::Matrix<double,12,1>& q) = 0;
 
 	/**
-	 * calculate CoM Inertia Derivative
+	 * Calculate CoM Inertia Derivative
+	 * @param [in] q
+	 * @param [in] dq
+	 * @return
 	 */
 	virtual Eigen::Matrix<double,6,6> comInertiaDerivative(
 			const Eigen::Matrix<double,12,1>& q,
 			const Eigen::Matrix<double,12,1>& dq) = 0;
 
 	/**
-	 * calculate CoM Momentum Jacobian
+	 * Calculate CoM Momentum Jacobian
+	 * @param [in] q
+	 * @return
 	 */
 	virtual Eigen::Matrix<double,6,12> comMomentumJacobian(
 			const Eigen::Matrix<double,12,1>& q) = 0;
 
 	/**
-	 * calculate CoM Momentum Jacobian Derivative
+	 * Calculate CoM Momentum Jacobian Derivative
+	 * @param [in] q
+	 * @param [in] dq
+	 * @return
 	 */
 	virtual Eigen::Matrix<double,6,12> comMomentumJacobianDerivative(
 			const Eigen::Matrix<double,12,1>& q,
 			const Eigen::Matrix<double,12,1>& dq) = 0;
 
 	/**
-	 * calculate CoM Velocity in Base Frame
+	 * Calculate CoM Velocity in Base Frame
+	 * @param [in] q
+	 * @param [in] dq
+	 * @return
 	 */
 	virtual Eigen::Matrix<double,3,1> comVelocityInBaseFrame(
 			const Eigen::Matrix<double,12,1>& q, const Eigen::Matrix<double,12,1>& dq) = 0;

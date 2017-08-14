@@ -12,10 +12,17 @@
 #include <cmath>
 #include <Eigen/Dense>
 
+/**
+ * General typedefs and enums for all Base classes
+ * @tparam JOINT_COORD_SIZE
+ */
 template< size_t JOINT_COORD_SIZE >
 class SwitchedModel
 {
 public:
+	/**
+	 * Enumerations defining base, joint and generalized coordinate size
+	 */
 	enum
 	{
 		BASE_COORDINATE_SIZE        = 6,

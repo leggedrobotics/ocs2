@@ -58,17 +58,17 @@ public:
 
 	/**
 	 * Calculate the feet position in the Base frame
-	 * @param jointCoordinate
-	 * @param footIndex
-	 * @param footPosition
+	 * @param [in] jointCoordinate
+	 * @param [in] footIndex
+	 * @param [out] footPosition
 	 */
 	static void FootPositionBaseFrame(const joint_coordinate_t& jointCoordinate,
 			const size_t& footIndex, Eigen::Vector3d& footPosition);
 
 	/**
 	 * Calculate the feet position in the Base frame
-	 * @param jointCoordinate
-	 * @param feetPositions
+	 * @param [in] jointCoordinate
+	 * @param [out] feetPositions
 	 */
 	static void FeetPositionsBaseFrame(const joint_coordinate_t& jointCoordinate,
 			std::array<Eigen::Vector3d,4>& feetPositions);
@@ -97,14 +97,14 @@ public:
 
 	/**
 	 * Calculate feet Positions in Origin Frame
-	 * @param feetPositions
+	 * @param [out] feetPositions
 	 */
 	void feetPositionsOriginFrame(std::array<Eigen::Vector3d,4>& feetPositions);
 
 	/**
 	 * Calculate feet Positions in Origin Frame
-	 * @param generalizedCoordinate
-	 * @param feetPositions
+	 * @param [in] generalizedCoordinate
+	 * @param [out] feetPositions
 	 */
 	void feetPositionsOriginFrame(const generalized_coordinate_t& generalizedCoordinate,
 			std::array<Eigen::Vector3d,4>& feetPositions);
@@ -141,7 +141,7 @@ public:
 
 	/**
 	 * Origin to base rotation matrix
-	 * @return
+	 * @return Eigen::Matrix3d
 	 */
 	Eigen::Matrix3d rotationMatrixOrigintoBase() const;
 

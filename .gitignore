@@ -1,0 +1,17 @@
+CMakeFiles/
+CMakeCache.txt
+*.cmake
+*.a
+*.o
+*.so
+Makefile
+.project
+.cproject
+*~
+*/.settings/*
+*/.idea/*
+*/doc/html/
+Doxyfile
+*.orig
+*.tag
+*.tmp

@@ -1,0 +1,12 @@
+<package>
+    <name>ocs2_example</name>
+    <version>1.0.0</version>
+    <description>
+        OSC2 Example
+    </description>
+    <maintainer email="sasutosh@ethz.ch">Asutosh</maintainer>
+    <license>BSD</license>
+
+    <buildtool_depend>catkin</buildtool_depend>
+
+</package>

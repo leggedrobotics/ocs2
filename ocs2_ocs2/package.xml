@@ -43,8 +43,10 @@
   <build_depend>cmake_modules</build_depend>
   <build_depend>ocs2_core</build_depend>
   <build_depend>ocs2_slq</build_depend>
+  <build_depend>c_gradient_descent</build_depend>
   <run_depend>ocs2_core</run_depend>
   <run_depend>ocs2_slq</run_depend>
+  <run_depend>c_gradient_descent</run_depend>
 
 
   <!-- The export tag contains other, unspecified, tags -->

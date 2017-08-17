@@ -32,7 +32,7 @@ DOXYFILE_ENCODING      = UTF-8
 # title of most generated pages and in a few other places.
 # The default value is: My Project.
 
-PROJECT_NAME           = "OCS2 Test Package"
+PROJECT_NAME           = "ocs2_ocs2"
 
 # The PROJECT_NUMBER tag can be used to enter a project or revision number. This
 # could be handy for archiving the generated documentation or if some version
@@ -44,7 +44,7 @@ PROJECT_NUMBER         = v1.0.0
 # for a project that appears at the top of each page and should give viewer a
 # quick idea about the purpose of the project. Keep the description short.
 
-PROJECT_BRIEF          = "Ocs2 Test Package"
+PROJECT_BRIEF          = "Ocs2 algorithm package"
 
 # With the PROJECT_LOGO tag one can specify a logo or an icon that is included
 # in the documentation. The maximum height of the logo should not exceed 55
@@ -111,7 +111,6 @@ REPEAT_BRIEF           = YES
 
 # This tag implements a quasi-intelligent brief description abbreviator that is
 # used to form the text in various listings. Each string in this list, if found
-# as the leading text of the brief description, will be stripped from the text
 # and the result, after processing the whole list, is used as the annotated
 # text. Otherwise, the brief description is used as-is. If left blank, the
 # following values are used ($name is automatically replaced with the name of
@@ -2129,13 +2128,13 @@ SKIP_FUNCTION_MACROS   = YES
 TAGFILES               = tags/ocs2_core.tag=../../../ocs2_core/doc/html \
 					 	 tags/ocs2_example.tag=../../../ocs2_example/doc/html \
 					 	 tags/ocs2_slq.tag=../../../ocs2_slq/doc/html \
-					 	 tags/ocs2_test_pkg.tag=../../../ocs2_test_pkg/doc/html
+					 	 tags/ocs2_ocs2.tag=../../../ocs2_ocs2/doc/html
 
 # When a file name is specified after GENERATE_TAGFILE, doxygen will create a
 # tag file that is based on the input files it reads. See section "Linking to
 # external documentation" for more information about the usage of tag files.
 
-GENERATE_TAGFILE       = ../../ocs2_doc/doc/tags/ocs2_test_pkg.tag
+GENERATE_TAGFILE       = ../../ocs2_doc/doc/tags/ocs2_ocs2.tag
 
 # If the ALLEXTERNALS tag is set to YES, all external class will be listed in
 # the class index. If set to NO, only the inherited external classes will be

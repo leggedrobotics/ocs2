@@ -183,11 +183,15 @@ target_link_libraries(c_anymal_switched_model
 ## Testing ##
 #############
 
-## Add gtest based cpp test target and link libraries
-# catkin_add_gtest(${PROJECT_NAME}-test test/test_c_anymal_switched_model.cpp)
-# if(TARGET ${PROJECT_NAME}-test)
-#   target_link_libraries(${PROJECT_NAME}-test ${PROJECT_NAME})
-# endif()
-
-## Add folders to be run by python nosetests
-# catkin_add_nosetests(test)
+if(CATKIN_ENABLE_TESTING)
+# Build unit tests
+catkin_add_gtest(test_quadruped_model
+    test/test_main.cpp
+    test/robcogen_tests.cpp
+)
+add_dependencies(test_quadruped_model ${catkin_EXPORTED_TARGETS})
+target_link_libraries(test_quadruped_model
+  c_anymal_switched_model
+  ${catkin_LIBRARIES}
+)
+endif()

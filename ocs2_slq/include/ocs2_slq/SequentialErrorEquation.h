@@ -16,6 +16,11 @@
 
 namespace ocs2{
 
+/**
+ * Sequential Error Equation Class
+ * @tparam STATE_DIM
+ * @tparam INPUT_DIM
+ */
 template <size_t STATE_DIM, size_t INPUT_DIM>
 class SequentialErrorEquation : public SystemBase<STATE_DIM>
 {
@@ -33,6 +38,15 @@ public:
 	SequentialErrorEquation() {}
 	~SequentialErrorEquation() {}
 
+	/**
+	 * Sets Data
+	 * @param [in] activeSubsystem
+	 * @param [in] switchingTimeStart
+	 * @param [in] switchingTimeFinal
+	 * @param [in] timeStampPtr
+	 * @param [in] GvPtr
+	 * @param [in] GmPtr
+	 */
 	void setData(const size_t& activeSubsystem, const scalar_t& switchingTimeStart, const scalar_t& switchingTimeFinal,
 			scalar_array_t* const timeStampPtr, state_vector_array_t* const GvPtr, state_matrix_array_t* const GmPtr)  {
 
@@ -46,6 +60,12 @@ public:
 		GmFunc_.setData(GmPtr);
 	}
 
+	/**
+	 * Compute derivative
+	 * @param [in] z
+	 * @param [in] Sve
+	 * @param [out] derivatives
+	 */
 	void computeDerivative(const scalar_t& z, const state_vector_t& Sve, state_vector_t& derivatives) {
 
 		// denormalized time

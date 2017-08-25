@@ -24,6 +24,13 @@
 
 namespace ocs2{
 
+/**
+ * LQP Class
+ * @tparam STATE_DIM
+ * @tparam INPUT_DIM
+ * @tparam OUTPUT_DIM
+ * @tparam NUM_Subsystems
+ */
 template <size_t STATE_DIM, size_t INPUT_DIM, size_t OUTPUT_DIM, size_t NUM_Subsystems>
 class LQP
 {
@@ -60,6 +67,9 @@ public:
 	typedef typename DIMENSIONS::control_gain_matrix_array_t control_gain_matrix_array_t;
 
 
+	/**
+	 * Constructor
+	 */
 	LQP(const std::vector<std::shared_ptr<ControlledSystemBase<STATE_DIM, INPUT_DIM> > >& subsystemDynamicsPtr,
 			const std::vector<std::shared_ptr<DerivativesBase<STATE_DIM, INPUT_DIM> > >& subsystemDerivativesPtr,
 			const std::vector<std::shared_ptr<CostFunctionBaseOCS2<STATE_DIM, INPUT_DIM> > >& subsystemCostFunctionsPtr,
@@ -124,6 +134,15 @@ public:
 
 	~LQP() {}
 
+	/**
+	 * Rollout function
+	 * @param [in] [out] initState
+	 * @param [in] controllersStock
+	 * @param [out] timeTrajectoriesStock
+	 * @param [out] stateTrajectoriesStock
+	 * @param [out] inputTrajectoriesStock
+	 * @param [out] outputTrajectoriesStock
+	 */
 	void rollout(const state_vector_t& initState,
 			const controller_array_t& controllersStock,
 			std::vector<scalar_array_t>& timeTrajectoriesStock,
@@ -131,28 +150,69 @@ public:
 			control_vector_array2_t& inputTrajectoriesStock,
 			output_vector_array2_t& outputTrajectoriesStock);
 
+	/**
+	 * Rollout function
+	 * @param [in] initState
+	 * @param [in] controllersStock
+	 * @param [out] timeTrajectoriesStock
+	 * @param [out] stateTrajectoriesStock
+	 * @param [out] inputTrajectoriesStock
+	 */
 	void rollout(const state_vector_t& initState,
 			const controller_array_t& controllersStock,
 			std::vector<scalar_array_t>& timeTrajectoriesStock,
 			state_vector_array2_t& stateTrajectoriesStock,
 			control_vector_array2_t& inputTrajectoriesStock);
 
+	/**
+	 * Rolls out cost
+	 * @param [in] timeTrajectoriesStock
+	 * @param [in] outputTrajectoriesStock
+	 * @param [in] inputTrajectoriesStock
+	 * @param [out] totalCost
+	 */
 	void rolloutCost(const std::vector<scalar_array_t>& timeTrajectoriesStock,
 			const output_vector_array2_t& outputTrajectoriesStock,
 			const control_vector_array2_t& inputTrajectoriesStock,
 			scalar_t& totalCost);
 
+	/**
+	 * Gets Controller
+	 * @param [out] controllersStock
+	 */
 	void getController(controller_array_t& controllersStock);
 
+	/**
+	 * Run function
+	 * @param [in] switchingTimes
+	 * @param [in] learningRate
+	 */
 	void run(const std::vector<scalar_t>& switchingTimes, const scalar_t& learningRate=1.0);
 
 protected:
+	/**
+	 * SOlves Riccati equations
+	 */
 	void SolveRiccatiEquations();
 
+	/**
+	 * Approximates optimal control problem
+	 */
 	void approximateOptimalControlProblem();
 
+	/**
+	 * Calculates Controller
+	 * @param [in] learningRate
+	 * @param [out] controllersStock
+	 */
 	void calculatecontroller(const scalar_t& learningRate, controller_array_t& controllersStock);
 
+	/**
+	 * Makes PSD
+	 * @tparam Derived
+	 * @param [out] squareMatrix
+	 * @return
+	 */
 	template <typename Derived>
 	bool makePSD(Eigen::MatrixBase<Derived>& squareMatrix);
 

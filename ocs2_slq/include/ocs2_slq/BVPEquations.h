@@ -18,7 +18,7 @@
 namespace ocs2{
 
 /**
- * BVPEquations
+ * BVP Equations Class
  * @tparam STATE_DIM
  * @tparam INPUT_DIM
  */
@@ -57,10 +57,10 @@ public:
 	~BVPEquations() {}
 
     /**
-     *
-     * @param Mm
-     * @param Sv
-     * @param MSv
+     * Converts to vector
+     * @param [in] Mm
+     * @param [in] Sv
+     * @param [out] MSv
      */
 	static void convert2Vector(const state_state_matrix_t& Mm, const state_vector_t& Sv, full_ode_vector_t& MSv)  {
 
@@ -69,10 +69,10 @@ public:
 	}
 
     /**
-     *
+     * Converts to matrix
      * @param [in] MSv
-     * @param Mm
-     * @param Sv
+     * @param [out] Mm
+     * @param [out] Sv
      */
 	static void convert2Matrix(const full_ode_vector_t& MSv, state_state_matrix_t& Mm, state_vector_t& Sv)  {
 
@@ -129,7 +129,7 @@ public:
 	}
 
     /**
-     *
+     * Computes derivative
      * @param [in] z
      * @param [in] MSv
      * @param [out] derivatives
@@ -190,7 +190,7 @@ public:
 	}
 
     /**
-     *
+     * Makes PSD
      * @tparam Derived
      * @param [out] squareMatrix
      * @return

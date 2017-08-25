@@ -27,6 +27,11 @@
 
 namespace ocs2{
 
+/**
+ * GLQP Class
+ * @tparam STATE_DIM
+ * @tparam INPUT_DIM
+ */
 template <size_t STATE_DIM, size_t INPUT_DIM>
 class GLQP
 {
@@ -87,40 +92,101 @@ public:
 
 	~GLQP() {}
 
+    /**
+     * Rollout function
+     * @param [in] initState
+     * @param [in] controllersStock
+     * @param [out] timeTrajectoriesStock
+     * @param [out] stateTrajectoriesStock
+     * @param [out] inputTrajectoriesStock
+     */
 	void rollout(const state_vector_t& initState,
 			const controller_array_t& controllersStock,
 			std::vector<scalar_array_t>& timeTrajectoriesStock,
 			state_vector_array2_t& stateTrajectoriesStock,
 			control_vector_array2_t& inputTrajectoriesStock);
 
+    /**
+     * Rollout cost function
+     * @param [in] timeTrajectoriesStock
+     * @param [in] stateTrajectoriesStock
+     * @param [in] controlTrajectoriesStock
+     * @param [out] totalCost
+     */
 	void rolloutCost(const std::vector<scalar_array_t>& timeTrajectoriesStock,
 			const state_vector_array2_t& stateTrajectoriesStock,
 			const control_vector_array2_t& controlTrajectoriesStock,
 			scalar_t& totalCost);
 
+    /**
+     * Gets controller
+     * @param [out] controllersStock
+     */
 	void getController(controller_array_t& controllersStock);
 
+    /**
+     * Gets value function
+     * @param [in] time
+     * @param [in] state
+     * @param [out] valueFuntion
+     */
 	void getValueFuntion(const scalar_t& time, const state_vector_t& state, scalar_t& valueFuntion);
 
+    /**
+     * Run function
+     * @param [in] systemStockIndexes
+     * @param [in] switchingTimes
+     * @param [in] learningRate
+     * @param [in] desiredTimeTrajectoriesStock
+     * @param [in] desiredStateTrajectoriesStock
+     */
 	void run(const std::vector<size_t>& systemStockIndexes,
 		const std::vector<scalar_t>& switchingTimes, const scalar_t& learningRate=1.0,
 		const std::vector<scalar_array_t>& desiredTimeTrajectoriesStock = std::vector<scalar_array_t>(),
 		const state_vector_array2_t& desiredStateTrajectoriesStock = state_vector_array2_t());
 
+    /**
+     * Sets cost nominal states
+     * @param [in] timeTrajectoryStock
+     * @param [in] stateTrajectoryStock
+     */
 	virtual void setCostNominalStates(const std::vector<scalar_array_t>& timeTrajectoryStock,
 			const state_vector_array2_t& stateTrajectoryStock);
 
 protected:
+    /**
+     *
+     */
 	void setupOptimizer();
 
+    /**
+     * SOlves Riccati equations
+     */
 	void SolveRiccatiEquations();
 
+    /**
+     * Approximates optimal control problem
+     */
 	void approximateOptimalControlProblem();
 
+    /**
+     * Calculates controller
+     * @param [in] learningRate
+     * @param [out] controllersStock
+     */
 	void calculatecontroller(const scalar_t& learningRate, controller_array_t& controllersStock);
 
+    /**
+     * Transforms local value function to global
+     */
 	void transformeLocalValueFuntion2Global();
 
+    /**
+     * Makes psd
+     * @tparam Derived
+     * @param [out] squareMatrix
+     * @return
+     */
 	template <typename Derived>
 	bool makePSD(Eigen::MatrixBase<Derived>& squareMatrix);
 

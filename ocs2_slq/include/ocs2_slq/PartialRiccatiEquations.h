@@ -14,6 +14,11 @@
 
 namespace ocs2{
 
+/**
+ * Partial Riccati Equations Class
+ * @tparam STATE_DIM
+ * @tparam INPUT_DIM
+ */
 template <size_t STATE_DIM, size_t INPUT_DIM>
 class PartialRiccatiEquations : public SystemBase<STATE_DIM*STATE_DIM+STATE_DIM+1>
 {
@@ -43,6 +48,13 @@ public:
 	PartialRiccatiEquations() {}
 	~PartialRiccatiEquations() {}
 
+	/**
+	 *
+	 * @param [in] Sm
+	 * @param [in] Sv
+	 * @param [in] s
+	 * @param [out] allSs
+	 */
 	static void convert2Vector(const state_matrix_t& Sm, const state_vector_t& Sv, const eigen_scalar_t& s,
 			Eigen::Matrix<double,S_DIM_,1>& allSs)  {
 
@@ -51,6 +63,13 @@ public:
 				s;
 	}
 
+	/**
+	 *
+	 * @param [in] allSs
+	 * @param [out] Sm
+	 * @param [out] Sv
+	 * @param [out] s
+	 */
 	static void convert2Matrix(const Eigen::Matrix<double,S_DIM_,1>& allSs,
 			state_matrix_t& Sm, state_vector_t& Sv, eigen_scalar_t& s)  {
 
@@ -59,6 +78,19 @@ public:
 		s  = allSs.template tail<1>();
 	}
 
+	/**
+	 *
+	 * @param [in] timeStart
+	 * @param [in] timeFinal
+	 * @param [in] Am
+	 * @param [in] Bm
+	 * @param [in] q
+	 * @param [in] Qv
+	 * @param [in] Qm
+	 * @param [in] Rv
+	 * @param [in] Rm
+	 * @param [in] Pm
+	 */
 	void setData(const scalar_t& timeStart, const scalar_t& timeFinal,
 			const state_matrix_t& Am, const control_gain_matrix_t& Bm,
 			const eigen_scalar_t& q, const state_vector_t& Qv, const state_matrix_t& Qm,
@@ -77,6 +109,12 @@ public:
 		Pm_ = Pm;
 	}
 
+	/**
+	 *
+	 * @param [in] t
+	 * @param [in] state
+	 * @param [out] derivative
+	 */
 	void computeDerivative(const scalar_t& t,
 			const Eigen::Matrix<double,S_DIM_,1>& state,
 			Eigen::Matrix<double,S_DIM_,1>& derivative) {
@@ -107,6 +145,12 @@ public:
 	}
 
 protected:
+	/**
+	 *
+	 * @tparam Derived
+	 * @param [out] squareMatrix
+	 * @return boolean
+	 */
 	template <typename Derived>
 	bool makePSD(Eigen::MatrixBase<Derived>& squareMatrix) {
 

@@ -16,7 +16,9 @@
 
 namespace ocs2{
 /**
- *
+ * Sequential Riccati Equations Normalized Class
+ * @tparam STATE_DIM
+ * @tparam INPUT_DIM
  */
 template <size_t STATE_DIM, size_t INPUT_DIM>
 class SequentialRiccatiEquationsNormalized : public SystemBase<STATE_DIM*(STATE_DIM+1)/2+STATE_DIM+1>
@@ -105,10 +107,10 @@ public:
 
 	/**
 	 * transcribe the stacked vector allSs into a symmetric matrix, a state vector sized Sv and a single scalar
-	 * @param allSs
-	 * @param Sm
-	 * @param Sv
-	 * @param s
+	 * @param [in] allSs
+	 * @param [out] Sm
+	 * @param [out] Sv
+	 * @param [out] s
 	 */
 	static void convert2Matrix(const s_vector_t& allSs, state_matrix_t& Sm, state_vector_t& Sv, eigen_scalar_t& s)  {
 
@@ -132,20 +134,20 @@ public:
 
 	/**
 	 * Sets data
-	 * @param learningRate
-	 * @param activeSubsystem
-	 * @param switchingTimeStart
-	 * @param switchingTimeFinal
-	 * @param timeStampPtr
-	 * @param AmPtr
-	 * @param BmPtr
-	 * @param qPtr
-	 * @param QvPtr
-	 * @param QmPtr
-	 * @param RvPtr
-	 * @param RmInversePtr
-	 * @param RmPtr
-	 * @param PmPtr
+	 * @param [in] learningRate
+	 * @param [in] activeSubsystem
+	 * @param [in] switchingTimeFinal
+	 * @param [in] switchingTimeStart
+	 * @param [in] timeStampPtr
+	 * @param [in] AmPtr
+	 * @param [in] BmPtr
+	 * @param [in] qPtr
+	 * @param [in] QvPtr
+	 * @param [in] QmPtr
+	 * @param [in] RvPtr
+	 * @param [in] RmInversePtr
+	 * @param [in] RmPtr
+	 * @param [in] PmPtr
 	 */
 	void setData(const scalar_t& learningRate,
 			const size_t& activeSubsystem, const scalar_t& switchingTimeStart, const scalar_t& switchingTimeFinal,
@@ -186,9 +188,9 @@ public:
 
 	/**
 	 * moved all dynamically allocated variables, are now members (higher efficiency)
-	 * @param z
-	 * @param allSs
-	 * @param derivatives
+	 * @param [in] z
+	 * @param [in] allSs
+	 * @param [out] derivatives
 	 */
 	void computeDerivative(const scalar_t& z, const s_vector_t& allSs, s_vector_t& derivatives) {
 
@@ -239,8 +241,9 @@ public:
 protected:
 	/**
 	 * Makes PSD
-	 * @param squareMatrix
-	 * @return boolean
+	 * @tparam Derived
+	 * @param [out] squareMatrix
+	 * @return
 	 */
 	template <typename Derived>
 	static bool makePSD(Eigen::MatrixBase<Derived>& squareMatrix) {

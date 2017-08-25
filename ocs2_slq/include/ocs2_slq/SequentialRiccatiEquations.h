@@ -16,6 +16,12 @@
 
 namespace ocs2{
 
+/**
+ * Sequential Riccati Equations Class
+ * @tparam STATE_DIM
+ * @tparam INPUT_DIM
+ * @tparam OUTPUT_DIM
+ */
 template <size_t STATE_DIM, size_t INPUT_DIM, size_t OUTPUT_DIM>
 class SequentialRiccatiEquations : public SystemBase<OUTPUT_DIM*(OUTPUT_DIM+1)/2+OUTPUT_DIM+1>
 {
@@ -75,9 +81,13 @@ public:
 
 	~SequentialRiccatiEquations() {}
 
-	/**
-	 * transcribe symmetric matrix Sm, vector Sv and scalar s into a single vector
-	 * */
+    /**
+    * Transcribe symmetric matrix Sm, vector Sv and scalar s into a single vector
+    * @param [in] Sm
+    * @param [in] Sv
+    * @param [in] s
+    * @param [out] allSs
+    */
 	static void convert2Vector(const state_matrix_t& Sm, const state_vector_t& Sv, const eigen_scalar_t& s, s_vector_t& allSs)  {
 
 		/*Sm is symmetric. Here, we only extract the upper triangular part and transcribe it in column-wise fashion into allSs*/
@@ -97,9 +107,13 @@ public:
 		allSs.template tail<1> () << s;
 	}
 
-	/**
-	 * transcribe the stacked vector allSs into a symmetric matrix, a state vector sized Sv and a single scalar
-	 */
+    /**
+    * Transcribes the stacked vector allSs into a symmetric matrix, a state vector sized Sv and a single scalar
+    * @param [in] allSs
+    * @param [out] Sm
+    * @param [out] Sv
+    * @param [out] s
+    */
 	static void convert2Matrix(const s_vector_t& allSs, state_matrix_t& Sm, state_vector_t& Sv, eigen_scalar_t& s)  {
 
 		/*Sm is symmetric. Here, we map the first entries from allSs onto the respective elements in the symmetric matrix*/
@@ -120,6 +134,23 @@ public:
 		s  = allSs.template tail<1>();
 	}
 
+	/**
+	 * Sets Data
+	 * @param [in] learningRate
+	 * @param [in] activeSubsystem
+	 * @param [in] switchingTimeStart
+	 * @param [in] switchingTimeFinal
+	 * @param [in] timeStampPtr
+	 * @param [in] AmPtr
+	 * @param [in] BmPtr
+	 * @param [in] qPtr
+	 * @param [in] QvPtr
+	 * @param [in] QmPtr
+	 * @param [in] RvPtr
+	 * @param [in] RmInversePtr
+	 * @param [in] RmPtr
+	 * @param [in] PmPtr
+	 */
 	void setData(const scalar_t& learningRate,
 			const size_t& activeSubsystem, const scalar_t& switchingTimeStart, const scalar_t& switchingTimeFinal,
 			const scalar_array_t* timeStampPtr,
@@ -157,10 +188,12 @@ public:
 		PmFunc_.setData(PmPtr);
 	}
 
-
-	/*
-	 * mgiftthaler: moved all dynamically allocated variables, are now members (higher efficiency)
-	 * */
+	/**
+	 * moved all dynamically allocated variables, are now members (higher efficiency)
+	 * @param [in] z
+	 * @param [in] allSs
+	 * @param [out] derivatives
+	 */
 	void computeDerivative(const scalar_t& z, const s_vector_t& allSs, s_vector_t& derivatives) {
 
 		SystemBase<OUTPUT_DIM*(OUTPUT_DIM+1)/2+OUTPUT_DIM+1>::numFunctionCalls_++;
@@ -203,6 +236,12 @@ public:
 	}
 
 protected:
+	/**
+	 *
+	 * @tparam Derived
+	 * @param [out] squareMatrix
+	 * @return boolean
+	 */
 	template <typename Derived>
 	static bool makePSD(Eigen::MatrixBase<Derived>& squareMatrix) {
 

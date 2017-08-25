@@ -9,16 +9,16 @@ The source code is available at <a href="https://bitbucket.org/adrlab/slq-mpc">h
 
 \section ocs2_doc_test_section OCS2 Contents
 
-\subsection ocs2_doc_test_sub_section OCS2 Core:
+\subsection ocs2_doc_test_sub_section1 OCS2 Core:
  - OCS2 Core Module
 
-\subsection ocs2_doc_test_sub_section OCS2 SLQ:
+\subsection ocs2_doc_test_sub_section2 OCS2 SLQ:
  - OCS2 SLQ
 
-\subsection ocs2_doc_test_sub_section OCS2 Example:
+\subsection ocs2_doc_test_sub_section3 OCS2 Example:
 - OCS2 Example
 
-\subsection ocs2_doc_test_sub_section OCS2 Test Package:
+\subsection ocs2_doc_test_sub_section4 OCS2 Test Package:
 - OCS2 Test Package
 
 

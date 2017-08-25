@@ -5,22 +5,18 @@
 OCS2 Home Page
 
 \section ocs2_doc_source_code Source Code
-The source code is available at <a href="https://bitbucket.org/adrlab/slq-mpc">https://bitbucket.org/adrlab/slq-mpc</a>
+The source code is available at <a href="https://bitbucket.org/adrlab/slq-mpc">https://bitbucket.org/adrlab/ocs2</a>
 
-\section ocs2_doc_test_section OCS2 Contents
+\section ocs2_doc_link_section OCS2 Contents
 
-\subsection ocs2_doc_test_sub_section1 OCS2 Core:
+\subsection ocs2_doc_ocs2_core OCS2 Core:
  - OCS2 Core Module
 
-\subsection ocs2_doc_test_sub_section2 OCS2 SLQ:
+\subsection ocs2_doc_ocs2_slq OCS2 SLQ:
  - OCS2 SLQ
 
-\subsection ocs2_doc_test_sub_section3 OCS2 Example:
-- OCS2 Example
-
-\subsection ocs2_doc_test_sub_section4 OCS2 Test Package:
-- OCS2 Test Package
-
+\subsection ocs2_doc_ocs2_ocs2 OCS2 OCS2:
+- OCS2 OCS2
 
 \section ocs2_doc_ack Acknowledgement
 \subsection contribs Contributors

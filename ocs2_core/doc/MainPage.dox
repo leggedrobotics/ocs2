@@ -2,21 +2,13 @@
 \mainpage Overview
 
 \section ocs2_core_home OCS2 Core
-OCS2 Home Page
+OCS2 Core Home Page
 
-\section ocs2_core_test_section OCS2 Contents
-
-\subsection ocs2_core_test_sub_section1 OCS2 Core:
- - OCS2 Core Module
-
-\subsection ocs2_core_test_sub_section2 OCS2 SLQ:
- - OCS2 SLQ
-
-\subsection ocs2_core_test_sub_section3 OCS2 Example:
-- OCS2 Example
-
-\subsection ocs2_core_test_sub_section4 OCS2 Test Package:
-- OCS2 Test Package
+\section ocs2_core_documentation_section OCS2 Documentation
+This library consists of three main modules
+ - <a href="../../../ocs2_core/doc/html/index.html">ocs2_core</a>
+ - <a href="../../../ocs2_slq/doc/html/index.html">ocs2_slq</a>
+ - <a href="../../../ocs2_ocs2/doc/html/index.html">ocs2_ocs2</a>
 
 
 */

@@ -15,7 +15,9 @@
 #include <ocs2_core/misc/LinearInterpolation.h>
 
 namespace ocs2{
-
+/**
+ *
+ */
 template <size_t STATE_DIM, size_t INPUT_DIM>
 class SequentialRiccatiEquationsNormalized : public SystemBase<STATE_DIM*(STATE_DIM+1)/2+STATE_DIM+1>
 {
@@ -76,8 +78,12 @@ public:
 	~SequentialRiccatiEquationsNormalized() {}
 
 	/**
-	 * transcribe symmetric matrix Sm, vector Sv and scalar s into a single vector
-	 * */
+	 * Transcribe symmetric matrix Sm, vector Sv and scalar s into a single vector
+	 * @param [in] Sm
+	 * @param [in] Sv
+	 * @param [in] s
+	 * @param [out] allSs
+	 */
 	static void convert2Vector(const state_matrix_t& Sm, const state_vector_t& Sv, const eigen_scalar_t& s, s_vector_t& allSs)  {
 
 		/*Sm is symmetric. Here, we only extract the upper triangular part and transcribe it in column-wise fashion into allSs*/
@@ -99,6 +105,10 @@ public:
 
 	/**
 	 * transcribe the stacked vector allSs into a symmetric matrix, a state vector sized Sv and a single scalar
+	 * @param allSs
+	 * @param Sm
+	 * @param Sv
+	 * @param s
 	 */
 	static void convert2Matrix(const s_vector_t& allSs, state_matrix_t& Sm, state_vector_t& Sv, eigen_scalar_t& s)  {
 
@@ -120,6 +130,23 @@ public:
 		s  = allSs.template tail<1>();
 	}
 
+	/**
+	 * Sets data
+	 * @param learningRate
+	 * @param activeSubsystem
+	 * @param switchingTimeStart
+	 * @param switchingTimeFinal
+	 * @param timeStampPtr
+	 * @param AmPtr
+	 * @param BmPtr
+	 * @param qPtr
+	 * @param QvPtr
+	 * @param QmPtr
+	 * @param RvPtr
+	 * @param RmInversePtr
+	 * @param RmPtr
+	 * @param PmPtr
+	 */
 	void setData(const scalar_t& learningRate,
 			const size_t& activeSubsystem, const scalar_t& switchingTimeStart, const scalar_t& switchingTimeFinal,
 			const scalar_array_t* timeStampPtr,
@@ -157,10 +184,12 @@ public:
 		PmFunc_.setData(PmPtr);
 	}
 
-
-	/*
-	 * mgiftthaler: moved all dynamically allocated variables, are now members (higher efficiency)
-	 * */
+	/**
+	 * moved all dynamically allocated variables, are now members (higher efficiency)
+	 * @param z
+	 * @param allSs
+	 * @param derivatives
+	 */
 	void computeDerivative(const scalar_t& z, const s_vector_t& allSs, s_vector_t& derivatives) {
 
 		SystemBase<STATE_DIM*(STATE_DIM+1)/2+STATE_DIM+1>::numFunctionCalls_++;
@@ -208,6 +237,11 @@ public:
 	}
 
 protected:
+	/**
+	 * Makes PSD
+	 * @param squareMatrix
+	 * @return boolean
+	 */
 	template <typename Derived>
 	static bool makePSD(Eigen::MatrixBase<Derived>& squareMatrix) {
 

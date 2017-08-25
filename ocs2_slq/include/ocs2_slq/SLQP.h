@@ -93,7 +93,7 @@ public:
 	virtual ~SLQP();
 
 	/**
-	 *
+	 * Rollout Function
 	 * @param initTime
 	 * @param initState
 	 * @param finalTime
@@ -123,7 +123,7 @@ public:
 			constraint2_vector_array_t& HvFinalStock) override;
 
 	/**
-	 *
+	 * Rollout Function
 	 * @param initTime
 	 * @param initState
 	 * @param finalTime
@@ -141,7 +141,7 @@ public:
 			control_vector_array2_t& inputTrajectoriesStock) override;
 
 	/**
-	 *
+	 * Rollout Function
 	 * @param initTime
 	 * @param initState
 	 * @param finalTime
@@ -159,7 +159,7 @@ public:
 			size_t& finalActiveSubsystemIndex) override;
 
 	/**
-	 *
+	 * Calculates the cost function
 	 * @param timeTrajectoriesStock
 	 * @param stateTrajectoriesStock
 	 * @param inputTrajectoriesStock
@@ -171,7 +171,7 @@ public:
 			scalar_t& totalCost) override;
 
 	/**
-	 *
+	 * Calculates the cost function
 	 * @param timeTrajectoriesStock
 	 * @param stateTrajectoriesStock
 	 * @param inputTrajectoriesStock
@@ -191,17 +191,17 @@ public:
 			scalar_t& totalCost) override;
 
 	/**
-	 *
+	 * Sets up the optimizer
 	 */
 	void setupOptimizer() override;
 
 	/**
-	 *
+	 * Runs initialization
 	 */
 	void runInit() override;
 
 	/**
-	 *
+	 * Runs iteration
 	 * @param SmFinal
 	 * @param SvFinal
 	 * @param sFinal
@@ -211,7 +211,7 @@ public:
 			const eigen_scalar_t& sFinal = eigen_scalar_t::Zero()) override;
 
 	/**
-	 *
+	 * Runs exit
 	 * @param SmFinal
 	 * @param SvFinal
 	 * @param sFinal
@@ -221,14 +221,14 @@ public:
 			const eigen_scalar_t& sFinal = eigen_scalar_t::Zero()) override;
 
 	/**
-	 *
+	 * Gets subsystem dynamics pointer
 	 */
 	virtual std::vector<std::shared_ptr<ControlledSystemBase<STATE_DIM, INPUT_DIM>> >& getSubsystemDynamicsPtrStock() override{
 		return subsystemDynamicsPtrStock_;
 	}
 
 	/**
-	 *
+	 * Gets single cost nominal state
 	 * @param index
 	 * @param timeTrajectory
 	 * @param stateTrajectory
@@ -238,7 +238,7 @@ public:
 
 protected:
 	/**
-	 *
+	 * Sets single cost nominal State
 	 * @param index
 	 * @param timeTrajectory
 	 * @param stateTrajectory
@@ -247,7 +247,7 @@ protected:
 			const state_vector_array_t& stateTrajectory) override;
 
 	/**
-	 *
+	 * Solves sequential Riccati equations
 	 * @param learningRate
 	 * @param SmFinal
 	 * @param SvFinal
@@ -259,17 +259,17 @@ protected:
 			const eigen_scalar_t& sFinal) override;
 
 	/**
-	 *
+	 * Approximates optimal control problem
 	 */
 	void approximateOptimalControlProblem();
 
 	/**
-	 *
+	 * Calculates controller
 	 */
 	void calculateController();
 
 	/**
-	 * 
+	 * Line search function
 	 * @param learningRateStar
 	 * @param maxLearningRateStar
 	 */

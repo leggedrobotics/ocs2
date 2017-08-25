@@ -14,6 +14,13 @@
 
 namespace ocs2{
 
+/**
+ * GSLQP Solver Class
+ * @tparam STATE_DIM
+ * @tparam INPUT_DIM
+ * @tparam OUTPUT_DIM
+ * @tparam NUM_Subsystems
+ */
 template <size_t STATE_DIM, size_t INPUT_DIM, size_t OUTPUT_DIM, size_t NUM_Subsystems>
 class GSLQPSolver
 {
@@ -46,7 +53,9 @@ public:
 
 	typedef Eigen::Matrix<double, NUM_Subsystems-1, 1> parameters_t;
 
-
+    /**
+     * Constructor
+     */
 	GSLQPSolver(const std::vector<std::shared_ptr<ControlledSystemBase<STATE_DIM, INPUT_DIM> > >& subsystemDynamicsPtr,
 			const std::vector<std::shared_ptr<DerivativesBase<STATE_DIM, INPUT_DIM> > >& subsystemDerivativesPtr,
 			const std::vector<std::shared_ptr<CostFunctionBaseOCS2<STATE_DIM, INPUT_DIM> > >& subsystemCostFunctionsPtr,
@@ -69,20 +78,46 @@ public:
 
 	virtual ~GSLQPSolver() {}
 
+    /**
+     * Returns cost
+     * @return scalar_t
+     */
 	scalar_t cost()  { return cost_; }
 
 	parameters_t costDerivative()  {return costDerivative_;}
 
+	/**
+	 * Returns controllerstock
+	 * @param [out] controllersStock
+	 */
 	void controller(std::vector<controller_t>& controllersStock)  { controllersStock = controllersStock_; }
 
+	/**
+	 * Reset function
+	 */
 	void reset()  {
 		controllersStockBag_.clear();
 		parametersBag_.clear();
 	}
 
+	/**
+	 * Returns the options
+	 * @return Options_t
+	 */
 	Options_t& options()  { return options_; }
+
+	/**
+	 * Returns the mp_options
+	 * @return MP_Options_t
+	 */
 	MP_Options_t& mp_options()  { return mp_options_; }
 
+	/**
+	 * Run function
+	 * @param [in] initTime
+	 * @param [in] initState
+	 * @param [in] switchingTimes
+	 */
 	void run(const double& initTime, const state_vector_t& initState, const std::vector<scalar_t>& switchingTimes);
 
 

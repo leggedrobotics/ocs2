@@ -34,6 +34,11 @@
 
 namespace ocs2{
 
+/**
+ * GSLQP Class
+ * @tparam STATE_DIM
+ * @tparam INPUT_DIM
+ */
 template <size_t STATE_DIM, size_t INPUT_DIM>
 class GSLQP
 {
@@ -116,6 +121,32 @@ public:
 
 	~GSLQP() {}
 
+    /**
+     * Forward integrate the system dynamics with given controller:
+     * 		inputs:
+     * 			+ initState: initial state at time switchingTimes_[0]
+     * 			+ controllersStock: controller for each subsystem
+     * 		outputs:
+     * 			+ timeTrajectoriesStock:  rollout simulated time steps
+     * 			+ stateTrajectoriesStock: rollout states
+     * 			+ inputTrajectoriesStock: rollout control inputs
+     * 			+ (optional) nc1TrajectoriesStock: number of active constraints at each time step
+     * 			+ (optional) EvTrajectoryStock: value of the constraint (if the rollout is constrained the value is
+     * 											always zero otherwise it is nonzero)
+     * @param [in] initTime
+     * @param [in] initState
+     * @param [in] finalTime
+     * @param [in] controllersStock
+     * @param [out] timeTrajectoriesStock
+     * @param [out] stateTrajectoriesStock
+     * @param [out] inputTrajectoriesStock
+     * @param [out] nc1TrajectoriesStock
+     * @param [out] EvTrajectoryStock
+     * @param [out] nc2TrajectoriesStock
+     * @param [out] HvTrajectoryStock
+     * @param [out] nc2FinalStock
+     * @param [out] HvFinalStock
+     */
 	void rollout(const scalar_t& initTime,
 			const state_vector_t& initState,
 			const scalar_t& finalTime,
@@ -130,7 +161,16 @@ public:
 			std::vector<size_t>& nc2FinalStock,
 			constraint2_vector_array_t& HvFinalStock);
 
-
+    /**
+     * Rollout function
+     * @param [in] initTime
+     * @param [in] initState
+     * @param [in] finalTime
+     * @param [in] controllersStock
+     * @param [out] timeTrajectoriesStock
+     * @param [out] stateTrajectoriesStock
+     * @param [out] inputTrajectoriesStock
+     */
 	void rollout(const scalar_t& initTime,
 			const state_vector_t& initState,
 			const scalar_t& finalTime,
@@ -139,11 +179,45 @@ public:
 			state_vector_array2_t& stateTrajectoriesStock,
 			control_vector_array2_t& inputTrajectoriesStock);
 
+    /**
+     * compute the cost for a given rollout
+     * 		inputs:
+     * 			+ timeTrajectoriesStock:  rollout simulated time steps
+     * 			+ stateTrajectoriesStock: rollout states
+     * 			+ inputTrajectoriesStock: rollout control inputs
+     *
+     * 		outputs:
+     * 			+ totalCost: the total cost of the trajectory
+     * @param [in] timeTrajectoriesStock
+     * @param [in] stateTrajectoriesStock
+     * @param [in] inputTrajectoriesStock
+     * @param [out] totalCost
+     */
 	void calculateCostFunction(const std::vector<scalar_array_t>& timeTrajectoriesStock,
 			const state_vector_array2_t& stateTrajectoriesStock,
 			const control_vector_array2_t& inputTrajectoriesStock,
 			scalar_t& totalCost);
 
+    /**
+     * compute the merit function for given rollout
+     * 		inputs:
+     * 			+ timeTrajectoriesStock: simulation time trajectory
+     * 			+ nc1TrajectoriesStock: rollout's number of active constraints in each time step
+     * 			+ EvTrajectoryStock: rollout's constraints value
+     * 			+ lagrangeTrajectoriesStock: constraint Lagrange multiplier for the given rollout
+     * 			+ totalCost: the total cost of the trajectory
+     *
+     * 		outputs:
+     * 			+ meritFuntionValue: the merit function value
+     * 			+ constraintISE: integral of Square Error (ISE)
+     * @param [in] timeTrajectoriesStock
+     * @param [in] nc1TrajectoriesStock
+     * @param [in] EvTrajectoryStock
+     * @param [in] lagrangeTrajectoriesStock
+     * @param [in] totalCost
+     * @param [out] meritFuntionValue
+     * @param [out] constraintISE
+     */
 	void calculateMeritFunction(const std::vector<scalar_array_t>& timeTrajectoriesStock,
 			const std::vector<std::vector<size_t> >& nc1TrajectoriesStock,
 			const constraint1_vector_array2_t& EvTrajectoryStock,
@@ -152,29 +226,120 @@ public:
 			scalar_t& meritFuntionValue,
 			scalar_t& constraintISE);
 
+    /**
+     * Constraint's Integral of Squared Error (ISE)
+     * 		Inputs:
+     * 			+ timeTrajectoriesStock: simulation time trajectory
+     * 			+ nc1TrajectoriesStock: rollout's number of active constraints in each time step
+     * 			+ EvTrajectoriesStock: rollout's constraints value
+     * 		output:
+     * 			+ constraintISE: integral of Square Error (ISE)
+     * 		Return:
+     * 			+ maximum constraint norm
+     * @param [in] timeTrajectoriesStock
+     * @param [in] nc1TrajectoriesStock
+     * @param [in] EvTrajectoriesStock
+     * @param [out] constraintISE
+     * @return double
+     */
 	double calculateConstraintISE(const std::vector<scalar_array_t>& timeTrajectoriesStock,
 			const std::vector<std::vector<size_t>>& nc1TrajectoriesStock,
 			const constraint1_vector_array2_t& EvTrajectoriesStock,
 			scalar_t& constraintISE);
 
+    /**
+     * get the calculated rollout's sensitivity to switchingTimes
+     * 		outputs:
+     * 			+ sensitivityTimeTrajectoriesStock: time stamps of the sensitivity values
+     * 			+ sensitivityStateTrajectoriesStock: state trajectory sensitivity to the switching times
+     * 			+ sensitivityInputTrajectoriesStock: control input trajectory sensitivity to the switching times
+     * @param [out] sensitivityTimeTrajectoriesStock
+     * @param [out] sensitivityStateTrajectoriesStock
+     * @param [out] sensitivityInputTrajectoriesStock
+     */
 	void getRolloutSensitivity2SwitchingTime(std::vector<scalar_array_t>& sensitivityTimeTrajectoriesStock,
 		std::vector<nabla_state_matrix_array_t>& sensitivityStateTrajectoriesStock,
 		std::vector<nabla_input_matrix_array_t>& sensitivityInputTrajectoriesStock);
 
+    /**
+     * get the calculated optimal controller structure
+     * @param [out] controllersStock
+     */
 	void getController(controller_array_t& controllersStock);
 
+    /**
+     * calculate the value function for the given time and state vector
+     * 		inputs
+     * 			+ time: inquiry time
+     * 			+ state: inquiry state
+     *
+     * 		output:
+     * 			+ valueFuntion: value function at the inquiry time and state
+     * @param [in] time
+     * @param [in] state
+     * @param [out] valueFuntion
+     */
 	void getValueFuntion(const scalar_t& time, const state_vector_t& state, scalar_t& valueFuntion);
 
+    /**
+     * calculate the cost function at the initial time
+     * 		inputs
+     * 			+ initState: initial state
+     *
+     * 		output:
+     * 			+ cost function value
+     * 			+ cost function value plus the constraint ISE multiplied by pho
+     * @param [in] costFunction
+     * @param [out] constriantISE
+     */
 	void getCostFuntion(scalar_t& costFunction, scalar_t& constriantISE);
 
+    /**
+     * calculate the value function's derivatives w.r.t. switchingTimes at the initial time
+     * 		inputs
+     * 			+ initState: initial state
+     *
+     * 		output:
+     * 			+ valueFuntionDerivative: cost function' derivatives w.r.t. switchingTimes for given initial state vector
+     * @param [in] initState
+     * @param [out] valueFuntionDerivative
+     */
 	void getValueFuntionDerivative(const state_vector_t& initState, Eigen::VectorXd& valueFuntionDerivative);
 
+    /**
+     * calculate the cost function's derivatives w.r.t. switchingTimes
+     *
+     * 		output:
+     * 			+ costFunctionDerivative: cost function' derivatives w.r.t. switchingTimes for given initial state vector
+     * @param [out] costFuntionDerivative
+     */
 	void getCostFuntionDerivative(Eigen::VectorXd& costFuntionDerivative);
 
+    /**
+     * get the optimal state and input trajectories
+     * 		output
+     * 			+ nominalTimeTrajectoriesStock_: optimal time trajectory
+     * 			+ nominalStateTrajectoriesStock_: optimal state trajectory
+     * 			+ nominalInputTrajectoriesStock_: optimal control input trajectory
+     * @param [out] nominalTimeTrajectoriesStock
+     * @param [out] nominalStateTrajectoriesStock
+     * @param [out] nominalInputTrajectoriesStock
+     */
 	void getNominalTrajectories(std::vector<scalar_array_t>& nominalTimeTrajectoriesStock,
 			state_vector_array2_t& nominalStateTrajectoriesStock,
 			control_vector_array2_t& nominalInputTrajectoriesStock);
 
+    /**
+     * run the SLQ algorithm for a given state and switching times based on the BVP method
+     * @param [in] initTime
+     * @param [in] initState
+     * @param [in] finalTime
+     * @param [in] systemStockIndexes
+     * @param [in] switchingTimes
+     * @param [in] slqpPtr
+     * @param [in] desiredTimeTrajectoriesStock
+     * @param [in] desiredStateTrajectoriesStock
+     */
 	void run(const double& initTime, const state_vector_t& initState, const double& finalTime,
 			const std::vector<size_t>& systemStockIndexes,
 			const std::vector<scalar_t>& switchingTimes,
@@ -184,35 +349,144 @@ public:
 
 protected:
 
+    /**
+     * run the LQ-based algorithm to compute the cost function derivatives wr.t. switchingTimes
+     */
 	void runLQBasedMethod();
 
+    /**
+     * run the Sweeping-BVP algorithm to compute the cost function derivatives wr.t. switchingTimes
+     */
 	void runSweepingBVPMethod();
 
+    /**
+     * solve the SLQ Riccati differential equations plus its derivatives differential equations :
+     * 		input:
+     * 			+ learningRate: the feeadforward learningRate
+     *
+     * 		uses:
+     * 			+ linearized dynamics
+     * 			+ quadratized cost
+     * 			+ nominal system sensitivity analysis
+     * 			+ SsTimeTrajectoryStock_: time stamp
+     * 			V(t,y) = y^T*Sm*y + y^T*(Sv) + s
+     * 			+ SmTrajectoryStock_: Sm matrix
+     * 			+ SvTrajectoryStock_: Sv vector
+     *
+     * 		modifies:
+
+     * 			dV(t,y) = y^T*dSm*y + y^T*(dSv) + ds
+     * 			+ nablaSmTrajectoryStock_: dSm
+     * 			+ nablaSvTrajectoryStock_: dSv
+     * 			+ nablasTrajectoryStock_: ds
+     * @param [out] learningRate
+     */
 	void solveSensitivityRiccatiEquations(const scalar_t& learningRate);
 
+    /**
+     * transform the local value function derivatives to the global one.
+     * 		it manipulates the following member variables:
+     * 			+ nablasTrajectoryStock_
+     * 			+ nablaSvTrajectoryStock_
+     */
 	void transformLocalValueFuntionDerivative2Global();
 
+    /**
+     * calculates the sensitivity of the rollout and LQ model to the switchingTimes
+     * 		inputs:
+     * 			+ sensitivityControllersStock
+     * 		outputs:
+     * 			+ sensitivityTimeTrajectoryStock: time stamp
+     * 			+ nablaStateTrajectoryStock: dy
+     * 			+ nablaInputTrajectoryStock: du
+     * @param [in] sensitivityControllersStock
+     * @param [out] sensitivityTimeTrajectoryStock
+     * @param [out] nablaStateTrajectoryStock
+     * @param [out] nablaInputTrajectoryStock
+     */
 	void rolloutSensitivity2SwitchingTime(const sensitivity_controller_array_t& sensitivityControllersStock,
 			std::vector<scalar_array_t>& sensitivityTimeTrajectoryStock,
 			std::vector<nabla_state_matrix_array_t>& nablaStateTrajectoryStock,
 			std::vector<nabla_input_matrix_array_t>& nablaInputTrajectoryStock);
 
+    /**
+     * approximate nominal LQ problem sensitivity to switching times
+     * 		modifies:
+     * 			+ nablaqTrajectoryStock_: dq
+     * 			+ nablaQvTrajectoryStock_: dQv
+     * 			+ nablaRvTrajectoryStock_: dRv
+     * 			+ nablaqFinalStock_: dq_f
+     * 			+ nablaQvFinalStock_: dQv_f
+     */
 	void approximateNominalLQPSensitivity2SwitchingTime();
 
+    /**
+     * calculates sensitivity controller feedback part (constrained feedback):
+     * 		This method uses the following variables:
+     * 			+ constrained, linearized model
+     * 			+ constrained, quadratized cost
+     *
+     * 		output:
+     * 			+ sensitivityControllersStock: the sensitivity controller
+     * @param [out] sensitivityControllersStock
+     */
 	void calculateSensitivityControllerFeedback(sensitivity_controller_array_t& sensitivityControllersStock);
 
+    /**
+     * calculate the sensitivity of the control input increment to switchingTimes based on the LQ method
+     * 		input & output:
+     * 			+ sensitivityControllersStock
+     * @param [in] sensitivityControllersStock
+     */
 	void calculateLQSensitivityControllerForward(sensitivity_controller_array_t& sensitivityControllersStock);
 
+    /**
+     * calculate the sensitivity of the control input increment to switchingTimes based on the BVP method
+     * 		inputs
+     * 			+ switchingTimeIndex: the index of the switching time which the cost derivative will be calculated
+     * 			+ SvTrajectoriesStock: sweeping method S vector
+     *
+     * 		output:
+     * 			+ sensitivityControllersStock
+     * @param [in] switchingTimeIndex
+     * @param [in] SvTrajectoriesStock
+     * @param [out] sensitivityControllersStock
+     */
 	void calculateBVPSensitivityControllerForward(const size_t& switchingTimeIndex, const state_vector_array2_t& SvTrajectoriesStock,
 			sensitivity_controller_array_t& sensitivityControllersStock);
 
+    /**
+     * calculate the nominal state time derivative
+     */
 	void calculateStateTimeDerivative();
 
+    /**
+     * solve sensitivity BVP (the boundary value problem of the sensitivity equations for a given switching time)
+     * 		inputs
+     * 			+ switchingTimeIndex: the index of the switching time which the cost derivative will be calculated
+     * 			+ timeTrajectoriesStock: time stamp
+     *
+     * 		outputs
+     * 			+ MmTrajectoriesStock: sweeping method M matrix
+     * 			+ SvTrajectoriesStock: sweeping method S vector
+     *
+     * 		uses
+     * 			+ linearized dynamics
+     * 			+ quadratized cost
+     * @param [in] switchingTimeIndex
+     * @param [in] timeTrajectoriesStock
+     * @param [out] MmTrajectoriesStock
+     * @param [out] SvTrajectoriesStock
+     */
 	void solveSensitivityBVP(const size_t& switchingTimeIndex,
 			const std::vector<scalar_array_t>& timeTrajectoriesStock,
 			state_matrix_array2_t& MmTrajectoriesStock,
 			state_vector_array2_t& SvTrajectoriesStock);
 
+    /**
+     * calculates cost function derivative based on BVP solution
+     * @param [out] costFunctionDerivative
+     */
 	void calculateBVPCostFunctionDerivative(Eigen::VectorXd& costFunctionDerivative);
 
 private:

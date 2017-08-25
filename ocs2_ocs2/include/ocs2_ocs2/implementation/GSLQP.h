@@ -11,21 +11,6 @@ namespace ocs2{
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-/*
- * Forward integrate the system dynamics with given controller:
- * 		inputs:
- * 			+ initState: initial state at time switchingTimes_[0]
- * 			+ controllersStock: controller for each subsystem
- * 		outputs:
- * 			+ timeTrajectoriesStock:  rollout simulated time steps
- * 			+ stateTrajectoriesStock: rollout states
- * 			+ inputTrajectoriesStock: rollout control inputs
- * 			+ (optional) nc1TrajectoriesStock: number of active constraints at each time step
- * 			+ (optional) EvTrajectoryStock: value of the constraint (if the rollout is constrained the value is
- * 											always zero otherwise it is nonzero)
- */
-
-/******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
 void GSLQP<STATE_DIM, INPUT_DIM>::rollout(const scalar_t& initTime,
 		const state_vector_t& initState,
@@ -65,16 +50,6 @@ void GSLQP<STATE_DIM, INPUT_DIM>::rollout(const scalar_t& initTime,
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-/*
- * compute the cost for a given rollout
- * 		inputs:
- * 			+ timeTrajectoriesStock:  rollout simulated time steps
- * 			+ stateTrajectoriesStock: rollout states
- * 			+ inputTrajectoriesStock: rollout control inputs
- *
- * 		outputs:
- * 			+ totalCost: the total cost of the trajectory
- */
 template <size_t STATE_DIM, size_t INPUT_DIM>
 void GSLQP<STATE_DIM, INPUT_DIM>::calculateCostFunction(
 		const std::vector<scalar_array_t>& timeTrajectoriesStock,
@@ -90,19 +65,6 @@ void GSLQP<STATE_DIM, INPUT_DIM>::calculateCostFunction(
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-/*
- * compute the merit function for given rollout
- * 		inputs:
- * 			+ timeTrajectoriesStock: simulation time trajectory
- * 			+ nc1TrajectoriesStock: rollout's number of active constraints in each time step
- * 			+ EvTrajectoryStock: rollout's constraints value
- * 			+ lagrangeTrajectoriesStock: constraint Lagrange multiplier for the given rollout
- * 			+ totalCost: the total cost of the trajectory
- *
- * 		outputs:
- * 			+ meritFuntionValue: the merit function value
- * 			+ constraintISE: integral of Square Error (ISE)
- */
 template <size_t STATE_DIM, size_t INPUT_DIM>
 void GSLQP<STATE_DIM, INPUT_DIM>::calculateMeritFunction(
 		const std::vector<scalar_array_t>& timeTrajectoriesStock,
@@ -121,17 +83,6 @@ void GSLQP<STATE_DIM, INPUT_DIM>::calculateMeritFunction(
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-/*
- * Constraint's Integral of Squared Error (ISE)
- * 		Inputs:
- * 			+ timeTrajectoriesStock: simulation time trajectory
- * 			+ nc1TrajectoriesStock: rollout's number of active constraints in each time step
- * 			+ EvTrajectoriesStock: rollout's constraints value
- * 		output:
- * 			+ constraintISE: integral of Square Error (ISE)
- * 		Return:
- * 			+ maximum constraint norm
- */
 template <size_t STATE_DIM, size_t INPUT_DIM>
 double GSLQP<STATE_DIM, INPUT_DIM>::calculateConstraintISE(
 		const std::vector<scalar_array_t>& timeTrajectoriesStock,
@@ -147,12 +98,6 @@ double GSLQP<STATE_DIM, INPUT_DIM>::calculateConstraintISE(
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-/*
- * transform the local value function derivatives to the global one.
- * 		it manipulates the following member variables:
- * 			+ nablasTrajectoryStock_
- * 			+ nablaSvTrajectoryStock_
- */
 template <size_t STATE_DIM, size_t INPUT_DIM>
 void GSLQP<STATE_DIM, INPUT_DIM>::transformLocalValueFuntionDerivative2Global()  {
 
@@ -182,13 +127,6 @@ void GSLQP<STATE_DIM, INPUT_DIM>::transformLocalValueFuntionDerivative2Global() 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-/*
- * get the calculated rollout's sensitivity to switchingTimes
- * 		outputs:
- * 			+ sensitivityTimeTrajectoriesStock: time stamps of the sensitivity values
- * 			+ sensitivityStateTrajectoriesStock: state trajectory sensitivity to the switching times
- * 			+ sensitivityInputTrajectoriesStock: control input trajectory sensitivity to the switching times
- */
 template <size_t STATE_DIM, size_t INPUT_DIM>
 void GSLQP<STATE_DIM, INPUT_DIM>::getRolloutSensitivity2SwitchingTime(
 		std::vector<scalar_array_t>& sensitivityTimeTrajectoriesStock,
@@ -204,9 +142,6 @@ void GSLQP<STATE_DIM, INPUT_DIM>::getRolloutSensitivity2SwitchingTime(
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-/*
- * get the calculated optimal controller structure
- */
 template <size_t STATE_DIM, size_t INPUT_DIM>
 void GSLQP<STATE_DIM, INPUT_DIM>::getController(controller_array_t& controllersStock) {
 
@@ -217,15 +152,6 @@ void GSLQP<STATE_DIM, INPUT_DIM>::getController(controller_array_t& controllersS
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-/*
- * calculate the value function for the given time and state vector
- * 		inputs
- * 			+ time: inquiry time
- * 			+ state: inquiry state
- *
- * 		output:
- * 			+ valueFuntion: value function at the inquiry time and state
- */
 template <size_t STATE_DIM, size_t INPUT_DIM>
 void GSLQP<STATE_DIM, INPUT_DIM>::getValueFuntion(const scalar_t& time, const state_vector_t& state, scalar_t& valueFuntion)  {
 
@@ -236,15 +162,6 @@ void GSLQP<STATE_DIM, INPUT_DIM>::getValueFuntion(const scalar_t& time, const st
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-/*
- * calculate the cost function at the initial time
- * 		inputs
- * 			+ initState: initial state
- *
- * 		output:
- * 			+ cost function value
- * 			+ cost function value plus the constraint ISE multiplied by pho
- */
 template <size_t STATE_DIM, size_t INPUT_DIM>
 void GSLQP<STATE_DIM, INPUT_DIM>::getCostFuntion(scalar_t& costFunction, scalar_t& constraintISE)  {
 
@@ -255,14 +172,6 @@ void GSLQP<STATE_DIM, INPUT_DIM>::getCostFuntion(scalar_t& costFunction, scalar_
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-/*
- * calculate the value function's derivatives w.r.t. switchingTimes at the initial time
- * 		inputs
- * 			+ initState: initial state
- *
- * 		output:
- * 			+ valueFuntionDerivative: cost function' derivatives w.r.t. switchingTimes for given initial state vector
- */
 template <size_t STATE_DIM, size_t INPUT_DIM>
 void GSLQP<STATE_DIM, INPUT_DIM>::getValueFuntionDerivative(const state_vector_t& initState,
 		Eigen::VectorXd& valueFuntionDerivative)  {
@@ -283,12 +192,6 @@ void GSLQP<STATE_DIM, INPUT_DIM>::getValueFuntionDerivative(const state_vector_t
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-/*
- * calculate the cost function's derivatives w.r.t. switchingTimes
- *
- * 		output:
- * 			+ costFunctionDerivative: cost function' derivatives w.r.t. switchingTimes for given initial state vector
- */
 template <size_t STATE_DIM, size_t INPUT_DIM>
 void GSLQP<STATE_DIM, INPUT_DIM>::getCostFuntionDerivative(Eigen::VectorXd& costFunctionDerivative)  {
 
@@ -299,13 +202,6 @@ void GSLQP<STATE_DIM, INPUT_DIM>::getCostFuntionDerivative(Eigen::VectorXd& cost
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-/*
- * get the optimal state and input trajectories
- * 		output
- * 			+ nominalTimeTrajectoriesStock_: optimal time trajectory
- * 			+ nominalStateTrajectoriesStock_: optimal state trajectory
- * 			+ nominalInputTrajectoriesStock_: optimal control input trajectory
- */
 template <size_t STATE_DIM, size_t INPUT_DIM>
 void GSLQP<STATE_DIM, INPUT_DIM>::getNominalTrajectories(std::vector<scalar_array_t>& nominalTimeTrajectoriesStock,
 		state_vector_array2_t& nominalStateTrajectoriesStock, control_vector_array2_t& nominalInputTrajectoriesStock)   {
@@ -317,27 +213,6 @@ void GSLQP<STATE_DIM, INPUT_DIM>::getNominalTrajectories(std::vector<scalar_arra
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-/*
- * solve the SLQ Riccati differential equations plus its derivatives differential equations :
- * 		input:
- * 			+ learningRate: the feeadforward learningRate
- *
- * 		uses:
- * 			+ linearized dynamics
- * 			+ quadratized cost
- * 			+ nominal system sensitivity analysis
- * 			+ SsTimeTrajectoryStock_: time stamp
- * 			V(t,y) = y^T*Sm*y + y^T*(Sv) + s
- * 			+ SmTrajectoryStock_: Sm matrix
- * 			+ SvTrajectoryStock_: Sv vector
- *
- * 		modifies:
-
- * 			dV(t,y) = y^T*dSm*y + y^T*(dSv) + ds
- * 			+ nablaSmTrajectoryStock_: dSm
- * 			+ nablaSvTrajectoryStock_: dSv
- * 			+ nablasTrajectoryStock_: ds
- */
 template <size_t STATE_DIM, size_t INPUT_DIM>
 void GSLQP<STATE_DIM, INPUT_DIM>::solveSensitivityRiccatiEquations(const scalar_t& learningRate)  {
 
@@ -402,15 +277,6 @@ void GSLQP<STATE_DIM, INPUT_DIM>::solveSensitivityRiccatiEquations(const scalar_
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-/*
- * calculates sensitivity controller feedback part (constrained feedback):
- * 		This method uses the following variables:
- * 			+ constrained, linearized model
- * 			+ constrained, quadratized cost
- *
- * 		output:
- * 			+ sensitivityControllersStock: the sensitivity controller
- */
 template <size_t STATE_DIM, size_t INPUT_DIM>
 void GSLQP<STATE_DIM, INPUT_DIM>::calculateSensitivityControllerFeedback(sensitivity_controller_array_t& sensitivityControllersStock) {
 
@@ -481,11 +347,6 @@ void GSLQP<STATE_DIM, INPUT_DIM>::calculateSensitivityControllerFeedback(sensiti
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-/*
- * calculate the sensitivity of the control input increment to switchingTimes based on the LQ method
- * 		input & output:
- * 			+ sensitivityControllersStock
- */
 template <size_t STATE_DIM, size_t INPUT_DIM>
 void GSLQP<STATE_DIM, INPUT_DIM>::calculateLQSensitivityControllerForward(
 		sensitivity_controller_array_t& sensitivityControllersStock)  {
@@ -539,15 +400,6 @@ void GSLQP<STATE_DIM, INPUT_DIM>::calculateLQSensitivityControllerForward(
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-/*
- * calculate the sensitivity of the control input increment to switchingTimes based on the BVP method
- * 		inputs
- * 			+ switchingTimeIndex: the index of the switching time which the cost derivative will be calculated
- * 			+ SvTrajectoriesStock: sweeping method S vector
- *
- * 		output:
- * 			+ sensitivityControllersStock
- */
 template <size_t STATE_DIM, size_t INPUT_DIM>
 void GSLQP<STATE_DIM, INPUT_DIM>::calculateBVPSensitivityControllerForward(
 		const size_t& switchingTimeIndex,
@@ -600,15 +452,6 @@ void GSLQP<STATE_DIM, INPUT_DIM>::calculateBVPSensitivityControllerForward(
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-/*
- * calculates the sensitivity of the rollout and LQ model to the switchingTimes
- * 		inputs:
- * 			+ sensitivityControllersStock
- * 		outputs:
- * 			+ sensitivityTimeTrajectoryStock: time stamp
- * 			+ nablaStateTrajectoryStock: dy
- * 			+ nablaInputTrajectoryStock: du
- */
 template <size_t STATE_DIM, size_t INPUT_DIM>
 void GSLQP<STATE_DIM, INPUT_DIM>::rolloutSensitivity2SwitchingTime(
 		const sensitivity_controller_array_t& sensitivityControllersStock,
@@ -664,15 +507,6 @@ void GSLQP<STATE_DIM, INPUT_DIM>::rolloutSensitivity2SwitchingTime(
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-/*
- * approximate nominal LQ problem sensitivity to switching times
- * 		modifies:
- * 			+ nablaqTrajectoryStock_: dq
- * 			+ nablaQvTrajectoryStock_: dQv
- * 			+ nablaRvTrajectoryStock_: dRv
- * 			+ nablaqFinalStock_: dq_f
- * 			+ nablaQvFinalStock_: dQv_f
- */
 template <size_t STATE_DIM, size_t INPUT_DIM>
 void GSLQP<STATE_DIM, INPUT_DIM>::approximateNominalLQPSensitivity2SwitchingTime() {
 
@@ -739,9 +573,6 @@ void GSLQP<STATE_DIM, INPUT_DIM>::approximateNominalLQPSensitivity2SwitchingTime
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-/*
- * calculate the nominal state time derivative
- */
 template <size_t STATE_DIM, size_t INPUT_DIM>
 void GSLQP<STATE_DIM, INPUT_DIM>::calculateStateTimeDerivative()  {
 
@@ -770,21 +601,6 @@ void GSLQP<STATE_DIM, INPUT_DIM>::calculateStateTimeDerivative()  {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-/*
- * solve sensitivity BVP (the boundary value problem of the sensitivity equations for a given switching time)
- * 		inputs
- * 			+ switchingTimeIndex: the index of the switching time which the cost derivative will be calculated
- * 			+ timeTrajectoriesStock: time stamp
- *
- * 		outputs
- * 			+ MmTrajectoriesStock: sweeping method M matrix
- * 			+ SvTrajectoriesStock: sweeping method S vector
- *
- * 		uses
- * 			+ linearized dynamics
- * 			+ quadratized cost
- *
- */
 template <size_t STATE_DIM, size_t INPUT_DIM>
 void GSLQP<STATE_DIM, INPUT_DIM>::solveSensitivityBVP(
 		const size_t& switchingTimeIndex,
@@ -866,9 +682,6 @@ void GSLQP<STATE_DIM, INPUT_DIM>::solveSensitivityBVP(
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-/*
- * calculates cost function derivative based on BVP solution
- */
 template <size_t STATE_DIM, size_t INPUT_DIM>
 void GSLQP<STATE_DIM, INPUT_DIM>::calculateBVPCostFunctionDerivative(
 		Eigen::VectorXd& costFunctionDerivative)  {
@@ -932,9 +745,6 @@ void GSLQP<STATE_DIM, INPUT_DIM>::calculateBVPCostFunctionDerivative(
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-/*
- * run the LQ-based algorithm to compute the cost function derivatives wr.t. switchingTimes
- */
 template <size_t STATE_DIM, size_t INPUT_DIM>
 void GSLQP<STATE_DIM, INPUT_DIM>::runLQBasedMethod()  {
 
@@ -984,10 +794,6 @@ void GSLQP<STATE_DIM, INPUT_DIM>::runLQBasedMethod()  {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-/*
- * run the Sweeping-BVP algorithm to compute the cost function derivatives wr.t. switchingTimes
- */
-
 template <size_t STATE_DIM, size_t INPUT_DIM>
 void GSLQP<STATE_DIM, INPUT_DIM>::runSweepingBVPMethod()  {
 
@@ -1029,10 +835,6 @@ void GSLQP<STATE_DIM, INPUT_DIM>::runSweepingBVPMethod()  {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-/*
- * run the SLQ algorithm for a given state and switching times based on the BVP method
- */
-
 template <size_t STATE_DIM, size_t INPUT_DIM>
 void GSLQP<STATE_DIM, INPUT_DIM>::run(const double& initTime, const state_vector_t& initState, const double& finalTime,
 		const std::vector<size_t>& systemStockIndexes, const std::vector<scalar_t>& switchingTimes,

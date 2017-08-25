@@ -17,6 +17,11 @@
 
 namespace ocs2{
 
+/**
+ * Sensitivity Sequential Riccati Equations Class
+ * @tparam STATE_DIM
+ * @tparam INPUT_DIM
+ */
 template <size_t STATE_DIM, size_t INPUT_DIM>
 class SensitivitySequentialRiccatiEquations : public SystemBase<Eigen::Dynamic>
 {
@@ -56,6 +61,14 @@ public:
 	SensitivitySequentialRiccatiEquations() {}
 	~SensitivitySequentialRiccatiEquations() {}
 
+	/**
+	 * Converts to vector
+	 * @param [in] numSubsystems
+	 * @param [in] nabla_Sm
+	 * @param [in] nabla_Sv
+	 * @param [in] nabla_s
+	 * @param [out] allSs
+	 */
 	static void convert2Vector(const size_t& numSubsystems, const state_matrix_array_t& nabla_Sm, const state_vector_array_t& nabla_Sv, const eigen_scalar_array_t& nabla_s,
 			Eigen::VectorXd& allSs)  {
 
@@ -67,6 +80,14 @@ public:
 					nabla_s[j];
 	}
 
+	/**
+	 * Converts to matrix
+	 * @param [in] numSubsystems
+	 * @param [in] allSs
+	 * @param [out] nabla_Sm
+	 * @param [out] nabla_Sv
+	 * @param [out] nabla_s
+	 */
 	static void convert2Matrix(const size_t& numSubsystems, const Eigen::VectorXd& allSs,
 			state_matrix_array_t& nabla_Sm, state_vector_array_t& nabla_Sv, eigen_scalar_array_t& nabla_s)  {
 
@@ -81,6 +102,31 @@ public:
 		}
 	}
 
+    /**
+     * Sets data
+     * @param [in] numSubsystems
+     * @param [in] learningRate
+     * @param [in] activeSubsystem
+     * @param [in] switchingTimeStart
+     * @param [in] switchingTimeFinal
+     * @param [in] SsTimePtr
+     * @param [in] SmPtr
+     * @param [in] SvPtr
+     * @param [in] timeStampPtr
+     * @param [in] AmPtr
+     * @param [in] BmPtr
+     * @param [in] qPtr
+     * @param [in] QvPtr
+     * @param [in] QmPtr
+     * @param [in] RvPtr
+     * @param [in] RmInversePtr
+     * @param [in] RmPtr
+     * @param [in] PmPtr
+     * @param [in] sensitivityTimeStampPtr
+     * @param [in] nablaqPtr
+     * @param [in] nablaQvPtr
+     * @param [in] nablaRvPtr
+     */
 	void setData(const size_t& numSubsystems, const scalar_t& learningRate,
 			const size_t& activeSubsystem, const scalar_t& switchingTimeStart, const scalar_t& switchingTimeFinal,
 			const scalar_array_t* SsTimePtr, const state_matrix_array_t* SmPtr, const state_vector_array_t* SvPtr,
@@ -132,6 +178,12 @@ public:
 		nablaRvFunc_.setData(nablaRvPtr);
 	}
 
+    /**
+     * Computes derivative
+     * @param [in] z
+     * @param [in] allSs
+     * @param [out] derivatives
+     */
 	void computeDerivative(const scalar_t& z, const Eigen::VectorXd& allSs, Eigen::VectorXd& derivatives)  {
 
 		// denormalized time

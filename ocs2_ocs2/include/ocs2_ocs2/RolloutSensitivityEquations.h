@@ -17,6 +17,11 @@
 
 namespace ocs2{
 
+/**
+ * Rollout Sensitivity Equations Class
+ * @tparam STATE_DIM
+ * @tparam INPUT_DIM
+ */
 template <size_t STATE_DIM, size_t INPUT_DIM>
 class RolloutSensitivityEquations : public SystemBase<Eigen::Dynamic>
 {
@@ -47,16 +52,38 @@ public:
 	RolloutSensitivityEquations()  {}
 	~RolloutSensitivityEquations() {}
 
+	/**
+	 * Converts to vector
+	 * @param [in] numSubsystems
+	 * @param [in] nabla_Xm
+	 * @param nabla_Xv
+	 */
 	static void convert2Vector(const size_t& numSubsystems, const nabla_state_matrix_t& nabla_Xm, Eigen::VectorXd& nabla_Xv)  {
 
 		nabla_Xv = Eigen::Map<const Eigen::VectorXd>(nabla_Xm.data(), (numSubsystems-1)*STATE_DIM);
 	}
 
+	/**
+	 * Converts to Matrix
+	 * @param [in] numSubsystems
+	 * @param [in] nabla_Xv
+	 * @param nabla_Xm
+	 */
 	static void convert2Matrix(const size_t& numSubsystems, const Eigen::VectorXd& nabla_Xv, nabla_state_matrix_t& nabla_Xm)  {
 
 		nabla_Xm = Eigen::Map<const nabla_state_matrix_t>(nabla_Xv.data(), STATE_DIM, numSubsystems-1);
 	}
 
+	/**
+	 * Sets Data
+	 * @param [in] activeSubsystem
+	 * @param [in] switchingTimes
+	 * @param [in] sensitivityControllerPtr
+	 * @param [in] timeTrajectoryPtr
+	 * @param [in] outputTimeDerivativeTrajectoryPtr
+	 * @param [in] AmTrajectoryPtr
+	 * @param [in] BmTrajectoryPtr
+	 */
 	void setData(const size_t& activeSubsystem, const scalar_array_t& switchingTimes, const sensitivity_controller_t* sensitivityControllerPtr,
 			const scalar_array_t* timeTrajectoryPtr, const state_vector_array_t*  outputTimeDerivativeTrajectoryPtr,
 			const state_matrix_array_t* AmTrajectoryPtr, const control_gain_matrix_array_t* BmTrajectoryPtr)  {
@@ -80,6 +107,12 @@ public:
 		BmFunc_.setData(BmTrajectoryPtr);
 	}
 
+	/**
+	 * Computes Derivative
+	 * @param [in] z
+	 * @param [in] nabla_Xv
+	 * @param [out] derivatives
+	 */
 	void computeDerivative(const scalar_t& z, const Eigen::VectorXd& nabla_Xv, Eigen::VectorXd& derivatives) {
 
 		// denormalized time
@@ -113,7 +146,12 @@ public:
 		convert2Vector(numSubsystems_, nabla_dXmdz, derivatives);
 	}
 
-
+	/**
+	 * Computes input sensitivity
+	 * @param [in] t
+	 * @param [in] nabla_Xm
+	 * @param [out] nabla_Um
+	 */
 	void computeInputSensitivity(const scalar_t& t, const nabla_state_matrix_t& nabla_Xm, nabla_input_matrix_t& nabla_Um) {
 
 		control_feedback_t Km;

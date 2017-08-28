@@ -136,7 +136,7 @@ public:
 
 	/**
 	 * Rollout function
-	 * @param [in] [out] initState
+	 * @param [in] initState
 	 * @param [in] controllersStock
 	 * @param [out] timeTrajectoriesStock
 	 * @param [out] stateTrajectoriesStock

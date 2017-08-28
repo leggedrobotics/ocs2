@@ -152,7 +152,7 @@ public:
 	 * @param [in] QvFinal
 	 * @param [in] QmFinal
 	 * @param [out] MmTrajectory
-	 * @param [[out] SvTrajectory
+	 * @param [out] SvTrajectory
 	 * @param [in] absTolODE
 	 * @param [in] relTolODE
 	 */

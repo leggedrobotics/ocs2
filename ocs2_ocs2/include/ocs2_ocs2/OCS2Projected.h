@@ -1,5 +1,5 @@
-/*
- * OCS2Projected.h
+/**
+ * \file OCS2Projected.h
  *
  *  Created on: Jul 21, 2016
  *      Author: farbod

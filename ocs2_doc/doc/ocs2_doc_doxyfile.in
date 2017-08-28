@@ -1491,7 +1491,7 @@ TREEVIEW_WIDTH         = 250
 # The default value is: NO.
 # This tag requires that the tag GENERATE_HTML is set to YES.
 
-EXT_LINKS_IN_WINDOW    = NO
+EXT_LINKS_IN_WINDOW    = YES
 
 # Use this tag to change the font size of LaTeX formulas included as images in
 # the HTML documentation. When you change the font size after a successful
@@ -2126,10 +2126,10 @@ SKIP_FUNCTION_MACROS   = YES
 # the path). If a tag file is not located in the directory in which doxygen is
 # run, you must also specify the path to the tagfile here.
 
-TAGFILES               = tags/ocs2_core.tag=../../ocs2_core/doc/html \
-                         tags/ocs2_example.tag=../../ocs2_example/doc/html \
-                         tags/ocs2_slq.tag=../../ocs2_slq/doc/html \
-                         tags/ocs2_ocs2.tag=../../ocs2_ocs2/doc/html
+TAGFILES               = tags/ocs2_core.tag=../../../ocs2_core/doc/html \
+                         tags/ocs2_example.tag=../../../ocs2_example/doc/html \
+                         tags/ocs2_slq.tag=../../../ocs2_slq/doc/html \
+                         tags/ocs2_ocs2.tag=../../../ocs2_ocs2/doc/html
 
 # When a file name is specified after GENERATE_TAGFILE, doxygen will create a
 # tag file that is based on the input files it reads. See section "Linking to
@@ -2142,14 +2142,14 @@ GENERATE_TAGFILE       =
 # listed.
 # The default value is: NO.
 
-ALLEXTERNALS           = NO
+ALLEXTERNALS           = YES
 
 # If the EXTERNAL_GROUPS tag is set to YES, all external groups will be listed
 # in the modules index. If set to NO, only the current project's groups will be
 # listed.
 # The default value is: YES.
 
-EXTERNAL_GROUPS        = NO
+EXTERNAL_GROUPS        = YES
 
 # If the EXTERNAL_PAGES tag is set to YES, all external pages will be listed in
 # the related pages index. If set to NO, only the current project's pages will

@@ -1,5 +1,5 @@
-/*
- * SensitivitySequentialRiccatiEquations.h
+/**
+ * \file SensitivitySequentialRiccatiEquations.h
  *
  *  Created on: Jun 21, 2016
  *      Author: farbod

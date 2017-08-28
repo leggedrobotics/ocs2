@@ -1,5 +1,5 @@
-/*
- * RolloutSensitivityEquations.h
+/**
+ * \file RolloutSensitivityEquations.h
  *
  *  Created on: Jan 9, 2016
  *      Author: farbod

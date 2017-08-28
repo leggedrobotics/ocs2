@@ -2128,7 +2128,6 @@ SKIP_FUNCTION_MACROS   = YES
 
 TAGFILES               = ../../ocs2_doc/doc/tags/ocs2_core.tag=../../../ocs2_core/doc/html \
 					 	 ../../ocs2_doc/doc/tags/ocs2_example.tag=../../../ocs2_example/doc/html \
-					 	 ../../ocs2_doc/doc/tags/ocs2_slq.tag=../../../ocs2_slq/doc/html \
 					 	 ../../ocs2_doc/doc/tags/ocs2_ocs2.tag=../../../ocs2_ocs2/doc/html
 
 # When a file name is specified after GENERATE_TAGFILE, doxygen will create a

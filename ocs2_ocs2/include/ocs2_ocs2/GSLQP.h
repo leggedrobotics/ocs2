@@ -1,5 +1,5 @@
-/*
- * GSLQP.h
+/**
+ * \file GSLQP.h
  *
  *  Created on: Dec 18, 2015
  *      Author: farbod

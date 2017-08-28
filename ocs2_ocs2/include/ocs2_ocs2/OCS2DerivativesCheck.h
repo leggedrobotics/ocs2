@@ -1,5 +1,5 @@
-/*
- * OCS2DerivativesCheck.h
+/**
+ * \file OCS2DerivativesCheck.h
  *
  *  Created on: Jan 19, 2016
  *      Author: farbod

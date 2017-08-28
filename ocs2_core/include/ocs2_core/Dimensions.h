@@ -1,5 +1,5 @@
-/*
- * Dimensions.h
+/**
+ * \file Dimensions.h
  *
  *  Created on: Jan 3, 2016
  *      Author: farbod

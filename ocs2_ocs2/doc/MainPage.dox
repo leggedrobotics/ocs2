@@ -2,7 +2,7 @@
 \mainpage Overview
 
 \section ocs2_ocs2_home OCS2 ocs2
-OCS2 OCS2 Home Page
+OCS2_OCS2 Documentation
 
 \section ocs2_ocs2_documentation_section OCS2 Documentation
 This library consists of three main modules
@@ -10,5 +10,5 @@ This library consists of three main modules
  - <a href="../../../ocs2_slq/doc/html/index.html">ocs2_slq</a>
  - <a href="../../../ocs2_ocs2/doc/html/index.html">ocs2_ocs2</a>
 
-
+<a href="../../../ocs2_doc/doc/html/index.html">Back to Home Page</a>
 */

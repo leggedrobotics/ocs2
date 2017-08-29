@@ -2,7 +2,7 @@
 \mainpage Overview
 
 \section ocs2_example_home OCS2 example
-OCS2 Home Page
+OCS2 Documentation
 
 \section ocs2_example_test_section OCS2 Contents
 
@@ -18,5 +18,6 @@ OCS2 Home Page
 \subsection ocs2_example_test_sub_section4 OCS2 Test Package:
 - OCS2 Test Package
 
+<a href="../../../ocs2_doc/doc/html/index.html">Back to Home Page</a>
 
 */

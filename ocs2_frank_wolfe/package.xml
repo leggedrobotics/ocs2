@@ -1,8 +1,8 @@
 <?xml version="1.0"?>
 <package>
-  <name>ocs2_ocs2</name>
+  <name>ocs2_frank_wolfe</name>
   <version>0.0.0</version>
-  <description>The ocs2_ocs2 package</description>
+  <description>The OCS2 Frank Wolfe package</description>
 
   <!-- One maintainer tag required, multiple allowed, one person per tag --> 
   <!-- Example:  -->
@@ -19,7 +19,7 @@
   <!-- Url tags are optional, but mutiple are allowed, one per tag -->
   <!-- Optional attribute type can be: website, bugtracker, or repository -->
   <!-- Example: -->
-  <!-- <url type="website">http://wiki.ros.org/ocs2_ocs2</url> -->
+  <!-- <url type="website">http://wiki.ros.org/c_ocs2_basic_gradient_descent</url> -->
 
 
   <!-- Author tags are optional, mutiple are allowed, one per tag -->
@@ -41,12 +41,6 @@
   <!--   <test_depend>gtest</test_depend> -->
   <buildtool_depend>catkin</buildtool_depend>
   <build_depend>cmake_modules</build_depend>
-  <build_depend>ocs2_core</build_depend>
-  <build_depend>ocs2_slq</build_depend>
-  <build_depend>ocs2_frank_wolfe</build_depend>
-  <run_depend>ocs2_core</run_depend>
-  <run_depend>ocs2_slq</run_depend>
-  <run_depend>ocs2_frank_wolfe</run_depend>
 
 
   <!-- The export tag contains other, unspecified, tags -->

@@ -4,7 +4,7 @@ project(ocs2_ocs2)
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
-find_package(catkin REQUIRED COMPONENTS cmake_modules ocs2_core ocs2_slq c_gradient_descent)
+find_package(catkin REQUIRED COMPONENTS cmake_modules ocs2_core ocs2_slq ocs2_frank_wolfe)
 find_package(Boost REQUIRED system filesystem)
 
 ## Eign3
@@ -101,7 +101,7 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread -fopenmp -std=c++11 -Wfatal-err
 catkin_package(
   INCLUDE_DIRS include
 #  LIBRARIES ocs2_ocs2
-  CATKIN_DEPENDS ocs2_core ocs2_slq c_gradient_descent
+  CATKIN_DEPENDS ocs2_core ocs2_slq ocs2_frank_wolfe
   DEPENDS boost eigen glpk
 )
 

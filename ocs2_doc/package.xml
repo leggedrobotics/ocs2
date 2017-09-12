@@ -10,12 +10,12 @@
 	<buildtool_depend>catkin</buildtool_depend>
   
 	<build_depend>ocs2_core</build_depend>
-	<build_depend>ocs2_example</build_depend>
+	<build_depend>ocs2_frank_wolfe</build_depend>
 	<build_depend>ocs2_slq</build_depend>
 	<build_depend>ocs2_ocs2</build_depend>
   
 	<run_depend>ocs2_core</run_depend>
-	<run_depend>ocs2_example</run_depend>
+	<run_depend>ocs2_frank_wolfe</run_depend>
 	<run_depend>ocs2_slq</run_depend>
 	<run_depend>ocs2_ocs2</run_depend>
   

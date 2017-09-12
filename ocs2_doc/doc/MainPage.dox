@@ -8,10 +8,11 @@ OCS2 Home Page
 The source code is available at <a href="https://bitbucket.org/adrlab/ocs2">https://bitbucket.org/adrlab/ocs2</a>
 
 \section ocs2_doc_documentation_section OCS2 Documentation
-This library consists of three main modules
+This library consists of four main modules
  - <a href="../../../ocs2_core/doc/html/index.html">ocs2_core</a>
  - <a href="../../../ocs2_slq/doc/html/index.html">ocs2_slq</a>
  - <a href="../../../ocs2_ocs2/doc/html/index.html">ocs2_ocs2</a>
+ - <a href="../../../ocs2_frank_wolfe/doc/html/index.html">ocs2_frank_wolfe</a>
 
 \section ocs2_doc_link_section OCS2 Contents
 

@@ -1,0 +1,32 @@
+/*!
+
+@page ocs2_doc_installation Installation
+
+\section ocs2_doc_requirements Requirements
+This library is written in C++11. It is tested under Ubuntu 14.04 with
+library versions as provided in the package sources.
+
+\subsection ocs2_doc_dep Dependencies
+ - C++ compiler with C++11 support
+ - Eigen
+ - catkin (build system, easy to switch to CMakeLists.txt where needed)
+ - boost version??
+
+\section ocs2_doc_install Installation
+\subsection ocs2_doc_build_lib Build the library
+
+\code{.sh}
+cd catkin_ws/src
+git clone git@bitbucket.org:adrlab/ocs2.git
+catkin build -DCMAKE_BUILD_TYPE=RELEASE 
+\endcode
+
+
+\subsection ocs2_doc_build_doc Build this Documentation
+
+\code{.sh}
+catkin build ocs2_doc --make-args doc
+\endcode
+This will build the documentation and open it in your browser.
+
+*/

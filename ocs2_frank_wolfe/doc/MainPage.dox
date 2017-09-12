@@ -1,10 +1,13 @@
 /*!
 \mainpage Overview
 
-\section ocs2_slq_home OCS2 slq
-OCS2 SLQ Documentation
+\section ocs2_frank_wolfe_home OCS2
+OCS2 Home Page
 
-\section ocs2_slq_documentation_section OCS2 Documentation
+\section ocs2_frank_wolfe_source_code Source Code
+The source code is available at <a href="https://bitbucket.org/adrlab/ocs2">https://bitbucket.org/adrlab/ocs2</a>
+
+\section ocs2_doc_documentation_section OCS2 Documentation
 This library consists of four main modules
  - <a href="../../../ocs2_core/doc/html/index.html">ocs2_core</a>
  - <a href="../../../ocs2_slq/doc/html/index.html">ocs2_slq</a>
@@ -12,4 +15,5 @@ This library consists of four main modules
  - <a href="../../../ocs2_frank_wolfe/doc/html/index.html">ocs2_frank_wolfe</a>
 
 <a href="../../../ocs2_doc/doc/html/index.html">Back to Home Page</a>
+
 */

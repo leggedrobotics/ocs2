@@ -5,7 +5,7 @@ project (ocs2_doc)
 find_package(catkin REQUIRED)
 
 catkin_package(
-    CATKIN_DEPENDS ocs2_core ocs2_example ocs2_slq ocs2_ocs2
+    CATKIN_DEPENDS ocs2_core ocs2_frank_wolfe ocs2_slq ocs2_ocs2
 )
 
 find_package(Doxygen)

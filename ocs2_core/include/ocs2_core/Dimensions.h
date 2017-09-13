@@ -249,8 +249,6 @@ public:
 	};
 };
 
-using HyQDimensions = Dimensions<36,12>;
-
 } // namespace ocs2
 
 #endif /* DIMENSIONS_H_ */

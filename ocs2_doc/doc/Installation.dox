@@ -8,9 +8,13 @@ library versions as provided in the package sources.
 
 \subsection ocs2_doc_dep Dependencies
  - C++ compiler with C++11 support
- - Eigen
- - catkin (build system, easy to switch to CMakeLists.txt where needed)
- - boost version??
+ - <a href="http://eigen.tuxfamily.org/index.php?title=Main_Page">Eigen (v3.3)</a>
+ - <a href="http://www.boost.org/=Main_Page">Boost C++ (v1.54)</a> 
+ - catkin
+ - <a href="https://www.gnu.org/software/glpk/">GLPK</a> 
+ 	 \code{.sh}
+	sudo apt-get install libglpk-dev
+	\endcode
 
 \section ocs2_doc_install Installation
 \subsection ocs2_doc_build_lib Build the library
@@ -18,7 +22,8 @@ library versions as provided in the package sources.
 \code{.sh}
 cd catkin_ws/src
 git clone git@bitbucket.org:adrlab/ocs2.git
-catkin build -DCMAKE_BUILD_TYPE=RELEASE 
+catkin build -DCMAKE_BUILD_TYPE=RELWITHDEBINFO -DCMAKE_CXX_FLAGS="-ffast-math"
+
 \endcode
 
 

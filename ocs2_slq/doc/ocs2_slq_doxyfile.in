@@ -32,7 +32,7 @@ DOXYFILE_ENCODING      = UTF-8
 # title of most generated pages and in a few other places.
 # The default value is: My Project.
 
-PROJECT_NAME           = "OCS2 SLQ"
+PROJECT_NAME           = "OCS2: SLQ"
 
 # The PROJECT_NUMBER tag can be used to enter a project or revision number. This
 # could be handy for archiving the generated documentation or if some version
@@ -2126,8 +2126,7 @@ SKIP_FUNCTION_MACROS   = YES
 # the path). If a tag file is not located in the directory in which doxygen is
 # run, you must also specify the path to the tagfile here.
 
-TAGFILES               = ../../ocs2_doc/doc/tags/ocs2_core.tag=../../../ocs2_core/doc/html \
-					 	 ../../ocs2_doc/doc/tags/ocs2_ocs2.tag=../../../ocs2_ocs2/doc/html
+TAGFILES               = ../../ocs2_doc/doc/tags/ocs2_core.tag=../../../ocs2_core/doc/html 
 
 # When a file name is specified after GENERATE_TAGFILE, doxygen will create a
 # tag file that is based on the input files it reads. See section "Linking to

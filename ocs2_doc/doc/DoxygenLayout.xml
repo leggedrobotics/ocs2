@@ -26,15 +26,15 @@
 
   <!-- Layout definition for a class page -->
   <class>
-    <briefdescription visible="yes"/>
+    <briefdescription visible="no"/>
     <includes visible="$SHOW_INCLUDE_FILES"/>
+    <detaileddescription title=""/>
     <inheritancegraph visible="$CLASS_GRAPH"/>
     <collaborationgraph visible="$COLLABORATION_GRAPH"/>
+    <allmemberslink visible="yes"/>
     <memberdecl>
       <nestedclasses visible="yes" title=""/>
       <publictypes title=""/>
-      <services title=""/>
-      <interfaces title=""/>
       <publicslots title=""/>
       <signals title=""/>
       <publicmethods title=""/>
@@ -64,13 +64,11 @@
       <related title="" subtitle=""/>
       <membergroups visible="yes"/>
     </memberdecl>
-    <detaileddescription title=""/>
+    
     <memberdef>
       <inlineclasses title=""/>
       <typedefs title=""/>
       <enums title=""/>
-      <services title=""/>
-      <interfaces title=""/>
       <constructors title=""/>
       <functions title=""/>
       <related title=""/>
@@ -78,7 +76,6 @@
       <properties title=""/>
       <events title=""/>
     </memberdef>
-    <allmemberslink visible="yes"/>
     <usedfiles visible="$SHOW_USED_FILES"/>
     <authorsection visible="yes"/>
   </class>
@@ -88,7 +85,6 @@
     <briefdescription visible="yes"/>
     <memberdecl>
       <nestednamespaces visible="yes" title=""/>
-      <constantgroups visible="yes" title=""/>
       <classes visible="yes" title=""/>
       <typedefs title=""/>
       <enums title=""/>
@@ -117,7 +113,6 @@
     <memberdecl>
       <classes visible="yes" title=""/>
       <namespaces visible="yes" title=""/>
-      <constantgroups visible="yes" title=""/>
       <defines title=""/>
       <typedefs title=""/>
       <enums title=""/>
@@ -139,7 +134,8 @@
 
   <!-- Layout definition for a group page -->
   <group>
-    <briefdescription visible="yes"/>
+    <briefdescription visible="no"/>
+    <detaileddescription title=""/>
     <groupgraph visible="$GROUP_GRAPHS"/>
     <memberdecl>
       <nestedgroups visible="yes" title=""/>
@@ -162,7 +158,7 @@
       <friends title=""/>
       <membergroups visible="yes"/>
     </memberdecl>
-    <detaileddescription title=""/>
+    
     <memberdef>
       <pagedocs/>
       <inlineclasses title=""/>

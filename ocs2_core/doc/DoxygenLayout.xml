@@ -27,18 +27,18 @@
     <allmemberslink visible="yes"/>
     <memberdecl>
       <nestedclasses visible="yes" title=""/>
-<!--      <publictypes title=""/> -->
+     <publictypes title=""/> 
       <publicslots title=""/>
       <signals title=""/>
       <publicmethods title=""/>
       <publicstaticmethods title=""/>
       <publicattributes title=""/>
       <publicstaticattributes title=""/>
-<!--      <protectedtypes title=""/> -->
+      <protectedtypes title=""/> -->
       <protectedslots title=""/>
       <protectedmethods title=""/>
       <protectedstaticmethods title=""/>
-<!--      <protectedattributes title=""/> -->
+      <protectedattributes title=""/> -->
       <protectedstaticattributes title=""/>
       <packagetypes title=""/>
       <packagemethods title=""/>

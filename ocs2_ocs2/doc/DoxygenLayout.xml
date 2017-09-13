@@ -14,7 +14,13 @@
       <tab type="filelist" visible="no" title="" intro=""/>
       <tab type="globals" visible="no" title="" intro=""/>
     </tab>
-    <tab type="examples" visible="yes" title="" intro=""/>  
+    <tab type="examples" visible="yes" title="" intro=""/>
+
+    <!-- Link to other packages -->
+    <tab type="user" url="../../../ocs2_doc/doc/html/index.html" title="Main Page" intro=""/>
+    <tab type="user" url="../../../ocs2_core/doc/html/index.html" title="Core" intro=""/>
+    <tab type="user" url="../../../ocs2_slq/doc/html/index.html" title="SLQ" intro=""/>
+    <tab type="user" url="../../../ocs2_frank_wolfe/doc/html/index.html" title="Frank Wolfe" intro=""/>
   </navindex>
 
   <!-- Layout definition for a class page -->
@@ -57,7 +63,7 @@
       <related title="" subtitle=""/>
       <membergroups visible="yes"/>
     </memberdecl>
-    
+
     <memberdef>
       <inlineclasses title=""/>
       <typedefs title=""/>
@@ -151,7 +157,7 @@
       <friends title=""/>
       <membergroups visible="yes"/>
     </memberdecl>
-    
+
     <memberdef>
       <pagedocs/>
       <inlineclasses title=""/>

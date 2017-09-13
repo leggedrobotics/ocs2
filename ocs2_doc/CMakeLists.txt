@@ -1,6 +1,6 @@
 cmake_minimum_required (VERSION 2.8)
 
-project (ocs2_doc) 
+project (ocs2_doc)
 
 find_package(catkin REQUIRED)
 
@@ -10,7 +10,7 @@ catkin_package(
 
 find_package(Doxygen)
 if(DOXYGEN_FOUND)
-    
+
     set(doxyfile_in ${CMAKE_CURRENT_SOURCE_DIR}/doc/ocs2_doc_doxyfile.in)
     set(doxyfile ${CMAKE_CURRENT_SOURCE_DIR}/Doxyfile)
 

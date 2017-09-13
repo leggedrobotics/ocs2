@@ -1065,4 +1065,3 @@ void SLQP<STATE_DIM, INPUT_DIM>::runExit(const state_matrix_t& SmFinal /*= state
 
 
 } // namespace ocs2
-

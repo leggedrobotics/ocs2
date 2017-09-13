@@ -49,11 +49,11 @@ public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
 	typedef std::shared_ptr<SLQP_BASE<STATE_DIM, INPUT_DIM>> 			Ptr;
-//	typedef SequentialRiccatiEquations<STATE_DIM, INPUT_DIM> 			RiccatiEquations_t;
+	//	typedef SequentialRiccatiEquations<STATE_DIM, INPUT_DIM> 			RiccatiEquations_t;
 	typedef SequentialRiccatiEquationsNormalized<STATE_DIM, INPUT_DIM>	RiccatiEquations_t;
-//	typedef SequentialErrorEquation<STATE_DIM, INPUT_DIM>			 	ErrorEquation_t;
+	//	typedef SequentialErrorEquation<STATE_DIM, INPUT_DIM>			 	ErrorEquation_t;
 	typedef SequentialErrorEquationNormalized<STATE_DIM, INPUT_DIM> 	ErrorEquation_t;
-//	typedef LTI_Equations<STATE_DIM> LTI_Equation_t;
+	//	typedef LTI_Equations<STATE_DIM> LTI_Equation_t;
 
 	typedef Dimensions<STATE_DIM, INPUT_DIM> DIMENSIONS;
 
@@ -264,13 +264,13 @@ public:
 			scalar_t& totalCost) = 0;
 
 	/**
-	 * Gets controller Stock
+	 * get the calculated optimal controller structure
 	 * @param [out] controllersStock
 	 */
 	void getController(controller_array_t& controllersStock) const;
 
 	/**
-	 * Gets controller stock
+	 * get the calculated optimal controller structure
 	 * @param [out] controllersStock
 	 */
 	void getControllerPtr(std::shared_ptr<controller_array_t>& controllersStock) const;
@@ -313,7 +313,7 @@ public:
 			const eigen_scalar_t& sFinal = eigen_scalar_t::Zero())  = 0;
 
 	/**
-	 * Run method
+	 * run the SLQP algorithm for a given state and switching times
 	 * @param [in] initTime
 	 * @param [in] initState
 	 * @param [in] finalTime
@@ -336,7 +336,13 @@ public:
 	virtual std::vector<std::shared_ptr<ControlledSystemBase<STATE_DIM, INPUT_DIM>> >& getSubsystemDynamicsPtrStock() = 0;
 
 	/**
-	 * Gets value function
+	 * calculate the value function for the given time and state vector
+	 * 		inputs
+	 * 			+ time: inquiry time
+	 * 			+ state: inquiry state
+	 *
+	 * 		output:
+	 * 			+ valueFuntion: value function at the inquiry time and state
 	 * @param [in] time
 	 * @param [in] output
 	 * @param [out] valueFuntion
@@ -344,7 +350,13 @@ public:
 	virtual void getValueFuntion(const scalar_t& time, const state_vector_t& output, scalar_t& valueFuntion);
 
 	/**
-	 * Gets cost
+	 * calculate the cost function at the initial time
+	 * 		inputs
+	 * 			+ initOutput: initial state
+	 *
+	 * 		output:
+	 * 			+ cost function value
+	 * 			+ cost function value plus the constraint ISE multiplied by pho
 	 * @param [out] costFunction
 	 * @param [out] constraintISE
 	 */
@@ -568,7 +580,14 @@ protected:
 			const double& deltaTime);
 
 	/**
-	 * Calculates rollout Lagrange multiplier
+	 * compute the Lagrage multiplier over the given rollout
+	 * 		inputs:
+	 * 			+ timeTrajectoriesStock: rollout simulated time steps
+	 * 			+ stateTrajectoriesStock: rollout outputs
+	 * 			+ lagrangeMultiplierFunctionsStock: the coefficients of the linear function for lagrangeMultiplier
+	 *
+	 * 		outputs:
+	 * 			+ lagrangeTrajectoriesStock: lagrangeMultiplier value over the given trajectory
 	 * @param [in] timeTrajectoriesStock
 	 * @param [in] stateTrajectoriesStock
 	 * @param [in] lagrangeMultiplierFunctionsStock
@@ -580,7 +599,13 @@ protected:
 			std::vector<std::vector<Eigen::VectorXd>>& lagrangeTrajectoriesStock);
 
 	/**
-	 * Calculates Rollout cost state
+	 * compute the co-state over the given rollout
+	 * 		inputs:
+	 * 			+ timeTrajectoriesStock: rollout simulated time steps
+	 * 			+ stateTrajectoriesStock: rollout outputs
+	 *
+	 * 		outputs:
+	 * 			+ costateTrajectoriesStock: co-state vector for the given trajectory
 	 * @param [in] timeTrajectoriesStock
 	 * @param [in] stateTrajectoriesStock
 	 * @param [out] costateTrajectoriesStock
@@ -590,13 +615,29 @@ protected:
 			state_vector_array2_t& costateTrajectoriesStock);
 
 	/**
-	 * Calculates input constraint Lagrangian
+	 * calculates the linear function approximation of the type-1 constraint Lagrangian:
+	 * 		This method uses the following variables:
+	 * 			+ constrained, linearized model
+	 * 			+ constrained, quadratized cost
+	 *
+	 * 		The method outputs:
+	 * 			+ lagrangeMultiplierFunctionsStock: the linear function approximation of the type-1 constraint Lagrangian.
 	 * @param [out] lagrangeMultiplierFunctionsStock
 	 */
 	void calculateInputConstraintLagrangian(std::vector<lagrange_t>& lagrangeMultiplierFunctionsStock);
 
 	/**
-	 * Calculates merit function
+	 * compute the merit function for given rollout
+	 * 		inputs:
+	 * 			+ timeTrajectoriesStock: simulation time trajectory
+	 * 			+ nc1TrajectoriesStock: rollout's number of active constraints in each time step
+	 * 			+ EvTrajectoryStock: rollout's constraints value
+	 * 			+ lagrangeTrajectoriesStock: constraint Lagrange multiplier for the given rollout
+	 * 			+ totalCost: the total cost of the trajectory
+	 *
+	 * 		outputs:
+	 * 			+ meritFuntionValue: the merit function value
+	 * 			+ constraintISE: integral of Square Error (ISE)
 	 * @param [in] timeTrajectoriesStock
 	 * @param [in] nc1TrajectoriesStock
 	 * @param [in] EvTrajectoryStock

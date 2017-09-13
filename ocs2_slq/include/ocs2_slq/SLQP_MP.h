@@ -85,9 +85,9 @@ public:
 	typedef typename DIMENSIONS::constraint2_state_matrix_array_t constraint2_state_matrix_array_t;
 	typedef typename DIMENSIONS::constraint2_state_matrix_array2_t constraint2_state_matrix_array2_t;
 
-    /**
-     * WORKER_STATE Enum
-     */
+	/**
+	 * WORKER_STATE Enum
+	 */
 	enum WORKER_STATE {
 		IDLE = 0,
 		LINE_SEARCH,
@@ -97,15 +97,15 @@ public:
 		SHUTDOWN
 	};
 
-    /**
-     * Constructor
-     * @param [in] subsystemDynamicsPtr
-     * @param [in] subsystemDerivativesPtr
-     * @param [in] subsystemCostFunctionsPtr
-     * @param [in] options
-     * @param [in] stateOperatingPoints
-     * @param [in] inputOperatingPoints
-     */
+	/**
+	 * Constructor
+	 * @param [in] subsystemDynamicsPtr
+	 * @param [in] subsystemDerivativesPtr
+	 * @param [in] subsystemCostFunctionsPtr
+	 * @param [in] options
+	 * @param [in] stateOperatingPoints
+	 * @param [in] inputOperatingPoints
+	 */
 	SLQP_MP(const std::vector<std::shared_ptr<ControlledSystemBase<STATE_DIM, INPUT_DIM> > >& subsystemDynamicsPtr,
 			const std::vector<std::shared_ptr<DerivativesBase<STATE_DIM, INPUT_DIM> > >& subsystemDerivativesPtr,
 			const std::vector<std::shared_ptr<CostFunctionBaseOCS2<STATE_DIM, INPUT_DIM> > >& subsystemCostFunctionsPtr,
@@ -126,7 +126,7 @@ public:
 		killIntegrationEventHandlers_.resize(options.nThreads_+1);
 		killIntegrationEventHandler_ = std::allocate_shared < KillIntegrationEventHandler<STATE_DIM>,
 				Eigen::aligned_allocator<KillIntegrationEventHandler<STATE_DIM>> >(
-				Eigen::aligned_allocator<KillIntegrationEventHandler<STATE_DIM>>() );
+						Eigen::aligned_allocator<KillIntegrationEventHandler<STATE_DIM>>() );
 
 		// for controller design
 		nominalStateFunc_.resize(options.nThreads_+1);
@@ -145,22 +145,22 @@ public:
 
 	~SLQP_MP();
 
-    /**
-     * only for interfacing with GSLQP
-     * @param [in] initTime
-     * @param [in] initState
-     * @param [in] finalTime
-     * @param [in] controllersStock
-     * @param [out] timeTrajectoriesStock
-     * @param [out] stateTrajectoriesStock
-     * @param [out] inputTrajectoriesStock
-     * @param [out] nc1TrajectoriesStock
-     * @param [out] EvTrajectoryStock
-     * @param [out] nc2TrajectoriesStock
-     * @param [out] HvTrajectoryStock
-     * @param [out] nc2FinalStock
-     * @param [out] HvFinalStock
-     */
+	/**
+	 * only for interfacing with GSLQP
+	 * @param [in] initTime
+	 * @param [in] initState
+	 * @param [in] finalTime
+	 * @param [in] controllersStock
+	 * @param [out] timeTrajectoriesStock
+	 * @param [out] stateTrajectoriesStock
+	 * @param [out] inputTrajectoriesStock
+	 * @param [out] nc1TrajectoriesStock
+	 * @param [out] EvTrajectoryStock
+	 * @param [out] nc2TrajectoriesStock
+	 * @param [out] HvTrajectoryStock
+	 * @param [out] nc2FinalStock
+	 * @param [out] HvFinalStock
+	 */
 	void rollout(const scalar_t& initTime,
 			const state_vector_t& initState,
 			const scalar_t& finalTime,
@@ -176,16 +176,16 @@ public:
 			constraint2_vector_array_t& HvFinalStock) override;
 
 	// only for interfacing with GSLQP
-    /**
-     * only for interfacing with GSLQP
-     * @param [in] initTime
-     * @param [in] initState
-     * @param [in] finalTime
-     * @param [in] controllersStock
-     * @param [out] timeTrajectoriesStock
-     * @param [out] stateTrajectoriesStock
-     * @param [out] inputTrajectoriesStock
-     */
+	/**
+	 * only for interfacing with GSLQP
+	 * @param [in] initTime
+	 * @param [in] initState
+	 * @param [in] finalTime
+	 * @param [in] controllersStock
+	 * @param [out] timeTrajectoriesStock
+	 * @param [out] stateTrajectoriesStock
+	 * @param [out] inputTrajectoriesStock
+	 */
 	void rollout(const scalar_t& initTime,
 			const state_vector_t& initState,
 			const scalar_t& finalTime,
@@ -194,23 +194,23 @@ public:
 			state_vector_array2_t& stateTrajectoriesStock,
 			control_vector_array2_t& inputTrajectoriesStock) override;
 
-    /**
-     * Rollout
-     * @param [in] threadId
-     * @param [in] initTime
-     * @param [in] initState
-     * @param [in] finalTime
-     * @param [in] controllersStock
-     * @param [out] timeTrajectoriesStock
-     * @param [out] stateTrajectoriesStock
-     * @param [out] inputTrajectoriesStock
-     * @param [out] nc1TrajectoriesStock
-     * @param [out] EvTrajectoryStock
-     * @param [out] nc2TrajectoriesStock
-     * @param [out] HvTrajectoryStock
-     * @param [out] nc2FinalStock
-     * @param [out] HvFinalStock
-     */
+	/**
+	 * Rollout
+	 * @param [in] threadId
+	 * @param [in] initTime
+	 * @param [in] initState
+	 * @param [in] finalTime
+	 * @param [in] controllersStock
+	 * @param [out] timeTrajectoriesStock
+	 * @param [out] stateTrajectoriesStock
+	 * @param [out] inputTrajectoriesStock
+	 * @param [out] nc1TrajectoriesStock
+	 * @param [out] EvTrajectoryStock
+	 * @param [out] nc2TrajectoriesStock
+	 * @param [out] HvTrajectoryStock
+	 * @param [out] nc2FinalStock
+	 * @param [out] HvFinalStock
+	 */
 	void rollout(const size_t& threadId,
 			const scalar_t& initTime,
 			const state_vector_t& initState,
@@ -226,17 +226,17 @@ public:
 			std::vector<size_t>& nc2FinalStock,
 			constraint2_vector_array_t& HvFinalStock);
 
-    /**
-     * Rollout
-     * @param [in] threadId
-     * @param [in] initTime
-     * @param [in] initState
-     * @param [in] finalTime
-     * @param [in] controllersStock
-     * @param [out] timeTrajectoriesStock
-     * @param [out] stateTrajectoriesStock
-     * @param [out] inputTrajectoriesStock
-     */
+	/**
+	 * Rollout
+	 * @param [in] threadId
+	 * @param [in] initTime
+	 * @param [in] initState
+	 * @param [in] finalTime
+	 * @param [in] controllersStock
+	 * @param [out] timeTrajectoriesStock
+	 * @param [out] stateTrajectoriesStock
+	 * @param [out] inputTrajectoriesStock
+	 */
 	void rollout(const size_t& threadId,
 			const scalar_t& initTime,
 			const state_vector_t& initState,
@@ -246,16 +246,16 @@ public:
 			state_vector_array2_t& stateTrajectoriesStock,
 			control_vector_array2_t& inputTrajectoriesStock);
 
-    /**
-     * Rollout
-     * @param [in] initTime
-     * @param [in] initState
-     * @param [in] finalTime
-     * @param [in] controllersStock
-     * @param [out] finalState
-     * @param [out] finalInput
-     * @param [out] finalActiveSubsystemIndex
-     */
+	/**
+	 * Rollout
+	 * @param [in] initTime
+	 * @param [in] initState
+	 * @param [in] finalTime
+	 * @param [in] controllersStock
+	 * @param [out] finalState
+	 * @param [out] finalInput
+	 * @param [out] finalActiveSubsystemIndex
+	 */
 	void rollout(const scalar_t& initTime,
 			const state_vector_t& initState,
 			const scalar_t& finalTime,
@@ -264,14 +264,14 @@ public:
 			control_vector_t& finalInput,
 			size_t& finalActiveSubsystemIndex) override;
 
-    /**
-     * Calculates cost function
-     * @param [in] timeTrajectoriesStock
-     * @param [in] stateTrajectoriesStock
-     * @param [in] inputTrajectoriesStock
-     * @param [out] totalCost
-     * @param [out] threadId
-     */
+	/**
+	 * Calculates cost function
+	 * @param [in] timeTrajectoriesStock
+	 * @param [in] stateTrajectoriesStock
+	 * @param [in] inputTrajectoriesStock
+	 * @param [out] totalCost
+	 * @param [out] threadId
+	 */
 	void calculateCostFunction(
 			const std::vector<scalar_array_t>& timeTrajectoriesStock,
 			const state_vector_array2_t& stateTrajectoriesStock,
@@ -280,30 +280,38 @@ public:
 			size_t threadId);
 
 	// for interfacing with GSLQP
-    /**
-     * Calculates cost function - for interfacing with GSLQP
-     * @param [in] timeTrajectoriesStock
-     * @param [in] stateTrajectoriesStock
-     * @param [in] inputTrajectoriesStock
-     * @param [out] totalCost
-     */
+	/**
+	 * compute the cost for a given rollout
+	 * 		inputs:
+	 * 			+ timeTrajectoriesStock:  rollout simulated time steps
+	 * 			+ stateTrajectoriesStock: rollout outputs
+	 * 			+ inputTrajectoriesStock: rollout control inputs
+	 *			+ threadId: working thread, defaults to the thread with lowest id, thus this is the default thread for single-core cost computation
+	 *				(allows to let method be called from the outside)
+	 * 		outputs:
+	 * 			+ totalCost: the total cost of the trajectory
+	 * @param [in] timeTrajectoriesStock
+	 * @param [in] stateTrajectoriesStock
+	 * @param [in] inputTrajectoriesStock
+	 * @param [out] totalCost
+	 */
 	void calculateCostFunction(
 			const std::vector<scalar_array_t>& timeTrajectoriesStock,
 			const state_vector_array2_t& stateTrajectoriesStock,
 			const control_vector_array2_t& inputTrajectoriesStock,
 			scalar_t& totalCost) override;
 
-    /**
-     * Calculates cost function
-     * @param [in] timeTrajectoriesStock
-     * @param [in] stateTrajectoriesStock
-     * @param [in] inputTrajectoriesStock
-     * @param [in] nc2TrajectoriesStock
-     * @param [in] HvTrajectoryStock
-     * @param [in] nc2FinalStock
-     * @param [in] HvFinalStock
-     * @param [out] totalCost
-     */
+	/**
+	 * Calculates cost function
+	 * @param [in] timeTrajectoriesStock
+	 * @param [in] stateTrajectoriesStock
+	 * @param [in] inputTrajectoriesStock
+	 * @param [in] nc2TrajectoriesStock
+	 * @param [in] HvTrajectoryStock
+	 * @param [in] nc2FinalStock
+	 * @param [in] HvFinalStock
+	 * @param [out] totalCost
+	 */
 	void calculateCostFunction(const std::vector<scalar_array_t>& timeTrajectoriesStock,
 			const state_vector_array2_t& stateTrajectoriesStock,
 			const control_vector_array2_t& inputTrajectoriesStock,
@@ -313,189 +321,222 @@ public:
 			const constraint2_vector_array_t& HvFinalStock,
 			scalar_t& totalCost) override;
 
-    /**
-     * Calculates cost function
-     * @param [in] timeTrajectoriesStock
-     * @param [in] stateTrajectoriesStock
-     * @param [in] inputTrajectoriesStock
-     * @param [in] nc2TrajectoriesStock
-     * @param [in] HvTrajectoryStock
-     * @param [in] nc2FinalStock
-     * @param [in] HvFinalStock
-     * @param [out] totalCost
-     * @param [out] threadId
-     */
+	/**
+	 * Calculates cost function
+	 * @param [in] timeTrajectoriesStock
+	 * @param [in] stateTrajectoriesStock
+	 * @param [in] inputTrajectoriesStock
+	 * @param [in] nc2TrajectoriesStock
+	 * @param [in] HvTrajectoryStock
+	 * @param [in] nc2FinalStock
+	 * @param [in] HvFinalStock
+	 * @param [out] totalCost
+	 * @param [out] threadId
+	 */
 	void calculateCostFunction(const std::vector<scalar_array_t>& timeTrajectoriesStock,
-				const state_vector_array2_t& stateTrajectoriesStock,
-				const control_vector_array2_t& inputTrajectoriesStock,
-				const std::vector<std::vector<size_t> >& nc2TrajectoriesStock,
-				const constraint2_vector_array2_t& HvTrajectoryStock,
-				const std::vector<size_t>& nc2FinalStock,
-				const constraint2_vector_array_t& HvFinalStock,
-				scalar_t& totalCost,
-				size_t threadId);
+			const state_vector_array2_t& stateTrajectoriesStock,
+			const control_vector_array2_t& inputTrajectoriesStock,
+			const std::vector<std::vector<size_t> >& nc2TrajectoriesStock,
+			const constraint2_vector_array2_t& HvTrajectoryStock,
+			const std::vector<size_t>& nc2FinalStock,
+			const constraint2_vector_array_t& HvFinalStock,
+			scalar_t& totalCost,
+			size_t threadId);
 
-    /**
-     * Sets up optimizer
-     */
+	/**
+	 * Sets up optimizer
+	 */
 	void setupOptimizer() override;
 
-    /**
-     * Runs Init
-     */
+	/**
+	 * Runs Init
+	 */
 	void runInit() override;
 
-    /**
-     * Runs iteration
-     * @param [in] SmFinal
-     * @param [in] SvFinal
-     * @param [in] sFinal
-     */
+	/**
+	 * Runs iteration
+	 * @param [in] SmFinal
+	 * @param [in] SvFinal
+	 * @param [in] sFinal
+	 */
 	void runIteration(const state_matrix_t& SmFinal = state_matrix_t::Zero(),
 			const state_vector_t& SvFinal = state_vector_t::Zero(),
 			const eigen_scalar_t& sFinal = eigen_scalar_t::Zero()) override;
 
-    /**
-     *
-     * @param [in] SmFinal
-     * @param [in] SvFinal
-     * @param [in] sFinal
-     */
+	/**
+	 *
+	 * @param [in] SmFinal
+	 * @param [in] SvFinal
+	 * @param [in] sFinal
+	 */
 	void runExit(const state_matrix_t& SmFinal = state_matrix_t::Zero(),
 			const state_vector_t& SvFinal = state_vector_t::Zero(),
 			const eigen_scalar_t& sFinal = eigen_scalar_t::Zero()) override;
 
 	// get subsystem dynamics on main thread
-    /**
-     *
-     */
+	/**
+	 *
+	 */
 	std::vector<std::shared_ptr<ControlledSystemBase<STATE_DIM, INPUT_DIM>> >& getSubsystemDynamicsPtrStock() override {
 		return dynamics_[BASE::options_.nThreads_];
 	}
 
-    /**
-     * Gets single cost nominal state
-     * @param [in] index
-     * @param [out] timeTrajectory
-     * @param [out] stateTrajectory
-     */
+	/**
+	 * Gets single cost nominal state
+	 * @param [in] index
+	 * @param [out] timeTrajectory
+	 * @param [out] stateTrajectory
+	 */
 	void getSingleCostNominalState(size_t index, scalar_array_t& timeTrajectory,
-				state_vector_array_t& stateTrajectory) const override;
+			state_vector_array_t& stateTrajectory) const override;
 
 protected:
-    /**
-     * Sets single cost nominal state
-     * @param [in] index
-     * @param [in] timeTrajectory
-     * @param [in] stateTrajectory
-     */
+	/**
+	 * Sets single cost nominal state
+	 * @param [in] index
+	 * @param [in] timeTrajectory
+	 * @param [in] stateTrajectory
+	 */
 	void setSingleCostNominalState(size_t index, const scalar_array_t& timeTrajectory,
 			const state_vector_array_t& stateTrajectory) override;
 
-    /**
-     * Solves sequential Riccati equations
-     * @param [in] learningRate
-     * @param [in] SmFinal
-     * @param [in] SvFinal
-     * @param [in] sFinal
-     */
+	/**
+	 * Solves sequential Riccati equations
+	 * @param [in] learningRate
+	 * @param [in] SmFinal
+	 * @param [in] SvFinal
+	 * @param [in] sFinal
+	 */
 	void solveSequentialRiccatiEquations(const scalar_t& learningRate,
 			const state_matrix_t& SmFinal,
 			const state_vector_t& SvFinal,
 			const eigen_scalar_t& sFinal) override;
 
-    /**
-     * Approximates optimal control problem
-     */
+	/**
+	 * approximates the nonlinear problem as a linear-quadratic problem around the nominal
+	 * state and control trajectories. This method updates the following variables:
+	 *
+	 * 		+ linearized system model
+	 * 		+ dxdt = Am(t)x(t) + Bm(t)u(t)
+	 * 		+ s.t. Cm(t)x(t) + Dm(t)t(t) + Ev(t) = 0
+	 * 		+ BASE::AmTrajectoryStock_: Am matrix
+	 * 		+ BASE::BmTrajectoryStock_: Bm matrix
+	 * 		+ BASE::CmTrajectoryStock_: Cm matrix
+	 * 		+ BASE::DmTrajectoryStock_: Dm matrix
+	 * 		+ BASE::EvTrajectoryStock_: Ev vector
+	 *
+	 * 		+ quadratized intermediate cost function
+	 * 		+ intermediate cost: q(t) + 0.5 y(t)Qm(t)y(t) + y(t)'Qv(t) + u(t)'Pm(t)y(t) + 0.5u(t)'Rm(t)u(t) + u(t)'Rv(t)
+	 * 		+ BASE::qTrajectoryStock_:  q
+	 * 		+ BASE::QvTrajectoryStock_: Qv vector
+	 * 		+ BASE::QmTrajectoryStock_: Qm matrix
+	 * 		+ BASE::PmTrajectoryStock_: Pm matrix
+	 * 		+ BASE::RvTrajectoryStock_: Rv vector
+	 * 		+ BASE::RmTrajectoryStock_: Rm matrix
+	 * 		+ BASE::RmInverseTrajectoryStock_: inverse of Rm matrix
+	 *
+	 * 		+ quadratized final cost in the last subsystem: qFinal(t) + 0.5 y(t)QmFinal(t)y(t) + y(t)'QvFinal(t)
+	 * 		+ BASE::qFinal_: qFinal
+	 * 		+ BASE::qFinal_: QvFinal vector
+	 * 		+ BASE::qFinal_: QmFinal matrix
+	 *
+	 * 		+ as well as the constrained coefficients of
+	 * 			linearized system model
+	 * 			quadratized intermediate cost function
+	 * 			quadratized final cost
+	 */
 	void approximateOptimalControlProblem();
 
-    /**
-     * Calculates controller
-     */
+	/**
+	 * Calculates controller
+	 */
 	void calculateController();
 
-    /**
-     * Linear search
-     */
+	/**
+	 * line search on the feedforward parts of the controller and lagrange multipliers.
+	 * Based on the option flag lineSearchByMeritFuntion_ it uses two different approaches for line search:
+	 * 		+ the constraint correction term is added by a user defined stepSize.
+	 * 		The line search uses the pure cost function for choosing the best stepSize.
+	 */
 	void lineSearch();
 
 private:
 
-    /**
-     * Launches worker threads
-     */
+	/**
+	 * Launches worker threads
+	 */
 	void launchWorkerThreads();
-    /**
-     * Sets number of worker threads
-     * @param [in] threadId
-     */
+	/**
+	 * Sets number of worker threads
+	 * @param [in] threadId
+	 */
 	void threadWork(size_t threadId);
 
 	// main function for sub-tasks
-    /**
-     * Computes the linearized dynamics for a particular subsystem
-     * @param [in] sysIndex
-     */
+	/**
+	 * Computes the linearized dynamics for a particular subsystem
+	 * @param [in] sysIndex
+	 */
 	void approximateSubsystemLQ(const size_t sysIndex); // computes the linearized dynamics for a particular subsystem
 
 	// worker functions
-    /**
-     * Approximates subsystem LQWorker
-     * @param [in] threadId
-     * @param [in] subsystemProcessed
-     * @return
-     */
+	/**
+	 * Approximates subsystem LQWorker
+	 * @param [in] threadId
+	 * @param [in] subsystemProcessed
+	 * @return
+	 */
 	size_t approximateSubsystemLQWorker(size_t threadId, size_t subsystemProcessed);		//Worker functions
 
-    /**
-     * Calculates controller
-     * @param [in] threadId
-     * @param [in] subsystemProcessed
-     * @return
-     */
+	/**
+	 * Calculates controller
+	 * @param [in] threadId
+	 * @param [in] subsystemProcessed
+	 * @return
+	 */
 	size_t calculateControllerWorker(size_t threadId, size_t subsystemProcessed);
 
-    /**
-     * Line search worker
-     * @param [in] threadId
-     */
+	/**
+	 * Line search worker
+	 * @param [in] threadId
+	 */
 	void lineSearchWorker(size_t threadId);
 
 	// execute methods
-    /**
-     * Execute methods
-     * @param [in] threadId
-     * @param [in] k
-     * @param [in] subsystemProcessed
-     * @return size_t
-     */
+	/**
+	 * Execute methods
+	 * @param [in] threadId
+	 * @param [in] k
+	 * @param [in] subsystemProcessed
+	 * @return size_t
+	 */
 	size_t executeApproximateSubsystemLQ(size_t threadId, size_t k, size_t subsystemProcessed);	// Computes the linearized dynamics
 
-    /**
-     * Execute calculate controller
-     * @param [in] threadId
-     * @param [in] k
-     * @param [in] subsystemProcessed
-     * @return size_t
-     */
+	/**
+	 * Execute calculate controller
+	 * @param [in] threadId
+	 * @param [in] k
+	 * @param [in] subsystemProcessed
+	 * @return size_t
+	 */
 	size_t executeCalculateController(size_t threadId, size_t k, size_t subsystemProcessed);
 
-    /**
-     * Executes LineSearch
-     * @param [in] threadId
-     * @param [in] learningRate
-     * @param [out] lsTotalCost
-     * @param [out] lsControllersStock
-     * @param [out] lsTimeTrajectoriesStock
-     * @param [out] lsStateTrajectoriesStock
-     * @param [out] lsInputTrajectoriesStock
-     * @param [out] lsNc1TrajectoriesStock
-     * @param [out] lsEvTrajectoryStock
-     * @param [out] lsNc2TrajectoriesStock
-     * @param [out] lsHvTrajectoryStock
-     * @param [out] lsNc2FinalStock
-     * @param [out] lsHvFinalStock
-     */
+	/**
+	 * Executes LineSearch
+	 * @param [in] threadId
+	 * @param [in] learningRate
+	 * @param [out] lsTotalCost
+	 * @param [out] lsControllersStock
+	 * @param [out] lsTimeTrajectoriesStock
+	 * @param [out] lsStateTrajectoriesStock
+	 * @param [out] lsInputTrajectoriesStock
+	 * @param [out] lsNc1TrajectoriesStock
+	 * @param [out] lsEvTrajectoryStock
+	 * @param [out] lsNc2TrajectoriesStock
+	 * @param [out] lsHvTrajectoryStock
+	 * @param [out] lsNc2FinalStock
+	 * @param [out] lsHvFinalStock
+	 */
 	void executeLineSearch(
 			size_t threadId, double learningRate,
 			scalar_t& lsTotalCost,
@@ -510,34 +551,34 @@ private:
 			std::vector<size_t>& lsNc2FinalStock,
 			constraint2_vector_array_t& lsHvFinalStock);
 
-    /**
-     * Distributes work
-     */
+	/**
+	 * Distributes work
+	 */
 	void distributeWork();
 
-    /**
-     * Solves sequential Riccati equations worker
-     * @param [in] threadId
-     */
+	/**
+	 * Solves sequential Riccati equations worker
+	 * @param [in] threadId
+	 */
 	void solveSequentialRiccatiEquationsWorker(size_t threadId);
 
 	/**
 	 * a heuristic that generates a unique id for a process, such that we can manage the tasks.
 	 * Generates a unique identifiers for subsystem, task, iteration:
-     * @param [in] iterateNo
-     * @param [in] workerState
-     * @param [in] subsystemId
-     * @return
-     */
+	 * @param [in] iterateNo
+	 * @param [in] workerState
+	 * @param [in] subsystemId
+	 * @return
+	 */
 	size_t generateUniqueProcessID (const size_t& iterateNo, const int workerState, const int subsystemId)
 	{
 		return (10e9*(workerState +1) + 10e6 * (subsystemId +1) + iterateNo+1);
 	}
 
-    /**
-     * for nice debug printing
-     * @param [in] text
-     */
+	/**
+	 * for nice debug printing
+	 * @param [in] text
+	 */
 	inline void printString(const std::string& text){std::cout << text << std::endl;}
 
 	std::vector<std::vector<std::shared_ptr<ControlledSystemBase<STATE_DIM, INPUT_DIM> > > > dynamics_;

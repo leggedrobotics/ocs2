@@ -19,24 +19,36 @@
 
 namespace nlp {
 /**
- * Settings for the NLP
+ * This structure contains the settings for the gradient-descent algorithm.
  */
 struct NlpOptions
 {
 public:
 	NlpOptions() {}
 
+	/** This value determines to display the log output.*/
 	bool displayGradientDescent_ = true;
+	/** This value determines the maximum number of algorithm iterations.*/
 	size_t maxIterations_ = 1000;
+	/** This value determines the termination condition based on the minimum relative changes of the cost.*/
 	double minRelCost_    = 1e-6;
+	/** This value determines the maximum step size for the line search scheme.*/
 	double maxLearningRate_ = 1.0;
+	/** This value determines the minimum step size for the line search scheme.*/
 	double minLearningRate_ = 0.05;
-	double minDisToBoundary_ = 0.01;
+	/**
+	 * This value determines the the line search scheme to be used. \n
+	 * - \b Ascending: The step size eventually increases from the minimum value to the maximum. \n
+	 * - \b Descending: The step size eventually decreases from the minimum value to the maximum.
+	 * */
 	bool useAscendingLineSearchNLP_ = true;
+	/** This value determines the minimum allowable difference between to consecutive switching times.*/
+	double minDisToBoundary_ = 0.01;
 };
 
 /**
- * Gradient Descent class
+ * This class implemets the Frank-Wolfe algorithm which is an iterative first-order gradient descent
+ * algorithm. For more discussion on this algorithm, the reader should refer to [...].
  */
 class GradientDescent
 {
@@ -49,39 +61,46 @@ public:
 	typedef std::vector<Eigen::Matrix<double,1,1>, Eigen::aligned_allocator<Eigen::Matrix<double, 1, 1>> > eigen_scalar_array_t;
 
 	/**
-	 * Constructor
+	 * This is the default constructor.
 	 */
 	GradientDescent() {
 		adjustOptions();
 		CleanFmtDisplay_ = Eigen::IOFormat(3, 0, ", ", "\n", "[", "]");
 	}
 
+	/**
+	 * This is the default destructor.
+	 */
 	~GradientDescent() {}
 
 	/**
-	 * Gets the cost
-	 * @param [out] cost
+	 * Gets the cost.
+	 * @param [out] cost value
 	 */
 	void getCost(double& cost) { cost = cost_; }
 
 	/**
-	 * gets the parameters
+	 * Gets the parameter vector.
+	 *
 	 * @tparam Derived
-	 * @param [out] parameters
+	 * @param [out] parameters: the parameter vector
 	 */
 	template <typename Derived>
 	void getParameters(Eigen::MatrixBase<Derived>& parameters) const { parameters = parameters_; }
 
 	/**
+	 * This method runt the Frank-Wolfw algorithm which the initial parameter \f$\theta_0\f$.
 	 *
-	 * @param [in] initParameters
+	 * @param [in] initParameters: The initial parameter vector (\f$\theta_0\f$)
 	 */
 	void run(const Eigen::VectorXd& initParameters);
 
 	/**
-	 * Calculates the linear equality constraint
-	 * @param [out] Am
-	 * @param [out] Bv
+	 * Calculates the coefficients of the linear equality constraints. \n
+	 * \f$ A_m \theta + B_v = 0\f$
+	 *
+	 * @param [out] Am: The \f$ A_m\f$ matrix.
+	 * @param [out] Bv: THe \f$ B_v \f$ vector.
 	 */
 	virtual void calculateLinearEqualityConstraint(Eigen::MatrixXd& Am, Eigen::VectorXd& Bv)  {
 		Am.resize(0,numParameters_);
@@ -89,11 +108,12 @@ public:
 	}
 
 	/**
-	 * Calculates the gradient
-	 * @param [in] id
-	 * @param [in] parameters
-	 * @param [in] gradient
-	 * @return boolean
+	 * Calculates the gradient direction.
+	 *
+	 * @param [in] id: solver ID
+	 * @param [in] parameters: The current parameter vector.
+	 * @param [in] gradient: Gradient at the current parameter vector.
+	 * @return The success flag.
 	 */
 	virtual bool calculateGradient(const size_t& id, const Eigen::VectorXd& parameters, Eigen::VectorXd& gradient) {
 		bool status = calculateNumericalGradient(id, parameters, gradient);
@@ -101,61 +121,70 @@ public:
 	}
 
 	/**
-	 * Gets the solution
-	 * @param [in] idStar
+	 * Gets the solution ID.
+	 *
+	 * @param [in] idStar: The ID of the best solution.
 	 */
 	virtual void getSolution(size_t idStar)  {}
 
 	/**
-	 * Gets the iteration log
-	 * @param [out] iterationCost
+	 * Gets the iteration cost log.
+	 *
+	 * @param [out] iterationCost: The cost value in each iteration.
 	 */
 	void getIterationsLog(eigen_scalar_array_t& iterationCost) const { iterationCost = iterationCost_; }
 
 	/**
-	 * Calculates the cost
-	 * @param [in] id
-	 * @param [in] parameters
-	 * @param [out] cost
-	 * @return boolean
+	 * Calculates the cost.
+	 *
+	 * @param [in] id: Solver ID
+	 * @param [in] parameters: The current parameter vector.
+	 * @param [out] cost: Gradient at the current parameter vector.
+	 * @return The success flag.
 	 */
 	virtual bool calculateCost(const size_t& id, const Eigen::VectorXd& parameters, double& cost) = 0;
 
 
 protected:
 	/**
-	 * Calculate the Frank Wolfe gradient
-	 * @param [in] id
-	 * @param [in] parameters
-	 * @param [out] gradient
+	 * Calculate the Frank Wolfe gradient.
+	 *
+	 * @param [in] id: solver ID
+	 * @param [in] parameters: The current parameter vector.
+	 * @param [out] gradient: The Frank-Wolfe gradient at the current parameter vector.
 	 */
 	void frankWolfeGradient(const size_t& id, const Eigen::VectorXd& parameters, Eigen::VectorXd& gradient);
 
 	/**
-	 * Line search to find the best learningStep
-	 * @param [in] gradient
-	 * @param [out] learningRateStar
+	 * Line search to find the best learning rate using ascending scheme where the step size eventually increases
+	 * from the minimum value to the maximum.
+	 *
+	 * @param [in] gradient: The current gradient.
+	 * @param [out] learningRateStar: The best learnig rate.
 	 */
 	void ascendingLineSearch(const Eigen::VectorXd& gradient, double& learningRateStar);
 
 	/**
-	 * Line search to find the best learningStep
-	 * @param [in] gradient
-	 * @param [out] learningRateStar
+	 * Line search to find the best learning rate using decreasing scheme where the step size eventually decreases
+	 * from the maximum value to the minimum.
+	 *
+	 * @param [in] gradient: The current gradient.
+	 * @param [out] learningRateStar: The best learnig rate.
 	 */
 	void decreasingLineSearch(const Eigen::VectorXd& gradient, double& learningRateStar);
 
 	/**
-	 * Initializes LP
+	 * Set up the Linear Programming problem in the Frank-Wolfe algorithm.
 	 */
 	void setupLP();
 
 	/**
-	 * Calculates the numerical gradient
-	 * @param [in] id
-	 * @param [in] parameters
-	 * @param [out] gradient
-	 * @return boolean
+	 * Calculate the gradient numerically
+	 *
+	 * @param [in] id: Solver ID
+	 * @param [in] parameters: The current parameter vector.
+	 * @param [out] gradient: Gradient at the current parameter vector.
+	 * @return The success flag.
 	 */
 	bool calculateNumericalGradient(const size_t& id, const Eigen::VectorXd& parameters, Eigen::VectorXd& gradient);
 

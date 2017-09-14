@@ -2,7 +2,8 @@
 \mainpage Overview
 
 \section ocs2_core_home OCS2 Core
-OCS2 Core Documentation
+This module include type definitions, ODE integrator, base class for dynamics, constraints, and their derivatives.
+It also contains an efficient linear interpolation class and LTI system class.
 
 \section ocs2_core_documentation_section OCS2 Documentation
 This library consists of four main modules

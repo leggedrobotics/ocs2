@@ -20,9 +20,10 @@
 namespace ocs2{
 
 /**
- * Base class for controlled system
- * @tparam STATE_DIM
- * @tparam INPUT_DIM
+ * The base class for non-autonomous system dynamics.
+ *
+ * @tparam STATE_DIM: Dimension of the state space.
+ * @tparam INPUT_DIM: Dimension of the control input space.
  */
 template <size_t STATE_DIM, size_t INPUT_DIM>
 class ControlledSystemBase : public SystemBase<STATE_DIM>
@@ -44,14 +45,23 @@ public:
 	typedef typename DIMENSIONS::constraint1_vector_t constraint1_vector_t;
 	typedef typename DIMENSIONS::constraint2_vector_t constraint2_vector_t;
 
+	/**
+	 * The default constructor.
+	 */
 	ControlledSystemBase()
 		: modelUpdated_(true)
 	{}
+
+	/**
+	 * The default destructor.
+	 */
 	virtual ~ControlledSystemBase() {}
 
 	/**
-	 * Sets controller
-	 * @param [in] controller
+	 * Sets the linear control policy using the controller class.
+	 * The controller class is defined as \f$ u(t,x) = u_{ff}(t) + K(t) * x \f$.
+	 *
+	 * @param [in] controller: The control policy.
 	 */
 	void setController(const controller_t& controller) {
 
@@ -67,10 +77,12 @@ public:
 	}
 
 	/**
-	 * Sets controller
-	 * @param [in] controllerTime
-	 * @param [in] uff
-	 * @param [in] k
+	 * Sets the linear control policy using the feedback and feedforward components.
+	 * The controller class is defined as \f$ u(t,x) = u_{ff}(t) + K(t) * x \f$.
+	 *
+	 * @param [in] controllerTime: Time stamp.
+	 * @param [in] uff: Feedforward term trajectory, \f$ u_{ff} \f$.
+	 * @param [in] k: Feedback term trajectory, \f$ K \f$.
 	 */
 	void setController(const scalar_array_t& controllerTime,
 			const control_vector_array_t& uff,
@@ -84,10 +96,11 @@ public:
 	}
 
 	/**
-	 * Computes input
-	 * @param [in] t
-	 * @param [in] x
-	 * @param [out] u
+	 * Computes input vector.
+	 *
+	 * @param [in] t: Current time.
+	 * @param [in] x: Current state.
+	 * @param [out] u: Current input.
 	 */
 	void computeInput(const scalar_t& t, const state_vector_t& x, control_vector_t& u)
 	{
@@ -101,10 +114,11 @@ public:
 	}
 
 	/**
-	 * Computes derivative
-	 * @param [in] t
-	 * @param [in] x
-	 * @param [out] dxdt
+	 * Computes derivative of the autonomous system dynamics with the given control policy.
+	 *
+	 * @param [in] t: Current time.
+	 * @param [in] x: Current state.
+	 * @param [out] dxdt: Current state time derivative.
 	 */
 	void computeDerivative(const scalar_t& t, const state_vector_t& x, state_vector_t& dxdt)  {
 
@@ -116,12 +130,13 @@ public:
 	}
 
 	/**
-	 * Computes first constraint
-	 * @param [in] t
-	 * @param [in] x
-	 * @param [in] u
-	 * @param [out] numConstraint1
-	 * @param [out] g1
+	 * Computes first constraint.
+	 *
+	 * @param [in] t: Current time.
+	 * @param [in] x: Current state.
+	 * @param [in] u: Current input.
+	 * @param [out] numConstraint1: Number of active state-input equality constriants.
+	 * @param [out] g1: The state-input equality constriants value.
 	 */
 	virtual void computeConstriant1(const scalar_t& t, const state_vector_t& x, const control_vector_t& u, size_t& numConstraint1, constraint1_vector_t& g1)  {
 
@@ -129,34 +144,37 @@ public:
 	}
 
 	/**
-	 * Computes second constraint
-	 * @param [in] t
-	 * @param [in] x
-	 * @param [out] numConstraint2
-	 * @param [out] g2
+	 * Computes second constraint.
+	 *
+	 * @param [in] t: Current time.
+	 * @param [in] x: Current state.
+	 * @param [out] numConstraint2: Number of active state-only equality constriants.
+	 * @param [out] g2: The state-only equality constriants value.
 	 */
 	virtual void computeConstriant2(const scalar_t& t, const state_vector_t& x, size_t& numConstraint2, constraint2_vector_t& g2)  {
 		numConstraint2 = 0;
 	}
 
 	/**
-	 * Computes final constraint
-	 * @param [in] t
-	 * @param [in] x
-	 * @param [out] numFinalConstraint2
-	 * @param [out] g2Final
+	 * Computes final constraint.
+	 *
+	 * @param [in] t: Current time.
+	 * @param [in] x: Current state.
+	 * @param [out] numFinalConstraint2: Number of active state-only final equality constriants.
+	 * @param [out] g2Final: The state-only final equality constriants value.
 	 */
 	virtual void computeFinalConstriant2(const scalar_t& t, const state_vector_t& x, size_t& numFinalConstraint2, constraint2_vector_t& g2Final)  {
 		numFinalConstraint2 = 0;
 	}
 
 	/**
-	 * Initializes the model
-	 * @param [in] systemStockIndexes
-	 * @param [in] switchingTimes
-	 * @param [in] initState
-	 * @param [in] activeSubsystemIndex
-	 * @param [in] algorithmName
+	 * Initializes the system dynamics.
+	 *
+	 * @param [in] systemStockIndexes: The susbsystem-stock index vector
+	 * @param [in] switchingTimes: The switching time vector.
+	 * @param [in] initState: Initial state.
+	 * @param [in] activeSubsystemIndex: Current active subsystem index.
+	 * @param [in] algorithmName: The algorithm that uses this class.
 	 */
 	virtual void initializeModel(const std::vector<size_t>& systemStockIndexes, const std::vector<scalar_t>& switchingTimes,
 			const state_vector_t& initState, const size_t& activeSubsystemIndex=0, const char* algorithmName=NULL)
@@ -167,17 +185,19 @@ public:
 	}
 
 	/**
-	 * Returns copy of the shared pointer to ControlledSystemBase
-	 * @return
+	 * Returns pointer to ControlledSystemBase class.
+	 *
+	 * @return a shared_ptr pointer.
 	 */
 	virtual std::shared_ptr<ControlledSystemBase<STATE_DIM, INPUT_DIM> > clone() const = 0;
 
 	/**
-	 * Computes derivative
-	 * @param [in] t
-	 * @param [in] x
-	 * @param [in] u
-	 * @param [out] dxdt
+	 * Computes derivative of the autonomous system dynamics.
+	 *
+	 * @param [in] t: Current time.
+	 * @param [in] x: Current state.
+	 * @param [in] u: Current input.
+	 * @param [out] dxdt: Current state time derivative.
 	 */
 	virtual void computeDerivative(
 			const scalar_t& t,

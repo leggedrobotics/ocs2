@@ -2,8 +2,8 @@
  *
  * Integrator.h
  *
- *  Created on: 07.10.16
- *      Author: mgiftthaler
+ *  Created on: 17.12.2015
+ *      Author: farbodf
  *
  */
 
@@ -23,7 +23,7 @@ namespace ocs2{
 
 
 /**
- * Defining the steppers
+ * Euler steppers
  */
 template <int STATE_DIM>
 using euler_t = boost::numeric::odeint::euler<
@@ -33,6 +33,9 @@ using euler_t = boost::numeric::odeint::euler<
 		double,
 		boost::numeric::odeint::vector_space_algebra >;
 
+/**
+ * Modified_Midpoint steppers
+ */
 template <int STATE_DIM>
 using modified_midpoint_t = boost::numeric::odeint::modified_midpoint<
 		Eigen::Matrix<double, STATE_DIM, 1>,
@@ -41,6 +44,9 @@ using modified_midpoint_t = boost::numeric::odeint::modified_midpoint<
 		double,
 		boost::numeric::odeint::vector_space_algebra >;
 
+/**
+ * 4th order Runge_Kutta steppers
+ */
 template <int STATE_DIM>
 using runge_kutta_4_t = boost::numeric::odeint::runge_kutta4<
 		Eigen::Matrix<double, STATE_DIM, 1>,
@@ -49,6 +55,9 @@ using runge_kutta_4_t = boost::numeric::odeint::runge_kutta4<
 		double,
 		boost::numeric::odeint::vector_space_algebra >;
 
+/**
+ * 5th order Runge_Kutta_Dopri steppers
+ */
 template <int STATE_DIM>
 using runge_kutta_dopri5_t = boost::numeric::odeint::runge_kutta_dopri5 <
 		Eigen::Matrix<double, STATE_DIM, 1>,
@@ -57,10 +66,16 @@ using runge_kutta_dopri5_t = boost::numeric::odeint::runge_kutta_dopri5 <
 		double,
 		boost::numeric::odeint::vector_space_algebra>;
 
+/**
+ * Dense_output Runge_Kutta steppers
+ */
 template <int STATE_DIM>
 using dense_runge_kutta5_t = boost::numeric::odeint::dense_output_runge_kutta <
 		boost::numeric::odeint::controlled_runge_kutta <runge_kutta_dopri5_t<STATE_DIM>> >;
 
+/**
+ * Bulirsch_Stoer steppers
+ */
 template <int STATE_DIM>
 using bulirsch_stoer_t = boost::numeric::odeint::bulirsch_stoer <
 		Eigen::Matrix<double, STATE_DIM, 1>,
@@ -69,6 +84,9 @@ using bulirsch_stoer_t = boost::numeric::odeint::bulirsch_stoer <
 		double,
 		boost::numeric::odeint::vector_space_algebra>;
 
+/**
+ * Adams_Bashforth steppers
+ */
 template <int STATE_DIM, size_t STEPS>
 using adams_bashforth_uncontrolled_t =
 		boost::numeric::odeint::adams_bashforth<
@@ -91,9 +109,10 @@ using adams_bashforth_uncontrolled_t =
 //		boost::numeric::odeint::vector_space_algebra> ;
 
 /**
- * Class Integrator
- * @tparam STATE_DIM
- * @tparam Stepper
+ * Integrator class for autonomous systems.
+ *
+ * @tparam STATE_DIM: Dimension of the state space.
+ * @tparam Stepper: Stepper class type to be used.
  */
 template <int STATE_DIM, class Stepper>
 class Integrator : public IntegratorBase<STATE_DIM>
@@ -103,9 +122,10 @@ public:
 
 	typedef IntegratorBase<STATE_DIM> Base;
 
-	/** Constructor
-	 * @param [in] system
-	 * @param [in] eventHandler
+	/**
+	 * Constructor
+	 * @param [in] system: The system dynamics.
+	 * @param [in] eventHandler: The integration event function.
 	 */
 	Integrator(
 			const std::shared_ptr<SystemBase<STATE_DIM> >& system,
@@ -116,13 +136,13 @@ public:
 
 	/**
 	 * Equidistant integration based on initial and final time as well as step length
-	 * @param [in] initialState
-	 * @param [in] startTime
-	 * @param [in] finalTime
-	 * @param [in] dt
-	 * @param [out] stateTrajectory
-	 * @param [out] timeTrajectory
-	 * @return boolean
+	 * @param [in] initialState: Initial state.
+	 * @param [in] startTime: Initial time.
+	 * @param [in] finalTime: Final time.
+	 * @param [in] dt: Time step.
+	 * @param [out] stateTrajectory: Output state trajectory.
+	 * @param [out] timeTrajectory: Output time stamp trajectory.
+	 * @return boolean: Success flag.
 	 */
 	bool integrate(
 			const typename Base::State_T& initialState,
@@ -149,16 +169,16 @@ public:
 
 	/**
 	 * Adaptive time integration based on start time and final time
-	 * @param [in] initialState
-	 * @param [in] startTime
-	 * @param [in] finalTime
-	 * @param [out] stateTrajectory
-	 * @param [out] timeTrajectory
-	 * @param [in] dtInitial
-	 * @param [in] AbsTol
-	 * @param [in] RelTol
-	 * @param [in] maxNumSteps
-	 * @return boolean
+	 * @param [in] initialState: Initial state.
+	 * @param [in] startTime: Initial time.
+	 * @param [in] finalTime: Final time.
+	 * @param [out] stateTrajectory: Output state trajectory.
+	 * @param [out] timeTrajectory: Output time stamp trajectory.
+	 * @param [in] dtInitial: Initial time step.
+	 * @param [in] AbsTol: The absolue tolerance error for ode solver.
+	 * @param [in] RelTol: The relative tolerance error for ode solver.
+	 * @param [in] maxNumSteps: The maximum number of integration points per a second for ode solver.
+	 * @return boolean: Success flag.
 	 */
 	bool integrate(
 			const typename Base::State_T& initialState,
@@ -181,13 +201,13 @@ public:
 
 	/**
 	 * Output integration based on a given time trajectory
-	 * @param [in] initialState
-	 * @param [in] timeTrajectory
-	 * @param [out] stateTrajectory
-	 * @param [in] dtInitial
-	 * @param [in] AbsTol
-	 * @param [in] RelTol
-	 * @return boolean
+	 * @param [in] initialState: Initial state.
+	 * @param [in] timeTrajectory: Input time stamp trajectory.
+	 * @param [out] stateTrajectory: Output state trajectory.
+	 * @param [in] dtInitial: Initial time step.
+	 * @param [in] AbsTol: The absolue tolerance error for ode solver.
+	 * @param [in] RelTol: The relative tolerance error for ode solver.
+	 * @return boolean: Success flag.
 	 */
 	bool integrate(
 			const typename Base::State_T& initialState,
@@ -231,17 +251,18 @@ private:
 
 
 	/**
-	 * Integrate Adaptive Specialized
-	 * @tparam S
-	 * @param [in] initialState
-	 * @param [in] startTime
-	 * @param [in] finalTime
-	 * @param [out] stateTrajectory
-	 * @param [out] timeTrajectory
-	 * @param [in] dtInitial
-	 * @param [in] AbsTol
-	 * @param [in] RelTol
-	 * @param [in] maxNumSteps
+	 * Integrate adaptive specialized.
+	 *
+	 * @tparam S: stepper type.
+	 * @param [in] initialState: Initial state.
+	 * @param [in] startTime: Initial time.
+	 * @param [in] finalTime: Final time.
+	 * @param [out] stateTrajectory: Output state trajectory.
+	 * @param [out] timeTrajectory: Output time stamp trajectory.
+	 * @param [in] dtInitial: Initial time step.
+	 * @param [in] AbsTol: The absolue tolerance error for ode solver.
+	 * @param [in] RelTol: The relative tolerance error for ode solver.
+	 * @param [in] maxNumSteps: The maximum number of integration points per a second for ode solver.
 	 * @return
 	 */
 	template <typename S>
@@ -271,17 +292,18 @@ private:
 	}
 
 	/**
-	 * Integrate Adaptive Specialized
-	 * @tparam S
-	 * @param [in] initialState
-	 * @param [in] startTime
-	 * @param [in] finalTime
-	 * @param [out] stateTrajectory
-	 * @param [out] timeTrajectory
-	 * @param [in] dtInitial
-	 * @param [in] AbsTol
-	 * @param [in] RelTol
-	 * @param [in] maxNumSteps
+	 * Integrate adaptive specialized,
+	 *
+	 * @tparam S: stepper type.
+	 * @param [in] initialState: Initial state.
+	 * @param [in] startTime: Initial time.
+	 * @param [in] finalTime: Final time.
+	 * @param [out] stateTrajectory: Output state trajectory.
+	 * @param [out] timeTrajectory: Output time stamp trajectory.
+	 * @param [in] dtInitial: Initial time step.
+	 * @param [in] AbsTol: The absolue tolerance error for ode solver.
+	 * @param [in] RelTol: The relative tolerance error for ode solver.
+	 * @param [in] maxNumSteps: The maximum number of integration points per a second for ode solver.
 	 * @return
 	 */
 	template <typename S>
@@ -312,13 +334,13 @@ private:
 
 	/**
 	 * Integrate times specialized function
-	 * @tparam S
-	 * @param [in] initialState
-	 * @param [in] timeTrajectory
-	 * @param [out] stateTrajectory
-	 * @param [in] dtInitial
-	 * @param [in] AbsTol
-	 * @param [in] RelTol
+	 * @tparam S: stepper type.
+	 * @param [in] initialState: Initial state.
+	 * @param [in] timeTrajectory: Input time stamp trajectory.
+	 * @param [out] stateTrajectory: Output state trajectory.
+	 * @param [in] dtInitial: Initial time step.
+	 * @param [in] AbsTol: The absolue tolerance error for ode solver.
+	 * @param [in] RelTol: The relative tolerance error for ode solver.
 	 * @return
 	 */
 	template <typename S = Stepper>
@@ -345,13 +367,13 @@ private:
 
 	/**
 	 * Integrate times specialized function
-	 * @tparam S
-	 * @param [in] initialState
-	 * @param [in] timeTrajectory
-	 * @param [out] stateTrajectory
-	 * @param [in] dtInitial
-	 * @param [in] AbsTol
-	 * @param [in] RelTol
+	 * @tparam S: stepper type.
+	 * @param [in] initialState: Initial state.
+	 * @param [in] timeTrajectory: Input time stamp trajectory.
+	 * @param [out] stateTrajectory: Output state trajectory.
+	 * @param [in] dtInitial: Initial time step.
+	 * @param [in] AbsTol: The absolue tolerance error for ode solver.
+	 * @param [in] RelTol: The relative tolerance error for ode solver.
 	 * @return
 	 */
 	template <typename S = Stepper>
@@ -378,10 +400,10 @@ private:
 
 	/**
 	 * Functionality to reset stepper. If we integrate with ODE45, we don't need to reset the stepper, hence specialize empty function
-	 * @tparam S
-	 * @param [in] initialState
-	 * @param [in] t
-	 * @param [in] dt
+	 * @tparam S: stepper type.
+	 * @param [in] initialState: Initial state.
+	 * @param [in] t: Time.
+	 * @param [in] dt: Time step.
 	 * @return
 	 */
 	template <typename S = Stepper>
@@ -395,8 +417,8 @@ private:
 	 * Functionality to reset stepper. If we integrate with some other method, eg. adams_bashforth, we need to reset the stepper, hence specialize with initialize call
 	 * @tparam S
 	 * @param [in] initialState
-	 * @param [in] t
-	 * @param [in] dt
+	 * @param [in] t: Time.
+	 * @param [in] dt: Time step.
 	 * @return
 	 */
 	template <typename S = Stepper>
@@ -414,26 +436,44 @@ private:
 
 
 /**
- * Defining the integrators
+ * Euler integrator.
  */
 template <int STATE_DIM>
 using IntegratorEuler = Integrator<STATE_DIM, euler_t<STATE_DIM>>;
 
+/**
+ * Modified midpoint integrator.
+ */
 template <int STATE_DIM>
 using IntegratorModifiedMidpoint = Integrator<STATE_DIM, modified_midpoint_t<STATE_DIM>>;
 
+/**
+ * RK4 integrator.
+ */
 template <int STATE_DIM>
 using IntegratorRK4 = Integrator<STATE_DIM, runge_kutta_4_t<STATE_DIM>>;
 
+/**
+ * RK5 variable integrator.
+ */
 template <int STATE_DIM>
 using IntegratorRK5Variable = Integrator<STATE_DIM, dense_runge_kutta5_t<STATE_DIM>>;
 
+/**
+ * ode45 integrator.
+ */
 template <int STATE_DIM>
 using ODE45 = Integrator<STATE_DIM, runge_kutta_dopri5_t<STATE_DIM>>;
 
+/**
+ * Adams-Bashforth integrator.
+ */
 template <int STATE_DIM, size_t STEPS>
 using IntegratorAdamsBashforth = Integrator < STATE_DIM, adams_bashforth_uncontrolled_t<STATE_DIM, STEPS>>;
 
+/**
+ * Bulirsch-Stoer integrator.
+ */
 template <int STATE_DIM>
 using IntegratorBulirschStoer = Integrator < STATE_DIM, bulirsch_stoer_t<STATE_DIM>>;
 

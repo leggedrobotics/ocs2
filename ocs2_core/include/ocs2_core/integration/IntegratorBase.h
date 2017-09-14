@@ -18,8 +18,9 @@
 namespace ocs2{
 
 /**
- * Integrator Base Class
- * @tparam STATE_DIM
+ * The interface class for integration of autonomous systems.
+ *
+ * @tparam STATE_DIM: Dimension of the state space.
  */
 template <int STATE_DIM>
 class IntegratorBase
@@ -31,6 +32,11 @@ public:
 	typedef Eigen::Matrix<double, STATE_DIM, 1> State_T;
 	typedef std::vector<State_T, Eigen::aligned_allocator<State_T> > StateTrajectory_T;
 
+	/**
+	 * Constructor
+	 * @param [in] system: The system dynamics.
+	 * @param [in] eventHandler: The integration event function.
+	 */
 	IntegratorBase(
 			const std::shared_ptr<SystemBase<STATE_DIM> >& system,
 			const std::shared_ptr<EventHandler<STATE_DIM> >& eventHandler = nullptr) :
@@ -39,6 +45,9 @@ public:
 				eventHandler_(eventHandler)
 	{}
 
+	/**
+	 * Default destructor
+	 */
 	virtual ~IntegratorBase() {}
 
 	/**
@@ -48,27 +57,15 @@ public:
 		observer_.reset();
 	}
 
-	// Equidistant integration based on number of time steps and step length
-	//	virtual bool integrate_n_steps(
-	//		const State_T& initialState,
-	//		const double& startTime,
-	//		size_t numSteps,
-	//		double dt,
-	//		StateTrajectory_T& stateTrajectory,
-	//		TimeTrajectory_T& timeTrajectory
-	//	) = 0;
-
-	// Equidistant integration based on initial and final time as well as step length
-	// = integrate_const
 	/**
 	 * Equidistant integration based on initial and final time as well as step length
-	 * @param [in] initialState
-	 * @param [in] startTime
-	 * @param [in] finalTime
-	 * @param [in] dt
-	 * @param [out] stateTrajectory
-	 * @param [out] timeTrajectory
-	 * @return boolean
+	 * @param [in] initialState: Initial state.
+	 * @param [in] startTime: Initial time.
+	 * @param [in] finalTime: Final time.
+	 * @param [in] dt: Time step.
+	 * @param [out] stateTrajectory: Output state trajectory.
+	 * @param [out] timeTrajectory: Output time stamp trajectory.
+	 * @return boolean: Success flag.
 	 */
 	virtual bool integrate(
 			const State_T& initialState,
@@ -79,20 +76,18 @@ public:
 			TimeTrajectory_T& timeTrajectory
 	) = 0;
 
-	// Adaptive time integration based on start time and final time
-	// = integrate adaptive
 	/**
 	 * Adaptive time integration based on start time and final time
-	 * @param [in] initialState
-	 * @param [in] startTime
-	 * @param [in] finalTime
-	 * @param [out] stateTrajectory
-	 * @param [out] timeTrajectory
-	 * @param [in] dtInitial
-	 * @param [in] AbsTol
-	 * @param [in] RelTol
-	 * @param [in] maxNumSteps
-	 * @return boolean
+	 * @param [in] initialState: Initial state.
+	 * @param [in] startTime: Initial time.
+	 * @param [in] finalTime: Final time.
+	 * @param [out] stateTrajectory: Output state trajectory.
+	 * @param [out] timeTrajectory: Output time stamp trajectory.
+	 * @param [in] dtInitial: Initial time step.
+	 * @param [in] AbsTol: The absolue tolerance error for ode solver.
+	 * @param [in] RelTol: The relative tolerance error for ode solver.
+	 * @param [in] maxNumSteps: The maximum number of integration points per a second for ode solver.
+	 * @return boolean: Success flag.
 	 */
 	virtual bool integrate(
 			const State_T& initialState,
@@ -106,17 +101,15 @@ public:
 			size_t maxNumSteps = std::numeric_limits<size_t>::max()
 	) = 0;
 
-	// Output integration based on a given time trajectory
-	// = integrate times
 	/**
 	 * Output integration based on a given time trajectory
-	 * @param [in] initialState
-	 * @param [in] timeTrajectory
-	 * @param [out] stateTrajectory
-	 * @param [in] dtInitial
-	 * @param [in] AbsTol
-	 * @param [in] RelTol
-	 * @return boolean
+	 * @param [in] initialState: Initial state.
+	 * @param [in] timeTrajectory: Input time stamp trajectory.
+	 * @param [out] stateTrajectory: Output state trajectory.
+	 * @param [in] dtInitial: Initial time step.
+	 * @param [in] AbsTol: The absolue tolerance error for ode solver.
+	 * @param [in] RelTol: The relative tolerance error for ode solver.
+	 * @return boolean: Success flag.
 	 */
 	virtual bool integrate(
 			const State_T& initialState,
@@ -131,9 +124,10 @@ public:
 protected:
 
 	/**
-	 * Retrieve trajectories from observer
-	 * @param [out] stateTrajectory
-	 * @param [out] timeTrajectory
+	 * Retrieve trajectories from observer.
+	 *
+	 * @param [out] stateTrajectory: Output state trajectory.
+	 * @param [out] timeTrajectory: Output time stamp trajectory.
 	 */
 	void retrieveTrajectoriesFromObserver(StateTrajectory_T& stateTrajectory, TimeTrajectory_T& timeTrajectory)
 	{
@@ -142,17 +136,28 @@ protected:
 	}
 
 	/**
-	 * Retrieves state trajectory from observer
-	 * @param [out] stateTrajectory
+	 * Retrieves state trajectory from observer.
+	 *
+	 * @param [out] stateTrajectory: Output state trajectory.
 	 */
 	void retrieveStateTrajectoryFromObserver(StateTrajectory_T& stateTrajectory)
 	{
 		stateTrajectory.swap(observer_.stateTrajectory_);
 	}
 
+	/**
+	 * Integrator observer for saving the variable of interest.
+	 */
 	Observer<STATE_DIM> observer_;
 
+	/**
+	 * System dynamics used by integrator.
+	 */
 	std::shared_ptr<SystemBase<STATE_DIM> > system_;
+
+	/**
+	 * Event handler used by integrator.
+	 */
 	std::shared_ptr<EventHandler<STATE_DIM> > eventHandler_;
 };
 

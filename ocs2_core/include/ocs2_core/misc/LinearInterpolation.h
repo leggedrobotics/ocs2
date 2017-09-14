@@ -19,8 +19,8 @@ namespace ocs2{
 
 /**
  * Linear Interpolation Class
- * @tparam Data_T
- * @tparam Alloc
+ * @tparam Data_T: Date type
+ * @tparam Alloc: Specialized allocation class
  */
 template <typename Data_T, class Alloc=std::allocator<Data_T> >
 class LinearInterpolation
@@ -29,7 +29,7 @@ public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
 	/**
-	 * Constructor
+	 * Default constructor.
 	 */
 	LinearInterpolation()
 
@@ -42,8 +42,9 @@ public:
 
 	/**
 	 * Constructor
-	 * @param [in] timeStampPtr
-	 * @param [in] dataPtr
+	 *
+	 * @param [in] timeStampPtr: A pointer to time stamp.
+	 * @param [in] dataPtr: A pointer to the data.
 	 */
 	LinearInterpolation(const std::vector<double>* timeStampPtr, const std::vector<Data_T,Alloc>* dataPtr)
 
@@ -58,7 +59,8 @@ public:
 	}
 
 	/**
-	 * Constructor
+	 * Copy constructor
+	 *
 	 * @param [in] arg
 	 */
 	LinearInterpolation(const LinearInterpolation& arg):
@@ -78,8 +80,9 @@ public:
 	}
 
     /**
-     * Sets the time stamp
-     * @param [in] timeStampPtr
+     * Sets the time stamp.
+     *
+     * @param [in] timeStampPtr: A pointer to time stamp.
      */
 	void setTimeStamp(const std::vector<double>* timeStampPtr)	{
 		reset();
@@ -90,7 +93,8 @@ public:
 
     /**
      * Sets data
-     * @param [in] dataPtr
+     *
+     * @param [in] dataPtr: A pointer to the data.
      */
 	void setData(const std::vector<Data_T,Alloc>* dataPtr)	{
 		reset();
@@ -107,10 +111,12 @@ public:
 	}
 
     /**
-     * Interpolate function
-     * @param [in] enquiryTime
-     * @param [out] enquiryData
-     * @param [in] greatestLessTimeStampIndex
+     * Interpolate function.
+     *
+     * @param [in]  enquiryTime: The enquiry time for interpolation.
+     * @param [out] enquiryData: The value of the trajectory at the requested time.
+     * @param [in]  greatestLessTimeStampIndex (optional): The greatest smaller time stamp index. If provided, the interpolation will skip
+     * the search scheme and readily calculates the output.
      */
 	void interpolate(const double& enquiryTime, Data_T& enquiryData, int greatestLessTimeStampIndex = -1) {
 
@@ -146,13 +152,18 @@ public:
 		enquiryData = alpha*dataPtr_->at(index_) + (1-alpha)*dataPtr_->at(index_+1);
 	}
 
+	/**
+	 * Returns the greatest smaller time stamp index found in the last interpolation function call.
+	 * @return The greatest smaller time stamp index.
+	 */
 	size_t getGreatestLessTimeStampIndex() { return index_; }
 
 protected:
     /**
-     * Find function
-     * @param enquiryTime
-     * @return
+     * Finds the index of the greatest smaller time stamp index for the enquiry time.
+     *
+     * @param [in] enquiryTime: The enquiry time for interpolation.
+     * @return The greatest smaller time stamp index.
      */
 	size_t find(const double& enquiryTime) {
 
@@ -187,10 +198,6 @@ protected:
 	void checkTimeStamp() {
 		if (timeStampPtr_==NULL)  	throw std::runtime_error("timeStampPtr is not initialized.");
 		if (timeStampSize_==0)  	throw std::runtime_error("LinearInterpolation.h : LinearInterpolation is not initialized.");
-	}
-
-	void checkData() {
-
 	}
 
 private:

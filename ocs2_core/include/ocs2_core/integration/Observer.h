@@ -1,8 +1,8 @@
 /*
  * Observer.h
  *
- *  Created on: 18.06.2015
- *      Author: neunertm
+ *  Created on: 17.12.2015
+ *      Author: farbodf
  */
 
 #ifndef OCS2_OBSERVER_H_
@@ -54,9 +54,10 @@ public:
 	}
 
     /**
+     * Sets the maximum number of integration points per a second for ode solvers.
      *
-     * @param [in] maxNumSteps
-     * @param [in] system
+     * @param [in] maxNumSteps: maximum number of integration points
+     * @param [in] system: A pointer to system.
      */
 	void setMaxNumSteps(size_t maxNumSteps, const std::shared_ptr<SystemBase<STATE_DIM> >& system) {
 		maxNumSteps_ = maxNumSteps;
@@ -64,9 +65,9 @@ public:
 	}
 
     /**
-     * Observe function
-     * @param [in] x
-     * @param [in] t
+     * Observe function to retrieve the variable of interest.
+     * @param [in] x: Current state.
+     * @param [in] t: Current time.
      */
 	void observe(const State_T& x, const double& t)
 	{

@@ -13,8 +13,9 @@
 namespace ocs2{
 
 /**
- * Kill Integration Event Handler Class
- * @tparam STATE_DIM
+ * Specialized event handler for terminating Integration.
+ *
+ * @tparam STATE_DIM: Dimension of the state space.
  */
 template <size_t STATE_DIM>
 class KillIntegrationEventHandler : public EventHandler<STATE_DIM>
@@ -24,27 +25,35 @@ public:
 
 	typedef Eigen::Matrix<double,STATE_DIM,1> State_T;
 
+	/**
+	 * Default constructor
+	 */
 	KillIntegrationEventHandler():
 		killIntegration_(false)
 	{}
 
+	/**
+	 * Default destructor
+	 */
 	~KillIntegrationEventHandler() {}
 
-    /**
-     * Checks event
-     * @param [in] state
-     * @param [in] t
-     * @return
-     */
+	/**
+	 * Checks if an event is activated.
+	 *
+	 * @param [in] state: Current state vector.
+	 * @param [in] time: Current time.
+	 * @return
+	 */
 	bool checkEvent(const State_T& state, const double& t) override {
 		return killIntegration_;
 	}
 
-    /**
-     * Handles event
-     * @param [in] state
-     * @param [in] t
-     */
+	/**
+	 * Stop integration.
+	 *
+	 * @param [in] state: Current state vector.
+	 * @param [in] time: Current time.
+	 */
 	void handleEvent(const State_T& state, const double& t) override {
 
 		/* throw an exception which stops the integration */
@@ -52,14 +61,14 @@ public:
 	}
 
     /**
-     * Sets event
+     * Activate KillIntegrationEventHandler.
      */
 	void setEvent() {
 		killIntegration_ = true;
 	}
 
     /**
-     * Resets event
+     * Deactivate KillIntegrationEventHandler.
      */
 	void resetEvent() {
 		killIntegration_ = false;

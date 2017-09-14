@@ -13,9 +13,10 @@
 namespace ocs2{
 
 /**
- * Quadratic Cost Function
- * @tparam STATE_DIM
- * @tparam CONTROL_DIM
+ * Quadratic Cost Function.
+ *
+ * @tparam STATE_DIM: Dimension of the state space.
+ * @tparam INPUT_DIM: Dimension of the control input space.
  */
 template <size_t STATE_DIM, size_t CONTROL_DIM>
 class QuadraticCostFunction : public CostFunctionBaseOCS2< STATE_DIM, CONTROL_DIM >
@@ -57,10 +58,11 @@ public:
 	virtual ~QuadraticCostFunction() {}
 
 	/**
-	 * Sets current state and control
-	 * @param [in] t
-	 * @param [in] x
-	 * @param [in] u
+	 * Sets the current time, state, and control input
+	 *
+	 * @param [in] t: Current time
+	 * @param [in] x: Current state vector
+	 * @param [in] u: Current input vector
 	 */
 	virtual void setCurrentStateAndControl(const scalar_t& t, const state_vector_t& x, const control_vector_t& u) {
 
@@ -69,10 +71,11 @@ public:
 		u_deviation_ = u - u_nominal_;
 	}
 
-	/**
-	 * Evaluates the cost
-	 * @param [out] cost
-	 */
+    /**
+     * Evaluates the cost.
+     *
+     * @param [out] L: The cost value.
+     */
 	void evaluate(scalar_t& cost) 	{
 
 		scalar_t costQ = 0.5 * x_deviation_.transpose() * Q_ * x_deviation_;
@@ -80,78 +83,86 @@ public:
 		cost = costQ + costR;
 	}
 
-	/**
-	 * Gets the state derivative cost
-	 * @param [out] cost
-	 */
+    /**
+     * Gets the state derivative.
+     *
+     * @param [out] dLdx: First order cost derivative with respect to state vector.
+     */
 	void stateDerivative(state_vector_t& cost)  {
 		cost =  Q_ * x_deviation_;
 	}
 
-	/**
-	 * Gets state second order derivative
-	 * @param [out] cost
-	 */
+    /**
+     * Gets state second order derivative.
+     *
+     * @param [out] dLdxx: Second order cost derivative with respect to state vector.
+     */
 	void stateSecondDerivative(state_matrix_t& cost)  {
 		cost = Q_;
 	}
 
-	/**
-	 * Gets control derivative
-	 * @param [out] cost
-	 */
+    /**
+     * Gets control derivative.
+     *
+     * @param [out] dLdu: First order cost derivative with respect to input vector.
+     */
 	void controlDerivative(control_vector_t& cost)	{
 		cost = R_ * u_deviation_;
 	}
 
-	/**
-	 * Gets control second derivative
-	 * @param [out] cost
-	 */
+    /**
+     * Gets control second derivative.
+     *
+     * @param [out] dLduu: Second order cost derivative with respect to input vector.
+     */
 	void controlSecondDerivative(control_matrix_t& cost)	{
 		cost = R_;
 	}
 
-	/**
-	 * Gets the state control derivative
-	 * @param [out] cost
-	 */
+    /**
+     * Gets the state, input derivative.
+     *
+     * @param [out] dLdxu: Second order cost derivative with respect to state and input vector.
+     */
 	void stateControlDerivative(control_feedback_t& cost)	{
 		cost = control_feedback_t::Zero();
 	}
 
-	/**
-	 * Gets the terminal cost
-	 * @param [out] cost
-	 */
+    /**
+     * Gets the terminal cost.
+     *
+     * @param [out] Phi: The final cost value
+     */
 	void terminalCost(scalar_t& cost)	{
 
 		state_vector_t x_deviation_final = this->x_ - x_final_;
 		cost = 0.5 * x_deviation_final.transpose() * Q_final_ * x_deviation_final;
 	}
 
-	/**
-	 * Gets the terminal cost state derivative
-	 * @param [out] cost
-	 */
+    /**
+     * Gets the terminal cost state derivative.
+     *
+     * @param [out] dPhidx: First order final cost derivative with respect to state vector.
+     */
 	void terminalCostStateDerivative(state_vector_t& cost)	{
 
 		state_vector_t x_deviation_final = this->x_ - x_final_;
 		cost = Q_final_ * x_deviation_final;
 	}
 
-	/**
-	 * Gets the terminal cost state second derivative
-	 * @param [out] cost
-	 */
+    /**
+     * Gets the terminal cost state second derivative
+     *
+     * @param [out] dPhidxx: Second order final cost derivative with respect to state vector.
+     */
 	void terminalCostStateSecondDerivative(state_matrix_t& cost)	{
 		cost = Q_final_;
 	}
 
-	/**
-	 * Returns pointer to CostFunctionOCS2
-	 * @return
-	 */
+    /**
+     * Returns pointer to CostFunctionOCS2 class.
+     * @return a shared_ptr pointer.
+     */
 	std::shared_ptr<CostFunctionBase<STATE_DIM, CONTROL_DIM> > clone() const {
 		typedef QuadraticCostFunction<STATE_DIM, CONTROL_DIM> quadratic_cost_t;
 		return std::allocate_shared<quadratic_cost_t, Eigen::aligned_allocator<quadratic_cost_t>>(

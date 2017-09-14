@@ -12,6 +12,11 @@
 
 namespace ocs2{
 
+/**
+ * LTI system class for linear defined as \f$ dx/dt = G_m*x(t) + G_v \f$.
+ *
+ * @tparam STATE_DIM: Dimension of the state space.
+ */
 template <int STATE_DIM>
 class LTI_Equations : public SystemBase<STATE_DIM>
 {
@@ -24,11 +29,23 @@ public:
 	LTI_Equations() {}
 	~LTI_Equations() {}
 
+	/**
+	 * Set the LTI system coefficients, \f$ dx/dt = G_m*x(t) + G_v \f$.
+	 * @param [in] Gm: G_m matrix.
+	 * @param [in] Gv: G_v vector.
+	 */
 	void setData(const state_matrix_t& Gm, const state_vector_t& Gv) {
 		Gm_ = Gm;
 		Gv_ = Gv;
 	}
 
+	/**
+	 * Computes the LTI system dynamics.
+	 *
+	 * @param [in] t: Current time.
+	 * @param [in] x: Current state.
+	 * @param [out] dxdt: Current state time derivative
+	 */
 	void computeDerivative(const double& z, const state_vector_t& x, state_vector_t& dx) {
 		// dx = Gm x + Gv
 		dx = Gm_*x + Gv_;

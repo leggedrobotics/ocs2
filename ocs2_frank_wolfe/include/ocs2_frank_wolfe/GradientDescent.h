@@ -48,7 +48,8 @@ public:
 
 /**
  * This class implemets the Frank-Wolfe algorithm which is an iterative first-order gradient descent
- * algorithm. For more discussion on this algorithm, the reader should refer to [...].
+ * algorithm. For more discussion on this algorithm, the reader should refer to 
+ * \cite jaggi2013revisiting
  */
 class GradientDescent
 {

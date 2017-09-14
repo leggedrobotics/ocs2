@@ -37,7 +37,7 @@ public:
 	/** This value determines the minimum step size for the line search scheme.*/
 	double minLearningRate_ = 0.05;
 	/**
-	 * This value determines the the line search scheme to be used. \n
+	 * This value determines the line search scheme to be used. \n
 	 * - \b Ascending: The step size eventually increases from the minimum value to the maximum. \n
 	 * - \b Descending: The step size eventually decreases from the minimum value to the maximum.
 	 * */
@@ -47,8 +47,8 @@ public:
 };
 
 /**
- * This class implemets the Frank-Wolfe algorithm which is an iterative first-order gradient descent
- * algorithm. For more discussion on this algorithm, the reader should refer to 
+ * This class implements the Frank-Wolfe algorithm which is an iterative first-order gradient descent
+ * algorithm. For more discussion on this algorithm, the reader should refer to
  * \cite jaggi2013revisiting
  */
 class GradientDescent
@@ -90,7 +90,7 @@ public:
 	void getParameters(Eigen::MatrixBase<Derived>& parameters) const { parameters = parameters_; }
 
 	/**
-	 * This method runt the Frank-Wolfw algorithm which the initial parameter \f$\theta_0\f$.
+	 * This method runt the Frank-Wolfe algorithm which the initial parameter \f$\theta_0\f$.
 	 *
 	 * @param [in] initParameters: The initial parameter vector (\f$\theta_0\f$)
 	 */
@@ -161,7 +161,7 @@ protected:
 	 * from the minimum value to the maximum.
 	 *
 	 * @param [in] gradient: The current gradient.
-	 * @param [out] learningRateStar: The best learnig rate.
+	 * @param [out] learningRateStar: The best learning rate.
 	 */
 	void ascendingLineSearch(const Eigen::VectorXd& gradient, double& learningRateStar);
 
@@ -170,7 +170,7 @@ protected:
 	 * from the maximum value to the minimum.
 	 *
 	 * @param [in] gradient: The current gradient.
-	 * @param [out] learningRateStar: The best learnig rate.
+	 * @param [out] learningRateStar: The best learning rate.
 	 */
 	void decreasingLineSearch(const Eigen::VectorXd& gradient, double& learningRateStar);
 

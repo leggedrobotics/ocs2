@@ -97,7 +97,7 @@ SHOW_FILES             = YES
 SHOW_NAMESPACES        = NO
 FILE_VERSION_FILTER    =
 LAYOUT_FILE            = DoxygenLayout.xml
-CITE_BIB_FILES         =
+CITE_BIB_FILES         = ../../ocs2_doc/doc/cite.bib
 #---------------------------------------------------------------------------
 #- Configuration options related to warning and progress messages
 #---------------------------------------------------------------------------

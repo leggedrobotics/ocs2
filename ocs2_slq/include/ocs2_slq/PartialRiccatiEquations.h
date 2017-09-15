@@ -62,7 +62,7 @@ public:
 	 * @param [in] Sm: \f$ S_m \f$
 	 * @param [in] Sv: \f$ S_v \f$
 	 * @param [in] s: \f$ s \f$
-	 * @param [out] allSs: Single vector constructed by concatinating Sm, Sv and s.
+	 * @param [out] allSs: Single vector constructed by concatenating Sm, Sv and s.
 	 */
 	static void convert2Vector(const state_matrix_t& Sm, const state_vector_t& Sv, const eigen_scalar_t& s,
 			Eigen::Matrix<double,S_DIM_,1>& allSs)  {
@@ -74,7 +74,7 @@ public:
 
     /**
     * Transcribes the stacked vector allSs into a symmetric matrix, Sm, a vector, Sv and a single scalar, s.
-    * @param [in] allSs: Single vector constructed by concatinating Sm, Sv and s.
+    * @param [in] allSs: Single vector constructed by concatenating Sm, Sv and s.
 	 * @param [out] Sm: \f$ S_m \f$
 	 * @param [out] Sv: \f$ S_v \f$
 	 * @param [out] s: \f$ s \f$
@@ -123,7 +123,7 @@ public:
 	 * Computes derivatives.
 	 *
 	 * @param [in] t: Time.
-	 * @param [in] state: Single vector constructed by concatinating Sm, Sv and s.
+	 * @param [in] state: Single vector constructed by concatenating Sm, Sv and s.
 	 * @param [out] derivative: d(state)/dt.
 	 */
 	void computeDerivative(const scalar_t& t,

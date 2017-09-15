@@ -73,8 +73,8 @@ public:
 	 * Constructor
 	 *
 	 * @param [in] subsystemDynamicsPtr: Array of system dynamics and constraints for system's subsystems.
-	 * @param [in] subsystemDerivativesPtr: Array of system dynamics and constraints dervatives for system's subsystems.
-	 * @param [in] subsystemCostFunctionsPtr: Array of cost function and its dervatives for system's subsystems.
+	 * @param [in] subsystemDerivativesPtr: Array of system dynamics and constraints derivatives for system's subsystems.
+	 * @param [in] subsystemCostFunctionsPtr: Array of cost function and its derivatives for system's subsystems.
 	 * @param [in] stateOperatingPoints: The state operating points for system's subsystems which will be used for initialization of LQ.
 	 * @param [in] inputOperatingPoints: The input operating points for system's subsystems which will be used for initialization of LQ.
 	 */
@@ -107,7 +107,7 @@ public:
 
 	/**
 	 * Forward integrate the system dynamics with given controller. It uses the given control policies and initial state,
-	 * to integrate the system dyanmics in time period [initTime, finalTime].
+	 * to integrate the system dynamics in time period [initTime, finalTime].
 	 *
 	 * @param [in] initState: Initial state.
 	 * @param [in] controllersStock: Array of control policies.
@@ -124,10 +124,10 @@ public:
 	/**
 	 * Calculates cost of a rollout.
 	 *
-	 * @param [in] timeTrajectoriesStock: Array of trajectories containing the time trajectory stamp of a rollout.
-	 * @param [in] stateTrajectoriesStock: Array of trajectories containing the state trajectory of a rollout.
-	 * @param [in] controlTrajectoriesStock: Array of trajectories containing the control input trajectory of a rollout.
-	 * @param [out] totalCost: The total cost of the rollout.
+	 * @param [in] timeTrajectoriesStock: Array of trajectories containing the time trajectory stamp of a roll-out.
+	 * @param [in] stateTrajectoriesStock: Array of trajectories containing the state trajectory of a roll-out.
+	 * @param [in] controlTrajectoriesStock: Array of trajectories containing the control input trajectory of a roll-out.
+	 * @param [out] totalCost: The total cost of the roll-out.
 	 */
 	void rolloutCost(const std::vector<scalar_array_t>& timeTrajectoriesStock,
 			const state_vector_array2_t& stateTrajectoriesStock,
@@ -153,11 +153,11 @@ public:
 	/**
 	 * The main routine of LQ which runs GLQP for a given state, time, subsystem arrangement, and switching times.
 
-	 * @param [in] systemStockIndexes: The indexes of the susbsystms in subsystemDynamicsPtr, subsystemDerivativesPtr, or subsystemCostFunctionsPtr.
+	 * @param [in] systemStockIndexes: The indexes of the subsystems in subsystemDynamicsPtr, subsystemDerivativesPtr, or subsystemCostFunctionsPtr.
 	 * @param [in] switchingTimes: The switching times between subsystems.
 	 * @param [in] learningRate: Learning rate for the line search.
-	 * @param [in] desiredTimeTrajectoriesStock: The time stamp tarjectory for each subsystem's cost.
-	 * @param [in] desiredStateTrajectoriesStock: The state tarjectory for each subsystem's cost.
+	 * @param [in] desiredTimeTrajectoriesStock: The time stamp trajectory for each subsystem's cost.
+	 * @param [in] desiredStateTrajectoriesStock: The state trajectory for each subsystem's cost.
 	 */
 	void run(const std::vector<size_t>& systemStockIndexes,
 		const std::vector<scalar_t>& switchingTimes, const scalar_t& learningRate=1.0,
@@ -167,8 +167,8 @@ public:
 	/**
 	 * Sets nominal state of subsystem costs.
 	 *
-	 * @param [in] timeTrajectoryStock: The time stamp tarjectory for each subsystem's cost.
-	 * @param [in] stateTrajectoryStock: The state tarjectory for each subsystem's cost.
+	 * @param [in] timeTrajectoryStock: The time stamp trajectory for each subsystem's cost.
+	 * @param [in] stateTrajectoryStock: The state trajectory for each subsystem's cost.
 	 */
 	virtual void setCostNominalStates(const std::vector<scalar_array_t>& timeTrajectoryStock,
 			const state_vector_array2_t& stateTrajectoryStock);

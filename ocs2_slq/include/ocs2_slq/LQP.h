@@ -67,11 +67,11 @@ public:
 	/**
 	 *
 	 * @param [in] subsystemDynamicsPtr: Array of system dynamics and constraints for system's subsystems.
-	 * @param [in] subsystemDerivativesPtr: Array of system dynamics and constraints dervatives for system's subsystems.
-	 * @param [in] subsystemCostFunctionsPtr: Array of cost function and its dervatives for system's subsystems.
+	 * @param [in] subsystemDerivativesPtr: Array of system dynamics and constraints derivatives for system's subsystems.
+	 * @param [in] subsystemCostFunctionsPtr: Array of cost function and its derivatives for system's subsystems.
 	 * @param [in] stateOperatingPoints: The state operating points for system's subsystems which will be used for initialization of LQ.
 	 * @param [in] inputOperatingPoints: The input operating points for system's subsystems which will be used for initialization of LQ.
-	 * @param [in] systemStockIndexes: The indexes of the susbsystms in subsystemDynamicsPtr, subsystemDerivativesPtr, or subsystemCostFunctionsPtr.
+	 * @param [in] systemStockIndexes: The indexes of the subsystems in subsystemDynamicsPtr, subsystemDerivativesPtr, or subsystemCostFunctionsPtr.
 	 * @param [in] options: Structure containing the settings for the LQ algorithm.
 	 * @param [in] runAsInitializer: Flag to determine to run the algorithm as an initializer.
 	 */
@@ -142,7 +142,7 @@ public:
 
 	/**
 	 * Forward integrate the system dynamics with given controller. It uses the given control policies and initial state,
-	 * to integrate the system dyanmics in time period [initTime, finalTime].
+	 * to integrate the system dynamics in time period [initTime, finalTime].
 	 *
 	 * @param [in] initState: Initial state.
 	 * @param [in] controllersStock: Array of control policies.
@@ -159,10 +159,10 @@ public:
 	/**
 	 * Calculates cost of a rollout.
 	 *
-	 * @param [in] timeTrajectoriesStock: Array of trajectories containing the time trajectory stamp of a rollout.
-	 * @param [in] stateTrajectoriesStock: Array of trajectories containing the state trajectory of a rollout.
-	 * @param [in] inputTrajectoriesStock: Array of trajectories containing the control input trajectory of a rollout.
-	 * @param [out] totalCost: The total cost of the rollout.
+	 * @param [in] timeTrajectoriesStock: Array of trajectories containing the time trajectory stamp of a roll-out.
+	 * @param [in] stateTrajectoriesStock: Array of trajectories containing the state trajectory of a roll-out.
+	 * @param [in] inputTrajectoriesStock: Array of trajectories containing the control input trajectory of a roll-out.
+	 * @param [out] totalCost: The total cost of the roll-out.
 	 */
 	void rolloutCost(const std::vector<scalar_array_t>& timeTrajectoriesStock,
 			const state_vector_array2_t& stateTrajectoriesStock,
@@ -207,7 +207,7 @@ protected:
 	 * Makes the matrix PSD.
 	 * @tparam Derived type.
 	 * @param [out] squareMatrix: The matrix to become PSD.
-	 * @return boolean: 
+	 * @return boolean:
 	 */
 	template <typename Derived>
 	bool makePSD(Eigen::MatrixBase<Derived>& squareMatrix);

@@ -116,8 +116,8 @@ public:
 	 * Constructor
 	 *
 	 * @param [in] subsystemDynamicsPtr: Array of system dynamics and constraints for system's subsystems.
-	 * @param [in] subsystemDerivativesPtr: Array of system dynamics and constraints dervatives for system's subsystems.
-	 * @param [in] subsystemCostFunctionsPtr: Array of cost function and its dervatives for system's subsystems.
+	 * @param [in] subsystemDerivativesPtr: Array of system dynamics and constraints derivatives for system's subsystems.
+	 * @param [in] subsystemCostFunctionsPtr: Array of cost function and its derivatives for system's subsystems.
 	 * @param [in] options: Structure containing the settings for the SLQ algorithm.
 	 * @param [in] stateOperatingPoints: The state operating points for system's subsystems which will be used for initialization of SLQ.
 	 * @param [in] inputOperatingPoints: The input operating points for system's subsystems which will be used for initialization of SLQ.
@@ -173,8 +173,8 @@ public:
 	virtual ~SLQP_BASE() {}
 
 	/**
-	 * The interface class for performaing rollout. It uses the given control policies and initial state,
-	 * to integrate the system dyanmics and calculate the costraints in time period [initTime, finalTime].
+	 * The interface class for performing roll-out. It uses the given control policies and initial state,
+	 * to integrate the system dynamics and calculate the constraints in time period [initTime, finalTime].
 	 *
 	 * @param [in] initTime: Initial time.
 	 * @param [in] initState: Initial state.
@@ -184,7 +184,7 @@ public:
 	 * @param [out] stateTrajectoriesStock: Array of trajectories containing the output state trajectory.
 	 * @param [out] inputTrajectoriesStock: Array of trajectories containing the output control input trajectory.
 	 * @param [out] nc1TrajectoriesStock: Array of trajectories containing the number of the active state-input constraints.
-	 * @param [out] EvTrajectoryStock: Array of trajectories containing the value of the state-input constraints (if the rollout is constrained the value is
+	 * @param [out] EvTrajectoryStock: Array of trajectories containing the value of the state-input constraints (if the roll-out is constrained the value is
 	 * always zero otherwise it is nonzero).
 	 * @param [out] nc2TrajectoriesStock: Array of trajectories containing the number of the active state-only constraints.
 	 * @param [out] HvTrajectoryStock: Array of trajectories containing the value of the state-only constraints.
@@ -206,8 +206,8 @@ public:
 			constraint2_vector_array_t& HvFinalStock) = 0;
 
 	/**
-	 * The interface class for performaing rollout. It uses the given control policies and initial state,
-	 * to integrate the system dyanmics in time period [initTime, finalTime].
+	 * The interface class for performing roll-out. It uses the given control policies and initial state,
+	 * to integrate the system dynamics in time period [initTime, finalTime].
 	 *
 	 * @param [in] initTime: Initial time.
 	 * @param [in] initState: Initial state.
@@ -226,8 +226,8 @@ public:
 			control_vector_array2_t& inputTrajectoriesStock) = 0;
 
 	/**
-	 * The interface class for performaing rollout. It uses the given control policies and initial state,
-	 * to integrate the system dyanmics in time period [initTime, finalTime] and only return the final state.
+	 * The interface class for performing roll-out. It uses the given control policies and initial state,
+	 * to integrate the system dynamics in time period [initTime, finalTime] and only return the final state.
 	 *
 	 * @param [in] initTime: Initial time.
 	 * @param [in] initState: Initial state.
@@ -246,12 +246,12 @@ public:
 			size_t& finalActiveSubsystemIndex) = 0;
 
 	/**
-	 * Calculates cost of a rollout.
+	 * Calculates cost of a roll-out.
 	 *
-	 * @param [in] timeTrajectoriesStock: Array of trajectories containing the time trajectory stamp of a rollout.
-	 * @param [in] stateTrajectoriesStock: Array of trajectories containing the state trajectory of a rollout.
-	 * @param [in] inputTrajectoriesStock: Array of trajectories containing the control input trajectory of a rollout.
-	 * @param [out] totalCost: The total cost of the rollout.
+	 * @param [in] timeTrajectoriesStock: Array of trajectories containing the time trajectory stamp of a roll-out.
+	 * @param [in] stateTrajectoriesStock: Array of trajectories containing the state trajectory of a roll-out.
+	 * @param [in] inputTrajectoriesStock: Array of trajectories containing the control input trajectory of a roll-out.
+	 * @param [out] totalCost: The total cost of the roll-out.
 	 */
 	virtual void calculateCostFunction(const std::vector<scalar_array_t>& timeTrajectoriesStock,
 			const state_vector_array2_t& stateTrajectoriesStock,
@@ -339,11 +339,11 @@ public:
 	 * @param [in] initTime: Initial time.
 	 * @param [in] initState: Initial state.
 	 * @param [in] finalTime: Final time.
-	 * @param [in] systemStockIndexes: The indexes of the susbsystms in subsystemDynamicsPtr, subsystemDerivativesPtr, or subsystemCostFunctionsPtr.
+	 * @param [in] systemStockIndexes: The indexes of the subsystems in subsystemDynamicsPtr, subsystemDerivativesPtr, or subsystemCostFunctionsPtr.
 	 * @param [in] switchingTimes: The switching times between subsystems.
-	 * @param [in] controllersStock: Array of the initial control policies. If it is provided as a empty array, SLQ calculats internally the initial policies.
-	 * @param [in] desiredTimeTrajectoriesStock: The time stamp tarjectory for each subsystem's cost.
-	 * @param [in] desiredStateTrajectoriesStock: The state tarjectory for each subsystem's cost.
+	 * @param [in] controllersStock: Array of the initial control policies. If it is provided as a empty array, SLQ calculates internally the initial policies.
+	 * @param [in] desiredTimeTrajectoriesStock: The time stamp trajectory for each subsystem's cost.
+	 * @param [in] desiredStateTrajectoriesStock: The state trajectory for each subsystem's cost.
 	 */
 	void run(const double& initTime, const state_vector_t& initState, const double& finalTime,
 			const std::vector<size_t>& systemStockIndexes=std::vector<size_t>(),
@@ -368,7 +368,7 @@ public:
 	virtual void getValueFuntion(const scalar_t& time, const state_vector_t& state, scalar_t& valueFuntion);
 
 	/**
-	 * Gets the cost function and ISE of the constriants at the initial time.
+	 * Gets the cost function and ISE of the constraints at the initial time.
 	 *
 	 * @param [out] costFunction: cost function value
 	 * @param [out] constraintISE: constraint ISE
@@ -415,7 +415,7 @@ public:
 	}
 
 	/**
-	 * Uses Disjoint Riccati approach which effective makes the backward pass of the SLQ parallelizable.
+	 * Uses Disjoint Riccati approach which effective makes parallelization possible for the backward pass of the SLQ.
 	 *
 	 * @param [in] useDisjointRiccati: Set to true if Disjoint Riccati approach should be used.
 	 */
@@ -450,7 +450,7 @@ public:
 	 * @param [in] switchingTimes: Switching times.
 	 * @param [in] initTime: Initial time.
 	 * @param [out] controllersStock: Truncated array of the control policies.
-	 * @param [out] initActiveSubsystemIndex: Initial active susbsystems.
+	 * @param [out] initActiveSubsystemIndex: Initial active subsystems.
 	 * @param [out] deletedcontrollersStock: The deleted part of the control policies.
 	 */
 	void truncateConterller(const scalar_array_t& switchingTimes,
@@ -476,7 +476,7 @@ public:
 	/**
 	 * Gets subsystem indexes.
 	 *
-	 * @param [out] systemStockIndexes: Subsystem indees.
+	 * @param [out] systemStockIndexes: Subsystem needed.
 	 */
 	void getSubsystemIndexes(std::vector<size_t>& systemStockIndexes) const {systemStockIndexes = systemStockIndexes_;}
 
@@ -491,8 +491,8 @@ public:
 	 * Gets a nominal state of subsystem cost in the given index.
 	 *
 	 * @param [in] index: The requested index.
-	 * @param [out] timeTrajectory: The time stamp tarjectory for the requested subsystem's cost.
-	 * @param [out] stateTrajectory: The state tarjectory for the requested subsystem's cost.
+	 * @param [out] timeTrajectory: The time stamp trajectory for the requested subsystem's cost.
+	 * @param [out] stateTrajectory: The state trajectory for the requested subsystem's cost.
 	 */
 	virtual void getSingleCostNominalState(size_t index, scalar_array_t& timeTrajectory,
 			state_vector_array_t& stateTrajectory) const = 0;
@@ -500,8 +500,8 @@ public:
 	/**
 	 * Gets nominal state of subsystem costs.
 	 *
-	 * @param [out] timeTrajectoryStock: The time stamp tarjectory for each subsystem's cost.
-	 * @param [out] stateTrajectoryStock: The state tarjectory for each subsystem's cost.
+	 * @param [out] timeTrajectoryStock: The time stamp trajectory for each subsystem's cost.
+	 * @param [out] stateTrajectoryStock: The state trajectory for each subsystem's cost.
 	 */
 	void getCostNominalStates(std::vector<scalar_array_t>& timeTrajectoryStock,
 			state_vector_array2_t& stateTrajectoryStock) const;
@@ -519,8 +519,8 @@ protected:
 	 * Sets a nominal state of subsystem cost in the given index.
 	 *
 	 * @param [in] index: The requested index.
-	 * @param [in] timeTrajectory: The time stamp tarjectory for the requested subsystem's cost.
-	 * @param [in] stateTrajectory: The state tarjectory for the requested subsystem's cost.
+	 * @param [in] timeTrajectory: The time stamp trajectory for the requested subsystem's cost.
+	 * @param [in] stateTrajectory: The state trajectory for the requested subsystem's cost.
 	 */
 	virtual void setSingleCostNominalState(size_t index, const scalar_array_t& timeTrajectory,
 			const state_vector_array_t& stateTrajectory) = 0;
@@ -528,8 +528,8 @@ protected:
 	/**
 	 * Sets nominal state of subsystem costs.
 	 *
-	 * @param [in] timeTrajectoryStock: The time stamp tarjectory for each subsystem's cost.
-	 * @param [in] stateTrajectoryStock: The state tarjectory for each subsystem's cost.
+	 * @param [in] timeTrajectoryStock: The time stamp trajectory for each subsystem's cost.
+	 * @param [in] stateTrajectoryStock: The state trajectory for each subsystem's cost.
 	 */
 	void setCostNominalStates(const std::vector<scalar_array_t>& timeTrajectoryStock,
 			const state_vector_array2_t& stateTrajectoryStock);
@@ -548,7 +548,7 @@ protected:
 			const eigen_scalar_t& sFinal) = 0;
 
 	/**
-	 * Solves a set of Riccati equations for the susbsystems in the given index.
+	 * Solves a set of Riccati equations for the subsystems in the given index.
 	 *
 	 * @param [in] index: The requested index.
 	 * @param [in] learningRate: The optimal learning rate from line search scheme.
@@ -562,7 +562,7 @@ protected:
 			const eigen_scalar_t& sFinal);
 
 	/**
-	 * Solves a set of Riccati equations for the susbsystems in the given index with given time trajectory stamp.
+	 * Solves a set of Riccati equations for the subsystems in the given index with given time trajectory stamp.
 	 *
 	 * @param [in] index: The requested index.
 	 * @param [in] learningRate: The optimal learning rate from line search scheme.
@@ -578,7 +578,7 @@ protected:
 			const eigen_scalar_t& sFinal);
 
 	/**
-	 * Solves a set of erro Riccati equations for the susbsystems in the given index.
+	 * Solves a set of erro Riccati equations for the subsystems in the given index.
 	 *
 	 * @param [in] index: The requested index.
 	 * @param [in] SveFinal: The final Sve for the current Riccati equation.
@@ -612,10 +612,10 @@ protected:
 			const double& deltaTime);
 
 	/**
-	 * Computes the Lagrage multiplier over the given rollout.
+	 * Computes the Lagrage multiplier over the given roll-out.
 	 *
-	 * @param [in] timeTrajectoriesStock: rollout simulated time steps
-	 * @param [in] stateTrajectoriesStock: rollout outputs
+	 * @param [in] timeTrajectoriesStock: roll-out simulated time steps
+	 * @param [in] stateTrajectoriesStock: roll-out outputs
 	 * @param [in] lagrangeMultiplierFunctionsStock: the coefficients of the linear function for lagrangeMultiplier
 	 * @param [out] lagrangeTrajectoriesStock: lagrangeMultiplier value over the given trajectory
 	 */
@@ -625,10 +625,10 @@ protected:
 			std::vector<std::vector<Eigen::VectorXd>>& lagrangeTrajectoriesStock);
 
 	/**
-	 * Computes the co-state over the given rollout.
+	 * Computes the co-state over the given roll-out.
 	 *
-	 * @param [in] timeTrajectoriesStock: rollout simulated time steps
-	 * @param [in] stateTrajectoriesStock: rollout outputs
+	 * @param [in] timeTrajectoriesStock: roll-out simulated time steps
+	 * @param [in] stateTrajectoriesStock: roll-out outputs
 	 * @param [out] costateTrajectoriesStock: co-state vector for the given trajectory
 	 */
 	void calculateRolloutCostate(const std::vector<scalar_array_t>& timeTrajectoriesStock,
@@ -645,12 +645,12 @@ protected:
 	void calculateInputConstraintLagrangian(std::vector<lagrange_t>& lagrangeMultiplierFunctionsStock);
 
 	/**
-	 * compute the merit function for given rollout
+	 * compute the merit function for given roll-out
 	 *
 	 * @param [in] timeTrajectoriesStock: simulation time trajectory
-	 * @param [in] nc1TrajectoriesStock: rollout's number of active constraints in each time step
-	 * @param [in] EvTrajectoryStock: rollout's constraints value
-	 * @param [in] lagrangeTrajectoriesStock: constraint Lagrange multiplier for the given rollout
+	 * @param [in] nc1TrajectoriesStock: roll-out's number of active constraints in each time step
+	 * @param [in] EvTrajectoryStock: roll-out's constraints value
+	 * @param [in] lagrangeTrajectoriesStock: constraint Lagrange multiplier for the given roll-out
 	 * @param [in] totalCost: the total cost of the trajectory
 	 * @param [out] meritFunctionValue: the total merit function value of the trajectory
 	 * @param [out] constraintISE: Integral of Square Error (ISE)
@@ -668,7 +668,7 @@ protected:
 	 * Makes the matrix PSD.
 	 * @tparam Derived type.
 	 * @param [out] squareMatrix: The matrix to become PSD.
-	 * @return boolean: 
+	 * @return boolean:
 	 */
 	template <typename Derived>
 	bool makePSD(Eigen::MatrixBase<Derived>& squareMatrix);

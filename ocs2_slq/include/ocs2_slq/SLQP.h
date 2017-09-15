@@ -83,8 +83,8 @@ public:
 	 * Constructor
 	 *
 	 * @param [in] subsystemDynamicsPtr: Array of system dynamics and constraints for system's subsystems.
-	 * @param [in] subsystemDerivativesPtr: Array of system dynamics and constraints dervatives for system's subsystems.
-	 * @param [in] subsystemCostFunctionsPtr: Array of cost function and its dervatives for system's subsystems.
+	 * @param [in] subsystemDerivativesPtr: Array of system dynamics and constraints derivatives for system's subsystems.
+	 * @param [in] subsystemCostFunctionsPtr: Array of cost function and its derivatives for system's subsystems.
 	 * @param [in] options: Structure containing the settings for the SLQ algorithm.
 	 * @param [in] stateOperatingPoints: The state operating points for system's subsystems which will be used for initialization of SLQ.
 	 * @param [in] inputOperatingPoints: The input operating points for system's subsystems which will be used for initialization of SLQ.
@@ -105,7 +105,7 @@ public:
 
 	/**
 	 * Forward integrate the system dynamics with given controller. It uses the given control policies and initial state,
-	 * to integrate the system dyanmics and calculate the costraints in time period [initTime, finalTime].
+	 * to integrate the system dynamics and calculate the constraints in time period [initTime, finalTime].
 	 *
 	 * @param [in] initTime: Initial time.
 	 * @param [in] initState: Initial state.
@@ -138,7 +138,7 @@ public:
 
 	/**
 	 * Forward integrate the system dynamics with given controller. It uses the given control policies and initial state,
-	 * to integrate the system dyanmics in time period [initTime, finalTime].
+	 * to integrate the system dynamics in time period [initTime, finalTime].
 	 *
 	 * @param [in] initTime: Initial time.
 	 * @param [in] initState: Initial state.
@@ -158,7 +158,7 @@ public:
 
 	/**
 	 * Forward integrate the system dynamics with given controller.  It uses the given control policies and initial state,
-	 * to integrate the system dyanmics in time period [initTime, finalTime] and only return the final state.
+	 * to integrate the system dynamics in time period [initTime, finalTime] and only return the final state.
 	 *
 	 * @param [in] initTime: Initial time.
 	 * @param [in] initState: Initial state.
@@ -177,12 +177,12 @@ public:
 			size_t& finalActiveSubsystemIndex) override;
 
 	/**
-	 * Calculates cost of a rollout.
+	 * Calculates cost of a roll-out.
 	 *
-	 * @param [in] timeTrajectoriesStock: Array of trajectories containing the time trajectory stamp of a rollout.
-	 * @param [in] stateTrajectoriesStock: Array of trajectories containing the state trajectory of a rollout.
-	 * @param [in] inputTrajectoriesStock: Array of trajectories containing the control input trajectory of a rollout.
-	 * @param [out] totalCost: The total cost of the rollout.
+	 * @param [in] timeTrajectoriesStock: Array of trajectories containing the time trajectory stamp of a roll-out.
+	 * @param [in] stateTrajectoriesStock: Array of trajectories containing the state trajectory of a roll-out.
+	 * @param [in] inputTrajectoriesStock: Array of trajectories containing the control input trajectory of a roll-out.
+	 * @param [out] totalCost: The total cost of the roll-out.
 	 */
 	void calculateCostFunction(const std::vector<scalar_array_t>& timeTrajectoriesStock,
 			const state_vector_array2_t& stateTrajectoriesStock,
@@ -190,11 +190,11 @@ public:
 			scalar_t& totalCost) override;
 
 	/**
-	 * Calculates the cost function plus penalty for state-only constraints of a rollout.
+	 * Calculates the cost function plus penalty for state-only constraints of a roll-out.
 	 *
-	 * @param [in] timeTrajectoriesStock: Array of trajectories containing the time trajectory stamp of a rollout.
-	 * @param [in] stateTrajectoriesStock: Array of trajectories containing the state trajectory of a rollout.
-	 * @param [in] inputTrajectoriesStock: Array of trajectories containing the control input trajectory of a rollout.
+	 * @param [in] timeTrajectoriesStock: Array of trajectories containing the time trajectory stamp of a roll-out.
+	 * @param [in] stateTrajectoriesStock: Array of trajectories containing the state trajectory of a roll-out.
+	 * @param [in] inputTrajectoriesStock: Array of trajectories containing the control input trajectory of a roll-out.
 	 * @param [out] nc2TrajectoriesStock: Array of trajectories containing the number of the active state-only constraints.
 	 * @param [out] HvTrajectoryStock: Array of trajectories containing the value of the state-only constraints.
 	 * @param [out] nc2FinalStock: Array containing the number of the active final state-only constraints.
@@ -265,14 +265,14 @@ protected:
 	 * Sets a nominal state of subsystem cost in the given index.
 	 *
 	 * @param [in] index: The requested index.
-	 * @param [in] timeTrajectory: The time stamp tarjectory for the requested subsystem's cost.
-	 * @param [in] stateTrajectory: The state tarjectory for the requested subsystem's cost.
+	 * @param [in] timeTrajectory: The time stamp trajectory for the requested subsystem's cost.
+	 * @param [in] stateTrajectory: The state trajectory for the requested subsystem's cost.
 	 */
 	void setSingleCostNominalState(size_t index, const scalar_array_t& timeTrajectory,
 			const state_vector_array_t& stateTrajectory) override;
 
 	/**
-	 * Solves Riccati equations for all the susbsystems in the systemStockIndexes.
+	 * Solves Riccati equations for all the subsystems in the systemStockIndexes.
 	 *
 	 * @param [in] learningRate: The optimal learning rate from line search scheme.
 	 * @param [in] SmFinal: The final Sm for Riccati equation.

@@ -79,21 +79,6 @@ void SLQP_MP<STATE_DIM, INPUT_DIM>::rollout(const scalar_t& initTime,
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-/*
- * Forward integrate the system dynamics with given controller:
- * 		inputs:
- * 			+ threadId: 		identifier of chosen thread
- * 			+ initState: 		initial state at time BASE::switchingTimes_[0]
- * 			+ controller_local: controller for each subsystem
- * 		outputs:
- * 			+ t_local: 			rollout simulated time steps
- * 			+ x_local: 			rollout states
- * 			+ u_local: 			rollout control inputs
- * 			+ (optional) y_local: rollout outputs
- * 			+ (optional) nc1TrajectoriesStock: 	number of active constraints at each time step
- * 			+ (optional) EvTrajectoryStock: value of the constraint (if the rollout is constrained the value is
- * 											always zero otherwise it is nonzero)
- */
 template <size_t STATE_DIM, size_t INPUT_DIM>
 void SLQP_MP<STATE_DIM, INPUT_DIM>::rollout(const size_t& threadId,
 		const scalar_t& initTime,
@@ -313,17 +298,6 @@ void SLQP_MP<STATE_DIM, INPUT_DIM>::rollout(const size_t& threadId,
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-/*
- * compute the cost for a given rollout
- * 		inputs:
- * 			+ timeTrajectoriesStock:  rollout simulated time steps
- * 			+ stateTrajectoriesStock: rollout outputs
- * 			+ inputTrajectoriesStock: rollout control inputs
- *			+ threadId: working thread, defaults to the thread with lowest id, thus this is the default thread for single-core cost computation
- *				(allows to let method be called from the outside)
- * 		outputs:
- * 			+ totalCost: the total cost of the trajectory
- */
 template <size_t STATE_DIM, size_t INPUT_DIM>
 void SLQP_MP<STATE_DIM, INPUT_DIM>::calculateCostFunction(
 		const std::vector<scalar_array_t>& timeTrajectoriesStock,
@@ -438,39 +412,6 @@ void SLQP_MP<STATE_DIM, INPUT_DIM>::calculateCostFunction(
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-/*
- * approximates the nonlinear problem as a linear-quadratic problem around the nominal
- * state and control trajectories. This method updates the following variables:
- *
- * 		+ linearized system model
- * 		+ dxdt = Am(t)x(t) + Bm(t)u(t)
- * 		+ s.t. Cm(t)x(t) + Dm(t)t(t) + Ev(t) = 0
- * 		+ BASE::AmTrajectoryStock_: Am matrix
- * 		+ BASE::BmTrajectoryStock_: Bm matrix
- * 		+ BASE::CmTrajectoryStock_: Cm matrix
- * 		+ BASE::DmTrajectoryStock_: Dm matrix
- * 		+ BASE::EvTrajectoryStock_: Ev vector
- *
- * 		+ quadratized intermediate cost function
- * 		+ intermediate cost: q(t) + 0.5 y(t)Qm(t)y(t) + y(t)'Qv(t) + u(t)'Pm(t)y(t) + 0.5u(t)'Rm(t)u(t) + u(t)'Rv(t)
- * 		+ BASE::qTrajectoryStock_:  q
- * 		+ BASE::QvTrajectoryStock_: Qv vector
- * 		+ BASE::QmTrajectoryStock_: Qm matrix
- * 		+ BASE::PmTrajectoryStock_: Pm matrix
- * 		+ BASE::RvTrajectoryStock_: Rv vector
- * 		+ BASE::RmTrajectoryStock_: Rm matrix
- * 		+ BASE::RmInverseTrajectoryStock_: inverse of Rm matrix
- *
- * 		+ quadratized final cost in the last subsystem: qFinal(t) + 0.5 y(t)QmFinal(t)y(t) + y(t)'QvFinal(t)
- * 		+ BASE::qFinal_: qFinal
- * 		+ BASE::qFinal_: QvFinal vector
- * 		+ BASE::qFinal_: QmFinal matrix
- *
- * 		+ as well as the constrained coefficients of
- * 			linearized system model
- * 			quadratized intermediate cost function
- * 			quadratized final cost
- */
 template <size_t STATE_DIM, size_t INPUT_DIM>
 void SLQP_MP<STATE_DIM, INPUT_DIM>::approximateOptimalControlProblem()  {
 
@@ -526,13 +467,6 @@ void SLQP_MP<STATE_DIM, INPUT_DIM>::approximateOptimalControlProblem()  {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-/*
- * line search on the feedforward parts of the controller and lagrange multipliers.
- * Based on the option flag lineSearchByMeritFuntion_ it uses two different approaches for line search:
- * 		+ the constraint correction term is added by a user defined stepSize.
- * 		The line search uses the pure cost function for choosing the best stepSize.
- *
- */
 template <size_t STATE_DIM, size_t INPUT_DIM>
 void SLQP_MP<STATE_DIM, INPUT_DIM>::lineSearch() {
 

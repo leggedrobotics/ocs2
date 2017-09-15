@@ -24,23 +24,6 @@ SLQP<STATE_DIM, INPUT_DIM>::~SLQP()
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-/*
- * Forward integrate the system dynamics with given controller:
- * 		inputs:
- * 			+ initTime: intial time
- * 			+ initState: initial state at time initTime
- * 			+ controllersStock: controller for each subsystem
- * 		outputs:
- * 			+ timeTrajectoriesStock:  rollout simulated time steps
- * 			+ stateTrajectoriesStock: rollout states
- * 			+ inputTrajectoriesStock: rollout control inputs
- * 			+ (optional) stateTrajectoriesStock_: rollout outputs
- * 			+ (optional) nc1TrajectoriesStock: number of active constraints at each time step
- * 			+ (optional) EvTrajectoryStock: value of the constraint (if the rollout is constrained the value is
- * 											always zero otherwise it is nonzero)
- */
-
-/******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
 void SLQP<STATE_DIM, INPUT_DIM>::rollout(const double& initTime,
 		const state_vector_t& initState,
@@ -295,16 +278,6 @@ void SLQP<STATE_DIM, INPUT_DIM>::calculateCostFunction(
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-/*
- * compute the cost for a given rollout
- * 		inputs:
- * 			+ timeTrajectoriesStock:  rollout simulated time steps
- * 			+ stateTrajectoriesStock: rollout outputs
- * 			+ inputTrajectoriesStock: rollout control inputs
- *
- * 		outputs:
- * 			+ totalCost: the total cost of the trajectory
- */
 template <size_t STATE_DIM, size_t INPUT_DIM>
 void SLQP<STATE_DIM, INPUT_DIM>::calculateCostFunction(
 		const std::vector<scalar_array_t>& timeTrajectoriesStock,
@@ -350,34 +323,6 @@ void SLQP<STATE_DIM, INPUT_DIM>::calculateCostFunction(
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-/*
- * approximates the nonlinear problem as a linear-quadratic problem around the nominal
- * state and control trajectories. This method updates the following variables:
- *
- * 		+ linearized system model
- * 		+ dxdt = Am(t)x(t) + Bm(t)u(t)
- * 		+ s.t. Cm(t)x(t) + Dm(t)t(t) + Ev(t) = 0
- * 		+ BASE::AmTrajectoryStock_: Am matrix
- * 		+ BASE::BmTrajectoryStock_: Bm matrix
- * 		+ BASE::CmTrajectoryStock_: Cm matrix
- * 		+ BASE::DmTrajectoryStock_: Dm matrix
- * 		+ BASE::EvTrajectoryStock_: Ev vector
- *
- * 		+ quadratized intermediate cost function
- * 		+ intermediate cost: q(t) + 0.5 y(t)Qm(t)y(t) + y(t)'Qv(t) + u(t)'Pm(t)y(t) + 0.5u(t)'Rm(t)u(t) + u(t)'Rv(t)
- * 		+ BASE::qTrajectoryStock_:  q
- * 		+ BASE::QvTrajectoryStock_: Qv vector
- * 		+ BASE::QmTrajectoryStock_: Qm matrix
- * 		+ BASE::PmTrajectoryStock_: Pm matrix
- * 		+ BASE::RvTrajectoryStock_: Rv vector
- * 		+ BASE::RmTrajectoryStock_: Rm matrix
- * 		+ BASE::RmInverseTrajectoryStock_: inverse of Rm matrix
- *
- * 		+ as well as the constrained coefficients of
- * 			linearized system model
- * 			quadratized intermediate cost function
- * 			quadratized final cost
- */
 template <size_t STATE_DIM, size_t INPUT_DIM>
 void SLQP<STATE_DIM, INPUT_DIM>::approximateOptimalControlProblem()  {
 
@@ -604,16 +549,6 @@ void SLQP<STATE_DIM, INPUT_DIM>::approximateOptimalControlProblem()  {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-/*
- * calculates the controller and linear function approximation of the type-1 constraint Lagrangian:
- * 		This method uses the following variables:
- * 			+ constrained, linearized model
- * 			+ constrained, quadratized cost
- *
- * 		The method outputs:
- * 			+ BASE::nominalControllersStock_: the controller that stabilizes the system around the new nominal trajectory and
- * 								improves the constraints as well as the increment to the feedforward control input.
- */
 template <size_t STATE_DIM, size_t INPUT_DIM>
 void SLQP<STATE_DIM, INPUT_DIM>::calculateController() {
 
@@ -729,13 +664,6 @@ void SLQP<STATE_DIM, INPUT_DIM>::calculateController() {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-/*
- * line search on the feedforwrd parts of the controller and lagrange multipliers.
- * Based on the option flag lineSearchByMeritFuntion_ it uses two different approaches for line search:
- * 		+ the constraint correction term is added by a user defined stepSize.
- * 		The line search uses the pure cost function for choosing the best stepSize.
- *
- */
 template <size_t STATE_DIM, size_t INPUT_DIM>
 void SLQP<STATE_DIM, INPUT_DIM>::lineSearch(scalar_t& learningRateStar, scalar_t maxLearningRateStar/*=1.0*/)  {
 

@@ -162,7 +162,7 @@ void GLQP<STATE_DIM, INPUT_DIM>::approximateOptimalControlProblem()  {
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
-void GLQP<STATE_DIM, INPUT_DIM>::calculatecontroller(const scalar_t& learningRate, controller_array_t& controllersStock) {
+void GLQP<STATE_DIM, INPUT_DIM>::calculateController(const scalar_t& learningRate, controller_array_t& controllersStock) {
 
 	for (int i=0; i<numSubsystems_; i++) {
 
@@ -444,7 +444,7 @@ void GLQP<STATE_DIM, INPUT_DIM>::run(const std::vector<size_t>& systemStockIndex
 
 	// calculate controller
 	controllersStock_.resize(numSubsystems_);
-	calculatecontroller(learningRate, controllersStock_);
+	calculateController(learningRate, controllersStock_);
 
 	// transforme the local value funtion to the global representation
 	transformeLocalValueFuntion2Global();

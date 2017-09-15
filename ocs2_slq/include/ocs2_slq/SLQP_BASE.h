@@ -50,11 +50,11 @@ public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
 	typedef std::shared_ptr<SLQP_BASE<STATE_DIM, INPUT_DIM>> 			Ptr;
-	//	typedef SequentialRiccatiEquations<STATE_DIM, INPUT_DIM> 			RiccatiEquations_t;
+//	typedef SequentialRiccatiEquations<STATE_DIM, INPUT_DIM> 			RiccatiEquations_t;
 	typedef SequentialRiccatiEquationsNormalized<STATE_DIM, INPUT_DIM>	RiccatiEquations_t;
-	//	typedef SequentialErrorEquation<STATE_DIM, INPUT_DIM>			 	ErrorEquation_t;
+//	typedef SequentialErrorEquation<STATE_DIM, INPUT_DIM>			 	ErrorEquation_t;
 	typedef SequentialErrorEquationNormalized<STATE_DIM, INPUT_DIM> 	ErrorEquation_t;
-	//	typedef LTI_Equations<STATE_DIM> LTI_Equation_t;
+//	typedef LTI_Equations<STATE_DIM> LTI_Equation_t;
 
 	typedef Dimensions<STATE_DIM, INPUT_DIM> DIMENSIONS;
 
@@ -105,6 +105,9 @@ public:
 	typedef typename DIMENSIONS::constraint2_state_matrix_array_t constraint2_state_matrix_array_t;
 	typedef typename DIMENSIONS::constraint2_state_matrix_array2_t constraint2_state_matrix_array2_t;
 
+	/**
+	 * Default constructor.
+	 */
 	SLQP_BASE()
 	: numSubsystems_(0)
 	{}
@@ -331,7 +334,7 @@ public:
 			const eigen_scalar_t& sFinal = eigen_scalar_t::Zero())  = 0;
 
 	/**
-	 * The main routine of SLQ which runs the SLQP algorithm for a given state, time, subsystem arrangement, and switching times.
+	 * The main routine of SLQ which runs SLQP for a given state, time, subsystem arrangement, and switching times.
 	 *
 	 * @param [in] initTime: Initial time.
 	 * @param [in] initState: Initial state.

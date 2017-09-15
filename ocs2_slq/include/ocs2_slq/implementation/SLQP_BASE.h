@@ -515,9 +515,6 @@ void SLQP_BASE<STATE_DIM, INPUT_DIM>::fullBackwardSweep(const size_t& index,
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-/*
- * make the given square matrix psd
- */
 template <size_t STATE_DIM, size_t INPUT_DIM>
 template <typename Derived>
 bool SLQP_BASE<STATE_DIM, INPUT_DIM>::makePSD(Eigen::MatrixBase<Derived>& squareMatrix) {
@@ -547,16 +544,6 @@ bool SLQP_BASE<STATE_DIM, INPUT_DIM>::makePSD(Eigen::MatrixBase<Derived>& square
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-/*
- * compute the Lagrage multiplier over the given rollout
- * 		inputs:
- * 			+ timeTrajectoriesStock: rollout simulated time steps
- * 			+ stateTrajectoriesStock: rollout outputs
- * 			+ lagrangeMultiplierFunctionsStock: the coefficients of the linear function for lagrangeMultiplier
- *
- * 		outputs:
- * 			+ lagrangeTrajectoriesStock: lagrangeMultiplier value over the given trajectory
- */
 template <size_t STATE_DIM, size_t INPUT_DIM>
 void SLQP_BASE<STATE_DIM, INPUT_DIM>::calculateRolloutLagrangeMultiplier(
 		const std::vector<scalar_array_t>& timeTrajectoriesStock,
@@ -609,15 +596,6 @@ void SLQP_BASE<STATE_DIM, INPUT_DIM>::calculateRolloutLagrangeMultiplier(
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-/*
- * compute the co-state over the given rollout
- * 		inputs:
- * 			+ timeTrajectoriesStock: rollout simulated time steps
- * 			+ stateTrajectoriesStock: rollout outputs
- *
- * 		outputs:
- * 			+ costateTrajectoriesStock: co-state vector for the given trajectory
- */
 template <size_t STATE_DIM, size_t INPUT_DIM>
 void SLQP_BASE<STATE_DIM, INPUT_DIM>::calculateRolloutCostate(
 		const std::vector<scalar_array_t>& timeTrajectoriesStock,
@@ -673,15 +651,6 @@ void SLQP_BASE<STATE_DIM, INPUT_DIM>::calculateRolloutCostate(
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-/*
- * calculates the linear function approximation of the type-1 constraint Lagrangian:
- * 		This method uses the following variables:
- * 			+ constrained, linearized model
- * 			+ constrained, quadratized cost
- *
- * 		The method outputs:
- * 			+ lagrangeMultiplierFunctionsStock: the linear function approximation of the type-1 constraint Lagrangian.
- */
 template <size_t STATE_DIM, size_t INPUT_DIM>
 void SLQP_BASE<STATE_DIM, INPUT_DIM>::calculateInputConstraintLagrangian(std::vector<lagrange_t>& lagrangeMultiplierFunctionsStock) {
 
@@ -802,19 +771,6 @@ void SLQP_BASE<STATE_DIM, INPUT_DIM>::calculateInputConstraintLagrangian(std::ve
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-/*
- * compute the merit function for given rollout
- * 		inputs:
- * 			+ timeTrajectoriesStock: simulation time trajectory
- * 			+ nc1TrajectoriesStock: rollout's number of active constraints in each time step
- * 			+ EvTrajectoryStock: rollout's constraints value
- * 			+ lagrangeTrajectoriesStock: constraint Lagrange multiplier for the given rollout
- * 			+ totalCost: the total cost of the trajectory
- *
- * 		outputs:
- * 			+ meritFuntionValue: the merit function value
- * 			+ constraintISE: integral of Square Error (ISE)
- */
 template <size_t STATE_DIM, size_t INPUT_DIM>
 void SLQP_BASE<STATE_DIM, INPUT_DIM>::calculateMeritFunction(
 		const std::vector<scalar_array_t>& timeTrajectoriesStock,
@@ -970,15 +926,6 @@ size_t SLQP_BASE<STATE_DIM, INPUT_DIM>::findActiveSubsystemIndex(
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-/*
- * calculate the value function for the given time and state vector
- * 		inputs
- * 			+ time: inquiry time
- * 			+ state: inquiry state
- *
- * 		output:
- * 			+ valueFuntion: value function at the inquiry time and state
- */
 template <size_t STATE_DIM, size_t INPUT_DIM>
 void SLQP_BASE<STATE_DIM, INPUT_DIM>::getValueFuntion (
 		const scalar_t& time, const state_vector_t& state, scalar_t& valueFuntion)  {
@@ -1014,15 +961,6 @@ void SLQP_BASE<STATE_DIM, INPUT_DIM>::getValueFuntion (
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-/*
- * calculate the cost function at the initial time
- * 		inputs
- * 			+ initOutput: initial state
- *
- * 		output:
- * 			+ cost function value
- * 			+ cost function value plus the constraint ISE multiplied by pho
- */
 template <size_t STATE_DIM, size_t INPUT_DIM>
 void SLQP_BASE<STATE_DIM, INPUT_DIM>::getCostFuntion(
 		scalar_t& costFunction, scalar_t& constriantISE)  {
@@ -1034,9 +972,6 @@ void SLQP_BASE<STATE_DIM, INPUT_DIM>::getCostFuntion(
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-/*
- * get the calculated optimal controller structure
- */
 template <size_t STATE_DIM, size_t INPUT_DIM>
 void SLQP_BASE<STATE_DIM, INPUT_DIM>::getController(controller_array_t& controllersStock) const {
 
@@ -1045,9 +980,6 @@ void SLQP_BASE<STATE_DIM, INPUT_DIM>::getController(controller_array_t& controll
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-/*
- * get the calculated optimal controller structure
- */
 template <size_t STATE_DIM, size_t INPUT_DIM>
 void SLQP_BASE<STATE_DIM, INPUT_DIM>::getControllerPtr(std::shared_ptr<controller_array_t>& controllersStock) const {
 

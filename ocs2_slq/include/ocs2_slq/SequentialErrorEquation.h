@@ -17,9 +17,10 @@
 namespace ocs2{
 
 /**
- * Sequential Error Equation Class
- * @tparam STATE_DIM
- * @tparam INPUT_DIM
+ * This class implements the Error equation of Riccati equation.
+ *
+ * @tparam STATE_DIM: Dimension of the state space.
+ * @tparam INPUT_DIM: Dimension of the control input space.
  */
 template <size_t STATE_DIM, size_t INPUT_DIM>
 class SequentialErrorEquation : public SystemBase<STATE_DIM>
@@ -35,17 +36,25 @@ public:
 	typedef typename DIMENSIONS::state_matrix_t 	  state_matrix_t;
 	typedef typename DIMENSIONS::state_matrix_array_t state_matrix_array_t;
 
+	/**
+	 * Default constructor.
+	 */
 	SequentialErrorEquation() {}
+
+	/**
+	 * Default destructor.
+	 */
 	~SequentialErrorEquation() {}
 
 	/**
-	 * Sets Data
-	 * @param [in] activeSubsystem
-	 * @param [in] switchingTimeStart
-	 * @param [in] switchingTimeFinal
-	 * @param [in] timeStampPtr
-	 * @param [in] GvPtr
-	 * @param [in] GmPtr
+	 * Sets coefficients of the model.
+	 *
+	 * @param [in] activeSubsystem: The index of the active subsystem.
+	 * @param [in] switchingTimeStart: The start time of the subsystem.
+	 * @param [in] switchingTimeFinal: The final time of the subsystem.
+	 * @param [in] timeStampPtr: A pointer to the time stamp trajectory.
+	 * @param [in] GvPtr: A pointer to the trajectory of \f$ G_v(t) \f$ .
+	 * @param [in] GmPtr: A pointer to the trajectory of \f$ G_m(t) \f$ .
 	 */
 	void setData(const size_t& activeSubsystem, const scalar_t& switchingTimeStart, const scalar_t& switchingTimeFinal,
 			scalar_array_t* const timeStampPtr, state_vector_array_t* const GvPtr, state_matrix_array_t* const GmPtr)  {
@@ -61,10 +70,11 @@ public:
 	}
 
 	/**
-	 * Compute derivative
-	 * @param [in] z
-	 * @param [in] Sve
-	 * @param [out] derivatives
+	 * Computes derivatives.
+	 *
+	 * @param [in] z: Time.
+	 * @param [in] Sve: Current Sve.
+	 * @param [out] derivatives: d(Sve)/dz
 	 */
 	void computeDerivative(const scalar_t& z, const state_vector_t& Sve, state_vector_t& derivatives) {
 

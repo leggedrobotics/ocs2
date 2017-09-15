@@ -459,12 +459,11 @@ protected:
 	void approximateOptimalControlProblem();
 
 	/**
-	 * Calculates the controller and linear function approximation of the type-1 constraint Lagrangian. \n
-	 * This method uses the following variables:
+	 * Calculates the controller. This method uses the following variables:
 	 * - constrained, linearized model
 	 * - constrained, quadratized cost \n
 	 *
-	 * The method outputs:
+	 * The method modifies:
 	 * - nominalControllersStock_: the controller that stabilizes the system around the new nominal trajectory and
 	 * 								improves the constraints as well as the increment to the feedforward control input.
 	 */

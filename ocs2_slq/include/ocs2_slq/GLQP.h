@@ -28,9 +28,11 @@
 namespace ocs2{
 
 /**
- * GLQP Class
- * @tparam STATE_DIM
- * @tparam INPUT_DIM
+ * This class implements the LQ method. The method is equivalent to SLQ. However, the nominal trajectories
+ * are fixed and given in contrast to SLQ which derives them by forward integrating the system dynamics.
+ *
+ * @tparam STATE_DIM: Dimension of the state space.
+ * @tparam INPUT_DIM: Dimension of the control input space.
  */
 template <size_t STATE_DIM, size_t INPUT_DIM>
 class GLQP
@@ -67,7 +69,15 @@ public:
 	typedef typename DIMENSIONS::control_gain_matrix_t 		 control_gain_matrix_t;
 	typedef typename DIMENSIONS::control_gain_matrix_array_t control_gain_matrix_array_t;
 
-
+	/**
+	 * Constructor
+	 *
+	 * @param [in] subsystemDynamicsPtr: Array of system dynamics and constraints for system's subsystems.
+	 * @param [in] subsystemDerivativesPtr: Array of system dynamics and constraints dervatives for system's subsystems.
+	 * @param [in] subsystemCostFunctionsPtr: Array of cost function and its dervatives for system's subsystems.
+	 * @param [in] stateOperatingPoints: The state operating points for system's subsystems which will be used for initialization of LQ.
+	 * @param [in] inputOperatingPoints: The input operating points for system's subsystems which will be used for initialization of LQ.
+	 */
 	GLQP(const std::vector<std::shared_ptr<ControlledSystemBase<STATE_DIM, INPUT_DIM> > >& subsystemDynamicsPtr,
 			const std::vector<std::shared_ptr<DerivativesBase<STATE_DIM, INPUT_DIM> > >& subsystemDerivativesPtr,
 			const std::vector<std::shared_ptr<CostFunctionBaseOCS2<STATE_DIM, INPUT_DIM> > >& subsystemCostFunctionsPtr,
@@ -90,73 +100,83 @@ public:
 			throw std::runtime_error("Number of input operating points is not equal to the number of subsystems.");
 	}
 
+	/**
+	 * Default destructor.
+	 */
 	~GLQP() {}
 
-    /**
-     * Rollout function
-     * @param [in] initState
-     * @param [in] controllersStock
-     * @param [out] timeTrajectoriesStock
-     * @param [out] stateTrajectoriesStock
-     * @param [out] inputTrajectoriesStock
-     */
+	/**
+	 * Forward integrate the system dynamics with given controller. It uses the given control policies and initial state,
+	 * to integrate the system dyanmics in time period [initTime, finalTime].
+	 *
+	 * @param [in] initState: Initial state.
+	 * @param [in] controllersStock: Array of control policies.
+	 * @param [out] timeTrajectoriesStock: Array of trajectories containing the output time trajectory stamp.
+	 * @param [out] stateTrajectoriesStock: Array of trajectories containing the output state trajectory.
+	 * @param [out] inputTrajectoriesStock: Array of trajectories containing the output control input trajectory.
+	 */
 	void rollout(const state_vector_t& initState,
 			const controller_array_t& controllersStock,
 			std::vector<scalar_array_t>& timeTrajectoriesStock,
 			state_vector_array2_t& stateTrajectoriesStock,
 			control_vector_array2_t& inputTrajectoriesStock);
 
-    /**
-     * Rollout cost function
-     * @param [in] timeTrajectoriesStock
-     * @param [in] stateTrajectoriesStock
-     * @param [in] controlTrajectoriesStock
-     * @param [out] totalCost
-     */
+	/**
+	 * Calculates cost of a rollout.
+	 *
+	 * @param [in] timeTrajectoriesStock: Array of trajectories containing the time trajectory stamp of a rollout.
+	 * @param [in] stateTrajectoriesStock: Array of trajectories containing the state trajectory of a rollout.
+	 * @param [in] controlTrajectoriesStock: Array of trajectories containing the control input trajectory of a rollout.
+	 * @param [out] totalCost: The total cost of the rollout.
+	 */
 	void rolloutCost(const std::vector<scalar_array_t>& timeTrajectoriesStock,
 			const state_vector_array2_t& stateTrajectoriesStock,
 			const control_vector_array2_t& controlTrajectoriesStock,
 			scalar_t& totalCost);
 
-    /**
-     * Gets controller
-     * @param [out] controllersStock
-     */
+	/**
+	 * Gets the optimal array of the control policies.
+	 *
+	 * @param [out] controllersStock: The optimal array of the control policies.
+	 */
 	void getController(controller_array_t& controllersStock);
 
-    /**
-     * Gets value function
-     * @param [in] time
-     * @param [in] state
-     * @param [out] valueFuntion
-     */
+	/**
+	 * Calculates the value function at the given time and state.
+	 *
+	 * @param [in] time: The inquiry time
+	 * @param [in] state: The inquiry state.
+	 * @param [out] valueFuntion: value function at the inquiry time and state.
+	 */
 	void getValueFuntion(const scalar_t& time, const state_vector_t& state, scalar_t& valueFuntion);
 
-    /**
-     * Run function
-     * @param [in] systemStockIndexes
-     * @param [in] switchingTimes
-     * @param [in] learningRate
-     * @param [in] desiredTimeTrajectoriesStock
-     * @param [in] desiredStateTrajectoriesStock
-     */
+	/**
+	 * The main routine of LQ which runs GLQP for a given state, time, subsystem arrangement, and switching times.
+
+	 * @param [in] systemStockIndexes: The indexes of the susbsystms in subsystemDynamicsPtr, subsystemDerivativesPtr, or subsystemCostFunctionsPtr.
+	 * @param [in] switchingTimes: The switching times between subsystems.
+	 * @param [in] learningRate: Learning rate for the line search.
+	 * @param [in] desiredTimeTrajectoriesStock: The time stamp tarjectory for each subsystem's cost.
+	 * @param [in] desiredStateTrajectoriesStock: The state tarjectory for each subsystem's cost.
+	 */
 	void run(const std::vector<size_t>& systemStockIndexes,
 		const std::vector<scalar_t>& switchingTimes, const scalar_t& learningRate=1.0,
 		const std::vector<scalar_array_t>& desiredTimeTrajectoriesStock = std::vector<scalar_array_t>(),
 		const state_vector_array2_t& desiredStateTrajectoriesStock = state_vector_array2_t());
 
-    /**
-     * Sets cost nominal states
-     * @param [in] timeTrajectoryStock
-     * @param [in] stateTrajectoryStock
-     */
+	/**
+	 * Sets nominal state of subsystem costs.
+	 *
+	 * @param [in] timeTrajectoryStock: The time stamp tarjectory for each subsystem's cost.
+	 * @param [in] stateTrajectoryStock: The state tarjectory for each subsystem's cost.
+	 */
 	virtual void setCostNominalStates(const std::vector<scalar_array_t>& timeTrajectoryStock,
 			const state_vector_array2_t& stateTrajectoryStock);
 
 protected:
-    /**
-     *
-     */
+	/**
+	 * Sets up uptomizer
+	 */
 	void setupOptimizer();
 
     /**
@@ -169,24 +189,25 @@ protected:
      */
 	void approximateOptimalControlProblem();
 
-    /**
-     * Calculates controller
-     * @param [in] learningRate
-     * @param [out] controllersStock
-     */
-	void calculatecontroller(const scalar_t& learningRate, controller_array_t& controllersStock);
+	/**
+	 * Calculates the controller.
+	 *
+	 * @param [in] learningRate: Learning rate.
+	 * @param [out] controllersStock: the output array of control policies.
+	 */
+	void calculateController(const scalar_t& learningRate, controller_array_t& controllersStock);
 
     /**
      * Transforms local value function to global
      */
 	void transformeLocalValueFuntion2Global();
 
-    /**
-     * Makes psd
-     * @tparam Derived
-     * @param [out] squareMatrix
-     * @return
-     */
+	/**
+	 * Makes the matrix PSD.
+	 * @tparam Derived type.
+	 * @param [out] squareMatrix: The matrix to become PSD.
+	 * @return boolean
+	 */
 	template <typename Derived>
 	bool makePSD(Eigen::MatrixBase<Derived>& squareMatrix);
 

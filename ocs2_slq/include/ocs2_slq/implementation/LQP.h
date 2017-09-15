@@ -11,13 +11,12 @@ namespace ocs2{
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, size_t OUTPUT_DIM, size_t NUM_Subsystems>
-void LQP<STATE_DIM, INPUT_DIM, OUTPUT_DIM, NUM_Subsystems>::rollout(const state_vector_t& initState,
+template <size_t STATE_DIM, size_t INPUT_DIM, size_t NUM_Subsystems>
+void LQP<STATE_DIM, INPUT_DIM, NUM_Subsystems>::rollout(const state_vector_t& initState,
 		const controller_array_t& controllersStock,
 		std::vector<scalar_array_t>& timeTrajectoriesStock,
 		state_vector_array2_t& stateTrajectoriesStock,
-		control_vector_array2_t& inputTrajectoriesStock,
-		output_vector_array2_t& outputTrajectoriesStock)  {
+		control_vector_array2_t& inputTrajectoriesStock)  {
 
 	if (controllersStock.size() != NUM_Subsystems)
 		throw std::runtime_error("controllersStock has less controllers then the number of subsystems");
@@ -25,7 +24,6 @@ void LQP<STATE_DIM, INPUT_DIM, OUTPUT_DIM, NUM_Subsystems>::rollout(const state_
 	timeTrajectoriesStock.resize(NUM_Subsystems);
 	stateTrajectoriesStock.resize(NUM_Subsystems);
 	inputTrajectoriesStock.resize(NUM_Subsystems);
-	outputTrajectoriesStock.resize(NUM_Subsystems);
 
 	state_vector_t x0 = initState;
 	for (int i=0; i<NUM_Subsystems; i++) {
@@ -42,10 +40,8 @@ void LQP<STATE_DIM, INPUT_DIM, OUTPUT_DIM, NUM_Subsystems>::rollout(const state_
 
 		// compute control trajectory for subsystem i
 		inputTrajectoriesStock[i].resize(timeTrajectoriesStock[i].size());
-		outputTrajectoriesStock[i].resize(timeTrajectoriesStock[i].size());
 		for (int k=0; k<timeTrajectoriesStock[i].size(); k++)   {
-			subsystemDynamicsPtrStock_[i]->computeOutput(timeTrajectoriesStock[i][k], stateTrajectoriesStock[i][k], outputTrajectoriesStock[i][k]);
-			subsystemDynamicsPtrStock_[i]->computeInput(timeTrajectoriesStock[i][k], outputTrajectoriesStock[i][k], inputTrajectoriesStock[i][k]);
+			subsystemDynamicsPtrStock_[i]->computeInput(timeTrajectoriesStock[i][k], stateTrajectoriesStock[i][k], inputTrajectoriesStock[i][k]);
 		}
 
 		// reset the initial state
@@ -59,27 +55,10 @@ void LQP<STATE_DIM, INPUT_DIM, OUTPUT_DIM, NUM_Subsystems>::rollout(const state_
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, size_t OUTPUT_DIM, size_t NUM_Subsystems>
-void LQP<STATE_DIM, INPUT_DIM, OUTPUT_DIM, NUM_Subsystems>::rollout(const state_vector_t& initState,
-		const controller_array_t& controllersStock,
-		std::vector<scalar_array_t>& timeTrajectoriesStock,
-		state_vector_array2_t& stateTrajectoriesStock,
-		control_vector_array2_t& inputTrajectoriesStock)  {
-
-	output_vector_array2_t outputTrajectoriesStock;
-	rollout(initState, controllersStock,
-			timeTrajectoriesStock, stateTrajectoriesStock, inputTrajectoriesStock,
-			outputTrajectoriesStock);
-}
-
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, size_t OUTPUT_DIM, size_t NUM_Subsystems>
-void LQP<STATE_DIM, INPUT_DIM, OUTPUT_DIM, NUM_Subsystems>::rolloutCost(
+template <size_t STATE_DIM, size_t INPUT_DIM, size_t NUM_Subsystems>
+void LQP<STATE_DIM, INPUT_DIM, NUM_Subsystems>::rolloutCost(
 		const std::vector<scalar_array_t>& timeTrajectoriesStock,
-		const output_vector_array2_t& outputTrajectoriesStock,
+		const state_vector_array2_t& stateTrajectoriesStock,
 		const control_vector_array2_t& inputTrajectoriesStock,
 		scalar_t& totalCost)  {
 
@@ -91,14 +70,14 @@ void LQP<STATE_DIM, INPUT_DIM, OUTPUT_DIM, NUM_Subsystems>::rolloutCost(
 		for (int k=0; k<timeTrajectoriesStock[i].size()-1; k++) {
 
 			if (k==0) {
-				subsystemCostFunctionsPtrStock_[i]->setCurrentStateAndControl(timeTrajectoriesStock[i][k], outputTrajectoriesStock[i][k], inputTrajectoriesStock[i][k]);
+				subsystemCostFunctionsPtrStock_[i]->setCurrentStateAndControl(timeTrajectoriesStock[i][k], stateTrajectoriesStock[i][k], inputTrajectoriesStock[i][k]);
 				subsystemCostFunctionsPtrStock_[i]->evaluate(currentIntermediateCost);
 			} else {
 				currentIntermediateCost = nextIntermediateCost;
 			}
 
 			// feed next state and control to cost function
-			subsystemCostFunctionsPtrStock_[i]->setCurrentStateAndControl(timeTrajectoriesStock[i][k+1], outputTrajectoriesStock[i][k+1], inputTrajectoriesStock[i][k+1]);
+			subsystemCostFunctionsPtrStock_[i]->setCurrentStateAndControl(timeTrajectoriesStock[i][k+1], stateTrajectoriesStock[i][k+1], inputTrajectoriesStock[i][k+1]);
 			// evaluate intermediate cost for next time step
 			subsystemCostFunctionsPtrStock_[i]->evaluate(nextIntermediateCost);
 
@@ -108,7 +87,7 @@ void LQP<STATE_DIM, INPUT_DIM, OUTPUT_DIM, NUM_Subsystems>::rolloutCost(
 		// terminal cost
 		if (i==NUM_Subsystems-1)  {
 			scalar_t finalCost;
-			subsystemCostFunctionsPtrStock_[i]->setCurrentStateAndControl(timeTrajectoriesStock[i].back(), outputTrajectoriesStock[i].back(), inputTrajectoriesStock[i].back());
+			subsystemCostFunctionsPtrStock_[i]->setCurrentStateAndControl(timeTrajectoriesStock[i].back(), stateTrajectoriesStock[i].back(), inputTrajectoriesStock[i].back());
 			subsystemCostFunctionsPtrStock_[i]->terminalCost(finalCost);
 			totalCost += finalCost;
 		}
@@ -120,14 +99,13 @@ void LQP<STATE_DIM, INPUT_DIM, OUTPUT_DIM, NUM_Subsystems>::rolloutCost(
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, size_t OUTPUT_DIM, size_t NUM_Subsystems>
-void LQP<STATE_DIM, INPUT_DIM, OUTPUT_DIM, NUM_Subsystems>::approximateOptimalControlProblem()  {
+template <size_t STATE_DIM, size_t INPUT_DIM, size_t NUM_Subsystems>
+void LQP<STATE_DIM, INPUT_DIM, NUM_Subsystems>::approximateOptimalControlProblem()  {
 
 	for (int i=0; i<NUM_Subsystems; i++) {
 
 		subsystemDerivativesPtrStock_[i]->initializeModel(systemStockIndexes_, switchingTimes_, stateOperatingPointsStock_.at(i), i, "LQP");
-		subsystemDerivativesPtrStock_[i]->setCurrentStateAndControl(0.0,
-				stateOperatingPointsStock_.at(i), inputOperatingPointsStock_.at(i), outputOperatingPointsStock_.at(i));
+		subsystemDerivativesPtrStock_[i]->setCurrentStateAndControl(0.0, stateOperatingPointsStock_.at(i), inputOperatingPointsStock_.at(i));
 		subsystemDerivativesPtrStock_[i]->getDerivativeState(AmStock_.at(i));
 		subsystemDerivativesPtrStock_[i]->getDerivativesControl(BmStock_.at(i));
 
@@ -139,7 +117,7 @@ void LQP<STATE_DIM, INPUT_DIM, OUTPUT_DIM, NUM_Subsystems>::approximateOptimalCo
 			GvStock_.at(i).setZero();
 		}
 
-		subsystemCostFunctionsPtrStock_[i]->setCurrentStateAndControl(0, outputOperatingPointsStock_.at(i), inputOperatingPointsStock_.at(i));
+		subsystemCostFunctionsPtrStock_[i]->setCurrentStateAndControl(0, stateOperatingPointsStock_.at(i), inputOperatingPointsStock_.at(i));
 		subsystemCostFunctionsPtrStock_[i]->stateSecondDerivative(QmStock_.at(i));
 		subsystemCostFunctionsPtrStock_[i]->controlSecondDerivative(RmStock_.at(i));
 		subsystemCostFunctionsPtrStock_[i]->stateControlDerivative(PmStock_.at(i));
@@ -191,8 +169,8 @@ void LQP<STATE_DIM, INPUT_DIM, OUTPUT_DIM, NUM_Subsystems>::approximateOptimalCo
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, size_t OUTPUT_DIM, size_t NUM_Subsystems>
-void LQP<STATE_DIM, INPUT_DIM, OUTPUT_DIM, NUM_Subsystems>::calculatecontroller(const scalar_t& learningRate, controller_array_t& controllersStock) {
+template <size_t STATE_DIM, size_t INPUT_DIM, size_t NUM_Subsystems>
+void LQP<STATE_DIM, INPUT_DIM, NUM_Subsystems>::calculateController(const scalar_t& learningRate, controller_array_t& controllersStock) {
 
 	for (int i=0; i<NUM_Subsystems; i++) {
 
@@ -204,14 +182,14 @@ void LQP<STATE_DIM, INPUT_DIM, OUTPUT_DIM, NUM_Subsystems>::calculatecontroller(
 		for (int k=0; k<N; k++) {
 			controllersStock[i].k_[k]    = -RmInverseStock_[i] * (PmStock_[i] + BmStock_[i].transpose()*SmTrajectoryStock_[i][k]);
 			controllersStock[i].uff_[k]  = -learningRate * RmInverseStock_[i] * (RvStock_[i]  + BmStock_[i].transpose()*SvTrajectoryStock_[i][k])
-								+ inputOperatingPointsStock_[i] - controllersStock[i].k_[k]*outputOperatingPointsStock_[i];
+								+ inputOperatingPointsStock_[i] - controllersStock[i].k_[k]*stateOperatingPointsStock_[i];
 		}  // end of k loop
 
 		if (INFO_ON_ ) {
 			std::cout << "Controller of subsystem" << i << ":" << std::endl;
 			std::cout << "learningRate " << learningRate << std::endl;
 			std::cout << "time: " << controllersStock[i].time_.front() << std::endl;
-			std::cout << "delta_uff: " <<  (controllersStock[i].uff_[0] + controllersStock[i].k_[0]*outputOperatingPointsStock_[i]).transpose() << std::endl;
+			std::cout << "delta_uff: " <<  (controllersStock[i].uff_[0] + controllersStock[i].k_[0]*stateOperatingPointsStock_[i]).transpose() << std::endl;
 			std::cout << "u0: " <<  inputOperatingPointsStock_[i].transpose() << std::endl;
 			std::cout << "k: \n" <<  controllersStock[i].k_.front() << std::endl << std::endl;
 		}
@@ -221,9 +199,9 @@ void LQP<STATE_DIM, INPUT_DIM, OUTPUT_DIM, NUM_Subsystems>::calculatecontroller(
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, size_t OUTPUT_DIM, size_t NUM_Subsystems>
+template <size_t STATE_DIM, size_t INPUT_DIM, size_t NUM_Subsystems>
 template <typename Derived>
-bool LQP<STATE_DIM, INPUT_DIM, OUTPUT_DIM, NUM_Subsystems>::makePSD(Eigen::MatrixBase<Derived>& squareMatrix) {
+bool LQP<STATE_DIM, INPUT_DIM, NUM_Subsystems>::makePSD(Eigen::MatrixBase<Derived>& squareMatrix) {
 
 	if (squareMatrix.rows() != squareMatrix.cols())  throw std::runtime_error("Not a square matrix: makePSD() method is for square matrix.");
 
@@ -249,8 +227,8 @@ bool LQP<STATE_DIM, INPUT_DIM, OUTPUT_DIM, NUM_Subsystems>::makePSD(Eigen::Matri
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, size_t OUTPUT_DIM, size_t NUM_Subsystems>
-void LQP<STATE_DIM, INPUT_DIM, OUTPUT_DIM, NUM_Subsystems>::getController(controller_array_t& controllersStock) {
+template <size_t STATE_DIM, size_t INPUT_DIM, size_t NUM_Subsystems>
+void LQP<STATE_DIM, INPUT_DIM, NUM_Subsystems>::getController(controller_array_t& controllersStock) {
 	controllersStock = controllersStock_;
 }
 
@@ -258,15 +236,15 @@ void LQP<STATE_DIM, INPUT_DIM, OUTPUT_DIM, NUM_Subsystems>::getController(contro
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, size_t OUTPUT_DIM, size_t NUM_Subsystems>
-void LQP<STATE_DIM, INPUT_DIM, OUTPUT_DIM, NUM_Subsystems>::SolveRiccatiEquations()  {
+template <size_t STATE_DIM, size_t INPUT_DIM, size_t NUM_Subsystems>
+void LQP<STATE_DIM, INPUT_DIM, NUM_Subsystems>::SolveRiccatiEquations()  {
 
 	// general bvp solver
-	SolveBVP<OUTPUT_DIM, INPUT_DIM> bvpSolver;
+	SolveBVP<STATE_DIM, INPUT_DIM> bvpSolver;
 
 	// final value for the last Riccati equations
-	output_vector_t SvFinal = output_vector_t::Zero();
-	state_matrix_t  SmFinal = QmFinal_;
+	state_vector_t SvFinal = state_vector_t::Zero();
+	state_matrix_t SmFinal = QmFinal_;
 
 	for (int i=NUM_Subsystems-1; i>=0; i--) {
 
@@ -274,9 +252,9 @@ void LQP<STATE_DIM, INPUT_DIM, OUTPUT_DIM, NUM_Subsystems>::SolveRiccatiEquation
 
 		state_matrix_array_t        AmTrajectory(2, AmStock_[i]);
 		control_gain_matrix_array_t BmTrajectory(2, BmStock_[i]);
-		output_vector_array_t       GvTrajectory(2, GvStock_[i]);
+		state_vector_array_t        GvTrajectory(2, GvStock_[i]);
 
-		output_vector_array_t  QvTrajectory(2, QvStock_[i]);
+		state_vector_array_t  QvTrajectory(2, QvStock_[i]);
 		state_matrix_array_t   QmTrajectory(2, QmStock_[i]);
 		control_vector_array_t RvTrajectory(2, RvStock_[i]);
 		control_matrix_array_t RmTrajectory(2, RmStock_[i]);
@@ -305,8 +283,8 @@ void LQP<STATE_DIM, INPUT_DIM, OUTPUT_DIM, NUM_Subsystems>::SolveRiccatiEquation
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, size_t OUTPUT_DIM, size_t NUM_Subsystems>
-void LQP<STATE_DIM, INPUT_DIM, OUTPUT_DIM, NUM_Subsystems>::run(const std::vector<scalar_t>& switchingTimes, const scalar_t& learningRate)  {
+template <size_t STATE_DIM, size_t INPUT_DIM, size_t NUM_Subsystems>
+void LQP<STATE_DIM, INPUT_DIM, NUM_Subsystems>::run(const std::vector<scalar_t>& switchingTimes, const scalar_t& learningRate)  {
 
 	if (switchingTimes.size() != NUM_Subsystems+1)
 		throw std::runtime_error("Number of switching times should be one plus the number of subsystems.");
@@ -319,7 +297,7 @@ void LQP<STATE_DIM, INPUT_DIM, OUTPUT_DIM, NUM_Subsystems>::run(const std::vecto
 	SolveRiccatiEquations();
 
 	// calculate controller
-	calculatecontroller(learningRate, controllersStock_);
+	calculateController(learningRate, controllersStock_);
 }
 
 } // namespace ocs2

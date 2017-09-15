@@ -17,25 +17,24 @@
 namespace ocs2{
 
 /**
- * Sequential Riccati Equations Class
- * @tparam STATE_DIM
- * @tparam INPUT_DIM
- * @tparam OUTPUT_DIM
+ * This class implements the Riccati equations for SLQ problem.
+ *
+ * @tparam STATE_DIM: Dimension of the state space.
+ * @tparam INPUT_DIM: Dimension of the control input space.
  */
-template <size_t STATE_DIM, size_t INPUT_DIM, size_t OUTPUT_DIM>
-class SequentialRiccatiEquations : public SystemBase<OUTPUT_DIM*(OUTPUT_DIM+1)/2+OUTPUT_DIM+1>
+template <size_t STATE_DIM, size_t INPUT_DIM>
+class SequentialRiccatiEquations : public SystemBase<STATE_DIM*(STATE_DIM+1)/2+STATE_DIM+1>
 {
 public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-	/* OUPUT_DIM = n
-	 * Then: n(n+1)/2 entries from triangular matrix Sm, n entries from vector Sv and +1 one from a scalar */
 	enum {
-		S_DIM_ = OUTPUT_DIM*(OUTPUT_DIM+1)/2 + OUTPUT_DIM + 1
+		/** STATE_DIM=n, Then: n(n+1)/2 entries from triangular matrix Sm, n entries from vector Sv and +1 one from a scalar */
+		S_DIM_ = STATE_DIM*(STATE_DIM+1)/2 + STATE_DIM + 1
 	};
 
 	typedef Eigen::Matrix<double,S_DIM_,1> s_vector_t;
-	typedef Dimensions<OUTPUT_DIM, INPUT_DIM> DIMENSIONS;
+	typedef Dimensions<STATE_DIM, INPUT_DIM> DIMENSIONS;
 	typedef typename DIMENSIONS::controller_t controller_t;
 	typedef typename DIMENSIONS::scalar_t 		scalar_t;
 	typedef typename DIMENSIONS::scalar_array_t scalar_array_t;
@@ -54,6 +53,9 @@ public:
 	typedef typename DIMENSIONS::control_gain_matrix_t 		 control_gain_matrix_t;
 	typedef typename DIMENSIONS::control_gain_matrix_array_t control_gain_matrix_array_t;
 
+	/**
+	 * Default constructor.
+	 */
 	SequentialRiccatiEquations():
 		__Sm(state_matrix_t::Zero()),
 		__Sv(state_vector_t::Zero()),
@@ -79,47 +81,51 @@ public:
 		__LmtransposeRm(control_gain_matrix_t::Zero())
 		{}
 
+	/**
+	 * Default destructor.
+	 */
 	~SequentialRiccatiEquations() {}
 
-    /**
-    * Transcribe symmetric matrix Sm, vector Sv and scalar s into a single vector
-    * @param [in] Sm
-    * @param [in] Sv
-    * @param [in] s
-    * @param [out] allSs
-    */
+	/**
+	 * Transcribe symmetric matrix Sm, vector Sv and scalar s into a single vector
+	 *
+	 * @param [in] Sm: \f$ S_m \f$
+	 * @param [in] Sv: \f$ S_v \f$
+	 * @param [in] s: \f$ s \f$
+	 * @param [out] allSs: Single vector constructed by concatinating Sm, Sv and s.
+	 */
 	static void convert2Vector(const state_matrix_t& Sm, const state_vector_t& Sv, const eigen_scalar_t& s, s_vector_t& allSs)  {
 
 		/*Sm is symmetric. Here, we only extract the upper triangular part and transcribe it in column-wise fashion into allSs*/
 		size_t count = 0;	// count the total number of scalar entries covered
 		size_t nRows = 0;
-		for(size_t nCols=0; nCols < OUTPUT_DIM; nCols++)
+		for(size_t nCols=0; nCols < STATE_DIM; nCols++)
 		{
 			nRows = nCols+1;
-			allSs.template segment(count, nRows) << Eigen::Map<const Eigen::VectorXd>(Sm.data() + nCols*OUTPUT_DIM, nRows);
+			allSs.template segment(count, nRows) << Eigen::Map<const Eigen::VectorXd>(Sm.data() + nCols*STATE_DIM, nRows);
 			count += nRows;
 		}
 
 		/* add data from Sv on top*/
-		allSs.template segment<OUTPUT_DIM>((OUTPUT_DIM*(OUTPUT_DIM+1))/2) <<  Eigen::Map<const Eigen::VectorXd>(Sv.data(), OUTPUT_DIM);
+		allSs.template segment<STATE_DIM>((STATE_DIM*(STATE_DIM+1))/2) <<  Eigen::Map<const Eigen::VectorXd>(Sv.data(), STATE_DIM);
 
 		/* add s as last element*/
 		allSs.template tail<1> () << s;
 	}
 
     /**
-    * Transcribes the stacked vector allSs into a symmetric matrix, a state vector sized Sv and a single scalar
-    * @param [in] allSs
-    * @param [out] Sm
-    * @param [out] Sv
-    * @param [out] s
+    * Transcribes the stacked vector allSs into a symmetric matrix, Sm, a vector, Sv and a single scalar, s.
+    * @param [in] allSs: Single vector constructed by concatinating Sm, Sv and s.
+	 * @param [out] Sm: \f$ S_m \f$
+	 * @param [out] Sv: \f$ S_v \f$
+	 * @param [out] s: \f$ s \f$
     */
 	static void convert2Matrix(const s_vector_t& allSs, state_matrix_t& Sm, state_vector_t& Sv, eigen_scalar_t& s)  {
 
 		/*Sm is symmetric. Here, we map the first entries from allSs onto the respective elements in the symmetric matrix*/
 		size_t count = 0;
 		size_t nCols = 0;
-		for(size_t rows=0; rows < OUTPUT_DIM; rows++)
+		for(size_t rows=0; rows < STATE_DIM; rows++)
 		{
 			nCols = rows+1;
 			Sm.template block(rows, 0, 1, nCols)  << Eigen::Map<const Eigen::VectorXd>(allSs.data()+count, nCols).transpose();
@@ -128,28 +134,29 @@ public:
 		}
 
 		/*extract the vector Sv*/
-		Sv = Eigen::Map<const Eigen::VectorXd>(allSs.data()+(OUTPUT_DIM*(OUTPUT_DIM+1))/2, OUTPUT_DIM);
+		Sv = Eigen::Map<const Eigen::VectorXd>(allSs.data()+(STATE_DIM*(STATE_DIM+1))/2, STATE_DIM);
 
 		/*extract s as the last element */
 		s  = allSs.template tail<1>();
 	}
 
 	/**
-	 * Sets Data
-	 * @param [in] learningRate
-	 * @param [in] activeSubsystem
-	 * @param [in] switchingTimeStart
-	 * @param [in] switchingTimeFinal
-	 * @param [in] timeStampPtr
-	 * @param [in] AmPtr
-	 * @param [in] BmPtr
-	 * @param [in] qPtr
-	 * @param [in] QvPtr
-	 * @param [in] QmPtr
-	 * @param [in] RvPtr
-	 * @param [in] RmInversePtr
-	 * @param [in] RmPtr
-	 * @param [in] PmPtr
+	 * Sets coefficients of the model.
+	 *
+	 * @param [in] learningRate: The learning rate.
+	 * @param [in] activeSubsystem: The index of the active subsystem.
+	 * @param [in] switchingTimeStart: The start time of the subsystem.
+	 * @param [in] switchingTimeFinal: The final time of the subsystem.
+	 * @param [in] timeStampPtr: A pointer to the time stamp trajectory.
+	 * @param [in] AmPtr: A pointer to the trajectory of \f$ A_m(t) \f$ .
+	 * @param [in] BmPtr: A pointer to the trajectory of \f$ B_m(t) \f$ .
+	 * @param [in] qPtr: A pointer to the trajectory of \f$ q(t) \f$ .
+	 * @param [in] QvPtr: A pointer to the trajectory of \f$ Q_v(t) \f$ .
+	 * @param [in] QmPtr: A pointer to the trajectory of \f$ Q_m(t) \f$ .
+	 * @param [in] RvPtr: A pointer to the trajectory of \f$ R_v(t) \f$ .
+	 * @param [in] RmInversePtr: A pointer to the trajectory of \f$ R_m^{-1}(t) \f$ .
+	 * @param [in] RmPtr: A pointer to the trajectory of \f$ R_m(t) \f$ .
+	 * @param [in] PmPtr: A pointer to the trajectory of \f$ P_m(t) \f$ .
 	 */
 	void setData(const scalar_t& learningRate,
 			const size_t& activeSubsystem, const scalar_t& switchingTimeStart, const scalar_t& switchingTimeFinal,
@@ -159,7 +166,7 @@ public:
 			const control_vector_array_t* RvPtr, const control_matrix_array_t* RmInversePtr, const control_matrix_array_t* RmPtr,
 			const control_feedback_array_t* PmPtr)  {
 
-		SystemBase<OUTPUT_DIM*(OUTPUT_DIM+1)/2+OUTPUT_DIM+1>::numFunctionCalls_ = 0;
+		SystemBase<STATE_DIM*(STATE_DIM+1)/2+STATE_DIM+1>::numFunctionCalls_ = 0;
 
 		alpha_ = learningRate;
 
@@ -189,14 +196,15 @@ public:
 	}
 
 	/**
-	 * moved all dynamically allocated variables, are now members (higher efficiency)
-	 * @param [in] z
-	 * @param [in] allSs
-	 * @param [out] derivatives
+	 * Computes derivatives.
+	 *
+	 * @param [in] z: Time.
+	 * @param [in] allSs: Single vector constructed by concatinating Sm, Sv and s.
+	 * @param [out] derivatives: d(allSs)/dz.
 	 */
 	void computeDerivative(const scalar_t& z, const s_vector_t& allSs, s_vector_t& derivatives) {
 
-		SystemBase<OUTPUT_DIM*(OUTPUT_DIM+1)/2+OUTPUT_DIM+1>::numFunctionCalls_++;
+		SystemBase<STATE_DIM*(STATE_DIM+1)/2+STATE_DIM+1>::numFunctionCalls_++;
 
 		// denormalized time
 		scalar_t t = switchingTimeFinal_ - t;
@@ -237,9 +245,9 @@ public:
 
 protected:
 	/**
-	 *
-	 * @tparam Derived
-	 * @param [out] squareMatrix
+	 * Makes the matrix PSD.
+	 * @tparam Derived type.
+	 * @param [out] squareMatrix: The matrix to become PSD.
 	 * @return boolean
 	 */
 	template <typename Derived>
@@ -263,13 +271,6 @@ protected:
 		} else {
 			squareMatrix = 0.5*(squareMatrix+squareMatrix.transpose()).eval();
 		}
-
-		//		Eigen::LDLT<Derived> ldlt(squareMatrix);
-		//		Derived squareMatrixNew = ldlt.matrixLDLT();
-		//		if (squareMatrix.isApprox(squareMatrixNew,1e-4))
-		//			std::cout << ">>>>>>>>>>>>>>> Cholesky is wrong" << std::endl;
-		//		if (hasNegativeEigenValue)
-		//			std::cout << "lambda: " << eig.eigenvalues().head(5).transpose() << std::endl;
 
 		return hasNegativeEigenValue;
 	}

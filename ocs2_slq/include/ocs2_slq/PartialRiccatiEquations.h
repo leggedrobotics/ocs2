@@ -15,9 +15,10 @@
 namespace ocs2{
 
 /**
- * Partial Riccati Equations Class
- * @tparam STATE_DIM
- * @tparam INPUT_DIM
+ * This class implements the Riccati equations for LQ problem.
+ *
+ * @tparam STATE_DIM: Dimension of the state space.
+ * @tparam INPUT_DIM: Dimension of the control input space.
  */
 template <size_t STATE_DIM, size_t INPUT_DIM>
 class PartialRiccatiEquations : public SystemBase<STATE_DIM*STATE_DIM+STATE_DIM+1>
@@ -45,15 +46,23 @@ public:
 	typedef typename DIMENSIONS::control_gain_matrix_t 		 control_gain_matrix_t;
 	typedef typename DIMENSIONS::control_gain_matrix_array_t control_gain_matrix_array_t;
 
+	/**
+	 * Default constructor.
+	 */
 	PartialRiccatiEquations() {}
+
+	/**
+	 * Default destructor.
+	 */
 	~PartialRiccatiEquations() {}
 
 	/**
+	 * Transcribe symmetric matrix Sm, vector Sv and scalar s into a single vector
 	 *
-	 * @param [in] Sm
-	 * @param [in] Sv
-	 * @param [in] s
-	 * @param [out] allSs
+	 * @param [in] Sm: \f$ S_m \f$
+	 * @param [in] Sv: \f$ S_v \f$
+	 * @param [in] s: \f$ s \f$
+	 * @param [out] allSs: Single vector constructed by concatinating Sm, Sv and s.
 	 */
 	static void convert2Vector(const state_matrix_t& Sm, const state_vector_t& Sv, const eigen_scalar_t& s,
 			Eigen::Matrix<double,S_DIM_,1>& allSs)  {
@@ -63,13 +72,13 @@ public:
 				s;
 	}
 
-	/**
-	 *
-	 * @param [in] allSs
-	 * @param [out] Sm
-	 * @param [out] Sv
-	 * @param [out] s
-	 */
+    /**
+    * Transcribes the stacked vector allSs into a symmetric matrix, Sm, a vector, Sv and a single scalar, s.
+    * @param [in] allSs: Single vector constructed by concatinating Sm, Sv and s.
+	 * @param [out] Sm: \f$ S_m \f$
+	 * @param [out] Sv: \f$ S_v \f$
+	 * @param [out] s: \f$ s \f$
+    */
 	static void convert2Matrix(const Eigen::Matrix<double,S_DIM_,1>& allSs,
 			state_matrix_t& Sm, state_vector_t& Sv, eigen_scalar_t& s)  {
 
@@ -79,17 +88,18 @@ public:
 	}
 
 	/**
+	 * Sets coefficients of the model.
 	 *
-	 * @param [in] timeStart
-	 * @param [in] timeFinal
-	 * @param [in] Am
-	 * @param [in] Bm
-	 * @param [in] q
-	 * @param [in] Qv
-	 * @param [in] Qm
-	 * @param [in] Rv
-	 * @param [in] Rm
-	 * @param [in] Pm
+	 * @param [in] timeStart: The start time of the subsystem.
+	 * @param [in] timeFinal: The final time of the subsystem.
+	 * @param [in] Am: The trajectory of \f$ A_m \f$ .
+	 * @param [in] Bm: The trajectory of \f$ B_m \f$ .
+	 * @param [in] q: The trajectory of \f$ q \f$ .
+	 * @param [in] Qv: The trajectory of \f$ Q_v \f$ .
+	 * @param [in] Qm: The trajectory of \f$ Q_m \f$ .
+	 * @param [in] Rv: The trajectory of \f$ R_v \f$ .
+	 * @param [in] Rm: The trajectory of \f$ R_m \f$ .
+	 * @param [in] Pm: The trajectory of \f$ P_m \f$ .
 	 */
 	void setData(const scalar_t& timeStart, const scalar_t& timeFinal,
 			const state_matrix_t& Am, const control_gain_matrix_t& Bm,
@@ -110,10 +120,11 @@ public:
 	}
 
 	/**
+	 * Computes derivatives.
 	 *
-	 * @param [in] t
-	 * @param [in] state
-	 * @param [out] derivative
+	 * @param [in] t: Time.
+	 * @param [in] state: Single vector constructed by concatinating Sm, Sv and s.
+	 * @param [out] derivative: d(state)/dt.
 	 */
 	void computeDerivative(const scalar_t& t,
 			const Eigen::Matrix<double,S_DIM_,1>& state,
@@ -146,9 +157,9 @@ public:
 
 protected:
 	/**
-	 *
-	 * @tparam Derived
-	 * @param [out] squareMatrix
+	 * Makes the matrix PSD.
+	 * @tparam Derived type.
+	 * @param [out] squareMatrix: The matrix to become PSD.
 	 * @return boolean
 	 */
 	template <typename Derived>

@@ -668,7 +668,7 @@ protected:
 	 * Makes the matrix PSD.
 	 * @tparam Derived type.
 	 * @param [out] squareMatrix: The matrix to become PSD.
-	 * @return boolean
+	 * @return boolean: 
 	 */
 	template <typename Derived>
 	bool makePSD(Eigen::MatrixBase<Derived>& squareMatrix);

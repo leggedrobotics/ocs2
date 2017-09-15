@@ -80,7 +80,7 @@ public:
 
     /**
      * Returns cost
-     * @return scalar_t
+     * @return scalar_t:
      */
 	scalar_t cost()  { return cost_; }
 
@@ -102,13 +102,13 @@ public:
 
 	/**
 	 * Returns the options
-	 * @return Options_t
+	 * @return Options_t:
 	 */
 	Options_t& options()  { return options_; }
 
 	/**
 	 * Returns the mp_options
-	 * @return MP_Options_t
+	 * @return MP_Options_t: 
 	 */
 	MP_Options_t& mp_options()  { return mp_options_; }
 

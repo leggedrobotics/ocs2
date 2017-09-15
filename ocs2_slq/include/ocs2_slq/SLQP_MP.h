@@ -499,7 +499,7 @@ private:
 	 * Approximates subsystem LQWorker
 	 * @param [in] threadId
 	 * @param [in] subsystemProcessed
-	 * @return
+	 * @return size_t:
 	 */
 	size_t approximateSubsystemLQWorker(size_t threadId, size_t subsystemProcessed);		//Worker functions
 
@@ -507,7 +507,7 @@ private:
 	 * Calculates controller
 	 * @param [in] threadId
 	 * @param [in] subsystemProcessed
-	 * @return
+	 * @return size_t:
 	 */
 	size_t calculateControllerWorker(size_t threadId, size_t subsystemProcessed);
 
@@ -583,7 +583,7 @@ private:
 	 * @param [in] iterateNo
 	 * @param [in] workerState
 	 * @param [in] subsystemId
-	 * @return
+	 * @return size_t: 
 	 */
 	size_t generateUniqueProcessID (const size_t& iterateNo, const int workerState, const int subsystemId)
 	{

@@ -65,7 +65,7 @@ public:
 	 * operator=
 	 *
 	 * @param [in] other: Instance of the other class.
-	 * @return
+	 * @return SystemDynamicsLinearizer&:
 	 */
 	SystemDynamicsLinearizer& operator=(const SystemDynamicsLinearizer&other)  {
 		nonlinearSystemPtr_ = other.nonlinearSystemPtr_->clone();
@@ -206,7 +206,7 @@ public:
 	/**
 	 * Returns pointer to DerivativesBase class.
 	 *
-	 * @return a shared_ptr pointer.
+	 * @return Base*: a shared_ptr pointer.
 	 */
 	std::shared_ptr<Base> clone() const  {
 		typedef SystemDynamicsLinearizer<STATE_DIM, INPUT_DIM> system_lineaizer_t;

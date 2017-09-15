@@ -49,7 +49,7 @@ public:
 /**
  * This class implements the Frank-Wolfe algorithm which is an iterative first-order gradient descent
  * algorithm. For more discussion on this algorithm, the reader should refer to
- * \cite jaggi13
+ * \cite jaggi13 .
  */
 class GradientDescent
 {

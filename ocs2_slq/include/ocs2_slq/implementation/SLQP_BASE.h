@@ -1064,14 +1064,6 @@ const typename SLQP_BASE<STATE_DIM, INPUT_DIM>::controller_t& SLQP_BASE<STATE_DI
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-/**
- *
- * @param switchingTimes
- * @param initTime
- * @param controllersStock
- * @param initActiveSubsystemIndex
- * @param deletedcontrollersStock
- */
 template <size_t STATE_DIM, size_t INPUT_DIM>
 void SLQP_BASE<STATE_DIM, INPUT_DIM>::truncateConterller(
 		const scalar_array_t& switchingTimes,
@@ -1213,13 +1205,6 @@ void SLQP_BASE<STATE_DIM, INPUT_DIM>::rewindOptimizer(const size_t& firstIndex, 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-/**
- * run the SLQP algorithm for a given state and switching times
- * @param initTime
- * @param initState
- * @param switchingTimes
- * @param controllersStock
- */
 template <size_t STATE_DIM, size_t INPUT_DIM>
 void SLQP_BASE<STATE_DIM, INPUT_DIM>::run(
 		const double& initTime, const state_vector_t& initState, const double& finalTime,

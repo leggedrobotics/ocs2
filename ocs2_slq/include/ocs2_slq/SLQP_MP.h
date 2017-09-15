@@ -398,8 +398,8 @@ public:
 	 * Gets a nominal state of subsystem cost in the given index.
 	 *
 	 * @param [in] index: The requested index.
-	 * @param [out] timeTrajectory: The time stamp tarjectory for the requested subsystem.
-	 * @param [out] stateTrajectory: The state tarjectory for the requested subsystem.
+	 * @param [out] timeTrajectory: The time stamp tarjectory for the requested subsystem's cost.
+	 * @param [out] stateTrajectory: The state tarjectory for the requested subsystem's cost.
 	 */
 	void getSingleCostNominalState(size_t index, scalar_array_t& timeTrajectory,
 			state_vector_array_t& stateTrajectory) const override;
@@ -409,8 +409,8 @@ protected:
 	 * Sets a nominal state of subsystem cost in the given index.
 	 *
 	 * @param [in] index: The requested index.
-	 * @param [in] timeTrajectory: The time stamp tarjectory for the requested subsystem.
-	 * @param [in] stateTrajectory: The state tarjectory for the requested subsystem.
+	 * @param [in] timeTrajectory: The time stamp tarjectory for the requested subsystem's cost.
+	 * @param [in] stateTrajectory: The state tarjectory for the requested subsystem's cost.
 	 */
 	void setSingleCostNominalState(size_t index, const scalar_array_t& timeTrajectory,
 			const state_vector_array_t& stateTrajectory) override;
@@ -465,7 +465,7 @@ protected:
 	 * - constrained, quadratized cost \n
 	 *
 	 * The method outputs:
-	 * - BASE::nominalControllersStock_: the controller that stabilizes the system around the new nominal trajectory and
+	 * - nominalControllersStock_: the controller that stabilizes the system around the new nominal trajectory and
 	 * 								improves the constraints as well as the increment to the feedforward control input.
 	 */
 	void calculateController();

@@ -18,7 +18,8 @@
 namespace ocs2{
 
 /**
- * Linear Interpolation Class
+ * Linear Interpolation class.
+ *
  * @tparam Data_T: Date type
  * @tparam Alloc: Specialized allocation class
  */
@@ -61,7 +62,7 @@ public:
 	/**
 	 * Copy constructor
 	 *
-	 * @param [in] arg
+	 * @param [in] arg: Instance of the other class.
 	 */
 	LinearInterpolation(const LinearInterpolation& arg):
 		index_(arg.index_),

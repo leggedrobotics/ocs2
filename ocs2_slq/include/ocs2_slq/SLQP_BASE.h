@@ -339,8 +339,8 @@ public:
 	 * @param [in] systemStockIndexes: The indexes of the susbsystms in subsystemDynamicsPtr, subsystemDerivativesPtr, or subsystemCostFunctionsPtr.
 	 * @param [in] switchingTimes: The switching times between subsystems.
 	 * @param [in] controllersStock: Array of the initial control policies. If it is provided as a empty array, SLQ calculats internally the initial policies.
-	 * @param [in] desiredTimeTrajectoriesStock
-	 * @param [in] desiredStateTrajectoriesStock
+	 * @param [in] desiredTimeTrajectoriesStock: The time stamp tarjectory for each subsystem's cost.
+	 * @param [in] desiredStateTrajectoriesStock: The state tarjectory for each subsystem's cost.
 	 */
 	void run(const double& initTime, const state_vector_t& initState, const double& finalTime,
 			const std::vector<size_t>& systemStockIndexes=std::vector<size_t>(),
@@ -488,8 +488,8 @@ public:
 	 * Gets a nominal state of subsystem cost in the given index.
 	 *
 	 * @param [in] index: The requested index.
-	 * @param [out] timeTrajectory: The time stamp tarjectory for the requested subsystem.
-	 * @param [out] stateTrajectory: The state tarjectory for the requested subsystem.
+	 * @param [out] timeTrajectory: The time stamp tarjectory for the requested subsystem's cost.
+	 * @param [out] stateTrajectory: The state tarjectory for the requested subsystem's cost.
 	 */
 	virtual void getSingleCostNominalState(size_t index, scalar_array_t& timeTrajectory,
 			state_vector_array_t& stateTrajectory) const = 0;
@@ -497,8 +497,8 @@ public:
 	/**
 	 * Gets nominal state of subsystem costs.
 	 *
-	 * @param [out] timeTrajectoryStock: The time stamp tarjectory for each subsystem.
-	 * @param [out] stateTrajectoryStock: The state tarjectory for each subsystem.
+	 * @param [out] timeTrajectoryStock: The time stamp tarjectory for each subsystem's cost.
+	 * @param [out] stateTrajectoryStock: The state tarjectory for each subsystem's cost.
 	 */
 	void getCostNominalStates(std::vector<scalar_array_t>& timeTrajectoryStock,
 			state_vector_array2_t& stateTrajectoryStock) const;
@@ -516,8 +516,8 @@ protected:
 	 * Sets a nominal state of subsystem cost in the given index.
 	 *
 	 * @param [in] index: The requested index.
-	 * @param [in] timeTrajectory: The time stamp tarjectory for the requested subsystem.
-	 * @param [in] stateTrajectory: The state tarjectory for the requested subsystem.
+	 * @param [in] timeTrajectory: The time stamp tarjectory for the requested subsystem's cost.
+	 * @param [in] stateTrajectory: The state tarjectory for the requested subsystem's cost.
 	 */
 	virtual void setSingleCostNominalState(size_t index, const scalar_array_t& timeTrajectory,
 			const state_vector_array_t& stateTrajectory) = 0;
@@ -525,8 +525,8 @@ protected:
 	/**
 	 * Sets nominal state of subsystem costs.
 	 *
-	 * @param [in] timeTrajectoryStock: The time stamp tarjectory for each subsystem.
-	 * @param [in] stateTrajectoryStock: The state tarjectory for each subsystem.
+	 * @param [in] timeTrajectoryStock: The time stamp tarjectory for each subsystem's cost.
+	 * @param [in] stateTrajectoryStock: The state tarjectory for each subsystem's cost.
 	 */
 	void setCostNominalStates(const std::vector<scalar_array_t>& timeTrajectoryStock,
 			const state_vector_array2_t& stateTrajectoryStock);

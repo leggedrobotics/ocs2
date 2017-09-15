@@ -33,13 +33,15 @@ public:
 	typedef typename DIMENSIONS::control_feedback_t control_feedback_t;
 
 	/**
-	 * Constructor
-	 * @param [in] Q
-	 * @param [in] R
-	 * @param [in] x_nominal
-	 * @param [in] u_nominal
-	 * @param [in] x_final
-	 * @param [in] Q_final
+	 * Constructor for the running and final cost function defined as the following:
+	 * - \f$ L = 0.5(x-x_{nominal})' Q (x-x_{nominal}) + 0.5(u-u_{nominal})' R (u-u_{nominal}) \f$
+	 * - \f$ \Phi = 0.5(x-x_{final})' Q_{final} (x-x_{final}) \f$.
+	 * @param [in] Q: \f$ Q \f$
+	 * @param [in] R: \f$ R \f$
+	 * @param [in] x_nominal: \f$ x_{nominal}\f$
+	 * @param [in] u_nominal: \f$ u_{nominal}\f$
+	 * @param [in] x_final: \f$ x_{final}\f$
+	 * @param [in] Q_final: \f$ Q_{final}\f$
 	 */
 	QuadraticCostFunction(const state_matrix_t& Q,
 			const control_matrix_t& R,

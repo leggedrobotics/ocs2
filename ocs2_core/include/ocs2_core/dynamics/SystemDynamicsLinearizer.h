@@ -52,7 +52,7 @@ public:
 	/**
 	 * Copy constructor
 	 *
-	 * @param [in] other
+	 * @param [in] other: Instance of the other class.
 	 */
 	SystemDynamicsLinearizer(const SystemDynamicsLinearizer& other)
 
@@ -64,7 +64,7 @@ public:
 	/**
 	 * operator=
 	 *
-	 * @param [in] other
+	 * @param [in] other: Instance of the other class.
 	 * @return
 	 */
 	SystemDynamicsLinearizer& operator=(const SystemDynamicsLinearizer&other)  {

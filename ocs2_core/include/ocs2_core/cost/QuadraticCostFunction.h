@@ -74,7 +74,7 @@ public:
     /**
      * Evaluates the cost.
      *
-     * @param [out] L: The cost value.
+     * @param [out] cost: The cost value.
      */
 	void evaluate(scalar_t& cost) 	{
 
@@ -88,8 +88,8 @@ public:
      *
      * @param [out] dLdx: First order cost derivative with respect to state vector.
      */
-	void stateDerivative(state_vector_t& cost)  {
-		cost =  Q_ * x_deviation_;
+	void stateDerivative(state_vector_t& dLdx)  {
+		dLdx =  Q_ * x_deviation_;
 	}
 
     /**
@@ -97,8 +97,8 @@ public:
      *
      * @param [out] dLdxx: Second order cost derivative with respect to state vector.
      */
-	void stateSecondDerivative(state_matrix_t& cost)  {
-		cost = Q_;
+	void stateSecondDerivative(state_matrix_t& dLdxx)  {
+		dLdxx = Q_;
 	}
 
     /**
@@ -106,8 +106,8 @@ public:
      *
      * @param [out] dLdu: First order cost derivative with respect to input vector.
      */
-	void controlDerivative(control_vector_t& cost)	{
-		cost = R_ * u_deviation_;
+	void controlDerivative(control_vector_t& dLdu)	{
+		dLdu = R_ * u_deviation_;
 	}
 
     /**
@@ -115,8 +115,8 @@ public:
      *
      * @param [out] dLduu: Second order cost derivative with respect to input vector.
      */
-	void controlSecondDerivative(control_matrix_t& cost)	{
-		cost = R_;
+	void controlSecondDerivative(control_matrix_t& dLduu)	{
+		dLduu = R_;
 	}
 
     /**
@@ -124,14 +124,14 @@ public:
      *
      * @param [out] dLdxu: Second order cost derivative with respect to state and input vector.
      */
-	void stateControlDerivative(control_feedback_t& cost)	{
-		cost = control_feedback_t::Zero();
+	void stateControlDerivative(control_feedback_t& dLdxu)	{
+		dLdxu = control_feedback_t::Zero();
 	}
 
     /**
      * Gets the terminal cost.
      *
-     * @param [out] Phi: The final cost value
+     * @param [out] cost: The final cost value
      */
 	void terminalCost(scalar_t& cost)	{
 
@@ -144,10 +144,10 @@ public:
      *
      * @param [out] dPhidx: First order final cost derivative with respect to state vector.
      */
-	void terminalCostStateDerivative(state_vector_t& cost)	{
+	void terminalCostStateDerivative(state_vector_t& dPhidx)	{
 
 		state_vector_t x_deviation_final = this->x_ - x_final_;
-		cost = Q_final_ * x_deviation_final;
+		dPhidx = Q_final_ * x_deviation_final;
 	}
 
     /**
@@ -155,8 +155,8 @@ public:
      *
      * @param [out] dPhidxx: Second order final cost derivative with respect to state vector.
      */
-	void terminalCostStateSecondDerivative(state_matrix_t& cost)	{
-		cost = Q_final_;
+	void terminalCostStateSecondDerivative(state_matrix_t& dPhidxx)	{
+		dPhidxx = Q_final_;
 	}
 
     /**

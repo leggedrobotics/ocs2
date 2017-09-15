@@ -375,9 +375,9 @@ public:
 	/**
 	 * Gets the nominal trajectories
 	 *
-	 * @param [out] timeTrajectoriesStock: Array of trajectories containing the output time trajectory stamp.
-	 * @param [out] stateTrajectoriesStock: Array of trajectories containing the output state trajectory.
-	 * @param [out] inputTrajectoriesStock: Array of trajectories containing the output control input trajectory.
+	 * @param [out] nominalTimeTrajectoriesStock: Array of trajectories containing the output time trajectory stamp.
+	 * @param [out] nominalStateTrajectoriesStock: Array of trajectories containing the output state trajectory.
+	 * @param [out] nominalInputTrajectoriesStock: Array of trajectories containing the output control input trajectory.
 	 */
 	virtual void getNominalTrajectories(std::vector<scalar_array_t>& nominalTimeTrajectoriesStock,
 			state_vector_array2_t& nominalStateTrajectoriesStock,
@@ -414,7 +414,7 @@ public:
 	/**
 	 * Uses Disjoint Riccati approach which effective makes the backward pass of the SLQ parallelizable.
 	 *
-	 * @param [in] True if Disjoint Riccati approach should be used.
+	 * @param [in] useDisjointRiccati: Set to true if Disjoint Riccati approach should be used.
 	 */
 	void setUseDisjointRiccati(bool useDisjointRiccati) {useDisjointRiccati_= useDisjointRiccati;}
 
@@ -423,7 +423,7 @@ public:
 	 *
 	 * @param [in] timeTrajectoriesStock: Array of trajectories containing the time trajectory stamp.
 	 * @param [in] nc1TrajectoriesStock: Array of trajectories containing the number of the active state-input constraints.
-	 * @param [in] EvTrajectoryStock: Array of trajectories containing the value of the state-input constraints.
+	 * @param [in] EvTrajectoriesStock: Array of trajectories containing the value of the state-input constraints.
 	 * @param [out] constraintISE: The state-input constraints ISE.
 	 * @return maximum norm of the constraints.
 	 */

@@ -44,7 +44,7 @@ public:
 	 * @param [in] time: Current time.
 	 * @return
 	 */
-	bool checkEvent(const State_T& state, const double& t) override {
+	bool checkEvent(const State_T& state, const double& time) override {
 		return killIntegration_;
 	}
 
@@ -54,7 +54,7 @@ public:
 	 * @param [in] state: Current state vector.
 	 * @param [in] time: Current time.
 	 */
-	void handleEvent(const State_T& state, const double& t) override {
+	void handleEvent(const State_T& state, const double& time) override {
 
 		/* throw an exception which stops the integration */
 		throw std::runtime_error("Integration terminated due to external event specified by user.");

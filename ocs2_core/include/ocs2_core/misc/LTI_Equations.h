@@ -46,9 +46,8 @@ public:
 	 * @param [in] x: Current state.
 	 * @param [out] dxdt: Current state time derivative
 	 */
-	void computeDerivative(const double& z, const state_vector_t& x, state_vector_t& dx) {
-		// dx = Gm x + Gv
-		dx = Gm_*x + Gv_;
+	void computeDerivative(const double& t, const state_vector_t& x, state_vector_t& dxdt) override {
+		dxdt = Gm_*x + Gv_;
 	}
 
 

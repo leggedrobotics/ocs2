@@ -8,9 +8,9 @@
 #ifndef OCS2_EVENTHANDLER_H_
 #define OCS2_EVENTHANDLER_H_
 
-namespace ocs2{
-
 #include <Eigen/Dense>
+
+namespace ocs2{
 
 /**
  * Event handler class for ode solvers.

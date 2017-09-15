@@ -135,8 +135,8 @@ public:
 	 * @param [in] t: Current time.
 	 * @param [in] x: Current state.
 	 * @param [in] u: Current input.
-	 * @param [out] numConstraint1: Number of active state-input equality constriants.
-	 * @param [out] g1: The state-input equality constriants value.
+	 * @param [out] numConstraint1: Number of active state-input equality constraints.
+	 * @param [out] g1: The state-input equality constraints value.
 	 */
 	virtual void computeConstriant1(const scalar_t& t, const state_vector_t& x, const control_vector_t& u, size_t& numConstraint1, constraint1_vector_t& g1)  {
 
@@ -148,8 +148,8 @@ public:
 	 *
 	 * @param [in] t: Current time.
 	 * @param [in] x: Current state.
-	 * @param [out] numConstraint2: Number of active state-only equality constriants.
-	 * @param [out] g2: The state-only equality constriants value.
+	 * @param [out] numConstraint2: Number of active state-only equality constraints.
+	 * @param [out] g2: The state-only equality constraints value.
 	 */
 	virtual void computeConstriant2(const scalar_t& t, const state_vector_t& x, size_t& numConstraint2, constraint2_vector_t& g2)  {
 		numConstraint2 = 0;
@@ -160,8 +160,8 @@ public:
 	 *
 	 * @param [in] t: Current time.
 	 * @param [in] x: Current state.
-	 * @param [out] numFinalConstraint2: Number of active state-only final equality constriants.
-	 * @param [out] g2Final: The state-only final equality constriants value.
+	 * @param [out] numFinalConstraint2: Number of active state-only final equality constraints.
+	 * @param [out] g2Final: The state-only final equality constraints value.
 	 */
 	virtual void computeFinalConstriant2(const scalar_t& t, const state_vector_t& x, size_t& numFinalConstraint2, constraint2_vector_t& g2Final)  {
 		numFinalConstraint2 = 0;
@@ -170,7 +170,7 @@ public:
 	/**
 	 * Initializes the system dynamics.
 	 *
-	 * @param [in] systemStockIndexes: The susbsystem-stock index vector
+	 * @param [in] systemStockIndexes: The subsystem-stock index vector
 	 * @param [in] switchingTimes: The switching time vector.
 	 * @param [in] initState: Initial state.
 	 * @param [in] activeSubsystemIndex: Current active subsystem index.

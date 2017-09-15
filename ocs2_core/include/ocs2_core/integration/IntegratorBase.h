@@ -84,7 +84,7 @@ public:
 	 * @param [out] stateTrajectory: Output state trajectory.
 	 * @param [out] timeTrajectory: Output time stamp trajectory.
 	 * @param [in] dtInitial: Initial time step.
-	 * @param [in] AbsTol: The absolue tolerance error for ode solver.
+	 * @param [in] AbsTol: The absolute tolerance error for ode solver.
 	 * @param [in] RelTol: The relative tolerance error for ode solver.
 	 * @param [in] maxNumSteps: The maximum number of integration points per a second for ode solver.
 	 * @return boolean: Success flag.
@@ -107,7 +107,7 @@ public:
 	 * @param [in] timeTrajectory: Input time stamp trajectory.
 	 * @param [out] stateTrajectory: Output state trajectory.
 	 * @param [in] dtInitial: Initial time step.
-	 * @param [in] AbsTol: The absolue tolerance error for ode solver.
+	 * @param [in] AbsTol: The absolute tolerance error for ode solver.
 	 * @param [in] RelTol: The relative tolerance error for ode solver.
 	 * @return boolean: Success flag.
 	 */

@@ -71,7 +71,7 @@ public:
 	/**
 	 * Initializes the system derivative.
 	 *
-	 * @param [in] systemStockIndexes: The susbsystem-stock index vector
+	 * @param [in] systemStockIndexes: The subsystem-stock index vector
 	 * @param [in] switchingTimes: The switching time vector.
 	 * @param [in] initState: Initial state.
 	 * @param [in] activeSubsystemIndex: Current active subsystem index.

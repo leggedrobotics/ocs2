@@ -305,7 +305,7 @@ public:
 		bool dispayGSLQP_;
 		/** This value determines to display the a summary log of SLQ. */
 		bool displayShortSummary_;
-		/** This value determines to use a warm strating schem for calculating cost gradients w.r.t. switching times. */
+		/** This value determines to use a warm starting scheme for calculating cost gradients w.r.t. switching times. */
 		bool warmStartGSLQP_;
 		/** This value determines to use LQ-based method or sweeping method for calculating cost gradients w.r.t. switching times. */
 		bool useLQForDerivatives_;

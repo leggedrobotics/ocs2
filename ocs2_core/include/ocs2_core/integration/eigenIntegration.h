@@ -30,7 +30,7 @@
 
 // Necessary routines for Eigen matrices to work with vector_space_algebra
 // from odeint
-// (that is, it lets odeint treat the eigen matrices correctly, knowing
+// (that is, it lets odeint treat the Eigen matrices correctly, knowing
 // how to add, multiply, compute the norm, etc)
 
 namespace Eigen {

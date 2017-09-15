@@ -4,7 +4,7 @@
  * Multicore version of SLQP
  *
  *  Created on: Jun 20, 2016
- *      Author: mgiftthaler
+ *      Author: farbodf, mgiftthaler
  */
 
 
@@ -25,9 +25,10 @@
 namespace ocs2{
 
 /**
- * SLQP MP Class
- * @tparam STATE_DIM
- * @tparam INPUT_DIM
+ * This class implements multi-thread SLQ algorithm.
+ *
+ * @tparam STATE_DIM: Dimension of the state space.
+ * @tparam INPUT_DIM: Dimension of the control input space.
  */
 template <size_t STATE_DIM, size_t INPUT_DIM>
 class SLQP_MP : public SLQP_BASE<STATE_DIM, INPUT_DIM>
@@ -86,7 +87,7 @@ public:
 	typedef typename DIMENSIONS::constraint2_state_matrix_array2_t constraint2_state_matrix_array2_t;
 
 	/**
-	 * WORKER_STATE Enum
+	 * worker state enum
 	 */
 	enum WORKER_STATE {
 		IDLE = 0,
@@ -99,12 +100,13 @@ public:
 
 	/**
 	 * Constructor
-	 * @param [in] subsystemDynamicsPtr
-	 * @param [in] subsystemDerivativesPtr
-	 * @param [in] subsystemCostFunctionsPtr
-	 * @param [in] options
-	 * @param [in] stateOperatingPoints
-	 * @param [in] inputOperatingPoints
+	 *
+	 * @param [in] subsystemDynamicsPtr: Array of system dynamics and constraints for system's subsystems.
+	 * @param [in] subsystemDerivativesPtr: Array of system dynamics and constraints dervatives for system's subsystems.
+	 * @param [in] subsystemCostFunctionsPtr: Array of cost function and its dervatives for system's subsystems.
+	 * @param [in] options: Structure containing the settings for the SLQ algorithm.
+	 * @param [in] stateOperatingPoints: The state operating points for system's subsystems which will be used for initialization of SLQ.
+	 * @param [in] inputOperatingPoints: The input operating points for system's subsystems which will be used for initialization of SLQ.
 	 */
 	SLQP_MP(const std::vector<std::shared_ptr<ControlledSystemBase<STATE_DIM, INPUT_DIM> > >& subsystemDynamicsPtr,
 			const std::vector<std::shared_ptr<DerivativesBase<STATE_DIM, INPUT_DIM> > >& subsystemDerivativesPtr,
@@ -143,23 +145,29 @@ public:
 		launchWorkerThreads();
 	}
 
+	/**
+	 * Default destructor.
+	 */
 	~SLQP_MP();
 
 	/**
-	 * only for interfacing with GSLQP
-	 * @param [in] initTime
-	 * @param [in] initState
-	 * @param [in] finalTime
-	 * @param [in] controllersStock
-	 * @param [out] timeTrajectoriesStock
-	 * @param [out] stateTrajectoriesStock
-	 * @param [out] inputTrajectoriesStock
-	 * @param [out] nc1TrajectoriesStock
-	 * @param [out] EvTrajectoryStock
-	 * @param [out] nc2TrajectoriesStock
-	 * @param [out] HvTrajectoryStock
-	 * @param [out] nc2FinalStock
-	 * @param [out] HvFinalStock
+	 * Forward integrate the system dynamics with given controller. It uses the given control policies and initial state,
+	 * to integrate the system dyanmics and calculate the costraints in time period [initTime, finalTime].
+	 *
+	 * @param [in] initTime: Initial time.
+	 * @param [in] initState: Initial state.
+	 * @param [in] finalTime: Final time.
+	 * @param [in] controllersStock: Array of control policies.
+	 * @param [out] timeTrajectoriesStock: Array of trajectories containing the output time trajectory stamp.
+	 * @param [out] stateTrajectoriesStock: Array of trajectories containing the output state trajectory.
+	 * @param [out] inputTrajectoriesStock: Array of trajectories containing the output control input trajectory.
+	 * @param [out] nc1TrajectoriesStock: Array of trajectories containing the number of the active state-input constraints.
+	 * @param [out] EvTrajectoryStock: Array of trajectories containing the value of the state-input constraints (if the rollout is constrained the value is
+	 * always zero otherwise it is nonzero).
+	 * @param [out] nc2TrajectoriesStock: Array of trajectories containing the number of the active state-only constraints.
+	 * @param [out] HvTrajectoryStock: Array of trajectories containing the value of the state-only constraints.
+	 * @param [out] nc2FinalStock: Array containing the number of the active final state-only constraints.
+	 * @param [out] HvFinalStock: Array containing the value of the final state-only constraints.
 	 */
 	void rollout(const scalar_t& initTime,
 			const state_vector_t& initState,
@@ -175,16 +183,17 @@ public:
 			std::vector<size_t>& nc2FinalStock,
 			constraint2_vector_array_t& HvFinalStock) override;
 
-	// only for interfacing with GSLQP
 	/**
-	 * only for interfacing with GSLQP
-	 * @param [in] initTime
-	 * @param [in] initState
-	 * @param [in] finalTime
-	 * @param [in] controllersStock
-	 * @param [out] timeTrajectoriesStock
-	 * @param [out] stateTrajectoriesStock
-	 * @param [out] inputTrajectoriesStock
+	 * Forward integrate the system dynamics with given controller. It uses the given control policies and initial state,
+	 * to integrate the system dyanmics in time period [initTime, finalTime].
+	 *
+	 * @param [in] initTime: Initial time.
+	 * @param [in] initState: Initial state.
+	 * @param [in] finalTime: Final time.
+	 * @param [in] controllersStock: Array of control policies.
+	 * @param [out] timeTrajectoriesStock: Array of trajectories containing the output time trajectory stamp.
+	 * @param [out] stateTrajectoriesStock: Array of trajectories containing the output state trajectory.
+	 * @param [out] inputTrajectoriesStock: Array of trajectories containing the output control input trajectory.
 	 */
 	void rollout(const scalar_t& initTime,
 			const state_vector_t& initState,
@@ -195,21 +204,24 @@ public:
 			control_vector_array2_t& inputTrajectoriesStock) override;
 
 	/**
-	 * Rollout
-	 * @param [in] threadId
-	 * @param [in] initTime
-	 * @param [in] initState
-	 * @param [in] finalTime
-	 * @param [in] controllersStock
-	 * @param [out] timeTrajectoriesStock
-	 * @param [out] stateTrajectoriesStock
-	 * @param [out] inputTrajectoriesStock
-	 * @param [out] nc1TrajectoriesStock
-	 * @param [out] EvTrajectoryStock
-	 * @param [out] nc2TrajectoriesStock
-	 * @param [out] HvTrajectoryStock
-	 * @param [out] nc2FinalStock
-	 * @param [out] HvFinalStock
+	 * Forward integrate the system dynamics with given controller. It uses the given control policies and initial state,
+	 * to integrate the system dyanmics and calculate the costraints in time period [initTime, finalTime].
+	 *
+	 * @param [in] threadId: Working thread.
+	 * @param [in] initTime: Initial time.
+	 * @param [in] initState: Initial state.
+	 * @param [in] finalTime: Final time.
+	 * @param [in] controllersStock: Array of control policies.
+	 * @param [out] timeTrajectoriesStock: Array of trajectories containing the output time trajectory stamp.
+	 * @param [out] stateTrajectoriesStock: Array of trajectories containing the output state trajectory.
+	 * @param [out] inputTrajectoriesStock: Array of trajectories containing the output control input trajectory.
+	 * @param [out] nc1TrajectoriesStock: Array of trajectories containing the number of the active state-input constraints.
+	 * @param [out] EvTrajectoryStock: Array of trajectories containing the value of the state-input constraints (if the rollout is constrained the value is
+	 * always zero otherwise it is nonzero).
+	 * @param [out] nc2TrajectoriesStock: Array of trajectories containing the number of the active state-only constraints.
+	 * @param [out] HvTrajectoryStock: Array of trajectories containing the value of the state-only constraints.
+	 * @param [out] nc2FinalStock: Array containing the number of the active final state-only constraints.
+	 * @param [out] HvFinalStock: Array containing the value of the final state-only constraints.
 	 */
 	void rollout(const size_t& threadId,
 			const scalar_t& initTime,
@@ -227,15 +239,17 @@ public:
 			constraint2_vector_array_t& HvFinalStock);
 
 	/**
-	 * Rollout
-	 * @param [in] threadId
-	 * @param [in] initTime
-	 * @param [in] initState
-	 * @param [in] finalTime
-	 * @param [in] controllersStock
-	 * @param [out] timeTrajectoriesStock
-	 * @param [out] stateTrajectoriesStock
-	 * @param [out] inputTrajectoriesStock
+	 * Forward integrate the system dynamics with given controller. It uses the given control policies and initial state,
+	 * to integrate the system dyanmics in time period [initTime, finalTime].
+	 *
+	 * @param [in] threadId: Working thread.
+	 * @param [in] initTime: Initial time.
+	 * @param [in] initState: Initial state.
+	 * @param [in] finalTime: Final time.
+	 * @param [in] controllersStock: Array of control policies.
+	 * @param [out] timeTrajectoriesStock: Array of trajectories containing the output time trajectory stamp.
+	 * @param [out] stateTrajectoriesStock: Array of trajectories containing the output state trajectory.
+	 * @param [out] inputTrajectoriesStock: Array of trajectories containing the output control input trajectory.
 	 */
 	void rollout(const size_t& threadId,
 			const scalar_t& initTime,
@@ -247,14 +261,16 @@ public:
 			control_vector_array2_t& inputTrajectoriesStock);
 
 	/**
-	 * Rollout
-	 * @param [in] initTime
-	 * @param [in] initState
-	 * @param [in] finalTime
-	 * @param [in] controllersStock
-	 * @param [out] finalState
-	 * @param [out] finalInput
-	 * @param [out] finalActiveSubsystemIndex
+	 * Forward integrate the system dynamics with given controller.  It uses the given control policies and initial state,
+	 * to integrate the system dyanmics in time period [initTime, finalTime] and only return the final state.
+	 *
+	 * @param [in] initTime: Initial time.
+	 * @param [in] initState: Initial state.
+	 * @param [in] finalTime: Final time.
+	 * @param [in] controllersStock: Array of control policies.
+	 * @param [out] finalState: Final state.
+	 * @param [out] finalInput: Final control input.
+	 * @param [out] finalActiveSubsystemIndex: The final active subsystem.
 	 */
 	void rollout(const scalar_t& initTime,
 			const state_vector_t& initState,
@@ -265,12 +281,13 @@ public:
 			size_t& finalActiveSubsystemIndex) override;
 
 	/**
-	 * Calculates cost function
-	 * @param [in] timeTrajectoriesStock
-	 * @param [in] stateTrajectoriesStock
-	 * @param [in] inputTrajectoriesStock
-	 * @param [out] totalCost
-	 * @param [out] threadId
+	 * Calculates cost of a rollout.
+	 *
+	 * @param [in] timeTrajectoriesStock: Array of trajectories containing the time trajectory stamp of a rollout.
+	 * @param [in] stateTrajectoriesStock: Array of trajectories containing the state trajectory of a rollout.
+	 * @param [in] inputTrajectoriesStock: Array of trajectories containing the control input trajectory of a rollout.
+	 * @param [out] totalCost: The total cost of the rollout.
+	 * @param [in] threadId: Working thread.
 	 */
 	void calculateCostFunction(
 			const std::vector<scalar_array_t>& timeTrajectoriesStock,
@@ -279,21 +296,13 @@ public:
 			scalar_t& totalCost,
 			size_t threadId);
 
-	// for interfacing with GSLQP
 	/**
-	 * compute the cost for a given rollout
-	 * 		inputs:
-	 * 			+ timeTrajectoriesStock:  rollout simulated time steps
-	 * 			+ stateTrajectoriesStock: rollout outputs
-	 * 			+ inputTrajectoriesStock: rollout control inputs
-	 *			+ threadId: working thread, defaults to the thread with lowest id, thus this is the default thread for single-core cost computation
-	 *				(allows to let method be called from the outside)
-	 * 		outputs:
-	 * 			+ totalCost: the total cost of the trajectory
-	 * @param [in] timeTrajectoriesStock
-	 * @param [in] stateTrajectoriesStock
-	 * @param [in] inputTrajectoriesStock
-	 * @param [out] totalCost
+	 * Calculates cost of a rollout.
+	 *
+	 * @param [in] timeTrajectoriesStock: Array of trajectories containing the time trajectory stamp of a rollout.
+	 * @param [in] stateTrajectoriesStock: Array of trajectories containing the state trajectory of a rollout.
+	 * @param [in] inputTrajectoriesStock: Array of trajectories containing the control input trajectory of a rollout.
+	 * @param [out] totalCost: The total cost of the rollout.
 	 */
 	void calculateCostFunction(
 			const std::vector<scalar_array_t>& timeTrajectoriesStock,
@@ -302,15 +311,16 @@ public:
 			scalar_t& totalCost) override;
 
 	/**
-	 * Calculates cost function
-	 * @param [in] timeTrajectoriesStock
-	 * @param [in] stateTrajectoriesStock
-	 * @param [in] inputTrajectoriesStock
-	 * @param [in] nc2TrajectoriesStock
-	 * @param [in] HvTrajectoryStock
-	 * @param [in] nc2FinalStock
-	 * @param [in] HvFinalStock
-	 * @param [out] totalCost
+	 * Calculates the cost function plus penalty for state-only constraints of a rollout.
+	 *
+	 * @param [in] timeTrajectoriesStock: Array of trajectories containing the time trajectory stamp of a rollout.
+	 * @param [in] stateTrajectoriesStock: Array of trajectories containing the state trajectory of a rollout.
+	 * @param [in] inputTrajectoriesStock: Array of trajectories containing the control input trajectory of a rollout.
+	 * @param [out] nc2TrajectoriesStock: Array of trajectories containing the number of the active state-only constraints.
+	 * @param [out] HvTrajectoryStock: Array of trajectories containing the value of the state-only constraints.
+	 * @param [out] nc2FinalStock: Array containing the number of the active final state-only constraints.
+	 * @param [out] HvFinalStock: Array containing the value of the final state-only constraints.
+	 * @param [out] totalCost: The total cost plus state-only constraints penalty.
 	 */
 	void calculateCostFunction(const std::vector<scalar_array_t>& timeTrajectoriesStock,
 			const state_vector_array2_t& stateTrajectoriesStock,
@@ -322,16 +332,17 @@ public:
 			scalar_t& totalCost) override;
 
 	/**
-	 * Calculates cost function
-	 * @param [in] timeTrajectoriesStock
-	 * @param [in] stateTrajectoriesStock
-	 * @param [in] inputTrajectoriesStock
-	 * @param [in] nc2TrajectoriesStock
-	 * @param [in] HvTrajectoryStock
-	 * @param [in] nc2FinalStock
-	 * @param [in] HvFinalStock
-	 * @param [out] totalCost
-	 * @param [out] threadId
+	 * Calculates the cost function plus penalty for state-only constraints of a rollout.
+	 *
+	 * @param [in] timeTrajectoriesStock: Array of trajectories containing the time trajectory stamp of a rollout.
+	 * @param [in] stateTrajectoriesStock: Array of trajectories containing the state trajectory of a rollout.
+	 * @param [in] inputTrajectoriesStock: Array of trajectories containing the control input trajectory of a rollout.
+	 * @param [out] nc2TrajectoriesStock: Array of trajectories containing the number of the active state-only constraints.
+	 * @param [out] HvTrajectoryStock: Array of trajectories containing the value of the state-only constraints.
+	 * @param [out] nc2FinalStock: Array containing the number of the active final state-only constraints.
+	 * @param [out] HvFinalStock: Array containing the value of the final state-only constraints.
+	 * @param [out] totalCost: The total cost plus state-only constraints penalty.
+	 * @param [in] threadId: Working thread.
 	 */
 	void calculateCostFunction(const std::vector<scalar_array_t>& timeTrajectoriesStock,
 			const state_vector_array2_t& stateTrajectoriesStock,
@@ -349,63 +360,68 @@ public:
 	void setupOptimizer() override;
 
 	/**
-	 * Runs Init
+	 * Runs the initialization method for single thread SLQ.
 	 */
 	void runInit() override;
 
 	/**
-	 * Runs iteration
-	 * @param [in] SmFinal
-	 * @param [in] SvFinal
-	 * @param [in] sFinal
+	 * Runs a single iteration of single thread SLQ.
+	 *
+	 * @param [in] SmFinal: The final Sm for Riccati equation.
+	 * @param [in] SvFinal: The final Sv for Riccati equation.
+	 * @param [in] sFinal: The final s for Riccati equation.
 	 */
 	void runIteration(const state_matrix_t& SmFinal = state_matrix_t::Zero(),
 			const state_vector_t& SvFinal = state_vector_t::Zero(),
 			const eigen_scalar_t& sFinal = eigen_scalar_t::Zero()) override;
 
 	/**
+	 * Runs the exit method single thread SLQ.
 	 *
-	 * @param [in] SmFinal
-	 * @param [in] SvFinal
-	 * @param [in] sFinal
+	 * @param [in] SmFinal: The final Sm for Riccati equation.
+	 * @param [in] SvFinal: The final Sv for Riccati equation.
+	 * @param [in] sFinal: The final s for Riccati equation.
 	 */
 	void runExit(const state_matrix_t& SmFinal = state_matrix_t::Zero(),
 			const state_vector_t& SvFinal = state_vector_t::Zero(),
 			const eigen_scalar_t& sFinal = eigen_scalar_t::Zero()) override;
 
-	// get subsystem dynamics on main thread
 	/**
-	 *
+	 * Gets a pointer to the array of the subsystem dynamics.
+	 * @return Pointer to the array of the subsystem dynamics.
 	 */
 	std::vector<std::shared_ptr<ControlledSystemBase<STATE_DIM, INPUT_DIM>> >& getSubsystemDynamicsPtrStock() override {
 		return dynamics_[BASE::options_.nThreads_];
 	}
 
 	/**
-	 * Gets single cost nominal state
-	 * @param [in] index
-	 * @param [out] timeTrajectory
-	 * @param [out] stateTrajectory
+	 * Gets a nominal state of subsystem cost in the given index.
+	 *
+	 * @param [in] index: The requested index.
+	 * @param [out] timeTrajectory: The time stamp tarjectory for the requested subsystem.
+	 * @param [out] stateTrajectory: The state tarjectory for the requested subsystem.
 	 */
 	void getSingleCostNominalState(size_t index, scalar_array_t& timeTrajectory,
 			state_vector_array_t& stateTrajectory) const override;
 
 protected:
 	/**
-	 * Sets single cost nominal state
-	 * @param [in] index
-	 * @param [in] timeTrajectory
-	 * @param [in] stateTrajectory
+	 * Sets a nominal state of subsystem cost in the given index.
+	 *
+	 * @param [in] index: The requested index.
+	 * @param [in] timeTrajectory: The time stamp tarjectory for the requested subsystem.
+	 * @param [in] stateTrajectory: The state tarjectory for the requested subsystem.
 	 */
 	void setSingleCostNominalState(size_t index, const scalar_array_t& timeTrajectory,
 			const state_vector_array_t& stateTrajectory) override;
 
 	/**
-	 * Solves sequential Riccati equations
-	 * @param [in] learningRate
-	 * @param [in] SmFinal
-	 * @param [in] SvFinal
-	 * @param [in] sFinal
+	 * Solves Riccati equations for all the susbsystems in the systemStockIndexes.
+	 *
+	 * @param [in] learningRate: The optimal learning rate from line search scheme.
+	 * @param [in] SmFinal: The final Sm for Riccati equation.
+	 * @param [in] SvFinal: The final Sv for Riccati equation.
+	 * @param [in] sFinal: The final s for Riccati equation.
 	 */
 	void solveSequentialRiccatiEquations(const scalar_t& learningRate,
 			const state_matrix_t& SmFinal,
@@ -413,50 +429,52 @@ protected:
 			const eigen_scalar_t& sFinal) override;
 
 	/**
-	 * approximates the nonlinear problem as a linear-quadratic problem around the nominal
+	 * Approximates the nonlinear problem as a linear-quadratic problem around the nominal
 	 * state and control trajectories. This method updates the following variables:
+	 * 	- linearized system model
+	 * 	- \f$ dxdt = A_m(t)x + B_m(t)u \f$.
+	 * 	- s.t. \f$ C_m(t)x + D_m(t)u + E_v(t) = 0 \f$.
+	 * 	- AmTrajectoryStock_: \f$ A_m\f$  matrix.
+	 * 	- BmTrajectoryStock_: \f$ B_m\f$  matrix.
+	 * 	- CmTrajectoryStock_: \f$ C_m\f$ matrix.
+	 * 	- DmTrajectoryStock_: \f$ D_m\f$ matrix.
+	 * 	- EvTrajectoryStock_: \f$ E_v\f$ vector.
 	 *
-	 * 		+ linearized system model
-	 * 		+ dxdt = Am(t)x(t) + Bm(t)u(t)
-	 * 		+ s.t. Cm(t)x(t) + Dm(t)t(t) + Ev(t) = 0
-	 * 		+ BASE::AmTrajectoryStock_: Am matrix
-	 * 		+ BASE::BmTrajectoryStock_: Bm matrix
-	 * 		+ BASE::CmTrajectoryStock_: Cm matrix
-	 * 		+ BASE::DmTrajectoryStock_: Dm matrix
-	 * 		+ BASE::EvTrajectoryStock_: Ev vector
+	 * 	- quadratized intermediate cost function
+	 * 	- intermediate cost: \f$ q(t) + 0.5 xQ_m(t)x + x'Q_v(t) + u'P_m(t)x + 0.5u'R_m(t)u + u'R_v(t) \f$
+	 * 	- qTrajectoryStock_:  \f$ q\f$
+	 * 	- QvTrajectoryStock_: \f$ Q_v\f$ vector.
+	 * 	- QmTrajectoryStock_:\f$  Q_m\f$ matrix.
+	 * 	- PmTrajectoryStock_: \f$ P_m\f$ matrix.
+	 * 	- RvTrajectoryStock_: \f$ R_v\f$ vector.
+	 * 	- RmTrajectoryStock_: \f$ R_m\f$ matrix.
+	 * 	- RmInverseTrajectoryStock_: inverse of \f$ R_m\f$ matrix.
 	 *
-	 * 		+ quadratized intermediate cost function
-	 * 		+ intermediate cost: q(t) + 0.5 y(t)Qm(t)y(t) + y(t)'Qv(t) + u(t)'Pm(t)y(t) + 0.5u(t)'Rm(t)u(t) + u(t)'Rv(t)
-	 * 		+ BASE::qTrajectoryStock_:  q
-	 * 		+ BASE::QvTrajectoryStock_: Qv vector
-	 * 		+ BASE::QmTrajectoryStock_: Qm matrix
-	 * 		+ BASE::PmTrajectoryStock_: Pm matrix
-	 * 		+ BASE::RvTrajectoryStock_: Rv vector
-	 * 		+ BASE::RmTrajectoryStock_: Rm matrix
-	 * 		+ BASE::RmInverseTrajectoryStock_: inverse of Rm matrix
+	 * 	- as well as the constrained coefficients of
+	 * 		- linearized system model
+	 * 		- quadratized intermediate cost function
+	 * 		- quadratized final cost
 	 *
-	 * 		+ quadratized final cost in the last subsystem: qFinal(t) + 0.5 y(t)QmFinal(t)y(t) + y(t)'QvFinal(t)
-	 * 		+ BASE::qFinal_: qFinal
-	 * 		+ BASE::qFinal_: QvFinal vector
-	 * 		+ BASE::qFinal_: QmFinal matrix
-	 *
-	 * 		+ as well as the constrained coefficients of
-	 * 			linearized system model
-	 * 			quadratized intermediate cost function
-	 * 			quadratized final cost
 	 */
 	void approximateOptimalControlProblem();
 
 	/**
-	 * Calculates controller
+	 * Calculates the controller and linear function approximation of the type-1 constraint Lagrangian. \n
+	 * This method uses the following variables:
+	 * - constrained, linearized model
+	 * - constrained, quadratized cost \n
+	 *
+	 * The method outputs:
+	 * - BASE::nominalControllersStock_: the controller that stabilizes the system around the new nominal trajectory and
+	 * 								improves the constraints as well as the increment to the feedforward control input.
 	 */
 	void calculateController();
 
 	/**
-	 * line search on the feedforward parts of the controller and lagrange multipliers.
+	 * Line search on the feedforwrd parts of the controller and lagrange multipliers.
 	 * Based on the option flag lineSearchByMeritFuntion_ it uses two different approaches for line search:
-	 * 		+ the constraint correction term is added by a user defined stepSize.
-	 * 		The line search uses the pure cost function for choosing the best stepSize.
+	 * 	- The constraint correction term is added by a user defined stepSize.
+	 * 	- The line search uses the merit function for choosing the best stepSize.
 	 */
 	void lineSearch();
 
@@ -472,14 +490,12 @@ private:
 	 */
 	void threadWork(size_t threadId);
 
-	// main function for sub-tasks
 	/**
 	 * Computes the linearized dynamics for a particular subsystem
 	 * @param [in] sysIndex
 	 */
 	void approximateSubsystemLQ(const size_t sysIndex); // computes the linearized dynamics for a particular subsystem
 
-	// worker functions
 	/**
 	 * Approximates subsystem LQWorker
 	 * @param [in] threadId

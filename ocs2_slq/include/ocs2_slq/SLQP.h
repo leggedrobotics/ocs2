@@ -18,9 +18,10 @@
 namespace ocs2{
 
 /**
- * SLQP class
- * @tparam STATE_DIM
- * @tparam INPUT_DIM
+ * This class implements single thread SLQ algorithm.
+ *
+ * @tparam STATE_DIM: Dimension of the state space.
+ * @tparam INPUT_DIM: Dimension of the control input space.
  */
 template <size_t STATE_DIM, size_t INPUT_DIM>
 class SLQP : public SLQP_BASE<STATE_DIM, INPUT_DIM>
@@ -80,6 +81,13 @@ public:
 
 	/**
 	 * Constructor
+	 *
+	 * @param [in] subsystemDynamicsPtr: Array of system dynamics and constraints for system's subsystems.
+	 * @param [in] subsystemDerivativesPtr: Array of system dynamics and constraints dervatives for system's subsystems.
+	 * @param [in] subsystemCostFunctionsPtr: Array of cost function and its dervatives for system's subsystems.
+	 * @param [in] options: Structure containing the settings for the SLQ algorithm.
+	 * @param [in] stateOperatingPoints: The state operating points for system's subsystems which will be used for initialization of SLQ.
+	 * @param [in] inputOperatingPoints: The input operating points for system's subsystems which will be used for initialization of SLQ.
 	 */
 	SLQP(const std::vector<std::shared_ptr<ControlledSystemBase<STATE_DIM, INPUT_DIM> > >& subsystemDynamicsPtr,
 			const std::vector<std::shared_ptr<DerivativesBase<STATE_DIM, INPUT_DIM> > >& subsystemDerivativesPtr,
@@ -90,35 +98,29 @@ public:
 	: BASE(subsystemDynamicsPtr, subsystemDerivativesPtr, subsystemCostFunctionsPtr, options, stateOperatingPoints, inputOperatingPoints)
 	{}
 
+	/**
+	 * Default destructor.
+	 */
 	virtual ~SLQP();
 
 	/**
-	 * Forward integrate the system dynamics with given controller:
-	 * 		inputs:
-	 * 			+ initTime: intial time
-	 * 			+ initState: initial state at time initTime
-	 * 			+ controllersStock: controller for each subsystem
-	 * 		outputs:
-	 * 			+ timeTrajectoriesStock:  rollout simulated time steps
-	 * 			+ stateTrajectoriesStock: rollout states
-	 * 			+ inputTrajectoriesStock: rollout control inputs
-	 * 			+ (optional) stateTrajectoriesStock_: rollout outputs
-	 * 			+ (optional) nc1TrajectoriesStock: number of active constraints at each time step
-	 * 			+ (optional) EvTrajectoryStock: value of the constraint (if the rollout is constrained the value is
-	 * 											always zero otherwise it is nonzero)
-	 * @param [in] initTime
-	 * @param [in] initState
-	 * @param [in] finalTime
-	 * @param [out] controllersStock
-	 * @param [out] timeTrajectoriesStock
-	 * @param [out] stateTrajectoriesStock
-	 * @param [out] inputTrajectoriesStock
-	 * @param [out] nc1TrajectoriesStock
-	 * @param [out] EvTrajectoryStock
-	 * @param [out] nc2TrajectoriesStock
-	 * @param [out] HvTrajectoryStock
-	 * @param [out] nc2FinalStock
-	 * @param [out] HvFinalStock
+	 * Forward integrate the system dynamics with given controller. It uses the given control policies and initial state,
+	 * to integrate the system dyanmics and calculate the costraints in time period [initTime, finalTime].
+	 *
+	 * @param [in] initTime: Initial time.
+	 * @param [in] initState: Initial state.
+	 * @param [in] finalTime: Final time.
+	 * @param [in] controllersStock: Array of control policies.
+	 * @param [out] timeTrajectoriesStock: Array of trajectories containing the output time trajectory stamp.
+	 * @param [out] stateTrajectoriesStock: Array of trajectories containing the output state trajectory.
+	 * @param [out] inputTrajectoriesStock: Array of trajectories containing the output control input trajectory.
+	 * @param [out] nc1TrajectoriesStock: Array of trajectories containing the number of the active state-input constraints.
+	 * @param [out] EvTrajectoryStock: Array of trajectories containing the value of the state-input constraints (if the rollout is constrained the value is
+	 * always zero otherwise it is nonzero).
+	 * @param [out] nc2TrajectoriesStock: Array of trajectories containing the number of the active state-only constraints.
+	 * @param [out] HvTrajectoryStock: Array of trajectories containing the value of the state-only constraints.
+	 * @param [out] nc2FinalStock: Array containing the number of the active final state-only constraints.
+	 * @param [out] HvFinalStock: Array containing the value of the final state-only constraints.
 	 */
 	virtual void rollout(const double& initTime,
 			const state_vector_t& initState,
@@ -135,22 +137,16 @@ public:
 			constraint2_vector_array_t& HvFinalStock) override;
 
 	/**
-	 * Forward integrate the system dynamics with given controller:
-	 * 		inputs:
-	 * 			+ initTime: intial time
-	 * 			+ initState: initial state at time initTime
-	 * 			+ controllersStock: controller for each subsystem
-	 * 		outputs:
-	 * 			+ timeTrajectoriesStock:  rollout simulated time steps
-	 * 			+ stateTrajectoriesStock: rollout states
-	 * 			+ inputTrajectoriesStock: rollout control inputs
-	 * @param [in] initTime
-	 * @param [in] initState
-	 * @param [in] finalTime
-	 * @param [out] controllersStock
-	 * @param [out] timeTrajectoriesStock
-	 * @param [out] stateTrajectoriesStock
-	 * @param [out] inputTrajectoriesStock
+	 * Forward integrate the system dynamics with given controller. It uses the given control policies and initial state,
+	 * to integrate the system dyanmics in time period [initTime, finalTime].
+	 *
+	 * @param [in] initTime: Initial time.
+	 * @param [in] initState: Initial state.
+	 * @param [in] finalTime: Final time.
+	 * @param [in] controllersStock: Array of control policies.
+	 * @param [out] timeTrajectoriesStock: Array of trajectories containing the output time trajectory stamp.
+	 * @param [out] stateTrajectoriesStock: Array of trajectories containing the output state trajectory.
+	 * @param [out] inputTrajectoriesStock: Array of trajectories containing the output control input trajectory.
 	 */
 	virtual void rollout(const double& initTime,
 			const state_vector_t& initState,
@@ -161,14 +157,16 @@ public:
 			control_vector_array2_t& inputTrajectoriesStock) override;
 
 	/**
-	 * Forward integrate the system dynamics with given controller:
-	 * @param initTime
-	 * @param initState
-	 * @param finalTime
-	 * @param controllersStock
-	 * @param finalState
-	 * @param finalInput
-	 * @param finalActiveSubsystemIndex
+	 * Forward integrate the system dynamics with given controller.  It uses the given control policies and initial state,
+	 * to integrate the system dyanmics in time period [initTime, finalTime] and only return the final state.
+	 *
+	 * @param [in] initTime: Initial time.
+	 * @param [in] initState: Initial state.
+	 * @param [in] finalTime: Final time.
+	 * @param [in] controllersStock: Array of control policies.
+	 * @param [out] finalState: Final state.
+	 * @param [out] finalInput: Final control input.
+	 * @param [out] finalActiveSubsystemIndex: The final active subsystem.
 	 */
 	virtual void rollout(const scalar_t& initTime,
 			const state_vector_t& initState,
@@ -179,18 +177,12 @@ public:
 			size_t& finalActiveSubsystemIndex) override;
 
 	/**
-	 * compute the cost for a given rollout
-	 * 		inputs:
-	 * 			+ timeTrajectoriesStock:  rollout simulated time steps
-	 * 			+ stateTrajectoriesStock: rollout outputs
-	 * 			+ inputTrajectoriesStock: rollout control inputs
+	 * Calculates cost of a rollout.
 	 *
-	 * 		outputs:
-	 * 			+ totalCost: the total cost of the trajectory
-	 * @param [in] timeTrajectoriesStock
-	 * @param [in] stateTrajectoriesStock
-	 * @param [in] inputTrajectoriesStock
-	 * @param [out] totalCost
+	 * @param [in] timeTrajectoriesStock: Array of trajectories containing the time trajectory stamp of a rollout.
+	 * @param [in] stateTrajectoriesStock: Array of trajectories containing the state trajectory of a rollout.
+	 * @param [in] inputTrajectoriesStock: Array of trajectories containing the control input trajectory of a rollout.
+	 * @param [out] totalCost: The total cost of the rollout.
 	 */
 	void calculateCostFunction(const std::vector<scalar_array_t>& timeTrajectoriesStock,
 			const state_vector_array2_t& stateTrajectoriesStock,
@@ -198,15 +190,16 @@ public:
 			scalar_t& totalCost) override;
 
 	/**
-	 * compute the cost for a given rollout
-	 * @param [in] timeTrajectoriesStock
-	 * @param [in] stateTrajectoriesStock
-	 * @param [in] inputTrajectoriesStock
-	 * @param [out] nc2TrajectoriesStock
-	 * @param [out] HvTrajectoryStock
-	 * @param [out] nc2FinalStock
-	 * @param [out] HvFinalStock
-	 * @param [out] totalCost
+	 * Calculates the cost function plus penalty for state-only constraints of a rollout.
+	 *
+	 * @param [in] timeTrajectoriesStock: Array of trajectories containing the time trajectory stamp of a rollout.
+	 * @param [in] stateTrajectoriesStock: Array of trajectories containing the state trajectory of a rollout.
+	 * @param [in] inputTrajectoriesStock: Array of trajectories containing the control input trajectory of a rollout.
+	 * @param [out] nc2TrajectoriesStock: Array of trajectories containing the number of the active state-only constraints.
+	 * @param [out] HvTrajectoryStock: Array of trajectories containing the value of the state-only constraints.
+	 * @param [out] nc2FinalStock: Array containing the number of the active final state-only constraints.
+	 * @param [out] HvFinalStock: Array containing the value of the final state-only constraints.
+	 * @param [out] totalCost: The total cost plus state-only constraints penalty.
 	 */
 	void calculateCostFunction(const std::vector<scalar_array_t>& timeTrajectoriesStock,
 			const state_vector_array2_t& stateTrajectoriesStock,
@@ -223,62 +216,68 @@ public:
 	void setupOptimizer() override;
 
 	/**
-	 * Runs initialization
+	 * Runs the initialization method for single thread SLQ.
 	 */
 	void runInit() override;
 
 	/**
-	 * Runs iteration
-	 * @param [in] SmFinal
-	 * @param [in] SvFinal
-	 * @param [in] sFinal
+	 * Runs a single iteration of single thread SLQ.
+	 *
+	 * @param [in] SmFinal: The final Sm for Riccati equation.
+	 * @param [in] SvFinal: The final Sv for Riccati equation.
+	 * @param [in] sFinal: The final s for Riccati equation.
 	 */
 	void runIteration(const state_matrix_t& SmFinal = state_matrix_t::Zero(),
 			const state_vector_t& SvFinal = state_vector_t::Zero(),
 			const eigen_scalar_t& sFinal = eigen_scalar_t::Zero()) override;
 
 	/**
-	 * Runs exit
-	 * @param [in] SmFinal
-	 * @param [in] SvFinal
-	 * @param [in] sFinal
+	 * Runs the exit method single thread SLQ.
+	 *
+	 * @param [in] SmFinal: The final Sm for Riccati equation.
+	 * @param [in] SvFinal: The final Sv for Riccati equation.
+	 * @param [in] sFinal: The final s for Riccati equation.
 	 */
 	void runExit(const state_matrix_t& SmFinal = state_matrix_t::Zero(),
 			const state_vector_t& SvFinal = state_vector_t::Zero(),
 			const eigen_scalar_t& sFinal = eigen_scalar_t::Zero()) override;
 
 	/**
-	 * Gets subsystem dynamics pointer
+	 * Gets a pointer to the array of the subsystem dynamics.
+	 * @return Pointer to the array of the subsystem dynamics.
 	 */
 	virtual std::vector<std::shared_ptr<ControlledSystemBase<STATE_DIM, INPUT_DIM>> >& getSubsystemDynamicsPtrStock() override{
 		return subsystemDynamicsPtrStock_;
 	}
 
 	/**
-	 * Gets single cost nominal state
-	 * @param [in] index
-	 * @param [out] timeTrajectory
-	 * @param [out] stateTrajectory
+	 * Gets a nominal state of subsystem cost in the given index.
+	 *
+	 * @param [in] index: The requested index.
+	 * @param [out] timeTrajectory: The time stamp tarjectory for the requested subsystem.
+	 * @param [out] stateTrajectory: The state tarjectory for the requested subsystem.
 	 */
 	void getSingleCostNominalState(size_t index, scalar_array_t& timeTrajectory,
 			state_vector_array_t& stateTrajectory) const override;
 
 protected:
 	/**
-	 * Sets single cost nominal State
-	 * @param [in] index
-	 * @param [in] timeTrajectory
-	 * @param [in] stateTrajectory
+	 * Sets a nominal state of subsystem cost in the given index.
+	 *
+	 * @param [in] index: The requested index.
+	 * @param [in] timeTrajectory: The time stamp tarjectory for the requested subsystem.
+	 * @param [in] stateTrajectory: The state tarjectory for the requested subsystem.
 	 */
 	void setSingleCostNominalState(size_t index, const scalar_array_t& timeTrajectory,
 			const state_vector_array_t& stateTrajectory) override;
 
 	/**
-	 * Solves sequential Riccati equations
-	 * @param [in] learningRate
-	 * @param [in] SmFinal
-	 * @param [in] SvFinal
-	 * @param [in] sFinal
+	 * Solves Riccati equations for all the susbsystems in the systemStockIndexes.
+	 *
+	 * @param [in] learningRate: The optimal learning rate from line search scheme.
+	 * @param [in] SmFinal: The final Sm for Riccati equation.
+	 * @param [in] SvFinal: The final Sv for Riccati equation.
+	 * @param [in] sFinal: The final s for Riccati equation.
 	 */
 	void solveSequentialRiccatiEquations(const scalar_t& learningRate,
 			const state_matrix_t& SmFinal,
@@ -286,55 +285,54 @@ protected:
 			const eigen_scalar_t& sFinal) override;
 
 	/**
-	 * approximates the nonlinear problem as a linear-quadratic problem around the nominal
+	 * Approximates the nonlinear problem as a linear-quadratic problem around the nominal
 	 * state and control trajectories. This method updates the following variables:
+	 * 	- linearized system model
+	 * 	- \f$ dxdt = A_m(t)x + B_m(t)u \f$.
+	 * 	- s.t. \f$ C_m(t)x + D_m(t)u + E_v(t) = 0 \f$.
+	 * 	- AmTrajectoryStock_: \f$ A_m\f$  matrix.
+	 * 	- BmTrajectoryStock_: \f$ B_m\f$  matrix.
+	 * 	- CmTrajectoryStock_: \f$ C_m\f$ matrix.
+	 * 	- DmTrajectoryStock_: \f$ D_m\f$ matrix.
+	 * 	- EvTrajectoryStock_: \f$ E_v\f$ vector.
 	 *
-	 * 		+ linearized system model
-	 * 		+ dxdt = Am(t)x(t) + Bm(t)u(t)
-	 * 		+ s.t. Cm(t)x(t) + Dm(t)t(t) + Ev(t) = 0
-	 * 		+ BASE::AmTrajectoryStock_: Am matrix
-	 * 		+ BASE::BmTrajectoryStock_: Bm matrix
-	 * 		+ BASE::CmTrajectoryStock_: Cm matrix
-	 * 		+ BASE::DmTrajectoryStock_: Dm matrix
-	 * 		+ BASE::EvTrajectoryStock_: Ev vector
+	 * 	- quadratized intermediate cost function
+	 * 	- intermediate cost: \f$ q(t) + 0.5 xQ_m(t)x + x'Q_v(t) + u'P_m(t)x + 0.5u'R_m(t)u + u'R_v(t) \f$
+	 * 	- qTrajectoryStock_:  \f$ q\f$
+	 * 	- QvTrajectoryStock_: \f$ Q_v\f$ vector.
+	 * 	- QmTrajectoryStock_:\f$  Q_m\f$ matrix.
+	 * 	- PmTrajectoryStock_: \f$ P_m\f$ matrix.
+	 * 	- RvTrajectoryStock_: \f$ R_v\f$ vector.
+	 * 	- RmTrajectoryStock_: \f$ R_m\f$ matrix.
+	 * 	- RmInverseTrajectoryStock_: inverse of \f$ R_m\f$ matrix.
 	 *
-	 * 		+ quadratized intermediate cost function
-	 * 		+ intermediate cost: q(t) + 0.5 y(t)Qm(t)y(t) + y(t)'Qv(t) + u(t)'Pm(t)y(t) + 0.5u(t)'Rm(t)u(t) + u(t)'Rv(t)
-	 * 		+ BASE::qTrajectoryStock_:  q
-	 * 		+ BASE::QvTrajectoryStock_: Qv vector
-	 * 		+ BASE::QmTrajectoryStock_: Qm matrix
-	 * 		+ BASE::PmTrajectoryStock_: Pm matrix
-	 * 		+ BASE::RvTrajectoryStock_: Rv vector
-	 * 		+ BASE::RmTrajectoryStock_: Rm matrix
-	 * 		+ BASE::RmInverseTrajectoryStock_: inverse of Rm matrix
+	 * 	- as well as the constrained coefficients of
+	 * 		- linearized system model
+	 * 		- quadratized intermediate cost function
+	 * 		- quadratized final cost
 	 *
-	 * 		+ as well as the constrained coefficients of
-	 * 			linearized system model
-	 * 			quadratized intermediate cost function
-	 * 			quadratized final cost
-	 * Approximates optimal control problem
 	 */
 	void approximateOptimalControlProblem();
 
 	/**
-	 * calculates the controller and linear function approximation of the type-1 constraint Lagrangian:
-	 * 		This method uses the following variables:
-	 * 			+ constrained, linearized model
-	 * 			+ constrained, quadratized cost
+	 * Calculates the controller and linear function approximation of the type-1 constraint Lagrangian. \n
+	 * This method uses the following variables:
+	 * - constrained, linearized model
+	 * - constrained, quadratized cost \n
 	 *
-	 * 		The method outputs:
-	 * 			+ BASE::nominalControllersStock_: the controller that stabilizes the system around the new nominal trajectory and
+	 * The method outputs:
+	 * - BASE::nominalControllersStock_: the controller that stabilizes the system around the new nominal trajectory and
 	 * 								improves the constraints as well as the increment to the feedforward control input.
 	 */
 	void calculateController();
 
 	/**
-	 * line search on the feedforwrd parts of the controller and lagrange multipliers.
+	 * Line search on the feedforwrd parts of the controller and lagrange multipliers.
 	 * Based on the option flag lineSearchByMeritFuntion_ it uses two different approaches for line search:
-	 * 		+ the constraint correction term is added by a user defined stepSize.
-	 * 		The line search uses the pure cost function for choosing the best stepSize.
-	 * @param [out] learningRateStar
-	 * @param [in] maxLearningRateStar
+	 * 	- The constraint correction term is added by a user defined stepSize.
+	 * 	- The line search uses the merit function for choosing the best stepSize.
+	 * @param [out] learningRateStar: The optimal learning rate.
+	 * @param [in] maxLearningRateStar: The maximum permitted learning rate.
 	 */
 	void lineSearch(scalar_t& learningRateStar,
 			scalar_t maxLearningRateStar=1.0);

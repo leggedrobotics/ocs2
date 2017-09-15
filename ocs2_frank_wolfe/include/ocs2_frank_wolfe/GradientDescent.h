@@ -114,7 +114,7 @@ public:
 	 * @param [in] id: solver ID
 	 * @param [in] parameters: The current parameter vector.
 	 * @param [in] gradient: Gradient at the current parameter vector.
-	 * @return The success flag.
+	 * @return boolean: The success flag.
 	 */
 	virtual bool calculateGradient(const size_t& id, const Eigen::VectorXd& parameters, Eigen::VectorXd& gradient) {
 		bool status = calculateNumericalGradient(id, parameters, gradient);
@@ -141,7 +141,7 @@ public:
 	 * @param [in] id: Solver ID
 	 * @param [in] parameters: The current parameter vector.
 	 * @param [out] cost: Gradient at the current parameter vector.
-	 * @return The success flag.
+	 * @return boolean: The success flag.
 	 */
 	virtual bool calculateCost(const size_t& id, const Eigen::VectorXd& parameters, double& cost) = 0;
 
@@ -185,7 +185,7 @@ protected:
 	 * @param [in] id: Solver ID
 	 * @param [in] parameters: The current parameter vector.
 	 * @param [out] gradient: Gradient at the current parameter vector.
-	 * @return The success flag.
+	 * @return boolean: The success flag.
 	 */
 	bool calculateNumericalGradient(const size_t& id, const Eigen::VectorXd& parameters, Eigen::VectorXd& gradient);
 

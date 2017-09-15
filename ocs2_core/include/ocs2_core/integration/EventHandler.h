@@ -40,7 +40,7 @@ public:
 	 *
 	 * @param [in] state: Current state vector.
 	 * @param [in] time: Current time.
-	 * @return
+	 * @return boolean: 
 	 */
 	virtual bool checkEvent(const State_T& state, const double& time) = 0;
 

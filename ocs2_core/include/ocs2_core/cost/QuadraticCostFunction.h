@@ -163,7 +163,7 @@ public:
 
     /**
      * Returns pointer to CostFunctionOCS2 class.
-     * @return a shared_ptr pointer.
+     * @return CostFunctionBase*: a shared_ptr pointer.
      */
 	std::shared_ptr<CostFunctionBase<STATE_DIM, CONTROL_DIM> > clone() const {
 		typedef QuadraticCostFunction<STATE_DIM, CONTROL_DIM> quadratic_cost_t;

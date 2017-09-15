@@ -135,7 +135,7 @@ public:
 	/**
 	 * Returns pointer to DerivativesBase class.
 	 *
-	 * @return a shared_ptr pointer.
+	 * @return DerivativesBase*: a shared_ptr pointer.
 	 */
 	virtual std::shared_ptr<DerivativesBase<STATE_DIM, INPUT_DIM> > clone() const = 0;
 

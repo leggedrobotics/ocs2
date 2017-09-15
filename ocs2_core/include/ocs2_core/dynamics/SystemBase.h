@@ -37,7 +37,7 @@ public:
 	/**
 	 * Gets the number of function calls.
 	 *
-	 * @return number of function calls
+	 * @return size_t: number of function calls
 	 */
 	size_t getNumFunctionCalls() {return numFunctionCalls_;}
 

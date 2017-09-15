@@ -48,7 +48,7 @@ public:
 
     /**
      * Returns pointer to CostFunctionOCS2 class.
-     * @return a shared_ptr pointer.
+     * @return CostFunctionBaseOCS2*: a shared_ptr pointer.
      */
 	virtual std::shared_ptr<CostFunctionBaseOCS2<STATE_DIM, INPUT_DIM> > clone() const = 0;
 

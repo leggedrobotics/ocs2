@@ -240,7 +240,7 @@ public:
      * @param [in] nc1TrajectoriesStock
      * @param [in] EvTrajectoriesStock
      * @param [out] constraintISE
-     * @return double
+     * @return double: 
      */
 	double calculateConstraintISE(const std::vector<scalar_array_t>& timeTrajectoriesStock,
 			const std::vector<std::vector<size_t>>& nc1TrajectoriesStock,

@@ -193,7 +193,7 @@ public:
      * Makes PSD
      * @tparam Derived
      * @param [out] squareMatrix
-     * @return
+     * @return boolean: 
      */
 	template <typename Derived>
 	static bool makePSD(Eigen::MatrixBase<Derived>& squareMatrix) {

@@ -42,7 +42,7 @@ public:
 	 *
 	 * @param [in] state: Current state vector.
 	 * @param [in] time: Current time.
-	 * @return
+	 * @return boolean: 
 	 */
 	bool checkEvent(const State_T& state, const double& time) override {
 		return killIntegration_;

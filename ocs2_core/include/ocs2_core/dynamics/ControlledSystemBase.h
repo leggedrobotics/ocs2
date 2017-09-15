@@ -187,7 +187,7 @@ public:
 	/**
 	 * Returns pointer to ControlledSystemBase class.
 	 *
-	 * @return a shared_ptr pointer.
+	 * @return ControlledSystemBase*: a shared_ptr pointer.
 	 */
 	virtual std::shared_ptr<ControlledSystemBase<STATE_DIM, INPUT_DIM> > clone() const = 0;
 

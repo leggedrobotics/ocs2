@@ -258,7 +258,7 @@ private:
 	/**
 	 * Finds nearest neighbour
 	 * @param [in] enquiryParameter
-	 * @return
+	 * @return size_t:
 	 */
 	size_t findNearestController(const Eigen::VectorXd& enquiryParameter) const;
 
@@ -274,7 +274,7 @@ private:
 	 * @param [in] id
 	 * @param [in] parameters
 	 * @param [out] gradient
-	 * @return
+	 * @return boolean:
 	 */
 	bool calculateGradient(const size_t& id, const Eigen::VectorXd& parameters, Eigen::VectorXd& gradient) override;
 
@@ -283,7 +283,7 @@ private:
 	 * @param [in] id
 	 * @param [in] parameters
 	 * @param [out] cost
-	 * @return
+	 * @return boolean: 
 	 */
 	bool calculateCost(const size_t& id, const Eigen::VectorXd& parameters, double& cost) override;
 

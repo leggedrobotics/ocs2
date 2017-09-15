@@ -1,8 +1,8 @@
 /*!
 \mainpage Overview
 
-\section ocs2_slq_home OCS2 slq
-OCS2 SLQ Documentation
+\section ocs2_slq_home OCS2 SLQ
+This module implements the continuous-time constrained SLQ algorithm for switched systems \cite farshidian17a .
 
 \section ocs2_slq_documentation_section OCS2 Documentation
 This library consists of four main modules

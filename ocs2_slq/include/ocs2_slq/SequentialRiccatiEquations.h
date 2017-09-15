@@ -29,7 +29,7 @@ public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
 	enum {
-		/** STATE_DIM=n, Then: n(n+1)/2 entries from triangular matrix Sm, n entries from vector Sv and +1 one from a scalar */
+		/** If STATE_DIM=n, Then: n(n+1)/2 entries from triangular matrix Sm, n entries from vector Sv and +1 one from a scalar */
 		S_DIM_ = STATE_DIM*(STATE_DIM+1)/2 + STATE_DIM + 1
 	};
 

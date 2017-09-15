@@ -18,9 +18,10 @@
 namespace ocs2{
 
 /**
- * BVP Equations Class
- * @tparam STATE_DIM
- * @tparam INPUT_DIM
+ * This class contains the general BVP equations.
+ *
+ * @tparam STATE_DIM: Dimension of the state space.
+ * @tparam INPUT_DIM: Dimension of the control input space.
  */
 template <size_t STATE_DIM, size_t INPUT_DIM>
 class BVPEquations : public SystemBase<STATE_DIM*STATE_DIM+STATE_DIM>
@@ -29,6 +30,7 @@ public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
 	enum {
+		/** If STATE_DIM=n, Then: n(n+1)/2 entries from triangular matrix Sm, n entries from vector Sv and +1 one from a scalar */
 		Full_ODE_VECTOR_DIM = STATE_DIM*STATE_DIM+STATE_DIM
 	};
 
@@ -52,15 +54,22 @@ public:
 	typedef std::vector<input_state_matrix_t, Eigen::aligned_allocator<input_state_matrix_t> > input_state_matrix_array_t;
 	typedef std::vector<state_input_matrix_t, Eigen::aligned_allocator<state_input_matrix_t> > state_input_matrix_array_t;
 
-
+	/**
+	 * Default constructor.
+	 */
 	BVPEquations() {}
+
+	/**
+	 * Default destructor.
+	 */
 	~BVPEquations() {}
 
-    /**
-     * Converts to vector
-     * @param [in] Mm
-     * @param [in] Sv
-     * @param [out] MSv
+	/**
+	 * Transcribe symmetric matrix Mm and vector Sv into a single vector.
+	 *
+     * @param [in] Mm: \f$ M_m \f$
+     * @param [in] Sv: \f$ S_v \f$
+     * @param [out] MSv: Single vector constructed by concatenating Mm and Sv.
      */
 	static void convert2Vector(const state_state_matrix_t& Mm, const state_vector_t& Sv, full_ode_vector_t& MSv)  {
 
@@ -68,11 +77,12 @@ public:
 				Eigen::Map<const Eigen::VectorXd>(Sv.data(),STATE_DIM);
 	}
 
-    /**
-     * Converts to matrix
-     * @param [in] MSv
-     * @param [out] Mm
-     * @param [out] Sv
+	/**
+	 * Transcribes the stacked vector allSs into a symmetric matrix, Mm and a vector, Sv.
+	 *
+     * @param [in] MSv: Single vector constructed by concatenating Mm and Sv.
+     * @param [out] Mm: \f$ M_m \f$
+     * @param [out] Sv: \f$ S_v \f$
      */
 	static void convert2Matrix(const full_ode_vector_t& MSv, state_state_matrix_t& Mm, state_vector_t& Sv)  {
 
@@ -81,18 +91,19 @@ public:
 	}
 
     /**
-     * Sets Data
-     * @param [in] timeStampPtr
-     * @param [in] AmPtr
-     * @param [in] OmPtr
-     * @param [in] BmPtr
-     * @param [in] GvPtr
-     * @param [in] QvPtr
-     * @param [in] QmPtr
-     * @param [in] PmPtr
-     * @param [in] RvPtr
-     * @param [in] RmPtr
-     * @param [in] RmInversePtr
+     * Sets coefficients of the model.
+     *
+ 	 * @param [in] timeStampPtr: A pointer to the time stamp trajectory.
+	 * @param [in] AmPtr: A pointer to the trajectory of \f$ A_m(t) \f$ .
+     * @param [in] OmPtr: A pointer to the trajectory of \f$ O_m(t) \f$ .
+	 * @param [in] BmPtr: A pointer to the trajectory of \f$ B_m(t) \f$ .
+     * @param [in] GvPtr: A pointer to the trajectory of \f$ G_v(t) \f$ .
+ 	 * @param [in] QvPtr: A pointer to the trajectory of \f$ Q_v(t) \f$ .
+	 * @param [in] QmPtr: A pointer to the trajectory of \f$ Q_m(t) \f$ .
+	 * @param [in] PmPtr: A pointer to the trajectory of \f$ P_m(t) \f$ .
+	 * @param [in] RvPtr: A pointer to the trajectory of \f$ R_v(t) \f$ .
+ 	 * @param [in] RmPtr: A pointer to the trajectory of \f$ R_m(t) \f$ .
+     * @param [in] RmInversePtr: A pointer to the trajectory of \f$ R_m^{-1}(t) \f$ .
      */
 	void setData(const double_array_t* timeStampPtr,
 			const state_state_matrix_array_t* AmPtr, const state_state_matrix_array_t* OmPtr, const state_input_matrix_array_t* BmPtr, const state_vector_array_t* GvPtr,
@@ -130,9 +141,9 @@ public:
 
     /**
      * Computes derivative
-     * @param [in] z
-     * @param [in] MSv
-     * @param [out] derivatives
+     * @param [in] z: Normalized time.
+     * @param [in] MSv: Single vector constructed by concatenating Mm, Sv.
+     * @param [out] derivatives: derivatives: d(MSv)/dz.
      */
 	void computeDerivative(const double& z, const full_ode_vector_t& MSv, full_ode_vector_t& derivatives) override {
 
@@ -189,12 +200,12 @@ public:
 		convert2Vector(dMmdz, dSvdz, derivatives);
 	}
 
-    /**
-     * Makes PSD
-     * @tparam Derived
-     * @param [out] squareMatrix
-     * @return boolean: 
-     */
+	/**
+	 * Makes the matrix PSD.
+	 * @tparam Derived type.
+	 * @param [out] squareMatrix: The matrix to become PSD.
+	 * @return boolean
+	 */
 	template <typename Derived>
 	static bool makePSD(Eigen::MatrixBase<Derived>& squareMatrix) {
 

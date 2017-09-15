@@ -21,9 +21,10 @@
 namespace ocs2{
 
 /**
- * Solve BVP Class
- * @tparam STATE_DIM
- * @tparam INPUT_DIM
+ * This class implements a general BVP solver.
+ *
+ * @tparam STATE_DIM: Dimension of the state space.
+ * @tparam INPUT_DIM: Dimension of the control input space.
  */
 template <size_t STATE_DIM, size_t INPUT_DIM>
 class SolveBVP
@@ -54,29 +55,33 @@ public:
 	typedef typename BVP::state_input_matrix_array_t state_input_matrix_array_t;
 
 	/**
-	 * Constructor
+	 * Default constructor.
 	 */
 	SolveBVP()
 	: bvpEquationsPtr_(new BVP()),
 	  bvpOdeSolver_(bvpEquationsPtr_)
 	{}
 
+	/**
+	 * Default destructor.
+	 */
 	~SolveBVP()  {}
 
-	/**
-	 * Sets Data
-	 * @param [in] timeStampPtr
-	 * @param [in] AmPtr
-	 * @param [in] OmPtr
-	 * @param [in] BmPtr
-	 * @param [in] GvPtr
-	 * @param [in] QvPtr
-	 * @param [in] QmPtr
-	 * @param [in] PmPtr
-	 * @param [in] RvPtr
-	 * @param [in] RmPtr
-	 * @param [in] RmInversePtr
-	 */
+    /**
+     * Sets coefficients of the model.
+     *
+ 	 * @param [in] timeStampPtr: A pointer to the time stamp trajectory.
+	 * @param [in] AmPtr: A pointer to the trajectory of \f$ A_m(t) \f$ .
+     * @param [in] OmPtr: A pointer to the trajectory of \f$ O_m(t) \f$ .
+	 * @param [in] BmPtr: A pointer to the trajectory of \f$ B_m(t) \f$ .
+     * @param [in] GvPtr: A pointer to the trajectory of \f$ G_v(t) \f$ .
+ 	 * @param [in] QvPtr: A pointer to the trajectory of \f$ Q_v(t) \f$ .
+	 * @param [in] QmPtr: A pointer to the trajectory of \f$ Q_m(t) \f$ .
+	 * @param [in] PmPtr: A pointer to the trajectory of \f$ P_m(t) \f$ .
+	 * @param [in] RvPtr: A pointer to the trajectory of \f$ R_v(t) \f$ .
+ 	 * @param [in] RmPtr: A pointer to the trajectory of \f$ R_m(t) \f$ .
+     * @param [in] RmInversePtr: A pointer to the trajectory of \f$ R_m^{-1}(t) \f$ .
+     */
 	void setData(const double_array_t* timeStampPtr,
 			const state_state_matrix_array_t* AmPtr, const state_state_matrix_array_t* OmPtr, const state_input_matrix_array_t* BmPtr, const state_vector_array_t* GvPtr,
 			const state_vector_array_t* QvPtr, const state_state_matrix_array_t* QmPtr, const input_state_matrix_array_t* PmPtr,
@@ -92,14 +97,15 @@ public:
 	}
 
 	/**
-	 * adaptive time step
-	 * @param [in] QvFinal
-	 * @param [in] QmFinal
-	 * @param [out] timeTrajectory
-	 * @param [out] MmTrajectory
-	 * @param [in] SvTrajectory
-	 * @param [in] absTolODE
-	 * @param [in] relTolODE
+	 * Solve the BVP problem defined in BVPEquations using the adaptive time step scheme.
+	 *
+	 * @param [in] QvFinal: The final value \f$ {Q_v}_f \f$ .
+	 * @param [in] QmFinal: The final value \f$ {Q_m}_f \f$ .
+	 * @param [out] timeTrajectory: The time trajectory stamp.
+	 * @param [out] MmTrajectory: The trajectory of \f$ M_m(t) \f$ .
+	 * @param [out] SvTrajectory: The trajectory of \f$ S_v(t) \f$ .
+	 * @param [in] absTolODE: Absolute tolerance for ode solver.
+	 * @param [in] relTolODE: Relative tolerance for ode solver.
 	 */
 	void solve(const state_vector_t& QvFinal, const state_state_matrix_t& QmFinal,
 			double_array_t& timeTrajectory, state_state_matrix_array_t& MmTrajectory, state_vector_array_t& SvTrajectory,
@@ -147,14 +153,15 @@ public:
 	}
 
 	/**
-	 * given time step
-	 * @param [in] timeTrajectory
-	 * @param [in] QvFinal
-	 * @param [in] QmFinal
-	 * @param [out] MmTrajectory
-	 * @param [out] SvTrajectory
-	 * @param [in] absTolODE
-	 * @param [in] relTolODE
+	 * Solve the BVP problem defined in BVPEquations over the given time trajectory.
+	 *
+	 * @param [in] timeTrajectory: The time trajectory stamp.
+	 * @param [in] QvFinal: The final value \f$ {Q_v}_f \f$ .
+	 * @param [in] QmFinal: The final value \f$ {Q_m}_f \f$ .
+	 * @param [out] MmTrajectory: The trajectory of \f$ M_m(t) \f$ .
+	 * @param [out] SvTrajectory: The trajectory of \f$ S_v(t) \f$ .
+	 * @param [in] absTolODE: Absolute tolerance for ode solver.
+	 * @param [in] relTolODE: Relative tolerance for ode solver.
 	 */
 	void solve(const double_array_t& timeTrajectory, const state_vector_t& QvFinal, const state_state_matrix_t& QmFinal,
 			state_state_matrix_array_t& MmTrajectory, state_vector_array_t& SvTrajectory,

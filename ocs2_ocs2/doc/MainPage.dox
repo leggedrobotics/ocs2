@@ -2,7 +2,7 @@
 \mainpage Overview
 
 \section ocs2_ocs2_home OCS2 OCS2
-OCS2 OCS2 Documentation
+This module implements the continuous-time unconstrained OCS2 algorithm for switched systems \cite farshidian17b.
 
 \section ocs2_ocs2_documentation_section OCS2 Documentation
 This library consists of four main modules

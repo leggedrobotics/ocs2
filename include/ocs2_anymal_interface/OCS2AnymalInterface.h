@@ -17,10 +17,10 @@
 #include <string>
 #include <Eigen/Dense>
 
-#include <iit/robots/hyq/transforms.h>
-#include <iit/robots/hyq/inverse_dynamics.h>
-#include <iit/robots/hyq/declarations.h>
-#include <iit/robots/hyq/link_data_map.h>
+#include <iit/robots/anymal/transforms.h>
+#include <iit/robots/anymal/inverse_dynamics.h>
+#include <iit/robots/anymal/declarations.h>
+#include <iit/robots/anymal/link_data_map.h>
 
 #include <ocs2_core/misc/LoadConfigFile.h>
 #include <ocs2_slq/LQP.h>

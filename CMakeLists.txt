@@ -4,7 +4,7 @@ project(ocs2_anymal_interface)
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
-find_package(catkin REQUIRED COMPONENTS cmake_modules ocs2_core ocs2_slq ocs2_ocs2)
+find_package(catkin REQUIRED COMPONENTS cmake_modules ocs2_core ocs2_slq ocs2_ocs2 ocs2_rbd_codegen)
 
 ## Eign3
 set( EIGEN_INCLUDE_DIRS "$ENV{LOCAL_EIGEN3_INCLUDE_DIR}" )

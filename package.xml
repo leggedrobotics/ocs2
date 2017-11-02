@@ -39,8 +39,13 @@
   <!--   <run_depend>message_runtime</run_depend> -->
   <!-- Use test_depend for packages you need only for testing: -->
   <!--   <test_depend>gtest</test_depend> -->
+  
   <buildtool_depend>catkin</buildtool_depend>
+  <build_depend>cmake_modules</build_depend>
   <build_depend>ocs2_core</build_depend>
+  <build_depend>ocs2_slq</build_depend>
+  <build_depend>ocs2_ocs2</build_depend>
+  <build_depend>ocs2_rbd_codegen</build_depend>
   <run_depend>ocs2_core</run_depend>
 
 

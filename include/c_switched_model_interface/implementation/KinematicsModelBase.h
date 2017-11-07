@@ -1,15 +1,15 @@
 /*
- * ModelKinematicsBase.h
+ * KinematicsModelBase.h
  *
  *  Created on: Aug 3, 2017
- *      Author: sasutosh
+ *      Author: Farbod
  */
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template< class DerivedClassType, size_t JOINT_COORD_SIZE >
-void ModelKinematicsBase<DerivedClassType, JOINT_COORD_SIZE>::update(const ModelKinematicsBase::generalized_coordinate_t& generalizedCoordinate)
+template <size_t JOINT_COORD_SIZE>
+void KinematicsModelBase<JOINT_COORD_SIZE>::update(const KinematicsModelBase::generalized_coordinate_t& generalizedCoordinate)
 {
 	qBase_  = generalizedCoordinate.template head<6>();
 	qJoint_ = generalizedCoordinate.template tail<JOINT_COORD_SIZE>();
@@ -19,49 +19,19 @@ void ModelKinematicsBase<DerivedClassType, JOINT_COORD_SIZE>::update(const Model
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template< class DerivedClassType, size_t JOINT_COORD_SIZE >
-void ModelKinematicsBase<DerivedClassType, JOINT_COORD_SIZE>::FootPositionBaseFrame(const joint_coordinate_t& jointCoordinate,
-	const size_t& footIndex, Eigen::Vector3d& footPosition)
-{
-	DerivedClassType::FootPositionBaseFrame(jointCoordinate, footIndex, footPosition);
-}
-
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-template< class DerivedClassType, size_t JOINT_COORD_SIZE >
-void ModelKinematicsBase<DerivedClassType, JOINT_COORD_SIZE>::footPositionBaseFrame(const size_t& footIndex, Eigen::Vector3d& footPosition)
-{
-	FootPositionBaseFrame(qJoint_, footIndex, footPosition);
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-template< class DerivedClassType, size_t JOINT_COORD_SIZE >
-void ModelKinematicsBase<DerivedClassType, JOINT_COORD_SIZE>::feetPositionsBaseFrame(std::array<Eigen::Vector3d,4>& feetPositions)
-{
-	FeetPositionsBaseFrame(qJoint_, feetPositions);
-}
-
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-template< class DerivedClassType, size_t JOINT_COORD_SIZE >
-void ModelKinematicsBase<DerivedClassType, JOINT_COORD_SIZE>::FeetPositionsBaseFrame(const joint_coordinate_t& jointCoordinate,
-		std::array<Eigen::Vector3d,4>& feetPositions)
+template <size_t JOINT_COORD_SIZE>
+void KinematicsModelBase<JOINT_COORD_SIZE>::feetPositionsBaseFrame(std::array<Eigen::Vector3d,4>& feetPositions)
 {
 	for (size_t i=0; i<4; i++)
-		FootPositionBaseFrame(jointCoordinate, i, feetPositions[i]);
+		footPositionBaseFrame(i, feetPositions[i]);
 }
+
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template< class DerivedClassType, size_t JOINT_COORD_SIZE >
-void ModelKinematicsBase<DerivedClassType, JOINT_COORD_SIZE>::footPositionOriginFrame(const size_t& footIndex, Eigen::Vector3d& footPosition)
+template <size_t JOINT_COORD_SIZE>
+void KinematicsModelBase<JOINT_COORD_SIZE>::footPositionOriginFrame(const size_t& footIndex, Eigen::Vector3d& footPosition)
 {
 	// calculate foot position in Base frame
 	Eigen::Vector3d b_footPosition;
@@ -73,8 +43,8 @@ void ModelKinematicsBase<DerivedClassType, JOINT_COORD_SIZE>::footPositionOrigin
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template< class DerivedClassType, size_t JOINT_COORD_SIZE >
-void ModelKinematicsBase<DerivedClassType, JOINT_COORD_SIZE>::footPositionOriginFrame(
+template <size_t JOINT_COORD_SIZE>
+void KinematicsModelBase<JOINT_COORD_SIZE>::footPositionOriginFrame(
 		const generalized_coordinate_t& generalizedCoordinate,
 		const size_t& footIndex, Eigen::Vector3d& footPosition)
 {
@@ -87,8 +57,8 @@ void ModelKinematicsBase<DerivedClassType, JOINT_COORD_SIZE>::footPositionOrigin
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template< class DerivedClassType, size_t JOINT_COORD_SIZE >
-void ModelKinematicsBase<DerivedClassType, JOINT_COORD_SIZE>::feetPositionsOriginFrame(
+template <size_t JOINT_COORD_SIZE>
+void KinematicsModelBase<JOINT_COORD_SIZE>::feetPositionsOriginFrame(
 		std::array<Eigen::Vector3d,4>& feetPositions)
 {
 	for (size_t i=0; i<4; i++)
@@ -98,8 +68,8 @@ void ModelKinematicsBase<DerivedClassType, JOINT_COORD_SIZE>::feetPositionsOrigi
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template< class DerivedClassType, size_t JOINT_COORD_SIZE >
-void ModelKinematicsBase<DerivedClassType, JOINT_COORD_SIZE>::feetPositionsOriginFrame(
+template <size_t JOINT_COORD_SIZE>
+void KinematicsModelBase<JOINT_COORD_SIZE>::feetPositionsOriginFrame(
 		const generalized_coordinate_t& generalizedCoordinate,
 			std::array<Eigen::Vector3d,4>& feetPositions)
 {
@@ -112,29 +82,8 @@ void ModelKinematicsBase<DerivedClassType, JOINT_COORD_SIZE>::feetPositionsOrigi
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template< class DerivedClassType, size_t JOINT_COORD_SIZE >
-void ModelKinematicsBase<DerivedClassType, JOINT_COORD_SIZE>::footJacobainBaseFrame(
-		const size_t& footIndex, Eigen::Matrix<double,6,JOINT_COORD_SIZE>& footJacobain)
-{
-	FootJacobainBaseFrame(qJoint_, footIndex, footJacobain);
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-template< class DerivedClassType, size_t JOINT_COORD_SIZE >
-void ModelKinematicsBase<DerivedClassType, JOINT_COORD_SIZE>::FootJacobainBaseFrame(
-		const joint_coordinate_t& jointCoordinate,
-		const size_t& footIndex, Eigen::Matrix<double,6,JOINT_COORD_SIZE>& footJacobain)
-{
-	DerivedClassType::FootJacobainBaseFrame(jointCoordinate, footIndex, footJacobain);
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-template< class DerivedClassType, size_t JOINT_COORD_SIZE >
-void ModelKinematicsBase<DerivedClassType, JOINT_COORD_SIZE>::FromBaseJacobianToInertiaJacobian(
+template <size_t JOINT_COORD_SIZE>
+void KinematicsModelBase<JOINT_COORD_SIZE>::FromBaseJacobianToInertiaJacobian(
 		const Eigen::Matrix3d& i_R_b,
 		const Eigen::Vector3d& b_r_point,
 		const Eigen::Matrix<double,6,JOINT_COORD_SIZE>& b_J_point,
@@ -149,8 +98,8 @@ void ModelKinematicsBase<DerivedClassType, JOINT_COORD_SIZE>::FromBaseJacobianTo
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template< class DerivedClassType, size_t JOINT_COORD_SIZE >
-Eigen::Matrix3d ModelKinematicsBase<DerivedClassType, JOINT_COORD_SIZE>::rotationMatrixOrigintoBase() const  {
+template <size_t JOINT_COORD_SIZE>
+Eigen::Matrix3d KinematicsModelBase<JOINT_COORD_SIZE>::rotationMatrixOrigintoBase() const  {
 
 	return b_R_o_;
 }
@@ -158,9 +107,9 @@ Eigen::Matrix3d ModelKinematicsBase<DerivedClassType, JOINT_COORD_SIZE>::rotatio
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template< class DerivedClassType, size_t JOINT_COORD_SIZE >
+template <size_t JOINT_COORD_SIZE>
 template <typename Derived>
-Eigen::Matrix3d ModelKinematicsBase<DerivedClassType, JOINT_COORD_SIZE>::RotationMatrixOrigintoBase(const Eigen::DenseBase<Derived>& eulerAngles)
+Eigen::Matrix3d KinematicsModelBase<JOINT_COORD_SIZE>::RotationMatrixOrigintoBase(const Eigen::DenseBase<Derived>& eulerAngles)
 {
 
 	if (eulerAngles.innerSize()!=3 || eulerAngles.outerSize()!=1)  throw std::runtime_error("Input argument should be a 3-by-1 vector.");
@@ -184,9 +133,9 @@ Eigen::Matrix3d ModelKinematicsBase<DerivedClassType, JOINT_COORD_SIZE>::Rotatio
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template< class DerivedClassType, size_t JOINT_COORD_SIZE >
+template <size_t JOINT_COORD_SIZE>
 template <typename Derived>
-Eigen::Matrix3d ModelKinematicsBase<DerivedClassType, JOINT_COORD_SIZE>::RotationMatrixBasetoOrigin(const Eigen::DenseBase<Derived>& eulerAngles)
+Eigen::Matrix3d KinematicsModelBase<JOINT_COORD_SIZE>::RotationMatrixBasetoOrigin(const Eigen::DenseBase<Derived>& eulerAngles)
 {
 
 	if (eulerAngles.innerSize()!=3 || eulerAngles.outerSize()!=1)  throw std::runtime_error("Input argument should be a 3-by-1 vector.");
@@ -210,9 +159,9 @@ Eigen::Matrix3d ModelKinematicsBase<DerivedClassType, JOINT_COORD_SIZE>::Rotatio
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template< class DerivedClassType, size_t JOINT_COORD_SIZE >
+template <size_t JOINT_COORD_SIZE>
 template <typename Derived>
-Eigen::Matrix3d ModelKinematicsBase<DerivedClassType, JOINT_COORD_SIZE>::CrossProductMatrix(const Eigen::DenseBase<Derived>& in)
+Eigen::Matrix3d KinematicsModelBase<JOINT_COORD_SIZE>::CrossProductMatrix(const Eigen::DenseBase<Derived>& in)
 {
 
 	if (in.innerSize()!=3 || in.outerSize()!=1)  throw std::runtime_error("Input argument should be a 3-by-1 vector.");

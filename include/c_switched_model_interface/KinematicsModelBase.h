@@ -1,8 +1,8 @@
 /*
- * ModelKinematicsBase.h
+ * KinematicsModelBase.h
  *
  *  Created on: Aug 2, 2017
- *      Author: sasutosh
+ *      Author: Farbod
  */
 
 #ifndef MODELKINEMATICSBASE_H_
@@ -16,16 +16,15 @@
 
 /**
  * ModelKinematics Base Class
- * @tparam DerivedClassType
  * @tparam JOINT_COORD_SIZE
  */
-template< class DerivedClassType, size_t JOINT_COORD_SIZE >
-class ModelKinematicsBase
+template <size_t JOINT_COORD_SIZE>
+class KinematicsModelBase
 {
 public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-	virtual ~ModelKinematicsBase(){};
+	virtual ~KinematicsModelBase(){};
 
 	typedef typename SwitchedModel<JOINT_COORD_SIZE>::generalized_coordinate_t generalized_coordinate_t;
 	typedef typename SwitchedModel<JOINT_COORD_SIZE>::joint_coordinate_t joint_coordinate_t;
@@ -41,37 +40,20 @@ public:
 	 * calculate the feet position in the Base frame
 	 * 		+ single foot:
 	 * 			 using the internal coordinate values set by update method.
-	 * 			 using the input coordinate values (static function).
+	 *
 	 *		+ four feet:
 	 * 			 using the internal coordinate values set by update method.
-	 * 			 using the input coordinate values (static function).
+	 *
 	 * @param [in] footIndex
 	 * @param [out] footPosition
 	 */
-	void footPositionBaseFrame(const size_t& footIndex, Eigen::Vector3d& footPosition);
+	virtual void footPositionBaseFrame(const size_t& footIndex, Eigen::Vector3d& footPosition) = 0;
 
 	/**
 	 * Calculate the feet position in the Base frame
 	 * @param [out] feetPositions
 	 */
 	void feetPositionsBaseFrame(std::array<Eigen::Vector3d,4>& feetPositions);
-
-	/**
-	 * Calculate the feet position in the Base frame
-	 * @param [in] jointCoordinate
-	 * @param [in] footIndex
-	 * @param [out] footPosition
-	 */
-	static void FootPositionBaseFrame(const joint_coordinate_t& jointCoordinate,
-			const size_t& footIndex, Eigen::Vector3d& footPosition);
-
-	/**
-	 * Calculate the feet position in the Base frame
-	 * @param [in] jointCoordinate
-	 * @param [out] feetPositions
-	 */
-	static void FeetPositionsBaseFrame(const joint_coordinate_t& jointCoordinate,
-			std::array<Eigen::Vector3d,4>& feetPositions);
 
 	/**
 	 * Calculate the feet position in the Origin frame
@@ -114,16 +96,7 @@ public:
 	 * @param [in] footIndex
 	 * @param [out] footJacobain
 	 */
-	void footJacobainBaseFrame(const size_t& footIndex, Eigen::Matrix<double,6,JOINT_COORD_SIZE>& footJacobain);
-
-	/**
-	 * Calculate foot Jacobain in Base Frame
-	 * @param [in] jointCoordinate
-	 * @param [in] footIndex
-	 * @param [out] footJacobain
-	 */
-	static void FootJacobainBaseFrame(const joint_coordinate_t& jointCoordinate,
-			const size_t& footIndex, Eigen::Matrix<double,6,JOINT_COORD_SIZE>& footJacobain);
+	void footJacobainBaseFrame(const size_t& footIndex, Eigen::Matrix<double,6,JOINT_COORD_SIZE>& footJacobain) = 0;
 
 	/**
 	 * calculates the Jacobian matrix in the Inertia frame using rotation "i_R_b" from the Base frame to Inertia
@@ -179,6 +152,6 @@ protected:
 
 };
 
-#include "implementation/ModelKinematicsBase.h"
+#include "implementation/KinematicsModelBase.h"
 
 #endif /* MODELKINEMATICSBASE_H_ */

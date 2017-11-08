@@ -13,28 +13,40 @@
 #include <iit/robots/anymal/transforms.h>
 #include <iit/robots/anymal/jacobians.h>
 
-namespace anymal
-{
+namespace anymal {
 
-class AnymalKinematics : public ModelKinematicsBase<AnymalKinematics, 12>
+class AnymalKinematics : public ModelKinematicsBase<12>
 {
 public:
-	enum { LF=0,  RF=1,  LH=2,  RH=3,
-		JOINT_COORDINATE_SIZE=12
-	};
+	enum { LF=0,  RF=1,  LH=2,  RH=3 };
 
-	AnymalKinematics() {}
-	~AnymalKinematics() {}
+	/**
+	 * calculate foot position in Base frame
+	 */
+	void footPositionBaseFrame(const size_t& footIndex, Eigen::Vector3d& footPosition) override;
 
-	static void FootPositionBaseFrame(const joint_coordinate_t& jointCoordinate,
-			const size_t& footIndex, Eigen::Vector3d& footPosition);
+	/**
+	 * calculate foot Jacobian in Base frame
+	 */
+	void footJacobainBaseFrame(const size_t& footIndex, Eigen::Matrix<double,6,12>& footJacobian) override;
 
-	static void FootJacobainBaseFrame(const joint_coordinate_t& jointCoordinate,
-			const size_t& footIndex, Eigen::Matrix<double,6,JOINT_COORDINATE_SIZE>& footJacobain);
 private:
+	// RBD homogeneous transforms of feet
+	iit::ANYmal::HomogeneousTransforms::Type_fr_trunk_X_fr_LF_foot fr_trunk_X_fr_LF_foot_;
+	iit::ANYmal::HomogeneousTransforms::Type_fr_trunk_X_fr_RF_foot fr_trunk_X_fr_RF_foot_;
+	iit::ANYmal::HomogeneousTransforms::Type_fr_trunk_X_fr_LH_foot fr_trunk_X_fr_LH_foot_;
+	iit::ANYmal::HomogeneousTransforms::Type_fr_trunk_X_fr_RH_foot fr_trunk_X_fr_RH_foot_;
+
+	// RBD Jacobian of feet
+	iit::ANYmal::Jacobians::Type_fr_trunk_J_fr_LF_foot fr_trunk_J_fr_LF_foot_;
+	iit::ANYmal::Jacobians::Type_fr_trunk_J_fr_RF_foot fr_trunk_J_fr_RF_foot_;
+	iit::ANYmal::Jacobians::Type_fr_trunk_J_fr_LH_foot fr_trunk_J_fr_LH_foot_;
+	iit::ANYmal::Jacobians::Type_fr_trunk_J_fr_RH_foot fr_trunk_J_fr_RH_foot_;
 
 };
 
 }  // end of anymal namespace
+
+#include "implementation/AnymalKinematics.h"
 
 #endif /* ANYMAL_ANYMALKINEMATICS_H_ */

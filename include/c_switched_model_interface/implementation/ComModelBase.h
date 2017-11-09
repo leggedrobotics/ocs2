@@ -9,7 +9,7 @@
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t JOINT_COORD_SIZE>
-void ComModelBase<DerivedClassType, JOINT_COORD_SIZE>::comJacobainBaseFrame(
+void ComModelBase<JOINT_COORD_SIZE>::comJacobainBaseFrame(
 		const joint_coordinate_t& jointCoordinate,
 		Eigen::Matrix<double,6,JOINT_COORD_SIZE>& comJacobain) {
 
@@ -17,4 +17,3 @@ void ComModelBase<DerivedClassType, JOINT_COORD_SIZE>::comJacobainBaseFrame(
 	Eigen::Matrix<double,6,6> I = comInertia(jointCoordinate);
 	comJacobain = I.inverse() * comMomentumJacobian(jointCoordinate);
 }
-

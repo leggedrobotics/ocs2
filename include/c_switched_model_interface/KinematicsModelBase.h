@@ -96,7 +96,7 @@ public:
 	 * @param [in] footIndex
 	 * @param [out] footJacobain
 	 */
-	void footJacobainBaseFrame(const size_t& footIndex, Eigen::Matrix<double,6,JOINT_COORD_SIZE>& footJacobain) = 0;
+	virtual void footJacobainBaseFrame(const size_t& footIndex, Eigen::Matrix<double,6,JOINT_COORD_SIZE>& footJacobain) = 0;
 
 	/**
 	 * calculates the Jacobian matrix in the Inertia frame using rotation "i_R_b" from the Base frame to Inertia

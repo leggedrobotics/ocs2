@@ -1,21 +1,19 @@
 cmake_minimum_required(VERSION 2.8.3)
-project(c_anymal_switched_model)
+project(ocs2_anymal_switched_model)
 
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS
-    cmake_modules
     c_switched_model_interface
-    c_rbd_codegen
-    quadruped_model
+    ocs2_rbd_codegen
 )
 
-## Eign3
+## Eigen3
 set( EIGEN_INCLUDE_DIRS "$ENV{LOCAL_EIGEN3_INCLUDE_DIR}" )
 if( NOT EIGEN_INCLUDE_DIRS )
-    find_package(Eigen REQUIRED)
-    message( WARNING "Uses Globally installed Eigen since LOCAL_EIGEN3_INCLUDE_DIR is not defined!")
+    find_package(Eigen3 REQUIRED)
+    message( WARNING "Uses globally installed Eigen since LOCAL_EIGEN3_INCLUDE_DIR is not defined!")
 endif()
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wfatal-errors")
@@ -102,8 +100,8 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wfatal-errors")
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
     INCLUDE_DIRS include
-    LIBRARIES c_anymal_switched_model
-    CATKIN_DEPENDS c_switched_model_interface c_rbd_codegen quadruped_model
+#    LIBRARIES
+    CATKIN_DEPENDS c_switched_model_interface ocs2_rbd_codegen
 #   DEPENDS system_lib
 )
 
@@ -113,36 +111,23 @@ catkin_package(
 
 ## Specify additional locations of header files
 ## Your package locations should be listed before other locations
-include_directories(include
-    ${catkin_INCLUDE_DIRS}
-	${EIGEN3_INCLUDE_DIR}
-)
-
-## Declare a C++ library
-add_library(c_anymal_switched_model
-    src/kinematics/AnymalKinematics.cpp
-    src/dynamics/AnymalComDynamics.cpp
-)
-
-## Add cmake target dependencies of the library
-## as an example, code may need to be generated before libraries
-## either from message generation or dynamic reconfigure
-add_dependencies(c_anymal_switched_model
-    ${${PROJECT_NAME}_EXPORTED_TARGETS}
-    ${catkin_EXPORTED_TARGETS}
+include_directories(
+  include
+  ${catkin_INCLUDE_DIRS}
+  ${EIGEN3_INCLUDE_DIR}
 )
 
 ## Declare a C++ executable
-# add_executable(c_anymal_switched_model_node src/c_anymal_switched_model_node.cpp)
+# add_executable(...)
 
 ## Add cmake target dependencies of the executable
 ## same as for the library above
 # add_dependencies(c_anymal_switched_model_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 ## Specify libraries to link a library or executable target against
-target_link_libraries(c_anymal_switched_model
-    ${catkin_LIBRARIES}
-)
+# target_link_libraries(${PROJECT_NAME}_node
+#     ${catkin_LIBRARIES}
+# )
 
 #############
 ## Install ##
@@ -184,14 +169,15 @@ target_link_libraries(c_anymal_switched_model
 #############
 
 if(CATKIN_ENABLE_TESTING)
-# Build unit tests
-catkin_add_gtest(test_quadruped_model
-    test/test_main.cpp
-    test/robcogen_tests.cpp
-)
-add_dependencies(test_quadruped_model ${catkin_EXPORTED_TARGETS})
-target_link_libraries(test_quadruped_model
-  c_anymal_switched_model
-  ${catkin_LIBRARIES}
-)
+  # Build unit tests
+  catkin_add_gtest(${PROJECT_NAME}_test
+      test/test_main.cpp
+      test/TestAnymalSwitchedModel.cpp
+  )
+
+  add_dependencies(${PROJECT_NAME}_test ${catkin_EXPORTED_TARGETS})
+
+  target_link_libraries(${PROJECT_NAME}_test
+    ${catkin_LIBRARIES}
+  )
 endif()

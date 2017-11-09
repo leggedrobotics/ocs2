@@ -9,7 +9,10 @@
 #define ANYMAL_ANYMALCOMDYNAMICS_H_
 
 #include <c_switched_model_interface/ComModelBase.h>
-#include <CoM/CoMGenerated.h>
+
+#include <iit/robots/anymal/inertia_properties.h>
+#include <iit/robots/anymal/transforms.h>
+#include <iit/robots/anymal/jsim.h>
 
 namespace anymal
 {
@@ -20,7 +23,12 @@ public:
 
   enum { LF=0,  RF=1,  LH=2,  RH=3 };
 
-  /**
+	/**
+	 * Constructor needed for initialization
+	 */
+  AnymalComDynamics();
+
+	/**
 	 * calculate CoM Position in Base frame
 	 */
 	Eigen::Vector3d comPositionBaseFrame(
@@ -47,6 +55,8 @@ public:
 
 	/**
 	 * calculate CoM Momentum Jacobian
+   * i.e. p_com = J_p_com(q) * dq
+   * Note: excluding the contribution of the trunk inertia
 	 */
 	Eigen::Matrix<double,6,12> comMomentumJacobian(
 			const Eigen::Matrix<double,12,1>& q);
@@ -64,6 +74,13 @@ public:
 	Eigen::Matrix<double,3,1> comVelocityInBaseFrame(
 			const Eigen::Matrix<double,12,1>& q,
 			const Eigen::Matrix<double,12,1>& dq);
+
+private:
+
+  iit::ANYmal::dyn::InertiaProperties inertiaProperties_;
+  iit::ANYmal::HomogeneousTransforms homTransforms_;
+  iit::ANYmal::ForceTransforms forceTransforms_;
+  iit::ANYmal::dyn::JSIM jointSpaceInertiaMatrix_;
 };
 
 }  // end of anymal namespace

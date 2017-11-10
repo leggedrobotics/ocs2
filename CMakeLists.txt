@@ -102,7 +102,7 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wfatal-errors")
 catkin_package(
     INCLUDE_DIRS include
     LIBRARIES c_anymal_switched_model
-    CATKIN_DEPENDS c_switched_model_interface ocs2_rbd_codegen
+    CATKIN_DEPENDS c_switched_model_interface c_rbd_codegen quadruped_model
 #   DEPENDS system_lib
 )
 
@@ -112,12 +112,12 @@ catkin_package(
 
 ## Specify additional locations of header files
 ## Your package locations should be listed before other locations
-include_directories(
-  include
-  ${catkin_INCLUDE_DIRS}
-  ${EIGEN3_INCLUDE_DIR}
+include_directories(include
+    ${catkin_INCLUDE_DIRS}
+	${EIGEN3_INCLUDE_DIR}
 )
 
+## Declare a C++ library
 add_library(c_anymal_switched_model
   src/AnymalComDynamics.cpp
   src/AnymalKinematics.cpp

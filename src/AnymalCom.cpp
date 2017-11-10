@@ -1,23 +1,23 @@
 /*
- * AnymalComDynamics.cpp
+ * AnymalCom.cpp
  *
  *  Created on: Nov, 2017
  *      Author: Jan Carius
  */
 
-#include <ocs2_anymal_switched_model/dynamics/AnymalComDynamics.h>
-#include <iit/robots/anymal/miscellaneous.h>
+#include <ocs2_anymal_switched_model/dynamics/AnymalCom.h>
+
 
 namespace anymal {
 
-AnymalComDynamics::AnymalComDynamics() :
+AnymalCom::AnymalCom() :
 		inertiaProperties_(),
 		homTransforms_(),
 		forceTransforms_(),
 		jointSpaceInertiaMatrix_(inertiaProperties_, forceTransforms_)
 { }
 
-Eigen::Vector3d AnymalComDynamics::comPositionBaseFrame(
+Eigen::Vector3d AnymalCom::comPositionBaseFrame(
 		const joint_coordinate_t& q)
 {
 	return iit::ANYmal::getWholeBodyCOM(inertiaProperties_, q, homTransforms_);
@@ -26,7 +26,7 @@ Eigen::Vector3d AnymalComDynamics::comPositionBaseFrame(
 	return inertiaProperties_.getCOM_trunk();
 }
 
-Eigen::Matrix<double, 6, 6> AnymalComDynamics::comInertia(
+Eigen::Matrix<double, 6, 6> AnymalCom::comInertia(
 		const Eigen::Matrix<double,12,1>& q)
 {
 	// total inertia of robot in current config in base frame
@@ -42,7 +42,7 @@ Eigen::Matrix<double, 6, 6> AnymalComDynamics::comInertia(
 	return I_total;
 }
 
-Eigen::Matrix<double,4,4> AnymalComDynamics::comHomogeneous(
+Eigen::Matrix<double,4,4> AnymalCom::comHomogeneous(
 		const Eigen::Matrix<double,12,1>& q)
 {
 	Eigen::Matrix<double,4,4> res = Eigen::Matrix<double,4,4>::Identity();
@@ -51,27 +51,27 @@ Eigen::Matrix<double,4,4> AnymalComDynamics::comHomogeneous(
 	return res;
 }
 
-Eigen::Matrix<double,6,6> AnymalComDynamics::comInertiaDerivative(
+Eigen::Matrix<double,6,6> AnymalCom::comInertiaDerivative(
 		const Eigen::Matrix<double,12,1>& q,
 		const Eigen::Matrix<double,12,1>& dq)
 {
 	return Eigen::Matrix<double,6,6>::Zero(); // massless limbs
 }
 
-Eigen::Matrix<double,6,12> AnymalComDynamics::comMomentumJacobian(
+Eigen::Matrix<double,6,12> AnymalCom::comMomentumJacobian(
 		const Eigen::Matrix<double,12,1>& q)
 {
 	return Eigen::Matrix<double,6,12>::Zero(); // massless limbs
 }
 
-Eigen::Matrix<double,6,12> AnymalComDynamics::comMomentumJacobianDerivative(
+Eigen::Matrix<double,6,12> AnymalCom::comMomentumJacobianDerivative(
 		const Eigen::Matrix<double,12,1>& q,
 		const Eigen::Matrix<double,12,1>& dq)
 {
 	return Eigen::Matrix<double,6,12>::Zero(); // massless limbs
 }
 
-Eigen::Matrix<double,3,1> AnymalComDynamics::comVelocityInBaseFrame(
+Eigen::Matrix<double,3,1> AnymalCom::comVelocityInBaseFrame(
 		const Eigen::Matrix<double,12,1>& q,
 		const Eigen::Matrix<double,12,1>& dq)
 {

@@ -1,32 +1,33 @@
 /*
- * AnymalDynamics.h
+ * AnymalCom.h
  *
  *  Created on: Aug 11, 2017
  *      Author: Jan Carius
  */
 
-#ifndef ANYMAL_ANYMALCOMDYNAMICS_H_
-#define ANYMAL_ANYMALCOMDYNAMICS_H_
+#ifndef ANYMAL_ANYMALCOM_H_
+#define ANYMAL_ANYMALCOM_H_
 
 #include <c_switched_model_interface/ComModelBase.h>
 
 #include <iit/robots/anymal/inertia_properties.h>
 #include <iit/robots/anymal/transforms.h>
 #include <iit/robots/anymal/jsim.h>
+#include <iit/robots/anymal/miscellaneous.h>
 
 namespace anymal
 {
 
-class AnymalComDynamics : public ComModelBase<12>
+class AnymalCom : public ComModelBase<12>
 {
 public:
 
-  enum { LF=0,  RF=1,  LH=2,  RH=3 };
+	enum { LF=0,  RF=1,  LH=2,  RH=3 };
 
 	/**
 	 * Constructor needed for initialization
 	 */
-  AnymalComDynamics();
+	AnymalCom();
 
 	/**
 	 * calculate CoM Position in Base frame
@@ -59,8 +60,8 @@ public:
 
 	/**
 	 * calculate CoM Momentum Jacobian
-   * i.e. p_com = J_p_com(q) * dq
-   * Note: excluding the contribution of the trunk inertia
+	 * i.e. p_com = J_p_com(q) * dq
+	 * Note: excluding the contribution of the trunk inertia
 	 */
 	Eigen::Matrix<double,6,12> comMomentumJacobian(
 			const Eigen::Matrix<double,12,1>& q);
@@ -76,12 +77,12 @@ public:
 
 private:
 
-  iit::ANYmal::dyn::InertiaProperties inertiaProperties_;
-  iit::ANYmal::HomogeneousTransforms homTransforms_;
-  iit::ANYmal::ForceTransforms forceTransforms_;
-  iit::ANYmal::dyn::JSIM jointSpaceInertiaMatrix_;
+	iit::ANYmal::dyn::InertiaProperties inertiaProperties_;
+	iit::ANYmal::HomogeneousTransforms homTransforms_;
+	iit::ANYmal::ForceTransforms forceTransforms_;
+	iit::ANYmal::dyn::JSIM jointSpaceInertiaMatrix_;
 };
 
 }  // end of anymal namespace
 
-#endif /* ANYMAL_ANYMALCOMDYNAMICS_H_ */
+#endif /* ANYMAL_ANYMALCOM_H_ */

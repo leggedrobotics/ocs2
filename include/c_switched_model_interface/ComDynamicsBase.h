@@ -13,7 +13,7 @@
 #include <iostream>
 #include <Eigen/Dense>
 
-#include <dynamics/ControlledSystemBase.h>
+#include <ocs2_core/dynamics/ControlledSystemBase.h>
 
 #include "SwitchedModel.h"
 #include "KinematicsModelBase.h"
@@ -26,8 +26,8 @@ public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
 	typedef ocs2::ControlledSystemBase<12,12> Base;
-	typedef ComModelBase<JOINT_COORD_SIZE>    		com_model_t;
-	typedef KinematicsModelBase<JOINT_COORD_SIZE>   kinematic_model_t;
+	typedef ComModelBase<JOINT_COORD_SIZE> com_model_t;
+	typedef KinematicsModelBase<JOINT_COORD_SIZE> kinematic_model_t;
 
 	typedef typename SwitchedModel<JOINT_COORD_SIZE>::base_coordinate_t  base_coordinate_t;
 	typedef typename SwitchedModel<JOINT_COORD_SIZE>::joint_coordinate_t joint_coordinate_t;
@@ -36,7 +36,8 @@ public:
 	ComDynamicsBase(const kinematic_model_t& kinematicModel, const com_model_t& comModel,
 			const double& gravitationalAcceleration=9.81, const bool& constrainedIntegration=true)
 
-	: comModel_(comModel),
+	: kinematicModel_(kinematicModel),
+	  comModel_(comModel),
 	  o_gravityVector_(0.0, 0.0, -gravitationalAcceleration),
 	  constrainedIntegration_(constrainedIntegration)
 	{
@@ -156,6 +157,7 @@ private:
 	kinematic_model_t 	kinematicModel_;
 	com_model_t 		comModel_;
 	Eigen::Vector3d 	o_gravityVector_;
+
 	bool constrainedIntegration_;
 
 	std::array<bool,4> stanceLegs_;

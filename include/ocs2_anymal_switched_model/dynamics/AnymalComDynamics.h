@@ -31,20 +31,24 @@ public:
 	/**
 	 * calculate CoM Position in Base frame
 	 */
-	Eigen::Vector3d comPositionBaseFrame(
-			const Eigen::Matrix<double,12,1>& q);
+	Eigen::Vector3d comPositionBaseFrame(const Eigen::Matrix<double,12,1>& q);
+
+	/**
+	 * calculate homogeneous transformation base -> CoM
+	 */
+	Eigen::Matrix<double,4,4> comHomogeneous(const Eigen::Matrix<double,12,1>& q);
+
+	/**
+	 * calculate CoM Velocity in Base Frame
+	 */
+	Eigen::Matrix<double,3,1> comVelocityInBaseFrame(
+			const Eigen::Matrix<double,12,1>& q,
+			const Eigen::Matrix<double,12,1>& dq);
 
 	/**
 	 * calculate CoM Inertia
 	 */
-	Eigen::Matrix<double, 6, 6> comInertia(
-			const Eigen::Matrix<double,12,1>& q);
-
-	/**
-	 * calculate Com Homogeneous
-	 */
-	Eigen::Matrix<double,4,4> comHomogeneous(
-			const Eigen::Matrix<double,12,1>& q);
+	Eigen::Matrix<double, 6, 6> comInertia(const Eigen::Matrix<double,12,1>& q);
 
 	/**
 	 * calculate CoM Inertia Derivative
@@ -68,12 +72,7 @@ public:
 			const Eigen::Matrix<double,12,1>& q,
 			const Eigen::Matrix<double,12,1>& dq);
 
-	/**
-	 * calculate CoM Velocity in Base Frame
-	 */
-	Eigen::Matrix<double,3,1> comVelocityInBaseFrame(
-			const Eigen::Matrix<double,12,1>& q,
-			const Eigen::Matrix<double,12,1>& dq);
+
 
 private:
 
@@ -84,7 +83,5 @@ private:
 };
 
 }  // end of anymal namespace
-
-#include "implementation/AnymalComDynamics.h"
 
 #endif /* ANYMAL_ANYMALCOMDYNAMICS_H_ */

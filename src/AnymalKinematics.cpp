@@ -5,6 +5,8 @@
  *      Author: farbod
  */
 
+#include <ocs2_anymal_switched_model/kinematics/AnymalKinematics.h>
+
 namespace anymal {
 
 /******************************************************************************************************/

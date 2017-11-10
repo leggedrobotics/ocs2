@@ -5,7 +5,7 @@
  *      Author: Jan Carius
  */
 
-
+#include <ocs2_anymal_switched_model/dynamics/AnymalComDynamics.h>
 #include <iit/robots/anymal/miscellaneous.h>
 
 namespace anymal {

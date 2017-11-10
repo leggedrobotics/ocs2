@@ -47,6 +47,4 @@ private:
 
 }  // end of anymal namespace
 
-#include "implementation/AnymalKinematics.h"
-
 #endif /* ANYMAL_ANYMALKINEMATICS_H_ */

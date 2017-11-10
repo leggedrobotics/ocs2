@@ -33,8 +33,7 @@ public:
 	 * @param [in] jointCoordinate
 	 * @param [out] comJacobain
 	 */
-	virtual void comJacobainBaseFrame(const joint_coordinate_t& jointCoordinate,
-			Eigen::Matrix<double,6,JOINT_COORD_SIZE>& comJacobain);
+	virtual Eigen::Matrix<double,6,JOINT_COORD_SIZE> comJacobainBaseFrame(const joint_coordinate_t& jointCoordinate);
 
 	/**
 	 * Calculate CoM Position in Base frame

@@ -9,11 +9,15 @@
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t JOINT_COORD_SIZE>
-void ComModelBase<JOINT_COORD_SIZE>::comJacobainBaseFrame(
-		const joint_coordinate_t& jointCoordinate,
-		Eigen::Matrix<double,6,JOINT_COORD_SIZE>& comJacobain) {
+Eigen::Matrix<double,6,JOINT_COORD_SIZE> ComModelBase<JOINT_COORD_SIZE>::comJacobainBaseFrame(
+		const joint_coordinate_t& jointCoordinate) {
 
 	// CoM jacobian in the Base frame around CoM
 	Eigen::Matrix<double,6,6> I = comInertia(jointCoordinate);
-	comJacobain = I.inverse() * comMomentumJacobian(jointCoordinate);
+	Eigen::Matrix3d rotationMInverse = I.topLeftCorner<3,3>().inverse();
+	Eigen::Matrix<double,6,6> I_inverse;
+	I_inverse << rotationMInverse, Eigen::Matrix3d::Zero(),
+			Eigen::Matrix3d::Zero(), Eigen::Matrix3d::Identity()/I(5,5);
+
+	return I_inverse * comMomentumJacobian(jointCoordinate);
 }

@@ -31,10 +31,18 @@ public:
 	typedef typename SwitchedModel<JOINT_COORD_SIZE>::base_coordinate_t base_coordinate_t;
 
 	/**
-	 * Gets a 18-by-1 generalized coordinate and calculates the rotation ...
+	 * Gets a (6+JOINT_COORD_SIZE)-by-1 generalized coordinate and calculates the rotation ...
 	 * @param [in] generalizedCoordinate
 	 */
-	virtual void update(const generalized_coordinate_t& generalizedCoordinate);
+	void update(const generalized_coordinate_t& generalizedCoordinate);
+
+	/**
+	 * Gets the base and joint coordinate calculates the rotation ...
+	 * @param [in] generalizedCoordinate
+	 */
+	template <typename BASE_COORDINATE, typename JOINT_COORDINATE>
+	virtual void update(const Eigen::DenseBase<BASE_COORDINATE>& qBase,
+			const Eigen::DenseBase<JOINT_COORDINATE>& qJoint);
 
 	/**
 	 * calculate the feet position in the Base frame
@@ -118,32 +126,6 @@ public:
 	 */
 	Eigen::Matrix3d rotationMatrixOrigintoBase() const;
 
-	/**
-	 * Origin to base rotation matrix
-	 * @tparam Derived
-	 * @param [in] eulerAngles
-	 * @return
-	 */
-	template <typename Derived>
-	static Eigen::Matrix3d RotationMatrixOrigintoBase(const Eigen::DenseBase<Derived>& eulerAngles);
-
-	/**
-	 * Base to origin rotation matrix
-	 * @tparam Derived
-	 * @param [in] eulerAngles
-	 * @return
-	 */
-	template <typename Derived>
-	static Eigen::Matrix3d RotationMatrixBasetoOrigin(const Eigen::DenseBase<Derived>& eulerAngles);
-
-	/**
-	 * Calculates the skew matrix for vector cross product
-	 * @tparam Derived
-	 * @param [in] in
-	 * @return
-	 */
-	template <typename Derived>
-	static Eigen::Matrix3d CrossProductMatrix(const Eigen::DenseBase<Derived>& in);
 
 protected:
 	base_coordinate_t  qBase_;

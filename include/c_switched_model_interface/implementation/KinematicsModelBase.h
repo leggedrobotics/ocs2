@@ -9,10 +9,21 @@
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t JOINT_COORD_SIZE>
-void KinematicsModelBase<JOINT_COORD_SIZE>::update(const KinematicsModelBase::generalized_coordinate_t& generalizedCoordinate)
+void KinematicsModelBase<JOINT_COORD_SIZE>::update(const generalized_coordinate_t& generalizedCoordinate)
 {
-	qBase_  = generalizedCoordinate.template head<6>();
-	qJoint_ = generalizedCoordinate.template tail<JOINT_COORD_SIZE>();
+	update(generalizedCoordinate.template head<6>(), generalizedCoordinate.template tail<JOINT_COORD_SIZE>());
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+template <size_t JOINT_COORD_SIZE>
+template <typename BASE_COORDINATE, typename JOINT_COORDINATE>
+void KinematicsModelBase<JOINT_COORD_SIZE>::update(const Eigen::DenseBase<BASE_COORDINATE>& qBase,
+		const Eigen::DenseBase<JOINT_COORDINATE>& qJoint) {
+
+	qBase_  = qBase;
+	qJoint_ = qJoint;
 	b_R_o_  = RotationMatrixOrigintoBase(qBase_.template head<3>());
 }
 
@@ -104,71 +115,3 @@ Eigen::Matrix3d KinematicsModelBase<JOINT_COORD_SIZE>::rotationMatrixOrigintoBas
 	return b_R_o_;
 }
 
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-template <size_t JOINT_COORD_SIZE>
-template <typename Derived>
-Eigen::Matrix3d KinematicsModelBase<JOINT_COORD_SIZE>::RotationMatrixOrigintoBase(const Eigen::DenseBase<Derived>& eulerAngles)
-{
-
-	if (eulerAngles.innerSize()!=3 || eulerAngles.outerSize()!=1)  throw std::runtime_error("Input argument should be a 3-by-1 vector.");
-
-	// inputs are the intrinsic rotation angles in RADIANTS
-	double sinAlpha = sin(eulerAngles(0));
-	double cosAlpha = cos(eulerAngles(0));
-	double sinBeta  = sin(eulerAngles(1));
-	double cosBeta  = cos(eulerAngles(1));
-	double sinGamma = sin(eulerAngles(2));
-	double cosGamma = cos(eulerAngles(2));
-
-	Eigen::Matrix3d Rx, Ry, Rz;
-	Rx << 1, 0, 0,					0, cosAlpha, sinAlpha,		0, -sinAlpha, cosAlpha;
-	Ry << cosBeta, 0, -sinBeta,		0, 1, 0,		 			sinBeta, 0, cosBeta;
-	Rz << cosGamma, sinGamma, 0, 	-sinGamma, cosGamma, 0,		0, 0, 1;
-
-	return Rz*Ry*Rx;
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-template <size_t JOINT_COORD_SIZE>
-template <typename Derived>
-Eigen::Matrix3d KinematicsModelBase<JOINT_COORD_SIZE>::RotationMatrixBasetoOrigin(const Eigen::DenseBase<Derived>& eulerAngles)
-{
-
-	if (eulerAngles.innerSize()!=3 || eulerAngles.outerSize()!=1)  throw std::runtime_error("Input argument should be a 3-by-1 vector.");
-
-	// inputs are the intrinsic rotation angles in RADIANTS
-	double sinAlpha = sin(eulerAngles(0));
-	double cosAlpha = cos(eulerAngles(0));
-	double sinBeta  = sin(eulerAngles(1));
-	double cosBeta  = cos(eulerAngles(1));
-	double sinGamma = sin(eulerAngles(2));
-	double cosGamma = cos(eulerAngles(2));
-
-	Eigen::Matrix3d RxT, RyT, RzT;
-	RxT << 1, 0, 0,					0, cosAlpha, -sinAlpha,		0, sinAlpha, cosAlpha;
-	RyT << cosBeta, 0, sinBeta,		0, 1, 0,		 			-sinBeta, 0, cosBeta;
-	RzT << cosGamma, -sinGamma, 0, 	sinGamma, cosGamma, 0,		0, 0, 1;
-
-	return RxT*RyT*RzT;
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-template <size_t JOINT_COORD_SIZE>
-template <typename Derived>
-Eigen::Matrix3d KinematicsModelBase<JOINT_COORD_SIZE>::CrossProductMatrix(const Eigen::DenseBase<Derived>& in)
-{
-
-	if (in.innerSize()!=3 || in.outerSize()!=1)  throw std::runtime_error("Input argument should be a 3-by-1 vector.");
-
-	Eigen::Matrix3d out;
-	out <<   0.0,   -in(2), +in(1),
-			+in(2),  0.0,   -in(0),
-			-in(1), +in(0),  0.0;
-	return out;
-}

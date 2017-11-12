@@ -8,7 +8,7 @@
 
 // model
 #include <ocs2_anymal_switched_model/kinematics/AnymalKinematics.h>
-#include <ocs2_anymal_switched_model/dynamics/AnymalComDynamics.h>
+#include <ocs2_anymal_switched_model/dynamics/AnymalCom.h>
 
 namespace anymal {
 
@@ -22,7 +22,7 @@ public:
 
 public:
   AnymalKinematics kinematics_;
-  AnymalComDynamics comDynamics_;
+  AnymalCom comDynamics_;
 
 };
 

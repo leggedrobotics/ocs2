@@ -41,7 +41,7 @@ public:
 	 * @param [in] generalizedCoordinate
 	 */
 	template <typename BASE_COORDINATE, typename JOINT_COORDINATE>
-	virtual void update(const Eigen::DenseBase<BASE_COORDINATE>& qBase,
+	void update(const Eigen::DenseBase<BASE_COORDINATE>& qBase,
 			const Eigen::DenseBase<JOINT_COORDINATE>& qJoint);
 
 	/**

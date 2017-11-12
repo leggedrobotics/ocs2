@@ -52,8 +52,6 @@ void ComKinoDynamicsDerivativeBase<JOINT_COORD_SIZE>::setCurrentStateAndControl(
 	qJoints_  = x.template tail<12>();
 	// HyQ's joints' velocities
 	dqJoints_ = u.template tail<12>();
-	// HyQ's Base local velocities
-	baseLocalVelocities_ = x.template segment<6>(6);
 
 	// set CoM data
 	comDynamicsDerivative_.setData(stanceLegs_, qJoints_, dqJoints_);
@@ -61,11 +59,12 @@ void ComKinoDynamicsDerivativeBase<JOINT_COORD_SIZE>::setCurrentStateAndControl(
 
 	// Rotation matrix from Base frame to Origin frame (global world)
 	comDynamicsDerivative_.getRotationMatrixBasetoOrigin(o_R_b_);
-
-
-
 	// Base to CoM displacement in the CoM frame
 	comDynamicsDerivative_.getBase2CoMInComFrame(com_base2CoM_);
+	// Base pose
+	comDynamicsDerivative_.getBasePose(basePose_);
+	// Base local velocities
+	comDynamicsDerivative_.getBaseLocalVelocities(baseLocalVelocities_);
 	// CoM Jacobian in the Base frame
 	comDynamicsDerivative_.getComJacobianInBaseFrame(b_comJacobain_);
 	// CoM Jacobin time derivative in the Base frame
@@ -78,30 +77,16 @@ void ComKinoDynamicsDerivativeBase<JOINT_COORD_SIZE>::setCurrentStateAndControl(
 	// feet Jacobins time derivative in the Base frame
 	const double h = sqrt(Eigen::NumTraits<double>::epsilon());
 	joints_coordinate_t qJointsPlus = qJoints_ + dqJoints_*h;
+	kinematicModel_.update(basePose_, qJointsPlus);
 	for (size_t i=0; i<4; i++) {
 		base_jacobian_matrix_t b_footJacobainPlus;
-		SwitchedModelKinematics::FootJacobainBaseFrame(qJointsPlus, i, b_footJacobainPlus);
-		b_feetJacobainsTimeDerivative_[i] = (b_footJacobainPlus-b_feetJacobains_[i])/h;
+		kinematicModel_.footJacobainBaseFrame(i, b_footJacobainPlus);
+		b_feetJacobainsTimeDerivative_[i].setZero();
+		b_feetJacobainsTimeDerivative_[i].block<6,3>(0,3*i) = (b_footJacobainPlus.block<6,3>(0,3*i)-b_feetJacobains_[i].block<6,3>(0,3*i))/h;
 	}  // end of i loop
 
 	// jacobina of angular velocities to Euler angle derivatives transformation
 	jacobianOfAngularVelocityMapping_ = JacobianOfAngularVelocityMapping(x.segment<3>(0), x.segment<3>(6)).transpose();
-
-
-
-	for (size_t i=0; i<4; i++) {
-		// CoM to feet in the CoM frame
-		SwitchedModelKinematics::FootPositionBaseFrame(qJoints_, i, b_base2StanceFeet_[i]);
-		// Feet Jacobian in the Base frame
-		SwitchedModelKinematics::FootJacobainBaseFrame(qJoints_, i, b_feetJacobains_[i]);
-
-		// feet Jacobins time derivative in the Base frame
-		base_jacobian_matrix_t b_footJacobainPlus;
-		SwitchedModelKinematics::FootJacobainBaseFrame(qJointsPlus, i, b_footJacobainPlus);
-		b_feetJacobainsTimeDerivative_[i].setZero();
-		b_feetJacobainsTimeDerivative_[i].block<3,3>(0,3*i) = (b_footJacobainPlus.block<3,3>(3,3*i)-b_feetJacobains_[i].block<3,3>(3,3*i))/h;
-	}  // end of i loop
-
 
 	// if GapIndicator is provided
 	if (endEffectorStateConstraints_.empty()==false)
@@ -111,7 +96,7 @@ void ComKinoDynamicsDerivativeBase<JOINT_COORD_SIZE>::setCurrentStateAndControl(
 
 			if (stanceLegs_[i]==false && nextPhaseStanceLegs_[i]==true)  {
 				// calculate the the foot position in the Origin frame.
-				Eigen::Vector3d o_origin2StanceFoot = x.segment<3>(3) + o_R_b_ * b_base2StanceFeet_[i];
+				Eigen::Vector3d o_origin2StanceFoot = x.segment<3>(3) + o_R_b_ * com_com2StanceFeet_[i];
 
 				feetConstraintJacobains_[i].setZero();
 				for (size_t j=0; j<endEffectorStateConstraints_.size(); j++) {
@@ -149,39 +134,11 @@ void ComKinoDynamicsDerivativeBase<JOINT_COORD_SIZE>::getDerivativeState(state_m
 
 	// CoM derivative with respect to CoM
 	Eigen::Matrix<double,12,12> comAcom;
-
-	// first three rows
-	comAcom.block<3,3>(0,0) = jacobianOfAngularVelocityMapping_.leftCols<3>();
-	comAcom.block<3,3>(0,3) = Eigen::Matrix3d::Zero();
-	comAcom.block<3,3>(0,6) = jacobianOfAngularVelocityMapping_.rightCols<3>();
-	comAcom.block<3,3>(0,9) = Eigen::Matrix3d::Zero();
-
-	// second three rows
-	comAcom.block<3,3>(3,0) = -SwitchedModelKinematics::CrossProductMatrix(o_R_b_*baseLocalVelocities_.tail<3>());
-	comAcom.block<3,3>(3,3) = Eigen::Matrix3d::Zero();
-	comAcom.block<3,3>(3,6) = Eigen::Matrix3d::Zero();
-	comAcom.block<3,3>(3,9) = o_R_b_;
-
-	// third three rows
-	comAcom.block<3,3>(6,0) = Eigen::Matrix3d::Zero();
-	comAcom.block<3,3>(6,3) = Eigen::Matrix3d::Zero();
-	comAcom.block<3,3>(6,6) = MInverse_.topLeftCorner<3,3>() * (
-			SwitchedModelKinematics::CrossProductMatrix(M_.topLeftCorner<3,3>()*baseLocalVelocities_.head<3>()) -
-			SwitchedModelKinematics::CrossProductMatrix(baseLocalVelocities_.head<3>())*M_.topLeftCorner<3,3>() );
-	comAcom.block<3,3>(6,9) = Eigen::Matrix3d::Zero();
-
-	// fourth three rows
-	comAcom.block<3,3>(9,0) = o_R_b_.transpose() * SwitchedModelKinematics::CrossProductMatrix(o_gravityVector_);
-	comAcom.block<3,3>(9,3) = Eigen::Matrix3d::Zero();
-	comAcom.block<3,3>(9,6) = Eigen::Matrix3d::Zero();
-	comAcom.block<3,3>(9,9) = Eigen::Matrix3d::Zero();
+	comDynamicsDerivative_.getDerivativeState(comAcom);
 
 	// CoM derivative with respect to qJoints
-	Eigen::Matrix<double,12,12> comAjoints;
-	comAjoints.setZero();
-	for (size_t i=0; i<4; i++)
-		comAjoints.block<3,3>(6,3*i) = -MInverse_.topLeftCorner<3,3>() * SwitchedModelKinematics::CrossProductMatrix(u_.segment<3>(3*i))
-						* b_feetJacobains_[i].block<3,3>(3,3*i);
+	Eigen::Matrix<double,12,JOINT_COORD_SIZE> comAjoints;
+	comDynamicsDerivative_.getApproximateDerivativesJoint(comAjoints);
 
 	A << comAcom,    							comAjoints,
 		 Eigen::Matrix<double,12,12>::Zero(), 	Eigen::Matrix<double,12,12>::Zero();
@@ -200,32 +157,17 @@ void ComKinoDynamicsDerivativeBase<JOINT_COORD_SIZE>::getDerivativesControl(cont
 	// B matrix
 	/*			lambda		jointsVel=omega
 	 * B = 	|	B00			B01	|
-	 *		|	B10			B11	|
+	 *		|	0			I	|
 	 */
 	// CoM derivative with respect to lambdas
 	Eigen::Matrix<double,12,12> comBlambda;
-	// first 6 rows
-	comBlambda.topRows<6>().setZero();
-	// second 6 rows
-	for (size_t i=0; i<4; i++)  {
+	comDynamicsDerivative_.getDerivativesControl(comBlambda);
 
-		// for swing legs set the corresponding block to zero
-		if (stanceLegs_[i]==false && options_.constrainedIntegration_==true) {
-			// third and fourth three rows and ith three columns
-			comBlambda.block<6,3>(6,i*3).setZero();
-			continue;
-		}
+	// CoM derivative with respect to joints' velocities
+	Eigen::Matrix<double,12,JOINT_COORD_SIZE> comBomega;
+	comDynamicsDerivative_.getApproximateDerivativesJointVelocity(comBomega);
 
-		// third three rows and ith three columns
-		comBlambda.block<3,3>(6,3*i) = SwitchedModelKinematics::CrossProductMatrix(b_base2StanceFeet_[i]);
-
-		// fourth three rows and ith three columns
-		comBlambda.block<3,3>(9,3*i).setIdentity();
-	}  // end of i loop
-
-	comBlambda.bottomRows<6>() = (MInverse_*comBlambda.bottomRows<6>()).eval();
-
-	B << comBlambda,    						Eigen::Matrix<double,12,12>::Zero(),
+	B << comBlambda,    						comBomega,
 		 Eigen::Matrix<double,12,12>::Zero(), 	Eigen::Matrix<double,12,12>::Identity();
 
 }
@@ -267,15 +209,16 @@ void ComKinoDynamicsDerivativeBase<JOINT_COORD_SIZE>::getConstraint1DerivativesS
 		C.block<3,3>(nextFreeIndex,3).setZero();
 
 		// Ci2
-		C.block<3,3>(nextFreeIndex,6) = -SwitchedModelKinematics::CrossProductMatrix(b_base2StanceFeet_[i]);
+		C.block<3,3>(nextFreeIndex,6) = -SwitchedModel<JOINT_COORD_SIZE>::CrossProductMatrix(com_com2StanceFeet_[i]);
 
 		// Ci3
 		C.block<3,3>(nextFreeIndex,9).setIdentity();
 
 		// Ci4
-		C.block<3,12>(nextFreeIndex,12) = SwitchedModelKinematics::CrossProductMatrix(baseLocalVelocities_.head<3>()) * (
-						b_feetJacobains_[i].bottomRows<3>())
-						+ b_feetJacobainsTimeDerivative_[i];
+		C.block<3,12>(nextFreeIndex,12) = SwitchedModel<JOINT_COORD_SIZE>::CrossProductMatrix(baseLocalVelocities_.head<3>()) * (
+						b_feetJacobains_[i].bottomRows<3>()-b_comJacobain_.bottomRows<3>())
+						+ b_feetJacobainsTimeDerivative_[i].bottomRows<3>()-b_comJacobainTimeDerivative_.bottomRows<3>()
+						+ SwitchedModel<JOINT_COORD_SIZE>::CrossProductMatrix(com_com2StanceFeet_[i]) * b_comJacobainTimeDerivative_.topRows<3>();
 
 		nextFreeIndex += 3;
 	}
@@ -287,29 +230,29 @@ void ComKinoDynamicsDerivativeBase<JOINT_COORD_SIZE>::getConstraint1DerivativesS
 
 			// Ci0
 			Eigen::Vector3d o_footVelocity = o_R_b_ * ( b_feetJacobains_[i].bottomRows<3>()*dqJoints_ + baseLocalVelocities_.tail<3>()
-					+ baseLocalVelocities_.head<3>().cross(b_base2StanceFeet_[i]) );
-			partial_x.block<3,3>(0,0) = -SwitchedModelKinematics::CrossProductMatrix(o_footVelocity);
+					+ baseLocalVelocities_.head<3>().cross(com_base2CoM_+com_com2StanceFeet_[i]) );
+			partial_x.block<3,3>(0,0) = -SwitchedModel<JOINT_COORD_SIZE>::CrossProductMatrix(o_footVelocity);
 
 			// Ci1
 			partial_x.block<3,3>(0,3).setZero();
 
 			// Ci2
-			partial_x.block<3,3>(0,6) = -o_R_b_ * SwitchedModelKinematics::CrossProductMatrix(b_base2StanceFeet_[i]);
+			partial_x.block<3,3>(0,6) = -o_R_b_ * SwitchedModel<JOINT_COORD_SIZE>::CrossProductMatrix(com_com2StanceFeet_[i]);
 
 			// Ci3
 			partial_x.block<3,3>(0,9) = o_R_b_;
 
 			// Ci4
-			partial_x.block<3,12>(0,12) = o_R_b_ * ( SwitchedModelKinematics::CrossProductMatrix(baseLocalVelocities_.head<3>()) * (
-					b_feetJacobains_[i].bottomRows<3>())
-					+ b_feetJacobainsTimeDerivative_[i] );
+			partial_x.block<3,12>(0,12) = o_R_b_ * ( SwitchedModel<JOINT_COORD_SIZE>::CrossProductMatrix(baseLocalVelocities_.head<3>()) * (
+					b_feetJacobains_[i].bottomRows<3>()-b_comJacobain_.bottomRows<3>())
+					+ b_feetJacobainsTimeDerivative_[i].bottomRows<3>()-b_comJacobainTimeDerivative_.bottomRows<3>()
+					+ SwitchedModel<JOINT_COORD_SIZE>::CrossProductMatrix(com_com2StanceFeet_[i]) * b_comJacobainTimeDerivative_.topRows<3>() );
 
 			C.block<1,24>(nextFreeIndex,0) = options_.zDirectionVelocityWeight_*partial_x.bottomRows<1>();
 			nextFreeIndex++;
 		}
 
 }
-
 
 /******************************************************************************************************/
 /******************************************************************************************************/
@@ -344,7 +287,8 @@ void ComKinoDynamicsDerivativeBase<JOINT_COORD_SIZE>::getConstraint1DerivativesC
 		D.block<3,12>(nextFreeIndex,0).setZero();
 
 		// Di1
-		D.block<3,12>(nextFreeIndex,12) = b_feetJacobains_[i].bottomRows<3>();
+		D.block<3,12>(nextFreeIndex,12) = b_feetJacobains_[i].bottomRows<3>() - b_comJacobain_.bottomRows<3>() +
+				SwitchedModel<JOINT_COORD_SIZE>::CrossProductMatrix(com_com2StanceFeet_[i])*b_comJacobain_.topRows<3>();
 
 		nextFreeIndex += 3;
 	}  // end of i loop
@@ -353,7 +297,8 @@ void ComKinoDynamicsDerivativeBase<JOINT_COORD_SIZE>::getConstraint1DerivativesC
 	// for the swing legs z direction constraints, if its CPG is provided
 	for (size_t i=0; i<4; i++)
 		if (stanceLegs_[i]==false && feetZDirectionCPGs_[i]!=NULL) {
-			Eigen::Matrix<double,3,12> partial_dq = o_R_b_ * ( b_feetJacobains_[i].bottomRows<3>() );
+			Eigen::Matrix<double,3,12> partial_dq = o_R_b_ * ( b_feetJacobains_[i].bottomRows<3>() - b_comJacobain_.bottomRows<3>() +
+					SwitchedModel<JOINT_COORD_SIZE>::CrossProductMatrix(com_com2StanceFeet_[i])*b_comJacobain_.topRows<3>() );
 			D.block<1,12>(nextFreeIndex,0).setZero();
 			D.block<1,12>(nextFreeIndex,12) = options_.zDirectionVelocityWeight_*partial_dq.bottomRows<1>();
 			nextFreeIndex++;
@@ -376,9 +321,9 @@ void ComKinoDynamicsDerivativeBase<JOINT_COORD_SIZE>::getConstraint2DerivativesS
 		if (stanceLegs_[i]==false && feetZDirectionCPGs_[i]!=NULL) {
 			// foot jacobian in the Origin frame
 			Eigen::Matrix<double, 3, 18> o_footJacobian;
-			o_footJacobian.block<3,3>(0,0)  = -SwitchedModelKinematics::CrossProductMatrix(o_R_b_*b_base2StanceFeet_[i]);
+			o_footJacobian.block<3,3>(0,0)  = -SwitchedModel<JOINT_COORD_SIZE>::CrossProductMatrix(o_R_b_*com_com2StanceFeet_[i]);
 			o_footJacobian.block<3,3>(0,3)  = Eigen::Matrix3d::Identity();
-			o_footJacobian.block<3,12>(0,6) = o_R_b_ * (b_feetJacobains_[i].bottomRows<3>());
+			o_footJacobian.block<3,12>(0,6) = o_R_b_ * (b_feetJacobains_[i].bottomRows<3>()-b_comJacobain_.bottomRows<3>());
 
 			F.block<1,6>(numConstraint2,0)   = options_.zDirectionPositionWeight_ * o_footJacobian.block<1,6>(2,0);
 			F.block<1,6>(numConstraint2,6)   = Eigen::Matrix<double,1,6>::Zero();
@@ -404,9 +349,9 @@ void ComKinoDynamicsDerivativeBase<JOINT_COORD_SIZE>::getFinalConstraint2Derivat
 		if (feetConstraintIsActive_[i]==true)  {
 			// foot jacobian in the Origin frame
 			Eigen::Matrix<double, 3, 18> o_footJacobian;
-			o_footJacobian.block<3,3>(0,0)  = -SwitchedModelKinematics::CrossProductMatrix(o_R_b_*b_base2StanceFeet_[i]);
+			o_footJacobian.block<3,3>(0,0)  = -SwitchedModel<JOINT_COORD_SIZE>::CrossProductMatrix(o_R_b_*com_com2StanceFeet_[i]);
 			o_footJacobian.block<3,3>(0,3)  = Eigen::Matrix3d::Identity();
-			o_footJacobian.block<3,12>(0,6) = o_R_b_ * (b_feetJacobains_[i].bottomRows<3>());
+			o_footJacobian.block<3,12>(0,6) = o_R_b_ * (b_feetJacobains_[i].bottomRows<3>()-b_comJacobain_.bottomRows<3>());
 
 			// gap jacobian
 			Eigen::Matrix<double, 1, 18> o_gapJacobian = feetConstraintJacobains_[i].transpose() * o_footJacobian;

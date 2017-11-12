@@ -111,19 +111,44 @@ public:
 	static Eigen::Matrix<double,6,3> JacobianOfAngularVelocityMapping(const Eigen::Vector3d& eulerAnglesXyz,
 			const Eigen::Vector3d& angularVelocity);
 
-	/*
-	 * user interface for CoM dynamics elements.
+	/**
+	 * user interface for CoM dynamics: get Base to CoM vector in CoM frame.
 	 */
 	void getBase2CoMInComFrame(Eigen::Vector3d& com_base2CoM) const;
 
+	/**
+	 * user interface for CoM dynamics: get Base Pose.
+	 */
+	void getBasePose(Eigen::Vector3d& basePose) const;
+
+	/**
+	 * user interface for CoM dynamics: get CoM to stance feet in CoM frame.
+	 */
 	void getCom2StanceFeetInComFrame(std::array<Eigen::Vector3d,4>& com_com2StanceFeet) const;
 
+	/**
+	 * user interface for CoM dynamics: get Base to stance feet in CoM frame.
+	 */
+	void getBase2StanceFeetInComFrame(std::array<Eigen::Vector3d,4>& com_base2StanceFeet) const;
+
+	/**
+	 * user interface for CoM dynamics: get CoM Jacobian with respect to base.
+	 */
 	void getComJacobianInBaseFrame(base_jacobian_matrix_t& b_comJacobain) const;
 
+	/**
+	 * user interface for CoM dynamics: get feet Jacobian with respect to base.
+	 */
 	void getFeetJacobiansInBaseFrame(std::array<base_jacobian_matrix_t,4>& b_feetJacobains) const;
 
+	/**
+	 * user interface for CoM dynamics: get time derivative of CoM Jacobian with respect to base.
+	 */
 	void getComJacobianTimeDerivativeInBaseFrame(base_jacobian_matrix_t& b_comJacobainTimeDerivative) const;
 
+	/**
+	 * user interface for CoM dynamics: get the rotation matrix from Base frame to Origin frame.
+	 */
 	void getRotationMatrixBasetoOrigin(Eigen::Matrix3d& o_R_b) const;
 
 private:
@@ -151,6 +176,7 @@ private:
 	Eigen::Vector3d com_base2CoM_;
 	base_jacobian_matrix_t b_comJacobain_;
 	base_jacobian_matrix_t b_comJacobainTimeDerivative_;
+	std::array<Eigen::Vector3d,4> com_base2StanceFeet_;
 	std::array<Eigen::Vector3d,4> com_com2StanceFeet_;
 
 	std::array<base_jacobian_matrix_t,4> b_feetJacobains_;

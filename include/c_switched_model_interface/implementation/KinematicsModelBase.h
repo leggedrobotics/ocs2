@@ -24,7 +24,7 @@ void KinematicsModelBase<JOINT_COORD_SIZE>::update(const Eigen::DenseBase<BASE_C
 
 	qBase_  = qBase;
 	qJoint_ = qJoint;
-	b_R_o_  = RotationMatrixOrigintoBase(qBase_.template head<3>());
+	b_R_o_  = SwitchedModel<JOINT_COORD_SIZE>::RotationMatrixOrigintoBase(qBase_.template head<3>());
 }
 
 /******************************************************************************************************/
@@ -103,7 +103,7 @@ void KinematicsModelBase<JOINT_COORD_SIZE>::FromBaseJacobianToInertiaJacobian(
 	// rotation
 	i_J_point.template topRows<3>() << i_R_b,  Eigen::Matrix3d::Zero(),  i_R_b*b_J_point.template topRows<3>();
 	// translation
-	i_J_point.template bottomRows<3>() << -i_R_b*CrossProductMatrix(b_r_point), i_R_b, i_R_b*b_J_point.template bottomRows<3>();
+	i_J_point.template bottomRows<3>() << -i_R_b*SwitchedModel<JOINT_COORD_SIZE>::CrossProductMatrix(b_r_point), i_R_b, i_R_b*b_J_point.template bottomRows<3>();
 }
 
 /******************************************************************************************************/
@@ -114,4 +114,3 @@ Eigen::Matrix3d KinematicsModelBase<JOINT_COORD_SIZE>::rotationMatrixOrigintoBas
 
 	return b_R_o_;
 }
-

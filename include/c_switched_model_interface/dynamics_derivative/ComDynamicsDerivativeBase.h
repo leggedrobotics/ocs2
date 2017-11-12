@@ -1,5 +1,5 @@
 /*
- * CoMDynamicsDerivativeBase.h
+ * ComDynamicsDerivativeBase.h
  *
  *  Created on: Nov 10, 2017
  *      Author: farbod
@@ -22,7 +22,7 @@
 #include "ComModelBase.h"
 
 template <size_t JOINT_COORD_SIZE>
-class CoMDynamicsDerivativeBase : public ocs2::DerivativesBase<12,12>
+class ComDynamicsDerivativeBase : public ocs2::DerivativesBase<12,12>
 {
 public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
@@ -36,7 +36,7 @@ public:
 	typedef Eigen::Matrix<double,6,JOINT_COORD_SIZE> base_jacobian_matrix_t;
 	typedef Eigen::Matrix<double,JOINT_COORD_SIZE,JOINT_COORD_SIZE> state_joint_matrix_t;
 
-	CoMDynamicsDerivativeBase(const kinematic_model_t& kinematicModel, const com_model_t& comModel,
+	ComDynamicsDerivativeBase(const kinematic_model_t& kinematicModel, const com_model_t& comModel,
 			const double& gravitationalAcceleration=9.81, const bool& constrainedIntegration=true)
 
 	: kinematicModel_(kinematicModel),
@@ -47,7 +47,7 @@ public:
 		if (gravitationalAcceleration<0)  throw std::runtime_error("Gravitational acceleration should be a positive value.");
 	}
 
-	virtual ~CoMDynamicsDerivativeBase() {}
+	virtual ~ComDynamicsDerivativeBase() {}
 
 	/**
 	 * clone this class.
@@ -163,6 +163,6 @@ private:
 
 };
 
-
+#include "implementation/ComDynamicsDerivativeBase.h"
 
 #endif /* COMDYNAMICSDERIVATIVEBASE_H_ */

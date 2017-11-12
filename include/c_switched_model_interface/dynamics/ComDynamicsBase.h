@@ -166,7 +166,7 @@ private:
 	joint_coordinate_t dqJoints_;
 
 	Eigen::Vector3d com_base2CoM_;
-	Eigen::Matrix<double,6,12> b_comJacobain_;
+	Eigen::Matrix<double,3,JOINT_COORD_SIZE> b_comJacobainOmega_;
 	std::array<Eigen::Vector3d,4> com_base2StanceFeet_;
 
 	// Inertia matrix and its derivative

@@ -82,15 +82,14 @@ void ComDynamicsBase<JOINT_COORD_SIZE>::computeDerivative(const scalar_t& t,
 			Eigen::Matrix3d::Zero(), Eigen::Matrix3d::Identity()/M_(5,5);
 
 	// Coriolis and centrifugal forces
-	C_.head<3>() = (SwitchedModel::CrossProductMatrix(com_W_com)*M_.topLeftCorner<3,3>() + dMdt_.topLeftCorner<3,3>()) * com_W_com;
+	C_.head<3>() = com_W_com.cross(M_.topLeftCorner<3,3>()*com_W_com) + dMdt_.topLeftCorner<3,3>()*com_W_com;
 	C_.tail<3>().setZero();
 
 	// gravity effect on CoM in CoM coordinate
-	MInverseG_.head<3>().setZero();
-	MInverseG_.tail<3>() = -o_R_b.transpose() * o_gravityVector_;
+	MInverseG_ << Eigen::Vector3d::Zero(), -o_R_b.transpose() * o_gravityVector_;
 
 	// CoM Jacobin in the Base frame
-	b_comJacobain_ = MInverse_*comModel_.comMomentumJacobian(qJoints_);
+	b_comJacobainOmega_ = (MInverse_*comModel_.comMomentumJacobian(qJoints_)).topRows<3>();
 
 	// contact JacobianTransposeLambda
 	Eigen::Vector3d com_comToFoot;
@@ -102,7 +101,7 @@ void ComDynamicsBase<JOINT_COORD_SIZE>::computeDerivative(const scalar_t& t,
 
 		com_comToFoot  = com_base2StanceFeet_[i]-com_base2CoM_;
 
-		JcTransposeLambda.head<3>() += SwitchedModel::CrossProductMatrix(com_comToFoot) * u.segment<3>(3*i);
+		JcTransposeLambda.head<3>() += com_comToFoot.cross(u.segment<3>(3*i));
 		JcTransposeLambda.tail<3>() += u.segment<3>(3*i);
 	}
 
@@ -110,7 +109,7 @@ void ComDynamicsBase<JOINT_COORD_SIZE>::computeDerivative(const scalar_t& t,
 	Eigen::Matrix3d transformAngVel2EulerAngDev = AngularVelocitiesToEulerAngleDerivativesMatrix(x.head<3>());
 
 	// CoM dynamics
-	dxdt.segment<3>(0) = o_R_b * transformAngVel2EulerAngDev * (com_W_com - b_comJacobain_.topRows<3>()*dqJoints_);
+	dxdt.segment<3>(0) = o_R_b * transformAngVel2EulerAngDev * (com_W_com - b_comJacobainOmega_*dqJoints_);
 	dxdt.segment<3>(3) = o_R_b * com_V_com;
 	dxdt.tail<6>() = MInverse_ * (-C_ + JcTransposeLambda) - MInverseG_;
 
@@ -155,7 +154,7 @@ void ComDynamicsBase<JOINT_COORD_SIZE>::CalculateBaseLocalVelocities(const joint
 	// local velocities of Base (com_W_b)
 	baseLocalVelocities.head<3>() = comLocalVelocities.head<3>() - b_comJacobain.topRows<3>()*dqJoints;
 	baseLocalVelocities.tail<3>() = comLocalVelocities.tail<3>() - b_comJacobain.bottomRows<3>()*dqJoints
-			+ SwitchedModel::CrossProductMatrix(com_base2CoM)*baseLocalVelocities.head<3>();
+			+ com_base2CoM.cross(baseLocalVelocities.head<3>());
 
 }
 

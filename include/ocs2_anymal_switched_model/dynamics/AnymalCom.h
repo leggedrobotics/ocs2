@@ -96,7 +96,10 @@ public:
 			const joint_coordinate_t& q,
 			const joint_coordinate_t& dq);
 
-
+	/**
+	 * Return copy of the total mass of the system
+	 */
+	double totalMass() {return inertiaProperties_.getTotalMass();}
 
 private:
 

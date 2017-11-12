@@ -66,8 +66,10 @@ TEST_F(SwitchedModelTests, Dynamics){
   std::cout << "Joint coordinates:\n" << joint_cor.transpose() << std::endl;
 
   std::cout << "comPositionBaseFrame:\n" << comDynamics_.comPositionBaseFrame(joint_cor) << std::endl;
+  std::cout << "comPositionBaseFrameDefault:\n" << comDynamics_.comPositionBaseFrame() << std::endl;
 
   std::cout << "comInertia:\n" << comDynamics_.comInertia(joint_cor) << std::endl;
+  std::cout << "comInertiaDefault:\n" << comDynamics_.comInertia() << std::endl;
 
 
 }

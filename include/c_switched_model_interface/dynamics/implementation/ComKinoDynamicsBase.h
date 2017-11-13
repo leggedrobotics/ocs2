@@ -85,14 +85,14 @@ void ComKinoDynamicsBase<JOINT_COORD_SIZE>::computeConstriant1(const scalar_t& t
 	Eigen::Matrix3d o_R_b = SwitchedModel::RotationMatrixBasetoOrigin(comPose.head<3>());
 
 	// base to CoM displacement in the CoM frame
-	Eigen::Vector3d com_base2CoM = comModel_.comPositionBaseFrame(qJoints);
+	Eigen::Vector3d com_base2CoM = comModelPtr_->comPositionBaseFrame(qJoints);
 
 	// base coordinate
 	basePose.head<3>() = comPose.segment<3>(0);
 	basePose.tail<3>() = comPose.segment<3>(3) - o_R_b * com_base2CoM;
 
 	// CoM Jacobin in the Base frame
-	Eigen::Matrix<double,6,12> b_comJacobain = comModel_.comJacobainBaseFrame(qJoints);
+	Eigen::Matrix<double,6,12> b_comJacobain = comModelPtr_->comJacobainBaseFrame(qJoints);
 
 	// local velocities of Base (b_W_b)
 	baseLocalVelocities.head<3>() = comLocalVelocities.head<3>() - b_comJacobain.topRows<3>()*dqJoints;
@@ -100,7 +100,7 @@ void ComKinoDynamicsBase<JOINT_COORD_SIZE>::computeConstriant1(const scalar_t& t
 			+ com_base2CoM.cross(baseLocalVelocities.head<3>());
 
 
-	kinematicModel_.update(basePose, qJoints);
+	kinematicModelPtr_->update(basePose, qJoints);
 
 	size_t nextFreeIndex = 0;
 	for (size_t i=0; i<4; i++) {
@@ -113,11 +113,11 @@ void ComKinoDynamicsBase<JOINT_COORD_SIZE>::computeConstriant1(const scalar_t& t
 		} else {
 			// stance foot position in the Base frame
 			Eigen::Vector3d b_base2Foot;
-			kinematicModel_.footPositionBaseFrame(i, b_base2Foot);
+			kinematicModelPtr_->footPositionBaseFrame(i, b_base2Foot);
 
 			// stance foot Jacobian in the base frame
 			Eigen::Matrix<double,6,JOINT_COORD_SIZE> b_footJacobain;
-			kinematicModel_.footJacobainBaseFrame(i, b_footJacobain);
+			kinematicModelPtr_->footJacobainBaseFrame(i, b_footJacobain);
 
 			// stance foot velocity in the World frame
 			g1.segment<3>(nextFreeIndex) = b_footJacobain.template bottomRows<3>()*dqJoints + baseLocalVelocities.template tail<3>()
@@ -134,11 +134,11 @@ void ComKinoDynamicsBase<JOINT_COORD_SIZE>::computeConstriant1(const scalar_t& t
 
 			// stance foot position in the Base frame
 			Eigen::Vector3d b_base2Foot;
-			kinematicModel_.footPositionBaseFrame(i, b_base2Foot);
+			kinematicModelPtr_->footPositionBaseFrame(i, b_base2Foot);
 
 			// swing foot Jacobian in the base frame
 			Eigen::Matrix<double,6,JOINT_COORD_SIZE> b_footJacobain;
-			kinematicModel_.footJacobainBaseFrame(i, b_footJacobain);
+			kinematicModelPtr_->footJacobainBaseFrame(i, b_footJacobain);
 
 			// stance foot velocity in the Origin frame
 			Eigen::Vector3d o_footVelocity = o_R_b * ( b_footJacobain.template bottomRows<3>()*dqJoints + baseLocalVelocities.template tail<3>()
@@ -172,14 +172,14 @@ void ComKinoDynamicsBase<JOINT_COORD_SIZE>::computeConstriant2(const scalar_t& t
 	base_coordinate_t basePose;
 	ComDynamicsBase<JOINT_COORD_SIZE>::CalculateBasePose(qJoints, x.head<6>(), basePose);
 
-	kinematicModel_.update(basePose, qJoints);
+	kinematicModelPtr_->update(basePose, qJoints);
 
 	for (size_t i=0; i<4; i++)
 		if (stanceLegs_[i]==false && feetZDirectionCPGs_[i]!=NULL) {
 
 			// foot position in the Origin frame
 			Eigen::Vector3d o_origin2Foot;
-			kinematicModel_.footPositionOriginFrame(i, o_origin2Foot);
+			kinematicModelPtr_->footPositionOriginFrame(i, o_origin2Foot);
 
 			g2(numConstraint2) = options_.zDirectionPositionWeight_ * ( o_origin2Foot(2)-feetZDirectionCPGs_[i]->calculatePosition(t) );
 			numConstraint2++;
@@ -207,7 +207,7 @@ void ComKinoDynamicsBase<JOINT_COORD_SIZE>::computeFinalConstriant2(const scalar
 	base_coordinate_t basePose;
 	ComDynamicsBase<JOINT_COORD_SIZE>::CalculateBasePose(qJoints, x.head<6>(), basePose);
 
-	kinematicModel_.update(basePose, qJoints);
+	kinematicModelPtr_->update(basePose, qJoints);
 
 
 	for (size_t i=0; i<4; i++)
@@ -215,7 +215,7 @@ void ComKinoDynamicsBase<JOINT_COORD_SIZE>::computeFinalConstriant2(const scalar
 
 			// foot position in the Origin frame
 			Eigen::Vector3d o_origin2Foot;
-			kinematicModel_.footPositionOriginFrame(i, o_origin2Foot);
+			kinematicModelPtr_->footPositionOriginFrame(i, o_origin2Foot);
 
 			for (size_t j=0; j<endEffectorStateConstraints_.size(); j++)  {
 

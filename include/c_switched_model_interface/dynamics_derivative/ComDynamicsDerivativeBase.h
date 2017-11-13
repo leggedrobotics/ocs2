@@ -17,9 +17,9 @@
 
 #include "misc/SphericalCoordinate.h"
 
-#include "SwitchedModel.h"
-#include "KinematicsModelBase.h"
-#include "ComModelBase.h"
+#include "c_switched_model_interface/core/SwitchedModel.h"
+#include "c_switched_model_interface/core/KinematicsModelBase.h"
+#include "c_switched_model_interface/core/ComModelBase.h"
 
 template <size_t JOINT_COORD_SIZE>
 class ComDynamicsDerivativeBase : public ocs2::DerivativesBase<12,12>
@@ -36,11 +36,11 @@ public:
 	typedef Eigen::Matrix<double,6,JOINT_COORD_SIZE> base_jacobian_matrix_t;
 	typedef Eigen::Matrix<double,JOINT_COORD_SIZE,JOINT_COORD_SIZE> state_joint_matrix_t;
 
-	ComDynamicsDerivativeBase(const kinematic_model_t& kinematicModel, const com_model_t& comModel,
+	ComDynamicsDerivativeBase(const typename kinematic_model_t::Ptr& kinematicModelPtr, const typename com_model_t::Ptr& comModelPtr,
 			const double& gravitationalAcceleration=9.81, const bool& constrainedIntegration=true)
 
-	: kinematicModel_(kinematicModel),
-	  comModel_(comModel),
+	: kinematicModelPtr_(kinematicModelPtr->clone()),
+	  comModelPtr_(comModelPtr->clone()),
 	  o_gravityVector_(0.0, 0.0, -gravitationalAcceleration),
 	  constrainedIntegration_(constrainedIntegration)
 	{
@@ -48,6 +48,17 @@ public:
 	}
 
 	virtual ~ComDynamicsDerivativeBase() {}
+
+	/**
+	 * copy construntor
+	 */
+	ComDynamicsDerivativeBase(const ComDynamicsDerivativeBase& rhs)
+
+	: kinematicModelPtr_(rhs.kinematicModelPtr_->clone()),
+	  comModelPtr_(rhs.comModelPtr_->clone()),
+	  o_gravityVector_(rhs.o_gravityVector_),
+	  constrainedIntegration_(rhs.constrainedIntegration_)
+	{}
 
 	/**
 	 * clone this class.
@@ -152,9 +163,9 @@ public:
 	void getRotationMatrixBasetoOrigin(Eigen::Matrix3d& o_R_b) const;
 
 private:
-	kinematic_model_t 	kinematicModel_;
-	com_model_t 		comModel_;
-	Eigen::Vector3d 	o_gravityVector_;
+	typename kinematic_model_t::Ptr	kinematicModelPtr_;
+	typename com_model_t::Ptr comModelPtr_;
+	Eigen::Vector3d o_gravityVector_;
 
 	bool constrainedIntegration_;
 

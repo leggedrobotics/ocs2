@@ -11,6 +11,7 @@
 
 #include <array>
 #include <cmath>
+#include <memory>
 #include <Eigen/Dense>
 
 #include "SwitchedModel.h"
@@ -24,9 +25,22 @@ class ComModelBase
 {
 public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+
+	typedef std::shared_ptr<ComModelBase<JOINT_COORD_SIZE>> Ptr;
+
 	typedef typename SwitchedModel<JOINT_COORD_SIZE>::generalized_coordinate_t generalized_coordinate_t;
 	typedef typename SwitchedModel<JOINT_COORD_SIZE>::joint_coordinate_t joint_coordinate_t;
 	typedef typename SwitchedModel<JOINT_COORD_SIZE>::base_coordinate_t base_coordinate_t;
+
+
+	ComModelBase() {}
+
+	virtual ~ComModelBase() {}
+
+	/**
+	 * Clone ComModelBase class.
+	 */
+	virtual std::shared_ptr<ComModelBase<JOINT_COORD_SIZE>> clone() const = 0;
 
 	/**
 	 * calculate CoM Jacobian in Base frame

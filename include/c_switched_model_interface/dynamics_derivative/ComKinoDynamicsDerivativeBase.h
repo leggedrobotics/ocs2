@@ -17,12 +17,12 @@
 
 #include <ocs2_core/dynamics/DerivativesBase.h>
 
-#include "SwitchedModel.h"
-#include "KinematicsModelBase.h"
-#include "ComModelBase.h"
+#include "c_switched_model_interface/core/SwitchedModel.h"
+#include "c_switched_model_interface/core/KinematicsModelBase.h"
+#include "c_switched_model_interface/core/ComModelBase.h"
 #include "ComDynamicsDerivativeBase.h"
 #include "misc/FeetZDirectionPlanner.h"
-#include "misc/EndEffectorConstraintBase.h"
+#include "state_constraint/EndEffectorConstraintBase.h"
 
 template <size_t JOINT_COORD_SIZE>
 class ComKinoDynamicsDerivativeBase : public ocs2::DerivativesBase<12+JOINT_COORD_SIZE, 12+JOINT_COORD_SIZE>
@@ -39,21 +39,24 @@ public:
 	typedef Eigen::Matrix<double,6,JOINT_COORD_SIZE> base_jacobian_matrix_t;
 
 
-	ComKinoDynamicsDerivativeBase(const kinematic_model_t& kinematicModel, const com_model_t& comModel,
+	ComKinoDynamicsDerivativeBase(const typename kinematic_model_t::Ptr& kinematicModelPtr, const typename com_model_t::Ptr& comModelPtr,
 			const std::array<bool,4>& stanceLegs, const double& gravitationalAcceleration=9.81, const Options& options = Options(),
 			const FeetZDirectionPlannerBase::Ptr& feetZDirectionPlanner=NULL,
 			const std::vector<EndEffectorConstraintBase::Ptr>& endEffectorStateConstraints = std::vector<EndEffectorConstraintBase::Ptr>())
 
-	: kinematicModel_(kinematicModel),
-	  comModel_(comModel),
+	: kinematicModelPtr_(kinematicModelPtr->clone()),
+	  comModelptr_(comModelPtr->clone()),
 	  o_gravityVector_(0.0, 0.0, -gravitationalAcceleration),
-	  comDynamicsDerivative_(kinematicModel, gravitationalAcceleration, options.constrainedIntegration_),
+	  comDynamicsDerivative_(kinematicModelPtr, comModelPtr, gravitationalAcceleration, options.constrainedIntegration_),
 	  stanceLegs_(stanceLegs),
 	  options_(options),
 	  feetZDirectionPlanner_(feetZDirectionPlanner),
-	  endEffectorStateConstraints_(endEffectorStateConstraints)
+	  endEffectorStateConstraints_(endEffectorStateConstraints.size())
 	{
 		if (gravitationalAcceleration<0)  throw std::runtime_error("Gravitational acceleration should be a positive value.");
+
+		for (size_t i=0; i<endEffectorStateConstraints.size(); i++)
+			endEffectorStateConstraints_[i] = endEffectorStateConstraints[i]->clone();
 	}
 
 	/**
@@ -61,8 +64,8 @@ public:
 	 */
 	ComKinoDynamicsDerivativeBase(const ComKinoDynamicsDerivativeBase& rhs)
 
-	: kinematicModel_(rhs.kinematicModel_),
-	  comModel_(rhs.comModel_),
+	: kinematicModelPtr_(rhs.kinematicModelPtr_->clone()),
+	  comModelPtr_(rhs.comModelPtr_->clone()),
 	  o_gravityVector_(rhs.o_gravityVector_),
 	  comDynamicsDerivative_(rhs.comDynamicsDerivative_),
 	  stanceLegs_(rhs.stanceLegs_),
@@ -152,8 +155,8 @@ public:
 
 private:
 
-	kinematic_model_t kinematicModel_;
-	com_model_t 	  comModel_;
+	typename kinematic_model_t::Ptr kinematicModelPtr_;
+	typename com_model_t::Ptr comModelPtr_;
 	Eigen::Vector3d   o_gravityVector_;
 
 	ComDynamicsBase<JOINT_COORD_SIZE> comDynamics_;

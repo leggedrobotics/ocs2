@@ -9,10 +9,11 @@
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t JOINT_COORD_SIZE>
-std::shared_ptr<typename ComDynamicsDerivativeBase<JOINT_COORD_SIZE>::Base> ComDynamicsDerivativeBase<JOINT_COORD_SIZE>::ComDynamicsDerivativeBase::clone()  {
+std::shared_ptr<typename ComDynamicsDerivativeBase<JOINT_COORD_SIZE>::Base>
+	ComDynamicsDerivativeBase<JOINT_COORD_SIZE>::ComDynamicsDerivativeBase::clone()  const {
 
-	return std::allocate_shared< typename ComDynamicsDerivativeBase<JOINT_COORD_SIZE>, Eigen::aligned_allocator<typename ComDynamicsDerivativeBase<JOINT_COORD_SIZE>> >(
-			Eigen::aligned_allocator<typename ComDynamicsDerivativeBase<JOINT_COORD_SIZE>>(), *this);
+	return std::allocate_shared< ComDynamicsDerivativeBase<JOINT_COORD_SIZE>, Eigen::aligned_allocator<ComDynamicsDerivativeBase<JOINT_COORD_SIZE>> >(
+			Eigen::aligned_allocator<ComDynamicsDerivativeBase<JOINT_COORD_SIZE>>(), *this);
 }
 
 /******************************************************************************************************/
@@ -49,38 +50,38 @@ void ComDynamicsDerivativeBase<JOINT_COORD_SIZE>::setCurrentStateAndControl(cons
 	Base::setCurrentStateAndControl(t, x, u);
 
 	// Rotation matrix from Base frame (or the coincided frame world frame) to Origin frame (global world).
-	o_R_b_ = SwitchedModel::RotationMatrixBasetoOrigin(x.head<3>());
+	o_R_b_ = SwitchedModel<JOINT_COORD_SIZE>::RotationMatrixBasetoOrigin(x.head<3>());
 
 	// base to CoM displacement in the CoM frame
-	com_base2CoM_ = comModel_.comPositionBaseFrame(qJoints_);
+	com_base2CoM_ = comModelPtr_->comPositionBaseFrame(qJoints_);
 
 	// base coordinate
-	q_base_.head<3>() = x.segment<3>(0);
-	q_base_.tail<3>() = x.segment<3>(3) - o_R_b_ * com_base2CoM_;
+	q_base_.template head<3>() = x.segment<3>(0);
+	q_base_.template tail<3>() = x.segment<3>(3) - o_R_b_ * com_base2CoM_;
 
 	// update kinematic model
-	kinematicModel_.update(q_base_, qJoints_);
+	kinematicModelPtr_->update(q_base_, qJoints_);
 
 	for (size_t i=0; i<4; i++)  {
 
 		// base to stance feet displacement in the CoM frame
-		kinematicModel_.footPositionBaseFrame(qJoints_, i, com_base2StanceFeet_[i]);
+		kinematicModelPtr_->footPositionBaseFrame(i, com_base2StanceFeet_[i]);
 		com_com2StanceFeet_[i]  = com_base2StanceFeet_[i]-com_base2CoM_;
 
 		// feet Jacobain's in the Base frame
-		kinematicModel_.footJacobainBaseFrame(qJoints_, i, b_feetJacobains_[i]);
+		kinematicModelPtr_->footJacobainBaseFrame(i, b_feetJacobains_[i]);
 	}  // end of i loop
 
 	// Inertia matrix in the CoM frame and its derivatives
-	M_ = comModel_.comInertia(qJoints_);
-	dMdt_ = (useInertiaMatrixDerivate_==true) ? comModel_.comInertiaDerivative(qJoints_, dqJoints_)
+	M_ = comModelPtr_->comInertia(qJoints_);
+	dMdt_ = (useInertiaMatrixDerivate_==true) ? comModelPtr_->comInertiaDerivative(qJoints_, dqJoints_)
 			: Eigen::Matrix<double,6,6>::Zero();
 	Eigen::Matrix3d rotationMInverse = M_.topLeftCorner<3,3>().inverse();
 	MInverse_ << rotationMInverse, Eigen::Matrix3d::Zero(),
 			Eigen::Matrix3d::Zero(), Eigen::Matrix3d::Identity()/M_(5,5);
 
 	// CoM Jacobin in the Base frame
-	b_comJacobain_ = MInverse_*comModel_.comMomentumJacobian(qJoints_);
+	b_comJacobain_ = MInverse_*comModelPtr_->comMomentumJacobian(qJoints_);
 
 	// local angular velocity of Base (w_W_base_)
 	w_W_base_ = x.segment<3>(6) - b_comJacobain_.template topRows<3>()*dqJoints_;
@@ -93,7 +94,7 @@ void ComDynamicsDerivativeBase<JOINT_COORD_SIZE>::setCurrentStateAndControl(cons
 //	joint_coordinate_t qJointsPlus = qJoints_ + dqJoints_*h;
 //	b_comJacobainTimeDerivative_ = (ComInertia(qJointsPlus).inverse() * ComMomentumJacobian(qJointsPlus) - b_comJacobain_)/h;
 	if (useInertiaMatrixDerivate_==true)
-		b_comJacobainTimeDerivative_ = MInverse_*comModel_.comMomentumJacobianDerivative(qJoints_, dqJoints_) - MInverse_*dMdt_*b_comJacobain_;
+		b_comJacobainTimeDerivative_ = MInverse_*comModelPtr_->comMomentumJacobianDerivative(qJoints_, dqJoints_) - MInverse_*dMdt_*b_comJacobain_;
 	else
 		b_comJacobainTimeDerivative_.setZero();
 
@@ -102,7 +103,7 @@ void ComDynamicsDerivativeBase<JOINT_COORD_SIZE>::setCurrentStateAndControl(cons
 		if (useInertiaMatrixDerivate_==true) {
 			joint_coordinate_t dqdt = joint_coordinate_t::Zero();
 			dqdt(j) = 1;
-			partialM_[j] = comModel_.comInertiaDerivative(qJoints_, dqdt) ;
+			partialM_[j] = comModelPtr_->comInertiaDerivative(qJoints_, dqdt) ;
 		}  else
 			partialM_[j].setZero();
 }
@@ -133,7 +134,7 @@ void ComDynamicsDerivativeBase<JOINT_COORD_SIZE>::getDerivativeState(state_matri
 	A.block<3,3>(0,9) = Eigen::Matrix3d::Zero();
 
 	// second three rows
-	A.block<3,3>(3,0) = -SwitchedModel::CrossProductMatrix(o_R_b_*com_V_com);
+	A.block<3,3>(3,0) = -SwitchedModel<JOINT_COORD_SIZE>::CrossProductMatrix(o_R_b_*com_V_com);
 	A.block<3,3>(3,3) = Eigen::Matrix3d::Zero();
 	A.block<3,3>(3,6) = Eigen::Matrix3d::Zero();
 	A.block<3,3>(3,9) = o_R_b_;
@@ -142,13 +143,13 @@ void ComDynamicsDerivativeBase<JOINT_COORD_SIZE>::getDerivativeState(state_matri
 	A.block<3,3>(6,0) = Eigen::Matrix3d::Zero();
 	A.block<3,3>(6,3) = Eigen::Matrix3d::Zero();
 	A.block<3,3>(6,6) = MInverse_.topLeftCorner<3,3>() * (
-			SwitchedModel::CrossProductMatrix(M_.topLeftCorner<3,3>()*com_W_com) -
-			SwitchedModel::CrossProductMatrix(com_W_com)*M_.topLeftCorner<3,3>() -
+			SwitchedModel<JOINT_COORD_SIZE>::CrossProductMatrix(M_.topLeftCorner<3,3>()*com_W_com) -
+			SwitchedModel<JOINT_COORD_SIZE>::CrossProductMatrix(com_W_com)*M_.topLeftCorner<3,3>() -
 			dMdt_.topLeftCorner<3,3>() );
 	A.block<3,3>(6,9) = Eigen::Matrix3d::Zero();
 
 	// fourth three rows
-	A.block<3,3>(9,0) = o_R_b_.transpose() * SwitchedModel::CrossProductMatrix(o_gravityVector_);
+	A.block<3,3>(9,0) = o_R_b_.transpose() * SwitchedModel<JOINT_COORD_SIZE>::CrossProductMatrix(o_gravityVector_);
 	A.block<3,3>(9,3) = Eigen::Matrix3d::Zero();
 	A.block<3,3>(9,6) = Eigen::Matrix3d::Zero();
 	A.block<3,3>(9,9) = Eigen::Matrix3d::Zero();
@@ -183,7 +184,7 @@ void ComDynamicsDerivativeBase<JOINT_COORD_SIZE>::getDerivativesControl(control_
 		}
 
 		// third three rows and ith three columns
-		B.block<3,3>(6,3*i) = SwitchedModel::CrossProductMatrix(com_com2StanceFeet_[i]);
+		B.block<3,3>(6,3*i) = SwitchedModel<JOINT_COORD_SIZE>::CrossProductMatrix(com_com2StanceFeet_[i]);
 
 		// fourth three rows and ith three columns
 		B.block<3,3>(9,3*i).setIdentity();
@@ -217,19 +218,20 @@ void ComDynamicsDerivativeBase<JOINT_COORD_SIZE>::getApproximateDerivativesJoint
 		Eigen::Matrix<double,3,12> b_com2FootJacobain = b_feetJacobains_[i].template bottomRows<3>()-b_comJacobain_.template bottomRows<3>();
 
 		// partila_q ([r]*lamda)
-		partrialF_q.template block<3,12>(6,0) -= (SwitchedModel::CrossProductMatrix(u_.segment<3>(3*i)) * b_com2FootJacobain);
+		partrialF_q.template block<3,12>(6,0) -= (SwitchedModel<JOINT_COORD_SIZE>::CrossProductMatrix(u_.segment<3>(3*i)) * b_com2FootJacobain);
 	}
 
 	// partila_q ([W]*I*W)
 	if (useInertiaMatrixDerivate_==true)
 		for (size_t j=0; j<12; j++)
-			partrialF_q.template block<3,1>(6,j) -= SwitchedModel::CrossProductMatrix(x_.segment<3>(6)) * partialM_[j].topLeftCorner<3,3>() * x_.segment<3>(6);
+			partrialF_q.template block<3,1>(6,j) -= SwitchedModel<JOINT_COORD_SIZE>::CrossProductMatrix(x_.segment<3>(6)) * partialM_[j].topLeftCorner<3,3>() * x_.segment<3>(6);
 
 	partrialF_q.template block<6,12>(6,0) = ( MInverse_ * partrialF_q.block<6,12>(6,0) );
 
 	/* partial derivative of the MInverse w.r.t. qJoints */
 	if (useInertiaMatrixDerivate_==true) {
-		static ComDynamicsBase<JOINT_COORD_SIZE> comDyamics(kinematicModel_, comModel_);
+		static ComDynamicsBase<JOINT_COORD_SIZE> comDyamics(kinematicModelPtr_, comModelPtr_,
+				-o_gravityVector_(2), constrainedIntegration_);
 		state_vector_t dxdt;
 		comDyamics.setData(stanceLegs_, qJoints_, dqJoints_);
 		comDyamics.computeDerivative(t_, x_, u_, dxdt);
@@ -249,7 +251,8 @@ void ComDynamicsDerivativeBase<JOINT_COORD_SIZE>::getApproximateDerivativesJoint
 template <size_t JOINT_COORD_SIZE>
 void ComDynamicsDerivativeBase<JOINT_COORD_SIZE>::getNumericalDerivativesJoint(state_joint_matrix_t& partrialF_q)  {
 
-	static ComDynamicsBase<JOINT_COORD_SIZE> comDyamics(kinematicModel_, comModel_);
+	static ComDynamicsBase<JOINT_COORD_SIZE> comDyamics(kinematicModelPtr_, comModelPtr_,
+			-o_gravityVector_(2), constrainedIntegration_);
 	state_vector_t dxdt;
 	comDyamics.setData(stanceLegs_, qJoints_, dqJoints_);
 	comDyamics.computeDerivative(t_, x_, u_, dxdt);
@@ -284,7 +287,7 @@ void ComDynamicsDerivativeBase<JOINT_COORD_SIZE>::getApproximateDerivativesJoint
 	partrialF_dq.template block<3,12>(3,0).setZero();
 
 	// third three rows
-	partrialF_dq.block<3,12>(6,0).setZero();
+	partrialF_dq.template block<3,12>(6,0).setZero();
 	if (useInertiaMatrixDerivate_==true)
 		for (size_t j=0; j<12; j++)
 			partrialF_dq.template block<3,1>(6,j) = -MInverse_.template topLeftCorner<3,3>() * partialM_[j].template topLeftCorner<3,3>() * x_.template segment<3>(6);
@@ -362,7 +365,7 @@ Eigen::Matrix<double,6,3> ComDynamicsDerivativeBase<JOINT_COORD_SIZE>::JacobianO
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t JOINT_COORD_SIZE>
-void ComDynamicsDerivativeBase<JOINT_COORD_SIZE>::getBase2CoMInComFrame(Eigen::Vector3d& com_base2CoM) {
+void ComDynamicsDerivativeBase<JOINT_COORD_SIZE>::getBase2CoMInComFrame(Eigen::Vector3d& com_base2CoM) const {
 	com_base2CoM = com_base2CoM_;
 }
 
@@ -370,7 +373,7 @@ void ComDynamicsDerivativeBase<JOINT_COORD_SIZE>::getBase2CoMInComFrame(Eigen::V
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t JOINT_COORD_SIZE>
-void ComDynamicsDerivativeBase<JOINT_COORD_SIZE>::getBasePose(Eigen::Vector3d& basePose) {
+void ComDynamicsDerivativeBase<JOINT_COORD_SIZE>::getBasePose(Eigen::Vector3d& basePose) const {
 	basePose = q_base_;
 }
 
@@ -378,7 +381,8 @@ void ComDynamicsDerivativeBase<JOINT_COORD_SIZE>::getBasePose(Eigen::Vector3d& b
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t JOINT_COORD_SIZE>
-void ComDynamicsDerivativeBase<JOINT_COORD_SIZE>::getCom2StanceFeetInComFrame(std::array<Eigen::Vector3d,4>& com_com2StanceFeet) {
+void ComDynamicsDerivativeBase<JOINT_COORD_SIZE>::getCom2StanceFeetInComFrame(
+		std::array<Eigen::Vector3d,4>& com_com2StanceFeet) const {
 	com_com2StanceFeet = com_com2StanceFeet_;
 }
 
@@ -386,7 +390,8 @@ void ComDynamicsDerivativeBase<JOINT_COORD_SIZE>::getCom2StanceFeetInComFrame(st
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t JOINT_COORD_SIZE>
-void ComDynamicsDerivativeBase<JOINT_COORD_SIZE>::getBase2StanceFeetInComFrame(std::array<Eigen::Vector3d,4>& com_base2StanceFeet) {
+void ComDynamicsDerivativeBase<JOINT_COORD_SIZE>::getBase2StanceFeetInComFrame(
+		std::array<Eigen::Vector3d,4>& com_base2StanceFeet) const {
 	com_base2StanceFeet = com_base2StanceFeet_;
 }
 
@@ -394,7 +399,8 @@ void ComDynamicsDerivativeBase<JOINT_COORD_SIZE>::getBase2StanceFeetInComFrame(s
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t JOINT_COORD_SIZE>
-void ComDynamicsDerivativeBase<JOINT_COORD_SIZE>::getComJacobianInBaseFrame(base_jacobian_matrix_t& b_comJacobain) {
+void ComDynamicsDerivativeBase<JOINT_COORD_SIZE>::getComJacobianInBaseFrame(
+		base_jacobian_matrix_t& b_comJacobain) const {
 	b_comJacobain = b_comJacobain_;
 }
 
@@ -402,7 +408,8 @@ void ComDynamicsDerivativeBase<JOINT_COORD_SIZE>::getComJacobianInBaseFrame(base
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t JOINT_COORD_SIZE>
-void ComDynamicsDerivativeBase<JOINT_COORD_SIZE>::getFeetJacobiansInBaseFrame(std::array<base_jacobian_matrix_t,4>& b_feetJacobains) {
+void ComDynamicsDerivativeBase<JOINT_COORD_SIZE>::getFeetJacobiansInBaseFrame(
+		std::array<base_jacobian_matrix_t,4>& b_feetJacobains) const {
 	b_feetJacobains = b_feetJacobains_;
 }
 
@@ -410,7 +417,8 @@ void ComDynamicsDerivativeBase<JOINT_COORD_SIZE>::getFeetJacobiansInBaseFrame(st
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t JOINT_COORD_SIZE>
-void ComDynamicsDerivativeBase<JOINT_COORD_SIZE>::getComJacobianTimeDerivativeInBaseFrame(base_jacobian_matrix_t& b_comJacobainTimeDerivative) {
+void ComDynamicsDerivativeBase<JOINT_COORD_SIZE>::getComJacobianTimeDerivativeInBaseFrame(
+		base_jacobian_matrix_t& b_comJacobainTimeDerivative) const {
 	b_comJacobainTimeDerivative = b_comJacobainTimeDerivative_;
 }
 
@@ -418,7 +426,7 @@ void ComDynamicsDerivativeBase<JOINT_COORD_SIZE>::getComJacobianTimeDerivativeIn
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t JOINT_COORD_SIZE>
-void ComDynamicsDerivativeBase<JOINT_COORD_SIZE>::getRotationMatrixBasetoOrigin(Eigen::Matrix3d& o_R_b) {
+void ComDynamicsDerivativeBase<JOINT_COORD_SIZE>::getRotationMatrixBasetoOrigin(Eigen::Matrix3d& o_R_b) const {
 	o_R_b = o_R_b_;
 }
 

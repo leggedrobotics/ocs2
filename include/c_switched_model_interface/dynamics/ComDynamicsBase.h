@@ -15,9 +15,9 @@
 
 #include <ocs2_core/dynamics/ControlledSystemBase.h>
 
-#include "SwitchedModel.h"
-#include "KinematicsModelBase.h"
-#include "ComModelBase.h"
+#include "c_switched_model_interface/core/SwitchedModel.h"
+#include "c_switched_model_interface/core/KinematicsModelBase.h"
+#include "c_switched_model_interface/core/ComModelBase.h"
 
 template <size_t JOINT_COORD_SIZE>
 class ComDynamicsBase : public ocs2::ControlledSystemBase<12, 12>
@@ -33,11 +33,11 @@ public:
 	typedef typename SwitchedModel<JOINT_COORD_SIZE>::joint_coordinate_t joint_coordinate_t;
 
 
-	ComDynamicsBase(const kinematic_model_t& kinematicModel, const com_model_t& comModel,
+	ComDynamicsBase(const typename kinematic_model_t::Ptr& kinematicModelPtr, const typename com_model_t::Ptr& comModelPtr,
 			const double& gravitationalAcceleration=9.81, const bool& constrainedIntegration=true)
 
-	: kinematicModel_(kinematicModel),
-	  comModel_(comModel),
+	: kinematicModelPtr_(kinematicModelPtr->clone()),
+	  comModelPtr_(comModelPtr->clone()),
 	  o_gravityVector_(0.0, 0.0, -gravitationalAcceleration),
 	  constrainedIntegration_(constrainedIntegration)
 	{
@@ -45,6 +45,17 @@ public:
 	}
 
 	virtual ~ComDynamicsBase() {}
+
+	/**
+	 * copy construntor
+	 */
+	ComDynamicsBase(const ComDynamicsBase& rhs)
+
+	: kinematicModelPtr_(rhs.kinematicModelPtr_->clone()),
+	  comModelPtr_(rhs.comModelPtr_->clone()),
+	  o_gravityVector_(rhs.o_gravityVector_),
+	  constrainedIntegration_(rhs.constrainedIntegration_)
+	{}
 
 	/**
 	 * clone this class.
@@ -98,7 +109,7 @@ public:
 	 * 		+ Base orientation w.r.t origin frame (3-states)
 	 * 		+ Base position w.r.t origin frame (3-states)
 	 */
-	static void CalculateBasePose(const joint_coordinate_t& qJoints,
+	void calculateBasePose(const joint_coordinate_t& qJoints,
 			const base_coordinate_t& comPose,
 			base_coordinate_t& basePose);
 
@@ -109,7 +120,7 @@ public:
 	 * The Base local velocities (baseLocalVelocities) consists of:
 	 * 		+ Base local angular and linear velocities in World frame (inertia frame coincide at Base frame) (6-states)
 	 */
-	static void CalculateBaseLocalVelocities(const joint_coordinate_t& qJoints,
+	void calculateBaseLocalVelocities(const joint_coordinate_t& qJoints,
 			const joint_coordinate_t& dqJoints,
 			const base_coordinate_t& comLocalVelocities,
 			base_coordinate_t& baseLocalVelocities);
@@ -154,9 +165,9 @@ public:
 
 
 private:
-	kinematic_model_t 	kinematicModel_;
-	com_model_t 		comModel_;
-	Eigen::Vector3d 	o_gravityVector_;
+	typename kinematic_model_t::Ptr kinematicModelPtr_;
+	typename com_model_t::Ptr comModelPtr_;
+	Eigen::Vector3d o_gravityVector_;
 
 	bool constrainedIntegration_;
 

@@ -33,32 +33,25 @@
 #include <mpc/MPC_SLQP.h>
 #include <mpc/util/LoadSettings_MPC.h>
 
-#include <HyqSwitchedModel.h>
-#include <util/LoadTask.h>
-#include <misc/SinCpg.h>
-#include <misc/SplineCpg.h>
-#include <misc/CpgBase.h>
-#include <misc/FeetZDirectionPlanner.h>
-#include <misc/SphericalCoordinate.h>
-#include <misc/SwitchedModelStateEstimator.h>
-#include <kinematics/SwitchedModelKinematics.h>
-#include <state_constraint/EndEffectorConstraintBase.h>
-#include <state_constraint/EllipticalConstraint.h>
-#include <state_constraint/EndEffectorConstraintsUtilities.h>
+#include <ocs2_anymal_switched_model/AnymalSwitchedModel.h>
+#include <ocs2_anymal_switched_model/util/LoadTask.h>
+#include <c_switched_model_interface/misc/SinCpg.h>
+#include <c_switched_model_interface/misc/SplineCpg.h>
+#include <c_switched_model_interface/misc/CpgBase.h>
+#include <c_switched_model_interface/misc/FeetZDirectionPlanner.h>
+#include <c_switched_model_interface/misc/SphericalCoordinate.h>
+#include <c_switched_model_interface/misc/SwitchedModelStateEstimator.h>
+#include <c_switched_model_interface/state_constraint/EndEffectorConstraintBase.h>
+#include <c_switched_model_interface/state_constraint/EllipticalConstraint.h>
+#include <c_switched_model_interface/state_constraint/EndEffectorConstraintsUtilities.h>
 
-#include "c_hyq_optimization/cost/SwitchedModelCost.h"
+#include <ocs2_anymal_cost/SwitchedModelCost.h>
 #include "c_hyq_optimization/misc/ConfigFileLoader.h"
-#include "c_hyq_optimization/misc/WeightCompensationForces.h"
 
-#define SIMPLE_MODEL
+#include <ocs2_anzmal_switched_model/dynamics/AnymalComKinoDynamics.h>
+#include <ocs2_anzmal_switched_model/dynamics/AnymalComKinoDynamicsDerivative.h>
 
-#ifdef SIMPLE_MODEL
-#include <c_hyq_switched_model/SwitchedHyQDynamicsSimple.h>
-#include <c_hyq_switched_model/SwitchedHyQDynamicsDerivativeSimple.h>
-#else
-#include <c_hyq_switched_model/SwitchedHyQDynamics.h>
-#include <c_hyq_switched_model/SwitchedHyQDynamicsDerivative.h>
-#endif
+namespace anymal {
 
 class OCS2AnymalInterface
 {
@@ -69,13 +62,8 @@ public:
 	typedef std::array<Eigen::Vector3d, 4>      contact_array_t;
 	typedef ocs2::Dimensions<12+12,12+12> 		dimension_t;
 	typedef SwitchedModelCost             		cost_funtion_t;
-#ifdef SIMPLE_MODEL
-	typedef hyq::SwitchedHyQDynamicsSimple     			system_dynamics_t;
-	typedef hyq::SwitchedHyQDynamicsDerivativeSimple	system_dynamics_derivative_t;
-#else
-	typedef hyq::SwitchedHyQDynamics           			system_dynamics_t;
-	typedef hyq::SwitchedHyQDynamicsDerivative 			system_dynamics_derivative_t;
-#endif
+	typedef AnymalComKinoDynamics           			system_dynamics_t;
+	typedef AnymalComKinoDynamicsDerivative 			system_dynamics_derivative_t;
 
 
 	typedef ocs2::GLQP<dimension_t::STATE_DIM_,dimension_t::INPUT_DIM_> 		glqp_t;
@@ -182,9 +170,9 @@ public:
 
 	double strideTime() { return (initSwitchingTimes_[1]-initSwitchingTimes_[0]); }
 
-	double strideLength() { return hyqOptions_.mpcStrideLength_; }
+	double strideLength() { return options_.mpcStrideLength_; }
 
-	size_t numPhasesInfullGaitCycle() { return hyqOptions_.numPhasesInfullGaitCycle_; }
+	size_t numPhasesInfullGaitCycle() { return options_.numPhasesInfullGaitCycle_; }
 
 
 protected:
@@ -239,7 +227,7 @@ private:
 	dimension_t::Options slqpOptions_;
 	typename mpc_t::mpc_settings_t mpcOptions_;
 
-	hyq::Options hyqOptions_;
+	anymal::Options options_;
 	std::vector<hyq::EndEffectorConstraintBase::Ptr> gapIndicatorPtrs_;
 	hyq::FeetZDirectionPlanner<z_direction_cpg_t>::Ptr feetZDirectionPlannerPtr_;
 	std::vector<hyq::CpgBase::PtrArray> plannedCPGs_;
@@ -319,5 +307,6 @@ private:
 
 };
 
+} // end of namespace anymal
 
 #endif /* OCS2ANYMALINTERFACE_H_ */

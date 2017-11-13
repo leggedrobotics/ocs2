@@ -398,7 +398,7 @@ void OCS2AnymalInterface::loadSettings(const std::string& pathToConfigFolder, co
 	ocs2::loadMpcSettings<12+12,12+12>(taskFile, mpcOptions_, true);
 
 	// load switched model options
-	loadModelSettings(taskFile, hyqOptions_, zmpWeight_, impulseWeight_, impulseSigmeFactor_, true);
+	loadModelSettings(taskFile, options_, zmpWeight_, impulseWeight_, impulseSigmeFactor_, true);
 
 	// load the switchingModes
 	hyq::loadSwitchingModes(taskFile, initSwitchingModes_);
@@ -445,9 +445,9 @@ void OCS2AnymalInterface::setupOptimizaer()  {
 
 	// Z direction CPG planner
 	feetZDirectionPlannerPtr_ = hyq::FeetZDirectionPlanner<z_direction_cpg_t>::Ptr(new hyq::FeetZDirectionPlanner<z_direction_cpg_t>(
-			initStanceLegSequene_, hyqOptions_.swingLegLiftOff_, (initSwitchingTimes_[1]-initSwitchingTimes_[0]) /*time scale for adjusting z hight*/,
-			hyq::HyQMode::ModeNumber2StanceLeg(hyqOptions_.defaultStartMode_),
-			hyq::HyQMode::ModeNumber2StanceLeg(hyqOptions_.defaultFinalMode_) ) );
+			initStanceLegSequene_, options_.swingLegLiftOff_, (initSwitchingTimes_[1]-initSwitchingTimes_[0]) /*time scale for adjusting z hight*/,
+			anymal::Mode::ModeNumber2StanceLeg(options_.defaultStartMode_),
+			anymal::Mode::ModeNumber2StanceLeg(options_.defaultFinalMode_) ) );
 
 	// for each subsystem that defined in stanceLegSequene
 	subsystemDynamicsPtr_.resize(initNumSubsystems_);
@@ -474,7 +474,7 @@ void OCS2AnymalInterface::setupOptimizaer()  {
 		dimension_t::control_vector_t uNominalForWeightCompensation;
 		std::array<Eigen::Vector3d,4> sphericalWeightCompensationForces;
 		Eigen::Matrix3d b_R_o = hyq::SwitchedModelKinematics::RotationMatrixOrigintoBase(initSwitchedHyqState_.head<3>());
-		if (hyqOptions_.useCartesianContactForce_==false)
+		if (options_.useCartesianContactForce_==false)
 			WeightCompensationForces::ComputeSphericalForces(b_R_o*gravity_, std::array<bool,4>{1,1,1,1}/*initStanceLegSequene_[i]*/, initSwitchedHyqState_.tail<12>(),
 					sphericalWeightCompensationForces);
 		else
@@ -488,7 +488,7 @@ void OCS2AnymalInterface::setupOptimizaer()  {
 		// state and input operating points
 		stateOperatingPoints_[i] = initSwitchedHyqState_;
 		inputOperatingPoints_[i] = uNominalForWeightCompensation;
-		if (hyqOptions_.constrainedIntegration_==false)  {
+		if (options_.constrainedIntegration_==false)  {
 			inputOperatingPoints_[i].setZero();
 			WeightCompensationForces::ComputeSphericalForces(b_R_o*gravity_, std::array<bool,4>{1,1,1,1}, initSwitchedHyqState_.tail<12>(), sphericalWeightCompensationForces);
 			for (size_t j=0; j<4; j++)  inputOperatingPoints_[i].segment<3>(3*j) = sphericalWeightCompensationForces[j];
@@ -516,9 +516,9 @@ void OCS2AnymalInterface::setupOptimizaer()  {
 				desiredTimeTrajectoriesStock_[i], desiredStateTrajectoriesStock_[i], uNominalTrajectory, QFinal_, xFinal_, zmpWeight_, impulseWeight_, impulseSigmeFactor_) );
 
 		// subsystem settings
-		subsystemDynamicsPtr_[i]    = std::shared_ptr<system_dynamics_t>( new system_dynamics_t(initStanceLegSequene_[i], -gravity_(2), hyqOptions_,
+		subsystemDynamicsPtr_[i]    = std::shared_ptr<system_dynamics_t>( new system_dynamics_t(initStanceLegSequene_[i], -gravity_(2), options_,
 				feetZDirectionPlannerPtr_, gapIndicatorPtrs_) );
-		subsystemDerivativesPtr_[i] = std::shared_ptr<system_dynamics_derivative_t>( new system_dynamics_derivative_t(initStanceLegSequene_[i], -gravity_(2), hyqOptions_,
+		subsystemDerivativesPtr_[i] = std::shared_ptr<system_dynamics_derivative_t>( new system_dynamics_derivative_t(initStanceLegSequene_[i], -gravity_(2), options_,
 				feetZDirectionPlannerPtr_, gapIndicatorPtrs_) );
 
 	}  // end of i loop
@@ -559,5 +559,3 @@ void OCS2AnymalInterface::calculateStateDerivative(const std::vector<size_t>& sy
 		}
 	}
 }
-
-

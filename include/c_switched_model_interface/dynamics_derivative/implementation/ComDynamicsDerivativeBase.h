@@ -50,7 +50,7 @@ void ComDynamicsDerivativeBase<JOINT_COORD_SIZE>::setCurrentStateAndControl(cons
 	Base::setCurrentStateAndControl(t, x, u);
 
 	// Rotation matrix from Base frame (or the coincided frame world frame) to Origin frame (global world).
-	o_R_b_ = SwitchedModel<JOINT_COORD_SIZE>::RotationMatrixBasetoOrigin(x.head<3>());
+	o_R_b_ = RotationMatrixBasetoOrigin(x.head<3>());
 
 	// base to CoM displacement in the CoM frame
 	com_base2CoM_ = comModelPtr_->comPositionBaseFrame(qJoints_);
@@ -134,7 +134,7 @@ void ComDynamicsDerivativeBase<JOINT_COORD_SIZE>::getDerivativeState(state_matri
 	A.block<3,3>(0,9) = Eigen::Matrix3d::Zero();
 
 	// second three rows
-	A.block<3,3>(3,0) = -SwitchedModel<JOINT_COORD_SIZE>::CrossProductMatrix(o_R_b_*com_V_com);
+	A.block<3,3>(3,0) = -CrossProductMatrix(o_R_b_*com_V_com);
 	A.block<3,3>(3,3) = Eigen::Matrix3d::Zero();
 	A.block<3,3>(3,6) = Eigen::Matrix3d::Zero();
 	A.block<3,3>(3,9) = o_R_b_;
@@ -143,13 +143,13 @@ void ComDynamicsDerivativeBase<JOINT_COORD_SIZE>::getDerivativeState(state_matri
 	A.block<3,3>(6,0) = Eigen::Matrix3d::Zero();
 	A.block<3,3>(6,3) = Eigen::Matrix3d::Zero();
 	A.block<3,3>(6,6) = MInverse_.topLeftCorner<3,3>() * (
-			SwitchedModel<JOINT_COORD_SIZE>::CrossProductMatrix(M_.topLeftCorner<3,3>()*com_W_com) -
-			SwitchedModel<JOINT_COORD_SIZE>::CrossProductMatrix(com_W_com)*M_.topLeftCorner<3,3>() -
+			CrossProductMatrix(M_.topLeftCorner<3,3>()*com_W_com) -
+			CrossProductMatrix(com_W_com)*M_.topLeftCorner<3,3>() -
 			dMdt_.topLeftCorner<3,3>() );
 	A.block<3,3>(6,9) = Eigen::Matrix3d::Zero();
 
 	// fourth three rows
-	A.block<3,3>(9,0) = o_R_b_.transpose() * SwitchedModel<JOINT_COORD_SIZE>::CrossProductMatrix(o_gravityVector_);
+	A.block<3,3>(9,0) = o_R_b_.transpose() * CrossProductMatrix(o_gravityVector_);
 	A.block<3,3>(9,3) = Eigen::Matrix3d::Zero();
 	A.block<3,3>(9,6) = Eigen::Matrix3d::Zero();
 	A.block<3,3>(9,9) = Eigen::Matrix3d::Zero();
@@ -184,7 +184,7 @@ void ComDynamicsDerivativeBase<JOINT_COORD_SIZE>::getDerivativesControl(control_
 		}
 
 		// third three rows and ith three columns
-		B.block<3,3>(6,3*i) = SwitchedModel<JOINT_COORD_SIZE>::CrossProductMatrix(com_com2StanceFeet_[i]);
+		B.block<3,3>(6,3*i) = CrossProductMatrix(com_com2StanceFeet_[i]);
 
 		// fourth three rows and ith three columns
 		B.block<3,3>(9,3*i).setIdentity();
@@ -218,13 +218,13 @@ void ComDynamicsDerivativeBase<JOINT_COORD_SIZE>::getApproximateDerivativesJoint
 		Eigen::Matrix<double,3,12> b_com2FootJacobain = b_feetJacobains_[i].template bottomRows<3>()-b_comJacobain_.template bottomRows<3>();
 
 		// partila_q ([r]*lamda)
-		partrialF_q.template block<3,12>(6,0) -= (SwitchedModel<JOINT_COORD_SIZE>::CrossProductMatrix(u_.segment<3>(3*i)) * b_com2FootJacobain);
+		partrialF_q.template block<3,12>(6,0) -= (CrossProductMatrix(u_.segment<3>(3*i)) * b_com2FootJacobain);
 	}
 
 	// partila_q ([W]*I*W)
 	if (useInertiaMatrixDerivate_==true)
 		for (size_t j=0; j<12; j++)
-			partrialF_q.template block<3,1>(6,j) -= SwitchedModel<JOINT_COORD_SIZE>::CrossProductMatrix(x_.segment<3>(6)) * partialM_[j].topLeftCorner<3,3>() * x_.segment<3>(6);
+			partrialF_q.template block<3,1>(6,j) -= CrossProductMatrix(x_.segment<3>(6)) * partialM_[j].topLeftCorner<3,3>() * x_.segment<3>(6);
 
 	partrialF_q.template block<6,12>(6,0) = ( MInverse_ * partrialF_q.block<6,12>(6,0) );
 

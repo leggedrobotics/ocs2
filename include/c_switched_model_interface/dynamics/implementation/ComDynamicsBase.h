@@ -53,7 +53,7 @@ void ComDynamicsBase<JOINT_COORD_SIZE>::computeDerivative(const scalar_t& t,
 		state_vector_t& dxdt)   {
 
 	// Rotation matrix from Base frame (or the coincided frame world frame) to Origin frame (global world).
-	Eigen::Matrix3d o_R_b = SwitchedModel<JOINT_COORD_SIZE>::RotationMatrixBasetoOrigin(x.head<3>());
+	Eigen::Matrix3d o_R_b = RotationMatrixBasetoOrigin(x.head<3>());
 
 	// base to CoM displacement in the CoM frame
 	com_base2CoM_ = comModelPtr_->comPositionBaseFrame(qJoints_);
@@ -127,7 +127,7 @@ void ComDynamicsBase<JOINT_COORD_SIZE>::calculateBasePose(const joint_coordinate
 		base_coordinate_t& basePose) {
 
 	// Rotation matrix from Base frame (or the coincided frame world frame) to Origin frame (global world).
-	Eigen::Matrix3d o_R_b = SwitchedModel<JOINT_COORD_SIZE>::RotationMatrixBasetoOrigin(comPose.template head<3>());
+	Eigen::Matrix3d o_R_b = RotationMatrixBasetoOrigin(comPose.template head<3>());
 
 	// base to CoM displacement in the CoM frame
 	Eigen::Vector3d com_base2CoM = comModelPtr_->comPositionBaseFrame(qJoints);

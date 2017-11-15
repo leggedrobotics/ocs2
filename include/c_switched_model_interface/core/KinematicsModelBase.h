@@ -15,6 +15,8 @@
 
 #include "SwitchedModel.h"
 
+namespace switched_model {
+
 /**
  * ModelKinematics Base Class
  * @tparam JOINT_COORD_SIZE
@@ -143,6 +145,8 @@ protected:
 	Eigen::Matrix3d b_R_o_;
 
 };
+
+} // end of namespace switched_model
 
 #include "implementation/KinematicsModelBase.h"
 

@@ -13,7 +13,7 @@
 #include "misc/CubicSpline.h"
 #include "misc/SplineCpg.h"
 
-namespace hyq {
+namespace switched_model {
 
 class FootCPG
 {
@@ -95,7 +95,7 @@ private:
 };
 
 
-}  // end of hyq namespace
+}  // end of switched_model namespace
 
 
 

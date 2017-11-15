@@ -13,7 +13,7 @@
 #include "misc/CpgBase.h"
 #include "misc/CubicSpline.h"
 
-namespace hyq {
+namespace switched_model {
 
 class SplineCpg : public CpgBase
 {
@@ -69,7 +69,6 @@ private:
 };
 
 
-}  // end of hyq namespace
+}  // end of switched_model namespace
 
 #endif /* SPLINECPG_H_ */
-

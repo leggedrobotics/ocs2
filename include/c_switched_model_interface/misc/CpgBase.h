@@ -12,7 +12,7 @@
 #include <limits>
 #include <memory>
 
-namespace hyq {
+namespace switched_model {
 
 class CpgBase
 {
@@ -76,6 +76,6 @@ protected:
 };
 
 
-}  // end of hyq namespace
+}  // end of switched_model namespace
 
 #endif /* HYQ_CPGBASE_H_ */

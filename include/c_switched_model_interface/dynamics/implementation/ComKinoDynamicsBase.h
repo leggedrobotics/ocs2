@@ -4,13 +4,13 @@
  *  Created on: Nov 12, 2017
  *      Author: farbod
  */
-
+namespace switched_model {
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t JOINT_COORD_SIZE>
-std::shared_ptr<ComKinoDynamicsBase<JOINT_COORD_SIZE>::Base> ComKinoDynamicsBase<JOINT_COORD_SIZE>::clone() {
+std::shared_ptr<typename ComKinoDynamicsBase<JOINT_COORD_SIZE>::Base> ComKinoDynamicsBase<JOINT_COORD_SIZE>::clone() const {
 
 	return std::allocate_shared< ComKinoDynamicsBase<JOINT_COORD_SIZE>, Eigen::aligned_allocator<ComKinoDynamicsBase<JOINT_COORD_SIZE>> > (
 			Eigen::aligned_allocator<ComKinoDynamicsBase<JOINT_COORD_SIZE>>(), *this);
@@ -24,7 +24,7 @@ void ComKinoDynamicsBase<JOINT_COORD_SIZE>::initializeModel(const std::vector<si
 		const state_vector_t& initState, const size_t& activeSubsystemIndex/*=0*/, const char* algorithmName/*=NULL*/)  {
 
 	Base::initializeModel(systemStockIndexes, switchingTimes, initState, activeSubsystemIndex, algorithmName);
-	comDynamics_.initializeModel(systemStockIndexes, switchingTimes, initState.head<12>(), activeSubsystemIndex, algorithmName);
+	comDynamics_.initializeModel(systemStockIndexes, switchingTimes, initState.template head<12>(), activeSubsystemIndex, algorithmName);
 
 	// use the provided planner to get the swing legs CPG
 	if (feetZDirectionPlanner_) {
@@ -43,7 +43,7 @@ void ComKinoDynamicsBase<JOINT_COORD_SIZE>::initializeModel(const std::vector<si
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t JOINT_COORD_SIZE>
-void ComKinoDynamicsBase<JOINT_COORD_SIZE>::SwitchedHyQDynamics::computeDerivative(const scalar_t& t,
+void ComKinoDynamicsBase<JOINT_COORD_SIZE>::computeDerivative(const scalar_t& t,
 		const state_vector_t& x,
 		const control_vector_t& u,
 		state_vector_t& dxdt)   {
@@ -53,7 +53,7 @@ void ComKinoDynamicsBase<JOINT_COORD_SIZE>::SwitchedHyQDynamics::computeDerivati
 
 	// CoM state time derivatives
 	typename ComDynamicsBase<JOINT_COORD_SIZE>::state_vector_t stateDerivativeCoM;
-	comDynamics_.computeDerivative(t, x.head<12>(), u.head<12>(), stateDerivativeCoM);
+	comDynamics_.computeDerivative(t, x.template head<12>(), u.template head<12>(), stateDerivativeCoM);
 
 	// extended state time derivatives
 	dxdt << stateDerivativeCoM, u.template tail<12>();
@@ -71,33 +71,41 @@ void ComKinoDynamicsBase<JOINT_COORD_SIZE>::computeConstriant1(const scalar_t& t
 			constraint1_vector_t& g1) {
 
 	// Joints
-	Eigen::VectorBlock<const state_vector_t,12>   qJoints  = x.tail<12>();
+	Eigen::VectorBlock<const state_vector_t,12>   qJoints  = x.template tail<12>();
 	// Joints' velocities
-	Eigen::VectorBlock<const control_vector_t,12> dqJoints = u.tail<12>();
+	Eigen::VectorBlock<const control_vector_t,12> dqJoints = u.template tail<12>();
 	// CoM local velocities
-	Eigen::VectorBlock<const state_vector_t,6> comLocalVelocities = x.segment<6>(6);
+	Eigen::VectorBlock<const state_vector_t,6> comLocalVelocities = x.template segment<6>(6);
 	// Base pse
 	base_coordinate_t basePose;
 	// Base local velocities
 	base_coordinate_t baseLocalVelocities;
 
 	// Rotation matrix from Base frame (or the coincided frame world frame) to Origin frame (global world).
-	Eigen::Matrix3d o_R_b = SwitchedModel::RotationMatrixBasetoOrigin(comPose.head<3>());
+
+	////// TEMPORARY HACK!!!
+	////// TODO: where to get comPose actually from??
+	base_coordinate_t comPose;
+	throw std::runtime_error("FIXME");
+	//////
+	//////
+
+	Eigen::Matrix3d o_R_b = RotationMatrixBasetoOrigin(comPose.template head<3>());
 
 	// base to CoM displacement in the CoM frame
 	Eigen::Vector3d com_base2CoM = comModelPtr_->comPositionBaseFrame(qJoints);
 
 	// base coordinate
-	basePose.head<3>() = comPose.segment<3>(0);
-	basePose.tail<3>() = comPose.segment<3>(3) - o_R_b * com_base2CoM;
+	basePose.template head<3>() = comPose.template segment<3>(0);
+	basePose.template tail<3>() = comPose.template segment<3>(3) - o_R_b * com_base2CoM;
 
 	// CoM Jacobin in the Base frame
 	Eigen::Matrix<double,6,12> b_comJacobain = comModelPtr_->comJacobainBaseFrame(qJoints);
 
 	// local velocities of Base (b_W_b)
-	baseLocalVelocities.head<3>() = comLocalVelocities.head<3>() - b_comJacobain.topRows<3>()*dqJoints;
-	baseLocalVelocities.tail<3>() = comLocalVelocities.tail<3>() - b_comJacobain.bottomRows<3>()*dqJoints
-			+ com_base2CoM.cross(baseLocalVelocities.head<3>());
+	baseLocalVelocities.template head<3>() = comLocalVelocities.template head<3>() - b_comJacobain.template topRows<3>()*dqJoints;
+	baseLocalVelocities.template tail<3>() = comLocalVelocities.template tail<3>() - b_comJacobain.template bottomRows<3>()*dqJoints
+			+ com_base2CoM.cross(baseLocalVelocities.template head<3>());
 
 
 	kinematicModelPtr_->update(basePose, qJoints);
@@ -120,8 +128,8 @@ void ComKinoDynamicsBase<JOINT_COORD_SIZE>::computeConstriant1(const scalar_t& t
 			kinematicModelPtr_->footJacobainBaseFrame(i, b_footJacobain);
 
 			// stance foot velocity in the World frame
-			g1.segment<3>(nextFreeIndex) = b_footJacobain.template bottomRows<3>()*dqJoints + baseLocalVelocities.template tail<3>()
-						+ baseLocalVelocities.head<3>().cross(b_base2Foot);
+			g1.template segment<3>(nextFreeIndex) = b_footJacobain.template bottomRows<3>()*dqJoints + baseLocalVelocities.template tail<3>()
+						+ baseLocalVelocities.template head<3>().cross(b_base2Foot);
 
 			nextFreeIndex += 3;
 		}
@@ -142,7 +150,7 @@ void ComKinoDynamicsBase<JOINT_COORD_SIZE>::computeConstriant1(const scalar_t& t
 
 			// stance foot velocity in the Origin frame
 			Eigen::Vector3d o_footVelocity = o_R_b * ( b_footJacobain.template bottomRows<3>()*dqJoints + baseLocalVelocities.template tail<3>()
-					+ baseLocalVelocities.head<3>().cross(b_base2Foot) );
+					+ baseLocalVelocities.template head<3>().cross(b_base2Foot) );
 
 			g1(nextFreeIndex) = options_.zDirectionVelocityWeight_*(o_footVelocity(2) - feetZDirectionCPGs_[i]->calculateVelocity(t));
 
@@ -166,11 +174,11 @@ void ComKinoDynamicsBase<JOINT_COORD_SIZE>::computeConstriant2(const scalar_t& t
 	if (options_.zDirectionPositionWeight_<std::numeric_limits<double>::epsilon())  return;
 
 	// Joints
-	Eigen::VectorBlock<const state_vector_t,12> qJoints = x.tail<12>();
+	Eigen::VectorBlock<const state_vector_t,12> qJoints = x.template tail<12>();
 
 	// Base pose
 	base_coordinate_t basePose;
-	ComDynamicsBase<JOINT_COORD_SIZE>::CalculateBasePose(qJoints, x.head<6>(), basePose);
+	ComDynamicsBase<JOINT_COORD_SIZE>::CalculateBasePose(qJoints, x.template head<6>(), basePose);
 
 	kinematicModelPtr_->update(basePose, qJoints);
 
@@ -201,11 +209,11 @@ void ComKinoDynamicsBase<JOINT_COORD_SIZE>::computeFinalConstriant2(const scalar
 	if (endEffectorStateConstraints_.empty()==true)   return;
 
 	// Joints
-	Eigen::VectorBlock<const state_vector_t,12> qJoints = x.tail<12>();
+	Eigen::VectorBlock<const state_vector_t,12> qJoints = x.template tail<12>();
 
 	// Base pose
 	base_coordinate_t basePose;
-	ComDynamicsBase<JOINT_COORD_SIZE>::CalculateBasePose(qJoints, x.head<6>(), basePose);
+	ComDynamicsBase<JOINT_COORD_SIZE>::CalculateBasePose(qJoints, x.template head<6>(), basePose);
 
 	kinematicModelPtr_->update(basePose, qJoints);
 
@@ -279,7 +287,8 @@ void ComKinoDynamicsBase<JOINT_COORD_SIZE>::setEndEffectorStateConstraints (
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t JOINT_COORD_SIZE>
-std::vector<ComKinoDynamicsBase<JOINT_COORD_SIZE>::EndEffectorConstraintBase::Ptr>& ComKinoDynamicsBase<JOINT_COORD_SIZE>::getEndEffectorStateConstraints () {
+std::vector<EndEffectorConstraintBase::Ptr>& ComKinoDynamicsBase<JOINT_COORD_SIZE>::getEndEffectorStateConstraints () const {
 	return endEffectorStateConstraints_;
 }
 
+} // end of namespace switched_model

@@ -16,6 +16,8 @@
 
 #include "SwitchedModel.h"
 
+namespace switched_model {
+
 /**
  * CoM Model Base Class
  * @tparam JOINT_COORD_SIZE
@@ -111,6 +113,8 @@ public:
 			const Eigen::Matrix<double,12,1>& q, const Eigen::Matrix<double,12,1>& dq) = 0;
 
 };
+
+} //end of namespace switched_model
 
 #include "implementation/ComModelBase.h"
 

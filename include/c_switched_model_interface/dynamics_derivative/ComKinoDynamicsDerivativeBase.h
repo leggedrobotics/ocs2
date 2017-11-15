@@ -21,8 +21,11 @@
 #include "c_switched_model_interface/core/KinematicsModelBase.h"
 #include "c_switched_model_interface/core/ComModelBase.h"
 #include "ComDynamicsDerivativeBase.h"
-#include "misc/FeetZDirectionPlanner.h"
-#include "state_constraint/EndEffectorConstraintBase.h"
+#include "c_switched_model_interface/misc/FeetZDirectionPlanner.h"
+#include "c_switched_model_interface/state_constraint/EndEffectorConstraintBase.h"
+#include <c_switched_model_interface/core/Options.h>
+
+namespace switched_model {
 
 template <size_t JOINT_COORD_SIZE>
 class ComKinoDynamicsDerivativeBase : public ocs2::DerivativesBase<12+JOINT_COORD_SIZE, 12+JOINT_COORD_SIZE>
@@ -33,6 +36,14 @@ public:
 	typedef ocs2::DerivativesBase<12+JOINT_COORD_SIZE, 12+JOINT_COORD_SIZE> Base;
 	typedef ComModelBase<JOINT_COORD_SIZE> com_model_t;
 	typedef KinematicsModelBase<JOINT_COORD_SIZE> kinematic_model_t;
+	typedef typename Base::scalar_t scalar_t;
+	typedef typename Base::state_matrix_t state_matrix_t;
+	typedef typename Base::state_vector_t state_vector_t;
+	typedef typename Base::control_vector_t control_vector_t;
+	typedef typename Base::control_gain_matrix_t control_gain_matrix_t;
+	typedef typename Base::constraint1_state_matrix_t constraint1_state_matrix_t;
+	typedef typename Base::constraint1_control_matrix_t constraint1_control_matrix_t;
+	typedef typename Base::constraint2_state_matrix_t constraint2_state_matrix_t;
 
 	typedef typename SwitchedModel<JOINT_COORD_SIZE>::base_coordinate_t  base_coordinate_t;
 	typedef typename SwitchedModel<JOINT_COORD_SIZE>::joint_coordinate_t joint_coordinate_t;
@@ -45,7 +56,7 @@ public:
 			const std::vector<EndEffectorConstraintBase::Ptr>& endEffectorStateConstraints = std::vector<EndEffectorConstraintBase::Ptr>())
 
 	: kinematicModelPtr_(kinematicModelPtr->clone()),
-	  comModelptr_(comModelPtr->clone()),
+	  comModelPtr_(comModelPtr->clone()),
 	  o_gravityVector_(0.0, 0.0, -gravitationalAcceleration),
 	  comDynamicsDerivative_(kinematicModelPtr, comModelPtr, gravitationalAcceleration, options.constrainedIntegration_),
 	  stanceLegs_(stanceLegs),
@@ -159,8 +170,6 @@ private:
 	typename com_model_t::Ptr comModelPtr_;
 	Eigen::Vector3d   o_gravityVector_;
 
-	ComDynamicsBase<JOINT_COORD_SIZE> comDynamics_;
-
 	std::array<bool,4> stanceLegs_;
 	std::array<bool,4> nextPhaseStanceLegs_;
 
@@ -194,6 +203,7 @@ private:
 	std::string algorithmName_;
 };
 
+} // end of namespace switched_model
 
 #include "implementation/ComKinoDynamicsDerivativeBase.h"
 

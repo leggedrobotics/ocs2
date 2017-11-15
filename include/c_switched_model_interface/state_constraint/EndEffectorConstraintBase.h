@@ -13,7 +13,7 @@
 #include <cmath>
 #include <Eigen/Dense>
 
-namespace hyq {
+namespace switched_model {
 
 class EndEffectorConstraintBase
 {
@@ -68,6 +68,6 @@ protected:
 };
 
 
-}  // end of hyq namespace
+}  // end of switched_model namespace
 
 #endif /* HYQ_ENDEFFECTORCONSTRAINTBASE_H_ */

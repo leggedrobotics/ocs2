@@ -5,9 +5,8 @@
  *      Author: asutosh
  */
 
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
+namespace switched_model {
+
 template <size_t JOINT_COORD_SIZE>
 Eigen::Matrix<double,6,JOINT_COORD_SIZE> ComModelBase<JOINT_COORD_SIZE>::comJacobainBaseFrame(
 		const joint_coordinate_t& jointCoordinate) {
@@ -21,3 +20,5 @@ Eigen::Matrix<double,6,JOINT_COORD_SIZE> ComModelBase<JOINT_COORD_SIZE>::comJaco
 
 	return I_inverse * comMomentumJacobian(jointCoordinate);
 }
+
+} // end of namespace switched_model

@@ -11,7 +11,7 @@
 #include <array>
 #include <Eigen/Dense>
 
-namespace hyq {
+namespace switched_model {
 
 class ZMPConstraint
 {
@@ -49,7 +49,7 @@ private:
 
 };
 
-}  // end of hyq namespace
+}  // end of switched_model namespace
 
 
 #endif /* HYQ_ZMPCONSTRAINT_H_ */

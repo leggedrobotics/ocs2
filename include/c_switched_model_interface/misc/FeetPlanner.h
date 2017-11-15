@@ -14,7 +14,7 @@
 
 #include "misc/FootCPG.h"
 
-namespace hyq {
+namespace switched_model {
 
 class FeetPlanner
 {
@@ -196,9 +196,7 @@ private:
 	std::vector<std::array<size_t,4> > finalTimesIndices_;
 };
 
-}  // end of hyq namespace
-
-
+}  // end of switched_model namespace
 
 
 #endif /* HYQ_FEETPLANNER_H_ */

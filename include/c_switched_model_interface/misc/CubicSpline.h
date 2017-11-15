@@ -11,7 +11,7 @@
 #include <limits>
 #include <cmath>
 
-namespace hyq {
+namespace switched_model {
 
 class CubicSpline
 {
@@ -77,6 +77,6 @@ private:
 };
 
 
-}  // end of hyq namespace
+}  // end of switched_model namespace
 
 #endif /* CUBICSPLINE_H_ */

@@ -18,7 +18,7 @@
 
 #define SIMPLE_MODEL
 
-namespace hyq {
+namespace switched_model {
 
 class SwitchedModelStateEstimator
 {
@@ -174,6 +174,6 @@ private:
 
 };
 
-}  // end of hyq namespace
+}  // end of switched_model namespace
 
 #endif /* HYQ_SWITCHEDMODELSTATEESTIMATOR_H_ */

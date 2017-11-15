@@ -10,7 +10,7 @@
 
 #include <Eigen/Dense>
 
-namespace hyq {
+namespace switched_model {
 
 class SphericalCoordinate
 {
@@ -117,6 +117,6 @@ private:
 
 };
 
-}  // end of hyq namespace
+}  // end of switched_model namespace
 
 #endif /* HYQ_SPHERICALCOORDINATE_H_ */

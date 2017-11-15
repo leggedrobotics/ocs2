@@ -19,6 +19,8 @@
 #include "c_switched_model_interface/core/KinematicsModelBase.h"
 #include "c_switched_model_interface/core/ComModelBase.h"
 
+namespace switched_model {
+
 template <size_t JOINT_COORD_SIZE>
 class ComDynamicsBase : public ocs2::ControlledSystemBase<12, 12>
 {
@@ -190,6 +192,8 @@ private:
 	Eigen::Matrix<double, 6, 1> MInverseG_;
 
 };
+
+} //end of namespace switched_model
 
 #include "implementation/ComDynamicsBase.h"
 

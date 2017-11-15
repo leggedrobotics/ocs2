@@ -12,7 +12,7 @@
 
 #include "misc/CpgBase.h"
 
-namespace hyq {
+namespace switched_model {
 
 class SinCpg : public CpgBase
 {
@@ -44,7 +44,7 @@ private:
 };
 
 
-}  // end of hyq namespace
+}  // end of switched_model namespace
 
 
 

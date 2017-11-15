@@ -10,7 +10,7 @@
 
 #include "EndEffectorConstraintBase.h"
 
-namespace hyq {
+namespace switched_model {
 
 class EllipticalConstraint : public EndEffectorConstraintBase
 {
@@ -95,7 +95,7 @@ private:
 
 };
 
-}  // end of hyq namespace
+}  // end of switched_model namespace
 
 
 

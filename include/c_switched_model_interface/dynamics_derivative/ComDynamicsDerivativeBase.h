@@ -15,11 +15,13 @@
 
 #include <ocs2_core/dynamics/DerivativesBase.h>
 
-#include "misc/SphericalCoordinate.h"
+#include "c_switched_model_interface/misc/SphericalCoordinate.h"
 
 #include "c_switched_model_interface/core/SwitchedModel.h"
 #include "c_switched_model_interface/core/KinematicsModelBase.h"
 #include "c_switched_model_interface/core/ComModelBase.h"
+
+namespace switched_model {
 
 template <size_t JOINT_COORD_SIZE>
 class ComDynamicsDerivativeBase : public ocs2::DerivativesBase<12,12>
@@ -199,6 +201,8 @@ private:
 	std::array<Eigen::Matrix<double,6,6>, 12> partialM_;
 
 };
+
+} // end of namespace switched_model
 
 #include "implementation/ComDynamicsDerivativeBase.h"
 

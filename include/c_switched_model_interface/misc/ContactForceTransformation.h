@@ -14,7 +14,7 @@
 
 #include "kinematics/SwitchedModelKinematics.h"
 
-namespace hyq {
+namespace switched_model {
 
 class ContactForceTransformation
 {
@@ -161,6 +161,6 @@ private:
 	Eigen::Matrix3d b_R_o_;
 };
 
-}  // end of hyq namespace
+}  // end of switched_model namespace
 
 #endif /* HYQ_CONTACTFORCETRANSFORMATION_H_ */

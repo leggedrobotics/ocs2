@@ -12,10 +12,9 @@
 #include <array>
 #include <vector>
 
-#include "HyqSwitchedModel.h"
-#include "misc/CpgBase.h"
+#include "CpgBase.h"
 
-namespace hyq {
+namespace switched_model {
 
 class FeetZDirectionPlannerBase
 {
@@ -208,6 +207,6 @@ private:
 	std::vector<std::array<bool,4> > stanceLegsStock_;
 };
 
-}  // end of hyq namespace
+}  // end of switched_model namespace
 
 #endif /* HYQ_FEETZDIRECTIONPLANNER_H_ */

@@ -10,7 +10,7 @@
 
 #include <array>
 
-namespace hyq {
+namespace switched_model {
 
 enum ModeNumber { // {LF, RF, LH, RH}
 	FLY         = 0,
@@ -57,6 +57,6 @@ inline std::array<bool,4> ModeNumber2StanceLeg(size_t modeNumber)  {
 	return stanceLegs;
 }
 
-}  // end of hyq namespace
+}  // end of switched_model namespace
 
 #endif /* HYQ_SWITCHEDMODELAUXILIARYFUNTIONS_H_ */

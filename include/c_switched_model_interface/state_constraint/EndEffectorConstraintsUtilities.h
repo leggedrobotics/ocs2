@@ -22,7 +22,7 @@
 #include "EndEffectorConstraintBase.h"
 #include "PotentialFieldConstraint.h"
 
-namespace hyq {
+namespace switched_model {
 
 
 inline void loadGaps(const std::string& filename, std::vector<EndEffectorConstraintBase::Ptr>& gapIndicatorPtrs, bool verbose = true)
@@ -157,7 +157,7 @@ inline void publishGapMessages(const std::vector<EndEffectorConstraintBase::Ptr>
 }
 
 
-}  // end of hyq namespace
+}  // end of switched_model namespace
 
 
 

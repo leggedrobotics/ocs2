@@ -10,7 +10,7 @@
 
 #include "EndEffectorConstraintBase.h"
 
-namespace hyq {
+namespace switched_model {
 
 class PotentialFieldConstraint : public EndEffectorConstraintBase
 {
@@ -86,7 +86,7 @@ private:
 
 };
 
-}  // end of hyq namespace
+}  // end of switched_model namespace
 
 
 

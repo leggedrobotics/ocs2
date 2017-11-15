@@ -74,6 +74,8 @@ void ComKinoDynamicsBase<JOINT_COORD_SIZE>::computeConstriant1(const scalar_t& t
 	Eigen::VectorBlock<const state_vector_t,12>   qJoints  = x.template tail<12>();
 	// Joints' velocities
 	Eigen::VectorBlock<const control_vector_t,12> dqJoints = u.template tail<12>();
+	// CoM Pose
+	Eigen::VectorBlock<const state_vector_t,6> comPose = x.template segment<0>(6);
 	// CoM local velocities
 	Eigen::VectorBlock<const state_vector_t,6> comLocalVelocities = x.template segment<6>(6);
 	// Base pse
@@ -82,14 +84,6 @@ void ComKinoDynamicsBase<JOINT_COORD_SIZE>::computeConstriant1(const scalar_t& t
 	base_coordinate_t baseLocalVelocities;
 
 	// Rotation matrix from Base frame (or the coincided frame world frame) to Origin frame (global world).
-
-	////// TEMPORARY HACK!!!
-	////// TODO: where to get comPose actually from??
-	base_coordinate_t comPose;
-	throw std::runtime_error("FIXME");
-	//////
-	//////
-
 	Eigen::Matrix3d o_R_b = RotationMatrixBasetoOrigin(comPose.template head<3>());
 
 	// base to CoM displacement in the CoM frame

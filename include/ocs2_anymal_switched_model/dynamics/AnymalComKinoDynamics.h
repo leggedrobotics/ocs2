@@ -3,20 +3,23 @@
 
 #include <c_switched_model_interface/dynamics/ComKinoDynamicsBase.h>
 #include <ocs2_anymal_switched_model/AnymalSwitchedModel.h>
+#include <ocs2_anymal_switched_model/dynamics/AnymalCom.h>
+#include <ocs2_anymal_switched_model/kinematics/AnymalKinematics.h>
 
 namespace anymal {
 
-class AnymalComKinoDynamics : public ComKinoDynamicsBase<12>
+class AnymalComKinoDynamics : public switched_model::ComKinoDynamicsBase<12>
 {
+private:
+	typedef switched_model::ComKinoDynamicsBase<12> Base;
+
 public:
-	typedef ComKinoDynamicsBase<12> Base;
-
 	AnymalComKinoDynamics(const std::array<bool,4>& stanceLegs,
-		const double& gravitationalAcceleration=9.81, const Base::Options& options = Options(),
-		const FeetZDirectionPlannerBase::Ptr& feetZDirectionPlanner=NULL,
-		const std::vector<EndEffectorConstraintBase::Ptr>& endEffectorStateConstraints = std::vector<EndEffectorConstraintBase::Ptr>())
+		const double& gravitationalAcceleration=9.81, const switched_model::Options& options = Options(),
+		const switched_model::FeetZDirectionPlannerBase::Ptr& feetZDirectionPlanner=NULL,
+		const std::vector<switched_model::EndEffectorConstraintBase::Ptr>& endEffectorStateConstraints = std::vector<switched_model::EndEffectorConstraintBase::Ptr>())
 
-	: Base(kinematics_, comDynamics_, stanceLegs, gravitationalAcceleration,
+	: Base(kinematics_.clone(), comDynamics_.clone(), stanceLegs, gravitationalAcceleration,
 			options, feetZDirectionPlanner, endEffectorStateConstraints)
 	{}
 

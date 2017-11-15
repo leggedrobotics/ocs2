@@ -8,7 +8,7 @@
 #ifndef ANYMAL_ANYMALCOM_H_
 #define ANYMAL_ANYMALCOM_H_
 
-#include <c_switched_model_interface/ComModelBase.h>
+#include <c_switched_model_interface/core/ComModelBase.h>
 
 #include <iit/robots/anymal/inertia_properties.h>
 #include <iit/robots/anymal/transforms.h>
@@ -18,20 +18,25 @@
 namespace anymal
 {
 
-class AnymalCom : public ComModelBase<12>
+class AnymalCom : public switched_model::ComModelBase<12>
 {
 public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
 	enum { LF=0,  RF=1,  LH=2,  RH=3 };
 
-	typedef ComModelBase<12> Base;
+	typedef switched_model::ComModelBase<12> Base;
 	typedef Base::joint_coordinate_t joint_coordinate_t;
 
 	/**
 	 * Constructor needed for initialization
 	 */
 	AnymalCom();
+
+	/**
+	 * Clone AnymalCom class.
+	 */
+	std::shared_ptr<Base> clone() const override;
 
 	/**
 	 * Set default joint configuration. Updates the CoM position and inertia

@@ -60,7 +60,7 @@ TEST_F(SwitchedModelTests, Kinematics){
 
 }
 
-TEST_F(SwitchedModelTests, Dynamics){
+TEST_F(SwitchedModelTests, ComDynamics){
   joint_coordinate_t joint_cor;
   joint_cor.setZero();
   std::cout << "Joint coordinates:\n" << joint_cor.transpose() << std::endl;
@@ -70,8 +70,10 @@ TEST_F(SwitchedModelTests, Dynamics){
 
   std::cout << "comInertia:\n" << comDynamics_.comInertia(joint_cor) << std::endl;
   std::cout << "comInertiaDefault:\n" << comDynamics_.comInertia() << std::endl;
+}
 
-
+TEST_F(SwitchedModelTests, ComKinoDynamics){
+  
 }
 
 } // namespace anymal

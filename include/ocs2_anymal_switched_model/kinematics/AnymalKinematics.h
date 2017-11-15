@@ -8,17 +8,24 @@
 #ifndef ANYMAL_ANYMALKINEMATICS_H_
 #define ANYMAL_ANYMALKINEMATICS_H_
 
-#include <c_switched_model_interface/KinematicsModelBase.h>
+#include <c_switched_model_interface/core/KinematicsModelBase.h>
 
 #include <iit/robots/anymal/transforms.h>
 #include <iit/robots/anymal/jacobians.h>
 
 namespace anymal {
 
-class AnymalKinematics : public KinematicsModelBase<12>
+class AnymalKinematics : public switched_model::KinematicsModelBase<12>
 {
 public:
+	typedef switched_model::KinematicsModelBase<12> Base;
+
 	enum { LF=0,  RF=1,  LH=2,  RH=3 };
+
+	/**
+	 * Clone AnymalKinematics class.
+	 */
+	std::shared_ptr<Base> clone() const override;
 
 	/**
 	 * calculate foot position in Base frame

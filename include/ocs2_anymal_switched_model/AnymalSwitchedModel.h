@@ -11,35 +11,26 @@
 #include <map>
 #include <array>
 #include <string>
+#include <c_switched_model_interface/core/Options.h>
 
 namespace anymal {
 
-struct Options
+struct Options : public switched_model::Options
 {
 	Options()
-	: constrainedIntegration_(true),
-	  useCartesianContactForce_(false),
-	  contactForceWeight_(0.1),
-	  zDirectionPositionWeight_(5.0),
-	  zDirectionVelocityWeight_(0.5),
-	  swingLegLiftOff_(0.3),
-	  mpcStrideLength_(0.35),
-	  numPhasesInfullGaitCycle_(4),
-	  defaultStartMode_(15),
-	  defaultFinalMode_(15)
-	 {}
-
-	bool constrainedIntegration_;
-	bool useCartesianContactForce_;
-	double contactForceWeight_;
-	double zDirectionPositionWeight_;
-	double zDirectionVelocityWeight_;
-	double swingLegLiftOff_;
-	double mpcStrideLength_;
-
-	size_t numPhasesInfullGaitCycle_;
-	size_t defaultStartMode_;
-	size_t defaultFinalMode_;
+	{
+		constrainedIntegration_ = true;
+		constrainedIntegration_ = true;
+		useCartesianContactForce_ = false;
+		contactForceWeight_ = 0.1;
+		zDirectionPositionWeight_ = 5.0;
+		zDirectionVelocityWeight_ = 0.5;
+		swingLegLiftOff_ = 0.3;
+		mpcStrideLength_ = 0.35;
+		numPhasesInfullGaitCycle_ = 4;
+		defaultStartMode_ = 15;
+		defaultFinalMode_ = 15;
+	}
 };
 
 

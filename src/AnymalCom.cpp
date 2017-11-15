@@ -24,6 +24,11 @@ AnymalCom::AnymalCom() :
 	setJointConfiguration(defaultJointConfig);
 }
 
+std::shared_ptr<AnymalCom::Base> AnymalCom::clone() const {
+	return std::allocate_shared< AnymalCom, Eigen::aligned_allocator<AnymalCom> > (
+					Eigen::aligned_allocator<AnymalCom>(), *this);
+}
+
 void AnymalCom::setJointConfiguration(const joint_coordinate_t& q)
 {
 	jointSpaceInertiaMatrix_.update(q);

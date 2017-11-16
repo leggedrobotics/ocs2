@@ -75,7 +75,7 @@ void ComKinoDynamicsBase<JOINT_COORD_SIZE>::computeConstriant1(const scalar_t& t
 	// Joints' velocities
 	Eigen::VectorBlock<const control_vector_t,12> dqJoints = u.template tail<12>();
 	// CoM Pose
-	Eigen::VectorBlock<const state_vector_t,6> comPose = x.template segment<0>(6);
+	Eigen::VectorBlock<const state_vector_t,6> comPose = x.template segment<6>(0);
 	// CoM local velocities
 	Eigen::VectorBlock<const state_vector_t,6> comLocalVelocities = x.template segment<6>(6);
 	// Base pse

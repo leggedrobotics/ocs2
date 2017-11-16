@@ -17,7 +17,7 @@
 #include <Eigen/StdVector>
 #include <unsupported/Eigen/MatrixFunctions>
 
-#include "Dimensions.h"
+#include <ocs2_core/Dimensions.h>
 
 #include <ocs2_core/dynamics/ControlledSystemBase.h>
 #include <ocs2_core/dynamics/DerivativesBase.h>
@@ -783,6 +783,6 @@ public:
 
 } // namespace ocs2
 
-#include <GSLQ/implementation/SLQP_BASE.h>
+#include "implementation/SLQP_BASE.h"
 
 #endif /* SLQP_H_ */

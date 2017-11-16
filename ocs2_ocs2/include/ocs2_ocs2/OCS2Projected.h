@@ -14,7 +14,7 @@
 #include <iterator>
 #include <algorithm>
 
-#include <c_gradient_descent/GradientDescent.h>
+#include <ocs2_frank_wolfe/GradientDescent.h>
 
 #include <ocs2_slq/GLQP.h>
 
@@ -283,7 +283,7 @@ private:
 	 * @param [in] id
 	 * @param [in] parameters
 	 * @param [out] cost
-	 * @return boolean: 
+	 * @return boolean:
 	 */
 	bool calculateCost(const size_t& id, const Eigen::VectorXd& parameters, double& cost) override;
 

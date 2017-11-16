@@ -115,7 +115,7 @@ void ComKinoDynamicsBase<JOINT_COORD_SIZE>::computeConstriant1(const scalar_t& t
 
 		// the contact force at swing leg is zero
 		if (stanceLegs_[i]==false) {
-			g1.segment<3>(nextFreeIndex) = options_.contactForceWeight_*u.segment<3>(3*i);
+			g1.template segment<3>(nextFreeIndex) = options_.contactForceWeight_*u.template segment<3>(3*i);
 			nextFreeIndex += 3;
 
 		} else {
@@ -178,7 +178,8 @@ void ComKinoDynamicsBase<JOINT_COORD_SIZE>::computeConstriant2(const scalar_t& t
 
 	// Base pose
 	base_coordinate_t basePose;
-	ComDynamicsBase<JOINT_COORD_SIZE>::CalculateBasePose(qJoints, x.template head<6>(), basePose);
+	// ComDynamicsBase<JOINT_COORD_SIZE>::CalculateBasePose(qJoints, x.template head<6>(), basePose); // what is this?
+	throw std::runtime_error("FIXME");
 
 	kinematicModelPtr_->update(basePose, qJoints);
 
@@ -213,7 +214,8 @@ void ComKinoDynamicsBase<JOINT_COORD_SIZE>::computeFinalConstriant2(const scalar
 
 	// Base pose
 	base_coordinate_t basePose;
-	ComDynamicsBase<JOINT_COORD_SIZE>::CalculateBasePose(qJoints, x.template head<6>(), basePose);
+	// ComDynamicsBase<JOINT_COORD_SIZE>::CalculateBasePose(qJoints, x.template head<6>(), basePose); // what is this?
+	throw std::runtime_error("FIXME");
 
 	kinematicModelPtr_->update(basePose, qJoints);
 

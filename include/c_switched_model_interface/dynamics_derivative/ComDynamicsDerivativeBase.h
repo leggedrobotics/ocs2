@@ -132,7 +132,7 @@ public:
 	/**
 	 * user interface for CoM dynamics: get Base Pose.
 	 */
-	void getBasePose(Eigen::Vector3d& basePose) const;
+	void getBasePose(base_coordinate_t& basePose) const;
 
 	/**
 	 * user interface for CoM dynamics: get CoM to stance feet in CoM frame.

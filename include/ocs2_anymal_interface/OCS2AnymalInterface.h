@@ -17,11 +17,6 @@
 #include <string>
 #include <Eigen/Dense>
 
-#include <iit/robots/anymal/transforms.h>
-#include <iit/robots/anymal/inverse_dynamics.h>
-#include <iit/robots/anymal/declarations.h>
-#include <iit/robots/anymal/link_data_map.h>
-
 #include <ocs2_core/misc/LoadConfigFile.h>
 #include <ocs2_slq/LQP.h>
 #include <ocs2_slq/GLQP.h>
@@ -33,23 +28,21 @@
 #include <mpc/MPC_SLQP.h>
 #include <mpc/util/LoadSettings_MPC.h>
 
-#include <ocs2_anymal_switched_model/AnymalSwitchedModel.h>
-#include <ocs2_anymal_switched_model/util/LoadTask.h>
+#include <ocs2_anymal_interface/LoadTask.h>
 #include <c_switched_model_interface/misc/SinCpg.h>
 #include <c_switched_model_interface/misc/SplineCpg.h>
 #include <c_switched_model_interface/misc/CpgBase.h>
 #include <c_switched_model_interface/misc/FeetZDirectionPlanner.h>
 #include <c_switched_model_interface/misc/SphericalCoordinate.h>
-#include <c_switched_model_interface/misc/SwitchedModelStateEstimator.h>
 #include <c_switched_model_interface/state_constraint/EndEffectorConstraintBase.h>
 #include <c_switched_model_interface/state_constraint/EllipticalConstraint.h>
 #include <c_switched_model_interface/state_constraint/EndEffectorConstraintsUtilities.h>
 
+#include <ocs2_anymal_switched_model/AnymalSwitchedModel.h>
+#include <ocs2_anymal_switched_model/SwitchedModelStateEstimator.h>
+#include <ocs2_anymal_switched_model/dynamics/AnymalComKinoDynamics.h>
+#include <ocs2_anymal_switched_model/dynamics/AnymalComKinoDynamicsDerivative.h>
 #include <ocs2_anymal_cost/SwitchedModelCost.h>
-#include "c_hyq_optimization/misc/ConfigFileLoader.h"
-
-#include <ocs2_anzmal_switched_model/dynamics/AnymalComKinoDynamics.h>
-#include <ocs2_anzmal_switched_model/dynamics/AnymalComKinoDynamicsDerivative.h>
 
 namespace anymal {
 
@@ -78,13 +71,13 @@ public:
 	typedef typename slqp_mp_t::Ptr  	slqp_mp_ptr_t;
 	typedef typename ocs2_t::Ptr 		ocs2_ptr_t;
 	typedef typename mpc_t::Ptr 		mpc_ptr_t;
-	typedef hyq::SplineCpg              z_direction_cpg_t;
+	typedef switched_model::SplineCpg	z_direction_cpg_t;
 	typedef Eigen::Matrix<double,6,1>   com_coordinate_t;
 
-	OCS2AnymalInterface(const std::string& pathToConfigFolder, const Eigen::Matrix<double,36,1>& initHyQState)
+	OCS2AnymalInterface(const std::string& pathToConfigFolder, const Eigen::Matrix<double,36,1>& initState)
 	: inverseDynamics_(iitInertiaProperties_, iitMotionTransforms_)
 	{
-		loadSettings(pathToConfigFolder, initHyQState);
+		loadSettings(pathToConfigFolder, initState);
 		setupOptimizaer();
 
 		// LQP
@@ -111,14 +104,14 @@ public:
 
 	~OCS2AnymalInterface() {}
 
-	void runSLQP(const double& initTime, const Eigen::Matrix<double,36,1>& initHyQState,
+	void runSLQP(const double& initTime, const Eigen::Matrix<double,36,1>& initState,
 			const dimension_t::controller_array_t& initialControllersStock=dimension_t::controller_array_t(),
 			const std::vector<double>& switchingTimes=std::vector<double>());
 
-	bool runMPC(const double& initTime, const Eigen::Matrix<double,36,1>& initHyQState);
-	bool runMPC(const double& initTime, const dimension_t::state_vector_t& initHyQState);
+	bool runMPC(const double& initTime, const Eigen::Matrix<double,36,1>& initState);
+	bool runMPC(const double& initTime, const dimension_t::state_vector_t& initState);
 
-	void runOCS2(const double& initTime, const Eigen::Matrix<double,36,1>& initHyQState,
+	void runOCS2(const double& initTime, const Eigen::Matrix<double,36,1>& initState,
 			const std::vector<double>& switchingTimes=std::vector<double>());
 
 	void setNewGoalStateMPC(const dimension_t::scalar_t& newGoalDuration, const dimension_t::state_vector_t& newGoalState);
@@ -147,7 +140,7 @@ public:
 
 	void getSystemStockIndexes(std::vector<size_t>& systemStockIndexes) const;
 
-	void getGapIndicatorPtrs(std::vector<hyq::EndEffectorConstraintBase::Ptr>& gapIndicatorPtrs) const;
+	void getGapIndicatorPtrs(std::vector<switched_model::EndEffectorConstraintBase::Ptr>& gapIndicatorPtrs) const;
 
 	void getIterationsLog(dimension_t::eigen_scalar_array_t& iterationCost, dimension_t::eigen_scalar_array_t& iterationISE1,
 			dimension_t::eigen_scalar_array_t& ocs2Iterationcost) const {
@@ -176,7 +169,7 @@ public:
 
 
 protected:
-	void loadSettings(const std::string& pathToConfigFolder, const Eigen::Matrix<double,36,1>& initHyQState);
+	void loadSettings(const std::string& pathToConfigFolder, const Eigen::Matrix<double,36,1>& initState);
 
 	void setupOptimizaer();
 
@@ -298,8 +291,6 @@ private:
 	ocs2::LinearInterpolation<dimension_t::state_vector_t, Eigen::aligned_allocator<dimension_t::state_vector_t> > 			linInterpolateStateDerivative_;
 	ocs2::LinearInterpolation<dimension_t::control_vector_t, Eigen::aligned_allocator<dimension_t::control_vector_t> > 		linInterpolateUff_;
 	ocs2::LinearInterpolation<dimension_t::control_feedback_t, Eigen::aligned_allocator<dimension_t::control_feedback_t> > 	linInterpolateK_;
-
-	hyq::SwitchedModelKinematics switchedModelKinematics_;
 
 	dimension_t::state_vector_t mrtDeadzone_;
 

@@ -16,7 +16,7 @@ if( NOT EIGEN_INCLUDE_DIRS )
     message( WARNING "Uses globally installed Eigen since LOCAL_EIGEN3_INCLUDE_DIR is not defined!")
 endif()
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wfatal-errors")
+add_definitions(-std=c++11 -Wfatal-errors)
 
 ###################################
 ## catkin specific configuration ##

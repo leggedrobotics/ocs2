@@ -100,4 +100,16 @@ Eigen::Matrix<double,3,1> AnymalCom::comVelocityInBaseFrame(
 	return Eigen::Matrix<double,3,1>::Zero(); // massless limbs
 }
 
+Eigen::Matrix<double,18,18> AnymalCom::getJsimInverse(const joint_coordinate_t& q) const {
+	iit::ANYmal::dyn::InertiaProperties inertiaProperties_copy;
+	iit::ANYmal::ForceTransforms forceTransforms_copy;
+	iit::ANYmal::dyn::JSIM jsim_copy(inertiaProperties_copy, forceTransforms_copy);
+
+	jsim_copy.update(q);
+	jsim_copy.computeL();
+	jsim_copy.computeInverse();
+
+	return jsim_copy.getInverse();
+}
+
 }  // end of namespace anymal

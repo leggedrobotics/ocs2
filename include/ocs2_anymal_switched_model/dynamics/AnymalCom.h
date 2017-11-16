@@ -104,7 +104,13 @@ public:
 	/**
 	 * Return copy of the total mass of the system
 	 */
-	double totalMass() {return inertiaProperties_.getTotalMass();}
+	double totalMass() const {return inertiaProperties_.getTotalMass();}
+
+	/**
+	 * Obtain joint space inertia matrix inverse at given joint coordinates
+	 * Does not update the interal state with the given joint coordinates
+	 */
+	Eigen::Matrix<double,18,18> getJsimInverse(const joint_coordinate_t& q) const;
 
 private:
 

@@ -10,7 +10,7 @@
 
 #include <cmath>
 
-#include "misc/CpgBase.h"
+#include "CpgBase.h"
 
 namespace switched_model {
 

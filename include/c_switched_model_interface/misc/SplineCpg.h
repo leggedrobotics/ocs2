@@ -10,8 +10,8 @@
 
 #include <cmath>
 
-#include "misc/CpgBase.h"
-#include "misc/CubicSpline.h"
+#include "CpgBase.h"
+#include "CubicSpline.h"
 
 namespace switched_model {
 

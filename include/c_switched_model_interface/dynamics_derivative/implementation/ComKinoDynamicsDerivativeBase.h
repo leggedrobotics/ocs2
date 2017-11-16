@@ -4,6 +4,9 @@
  *  Created on: Nov 12, 2017
  *      Author: farbod
  */
+
+#include <c_switched_model_interface/core/SwitchedModel.h>
+
 namespace switched_model {
 /******************************************************************************************************/
 /******************************************************************************************************/
@@ -64,7 +67,8 @@ void ComKinoDynamicsDerivativeBase<JOINT_COORD_SIZE>::setCurrentStateAndControl(
 	// Base pose
 	comDynamicsDerivative_.getBasePose(basePose_);
 	// Base local velocities
-	comDynamicsDerivative_.getBaseLocalVelocities(baseLocalVelocities_);
+		//comDynamicsDerivative_.getBaseLocalVelocities(baseLocalVelocities_); //where is this method?
+	throw std::runtime_error("FIXME");
 	// CoM Jacobian in the Base frame
 	comDynamicsDerivative_.getComJacobianInBaseFrame(b_comJacobain_);
 	// CoM Jacobin time derivative in the Base frame
@@ -82,7 +86,7 @@ void ComKinoDynamicsDerivativeBase<JOINT_COORD_SIZE>::setCurrentStateAndControl(
 		base_jacobian_matrix_t b_footJacobainPlus;
 		kinematicModelPtr_->footJacobainBaseFrame(i, b_footJacobainPlus);
 		b_feetJacobainsTimeDerivative_[i].setZero();
-		b_feetJacobainsTimeDerivative_[i].block<6,3>(0,3*i) = (b_footJacobainPlus.block<6,3>(0,3*i)-b_feetJacobains_[i].block<6,3>(0,3*i))/h;
+		b_feetJacobainsTimeDerivative_[i].template block<6,3>(0,3*i) = (b_footJacobainPlus.template block<6,3>(0,3*i)-b_feetJacobains_[i].template block<6,3>(0,3*i))/h;
 	}  // end of i loop
 
 	// TODO where does jacobianOfAngularVelocityMapping_ come from???
@@ -327,9 +331,9 @@ void ComKinoDynamicsDerivativeBase<JOINT_COORD_SIZE>::getConstraint2DerivativesS
 			o_footJacobian.block<3,3>(0,3)  = Eigen::Matrix3d::Identity();
 			o_footJacobian.block<3,12>(0,6) = o_R_b_ * (b_feetJacobains_[i].template bottomRows<3>()-b_comJacobain_.template bottomRows<3>());
 
-			F.block<1,6>(numConstraint2,0)   = options_.zDirectionPositionWeight_ * o_footJacobian.block<1,6>(2,0);
-			F.block<1,6>(numConstraint2,6)   = Eigen::Matrix<double,1,6>::Zero();
-			F.block<1,12>(numConstraint2,12) = options_.zDirectionPositionWeight_ * o_footJacobian.block<1,12>(2,6);
+			F.template block<1,6>(numConstraint2,0)   = options_.zDirectionPositionWeight_ * o_footJacobian.block<1,6>(2,0);
+			F.template block<1,6>(numConstraint2,6)   = Eigen::Matrix<double,1,6>::Zero();
+			F.template block<1,12>(numConstraint2,12) = options_.zDirectionPositionWeight_ * o_footJacobian.block<1,12>(2,6);
 			numConstraint2++;
 		}
 
@@ -358,9 +362,9 @@ void ComKinoDynamicsDerivativeBase<JOINT_COORD_SIZE>::getFinalConstraint2Derivat
 			// gap jacobian
 			Eigen::Matrix<double, 1, 18> o_gapJacobian = feetConstraintJacobains_[i].transpose() * o_footJacobian;
 
-			F.block<1,6>(numConstraint2,0)   = o_gapJacobian.block<1,6>(0,0);
-			F.block<1,6>(numConstraint2,6)   = Eigen::Matrix<double,1,6>::Zero();
-			F.block<1,12>(numConstraint2,12) = o_gapJacobian.block<1,12>(0,6);
+			F.template block<1,6>(numConstraint2,0)   = o_gapJacobian.block<1,6>(0,0);
+			F.template block<1,6>(numConstraint2,6)   = Eigen::Matrix<double,1,6>::Zero();
+			F.template block<1,12>(numConstraint2,12) = o_gapJacobian.block<1,12>(0,6);
 
 			numConstraint2++;
 		}

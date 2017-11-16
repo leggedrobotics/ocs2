@@ -55,7 +55,7 @@ public:
 	  comDynamics_(kinematicModelPtr, comModelPtr, gravitationalAcceleration, options.constrainedIntegration_),
 	  stanceLegs_(stanceLegs),
 	  options_(options),
-	  feetZDirectionPlanner_(feetZDirectionPlanner->clone()),
+	  feetZDirectionPlanner_(feetZDirectionPlanner != NULL ? feetZDirectionPlanner->clone() : NULL),
 	  endEffectorStateConstraints_(endEffectorStateConstraints.size())
 	{
 		if (gravitationalAcceleration<0)  throw std::runtime_error("Gravitational acceleration should be a positive value (e.g. +9.81).");

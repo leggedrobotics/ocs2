@@ -4,6 +4,9 @@
  *  Created on: Nov 10, 2017
  *      Author: farbod
  */
+
+#include <c_switched_model_interface/core/SwitchedModel.h>
+
 namespace switched_model {
 /******************************************************************************************************/
 /******************************************************************************************************/
@@ -226,7 +229,7 @@ void ComDynamicsDerivativeBase<JOINT_COORD_SIZE>::getApproximateDerivativesJoint
 		for (size_t j=0; j<12; j++)
 			partrialF_q.template block<3,1>(6,j) -= CrossProductMatrix(x_.segment<3>(6)) * partialM_[j].topLeftCorner<3,3>() * x_.segment<3>(6);
 
-	partrialF_q.template block<6,12>(6,0) = ( MInverse_ * partrialF_q.block<6,12>(6,0) );
+	partrialF_q.template block<6,12>(6,0) = ( MInverse_ * partrialF_q.template block<6,12>(6,0) );
 
 	/* partial derivative of the MInverse w.r.t. qJoints */
 	if (useInertiaMatrixDerivate_==true) {
@@ -373,7 +376,7 @@ void ComDynamicsDerivativeBase<JOINT_COORD_SIZE>::getBase2CoMInComFrame(Eigen::V
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t JOINT_COORD_SIZE>
-void ComDynamicsDerivativeBase<JOINT_COORD_SIZE>::getBasePose(Eigen::Vector3d& basePose) const {
+void ComDynamicsDerivativeBase<JOINT_COORD_SIZE>::getBasePose(ComDynamicsDerivativeBase<JOINT_COORD_SIZE>::base_coordinate_t& basePose) const {
 	basePose = q_base_;
 }
 

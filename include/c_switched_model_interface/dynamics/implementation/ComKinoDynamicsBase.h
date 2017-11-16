@@ -75,7 +75,7 @@ void ComKinoDynamicsBase<JOINT_COORD_SIZE>::computeConstriant1(const scalar_t& t
 	// Joints' velocities
 	Eigen::VectorBlock<const control_vector_t,12> dqJoints = u.template tail<12>();
 	// CoM Pose
-	Eigen::VectorBlock<const state_vector_t,6> comPose = x.template segment<0>(6);
+	Eigen::VectorBlock<const state_vector_t,6> comPose = x.template segment<6>(0);
 	// CoM local velocities
 	Eigen::VectorBlock<const state_vector_t,6> comLocalVelocities = x.template segment<6>(6);
 	// Base pse
@@ -109,7 +109,7 @@ void ComKinoDynamicsBase<JOINT_COORD_SIZE>::computeConstriant1(const scalar_t& t
 
 		// the contact force at swing leg is zero
 		if (stanceLegs_[i]==false) {
-			g1.segment<3>(nextFreeIndex) = options_.contactForceWeight_*u.segment<3>(3*i);
+			g1.template segment<3>(nextFreeIndex) = options_.contactForceWeight_*u.template segment<3>(3*i);
 			nextFreeIndex += 3;
 
 		} else {
@@ -172,7 +172,8 @@ void ComKinoDynamicsBase<JOINT_COORD_SIZE>::computeConstriant2(const scalar_t& t
 
 	// Base pose
 	base_coordinate_t basePose;
-	ComDynamicsBase<JOINT_COORD_SIZE>::CalculateBasePose(qJoints, x.template head<6>(), basePose);
+	// ComDynamicsBase<JOINT_COORD_SIZE>::CalculateBasePose(qJoints, x.template head<6>(), basePose); // what is this?
+	throw std::runtime_error("FIXME");
 
 	kinematicModelPtr_->update(basePose, qJoints);
 
@@ -207,7 +208,8 @@ void ComKinoDynamicsBase<JOINT_COORD_SIZE>::computeFinalConstriant2(const scalar
 
 	// Base pose
 	base_coordinate_t basePose;
-	ComDynamicsBase<JOINT_COORD_SIZE>::CalculateBasePose(qJoints, x.template head<6>(), basePose);
+	// ComDynamicsBase<JOINT_COORD_SIZE>::CalculateBasePose(qJoints, x.template head<6>(), basePose); // what is this?
+	throw std::runtime_error("FIXME");
 
 	kinematicModelPtr_->update(basePose, qJoints);
 

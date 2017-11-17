@@ -5,8 +5,8 @@
  *      Author: farbod
  */
 
-#ifndef HYQ_CPGBASE_H_
-#define HYQ_CPGBASE_H_
+#ifndef CPGBASE_H_
+#define CPGBASE_H_
 
 #include <cmath>
 #include <limits>
@@ -17,8 +17,6 @@ namespace switched_model {
 class CpgBase
 {
 public:
-	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-
 	typedef std::shared_ptr<CpgBase> Ptr;
 	typedef std::array<Ptr,4>        PtrArray;
 
@@ -78,4 +76,4 @@ protected:
 
 }  // end of switched_model namespace
 
-#endif /* HYQ_CPGBASE_H_ */
+#endif /* CPGBASE_H_ */

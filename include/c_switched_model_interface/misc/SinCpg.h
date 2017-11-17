@@ -9,16 +9,15 @@
 #define SINCPG_H_
 
 #include <cmath>
+#include <memory>
 
-#include "misc/CpgBase.h"
+#include "CpgBase.h"
 
 namespace switched_model {
 
 class SinCpg : public CpgBase
 {
 public:
-	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-
 	typedef std::shared_ptr<SinCpg> Ptr;
 
 	SinCpg(const double& swingLegLiftOff = 0.15, const double& swingTimeScale = 1.0)
@@ -45,7 +44,6 @@ private:
 
 
 }  // end of switched_model namespace
-
 
 
 #endif /* SINCPG_H_ */

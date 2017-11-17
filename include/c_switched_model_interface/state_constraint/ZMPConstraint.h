@@ -5,8 +5,8 @@
  *      Author: farbod
  */
 
-#ifndef HYQ_ZMPCONSTRAINT_H_
-#define HYQ_ZMPCONSTRAINT_H_
+#ifndef ZMPCONSTRAINT_H_
+#define ZMPCONSTRAINT_H_
 
 #include <array>
 #include <Eigen/Dense>
@@ -52,4 +52,4 @@ private:
 }  // end of switched_model namespace
 
 
-#endif /* HYQ_ZMPCONSTRAINT_H_ */
+#endif /* ZMPCONSTRAINT_H_ */

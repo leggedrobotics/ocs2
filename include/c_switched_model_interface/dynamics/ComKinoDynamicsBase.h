@@ -55,13 +55,16 @@ public:
 	  comDynamics_(kinematicModelPtr, comModelPtr, gravitationalAcceleration, options.constrainedIntegration_),
 	  stanceLegs_(stanceLegs),
 	  options_(options),
-	  feetZDirectionPlanner_(feetZDirectionPlanner != NULL ? feetZDirectionPlanner->clone() : NULL),
+	  feetZDirectionPlanner_(feetZDirectionPlanner!=NULL ? feetZDirectionPlanner->clone() : NULL),
 	  endEffectorStateConstraints_(endEffectorStateConstraints.size())
 	{
 		if (gravitationalAcceleration<0)  throw std::runtime_error("Gravitational acceleration should be a positive value (e.g. +9.81).");
 
-		for (size_t i=0; i<endEffectorStateConstraints.size(); i++)
+		for (size_t i=0; i<endEffectorStateConstraints.size(); i++) {
+			if (endEffectorStateConstraints[i] == NULL)
+				throw std::runtime_error("The endEffectorStateConstraints array is not properly initialized.");
 			endEffectorStateConstraints_[i] = endEffectorStateConstraints[i]->clone();
+		}
 	}
 
 	/**
@@ -75,11 +78,14 @@ public:
 	  comDynamics_(rhs.comDynamics_),
 	  stanceLegs_(rhs.stanceLegs_),
 	  options_(rhs.options_),
-	  feetZDirectionPlanner_(rhs.feetZDirectionPlanner_->clone()),
+	  feetZDirectionPlanner_(rhs.feetZDirectionPlanner_!=NULL ? rhs.feetZDirectionPlanner_->clone() : NULL),
 	  endEffectorStateConstraints_(rhs.endEffectorStateConstraints_.size())
 	{
-		for (size_t i=0; i<rhs.endEffectorStateConstraints_.size(); i++)
+		for (size_t i=0; i<rhs.endEffectorStateConstraints_.size(); i++)  {
+			if (rhs.endEffectorStateConstraints_[i] == NULL)
+				throw std::runtime_error("The endEffectorStateConstraints array is not properly initialized.");
 			endEffectorStateConstraints_[i] = rhs.endEffectorStateConstraints_[i]->clone();
+		}
 	}
 
 	virtual ~ComKinoDynamicsBase() {}

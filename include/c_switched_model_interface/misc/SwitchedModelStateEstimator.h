@@ -5,8 +5,8 @@
  *      Author: farbod
  */
 
-#ifndef HYQ_SWITCHEDMODELSTATEESTIMATOR_H_
-#define HYQ_SWITCHEDMODELSTATEESTIMATOR_H_
+#ifndef SWITCHEDMODELSTATEESTIMATOR_H_
+#define SWITCHEDMODELSTATEESTIMATOR_H_
 
 #include <array>
 #include <Eigen/Dense>
@@ -176,4 +176,4 @@ private:
 
 }  // end of switched_model namespace
 
-#endif /* HYQ_SWITCHEDMODELSTATEESTIMATOR_H_ */
+#endif /* SWITCHEDMODELSTATEESTIMATOR_H_ */

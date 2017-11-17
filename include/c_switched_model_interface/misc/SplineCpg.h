@@ -10,16 +10,14 @@
 
 #include <cmath>
 
-#include "misc/CpgBase.h"
-#include "misc/CubicSpline.h"
+#include "CpgBase.h"
+#include "CubicSpline.h"
 
 namespace switched_model {
 
 class SplineCpg : public CpgBase
 {
 public:
-	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-
 	typedef std::shared_ptr<SplineCpg> Ptr;
 
 	SplineCpg(const double& swingLegLiftOff = 0.15, const double& swingTimeScale = 1.0)

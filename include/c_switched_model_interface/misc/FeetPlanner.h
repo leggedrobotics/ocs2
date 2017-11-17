@@ -5,8 +5,8 @@
  *      Author: farbod
  */
 
-#ifndef HYQ_FEETPLANNER_H_
-#define HYQ_FEETPLANNER_H_
+#ifndef FEETPLANNER_H_
+#define FEETPLANNER_H_
 
 #include <memory>
 #include <array>
@@ -199,4 +199,4 @@ private:
 }  // end of switched_model namespace
 
 
-#endif /* HYQ_FEETPLANNER_H_ */
+#endif /* FEETPLANNER_H_ */

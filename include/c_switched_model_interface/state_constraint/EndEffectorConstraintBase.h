@@ -5,8 +5,8 @@
  *      Author: farbod
  */
 
-#ifndef HYQ_ENDEFFECTORCONSTRAINTBASE_H_
-#define HYQ_ENDEFFECTORCONSTRAINTBASE_H_
+#ifndef ENDEFFECTORCONSTRAINTBASE_H_
+#define ENDEFFECTORCONSTRAINTBASE_H_
 
 #include <memory>
 #include <limits>
@@ -70,4 +70,4 @@ protected:
 
 }  // end of switched_model namespace
 
-#endif /* HYQ_ENDEFFECTORCONSTRAINTBASE_H_ */
+#endif /* ENDEFFECTORCONSTRAINTBASE_H_ */

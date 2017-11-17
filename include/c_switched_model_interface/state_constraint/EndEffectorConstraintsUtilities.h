@@ -5,8 +5,8 @@
  *      Author: farbod
  */
 
-#ifndef HYQ_ENDEFFECTORCONSTRAINTSUTILITIES_H_
-#define HYQ_ENDEFFECTORCONSTRAINTSUTILITIES_H_
+#ifndef ENDEFFECTORCONSTRAINTSUTILITIES_H_
+#define ENDEFFECTORCONSTRAINTSUTILITIES_H_
 
 #include <memory>
 #include <string>
@@ -162,4 +162,4 @@ inline void publishGapMessages(const std::vector<EndEffectorConstraintBase::Ptr>
 
 
 
-#endif /* HYQ_ENDEFFECTORCONSTRAINTSUTILITIES_H_ */
+#endif /* ENDEFFECTORCONSTRAINTSUTILITIES_H_ */

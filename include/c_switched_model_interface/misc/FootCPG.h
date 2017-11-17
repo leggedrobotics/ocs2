@@ -5,8 +5,8 @@
  *      Author: farbod
  */
 
-#ifndef HYQ_FOOTCPG_H_
-#define HYQ_FOOTCPG_H_
+#ifndef FOOTCPG_H_
+#define FOOTCPG_H_
 
 #include <cmath>
 
@@ -100,4 +100,4 @@ private:
 
 
 
-#endif /* HYQ_FOOTCPG_H_ */
+#endif /* FOOTCPG_H_ */

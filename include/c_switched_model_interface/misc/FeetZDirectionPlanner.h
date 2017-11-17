@@ -5,8 +5,8 @@
  *      Author: farbod
  */
 
-#ifndef HYQ_FEETZDIRECTIONPLANNER_H_
-#define HYQ_FEETZDIRECTIONPLANNER_H_
+#ifndef FEETZDIRECTIONPLANNER_H_
+#define FEETZDIRECTIONPLANNER_H_
 
 #include <memory>
 #include <array>
@@ -19,7 +19,6 @@ namespace switched_model {
 class FeetZDirectionPlannerBase
 {
 public:
-	EIGEN_MAKE_ALIGNED_OPERATOR_NEW;
 	typedef std::shared_ptr<FeetZDirectionPlannerBase> Ptr;
 
 	FeetZDirectionPlannerBase() {}
@@ -45,7 +44,6 @@ template <class CPG>
 class FeetZDirectionPlanner  : public FeetZDirectionPlannerBase
 {
 public:
-	EIGEN_MAKE_ALIGNED_OPERATOR_NEW;
 	typedef std::shared_ptr<FeetZDirectionPlanner<CPG> > Ptr;
 
 	FeetZDirectionPlanner(const std::vector<std::array<bool,4> >& stanceLegsSequene,
@@ -209,4 +207,4 @@ private:
 
 }  // end of switched_model namespace
 
-#endif /* HYQ_FEETZDIRECTIONPLANNER_H_ */
+#endif /* FEETZDIRECTIONPLANNER_H_ */

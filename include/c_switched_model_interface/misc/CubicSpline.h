@@ -16,8 +16,6 @@ namespace switched_model {
 class CubicSpline
 {
 public:
-	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-
 	typedef std::shared_ptr<CubicSpline> Ptr;
 
 	CubicSpline() {}

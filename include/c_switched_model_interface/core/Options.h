@@ -8,6 +8,8 @@
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/info_parser.hpp>
 
+#include "MotionPhaseDefinition.h"
+
 namespace switched_model {
 
 struct Options
@@ -109,19 +111,19 @@ inline void loadModelSettings(const std::string& filename, Options& options, boo
 	}
 
 	try {
-		options.defaultStartMode_ = Mode::String2ModeNumber(pt.get<std::string>("model_settings.defaultStartMode"));
-		std::cerr << "#### defaultStartMode ............. " << Mode::ModeNumber2String(options.defaultStartMode_) << std::endl;
+		options.defaultStartMode_ = string2ModeNumber(pt.get<std::string>("model_settings.defaultStartMode"));
+		std::cerr << "#### defaultStartMode ............. " << modeNumber2String(options.defaultStartMode_) << std::endl;
 	}
 	catch (const std::exception& e){
-		std::cerr << "#### defaultStartMode ............. " << Mode::ModeNumber2String(options.defaultStartMode_) << "\t(default)" << std::endl;
+		std::cerr << "#### defaultStartMode ............. " << modeNumber2String(options.defaultStartMode_) << "\t(default)" << std::endl;
 	}
 
 	try {
-		options.defaultFinalMode_ = Mode::String2ModeNumber(pt.get<std::string>("model_settings.defaultFinalMode"));
-		std::cerr << "#### defaultFinalMode ............. " << Mode::ModeNumber2String(options.defaultFinalMode_) << std::endl;
+		options.defaultFinalMode_ = string2ModeNumber(pt.get<std::string>("model_settings.defaultFinalMode"));
+		std::cerr << "#### defaultFinalMode ............. " << modeNumber2String(options.defaultFinalMode_) << std::endl;
 	}
 	catch (const std::exception& e){
-		std::cerr << "#### defaultFinalMode ............. " << Mode::ModeNumber2String(options.defaultFinalMode_) << "\t(default)" << std::endl;
+		std::cerr << "#### defaultFinalMode ............. " << modeNumber2String(options.defaultFinalMode_) << "\t(default)" << std::endl;
 	}
 
 	std::cerr << std::endl;

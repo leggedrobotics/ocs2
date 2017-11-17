@@ -6,6 +6,7 @@ add_definitions("-std=c++11")
 find_package(catkin REQUIRED
 	cmake_modules
 	ocs2_core
+	roscpp
 )
 
 ## Eigen3
@@ -20,7 +21,7 @@ endif()
 ###################################
 catkin_package(
 	INCLUDE_DIRS include
-	CATKIN_DEPENDS ocs2_core
+	CATKIN_DEPENDS ocs2_core roscpp
 	DEPENDS Eigen
 )
 

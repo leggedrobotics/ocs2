@@ -11,6 +11,7 @@
   <buildtool_depend>catkin</buildtool_depend>
 
   <depend>ocs2_core</depend>
+  <depend>roscpp</depend>
 
   <!-- The export tag contains other, unspecified, tags -->
   <export>

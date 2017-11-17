@@ -105,7 +105,7 @@ void KinematicsModelBase<JOINT_COORD_SIZE>::FromBaseJacobianToInertiaJacobian(
 	// rotation
 	i_J_point.template topRows<3>() << i_R_b,  Eigen::Matrix3d::Zero(),  i_R_b*b_J_point.template topRows<3>();
 	// translation
-	i_J_point.template bottomRows<3>() << -i_R_b*SwitchedModel<JOINT_COORD_SIZE>::CrossProductMatrix(b_r_point), i_R_b, i_R_b*b_J_point.template bottomRows<3>();
+	i_J_point.template bottomRows<3>() << -i_R_b*switched_model::CrossProductMatrix(b_r_point), i_R_b, i_R_b*b_J_point.template bottomRows<3>();
 }
 
 /******************************************************************************************************/

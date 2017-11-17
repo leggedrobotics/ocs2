@@ -5,8 +5,15 @@
  *      Author: farbod
  */
 
-#include "ocs2_anymal_interface/OCS2AnymalInterface.h"
+//config file loading
+#include <ocs2_anymal_interface/OCS2AnymalInterface.h>
+#include <c_switched_model_interface/state_constraint/EndEffectorConstraintsUtilities.h>
 
+#include <ocs2_core/misc/LoadConfigFile.h>
+#include <ocs2_core/integration/eigenIntegration.h>
+
+
+namespace anymal {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
@@ -23,10 +30,10 @@ void OCS2AnymalInterface::fromHyqStateToComStateOrigin(const double& time,
 		com_coordinate_t& comVelocities)  {
 
 	// rotation matrix
-	Eigen::Matrix3d b_R_o = hyq::SwitchedModelKinematics::RotationMatrixOrigintoBase(hyqState.head<3>());
+	Eigen::Matrix3d b_R_o = switched_model::RotationMatrixOrigintoBase(hyqState.head<3>());
 	// switched hyq state
 	dimension_t::state_vector_t switchedState;
-	hyq::SwitchedModelStateEstimator::EstimateSwitchedModelState(time, hyqState, switchedState);
+	SwitchedModelStateEstimator::EstimateSwitchedModelState(time, hyqState, switchedState);
 	comPose = switchedState.segment<6>(0);
 	com_coordinate_t comLocalVelocities = switchedState.segment<6>(6);
 	comVelocities.head<3>() = b_R_o.transpose() * comLocalVelocities.head<3>();
@@ -39,7 +46,7 @@ void OCS2AnymalInterface::fromHyqStateToComStateOrigin(const double& time,
 void OCS2AnymalInterface::adjustFootZdirection(const double& time, std::array<Eigen::Vector3d,4>& origin_base2StanceFeet, std::array<bool,4>& stanceLegSequene) {
 
 	size_t activeSubsystemIndexInStock = findActiveSubsystemIndex(time);
-	stanceLegSequene = hyq::HyQMode::ModeNumber2StanceLeg(initSwitchingModes_[activeSubsystemIndexInStock]);
+	stanceLegSequene = Mode::ModeNumber2StanceLeg(initSwitchingModes_[activeSubsystemIndexInStock]);
 
 	for (size_t j=0; j<4; j++) {
 		if (stanceLegSequene[j]==true)
@@ -137,16 +144,16 @@ void OCS2AnymalInterface::getSystemStockIndexes(std::vector<size_t>& systemStock
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void OCS2AnymalInterface::getGapIndicatorPtrs(std::vector<hyq::EndEffectorConstraintBase::Ptr>& gapIndicatorPtrs) const {
+void OCS2AnymalInterface::getGapIndicatorPtrs(std::vector<switched_model::EndEffectorConstraintBase::Ptr>& gapIndicatorPtrs) const {
 	gapIndicatorPtrs = gapIndicatorPtrs_;
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void OCS2AnymalInterface::getMpcOptions(typename mpc_t::mpc_settings_t& mpcOptions){
-	mpcOptions = mpcOptions_;
-}
+// void OCS2AnymalInterface::getMpcOptions(typename mpc_t::mpc_settings_t& mpcOptions){
+// 	mpcOptions = mpcOptions_;
+// }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
@@ -202,7 +209,7 @@ void OCS2AnymalInterface::runSLQP(const double& initTime,
 		const std::vector<double>& switchingTimes/*=std::vector<double>()*/)  {
 
 	initTime_ = initTime;
-	hyq::SwitchedModelStateEstimator::EstimateSwitchedModelState(initTime_, initHyQState, initSwitchedHyqState_);
+	SwitchedModelStateEstimator::EstimateSwitchedModelState(initTime_, initHyQState, initSwitchedState_);
 
 	if (switchingTimes.empty()==true)
 		switchingTimes_ = initSwitchingTimes_;
@@ -226,7 +233,7 @@ void OCS2AnymalInterface::runSLQP(const double& initTime,
 	}
 
 	// run slqp
-	slqpPtr_->run(initTime_, initSwitchedHyqState_, switchingTimes_.back(), initSystemStockIndexes_, switchingTimes_,
+	slqpPtr_->run(initTime_, initSwitchedState_, switchingTimes_.back(), initSystemStockIndexes_, switchingTimes_,
 			controllersStock_, desiredTimeTrajectoriesStock_, desiredStateTrajectoriesStock_);
 
 	// get the optimizer parametet
@@ -242,8 +249,8 @@ void OCS2AnymalInterface::runSLQP(const double& initTime,
 
 //	concatenate();
 
-//	hyq::SwitchedModelKinematics::FeetPositionsBaseFrame(initSwitchedHyqState_.tail<12>(), origin_base2StanceFeetPrev_);
-//	Eigen::Matrix3d o_R_b = hyq::SwitchedModelKinematics::RotationMatrixOrigintoBase(initSwitchedHyqState_.head<3>()).transpose();
+//	hyq::SwitchedModelKinematics::FeetPositionsBaseFrame(initSwitchedState_.tail<12>(), origin_base2StanceFeetPrev_);
+//	Eigen::Matrix3d o_R_b = hyq::SwitchedModelKinematics::RotationMatrixOrigintoBase(initSwitchedState_.head<3>()).transpose();
 //	for (size_t j=0; j<4; j++) origin_base2StanceFeetPrev_[j] = (o_R_b * origin_base2StanceFeetPrev_[j] + initHyQState.segment<3>(3)).eval();
 //
 //	feetZDirectionPlannerPtr_->planAllModes(switchingTimes_, plannedCPGs_);
@@ -272,61 +279,61 @@ void OCS2AnymalInterface::getOptimizerParameters(const std::shared_ptr<T>& optim
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-bool OCS2AnymalInterface::runMPC(const double& initTime, const Eigen::Matrix<double,36,1>& initHyQState)  {
-
-	initTime_ = initTime;
-	hyq::SwitchedModelStateEstimator::EstimateSwitchedModelState(initTime_, initHyQState, initSwitchedHyqState_);
-
-	// update controller
-	bool controllerIsUpdated = mpcPtr_->run(initTime_, initSwitchedHyqState_);
-
-	// get the optimizer outputs
-	controllersStockPtr_ = mpcPtr_->getControllerPtr();
-
-	// get the optimizer outputs
-	timeTrajectoriesStockPtr_ = mpcPtr_->getTimeTrajectoriesPtr();
-	stateTrajectoriesStockPtr_ = mpcPtr_->getStateTrajectoriesPtr();
-	inputTrajectoriesStockPtr_ = mpcPtr_->getInputTrajectoriesPtr();
-
-	// get the optimizer parametet: switchingTimes_, systemStockIndexes_,
-	// numSubsystems_, switchingModes_, and stanceLegSequene_
-	getOptimizerParameters(mpcPtr_);
-
-	return controllerIsUpdated;
-}
-
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-bool OCS2AnymalInterface::runMPC(const double& initTime, const dimension_t::state_vector_t& initHyQState)  {
-
-	initTime_ = initTime;
-	initSwitchedHyqState_ = initHyQState;
-
-	// update controller
-	bool controllerIsUpdated = mpcPtr_->run(initTime_, initSwitchedHyqState_);
-
-	// get the optimizer outputs
-	mpcPtr_->getController(controllersStock_);
-
-	// get the optimizer outputs
-	mpcPtr_->getTrajectories(timeTrajectoriesStock_, stateTrajectoriesStock_, inputTrajectoriesStock_);
-
-	// get the optimizer parametet: switchingTimes_, systemStockIndexes_,
-	// numSubsystems_, switchingModes_, and stanceLegSequene_
-	getOptimizerParameters(mpcPtr_);
-
-	return controllerIsUpdated;
-}
+// bool OCS2AnymalInterface::runMPC(const double& initTime, const Eigen::Matrix<double,36,1>& initHyQState)  {
+//
+// 	initTime_ = initTime;
+// 	hyq::SwitchedModelStateEstimator::EstimateSwitchedModelState(initTime_, initHyQState, initSwitchedState_);
+//
+// 	// update controller
+// 	bool controllerIsUpdated = mpcPtr_->run(initTime_, initSwitchedState_);
+//
+// 	// get the optimizer outputs
+// 	controllersStockPtr_ = mpcPtr_->getControllerPtr();
+//
+// 	// get the optimizer outputs
+// 	timeTrajectoriesStockPtr_ = mpcPtr_->getTimeTrajectoriesPtr();
+// 	stateTrajectoriesStockPtr_ = mpcPtr_->getStateTrajectoriesPtr();
+// 	inputTrajectoriesStockPtr_ = mpcPtr_->getInputTrajectoriesPtr();
+//
+// 	// get the optimizer parametet: switchingTimes_, systemStockIndexes_,
+// 	// numSubsystems_, switchingModes_, and stanceLegSequene_
+// 	getOptimizerParameters(mpcPtr_);
+//
+// 	return controllerIsUpdated;
+// }
 
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void OCS2AnymalInterface::setNewGoalStateMPC(const dimension_t::scalar_t& newGoalDuration, const dimension_t::state_vector_t& newGoalState) {
-	mpcPtr_->setNewGoalState(newGoalDuration, newGoalState);
-}
+// bool OCS2AnymalInterface::runMPC(const double& initTime, const dimension_t::state_vector_t& initHyQState)  {
+//
+// 	initTime_ = initTime;
+// 	initSwitchedState_ = initHyQState;
+//
+// 	// update controller
+// 	bool controllerIsUpdated = mpcPtr_->run(initTime_, initSwitchedState_);
+//
+// 	// get the optimizer outputs
+// 	mpcPtr_->getController(controllersStock_);
+//
+// 	// get the optimizer outputs
+// 	mpcPtr_->getTrajectories(timeTrajectoriesStock_, stateTrajectoriesStock_, inputTrajectoriesStock_);
+//
+// 	// get the optimizer parametet: switchingTimes_, systemStockIndexes_,
+// 	// numSubsystems_, switchingModes_, and stanceLegSequene_
+// 	getOptimizerParameters(mpcPtr_);
+//
+// 	return controllerIsUpdated;
+// }
+
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+// void OCS2AnymalInterface::setNewGoalStateMPC(const dimension_t::scalar_t& newGoalDuration, const dimension_t::state_vector_t& newGoalState) {
+// 	mpcPtr_->setNewGoalState(newGoalDuration, newGoalState);
+// }
 
 
 /******************************************************************************************************/
@@ -342,10 +349,10 @@ void OCS2AnymalInterface::runOCS2(const double& initTime,
 		switchingTimes_ = switchingTimes;
 
 	initTime_ = initTime;
-	hyq::SwitchedModelStateEstimator::EstimateSwitchedModelState(initTime_, initHyQState, initSwitchedHyqState_);
+	SwitchedModelStateEstimator::EstimateSwitchedModelState(initTime_, initHyQState, initSwitchedState_);
 
 	// run ocs2
-	ocs2Ptr_->run(initTime_, initSwitchedHyqState_, switchingTimes_.back(), initSystemStockIndexes_, switchingTimes_,
+	ocs2Ptr_->run(initTime_, initSwitchedState_, switchingTimes_.back(), initSystemStockIndexes_, switchingTimes_,
 			dimension_t::controller_array_t(),
 			desiredTimeTrajectoriesStock_, desiredStateTrajectoriesStock_);
 
@@ -371,44 +378,44 @@ void OCS2AnymalInterface::loadSettings(const std::string& pathToConfigFolder, co
 	taskFile = pathToConfigFolder + "/task.info";
 
 	double dt, finalTime, initSettlingTime;
-	loadSimulationSettings(taskFile, dt, finalTime, initSettlingTime);
+	ocs2::LoadConfigFile::loadSimulationSettings(taskFile, dt, finalTime, initSettlingTime);
 
 	// gravity vector
-	loadMatrix(taskFile,"gravity",gravity_);
+	ocs2::LoadConfigFile::loadMatrix(taskFile,"gravity",gravity_);
 	std::cerr <<"====================" << std::endl;
 	std::cerr << "Gravity: \t" << gravity_.transpose().format(CleanFmtDisplay_) << std::endl << std::endl;
 
 	// Initial state of the switchedModel
-	hyq::SwitchedModelStateEstimator::EstimateSwitchedModelState(0.0, initHyQState, initSwitchedHyqState_);
+	SwitchedModelStateEstimator::EstimateSwitchedModelState(0.0, initHyQState, initSwitchedState_);
 
 	// cost function components
-	loadMatrix(taskFile, "Q", Q_);
-	loadMatrix(taskFile, "R", R_);
-	loadMatrix(taskFile, "Q_final", QFinal_);
+	ocs2::LoadConfigFile::loadMatrix(taskFile, "Q", Q_);
+	ocs2::LoadConfigFile::loadMatrix(taskFile, "R", R_);
+	ocs2::LoadConfigFile::loadMatrix(taskFile, "Q_final", QFinal_);
 	// target state
 	dimension_t::state_vector_t xFinalLoaded;
-	loadMatrix(taskFile, "x_final", xFinalLoaded);
-	xFinal_ = initSwitchedHyqState_;
+	ocs2::LoadConfigFile::loadMatrix(taskFile, "x_final", xFinalLoaded);
+	xFinal_ = initSwitchedState_;
 	xFinal_.head<6>() += xFinalLoaded.head<6>();
 
 	// OCS2 options
-	ocs2::loadOptions<12+12,12+12>(taskFile, slqpOptions_, true);
+	ocs2::LoadConfigFile::loadOptions<12+12,12+12>(taskFile, slqpOptions_, true);
 
-	// MPC settings
-	ocs2::loadMpcSettings<12+12,12+12>(taskFile, mpcOptions_, true);
+	// // MPC settings
+	// ocs2::LoadConfigFile::loadMpcSettings<12+12,12+12>(taskFile, mpcOptions_, true);
 
 	// load switched model options
 	loadModelSettings(taskFile, options_, zmpWeight_, impulseWeight_, impulseSigmeFactor_, true);
 
 	// load the switchingModes
-	hyq::loadSwitchingModes(taskFile, initSwitchingModes_);
+	loadSwitchingModes(taskFile, initSwitchingModes_);
 	initNumSubsystems_ = initSwitchingModes_.size();
 	std::cerr << "initSwitchingModes: "
 			<< Eigen::Matrix<size_t,1,-1>::Map(initSwitchingModes_.data(),initNumSubsystems_).format(CleanFmtDisplay_) << std::endl;
 
 	// stanceLeg sequence
 	initStanceLegSequene_.resize(initNumSubsystems_);
-	for (size_t i=0; i<initNumSubsystems_; i++)  initStanceLegSequene_[i] = hyq::HyQMode::ModeNumber2StanceLeg(initSwitchingModes_[i]);
+	for (size_t i=0; i<initNumSubsystems_; i++)  initStanceLegSequene_[i] = Mode::ModeNumber2StanceLeg(initSwitchingModes_[i]);
 
 	// subsystems index in the subsystem-stock
 	initSystemStockIndexes_.resize(initNumSubsystems_);
@@ -417,13 +424,13 @@ void OCS2AnymalInterface::loadSettings(const std::string& pathToConfigFolder, co
 	// Initial switching times
 	size_t NumNonFlyingSubSystems=0;
 	for (size_t i=0; i<initNumSubsystems_; i++)
-		if (initSwitchingModes_[initSystemStockIndexes_[i]] != hyq::FLY)
+		if (initSwitchingModes_[initSystemStockIndexes_[i]] != FLY)
 			NumNonFlyingSubSystems++;
 	initSwitchingTimes_.resize(initNumSubsystems_+1);
 	initSwitchingTimes_.front() = 0.0;
 	initSwitchingTimes_.back()  = finalTime-initSettlingTime;
 	for (size_t i=0; i<initNumSubsystems_-1; i++)
-		if (initSwitchingModes_[initSystemStockIndexes_[i]] != hyq::FLY)
+		if (initSwitchingModes_[initSystemStockIndexes_[i]] != FLY)
 			initSwitchingTimes_[i+1] = initSwitchingTimes_[i] + (finalTime-initSettlingTime)/NumNonFlyingSubSystems;
 		else
 			initSwitchingTimes_[i+1] = initSwitchingTimes_[i] + 0.2;
@@ -431,20 +438,20 @@ void OCS2AnymalInterface::loadSettings(const std::string& pathToConfigFolder, co
 					<< std::endl << std::endl;
 
 	// Gap Indicators
-	hyq::loadGaps(taskFile, gapIndicatorPtrs_, true);
+	switched_model::loadGaps(taskFile, gapIndicatorPtrs_, true);
 
 	// mrt_deadzone
-	loadMatrix(taskFile, "mrt_deadzone", mrtDeadzone_);
+	ocs2::LoadConfigFile::loadMatrix(taskFile, "mrt_deadzone", mrtDeadzone_);
 
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void OCS2AnymalInterface::setupOptimizaer()  {
+void OCS2AnymalInterface::setupOptimizer()  {
 
 	// Z direction CPG planner
-	feetZDirectionPlannerPtr_ = hyq::FeetZDirectionPlanner<z_direction_cpg_t>::Ptr(new hyq::FeetZDirectionPlanner<z_direction_cpg_t>(
+	feetZDirectionPlannerPtr_ = switched_model::FeetZDirectionPlanner<z_direction_cpg_t>::Ptr(new switched_model::FeetZDirectionPlanner<z_direction_cpg_t>(
 			initStanceLegSequene_, options_.swingLegLiftOff_, (initSwitchingTimes_[1]-initSwitchingTimes_[0]) /*time scale for adjusting z hight*/,
 			anymal::Mode::ModeNumber2StanceLeg(options_.defaultStartMode_),
 			anymal::Mode::ModeNumber2StanceLeg(options_.defaultFinalMode_) ) );
@@ -467,18 +474,18 @@ void OCS2AnymalInterface::setupOptimizaer()  {
 		desiredTimeTrajectoriesStock_[i] = tNominalTrajectory;
 		// nominal state
 		dimension_t::state_vector_array_t xNominalTrajectory(2);
-		xNominalTrajectory[0] = initSwitchedHyqState_;
+		xNominalTrajectory[0] = initSwitchedState_;
 		xNominalTrajectory[1] = xFinal_;
 		desiredStateTrajectoriesStock_[i] = xNominalTrajectory;
 		// nominal control inputs for weight compensation
 		dimension_t::control_vector_t uNominalForWeightCompensation;
 		std::array<Eigen::Vector3d,4> sphericalWeightCompensationForces;
-		Eigen::Matrix3d b_R_o = hyq::SwitchedModelKinematics::RotationMatrixOrigintoBase(initSwitchedHyqState_.head<3>());
+		Eigen::Matrix3d b_R_o = switched_model::RotationMatrixOrigintoBase(initSwitchedState_.head<3>());
 		if (options_.useCartesianContactForce_==false)
-			WeightCompensationForces::ComputeSphericalForces(b_R_o*gravity_, std::array<bool,4>{1,1,1,1}/*initStanceLegSequene_[i]*/, initSwitchedHyqState_.tail<12>(),
+			weightCompensationForces_.ComputeSphericalForces(b_R_o*gravity_, std::array<bool,4>{1,1,1,1}/*initStanceLegSequene_[i]*/, initSwitchedState_.tail<12>(),
 					sphericalWeightCompensationForces);
 		else
-			WeightCompensationForces::ComputeCartesianForces(b_R_o*gravity_, std::array<bool,4>{1,1,1,1}/*initStanceLegSequene_[i]*/, initSwitchedHyqState_.tail<12>(),
+			weightCompensationForces_.ComputeCartesianForces(b_R_o*gravity_, std::array<bool,4>{1,1,1,1}/*initStanceLegSequene_[i]*/, initSwitchedState_.tail<12>(),
 					sphericalWeightCompensationForces);
 		for (size_t j=0; j<4; j++)
 			uNominalForWeightCompensation.segment<3>(3*j) = sphericalWeightCompensationForces[j];
@@ -486,11 +493,11 @@ void OCS2AnymalInterface::setupOptimizaer()  {
 		dimension_t::control_vector_array_t uNominalTrajectory(2, uNominalForWeightCompensation);
 
 		// state and input operating points
-		stateOperatingPoints_[i] = initSwitchedHyqState_;
+		stateOperatingPoints_[i] = initSwitchedState_;
 		inputOperatingPoints_[i] = uNominalForWeightCompensation;
 		if (options_.constrainedIntegration_==false)  {
 			inputOperatingPoints_[i].setZero();
-			WeightCompensationForces::ComputeSphericalForces(b_R_o*gravity_, std::array<bool,4>{1,1,1,1}, initSwitchedHyqState_.tail<12>(), sphericalWeightCompensationForces);
+			weightCompensationForces_.ComputeSphericalForces(b_R_o*gravity_, std::array<bool,4>{1,1,1,1}, initSwitchedState_.tail<12>(), sphericalWeightCompensationForces);
 			for (size_t j=0; j<4; j++)  inputOperatingPoints_[i].segment<3>(3*j) = sphericalWeightCompensationForces[j];
 		}
 
@@ -545,7 +552,7 @@ void OCS2AnymalInterface::calculateStateDerivative(const std::vector<size_t>& sy
 	stateDerivativeTrajectoriesStock.resize(numSubsystems_);
 	for (int i=0; i<numSubsystems_; i++) {
 
-		std::shared_ptr<system_dynamics_t::Base> currSubsystemDynamicsPtr = subsystemDynamicsPtr_[initSystemStockIndexes_[i]]->clone();
+		std::shared_ptr<system_dynamics_t::Base::Base> currSubsystemDynamicsPtr = subsystemDynamicsPtr_[initSystemStockIndexes_[i]]->clone();
 
 		// initialize subsystem i
 		dimension_t::state_vector_t x0 = stateTrajectoriesStock[i][0];
@@ -559,3 +566,5 @@ void OCS2AnymalInterface::calculateStateDerivative(const std::vector<size_t>& sy
 		}
 	}
 }
+
+} // end of namespace anymal

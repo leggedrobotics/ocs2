@@ -10,10 +10,9 @@ namespace anymal {
 
 class AnymalComKinoDynamicsDerivative : public switched_model::ComKinoDynamicsDerivativeBase<12>
 {
-private:
+public:
 	typedef ComKinoDynamicsDerivativeBase<12> Base;
 
-public:
 	AnymalComKinoDynamicsDerivative(const std::array<bool,4>& stanceLegs,
 		const double& gravitationalAcceleration=9.81, const switched_model::Options& options = Options(),
 		const switched_model::FeetZDirectionPlannerBase::Ptr& feetZDirectionPlanner=NULL,

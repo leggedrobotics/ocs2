@@ -17,7 +17,6 @@
 #include <string>
 #include <Eigen/Dense>
 
-#include <ocs2_core/misc/LoadConfigFile.h>
 #include <ocs2_slq/LQP.h>
 #include <ocs2_slq/GLQP.h>
 #include <ocs2_slq/SLQP.h>
@@ -37,11 +36,13 @@
 #include <c_switched_model_interface/state_constraint/EndEffectorConstraintBase.h>
 #include <c_switched_model_interface/state_constraint/EllipticalConstraint.h>
 #include <c_switched_model_interface/state_constraint/EndEffectorConstraintsUtilities.h>
+#include <c_switched_model_interface/misc/WeightCompensationForces.h>
 
 #include <ocs2_anymal_switched_model/AnymalSwitchedModel.h>
 #include <ocs2_anymal_switched_model/SwitchedModelStateEstimator.h>
 #include <ocs2_anymal_switched_model/dynamics/AnymalComKinoDynamics.h>
 #include <ocs2_anymal_switched_model/dynamics/AnymalComKinoDynamicsDerivative.h>
+#include <iit/robots/anymal/inverse_dynamics.h>
 #include <ocs2_anymal_cost/SwitchedModelCost.h>
 
 namespace anymal {
@@ -57,6 +58,7 @@ public:
 	typedef SwitchedModelCost             		cost_funtion_t;
 	typedef AnymalComKinoDynamics           			system_dynamics_t;
 	typedef AnymalComKinoDynamicsDerivative 			system_dynamics_derivative_t;
+	typedef switched_model::WeightCompensationForces<AnymalCom,AnymalKinematics> weightCompensationForces_t;
 
 
 	typedef ocs2::GLQP<dimension_t::STATE_DIM_,dimension_t::INPUT_DIM_> 		glqp_t;
@@ -78,7 +80,7 @@ public:
 	: inverseDynamics_(iitInertiaProperties_, iitMotionTransforms_)
 	{
 		loadSettings(pathToConfigFolder, initState);
-		setupOptimizaer();
+		setupOptimizer();
 
 		// LQP
 		lqpPtr_ = typename glqp_t::Ptr(new glqp_t(subsystemDynamicsPtr_, subsystemDerivativesPtr_, subsystemCostFunctionsPtr_,
@@ -171,7 +173,7 @@ public:
 protected:
 	void loadSettings(const std::string& pathToConfigFolder, const Eigen::Matrix<double,36,1>& initState);
 
-	void setupOptimizaer();
+	void setupOptimizer();
 
 	template<class T>
 	void getOptimizerParameters(const std::shared_ptr<T>& optimizerPtr);
@@ -201,9 +203,9 @@ private:
 
 	std::array<Eigen::Vector3d,4> origin_base2StanceFeetPrev_;
 
-	iit::HyQ::dyn::InertiaProperties iitInertiaProperties_;
-	iit::HyQ::MotionTransforms iitMotionTransforms_;
-	iit::HyQ::dyn::InverseDynamics inverseDynamics_;
+	iit::ANYmal::dyn::InertiaProperties iitInertiaProperties_;
+	iit::ANYmal::MotionTransforms iitMotionTransforms_;
+	iit::ANYmal::dyn::InverseDynamics inverseDynamics_;
 	size_t greatestLessTimeStampIndex_;
 
 	Eigen::Vector3d gravity_;
@@ -221,11 +223,11 @@ private:
 	// typename mpc_t::mpc_settings_t mpcOptions_;
 
 	anymal::Options options_;
-	std::vector<hyq::EndEffectorConstraintBase::Ptr> gapIndicatorPtrs_;
-	hyq::FeetZDirectionPlanner<z_direction_cpg_t>::Ptr feetZDirectionPlannerPtr_;
-	std::vector<hyq::CpgBase::PtrArray> plannedCPGs_;
+	std::vector<switched_model::EndEffectorConstraintBase::Ptr> gapIndicatorPtrs_;
+	switched_model::FeetZDirectionPlanner<z_direction_cpg_t>::Ptr feetZDirectionPlannerPtr_;
+	std::vector<switched_model::CpgBase::PtrArray> plannedCPGs_;
 
-	dimension_t::state_vector_t initSwitchedHyqState_;
+	dimension_t::state_vector_t initSwitchedState_;
 	double initTime_;
 
 	std::vector<size_t> 			initSwitchingModes_;
@@ -239,9 +241,9 @@ private:
 	std::vector<double> 			switchingTimes_;
 
 	// subsystem dynamics
-	std::vector<std::shared_ptr<system_dynamics_t::Base> > subsystemDynamicsPtr_;
+	std::vector<std::shared_ptr<system_dynamics_t::Base::Base> > subsystemDynamicsPtr_;
 	// subsystem derivatives
-	std::vector<std::shared_ptr<system_dynamics_derivative_t::Base> > subsystemDerivativesPtr_;
+	std::vector<std::shared_ptr<system_dynamics_derivative_t::Base::Base> > subsystemDerivativesPtr_;
 	// subsystem cost functions
 	std::vector<std::shared_ptr<cost_funtion_t::BASE> > subsystemCostFunctionsPtr_;
 	// subsystem state operating points
@@ -295,6 +297,8 @@ private:
 	dimension_t::state_vector_t mrtDeadzone_;
 
 	const Eigen::IOFormat CleanFmtDisplay_ = Eigen::IOFormat(3, 0, ", ", "\n", "[", "]");
+
+	weightCompensationForces_t weightCompensationForces_;
 
 };
 

@@ -171,6 +171,18 @@ public:
 
 
 protected:
+	/**
+	 * This function loads the simulation-specific settings:
+	 * dt, tFinal, initSettlingTime
+	 */
+	void loadSimulationSettings(const std::string& filename, double& dt, double& tFinal, double& initSettlingTime);
+
+	/**
+	 * This function loads the visualization-specific settings:
+	 * slowdown factor, vizualization time
+	 */
+	void loadVisualizationSettings(const std::string& filename, double& slowdown, double& vizTime);
+
 	void loadSettings(const std::string& pathToConfigFolder, const Eigen::Matrix<double,36,1>& initState);
 
 	void setupOptimizer();

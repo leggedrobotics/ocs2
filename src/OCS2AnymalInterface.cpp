@@ -43,10 +43,11 @@ void OCS2AnymalInterface::fromHyqStateToComStateOrigin(const double& time,
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void OCS2AnymalInterface::adjustFootZdirection(const double& time, std::array<Eigen::Vector3d,4>& origin_base2StanceFeet, std::array<bool,4>& stanceLegSequene) {
+void OCS2AnymalInterface::adjustFootZdirection(
+		const double& time, std::array<Eigen::Vector3d,4>& origin_base2StanceFeet, std::array<bool,4>& stanceLegSequene) {
 
 	size_t activeSubsystemIndexInStock = findActiveSubsystemIndex(time);
-	stanceLegSequene = Mode::ModeNumber2StanceLeg(initSwitchingModes_[activeSubsystemIndexInStock]);
+	stanceLegSequene = switched_model::modeNumber2StanceLeg(initSwitchingModes_[activeSubsystemIndexInStock]);
 
 	for (size_t j=0; j<4; j++) {
 		if (stanceLegSequene[j]==true)
@@ -405,17 +406,17 @@ void OCS2AnymalInterface::loadSettings(const std::string& pathToConfigFolder, co
 	// ocs2::LoadConfigFile::loadMpcSettings<12+12,12+12>(taskFile, mpcOptions_, true);
 
 	// load switched model options
-	loadModelSettings(taskFile, options_, zmpWeight_, impulseWeight_, impulseSigmeFactor_, true);
+	switched_model::loadModelSettings(taskFile, options_, true);
 
 	// load the switchingModes
-	loadSwitchingModes(taskFile, initSwitchingModes_);
+	switched_model::loadSwitchingModes(taskFile, initSwitchingModes_, true);
 	initNumSubsystems_ = initSwitchingModes_.size();
 	std::cerr << "initSwitchingModes: "
 			<< Eigen::Matrix<size_t,1,-1>::Map(initSwitchingModes_.data(),initNumSubsystems_).format(CleanFmtDisplay_) << std::endl;
 
 	// stanceLeg sequence
 	initStanceLegSequene_.resize(initNumSubsystems_);
-	for (size_t i=0; i<initNumSubsystems_; i++)  initStanceLegSequene_[i] = Mode::ModeNumber2StanceLeg(initSwitchingModes_[i]);
+	for (size_t i=0; i<initNumSubsystems_; i++)  initStanceLegSequene_[i] = switched_model::modeNumber2StanceLeg(initSwitchingModes_[i]);
 
 	// subsystems index in the subsystem-stock
 	initSystemStockIndexes_.resize(initNumSubsystems_);
@@ -424,13 +425,13 @@ void OCS2AnymalInterface::loadSettings(const std::string& pathToConfigFolder, co
 	// Initial switching times
 	size_t NumNonFlyingSubSystems=0;
 	for (size_t i=0; i<initNumSubsystems_; i++)
-		if (initSwitchingModes_[initSystemStockIndexes_[i]] != FLY)
+		if (initSwitchingModes_[initSystemStockIndexes_[i]] != switched_model::FLY)
 			NumNonFlyingSubSystems++;
 	initSwitchingTimes_.resize(initNumSubsystems_+1);
 	initSwitchingTimes_.front() = 0.0;
 	initSwitchingTimes_.back()  = finalTime-initSettlingTime;
 	for (size_t i=0; i<initNumSubsystems_-1; i++)
-		if (initSwitchingModes_[initSystemStockIndexes_[i]] != FLY)
+		if (initSwitchingModes_[initSystemStockIndexes_[i]] != switched_model::FLY)
 			initSwitchingTimes_[i+1] = initSwitchingTimes_[i] + (finalTime-initSettlingTime)/NumNonFlyingSubSystems;
 		else
 			initSwitchingTimes_[i+1] = initSwitchingTimes_[i] + 0.2;
@@ -453,8 +454,8 @@ void OCS2AnymalInterface::setupOptimizer()  {
 	// Z direction CPG planner
 	feetZDirectionPlannerPtr_ = switched_model::FeetZDirectionPlanner<z_direction_cpg_t>::Ptr(new switched_model::FeetZDirectionPlanner<z_direction_cpg_t>(
 			initStanceLegSequene_, options_.swingLegLiftOff_, (initSwitchingTimes_[1]-initSwitchingTimes_[0]) /*time scale for adjusting z hight*/,
-			anymal::Mode::ModeNumber2StanceLeg(options_.defaultStartMode_),
-			anymal::Mode::ModeNumber2StanceLeg(options_.defaultFinalMode_) ) );
+			switched_model::modeNumber2StanceLeg(options_.defaultStartMode_),
+			switched_model::modeNumber2StanceLeg(options_.defaultFinalMode_) ) );
 
 	// for each subsystem that defined in stanceLegSequene
 	subsystemDynamicsPtr_.resize(initNumSubsystems_);
@@ -481,11 +482,7 @@ void OCS2AnymalInterface::setupOptimizer()  {
 		dimension_t::control_vector_t uNominalForWeightCompensation;
 		std::array<Eigen::Vector3d,4> sphericalWeightCompensationForces;
 		Eigen::Matrix3d b_R_o = switched_model::RotationMatrixOrigintoBase(initSwitchedState_.head<3>());
-		if (options_.useCartesianContactForce_==false)
-			weightCompensationForces_.ComputeSphericalForces(b_R_o*gravity_, std::array<bool,4>{1,1,1,1}/*initStanceLegSequene_[i]*/, initSwitchedState_.tail<12>(),
-					sphericalWeightCompensationForces);
-		else
-			weightCompensationForces_.ComputeCartesianForces(b_R_o*gravity_, std::array<bool,4>{1,1,1,1}/*initStanceLegSequene_[i]*/, initSwitchedState_.tail<12>(),
+		weightCompensationForces_.ComputeCartesianForces(b_R_o*gravity_, std::array<bool,4>{1,1,1,1}/*initStanceLegSequene_[i]*/, initSwitchedState_.tail<12>(),
 					sphericalWeightCompensationForces);
 		for (size_t j=0; j<4; j++)
 			uNominalForWeightCompensation.segment<3>(3*j) = sphericalWeightCompensationForces[j];

@@ -27,7 +27,8 @@
 // #include <mpc/MPC_SLQP.h>
 // #include <mpc/util/LoadSettings_MPC.h>
 
-#include <ocs2_anymal_interface/LoadTask.h>
+#include <c_switched_model_interface/core/Options.h>
+#include <c_switched_model_interface/core/MotionPhaseDefinition.h>
 #include <c_switched_model_interface/misc/SinCpg.h>
 #include <c_switched_model_interface/misc/SplineCpg.h>
 #include <c_switched_model_interface/misc/CpgBase.h>
@@ -38,7 +39,6 @@
 #include <c_switched_model_interface/state_constraint/EndEffectorConstraintsUtilities.h>
 #include <c_switched_model_interface/misc/WeightCompensationForces.h>
 
-#include <ocs2_anymal_switched_model/AnymalSwitchedModel.h>
 #include <ocs2_anymal_switched_model/SwitchedModelStateEstimator.h>
 #include <ocs2_anymal_switched_model/dynamics/AnymalComKinoDynamics.h>
 #include <ocs2_anymal_switched_model/dynamics/AnymalComKinoDynamicsDerivative.h>
@@ -222,7 +222,7 @@ private:
 	dimension_t::Options slqpOptions_;
 	// typename mpc_t::mpc_settings_t mpcOptions_;
 
-	anymal::Options options_;
+	switched_model::Options options_;
 	std::vector<switched_model::EndEffectorConstraintBase::Ptr> gapIndicatorPtrs_;
 	switched_model::FeetZDirectionPlanner<z_direction_cpg_t>::Ptr feetZDirectionPlannerPtr_;
 	std::vector<switched_model::CpgBase::PtrArray> plannedCPGs_;

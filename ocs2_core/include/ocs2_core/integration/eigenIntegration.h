@@ -120,7 +120,7 @@ namespace numeric {
 namespace odeint {
 
 template<int STATE_DIM>
-struct vector_space_reduce
+struct vector_space_reduce< Eigen::Matrix<double, STATE_DIM, 1> >
 {
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 

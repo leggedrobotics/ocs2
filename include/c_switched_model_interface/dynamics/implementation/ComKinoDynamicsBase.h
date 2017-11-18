@@ -36,7 +36,10 @@ void ComKinoDynamicsBase<JOINT_COORD_SIZE>::initializeModel(const std::vector<si
 		for (size_t j=0; j<4; j++)  nextPhaseStanceLegs_[j] = (finalTimesIndices[activeSubsystemIndex][j] == activeSubsystemIndex+1);
 	}
 
-	algorithmName_.assign(algorithmName);
+	if (algorithmName!=NULL)
+		algorithmName_.assign(algorithmName);
+	else
+		algorithmName_.clear();
 }
 
 /******************************************************************************************************/
@@ -172,8 +175,7 @@ void ComKinoDynamicsBase<JOINT_COORD_SIZE>::computeConstriant2(const scalar_t& t
 
 	// Base pose
 	base_coordinate_t basePose;
-	// ComDynamicsBase<JOINT_COORD_SIZE>::CalculateBasePose(qJoints, x.template head<6>(), basePose); // what is this?
-	throw std::runtime_error("FIXME");
+	comDynamics_.calculateBasePose(qJoints, x.template head<6>(), basePose);
 
 	kinematicModelPtr_->update(basePose, qJoints);
 
@@ -208,8 +210,7 @@ void ComKinoDynamicsBase<JOINT_COORD_SIZE>::computeFinalConstriant2(const scalar
 
 	// Base pose
 	base_coordinate_t basePose;
-	// ComDynamicsBase<JOINT_COORD_SIZE>::CalculateBasePose(qJoints, x.template head<6>(), basePose); // what is this?
-	throw std::runtime_error("FIXME");
+	comDynamics_.calculateBasePose(qJoints, x.template head<6>(), basePose);
 
 	kinematicModelPtr_->update(basePose, qJoints);
 

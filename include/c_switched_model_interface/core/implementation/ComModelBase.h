@@ -13,10 +13,7 @@ Eigen::Matrix<double,6,JOINT_COORD_SIZE> ComModelBase<JOINT_COORD_SIZE>::comJaco
 
 	// CoM jacobian in the Base frame around CoM
 	Eigen::Matrix<double,6,6> I = comInertia(jointCoordinate);
-	Eigen::Matrix3d rotationMInverse = I.topLeftCorner<3,3>().inverse();
-	Eigen::Matrix<double,6,6> I_inverse;
-	I_inverse << rotationMInverse, Eigen::Matrix3d::Zero(),
-			Eigen::Matrix3d::Zero(), Eigen::Matrix3d::Identity()/I(5,5);
+	Eigen::Matrix<double,6,6> I_inverse = I.ldlt().solve(Eigen::MatrixXd::Identity(6,6));
 
 	return I_inverse * comMomentumJacobian(jointCoordinate);
 }

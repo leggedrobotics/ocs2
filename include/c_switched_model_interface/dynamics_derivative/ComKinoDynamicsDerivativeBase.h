@@ -110,64 +110,82 @@ public:
 	/**
 	 * Set the current state and contact force input
 	 *
-	 * @param t
-	 * @param x
-	 * @param u
+	 * @param t: current time
+	 * @param x: current switched state vector (centrodial dynamics plus joints' angles)
+	 * @param u: current switched input vector (contact forces plus joints' velocities)
 	 */
 	virtual void setCurrentStateAndControl(const scalar_t& t, const state_vector_t& x, const control_vector_t& u) override;
 
-
+	/**
+	 * calculate and retrieve the A matrix (i.e. the state derivative of the dynamics w.r.t. state vector).
+	 *
+	 * @param A: a nx-by-nx matrix
+	 */
 	virtual void getDerivativeState(state_matrix_t& A)  override;
 
+	/**
+	 * calculate and retrieve the B matrix (i.e. the state derivative of the dynamics w.r.t. input vector).
+	 *
+	 * @param B: a ny-by-nu matrix
+	 */
 	virtual void getDerivativesControl(control_gain_matrix_t& B)  override;
 
+	/**
+	 * calculate and retrieve the C matrix (i.e. the state derivative of the state-input constraints w.r.t. state vector).
+	 * Note that only nc1 top rows are valid where nc1 is the number of active state-input constraints at the current time.
+	 *
+	 * @param C: a nc1-by-nx matrix
+	 */
 	virtual void getConstraint1DerivativesState(constraint1_state_matrix_t& C)  override;
 
+	/**
+	 * calculate and retrieve the D matrix (i.e. the state derivative of the state-input constraints w.r.t. input vector).
+	 * Note that only nc1 top rows are valid where nc1 is the number of active state-input constraints at the current time.
+	 *
+	 * @param D: a nc1-by-nu matrix
+	 */
 	virtual void getConstraint1DerivativesControl(constraint1_control_matrix_t& D)  override;
 
+	/**
+	 * calculate and retrieve the F matrix (i.e. the state derivative of the state-only constraints w.r.t. state vector).
+	 * Note that only nc2 top rows are valid where nc2 is the number of active state-only constraints at the current time.
+	 *
+	 * @param F: a nc2-by-nx matrix
+	 */
 	virtual void getConstraint2DerivativesState(constraint2_state_matrix_t& F) override;
 
-	virtual void getFinalConstraint2DerivativesState(constraint2_state_matrix_t& F) override;
+	/**
+	 * * calculate and retrieve the F matrix (i.e. the state derivative of the final state-only constraints w.r.t. state vector).
+	 * Note that only nc2Final top rows are valid where nc2Final is the number of active final state-only constraints at the current time.
+	 *
+	 * @param F_final: a nc2Final-by-nx matrix
+	 */
+	virtual void getFinalConstraint2DerivativesState(constraint2_state_matrix_t& F_final) override;
 
 	/**
-	 * to map local angular velocity \omega_W expressed in body coordinates, to changes in Euler Angles expressed in an inertial frame q_I
-	 * we have to map them via \dot{q}_I = H \omega_W, where H is the matrix defined in kindr getMappingFromLocalAngularVelocityToDiff.
-	 * You can see the kindr cheat sheet to figure out how to build this matrix. The following code computes the Jacobian of \dot{q}_I
-	 * with respect to \q_I and \omega_W. Thus the lower part of the Jacobian is H and the upper part is dH/dq_I \omega_W. We include
-	 * both parts for more efficient computation. The following code is computed using auto-diff.
-	 * @param eulerAnglesXyz
-	 * @param angularVelocity
-	 * @return
-	 */
-	Eigen::Matrix<double,6,3> JacobianOfAngularVelocityMapping(const Eigen::Vector3d& eulerAnglesXyz,
-			const Eigen::Vector3d& angularVelocity);
-
-	/*
 	 * set the stance legs
 	 */
-	void setStanceLegs (const std::array<bool,4>& stanceLegs)  {  stanceLegs_ = stanceLegs;  }
+	void setStanceLegs (const std::array<bool,4>& stanceLegs);
 
-	/*
+	/**
 	 * get the model's stance leg
 	 */
-	void getStanceLegs (std::array<bool,4>& stanceLegs)  {  stanceLegs = stanceLegs_;  }
+	void getStanceLegs (std::array<bool,4>& stanceLegs);
 
-	/*
-	 * set the swing legs z direction CPGs planner
+	/**
+	 * set the swing legs z direction CPGs plannerinput
 	 */
-	void setSwingLegsCpgsPlanner (const FeetZDirectionPlannerBase::Ptr& feetZDirectionPlanner) {  feetZDirectionPlanner_ = feetZDirectionPlanner; }
+	void setSwingLegsCpgsPlanner (const FeetZDirectionPlannerBase::Ptr& feetZDirectionPlanner);
 
-	/*
+	/**
 	 * set the swing legs z direction CPGs
 	 */
-	void setSwingLegsCpgs (const std::array<CpgBase::Ptr,4>& feetZDirectionCPGs) {  feetZDirectionCPGs_ = feetZDirectionCPGs; }
+	void setSwingLegsCpgs (const std::array<CpgBase::Ptr,4>& feetZDirectionCPGs);
 
-	/*
+	/**
 	 * set the endEffectorStateConstraints vector pointer
 	 */
-	void setEndEffectorStateConstraints (const std::vector<EndEffectorConstraintBase::Ptr>& endEffectorStateConstraints) {
-		endEffectorStateConstraints_ = endEffectorStateConstraints;
-	}
+	void setEndEffectorStateConstraints (const std::vector<EndEffectorConstraintBase::Ptr>& endEffectorStateConstraints);
 
 
 private:

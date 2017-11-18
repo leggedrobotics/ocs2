@@ -45,14 +45,16 @@ public:
 	virtual std::shared_ptr<ComModelBase<JOINT_COORD_SIZE>> clone() const = 0;
 
 	/**
-	 * calculate CoM Jacobian in Base frame
+	 * Calculate CoM Jacobian in Base frame
+	 *
 	 * @param [in] jointCoordinate
 	 * @param [out] comJacobain
 	 */
-	virtual Eigen::Matrix<double,6,JOINT_COORD_SIZE> comJacobainBaseFrame(const joint_coordinate_t& jointCoordinate);
+	virtual Eigen::Matrix<double,6,JOINT_COORD_SIZE> comJacobainBaseFrame(
+			const joint_coordinate_t& jointCoordinate);
 
 	/**
-	 * Calculate CoM Position in Base frame
+	 * Calculate CoM Position in Base frame from Base origin
 	 * @param [in] q
 	 * @param [out] comPosition
 	 */
@@ -60,7 +62,8 @@ public:
 			const joint_coordinate_t& q) = 0;
 
 	/**
-	 * Calculate CoM Inertia
+	 * Calculate CoM inertia tensor around CoM
+	 *
 	 * @param [in] q
 	 * @return
 	 */

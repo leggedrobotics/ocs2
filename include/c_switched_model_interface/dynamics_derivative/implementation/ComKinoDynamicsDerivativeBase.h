@@ -8,6 +8,7 @@
 #include <c_switched_model_interface/core/SwitchedModel.h>
 
 namespace switched_model {
+
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
@@ -38,7 +39,10 @@ void ComKinoDynamicsDerivativeBase<JOINT_COORD_SIZE>::initializeModel(const std:
 		for (size_t j=0; j<4; j++)  nextPhaseStanceLegs_[j] = (finalTimesIndices[activeSubsystemIndex][j] == activeSubsystemIndex+1);
 	}
 
-	algorithmName_.assign(algorithmName);
+	if (algorithmName!=NULL)
+		algorithmName_.assign(algorithmName);
+	else
+		algorithmName_.clear();
 }
 
 
@@ -67,8 +71,7 @@ void ComKinoDynamicsDerivativeBase<JOINT_COORD_SIZE>::setCurrentStateAndControl(
 	// Base pose
 	comDynamicsDerivative_.getBasePose(basePose_);
 	// Base local velocities
-		//comDynamicsDerivative_.getBaseLocalVelocities(baseLocalVelocities_); //where is this method?
-	throw std::runtime_error("FIXME");
+	comDynamicsDerivative_.getBaseLocalVelocities(baseLocalVelocities_);
 	// CoM Jacobian in the Base frame
 	comDynamicsDerivative_.getComJacobianInBaseFrame(b_comJacobain_);
 	// CoM Jacobin time derivative in the Base frame
@@ -88,11 +91,6 @@ void ComKinoDynamicsDerivativeBase<JOINT_COORD_SIZE>::setCurrentStateAndControl(
 		b_feetJacobainsTimeDerivative_[i].setZero();
 		b_feetJacobainsTimeDerivative_[i].template block<6,3>(0,3*i) = (b_footJacobainPlus.template block<6,3>(0,3*i)-b_feetJacobains_[i].template block<6,3>(0,3*i))/h;
 	}  // end of i loop
-
-	// TODO where does jacobianOfAngularVelocityMapping_ come from???
-	throw std::runtime_error("FIXME");
-	// // jacobina of angular velocities to Euler angle derivatives transformation
-	// jacobianOfAngularVelocityMapping_ = JacobianOfAngularVelocityMapping(x.segment<3>(0), x.segment<3>(6)).transpose();
 
 	// if GapIndicator is provided
 	if (endEffectorStateConstraints_.empty()==false)
@@ -126,9 +124,6 @@ void ComKinoDynamicsDerivativeBase<JOINT_COORD_SIZE>::setCurrentStateAndControl(
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-/*
- * calculate and retrieve the A matrix
- */
 template <size_t JOINT_COORD_SIZE>
 void ComKinoDynamicsDerivativeBase<JOINT_COORD_SIZE>::getDerivativeState(state_matrix_t& A)  {
 
@@ -154,9 +149,6 @@ void ComKinoDynamicsDerivativeBase<JOINT_COORD_SIZE>::getDerivativeState(state_m
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-/*
- * calculate and retrieve the B matrix
- */
 template <size_t JOINT_COORD_SIZE>
 void ComKinoDynamicsDerivativeBase<JOINT_COORD_SIZE>::getDerivativesControl(control_gain_matrix_t& B)  {
 
@@ -182,9 +174,6 @@ void ComKinoDynamicsDerivativeBase<JOINT_COORD_SIZE>::getDerivativesControl(cont
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-/*
- * calculate and retrieve the C matrix
- */
 template <size_t JOINT_COORD_SIZE>
 void ComKinoDynamicsDerivativeBase<JOINT_COORD_SIZE>::getConstraint1DerivativesState(constraint1_state_matrix_t& C) {
 
@@ -263,9 +252,6 @@ void ComKinoDynamicsDerivativeBase<JOINT_COORD_SIZE>::getConstraint1DerivativesS
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-/*
- * calculate and retrieve the D matrix
- */
 template <size_t JOINT_COORD_SIZE>
 void ComKinoDynamicsDerivativeBase<JOINT_COORD_SIZE>::getConstraint1DerivativesControl(constraint1_control_matrix_t& D) {
 
@@ -314,9 +300,6 @@ void ComKinoDynamicsDerivativeBase<JOINT_COORD_SIZE>::getConstraint1DerivativesC
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-/*
- * calculate and retrieve the F matrix
- */
 template <size_t JOINT_COORD_SIZE>
 void ComKinoDynamicsDerivativeBase<JOINT_COORD_SIZE>::getConstraint2DerivativesState(constraint2_state_matrix_t& F)  {
 
@@ -339,13 +322,9 @@ void ComKinoDynamicsDerivativeBase<JOINT_COORD_SIZE>::getConstraint2DerivativesS
 
 }
 
-
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-/*
- * calculate and retrieve the F matrix
- */
 template <size_t JOINT_COORD_SIZE>
 void ComKinoDynamicsDerivativeBase<JOINT_COORD_SIZE>::getFinalConstraint2DerivativesState(constraint2_state_matrix_t& F)  {
 
@@ -373,64 +352,45 @@ void ComKinoDynamicsDerivativeBase<JOINT_COORD_SIZE>::getFinalConstraint2Derivat
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-/*
- * to map local angular velocity \omega_W expressed in body coordinates, to changes in Euler Angles expressed in an inertial frame q_I
- * we have to map them via \dot{q}_I = H \omega_W, where H is the matrix defined in kindr getMappingFromLocalAngularVelocityToDiff.
- * You can see the kindr cheat sheet to figure out how to build this matrix. The following code computes the Jacobian of \dot{q}_I
- * with respect to \q_I and \omega_W. Thus the lower part of the Jacobian is H and the upper part is dH/dq_I \omega_W. We include
- * both parts for more efficient computation. The following code is computed using auto-diff.
- * @param eulerAnglesXyz
- * @param angularVelocity
- * @return
- */
 template <size_t JOINT_COORD_SIZE>
-Eigen::Matrix<double,6,3> ComKinoDynamicsDerivativeBase<JOINT_COORD_SIZE>::JacobianOfAngularVelocityMapping(
-		const Eigen::Vector3d& eulerAnglesXyz, const Eigen::Vector3d& angularVelocity) {
-
-	using namespace std;
-
-	Eigen::Matrix<double,6,1> xAD;
-	xAD << eulerAnglesXyz, angularVelocity;
-	const double* x = xAD.data();
-
-	std::array<double,10> v;
-
-	Eigen::Matrix<double,6,3> jac;
-	double* y = jac.data();
-
-	y[9] = sin(x[2]);
-	y[10] = cos(x[2]);
-	v[0] = cos(x[1]);
-	v[1] = 1 / v[0];
-	y[3] = v[1] * y[10];
-	v[2] = sin(x[1]);
-	y[1] = 0 - (0 - (0 - x[4] * y[9] + x[3] * y[10]) * 1 / v[0] * v[1]) * v[2];
-	v[3] = sin(x[2]);
-	v[4] = 0 - v[1];
-	y[4] = v[4] * y[9];
-	v[5] = y[10];
-	y[2] = 0 - x[3] * v[1] * v[3] + x[4] * v[4] * v[5];
-	y[8] = 0 - x[4] * v[3] + x[3] * v[5];
-	v[6] = v[1] * y[9];
-	v[7] = v[4] * y[10];
-	v[8] = v[2];
-	y[15] = v[7] * v[8];
-	y[16] = v[6] * v[8];
-	v[9] = x[4] * v[8];
-	v[8] = x[3] * v[8];
-	y[13] = (x[4] * v[6] + x[3] * v[7]) * v[0] - (0 - (v[9] * y[9] - v[8] * y[10]) * 1 / v[0] * v[1]) * v[2];
-	y[14] = 0 - v[8] * v[4] * v[3] + v[9] * v[1] * v[5];
-	// dependent variables without operations
-	y[0] = 0;
-	y[5] = 0;
-	y[6] = 0;
-	y[7] = 0;
-	y[11] = 0;
-	y[12] = 0;
-	y[17] = 1;
-
-
-	return jac;
+void ComKinoDynamicsDerivativeBase<JOINT_COORD_SIZE>::setStanceLegs (const std::array<bool,4>& stanceLegs)  {
+	stanceLegs_ = stanceLegs;
 }
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+template <size_t JOINT_COORD_SIZE>
+void ComKinoDynamicsDerivativeBase<JOINT_COORD_SIZE>::getStanceLegs (std::array<bool,4>& stanceLegs)  {
+	stanceLegs = stanceLegs_;
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+template <size_t JOINT_COORD_SIZE>
+void ComKinoDynamicsDerivativeBase<JOINT_COORD_SIZE>::setSwingLegsCpgsPlanner (
+		const FeetZDirectionPlannerBase::Ptr& feetZDirectionPlanner) {
+	feetZDirectionPlanner_ = feetZDirectionPlanner;
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+template <size_t JOINT_COORD_SIZE>
+void ComKinoDynamicsDerivativeBase<JOINT_COORD_SIZE>::setSwingLegsCpgs (const std::array<CpgBase::Ptr,4>& feetZDirectionCPGs) {
+	feetZDirectionCPGs_ = feetZDirectionCPGs;
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+template <size_t JOINT_COORD_SIZE>
+void ComKinoDynamicsDerivativeBase<JOINT_COORD_SIZE>::setEndEffectorStateConstraints (
+		const std::vector<EndEffectorConstraintBase::Ptr>& endEffectorStateConstraints) {
+	endEffectorStateConstraints_ = endEffectorStateConstraints;
+}
+
+
 
 } //end of namespace switched_model

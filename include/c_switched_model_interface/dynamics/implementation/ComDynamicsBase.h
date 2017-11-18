@@ -99,7 +99,7 @@ void ComDynamicsBase<JOINT_COORD_SIZE>::computeDerivative(const scalar_t& t,
 	for (size_t i=0; i<4; i++)  {
 
 		// for a swing leg skip the followings
-		if (stanceLegs_[i]==false && constrainedIntegration_==true) continue;
+		if (stanceLegs_[i]==false && constrainedIntegration_==true)  continue;
 
 		com_comToFoot  = com_base2StanceFeet_[i]-com_base2CoM_;
 

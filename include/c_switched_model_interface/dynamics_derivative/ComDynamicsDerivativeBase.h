@@ -135,6 +135,11 @@ public:
 	void getBasePose(base_coordinate_t& basePose) const;
 
 	/**
+	 * user interface for CoM dynamics: get Base Pose.
+	 */
+	void getBaseLocalVelocities(base_coordinate_t& baseLocalVelocities) const;
+
+	/**
 	 * user interface for CoM dynamics: get CoM to stance feet in CoM frame.
 	 */
 	void getCom2StanceFeetInComFrame(std::array<Eigen::Vector3d,4>& com_com2StanceFeet) const;
@@ -175,13 +180,11 @@ private:
 
 	std::array<bool,4> stanceLegs_;
 	base_coordinate_t  q_base_;
+	base_coordinate_t  dq_base_; // local angular and linear velocity of Base
 	joint_coordinate_t qJoints_;
 	joint_coordinate_t dqJoints_;
 
 	Eigen::Matrix3d o_R_b_;
-
-	// local angular velocity of Base (w_W_base)
-	Eigen::Vector3d w_W_base_;
 
 	// jacobian of the angular velocities to Euler angle derivatives transformation D(d\theta / dt) = [ d/d(theta), d/d(w_omega_b) ]
 	Eigen::Matrix<double,3,6> jacobianOfAngularVelocityMapping_;

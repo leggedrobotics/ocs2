@@ -86,11 +86,15 @@ void ComDynamicsDerivativeBase<JOINT_COORD_SIZE>::setCurrentStateAndControl(cons
 	// CoM Jacobin in the Base frame
 	b_comJacobain_ = MInverse_*comModelPtr_->comMomentumJacobian(qJoints_);
 
-	// local angular velocity of Base (w_W_base_)
-	w_W_base_ = x.segment<3>(6) - b_comJacobain_.template topRows<3>()*dqJoints_;
+	// local angular and linear velocity of Base
+	dq_base_ = x.segment<6>(6) - b_comJacobain_ * dqJoints_;
+
+	dq_base_.template head<3>() = x.segment<3>(6) - b_comJacobain_.template topRows<3>()*dqJoints_;
+	dq_base_.template tail<3>() = x.segment<3>(9) - b_comJacobain_.template bottomRows<3>()*dqJoints_
+			+ com_base2CoM_.cross(dq_base_.template head<3>());
 
 	// jacobina of angular velocities to Euler angle derivatives transformation
-	jacobianOfAngularVelocityMapping_ = JacobianOfAngularVelocityMapping(x.head<3>(), w_W_base_).transpose();
+	jacobianOfAngularVelocityMapping_ = JacobianOfAngularVelocityMapping(x.head<3>(), dq_base_.template head<3>()).transpose();
 
 	// CoM Jacobin time derivative in the Base frame
 //	const double h = sqrt(Eigen::NumTraits<double>::epsilon());
@@ -378,6 +382,14 @@ void ComDynamicsDerivativeBase<JOINT_COORD_SIZE>::getBase2CoMInComFrame(Eigen::V
 template <size_t JOINT_COORD_SIZE>
 void ComDynamicsDerivativeBase<JOINT_COORD_SIZE>::getBasePose(ComDynamicsDerivativeBase<JOINT_COORD_SIZE>::base_coordinate_t& basePose) const {
 	basePose = q_base_;
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+template <size_t JOINT_COORD_SIZE>
+void ComDynamicsDerivativeBase<JOINT_COORD_SIZE>::getBaseLocalVelocities(base_coordinate_t& baseLocalVelocities) const {
+	baseLocalVelocities = dq_base_;
 }
 
 /******************************************************************************************************/

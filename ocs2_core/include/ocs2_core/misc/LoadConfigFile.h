@@ -59,53 +59,6 @@ public:
 		}
 	}
 
-
-	/**
-	 * This function loads the simulation-specific settings:
-	 * dt, tFinal, initSettlingTime
-	 */
-	static void loadSimulationSettings(const std::string& filename, double& dt,
-			double& tFinal, double& initSettlingTime)
-	{
-		const double defaultInitSettlingTime = 1.5;
-		boost::property_tree::ptree pt;
-		boost::property_tree::read_info(filename, pt);
-
-		try	{
-			dt     = pt.get<double>("simulationSettings.dt");
-			tFinal = pt.get<double>("simulationSettings.tFinal");
-			initSettlingTime = pt.get<double>("simulationSettings.initSettlingTime", defaultInitSettlingTime);
-		}
-		catch (const std::exception& e){
-			std::cerr<<"Error in loading simulation settings: " << e.what() << std::endl;
-		}
-		std::cerr<<"Simulation Settings: " << std::endl;
-		std::cerr<<"=====================================" << std::endl;
-		std::cerr<<"Simulation time step ......... " << dt << std::endl;
-		std::cerr<<"Controller simulation time ... [0, " << tFinal  << "]" << std::endl;
-		std::cerr<<"initial settling time ......... " << initSettlingTime  << std::endl << std::endl;
-
-	}
-
-	/**
-	 * This function loads the visualization-specific settings:
-	 * slowdown factor, vizualization time
-	 */
-	static void loadVisualizationSettings(const std::string& filename,
-			double& slowdown, double& vizTime)
-	{
-		boost::property_tree::ptree pt;
-		boost::property_tree::read_info(filename, pt);
-
-		try	{
-			slowdown = pt.get<double>("visualization.slowdown");
-			vizTime = pt.get<double>("visualization.vizTime");
-		}
-		catch (const std::exception& e){
-			std::cerr<<"Error in loading viz settings: " << e.what() << std::endl;
-		}
-	}
-
 	/**
 	 * This function loads the "Options" structure from a config file. This file contains the settings for the SQL and OCS2 algorithms.
 	 * Here, we use the INFO format which was created specifically for the property tree library (refer to www.goo.gl/fV3yWA).

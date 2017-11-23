@@ -33,7 +33,7 @@ void OCS2AnymalInterface::fromHyqStateToComStateOrigin(const double& time,
 	Eigen::Matrix3d b_R_o = switched_model::RotationMatrixOrigintoBase(hyqState.head<3>());
 	// switched hyq state
 	dimension_t::state_vector_t switchedState;
-	SwitchedModelStateEstimator::EstimateSwitchedModelState(time, hyqState, switchedState);
+	switchedModelStateEstimator_.estimateComkinoModelState(hyqState, switchedState);
 	comPose = switchedState.segment<6>(0);
 	com_coordinate_t comLocalVelocities = switchedState.segment<6>(6);
 	comVelocities.head<3>() = b_R_o.transpose() * comLocalVelocities.head<3>();
@@ -210,7 +210,7 @@ void OCS2AnymalInterface::runSLQP(const double& initTime,
 		const std::vector<double>& switchingTimes/*=std::vector<double>()*/)  {
 
 	initTime_ = initTime;
-	SwitchedModelStateEstimator::EstimateSwitchedModelState(initTime_, initHyQState, initSwitchedState_);
+	switchedModelStateEstimator_.estimateComkinoModelState(initHyQState, initSwitchedState_);
 
 	if (switchingTimes.empty()==true)
 		switchingTimes_ = initSwitchingTimes_;
@@ -283,7 +283,7 @@ void OCS2AnymalInterface::getOptimizerParameters(const std::shared_ptr<T>& optim
 // bool OCS2AnymalInterface::runMPC(const double& initTime, const Eigen::Matrix<double,36,1>& initHyQState)  {
 //
 // 	initTime_ = initTime;
-// 	hyq::SwitchedModelStateEstimator::EstimateSwitchedModelState(initTime_, initHyQState, initSwitchedState_);
+// 	switchedModelStateEstimator_.estimateComkinoModelState(initHyQState, initSwitchedState_);
 //
 // 	// update controller
 // 	bool controllerIsUpdated = mpcPtr_->run(initTime_, initSwitchedState_);
@@ -350,7 +350,7 @@ void OCS2AnymalInterface::runOCS2(const double& initTime,
 		switchingTimes_ = switchingTimes;
 
 	initTime_ = initTime;
-	SwitchedModelStateEstimator::EstimateSwitchedModelState(initTime_, initHyQState, initSwitchedState_);
+	switchedModelStateEstimator_.estimateComkinoModelState(initHyQState, initSwitchedState_);
 
 	// run ocs2
 	ocs2Ptr_->run(initTime_, initSwitchedState_, switchingTimes_.back(), initSystemStockIndexes_, switchingTimes_,
@@ -416,6 +416,7 @@ void OCS2AnymalInterface::loadVisualizationSettings(const std::string& filename,
 /******************************************************************************************************/
 /******************************************************************************************************/
 void OCS2AnymalInterface::loadSettings(const std::string& pathToConfigFolder, const Eigen::Matrix<double,36,1>& initHyQState) {
+
 	std::string taskFile;
 	taskFile = pathToConfigFolder + "/task.info";
 
@@ -428,7 +429,7 @@ void OCS2AnymalInterface::loadSettings(const std::string& pathToConfigFolder, co
 	std::cerr << "Gravity: \t" << gravity_.transpose().format(CleanFmtDisplay_) << std::endl << std::endl;
 
 	// Initial state of the switchedModel
-	SwitchedModelStateEstimator::EstimateSwitchedModelState(0.0, initHyQState, initSwitchedState_);
+	switchedModelStateEstimator_.estimateComkinoModelState(initHyQState, initSwitchedState_);
 
 	// cost function components
 	ocs2::LoadConfigFile::loadMatrix(taskFile, "Q", Q_);

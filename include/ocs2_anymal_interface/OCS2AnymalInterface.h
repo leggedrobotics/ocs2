@@ -39,7 +39,7 @@
 #include <c_switched_model_interface/state_constraint/EndEffectorConstraintsUtilities.h>
 #include <c_switched_model_interface/misc/WeightCompensationForces.h>
 
-#include <ocs2_anymal_switched_model/SwitchedModelStateEstimator.h>
+#include <ocs2_anymal_switched_model/AnymalModelStateEstimator.h>
 #include <ocs2_anymal_switched_model/dynamics/AnymalComKinoDynamics.h>
 #include <ocs2_anymal_switched_model/dynamics/AnymalComKinoDynamicsDerivative.h>
 #include <iit/robots/anymal/inverse_dynamics.h>
@@ -76,10 +76,10 @@ public:
 	typedef switched_model::SplineCpg	z_direction_cpg_t;
 	typedef Eigen::Matrix<double,6,1>   com_coordinate_t;
 
-	OCS2AnymalInterface(const std::string& pathToConfigFolder, const Eigen::Matrix<double,36,1>& initState)
+	OCS2AnymalInterface(const std::string& pathToConfigFolder, const Eigen::Matrix<double,36,1>& initHyQState)
 	: inverseDynamics_(iitInertiaProperties_, iitMotionTransforms_)
 	{
-		loadSettings(pathToConfigFolder, initState);
+		loadSettings(pathToConfigFolder, initHyQState);
 		setupOptimizer();
 
 		// LQP
@@ -169,21 +169,21 @@ public:
 
 	size_t numPhasesInfullGaitCycle() { return options_.numPhasesInfullGaitCycle_; }
 
-
-protected:
 	/**
 	 * This function loads the simulation-specific settings:
 	 * dt, tFinal, initSettlingTime
 	 */
-	void loadSimulationSettings(const std::string& filename, double& dt, double& tFinal, double& initSettlingTime);
+	static void loadSimulationSettings(const std::string& filename, double& dt, double& tFinal,
+			double& initSettlingTime);
 
 	/**
 	 * This function loads the visualization-specific settings:
 	 * slowdown factor, vizualization time
 	 */
-	void loadVisualizationSettings(const std::string& filename, double& slowdown, double& vizTime);
+	static void loadVisualizationSettings(const std::string& filename, double& slowdown, double& vizTime);
 
-	void loadSettings(const std::string& pathToConfigFolder, const Eigen::Matrix<double,36,1>& initState);
+protected:
+	void loadSettings(const std::string& pathToConfigFolder, const Eigen::Matrix<double,36,1>& initHyQState);
 
 	void setupOptimizer();
 
@@ -239,6 +239,7 @@ private:
 	switched_model::FeetZDirectionPlanner<z_direction_cpg_t>::Ptr feetZDirectionPlannerPtr_;
 	std::vector<switched_model::CpgBase::PtrArray> plannedCPGs_;
 
+	AnymalModelStateEstimator switchedModelStateEstimator_;
 	dimension_t::state_vector_t initSwitchedState_;
 	double initTime_;
 

@@ -6,11 +6,13 @@ project(ocs2_anymal_interface)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS
   cmake_modules
+  roscpp
   ocs2_core
   ocs2_slq
   ocs2_ocs2
   ocs2_anymal_switched_model
   ocs2_anymal_cost
+  cereal
 )
 
 ## Eigen3
@@ -73,6 +75,20 @@ add_dependencies(${PROJECT_NAME}
 )
 
 target_link_libraries(${PROJECT_NAME}
+  ${catkin_LIBRARIES}
+)
+
+add_executable(PlanningTest
+  src/PlanningTest.cpp
+)
+
+add_dependencies(PlanningTest
+  ${${PROJECT_NAME}_EXPORTED_TARGETS}
+  ${catkin_EXPORTED_TARGETS}
+)
+
+target_link_libraries(PlanningTest
+  ${PROJECT_NAME}
   ${catkin_LIBRARIES}
 )
 

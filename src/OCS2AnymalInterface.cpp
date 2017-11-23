@@ -559,7 +559,7 @@ void OCS2AnymalInterface::setupOptimizer()  {
 		nondiagonalR = 0.5*(nondiagonalR + nondiagonalR.transpose()).eval();
 
 		subsystemCostFunctionsPtr_[i] = std::shared_ptr<cost_funtion_t>( new cost_funtion_t(initStanceLegSequene_[i], Q_, nondiagonalR,
-				desiredTimeTrajectoriesStock_[i], desiredStateTrajectoriesStock_[i], uNominalTrajectory, QFinal_, xFinal_, zmpWeight_, impulseWeight_, impulseSigmeFactor_) );
+				desiredTimeTrajectoriesStock_[i], desiredStateTrajectoriesStock_[i], uNominalTrajectory, QFinal_, xFinal_, options_.copWeight_) );
 
 		// subsystem settings
 		subsystemDynamicsPtr_[i]    = std::shared_ptr<system_dynamics_t>( new system_dynamics_t(initStanceLegSequene_[i], -gravity_(2), options_,

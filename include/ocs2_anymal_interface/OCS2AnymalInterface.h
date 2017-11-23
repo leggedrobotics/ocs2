@@ -227,7 +227,6 @@ private:
 	dimension_t::state_matrix_t 	QFinal_;
 	dimension_t::state_vector_t 	xFinal_;
 
-	double zmpWeight_;
 	double impulseWeight_;
 	double impulseSigmeFactor_;
 

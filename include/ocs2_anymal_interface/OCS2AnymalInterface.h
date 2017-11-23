@@ -257,7 +257,7 @@ private:
 	// subsystem derivatives
 	std::vector<std::shared_ptr<system_dynamics_derivative_t::Base::Base> > subsystemDerivativesPtr_;
 	// subsystem cost functions
-	std::vector<std::shared_ptr<cost_funtion_t::BASE> > subsystemCostFunctionsPtr_;
+	std::vector<std::shared_ptr<cost_funtion_t::Base> > subsystemCostFunctionsPtr_;
 	// subsystem state operating points
 	dimension_t::state_vector_array_t   stateOperatingPoints_;
 	// subsystem input operating points

@@ -46,7 +46,7 @@ public:
 	/**
 	 * calculate CoM Position in Base frame for given joint q
 	 */
-	Eigen::Vector3d comPositionBaseFrame(const joint_coordinate_t& q);
+	Eigen::Vector3d comPositionBaseFrame(const joint_coordinate_t& q) override;
 
 	/**
 	  calculate CoM Position in Base frame for default q
@@ -56,7 +56,7 @@ public:
 	/**
 	 * calculate homogeneous transformation base -> CoM for given q
 	 */
-	Eigen::Matrix<double,4,4> comHomogeneous(const joint_coordinate_t& q);
+	Eigen::Matrix<double,4,4> comHomogeneous(const joint_coordinate_t& q) override;
 
 	/**
 	 * calculate homogeneous transformation base -> CoM for default q
@@ -68,12 +68,12 @@ public:
 	 */
 	Eigen::Matrix<double,3,1> comVelocityInBaseFrame(
 			const Eigen::Matrix<double,12,1>& q,
-			const Eigen::Matrix<double,12,1>& dq);
+			const Eigen::Matrix<double,12,1>& dq) override;
 
 	/**
 	 * calculate CoM Inertia for given q
 	 */
-	Eigen::Matrix<double, 6, 6> comInertia(const joint_coordinate_t& q);
+	Eigen::Matrix<double, 6, 6> comInertia(const joint_coordinate_t& q) override;
 
 	/**
 	 * calculate CoM Inertia for default q
@@ -85,32 +85,27 @@ public:
 	 */
 	Eigen::Matrix<double,6,6> comInertiaDerivative(
 			const joint_coordinate_t& q,
-			const joint_coordinate_t& dq);
+			const joint_coordinate_t& dq) override;
 
 	/**
 	 * calculate CoM Momentum Jacobian
 	 * i.e. p_com = J_p_com(q) * dq
 	 * Note: excluding the contribution of the trunk inertia
 	 */
-	Eigen::Matrix<double,6,12> comMomentumJacobian(const joint_coordinate_t& q);
+	Eigen::Matrix<double,6,12> comMomentumJacobian(const joint_coordinate_t& q) override;
 
 	/**
 	 * calculate CoM Momentum Jacobian Derivative
 	 */
 	Eigen::Matrix<double,6,12> comMomentumJacobianDerivative(
 			const joint_coordinate_t& q,
-			const joint_coordinate_t& dq);
+			const joint_coordinate_t& dq) override;
 
 	/**
 	 * Return copy of the total mass of the system
 	 */
 	double totalMass() const {return inertiaProperties_.getTotalMass();}
 
-	/**
-	 * Obtain joint space inertia matrix inverse at given joint coordinates
-	 * Does not update the interal state with the given joint coordinates
-	 */
-	Eigen::Matrix<double,18,18> getJsimInverse(const joint_coordinate_t& q) const;
 
 private:
 

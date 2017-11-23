@@ -1,8 +1,6 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(c_switched_model_interface)
 
-add_definitions("-std=c++11")
-
 find_package(catkin REQUIRED
 	cmake_modules
 	ocs2_core
@@ -16,13 +14,18 @@ if( NOT EIGEN_INCLUDE_DIRS )
     message( WARNING "Uses Globally installed Eigen since LOCAL_EIGEN3_INCLUDE_DIR is not defined!")
 endif()
 
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread -fopenmp -std=c++11 -Wfatal-errors -ffast-math")
+
 ###################################
 ## catkin specific configuration ##
 ###################################
 catkin_package(
 	INCLUDE_DIRS include
-	CATKIN_DEPENDS ocs2_core roscpp
-	DEPENDS Eigen
+	LIBRARIES ${PROJECT_NAME}
+	CATKIN_DEPENDS 
+	    ocs2_core 
+	    roscpp
+#	DEPENDS
 )
 
 ###########
@@ -30,8 +33,22 @@ catkin_package(
 ###########
 include_directories(
 	include
+	${EIGEN_INCLUDE_DIRS}
 	${catkin_INCLUDE_DIRS}
-	${EIGEN3_INCLUDE_DIR}
+)
+
+# Declare a C++ library
+add_library(${PROJECT_NAME}
+  src/state_constraint/EndEffectorConstraintBase.cpp
+)
+
+add_dependencies(${PROJECT_NAME}
+  ${${PROJECT_NAME}_EXPORTED_TARGETS}
+  ${catkin_EXPORTED_TARGETS}
+)
+
+target_link_libraries(${PROJECT_NAME}
+  ${catkin_LIBRARIES}
 )
 
 ###########################

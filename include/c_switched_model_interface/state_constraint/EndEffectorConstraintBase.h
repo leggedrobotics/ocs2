@@ -36,7 +36,9 @@ public:
 
 	virtual ~EndEffectorConstraintBase() {}
 
-	// an approximate constraint indicator. The cube should inscribed the actual constrained area.
+	/**
+	 * An approximate constraint indicator function. The cube should inscribed the actual constrained area.
+	 */
 	virtual bool isActive(const Eigen::Vector3d& vector);
 
 	void normalizeVector(const Eigen::Vector3d& vector,
@@ -44,13 +46,13 @@ public:
 
 	bool isRepeller() const { return isRepeller_; }
 
-	void setXLimits(const Eigen::Vector2d& xLimits) { xLimits_ = xLimits; }
-	void setYLimits(const Eigen::Vector2d& yLimits) { yLimits_ = yLimits; }
-	void setZLimits(const Eigen::Vector2d& zLimits) { zLimits_ = zLimits; }
+	void setXLimits(const Eigen::Vector2d& xLimits);
+	void setYLimits(const Eigen::Vector2d& yLimits);
+	void setZLimits(const Eigen::Vector2d& zLimits);
 
-	const Eigen::Vector2d& getXLimits() const { return xLimits_; }
-	const Eigen::Vector2d& getYLimits() const { return yLimits_; }
-	const Eigen::Vector2d& getZLimits() const { return zLimits_; }
+	const Eigen::Vector2d& getXLimits() const;
+	const Eigen::Vector2d& getYLimits() const;
+	const Eigen::Vector2d& getZLimits() const;
 
 	virtual double constraintValue(const Eigen::Vector3d& vector) = 0;
 	virtual Eigen::Vector3d constraintDerivative(const Eigen::Vector3d& vector) = 0;

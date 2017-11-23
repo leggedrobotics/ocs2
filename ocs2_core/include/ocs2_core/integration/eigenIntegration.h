@@ -126,7 +126,8 @@ struct vector_space_norm_inf<Eigen::Matrix<double, S1, S2, O, M1, M2>>
 {
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-	double operator()(const Eigen::Matrix<double, S1, S2, O, M1, M2> &m) const
+	typedef double result_type;
+	result_type operator()(const Eigen::Matrix<double, S1, S2, O, M1, M2> &m) const
     {
         return m.template lpNorm<Eigen::Infinity>();
     }

@@ -237,46 +237,18 @@ void ComDynamicsDerivativeBase<JOINT_COORD_SIZE>::getApproximateDerivativesJoint
 
 	/* partial derivative of the MInverse w.r.t. qJoints */
 	if (useInertiaMatrixDerivate_==true) {
-		static ComDynamicsBase<JOINT_COORD_SIZE> comDyamics(kinematicModelPtr_, comModelPtr_,
-				-o_gravityVector_(2), constrainedIntegration_);
-		state_vector_t dxdt;
-		comDyamics.setData(stanceLegs_, qJoints_, dqJoints_);
-		comDyamics.computeDerivative(t_, x_, u_, dxdt);
-
-		Eigen::Matrix<double,6,12> partial;
-		for (size_t j=0; j<12; j++)
-			partial.col(j) = -MInverse_ * partialM_[j] * dxdt.tail<6>();
-
-		partrialF_q.template bottomRows<6>() += partial;
+//		static ComDynamicsBase<JOINT_COORD_SIZE> comDyamics(kinematicModelPtr_, comModelPtr_,
+//				-o_gravityVector_(2), constrainedIntegration_);
+//		state_vector_t dxdt;
+//		comDyamics.setData(stanceLegs_, qJoints_, dqJoints_);
+//		comDyamics.computeDerivative(t_, x_, u_, dxdt);
+//
+//		Eigen::Matrix<double,6,12> partial;
+//		for (size_t j=0; j<12; j++)
+//			partial.col(j) = -MInverse_ * partialM_[j] * dxdt.tail<6>();
+//
+//		partrialF_q.template bottomRows<6>() += partial;
 	}
-}
-
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-template <size_t JOINT_COORD_SIZE>
-void ComDynamicsDerivativeBase<JOINT_COORD_SIZE>::getNumericalDerivativesJoint(state_joint_matrix_t& partrialF_q)  {
-
-	static ComDynamicsBase<JOINT_COORD_SIZE> comDyamics(kinematicModelPtr_, comModelPtr_,
-			-o_gravityVector_(2), constrainedIntegration_);
-	state_vector_t dxdt;
-	comDyamics.setData(stanceLegs_, qJoints_, dqJoints_);
-	comDyamics.computeDerivative(t_, x_, u_, dxdt);
-
-	Eigen::Matrix<double,6,12> partial;
-	for (size_t j=0; j<12; j++) {
-		double h = sqrt(Eigen::NumTraits<double>::epsilon()) * std::max(fabs(qJoints_(j)), 1.0);
-
-		joint_coordinate_t qJointsPlus = qJoints_;
-		qJointsPlus(j) += h;
-
-		comDyamics.setData(stanceLegs_, qJointsPlus, dqJoints_);
-		state_vector_t dxdtPlus;
-		comDyamics.computeDerivative(t_, x_, u_, dxdtPlus);
-
-		partrialF_q.col(j) = (dxdtPlus-dxdt)/h;
-	}  // end of j loop
 }
 
 

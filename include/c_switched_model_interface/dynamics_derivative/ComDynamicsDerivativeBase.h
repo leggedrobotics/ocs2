@@ -101,11 +101,6 @@ public:
 	void getApproximateDerivativesJoint(state_joint_matrix_t& partrialF_q);
 
 	/**
-	 * calculate approximate derivatives w.r.t. joints
-	 */
-	void getNumericalDerivativesJoint(state_joint_matrix_t& partrialF_q);
-
-	/**
 	 * calculate and retrieve the approximate derivatives w.r.t. joints' velocities
 	 */
 	void getApproximateDerivativesJointVelocity(state_joint_matrix_t& partrialF_dq);

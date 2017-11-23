@@ -114,29 +114,47 @@ abs( const Eigen::MatrixBase< D > &m ) {
 } // end Eigen namespace
 
 
-
 namespace boost {
 namespace numeric {
 namespace odeint {
 
-template<int STATE_DIM>
-struct vector_space_reduce< Eigen::Matrix<double, STATE_DIM, 1> >
-{
-  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+#if (BOOST_VERSION / 100000 == 1 && BOOST_VERSION / 100 % 1000 > 55)
 
-  template< class Op >
-  double operator()(const Eigen::Matrix<double, STATE_DIM, 1>& x , Op op , double init ) const
-  {
-	  for (int i=0; i<STATE_DIM; i++)
-	  {
-		  init = op( init , x(i) );
-	  }
-      return init;
-  }
+// new boost
+template <int S1, int S2, int O, int M1, int M2>
+struct vector_space_norm_inf<Eigen::Matrix<double, S1, S2, O, M1, M2>>
+{
+	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+
+	double operator()(const Eigen::Matrix<double, S1, S2, O, M1, M2> &m) const
+    {
+        return m.template lpNorm<Eigen::Infinity>();
+    }
 };
 
+#else
 
-} } } // end boost::numeric::odeint namespace
+// old boost
+template <int STATE_DIM>
+struct vector_space_reduce<Eigen::Matrix<double, STATE_DIM, 1>>
+{
+	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+
+    template <class Op>
+	double operator()(const Eigen::Matrix<double, STATE_DIM, 1> &x, Op op, double init) const
+    {
+        for (int i = 0; i < STATE_DIM; i++)
+        {
+            init = op(init, x(i));
+        }
+        return init;
+    }
+};
+
+#endif
+}
+}
+}  // end boost::numeric::odeint namespace
 
 
 #endif // BOOST_NUMERIC_ODEINT_EXTERNAL_EIGEN_EIGEN_ALGEBRA_HPP_INCLUDED

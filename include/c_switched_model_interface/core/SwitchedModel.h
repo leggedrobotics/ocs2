@@ -22,6 +22,8 @@ template< size_t JOINT_COORD_SIZE >
 class SwitchedModel
 {
 public:
+	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+
 	/**
 	 * Enumerations defining base, joint and generalized coordinate size
 	 */

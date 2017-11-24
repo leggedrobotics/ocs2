@@ -5,7 +5,6 @@
  *      Author: farbod
  */
 
-#include <c_switched_model_interface/core/SwitchedModel.h>
 
 namespace switched_model {
 

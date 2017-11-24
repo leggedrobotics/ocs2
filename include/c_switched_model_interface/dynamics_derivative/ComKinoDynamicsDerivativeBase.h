@@ -10,7 +10,6 @@
 
 #include <array>
 #include <memory>
-#include <string>
 #include <iostream>
 #include <string>
 #include <Eigen/Dense>
@@ -61,13 +60,13 @@ public:
 	  comDynamicsDerivative_(kinematicModelPtr, comModelPtr, gravitationalAcceleration, options.constrainedIntegration_),
 	  stanceLegs_(stanceLegs),
 	  options_(options),
-	  feetZDirectionPlanner_(feetZDirectionPlanner!=NULL ? feetZDirectionPlanner->clone() : NULL),
+	  feetZDirectionPlanner_(feetZDirectionPlanner!=nullptr ? feetZDirectionPlanner->clone() : nullptr),
 	  endEffectorStateConstraints_(endEffectorStateConstraints.size())
 	{
 		if (gravitationalAcceleration<0)  throw std::runtime_error("Gravitational acceleration should be a positive value.");
 
 		for (size_t i=0; i<endEffectorStateConstraints.size(); i++){
-			if (endEffectorStateConstraints[i] == NULL)
+			if (endEffectorStateConstraints[i] == nullptr)
 				throw std::runtime_error("The endEffectorStateConstraints array is not properly initialized.");
 			endEffectorStateConstraints_[i] = endEffectorStateConstraints[i]->clone();
 		}
@@ -78,17 +77,18 @@ public:
 	 */
 	ComKinoDynamicsDerivativeBase(const ComKinoDynamicsDerivativeBase& rhs)
 
-	: kinematicModelPtr_(rhs.kinematicModelPtr_->clone()),
+	: Base(rhs),
+	  kinematicModelPtr_(rhs.kinematicModelPtr_->clone()),
 	  comModelPtr_(rhs.comModelPtr_->clone()),
 	  o_gravityVector_(rhs.o_gravityVector_),
 	  comDynamicsDerivative_(rhs.comDynamicsDerivative_),
 	  stanceLegs_(rhs.stanceLegs_),
 	  options_(rhs.options_),
-	  feetZDirectionPlanner_(rhs.feetZDirectionPlanner_!=NULL ? rhs.feetZDirectionPlanner_->clone() : NULL),
+	  feetZDirectionPlanner_(rhs.feetZDirectionPlanner_!=nullptr ? rhs.feetZDirectionPlanner_->clone() : nullptr),
 	  endEffectorStateConstraints_(rhs.endEffectorStateConstraints_.size())
 	{
 		for (size_t i=0; i<rhs.endEffectorStateConstraints_.size(); i++) {
-			if (rhs.endEffectorStateConstraints_[i] == NULL)
+			if (rhs.endEffectorStateConstraints_[i]==nullptr)
 				throw std::runtime_error("The endEffectorStateConstraints array is not properly initialized.");
 			endEffectorStateConstraints_[i] = rhs.endEffectorStateConstraints_[i]->clone();
 		}

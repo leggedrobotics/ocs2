@@ -5,9 +5,9 @@
  *      Author: farbod
  */
 
-#include <c_switched_model_interface/core/SwitchedModel.h>
 
 namespace switched_model {
+
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
@@ -84,7 +84,7 @@ void ComDynamicsDerivativeBase<JOINT_COORD_SIZE>::setCurrentStateAndControl(cons
 			Eigen::Matrix3d::Zero(), Eigen::Matrix3d::Identity()/M_(5,5);
 
 	// CoM Jacobin in the Base frame
-	b_comJacobain_ = MInverse_*comModelPtr_->comMomentumJacobian(qJoints_);
+	b_comJacobain_ = MInverse_ * comModelPtr_->comMomentumJacobian(qJoints_);
 
 	// local angular and linear velocity of Base
 	dq_base_ = x.segment<6>(6) - b_comJacobain_ * dqJoints_;
@@ -233,7 +233,7 @@ void ComDynamicsDerivativeBase<JOINT_COORD_SIZE>::getApproximateDerivativesJoint
 		for (size_t j=0; j<12; j++)
 			partrialF_q.template block<3,1>(6,j) -= CrossProductMatrix(x_.segment<3>(6)) * partialM_[j].topLeftCorner<3,3>() * x_.segment<3>(6);
 
-	partrialF_q.template block<6,12>(6,0) = ( MInverse_ * partrialF_q.template block<6,12>(6,0) );
+	partrialF_q.template block<6,12>(6,0) = ( MInverse_ * partrialF_q.template block<6,12>(6,0) ).eval();
 
 	/* partial derivative of the MInverse w.r.t. qJoints */
 	if (useInertiaMatrixDerivate_==true) {

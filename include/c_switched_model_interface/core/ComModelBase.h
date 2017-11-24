@@ -71,6 +71,12 @@ public:
 			const Eigen::Matrix<double,12,1>& q) = 0;
 
 	/**
+	 * Total mass of robot
+	 * @return mass in kg
+	 */
+	virtual double totalMass() const = 0;
+
+	/**
 	 * Calculate Com Homogeneous
 	 * @param [in] q
 	 * @return

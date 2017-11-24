@@ -56,7 +56,8 @@ public:
 	 */
 	ComDynamicsDerivativeBase(const ComDynamicsDerivativeBase& rhs)
 
-	: kinematicModelPtr_(rhs.kinematicModelPtr_->clone()),
+	: Base(rhs),
+	  kinematicModelPtr_(rhs.kinematicModelPtr_->clone()),
 	  comModelPtr_(rhs.comModelPtr_->clone()),
 	  o_gravityVector_(rhs.o_gravityVector_),
 	  constrainedIntegration_(rhs.constrainedIntegration_)

@@ -18,6 +18,8 @@ namespace anymal {
 class AnymalKinematics : public switched_model::KinematicsModelBase<12>
 {
 public:
+	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+
 	typedef switched_model::KinematicsModelBase<12> Base;
 
 	enum { LF=0,  RF=1,  LH=2,  RH=3 };

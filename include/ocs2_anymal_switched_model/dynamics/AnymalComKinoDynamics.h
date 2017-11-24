@@ -12,6 +12,8 @@ namespace anymal {
 class AnymalComKinoDynamics : public switched_model::ComKinoDynamicsBase<12>
 {
 public:
+	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+
 	typedef switched_model::ComKinoDynamicsBase<12> Base;
 
 	AnymalComKinoDynamics(const std::array<bool,4>& stanceLegs,
@@ -20,6 +22,8 @@ public:
 		const std::vector<switched_model::EndEffectorConstraintBase::Ptr>& endEffectorStateConstraints = std::vector<switched_model::EndEffectorConstraintBase::Ptr>());
 
 	~AnymalComKinoDynamics() {}
+
+	std::shared_ptr<Base::Base> clone() const  override;
 
 private:
 

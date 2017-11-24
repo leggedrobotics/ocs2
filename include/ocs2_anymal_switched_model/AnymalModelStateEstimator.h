@@ -16,6 +16,8 @@ namespace anymal {
 class AnymalModelStateEstimator : public switched_model::SwitchedModelStateEstimator<12>
 {
 public:
+	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+
 	typedef switched_model::SwitchedModelStateEstimator<12> Base;
 
 	AnymalModelStateEstimator();

@@ -32,6 +32,7 @@ AnymalCom::AnymalCom()
 /******************************************************************************************************/
 /******************************************************************************************************/
 std::shared_ptr<AnymalCom::Base> AnymalCom::clone() const {
+
 	return std::allocate_shared< AnymalCom, Eigen::aligned_allocator<AnymalCom> > (
 					Eigen::aligned_allocator<AnymalCom>(), *this);
 }
@@ -61,6 +62,14 @@ Eigen::Matrix<double, 6, 6> AnymalCom::comInertia(const joint_coordinate_t& q)
 {
 	// total inertia of robot in the default config in base frame
 	return comInertia_;
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+double AnymalCom::totalMass() const {
+
+	return inertiaProperties_.getTotalMass();
 }
 
 /******************************************************************************************************/

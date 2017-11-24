@@ -51,6 +51,7 @@ add_library(${PROJECT_NAME}
   src/AnymalKinematics.cpp
   src/AnymalComKinoDynamics.cpp
   src/AnymalComKinoDynamicsDerivative.cpp
+  src/AnymalCost.cpp
   src/AnymalModelStateEstimator.cpp
 )
 

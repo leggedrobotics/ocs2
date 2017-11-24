@@ -20,4 +20,10 @@ AnymalComKinoDynamicsDerivative::AnymalComKinoDynamicsDerivative(const std::arra
 		options, feetZDirectionPlanner, endEffectorStateConstraints)
 {}
 
+std::shared_ptr<typename AnymalComKinoDynamicsDerivative::Base::Base> AnymalComKinoDynamicsDerivative::clone() const {
+
+	return std::allocate_shared< AnymalComKinoDynamicsDerivative, Eigen::aligned_allocator<AnymalComKinoDynamicsDerivative> > (
+			Eigen::aligned_allocator<AnymalComKinoDynamicsDerivative>(), *this);
+}
+
 } //end of namespace anymal

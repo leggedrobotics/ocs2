@@ -20,4 +20,10 @@ AnymalComKinoDynamics::AnymalComKinoDynamics(const std::array<bool,4>& stanceLeg
 		feetZDirectionPlanner, endEffectorStateConstraints)
 {}
 
+std::shared_ptr<AnymalComKinoDynamics::Base::Base> AnymalComKinoDynamics::clone() const {
+
+	return std::allocate_shared< AnymalComKinoDynamics, Eigen::aligned_allocator<AnymalComKinoDynamics> > (
+			Eigen::aligned_allocator<AnymalComKinoDynamics>(), *this);
+}
+
 } //end of namespace anymal

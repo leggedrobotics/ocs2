@@ -11,7 +11,6 @@ find_package(catkin REQUIRED COMPONENTS
   ocs2_slq
   ocs2_ocs2
   ocs2_anymal_switched_model
-  ocs2_anymal_cost
   cereal
 )
 
@@ -47,7 +46,6 @@ catkin_package(
     ocs2_slq
     ocs2_ocs2
     ocs2_anymal_switched_model
-    ocs2_anymal_cost
 #  DEPENDS
 )
 

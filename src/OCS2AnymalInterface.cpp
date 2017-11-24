@@ -6,12 +6,7 @@
  */
 
 //config file loading
-#include <ocs2_anymal_interface/OCS2AnymalInterface.h>
-#include <c_switched_model_interface/state_constraint/EndEffectorConstraintsUtilities.h>
-
-#include <ocs2_core/misc/LoadConfigFile.h>
-#include <ocs2_core/integration/eigenIntegration.h>
-
+#include "ocs2_anymal_interface/OCS2AnymalInterface.h"
 
 namespace anymal {
 /******************************************************************************************************/
@@ -562,7 +557,7 @@ void OCS2AnymalInterface::setupOptimizer()  {
 				desiredTimeTrajectoriesStock_[i], desiredStateTrajectoriesStock_[i], uNominalTrajectory, QFinal_, xFinal_, options_.copWeight_) );
 
 		// subsystem settings
-		subsystemDynamicsPtr_[i]    = std::shared_ptr<system_dynamics_t>( new system_dynamics_t(initStanceLegSequene_[i], -gravity_(2), options_,
+		subsystemDynamicsPtr_[i] = std::shared_ptr<system_dynamics_t>( new system_dynamics_t(initStanceLegSequene_[i], -gravity_(2), options_,
 				feetZDirectionPlannerPtr_, gapIndicatorPtrs_) );
 		subsystemDerivativesPtr_[i] = std::shared_ptr<system_dynamics_derivative_t>( new system_dynamics_derivative_t(initStanceLegSequene_[i], -gravity_(2), options_,
 				feetZDirectionPlannerPtr_, gapIndicatorPtrs_) );

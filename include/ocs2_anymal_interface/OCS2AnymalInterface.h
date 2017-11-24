@@ -42,8 +42,11 @@
 #include <ocs2_anymal_switched_model/AnymalModelStateEstimator.h>
 #include <ocs2_anymal_switched_model/dynamics/AnymalComKinoDynamics.h>
 #include <ocs2_anymal_switched_model/dynamics/AnymalComKinoDynamicsDerivative.h>
+#include <ocs2_anymal_switched_model/cost/AnymalCost.h>
 #include <iit/robots/anymal/inverse_dynamics.h>
-#include <ocs2_anymal_cost/SwitchedModelCost.h>
+
+#include <ocs2_core/misc/LoadConfigFile.h>
+#include <ocs2_core/integration/eigenIntegration.h>
 
 namespace anymal {
 
@@ -55,9 +58,9 @@ public:
 	typedef std::shared_ptr<OCS2AnymalInterface> Ptr;
 	typedef std::array<Eigen::Vector3d, 4>      contact_array_t;
 	typedef ocs2::Dimensions<12+12,12+12> 		dimension_t;
-	typedef SwitchedModelCost             		cost_funtion_t;
-	typedef AnymalComKinoDynamics           			system_dynamics_t;
-	typedef AnymalComKinoDynamicsDerivative 			system_dynamics_derivative_t;
+	typedef AnymalCost		             		cost_funtion_t;
+	typedef AnymalComKinoDynamics           	system_dynamics_t;
+	typedef AnymalComKinoDynamicsDerivative 	system_dynamics_derivative_t;
 	typedef switched_model::WeightCompensationForces<AnymalCom,AnymalKinematics> weightCompensationForces_t;
 
 
@@ -257,7 +260,7 @@ private:
 	// subsystem derivatives
 	std::vector<std::shared_ptr<system_dynamics_derivative_t::Base::Base> > subsystemDerivativesPtr_;
 	// subsystem cost functions
-	std::vector<std::shared_ptr<cost_funtion_t::Base> > subsystemCostFunctionsPtr_;
+	std::vector<std::shared_ptr<cost_funtion_t::Base::Base> > subsystemCostFunctionsPtr_;
 	// subsystem state operating points
 	dimension_t::state_vector_array_t   stateOperatingPoints_;
 	// subsystem input operating points

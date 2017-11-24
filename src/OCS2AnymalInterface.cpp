@@ -372,15 +372,17 @@ void OCS2AnymalInterface::loadSimulationSettings(const std::string& filename, do
 {
 	const double defaultInitSettlingTime = 1.5;
 	boost::property_tree::ptree pt;
-	boost::property_tree::read_info(filename, pt);
 
 	try	{
+		boost::property_tree::read_info(filename, pt);
 		dt     = pt.get<double>("simulationSettings.dt");
 		tFinal = pt.get<double>("simulationSettings.tFinal");
 		initSettlingTime = pt.get<double>("simulationSettings.initSettlingTime", defaultInitSettlingTime);
 	}
 	catch (const std::exception& e){
+		std::cerr << "Tried to open file " << filename << " but failed: " << std::endl;
 		std::cerr<<"Error in loading simulation settings: " << e.what() << std::endl;
+		throw;
 	}
 	std::cerr<<"Simulation Settings: " << std::endl;
 	std::cerr<<"=====================================" << std::endl;
@@ -394,11 +396,12 @@ void OCS2AnymalInterface::loadSimulationSettings(const std::string& filename, do
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void OCS2AnymalInterface::loadVisualizationSettings(const std::string& filename, double& slowdown, double& vizTime) {
+void OCS2AnymalInterface::loadVisualizationSettings(const std::string& filename, double& slowdown, double& vizTime)
+{
 	boost::property_tree::ptree pt;
-	boost::property_tree::read_info(filename, pt);
 
 	try	{
+		boost::property_tree::read_info(filename, pt);
 		slowdown = pt.get<double>("visualization.slowdown");
 		vizTime = pt.get<double>("visualization.vizTime");
 	}
@@ -410,16 +413,13 @@ void OCS2AnymalInterface::loadVisualizationSettings(const std::string& filename,
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void OCS2AnymalInterface::loadSettings(const std::string& pathToConfigFolder, const Eigen::Matrix<double,36,1>& initHyQState) {
-
-	std::string taskFile;
-	taskFile = pathToConfigFolder + "/task.info";
+void OCS2AnymalInterface::loadSettings(const std::string& pathToConfigFile, const Eigen::Matrix<double,36,1>& initHyQState) {
 
 	double dt, finalTime, initSettlingTime;
-	loadSimulationSettings(taskFile, dt, finalTime, initSettlingTime);
+	loadSimulationSettings(pathToConfigFile, dt, finalTime, initSettlingTime);
 
 	// gravity vector
-	ocs2::LoadConfigFile::loadMatrix(taskFile,"gravity",gravity_);
+	ocs2::LoadConfigFile::loadMatrix(pathToConfigFile,"gravity",gravity_);
 	std::cerr <<"====================" << std::endl;
 	std::cerr << "Gravity: \t" << gravity_.transpose().format(CleanFmtDisplay_) << std::endl << std::endl;
 
@@ -427,26 +427,26 @@ void OCS2AnymalInterface::loadSettings(const std::string& pathToConfigFolder, co
 	switchedModelStateEstimator_.estimateComkinoModelState(initHyQState, initSwitchedState_);
 
 	// cost function components
-	ocs2::LoadConfigFile::loadMatrix(taskFile, "Q", Q_);
-	ocs2::LoadConfigFile::loadMatrix(taskFile, "R", R_);
-	ocs2::LoadConfigFile::loadMatrix(taskFile, "Q_final", QFinal_);
+	ocs2::LoadConfigFile::loadMatrix(pathToConfigFile, "Q", Q_);
+	ocs2::LoadConfigFile::loadMatrix(pathToConfigFile, "R", R_);
+	ocs2::LoadConfigFile::loadMatrix(pathToConfigFile, "Q_final", QFinal_);
 	// target state
 	dimension_t::state_vector_t xFinalLoaded;
-	ocs2::LoadConfigFile::loadMatrix(taskFile, "x_final", xFinalLoaded);
+	ocs2::LoadConfigFile::loadMatrix(pathToConfigFile, "x_final", xFinalLoaded);
 	xFinal_ = initSwitchedState_;
 	xFinal_.head<6>() += xFinalLoaded.head<6>();
 
 	// OCS2 options
-	ocs2::LoadConfigFile::loadOptions<12+12,12+12>(taskFile, slqpOptions_, true);
+	ocs2::LoadConfigFile::loadOptions<12+12,12+12>(pathToConfigFile, slqpOptions_, true);
 
 	// // MPC settings
-	// ocs2::LoadConfigFile::loadMpcSettings<12+12,12+12>(taskFile, mpcOptions_, true);
+	// ocs2::LoadConfigFile::loadMpcSettings<12+12,12+12>(pathToConfigFile, mpcOptions_, true);
 
 	// load switched model options
-	switched_model::loadModelSettings(taskFile, options_, true);
+	switched_model::loadModelSettings(pathToConfigFile, options_, true);
 
 	// load the switchingModes
-	switched_model::loadSwitchingModes(taskFile, initSwitchingModes_, true);
+	switched_model::loadSwitchingModes(pathToConfigFile, initSwitchingModes_, true);
 	initNumSubsystems_ = initSwitchingModes_.size();
 	std::cerr << "initSwitchingModes: "
 			<< Eigen::Matrix<size_t,1,-1>::Map(initSwitchingModes_.data(),initNumSubsystems_).format(CleanFmtDisplay_) << std::endl;
@@ -476,10 +476,10 @@ void OCS2AnymalInterface::loadSettings(const std::string& pathToConfigFolder, co
 					<< std::endl << std::endl;
 
 	// Gap Indicators
-	switched_model::loadGaps(taskFile, gapIndicatorPtrs_, true);
+	switched_model::loadGaps(pathToConfigFile, gapIndicatorPtrs_, true);
 
 	// mrt_deadzone
-	ocs2::LoadConfigFile::loadMatrix(taskFile, "mrt_deadzone", mrtDeadzone_);
+	ocs2::LoadConfigFile::loadMatrix(pathToConfigFile, "mrt_deadzone", mrtDeadzone_);
 
 }
 

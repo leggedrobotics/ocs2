@@ -186,7 +186,7 @@ public:
 	static void loadVisualizationSettings(const std::string& filename, double& slowdown, double& vizTime);
 
 protected:
-	void loadSettings(const std::string& pathToConfigFolder, const Eigen::Matrix<double,36,1>& initHyQState);
+	void loadSettings(const std::string& pathToConfigFile, const Eigen::Matrix<double,36,1>& initHyQState);
 
 	void setupOptimizer();
 

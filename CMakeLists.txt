@@ -12,6 +12,7 @@ find_package(catkin REQUIRED COMPONENTS
   ocs2_ocs2
   ocs2_anymal_switched_model
   cereal
+  xpp_msgs
 )
 
 ## Eigen3
@@ -20,6 +21,10 @@ if( NOT EIGEN_INCLUDE_DIRS )
     find_package(Eigen REQUIRED)
     message( WARNING "Uses Globally installed Eigen since LOCAL_EIGEN3_INCLUDE_DIR is not defined!")
 endif()
+
+find_package(Boost REQUIRED COMPONENTS
+  filesystem
+)
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread -fopenmp -std=c++11 -Wfatal-errors -ffast-math")
 
@@ -46,6 +51,7 @@ catkin_package(
     ocs2_slq
     ocs2_ocs2
     ocs2_anymal_switched_model
+    xpp_msgs
 #  DEPENDS
 )
 

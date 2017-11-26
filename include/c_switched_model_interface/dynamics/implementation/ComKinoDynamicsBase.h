@@ -175,7 +175,7 @@ void ComKinoDynamicsBase<JOINT_COORD_SIZE>::computeConstriant2(const scalar_t& t
 
 	// Base pose
 	base_coordinate_t basePose;
-	comDynamics_.calculateBasePose(qJoints, x.template head<6>(), basePose);
+	comModelPtr_->calculateBasePose(qJoints, x.template head<6>(), basePose);
 
 	kinematicModelPtr_->update(basePose, qJoints);
 
@@ -210,7 +210,7 @@ void ComKinoDynamicsBase<JOINT_COORD_SIZE>::computeFinalConstriant2(const scalar
 
 	// Base pose
 	base_coordinate_t basePose;
-	comDynamics_.calculateBasePose(qJoints, x.template head<6>(), basePose);
+	comModelPtr_->calculateBasePose(qJoints, x.template head<6>(), basePose);
 
 	kinematicModelPtr_->update(basePose, qJoints);
 

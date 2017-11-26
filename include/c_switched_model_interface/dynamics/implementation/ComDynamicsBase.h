@@ -117,49 +117,6 @@ void ComDynamicsBase<JOINT_COORD_SIZE>::computeDerivative(const scalar_t& t,
 
 }
 
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-template <size_t JOINT_COORD_SIZE>
-void ComDynamicsBase<JOINT_COORD_SIZE>::calculateBasePose(const joint_coordinate_t& qJoints,
-		const base_coordinate_t& comPose,
-		base_coordinate_t& basePose) {
-
-	// Rotation matrix from Base frame (or the coincided frame world frame) to Origin frame (global world).
-	Eigen::Matrix3d o_R_b = RotationMatrixBasetoOrigin(comPose.template head<3>());
-
-	// base to CoM displacement in the CoM frame
-	Eigen::Vector3d com_base2CoM = comModelPtr_->comPositionBaseFrame(qJoints);
-
-	// base coordinate
-	basePose.template head<3>() = comPose.template segment<3>(0);
-	basePose.template tail<3>() = comPose.template segment<3>(3) - o_R_b * com_base2CoM;
-}
-
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-template <size_t JOINT_COORD_SIZE>
-void ComDynamicsBase<JOINT_COORD_SIZE>::calculateBaseLocalVelocities(const joint_coordinate_t& qJoints,
-		const joint_coordinate_t& dqJoints,
-		const base_coordinate_t& comLocalVelocities,
-		base_coordinate_t& baseLocalVelocities) {
-
-	// base to CoM displacement in the CoM frame
-	Eigen::Vector3d com_base2CoM = comModelPtr_->comPositionBaseFrame(qJoints);
-
-	// CoM Jacobin in the Base frame
-	Eigen::Matrix<double,6,12> b_comJacobain = comModelPtr_->comJacobainBaseFrame(qJoints);
-
-	// local velocities of Base (com_W_b)
-	baseLocalVelocities.template head<3>() = comLocalVelocities.template head<3>() - b_comJacobain.template topRows<3>()*dqJoints;
-	baseLocalVelocities.template tail<3>() = comLocalVelocities.template tail<3>() - b_comJacobain.template bottomRows<3>()*dqJoints
-			+ com_base2CoM.cross(baseLocalVelocities.template head<3>());
-
-}
-
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/

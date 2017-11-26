@@ -105,30 +105,6 @@ public:
 			const joint_coordinate_t& dqJoints);
 
 	/**
-	 * Calculates the Base orientation and position based on the current joints' angel (qJoints)
-	 * and the current CoM orientation and position.
-	 *
-	 * The Base pose (basePose) consists of:
-	 * 		+ Base orientation w.r.t origin frame (3-states)
-	 * 		+ Base position w.r.t origin frame (3-states)
-	 */
-	void calculateBasePose(const joint_coordinate_t& qJoints,
-			const base_coordinate_t& comPose,
-			base_coordinate_t& basePose);
-
-	/**
-	 * Calculates the Base local velocities based on the current joints' angel (qJoints),
-	 * the current joints' velocities (dqJoints), CoM local velocities (comLocalVelocities).
-	 *
-	 * The Base local velocities (baseLocalVelocities) consists of:
-	 * 		+ Base local angular and linear velocities in World frame (inertia frame coincide at Base frame) (6-states)
-	 */
-	void calculateBaseLocalVelocities(const joint_coordinate_t& qJoints,
-			const joint_coordinate_t& dqJoints,
-			const base_coordinate_t& comLocalVelocities,
-			base_coordinate_t& baseLocalVelocities);
-
-	/**
 	 * @brief Computes the matrix which transforms derivatives of angular velocities in the body frame to euler angles derivatives
 	 * WARNING: matrix is singular when rotation around y axis is +/- 90 degrees
 	 * @param[in] eulerAngles: euler angles in xyz convention

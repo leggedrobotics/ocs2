@@ -121,6 +121,30 @@ public:
 	virtual Eigen::Matrix<double,3,1> comVelocityInBaseFrame(
 			const Eigen::Matrix<double,12,1>& q, const Eigen::Matrix<double,12,1>& dq) = 0;
 
+	/**
+	 * Calculate Base Pose from CoM pose for given joint coordinates
+	 * The Base pose (basePose) consists of:
+	 * 		+ Base orientation w.r.t origin frame (3-states)
+	 * 		+ Base position w.r.t origin frame (3-states)
+	 *
+	 * @param [in]  qJoints
+	 * @param [in]  comPose
+	 * @param [out] basePose
+	*/
+	virtual void calculateBasePose(const joint_coordinate_t& qJoints,
+			const base_coordinate_t& comPose, base_coordinate_t& basePose);
+
+	/**
+	 * Calculates the Base local velocities based on the current joint coordinates
+	 * joint velocities, and CoM local velocities (comLocalVelocities).
+	 * The Base local velocities (baseLocalVelocities) consists of angular and
+	 * linear velocities in World frame (inertia frame coincide at Base frame)
+	 * (6-states)
+	 */
+	void calculateBaseLocalVelocities(const joint_coordinate_t& qJoints,
+			const joint_coordinate_t& dqJoints,
+			const base_coordinate_t& comLocalVelocities,
+			base_coordinate_t& baseLocalVelocities);
 };
 
 } //end of namespace switched_model

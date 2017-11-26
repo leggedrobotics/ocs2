@@ -76,7 +76,7 @@ ocs2
 	stateConstraintPenaltyBase   1.1                                          	
 	meritFunctionRho             50.0                                         	
 	constraintStepSize           1.0                                          	
-	dispayGSLQP                  0
+	dispayGSLQP                  1
 	displayShortSummary			 0                                            	
 	warmStartGSLQP               1    
 	useLQForDerivatives		     0                                        

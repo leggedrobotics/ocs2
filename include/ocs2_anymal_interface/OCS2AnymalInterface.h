@@ -37,12 +37,12 @@
 #include <c_switched_model_interface/state_constraint/EndEffectorConstraintBase.h>
 #include <c_switched_model_interface/state_constraint/EllipticalConstraint.h>
 #include <c_switched_model_interface/state_constraint/EndEffectorConstraintsUtilities.h>
-#include <c_switched_model_interface/misc/WeightCompensationForces.h>
 
 #include <ocs2_anymal_switched_model/AnymalModelStateEstimator.h>
 #include <ocs2_anymal_switched_model/dynamics/AnymalComKinoDynamics.h>
 #include <ocs2_anymal_switched_model/dynamics/AnymalComKinoDynamicsDerivative.h>
 #include <ocs2_anymal_switched_model/cost/AnymalCost.h>
+#include <ocs2_anymal_switched_model/misc/AnymalWeightCompensationForces.h>
 #include <iit/robots/anymal/inverse_dynamics.h>
 
 #include <ocs2_core/misc/LoadConfigFile.h>
@@ -61,7 +61,7 @@ public:
 	typedef AnymalCost		             		cost_funtion_t;
 	typedef AnymalComKinoDynamics           	system_dynamics_t;
 	typedef AnymalComKinoDynamicsDerivative 	system_dynamics_derivative_t;
-	typedef switched_model::WeightCompensationForces<AnymalCom,AnymalKinematics> weightCompensationForces_t;
+	typedef AnymalWeightCompensationForces		weightCompensationForces_t;
 
 
 	typedef ocs2::GLQP<dimension_t::STATE_DIM_,dimension_t::INPUT_DIM_> 		glqp_t;

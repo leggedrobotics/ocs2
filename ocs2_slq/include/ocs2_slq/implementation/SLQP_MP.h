@@ -1670,27 +1670,39 @@ void SLQP_MP<STATE_DIM, INPUT_DIM>::setupOptimizer() {
 	for (size_t i=0; i<BASE::options_.nThreads_+1; i++)  {
 
 		dynamics_[i].clear();
+		dynamics_[i].reserve(BASE::numSubsystems_);
 		linearizedSystems_[i].clear();
+		linearizedSystems_[i].reserve(BASE::numSubsystems_);
 		costFunctions_[i].clear();
+		costFunctions_[i].reserve(BASE::numSubsystems_);
 		killIntegrationEventHandlers_[i].clear();
+		killIntegrationEventHandlers_[i].reserve(BASE::numSubsystems_);
 		integratorsODE45_[i].clear();
+		integratorsODE45_[i].reserve(BASE::numSubsystems_);
 
 		// .. initialize all subsystems, etc.
 		for(size_t j = 0; j<BASE::numSubsystems_; j++)  {
+
 			// initialize dynamics
-			dynamics_[i].push_back(BASE::subsystemDynamicsPtr_[BASE::systemStockIndexes_[j]]->clone());
+			dynamics_[i].push_back(std::move( BASE::subsystemDynamicsPtr_[BASE::systemStockIndexes_[j]]->clone() ));
 
 			// initialize linearized systems
-			linearizedSystems_[i].push_back(BASE::subsystemDerivativesPtr_[BASE::systemStockIndexes_[j]]->clone());
+			linearizedSystems_[i].push_back(std::move( BASE::subsystemDerivativesPtr_[BASE::systemStockIndexes_[j]]->clone() ));
 
 			// initialize cost functions
-			costFunctions_[i].push_back(BASE::subsystemCostFunctionsPtr_[BASE::systemStockIndexes_[j]]->clone());
+			costFunctions_[i].push_back(std::move( BASE::subsystemCostFunctionsPtr_[BASE::systemStockIndexes_[j]]->clone() ));
+
+			// initialize events
+			typedef KillIntegrationEventHandler<STATE_DIM> event_t;
+			typedef Eigen::aligned_allocator<event_t> event_alloc_t;
+			killIntegrationEventHandlers_[i].push_back(std::move(
+					std::allocate_shared<event_t,event_alloc_t>(event_alloc_t()) ));
 
 			// initialize integrators
-			killIntegrationEventHandlers_[i].push_back( std::allocate_shared<KillIntegrationEventHandler<STATE_DIM>,
-					Eigen::aligned_allocator<KillIntegrationEventHandler<STATE_DIM>> >(
-							Eigen::aligned_allocator<KillIntegrationEventHandler<STATE_DIM>>() ) );
-			integratorsODE45_[i].push_back( std::shared_ptr<ODE45<STATE_DIM> >( new ODE45<STATE_DIM> (dynamics_[i].back(), killIntegrationEventHandler_) ) );
+			typedef ODE45<STATE_DIM> ode_t;
+			typedef Eigen::aligned_allocator<ode_t> ode_alloc_t;
+			integratorsODE45_[i].push_back(std::move(
+					std::allocate_shared<ode_t, ode_alloc_t>(ode_alloc_t(), dynamics_[i].back(), killIntegrationEventHandler_) ));
 		}
 	}
 

@@ -853,17 +853,24 @@ void SLQP<STATE_DIM, INPUT_DIM>::setupOptimizer() {
 	if (BASE::subsystemDynamicsPtr_.size()-1 < *std::max_element(BASE::systemStockIndexes_.begin(), BASE::systemStockIndexes_.end()))
 		throw std::runtime_error("systemStockIndex points to non-existing subsystem");
 
-	subsystemDynamicsPtrStock_.resize(BASE::numSubsystems_);
-	subsystemDerivativesPtrStock_.resize(BASE::numSubsystems_);
-	subsystemCostFunctionsPtrStock_.resize(BASE::numSubsystems_);
-	subsystemSimulatorsStockPtr_.resize(BASE::numSubsystems_);
+	subsystemDynamicsPtrStock_.clear();
+	subsystemDynamicsPtrStock_.reserve(BASE::numSubsystems_);
+	subsystemDerivativesPtrStock_.clear();
+	subsystemDerivativesPtrStock_.reserve(BASE::numSubsystems_);
+	subsystemCostFunctionsPtrStock_.clear();
+	subsystemCostFunctionsPtrStock_.reserve(BASE::numSubsystems_);
+	subsystemSimulatorsStockPtr_.clear();
+	subsystemSimulatorsStockPtr_.reserve(BASE::numSubsystems_);
 
 	for (int i=0; i<BASE::systemStockIndexes_.size(); i++) {
-		subsystemDynamicsPtrStock_[i] = BASE::subsystemDynamicsPtr_[BASE::systemStockIndexes_[i]]->clone();
-		subsystemDerivativesPtrStock_[i] = BASE::subsystemDerivativesPtr_[BASE::systemStockIndexes_[i]]->clone();
-		subsystemCostFunctionsPtrStock_[i] = BASE::subsystemCostFunctionsPtr_[BASE::systemStockIndexes_[i]]->clone();
 
-		subsystemSimulatorsStockPtr_[i] =  std::shared_ptr<ODE45<STATE_DIM>>( new ODE45<STATE_DIM>(subsystemDynamicsPtrStock_[i]) );
+		subsystemDynamicsPtrStock_.push_back(std::move( BASE::subsystemDynamicsPtr_[BASE::systemStockIndexes_[i]]->clone() ));
+		subsystemDerivativesPtrStock_.push_back(std::move( BASE::subsystemDerivativesPtr_[BASE::systemStockIndexes_[i]]->clone() ));
+		subsystemCostFunctionsPtrStock_.push_back(std::move( BASE::subsystemCostFunctionsPtr_[BASE::systemStockIndexes_[i]]->clone() ));
+
+		typedef ODE45<STATE_DIM> ode_t;
+		typedef Eigen::aligned_allocator<ode_t> ode_alloc_t;
+		subsystemSimulatorsStockPtr_.push_back(std::move( std::allocate_shared<ode_t, ode_alloc_t>(ode_alloc_t(), subsystemDynamicsPtrStock_.back()) ));
 	}
 
 	BASE::sFinalStock_.resize(BASE::numSubsystems_+1);

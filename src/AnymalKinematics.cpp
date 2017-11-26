@@ -14,7 +14,7 @@ namespace anymal {
 /******************************************************************************************************/
 AnymalKinematics* AnymalKinematics::clone() const {
 
-	return new AnymalKinematics;
+	return new AnymalKinematics(*this);
 }
 
 /******************************************************************************************************/

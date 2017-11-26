@@ -35,11 +35,11 @@ public:
 	typedef typename SwitchedModel<JOINT_COORD_SIZE>::joint_coordinate_t joint_coordinate_t;
 
 
-	ComDynamicsBase(const typename kinematic_model_t::Ptr& kinematicModelPtr, const typename com_model_t::Ptr& comModelPtr,
+	ComDynamicsBase(kinematic_model_t* kinematicModelPtr, com_model_t* comModelPtr,
 			const double& gravitationalAcceleration=9.81, const bool& constrainedIntegration=true)
 
-	: kinematicModelPtr_(kinematicModelPtr->clone()),
-	  comModelPtr_(comModelPtr->clone()),
+	: kinematicModelPtr_(kinematicModelPtr),
+	  comModelPtr_(comModelPtr),
 	  o_gravityVector_(0.0, 0.0, -gravitationalAcceleration),
 	  constrainedIntegration_(constrainedIntegration)
 	{
@@ -134,7 +134,7 @@ public:
 	 * @param[in] eulerAngles: euler angles in xyz convention
 	 * @return M: matrix that does the transformation
 	 */
-	static Eigen::Matrix3d AngularVelocitiesToEulerAngleDerivativesMatrix (Eigen::Vector3d eulerAngles);
+	static Eigen::Matrix3d AngularVelocitiesToEulerAngleDerivativesMatrix (const Eigen::Vector3d& eulerAngles);
 
 	/**
 	 * user interface for retrieving stance legs. Note this value is updated after each call of computeDerivative() method.

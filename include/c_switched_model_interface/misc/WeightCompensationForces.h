@@ -13,20 +13,35 @@
 
 #include <ocs2_core/misc/EigenQuadSolve.h>
 #include <c_switched_model_interface/core/SwitchedModel.h>
+#include <c_switched_model_interface/core/KinematicsModelBase.h>
+#include <c_switched_model_interface/core/ComModelBase.h>
 #include <c_switched_model_interface/misc/SphericalCoordinate.h>
 
 namespace switched_model {
 
-template<typename ComModel, typename KinematicsModel>
+template <size_t JOINT_COORD_SIZE>
 class WeightCompensationForces
 {
 public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-	typedef Eigen::Matrix<double,12,1>     joint_coordinate_t;
-	typedef std::array<Eigen::Vector3d,4>  vector_3d_array;
+	typedef ComModelBase<JOINT_COORD_SIZE> com_model_t;
+	typedef KinematicsModelBase<JOINT_COORD_SIZE> kinematic_model_t;
 
-	WeightCompensationForces() {}
+	typedef std::array<Eigen::Vector3d,4>  vector_3d_array;
+	typedef typename SwitchedModel<JOINT_COORD_SIZE>::base_coordinate_t  base_coordinate_t;
+	typedef typename SwitchedModel<JOINT_COORD_SIZE>::joint_coordinate_t joint_coordinate_t;
+
+	WeightCompensationForces(const kinematic_model_t* kinematicModelPtr, const com_model_t* comModelPtr)
+	: kinematicModelPtr_(kinematicModelPtr->clone()),
+	  comModelPtr_(comModelPtr->clone())
+	{}
+
+	WeightCompensationForces(const WeightCompensationForces& rhs)
+	: kinematicModelPtr_(rhs.kinematicModelPtr_->clone()),
+	  comModelPtr_(rhs.comModelPtr_->clone())
+	{}
+
 	~WeightCompensationForces() {}
 
 
@@ -34,18 +49,18 @@ public:
 			const std::array<bool,4>& stanceLegs, const joint_coordinate_t& qJoints,
 			vector_3d_array& sphericalForces)  {
 
-		const double totalMass = comModel_.totalMass();
+		const double totalMass = comModelPtr_->totalMass();
 
 		// CoM Position in Base frame
-		Eigen::Vector3d b_comPosition = comModel_.comPositionBaseFrame(qJoints);
+		Eigen::Vector3d b_comPosition = comModelPtr_->comPositionBaseFrame(qJoints);
 
 		Eigen::Matrix<double,3,4> transform;
-		kinModel_.update(Eigen::Matrix<double,6,1>::Zero(), qJoints);
+		kinematicModelPtr_->update(base_coordinate_t::Zero(), qJoints);
 		for (size_t i=0; i<4; i++)
 			if (stanceLegs[i] == true) {
 				// foot position in the Base frame
 				Eigen::Vector3d b_feetPosition;
-				kinModel_.footPositionBaseFrame(i, b_feetPosition);
+				kinematicModelPtr_->footPositionBaseFrame(i, b_feetPosition);
 				transform.col(i) = SphericalCoordinate::FromSphericalToCartesian(b_feetPosition-b_comPosition).col(0);
 			} else
 				transform.col(i).setZero();
@@ -91,23 +106,23 @@ public:
 //			} else
 //				cartesianForces[i].setZero();
 
-		const double totalMass = comModel_.totalMass();
+		const double totalMass = comModelPtr_->totalMass();
 
 		// number of stance legs
 		size_t numStanceLeg = stanceLegs[0] + stanceLegs[1] + stanceLegs[2] + stanceLegs[3];
 
 		// CoM Position in Base frame
-		Eigen::Vector3d b_comPosition = comModel_.comPositionBaseFrame(qJoints);
+		Eigen::Vector3d b_comPosition = comModelPtr_->comPositionBaseFrame(qJoints);
 
 		// F = A * lambda
 		Eigen::MatrixXd A(6, 3*numStanceLeg);
 		size_t itr = 0;
-		kinModel_.update(Eigen::Matrix<double,6,1>::Zero(), qJoints);
+		kinematicModelPtr_->update(base_coordinate_t::Zero(), qJoints);
 		for (size_t i=0; i<4; i++)
 			if (stanceLegs[i] == true) {
 				// foot position in the Base frame
 				Eigen::Vector3d b_footPosition;
-				kinModel_.footPositionBaseFrame(i, b_footPosition);
+				kinematicModelPtr_->footPositionBaseFrame(i, b_footPosition);
 
 				Eigen::Vector3d com_footPosition = b_footPosition - b_comPosition;
 
@@ -118,7 +133,7 @@ public:
 			}
 
 		 // F
-		Eigen::Matrix<double,6,1> F;
+		base_coordinate_t F;
 		F << Eigen::Vector3d::Zero(), -w_gravityVectorconst*totalMass;
 
 		// lambda
@@ -143,19 +158,19 @@ public:
 			const std::array<bool,4>& stanceLegs, const joint_coordinate_t& qJoints,
 			vector_3d_array& sphericalForces)  {
 
-		const double totalMass = comModel_.totalMass();
+		const double totalMass = comModelPtr_->totalMass();
 
 		// CoM Position in Base frame
-		Eigen::Vector3d b_comPosition = comModel_.comPositionBaseFrame(qJoints);
+		Eigen::Vector3d b_comPosition = comModelPtr_->comPositionBaseFrame(qJoints);
 		// feet position
-		std::array<Eigen::Vector3d,4> com_feetPositions;
+		vector_3d_array com_feetPositions;
 		Eigen::Vector3d com_feetCenterPosition = Eigen::Vector3d::Zero();
-		kinModel_.update(qJoints);
+		kinematicModelPtr_->update(qJoints);
 		for (size_t i=0; i<4; i++)
 			if (stanceLegs[i] == true) {
 				// foot position in the Base frame
 				Eigen::Vector3d b_footPosition;
-				kinModel_.footPositionBaseFrame(i, b_footPosition);
+				kinematicModelPtr_->footPositionBaseFrame(i, b_footPosition);
 				com_feetPositions[i] = b_footPosition - b_comPosition;
 				com_feetCenterPosition += com_feetPositions[i];
 			} else
@@ -203,7 +218,7 @@ public:
 	 * @param[out] contactForces: optimized contact Forces
 	 * @param[out] feasibility: feasibility status of the QP
 	 */
-	static void SolveQPforForces(const Eigen::Matrix<double,6,1>& F,
+	static void SolveQPforForces(const base_coordinate_t& F,
 			const Eigen::MatrixXd& JcStacked,
 			const size_t numForces,
 			const size_t numLegs,
@@ -245,8 +260,8 @@ public:
 
 
 private:
-	ComModel comModel_;
-	KinematicsModel kinModel_;
+	typename kinematic_model_t::Ptr kinematicModelPtr_;
+	typename com_model_t::Ptr comModelPtr_;
 
 };
 

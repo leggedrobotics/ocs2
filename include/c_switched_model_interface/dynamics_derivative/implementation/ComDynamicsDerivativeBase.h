@@ -197,7 +197,7 @@ void ComDynamicsDerivativeBase<JOINT_COORD_SIZE>::getDerivativesControl(control_
 		B.block<3,3>(9,3*i).setIdentity();
 	}  // end of i loop
 
-	B.bottomRows<6>() = (MInverse_*B.bottomRows<6>()).eval();
+	B.bottomRows<6>() = MInverse_*B.bottomRows<6>();
 }
 
 

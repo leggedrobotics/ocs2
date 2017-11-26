@@ -183,10 +183,14 @@ void SwitchedModelCostBase<JOINT_COORD_SIZE>::terminalCostStateSecondDerivative(
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t JOINT_COORD_SIZE>
-void SwitchedModelCostBase<JOINT_COORD_SIZE>::copErrorCostFunc(const joint_coordinate_t& qJoints, const joint_coordinate_t& lambda,
-		double& copCost, Eigen::Matrix<double,12,1>& devJoints_copCost, Eigen::Matrix<double,12,1>& devLambda_copCost,
-		Eigen::Matrix<double,12,12>& hessJoints_copCost, Eigen::Matrix<double,12,12>& hessLambda_copCost,
-		Eigen::Matrix<double,12,12>& devLambdaJoints_copCost) {
+void SwitchedModelCostBase<JOINT_COORD_SIZE>::copErrorCostFunc(
+		const joint_coordinate_t& qJoints, const joint_coordinate_t& lambda,
+		double& copCost,
+		Eigen::Matrix<double,JOINT_COORD_SIZE,1>& devJoints_copCost,
+		Eigen::Matrix<double,JOINT_COORD_SIZE,1>& devLambda_copCost,
+		Eigen::Matrix<double,JOINT_COORD_SIZE,JOINT_COORD_SIZE>& hessJoints_copCost,
+		Eigen::Matrix<double,JOINT_COORD_SIZE,JOINT_COORD_SIZE>& hessLambda_copCost,
+		Eigen::Matrix<double,JOINT_COORD_SIZE,JOINT_COORD_SIZE>& devLambdaJoints_copCost) {
 
 
 	// copError = Momentum_total - cop_des * lambda_total

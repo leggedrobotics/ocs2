@@ -27,8 +27,16 @@ public:
 	typedef Eigen::Matrix<double,12+2*JOINT_COORD_SIZE,1> 	rbd_model_state_t;
 
 	/******************************************************************************************************/
-	SwitchedModelStateEstimator(const typename ComModelBase<JOINT_COORD_SIZE>::Ptr& comModelPtr)
+	SwitchedModelStateEstimator(ComModelBase<JOINT_COORD_SIZE>* comModelPtr)
 	: comModelPtr_(comModelPtr)
+	{}
+
+	/******************************************************************************************************/
+	/**
+	 * copy constructor
+	 */
+	SwitchedModelStateEstimator(const SwitchedModelStateEstimator& rhs)
+	: comModelPtr_(rhs.comModelPtr_->clone())
 	{}
 
 	/******************************************************************************************************/

@@ -44,15 +44,15 @@ public:
 	typedef typename SwitchedModel<JOINT_COORD_SIZE>::base_coordinate_t  base_coordinate_t;
 	typedef typename SwitchedModel<JOINT_COORD_SIZE>::joint_coordinate_t joint_coordinate_t;
 
-	ComKinoDynamicsBase(const typename kinematic_model_t::Ptr& kinematicModelPtr, const typename com_model_t::Ptr& comModelPtr,
+	ComKinoDynamicsBase(kinematic_model_t* kinematicModelPtr, com_model_t* comModelPtr,
 			const std::array<bool,4>& stanceLegs, const double& gravitationalAcceleration=9.81, const Options& options = Options(),
 			const FeetZDirectionPlannerBase::Ptr& feetZDirectionPlanner=NULL,
 			const std::vector<EndEffectorConstraintBase::Ptr>& endEffectorStateConstraints = std::vector<EndEffectorConstraintBase::Ptr>())
 
-	: kinematicModelPtr_(kinematicModelPtr->clone()),
-	  comModelPtr_(comModelPtr->clone()),
+	: kinematicModelPtr_(kinematicModelPtr),
+	  comModelPtr_(comModelPtr),
 	  o_gravityVector_(0.0, 0.0, -gravitationalAcceleration),
-	  comDynamics_(kinematicModelPtr, comModelPtr, gravitationalAcceleration, options.constrainedIntegration_),
+	  comDynamics_(kinematicModelPtr->clone(), comModelPtr->clone(), gravitationalAcceleration, options.constrainedIntegration_),
 	  stanceLegs_(stanceLegs),
 	  options_(options),
 	  feetZDirectionPlanner_(feetZDirectionPlanner!=nullptr ? feetZDirectionPlanner->clone() : nullptr),

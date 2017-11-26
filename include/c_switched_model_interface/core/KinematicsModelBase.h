@@ -27,7 +27,7 @@ class KinematicsModelBase
 public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-	typedef std::shared_ptr<KinematicsModelBase<JOINT_COORD_SIZE>> Ptr;
+	typedef std::unique_ptr<KinematicsModelBase<JOINT_COORD_SIZE>> Ptr;
 
 	typedef typename SwitchedModel<JOINT_COORD_SIZE>::generalized_coordinate_t generalized_coordinate_t;
 	typedef typename SwitchedModel<JOINT_COORD_SIZE>::joint_coordinate_t joint_coordinate_t;
@@ -40,7 +40,7 @@ public:
 	/**
 	 * Clone KinematicsModelBase class.
 	 */
-	virtual std::shared_ptr<KinematicsModelBase<JOINT_COORD_SIZE>> clone() const = 0;
+	virtual KinematicsModelBase<JOINT_COORD_SIZE>* clone() const = 0;
 
 	/**
 	 * Gets a (6+JOINT_COORD_SIZE)-by-1 generalized coordinate and calculates the rotation ...

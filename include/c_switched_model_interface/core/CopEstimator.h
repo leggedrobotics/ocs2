@@ -35,9 +35,9 @@ public:
 	typedef typename SwitchedModel<JOINT_COORD_SIZE>::joint_coordinate_t joint_coordinate_t;
 	typedef Eigen::Matrix<double,6,JOINT_COORD_SIZE> base_jacobian_matrix_t;
 
-	CopEstimator(const typename kinematic_model_t::Ptr& kinematicModelPtr, const typename com_model_t::Ptr& comModelPtr)
-	: kinematicModelPtr_(kinematicModelPtr->clone()),
-	  comModelPtr_(comModelPtr->clone()),
+	CopEstimator(kinematic_model_t* kinematicModelPtr, com_model_t* comModelPtr)
+	: kinematicModelPtr_(kinematicModelPtr),
+	  comModelPtr_(comModelPtr),
 	  totalWeight_(comModelPtr->totalMass()*9.81)
 	{}
 
@@ -62,7 +62,9 @@ public:
 	 * @param devLambda_copError [out] derivative of CoP w.r.t. contact forces
 	 */
 	void copErrorEstimator(const std::array<bool,4>& stanceLegs, const joint_coordinate_t& qJoints, const joint_coordinate_t& lambda,
-			Eigen::Vector2d& copError, Eigen::Matrix<double,2,12>& devJoints_copError, Eigen::Matrix<double,2,12>& devLambda_copError);
+			Eigen::Vector2d& copError,
+			Eigen::Matrix<double,2,JOINT_COORD_SIZE>& devJoints_copError,
+			Eigen::Matrix<double,2,JOINT_COORD_SIZE>& devLambda_copError);
 
 	/**
 	 * Estimates the CoP displacement (copError) from the center of the support polygon. the output value is

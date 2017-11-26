@@ -170,7 +170,7 @@ void ComDynamicsBase<JOINT_COORD_SIZE>::calculateBaseLocalVelocities(const joint
  * @return M: matrix that does the transformation
  */
 template <size_t JOINT_COORD_SIZE>
-Eigen::Matrix3d ComDynamicsBase<JOINT_COORD_SIZE>::AngularVelocitiesToEulerAngleDerivativesMatrix (Eigen::Vector3d eulerAngles){
+Eigen::Matrix3d ComDynamicsBase<JOINT_COORD_SIZE>::AngularVelocitiesToEulerAngleDerivativesMatrix (const Eigen::Vector3d& eulerAngles){
 
 	Eigen::Matrix<double,3,3> M;
 	double sinPsi = sin(eulerAngles(2));

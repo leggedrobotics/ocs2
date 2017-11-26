@@ -38,11 +38,11 @@ public:
 	typedef Eigen::Matrix<double,6,JOINT_COORD_SIZE> base_jacobian_matrix_t;
 	typedef Eigen::Matrix<double,JOINT_COORD_SIZE,JOINT_COORD_SIZE> state_joint_matrix_t;
 
-	ComDynamicsDerivativeBase(const typename kinematic_model_t::Ptr& kinematicModelPtr, const typename com_model_t::Ptr& comModelPtr,
+	ComDynamicsDerivativeBase(kinematic_model_t* kinematicModelPtr, com_model_t* comModelPtr,
 			const double& gravitationalAcceleration=9.81, const bool& constrainedIntegration=true)
 
-	: kinematicModelPtr_(kinematicModelPtr->clone()),
-	  comModelPtr_(comModelPtr->clone()),
+	: kinematicModelPtr_(kinematicModelPtr),
+	  comModelPtr_(comModelPtr),
 	  o_gravityVector_(0.0, 0.0, -gravitationalAcceleration),
 	  constrainedIntegration_(constrainedIntegration)
 	{

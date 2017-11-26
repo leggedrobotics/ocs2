@@ -28,7 +28,7 @@ class ComModelBase
 public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-	typedef std::shared_ptr<ComModelBase<JOINT_COORD_SIZE>> Ptr;
+	typedef std::unique_ptr<ComModelBase<JOINT_COORD_SIZE>> Ptr;
 
 	typedef typename SwitchedModel<JOINT_COORD_SIZE>::generalized_coordinate_t generalized_coordinate_t;
 	typedef typename SwitchedModel<JOINT_COORD_SIZE>::joint_coordinate_t joint_coordinate_t;
@@ -42,7 +42,7 @@ public:
 	/**
 	 * Clone ComModelBase class.
 	 */
-	virtual std::shared_ptr<ComModelBase<JOINT_COORD_SIZE>> clone() const = 0;
+	virtual ComModelBase<JOINT_COORD_SIZE>* clone() const = 0;
 
 	/**
 	 * Calculate CoM Jacobian in Base frame

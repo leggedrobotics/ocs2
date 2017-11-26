@@ -43,7 +43,13 @@ void AnymalCom::setJointConfiguration(const joint_coordinate_t& q) {
 
 	jointSpaceInertiaMatrix_.update(q);
 	comPositionBaseFrame_ = iit::ANYmal::getWholeBodyCOM(inertiaProperties_, q, homTransforms_);
+
 	comInertia_ = jointSpaceInertiaMatrix_.getWholeBodyInertia();
+	double& mass = comInertia_(5,5);
+	Eigen::Matrix3d crossComPositionBaseFrame = switched_model::CrossProductMatrix(comPositionBaseFrame_);
+	comInertia_.template topLeftCorner<3,3>() += mass*crossComPositionBaseFrame*crossComPositionBaseFrame;
+	comInertia_.template topRightCorner<3,3>().setZero();
+	comInertia_.template bottomLeftCorner<3,3>().setZero();
 }
 
 /******************************************************************************************************/

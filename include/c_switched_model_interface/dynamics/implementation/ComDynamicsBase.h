@@ -79,9 +79,11 @@ void ComDynamicsBase<JOINT_COORD_SIZE>::computeDerivative(const scalar_t& t,
 	// Inertia matrix in the CoM frame and its derivatives
 	M_    = comModelPtr_->comInertia(qJoints_);
 	dMdt_ = comModelPtr_->comInertiaDerivative(qJoints_, dqJoints_);
-	Eigen::Matrix3d rotationMInverse = M_.topLeftCorner<3,3>().inverse();
-	MInverse_ << rotationMInverse, Eigen::Matrix3d::Zero(),
-			Eigen::Matrix3d::Zero(), Eigen::Matrix3d::Identity()/M_(5,5);
+//	Eigen::Matrix3d rotationMInverse = M_.topLeftCorner<3,3>().inverse();
+//	MInverse_ << rotationMInverse, Eigen::Matrix3d::Zero(),
+//			Eigen::Matrix3d::Zero(), Eigen::Matrix3d::Identity()/M_(5,5);
+	MInverse_ << M_.topLeftCorner<3,3>().inverse(), Eigen::Matrix3d::Zero(),
+			     Eigen::Matrix3d::Zero(),           (1/M_(5,5))*Eigen::Matrix3d::Identity();
 
 	// Coriolis and centrifugal forces
 	C_.head<3>() = com_W_com.cross(M_.topLeftCorner<3,3>()*com_W_com) + dMdt_.topLeftCorner<3,3>()*com_W_com;

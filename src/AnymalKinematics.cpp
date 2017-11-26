@@ -12,10 +12,9 @@ namespace anymal {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-std::shared_ptr<AnymalKinematics::Base> AnymalKinematics::clone() const {
+AnymalKinematics* AnymalKinematics::clone() const {
 
-	return std::allocate_shared< AnymalKinematics, Eigen::aligned_allocator<AnymalKinematics> > (
-					Eigen::aligned_allocator<AnymalKinematics>(), *this);
+	return new AnymalKinematics;
 }
 
 /******************************************************************************************************/

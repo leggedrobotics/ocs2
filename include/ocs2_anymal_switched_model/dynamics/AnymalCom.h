@@ -36,7 +36,7 @@ public:
 	/**
 	 * Clone AnymalCom class.
 	 */
-	std::shared_ptr<Base> clone() const override;
+	AnymalCom* clone() const override;
 
 	/**
 	 * Set default joint configuration. Updates the CoM position and inertia

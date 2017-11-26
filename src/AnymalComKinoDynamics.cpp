@@ -14,10 +14,13 @@ AnymalComKinoDynamics::AnymalComKinoDynamics(const std::array<bool,4>& stanceLeg
 		const switched_model::FeetZDirectionPlannerBase::Ptr& feetZDirectionPlanner,
 		const std::vector<switched_model::EndEffectorConstraintBase::Ptr>& endEffectorStateConstraints)
 
-: Base(std::shared_ptr<AnymalKinematics::Base>(new AnymalKinematics),
-		std::shared_ptr<AnymalCom::Base>(new AnymalCom),
+: Base(new AnymalKinematics, new AnymalCom,
 		stanceLegs, gravitationalAcceleration, options,
 		feetZDirectionPlanner, endEffectorStateConstraints)
+{}
+
+AnymalComKinoDynamics::AnymalComKinoDynamics(const AnymalComKinoDynamics& rhs)
+: Base(rhs)
 {}
 
 std::shared_ptr<AnymalComKinoDynamics::Base::Base> AnymalComKinoDynamics::clone() const {

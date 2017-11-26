@@ -21,6 +21,8 @@ public:
 		const switched_model::FeetZDirectionPlannerBase::Ptr& feetZDirectionPlanner=NULL,
 		const std::vector<switched_model::EndEffectorConstraintBase::Ptr>& endEffectorStateConstraints = std::vector<switched_model::EndEffectorConstraintBase::Ptr>());
 
+	AnymalComKinoDynamics(const AnymalComKinoDynamics& rhs);
+
 	~AnymalComKinoDynamics() {}
 
 	std::shared_ptr<Base::Base> clone() const  override;

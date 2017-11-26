@@ -35,9 +35,9 @@ public:
 			const double& sigma = 1,
 			const double& tp = 0);
 
-	~AnymalCost() {}
+	AnymalCost(const AnymalCost& rhs);
 
-	std::shared_ptr<Base::Base> clone() const override;
+	~AnymalCost() {}
 
 private:
 

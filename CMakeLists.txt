@@ -5,6 +5,7 @@ project(ocs2_anymal_switched_model)
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS
+    cmake_modules
     c_switched_model_interface
     ocs2_rbd_codegen
 )
@@ -42,8 +43,8 @@ catkin_package(
 ## Your package locations should be listed before other locations
 include_directories(
   include
+  ${EIGEN_INCLUDE_DIRS}
   ${catkin_INCLUDE_DIRS}
-  ${EIGEN3_INCLUDE_DIR}
 )
 
 add_library(${PROJECT_NAME}
@@ -53,6 +54,7 @@ add_library(${PROJECT_NAME}
   src/AnymalComKinoDynamicsDerivative.cpp
   src/AnymalCost.cpp
   src/AnymalModelStateEstimator.cpp
+  src/AnymalWeightCompensationForces.cpp
 )
 
 add_dependencies(${PROJECT_NAME}

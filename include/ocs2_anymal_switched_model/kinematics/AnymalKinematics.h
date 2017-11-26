@@ -27,7 +27,7 @@ public:
 	/**
 	 * Clone AnymalKinematics class.
 	 */
-	std::shared_ptr<Base> clone() const override;
+	AnymalKinematics* clone() const override;
 
 	/**
 	 * calculate foot position in Base frame

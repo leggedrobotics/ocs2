@@ -22,6 +22,8 @@ public:
 
 	AnymalModelStateEstimator();
 
+	AnymalModelStateEstimator(const AnymalModelStateEstimator& rhs);
+
 	~AnymalModelStateEstimator() {}
 
 private:

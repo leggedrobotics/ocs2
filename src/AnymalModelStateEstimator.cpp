@@ -11,9 +11,11 @@ namespace anymal {
 
 
 AnymalModelStateEstimator::AnymalModelStateEstimator()
-	: AnymalModelStateEstimator::Base(
-			std::allocate_shared< AnymalCom, Eigen::aligned_allocator<AnymalCom> > (Eigen::aligned_allocator<AnymalCom>() )
-			)
+: Base(new AnymalCom)
+{}
+
+AnymalModelStateEstimator::AnymalModelStateEstimator(const AnymalModelStateEstimator& rhs)
+: Base(rhs)
 {}
 
 

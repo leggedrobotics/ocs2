@@ -365,27 +365,34 @@ void GLQP<STATE_DIM, INPUT_DIM>::setupOptimizer() {
 	if (subsystemDynamicsPtr_.size()-1 < *std::max_element(systemStockIndexes_.begin(), systemStockIndexes_.end()))
 		throw std::runtime_error("systemStockIndexes points to non-existing subsystem");
 
-	subsystemDynamicsPtrStock_.resize(numSubsystems_);
-	subsystemDerivativesPtrStock_.resize(numSubsystems_);
-	subsystemCostFunctionsPtrStock_.resize(numSubsystems_);
+	subsystemDynamicsPtrStock_.clear();
+	subsystemDynamicsPtrStock_.reserve(numSubsystems_);
+	subsystemDerivativesPtrStock_.clear();
+	subsystemDerivativesPtrStock_.reserve(numSubsystems_);
+	subsystemCostFunctionsPtrStock_.clear();
+	subsystemCostFunctionsPtrStock_.reserve(numSubsystems_);
 
-	stateOperatingPointsStock_.resize(numSubsystems_);
-	inputOperatingPointsStock_.resize(numSubsystems_);
+	stateOperatingPointsStock_.clear();
+	stateOperatingPointsStock_.reserve(numSubsystems_);
+	inputOperatingPointsStock_.clear();
+	inputOperatingPointsStock_.reserve(numSubsystems_);
 
-	subsystemSimulatorsStockPtr_.resize(numSubsystems_);
+	subsystemSimulatorsStockPtr_.clear();
+	subsystemSimulatorsStockPtr_.reserve(numSubsystems_);
 
 	for (int i=0; i<numSubsystems_; i++) {
 
-		subsystemDynamicsPtrStock_[i] = subsystemDynamicsPtr_[systemStockIndexes_[i]]->clone();
-		subsystemDerivativesPtrStock_[i] = subsystemDerivativesPtr_[systemStockIndexes_[i]]->clone();
-		subsystemCostFunctionsPtrStock_[i] = subsystemCostFunctionsPtr_[systemStockIndexes_[i]]->clone();
+		subsystemDynamicsPtrStock_.push_back(std::move( subsystemDynamicsPtr_[systemStockIndexes_[i]]->clone() ));
+		subsystemDerivativesPtrStock_.push_back(std::move( subsystemDerivativesPtr_[systemStockIndexes_[i]]->clone() ));
+		subsystemCostFunctionsPtrStock_.push_back(std::move( subsystemCostFunctionsPtr_[systemStockIndexes_[i]]->clone() ));
 
-		stateOperatingPointsStock_[i] = stateOperatingPoints_[systemStockIndexes_[i]];
-		inputOperatingPointsStock_[i] = inputOperatingPoints_[systemStockIndexes_[i]];
+		stateOperatingPointsStock_.push_back( stateOperatingPoints_[systemStockIndexes_[i]] );
+		inputOperatingPointsStock_.push_back( inputOperatingPoints_[systemStockIndexes_[i]] );
 
-		subsystemSimulatorsStockPtr_[i] = std::allocate_shared<
-				ODE45<STATE_DIM>, Eigen::aligned_allocator<ODE45<STATE_DIM>> >(
-						Eigen::aligned_allocator<ODE45<STATE_DIM>>(), subsystemDynamicsPtrStock_[i] );
+		typedef ODE45<STATE_DIM> ode_t;
+		typedef Eigen::aligned_allocator<ode_t> ode_alloc_t;
+		subsystemSimulatorsStockPtr_.push_back(std::move(
+				std::allocate_shared<ode_t, ode_alloc_t>(ode_alloc_t(), subsystemDynamicsPtrStock_.back()) ));
 	}
 }
 

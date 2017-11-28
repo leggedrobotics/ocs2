@@ -7,6 +7,7 @@ project(ocs2_anymal_interface)
 find_package(catkin REQUIRED COMPONENTS
   cmake_modules
   roscpp
+  rosbag
   ocs2_core
   ocs2_slq
   ocs2_ocs2

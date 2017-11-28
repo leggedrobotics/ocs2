@@ -16,6 +16,7 @@
 #include <boost/filesystem.hpp>
 
 #include <ros/ros.h>
+#include <rosbag/bag.h>
 #include <xpp_msgs/RobotStateCartesianTrajectory.h>
 
 #include <cereal/archives/xml.hpp>
@@ -73,7 +74,8 @@ int main( int argc, char* argv[] )
 	auto end = std::chrono::steady_clock::now();
 	auto diff = end - start;
 
-	std::cout<<"Elapsed time is :  " << std::chrono::duration_cast<std::chrono::milliseconds>(diff).count()
+	std::cout<<"Elapsed time is :  "
+			<< std::chrono::duration_cast<std::chrono::milliseconds>(diff).count()
 			<< " ms "<< std::endl;
 
 	double costFunction, constriantISE;
@@ -126,9 +128,12 @@ int main( int argc, char* argv[] )
 	dimension_t::eigen_scalar_array_t iterationCost, iterationISE1, ocs2IterationCost;
 	anymalOptimization.getIterationsLog(iterationCost, iterationISE1, ocs2IterationCost);
 
-	xpp_msgs::RobotStateCartesianTrajectory robotStateCartesianTrajectoryMsg;
-	robotStateCartesianTrajectoryMsg.points.reserve(
-			2*timeTrajectoriesStock.size()*timeTrajectoriesStock[0].size()); // should avoid reallocating later
+	// creates a bag file in current directory
+	rosbag::Bag bag;
+	bag.open("ocs2_anymal_traj.bag", rosbag::bagmode::Write);
+
+	ros::Time::init();
+	auto startTime = ros::Time::now();
 
 	for (size_t i=0; i<timeTrajectoriesStock.size(); i++)  {
 
@@ -169,7 +174,10 @@ int main( int argc, char* argv[] )
 			std::array<Eigen::Vector3d,4> feetPositions;
 			switchedModelKinematics.feetPositionsOriginFrame(generalizedCoordinate, feetPositions);
 			Eigen::Matrix<double,12,1> feetPositionsVector;
-			for (size_t j=0; j<4; j++)  feetPositionsVector.segment<3>(3*j) = feetPositions[j];
+			for (size_t j=0; j<4; j++)
+			{
+				feetPositionsVector.segment<3>(3*j) = feetPositions[j];
+			}
 			feetPositionTrajectory.push_back(feetPositionsVector);
 
 //			// Cop error TODO
@@ -189,7 +197,7 @@ int main( int argc, char* argv[] )
 //					hessJoints_copCost, hessLambda_copCost,
 //					devLambdaJoints_copCost, copError);
 
-			//fill the message
+			//construct the message
 			xpp_msgs::RobotStateCartesian point;
 
 			Eigen::Quaternion<double> qx( cos(basePose(0)/2),   sin(basePose(0)/2),   0.0,   0.0 );
@@ -216,13 +224,13 @@ int main( int argc, char* argv[] )
 			point.time_from_start = ros::Duration(timeTrajectoriesStock[i][k]);
 
 			constexpr int numEE = 4;
-			point.ee_motion.reserve(numEE);
-			point.ee_forces.reserve(numEE);
-			point.ee_contact.reserve(numEE);
+			point.ee_motion.resize(numEE);
+			point.ee_forces.resize(numEE);
+			point.ee_contact.resize(numEE);
 			for(size_t ee_k=0; ee_k < numEE; ee_k++){
-				point.ee_motion[ee_k].pos.x = feetPositionTrajectory.back()(3*ee_k + 0);
-				point.ee_motion[ee_k].pos.y = feetPositionTrajectory.back()(3*ee_k + 1);
-				point.ee_motion[ee_k].pos.z = feetPositionTrajectory.back()(3*ee_k + 2);
+				point.ee_motion[ee_k].pos.x = feetPositionsVector(3*ee_k + 0);
+				point.ee_motion[ee_k].pos.y = feetPositionsVector(3*ee_k + 1);
+				point.ee_motion[ee_k].pos.z = feetPositionsVector(3*ee_k + 2);
 
 //				point.ee_motion[ee_k].vel.x =
 //				point.ee_motion[ee_k].acc.x =
@@ -231,12 +239,13 @@ int main( int argc, char* argv[] )
 				point.ee_forces[ee_k].y = inputTrajectory.back()(3*ee_k + 1);
 				point.ee_forces[ee_k].z = inputTrajectory.back()(3*ee_k + 2);
 
-				point.ee_contact[ee_k] = stanceLegSequene[i][0];
-				point.ee_contact[ee_k] = stanceLegSequene[i][1];
-				point.ee_contact[ee_k] = stanceLegSequene[i][2];
+				point.ee_contact[ee_k] = stanceLegSequene[i][ee_k];
 			}
 
-			robotStateCartesianTrajectoryMsg.points.push_back(point);
+			// const auto stamp = point.time_from_start + startTime;
+			const auto stamp = ros::Time(startTime.toSec() + timeTrajectoriesStock[i][k]);
+
+			bag.write("xpp/state_des",stamp, point);
 
 		}  // end of k loop
 
@@ -263,12 +272,14 @@ int main( int argc, char* argv[] )
 
 	}  // end of i loop
 
+	bag.close();
+
 	eigenInitSwitchingTime.back()(0) = initSwitchingTimes.back();
 	eigenSwitchingTime.back()(0) = switchingTimes.back();
 
-	ros::init(argc, argv, "switched_state_publisher", ros::init_options::NoSigintHandler);
-	signal(SIGINT, mySigintHandler);
-	ros::NodeHandle n;
+	// ros::init(argc, argv, "switched_state_publisher", ros::init_options::NoSigintHandler);
+	// signal(SIGINT, mySigintHandler);
+	// ros::NodeHandle n;
 
 
 	// publish the gaps
@@ -277,33 +288,11 @@ int main( int argc, char* argv[] )
 
 
 
-	robotStateCartesianTrajectoryMsg.header.stamp = ros::Time::now();
-	robotStateCartesianTrajectoryMsg.header.frame_id = "base"; //TODO
-
-
-
-
 //	ConvertToRosMsg<dimension_t::STATE_DIM_,dimension_t::INPUT_DIM_>::ToTrajectoryMsg(
 //			timeTrajectoriesStock, stateTrajectoriesStock, 0.02, rosStateTrajectory);
 //	std::string trajectoryTopic;
 //	ros::param::param<std::string>("trajectory_topic", trajectoryTopic, std::string("/hyqTrajectory"));
 
-	ros::Publisher publisher = n.advertise<xpp_msgs::RobotStateCartesian>("anymal_ocs2_trajectory", 10);
-
-	// publishing loop
-	std::cerr << "visualizing ..." << std::endl;
-	while (ros::ok() and robotStateCartesianTrajectoryMsg.points.size())  {
-//		hyq::publishGapMessages(gapIndicatorPtrs, gapPublisher);
-
-		// send out the trajectory
-		publisher.publish(robotStateCartesianTrajectoryMsg.points.back());
-		robotStateCartesianTrajectoryMsg.points.pop_back();
-
-		ros::spinOnce();
-		ros::Duration(0.01).sleep(); //TODO
-
-
-	}
 
 //
 //	/******************************************************************************************************/
@@ -383,4 +372,3 @@ int main( int argc, char* argv[] )
 
 
 }
-

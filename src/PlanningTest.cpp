@@ -132,8 +132,12 @@ int main( int argc, char* argv[] )
 	rosbag::Bag bag;
 	bag.open("ocs2_anymal_traj.bag", rosbag::bagmode::Write);
 
+	xpp_msgs::RobotStateCartesianTrajectory robotStateCartesianTrajectoryMsg;
+
 	ros::Time::init();
 	auto startTime = ros::Time::now();
+
+	robotStateCartesianTrajectoryMsg.header.stamp = startTime;
 
 	for (size_t i=0; i<timeTrajectoriesStock.size(); i++)  {
 
@@ -246,6 +250,7 @@ int main( int argc, char* argv[] )
 			const auto stamp = ros::Time(startTime.toSec() + timeTrajectoriesStock[i][k]);
 
 			bag.write("xpp/state_des",stamp, point);
+			robotStateCartesianTrajectoryMsg.points.push_back(point);
 
 		}  // end of k loop
 
@@ -272,6 +277,8 @@ int main( int argc, char* argv[] )
 
 	}  // end of i loop
 
+
+	bag.write("xpp/trajectory_des", startTime, robotStateCartesianTrajectoryMsg);
 	bag.close();
 
 	eigenInitSwitchingTime.back()(0) = initSwitchingTimes.back();

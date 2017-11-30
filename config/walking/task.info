@@ -1,180 +1,180 @@
 
 simulationSettings
 {
-    dt      			0.001
-    tFinal 				8.4
-    initSettlingTime 	0.0
+    dt               0.001
+    tFinal           8.4
+    initSettlingTime 0.0
 }
 
 visualization
 {
-    slowdown 		1
-    vizTime  		200
+    slowdown     1
+    vizTime      200
 }
 
 gravity
 {
    (0,0) 0.0     ; x
-   (1,0) 0.0     ; y 
+   (1,0) 0.0     ; y
    (2,0) -9.81   ; z
 }
 
 
 model_settings
 {
-	constrainedIntegration		1
-	useCartesianContactForce	1
-	contactForceWeight			1.0
-	zDirectionPositionWeight	0.0
-	zDirectionVelocityWeight	0.5
-	
-	swingLegLiftOff				0.10  
-	defaultStartMode			STANCE
-	defaultFinalMode			STANCE
-	
-	zmpWeight					10000.0
-	impulseWeight				0.0
-	impulseSigmeFactor			0.1
-	
-	mpcStrideLength				0.35
-	numPhasesInfullGaitCycle	4
+  constrainedIntegration    1
+  useCartesianContactForce  1
+  contactForceWeight        1.0
+  zDirectionPositionWeight  0.0
+  zDirectionVelocityWeight  0.5
+
+  swingLegLiftOff        0.10
+  defaultStartMode      STANCE
+  defaultFinalMode      STANCE
+
+  copWeight            0;    10000.0
+  impulseWeight        0.0
+  impulseSigmeFactor   0.1
+
+  mpcStrideLength           0.35
+  numPhasesInfullGaitCycle  4
 }
 
 switchingModes
 {
-  	[0]		STANCE
-  	
-  	[1]     LF_RF_RH
-	[2]     RF_LH_RH
-	[3]     LF_RF_LH
-	[4]     LF_LH_RH
-	
-	[5]     LF_RF_RH
-	[6]     RF_LH_RH
-	[7]     LF_RF_LH
-	[8]     LF_LH_RH
-	
-	[9]     LF_RF_RH
-	[10]    RF_LH_RH
-	[11]    LF_RF_LH
-	[12]    LF_LH_RH
-	
-;	[13]    LF_RF_RH
-;	[14]    RF_LH_RH
-;	[15]    LF_RF_LH
-;	[16]    LF_LH_RH
-	
-	[13]	STANCE
+  [0]    STANCE
+
+  [1]    LF_RF_RH
+  [2]    RF_LH_RH
+  [3]    LF_RF_LH
+  [4]    LF_LH_RH
+
+  [5]    LF_RF_RH
+  [6]    RF_LH_RH
+  [7]    LF_RF_LH
+  [8]    LF_LH_RH
+
+  [9]    LF_RF_RH
+  [10]   RF_LH_RH
+  [11]   LF_RF_LH
+  [12]   LF_LH_RH
+
+;  [13]   LF_RF_RH
+;  [14]   RF_LH_RH
+;  [15]   LF_RF_LH
+;  [16]   LF_LH_RH
+
+  [13]  STANCE
 }
 
 ;switchingModes
 ;{
-;  	[0]     LF_RF_RH
-;	[1]     RF_LH_RH
-;	[2]     LF_RF_LH
-;	[3]     LF_LH_RH
+;  [0]     LF_RF_RH
+;  [1]     RF_LH_RH
+;  [2]     LF_RF_LH
+;  [3]     LF_LH_RH
 ;}
 
 
 ocs2
 {
-	maxIterationGSLQP            10		;50                                            
-	minLearningRateGSLQP         0.1	;0.01                                        	
-	maxLearningRateGSLQP         1.0                                          	
-	minRelCostGSLQP              0.1	;0.01                                         	
-	stateConstraintPenaltyCoeff  100.0                                         	
-	stateConstraintPenaltyBase   1.1                                          	
-	meritFunctionRho             50.0                                         	
-	constraintStepSize           1.0 	
-	dispayGSLQP                  0   
-	displayShortSummary			 1                                            	
-	warmStartGSLQP               1    
-	useLQForDerivatives		     0                                        
-                                                                              	
-	AbsTolODE                    1e-5                                                                          
-	RelTolODE                    1e-3                                         	
-	maxNumStepsPerSecond         50000                                        	
-	simulationIsConstrained      0                                            	
-    minAbsConstraint1ISE         5e-3                                        	
-	minRelConstraint1ISE         5e-6    
-	checkNumericalStability		 0                                                     
-                                                                              	
-	displayGradientDescent       0                                                                             
-	tolGradientDescent           1e-2                                         	
-	acceptableTolGradientDescent 1e-2                                         	
-	maxIterationGradientDescent  5 
-	minLearningRateNLP           0.05
+  maxIterationGSLQP            10    ;50
+  minLearningRateGSLQP         0.1  ;0.01
+  maxLearningRateGSLQP         1.0
+  minRelCostGSLQP              0.1  ;0.01
+  stateConstraintPenaltyCoeff  100.0
+  stateConstraintPenaltyBase   1.1
+  meritFunctionRho             50.0
+  constraintStepSize           1.0
+  dispayGSLQP                  1
+  displayShortSummary       1
+  warmStartGSLQP               1
+  useLQForDerivatives         0
+
+  AbsTolODE                    1e-5
+  RelTolODE                    1e-3
+  maxNumStepsPerSecond         50000
+  simulationIsConstrained      0
+    minAbsConstraint1ISE         5e-3
+  minRelConstraint1ISE         5e-6
+  checkNumericalStability     1
+
+  displayGradientDescent       0
+  tolGradientDescent           1e-2
+  acceptableTolGradientDescent 1e-2
+  maxIterationGradientDescent  5
+  minLearningRateNLP           0.05
     maxLearningRateNLP           0.6
     useAscendingLineSearchNLP    1
-    minAcceptedSwitchingTimeDifference 0.01    
-    
-    useMultiThreading    		1
+    minAcceptedSwitchingTimeDifference 0.01
+
+    useMultiThreading        0
     nThreads                    4
     debugPrintMP                0
     lsStepsizeGreedy            1
-    
+
     RiccatiIntegratorType       1        ; ODE45 = 1, ADAMS_BASHFORTH = 2, BULIRSCH_STOER = 3, ADAMS_BASHFORTH_MOULTON = 4
-    adams_integrator_dt         0.01          
-    
-    useRiccatiSolver			1                                                          	
-}                                                                             	
-      
+    adams_integrator_dt         0.01
+
+    useRiccatiSolver      1
+}
+
 mpc
 {
-	numIterations			10
-	maxNumIterations		10
-	
-	debugPrint				0
-	coldStart				0
-	recedingHorizon			0 		: use receding horizon MPC
+  numIterations      10
+  maxNumIterations    10
 
-	useDisjointRiccati		1		; use disjoint riccati solver in MP case and recedingHorizon fashion
-	
-	useFeedbackPolicy		0
-	forwardSimulationTime	28		; [ms] MRT time
-	
-	rosMsgTimeWindow		100		; [ms]
-	
-	simulatedMPCloopTime	0		; [ms] asynchronous MPC constant delay (On hardware should ALWAYS be 0)  
-}                                                                                                           	
-                                                                              	
-; initial state                                                               	
-initialHyQState                                                               	
+  debugPrint        0
+  coldStart        0
+  recedingHorizon      0     : use receding horizon MPC
+
+  useDisjointRiccati    1    ; use disjoint riccati solver in MP case and recedingHorizon fashion
+
+  useFeedbackPolicy    0
+  forwardSimulationTime  28    ; [ms] MRT time
+
+  rosMsgTimeWindow    100    ; [ms]
+
+  simulatedMPCloopTime  0    ; [ms] asynchronous MPC constant delay (On hardware should ALWAYS be 0)
+}
+
+; initial state
+initialHyQState
 {
    ; orientation
    (0,0) 0.0     ; x
-   (1,0) 0.0     ; y 
+   (1,0) 0.0     ; y
    (2,0) 0.0     ; z
-                 
+
    ; position
    (3,0) 0.0     ; x
    (4,0) 0.0     ; y
    (5,0) 0.572   ; z
-               
-   ; joint state              
-   (6,0)  -0.2      ; LF_HAA
-   (7,0)   0.723    ; LF_HFE
-   (8,0)  -1.458    ; LF_KFE
-   (9,0)  -0.2      ; RF_HAA
-   (10,0)  0.723    ; RF_HFE
-   (11,0) -1.458    ; RF_KFE
-   (12,0) -0.2      ; LH_HAA
-   (13,0) -0.723    ; LH_HFE
-   (14,0)  1.458    ; LH_KFE
-   (15,0) -0.2      ; RH_HAA
-   (16,0) -0.723    ; RH_HFE
-   (17,0)  1.458    ; RH_KFE
-   
+
+   ; joint state
+   (6,0)   -0.1; -0.2      ; LF_HAA
+   (7,0)    0.7;  0.723    ; LF_HFE
+   (8,0)   -1.0; -1.458    ; LF_KFE
+   (9,0)    0.1; -0.2      ; RF_HAA
+   (10,0)   0.7;  0.723    ; RF_HFE
+   (11,0)  -1.0; -1.458    ; RF_KFE
+   (12,0)  -0.1; -0.2      ; LH_HAA
+   (13,0)  -0.7; -0.723    ; LH_HFE
+   (14,0)   1.0;  1.458    ; LH_KFE
+   (15,0)   0.1; -0.2      ; RH_HAA
+   (16,0)  -0.7; -0.723    ; RH_HFE
+   (17,0)   1.0;  1.458    ; RH_KFE
+
    ; angular velocity
    (18,0) 0.0    ; x
    (19,0) 0.0    ; y
    (20,0) 0.0    ; z
-   
+
    ; translational velocity
    (21,0) 0.0    ; x
    (22,0) 0.0    ; y
    (23,0) 0.0    ; z
-   
+
    ; joint velocity
    (24,0) 0.0    ; HAA
    (25,0) 0.0    ; HFE
@@ -195,42 +195,42 @@ initialHyQState
 Q
 {
     scaling 1e+0
-	
+
    ; orientation
    (0,0) 100.0     ; x
-   (1,1) 100.0     ; y 
+   (1,1) 100.0     ; y
    (2,2) 100.0     ; z
-                
+
    ; positon
    (3,3) 0.0      ; x
    (4,4) 0.0      ; y
    (5,5) 100.0      ; z
-               
+
    ; angular velocity
    (6,6) 10.0      ; x
    (7,7) 10.0      ; y
    (8,8) 10.0      ; z
-   
+
    ; translational velocity
    (9,9)   0.0    ; x
    (10,10) 0.0    ; y
    (11,11) 0.0    ; z
-   
+
    ; LF joints
    (12,12) 10.0    ; LF_HAA
    (13,13) 10.0    ; LF_HFE
    (14,14) 10.0    ; LF_KFE
-   
+
    ; RF joints
    (15,15) 10.0    ; RF_HAA
    (16,16) 10.0    ; RF_HFE
    (17,17) 10.0    ; RF_KFE
-   
+
    ; LH joints
    (18,18) 10.0    ; LH_HAA
    (19,19) 10.0    ; LH_HFE
    (20,20) 10.0    ; LH_KFE
-   
+
    ; RH joints
    (21,21) 10.0    ; RH_HAA
    (22,22) 10.0    ; RH_HFE
@@ -242,43 +242,43 @@ Q
 R
 {
    scaling 1e-3
-   
+
    ; LF contact forces
    (0,0)   1.0    ; LF_X
    (1,1)   1.0    ; LF_Y
    (2,2)   1.0    ; LF_Z
-                  
-   ; RF contact forces          
+
+   ; RF contact forces
    (3,3)   1.0    ; RF_X
    (4,4)   1.0    ; RF_Y
-   (5,5)   1.0    ; RF_Z       
-                  
-   ; LH contact forces         
+   (5,5)   1.0    ; RF_Z
+
+   ; LH contact forces
    (6,6)   1.0    ; LH_X
    (7,7)   1.0    ; LH_Y
    (8,8)   1.0    ; LH_Z
-                  
+
    ; RH contact forces
    (9,9)   1.0    ; RH_X
    (10,10) 1.0    ; RH_Y
    (11,11) 1.0    ; RH_Z
-   
-   
+
+
    ; LF joint velocities
    (12,12) 1000    ; LF_HAA
    (13,13) 1000    ; LF_HFE
    (14,14) 1000    ; LF_KFE
-   
+
    ; RF joint velocities
    (15,15) 1000    ; RF_HAA
    (16,16) 1000    ; RF_HFE
    (17,17) 1000    ; RF_KFE
-   
+
    ; LH joint velocities
    (18,18) 1000    ; LH_HAA
    (19,19) 1000    ; LH_HFE
    (20,20) 1000    ; LH_KFE
-   
+
    ; RH joint velocities
    (21,21) 1000    ; RH_HAA
    (22,22) 1000    ; RH_HFE
@@ -290,47 +290,47 @@ R
 Q_final
 {
     scaling 1e-0
-	
+
    ; orientation
    (0,0)    1000.0     ; x
-   (1,1)    1000.0     ; y 
+   (1,1)    1000.0     ; y
    (2,2)    1000.0     ; z
-                 
+
    ; position
    (3,3)   1000.0    ; x
    (4,4)   1000.0    ; y
    (5,5)   1000.0    ; z
-               
+
    ; angular velocity
    (6,6)   100.0      ; x
    (7,7)   100.0      ; y
    (8,8)   100.0      ; z
-   
+
    ; translational velocity
    (9,9)   100.0    ; x
    (10,10) 100.0    ; y
    (11,11) 100.0    ; z
-   
+
    ; LF joints
   (12,12) 50.0    ; LF_HAA
   (13,13) 50.0    ; LF_HFE
   (14,14) 50.0    ; LF_KFE
-  
+
   ; RF joints
   (15,15) 50.0    ; RF_HAA
   (16,16) 50.0    ; RF_HFE
   (17,17) 50.0    ; RF_KFE
-  
+
   ; LH joints
   (18,18) 50.0    ; LH_HAA
   (19,19) 50.0    ; LH_HFE
   (20,20) 50.0    ; LH_KFE
-  
+
   ; RH joints
   (21,21) 50.0    ; RH_HAA
   (22,22) 50.0    ; RH_HFE
   (23,23) 50.0    ; RH_KFE
-   
+
 }
 
 
@@ -339,37 +339,37 @@ x_final
 {
    ; orientation
    (0,0) 0.0     ; x
-   (1,0) 0.0     ; y 
+   (1,0) 0.0     ; y
    (2,0) 0.0     ; z
-                 
+
    ; position
    (3,0) 0.0      ; x  0.5
    (4,0) 0.0      ; y
    (5,0) 0.0      ; z
-   
+
    ; angular velocity
    (6,0) 0.0    ; x
    (7,0) 0.0    ; y
    (8,0) 0.0    ; z
-   
+
    ; translational velocity
    (9,0)  0.0     ; x
    (10,0) 0.0    ; y
    (11,0) 0.0    ; z
-   
-   ; joint state            
-   (6,0)  -0.213    ; LF_HAA
-   (7,0)   0.757    ; LF_HFE
-   (8,0)  -1.512    ; LF_KFE
-   (9,0)  -0.213    ; RF_HAA
-   (10,0)  0.757    ; RF_HFE
-   (11,0) -1.512    ; RF_KFE
-   (12,0) -0.213    ; LH_HAA
-   (13,0) -0.757    ; LH_HFE
-   (14,0)  1.512    ; LH_KFE
-   (15,0) -0.213    ; RH_HAA
-   (16,0) -0.757    ; RH_HFE
-   (17,0)  1.512    ; RH_KFE
+
+   ; joint state
+   (6,0)   -0.1; -0.2      ; LF_HAA
+   (7,0)    0.7;  0.723    ; LF_HFE
+   (8,0)   -1.0; -1.458    ; LF_KFE
+   (9,0)    0.1; -0.2      ; RF_HAA
+   (10,0)   0.7;  0.723    ; RF_HFE
+   (11,0)  -1.0; -1.458    ; RF_KFE
+   (12,0)  -0.1; -0.2      ; LH_HAA
+   (13,0)  -0.7; -0.723    ; LH_HFE
+   (14,0)   1.0;  1.458    ; LH_KFE
+   (15,0)   0.1; -0.2      ; RH_HAA
+   (16,0)  -0.7; -0.723    ; RH_HFE
+   (17,0)   1.0;  1.458    ; RH_KFE
 }
 
 ; deadzone for MRT activation
@@ -377,37 +377,37 @@ mrt_deadzone
 {
    ; orientation
    (0,0)   0.00    ; x
-   (1,0)   0.00    ; y 
+   (1,0)   0.00    ; y
    (2,0)   0.00    ; z
-                 
+
    ; position
-   (3,0)   0.00    ; x				; 0.01
+   (3,0)   0.00    ; x        ; 0.01
    (4,0)   0.00    ; y              ; 0.01
    (5,0)   0.00    ; z              ; 0.01
-   
+
    ; angular velocity
    (6,0)   0.00    ; x
    (7,0)   0.00    ; y
    (8,0)   0.00    ; z
-   
+
    ; translational velocity
    (9,0)   0.00    ; x              ; 0.001
    (10,0)  0.00    ; y              ; 0.001
-   (11,0)  0.00    ; z              ; 0.00 
-   
-   ; joint state            
-   (6,0)   0.00    ; LF_HAA			; 0.04
+   (11,0)  0.00    ; z              ; 0.00
+
+   ; joint state
+   (6,0)   0.00    ; LF_HAA      ; 0.04
    (7,0)   0.00    ; LF_HFE         ; 0.04
    (8,0)   0.00    ; LF_KFE         ; 0.04
-                               
+
    (9,0)   0.00    ; RF_HAA         ; 0.04
    (10,0)  0.00    ; RF_HFE         ; 0.04
    (11,0)  0.00    ; RF_KFE         ; 0.04
-                                
+
    (12,0)  0.00    ; LH_HAA         ; 0.04
    (13,0)  0.00    ; LH_HFE         ; 0.04
    (14,0)  0.00    ; LH_KFE         ; 0.04
-                                
+
    (15,0)  0.00    ; RH_HAA         ; 0.04
    (16,0)  0.00    ; RH_HFE         ; 0.04
    (17,0)  0.00    ; RH_KFE         ; 0.04
@@ -417,10 +417,9 @@ mrt_deadzone
 ; set the endeffector's constraint information in ascending order
 ;endeffector_constraint_0
 ;{
-;	type	GAP
-;	xMin	0.7  ;0.7
-;	xMax	1.7  ;1.4
-;	yMin	-10.0
-;	yMax	10.0
+;  type  GAP
+;  xMin  0.7  ;0.7
+;  xMax  1.7  ;1.4
+;  yMin  -10.0
+;  yMax  10.0
 ;}
-

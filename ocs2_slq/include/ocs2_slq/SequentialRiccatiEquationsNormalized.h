@@ -8,6 +8,8 @@
 #ifndef SEQUENTIALRICCATIEQUATIONSNORMALIZED_OCS2_H_
 #define SEQUENTIALRICCATIEQUATIONSNORMALIZED_OCS2_H_
 
+#include <Eigen/StdVector>
+#include <vector>
 #include <Eigen/Dense>
 
 #include <ocs2_core/Dimensions.h>
@@ -34,10 +36,13 @@ public:
 	};
 
 	typedef Eigen::Matrix<double,S_DIM_,1> s_vector_t;
+	typedef std::vector<s_vector_t, Eigen::aligned_allocator<s_vector_t> > s_vector_array_t;
+
 	typedef Dimensions<STATE_DIM, INPUT_DIM> DIMENSIONS;
 	typedef typename DIMENSIONS::controller_t controller_t;
 	typedef typename DIMENSIONS::scalar_t 		scalar_t;
 	typedef typename DIMENSIONS::scalar_array_t scalar_array_t;
+	typedef typename DIMENSIONS::size_array_t 	size_array_t;
 	typedef typename DIMENSIONS::eigen_scalar_t       eigen_scalar_t;
 	typedef typename DIMENSIONS::eigen_scalar_array_t eigen_scalar_array_t;
 	typedef typename DIMENSIONS::state_vector_t 	  state_vector_t;
@@ -144,7 +149,6 @@ public:
 	 * Sets coefficients of the model.
 	 *
 	 * @param [in] learningRate: The learning rate.
-	 * @param [in] activeSubsystem: The index of the active subsystem.
 	 * @param [in] switchingTimeStart: The start time of the subsystem.
 	 * @param [in] switchingTimeFinal: The final time of the subsystem.
 	 * @param [in] timeStampPtr: A pointer to the time stamp trajectory.
@@ -159,18 +163,19 @@ public:
 	 * @param [in] PmPtr: A pointer to the trajectory of \f$ P_m(t) \f$ .
 	 */
 	void setData(const scalar_t& learningRate,
-			const size_t& activeSubsystem, const scalar_t& switchingTimeStart, const scalar_t& switchingTimeFinal,
+			const scalar_t& switchingTimeStart, const scalar_t& switchingTimeFinal,
 			const scalar_array_t* timeStampPtr,
 			const state_matrix_array_t* AmPtr, const control_gain_matrix_array_t* BmPtr,
 			const eigen_scalar_array_t* qPtr, const state_vector_array_t* QvPtr, const state_matrix_array_t* QmPtr,
 			const control_vector_array_t* RvPtr, const control_matrix_array_t* RmInversePtr, const control_matrix_array_t* RmPtr,
-			const control_feedback_array_t* PmPtr)  {
+			const control_feedback_array_t* PmPtr,
+			const size_array_t* eventsPastTheEndIndecesPtr,
+			const eigen_scalar_array_t* qFinalPtr, const state_vector_array_t* QvFinalPtr, const state_matrix_array_t* QmFianlPtr)  {
 
 		SystemBase<STATE_DIM*(STATE_DIM+1)/2+STATE_DIM+1>::numFunctionCalls_ = 0;
 
 		alpha_ = learningRate;
 
-		activeSubsystem_ = activeSubsystem;
 		switchingTimeStart_ = switchingTimeStart;
 		switchingTimeFinal_ = switchingTimeFinal;
 
@@ -193,6 +198,71 @@ public:
 		RmFunc_.setData(RmPtr);
 		PmFunc_.setTimeStamp(timeStampPtr);
 		PmFunc_.setData(PmPtr);
+
+		eventTime_.clear();
+		eventTime_.reserve(eventsPastTheEndIndecesPtr->size());
+
+		for (auto indexItr=eventsPastTheEndIndecesPtr->begin(); indexItr!=eventsPastTheEndIndecesPtr->end(); ++indexItr) {
+			eventTime_.push_back( timeStampPtr->at(*indexItr-1) );
+		}
+
+		qFinalPtr_  = qFinalPtr;
+		QvFinalPtr_ = QvFinalPtr;
+		QmFianlPtr_ = QmFianlPtr;
+
+		std::cout << std::endl;
+		std::cout << "timeStampPtr.size(): " << timeStampPtr->size() << std::endl;
+		for (size_t k=0; k<timeStampPtr->size(); k++) {
+
+			std::cout << "Am[" << timeStampPtr->at(k) << "]: \n" << AmPtr->at(k) << std::endl;
+			std::cout << "Bm[" << timeStampPtr->at(k) << "]: \n" << BmPtr->at(k) << std::endl;
+			std::cout << "Qm[" << timeStampPtr->at(k) << "]: \n" << QmPtr->at(k) << std::endl;
+			std::cout << "Pm[" << timeStampPtr->at(k) << "]: \n" << PmPtr->at(k) << std::endl;
+			std::cout << "Rm[" << timeStampPtr->at(k) << "]: \n" << RmPtr->at(k) << std::endl;
+			std::cout << "RmInverse[" << timeStampPtr->at(k) << "]: \n" << RmInversePtr->at(k) << std::endl;
+//			std::cout << "[" << timeStampPtr->at(k) << "]: \n" << ->at(k) << std::endl;
+//			std::cout << "[" << timeStampPtr->at(k) << "]: \n" << ->at(k) << std::endl;
+			std::cout << std::endl;
+		}
+
+	}
+
+	/**
+	 * Reset the Riccati equation
+	 */
+	void reset() {
+
+		AmFunc_.reset();
+		BmFunc_.reset();
+		qFunc_.reset();
+		QvFunc_.reset();
+		QmFunc_.reset();
+		RvFunc_.reset();
+		RmInverseFunc_.reset();
+		RmFunc_.reset();
+		PmFunc_.reset();
+	}
+
+	/**
+	 * Riccati jump map at switching moments
+	 *
+	 * @param [in] time: Normalized transition time
+	 * @param [in] state: transition state
+	 * @param [out] mappedState: mapped state after transition
+	 */
+	void mapState(const double& z, const s_vector_t& state,
+			s_vector_t& mappedState) override {
+
+		scalar_t time = switchingTimeFinal_ + (switchingTimeStart_-switchingTimeFinal_)*z;
+
+		size_t index = find(eventTime_, time);
+
+		if (index == eventTime_.size())  throw std::runtime_error("The Riccati state jump time is not defined.");
+
+		s_vector_t allSsJump;
+		convert2Vector(QmFianlPtr_->at(index), QvFinalPtr_->at(index), qFinalPtr_->at(index), allSsJump);
+
+		mappedState = state + allSsJump;
 	}
 
 	/**
@@ -207,7 +277,7 @@ public:
 		SystemBase<STATE_DIM*(STATE_DIM+1)/2+STATE_DIM+1>::numFunctionCalls_++;
 
 		// denormalized time
-		scalar_t t = switchingTimeFinal_ - (switchingTimeFinal_-switchingTimeStart_)*z;
+		scalar_t t = switchingTimeFinal_ + (switchingTimeStart_-switchingTimeFinal_)*z;
 
 		convert2Matrix(allSs, __Sm, __Sv, __s);
 
@@ -280,11 +350,38 @@ protected:
 		return hasNegativeEigenValue;
 	}
 
+	template<class InputIterator, class T>
+	InputIterator find (InputIterator first, InputIterator last, const T& val)
+	{
+	  while (first!=last) {
+	    if (*first==val) return first;
+	    ++first;
+	  }
+	  return last;
+	}
+
+	/**
+	 * finds the index of an element in dataArray which is equal to value (epsilone distance)
+	 * @param [in] dataArray: data array
+	 * @param [in] value: enquiry value
+	 * @return: index
+	 */
+	size_t find(const std::vector<double>& dataArray, const double& value) {
+
+		size_t index = dataArray.size();
+
+		for (size_t i=0; i<dataArray.size(); i++)
+			if (std::abs(dataArray[i]-value)<1e-5) {
+				index = i;
+				break;
+			}
+
+		return index;
+	}
 
 private:
 	scalar_t alpha_;
 
-	size_t activeSubsystem_;
 	scalar_t switchingTimeStart_;
 	scalar_t switchingTimeFinal_;
 
@@ -323,6 +420,11 @@ private:
 	control_vector_t __Lv;
 	state_matrix_t __AtransposeSm;
 	control_gain_matrix_t __LmtransposeRm;
+
+	std::vector<double> eventTime_;
+	const eigen_scalar_array_t* qFinalPtr_;
+	const state_vector_array_t* QvFinalPtr_;
+	const state_matrix_array_t* QmFianlPtr_;
 };
 
 }

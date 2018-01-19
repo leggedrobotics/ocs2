@@ -39,10 +39,11 @@ public:
 	 */
 	IntegratorBase(
 			const std::shared_ptr<SystemBase<STATE_DIM> >& system,
-			const std::shared_ptr<EventHandler<STATE_DIM> >& eventHandler = nullptr) :
-				observer_(eventHandler),
-				system_(system),
-				eventHandler_(eventHandler)
+			const std::shared_ptr<EventHandler<STATE_DIM> >& eventHandler = nullptr)
+
+	: observer_(eventHandler),
+	  system_(system),
+	  eventHandler_(eventHandler)
 	{}
 
 	/**
@@ -65,19 +66,23 @@ public:
 	 * @param [in] dt: Time step.
 	 * @param [out] stateTrajectory: Output state trajectory.
 	 * @param [out] timeTrajectory: Output time stamp trajectory.
-	 * @return boolean: Success flag.
+	 * @param [in] Whether to concatenate the output to the input trajectories or override (default).
 	 */
-	virtual bool integrate(
+	virtual void integrate(
 			const State_T& initialState,
 			const double& startTime,
 			const double& finalTime,
 			double dt,
 			StateTrajectory_T& stateTrajectory,
-			TimeTrajectory_T& timeTrajectory
+			TimeTrajectory_T& timeTrajectory,
+			bool concatOutput = false
 	) = 0;
 
 	/**
-	 * Adaptive time integration based on start time and final time
+	 * Adaptive time integration based on start time and final time. This method can solve ODEs with time-dependent events,
+	 * if eventsTime is not empty. In this case the output time-trajectory contains two identical values at the moments
+	 * of event triggerings. This method uses SystemBase::mapState() method for state transition at events.
+	 *
 	 * @param [in] initialState: Initial state.
 	 * @param [in] startTime: Initial time.
 	 * @param [in] finalTime: Final time.
@@ -87,62 +92,73 @@ public:
 	 * @param [in] AbsTol: The absolute tolerance error for ode solver.
 	 * @param [in] RelTol: The relative tolerance error for ode solver.
 	 * @param [in] maxNumSteps: The maximum number of integration points per a second for ode solver.
-	 * @return boolean: Success flag.
+	 * @param [in] Whether to concatenate the output to the input trajectories or override (default).
 	 */
-	virtual bool integrate(
+	virtual void integrate(
 			const State_T& initialState,
 			const double& startTime,
 			const double& finalTime,
+			const TimeTrajectory_T& eventsTime,
 			StateTrajectory_T& stateTrajectory,
 			TimeTrajectory_T& timeTrajectory,
+			std::vector<size_t>& eventsPastTheEndIndeces,
 			double dtInitial = 0.01,
 			double AbsTol = 1e-6,
 			double RelTol = 1e-3,
-			size_t maxNumSteps = std::numeric_limits<size_t>::max()
+			size_t maxNumSteps = std::numeric_limits<size_t>::max(),
+			bool concatOutput = false
 	) = 0;
 
+
 	/**
-	 * Output integration based on a given time trajectory
+	 * Output integration based on a given time trajectory. This method can solve ODEs with time-dependent events.
+	 * In this case, user should pass past-the-end indeces of events on the input time trajectory. Moreover, this
+	 * method assumes that there are two identical time values in the input time-trajectory at the moments of event
+	 * triggerings. This method uses SystemBase::mapState() method for state transition at events.
+	 *
 	 * @param [in] initialState: Initial state.
-	 * @param [in] timeTrajectory: Input time stamp trajectory.
+	 * @param [in] beginTimeItr: The iterator to the begining of the time stamp trajectory.
+	 * @param [in] endTimeItr: The iterator to the end of the time stamp trajectory.
 	 * @param [out] stateTrajectory: Output state trajectory.
 	 * @param [in] dtInitial: Initial time step.
 	 * @param [in] AbsTol: The absolute tolerance error for ode solver.
 	 * @param [in] RelTol: The relative tolerance error for ode solver.
-	 * @return boolean: Success flag.
+	 * @param [in] maxNumSteps: The maximum number of integration points per a second for ode solver.
+	 * @param [in] Whether to concatenate the output to the input trajectories or override (default).
 	 */
-	virtual bool integrate(
+	virtual void integrate(
 			const State_T& initialState,
-			const TimeTrajectory_T& timeTrajectory,
+			typename TimeTrajectory_T::const_iterator beginTimeItr,
+			typename TimeTrajectory_T::const_iterator endTimeItr,
 			StateTrajectory_T& stateTrajectory,
 			double dtInitial = 0.01,
 			double AbsTol = 1e-9,
-			double RelTol = 1e-6
+			double RelTol = 1e-6,
+			size_t maxNumSteps = std::numeric_limits<size_t>::max(),
+			bool concatOutput = false
 	) = 0;
 
 
 protected:
 
 	/**
-	 * Retrieve trajectories from observer.
+	 * Set time trajectory pointer to observer.
 	 *
-	 * @param [out] stateTrajectory: Output state trajectory.
-	 * @param [out] timeTrajectory: Output time stamp trajectory.
+	 * @param timeTrajectory: Output time stamp trajectory.
 	 */
-	void retrieveTrajectoriesFromObserver(StateTrajectory_T& stateTrajectory, TimeTrajectory_T& timeTrajectory)
+	void setTimeTrajectoryPtrToObserver(TimeTrajectory_T& timeTrajectory)
 	{
-		stateTrajectory.swap(observer_.stateTrajectory_);
-		timeTrajectory.swap(observer_.timeTrajectory_);
+		observer_.setTimeTrajectory(&timeTrajectory);
 	}
 
 	/**
-	 * Retrieves state trajectory from observer.
+	 * Set state trajectory pointer to observer.
 	 *
-	 * @param [out] stateTrajectory: Output state trajectory.
+	 * @param stateTrajectory: Output state trajectory.
 	 */
-	void retrieveStateTrajectoryFromObserver(StateTrajectory_T& stateTrajectory)
+	void setStateTrajectoryPtrToObserver(StateTrajectory_T& stateTrajectory)
 	{
-		stateTrajectory.swap(observer_.stateTrajectory_);
+		observer_.setStateTrajectory(&stateTrajectory);
 	}
 
 	/**

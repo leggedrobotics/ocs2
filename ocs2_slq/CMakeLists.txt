@@ -205,3 +205,11 @@ if(DOXYGEN_FOUND)
             COMMAND ${CMAKE_COMMAND} -E echo_append "OCS2 Documentation built in ${CMAKE_CURRENT_SOURCE_DIR}/doc"
             VERBATIM)
 endif()
+
+
+
+add_executable(exp1_slq_test test/exp1_slq_test.cpp)
+target_link_libraries(exp1_slq_test
+  ${catkin_LIBRARIES}
+  ${Boost_LIBRARIES}
+)

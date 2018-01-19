@@ -10,11 +10,12 @@
 
 #include <cmath>
 #include <algorithm>
+#include <memory>
 #include <Eigen/Dense>
 
 #include "ocs2_core/dynamics/ControlledSystemBase.h"
 #include "ocs2_core/dynamics/DerivativesBase.h"
-
+#include "ocs2_core/logic/LogicRulesBase.h"
 
 namespace ocs2{
 
@@ -25,24 +26,26 @@ namespace ocs2{
  *
  * @tparam STATE_DIM: Dimension of the state space.
  * @tparam INPUT_DIM: Dimension of the control input space.
+ * @tparam LOGIC_RULES_T: Logic Rules type (default NullLogicRules).
  */
-template <size_t STATE_DIM, size_t INPUT_DIM>
-class SystemDynamicsLinearizer : public DerivativesBase<STATE_DIM, INPUT_DIM>
+template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T=NullLogicRules<STATE_DIM>>
+class SystemDynamicsLinearizer : public DerivativesBase<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>
 {
 public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-	typedef DerivativesBase<STATE_DIM, INPUT_DIM> Base;
+	typedef DerivativesBase<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> Base;
+	typedef ControlledSystemBase<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> controlled_system_base_t;
 	typedef typename Base::scalar_t scalar_t;
 	typedef typename Base::state_vector_t state_vector_t;
 	typedef typename Base::state_matrix_t state_matrix_t;
-	typedef typename Base::control_vector_t control_vector_t;
+	typedef typename Base::input_vector_t input_vector_t;
 	typedef typename Base::control_gain_matrix_t control_gain_matrix_t;
 
 	/**
 	 * Constructor
 	 */
-	SystemDynamicsLinearizer(const std::shared_ptr<ControlledSystemBase<STATE_DIM, INPUT_DIM> >& nonlinearSystemPtr_,
+	SystemDynamicsLinearizer(const std::shared_ptr<controlled_system_base_t>& nonlinearSystemPtr_,
 			bool doubleSidedDerivative=true, bool isSecondOrderSystem=false)
 	: nonlinearSystemPtr_(nonlinearSystemPtr_),
 	  doubleSidedDerivative_(doubleSidedDerivative),
@@ -74,6 +77,19 @@ public:
 	}
 
 	/**
+	 * Initializes the system derivative.
+	 *
+	 * @param [in] logicRules: A class containing the logic rules.
+	 * @param [in] activeSubSystemID: Current active subsystem index.
+	 * @param [in] algorithmName: The algorithm that uses this class.
+	 */
+	virtual void initializeModel(const LOGIC_RULES_T& logicRules, const int& activeSubSystemID, const char* algorithmName=NULL)
+	{
+		Base::initializeModel(logicRules, activeSubSystemID, algorithmName);
+		nonlinearSystemPtr_->initializeModel(logicRules, activeSubSystemID, algorithmName);
+	}
+
+	/**
 	 * Default destructor
 	 */
 	virtual ~SystemDynamicsLinearizer(){}
@@ -85,7 +101,7 @@ public:
 	 * @param [in] x: Current state.
 	 * @param [in] u: Current input.
 	 */
-	virtual void setCurrentStateAndControl(const scalar_t& t, const state_vector_t& x, const control_vector_t& u) override  {
+	virtual void setCurrentStateAndControl(const scalar_t& t, const state_vector_t& x, const input_vector_t& u) override  {
 
 		Base::setCurrentStateAndControl(t, x, u);
 
@@ -161,7 +177,7 @@ public:
 			// inspired from http://en.wikipedia.org/wiki/Numerical_differentiation#Practical_considerations_using_floating_point_arithmetic
 			double h = eps_ * std::max(fabs(Base::u_(i)), 1.0);
 
-			control_vector_t uPlusPerturbed = Base::u_;
+			input_vector_t uPlusPerturbed = Base::u_;
 			uPlusPerturbed(i) += h;
 
 			// get evaluation of f(x,u)
@@ -170,7 +186,7 @@ public:
 
 			if (doubleSidedDerivative_)  {
 
-				control_vector_t uMinusPerturbed = Base::u_;
+				input_vector_t uMinusPerturbed = Base::u_;
 				uMinusPerturbed(i) -= h;
 
 				state_vector_t fMinusPerturbed;
@@ -218,7 +234,7 @@ public:
 private:
 	const double eps_= sqrt(Eigen::NumTraits<double>::epsilon());
 
-	std::shared_ptr<ControlledSystemBase<STATE_DIM, INPUT_DIM> > nonlinearSystemPtr_;
+	std::shared_ptr<controlled_system_base_t> nonlinearSystemPtr_;
 	bool doubleSidedDerivative_;
 	bool isSecondOrderSystem_;
 

@@ -52,6 +52,19 @@ public:
 			const Eigen::Matrix<double,STATE_DIM,1>& x,
 			Eigen::Matrix<double,STATE_DIM,1>& dxdt) = 0;
 
+	/**
+	 * State map at the transition time
+	 *
+	 * @param [in] time: transition time
+	 * @param [in] state: transition state
+	 * @param [out] mappedState: mapped state after transition
+	 */
+	virtual void mapState(const double& time, const Eigen::Matrix<double,STATE_DIM,1>& state,
+			Eigen::Matrix<double,STATE_DIM,1>& mappedState) {
+
+		mappedState = state;
+	}
+
 protected:
 	size_t numFunctionCalls_;
 

@@ -5,12 +5,36 @@
  *      Author: farbod
  */
 
-#ifndef OCS2_EVENTHANDLER_H_
-#define OCS2_EVENTHANDLER_H_
+#ifndef EVENTHANDLER_OCS2_H_
+#define EVENTHANDLER_OCS2_H_
 
-#include <Eigen/Dense>
+#include <exception>
+#include <memory>
 
 namespace ocs2{
+
+/**
+ * Exception type which can be catch outside of the ODE solver where the programs returns the program handle to
+ * EventHandler::mapState for reinitializing the ODE solver.
+ */
+class EventHandlerException: public std::exception
+{
+public:
+	EventHandlerException(const double& time)
+	: time_(time)
+	{}
+
+	void getActiveEventTime(double& time) const {
+		time = time_;
+	}
+
+	virtual const char* what() const throw() {
+		return "OCS2-integration EventHandler's exception is triggered.";
+	}
+
+private:
+	double time_;
+};
 
 /**
  * Event handler class for ode solvers.
@@ -22,6 +46,10 @@ class EventHandler
 {
 public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+
+	typedef std::shared_ptr<EventHandler<STATE_DIM>> Ptr;
+
+	typedef std::exception Even_Exception_T;
 
 	typedef Eigen::Matrix<double,STATE_DIM,1> State_T;
 
@@ -52,9 +80,27 @@ public:
 	 */
 	virtual void handleEvent(const State_T& state, const double& time) = 0;
 
-private:
+	/**
+	 * Activate KillIntegrationEventHandler.
+	 */
+	static void ActivateKillIntegration() {
+		killIntegration_ = true;
+	}
+
+	/**
+	 * Deactivate KillIntegrationEventHandler.
+	 */
+	static void DeactivateKillIntegration() {
+		killIntegration_ = false;
+	}
+
+protected:
+	static bool killIntegration_; /*=false*/
 };
+
+template <int STATE_DIM>
+bool EventHandler<STATE_DIM>::killIntegration_ = false;
 
 } // namespace ocs2
 
-#endif /* OCS2EVENTHANDLER_H_ */
+#endif /* EVENTHANDLER_OCS2_H_ */

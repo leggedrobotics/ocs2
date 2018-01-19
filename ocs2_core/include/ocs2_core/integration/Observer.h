@@ -32,8 +32,6 @@ public:
 	typedef Eigen::Matrix<double,STATE_DIM,1> State_T;
 	typedef std::vector<State_T, Eigen::aligned_allocator<State_T> > StateTrajectory_T;
 
-	friend class IntegratorBase<STATE_DIM>;
-
     /**
      * Constructor
      * @param [in] eventHandler
@@ -44,14 +42,6 @@ public:
 		system_(nullptr),
 		maxNumSteps_(std::numeric_limits<size_t>::max())
 	{}
-
-    /**
-     * Reset function
-     */
-	void reset() {
-		stateTrajectory_.clear();
-		timeTrajectory_.clear();
-	}
 
     /**
      * Sets the maximum number of integration points per a second for ode solvers.
@@ -71,28 +61,66 @@ public:
      */
 	void observe(const State_T& x, const double& t)
 	{
-		stateTrajectory_.push_back(x);
-		timeTrajectory_.push_back(t);
+		stateTrajectoryPtr_->push_back(x);
+		timeTrajectoryPtr_->push_back(t);
 
-		if (eventHandler_ && eventHandler_->checkEvent(x, t))
-		{
+		if (eventHandler_ && eventHandler_->checkEvent(x, t)) {
 			eventHandler_->handleEvent(x, t);
 		}
 
-		if (system_)
-			if (system_->getNumFunctionCalls() > maxNumSteps_)  throw std::runtime_error("integration terminated: max number of steps reached.\n");
+		if (system_ && system_->getNumFunctionCalls() > maxNumSteps_)
+			throw std::runtime_error("integration terminated: max number of steps reached.\n");
 	}
 
-	// Lambda to pass to odeint (odeint takes copies of the observer so we can't pass the class
+	/**
+	 * Adjust observer after LogicRulesEvent
+	 *
+	 * @param switchStartTime: event time
+	 */
+	void adjustObserverAfterLogicRulesEvent(const double& switchStartTime, size_t& outputSize) {
+
+		outputSize = stateTrajectoryPtr_->size();
+		double alpha = (switchStartTime-timeTrajectoryPtr_->at(outputSize-2)) / (timeTrajectoryPtr_->at(outputSize-1)-timeTrajectoryPtr_->at(outputSize-2));
+
+		std::cout << "alpha: " << alpha << std::endl;
+		std::cout << "timeTrajectory_[-2]: " << timeTrajectoryPtr_->at(outputSize-2) << "\t state: " << stateTrajectoryPtr_->at(outputSize-2).transpose() << std::endl;
+		std::cout << "timeTrajectory_[-1]: " << timeTrajectoryPtr_->at(outputSize-1) << "\t state: " << stateTrajectoryPtr_->at(outputSize-1).transpose() << std::endl;
+
+		timeTrajectoryPtr_->at(outputSize-1)  = switchStartTime;
+		stateTrajectoryPtr_->at(outputSize-1) = (1.0-alpha)*stateTrajectoryPtr_->at(outputSize-2) + alpha*stateTrajectoryPtr_->at(outputSize-1);
+	}
+
+	/**
+	 * Lambda to pass to odeint (odeint takes copies of the observer so we can't pass the class
+	 */
 	std::function<void (const State_T& x, const double& t)> observeWrap;
+
+	/**
+	 * Set state trajectory pointer to observer.
+	 *
+	 * @param stateTrajectoryPtr
+	 */
+	void setStateTrajectory(StateTrajectory_T* stateTrajectoryPtr) {
+		stateTrajectoryPtr_ = stateTrajectoryPtr;
+	}
+
+	/**
+	 * Set time trajectory pointer to observer.
+	 *
+	 * @param timeTrajectoryPtr
+	 */
+	void setTimeTrajectory(TimeTrajectory_T* timeTrajectoryPtr) {
+		timeTrajectoryPtr_ = timeTrajectoryPtr;
+	}
+
 
 private:
 	std::shared_ptr<EventHandler<STATE_DIM> > eventHandler_;
 	std::shared_ptr<SystemBase<STATE_DIM> > system_;
 	size_t maxNumSteps_;
 
-	StateTrajectory_T stateTrajectory_;
-	TimeTrajectory_T timeTrajectory_;
+	StateTrajectory_T* stateTrajectoryPtr_;
+	TimeTrajectory_T* timeTrajectoryPtr_;
 
 };
 

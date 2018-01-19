@@ -8,7 +8,7 @@
 #ifndef QUADRATICCOSTFUNCTION_OCS2_H_
 #define QUADRATICCOSTFUNCTION_OCS2_H_
 
-#include "ocs2_core/cost/CostFunctionBaseOCS2.h"
+#include "ocs2_core/cost/CostFunctionBase.h"
 
 namespace ocs2{
 
@@ -17,14 +17,17 @@ namespace ocs2{
  *
  * @tparam STATE_DIM: Dimension of the state space.
  * @tparam INPUT_DIM: Dimension of the control input space.
+ * @tparam LOGIC_RULES_T: Logic Rules type (default NullLogicRules).
  */
-template <size_t STATE_DIM, size_t CONTROL_DIM>
-class QuadraticCostFunction : public CostFunctionBaseOCS2< STATE_DIM, CONTROL_DIM >
+template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T=NullLogicRules>
+class QuadraticCostFunction : public CostFunctionBaseOCS2< STATE_DIM, INPUT_DIM, LOGIC_RULES_T>
 {
 public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-	typedef Dimensions<STATE_DIM, CONTROL_DIM> DIMENSIONS;
+	typedef CostFunctionBaseOCS2<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> Base;
+
+	typedef Dimensions<STATE_DIM, INPUT_DIM> DIMENSIONS;
 	typedef typename DIMENSIONS::scalar_t scalar_t;
 	typedef typename DIMENSIONS::state_vector_t state_vector_t;
 	typedef typename DIMENSIONS::state_matrix_t state_matrix_t;
@@ -60,6 +63,18 @@ public:
 	virtual ~QuadraticCostFunction() {}
 
 	/**
+	 * Initializes the system dynamics.
+	 *
+	 * @param [in] logicRules: A class containing the logic rules.
+	 * @param [in] activeSubSystemID: Current active subsystem index.
+	 * @param [in] algorithmName: The algorithm that uses this class.
+	 */
+	virtual void initializeModel(const LOGIC_RULES_T& logicRules, const int& activeSubSystemID, const char* algorithmName=NULL)
+	{
+		Base::initializeModel(logicRules, activeSubSystemID, algorithmName);
+	}
+
+	/**
 	 * Sets the current time, state, and control input
 	 *
 	 * @param [in] t: Current time
@@ -68,7 +83,7 @@ public:
 	 */
 	virtual void setCurrentStateAndControl(const scalar_t& t, const state_vector_t& x, const control_vector_t& u) {
 
-		CostFunctionBase< STATE_DIM, CONTROL_DIM >::setCurrentStateAndControl(t, x, u);
+		Base::setCurrentStateAndControl(t, x, u);
 		x_deviation_ = x - x_nominal_;
 		u_deviation_ = u - u_nominal_;
 	}
@@ -165,8 +180,8 @@ public:
      * Returns pointer to CostFunctionOCS2 class.
      * @return CostFunctionBase*: a shared_ptr pointer.
      */
-	std::shared_ptr<CostFunctionBase<STATE_DIM, CONTROL_DIM> > clone() const {
-		typedef QuadraticCostFunction<STATE_DIM, CONTROL_DIM> quadratic_cost_t;
+	std::shared_ptr<Base> clone() const {
+		typedef QuadraticCostFunction<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> quadratic_cost_t;
 		return std::allocate_shared<quadratic_cost_t, Eigen::aligned_allocator<quadratic_cost_t>>(
 				Eigen::aligned_allocator<quadratic_cost_t>(),*this);
 	}

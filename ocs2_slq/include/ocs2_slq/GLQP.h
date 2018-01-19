@@ -18,7 +18,7 @@
 #include <ocs2_core/Dimensions.h>
 #include <ocs2_core/dynamics/ControlledSystemBase.h>
 #include <ocs2_core/dynamics/DerivativesBase.h>
-#include <ocs2_core/cost/CostFunctionBaseOCS2.h>
+#include <ocs2_core/cost/CostFunctionBase.h>
 #include <ocs2_core/integration/Integrator.h>
 #include <ocs2_core/misc/LinearInterpolation.h>
 
@@ -78,11 +78,12 @@ public:
 	 * @param [in] stateOperatingPoints: The state operating points for system's subsystems which will be used for initialization of LQ.
 	 * @param [in] inputOperatingPoints: The input operating points for system's subsystems which will be used for initialization of LQ.
 	 */
-	GLQP(const std::vector<std::shared_ptr<ControlledSystemBase<STATE_DIM, INPUT_DIM> > >& subsystemDynamicsPtr,
-			const std::vector<std::shared_ptr<DerivativesBase<STATE_DIM, INPUT_DIM> > >& subsystemDerivativesPtr,
-			const std::vector<std::shared_ptr<CostFunctionBaseOCS2<STATE_DIM, INPUT_DIM> > >& subsystemCostFunctionsPtr,
-			const state_vector_array_t&   stateOperatingPoints,
-			const control_vector_array_t& inputOperatingPoints)
+	GLQP(const std::vector<typename ControlledSystemBase<STATE_DIM, INPUT_DIM>::Ptr>& subsystemDynamicsPtr,
+		 const std::vector<typename DerivativesBase<STATE_DIM, INPUT_DIM>::Ptr>& subsystemDerivativesPtr,
+		 const std::vector<typename CostFunctionBase<STATE_DIM, INPUT_DIM>::Ptr>& subsystemCostFunctionsPtr,
+		 const state_vector_array_t&   stateOperatingPoints,
+		 const control_vector_array_t& inputOperatingPoints)
+
 	: numSubsystems_(0),
 	  subsystemDynamicsPtr_(subsystemDynamicsPtr),
 	  subsystemDerivativesPtr_(subsystemDerivativesPtr),
@@ -216,15 +217,15 @@ private:
 	std::vector<size_t> systemStockIndexes_;
 	scalar_array_t switchingTimes_;
 
-	std::vector<std::shared_ptr<ControlledSystemBase<STATE_DIM, INPUT_DIM> > > subsystemDynamicsPtr_;
-	std::vector<std::shared_ptr<DerivativesBase<STATE_DIM, INPUT_DIM> > > subsystemDerivativesPtr_;
-	std::vector<std::shared_ptr<CostFunctionBaseOCS2<STATE_DIM, INPUT_DIM> > > subsystemCostFunctionsPtr_;
+	std::vector<typename ControlledSystemBase<STATE_DIM, INPUT_DIM>::Ptr > subsystemDynamicsPtr_;
+	std::vector<typename DerivativesBase<STATE_DIM, INPUT_DIM>::Ptr > subsystemDerivativesPtr_;
+	std::vector<typename CostFunctionBase<STATE_DIM, INPUT_DIM>::Ptr > subsystemCostFunctionsPtr_;
 	state_vector_array_t   stateOperatingPoints_;
 	control_vector_array_t inputOperatingPoints_;
 
-	std::vector<std::shared_ptr<ControlledSystemBase<STATE_DIM, INPUT_DIM> > > subsystemDynamicsPtrStock_;
-	std::vector<std::shared_ptr<DerivativesBase<STATE_DIM, INPUT_DIM> > > subsystemDerivativesPtrStock_;
-	std::vector<std::shared_ptr<CostFunctionBaseOCS2<STATE_DIM, INPUT_DIM> > > subsystemCostFunctionsPtrStock_;
+	std::vector<typename ControlledSystemBase<STATE_DIM, INPUT_DIM>::Ptr > subsystemDynamicsPtrStock_;
+	std::vector<typename DerivativesBase<STATE_DIM, INPUT_DIM>::Ptr > subsystemDerivativesPtrStock_;
+	std::vector<typename CostFunctionBase<STATE_DIM, INPUT_DIM>::Ptr > subsystemCostFunctionsPtrStock_;
 
 	state_vector_array_t   stateOperatingPointsStock_;
 	control_vector_array_t inputOperatingPointsStock_;

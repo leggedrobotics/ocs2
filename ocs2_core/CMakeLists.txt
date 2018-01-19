@@ -44,3 +44,36 @@ if(DOXYGEN_FOUND)
             COMMAND ${CMAKE_COMMAND} -E echo_append "OCS2 Documentation built in ${CMAKE_CURRENT_SOURCE_DIR}/doc"
             VERBATIM)
 endif()
+
+#############
+## Testing ##
+#############
+
+## Info ==============================
+## to run tests, cd package/src and run 
+## $ catkin run_tests --no-deps --this
+
+## unit tests
+#catkin_add_gtest(integration_unittest test/IntegrationTest.cpp)
+#target_link_libraries(integration_unittest 
+#  ${Boost_LIBRARIES}
+#)
+
+#add_executable(integration_unittest test/IntegrationTest.cpp)
+#target_link_libraries(integration_unittest
+#  ${catkin_LIBRARIES}
+#  ${Boost_LIBRARIES}
+#) 
+#
+#add_executable(findIndex_unittest test/testFindIndex.cpp)
+#target_link_libraries(findIndex_unittest
+#  ${catkin_LIBRARIES}
+#  ${Boost_LIBRARIES}
+#)
+
+add_executable(logic_rules_machin_unittest test/testLogicRulesMachine.cpp)
+target_link_libraries(logic_rules_machin_unittest
+  ${catkin_LIBRARIES}
+  ${Boost_LIBRARIES}
+)
+

@@ -49,17 +49,15 @@ public:
 	/**
 	 * Sets coefficients of the model.
 	 *
-	 * @param [in] activeSubsystem: The index of the active subsystem.
 	 * @param [in] switchingTimeStart: The start time of the subsystem.
 	 * @param [in] switchingTimeFinal: The final time of the subsystem.
 	 * @param [in] timeStampPtr: A pointer to the time stamp trajectory.
 	 * @param [in] GvPtr: A pointer to the trajectory of \f$ G_v(t) \f$ .
 	 * @param [in] GmPtr: A pointer to the trajectory of \f$ G_m(t) \f$ .
 	 */
-	void setData(const size_t& activeSubsystem, const scalar_t& switchingTimeStart, const scalar_t& switchingTimeFinal,
+	void setData(const scalar_t& switchingTimeStart, const scalar_t& switchingTimeFinal,
 			scalar_array_t* const timeStampPtr, state_vector_array_t* const GvPtr, state_matrix_array_t* const GmPtr)  {
 
-		activeSubsystem_ = activeSubsystem;
 		switchingTimeStart_ = switchingTimeStart;
 		switchingTimeFinal_ = switchingTimeFinal;
 
@@ -67,6 +65,19 @@ public:
 		GvFunc_.setData(GvPtr);
 		GmFunc_.setTimeStamp(timeStampPtr);
 		GmFunc_.setData(GmPtr);
+	}
+
+	/**
+	 * Error Riccati jump map at switching moments
+	 *
+	 * @param [in] time: Normalized transition time
+	 * @param [in] state: transition state
+	 * @param [out] mappedState: mapped state after transition
+	 */
+	void mapState(const double& z, const s_vector_t& state,
+			s_vector_t& mappedState) override {
+
+		mappedState = state;
 	}
 
 	/**
@@ -91,7 +102,6 @@ public:
 
 
 private:
-	size_t activeSubsystem_;
 	scalar_t switchingTimeStart_;
 	scalar_t switchingTimeFinal_;
 

@@ -15,6 +15,9 @@
 
 namespace ocs2{
 
+const double RIGHT_LIMIT_EPSILON = 1e-3;
+const double WEAK_EPSILON = 1e-5;
+
 /**
  * This class defines the types which are used throughout this package.
  *
@@ -143,6 +146,10 @@ public:
     typedef std::vector<constraint2_state_matrix_t, Eigen::aligned_allocator<constraint2_state_matrix_t> > constraint2_state_matrix_array_t;
     /** Array of constraint2_state matrix trajectory type. */
     typedef std::vector<constraint2_state_matrix_array_t, Eigen::aligned_allocator<constraint2_state_matrix_array_t> > constraint2_state_matrix_array2_t;
+
+    /** Unsigned integer type */
+    // size_t is already defined
+    typedef std::vector<size_t> size_array_t;
 
     /** Scalar type. */
 	typedef double scalar_t;
@@ -277,6 +284,7 @@ public:
 
 			useMultiThreading_(false),
 			nThreads_(4),
+			numPartitionings_(4),
 			debugPrintMP_(false),
 			lsStepsizeGreedy_(true),
 			checkNumericalStability_(true),
@@ -354,6 +362,8 @@ public:
 		bool useMultiThreading_;
 		/** Number of threads used in the multi threading scheme. */
 		size_t nThreads_;
+		/** Number of time horizon partitionings. */
+		size_t numPartitionings_;
 		/** Special debugging output for multi threading scheme. */
 		bool debugPrintMP_;
 		/**

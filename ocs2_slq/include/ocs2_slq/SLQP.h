@@ -9,9 +9,6 @@
 #define SLQP_OCS2_H_
 
 
-#include <ocs2_core/Dimensions.h>
-#include <ocs2_core/integration/KillIntegrationEventHandler.h>
-
 #include "ocs2_slq/SLQP_BASE.h"
 
 
@@ -23,19 +20,20 @@ namespace ocs2{
  * @tparam STATE_DIM: Dimension of the state space.
  * @tparam INPUT_DIM: Dimension of the control input space.
  */
-template <size_t STATE_DIM, size_t INPUT_DIM>
-class SLQP : public SLQP_BASE<STATE_DIM, INPUT_DIM>
+template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T=NullLogicRules<STATE_DIM,INPUT_DIM>>
+class SLQP : public SLQP_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>
 {
 public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-	typedef SLQP_BASE<STATE_DIM, INPUT_DIM>	BASE;
+	typedef SLQP_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>	BASE;
 	typedef typename BASE::DIMENSIONS DIMENSIONS;
 
 	typedef typename DIMENSIONS::template LinearFunction_t<Eigen::Dynamic> lagrange_t;
 	typedef typename DIMENSIONS::controller_t controller_t;
 	typedef typename DIMENSIONS::controller_array_t controller_array_t;
 	typedef typename DIMENSIONS::Options Options_t;
+	typedef typename DIMENSIONS::size_array_t size_array_t;
 	typedef typename DIMENSIONS::scalar_t scalar_t;
 	typedef typename DIMENSIONS::scalar_array_t scalar_array_t;
 	typedef typename DIMENSIONS::eigen_scalar_t eigen_scalar_t;
@@ -78,63 +76,39 @@ public:
 	typedef typename DIMENSIONS::constraint2_state_matrix_array_t constraint2_state_matrix_array_t;
 	typedef typename DIMENSIONS::constraint2_state_matrix_array2_t constraint2_state_matrix_array2_t;
 
+	typedef typename BASE::controlled_system_base_t		 controlled_system_base_t;
+	typedef typename BASE::event_handler_t	 			 event_handler_t;
+	typedef typename BASE::derivatives_base_t			 derivatives_base_t;
+	typedef typename BASE::constraint_base_t			 constraint_base_t;
+	typedef typename BASE::cost_function_base_t			 cost_function_base_t;
+	typedef typename BASE::operating_trajectories_base_t operating_trajectories_base_t;
 
 	/**
 	 * Constructor
 	 *
 	 * @param [in] subsystemDynamicsPtr: Array of system dynamics and constraints for system's subsystems.
 	 * @param [in] subsystemDerivativesPtr: Array of system dynamics and constraints derivatives for system's subsystems.
+	 * @param [in] subsystemConstraintPtr: Array of constraint function and its derivatives for system's subsystems.
 	 * @param [in] subsystemCostFunctionsPtr: Array of cost function and its derivatives for system's subsystems.
+	 * @param [in] operatingTrajectoriesPtr: The operating trajectories of system which will be used for initialization of SLQ.
 	 * @param [in] options: Structure containing the settings for the SLQ algorithm.
-	 * @param [in] stateOperatingPoints: The state operating points for system's subsystems which will be used for initialization of SLQ.
-	 * @param [in] inputOperatingPoints: The input operating points for system's subsystems which will be used for initialization of SLQ.
+	 * @param [in] logicRules: The logic rules used for implementing mixed logical dynamical systems.
 	 */
-	SLQP(const std::vector<std::shared_ptr<ControlledSystemBase<STATE_DIM, INPUT_DIM> > >& subsystemDynamicsPtr,
-			const std::vector<std::shared_ptr<DerivativesBase<STATE_DIM, INPUT_DIM> > >& subsystemDerivativesPtr,
-			const std::vector<std::shared_ptr<CostFunctionBaseOCS2<STATE_DIM, INPUT_DIM> > >& subsystemCostFunctionsPtr,
+	SLQP(const typename controlled_system_base_t::Ptr& subsystemDynamicsPtr,
+			const typename derivatives_base_t::Ptr& subsystemDerivativesPtr,
+			const typename constraint_base_t::Ptr& subsystemConstraintPtr,
+			const typename cost_function_base_t::Ptr& subsystemCostFunctionsPtr,
+			const typename operating_trajectories_base_t::Ptr& operatingTrajectoriesPtr,
 			const Options_t& options = Options_t::Options(),
-			const state_vector_array_t& stateOperatingPoints = state_vector_array_t(),
-			const control_vector_array_t& inputOperatingPoints = control_vector_array_t() )
-	: BASE(subsystemDynamicsPtr, subsystemDerivativesPtr, subsystemCostFunctionsPtr, options, stateOperatingPoints, inputOperatingPoints)
+			const LOGIC_RULES_T& logicRules = LOGIC_RULES_T())
+
+	: BASE(subsystemDynamicsPtr, subsystemDerivativesPtr, subsystemConstraintPtr, subsystemCostFunctionsPtr, operatingTrajectoriesPtr, options, logicRules)
 	{}
 
 	/**
 	 * Default destructor.
 	 */
 	virtual ~SLQP();
-
-	/**
-	 * Forward integrate the system dynamics with given controller. It uses the given control policies and initial state,
-	 * to integrate the system dynamics and calculate the constraints in time period [initTime, finalTime].
-	 *
-	 * @param [in] initTime: Initial time.
-	 * @param [in] initState: Initial state.
-	 * @param [in] finalTime: Final time.
-	 * @param [in] controllersStock: Array of control policies.
-	 * @param [out] timeTrajectoriesStock: Array of trajectories containing the output time trajectory stamp.
-	 * @param [out] stateTrajectoriesStock: Array of trajectories containing the output state trajectory.
-	 * @param [out] inputTrajectoriesStock: Array of trajectories containing the output control input trajectory.
-	 * @param [out] nc1TrajectoriesStock: Array of trajectories containing the number of the active state-input constraints.
-	 * @param [out] EvTrajectoryStock: Array of trajectories containing the value of the state-input constraints (if the rollout is constrained the value is
-	 * always zero otherwise it is nonzero).
-	 * @param [out] nc2TrajectoriesStock: Array of trajectories containing the number of the active state-only constraints.
-	 * @param [out] HvTrajectoryStock: Array of trajectories containing the value of the state-only constraints.
-	 * @param [out] nc2FinalStock: Array containing the number of the active final state-only constraints.
-	 * @param [out] HvFinalStock: Array containing the value of the final state-only constraints.
-	 */
-	virtual void rollout(const double& initTime,
-			const state_vector_t& initState,
-			const scalar_t& finalTime,
-			const controller_array_t& controllersStock,
-			std::vector<scalar_array_t>& timeTrajectoriesStock,
-			state_vector_array2_t& stateTrajectoriesStock,
-			control_vector_array2_t& inputTrajectoriesStock,
-			std::vector<std::vector<size_t> >& nc1TrajectoriesStock,
-			constraint1_vector_array2_t& EvTrajectoryStock,
-			std::vector<std::vector<size_t> >& nc2TrajectoriesStock,
-			constraint2_vector_array2_t& HvTrajectoryStock,
-			std::vector<size_t>& nc2FinalStock,
-			constraint2_vector_array_t& HvFinalStock) override;
 
 	/**
 	 * Forward integrate the system dynamics with given controller. It uses the given control policies and initial state,
@@ -145,46 +119,58 @@ public:
 	 * @param [in] finalTime: Final time.
 	 * @param [in] controllersStock: Array of control policies.
 	 * @param [out] timeTrajectoriesStock: Array of trajectories containing the output time trajectory stamp.
+	 * @param [out] eventsPastTheEndIndecesStock: Array of indices containing past-the-end index of events trigger.
 	 * @param [out] stateTrajectoriesStock: Array of trajectories containing the output state trajectory.
 	 * @param [out] inputTrajectoriesStock: Array of trajectories containing the output control input trajectory.
+	 * @param [in] threadId: Working thread (default is 0).
 	 */
-	virtual void rollout(const double& initTime,
+	void rolloutTrajectory(const scalar_t& initTime,
 			const state_vector_t& initState,
 			const scalar_t& finalTime,
 			const controller_array_t& controllersStock,
 			std::vector<scalar_array_t>& timeTrajectoriesStock,
+			std::vector<size_array_t>& eventsPastTheEndIndecesStock,
 			state_vector_array2_t& stateTrajectoriesStock,
-			control_vector_array2_t& inputTrajectoriesStock) override;
+			control_vector_array2_t& inputTrajectoriesStock,
+			size_t threadId = 0) override;
 
 	/**
-	 * Forward integrate the system dynamics with given controller.  It uses the given control policies and initial state,
-	 * to integrate the system dynamics in time period [initTime, finalTime] and only return the final state.
+	 * The interface class for constraints. It uses the given rollout trajectories and calculate the constraints.
 	 *
-	 * @param [in] initTime: Initial time.
-	 * @param [in] initState: Initial state.
-	 * @param [in] finalTime: Final time.
-	 * @param [in] controllersStock: Array of control policies.
-	 * @param [out] finalState: Final state.
-	 * @param [out] finalInput: Final control input.
-	 * @param [out] finalActiveSubsystemIndex: The final active subsystem.
+	 * @param [in] timeTrajectoriesStock: Array of trajectories containing the output time trajectory stamp.
+	 * @param [in] eventsPastTheEndIndecesStock: Array of indices containing past-the-end index of events trigger.
+	 * @param [in] stateTrajectoriesStock: Array of trajectories containing the output state trajectory.
+	 * @param [in] inputTrajectoriesStock: Array of trajectories containing the output control input trajectory.
+	 * @param [out] nc1TrajectoriesStock: Array of trajectories containing the number of the active state-input constraints.
+	 * @param [out] EvTrajectoryStock: Array of trajectories containing the value of the state-input constraints (if the roll-out is constrained the value is
+	 * always zero otherwise it is nonzero).
+	 * @param [out] nc2TrajectoriesStock: Array of trajectories containing the number of the active state-only constraints.
+	 * @param [out] HvTrajectoryStock: Array of trajectories containing the value of the state-only constraints.
+	 * @param [out] nc2FinalStock: Array containing the number of the active final state-only constraints.
+	 * @param [out] HvFinalStock: Array containing the value of the final state-only constraints.
 	 */
-	virtual void rollout(const scalar_t& initTime,
-			const state_vector_t& initState,
-			const scalar_t& finalTime,
-			const controller_array_t& controllersStock,
-			state_vector_t& finalState,
-			control_vector_t& finalInput,
-			size_t& finalActiveSubsystemIndex) override;
+	virtual void calculateRolloutConstraints(const std::vector<scalar_array_t>& timeTrajectoriesStock,
+			const std::vector<size_array_t>& eventsPastTheEndIndecesStock,
+			const state_vector_array2_t& stateTrajectoriesStock,
+			const control_vector_array2_t& inputTrajectoriesStock,
+			std::vector<size_array_t>& nc1TrajectoriesStock,
+			constraint1_vector_array2_t& EvTrajectoryStock,
+			std::vector<size_array_t>& nc2TrajectoriesStock,
+			constraint2_vector_array2_t& HvTrajectoryStock,
+			std::vector<size_array_t>& nc2FinalValuesStock,
+			constraint2_vector_array2_t& HvFinalStock) override;
 
 	/**
 	 * Calculates cost of a roll-out.
 	 *
 	 * @param [in] timeTrajectoriesStock: Array of trajectories containing the time trajectory stamp of a roll-out.
+	 * @param [in] eventsPastTheEndIndecesStock: Array of indices containing past-the-end index of events trigger.
 	 * @param [in] stateTrajectoriesStock: Array of trajectories containing the state trajectory of a roll-out.
 	 * @param [in] inputTrajectoriesStock: Array of trajectories containing the control input trajectory of a roll-out.
 	 * @param [out] totalCost: The total cost of the roll-out.
 	 */
-	void calculateCostFunction(const std::vector<scalar_array_t>& timeTrajectoriesStock,
+	void calculateRolloutCost(const std::vector<scalar_array_t>& timeTrajectoriesStock,
+			const std::vector<size_array_t>& eventsPastTheEndIndecesStock,
 			const state_vector_array2_t& stateTrajectoriesStock,
 			const control_vector_array2_t& inputTrajectoriesStock,
 			scalar_t& totalCost) override;
@@ -193,6 +179,7 @@ public:
 	 * Calculates the cost function plus penalty for state-only constraints of a roll-out.
 	 *
 	 * @param [in] timeTrajectoriesStock: Array of trajectories containing the time trajectory stamp of a roll-out.
+	 * @param [in] eventsPastTheEndIndecesStock: Array of indices containing past-the-end index of events trigger.
 	 * @param [in] stateTrajectoriesStock: Array of trajectories containing the state trajectory of a roll-out.
 	 * @param [in] inputTrajectoriesStock: Array of trajectories containing the control input trajectory of a roll-out.
 	 * @param [out] nc2TrajectoriesStock: Array of trajectories containing the number of the active state-only constraints.
@@ -201,13 +188,14 @@ public:
 	 * @param [out] HvFinalStock: Array containing the value of the final state-only constraints.
 	 * @param [out] totalCost: The total cost plus state-only constraints penalty.
 	 */
-	void calculateCostFunction(const std::vector<scalar_array_t>& timeTrajectoriesStock,
+	void calculateRolloutCost(const std::vector<scalar_array_t>& timeTrajectoriesStock,
+			const std::vector<size_array_t>& eventsPastTheEndIndecesStock,
 			const state_vector_array2_t& stateTrajectoriesStock,
 			const control_vector_array2_t& inputTrajectoriesStock,
-			const std::vector<std::vector<size_t> >& nc2TrajectoriesStock,
+			const std::vector<size_array_t>& nc2TrajectoriesStock,
 			const constraint2_vector_array2_t& HvTrajectoryStock,
-			const std::vector<size_t>& nc2FinalStock,
-			const constraint2_vector_array_t& HvFinalStock,
+			const std::vector<size_array_t>& nc2FinalStock,
+			const constraint2_vector_array2_t& HvFinalStock,
 			scalar_t& totalCost) override;
 
 	/**
@@ -227,7 +215,8 @@ public:
 	 * @param [in] SvFinal: The final Sv for Riccati equation.
 	 * @param [in] sFinal: The final s for Riccati equation.
 	 */
-	void runIteration(const state_matrix_t& SmFinal = state_matrix_t::Zero(),
+	void runIteration(const scalar_t& maxLearningRateStar,
+			const state_matrix_t& SmFinal = state_matrix_t::Zero(),
 			const state_vector_t& SvFinal = state_vector_t::Zero(),
 			const eigen_scalar_t& sFinal = eigen_scalar_t::Zero()) override;
 
@@ -242,37 +231,9 @@ public:
 			const state_vector_t& SvFinal = state_vector_t::Zero(),
 			const eigen_scalar_t& sFinal = eigen_scalar_t::Zero()) override;
 
-	/**
-	 * Gets a pointer to the array of the subsystem dynamics.
-	 * @return Pointer to the array of the subsystem dynamics.
-	 */
-	virtual std::vector<std::shared_ptr<ControlledSystemBase<STATE_DIM, INPUT_DIM>> >& getSubsystemDynamicsPtrStock() override{
-		return subsystemDynamicsPtrStock_;
-	}
-
-	/**
-	 * Gets a nominal state of subsystem cost in the given index.
-	 *
-	 * @param [in] index: The requested index.
-	 * @param [out] timeTrajectory: The time stamp tarjectory for the requested subsystem's cost.
-	 * @param [out] stateTrajectory: The state tarjectory for the requested subsystem's cost.
-	 */
-	void getSingleCostNominalState(size_t index, scalar_array_t& timeTrajectory,
-			state_vector_array_t& stateTrajectory) const override;
-
 protected:
 	/**
-	 * Sets a nominal state of subsystem cost in the given index.
-	 *
-	 * @param [in] index: The requested index.
-	 * @param [in] timeTrajectory: The time stamp trajectory for the requested subsystem's cost.
-	 * @param [in] stateTrajectory: The state trajectory for the requested subsystem's cost.
-	 */
-	void setSingleCostNominalState(size_t index, const scalar_array_t& timeTrajectory,
-			const state_vector_array_t& stateTrajectory) override;
-
-	/**
-	 * Solves Riccati equations for all the subsystems in the systemStockIndexes.
+	 * Solves Riccati equations for all the subsystems.
 	 *
 	 * @param [in] learningRate: The optimal learning rate from line search scheme.
 	 * @param [in] SmFinal: The final Sm for Riccati equation.
@@ -285,34 +246,10 @@ protected:
 			const eigen_scalar_t& sFinal) override;
 
 	/**
-	 * Approximates the nonlinear problem as a linear-quadratic problem around the nominal
-	 * state and control trajectories. This method updates the following variables:
-	 * 	- linearized system model
-	 * 	- \f$ dxdt = A_m(t)x + B_m(t)u \f$.
-	 * 	- s.t. \f$ C_m(t)x + D_m(t)u + E_v(t) = 0 \f$.
-	 * 	- AmTrajectoryStock_: \f$ A_m\f$  matrix.
-	 * 	- BmTrajectoryStock_: \f$ B_m\f$  matrix.
-	 * 	- CmTrajectoryStock_: \f$ C_m\f$ matrix.
-	 * 	- DmTrajectoryStock_: \f$ D_m\f$ matrix.
-	 * 	- EvTrajectoryStock_: \f$ E_v\f$ vector.
-	 *
-	 * 	- quadratized intermediate cost function
-	 * 	- intermediate cost: \f$ q(t) + 0.5 xQ_m(t)x + x'Q_v(t) + u'P_m(t)x + 0.5u'R_m(t)u + u'R_v(t) \f$
-	 * 	- qTrajectoryStock_:  \f$ q\f$
-	 * 	- QvTrajectoryStock_: \f$ Q_v\f$ vector.
-	 * 	- QmTrajectoryStock_:\f$  Q_m\f$ matrix.
-	 * 	- PmTrajectoryStock_: \f$ P_m\f$ matrix.
-	 * 	- RvTrajectoryStock_: \f$ R_v\f$ vector.
-	 * 	- RmTrajectoryStock_: \f$ R_m\f$ matrix.
-	 * 	- RmInverseTrajectoryStock_: inverse of \f$ R_m\f$ matrix.
-	 *
-	 * 	- as well as the constrained coefficients of
-	 * 		- linearized system model
-	 * 		- quadratized intermediate cost function
-	 * 		- quadratized final cost
-	 *
+	 * Computes the linearized dynamics for a particular subsystem
+	 * @param [in] sysIndex
 	 */
-	void approximateOptimalControlProblem();
+	void approximatePartitionLQ(const size_t& sysIndex) override;
 
 	/**
 	 * Calculates the controller. This method uses the following variables:
@@ -337,12 +274,7 @@ protected:
 			scalar_t maxLearningRateStar=1.0);
 
 private:
-	std::vector<std::shared_ptr<ControlledSystemBase<STATE_DIM, INPUT_DIM>>> subsystemDynamicsPtrStock_;
 
-	std::vector<std::shared_ptr<DerivativesBase<STATE_DIM, INPUT_DIM> > > subsystemDerivativesPtrStock_;
-	std::vector<std::shared_ptr<CostFunctionBaseOCS2<STATE_DIM, INPUT_DIM> > > subsystemCostFunctionsPtrStock_;
-
-	std::vector<std::shared_ptr<ODE45<STATE_DIM> > > subsystemSimulatorsStockPtr_;
 
 public:
 	template <size_t GSLQP_STATE_DIM, size_t GSLQP_INPUT_DIM>

@@ -11,8 +11,8 @@ namespace ocs2{
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM>
-SLQP_MP<STATE_DIM, INPUT_DIM>::~SLQP_MP()
+template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
+SLQP_MP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::~SLQP_MP()
 {
 	workersActive_ = false;
 	workerTask_ = SHUTDOWN;
@@ -39,436 +39,295 @@ SLQP_MP<STATE_DIM, INPUT_DIM>::~SLQP_MP()
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM>
-void SLQP_MP<STATE_DIM, INPUT_DIM>::rollout(const scalar_t& initTime,
-		const state_vector_t& initState,
-		const scalar_t& finalTime,
-		const controller_array_t& controllersStock,
-		std::vector<scalar_array_t>& timeTrajectoriesStock,
-		state_vector_array2_t& stateTrajectoriesStock,
-		control_vector_array2_t& inputTrajectoriesStock,
-		std::vector<std::vector<size_t> >& nc1TrajectoriesStock,
-		constraint1_vector_array2_t& EvTrajectoryStock,
-		std::vector<std::vector<size_t> >& nc2TrajectoriesStock,
-		constraint2_vector_array2_t& HvTrajectoryStock,
-		std::vector<size_t>& nc2FinalStock,
-		constraint2_vector_array_t& HvFinalStock) {
-
-	rollout(BASE::options_.nThreads_, initTime, initState, finalTime,
-			controllersStock, timeTrajectoriesStock, stateTrajectoriesStock, inputTrajectoriesStock,
-			nc1TrajectoriesStock, EvTrajectoryStock,
-			nc2TrajectoriesStock, HvTrajectoryStock, nc2FinalStock, HvFinalStock);
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM>
-void SLQP_MP<STATE_DIM, INPUT_DIM>::rollout(const scalar_t& initTime,
-		const state_vector_t& initState,
-		const scalar_t& finalTime,
-		const controller_array_t& controllersStock,
-		std::vector<scalar_array_t>& timeTrajectoriesStock,
-		state_vector_array2_t& stateTrajectoriesStock,
-		control_vector_array2_t& inputTrajectoriesStock){
-
-	rollout(BASE::options_.nThreads_, initTime, initState, finalTime,
-			controllersStock, timeTrajectoriesStock, stateTrajectoriesStock, inputTrajectoriesStock);
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM>
-void SLQP_MP<STATE_DIM, INPUT_DIM>::rollout(const size_t& threadId,
+template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
+void SLQP_MP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::rolloutTrajectory(
 		const scalar_t& initTime,
 		const state_vector_t& initState,
 		const scalar_t& finalTime,
-		const controller_array_t& controller_local,
-		std::vector<scalar_array_t>& t_local,
-		state_vector_array2_t& x_local,
-		control_vector_array2_t& u_local){
+		const controller_array_t& controllersStock,
+		std::vector<scalar_array_t>& timeTrajectoriesStock,
+		std::vector<size_array_t>& eventsPastTheEndIndecesStock,
+		state_vector_array2_t& stateTrajectoriesStock,
+		control_vector_array2_t& inputTrajectoriesStock)  {
 
-	if (controller_local.size() != BASE::numSubsystems_)
-		throw std::runtime_error("controller_local has less controllers then the number of subsystems");
+	if (controllersStock.size() != BASE::options_.numPartitionings_)
+		throw std::runtime_error("controllersStock has less controllers then the number of subsystems");
 
-	t_local.resize(BASE::numSubsystems_);
-	x_local.resize(BASE::numSubsystems_);
-	u_local.resize(BASE::numSubsystems_);
+	timeTrajectoriesStock.resize(BASE::options_.numPartitionings_);
+	eventsPastTheEndIndecesStock.resize(BASE::options_.numPartitionings_);
+	stateTrajectoriesStock.resize(BASE::options_.numPartitionings_);
+	inputTrajectoriesStock.resize(BASE::options_.numPartitionings_);
 
 	// finding the active subsystem index at initTime
-	size_t initActiveSubsystemIndex = this->findActiveSubsystemIndex(BASE::switchingTimes_, initTime);
+	size_t initActiveSubsystemIndex = BASE::findActiveSubsystemIndex(BASE::partitioningTimes_, initTime);
 	// finding the active subsystem index at initTime
-	size_t finalActiveSubsystemIndex = this->findActiveSubsystemIndex(BASE::switchingTimes_, finalTime);
+	size_t finalActiveSubsystemIndex = BASE::findActiveSubsystemIndex(BASE::partitioningTimes_, finalTime);
 
-	double t0 = initTime;
+	scalar_t t0 = initTime;
 	state_vector_t x0 = initState;
-	double tf;
-	for (int i=0; i<BASE::numSubsystems_; i++)
-	{
+	scalar_t tf;
+	for (size_t i=0; i<BASE::options_.numPartitionings_; i++)  {
+
 		// for subsystems before the initial time
 		if (i<initActiveSubsystemIndex  ||  i>finalActiveSubsystemIndex) {
-			t_local[i].clear();
-			x_local[i].clear();
-			u_local[i].clear();
+			timeTrajectoriesStock[i].clear();
+			eventsPastTheEndIndecesStock[i].clear();
+			stateTrajectoriesStock[i].clear();
+			inputTrajectoriesStock[i].clear();
 			continue;
 		}
 
-		t_local[i].clear();
-		x_local[i].clear();
+		// final time
+		tf = (i != finalActiveSubsystemIndex) ? BASE::partitioningTimes_[i+1] : finalTime;
 
-		// max number of steps of integration
-		size_t maxNumSteps = BASE::options_.maxNumStepsPerSecond_ * std::max( 1.0, BASE::switchingTimes_[i+1]-BASE::switchingTimes_[i]);
+		// use Base rolloutWorker to use the worker i
+		BASE::rolloutWorker(i,
+				t0, x0, tf, controllersStock[i], BASE::logicRulesMachine_.getSwitchingTimes(i),
+				timeTrajectoriesStock[i], eventsPastTheEndIndecesStock[i], stateTrajectoriesStock[i], inputTrajectoriesStock[i]);
 
-		// initialize subsystem i
-		dynamics_[threadId][i]->initializeModel(BASE::systemStockIndexes_, BASE::switchingTimes_, x0, i, "GSLPQ");
+		// reset the initial time and state
+		t0 = timeTrajectoriesStock[i].back();
+		x0 = stateTrajectoriesStock[i].back();
 
-		// simulate subsystem i
-		tf = (i != finalActiveSubsystemIndex) ? BASE::switchingTimes_[i+1] : finalTime;
+		if (x0 != x0)  throw std::runtime_error("System became unstable during the SLQP rollout.");
 
-		// set controller for subsystem i
-		if (controller_local[i].time_.empty()==false) {
-			dynamics_[threadId][i]->setController(controller_local[i]);
-
-		} else {
-
-			if (BASE::options_.dispayGSLQP_)  std::cout << "LQP controller is used at period: [" << t0 << ", " << tf << "]" << std::endl;
-
-			controller_t lqpPolicy = BASE::lqpControllersStock_[BASE::systemStockIndexes_[i]];
-			double timeShift = t0-lqpPolicy.time_[0];
-			for (size_t k=0; k<lqpPolicy.time_.size(); k++)
-				lqpPolicy.time_[k] += timeShift;
-
-			dynamics_[threadId][i]->setController(lqpPolicy);
-		}
-
-		// simulate subsystem i
-		integratorsODE45_[threadId][i]->integrate(x0, t0, tf,
-				x_local[i], t_local[i],
-				1e-3, BASE::options_.AbsTolODE_, BASE::options_.RelTolODE_, maxNumSteps);
-
-		if (x_local[i].back() != x_local[i].back())
-			throw std::runtime_error("System became unstable during the SLQP_MP rollout.");
-
-		// compute control trajectory for subsystem i
-		u_local[i].resize(t_local[i].size());
-		for (int k=0; k<t_local[i].size(); k++)
-			dynamics_[threadId][i]->computeInput(t_local[i][k], x_local[i][k], u_local[i][k]);
-
-		// reset the initial state
-		t0 = t_local[i].back();
-		x0 = x_local[i].back();
-	}
+	}  // end of i loop
 }
 
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM>
-void SLQP_MP<STATE_DIM, INPUT_DIM>::rollout (
+/******************************************************************************************************/
+/******************************************************************************************************/
+template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
+void SLQP_MP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::rolloutTrajectory(
+		size_t threadId,
 		const scalar_t& initTime,
 		const state_vector_t& initState,
 		const scalar_t& finalTime,
 		const controller_array_t& controllersStock,
-		state_vector_t& finalState,
-		control_vector_t& finalInput,
-		size_t& finalActiveSubsystemIndex) {
+		std::vector<scalar_array_t>& timeTrajectoriesStock,
+		std::vector<size_array_t>& eventsPastTheEndIndecesStock,
+		state_vector_array2_t& stateTrajectoriesStock,
+		control_vector_array2_t& inputTrajectoriesStock){
 
-	if (controllersStock.size() != BASE::numSubsystems_)
+	if (controllersStock.size() != BASE::options_.numPartitionings_)
 		throw std::runtime_error("controllersStock has less controllers then the number of subsystems");
 
-	scalar_array_t timeTrajectory;
-	state_vector_array_t stateTrajectory;
+	timeTrajectoriesStock.resize(BASE::options_.numPartitionings_);
+	eventsPastTheEndIndecesStock.resize(BASE::options_.numPartitionings_);
+	stateTrajectoriesStock.resize(BASE::options_.numPartitionings_);
+	inputTrajectoriesStock.resize(BASE::options_.numPartitionings_);
 
-	// finding the active subsystem index at initTime and final time
-	size_t initActiveSubsystemIndex = this->findActiveSubsystemIndex(BASE::switchingTimes_, initTime);
-	finalActiveSubsystemIndex = this->findActiveSubsystemIndex(BASE::switchingTimes_, finalTime);
+	// finding the active subsystem index at initTime
+	size_t initActiveSubsystemIndex = BASE::findActiveSubsystemIndex(BASE::partitioningTimes_, initTime);
+	// finding the active subsystem index at initTime
+	size_t finalActiveSubsystemIndex = BASE::findActiveSubsystemIndex(BASE::partitioningTimes_, finalTime);
 
-	double t0 = initTime;
+	scalar_t t0 = initTime;
 	state_vector_t x0 = initState;
-	double tf;
-	for (int i=initActiveSubsystemIndex; i<finalActiveSubsystemIndex+1; i++) {
+	scalar_t tf;
+	for (size_t i=0; i<BASE::options_.numPartitionings_; i++)
+	{
+		// for subsystems before the initial time
+		if (i<initActiveSubsystemIndex  ||  i>finalActiveSubsystemIndex) {
+			timeTrajectoriesStock[i].clear();
+			eventsPastTheEndIndecesStock[i].clear();
+			stateTrajectoriesStock[i].clear();
+			inputTrajectoriesStock[i].clear();
+			continue;
+		}
 
-		timeTrajectory.clear();
-		stateTrajectory.clear();
+		// final time
+		tf = (i != finalActiveSubsystemIndex) ? BASE::partitioningTimes_[i+1] : finalTime;
 
-		// max number of steps of integration
-		size_t maxNumSteps = BASE::options_.maxNumStepsPerSecond_ * std::max( 1.0, BASE::switchingTimes_[i+1]-t0);
+		// use Base rolloutWorker to use the worker threadId
+		BASE::rolloutWorker(threadId,
+				t0, x0, tf, controllersStock[i], BASE::logicRulesMachine_.getSwitchingTimes(i),
+				timeTrajectoriesStock[i], eventsPastTheEndIndecesStock[i], stateTrajectoriesStock[i], inputTrajectoriesStock[i]);
 
-		// initialize subsystem i
-		dynamics_[BASE::options_.nThreads_][i]->initializeModel(BASE::systemStockIndexes_, BASE::switchingTimes_, x0, i, "GSLPQ");
-		// set controller for subsystem i
-		dynamics_[BASE::options_.nThreads_][i]->setController(controllersStock[i]);
+		// reset the initial state
+		t0 = timeTrajectoriesStock[i].back();
+		x0 = stateTrajectoriesStock[i].back();
 
-		// simulate subsystem i
-		tf = (i!=finalActiveSubsystemIndex) ? BASE::switchingTimes_[i+1] : finalTime;
-		integratorsODE45_[BASE::options_.nThreads_][i]->integrate(x0, t0, tf,
-				stateTrajectory, timeTrajectory,
-				1e-3, BASE::options_.AbsTolODE_, BASE::options_.RelTolODE_, maxNumSteps);
-
-		if (stateTrajectory.back() != stateTrajectory.back())
-			throw std::runtime_error("System became unstable during the SLQP rollout.");
-
-		// reset the initial time and state
-		t0 = timeTrajectory.back();
-		x0 = stateTrajectory.back();
+		if (x0 != x0)  throw std::runtime_error("System became unstable during the SLQP_MP rollout.");
 	}
-
-	// compute state, control and output
-	finalState = stateTrajectory.back();
-	dynamics_[BASE::options_.nThreads_][finalActiveSubsystemIndex]->computeInput(timeTrajectory.back(), stateTrajectory.back(), finalInput);
 }
 
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM>
-void SLQP_MP<STATE_DIM, INPUT_DIM>::rollout(const size_t& threadId,
-		const scalar_t& initTime,
-		const state_vector_t& initState,
-		const scalar_t& finalTime,
-		const controller_array_t& controller_local,
-		std::vector<scalar_array_t>& t_local,
-		state_vector_array2_t& x_local,
-		control_vector_array2_t& u_local,
-		std::vector<std::vector<size_t> >& nc1TrajectoriesStock,
+/******************************************************************************************************/
+/******************************************************************************************************/
+template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
+void SLQP_MP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculateRolloutConstraints(
+		const std::vector<scalar_array_t>& timeTrajectoriesStock,
+		const std::vector<size_array_t>& eventsPastTheEndIndecesStock,
+		const state_vector_array2_t& stateTrajectoriesStock,
+		const control_vector_array2_t& inputTrajectoriesStock,
+		std::vector<size_array_t>& nc1TrajectoriesStock,
 		constraint1_vector_array2_t& EvTrajectoryStock,
-		std::vector<std::vector<size_t> >& nc2TrajectoriesStock,
+		std::vector<size_array_t>& nc2TrajectoriesStock,
 		constraint2_vector_array2_t& HvTrajectoryStock,
-		std::vector<size_t>& nc2FinalStock,
-		constraint2_vector_array_t& HvFinalStock) {
+		std::vector<size_array_t>& nc2FinalValuesStock,
+		constraint2_vector_array2_t& HvFinalStock) {
 
-	// STEP1 : do a rollout
-	rollout(threadId, initTime, initState, finalTime, controller_local, t_local, x_local, u_local);
+	calculateRolloutConstraints(BASE::options_.nThreads_,
+			timeTrajectoriesStock, eventsPastTheEndIndecesStock,
+			stateTrajectoriesStock, inputTrajectoriesStock,
+			nc1TrajectoriesStock, EvTrajectoryStock,
+			nc2TrajectoriesStock, HvTrajectoryStock,
+			nc2FinalValuesStock, HvFinalStock);
+}
 
-	// STEP2 : calculate constraint violations
+/******************************************************************************************************/
+template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
+void SLQP_MP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculateRolloutConstraints(
+		size_t threadId,
+		const std::vector<scalar_array_t>& timeTrajectoriesStock,
+		const std::vector<size_array_t>& eventsPastTheEndIndecesStock,
+		const state_vector_array2_t& stateTrajectoriesStock,
+		const control_vector_array2_t& inputTrajectoriesStock,
+		std::vector<size_array_t>& nc1TrajectoriesStock,
+		constraint1_vector_array2_t& EvTrajectoryStock,
+		std::vector<size_array_t>& nc2TrajectoriesStock,
+		constraint2_vector_array2_t& HvTrajectoryStock,
+		std::vector<size_array_t>& nc2FinalValuesStock,
+		constraint2_vector_array2_t& HvFinalStock) {
+
+	// calculate constraint violations
 	// constraint type 1 computations which consists of number of active constraints at each time point
 	// and the value of the constraint (if the rollout is constrained the value is always zero otherwise
 	// it is nonzero)
-	nc1TrajectoriesStock.resize(BASE::numSubsystems_);
-	EvTrajectoryStock.resize(BASE::numSubsystems_);
+	nc1TrajectoriesStock.resize(BASE::options_.numPartitionings_);
+	EvTrajectoryStock.resize(BASE::options_.numPartitionings_);
 
 	// constraint type 2 computations which consists of number of active constraints at each time point
 	// and the value of the constraint
-	nc2TrajectoriesStock.resize(BASE::numSubsystems_);
-	HvTrajectoryStock.resize(BASE::numSubsystems_);
-	nc2FinalStock.resize(BASE::numSubsystems_);
-	HvFinalStock.resize(BASE::numSubsystems_);
+	nc2TrajectoriesStock.resize(BASE::options_.numPartitionings_);
+	HvTrajectoryStock.resize(BASE::options_.numPartitionings_);
+	nc2FinalStock.resize(BASE::options_.numPartitionings_);
+	HvFinalStock.resize(BASE::options_.numPartitionings_);
 
-	for (int i=0; i<BASE::numSubsystems_; i++)
-	{
-		size_t N = t_local[i].size();
-		nc1TrajectoriesStock[i].resize(N);
-		EvTrajectoryStock[i].resize(N);
-		nc2TrajectoriesStock[i].resize(N);
-		HvTrajectoryStock[i].resize(N);
+	for (size_t i=0; i<BASE::options_.numPartitionings_; i++) {
 
-		// compute constraint1 trajectory for subsystem i
-		for (int k=0; k<N; k++)
-		{
-			// constraint 1 type
-			dynamics_[threadId][i]->computeConstriant1(
-					t_local[i][k], x_local[i][k], u_local[i][k],
-					nc1TrajectoriesStock[i][k], EvTrajectoryStock[i][k]);
-
-			if (nc1TrajectoriesStock[i][k] > INPUT_DIM)
-				throw std::runtime_error("Number of active type-1 constraints should be less-equal to the number of input dimension.");
-
-
-			// constraint type 2
-			dynamics_[threadId][i]->computeConstriant2(t_local[i][k],
-					x_local[i][k],
-					nc2TrajectoriesStock[i][k], HvTrajectoryStock[i][k]);
-
-			if (nc2TrajectoriesStock[i][k] > INPUT_DIM)
-				throw std::runtime_error("Number of active type-2 constraints should be less-equal to the number of input dimension.");
-
-		}  // end of k loop
-
-		// if the subsystem is not simulated (e.g. due to the initial time)
-		if (N==0)
-			nc2FinalStock[i] = 0;
-		else
-			dynamics_[threadId][i]->computeFinalConstriant2(t_local[i].back(), x_local[i].back(),
-					nc2FinalStock[i], HvFinalStock[i]);
-
-		if (nc2FinalStock[i] > INPUT_DIM)
-			throw std::runtime_error("Number of active type-2 constraints at final time should be less-equal to the number of input dimension.");
-
+		BASE::calculateConstraintsWorker(threadId,
+				timeTrajectoriesStock[i], eventsPastTheEndIndecesStock[i],
+				stateTrajectoriesStock[i], inputTrajectoriesStock[i],
+				nc1TrajectoriesStock[i], EvTrajectoryStock[i],
+				nc2TrajectoriesStock[i], HvTrajectoryStock[i],
+				nc2FinalValuesStock[i], HvFinalStock[i]);
 	}  // end of i loop
-
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM>
-void SLQP_MP<STATE_DIM, INPUT_DIM>::calculateCostFunction(
+template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
+void SLQP_MP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculateRolloutCost(
 		const std::vector<scalar_array_t>& timeTrajectoriesStock,
+		const std::vector<size_array_t>& eventsPastTheEndIndecesStock,
 		const state_vector_array2_t& stateTrajectoriesStock,
 		const control_vector_array2_t& inputTrajectoriesStock,
 		scalar_t& totalCost) {
 
-	calculateCostFunction(timeTrajectoriesStock, stateTrajectoriesStock, inputTrajectoriesStock, totalCost, BASE::options_.nThreads_);
+	calculateRolloutCost(BASE::options_.nThreads_,
+			timeTrajectoriesStock, eventsPastTheEndIndecesStock,
+			stateTrajectoriesStock, inputTrajectoriesStock,
+			totalCost);
 }
 
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM>
-void SLQP_MP<STATE_DIM, INPUT_DIM>::calculateCostFunction(
+template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
+void SLQP_MP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculateRolloutCost(
+		size_t threadId,
 		const std::vector<scalar_array_t>& timeTrajectoriesStock,
+		const std::vector<size_array_t>& eventsPastTheEndIndecesStock,
 		const state_vector_array2_t& stateTrajectoriesStock,
 		const control_vector_array2_t& inputTrajectoriesStock,
-		scalar_t& totalCost,
-		size_t threadId)  {
+		scalar_t& totalCost)  {
 
 	totalCost = 0.0;
-	for (size_t i=0; i<BASE::numSubsystems_; i++) {
 
-		// integrates the intermediate cost using the trapezoidal approximation method
-		scalar_t currentIntermediateCost;
-		scalar_t nextIntermediateCost;
-		for (int k=0; k+1<timeTrajectoriesStock[i].size(); k++) {
+	for (size_t i=0; i<BASE::options_.numPartitionings_; i++) {
 
-			if (k==0) {
-				costFunctions_[threadId][i]->setCurrentStateAndControl(timeTrajectoriesStock[i][k], stateTrajectoriesStock[i][k], inputTrajectoriesStock[i][k]);
-				costFunctions_[threadId][i]->evaluate(currentIntermediateCost);
-			} else
-			{
-				currentIntermediateCost = nextIntermediateCost;
-			}
+		scalar_t cost;
 
-			// feed next state and control to cost function
-			costFunctions_[threadId][i]->setCurrentStateAndControl(timeTrajectoriesStock[i][k+1], stateTrajectoriesStock[i][k+1], inputTrajectoriesStock[i][k+1]);
-			// evaluate intermediate cost for next time step
-			costFunctions_[threadId][i]->evaluate(nextIntermediateCost);
+		BASE::calculateCostWorker(threadId,
+				timeTrajectoriesStock[i], eventsPastTheEndIndecesStock[i],
+				stateTrajectoriesStock[i], inputTrajectoriesStock[i],
+				cost);
 
-			totalCost += 0.5*(currentIntermediateCost+nextIntermediateCost)*(timeTrajectoriesStock[i][k+1]-timeTrajectoriesStock[i][k]);
-		}  // end of k loop
-
-		// terminal cost
-		if (i==BASE::finalActiveSubsystem_) {
-			scalar_t finalCost;
-			costFunctions_[threadId][i]->setCurrentStateAndControl(timeTrajectoriesStock[i].back(), stateTrajectoriesStock[i].back(), inputTrajectoriesStock[i].back());
-			costFunctions_[threadId][i]->terminalCost(finalCost);
-			totalCost += finalCost;
-		}
+		totalCost += cost;
 
 	}  // end of i loop
 }
 
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM>
-void SLQP_MP<STATE_DIM, INPUT_DIM>::calculateCostFunction(
+template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
+void SLQP_MP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculateRolloutCost(
 		const std::vector<scalar_array_t>& timeTrajectoriesStock,
+		const std::vector<size_array_t>& eventsPastTheEndIndecesStock,
 		const state_vector_array2_t& stateTrajectoriesStock,
 		const control_vector_array2_t& inputTrajectoriesStock,
-		const std::vector<std::vector<size_t> >& nc2TrajectoriesStock,
+		const std::vector<size_array_t>& nc2TrajectoriesStock,
 		const constraint2_vector_array2_t& HvTrajectoryStock,
-		const std::vector<size_t>& nc2FinalStock,
-		const constraint2_vector_array_t& HvFinalStock,
+		const std::vector<size_array_t>& nc2FinalStock,
+		const constraint2_vector_array2_t& HvFinalStock,
 		scalar_t& totalCost){
 
-	calculateCostFunction(timeTrajectoriesStock,
-			stateTrajectoriesStock,
-			inputTrajectoriesStock,
-			nc2TrajectoriesStock,
-			HvTrajectoryStock,
-			nc2FinalStock,
-			HvFinalStock,
-			totalCost,
-			BASE::options_.nThreads_);
+	calculateRolloutCost(BASE::options_.nThreads_,
+			timeTrajectoriesStock, eventsPastTheEndIndecesStock,
+			stateTrajectoriesStock, inputTrajectoriesStock,
+			nc2TrajectoriesStock, HvTrajectoryStock, nc2FinalStock, HvFinalStock,
+			totalCost);
 }
 
 /*****************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM>
-void SLQP_MP<STATE_DIM, INPUT_DIM>::calculateCostFunction(
+template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
+void SLQP_MP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculateRolloutCost(
+		size_t threadId,
 		const std::vector<scalar_array_t>& timeTrajectoriesStock,
+		const std::vector<size_array_t>& eventsPastTheEndIndecesStock,
 		const state_vector_array2_t& stateTrajectoriesStock,
 		const control_vector_array2_t& inputTrajectoriesStock,
-		const std::vector<std::vector<size_t> >& nc2TrajectoriesStock,
+		const std::vector<size_array_t>& nc2TrajectoriesStock,
 		const constraint2_vector_array2_t& HvTrajectoryStock,
-		const std::vector<size_t>& nc2FinalStock,
-		const constraint2_vector_array_t& HvFinalStock,
-		scalar_t& totalCost,
-		size_t threadId) {
+		const std::vector<size_array_t>& nc2FinalStock,
+		const constraint2_vector_array2_t& HvFinalStock,
+		scalar_t& totalCost) {
 
-	calculateCostFunction(timeTrajectoriesStock, stateTrajectoriesStock, inputTrajectoriesStock, totalCost, threadId);
-	double stateConstraintPenalty = BASE::options_.stateConstraintPenaltyCoeff_ * pow(BASE::options_.stateConstraintPenaltyBase_, BASE::iteration_);
+	calculateRolloutCost(threadId,
+			timeTrajectoriesStock, eventsPastTheEndIndecesStock,
+			stateTrajectoriesStock, inputTrajectoriesStock,
+			totalCost);
 
-	for (int i=0; i<BASE::numSubsystems_; i++) {
-		// integrates constraint type 2
-		for (int k=0; k+1<timeTrajectoriesStock[i].size(); k++) {
+	const double stateConstraintPenalty = BASE::options_.stateConstraintPenaltyCoeff_ * pow(BASE::options_.stateConstraintPenaltyBase_, BASE::iteration_);
+
+	size_t eventItr = 0;
+
+	for (size_t i=0; i<BASE::options_.numPartitionings_; i++) {
+
+		for (size_t k=0; k+1<timeTrajectoriesStock[i].size(); k++) {
+
+			// integrates constraint type 2
 			size_t nc2 = nc2TrajectoriesStock[i][k];
 			if (nc2 > 0) {
 				double dt = timeTrajectoriesStock[i][k+1]-timeTrajectoriesStock[i][k];
 				totalCost += 0.5 * dt * stateConstraintPenalty * HvTrajectoryStock[i][k].head(nc2).squaredNorm();
 			}
+
+			// final constraint type 2
+			if (eventItr!=eventsPastTheEndIndecesStock[i].size() && k+1==eventsPastTheEndIndecesStock[i][eventItr]) {
+				size_t nc2Final = nc2FinalStock[i][eventItr];
+				totalCost += 0.5 * stateConstraintPenalty * HvFinalStock[i][eventItr].head(nc2Final).squaredNorm();
+				eventItr++;
+			}
 		}  // end of k loop
-
-		// final constraint type 2
-		size_t nc2Final = nc2FinalStock[i];
-		if (nc2Final>0)
-			totalCost += 0.5 * stateConstraintPenalty * HvFinalStock[i].head(nc2Final).squaredNorm();
-
 	}  // end of i loop
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM>
-void SLQP_MP<STATE_DIM, INPUT_DIM>::approximateOptimalControlProblem()  {
-
-	BASE::AmTrajectoryStock_.resize(BASE::numSubsystems_);
-	BASE::BmTrajectoryStock_.resize(BASE::numSubsystems_);
-	BASE::CmTrajectoryStock_.resize(BASE::numSubsystems_);
-	BASE::DmTrajectoryStock_.resize(BASE::numSubsystems_);
-	BASE::FmTrajectoryStock_.resize(BASE::numSubsystems_);
-	BASE::qTrajectoryStock_.resize(BASE::numSubsystems_);
-	BASE::QvTrajectoryStock_.resize(BASE::numSubsystems_);
-	BASE::QmTrajectoryStock_.resize(BASE::numSubsystems_);
-	BASE::RvTrajectoryStock_.resize(BASE::numSubsystems_);
-	BASE::RmTrajectoryStock_.resize(BASE::numSubsystems_);
-	BASE::RmInverseTrajectoryStock_.resize(BASE::numSubsystems_);
-	BASE::PmTrajectoryStock_.resize(BASE::numSubsystems_);
-	BASE::qFinalStock_.resize(BASE::numSubsystems_);
-	BASE::QvFinalStock_.resize(BASE::numSubsystems_);
-	BASE::QmFinalStock_.resize(BASE::numSubsystems_);
-	BASE::FmFinalStock_.resize(BASE::numSubsystems_);
-
-	// constraint type 1 coefficients
-	BASE::DmDagerTrajectoryStock_.resize(BASE::numSubsystems_);
-	BASE::AmConstrainedTrajectoryStock_.resize(BASE::numSubsystems_);
-	BASE::QmConstrainedTrajectoryStock_.resize(BASE::numSubsystems_);
-	BASE::QvConstrainedTrajectoryStock_.resize(BASE::numSubsystems_);
-	BASE::EvProjectedTrajectoryStock_.resize(BASE::numSubsystems_);
-	BASE::CmProjectedTrajectoryStock_.resize(BASE::numSubsystems_);
-	BASE::DmProjectedTrajectoryStock_.resize(BASE::numSubsystems_);
-	if (BASE::options_.useRiccatiSolver_==true) {
-		BASE::RmConstrainedTrajectoryStock_.resize(BASE::numSubsystems_);
-	} else {
-		BASE::BmConstrainedTrajectoryStock_.resize(BASE::numSubsystems_);
-		BASE::PmConstrainedTrajectoryStock_.resize(BASE::numSubsystems_);
-		BASE::RvConstrainedTrajectoryStock_.resize(BASE::numSubsystems_);
-	}
-
-	for (int i=0; i<BASE::numSubsystems_; i++)
-	{
-		subsystemProcessed_ = i;
-
-		if(BASE::options_.debugPrintMP_)
-			printString("[MP] Starting approximation of subsystem " + std::to_string(i) + " out of " + std::to_string( (size_t) BASE::numSubsystems_-1));
-
-		approximateSubsystemLQ(i);
-
-		if(BASE::options_.debugPrintMP_)
-			printString("[MP] ended approximation of subsystem " + std::to_string(i));
-
-
-	}  // end of i loop
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM>
-void SLQP_MP<STATE_DIM, INPUT_DIM>::lineSearch() {
+template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
+void SLQP_MP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::lineSearch() {
 
 	BASE::learningRateStar_ = 0.0;	// default learning rate as zero
 
@@ -488,13 +347,20 @@ void SLQP_MP<STATE_DIM, INPUT_DIM>::lineSearch() {
 	}
 
 	// perform one rollout while the input correction for the type-1 constraint is considered.
-	rollout(BASE::options_.nThreads_, BASE::initTime_, BASE::initState_, BASE::finalTime_, BASE::nominalControllersStock_, BASE::nominalTimeTrajectoriesStock_,
+	rolloutTrajectory(BASE::options_.nThreads_,
+			BASE::initTime_, BASE::initState_, BASE::finalTime_, BASE::nominalControllersStock_,
+			BASE::nominalTimeTrajectoriesStock_, BASE::nominalEventsPastTheEndIndecesStock_,
+			BASE::nominalStateTrajectoriesStock_, BASE::nominalInputTrajectoriesStock_);
+	calculateRolloutConstraints(BASE::options_.nThreads_,
+			BASE::nominalTimeTrajectoriesStock_, BASE::nominalEventsPastTheEndIndecesStock_,
 			BASE::nominalStateTrajectoriesStock_, BASE::nominalInputTrajectoriesStock_,
 			BASE::nc1TrajectoriesStock_, BASE::EvTrajectoryStock_,BASE::nc2TrajectoriesStock_,
 			BASE::HvTrajectoryStock_, BASE::nc2FinalStock_, BASE::HvFinalStock_);
-
-	calculateCostFunction( BASE::nominalTimeTrajectoriesStock_, BASE::nominalStateTrajectoriesStock_, BASE::nominalInputTrajectoriesStock_,
-			BASE::nc2TrajectoriesStock_, BASE::HvTrajectoryStock_, BASE::nc2FinalStock_, BASE::HvFinalStock_, BASE::nominalTotalCost_, BASE::options_.nThreads_);
+	calculateRolloutCost(BASE::options_.nThreads_,
+			BASE::nominalTimeTrajectoriesStock_, BASE::nominalEventsPastTheEndIndecesStock_,
+			BASE::nominalStateTrajectoriesStock_, BASE::nominalInputTrajectoriesStock_,
+			BASE::nc2TrajectoriesStock_, BASE::HvTrajectoryStock_, BASE::nc2FinalStock_, BASE::HvFinalStock_,
+			BASE::nominalTotalCost_);
 
 	lowestTotalCost_  = BASE::nominalTotalCost_;
 
@@ -545,12 +411,12 @@ void SLQP_MP<STATE_DIM, INPUT_DIM>::lineSearch() {
 		printString("[MP]: Woke up again, should have results now.");
 
 	// clear the feedforward increments
-	for (int j=0; j<BASE::options_.nThreads_+1; j++)
-		for (size_t i=0; i<BASE::numSubsystems_; i++)
+	for (size_t j=0; j<BASE::options_.nThreads_+1; j++)
+		for (size_t i=0; i<BASE::options_.numPartitionings_; i++)
 			BASE::nominalControllersStock_[i].deltaUff_.clear();
 
 	// reset integrator events
-	killIntegrationEventHandler_->resetEvent();	// reset all integrations
+	event_handler_t::DeactivateKillIntegration();	// reset all integrations
 
 	if (BASE::options_.dispayGSLQP_)
 		if(BASE::options_.lsStepsizeGreedy_ == true)
@@ -568,14 +434,13 @@ void SLQP_MP<STATE_DIM, INPUT_DIM>::lineSearch() {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM>
-void SLQP_MP<STATE_DIM, INPUT_DIM>::launchWorkerThreads()
+template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
+void SLQP_MP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::launchWorkerThreads()
 {
 	workersActive_ = true;
 	workerTask_ = IDLE;
 
-	for (size_t i=0; i < BASE::options_.nThreads_; i++)
-	{
+	for (size_t i=0; i < BASE::options_.nThreads_; i++) {
 		workerThreads_.push_back(std::thread(&SLQP_MP::threadWork, this, i));
 	}
 }
@@ -583,8 +448,8 @@ void SLQP_MP<STATE_DIM, INPUT_DIM>::launchWorkerThreads()
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM>
-void SLQP_MP<STATE_DIM, INPUT_DIM>::threadWork(size_t threadId)
+template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
+void SLQP_MP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::threadWork(size_t threadId)
 {
 	if(BASE::options_.debugPrintMP_)
 		printString("[Thread " + std::to_string(threadId) + "]: launched");
@@ -670,7 +535,7 @@ void SLQP_MP<STATE_DIM, INPUT_DIM>::threadWork(size_t threadId)
 			if(BASE::options_.debugPrintMP_)
 				printString("[Thread "+ std::to_string(threadId) +"]: now busy with RiccatiSolver!");
 			uniqueProcessID = generateUniqueProcessID (iteration_local, SOLVE_RICCATI, subsystemProcessed_local);
-			solveSequentialRiccatiEquationsWorker(threadId);
+			executeRiccatiSolver(threadId);
 			break;
 		}
 		case SHUTDOWN:
@@ -689,45 +554,24 @@ void SLQP_MP<STATE_DIM, INPUT_DIM>::threadWork(size_t threadId)
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM>
-void SLQP_MP<STATE_DIM, INPUT_DIM>::approximateSubsystemLQ(const size_t i)
+// FIXME: the final values are not computed in parallel
+template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
+void SLQP_MP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::approximatePartitionLQ(const size_t& i)
 {
-	size_t N =   BASE::nominalTimeTrajectoriesStock_[i].size();
+	subsystemProcessed_ = i;
 
-	BASE::AmTrajectoryStock_[i].resize(N);
-	BASE::BmTrajectoryStock_[i].resize(N);
-	BASE::CmTrajectoryStock_[i].resize(N);
-	BASE::DmTrajectoryStock_[i].resize(N);
-	BASE::FmTrajectoryStock_[i].resize(N);
-
-	BASE::qTrajectoryStock_[i].resize(N);
-	BASE::QvTrajectoryStock_[i].resize(N);
-	BASE::QmTrajectoryStock_[i].resize(N);
-	BASE::RvTrajectoryStock_[i].resize(N);
-	BASE::RmTrajectoryStock_[i].resize(N);
-	BASE::RmInverseTrajectoryStock_[i].resize(N);
-	BASE::PmTrajectoryStock_[i].resize(N);
-
-	// for constraints
-	BASE::DmDagerTrajectoryStock_[i].resize(N);
-	BASE::AmConstrainedTrajectoryStock_[i].resize(N);
-	BASE::QmConstrainedTrajectoryStock_[i].resize(N);
-	BASE::QvConstrainedTrajectoryStock_[i].resize(N);
-	BASE::EvProjectedTrajectoryStock_[i].resize(N);
-	BASE::CmProjectedTrajectoryStock_[i].resize(N);
-	BASE::DmProjectedTrajectoryStock_[i].resize(N);
-	if (BASE::options_.useRiccatiSolver_==true) {
-		BASE::RmConstrainedTrajectoryStock_[i].resize(N);
-	} else {
-		BASE::BmConstrainedTrajectoryStock_[i].resize(N);
-		BASE::PmConstrainedTrajectoryStock_[i].resize(N);
-		BASE::RvConstrainedTrajectoryStock_[i].resize(N);
-	}
+	size_t N = BASE::nominalTimeTrajectoriesStock_[i].size();
 
 	if (N > 0) {
-		// initialize subsystem i dynamics derivatives
 		for(size_t j = 0; j< BASE::options_.nThreads_+1; j++) {
-			linearizedSystems_[j][i]->initializeModel(BASE::systemStockIndexes_, BASE::switchingTimes_,
+			// initialize subsystem i dynamics derivatives
+			BASE::subsystemDerivativesPtrStock_[i]->initializeModel(BASE::logicRulesMachine_.getLogicRules(), BASE::partitioningTimes_,
+					BASE::nominalStateTrajectoriesStock_[i].front(), i, "GSLPQ");
+			// initialize subsystem i constraint
+			BASE::subsystemConstraintsPtrStock_[i]->initializeModel(BASE::logicRulesMachine_.getLogicRules(), BASE::partitioningTimes_,
+					BASE::nominalStateTrajectoriesStock_[i].front(), i, "GSLPQ");
+			// initialize subsystem i cost
+			BASE::subsystemCostFunctionsPtrStock_[i]->initializeModel(BASE::logicRulesMachine_.getLogicRules(), BASE::partitioningTimes_,
 					BASE::nominalStateTrajectoriesStock_[i].front(), i, "GSLPQ");
 		}
 
@@ -735,16 +579,14 @@ void SLQP_MP<STATE_DIM, INPUT_DIM>::approximateSubsystemLQ(const size_t i)
 		kCompleted_approx_[i]= 0;
 		KMax_subsystem_approx_[i] = N;
 
-		if(BASE::options_.debugPrintMP_)
-			printString("[MP]: Waking up workers to do linearisation for subsystem " + std::to_string(i));
+		if(BASE::options_.debugPrintMP_)  printString("[MP]: Waking up workers to do linearisation for subsystem " + std::to_string(i));
 
 		workerTask_ = APPROXIMATE_LQ;
 		std::unique_lock<std::mutex> lock (workerWakeUpMutex_);
 		workerWakeUpCondition_.notify_all();
 		lock.unlock();
 
-		if(BASE::options_.debugPrintMP_)
-			printString("[MP]: Will wait now until workers have linearized dynamics of subsystem " + std::to_string(i));
+		if(BASE::options_.debugPrintMP_)  printString("[MP]: Will wait now until workers have linearized dynamics of subsystem " + std::to_string(i));
 
 		std::unique_lock<std::mutex> waitLock(kCompletedMutex_);
 		while(kCompleted_approx_[i].load() < KMax_subsystem_approx_[i]){
@@ -753,58 +595,25 @@ void SLQP_MP<STATE_DIM, INPUT_DIM>::approximateSubsystemLQ(const size_t i)
 
 		waitLock.unlock();
 		workerTask_ = IDLE;
-
 	}
 
+	// TODO: this part of the code is not prallel
+	// if a switch took place calculate switch related variables
+	size_t NE = BASE::nominalEventsPastTheEndIndecesStock_[i].size();
 
-	if (i==BASE::finalActiveSubsystem_) // if last subsystem, set terminal cost
-	{
-		if(BASE::options_.debugPrintMP_)
-			printString("[MP]: Approximating terminal cost with single thread, subsystem  " + std::to_string(i));
-
-		costFunctions_[BASE::options_.nThreads_][i]->setCurrentStateAndControl(BASE::nominalTimeTrajectoriesStock_[i].back(),
-				BASE::nominalStateTrajectoriesStock_[i].back(), BASE::nominalInputTrajectoriesStock_[i].back());
-
-		costFunctions_[BASE::options_.nThreads_][i]->terminalCost(BASE::qFinalStock_[i](0));
-		costFunctions_[BASE::options_.nThreads_][i]->terminalCostStateDerivative(BASE::QvFinalStock_[i]);
-		costFunctions_[BASE::options_.nThreads_][i]->terminalCostStateSecondDerivative(BASE::QmFinalStock_[i]);
-
-		// making sure that Qm remains PSD
-		this->makePSD(BASE::QmFinalStock_[i]);
-	}
-	else {
-		BASE::qFinalStock_[i].setZero();
-		BASE::QvFinalStock_[i].setZero();
-		BASE::QmFinalStock_[i].setZero();
-	}
-
-	// constrained type-2 final coefficients
-	if (BASE::nc2FinalStock_[i] > 0) {
-		size_t nc2 = BASE::nc2FinalStock_[i];
-
-		linearizedSystems_[BASE::options_.nThreads_][i]->setCurrentStateAndControl(
-				BASE::nominalTimeTrajectoriesStock_[i].back(),
-				BASE::nominalStateTrajectoriesStock_[i].back(),
-				BASE::nominalInputTrajectoriesStock_[i].back());
-
-		linearizedSystems_[BASE::options_.nThreads_][i]->getFinalConstraint2DerivativesState(BASE::FmFinalStock_[i]);
-
-		double stateConstraintPenalty = BASE::options_.stateConstraintPenaltyCoeff_ * pow(BASE::options_.stateConstraintPenaltyBase_, BASE::iteration_);
-
-		BASE::qFinalStock_[i]  += 0.5 * stateConstraintPenalty * BASE::HvFinalStock_[i].head(nc2).transpose() * BASE::HvFinalStock_[i].head(nc2);
-		BASE::QvFinalStock_[i] += stateConstraintPenalty * BASE::FmFinalStock_[i].topRows(nc2).transpose() * BASE::HvFinalStock_[i].head(nc2);
-		BASE::QmFinalStock_[i] += stateConstraintPenalty * BASE::FmFinalStock_[i].topRows(nc2).transpose() * BASE::FmFinalStock_[i].topRows(nc2);
-	}
+	for (size_t k=0; k<NE; k++) {
+		BASE::approximateLQFinalTimeWorker(i, k, i);
+	}  // end of k loop
 
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM>
-void SLQP_MP<STATE_DIM, INPUT_DIM>::calculateController() {
+template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
+void SLQP_MP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculateController() {
 
-	for (int i=0; i<BASE::numSubsystems_; i++)  {
+	for (size_t i=0; i<BASE::options_.numPartitionings_; i++)  {
 
 		if (i<BASE::initActiveSubsystem_ || i>BASE::finalActiveSubsystem_) {
 			BASE::nominalControllersStock_[i].clear();
@@ -821,30 +630,39 @@ void SLQP_MP<STATE_DIM, INPUT_DIM>::calculateController() {
 		for(size_t n = 0; n< BASE::options_.nThreads_+1; n++) {
 
 			// functions for controller and lagrange-multiplier
+			nominalStateFunc_[n].reset();
 			nominalStateFunc_[n].setTimeStamp( &(BASE::nominalTimeTrajectoriesStock_[i]) );
 			nominalStateFunc_[n].setData( &(BASE::nominalStateTrajectoriesStock_[i]) );
 
+			nominalInputFunc_[n].reset();
 			nominalInputFunc_[n].setTimeStamp( &(BASE::nominalTimeTrajectoriesStock_[i]) );
 			nominalInputFunc_[n].setData( &(BASE::nominalInputTrajectoriesStock_[i]) );
 
+			BmFunc_[n].reset();
 			BmFunc_[n].setTimeStamp( &(BASE::nominalTimeTrajectoriesStock_[i]) );
 			BmFunc_[n].setData( &(BASE::BmTrajectoryStock_[i]) );
 
+			PmFunc_[n].reset();
 			PmFunc_[n].setTimeStamp( &(BASE::nominalTimeTrajectoriesStock_[i]) );
 			PmFunc_[n].setData( &(BASE::PmTrajectoryStock_[i]) );
 
+			RmInverseFunc_[n].reset();
 			RmInverseFunc_[n].setTimeStamp( &(BASE::nominalTimeTrajectoriesStock_[i]) );
 			RmInverseFunc_[n].setData( &(BASE::RmInverseTrajectoryStock_[i]) );
 
+			RvFunc_[n].reset();
 			RvFunc_[n].setTimeStamp( &(BASE::nominalTimeTrajectoriesStock_[i]) );
 			RvFunc_[n].setData( &(BASE::RvTrajectoryStock_[i]) );
 
+			EvProjectedFunc_[n].reset();
 			EvProjectedFunc_[n].setTimeStamp( &(BASE::nominalTimeTrajectoriesStock_[i]) );
 			EvProjectedFunc_[n].setData( &(BASE::EvProjectedTrajectoryStock_[i]) );
 
+			CmProjectedFunc_[n].reset();
 			CmProjectedFunc_[n].setTimeStamp( &(BASE::nominalTimeTrajectoriesStock_[i]) );
 			CmProjectedFunc_[n].setData( &(BASE::CmProjectedTrajectoryStock_[i]) );
 
+			DmProjectedFunc_[n].reset();
 			DmProjectedFunc_[n].setTimeStamp( &(BASE::nominalTimeTrajectoriesStock_[i]) );
 			DmProjectedFunc_[n].setData( &(BASE::DmProjectedTrajectoryStock_[i]) );
 		}
@@ -885,8 +703,8 @@ void SLQP_MP<STATE_DIM, INPUT_DIM>::calculateController() {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM>
-size_t SLQP_MP<STATE_DIM, INPUT_DIM>::approximateSubsystemLQWorker(size_t threadId, size_t subsystemProcessed)
+template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
+size_t SLQP_MP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::approximateSubsystemLQWorker(size_t threadId, size_t subsystemProcessed)
 {
 
 	size_t k = 0;
@@ -905,7 +723,9 @@ size_t SLQP_MP<STATE_DIM, INPUT_DIM>::approximateSubsystemLQWorker(size_t thread
 				}
 			}
 
-			executeApproximateSubsystemLQ(threadId, k, subsystemProcessed);
+//			executeApproximateSubsystemLQ(threadId, k, subsystemProcessed);
+			BASE::approximateLQIntermediateTimeWorker(threadId, subsystemProcessed, k);
+
 			kCompleted_local = ++kCompleted_approx_[subsystemProcessed];
 		}
 
@@ -943,8 +763,8 @@ size_t SLQP_MP<STATE_DIM, INPUT_DIM>::approximateSubsystemLQWorker(size_t thread
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM>
-size_t SLQP_MP<STATE_DIM, INPUT_DIM>::calculateControllerWorker(size_t threadId, size_t subsystemProcessed)
+template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
+size_t SLQP_MP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculateControllerWorker(size_t threadId, size_t subsystemProcessed)
 {
 
 	size_t k = 0;
@@ -993,118 +813,116 @@ size_t SLQP_MP<STATE_DIM, INPUT_DIM>::calculateControllerWorker(size_t threadId,
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM>
-size_t SLQP_MP<STATE_DIM, INPUT_DIM>::executeApproximateSubsystemLQ(size_t threadId, size_t k, size_t subsystemProcessed)
-{
-	const size_t i = subsystemProcessed;
-
-	// LINEARIZE SYSTEM DYNAMICS AND CONSTRAINTS
-	linearizedSystems_[threadId][i]->setCurrentStateAndControl(
-			BASE::nominalTimeTrajectoriesStock_[i][k],
-			BASE::nominalStateTrajectoriesStock_[i][k],
-			BASE::nominalInputTrajectoriesStock_[i][k]);
-
-	linearizedSystems_[threadId][i]->getDerivativeState(BASE::AmTrajectoryStock_[i][k]);
-	linearizedSystems_[threadId][i]->getDerivativesControl(BASE::BmTrajectoryStock_[i][k]);
-
-	// if constraint type 1 is active
-	if (BASE::nc1TrajectoriesStock_[i][k] > 0)
-	{
-		linearizedSystems_[threadId][i]->getConstraint1DerivativesState(BASE::CmTrajectoryStock_[i][k]);
-		linearizedSystems_[threadId][i]->getConstraint1DerivativesControl(BASE::DmTrajectoryStock_[i][k]);
-	}
-
-	// if constraint type 2 is active
-	if (BASE::nc2TrajectoriesStock_[i][k] > 0) {
-		linearizedSystems_[threadId][i]->getConstraint2DerivativesState(BASE::FmTrajectoryStock_[i][k]);
-	}
-
-	// QUADRATIC APPROXIMATION TO THE COST FUNCTION
-	costFunctions_[threadId][i]->setCurrentStateAndControl(
-			BASE::nominalTimeTrajectoriesStock_[i][k],
-			BASE::nominalStateTrajectoriesStock_[i][k],
-			BASE::nominalInputTrajectoriesStock_[i][k]);
-	costFunctions_[threadId][i]->evaluate(BASE::qTrajectoryStock_[i][k](0));
-	costFunctions_[threadId][i]->stateDerivative(BASE::QvTrajectoryStock_[i][k]);
-	costFunctions_[threadId][i]->stateSecondDerivative(BASE::QmTrajectoryStock_[i][k]);
-	costFunctions_[threadId][i]->controlDerivative(BASE::RvTrajectoryStock_[i][k]);
-	costFunctions_[threadId][i]->controlSecondDerivative(BASE::RmTrajectoryStock_[i][k]);
-	BASE::RmInverseTrajectoryStock_[i][k] = BASE::RmTrajectoryStock_[i][k].inverse();
-	costFunctions_[threadId][i]->stateControlDerivative(BASE::PmTrajectoryStock_[i][k]);
-
-
-	// constraint type 2 coefficients
-	double stateConstraintPenalty = BASE::options_.stateConstraintPenaltyCoeff_ * pow(BASE::options_.stateConstraintPenaltyBase_, BASE::iteration_);
-	size_t nc2 = BASE::nc2TrajectoriesStock_[i][k];
-
-	if (nc2 > 0) {
-		//				subsystemDerivativesPtrStock_[i]->getConstraint2DerivativesState(FmTrajectoryStock_[i][k]);
-		BASE::qTrajectoryStock_[i][k]  += 0.5 * stateConstraintPenalty * BASE::HvTrajectoryStock_[i][k].head(nc2).transpose() * BASE::HvTrajectoryStock_[i][k].head(nc2);
-		BASE::QvTrajectoryStock_[i][k] += stateConstraintPenalty * BASE::FmTrajectoryStock_[i][k].topRows(nc2).transpose() * BASE::HvTrajectoryStock_[i][k].head(nc2);
-		BASE::QmTrajectoryStock_[i][k] += stateConstraintPenalty * BASE::FmTrajectoryStock_[i][k].topRows(nc2).transpose() * BASE::FmTrajectoryStock_[i][k].topRows(nc2);
-	}
-
-	// constraint type 1 coefficients
-	size_t nc1 = BASE::nc1TrajectoriesStock_[i][k];
-
-	if (nc1 == 0)
-	{
-		BASE::DmDagerTrajectoryStock_[i][k].setZero();
-		BASE::EvProjectedTrajectoryStock_[i][k].setZero();
-		BASE::CmProjectedTrajectoryStock_[i][k].setZero();
-		BASE::DmProjectedTrajectoryStock_[i][k].setZero();
-
-		BASE::AmConstrainedTrajectoryStock_[i][k] = BASE::AmTrajectoryStock_[i][k];
-		BASE::QmConstrainedTrajectoryStock_[i][k] = BASE::QmTrajectoryStock_[i][k];
-		BASE::QvConstrainedTrajectoryStock_[i][k] = BASE::QvTrajectoryStock_[i][k];
-		if (BASE::options_.useRiccatiSolver_==true) {
-			BASE::RmConstrainedTrajectoryStock_[i][k] = BASE::RmTrajectoryStock_[i][k];
-		} else {
-			BASE::BmConstrainedTrajectoryStock_[i][k] = BASE::BmTrajectoryStock_[i][k];
-			BASE::PmConstrainedTrajectoryStock_[i][k] = BASE::PmTrajectoryStock_[i][k];
-			BASE::RvConstrainedTrajectoryStock_[i][k] = BASE::RvTrajectoryStock_[i][k];
-		}
-
-	} else {
-		Eigen::MatrixXd Cm = BASE::CmTrajectoryStock_[i][k].topRows(nc1);
-		Eigen::MatrixXd Dm = BASE::DmTrajectoryStock_[i][k].topRows(nc1);
-		Eigen::MatrixXd Ev = BASE::EvTrajectoryStock_[i][k].head(nc1);
-
-		Eigen::MatrixXd RmProjected = ( Dm*BASE::RmInverseTrajectoryStock_[i][k]*Dm.transpose() ).inverse();
-		Eigen::MatrixXd DmDager = BASE::RmInverseTrajectoryStock_[i][k] * Dm.transpose() * RmProjected;
-
-		BASE::DmDagerTrajectoryStock_[i][k].leftCols(nc1) = DmDager;
-		BASE::EvProjectedTrajectoryStock_[i][k] = DmDager * Ev;
-		BASE::CmProjectedTrajectoryStock_[i][k] = DmDager * Cm;
-		BASE::DmProjectedTrajectoryStock_[i][k] = DmDager * Dm;
-
-		control_matrix_t DmNullSpaceProjection = control_matrix_t::Identity() - BASE::DmProjectedTrajectoryStock_[i][k];
-		state_matrix_t   PmTransDmDagerCm = BASE::PmTrajectoryStock_[i][k].transpose()*BASE::CmProjectedTrajectoryStock_[i][k];
-
-		BASE::AmConstrainedTrajectoryStock_[i][k] = BASE::AmTrajectoryStock_[i][k] - BASE::BmTrajectoryStock_[i][k]*BASE::CmProjectedTrajectoryStock_[i][k];
-		BASE::QmConstrainedTrajectoryStock_[i][k] = BASE::QmTrajectoryStock_[i][k] + Cm.transpose()*RmProjected*Cm - PmTransDmDagerCm - PmTransDmDagerCm.transpose();
-		BASE::QvConstrainedTrajectoryStock_[i][k] = BASE::QvTrajectoryStock_[i][k] - BASE::CmProjectedTrajectoryStock_[i][k].transpose()*BASE::RvTrajectoryStock_[i][k];
-		if (BASE::options_.useRiccatiSolver_==true) {
-			BASE::RmConstrainedTrajectoryStock_[i][k] = DmNullSpaceProjection.transpose() * BASE::RmTrajectoryStock_[i][k] * DmNullSpaceProjection;
-		} else {
-			BASE::BmConstrainedTrajectoryStock_[i][k] = BASE::BmTrajectoryStock_[i][k] * DmNullSpaceProjection;
-			BASE::PmConstrainedTrajectoryStock_[i][k] = DmNullSpaceProjection.transpose() * BASE::PmTrajectoryStock_[i][k];
-			BASE::RvConstrainedTrajectoryStock_[i][k] = DmNullSpaceProjection.transpose() * BASE::RvTrajectoryStock_[i][k];
-		}
-
-	}
-
-	// making sure that constrained Qm is PSD
-	this->makePSD(BASE::QmConstrainedTrajectoryStock_[i][k]);
-
-	return i;
-}
+// FIXME: delete this, it is substitude with BASE::executeIntermediateApproximateLQ
+//template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
+//size_t SLQP_MP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::executeApproximateSubsystemLQ(size_t threadId, size_t k, size_t subsystemProcessed)
+//{
+//	const size_t i = subsystemProcessed;
+//
+//	// LINEARIZE SYSTEM DYNAMICS AND CONSTRAINTS
+//	linearizedSystems_[threadId][i]->setCurrentStateAndControl(
+//			BASE::nominalTimeTrajectoriesStock_[i][k],
+//			BASE::nominalStateTrajectoriesStock_[i][k],
+//			BASE::nominalInputTrajectoriesStock_[i][k]);
+//	linearizedSystems_[threadId][i]->getDerivativeState(BASE::AmTrajectoryStock_[i][k]);
+//	linearizedSystems_[threadId][i]->getDerivativesControl(BASE::BmTrajectoryStock_[i][k]);
+//
+//	// if constraint type 1 is active
+//	if (BASE::nc1TrajectoriesStock_[i][k] > 0) {
+//		linearizedSystems_[threadId][i]->getConstraint1DerivativesState(BASE::CmTrajectoryStock_[i][k]);
+//		linearizedSystems_[threadId][i]->getConstraint1DerivativesControl(BASE::DmTrajectoryStock_[i][k]);
+//	}
+//
+//	// if constraint type 2 is active
+//	if (BASE::nc2TrajectoriesStock_[i][k] > 0) {
+//		linearizedSystems_[threadId][i]->getConstraint2DerivativesState(BASE::FmTrajectoryStock_[i][k]);
+//	}
+//
+//	// QUADRATIC APPROXIMATION TO THE COST FUNCTION
+//	costFunctions_[threadId][i]->setCurrentStateAndControl(
+//			BASE::nominalTimeTrajectoriesStock_[i][k],
+//			BASE::nominalStateTrajectoriesStock_[i][k],
+//			BASE::nominalInputTrajectoriesStock_[i][k]);
+//	costFunctions_[threadId][i]->evaluate(BASE::qTrajectoryStock_[i][k](0));
+//	costFunctions_[threadId][i]->stateDerivative(BASE::QvTrajectoryStock_[i][k]);
+//	costFunctions_[threadId][i]->stateSecondDerivative(BASE::QmTrajectoryStock_[i][k]);
+//	costFunctions_[threadId][i]->controlDerivative(BASE::RvTrajectoryStock_[i][k]);
+//	costFunctions_[threadId][i]->controlSecondDerivative(BASE::RmTrajectoryStock_[i][k]);
+//	BASE::RmInverseTrajectoryStock_[i][k] = BASE::RmTrajectoryStock_[i][k].inverse();
+//	costFunctions_[threadId][i]->stateControlDerivative(BASE::PmTrajectoryStock_[i][k]);
+//
+//
+//	// constraint type 2 coefficients
+//	double stateConstraintPenalty = BASE::options_.stateConstraintPenaltyCoeff_ * pow(BASE::options_.stateConstraintPenaltyBase_, BASE::iteration_);
+//	size_t nc2 = BASE::nc2TrajectoriesStock_[i][k];
+//
+//	if (nc2 > 0) {
+//		BASE::qTrajectoryStock_[i][k]  += 0.5 * stateConstraintPenalty * BASE::HvTrajectoryStock_[i][k].head(nc2).transpose() * BASE::HvTrajectoryStock_[i][k].head(nc2);
+//		BASE::QvTrajectoryStock_[i][k] += stateConstraintPenalty * BASE::FmTrajectoryStock_[i][k].topRows(nc2).transpose() * BASE::HvTrajectoryStock_[i][k].head(nc2);
+//		BASE::QmTrajectoryStock_[i][k] += stateConstraintPenalty * BASE::FmTrajectoryStock_[i][k].topRows(nc2).transpose() * BASE::FmTrajectoryStock_[i][k].topRows(nc2);
+//	}
+//
+//	// constraint type 1 coefficients
+//	size_t nc1 = BASE::nc1TrajectoriesStock_[i][k];
+//
+//	if (nc1 == 0)
+//	{
+//		BASE::DmDagerTrajectoryStock_[i][k].setZero();
+//		BASE::EvProjectedTrajectoryStock_[i][k].setZero();
+//		BASE::CmProjectedTrajectoryStock_[i][k].setZero();
+//		BASE::DmProjectedTrajectoryStock_[i][k].setZero();
+//
+//		BASE::AmConstrainedTrajectoryStock_[i][k] = BASE::AmTrajectoryStock_[i][k];
+//		BASE::QmConstrainedTrajectoryStock_[i][k] = BASE::QmTrajectoryStock_[i][k];
+//		BASE::QvConstrainedTrajectoryStock_[i][k] = BASE::QvTrajectoryStock_[i][k];
+//		if (BASE::options_.useRiccatiSolver_==true) {
+//			BASE::RmConstrainedTrajectoryStock_[i][k] = BASE::RmTrajectoryStock_[i][k];
+//		} else {
+//			BASE::BmConstrainedTrajectoryStock_[i][k] = BASE::BmTrajectoryStock_[i][k];
+//			BASE::PmConstrainedTrajectoryStock_[i][k] = BASE::PmTrajectoryStock_[i][k];
+//			BASE::RvConstrainedTrajectoryStock_[i][k] = BASE::RvTrajectoryStock_[i][k];
+//		}
+//
+//	} else {
+//		Eigen::MatrixXd Cm = BASE::CmTrajectoryStock_[i][k].topRows(nc1);
+//		Eigen::MatrixXd Dm = BASE::DmTrajectoryStock_[i][k].topRows(nc1);
+//		Eigen::MatrixXd Ev = BASE::EvTrajectoryStock_[i][k].head(nc1);
+//
+//		Eigen::MatrixXd RmProjected = ( Dm*BASE::RmInverseTrajectoryStock_[i][k]*Dm.transpose() ).inverse();
+//		Eigen::MatrixXd DmDager = BASE::RmInverseTrajectoryStock_[i][k] * Dm.transpose() * RmProjected;
+//
+//		BASE::DmDagerTrajectoryStock_[i][k].leftCols(nc1) = DmDager;
+//		BASE::EvProjectedTrajectoryStock_[i][k] = DmDager * Ev;
+//		BASE::CmProjectedTrajectoryStock_[i][k] = DmDager * Cm;
+//		BASE::DmProjectedTrajectoryStock_[i][k] = DmDager * Dm;
+//
+//		control_matrix_t DmNullSpaceProjection = control_matrix_t::Identity() - BASE::DmProjectedTrajectoryStock_[i][k];
+//		state_matrix_t   PmTransDmDagerCm = BASE::PmTrajectoryStock_[i][k].transpose()*BASE::CmProjectedTrajectoryStock_[i][k];
+//
+//		BASE::AmConstrainedTrajectoryStock_[i][k] = BASE::AmTrajectoryStock_[i][k] - BASE::BmTrajectoryStock_[i][k]*BASE::CmProjectedTrajectoryStock_[i][k];
+//		BASE::QmConstrainedTrajectoryStock_[i][k] = BASE::QmTrajectoryStock_[i][k] + Cm.transpose()*RmProjected*Cm - PmTransDmDagerCm - PmTransDmDagerCm.transpose();
+//		BASE::QvConstrainedTrajectoryStock_[i][k] = BASE::QvTrajectoryStock_[i][k] - BASE::CmProjectedTrajectoryStock_[i][k].transpose()*BASE::RvTrajectoryStock_[i][k];
+//		if (BASE::options_.useRiccatiSolver_==true) {
+//			BASE::RmConstrainedTrajectoryStock_[i][k] = DmNullSpaceProjection.transpose() * BASE::RmTrajectoryStock_[i][k] * DmNullSpaceProjection;
+//		} else {
+//			BASE::BmConstrainedTrajectoryStock_[i][k] = BASE::BmTrajectoryStock_[i][k] * DmNullSpaceProjection;
+//			BASE::PmConstrainedTrajectoryStock_[i][k] = DmNullSpaceProjection.transpose() * BASE::PmTrajectoryStock_[i][k];
+//			BASE::RvConstrainedTrajectoryStock_[i][k] = DmNullSpaceProjection.transpose() * BASE::RvTrajectoryStock_[i][k];
+//		}
+//
+//	}
+//
+//	// making sure that constrained Qm is PSD
+//	this->makePSD(BASE::QmConstrainedTrajectoryStock_[i][k]);
+//
+//	return i;
+//}
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM>
-size_t SLQP_MP<STATE_DIM, INPUT_DIM>::executeCalculateController(size_t threadId, size_t k, size_t subsystemProcessed)
+template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
+size_t SLQP_MP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::executeCalculateController(size_t threadId, size_t k, size_t subsystemProcessed)
 {
 
 	const size_t i = subsystemProcessed;
@@ -1168,24 +986,25 @@ size_t SLQP_MP<STATE_DIM, INPUT_DIM>::executeCalculateController(size_t threadId
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM>
-void SLQP_MP<STATE_DIM, INPUT_DIM>::lineSearchWorker(size_t threadId)
+template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
+void SLQP_MP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::lineSearchWorker(size_t threadId)
 {
 	if(BASE::options_.debugPrintMP_)
 		printString("[Thread " + std::to_string(threadId) + "]: Starting lineSearchWorker. ");
 
 	// local search forward simulation's variables
 	scalar_t lsTotalCost;
-	controller_array_t           		lsControllersStock(BASE::numSubsystems_);
-	std::vector<scalar_array_t>         lsTimeTrajectoriesStock(BASE::numSubsystems_);
-	state_vector_array2_t   			lsStateTrajectoriesStock(BASE::numSubsystems_);
-	control_vector_array2_t 			lsInputTrajectoriesStock(BASE::numSubsystems_);
-	std::vector<std::vector<size_t> >	lsNc1TrajectoriesStock(BASE::numSubsystems_);
-	constraint1_vector_array2_t 		lsEvTrajectoryStock(BASE::numSubsystems_);
-	std::vector<std::vector<size_t> >   lsNc2TrajectoriesStock(BASE::numSubsystems_);
-	constraint2_vector_array2_t 		lsHvTrajectoryStock(BASE::numSubsystems_);
-	std::vector<size_t>               	lsNc2FinalStock(BASE::numSubsystems_);
-	constraint2_vector_array_t 			lsHvFinalStock(BASE::numSubsystems_);
+	controller_array_t          lsControllersStock(BASE::options_.numPartitionings_);
+	std::vector<scalar_array_t>	lsTimeTrajectoriesStock(BASE::options_.numPartitionings_);
+	std::vector<size_array_t>	lsEventsPastTheEndIndecesStock(BASE::options_.numPartitionings_);
+	state_vector_array2_t   	lsStateTrajectoriesStock(BASE::options_.numPartitionings_);
+	control_vector_array2_t 	lsInputTrajectoriesStock(BASE::options_.numPartitionings_);
+	std::vector<size_array_t>	lsNc1TrajectoriesStock(BASE::options_.numPartitionings_);
+	constraint1_vector_array2_t lsEvTrajectoryStock(BASE::options_.numPartitionings_);
+	std::vector<size_array_t> 	lsNc2TrajectoriesStock(BASE::options_.numPartitionings_);
+	constraint2_vector_array2_t lsHvTrajectoryStock(BASE::options_.numPartitionings_);
+	std::vector<size_array_t>	lsNc2FinalStock(BASE::options_.numPartitionings_);
+	constraint2_vector_array2_t	lsHvFinalStock(BASE::options_.numPartitionings_);
 
 	while(true)
 	{
@@ -1212,12 +1031,12 @@ void SLQP_MP<STATE_DIM, INPUT_DIM>::lineSearchWorker(size_t threadId)
 
 		lsControllersStock = initLScontrollersStock_;
 
-		executeLineSearch(
-				threadId,
+		executeLineSearch(threadId,
 				learningRate,
 				lsTotalCost,
 				lsControllersStock,
 				lsTimeTrajectoriesStock,
+				lsEventsPastTheEndIndecesStock,
 				lsStateTrajectoriesStock,
 				lsInputTrajectoriesStock,
 				lsNc1TrajectoriesStock,
@@ -1284,10 +1103,11 @@ void SLQP_MP<STATE_DIM, INPUT_DIM>::lineSearchWorker(size_t threadId)
 			lowestTotalCost_ 	= lsTotalCost;
 			BASE::learningRateStar_ = learningRate;
 
-			for (size_t i = 0; i<BASE::numSubsystems_; i++)	// swapping where possible for improved efficiency
+			for (size_t i = 0; i<BASE::options_.numPartitionings_; i++)	// swapping where possible for improved efficiency
 			{
 				BASE::nominalControllersStock_[i].swap(lsControllersStock[i]);
 				BASE::nominalTimeTrajectoriesStock_[i].swap(lsTimeTrajectoriesStock[i]);
+				BASE::nominalEventsPastTheEndIndecesStock_[i].swap(lsEventsPastTheEndIndecesStock[i]);
 				BASE::nominalStateTrajectoriesStock_[i].swap(lsStateTrajectoriesStock[i]);
 				BASE::nominalInputTrajectoriesStock_[i].swap(lsInputTrajectoriesStock[i]);
 				BASE::nc1TrajectoriesStock_[i].swap(lsNc1TrajectoriesStock[i]);
@@ -1314,7 +1134,7 @@ void SLQP_MP<STATE_DIM, INPUT_DIM>::lineSearchWorker(size_t threadId)
 		if (allPreviousAlphasProcessed)
 		{
 			alphaBestFound_ = true;
-			killIntegrationEventHandler_->setEvent();	// kill all integrators
+			event_handler_t::ActivateKillIntegration();	// kill all integrators
 			if (BASE::options_.dispayGSLQP_) {
 				printString("\t LS: terminate other rollouts with different alphas. alpha_best found or terminating without improvement. ");
 			}
@@ -1343,36 +1163,44 @@ void SLQP_MP<STATE_DIM, INPUT_DIM>::lineSearchWorker(size_t threadId)
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM>
-void SLQP_MP<STATE_DIM, INPUT_DIM>::executeLineSearch(
+template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
+void SLQP_MP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::executeLineSearch(
 		size_t threadId,
 		double learningRate,
 		scalar_t& lsTotalCost,
 		controller_array_t& lsControllersStock,
 		std::vector<scalar_array_t>& lsTimeTrajectoriesStock,
+		std::vector<size_array_t>& lsEventsPastTheEndIndecesStock,
 		state_vector_array2_t& lsStateTrajectoriesStock,
 		control_vector_array2_t& lsInputTrajectoriesStock,
-		std::vector<std::vector<size_t> >& lsNc1TrajectoriesStock,
+		std::vector<size_array_t>& lsNc1TrajectoriesStock,
 		constraint1_vector_array2_t& lsEvTrajectoryStock,
-		std::vector<std::vector<size_t> >& lsNc2TrajectoriesStock,
+		std::vector<size_array_t>& lsNc2TrajectoriesStock,
 		constraint2_vector_array2_t& lsHvTrajectoryStock,
-		std::vector<size_t>& lsNc2FinalStock,
-		constraint2_vector_array_t& lsHvFinalStock)  {
+		std::vector<size_array_t>& lsNc2FinalStock,
+		constraint2_vector_array2_t& lsHvFinalStock)  {
 
 	// modifying uff by local increments
-	for (int i=0; i<BASE::numSubsystems_; i++)
-		for (int k=0; k<lsControllersStock[i].time_.size(); k++)
+	for (size_t i=0; i<BASE::options_.numPartitionings_; i++)
+		for (size_t k=0; k<lsControllersStock[i].time_.size(); k++)
 			lsControllersStock[i].uff_[k] += learningRate * lsControllersStock[i].deltaUff_[k];
 
 	try {
-		rollout(threadId, BASE::initTime_, BASE::initState_, BASE::finalTime_, lsControllersStock, lsTimeTrajectoriesStock,
+		rolloutTrajectory(threadId,
+				BASE::initTime_, BASE::initState_, BASE::finalTime_, lsControllersStock,
+				lsTimeTrajectoriesStock, lsEventsPastTheEndIndecesStock,
+				lsStateTrajectoriesStock, lsInputTrajectoriesStock);
+		calculateRolloutConstraints(threadId,
+				lsTimeTrajectoriesStock, lsEventsPastTheEndIndecesStock,
 				lsStateTrajectoriesStock, lsInputTrajectoriesStock,
 				lsNc1TrajectoriesStock, lsEvTrajectoryStock,
 				lsNc2TrajectoriesStock, lsHvTrajectoryStock, lsNc2FinalStock, lsHvFinalStock);
-
 		// calculate rollout cost
-		calculateCostFunction(lsTimeTrajectoriesStock, lsStateTrajectoriesStock, lsInputTrajectoriesStock,
-				lsNc2TrajectoriesStock, lsHvTrajectoryStock, lsNc2FinalStock, lsHvFinalStock, lsTotalCost, threadId);
+		calculateRolloutCost(threadId,
+				lsTimeTrajectoriesStock, lsEventsPastTheEndIndecesStock,
+				lsStateTrajectoriesStock, lsInputTrajectoriesStock,
+				lsNc2TrajectoriesStock, lsHvTrajectoryStock, lsNc2FinalStock, lsHvFinalStock,
+				lsTotalCost);
 
 		// display
 		if (BASE::options_.dispayGSLQP_){
@@ -1383,7 +1211,7 @@ void SLQP_MP<STATE_DIM, INPUT_DIM>::executeLineSearch(
 					" \t constraint ISE: " + std::to_string(lsConstraint1ISE));
 			if (std::accumulate(lsNc2FinalStock.begin(), lsNc2FinalStock.end(), 0) > 0) {
 				std::cerr << "\t final constraint type-2:   ";
-				for(size_t i=0; i<BASE::numSubsystems_; i++) std::cerr << "[" << i  << "]: " << lsHvFinalStock[i].head(lsNc2FinalStock[i]).transpose() << ",  ";
+				for(size_t i=0; i<BASE::options_.numPartitionings_; i++) std::cerr << "[" << i  << "]: " << lsHvFinalStock[i].head(lsNc2FinalStock[i]).transpose() << ",  ";
 				std::cerr << std::endl;
 			}
 
@@ -1399,63 +1227,38 @@ void SLQP_MP<STATE_DIM, INPUT_DIM>::executeLineSearch(
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM>
-void SLQP_MP<STATE_DIM, INPUT_DIM>::setSingleCostNominalState(size_t index,
-		const scalar_array_t& timeTrajectory, const state_vector_array_t& stateTrajectory) {
-
-	// for all threads + 1
-	for (size_t i=0; i<BASE::options_.nThreads_+1; i++)
-		costFunctions_[i][index]->setCostNominalState(timeTrajectory, stateTrajectory);
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM>
-void SLQP_MP<STATE_DIM, INPUT_DIM>::getSingleCostNominalState(size_t index,
-		scalar_array_t& timeTrajectory, state_vector_array_t& stateTrajectory) const {
-
-	costFunctions_[BASE::options_.nThreads_][index]->setCostNominalState(timeTrajectory, stateTrajectory);
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM>
-void SLQP_MP<STATE_DIM, INPUT_DIM>::solveSequentialRiccatiEquations(const scalar_t& learningRate,
+template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
+void SLQP_MP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::solveSequentialRiccatiEquations(const scalar_t& learningRate,
 		const state_matrix_t& SmFinal, const state_vector_t& SvFinal, const eigen_scalar_t& sFinal){
 
 	riccatiSolverLearningRate_ = learningRate;
 
 	numSubsystemsProcessed_ = 0;
 //	if (async_==true)
-//		for (int i=0; i < BASE::numSubsystems_; i++){
+//		for (size_t i=0; i < BASE::options_.numPartitionings_; i++){
 //			subsystemsDone_[i] = false;
 //			subsystemsProcessing_[i] = false;
 //		}
 
-	BASE::SsTimeTrajectoryStock_.resize(BASE::numSubsystems_);
-	BASE::SsNormalizedTimeTrajectoryStock_.resize(BASE::numSubsystems_);
-	BASE::sTrajectoryStock_.resize(BASE::numSubsystems_);
-	BASE::SvTrajectoryStock_.resize(BASE::numSubsystems_);
-	BASE::SveTrajectoryStock_.resize(BASE::numSubsystems_);
-	BASE::SmTrajectoryStock_.resize(BASE::numSubsystems_);
-
-//	BASE::SmFinalStock_[BASE::numSubsystems_]  = SmFinal;
-//	BASE::SvFinalStock_[BASE::numSubsystems_]  = SvFinal;
-//	BASE::SveFinalStock_[BASE::numSubsystems_] = state_vector_t::Zero();
-//	BASE::sFinalStock_[BASE::numSubsystems_]   = sFinal;
+	BASE::SsTimeTrajectoryStock_.resize(BASE::options_.numPartitionings_);
+	BASE::SsNormalizedTimeTrajectoryStock_.resize(BASE::options_.numPartitionings_);
+	BASE::SsNormalizedEventsPastTheEndIndecesStock_.resize(BASE::options_.numPartitionings_);
+	BASE::sTrajectoryStock_.resize(BASE::options_.numPartitionings_);
+	BASE::SvTrajectoryStock_.resize(BASE::options_.numPartitionings_);
+	BASE::SveTrajectoryStock_.resize(BASE::options_.numPartitionings_);
+	BASE::SmTrajectoryStock_.resize(BASE::options_.numPartitionings_);
 
 	BASE::SmFinalStock_[BASE::finalActiveSubsystem_+1]  = SmFinal;
 	BASE::SvFinalStock_[BASE::finalActiveSubsystem_+1]  = SvFinal;
 	BASE::SveFinalStock_[BASE::finalActiveSubsystem_+1] = state_vector_t::Zero();
 	BASE::sFinalStock_[BASE::finalActiveSubsystem_+1]   = sFinal;
 
-	if(BASE::iteration_ == 0 && BASE::useDisjointRiccati_==false) {
-		// solve it sequentially for the first time
-		for (int i=BASE::numSubsystems_-1; i>=0; i--)  {
+	// solve it sequentially for the first time or when useDisjointRiccati_ is false
+	if(BASE::useDisjointRiccati_==false || BASE::iteration_ == 0) {
 
-			if (i<BASE::initActiveSubsystem_ || BASE::finalActiveSubsystem_<i) {
+		for (int i=BASE::options_.numPartitionings_-1; i>=0; i--)  {
+
+			if (i < (signed)BASE::initActiveSubsystem_ || i > (signed)BASE::finalActiveSubsystem_) {
 
 				BASE::SsTimeTrajectoryStock_[i].clear();
 				BASE::SmTrajectoryStock_[i].clear();
@@ -1472,15 +1275,20 @@ void SLQP_MP<STATE_DIM, INPUT_DIM>::solveSequentialRiccatiEquations(const scalar
 				continue;
 			}
 
+			// for each partition, there is one worker
+			const int& workerIndex = i;
 
+			// solve backward pass
 			if (BASE::options_.useRiccatiSolver_==true) {
-				this->solveSingleSequentialRiccatiEquation(i, riccatiSolverLearningRate_,
+				BASE::solveRiccatiEquationsWorker(workerIndex, i,
+						riccatiSolverLearningRate_,
 						BASE::SmFinalStock_[i+1], BASE::SvFinalStock_[i+1], BASE::sFinalStock_[i+1]);
-				this->solveSingleErrorRiccatiEquation(i, BASE::SveFinalStock_[i+1]);
+				BASE::solveErrorRiccatiEquationWorker(workerIndex, i,
+						BASE::SveFinalStock_[i+1]);
 			} else {
-				this->fullBackwardSweep(i, BASE::SmFinalStock_[i+1], BASE::SvFinalStock_[i+1], BASE::SveFinalStock_[i+1], BASE::sFinalStock_[i+1]);
+				BASE::fullRiccatiBackwardSweepWorker(workerIndex, i,
+						BASE::SmFinalStock_[i+1], BASE::SvFinalStock_[i+1], BASE::SveFinalStock_[i+1], BASE::sFinalStock_[i+1]);
 			}
-
 
 			// set the final value for next Riccati equation
 			BASE::sFinalStock_[i]   = BASE::sTrajectoryStock_[i].front();
@@ -1489,8 +1297,9 @@ void SLQP_MP<STATE_DIM, INPUT_DIM>::solveSequentialRiccatiEquations(const scalar
 			BASE::SmFinalStock_[i]  = BASE::SmTrajectoryStock_[i].front();
 
 		}
-
-	} else {
+	}
+	// solve it inparallel if useDisjointRiccati_ is true
+	else {
 
 		if(BASE::options_.debugPrintMP_)
 			printString("[MP]: Waking up workers to do RiccatiSolver Task ");
@@ -1504,7 +1313,7 @@ void SLQP_MP<STATE_DIM, INPUT_DIM>::solveSequentialRiccatiEquations(const scalar
 			printString("[MP]: Will wait now until workers have done RiccatiSolver Task ");
 
 		std::unique_lock<std::mutex> waitLock(riccatiSolverBarrierMutex_);
-		while(numSubsystemsProcessed_.load() < BASE::numSubsystems_){
+		while(numSubsystemsProcessed_.load() < BASE::options_.numPartitionings_){
 			riccatiSolverCompletedCondition_.wait(waitLock);
 		}
 		waitLock.unlock();
@@ -1528,11 +1337,12 @@ void SLQP_MP<STATE_DIM, INPUT_DIM>::solveSequentialRiccatiEquations(const scalar
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM>
-void SLQP_MP<STATE_DIM, INPUT_DIM>::solveSequentialRiccatiEquationsWorker(size_t threadId) {
+template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
+void SLQP_MP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::executeRiccatiSolver(size_t threadId) {
 
 	bool endSubsystemIsUpdated = false;
-	for(int i = endingIndicesRiccatiWorker_[threadId]; i >= startingIndicesRiccatiWorker_[threadId]; i--) {
+
+	for (int i = endingIndicesRiccatiWorker_[threadId]; i >= startingIndicesRiccatiWorker_[threadId]; i--) {
 
 		if(BASE::options_.debugPrintMP_)
 			printString("[MP]>> Thread " + std::to_string(threadId) + " processing subsystem " + std::to_string(i));
@@ -1576,17 +1386,20 @@ void SLQP_MP<STATE_DIM, INPUT_DIM>::solveSequentialRiccatiEquationsWorker(size_t
 		// unlock data
 		dataReadLock.unlock();
 
-
+		// solve the backward pass
 		if (endSubsystemIsUpdated==false) {
 			endSubsystemIsUpdated = true;
 			SvFinal += SmFinal*(BASE::nominalStateTrajectoriesStock_[i].back()-xFinal);
 		}
 
 		if (BASE::options_.useRiccatiSolver_==true) {
-			this->solveSingleSequentialRiccatiEquation(i, riccatiSolverLearningRate_, SmFinal, SvFinal, sFinal);
-			this->solveSingleErrorRiccatiEquation(i, SveFinal);
+			BASE::solveRiccatiEquationsWorker(threadId, i,
+					riccatiSolverLearningRate_, SmFinal, SvFinal, sFinal);
+			BASE::solveErrorRiccatiEquationWorker(threadId, i,
+					SveFinal);
 		} else {
-			this->fullBackwardSweep(i, SmFinal, SvFinal, SveFinal, sFinal);
+			BASE::fullRiccatiBackwardSweepWorker(threadId, i,
+					SmFinal, SvFinal, SveFinal, sFinal);
 		}
 
 		// lock data
@@ -1614,41 +1427,41 @@ void SLQP_MP<STATE_DIM, INPUT_DIM>::solveSequentialRiccatiEquationsWorker(size_t
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM>
-void SLQP_MP<STATE_DIM, INPUT_DIM>::distributeWork(){
+template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
+void SLQP_MP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::distributeWork(){
 
 	const int N = BASE::options_.nThreads_;
 	startingIndicesRiccatiWorker_.resize(N);
 	endingIndicesRiccatiWorker_.resize(N);
 
-//	if (BASE::numSubsystems_ < N)
+//	if (BASE::options_.numPartitionings_ < N)
 //		throw std::runtime_error("Number of threads is bigger than number of subsystems");
 
 	int subsystemsPerThread = (BASE::finalActiveSubsystem_-BASE::initActiveSubsystem_+1) / N;
 	int remainingSubsystems = (BASE::finalActiveSubsystem_-BASE::initActiveSubsystem_+1) % N;
 
-	int startingId = BASE::initActiveSubsystem_;
-	int endingId = BASE::finalActiveSubsystem_;
-	for (int i=0; i<N; i++){
+	int startingId, endingId = BASE::finalActiveSubsystem_;
+	for (size_t i=0; i<N; i++){
 		endingIndicesRiccatiWorker_[i] = endingId;
 		if (remainingSubsystems > 0){
 			startingId = endingId - subsystemsPerThread;
 			remainingSubsystems--;
-		}else
+		} else {
 			startingId = endingId - subsystemsPerThread + 1;
+		}
 		startingIndicesRiccatiWorker_[i] = startingId;
 		endingId = startingId - 1;
 	}
 
 	// adding the inactive subsystems
-	endingIndicesRiccatiWorker_.front() = BASE::numSubsystems_-1;
+	endingIndicesRiccatiWorker_.front() = BASE::options_.numPartitionings_-1;
 	startingIndicesRiccatiWorker_.back() = 0;
 
 	if (BASE::options_.dispayGSLQP_==true) {
 		std::cout << "Initial Active Subsystem: " << BASE::initActiveSubsystem_ << std::endl;
 		std::cout << "Final Active Subsystem:   " << BASE::finalActiveSubsystem_ << std::endl;
 		std::cout << "Backward path work distribution:" << std::endl;
-		for (int i=0; i<N; i++){
+		for (size_t i=0; i<N; i++){
 			std::cout << "start: " << startingIndicesRiccatiWorker_[i] << "\t";
 			std::cout << "end: " << endingIndicesRiccatiWorker_[i]  << "\t";
 			std::cout << "num: " << endingIndicesRiccatiWorker_[i]-startingIndicesRiccatiWorker_[i]+1 << std::endl;;
@@ -1660,104 +1473,102 @@ void SLQP_MP<STATE_DIM, INPUT_DIM>::distributeWork(){
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM>
-void SLQP_MP<STATE_DIM, INPUT_DIM>::setupOptimizer() {
+template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
+void SLQP_MP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::setupOptimizer() {
 
-	if (BASE::subsystemDynamicsPtr_.size()-1 < *std::max_element(BASE::systemStockIndexes_.begin(), BASE::systemStockIndexes_.end()))
-		throw std::runtime_error("systemStockIndex points to non-existing subsystem");
+	// call Base routine
+	BASE::setupOptimizer();
 
-	// for all threads + 1
-	for (size_t i=0; i<BASE::options_.nThreads_+1; i++)  {
+//	// for all threads + 1
+//	for (size_t i=0; i<BASE::options_.nThreads_+1; i++)  {
+//
+//		dynamics_[i].clear();
+//		dynamics_[i].reserve(BASE::options_.numPartitionings_);
+//		linearizedSystems_[i].clear();
+//		linearizedSystems_[i].reserve(BASE::options_.numPartitionings_);
+//		constraints_[i].clear();
+//		constraints_[i].reserve(BASE::options_.numPartitionings_);
+//		costFunctions_[i].clear();
+//		costFunctions_[i].reserve(BASE::options_.numPartitionings_);
+//		eventHandlerPtrs_[i].clear();
+//		eventHandlerPtrs_[i].reserve(BASE::options_.numPartitionings_);
+//		integratorsODE45_[i].clear();
+//		integratorsODE45_[i].reserve(BASE::options_.numPartitionings_);
+//
+//		// .. initialize all subsystems, etc.
+//		for(size_t j = 0; j<BASE::options_.numPartitionings_; j++)  {
+//
+//			// initialize dynamics
+//			dynamics_[i].push_back(std::move( BASE::subsystemDynamicsPtr_->clone() ));
+//
+//			// initialize linearized systems
+//			linearizedSystems_[i].push_back(std::move( BASE::subsystemDerivativesPtr_->clone() ));
+//
+//			// initialize constraints
+//			constraints_[i].push_back(std::move( BASE::subsystemConstraintPtr_->clone() ));
+//
+//			// initialize cost functions
+//			costFunctions_[i].push_back(std::move( BASE::subsystemCostFunctionsPtr_->clone() ));
+//
+//			// initialize operating trajectories
+//			operatingTrajectories_[i].push_back(std::move( BASE::operatingTrajectoriesPtr_->clone() ));
+//
+//			// initialize events
+//			typedef Eigen::aligned_allocator<event_handler_t> event_handler_alloc_t;
+//			eventHandlerPtrs_[i].push_back(std::move( std::allocate_shared<event_handler_t, event_handler_alloc_t>(event_handler_alloc_t()) ));
+//
+//			// initialize integrators
+//			typedef ODE45<STATE_DIM> ode_t;
+//			typedef Eigen::aligned_allocator<ode_t> ode_alloc_t;
+//			integratorsODE45_[i].push_back(std::move(
+//					std::allocate_shared<ode_t, ode_alloc_t>(ode_alloc_t(), dynamics_[i].back(), eventHandlerPtrs_[i].back()) ));
+//		}
+//	}
 
-		dynamics_[i].clear();
-		dynamics_[i].reserve(BASE::numSubsystems_);
-		linearizedSystems_[i].clear();
-		linearizedSystems_[i].reserve(BASE::numSubsystems_);
-		costFunctions_[i].clear();
-		costFunctions_[i].reserve(BASE::numSubsystems_);
-		killIntegrationEventHandlers_[i].clear();
-		killIntegrationEventHandlers_[i].reserve(BASE::numSubsystems_);
-		integratorsODE45_[i].clear();
-		integratorsODE45_[i].reserve(BASE::numSubsystems_);
+	KMax_subsystem_approx_.resize(BASE::options_.numPartitionings_);
+	KMax_subsystem_ctrl_.resize(BASE::options_.numPartitionings_);
 
-		// .. initialize all subsystems, etc.
-		for(size_t j = 0; j<BASE::numSubsystems_; j++)  {
-
-			// initialize dynamics
-			dynamics_[i].push_back(std::move( BASE::subsystemDynamicsPtr_[BASE::systemStockIndexes_[j]]->clone() ));
-
-			// initialize linearized systems
-			linearizedSystems_[i].push_back(std::move( BASE::subsystemDerivativesPtr_[BASE::systemStockIndexes_[j]]->clone() ));
-
-			// initialize cost functions
-			costFunctions_[i].push_back(std::move( BASE::subsystemCostFunctionsPtr_[BASE::systemStockIndexes_[j]]->clone() ));
-
-			// initialize events
-			typedef KillIntegrationEventHandler<STATE_DIM> event_t;
-			typedef Eigen::aligned_allocator<event_t> event_alloc_t;
-			killIntegrationEventHandlers_[i].push_back(std::move(
-					std::allocate_shared<event_t,event_alloc_t>(event_alloc_t()) ));
-
-			// initialize integrators
-			typedef ODE45<STATE_DIM> ode_t;
-			typedef Eigen::aligned_allocator<ode_t> ode_alloc_t;
-			integratorsODE45_[i].push_back(std::move(
-					std::allocate_shared<ode_t, ode_alloc_t>(ode_alloc_t(), dynamics_[i].back(), killIntegrationEventHandler_) ));
-		}
-	}
-
-	KMax_subsystem_approx_.resize(BASE::numSubsystems_);
-	KMax_subsystem_ctrl_.resize(BASE::numSubsystems_);
-
-	BASE::sFinalStock_.resize(BASE::numSubsystems_+1);
-	BASE::SvFinalStock_.resize(BASE::numSubsystems_+1);
-	BASE::SveFinalStock_.resize(BASE::numSubsystems_+1);
-	BASE::SmFinalStock_.resize(BASE::numSubsystems_+1);
-	BASE::xFinalStock_.resize(BASE::numSubsystems_+1);
-	for (size_t i=0; i<BASE::numSubsystems_+1; i++) {
-		BASE::sFinalStock_[i].setZero();
-		BASE::SvFinalStock_[i].setZero();
-		BASE::SveFinalStock_[i].setZero();
-		BASE::SmFinalStock_[i].setZero();
-		BASE::xFinalStock_[i].setZero();
-	}
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM>
-void SLQP_MP<STATE_DIM, INPUT_DIM>::runInit() {
+template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
+void SLQP_MP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::runInit() {
 
 	// set the start and final time for costFuntions
-	for (size_t j=0; j<BASE::options_.nThreads_+1; j++)
-		for(size_t i=0; i<BASE::numSubsystems_; i++)
-			costFunctions_[j][i]->setTimePeriod(BASE::switchingTimes_[i], BASE::switchingTimes_[i+1]);
+	for(size_t i=0; i<BASE::options_.numPartitionings_; i++)
+		BASE::subsystemCostFunctionsPtr_[i]->setTimePeriod(BASE::partitioningTimes_[i], BASE::partitioningTimes_[i+1]);
 
 	//distribute work
 	distributeWork();
 
 	// initial controller rollout
-	rollout(BASE::options_.nThreads_,
-			BASE::initTime_,
+	rolloutTrajectory(BASE::initTime_,
 			BASE::initState_,
 			BASE::finalTime_,
 			BASE::nominalControllersStock_,
-			BASE::nominalTimeTrajectoriesStock_, BASE::nominalStateTrajectoriesStock_, BASE::nominalInputTrajectoriesStock_,
+			BASE::nominalTimeTrajectoriesStock_, BASE::nominalEventsPastTheEndIndecesStock_,
+			BASE::nominalStateTrajectoriesStock_, BASE::nominalInputTrajectoriesStock_);
+
+	calculateRolloutConstraints(BASE::nominalTimeTrajectoriesStock_, BASE::nominalEventsPastTheEndIndecesStock_,
+			BASE::nominalStateTrajectoriesStock_, BASE::nominalInputTrajectoriesStock_,
 			BASE::nc1TrajectoriesStock_, BASE::EvTrajectoryStock_,
 			BASE::nc2TrajectoriesStock_, BASE::HvTrajectoryStock_, BASE::nc2FinalStock_, BASE::HvFinalStock_);
 
 	// initial controller cost
-	calculateCostFunction(BASE::nominalTimeTrajectoriesStock_, BASE::nominalStateTrajectoriesStock_, BASE::nominalInputTrajectoriesStock_,
+	calculateRolloutCost(BASE::nominalTimeTrajectoriesStock_, BASE::nominalEventsPastTheEndIndecesStock_,
+			BASE::nominalStateTrajectoriesStock_, BASE::nominalInputTrajectoriesStock_,
 			BASE::nc2TrajectoriesStock_, BASE::HvTrajectoryStock_, BASE::nc2FinalStock_, BASE::HvFinalStock_,
-			BASE::nominalTotalCost_, BASE::options_.nThreads_);
+			BASE::nominalTotalCost_);
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM>
-void SLQP_MP<STATE_DIM, INPUT_DIM>::runIteration(const state_matrix_t& SmFinal /*= state_matrix_t::Zero()*/,
+template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
+void SLQP_MP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::runIteration(const scalar_t& maxLearningRateStar,
+		const state_matrix_t& SmFinal /*= state_matrix_t::Zero()*/,
 		const state_vector_t& SvFinal /*= state_vector_t::Zero()*/,
 		const eigen_scalar_t& sFinal /*= eigen_scalar_t::Zero()*/) {
 
@@ -1772,7 +1583,7 @@ void SLQP_MP<STATE_DIM, INPUT_DIM>::runIteration(const state_matrix_t& SmFinal /
 #endif
 
 	// linearizing the dynamics and quadratizing the cost function along nominal trajectories
-	approximateOptimalControlProblem();
+	BASE::approximateOptimalControlProblem();
 
 #ifdef BENCHMARK
 	auto end = std::chrono::steady_clock::now();
@@ -1810,8 +1621,8 @@ void SLQP_MP<STATE_DIM, INPUT_DIM>::runIteration(const state_matrix_t& SmFinal /
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM>
-void SLQP_MP<STATE_DIM, INPUT_DIM>::runExit(const state_matrix_t& SmFinal /*= state_matrix_t::Zero()*/,
+template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
+void SLQP_MP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::runExit(const state_matrix_t& SmFinal /*= state_matrix_t::Zero()*/,
 		const state_vector_t& SvFinal /*= state_vector_t::Zero()*/,
 		const eigen_scalar_t& sFinal /*= eigen_scalar_t::Zero()*/) {
 
@@ -1819,7 +1630,7 @@ void SLQP_MP<STATE_DIM, INPUT_DIM>::runExit(const state_matrix_t& SmFinal /*= st
 	Eigen::setNbThreads(1);
 
 	// linearizing the dynamics and quadratizing the cost function along nominal trajectories
-	approximateOptimalControlProblem();
+	BASE::approximateOptimalControlProblem();
 
 	// solve Riccati equations
 	solveSequentialRiccatiEquations(0.0 /*learningRate*/, SmFinal, SvFinal, sFinal);
@@ -1828,7 +1639,7 @@ void SLQP_MP<STATE_DIM, INPUT_DIM>::runExit(const state_matrix_t& SmFinal /*= st
 	Eigen::setNbThreads(0);
 
 	// calculate the nominal co-state
-	this->calculateRolloutCostate(BASE::nominalTimeTrajectoriesStock_, BASE::nominalStateTrajectoriesStock_, BASE::nominalcostateTrajectoriesStock_);
+	BASE::calculateRolloutCostate(BASE::nominalTimeTrajectoriesStock_, BASE::nominalStateTrajectoriesStock_, BASE::nominalcostateTrajectoriesStock_);
 }
 
 

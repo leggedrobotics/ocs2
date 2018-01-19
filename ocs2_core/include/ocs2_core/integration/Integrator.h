@@ -16,6 +16,7 @@
 
 #include <boost/numeric/odeint.hpp>
 
+#include "ocs2_core/OCS2NumericTraits.h"
 #include "ocs2_core/integration/eigenIntegration.h"
 #include "ocs2_core/integration/IntegratorBase.h"
 
@@ -130,7 +131,9 @@ public:
 	Integrator(
 			const std::shared_ptr<SystemBase<STATE_DIM> >& system,
 			const std::shared_ptr<EventHandler<STATE_DIM> >& eventHandler = nullptr)
-	: IntegratorBase<STATE_DIM>(system, eventHandler){
+
+	: Base(system, eventHandler)
+	{
 		setupSystem();
 	}
 
@@ -142,33 +145,47 @@ public:
 	 * @param [in] dt: Time step.
 	 * @param [out] stateTrajectory: Output state trajectory.
 	 * @param [out] timeTrajectory: Output time stamp trajectory.
-	 * @return boolean: Success flag.
+	 * @param [in] Whether to concatenate the output to the input trajectories or override (default).
 	 */
-	bool integrate(
+	void integrate(
 			const typename Base::State_T& initialState,
 			const double& startTime,
 			const double& finalTime,
 			double dt,
 			typename Base::StateTrajectory_T& stateTrajectory,
-			typename Base::TimeTrajectory_T& timeTrajectory) override{
+			typename Base::TimeTrajectory_T& timeTrajectory,
+			bool concatOutput = false) override {
 
 		typename Base::State_T initialStateInternal = initialState;
 
-		/* use a temporary state for initialization, the state returned by initialize is different from the real init state (already forward integrated) */
+		/*
+		 * use a temporary state for initialization, the state returned by initialize is different
+		 * from the real init state (already forward integrated)
+		 */
 		typename Base::State_T initialStateInternal_init_temp = initialState;
 
 		double startTime_temp = startTime;
 
+		// reset the trajectories
+		if (concatOutput==false) {
+			timeTrajectory->clear();
+			stateTrajectory->clear();
+		}
+
+		Base::setTimeTrajectoryPtrToObserver(timeTrajectory);
+		Base::setStateTrajectoryPtrToObserver(stateTrajectory);
+
 		initialize(initialStateInternal_init_temp, startTime_temp, dt);
 
-		boost::numeric::odeint::integrate_const(stepper_, systemFunction_, initialStateInternal, startTime, finalTime+0.1*dt, dt, Base::observer_.observeWrap);
-
-		Base::retrieveTrajectoriesFromObserver(stateTrajectory, timeTrajectory);
-		return true;
+		boost::numeric::odeint::integrate_const(stepper_, systemFunction_,
+				initialStateInternal, startTime, finalTime+0.1*dt, dt, Base::observer_.observeWrap);
 	}
 
 	/**
-	 * Adaptive time integration based on start time and final time
+	 * Adaptive time integration based on start time and final time. This method can solve ODEs with time-dependent events,
+	 * if eventsTime is not empty. In this case the output time-trajectory contains two identical values at the moments
+	 * of event triggerings. This method uses SystemBase::mapState() method for state transition at events.
+	 *
 	 * @param [in] initialState: Initial state.
 	 * @param [in] startTime: Initial time.
 	 * @param [in] finalTime: Final time.
@@ -178,48 +195,75 @@ public:
 	 * @param [in] AbsTol: The absolute tolerance error for ode solver.
 	 * @param [in] RelTol: The relative tolerance error for ode solver.
 	 * @param [in] maxNumSteps: The maximum number of integration points per a second for ode solver.
-	 * @return boolean: Success flag.
+	 * @param [in] Whether to concatenate the output to the input trajectories or override (default).
 	 */
-	bool integrate(
-			const typename Base::State_T& initialState,
+	void integrate(const typename Base::State_T& initialState,
 			const double& startTime,
 			const double& finalTime,
 			typename Base::StateTrajectory_T& stateTrajectory,
 			typename Base::TimeTrajectory_T& timeTrajectory,
 			double dtInitial = 0.01,
-			double AbsTol = 1e-9,
-			double RelTol = 1e-6,
-			size_t maxNumSteps = std::numeric_limits<size_t>::max()) override  {
+			double AbsTol = 1e-6,
+			double RelTol = 1e-3,
+			size_t maxNumSteps = std::numeric_limits<size_t>::max(),
+			bool concatOutput = false)  override  {
 
-		integrate_adaptive_specialized<Stepper>( initialState, startTime, finalTime, stateTrajectory, timeTrajectory, dtInitial, AbsTol, RelTol, maxNumSteps );
+		typename Base::State_T internalStartState = initialState;
 
-		Base::retrieveTrajectoriesFromObserver(stateTrajectory, timeTrajectory);
+		if (maxNumSteps < std::numeric_limits<size_t>::max())
+			Base::observer_.setMaxNumSteps(maxNumSteps, Base::system_);
 
-		return true;
+		// reset the trajectories
+		if (concatOutput==false) {
+			timeTrajectory->clear();
+			stateTrajectory->clear();
+		}
+
+		Base::setTimeTrajectoryPtrToObserver(timeTrajectory);
+		Base::setStateTrajectoryPtrToObserver(stateTrajectory);
+
+		integrate_adaptive_specialized<Stepper>(internalStartState, startTime, finalTime, dtInitial, AbsTol, RelTol);
 	}
 
-
 	/**
-	 * Output integration based on a given time trajectory
+	 * Output integration based on a given time trajectory. This method can solve ODEs with time-dependent events.
+	 * In this case, user should pass past-the-end indeces of events on the input time trajectory. Moreover, this
+	 * method assumes that there are two identical time values in the input time-trajectory at the moments of event
+	 * triggerings. This method uses SystemBase::mapState() method for state transition at events.
+	 *
 	 * @param [in] initialState: Initial state.
-	 * @param [in] timeTrajectory: Input time stamp trajectory.
+	 * @param [in] beginTimeItr: The iterator to the begining of the time stamp trajectory.
+	 * @param [in] endTimeItr: The iterator to the end of the time stamp trajectory.
 	 * @param [out] stateTrajectory: Output state trajectory.
 	 * @param [in] dtInitial: Initial time step.
 	 * @param [in] AbsTol: The absolute tolerance error for ode solver.
 	 * @param [in] RelTol: The relative tolerance error for ode solver.
-	 * @return boolean: Success flag.
+	 * @param [in] maxNumSteps: The maximum number of integration points per a second for ode solver.
+	 * @param [in] Whether to concatenate the output to the input trajectories or override (default).
 	 */
-	bool integrate(
-			const typename Base::State_T& initialState,
-			const typename Base::TimeTrajectory_T& timeTrajectory,
+	void integrate(const typename Base::State_T& initialState,
+			typename Base::TimeTrajectory_T::const_iterator beginTimeItr,
+			typename Base::TimeTrajectory_T::const_iterator endTimeItr,
 			typename Base::StateTrajectory_T& stateTrajectory,
 			double dtInitial = 0.01,
 			double AbsTol = 1e-9,
-			double RelTol = 1e-6) override  {
+			double RelTol = 1e-6,
+			size_t maxNumSteps = std::numeric_limits<size_t>::max(),
+			bool concatOutput = false) override  {
 
-		integrate_times_specialized<Stepper>(initialState, timeTrajectory, stateTrajectory, dtInitial, AbsTol, RelTol);
+		typename Base::State_T internalStartState = initialState;
 
-		return true;
+		if (maxNumSteps < std::numeric_limits<size_t>::max())
+			Base::observer_.setMaxNumSteps(maxNumSteps, Base::system_);
+
+		// reset the trajectories
+		if (concatOutput==false) {
+			stateTrajectory->clear();
+		}
+
+		Base::setStateTrajectoryPtrToObserver(stateTrajectory);
+
+		integrate_times_specialized<Stepper>(internalStartState, beginTimeItr, endTimeItr, dtInitial, AbsTol, RelTol);
 	}
 
 
@@ -246,7 +290,6 @@ private:
 	void initialize(typename Base::State_T& initialState, double& t, double dt)
 	{
 //		initializeStepper(initialState, t, dt);	// TODO
-		Base::observer_.reset();
 	}
 
 
@@ -268,27 +311,15 @@ private:
 	template <typename S>
 	typename std::enable_if<std::is_same<S, runge_kutta_dopri5_t<STATE_DIM>>::value, void>::type
 	integrate_adaptive_specialized(
-			const typename Base::State_T& initialState,
+			typename Base::State_T& initialState,
 			const double& startTime,
 			const double& finalTime,
-			typename Base::StateTrajectory_T& stateTrajectory,
-			typename Base::TimeTrajectory_T& timeTrajectory,
 			double dtInitial,
 			double AbsTol,
-			double RelTol,
-			size_t maxNumSteps){
+			double RelTol) {
 
-		typename Base::State_T initialStateInternal = initialState;
-		double startTime_temp = startTime;
-
-		initialize(initialStateInternal, startTime_temp, dtInitial);
-
-		if (maxNumSteps < std::numeric_limits<size_t>::max()){
-			Base::observer_.setMaxNumSteps(maxNumSteps, Base::system_);
-		}
-
-		boost::numeric::odeint::integrate_adaptive(boost::numeric::odeint::make_controlled<S>(AbsTol, RelTol), systemFunction_, initialStateInternal, startTime, finalTime, dtInitial, Base::observer_.observeWrap);
-
+		boost::numeric::odeint::integrate_adaptive(boost::numeric::odeint::make_controlled<S>(AbsTol, RelTol), systemFunction_,
+				initialState, startTime, finalTime, dtInitial, Base::observer_.observeWrap);
 	}
 
 	/**
@@ -309,34 +340,23 @@ private:
 	template <typename S>
 	typename std::enable_if<!std::is_same<S, runge_kutta_dopri5_t<STATE_DIM>>::value, void>::type
 	integrate_adaptive_specialized(
-			const typename Base::State_T& initialState,
+			typename Base::State_T& initialState,
 			const double& startTime,
 			const double& finalTime,
-			typename Base::StateTrajectory_T& stateTrajectory,
-			typename Base::TimeTrajectory_T& timeTrajectory,
 			double dtInitial,
 			double AbsTol,
-			double RelTol,
-			size_t maxNumSteps) {
+			double RelTol) {
 
-		typename Base::State_T initialStateInternal = initialState;
-		double startTime_temp = startTime;
-
-		initialize(initialStateInternal, startTime_temp, dtInitial);
-
-		if (maxNumSteps < std::numeric_limits<size_t>::max()){
-			Base::observer_.setMaxNumSteps(maxNumSteps, Base::system_);
-		}
-
-		boost::numeric::odeint::integrate_adaptive(stepper_, systemFunction_, initialStateInternal, startTime, finalTime, dtInitial, Base::observer_.observeWrap);
-
+		boost::numeric::odeint::integrate_adaptive(stepper_, systemFunction_,
+				initialState, startTime, finalTime, dtInitial, Base::observer_.observeWrap);
 	}
 
 	/**
 	 * Integrate times specialized function
 	 * @tparam S: stepper type.
 	 * @param [in] initialState: Initial state.
-	 * @param [in] timeTrajectory: Input time stamp trajectory.
+	 * @param [in] beginTimeItr: The iterator to the begining of the time stamp trajectory.
+	 * @param [in] endTimeItr: The iterator to the end of the time stamp trajectory.
 	 * @param [out] stateTrajectory: Output state trajectory.
 	 * @param [in] dtInitial: Initial time step.
 	 * @param [in] AbsTol: The absolute tolerance error for ode solver.
@@ -346,30 +366,23 @@ private:
 	template <typename S = Stepper>
 	typename std::enable_if<std::is_same<S, runge_kutta_dopri5_t<STATE_DIM>>::value, void>::type
 	integrate_times_specialized(
-			const typename Base::State_T& initialState,
-			const typename Base::TimeTrajectory_T& timeTrajectory,
-			typename Base::StateTrajectory_T& stateTrajectory,
+			typename Base::State_T& initialState,
+			typename Base::TimeTrajectory_T::const_iterator beginTimeItr,
+			typename Base::TimeTrajectory_T::const_iterator endTimeItr,
 			double dtInitial,
 			double AbsTol,
 			double RelTol){
 
-		typename Base::State_T initialStateInternal = initialState;
-		double startTime_temp = timeTrajectory.front();
-
-		initialize(initialStateInternal, startTime_temp, dtInitial);
-
-		boost::numeric::odeint::integrate_times(boost::numeric::odeint::make_controlled<S>(AbsTol, RelTol),
-				systemFunction_, initialStateInternal, &timeTrajectory.front(), &timeTrajectory.back()+1, dtInitial, Base::observer_.observeWrap);
-
-		Base::retrieveStateTrajectoryFromObserver(stateTrajectory);
-
+		boost::numeric::odeint::integrate_times(boost::numeric::odeint::make_controlled<S>(AbsTol, RelTol), systemFunction_,
+				initialState, beginTimeItr, endTimeItr, dtInitial, Base::observer_.observeWrap);
 	}
 
 	/**
 	 * Integrate times specialized function
 	 * @tparam S: stepper type.
 	 * @param [in] initialState: Initial state.
-	 * @param [in] timeTrajectory: Input time stamp trajectory.
+	 * @param [in] beginTimeItr: The iterator to the begining of the time stamp trajectory.
+	 * @param [in] endTimeItr: The iterator to the end of the time stamp trajectory.
 	 * @param [out] stateTrajectory: Output state trajectory.
 	 * @param [in] dtInitial: Initial time step.
 	 * @param [in] AbsTol: The absolute tolerance error for ode solver.
@@ -379,22 +392,15 @@ private:
 	template <typename S = Stepper>
 	typename std::enable_if<!std::is_same<S, runge_kutta_dopri5_t<STATE_DIM>>::value, void>::type
 	integrate_times_specialized(
-			const typename Base::State_T& initialState,
-			const typename Base::TimeTrajectory_T& timeTrajectory,
-			typename Base::StateTrajectory_T& stateTrajectory,
+			typename Base::State_T& initialState,
+			typename Base::TimeTrajectory_T::const_iterator beginTimeItr,
+			typename Base::TimeTrajectory_T::const_iterator endTimeItr,
 			double dtInitial,
 			double AbsTol,
 			double RelTol){
 
-		typename Base::State_T initialStateInternal = initialState;
-		double startTime_temp = timeTrajectory.front();
-
-		initialize(initialStateInternal, startTime_temp, dtInitial);
-
-		boost::numeric::odeint::integrate_times(stepper_, systemFunction_, initialStateInternal, &timeTrajectory.front(), &timeTrajectory.back()+1, dtInitial, Base::observer_.observeWrap);
-
-		Base::retrieveStateTrajectoryFromObserver(stateTrajectory);
-
+		boost::numeric::odeint::integrate_times(stepper_, systemFunction_,
+				initialState, beginTimeItr, endTimeItr, dtInitial, Base::observer_.observeWrap);
 	}
 
 

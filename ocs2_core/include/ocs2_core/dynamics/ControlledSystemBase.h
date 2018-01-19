@@ -9,13 +9,14 @@
 #define CONTROLLEDSYSTEMBASE_OCS2_H_
 
 #include <cstring>
+#include <Eigen/StdVector>
 #include <vector>
 #include <Eigen/Dense>
-#include <Eigen/StdVector>
 
 #include "ocs2_core/Dimensions.h"
 #include "ocs2_core/dynamics/SystemBase.h"
 #include "ocs2_core/misc/LinearInterpolation.h"
+#include "ocs2_core/logic/LogicRulesBase.h"
 
 namespace ocs2{
 
@@ -24,21 +25,23 @@ namespace ocs2{
  *
  * @tparam STATE_DIM: Dimension of the state space.
  * @tparam INPUT_DIM: Dimension of the control input space.
+ * @tparam LOGIC_RULES_T: Logic Rules type (default NullLogicRules).
  */
-template <size_t STATE_DIM, size_t INPUT_DIM>
+template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T=NullLogicRules<STATE_DIM,INPUT_DIM>>
 class ControlledSystemBase : public SystemBase<STATE_DIM>
 {
 public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+	static_assert(std::is_base_of<LogicRulesBase<STATE_DIM, INPUT_DIM>, LOGIC_RULES_T>::value, "LOGIC_RULES_T must inherit from LogicRulesBase");
 
-	typedef std::shared_ptr<ControlledSystemBase<STATE_DIM, INPUT_DIM> > Ptr;
+	typedef std::shared_ptr<ControlledSystemBase<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> > Ptr;
 
 	typedef Dimensions<STATE_DIM, INPUT_DIM> DIMENSIONS;
 	typedef typename DIMENSIONS::scalar_t scalar_t;
 	typedef typename DIMENSIONS::scalar_array_t scalar_array_t;
 	typedef typename DIMENSIONS::state_vector_t state_vector_t;
-	typedef typename DIMENSIONS::control_vector_t control_vector_t;
-	typedef typename DIMENSIONS::control_vector_array_t control_vector_array_t;
+	typedef typename DIMENSIONS::control_vector_t input_vector_t;
+	typedef typename DIMENSIONS::control_vector_array_t input_vector_array_t;
 	typedef typename DIMENSIONS::control_feedback_t control_feedback_t;
 	typedef typename DIMENSIONS::control_feedback_array_t control_feedback_array_t;
 	typedef typename DIMENSIONS::controller_t controller_t;
@@ -85,7 +88,7 @@ public:
 	 * @param [in] k: Feedback term trajectory, \f$ K \f$.
 	 */
 	void setController(const scalar_array_t& controllerTime,
-			const control_vector_array_t& uff,
+			const input_vector_array_t& uff,
 			const control_feedback_array_t& k) {
 
 		controller_.time_ = controllerTime;
@@ -102,9 +105,9 @@ public:
 	 * @param [in] x: Current state.
 	 * @param [out] u: Current input.
 	 */
-	void computeInput(const scalar_t& t, const state_vector_t& x, control_vector_t& u)
+	void computeInput(const scalar_t& t, const state_vector_t& x, input_vector_t& u)
 	{
-		control_vector_t uff;
+		input_vector_t uff;
 		control_feedback_t k;
 
 		linInterpolateUff_.interpolate(t, uff);
@@ -124,64 +127,21 @@ public:
 
 		SystemBase<STATE_DIM>::numFunctionCalls_++;
 
-		control_vector_t u;
+		input_vector_t u;
 		computeInput(t, x, u);
 		computeDerivative(t, x, u, dxdt);
 	}
 
 	/**
-	 * Computes first constraint.
-	 *
-	 * @param [in] t: Current time.
-	 * @param [in] x: Current state.
-	 * @param [in] u: Current input.
-	 * @param [out] numConstraint1: Number of active state-input equality constraints.
-	 * @param [out] g1: The state-input equality constraints value.
-	 */
-	virtual void computeConstriant1(const scalar_t& t, const state_vector_t& x, const control_vector_t& u, size_t& numConstraint1, constraint1_vector_t& g1)  {
-
-		numConstraint1 = 0;
-	}
-
-	/**
-	 * Computes second constraint.
-	 *
-	 * @param [in] t: Current time.
-	 * @param [in] x: Current state.
-	 * @param [out] numConstraint2: Number of active state-only equality constraints.
-	 * @param [out] g2: The state-only equality constraints value.
-	 */
-	virtual void computeConstriant2(const scalar_t& t, const state_vector_t& x, size_t& numConstraint2, constraint2_vector_t& g2)  {
-		numConstraint2 = 0;
-	}
-
-	/**
-	 * Computes final constraint.
-	 *
-	 * @param [in] t: Current time.
-	 * @param [in] x: Current state.
-	 * @param [out] numFinalConstraint2: Number of active state-only final equality constraints.
-	 * @param [out] g2Final: The state-only final equality constraints value.
-	 */
-	virtual void computeFinalConstriant2(const scalar_t& t, const state_vector_t& x, size_t& numFinalConstraint2, constraint2_vector_t& g2Final)  {
-		numFinalConstraint2 = 0;
-	}
-
-	/**
 	 * Initializes the system dynamics.
 	 *
-	 * @param [in] systemStockIndexes: The subsystem-stock index vector
-	 * @param [in] switchingTimes: The switching time vector.
-	 * @param [in] initState: Initial state.
-	 * @param [in] activeSubsystemIndex: Current active subsystem index.
+	 * @param [in] logicRules: A class containing the logic rules.
+	 * @param [in] activeSubSystemID: Current active subsystem index.
 	 * @param [in] algorithmName: The algorithm that uses this class.
 	 */
-	virtual void initializeModel(const std::vector<size_t>& systemStockIndexes, const std::vector<scalar_t>& switchingTimes,
-			const state_vector_t& initState, const size_t& activeSubsystemIndex=0, const char* algorithmName=NULL)
+	virtual void initializeModel(const LOGIC_RULES_T& logicRules, const int& activeSubSystemID, const char* algorithmName=NULL)
 	{
 		SystemBase<STATE_DIM>::numFunctionCalls_ = 0;
-		if (activeSubsystemIndex>=switchingTimes.size()-1)
-			throw std::runtime_error("activeSubsystemIndex refers to a non-existing subsystem based on the input switchingTimes sequence.");
 	}
 
 	/**
@@ -189,7 +149,7 @@ public:
 	 *
 	 * @return ControlledSystemBase*: a shared_ptr pointer.
 	 */
-	virtual std::shared_ptr<ControlledSystemBase<STATE_DIM, INPUT_DIM> > clone() const = 0;
+	virtual std::shared_ptr<ControlledSystemBase<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> > clone() const = 0;
 
 	/**
 	 * Computes derivative of the autonomous system dynamics.
@@ -202,15 +162,26 @@ public:
 	virtual void computeDerivative(
 			const scalar_t& t,
 			const state_vector_t& x,
-			const control_vector_t& u,
+			const input_vector_t& u,
 			state_vector_t& dxdt) = 0;
+
+	/**
+	 * State map at the transition time
+	 *
+	 * @param [in] time: transition time
+	 * @param [in] state: transition state
+	 * @param [out] mappedState: mapped state after transition
+	 */
+	virtual void mapState(const scalar_t& time, const state_vector_t& state, state_vector_t& mappedState) override {
+		SystemBase<STATE_DIM>::mapState(time, state, mappedState);
+	}
 
 protected:
 	controller_t controller_;
 
 	bool modelUpdated_;
 
-	LinearInterpolation<control_vector_t, Eigen::aligned_allocator<control_vector_t> > linInterpolateUff_;
+	LinearInterpolation<input_vector_t, Eigen::aligned_allocator<input_vector_t> > linInterpolateUff_;
 	LinearInterpolation<control_feedback_t, Eigen::aligned_allocator<control_feedback_t> > linInterpolateK_;
 };
 

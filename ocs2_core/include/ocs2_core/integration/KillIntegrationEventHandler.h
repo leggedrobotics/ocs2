@@ -8,6 +8,8 @@
 #ifndef OCS2_KILL_INTEGRATION_EVENTHANDLER_H_
 #define OCS2_KILL_INTEGRATION_EVENTHANDLER_H_
 
+#include <memory>
+
 #include "ocs2_core/integration/EventHandler.h"
 
 namespace ocs2{
@@ -17,20 +19,20 @@ namespace ocs2{
  *
  * @tparam STATE_DIM: Dimension of the state space.
  */
-template <size_t STATE_DIM>
+template <int STATE_DIM>
 class KillIntegrationEventHandler : public EventHandler<STATE_DIM>
 {
 public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+
+	typedef std::shared_ptr<KillIntegrationEventHandler<STATE_DIM>> Ptr;
 
 	typedef Eigen::Matrix<double,STATE_DIM,1> State_T;
 
 	/**
 	 * Default constructor
 	 */
-	KillIntegrationEventHandler():
-		killIntegration_(false)
-	{}
+	KillIntegrationEventHandler() {}
 
 	/**
 	 * Default destructor
@@ -45,7 +47,7 @@ public:
 	 * @return boolean: 
 	 */
 	bool checkEvent(const State_T& state, const double& time) override {
-		return killIntegration_;
+		return EventHandler<STATE_DIM>::killIntegration_;
 	}
 
 	/**
@@ -55,27 +57,12 @@ public:
 	 * @param [in] time: Current time.
 	 */
 	void handleEvent(const State_T& state, const double& time) override {
-
 		/* throw an exception which stops the integration */
 		throw std::runtime_error("Integration terminated due to external event specified by user.");
 	}
 
-    /**
-     * Activate KillIntegrationEventHandler.
-     */
-	void setEvent() {
-		killIntegration_ = true;
-	}
-
-    /**
-     * Deactivate KillIntegrationEventHandler.
-     */
-	void resetEvent() {
-		killIntegration_ = false;
-	}
-
 private:
-	bool killIntegration_;
+
 };
 
 } // namespace ocs2

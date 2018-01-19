@@ -17,7 +17,7 @@
 #include <ocs2_core/Dimensions.h>
 #include <ocs2_core/dynamics/ControlledSystemBase.h>
 #include <ocs2_core/dynamics/DerivativesBase.h>
-#include <ocs2_core/cost/CostFunctionBaseOCS2.h>
+#include <ocs2_core/cost/CostFunctionBase.h>
 #include <ocs2_core/integration/Integrator.h>
 
 #include "ocs2_slq/SolveBVP.h"

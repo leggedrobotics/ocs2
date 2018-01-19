@@ -8,10 +8,10 @@
 #ifndef SOLVEBVP_OCS2_H_
 #define SOLVEBVP_OCS2_H_
 
-#include <vector>
 #include <memory>
-#include <Eigen/Dense>
 #include <Eigen/StdVector>
+#include <vector>
+#include <Eigen/Dense>
 
 #include <ocs2_core/integration/Integrator.h>
 #include <ocs2_core/misc/LinearInterpolation.h>

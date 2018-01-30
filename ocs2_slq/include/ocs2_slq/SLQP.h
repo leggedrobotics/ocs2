@@ -19,6 +19,7 @@ namespace ocs2{
  *
  * @tparam STATE_DIM: Dimension of the state space.
  * @tparam INPUT_DIM: Dimension of the control input space.
+ * @tparam LOGIC_RULES_T: Logic Rules type (default NullLogicRules).
  */
 template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T=NullLogicRules<STATE_DIM,INPUT_DIM>>
 class SLQP : public SLQP_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>
@@ -111,97 +112,27 @@ public:
 	virtual ~SLQP();
 
 	/**
-	 * Forward integrate the system dynamics with given controller. It uses the given control policies and initial state,
-	 * to integrate the system dynamics in time period [initTime, finalTime].
+	 * Line search on the feedforwrd parts of the controller. It uses the following approach for line search:
+	 * The constraint TYPE-1 correction term is directly added through a user defined stepSize (defined in options_.constraintStepSize_).
+	 * But the cost minimization term is optimized through a line-search strategy defined in SLQ options.
 	 *
-	 * @param [in] initTime: Initial time.
-	 * @param [in] initState: Initial state.
-	 * @param [in] finalTime: Final time.
-	 * @param [in] controllersStock: Array of control policies.
-	 * @param [out] timeTrajectoriesStock: Array of trajectories containing the output time trajectory stamp.
-	 * @param [out] eventsPastTheEndIndecesStock: Array of indices containing past-the-end index of events trigger.
-	 * @param [out] stateTrajectoriesStock: Array of trajectories containing the output state trajectory.
-	 * @param [out] inputTrajectoriesStock: Array of trajectories containing the output control input trajectory.
-	 * @param [in] threadId: Working thread (default is 0).
+	 * @param [in] maxLearningRateStar: The maximum permitted learning rate.
 	 */
-	void rolloutTrajectory(const scalar_t& initTime,
-			const state_vector_t& initState,
-			const scalar_t& finalTime,
-			const controller_array_t& controllersStock,
-			std::vector<scalar_array_t>& timeTrajectoriesStock,
-			std::vector<size_array_t>& eventsPastTheEndIndecesStock,
-			state_vector_array2_t& stateTrajectoriesStock,
-			control_vector_array2_t& inputTrajectoriesStock,
-			size_t threadId = 0) override;
+	void lineSearch(scalar_t maxLearningRateStar=1.0) override;
 
 	/**
-	 * The interface class for constraints. It uses the given rollout trajectories and calculate the constraints.
+	 * Solves Riccati equations for all the partitions.
 	 *
-	 * @param [in] timeTrajectoriesStock: Array of trajectories containing the output time trajectory stamp.
-	 * @param [in] eventsPastTheEndIndecesStock: Array of indices containing past-the-end index of events trigger.
-	 * @param [in] stateTrajectoriesStock: Array of trajectories containing the output state trajectory.
-	 * @param [in] inputTrajectoriesStock: Array of trajectories containing the output control input trajectory.
-	 * @param [out] nc1TrajectoriesStock: Array of trajectories containing the number of the active state-input constraints.
-	 * @param [out] EvTrajectoryStock: Array of trajectories containing the value of the state-input constraints (if the roll-out is constrained the value is
-	 * always zero otherwise it is nonzero).
-	 * @param [out] nc2TrajectoriesStock: Array of trajectories containing the number of the active state-only constraints.
-	 * @param [out] HvTrajectoryStock: Array of trajectories containing the value of the state-only constraints.
-	 * @param [out] nc2FinalStock: Array containing the number of the active final state-only constraints.
-	 * @param [out] HvFinalStock: Array containing the value of the final state-only constraints.
+	 * @param [in] learningRate: The optimal learning rate from line search scheme.
+	 * @param [in] SmFinal: The final Sm for Riccati equation.
+	 * @param [in] SvFinal: The final Sv for Riccati equation.
+	 * @param [in] sFinal: The final s for Riccati equation.
 	 */
-	virtual void calculateRolloutConstraints(const std::vector<scalar_array_t>& timeTrajectoriesStock,
-			const std::vector<size_array_t>& eventsPastTheEndIndecesStock,
-			const state_vector_array2_t& stateTrajectoriesStock,
-			const control_vector_array2_t& inputTrajectoriesStock,
-			std::vector<size_array_t>& nc1TrajectoriesStock,
-			constraint1_vector_array2_t& EvTrajectoryStock,
-			std::vector<size_array_t>& nc2TrajectoriesStock,
-			constraint2_vector_array2_t& HvTrajectoryStock,
-			std::vector<size_array_t>& nc2FinalValuesStock,
-			constraint2_vector_array2_t& HvFinalStock) override;
-
-	/**
-	 * Calculates cost of a roll-out.
-	 *
-	 * @param [in] timeTrajectoriesStock: Array of trajectories containing the time trajectory stamp of a roll-out.
-	 * @param [in] eventsPastTheEndIndecesStock: Array of indices containing past-the-end index of events trigger.
-	 * @param [in] stateTrajectoriesStock: Array of trajectories containing the state trajectory of a roll-out.
-	 * @param [in] inputTrajectoriesStock: Array of trajectories containing the control input trajectory of a roll-out.
-	 * @param [out] totalCost: The total cost of the roll-out.
-	 */
-	void calculateRolloutCost(const std::vector<scalar_array_t>& timeTrajectoriesStock,
-			const std::vector<size_array_t>& eventsPastTheEndIndecesStock,
-			const state_vector_array2_t& stateTrajectoriesStock,
-			const control_vector_array2_t& inputTrajectoriesStock,
-			scalar_t& totalCost) override;
-
-	/**
-	 * Calculates the cost function plus penalty for state-only constraints of a roll-out.
-	 *
-	 * @param [in] timeTrajectoriesStock: Array of trajectories containing the time trajectory stamp of a roll-out.
-	 * @param [in] eventsPastTheEndIndecesStock: Array of indices containing past-the-end index of events trigger.
-	 * @param [in] stateTrajectoriesStock: Array of trajectories containing the state trajectory of a roll-out.
-	 * @param [in] inputTrajectoriesStock: Array of trajectories containing the control input trajectory of a roll-out.
-	 * @param [out] nc2TrajectoriesStock: Array of trajectories containing the number of the active state-only constraints.
-	 * @param [out] HvTrajectoryStock: Array of trajectories containing the value of the state-only constraints.
-	 * @param [out] nc2FinalStock: Array containing the number of the active final state-only constraints.
-	 * @param [out] HvFinalStock: Array containing the value of the final state-only constraints.
-	 * @param [out] totalCost: The total cost plus state-only constraints penalty.
-	 */
-	void calculateRolloutCost(const std::vector<scalar_array_t>& timeTrajectoriesStock,
-			const std::vector<size_array_t>& eventsPastTheEndIndecesStock,
-			const state_vector_array2_t& stateTrajectoriesStock,
-			const control_vector_array2_t& inputTrajectoriesStock,
-			const std::vector<size_array_t>& nc2TrajectoriesStock,
-			const constraint2_vector_array2_t& HvTrajectoryStock,
-			const std::vector<size_array_t>& nc2FinalStock,
-			const constraint2_vector_array2_t& HvFinalStock,
-			scalar_t& totalCost) override;
-
-	/**
-	 * Sets up the optimizer
-	 */
-	void setupOptimizer() override;
+	void solveSequentialRiccatiEquations(
+			const scalar_t& learningRate,
+			const state_matrix_t& SmFinal,
+			const state_vector_t& SvFinal,
+			const eigen_scalar_t& sFinal) override;
 
 	/**
 	 * Runs the initialization method for single thread SLQ.
@@ -233,45 +164,18 @@ public:
 
 protected:
 	/**
-	 * Solves Riccati equations for all the subsystems.
-	 *
-	 * @param [in] learningRate: The optimal learning rate from line search scheme.
-	 * @param [in] SmFinal: The final Sm for Riccati equation.
-	 * @param [in] SvFinal: The final Sv for Riccati equation.
-	 * @param [in] sFinal: The final s for Riccati equation.
-	 */
-	void solveSequentialRiccatiEquations(const scalar_t& learningRate,
-			const state_matrix_t& SmFinal,
-			const state_vector_t& SvFinal,
-			const eigen_scalar_t& sFinal) override;
-
-	/**
-	 * Computes the linearized dynamics for a particular subsystem
+	 * Computes the linearized dynamics for a particular time partition
 	 * @param [in] sysIndex
 	 */
-	void approximatePartitionLQ(const size_t& sysIndex) override;
+	void approximatePartitionLQ(const size_t& partitionIndex) override;
 
 	/**
-	 * Calculates the controller. This method uses the following variables:
-	 * - constrained, linearized model
-	 * - constrained, quadratized cost \n
+	 * Computes the controller for a particular time partition
 	 *
-	 * The method modifies:
-	 * - nominalControllersStock_: the controller that stabilizes the system around the new nominal trajectory and
-	 * 								improves the constraints as well as the increment to the feedforward control input.
+	 * @param partitionIndex: Time partition index
 	 */
-	void calculateController();
+	void calculatePartitionController(const size_t& partitionIndex) override;
 
-	/**
-	 * Line search on the feedforwrd parts of the controller and lagrange multipliers.
-	 * Based on the option flag lineSearchByMeritFuntion_ it uses two different approaches for line search:
-	 * 	- The constraint correction term is added by a user defined stepSize.
-	 * 	- The line search uses the merit function for choosing the best stepSize.
-	 * @param [out] learningRateStar: The optimal learning rate.
-	 * @param [in] maxLearningRateStar: The maximum permitted learning rate.
-	 */
-	void lineSearch(scalar_t& learningRateStar,
-			scalar_t maxLearningRateStar=1.0);
 
 private:
 

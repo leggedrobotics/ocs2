@@ -42,6 +42,12 @@ public:
 	size_t getNumFunctionCalls() {return numFunctionCalls_;}
 
 	/**
+	 * Resets the number of function calls to zero.
+	 *
+	 */
+	void resetNumFunctionCalls() {numFunctionCalls_ = 0;}
+
+	/**
 	 * Computes the autonomous system dynamics.
 	 * @param [in] t: Current time.
 	 * @param [in] x: Current state.

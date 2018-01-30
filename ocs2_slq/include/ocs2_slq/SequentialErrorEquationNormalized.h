@@ -74,8 +74,8 @@ public:
 	 * @param [in] state: transition state
 	 * @param [out] mappedState: mapped state after transition
 	 */
-	void mapState(const double& z, const s_vector_t& state,
-			s_vector_t& mappedState) override {
+	void mapState(const scalar_t& z, const state_vector_t& state,
+			state_vector_t& mappedState) override {
 
 		mappedState = state;
 	}
@@ -98,6 +98,14 @@ public:
 
 		// Error equation for the equivalent system
 		derivatives = (switchingTimeFinal_-switchingTimeStart_)*(__Gm.transpose()*Sve+__Gv);
+	}
+
+	/**
+	 * Reset the Error Riccati equation
+	 */
+	void reset() {
+		GvFunc_.reset();
+		GmFunc_.reset();
 	}
 
 

@@ -47,7 +47,7 @@ public:
 	 * @return boolean: 
 	 */
 	bool checkEvent(const State_T& state, const double& time) override {
-		return EventHandler<STATE_DIM>::killIntegration_;
+		return killIntegration_;
 	}
 
 	/**
@@ -58,12 +58,31 @@ public:
 	 */
 	void handleEvent(const State_T& state, const double& time) override {
 		/* throw an exception which stops the integration */
-		throw std::runtime_error("Integration terminated due to external event specified by user.");
+		throw std::runtime_error("Integration terminated due to an external signal specified by user.");
 	}
 
-private:
+	/**
+	 * Activate KillIntegrationEventHandler.
+	 */
+	static void ActivateKillIntegration() {
+		killIntegration_ = true;
+	}
+
+	/**
+	 * Deactivate KillIntegrationEventHandler.
+	 */
+	static void DeactivateKillIntegration() {
+		killIntegration_ = false;
+	}
+
+protected:
+	static bool killIntegration_; /*=false*/
 
 };
+
+
+template <int STATE_DIM>
+bool KillIntegrationEventHandler<STATE_DIM>::killIntegration_ = false;
 
 } // namespace ocs2
 

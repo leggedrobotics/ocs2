@@ -79,27 +79,8 @@ public:
 	 * @param [in] time: Current time.
 	 */
 	virtual void handleEvent(const State_T& state, const double& time) = 0;
-
-	/**
-	 * Activate KillIntegrationEventHandler.
-	 */
-	static void ActivateKillIntegration() {
-		killIntegration_ = true;
-	}
-
-	/**
-	 * Deactivate KillIntegrationEventHandler.
-	 */
-	static void DeactivateKillIntegration() {
-		killIntegration_ = false;
-	}
-
-protected:
-	static bool killIntegration_; /*=false*/
 };
 
-template <int STATE_DIM>
-bool EventHandler<STATE_DIM>::killIntegration_ = false;
 
 } // namespace ocs2
 

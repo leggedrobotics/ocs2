@@ -180,6 +180,12 @@ public:
 		std::vector<Eigen::Matrix<double, DIM1, DIM2>, Eigen::aligned_allocator<Eigen::Matrix<double, DIM1, DIM2>> > deltaUff_;
 		std::vector<Eigen::Matrix<double, DIM1, STATE_DIM>, Eigen::aligned_allocator<Eigen::Matrix<double, DIM1, STATE_DIM>> > k_;
 
+		LinearFunction_t()
+		: uff_(0),
+		  deltaUff_(0),
+		  k_(0)
+		{}
+
 		/**
 		 * Updates the internal variables with the given input
 		 * @param [in] arg
@@ -284,7 +290,6 @@ public:
 
 			useMultiThreading_(false),
 			nThreads_(4),
-			numPartitionings_(4),
 			debugPrintMP_(false),
 			lsStepsizeGreedy_(true),
 			checkNumericalStability_(true),
@@ -362,8 +367,6 @@ public:
 		bool useMultiThreading_;
 		/** Number of threads used in the multi threading scheme. */
 		size_t nThreads_;
-		/** Number of time horizon partitionings. */
-		size_t numPartitionings_;
 		/** Special debugging output for multi threading scheme. */
 		bool debugPrintMP_;
 		/**

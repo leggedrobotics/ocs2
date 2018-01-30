@@ -20,12 +20,12 @@ namespace ocs2{
  * @tparam LOGIC_RULES_T: Logic Rules type (default NullLogicRules).
  */
 template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T=NullLogicRules>
-class QuadraticCostFunction : public CostFunctionBaseOCS2< STATE_DIM, INPUT_DIM, LOGIC_RULES_T>
+class QuadraticCostFunction : public CostFunctionBase< STATE_DIM, INPUT_DIM, LOGIC_RULES_T>
 {
 public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-	typedef CostFunctionBaseOCS2<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> Base;
+	typedef CostFunctionBase<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> Base;
 
 	typedef Dimensions<STATE_DIM, INPUT_DIM> DIMENSIONS;
 	typedef typename DIMENSIONS::scalar_t scalar_t;
@@ -63,15 +63,18 @@ public:
 	virtual ~QuadraticCostFunction() {}
 
 	/**
-	 * Initializes the system dynamics.
+	 * Initializes the quadratic cost function.
 	 *
-	 * @param [in] logicRules: A class containing the logic rules.
-	 * @param [in] activeSubSystemID: Current active subsystem index.
-	 * @param [in] algorithmName: The algorithm that uses this class.
+	 * @param [in] logicRulesMachine: A class which contains and parse the logic rules e.g
+	 * method findActiveSubsystemHandle returns a Lambda expression which can be used to
+	 * find the ID of the current active subsystem.
+	 * @param [in] partitionIndex: index of the time partition.
+	 * @param [in] algorithmName: The algorithm that class this class (default not defined).
 	 */
-	virtual void initializeModel(const LOGIC_RULES_T& logicRules, const int& activeSubSystemID, const char* algorithmName=NULL)
-	{
-		Base::initializeModel(logicRules, activeSubSystemID, algorithmName);
+	virtual void initializeModel(const LogicRulesMachine<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>& logicRulesMachine,
+			const size_t& partitionIndex, const char* algorithmName=NULL) override {
+
+		Base::initializeModel(logicRulesMachine, partitionIndex, algorithmName);
 	}
 
 	/**

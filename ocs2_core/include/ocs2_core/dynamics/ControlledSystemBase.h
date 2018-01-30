@@ -16,7 +16,7 @@
 #include "ocs2_core/Dimensions.h"
 #include "ocs2_core/dynamics/SystemBase.h"
 #include "ocs2_core/misc/LinearInterpolation.h"
-#include "ocs2_core/logic/LogicRulesBase.h"
+#include "ocs2_core/logic/LogicRulesMachine.h"
 
 namespace ocs2{
 
@@ -103,17 +103,17 @@ public:
 	 *
 	 * @param [in] t: Current time.
 	 * @param [in] x: Current state.
-	 * @param [out] u: Current input.
+	 * @return Current input.
 	 */
-	void computeInput(const scalar_t& t, const state_vector_t& x, input_vector_t& u)
+	input_vector_t computeInput(const scalar_t& t, const state_vector_t& x)
 	{
 		input_vector_t uff;
-		control_feedback_t k;
-
 		linInterpolateUff_.interpolate(t, uff);
+
+		control_feedback_t k;
 		linInterpolateK_.interpolate(t, k);
 
-		u = uff + k*x;
+		return uff + k*x;
 	}
 
 	/**
@@ -127,22 +127,22 @@ public:
 
 		SystemBase<STATE_DIM>::numFunctionCalls_++;
 
-		input_vector_t u;
-		computeInput(t, x, u);
+		input_vector_t u = computeInput(t, x);
 		computeDerivative(t, x, u, dxdt);
 	}
 
 	/**
 	 * Initializes the system dynamics.
 	 *
-	 * @param [in] logicRules: A class containing the logic rules.
-	 * @param [in] activeSubSystemID: Current active subsystem index.
-	 * @param [in] algorithmName: The algorithm that uses this class.
+	 * @param [in] logicRulesMachine: A class which contains and parse the logic rules e.g
+	 * method findActiveSubsystemHandle returns a Lambda expression which can be used to
+	 * find the ID of the current active subsystem.
+	 * @param [in] partitionIndex: index of the time partition.
+	 * @param [in] algorithmName: The algorithm that class this class (default not defined).
 	 */
-	virtual void initializeModel(const LOGIC_RULES_T& logicRules, const int& activeSubSystemID, const char* algorithmName=NULL)
-	{
-		SystemBase<STATE_DIM>::numFunctionCalls_ = 0;
-	}
+	virtual void initializeModel(const LogicRulesMachine<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>& logicRulesMachine,
+			const size_t& partitionIndex, const char* algorithmName=NULL)
+	{}
 
 	/**
 	 * Returns pointer to ControlledSystemBase class.

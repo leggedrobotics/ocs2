@@ -12,7 +12,7 @@
 #include <cstring>
 
 #include "ocs2_core/Dimensions.h"
-#include "ocs2_core/logic/LogicRulesBase.h"
+#include "ocs2_core/logic/LogicRulesMachine.h"
 
 namespace ocs2{
 
@@ -68,13 +68,16 @@ public:
 	}
 
 	/**
-	 * Initializes the system derivative.
+	 * Initializes the system dynamics derivatives.
 	 *
-	 * @param [in] logicRules: A class containing the logic rules.
-	 * @param [in] activeSubSystemID: Current active subsystem index.
-	 * @param [in] algorithmName: The algorithm that uses this class.
+	 * @param [in] logicRulesMachine: A class which contains and parse the logic rules e.g
+	 * method findActiveSubsystemHandle returns a Lambda expression which can be used to
+	 * find the ID of the current active subsystem.
+	 * @param [in] partitionIndex: index of the time partition.
+	 * @param [in] algorithmName: The algorithm that class this class (default not defined).
 	 */
-	virtual void initializeModel(const LOGIC_RULES_T& logicRules, const int& activeSubSystemID, const char* algorithmName=NULL)
+	virtual void initializeModel(const LogicRulesMachine<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>& logicRulesMachine,
+			const size_t& partitionIndex, const char* algorithmName=NULL)
 	{}
 
 	/**

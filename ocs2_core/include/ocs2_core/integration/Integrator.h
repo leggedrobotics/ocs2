@@ -145,7 +145,7 @@ public:
 	 * @param [in] dt: Time step.
 	 * @param [out] stateTrajectory: Output state trajectory.
 	 * @param [out] timeTrajectory: Output time stamp trajectory.
-	 * @param [in] Whether to concatenate the output to the input trajectories or override (default).
+	 * @param [in] concatOutput: Whether to concatenate the output to the input trajectories or override (default).
 	 */
 	void integrate(
 			const typename Base::State_T& initialState,
@@ -168,12 +168,13 @@ public:
 
 		// reset the trajectories
 		if (concatOutput==false) {
-			timeTrajectory->clear();
-			stateTrajectory->clear();
+			timeTrajectory.clear();
+			stateTrajectory.clear();
 		}
 
-		Base::setTimeTrajectoryPtrToObserver(timeTrajectory);
-		Base::setStateTrajectoryPtrToObserver(stateTrajectory);
+//		Base::setTimeTrajectoryPtrToObserver(timeTrajectory);
+//		Base::setStateTrajectoryPtrToObserver(stateTrajectory);
+		Base::setOutputTrajectoryPtrToObserver(&stateTrajectory, &timeTrajectory);
 
 		initialize(initialStateInternal_init_temp, startTime_temp, dt);
 
@@ -195,9 +196,10 @@ public:
 	 * @param [in] AbsTol: The absolute tolerance error for ode solver.
 	 * @param [in] RelTol: The relative tolerance error for ode solver.
 	 * @param [in] maxNumSteps: The maximum number of integration points per a second for ode solver.
-	 * @param [in] Whether to concatenate the output to the input trajectories or override (default).
+	 * @param [in] concatOutput: Whether to concatenate the output to the input trajectories or override (default).
 	 */
-	void integrate(const typename Base::State_T& initialState,
+	void integrate(
+			const typename Base::State_T& initialState,
 			const double& startTime,
 			const double& finalTime,
 			typename Base::StateTrajectory_T& stateTrajectory,
@@ -215,12 +217,13 @@ public:
 
 		// reset the trajectories
 		if (concatOutput==false) {
-			timeTrajectory->clear();
-			stateTrajectory->clear();
+			timeTrajectory.clear();
+			stateTrajectory.clear();
 		}
 
-		Base::setTimeTrajectoryPtrToObserver(timeTrajectory);
-		Base::setStateTrajectoryPtrToObserver(stateTrajectory);
+//		Base::setTimeTrajectoryPtrToObserver(timeTrajectory);
+//		Base::setStateTrajectoryPtrToObserver(stateTrajectory);
+		Base::setOutputTrajectoryPtrToObserver(&stateTrajectory, &timeTrajectory);
 
 		integrate_adaptive_specialized<Stepper>(internalStartState, startTime, finalTime, dtInitial, AbsTol, RelTol);
 	}
@@ -239,7 +242,7 @@ public:
 	 * @param [in] AbsTol: The absolute tolerance error for ode solver.
 	 * @param [in] RelTol: The relative tolerance error for ode solver.
 	 * @param [in] maxNumSteps: The maximum number of integration points per a second for ode solver.
-	 * @param [in] Whether to concatenate the output to the input trajectories or override (default).
+	 * @param [in] concatOutput: Whether to concatenate the output to the input trajectories or override (default).
 	 */
 	void integrate(const typename Base::State_T& initialState,
 			typename Base::TimeTrajectory_T::const_iterator beginTimeItr,
@@ -258,10 +261,11 @@ public:
 
 		// reset the trajectories
 		if (concatOutput==false) {
-			stateTrajectory->clear();
+			stateTrajectory.clear();
 		}
 
-		Base::setStateTrajectoryPtrToObserver(stateTrajectory);
+//		Base::setStateTrajectoryPtrToObserver(stateTrajectory);
+		Base::setOutputTrajectoryPtrToObserver(&stateTrajectory);
 
 		integrate_times_specialized<Stepper>(internalStartState, beginTimeItr, endTimeItr, dtInitial, AbsTol, RelTol);
 	}
@@ -484,9 +488,15 @@ template <int STATE_DIM>
 using IntegratorBulirschStoer = Integrator < STATE_DIM, bulirsch_stoer_t<STATE_DIM>>;
 
 
-//// works only after boost 1.56
-//template <int STATE_DIM, size_t STEPS>
-//using IntegratorAdamsBashforthMoulton = Integrator < STATE_DIM, adams_bashforth_moulton_uncontrolled_t<STATE_DIM, STEPS>>;
+/**
+ * Adams-Bashforth-Moulton integrator (works only after boost 1.56)
+ */
+#if (BOOST_VERSION / 100000 == 1 && BOOST_VERSION / 100 % 1000 > 55)
+
+template <int STATE_DIM, size_t STEPS>
+using IntegratorAdamsBashforthMoulton = Integrator < STATE_DIM, adams_bashforth_moulton_uncontrolled_t<STATE_DIM, STEPS>>;
+
+#endif
 
 } // namespace ocs2
 

@@ -107,14 +107,6 @@ public:
 		}
 
 		try	{
-			opt.numPartitionings_ = pt.get<int>("ocs2.numPartitionings");
-			if (verbose)  std::cout << " #### Option loader : option 'numPartitionings' .................... " << opt.numPartitionings_ << std::endl;
-		}
-		catch (const std::exception& e){
-			if (verbose)  std::cout << " #### Option loader : option 'numPartitionings' .................... " << opt.numPartitionings_ << "\t(default)" << std::endl;
-		}
-
-		try	{
 			opt.maxIterationGSLQP_ = pt.get<int>("ocs2.maxIterationGSLQP");
 			if (verbose)  std::cout << " #### Option loader : option 'maxIterationGSLQP' ................... " << opt.maxIterationGSLQP_ << std::endl;
 		}

@@ -210,20 +210,20 @@ public:
 		QvFinalPtr_ = QvFinalPtr;
 		QmFianlPtr_ = QmFianlPtr;
 
-		std::cout << std::endl;
-		std::cout << "timeStampPtr.size(): " << timeStampPtr->size() << std::endl;
-		for (size_t k=0; k<timeStampPtr->size(); k++) {
-
-			std::cout << "Am[" << timeStampPtr->at(k) << "]: \n" << AmPtr->at(k) << std::endl;
-			std::cout << "Bm[" << timeStampPtr->at(k) << "]: \n" << BmPtr->at(k) << std::endl;
-			std::cout << "Qm[" << timeStampPtr->at(k) << "]: \n" << QmPtr->at(k) << std::endl;
-			std::cout << "Pm[" << timeStampPtr->at(k) << "]: \n" << PmPtr->at(k) << std::endl;
-			std::cout << "Rm[" << timeStampPtr->at(k) << "]: \n" << RmPtr->at(k) << std::endl;
-			std::cout << "RmInverse[" << timeStampPtr->at(k) << "]: \n" << RmInversePtr->at(k) << std::endl;
+//		std::cout << std::endl;
+//		std::cout << "timeStampPtr.size(): " << timeStampPtr->size() << std::endl;
+//		for (size_t k=0; k<timeStampPtr->size(); k++) {
+//
+//			std::cout << "Am[" << timeStampPtr->at(k) << "]: \n" << AmPtr->at(k) << std::endl;
+//			std::cout << "Bm[" << timeStampPtr->at(k) << "]: \n" << BmPtr->at(k) << std::endl;
+//			std::cout << "Qm[" << timeStampPtr->at(k) << "]: \n" << QmPtr->at(k) << std::endl;
+//			std::cout << "Pm[" << timeStampPtr->at(k) << "]: \n" << PmPtr->at(k) << std::endl;
+//			std::cout << "Rm[" << timeStampPtr->at(k) << "]: \n" << RmPtr->at(k) << std::endl;
+//			std::cout << "RmInverse[" << timeStampPtr->at(k) << "]: \n" << RmInversePtr->at(k) << std::endl;
 //			std::cout << "[" << timeStampPtr->at(k) << "]: \n" << ->at(k) << std::endl;
 //			std::cout << "[" << timeStampPtr->at(k) << "]: \n" << ->at(k) << std::endl;
-			std::cout << std::endl;
-		}
+//			std::cout << std::endl;
+//		}
 
 	}
 

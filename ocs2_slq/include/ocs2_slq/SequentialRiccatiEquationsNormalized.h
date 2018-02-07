@@ -220,8 +220,6 @@ public:
 //			std::cout << "Pm[" << timeStampPtr->at(k) << "]: \n" << PmPtr->at(k) << std::endl;
 //			std::cout << "Rm[" << timeStampPtr->at(k) << "]: \n" << RmPtr->at(k) << std::endl;
 //			std::cout << "RmInverse[" << timeStampPtr->at(k) << "]: \n" << RmInversePtr->at(k) << std::endl;
-//			std::cout << "[" << timeStampPtr->at(k) << "]: \n" << ->at(k) << std::endl;
-//			std::cout << "[" << timeStampPtr->at(k) << "]: \n" << ->at(k) << std::endl;
 //			std::cout << std::endl;
 //		}
 
@@ -250,14 +248,14 @@ public:
 	 * @param [in] state: transition state
 	 * @param [out] mappedState: mapped state after transition
 	 */
-	void mapState(const double& z, const s_vector_t& state,
-			s_vector_t& mappedState) override {
+	void mapState(const scalar_t& z, const s_vector_t& state, s_vector_t& mappedState) override {
 
 		scalar_t time = switchingTimeFinal_ + (switchingTimeStart_-switchingTimeFinal_)*z;
 
 		size_t index = find(eventTime_, time);
 
-		if (index == eventTime_.size())  throw std::runtime_error("The Riccati state jump time is not defined.");
+		if (index == eventTime_.size())
+			throw std::runtime_error("The Riccati state jump time is not defined.");
 
 		s_vector_t allSsJump;
 		convert2Vector(QmFianlPtr_->at(index), QvFinalPtr_->at(index), qFinalPtr_->at(index), allSsJump);

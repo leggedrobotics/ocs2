@@ -248,137 +248,134 @@ public:
 		BULIRSCH_STOER = 3
 	};
 
-	/**
-	 * This structure contains the settings for the SLQ algorithm.
-	 */
-	struct Options {
-	public:
-		Options() :
-			maxIterationGSLQP_(15),
-			minLearningRateGSLQP_(0.05),
-			maxLearningRateGSLQP_(1.0),
-			lineSearchContractionRate_(0.5),
-			minRelCostGSLQP_(1e-3),
-			stateConstraintPenaltyCoeff_(0.0),
-			stateConstraintPenaltyBase_(1.0),
-			meritFunctionRho_(1.0),
-			constraintStepSize_(1.0),
-			dispayGSLQP_(false),
-			displayShortSummary_(false),
-			warmStartGSLQP_(false),
-			useLQForDerivatives_(false),
-
-			AbsTolODE_(1e-9),
-			RelTolODE_(1e-6),
-			maxNumStepsPerSecond_(5000),
-			simulationIsConstrained_(false),
-			minSimulationTimeDuration_(1e-3),
-			minAbsConstraint1ISE_(1e-3),
-			minRelConstraint1ISE_(1e-3),
-
-			displayGradientDescent_(true),
-			tolGradientDescent_(1e-2),
-			acceptableTolGradientDescent_(1e-1),
-			maxIterationGradientDescent_(20),
-			minLearningRateNLP_(0.05),
-		    maxLearningRateNLP_(1.0),
-		    useAscendingLineSearchNLP_(true),
-			minAcceptedSwitchingTimeDifference_(0.0),
-
-			RiccatiIntegratorType_(ODE45),
-			adams_integrator_dt_(0.001),
-
-			useMultiThreading_(false),
-			nThreads_(4),
-			debugPrintMP_(false),
-			lsStepsizeGreedy_(true),
-			checkNumericalStability_(true),
-			useRiccatiSolver_(true)
-		{}
-
-		/** Maximum number of iterations of SLQ. */
-		size_t maxIterationGSLQP_;
-		/** Minimum number of iterations of SLQ. */
-		double minLearningRateGSLQP_;
-		/** Maximum learning rate of line-search scheme in SLQ. */
-		double maxLearningRateGSLQP_;
-		/** Line-search scheme contraction rate. */
-		double lineSearchContractionRate_;
-		/** This value determines the termination condition based on the minimum relative changes of the cost. */
-		double minRelCostGSLQP_;
-		/** The penalty function coefficient, \f$\alpha\f$, for state-only constraints. \f$ p(i) = \alpha a^i \f$ */
-		double stateConstraintPenaltyCoeff_;
-		/** The penalty function base, \f$ a \f$, for state-only constraints. \f$ p(i) = \alpha a^i \f$ */
-		double stateConstraintPenaltyBase_;
-		/** merit function coefficient. */
-		double meritFunctionRho_;
-		/** Constant step size for type-1 constraints. */
-		double constraintStepSize_;
-		/** This value determines to display the log output of SLQ. */
-		bool dispayGSLQP_;
-		/** This value determines to display the a summary log of SLQ. */
-		bool displayShortSummary_;
-		/** This value determines to use a warm starting scheme for calculating cost gradients w.r.t. switching times. */
-		bool warmStartGSLQP_;
-		/** This value determines to use LQ-based method or sweeping method for calculating cost gradients w.r.t. switching times. */
-		bool useLQForDerivatives_;
-
-		/** This value determines the absolute tolerance error for ode solvers. */
-		double AbsTolODE_;
-		/** This value determines the relative tolerance error for ode solvers. */
-		double RelTolODE_;
-		/** This value determines the maximum number of integration points per a second for ode solvers. */
-		size_t maxNumStepsPerSecond_;
-		bool simulationIsConstrained_;
-		double minSimulationTimeDuration_;
-		/** This value determines the maximum permitted absolute ISE (Integral of Square Error) for constrained type-1.*/
-		double minAbsConstraint1ISE_;
-		/** This value determines the maximum permitted relative ISE (Integral of Square Error) for constrained type-1.*/
-		double minRelConstraint1ISE_;
-
-		/** This value determines to display the log output of GSLQ. */
-		bool displayGradientDescent_;
-		double tolGradientDescent_;
-		/** This value determines the termination condition for OCS2 based on the minimum relative changes of the cost.*/
-		double acceptableTolGradientDescent_;
-		/** This value determines the maximum number of iterations in OCS2 algorithm.*/
-		size_t maxIterationGradientDescent_;
-		/** This value determines the minimum step size for the line search scheme in OCS2 algorithm.*/
-		double minLearningRateNLP_;
-		/** This value determines the maximum step size for the line search scheme in OCS2 algorithm.*/
-		double maxLearningRateNLP_;
-		/**
-		 * This value determines the the line search scheme to be used in OCS2. \n
-		 * - \b Ascending: The step size eventually increases from the minimum value to the maximum. \n
-		 * - \b Descending: The step size eventually decreases from the minimum value to the maximum.
-		 * */
-		bool useAscendingLineSearchNLP_;
-		/** This value determines the minimum allowable difference between to consecutive switching times.*/
-		double minAcceptedSwitchingTimeDifference_;
-
-		/** Check the numerical stability of the algorithms for debugging purpose. */
-		bool checkNumericalStability_;
-		/** Riccati integrator type. */
-		size_t RiccatiIntegratorType_;
-		/** Adams integrator dt. */
-		double adams_integrator_dt_;
-
-		/** Use multi threading for the algorithms. */
-		bool useMultiThreading_;
-		/** Number of threads used in the multi threading scheme. */
-		size_t nThreads_;
-		/** Special debugging output for multi threading scheme. */
-		bool debugPrintMP_;
-		/**
-		 * line search options in multi threading scheme.
-		 * - True: The largest acceptable step-size will be chosen. The solution is equivalent to single core lineSearch.
-		 * - False: The first acceptable step-size will be chosen.
-		 * */
-		bool lsStepsizeGreedy_;
-
-		/** If true, SLQ uses ode solver to solve the Riccati equations. Otherwise it uses matrix exponential to solve it. */
-		bool useRiccatiSolver_;
-	};
+//	/**
+//	 * This structure contains the settings for the SLQ algorithm.
+//	 */
+//	struct Options {
+//	public:
+//		Options() :
+//			maxIterationGSLQP_(15),
+//			minLearningRateGSLQP_(0.05),
+//			maxLearningRateGSLQP_(1.0),
+//			lineSearchContractionRate_(0.5),
+//			minRelCostGSLQP_(1e-3),
+//			stateConstraintPenaltyCoeff_(0.0),
+//			stateConstraintPenaltyBase_(1.0),
+//			meritFunctionRho_(1.0),
+//			constraintStepSize_(1.0),
+//			dispayInfo_(false),
+//			displayShortSummary_(false),
+//			warmStartGSLQP_(false),
+//			useLQForDerivatives_(false),
+//
+//			AbsTolODE_(1e-9),
+//			RelTolODE_(1e-6),
+//			maxNumStepsPerSecond_(5000),
+//			simulationIsConstrained_(false),
+//			minSimulationTimeDuration_(1e-3),
+//			minAbsConstraint1ISE_(1e-3),
+//			minRelConstraint1ISE_(1e-3),
+//
+//			displayGradientDescent_(false),
+//			tolGradientDescent_(1e-2),
+//			acceptableTolGradientDescent_(1e-1),
+//			maxIterationGradientDescent_(20),
+//			minLearningRateNLP_(0.05),
+//		    maxLearningRateNLP_(1.0),
+//		    useAscendingLineSearchNLP_(true),
+//			minAcceptedSwitchingTimeDifference_(0.0),
+//
+//			RiccatiIntegratorType_(ODE45),
+//			adams_integrator_dt_(0.001),
+//
+//			nThreads_(4),
+//			debugPrintMP_(false),
+//			lsStepsizeGreedy_(true),
+//			checkNumericalStability_(true),
+//			useRiccatiSolver_(true)
+//		{}
+//
+//		/** Maximum number of iterations of SLQ. */
+//		size_t maxIterationGSLQP_;
+//		/** Minimum number of iterations of SLQ. */
+//		double minLearningRateGSLQP_;
+//		/** Maximum learning rate of line-search scheme in SLQ. */
+//		double maxLearningRateGSLQP_;
+//		/** Line-search scheme contraction rate. */
+//		double lineSearchContractionRate_;
+//		/** This value determines the termination condition based on the minimum relative changes of the cost. */
+//		double minRelCostGSLQP_;
+//		/** The penalty function coefficient, \f$\alpha\f$, for state-only constraints. \f$ p(i) = \alpha a^i \f$ */
+//		double stateConstraintPenaltyCoeff_;
+//		/** The penalty function base, \f$ a \f$, for state-only constraints. \f$ p(i) = \alpha a^i \f$ */
+//		double stateConstraintPenaltyBase_;
+//		/** merit function coefficient. */
+//		double meritFunctionRho_;
+//		/** Constant step size for type-1 constraints. */
+//		double constraintStepSize_;
+//		/** This value determines to display the log output of SLQ. */
+//		bool dispayInfo_;
+//		/** This value determines to display the a summary log of SLQ. */
+//		bool displayShortSummary_;
+//		/** This value determines to use a warm starting scheme for calculating cost gradients w.r.t. switching times. */
+//		bool warmStartGSLQP_;
+//		/** This value determines to use LQ-based method or sweeping method for calculating cost gradients w.r.t. switching times. */
+//		bool useLQForDerivatives_;
+//
+//		/** This value determines the absolute tolerance error for ode solvers. */
+//		double AbsTolODE_;
+//		/** This value determines the relative tolerance error for ode solvers. */
+//		double RelTolODE_;
+//		/** This value determines the maximum number of integration points per a second for ode solvers. */
+//		size_t maxNumStepsPerSecond_;
+//		bool simulationIsConstrained_;
+//		double minSimulationTimeDuration_;
+//		/** This value determines the maximum permitted absolute ISE (Integral of Square Error) for constrained type-1.*/
+//		double minAbsConstraint1ISE_;
+//		/** This value determines the maximum permitted relative ISE (Integral of Square Error) for constrained type-1.*/
+//		double minRelConstraint1ISE_;
+//
+//		/** This value determines to display the log output of GSLQ. */
+//		bool displayGradientDescent_;
+//		double tolGradientDescent_;
+//		/** This value determines the termination condition for OCS2 based on the minimum relative changes of the cost.*/
+//		double acceptableTolGradientDescent_;
+//		/** This value determines the maximum number of iterations in OCS2 algorithm.*/
+//		size_t maxIterationGradientDescent_;
+//		/** This value determines the minimum step size for the line search scheme in OCS2 algorithm.*/
+//		double minLearningRateNLP_;
+//		/** This value determines the maximum step size for the line search scheme in OCS2 algorithm.*/
+//		double maxLearningRateNLP_;
+//		/**
+//		 * This value determines the the line search scheme to be used in OCS2. \n
+//		 * - \b Ascending: The step size eventually increases from the minimum value to the maximum. \n
+//		 * - \b Descending: The step size eventually decreases from the minimum value to the maximum.
+//		 * */
+//		bool useAscendingLineSearchNLP_;
+//		/** This value determines the minimum allowable difference between to consecutive switching times.*/
+//		double minAcceptedSwitchingTimeDifference_;
+//
+//		/** Check the numerical stability of the algorithms for debugging purpose. */
+//		bool checkNumericalStability_;
+//		/** Riccati integrator type. */
+//		size_t RiccatiIntegratorType_;
+//		/** Adams integrator dt. */
+//		double adams_integrator_dt_;
+//
+//		/** Number of threads used in the multi threading scheme. */
+//		size_t nThreads_;
+//		/** Special debugging output for multi threading scheme. */
+//		bool debugPrintMP_;
+//		/**
+//		 * line search options in multi threading scheme.
+//		 * - True: The largest acceptable step-size will be chosen. This strategy is equivalent to the single core one.
+//		 * - False: The first acceptable step-size will be chosen.
+//		 * */
+//		bool lsStepsizeGreedy_;
+//
+//		/** If true, SLQ uses ode solver to solve the Riccati equations. Otherwise it uses matrix exponential to solve it. */
+//		bool useRiccatiSolver_;
+//	};
 };
 
 } // namespace ocs2

@@ -180,13 +180,12 @@ public:
 	}
 
     /**
-     * Returns pointer to CostFunctionOCS2 class.
-     * @return CostFunctionBase*: a shared_ptr pointer.
+     * Returns pointer to the class.
+     *
+     * @return A raw pointer to the class.
      */
-	std::shared_ptr<Base> clone() const {
-		typedef QuadraticCostFunction<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> quadratic_cost_t;
-		return std::allocate_shared<quadratic_cost_t, Eigen::aligned_allocator<quadratic_cost_t>>(
-				Eigen::aligned_allocator<quadratic_cost_t>(),*this);
+	virtual QuadraticCostFunction<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>* clone() const override {
+		return new QuadraticCostFunction<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>(*this);
 	}
 
 protected:

@@ -70,7 +70,7 @@ public:
 	 * @return SystemDynamicsLinearizer&:
 	 */
 	SystemDynamicsLinearizer& operator=(const SystemDynamicsLinearizer&other)  {
-		nonlinearSystemPtr_ = other.nonlinearSystemPtr_->clone();
+		nonlinearSystemPtr_ = typename controlled_system_base_t::Ptr(other.nonlinearSystemPtr_->clone());
 		doubleSidedDerivative_ = other.doubleSidedDerivative_;
 		isSecondOrderSystem_ = other.isSecondOrderSystem_;
 	}
@@ -222,21 +222,19 @@ public:
 	}
 
 	/**
-	 * Returns pointer to DerivativesBase class.
+	 * Returns pointer to the class.
 	 *
-	 * @return Base*: a shared_ptr pointer.
+	 * @return A raw pointer to the class.
 	 */
-	std::shared_ptr<Base> clone() const  {
-		typedef SystemDynamicsLinearizer<STATE_DIM, INPUT_DIM> system_lineaizer_t;
-		return std::allocate_shared<system_lineaizer_t, Eigen::aligned_allocator<system_lineaizer_t>>(
-				Eigen::aligned_allocator<system_lineaizer_t>(),*this );
+	virtual SystemDynamicsLinearizer<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>* clone() const override {
+		return new SystemDynamicsLinearizer<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>(*this);
 	}
 
 
 private:
 	const double eps_= sqrt(Eigen::NumTraits<double>::epsilon());
 
-	std::shared_ptr<controlled_system_base_t> nonlinearSystemPtr_;
+	typename controlled_system_base_t::Ptr nonlinearSystemPtr_;
 	bool doubleSidedDerivative_;
 	bool isSecondOrderSystem_;
 

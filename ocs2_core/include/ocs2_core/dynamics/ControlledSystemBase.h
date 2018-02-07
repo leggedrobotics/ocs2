@@ -35,6 +35,7 @@ public:
 	static_assert(std::is_base_of<LogicRulesBase<STATE_DIM, INPUT_DIM>, LOGIC_RULES_T>::value, "LOGIC_RULES_T must inherit from LogicRulesBase");
 
 	typedef std::shared_ptr<ControlledSystemBase<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> > Ptr;
+	typedef std::shared_ptr<const ControlledSystemBase<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> > ConstPtr;
 
 	typedef Dimensions<STATE_DIM, INPUT_DIM> DIMENSIONS;
 	typedef typename DIMENSIONS::scalar_t scalar_t;
@@ -145,11 +146,11 @@ public:
 	{}
 
 	/**
-	 * Returns pointer to ControlledSystemBase class.
+	 * Returns pointer to the class.
 	 *
-	 * @return ControlledSystemBase*: a shared_ptr pointer.
+	 * @return A raw pointer to the class.
 	 */
-	virtual std::shared_ptr<ControlledSystemBase<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> > clone() const = 0;
+	virtual ControlledSystemBase<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>* clone() const = 0;
 
 	/**
 	 * Computes derivative of the autonomous system dynamics.

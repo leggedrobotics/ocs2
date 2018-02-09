@@ -19,8 +19,8 @@
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/info_parser.hpp>
 
-#include "EndEffectorConstraintBase.h"
-#include "PotentialFieldConstraint.h"
+#include "c_switched_model_interface/state_constraint/EndEffectorConstraintBase.h"
+#include "c_switched_model_interface/state_constraint/PotentialFieldConstraint.h"
 
 namespace switched_model {
 

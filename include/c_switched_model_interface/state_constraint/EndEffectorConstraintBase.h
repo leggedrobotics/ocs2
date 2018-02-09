@@ -20,7 +20,9 @@ class EndEffectorConstraintBase
 public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-	typedef std::shared_ptr<EndEffectorConstraintBase> Ptr;
+	typedef std::shared_ptr<EndEffectorConstraintBase>		 Ptr;
+	typedef std::shared_ptr<const EndEffectorConstraintBase> ConstPtr;
+
 	static constexpr double plusInf_  = +1e10;
 	static constexpr double minusInf_ = -1e10;
 
@@ -39,10 +41,10 @@ public:
 	/**
 	 * An approximate constraint indicator function. The cube should inscribed the actual constrained area.
 	 */
-	virtual bool isActive(const Eigen::Vector3d& vector);
+	virtual bool isActive(const Eigen::Vector3d& vector) const;
 
 	void normalizeVector(const Eigen::Vector3d& vector,
-			Eigen::Vector3d& normalizedVector, Eigen::Vector3d& scale);
+			Eigen::Vector3d& normalizedVector, Eigen::Vector3d& scale) const;
 
 	bool isRepeller() const { return isRepeller_; }
 
@@ -54,9 +56,10 @@ public:
 	const Eigen::Vector2d& getYLimits() const;
 	const Eigen::Vector2d& getZLimits() const;
 
-	virtual double constraintValue(const Eigen::Vector3d& vector) = 0;
-	virtual Eigen::Vector3d constraintDerivative(const Eigen::Vector3d& vector) = 0;
-	virtual Ptr clone() const = 0;
+	virtual double constraintValue(const Eigen::Vector3d& vector) const = 0;
+	virtual Eigen::Vector3d constraintDerivative(const Eigen::Vector3d& vector) const = 0;
+
+	virtual EndEffectorConstraintBase* clone() const = 0;
 
 protected:
 	const double localInf_ = 1e9;

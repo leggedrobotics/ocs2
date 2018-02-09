@@ -8,7 +8,7 @@
 #ifndef POTENTIALFIELDCONSTRAINT_H_
 #define POTENTIALFIELDCONSTRAINT_H_
 
-#include "EndEffectorConstraintBase.h"
+#include "c_switched_model_interface/state_constraint/EndEffectorConstraintBase.h"
 
 namespace switched_model {
 
@@ -17,7 +17,8 @@ class PotentialFieldConstraint : public EndEffectorConstraintBase
 public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-	typedef std::shared_ptr<EllipticalConstraint> Ptr;
+	typedef std::shared_ptr<EllipticalConstraint> 		Ptr;
+	typedef std::shared_ptr<const EllipticalConstraint> ConstPtr;
 
 	PotentialFieldConstraint(const bool& isRepeller = true,
 			const Eigen::Vector2d& xLimits = Eigen::Vector2d(minusInf_,plusInf_),
@@ -41,10 +42,10 @@ public:
 		}
 	}
 
-	~PotentialFieldConstraint() {}
+	virtual ~PotentialFieldConstraint() {}
 
 
-	virtual double constraintValue(const Eigen::Vector3d& vector) override {
+	virtual double constraintValue(const Eigen::Vector3d& vector) const override {
 
 		Eigen::Vector3d normalizedVector, scale;
 		normalizeVector(vector, normalizedVector, scale);
@@ -62,7 +63,7 @@ public:
 
 
 
-	virtual Eigen::Vector3d constraintDerivative(const Eigen::Vector3d& vector) override {
+	virtual Eigen::Vector3d constraintDerivative(const Eigen::Vector3d& vector) const override {
 
 		Eigen::Vector3d normalizedVector, scale;
 		normalizeVector(vector, normalizedVector, scale);
@@ -78,8 +79,8 @@ public:
 			return  normalizedVector.cwiseQuotient(scale) / (d2*sqrt(d2));
 	}
 
-	virtual EndEffectorConstraintBase::Ptr clone() const override {
-		return EndEffectorConstraintBase::Ptr(new PotentialFieldConstraint(*this));
+	virtual PotentialFieldConstraint* clone() const override {
+		return PotentialFieldConstraint(*this);
 	}
 
 private:

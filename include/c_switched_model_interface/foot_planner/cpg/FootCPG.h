@@ -10,8 +10,8 @@
 
 #include <cmath>
 
-#include "misc/CubicSpline.h"
-#include "misc/SplineCpg.h"
+#include "c_switched_model_interface/misc/CubicSpline.h"
+#include "c_switched_model_interface/foot_planner/cpg/SplineCPG.h"
 
 namespace switched_model {
 
@@ -51,7 +51,7 @@ public:
 	 * @param time
 	 * @return
 	 */
-	Eigen::Vector3d calculatePosition(const double& time) {
+	Eigen::Vector3d calculatePosition(const double& time) const {
 
 		Eigen::Vector3d p;
 		p(0) = xSplinePtr_->evaluateSplinePosition(time);
@@ -65,7 +65,7 @@ public:
 	 * @param time
 	 * @return
 	 */
-	Eigen::Vector3d calculateVelocity(const double& time) {
+	Eigen::Vector3d calculateVelocity(const double& time) const {
 
 		Eigen::Vector3d v;
 		v(0) = xSplinePtr_->evaluateSplineVelocity(time);
@@ -79,7 +79,7 @@ public:
 	 * @param time
 	 * @return
 	 */
-	Eigen::Vector3d calculateAcceleration(const double& time) {
+	Eigen::Vector3d calculateAcceleration(const double& time) const {
 
 		Eigen::Vector3d a;
 		a(0) = xSplinePtr_->evaluateSplineAcceleration(time);
@@ -91,7 +91,7 @@ public:
 private:
 	CubicSpline::Ptr xSplinePtr_;
 	CubicSpline::Ptr ySplinePtr_;
-	SplineCpg::Ptr 	 zDoubleSplinePtr_;
+	SplineCPG::Ptr 	 zDoubleSplinePtr_;
 };
 
 

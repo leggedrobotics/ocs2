@@ -18,7 +18,8 @@ constexpr double EndEffectorConstraintBase::minusInf_;
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-bool EndEffectorConstraintBase::isActive(const Eigen::Vector3d& vector) {
+bool EndEffectorConstraintBase::isActive(const Eigen::Vector3d& vector) const {
+
 	bool isInXLimits, isInYLimits, isInZLimits;
 	isInXLimits = (xLimits_(0)<=vector(0) && vector(0)<=xLimits_(1)) ? true : false;
 	isInYLimits = (yLimits_(0)<=vector(1) && vector(1)<=yLimits_(1)) ? true : false;
@@ -36,7 +37,7 @@ bool EndEffectorConstraintBase::isActive(const Eigen::Vector3d& vector) {
 /******************************************************************************************************/
 /******************************************************************************************************/
 void EndEffectorConstraintBase::normalizeVector(const Eigen::Vector3d& vector,
-		Eigen::Vector3d& normalizedVector, Eigen::Vector3d& scale) {
+		Eigen::Vector3d& normalizedVector, Eigen::Vector3d& scale) const {
 
 	// x direction
 	if (-localInf_<xLimits_(0) && xLimits_(1)<localInf_) {

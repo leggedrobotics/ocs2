@@ -1,52 +1,30 @@
 /*
- * FeetZDirectionPlanner.h
+ * FeetPlanner.h
  *
- *  Created on: Jul 5, 2016
+ *  Created on: Jul 10, 2017
  *      Author: farbod
  */
 
-#ifndef FEETZDIRECTIONPLANNER_H_
-#define FEETZDIRECTIONPLANNER_H_
+#ifndef FEETPLANNER_H_
+#define FEETPLANNER_H_
 
 #include <memory>
 #include <array>
 #include <vector>
 
-#include "CpgBase.h"
+#include "c_switched_model_interface/foot_planner/cpg/FootCPG.h"
 
 namespace switched_model {
 
-class FeetZDirectionPlannerBase
+class FeetPlanner
 {
 public:
-	typedef std::shared_ptr<FeetZDirectionPlannerBase> Ptr;
+	EIGEN_MAKE_ALIGNED_OPERATOR_NEW;
 
-	FeetZDirectionPlannerBase() {}
-	virtual ~FeetZDirectionPlannerBase() {}
+	typedef std::shared_ptr<FeetPlanner>  Ptr;
+	typedef std::array<Eigen::Vector2d,4> vector_2d_array_t;
 
-	virtual void planSingleMode(const std::vector<size_t>& systemStockIndexes, const std::vector<double>& switchingTimes,
-			const size_t& activeSubsystemIndex, CpgBase::PtrArray& plannedCPG) = 0;
-
-	virtual Ptr clone() const = 0;
-
-	virtual void getStartTimesIndices(std::vector<std::array<size_t,4> >& startTimesIndices) const { startTimesIndices = startTimesIndices_; }
-	virtual void getFinalTimesIndices(std::vector<std::array<size_t,4> >& finalTimesIndices) const { finalTimesIndices = finalTimesIndices_; }
-
-protected:
-	std::vector<std::array<size_t,4> > startTimesIndices_;
-	std::vector<std::array<size_t,4> > finalTimesIndices_;
-
-};
-
-
-
-template <class CPG>
-class FeetZDirectionPlanner  : public FeetZDirectionPlannerBase
-{
-public:
-	typedef std::shared_ptr<FeetZDirectionPlanner<CPG> > Ptr;
-
-	FeetZDirectionPlanner(const std::vector<std::array<bool,4> >& stanceLegsSequene,
+	FeetPlanner(const std::vector<std::array<bool,4> >& stanceLegsSequene,
 			const double& swingLegLiftOff = 0.15,
 			const double& swingTimeScale = 1.0,
 			const std::array<bool,4>& defaultStartMode = std::array<bool,4>{1,1,1,1},
@@ -58,25 +36,21 @@ public:
 	  defaultFinalMode_(defaultFinalMode)
 	{}
 
-	~FeetZDirectionPlanner()  {}
-
-	/**
-	 * clone the class
-	 */
-	virtual FeetZDirectionPlannerBase::Ptr clone() const override {
-		return FeetZDirectionPlannerBase::Ptr(new FeetZDirectionPlanner(*this));
-	}
+	~FeetPlanner()  {}
 
 	/**
 	 *
 	*/
 	void planSingleMode(const std::vector<size_t>& systemStockIndexes, const std::vector<double>& switchingTimes,
-			const size_t& activeSubsystemIndex, CpgBase::PtrArray& plannedCPG)  {
+			const size_t& activeSubsystemIndex,
+			const double& startTime, const vector_2d_array_t& startPosXY, const vector_2d_array_t& startVelXY,
+			const std::vector<vector_2d_array_t>& touchdownPosXYStock,
+			FootCPG::PtrArray& plannedCPG)  {
 
-		// update FeetZDirectionPlanner if a new systemStockIndexes is set
-		if (systemStockIndexes_!=systemStockIndexes) {
+		// update FeetPlanner if a new systemStockIndexes is set
+		if (systemStockIndexes!=systemStockIndexes_) {
 			systemStockIndexes_ = systemStockIndexes;
-			updateFeetZDirectionPlanner(systemStockIndexes_, stanceLegsStock_, startTimesIndices_, finalTimesIndices_);
+			updateFeetPlanner(systemStockIndexes_, stanceLegsStock_, startTimesIndices_, finalTimesIndices_);
 		}
 
 		size_t numSubsystems = systemStockIndexes_.size();
@@ -91,15 +65,29 @@ public:
 
 		for (size_t j=0; j<4; j++)  {
 
-			// skip if it is a stance leg
-			if (stanceLegsStock_[activeSubsystemIndex][j]==true)  continue;
-
 			// create the CPG from the given times
-			plannedCPG[j] = std::shared_ptr<CPG>( new CPG(swingLegLiftOff_, swingTimeScale_) );
+			plannedCPG[j] = FootCPG::Ptr( new FootCPG(swingLegLiftOff_, swingTimeScale_) );
 
-			const double& startTime = switchingTimes_[startTimesIndices_[activeSubsystemIndex][j]];
-			const double& finalTime = switchingTimes_[finalTimesIndices_[activeSubsystemIndex][j]];
-			plannedCPG[j]->set(startTime, finalTime, plannedCPG[j]->adaptiveSwingLegLiftOff(startTime, finalTime));
+			// for a swing leg
+			if (stanceLegsStock_[activeSubsystemIndex][j]==false)  {
+
+				const size_t& startIndex = startTimesIndices_[activeSubsystemIndex][j];
+				const size_t& finalIndex = finalTimesIndices_[activeSubsystemIndex][j];
+				plannedCPG[j]->set(startTime,
+						switchingTimes_[startIndex],
+						switchingTimes_[finalIndex],
+						startPosXY[j], startVelXY[j], touchdownPosXYStock[finalIndex][j],
+						plannedCPG[j]->adaptiveSwingLegLiftOff(switchingTimes_[startIndex], switchingTimes_[finalIndex]) );
+
+			} else { // for a stance leg
+
+				plannedCPG[j]->set(startTime,
+						switchingTimes_[activeSubsystemIndex],
+						switchingTimes_[activeSubsystemIndex+1],
+						startPosXY[j], Eigen::Vector2d::Zero() /*startVelXY*/, startPosXY[j] /*touchdownPosXY*/,
+						0.0 /*Z direction lift*/);
+			}
+
 		}  // end of j loop
 	}
 
@@ -114,7 +102,7 @@ protected:
 	 * @param startTimesIndices:
 	 * @param finalTimesIndices:
 	 */
-	void updateFeetZDirectionPlanner(const std::vector<size_t>& systemStockIndexes,
+	void updateFeetPlanner(const std::vector<size_t>& systemStockIndexes,
 			std::vector<std::array<bool,4>>& stanceLegsStock,
 			std::vector<std::array<size_t,4>>& startTimesIndices,
 			std::vector<std::array<size_t,4>>& finalTimesIndices) {
@@ -203,8 +191,12 @@ private:
 	std::vector<double> switchingTimes_;
 	std::vector<size_t> systemStockIndexes_;
 	std::vector<std::array<bool,4> > stanceLegsStock_;
+
+	std::vector<std::array<size_t,4> > startTimesIndices_;
+	std::vector<std::array<size_t,4> > finalTimesIndices_;
 };
 
 }  // end of switched_model namespace
 
-#endif /* FEETZDIRECTIONPLANNER_H_ */
+
+#endif /* FEETPLANNER_H_ */

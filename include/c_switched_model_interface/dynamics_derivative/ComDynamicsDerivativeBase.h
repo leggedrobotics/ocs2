@@ -24,12 +24,22 @@
 namespace switched_model {
 
 template <size_t JOINT_COORD_SIZE>
-class ComDynamicsDerivativeBase : public ocs2::DerivativesBase<12,12>
+class ComDynamicsDerivativeBase : public ocs2::DerivativesBase<12,12,ocs2::NullLogicRules<12,12>>
 {
 public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-	typedef ocs2::DerivativesBase<12,12> Base;
+	enum
+	{
+		STATE_DIM = 12,
+		INPUT_DIM = 12
+	};
+
+	typedef ocs2::NullLogicRules<12,12> logic_rules_t;
+	typedef ocs2::LogicRulesMachine<STATE_DIM, INPUT_DIM, logic_rules_t> logic_rules_machine_t;
+
+	typedef ocs2::DerivativesBase<12,12,logic_rules_t> Base;
+
 	typedef ComModelBase<JOINT_COORD_SIZE> com_model_t;
 	typedef KinematicsModelBase<JOINT_COORD_SIZE> kinematic_model_t;
 
@@ -38,11 +48,12 @@ public:
 	typedef Eigen::Matrix<double,6,JOINT_COORD_SIZE> base_jacobian_matrix_t;
 	typedef Eigen::Matrix<double,JOINT_COORD_SIZE,JOINT_COORD_SIZE> state_joint_matrix_t;
 
-	ComDynamicsDerivativeBase(kinematic_model_t* kinematicModelPtr, com_model_t* comModelPtr,
+	ComDynamicsDerivativeBase(const kinematic_model_t* kinematicModelPtr, const com_model_t* comModelPtr,
 			const double& gravitationalAcceleration=9.81, const bool& constrainedIntegration=true)
 
-	: kinematicModelPtr_(kinematicModelPtr),
-	  comModelPtr_(comModelPtr),
+	: Base(),
+	  kinematicModelPtr_(kinematicModelPtr->clone()),
+	  comModelPtr_(comModelPtr->clone()),
 	  o_gravityVector_(0.0, 0.0, -gravitationalAcceleration),
 	  constrainedIntegration_(constrainedIntegration)
 	{
@@ -66,18 +77,24 @@ public:
 	/**
 	 * clone this class.
 	 */
-	virtual std::shared_ptr<Base> clone() const override;
+	virtual ComDynamicsDerivativeBase<JOINT_COORD_SIZE>* clone() const override;
 
 	/**
-	 * Initializes the model: This method should always be called at the very first call of the model.
+	 * Initializes the system dynamics. This method should always be called at the very first call of the model.
+	 *
+	 * @param [in] logicRulesMachine: A class which contains and parse the logic rules e.g
+	 * method findActiveSubsystemHandle returns a Lambda expression which can be used to
+	 * find the ID of the current active subsystem.
+	 * @param [in] partitionIndex: index of the time partition.
+	 * @param [in] algorithmName: The algorithm that class this class (default not defined).
 	 */
-	virtual void initializeModel(const std::vector<size_t>& systemStockIndexes, const std::vector<scalar_t>& switchingTimes,
-			const state_vector_t& initState, const size_t& activeSubsystemIndex=0, const char* algorithmName=NULL) override;
+	virtual void initializeModel(const logic_rules_machine_t& logicRulesMachine,
+			const size_t& partitionIndex, const char* algorithmName=NULL) override;
 
 	/**
 	 * Set state and input.
 	 */
-	virtual void setCurrentStateAndControl(const scalar_t& t, const state_vector_t& x, const control_vector_t& u) override;
+	virtual void setCurrentStateAndControl(const scalar_t& t, const state_vector_t& x, const input_vector_t& u) override;
 
 	/**
 	 * set the current state and contact force input
@@ -172,9 +189,8 @@ private:
 
 	bool constrainedIntegration_;
 
-	const bool useInertiaMatrixDerivate_ = false;
-
 	std::array<bool,4> stanceLegs_;
+
 	base_coordinate_t  q_base_;
 	base_coordinate_t  dq_base_; // local angular and linear velocity of Base
 	joint_coordinate_t qJoints_;
@@ -199,6 +215,7 @@ private:
 	Eigen::Matrix<double, 6, 6> MInverse_;
 	std::array<Eigen::Matrix<double,6,6>, 12> partialM_;
 
+	std::string algorithmName_;
 };
 
 } // end of namespace switched_model

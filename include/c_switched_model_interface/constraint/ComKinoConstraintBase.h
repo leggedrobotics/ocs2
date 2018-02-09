@@ -1,12 +1,12 @@
 /*
- * ComKinoDynamicsDerivativeBase.h
+ * ComKinoConstraintBase.h
  *
  *  Created on: Nov 12, 2017
  *      Author: farbod
  */
 
-#ifndef COMKINODYNAMICSDERIVATIVEBASE_H_
-#define COMKINODYNAMICSDERIVATIVEBASE_H_
+#ifndef COMKINOCONSTRAINTBASE_H_
+#define COMKINOCONSTRAINTBASE_H_
 
 #include <array>
 #include <memory>
@@ -14,12 +14,11 @@
 #include <string>
 #include <Eigen/Dense>
 
-#include <ocs2_core/dynamics/DerivativesBase.h>
+#include <ocs2_core/constraint/ConstraintBase.h>
 
 #include "c_switched_model_interface/core/SwitchedModel.h"
 #include "c_switched_model_interface/core/KinematicsModelBase.h"
 #include "c_switched_model_interface/core/ComModelBase.h"
-#include "ComDynamicsDerivativeBase.h"
 #include "c_switched_model_interface/logic/SwitchedModelLogicRulesBase.h"
 #include "c_switched_model_interface/state_constraint/EndEffectorConstraintBase.h"
 #include <c_switched_model_interface/core/Options.h>
@@ -27,7 +26,7 @@
 namespace switched_model {
 
 template <size_t JOINT_COORD_SIZE>
-class ComKinoDynamicsDerivativeBase : public ocs2::DerivativesBase<12+JOINT_COORD_SIZE, 12+JOINT_COORD_SIZE, SwitchedModelLogicRulesBase<JOINT_COORD_SIZE>>
+class ComKinoConstraintBase : public ocs2::ConstraintBase<12+JOINT_COORD_SIZE, 12+JOINT_COORD_SIZE, SwitchedModelLogicRulesBase<JOINT_COORD_SIZE>>
 {
 public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
@@ -38,10 +37,11 @@ public:
 		INPUT_DIM = 12+JOINT_COORD_SIZE
 	};
 
-	typedef SwitchedModelLogicRulesBase<JOINT_COORD_SIZE> logic_rules_t;
+	typedef SwitchedModelLogicRulesBase<JOINT_COORD_SIZE> 	logic_rules_t;
+	typedef typename logic_rules_t::feet_cpg_ptr_t 			feet_cpg_ptr_t;
 	typedef ocs2::LogicRulesMachine<STATE_DIM, INPUT_DIM, logic_rules_t> logic_rules_machine_t;
 
-	typedef ocs2::DerivativesBase<STATE_DIM, INPUT_DIM, logic_rules_t> Base;
+	typedef ocs2::ConstraintBase<STATE_DIM, INPUT_DIM, logic_rules_t> Base;
 
 	typedef ComModelBase<JOINT_COORD_SIZE> com_model_t;
 	typedef KinematicsModelBase<JOINT_COORD_SIZE> kinematic_model_t;
@@ -51,48 +51,48 @@ public:
 	typedef typename Base::state_vector_t state_vector_t;
 	typedef typename Base::input_vector_t input_vector_t;
 	typedef typename Base::control_gain_matrix_t control_gain_matrix_t;
-	typedef typename Base::constraint1_state_matrix_t constraint1_state_matrix_t;
+	typedef typename Base::constraint1_vector_t 		constraint1_vector_t;
+	typedef typename Base::constraint1_state_matrix_t 	constraint1_state_matrix_t;
 	typedef typename Base::constraint1_control_matrix_t constraint1_control_matrix_t;
-	typedef typename Base::constraint2_state_matrix_t constraint2_state_matrix_t;
+	typedef typename Base::constraint2_vector_t 		constraint2_vector_t;
+	typedef typename Base::constraint2_state_matrix_t 	constraint2_state_matrix_t;
 
 	typedef typename SwitchedModel<JOINT_COORD_SIZE>::base_coordinate_t  base_coordinate_t;
 	typedef typename SwitchedModel<JOINT_COORD_SIZE>::joint_coordinate_t joint_coordinate_t;
 	typedef Eigen::Matrix<double,6,JOINT_COORD_SIZE> base_jacobian_matrix_t;
 
 
-	ComKinoDynamicsDerivativeBase(const kinematic_model_t* kinematicModelPtr, const com_model_t* comModelPtr,
+	ComKinoConstraintBase(const kinematic_model_t* kinematicModelPtr, const com_model_t* comModelPtr,
 			const scalar_t& gravitationalAcceleration=9.81, const Options& options = Options())
 
 	: Base(),
 	  kinematicModelPtr_(kinematicModelPtr->clone()),
 	  comModelPtr_(comModelPtr->clone()),
 	  o_gravityVector_(0.0, 0.0, -gravitationalAcceleration),
-	  options_(options),
-	  comDynamicsDerivative_(kinematicModelPtr, comModelPtr, gravitationalAcceleration, options.constrainedIntegration_)
+	  options_(options)
 	{
-		if (gravitationalAcceleration < 0)
+		if (gravitationalAcceleration<0)
 			throw std::runtime_error("Gravitational acceleration should be a positive value.");
 	}
 
 	/**
-	 * copy construntor of ComKinoDynamicsDerivativeBase
+	 * copy construntor of ComKinoConstraintBase
 	 */
-	ComKinoDynamicsDerivativeBase(const ComKinoDynamicsDerivativeBase& rhs)
+	ComKinoConstraintBase(const ComKinoConstraintBase& rhs)
 
 	: Base(rhs),
 	  kinematicModelPtr_(rhs.kinematicModelPtr_->clone()),
 	  comModelPtr_(rhs.comModelPtr_->clone()),
 	  o_gravityVector_(rhs.o_gravityVector_),
-	  options_(rhs.options_),
-	  comDynamicsDerivative_(rhs.comDynamicsDerivative_)
+	  options_(rhs.options_)
 	{}
 
-	virtual ~ComKinoDynamicsDerivativeBase() {}
+	virtual ~ComKinoConstraintBase() {}
 
 	/**
-	 * clone ComKinoDynamicsDerivativeBase class.
+	 * clone ComKinoConstraintBase class.
 	 */
-	virtual ComKinoDynamicsDerivativeBase<JOINT_COORD_SIZE>* clone() const override;
+	virtual ComKinoConstraintBase<JOINT_COORD_SIZE>* clone() const override;
 
 	/**
 	 * Initializes the system dynamics. This method should always be called at the very first call of the model.
@@ -116,18 +116,51 @@ public:
 	virtual void setCurrentStateAndControl(const scalar_t& t, const state_vector_t& x, const input_vector_t& u) override;
 
 	/**
-	 * calculate and retrieve the A matrix (i.e. the state derivative of the dynamics w.r.t. state vector).
-	 *
-	 * @param A: a nx-by-nx matrix
+	 * Equality constraint type-1 consists of states and inputs.
 	 */
-	virtual void getDerivativeState(state_matrix_t& A)  override;
+	virtual void computeConstriant1(size_t& numConstraint1, constraint1_vector_t& g1) override;
 
 	/**
-	 * calculate and retrieve the B matrix (i.e. the state derivative of the dynamics w.r.t. input vector).
-	 *
-	 * @param B: a ny-by-nu matrix
+	 * Equality and inequality constraint type-2 consists of states.
 	 */
-	virtual void getDerivativesControl(control_gain_matrix_t& B)  override;
+	virtual void computeConstriant2(size_t& numConstraint2, constraint2_vector_t& g2) override;
+
+	/**
+	 * Equality and inequality final constraint type-2 consists of states.
+	 */
+	virtual void computeFinalConstriant2(size_t& numFinalConstraint2, constraint2_vector_t& g2Final) override;
+
+	/**
+	 * calculate and retrieve the C matrix (i.e. the state derivative of the state-input constraints w.r.t. state vector).
+	 * Note that only nc1 top rows are valid where nc1 is the number of active state-input constraints at the current time.
+	 *
+	 * @param C: a nc1-by-nx matrix
+	 */
+	virtual void getConstraint1DerivativesState(constraint1_state_matrix_t& C)  override;
+
+	/**
+	 * calculate and retrieve the D matrix (i.e. the state derivative of the state-input constraints w.r.t. input vector).
+	 * Note that only nc1 top rows are valid where nc1 is the number of active state-input constraints at the current time.
+	 *
+	 * @param D: a nc1-by-nu matrix
+	 */
+	virtual void getConstraint1DerivativesControl(constraint1_control_matrix_t& D)  override;
+
+	/**
+	 * calculate and retrieve the F matrix (i.e. the state derivative of the state-only constraints w.r.t. state vector).
+	 * Note that only nc2 top rows are valid where nc2 is the number of active state-only constraints at the current time.
+	 *
+	 * @param F: a nc2-by-nx matrix
+	 */
+	virtual void getConstraint2DerivativesState(constraint2_state_matrix_t& F) override;
+
+	/**
+	 * * calculate and retrieve the F matrix (i.e. the state derivative of the final state-only constraints w.r.t. state vector).
+	 * Note that only nc2Final top rows are valid where nc2Final is the number of active final state-only constraints at the current time.
+	 *
+	 * @param F_final: a nc2Final-by-nx matrix
+	 */
+	virtual void getFinalConstraint2DerivativesState(constraint2_state_matrix_t& F_final) override;
 
 	/**
 	 * set the stance legs
@@ -137,23 +170,25 @@ public:
 	/**
 	 * get the model's stance leg
 	 */
-	void getStanceLegs (std::array<bool,4>& stanceLegs) const;
+	void getStanceLegs (std::array<bool,4>& stanceLegs);
 
 
 private:
-
 	typename kinematic_model_t::Ptr kinematicModelPtr_;
 	typename com_model_t::Ptr comModelPtr_;
-	Eigen::Vector3d   o_gravityVector_;
+	Eigen::Vector3d o_gravityVector_;
 	Options options_;
-
-	ComDynamicsDerivativeBase<JOINT_COORD_SIZE> comDynamicsDerivative_;
 
 	const logic_rules_t* logicRulesPtr_;
 
 	std::function<size_t(scalar_t)> findActiveSubsystemFnc_;
 
+	const std::vector<EndEffectorConstraintBase::ConstPtr>* endEffectorStateConstraintsPtr_;
+
 	std::array<bool,4> stanceLegs_;
+	std::array<bool,4> nextPhaseStanceLegs_;
+
+	const feet_cpg_ptr_t* zDirectionRefsPtr_;
 
 	joint_coordinate_t qJoints_;
 	joint_coordinate_t dqJoints_;
@@ -165,18 +200,28 @@ private:
 	Eigen::Vector3d com_base2CoM_;
 	base_jacobian_matrix_t b_comJacobain_;
 	base_jacobian_matrix_t b_comJacobainTimeDerivative_;
+
 	std::array<Eigen::Vector3d,4> com_com2StanceFeet_;
+	std::array<Eigen::Vector3d,4> com_base2StanceFeet_;
+	std::array<Eigen::Vector3d,4> o_origin2StanceFeet_;
 
 	std::array<bool,4> feetConstraintIsActive_;
+	std::array<scalar_t,4> feetConstraintValues_;
 	std::array<Eigen::Vector3d,4> feetConstraintJacobains_;
 
 	std::array<base_jacobian_matrix_t,4> b_feetJacobains_;
+	std::array<base_jacobian_matrix_t,4> b_feetJacobainsTimeDerivative_;
+
+	// Inertia matrix
+	Eigen::Matrix<double, 6, 6> M_;
+	Eigen::Matrix<double, 6, 6> dMdt_;
+	Eigen::Matrix<double, 6, 6> MInverse_;
 
 	std::string algorithmName_;
 };
 
 } // end of namespace switched_model
 
-#include "implementation/ComKinoDynamicsDerivativeBase.h"
+#include "implementation/ComKinoConstraintBase.h"
 
-#endif /* COMKINODYNAMICSDERIVATIVEBASE_H_ */
+#endif /* COMKINOCONSTRAINTBASE_H_ */

@@ -38,7 +38,16 @@ public:
 	typedef Eigen::Matrix<double,JOINT_COORDINATE_SIZE,1>       joint_coordinate_t;
 	typedef Eigen::Matrix<double,BASE_COORDINATE_SIZE,1>        base_coordinate_t;
 
+
 };
+
+/**
+ * Whether to use Inertia Matrix derivate
+ * @return
+ */
+inline bool useInertiaMatrixDerivate() {
+	return false;
+}
 
 /**
  * Origin to base rotation matrix
@@ -47,7 +56,7 @@ public:
  * @return
  */
 template <typename Derived>
-static Eigen::Matrix3d RotationMatrixOrigintoBase(const Eigen::DenseBase<Derived>& eulerAngles) {
+inline Eigen::Matrix3d RotationMatrixOrigintoBase(const Eigen::DenseBase<Derived>& eulerAngles) {
 
 	if (eulerAngles.innerSize()!=3 || eulerAngles.outerSize()!=1)  throw std::runtime_error("Input argument should be a 3-by-1 vector.");
 
@@ -74,7 +83,7 @@ static Eigen::Matrix3d RotationMatrixOrigintoBase(const Eigen::DenseBase<Derived
  * @return
  */
 template <typename Derived>
-static Eigen::Matrix3d RotationMatrixBasetoOrigin(const Eigen::DenseBase<Derived>& eulerAngles) {
+inline Eigen::Matrix3d RotationMatrixBasetoOrigin(const Eigen::DenseBase<Derived>& eulerAngles) {
 
 	if (eulerAngles.innerSize()!=3 || eulerAngles.outerSize()!=1)  throw std::runtime_error("Input argument should be a 3-by-1 vector.");
 
@@ -101,7 +110,7 @@ static Eigen::Matrix3d RotationMatrixBasetoOrigin(const Eigen::DenseBase<Derived
  * @return
  */
 template <typename Derived>
-static Eigen::Matrix3d CrossProductMatrix(const Eigen::DenseBase<Derived>& in) {
+inline Eigen::Matrix3d CrossProductMatrix(const Eigen::DenseBase<Derived>& in) {
 
 	if (in.innerSize()!=3 || in.outerSize()!=1)  throw std::runtime_error("Input argument should be a 3-by-1 vector.");
 

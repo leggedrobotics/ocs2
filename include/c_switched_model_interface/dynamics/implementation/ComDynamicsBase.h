@@ -11,21 +11,25 @@ namespace switched_model {
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t JOINT_COORD_SIZE>
-std::shared_ptr<typename ComDynamicsBase<JOINT_COORD_SIZE>::Base> ComDynamicsBase<JOINT_COORD_SIZE>::clone() const {
+ComDynamicsBase<JOINT_COORD_SIZE>* ComDynamicsBase<JOINT_COORD_SIZE>::clone() const {
 
-	return std::allocate_shared< ComDynamicsBase<JOINT_COORD_SIZE>, Eigen::aligned_allocator<ComDynamicsBase<JOINT_COORD_SIZE>> > (
-			Eigen::aligned_allocator<ComDynamicsBase<JOINT_COORD_SIZE>>(), *this);
-};
+	return new ComDynamicsBase<JOINT_COORD_SIZE>(*this);
+}
 
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t JOINT_COORD_SIZE>
-void ComDynamicsBase<JOINT_COORD_SIZE>::initializeModel(const std::vector<size_t>& systemStockIndexes, const std::vector<scalar_t>& switchingTimes,
-		const state_vector_t& initState, const size_t& activeSubsystemIndex/*=0*/, const char* algorithmName/*=NULL*/) {
+void ComDynamicsBase<JOINT_COORD_SIZE>::initializeModel(const logic_rules_machine_t& logicRulesMachine,
+		const size_t& partitionIndex, const char* algorithmName/*=NULL*/) {
 
-	Base::initializeModel(systemStockIndexes, switchingTimes, initState, activeSubsystemIndex, algorithmName);
+	Base::initializeModel(logicRulesMachine, partitionIndex, algorithmName);
+
+	if (algorithmName!=NULL)
+		algorithmName_.assign(algorithmName);
+	else
+		algorithmName_.clear();
 }
 
 
@@ -49,7 +53,7 @@ void ComDynamicsBase<JOINT_COORD_SIZE>::setData(const std::array<bool,4>& stance
 template <size_t JOINT_COORD_SIZE>
 void ComDynamicsBase<JOINT_COORD_SIZE>::computeDerivative(const scalar_t& t,
 		const state_vector_t& x,
-		const control_vector_t& u,
+		const input_vector_t& u,
 		state_vector_t& dxdt)   {
 
 	// Rotation matrix from Base frame (or the coincided frame world frame) to Origin frame (global world).

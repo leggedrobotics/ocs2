@@ -12,21 +12,24 @@ namespace switched_model {
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t JOINT_COORD_SIZE>
-std::shared_ptr<typename ComDynamicsDerivativeBase<JOINT_COORD_SIZE>::Base>
-	ComDynamicsDerivativeBase<JOINT_COORD_SIZE>::ComDynamicsDerivativeBase::clone()  const {
+ComDynamicsDerivativeBase<JOINT_COORD_SIZE>* ComDynamicsDerivativeBase<JOINT_COORD_SIZE>::ComDynamicsDerivativeBase::clone()  const {
 
-	return std::allocate_shared< ComDynamicsDerivativeBase<JOINT_COORD_SIZE>, Eigen::aligned_allocator<ComDynamicsDerivativeBase<JOINT_COORD_SIZE>> >(
-			Eigen::aligned_allocator<ComDynamicsDerivativeBase<JOINT_COORD_SIZE>>(), *this);
+	return new ComDynamicsDerivativeBase<JOINT_COORD_SIZE>(*this);
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t JOINT_COORD_SIZE>
-void ComDynamicsDerivativeBase<JOINT_COORD_SIZE>::initializeModel(const std::vector<size_t>& systemStockIndexes, const std::vector<scalar_t>& switchingTimes,
-		const state_vector_t& initState, const size_t& activeSubsystemIndex/*=0*/, const char* algorithmName/*=NULL*/)  {
+void ComDynamicsDerivativeBase<JOINT_COORD_SIZE>::initializeModel(const logic_rules_machine_t& logicRulesMachine,
+		const size_t& partitionIndex, const char* algorithmName/*=NULL*/) {
 
-	Base::initializeModel(systemStockIndexes, switchingTimes, initState, activeSubsystemIndex, algorithmName);
+	Base::initializeModel(logicRulesMachine, partitionIndex, algorithmName);
+
+	if (algorithmName!=NULL)
+		algorithmName_.assign(algorithmName);
+	else
+		algorithmName_.clear();
 }
 
 /******************************************************************************************************/
@@ -48,7 +51,7 @@ void ComDynamicsDerivativeBase<JOINT_COORD_SIZE>::setData(const std::array<bool,
 template <size_t JOINT_COORD_SIZE>
 void ComDynamicsDerivativeBase<JOINT_COORD_SIZE>::setCurrentStateAndControl(const scalar_t& t,
 		const state_vector_t& x,
-		const control_vector_t& u)  {
+		const input_vector_t& u)  {
 
 	Base::setCurrentStateAndControl(t, x, u);
 
@@ -77,13 +80,13 @@ void ComDynamicsDerivativeBase<JOINT_COORD_SIZE>::setCurrentStateAndControl(cons
 
 	// Inertia matrix in the CoM frame and its derivatives
 	M_ = comModelPtr_->comInertia(qJoints_);
-	dMdt_ = (useInertiaMatrixDerivate_==true) ? comModelPtr_->comInertiaDerivative(qJoints_, dqJoints_)
+	dMdt_ = (useInertiaMatrixDerivate()) ? comModelPtr_->comInertiaDerivative(qJoints_, dqJoints_)
 			: Eigen::Matrix<double,6,6>::Zero();
 	Eigen::Matrix3d rotationMInverse = M_.topLeftCorner<3,3>().inverse();
 	MInverse_ << rotationMInverse, Eigen::Matrix3d::Zero(),
 			Eigen::Matrix3d::Zero(), Eigen::Matrix3d::Identity()/M_(5,5);
 
-	// CoM Jacobin in the Base frame
+	// CoM Jacobian in the Base frame
 	b_comJacobain_ = MInverse_ * comModelPtr_->comMomentumJacobian(qJoints_);
 
 	// local angular and linear velocity of Base
@@ -100,14 +103,14 @@ void ComDynamicsDerivativeBase<JOINT_COORD_SIZE>::setCurrentStateAndControl(cons
 //	const double h = sqrt(Eigen::NumTraits<double>::epsilon());
 //	joint_coordinate_t qJointsPlus = qJoints_ + dqJoints_*h;
 //	b_comJacobainTimeDerivative_ = (ComInertia(qJointsPlus).inverse() * ComMomentumJacobian(qJointsPlus) - b_comJacobain_)/h;
-	if (useInertiaMatrixDerivate_==true)
+	if (useInertiaMatrixDerivate())
 		b_comJacobainTimeDerivative_ = MInverse_*comModelPtr_->comMomentumJacobianDerivative(qJoints_, dqJoints_) - MInverse_*dMdt_*b_comJacobain_;
 	else
 		b_comJacobainTimeDerivative_.setZero();
 
 	// derivative of the Inertia matrix w.r.t. qJoints
 	for (size_t j=0; j<12; j++)
-		if (useInertiaMatrixDerivate_==true) {
+		if (useInertiaMatrixDerivate()) {
 			joint_coordinate_t dqdt = joint_coordinate_t::Zero();
 			dqdt(j) = 1;
 			partialM_[j] = comModelPtr_->comInertiaDerivative(qJoints_, dqdt) ;
@@ -229,14 +232,14 @@ void ComDynamicsDerivativeBase<JOINT_COORD_SIZE>::getApproximateDerivativesJoint
 	}
 
 	// partila_q ([W]*I*W)
-	if (useInertiaMatrixDerivate_==true)
+	if (useInertiaMatrixDerivate())
 		for (size_t j=0; j<12; j++)
 			partrialF_q.template block<3,1>(6,j) -= CrossProductMatrix(x_.segment<3>(6)) * partialM_[j].topLeftCorner<3,3>() * x_.segment<3>(6);
 
 	partrialF_q.template block<6,12>(6,0) = ( MInverse_ * partrialF_q.template block<6,12>(6,0) ).eval();
 
 	/* partial derivative of the MInverse w.r.t. qJoints */
-	if (useInertiaMatrixDerivate_==true) {
+	if (useInertiaMatrixDerivate()) {
 //		static ComDynamicsBase<JOINT_COORD_SIZE> comDyamics(kinematicModelPtr_, comModelPtr_,
 //				-o_gravityVector_(2), constrainedIntegration_);
 //		state_vector_t dxdt;
@@ -267,7 +270,7 @@ void ComDynamicsDerivativeBase<JOINT_COORD_SIZE>::getApproximateDerivativesJoint
 
 	// third three rows
 	partrialF_dq.template block<3,12>(6,0).setZero();
-	if (useInertiaMatrixDerivate_==true)
+	if (useInertiaMatrixDerivate())
 		for (size_t j=0; j<12; j++)
 			partrialF_dq.template block<3,1>(6,j) = -MInverse_.template topLeftCorner<3,3>() * partialM_[j].template topLeftCorner<3,3>() * x_.template segment<3>(6);
 

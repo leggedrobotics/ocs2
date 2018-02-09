@@ -24,8 +24,8 @@
 #include <ocs2_ocs2/OCS2Projected.h>
 #include <ocs2_core/misc/LinearInterpolation.h>
 
-// #include <mpc/MPC_SLQP.h>
-// #include <mpc/util/LoadSettings_MPC.h>
+#include <ocs2_mpc/MPC_Settings.h>
+#include <ocs2_mpc/SLQ_MPC.h>
 
 #include <c_switched_model_interface/core/Options.h>
 #include <c_switched_model_interface/core/MotionPhaseDefinition.h>
@@ -68,14 +68,14 @@ public:
 	typedef ocs2::SLQP_BASE<dimension_t::STATE_DIM_,dimension_t::INPUT_DIM_> 	slqp_base_t;
 	typedef ocs2::SLQP<dimension_t::STATE_DIM_,dimension_t::INPUT_DIM_>  		slqp_t;
 	typedef ocs2::SLQP_MP<dimension_t::STATE_DIM_,dimension_t::INPUT_DIM_>  	slqp_mp_t;
-	// typedef ocs2::MPC_SLQP<dimension_t::STATE_DIM_,dimension_t::INPUT_DIM_>		mpc_t;
+	 typedef ocs2::SLQ_MPC<dimension_t::STATE_DIM_,dimension_t::INPUT_DIM_>		mpc_t;
 	typedef ocs2::OCS2Projected<dimension_t::STATE_DIM_,dimension_t::INPUT_DIM_> ocs2_t;
 	typedef typename glqp_t::Ptr 		glqp_ptr_t;
 	typedef typename slqp_base_t::Ptr 	slqp_base_ptr_t;
 	typedef typename slqp_t::Ptr  		slqp_ptr_t;
 	typedef typename slqp_mp_t::Ptr  	slqp_mp_ptr_t;
 	typedef typename ocs2_t::Ptr 		ocs2_ptr_t;
-	// typedef typename mpc_t::Ptr 		mpc_ptr_t;
+	typedef typename mpc_t::Ptr 		mpc_ptr_t;
 	typedef switched_model::SplineCpg	z_direction_cpg_t;
 	typedef Eigen::Matrix<double,6,1>   com_coordinate_t;
 
@@ -99,11 +99,11 @@ public:
 		ocs2Ptr_ = ocs2_ptr_t(new ocs2_t(subsystemDynamicsPtr_, subsystemDerivativesPtr_, subsystemCostFunctionsPtr_, slqpOptions_,
 				stateOperatingPoints_, inputOperatingPoints_) );
 
-		// // MPC
-		// mpcPtr_ = mpc_ptr_t( new mpc_t(subsystemDynamicsPtr_, subsystemDerivativesPtr_, subsystemCostFunctionsPtr_,
-		// 		stateOperatingPoints_, inputOperatingPoints_,
-		// 		initSystemStockIndexes_, initSwitchingTimes_,
-		// 		slqpOptions_, mpcOptions_) );
+		// MPC
+		mpcPtr_ = mpc_ptr_t( new mpc_t(subsystemDynamicsPtr_, subsystemDerivativesPtr_, subsystemCostFunctionsPtr_,
+				stateOperatingPoints_, inputOperatingPoints_,
+				initSystemStockIndexes_, initSwitchingTimes_,
+				slqpOptions_, mpcOptions_) );
 
 	}
 
@@ -113,13 +113,15 @@ public:
 			const dimension_t::controller_array_t& initialControllersStock=dimension_t::controller_array_t(),
 			const std::vector<double>& switchingTimes=std::vector<double>());
 
-	// bool runMPC(const double& initTime, const Eigen::Matrix<double,36,1>& initState);
-	// bool runMPC(const double& initTime, const dimension_t::state_vector_t& initState);
+	bool runMPC(const double& initTime, const Eigen::Matrix<double,36,1>& initState);
+
+	bool runMPC(const double& initTime, const dimension_t::state_vector_t& initState);
 
 	void runOCS2(const double& initTime, const Eigen::Matrix<double,36,1>& initState,
 			const std::vector<double>& switchingTimes=std::vector<double>());
 
-	// void setNewGoalStateMPC(const dimension_t::scalar_t& newGoalDuration, const dimension_t::state_vector_t& newGoalState);
+	void setNewGoalStateMPC(const dimension_t::scalar_t& newGoalDuration,
+			const dimension_t::state_vector_t& newGoalState);
 
 	void getCostFuntion(double& costFunction, double& constriantISE) const;
 
@@ -164,7 +166,7 @@ public:
 			com_coordinate_t& comPose,
 			com_coordinate_t& comVelocities);
 
-	// void getMpcOptions(typename mpc_t::mpc_settings_t& mpcOptions);
+	void getMpcOptions(ocs2::MPC_Settings& mpcOptions);
 
 	double strideTime() { return (initSwitchingTimes_[1]-initSwitchingTimes_[0]); }
 
@@ -234,7 +236,7 @@ private:
 	double impulseSigmeFactor_;
 
 	dimension_t::Options slqpOptions_;
-	// typename mpc_t::mpc_settings_t mpcOptions_;
+	ocs2::MPC_Settings mpcOptions_;
 
 	switched_model::Options options_;
 	std::vector<switched_model::EndEffectorConstraintBase::Ptr> gapIndicatorPtrs_;
@@ -270,10 +272,10 @@ private:
 	glqp_ptr_t 		lqpPtr_;
 	// SLQ
 	slqp_base_ptr_t	slqpPtr_;
-//	// OCS2
+	// OCS2
 	ocs2_ptr_t 		ocs2Ptr_;
-	// // MPC
-	// mpc_ptr_t 		mpcPtr_;
+	// MPC
+	mpc_ptr_t 		mpcPtr_;
 
 	double costFunction_, constriantISE_;
 	dimension_t::controller_array_t controllersStock_;

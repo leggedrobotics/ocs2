@@ -147,9 +147,9 @@ void OCS2AnymalInterface::getGapIndicatorPtrs(std::vector<switched_model::EndEff
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-// void OCS2AnymalInterface::getMpcOptions(typename mpc_t::mpc_settings_t& mpcOptions){
-// 	mpcOptions = mpcOptions_;
-// }
+void OCS2AnymalInterface::getMpcOptions(ocs2::MPC_Settings& mpcOptions){
+	mpcOptions = mpcOptions_;
+}
 
 /******************************************************************************************************/
 /******************************************************************************************************/
@@ -275,61 +275,63 @@ void OCS2AnymalInterface::getOptimizerParameters(const std::shared_ptr<T>& optim
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-// bool OCS2AnymalInterface::runMPC(const double& initTime, const Eigen::Matrix<double,36,1>& initHyQState)  {
-//
-// 	initTime_ = initTime;
-// 	switchedModelStateEstimator_.estimateComkinoModelState(initHyQState, initSwitchedState_);
-//
-// 	// update controller
-// 	bool controllerIsUpdated = mpcPtr_->run(initTime_, initSwitchedState_);
-//
-// 	// get the optimizer outputs
-// 	controllersStockPtr_ = mpcPtr_->getControllerPtr();
-//
-// 	// get the optimizer outputs
-// 	timeTrajectoriesStockPtr_ = mpcPtr_->getTimeTrajectoriesPtr();
-// 	stateTrajectoriesStockPtr_ = mpcPtr_->getStateTrajectoriesPtr();
-// 	inputTrajectoriesStockPtr_ = mpcPtr_->getInputTrajectoriesPtr();
-//
-// 	// get the optimizer parametet: switchingTimes_, systemStockIndexes_,
-// 	// numSubsystems_, switchingModes_, and stanceLegSequene_
-// 	getOptimizerParameters(mpcPtr_);
-//
-// 	return controllerIsUpdated;
-// }
+bool OCS2AnymalInterface::runMPC(const double& initTime, const Eigen::Matrix<double,36,1>& initHyQState)  {
+
+	initTime_ = initTime;
+	switchedModelStateEstimator_.estimateComkinoModelState(initHyQState, initSwitchedState_);
+
+	// update controller
+	bool controllerIsUpdated = mpcPtr_->run(initTime_, initSwitchedState_);
+
+	// get the optimizer outputs
+	controllersStockPtr_ = mpcPtr_->getControllerPtr();
+
+	// get the optimizer outputs
+	timeTrajectoriesStockPtr_ = mpcPtr_->getTimeTrajectoriesPtr();
+	stateTrajectoriesStockPtr_ = mpcPtr_->getStateTrajectoriesPtr();
+	inputTrajectoriesStockPtr_ = mpcPtr_->getInputTrajectoriesPtr();
+
+	// get the optimizer parametet: switchingTimes_, systemStockIndexes_,
+	// numSubsystems_, switchingModes_, and stanceLegSequene_
+	getOptimizerParameters(mpcPtr_);
+
+	return controllerIsUpdated;
+}
 
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-// bool OCS2AnymalInterface::runMPC(const double& initTime, const dimension_t::state_vector_t& initHyQState)  {
-//
-// 	initTime_ = initTime;
-// 	initSwitchedState_ = initHyQState;
-//
-// 	// update controller
-// 	bool controllerIsUpdated = mpcPtr_->run(initTime_, initSwitchedState_);
-//
-// 	// get the optimizer outputs
-// 	mpcPtr_->getController(controllersStock_);
-//
-// 	// get the optimizer outputs
-// 	mpcPtr_->getTrajectories(timeTrajectoriesStock_, stateTrajectoriesStock_, inputTrajectoriesStock_);
-//
-// 	// get the optimizer parametet: switchingTimes_, systemStockIndexes_,
-// 	// numSubsystems_, switchingModes_, and stanceLegSequene_
-// 	getOptimizerParameters(mpcPtr_);
-//
-// 	return controllerIsUpdated;
-// }
+bool OCS2AnymalInterface::runMPC(const double& initTime, const dimension_t::state_vector_t& initHyQState)  {
+
+	initTime_ = initTime;
+	initSwitchedState_ = initHyQState;
+
+	// update controller
+	bool controllerIsUpdated = mpcPtr_->run(initTime_, initSwitchedState_);
+
+	// get the optimizer outputs
+	mpcPtr_->getController(controllersStock_);
+
+	// get the optimizer outputs
+	mpcPtr_->getTrajectories(timeTrajectoriesStock_, stateTrajectoriesStock_, inputTrajectoriesStock_);
+
+	// get the optimizer parametet: switchingTimes_, systemStockIndexes_,
+	// numSubsystems_, switchingModes_, and stanceLegSequene_
+	getOptimizerParameters(mpcPtr_);
+
+	return controllerIsUpdated;
+}
 
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-// void OCS2AnymalInterface::setNewGoalStateMPC(const dimension_t::scalar_t& newGoalDuration, const dimension_t::state_vector_t& newGoalState) {
-// 	mpcPtr_->setNewGoalState(newGoalDuration, newGoalState);
-// }
+void OCS2AnymalInterface::setNewGoalStateMPC(const dimension_t::scalar_t& newGoalDuration,
+		const dimension_t::state_vector_t& newGoalState) {
+
+	mpcPtr_->setNewGoalState(newGoalDuration, newGoalState);
+}
 
 
 /******************************************************************************************************/
@@ -439,8 +441,8 @@ void OCS2AnymalInterface::loadSettings(const std::string& pathToConfigFile, cons
 	// OCS2 options
 	ocs2::LoadConfigFile::loadOptions<12+12,12+12>(pathToConfigFile, slqpOptions_, true);
 
-	// // MPC settings
-	// ocs2::LoadConfigFile::loadMpcSettings<12+12,12+12>(pathToConfigFile, mpcOptions_, true);
+	// MPC settings
+	ocs2::loadMpcSettings(pathToConfigFile, mpcOptions_, true);
 
 	// load switched model options
 	switched_model::loadModelSettings(pathToConfigFile, options_, true);

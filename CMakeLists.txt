@@ -11,6 +11,7 @@ find_package(catkin REQUIRED COMPONENTS
   ocs2_core
   ocs2_slq
   ocs2_ocs2
+  c_slqp_mpc
   ocs2_anymal_switched_model
   cereal
   xpp_msgs
@@ -51,6 +52,7 @@ catkin_package(
     ocs2_core
     ocs2_slq
     ocs2_ocs2
+    c_slqp_mpc
     ocs2_anymal_switched_model
     xpp_msgs
 #  DEPENDS

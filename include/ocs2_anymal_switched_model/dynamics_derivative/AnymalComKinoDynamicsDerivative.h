@@ -14,18 +14,16 @@ class AnymalComKinoDynamicsDerivative : public switched_model::ComKinoDynamicsDe
 public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-	typedef ComKinoDynamicsDerivativeBase<12> Base;
+	typedef switched_model::ComKinoDynamicsDerivativeBase<12> Base;
 
-	AnymalComKinoDynamicsDerivative(const std::array<bool,4>& stanceLegs,
-		const double& gravitationalAcceleration=9.81, const switched_model::Options& options = switched_model::Options(),
-		const switched_model::FeetZDirectionPlannerBase::Ptr& feetZDirectionPlanner=NULL,
-		const std::vector<switched_model::EndEffectorConstraintBase::Ptr>& endEffectorStateConstraints = std::vector<switched_model::EndEffectorConstraintBase::Ptr>());
+	AnymalComKinoDynamicsDerivative(const scalar_t& gravitationalAcceleration=9.81,
+			const switched_model::Options& options = switched_model::Options());
 
 	AnymalComKinoDynamicsDerivative(const AnymalComKinoDynamicsDerivative& rhs);
 
 	~AnymalComKinoDynamicsDerivative() {}
 
-	std::shared_ptr<Base::Base> clone() const override;
+	AnymalComKinoDynamicsDerivative* clone() const override;
 
 private:
 

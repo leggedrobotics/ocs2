@@ -5,13 +5,13 @@
  *      Author: farbod
  */
 
-#include "ocs2_anymal_switched_model/AnymalModelStateEstimator.h"
+#include "ocs2_anymal_switched_model/core/AnymalModelStateEstimator.h"
 
 namespace anymal {
 
 
 AnymalModelStateEstimator::AnymalModelStateEstimator()
-: Base(new AnymalCom)
+: Base(new AnymalCom())
 {}
 
 AnymalModelStateEstimator::AnymalModelStateEstimator(const AnymalModelStateEstimator& rhs)

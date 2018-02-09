@@ -21,19 +21,15 @@ public:
 
 	typedef SwitchedModelCostBase<12> Base;
 
-	AnymalCost(const std::array<bool,4>& stanceLegs,
-			const state_matrix_t& Q,
+	AnymalCost(const state_matrix_t& Q,
 			const control_matrix_t& R,
-			const scalar_array_t&         tNominalTrajectory,
-			const state_vector_array_t&   xNominalTrajectory,
-			const control_vector_array_t& uNominalTrajectory,
 			const state_matrix_t& QFinal,
 			const state_vector_t& xFinal,
-			const double& copWeightMax = 0.0,
+			const scalar_t& copWeightMax = 0.0,
 			const state_matrix_t& QIntermediate = state_matrix_t::Zero(),
 			const state_vector_t& xNominalIntermediate = state_vector_t::Zero(),
-			const double& sigma = 1,
-			const double& tp = 0);
+			const scalar_t& sigma = 1,
+			const scalar_t& tp = 0);
 
 	AnymalCost(const AnymalCost& rhs);
 

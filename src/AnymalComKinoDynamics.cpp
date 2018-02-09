@@ -9,24 +9,19 @@
 
 namespace anymal {
 
-AnymalComKinoDynamics::AnymalComKinoDynamics(const std::array<bool,4>& stanceLegs,
-		const double& gravitationalAcceleration, const switched_model::Options& options,
-		const switched_model::FeetZDirectionPlannerBase::Ptr& feetZDirectionPlanner,
-		const std::vector<switched_model::EndEffectorConstraintBase::Ptr>& endEffectorStateConstraints)
+AnymalComKinoDynamics::AnymalComKinoDynamics(const scalar_t& gravitationalAcceleration,
+		const switched_model::Options& options)
 
-: Base(new AnymalKinematics, new AnymalCom,
-		stanceLegs, gravitationalAcceleration, options,
-		feetZDirectionPlanner, endEffectorStateConstraints)
+: Base(new AnymalKinematics(), new AnymalCom(), gravitationalAcceleration, options)
 {}
 
 AnymalComKinoDynamics::AnymalComKinoDynamics(const AnymalComKinoDynamics& rhs)
 : Base(rhs)
 {}
 
-std::shared_ptr<AnymalComKinoDynamics::Base::Base> AnymalComKinoDynamics::clone() const {
+AnymalComKinoDynamics* AnymalComKinoDynamics::clone() const {
 
-	return std::allocate_shared< AnymalComKinoDynamics, Eigen::aligned_allocator<AnymalComKinoDynamics> > (
-			Eigen::aligned_allocator<AnymalComKinoDynamics>(), *this);
+	return new AnymalComKinoDynamics(*this);
 }
 
 } //end of namespace anymal

@@ -6,9 +6,10 @@
 
 #include <gtest/gtest.h>
 
-#include "TestAnymalSwitchedModel.hpp"
+#include "include/TestAnymalSwitchedModel.h"
 
-namespace anymal {
+using namespace anymal;
+
 class SwitchedModelTests : public ::testing::Test,
                            public TestAnymalSwitchedModel {
 public:
@@ -76,4 +77,9 @@ TEST_F(SwitchedModelTests, ComKinoDynamics){
   
 }
 
-} // namespace anymal
+
+/// Run all the tests that were declared with TEST()
+int main(int argc, char **argv){
+  testing::InitGoogleTest(&argc, argv);
+  return RUN_ALL_TESTS();
+}

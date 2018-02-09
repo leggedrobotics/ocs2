@@ -50,8 +50,10 @@ include_directories(
 add_library(${PROJECT_NAME}
   src/AnymalCom.cpp
   src/AnymalKinematics.cpp
+  src/AnymalLogicRules.cpp
   src/AnymalComKinoDynamics.cpp
   src/AnymalComKinoDynamicsDerivative.cpp
+  src/AnymalComKinoConstraint.cpp
   src/AnymalCost.cpp
   src/AnymalModelStateEstimator.cpp
   src/AnymalWeightCompensationForces.cpp
@@ -108,7 +110,6 @@ target_link_libraries(${PROJECT_NAME}
 if(CATKIN_ENABLE_TESTING)
   # Build unit tests
   catkin_add_gtest(${PROJECT_NAME}_test
-      test/test_main.cpp
       test/TestAnymalSwitchedModel.cpp
   )
 

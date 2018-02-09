@@ -1,5 +1,5 @@
 /*!
-* @file    TestAnymalSwitchedModel.hpp
+* @file    TestAnymalSwitchedModel.h
 * @author  Jan Carius
 * @date    Nov, 2017
 */
@@ -10,7 +10,7 @@
 #include <ocs2_anymal_switched_model/kinematics/AnymalKinematics.h>
 #include <ocs2_anymal_switched_model/dynamics/AnymalCom.h>
 #include <ocs2_anymal_switched_model/dynamics/AnymalComKinoDynamics.h>
-#include <ocs2_anymal_switched_model/dynamics/AnymalComKinoDynamicsDerivative.h>
+#include <ocs2_anymal_switched_model/dynamics_derivative/AnymalComKinoDynamicsDerivative.h>
 
 namespace anymal {
 

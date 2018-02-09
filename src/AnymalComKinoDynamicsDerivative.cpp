@@ -5,28 +5,23 @@
  *      Author: farbod
  */
 
-#include "ocs2_anymal_switched_model/dynamics/AnymalComKinoDynamicsDerivative.h"
+#include "ocs2_anymal_switched_model/dynamics_derivative/AnymalComKinoDynamicsDerivative.h"
 
 namespace anymal {
 
-AnymalComKinoDynamicsDerivative::AnymalComKinoDynamicsDerivative(const std::array<bool,4>& stanceLegs,
-		const double& gravitationalAcceleration, const switched_model::Options& options,
-		const switched_model::FeetZDirectionPlannerBase::Ptr& feetZDirectionPlanner,
-		const std::vector<switched_model::EndEffectorConstraintBase::Ptr>& endEffectorStateConstraints)
+AnymalComKinoDynamicsDerivative::AnymalComKinoDynamicsDerivative(
+		const scalar_t& gravitationalAcceleration, const switched_model::Options& options)
 
-: Base(new AnymalKinematics, new AnymalCom,
-		stanceLegs, gravitationalAcceleration,
-		options, feetZDirectionPlanner, endEffectorStateConstraints)
+: Base(new AnymalKinematics(), new AnymalCom(), gravitationalAcceleration, options)
 {}
 
 AnymalComKinoDynamicsDerivative::AnymalComKinoDynamicsDerivative(const AnymalComKinoDynamicsDerivative& rhs)
 : Base(rhs)
 {}
 
-std::shared_ptr<typename AnymalComKinoDynamicsDerivative::Base::Base> AnymalComKinoDynamicsDerivative::clone() const {
+AnymalComKinoDynamicsDerivative* AnymalComKinoDynamicsDerivative::clone() const {
 
-	return std::allocate_shared< AnymalComKinoDynamicsDerivative, Eigen::aligned_allocator<AnymalComKinoDynamicsDerivative> > (
-			Eigen::aligned_allocator<AnymalComKinoDynamicsDerivative>(), *this);
+	return new AnymalComKinoDynamicsDerivative(*this);
 }
 
 } //end of namespace anymal

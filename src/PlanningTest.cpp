@@ -60,12 +60,12 @@ int main( int argc, char* argv[] )
 	ocs2::LoadConfigFile::loadMatrix(taskFile, "initialHyQState", initHyQState);
 
 	/******************************************************************************************************/
-	anymal::OCS2AnymalInterface anymalOptimization(taskFile, initHyQState);
+	anymal::OCS2AnymalInterface anymalOptimization(taskFile);
 
 	auto start = std::chrono::steady_clock::now();
 
 	// run SLQ
-	anymalOptimization.runSLQP(0.0, initHyQState);
+	anymalOptimization.runSLQ(0.0, initHyQState);
 	// run OCS2
 //	anymalOptimization.runOCS2(0.0, initHyQState);
 	// run MPC
@@ -78,8 +78,8 @@ int main( int argc, char* argv[] )
 			<< std::chrono::duration_cast<std::chrono::milliseconds>(diff).count()
 			<< " ms "<< std::endl;
 
-	double costFunction, constriantISE;
-	anymalOptimization.getCostFuntion(costFunction, constriantISE);
+	double costFunction, constriantISE1, constriantISE2;
+	anymalOptimization.getPerformanceIndeces(costFunction, constriantISE1, constriantISE2);
 
 	// switching time
 	std::vector<double> switchingTimes;
@@ -99,14 +99,15 @@ int main( int argc, char* argv[] )
 	std::vector<std::array<bool,4> > stanceLegSequene;
 	anymalOptimization.getStanceLegSequene(stanceLegSequene);
 
-	std::vector<switched_model::EndEffectorConstraintBase::Ptr> gapIndicatorPtrs;
+	std::vector<switched_model::EndEffectorConstraintBase::ConstPtr> gapIndicatorPtrs;
 	anymalOptimization.getGapIndicatorPtrs(gapIndicatorPtrs);
 
 	/******************************************************************************************************/
 	std::cerr <<"\n======================================" << std::endl;
-	std::cerr << "SLQP results: "<< std::endl;
+	std::cerr << "SLQ results: "<< std::endl;
 	std::cerr << "The total cost: " << costFunction << std::endl;
-	std::cerr << "The total ISE:  " << constriantISE << std::endl;
+	std::cerr << "The type-1 ISE: " << constriantISE1 << std::endl;
+	std::cerr << "The type-2 ISE: " << constriantISE2 << std::endl;
 
 	anymal::AnymalKinematics switchedModelKinematics;
 	anymal::AnymalCom anymalCom;

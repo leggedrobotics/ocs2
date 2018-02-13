@@ -12,29 +12,23 @@ visualization
     vizTime      200
 }
 
-gravity
-{
-   (0,0) 0.0     ; x
-   (1,0) 0.0     ; y
-   (2,0) -9.81   ; z
-}
-
 
 model_settings
 {
+  useMultiThreading			0
   constrainedIntegration    1
-  useCartesianContactForce  1
+  
+  gravitationalAcceleration 9.81
+  
   contactForceWeight        1.0
   zDirectionPositionWeight  0.0
   zDirectionVelocityWeight  0.5
 
-  swingLegLiftOff        0.10
-  defaultStartMode      STANCE
-  defaultFinalMode      LF_RH  ;STANCE
+  swingLegLiftOff        	0.10
 
-  copWeight           0.0    ; 600.0
-  impulseWeight       0.0
-  impulseSigmeFactor  0.1
+  copWeight           		0.0    ; 600.0
+  impulseWeight       		0.0
+  impulseSigmeFactor  		0.1
 
   mpcStrideLength           0.3
   numPhasesInfullGaitCycle  2
@@ -66,7 +60,7 @@ switchingModes
 ;}
 
 
-ocs2
+slq
 {
   maxIterationGSLQP            50    ;50
   minLearningRateGSLQP         1.0  ;0.1
@@ -76,7 +70,7 @@ ocs2
   stateConstraintPenaltyBase   1.1
   meritFunctionRho             50.0
   constraintStepSize           1.0
-  dispayGSLQP                  1
+  displayInfo                  1
   displayShortSummary          0
   warmStartGSLQP               1
   useLQForDerivatives          0
@@ -85,7 +79,7 @@ ocs2
   RelTolODE                    1e-3  ;1e-4
   maxNumStepsPerSecond         50000
   simulationIsConstrained      0
-    minAbsConstraint1ISE       5e-3
+  minAbsConstraint1ISE         5e-3
   minRelConstraint1ISE         5e-6
   checkNumericalStability      0
 
@@ -94,38 +88,38 @@ ocs2
   acceptableTolGradientDescent 1e-2
   maxIterationGradientDescent  5
   minLearningRateNLP           0.05
-    maxLearningRateNLP           0.6
-    useAscendingLineSearchNLP    1
-    minAcceptedSwitchingTimeDifference 0.01
+  maxLearningRateNLP           0.6
+  useAscendingLineSearchNLP    1
+  minAcceptedSwitchingTimeDifference 0.01
 
-    useMultiThreading           1
-    nThreads                    4
-    debugPrintMP                0
-    lsStepsizeGreedy            1
+  useMultiThreading           1
+  nThreads                    4
+  debugPrintMP                0
+  lsStepsizeGreedy            1
 
-    RiccatiIntegratorType       1        ; ODE45 = 1, ADAMS_BASHFORTH = 2, BULIRSCH_STOER = 3, ADAMS_BASHFORTH_MOULTON = 4
-    adams_integrator_dt         0.01
+  RiccatiIntegratorType       1        ; ODE45 = 1, ADAMS_BASHFORTH = 2, BULIRSCH_STOER = 3, ADAMS_BASHFORTH_MOULTON = 4
+  adams_integrator_dt         0.01
 
-    useRiccatiSolver      1
+  useRiccatiSolver      1
 }
 
 mpc
 {
-  numIterations       1
-  maxNumIterations    1
+  numIterations			1
+  maxNumIterations		1
 
-  debugPrint        0
-  coldStart         0
-  recedingHorizon      1     : use receding horizon MPC
+  debugPrint			0
+  coldStart				0
+  recedingHorizon		1	; use receding horizon MPC
 
-  useDisjointRiccati    1    ; use disjoint riccati solver in MP case and recedingHorizon fashion
+  useDisjointRiccati	1	; use disjoint riccati solver in MP case and recedingHorizon fashion
 
-  useFeedbackPolicy       0
-  forwardSimulationTime  28    ; [ms] MRT time
+  useFeedbackPolicy		0
+  forwardSimulationTime	28	; [ms] MRT time
 
-  rosMsgTimeWindow    100    ; [ms]
+  rosMsgTimeWindow		100	; [ms]
 
-  simulatedMPCloopTime  0    ; [ms] asynchronous MPC constant delay (On hardware should ALWAYS be 0)
+  simulatedMPCloopTime	0	; [ms] asynchronous MPC constant delay (On hardware should ALWAYS be 0)
 }
 
 

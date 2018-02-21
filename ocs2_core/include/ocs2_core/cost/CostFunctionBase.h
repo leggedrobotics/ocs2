@@ -8,7 +8,10 @@
 #ifndef COSTFUNCTIONBASE_OCS2_H_
 #define COSTFUNCTIONBASE_OCS2_H_
 
+#include <memory>
+
 #include "ocs2_core/Dimensions.h"
+#include "ocs2_core/misc/LinearInterpolation.h"
 #include "ocs2_core/logic/LogicRulesMachine.h"
 
 namespace ocs2{
@@ -37,20 +40,129 @@ public:
 	typedef typename DIMENSIONS::state_vector_t 		state_vector_t;
 	typedef typename DIMENSIONS::state_vector_array_t 	state_vector_array_t;
 	typedef typename DIMENSIONS::state_matrix_t 		state_matrix_t;
-	typedef typename DIMENSIONS::control_vector_t  		control_vector_t;
-	typedef typename DIMENSIONS::control_vector_array_t control_vector_array_t;
+	typedef typename DIMENSIONS::control_vector_t  		input_vector_t;
+	typedef typename DIMENSIONS::control_vector_array_t input_vector_array_t;
 	typedef typename DIMENSIONS::control_matrix_t 		control_matrix_t;
 	typedef typename DIMENSIONS::control_feedback_t 	control_feedback_t;
 
 	/**
 	 * Default constructor
 	 */
-	CostFunctionBase() {};
+	CostFunctionBase()
+	: timeStart_(0.0),
+	  timeFinal_(1.0),
+	  timeSD_(0.17),
+	  timeMean_(0.5),
+	  tNominalTrajectoryPtr_(nullptr),
+	  xNominalTrajectoryPtr_(nullptr),
+	  uNominalTrajectoryPtr_(nullptr),
+	  xNominalFunc_(),
+	  uNominalFunc_()
+	{
+		xNominalFunc_.setZero();
+		uNominalFunc_.setZero();
+	};
+
+	/**
+	 * Copy constructor
+	 */
+	CostFunctionBase(const CostFunctionBase& rhs)
+	: CostFunctionBase()
+	{}
 
 	/**
 	 * Default destructor
 	 */
 	virtual ~CostFunctionBase() {};
+
+	/**
+	 * Sets pointers to the nominal state and input trajectories used in the cost function.
+	 *
+	 * @param [in] timeTrajectoryPtr: A Pointer to the time trajectory.
+	 * @param [in] stateTrajectoryPtr: A Pointer to the state trajectory.
+	 * @param [in] inputTrajectoryPtr: A Pointer to the inout trajectory.
+	 */
+	virtual void setCostNominalTrajectoriesPtr(
+			const scalar_array_t* timeTrajectoryPtr,
+			const state_vector_array_t* stateTrajectoryPtr,
+			const input_vector_array_t* inputTrajectoryPtr = nullptr) {
+
+		tNominalTrajectoryPtr_ = timeTrajectoryPtr;
+		xNominalTrajectoryPtr_ = stateTrajectoryPtr;
+		uNominalTrajectoryPtr_ = inputTrajectoryPtr;
+
+		if (!xNominalTrajectoryPtr_ || xNominalTrajectoryPtr_->empty()) {
+			xNominalFunc_.setZero();
+		} else {
+			xNominalFunc_.reset();
+			xNominalFunc_.setTimeStamp(tNominalTrajectoryPtr_);
+			xNominalFunc_.setData(xNominalTrajectoryPtr_);
+		}
+
+		if (!uNominalTrajectoryPtr_ || uNominalTrajectoryPtr_->empty()) {
+			uNominalFunc_.setZero();
+		} else {
+			uNominalFunc_.reset();
+			uNominalFunc_.setTimeStamp(tNominalTrajectoryPtr_);
+			uNominalFunc_.setData(uNominalTrajectoryPtr_);
+		}
+	}
+
+	/**
+	 * Gets the nominal state used in the cost function.
+	 *
+	 * @param [out] timeTrajectory: The time trajectory.
+	 * @param [out] stateTrajectory: The state trajectory.
+	 * @param [out] inputTrajectory: The input trajectory.
+	 */
+	virtual void getCostNominalTrajectories(scalar_array_t& timeTrajectory,
+			state_vector_array_t& stateTrajectory,
+			input_vector_array_t& inputTrajectory) const {
+
+		getCostNominalState(timeTrajectory, stateTrajectory);
+
+		if (uNominalTrajectoryPtr_) {
+			inputTrajectory = *uNominalTrajectoryPtr_;
+		} else {
+			inputTrajectory.empty();
+		}
+	}
+
+	/**
+	 * Gets the nominal state used in the cost function.
+	 *
+	 * @param [out] timeTrajectory: The time trajectory.
+	 * @param [out] stateTrajectory: The state trajectory.
+	 */
+	virtual void getCostNominalState(scalar_array_t& timeTrajectory,
+			state_vector_array_t& stateTrajectory) const {
+
+		if (xNominalTrajectoryPtr_) {
+			timeTrajectory  = *tNominalTrajectoryPtr_;
+			stateTrajectory = *xNominalTrajectoryPtr_;
+		} else {
+			timeTrajectory.empty();
+			stateTrajectory.empty();
+		}
+	}
+
+	/**
+	 * Gets the nominal input used in the cost function.
+	 *
+	 * @param [out] timeTrajectory: The time trajectory.
+	 * @param [out] inputTrajectory: The input trajectory.
+	 */
+	virtual void getCostNominalInput(scalar_array_t& timeTrajectory,
+			input_vector_array_t& inputTrajectory) const {
+
+		if (uNominalTrajectoryPtr_) {
+			timeTrajectory  = *tNominalTrajectoryPtr_;
+			inputTrajectory = *uNominalTrajectoryPtr_;
+		} else {
+			timeTrajectory.empty();
+			inputTrajectory.empty();
+		}
+	}
 
     /**
      * Returns pointer to the class.
@@ -79,65 +191,11 @@ public:
      * @param [in] x: Current state vector
      * @param [in] u: Current input vector
      */
-	virtual void setCurrentStateAndControl(const scalar_t& t, const state_vector_t& x, const control_vector_t& u) {
+	virtual void setCurrentStateAndControl(const scalar_t& t, const state_vector_t& x, const input_vector_t& u) {
 		t_ = t;
 		x_ = x;
 		u_ = u;
 	}
-
-    /**
-     * Sets the time period.
-     *
-     * @param [in] timeStart: The start time of the period.
-     * @param [in] timeFinal: The final time of the period.
-     */
-	virtual void setTimePeriod(const double& timeStart, const double& timeFinal) {
-		timeStart_ = timeStart;
-		timeFinal_ = timeFinal;
-
-		timeSD_ = (timeFinal-timeStart) / 6.0;
-		timeMean_ = (timeFinal+timeStart) / 2.0;
-	}
-
-    /**
-     * Sets the nominal state used in the cost function.
-     *
-     * @param [in] timeTrajectory: The time trajectory.
-     * @param [in] stateTrajectory: The state trajectory.
-     */
-	virtual void setCostNominalState(const scalar_array_t& timeTrajectory,
-			const state_vector_array_t& stateTrajectory)
-	{}
-
-    /**
-     * Gets the nominal state used in the cost function.
-     *
-     * @param [out] timeTrajectory: The time trajectory.
-     * @param [out] stateTrajectory: The state trajectory.
-     */
-	virtual void getCostNominalState(scalar_array_t& timeTrajectory,
-			state_vector_array_t& stateTrajectory) const
-	{}
-
-    /**
-     * Sets the nominal input used in the cost function.
-     *
-     * @param [in] timeTrajectory: The time trajectory.
-     * @param [in] inputTrajectory: The input trajectory.
-     */
-	virtual void setCostNominalInput(const scalar_array_t& timeTrajectory,
-			const control_vector_array_t& inputTrajectory)
-	{}
-
-    /**
-     * Gets the nominal input used in the cost function.
-     *
-     * @param [out] timeTrajectory: The time trajectory.
-     * @param [out] inputTrajectory: The input trajectory.
-     */
-	virtual void getCostNominalInput(scalar_array_t& timeTrajectory,
-			control_vector_array_t& inputTrajectory) const
-	{}
 
     /**
      * Evaluates the cost.
@@ -161,21 +219,21 @@ public:
 	virtual void stateSecondDerivative(state_matrix_t& dLdxx) = 0;
 
     /**
-     * Gets control derivative.
+     * Gets control input derivative.
      *
      * @param [out] dLdu: First order cost derivative with respect to input vector.
      */
-	virtual void controlDerivative(control_vector_t& dLdu) = 0;
+	virtual void controlDerivative(input_vector_t& dLdu) = 0;
 
     /**
-     * Gets control second derivative.
+     * Gets control input second derivative.
      *
      * @param [out] dLduu: Second order cost derivative with respect to input vector.
      */
 	virtual void controlSecondDerivative(control_matrix_t& dLduu) = 0;
 
     /**
-     * Gets the state, input derivative.
+     * Gets the state, control input derivative.
      *
      * @param [out] dLdxu: Second order cost derivative with respect to state and input vector.
      */
@@ -203,15 +261,39 @@ public:
 	virtual void terminalCostStateSecondDerivative(state_matrix_t& dPhidxx) = 0;
 
 protected:
+	/**
+	 * Sets the time period.
+	 *
+	 * @param [in] timeStart: The start time of the period.
+	 * @param [in] timeFinal: The final time of the period.
+	 */
+	virtual void setTimePeriod(const double& timeStart, const double& timeFinal) {
+		timeStart_ = timeStart;
+		timeFinal_ = timeFinal;
+
+		timeSD_ = (timeFinal-timeStart) / 6.0;
+		timeMean_ = (timeFinal+timeStart) / 2.0;
+	}
+
+/*
+ * Variables
+ */
+	scalar_t timeStart_ = 0.0;
+	scalar_t timeFinal_ = 1.0;
+
+	scalar_t timeSD_ = 0.17;  //1.0 / 6.0;
+	scalar_t timeMean_ = 0.5;
+
+	const scalar_array_t*		tNominalTrajectoryPtr_;
+	const state_vector_array_t* xNominalTrajectoryPtr_;
+	const input_vector_array_t* uNominalTrajectoryPtr_;
+
+	ocs2::LinearInterpolation<state_vector_t, Eigen::aligned_allocator<state_vector_t> > xNominalFunc_;
+	ocs2::LinearInterpolation<input_vector_t, Eigen::aligned_allocator<input_vector_t> > uNominalFunc_;
+
 	scalar_t t_;
 	state_vector_t x_;
-	control_vector_t u_;
-
-	double timeStart_ = 0.0;
-	double timeFinal_ = 1.0;
-
-	double timeSD_ = 0.17;  //1.0 / 6.0;
-	double timeMean_ = 0.5;
+	input_vector_t u_;
 };
 
 } // namespace ocs2

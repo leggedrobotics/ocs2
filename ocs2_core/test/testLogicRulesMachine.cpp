@@ -28,10 +28,10 @@ public:
 	virtual ~TestLogicRules() {}
 
 	void adjustController(controller_t& controller) const override
-			{}
+	{}
 
-	void set(const scalar_array_t& logicRulesSwitchingTimes) {
-		BASE::logicRulesSwitchingTimes_ = logicRulesSwitchingTimes;
+	void set(const scalar_array_t& switchingTimes) {
+		BASE::switchingTimes_ = switchingTimes;
 	}
 
 private:

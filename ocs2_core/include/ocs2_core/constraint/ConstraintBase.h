@@ -41,7 +41,7 @@ public:
 	typedef typename DIMENSIONS::scalar_t scalar_t;
 	typedef typename DIMENSIONS::state_vector_t   state_vector_t;
 	typedef typename DIMENSIONS::control_vector_t input_vector_t;
-	typedef typename DIMENSIONS::state_matrix_t state_matrix_t;
+	typedef typename DIMENSIONS::state_matrix_t   state_matrix_t;
 	typedef typename DIMENSIONS::control_gain_matrix_t 	control_gain_matrix_t;
 	typedef typename DIMENSIONS::constraint1_vector_t 	constraint1_vector_t;
 	typedef typename DIMENSIONS::constraint2_vector_t 	constraint2_vector_t;

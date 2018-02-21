@@ -31,7 +31,7 @@ public:
 	typedef typename DIMENSIONS::scalar_t scalar_t;
 	typedef typename DIMENSIONS::state_vector_t state_vector_t;
 	typedef typename DIMENSIONS::state_matrix_t state_matrix_t;
-	typedef typename DIMENSIONS::control_vector_t control_vector_t;
+	typedef typename DIMENSIONS::control_vector_t input_vector_t;
 	typedef typename DIMENSIONS::control_matrix_t control_matrix_t;
 	typedef typename DIMENSIONS::control_feedback_t control_feedback_t;
 
@@ -49,7 +49,7 @@ public:
 	QuadraticCostFunction(const state_matrix_t& Q,
 			const control_matrix_t& R,
 	    const state_vector_t& x_nominal,
-	    const control_vector_t& u_nominal,
+	    const input_vector_t& u_nominal,
 	    const state_vector_t& x_final,
 	    const state_matrix_t Q_final)
 		: Q_(Q),
@@ -84,7 +84,7 @@ public:
 	 * @param [in] x: Current state vector
 	 * @param [in] u: Current input vector
 	 */
-	virtual void setCurrentStateAndControl(const scalar_t& t, const state_vector_t& x, const control_vector_t& u) {
+	virtual void setCurrentStateAndControl(const scalar_t& t, const state_vector_t& x, const input_vector_t& u) {
 
 		Base::setCurrentStateAndControl(t, x, u);
 		x_deviation_ = x - x_nominal_;
@@ -126,7 +126,7 @@ public:
      *
      * @param [out] dLdu: First order cost derivative with respect to input vector.
      */
-	void controlDerivative(control_vector_t& dLdu)	{
+	void controlDerivative(input_vector_t& dLdu)	{
 		dLdu = R_ * u_deviation_;
 	}
 
@@ -193,8 +193,8 @@ protected:
 	state_vector_t x_nominal_;
 	state_matrix_t Q_;
 
-	control_vector_t u_deviation_;
-	control_vector_t u_nominal_;
+	input_vector_t u_deviation_;
+	input_vector_t u_nominal_;
 	control_matrix_t R_;
 
 	state_vector_t x_final_;

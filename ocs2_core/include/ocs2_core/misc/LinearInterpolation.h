@@ -198,7 +198,7 @@ protected:
      */
 	void checkTimeStamp() {
 		if (timeStampPtr_==NULL)  	throw std::runtime_error("timeStampPtr is not initialized.");
-		if (timeStampSize_==0)  	throw std::runtime_error("LinearInterpolation.h : LinearInterpolation is not initialized.");
+		if (timeStampSize_==0)  	throw std::runtime_error("LinearInterpolation is not initialized.");
 	}
 
 private:

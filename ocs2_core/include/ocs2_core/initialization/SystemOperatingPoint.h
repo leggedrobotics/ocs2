@@ -42,6 +42,13 @@ public:
 	/**
 	 * Default constructor
 	 */
+	SystemOperatingPoint()
+	: SystemOperatingPoint(state_vector_t::Zero(), input_vector_t::Zero())
+	{}
+
+	/**
+	 * Constructor
+	 */
 	SystemOperatingPoint(const state_vector_t& stateOperatingPoint, const input_vector_t& inputOperatingPoint)
 	: stateOperatingPoint_(stateOperatingPoint),
 	  inputOperatingPoint_(inputOperatingPoint)
@@ -91,8 +98,8 @@ public:
 	 */
 	virtual void getSystemOperatingTrajectories(
 			const state_vector_t& initialState,
-			const double& startTime,
-			const double& finalTime,
+			const scalar_t& startTime,
+			const scalar_t& finalTime,
 			scalar_array_t& timeTrajectory,
 			state_vector_array_t& stateTrajectory,
 			input_vector_array_t& inputTrajectory,
@@ -115,7 +122,7 @@ public:
 	}
 
 
-private:
+protected:
 	state_vector_t stateOperatingPoint_;
 	input_vector_t inputOperatingPoint_;
 

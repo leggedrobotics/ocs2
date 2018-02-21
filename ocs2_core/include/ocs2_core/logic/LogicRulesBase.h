@@ -32,7 +32,13 @@ public:
 	typedef typename Dimensions<STATE_DIM, INPUT_DIM>::controller_t controller_t;
 	typedef typename Dimensions<STATE_DIM, INPUT_DIM>::controller_array_t controller_array_t;
 
-	LogicRulesBase() {}
+	LogicRulesBase()
+	: switchingTimes_(0)
+	{}
+
+	LogicRulesBase(const scalar_array_t& switchingTimes)
+	: switchingTimes_(switchingTimes)
+	{}
 
 	virtual ~LogicRulesBase() {}
 
@@ -41,11 +47,11 @@ public:
 
 
 	const scalar_array_t& logicRulesSwitchingTimes() const {
-		return logicRulesSwitchingTimes_;
+		return switchingTimes_;
 	}
 
 protected:
-	scalar_array_t logicRulesSwitchingTimes_;
+	scalar_array_t switchingTimes_;
 };
 
 
@@ -72,7 +78,8 @@ public:
 
 	~NullLogicRules() {}
 
-	void adjustController(controller_t& controller) const override {}
+	void adjustController(controller_t& controller) const override
+	{}
 
 private:
 

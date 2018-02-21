@@ -9,9 +9,9 @@
 #define SYSTEMOPERATINGTRAJECTORIESBASE_OCS2_H_
 
 #include <type_traits>
+#include <Eigen/Dense>
 #include <Eigen/StdVector>
 #include <vector>
-#include <Eigen/Dense>
 
 #include "ocs2_core/Dimensions.h"
 #include "ocs2_core/logic/LogicRulesMachine.h"
@@ -74,7 +74,6 @@ public:
 	 */
 	virtual SystemOperatingTrajectoriesBase<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>* clone() const = 0;
 
-
 	/**
 	 * Gets the Operating Trajectories of the system in time interval [startTime, finalTime] where there is
 	 * no intermediate switches except possibly the end time.
@@ -90,8 +89,8 @@ public:
 	 */
 	virtual void getSystemOperatingTrajectories(
 			const state_vector_t& initialState,
-			const double& startTime,
-			const double& finalTime,
+			const scalar_t& startTime,
+			const scalar_t& finalTime,
 			scalar_array_t& timeTrajectory,
 			state_vector_array_t& stateTrajectory,
 			input_vector_array_t& inputTrajectory,

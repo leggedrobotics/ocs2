@@ -53,7 +53,7 @@ public:
 	 * The default constructor.
 	 */
 	ControlledSystemBase()
-		: modelUpdated_(true)
+	: modelUpdated_(true)
 	{}
 
 	/**

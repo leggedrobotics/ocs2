@@ -38,6 +38,20 @@ const LOGIC_RULES_T& LogicRulesMachine<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::get
 /******************************************************************************************************/
 /******************************************************************************************************/
 /*
+ * Get the pointer to the active logic rules class
+ *
+ * @return pointer to active logic rules class
+ */
+template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
+const LOGIC_RULES_T* LogicRulesMachine<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::getLogicRulesPtr() const {
+
+	return &logicRulesInUse_;
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+/*
  * Gets the switching times associated to the partition number index.
  * @param [in] index: index of the time partition.
  * @return
@@ -47,6 +61,21 @@ const typename LogicRulesMachine<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::scalar_ar
 	LogicRulesMachine<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::getSwitchingTimes(size_t index) const {
 
 	return eventTimesStock_[index];
+}
+
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+/*
+ * Gets the partitioning times.
+ * @return const reference to partitioning times.
+ */
+template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
+const typename LogicRulesMachine<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::scalar_array_t&
+	LogicRulesMachine<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::getPartitioningTimes() const {
+
+	return partitioningTimes_;
 }
 
 /******************************************************************************************************/
@@ -78,7 +107,7 @@ std::function<size_t(typename LogicRulesMachine<STATE_DIM, INPUT_DIM, LOGIC_RULE
 	LogicRulesMachine<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::getHandleToFindActiveSubsystemID(
 		size_t partitionIndex) const {
 
-	const size_array_t& switchedSystemIDs = switchedSystemIDsStock_[index];
+	const size_array_t& switchedSystemIDs = switchedSystemIDsStock_[partitionIndex];
 	size_t numSubsystems = switchedSystemIDs.size();
 
 	scalar_array_t switchingTimes;
@@ -95,6 +124,16 @@ std::function<size_t(typename LogicRulesMachine<STATE_DIM, INPUT_DIM, LOGIC_RULE
 	else
 		switchingTimes[numSubsystems] = partitioningTimes_[partitionIndex+1];
 
+//	std::cout << "switchingTimes: ";
+//	for (auto& t : switchingTimes)
+//		std::cout << t << ", ";
+//	std::cout << std::endl;
+//
+//	std::cout << "switchedSystemIDs: ";
+//	for (auto& i : switchedSystemIDs)
+//		std::cout << i << ", ";
+//	std::cout << std::endl;
+
 	// return Lambda expression
 	return [switchingTimes, switchedSystemIDs](scalar_t time) {
 		static int guessedIndex_ = 0;
@@ -107,6 +146,21 @@ std::function<size_t(typename LogicRulesMachine<STATE_DIM, INPUT_DIM, LOGIC_RULE
 
 		return switchedSystemIDs[index];
 	};
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+/*
+ * Returns the number of subsystems in the partition.
+ *
+ * @param partitionIndex: index of the time partition
+ * @return Number of subsystems
+ */
+template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
+size_t LogicRulesMachine<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::getNumSubsystems(size_t partitionIndex) const {
+
+	return switchedSystemIDsStock_[partitionIndex].size();
 }
 
 /******************************************************************************************************/

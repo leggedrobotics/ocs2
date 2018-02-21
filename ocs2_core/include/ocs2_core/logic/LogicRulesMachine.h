@@ -76,6 +76,13 @@ public:
 	const LOGIC_RULES_T& getLogicRules() const;
 
 	/**
+	 * Get the pointer to the active logic rules class
+	 *
+	 * @return pointer to active logic rules class
+	 */
+	const LOGIC_RULES_T* getLogicRulesPtr() const;
+
+	/**
 	 * Gets the switching times associated to the partition number index.
 	 * @param [in] partitionIndex: index of the time partition.
 	 * @return
@@ -83,11 +90,33 @@ public:
 	const scalar_array_t& getSwitchingTimes(size_t partitionIndex) const;
 
 	/**
+	 * Gets the partitioning times.
+	 * @return const reference to partitioning times.
+	 */
+	const scalar_array_t& getPartitioningTimes() const;
+
+	/**
 	 * Gets the IDs of the switched systems associated to the partition number index.
 	 * @param [in] partitionIndex: index of the time partition
 	 * @return
 	 */
 	const size_array_t& getSwitchedSystemIDs(size_t partitionIndex) const;
+
+	/**
+	 * Returns the number of subsystems in the partition.
+	 *
+	 * @param partitionIndex: index of the time partition
+	 * @return Number of subsystems
+	 */
+	size_t getNumSubsystems(size_t partitionIndex) const;
+
+	/**
+	 * Returns a Lambda expression which can be used to find the current active subsystem's ID.
+	 *
+	 * @param partitionIndex: index of the time partition
+	 * @return Lambda expression
+	 */
+	std::function<size_t(scalar_t)> getHandleToFindActiveSubsystemID(size_t partitionIndex) const;
 
 	/**
 	 * Updates the active logic rules based on the last set value (using LogicRulesMachine::setLogicRules) and
@@ -99,14 +128,6 @@ public:
 	 */
 	void updateLogicRules(const scalar_array_t& partitioningTimes,
 			controller_array_t& controllerStock);
-
-	/**
-	 * Returns a Lambda expression which can be used to find the current active subsystem's ID.
-	 *
-	 * @param partitionIndex: index of the time partition
-	 * @return Lambda expression
-	 */
-	std::function<size_t(scalar_t)> getHandleToFindActiveSubsystemID(size_t partitionIndex) const;
 
 	/**
 	 * Find distribution of the switched systems over the time partitions.

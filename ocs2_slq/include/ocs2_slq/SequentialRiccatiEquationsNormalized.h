@@ -162,8 +162,7 @@ public:
 	 * @param [in] RmPtr: A pointer to the trajectory of \f$ R_m(t) \f$ .
 	 * @param [in] PmPtr: A pointer to the trajectory of \f$ P_m(t) \f$ .
 	 */
-	void setData(const scalar_t& learningRate,
-			const scalar_t& switchingTimeStart, const scalar_t& switchingTimeFinal,
+	void setData(const scalar_t& switchingTimeStart, const scalar_t& switchingTimeFinal,
 			const scalar_array_t* timeStampPtr,
 			const state_matrix_array_t* AmPtr, const control_gain_matrix_array_t* BmPtr,
 			const eigen_scalar_array_t* qPtr, const state_vector_array_t* QvPtr, const state_matrix_array_t* QmPtr,
@@ -173,8 +172,6 @@ public:
 			const eigen_scalar_array_t* qFinalPtr, const state_vector_array_t* QvFinalPtr, const state_matrix_array_t* QmFianlPtr)  {
 
 		SystemBase<STATE_DIM*(STATE_DIM+1)/2+STATE_DIM+1>::numFunctionCalls_ = 0;
-
-		alpha_ = learningRate;
 
 		switchingTimeStart_ = switchingTimeStart;
 		switchingTimeFinal_ = switchingTimeFinal;
@@ -306,7 +303,7 @@ public:
 		__LmtransposeRm = __Lm.transpose()*__Rm;
 		__dSmdt = __Qm	+ __AtransposeSm + __AtransposeSm.transpose() - __LmtransposeRm*__Lm;
 		__dSvdt = __Qv  + __Am.transpose()*__Sv - __LmtransposeRm*__Lv;
-		__dsdt  = __q   - 0.5*alpha_*(2.0-alpha_)*__Lv.transpose()*__Rm*__Lv;
+		__dsdt  = __q   - 0.5 *__Lv.transpose() *__Rm * __Lv;
 
 		// Riccati equations for the equivalent system
 		__dSmdz = (switchingTimeFinal_-switchingTimeStart_)*__dSmdt;
@@ -314,6 +311,12 @@ public:
 		__dsdz  = (switchingTimeFinal_-switchingTimeStart_)*__dsdt;
 
 		convert2Vector(__dSmdz, __dSvdz, __dsdz, derivatives);
+
+//		std::cout << ">>>> time: " << t << std::endl;
+//		std::cout << "__dSmdt: \n" << __dSmdt << std::endl;
+//		std::cout << "__dSvdt: \n" << __dSvdt.transpose() << std::endl;
+//		std::cout << "switchingTimeFinal_-switchingTimeStart_: \n" << switchingTimeFinal_-switchingTimeStart_ << std::endl;
+//		std::cout << "derivatives: \n" << derivatives.transpose() << std::endl;
 	}
 
 protected:
@@ -378,8 +381,6 @@ protected:
 	}
 
 private:
-	scalar_t alpha_;
-
 	scalar_t switchingTimeStart_;
 	scalar_t switchingTimeFinal_;
 

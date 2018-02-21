@@ -2729,7 +2729,7 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::run(
 			settings_.displayInfo_==true || settings_.displayShortSummary_==true;
 
 	// finding the final optimal learningRate and getting the optimal trajectories and controller
-	maxLearningRate_ = 0.0;  // settings_.maxLearningRateGSLQP_
+	maxLearningRate_ = settings_.maxLearningRateGSLQP_;
 	lineSearch(computeISEs);
 
 #ifdef BENCHMARK

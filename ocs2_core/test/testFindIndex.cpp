@@ -6,6 +6,7 @@
  */
 
 #include <iostream>
+#include <algorithm>
 
 #include "ocs2_core/misc/FindActiveIntervalIndex.h"
 
@@ -13,7 +14,7 @@
 
 using namespace ocs2;
 
-TEST(testFindIndex, testFindIndex)
+TEST(testFindIndex, testFindIndex_ceiling)
 {
 	std::vector<double> timeIntervals;
 	timeIntervals.push_back(0.0);
@@ -32,14 +33,90 @@ TEST(testFindIndex, testFindIndex)
 	std::vector<int> activeIntervalIndeces {-1, 0, 0, 0, 1, 1, 2, 2, 3};
 
 	bool resultsGood = true;
+	int index = 0;
+	// Moving forward test
+	std::cout << "### Moving forward test" << std::endl;
 	for (size_t i=0; i<testTimes.size(); i++) {
 
-		int index = findActiveIntervalIndex(timeIntervals, testTimes[i], 0);
+		index = std::max(index, 0);
+		index = std::min(index, (int)timeIntervals.size()-2);
+
+		index = findActiveIntervalIndex(timeIntervals, testTimes[i], index);
+
+		std::cout << "time: " << testTimes[i] << " \t activeIntervalIndex: "
+				<< index << " \t correct solution is: " << activeIntervalIndeces[i] << std::endl;
 
 		resultsGood = resultsGood && (index==activeIntervalIndeces[i]);
+	}
 
-		std::cout << "time: " << testTimes[i] << " ==> activeIntervalIndex: "
-				<< index << "\t correct solution is: " << activeIntervalIndeces[i] << std::endl;
+	// Moving backward test
+	std::cout << "### Moving backward test" << std::endl;
+	for (int i=testTimes.size()-1; i>=0; i--) {
+
+		index = std::max(index, 0);
+		index = std::min(index, (int)timeIntervals.size()-2);
+
+		index = findActiveIntervalIndex(timeIntervals, testTimes[i], index);
+
+		std::cout << "time: " << testTimes[i] << " \t activeIntervalIndex: "
+				<< index << " \t correct solution is: " << activeIntervalIndeces[i] << std::endl;
+
+		resultsGood = resultsGood && (index==activeIntervalIndeces[i]);
+	}
+
+	ASSERT_TRUE(resultsGood);
+}
+
+TEST(testFindIndex, testFindIndex_floor)
+{
+	std::vector<double> timeIntervals;
+	timeIntervals.push_back(0.0);
+	timeIntervals.push_back(1.0);
+	timeIntervals.push_back(2.0);
+	timeIntervals.push_back(3.0);
+
+	std::cout << "timeIntervalsSplits = {";
+	for (const int& i : timeIntervals)
+		std::cout << i << ", ";
+	std::cout << "} " << std::endl;
+
+	// test times
+	std::vector<double> testTimes {-0.5, 0.0, 0.5, 1.0, 1.5, 2.0, 2.5, 3.0, 3.5};
+	// correct solution
+	std::vector<int> activeIntervalIndeces {-1, 0, 0, 1, 1, 2, 2, 2, 3};
+
+	bool resultsGood = true;
+	int index = 0;
+	// Moving forward test
+	std::cout << "### Moving forward test" << std::endl;
+	for (size_t i=0; i<testTimes.size(); i++) {
+
+		index = std::max(index, 0);
+		index = std::min(index, (int)timeIntervals.size()-2);
+
+		index = findActiveIntervalIndex(timeIntervals, testTimes[i], index,
+				-OCS2NumericTraits<double>::week_epsilon());
+
+		std::cout << "time: " << testTimes[i] << " \t activeIntervalIndex: "
+				<< index << " \t correct solution is: " << activeIntervalIndeces[i] << std::endl;
+
+		resultsGood = resultsGood && (index==activeIntervalIndeces[i]);
+	}
+
+	// Moving backward test
+	std::cout << "### Moving backward test" << std::endl;
+	for (int i=testTimes.size()-1; i>=0; i--) {
+
+		index = std::max(index, 0);
+		index = std::min(index, (int)timeIntervals.size()-2);
+
+		index = findActiveIntervalIndex(timeIntervals, testTimes[i], index,
+				-OCS2NumericTraits<double>::week_epsilon());
+
+		std::cout << "time: " << testTimes[i] << " \t activeIntervalIndex: "
+				<< index << " \t correct solution is: " << activeIntervalIndeces[i] << std::endl;
+
+		resultsGood = resultsGood && (index==activeIntervalIndeces[i]);
 	}
 
 	ASSERT_TRUE(resultsGood);

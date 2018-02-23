@@ -8,7 +8,7 @@
 #ifndef FINDACTIVEINTERVALINDEX_OCS2_H_
 #define FINDACTIVEINTERVALINDEX_OCS2_H_
 
-
+#include <stdexcept>
 #include <vector>
 
 #include "ocs2_core/OCS2NumericTraits.h"
@@ -20,8 +20,9 @@ namespace ocs2{
  * to it. For an input timeIntervals vector of size n, we have n-1 intervals indexed from 0 to n-2.
  * If enquiryTime is smaller than timeIntervals.front(), the function returns -1. If enquiryTime is
  * greater than timeIntervals.back() it returns n-1 which is a non-existing interval index. Otherwise
- * enquiryTime is in interval i if: timeIntervals[i] < t <= timeIntervals[i+1]. There is an exception
- * when time=timeIntervals.begin(), here the function returns index 0.
+ * enquiryTime is in interval i if: timeIntervals[i] < t <= timeIntervals[i+1]. The equality is in the
+ * sense that two values are in the epsilon vicinity. Moreover as an exceptional case, if the time is
+ * equal to timeIntervals.begin(), the function returns index 0.
  *
  * User can utilize the third input argument to incorporate his/her guessed output. The function then uses
  * this guessed index to start searching from. This can potentially increase the speed of the function if
@@ -33,6 +34,7 @@ namespace ocs2{
  * @param [in] timeIntervals: a non-decreasing time sequence representing the time intervals segmentation points.
  * @param [in] enquiryTime: Enquiry time.
  * @param [in] guessedIndex: User guessed index for increasing efficiency.
+ * @param [in] epsilon: Defines epsilon-vicinity equality.
  * @return: The active interval index. The output is an integer from -1 to n-1 where n is the size of
  * the timeIntervals vector.
  */
@@ -43,21 +45,29 @@ int findActiveIntervalIndex(
 		const int& guessedIndex,
 		scalar_t epsilon = OCS2NumericTraits<scalar_t>::week_epsilon()) {
 
+	const int numTimeIntervals = timeIntervals.size()-1;
+
+	if (numTimeIntervals < 1)
+		throw std::runtime_error("The time interval array should have at least 2 elements.");
+
+	if (guessedIndex<0 || guessedIndex>numTimeIntervals-1)
+		throw std::runtime_error("The guessed index is out of range.");
+
 	int index = -1;
 
 	scalar_t timeMinus = enquiryTime - epsilon;
 
-	if (timeMinus < timeIntervals.at(guessedIndex)) {
+	if (timeMinus < timeIntervals[guessedIndex]) {
 		for (int i=guessedIndex; i>=0; i--)  {
-			if (timeIntervals.at(i) <= timeMinus) {
+			if (timeIntervals[i] <= timeMinus) {
 				index = i;
 				break;
 			}
 		}
 	} else {
-		for (int i=guessedIndex; i<timeIntervals.size(); i++) {
+		for (int i=guessedIndex; i<=numTimeIntervals; i++) {
 			index = i;
-			if (timeMinus < timeIntervals.at(i)) {
+			if (timeMinus < timeIntervals[i]) {
 				index--;
 				break;
 			}
@@ -70,9 +80,9 @@ int findActiveIntervalIndex(
 			index = 0;
 
 	// final time case for epsilon < 0
-	if (index==timeIntervals.size()-1 && epsilon < 0)
+	if (index==numTimeIntervals && epsilon < 0)
 		if(enquiryTime <= timeIntervals.back()-epsilon)
-			index = timeIntervals.size()-2;
+			index = numTimeIntervals-1;
 
 	return index;
 }
@@ -83,8 +93,9 @@ int findActiveIntervalIndex(
  * to it. For an input timeIntervals vector of size n, we have n-1 intervals indexed from 0 to n-2.
  * If enquiryTime is smaller than timeIntervals.front(), the function returns -1. If enquiryTime is
  * greater than timeIntervals.back() it returns n-1 which is a non-existing interval index. Otherwise
- * enquiryTime is in interval i if: timeIntervals[i] < t <= timeIntervals[i+1]. There is an exception
- * when time=timeIntervals.begin(), here the function returns index 0.
+ * enquiryTime is in interval i if: timeIntervals[i] < t <= timeIntervals[i+1]. The equality is in the
+ * sense that two values are in the epsilon vicinity. Moreover as an exceptional case, if the time is
+ * equal to timeIntervals.begin(), the function returns index 0.
  *
  * Note: do not assign this call output directly to unsigned integer, since the function may also return -1.
  *
@@ -96,6 +107,7 @@ int findActiveIntervalIndex(
  *
  * @param [in] timeIntervals: a non-decreasing time sequence representing the time intervals segmentation points.
  * @param [in] enquiryTime: Enquiry time.
+ * @param [in] epsilon: Defines epsilon-vicinity equality.
  * @return: The active interval index. The output is an integer from -1 to n-1 where n is the size of
  * the timeIntervals vector.
  */

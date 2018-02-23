@@ -36,17 +36,20 @@ namespace ocs2{
  * @return: The active interval index. The output is an integer from -1 to n-1 where n is the size of
  * the timeIntervals vector.
  */
-inline int findActiveIntervalIndex(const std::vector<double>& timeIntervals, const double& enquiryTime,
-		const int& guessedIndex) {
+template <typename scalar_t>
+int findActiveIntervalIndex(
+		const std::vector<scalar_t>& timeIntervals,
+		const scalar_t& enquiryTime,
+		const int& guessedIndex,
+		scalar_t epsilon = OCS2NumericTraits<scalar_t>::week_epsilon()) {
 
 	int index = -1;
 
-	double timePlus  = enquiryTime + OCS2NumericTraits<double>::week_epsilon();
-	double timeMinus = enquiryTime - OCS2NumericTraits<double>::week_epsilon();
+	scalar_t timeMinus = enquiryTime - epsilon;
 
 	if (timeMinus < timeIntervals.at(guessedIndex)) {
 		for (int i=guessedIndex; i>=0; i--)  {
-			if (timeIntervals.at(i) <= timePlus) {
+			if (timeIntervals.at(i) <= timeMinus) {
 				index = i;
 				break;
 			}
@@ -55,11 +58,21 @@ inline int findActiveIntervalIndex(const std::vector<double>& timeIntervals, con
 		for (int i=guessedIndex; i<timeIntervals.size(); i++) {
 			index = i;
 			if (timeMinus < timeIntervals.at(i)) {
-				index = i-1;
+				index--;
 				break;
 			}
 		}
 	}
+
+	// initial time case for epsilon > 0
+	if (index==-1 && epsilon > 0)
+		if(enquiryTime >= timeIntervals.front()-epsilon)
+			index = 0;
+
+	// final time case for epsilon < 0
+	if (index==timeIntervals.size()-1 && epsilon < 0)
+		if(enquiryTime <= timeIntervals.back()-epsilon)
+			index = timeIntervals.size()-2;
 
 	return index;
 }
@@ -86,12 +99,15 @@ inline int findActiveIntervalIndex(const std::vector<double>& timeIntervals, con
  * @return: The active interval index. The output is an integer from -1 to n-1 where n is the size of
  * the timeIntervals vector.
  */
-
-inline int findActiveIntervalIndex(const std::vector<double>& timeIntervals, const double& enquiryTime) {
+template <typename scalar_t>
+int findActiveIntervalIndex(
+		const std::vector<scalar_t>& timeIntervals,
+		const scalar_t& enquiryTime,
+		scalar_t epsilon = OCS2NumericTraits<scalar_t>::week_epsilon()) {
 
 	static int guessedIndex_ = 0;
 
-	int index = findActiveIntervalIndex(timeIntervals, enquiryTime, guessedIndex_);
+	int index = findActiveIntervalIndex(timeIntervals, enquiryTime, guessedIndex_, epsilon);
 
 	guessedIndex_ = std::max(index,0);
 

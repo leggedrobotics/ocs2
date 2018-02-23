@@ -39,7 +39,7 @@ TEST(testFindIndex, testFindIndex)
 		resultsGood = resultsGood && (index==activeIntervalIndeces[i]);
 
 		std::cout << "time: " << testTimes[i] << " ==> activeIntervalIndex: "
-				<< findActiveIntervalIndex(timeIntervals, testTimes[i], 0) << "\t correct solution is: " << activeIntervalIndeces[i] << std::endl;
+				<< index << "\t correct solution is: " << activeIntervalIndeces[i] << std::endl;
 	}
 
 	ASSERT_TRUE(resultsGood);

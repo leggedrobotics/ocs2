@@ -29,6 +29,8 @@ class LinearInterpolation
 public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
+	typedef double scalar_t;
+
 	/**
 	 * Default constructor.
 	 */
@@ -47,7 +49,7 @@ public:
 	 * @param [in] timeStampPtr: A pointer to time stamp.
 	 * @param [in] dataPtr: A pointer to the data.
 	 */
-	LinearInterpolation(const std::vector<double>* timeStampPtr, const std::vector<Data_T,Alloc>* dataPtr)
+	LinearInterpolation(const std::vector<scalar_t>* timeStampPtr, const std::vector<Data_T,Alloc>* dataPtr)
 
 	: index_(0),
 	  zeroFunction_(false),
@@ -85,7 +87,7 @@ public:
      *
      * @param [in] timeStampPtr: A pointer to time stamp.
      */
-	void setTimeStamp(const std::vector<double>* timeStampPtr)	{
+	void setTimeStamp(const std::vector<scalar_t>* timeStampPtr)	{
 		reset();
 		timeStampSize_ = timeStampPtr->size();
 		timeStampPtr_ = timeStampPtr;
@@ -119,7 +121,7 @@ public:
      * @param [in]  greatestLessTimeStampIndex (optional): The greatest smaller time stamp index. If provided, the interpolation will skip
      * the search scheme and readily calculates the output.
      */
-	void interpolate(const double& enquiryTime, Data_T& enquiryData, int greatestLessTimeStampIndex = -1) {
+	void interpolate(const scalar_t& enquiryTime, Data_T& enquiryData, int greatestLessTimeStampIndex = -1) {
 
 		if (zeroFunction_==true)  {
 			enquiryData.setZero();
@@ -129,8 +131,15 @@ public:
 		if (dataPtr_->size() != timeStampSize_)
 			throw std::runtime_error("LinearInterpolation.h : The size of timeStamp vector is not equal to the size of data vector.");
 
-		if (timeStampSize_==1)  {
+		if (enquiryTime<=timeStampPtr_->front()) {
 			enquiryData = dataPtr_->front();
+			index_ = 0;
+			return;
+		}
+
+		if (enquiryTime>=timeStampPtr_->back()) {
+			enquiryData = dataPtr_->back();
+			index_ = timeStampSize_-1;
 			return;
 		}
 
@@ -139,17 +148,7 @@ public:
 		else
 			index_ = greatestLessTimeStampIndex;
 
-		if (enquiryTime<timeStampPtr_->front()) {
-			enquiryData = dataPtr_->front();
-			return;
-		}
-
-		if (index_==timeStampSize_-1) {
-			enquiryData = dataPtr_->back();
-			return;
-		}
-
-		double alpha = (enquiryTime-timeStampPtr_->at(index_+1)) / (timeStampPtr_->at(index_)-timeStampPtr_->at(index_+1));
+		scalar_t alpha = (enquiryTime-timeStampPtr_->at(index_+1)) / (timeStampPtr_->at(index_)-timeStampPtr_->at(index_+1));
 		enquiryData = alpha*dataPtr_->at(index_) + (1-alpha)*dataPtr_->at(index_+1);
 	}
 
@@ -157,7 +156,7 @@ public:
 	 * Returns the greatest smaller time stamp index found in the last interpolation function call.
 	 * @return The greatest smaller time stamp index.
 	 */
-	size_t getGreatestLessTimeStampIndex() { return index_; }
+	int getGreatestLessTimeStampIndex() { return index_; }
 
 protected:
     /**
@@ -166,7 +165,7 @@ protected:
      * @param [in] enquiryTime: The enquiry time for interpolation.
      * @return The greatest smaller time stamp index.
      */
-	size_t find(const double& enquiryTime) {
+	int find(const scalar_t& enquiryTime) {
 
 		int index = -1;
 
@@ -180,17 +179,13 @@ protected:
 			for (int i=index_; i<timeStampSize_; i++) {
 				index = i;
 				if (timeStampPtr_->at(i) > enquiryTime) {
-					index = i-1;
+					index--;
 					break;
 				}
 			}
 		}
 
-		// throw error if index is wrong
-		if(index < 0)
-			throw std::runtime_error("LinearInterpolation.h : index in protected member find((const double& enquiryTime) not computed properly");
-
-		return (size_t)index;
+		return index;
 	}
 
     /**
@@ -202,11 +197,11 @@ protected:
 	}
 
 private:
-	size_t index_;
+	int index_;
 	bool zeroFunction_;
 
 	size_t timeStampSize_;
-	const std::vector<double>* timeStampPtr_;
+	const std::vector<scalar_t>* timeStampPtr_;
 	const std::vector<Data_T,Alloc>* dataPtr_;
 
 };

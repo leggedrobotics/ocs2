@@ -62,28 +62,28 @@ public:
 	 * Default constructor.
 	 */
 	SequentialRiccatiEquationsNormalized():
-		__Sm(state_matrix_t::Zero()),
-		__Sv(state_vector_t::Zero()),
-		__s (eigen_scalar_t::Zero()),
-		__Am(state_matrix_t::Zero()),
-		__Bm(control_gain_matrix_t::Zero()),
-		__q (eigen_scalar_t::Zero()),
-		__Qv(state_vector_t::Zero()),
-		__Qm(state_matrix_t::Zero()),
-		__Rv(control_vector_t::Zero()),
-		__RmInv(control_matrix_t::Zero()),
-		__Rm(control_matrix_t::Zero()),
-		__Pm(control_feedback_t::Zero()),
-		__dSmdt(state_matrix_t::Zero()),
-		__dSmdz(state_matrix_t::Zero()),
-		__dSvdt(state_vector_t::Zero()),
-		__dSvdz(state_vector_t::Zero()),
-		__dsdt(eigen_scalar_t::Zero()),
-		__dsdz(eigen_scalar_t::Zero()),
-		__Lm(control_feedback_t::Zero()),
-		__Lv(control_vector_t::Zero()),
-		__AtransposeSm(state_matrix_t::Zero()),
-		__LmtransposeRm(control_gain_matrix_t::Zero())
+		Sm_(state_matrix_t::Zero()),
+		Sv_(state_vector_t::Zero()),
+		s_ (eigen_scalar_t::Zero()),
+		Am_(state_matrix_t::Zero()),
+		Bm_(control_gain_matrix_t::Zero()),
+		q_ (eigen_scalar_t::Zero()),
+		Qv_(state_vector_t::Zero()),
+		Qm_(state_matrix_t::Zero()),
+		Rv_(control_vector_t::Zero()),
+		RmInv_(control_matrix_t::Zero()),
+		Rm_(control_matrix_t::Zero()),
+		Pm_(control_feedback_t::Zero()),
+		dSmdt_(state_matrix_t::Zero()),
+		dSmdz_(state_matrix_t::Zero()),
+		dSvdt_(state_vector_t::Zero()),
+		dSvdz_(state_vector_t::Zero()),
+		dsdt_(eigen_scalar_t::Zero()),
+		dsdz_(eigen_scalar_t::Zero()),
+		Lm_(control_feedback_t::Zero()),
+		Lv_(control_vector_t::Zero()),
+		AtransposeSm_(state_matrix_t::Zero()),
+		Lm_transposeRm(control_gain_matrix_t::Zero())
 		{}
 
 	/**
@@ -274,47 +274,47 @@ public:
 		// denormalized time
 		scalar_t t = switchingTimeFinal_ + (switchingTimeStart_-switchingTimeFinal_)*z;
 
-		convert2Matrix(allSs, __Sm, __Sv, __s);
+		convert2Matrix(allSs, Sm_, Sv_, s_);
 
 		// numerical consideration
-//		bool hasNegativeEigenValue = makePSD(__Sm);
-		__Sm += state_matrix_t::Identity()*(1e-5);
+//		bool hasNegativeEigenValue = makePSD(Sm_);
+		Sm_ += state_matrix_t::Identity()*(1e-5);
 
-		AmFunc_.interpolate(t, __Am);
+		AmFunc_.interpolate(t, Am_);
 		size_t greatestLessTimeStampIndex = AmFunc_.getGreatestLessTimeStampIndex();
-		BmFunc_.interpolate(t, __Bm, greatestLessTimeStampIndex);
-		qFunc_.interpolate(t, __q, greatestLessTimeStampIndex);
-		QvFunc_.interpolate(t, __Qv, greatestLessTimeStampIndex);
-		QmFunc_.interpolate(t, __Qm, greatestLessTimeStampIndex);
-		RvFunc_.interpolate(t, __Rv, greatestLessTimeStampIndex);
-		RmInverseFunc_.interpolate(t, __RmInv, greatestLessTimeStampIndex);
-		RmFunc_.interpolate(t, __Rm, greatestLessTimeStampIndex);
-		PmFunc_.interpolate(t, __Pm, greatestLessTimeStampIndex);
+		BmFunc_.interpolate(t, Bm_, greatestLessTimeStampIndex);
+		qFunc_.interpolate(t, q_, greatestLessTimeStampIndex);
+		QvFunc_.interpolate(t, Qv_, greatestLessTimeStampIndex);
+		QmFunc_.interpolate(t, Qm_, greatestLessTimeStampIndex);
+		RvFunc_.interpolate(t, Rv_, greatestLessTimeStampIndex);
+		RmInverseFunc_.interpolate(t, RmInv_, greatestLessTimeStampIndex);
+		RmFunc_.interpolate(t, Rm_, greatestLessTimeStampIndex);
+		PmFunc_.interpolate(t, Pm_, greatestLessTimeStampIndex);
 
 
 		// Riccati equations for the original system
-		__Lm 	= __RmInv*(__Pm+__Bm.transpose()*__Sm);
-		__Lv 	= __RmInv*(__Rv+__Bm.transpose()*__Sv);
+		Lm_ = RmInv_*(Pm_+Bm_.transpose()*Sm_);
+		Lv_ = RmInv_*(Rv_+Bm_.transpose()*Sv_);
 
 		/*note: according to some discussions on stackoverflow, it does not buy computation time if multiplications
 		 * with symmetric matrices are executed using selfadjointView(). Doing the full multiplication seems to be faster
 		 * because of vectorization */
-		__AtransposeSm = __Am.transpose()*__Sm;
-		__LmtransposeRm = __Lm.transpose()*__Rm;
-		__dSmdt = __Qm	+ __AtransposeSm + __AtransposeSm.transpose() - __LmtransposeRm*__Lm;
-		__dSvdt = __Qv  + __Am.transpose()*__Sv - __LmtransposeRm*__Lv;
-		__dsdt  = __q   - 0.5 *__Lv.transpose() *__Rm * __Lv;
+		AtransposeSm_ = Am_.transpose()*Sm_;
+		Lm_transposeRm = Lm_.transpose()*Rm_;
+		dSmdt_ = Qm_  + AtransposeSm_ + AtransposeSm_.transpose() - Lm_transposeRm*Lm_;
+		dSvdt_ = Qv_  + Am_.transpose()*Sv_ - Lm_transposeRm*Lv_;
+		dsdt_  = q_   - 0.5 *Lv_.transpose() *Rm_ * Lv_;
 
 		// Riccati equations for the equivalent system
-		__dSmdz = (switchingTimeFinal_-switchingTimeStart_)*__dSmdt;
-		__dSvdz = (switchingTimeFinal_-switchingTimeStart_)*__dSvdt;
-		__dsdz  = (switchingTimeFinal_-switchingTimeStart_)*__dsdt;
+		dSmdz_ = (switchingTimeFinal_-switchingTimeStart_)*dSmdt_;
+		dSvdz_ = (switchingTimeFinal_-switchingTimeStart_)*dSvdt_;
+		dsdz_  = (switchingTimeFinal_-switchingTimeStart_)*dsdt_;
 
-		convert2Vector(__dSmdz, __dSvdz, __dsdz, derivatives);
+		convert2Vector(dSmdz_, dSvdz_, dsdz_, derivatives);
 
 //		std::cout << ">>>> time: " << t << std::endl;
-//		std::cout << "__dSmdt: \n" << __dSmdt << std::endl;
-//		std::cout << "__dSvdt: \n" << __dSvdt.transpose() << std::endl;
+//		std::cout << "dSmdt_: \n" << dSmdt_ << std::endl;
+//		std::cout << "dSvdt_: \n" << dSvdt_.transpose() << std::endl;
 //		std::cout << "switchingTimeFinal_-switchingTimeStart_: \n" << switchingTimeFinal_-switchingTimeStart_ << std::endl;
 //		std::cout << "derivatives: \n" << derivatives.transpose() << std::endl;
 	}
@@ -397,28 +397,28 @@ private:
 
 
 	// members required only in computeDerivative()
-	state_matrix_t __Sm;
-	state_vector_t __Sv;
-	eigen_scalar_t __s;
-	state_matrix_t __Am;
-	control_gain_matrix_t __Bm;
-	eigen_scalar_t __q;
-	state_vector_t __Qv;
-	state_matrix_t __Qm;
-	control_vector_t __Rv;
-	control_matrix_t __RmInv;
-	control_matrix_t __Rm;
-	control_feedback_t __Pm;
-	state_matrix_t __dSmdt;
-	state_matrix_t __dSmdz;
-	state_vector_t __dSvdt;
-	state_vector_t __dSvdz;
-	eigen_scalar_t __dsdt;
-	eigen_scalar_t __dsdz;
-	control_feedback_t __Lm;
-	control_vector_t __Lv;
-	state_matrix_t __AtransposeSm;
-	control_gain_matrix_t __LmtransposeRm;
+	state_matrix_t Sm_;
+	state_vector_t Sv_;
+	eigen_scalar_t s_;
+	state_matrix_t Am_;
+	control_gain_matrix_t Bm_;
+	eigen_scalar_t q_;
+	state_vector_t Qv_;
+	state_matrix_t Qm_;
+	control_vector_t Rv_;
+	control_matrix_t RmInv_;
+	control_matrix_t Rm_;
+	control_feedback_t Pm_;
+	state_matrix_t dSmdt_;
+	state_matrix_t dSmdz_;
+	state_vector_t dSvdt_;
+	state_vector_t dSvdz_;
+	eigen_scalar_t dsdt_;
+	eigen_scalar_t dsdz_;
+	control_feedback_t Lm_;
+	control_vector_t   Lv_;
+	state_matrix_t AtransposeSm_;
+	control_gain_matrix_t Lm_transposeRm;
 
 	std::vector<double> eventTime_;
 	const eigen_scalar_array_t* qFinalPtr_;

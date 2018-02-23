@@ -152,7 +152,6 @@ SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::~SLQ_BASE()  {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-// FIXME: Init time can be bigger than the firt switching time (e.g. MPC seetings)
 template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
 void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::rolloutWorker(
 		size_t workerIndex,
@@ -2134,9 +2133,15 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::getNominalTrajectoriesPtr(st
 template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
 size_t SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::findActiveSubsystemIndex(
 		const scalar_array_t& partitioningTimes,
-		const double& time) {
+		const scalar_t& time,
+		bool ceilingFunction /*= true*/) {
 
-	int activeSubsystemIndex = findActiveIntervalIndex(partitioningTimes, time, 0);
+	int activeSubsystemIndex;
+	if (ceilingFunction==true)
+		activeSubsystemIndex = findActiveIntervalIndex(partitioningTimes, time, 0);
+	else
+		activeSubsystemIndex = findActiveIntervalIndex(partitioningTimes, time, 0,
+				-OCS2NumericTraits<scalar_t>::week_epsilon());
 
 	if (activeSubsystemIndex < 0) {
 		std::string mesg = "Given time is less than the strat time (i.e. givenTime < partitioningTimes.front()): "

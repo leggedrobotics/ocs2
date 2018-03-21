@@ -30,8 +30,8 @@ public:
 	void adjustController(controller_t& controller) const override
 	{}
 
-	void set(const scalar_array_t& switchingTimes) {
-		BASE::switchingTimes_ = switchingTimes;
+	void set(const scalar_array_t& eventTimes) {
+		BASE::eventTimes_ = eventTimes;
 	}
 
 private:
@@ -46,7 +46,8 @@ private:
  * @return
  */
 template <size_t STATE_DIM, size_t INPUT_DIM>
-bool checkSolution(const LogicRulesMachine<STATE_DIM,INPUT_DIM,TestLogicRules<STATE_DIM,INPUT_DIM>>& logicRulesMachine,
+bool checkSolution(
+		const LogicRulesMachine<STATE_DIM,INPUT_DIM,TestLogicRules<STATE_DIM,INPUT_DIM>>& logicRulesMachine,
 		const std::vector<std::vector<double>>& eventTimesStockResult,
 		const std::vector<std::vector<size_t>>& switchedSystemIDsStockResult) {
 
@@ -54,7 +55,7 @@ bool checkSolution(const LogicRulesMachine<STATE_DIM,INPUT_DIM,TestLogicRules<ST
 
 	bool testPass = true;
 	for (size_t i=0; i<numPartitionings; i++) {
-		if (eventTimesStockResult[i]!=logicRulesMachine.getSwitchingTimes(i))
+		if (eventTimesStockResult[i]!=logicRulesMachine.getEventTimes(i))
 			if (eventTimesStockResult[i].empty() && logicRulesMachine.getSwitchingTimes(i).empty() )
 				continue;
 			else {
@@ -72,8 +73,6 @@ bool checkSolution(const LogicRulesMachine<STATE_DIM,INPUT_DIM,TestLogicRules<ST
 
 TEST(testLogicRulesMachine, LogicRulesMachine)
 {
-	bool resultsGood = true;
-
 	TestLogicRules<1,1> logicRules;
 	LogicRulesMachine<1,1,TestLogicRules<1,1>> logicRulesMachine(logicRules);
 
@@ -110,8 +109,7 @@ TEST(testLogicRulesMachine, LogicRulesMachine)
 	switchedSystemIDsStockResult[2] = std::vector<size_t>{0};
 
 	testPass = checkSolution(logicRulesMachine, eventTimesStockResult, switchedSystemIDsStockResult);
-//	std::cout << "Test Pass: " <<  testPass << std::endl;
-	resultsGood = resultsGood && testPass;
+	ASSERT_TRUE(testPass);
 
 	// switches at the end of partitions
 	logicRulesSwitchingTimes = std::vector<double>{0, 1, 2, 3};
@@ -132,8 +130,7 @@ TEST(testLogicRulesMachine, LogicRulesMachine)
 	switchedSystemIDsStockResult[2] = std::vector<size_t>{3};
 
 	testPass = checkSolution(logicRulesMachine, eventTimesStockResult, switchedSystemIDsStockResult);
-//	std::cout << "Test Pass: " <<  testPass << std::endl;
-	resultsGood = resultsGood && testPass;
+	ASSERT_TRUE(testPass);
 
 	// swiches after time interval
 	logicRulesSwitchingTimes = std::vector<double>{3, 4, 5, 6};
@@ -154,8 +151,7 @@ TEST(testLogicRulesMachine, LogicRulesMachine)
 	switchedSystemIDsStockResult[2] = std::vector<size_t>{0};
 
 	testPass = checkSolution(logicRulesMachine, eventTimesStockResult, switchedSystemIDsStockResult);
-//	std::cout << "Test Pass: " <<  testPass << std::endl;
-	resultsGood = resultsGood && testPass;
+	ASSERT_TRUE(testPass);
 
 	// switches before time interval
 	logicRulesSwitchingTimes = std::vector<double>{-3, -2, -1, 0};
@@ -176,8 +172,7 @@ TEST(testLogicRulesMachine, LogicRulesMachine)
 	switchedSystemIDsStockResult[2] = std::vector<size_t>{4};
 
 	testPass = checkSolution(logicRulesMachine, eventTimesStockResult, switchedSystemIDsStockResult);
-//	std::cout << "Test Pass: " <<  testPass << std::endl;
-	resultsGood = resultsGood && testPass;
+	ASSERT_TRUE(testPass);
 
 	// switches in the middle
 	logicRulesSwitchingTimes = std::vector<double>{0, 0.5, 1.5, 2.5};
@@ -198,8 +193,7 @@ TEST(testLogicRulesMachine, LogicRulesMachine)
 	switchedSystemIDsStockResult[2] = std::vector<size_t>{3,4};
 
 	testPass = checkSolution(logicRulesMachine, eventTimesStockResult, switchedSystemIDsStockResult);
-//	std::cout << "Test Pass: " <<  testPass << std::endl;
-	resultsGood = resultsGood && testPass;
+	ASSERT_TRUE(testPass);
 
 	// no switch in middle partition
 	logicRulesSwitchingTimes = std::vector<double>{0.5, 2.5};
@@ -220,10 +214,7 @@ TEST(testLogicRulesMachine, LogicRulesMachine)
 	switchedSystemIDsStockResult[2] = std::vector<size_t>{1,2};
 
 	testPass = checkSolution(logicRulesMachine, eventTimesStockResult, switchedSystemIDsStockResult);
-//	std::cout << "Test Pass: " <<  testPass << std::endl;
-	resultsGood = resultsGood && testPass;
-
-	ASSERT_TRUE(resultsGood);
+	ASSERT_TRUE(testPass);
 }
 
 

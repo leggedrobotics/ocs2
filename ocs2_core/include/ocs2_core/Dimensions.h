@@ -16,9 +16,6 @@
 
 namespace ocs2{
 
-const double RIGHT_LIMIT_EPSILON = 1e-3;
-const double WEAK_EPSILON = 1e-5;
-
 /**
  * This class defines the types which are used throughout this package.
  *

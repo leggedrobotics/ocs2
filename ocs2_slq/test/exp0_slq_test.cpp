@@ -25,28 +25,22 @@ enum
 
 TEST(exp0_slq_test, exp0_slq_test)
 {
-	// subsystem dynamics
-	ControlledSystemBase<STATE_DIM, INPUT_DIM, EXP0_LogicRules>::Ptr subsystemDynamicsPtr =
-			std::allocate_shared<EXP0_System, Eigen::aligned_allocator<EXP0_System>>( Eigen::aligned_allocator<EXP0_System>() );
+	// system dynamics
+	EXP0_System systemDynamics;
 
-	// subsystem derivatives
-	DerivativesBase<STATE_DIM, INPUT_DIM, EXP0_LogicRules>::Ptr subsystemDerivativePtr =
-			std::allocate_shared<EXP0_SystemDerivative, Eigen::aligned_allocator<EXP0_SystemDerivative>>( Eigen::aligned_allocator<EXP0_SystemDerivative>() );
+	// system derivatives
+	EXP0_SystemDerivative systemDerivative;
 
-	// subsystem constraints
-	ConstraintBase<STATE_DIM, INPUT_DIM, EXP0_LogicRules>::Ptr subsystemConstraintPtr =
-			std::allocate_shared<EXP0_SystemConstraint, Eigen::aligned_allocator<EXP0_SystemConstraint>>( Eigen::aligned_allocator<EXP0_SystemConstraint>() );
+	// system constraints
+	EXP0_SystemConstraint systemConstraint;
 
-	// subsystem cost functions
-	CostFunctionBase<STATE_DIM, INPUT_DIM, EXP0_LogicRules>::Ptr subsystemCostFunctionPtr =
-			std::allocate_shared<EXP0_CostFunction, Eigen::aligned_allocator<EXP0_CostFunction>>( Eigen::aligned_allocator<EXP0_CostFunction>() );
+	// system cost functions
+	EXP0_CostFunction systemCostFunction;
 
-
+	// system operatingTrajectories
 	Eigen::Matrix<double,2,1> stateOperatingPoint = Eigen::Matrix<double,2,1>::Zero();
 	Eigen::Matrix<double,1,1> inputOperatingPoint = Eigen::Matrix<double,1,1>::Zero();
-	SystemOperatingTrajectoriesBase<STATE_DIM, INPUT_DIM, EXP0_LogicRules>::Ptr operatingTrajectoriesPtr =
-			std::allocate_shared<EXP0_SystemOperatingTrajectories, Eigen::aligned_allocator<EXP0_SystemOperatingTrajectories>>(
-					Eigen::aligned_allocator<EXP0_SystemOperatingTrajectories>(), stateOperatingPoint, inputOperatingPoint );
+	EXP0_SystemOperatingTrajectories operatingTrajectories(stateOperatingPoint, inputOperatingPoint);
 
 
 	/******************************************************************************************************/
@@ -85,15 +79,15 @@ TEST(exp0_slq_test, exp0_slq_test)
 	/******************************************************************************************************/
 	// SLQ - single core version
 	SLQ<STATE_DIM, INPUT_DIM, EXP0_LogicRules> slq(
-			subsystemDynamicsPtr.get(), subsystemDerivativePtr.get(),
-			subsystemConstraintPtr.get(), subsystemCostFunctionPtr.get(),
-			operatingTrajectoriesPtr.get(), slqOptions, logicRules);
+			&systemDynamics, &systemDerivative,
+			&systemConstraint, &systemCostFunction,
+			&operatingTrajectories, slqOptions, &logicRules);
 
 	// GSLQ MP version
 	SLQ_MP<STATE_DIM, INPUT_DIM, EXP0_LogicRules> slq_mp(
-			subsystemDynamicsPtr.get(), subsystemDerivativePtr.get(),
-			subsystemConstraintPtr.get(), subsystemCostFunctionPtr.get(),
-			operatingTrajectoriesPtr.get(), slqOptions, logicRules);
+			&systemDynamics, &systemDerivative,
+			&systemConstraint, &systemCostFunction,
+			&operatingTrajectories, slqOptions, &logicRules);
 
 	// run single core SLQ
 	if (slqOptions.displayInfo_ || slqOptions.displayShortSummary_)
@@ -113,10 +107,8 @@ TEST(exp0_slq_test, exp0_slq_test)
 	/******************************************************************************************************/
 	/******************************************************************************************************/
 	// get controller
-	SLQ_BASE<STATE_DIM, INPUT_DIM, EXP0_LogicRules>::controller_array_t controllersStock;
-	slq.getController(controllersStock);
-	SLQ_BASE<STATE_DIM, INPUT_DIM, EXP0_LogicRules>::controller_array_t controllersStock_mp;
-	slq_mp.getController(controllersStock_mp);
+	SLQ_BASE<STATE_DIM, INPUT_DIM, EXP0_LogicRules>::controller_array_t controllersStock = slq.getController();
+	SLQ_BASE<STATE_DIM, INPUT_DIM, EXP0_LogicRules>::controller_array_t controllersStock_mp = slq_mp.getController();
 
 	// get performance indeces
 	double totalCost, totalCost_mp;

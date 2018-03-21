@@ -32,7 +32,8 @@ class ControlledSystemBase : public SystemBase<STATE_DIM>
 {
 public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-	static_assert(std::is_base_of<LogicRulesBase<STATE_DIM, INPUT_DIM>, LOGIC_RULES_T>::value, "LOGIC_RULES_T must inherit from LogicRulesBase");
+	static_assert(std::is_base_of<LogicRulesBase<STATE_DIM, INPUT_DIM, typename LOGIC_RULES_T::LogicRulesTemplate>, LOGIC_RULES_T>::value,
+			"LOGIC_RULES_T must inherit from LogicRulesBase");
 
 	typedef std::shared_ptr<ControlledSystemBase<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> > Ptr;
 	typedef std::shared_ptr<const ControlledSystemBase<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> > ConstPtr;
@@ -141,7 +142,7 @@ public:
 	 * @param [in] partitionIndex: index of the time partition.
 	 * @param [in] algorithmName: The algorithm that class this class (default not defined).
 	 */
-	virtual void initializeModel(const LogicRulesMachine<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>& logicRulesMachine,
+	virtual void initializeModel(LogicRulesMachine<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>& logicRulesMachine,
 			const size_t& partitionIndex, const char* algorithmName=NULL)
 	{}
 
@@ -173,8 +174,26 @@ public:
 	 * @param [in] state: transition state
 	 * @param [out] mappedState: mapped state after transition
 	 */
-	virtual void mapState(const scalar_t& time, const state_vector_t& state, state_vector_t& mappedState) override {
+	virtual void mapState(
+			const scalar_t& time,
+			const state_vector_t& state,
+			state_vector_t& mappedState) override {
+
 		SystemBase<STATE_DIM>::mapState(time, state, mappedState);
+	}
+
+	/**
+	 *
+	 * @param [in] time: transition time
+	 * @param [in] state: transition state
+	 * @param [out] guardSurfacesValue: An array of guard surfaces values
+	 */
+	virtual void computeGuardSurfaces(
+			const scalar_t& time,
+			const state_vector_t& state,
+			scalar_array_t& guardSurfacesValue) override {
+
+		SystemBase<STATE_DIM>::computeGuardSurfaces(time, state, guardSurfacesValue);
 	}
 
 protected:

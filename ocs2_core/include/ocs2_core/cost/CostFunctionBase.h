@@ -28,7 +28,8 @@ class CostFunctionBase
 {
 public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-	static_assert(std::is_base_of<LogicRulesBase<STATE_DIM,INPUT_DIM>, LOGIC_RULES_T>::value, "LOGIC_RULES_T must inherit from LogicRulesBase");
+	static_assert(std::is_base_of<LogicRulesBase<STATE_DIM, INPUT_DIM, typename LOGIC_RULES_T::LogicRulesTemplate>, LOGIC_RULES_T>::value,
+			"LOGIC_RULES_T must inherit from LogicRulesBase");
 
 	typedef std::shared_ptr<CostFunctionBase<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> > Ptr;
 	typedef std::shared_ptr<const CostFunctionBase<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> > ConstPtr;
@@ -76,35 +77,37 @@ public:
 	virtual ~CostFunctionBase() {};
 
 	/**
-	 * Sets pointers to the nominal state and input trajectories used in the cost function.
+	 * Sets the nominal state and input trajectories used in the cost function.
 	 *
-	 * @param [in] timeTrajectoryPtr: A Pointer to the time trajectory.
-	 * @param [in] stateTrajectoryPtr: A Pointer to the state trajectory.
-	 * @param [in] inputTrajectoryPtr: A Pointer to the inout trajectory.
+	 * @param [in] timeTrajectory: A Reference to the time trajectory.
+	 * @param [in] stateTrajectory: A Reference to the state trajectory.
+	 * @param [in] inputTrajectory: A Reference to the inout trajectory.
 	 */
-	virtual void setCostNominalTrajectoriesPtr(
-			const scalar_array_t* timeTrajectoryPtr,
-			const state_vector_array_t* stateTrajectoryPtr,
-			const input_vector_array_t* inputTrajectoryPtr = nullptr) {
+	virtual void setCostNominalTrajectories(
+			const scalar_array_t& timeTrajectory,
+			const state_vector_array_t& stateTrajectory,
+			const input_vector_array_t& inputTrajectory = input_vector_array_t()) {
 
-		tNominalTrajectoryPtr_ = timeTrajectoryPtr;
-		xNominalTrajectoryPtr_ = stateTrajectoryPtr;
-		uNominalTrajectoryPtr_ = inputTrajectoryPtr;
+		tNominalTrajectoryPtr_ = &timeTrajectory;
 
-		if (!xNominalTrajectoryPtr_ || xNominalTrajectoryPtr_->empty()) {
-			xNominalFunc_.setZero();
-		} else {
+		if (stateTrajectory.empty()==false) {
+			xNominalTrajectoryPtr_ = &stateTrajectory;
 			xNominalFunc_.reset();
 			xNominalFunc_.setTimeStamp(tNominalTrajectoryPtr_);
 			xNominalFunc_.setData(xNominalTrajectoryPtr_);
+		} else {
+			xNominalTrajectoryPtr_ = nullptr;
+			xNominalFunc_.setZero();
 		}
 
-		if (!uNominalTrajectoryPtr_ || uNominalTrajectoryPtr_->empty()) {
-			uNominalFunc_.setZero();
-		} else {
+		if (inputTrajectory.empty()==false) {
+			uNominalTrajectoryPtr_ = &inputTrajectory;
 			uNominalFunc_.reset();
 			uNominalFunc_.setTimeStamp(tNominalTrajectoryPtr_);
 			uNominalFunc_.setData(uNominalTrajectoryPtr_);
+		} else {
+			uNominalTrajectoryPtr_ = nullptr;
+			uNominalFunc_.setZero();
 		}
 	}
 
@@ -180,7 +183,7 @@ public:
 	 * @param [in] partitionIndex: index of the time partition.
 	 * @param [in] algorithmName: The algorithm that class this class (default not defined).
 	 */
-	virtual void initializeModel(const LogicRulesMachine<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>& logicRulesMachine,
+	virtual void initializeModel(LogicRulesMachine<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>& logicRulesMachine,
 			const size_t& partitionIndex, const char* algorithmName=NULL)
 	{}
 

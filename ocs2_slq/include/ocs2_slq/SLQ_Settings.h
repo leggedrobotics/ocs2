@@ -65,6 +65,7 @@ public:
 		RiccatiIntegratorType_(RICCATI_INTEGRATOR_TYPE::ODE45),
 		adams_integrator_dt_(0.001),
 
+		useMultiThreading_(false),
 		nThreads_(4),
 		debugPrintMP_(false),
 		lsStepsizeGreedy_(true),
@@ -170,6 +171,8 @@ public:
 	/** Adams integrator dt. */
 	double adams_integrator_dt_;
 
+	/** Use multi threading for the SLQ algorithms. */
+	bool useMultiThreading_;
 	/** Number of threads used in the multi threading scheme. */
 	size_t nThreads_;
 	/** Special debugging output for multi threading scheme. */
@@ -194,7 +197,15 @@ inline void SLQ_Settings::loadSettings(const std::string& filename, bool verbose
 
 	if(verbose){
 		std::cerr << std::endl << " #### SLQ Settings: " << std::endl;
-		std::cerr << " #### ==============================================================================================" << std::endl;
+		std::cerr <<" #### =============================================================================" << std::endl;
+	}
+
+	try	{
+		useMultiThreading_ = pt.get<bool>("slq.useMultiThreading");
+		if (verbose)  std::cerr << " #### Option loader : option 'useMultiThreading' ................... " << useMultiThreading_ << std::endl;
+	}
+	catch (const std::exception& e){
+		if (verbose)  std::cerr << " #### Option loader : option 'useMultiThreading' ................... " << useMultiThreading_ << "   \t(default)" << std::endl;
 	}
 
 	try	{
@@ -206,7 +217,7 @@ inline void SLQ_Settings::loadSettings(const std::string& filename, bool verbose
 	}
 
 	try	{
-		maxNumIterationsSLQ_ = pt.get<int>("slq.maxIterationGSLQP");
+		maxNumIterationsSLQ_ = pt.get<int>("slq.maxNumIterationsSLQ");
 		if (verbose)  std::cerr << " #### Option loader : option 'maxNumIterationsSLQ' ................. " << maxNumIterationsSLQ_ << std::endl;
 	}
 	catch (const std::exception& e){
@@ -478,8 +489,7 @@ inline void SLQ_Settings::loadSettings(const std::string& filename, bool verbose
 	}
 
 	if(verbose)
-		std::cerr <<" #### ========================================================================================== ####" << std::endl;
-
+		std::cerr <<" #### =============================================================================" << std::endl;
 }
 
 } // namespace ocs2

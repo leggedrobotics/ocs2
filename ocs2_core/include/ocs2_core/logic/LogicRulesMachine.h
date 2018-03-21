@@ -31,7 +31,8 @@ class LogicRulesMachine
 {
 public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-	static_assert(std::is_base_of<LogicRulesBase<STATE_DIM, INPUT_DIM>, LOGIC_RULES_T>::value, "LOGIC_RULES_T must inherit from LogicRulesBase");
+	static_assert(std::is_base_of<LogicRulesBase<STATE_DIM, INPUT_DIM, typename LOGIC_RULES_T::LogicRulesTemplate>, LOGIC_RULES_T>::value,
+			"LOGIC_RULES_T must inherit from LogicRulesBase");
 
 	typedef std::shared_ptr<LogicRulesMachine<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>> Ptr;
 
@@ -54,6 +55,7 @@ public:
 	  numPartitionings_(1),
 	  partitioningTimes_{-10000,10000},
 	  eventTimesStock_(1,scalar_array_t(0)),
+	  switchingTimesStock_(1,partitioningTimes_),
 	  switchedSystemIDsStock_(1,size_array_t(1,0))
 	{}
 
@@ -73,7 +75,20 @@ public:
 	 * Get the active logic rules class
 	 * @return active logic rules class
 	 */
+	LOGIC_RULES_T& getLogicRules();
+
+	/**
+	 * Get the active logic rules class
+	 * @return active logic rules class
+	 */
 	const LOGIC_RULES_T& getLogicRules() const;
+
+	/**
+	 * Get the pointer to the active logic rules class
+	 *
+	 * @return pointer to active logic rules class
+	 */
+	LOGIC_RULES_T* getLogicRulesPtr();
 
 	/**
 	 * Get the pointer to the active logic rules class
@@ -83,11 +98,19 @@ public:
 	const LOGIC_RULES_T* getLogicRulesPtr() const;
 
 	/**
-	 * Gets the switching times associated to the partition number index.
+	 * Gets the event times associated to the partition number index.
+	 *
 	 * @param [in] partitionIndex: index of the time partition.
 	 * @return
 	 */
-	const scalar_array_t& getSwitchingTimes(size_t partitionIndex) const;
+	const scalar_array_t& getEventTimes(size_t partitionIndex) const;
+
+	/**
+	 * Gets the switching times associated to the partition number index.
+	 * @param [in] index: index of the time partition
+	 * @return
+	 */
+	const scalar_array_t& getSwitchingTimes(size_t index) const;
 
 	/**
 	 * Gets the partitioning times.
@@ -111,6 +134,14 @@ public:
 	size_t getNumSubsystems(size_t partitionIndex) const;
 
 	/**
+	 * Returns the number of event in the partition.
+	 *
+	 * @param partitionIndex: index of the time partition
+	 * @return Number of events
+	 */
+	size_t getNumEvents(size_t partitionIndex) const;
+
+	/**
 	 * Returns a Lambda expression which can be used to find the current active subsystem's ID.
 	 *
 	 * @param partitionIndex: index of the time partition
@@ -124,9 +155,10 @@ public:
 	 * distribution of the switched systems over the time partitions.
 	 *
 	 * @param [in] partitioningTimes: Vector of time partitions.
-	 * @param controllerStock: The controller which will be adjusted.
+	 * @param [out] controllerStock: The controller which will be adjusted.
 	 */
-	void updateLogicRules(const scalar_array_t& partitioningTimes,
+	void updateLogicRules(
+			const scalar_array_t& partitioningTimes,
 			controller_array_t& controllerStock);
 
 	/**
@@ -134,10 +166,13 @@ public:
 	 *
 	 * @param [in] partitioningTimes: Vector of time partitions.
 	 * @param [out] eventTimesStock: Distribution of the event times over partitions.
+	 * @param [out] switchingTimesStock: Distribution of the switching times over partitions.
 	 * @param [out] switchedSystemIDsStock: Distribution of the switched system over partitions identified by their index.
 	 */
-	void findSwitchedSystemsDistribution(const scalar_array_t& partitioningTimes,
+	void findSwitchedSystemsDistribution(
+			const scalar_array_t& partitioningTimes,
 			std::vector<scalar_array_t>& eventTimesStock,
+			std::vector<scalar_array_t>& switchingTimesStock,
 			std::vector<size_array_t>& switchedSystemIDsStock);
 
 	/**
@@ -155,6 +190,7 @@ private:
 	scalar_array_t partitioningTimes_;
 
 	std::vector<scalar_array_t> eventTimesStock_;
+	std::vector<scalar_array_t> switchingTimesStock_;
 	std::vector<size_array_t> switchedSystemIDsStock_;
 };
 

@@ -29,6 +29,12 @@ void LogicRulesMachine<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::setLogicRules(const
  * @return active logic rules class
  */
 template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
+LOGIC_RULES_T& LogicRulesMachine<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::getLogicRules() {
+
+	return logicRulesInUse_;
+}
+
+template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
 const LOGIC_RULES_T& LogicRulesMachine<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::getLogicRules() const {
 
 	return logicRulesInUse_;
@@ -43,6 +49,12 @@ const LOGIC_RULES_T& LogicRulesMachine<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::get
  * @return pointer to active logic rules class
  */
 template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
+LOGIC_RULES_T* LogicRulesMachine<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::getLogicRulesPtr() {
+
+	return &logicRulesInUse_;
+}
+
+template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
 const LOGIC_RULES_T* LogicRulesMachine<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::getLogicRulesPtr() const {
 
 	return &logicRulesInUse_;
@@ -52,13 +64,13 @@ const LOGIC_RULES_T* LogicRulesMachine<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::get
 /******************************************************************************************************/
 /******************************************************************************************************/
 /*
- * Gets the switching times associated to the partition number index.
+ * Gets the event times associated to the partition number index.
  * @param [in] index: index of the time partition.
  * @return
  */
 template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
 const typename LogicRulesMachine<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::scalar_array_t&
-	LogicRulesMachine<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::getSwitchingTimes(size_t index) const {
+	LogicRulesMachine<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::getEventTimes(size_t index) const {
 
 	return eventTimesStock_[index];
 }
@@ -97,6 +109,21 @@ const typename LogicRulesMachine<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::size_arra
 /******************************************************************************************************/
 /******************************************************************************************************/
 /*
+ * Gets the switching times associated to the partition number index.
+ * @param [in] index: index of the time partition
+ * @return
+ */
+template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
+const typename LogicRulesMachine<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::scalar_array_t&
+	LogicRulesMachine<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::getSwitchingTimes(size_t index) const {
+
+	return switchingTimesStock_[index];
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+/*
  * Returns a Lambda expression which can be used to find the current active subsystem's ID.
  *
  * @param partitionIndex: index of the time partition
@@ -108,31 +135,7 @@ std::function<size_t(typename LogicRulesMachine<STATE_DIM, INPUT_DIM, LOGIC_RULE
 		size_t partitionIndex) const {
 
 	const size_array_t& switchedSystemIDs = switchedSystemIDsStock_[partitionIndex];
-	size_t numSubsystems = switchedSystemIDs.size();
-
-	scalar_array_t switchingTimes;
-	switchingTimes.reserve(1+numSubsystems);
-
-	// add the partition's start time
-	switchingTimes.push_back(partitioningTimes_[partitionIndex]);
-	// add the intermediate switching times
-	for (const scalar_t& t: this->getSwitchingTimes(partitionIndex))
-		switchingTimes.push_back(t);
-	// only add the partition's final time if there is no intermediate switching time at the end
-	if (switchingTimes.size() == numSubsystems)
-		switchingTimes.push_back(partitioningTimes_[partitionIndex+1]);
-	else
-		switchingTimes[numSubsystems] = partitioningTimes_[partitionIndex+1];
-
-//	std::cout << "switchingTimes: ";
-//	for (auto& t : switchingTimes)
-//		std::cout << t << ", ";
-//	std::cout << std::endl;
-//
-//	std::cout << "switchedSystemIDs: ";
-//	for (auto& i : switchedSystemIDs)
-//		std::cout << i << ", ";
-//	std::cout << std::endl;
+	const scalar_array_t& switchingTimes = switchingTimesStock_[partitionIndex];
 
 	// return Lambda expression
 	return [switchingTimes, switchedSystemIDs](scalar_t time) {
@@ -140,7 +143,7 @@ std::function<size_t(typename LogicRulesMachine<STATE_DIM, INPUT_DIM, LOGIC_RULE
 		int index = findActiveIntervalIndex(switchingTimes, time, guessedIndex_);
 
 		if (index < 0 || index >= switchedSystemIDs.size())
-			throw std::runtime_error("The enquiry time refers to an out-of-bound subsystem.");
+			throw std::runtime_error("The enquiry time refers to an out-of-range subsystem.");
 
 		guessedIndex_ = index;
 
@@ -167,6 +170,21 @@ size_t LogicRulesMachine<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::getNumSubsystems(
 /******************************************************************************************************/
 /******************************************************************************************************/
 /*
+ * Returns the number of event in the partition.
+ *
+ * @param partitionIndex: index of the time partition
+ * @return Number of events
+ */
+template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
+size_t LogicRulesMachine<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::getNumEvents(size_t partitionIndex) const  {
+
+	return eventTimesStock_[partitionIndex].size();
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+/*
  * Updates the active logic rules based on the last set value (using LogicRulesMachine::setLogicRules) and
  * adjusts the controller based on LOGIC_RULES_T::adjustController() routine. Moreover, it recomputes the
  * distribution of the switched systems over the time partitions.
@@ -179,16 +197,9 @@ void LogicRulesMachine<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::updateLogicRules(
 		const scalar_array_t& partitioningTimes,
 		controller_array_t& controllerStock) {
 
-	// if logic rules is modified
-	if (logicRulesModified_ == true)  {
-
+	// if logic rules is modified update the logic
+	if (logicRulesModified_ == true)
 		logicRulesInUse_ = std::move(logicRules_);
-
-		// adjust controller
-		for (auto controllerItr=controllerStock.begin(); controllerItr!=controllerStock.end(); ++controllerItr)
-			if (controllerItr->time_.empty()==false)
-				logicRulesInUse_.adjustController(*controllerItr);
-	}
 
 	// if partitioningTimes is updated
 	if (logicRulesModified_==true || partitioningTimes_!=partitioningTimes) {
@@ -199,7 +210,16 @@ void LogicRulesMachine<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::updateLogicRules(
 		numPartitionings_ = partitioningTimes.size()-1;
 		partitioningTimes_ = partitioningTimes;
 		// recomputes the distribution of the switched systems over the time partitions.
-		findSwitchedSystemsDistribution(partitioningTimes, eventTimesStock_, switchedSystemIDsStock_);
+		findSwitchedSystemsDistribution(partitioningTimes, eventTimesStock_, switchingTimesStock_,
+				switchedSystemIDsStock_);
+	}
+
+	// adjust controller
+	if (logicRulesModified_ == true && controllerStock.size()>0) {
+		// adjust controller
+		for (auto controllerItr=controllerStock.begin(); controllerItr!=controllerStock.end(); ++controllerItr)
+			if (controllerItr->time_.empty()==false)
+				this->getLogicRules().adjustController(*controllerItr);
 	}
 
 	logicRulesModified_ = false;
@@ -212,16 +232,18 @@ void LogicRulesMachine<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::updateLogicRules(
  * Find distribution of the switched systems over the time partitions.
  * @param [in] partitioningTimes: Vector of time partitions.
  * @param [out] eventTimesStock: Distribution of the event times over partitions.
+ * @param [out] switchingTimesStock: Distribution of the switching times over partitions.
  * @param [out] switchedSystemIDsStock: Distribution of the switched system over partitions identified by their index.
  */
 template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
 void LogicRulesMachine<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::findSwitchedSystemsDistribution(
 		const scalar_array_t& partitioningTimes,
 		std::vector<scalar_array_t>& eventTimesStock,
+		std::vector<scalar_array_t>& switchingTimesStock,
 		std::vector<size_array_t>& switchedSystemIDsStock) {
 
-	const scalar_array_t& switchingTimes = getLogicRules().logicRulesSwitchingTimes();
-	const size_t numSubsystems = switchingTimes.size()+1;
+	const scalar_array_t& allEventTimes = this->getLogicRules().eventTimes();
+	const size_t numSubsystems = allEventTimes.size()+1;
 
 	/*
 	 * Finding the distribution of the event's indeces over partitions.
@@ -229,9 +251,9 @@ void LogicRulesMachine<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::findSwitchedSystems
 	int lastIndex = 0;
 	int firstActiveSwitchinTimeIndex = -1;
 	std::vector<size_array_t> eventIndecesStock(numPartitionings_, size_array_t(0));
-	for (size_t i=0; i<switchingTimes.size(); i++) {
+	for (size_t i=0; i<allEventTimes.size(); i++) {
 
-		const double& ti = switchingTimes[i];
+		const scalar_t& ti = allEventTimes[i];
 
 		int index = findActiveIntervalIndex(partitioningTimes, ti, lastIndex);
 
@@ -260,7 +282,7 @@ void LogicRulesMachine<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::findSwitchedSystems
 	}
 	else // there are 3 case: no swich, all switches before or after the current time interval
 	{
-		if (switchingTimes.empty()==false && switchingTimes.back() < partitioningTimes.front()+OCS2NumericTraits<double>::limit_epsilon())
+		if (allEventTimes.empty()==false && allEventTimes.back() < partitioningTimes.front()+OCS2NumericTraits<double>::limit_epsilon())
 			currActiveSubsystemIndex = numSubsystems-1;
 		else
 			currActiveSubsystemIndex = 0;
@@ -278,7 +300,7 @@ void LogicRulesMachine<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::findSwitchedSystems
 		for (size_t j=0; j<eventIndecesStock[i].size(); j++) {
 
 			size_t& index = eventIndecesStock[i][j];
-			eventTimesStock[i].push_back( switchingTimes[index] );
+			eventTimesStock[i].push_back( allEventTimes[index] );
 
 			// since a switch happended the next switched system should be pushed to this partitions switched systems list
 			// unless the swich happend at the end of the time partition
@@ -288,6 +310,30 @@ void LogicRulesMachine<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::findSwitchedSystems
 			}
 
 		} // end of j loop
+	}  // end of i loop
+
+	/*
+	 * calculates switching times
+	 */
+	switchingTimesStock.resize(numPartitionings_);
+	for (size_t i=0; i<numPartitionings_; i++) {
+
+		const size_t numSubsystems = switchedSystemIDsStock_[i].size();
+		scalar_array_t& switchingTimes = switchingTimesStock[i];
+
+		switchingTimes.clear();
+		switchingTimes.reserve(1+numSubsystems);
+
+		// add the partition's start time
+		switchingTimes.push_back(partitioningTimes_[i]);
+		// add the intermediate switching times
+		for (const scalar_t& t: eventTimesStock_[i])
+			switchingTimes.push_back(t);
+		// only add the partition's final time if there is no intermediate switching time at the end
+		if (switchingTimes.size() == numSubsystems)
+			switchingTimes.push_back(partitioningTimes_[i+1]);
+		else
+			switchingTimes[numSubsystems] = partitioningTimes_[i+1];
 	}  // end of i loop
 
 }
@@ -302,13 +348,13 @@ template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
 void LogicRulesMachine<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::displaySwitchedSystemsDistribution() {
 
 	std::cerr << std::endl << "Event Times:\n\t {";
-	for (auto& t: getLogicRules().logicRulesSwitchingTimes())
+	for (auto& t: this->getLogicRules().eventTimes())
 		std::cerr << t << ", ";
-	if (!getLogicRules().logicRulesSwitchingTimes().empty())  std::cerr << "\b\b";
+	if (!this->getLogicRules().eventTimes().empty())  std::cerr << "\b\b";
 	std::cerr << "}" << std::endl;
 
 	std::cerr << "Subsystem IDs:\n\t {";
-	for (size_t i=0; i<=getLogicRules().logicRulesSwitchingTimes().size() ;i++)
+	for (size_t i=0; i<=this->getLogicRules().eventTimes().size() ;i++)
 		std::cerr << i << ", ";
 	std::cerr << "\b\b}" << std::endl;
 

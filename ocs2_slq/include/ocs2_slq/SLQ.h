@@ -100,7 +100,7 @@ public:
 	 * @param [in] costFunctionPtr: The cost function (intermediate and terminal costs) and its derivatives for subsystems.
 	 * @param [in] operatingTrajectoriesPtr: The operating trajectories of system which will be used for initialization of SLQ.
 	 * @param [in] settings: Structure containing the settings for the SLQ algorithm.
-	 * @param [in] logicRules: The logic rules used for implementing mixed logical dynamical systems.
+	 * @param [in] logicRulesPtr: The logic rules used for implementing mixed logical dynamical systems.
 	 * @param [in] heuristicsFunctionPtr: Heuristic function used in the infinite time optimal control formulation. If it is not
 	 * defined, we will use the terminal cost function defined in costFunctionPtr.
 	 */
@@ -110,12 +110,8 @@ public:
 		const cost_function_base_t* costFunctionPtr,
 		const operating_trajectories_base_t* operatingTrajectoriesPtr,
 		const SLQ_Settings& settings = SLQ_Settings(),
-		const LOGIC_RULES_T& logicRules = LOGIC_RULES_T(),
-		const cost_function_base_t* heuristicsFunctionPtr = nullptr)
-
-	: BASE(systemDynamicsPtr, systemDerivativesPtr, systemConstraintsPtr, costFunctionPtr, operatingTrajectoriesPtr,
-			settings, logicRules, heuristicsFunctionPtr)
-	{}
+		const LOGIC_RULES_T* logicRulesPtr = nullptr,
+		const cost_function_base_t* heuristicsFunctionPtr = nullptr);
 
 	/**
 	 * Default destructor.

@@ -180,9 +180,9 @@ void GSLQP<STATE_DIM, INPUT_DIM>::getValueFuntionDerivative(const state_vector_t
 
 	for (int j=0; j<numSubsystems_-1; j++)  {
 
-		state_matrix_t dSm  = nablaSmTrajectoryStock_[0][0][j];
+		state_matrix_t dSm = nablaSmTrajectoryStock_[0][0][j];
 		state_vector_t dSv = nablaSvTrajectoryStock_[0][0][j];
-		eigen_scalar_t ds   = nablasTrajectoryStock_[0][0][j];
+		eigen_scalar_t ds  = nablasTrajectoryStock_[0][0][j];
 
 		valueFuntionDerivative(j) = (ds + initState.transpose()*dSv + 0.5*initState.transpose()*dSm*initState).eval()(0);
 	}

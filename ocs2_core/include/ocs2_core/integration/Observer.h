@@ -8,8 +8,11 @@
 #ifndef OCS2_OBSERVER_H_
 #define OCS2_OBSERVER_H_
 
-#include <limits>
-#include "ocs2_core/integration/EventHandler.h"
+#include <Eigen/StdVector>
+#include <Eigen/Dense>
+#include <vector>
+
+#include "ocs2_core/integration/SystemEventHandler.h"
 #include "ocs2_core/dynamics/SystemBase.h"
 
 
@@ -28,79 +31,70 @@ class Observer
 public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-	typedef std::vector<double> TimeTrajectory_T;
-	typedef Eigen::Matrix<double,STATE_DIM,1> State_T;
-	typedef std::vector<State_T, Eigen::aligned_allocator<State_T> > StateTrajectory_T;
+	typedef double scalar_t;
+	typedef std::vector<scalar_t> scalar_array_t;
+	typedef Eigen::Matrix<scalar_t,STATE_DIM,1> state_vector_t;
+	typedef std::vector<state_vector_t, Eigen::aligned_allocator<state_vector_t>> state_vector_array_t;
 
     /**
      * Constructor
      * @param [in] eventHandler
      */
-	Observer(const std::shared_ptr<EventHandler<STATE_DIM> >& eventHandler = nullptr) :
-		observeWrap([this](const State_T& x, const double& t){ this->observe(x,t); }),
-		eventHandler_(eventHandler),
-		system_(nullptr),
-		maxNumSteps_(std::numeric_limits<size_t>::max())
-	{}
+	Observer(const std::shared_ptr<SystemEventHandler<STATE_DIM> >& eventHandlerPtr = nullptr)
 
-    /**
-     * Sets the maximum number of integration points per a second for ode solvers.
-     *
-     * @param [in] maxNumSteps: maximum number of integration points
-     * @param [in] system: A pointer to system.
-     */
-	void setMaxNumSteps(size_t maxNumSteps, const std::shared_ptr<SystemBase<STATE_DIM> >& system) {
-		maxNumSteps_ = maxNumSteps;
-		system_ = system;
-	}
+	: observeWrap([this](const state_vector_t& x, const scalar_t& t){ this->observe(x,t); }),
+	  eventHandlerPtr_(eventHandlerPtr)
+	{}
 
     /**
      * Observe function to retrieve the variable of interest.
      * @param [in] x: Current state.
      * @param [in] t: Current time.
      */
-	void observe(const State_T& x, const double& t)
+	void observe(const state_vector_t& x, const scalar_t& t)
 	{
+
+		// Store data
 		stateTrajectoryPtr_->push_back(x);
 		timeTrajectoryPtr_->push_back(t);
 
-		if (eventHandler_ && eventHandler_->checkEvent(x, t)) {
-			eventHandler_->handleEvent(x, t);
+		// Check events
+		if (eventHandlerPtr_ && eventHandlerPtr_->checkEvent(x, t)) {
+
+			// Act on the event
+			int eventID = eventHandlerPtr_->handleEvent(*stateTrajectoryPtr_, *timeTrajectoryPtr_);
+//			std::cout << "++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++\n"
+//					<< "eventID: " << eventID << "\t event time: " << timeTrajectoryPtr_->back()
+//					<< "\t Not adjusted time: " << t << "\n";
+
+			switch(eventID) {
+
+			case sys_event_id::killIntegration:
+				throw std::runtime_error("Integration terminated due to an external signal triggered by a program.");
+				break;
+
+			case sys_event_id::maxCall:
+				throw std::runtime_error("Integration terminated since the maximum number of function calls is reached.\n");
+				break;
+
+			default:
+				throw static_cast<size_t>(eventID);
+			}
 		}
 
-		if (system_ && system_->getNumFunctionCalls() > maxNumSteps_)
-			throw std::runtime_error("integration terminated: max number of steps reached.\n");
-	}
-
-	/**
-	 * Adjust observer after LogicRulesEvent
-	 *
-	 * @param switchStartTime: event time
-	 */
-	void adjustObserverAfterLogicRulesEvent(const double& switchStartTime, size_t& outputSize) {
-
-		outputSize = stateTrajectoryPtr_->size();
-		double alpha = (switchStartTime-timeTrajectoryPtr_->at(outputSize-2)) / (timeTrajectoryPtr_->at(outputSize-1)-timeTrajectoryPtr_->at(outputSize-2));
-
-		std::cout << "alpha: " << alpha << std::endl;
-		std::cout << "timeTrajectory_[-2]: " << timeTrajectoryPtr_->at(outputSize-2) << "\t state: " << stateTrajectoryPtr_->at(outputSize-2).transpose() << std::endl;
-		std::cout << "timeTrajectory_[-1]: " << timeTrajectoryPtr_->at(outputSize-1) << "\t state: " << stateTrajectoryPtr_->at(outputSize-1).transpose() << std::endl;
-
-		timeTrajectoryPtr_->at(outputSize-1)  = switchStartTime;
-		stateTrajectoryPtr_->at(outputSize-1) = (1.0-alpha)*stateTrajectoryPtr_->at(outputSize-2) + alpha*stateTrajectoryPtr_->at(outputSize-1);
 	}
 
 	/**
 	 * Lambda to pass to odeint (odeint takes copies of the observer so we can't pass the class
 	 */
-	std::function<void (const State_T& x, const double& t)> observeWrap;
+	std::function<void (const state_vector_t& x, const scalar_t& t)> observeWrap;
 
 	/**
 	 * Set state trajectory pointer to observer.
 	 *
 	 * @param stateTrajectoryPtr
 	 */
-	void setStateTrajectory(StateTrajectory_T* stateTrajectoryPtr) {
+	void setStateTrajectory(state_vector_array_t* stateTrajectoryPtr) {
 		stateTrajectoryPtr_ = stateTrajectoryPtr;
 	}
 
@@ -109,19 +103,16 @@ public:
 	 *
 	 * @param timeTrajectoryPtr
 	 */
-	void setTimeTrajectory(TimeTrajectory_T* timeTrajectoryPtr) {
+	void setTimeTrajectory(scalar_array_t* timeTrajectoryPtr) {
 		timeTrajectoryPtr_ = timeTrajectoryPtr;
 	}
 
 
 private:
-	std::shared_ptr<EventHandler<STATE_DIM> > eventHandler_;
-	std::shared_ptr<SystemBase<STATE_DIM> > system_;
-	size_t maxNumSteps_;
+	std::shared_ptr<SystemEventHandler<STATE_DIM> > eventHandlerPtr_;
 
-	StateTrajectory_T* stateTrajectoryPtr_;
-	TimeTrajectory_T* timeTrajectoryPtr_;
-
+	scalar_array_t* timeTrajectoryPtr_;
+	state_vector_array_t* stateTrajectoryPtr_;
 };
 
 

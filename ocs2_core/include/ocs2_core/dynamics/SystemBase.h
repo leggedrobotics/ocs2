@@ -65,10 +65,27 @@ public:
 	 * @param [in] state: transition state
 	 * @param [out] mappedState: mapped state after transition
 	 */
-	virtual void mapState(const double& time, const Eigen::Matrix<double,STATE_DIM,1>& state,
+	virtual void mapState(
+			const double& time,
+			const Eigen::Matrix<double,STATE_DIM,1>& state,
 			Eigen::Matrix<double,STATE_DIM,1>& mappedState) {
 
 		mappedState = state;
+	}
+
+	/**
+	 *
+	 * @param [in] time: transition time
+	 * @param [in] state: transition state
+	 * @param [out] guardSurfacesValue: An array of guard surfaces values
+	 */
+	virtual void computeGuardSurfaces(
+			const double& time,
+			const Eigen::Matrix<double,STATE_DIM,1>& state,
+			std::vector<double>& guardSurfacesValue) {
+
+		guardSurfacesValue.clear();
+		guardSurfacesValue.push_back(-1);
 	}
 
 protected:

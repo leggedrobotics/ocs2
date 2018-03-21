@@ -12,6 +12,24 @@ namespace ocs2{
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
+SLQ<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::SLQ(
+		const controlled_system_base_t* systemDynamicsPtr,
+		const derivatives_base_t* systemDerivativesPtr,
+		const constraint_base_t* systemConstraintsPtr,
+		const cost_function_base_t* costFunctionPtr,
+		const operating_trajectories_base_t* operatingTrajectoriesPtr,
+		const SLQ_Settings& settings /*= SLQ_Settings()*/,
+		const LOGIC_RULES_T* logicRulesPtr /*= nullptr*/,
+		const cost_function_base_t* heuristicsFunctionPtr /*= nullptr*/)
+
+	: BASE(systemDynamicsPtr, systemDerivativesPtr, systemConstraintsPtr, costFunctionPtr, operatingTrajectoriesPtr,
+			settings, logicRulesPtr, heuristicsFunctionPtr)
+{}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
 SLQ<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::~SLQ()
 {}
 
@@ -219,10 +237,8 @@ void SLQ<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::solveSequentialRiccatiEquations(
 		}
 
 		if (BASE::settings_.useRiccatiSolver_==true) {
-			BASE::solveRiccatiEquationsWorker(workerIndex, i,
-					BASE::SmFinalStock_[i+1], BASE::SvFinalStock_[i+1], BASE::sFinalStock_[i+1]);
-			BASE::solveErrorRiccatiEquationWorker(workerIndex, i,
-					BASE::SveFinalStock_[i+1]);
+			BASE::solveSlqRiccatiEquationsWorker(workerIndex, i,
+					BASE::SmFinalStock_[i+1], BASE::SvFinalStock_[i+1], BASE::sFinalStock_[i+1], BASE::SveFinalStock_[i+1]);
 		} else {
 			scalar_t constraintStepSize = BASE::updateFeedForwardPoliciesStock_[i] ? BASE::settings_.constraintStepSize_ : 0.0;
 			BASE::fullRiccatiBackwardSweepWorker(workerIndex, i,

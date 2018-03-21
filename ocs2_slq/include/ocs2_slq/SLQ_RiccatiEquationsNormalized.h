@@ -1,12 +1,12 @@
 /*
- * SequentialRiccatiEquationsNormalized.h
+ * SLQ_RiccatiEquationsNormalized.h
  *
- *  Created on: Jan 26, 2017
+ *  Created on: Feb 28, 2018
  *      Author: farbod
  */
 
-#ifndef SEQUENTIALRICCATIEQUATIONSNORMALIZED_OCS2_H_
-#define SEQUENTIALRICCATIEQUATIONSNORMALIZED_OCS2_H_
+#ifndef SLQ_RICCATIEQUATIONSNORMALIZED_OCS2_H_
+#define SLQ_RICCATIEQUATIONSNORMALIZED_OCS2_H_
 
 #include <Eigen/StdVector>
 #include <vector>
@@ -25,18 +25,17 @@ namespace ocs2{
  * @tparam INPUT_DIM: Dimension of the control input space.
  */
 template <size_t STATE_DIM, size_t INPUT_DIM>
-class SequentialRiccatiEquationsNormalized : public SystemBase<STATE_DIM*(STATE_DIM+1)/2+STATE_DIM+1>
+class SLQ_RiccatiEquationsNormalized : public SystemBase<(STATE_DIM*(STATE_DIM+1))/2 + 2*STATE_DIM + 1>
 {
 public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
 	enum {
-		/** If STATE_DIM=n, Then: n(n+1)/2 entries from triangular matrix Sm, n entries from vector Sv and +1 one from a scalar */
-		S_DIM_ = STATE_DIM*(STATE_DIM+1)/2 + STATE_DIM + 1
+		/** If STATE_DIM=n, Then: n(n+1)/2 entries from triangular matrix Sm, n entries from vector Sv, n entries from vector Sve, and +1 one from a scalar */
+		S_DIM_ = (STATE_DIM*(STATE_DIM+1))/2 + 2*STATE_DIM + 1
 	};
 
-	typedef Eigen::Matrix<double,S_DIM_,1> s_vector_t;
-	typedef std::vector<s_vector_t, Eigen::aligned_allocator<s_vector_t> > s_vector_array_t;
+	typedef SystemBase<S_DIM_> BASE;
 
 	typedef Dimensions<STATE_DIM, INPUT_DIM> DIMENSIONS;
 	typedef typename DIMENSIONS::controller_t controller_t;
@@ -58,15 +57,20 @@ public:
 	typedef typename DIMENSIONS::control_gain_matrix_t 		 control_gain_matrix_t;
 	typedef typename DIMENSIONS::control_gain_matrix_array_t control_gain_matrix_array_t;
 
+	typedef Eigen::Matrix<scalar_t,S_DIM_,1> s_vector_t;
+	typedef std::vector<s_vector_t, Eigen::aligned_allocator<s_vector_t> > s_vector_array_t;
+
 	/**
 	 * Default constructor.
 	 */
-	SequentialRiccatiEquationsNormalized()
+	SLQ_RiccatiEquationsNormalized()
+
 	: switchingTimeStart_(0.0),
 	  switchingTimeFinal_(1.0),
 	  scalingFactor_(1.0),
 	  Sm_(state_matrix_t::Zero()),
 	  Sv_(state_vector_t::Zero()),
+	  Sve_(state_vector_t::Zero()),
 	  s_ (eigen_scalar_t::Zero()),
 	  Am_(state_matrix_t::Zero()),
 	  Bm_(control_gain_matrix_t::Zero()),
@@ -77,32 +81,44 @@ public:
 	  RmInv_(control_matrix_t::Zero()),
 	  Rm_(control_matrix_t::Zero()),
 	  Pm_(control_feedback_t::Zero()),
+	  Ev_(input_vector_t::Zero()),
+	  Cm_(control_feedback_t::Zero()),
 	  dSmdt_(state_matrix_t::Zero()),
 	  dSmdz_(state_matrix_t::Zero()),
 	  dSvdt_(state_vector_t::Zero()),
 	  dSvdz_(state_vector_t::Zero()),
+	  dSvedt_(state_vector_t::Zero()),
+	  dSvedz_(state_vector_t::Zero()),
 	  dsdt_(eigen_scalar_t::Zero()),
 	  dsdz_(eigen_scalar_t::Zero()),
 	  Lm_(control_feedback_t::Zero()),
 	  Lv_(input_vector_t::Zero()),
+	  Lve_(input_vector_t::Zero()),
 	  Am_transposeSm_(state_matrix_t::Zero()),
-	  Lm_transposeRm_(control_gain_matrix_t::Zero())
+	  Lm_transposeRm_(control_gain_matrix_t::Zero()),
+	  Cm_transposeRm_(control_gain_matrix_t::Zero())
 	{}
 
 	/**
 	 * Default destructor.
 	 */
-	~SequentialRiccatiEquationsNormalized() {}
+	~SLQ_RiccatiEquationsNormalized() {}
 
 	/**
-	 * Transcribe symmetric matrix Sm, vector Sv and scalar s into a single vector
+	 * Transcribe symmetric matrix Sm, vector Sv, scalar s, and vector Sv into a single vector
 	 *
 	 * @param [in] Sm: \f$ S_m \f$
 	 * @param [in] Sv: \f$ S_v \f$
 	 * @param [in] s: \f$ s \f$
+	 * @param [in] Sve: \f$ S_{v,e} \f$
 	 * @param [out] allSs: Single vector constructed by concatenating Sm, Sv and s.
 	 */
-	static void convert2Vector(const state_matrix_t& Sm, const state_vector_t& Sv, const eigen_scalar_t& s, s_vector_t& allSs)  {
+	static void convert2Vector(
+			const state_matrix_t& Sm,
+			const state_vector_t& Sv,
+			const eigen_scalar_t& s,
+			const state_vector_t& Sve,
+			s_vector_t& allSs)  {
 
 		/*Sm is symmetric. Here, we only extract the upper triangular part and transcribe it in column-wise fashion into allSs*/
 		size_t count = 0;	// count the total number of scalar entries covered
@@ -110,25 +126,35 @@ public:
 		for(size_t nCols=0; nCols < STATE_DIM; nCols++)
 		{
 			nRows = nCols+1;
-			allSs.template segment(count, nRows) << Eigen::Map<const Eigen::VectorXd>(Sm.data() + nCols*STATE_DIM, nRows);
+			allSs.segment(count, nRows) << Eigen::Map<const Eigen::VectorXd>(Sm.data() + nCols*STATE_DIM, nRows);
 			count += nRows;
 		}
 
 		/* add data from Sv on top*/
-		allSs.template segment<STATE_DIM>((STATE_DIM*(STATE_DIM+1))/2) <<  Eigen::Map<const Eigen::VectorXd>(Sv.data(), STATE_DIM);
+		allSs.template segment<STATE_DIM>((STATE_DIM*(STATE_DIM+1))/2) << Eigen::Map<const Eigen::VectorXd>(Sv.data(), STATE_DIM);
 
-		/* add s as last element*/
-		allSs.template tail<1> () << s;
+		/* add data from e on top*/
+		allSs.template segment<1>((STATE_DIM*(STATE_DIM+1))/2 + STATE_DIM) << s;
+
+		/* add Sve as last segment*/
+		allSs.template tail<STATE_DIM>() << Sve;
 	}
 
     /**
-    * Transcribes the stacked vector allSs into a symmetric matrix, Sm, a vector, Sv and a single scalar, s.
+    * Transcribes the stacked vector allSs into a symmetric matrix, Sm, a vector Sv, a single scalar s, and a vector Sve.
+    *
     * @param [in] allSs: Single vector constructed by concatenating Sm, Sv and s.
 	 * @param [out] Sm: \f$ S_m \f$
 	 * @param [out] Sv: \f$ S_v \f$
 	 * @param [out] s: \f$ s \f$
+	 * @param [out] Sve: \f$ S_{v,e} \f$
     */
-	static void convert2Matrix(const s_vector_t& allSs, state_matrix_t& Sm, state_vector_t& Sv, eigen_scalar_t& s)  {
+	static void convert2Matrix(
+			const s_vector_t& allSs,
+			state_matrix_t& Sm,
+			state_vector_t& Sv,
+			eigen_scalar_t& s,
+			state_vector_t& Sve)  {
 
 		/*Sm is symmetric. Here, we map the first entries from allSs onto the respective elements in the symmetric matrix*/
 		size_t count = 0;
@@ -144,8 +170,11 @@ public:
 		/*extract the vector Sv*/
 		Sv = Eigen::Map<const Eigen::VectorXd>(allSs.data()+(STATE_DIM*(STATE_DIM+1))/2, STATE_DIM);
 
+		/*extract the scalar s*/
+		s  = allSs.template segment<1>((STATE_DIM*(STATE_DIM+1))/2+STATE_DIM);
+
 		/*extract s as the last element */
-		s  = allSs.template tail<1>();
+		Sve = allSs.template tail<STATE_DIM>();
 	}
 
 	/**
@@ -164,6 +193,8 @@ public:
 	 * @param [in] RmInversePtr: A pointer to the trajectory of \f$ R_m^{-1}(t) \f$ .
 	 * @param [in] RmPtr: A pointer to the trajectory of \f$ R_m(t) \f$ .
 	 * @param [in] PmPtr: A pointer to the trajectory of \f$ P_m(t) \f$ .
+	 * @param [in] EvPtr: A pointer to the trajectory of \f$ E_v(t) \f$ .
+	 * @param [in] CmPtr: A pointer to the trajectory of \f$ C_m(t) \f$ .
 	 */
 	void setData(const scalar_t& switchingTimeStart, const scalar_t& switchingTimeFinal,
 			const scalar_array_t* timeStampPtr,
@@ -171,10 +202,11 @@ public:
 			const eigen_scalar_array_t* qPtr, const state_vector_array_t* QvPtr, const state_matrix_array_t* QmPtr,
 			const input_vector_array_t* RvPtr, const control_matrix_array_t* RmInversePtr, const control_matrix_array_t* RmPtr,
 			const control_feedback_array_t* PmPtr,
+			const input_vector_array_t* EvPtr, const control_feedback_array_t* CmPtr,
 			const size_array_t* eventsPastTheEndIndecesPtr,
 			const eigen_scalar_array_t* qFinalPtr, const state_vector_array_t* QvFinalPtr, const state_matrix_array_t* QmFianlPtr)  {
 
-		SystemBase<STATE_DIM*(STATE_DIM+1)/2+STATE_DIM+1>::numFunctionCalls_ = 0;
+		BASE::numFunctionCalls_ = 0;
 
 		switchingTimeStart_ = switchingTimeStart;
 		switchingTimeFinal_ = switchingTimeFinal;
@@ -199,6 +231,11 @@ public:
 		RmFunc_.setData(RmPtr);
 		PmFunc_.setTimeStamp(timeStampPtr);
 		PmFunc_.setData(PmPtr);
+
+		EvFunc_.setTimeStamp(timeStampPtr);
+		EvFunc_.setData(EvPtr);
+		CmFunc_.setTimeStamp(timeStampPtr);
+		CmFunc_.setData(CmPtr);
 
 		eventTime_.clear();
 		eventTime_.reserve(eventsPastTheEndIndecesPtr->size());
@@ -225,6 +262,8 @@ public:
 		RmInverseFunc_.reset();
 		RmFunc_.reset();
 		PmFunc_.reset();
+		EvFunc_.reset();
+		CmFunc_.reset();
 	}
 
 	/**
@@ -244,7 +283,8 @@ public:
 			throw std::runtime_error("The Riccati state jump time is not defined.");
 
 		s_vector_t allSsJump;
-		convert2Vector(QmFianlPtr_->at(index), QvFinalPtr_->at(index), qFinalPtr_->at(index), allSsJump);
+		convert2Vector(QmFianlPtr_->at(index), QvFinalPtr_->at(index), qFinalPtr_->at(index), state_vector_t::Zero(),
+				allSsJump);
 
 		mappedState = state + allSsJump;
 	}
@@ -258,12 +298,12 @@ public:
 	 */
 	void computeDerivative(const scalar_t& z, const s_vector_t& allSs, s_vector_t& derivatives) {
 
-		SystemBase<STATE_DIM*(STATE_DIM+1)/2+STATE_DIM+1>::numFunctionCalls_++;
+		BASE::numFunctionCalls_++;
 
 		// denormalized time
 		const scalar_t t = switchingTimeFinal_ - scalingFactor_*z;
 
-		convert2Matrix(allSs, Sm_, Sv_, s_);
+		convert2Matrix(allSs, Sm_, Sv_, s_, Sve_);
 
 		// numerical consideration
 //		bool hasNegativeEigenValue = makePSD(Sm_);
@@ -279,26 +319,32 @@ public:
 		RmInverseFunc_.interpolate(t, RmInv_, greatestLessTimeStampIndex);
 		RmFunc_.interpolate(t, Rm_, greatestLessTimeStampIndex);
 		PmFunc_.interpolate(t, Pm_, greatestLessTimeStampIndex);
+		EvFunc_.interpolate(t, Ev_, greatestLessTimeStampIndex);
+		CmFunc_.interpolate(t, Cm_, greatestLessTimeStampIndex);
 
 		// Riccati equations for the original system
-		Lm_ = RmInv_*(Pm_+Bm_.transpose()*Sm_);
-		Lv_ = RmInv_*(Rv_+Bm_.transpose()*Sv_);
+		Lm_  = RmInv_*(Pm_+Bm_.transpose()*Sm_);
+		Lv_  = RmInv_*(Rv_+Bm_.transpose()*Sv_);
+		Lve_ = RmInv_*Bm_.transpose()*Sve_;
 
 		/*note: according to some discussions on stackoverflow, it does not buy computation time if multiplications
 		 * with symmetric matrices are executed using selfadjointView(). Doing the full multiplication seems to be faster
 		 * because of vectorization */
 		Am_transposeSm_ = (Sm_*Am_).transpose();
 		Lm_transposeRm_ = (Rm_*Lm_).transpose();
-		dSmdt_ = Qm_  + Am_transposeSm_ + Am_transposeSm_.transpose() - Lm_transposeRm_*Lm_;
-		dSvdt_ = Qv_  + Am_.transpose()*Sv_ - Lm_transposeRm_*Lv_;
-		dsdt_  = q_   - 0.5 *Lv_.transpose() *Rm_ * Lv_;
+		Cm_transposeRm_ = (Rm_*Cm_).transpose();
+		dSmdt_  = Qm_  + Am_transposeSm_ + Am_transposeSm_.transpose() - Lm_transposeRm_*Lm_;
+		dSvdt_  = Qv_  + Am_.transpose()*Sv_ - Lm_transposeRm_*Lv_;
+		dsdt_   = q_   - 0.5 *Lv_.transpose() *Rm_ * Lv_;
+		dSvedt_ = (Cm_transposeRm_-Lm_transposeRm_)*Ev_ + Am_.transpose()*Sve_ - Lm_transposeRm_*Lve_;
 
 		// Riccati equations for the equivalent system
-		dSmdz_ = scalingFactor_ * dSmdt_;
-		dSvdz_ = scalingFactor_ * dSvdt_;
-		dsdz_  = scalingFactor_ * dsdt_;
+		dSmdz_  = scalingFactor_ * dSmdt_;
+		dSvdz_  = scalingFactor_ * dSvdt_;
+		dsdz_   = scalingFactor_ * dsdt_;
+		dSvedz_ = scalingFactor_ * dSvedt_;
 
-		convert2Vector(dSmdz_, dSvdz_, dsdz_, derivatives);
+		convert2Vector(dSmdz_, dSvdz_, dsdz_, dSvedz_, derivatives);
 	}
 
 protected:
@@ -377,11 +423,13 @@ private:
 	LinearInterpolation<control_matrix_t,Eigen::aligned_allocator<control_matrix_t> > RmInverseFunc_;
 	LinearInterpolation<control_matrix_t,Eigen::aligned_allocator<control_matrix_t> > RmFunc_;
 	LinearInterpolation<control_feedback_t,Eigen::aligned_allocator<control_feedback_t> > PmFunc_;
-
+	LinearInterpolation<input_vector_t,Eigen::aligned_allocator<input_vector_t> > 		  EvFunc_;
+	LinearInterpolation<control_feedback_t,Eigen::aligned_allocator<control_feedback_t> > CmFunc_;
 
 	// members required only in computeDerivative()
 	state_matrix_t Sm_;
 	state_vector_t Sv_;
+	state_vector_t Sve_;
 	eigen_scalar_t s_;
 	state_matrix_t Am_;
 	control_gain_matrix_t Bm_;
@@ -392,16 +440,22 @@ private:
 	control_matrix_t RmInv_;
 	control_matrix_t Rm_;
 	control_feedback_t Pm_;
+	input_vector_t Ev_;
+	control_feedback_t Cm_;
 	state_matrix_t dSmdt_;
 	state_matrix_t dSmdz_;
 	state_vector_t dSvdt_;
 	state_vector_t dSvdz_;
+	state_vector_t dSvedt_;
+	state_vector_t dSvedz_;
 	eigen_scalar_t dsdt_;
 	eigen_scalar_t dsdz_;
 	control_feedback_t Lm_;
 	input_vector_t     Lv_;
+	input_vector_t     Lve_;
 	state_matrix_t Am_transposeSm_;
 	control_gain_matrix_t Lm_transposeRm_;
+	control_gain_matrix_t Cm_transposeRm_;
 
 	std::vector<double> eventTime_;
 	const eigen_scalar_array_t* qFinalPtr_;
@@ -411,4 +465,4 @@ private:
 
 }
 
-#endif /* SEQUENTIALRICCATIEQUATIONSNORMALIZED_OCS2_H_ */
+#endif /* SLQ_RICCATIEQUATIONSNORMALIZED_OCS2_H_ */

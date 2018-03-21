@@ -32,11 +32,13 @@ public:
 
 	typedef LogicRulesBase<2,1> BASE;
 
+	EXP0_LogicRules() = default;
+
+	~EXP0_LogicRules() = default;
+
 	EXP0_LogicRules(const BASE::scalar_array_t& switchingTimes)
 	: BASE(switchingTimes)
 	{}
-
-	~EXP0_LogicRules() {}
 
 	void adjustController(typename BASE::controller_t& controller) const override
 	{}

@@ -12,6 +12,31 @@ namespace ocs2{
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
+SLQ_MP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::SLQ_MP (
+		const controlled_system_base_t* systemDynamicsPtr,
+		const derivatives_base_t* systemDerivativesPtr,
+		const constraint_base_t* systemConstraintsPtr,
+		const cost_function_base_t* costFunctionPtr,
+		const operating_trajectories_base_t* operatingTrajectoriesPtr,
+		const SLQ_Settings& settings /*= SLQ_Settings()*/,
+		const LOGIC_RULES_T* logicRulesPtr /*= nullptr*/,
+		const cost_function_base_t* heuristicsFunctionPtr /*= nullptr*/)
+
+	: BASE(systemDynamicsPtr, systemDerivativesPtr, systemConstraintsPtr, costFunctionPtr, operatingTrajectoriesPtr,
+			settings, logicRulesPtr, heuristicsFunctionPtr),
+	  workerTask_(IDLE),
+	  subsystemProcessed_(0)
+{
+	Eigen::initParallel();
+
+	// initialize threads
+	launchWorkerThreads();
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
 SLQ_MP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::~SLQ_MP()  {
 
 	workersActive_ = false;
@@ -687,10 +712,8 @@ void SLQ_MP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::solveSequentialRiccatiEquation
 
 			// solve backward pass
 			if (BASE::settings_.useRiccatiSolver_==true) {
-				BASE::solveRiccatiEquationsWorker(workerIndex, i,
-						BASE::SmFinalStock_[i+1], BASE::SvFinalStock_[i+1], BASE::sFinalStock_[i+1]);
-				BASE::solveErrorRiccatiEquationWorker(workerIndex, i,
-						BASE::SveFinalStock_[i+1]);
+				BASE::solveSlqRiccatiEquationsWorker(workerIndex, i,
+						BASE::SmFinalStock_[i+1], BASE::SvFinalStock_[i+1], BASE::sFinalStock_[i+1], BASE::SveFinalStock_[i+1]);
 			} else {
 				scalar_t constraintStepSize = BASE::updateFeedForwardPoliciesStock_[i] ? BASE::settings_.constraintStepSize_ : 0.0;
 				BASE::fullRiccatiBackwardSweepWorker(workerIndex, i,
@@ -801,10 +824,8 @@ void SLQ_MP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::executeRiccatiSolver(size_t th
 		}
 
 		if (BASE::settings_.useRiccatiSolver_==true) {
-			BASE::solveRiccatiEquationsWorker(threadId, i,
-					SmFinal, SvFinal, sFinal);
-			BASE::solveErrorRiccatiEquationWorker(threadId, i,
-					SveFinal);
+			BASE::solveSlqRiccatiEquationsWorker(threadId, i,
+					SmFinal, SvFinal, sFinal, SveFinal);
 		} else {
 			scalar_t constraintStepSize = BASE::updateFeedForwardPoliciesStock_[i] ? BASE::settings_.constraintStepSize_ : 0.0;
 			BASE::fullRiccatiBackwardSweepWorker(threadId, i,

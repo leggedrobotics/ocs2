@@ -38,9 +38,9 @@ namespace ocs2{
  * @return: The active interval index. The output is an integer from -1 to n-1 where n is the size of
  * the timeIntervals vector.
  */
-template <typename scalar_t>
+template <typename scalar_t, typename alloc_t = std::allocator<scalar_t> >
 int findActiveIntervalIndex(
-		const std::vector<scalar_t>& timeIntervals,
+		const std::vector<scalar_t, alloc_t>& timeIntervals,
 		const scalar_t& enquiryTime,
 		const int& guessedIndex,
 		scalar_t epsilon = OCS2NumericTraits<scalar_t>::week_epsilon()) {
@@ -111,9 +111,9 @@ int findActiveIntervalIndex(
  * @return: The active interval index. The output is an integer from -1 to n-1 where n is the size of
  * the timeIntervals vector.
  */
-template <typename scalar_t>
+template <typename scalar_t, typename alloc_t = std::allocator<scalar_t> >
 int findActiveIntervalIndex(
-		const std::vector<scalar_t>& timeIntervals,
+		const std::vector<scalar_t, alloc_t>& timeIntervals,
 		const scalar_t& enquiryTime,
 		scalar_t epsilon = OCS2NumericTraits<scalar_t>::week_epsilon()) {
 

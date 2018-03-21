@@ -68,6 +68,14 @@ public:
 	}
 
 	/**
+	 * Reset the Error Riccati equation
+	 */
+	void reset() {
+		GvFunc_.reset();
+		GmFunc_.reset();
+	}
+
+	/**
 	 * Error Riccati jump map at switching moments
 	 *
 	 * @param [in] time: Normalized transition time
@@ -90,22 +98,14 @@ public:
 	void computeDerivative(const scalar_t& z, const state_vector_t& Sve, state_vector_t& derivatives) {
 
 		// denormalized time
-		scalar_t t = switchingTimeFinal_ - (switchingTimeFinal_-switchingTimeStart_)*z;
+		const scalar_t t = switchingTimeFinal_ + (switchingTimeStart_-switchingTimeFinal_)*z;
 
-		GvFunc_.interpolate(t, __Gv);
+		GvFunc_.interpolate(t, Gv_);
 		size_t greatestLessTimeStampIndex = GvFunc_.getGreatestLessTimeStampIndex();
-		GmFunc_.interpolate(t, __Gm, greatestLessTimeStampIndex);
+		GmFunc_.interpolate(t, Gm_, greatestLessTimeStampIndex);
 
 		// Error equation for the equivalent system
-		derivatives = (switchingTimeFinal_-switchingTimeStart_)*(__Gm.transpose()*Sve+__Gv);
-	}
-
-	/**
-	 * Reset the Error Riccati equation
-	 */
-	void reset() {
-		GvFunc_.reset();
-		GmFunc_.reset();
+		derivatives = (switchingTimeFinal_-switchingTimeStart_)*(Gm_.transpose()*Sve+Gv_);
 	}
 
 
@@ -117,8 +117,8 @@ private:
 	LinearInterpolation<state_matrix_t,Eigen::aligned_allocator<state_matrix_t> > GmFunc_;
 
 	// members required in computeDerivative
-	state_vector_t __Gv;
-	state_matrix_t __Gm;
+	state_vector_t Gv_;
+	state_matrix_t Gm_;
 };
 
 } // namespace ocs2

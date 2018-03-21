@@ -12,7 +12,7 @@
 
 #include "ocs2_core/dynamics/SystemBase.h"
 #include "ocs2_core/integration/Observer.h"
-#include "ocs2_core/integration/EventHandler.h"
+#include "ocs2_core/integration/SystemEventHandler.h"
 
 
 namespace ocs2{
@@ -28,9 +28,10 @@ class IntegratorBase
 public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-	typedef std::vector<double> TimeTrajectory_T;
-	typedef Eigen::Matrix<double, STATE_DIM, 1> State_T;
-	typedef std::vector<State_T, Eigen::aligned_allocator<State_T> > StateTrajectory_T;
+	typedef double scalar_t;
+	typedef std::vector<scalar_t> scalar_array_t;
+	typedef Eigen::Matrix<scalar_t,STATE_DIM,1> state_vector_t;
+	typedef std::vector<state_vector_t, Eigen::aligned_allocator<state_vector_t>> state_vector_array_t;
 
 	/**
 	 * Constructor
@@ -38,13 +39,16 @@ public:
 	 * @param [in] eventHandler: The integration event function.
 	 */
 	IntegratorBase(
-			const std::shared_ptr<SystemBase<STATE_DIM> >& system,
-			const std::shared_ptr<EventHandler<STATE_DIM> >& eventHandler = nullptr)
+			const std::shared_ptr<SystemBase<STATE_DIM> >& systemPtr,
+			const std::shared_ptr<SystemEventHandler<STATE_DIM> >& eventHandlerPtr = nullptr)
 
-	: observer_(eventHandler),
-	  system_(system),
-	  eventHandler_(eventHandler)
-	{}
+	: observer_(eventHandlerPtr),
+	  systemPtr_(systemPtr),
+	  eventHandlerPtr_(eventHandlerPtr)
+	{
+		if (eventHandlerPtr_)
+			eventHandlerPtr_->setSystem(systemPtr_);
+	}
 
 	/**
 	 * Default destructor
@@ -62,12 +66,12 @@ public:
 	 * @param [in] concatOutput: Whether to concatenate the output to the input trajectories or override (default).
 	 */
 	virtual void integrate(
-			const State_T& initialState,
-			const double& startTime,
-			const double& finalTime,
-			double dt,
-			StateTrajectory_T& stateTrajectory,
-			TimeTrajectory_T& timeTrajectory,
+			const state_vector_t& initialState,
+			const scalar_t& startTime,
+			const scalar_t& finalTime,
+			scalar_t dt,
+			state_vector_array_t& stateTrajectory,
+			scalar_array_t& timeTrajectory,
 			bool concatOutput = false
 	) = 0;
 
@@ -88,14 +92,14 @@ public:
 	 * @param [in] concatOutput: Whether to concatenate the output to the input trajectories or override (default).
 	 */
 	virtual void integrate(
-			const State_T& initialState,
-			const double& startTime,
-			const double& finalTime,
-			StateTrajectory_T& stateTrajectory,
-			TimeTrajectory_T& timeTrajectory,
-			double dtInitial = 0.01,
-			double AbsTol = 1e-6,
-			double RelTol = 1e-3,
+			const state_vector_t& initialState,
+			const scalar_t& startTime,
+			const scalar_t& finalTime,
+			state_vector_array_t& stateTrajectory,
+			scalar_array_t& timeTrajectory,
+			scalar_t dtInitial = 0.01,
+			scalar_t AbsTol = 1e-6,
+			scalar_t RelTol = 1e-3,
 			size_t maxNumSteps = std::numeric_limits<size_t>::max(),
 			bool concatOutput = false
 	) = 0;
@@ -118,13 +122,13 @@ public:
 	 * @param [in] concatOutput: Whether to concatenate the output to the input trajectories or override (default).
 	 */
 	virtual void integrate(
-			const State_T& initialState,
-			typename TimeTrajectory_T::const_iterator beginTimeItr,
-			typename TimeTrajectory_T::const_iterator endTimeItr,
-			StateTrajectory_T& stateTrajectory,
-			double dtInitial = 0.01,
-			double AbsTol = 1e-9,
-			double RelTol = 1e-6,
+			const state_vector_t& initialState,
+			typename scalar_array_t::const_iterator beginTimeItr,
+			typename scalar_array_t::const_iterator endTimeItr,
+			state_vector_array_t& stateTrajectory,
+			scalar_t dtInitial = 0.01,
+			scalar_t AbsTol = 1e-9,
+			scalar_t RelTol = 1e-6,
 			size_t maxNumSteps = std::numeric_limits<size_t>::max(),
 			bool concatOutput = false
 	) = 0;
@@ -138,9 +142,11 @@ protected:
 	 * @param stateTrajectory: Output state trajectory.
 	 * @param timeTrajectory: Output time stamp trajectory.
 	 */
-	void setOutputTrajectoryPtrToObserver(StateTrajectory_T* stateTrajectoryPtr,
-			TimeTrajectory_T* timeTrajectoryPtr = nullptr) {
+	void setOutputTrajectoryPtrToObserver(state_vector_array_t* stateTrajectoryPtr,
+			scalar_array_t* timeTrajectoryPtr = nullptr) {
+
 		observer_.setStateTrajectory(stateTrajectoryPtr);
+
 		if (timeTrajectoryPtr) {
 			observer_.setTimeTrajectory(timeTrajectoryPtr);
 		} else {
@@ -154,7 +160,7 @@ protected:
 	 *
 	 * @param timeTrajectory: Output time stamp trajectory.
 	 */
-	void setTimeTrajectoryPtrToObserver(TimeTrajectory_T& timeTrajectory)
+	void setTimeTrajectoryPtrToObserver(scalar_array_t& timeTrajectory)
 	{
 		observer_.setTimeTrajectory(&timeTrajectory);
 	}
@@ -164,7 +170,7 @@ protected:
 	 *
 	 * @param stateTrajectory: Output state trajectory.
 	 */
-	void setStateTrajectoryPtrToObserver(StateTrajectory_T& stateTrajectory)
+	void setStateTrajectoryPtrToObserver(state_vector_array_t& stateTrajectory)
 	{
 		observer_.setStateTrajectory(&stateTrajectory);
 	}
@@ -177,15 +183,15 @@ protected:
 	/**
 	 * System dynamics used by integrator.
 	 */
-	std::shared_ptr<SystemBase<STATE_DIM> > system_;
+	std::shared_ptr<SystemBase<STATE_DIM> > systemPtr_;
 
 	/**
 	 * Event handler used by integrator.
 	 */
-	std::shared_ptr<EventHandler<STATE_DIM> > eventHandler_;
+	std::shared_ptr<SystemEventHandler<STATE_DIM> > eventHandlerPtr_;
 
 private:
-	std::vector<double> tempTimeTrajectory_; // used for the output integration case based on a given time trajectory.
+	std::vector<scalar_t> tempTimeTrajectory_; // used for the output integration case based on a given time trajectory.
 };
 
 } // namespace ocs2

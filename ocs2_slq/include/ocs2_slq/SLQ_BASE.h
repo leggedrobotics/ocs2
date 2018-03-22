@@ -712,7 +712,8 @@ protected:
 			state_vector_array_t& stateTrajectory,
 			input_vector_array_t& inputTrajectory,
 			scalar_array_t& eventTimes,
-			size_array_t& subsystemID);
+			size_array_t& subsystemID,
+			scalar_array_t& guardSurfacesValues);
 
 	/**
 	 * Calculates the total cost for the given trajectories.

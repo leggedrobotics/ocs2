@@ -206,10 +206,14 @@ typename SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::state_vector_t
 			state_vector_array_t& stateTrajectory,
 			input_vector_array_t& inputTrajectory,
 			scalar_array_t& eventTimes,
-			size_array_t& subsystemID)  {
+			size_array_t& subsystemID,
+			scalar_array_t& guardSurfacesValues)  {
 
 	if (initTime > finalTime)
 		throw std::runtime_error("Initial time should be less-equal to final time.");
+	if (eventTimes.empty()==false && guardSurfacesValues.empty()==true)
+		throw std::runtime_error("Since the event times array is not empty, "
+				"the last update of the guard functions value should be provided.");
 
 	// max number of steps for integration
 	const size_t maxNumSteps = settings_.maxNumStepsPerSecond_ * std::max(1.0, finalTime-initTime);
@@ -231,27 +235,31 @@ typename SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::state_vector_t
 		systemDynamicsPtrStock_[workerIndex]->resetNumFunctionCalls();
 		// initialize subsystem
 		systemDynamicsPtrStock_[workerIndex]->initializeModel(*logicRulesMachinePtr_, partitionIndex, "SLQ");
-		// Reset the event class
-		eventsPtrStock_[workerIndex]->reset();
+		// Set event times control parameters
+		if (eventTimes.empty()==true)
+			eventsPtrStock_[workerIndex]->setEventTimesGuard(settings_.minEventTimeDifference_);
+		else
+			eventsPtrStock_[workerIndex]->setEventTimesGuard(settings_.minEventTimeDifference_, eventTimes.back(), guardSurfacesValues);
 	}
 
 	std::cout << std::endl << "Time period: [" << initTime << ", " << finalTime << "]\n";
 
 	// initial values of the guard surfaces
-	scalar_array_t initGuardSurfacesValue;
-	systemDynamicsPtrStock_[workerIndex]->computeGuardSurfaces(initTime, initState, initGuardSurfacesValue);
+	if (subsystemID.empty()==true) {
+		size_t activeSubsystem = 0;
+		scalar_array_t initGuardSurfacesValue;
+		systemDynamicsPtrStock_[workerIndex]->computeGuardSurfaces(initTime, initState, initGuardSurfacesValue);
+		for (size_t i=0; i<initGuardSurfacesValue.size(); i++)
+			if (initGuardSurfacesValue[i]<0)
+				activeSubsystem = i;
 
-	size_t activeSubsystem = 0;
-	for (size_t i=0; i<initGuardSurfacesValue.size(); i++)
-		if (initGuardSurfacesValue[i]<0)
-			activeSubsystem = i;
+		subsystemID.push_back(activeSubsystem);
+	}
 
 	scalar_t t0 = initTime;
 	state_vector_t x0 = initState;
 
 	while (t0 < finalTime-ocs2::OCS2NumericTraits<scalar_t>::week_epsilon()) {
-
-		subsystemID.push_back(activeSubsystem);
 
 		try {
 			// integrate controled system
@@ -261,11 +269,11 @@ typename SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::state_vector_t
 
 		} catch (const size_t& eventID) {
 
-			eventsPastTheEndIndeces.push_back( stateTrajectory.size()-2 );
+			eventsPastTheEndIndeces.push_back( stateTrajectory.size() );
 			systemDynamicsPtrStock_[workerIndex]->mapState(timeTrajectory.back(), stateTrajectory.back(), x0);
 
-			activeSubsystem = eventID;
 			eventTimes.push_back(timeTrajectory.back());
+			subsystemID.push_back(eventID);
 
 			std::cout << "Event Time: " << timeTrajectory.back() << "\t Event ID: " << eventID << std::endl;
 		}
@@ -279,6 +287,9 @@ typename SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::state_vector_t
 		inputTrajectory.emplace_back( systemDynamicsPtrStock_[workerIndex]->computeInput(
 				timeTrajectory[k_u], stateTrajectory[k_u]) );
 	} // end of k loop
+
+	// get the guardSurfacesValues
+	guardSurfacesValues = eventsPtrStock_[workerIndex]->getGuardSurfacesValues();
 
 	return stateTrajectory.back();
 }
@@ -314,6 +325,7 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::rolloutStateTriggeredTraject
 
 	scalar_array_t eventTimes;
 	size_array_t subsystemID;
+	scalar_array_t guardSurfacesValues;
 
 	scalar_t t0 = initTime;
 	state_vector_t x0 = initState;
@@ -332,15 +344,15 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::rolloutStateTriggeredTraject
 		// final time
 		tf = (i != finalActivePartition) ? partitioningTimes[i+1] : finalTime;
 
-		eventTimes.clear();
-		subsystemID.clear();
+//		eventTimes.clear();
+//		subsystemID.clear();
 
 		// call rolloutTimeTriggeredWorker for the partition 'i' on the thread 'threadId'
 		x0 = rolloutStateTriggeredWorker(threadId, i,
 				t0, x0, tf, controllersStock[i],
 				timeTrajectoriesStock[i], eventsPastTheEndIndecesStock[i],
 				stateTrajectoriesStock[i], inputTrajectoriesStock[i],
-				eventTimes, subsystemID);
+				eventTimes, subsystemID, guardSurfacesValues);
 
 		std::cout << "Event Pattern [" << i << "]\n";
 		for (size_t i=0; i<eventTimes.size(); i++)

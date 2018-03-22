@@ -889,15 +889,15 @@ void SLQ_MP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::distributeWork(){
 	startingIndicesRiccatiWorker_.back() = 0;
 
 	if (BASE::settings_.displayInfo_) {
-		std::cout << "Initial Active Subsystem: " << BASE::initActivePartition_ << std::endl;
-		std::cout << "Final Active Subsystem:   " << BASE::finalActivePartition_ << std::endl;
-		std::cout << "Backward path work distribution:" << std::endl;
+		std::cerr << "Initial Active Subsystem: " << BASE::initActivePartition_ << std::endl;
+		std::cerr << "Final Active Subsystem:   " << BASE::finalActivePartition_ << std::endl;
+		std::cerr << "Backward path work distribution:" << std::endl;
 		for (size_t i=0; i<N; i++){
-			std::cout << "start: " << startingIndicesRiccatiWorker_[i] << "\t";
+			std::cerr << "start: " << startingIndicesRiccatiWorker_[i] << "\t";
 			std::cout << "end: " << endingIndicesRiccatiWorker_[i]  << "\t";
-			std::cout << "num: " << endingIndicesRiccatiWorker_[i]-startingIndicesRiccatiWorker_[i]+1 << std::endl;;
+			std::cerr << "num: " << endingIndicesRiccatiWorker_[i]-startingIndicesRiccatiWorker_[i]+1 << std::endl;;
 		}
-		std::cout << std::endl;
+		std::cerr << std::endl;
 	}
 }
 

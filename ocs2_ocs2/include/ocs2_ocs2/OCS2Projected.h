@@ -101,7 +101,7 @@ public:
 		nlpOptions_.minRelCost_    	  = options_.acceptableTolGradientDescent_;
 		nlpOptions_.maxLearningRate_  = options_.maxLearningRateNLP_;
 		nlpOptions_.minLearningRate_  = options_.minLearningRateNLP_;
-		nlpOptions_.minDisToBoundary_ = options_.minAcceptedSwitchingTimeDifference_;
+		nlpOptions_.minDisToBoundary_ = options_.minEventTimeDifference_;
 		nlpOptions_.useAscendingLineSearchNLP_ = options_.useAscendingLineSearchNLP_;
 		adjustOptions();
 

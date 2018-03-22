@@ -60,7 +60,7 @@ public:
 		minLearningRateNLP_(0.05),
 		maxLearningRateNLP_(1.0),
 		useAscendingLineSearchNLP_(true),
-		minAcceptedSwitchingTimeDifference_(0.0),
+		minEventTimeDifference_(0.0),
 
 		RiccatiIntegratorType_(RICCATI_INTEGRATOR_TYPE::ODE45),
 		adams_integrator_dt_(0.001),
@@ -161,8 +161,8 @@ public:
 	 * - \b Descending: The step size eventually decreases from the minimum value to the maximum.
 	 * */
 	bool useAscendingLineSearchNLP_;
-	/** This value determines the minimum allowable difference between to consecutive switching times.*/
-	double minAcceptedSwitchingTimeDifference_;
+	/** This value determines the minimum accepted difference between to consecutive events times.*/
+	double minEventTimeDifference_;
 
 	/** Check the numerical stability of the algorithms for debugging purpose. */
 	bool checkNumericalStability_;
@@ -433,11 +433,11 @@ inline void SLQ_Settings::loadSettings(const std::string& filename, bool verbose
 	}
 
 	try	{
-		minAcceptedSwitchingTimeDifference_ = pt.get<double>("slq.minAcceptedSwitchingTimeDifference");
-		if (verbose)  std::cerr << " #### Option loader : option 'minAcceptedSwitchingTimeDifference' .. " << minAcceptedSwitchingTimeDifference_ << std::endl;
+		minEventTimeDifference_ = pt.get<double>("slq.minEventTimeDifference");
+		if (verbose)  std::cerr << " #### Option loader : option 'minEventTimeDifference' .............. " << minEventTimeDifference_ << std::endl;
 	}
 	catch (const std::exception& e){
-		if (verbose)  std::cerr << " #### Option loader : option 'minAcceptedSwitchingTimeDifference' .. " << minAcceptedSwitchingTimeDifference_ << "   \t(default)" << std::endl;
+		if (verbose)  std::cerr << " #### Option loader : option 'minEventTimeDifference' .............. " << minEventTimeDifference_ << "   \t(default)" << std::endl;
 	}
 
 	try	{

@@ -63,9 +63,6 @@ public:
 
 			// Act on the event
 			int eventID = eventHandlerPtr_->handleEvent(*stateTrajectoryPtr_, *timeTrajectoryPtr_);
-//			std::cout << "++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++\n"
-//					<< "eventID: " << eventID << "\t event time: " << timeTrajectoryPtr_->back()
-//					<< "\t Not adjusted time: " << t << "\n";
 
 			switch(eventID) {
 

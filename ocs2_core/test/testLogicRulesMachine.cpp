@@ -6,7 +6,7 @@
  */
 
 
-#include <ocs2_core/logic/LogicRulesMachine.h>
+#include <ocs2_core/logic/machine/LogicRulesMachine.h>
 
 #include <gtest/gtest.h>
 
@@ -19,6 +19,7 @@ public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
 	typedef LogicRulesBase<STATE_DIM,INPUT_DIM> BASE;
+	typedef typename BASE::scalar_t scalar_t;
 	typedef typename BASE::scalar_array_t scalar_array_t;
 	typedef typename BASE::size_array_t size_array_t;
 	typedef typename BASE::controller_t controller_t;
@@ -33,6 +34,14 @@ public:
 	void set(const scalar_array_t& eventTimes) {
 		BASE::eventTimes_ = eventTimes;
 	}
+
+	void update() override
+	{}
+
+	void rewind(const scalar_t& lowerBoundTime,
+			const scalar_t& upperBoundTime) override
+	{}
+
 
 private:
 
@@ -63,7 +72,7 @@ bool checkSolution(
 			}
 	}
 	for (size_t i=0; i<numPartitionings; i++) {
-		if (switchedSystemIDsStockResult[i] != logicRulesMachine.getSwitchedSystemIDs(i))
+		if (switchedSystemIDsStockResult[i] != logicRulesMachine.getEventCounters(i))
 			testPass = false;
 	}
 
@@ -81,7 +90,7 @@ TEST(testLogicRulesMachine, LogicRulesMachine)
 	std::vector<double> partitioningTimes{0,1,2,3};
 	controllerStock.resize(partitioningTimes.size()-1);
 
-	std::vector<double> logicRulesSwitchingTimes;
+	std::vector<double> logicRulesEventTimes;
 
 	std::cout << std::endl;
 
@@ -91,13 +100,14 @@ TEST(testLogicRulesMachine, LogicRulesMachine)
 	std::vector<std::vector<size_t>> switchedSystemIDsStockResult(3);
 
 	// No switch
-	logicRulesSwitchingTimes = std::vector<double>{};
-	logicRules.set(logicRulesSwitchingTimes);
+	logicRulesEventTimes = std::vector<double>{};
+	logicRules.set(logicRulesEventTimes);
 	logicRulesMachine.setLogicRules(logicRules);
 	logicRulesMachine.updateLogicRules(partitioningTimes, controllerStock);
 
+	std::cout << std::endl << "======================" << std::endl;
 	std::cout << "### No switch:" << std::endl;
-	logicRulesMachine.displaySwitchedSystemsDistribution();
+	logicRulesMachine.display();
 
 	eventTimesStockResult[0] = std::vector<double>{};
 	switchedSystemIDsStockResult[0] = std::vector<size_t>{0};
@@ -112,13 +122,14 @@ TEST(testLogicRulesMachine, LogicRulesMachine)
 	ASSERT_TRUE(testPass);
 
 	// switches at the end of partitions
-	logicRulesSwitchingTimes = std::vector<double>{0, 1, 2, 3};
-	logicRules.set(logicRulesSwitchingTimes);
+	logicRulesEventTimes = std::vector<double>{0, 1, 2, 3};
+	logicRules.set(logicRulesEventTimes);
 	logicRulesMachine.setLogicRules(logicRules);
 	logicRulesMachine.updateLogicRules(partitioningTimes, controllerStock);
 
+	std::cout << std::endl << "======================" << std::endl;
 	std::cout << "### Switches at the end of partitions:" << std::endl;
-	logicRulesMachine.displaySwitchedSystemsDistribution();
+	logicRulesMachine.display();
 
 	eventTimesStockResult[0] = std::vector<double>{1};
 	switchedSystemIDsStockResult[0] = std::vector<size_t>{1};
@@ -133,13 +144,14 @@ TEST(testLogicRulesMachine, LogicRulesMachine)
 	ASSERT_TRUE(testPass);
 
 	// swiches after time interval
-	logicRulesSwitchingTimes = std::vector<double>{3, 4, 5, 6};
-	logicRules.set(logicRulesSwitchingTimes);
+	logicRulesEventTimes = std::vector<double>{3, 4, 5, 6};
+	logicRules.set(logicRulesEventTimes);
 	logicRulesMachine.setLogicRules(logicRules);
 	logicRulesMachine.updateLogicRules(partitioningTimes, controllerStock);
 
+	std::cout << std::endl << "======================" << std::endl;
 	std::cout << "### Switches after time interval:" << std::endl;
-	logicRulesMachine.displaySwitchedSystemsDistribution();
+	logicRulesMachine.display();
 
 	eventTimesStockResult[0] = std::vector<double>{};
 	switchedSystemIDsStockResult[0] = std::vector<size_t>{0};
@@ -154,13 +166,14 @@ TEST(testLogicRulesMachine, LogicRulesMachine)
 	ASSERT_TRUE(testPass);
 
 	// switches before time interval
-	logicRulesSwitchingTimes = std::vector<double>{-3, -2, -1, 0};
-	logicRules.set(logicRulesSwitchingTimes);
+	logicRulesEventTimes = std::vector<double>{-3, -2, -1, 0};
+	logicRules.set(logicRulesEventTimes);
 	logicRulesMachine.setLogicRules(logicRules);
 	logicRulesMachine.updateLogicRules(partitioningTimes, controllerStock);
 
+	std::cout << std::endl << "======================" << std::endl;
 	std::cout << "### Switches before time interval:" << std::endl;
-	logicRulesMachine.displaySwitchedSystemsDistribution();
+	logicRulesMachine.display();
 
 	eventTimesStockResult[0] = std::vector<double>{};
 	switchedSystemIDsStockResult[0] = std::vector<size_t>{4};
@@ -175,13 +188,14 @@ TEST(testLogicRulesMachine, LogicRulesMachine)
 	ASSERT_TRUE(testPass);
 
 	// switches in the middle
-	logicRulesSwitchingTimes = std::vector<double>{0, 0.5, 1.5, 2.5};
-	logicRules.set(logicRulesSwitchingTimes);
+	logicRulesEventTimes = std::vector<double>{0, 0.5, 1.5, 2.5};
+	logicRules.set(logicRulesEventTimes);
 	logicRulesMachine.setLogicRules(logicRules);
 	logicRulesMachine.updateLogicRules(partitioningTimes, controllerStock);
 
+	std::cout << std::endl << "======================" << std::endl;
 	std::cout << "### Switches in the middle:" << std::endl;
-	logicRulesMachine.displaySwitchedSystemsDistribution();
+	logicRulesMachine.display();
 
 	eventTimesStockResult[0] = std::vector<double>{0.5};
 	switchedSystemIDsStockResult[0] = std::vector<size_t>{1,2};
@@ -196,13 +210,14 @@ TEST(testLogicRulesMachine, LogicRulesMachine)
 	ASSERT_TRUE(testPass);
 
 	// no switch in middle partition
-	logicRulesSwitchingTimes = std::vector<double>{0.5, 2.5};
-	logicRules.set(logicRulesSwitchingTimes);
+	logicRulesEventTimes = std::vector<double>{0.5, 2.5};
+	logicRules.set(logicRulesEventTimes);
 	logicRulesMachine.setLogicRules(logicRules);
 	logicRulesMachine.updateLogicRules(partitioningTimes, controllerStock);
 
+	std::cout << std::endl << "======================" << std::endl;
 	std::cout << "### No switch in middle partition:" << std::endl;
-	logicRulesMachine.displaySwitchedSystemsDistribution();
+	logicRulesMachine.display();
 
 	eventTimesStockResult[0] = std::vector<double>{0.5};
 	switchedSystemIDsStockResult[0] = std::vector<size_t>{0,1};
@@ -217,6 +232,65 @@ TEST(testLogicRulesMachine, LogicRulesMachine)
 	ASSERT_TRUE(testPass);
 }
 
+TEST(testLogicRulesMachine, shortPartition)
+{
+	TestLogicRules<1,1> logicRules;
+	LogicRulesMachine<1,1,TestLogicRules<1,1>> logicRulesMachine(logicRules);
+
+	std::vector<double> partitioningTimes;
+	LogicRulesMachine<1,1,TestLogicRules<1,1>>::controller_array_t controllerStock;
+
+	std::vector<double> logicRulesEventTimes{0.5, 2.5};
+	logicRules.set(logicRulesEventTimes);
+	logicRulesMachine.setLogicRules(logicRules);
+
+	std::cout << std::endl;
+
+	// result
+	bool testPass;
+	std::vector<std::vector<double>> eventTimesStockResult;
+	std::vector<std::vector<size_t>> switchedSystemIDsStockResult;
+
+	// Small time partition with one event
+	partitioningTimes = std::vector<double>{1.5, 2.0, 3.0};
+	controllerStock.resize(partitioningTimes.size()-1);
+	logicRulesMachine.updateLogicRules(partitioningTimes, controllerStock);
+
+	std::cout << std::endl << "======================" << std::endl;
+	std::cout << "### Small time partition with one event:" << std::endl;
+	logicRulesMachine.display();
+
+	eventTimesStockResult.resize(2);
+	switchedSystemIDsStockResult.resize(2);
+
+	eventTimesStockResult[0] = std::vector<double>{};
+	switchedSystemIDsStockResult[0] = std::vector<size_t>{1};
+
+	eventTimesStockResult[1] = std::vector<double>{2.5};
+	switchedSystemIDsStockResult[1] = std::vector<size_t>{1, 2};
+
+	testPass = checkSolution(logicRulesMachine, eventTimesStockResult, switchedSystemIDsStockResult);
+	ASSERT_TRUE(testPass);
+
+
+	// Small time partition with no event
+	partitioningTimes = std::vector<double>{0.5, 1.0, 2.0, 2.5};
+	controllerStock.resize(partitioningTimes.size()-1);
+	logicRulesMachine.updateLogicRules(partitioningTimes, controllerStock);
+
+	std::cout << std::endl << "======================" << std::endl;
+	std::cout << "### Small time partition with no event:" << std::endl;
+	logicRulesMachine.display();
+
+	eventTimesStockResult.resize(1);
+	switchedSystemIDsStockResult.resize(1);
+
+	eventTimesStockResult[0] = std::vector<double>{};
+	switchedSystemIDsStockResult[0] = std::vector<size_t>{1};
+
+	testPass = checkSolution(logicRulesMachine, eventTimesStockResult, switchedSystemIDsStockResult);
+	ASSERT_TRUE(testPass);
+}
 
 int main(int argc, char** argv)
 {

@@ -43,6 +43,9 @@ public:
 	void adjustController(typename BASE::controller_t& controller) const override
 	{}
 
+	void update() override
+	{}
+
 private:
 
 };
@@ -130,7 +133,7 @@ public:
 
 		Base::initializeModel(logicRulesMachine, partitionIndex, algorithmName);
 
-		findActiveSubsystemFnc_ = std::move( logicRulesMachine.getHandleToFindActiveSubsystemID(partitionIndex) );
+		findActiveSubsystemFnc_ = std::move( logicRulesMachine.getHandleToFindActiveEventCounter(partitionIndex) );
 	}
 
 	EXP0_System* clone() const override {
@@ -227,7 +230,7 @@ public:
 
 		Base::initializeModel(logicRulesMachine, partitionIndex, algorithmName);
 
-		findActiveSubsystemFnc_ = std::move( logicRulesMachine.getHandleToFindActiveSubsystemID(partitionIndex) );
+		findActiveSubsystemFnc_ = std::move( logicRulesMachine.getHandleToFindActiveEventCounter(partitionIndex) );
 	}
 
 	EXP0_SystemDerivative* clone() const override {
@@ -357,7 +360,7 @@ public:
 
 		Base::initializeModel(logicRulesMachine, partitionIndex, algorithmName);
 
-		findActiveSubsystemFnc_ = std::move( logicRulesMachine.getHandleToFindActiveSubsystemID(partitionIndex) );
+		findActiveSubsystemFnc_ = std::move( logicRulesMachine.getHandleToFindActiveEventCounter(partitionIndex) );
 	}
 
 	EXP0_CostFunction* clone() const override {

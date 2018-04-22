@@ -91,7 +91,7 @@ public:
 			const state_vector_t& state,
 			const scalar_t& time) override {
 
-		std::cout << std::endl << "time: " << time << std::endl;
+//		std::cout << std::endl << "time: " << time << std::endl;
 
 		// SystemEventHandler event
 		systemEventHandlerTriggered_ = BASE::checkEvent(state, time);
@@ -102,20 +102,20 @@ public:
 
 		// No event will happen if one is recently hanned
 		if (time-lastEventTriggeredTime_ < minEventTimeDifference_) {
-			std::cout << "Event Handeling is NOT active." << std::endl;
+//			std::cout << "Event Handeling is NOT active." << std::endl;
 			return false;
 		} else {
-			std::cout << "Event Handeling is active." << std::endl;
+//			std::cout << "Event Handeling is active." << std::endl;
 		}
 
 		BASE::systemPtr_->computeGuardSurfaces(time, state, guardSurfacesValuesCurrent_);
 
-		std::cout << "guardSurfacesValue: ";
-		for (size_t i=0; i<guardSurfacesValuesCurrent_.size(); i++)
-			if (guardSurfacesValuesCurrent_[i]<0.6)
-				std::cout << ",   [" << i << "]: " << guardSurfacesValuesCurrent_[i];
-		std::cout << "\n";
-
+//		std::cout << "guardSurfacesValue: ";
+//		for (size_t i=0; i<guardSurfacesValuesCurrent_.size(); i++)
+//			if (guardSurfacesValuesCurrent_[i]<0.6)
+//				std::cout << ",   [" << i << "]: " << guardSurfacesValuesCurrent_[i];
+//		std::cout << "\n";
+//
 //		for (size_t i=0; i<guardSurfacesValuesPrevious_.size(); i++)
 //			std::cout << "[" << i << "]:\t" << guardSurfacesValuesPrevious_[i] <<
 //				"\t-->\t" << guardSurfacesValuesCurrent_[i] << std::endl;
@@ -129,9 +129,6 @@ public:
 
 		if (eventTriggered==false) {
 			guardSurfacesValuesPrevious_.swap(guardSurfacesValuesCurrent_);
-
-		} else {
-			lastEventTriggeredTime_ = time;
 		}
 
 		return eventTriggered;
@@ -156,22 +153,21 @@ public:
 			return BASE::handleEvent(stateTrajectory, timeTrajectory);
 
 		// correcting for the zero crossing
+		size_t lastIndex;
 		scalar_t zeroCrossingTime;
 		state_vector_t zeroCrossingState;
 		computeZeroCrossing(stateTrajectory, timeTrajectory,
-				zeroCrossingState, zeroCrossingTime);
+				lastIndex, zeroCrossingState, zeroCrossingTime);
 
-		const size_t lastIndexBeforeModification = timeTrajectory.size() - 1;
+		if (lastIndex>0) {
+			timeTrajectory[lastIndex]  = zeroCrossingTime;
+			timeTrajectory.erase(timeTrajectory.begin()+lastIndex+1, timeTrajectory.end());
 
-//		timeTrajectory.push_back(zeroCrossingTime);
-//		stateTrajectory.push_back(zeroCrossingState);
-//
-//		timeTrajectory.push_back(timeTrajectory[lastIndexBeforeModification]);
-//		stateTrajectory.push_back(stateTrajectory[lastIndexBeforeModification]);
+			stateTrajectory[lastIndex] = zeroCrossingState;
+			stateTrajectory.erase(stateTrajectory.begin()+lastIndex+1, stateTrajectory.end());
+		}
 
-		timeTrajectory[lastIndexBeforeModification]  = zeroCrossingTime;
-		stateTrajectory[lastIndexBeforeModification] = zeroCrossingState;
-
+		lastEventTriggeredTime_ = timeTrajectory[lastIndex];
 		guardSurfacesValuesPrevious_.swap(guardSurfacesValuesCurrent_);
 
 		// StateTriggered event
@@ -183,34 +179,53 @@ public:
 	 *
 	 * @param [in] stateTrajectory: The state trajectory which contains the current state vector as its last element.
 	 * @param [in] timeTrajectory: The time trajectory which contains the current time as its last element.
+	 * @param [out] lastIndex: The first index after crossing.
 	 * @param [out] zeroCrossingState: State at zero crossing.
 	 * @param [out] zeroCrossingTime: Time of the zero crossing.
 	 */
 	void computeZeroCrossing(
 			const state_vector_array_t& stateTrajectory,
 			const scalar_array_t& timeTrajectory,
+			size_t& lastIndex,
 			state_vector_t& zeroCrossingState,
 			scalar_t& zeroCrossingTime) {
 
-		const scalar_t& t1 = *(timeTrajectory.end()-2);
-		const scalar_t& t2 = *(timeTrajectory.end()-1);
-		const state_vector_t& x1 = *(stateTrajectory.end()-2);
-		const state_vector_t& x2 = *(stateTrajectory.end()-1);
-//		scalar_array_t guardSurfacesValues1;
-//		BASE::systemPtr_->computeGuardSurfaces(t1, x1, guardSurfacesValues1);
-//		const scalar_t& v1 = guardSurfacesValues1[triggeredEventSurface_];
-		const scalar_t& v1 = guardSurfacesValuesPrevious_[triggeredEventSurface_];
-		const scalar_t& v2 = guardSurfacesValuesCurrent_[triggeredEventSurface_];
-		scalar_t delta_v = v1 - v2;
+		if (timeTrajectory.size()==1) {
+			lastIndex = 0;
+			zeroCrossingTime = timeTrajectory.front();
+			zeroCrossingState = stateTrajectory.front();
 
-		zeroCrossingTime  = v1/delta_v*t2 - v2/delta_v*t1;
-		zeroCrossingState = v1/delta_v*x2 - v2/delta_v*x1;
+		} else {
+			lastIndex = timeTrajectory.size()-1;
+
+			if (timeTrajectory[timeTrajectory.size()-2]-lastEventTriggeredTime_ < minEventTimeDifference_)
+				for (int i=timeTrajectory.size()-2; i>=0; i--) {
+					BASE::systemPtr_->computeGuardSurfaces(timeTrajectory[i], stateTrajectory[i], guardSurfacesValuesPrevious_);
+					if (guardSurfacesValuesPrevious_[triggeredEventSurface_]>0) {
+						break;
+					} else {
+						guardSurfacesValuesCurrent_.swap(guardSurfacesValuesPrevious_);
+						lastIndex = i;
+					}
+				}
+
+			const scalar_t& t1 = timeTrajectory[lastIndex-1];
+			const scalar_t& t2 = timeTrajectory[lastIndex];
+			const state_vector_t& x1 = stateTrajectory[lastIndex-1];
+			const state_vector_t& x2 = stateTrajectory[lastIndex];
+			const scalar_t& v1 = guardSurfacesValuesPrevious_[triggeredEventSurface_];
+			const scalar_t& v2 = guardSurfacesValuesCurrent_[triggeredEventSurface_];
+			scalar_t delta_v = v1 - v2;
+
+			zeroCrossingTime  = v1/delta_v*t2 - v2/delta_v*t1;
+			zeroCrossingState = v1/delta_v*x2 - v2/delta_v*x1;
+		}
 
 		scalar_array_t zeroCrossingGuardSurfacesValues;
 		BASE::systemPtr_->computeGuardSurfaces(zeroCrossingTime, zeroCrossingState, zeroCrossingGuardSurfacesValues);
-		std::cout << "\t zero-crossing time: " << zeroCrossingTime << std::endl;
-		std::cout << "\t zero-crossing value[" << triggeredEventSurface_ << "]: " <<
-				zeroCrossingGuardSurfacesValues[triggeredEventSurface_] << std::endl;
+//		std::cout << "\t zero-crossing time: " << zeroCrossingTime << std::endl;
+//		std::cout << "\t zero-crossing value[" << triggeredEventSurface_ << "]: " <<
+//				zeroCrossingGuardSurfacesValues[triggeredEventSurface_] << std::endl;
 	}
 
 

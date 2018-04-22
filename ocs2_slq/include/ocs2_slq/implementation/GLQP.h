@@ -146,7 +146,7 @@ void GLQP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::findOperatingPointsWorker(
 		endTime = ( i==eventTimes.size() ? finalTime : eventTimes[i] );
 
 		// skip if finalTime==eventTimes.back()
-		// this is consistent with LogicRulesMachine::findSwitchedSystemsDistribution method
+		// this is consistent with LogicRulesMachine::findEventsDistribution method
 		if (i==eventTimes.size() && eventTimes.empty()==false)
 			if (std::abs(finalTime-eventTimes.back()) < OCS2NumericTraits<double>::limit_epsilon())
 				continue;
@@ -733,7 +733,7 @@ void GLQP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::solveRiccatiEquationsWorker(
 				RvStock_[partitionIndex][2*i], RmStock_[partitionIndex][2*i], PmStock_[partitionIndex][2*i]);
 
 		// skip if finalTime==eventTimes.back().
-		// This is consistent with LogicRulesMachine::findSwitchedSystemsDistribution method
+		// This is consistent with LogicRulesMachine::findEventsDistribution method
 		if (i==0 && NE>0 && std::abs(stratNormalizedTime-SsNormalizedEventTimes.front())<OCS2NumericTraits<double>::limit_epsilon()) {
 			SsNormalizedEventsPastTheEndIndecesStock_[partitionIndex][0] = 0;
 			typename riccati_equations_t::s_vector_t allSsFinalTemp = allSsFinal;

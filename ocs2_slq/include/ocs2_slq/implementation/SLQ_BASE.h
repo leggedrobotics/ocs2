@@ -29,9 +29,9 @@ SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::SLQ_BASE(
 		  numPartitionings_(0)
 {
 	if (logicRulesPtr != nullptr)
-		logicRulesMachinePtr_ = typename logic_rules_machine_t::Ptr( new logic_rules_machine_t(*logicRulesPtr) );
+		logicRulesMachinePtr_ = logic_rules_machine_ptr_t( new logic_rules_machine_t(*logicRulesPtr) );
 	else
-		logicRulesMachinePtr_ = typename logic_rules_machine_t::Ptr( new logic_rules_machine_t(LOGIC_RULES_T()) );
+		logicRulesMachinePtr_ = logic_rules_machine_ptr_t( new logic_rules_machine_t(LOGIC_RULES_T()) );
 
 	// Dynamics, Constraints, derivatives, and cost
 	systemDynamicsPtrStock_.clear();
@@ -207,7 +207,8 @@ typename SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::state_vector_t
 			input_vector_array_t& inputTrajectory,
 			scalar_array_t& eventTimes,
 			size_array_t& subsystemID,
-			scalar_array_t& guardSurfacesValues)  {
+			scalar_array_t& guardSurfacesValues,
+			hybrid_logic_rules_machine_t& hybridLlogicRulesMachine)  {
 
 	if (initTime > finalTime)
 		throw std::runtime_error("Initial time should be less-equal to final time.");
@@ -229,20 +230,22 @@ typename SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::state_vector_t
 
 	// initialize the model and set controller
 	if (controller.empty()==false) {
+		// init Hybrid Logic Machine
+		hybridLlogicRulesMachine.initLogicMachine(partitionIndex);
+//		std::cerr << std::endl << "+++++++++++++ partitionIndex: " << partitionIndex;
+//		hybridLlogicRulesMachine.display();
 		// set controller
 		systemDynamicsPtrStock_[workerIndex]->setController(controller);
 		// reset function calls counter
 		systemDynamicsPtrStock_[workerIndex]->resetNumFunctionCalls();
 		// initialize subsystem
-		systemDynamicsPtrStock_[workerIndex]->initializeModel(*logicRulesMachinePtr_, partitionIndex, "SLQ");
+		systemDynamicsPtrStock_[workerIndex]->initializeModel(hybridLlogicRulesMachine, partitionIndex, "SLQ");
 		// Set event times control parameters
 		if (eventTimes.empty()==true)
 			eventsPtrStock_[workerIndex]->setEventTimesGuard(settings_.minEventTimeDifference_);
 		else
 			eventsPtrStock_[workerIndex]->setEventTimesGuard(settings_.minEventTimeDifference_, eventTimes.back(), guardSurfacesValues);
 	}
-
-	std::cout << std::endl << "Time period: [" << initTime << ", " << finalTime << "]\n";
 
 	// initial values of the guard surfaces
 	if (subsystemID.empty()==true) {
@@ -269,13 +272,14 @@ typename SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::state_vector_t
 
 		} catch (const size_t& eventID) {
 
-			eventsPastTheEndIndeces.push_back( stateTrajectory.size() );
+			eventsPastTheEndIndeces.push_back( timeTrajectory.size() );
 			systemDynamicsPtrStock_[workerIndex]->mapState(timeTrajectory.back(), stateTrajectory.back(), x0);
 
 			eventTimes.push_back(timeTrajectory.back());
 			subsystemID.push_back(eventID);
 
-			std::cout << "Event Time: " << timeTrajectory.back() << "\t Event ID: " << eventID << std::endl;
+			hybridLlogicRulesMachine.push_back(partitionIndex, timeTrajectory.back(), eventID);
+//			hybridLlogicRulesMachine.display();
 		}
 
 		t0 = timeTrajectory.back();
@@ -323,12 +327,20 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::rolloutStateTriggeredTraject
 	// finding the active subsystem index at initTime
 	size_t finalActivePartition = findActivePartitionIndex(partitioningTimes, finalTime);
 
+	std::vector<scalar_array_t> eventTimesStock(numPartitionings);
+	std::vector<scalar_array_t> switchingTimesStock(numPartitionings);
+	std::vector<size_array_t>   switchedSystemIDsStock(numPartitionings);
+
+
 	scalar_array_t eventTimes;
 	size_array_t subsystemID;
-	scalar_array_t guardSurfacesValues;
+
+	hybrid_logic_rules_machine_t hybridLlogicRulesMachine;
+	hybridLlogicRulesMachine.setupLogicMachine(partitioningTimes, initTime, initActivePartition, 15);
 
 	scalar_t t0 = initTime;
 	state_vector_t x0 = initState;
+	scalar_array_t guardSurfacesValues;
 	scalar_t tf;
 	for (size_t i=0; i<numPartitionings; i++)  {
 
@@ -344,21 +356,13 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::rolloutStateTriggeredTraject
 		// final time
 		tf = (i != finalActivePartition) ? partitioningTimes[i+1] : finalTime;
 
-//		eventTimes.clear();
-//		subsystemID.clear();
-
 		// call rolloutTimeTriggeredWorker for the partition 'i' on the thread 'threadId'
 		x0 = rolloutStateTriggeredWorker(threadId, i,
 				t0, x0, tf, controllersStock[i],
 				timeTrajectoriesStock[i], eventsPastTheEndIndecesStock[i],
 				stateTrajectoriesStock[i], inputTrajectoriesStock[i],
-				eventTimes, subsystemID, guardSurfacesValues);
-
-		std::cout << "Event Pattern [" << i << "]\n";
-		for (size_t i=0; i<eventTimes.size(); i++)
-			std::cout << "[" << subsystemID[i] << "]  " << eventTimes[i] << "  ";
-		if (eventTimes.size() < subsystemID.size())
-			std::cout << "[" << subsystemID.back() << "]  " << std::endl;
+				eventTimes, subsystemID, guardSurfacesValues,
+				hybridLlogicRulesMachine);
 
 		// reset the initial time
 		t0 = timeTrajectoriesStock[i].back();
@@ -367,6 +371,8 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::rolloutStateTriggeredTraject
 
 	if (x0 != x0)
 		throw std::runtime_error("System became unstable during the SLQ rollout.");
+
+	hybridLlogicRulesMachine.display();
 }
 
 /******************************************************************************************************/
@@ -388,7 +394,7 @@ typename SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::state_vector_t
 		throw std::runtime_error("Initial time should be less-equal to final time.");
 
 	const size_t numEvents = logicRulesMachinePtr_->getNumEvents(partitionIndex);
-	const size_t numSubsystems = logicRulesMachinePtr_->getNumSubsystems(partitionIndex);
+	const size_t numSubsystems = logicRulesMachinePtr_->getNumEventCounters(partitionIndex);
 	const scalar_array_t& switchingTimes = logicRulesMachinePtr_->getSwitchingTimes(partitionIndex);
 
 	// max number of steps for integration
@@ -455,11 +461,6 @@ typename SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::state_vector_t
 					timeTrajectory, stateTrajectory, inputTrajectory,
 					true);
 		}
-
-		// TODO: debug print, delete this
-//		std::cout << "Itr: " << i << std::endl;
-//		std::cout << "beginTime: " << beginTime << std::endl;
-//		std::cout << "endTime:   " << endTime << std::endl;
 
 		if (i<finalItr) {
 			eventsPastTheEndIndeces.push_back( stateTrajectory.size() );
@@ -1498,19 +1499,6 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::solveRiccatiEquationsWorker(
 		riccati_equations_t::convert2Matrix(allSsTrajectory[NS-1-k], SmTrajectoryStock_[partitionIndex][k], SvTrajectoryStock_[partitionIndex][k], sTrajectoryStock_[partitionIndex][k]);
 		SsTimeTrajectoryStock_[partitionIndex][k] = scalingFactor*SsNormalizedTimeTrajectoryStock_[partitionIndex][NS-1-k] + partitioningTimes_[partitionIndex+1];
 	}  // end of k loop
-
-	// TODO: delete debug display
-//	std::cout << ">>> partitionIndex: " << partitionIndex << std::endl;
-//	std::cout << "size: " << SsTimeTrajectoryStock_[partitionIndex].size() << std::endl;
-//	std::cout << "From: " << SsTimeTrajectoryStock_[partitionIndex].front() << " To: " << SsTimeTrajectoryStock_[partitionIndex].back() << std::endl;
-//	std::cout << "SsNormalizedSwitchingTimes: {";
-//	for (auto ti : SsNormalizedSwitchingTimes)
-//		std::cout << scalingFactor*ti + partitioningTimes_[partitionIndex+1] << ", ";
-//	std::cout << "\b\b}\n";
-//	std::cout << "SsNormalizedEventsPastTheEndIndeces: {";
-//	for (auto ti : SsNormalizedEventsPastTheEndIndecesStock_[partitionIndex])
-//		std::cout << ti << ", ";
-//	std::cout << "\b\b}\n";
 
 	// testing the numerical stability of the Riccati equations
 	if (settings_.checkNumericalStability_)
@@ -2943,6 +2931,26 @@ const typename SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::scalar_array_t&
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
+typename SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::logic_rules_machine_t*
+	SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::getLogicRulesMachinePtr() {
+
+	return logicRulesMachinePtr_.get();
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
+const typename SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::logic_rules_machine_t*
+	SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::getLogicRulesMachinePtr() const {
+
+	return logicRulesMachinePtr_.get();
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
 void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::setLogicRules(const LOGIC_RULES_T& logicRules) {
 
 	logicRulesMachinePtr_->setLogicRules(logicRules);
@@ -3205,7 +3213,8 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::run(
 	if (settings_.displayInfo_) {
 		std::cerr << std::endl << "Rewind Counter: " << rewindCounter_ << std::endl;
 		std::cerr << "SLQ solver starts from initial time " << initTime << " to final time " << finalTime << ".";
-		logicRulesMachinePtr_->displaySwitchedSystemsDistribution();
+		logicRulesMachinePtr_->display();
+		std::cerr << std::endl;
 	}
 
 	iteration_ = 0;

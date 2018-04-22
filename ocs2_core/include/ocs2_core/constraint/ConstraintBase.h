@@ -12,7 +12,9 @@
 #include <cstring>
 
 #include "ocs2_core/Dimensions.h"
-#include "ocs2_core/logic/LogicRulesMachine.h"
+#include "ocs2_core/logic/rules/LogicRulesBase.h"
+#include "ocs2_core/logic/rules/NullLogicRules.h"
+#include "ocs2_core/logic/machine/LogicRulesMachine.h"
 
 namespace ocs2{
 
@@ -32,7 +34,7 @@ class ConstraintBase
 {
 public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-	static_assert(std::is_base_of<LogicRulesBase<STATE_DIM, INPUT_DIM, typename LOGIC_RULES_T::LogicRulesTemplate>, LOGIC_RULES_T>::value,
+	static_assert(std::is_base_of<LogicRulesBase<STATE_DIM, INPUT_DIM>, LOGIC_RULES_T>::value,
 			"LOGIC_RULES_T must inherit from LogicRulesBase");
 
 	typedef std::shared_ptr<ConstraintBase<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> > Ptr;

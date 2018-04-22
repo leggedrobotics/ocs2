@@ -9,7 +9,7 @@
 #include <fstream>
 
 #include "ocs2_core/integration/Integrator.h"
-#include "ocs2_core/integration/EventHandler.h"
+#include "ocs2_core/integration/EventHandlerBase.h"
 #include "ocs2_core/dynamics/ControlledSystemBase.h"
 #include <ocs2_core/misc/FindActiveIntervalIndex.h>
 

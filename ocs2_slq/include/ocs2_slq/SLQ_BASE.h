@@ -30,8 +30,9 @@
 #include <ocs2_core/misc/LinearInterpolation.h>
 #include <ocs2_core/misc/LTI_Equations.h>
 #include <ocs2_core/misc/FindActiveIntervalIndex.h>
-#include <ocs2_core/logic/LogicRulesBase.h>
-#include <ocs2_core/logic/LogicRulesMachine.h>
+#include <ocs2_core/logic/rules/LogicRulesBase.h>
+#include <ocs2_core/logic/machine/LogicRulesMachine.h>
+#include <ocs2_core/logic/machine/HybridLogicRulesMachine.h>
 #include <ocs2_core/initialization/SystemOperatingTrajectoriesBase.h>
 
 #include <ocs2_slq/SLQ_Settings.h>
@@ -60,7 +61,7 @@ class SLQ_BASE
 {
 public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-	static_assert(std::is_base_of<LogicRulesBase<STATE_DIM, INPUT_DIM, typename LOGIC_RULES_T::LogicRulesTemplate>, LOGIC_RULES_T>::value,
+	static_assert(std::is_base_of<LogicRulesBase<STATE_DIM, INPUT_DIM>, LOGIC_RULES_T>::value,
 			"LOGIC_RULES_T must inherit from LogicRulesBase");
 
 	typedef std::shared_ptr<SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>>	Ptr;
@@ -122,7 +123,6 @@ public:
 	typedef typename DIMENSIONS::constraint2_state_matrix_array_t constraint2_state_matrix_array_t;
 	typedef typename DIMENSIONS::constraint2_state_matrix_array2_t constraint2_state_matrix_array2_t;
 
-	typedef LogicRulesMachine<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>		logic_rules_machine_t;
 	typedef ControlledSystemBase<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>	controlled_system_base_t;
 	typedef SystemEventHandler<STATE_DIM>								event_handler_t;
 	typedef StateTriggeredEventHandler<STATE_DIM>						state_triggered_event_handler_t;
@@ -131,7 +131,43 @@ public:
 	typedef CostFunctionBase<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>		cost_function_base_t;
 	typedef SystemOperatingTrajectoriesBase<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> operating_trajectories_base_t;
 
+	typedef LogicRulesMachine<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>	logic_rules_machine_t;
+	typedef typename logic_rules_machine_t::Ptr						logic_rules_machine_ptr_t;
+
 	using INTERNAL_CONTROLLER = controller_array_t;
+
+// TODO: do not push to remote
+public:
+
+	typedef HybridLogicRulesMachine<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> 	hybrid_logic_rules_machine_t;
+
+	state_vector_t rolloutStateTriggeredWorker(size_t workerIndex,
+			const size_t& partitionIndex,
+			const scalar_t& initTime,
+			const state_vector_t& initState,
+			const scalar_t& finalTime,
+			const controller_t& controller,
+			scalar_array_t& timeTrajectory,
+			size_array_t& eventsPastTheEndIndeces,
+			state_vector_array_t& stateTrajectory,
+			input_vector_array_t& inputTrajectory,
+			scalar_array_t& eventTimes,
+			size_array_t& subsystemID,
+			scalar_array_t& guardSurfacesValues,
+			hybrid_logic_rules_machine_t& hybridLlogicRulesMachine);
+
+	void rolloutStateTriggeredTrajectory(const scalar_t& initTime,
+			const state_vector_t& initState,
+			const scalar_t& finalTime,
+			const scalar_array_t& partitioningTimes,
+			const controller_array_t& controllersStock,
+			std::vector<scalar_array_t>& timeTrajectoriesStock,
+			std::vector<size_array_t>& eventsPastTheEndIndecesStock,
+			state_vector_array2_t& stateTrajectoriesStock,
+			input_vector_array2_t& inputTrajectoriesStock,
+			size_t threadId = 0);
+
+public:
 
 	/**
 	 * Default constructor.
@@ -166,17 +202,6 @@ public:
 	 * destructor.
 	 */
 	virtual ~SLQ_BASE();
-
-	void rolloutStateTriggeredTrajectory(const scalar_t& initTime,
-			const state_vector_t& initState,
-			const scalar_t& finalTime,
-			const scalar_array_t& partitioningTimes,
-			const controller_array_t& controllersStock,
-			std::vector<scalar_array_t>& timeTrajectoriesStock,
-			std::vector<size_array_t>& eventsPastTheEndIndecesStock,
-			state_vector_array2_t& stateTrajectoriesStock,
-			input_vector_array2_t& inputTrajectoriesStock,
-			size_t threadId = 0);
 
 	/**
 	 * Forward integrate the system dynamics with given controller. It uses the given control policies and initial state,
@@ -511,6 +536,20 @@ public:
 	const scalar_array_t& getPartitioningTimes() const;
 
 	/**
+	 * Gets a pointer to the LogicRulesMachine
+	 *
+	 * @return a pointer to LogicRulesMachine
+	 */
+	logic_rules_machine_t* getLogicRulesMachinePtr();
+
+	/**
+	 * Gets a pointer to the LogicRulesMachine
+	 *
+	 * @return a pointer to LogicRulesMachine
+	 */
+	const logic_rules_machine_t* getLogicRulesMachinePtr() const;
+
+	/**
 	 * set logic rules.
 	 *
 	 * @param logicRules: This class will be passed to all of the dynamics and derivatives classes through initializeModel() routine.
@@ -700,20 +739,6 @@ protected:
 			size_array_t& eventsPastTheEndIndeces,
 			state_vector_array_t& stateTrajectory,
 			input_vector_array_t& inputTrajectory);
-
-	state_vector_t rolloutStateTriggeredWorker(size_t workerIndex,
-			const size_t& partitionIndex,
-			const scalar_t& initTime,
-			const state_vector_t& initState,
-			const scalar_t& finalTime,
-			const controller_t& controller,
-			scalar_array_t& timeTrajectory,
-			size_array_t& eventsPastTheEndIndeces,
-			state_vector_array_t& stateTrajectory,
-			input_vector_array_t& inputTrajectory,
-			scalar_array_t& eventTimes,
-			size_array_t& subsystemID,
-			scalar_array_t& guardSurfacesValues);
 
 	/**
 	 * Calculates the total cost for the given trajectories.
@@ -1013,7 +1038,7 @@ protected:
 	 *** Variables **
 	 ****************/
 	SLQ_Settings settings_;
-	typename logic_rules_machine_t::Ptr logicRulesMachinePtr_;
+	logic_rules_machine_ptr_t logicRulesMachinePtr_;
 
 	unsigned long long int rewindCounter_;
 

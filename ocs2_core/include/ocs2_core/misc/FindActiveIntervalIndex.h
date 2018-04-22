@@ -8,6 +8,7 @@
 #ifndef FINDACTIVEINTERVALINDEX_OCS2_H_
 #define FINDACTIVEINTERVALINDEX_OCS2_H_
 
+#include <string>
 #include <stdexcept>
 #include <vector>
 
@@ -51,7 +52,8 @@ int findActiveIntervalIndex(
 		throw std::runtime_error("The time interval array should have at least 2 elements.");
 
 	if (guessedIndex<0 || guessedIndex>numTimeIntervals-1)
-		throw std::runtime_error("The guessed index is out of range.");
+		throw std::runtime_error("The guessed index (i.e. " + std::to_string(guessedIndex) +
+				") is out of range ( [0, " + std::to_string(numTimeIntervals-1) + "].");
 
 	int index = -1;
 

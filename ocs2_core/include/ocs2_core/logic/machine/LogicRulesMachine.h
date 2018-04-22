@@ -11,13 +11,14 @@
 #include <utility>
 #include <memory>
 #include <iostream>
+#include <string>
 #include <functional>
 #include <type_traits>
 
 #include "ocs2_core/Dimensions.h"
 #include "ocs2_core/OCS2NumericTraits.h"
 #include "ocs2_core/misc/FindActiveIntervalIndex.h"
-#include "ocs2_core/logic/LogicRulesBase.h"
+#include "ocs2_core/logic/rules/LogicRulesBase.h"
 
 namespace ocs2{
 
@@ -31,7 +32,7 @@ class LogicRulesMachine
 {
 public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-	static_assert(std::is_base_of<LogicRulesBase<STATE_DIM, INPUT_DIM, typename LOGIC_RULES_T::LogicRulesTemplate>, LOGIC_RULES_T>::value,
+	static_assert(std::is_base_of<LogicRulesBase<STATE_DIM, INPUT_DIM>, LOGIC_RULES_T>::value,
 			"LOGIC_RULES_T must inherit from LogicRulesBase");
 
 	typedef std::shared_ptr<LogicRulesMachine<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>> Ptr;
@@ -44,32 +45,67 @@ public:
 	typedef typename DIMENSIONS::controller_array_t controller_array_t;
 
 	/**
+	 * Default constructor.
+	 */
+	LogicRulesMachine()
+	: logicRulesModified_(false),
+	  logicRulesModifiedOffline_(false),
+	  numPartitionings_(1),
+	  partitioningTimes_{-10000,10000},
+	  eventTimesStock_(1,scalar_array_t(0)),
+	  switchingTimesStock_(1,partitioningTimes_),
+	  eventCountersStock_(1,size_array_t(1,0))
+	{}
+
+	/**
 	 * Constructor.
 	 *
 	 * @param logicRules: The logic rules class.
 	 */
 	LogicRulesMachine(const LOGIC_RULES_T& logicRules)
-	: logicRulesModified_(false),
-	  logicRules_(logicRules),
+	: logicRules_(logicRules),
 	  logicRulesInUse_(logicRules),
+	  logicRulesModified_(false),
+	  logicRulesModifiedOffline_(false),
 	  numPartitionings_(1),
 	  partitioningTimes_{-10000,10000},
 	  eventTimesStock_(1,scalar_array_t(0)),
 	  switchingTimesStock_(1,partitioningTimes_),
-	  switchedSystemIDsStock_(1,size_array_t(1,0))
+	  eventCountersStock_(1,size_array_t(1,0))
 	{}
 
 	/**
 	 * Default destructor.
 	 */
-	~LogicRulesMachine()
-	{}
+	virtual ~LogicRulesMachine() = default;
 
 	/**
-	 * Set a new logic rules class
+	 * Copy constructor
+	 */
+	LogicRulesMachine(const LogicRulesMachine& rhs) = default;
+
+	/**
+	 * Move assignment
+	 */
+	LogicRulesMachine& operator=(LogicRulesMachine&& other) = default;
+
+	/**
+	 * Assignment
+	 */
+	LogicRulesMachine& operator=(const LogicRulesMachine& other) = default;
+
+	/**
+	 * Sets a new logic rules class.
+	 *
 	 * @param [in] logicRules: The new logic rules class
 	 */
 	void setLogicRules(const LOGIC_RULES_T& logicRules);
+
+	/**
+	 * This causes that logicMachine updates itself in the next call of the SLQ::run().
+	 *
+	 */
+	void logicRulesUpdated();
 
 	/**
 	 * Get the active logic rules class
@@ -106,6 +142,13 @@ public:
 	const scalar_array_t& getEventTimes(size_t partitionIndex) const;
 
 	/**
+	 * Gets the event counters associated to the partition number index.
+	 * @param [in] partitionIndex: index of the time partition
+	 * @return
+	 */
+	const size_array_t& getEventCounters(size_t partitionIndex) const;
+
+	/**
 	 * Gets the switching times associated to the partition number index.
 	 * @param [in] index: index of the time partition
 	 * @return
@@ -119,19 +162,12 @@ public:
 	const scalar_array_t& getPartitioningTimes() const;
 
 	/**
-	 * Gets the IDs of the switched systems associated to the partition number index.
-	 * @param [in] partitionIndex: index of the time partition
-	 * @return
-	 */
-	const size_array_t& getSwitchedSystemIDs(size_t partitionIndex) const;
-
-	/**
-	 * Returns the number of subsystems in the partition.
+	 * Returns the number of event counters in the partition.
 	 *
 	 * @param partitionIndex: index of the time partition
-	 * @return Number of subsystems
+	 * @return Number of event counters.
 	 */
-	size_t getNumSubsystems(size_t partitionIndex) const;
+	size_t getNumEventCounters(size_t partitionIndex) const;
 
 	/**
 	 * Returns the number of event in the partition.
@@ -142,12 +178,12 @@ public:
 	size_t getNumEvents(size_t partitionIndex) const;
 
 	/**
-	 * Returns a Lambda expression which can be used to find the current active subsystem's ID.
+	 * Returns a Lambda expression which can be used to find the current active event counter.
 	 *
 	 * @param partitionIndex: index of the time partition
 	 * @return Lambda expression
 	 */
-	std::function<size_t(scalar_t)> getHandleToFindActiveSubsystemID(size_t partitionIndex) const;
+	std::function<size_t(scalar_t)> getHandleToFindActiveEventCounter(size_t partitionIndex) const;
 
 	/**
 	 * Updates the active logic rules based on the last set value (using LogicRulesMachine::setLogicRules) and
@@ -157,41 +193,42 @@ public:
 	 * @param [in] partitioningTimes: Vector of time partitions.
 	 * @param [out] controllerStock: The controller which will be adjusted.
 	 */
-	void updateLogicRules(
+	virtual void updateLogicRules(
 			const scalar_array_t& partitioningTimes,
 			controller_array_t& controllerStock);
 
 	/**
-	 * Find distribution of the switched systems over the time partitions.
+	 * Find distribution of the events over the time partitions.
 	 *
 	 * @param [in] partitioningTimes: Vector of time partitions.
 	 * @param [out] eventTimesStock: Distribution of the event times over partitions.
 	 * @param [out] switchingTimesStock: Distribution of the switching times over partitions.
-	 * @param [out] switchedSystemIDsStock: Distribution of the switched system over partitions identified by their index.
+	 * @param [out] eventCountersStock: Distribution of the event counter over partitions.
 	 */
-	void findSwitchedSystemsDistribution(
+	void findEventsDistribution(
 			const scalar_array_t& partitioningTimes,
 			std::vector<scalar_array_t>& eventTimesStock,
 			std::vector<scalar_array_t>& switchingTimesStock,
-			std::vector<size_array_t>& switchedSystemIDsStock);
+			std::vector<size_array_t>& eventCountersStock);
 
 	/**
 	 * Displays switched systems distribution over the time partitions.
 	 */
-	void displaySwitchedSystemsDistribution();
+	virtual void display() const;
 
 
-private:
-	bool logicRulesModified_;
+protected:
 	LOGIC_RULES_T logicRules_;
 	LOGIC_RULES_T logicRulesInUse_;
+	bool logicRulesModified_;
+	bool logicRulesModifiedOffline_;
 
 	size_t numPartitionings_;
 	scalar_array_t partitioningTimes_;
 
 	std::vector<scalar_array_t> eventTimesStock_;
 	std::vector<scalar_array_t> switchingTimesStock_;
-	std::vector<size_array_t> switchedSystemIDsStock_;
+	std::vector<size_array_t> eventCountersStock_;
 };
 
 } // namespace ocs2

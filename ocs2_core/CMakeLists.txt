@@ -2,7 +2,10 @@ cmake_minimum_required(VERSION 2.8.3)
 project(ocs2_core) 
 
 find_package(catkin REQUIRED COMPONENTS cmake_modules) 
-find_package(Boost REQUIRED system filesystem)
+find_package(Boost REQUIRED COMPONENTS 
+  filesystem 
+  system
+)
 
 ## Eign3
 set( EIGEN_INCLUDE_DIRS "$ENV{LOCAL_EIGEN3_INCLUDE_DIR}" )
@@ -15,7 +18,9 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread -fopenmp -std=c++11 -Wfatal-err
 # add flags "-Wl,--no-as-needed" if using gcc 4.8.2 or lower
 
 catkin_package(
-  INCLUDE_DIRS include
+  INCLUDE_DIRS 
+    include
+    include/external
 #  LIBRARIES ocs2_core
 #  CATKIN_DEPENDS other_catkin_pkg
   DEPENDS boost eigen
@@ -23,6 +28,7 @@ catkin_package(
 
 include_directories(
   include
+  include/external
   ${EIGEN_INCLUDE_DIRS}
   ${Boost_INCLUDE_DIRS}
   ${catkin_INCLUDE_DIRS}
@@ -54,21 +60,64 @@ endif()
 ## $ catkin run_tests --no-deps --this
 
 ## unit tests  catkin_add_gtest
-catkin_add_gtest(integration_unittest test/IntegrationTest.cpp)
+catkin_add_gtest(integration_unittest 
+  test/IntegrationTest.cpp)
 target_link_libraries(integration_unittest
   ${catkin_LIBRARIES}
   ${Boost_LIBRARIES}
 ) 
 
-catkin_add_gtest(findIndex_unittest test/testFindIndex.cpp)
+catkin_add_gtest(findIndex_unittest 
+  test/testFindIndex.cpp)
 target_link_libraries(findIndex_unittest
   ${catkin_LIBRARIES}
   ${Boost_LIBRARIES}
 )
 
-catkin_add_gtest(logic_rules_machin_unittest test/testLogicRulesMachine.cpp)
+catkin_add_gtest(logic_rules_machin_unittest 
+  test/testLogicRulesMachine.cpp)
 target_link_libraries(logic_rules_machin_unittest
   ${catkin_LIBRARIES}
   ${Boost_LIBRARIES}
 )
 
+catkin_add_gtest(cppadcg_unittest 
+  test/testCppADCG_linux.cpp)
+target_link_libraries(cppadcg_unittest
+  ${Boost_LIBRARIES}
+  ${catkin_LIBRARIES} -lm -ldl
+)
+
+#add_executable(dynamicLinux
+#   src/dynamic_linux.cpp
+#)
+#add_dependencies(dynamicLinux
+#  ${${PROJECT_NAME}_EXPORTED_TARGETS}
+#  ${catkin_EXPORTED_TARGETS}
+#)
+#target_link_libraries(dynamicLinux
+#  ${catkin_LIBRARIES} -lm -ldl
+#)
+
+#add_executable(eigenDynamicLinux
+#   src/eigen_dynamic_linux.cpp
+#)
+#add_dependencies(eigenDynamicLinux
+#  ${${PROJECT_NAME}_EXPORTED_TARGETS}
+#  ${catkin_EXPORTED_TARGETS}
+#)
+#target_link_libraries(eigenDynamicLinux
+#  ${catkin_LIBRARIES} -lm -ldl
+#)
+#
+#add_executable(cppadcgTest
+#   src/cppadcg_linux.cpp
+#)
+#add_dependencies(cppadcgTest
+#  ${${PROJECT_NAME}_EXPORTED_TARGETS}
+#  ${catkin_EXPORTED_TARGETS}
+#)
+#target_link_libraries(cppadcgTest
+#  ${Boost_LIBRARIES}
+#  ${catkin_LIBRARIES} -lm -ldl
+#)

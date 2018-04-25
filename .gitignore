@@ -17,3 +17,4 @@ Doxyfile
 *.tag
 *.tmp
 *.swp
+ocs2_core/test/cppad_cg/testCppADCG_generated/

@@ -76,7 +76,7 @@ public:
 	/**
 	 * Default destructor
 	 */
-	virtual ~CostFunctionBase() {};
+	virtual ~CostFunctionBase() = default;
 
 	/**
 	 * Sets the nominal state and input trajectories used in the cost function.
@@ -120,7 +120,8 @@ public:
 	 * @param [out] stateTrajectory: The state trajectory.
 	 * @param [out] inputTrajectory: The input trajectory.
 	 */
-	virtual void getCostNominalTrajectories(scalar_array_t& timeTrajectory,
+	virtual void getCostNominalTrajectories(
+			scalar_array_t& timeTrajectory,
 			state_vector_array_t& stateTrajectory,
 			input_vector_array_t& inputTrajectory) const {
 
@@ -139,7 +140,8 @@ public:
 	 * @param [out] timeTrajectory: The time trajectory.
 	 * @param [out] stateTrajectory: The state trajectory.
 	 */
-	virtual void getCostNominalState(scalar_array_t& timeTrajectory,
+	virtual void getCostNominalState(
+			scalar_array_t& timeTrajectory,
 			state_vector_array_t& stateTrajectory) const {
 
 		if (xNominalTrajectoryPtr_) {
@@ -157,7 +159,8 @@ public:
 	 * @param [out] timeTrajectory: The time trajectory.
 	 * @param [out] inputTrajectory: The input trajectory.
 	 */
-	virtual void getCostNominalInput(scalar_array_t& timeTrajectory,
+	virtual void getCostNominalInput(
+			scalar_array_t& timeTrajectory,
 			input_vector_array_t& inputTrajectory) const {
 
 		if (uNominalTrajectoryPtr_) {
@@ -185,7 +188,8 @@ public:
 	 * @param [in] partitionIndex: index of the time partition.
 	 * @param [in] algorithmName: The algorithm that class this class (default not defined).
 	 */
-	virtual void initializeModel(LogicRulesMachine<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>& logicRulesMachine,
+	virtual void initializeModel(
+			LogicRulesMachine<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>& logicRulesMachine,
 			const size_t& partitionIndex, const char* algorithmName=NULL)
 	{}
 
@@ -196,7 +200,11 @@ public:
      * @param [in] x: Current state vector
      * @param [in] u: Current input vector
      */
-	virtual void setCurrentStateAndControl(const scalar_t& t, const state_vector_t& x, const input_vector_t& u) {
+	virtual void setCurrentStateAndControl(
+			const scalar_t& t, const
+			state_vector_t& x, const
+			input_vector_t& u) {
+
 		t_ = t;
 		x_ = x;
 		u_ = u;

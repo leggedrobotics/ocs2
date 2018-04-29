@@ -647,6 +647,21 @@ void ModelCSourceGen<Base>::determineHessianSparsity() {
                                 _hessSparsity.rows, _hessSparsity.cols);
 
     } else {
+    	std::vector<size_t> possible_hess_rows, possible_hess_cols;
+    	generateSparsityIndexes(_hessSparsity.sparsity,
+    			possible_hess_rows, possible_hess_cols);
+
+    	std::vector<size_t> intersection_hess_rows, intersection_hess_cols;
+    	for (size_t i1=0; i1<_custom_hess.row.size(); i1++)
+    		for (size_t i2=0; i2<possible_hess_rows.size(); i2++)
+    			if (_custom_hess.row[i1] == possible_hess_rows[i2] && _custom_hess.col[i1] == possible_hess_cols[i2]) {
+    				intersection_hess_rows.push_back(_custom_hess.row[i1]);
+    				intersection_hess_cols.push_back(_custom_hess.col[i1]);
+    			}
+
+    	_custom_hess.row = intersection_hess_rows;
+    	_custom_hess.col = intersection_hess_cols;
+
         _hessSparsity.rows = _custom_hess.row;
         _hessSparsity.cols = _custom_hess.col;
     }

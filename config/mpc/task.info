@@ -2,7 +2,7 @@
 simulationSettings
 {
     dt                 0.001
-    tFinal             3.2
+    tFinal 			   0.8		; 1.2		; 0.8
     initSettlingTime   0.0
 }
 
@@ -15,7 +15,6 @@ visualization
 
 model_settings
 {
-  useMultiThreading			0
   constrainedIntegration    1
   
   gravitationalAcceleration 9.81
@@ -30,98 +29,113 @@ model_settings
   impulseWeight       		0.0
   impulseSigmeFactor  		0.1
 
-  mpcStrideLength           0.3
+  mpcStrideLength           0.2
   numPhasesInfullGaitCycle  2
+  
+  eps 	2e-4
+  eta 	1e+2
 }
 
 switchingModes
 {
-  [0]  STANCE
-
-  [1]  LF_RH
-  [2]  RF_LH
-
-  [3]  LF_RH
-  [4]  RF_LH
-
-  [5]  LF_RH
-  [6]  RF_LH
-
-  [7]  STANCE
+  	[0]     STANCE
+  	[1]     STANCE
 }
 
-;switchingModes
+templateSubsystemsSequence
+{
+  	[0]     LF_RH
+	[1]     RF_LH
+}
+templateSwitchingTimes
+{
+  	[0]     0.0
+	[1]     0.4
+	[2]     0.8
+}
+
+
+;templateSubsystemsSequence
 ;{
-;  [0]     LF_RH
-;  [1]     RF_LH
-;
-;  [2]     LF_RH
-;  [3]     RF_LH
+;  	[0]     LF_RF_RH
+;	[1]     RF_LH_RH
+;	[2]     LF_RF_LH
+;	[3]     LF_LH_RH
+;}
+;templateSwitchingTimes
+;{
+;  	[0]     0.0
+;	[1]     0.6
+;	[2]     1.2
+;	[3]     1.8
+;	[4]     2.4
 ;}
 
 
 slq
 {
-  maxIterationGSLQP            50    ;50
-  minLearningRateGSLQP         1.0  ;0.1
-  maxLearningRateGSLQP         1.0
-  minRelCostGSLQP              0.1  ;0.01
-  stateConstraintPenaltyCoeff  100.0
-  stateConstraintPenaltyBase   1.1
-  meritFunctionRho             50.0
-  constraintStepSize           1.0
-  displayInfo                  1
-  displayShortSummary          0
-  warmStartGSLQP               1
-  useLQForDerivatives          0
+  maxNumIterationsSLQ          	10    ;50
+  minLearningRateGSLQP         	1.0  ;0.1
+  maxLearningRateGSLQP         	1.0
+  minRelCostGSLQP              	0.1  ;0.01
+  stateConstraintPenaltyCoeff  	100.0
+  stateConstraintPenaltyBase   	1.1
+  meritFunctionRho             	50.0
+  constraintStepSize          	1.0
+  displayInfo                  	0
+  displayShortSummary          	0
+  warmStartGSLQP               	1
+  useLQForDerivatives          	0
+
+  AbsTolODE                	    1e-5  ;1e-6
+  RelTolODE                   	1e-3  ;1e-4
+  minTimeStep					1e-3
+  maxNumStepsPerSecond         	50000
+  simulationIsConstrained      	0
+  noStateConstraints			0
+  minAbsConstraint1ISE         	5e-3
+  minRelConstraint1ISE         	5e-6
+  checkNumericalStability      	0
+
+  displayGradientDescent      	0
+  tolGradientDescent           	1e-2
+  acceptableTolGradientDescent 	1e-2
+  maxIterationGradientDescent  	5
+  minLearningRateNLP           	0.05
+  maxLearningRateNLP           	0.6
+  useAscendingLineSearchNLP    	1
+
+  useMultiThreading           	1
+  nThreads                    	4
+  debugPrintMP                	0
+  lsStepsizeGreedy            	1
+
+  RiccatiIntegratorType       	1 		; ODE45 = 1, ADAMS_BASHFORTH = 2, BULIRSCH_STOER = 3, ADAMS_BASHFORTH_MOULTON = 4
+  adams_integrator_dt			0.01
+
+  useRiccatiSolver      		1
   
-  ;noStateConstraints		   1
-
-  AbsTolODE                    1e-5  ;1e-6
-  RelTolODE                    1e-3  ;1e-4
-  maxNumStepsPerSecond         50000
-  simulationIsConstrained      0
-  minAbsConstraint1ISE         5e-3
-  minRelConstraint1ISE         5e-6
-  checkNumericalStability      0
-
-  displayGradientDescent       0
-  tolGradientDescent           1e-2
-  acceptableTolGradientDescent 1e-2
-  maxIterationGradientDescent  5
-  minLearningRateNLP           0.05
-  maxLearningRateNLP           0.6
-  useAscendingLineSearchNLP    1
-  minAcceptedSwitchingTimeDifference 0.01
-
-  useMultiThreading           1
-  nThreads                    4
-  debugPrintMP                0
-  lsStepsizeGreedy            1
-
-  RiccatiIntegratorType       1        ; ODE45 = 1, ADAMS_BASHFORTH = 2, BULIRSCH_STOER = 3, ADAMS_BASHFORTH_MOULTON = 4
-  adams_integrator_dt         0.01
-
-  useRiccatiSolver      1
+  minEventTimeDifference 		0.01
 }
 
 mpc
 {
-  numIterations			1
-  maxNumIterations		1
+  numIterations				1
+  maxNumIterations			1
 
-  debugPrint			0
-  coldStart				0
-  recedingHorizon		1	; use receding horizon MPC
+  debugPrint				1
+  coldStart					0
+  recedingHorizon			1	; use receding horizon MPC
 
-  useDisjointRiccati	1	; use disjoint riccati solver in MP case and recedingHorizon fashion
+  useParallelRiccatiSolver	1		; use disjoint riccati solver in MP case and recedingHorizon fashion
 
-  useFeedbackPolicy		0
-  forwardSimulationTime	28	; [ms] MRT time
+  useFeedbackPolicy			0
+  forwardSimulationTime		28	; [ms] MRT time
 
-  rosMsgTimeWindow		100	; [ms]
+  rosMsgTimeWindow			300	; [ms]
+  adaptiveRosMsgTimeWindow	0
 
-  simulatedMPCloopTime	0	; [ms] asynchronous MPC constant delay (On hardware should ALWAYS be 0)
+  simulatedMPCloopTime		0	; [ms] asynchronous MPC constant delay (On hardware should ALWAYS be 0)
 }
 
 
@@ -136,7 +150,7 @@ initialRobotState
    ; position
    (3,0) 0.0     ; x
    (4,0) 0.0     ; y
-   (5,0) 0.572   ; z
+   (5,0) 0.534   ; z
 
    ; joint state
    (6,0)   -0.1; -0.2      ; LF_HAA
@@ -322,42 +336,18 @@ Q_final
 }
 
 
-; switchedModel nominal trajectory final point
-x_final
+; Robot final CoM pose
+CoM_final_pose
 {
    ; orientation
    (0,0) 0.0     ; x
-   (1,0) 0.0     ; y
+   (1,0) 0.0     ; y 
    (2,0) 0.0     ; z
-
+                 
    ; position
-   (3,0) 0.0      ; x ;1.0
+   (3,0) 2.0      ; x ;1.0
    (4,0) 0.0      ; y
-   (5,0) 0.0     ; z
-
-   ; angular velocity
-   (6,0) 0.0    ; x
-   (7,0) 0.0    ; y
-   (8,0) 0.0    ; z
-
-   ; translational velocity
-   (9,0)  0.0     ; x
-   (10,0) 0.0    ; y
-   (11,0) 0.0    ; z
-
-   ; joint state
-   (6,0)   -0.1; -0.2      ; LF_HAA
-   (7,0)    0.7;  0.723    ; LF_HFE
-   (8,0)   -1.0; -1.458    ; LF_KFE
-   (9,0)    0.1; -0.2      ; RF_HAA
-   (10,0)   0.7;  0.723    ; RF_HFE
-   (11,0)  -1.0; -1.458    ; RF_KFE
-   (12,0)  -0.1; -0.2      ; LH_HAA
-   (13,0)  -0.7; -0.723    ; LH_HFE
-   (14,0)   1.0;  1.458    ; LH_KFE
-   (15,0)   0.1; -0.2      ; RH_HAA
-   (16,0)  -0.7; -0.723    ; RH_HFE
-   (17,0)   1.0;  1.458    ; RH_KFE
+   (5,0) 0.0 	  ; z
 }
 
 ; set the endeffector's constraint information in ascending order

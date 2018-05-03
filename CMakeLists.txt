@@ -13,6 +13,7 @@ find_package(catkin REQUIRED COMPONENTS
   ocs2_ocs2
   ocs2_mpc
   ocs2_anymal_switched_model
+  ocs2_quadruped_interface
   cereal
   xpp_msgs
 )
@@ -30,11 +31,6 @@ find_package(Boost REQUIRED COMPONENTS
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread -fopenmp -std=c++11 -Wfatal-errors -ffast-math")
 
-## Uncomment this if the package has a setup.py. This macro ensures
-## modules and global scripts declared therein get installed
-## See http://ros.org/doc/api/catkin/html/user_guide/setup_dot_py.html
-# catkin_python_setup()
-
 
 ###################################
 ## catkin specific configuration ##
@@ -46,16 +42,22 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread -fopenmp -std=c++11 -Wfatal-err
 ## CATKIN_DEPENDS: catkin_packages dependent projects also need
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
-  INCLUDE_DIRS include
-  LIBRARIES ${PROJECT_NAME}
+  INCLUDE_DIRS 
+    include
+  
+  LIBRARIES 
+    ocs2_anymal_interface
+    ocs2_anymal_mpc
+    ocs2_anymal_mrt
+    
   CATKIN_DEPENDS
     ocs2_core
     ocs2_slq
     ocs2_ocs2
     ocs2_mpc
     ocs2_anymal_switched_model
+    ocs2_quadruped_interface
     xpp_msgs
-#  DEPENDS
 )
 
 ###########
@@ -72,67 +74,93 @@ include_directories(
 )
 
 # Declare a C++ library
-add_library(${PROJECT_NAME}
+add_library(ocs2_anymal_interface
   src/OCS2AnymalInterface.cpp
 )
-
-add_dependencies(${PROJECT_NAME}
+add_dependencies(ocs2_anymal_interface
   ${${PROJECT_NAME}_EXPORTED_TARGETS}
   ${catkin_EXPORTED_TARGETS}
 )
+target_link_libraries(ocs2_anymal_interface
+  ${catkin_LIBRARIES}
+)
 
-target_link_libraries(${PROJECT_NAME}
+add_library(ocs2_anymal_mpc
+  src/OCS2AnymalMPC.cpp
+)
+add_dependencies(ocs2_anymal_mpc
+  ocs2_anymal_interface
+  ${${PROJECT_NAME}_EXPORTED_TARGETS}
+  ${catkin_EXPORTED_TARGETS}
+)
+target_link_libraries(ocs2_anymal_mpc
+  ocs2_anymal_interface
+  ${catkin_LIBRARIES}
+)
+
+add_library(ocs2_anymal_mrt
+  src/OCS2AnymalMRT.cpp
+)
+add_dependencies(ocs2_anymal_mrt
+  ocs2_anymal_interface
+  ${${PROJECT_NAME}_EXPORTED_TARGETS}
+  ${catkin_EXPORTED_TARGETS}
+)
+target_link_libraries(ocs2_anymal_mrt
+  ocs2_anymal_interface
+  ${catkin_LIBRARIES}
+)
+
+
+# Declare a C++ Executable
+add_executable(target_command_node
+  src/AnymalTargetPoseCommand.cpp
+)
+add_dependencies(target_command_node
+  ${${PROJECT_NAME}_EXPORTED_TARGETS}
+  ${catkin_EXPORTED_TARGETS}
+)
+target_link_libraries(target_command_node
   ${catkin_LIBRARIES}
 )
 
 add_executable(PlanningTest
   src/PlanningTest.cpp
 )
-
 add_dependencies(PlanningTest
   ${${PROJECT_NAME}_EXPORTED_TARGETS}
   ${catkin_EXPORTED_TARGETS}
 )
-
 target_link_libraries(PlanningTest
-  ${PROJECT_NAME}
+  ocs2_anymal_interface
   ${catkin_LIBRARIES}
 )
 
-#############
-## Install ##
-#############
+add_executable(AnymalMPC
+  src/AnymalMPC.cpp
+)
+add_dependencies(AnymalMPC
+  ocs2_anymal_mpc
+  ${${PROJECT_NAME}_EXPORTED_TARGETS}
+  ${catkin_EXPORTED_TARGETS}
+)
+target_link_libraries(AnymalMPC
+  ocs2_anymal_mpc
+  ${catkin_LIBRARIES}
+)
 
-# all install targets should use catkin DESTINATION variables
-# See http://ros.org/doc/api/catkin/html/adv_user_guide/variables.html
-
-## Mark executable scripts (Python etc.) for installation
-## in contrast to setup.py, you can choose the destination
-# install(PROGRAMS
-#   scripts/my_python_script
-#   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
-# )
-
-## Mark executables and/or libraries for installation
-# install(TARGETS ocs2_anymal_interface ocs2_anymal_interface_node
-#   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-#   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-#   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
-# )
-
-## Mark cpp header files for installation
-# install(DIRECTORY include/${PROJECT_NAME}/
-#   DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
-#   FILES_MATCHING PATTERN "*.h"
-#   PATTERN ".svn" EXCLUDE
-# )
-
-## Mark other files for installation (e.g. launch and bag files, etc.)
-# install(FILES
-#   # myfile1
-#   # myfile2
-#   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
-# )
+add_executable(MPC_Simulator
+  src/MPC_DummySimulator.cpp
+)
+add_dependencies(MPC_Simulator
+  ocs2_anymal_interface
+  ${${PROJECT_NAME}_EXPORTED_TARGETS}
+  ${catkin_EXPORTED_TARGETS}
+)
+target_link_libraries(MPC_Simulator
+  ocs2_anymal_interface
+  ${catkin_LIBRARIES}
+)
 
 #############
 ## Testing ##

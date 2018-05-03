@@ -24,15 +24,15 @@
   <buildtool_depend>catkin</buildtool_depend>
   <build_depend>cmake_modules</build_depend>
 
+  <depend>roscpp</depend>
   <depend>ocs2_core</depend>
   <depend>ocs2_slq</depend>
   <depend>ocs2_ocs2</depend>
   <depend>ocs2_mpc</depend>
   <depend>ocs2_anymal_switched_model</depend>
+  <depend>ocs2_quadruped_interface</depend>
   <depend>cereal</depend>
-  <depend>roscpp</depend>
   <depend>xpp_msgs</depend>
-
 
   <!-- The export tag contains other, unspecified, tags -->
   <export>

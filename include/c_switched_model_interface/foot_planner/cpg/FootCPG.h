@@ -15,34 +15,51 @@
 
 namespace switched_model {
 
+template <typename scalar_t = double>
 class FootCPG
 {
 public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-	typedef std::shared_ptr<FootCPG> Ptr;
-	typedef std::array<Ptr , 4>      PtrArray;
+	typedef std::shared_ptr<FootCPG<scalar_t>>	Ptr;
 
-	FootCPG(const double& swingLegLiftOff = 0.15, const double& swingTimeScale = 1.0)
-	{
-		xSplinePtr_ = CubicSpline::Ptr( new CubicSpline() );
-		ySplinePtr_ = CubicSpline::Ptr( new CubicSpline() );
-		zDoubleSplinePtr_ = SplineCpg::Ptr( new SplineCpg(swingLegLiftOff, swingTimeScale) );
+	typedef Eigen::Matrix<scalar_t,3,1>	vector_3d_t;
+
+	FootCPG()
+	: FootCPG(0.15, 1.0)
+	{}
+
+	FootCPG(const scalar_t& swingLegLiftOff, const scalar_t& swingTimeScale = 1.0) {
+
+		xSplinePtr_ = typename CubicSpline<scalar_t>::Ptr( new CubicSpline<scalar_t>() );
+		ySplinePtr_ = typename CubicSpline<scalar_t>::Ptr( new CubicSpline<scalar_t>() );
+		zDoubleSplinePtr_ = typename SplineCPG<scalar_t>::Ptr( new SplineCPG<scalar_t>(swingLegLiftOff, swingTimeScale) );
 	}
 
-	~FootCPG() {}
+	~FootCPG() = default;
 
-	void set(const double& currentTime,
-			const double& liftoffTime,  const double& touchdownTime,
-			const Eigen::Vector2d& currentPosXY, const Eigen::Vector2d& currentVelXY,
-			const Eigen::Vector2d& touchdownPosXY,
-			const double& swingLegLiftOff) {
-		xSplinePtr_->set(currentTime,  currentPosXY(0) /*p0*/, currentVelXY(0) /*v0*/, touchdownTime /*t1*/, touchdownPosXY(0) /*p1*/, 0.0 /*v1*/);
-		ySplinePtr_->set(currentTime,  currentPosXY(1) /*p0*/, currentVelXY(1) /*v0*/, touchdownTime /*t1*/, touchdownPosXY(1) /*p1*/, 0.0 /*v1*/);
+	void setConstant(const vector_3d_t& currentPos) {
+
+		xSplinePtr_->setConstant(currentPos(0));
+		ySplinePtr_->setConstant(currentPos(1));
+		zDoubleSplinePtr_->setConstant();
+	}
+
+	void set(const scalar_t& currentTime,
+			const scalar_t& liftoffTime,
+			const scalar_t& touchdownTime,
+			const vector_3d_t& currentPos,
+			const vector_3d_t& currentVel,
+			const vector_3d_t& touchdownPos,
+			const scalar_t& swingLegLiftOff) {
+
+		xSplinePtr_->set(currentTime,  currentPos(0) /*p0*/, currentVel(0) /*v0*/, touchdownTime /*t1*/, touchdownPos(0) /*p1*/, 0.0 /*v1*/);
+		ySplinePtr_->set(currentTime,  currentPos(1) /*p0*/, currentVel(1) /*v0*/, touchdownTime /*t1*/, touchdownPos(1) /*p1*/, 0.0 /*v1*/);
 		zDoubleSplinePtr_->set(liftoffTime, touchdownTime, swingLegLiftOff);
 	}
 
-	double adaptiveSwingLegLiftOff(const double& startTime, const double& finalTime) {
+	scalar_t adaptiveSwingLegLiftOff(const scalar_t& startTime, const scalar_t& finalTime) {
+
 		return zDoubleSplinePtr_->adaptiveSwingLegLiftOff(startTime, finalTime);
 	}
 
@@ -51,7 +68,7 @@ public:
 	 * @param time
 	 * @return
 	 */
-	Eigen::Vector3d calculatePosition(const double& time) const {
+	Eigen::Vector3d calculatePosition(const scalar_t& time) const {
 
 		Eigen::Vector3d p;
 		p(0) = xSplinePtr_->evaluateSplinePosition(time);
@@ -65,7 +82,7 @@ public:
 	 * @param time
 	 * @return
 	 */
-	Eigen::Vector3d calculateVelocity(const double& time) const {
+	Eigen::Vector3d calculateVelocity(const scalar_t& time) const {
 
 		Eigen::Vector3d v;
 		v(0) = xSplinePtr_->evaluateSplineVelocity(time);
@@ -79,7 +96,7 @@ public:
 	 * @param time
 	 * @return
 	 */
-	Eigen::Vector3d calculateAcceleration(const double& time) const {
+	Eigen::Vector3d calculateAcceleration(const scalar_t& time) const {
 
 		Eigen::Vector3d a;
 		a(0) = xSplinePtr_->evaluateSplineAcceleration(time);
@@ -89,15 +106,14 @@ public:
 	}
 
 private:
-	CubicSpline::Ptr xSplinePtr_;
-	CubicSpline::Ptr ySplinePtr_;
-	SplineCPG::Ptr 	 zDoubleSplinePtr_;
+	typename CubicSpline<scalar_t>::Ptr xSplinePtr_;
+	typename CubicSpline<scalar_t>::Ptr ySplinePtr_;
+	typename SplineCPG<scalar_t>::Ptr   zDoubleSplinePtr_;
 };
 
 
 }  // end of switched_model namespace
 
 
-
-
 #endif /* FOOTCPG_H_ */
+

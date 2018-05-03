@@ -25,10 +25,12 @@
 namespace switched_model {
 
 
-inline void loadGaps(const std::string& filename, std::vector<EndEffectorConstraintBase::Ptr>& gapIndicatorPtrs, bool verbose = true)
+inline void loadGaps(const std::string& filename, std::vector<EndEffectorConstraintBase::ConstPtr>& gapIndicatorPtrs, bool verbose = true)
 {
 	boost::property_tree::ptree pt;
 	boost::property_tree::read_info(filename, pt);
+
+	gapIndicatorPtrs.clear();
 
 	std::cerr <<"EndEffectorConstraints Options: " << std::endl;
 	std::cerr <<"=====================================================================" << std::endl;

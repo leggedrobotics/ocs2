@@ -21,12 +21,12 @@
 #include "c_switched_model_interface/core/ComModelBase.h"
 #include "c_switched_model_interface/logic/SwitchedModelLogicRulesBase.h"
 #include "c_switched_model_interface/state_constraint/EndEffectorConstraintBase.h"
-#include <c_switched_model_interface/core/Options.h>
+#include <c_switched_model_interface/core/Model_Settings.h>
 
 namespace switched_model {
 
 template <size_t JOINT_COORD_SIZE>
-class ComKinoConstraintBase : public ocs2::ConstraintBase<12+JOINT_COORD_SIZE, 12+JOINT_COORD_SIZE, SwitchedModelLogicRulesBase<JOINT_COORD_SIZE>>
+class ComKinoConstraintBase : public ocs2::ConstraintBase<12+JOINT_COORD_SIZE, 12+JOINT_COORD_SIZE, SwitchedModelPlannerLogicRules<JOINT_COORD_SIZE>>
 {
 public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
@@ -37,8 +37,10 @@ public:
 		INPUT_DIM = 12+JOINT_COORD_SIZE
 	};
 
-	typedef SwitchedModelLogicRulesBase<JOINT_COORD_SIZE> 	logic_rules_t;
+	typedef SwitchedModelPlannerLogicRules<JOINT_COORD_SIZE> logic_rules_t;
+	typedef typename logic_rules_t::foot_cpg_t 				foot_cpg_t;
 	typedef typename logic_rules_t::feet_cpg_ptr_t 			feet_cpg_ptr_t;
+	typedef typename logic_rules_t::feet_cpg_const_ptr_t	feet_cpg_const_ptr_t;
 	typedef ocs2::LogicRulesMachine<STATE_DIM, INPUT_DIM, logic_rules_t> logic_rules_machine_t;
 
 	typedef ocs2::ConstraintBase<STATE_DIM, INPUT_DIM, logic_rules_t> Base;
@@ -62,18 +64,15 @@ public:
 	typedef Eigen::Matrix<double,6,JOINT_COORD_SIZE> base_jacobian_matrix_t;
 
 
-	ComKinoConstraintBase(const kinematic_model_t* kinematicModelPtr, const com_model_t* comModelPtr,
-			const scalar_t& gravitationalAcceleration=9.81, const Options& options = Options())
+	ComKinoConstraintBase(const kinematic_model_t& kinematicModel, const com_model_t& comModel,
+			const Model_Settings& options = Model_Settings())
 
 	: Base(),
-	  kinematicModelPtr_(kinematicModelPtr->clone()),
-	  comModelPtr_(comModelPtr->clone()),
-	  o_gravityVector_(0.0, 0.0, -gravitationalAcceleration),
+	  kinematicModelPtr_(kinematicModel.clone()),
+	  comModelPtr_(comModel.clone()),
+	  o_gravityVector_(0.0, 0.0, -options.gravitationalAcceleration_),
 	  options_(options)
-	{
-		if (gravitationalAcceleration<0)
-			throw std::runtime_error("Gravitational acceleration should be a positive value.");
-	}
+	{}
 
 	/**
 	 * copy construntor of ComKinoConstraintBase
@@ -103,8 +102,10 @@ public:
 	 * @param [in] partitionIndex: index of the time partition.
 	 * @param [in] algorithmName: The algorithm that class this class (default not defined).
 	 */
-	virtual void initializeModel(const logic_rules_machine_t& logicRulesMachine,
-			const size_t& partitionIndex, const char* algorithmName=NULL) override;
+	virtual void initializeModel(
+			logic_rules_machine_t& logicRulesMachine,
+			const size_t& partitionIndex,
+			const char* algorithmName=NULL) override;
 
 	/**
 	 * Set the current state and contact force input
@@ -116,19 +117,49 @@ public:
 	virtual void setCurrentStateAndControl(const scalar_t& t, const state_vector_t& x, const input_vector_t& u) override;
 
 	/**
-	 * Equality constraint type-1 consists of states and inputs.
+	 * Computes the state-input equality constraints.
+	 *
+	 * @param [out] e: The state-input equality constraints value.
 	 */
-	virtual void computeConstriant1(size_t& numConstraint1, constraint1_vector_t& g1) override;
+	virtual void getConstraint1(constraint1_vector_t& e) override;
 
 	/**
-	 * Equality and inequality constraint type-2 consists of states.
+	 * Get the number of state-input active equality constriants.
+	 *
+	 * @param [in] time: time.
+	 * @return number of state-input active equality constriants.
 	 */
-	virtual void computeConstriant2(size_t& numConstraint2, constraint2_vector_t& g2) override;
+	virtual size_t numStateInputConstraint(const scalar_t& time) override;
 
 	/**
-	 * Equality and inequality final constraint type-2 consists of states.
+	 * get the state-only equality constraints.
+	 *
+	 * @param [out] h: The state-only equality constraints value.
 	 */
-	virtual void computeFinalConstriant2(size_t& numFinalConstraint2, constraint2_vector_t& g2Final) override;
+	virtual void getConstraint2(constraint2_vector_t& h) override;
+
+	/**
+	 * Get the number of state-only active equality constriants.
+	 *
+	 * @param [in] time: time.
+	 * @return number of state-only active equality constriants.
+	 */
+	virtual size_t numStateOnlyConstraint(const scalar_t& time) override;
+
+	/**
+	 * Compute the final state-only equality constraints.
+	 *
+	 * @param [out] h_f: The final state-only equality constraints value.
+	 */
+	virtual void getFinalConstraint2(constraint2_vector_t& h_f) override;
+
+	/**
+	 * Get the number of final state-only active equality constriants.
+	 *
+	 * @param [in] time: time.
+	 * @return number of final state-only active equality constriants.
+	 */
+	virtual size_t numStateOnlyFinalConstraint(const scalar_t& time) override;
 
 	/**
 	 * calculate and retrieve the C matrix (i.e. the state derivative of the state-input constraints w.r.t. state vector).
@@ -136,7 +167,7 @@ public:
 	 *
 	 * @param C: a nc1-by-nx matrix
 	 */
-	virtual void getConstraint1DerivativesState(constraint1_state_matrix_t& C)  override;
+	virtual void getConstraint1DerivativesState(constraint1_state_matrix_t& C) override;
 
 	/**
 	 * calculate and retrieve the D matrix (i.e. the state derivative of the state-input constraints w.r.t. input vector).
@@ -177,18 +208,20 @@ private:
 	typename kinematic_model_t::Ptr kinematicModelPtr_;
 	typename com_model_t::Ptr comModelPtr_;
 	Eigen::Vector3d o_gravityVector_;
-	Options options_;
+	Model_Settings options_;
 
-	const logic_rules_t* logicRulesPtr_;
+	logic_rules_t* logicRulesPtr_;
 
 	std::function<size_t(scalar_t)> findActiveSubsystemFnc_;
+
+	size_t numSubsystems_;
 
 	const std::vector<EndEffectorConstraintBase::ConstPtr>* endEffectorStateConstraintsPtr_;
 
 	std::array<bool,4> stanceLegs_;
 	std::array<bool,4> nextPhaseStanceLegs_;
 
-	const feet_cpg_ptr_t* zDirectionRefsPtr_;
+	std::array<const foot_cpg_t*,4> zDirectionRefsPtr_;
 
 	joint_coordinate_t qJoints_;
 	joint_coordinate_t dqJoints_;

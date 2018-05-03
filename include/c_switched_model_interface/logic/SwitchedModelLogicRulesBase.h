@@ -8,11 +8,13 @@
 #ifndef SWITCHEDMODELLOGICRULESBASE_H_
 #define SWITCHEDMODELLOGICRULESBASE_H_
 
-#include <ocs2_core/logic/LogicRulesBase.h>
+#include <mutex>
+
+#include <ocs2_core/logic/rules/HybridLogicRules.h>
 
 #include "c_switched_model_interface/core/SwitchedModel.h"
-#include "c_switched_model_interface/foot_planner/cpg/SplineCPG.h"
-#include "c_switched_model_interface/foot_planner/FeetZDirectionPlanner.h"
+#include "c_switched_model_interface/foot_planner/cpg/CPG_BASE.h"
+#include "c_switched_model_interface/foot_planner/FeetPlannerBase.h"
 #include "c_switched_model_interface/state_constraint/EndEffectorConstraintBase.h"
 
 namespace switched_model {
@@ -20,105 +22,89 @@ namespace switched_model {
 /**
  * Logic rules base class
  */
-template <size_t JOINT_COORD_SIZE>
-class SwitchedModelLogicRulesBase : public ocs2::LogicRulesBase<12+JOINT_COORD_SIZE, 12+JOINT_COORD_SIZE>
+template <size_t JOINT_COORD_SIZE, class cpg_t>
+class SwitchedModelLogicRulesBase : public ocs2::HybridLogicRules<12+JOINT_COORD_SIZE, 12+JOINT_COORD_SIZE>
 {
 public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-	typedef ocs2::LogicRulesBase<12+JOINT_COORD_SIZE, 12+JOINT_COORD_SIZE> Base;
+	typedef std::shared_ptr<SwitchedModelLogicRulesBase<JOINT_COORD_SIZE,cpg_t>> Ptr;
 
-	typedef typename Base::size_array_t size_array_t;
-	typedef typename Base::scalar_t scalar_t;
-	typedef typename Base::scalar_array_t scalar_array_t;
-	typedef typename Base::controller_t controller_t;
-	typedef typename Base::controller_array_t controller_array_t;
+	typedef ocs2::HybridLogicRules<12+JOINT_COORD_SIZE, 12+JOINT_COORD_SIZE> BASE;
 
-	typedef std::array<bool,4> contact_flags_t;
+	typedef typename BASE::size_array_t size_array_t;
+	typedef typename BASE::scalar_t scalar_t;
+	typedef typename BASE::scalar_array_t scalar_array_t;
+	typedef typename BASE::controller_t controller_t;
+	typedef typename BASE::controller_array_t controller_array_t;
 
-	typedef SplineCPG<scalar_t> cpg_t;
-	typedef FeetZDirectionPlanner<cpg_t,scalar_t> feet_z_planner_t;
-	typedef typename feet_z_planner_t::feet_cpg_ptr_t		feet_cpg_ptr_t;
-	typedef typename feet_z_planner_t::feet_cpg_const_ptr_t	feet_cpg_const_ptr_t;
+	typedef typename BASE::logic_template_type logic_template_type;
+
+	typedef SwitchedModel<JOINT_COORD_SIZE> switched_model_t;
+	typedef typename switched_model_t::contact_flag_t contact_flag_t;
+
+	typedef FeetPlannerBase<scalar_t, cpg_t> 				feet_planner_t;
+	typedef typename feet_planner_t::Ptr					feet_planner_ptr_t;
+	typedef cpg_t											foot_cpg_t;
+	typedef typename feet_planner_t::feet_cpg_ptr_t			feet_cpg_ptr_t;
+	typedef typename feet_planner_t::feet_cpg_const_ptr_t	feet_cpg_const_ptr_t;
+
+private:
+	using read_lock_t  = std::unique_lock<std::mutex>;
+	using write_lock_t = std::unique_lock<std::mutex>;
 
 public:
 	/**
 	 * Default constructor
 	 */
-	SwitchedModelLogicRulesBase() = delete;
+	SwitchedModelLogicRulesBase() = default;
 
 	/**
 	 * Constructor
 	 *
-	 * @param [in] swingLegLiftOff: Maximum swing leg lift-off
-	 * @param [in] swingTimeScale: The scaling factor for adapting swing leg's lift-off
+	 * @param [in] feetPlannerPtr: A pointer to the FeetPlanner class.
 	 */
-	SwitchedModelLogicRulesBase(const scalar_t& swingLegLiftOff = 0.15,
-			const scalar_t& swingTimeScale = 1.0)
-
-	: Base(),
-	  feetZDirectionPlanner_(swingLegLiftOff, swingTimeScale)
-	{}
+	SwitchedModelLogicRulesBase(const feet_planner_ptr_t& feetPlannerPtr);
 
 	/**
 	 * Copy constructor
 	 */
-	SwitchedModelLogicRulesBase(const SwitchedModelLogicRulesBase& rhs)
-
-	: Base(rhs),
-	  motionPhasesSequence_(rhs.motionPhasesSequence_),
-	  feetZDirectionPlanner_(rhs.feetZDirectionPlanner_),
-	  contactFlagsStock_(rhs.contactFlagsStock_),
-	  zDirectionRefsStock_(rhs.zDirectionRefsStock_),
-	  endEffectorStateConstraints_(rhs.endEffectorStateConstraints_)
-	{}
+	SwitchedModelLogicRulesBase(const SwitchedModelLogicRulesBase& rhs);
 
 	/**
 	 * Destructor
 	 */
-	virtual ~SwitchedModelLogicRulesBase()
-	{}
+	virtual ~SwitchedModelLogicRulesBase() = default;
 
 	/**
-	 * Sets motion constraints which include gait sequence constraints and state-only constraint defined by gaps, etc.
+	 * Move assignment
+	 */
+	SwitchedModelLogicRulesBase& operator=(SwitchedModelLogicRulesBase&& other);
+
+	/**
+	 * Assignment
+	 */
+	SwitchedModelLogicRulesBase& operator=(const SwitchedModelLogicRulesBase& other);
+
+	/**
+	 * Sets motion constraints which include mode sequence constraints and state-only constraint defined by gaps, etc.
 	 *
-	 * @param [in] switchingTimes: The switching times.
-	 * @param [in] motionPhasesSequence: The sequence of the motion phase.
+	 * @param [in] subsystemsSequence: The sequence of the triggered subsystems.
+	 * @param [in] eventTimes: The sequence of the times in which mode transition took place.
 	 * @param [in] endEffectorStateConstraints: An array of the state-only constraint defined by gaps, etc.
 	 */
-	void setMotionConstraints(const scalar_array_t& switchingTimes,
-			const size_array_t& motionPhasesSequence,
-			const std::vector<EndEffectorConstraintBase::ConstPtr>& endEffectorStateConstraints = std::vector<EndEffectorConstraintBase::ConstPtr>()) {
-
-		setGaitSequence(switchingTimes, motionPhasesSequence);
-
-		endEffectorStateConstraints_ = endEffectorStateConstraints;
-	}
+	void setMotionConstraints(
+			const size_array_t& subsystemsSequence,
+			const scalar_array_t& eventTimes,
+			const std::vector<EndEffectorConstraintBase::ConstPtr>& endEffectorStateConstraints =
+					std::vector<EndEffectorConstraintBase::ConstPtr>());
 
 	/**
-	 * Sets gait sequence.
+	 * Retrieves the contact status flag sequence.
 	 *
-	 * @param [in] switchingTimes: The switching times.
-	 * @param [in] motionPhasesSequence: The sequence of the motion phase.
+	 * @return contactFlagsStock_
 	 */
-	void setGaitSequence(const scalar_array_t& switchingTimes,
-			const size_array_t& motionPhasesSequence) {
-
-		Base::switchingTimes_ = switchingTimes;
-		motionPhasesSequence_ = motionPhasesSequence;
-		size_t numSubsystems = motionPhasesSequence.size();
-
-		if (switchingTimes.size()+1 != numSubsystems)
-			throw std::runtime_error("The number of motion phases should be 1 plus number of the switching times.");
-
-		contactFlagsStock_.resize(numSubsystems);
-		zDirectionRefsStock_.resize(numSubsystems);
-		for (size_t i=0; i<numSubsystems; i++) {
-			contactFlagsStock_[i] = modeNumber2StanceLeg(motionPhasesSequence[i]);
-			feetZDirectionPlanner_.planSingleMode(i, motionPhasesSequence, switchingTimes, zDirectionRefsStock_[i]);
-		}
-	}
-
+	const std::vector<contact_flag_t>& getContactFlagsSequence() const;
 
 	/**
 	 * Retrieves the contact flags of the requested motion phase.
@@ -127,14 +113,7 @@ public:
 	 * @param [out] contactFlags: A contact flags array which determines the stance legs.
 	 */
 	void getContactFlags(const size_t& index,
-			contact_flags_t& contactFlags) const {
-
-		if (index >= contactFlagsStock_.size())
-			throw std::runtime_error("The requested index refers to an out-of-bound motion phase.");
-
-		contactFlags = contactFlagsStock_[index];
-	}
-
+			contact_flag_t& contactFlags) const;
 
 	/**
 	 * Retrieves constraints information of the motion phase specified by th given index. This information
@@ -142,30 +121,59 @@ public:
 	 *
 	 * @param [in] index: The requested motion phase.
 	 * @param [out] contactFlags: A contact flags array which determines the stance legs.
-	 * @param [out] zDirectionRefs: An array of z-direction motion reference for the swing legs (note that
-	 * for the stance legs the behavior of the reference generator is not defined).
+	 * @param [out] feetReferencePtr: An array of planned motion for the swing legs (note that
+	 * for the stance legs the behavior might not be defined).
 	 */
 	void getMotionPhaseLogics(const size_t& index,
-			contact_flags_t& contactFlags,
-			const feet_cpg_ptr_t* zDirectionRefsPtr) const {
-
-		if (index >= contactFlagsStock_.size())
-			throw std::runtime_error("The requested index refers to an out-of-bound motion phase.");
-
-		contactFlags = contactFlagsStock_[index];
-
-		zDirectionRefsPtr = &zDirectionRefsStock_[index];
-	}
+			contact_flag_t& contactFlags,
+			std::array<const cpg_t*, 4>& feetReferencePtr) const;
 
 	/**
 	 * Get a const pointer to state-only constraints for end-effectors.
 	 *
 	 * @return A const pointer to the array of const pointer for endEffectorStateConstraint objects.
 	 */
-	const std::vector<EndEffectorConstraintBase::ConstPtr>* getEndEffectorStateConstraintsPtr() const {
+	const std::vector<EndEffectorConstraintBase::ConstPtr>* getEndEffectorStateConstraintsPtr() const;
 
-		return &endEffectorStateConstraints_;
-	}
+	/**
+	 * Gets a reference to the feet planner class.
+	 *
+	 * @return feet planner class.
+	 */
+	feet_planner_t& getFeetPlanner();
+
+	/**
+	 * This method can be used to update the internal variables. This method will be called by any
+	 * program that trys to update the logic rules variables.
+	 */
+	virtual void update() override;
+
+	/**
+	 * Rewinds the class. This methid is only called in the MPC class.
+	 *
+	 * @param [in] lowerBoundTime: The smallest time for which the logicRules should be defined.
+	 * @param [in] upperBoundTime: The greatest time for which the logicRules should be defined.
+	 */
+	virtual void rewind(
+			const scalar_t& lowerBoundTime,
+			const scalar_t& upperBoundTime) override;
+
+	/**
+	 * Used in the SLQ-MPC method to set the model sequence template.
+	 *
+	 * @param [in] modeSequenceTemplate: A dada type which includes all necessary information for modifying the logicRules.
+	 */
+	virtual void setModeSequenceTemplate(const logic_template_type& modeSequenceTemplate) override;
+
+	/**
+	 * Used in the SLQ-MPC method to insert a new user defined logic in the given time period.
+	 *
+	 * @param [in] startTime: The initial time from which the new logicRules template should be augmented.
+	 * @param [in] finalTime: The final time to which the new logicRules template should be augmented.
+	 */
+	virtual void insertModeSequenceTemplate(
+			const scalar_t& startTime,
+			const scalar_t& finalTime) override;
 
 	/**
 	 * Adjust the controller based on the last changes in the logic rules.
@@ -173,21 +181,42 @@ public:
 	 * @param controller: The controller which will be modified.
 	 */
 	virtual void adjustController(controller_t& controller) const override {
-
 		// TODO
 	}
 
-private:
-	size_array_t motionPhasesSequence_;
-	feet_z_planner_t feetZDirectionPlanner_;
+protected:
+	/**
+	 * Extends the switch information from lowerBoundTime to upperBoundTime based on the template mode sequence.
+	 *
+	 * @param [in] startTime: The initial time from which the logicRules template should be augmented.
+	 * @param [in] finalTime: The final time to which the logicRules template should be augmented.
+	 */
+	void tileModeSequenceTemplate(
+			const scalar_t& startTime,
+			const scalar_t& finalTime);
 
-	std::vector<contact_flags_t> contactFlagsStock_;
-	std::vector<feet_cpg_ptr_t> zDirectionRefsStock_;
+private:
+	mutable std::mutex feetReferenceUpdateMutex_;
+
+	feet_planner_ptr_t feetPlannerPtr_;
+
+	std::vector<contact_flag_t> contactFlagsStock_;
+	mutable std::vector<feet_cpg_ptr_t> feetReferencePtrStock_;
+	mutable std::vector<bool>			feetReferenceUpdatedStock_;
 
 	std::vector<EndEffectorConstraintBase::ConstPtr> endEffectorStateConstraints_;
 
+	logic_template_type modeSequenceTemplate_;
 };
 
+/**
+ * Specialization for planner which uses only Z direction planner
+ */
+template <size_t JOINT_COORD_SIZE, typename scalar_t = double>
+using SwitchedModelPlannerLogicRules = SwitchedModelLogicRulesBase<JOINT_COORD_SIZE, CPG_BASE<scalar_t>>;
+
 } // namespace switched_model
+
+#include "implementation/SwitchedModelLogicRulesBase.h"
 
 #endif /* SWITCHEDMODELLOGICRULESBASE_H_ */

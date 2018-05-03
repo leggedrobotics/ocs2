@@ -21,7 +21,7 @@ ComDynamicsBase<JOINT_COORD_SIZE>* ComDynamicsBase<JOINT_COORD_SIZE>::clone() co
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t JOINT_COORD_SIZE>
-void ComDynamicsBase<JOINT_COORD_SIZE>::initializeModel(const logic_rules_machine_t& logicRulesMachine,
+void ComDynamicsBase<JOINT_COORD_SIZE>::initializeModel(logic_rules_machine_t& logicRulesMachine,
 		const size_t& partitionIndex, const char* algorithmName/*=NULL*/) {
 
 	Base::initializeModel(logicRulesMachine, partitionIndex, algorithmName);
@@ -83,11 +83,11 @@ void ComDynamicsBase<JOINT_COORD_SIZE>::computeDerivative(const scalar_t& t,
 	// Inertia matrix in the CoM frame and its derivatives
 	M_    = comModelPtr_->comInertia(qJoints_);
 	dMdt_ = comModelPtr_->comInertiaDerivative(qJoints_, dqJoints_);
-//	Eigen::Matrix3d rotationMInverse = M_.topLeftCorner<3,3>().inverse();
-//	MInverse_ << rotationMInverse, Eigen::Matrix3d::Zero(),
-//			Eigen::Matrix3d::Zero(), Eigen::Matrix3d::Identity()/M_(5,5);
-	MInverse_ << M_.topLeftCorner<3,3>().inverse(), Eigen::Matrix3d::Zero(),
-			     Eigen::Matrix3d::Zero(),           (1/M_(5,5))*Eigen::Matrix3d::Identity();
+	Eigen::Matrix3d rotationMInverse = M_.topLeftCorner<3,3>().inverse();
+	MInverse_ << rotationMInverse, Eigen::Matrix3d::Zero(),
+			Eigen::Matrix3d::Zero(), Eigen::Matrix3d::Identity()/M_(5,5);
+//	MInverse_ << M_.topLeftCorner<3,3>().inverse(), Eigen::Matrix3d::Zero(),
+//			     Eigen::Matrix3d::Zero(),           (1/M_(5,5))*Eigen::Matrix3d::Identity();
 
 	// Coriolis and centrifugal forces
 	C_.head<3>() = com_W_com.cross(M_.topLeftCorner<3,3>()*com_W_com) + dMdt_.topLeftCorner<3,3>()*com_W_com;
@@ -162,6 +162,14 @@ void ComDynamicsBase<JOINT_COORD_SIZE>::getStanceLegs(std::array<bool,4>& stance
 template <size_t JOINT_COORD_SIZE>
 void ComDynamicsBase<JOINT_COORD_SIZE>::getFeetPositions(std::array<Eigen::Vector3d,4>& b_base2StanceFeet) const {
 	b_base2StanceFeet = com_base2StanceFeet_;
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+template <size_t JOINT_COORD_SIZE>
+void ComDynamicsBase<JOINT_COORD_SIZE>::getBasePose(base_coordinate_t& o_basePose) const {
+	o_basePose = q_base_;
 }
 
 /******************************************************************************************************/

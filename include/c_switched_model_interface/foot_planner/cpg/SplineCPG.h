@@ -23,16 +23,28 @@ public:
 
 	typedef CPG_BASE<scalar_t> Base;
 
-	SplineCPG(const scalar_t& swingLegLiftOff = 0.15, const scalar_t& swingTimeScale = 1.0)
+	SplineCPG()
+	: Base(0.15, 1.0)
+	{}
+
+	SplineCPG(const scalar_t& swingLegLiftOff, const scalar_t& swingTimeScale = 1.0)
 	: Base(swingLegLiftOff, swingTimeScale)
 	{}
 
-	~SplineCPG() {}
+	~SplineCPG() = default;
+
+	void setConstant() override {
+
+		Base::set(0.0, 1.0, 0.0);
+		leftSpline_.setConstant(startHight_);
+		rightSpline_.setConstant(startHight_);
+	}
 
 	void set(const scalar_t& startTime, const scalar_t& finalTime, const scalar_t& maxHight) override {
+
 		Base::set(startTime, finalTime, maxHight);
 
-		midTime_  = 0.5*(Base::startTime_+Base::finalTime_);
+		midTime_ = 0.5*(Base::startTime_+Base::finalTime_);
 
 		leftSpline_.set(Base::startTime_, startHight_ /*p0*/, 0.0 /*v0*/, midTime_ /*t1*/, Base::maxHight_ /*p1*/, 0.0 /*v1*/);
 		rightSpline_.set(midTime_, Base::maxHight_ /*p0*/, 0.0 /*v0*/, Base::finalTime_ /*t1*/, finalHight_ /*p1*/, 0.0 /*v1*/);

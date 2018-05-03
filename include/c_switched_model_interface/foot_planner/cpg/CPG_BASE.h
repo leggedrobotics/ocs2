@@ -21,12 +21,18 @@ public:
 	typedef std::shared_ptr<CPG_BASE<scalar_t>> 		Ptr;
 	typedef std::shared_ptr<const CPG_BASE<scalar_t>> 	ConstPtr;
 
-	CPG_BASE(const scalar_t& swingLegLiftOff = 0.15, const scalar_t& swingTimeScale = 1.0)
+	CPG_BASE()
+	: CPG_BASE(0.15, 1.0)
+	{}
+
+	CPG_BASE(const scalar_t& swingLegLiftOff, const scalar_t& swingTimeScale = 1.0)
 	: swingLegLiftOff_(swingLegLiftOff),
 	  swingTimeScale_(swingTimeScale)
 	{}
 
-	virtual ~CPG_BASE() {}
+	virtual ~CPG_BASE() = default;
+
+	virtual void setConstant() = 0;
 
 	virtual void set(const scalar_t& startTime, const scalar_t& finalTime, const scalar_t& maxHight) {
 		startTime_ = startTime;

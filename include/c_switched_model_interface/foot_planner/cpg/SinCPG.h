@@ -29,6 +29,11 @@ public:
 
 	~SinCPG() {}
 
+	void setConstant() override {
+		Base::set(0.0, 1.0, 0.0);
+		Base::maxHight_ = 0.0;
+	}
+
 	scalar_t calculatePosition(const scalar_t& time) const override {
 		const scalar_t omega = M_PI/(Base::finalTime_-Base::startTime_);
 		scalar_t position = Base::maxHight_ * pow(sin( omega*(time-Base::startTime_) ), 2);

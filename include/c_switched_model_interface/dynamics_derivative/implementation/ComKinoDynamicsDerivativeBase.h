@@ -21,12 +21,12 @@ ComKinoDynamicsDerivativeBase<JOINT_COORD_SIZE>* ComKinoDynamicsDerivativeBase<J
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t JOINT_COORD_SIZE>
-void ComKinoDynamicsDerivativeBase<JOINT_COORD_SIZE>::initializeModel(const logic_rules_machine_t& logicRulesMachine,
+void ComKinoDynamicsDerivativeBase<JOINT_COORD_SIZE>::initializeModel(logic_rules_machine_t& logicRulesMachine,
 		const size_t& partitionIndex, const char* algorithmName/*=NULL*/) {
 
 	Base::initializeModel(logicRulesMachine, partitionIndex, algorithmName);
 
-	findActiveSubsystemFnc_ = std::move( logicRulesMachine.getHandleToFindActiveSubsystemID(partitionIndex) );
+	findActiveSubsystemFnc_ = std::move( logicRulesMachine.getHandleToFindActiveEventCounter(partitionIndex) );
 
 	logicRulesPtr_ = logicRulesMachine.getLogicRulesPtr();
 
@@ -64,7 +64,7 @@ void ComKinoDynamicsDerivativeBase<JOINT_COORD_SIZE>::setCurrentStateAndControl(
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t JOINT_COORD_SIZE>
-void ComKinoDynamicsDerivativeBase<JOINT_COORD_SIZE>::getDerivativeState(state_matrix_t& A)  {
+void ComKinoDynamicsDerivativeBase<JOINT_COORD_SIZE>::getFlowMapDerivativeState(state_matrix_t& A)  {
 
 	// A matrix
 	/*			com		qJoints
@@ -74,7 +74,7 @@ void ComKinoDynamicsDerivativeBase<JOINT_COORD_SIZE>::getDerivativeState(state_m
 
 	// CoM derivative with respect to CoM
 	Eigen::Matrix<double,12,12> comAcom;
-	comDynamicsDerivative_.getDerivativeState(comAcom);
+	comDynamicsDerivative_.getFlowMapDerivativeState(comAcom);
 
 	// CoM derivative with respect to qJoints
 	Eigen::Matrix<double,12,JOINT_COORD_SIZE> comAjoints;
@@ -89,7 +89,7 @@ void ComKinoDynamicsDerivativeBase<JOINT_COORD_SIZE>::getDerivativeState(state_m
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t JOINT_COORD_SIZE>
-void ComKinoDynamicsDerivativeBase<JOINT_COORD_SIZE>::getDerivativesControl(control_gain_matrix_t& B)  {
+void ComKinoDynamicsDerivativeBase<JOINT_COORD_SIZE>::getFlowMapDerivativeInput(control_gain_matrix_t& B)  {
 
 	// B matrix
 	/*			lambda		jointsVel=omega
@@ -98,7 +98,7 @@ void ComKinoDynamicsDerivativeBase<JOINT_COORD_SIZE>::getDerivativesControl(cont
 	 */
 	// CoM derivative with respect to lambdas
 	Eigen::Matrix<double,12,12> comBlambda;
-	comDynamicsDerivative_.getDerivativesControl(comBlambda);
+	comDynamicsDerivative_.getFlowMapDerivativeInput(comBlambda);
 
 	// CoM derivative with respect to joints' velocities
 	Eigen::Matrix<double,12,JOINT_COORD_SIZE> comBomega;

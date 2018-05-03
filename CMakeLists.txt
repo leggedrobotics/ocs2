@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 2.8.3)
-project(c_switched_model_interface)
+project(ocs2_switched_model_interface)
 
 find_package(catkin REQUIRED
 	cmake_modules

@@ -11,6 +11,7 @@
 #include <limits>
 #include <memory>
 #include <cmath>
+#include <string>
 
 namespace switched_model {
 
@@ -20,14 +21,27 @@ class CubicSpline
 public:
 	typedef std::shared_ptr<CubicSpline> Ptr;
 
-	CubicSpline() {}
-	~CubicSpline() {}
+	CubicSpline()  = default;
+
+	~CubicSpline() = default;
+
+	void setConstant(const scalar_t& p0) {
+
+		t0_ = 0.0;
+		t1_ = 1.0;
+		dt_ = 1.0;
+
+		c0_ = p0;
+		c1_ = c2_ = c3_ = 0.0;
+
+	}
 
 	void set(const scalar_t& t0,  const scalar_t& p0, const scalar_t& v0,
 			const scalar_t& t1, const scalar_t& p1, const scalar_t& v1) {
 
 		if (t1 < t0)
-			throw std::runtime_error("The final time should be greater than start time");
+			throw std::runtime_error("The final time should not be less than the start time ("
+					+ std::to_string(t0) + "<=" + std::to_string(t1) + ").");
 
 		t0_ = t0;
 		t1_ = t1;

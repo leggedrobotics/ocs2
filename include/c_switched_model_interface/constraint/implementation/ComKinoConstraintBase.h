@@ -21,14 +21,16 @@ ComKinoConstraintBase<JOINT_COORD_SIZE>* ComKinoConstraintBase<JOINT_COORD_SIZE>
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t JOINT_COORD_SIZE>
-void ComKinoConstraintBase<JOINT_COORD_SIZE>::initializeModel(const logic_rules_machine_t& logicRulesMachine,
+void ComKinoConstraintBase<JOINT_COORD_SIZE>::initializeModel(logic_rules_machine_t& logicRulesMachine,
 		const size_t& partitionIndex, const char* algorithmName/*=NULL*/) {
 
 	Base::initializeModel(logicRulesMachine, partitionIndex, algorithmName);
 
-	findActiveSubsystemFnc_ = std::move( logicRulesMachine.getHandleToFindActiveSubsystemID(partitionIndex) );
+	findActiveSubsystemFnc_ = std::move( logicRulesMachine.getHandleToFindActiveEventCounter(partitionIndex) );
 
 	logicRulesPtr_ = logicRulesMachine.getLogicRulesPtr();
+
+	numSubsystems_ = logicRulesMachine.getNumEventCounters(partitionIndex);
 
 	endEffectorStateConstraintsPtr_ = logicRulesPtr_->getEndEffectorStateConstraintsPtr();
 
@@ -36,7 +38,6 @@ void ComKinoConstraintBase<JOINT_COORD_SIZE>::initializeModel(const logic_rules_
 		algorithmName_.assign(algorithmName);
 	else
 		algorithmName_.clear();
-
 }
 
 /******************************************************************************************************/
@@ -50,7 +51,10 @@ void ComKinoConstraintBase<JOINT_COORD_SIZE>::setCurrentStateAndControl(
 
 	size_t index = findActiveSubsystemFnc_(t);
 	logicRulesPtr_->getMotionPhaseLogics(index, stanceLegs_, zDirectionRefsPtr_);
-	logicRulesPtr_->getContactFlags(index+1, nextPhaseStanceLegs_);
+	if (index+1 < numSubsystems_)
+		logicRulesPtr_->getContactFlags(index+1, nextPhaseStanceLegs_);
+	else
+		nextPhaseStanceLegs_.fill(true);
 
 	// HyQ's joints
 	qJoints_  = x.template tail<12>();
@@ -106,6 +110,7 @@ void ComKinoConstraintBase<JOINT_COORD_SIZE>::setCurrentStateAndControl(
 
 		// feet Jacobain's in the Base frame
 		kinematicModelPtr_->footJacobainBaseFrame(i, b_feetJacobains_[i]);
+
 	}  // end of i loop
 
 
@@ -152,8 +157,8 @@ void ComKinoConstraintBase<JOINT_COORD_SIZE>::setCurrentStateAndControl(
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t JOINT_COORD_SIZE>
-void ComKinoConstraintBase<JOINT_COORD_SIZE>::computeConstriant1(
-		size_t& numConstraint1, constraint1_vector_t& g1) {
+void ComKinoConstraintBase<JOINT_COORD_SIZE>::getConstraint1(
+		constraint1_vector_t& g1) {
 
 	size_t nextFreeIndex = 0;
 	for (size_t i=0; i<4; i++) {
@@ -176,49 +181,85 @@ void ComKinoConstraintBase<JOINT_COORD_SIZE>::computeConstriant1(
 
 	// add the swing legs z direction constraints, if its CPG is provided
 	for (size_t i=0; i<4; i++) {
-		if (stanceLegs_[i]==false && zDirectionRefsPtr_->at(i)!=nullptr) {
+		if (stanceLegs_[i]==false && zDirectionRefsPtr_[i]!=nullptr) {
 
 			// stance foot velocity in the Origin frame
 			Eigen::Vector3d o_footVelocity = o_R_b_ * ( b_feetJacobains_[i].template bottomRows<3>()*dqJoints_ + baseLocalVelocities_.template tail<3>()
 					+ baseLocalVelocities_.template head<3>().cross(com_base2StanceFeet_[i]) );
 
 			g1(nextFreeIndex) = options_.zDirectionVelocityWeight_ *
-					(o_footVelocity(2) - zDirectionRefsPtr_->at(i)->calculateVelocity(Base::t_));
+					(o_footVelocity(2) - zDirectionRefsPtr_[i]->calculateVelocity(Base::t_));
 			nextFreeIndex++;
 		}
 	}  // end of i loop
-
-	numConstraint1 = nextFreeIndex;
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t JOINT_COORD_SIZE>
-void ComKinoConstraintBase<JOINT_COORD_SIZE>::computeConstriant2(
-		size_t& numConstraint2, constraint2_vector_t& g2) {
+size_t ComKinoConstraintBase<JOINT_COORD_SIZE>::numStateInputConstraint(
+		const scalar_t& time) {
 
-	numConstraint2 = 0;
+	size_t numConstraint1 = 12;
+
+	// add the swing legs z direction constraints, if its CPG is provided
+	for (size_t i=0; i<4; i++) {
+		if (stanceLegs_[i]==false && zDirectionRefsPtr_[i]!=nullptr) {
+			numConstraint1++;
+		}
+	}  // end of i loop
+
+	return numConstraint1;
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+template <size_t JOINT_COORD_SIZE>
+void ComKinoConstraintBase<JOINT_COORD_SIZE>::getConstraint2(
+		constraint2_vector_t& g2) {
+
+	size_t numConstraint2 = 0;
 	if (options_.zDirectionPositionWeight_<std::numeric_limits<double>::epsilon())  return;
 
 	for (size_t i=0; i<4; i++)
-		if (stanceLegs_[i]==false && zDirectionRefsPtr_->at(i)!=NULL) {
+		if (stanceLegs_[i]==false && zDirectionRefsPtr_[i]!=nullptr) {
 
 			g2(numConstraint2) = options_.zDirectionPositionWeight_ *
-					( o_origin2StanceFeet_[i](2)-zDirectionRefsPtr_->at(i)->calculatePosition(Base::t_) );
+					( o_origin2StanceFeet_[i](2)-zDirectionRefsPtr_[i]->calculatePosition(Base::t_) );
 			numConstraint2++;
 		}  // end of if loop
 }
 
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+template <size_t JOINT_COORD_SIZE>
+size_t ComKinoConstraintBase<JOINT_COORD_SIZE>::numStateOnlyConstraint(
+		const scalar_t& time) {
+
+	size_t numConstraint2 = 0;
+	if (options_.zDirectionPositionWeight_<std::numeric_limits<double>::epsilon())
+		return numConstraint2;
+
+	for (size_t i=0; i<4; i++)
+		if (stanceLegs_[i]==false && zDirectionRefsPtr_[i]!=nullptr) {
+			numConstraint2++;
+		}  // end of if loop
+
+	return numConstraint2;
+}
+
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t JOINT_COORD_SIZE>
-void ComKinoConstraintBase<JOINT_COORD_SIZE>::computeFinalConstriant2(
-		size_t& numFinalConstraint2, constraint2_vector_t& g2Final) {
+void ComKinoConstraintBase<JOINT_COORD_SIZE>::getFinalConstraint2(
+		constraint2_vector_t& g2Final) {
 
-	numFinalConstraint2 = 0;
+	size_t numFinalConstraint2 = 0;
 
 	for (size_t i=0; i<4; i++)
 		if (feetConstraintIsActive_[i]==true)  {
@@ -226,7 +267,23 @@ void ComKinoConstraintBase<JOINT_COORD_SIZE>::computeFinalConstriant2(
 			g2Final(numFinalConstraint2) = feetConstraintValues_[i];
 			numFinalConstraint2++;
 		}
+}
 
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+template <size_t JOINT_COORD_SIZE>
+size_t ComKinoConstraintBase<JOINT_COORD_SIZE>::numStateOnlyFinalConstraint(
+		const scalar_t& time) {
+
+	size_t numFinalConstraint2 = 0;
+
+	for (size_t i=0; i<4; i++)
+		if (feetConstraintIsActive_[i]==true)  {
+			numFinalConstraint2++;
+		}
+
+	return numFinalConstraint2;
 }
 
 /******************************************************************************************************/
@@ -278,7 +335,7 @@ void ComKinoConstraintBase<JOINT_COORD_SIZE>::getConstraint1DerivativesState(con
 
 	// for the swing legs z direction constraints, if its CPG is provided
 	for (size_t i=0; i<4; i++)
-		if (stanceLegs_[i]==false && zDirectionRefsPtr_->at(i)!=NULL) {
+		if (stanceLegs_[i]==false && zDirectionRefsPtr_[i]!=nullptr) {
 			Eigen::Matrix<double,3,24> partial_x;
 
 			// Ci0
@@ -345,7 +402,7 @@ void ComKinoConstraintBase<JOINT_COORD_SIZE>::getConstraint1DerivativesControl(c
 
 	// for the swing legs z direction constraints, if its CPG is provided
 	for (size_t i=0; i<4; i++)
-		if (stanceLegs_[i]==false && zDirectionRefsPtr_->at(i)!=NULL) {
+		if (stanceLegs_[i]==false && zDirectionRefsPtr_[i]!=nullptr) {
 			Eigen::Matrix<double,3,12> partial_dq = o_R_b_ * ( b_feetJacobains_[i].template bottomRows<3>() - b_comJacobain_.template bottomRows<3>() +
 					CrossProductMatrix(com_com2StanceFeet_[i])*b_comJacobain_.template topRows<3>() );
 			D.template block<1,12>(nextFreeIndex,0).setZero();
@@ -364,7 +421,7 @@ void ComKinoConstraintBase<JOINT_COORD_SIZE>::getConstraint2DerivativesState(con
 	if (options_.zDirectionPositionWeight_<std::numeric_limits<double>::epsilon())  return;
 
 	for (size_t i=0; i<4; i++)
-		if (stanceLegs_[i]==false && zDirectionRefsPtr_->at(i)!=NULL) {
+		if (stanceLegs_[i]==false && zDirectionRefsPtr_[i]!=nullptr) {
 			// foot jacobian in the Origin frame
 			Eigen::Matrix<double, 3, 18> o_footJacobian;
 			o_footJacobian.block<3,3>(0,0)  = -CrossProductMatrix(o_R_b_*com_com2StanceFeet_[i]);

@@ -19,22 +19,31 @@
 
 namespace switched_model {
 
-template <size_t JOINT_COORD_SIZE>
+template <size_t JOINT_COORD_SIZE, typename scalar_t = double>
 class WeightCompensationForces
 {
 public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
+	typedef std::shared_ptr<WeightCompensationForces<JOINT_COORD_SIZE>> Ptr;
+
 	typedef ComModelBase<JOINT_COORD_SIZE> com_model_t;
 	typedef KinematicsModelBase<JOINT_COORD_SIZE> kinematic_model_t;
 
-	typedef std::array<Eigen::Vector3d,4>  vector_3d_array;
+	typedef Eigen::Matrix<scalar_t,3,1>	vector_3d_t;
+	typedef Eigen::Matrix<scalar_t,4,1>	vector_4d_t;
+	typedef Eigen::Matrix<scalar_t,3,3>	matrix_3d_t;
+	typedef std::array<vector_3d_t,4>  	vector_3d_array_t;
+	typedef Eigen::Matrix<scalar_t, Eigen::Dynamic, 1> 				vector_xd_t;
+	typedef Eigen::Matrix<scalar_t, Eigen::Dynamic, Eigen::Dynamic> matrix_xd_t;
+
+	typedef typename SwitchedModel<JOINT_COORD_SIZE>::contact_flag_t 	 contact_flag_t;
 	typedef typename SwitchedModel<JOINT_COORD_SIZE>::base_coordinate_t  base_coordinate_t;
 	typedef typename SwitchedModel<JOINT_COORD_SIZE>::joint_coordinate_t joint_coordinate_t;
 
-	WeightCompensationForces(const kinematic_model_t* kinematicModelPtr, const com_model_t* comModelPtr)
-	: kinematicModelPtr_(kinematicModelPtr->clone()),
-	  comModelPtr_(comModelPtr->clone())
+	WeightCompensationForces(const kinematic_model_t& kinematicModel, const com_model_t& comModel)
+	: kinematicModelPtr_(kinematicModel.clone()),
+	  comModelPtr_(comModel.clone())
 	{}
 
 	WeightCompensationForces(const WeightCompensationForces& rhs)
@@ -45,21 +54,26 @@ public:
 	~WeightCompensationForces() {}
 
 
-	void ComputeSphericalForces(const Eigen::Vector3d& w_gravityVectorconst,
-			const std::array<bool,4>& stanceLegs, const joint_coordinate_t& qJoints,
-			vector_3d_array& sphericalForces)  {
+	/******************************************************************************************************/
+	/******************************************************************************************************/
+	/******************************************************************************************************/
+	void computeSphericalForces(
+			const vector_3d_t& w_gravityVectorconst,
+			const contact_flag_t& stanceLegs,
+			const joint_coordinate_t& qJoints,
+			vector_3d_array_t& sphericalForces)  {
 
-		const double totalMass = comModelPtr_->totalMass();
+		const scalar_t totalMass = comModelPtr_->totalMass();
 
 		// CoM Position in Base frame
-		Eigen::Vector3d b_comPosition = comModelPtr_->comPositionBaseFrame(qJoints);
+		vector_3d_t b_comPosition = comModelPtr_->comPositionBaseFrame(qJoints);
 
-		Eigen::Matrix<double,3,4> transform;
+		Eigen::Matrix<scalar_t,3,4> transform;
 		kinematicModelPtr_->update(base_coordinate_t::Zero(), qJoints);
 		for (size_t i=0; i<4; i++)
 			if (stanceLegs[i] == true) {
 				// foot position in the Base frame
-				Eigen::Vector3d b_feetPosition;
+				vector_3d_t b_feetPosition;
 				kinematicModelPtr_->footPositionBaseFrame(i, b_feetPosition);
 				transform.col(i) = SphericalCoordinate::FromSphericalToCartesian(b_feetPosition-b_comPosition).col(0);
 			} else
@@ -69,14 +83,14 @@ public:
 		size_t numStanceLeg = stanceLegs[0] + stanceLegs[1] + stanceLegs[2] + stanceLegs[3];
 		size_t independentContacts = (numStanceLeg<4)? numStanceLeg : 3;
 
-		Eigen::JacobiSVD<Eigen::Matrix<double,3,4>> transformSVD(transform, Eigen::ComputeFullU | Eigen::ComputeFullV);
+		Eigen::JacobiSVD<Eigen::Matrix<scalar_t,3,4>> transformSVD(transform, Eigen::ComputeFullU | Eigen::ComputeFullV);
 
-		Eigen::Matrix<double,4,3> inveseSigma = Eigen::MatrixXd::Zero(4,3);
+		Eigen::Matrix<scalar_t,4,3> inveseSigma = Eigen::Matrix<scalar_t,4,3>::Zero();
 		for (size_t i=0; i<independentContacts; i++)
 			inveseSigma(i,i) = 1.0/transformSVD.singularValues()(i);
 
-		Eigen::Matrix<double,4,3> inverseTransform = transformSVD.matrixV().transpose().inverse() * inveseSigma * transformSVD.matrixU().inverse();
-		Eigen::Vector4d radialForces = -inverseTransform*(w_gravityVectorconst*totalMass);
+		Eigen::Matrix<scalar_t,4,3> inverseTransform = transformSVD.matrixV().transpose().inverse() * inveseSigma * transformSVD.matrixU().inverse();
+		vector_4d_t radialForces = -inverseTransform*(w_gravityVectorconst*totalMass);
 
 		// 4 legs' contact forces in the Spherical coordinate for weight compensation
 		for (size_t i=0; i<4; i++)
@@ -84,19 +98,24 @@ public:
 	}
 
 
-	void ComputeCartesianForces(const Eigen::Vector3d& w_gravityVectorconst,
-			const std::array<bool,4>& stanceLegs, const joint_coordinate_t& qJoints,
-			vector_3d_array& cartesianForces)  {
+	/******************************************************************************************************/
+	/******************************************************************************************************/
+	/******************************************************************************************************/
+	void computeCartesianForces(
+			const vector_3d_t& w_gravityVectorconst,
+			const contact_flag_t& stanceLegs,
+			const joint_coordinate_t& qJoints,
+			vector_3d_array_t& cartesianForces)  {
 
-//		vector_3d_array sphericalForces;
-//		ComputeSphericalForces(w_gravityVectorconst, stanceLegs, qJoints, sphericalForces);
+//		vector_3d_array_t sphericalForces;
+//		computeSphericalForces(w_gravityVectorconst, stanceLegs, qJoints, sphericalForces);
 //
 //		// CoM Position in Base frame
-//		Eigen::Vector3d b_comPosition;
+//		vector_3d_t b_comPosition;
 //		ComModel::ComPositionBaseFrame(qJoints, b_comPosition);
 //
-//		Eigen::Matrix3d transform;
-//		Eigen::Vector3d b_feetPosition;
+//		matrix_3d_t transform;
+//		vector_3d_t b_feetPosition;
 //		for (size_t i=0; i<4; i++)
 //			if (stanceLegs[i] == true) {
 //				// foot position in the Base frame
@@ -106,70 +125,75 @@ public:
 //			} else
 //				cartesianForces[i].setZero();
 
-		const double totalMass = comModelPtr_->totalMass();
+		const scalar_t totalMass = comModelPtr_->totalMass();
 
 		// number of stance legs
 		size_t numStanceLeg = stanceLegs[0] + stanceLegs[1] + stanceLegs[2] + stanceLegs[3];
 
 		// CoM Position in Base frame
-		Eigen::Vector3d b_comPosition = comModelPtr_->comPositionBaseFrame(qJoints);
+		vector_3d_t b_comPosition = comModelPtr_->comPositionBaseFrame(qJoints);
 
 		// F = A * lambda
-		Eigen::MatrixXd A(6, 3*numStanceLeg);
+		matrix_xd_t A(6, 3*numStanceLeg);
 		size_t itr = 0;
 		kinematicModelPtr_->update(base_coordinate_t::Zero(), qJoints);
 		for (size_t i=0; i<4; i++)
 			if (stanceLegs[i] == true) {
 				// foot position in the Base frame
-				Eigen::Vector3d b_footPosition;
+				vector_3d_t b_footPosition;
 				kinematicModelPtr_->footPositionBaseFrame(i, b_footPosition);
 
-				Eigen::Vector3d com_footPosition = b_footPosition - b_comPosition;
+				vector_3d_t com_footPosition = b_footPosition - b_comPosition;
 
-				A.block<6,3>(0, 3*itr) << switched_model::CrossProductMatrix(com_footPosition),
-						Eigen::Matrix3d::Identity();
+				A.template block<6,3>(0, 3*itr) << switched_model::CrossProductMatrix(com_footPosition),
+						matrix_3d_t::Identity();
 
 				itr++;
 			}
 
 		 // F
 		base_coordinate_t F;
-		F << Eigen::Vector3d::Zero(), -w_gravityVectorconst*totalMass;
+		F << vector_3d_t::Zero(), -w_gravityVectorconst*totalMass;
 
 		// lambda
 		// F = A * lambda
-		Eigen::VectorXd lambda;
+		vector_xd_t lambda;
 		bool feasibility;
-		Eigen::MatrixXd JcStacked = A.transpose();
+		matrix_xd_t JcStacked = A.transpose();
 		SolveQPforForces(F, JcStacked, 3*numStanceLeg, numStanceLeg,
 				lambda, feasibility);
 
 		itr = 0;
 		for (size_t i=0; i<4; i++)
 			if (stanceLegs[i] == true) {
-				cartesianForces[i] = lambda.segment<3>(3*itr);
+				cartesianForces[i] = lambda.template segment<3>(3*itr);
 				itr++;
 			} else
 				cartesianForces[i].setZero();
 	}
 
 
-	void ComputeZMPForces(const Eigen::Vector3d& w_gravityVectorconst,
-			const std::array<bool,4>& stanceLegs, const joint_coordinate_t& qJoints,
-			vector_3d_array& sphericalForces)  {
+	/******************************************************************************************************/
+	/******************************************************************************************************/
+	/******************************************************************************************************/
+	void computeZMPForces(
+			const vector_3d_t& w_gravityVectorconst,
+			const contact_flag_t& stanceLegs,
+			const joint_coordinate_t& qJoints,
+			vector_3d_array_t& sphericalForces)  {
 
-		const double totalMass = comModelPtr_->totalMass();
+		const scalar_t totalMass = comModelPtr_->totalMass();
 
 		// CoM Position in Base frame
-		Eigen::Vector3d b_comPosition = comModelPtr_->comPositionBaseFrame(qJoints);
+		vector_3d_t b_comPosition = comModelPtr_->comPositionBaseFrame(qJoints);
 		// feet position
-		vector_3d_array com_feetPositions;
-		Eigen::Vector3d com_feetCenterPosition = Eigen::Vector3d::Zero();
+		vector_3d_array_t com_feetPositions;
+		vector_3d_t com_feetCenterPosition = vector_3d_t::Zero();
 		kinematicModelPtr_->update(qJoints);
 		for (size_t i=0; i<4; i++)
 			if (stanceLegs[i] == true) {
 				// foot position in the Base frame
-				Eigen::Vector3d b_footPosition;
+				vector_3d_t b_footPosition;
 				kinematicModelPtr_->footPositionBaseFrame(i, b_footPosition);
 				com_feetPositions[i] = b_footPosition - b_comPosition;
 				com_feetCenterPosition += com_feetPositions[i];
@@ -178,25 +202,25 @@ public:
 
 		com_feetCenterPosition /= 3.0;
 
-		Eigen::Matrix3d A;
-		A.row(0) << Eigen::RowVector3d(1.0, 1.0, 1.0);
+		matrix_3d_t A;
+		A.row(0) << Eigen::Matrix<scalar_t,1,3>(1.0, 1.0, 1.0);
 		size_t itr = 0;
 		for (size_t i=0; i<4; i++)
 			if (stanceLegs[i] == true) {
-				A.block<2,1>(1,itr) = com_feetPositions[i].head<2>();
+				A.template block<2,1>(1,itr) = com_feetPositions[i].template head<2>();
 				itr++;
 			}
 
-		Eigen::Vector3d B;
-		B << 1.0, com_feetCenterPosition.head<2>();
+		vector_3d_t B;
+		B << 1.0, com_feetCenterPosition.template head<2>();
 		B *= (-w_gravityVectorconst(2)*totalMass);
 
-		Eigen::Vector3d Fz = A.inverse()*B;
+		vector_3d_t Fz = A.inverse()*B;
 
 		itr = 0;
 		for (size_t i=0; i<4; i++)
 			if (stanceLegs[i] == true) {
-				sphericalForces[i] = SphericalCoordinate::FromCartesianToSpherical(com_feetPositions[i]) * Eigen::Vector3d(0.0, 0.0, Fz(itr));
+				sphericalForces[i] = SphericalCoordinate::FromCartesianToSpherical(com_feetPositions[i]) * vector_3d_t(0.0, 0.0, Fz(itr));
 				itr++;
 			} else
 				sphericalForces[i].setZero();
@@ -218,28 +242,29 @@ public:
 	 * @param[out] contactForces: optimized contact Forces
 	 * @param[out] feasibility: feasibility status of the QP
 	 */
-	static void SolveQPforForces(const base_coordinate_t& F,
-			const Eigen::MatrixXd& JcStacked,
+	static void SolveQPforForces(
+			const base_coordinate_t& F,
+			const matrix_xd_t& JcStacked,
 			const size_t numForces,
 			const size_t numLegs,
-			Eigen::VectorXd& contactForces,
-			bool& feasibility){
+			vector_xd_t& contactForces,
+			bool& feasibility)  {
 
 		// vector for contact Forces and roation matrix
-		Eigen::VectorXd lambda(numForces);
+		vector_xd_t lambda(numForces);
 
 		//initialize matrices for quadprog
-		Eigen::MatrixXd G(numForces,numForces), CI(numForces, numLegs),CE, Gcopy(numForces,numForces);
-		Eigen::VectorXd g0(numForces), ci0(1), ce0;
+		matrix_xd_t G(numForces,numForces), CI(numForces, numLegs),CE, Gcopy(numForces,numForces);
+		vector_xd_t g0(numForces), ci0(1), ce0;
 
 		// for cost function
 		G = JcStacked * JcStacked.transpose() * 2;
-		Gcopy = G + Eigen::MatrixXd::Identity(numForces, numForces) * 5e-4;	//convexify since quadprog assumes strong convexity
+		Gcopy = G + matrix_xd_t::Identity(numForces, numForces) * 5e-4;	//convexify since quadprog assumes strong convexity
 		g0 = -2 * JcStacked *F;
 
 		// matrices and vectors for inequality constraints
-		CI = Eigen::MatrixXd::Zero(numForces, numLegs);
-		ci0 = Eigen::VectorXd::Zero(numLegs);
+		CI = matrix_xd_t::Zero(numForces, numLegs);
+		ci0 = vector_xd_t::Zero(numLegs);
 
 		//set the constraints up
 		for(size_t i=0; i<numLegs; i++)
@@ -247,12 +272,12 @@ public:
 
 
 		// invoke quadprog
-		double cost = solve_quadprog(Gcopy, g0,  CE, ce0,  CI, ci0, lambda);
+		scalar_t cost = solve_quadprog(Gcopy, g0,  CE, ce0,  CI, ci0, lambda);
 
 		contactForces = lambda;
 
 		// if the quadprog is infeasible do the batch optimization
-		if (cost == std::numeric_limits<double>::infinity())
+		if (cost == std::numeric_limits<scalar_t>::infinity())
 			feasibility = false;
 		else
 			feasibility = true;

@@ -11,14 +11,16 @@ namespace switched_model {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t JOINT_COORD_SIZE>
-void CopEstimator<JOINT_COORD_SIZE>::copErrorEstimator(const std::array<bool,4>& stanceLegs,
-		const joint_coordinate_t& qJoints, const joint_coordinate_t& lambda,
-		Eigen::Vector2d& copError, // copError = xyMomentum_total - cop_des * lambda_total
-		Eigen::Matrix<double,2,JOINT_COORD_SIZE>& devJoints_copError,
-		Eigen::Matrix<double,2,JOINT_COORD_SIZE>& devLambda_copError) {
+template <size_t JOINT_COORD_SIZE, typename scalar_t>
+void CopEstimator<JOINT_COORD_SIZE, scalar_t>::copErrorEstimator(
+		const contact_flag_t& stanceLegs,
+		const joint_coordinate_t& qJoints,
+		const joint_coordinate_t& lambda,
+		Eigen::Matrix<scalar_t,2,1>& copError, // copError = xyMomentum_total - cop_des * lambda_total
+		Eigen::Matrix<scalar_t,2,JOINT_COORD_SIZE>& devJoints_copError,
+		Eigen::Matrix<scalar_t,2,JOINT_COORD_SIZE>& devLambda_copError) {
 
-	double numStanceLegs = 0.0;
+	scalar_t numStanceLegs = 0.0;
 	b_totalPressureMoment_.setZero();
 	devJoints_b_totalPressureMoment_.setZero();
 	totalPressure_ = 0.0;
@@ -30,7 +32,7 @@ void CopEstimator<JOINT_COORD_SIZE>::copErrorEstimator(const std::array<bool,4>&
 	for (size_t j=0; j<4; j++)
 		if (stanceLegs[j]==true) {
 
-			Eigen::Vector3d b_base2StanceFoot;
+			Eigen::Matrix<scalar_t,3,1> b_base2StanceFoot;
 			kinematicModelPtr_->footPositionBaseFrame(j, b_base2StanceFoot);
 			base_jacobian_matrix_t b_jacobianFoot;
 			kinematicModelPtr_->footJacobainBaseFrame(j, b_jacobianFoot);
@@ -80,13 +82,15 @@ void CopEstimator<JOINT_COORD_SIZE>::copErrorEstimator(const std::array<bool,4>&
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t JOINT_COORD_SIZE>
-Eigen::Vector2d CopEstimator<JOINT_COORD_SIZE>::copErrorEstimator(const std::array<bool,4>& stanceLegs,
-		const joint_coordinate_t& qJoints, const joint_coordinate_t& lambda) {
+template <size_t JOINT_COORD_SIZE, typename scalar_t>
+Eigen::Matrix<scalar_t,2,1> CopEstimator<JOINT_COORD_SIZE, scalar_t>::copErrorEstimator(
+		const contact_flag_t& stanceLegs,
+		const joint_coordinate_t& qJoints,
+		const joint_coordinate_t& lambda) {
 
-	Eigen::Vector2d copError;
-	Eigen::Matrix<double,2,12> devJoints_copError;
-	Eigen::Matrix<double,2,12> devLambda_copError;
+	Eigen::Matrix<scalar_t,2,1>  copError;
+	Eigen::Matrix<scalar_t,2,12> devLambda_copError;
+	Eigen::Matrix<scalar_t,2,JOINT_COORD_SIZE> devJoints_copError;
 
 	copErrorEstimator(stanceLegs, qJoints, lambda, copError, devJoints_copError, devLambda_copError);
 

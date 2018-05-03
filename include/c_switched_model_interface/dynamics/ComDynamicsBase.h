@@ -45,12 +45,12 @@ public:
 	typedef typename SwitchedModel<JOINT_COORD_SIZE>::joint_coordinate_t joint_coordinate_t;
 
 
-	ComDynamicsBase(const kinematic_model_t* kinematicModelPtr, const com_model_t* comModelPtr,
+	ComDynamicsBase(const kinematic_model_t& kinematicModel, const com_model_t& comModel,
 			const double& gravitationalAcceleration=9.81, const bool& constrainedIntegration=true)
 
 	: Base(),
-	  kinematicModelPtr_(kinematicModelPtr->clone()),
-	  comModelPtr_(comModelPtr->clone()),
+	  kinematicModelPtr_(kinematicModel.clone()),
+	  comModelPtr_(comModel.clone()),
 	  o_gravityVector_(0.0, 0.0, -gravitationalAcceleration),
 	  constrainedIntegration_(constrainedIntegration)
 	{
@@ -85,7 +85,7 @@ public:
 	 * @param [in] partitionIndex: index of the time partition.
 	 * @param [in] algorithmName: The algorithm that class this class (default not defined).
 	 */
-	virtual void initializeModel(const logic_rules_machine_t& logicRulesMachine,
+	virtual void initializeModel(logic_rules_machine_t& logicRulesMachine,
 			const size_t& partitionIndex, const char* algorithmName=NULL) override;
 
 	/**
@@ -138,6 +138,11 @@ public:
 	 * user interface for retrieving feet's positions. Note this value is updated after each call of computeDerivative() method.
 	 */
 	void getFeetPositions(std::array<Eigen::Vector3d,4>& b_base2StanceFeet) const;
+
+	/**
+	 * user interface for retrieving base pose in origin frame. Note this value is updated after each call of computeDerivative() method.
+	 */
+	void getBasePose(base_coordinate_t& o_basePose) const;
 
 	/**
 	 * user interface for CoM dynamics elements: The inertial matrix. Note this value is updated after each call of computeDerivative() method.

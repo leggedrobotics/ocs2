@@ -20,7 +20,7 @@
 
 namespace switched_model {
 
-template< size_t JOINT_COORD_SIZE >
+template <size_t JOINT_COORD_SIZE, typename scalar_t=double>
 class CopEstimator
 {
 public:
@@ -31,15 +31,20 @@ public:
 	typedef ComModelBase<JOINT_COORD_SIZE> com_model_t;
 	typedef KinematicsModelBase<JOINT_COORD_SIZE> kinematic_model_t;
 
+	typedef typename SwitchedModel<JOINT_COORD_SIZE>::contact_flag_t  	 contact_flag_t;
 	typedef typename SwitchedModel<JOINT_COORD_SIZE>::base_coordinate_t  base_coordinate_t;
 	typedef typename SwitchedModel<JOINT_COORD_SIZE>::joint_coordinate_t joint_coordinate_t;
-	typedef Eigen::Matrix<double,6,JOINT_COORD_SIZE> base_jacobian_matrix_t;
+	typedef Eigen::Matrix<scalar_t,6,JOINT_COORD_SIZE> base_jacobian_matrix_t;
 
-	CopEstimator(kinematic_model_t* kinematicModelPtr, com_model_t* comModelPtr)
-	: kinematicModelPtr_(kinematicModelPtr),
-	  comModelPtr_(comModelPtr),
-	  totalWeight_(comModelPtr->totalMass()*9.81)
-	{}
+	CopEstimator(const kinematic_model_t& kinematicModel, const com_model_t& comModel,
+			const scalar_t& gravitationalAcceleration=9.81)
+	: kinematicModelPtr_(kinematicModel.clone()),
+	  comModelPtr_(comModel.clone()),
+	  totalWeight_(comModel.totalMass()*gravitationalAcceleration)
+	{
+		if (gravitationalAcceleration<0)
+			throw std::runtime_error("Gravitational acceleration should be a positive value.");
+	}
 
 	/**
 	 * copy constructor
@@ -61,10 +66,13 @@ public:
 	 * @param devJoints_copError [out] derivative of CoP w.r.t. joint angles
 	 * @param devLambda_copError [out] derivative of CoP w.r.t. contact forces
 	 */
-	void copErrorEstimator(const std::array<bool,4>& stanceLegs, const joint_coordinate_t& qJoints, const joint_coordinate_t& lambda,
-			Eigen::Vector2d& copError,
-			Eigen::Matrix<double,2,JOINT_COORD_SIZE>& devJoints_copError,
-			Eigen::Matrix<double,2,JOINT_COORD_SIZE>& devLambda_copError);
+	void copErrorEstimator(
+			const contact_flag_t& stanceLegs,
+			const joint_coordinate_t& qJoints,
+			const joint_coordinate_t& lambda,
+			Eigen::Matrix<scalar_t,2,1>& copError,
+			Eigen::Matrix<scalar_t,2,JOINT_COORD_SIZE>& devJoints_copError,
+			Eigen::Matrix<scalar_t,2,JOINT_COORD_SIZE>& devLambda_copError);
 
 	/**
 	 * Estimates the CoP displacement (copError) from the center of the support polygon. the output value is
@@ -75,22 +83,25 @@ public:
 	 * @param lambda [in] contact forces
 	 * @return CoP displacement from the center of the support polygon
 	 */
-	Eigen::Vector2d copErrorEstimator(const std::array<bool,4>& stanceLegs, const joint_coordinate_t& qJoints, const joint_coordinate_t& lambda);
+	Eigen::Matrix<scalar_t,2,1> copErrorEstimator(
+			const contact_flag_t& stanceLegs,
+			const joint_coordinate_t& qJoints,
+			const joint_coordinate_t& lambda);
 
 
 private:
 	typename kinematic_model_t::Ptr kinematicModelPtr_;
 	typename com_model_t::Ptr comModelPtr_;
 
-	double totalWeight_;
+	scalar_t totalWeight_;
 
-	std::array<Eigen::Vector2d,4> b_feetPosition_;
+	std::array<Eigen::Matrix<scalar_t,2,1>,4> b_feetPosition_;
 
-	double totalPressure_;
-	Eigen::Vector2d b_totalPressureMoment_;
-	Eigen::Vector2d b_base2CopDesired_;
-	Eigen::Matrix<double,2,JOINT_COORD_SIZE> devJoints_b_totalPressureMoment_;
-	Eigen::Matrix<double,2,JOINT_COORD_SIZE> devJoints_b_base2CopDesired_;
+	scalar_t totalPressure_;
+	Eigen::Matrix<scalar_t,2,1> b_totalPressureMoment_;
+	Eigen::Matrix<scalar_t,2,1> b_base2CopDesired_;
+	Eigen::Matrix<scalar_t,2,JOINT_COORD_SIZE> devJoints_b_totalPressureMoment_;
+	Eigen::Matrix<scalar_t,2,JOINT_COORD_SIZE> devJoints_b_base2CopDesired_;
 };
 
 }  // end of switched_model namespace

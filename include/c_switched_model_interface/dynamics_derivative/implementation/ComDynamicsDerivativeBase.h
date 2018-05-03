@@ -21,7 +21,7 @@ ComDynamicsDerivativeBase<JOINT_COORD_SIZE>* ComDynamicsDerivativeBase<JOINT_COO
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t JOINT_COORD_SIZE>
-void ComDynamicsDerivativeBase<JOINT_COORD_SIZE>::initializeModel(const logic_rules_machine_t& logicRulesMachine,
+void ComDynamicsDerivativeBase<JOINT_COORD_SIZE>::initializeModel(logic_rules_machine_t& logicRulesMachine,
 		const size_t& partitionIndex, const char* algorithmName/*=NULL*/) {
 
 	Base::initializeModel(logicRulesMachine, partitionIndex, algorithmName);
@@ -123,7 +123,7 @@ void ComDynamicsDerivativeBase<JOINT_COORD_SIZE>::setCurrentStateAndControl(cons
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t JOINT_COORD_SIZE>
-void ComDynamicsDerivativeBase<JOINT_COORD_SIZE>::getDerivativeState(state_matrix_t& A)  {
+void ComDynamicsDerivativeBase<JOINT_COORD_SIZE>::getFlowMapDerivativeState(state_matrix_t& A)  {
 
 	// local angular velocity (w_W_com) and local linear velocity (w_V_com) of CoM
 	Eigen::VectorBlock<state_vector_t,3> com_W_com = x_.segment<3>(6);
@@ -170,7 +170,7 @@ void ComDynamicsDerivativeBase<JOINT_COORD_SIZE>::getDerivativeState(state_matri
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t JOINT_COORD_SIZE>
-void ComDynamicsDerivativeBase<JOINT_COORD_SIZE>::getDerivativesControl(control_gain_matrix_t& B)  {
+void ComDynamicsDerivativeBase<JOINT_COORD_SIZE>::getFlowMapDerivativeInput(control_gain_matrix_t& B)  {
 
 
 	// B matrix

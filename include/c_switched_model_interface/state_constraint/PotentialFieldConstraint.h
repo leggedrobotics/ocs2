@@ -80,7 +80,7 @@ public:
 	}
 
 	virtual PotentialFieldConstraint* clone() const override {
-		return PotentialFieldConstraint(*this);
+		return new PotentialFieldConstraint(*this);
 	}
 
 private:

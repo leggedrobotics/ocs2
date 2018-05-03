@@ -37,7 +37,9 @@ enum ModeNumber { // {LF, RF, LH, RH}
 	STANCE   	= 15,
 };
 
-
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
 inline std::array<bool,4> modeNumber2StanceLeg(const size_t& modeNumber)  {
 
 	std::array<bool,4> stanceLegs;  // {LF, RF, LH, RH}
@@ -64,7 +66,17 @@ inline std::array<bool,4> modeNumber2StanceLeg(const size_t& modeNumber)  {
 	return stanceLegs;
 }
 
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+inline size_t stanceLeg2ModeNumber(const std::array<bool,4>& stanceLegs)  {
 
+	return stanceLegs[3] + 2*stanceLegs[2] + 4*stanceLegs[1] + 8*stanceLegs[0];
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
 inline std::string modeNumber2String(const size_t& modeNumber)  {
 
 	// build the map from mode number to name
@@ -89,7 +101,9 @@ inline std::string modeNumber2String(const size_t& modeNumber)  {
 	return modeToName[modeNumber];
 }
 
-
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
 inline size_t string2ModeNumber(const std::string& modeString)  {
 
 	// build the map from name to mode number
@@ -114,23 +128,59 @@ inline size_t string2ModeNumber(const std::string& modeString)  {
 	return nameToMode[modeString];
 }
 
-inline void loadSwitchingModes(const std::string& filename, std::vector<size_t>& switchingModes, bool verbose = true)
-{
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+template <typename T>
+void loadStdVector(
+		const std::string& filename,
+		const std::string& topicName,
+		std::vector<T>& loadVector,
+		bool verbose = true) {
+
 	boost::property_tree::ptree pt;
 	boost::property_tree::read_info(filename, pt);
 
 	// read the modes from taskFile
-	size_t numSubsystems = 0;
-	std::vector<std::string> switchingModesString;
+	size_t vectorSize = 0;
+	loadVector.clear();
 	while (true) {
 		try {
-			switchingModesString.push_back( pt.get<std::string>("switchingModes.[" + std::to_string(numSubsystems) + "]") );
-			numSubsystems++;
+			loadVector.push_back( pt.get<T>(topicName + ".[" + std::to_string(vectorSize) + "]") );
+			vectorSize++;
 		}
 		catch (const std::exception& e) {
 			break;
 		}
 	}  // end of while loop
+
+	// display
+	if (verbose==true) {
+		if (vectorSize==0) {
+			std::cerr << topicName << ": { }";
+		} else {
+			std::cerr << topicName << ": {";
+			for (size_t i=0; i<vectorSize; i++)
+				std::cerr << loadVector[i] << ", ";
+			std::cerr << "\b\b}" << std::endl;
+		}
+	}
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+inline void loadModes(
+		const std::string& filename,
+		const std::string& topicName,
+		std::vector<size_t>& switchingModes,
+		bool verbose = true) {
+
+	// read the modes from taskFile
+	std::vector<std::string> switchingModesString;
+	loadStdVector(filename, topicName, switchingModesString, false);
+
+	const size_t numSubsystems = switchingModesString.size();
 
 	// convert the mode name to mode enum
 	switchingModes.resize(numSubsystems);
@@ -139,17 +189,19 @@ inline void loadSwitchingModes(const std::string& filename, std::vector<size_t>&
 
 	// display
 	if (verbose==true) {
-		std::cerr << "Switching Modes: " << std::endl;
-		std::cerr <<"=====================================================================" << std::endl;
-		for (size_t i=0; i<numSubsystems; i++)
-			std::cerr << modeNumber2String(switchingModes[i]) << ", ";
-		std::cerr << std::endl << std::endl;
+		if (numSubsystems==0) {
+			std::cerr << topicName << ": { }";
+		} else {
+			std::cerr << topicName << ": {";
+			for (size_t i=0; i<numSubsystems; i++)
+				std::cerr << modeNumber2String(switchingModes[i]) << ", ";
+			std::cerr << "\b\b}" << std::endl;
+		}
 	}
 }
-
 
 } // end of namespace switched_model
 
 
-
 #endif /* MOTIONPHASEDEFINITION_H_ */
+

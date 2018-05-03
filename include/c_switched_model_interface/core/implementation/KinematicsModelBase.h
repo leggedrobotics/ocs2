@@ -5,6 +5,8 @@
  *      Author: Farbod
  */
 
+#include <iostream>
+
 namespace switched_model {
 
 /******************************************************************************************************/
@@ -112,7 +114,23 @@ void KinematicsModelBase<JOINT_COORD_SIZE>::FromBaseJacobianToInertiaJacobian(
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t JOINT_COORD_SIZE>
-Eigen::Matrix3d KinematicsModelBase<JOINT_COORD_SIZE>::rotationMatrixOrigintoBase() const  {
+void KinematicsModelBase<JOINT_COORD_SIZE>::FromBaseVelocityToInertiaVelocity(
+		const Eigen::Matrix3d& i_R_b,
+		const base_coordinate_t& baseLocalVelocities,
+		const Eigen::Vector3d& b_r_point,
+		const Eigen::Vector3d& b_v_point,
+		Eigen::Vector3d& i_v_point) {
+
+	// point velocities in the inertia frame
+	i_v_point = i_R_b * ( b_v_point + baseLocalVelocities.template tail<3>() +
+			baseLocalVelocities.template head<3>().cross(b_r_point) );
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+template <size_t JOINT_COORD_SIZE>
+const Eigen::Matrix3d& KinematicsModelBase<JOINT_COORD_SIZE>::rotationMatrixOrigintoBase() const  {
 
 	return b_R_o_;
 }

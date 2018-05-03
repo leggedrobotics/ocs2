@@ -17,8 +17,8 @@ Eigen::Matrix<double,6,JOINT_COORD_SIZE> ComModelBase<JOINT_COORD_SIZE>::comJaco
 	// CoM jacobian in the Base frame around CoM
 	Eigen::Matrix<double,6,6> I = comInertia(jointCoordinate);
 	Eigen::Matrix<double,6,6> I_inverse;
-//	Eigen::Matrix3d rotationMInverse = I.topLeftCorner<3,3>().inverse();
-	I_inverse << I.topLeftCorner<3,3>().inverse(), Eigen::Matrix3d::Zero(),
+	Eigen::Matrix3d rotationMInverse = I.topLeftCorner<3,3>().inverse();
+	I_inverse << rotationMInverse, 				   Eigen::Matrix3d::Zero(),
 			     Eigen::Matrix3d::Zero(),          (1/I(5,5))*Eigen::Matrix3d::Identity();
 
 	return I_inverse * comMomentumJacobian(jointCoordinate);
@@ -28,7 +28,8 @@ Eigen::Matrix<double,6,JOINT_COORD_SIZE> ComModelBase<JOINT_COORD_SIZE>::comJaco
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t JOINT_COORD_SIZE>
-void ComModelBase<JOINT_COORD_SIZE>::calculateBasePose(const joint_coordinate_t& qJoints,
+void ComModelBase<JOINT_COORD_SIZE>::calculateBasePose(
+		const joint_coordinate_t& qJoints,
 		const base_coordinate_t& comPose,
 		base_coordinate_t& basePose) {
 
@@ -48,7 +49,8 @@ void ComModelBase<JOINT_COORD_SIZE>::calculateBasePose(const joint_coordinate_t&
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t JOINT_COORD_SIZE>
-void ComModelBase<JOINT_COORD_SIZE>::calculateBaseLocalVelocities(const joint_coordinate_t& qJoints,
+void ComModelBase<JOINT_COORD_SIZE>::calculateBaseLocalVelocities(
+		const joint_coordinate_t& qJoints,
 		const joint_coordinate_t& dqJoints,
 		const base_coordinate_t& comLocalVelocities,
 		base_coordinate_t& baseLocalVelocities) {
@@ -57,7 +59,7 @@ void ComModelBase<JOINT_COORD_SIZE>::calculateBaseLocalVelocities(const joint_co
 	Eigen::Vector3d com_base2CoM = comPositionBaseFrame(qJoints);
 
 	// CoM Jacobin in the Base frame
-	Eigen::Matrix<double,6,12> b_comJacobain = comJacobainBaseFrame(qJoints);
+	Eigen::Matrix<double,6,JOINT_COORD_SIZE> b_comJacobain = comJacobainBaseFrame(qJoints);
 
 	// local velocities of Base (com_W_b)
 	baseLocalVelocities.template head<3>() = comLocalVelocities.template head<3>() - b_comJacobain.template topRows<3>()*dqJoints;

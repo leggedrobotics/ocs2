@@ -22,12 +22,12 @@
 #include "ComDynamicsDerivativeBase.h"
 #include "c_switched_model_interface/logic/SwitchedModelLogicRulesBase.h"
 #include "c_switched_model_interface/state_constraint/EndEffectorConstraintBase.h"
-#include <c_switched_model_interface/core/Options.h>
+#include <c_switched_model_interface/core/Model_Settings.h>
 
 namespace switched_model {
 
 template <size_t JOINT_COORD_SIZE>
-class ComKinoDynamicsDerivativeBase : public ocs2::DerivativesBase<12+JOINT_COORD_SIZE, 12+JOINT_COORD_SIZE, SwitchedModelLogicRulesBase<JOINT_COORD_SIZE>>
+class ComKinoDynamicsDerivativeBase : public ocs2::DerivativesBase<12+JOINT_COORD_SIZE, 12+JOINT_COORD_SIZE, SwitchedModelPlannerLogicRules<JOINT_COORD_SIZE>>
 {
 public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
@@ -38,7 +38,7 @@ public:
 		INPUT_DIM = 12+JOINT_COORD_SIZE
 	};
 
-	typedef SwitchedModelLogicRulesBase<JOINT_COORD_SIZE> logic_rules_t;
+	typedef SwitchedModelPlannerLogicRules<JOINT_COORD_SIZE> logic_rules_t;
 	typedef ocs2::LogicRulesMachine<STATE_DIM, INPUT_DIM, logic_rules_t> logic_rules_machine_t;
 
 	typedef ocs2::DerivativesBase<STATE_DIM, INPUT_DIM, logic_rules_t> Base;
@@ -60,19 +60,16 @@ public:
 	typedef Eigen::Matrix<double,6,JOINT_COORD_SIZE> base_jacobian_matrix_t;
 
 
-	ComKinoDynamicsDerivativeBase(const kinematic_model_t* kinematicModelPtr, const com_model_t* comModelPtr,
-			const scalar_t& gravitationalAcceleration=9.81, const Options& options = Options())
+	ComKinoDynamicsDerivativeBase(const kinematic_model_t& kinematicModel, const com_model_t& comModel,
+			const Model_Settings& options = Model_Settings())
 
 	: Base(),
-	  kinematicModelPtr_(kinematicModelPtr->clone()),
-	  comModelPtr_(comModelPtr->clone()),
-	  o_gravityVector_(0.0, 0.0, -gravitationalAcceleration),
+	  kinematicModelPtr_(kinematicModel.clone()),
+	  comModelPtr_(comModel.clone()),
+	  o_gravityVector_(0.0, 0.0, -options.gravitationalAcceleration_),
 	  options_(options),
-	  comDynamicsDerivative_(kinematicModelPtr, comModelPtr, gravitationalAcceleration, options.constrainedIntegration_)
-	{
-		if (gravitationalAcceleration < 0)
-			throw std::runtime_error("Gravitational acceleration should be a positive value.");
-	}
+	  comDynamicsDerivative_(kinematicModel, comModel, options.gravitationalAcceleration_, options.constrainedIntegration_)
+	{}
 
 	/**
 	 * copy construntor of ComKinoDynamicsDerivativeBase
@@ -103,7 +100,7 @@ public:
 	 * @param [in] partitionIndex: index of the time partition.
 	 * @param [in] algorithmName: The algorithm that class this class (default not defined).
 	 */
-	virtual void initializeModel(const logic_rules_machine_t& logicRulesMachine,
+	virtual void initializeModel(logic_rules_machine_t& logicRulesMachine,
 			const size_t& partitionIndex, const char* algorithmName=NULL) override;
 
 	/**
@@ -120,14 +117,14 @@ public:
 	 *
 	 * @param A: a nx-by-nx matrix
 	 */
-	virtual void getDerivativeState(state_matrix_t& A)  override;
+	virtual void getFlowMapDerivativeState(state_matrix_t& A)  override;
 
 	/**
 	 * calculate and retrieve the B matrix (i.e. the state derivative of the dynamics w.r.t. input vector).
 	 *
 	 * @param B: a ny-by-nu matrix
 	 */
-	virtual void getDerivativesControl(control_gain_matrix_t& B)  override;
+	virtual void getFlowMapDerivativeInput(control_gain_matrix_t& B)  override;
 
 	/**
 	 * set the stance legs
@@ -145,11 +142,11 @@ private:
 	typename kinematic_model_t::Ptr kinematicModelPtr_;
 	typename com_model_t::Ptr comModelPtr_;
 	Eigen::Vector3d   o_gravityVector_;
-	Options options_;
+	Model_Settings options_;
 
 	ComDynamicsDerivativeBase<JOINT_COORD_SIZE> comDynamicsDerivative_;
 
-	const logic_rules_t* logicRulesPtr_;
+	logic_rules_t* logicRulesPtr_;
 
 	std::function<size_t(scalar_t)> findActiveSubsystemFnc_;
 

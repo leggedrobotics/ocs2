@@ -11,6 +11,50 @@ namespace switched_model {
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t JOINT_COORD_SIZE>
+SwitchedModelCostBase<JOINT_COORD_SIZE>::SwitchedModelCostBase(
+		const kinematic_model_t& kinematicModel,
+		const com_model_t& comModel,
+		const state_matrix_t& Q,
+		const control_matrix_t& R,
+		const state_matrix_t& QFinal,
+		const state_vector_t& xFinal,
+		const scalar_t& copWeightMax /*= 0.0*/,
+		const state_matrix_t& QIntermediate /*= state_matrix_t::Zero()*/,
+		const state_vector_t& xNominalIntermediate /*= state_vector_t::Zero()*/,
+		const scalar_t& sigma /*= 1.0*/,
+		const scalar_t& tp /*= 0.0*/)
+
+	: Base(),
+	  kinematicModelPtr_(kinematicModel.clone()),
+	  comModelPtr_(comModel.clone()),
+	  Q_desired_(Q),
+	  R_desired_(R),
+	  QFinal_desired_(QFinal),
+	  xFinal_(xFinal),
+	  copWeightMax_(copWeightMax),
+	  QIntermediate_(QIntermediate),
+	  xNominalIntermediate_(xNominalIntermediate),
+	  sigma_(sigma),
+	  sigmaSquared_(sigma*sigma),
+	  normalization_(1.0 / (sigma_ * std::sqrt(2.0*M_PI)) ),
+	  tp_(tp),
+	  dtSquared_(0.0),
+	  copEstimatorPtr_(new CopEstimator<JOINT_COORD_SIZE>(kinematicModel, comModel))
+{
+	const size_t numContactPoints = SwitchedModel<JOINT_COORD_SIZE>::NUM_CONTACT_POINTS;
+	const size_t numMotionPhases = std::pow(2, numContactPoints);
+
+	for (size_t i=0; i<numMotionPhases; i++) {
+
+		contact_flag_t stanceLeg = modeNumber2StanceLeg(i);
+		R_Bank_[stanceLeg] = correctedInputCost(stanceLeg, R_desired_);
+	} // end of i loop
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+template <size_t JOINT_COORD_SIZE>
 SwitchedModelCostBase<JOINT_COORD_SIZE>* SwitchedModelCostBase<JOINT_COORD_SIZE>::clone() const {
 
 	return new SwitchedModelCostBase<JOINT_COORD_SIZE>(*this);
@@ -20,14 +64,18 @@ SwitchedModelCostBase<JOINT_COORD_SIZE>* SwitchedModelCostBase<JOINT_COORD_SIZE>
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t JOINT_COORD_SIZE>
-void SwitchedModelCostBase<JOINT_COORD_SIZE>::initializeModel(const logic_rules_machine_t& logicRulesMachine,
+void SwitchedModelCostBase<JOINT_COORD_SIZE>::initializeModel(logic_rules_machine_t& logicRulesMachine,
 		const size_t& partitionIndex, const char* algorithmName/*=NULL*/) {
 
 	Base::initializeModel(logicRulesMachine, partitionIndex, algorithmName);
 
-	findActiveSubsystemFnc_ = std::move( logicRulesMachine.getHandleToFindActiveSubsystemID(partitionIndex) );
+	findActiveSubsystemFnc_ = std::move( logicRulesMachine.getHandleToFindActiveEventCounter(partitionIndex) );
 
 	logicRulesPtr_ = logicRulesMachine.getLogicRulesPtr();
+
+	// set the start and final time for cost funtion
+	const scalar_array_t& partitioningTimes= logicRulesMachine.getPartitioningTimes();
+	Base::setTimePeriod(partitioningTimes[partitionIndex], partitioningTimes[partitionIndex+1]);
 
 	if (algorithmName!=NULL)
 		algorithmName_.assign(algorithmName);
@@ -50,13 +98,17 @@ void SwitchedModelCostBase<JOINT_COORD_SIZE>::setCurrentStateAndControl(const sc
 	const scalar_t tSpan = Base::timeFinal_-Base::timeStart_;
 	const scalar_t tElapsedRatio = (t - Base::timeStart_)/tSpan;
 	QFinal_.setZero();
-	Q_ = (1.0-tElapsedRatio)*Q_desired_ + tElapsedRatio*QFinal_desired_;
+//	Q_ = (1.0-tElapsedRatio)*Q_desired_ + tElapsedRatio*QFinal_desired_;
+	Q_ = Q_desired_ + QFinal_desired_ / 1.0;
+
+	// R matrix
+	R_ = R_Bank_[stanceLegs_];
 
 	state_vector_t xNominal;
-	xNominalFunc_.interpolate(t, xNominal);
+	Base::xNominalFunc_.interpolate(t, xNominal);
 	xDeviation_ = x - xNominal;
 	input_vector_t uNominal;
-	uNominalFunc_.interpolate(t, uNominal);
+	Base::uNominalFunc_.interpolate(t, uNominal);
 	uDeviation_ = u - uNominal;
 
 	xDeviationIntermediate_ = x - xNominalIntermediate_;
@@ -87,74 +139,8 @@ void SwitchedModelCostBase<JOINT_COORD_SIZE>::setCurrentStateAndControl(const sc
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t JOINT_COORD_SIZE>
-void SwitchedModelCostBase<JOINT_COORD_SIZE>::setCostNominalTrajectories(
-		const scalar_array_t& timeTrajectory,
-		const state_vector_array_t& stateTrajectory,
-		const input_vector_array_t& inputTrajectory /*= input_vector_array_t()*/) {
-
-	tNominalTrajectory_ = timeTrajectory;
-	xNominalTrajectory_ = stateTrajectory;
-	uNominalTrajectory_ = inputTrajectory;
-
-	if (xNominalTrajectory_.empty()==true) {
-		xNominalFunc_.setZero();
-	} else {
-		xNominalFunc_.reset();
-		xNominalFunc_.setTimeStamp(&tNominalTrajectory_);
-		xNominalFunc_.setData(&xNominalTrajectory_);
-	}
-
-	if (uNominalTrajectory_.empty()) {
-		uNominalFunc_.setZero();
-	} else {
-		uNominalFunc_.reset();
-		uNominalFunc_.setTimeStamp(&tNominalTrajectory_);
-		uNominalFunc_.setData(&uNominalTrajectory_);
-	}
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-template <size_t JOINT_COORD_SIZE>
-void SwitchedModelCostBase<JOINT_COORD_SIZE>::getCostNominalTrajectories(
-		scalar_array_t& timeTrajectory,
-		state_vector_array_t& stateTrajectory,
-		input_vector_array_t& inputTrajectory) const {
-
-	timeTrajectory  = tNominalTrajectory_;
-	stateTrajectory = xNominalTrajectory_;
-	inputTrajectory = uNominalTrajectory_;
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-template <size_t JOINT_COORD_SIZE>
-void SwitchedModelCostBase<JOINT_COORD_SIZE>::getCostNominalState(scalar_array_t& timeTrajectory,
-		state_vector_array_t& stateTrajectory) const {
-
-	timeTrajectory  = tNominalTrajectory_;
-	stateTrajectory = xNominalTrajectory_;
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-template <size_t JOINT_COORD_SIZE>
-void SwitchedModelCostBase<JOINT_COORD_SIZE>::getCostNominalInput(
-		scalar_array_t& timeTrajectory,
-		input_vector_array_t& inputTrajectory) const {
-
-	timeTrajectory  = tNominalTrajectory_;
-	inputTrajectory = uNominalTrajectory_;
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-template <size_t JOINT_COORD_SIZE>
-void SwitchedModelCostBase<JOINT_COORD_SIZE>::evaluate(scalar_t& L)  {
+void SwitchedModelCostBase<JOINT_COORD_SIZE>::getIntermediateCost(
+		scalar_t& L)  {
 
 	scalar_t costQ = 0.5 * xDeviation_.transpose() * Q_ * xDeviation_;
 
@@ -169,7 +155,8 @@ void SwitchedModelCostBase<JOINT_COORD_SIZE>::evaluate(scalar_t& L)  {
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t JOINT_COORD_SIZE>
-void SwitchedModelCostBase<JOINT_COORD_SIZE>::stateDerivative(state_vector_t& dLdx)  {
+void SwitchedModelCostBase<JOINT_COORD_SIZE>::getIntermediateCostDerivativeState(
+		state_vector_t& dLdx)  {
 
 	state_vector_t costQ = Q_ * xDeviation_;
 	state_vector_t costQintermediate = QIntermediate_ * xDeviationIntermediate_ * normalization_ * std::exp(-0.5 * dtSquared_ / sigmaSquared_);
@@ -182,7 +169,9 @@ void SwitchedModelCostBase<JOINT_COORD_SIZE>::stateDerivative(state_vector_t& dL
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t JOINT_COORD_SIZE>
-void SwitchedModelCostBase<JOINT_COORD_SIZE>::stateSecondDerivative(state_matrix_t& dLdxx)  {
+void SwitchedModelCostBase<JOINT_COORD_SIZE>::getIntermediateCostSecondDerivativeState(
+		state_matrix_t& dLdxx)  {
+
 	dLdxx = Q_ + QIntermediate_ * normalization_ * std::exp(-0.5 * dtSquared_ / sigmaSquared_);
 	dLdxx.template bottomRightCorner<12,12>() += copWeight_*hessJoints_copCost_;
 }
@@ -191,7 +180,9 @@ void SwitchedModelCostBase<JOINT_COORD_SIZE>::stateSecondDerivative(state_matrix
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t JOINT_COORD_SIZE>
-void SwitchedModelCostBase<JOINT_COORD_SIZE>::controlDerivative(input_vector_t& dLdu)  {
+void SwitchedModelCostBase<JOINT_COORD_SIZE>::getIntermediateCostDerivativeInput(
+		input_vector_t& dLdu)  {
+
 	dLdu = R_ * uDeviation_;
 	dLdu.template head<12>() += copWeight_*devLambda_copCost_;
 }
@@ -200,7 +191,9 @@ void SwitchedModelCostBase<JOINT_COORD_SIZE>::controlDerivative(input_vector_t& 
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t JOINT_COORD_SIZE>
-void SwitchedModelCostBase<JOINT_COORD_SIZE>::controlSecondDerivative(control_matrix_t& dLduu)  {
+void SwitchedModelCostBase<JOINT_COORD_SIZE>::getIntermediateCostSecondDerivativeInput(
+		control_matrix_t& dLduu)  {
+
 	dLduu = R_;
 	dLduu.template topLeftCorner<12,12>() += copWeight_*hessLambda_copCost_;
 
@@ -210,16 +203,18 @@ void SwitchedModelCostBase<JOINT_COORD_SIZE>::controlSecondDerivative(control_ma
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t JOINT_COORD_SIZE>
-void SwitchedModelCostBase<JOINT_COORD_SIZE>::stateControlDerivative(control_feedback_t& dLdxu)  {
-	dLdxu.setZero();
-	dLdxu.template topRightCorner<12,12>() += copWeight_*devLambdaJoints_copCost_;
+void SwitchedModelCostBase<JOINT_COORD_SIZE>::getIntermediateCostDerivativeInputState(
+		control_feedback_t& dLdux)  {
+
+	dLdux.setZero();
+	dLdux.template topRightCorner<12,12>() += copWeight_*devLambdaJoints_copCost_;
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t JOINT_COORD_SIZE>
-void SwitchedModelCostBase<JOINT_COORD_SIZE>::terminalCost(scalar_t& Phi) {
+void SwitchedModelCostBase<JOINT_COORD_SIZE>::getTerminalCost(scalar_t& Phi) {
 
 	state_vector_t x_deviation_final = Base::x_ - xFinal_;
 	Phi = 0.5 * x_deviation_final.transpose() * QFinal_ * x_deviation_final;
@@ -229,8 +224,9 @@ void SwitchedModelCostBase<JOINT_COORD_SIZE>::terminalCost(scalar_t& Phi) {
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t JOINT_COORD_SIZE>
-void SwitchedModelCostBase<JOINT_COORD_SIZE>::terminalCostStateDerivative(state_vector_t& dPhidx)
-{
+void SwitchedModelCostBase<JOINT_COORD_SIZE>::getTerminalCostDerivativeState(
+		state_vector_t& dPhidx) {
+
 	state_vector_t x_deviation_final = Base::x_ - xFinal_;
 	dPhidx =  QFinal_ * x_deviation_final;
 }
@@ -239,8 +235,39 @@ void SwitchedModelCostBase<JOINT_COORD_SIZE>::terminalCostStateDerivative(state_
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t JOINT_COORD_SIZE>
-void SwitchedModelCostBase<JOINT_COORD_SIZE>::terminalCostStateSecondDerivative(state_matrix_t& dPhidxx)  {
+void SwitchedModelCostBase<JOINT_COORD_SIZE>::getTerminalCostSecondDerivativeState(
+		state_matrix_t& dPhidxx)  {
+
 	dPhidxx = QFinal_;
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+template <size_t JOINT_COORD_SIZE>
+typename SwitchedModelCostBase<JOINT_COORD_SIZE>::control_matrix_t
+	SwitchedModelCostBase<JOINT_COORD_SIZE>::correctedInputCost(
+			const contact_flag_t& stanceLeg,
+			const control_matrix_t& R) {
+
+	control_matrix_t nondiagonalR = R;
+	scalar_t meanRz = (R(2,2)+R(5,5)+R(8,8)+R(11,11))/4;
+	for (size_t j=0; j<4; j++)
+		for (size_t k=0; k<=j; k++)
+			if (k==j) {
+				nondiagonalR(3*j+0,3*k+0) = 1.05*R(3*j+0,3*k+0);
+				nondiagonalR(3*j+1,3*k+1) = 1.05*R(3*j+1,3*k+1);
+				nondiagonalR(3*j+2,3*k+2) = 1.05*meanRz;
+			}
+			else {
+				if (stanceLeg[j] && stanceLeg[k])
+					nondiagonalR(3*j+2,3*k+2) = 2*meanRz;
+				else
+					nondiagonalR(3*j+2,3*k+2) = 0.0;
+			}
+	nondiagonalR = 0.5*(nondiagonalR + nondiagonalR.transpose()).eval();
+
+	return nondiagonalR;
 }
 
 /******************************************************************************************************/

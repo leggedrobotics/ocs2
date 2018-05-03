@@ -48,12 +48,12 @@ public:
 	typedef Eigen::Matrix<double,6,JOINT_COORD_SIZE> base_jacobian_matrix_t;
 	typedef Eigen::Matrix<double,JOINT_COORD_SIZE,JOINT_COORD_SIZE> state_joint_matrix_t;
 
-	ComDynamicsDerivativeBase(const kinematic_model_t* kinematicModelPtr, const com_model_t* comModelPtr,
+	ComDynamicsDerivativeBase(const kinematic_model_t& kinematicModel, const com_model_t& comModel,
 			const double& gravitationalAcceleration=9.81, const bool& constrainedIntegration=true)
 
 	: Base(),
-	  kinematicModelPtr_(kinematicModelPtr->clone()),
-	  comModelPtr_(comModelPtr->clone()),
+	  kinematicModelPtr_(kinematicModel.clone()),
+	  comModelPtr_(comModel.clone()),
 	  o_gravityVector_(0.0, 0.0, -gravitationalAcceleration),
 	  constrainedIntegration_(constrainedIntegration)
 	{
@@ -88,7 +88,7 @@ public:
 	 * @param [in] partitionIndex: index of the time partition.
 	 * @param [in] algorithmName: The algorithm that class this class (default not defined).
 	 */
-	virtual void initializeModel(const logic_rules_machine_t& logicRulesMachine,
+	virtual void initializeModel(logic_rules_machine_t& logicRulesMachine,
 			const size_t& partitionIndex, const char* algorithmName=NULL) override;
 
 	/**
@@ -106,12 +106,12 @@ public:
 	/**
 	 * calculate and retrieve the A matrix
 	 */
-	virtual void getDerivativeState(state_matrix_t& A)  override;
+	virtual void getFlowMapDerivativeState(state_matrix_t& A)  override;
 
 	/**
 	 * calculate and retrieve the B matrix
 	 */
-	virtual void getDerivativesControl(control_gain_matrix_t& B)  override;
+	virtual void getFlowMapDerivativeInput(control_gain_matrix_t& B)  override;
 
 	/**
 	 * calculate and retrieve the approximate derivatives w.r.t. joints

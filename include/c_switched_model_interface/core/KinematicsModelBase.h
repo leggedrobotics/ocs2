@@ -50,7 +50,8 @@ public:
 
 	/**
 	 * Gets the base and joint coordinate calculates the rotation ...
-	 * @param [in] generalizedCoordinate
+	 * @param [in] qBase
+	 * @param [in] qJoint
 	 */
 	template <typename BASE_COORDINATE, typename JOINT_COORDINATE>
 	void update(const Eigen::DenseBase<BASE_COORDINATE>& qBase,
@@ -133,10 +134,27 @@ public:
 			Eigen::Matrix<double,6,JOINT_COORD_SIZE + 6>& i_J_point);
 
 	/**
+	 * calculates the velocity in the Inertia frame using rotation "i_R_b" from the Base frame to Inertia
+	 * Frame, local velocities of base, and the velocity of the point expressed in the Base frame.
+	 *
+	 * @param i_R_b
+	 * @param baseLocalVelocities
+	 * @param b_r_point
+	 * @param b_v_point
+	 * @param i_v_point
+	 */
+	static void FromBaseVelocityToInertiaVelocity(
+			const Eigen::Matrix3d& i_R_b,
+			const base_coordinate_t& baseLocalVelocities,
+			const Eigen::Vector3d& b_r_point,
+			const Eigen::Vector3d& b_v_point,
+			Eigen::Vector3d& i_v_point);
+
+	/**
 	 * Origin to base rotation matrix
 	 * @return Eigen::Matrix3d
 	 */
-	Eigen::Matrix3d rotationMatrixOrigintoBase() const;
+	const Eigen::Matrix3d& rotationMatrixOrigintoBase() const;
 
 
 protected:

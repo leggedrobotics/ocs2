@@ -13,7 +13,7 @@ namespace ocs2{
 template <size_t DOMAIN_DIM, size_t RANGE_DIM, typename SCALAR_T>
 CppAdCodeGenInterface<DOMAIN_DIM, RANGE_DIM, SCALAR_T>::CppAdCodeGenInterface(
 			const ad_funtion_t& adFunction,
-			const range_doamin_matrix_t& sparsityPattern)
+			const range_domain_matrix_t& sparsityPattern)
 
     : BASE()
     , adFunction_(adFunction)
@@ -26,8 +26,29 @@ CppAdCodeGenInterface<DOMAIN_DIM, RANGE_DIM, SCALAR_T>::CppAdCodeGenInterface(
     , colsJacobian_(0)
     , rowsHessian_(0)
     , colsHessian_(0)
+    , relatedDependent_(0)
     , hessianWeight_(range_vector_t::Zero())
+{
+//	CppadParallelSetting::initParallel(2 + 1);
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+template <size_t DOMAIN_DIM, size_t RANGE_DIM, typename SCALAR_T>
+CppAdCodeGenInterface<DOMAIN_DIM, RANGE_DIM, SCALAR_T>::CppAdCodeGenInterface(const CppAdCodeGenInterface& rhs)
+
+    : CppAdCodeGenInterface(rhs.adFunction_, rhs.sparsityPattern_)
 {}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+template <size_t DOMAIN_DIM, size_t RANGE_DIM, typename SCALAR_T>
+CppAdCodeGenInterface<DOMAIN_DIM, RANGE_DIM, SCALAR_T>* CppAdCodeGenInterface<DOMAIN_DIM, RANGE_DIM, SCALAR_T>::clone() const {
+
+	return new CppAdCodeGenInterface(adFunction_, sparsityPattern_);
+}
 
 /******************************************************************************************************/
 /******************************************************************************************************/
@@ -102,14 +123,15 @@ void CppAdCodeGenInterface<DOMAIN_DIM, RANGE_DIM, SCALAR_T>::createModels(
     		rowsJacobian_, colsJacobian_,
     		rowsHessian_, colsHessian_);
 
-    if (verbose) std::cerr << "sparsityPattern: \n" << sparsityPattern_ << std::endl;
+    if (verbose) std::cerr << "Sparsity pattern of " << modelName <<
+    		" model: \n" << sparsityPattern_ << std::endl;
 
     //*************************************************************************
     //                      Create the dynamic library
     //                 (generates and compiles source code)
     //*************************************************************************
     // generates source code
-    CppAD::cg::ModelCSourceGen<SCALAR_T> cgen(fun, "modelName");
+    CppAD::cg::ModelCSourceGen<SCALAR_T> cgen(fun, modelName);
 
     // set the options
     cgen.setCreateForwardZero(computeForwardModel_);
@@ -120,6 +142,7 @@ void CppAdCodeGenInterface<DOMAIN_DIM, RANGE_DIM, SCALAR_T>::createModels(
     } else {
     	cgen.setCreateSparseJacobian(computeJacobianModel_);
     	cgen.setCustomSparseJacobianElements(rowsJacobian_, colsJacobian_);
+    	cgen.setRelatedDependents(relatedDependent_);
     }
 
     if (modelFullDerivatives_==true) {
@@ -128,7 +151,18 @@ void CppAdCodeGenInterface<DOMAIN_DIM, RANGE_DIM, SCALAR_T>::createModels(
     } else {
     	cgen.setCreateSparseHessian(computeHessianModel_);
     	cgen.setCustomSparseHessianElements(rowsHessian_, colsHessian_);
+    	cgen.setRelatedDependents(relatedDependent_);
     }
+
+//    domain_vector_t xtemp = domain_vector_t::Zero();
+//    cgen.setTypicalIndependentValues(std::vector<SCALAR_T>(xtemp.data(), xtemp.data()+DOMAIN_DIM));
+
+//    cgen.setCreateReverseOne(true);
+//    cgen.setMultiThreading(true);
+//    if (cgen.isJacobianMultiThreadingEnabled())
+//    	std::cout << ">>>>>>>>>>>>>>>>>>> isJacobianMultiThreadingEnabled \n";
+//    if (cgen.isHessianMultiThreadingEnabled())
+//        	std::cout << ">>>>>>>>>>>>>>>>>>> isHessianMultiThreadingEnabled \n";
 
     //
     CppAD::cg::ModelLibraryCSourceGen<SCALAR_T> libcgen(cgen);
@@ -158,7 +192,7 @@ void CppAdCodeGenInterface<DOMAIN_DIM, RANGE_DIM, SCALAR_T>::createModels(
     dynamicLib_.reset(p.createDynamicLibrary(compiler));
 
     // get model
-    model_.reset(dynamicLib_->model("modelName"));
+    model_.reset(dynamicLib_->model(modelName));
 }
 
 /******************************************************************************************************/
@@ -181,7 +215,7 @@ void CppAdCodeGenInterface<DOMAIN_DIM, RANGE_DIM, SCALAR_T>::loadModels(
 			libraryName + CppAD::cg::system::SystemInfo<>::DYNAMIC_LIB_EXTENSION) );
 
 	// get model
-	model_.reset(dynamicLib_->model("modelName"));
+	model_.reset(dynamicLib_->model(modelName));
 }
 
 /******************************************************************************************************/
@@ -189,7 +223,7 @@ void CppAdCodeGenInterface<DOMAIN_DIM, RANGE_DIM, SCALAR_T>::loadModels(
 /******************************************************************************************************/
 template <size_t DOMAIN_DIM, size_t RANGE_DIM, typename SCALAR_T>
 void CppAdCodeGenInterface<DOMAIN_DIM, RANGE_DIM, SCALAR_T>::getSparsityPattern(
-		range_doamin_matrix_t& sparsityPattern) const {
+		range_domain_matrix_t& sparsityPattern) const {
 
 	sparsityPattern = sparsityPattern_;
 }
@@ -222,7 +256,7 @@ bool CppAdCodeGenInterface<DOMAIN_DIM, RANGE_DIM, SCALAR_T>::getFunctionValue(
 template <size_t DOMAIN_DIM, size_t RANGE_DIM, typename SCALAR_T>
 bool CppAdCodeGenInterface<DOMAIN_DIM, RANGE_DIM, SCALAR_T>::getJacobian(
 		const domain_vector_t& x,
-		doamin_range_matrix_t& jacobian) {
+		domain_range_matrix_t& jacobian) {
 
 	dynamic_vector_map_t xDynamic(const_cast<SCALAR_T*>(x.data()), DOMAIN_DIM);
 	dynamic_vector_map_t jacobianDynamic(jacobian.data(), DOMAIN_DIM*RANGE_DIM);

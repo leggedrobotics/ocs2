@@ -19,7 +19,7 @@ namespace ocs2{
  * @tparam INPUT_DIM: Dimension of the control input space.
  * @tparam LOGIC_RULES_T: Logic Rules type (default NullLogicRules).
  */
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T=NullLogicRules>
+template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T=NullLogicRules<STATE_DIM,INPUT_DIM>>
 class QuadraticCostFunction : public CostFunctionBase< STATE_DIM, INPUT_DIM, LOGIC_RULES_T>
 {
 public:
@@ -46,21 +46,22 @@ public:
 	 * @param [in] x_final: \f$ x_{final}\f$
 	 * @param [in] Q_final: \f$ Q_{final}\f$
 	 */
-	QuadraticCostFunction(const state_matrix_t& Q,
+	QuadraticCostFunction(
+			const state_matrix_t& Q,
 			const control_matrix_t& R,
-	    const state_vector_t& x_nominal,
-	    const input_vector_t& u_nominal,
-	    const state_vector_t& x_final,
-	    const state_matrix_t Q_final)
-		: Q_(Q),
-		  R_(R),
-		  x_nominal_(x_nominal),
-		  u_nominal_(u_nominal),
-		  x_final_(x_final),
-		  Q_final_(Q_final)
+			const state_vector_t& x_nominal,
+			const input_vector_t& u_nominal,
+			const state_vector_t& x_final,
+			const state_matrix_t& Q_final)
+	: Q_(Q)
+	, R_(R)
+	, x_nominal_(x_nominal)
+	, u_nominal_(u_nominal)
+	, x_final_(x_final)
+	, Q_final_(Q_final)
 	{}
 
-	virtual ~QuadraticCostFunction() {}
+	virtual ~QuadraticCostFunction() = default;
 
 	/**
 	 * Initializes the quadratic cost function.
@@ -84,7 +85,10 @@ public:
 	 * @param [in] x: Current state vector
 	 * @param [in] u: Current input vector
 	 */
-	virtual void setCurrentStateAndControl(const scalar_t& t, const state_vector_t& x, const input_vector_t& u) {
+	virtual void setCurrentStateAndControl(
+			const scalar_t& t,
+			const state_vector_t& x,
+			const input_vector_t& u) override {
 
 		Base::setCurrentStateAndControl(t, x, u);
 		x_deviation_ = x - x_nominal_;
@@ -92,90 +96,89 @@ public:
 	}
 
     /**
-     * Evaluates the cost.
+     * Get the intermediate cost.
      *
-     * @param [out] cost: The cost value.
+     * @param [out] L: The intermediate cost value.
      */
-	void evaluate(scalar_t& cost) 	{
+	virtual void getIntermediateCost(scalar_t& L) override {
 
-		scalar_t costQ = 0.5 * x_deviation_.transpose() * Q_ * x_deviation_;
-		scalar_t costR = 0.5 * u_deviation_.transpose() * R_ * u_deviation_;
-		cost = costQ + costR;
+		L = 0.5 * x_deviation_.dot(Q_ * x_deviation_) +
+				0.5 * u_deviation_.dot(R_ * u_deviation_);
 	}
 
     /**
-     * Gets the state derivative.
+     * Get the state derivative of the intermediate cost.
      *
-     * @param [out] dLdx: First order cost derivative with respect to state vector.
+     * @param [out] dLdx: First order derivative of the intermediate cost with respect to state vector.
      */
-	void stateDerivative(state_vector_t& dLdx)  {
+	virtual void getIntermediateCostDerivativeState(state_vector_t& dLdx) override {
 		dLdx =  Q_ * x_deviation_;
 	}
 
     /**
-     * Gets state second order derivative.
+     * Get state second order derivative of the intermediate cost.
      *
-     * @param [out] dLdxx: Second order cost derivative with respect to state vector.
+     * @param [out] dLdxx: Second order derivative of the intermediate cost with respect to state vector.
      */
-	void stateSecondDerivative(state_matrix_t& dLdxx)  {
+	virtual void getIntermediateCostSecondDerivativeState(state_matrix_t& dLdxx) override {
 		dLdxx = Q_;
 	}
 
     /**
-     * Gets control derivative.
+     * Get control input derivative of the intermediate cost.
      *
-     * @param [out] dLdu: First order cost derivative with respect to input vector.
+     * @param [out] dLdu: First order derivative of the intermediate cost with respect to input vector.
      */
-	void controlDerivative(input_vector_t& dLdu)	{
+	virtual void getIntermediateCostDerivativeInput(input_vector_t& dLdu) override {
 		dLdu = R_ * u_deviation_;
 	}
 
     /**
-     * Gets control second derivative.
+     * Get control input second derivative of the intermediate cost.
      *
-     * @param [out] dLduu: Second order cost derivative with respect to input vector.
+     * @param [out] dLduu: Second order derivative of the intermediate cost with respect to input vector.
      */
-	void controlSecondDerivative(control_matrix_t& dLduu)	{
+	virtual void getIntermediateCostSecondDerivativeInput(control_matrix_t& dLduu) override {
 		dLduu = R_;
 	}
 
     /**
-     * Gets the state, input derivative.
+     * Get the input-state derivative of the intermediate cost.
      *
-     * @param [out] dLdxu: Second order cost derivative with respect to state and input vector.
+     * @param [out] dLdux: Second order derivative of the intermediate cost with respect to input vector and state.
      */
-	void stateControlDerivative(control_feedback_t& dLdxu)	{
-		dLdxu = control_feedback_t::Zero();
+	virtual void getIntermediateCostDerivativeInputState(control_feedback_t& dLdux) override {
+		dLdux = control_feedback_t::Zero();
 	}
 
     /**
-     * Gets the terminal cost.
+     * Get the terminal cost.
      *
-     * @param [out] cost: The final cost value
+     * @param [out] cost: The final cost value.
      */
-	void terminalCost(scalar_t& cost)	{
+	virtual void getTerminalCost(scalar_t& cost) override {
 
 		state_vector_t x_deviation_final = this->x_ - x_final_;
-		cost = 0.5 * x_deviation_final.transpose() * Q_final_ * x_deviation_final;
+		cost = 0.5 * x_deviation_final.dot(Q_final_ * x_deviation_final);
 	}
 
     /**
-     * Gets the terminal cost state derivative.
+     * Get the terminal cost state derivative.
      *
      * @param [out] dPhidx: First order final cost derivative with respect to state vector.
      */
-	void terminalCostStateDerivative(state_vector_t& dPhidx)	{
+	virtual void getTerminalCostDerivativeState(state_vector_t& dPhidx) override {
 
 		state_vector_t x_deviation_final = this->x_ - x_final_;
 		dPhidx = Q_final_ * x_deviation_final;
 	}
 
     /**
-     * Gets the terminal cost state second derivative
+     * Get the terminal cost state second derivative
      *
      * @param [out] dPhidxx: Second order final cost derivative with respect to state vector.
      */
-	void terminalCostStateSecondDerivative(state_matrix_t& dPhidxx)	{
+	virtual void getTerminalCostSecondDerivativeState(state_matrix_t& dPhidxx) override {
 		dPhidxx = Q_final_;
 	}
 
@@ -204,4 +207,4 @@ protected:
 
 } // namespace ocs2
 
-#endif /* QUADRATICCOSTFUNCTION_H_ */
+#endif /* QUADRATICCOSTFUNCTION_OCS2_H_ */

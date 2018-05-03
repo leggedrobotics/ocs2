@@ -23,9 +23,9 @@ SLQ_MP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::SLQ_MP (
 		const cost_function_base_t* heuristicsFunctionPtr /*= nullptr*/)
 
 	: BASE(systemDynamicsPtr, systemDerivativesPtr, systemConstraintsPtr, costFunctionPtr, operatingTrajectoriesPtr,
-			settings, logicRulesPtr, heuristicsFunctionPtr),
-	  workerTask_(IDLE),
-	  subsystemProcessed_(0)
+			settings, logicRulesPtr, heuristicsFunctionPtr)
+	, workerTask_(IDLE)
+	, subsystemProcessed_(0)
 {
 	Eigen::initParallel();
 

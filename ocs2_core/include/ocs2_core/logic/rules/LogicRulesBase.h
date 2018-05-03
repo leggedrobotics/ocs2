@@ -120,7 +120,7 @@ public:
 	}
 
 	/**
-	 * Rewinds the class. This methid is only called in the MPC class.
+	 * Rewinds the class. This method is only called in the MPC class.
 	 *
 	 * @param [in] lowerBoundTime: The smallest time for which the logicRules should be defined.
 	 * @param [in] upperBoundTime: The greates time for which the logicRules should be defined.

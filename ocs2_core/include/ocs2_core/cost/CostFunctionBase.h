@@ -33,6 +33,14 @@ public:
 	static_assert(std::is_base_of<LogicRulesBase<STATE_DIM, INPUT_DIM>, LOGIC_RULES_T>::value,
 			"LOGIC_RULES_T must inherit from LogicRulesBase");
 
+	enum
+	{
+		state_dim_ = STATE_DIM,
+		input_dim_ = INPUT_DIM
+	};
+
+	typedef LOGIC_RULES_T logic_rules_t;
+
 	typedef std::shared_ptr<CostFunctionBase<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> > Ptr;
 	typedef std::shared_ptr<const CostFunctionBase<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> > ConstPtr;
 
@@ -52,15 +60,15 @@ public:
 	 * Default constructor
 	 */
 	CostFunctionBase()
-	: timeStart_(0.0),
-	  timeFinal_(1.0),
-	  timeSD_(0.17),
-	  timeMean_(0.5),
-	  tNominalTrajectoryPtr_(nullptr),
-	  xNominalTrajectoryPtr_(nullptr),
-	  uNominalTrajectoryPtr_(nullptr),
-	  xNominalFunc_(),
-	  uNominalFunc_()
+	: timeStart_(0.0)
+	, timeFinal_(1.0)
+	, timeSD_(0.17)
+	, timeMean_(0.5)
+	, tNominalTrajectoryPtr_(nullptr)
+	, xNominalTrajectoryPtr_(nullptr)
+	, uNominalTrajectoryPtr_(nullptr)
+	, xNominalFunc_()
+	, uNominalFunc_()
 	{
 		xNominalFunc_.setZero();
 		uNominalFunc_.setZero();
@@ -88,30 +96,7 @@ public:
 	virtual void setCostNominalTrajectories(
 			const scalar_array_t& timeTrajectory,
 			const state_vector_array_t& stateTrajectory,
-			const input_vector_array_t& inputTrajectory = input_vector_array_t()) {
-
-		tNominalTrajectoryPtr_ = &timeTrajectory;
-
-		if (stateTrajectory.empty()==false) {
-			xNominalTrajectoryPtr_ = &stateTrajectory;
-			xNominalFunc_.reset();
-			xNominalFunc_.setTimeStamp(tNominalTrajectoryPtr_);
-			xNominalFunc_.setData(xNominalTrajectoryPtr_);
-		} else {
-			xNominalTrajectoryPtr_ = nullptr;
-			xNominalFunc_.setZero();
-		}
-
-		if (inputTrajectory.empty()==false) {
-			uNominalTrajectoryPtr_ = &inputTrajectory;
-			uNominalFunc_.reset();
-			uNominalFunc_.setTimeStamp(tNominalTrajectoryPtr_);
-			uNominalFunc_.setData(uNominalTrajectoryPtr_);
-		} else {
-			uNominalTrajectoryPtr_ = nullptr;
-			uNominalFunc_.setZero();
-		}
-	}
+			const input_vector_array_t& inputTrajectory = input_vector_array_t());
 
 	/**
 	 * Gets the nominal state used in the cost function.
@@ -123,16 +108,7 @@ public:
 	virtual void getCostNominalTrajectories(
 			scalar_array_t& timeTrajectory,
 			state_vector_array_t& stateTrajectory,
-			input_vector_array_t& inputTrajectory) const {
-
-		getCostNominalState(timeTrajectory, stateTrajectory);
-
-		if (uNominalTrajectoryPtr_) {
-			inputTrajectory = *uNominalTrajectoryPtr_;
-		} else {
-			inputTrajectory.empty();
-		}
-	}
+			input_vector_array_t& inputTrajectory) const;
 
 	/**
 	 * Gets the nominal state used in the cost function.
@@ -142,16 +118,7 @@ public:
 	 */
 	virtual void getCostNominalState(
 			scalar_array_t& timeTrajectory,
-			state_vector_array_t& stateTrajectory) const {
-
-		if (xNominalTrajectoryPtr_) {
-			timeTrajectory  = *tNominalTrajectoryPtr_;
-			stateTrajectory = *xNominalTrajectoryPtr_;
-		} else {
-			timeTrajectory.empty();
-			stateTrajectory.empty();
-		}
-	}
+			state_vector_array_t& stateTrajectory) const;
 
 	/**
 	 * Gets the nominal input used in the cost function.
@@ -161,16 +128,7 @@ public:
 	 */
 	virtual void getCostNominalInput(
 			scalar_array_t& timeTrajectory,
-			input_vector_array_t& inputTrajectory) const {
-
-		if (uNominalTrajectoryPtr_) {
-			timeTrajectory  = *tNominalTrajectoryPtr_;
-			inputTrajectory = *uNominalTrajectoryPtr_;
-		} else {
-			timeTrajectory.empty();
-			inputTrajectory.empty();
-		}
-	}
+			input_vector_array_t& inputTrajectory) const;
 
     /**
      * Returns pointer to the class.
@@ -190,7 +148,8 @@ public:
 	 */
 	virtual void initializeModel(
 			LogicRulesMachine<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>& logicRulesMachine,
-			const size_t& partitionIndex, const char* algorithmName=NULL)
+			const size_t& partitionIndex,
+			const char* algorithmName = nullptr)
 	{}
 
     /**
@@ -211,67 +170,67 @@ public:
 	}
 
     /**
-     * Evaluates the cost.
+     * Get the intermediate cost.
      *
-     * @param [out] L: The cost value.
+     * @param [out] L: The intermediate cost value.
      */
-	virtual void evaluate(scalar_t& L) = 0;
+	virtual void getIntermediateCost(scalar_t& L) = 0;
 
     /**
-     * Gets the state derivative.
+     * Get the state derivative of the intermediate cost.
      *
-     * @param [out] dLdx: First order cost derivative with respect to state vector.
+     * @param [out] dLdx: First order derivative of the intermediate cost with respect to state vector.
      */
-	virtual void stateDerivative(state_vector_t& dLdx) = 0;
+	virtual void getIntermediateCostDerivativeState(state_vector_t& dLdx) = 0;
 
     /**
-     * Gets state second order derivative.
+     * Get state second order derivative of the intermediate cost.
      *
-     * @param [out] dLdxx: Second order cost derivative with respect to state vector.
+     * @param [out] dLdxx: Second order derivative of the intermediate cost with respect to state vector.
      */
-	virtual void stateSecondDerivative(state_matrix_t& dLdxx) = 0;
+	virtual void getIntermediateCostSecondDerivativeState(state_matrix_t& dLdxx) = 0;
 
     /**
-     * Gets control input derivative.
+     * Get control input derivative of the intermediate cost.
      *
-     * @param [out] dLdu: First order cost derivative with respect to input vector.
+     * @param [out] dLdu: First order derivative of the intermediate cost with respect to input vector.
      */
-	virtual void controlDerivative(input_vector_t& dLdu) = 0;
+	virtual void getIntermediateCostDerivativeInput(input_vector_t& dLdu) = 0;
 
     /**
-     * Gets control input second derivative.
+     * Get control input second derivative of the intermediate cost.
      *
-     * @param [out] dLduu: Second order cost derivative with respect to input vector.
+     * @param [out] dLduu: Second order derivative of the intermediate cost with respect to input vector.
      */
-	virtual void controlSecondDerivative(control_matrix_t& dLduu) = 0;
+	virtual void getIntermediateCostSecondDerivativeInput(control_matrix_t& dLduu) = 0;
 
     /**
-     * Gets the state, control input derivative.
+     * Get the input-state derivative of the intermediate cost.
      *
-     * @param [out] dLdxu: Second order cost derivative with respect to state and input vector.
+     * @param [out] dLdux: Second order derivative of the intermediate cost with respect to input vector and state.
      */
-	virtual void stateControlDerivative(control_feedback_t& dLdxu) = 0;
+	virtual void getIntermediateCostDerivativeInputState(control_feedback_t& dLdux) = 0;
 
     /**
-     * Gets the terminal cost.
+     * Get the terminal cost.
      *
-     * @param [out] Phi: The final cost value
+     * @param [out] Phi: The final cost value.
      */
-	virtual void terminalCost(scalar_t& Phi) = 0;
+	virtual void getTerminalCost(scalar_t& Phi) = 0;
 
     /**
-     * Gets the terminal cost state derivative.
+     * Get the terminal cost state derivative of the terminal cost.
      *
      * @param [out] dPhidx: First order final cost derivative with respect to state vector.
      */
-	virtual void terminalCostStateDerivative(state_vector_t& dPhidx) = 0;
+	virtual void getTerminalCostDerivativeState(state_vector_t& dPhidx) = 0;
 
     /**
-     * Gets the terminal cost state second derivative
+     * Get the terminal cost state second derivative of the terminal cost.
      *
      * @param [out] dPhidxx: Second order final cost derivative with respect to state vector.
      */
-	virtual void terminalCostStateSecondDerivative(state_matrix_t& dPhidxx) = 0;
+	virtual void getTerminalCostSecondDerivativeState(state_matrix_t& dPhidxx) = 0;
 
 protected:
 	/**
@@ -280,13 +239,7 @@ protected:
 	 * @param [in] timeStart: The start time of the period.
 	 * @param [in] timeFinal: The final time of the period.
 	 */
-	virtual void setTimePeriod(const double& timeStart, const double& timeFinal) {
-		timeStart_ = timeStart;
-		timeFinal_ = timeFinal;
-
-		timeSD_ = (timeFinal-timeStart) / 6.0;
-		timeMean_ = (timeFinal+timeStart) / 2.0;
-	}
+	virtual void setTimePeriod(const scalar_t& timeStart, const scalar_t& timeFinal);
 
 /*
  * Variables
@@ -311,5 +264,6 @@ protected:
 
 } // namespace ocs2
 
+#include "implementation/CostFunctionBase.h"
 
 #endif /* COSTFUNCTIONBASE_OCS2_H_ */

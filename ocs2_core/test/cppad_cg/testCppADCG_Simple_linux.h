@@ -89,7 +89,6 @@ bool checkHessian(const Eigen::Matrix<double, DOMAIN_DIM_, 1>& x,
 
 
 TEST(testCppADCG_Simple_linux, cppadcg_linux)
-//int main(int argc, char** argv)
 {
 
     typedef ocs2::CppAdCodeGenInterface<DOMAIN_DIM_, RANGE_DIM_> cppadcg_interface_t;
@@ -100,8 +99,8 @@ TEST(testCppADCG_Simple_linux, cppadcg_linux)
     typedef cppadcg_interface_t::domain_vector_t		domain_vector_t;
     typedef cppadcg_interface_t::range_vector_t			range_vector_t;
     typedef cppadcg_interface_t::domain_matrix_t		domain_matrix_t;
-    typedef cppadcg_interface_t::doamin_range_matrix_t	doamin_range_matrix_t;
-    typedef cppadcg_interface_t::range_doamin_matrix_t	range_doamin_matrix_t;
+    typedef cppadcg_interface_t::domain_range_matrix_t	domain_range_matrix_t;
+    typedef cppadcg_interface_t::range_domain_matrix_t	range_domain_matrix_t;
 
     /***************************************************************************
      *                               the model
@@ -115,7 +114,7 @@ TEST(testCppADCG_Simple_linux, cppadcg_linux)
     /***************************************************************************
      *                              Sparsity Pattern
      **************************************************************************/
-    range_doamin_matrix_t sparsityPattern;
+    range_domain_matrix_t sparsityPattern;
     sparsityPattern.setOnes();
     sparsityPattern.col(2).setZero();
 
@@ -163,7 +162,7 @@ TEST(testCppADCG_Simple_linux, cppadcg_linux)
     	success &= checkFunction(x, funcValue);
     	ASSERT_TRUE(success);
 
-    	doamin_range_matrix_t jacobian;
+    	domain_range_matrix_t jacobian;
     	success = cppAdCodeGenClass_.getJacobian(x, jacobian);
 //    	// print out the result
 //    	if (success) {

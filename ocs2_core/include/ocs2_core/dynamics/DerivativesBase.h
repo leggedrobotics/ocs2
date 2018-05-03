@@ -19,8 +19,11 @@
 namespace ocs2{
 
 /**
- * Base class for the linearized system dynamics. The linearized system dynamics are defined as: \n
- * - Linearized system:                        \f$ dx/dt = A(t) \delta x + B(t) \delta u \f$ \n
+ * Base class for the linearized system dynamics. \n
+ * The linearized system flow map is defined as: \n
+ * \f$ dx/dt = A(t) \delta x + B(t) \delta u \f$ \n
+ * The linearized system jump map is defined as: \n
+ * \f$ x^+ = G \delta x + H \delta u \f$ \n
  *
  * @tparam STATE_DIM: Dimension of the state space.
  * @tparam INPUT_DIM: Dimension of the control input space.
@@ -50,12 +53,12 @@ public:
 	/**
 	 * Default constructor
 	 */
-	DerivativesBase() {}
+	DerivativesBase() = default;
 
 	/**
 	 * Default destructor
 	 */
-	virtual ~DerivativesBase() {}
+	virtual ~DerivativesBase() = default;
 
 	/**
 	 * Sets the current time, state, and control inout.
@@ -64,8 +67,11 @@ public:
 	 * @param [in] x: Current state.
 	 * @param [in] u: Current input.
 	 */
-	virtual void setCurrentStateAndControl(const scalar_t& t, const state_vector_t& x,
+	virtual void setCurrentStateAndControl(
+			const scalar_t& t,
+			const state_vector_t& x,
 			const input_vector_t& u) {
+
 		t_ = t;
 		x_ = x;
 		u_ = u;
@@ -80,25 +86,71 @@ public:
 	 * @param [in] partitionIndex: index of the time partition.
 	 * @param [in] algorithmName: The algorithm that class this class (default not defined).
 	 */
-	virtual void initializeModel(LogicRulesMachine<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>& logicRulesMachine,
-			const size_t& partitionIndex, const char* algorithmName=NULL)
+	virtual void initializeModel(
+			LogicRulesMachine<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>& logicRulesMachine,
+			const size_t& partitionIndex,
+			const char* algorithmName=NULL)
 	{}
 
 	/**
-	 * The A matrix at a given operating point for the linearized system,
+	 * Get partial time derivative of the system flow map.
+	 * \f$ \frac{\partial f}{\partial t}  \f$.
+	 *
+	 * @param [out] df: \f$ \frac{\partial f}{\partial t} \f$ matrix.
+	 */
+	virtual void getFlowMapDerivativeTime(state_vector_t& df) {
+
+		df.setZero();
+	}
+
+	/**
+	 * Get the A matrix at a given operating point for the linearized system flow map.
 	 * \f$ dx/dt = A(t) \delta x + B(t) \delta u \f$.
 	 *
 	 * @param [out] A: \f$ A(t) \f$ matrix.
 	 */
-	virtual void getDerivativeState(state_matrix_t& A) = 0;
+	virtual void getFlowMapDerivativeState(state_matrix_t& A) = 0;
 
 	/**
-	 * The B matrix at a given operating point for the linearized system,
+	 * Get the B matrix at a given operating point for the linearized system flow map.
 	 * \f$ dx/dt = A(t) \delta x + B(t) \delta u \f$.
 	 *
 	 * @param [out] B: \f$ B(t) \f$ matrix.
 	 */
-	virtual void getDerivativesControl(control_gain_matrix_t& B) = 0;
+	virtual void getFlowMapDerivativeInput(control_gain_matrix_t& B) = 0;
+
+	/**
+	 * Get partial time derivative of the system jump map.
+	 * \f$ \frac{\partial g}{\partial t}  \f$.
+	 *
+	 * @param [out] dg: \f$ \frac{\partial g}{\partial t} \f$ matrix.
+	 */
+	virtual void getJumpMapDerivativeTime(state_vector_t& dg) {
+
+		dg.setZero();
+	}
+
+	/**
+	 * Get the G matrix at a given operating point for the linearized system jump map.
+	 * \f$ x^+ = G \delta x + H \delta u \f$.
+	 *
+	 * @param [out] G: \f$ G \f$ matrix.
+	 */
+	virtual void getJumpMapDerivativeState(state_matrix_t& G) {
+
+		G.setIdentity();
+	}
+
+	/**
+	 * Get the H matrix at a given operating point for the linearized system jump map.
+	 * \f$ x^+ = G \delta x + H \delta u \f$.
+	 *
+	 * @param [out] H: \f$ H \f$ matrix.
+	 */
+	virtual void getJumpMapDerivativeInput(control_gain_matrix_t& H) {
+
+		H.setZero();
+	}
 
 	/**
 	 * Returns pointer to the class.

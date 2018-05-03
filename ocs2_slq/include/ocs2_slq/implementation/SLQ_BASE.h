@@ -24,9 +24,9 @@ SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::SLQ_BASE(
 		const LOGIC_RULES_T* logicRulesPtr /*= nullptr*/,
 		const cost_function_base_t* heuristicsFunctionPtr /* = nullptr*/)
 
-		: settings_(settings),
-		  rewindCounter_(0),
-		  numPartitionings_(0)
+	: settings_(settings)
+	, rewindCounter_(0)
+	, numPartitionings_(0)
 {
 	if (logicRulesPtr != nullptr)
 		logicRulesMachinePtr_ = logic_rules_machine_ptr_t( new logic_rules_machine_t(*logicRulesPtr) );
@@ -646,15 +646,18 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculateConstraintsWorker(
 	for (size_t k=0; k<N; k++) {
 
 		// set data
-		systemConstraintsPtrStock_[workerIndex]->setCurrentStateAndControl(timeTrajectory[k], stateTrajectory[k], inputTrajectory[k]);
+		systemConstraintsPtrStock_[workerIndex]->setCurrentStateAndControl(
+				timeTrajectory[k], stateTrajectory[k], inputTrajectory[k]);
 
 		// constraint 1 type
-		systemConstraintsPtrStock_[workerIndex]->computeConstriant1(nc1Trajectory[k], EvTrajectory[k]);
+		nc1Trajectory[k] = systemConstraintsPtrStock_[workerIndex]->numStateInputConstraint(timeTrajectory[k]);
+		systemConstraintsPtrStock_[workerIndex]->getConstraint1(EvTrajectory[k]);
 		if (nc1Trajectory[k] > INPUT_DIM)
 			throw std::runtime_error("Number of active type-1 constraints should be less-equal to the number of input dimension.");
 
 		// constraint type 2
-		systemConstraintsPtrStock_[workerIndex]->computeConstriant2(nc2Trajectory[k], HvTrajectory[k]);
+		nc2Trajectory[k] = systemConstraintsPtrStock_[workerIndex]->numStateOnlyConstraint(timeTrajectory[k]);
+		systemConstraintsPtrStock_[workerIndex]->getConstraint2(HvTrajectory[k]);
 		if (nc2Trajectory[k] > INPUT_DIM)
 			throw std::runtime_error("Number of active type-2 constraints should be less-equal to the number of input dimension.");
 
@@ -662,7 +665,8 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculateConstraintsWorker(
 		if (eventsPastTheEndItr!=eventsPastTheEndIndeces.end() && k+1==*eventsPastTheEndItr) {
 			size_t nc2Final;
 			constraint2_vector_t HvFinal;
-			systemConstraintsPtrStock_[workerIndex]->computeFinalConstriant2(nc2Final, HvFinal);
+			nc2Final = systemConstraintsPtrStock_[workerIndex]->numStateOnlyFinalConstraint(timeTrajectory[k]);
+			systemConstraintsPtrStock_[workerIndex]->getFinalConstraint2(HvFinal);
 			if (nc2Final > INPUT_DIM)
 				throw std::runtime_error("Number of active type-2 constraints at final time should be less-equal to the number of input dimension.");
 
@@ -798,7 +802,7 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculateCostWorker(
 
 		if (k==0) {
 			costFunctionsPtrStock_[workerIndex]->setCurrentStateAndControl(timeTrajectory[k], stateTrajectory[k], inputTrajectory[k]);
-			costFunctionsPtrStock_[workerIndex]->evaluate(currentIntermediateCost);
+			costFunctionsPtrStock_[workerIndex]->getIntermediateCost(currentIntermediateCost);
 		} else
 		{
 			currentIntermediateCost = nextIntermediateCost;
@@ -806,15 +810,15 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculateCostWorker(
 
 		// feed next state and control to cost function
 		costFunctionsPtrStock_[workerIndex]->setCurrentStateAndControl(timeTrajectory[k+1], stateTrajectory[k+1], inputTrajectory[k+1]);
-		// evaluate intermediate cost for next time step
-		costFunctionsPtrStock_[workerIndex]->evaluate(nextIntermediateCost);
+		// getIntermediateCost intermediate cost for next time step
+		costFunctionsPtrStock_[workerIndex]->getIntermediateCost(nextIntermediateCost);
 
 		totalCost += 0.5*(currentIntermediateCost+nextIntermediateCost)*(timeTrajectory[k+1]-timeTrajectory[k]);
 
 		// terminal cost at switching times
 		if (eventsPastTheEndItr!=eventsPastTheEndIndeces.end() && k+1==*eventsPastTheEndItr) {
 			scalar_t finalCost;
-			costFunctionsPtrStock_[workerIndex]->terminalCost(finalCost);
+			costFunctionsPtrStock_[workerIndex]->getTerminalCost(finalCost);
 			totalCost += finalCost;
 
 			eventsPastTheEndItr++;
@@ -851,7 +855,7 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculateRolloutCost(
 			stateTrajectoriesStock[finalActivePartition_].back(),
 			inputTrajectoriesStock[finalActivePartition_].back());
 	scalar_t sHeuristics;
-	heuristicsFunctionsPtrStock_[threadId]->terminalCost(sHeuristics);
+	heuristicsFunctionsPtrStock_[threadId]->getTerminalCost(sHeuristics);
 	totalCost += sHeuristics;
 }
 
@@ -977,9 +981,9 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::approximateOptimalControlPro
 			nominalTimeTrajectoriesStock_[finalActivePartition_].back(),
 			nominalStateTrajectoriesStock_[finalActivePartition_].back(),
 			nominalInputTrajectoriesStock_[finalActivePartition_].back());
-	heuristicsFunctionsPtrStock_[0]->terminalCost(sHeuristics_(0));
-	heuristicsFunctionsPtrStock_[0]->terminalCostStateDerivative(SvHeuristics_);
-	heuristicsFunctionsPtrStock_[0]->terminalCostStateSecondDerivative(SmHeuristics_);
+	heuristicsFunctionsPtrStock_[0]->getTerminalCost(sHeuristics_(0));
+	heuristicsFunctionsPtrStock_[0]->getTerminalCostDerivativeState(SvHeuristics_);
+	heuristicsFunctionsPtrStock_[0]->getTerminalCostSecondDerivativeState(SmHeuristics_);
 }
 
 /******************************************************************************************************/
@@ -1007,8 +1011,8 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::approximateLQWorker(
 			nominalInputTrajectoriesStock_[i][k]);
 
 	// get results
-	systemDerivativesPtrStock_[workerIndex]->getDerivativeState(AmTrajectoryStock_[i][k]);
-	systemDerivativesPtrStock_[workerIndex]->getDerivativesControl(BmTrajectoryStock_[i][k]);
+	systemDerivativesPtrStock_[workerIndex]->getFlowMapDerivativeState(AmTrajectoryStock_[i][k]);
+	systemDerivativesPtrStock_[workerIndex]->getFlowMapDerivativeInput(BmTrajectoryStock_[i][k]);
 
 
 	/*
@@ -1022,21 +1026,23 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::approximateLQWorker(
 			nominalInputTrajectoriesStock_[i][k]);
 
 	// constraint type 1
-	systemConstraintsPtrStock_[workerIndex]->computeConstriant1(nc1TrajectoriesStock_[i][k], EvTrajectoryStock_[i][k]);
+	nc1TrajectoriesStock_[i][k] = systemConstraintsPtrStock_[workerIndex]->numStateInputConstraint(nominalTimeTrajectoriesStock_[i][k]);
 	if (nc1TrajectoriesStock_[i][k] > INPUT_DIM)
 		throw std::runtime_error("Number of active type-1 constraints should be less-equal to the number of input dimension.");
 	// if constraint type 1 is active
 	if (nc1TrajectoriesStock_[i][k] > 0) {
+		systemConstraintsPtrStock_[workerIndex]->getConstraint1(EvTrajectoryStock_[i][k]);
 		systemConstraintsPtrStock_[workerIndex]->getConstraint1DerivativesState(CmTrajectoryStock_[i][k]);
 		systemConstraintsPtrStock_[workerIndex]->getConstraint1DerivativesControl(DmTrajectoryStock_[i][k]);
 	}
 
 	// constraint type 2
-	systemConstraintsPtrStock_[workerIndex]->computeConstriant2(nc2TrajectoriesStock_[i][k], HvTrajectoryStock_[i][k]);
+	nc2TrajectoriesStock_[i][k] = systemConstraintsPtrStock_[workerIndex]->numStateOnlyConstraint(nominalTimeTrajectoriesStock_[i][k]);
 	if (nc2TrajectoriesStock_[i][k] > INPUT_DIM)
 		throw std::runtime_error("Number of active type-2 constraints should be less-equal to the number of input dimension.");
 	// if constraint type 2 is active
 	if (nc2TrajectoriesStock_[i][k] > 0) {
+		systemConstraintsPtrStock_[workerIndex]->getConstraint2(HvTrajectoryStock_[i][k]);
 		systemConstraintsPtrStock_[workerIndex]->getConstraint2DerivativesState(FmTrajectoryStock_[i][k]);
 	}
 
@@ -1052,13 +1058,13 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::approximateLQWorker(
 			nominalInputTrajectoriesStock_[i][k]);
 
 	// get results
-	costFunctionsPtrStock_[workerIndex]->evaluate(qTrajectoryStock_[i][k](0));
-	costFunctionsPtrStock_[workerIndex]->stateDerivative(QvTrajectoryStock_[i][k]);
-	costFunctionsPtrStock_[workerIndex]->stateSecondDerivative(QmTrajectoryStock_[i][k]);
-	costFunctionsPtrStock_[workerIndex]->controlDerivative(RvTrajectoryStock_[i][k]);
-	costFunctionsPtrStock_[workerIndex]->controlSecondDerivative(RmTrajectoryStock_[i][k]);
+	costFunctionsPtrStock_[workerIndex]->getIntermediateCost(qTrajectoryStock_[i][k](0));
+	costFunctionsPtrStock_[workerIndex]->getIntermediateCostDerivativeState(QvTrajectoryStock_[i][k]);
+	costFunctionsPtrStock_[workerIndex]->getIntermediateCostSecondDerivativeState(QmTrajectoryStock_[i][k]);
+	costFunctionsPtrStock_[workerIndex]->getIntermediateCostDerivativeInput(RvTrajectoryStock_[i][k]);
+	costFunctionsPtrStock_[workerIndex]->getIntermediateCostSecondDerivativeInput(RmTrajectoryStock_[i][k]);
 	RmInverseTrajectoryStock_[i][k] = RmTrajectoryStock_[i][k].inverse();
-	costFunctionsPtrStock_[workerIndex]->stateControlDerivative(PmTrajectoryStock_[i][k]);
+	costFunctionsPtrStock_[workerIndex]->getIntermediateCostDerivativeInputState(PmTrajectoryStock_[i][k]);
 
 	/*
 	 * Modify the unconstrained LQ coefficients to constrained ones
@@ -1133,19 +1139,22 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::approximateLQWorker(
 			/*
 			 *  Final constraint type 2
 			 */
-			systemConstraintsPtrStock_[workerIndex]->computeFinalConstriant2(nc2FinalStock_[i][ke], HvFinalStock_[i][ke]);
+			nc2FinalStock_[i][ke] = systemConstraintsPtrStock_[workerIndex]->numStateOnlyFinalConstraint(nominalTimeTrajectoriesStock_[i][k]);
+
 			if (nc2FinalStock_[i][ke] > INPUT_DIM)
-				throw std::runtime_error("Number of active type-2 constraints at final time should be less-equal to the number of input dimension.");
+				throw std::runtime_error("Number of active final type-2 constraints should be less-equal to the number of input dimension.");
 			// if final constraint type 2 is active
-			if (nc2FinalStock_[i][ke] > 0)
+			if (nc2FinalStock_[i][ke] > 0) {
+				systemConstraintsPtrStock_[workerIndex]->getFinalConstraint2(HvFinalStock_[i][ke]);
 				systemConstraintsPtrStock_[workerIndex]->getFinalConstraint2DerivativesState(FmFinalStock_[i][ke]);
+			}
 
 			/*
 			 * Final cost
 			 */
-			costFunctionsPtrStock_[workerIndex]->terminalCost(qFinalStock_[i][ke](0));
-			costFunctionsPtrStock_[workerIndex]->terminalCostStateDerivative(QvFinalStock_[i][ke]);
-			costFunctionsPtrStock_[workerIndex]->terminalCostStateSecondDerivative(QmFinalStock_[i][ke]);
+			costFunctionsPtrStock_[workerIndex]->getTerminalCost(qFinalStock_[i][ke](0));
+			costFunctionsPtrStock_[workerIndex]->getTerminalCostDerivativeState(QvFinalStock_[i][ke]);
+			costFunctionsPtrStock_[workerIndex]->getTerminalCostSecondDerivativeState(QmFinalStock_[i][ke]);
 
 			/*
 			 * Modify the unconstrained LQ coefficients to constrained ones

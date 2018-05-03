@@ -5,8 +5,8 @@
  *      Author: farbod
  */
 
-#ifndef TESTCPPADCG_NN_LINUX_H_
-#define TESTCPPADCG_NN_LINUX_H_
+#ifndef TESTCPPADCG_NN_LINUX_OCS2_H_
+#define TESTCPPADCG_NN_LINUX_OCS2_H_
 
 #include <iostream>
 #include <boost/filesystem.hpp>
@@ -99,8 +99,8 @@ TEST(testCppADCG_NN_linux, cppadcg_linux)
     typedef cppadcg_interface_t::domain_vector_t		domain_vector_t;
     typedef cppadcg_interface_t::range_vector_t			range_vector_t;
     typedef cppadcg_interface_t::domain_matrix_t		domain_matrix_t;
-    typedef cppadcg_interface_t::doamin_range_matrix_t	doamin_range_matrix_t;
-    typedef cppadcg_interface_t::range_doamin_matrix_t	range_doamin_matrix_t;
+    typedef cppadcg_interface_t::domain_range_matrix_t	domain_range_matrix_t;
+    typedef cppadcg_interface_t::range_domain_matrix_t	range_domain_matrix_t;
 
     /***************************************************************************
      *                               the model
@@ -114,7 +114,7 @@ TEST(testCppADCG_NN_linux, cppadcg_linux)
     /***************************************************************************
      *                              Sparsity Pattern
      **************************************************************************/
-    range_doamin_matrix_t sparsityPattern;
+    range_domain_matrix_t sparsityPattern;
     sparsityPattern.setOnes();
     sparsityPattern.col(4).setZero();
     sparsityPattern.col(8).setZero();
@@ -162,7 +162,7 @@ TEST(testCppADCG_NN_linux, cppadcg_linux)
     	success &= checkFunction(x, funcValue);
     	ASSERT_TRUE(success);
 
-    	doamin_range_matrix_t jacobian;
+    	domain_range_matrix_t jacobian;
     	success = cppAdCodeGenClass_.getJacobian(x, jacobian);
 //    	// print out the result
 //    	if (success) {
@@ -172,17 +172,17 @@ TEST(testCppADCG_NN_linux, cppadcg_linux)
     	success &= checkJacobian(x, sparsityPattern, jacobian.transpose());
     	ASSERT_TRUE(success);
 
-    	for (size_t i=0; i<RANGE_DIM_; i++) {
-    		domain_matrix_t hessian;
-    		success = cppAdCodeGenClass_.getHessian(x, hessian, i);
-//    		// print out the result
-//    		if (success) {
-//    			std::cout << "hessian[" << i << "]: " << std::endl;
-//    			std::cout << hessian << std::endl;
-//    		}
-    		success &= checkHessian(x, sparsityPattern, hessian, i);
-    		ASSERT_TRUE(success);
-    	}
+//    	for (size_t i=0; i<RANGE_DIM_; i++) {
+//    		domain_matrix_t hessian;
+//    		success = cppAdCodeGenClass_.getHessian(x, hessian, i);
+////    		// print out the result
+////    		if (success) {
+////    			std::cout << "hessian[" << i << "]: " << std::endl;
+////    			std::cout << hessian << std::endl;
+////    		}
+//    		success &= checkHessian(x, sparsityPattern, hessian, i);
+//    		ASSERT_TRUE(success);
+//    	}
 
     }
 
@@ -190,4 +190,4 @@ TEST(testCppADCG_NN_linux, cppadcg_linux)
 
 } // end of namespace cppadcg_nn_test
 
-#endif /* TESTCPPADCG_NN_LINUX_H_ */
+#endif /* TESTCPPADCG_NN_LINUX_OCS2_H_ */

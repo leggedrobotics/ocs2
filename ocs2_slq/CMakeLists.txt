@@ -145,13 +145,17 @@ endif()
 
 ## unit tests  catkin_add_gtest
 
-catkin_add_gtest(exp0_slq_test test/exp0_slq_test.cpp)
+catkin_add_gtest(exp0_slq_test 
+  test/exp0_slq_test.cpp
+)
 target_link_libraries(exp0_slq_test
   ${catkin_LIBRARIES}
   ${Boost_LIBRARIES}
 )
 
-catkin_add_gtest(exp1_slq_test test/exp1_slq_test.cpp)
+catkin_add_gtest(
+  exp1_slq_test test/exp1_slq_test.cpp
+)
 target_link_libraries(exp1_slq_test
   ${catkin_LIBRARIES}
   ${Boost_LIBRARIES}

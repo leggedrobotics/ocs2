@@ -1,5 +1,5 @@
 /*
- * testCppADCG_linux.cpp
+ * testCppADCG.cpp
  *
  *  Created on: Apr 24, 2018
  *      Author: farbod
@@ -7,6 +7,9 @@
 
 #include "cppad_cg/testCppADCG_Simple_linux.h"
 #include "cppad_cg/testCppADCG_NN_linux.h"
+#include "cppad_cg/testCppADCG_cost.h"
+#include "cppad_cg/testCppADCG_dynamics.h"
+#include "cppad_cg/testCppADCG_constraint.h"
 
 int main(int argc, char** argv)
 {

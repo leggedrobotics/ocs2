@@ -55,12 +55,17 @@ public:
 	/**
 	 * Default constructor
 	 */
-	ConstraintBase() {}
+	ConstraintBase() = default;
+
+	/**
+	 * Default copy constructor
+	 */
+	ConstraintBase(const ConstraintBase& rhs) = default;
 
 	/**
 	 * Default destructor
 	 */
-	virtual ~ConstraintBase() {}
+	virtual ~ConstraintBase() = default;
 
 	/**
 	 * Sets the current time, state, and control inout.
@@ -69,7 +74,9 @@ public:
 	 * @param [in] x: Current state.
 	 * @param [in] u: Current input.
 	 */
-	virtual void setCurrentStateAndControl(const scalar_t& t, const state_vector_t& x,
+	virtual void setCurrentStateAndControl(
+			const scalar_t& t,
+			const state_vector_t& x,
 			const input_vector_t& u) {
 		t_ = t;
 		x_ = x;
@@ -85,8 +92,10 @@ public:
 	 * @param [in] partitionIndex: index of the time partition.
 	 * @param [in] algorithmName: The algorithm that class this class (default not defined).
 	 */
-	virtual void initializeModel(LogicRulesMachine<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>& logicRulesMachine,
-			const size_t& partitionIndex, const char* algorithmName=NULL)
+	virtual void initializeModel(
+			LogicRulesMachine<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>& logicRulesMachine,
+			const size_t& partitionIndex,
+			const char* algorithmName = nullptr)
 	{}
 
 	/**
@@ -100,40 +109,57 @@ public:
 	}
 
 	/**
-	 * Computes first constraint.
+	 * Computes the state-input equality constraints.
 	 *
-	 * @param [in] t: Current time.
-	 * @param [in] x: Current state.
-	 * @param [in] u: Current input.
-	 * @param [out] numConstraint1: Number of active state-input equality constraints.
-	 * @param [out] g1: The state-input equality constraints value.
+	 * @param [out] e: The state-input equality constraints value.
 	 */
-	virtual void computeConstriant1(size_t& numConstraint1, constraint1_vector_t& g1)  {
-		numConstraint1 = 0;
+	virtual void getConstraint1(constraint1_vector_t& e)  {}
+
+	/**
+	 * Get the number of state-input active equality constriants.
+	 *
+	 * @param [in] time: time.
+	 * @return number of state-input active equality constriants.
+	 */
+	virtual size_t numStateInputConstraint(const scalar_t& time) {
+
+		return 0;
 	}
 
 	/**
-	 * Computes second constraint.
+	 * get the state-only equality constraints.
 	 *
-	 * @param [in] t: Current time.
-	 * @param [in] x: Current state.
-	 * @param [out] numConstraint2: Number of active state-only equality constraints.
-	 * @param [out] g2: The state-only equality constraints value.
+	 * @param [out] h: The state-only equality constraints value.
 	 */
-	virtual void computeConstriant2(size_t& numConstraint2, constraint2_vector_t& g2)  {
-		numConstraint2 = 0;
+	virtual void getConstraint2(constraint2_vector_t& h) {}
+
+	/**
+	 * Get the number of state-only active equality constriants.
+	 *
+	 * @param [in] time: time.
+	 * @return number of state-only active equality constriants.
+	 */
+	virtual size_t numStateOnlyConstraint(const scalar_t& time) {
+
+		return 0;
 	}
 
 	/**
-	 * Computes final constraint.
+	 * Compute the final state-only equality constraints.
 	 *
-	 * @param [in] t: Current time.
-	 * @param [in] x: Current state.
-	 * @param [out] numFinalConstraint2: Number of active state-only final equality constraints.
-	 * @param [out] g2Final: The state-only final equality constraints value.
+	 * @param [out] h_f: The final state-only equality constraints value.
 	 */
-	virtual void computeFinalConstriant2(size_t& numFinalConstraint2, constraint2_vector_t& g2Final)  {
-		numFinalConstraint2 = 0;
+	virtual void getFinalConstraint2(constraint2_vector_t& h_f) {}
+
+	/**
+	 * Get the number of final state-only active equality constriants.
+	 *
+	 * @param [in] time: time.
+	 * @return number of final state-only active equality constriants.
+	 */
+	virtual size_t numStateOnlyFinalConstraint(const scalar_t& time) {
+
+		return 0;
 	}
 
 	/**

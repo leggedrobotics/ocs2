@@ -82,42 +82,10 @@ target_link_libraries(logic_rules_machin_unittest
 )
 
 catkin_add_gtest(cppadcg_unittest 
-  test/testCppADCG_linux.cpp)
+  test/testCppADCG.cpp)
 target_link_libraries(cppadcg_unittest
   ${Boost_LIBRARIES}
   ${catkin_LIBRARIES} -lm -ldl
 )
 
-#add_executable(dynamicLinux
-#   src/dynamic_linux.cpp
-#)
-#add_dependencies(dynamicLinux
-#  ${${PROJECT_NAME}_EXPORTED_TARGETS}
-#  ${catkin_EXPORTED_TARGETS}
-#)
-#target_link_libraries(dynamicLinux
-#  ${catkin_LIBRARIES} -lm -ldl
-#)
 
-#add_executable(eigenDynamicLinux
-#   src/eigen_dynamic_linux.cpp
-#)
-#add_dependencies(eigenDynamicLinux
-#  ${${PROJECT_NAME}_EXPORTED_TARGETS}
-#  ${catkin_EXPORTED_TARGETS}
-#)
-#target_link_libraries(eigenDynamicLinux
-#  ${catkin_LIBRARIES} -lm -ldl
-#)
-#
-#add_executable(cppadcgTest
-#   src/cppadcg_linux.cpp
-#)
-#add_dependencies(cppadcgTest
-#  ${${PROJECT_NAME}_EXPORTED_TARGETS}
-#  ${catkin_EXPORTED_TARGETS}
-#)
-#target_link_libraries(cppadcgTest
-#  ${Boost_LIBRARIES}
-#  ${catkin_LIBRARIES} -lm -ldl
-#)

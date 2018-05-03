@@ -1172,9 +1172,9 @@ protected:
 	std::vector<LinearInterpolation<control_feedback_t,Eigen::aligned_allocator<control_feedback_t> >> 	PmFunc_;
 	std::vector<LinearInterpolation<control_matrix_t,Eigen::aligned_allocator<control_matrix_t> >>     	RmInverseFunc_;
 	std::vector<LinearInterpolation<input_vector_t,Eigen::aligned_allocator<input_vector_t> >>     		RvFunc_;
-	std::vector<LinearInterpolation<input_vector_t,Eigen::aligned_allocator<input_vector_t> >>     	EvProjectedFunc_;
-	std::vector<LinearInterpolation<control_feedback_t,Eigen::aligned_allocator<control_feedback_t> >> CmProjectedFunc_;
-	std::vector<LinearInterpolation<control_matrix_t,Eigen::aligned_allocator<control_matrix_t> >>     DmProjectedFunc_;
+	std::vector<LinearInterpolation<input_vector_t,Eigen::aligned_allocator<input_vector_t> >>     		EvProjectedFunc_;
+	std::vector<LinearInterpolation<control_feedback_t,Eigen::aligned_allocator<control_feedback_t> >> 	CmProjectedFunc_;
+	std::vector<LinearInterpolation<control_matrix_t,Eigen::aligned_allocator<control_matrix_t> >>     	DmProjectedFunc_;
 
 	// function for Riccati error equation
 	std::vector<LinearInterpolation<state_matrix_t, Eigen::aligned_allocator<state_matrix_t> >> SmFuncs_;

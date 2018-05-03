@@ -71,7 +71,7 @@ void LQP<STATE_DIM, INPUT_DIM, NUM_Subsystems>::rolloutCost(
 
 			if (k==0) {
 				subsystemCostFunctionsPtrStock_[i]->setCurrentStateAndControl(timeTrajectoriesStock[i][k], stateTrajectoriesStock[i][k], inputTrajectoriesStock[i][k]);
-				subsystemCostFunctionsPtrStock_[i]->evaluate(currentIntermediateCost);
+				subsystemCostFunctionsPtrStock_[i]->getIntermediateCost(currentIntermediateCost);
 			} else {
 				currentIntermediateCost = nextIntermediateCost;
 			}
@@ -79,7 +79,7 @@ void LQP<STATE_DIM, INPUT_DIM, NUM_Subsystems>::rolloutCost(
 			// feed next state and control to cost function
 			subsystemCostFunctionsPtrStock_[i]->setCurrentStateAndControl(timeTrajectoriesStock[i][k+1], stateTrajectoriesStock[i][k+1], inputTrajectoriesStock[i][k+1]);
 			// evaluate intermediate cost for next time step
-			subsystemCostFunctionsPtrStock_[i]->evaluate(nextIntermediateCost);
+			subsystemCostFunctionsPtrStock_[i]->getIntermediateCost(nextIntermediateCost);
 
 			totalCost += 0.5*(currentIntermediateCost+nextIntermediateCost)*(timeTrajectoriesStock[i][k+1]-timeTrajectoriesStock[i][k]);
 		}
@@ -88,7 +88,7 @@ void LQP<STATE_DIM, INPUT_DIM, NUM_Subsystems>::rolloutCost(
 		if (i==NUM_Subsystems-1)  {
 			scalar_t finalCost;
 			subsystemCostFunctionsPtrStock_[i]->setCurrentStateAndControl(timeTrajectoriesStock[i].back(), stateTrajectoriesStock[i].back(), inputTrajectoriesStock[i].back());
-			subsystemCostFunctionsPtrStock_[i]->terminalCost(finalCost);
+			subsystemCostFunctionsPtrStock_[i]->getTerminalCost(finalCost);
 			totalCost += finalCost;
 		}
 	}
@@ -106,8 +106,8 @@ void LQP<STATE_DIM, INPUT_DIM, NUM_Subsystems>::approximateOptimalControlProblem
 
 		subsystemDerivativesPtrStock_[i]->initializeModel(systemStockIndexes_, switchingTimes_, stateOperatingPointsStock_.at(i), i, "LQP");
 		subsystemDerivativesPtrStock_[i]->setCurrentStateAndControl(0.0, stateOperatingPointsStock_.at(i), inputOperatingPointsStock_.at(i));
-		subsystemDerivativesPtrStock_[i]->getDerivativeState(AmStock_.at(i));
-		subsystemDerivativesPtrStock_[i]->getDerivativesControl(BmStock_.at(i));
+		subsystemDerivativesPtrStock_[i]->flowMapStateDerivative(AmStock_.at(i));
+		subsystemDerivativesPtrStock_[i]->flowMapInputDerivative(BmStock_.at(i));
 
 		if (runAsInitializer_==true) {
 			subsystemDynamicsPtrStock_[i]->initializeModel(systemStockIndexes_, switchingTimes_, stateOperatingPointsStock_.at(i), i, "LQP");
@@ -118,17 +118,17 @@ void LQP<STATE_DIM, INPUT_DIM, NUM_Subsystems>::approximateOptimalControlProblem
 		}
 
 		subsystemCostFunctionsPtrStock_[i]->setCurrentStateAndControl(0, stateOperatingPointsStock_.at(i), inputOperatingPointsStock_.at(i));
-		subsystemCostFunctionsPtrStock_[i]->stateSecondDerivative(QmStock_.at(i));
-		subsystemCostFunctionsPtrStock_[i]->controlSecondDerivative(RmStock_.at(i));
-		subsystemCostFunctionsPtrStock_[i]->stateControlDerivative(PmStock_.at(i));
+		subsystemCostFunctionsPtrStock_[i]->getIntermediateCostSecondDerivativeState(QmStock_.at(i));
+		subsystemCostFunctionsPtrStock_[i]->getIntermediateCostSecondDerivativeInput(RmStock_.at(i));
+		subsystemCostFunctionsPtrStock_[i]->getIntermediateCostDerivativeInputState(PmStock_.at(i));
 		RmInverseStock_.at(i) = RmStock_.at(i).inverse();
 
 		if (runAsInitializer_==true) {
 			QvStock_.at(i).setZero();
 			RvStock_.at(i).setZero();
 		} else {
-			subsystemCostFunctionsPtrStock_[i]->stateDerivative(QvStock_.at(i));
-			subsystemCostFunctionsPtrStock_[i]->controlDerivative(RvStock_.at(i));
+			subsystemCostFunctionsPtrStock_[i]->getIntermediateCostDerivativeState(QvStock_.at(i));
+			subsystemCostFunctionsPtrStock_[i]->getIntermediateCostDerivativeInput(RvStock_.at(i));
 		}
 
 		if (INFO_ON_) {
@@ -148,14 +148,14 @@ void LQP<STATE_DIM, INPUT_DIM, NUM_Subsystems>::approximateOptimalControlProblem
 		makePSD(QmStock_[i]);
 
 		if (i==NUM_Subsystems-1)  {
-			subsystemCostFunctionsPtrStock_[i]->terminalCostStateSecondDerivative(QmFinal_);
+			subsystemCostFunctionsPtrStock_[i]->getTerminalCostSecondDerivativeState(QmFinal_);
 			// making sure that Qm is PSD
 			makePSD(QmFinal_);
 
 			if (runAsInitializer_==true)
 				QvFinal_.setZero();
 			else
-				subsystemCostFunctionsPtrStock_[i]->terminalCostStateDerivative(QvFinal_);
+				subsystemCostFunctionsPtrStock_[i]->getTerminalCostDerivativeState(QvFinal_);
 
 			if (INFO_ON_) {
 				std::cout<< "QvFinal[" << i << "]: \n" << QvFinal_.transpose() << std::endl;

@@ -23,25 +23,31 @@ public:
 
 	typedef AutomaticDifferentiationBase<DOMAIN_DIM, RANGE_DIM, SCALAR_T> BASE;
 
-	using typename BASE::domain_vector_t;
-	using typename BASE::domain_matrix_t;
-	using typename BASE::range_vector_t;
-	using typename BASE::range_matrix_t;
-	using typename BASE::range_doamin_matrix_t;
-	using typename BASE::doamin_range_matrix_t;
+	typedef typename BASE::domain_vector_t			domain_vector_t;
+	typedef typename BASE::domain_matrix_t			domain_matrix_t;
+	typedef typename BASE::range_vector_t			range_vector_t;
+	typedef typename BASE::range_matrix_t			range_matrix_t;
+	typedef typename BASE::range_domain_matrix_t	range_domain_matrix_t;
+	typedef typename BASE::domain_range_matrix_t	domain_range_matrix_t;
 
 	typedef CppAD::cg::CG<SCALAR_T> 	ad_base_t;
     typedef CppAD::AD<ad_base_t> 		ad_scalar_t;
     typedef CppAD::ADFun<ad_base_t> 	ad_fun_t;
 
-    typedef Eigen::Matrix<ad_scalar_t, 1, Eigen::Dynamic, Eigen::RowMajor> ad_dynamic_vector_t;
+    typedef Eigen::Matrix<ad_scalar_t, Eigen::Dynamic, 1> ad_dynamic_vector_t;
     typedef std::function<void(const ad_dynamic_vector_t&, ad_dynamic_vector_t&)> ad_funtion_t;
 
 	CppAdCodeGenInterface(
 			const ad_funtion_t& adFunction,
-			const range_doamin_matrix_t& sparsityPattern);
+			const range_domain_matrix_t& sparsityPattern);
 
-	~CppAdCodeGenInterface() = default;
+	~CppAdCodeGenInterface() {
+//		CppadParallelSetting::resetParallel();
+	}
+
+	CppAdCodeGenInterface(const CppAdCodeGenInterface& rhs);
+
+	CppAdCodeGenInterface* clone() const override;
 
 	void computeForwardModel(bool computeForwardModel) override;
 
@@ -60,7 +66,7 @@ public:
 			const bool verbose = true) override;
 
 	void getSparsityPattern(
-			range_doamin_matrix_t& sparsityPattern) const override;
+			range_domain_matrix_t& sparsityPattern) const override;
 
 	bool getFunctionValue(
 			const domain_vector_t& x,
@@ -68,7 +74,7 @@ public:
 
 	bool getJacobian(
 			const domain_vector_t& x,
-			doamin_range_matrix_t& jacobian) override;
+			domain_range_matrix_t& jacobian) override;
 
 	bool getHessian(
 			const domain_vector_t& x,
@@ -81,7 +87,7 @@ private:
 
 	ad_funtion_t adFunction_;
 
-    range_doamin_matrix_t sparsityPattern_;
+    range_domain_matrix_t sparsityPattern_;
     bool modelFullDerivatives_;
 
     bool computeForwardModel_;
@@ -92,6 +98,7 @@ private:
 	std::vector<size_t> colsJacobian_;
 	std::vector<size_t> rowsHessian_;
 	std::vector<size_t> colsHessian_;
+	std::vector<std::set<size_t> > relatedDependent_;
 
     std::unique_ptr<CppAD::cg::DynamicLib<SCALAR_T>> dynamicLib_;
     std::unique_ptr<CppAD::cg::GenericModel<SCALAR_T>> model_;

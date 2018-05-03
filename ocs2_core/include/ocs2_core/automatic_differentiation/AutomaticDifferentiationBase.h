@@ -24,8 +24,8 @@ public:
 	typedef Eigen::Matrix<SCALAR_T, DOMAIN_DIM, DOMAIN_DIM> domain_matrix_t;
 	typedef Eigen::Matrix<SCALAR_T, RANGE_DIM, 1>			range_vector_t;
 	typedef Eigen::Matrix<SCALAR_T, RANGE_DIM, RANGE_DIM> 	range_matrix_t;
-	typedef Eigen::Matrix<SCALAR_T, RANGE_DIM, DOMAIN_DIM>	range_doamin_matrix_t;
-	typedef Eigen::Matrix<SCALAR_T, DOMAIN_DIM, RANGE_DIM>	doamin_range_matrix_t;
+	typedef Eigen::Matrix<SCALAR_T, RANGE_DIM, DOMAIN_DIM>	range_domain_matrix_t;
+	typedef Eigen::Matrix<SCALAR_T, DOMAIN_DIM, RANGE_DIM>	domain_range_matrix_t;
 
 	AutomaticDifferentiationBase() = default;
 
@@ -45,6 +45,8 @@ public:
 
 	virtual void computeHessianModel(bool computeHessianModel) = 0;
 
+	virtual AutomaticDifferentiationBase* clone() const = 0;
+
 	virtual void createModels(
 			const std::string& modelName,
 			const std::string& libraryFolder = "",
@@ -56,7 +58,7 @@ public:
 			const bool verbose = true) = 0;
 
 	virtual void getSparsityPattern(
-			range_doamin_matrix_t& sparsityPattern) const = 0;
+			range_domain_matrix_t& sparsityPattern) const = 0;
 
 	virtual bool getFunctionValue(
 			const domain_vector_t& x,
@@ -64,7 +66,7 @@ public:
 
 	virtual bool getJacobian(
 			const domain_vector_t& x,
-			doamin_range_matrix_t& jacobian) = 0;
+			domain_range_matrix_t& jacobian) = 0;
 
 	virtual bool getHessian(
 			const domain_vector_t& x,
@@ -73,7 +75,7 @@ public:
 
 protected:
 	inline void extractSparsityPattern(
-			const range_doamin_matrix_t& sparsityPattern,
+			const range_domain_matrix_t& sparsityPattern,
 			std::vector<size_t>& rowsJacobian,
 			std::vector<size_t>& colsJacobian,
 			std::vector<size_t>& rowsHessian,

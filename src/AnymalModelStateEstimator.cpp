@@ -11,7 +11,7 @@ namespace anymal {
 
 
 AnymalModelStateEstimator::AnymalModelStateEstimator()
-: Base(new AnymalCom())
+: Base(AnymalCom())
 {}
 
 AnymalModelStateEstimator::AnymalModelStateEstimator(const AnymalModelStateEstimator& rhs)

@@ -9,10 +9,9 @@
 
 namespace anymal {
 
-AnymalComKinoConstraint::AnymalComKinoConstraint(
-		const scalar_t& gravitationalAcceleration, const switched_model::Options& options)
+AnymalComKinoConstraint::AnymalComKinoConstraint(const switched_model::Model_Settings& options)
 
-: Base(new AnymalKinematics(), new AnymalCom(), gravitationalAcceleration, options)
+: Base(AnymalKinematics(), AnymalCom(), options)
 {}
 
 AnymalComKinoConstraint::AnymalComKinoConstraint(const AnymalComKinoConstraint& rhs)

@@ -24,6 +24,12 @@ public:
 
 	enum { LF=0,  RF=1,  LH=2,  RH=3 };
 
+	AnymalKinematics()
+	{}
+
+	~AnymalKinematics()
+	{}
+
 	/**
 	 * Clone AnymalKinematics class.
 	 */

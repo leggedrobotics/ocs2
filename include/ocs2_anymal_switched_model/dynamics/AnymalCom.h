@@ -33,6 +33,9 @@ public:
 	 */
 	AnymalCom();
 
+	~AnymalCom()
+	{}
+
 	/**
 	 * Clone AnymalCom class.
 	 */

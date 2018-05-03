@@ -19,7 +19,7 @@ AnymalCost::AnymalCost(const state_matrix_t& Q,
 		const scalar_t& sigma /*=1*/,
 		const scalar_t& tp /*=0*/)
 
-	: Base(new AnymalKinematics(), new AnymalCom(),
+	: Base(AnymalKinematics(), AnymalCom(),
 		Q, R, QFinal, xFinal, copWeightMax, QIntermediate, xNominalIntermediate, sigma, tp)
 {}
 

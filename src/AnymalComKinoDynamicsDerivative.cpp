@@ -9,10 +9,8 @@
 
 namespace anymal {
 
-AnymalComKinoDynamicsDerivative::AnymalComKinoDynamicsDerivative(
-		const scalar_t& gravitationalAcceleration, const switched_model::Options& options)
-
-: Base(new AnymalKinematics(), new AnymalCom(), gravitationalAcceleration, options)
+AnymalComKinoDynamicsDerivative::AnymalComKinoDynamicsDerivative(const switched_model::Model_Settings& options)
+: Base(AnymalKinematics(), AnymalCom(), options)
 {}
 
 AnymalComKinoDynamicsDerivative::AnymalComKinoDynamicsDerivative(const AnymalComKinoDynamicsDerivative& rhs)

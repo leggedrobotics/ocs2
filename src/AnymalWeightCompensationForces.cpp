@@ -12,7 +12,7 @@ namespace anymal {
 
 
 AnymalWeightCompensationForces::AnymalWeightCompensationForces()
-	: AnymalWeightCompensationForces::Base(new AnymalKinematics, new AnymalCom)
+	: Base(AnymalKinematics(), AnymalCom())
 {}
 
 AnymalWeightCompensationForces::AnymalWeightCompensationForces(const AnymalWeightCompensationForces& rhs)

@@ -2,7 +2,6 @@
 #define ANYMAL_COMKINODYNAMICS_H_
 
 #include <c_switched_model_interface/dynamics/ComKinoDynamicsBase.h>
-#include <c_switched_model_interface/core/Options.h>
 #include <c_switched_model_interface/core/MotionPhaseDefinition.h>
 #include <ocs2_anymal_switched_model/dynamics/AnymalCom.h>
 #include <ocs2_anymal_switched_model/kinematics/AnymalKinematics.h>
@@ -16,8 +15,7 @@ public:
 
 	typedef switched_model::ComKinoDynamicsBase<12> Base;
 
-	AnymalComKinoDynamics(const scalar_t& gravitationalAcceleration=9.81,
-			const switched_model::Options& options = switched_model::Options());
+	AnymalComKinoDynamics(const switched_model::Model_Settings& options = switched_model::Model_Settings());
 
 	AnymalComKinoDynamics(const AnymalComKinoDynamics& rhs);
 

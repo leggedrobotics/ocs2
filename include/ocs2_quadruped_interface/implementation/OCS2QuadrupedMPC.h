@@ -16,8 +16,8 @@ OCS2QuadrupedMPC<JOINT_COORD_SIZE>::OCS2QuadrupedMPC(
 		const quadruped_interface_ptr_t& ocs2QuadrupedInterfacePtr,
 		const std::string& robotName /*robot*/)
 
-: ocs2QuadrupedInterfacePtr_(ocs2QuadrupedInterfacePtr),
-  robotName_(robotName)
+		: ocs2QuadrupedInterfacePtr_(ocs2QuadrupedInterfacePtr),
+		  robotName_(robotName)
 {
 	reset();
 
@@ -39,12 +39,18 @@ template <size_t JOINT_COORD_SIZE>
 OCS2QuadrupedMPC<JOINT_COORD_SIZE>::~OCS2QuadrupedMPC() {
 
 #ifdef PUBLISH_THREAD
-	std::cerr << "Shutting down workers." << std::endl;
+	std::cerr << "Shutting down workers ..." << std::endl;
 
-	isPublish_ = false;
-	publisherWorker_.join();
+	std::unique_lock<std::mutex> lk(publishMutex_);
+	stopPublishing_ = true;
+	lk.unlock();
 
-	std::cerr << "All workers shut down" << std::endl;
+	msgReady_.notify_all();
+
+	if (publisherWorker_.joinable())
+		publisherWorker_.join();
+
+	std::cerr << "All workers are shut down." << std::endl;
 #endif
 
 }
@@ -55,9 +61,8 @@ OCS2QuadrupedMPC<JOINT_COORD_SIZE>::~OCS2QuadrupedMPC() {
 template <size_t JOINT_COORD_SIZE>
 void OCS2QuadrupedMPC<JOINT_COORD_SIZE>::sigintHandler(int sig)  {
 
-	std::cerr << "Shutting MPC node. " << std::endl;
-	ros::shutdown();
-	exit(0);
+	ROS_INFO_STREAM("Shutting MPC node.");
+	::ros::shutdown();
 }
 
 /******************************************************************************************************/
@@ -77,7 +82,7 @@ void OCS2QuadrupedMPC<JOINT_COORD_SIZE>::reset() {
 	targetReachingDuration_ = 1.0;
 	targetPoseDisplacement_ = base_coordinate_t::Zero();
 
-	isPublish_ = true;
+	stopPublishing_ = false;
 	readyToPublish_ = false;
 }
 
@@ -100,11 +105,11 @@ void OCS2QuadrupedMPC<JOINT_COORD_SIZE>::publishOptimizeTrajectories(
 		const scalar_t& planInitTime,
 		const rbd_state_vector_t& planInitState,
 		const bool& controllerIsUpdated,
-		const scalar_array2_ptr_t& timeTrajectoriesStockPtr,
-		const state_vector_array2_ptr_t& stateTrajectoriesStockPtr,
-		const input_vector_array2_ptr_t& inputTrajectoriesStockPtr,
-		const size_array_t& gaitSequence,
-		const scalar_array_t& switchingTimes)  {
+		const std::vector<scalar_array_t>*& timeTrajectoriesStockPtr,
+		const state_vector_array2_t*& stateTrajectoriesStockPtr,
+		const input_vector_array2_t*& inputTrajectoriesStockPtr,
+		const scalar_array_t*& eventTimesPtr,
+		const size_array_t*& phaseSequencePtr)  {
 
 #ifdef PUBLISH_THREAD
 	std::unique_lock<std::mutex> lk(publishMutex_);
@@ -115,12 +120,12 @@ void OCS2QuadrupedMPC<JOINT_COORD_SIZE>::publishOptimizeTrajectories(
 	for (size_t i=0; i<RBD_STATE_DIM; i++)
 		switchedModelTrajectoryMsg_.planInitState[i] = planInitState(i);
 
+	gaitSequenceMsg(eventTimesPtr, phaseSequencePtr,
+			switchedModelTrajectoryMsg_.gaitSequence);
+
 	switchedModelTrajectoryMsg_.timeTrajectory.clear();
 	switchedModelTrajectoryMsg_.stateTrajectory.clear();
 	switchedModelTrajectoryMsg_.inputTrajectory.clear();
-	switchedModelTrajectoryMsg_.subsystemNum.clear();
-	switchedModelTrajectoryMsg_.switchingTimes.clear();
-	switchedModelTrajectoryMsg_.gaitSequence.clear();
 
 	const scalar_t t0 = planInitTime + currentDelay_*1e-3;
 	const scalar_t tf = planInitTime + mpcSettings_.rosMsgTimeWindow_*1e-3;
@@ -138,9 +143,6 @@ void OCS2QuadrupedMPC<JOINT_COORD_SIZE>::publishOptimizeTrajectories(
 		if (N == 0)  continue;
 		if (timeTrajectory.back()  < t0)  continue;
 		if (timeTrajectory.front() > tf)  continue;
-
-		switchedModelTrajectoryMsg_.gaitSequence.push_back(gaitSequence[i]);
-		switchedModelTrajectoryMsg_.switchingTimes.push_back(switchingTimes[i]);
 
 		lastActiveSubsystem = i;
 		for (size_t k=0; k<N; k++) {
@@ -160,12 +162,8 @@ void OCS2QuadrupedMPC<JOINT_COORD_SIZE>::publishOptimizeTrajectories(
 			switchedModelTrajectoryMsg_.stateTrajectory.push_back(stateBoost);
 			switchedModelTrajectoryMsg_.inputTrajectory.push_back(inputBoost);
 
-			switchedModelTrajectoryMsg_.subsystemNum.push_back(i);
-
 		}  // end of k loop
 	}  // end of i loop
-
-	switchedModelTrajectoryMsg_.switchingTimes.push_back(switchingTimes[lastActiveSubsystem+1]);
 
 #ifdef PUBLISH_THREAD
 	readyToPublish_ = true;
@@ -185,9 +183,9 @@ void OCS2QuadrupedMPC<JOINT_COORD_SIZE>::publishSlqController(
 		const scalar_t& planInitTime,
 		const rbd_state_vector_t& planInitState,
 		const bool& controllerIsUpdated,
-		const controller_array_ptr_t& controllerTrajectoriesStock,
-		const size_array_t& gaitSequence,
-		const scalar_array_t& switchingTimes)  {
+		const controller_array_t*& controllerStockPtr,
+		const scalar_array_t*& eventTimesPtr,
+		const size_array_t*& phaseSequencePtr)  {
 
 #ifdef PUBLISH_THREAD
 	std::unique_lock<std::mutex> lk(publishMutex_);
@@ -195,17 +193,19 @@ void OCS2QuadrupedMPC<JOINT_COORD_SIZE>::publishSlqController(
 	ocs2_ros_msg::slq_controller slqControllerMsg;
 	bool nanFound = false;
 
-	slqControllerTrajectoryMsg_.numInputs  = INPUT_DIM;
-	slqControllerTrajectoryMsg_.numOutputs = STATE_DIM;
+	slqControllerTrajectoryMsg_.dimInput = INPUT_DIM;
+	slqControllerTrajectoryMsg_.dimState = STATE_DIM;
 
 	slqControllerTrajectoryMsg_.controllerIsUpdated = controllerIsUpdated;
 	slqControllerTrajectoryMsg_.planInitTime = planInitTime;
 	for (size_t i=0; i<RBD_STATE_DIM; i++)
 		slqControllerTrajectoryMsg_.planInitState[i] = planInitState(i);
 
+	gaitSequenceMsg(eventTimesPtr, phaseSequencePtr,
+			slqControllerTrajectoryMsg_.gaitSequence);
+
+	//
 	slqControllerTrajectoryMsg_.slqControllerTrajectory.clear();
-	slqControllerTrajectoryMsg_.switchingTimes.clear();
-	slqControllerTrajectoryMsg_.gaitSequence.clear();
 
 	const scalar_t t0 = planInitTime + currentDelay_*1e-3;
 	const scalar_t tf = planInitTime + mpcSettings_.rosMsgTimeWindow_*1e-3;
@@ -213,18 +213,15 @@ void OCS2QuadrupedMPC<JOINT_COORD_SIZE>::publishSlqController(
 		std::cout << "WARNING: Message publishing time-horizon is shorter than the MPC delay!" << std::endl;
 
 	int lastActiveSubsystem = -1;
-	for (size_t i=0; i<controllerTrajectoriesStock->size(); i++)  {
+	for (size_t i=0; i<controllerStockPtr->size(); i++)  {
 
-		const controller_t& controller = controllerTrajectoriesStock->at(i);
+		const controller_t& controller = controllerStockPtr->at(i);
 
 		size_t N = controller.time_.size();
 
 		if (N == 0)  continue;
 		if (controller.time_.back()  < t0)  continue;
 		if (controller.time_.front() > tf)  continue;
-
-		slqControllerTrajectoryMsg_.gaitSequence.push_back(gaitSequence[i]);
-		slqControllerTrajectoryMsg_.switchingTimes.push_back(switchingTimes[i]);
 
 		lastActiveSubsystem = i;
 		for (size_t k=0; k<N; k++) {
@@ -245,12 +242,9 @@ void OCS2QuadrupedMPC<JOINT_COORD_SIZE>::publishSlqController(
 
 			slqControllerTrajectoryMsg_.slqControllerTrajectory.push_back(slqControllerMsg);
 
-			slqControllerMsg.subsystemNum = i;
 		}  // end of k loop
 
 	}  // end of i loop
-
-	slqControllerTrajectoryMsg_.switchingTimes.push_back(switchingTimes[lastActiveSubsystem+1]);
 
 #ifdef PUBLISH_THREAD
 	readyToPublish_ = true;
@@ -266,7 +260,30 @@ void OCS2QuadrupedMPC<JOINT_COORD_SIZE>::publishSlqController(
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t JOINT_COORD_SIZE>
-void OCS2QuadrupedMPC<JOINT_COORD_SIZE>::stateCallback(const ocs2_ros_msg::rbd_state_vector::ConstPtr msg) {
+template <class ContainerAllocator>
+void OCS2QuadrupedMPC<JOINT_COORD_SIZE>::gaitSequenceMsg(
+		const scalar_array_t*& eventTimesPtr,
+		const size_array_t*& phaseSequencePtr,
+		ocs2_ros_msg::gait_sequence_<ContainerAllocator>& gaitSequenceMsg) const {
+
+	//
+	gaitSequenceMsg.eventTimes.clear();
+	gaitSequenceMsg.eventTimes.reserve(eventTimesPtr->size());
+	for (const scalar_t& ti: *eventTimesPtr)
+		gaitSequenceMsg.eventTimes.push_back(ti);
+
+	//
+	gaitSequenceMsg.phaseSequence.clear();
+	gaitSequenceMsg.phaseSequence.reserve(phaseSequencePtr->size());
+	for (const size_t& pi: *phaseSequencePtr)
+		gaitSequenceMsg.phaseSequence.push_back(pi);
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+template <size_t JOINT_COORD_SIZE>
+void OCS2QuadrupedMPC<JOINT_COORD_SIZE>::stateCallback(const ocs2_ros_msg::rbd_state_vector::ConstPtr& msg) {
 
 	// current time and state
 	scalar_t currentTime = msg->timeStamp;
@@ -285,11 +302,14 @@ void OCS2QuadrupedMPC<JOINT_COORD_SIZE>::stateCallback(const ocs2_ros_msg::rbd_s
 
 		// the default state
 		ocs2QuadrupedInterfacePtr_->computeSwitchedModelState(rbdCurrentState, initState_);
+		// Designs weight compensating input.
+		ocs2QuadrupedInterfacePtr_->designWeightCompensatingInput(initState_, initInput_);
 
+		// set the goal
 		if (mpcSettings_.recedingHorizon_==true) {
 			targetPositionIsUpdated_ = true;
 			targetPoseDisplacement_.setZero();
-			targetReachingDuration_ = ocs2QuadrupedInterfacePtr_->numPhasesInfullGaitCycle() * ocs2QuadrupedInterfacePtr_->strideTime();
+			targetReachingDuration_ = 1.0;
 		} else {
 			targetPositionIsUpdated_ = false;
 		}
@@ -298,23 +318,54 @@ void OCS2QuadrupedMPC<JOINT_COORD_SIZE>::stateCallback(const ocs2_ros_msg::rbd_s
 	// update target position
 	if(targetPositionIsUpdated_==true) {
 
+//		targetPositionIsUpdated_ = false;
+//
+//		state_vector_t currentState;
+//		ocs2QuadrupedInterfacePtr_->computeSwitchedModelState(rbdCurrentState, currentState);
+//
+//		state_vector_t targetState;
+//		targetState.template segment<3>(0) = initState_. template segment<3>(0)   + targetPoseDisplacement_.template segment<3>(0);
+//		targetState.template segment<2>(3) = currentState. template segment<2>(3) + targetPoseDisplacement_.template segment<2>(3);
+//		targetState.template segment<1>(5) = initState_. template segment<1>(5)   + targetPoseDisplacement_.template segment<1>(5);
+//		targetState.template segment<6>(6).setZero();
+//		targetState.template segment<12>(12) = initState_.template segment<12>(12);
+//
+//		ocs2QuadrupedInterfacePtr_->setNewGoalStateMPC(targetReachingDuration_, targetState);
+
 		targetPositionIsUpdated_ = false;
 
 		state_vector_t currentState;
 		ocs2QuadrupedInterfacePtr_->computeSwitchedModelState(rbdCurrentState, currentState);
 
-		state_vector_t targetState;
-		targetState.template segment<3>(0) = initState_. template segment<3>(0)   + targetPoseDisplacement_.template segment<3>(0);
-		targetState.template segment<2>(3) = currentState. template segment<2>(3) + targetPoseDisplacement_.template segment<2>(3);
-		targetState.template segment<1>(5) = initState_. template segment<1>(5)   + targetPoseDisplacement_.template segment<1>(5);
-		targetState.template segment<6>(6).setZero();
-		targetState.template segment<12>(12) = initState_.template segment<12>(12);
+		// nominal time
+		tGoalTrajectory_.resize(2);
+		tGoalTrajectory_[0] = currentTime + ocs2QuadrupedInterfacePtr_->getModelSettings().mpcGoalCommandDelay_;
+		tGoalTrajectory_[1] = currentTime + ocs2QuadrupedInterfacePtr_->getModelSettings().mpcGoalCommandDelay_ + targetReachingDuration_;
 
-		ocs2QuadrupedInterfacePtr_->setNewGoalStateMPC(targetReachingDuration_, targetState);
+		// nominal state
+		xGoalTrajectory_.resize(2);
+		xGoalTrajectory_[0].template head<6>()     = currentState.template head<6>();
+		xGoalTrajectory_[0].template segment<6>(6) = base_coordinate_t::Zero();
+		xGoalTrajectory_[0].template tail<12>()    = initState_.template tail<12>();
+
+		xGoalTrajectory_[1].template segment<3>(0) = initState_. template segment<3>(0)   + targetPoseDisplacement_.template segment<3>(0);
+		xGoalTrajectory_[1].template segment<2>(3) = currentState. template segment<2>(3) + targetPoseDisplacement_.template segment<2>(3);
+		xGoalTrajectory_[1].template segment<1>(5) = initState_. template segment<1>(5)   + targetPoseDisplacement_.template segment<1>(5);
+		xGoalTrajectory_[1].template segment<6>(6) = base_coordinate_t::Zero();
+		xGoalTrajectory_[1].template tail<12>()    = initState_.template tail<12>();
+
+		// nominal input
+		uGoalTrajectory_.resize(2);
+		uGoalTrajectory_[0] = initInput_;
+		uGoalTrajectory_[1] = initInput_;
+
+		ocs2QuadrupedInterfacePtr_->getMPC().setNewGoalTrajectories(tGoalTrajectory_, xGoalTrajectory_, uGoalTrajectory_);
 
 		// display
-		std::cerr << "### The target position is updated to at time " << std::setprecision(4) << currentTime << " to:    "
-				<< targetState.template segment<3>(3).transpose() << std::endl;
+		std::cerr << "### The target position is updated at time " << std::setprecision(4) << currentTime << " to: \t [";
+		for (size_t i=0; i<3; i++)
+			std::cerr << xGoalTrajectory_[1].template segment<3>(3)(i) << ", ";
+		std::cerr << "\b\b]" << std::endl;
 
 	} else if (mpcSettings_.recedingHorizon_==false) {
 		return;
@@ -322,15 +373,23 @@ void OCS2QuadrupedMPC<JOINT_COORD_SIZE>::stateCallback(const ocs2_ros_msg::rbd_s
 
 	// run SLQ-MPC
 	bool controllerIsUpdated = ocs2QuadrupedInterfacePtr_->runMPC(currentTime, rbdCurrentState);
-	// get optimized output
-	controllersStock_ = ocs2QuadrupedInterfacePtr_->getControllerPtr();
-	timeTrajectoriesStock_  = ocs2QuadrupedInterfacePtr_->getTimeTrajectoriesPtr();
-	stateTrajectoriesStock_ = ocs2QuadrupedInterfacePtr_->getStateTrajectoriesPtr();
-	inputTrajectoriesStock_ = ocs2QuadrupedInterfacePtr_->getInputTrajectoriesPtr();
+	// get optimized controller
+	const controller_array_t* controllersStockPtr(nullptr);
+	ocs2QuadrupedInterfacePtr_->getOptimizedControllerPtr(controllersStockPtr);
+	// get optimized trajectories
+	const std::vector<scalar_array_t>* timeTrajectoriesStockPtr(nullptr);
+	const state_vector_array2_t* stateTrajectoriesStockPtr(nullptr);
+	const input_vector_array2_t* inputTrajectoriesStockPtr(nullptr);
+	ocs2QuadrupedInterfacePtr_->getOptimizedTrajectoriesPtr(
+			timeTrajectoriesStockPtr,
+			stateTrajectoriesStockPtr,
+			inputTrajectoriesStockPtr);
 
 	// Switching times and motion sequence
-	ocs2QuadrupedInterfacePtr_->getSwitchingTimes(switchingTimes_);
-	ocs2QuadrupedInterfacePtr_->getGaitSequence(gaitSequence_);
+	const scalar_array_t* eventTimesPtr(nullptr);
+	ocs2QuadrupedInterfacePtr_->getEventTimesPtr(eventTimesPtr);
+	const size_array_t* phaseSequencePtr(nullptr);
+	ocs2QuadrupedInterfacePtr_->getSubsystemsSequencePtr(phaseSequencePtr);
 
 	// messure the delay for sending ROS messages
 	if(mpcSettings_.adaptiveRosMsgTimeWindow_==true || mpcSettings_.debugPrint_){
@@ -362,12 +421,13 @@ void OCS2QuadrupedMPC<JOINT_COORD_SIZE>::stateCallback(const ocs2_ros_msg::rbd_s
 
 	// publish optimized output
 	if (mpcSettings_.useFeedbackPolicy_==true) {
-		publishSlqController(currentTime, rbdCurrentState, controllerIsUpdated, controllersStock_,
-				gaitSequence_, switchingTimes_);
+		publishSlqController(currentTime, rbdCurrentState, controllerIsUpdated,
+				controllersStockPtr,
+				eventTimesPtr, phaseSequencePtr);
 	} else {
 		publishOptimizeTrajectories(currentTime, rbdCurrentState, controllerIsUpdated,
-				timeTrajectoriesStock_, stateTrajectoriesStock_, inputTrajectoriesStock_,
-				gaitSequence_, switchingTimes_);
+				timeTrajectoriesStockPtr, stateTrajectoriesStockPtr, inputTrajectoriesStockPtr,
+				eventTimesPtr, phaseSequencePtr);
 	}
 
 #endif
@@ -378,16 +438,20 @@ void OCS2QuadrupedMPC<JOINT_COORD_SIZE>::stateCallback(const ocs2_ros_msg::rbd_s
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t JOINT_COORD_SIZE>
-void OCS2QuadrupedMPC<JOINT_COORD_SIZE>::targetPoseCallback(const geometry_msgs::Point& msg) {
+void OCS2QuadrupedMPC<JOINT_COORD_SIZE>::targetPoseCallback(const geometry_msgs::Pose& basePoseMsg) {
 
 	targetPositionIsUpdated_ = true;
 
-	targetPoseDisplacement_(0) = 0.0;
-	targetPoseDisplacement_(1) = 0.0;
-	targetPoseDisplacement_(2) = 0.0;
-	targetPoseDisplacement_(3) = msg.x;
-	targetPoseDisplacement_(4) = msg.y;
-	targetPoseDisplacement_(5) = msg.z;
+	Eigen::Quaternion<scalar_t> qxyz(
+			basePoseMsg.orientation.w,
+			basePoseMsg.orientation.x,
+			basePoseMsg.orientation.y,
+			basePoseMsg.orientation.z);
+
+	targetPoseDisplacement_.template head<3>() = qxyz.toRotationMatrix().eulerAngles(0, 1, 2);
+	targetPoseDisplacement_(3) = basePoseMsg.position.x;
+	targetPoseDisplacement_(4) = basePoseMsg.position.y;
+	targetPoseDisplacement_(5) = basePoseMsg.position.z;
 
 	// x direction
 	size_t numReqiredStepsX = std::ceil( std::abs(targetPoseDisplacement_(3)) / (1.0*ocs2QuadrupedInterfacePtr_->strideLength()) );
@@ -405,14 +469,20 @@ void OCS2QuadrupedMPC<JOINT_COORD_SIZE>::targetPoseCallback(const geometry_msgs:
 template <size_t JOINT_COORD_SIZE>
 void OCS2QuadrupedMPC<JOINT_COORD_SIZE>::publisherWorkerThread() {
 
-	while(isPublish_) {
+	while(true) {
 
 		std::unique_lock<std::mutex> lk(publishMutex_);
-		msgReady_.wait(lk, [&]{return readyToPublish_;});
 
-		slqControllerTrajectoryMsgBuffer_ = slqControllerTrajectoryMsg_;
-		switchedModelTrajectoryMsgBuffer_ = switchedModelTrajectoryMsg_;
+		msgReady_.wait(lk, [&]{return (readyToPublish_ || stopPublishing_);});
+
+		if (stopPublishing_==true)  break;
+
+		if (mpcSettings_.useFeedbackPolicy_==true)
+			slqControllerTrajectoryMsgBuffer_ = std::move(slqControllerTrajectoryMsg_);
+		else
+			switchedModelTrajectoryMsgBuffer_ = std::move(switchedModelTrajectoryMsg_);
 		readyToPublish_ = false;
+
 		lk.unlock();
 
 		// Send data back to main()
@@ -433,12 +503,12 @@ void OCS2QuadrupedMPC<JOINT_COORD_SIZE>::launchNodes(int argc, char* argv[]) {
 	reset();
 
 	// display
-	std::cerr << "ROS node is setting up."<< std::endl;
+	ROS_INFO_STREAM("MPC node is setting up ...");
 
 	// setup ROS
-	ros::init(argc, argv, robotName_+"_mpc", ros::init_options::NoSigintHandler);
+	::ros::init(argc, argv, robotName_+"_mpc", ::ros::init_options::NoSigintHandler);
 	signal(SIGINT, OCS2QuadrupedMPC::sigintHandler);
-	ros::NodeHandle nodeHandler;
+	::ros::NodeHandle nodeHandler;
 
 	// SLQ-MPC subscribers
 	stateSubscriber_ = nodeHandler.subscribe(robotName_+"_state", 1, &OCS2QuadrupedMPC::stateCallback, this);
@@ -457,10 +527,11 @@ void OCS2QuadrupedMPC<JOINT_COORD_SIZE>::launchNodes(int argc, char* argv[]) {
 #ifdef PUBLISH_THREAD
 	std::cerr << "Publishing SLQ-MPC messages on a sparate thread." << std::endl;
 #endif
+
+	ROS_INFO_STREAM("MPC node is ready.");
 	std::cerr << "Start spinning now ... " << std::endl;
 
-
-	ros::spin();
+	::ros::spin();
 }
 
 

@@ -17,15 +17,17 @@
 #include <ctime>
 #include <chrono>
 #include <Eigen/Dense>
+#include <Eigen/Geometry>
 #include <thread>
 #include <mutex>
 #include <condition_variable>
 
 #include <ros/ros.h>
-#include <geometry_msgs/Point.h>
+#include <geometry_msgs/Pose.h>
 
 // OCS2 messages
 #include <ocs2_ros_msg/rbd_state_vector.h>
+#include <ocs2_ros_msg/gait_sequence.h>
 #include <ocs2_ros_msg/switched_model_trajectory.h>
 #include <ocs2_ros_msg/slq_controller_trajectory.h>
 #include <ocs2_ros_msg/dummy.h>
@@ -35,6 +37,7 @@
 
 //#define PUBLISH_DUMMY
 #define PUBLISH_THREAD
+
 
 namespace switched_model {
 
@@ -74,11 +77,7 @@ public:
 	typedef typename quadruped_interface_t::input_vector_array2_t	input_vector_array2_t;
 	typedef typename quadruped_interface_t::controller_t			controller_t;
 	typedef typename quadruped_interface_t::controller_array_t		controller_array_t;
-
-	typedef std::shared_ptr<const std::vector<scalar_array_t>> 	scalar_array2_ptr_t;
-	typedef std::shared_ptr<const state_vector_array2_t> 		state_vector_array2_ptr_t;
-	typedef std::shared_ptr<const input_vector_array2_t> 		input_vector_array2_ptr_t;
-	typedef std::shared_ptr<const controller_array_t> 			controller_array_ptr_t;
+	typedef typename quadruped_interface_t::control_feedback_t 	   	control_feedback_t;
 
 
 	OCS2QuadrupedMPC(const quadruped_interface_ptr_t& ocs2QuadrupedInterfacePtr,
@@ -88,31 +87,37 @@ public:
 
 	void reset();
 
+	void launchNodes(int argc, char* argv[]);
+
 	void publishDummy();
 
 	void publishOptimizeTrajectories(
 			const scalar_t& planInitTime,
 			const rbd_state_vector_t& planInitState,
 			const bool& controllerIsUpdated,
-			const scalar_array2_ptr_t& timeTrajectoriesStockPtr,
-			const state_vector_array2_ptr_t& stateTrajectoriesStockPtr,
-			const input_vector_array2_ptr_t& inputTrajectoriesStockPtr,
-			const size_array_t& switchingModeSequence,
-			const scalar_array_t& switchingTimes);
+			const std::vector<scalar_array_t>*& timeTrajectoriesStockPtr,
+			const state_vector_array2_t*& stateTrajectoriesStockPtr,
+			const input_vector_array2_t*& inputTrajectoriesStockPtr,
+			const scalar_array_t*& eventTimesPtr,
+			const size_array_t*& gaitSequencePtr);
 
 	void publishSlqController(
 			const scalar_t& planInitTime,
 			const rbd_state_vector_t& planInitState,
 			const bool& controllerIsUpdated,
-			const controller_array_ptr_t& controllerTrajectoriesStock,
-			const size_array_t& switchingModeSequence,
-			const scalar_array_t& switchingTimes);
+			const controller_array_t*& controllerStockPtr,
+			const scalar_array_t*& eventTimesPtr,
+			const size_array_t*& gaitSequencePtr);
 
-	void stateCallback(const ocs2_ros_msg::rbd_state_vector::ConstPtr msg);
+	template <class ContainerAllocator>
+	void gaitSequenceMsg(
+			const scalar_array_t*& eventTimesPtr,
+			const size_array_t*& gaitSequencePtr,
+			ocs2_ros_msg::gait_sequence_<ContainerAllocator>& gaitSequenceMsg) const;
 
-	void targetPoseCallback(const geometry_msgs::Point& msg);
+	void stateCallback(const ocs2_ros_msg::rbd_state_vector::ConstPtr& msg);
 
-	void launchNodes(int argc, char* argv[]);
+	void targetPoseCallback(const geometry_msgs::Pose& msg);
 
 	static void sigintHandler(int sig);
 
@@ -128,14 +133,14 @@ private:
 	ocs2::MPC_Settings mpcSettings_;
 
 	// Publishers and subscribers
-	ros::Subscriber stateSubscriber_;
-	ros::Subscriber targetPoseSubscriber_;
-	ros::Publisher  slqTrajectoriesPublisher_;
-	ros::Publisher  slqControllerPublisher_;
-	ros::Publisher  dummyPublisher_;
+	::ros::Subscriber stateSubscriber_;
+	::ros::Subscriber targetPoseSubscriber_;
+	::ros::Publisher  slqTrajectoriesPublisher_;
+	::ros::Publisher  slqControllerPublisher_;
+	::ros::Publisher  dummyPublisher_;
 
 	// Threading for publishing data
-	bool isPublish_;
+	bool stopPublishing_;
 	bool readyToPublish_;
 	std::thread publisherWorker_;
 	std::mutex publishMutex_;
@@ -143,6 +148,7 @@ private:
 
 	bool initialCall_;
 	state_vector_t initState_;
+	input_vector_t initInput_;
 
 	size_t numIterations_;
 	scalar_t maxDelay_;
@@ -155,15 +161,9 @@ private:
 	bool targetPositionIsUpdated_;
 	scalar_t targetReachingDuration_;
 	base_coordinate_t targetPoseDisplacement_;
-
-	// optimized outputs
-	controller_array_ptr_t 		controllersStock_;
-	scalar_array2_ptr_t 		timeTrajectoriesStock_;
-	state_vector_array2_ptr_t 	stateTrajectoriesStock_;
-	input_vector_array2_ptr_t 	inputTrajectoriesStock_;
-	// gait characteristics
-	size_array_t gaitSequence_;
-	scalar_array_t switchingTimes_;
+	scalar_array_t tGoalTrajectory_;
+	state_vector_array_t xGoalTrajectory_;
+	input_vector_array_t uGoalTrajectory_;
 
 	// optimal outputs messages
 	ocs2_ros_msg::slq_controller_trajectory slqControllerTrajectoryMsg_;

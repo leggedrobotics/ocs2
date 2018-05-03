@@ -19,14 +19,16 @@ OCS2QuadrupedInterface<JOINT_COORD_SIZE>::OCS2QuadrupedInterface(
 : kinematicModelPtr_(kinematicModel.clone()),
   comModelPtr_(comModel.clone()),
   switchedModelStateEstimator_(comModel)
-
 {
 	// load sertting from loading file
 	loadSettings(pathToConfigFolder);
 
 	// logic rule
-	logicRules_ = logic_rules_t(modelSettings_.swingLegLiftOff_, 1.0 /*swingTimeScale*/);
-	logicRules_.setMotionConstraints(initSwitchingTimes_, initSwitchingModes_, gapIndicatorPtrs_);
+	feet_z_planner_ptr_t feetZPlannerPtr( new feet_z_planner_t(modelSettings_.swingLegLiftOff_, 1.0 /*swingTimeScale*/) );
+
+	logicRulesPtr_ = logic_rules_ptr_t( new logic_rules_t(feetZPlannerPtr) );
+
+	logicRulesPtr_->setMotionConstraints(initSwitchingModes_, initEventTimes_, gapIndicatorPtrs_);
 }
 
 /******************************************************************************************************/
@@ -67,7 +69,8 @@ void OCS2QuadrupedInterface<JOINT_COORD_SIZE>::loadSettings(const std::string& p
 	xFinal_.template head<6>() += comFinalPose;
 
 	// load the switchingModes
-	loadSwitchingModes(pathToConfigFile, initSwitchingModes_, true);
+	std::cerr << std::endl;
+	loadModes(pathToConfigFile, "switchingModes", initSwitchingModes_, true);
 	initNumSubsystems_ = initSwitchingModes_.size();
 	// display
 	std::cerr << "Initial Switching Modes: {";
@@ -84,19 +87,19 @@ void OCS2QuadrupedInterface<JOINT_COORD_SIZE>::loadSettings(const std::string& p
 	for (size_t i=0; i<initNumSubsystems_; i++)
 		if (initSwitchingModes_[i] != FLY)
 			NumNonFlyingSubSystems++;
-	initSwitchingTimes_.resize(initNumSubsystems_);
-	initSwitchingTimes_.front() = initTime_;
+	initEventTimes_.resize(initNumSubsystems_);
+	initEventTimes_.front() = initTime_;
 	for (size_t i=0; i<initNumSubsystems_-1; i++)
 		if (initSwitchingModes_[i] != FLY)
-			initSwitchingTimes_[i+1] = initSwitchingTimes_[i] + (finalTime_-initTime_)/NumNonFlyingSubSystems;
+			initEventTimes_[i+1] = initEventTimes_[i] + (finalTime_-initTime_)/NumNonFlyingSubSystems;
 		else
-			initSwitchingTimes_[i+1] = initSwitchingTimes_[i] + 0.2;
-	initSwitchingTimes_.erase(initSwitchingTimes_.begin());
+			initEventTimes_[i+1] = initEventTimes_[i] + 0.2;
+	initEventTimes_.erase(initEventTimes_.begin());
 	// display
-	std::cerr << "Initial Switching Times: {";
-	for (const auto& switchingtime: initSwitchingTimes_)
+	std::cerr << "Initial Event Times:     {";
+	for (const auto& switchingtime: initEventTimes_)
 		std::cerr << switchingtime << ", ";
-	if (initSwitchingTimes_.empty()==false)
+	if (initEventTimes_.empty()==false)
 		std::cerr << "\b\b}" << std::endl;
 	else
 		std::cerr << "}" << std::endl;
@@ -104,7 +107,7 @@ void OCS2QuadrupedInterface<JOINT_COORD_SIZE>::loadSettings(const std::string& p
 	// partitioning times
 	partitioningTimes_.clear();
 	partitioningTimes_.push_back(initTime_);
-	for (const auto& t : initSwitchingTimes_)
+	for (const auto& t : initEventTimes_)
 		partitioningTimes_.push_back(t);
 	partitioningTimes_.push_back(finalTime_);
 	// display
@@ -115,12 +118,132 @@ void OCS2QuadrupedInterface<JOINT_COORD_SIZE>::loadSettings(const std::string& p
 	// Number of partitioning times
 	numPartitioningTimes_ = partitioningTimes_.size()-1;
 
+	// load the mode sequence template
+	std::cerr << std::endl;
+	loadModes(pathToConfigFile, "templateSubsystemsSequence", modeSequenceTemplate_.templateSubsystemsSequence_, true);
+	loadStdVector(pathToConfigFile, "templateSwitchingTimes", modeSequenceTemplate_.templateSwitchingTimes_, true);
+	std::cerr << std::endl;
+
 	// Gap Indicators
 	loadGaps(pathToConfigFile, gapIndicatorPtrs_, true);
 
 	switchingModes_    = initSwitchingModes_;
 	stanceLegSequene_  = initStanceLegSequene_;
-	switchingTimes_    = initSwitchingTimes_;
+	switchingTimes_    = initEventTimes_;
+
+	// Ground profile class
+	scalar_t groundHight;
+	estimateFlatGround(initRbdState_, contact_flag_t{1,1,1,1}, groundHight);
+	std::cerr << "Ground Profile Hight: " << groundHight << std::endl << std::endl;
+	groundProfilePtr_ = flat_ground_profile_ptr_t( new flat_ground_profile_t(groundHight) );
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+template <size_t JOINT_COORD_SIZE>
+typename OCS2QuadrupedInterface<JOINT_COORD_SIZE>::logic_rules_t&
+	OCS2QuadrupedInterface<JOINT_COORD_SIZE>::getLogicRules() {
+
+	return *logicRulesPtr_;
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+template <size_t JOINT_COORD_SIZE>
+void OCS2QuadrupedInterface<JOINT_COORD_SIZE>::computeSwitchedModelState(
+		const rbd_state_vector_t& rbdState,
+		state_vector_t& comkinoState) {
+
+	switchedModelStateEstimator_.estimateComkinoModelState(rbdState, comkinoState);
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+template <size_t JOINT_COORD_SIZE>
+void OCS2QuadrupedInterface<JOINT_COORD_SIZE>::computeRbdModelState(
+		const state_vector_t& comkinoState,
+		const input_vector_t& comkinoInput,
+		rbd_state_vector_t& rbdState) {
+
+	switchedModelStateEstimator_.estimateRbdModelState(comkinoState, comkinoInput.template tail<JOINT_COORD_SIZE>(),
+			rbdState);
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+template <size_t JOINT_COORD_SIZE>
+void OCS2QuadrupedInterface<JOINT_COORD_SIZE>::computeComLocalAcceleration(
+			const state_vector_t& comkinoState,
+			const input_vector_t& comkinoInput,
+			base_coordinate_t& comLocalAcceleration) {
+
+	typedef Eigen::Matrix<scalar_t,3,3> matrix_3_t;
+	typedef Eigen::Matrix<scalar_t,3,1> vector_3_t;
+	typedef Eigen::Matrix<scalar_t,6,6> matrix_6_t;
+	typedef Eigen::Matrix<scalar_t,6,1> vector_6_t;
+
+	static vector_3_t o_gravityVector = vector_3_t(0.0, 0.0, -modelSettings_.gravitationalAcceleration_);
+
+	Eigen::VectorBlock<const state_vector_t,6> xCOM  = comkinoState.template segment<6>(0);
+	Eigen::VectorBlock<const state_vector_t,3> b_W_com = comkinoState.template segment<3>(6);
+	Eigen::VectorBlock<const state_vector_t,3> b_V_com = comkinoState.template segment<3>(9);
+	Eigen::VectorBlock<const state_vector_t,12> qJoints  = comkinoState.template tail<12>();
+	Eigen::VectorBlock<const input_vector_t,12> dqJoints = comkinoInput.template tail<12>();
+	Eigen::VectorBlock<const input_vector_t,3*4> lambda  = comkinoInput.template head<12>();
+
+	// Rotation matrix from Base frame (or the coincided frame world frame) to Origin frame (global world).
+	Eigen::Matrix3d o_R_b = RotationMatrixBasetoOrigin(xCOM.template head<3>());
+
+	// base to CoM displacement in the CoM frame
+	vector_3_t b_base2CoM = comModelPtr_->comPositionBaseFrame(qJoints);
+
+	// base coordinate
+	base_coordinate_t xBase;
+	xBase.template head<3>() = xCOM.template head<3>();
+	xBase.template tail<3>() = xCOM.template tail<3>() - o_R_b * b_base2CoM;
+
+	// update kinematic model
+	kinematicModelPtr_->update(xBase, qJoints);
+
+	// base to stance feet displacement in the CoM frame
+	std::array<vector_3_t,4> b_base2StanceFeet;
+	for (size_t i=0; i<4; i++)
+		kinematicModelPtr_->footPositionBaseFrame(i, b_base2StanceFeet[i]);
+
+	// Inertia matrix in the CoM frame and its derivatives
+	matrix_6_t M    = comModelPtr_->comInertia(qJoints);
+	matrix_6_t dMdt = comModelPtr_->comInertiaDerivative(qJoints, dqJoints);
+	matrix_3_t rotationMInverse = M.template topLeftCorner<3,3>().inverse();
+	matrix_6_t MInverse;
+	MInverse << rotationMInverse, 	matrix_3_t::Zero(),
+				matrix_3_t::Zero(), (1/M(5,5))*matrix_3_t::Identity();
+
+	// Coriolis and centrifugal forces
+	vector_6_t C;
+	C.template head<3>() = b_W_com.cross(M.template topLeftCorner<3,3>()*b_W_com) + dMdt.template topLeftCorner<3,3>()*b_W_com;
+	C.template tail<3>().setZero();
+
+	// gravity effect on CoM in CoM coordinate
+	vector_6_t MInverseG;
+	MInverseG << vector_3_t::Zero(), -o_R_b.transpose() * o_gravityVector;
+
+	// contact JacobianTransposeLambda
+	vector_3_t b_comToFoot;
+	vector_6_t JcTransposeLambda = vector_6_t::Zero();
+	for (size_t i=0; i<4; i++)  {
+
+		b_comToFoot = b_base2StanceFeet[i] - b_base2CoM;
+
+		JcTransposeLambda.template head<3>() += b_comToFoot.cross(lambda.template segment<3>(3*i));
+		JcTransposeLambda.template tail<3>() += lambda.template segment<3>(3*i);
+	}
+
+	// CoM acceleration about CoM frame
+	comLocalAcceleration = MInverse * (-C + JcTransposeLambda) - MInverseG;
 
 }
 
@@ -128,7 +251,124 @@ void OCS2QuadrupedInterface<JOINT_COORD_SIZE>::loadSettings(const std::string& p
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t JOINT_COORD_SIZE>
-void OCS2QuadrupedInterface<JOINT_COORD_SIZE>::getPerformanceIndeces(scalar_t& costFunction,
+void OCS2QuadrupedInterface<JOINT_COORD_SIZE>::computeComStateInOrigin(
+		const state_vector_t& comkinoState,
+		const input_vector_t& comkinoInput,
+		base_coordinate_t& o_comPose,
+		base_coordinate_t& o_comVelocity,
+		base_coordinate_t& o_comAcceleration)  {
+
+	Eigen::VectorBlock<const state_vector_t,3> o_r_com = comkinoState.template segment<3>(3);
+	Eigen::VectorBlock<const state_vector_t,3> b_W_com = comkinoState.template segment<3>(6);
+	Eigen::VectorBlock<const state_vector_t,3> b_V_com = comkinoState.template segment<3>(9);
+
+	// compute CoM local acceleration about CoM frame
+	base_coordinate_t comLocalAcceleration;
+	computeComLocalAcceleration(comkinoState, comkinoInput, comLocalAcceleration);
+
+	// Rotation matrix from Base frame (or the coincided frame world frame) to Origin frame (global world).
+	Eigen::Matrix3d o_R_b = kinematicModelPtr_->rotationMatrixOrigintoBase().transpose();
+
+	// CoM pose in the origin frame
+	o_comPose << comkinoState.template head<3>(), o_r_com;
+
+	// CoM velocity in the origin frame
+	o_comVelocity.template head<3>() = o_R_b *  b_W_com;
+	o_comVelocity.template tail<3>() = o_R_b *  b_V_com;
+//	o_comVelocity.template tail<3>() = o_R_b * (b_V_com - b_W_com.cross(o_r_com));
+
+	// CoM acceleration in the origin frame
+	o_comAcceleration.template head<3>() = o_R_b *  comLocalAcceleration.template head<3>();
+	o_comAcceleration.template tail<3>() = o_R_b *  comLocalAcceleration.template tail<3>();
+//	o_comAcceleration.template tail<3>() = o_R_b * (comLocalAcceleration.template tail<3>() - comLocalAcceleration.template head<3>().cross(o_r_com)
+//			- b_W_com.cross(b_W_com.cross(o_r_com)));
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+template <size_t JOINT_COORD_SIZE>
+void OCS2QuadrupedInterface<JOINT_COORD_SIZE>::estimateFlatGround(
+		const rbd_state_vector_t& rbdState,
+		const contact_flag_t& contactFlag,
+		scalar_t& groundHight) const {
+
+	kinematicModelPtr_->update(rbdState.template head<6+JOINT_COORD_SIZE>());
+
+	std::array<Eigen::Vector3d,4> feetPositions;
+	kinematicModelPtr_->feetPositionsOriginFrame(feetPositions);
+
+	groundHight = 0.0;
+	for (size_t j=0; j<4; j++)
+		if (contactFlag[j]==true)
+			groundHight += 0.25*feetPositions[j](2);
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+template <size_t JOINT_COORD_SIZE>
+typename OCS2QuadrupedInterface<JOINT_COORD_SIZE>::kinematic_model_t&
+	OCS2QuadrupedInterface<JOINT_COORD_SIZE>::getKinematicModel() {
+
+	return *kinematicModelPtr_;
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+template <size_t JOINT_COORD_SIZE>
+typename OCS2QuadrupedInterface<JOINT_COORD_SIZE>::com_model_t&
+	OCS2QuadrupedInterface<JOINT_COORD_SIZE>::getComModel() {
+
+	return *comModelPtr_;
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+template <size_t JOINT_COORD_SIZE>
+typename OCS2QuadrupedInterface<JOINT_COORD_SIZE>::slq_base_t&
+	OCS2QuadrupedInterface<JOINT_COORD_SIZE>::getSLQ() {
+
+	return *slqPtr_;
+}
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+template <size_t JOINT_COORD_SIZE>
+typename OCS2QuadrupedInterface<JOINT_COORD_SIZE>::slq_base_ptr_t&
+	OCS2QuadrupedInterface<JOINT_COORD_SIZE>::getSLQPtr() {
+
+	return slqPtr_;
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+template <size_t JOINT_COORD_SIZE>
+typename OCS2QuadrupedInterface<JOINT_COORD_SIZE>::mpc_t&
+	OCS2QuadrupedInterface<JOINT_COORD_SIZE>::getMPC() {
+
+	return *mpcPtr_;
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+template <size_t JOINT_COORD_SIZE>
+typename OCS2QuadrupedInterface<JOINT_COORD_SIZE>::mpc_ptr_t&
+	OCS2QuadrupedInterface<JOINT_COORD_SIZE>::getMPCPtr() {
+
+	return mpcPtr_;
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+template <size_t JOINT_COORD_SIZE>
+void OCS2QuadrupedInterface<JOINT_COORD_SIZE>::getPerformanceIndeces(
+		scalar_t& costFunction,
 		scalar_t& constriantISE1,
 		scalar_t& constriantISE2) const {
 
@@ -141,93 +381,54 @@ void OCS2QuadrupedInterface<JOINT_COORD_SIZE>::getPerformanceIndeces(scalar_t& c
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t JOINT_COORD_SIZE>
-void OCS2QuadrupedInterface<JOINT_COORD_SIZE>::getController(controller_array_t& controllersStock) const {
+void OCS2QuadrupedInterface<JOINT_COORD_SIZE>::getOptimizedControllerPtr(
+		const controller_array_t*& controllersStockPtr) const {
 
-	controllersStock = controllersStock_;
+	controllersStockPtr = controllersStockPtr_;
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t JOINT_COORD_SIZE>
-std::shared_ptr<const typename OCS2QuadrupedInterface<JOINT_COORD_SIZE>::controller_array_t>
-	OCS2QuadrupedInterface<JOINT_COORD_SIZE>::getControllerPtr() const {
+void OCS2QuadrupedInterface<JOINT_COORD_SIZE>::getOptimizedTrajectoriesPtr(
+		const std::vector<scalar_array_t>*& timeTrajectoriesStockPtr,
+		const state_vector_array2_t*& stateTrajectoriesStockPtr,
+		const input_vector_array2_t*& inputTrajectoriesStockPtr) const {
 
-	return controllersStockPtr_;
+	timeTrajectoriesStockPtr = timeTrajectoriesStockPtr_;
+	stateTrajectoriesStockPtr = stateTrajectoriesStockPtr_;
+	inputTrajectoriesStockPtr = inputTrajectoriesStockPtr_;
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t JOINT_COORD_SIZE>
-std::shared_ptr<const std::vector<typename OCS2QuadrupedInterface<JOINT_COORD_SIZE>::scalar_array_t>>
-	OCS2QuadrupedInterface<JOINT_COORD_SIZE>::getTimeTrajectoriesPtr() const {
+void OCS2QuadrupedInterface<JOINT_COORD_SIZE>::getEventTimesPtr(
+		const scalar_array_t*& eventTimesPtr) const {
 
-	return timeTrajectoriesStockPtr_;
+	eventTimesPtr = &eventTimes_;
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t JOINT_COORD_SIZE>
-std::shared_ptr<const typename OCS2QuadrupedInterface<JOINT_COORD_SIZE>::state_vector_array2_t>
-	OCS2QuadrupedInterface<JOINT_COORD_SIZE>::getStateTrajectoriesPtr() const {
+void OCS2QuadrupedInterface<JOINT_COORD_SIZE>::getSubsystemsSequencePtr(
+		const size_array_t*& subsystemsSequencePtr) const {
 
-	return stateTrajectoriesStockPtr_;
+	subsystemsSequencePtr = &subsystemsSequence_;
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t JOINT_COORD_SIZE>
-std::shared_ptr<const typename OCS2QuadrupedInterface<JOINT_COORD_SIZE>::input_vector_array2_t>
-	OCS2QuadrupedInterface<JOINT_COORD_SIZE>::getInputTrajectoriesPtr() const {
+void OCS2QuadrupedInterface<JOINT_COORD_SIZE>::getContactFlagsSequencePtr(
+		const std::vector<contact_flag_t>*& contactFlagsSequencePtr) const {
 
-	return inputTrajectoriesStockPtr_;
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-template <size_t JOINT_COORD_SIZE>
-void OCS2QuadrupedInterface<JOINT_COORD_SIZE>::getTrajectories(
-		std::vector<scalar_array_t>& timeTrajectoriesStock,
-		state_vector_array2_t& stateTrajectoriesStock,
-		input_vector_array2_t& inputTrajectoriesStock) const {
-
-	timeTrajectoriesStock  = timeTrajectoriesStock_;
-	stateTrajectoriesStock = stateTrajectoriesStock_;
-	inputTrajectoriesStock = inputTrajectoriesStock_;
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-template <size_t JOINT_COORD_SIZE>
-void OCS2QuadrupedInterface<JOINT_COORD_SIZE>::getSwitchingTimes(
-		scalar_array_t& switchingTimes) const {
-
-	switchingTimes = switchingTimes_;
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-template <size_t JOINT_COORD_SIZE>
-void OCS2QuadrupedInterface<JOINT_COORD_SIZE>::getGaitSequence(
-		size_array_t& gaitSequence) const {
-
-	gaitSequence = switchingModes_;
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-template <size_t JOINT_COORD_SIZE>
-void OCS2QuadrupedInterface<JOINT_COORD_SIZE>::getStanceLegSequene(
-		std::vector<contact_flag_t>& stanceLegSequene) const {
-
-	stanceLegSequene = stanceLegSequene_;
+	contactFlagsSequencePtr = &contactFlagsSequence_;
 }
 
 /******************************************************************************************************/
@@ -268,7 +469,26 @@ ocs2::MPC_Settings& OCS2QuadrupedInterface<JOINT_COORD_SIZE>::getMpcSettings() {
 /******************************************************************************************************/
 template <size_t JOINT_COORD_SIZE>
 ocs2::SLQ_Settings& OCS2QuadrupedInterface<JOINT_COORD_SIZE>::getSlqSettings() {
+
 	return slqPtr_->settings();
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+template <size_t JOINT_COORD_SIZE>
+Model_Settings& OCS2QuadrupedInterface<JOINT_COORD_SIZE>::getModelSettings() {
+
+	return modelSettings_;
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+template <size_t JOINT_COORD_SIZE>
+void OCS2QuadrupedInterface<JOINT_COORD_SIZE>::getLoadedInitialState(rbd_state_vector_t& initRbdState) const {
+
+	initRbdState = initRbdState_;
 }
 
 /******************************************************************************************************/
@@ -277,22 +497,22 @@ ocs2::SLQ_Settings& OCS2QuadrupedInterface<JOINT_COORD_SIZE>::getSlqSettings() {
 template <size_t JOINT_COORD_SIZE>
 void OCS2QuadrupedInterface<JOINT_COORD_SIZE>::concatenate()  {
 
-	timeTrajectory_  = timeTrajectoriesStock_[0];
-	stateTrajectory_ = stateTrajectoriesStock_[0];
-	inputTrajectory_  = inputTrajectoriesStock_[0];
+	timeTrajectory_  = timeTrajectoriesStockPtr_->at(0);
+	stateTrajectory_ = stateTrajectoriesStockPtr_->at(0);
+	inputTrajectory_  = inputTrajectoriesStockPtr_->at(0);
 	for(size_t i=1; i<numSubsystems_; i++) {
-		timeTrajectory_.insert(timeTrajectory_.end(), timeTrajectoriesStock_[i].begin(), timeTrajectoriesStock_[i].end());
-		stateTrajectory_.insert(stateTrajectory_.end(), stateTrajectoriesStock_[i].begin(), stateTrajectoriesStock_[i].end());
-		inputTrajectory_.insert(inputTrajectory_.end(), inputTrajectoriesStock_[i].begin(), inputTrajectoriesStock_[i].end());
+		timeTrajectory_.insert(timeTrajectory_.end(), timeTrajectoriesStockPtr_->at(i).begin(), timeTrajectoriesStockPtr_->at(i).end());
+		stateTrajectory_.insert(stateTrajectory_.end(), stateTrajectoriesStockPtr_->at(i).begin(), stateTrajectoriesStockPtr_->at(i).end());
+		inputTrajectory_.insert(inputTrajectory_.end(), inputTrajectoriesStockPtr_->at(i).begin(), inputTrajectoriesStockPtr_->at(i).end());
 	}
 
-	controllerTimeTrajectory_ = controllersStock_[0].time_;
-	controllerFBTrajectory_   = controllersStock_[0].k_;
-	controllerFFTrajector_    = controllersStock_[0].uff_;
+	controllerTimeTrajectory_ = controllersStockPtr_->at(0).time_;
+	controllerFBTrajectory_   = controllersStockPtr_->at(0).k_;
+	controllerFFTrajector_    = controllersStockPtr_->at(0).uff_;
 	for(size_t i=1; i<numSubsystems_; i++) {
-		controllerTimeTrajectory_.insert(controllerTimeTrajectory_.end(), controllersStock_[i].time_.begin(), controllersStock_[i].time_.end());
-		controllerFBTrajectory_.insert(controllerFBTrajectory_.end(), controllersStock_[i].k_.begin(), controllersStock_[i].k_.end());
-		controllerFFTrajector_.insert(controllerFFTrajector_.end(), controllersStock_[i].uff_.begin(), controllersStock_[i].uff_.end());
+		controllerTimeTrajectory_.insert(controllerTimeTrajectory_.end(), controllersStockPtr_->at(i).time_.begin(), controllersStockPtr_->at(i).time_.end());
+		controllerFBTrajectory_.insert(controllerFBTrajectory_.end(), controllersStockPtr_->at(i).k_.begin(), controllersStockPtr_->at(i).k_.end());
+		controllerFFTrajector_.insert(controllerFFTrajector_.end(), controllersStockPtr_->at(i).uff_.begin(), controllersStockPtr_->at(i).uff_.end());
 	}
 
 	linInterpolateState_.setTimeStamp(&timeTrajectory_);
@@ -329,8 +549,30 @@ void OCS2QuadrupedInterface<JOINT_COORD_SIZE>::runSLQ(
 	}
 
 	// reference trajectories
-	designDesiredTrajectories(desiredTimeTrajectoriesStock_,
-			desiredStateTrajectoriesStock_, desiredInputTrajectoriesStock_);
+	input_vector_t uNominalForWeightCompensation;
+	designWeightCompensatingInput(initSwitchedState_, uNominalForWeightCompensation);
+
+	desiredTimeTrajectoriesStock_.resize(numPartitioningTimes_);
+	desiredStateTrajectoriesStock_.resize(numPartitioningTimes_);
+	desiredInputTrajectoriesStock_.resize(numPartitioningTimes_);
+	for (size_t i=0; i<numPartitioningTimes_; i++) {
+
+		// reference time
+		desiredTimeTrajectoriesStock_[i].resize(2);
+		desiredTimeTrajectoriesStock_[i][0] = initEventTimes_.front();
+		desiredTimeTrajectoriesStock_[i][1] = initEventTimes_.back();
+
+		// reference state
+		desiredStateTrajectoriesStock_[i].resize(2);
+		desiredStateTrajectoriesStock_[i][0] = initSwitchedState_;
+		desiredStateTrajectoriesStock_[i][1] = xFinal_;
+
+		// reference inputs for weight compensation
+		desiredInputTrajectoriesStock_[i].resize(2);
+		desiredInputTrajectoriesStock_[i][0] = uNominalForWeightCompensation;
+		desiredInputTrajectoriesStock_[i][1] = uNominalForWeightCompensation;
+	}
+
 
 	// TODO: numSubsystems_ is not set
 //	scalar_array_t costAnnealingStartTimes(numSubsystems_, switchingTimes_.front());
@@ -339,14 +581,12 @@ void OCS2QuadrupedInterface<JOINT_COORD_SIZE>::runSLQ(
 	// run slqp
 	if (initialControllersStock.empty()==true) {
 		std::cerr << "Cold initialization." << std::endl;
-		controllersStock_.clear();
 		slqPtr_->run(initTime_, initSwitchedState_, finalTime_, partitioningTimes_,
 				desiredTimeTrajectoriesStock_, desiredStateTrajectoriesStock_, desiredInputTrajectoriesStock_);
 
 	} else {
 		std::cerr << "Warm initialization." << std::endl;
-		controllersStock_ = initialControllersStock;
-		slqPtr_->run(initTime_, initSwitchedState_, finalTime_, partitioningTimes_, controllersStock_,
+		slqPtr_->run(initTime_, initSwitchedState_, finalTime_, partitioningTimes_, initialControllersStock,
 				desiredTimeTrajectoriesStock_, desiredStateTrajectoriesStock_, desiredInputTrajectoriesStock_);
 	}
 //	if (initialControllersStock.empty()==true) {
@@ -362,40 +602,25 @@ void OCS2QuadrupedInterface<JOINT_COORD_SIZE>::runSLQ(
 //	slqPtr_->run(initTime_, initSwitchedState_, finalTime_, partitioningTimes_,
 //			controllersStock_, desiredTimeTrajectoriesStock_, desiredStateTrajectoriesStock_);
 
-	// get the optimizer parametet
-	getOptimizerParameters(slqPtr_);
-
 	// get the optimizer outputs
 	ocs2Iterationcost_.clear();
 	slqPtr_->getIterationsLog(iterationCost_, iterationISE1_, iterationISE2_);
 	slqPtr_->getPerformanceIndeces(costFunction_, constriantISE1_, constriantISE2_);
-	slqPtr_->getController(controllersStock_);
-	slqPtr_->getNominalTrajectories(timeTrajectoriesStock_, stateTrajectoriesStock_, inputTrajectoriesStock_);
+
+	slqPtr_->getControllerPtr(controllersStockPtr_);
+	slqPtr_->getNominalTrajectoriesPtr(
+			timeTrajectoriesStockPtr_,
+			stateTrajectoriesStockPtr_,
+			inputTrajectoriesStockPtr_);
+
+	// get gait sequence (should be copied since it might be overridden in the next iteration)
+	eventTimes_ = slqPtr_->getLogicRules().eventTimes();
+	subsystemsSequence_ = slqPtr_->getLogicRules().subsystemsSequence();
+	contactFlagsSequence_ = slqPtr_->getLogicRules().getContactFlagsSequence();
 
 //	concatenate();
 
 }
-
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-template <size_t JOINT_COORD_SIZE>
-template<class T>
-void OCS2QuadrupedInterface<JOINT_COORD_SIZE>::getOptimizerParameters(
-		const std::shared_ptr<T>& optimizerPtr) {
-
-	optimizerPtr->getEventTimes(switchingTimes_);
-
-	optimizerPtr->getSwitchedSystemIDs(switchingModes_);
-
-	numSubsystems_ = switchingModes_.size();
-
-	stanceLegSequene_.resize(numSubsystems_);
-	for (size_t i=0; i<numSubsystems_; i++)
-		stanceLegSequene_[i] = switched_model::modeNumber2StanceLeg(switchingModes_[i]);
-}
-
 
 /******************************************************************************************************/
 /******************************************************************************************************/
@@ -403,49 +628,29 @@ void OCS2QuadrupedInterface<JOINT_COORD_SIZE>::getOptimizerParameters(
 template <size_t JOINT_COORD_SIZE>
 bool OCS2QuadrupedInterface<JOINT_COORD_SIZE>::runMPC(
 		const scalar_t& initTime,
-		const rbd_state_vector_t& initHyQState)  {
+		const rbd_state_vector_t& initState)  {
 
 	initTime_ = initTime;
-	computeSwitchedModelState(initHyQState, initSwitchedState_);
+	computeSwitchedModelState(initState, initSwitchedState_);
 
 	// update controller
 	bool controllerIsUpdated = mpcPtr_->run(initTime_, initSwitchedState_);
 
 	// get the optimizer outputs
-	controllersStockPtr_ = mpcPtr_->getControllerPtr();
+	mpcPtr_->getOptimizedControllerPtr(controllersStockPtr_);
 
-	// get the optimizer outputs
-	timeTrajectoriesStockPtr_  = mpcPtr_->getTimeTrajectoriesPtr();
-	stateTrajectoriesStockPtr_ = mpcPtr_->getStateTrajectoriesPtr();
-	inputTrajectoriesStockPtr_ = mpcPtr_->getInputTrajectoriesPtr();
+	mpcPtr_->getOptimizedTrajectoriesPtr(
+			timeTrajectoriesStockPtr_,
+			stateTrajectoriesStockPtr_,
+			inputTrajectoriesStockPtr_);
 
-	// get the optimizer parametet: switchingTimes_, systemStockIndexes_,
-	// numSubsystems_, switchingModes_, and stanceLegSequene_
-	getOptimizerParameters(mpcPtr_);
+	// get gait sequence (should be copied since it might be overridden in the next iteration)
+	eventTimes_ = mpcPtr_->getLogicRules().eventTimes();
+
+	subsystemsSequence_ = mpcPtr_->getLogicRules().subsystemsSequence();
+//	contactFlagsSequence_ = mpcPtr_->getLogicRules().getContactFlagsSequence();
 
 	return controllerIsUpdated;
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-template <size_t JOINT_COORD_SIZE>
-void OCS2QuadrupedInterface<JOINT_COORD_SIZE>::computeSwitchedModelState(
-		const rbd_state_vector_t& rbdState,
-		state_vector_t& comkinoState) {
-
-	switchedModelStateEstimator_.estimateComkinoModelState(rbdState, comkinoState);
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-template <size_t JOINT_COORD_SIZE>
-void OCS2QuadrupedInterface<JOINT_COORD_SIZE>::setNewGoalStateMPC(
-		const scalar_t& newGoalDuration,
-		const state_vector_t& newGoalState) {
-
-	mpcPtr_->setNewGoalState(newGoalDuration, newGoalState);
 }
 
 /******************************************************************************************************/
@@ -458,7 +663,7 @@ void OCS2QuadrupedInterface<JOINT_COORD_SIZE>::runOCS2(
 		const scalar_array_t& switchingTimes /*=scalar_array_t()*/)  {
 
 //	if (switchingTimes.empty()==true)
-//		switchingTimes_ = initSwitchingTimes_;
+//		switchingTimes_ = initEventTimes_;
 //	else
 //		switchingTimes_ = switchingTimes;
 //

@@ -13,6 +13,8 @@ find_package(catkin REQUIRED COMPONENTS
   ocs2_slq
   roscpp
   ocs2_ros_msg
+  xpp_msgs
+  rosbag
 )
 
 ## Eigen3
@@ -48,6 +50,8 @@ catkin_package(
       ocs2_slq 
       roscpp
       ocs2_ros_msg
+      xpp_msgs
+      
 #  DEPENDS system_lib
 )
 
@@ -64,37 +68,3 @@ include_directories(
   ${catkin_INCLUDE_DIRS}
 )
 
-## Declare a C++ library
-# add_library(ocs2_quadruped_interface
-#   src/${PROJECT_NAME}/ocs2_quadruped_interface.cpp
-# )
-
-## Add cmake target dependencies of the library
-## as an example, code may need to be generated before libraries
-## either from message generation or dynamic reconfigure
-# add_dependencies(ocs2_quadruped_interface ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
-
-## Declare a C++ executable
-# add_executable(ocs2_quadruped_interface_node src/ocs2_quadruped_interface_node.cpp)
-
-## Add cmake target dependencies of the executable
-## same as for the library above
-# add_dependencies(ocs2_quadruped_interface_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
-
-## Specify libraries to link a library or executable target against
-# target_link_libraries(ocs2_quadruped_interface_node
-#   ${catkin_LIBRARIES}
-# )
-
-#############
-## Testing ##
-#############
-
-## Add gtest based cpp test target and link libraries
-# catkin_add_gtest(${PROJECT_NAME}-test test/test_ocs2_quadruped_interface.cpp)
-# if(TARGET ${PROJECT_NAME}-test)
-#   target_link_libraries(${PROJECT_NAME}-test ${PROJECT_NAME})
-# endif()
-
-## Add folders to be run by python nosetests
-# catkin_add_nosetests(test)

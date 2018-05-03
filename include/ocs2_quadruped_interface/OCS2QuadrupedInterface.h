@@ -33,12 +33,15 @@
 #include <c_switched_model_interface/core/MotionPhaseDefinition.h>
 #include <c_switched_model_interface/core/SwitchedModelStateEstimator.h>
 
+#include <c_switched_model_interface/foot_planner/cpg/SplineCPG.h>
+#include "c_switched_model_interface/foot_planner/FeetZDirectionPlanner.h"
 #include <c_switched_model_interface/logic/SwitchedModelLogicRulesBase.h>
 #include <c_switched_model_interface/dynamics/ComKinoDynamicsBase.h>
 #include <c_switched_model_interface/dynamics_derivative/ComKinoDynamicsDerivativeBase.h>
 #include <c_switched_model_interface/constraint/ComKinoConstraintBase.h>
 #include <c_switched_model_interface/cost/SwitchedModelCostBase.h>
 #include <c_switched_model_interface/initialization/ComKinoOperatingPointsBase.h>
+#include <c_switched_model_interface/ground/FlatGroundProfile.h>
 
 #include <c_switched_model_interface/misc/WeightCompensationForces.h>
 
@@ -62,54 +65,66 @@ public:
 		RBD_STATE_DIM = 12 + 2*JOINT_COORD_SIZE
 	};
 
-	typedef std::shared_ptr<OCS2QuadrupedInterface> Ptr;
-
-	typedef ocs2::Dimensions<STATE_DIM,INPUT_DIM> dimension_t;
+	typedef std::shared_ptr<OCS2QuadrupedInterface<JOINT_COORD_SIZE>> Ptr;
 
 	typedef ComModelBase<JOINT_COORD_SIZE> com_model_t;
 	typedef KinematicsModelBase<JOINT_COORD_SIZE> kinematic_model_t;
 
-	typedef SwitchedModelLogicRulesBase<JOINT_COORD_SIZE> 	logic_rules_t;
 	typedef SwitchedModelStateEstimator<JOINT_COORD_SIZE>	state_estimator_t;
 
-	typedef ocs2::GLQP<STATE_DIM, INPUT_DIM, logic_rules_t>		lq_t;
-	typedef ocs2::SLQ_BASE<STATE_DIM, INPUT_DIM, logic_rules_t>	slqp_base_t;
-	typedef ocs2::SLQ<STATE_DIM, INPUT_DIM, logic_rules_t>  	slqp_t;
-	typedef ocs2::SLQ_MP<STATE_DIM, INPUT_DIM, logic_rules_t>  	slqp_mp_t;
-//	typedef ocs2::OCS2Projected<STATE_DIM, INPUT_DIM> 			ocs2_t;
-	typedef ocs2::MPC_SLQ<STATE_DIM, INPUT_DIM, logic_rules_t>	mpc_t;
+	typedef ocs2::Dimensions<STATE_DIM,INPUT_DIM> 			dimension_t;
+	typedef typename dimension_t::scalar_t		 			scalar_t;
+	typedef typename dimension_t::scalar_array_t 			scalar_array_t;
+	typedef typename dimension_t::size_array_t	 			size_array_t;
+	typedef typename dimension_t::controller_t		 		controller_t;
+	typedef typename dimension_t::controller_array_t 		controller_array_t;
+	typedef typename dimension_t::state_vector_t 			state_vector_t;
+	typedef typename dimension_t::state_vector_array_t 		state_vector_array_t;
+	typedef typename dimension_t::state_vector_array2_t 	state_vector_array2_t;
+	typedef typename dimension_t::control_vector_t 		  	input_vector_t;
+	typedef typename dimension_t::control_vector_array_t  	input_vector_array_t;
+	typedef typename dimension_t::control_vector_array2_t 	input_vector_array2_t;
+	typedef typename dimension_t::eigen_scalar_t			eigen_scalar_t;
+	typedef typename dimension_t::eigen_scalar_array_t		eigen_scalar_array_t;
+	typedef typename dimension_t::state_matrix_t			state_matrix_t;
+	typedef typename dimension_t::control_matrix_t			control_matrix_t;
+	typedef typename dimension_t::control_feedback_t 	   	control_feedback_t;
+	typedef typename dimension_t::control_feedback_array_t 	control_feedback_array_t;
 
-	typedef typename lq_t::Ptr 			lq_ptr_t;
-	typedef typename slqp_base_t::Ptr 	slqp_base_ptr_t;
-	typedef typename slqp_t::Ptr  		slqp_ptr_t;
-	typedef typename slqp_mp_t::Ptr  	slqp_mp_ptr_t;
-//	typedef typename ocs2_t::Ptr 		ocs2_ptr_t;
-	typedef typename mpc_t::Ptr 		mpc_ptr_t;
-
-	typedef typename dimension_t::scalar_t		 scalar_t;
-	typedef typename dimension_t::scalar_array_t scalar_array_t;
-	typedef typename dimension_t::size_array_t	 size_array_t;
-	typedef typename dimension_t::controller_t		 controller_t;
-	typedef typename dimension_t::controller_array_t controller_array_t;
-	typedef typename dimension_t::state_vector_t 		state_vector_t;
-	typedef typename dimension_t::state_vector_array_t 	state_vector_array_t;
-	typedef typename dimension_t::state_vector_array2_t state_vector_array2_t;
-	typedef typename dimension_t::control_vector_t 		  input_vector_t;
-	typedef typename dimension_t::control_vector_array_t  input_vector_array_t;
-	typedef typename dimension_t::control_vector_array2_t input_vector_array2_t;
-	typedef typename dimension_t::eigen_scalar_t		eigen_scalar_t;
-	typedef typename dimension_t::eigen_scalar_array_t	eigen_scalar_array_t;
-	typedef typename dimension_t::state_matrix_t	state_matrix_t;
-	typedef typename dimension_t::control_matrix_t	control_matrix_t;
-	typedef typename dimension_t::control_feedback_t 	   control_feedback_t;
-	typedef typename dimension_t::control_feedback_array_t control_feedback_array_t;
-
-	typedef SwitchedModel<JOINT_COORD_SIZE> switched_model_t;
+	typedef SwitchedModel<JOINT_COORD_SIZE> 					switched_model_t;
 	typedef typename switched_model_t::contact_flag_t 			contact_flag_t;
 	typedef typename switched_model_t::generalized_coordinate_t generalized_coordinate_t;
 	typedef typename switched_model_t::joint_coordinate_t 		joint_coordinate_t;
 	typedef typename switched_model_t::base_coordinate_t 		base_coordinate_t;
 	typedef Eigen::Matrix<scalar_t, RBD_STATE_DIM,1>			rbd_state_vector_t;
+
+	typedef GroundProfileBase<scalar_t> 		ground_profile_t;
+	typedef typename ground_profile_t::Ptr 		ground_profile_ptr_t;
+	typedef FlatGroundProfile<scalar_t> 		flat_ground_profile_t;
+	typedef typename flat_ground_profile_t::Ptr flat_ground_profile_ptr_t;
+
+	typedef	SplineCPG<scalar_t>						cpg_t;
+	typedef FeetZDirectionPlanner<scalar_t, cpg_t>	feet_z_planner_t;
+	typedef typename feet_z_planner_t::Ptr			feet_z_planner_ptr_t;
+
+	typedef SwitchedModelPlannerLogicRules<JOINT_COORD_SIZE> 	logic_rules_t;
+	typedef typename logic_rules_t::Ptr							logic_rules_ptr_t;
+
+	typedef ocs2::ModeSequenceTemplate<scalar_t> mode_sequence_template_t;
+
+	typedef ocs2::GLQP<STATE_DIM, INPUT_DIM, logic_rules_t>		lq_t;
+	typedef ocs2::SLQ_BASE<STATE_DIM, INPUT_DIM, logic_rules_t>	slq_base_t;
+	typedef ocs2::SLQ<STATE_DIM, INPUT_DIM, logic_rules_t>  	slq_t;
+	typedef ocs2::SLQ_MP<STATE_DIM, INPUT_DIM, logic_rules_t>  	slq_mp_t;
+//	typedef ocs2::OCS2Projected<STATE_DIM, INPUT_DIM> 			ocs2_t;
+	typedef ocs2::MPC_SLQ<STATE_DIM, INPUT_DIM, logic_rules_t>	mpc_t;
+
+	typedef typename lq_t::Ptr 			lq_ptr_t;
+	typedef typename slq_base_t::Ptr 	slq_base_ptr_t;
+	typedef typename slq_t::Ptr  		slq_ptr_t;
+	typedef typename slq_mp_t::Ptr  	slq_mp_ptr_t;
+//	typedef typename ocs2_t::Ptr 		ocs2_ptr_t;
+	typedef typename mpc_t::Ptr 		mpc_ptr_t;
 
 	/**
 	 * Default constructor
@@ -134,20 +149,21 @@ public:
 	/**
 	 * setup all optimizes
 	 */
-	virtual void setupOptimizer(const logic_rules_t& logicRules,
-			slqp_base_ptr_t& slqPtr) = 0;
+	virtual void setupOptimizer(
+			const logic_rules_ptr_t& logicRulesPtr,
+			const mode_sequence_template_t* modeSequenceTemplatePtr,
+			slq_base_ptr_t& slqPtr,
+			mpc_ptr_t& mpcPtr) = 0;
 
 	/**
-	 * Designs desired trajectories for each time partition.
+	 * Designs weight compensating input.
 	 *
-	 * @param [out] desiredTimeTrajectoriesStock: The desired time trajectories.
-	 * @param [out] desiredStateTrajectoriesStock: The desired state trajectories.
-	 * @param [out] desiredInputTrajectoriesStock: The desired input trajectories.
+	 * @param [in] switchedState: Switched model state.
+	 * @param [out] uForWeightCompensation: Weight compensating input.
 	 */
-	virtual void designDesiredTrajectories(
-				std::vector<scalar_array_t>& desiredTimeTrajectoriesStock,
-				state_vector_array2_t& desiredStateTrajectoriesStock,
-				input_vector_array2_t& desiredInputTrajectoriesStock) = 0;
+	virtual void designWeightCompensatingInput(
+			const state_vector_t& switchedState,
+			input_vector_t& uForWeightCompensation) = 0;
 
 	/**
 	 * Run the SLQ algorithm.
@@ -172,7 +188,8 @@ public:
 	 * @param initState: Initial robot's RBD state.
 	 * @return
 	 */
-	bool runMPC(const scalar_t& initTime,
+	bool runMPC(
+			const scalar_t& initTime,
 			const rbd_state_vector_t& initState);
 
 	/**
@@ -182,115 +199,196 @@ public:
 	 * @param initState
 	 * @param switchingTimes
 	 */
-	void runOCS2(const scalar_t& initTime,
+	void runOCS2(
+			const scalar_t& initTime,
 			const rbd_state_vector_t& initState,
 			const scalar_array_t& switchingTimes = scalar_array_t());
 
 	/**
+	 * Gets a const reference to the internal logicRules.
+	 *
+	 * @return const reference to the internal logicRules.
+	 */
+	logic_rules_t& getLogicRules();
+
+	/**
+	 * Updates the logicMachine.
+	 *
+	 * @param [in] partitioningTimes: partitioning times array.
+	 * @param [in] logicRulesUpdated: If the internal logicRules class has been already updated.
+	 */
+	void updateLogicMachine(
+			const scalar_array_t& partitioningTimes,
+			bool logicRulesUpdated = true);
+
+	/**
 	 * Computes switched model state from the RBD state
 	 *
-	 * @param rbdState: RBD state
-	 * @param comkinoState: Switched model state.
+	 * @param [in] rbdState: RBD state
+	 * @param [out] comkinoState: Switched model state.
 	 */
-	void computeSwitchedModelState(const rbd_state_vector_t& rbdState,
+	void computeSwitchedModelState(
+			const rbd_state_vector_t& rbdState,
 			state_vector_t& comkinoState);
 
 	/**
-	 * Set new goal to MPC.
+	 * Computes the RBD state from the switched model state.
 	 *
-	 * @param newGoalDuration
-	 * @param newGoalState
+	 * @param [in] comkinoState: switched model state.
+	 * @param [in] comkinoInput: switched model input.
+	 * @param [out] rbdState: RBD state
 	 */
-	void setNewGoalStateMPC(const scalar_t& newGoalDuration,
-			const state_vector_t& newGoalState);
+	void computeRbdModelState(
+			const state_vector_t& comkinoState,
+			const input_vector_t& comkinoInput,
+			rbd_state_vector_t& rbdState);
 
 	/**
-	 * Get performance indeces.
+	 * Computes the CoM's local acceleration about the CoM frame.
+	 * Note that here the off-diagonal blocks of the inertia tensor is zero.
 	 *
-	 * @param costFunction
-	 * @param constriantISE1
-	 * @param constriantISE2
+	 * @param [in] comkinoState: CoM-Kino model state.
+	 * @param [in] comkinoInput: CoM-Kino model input.
+	 * @param [out] comLocalAcceleration: CoM acceleration about the CoM frame.
 	 */
-	void getPerformanceIndeces(scalar_t& costFunction,
+	void computeComLocalAcceleration(
+			const state_vector_t& comkinoState,
+			const input_vector_t& comkinoInput,
+			base_coordinate_t& comLocalAcceleration);
+
+	/**
+	 * Computes the CoM's pose, velocity, and acceleration in the origin frame from the switched model state and input.
+	 *
+	 * @param [in] comkinoState: CoM-Kino model state.
+	 * @param [in] comkinoInput: CoM-Kino model input.
+	 * @param [out] o_comPose: CoM pose in the origin frame.
+	 * @param [out] o_comVelocity: CoM velocity in the origin frame.
+	 * @param [out] o_comAcceleration: CoM acceleration in the origin frame.
+	 */
+	void computeComStateInOrigin(
+			const state_vector_t& comkinoState,
+			const input_vector_t& comkinoInput,
+			base_coordinate_t& o_comPose,
+			base_coordinate_t& o_comVelocity,
+			base_coordinate_t& o_comAcceleration);
+
+	/**
+	 * Estimates flat ground hight.
+	 *
+	 * @param [in] rbdState: RBD state.
+	 * @param [in] contactFlag: Contact flag.
+	 * @param [out] groundHight: Ground hight
+	 */
+	void estimateFlatGround(
+			const rbd_state_vector_t& rbdState,
+			const contact_flag_t& contactFlag,
+			scalar_t& groundHight) const;
+
+	/**
+	 * Get a reference to the robot kinematic model.
+	 *
+	 * @return A reference to the robot kinematic model
+	 */
+	kinematic_model_t& getKinematicModel();
+
+	/**
+	 * Get a reference to the robot CoM model.
+	 *
+	 * @return A reference to the robot CoM model
+	 */
+	com_model_t& getComModel();
+
+	/**
+	 * Gets a reference to the internal SLQ class.
+	 *
+	 * @return Reference to the internal SLQ
+	 */
+	slq_base_t& getSLQ();
+
+	/**
+	 * Gets a pointer to the internal SLQ class.
+	 *
+	 * @return Pointer to the internal SLQ
+	 */
+	slq_base_ptr_t& getSLQPtr();
+
+	/**
+	 * Gets a reference to the internal SLQ-MPC class.
+	 *
+	 * @return Reference to the internal MPC
+	 */
+	mpc_t& getMPC();
+
+	/**
+	 * Gets a pointer to the internal SLQ-MPC class.
+	 *
+	 * @return Pointer to the internal MPC
+	 */
+	mpc_ptr_t& getMPCPtr();
+
+	/**
+	 * Gets the cost function and ISEs of the type-1 and type-2 constraints at the initial time.
+	 *
+	 * @param [out] costFunction: cost function value
+	 * @param [out] constraint1ISE: type-1 constraint ISE.
+	 * @param [out] constraint1ISE: type-2 constraint ISE.
+	 */
+	void getPerformanceIndeces(
+			scalar_t& costFunction,
 			scalar_t& constriantISE1,
 			scalar_t& constriantISE2) const;
 
 	/**
-	 * Get the log iterations
+	 * Gets Iterations Log of SLQ.
 	 *
-	 * @param iterationCost
-	 * @param iterationISE1
-	 * @param ocs2Iterationcost
+	 * @param [out] iterationCost: Each iteration's cost.
+	 * @param [out] iterationISE1: Each iteration's type-1 constraints ISE.
+	 * @param [out] iterationISE2: Each iteration's type-2 constraints ISE.
 	 */
-	void getIterationsLog(eigen_scalar_array_t& iterationCost,
+	void getIterationsLog(
+			eigen_scalar_array_t& iterationCost,
 			eigen_scalar_array_t& iterationISE1,
 			eigen_scalar_array_t& ocs2Iterationcost) const;
-	/**
-	 * Get switching times.
-	 *
-	 * @param switchingTimes
-	 */
-	void getSwitchingTimes(scalar_array_t& switchingTimes) const;
 
 	/**
-	 * Get controller
+	 * Gets a pointer to the optimized array of the control policies.
 	 *
-	 * @param controllersStockPtr
+	 * @param [out] controllersStockPtr: A pointer to the optimal array of the control policies
 	 */
-	void getController(controller_array_t& controllersStockPtr) const;
+	void getOptimizedControllerPtr(const controller_array_t*& controllersStockPtr) const;
 
 	/**
-	 * Get controller pointer.
+	 * Gets a pointer to the optimized time, state, and input trajectories.
 	 *
-	 * @return
+	 * @param [out] timeTrajectoriesStockPtr: A pointer to an array of trajectories containing the output time trajectory stamp.
+	 * @param [out] stateTrajectoriesStockPtr: A pointer to an array of trajectories containing the output state trajectory.
+	 * @param [out] inputTrajectoriesStockPtr: A pointer to an array of trajectories containing the output control input trajectory.
 	 */
-	std::shared_ptr<const controller_array_t> getControllerPtr() const;
+	void getOptimizedTrajectoriesPtr(
+			const std::vector<scalar_array_t>*& timeTrajectoriesStockPtr,
+			const state_vector_array2_t*& stateTrajectoriesStockPtr,
+			const input_vector_array2_t*& inputTrajectoriesStockPtr) const ;
 
 	/**
-	 * Get optimized trajectories.
+	 * Get events times.
 	 *
-	 * @param timeTrajectoriesStock
-	 * @param stateTrajectoriesStock
-	 * @param inputTrajectoriesStock
+	 * @param [in] eventTimesPtr: a pointer to eventTimesPtr_
 	 */
-	void getTrajectories(std::vector<scalar_array_t>& timeTrajectoriesStock,
-			state_vector_array2_t& stateTrajectoriesStock,
-			input_vector_array2_t& inputTrajectoriesStock) const;
+	void getEventTimesPtr(const scalar_array_t*& eventTimesPtr) const;
 
 	/**
-	 * Get a pointer to the optimized trajectories time stamp.
+	 * Get motion subsystems sequence.
 	 *
-	 * @return
+	 * @param [in] motionPhasesSequencePtr: a pointer to motionPhasesSequencePtr_
 	 */
-	std::shared_ptr<const std::vector<scalar_array_t>> getTimeTrajectoriesPtr() const;
+	void getSubsystemsSequencePtr(const size_array_t*& motionPhasesSequencePtr) const;
 
 	/**
-	 * Get a pointer to the optimized state trajectory.
+	 * Get contact flags sequence
 	 *
-	 * @return
+	 * @param [in] contactFlagsSequencePtr: a pointer to contactFlagsSequencePtr_
 	 */
-	std::shared_ptr<const state_vector_array2_t> getStateTrajectoriesPtr() const;
-
-	/**
-	 * Get a pointer to the optimized input trajectory.
-	 *
-	 * @return
-	 */
-	std::shared_ptr<const input_vector_array2_t> getInputTrajectoriesPtr() const;
-
-	/**
-	 * Get stance legs sequene.
-	 *
-	 * @param stanceLegSequene
-	 */
-	void getStanceLegSequene(std::vector<contact_flag_t>& stanceLegSequene) const;
-
-	/**
-	 * Get gait sequene.
-	 *
-	 * @param gait sequence
-	 */
-	void getGaitSequence(size_array_t& gaitSequence) const;
+	void getContactFlagsSequencePtr(const std::vector<contact_flag_t>*& contactFlagsSequencePtr) const;
 
 	/**
 	 * Get an array of pointers to the loaded gap class.
@@ -306,13 +404,26 @@ public:
 	 */
 	ocs2::MPC_Settings& getMpcSettings();
 
-
 	/**
 	 * Get SLQ settings.
 	 *
 	 * @return SLQ settings.
 	 */
 	ocs2::SLQ_Settings& getSlqSettings();
+
+	/**
+	 * Get SLQ settings.
+	 *
+	 * @return SLQ settings.
+	 */
+	Model_Settings& getModelSettings();
+
+	/**
+	 * Gets the loaded initial RBD state.
+	 *
+	 * @param initRbdState: initial RBD state.
+	 */
+	void getLoadedInitialState(rbd_state_vector_t& initRbdState) const;
 
 	/**
 	 * This function loads the simulation-specific settings: dt, tFinal, initSettlingTime
@@ -338,7 +449,7 @@ public:
 
 
 	double strideTime() {
-		return (initSwitchingTimes_[1]-initSwitchingTimes_[0]);
+		return (initEventTimes_[1]-initEventTimes_[0]);
 	}
 
 	double strideLength() {
@@ -358,14 +469,6 @@ protected:
 	void loadSettings(const std::string& pathToConfigFile);
 
 	/**
-	 * Get optimizers parameters
-	 *
-	 * @param optimizerPtr
-	 */
-	template<class T>
-	void getOptimizerParameters(const std::shared_ptr<T>& optimizerPtr);
-
-	/**
 	 * concatenate the contatiner stocks
 	 */
 	void concatenate();
@@ -379,12 +482,14 @@ protected:
 
 	state_estimator_t switchedModelStateEstimator_;
 
-	logic_rules_t logicRules_; // logic
+	logic_rules_ptr_t logicRulesPtr_; // logic
 
 	ocs2::SLQ_Settings slqSettings_;
 	ocs2::MPC_Settings mpcSettings_;
 
 	Model_Settings modelSettings_;
+
+	ground_profile_ptr_t groundProfilePtr_;
 
 	state_matrix_t Q_;
 	control_matrix_t R_;
@@ -405,7 +510,7 @@ protected:
 	size_t 		    numPartitioningTimes_;
 
 	size_t 		   initNumSubsystems_;
-	scalar_array_t initSwitchingTimes_;
+	scalar_array_t initEventTimes_;
 	size_array_t   initSwitchingModes_;
 	std::vector<contact_flag_t> initStanceLegSequene_;
 
@@ -413,6 +518,8 @@ protected:
 	scalar_array_t switchingTimes_;
 	size_array_t   switchingModes_;
 	std::vector<contact_flag_t> stanceLegSequene_;
+
+	mode_sequence_template_t modeSequenceTemplate_;
 
 	scalar_t costFunction_;
 	scalar_t constriantISE1_;
@@ -426,21 +533,20 @@ protected:
 	//
 	lq_ptr_t lqPtr_;
 	// SLQ
-	slqp_base_ptr_t	slqPtr_;
+	slq_base_ptr_t	slqPtr_;
 	// OCS2
 //	ocs2_ptr_t 		ocs2Ptr_;
 	// MPC
 	mpc_ptr_t 		mpcPtr_;
 
-	controller_array_t 			controllersStock_;
-	std::vector<scalar_array_t> timeTrajectoriesStock_;
-	state_vector_array2_t 		stateTrajectoriesStock_;
-	input_vector_array2_t 		inputTrajectoriesStock_;
+	scalar_array_t 				eventTimes_;
+	size_array_t				subsystemsSequence_;
+	std::vector<contact_flag_t> contactFlagsSequence_;
 
-	std::shared_ptr<const controller_array_t> 			controllersStockPtr_;
-	std::shared_ptr<const std::vector<scalar_array_t>> 	timeTrajectoriesStockPtr_;
-	std::shared_ptr<const state_vector_array2_t> 		stateTrajectoriesStockPtr_;
-	std::shared_ptr<const input_vector_array2_t> 		inputTrajectoriesStockPtr_;
+	const controller_array_t* 			controllersStockPtr_;
+	const std::vector<scalar_array_t>* 	timeTrajectoriesStockPtr_;
+	const state_vector_array2_t* 		stateTrajectoriesStockPtr_;
+	const input_vector_array2_t* 		inputTrajectoriesStockPtr_;
 
 	std::vector<scalar_array_t>	desiredTimeTrajectoriesStock_;
 	state_vector_array2_t 		desiredStateTrajectoriesStock_;

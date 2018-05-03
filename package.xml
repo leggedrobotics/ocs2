@@ -31,7 +31,8 @@
   <depend>ocs2_slq</depend>
   <depend>roscpp</depend>
   <depend>ocs2_ros_msg</depend>
-
+  <depend>xpp_msgs</depend>
+  <depend>rosbag</depend>
 
   <!-- The export tag contains other, unspecified, tags -->
   <export>

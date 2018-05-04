@@ -6,7 +6,7 @@ project(ocs2_quadruped_interface)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS
   cmake_modules
-  c_switched_model_interface
+  ocs2_switched_model_interface
   ocs2_core
   ocs2_mpc
   ocs2_ocs2
@@ -43,7 +43,7 @@ catkin_package(
    INCLUDE_DIRS include
 #  LIBRARIES ocs2_quadruped_interface
    CATKIN_DEPENDS 
-      c_switched_model_interface 
+      ocs2_switched_model_interface 
       ocs2_core 
       ocs2_mpc 
       ocs2_ocs2 

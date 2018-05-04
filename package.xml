@@ -24,7 +24,7 @@
   <buildtool_depend>catkin</buildtool_depend>
   <build_depend>cmake_modules</build_depend>
   
-  <depend>c_switched_model_interface</depend>
+  <depend>ocs2_switched_model_interface</depend>
   <depend>ocs2_core</depend>
   <depend>ocs2_mpc</depend>
   <depend>ocs2_ocs2</depend>

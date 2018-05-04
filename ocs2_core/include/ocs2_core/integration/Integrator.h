@@ -98,16 +98,20 @@ using adams_bashforth_uncontrolled_t =
 		double, 								// typename time
 		boost::numeric::odeint::vector_space_algebra> ;
 
-// works only for boost 1.56 or higher
-//template <int STATE_DIM, size_t STEPS>
-//using adams_bashforth_moulton_uncontrolled_t =
-//		boost::numeric::odeint::adams_bashforth_moulton<
-//		STEPS,
-//		Eigen::Matrix<double, STATE_DIM, 1>,	// state
-//		double,									// typename value
-//		Eigen::Matrix<double, STATE_DIM, 1>,	// derivative
-//		double, 								// typename time
-//		boost::numeric::odeint::vector_space_algebra> ;
+/**
+ * Adams-Bashforth-Moulton integrator (works only after boost 1.56)
+ */
+#if (BOOST_VERSION / 100000 == 1 && BOOST_VERSION / 100 % 1000 > 55)
+template <int STATE_DIM, size_t STEPS>
+using adams_bashforth_moulton_uncontrolled_t =
+		boost::numeric::odeint::adams_bashforth_moulton<
+		STEPS,
+		Eigen::Matrix<double, STATE_DIM, 1>,	// state
+		double,									// typename value
+		Eigen::Matrix<double, STATE_DIM, 1>,	// derivative
+		double, 								// typename time
+		boost::numeric::odeint::vector_space_algebra> ;
+#endif
 
 /**
  * Integrator class for autonomous systems.
@@ -491,10 +495,8 @@ using IntegratorBulirschStoer = Integrator < STATE_DIM, bulirsch_stoer_t<STATE_D
  * Adams-Bashforth-Moulton integrator (works only after boost 1.56)
  */
 #if (BOOST_VERSION / 100000 == 1 && BOOST_VERSION / 100 % 1000 > 55)
-
 template <int STATE_DIM, size_t STEPS>
 using IntegratorAdamsBashforthMoulton = Integrator < STATE_DIM, adams_bashforth_moulton_uncontrolled_t<STATE_DIM, STEPS>>;
-
 #endif
 
 } // namespace ocs2

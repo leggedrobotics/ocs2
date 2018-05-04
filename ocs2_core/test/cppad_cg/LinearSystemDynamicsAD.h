@@ -76,7 +76,7 @@ public:
 			const SCALAR_T& time,
 			const Eigen::Matrix<SCALAR_T, STATE_DIM, 1>& state,
 			const Eigen::Matrix<SCALAR_T, INPUT_DIM, 1>& input,
-			Eigen::Matrix<SCALAR_T, STATE_DIM, 1>& jumpedState){
+			Eigen::Matrix<SCALAR_T, STATE_DIM, 1>& jumpedState) {
 
 		jumpedState =
 				G_.template cast<SCALAR_T>() * state +

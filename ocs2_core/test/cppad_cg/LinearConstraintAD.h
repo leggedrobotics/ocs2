@@ -74,7 +74,7 @@ public:
 			const SCALAR_T& time,
 			const Eigen::Matrix<SCALAR_T, STATE_DIM, 1>& state,
 			const Eigen::Matrix<SCALAR_T, INPUT_DIM, 1>& input,
-			Eigen::Matrix<SCALAR_T, Eigen::Dynamic, 1>& constraintVector) override {
+			Eigen::Matrix<SCALAR_T, Eigen::Dynamic, 1>& constraintVector) {
 
 		constraintVector = e_.template cast<SCALAR_T>()
 				+ C_.template cast<SCALAR_T>() * state
@@ -104,7 +104,7 @@ public:
 	void stateOnlyConstraint(
 			const SCALAR_T& time,
 			const Eigen::Matrix<SCALAR_T, STATE_DIM, 1>& state,
-			Eigen::Matrix<SCALAR_T, Eigen::Dynamic, 1>& constraintVector) override {
+			Eigen::Matrix<SCALAR_T, Eigen::Dynamic, 1>& constraintVector) {
 
 		constraintVector = h_.template cast<SCALAR_T>()
 				+ F_.template cast<SCALAR_T>() * state;
@@ -133,7 +133,7 @@ public:
 	void stateOnlyFinalConstraint(
 			const SCALAR_T& time,
 			const Eigen::Matrix<SCALAR_T, STATE_DIM, 1>& state,
-			Eigen::Matrix<SCALAR_T, Eigen::Dynamic, 1>& constraintVector) override {
+			Eigen::Matrix<SCALAR_T, Eigen::Dynamic, 1>& constraintVector) {
 
 		constraintVector = h_f_.template cast<SCALAR_T>()
 				+ F_f_.template cast<SCALAR_T>() * state;

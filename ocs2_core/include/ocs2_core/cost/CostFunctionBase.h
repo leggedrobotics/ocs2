@@ -15,6 +15,7 @@
 #include "ocs2_core/logic/rules/LogicRulesBase.h"
 #include "ocs2_core/logic/rules/NullLogicRules.h"
 #include "ocs2_core/logic/machine/LogicRulesMachine.h"
+#include "ocs2_core/cost/CostDesiredTrajectories.h"
 
 namespace ocs2{
 
@@ -56,6 +57,9 @@ public:
 	typedef typename DIMENSIONS::control_matrix_t 		control_matrix_t;
 	typedef typename DIMENSIONS::control_feedback_t 	control_feedback_t;
 
+	typedef CostDesiredTrajectories<scalar_t> 								cost_desired_trajectories_t;
+	typedef typename cost_desired_trajectories_t::dynamic_vector_array_t	dynamic_vector_array_t;
+
 	/**
 	 * Default constructor
 	 */
@@ -64,9 +68,7 @@ public:
 	, timeFinal_(1.0)
 	, timeSD_(0.17)
 	, timeMean_(0.5)
-	, tNominalTrajectoryPtr_(nullptr)
-	, xNominalTrajectoryPtr_(nullptr)
-	, uNominalTrajectoryPtr_(nullptr)
+	, costDesiredTrajectoriesPtr_(nullptr)
 	, xNominalFunc_()
 	, uNominalFunc_()
 	{
@@ -87,48 +89,20 @@ public:
 	virtual ~CostFunctionBase() = default;
 
 	/**
-	 * Sets the nominal state and input trajectories used in the cost function.
+	 * Sets the desired state and input trajectories used in the cost function.
 	 *
-	 * @param [in] timeTrajectory: A Reference to the time trajectory.
-	 * @param [in] stateTrajectory: A Reference to the state trajectory.
-	 * @param [in] inputTrajectory: A Reference to the inout trajectory.
+	 * @param [in] CostDesiredTrajectories: cost desired trajectories interface class.
 	 */
-	virtual void setCostNominalTrajectories(
-			const scalar_array_t& timeTrajectory,
-			const state_vector_array_t& stateTrajectory,
-			const input_vector_array_t& inputTrajectory = input_vector_array_t());
+	virtual void setCostDesiredTrajectories(
+			const cost_desired_trajectories_t& costDesiredTrajectories);
 
 	/**
-	 * Gets the nominal state used in the cost function.
+	 * Gets the desired state and input trajectories used in the cost function.
 	 *
-	 * @param [out] timeTrajectory: The time trajectory.
-	 * @param [out] stateTrajectory: The state trajectory.
-	 * @param [out] inputTrajectory: The input trajectory.
+	 * @param [in] CostDesiredTrajectories: cost desired trajectories interface class.
 	 */
-	virtual void getCostNominalTrajectories(
-			scalar_array_t& timeTrajectory,
-			state_vector_array_t& stateTrajectory,
-			input_vector_array_t& inputTrajectory) const;
-
-	/**
-	 * Gets the nominal state used in the cost function.
-	 *
-	 * @param [out] timeTrajectory: The time trajectory.
-	 * @param [out] stateTrajectory: The state trajectory.
-	 */
-	virtual void getCostNominalState(
-			scalar_array_t& timeTrajectory,
-			state_vector_array_t& stateTrajectory) const;
-
-	/**
-	 * Gets the nominal input used in the cost function.
-	 *
-	 * @param [out] timeTrajectory: The time trajectory.
-	 * @param [out] inputTrajectory: The input trajectory.
-	 */
-	virtual void getCostNominalInput(
-			scalar_array_t& timeTrajectory,
-			input_vector_array_t& inputTrajectory) const;
+	virtual void getCostDesiredTrajectories(
+			cost_desired_trajectories_t& costDesiredTrajectories) const;
 
     /**
      * Returns pointer to the class.
@@ -250,12 +224,10 @@ protected:
 	scalar_t timeSD_ = 0.17;  //1.0 / 6.0;
 	scalar_t timeMean_ = 0.5;
 
-	const scalar_array_t*		tNominalTrajectoryPtr_;
-	const state_vector_array_t* xNominalTrajectoryPtr_;
-	const input_vector_array_t* uNominalTrajectoryPtr_;
+	const cost_desired_trajectories_t* costDesiredTrajectoriesPtr_;
 
-	ocs2::LinearInterpolation<state_vector_t, Eigen::aligned_allocator<state_vector_t> > xNominalFunc_;
-	ocs2::LinearInterpolation<input_vector_t, Eigen::aligned_allocator<input_vector_t> > uNominalFunc_;
+	typename cost_desired_trajectories_t::dynamic_linear_interpolation_t xNominalFunc_;
+	typename cost_desired_trajectories_t::dynamic_linear_interpolation_t uNominalFunc_;
 
 	scalar_t t_;
 	state_vector_t x_;

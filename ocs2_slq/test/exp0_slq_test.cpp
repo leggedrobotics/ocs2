@@ -92,16 +92,12 @@ TEST(exp0_slq_test, exp0_slq_test)
 	// run single core SLQ
 	if (slqOptions.displayInfo_ || slqOptions.displayShortSummary_)
 		std::cerr << "\n>>> single-core SLQ" << std::endl;
-	slq.run(startTime, initState, finalTime, partitioningTimes,
-			std::vector<SLQ_BASE<STATE_DIM, INPUT_DIM, EXP0_LogicRules>::scalar_array_t>(),
-			SLQ_BASE<STATE_DIM, INPUT_DIM, EXP0_LogicRules>::state_vector_array2_t());
+	slq.run(startTime, initState, finalTime, partitioningTimes);
 
 	// run multi-core SLQ
 	if (slqOptions.displayInfo_ || slqOptions.displayShortSummary_)
 		std::cerr << "\n>>> multi-core SLQ" << std::endl;
-	slq_mp.run(startTime, initState, finalTime, partitioningTimes,
-			std::vector<SLQ_BASE<STATE_DIM, INPUT_DIM, EXP0_LogicRules>::scalar_array_t>(),
-			SLQ_BASE<STATE_DIM, INPUT_DIM, EXP0_LogicRules>::state_vector_array2_t());
+	slq_mp.run(startTime, initState, finalTime, partitioningTimes);
 
 	/******************************************************************************************************/
 	/******************************************************************************************************/

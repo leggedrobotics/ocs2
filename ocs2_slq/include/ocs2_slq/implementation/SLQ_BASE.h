@@ -25,6 +25,9 @@ SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::SLQ_BASE(
 		const cost_function_base_t* heuristicsFunctionPtr /* = nullptr*/)
 
 	: settings_(settings)
+	, costDesiredTrajectories_()
+	, costDesiredTrajectoriesBuffer_()
+	, costDesiredTrajectoriesUpdated_(false)
 	, rewindCounter_(0)
 	, numPartitionings_(0)
 {
@@ -788,10 +791,7 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculateCostWorker(
 	// initialize subsystem i cost
 	costFunctionsPtrStock_[workerIndex]->initializeModel(*logicRulesMachinePtr_, partitionIndex, "SLQ");
 	// set desired trajectories
-	costFunctionsPtrStock_[workerIndex]->setCostNominalTrajectories(
-			*(desiredTimeTrajectoryStockPtr_->begin() +partitionIndex),
-			*(desiredStateTrajectoryStockPtr_->begin()+partitionIndex),
-			*(desiredInputTrajectoryStockPtr_->begin()+partitionIndex) );
+	costFunctionsPtrStock_[workerIndex]->setCostDesiredTrajectories(costDesiredTrajectories_);
 
 	auto eventsPastTheEndItr = eventsPastTheEndIndeces.begin();
 
@@ -960,10 +960,7 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::approximateOptimalControlPro
 				// initialize subsystem i cost
 				costFunctionsPtrStock_[j]->initializeModel(*logicRulesMachinePtr_, i, "SLQ");
 				// set desired trajectories
-				costFunctionsPtrStock_[j]->setCostNominalTrajectories(
-						*(desiredTimeTrajectoryStockPtr_->begin() +i),
-						*(desiredStateTrajectoryStockPtr_->begin()+i),
-						*(desiredInputTrajectoryStockPtr_->begin()+i) );
+				costFunctionsPtrStock_[j]->setCostDesiredTrajectories(costDesiredTrajectories_);
 			}  // end of j loop
 
 			/*
@@ -2997,6 +2994,67 @@ const typename SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::scalar_array_t&
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
+void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::setCostDesiredTrajectories(
+		const cost_desired_trajectories_t& costDesiredTrajectories) {
+
+	costDesiredTrajectoriesUpdated_ = true;
+	costDesiredTrajectoriesBuffer_ = costDesiredTrajectories;
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
+void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::setCostDesiredTrajectories(
+		const scalar_array_t& desiredTimeTrajectory,
+		const Eigen::Matrix<scalar_t, Eigen::Dynamic, 1>& desiredStateTrajectory,
+		const Eigen::Matrix<scalar_t, Eigen::Dynamic, 1>& desiredInputTrajectory) {
+
+	costDesiredTrajectoriesUpdated_ = true;
+	costDesiredTrajectoriesBuffer_.desiredTimeTrajectory()  = desiredTimeTrajectory;
+	costDesiredTrajectoriesBuffer_.desiredStateTrajectory() = desiredStateTrajectory;
+	costDesiredTrajectoriesBuffer_.desiredInputTrajectory() = desiredInputTrajectory;
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
+void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::swapCostDesiredTrajectories(
+		cost_desired_trajectories_t& costDesiredTrajectories) {
+
+	costDesiredTrajectoriesUpdated_ = true;
+	costDesiredTrajectoriesBuffer_.swap(costDesiredTrajectories);
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
+void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::swapCostDesiredTrajectories(
+		scalar_array_t& desiredTimeTrajectory,
+		Eigen::Matrix<scalar_t, Eigen::Dynamic, 1>& desiredStateTrajectory,
+		Eigen::Matrix<scalar_t, Eigen::Dynamic, 1>& desiredInputTrajectory) {
+
+	costDesiredTrajectoriesUpdated_ = true;
+	costDesiredTrajectoriesBuffer_.desiredTimeTrajectory().swap(desiredTimeTrajectory);
+	costDesiredTrajectoriesBuffer_.desiredStateTrajectory().swap(desiredStateTrajectory);
+	costDesiredTrajectoriesBuffer_.desiredInputTrajectory().swap(desiredInputTrajectory);
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
+bool SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::costDesiredTrajectoriesUpdated() const {
+
+	return costDesiredTrajectoriesUpdated_;
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
 void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::runInit() {
 
 #ifdef BENCHMARK
@@ -3140,16 +3198,12 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::runIteration() {
 template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
 void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::run(
 		const scalar_t& initTime, const state_vector_t& initState, const scalar_t& finalTime,
-		const scalar_array_t& partitioningTimes,
-		const std::vector<scalar_array_t>& desiredTimeTrajectoriesStock /*= std::vector<scalar_array_t>()*/,
-		const state_vector_array2_t& desiredStateTrajectoriesStock /*= state_vector_array2_t()*/,
-		const input_vector_array2_t& desiredInputTrajectoriesStock /*= input_vector_array2_t()*/) {
+		const scalar_array_t& partitioningTimes) {
 
 	const controller_array_t noInitialController(partitioningTimes.size()-1, controller_t());
 
 	// call the "run" method which uses the internal controllers stock (i.e. nominalControllersStock_)
-	run(initTime, initState, finalTime, partitioningTimes, noInitialController,
-			desiredTimeTrajectoriesStock, desiredStateTrajectoriesStock, desiredInputTrajectoriesStock);
+	run(initTime, initState, finalTime, partitioningTimes, noInitialController);
 }
 
 
@@ -3160,10 +3214,7 @@ template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
 void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::run(
 		const scalar_t& initTime, const state_vector_t& initState, const scalar_t& finalTime,
 		const scalar_array_t& partitioningTimes,
-		const controller_array_t& controllersStock,
-		const std::vector<scalar_array_t>& desiredTimeTrajectoriesStock /*= std::vector<scalar_array_t>()*/,
-		const state_vector_array2_t& desiredStateTrajectoriesStock /*= state_vector_array2_t()*/,
-		const input_vector_array2_t& desiredInputTrajectoriesStock /*= input_vector_array2_t()*/) {
+		const controller_array_t& controllersStock) {
 
 	if (settings_.displayInfo_) {
 			std::cerr << "++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++" << std::endl;
@@ -3192,27 +3243,9 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::run(
 	}
 
 	// set desired trajectories for cost
-	if (desiredTimeTrajectoriesStock.empty()==false) {
-
-		if (desiredTimeTrajectoriesStock.size() != numPartitionings_)
-			throw std::runtime_error("desiredTimeTrajectoriesStock has less elements than the number of partitions.");
-		if (desiredStateTrajectoriesStock.size() != numPartitionings_)
-			throw std::runtime_error("desiredStateTrajectoriesStock has less elements than the number of partitions.");
-		if (desiredInputTrajectoriesStock.size() != numPartitionings_ && desiredInputTrajectoriesStock.empty() == false)
-			throw std::runtime_error("desiredInputTrajectoriesStock has less elements than the number of partitions.");
-
-		desiredTimeTrajectoryStockPtr_  = &desiredTimeTrajectoriesStock;
-		desiredStateTrajectoryStockPtr_ = &desiredStateTrajectoriesStock;
-		if (desiredInputTrajectoriesStock.empty()==false)
-			desiredInputTrajectoryStockPtr_ = &desiredInputTrajectoriesStock;
-		else
-			desiredInputTrajectoryStockPtr_ = &nullDesiredInputTrajectoryStockPtr_;
-
-	} else {
-		if (settings_.displayInfo_) std::cerr << "WARNING: Desired state trajectories are not provided." << std::endl;
-		desiredTimeTrajectoryStockPtr_  = &nullDesiredTimeTrajectoryStockPtr_;
-		desiredStateTrajectoryStockPtr_ = &nullDesiredStateTrajectoryStockPtr_;
-		desiredInputTrajectoryStockPtr_ = &nullDesiredInputTrajectoryStockPtr_;
+	if (costDesiredTrajectoriesUpdated_ == true) {
+		costDesiredTrajectoriesUpdated_ = false;
+		costDesiredTrajectories_.swap(costDesiredTrajectoriesBuffer_);
 	}
 
 	// update the LOGIC_RULES in the begining of the run routine and adjust the nominal controllerStock based on an user-defined function

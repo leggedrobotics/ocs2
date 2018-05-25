@@ -68,8 +68,10 @@ public:
 	 * @param [in] partitionIndex: index of the time partition.
 	 * @param [in] algorithmName: The algorithm that class this class (default not defined).
 	 */
-	virtual void initializeModel(LogicRulesMachine<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>& logicRulesMachine,
-			const size_t& partitionIndex, const char* algorithmName=NULL) override {
+	virtual void initializeModel(
+			LogicRulesMachine<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>& logicRulesMachine,
+			const size_t& partitionIndex,
+			const char* algorithmName=NULL) override {
 
 		Base::initializeModel(logicRulesMachine, partitionIndex, algorithmName);
 	}
@@ -80,6 +82,7 @@ public:
 	 * @return A raw pointer to the class.
 	 */
 	virtual SystemOperatingPoint<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>* clone() const override {
+
 		return new SystemOperatingPoint<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>(*this);
 	}
 

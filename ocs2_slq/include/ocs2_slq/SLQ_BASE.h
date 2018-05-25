@@ -24,6 +24,7 @@
 #include <ocs2_core/dynamics/DerivativesBase.h>
 #include <ocs2_core/constraint/ConstraintBase.h>
 #include <ocs2_core/cost/CostFunctionBase.h>
+#include <ocs2_core/cost/CostDesiredTrajectories.h>
 #include <ocs2_core/integration/Integrator.h>
 #include <ocs2_core/integration/SystemEventHandler.h>
 #include <ocs2_core/integration/StateTriggeredEventHandler.h>
@@ -130,6 +131,8 @@ public:
 	typedef ConstraintBase<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>			constraint_base_t;
 	typedef CostFunctionBase<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>		cost_function_base_t;
 	typedef SystemOperatingTrajectoriesBase<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> operating_trajectories_base_t;
+
+	typedef CostDesiredTrajectories<scalar_t> 	cost_desired_trajectories_t;
 
 	typedef LogicRulesMachine<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>	logic_rules_machine_t;
 	typedef typename logic_rules_machine_t::Ptr						logic_rules_machine_ptr_t;
@@ -417,17 +420,12 @@ public:
 	 * @param [in] initState: The initial state.
 	 * @param [in] finalTime: The final time.
 	 * @param [in] partitioningTimes: The partitioning times between subsystems.
-	 * @param [in] desiredTimeTrajectoriesStockPtr: The time stamp trajectory for each subsystem's cost.
-	 * @param [in] desiredStateTrajectoriesStockPtr: The desired state trajectory for each partition's cost.
-	 * @param [in] desiredInputTrajectoriesStockPtr: The desired input trajectory for each partition's cost.
+	 * @param [in] costDesiredTrajectories: The cost desired trajectories.
 	 */
 	void run(const scalar_t& initTime,
 			const state_vector_t& initState,
 			const scalar_t& finalTime,
-			const scalar_array_t& partitioningTimes,
-			const std::vector<scalar_array_t>& desiredTimeTrajectoriesStock = std::vector<scalar_array_t>(),
-			const state_vector_array2_t& desiredStateTrajectoriesStock = state_vector_array2_t(),
-			const input_vector_array2_t& desiredInputTrajectoriesStock = input_vector_array2_t());
+			const scalar_array_t& partitioningTimes);
 
 	/**
 	 * The main routine of SLQ which runs SLQ for a given initial state, initial time, and final time. In order
@@ -441,18 +439,13 @@ public:
 	 * @param [in] partitioningTimes: The time partitioning.
 	 * @param [in] controllersStock: Array of the initial control policies. If you want to use the control policy
 	 * which was designed by the previous call of the "run" routine, you should pass INTERNAL_CONTROLLER().
-	 * @param [in] desiredTimeTrajectoriesStockPtr: The time stamp trajectory for each subsystem's cost.
-	 * @param [in] desiredStateTrajectoriesStockPtr: The desired state trajectory for each partition's cost.
-	 * @param [in] desiredInputTrajectoriesStockPtr: The desired input trajectory for each partition's cost.
+	 * @param [in] costDesiredTrajectories: The cost desired trajectories.
 	 */
 	void run(const scalar_t& initTime,
 			const state_vector_t& initState,
 			const scalar_t& finalTime,
 			const scalar_array_t& partitioningTimes,
-			const controller_array_t& controllersStock,
-			const std::vector<scalar_array_t>& desiredTimeTrajectoriesStock = std::vector<scalar_array_t>(),
-			const state_vector_array2_t& desiredStateTrajectoriesStock = state_vector_array2_t(),
-			const input_vector_array2_t& desiredInputTrajectoriesStock = input_vector_array2_t());
+			const controller_array_t& controllersStock);
 
 	/**
 	 * Calculates the value function at the given time and state.
@@ -576,6 +569,53 @@ public:
 	 * @return eventTimes: Array of the event times.
 	 */
 	const scalar_array_t& getEventTimes() const;
+
+	/**
+	 * Sets the cost function desired trajectories.
+	 *
+	 * @param [in] costDesiredTrajectories: The cost function desired trajectories
+	 */
+	void setCostDesiredTrajectories(
+			const cost_desired_trajectories_t& costDesiredTrajectories);
+
+	/**
+	 * Sets the cost function desired trajectories.
+	 *
+	 * @param [in] desiredTimeTrajectory: The desired time trajectory for cost.
+	 * @param [in] desiredStateTrajectory: The desired state trajectory for cost.
+	 * @param [in] desiredInputTrajectory: The desired input trajectory for cost.
+	 */
+	void setCostDesiredTrajectories(
+			const scalar_array_t& desiredTimeTrajectory,
+			const Eigen::Matrix<scalar_t, Eigen::Dynamic, 1>& desiredStateTrajectory,
+			const Eigen::Matrix<scalar_t, Eigen::Dynamic, 1>& desiredInputTrajectory);
+
+	/**
+	 * Swaps the cost function desired trajectories.
+	 *
+	 * @param [in] costDesiredTrajectories: The cost function desired trajectories
+	 */
+	void swapCostDesiredTrajectories(
+			cost_desired_trajectories_t& costDesiredTrajectories);
+
+	/**
+	 * Swaps the cost function desired trajectories.
+	 *
+	 * @param [in] desiredTimeTrajectory: The desired time trajectory for cost.
+	 * @param [in] desiredStateTrajectory: The desired state trajectory for cost.
+	 * @param [in] desiredInputTrajectory: The desired input trajectory for cost.
+	 */
+	void swapCostDesiredTrajectories(
+			scalar_array_t& desiredTimeTrajectory,
+			Eigen::Matrix<scalar_t, Eigen::Dynamic, 1>& desiredStateTrajectory,
+			Eigen::Matrix<scalar_t, Eigen::Dynamic, 1>& desiredInputTrajectory);
+
+	/**
+	 * Whether the cost function desired trajectories is updated.
+	 *
+	 * @return true if it is updated.
+	 */
+	bool costDesiredTrajectoriesUpdated() const;
 
 	/**
 	 * Gets the optimal array of the control policies.
@@ -1039,6 +1079,10 @@ protected:
 	 ****************/
 	SLQ_Settings settings_;
 	logic_rules_machine_ptr_t logicRulesMachinePtr_;
+
+	cost_desired_trajectories_t costDesiredTrajectories_;
+	cost_desired_trajectories_t costDesiredTrajectoriesBuffer_;
+	bool costDesiredTrajectoriesUpdated_;
 
 	unsigned long long int rewindCounter_;
 

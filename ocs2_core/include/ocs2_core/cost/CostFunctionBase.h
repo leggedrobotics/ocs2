@@ -58,6 +58,7 @@ public:
 	typedef typename DIMENSIONS::control_feedback_t 	control_feedback_t;
 
 	typedef CostDesiredTrajectories<scalar_t> 								cost_desired_trajectories_t;
+	typedef typename cost_desired_trajectories_t::dynamic_vector_t			dynamic_vector_t;
 	typedef typename cost_desired_trajectories_t::dynamic_vector_array_t	dynamic_vector_array_t;
 
 	/**

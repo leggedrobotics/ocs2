@@ -3007,8 +3007,8 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::setCostDesiredTrajectories(
 template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
 void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::setCostDesiredTrajectories(
 		const scalar_array_t& desiredTimeTrajectory,
-		const Eigen::Matrix<scalar_t, Eigen::Dynamic, 1>& desiredStateTrajectory,
-		const Eigen::Matrix<scalar_t, Eigen::Dynamic, 1>& desiredInputTrajectory) {
+		const dynamic_vector_array_t& desiredStateTrajectory,
+		const dynamic_vector_array_t& desiredInputTrajectory) {
 
 	costDesiredTrajectoriesUpdated_ = true;
 	costDesiredTrajectoriesBuffer_.desiredTimeTrajectory()  = desiredTimeTrajectory;
@@ -3033,8 +3033,8 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::swapCostDesiredTrajectories(
 template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
 void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::swapCostDesiredTrajectories(
 		scalar_array_t& desiredTimeTrajectory,
-		Eigen::Matrix<scalar_t, Eigen::Dynamic, 1>& desiredStateTrajectory,
-		Eigen::Matrix<scalar_t, Eigen::Dynamic, 1>& desiredInputTrajectory) {
+		dynamic_vector_array_t& desiredStateTrajectory,
+		dynamic_vector_array_t& desiredInputTrajectory) {
 
 	costDesiredTrajectoriesUpdated_ = true;
 	costDesiredTrajectoriesBuffer_.desiredTimeTrajectory().swap(desiredTimeTrajectory);

@@ -124,6 +124,9 @@ public:
 	typedef typename DIMENSIONS::constraint2_state_matrix_array_t constraint2_state_matrix_array_t;
 	typedef typename DIMENSIONS::constraint2_state_matrix_array2_t constraint2_state_matrix_array2_t;
 
+	typedef Eigen::Matrix<scalar_t, Eigen::Dynamic, 1> 	dynamic_vector_t;
+	typedef std::vector<dynamic_vector_t>				dynamic_vector_array_t;
+
 	typedef ControlledSystemBase<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>	controlled_system_base_t;
 	typedef SystemEventHandler<STATE_DIM>								event_handler_t;
 	typedef StateTriggeredEventHandler<STATE_DIM>						state_triggered_event_handler_t;
@@ -132,7 +135,7 @@ public:
 	typedef CostFunctionBase<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>		cost_function_base_t;
 	typedef SystemOperatingTrajectoriesBase<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> operating_trajectories_base_t;
 
-	typedef CostDesiredTrajectories<scalar_t> 	cost_desired_trajectories_t;
+	typedef CostDesiredTrajectories<scalar_t> 								cost_desired_trajectories_t;
 
 	typedef LogicRulesMachine<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>	logic_rules_machine_t;
 	typedef typename logic_rules_machine_t::Ptr						logic_rules_machine_ptr_t;
@@ -587,8 +590,8 @@ public:
 	 */
 	void setCostDesiredTrajectories(
 			const scalar_array_t& desiredTimeTrajectory,
-			const Eigen::Matrix<scalar_t, Eigen::Dynamic, 1>& desiredStateTrajectory,
-			const Eigen::Matrix<scalar_t, Eigen::Dynamic, 1>& desiredInputTrajectory);
+			const dynamic_vector_array_t& desiredStateTrajectory,
+			const dynamic_vector_array_t& desiredInputTrajectory);
 
 	/**
 	 * Swaps the cost function desired trajectories.
@@ -607,8 +610,8 @@ public:
 	 */
 	void swapCostDesiredTrajectories(
 			scalar_array_t& desiredTimeTrajectory,
-			Eigen::Matrix<scalar_t, Eigen::Dynamic, 1>& desiredStateTrajectory,
-			Eigen::Matrix<scalar_t, Eigen::Dynamic, 1>& desiredInputTrajectory);
+			dynamic_vector_array_t& desiredStateTrajectory,
+			dynamic_vector_array_t& desiredInputTrajectory);
 
 	/**
 	 * Whether the cost function desired trajectories is updated.

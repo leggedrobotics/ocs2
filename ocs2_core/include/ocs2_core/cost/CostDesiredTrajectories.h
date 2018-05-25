@@ -9,6 +9,7 @@
 #define COSTDESIREDTRAJECTORIES_OCS2_H_
 
 #include <vector>
+#include <iomanip>
 #include <Eigen/Dense>
 
 #include "ocs2_core/misc/LinearInterpolation.h"

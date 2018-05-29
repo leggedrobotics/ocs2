@@ -2,7 +2,7 @@
 <package format="2">
   <name>ocs2_quadruped_interface</name>
   <version>0.0.0</version>
-  <description>The ocs2_anymal_interface package</description>
+  <description>The ocs2_quadruped_interface package</description>
 
   <!-- One maintainer tag required, multiple allowed, one person per tag -->
   <!-- Example:  -->
@@ -24,16 +24,15 @@
   <buildtool_depend>catkin</buildtool_depend>
   <build_depend>cmake_modules</build_depend>
   
-  <depend>ocs2_switched_model_interface</depend>
-  <depend>ocs2_core</depend>
-  <depend>ocs2_mpc</depend>
-  <depend>ocs2_ocs2</depend>
-  <depend>ocs2_slq</depend>
   <depend>roscpp</depend>
-  <depend>ocs2_ros_msg</depend>
-  <depend>xpp_msgs</depend>
-  <depend>rosbag</depend>
+  <depend>ocs2_core</depend>
+  <depend>ocs2_slq</depend>
+  <depend>ocs2_ocs2</depend>
+  <depend>ocs2_mpc</depend>
   <depend>ocs2_comm_interfaces</depend>
+  <depend>ocs2_switched_model_interface</depend>
+  <depend>rosbag</depend>
+  <depend>xpp_msgs</depend>
 
   <!-- The export tag contains other, unspecified, tags -->
   <export>

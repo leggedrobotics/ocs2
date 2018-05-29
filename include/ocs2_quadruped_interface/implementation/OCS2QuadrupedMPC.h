@@ -318,46 +318,10 @@ void OCS2QuadrupedMPC<JOINT_COORD_SIZE>::stateCallback(const ocs2_ros_msg::rbd_s
 	// update target position
 	if(targetPositionIsUpdated_==true) {
 
-//		targetPositionIsUpdated_ = false;
-//
-//		state_vector_t currentState;
-//		ocs2QuadrupedInterfacePtr_->computeSwitchedModelState(rbdCurrentState, currentState);
-//
-//		state_vector_t targetState;
-//		targetState.template segment<3>(0) = initState_. template segment<3>(0)   + targetPoseDisplacement_.template segment<3>(0);
-//		targetState.template segment<2>(3) = currentState. template segment<2>(3) + targetPoseDisplacement_.template segment<2>(3);
-//		targetState.template segment<1>(5) = initState_. template segment<1>(5)   + targetPoseDisplacement_.template segment<1>(5);
-//		targetState.template segment<6>(6).setZero();
-//		targetState.template segment<12>(12) = initState_.template segment<12>(12);
-//
-//		ocs2QuadrupedInterfacePtr_->setNewGoalStateMPC(targetReachingDuration_, targetState);
-
 		targetPositionIsUpdated_ = false;
 
-		state_vector_t currentState;
-		ocs2QuadrupedInterfacePtr_->computeSwitchedModelState(rbdCurrentState, currentState);
-
-		// nominal time
-		tGoalTrajectory_.resize(2);
-		tGoalTrajectory_[0] = currentTime + ocs2QuadrupedInterfacePtr_->getModelSettings().mpcGoalCommandDelay_;
-		tGoalTrajectory_[1] = currentTime + ocs2QuadrupedInterfacePtr_->getModelSettings().mpcGoalCommandDelay_ + targetReachingDuration_;
-
-		// nominal state
-		xGoalTrajectory_.resize(2);
-		xGoalTrajectory_[0].template head<6>()     = currentState.template head<6>();
-		xGoalTrajectory_[0].template segment<6>(6) = base_coordinate_t::Zero();
-		xGoalTrajectory_[0].template tail<12>()    = initState_.template tail<12>();
-
-		xGoalTrajectory_[1].template segment<3>(0) = initState_. template segment<3>(0)   + targetPoseDisplacement_.template segment<3>(0);
-		xGoalTrajectory_[1].template segment<2>(3) = currentState. template segment<2>(3) + targetPoseDisplacement_.template segment<2>(3);
-		xGoalTrajectory_[1].template segment<1>(5) = initState_. template segment<1>(5)   + targetPoseDisplacement_.template segment<1>(5);
-		xGoalTrajectory_[1].template segment<6>(6) = base_coordinate_t::Zero();
-		xGoalTrajectory_[1].template tail<12>()    = initState_.template tail<12>();
-
-		// nominal input
-		uGoalTrajectory_.resize(2);
-		uGoalTrajectory_[0] = initInput_;
-		uGoalTrajectory_[1] = initInput_;
+		targetPoseToDesiredTrajectories(currentTime, rbdCurrentState,
+				tGoalTrajectory_, xGoalTrajectory_, uGoalTrajectory_);
 
 		ocs2QuadrupedInterfacePtr_->getMPC().setNewGoalTrajectories(tGoalTrajectory_, xGoalTrajectory_, uGoalTrajectory_);
 
@@ -461,6 +425,53 @@ void OCS2QuadrupedMPC<JOINT_COORD_SIZE>::targetPoseCallback(const geometry_msgs:
 	size_t numReqiredSteps = std::max(numReqiredStepsX, numReqiredStepsY);
 
 	targetReachingDuration_ = numReqiredSteps * ocs2QuadrupedInterfacePtr_->numPhasesInfullGaitCycle() * ocs2QuadrupedInterfacePtr_->strideTime();
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+template <size_t JOINT_COORD_SIZE>
+void OCS2QuadrupedMPC<JOINT_COORD_SIZE>::targetPoseToDesiredTrajectories(
+		const scalar_t& currentTime,
+		const rbd_state_vector_t& rbdCurrentState,
+		scalar_array_t& tGoalTrajectory,
+		state_vector_array_t& xGoalTrajectory,
+		input_vector_array_t& uGoalTrajectory) {
+
+//	state_vector_t currentState;
+//	ocs2QuadrupedInterfacePtr_->computeSwitchedModelState(rbdCurrentState, currentState);
+//
+//	state_vector_t targetState;
+//	targetState.template segment<3>(0) = initState_. template segment<3>(0)   + targetPoseDisplacement_.template segment<3>(0);
+//	targetState.template segment<2>(3) = currentState. template segment<2>(3) + targetPoseDisplacement_.template segment<2>(3);
+//	targetState.template segment<1>(5) = initState_. template segment<1>(5)   + targetPoseDisplacement_.template segment<1>(5);
+//	targetState.template segment<6>(6).setZero();
+//	targetState.template segment<12>(12) = initState_.template segment<12>(12);
+
+	state_vector_t currentState;
+	ocs2QuadrupedInterfacePtr_->computeSwitchedModelState(rbdCurrentState, currentState);
+
+	// nominal time
+	tGoalTrajectory.resize(2);
+	tGoalTrajectory[0] = currentTime + ocs2QuadrupedInterfacePtr_->getModelSettings().mpcGoalCommandDelay_;
+	tGoalTrajectory[1] = currentTime + ocs2QuadrupedInterfacePtr_->getModelSettings().mpcGoalCommandDelay_ + targetReachingDuration_;
+
+	// nominal state
+	xGoalTrajectory.resize(2);
+	xGoalTrajectory[0].template head<6>()     = currentState.template head<6>();
+	xGoalTrajectory[0].template segment<6>(6) = base_coordinate_t::Zero();
+	xGoalTrajectory[0].template tail<12>()    = initState_.template tail<12>();
+
+	xGoalTrajectory[1].template segment<3>(0) = initState_. template segment<3>(0)   + targetPoseDisplacement_.template segment<3>(0);
+	xGoalTrajectory[1].template segment<2>(3) = currentState. template segment<2>(3) + targetPoseDisplacement_.template segment<2>(3);
+	xGoalTrajectory[1].template segment<1>(5) = initState_. template segment<1>(5)   + targetPoseDisplacement_.template segment<1>(5);
+	xGoalTrajectory[1].template segment<6>(6) = base_coordinate_t::Zero();
+	xGoalTrajectory_[1].template tail<12>()    = initState_.template tail<12>();
+
+	// nominal input
+	uGoalTrajectory.resize(2);
+	uGoalTrajectory[0] = initInput_;
+	uGoalTrajectory[1] = initInput_;
 }
 
 /******************************************************************************************************/

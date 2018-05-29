@@ -15,106 +15,164 @@
 #include <Eigen/Core>
 #include <Eigen/Geometry>
 
-#include <ros/ros.h>
-#include <sensor_msgs/Joy.h>
-#include <geometry_msgs/Pose.h>
 
 namespace switched_model {
 
+/**
+ * Target pose
+ * targetPoseDisplacement(0): Roll
+ * targetPoseDisplacement(1): Pitch
+ * targetPoseDisplacement(2): Yaw
+ *
+ * targetPoseDisplacement(3): X
+ * targetPoseDisplacement(4): Y
+ * targetPoseDisplacement(5): Z
+ *
+ *
+ * Desired state:
+ * dState = costDesiredTrajectories.desiredStateTrajectory().at(0)
+ *
+ * dState(0): orientation.w
+ * dState(1): orientation.x
+ * dState(2): orientation.y
+ * dState(3): orientation.z
+ *
+ * dState(4): position.x
+ * dState(5): position.y
+ * dState(6): position.z
+ *
+ */
+
+template <typename SCALAR_T>
 class TargetPoseCommand
 {
 public:
-	typedef double 					scalar_t;
-	typedef std::vector<scalar_t> 	scalar_array_t;
+	enum DIM {
+		POSE_DIM_ = 6,
+	};
 
+	typedef SCALAR_T 									scalar_t;
+	typedef std::vector<scalar_t> 						scalar_array_t;
+	typedef Eigen::Matrix<scalar_t, POSE_DIM_, 1>		pose_vector_t;
+	typedef Eigen::Matrix<scalar_t, Eigen::Dynamic, 1>	cost_state_vector_t;
+
+	/**
+	 *
+	 * @param goalPoseLimit
+	 */
 	TargetPoseCommand(
-			const std::string& robotName,
-			const scalar_array_t& goalPoseLimit = scalar_array_t{2.0, 1.0, 0.3, 45.0, 45.0, 360.0})
+			const scalar_array_t& goalPoseLimit = scalar_array_t{45.0, 45.0, 360.0, 2.0, 1.0, 0.3})
 
-	: robotName_(robotName)
-	, goalPoseLimit_(goalPoseLimit)
+	: goalPoseLimit_(goalPoseLimit)
 	{
-		if (goalPoseLimit_.size() != maxCommandSize_)
+		if (goalPoseLimit_.size() != POSE_DIM_)
 			throw std::runtime_error("The goal pose limit should be of size 6.");
 	}
 
 	~TargetPoseCommand() = default;
 
-	void launchNodes(int argc, char* argv[]) {
+	/**
+	 * Transforms the cost function's desired state to the target pose displacement.
+	 *
+	 * @param [in] desiredState: The cost function's desired state.
+	 * @param [out] targetPoseDisplacement: The target pose displacement.
+	 */
+	static void toTargetPoseDisplacement(
+			const cost_state_vector_t& desiredState,
+			pose_vector_t& targetPoseDisplacement) {
 
-		ros::init(argc, argv, "target_pose");
-		ros::NodeHandle nodeHandler;
-		gaolPublisher_ = nodeHandler.advertise<geometry_msgs::Pose>(robotName_ + "_target", 1);
-		ros::spinOnce();
+		Eigen::Quaternion<scalar_t> qxyz(
+				desiredState(0),
+				desiredState(1),
+				desiredState(2),
+				desiredState(3));
 
-		// display
-		ROS_INFO_STREAM(robotName_ + " 	command node is ready.");
+		targetPoseDisplacement.template head<3>() = qxyz.toRotationMatrix().eulerAngles(0, 1, 2);
+		targetPoseDisplacement(3) = desiredState(4);
+		targetPoseDisplacement(4) = desiredState(5);
+		targetPoseDisplacement(5) = desiredState(6);
 	}
 
-	void run() {
+	/**
+	 * Transforms the target pose displacement to the cost function's desired state.
+	 * Moreover, it clamps the targetPoseDisplacement to its limits.
+	 *
+	 * @param [in] targetPoseDisplacement: The target pose displacement.
+	 * @param [out] desiredState: The cost function's desired state.
+	 * @return: The clamped targetPoseDisplacement.
+	 */
+	pose_vector_t toCostDesiredState(
+				const pose_vector_t& targetPoseDisplacement,
+				cost_state_vector_t& desiredState) {
 
 		auto deg2rad = [](const scalar_t& deg) { return (deg*M_PI/180); };
-		auto rad2deg = [](const scalar_t& rad) { return (rad*180/M_PI); };
 
-		while (ros::ok()) {
+		// limits
+		pose_vector_t targetPoseDisplacementLimited;
+		for (size_t i=0; i<POSE_DIM_; i++) {
+			if (std::abs(targetPoseDisplacement(i)) > goalPoseLimit_[i])
+				targetPoseDisplacementLimited(i) = (targetPoseDisplacement(i) > 0) ? goalPoseLimit_[i] : -goalPoseLimit_[i];
+			else
+				targetPoseDisplacementLimited(i) = targetPoseDisplacement(i);
+		}  // end of i loop
 
-			commadInput_.clear();
+		desiredState.resize(POSE_DIM_+1);
 
-			std::cout << "Enter XYZ displacement for the robot, separated by spaces: ";
-			std::string line;
-			std::getline(std::cin, line);
-			std::istringstream stream(line);
-			scalar_t in;
-			while (stream >> in)
-				commadInput_.push_back(in);
+		// Orientation
+		Eigen::Quaternion<scalar_t> qxyz =
+				Eigen::AngleAxis<scalar_t>(deg2rad(targetPoseDisplacementLimited[0]), Eigen::Vector3d::UnitX()) *  // roll
+				Eigen::AngleAxis<scalar_t>(deg2rad(targetPoseDisplacementLimited[1]), Eigen::Vector3d::UnitY()) *  // pitch
+				Eigen::AngleAxis<scalar_t>(deg2rad(targetPoseDisplacementLimited[2]), Eigen::Vector3d::UnitZ());   // yaw
 
-			if (commadInput_.size() > maxCommandSize_)
-				commadInput_.erase(commadInput_.begin()+maxCommandSize_, commadInput_.end());
+		desiredState(0) = qxyz.w();
+		desiredState(1) = qxyz.x();
+		desiredState(2) = qxyz.y();
+		desiredState(3) = qxyz.z();
 
-			for (size_t i=0; i<maxCommandSize_; i++) {
-				if (i+1 > commadInput_.size()) {
-					commadInput_.push_back(0.0);
-					continue;
-				}
-				if (std::abs(commadInput_[i]) > goalPoseLimit_[i])
-					commadInput_[i] = (commadInput_[i] > 0) ? goalPoseLimit_[i] : -goalPoseLimit_[i];
+		// Position
+		desiredState(4) = targetPoseDisplacementLimited[3];
+		desiredState(5) = targetPoseDisplacementLimited[4];
+		desiredState(6) = targetPoseDisplacementLimited[5];
+
+		return targetPoseDisplacementLimited;
+	}
+
+	/**
+	 * Gets the target pose displacement from command line. The first 3 input are the (x,y,z)
+	 * position and the 2nd three inputs are (roll,pitch,yaw) orientation.
+	 *
+	 * @param [out] targetPoseDisplacement: The target pose displacement.
+	 */
+	void getCommandLineTargetPoseDisplacement(pose_vector_t& targetPoseDisplacement) {
+
+		scalar_array_t commadInput(0);
+
+		std::string line;
+		std::getline(std::cin, line);
+		std::istringstream stream(line);
+		scalar_t in;
+		while (stream >> in)
+			commadInput.push_back(in);
+
+		// if the size is greater than POSE_DIM_
+		const size_t n = commadInput.size();
+		if (n > POSE_DIM_)
+			commadInput.erase(commadInput.begin()+POSE_DIM_, commadInput.end());
+		else
+			for (size_t i=n; i<POSE_DIM_; i++) {
+				commadInput.push_back(0.0);
 			}  // end of i loop
 
-			// creat the message
-			geometry_msgs::Pose basePoseMsg;
-			basePoseMsg.position.x = commadInput_[0];
-			basePoseMsg.position.y = commadInput_[1];
-			basePoseMsg.position.z = commadInput_[2];
-
-			Eigen::Quaternion<scalar_t> qxyz =
-					Eigen::AngleAxis<scalar_t>(deg2rad(commadInput_[3]), Eigen::Vector3d::UnitX()) *  // roll
-					Eigen::AngleAxis<scalar_t>(deg2rad(commadInput_[4]), Eigen::Vector3d::UnitY()) *  // pitch
-					Eigen::AngleAxis<scalar_t>(deg2rad(commadInput_[5]), Eigen::Vector3d::UnitZ());   // yaw
-
-			basePoseMsg.orientation.x = qxyz.x();
-			basePoseMsg.orientation.y = qxyz.y();
-			basePoseMsg.orientation.z = qxyz.z();
-			basePoseMsg.orientation.w = qxyz.w();
-
-			gaolPublisher_.publish(basePoseMsg);
-
-			std::cout << "The following position displacement is published: [";
-			for (size_t i=0; i<maxCommandSize_; i++)
-				std::cout << commadInput_[i] << ", ";
-			std::cout << "\b\b]" << std::endl << std::endl;
-
-		}  // enf of while loop
+		// reversing the order of the position and orientation.
+		for (size_t j=0; j<3; j++) {
+			targetPoseDisplacement(j) = commadInput[3+j];
+			targetPoseDisplacement(3+j) = commadInput[j];
+		}
 	}
 
 
 private:
-	const size_t maxCommandSize_ = 6;
-
-	std::string robotName_;
-
 	scalar_array_t goalPoseLimit_;
-
-	ros::Publisher gaolPublisher_;
 
 	scalar_array_t commadInput_;
 };

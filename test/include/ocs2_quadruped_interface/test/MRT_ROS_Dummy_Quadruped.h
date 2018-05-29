@@ -1,33 +1,50 @@
 /*
- * DummySimulator.h
+ * MRT_ROS_Dummy_Quadruped.h
  *
- *  Created on: Apr 10, 2018
+ *  Created on: May 28, 2018
  *      Author: farbod
  */
 
-#ifndef DUMMYSIMULATOR_H_
-#define DUMMYSIMULATOR_H_
+#ifndef MRT_ROS_DUMMY_QUADRUPED_H_
+#define MRT_ROS_DUMMY_QUADRUPED_H_
 
 #include <unistd.h>
 
 #include <rosbag/bag.h>
+
 #include <xpp_msgs/RobotStateCartesianTrajectory.h>
 #include <xpp_msgs/RobotStateCartesian.h>
 #include <xpp_msgs/topic_names.h>
 
 #include <ocs2_comm_interfaces/test/MRT_ROS_Dummy_Loop.h>
+#include "ocs2_quadruped_interface/MRT_ROS_Quadruped.h"
 
 #define SAVE_ROS_BAG
 
 namespace switched_model {
 
 template <size_t JOINT_COORD_SIZE>
-class DummySimulator : public ocs2::MRT_ROS_Dummy_Loop<12+JOINT_COORD_SIZE, 12+JOINT_COORD_SIZE>
+class MRT_ROS_Dummy_Quadruped : public ocs2::MRT_ROS_Dummy_Loop<12+JOINT_COORD_SIZE, 12+JOINT_COORD_SIZE, typename OCS2QuadrupedInterface<JOINT_COORD_SIZE>::logic_rules_t>
 {
 public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-	typedef ocs2::MRT_ROS_Dummy_Loop<12+JOINT_COORD_SIZE, 12+JOINT_COORD_SIZE> BASE;
+	typedef OCS2QuadrupedInterface<JOINT_COORD_SIZE> quadruped_interface_t;
+	typedef typename quadruped_interface_t::Ptr quadruped_interface_ptr_t;
+
+	typedef typename quadruped_interface_t::contact_flag_t			contact_flag_t;
+	typedef typename quadruped_interface_t::generalized_coordinate_t generalized_coordinate_t;
+	typedef typename quadruped_interface_t::joint_coordinate_t 		joint_coordinate_t;
+	typedef typename quadruped_interface_t::base_coordinate_t 		base_coordinate_t;
+	typedef typename quadruped_interface_t::rbd_state_vector_t		rbd_state_vector_t;
+
+	enum {
+		STATE_DIM = quadruped_interface_t::STATE_DIM,
+		INPUT_DIM = quadruped_interface_t::INPUT_DIM,
+		RBD_STATE_DIM = quadruped_interface_t::RBD_STATE_DIM
+	};
+
+	typedef ocs2::MRT_ROS_Dummy_Loop<STATE_DIM, INPUT_DIM, typename quadruped_interface_t::logic_rules_t> BASE;
 	typedef typename BASE::controller_t					controller_t;
 	typedef typename BASE::controller_array_t			controller_array_t;
 	typedef typename BASE::scalar_t						scalar_t;
@@ -41,17 +58,11 @@ public:
 	typedef typename BASE::control_feedback_array_t  	control_feedback_array_t;
 	typedef typename BASE::system_observation_t 		system_observation_t;
 
-	typedef OCS2QuadrupedInterface<JOINT_COORD_SIZE> quadruped_interface_t;
-	typedef typename quadruped_interface_t::Ptr quadruped_interface_ptr_t;
-
-	typedef typename quadruped_interface_t::contact_flag_t			contact_flag_t;
-	typedef typename quadruped_interface_t::generalized_coordinate_t generalized_coordinate_t;
-	typedef typename quadruped_interface_t::joint_coordinate_t 		joint_coordinate_t;
-	typedef typename quadruped_interface_t::base_coordinate_t 		base_coordinate_t;
-	typedef typename quadruped_interface_t::rbd_state_vector_t		rbd_state_vector_t;
-
 	typedef Eigen::Matrix<scalar_t,3,1>	vector_3d_t;
 	typedef std::array<vector_3d_t,4>	vector_3d_array_t;
+
+	typedef MRT_ROS_Quadruped<JOINT_COORD_SIZE> mrt_t;
+	typedef typename mrt_t::Ptr 				mrt_ptr_t;
 
 
 	/**
@@ -61,7 +72,7 @@ public:
 	 * @param [in] mrtLoopFrequency: MRT loop frequency in Hz
 	 * @param [in] robotName
 	 */
-	DummySimulator(
+	MRT_ROS_Dummy_Quadruped(
 			const quadruped_interface_ptr_t& ocs2QuadrupedInterfacePtr,
 			const scalar_t& mrtLoopFrequency,
 			const std::string& robotName = "robot");
@@ -69,7 +80,7 @@ public:
 	/**
 	 * Destructor.
 	 */
-	virtual ~DummySimulator();
+	virtual ~MRT_ROS_Dummy_Quadruped();
 
 
 protected:
@@ -118,6 +129,7 @@ protected:
 private:
 	quadruped_interface_ptr_t ocs2QuadrupedInterfacePtr_;
 	std::string robotName_;
+	std::string rosbagFile_;
 
 	ros::Publisher visualizationPublisher_;
 	ros::Time startTime_;
@@ -130,6 +142,6 @@ private:
 
 } // end of namespace switched_model
 
-#include "implementation/DummySimulator.h"
+#include "implementation/MRT_ROS_Dummy_Quadruped.h"
 
-#endif /* DUMMYSIMULATOR_H_ */
+#endif /* MRT_ROS_DUMMY_QUADRUPED_H_ */

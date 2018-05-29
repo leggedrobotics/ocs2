@@ -1,0 +1,306 @@
+/*
+ * MRT_ROS_Quadruped.h
+ *
+ *  Created on: May 25, 2018
+ *      Author: farbod
+ */
+
+namespace switched_model {
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+template <size_t JOINT_COORD_SIZE>
+MRT_ROS_Quadruped<JOINT_COORD_SIZE>::MRT_ROS_Quadruped(
+		const quadruped_interface_ptr_t& ocs2QuadrupedInterfacePtr,
+		const std::string& robotName /*robot*/)
+
+		: BASE()
+		, ocs2QuadrupedInterfacePtr_(ocs2QuadrupedInterfacePtr)
+		, modelSettings_(ocs2QuadrupedInterfacePtr->getModelSettings())
+{
+	// feet z-direction planner
+	feet_z_planner_ptr_t feetZDirectionPlannerPtr(
+			new feet_z_planner_t(modelSettings_.swingLegLiftOff_, 1.0 /*swingTimeScale*/) );
+	// Logic rule
+	logic_rules_ptr_t logicRulesPtr( new logic_rules_t(feetZDirectionPlannerPtr) );
+	// Set Base
+	BASE::set(*logicRulesPtr, true, robotName);
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+template <size_t JOINT_COORD_SIZE>
+void MRT_ROS_Quadruped<JOINT_COORD_SIZE>::reset() {
+
+	BASE::reset();
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+template <size_t JOINT_COORD_SIZE>
+void MRT_ROS_Quadruped<JOINT_COORD_SIZE>::modifyBufferFeedforwardPolicy(
+		const system_observation_t& planInitObservationBuffer,
+		scalar_array_t& mpcTimeTrajectoryBuffer,
+		state_vector_array_t& mpcStateTrajectoryBuffer,
+		input_vector_array_t& mpcInputTrajectoryBuffer,
+		scalar_array_t& eventTimesBuffer,
+		size_array_t& subsystemsSequenceBuffer) {
+
+	const size_t NE = subsystemsSequenceBuffer.size();
+	touchdownTimeStockBuffer_.clear();
+	touchdownTimeStockBuffer_.reserve(NE+1);
+	touchdownStateStockBuffer_.clear();
+	touchdownStateStockBuffer_.reserve(NE+1);
+	touchdownInputStockBuffer_.clear();
+	touchdownInputStockBuffer_.reserve(NE+1);
+
+	for (size_t i=0; i<mpcTimeTrajectoryBuffer.size(); i++) {
+
+		// save touchdown information
+		if (i==0 || (mpcTimeTrajectoryBuffer[i]-mpcTimeTrajectoryBuffer[i-1])<ocs2::OCS2NumericTraits<scalar_t>::week_epsilon()) {
+			touchdownTimeStockBuffer_.push_back(mpcTimeTrajectoryBuffer[i]);
+			touchdownStateStockBuffer_.push_back(mpcStateTrajectoryBuffer[i]);
+			touchdownInputStockBuffer_.push_back(mpcInputTrajectoryBuffer[i]);
+			// making the reference and the measured EE velocity the same
+			if (i==0)
+				touchdownInputStockBuffer_[0].template tail<12>() = planInitObservationBuffer.input().template tail<12>();
+		}
+	} // end of i loop
+	touchdownTimeStockBuffer_.push_back(mpcTimeTrajectoryBuffer.back());
+	touchdownStateStockBuffer_.push_back(mpcStateTrajectoryBuffer.back());
+	touchdownInputStockBuffer_.push_back(mpcInputTrajectoryBuffer.back());
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+template <size_t JOINT_COORD_SIZE>
+void MRT_ROS_Quadruped<JOINT_COORD_SIZE>::loadModifiedFeedforwardPolicy(
+		bool& logicUpdated,
+		bool& policyUpdated,
+		scalar_array_t& mpcTimeTrajectory,
+		state_vector_array_t& mpcStateTrajectory,
+		input_vector_array_t& mpcInputTrajectory,
+		scalar_array_t& eventTimes,
+		size_array_t& subsystemsSequence) {
+
+	// display
+	if (BASE::logicUpdated_==true) {
+
+		std::cerr << "touchdownTimeStock: {";
+		for (const auto& t: touchdownTimeStockBuffer_)
+			std::cerr << t << ", ";
+		std::cerr << "\b\b}" << std::endl;
+		std::cerr << "touchdownTimeStock.size: " << touchdownTimeStockBuffer_.size() << std::endl;
+
+		std::cerr << "eventTimes: {";
+		for (const auto& t: eventTimes)
+			std::cerr << t << ", ";
+		std::cerr << "\b\b}" << std::endl;
+		std::cerr << "eventTimes.size: " << eventTimes.size() << std::endl;
+
+		std::cerr << "subsystemsSequence: {";
+		for (const auto& t: subsystemsSequence)
+			std::cerr << t << ", ";
+		std::cerr << "\b\b}" << std::endl;
+		std::cerr << "subsystemsSequence.size: " << subsystemsSequence.size() << std::endl;
+
+		BASE::logicMachinePtr_->display();
+	}
+
+	updateFeetTrajectories(eventTimes, subsystemsSequence,
+			touchdownTimeStockBuffer_, touchdownStateStockBuffer_, touchdownInputStockBuffer_);
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+template <size_t JOINT_COORD_SIZE>
+void MRT_ROS_Quadruped<JOINT_COORD_SIZE>::updateFeetTrajectories(
+		const scalar_array_t& eventTimes,
+		const size_array_t& subsystemsSequence,
+		const scalar_array_t& touchdownTimeStock,
+		const state_vector_array_t& touchdownStateStock,
+		const input_vector_array_t& touchdownInputStock) {
+
+	// compute feet
+	const size_t n = touchdownTimeStock.size();
+	vector_3d_array_t o_contactForcesTemp;
+	std::vector<vector_3d_array_t> o_feetPositionStock(n);
+	std::vector<vector_3d_array_t> o_feetVelocityStock(n);
+	for (size_t i=0; i<n; i++) {
+
+		computeFeetState(touchdownStateStock[i], touchdownInputStock[i],
+				o_feetPositionStock[i], o_feetVelocityStock[i], o_contactForcesTemp);
+
+		if (0<i && i<n-1 )
+			o_feetVelocityStock[i].fill(vector_3d_t::Zero());
+
+	}  // end of i loop
+
+	const size_t numPhaseSequence = subsystemsSequence.size();
+	size_t initActiveSubsystem  = BASE::findActiveSubsystemFnc_(touchdownTimeStock.front());
+	size_t finalActiveSubsystem = BASE::findActiveSubsystemFnc_(touchdownTimeStock.back());
+
+	// XY plan
+	feetXPlanPtrStock_.resize(numPhaseSequence);
+	feetYPlanPtrStock_.resize(numPhaseSequence);
+	for (size_t i=0; i<numPhaseSequence; i++) {
+
+		if (i<initActiveSubsystem || finalActiveSubsystem<i ) {
+			continue;
+		}
+
+		const size_t startIndex = i - initActiveSubsystem;
+
+		for (size_t j=0; j<4; j++) {
+
+			feetXPlanPtrStock_[i][j] = std::make_shared<cubic_spline_t>();
+			feetYPlanPtrStock_[i][j] = std::make_shared<cubic_spline_t>();
+
+			feetXPlanPtrStock_[i][j]->set(
+					touchdownTimeStock[startIndex] /*t0*/, o_feetPositionStock[startIndex][j](0) /*p0*/, o_feetVelocityStock[startIndex][j](0) /*v0*/,
+					touchdownTimeStock[startIndex+1] /*t1*/, o_feetPositionStock[startIndex+1][j](0) /*p1*/, o_feetVelocityStock[startIndex+1][j](0) /*v1*/);
+
+			feetYPlanPtrStock_[i][j]->set(
+					touchdownTimeStock[startIndex] /*t0*/, o_feetPositionStock[startIndex][j](1) /*p0*/, o_feetVelocityStock[startIndex][j](1) /*v0*/,
+					touchdownTimeStock[startIndex+1] /*t1*/, o_feetPositionStock[startIndex+1][j](1) /*p1*/, o_feetVelocityStock[startIndex+1][j](1) /*v1*/);
+		}
+	}
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+template <size_t JOINT_COORD_SIZE>
+void MRT_ROS_Quadruped<JOINT_COORD_SIZE>::computeFeetState(
+		const state_vector_t& state,
+		const input_vector_t& input,
+		vector_3d_array_t& o_feetPosition,
+		vector_3d_array_t& o_feetVelocity,
+		vector_3d_array_t& o_contactForces)  {
+
+	base_coordinate_t comPose = state.template head<6>();
+	base_coordinate_t comLocalVelocities = state.template segment<6>(6);
+	joint_coordinate_t qJoints  = state.template tail<12>();
+	joint_coordinate_t dqJoints = input.template tail<12>();
+
+	base_coordinate_t basePose;
+	ocs2QuadrupedInterfacePtr_->getComModel().calculateBasePose(qJoints, comPose, basePose);
+	base_coordinate_t baseLocalVelocities;
+	ocs2QuadrupedInterfacePtr_->getComModel().calculateBaseLocalVelocities(qJoints, dqJoints, comLocalVelocities, baseLocalVelocities);
+
+	ocs2QuadrupedInterfacePtr_->getKinematicModel().update(basePose, qJoints);
+	Eigen::Matrix3d o_R_b = ocs2QuadrupedInterfacePtr_->getKinematicModel().rotationMatrixOrigintoBase().transpose();
+
+	for(size_t i=0; i<4; i++) {
+		// calculates foot position in the base frame
+		vector_3d_t b_footPosition;
+		ocs2QuadrupedInterfacePtr_->getKinematicModel().footPositionBaseFrame(i, b_footPosition);
+
+		// calculates foot position in the origin frame
+		o_feetPosition[i] = o_R_b * b_footPosition + basePose.template tail<3>();
+
+		// calculates foot velocity in the base frame
+		Eigen::Matrix<scalar_t,6,JOINT_COORD_SIZE> b_footJacobain;
+		ocs2QuadrupedInterfacePtr_->getKinematicModel().footJacobainBaseFrame(i, b_footJacobain);
+		vector_3d_t b_footVelocity = (b_footJacobain*dqJoints).template tail<3>();
+
+		// calculates foot velocity in the origin frame
+		ocs2QuadrupedInterfacePtr_->getKinematicModel().FromBaseVelocityToInertiaVelocity(
+				o_R_b, baseLocalVelocities, b_footPosition, b_footVelocity, o_feetVelocity[i]);
+
+		// calculates contact forces in the origin frame
+		o_contactForces[i] = o_R_b * input.template segment<3>(3*i);
+
+	} // end of i loop
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+template <size_t JOINT_COORD_SIZE>
+void MRT_ROS_Quadruped<JOINT_COORD_SIZE>::computePlan(
+		const scalar_t& time,
+		vector_3d_array_t& o_feetPositionRef,
+		vector_3d_array_t& o_feetVelocityRef,
+		vector_3d_array_t& o_feetAccelerationRef,
+		base_coordinate_t& o_comPoseRef,
+		base_coordinate_t& o_comVelocityRef,
+		base_coordinate_t& o_comAccelerationRef,
+		contact_flag_t& stanceLegs)  {
+
+	// optimal switched model state and input
+	BASE::mpcLinInterpolateState_.interpolate(time, stateRef_);
+	int greatestLessTimeStampIndex = BASE::mpcLinInterpolateState_.getGreatestLessTimeStampIndex();
+	BASE::mpcLinInterpolateInput_.interpolate(time, inputRef_, greatestLessTimeStampIndex);
+
+//	// calculates nominal position, velocity, and contact forces of the feet in the origin frame.
+//	// This also updates the kinematic model.
+//	computeFeetState(stateRef, stateRef, o_feetPositionRef, o_feetVelocityRef, o_contactForcesRef);
+
+	// filter swing leg trajectory
+	size_t index = BASE::findActiveSubsystemFnc_(time);
+	BASE::logicMachinePtr_->getLogicRulesPtr()->getMotionPhaseLogics(index, stanceLegs, feetZPlanPtr_);
+
+	for (size_t j=0; j<4; j++) {
+		o_feetPositionRef[j] <<
+				feetXPlanPtrStock_[index][j]->evaluateSplinePosition(time),
+				feetYPlanPtrStock_[index][j]->evaluateSplinePosition(time),
+				feetZPlanPtr_[j]->calculatePosition(time);
+
+		o_feetVelocityRef[j] <<
+				feetXPlanPtrStock_[index][j]->evaluateSplineVelocity(time),
+				feetYPlanPtrStock_[index][j]->evaluateSplineVelocity(time),
+				feetZPlanPtr_[j]->calculateVelocity(time);
+
+		o_feetAccelerationRef[j] <<
+				feetXPlanPtrStock_[index][j]->evaluateSplineAcceleration(time),
+				feetYPlanPtrStock_[index][j]->evaluateSplineAcceleration(time),
+				feetZPlanPtr_[j]->calculateAcceleration(time);
+	}
+
+	// calculate CoM pose, velocity, and acceleration in the origin frame.
+	ocs2QuadrupedInterfacePtr_->computeComStateInOrigin(stateRef_, inputRef_,
+			o_comPoseRef, o_comVelocityRef, o_comAccelerationRef);
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+template <size_t JOINT_COORD_SIZE>
+bool MRT_ROS_Quadruped<JOINT_COORD_SIZE>::updateNodes(
+		const contact_flag_t& contactFlag,
+		const scalar_t& time,
+		const rbd_state_vector_t& rbdState) {
+
+	// check callback queue
+	::ros::spinOnce();
+
+	system_observation_t currentObservation;
+	// time
+	currentObservation.time() = time;
+	// state
+	ocs2QuadrupedInterfacePtr_->computeSwitchedModelState(rbdState, currentObservation.state());
+	// inuput
+	currentObservation.input().template tail<JOINT_COORD_SIZE>().setZero();
+	currentObservation.input().template tail<JOINT_COORD_SIZE>() =
+			rbdState.template tail<JOINT_COORD_SIZE>();
+	// mode
+	currentObservation.mode() = switched_model::stanceLeg2ModeNumber(contactFlag);
+
+	// publish the current observation
+	BASE::publishObservation(currentObservation);
+
+	// check for a new controller update from the MPC node
+	bool policyUpdated = BASE::updatePolicy();
+
+	return policyUpdated;
+}
+
+
+} // end of namespace switched_model
+

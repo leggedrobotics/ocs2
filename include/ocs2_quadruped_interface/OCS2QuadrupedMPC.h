@@ -119,6 +119,13 @@ public:
 
 	void targetPoseCallback(const geometry_msgs::Pose& msg);
 
+	void targetPoseToDesiredTrajectories(
+			const scalar_t& currentTime,
+			const rbd_state_vector_t& rbdCurrentState,
+			scalar_array_t& tGoalTrajectory,
+			state_vector_array_t& xGoalTrajectory,
+			input_vector_array_t& uGoalTrajectory);
+
 	static void sigintHandler(int sig);
 
 	void publisherWorkerThread();

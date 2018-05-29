@@ -15,6 +15,7 @@ find_package(catkin REQUIRED COMPONENTS
   ocs2_ros_msg
   xpp_msgs
   rosbag
+  ocs2_comm_interfaces
 )
 
 ## Eigen3
@@ -40,7 +41,7 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread -fopenmp -std=c++11 -Wfatal-err
 ## CATKIN_DEPENDS: catkin_packages dependent projects also need
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
-   INCLUDE_DIRS include
+   INCLUDE_DIRS include test/include
 #  LIBRARIES ocs2_quadruped_interface
    CATKIN_DEPENDS 
       ocs2_switched_model_interface 
@@ -51,6 +52,7 @@ catkin_package(
       roscpp
       ocs2_ros_msg
       xpp_msgs
+      ocs2_comm_interfaces
       
 #  DEPENDS system_lib
 )
@@ -64,6 +66,7 @@ catkin_package(
 # include_directories(include)
 include_directories(
   include
+  test/include
   ${EIGEN_INCLUDE_DIRS}
   ${catkin_INCLUDE_DIRS}
 )

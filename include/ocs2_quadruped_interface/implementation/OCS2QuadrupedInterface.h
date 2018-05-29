@@ -552,27 +552,20 @@ void OCS2QuadrupedInterface<JOINT_COORD_SIZE>::runSLQ(
 	input_vector_t uNominalForWeightCompensation;
 	designWeightCompensatingInput(initSwitchedState_, uNominalForWeightCompensation);
 
-	desiredTimeTrajectoriesStock_.resize(numPartitioningTimes_);
-	desiredStateTrajectoriesStock_.resize(numPartitioningTimes_);
-	desiredInputTrajectoriesStock_.resize(numPartitioningTimes_);
-	for (size_t i=0; i<numPartitioningTimes_; i++) {
+	// reference time
+	costDesiredTrajectories_.desiredTimeTrajectory().resize(2);
+	costDesiredTrajectories_.desiredTimeTrajectory().at(0) = initEventTimes_.front();
+	costDesiredTrajectories_.desiredTimeTrajectory().at(1) = initEventTimes_.back();
+	// reference state
+	costDesiredTrajectories_.desiredStateTrajectory().resize(2);
+	costDesiredTrajectories_.desiredStateTrajectory().at(0) = initSwitchedState_;
+	costDesiredTrajectories_.desiredStateTrajectory().at(1) = xFinal_;
+	// reference inputs for weight compensation
+	costDesiredTrajectories_.desiredInputTrajectory().resize(2);
+	costDesiredTrajectories_.desiredInputTrajectory().at(0) = uNominalForWeightCompensation;
+	costDesiredTrajectories_.desiredInputTrajectory().at(1) = uNominalForWeightCompensation;
 
-		// reference time
-		desiredTimeTrajectoriesStock_[i].resize(2);
-		desiredTimeTrajectoriesStock_[i][0] = initEventTimes_.front();
-		desiredTimeTrajectoriesStock_[i][1] = initEventTimes_.back();
-
-		// reference state
-		desiredStateTrajectoriesStock_[i].resize(2);
-		desiredStateTrajectoriesStock_[i][0] = initSwitchedState_;
-		desiredStateTrajectoriesStock_[i][1] = xFinal_;
-
-		// reference inputs for weight compensation
-		desiredInputTrajectoriesStock_[i].resize(2);
-		desiredInputTrajectoriesStock_[i][0] = uNominalForWeightCompensation;
-		desiredInputTrajectoriesStock_[i][1] = uNominalForWeightCompensation;
-	}
-
+	slqPtr_->setCostDesiredTrajectories(costDesiredTrajectories_);
 
 	// TODO: numSubsystems_ is not set
 //	scalar_array_t costAnnealingStartTimes(numSubsystems_, switchingTimes_.front());
@@ -581,13 +574,11 @@ void OCS2QuadrupedInterface<JOINT_COORD_SIZE>::runSLQ(
 	// run slqp
 	if (initialControllersStock.empty()==true) {
 		std::cerr << "Cold initialization." << std::endl;
-		slqPtr_->run(initTime_, initSwitchedState_, finalTime_, partitioningTimes_,
-				desiredTimeTrajectoriesStock_, desiredStateTrajectoriesStock_, desiredInputTrajectoriesStock_);
+		slqPtr_->run(initTime_, initSwitchedState_, finalTime_, partitioningTimes_);
 
 	} else {
 		std::cerr << "Warm initialization." << std::endl;
-		slqPtr_->run(initTime_, initSwitchedState_, finalTime_, partitioningTimes_, initialControllersStock,
-				desiredTimeTrajectoriesStock_, desiredStateTrajectoriesStock_, desiredInputTrajectoriesStock_);
+		slqPtr_->run(initTime_, initSwitchedState_, finalTime_, partitioningTimes_, initialControllersStock);
 	}
 //	if (initialControllersStock.empty()==true) {
 //		std::cerr << "Cold initialization." << std::endl;

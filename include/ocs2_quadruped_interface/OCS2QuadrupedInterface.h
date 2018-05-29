@@ -91,6 +91,8 @@ public:
 	typedef typename dimension_t::control_feedback_t 	   	control_feedback_t;
 	typedef typename dimension_t::control_feedback_array_t 	control_feedback_array_t;
 
+	typedef ocs2::CostDesiredTrajectories<scalar_t> 		cost_desired_trajectories_t;
+
 	typedef SwitchedModel<JOINT_COORD_SIZE> 					switched_model_t;
 	typedef typename switched_model_t::contact_flag_t 			contact_flag_t;
 	typedef typename switched_model_t::generalized_coordinate_t generalized_coordinate_t;
@@ -548,9 +550,7 @@ protected:
 	const state_vector_array2_t* 		stateTrajectoriesStockPtr_;
 	const input_vector_array2_t* 		inputTrajectoriesStockPtr_;
 
-	std::vector<scalar_array_t>	desiredTimeTrajectoriesStock_;
-	state_vector_array2_t 		desiredStateTrajectoriesStock_;
-	input_vector_array2_t 		desiredInputTrajectoriesStock_;
+	cost_desired_trajectories_t	costDesiredTrajectories_;
 
 	scalar_array_t 			timeTrajectory_;
 	state_vector_array_t 	stateTrajectory_;

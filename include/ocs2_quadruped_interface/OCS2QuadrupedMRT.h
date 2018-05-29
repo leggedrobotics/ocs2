@@ -38,7 +38,7 @@
 
 #include "ocs2_quadruped_interface/OCS2QuadrupedInterface.h"
 
-//#define PUBLISH_THREAD
+#define PUBLISH_THREAD
 
 namespace switched_model {
 

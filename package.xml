@@ -33,6 +33,7 @@
   <depend>ocs2_ros_msg</depend>
   <depend>xpp_msgs</depend>
   <depend>rosbag</depend>
+  <depend>ocs2_comm_interfaces</depend>
 
   <!-- The export tag contains other, unspecified, tags -->
   <export>

@@ -1,7 +1,7 @@
 /*
- * DummySimulator.h
+ * MRT_ROS_Dummy_Quadruped.h
  *
- *  Created on: Apr 11, 2018
+ *  Created on: May 28, 2018
  *      Author: farbod
  */
 
@@ -11,17 +11,18 @@ namespace switched_model {
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t JOINT_COORD_SIZE>
-DummySimulator<JOINT_COORD_SIZE>::DummySimulator(
+MRT_ROS_Dummy_Quadruped<JOINT_COORD_SIZE>::MRT_ROS_Dummy_Quadruped(
 		const quadruped_interface_ptr_t& ocs2QuadrupedInterfacePtr,
 		const scalar_t& mrtLoopFrequency,
 		const std::string& robotName /*= "robot"*/)
 
-	: BASE(new mrt_t(ocs2QuadrupedInterfacePtr, robotName), mrtLoopFrequency)
+	: BASE(typename BASE::mrt_ptr_t(new mrt_t(ocs2QuadrupedInterfacePtr, robotName)), mrtLoopFrequency)
 	, ocs2QuadrupedInterfacePtr_(ocs2QuadrupedInterfacePtr)
 	, robotName_(robotName)
 {
 #ifdef SAVE_ROS_BAG
-	bag_.open("ocs2_" + robotName_ + "_traj.bag", rosbag::bagmode::Write);
+	rosbagFile_ = "ocs2_" + robotName_ + "_traj.bag";
+	bag_.open(rosbagFile_, rosbag::bagmode::Write);
 #endif
 }
 
@@ -29,10 +30,10 @@ DummySimulator<JOINT_COORD_SIZE>::DummySimulator(
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t JOINT_COORD_SIZE>
-DummySimulator<JOINT_COORD_SIZE>::~DummySimulator() {
+MRT_ROS_Dummy_Quadruped<JOINT_COORD_SIZE>::~MRT_ROS_Dummy_Quadruped() {
 
 #ifdef SAVE_ROS_BAG
-	std::cerr << "ROS Bag file is being saved ... " << std::endl;
+	ROS_INFO_STREAM("ROS Bag file is being saved to \"" + rosbagFile_ + "\" ...");
 	bag_.write("xpp/trajectory_des", startTime_, robotStateCartesianTrajectoryMsg_);
 	bag_.close();
 	ROS_INFO_STREAM("ROS Bag file is saved.");
@@ -43,7 +44,7 @@ DummySimulator<JOINT_COORD_SIZE>::~DummySimulator() {
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t JOINT_COORD_SIZE>
-void DummySimulator<JOINT_COORD_SIZE>::launchVisualizerNode(int argc, char* argv[]) {
+void MRT_ROS_Dummy_Quadruped<JOINT_COORD_SIZE>::launchVisualizerNode(int argc, char* argv[]) {
 
 	ros::init(argc, argv, robotName_ + "_visualization_node");
 
@@ -65,7 +66,7 @@ void DummySimulator<JOINT_COORD_SIZE>::launchVisualizerNode(int argc, char* argv
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t JOINT_COORD_SIZE>
-void DummySimulator<JOINT_COORD_SIZE>::publishVisualizer(
+void MRT_ROS_Dummy_Quadruped<JOINT_COORD_SIZE>::publishVisualizer(
 		const system_observation_t& observation) {
 
 	vector_3d_array_t o_feetPositionRef;
@@ -78,7 +79,8 @@ void DummySimulator<JOINT_COORD_SIZE>::publishVisualizer(
 	contact_flag_t 	   stanceLegs;
 	rbd_state_vector_t rbdState;
 
-	mrtPtr_->computePlan(observation.time(),
+	std::static_pointer_cast<mrt_t>(BASE::mrtPtr_)->computePlan(
+			observation.time(),
 			o_feetPositionRef, o_feetVelocityRef, o_feetAccelerationRef,
 			o_comPoseRef, o_comVelocityRef, o_comAccelerationRef,
 			stanceLegs);
@@ -99,7 +101,7 @@ void DummySimulator<JOINT_COORD_SIZE>::publishVisualizer(
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t JOINT_COORD_SIZE>
-void DummySimulator<JOINT_COORD_SIZE>::publishXppVisualizer(
+void MRT_ROS_Dummy_Quadruped<JOINT_COORD_SIZE>::publishXppVisualizer(
 		const scalar_t& time,
 		const base_coordinate_t& basePose,
 		const base_coordinate_t& baseLocalVelocities,

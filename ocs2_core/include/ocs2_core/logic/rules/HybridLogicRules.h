@@ -55,7 +55,10 @@ public:
 };
 
 /**
- * Logic rules base class
+ * Hybrid logic rules base class
+ *
+ * @tparam STATE_DIM: Dimension of the state space.
+ * @tparam INPUT_DIM: Dimension of the control input space.
  */
 template <size_t STATE_DIM, size_t INPUT_DIM>
 class HybridLogicRules : public LogicRulesBase<STATE_DIM, INPUT_DIM>

@@ -849,11 +849,16 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculateRolloutCost(
 	}  // end of i loop
 
 	// calculate the Heuristics function at the final time
+	// initialize
 	heuristicsFunctionsPtrStock_[threadId]->initializeModel(*logicRulesMachinePtr_, finalActivePartition_, "SLQ");
+	// set desired trajectories
+	heuristicsFunctionsPtrStock_[threadId]->setCostDesiredTrajectories(costDesiredTrajectories_);
+	// set state-input
 	heuristicsFunctionsPtrStock_[threadId]->setCurrentStateAndControl(
 			timeTrajectoriesStock[finalActivePartition_].back(),
 			stateTrajectoriesStock[finalActivePartition_].back(),
 			inputTrajectoriesStock[finalActivePartition_].back());
+	// compute
 	scalar_t sHeuristics;
 	heuristicsFunctionsPtrStock_[threadId]->getTerminalCost(sHeuristics);
 	totalCost += sHeuristics;
@@ -974,6 +979,7 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::approximateOptimalControlPro
 
 	// calculate the Heuristics function at the final time
 	heuristicsFunctionsPtrStock_[0]->initializeModel(*logicRulesMachinePtr_, finalActivePartition_, "SLQ");
+	heuristicsFunctionsPtrStock_[0]->setCostDesiredTrajectories(costDesiredTrajectories_);
 	heuristicsFunctionsPtrStock_[0]->setCurrentStateAndControl(
 			nominalTimeTrajectoriesStock_[finalActivePartition_].back(),
 			nominalStateTrajectoriesStock_[finalActivePartition_].back(),

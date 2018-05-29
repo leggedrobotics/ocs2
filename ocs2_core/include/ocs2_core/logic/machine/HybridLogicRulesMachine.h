@@ -17,6 +17,10 @@ namespace ocs2{
 
 /**
  * This class allows to construct the Logic Rules Machine on fly. This class is employed in the State-Triggered SLQ forward pass.
+ *
+ * @tparam STATE_DIM: Dimension of the state space.
+ * @tparam INPUT_DIM: Dimension of the control input space.
+ * @tparam LOGIC_RULES_T: Logic Rules type.
  */
 template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
 class HybridLogicRulesMachine : public LogicRulesMachine<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>
@@ -50,7 +54,7 @@ public:
 	/**
 	 * Default destructor.
 	 */
-	~HybridLogicRulesMachine() = default;
+	virtual ~HybridLogicRulesMachine() = default;
 
 	/**
 	 * Copy constructor

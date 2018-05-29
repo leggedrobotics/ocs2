@@ -25,6 +25,8 @@ namespace ocs2{
 /**
  * The logic rules machine class
  *
+ * @tparam STATE_DIM: Dimension of the state space.
+ * @tparam INPUT_DIM: Dimension of the control input space.
  * @tparam LOGIC_RULES_T: logical rule type.
  */
 template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>

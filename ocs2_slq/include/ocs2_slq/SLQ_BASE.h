@@ -32,6 +32,7 @@
 #include <ocs2_core/misc/LTI_Equations.h>
 #include <ocs2_core/misc/FindActiveIntervalIndex.h>
 #include <ocs2_core/logic/rules/LogicRulesBase.h>
+#include <ocs2_core/logic/rules/NullLogicRules.h>
 #include <ocs2_core/logic/machine/LogicRulesMachine.h>
 #include <ocs2_core/logic/machine/HybridLogicRulesMachine.h>
 #include <ocs2_core/initialization/SystemOperatingTrajectoriesBase.h>

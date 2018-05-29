@@ -14,26 +14,30 @@
 #include <vector>
 
 #include "ocs2_core/Dimensions.h"
-#include "ocs2_core/logic/rules/LogicRulesBase.h"
+#include "ocs2_core/logic/rules/HybridLogicRules.h"
 
 namespace ocs2{
 
 /**
  * Null logic rules class
+ *
+ * @tparam STATE_DIM: Dimension of the state space.
+ * @tparam INPUT_DIM: Dimension of the control input space.
  */
 template <size_t STATE_DIM, size_t INPUT_DIM>
-class NullLogicRules : public LogicRulesBase<STATE_DIM, INPUT_DIM>
+class NullLogicRules : public HybridLogicRules<STATE_DIM, INPUT_DIM>
 {
 public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-	typedef LogicRulesBase<STATE_DIM, INPUT_DIM> BASE;
+	typedef HybridLogicRules<STATE_DIM, INPUT_DIM> BASE;
 
-	typedef typename BASE::size_array_t size_array_t;
-	typedef typename BASE::scalar_t scalar_t;
-	typedef typename BASE::scalar_array_t scalar_array_t;
-	typedef typename BASE::controller_t controller_t;
-	typedef typename BASE::controller_array_t controller_array_t;
+	typedef typename BASE::size_array_t 		size_array_t;
+	typedef typename BASE::scalar_t 			scalar_t;
+	typedef typename BASE::scalar_array_t 		scalar_array_t;
+	typedef typename BASE::controller_t 		controller_t;
+	typedef typename BASE::controller_array_t 	controller_array_t;
+	typedef typename BASE::logic_template_type 	logic_template_type;
 
 	/**
 	 * Constructor
@@ -50,7 +54,7 @@ public:
 	/**
 	 * Destructor
 	 */
-	~NullLogicRules() = default;
+	virtual ~NullLogicRules() = default;
 
 	/**
 	 * Move assignment
@@ -87,6 +91,26 @@ public:
 	 * program that trys to update the logic rules variables.
 	 */
 	virtual void update() override
+	{}
+
+	/**
+	 * Used in the SLQ-MPC method to set the model sequence template.
+	 *
+	 * @param [in] modeSequenceTemplate: A dada type which includes all necessary information for modifying the logicRules.
+	 */
+	virtual void setModeSequenceTemplate(const logic_template_type& modeSequenceTemplate) override
+	{}
+
+	/**
+	 * Used in the SLQ-MPC method to inset a new user defined logic in the given time period.
+	 * Note: use the update method to at the end to update your derived class variables
+	 *
+	 * @param [in] startTime: The initial time from which the new logicRules template should be augmented.
+	 * @param [in] finalTime: The final time to which the new logicRules template should be augmented.
+	 */
+	virtual void insertModeSequenceTemplate(
+			const scalar_t& startTime,
+			const scalar_t& finalTime) override
 	{}
 
 private:

@@ -90,7 +90,7 @@ public:
 		for (size_t i=0; i<N; i++) {
 
 			std::cout << "time: " << std::setprecision(dispPrecision) <<
-					desiredTimeTrajectory_[i] << ",  ";
+					desiredTimeTrajectory_[i] << ",  " << std::endl;
 
 			// state
 			std::cout << "state: [";
@@ -99,9 +99,9 @@ public:
 						desiredStateTrajectory_[i](j) << ",  ";
 			}
 			if (desiredStateTrajectory_[i].size()>0)
-				std::cout << "\b\b]" << ",  ";
+				std::cout << "\b\b]" << ",  " << std::endl;
 			else
-				std::cout << " ]" << ",  ";
+				std::cout << " ]" << ",  " << std::endl;
 
 			// input
 			std::cout << "input: [";

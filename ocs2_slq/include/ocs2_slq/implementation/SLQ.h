@@ -210,10 +210,10 @@ void SLQ<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::solveSequentialRiccatiEquations(
 	// for all partition, there is only one worker
 	const size_t workerIndex = 0;
 
-	BASE::SmFinalStock_[BASE::finalActivePartition_+1]  = SmFinal;
-	BASE::SvFinalStock_[BASE::finalActivePartition_+1]  = SvFinal;
-	BASE::SveFinalStock_[BASE::finalActivePartition_+1] = state_vector_t::Zero();
-	BASE::sFinalStock_[BASE::finalActivePartition_+1]   = sFinal;
+	BASE::SmFinalStock_[BASE::finalActivePartition_]  = SmFinal;
+	BASE::SvFinalStock_[BASE::finalActivePartition_]  = SvFinal;
+	BASE::SveFinalStock_[BASE::finalActivePartition_] = state_vector_t::Zero();
+	BASE::sFinalStock_[BASE::finalActivePartition_]   = sFinal;
 
 	for (int i=BASE::numPartitionings_-1; i>=0; i--) {
 
@@ -238,26 +238,23 @@ void SLQ<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::solveSequentialRiccatiEquations(
 
 		if (BASE::settings_.useRiccatiSolver_==true) {
 			BASE::solveSlqRiccatiEquationsWorker(workerIndex, i,
-					BASE::SmFinalStock_[i+1], BASE::SvFinalStock_[i+1], BASE::sFinalStock_[i+1], BASE::SveFinalStock_[i+1]);
+					BASE::SmFinalStock_[i], BASE::SvFinalStock_[i], BASE::sFinalStock_[i], BASE::SveFinalStock_[i]);
 		} else {
 			scalar_t constraintStepSize = BASE::updateFeedForwardPoliciesStock_[i] ? BASE::settings_.constraintStepSize_ : 0.0;
 			BASE::fullRiccatiBackwardSweepWorker(workerIndex, i,
-					BASE::SmFinalStock_[i+1], BASE::SvFinalStock_[i+1], BASE::SveFinalStock_[i+1], BASE::sFinalStock_[i+1],
+					BASE::SmFinalStock_[i], BASE::SvFinalStock_[i], BASE::SveFinalStock_[i], BASE::sFinalStock_[i],
 					constraintStepSize);
 		}
 
 		// set the final value for next Riccati equation
-		BASE::sFinalStock_[i]   = BASE::sTrajectoryStock_[i].front();
-		BASE::SvFinalStock_[i]  = BASE::SvTrajectoryStock_[i].front();
-		BASE::SveFinalStock_[i] = BASE::SveTrajectoryStock_[i].front();
-		BASE::SmFinalStock_[i]  = BASE::SmTrajectoryStock_[i].front();
-
-	}
-
-	// state at the switching times
-	BASE::xFinalStock_[BASE::finalActivePartition_+1] = BASE::nominalStateTrajectoriesStock_[BASE::finalActivePartition_].back();
-	for (size_t i=BASE::initActivePartition_; i<=BASE::finalActivePartition_; i++)
-		BASE::xFinalStock_[i] = BASE::nominalStateTrajectoriesStock_[i].front();
+		if (i>BASE::initActivePartition_) {
+			BASE::SmFinalStock_[i-1]  = BASE::SmTrajectoryStock_[i].front();
+			BASE::SvFinalStock_[i-1]  = BASE::SvTrajectoryStock_[i].front();
+			BASE::SveFinalStock_[i-1] = BASE::SveTrajectoryStock_[i].front();
+			BASE::sFinalStock_[i-1]   = BASE::sTrajectoryStock_[i].front();
+			BASE::xFinalStock_[i-1]	  = BASE::nominalStateTrajectoriesStock_[i].front();
+		}
+	}  // end of i loop
 
 }
 

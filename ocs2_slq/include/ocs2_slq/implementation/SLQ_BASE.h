@@ -1630,10 +1630,6 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::solveRiccatiEquationsForNomi
 		riccati_equations_t::convert2Matrix(allSsTrajectory[N-1-k], SmTrajectoryStock_[partitionIndex][k], SvTrajectoryStock_[partitionIndex][k], sTrajectoryStock_[partitionIndex][k]);
 	}  // end of k loop
 
-//	// set the final value for next Riccati equation
-//	sFinalStock_[partitionIndex]  = sTrajectoryStock_[partitionIndex].front();
-//	SvFinalStock_[partitionIndex] = SvTrajectoryStock_[partitionIndex].front();
-//	SmFinalStock_[partitionIndex] = SmTrajectoryStock_[partitionIndex].front();
 
 	// testing the numerical stability of the Riccati equations
 	if (settings_.checkNumericalStability_)
@@ -2813,26 +2809,22 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::rewindOptimizer(const size_t
 		throw std::runtime_error("Index for rewinding is greater than the current size.");
 
 	const size_t preservedLength = numPartitionings_ - firstIndex;
-	for (size_t i=0; i<=numPartitionings_; i++)
-		if (i<preservedLength+1) {
-			sFinalStock_[i]   = sFinalStock_[firstIndex+i];
+	for (size_t i=0; i<numPartitionings_; i++)
+		if (i<preservedLength) {
+			nominalControllersStock_[i].swap(nominalControllersStock_[firstIndex+i]);
+			SmFinalStock_[i]  = SmFinalStock_[firstIndex+i];
 			SvFinalStock_[i]  = SvFinalStock_[firstIndex+i];
 			SveFinalStock_[i] = SveFinalStock_[firstIndex+i];
-			SmFinalStock_[i]  = SmFinalStock_[firstIndex+i];
+			sFinalStock_[i]   = sFinalStock_[firstIndex+i];
 			xFinalStock_[i]   = xFinalStock_[firstIndex+i];
 		} else {
-			sFinalStock_[i].setZero();
+			nominalControllersStock_[i].clear();
+			SmFinalStock_[i].setZero();
 			SvFinalStock_[i].setZero();
 			SveFinalStock_[i].setZero();
-			SmFinalStock_[i].setZero();
+			sFinalStock_[i].setZero();
 			xFinalStock_[i].setZero();
 		}
-
-	for (size_t i=0; i<numPartitionings_; i++)
-		if (i<preservedLength)
-			nominalControllersStock_[i].swap(nominalControllersStock_[firstIndex+i]);
-		else
-			nominalControllersStock_[i].clear();
 }
 
 /******************************************************************************************************/
@@ -2860,11 +2852,11 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::setupOptimizer(const size_t&
 	/*
 	 * Riccati solver variables and controller update
 	 */
-	sFinalStock_   = eigen_scalar_array_t(numPartitionings+1, eigen_scalar_t::Zero());
-	SvFinalStock_  = state_vector_array_t(numPartitionings+1, state_vector_t::Zero());
-	SveFinalStock_ = state_vector_array_t(numPartitionings+1, state_vector_t::Zero());
-	SmFinalStock_  = state_matrix_array_t(numPartitionings+1, state_matrix_t::Zero());
-	xFinalStock_   = state_vector_array_t(numPartitionings+1, state_vector_t::Zero());
+	SmFinalStock_  = state_matrix_array_t(numPartitionings, state_matrix_t::Zero());
+	SvFinalStock_  = state_vector_array_t(numPartitionings, state_vector_t::Zero());
+	SveFinalStock_ = state_vector_array_t(numPartitionings, state_vector_t::Zero());
+	sFinalStock_   = eigen_scalar_array_t(numPartitionings, eigen_scalar_t::Zero());
+	xFinalStock_   = state_vector_array_t(numPartitionings, state_vector_t::Zero());
 
 	SsTimeTrajectoryStock_.resize(numPartitionings);
 	SsNormalizedTimeTrajectoryStock_.resize(numPartitionings);

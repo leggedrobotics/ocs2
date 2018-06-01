@@ -672,23 +672,18 @@ void SLQ_MP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::solveSequentialRiccatiEquation
 		const eigen_scalar_t& sFinal){
 
 	numSubsystemsProcessed_ = 0;
-//	if (async_==true)
-//		for (size_t i=0; i < BASE::numPartitionings_; i++){
-//			subsystemsDone_[i] = false;
-//			subsystemsProcessing_[i] = false;
-//		}
 
-	BASE::SmFinalStock_[BASE::finalActivePartition_+1]  = SmFinal;
-	BASE::SvFinalStock_[BASE::finalActivePartition_+1]  = SvFinal;
-	BASE::SveFinalStock_[BASE::finalActivePartition_+1] = state_vector_t::Zero();
-	BASE::sFinalStock_[BASE::finalActivePartition_+1]   = sFinal;
+	BASE::SmFinalStock_[BASE::finalActivePartition_]  = SmFinal;
+	BASE::SvFinalStock_[BASE::finalActivePartition_]  = SvFinal;
+	BASE::SveFinalStock_[BASE::finalActivePartition_] = state_vector_t::Zero();
+	BASE::sFinalStock_[BASE::finalActivePartition_]   = sFinal;
 
 	// solve it sequentially for the first time when useParallelRiccatiSolverFromInitItr_ is false
-	if(BASE::useParallelRiccatiSolverFromInitItr_==false && BASE::iteration_ == 0) {
+	if(BASE::iteration_==0 && BASE::useParallelRiccatiSolverFromInitItr_==false) {
 
 		for (int i=BASE::numPartitionings_-1; i>=0; i--)  {
 
-			if (i < (signed)BASE::initActivePartition_ || i > (signed)BASE::finalActivePartition_) {
+			if (i<(signed)BASE::initActivePartition_ || i>(signed)BASE::finalActivePartition_) {
 
 				BASE::SsTimeTrajectoryStock_[i].clear();
 				BASE::SsNormalizedTimeTrajectoryStock_[i].clear();
@@ -713,20 +708,22 @@ void SLQ_MP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::solveSequentialRiccatiEquation
 			// solve backward pass
 			if (BASE::settings_.useRiccatiSolver_==true) {
 				BASE::solveSlqRiccatiEquationsWorker(workerIndex, i,
-						BASE::SmFinalStock_[i+1], BASE::SvFinalStock_[i+1], BASE::sFinalStock_[i+1], BASE::SveFinalStock_[i+1]);
+						BASE::SmFinalStock_[i], BASE::SvFinalStock_[i], BASE::sFinalStock_[i], BASE::SveFinalStock_[i]);
 			} else {
 				scalar_t constraintStepSize = BASE::updateFeedForwardPoliciesStock_[i] ? BASE::settings_.constraintStepSize_ : 0.0;
 				BASE::fullRiccatiBackwardSweepWorker(workerIndex, i,
-						BASE::SmFinalStock_[i+1], BASE::SvFinalStock_[i+1], BASE::SveFinalStock_[i+1], BASE::sFinalStock_[i+1],
+						BASE::SmFinalStock_[i], BASE::SvFinalStock_[i], BASE::SveFinalStock_[i], BASE::sFinalStock_[i],
 						constraintStepSize);
 			}
 
 			// set the final value for next Riccati equation
-			BASE::sFinalStock_[i]   = BASE::sTrajectoryStock_[i].front();
-			BASE::SvFinalStock_[i]  = BASE::SvTrajectoryStock_[i].front();
-			BASE::SveFinalStock_[i] = BASE::SveTrajectoryStock_[i].front();
-			BASE::SmFinalStock_[i]  = BASE::SmTrajectoryStock_[i].front();
-
+			if (i>BASE::initActivePartition_) {
+				BASE::SmFinalStock_[i-1]  = BASE::SmTrajectoryStock_[i].front();
+				BASE::SvFinalStock_[i-1]  = BASE::SvTrajectoryStock_[i].front();
+				BASE::SveFinalStock_[i-1] = BASE::SveTrajectoryStock_[i].front();
+				BASE::sFinalStock_[i-1]   = BASE::sTrajectoryStock_[i].front();
+				BASE::xFinalStock_[i-1]	  = BASE::nominalStateTrajectoriesStock_[i].front();
+			}
 		}
 	}
 	// solve it in parallel if useParallelRiccatiSolverFromInitItr_ is true
@@ -752,11 +749,6 @@ void SLQ_MP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::solveSequentialRiccatiEquation
 		workerTask_ = IDLE;
 	}
 
-	// state at the switching times
-	BASE::xFinalStock_[BASE::finalActivePartition_+1] = BASE::nominalStateTrajectoriesStock_[BASE::finalActivePartition_].back();
-	for (size_t i=BASE::initActivePartition_; i<=BASE::finalActivePartition_; i++)
-		BASE::xFinalStock_[i] = BASE::nominalStateTrajectoriesStock_[i].front();
-
 	if(BASE::settings_.debugPrintMP_){
 		BASE::printString("[MP]: Iteration: " + std::to_string(BASE::iteration_) + " done.");
 		BASE::printString("----------------------------------");
@@ -771,8 +763,6 @@ void SLQ_MP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::solveSequentialRiccatiEquation
 template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
 void SLQ_MP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::executeRiccatiSolver(size_t threadId) {
 
-	bool endSubsystemIsUpdated = false;
-
 	for (int i = endingIndicesRiccatiWorker_[threadId]; i >= startingIndicesRiccatiWorker_[threadId]; i--) {
 
 		if(BASE::settings_.debugPrintMP_)
@@ -780,7 +770,7 @@ void SLQ_MP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::executeRiccatiSolver(size_t th
 
 
 		// for inactive subsystems
-		if (i < (signed)BASE::initActivePartition_ || i > (signed)BASE::finalActivePartition_) {
+		if (i<(signed)BASE::initActivePartition_ || i>(signed)BASE::finalActivePartition_) {
 
 			BASE::SsTimeTrajectoryStock_[i].clear();
 			BASE::SmTrajectoryStock_[i].clear();
@@ -808,21 +798,23 @@ void SLQ_MP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::executeRiccatiSolver(size_t th
 		// lock data
 		std::unique_lock<std::mutex> dataReadLock(riccatiSolverDataMutex_);
 
-		state_matrix_t SmFinal  = BASE::SmFinalStock_[i+1];
-		state_vector_t SvFinal  = BASE::SvFinalStock_[i+1];
-		state_vector_t SveFinal = BASE::SveFinalStock_[i+1];
-		eigen_scalar_t sFinal   = BASE::sFinalStock_[i+1];
-		state_vector_t xFinal   = BASE::xFinalStock_[i+1];
+		state_matrix_t SmFinal  = BASE::SmFinalStock_[i];
+		state_vector_t SvFinal  = BASE::SvFinalStock_[i];
+		state_vector_t SveFinal = BASE::SveFinalStock_[i];
+		eigen_scalar_t sFinal   = BASE::sFinalStock_[i];
+		state_vector_t xFinal   = BASE::xFinalStock_[i];
 
 		// unlock data
 		dataReadLock.unlock();
 
-		// solve the backward pass
-		if (endSubsystemIsUpdated==false) {
-			endSubsystemIsUpdated = true;
-			SvFinal += SmFinal*(BASE::nominalStateTrajectoriesStock_[i].back()-xFinal);
+		// modify the end subsystem final values based on the catched values for asynchronous
+		if (i==endingIndicesRiccatiWorker_[threadId] && i<BASE::finalActivePartition_) {
+			const state_vector_t& x = BASE::nominalStateTrajectoriesStock_[i+1].front();
+			SvFinal += SmFinal*(x-xFinal);
+			// TODO for sFinal
 		}
 
+		// solve the backward pass
 		if (BASE::settings_.useRiccatiSolver_==true) {
 			BASE::solveSlqRiccatiEquationsWorker(threadId, i,
 					SmFinal, SvFinal, sFinal, SveFinal);
@@ -837,10 +829,13 @@ void SLQ_MP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::executeRiccatiSolver(size_t th
 		std::unique_lock<std::mutex> dataWriteLock(riccatiSolverDataMutex_);
 
 		// set the final value for next Riccati equation
-		BASE::sFinalStock_[i]   = BASE::sTrajectoryStock_[i].front();
-		BASE::SvFinalStock_[i]  = BASE::SvTrajectoryStock_[i].front();
-		BASE::SveFinalStock_[i] = BASE::SveTrajectoryStock_[i].front();
-		BASE::SmFinalStock_[i]  = BASE::SmTrajectoryStock_[i].front();
+		if (i>BASE::initActivePartition_) {
+			BASE::SmFinalStock_[i-1]  = BASE::SmTrajectoryStock_[i].front();
+			BASE::SvFinalStock_[i-1]  = BASE::SvTrajectoryStock_[i].front();
+			BASE::SveFinalStock_[i-1] = BASE::SveTrajectoryStock_[i].front();
+			BASE::sFinalStock_[i-1]   = BASE::sTrajectoryStock_[i].front();
+			BASE::xFinalStock_[i-1]	  = BASE::nominalStateTrajectoriesStock_[i].front();
+		}
 
 		// unlock data
 		dataWriteLock.unlock();

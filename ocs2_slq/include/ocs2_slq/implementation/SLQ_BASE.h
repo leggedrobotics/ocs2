@@ -3203,7 +3203,9 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::runIteration() {
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
 void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::run(
-		const scalar_t& initTime, const state_vector_t& initState, const scalar_t& finalTime,
+		const scalar_t& initTime,
+		const state_vector_t& initState,
+		const scalar_t& finalTime,
 		const scalar_array_t& partitioningTimes) {
 
 	const controller_array_t noInitialController(partitioningTimes.size()-1, controller_t());
@@ -3218,14 +3220,16 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::run(
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
 void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::run(
-		const scalar_t& initTime, const state_vector_t& initState, const scalar_t& finalTime,
+		const scalar_t& initTime,
+		const state_vector_t& initState,
+		const scalar_t& finalTime,
 		const scalar_array_t& partitioningTimes,
 		const controller_array_t& controllersStock) {
 
 	if (settings_.displayInfo_) {
-			std::cerr << "++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++" << std::endl;
-			std::cerr << "++++++++++++++++ SLQ solver is initialized +++++++++++++++++" << std::endl;
-			std::cerr << "++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++" << std::endl;
+		std::cerr << "++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++" << std::endl;
+		std::cerr << "++++++++++++++++ SLQ solver is initialized +++++++++++++++++" << std::endl;
+		std::cerr << "++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++" << std::endl;
 	}
 
 	// update numPartitionings_ if it has been changed
@@ -3238,7 +3242,10 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::run(
 	// update partitioningTimes_
 	partitioningTimes_ = partitioningTimes;
 
-	// use nominalControllersStock_ if no initial controller is given
+	// Use the input controller if it is not empty otherwise use the internal controller (nominalControllersStock_).
+	// In the later case 2 senarios are possible: either the internal controller is already set (such as the MPC case
+	// where the warm starting option is set true) or the internal controller is empty in which instead of performing
+	// a rollout the operating tarjectories will be used.
 	if (controllersStock.empty()==false) {
 		nominalControllersStock_ = controllersStock;
 		if (controllersStock.size() != numPartitionings_)
@@ -3248,7 +3255,7 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::run(
 			throw std::runtime_error("The internal controller is not compatible with the number of partitions.");
 	}
 
-	// set desired trajectories for cost
+	// set desired trajectories of cost if it is updated
 	if (costDesiredTrajectoriesUpdated_ == true) {
 		costDesiredTrajectoriesUpdated_ = false;
 		costDesiredTrajectories_.swap(costDesiredTrajectoriesBuffer_);
@@ -3275,10 +3282,17 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::run(
 	iterationISE2_.clear();
 
 	// finding the initial active partition index and truncating the controller
-	truncateConterller(partitioningTimes_, initTime_, nominalControllersStock_, initActivePartition_, deletedcontrollersStock_);
+	truncateConterller(partitioningTimes_, initTime_,
+			nominalControllersStock_, initActivePartition_, deletedcontrollersStock_);
 
 	// the final active partition index.
 	finalActivePartition_ = findActivePartitionIndex(partitioningTimes_, finalTime_);
+
+	// check if after the truncation the internal controller is empty
+	bool isInitInternalControllerEmpty = false;
+	for (const controller_t& controller: nominalControllersStock_) {
+		isInitInternalControllerEmpty = isInitInternalControllerEmpty || controller.empty();
+	}
 
 	// display
 	if (settings_.displayInfo_)
@@ -3288,7 +3302,7 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::run(
 	for (size_t i=0; i<numPartitionings_; i++)
 		updateFeedForwardPoliciesStock_[i] = nominalControllersStock_[i].time_.empty() ? false : true;
 
-	// run loop initializer and update the member variables
+	// run SLQ initializer and update the member variables
 	runInit();
 
 	// after iteration zero always allow feedforward policy update
@@ -3330,9 +3344,10 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::run(
 		relCost = std::abs(nominalTotalCost_-costCashed);
 		relConstraint1ISE = std::abs(nominalConstraint1ISE_-constraint1ISECashed);
 		isConstraint1Satisfied  = nominalConstraint1ISE_<=settings_.minAbsConstraint1ISE_ || relConstraint1ISE<=settings_.minRelConstraint1ISE_;
-		isLearningRateStarZero  = learningRateStar_==0;
+		isLearningRateStarZero  = learningRateStar_==0 && !isInitInternalControllerEmpty;
 		isCostFunctionConverged = relCost<=settings_.minRelCostGSLQP_ || isLearningRateStarZero;
 		isOptimizationConverged = isCostFunctionConverged==true && isConstraint1Satisfied==true;
+		isInitInternalControllerEmpty = false;
 
 	}  // end of while loop
 

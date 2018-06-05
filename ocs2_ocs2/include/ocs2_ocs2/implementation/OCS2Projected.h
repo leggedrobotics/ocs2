@@ -65,7 +65,7 @@ const typename OCS2Projected<STATE_DIM, INPUT_DIM>::controller_t& OCS2Projected<
 template <size_t STATE_DIM, size_t INPUT_DIM>
 void OCS2Projected<STATE_DIM, INPUT_DIM>::getNominalTrajectories(std::vector<scalar_array_t>& optimizedTimeTrajectoriesStock,
 		state_vector_array2_t& optimizedStateTrajectoriesStock,
-		control_vector_array2_t& optimizedInputTrajectoriesStock) const {
+		input_vector_array2_t& optimizedInputTrajectoriesStock) const {
 
 	optimizedTimeTrajectoriesStock   = optimizedTimeTrajectoriesStock_;
 	optimizedStateTrajectoriesStock  = optimizedStateTrajectoriesStock_;
@@ -86,11 +86,11 @@ typename OCS2Projected<STATE_DIM, INPUT_DIM>::Options_t& OCS2Projected<STATE_DIM
 template <size_t STATE_DIM, size_t INPUT_DIM>
 void OCS2Projected<STATE_DIM, INPUT_DIM>::getNominalTrajectoriesPtr(std::shared_ptr<std::vector<scalar_array_t>>& optimizedTimeTrajectoriesStockPtr,
 		std::shared_ptr<state_vector_array2_t>& optimizedStateTrajectoriesStockPtr,
-		std::shared_ptr<control_vector_array2_t>& optimizedInputTrajectoriesStockPtr) const {
+		std::shared_ptr<input_vector_array2_t>& optimizedInputTrajectoriesStockPtr) const {
 
 	optimizedTimeTrajectoriesStockPtr   = std::make_shared<std::vector<scalar_array_t>>(optimizedTimeTrajectoriesStock_);
 	optimizedStateTrajectoriesStockPtr  = std::make_shared<state_vector_array2_t>(optimizedStateTrajectoriesStock_);
-	optimizedInputTrajectoriesStockPtr  = std::make_shared<control_vector_array2_t>(optimizedInputTrajectoriesStock_);
+	optimizedInputTrajectoriesStockPtr  = std::make_shared<input_vector_array2_t>(optimizedInputTrajectoriesStock_);
 }
 
 /******************************************************************************************************/
@@ -211,7 +211,7 @@ void OCS2Projected<STATE_DIM, INPUT_DIM>::saveToBag(size_t id, const Eigen::Vect
 	// get the nominal trajectories
 	std::vector<scalar_array_t> timeTrajectoriesStock(numSubsystems_);
 	state_vector_array2_t   stateTrajectoriesStock(numSubsystems_);
-	control_vector_array2_t inputTrajectoriesStock(numSubsystems_);
+	input_vector_array2_t inputTrajectoriesStock(numSubsystems_);
 	slqpSolverPtrs_[id]->getNominalTrajectories(timeTrajectoriesStock, stateTrajectoriesStock, inputTrajectoriesStock);
 
 	// get the optimized controller
@@ -220,7 +220,7 @@ void OCS2Projected<STATE_DIM, INPUT_DIM>::saveToBag(size_t id, const Eigen::Vect
 
 	// changing the controller structure to tracking controller
 	LinearInterpolation<state_vector_t,Eigen::aligned_allocator<state_vector_t> >   nominalStateFunc;
-	LinearInterpolation<control_vector_t,Eigen::aligned_allocator<control_vector_t> > nominalInputFunc;
+	LinearInterpolation<input_vector_t,Eigen::aligned_allocator<input_vector_t> > nominalInputFunc;
 	for (size_t i=0; i<numSubsystems_; i++) {
 
 		nominalStateFunc.setTimeStamp( &(timeTrajectoriesStock[i]) );
@@ -236,7 +236,7 @@ void OCS2Projected<STATE_DIM, INPUT_DIM>::saveToBag(size_t id, const Eigen::Vect
 			state_vector_t nominalState;
 			nominalStateFunc.interpolate(time, nominalState);
 			size_t greatestLessTimeStampIndex = nominalStateFunc.getGreatestLessTimeStampIndex();
-			control_vector_t nominalInput;
+			input_vector_t nominalInput;
 			nominalInputFunc.interpolate(time, nominalInput, greatestLessTimeStampIndex);
 
 			controllersStock[i].uff_[k] = -controllersStock[i].k_[k]*nominalState;
@@ -266,7 +266,7 @@ void OCS2Projected<STATE_DIM, INPUT_DIM>::calculateInitialController(const state
 	// calculate the coldStart controllers' cost
 	std::vector<scalar_array_t> timeTrajectoriesStock(numSubsystems_);
 	state_vector_array2_t stateTrajectoriesStock(numSubsystems_);
-	control_vector_array2_t inputTrajectoriesStock(numSubsystems_);
+	input_vector_array2_t inputTrajectoriesStock(numSubsystems_);
 	scalar_t coldStartTotalCost = std::numeric_limits<double>::max();
 	try {
 		rollout(initTime_, initState_, finalTime_, switchingTimes, coldStartControllersStock,
@@ -302,7 +302,7 @@ void OCS2Projected<STATE_DIM, INPUT_DIM>::calculateInitialController(const state
 		// calculate the warmStart controllers' cost
 		std::vector<scalar_array_t> timeTrajectoriesStock(numSubsystems_);
 		state_vector_array2_t stateTrajectoriesStock(numSubsystems_);
-		control_vector_array2_t inputTrajectoriesStock(numSubsystems_);
+		input_vector_array2_t inputTrajectoriesStock(numSubsystems_);
 		try {
 			rollout(initTime_, initState_, finalTime_, switchingTimes, warmStartControllersStock,
 					timeTrajectoriesStock, stateTrajectoriesStock, inputTrajectoriesStock);
@@ -337,7 +337,7 @@ void OCS2Projected<STATE_DIM, INPUT_DIM>::rollout(const double& initTime,
 		const controller_array_t& controllersStock,
 		std::vector<scalar_array_t>& timeTrajectoriesStock,
 		state_vector_array2_t& stateTrajectoriesStock,
-		control_vector_array2_t& inputTrajectoriesStock)  {
+		input_vector_array2_t& inputTrajectoriesStock)  {
 
 	if (controllersStock.size() != numSubsystems_)
 		throw std::runtime_error("controllersStock has less controllers then the number of subsystems");
@@ -419,7 +419,7 @@ template <size_t STATE_DIM, size_t INPUT_DIM>
 void OCS2Projected<STATE_DIM, INPUT_DIM>::calculateCostFunction(
 		const std::vector<scalar_array_t>& timeTrajectoriesStock,
 		const state_vector_array2_t& stateTrajectoriesStock,
-		const control_vector_array2_t& inputTrajectoriesStock,
+		const input_vector_array2_t& inputTrajectoriesStock,
 		scalar_t& totalCost)  {
 
 	totalCost = 0.0;

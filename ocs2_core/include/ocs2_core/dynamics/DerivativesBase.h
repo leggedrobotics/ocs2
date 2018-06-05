@@ -42,13 +42,16 @@ public:
 
 	typedef Dimensions<STATE_DIM, INPUT_DIM> DIMENSIONS;
 	typedef typename DIMENSIONS::scalar_t scalar_t;
-	typedef typename DIMENSIONS::state_vector_t   state_vector_t;
-	typedef typename DIMENSIONS::control_vector_t input_vector_t;
+	typedef typename DIMENSIONS::state_vector_t state_vector_t;
+	typedef typename DIMENSIONS::input_vector_t input_vector_t;
 	typedef typename DIMENSIONS::state_matrix_t state_matrix_t;
-	typedef typename DIMENSIONS::control_gain_matrix_t control_gain_matrix_t;
-	typedef typename DIMENSIONS::constraint1_state_matrix_t   constraint1_state_matrix_t;
-	typedef typename DIMENSIONS::constraint1_control_matrix_t constraint1_control_matrix_t;
-	typedef typename DIMENSIONS::constraint2_state_matrix_t   constraint2_state_matrix_t;
+	typedef typename DIMENSIONS::state_input_matrix_t state_input_matrix_t;
+	typedef typename DIMENSIONS::constraint1_state_matrix_t constraint1_state_matrix_t;
+	typedef typename DIMENSIONS::constraint1_input_matrix_t constraint1_input_matrix_t;
+	typedef typename DIMENSIONS::constraint2_state_matrix_t constraint2_state_matrix_t;
+	typedef typename DIMENSIONS::dynamic_vector_t 		dynamic_vector_t;
+	typedef typename DIMENSIONS::dynamic_state_matrix_t dynamic_state_matrix_t;
+	typedef typename DIMENSIONS::dynamic_input_matrix_t dynamic_input_matrix_t;
 
 	/**
 	 * Default constructor
@@ -59,6 +62,21 @@ public:
 	 * Default destructor
 	 */
 	virtual ~DerivativesBase() = default;
+
+	/**
+	 * Initializes the system dynamics derivatives.
+	 *
+	 * @param [in] logicRulesMachine: A class which contains and parse the logic rules e.g
+	 * method findActiveSubsystemHandle returns a Lambda expression which can be used to
+	 * find the ID of the current active subsystem.
+	 * @param [in] partitionIndex: index of the time partition.
+	 * @param [in] algorithmName: The algorithm that class this class (default not defined).
+	 */
+	virtual void initializeModel(
+			LogicRulesMachine<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>& logicRulesMachine,
+			const size_t& partitionIndex,
+			const char* algorithmName=NULL)
+	{}
 
 	/**
 	 * Sets the current time, state, and control inout.
@@ -76,21 +94,6 @@ public:
 		x_ = x;
 		u_ = u;
 	}
-
-	/**
-	 * Initializes the system dynamics derivatives.
-	 *
-	 * @param [in] logicRulesMachine: A class which contains and parse the logic rules e.g
-	 * method findActiveSubsystemHandle returns a Lambda expression which can be used to
-	 * find the ID of the current active subsystem.
-	 * @param [in] partitionIndex: index of the time partition.
-	 * @param [in] algorithmName: The algorithm that class this class (default not defined).
-	 */
-	virtual void initializeModel(
-			LogicRulesMachine<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>& logicRulesMachine,
-			const size_t& partitionIndex,
-			const char* algorithmName=NULL)
-	{}
 
 	/**
 	 * Get partial time derivative of the system flow map.
@@ -117,7 +120,7 @@ public:
 	 *
 	 * @param [out] B: \f$ B(t) \f$ matrix.
 	 */
-	virtual void getFlowMapDerivativeInput(control_gain_matrix_t& B) = 0;
+	virtual void getFlowMapDerivativeInput(state_input_matrix_t& B) = 0;
 
 	/**
 	 * Get partial time derivative of the system jump map.
@@ -147,9 +150,39 @@ public:
 	 *
 	 * @param [out] H: \f$ H \f$ matrix.
 	 */
-	virtual void getJumpMapDerivativeInput(control_gain_matrix_t& H) {
+	virtual void getJumpMapDerivativeInput(state_input_matrix_t& H) {
 
 		H.setZero();
+	}
+
+	/**
+	 * Get at a given operating point the derivative of the guard surfaces w.r.t. input vector.
+	 *
+	 * @param [out] D_t_gamma: Derivative of the guard surfaces w.r.t. time.
+	 */
+	virtual void getGuardSurfacesDerivativeTime(dynamic_vector_t& D_t_gamma) {
+
+		D_t_gamma = dynamic_vector_t::Zero(1);
+	}
+
+	/**
+	 * Get at a given operating point the derivative of the guard surfaces w.r.t. input vector.
+	 *
+	 * @param [out] D_x_gamma: Derivative of the guard surfaces w.r.t. state vector.
+	 */
+	virtual void getGuardSurfacesDerivativeState(dynamic_state_matrix_t& D_x_gamma) {
+
+		D_x_gamma = dynamic_state_matrix_t::Zero(1,STATE_DIM);
+	}
+
+	/**
+	 * Get at a given operating point the derivative of the guard surfaces w.r.t. input vector.
+	 *
+	 * @param [out] D_u_gamma: Derivative of the guard surfaces w.r.t. input vector.
+	 */
+	virtual void getGuardSurfacesDerivativeInput(dynamic_input_matrix_t& D_u_gamma) {
+
+		D_u_gamma = dynamic_input_matrix_t::Zero(1,INPUT_DIM);
 	}
 
 	/**

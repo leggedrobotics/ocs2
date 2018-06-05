@@ -191,7 +191,7 @@ public:
 	/**
 	 * Adaptive time integration based on start time and final time. This method can solve ODEs with time-dependent events,
 	 * if eventsTime is not empty. In this case the output time-trajectory contains two identical values at the moments
-	 * of event triggerings. This method uses SystemBase::mapState() method for state transition at events.
+	 * of event triggerings. This method uses SystemBase::computeJumpMap() method for state transition at events.
 	 *
 	 * @param [in] initialState: Initial state.
 	 * @param [in] startTime: Initial time.
@@ -236,7 +236,7 @@ public:
 	 * Output integration based on a given time trajectory. This method can solve ODEs with time-dependent events.
 	 * In this case, user should pass past-the-end indeces of events on the input time trajectory. Moreover, this
 	 * method assumes that there are two identical time values in the input time-trajectory at the moments of event
-	 * triggerings. This method uses SystemBase::mapState() method for state transition at events.
+	 * triggerings. This method uses SystemBase::computeJumpMap() method for state transition at events.
 	 *
 	 * @param [in] initialState: Initial state.
 	 * @param [in] beginTimeItr: The iterator to the begining of the time stamp trajectory.
@@ -281,10 +281,13 @@ private:
 	 */
 	void setupSystem()
 	{
-		systemFunction_ = [this]( const Eigen::Matrix<scalar_t, STATE_DIM, 1>& x, Eigen::Matrix<scalar_t, STATE_DIM, 1>& dxdt, scalar_t t ){
-			const state_vector_t& xState(static_cast<const state_vector_t& >(x));
-			state_vector_t& dxdtState(static_cast<state_vector_t& >(dxdt));
-			this->systemPtr_->computeDerivative(t, xState, dxdtState);
+		systemFunction_ = [this](
+				const Eigen::Matrix<scalar_t, STATE_DIM, 1>& x,
+				Eigen::Matrix<scalar_t, STATE_DIM, 1>& dxdt,
+				scalar_t t) {
+			const state_vector_t& xState(static_cast<const state_vector_t&>(x));
+			state_vector_t& dxdtState(static_cast<state_vector_t&>(dxdt));
+			this->systemPtr_->computeFlowMap(t, xState, dxdtState);
 		};
 	}
 

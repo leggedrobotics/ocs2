@@ -16,7 +16,7 @@ void LQP<STATE_DIM, INPUT_DIM, NUM_Subsystems>::rollout(const state_vector_t& in
 		const controller_array_t& controllersStock,
 		std::vector<scalar_array_t>& timeTrajectoriesStock,
 		state_vector_array2_t& stateTrajectoriesStock,
-		control_vector_array2_t& inputTrajectoriesStock)  {
+		input_vector_array2_t& inputTrajectoriesStock)  {
 
 	if (controllersStock.size() != NUM_Subsystems)
 		throw std::runtime_error("controllersStock has less controllers then the number of subsystems");
@@ -59,7 +59,7 @@ template <size_t STATE_DIM, size_t INPUT_DIM, size_t NUM_Subsystems>
 void LQP<STATE_DIM, INPUT_DIM, NUM_Subsystems>::rolloutCost(
 		const std::vector<scalar_array_t>& timeTrajectoriesStock,
 		const state_vector_array2_t& stateTrajectoriesStock,
-		const control_vector_array2_t& inputTrajectoriesStock,
+		const input_vector_array2_t& inputTrajectoriesStock,
 		scalar_t& totalCost)  {
 
 	totalCost = 0.0;
@@ -111,7 +111,7 @@ void LQP<STATE_DIM, INPUT_DIM, NUM_Subsystems>::approximateOptimalControlProblem
 
 		if (runAsInitializer_==true) {
 			subsystemDynamicsPtrStock_[i]->initializeModel(systemStockIndexes_, switchingTimes_, stateOperatingPointsStock_.at(i), i, "LQP");
-			subsystemDynamicsPtrStock_[i]->computeDerivative(switchingTimes_.at(i), stateOperatingPointsStock_.at(i),
+			subsystemDynamicsPtrStock_[i]->computeFlowMap(switchingTimes_.at(i), stateOperatingPointsStock_.at(i),
 					inputOperatingPointsStock_.at(i), GvStock_.at(i));
 		} else {
 			GvStock_.at(i).setZero();
@@ -251,15 +251,15 @@ void LQP<STATE_DIM, INPUT_DIM, NUM_Subsystems>::SolveRiccatiEquations()  {
 		scalar_array_t timeTrajectory{switchingTimes_[i], switchingTimes_[i+1]};
 
 		state_matrix_array_t        AmTrajectory(2, AmStock_[i]);
-		control_gain_matrix_array_t BmTrajectory(2, BmStock_[i]);
+		state_input_matrix_array_t BmTrajectory(2, BmStock_[i]);
 		state_vector_array_t        GvTrajectory(2, GvStock_[i]);
 
 		state_vector_array_t  QvTrajectory(2, QvStock_[i]);
 		state_matrix_array_t   QmTrajectory(2, QmStock_[i]);
-		control_vector_array_t RvTrajectory(2, RvStock_[i]);
-		control_matrix_array_t RmTrajectory(2, RmStock_[i]);
-		control_matrix_array_t   RmInverseTrajectory(2, RmInverseStock_[i]);
-		control_feedback_array_t PmTrajectory(2, PmStock_[i]);
+		input_vector_array_t RvTrajectory(2, RvStock_[i]);
+		input_matrix_array_t RmTrajectory(2, RmStock_[i]);
+		input_matrix_array_t   RmInverseTrajectory(2, RmInverseStock_[i]);
+		input_state_array_t PmTrajectory(2, PmStock_[i]);
 
 		// set data for Riccati equations
 		bvpSolver.setData(&timeTrajectory,

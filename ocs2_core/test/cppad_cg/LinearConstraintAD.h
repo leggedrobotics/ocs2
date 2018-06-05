@@ -27,18 +27,18 @@ public:
 	typedef typename BASE::state_vector_t   		state_vector_t;
 	typedef typename BASE::input_vector_t	 		input_vector_t;
 	typedef typename BASE::state_matrix_t   		state_matrix_t;
-	typedef typename BASE::control_gain_matrix_t 	control_gain_matrix_t;
+	typedef typename BASE::state_input_matrix_t 	state_input_matrix_t;
 	typedef typename BASE::constraint1_vector_t 	constraint1_vector_t;
 	typedef typename BASE::constraint2_vector_t 	constraint2_vector_t;
 	typedef typename BASE::constraint1_state_matrix_t   constraint1_state_matrix_t;
-	typedef typename BASE::constraint1_control_matrix_t constraint1_control_matrix_t;
+	typedef typename BASE::constraint1_input_matrix_t constraint1_input_matrix_t;
 	typedef typename BASE::constraint2_state_matrix_t   constraint2_state_matrix_t;
 
 	LinearConstraintAD(
 			const size_t& numStateInputConstraint,
 			const constraint1_vector_t& e,
 			const constraint1_state_matrix_t& C,
-			const constraint1_control_matrix_t& D,
+			const constraint1_input_matrix_t& D,
 			const size_t& numStateOnlyConstraint,
 			const constraint2_vector_t& h,
 			const constraint2_state_matrix_t& F,
@@ -154,7 +154,7 @@ private:
 	size_t numStateInputConstraint_;
 	constraint1_vector_t 			e_;
 	constraint1_state_matrix_t 		C_;
-	constraint1_control_matrix_t 	D_;
+	constraint1_input_matrix_t 	D_;
 	size_t numStateOnlyConstraint_;
 	constraint2_vector_t 			h_;
 	constraint2_state_matrix_t 		F_;

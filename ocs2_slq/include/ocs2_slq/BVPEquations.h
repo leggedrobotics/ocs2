@@ -145,7 +145,7 @@ public:
      * @param [in] MSv: Single vector constructed by concatenating Mm, Sv.
      * @param [out] derivatives: derivatives: d(MSv)/dz.
      */
-	void computeDerivative(const double& z, const full_ode_vector_t& MSv, full_ode_vector_t& derivatives) override {
+	void computeFlowMap(const double& z, const full_ode_vector_t& MSv, full_ode_vector_t& derivatives) override {
 
 		// denormalized time
 		if (z>1 || z<0)  throw std::runtime_error("The normalized time should be between zero and one.");

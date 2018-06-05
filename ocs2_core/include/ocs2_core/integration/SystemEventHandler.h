@@ -45,6 +45,7 @@ public:
 	typedef typename BASE::scalar_array_t 		scalar_array_t;
 	typedef typename BASE::state_vector_t		state_vector_t;
 	typedef typename BASE::state_vector_array_t state_vector_array_t;
+	typedef typename BASE::dynamic_vector_t 	dynamic_vector_t;
 
 	/**
 	 * Default constructor

@@ -44,8 +44,8 @@ public:
 	typedef typename DIMENSIONS::size_array_t 			size_array_t;
 	typedef typename DIMENSIONS::state_vector_t   		state_vector_t;
 	typedef typename DIMENSIONS::state_vector_array_t   state_vector_array_t;
-	typedef typename DIMENSIONS::control_vector_t 		input_vector_t;
-	typedef typename DIMENSIONS::control_vector_array_t input_vector_array_t;
+	typedef typename DIMENSIONS::input_vector_t 		input_vector_t;
+	typedef typename DIMENSIONS::input_vector_array_t input_vector_array_t;
 
 	/**
 	 * Default constructor

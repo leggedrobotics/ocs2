@@ -65,21 +65,21 @@ public:
 	typedef typename DIMENSIONS::state_vector_t 	   state_vector_t;
 	typedef typename DIMENSIONS::state_vector_array_t  state_vector_array_t;
 	typedef typename DIMENSIONS::state_vector_array2_t state_vector_array2_t;
-	typedef typename DIMENSIONS::control_vector_t 		 input_vector_t;
-	typedef typename DIMENSIONS::control_vector_array_t  input_vector_array_t;
-	typedef typename DIMENSIONS::control_vector_array2_t input_vector_array2_t;
-	typedef typename DIMENSIONS::control_feedback_t 	   control_feedback_t;
-	typedef typename DIMENSIONS::control_feedback_array_t  control_feedback_array_t;
-	typedef typename DIMENSIONS::control_feedback_array2_t control_feedback_array2_t;
+	typedef typename DIMENSIONS::input_vector_t 		 input_vector_t;
+	typedef typename DIMENSIONS::input_vector_array_t  input_vector_array_t;
+	typedef typename DIMENSIONS::input_vector_array2_t input_vector_array2_t;
+	typedef typename DIMENSIONS::input_state_t 	   input_state_t;
+	typedef typename DIMENSIONS::input_state_array_t  input_state_array_t;
+	typedef typename DIMENSIONS::input_state_array2_t input_state_array2_t;
 	typedef typename DIMENSIONS::state_matrix_t 	   state_matrix_t;
 	typedef typename DIMENSIONS::state_matrix_array_t  state_matrix_array_t;
 	typedef typename DIMENSIONS::state_matrix_array2_t state_matrix_array2_t;
-	typedef typename DIMENSIONS::control_matrix_t 		 control_matrix_t;
-	typedef typename DIMENSIONS::control_matrix_array_t  control_matrix_array_t;
-	typedef typename DIMENSIONS::control_matrix_array2_t control_matrix_array2_t;
-	typedef typename DIMENSIONS::control_gain_matrix_t 		  control_gain_matrix_t;
-	typedef typename DIMENSIONS::control_gain_matrix_array_t  control_gain_matrix_array_t;
-	typedef typename DIMENSIONS::control_gain_matrix_array2_t control_gain_matrix_array2_t;
+	typedef typename DIMENSIONS::input_matrix_t 		 input_matrix_t;
+	typedef typename DIMENSIONS::input_matrix_array_t  input_matrix_array_t;
+	typedef typename DIMENSIONS::input_matrix_array2_t input_matrix_array2_t;
+	typedef typename DIMENSIONS::state_input_matrix_t 		  state_input_matrix_t;
+	typedef typename DIMENSIONS::state_input_matrix_array_t  state_input_matrix_array_t;
+	typedef typename DIMENSIONS::state_input_matrix_array2_t state_input_matrix_array2_t;
 
 	typedef LogicRulesMachine<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>		logic_rules_machine_t;
 	typedef ControlledSystemBase<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>	controlled_system_base_t;
@@ -352,7 +352,7 @@ protected:
 	controller_array_t controllersStock_;
 
 	state_matrix_array2_t        AmStock_;
-	control_gain_matrix_array2_t BmStock_;
+	state_input_matrix_array2_t BmStock_;
 
 	eigen_scalar_array2_t qFinalStock_;
 	state_vector_array2_t QvFinalStock_;
@@ -362,9 +362,9 @@ protected:
 	state_vector_array2_t QvStock_;
 	state_matrix_array2_t QmStock_;
 	input_vector_array2_t RvStock_;
-	control_feedback_array2_t PmStock_;
-	control_matrix_array2_t RmStock_;
-	control_matrix_array2_t RmInverseStock_;
+	input_state_array2_t PmStock_;
+	input_matrix_array2_t RmStock_;
+	input_matrix_array2_t RmInverseStock_;
 
 	std::vector<std::shared_ptr<riccati_equations_t>> 							riccatiEquationsPtrStock_;
 	std::vector<std::shared_ptr<IntegratorBase<riccati_equations_t::S_DIM_>>> 	riccatiIntegratorPtrStock_;

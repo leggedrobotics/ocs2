@@ -30,12 +30,12 @@ public:
 	typedef typename BASE::state_matrix_t 			state_matrix_t;
 	typedef typename BASE::input_vector_t  			input_vector_t;
 	typedef typename BASE::input_vector_array_t 	input_vector_array_t;
-	typedef typename BASE::control_matrix_t 		control_matrix_t;
-	typedef typename BASE::control_feedback_t 		control_feedback_t;
+	typedef typename BASE::input_matrix_t 		input_matrix_t;
+	typedef typename BASE::input_state_t 		input_state_t;
 
 	QuadraticCostFunctionAD(
 			const state_matrix_t& Q,
-			const control_matrix_t& R,
+			const input_matrix_t& R,
 			const state_vector_t& x_nominal,
 			const input_vector_t& u_nominal,
 			const state_vector_t& x_final,
@@ -81,7 +81,7 @@ private:
 
 	input_vector_t u_deviation_;
 	input_vector_t u_nominal_;
-	control_matrix_t R_;
+	input_matrix_t R_;
 
 	state_vector_t x_final_;
 	state_matrix_t Q_final_;

@@ -34,8 +34,8 @@ bool checkCostFunction(
 	typedef typename quadratic_cost_t::state_vector_t		state_vector_t;
 	typedef typename quadratic_cost_t::state_matrix_t		state_matrix_t;
 	typedef typename quadratic_cost_t::input_vector_t		input_vector_t;
-	typedef typename quadratic_cost_t::control_matrix_t		control_matrix_t;
-	typedef typename quadratic_cost_t::control_feedback_t	control_feedback_t;
+	typedef typename quadratic_cost_t::input_matrix_t		input_matrix_t;
+	typedef typename quadratic_cost_t::input_state_t	input_state_t;
 
 	bool success = true;
 
@@ -88,7 +88,7 @@ bool checkCostFunction(
 			success = false;
 		}
 
-		control_matrix_t dLduu, ad_dLduu;
+		input_matrix_t dLduu, ad_dLduu;
 		quadraticCost1->getIntermediateCostSecondDerivativeInput(dLduu);
 		quadraticCost2->getIntermediateCostSecondDerivativeInput(ad_dLduu);
 		if (!dLduu.isApprox(ad_dLduu, precision)) {
@@ -97,7 +97,7 @@ bool checkCostFunction(
 			success = false;
 		}
 
-		control_feedback_t dLdxu, ad_dLdxu;
+		input_state_t dLdxu, ad_dLdxu;
 		quadraticCost1->getIntermediateCostDerivativeInputState(dLdxu);
 		quadraticCost2->getIntermediateCostDerivativeInputState(ad_dLdxu);
 		if (!dLdxu.isApprox(ad_dLdxu, precision)) {
@@ -154,12 +154,12 @@ struct cost_parameters
 	typedef base_cost_t::state_vector_t		state_vector_t;
 	typedef base_cost_t::state_matrix_t		state_matrix_t;
 	typedef base_cost_t::input_vector_t		input_vector_t;
-	typedef base_cost_t::control_matrix_t	control_matrix_t;
-	typedef base_cost_t::control_feedback_t	control_feedback_t;
+	typedef base_cost_t::input_matrix_t	input_matrix_t;
+	typedef base_cost_t::input_state_t	input_state_t;
 
     // Define cost parameters
 	state_matrix_t Q = 10.0 * state_matrix_t::Identity();
-	control_matrix_t R = control_matrix_t::Identity();;
+	input_matrix_t R = input_matrix_t::Identity();;
 	state_vector_t x_nominal = state_vector_t::Zero();
 	input_vector_t u_nominal = input_vector_t::Zero();
 	state_vector_t x_final = state_vector_t::Ones();;

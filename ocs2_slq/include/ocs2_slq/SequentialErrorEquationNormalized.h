@@ -82,7 +82,7 @@ public:
 	 * @param [in] state: transition state
 	 * @param [out] mappedState: mapped state after transition
 	 */
-	void mapState(const scalar_t& z, const state_vector_t& state,
+	void computeJumpMap(const scalar_t& z, const state_vector_t& state,
 			state_vector_t& mappedState) override {
 
 		mappedState = state;
@@ -95,7 +95,7 @@ public:
 	 * @param [in] Sve: Current Sve.
 	 * @param [out] derivatives: d(Sve)/dz
 	 */
-	void computeDerivative(const scalar_t& z, const state_vector_t& Sve, state_vector_t& derivatives) {
+	void computeFlowMap(const scalar_t& z, const state_vector_t& Sve, state_vector_t& derivatives) {
 
 		// denormalized time
 		const scalar_t t = switchingTimeFinal_ + (switchingTimeStart_-switchingTimeFinal_)*z;
@@ -116,7 +116,7 @@ private:
 	LinearInterpolation<state_vector_t,Eigen::aligned_allocator<state_vector_t> > GvFunc_;
 	LinearInterpolation<state_matrix_t,Eigen::aligned_allocator<state_matrix_t> > GmFunc_;
 
-	// members required in computeDerivative
+	// members required in computeFlowMap
 	state_vector_t Gv_;
 	state_matrix_t Gm_;
 };

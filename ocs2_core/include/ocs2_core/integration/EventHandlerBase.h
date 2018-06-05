@@ -14,6 +14,8 @@
 #include <Eigen/Dense>
 #include <vector>
 
+#include "ocs2_core/Dimensions.h"
+
 namespace ocs2{
 
 /**
@@ -29,10 +31,12 @@ public:
 
 	typedef std::shared_ptr<EventHandlerBase<STATE_DIM>> Ptr;
 
-	typedef double scalar_t;
-	typedef std::vector<scalar_t> scalar_array_t;
-	typedef Eigen::Matrix<scalar_t,STATE_DIM,1> state_vector_t;
-	typedef std::vector<state_vector_t, Eigen::aligned_allocator<state_vector_t>> state_vector_array_t;
+	typedef Dimensions<STATE_DIM, 0> DIMENSIONS;
+	typedef typename DIMENSIONS::scalar_t 				scalar_t;
+	typedef typename DIMENSIONS::scalar_array_t 		scalar_array_t;
+	typedef typename DIMENSIONS::state_vector_t			state_vector_t;
+	typedef typename DIMENSIONS::state_vector_array_t	state_vector_array_t;
+	typedef typename DIMENSIONS::dynamic_vector_t		dynamic_vector_t;
 
 	/**
 	 * Default constructor

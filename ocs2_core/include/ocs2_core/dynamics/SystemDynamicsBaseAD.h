@@ -47,7 +47,7 @@ public:
 	typedef typename BASE::state_vector_t 			state_vector_t;
 	typedef typename BASE::state_matrix_t 			state_matrix_t;
 	typedef typename BASE::input_vector_t  			input_vector_t;
-	typedef typename BASE::control_gain_matrix_t 	control_gain_matrix_t;
+	typedef typename BASE::state_input_matrix_t 	state_input_matrix_t;
 
 	/**
 	 * Default constructor
@@ -186,7 +186,7 @@ public:
 	 *
 	 * @param [out] B: \f$ B(t) \f$ matrix.
 	 */
-	virtual void getFlowMapDerivativeInput(control_gain_matrix_t& B) override;
+	virtual void getFlowMapDerivativeInput(state_input_matrix_t& B) override;
 
 	/**
 	 * Partial time derivative of the system jump map.
@@ -210,7 +210,7 @@ public:
 	 *
 	 * @param [out] H: \f$ H \f$ matrix.
 	 */
-	virtual void getJumpMapDerivativeInput(control_gain_matrix_t& H) override;
+	virtual void getJumpMapDerivativeInput(state_input_matrix_t& H) override;
 
 
 protected:

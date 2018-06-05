@@ -43,13 +43,13 @@ public:
 	typedef Dimensions<STATE_DIM, INPUT_DIM> DIMENSIONS;
 	typedef typename DIMENSIONS::scalar_t scalar_t;
 	typedef typename DIMENSIONS::state_vector_t   state_vector_t;
-	typedef typename DIMENSIONS::control_vector_t input_vector_t;
+	typedef typename DIMENSIONS::input_vector_t input_vector_t;
 	typedef typename DIMENSIONS::state_matrix_t   state_matrix_t;
-	typedef typename DIMENSIONS::control_gain_matrix_t 	control_gain_matrix_t;
+	typedef typename DIMENSIONS::state_input_matrix_t 	state_input_matrix_t;
 	typedef typename DIMENSIONS::constraint1_vector_t 	constraint1_vector_t;
 	typedef typename DIMENSIONS::constraint2_vector_t 	constraint2_vector_t;
 	typedef typename DIMENSIONS::constraint1_state_matrix_t   constraint1_state_matrix_t;
-	typedef typename DIMENSIONS::constraint1_control_matrix_t constraint1_control_matrix_t;
+	typedef typename DIMENSIONS::constraint1_input_matrix_t constraint1_input_matrix_t;
 	typedef typename DIMENSIONS::constraint2_state_matrix_t   constraint2_state_matrix_t;
 
 	/**
@@ -176,7 +176,7 @@ public:
 	 *
 	 * @param [out] D: \f$ D(t) \f$ matrix.
 	 */
-	virtual void getConstraint1DerivativesControl(constraint1_control_matrix_t& D) {}
+	virtual void getConstraint1DerivativesControl(constraint1_input_matrix_t& D) {}
 
 	/**
 	 * The F matrix at a given operating point for the linearized state-only constraints,

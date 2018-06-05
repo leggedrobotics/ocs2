@@ -57,17 +57,17 @@ public:
 	typedef typename DIMENSIONS::state_vector_t 	  state_vector_t;
 	typedef typename DIMENSIONS::state_vector_array_t state_vector_array_t;
 	typedef typename DIMENSIONS::state_vector_array2_t state_vector_array2_t;
-	typedef typename DIMENSIONS::control_vector_t 		control_vector_t;
-	typedef typename DIMENSIONS::control_vector_array_t control_vector_array_t;
-	typedef typename DIMENSIONS::control_vector_array2_t control_vector_array2_t;
-	typedef typename DIMENSIONS::control_feedback_t 	  control_feedback_t;
-	typedef typename DIMENSIONS::control_feedback_array_t control_feedback_array_t;
+	typedef typename DIMENSIONS::input_vector_t 		input_vector_t;
+	typedef typename DIMENSIONS::input_vector_array_t input_vector_array_t;
+	typedef typename DIMENSIONS::input_vector_array2_t input_vector_array2_t;
+	typedef typename DIMENSIONS::input_state_t 	  input_state_t;
+	typedef typename DIMENSIONS::input_state_array_t input_state_array_t;
 	typedef typename DIMENSIONS::state_matrix_t 	  state_matrix_t;
 	typedef typename DIMENSIONS::state_matrix_array_t state_matrix_array_t;
-	typedef typename DIMENSIONS::control_matrix_t 		control_matrix_t;
-	typedef typename DIMENSIONS::control_matrix_array_t control_matrix_array_t;
-	typedef typename DIMENSIONS::control_gain_matrix_t 		 control_gain_matrix_t;
-	typedef typename DIMENSIONS::control_gain_matrix_array_t control_gain_matrix_array_t;
+	typedef typename DIMENSIONS::input_matrix_t 		input_matrix_t;
+	typedef typename DIMENSIONS::input_matrix_array_t input_matrix_array_t;
+	typedef typename DIMENSIONS::state_input_matrix_t 		 state_input_matrix_t;
+	typedef typename DIMENSIONS::state_input_matrix_array_t state_input_matrix_array_t;
 
 	OCS2Projected()
 	: numSubsystems_(0)
@@ -87,7 +87,7 @@ public:
 			const std::vector<std::shared_ptr<CostFunctionBaseOCS2<STATE_DIM, INPUT_DIM> > >& subsystemCostFunctionsPtr,
 			const Options_t& options,
 			const state_vector_array_t&   stateOperatingPoints,
-			const control_vector_array_t& inputOperatingPoints)
+			const input_vector_array_t& inputOperatingPoints)
 
 	: numSubsystems_(0),
 	  subsystemDynamicsPtr_(subsystemDynamicsPtr),
@@ -180,11 +180,11 @@ public:
 	 */
 	void getNominalTrajectories(std::vector<scalar_array_t>& nominalTimeTrajectoriesStock,
 			state_vector_array2_t& nominalStateTrajectoriesStock,
-			control_vector_array2_t& nominalInputTrajectoriesStock) const;
+			input_vector_array2_t& nominalInputTrajectoriesStock) const;
 
 	void getNominalTrajectoriesPtr(std::shared_ptr<std::vector<scalar_array_t>>& optimizedTimeTrajectoriesStockPtr,
 			std::shared_ptr<state_vector_array2_t>& optimizedStateTrajectoriesStockPtr,
-			std::shared_ptr<control_vector_array2_t>& optimizedInputTrajectoriesStockPtr) const;
+			std::shared_ptr<input_vector_array2_t>& optimizedInputTrajectoriesStockPtr) const;
 
 	/**
 	 * Gets slq Iteration COst
@@ -222,7 +222,7 @@ public:
 			const controller_array_t& controllersStock,
 			std::vector<scalar_array_t>& timeTrajectoriesStock,
 			state_vector_array2_t& stateTrajectoriesStock,
-			control_vector_array2_t& inputTrajectoriesStock);
+			input_vector_array2_t& inputTrajectoriesStock);
 
 	/**
 	 * Calculates cost function
@@ -233,7 +233,7 @@ public:
 	 */
 	void calculateCostFunction(const std::vector<scalar_array_t>& timeTrajectoriesStock,
 			const state_vector_array2_t& stateTrajectoriesStock,
-			const control_vector_array2_t& inputTrajectoriesStock,
+			const input_vector_array2_t& inputTrajectoriesStock,
 			scalar_t& totalCost);
 
 	/**
@@ -356,7 +356,7 @@ private:
 	controller_array_t optimizedControllersStock_;
 	std::vector<scalar_array_t> optimizedTimeTrajectoriesStock_;
 	state_vector_array2_t   optimizedStateTrajectoriesStock_;
-	control_vector_array2_t optimizedInputTrajectoriesStock_;
+	input_vector_array2_t optimizedInputTrajectoriesStock_;
 	Eigen::VectorXd 		costFuntionDerivative_;
 
 	scalar_t currentTotalCost_;

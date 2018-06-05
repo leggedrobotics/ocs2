@@ -52,10 +52,10 @@ public:
 	typedef typename DIMENSIONS::state_vector_t 		state_vector_t;
 	typedef typename DIMENSIONS::state_vector_array_t 	state_vector_array_t;
 	typedef typename DIMENSIONS::state_matrix_t 		state_matrix_t;
-	typedef typename DIMENSIONS::control_vector_t  		input_vector_t;
-	typedef typename DIMENSIONS::control_vector_array_t input_vector_array_t;
-	typedef typename DIMENSIONS::control_matrix_t 		control_matrix_t;
-	typedef typename DIMENSIONS::control_feedback_t 	control_feedback_t;
+	typedef typename DIMENSIONS::input_vector_t  		input_vector_t;
+	typedef typename DIMENSIONS::input_vector_array_t input_vector_array_t;
+	typedef typename DIMENSIONS::input_matrix_t 		input_matrix_t;
+	typedef typename DIMENSIONS::input_state_t 	input_state_t;
 
 	typedef CostDesiredTrajectories<scalar_t> 								cost_desired_trajectories_t;
 	typedef typename cost_desired_trajectories_t::dynamic_vector_t			dynamic_vector_t;
@@ -177,14 +177,14 @@ public:
      *
      * @param [out] dLduu: Second order derivative of the intermediate cost with respect to input vector.
      */
-	virtual void getIntermediateCostSecondDerivativeInput(control_matrix_t& dLduu) = 0;
+	virtual void getIntermediateCostSecondDerivativeInput(input_matrix_t& dLduu) = 0;
 
     /**
      * Get the input-state derivative of the intermediate cost.
      *
      * @param [out] dLdux: Second order derivative of the intermediate cost with respect to input vector and state.
      */
-	virtual void getIntermediateCostDerivativeInputState(control_feedback_t& dLdux) = 0;
+	virtual void getIntermediateCostDerivativeInputState(input_state_t& dLdux) = 0;
 
     /**
      * Get the terminal cost.

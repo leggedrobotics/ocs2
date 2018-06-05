@@ -27,7 +27,7 @@ class SLQ : public SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>
 public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-	typedef SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>	BASE;
+	typedef SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> BASE;
 
 	typedef typename BASE::DIMENSIONS 		DIMENSIONS;
 
@@ -43,30 +43,30 @@ public:
 	typedef typename DIMENSIONS::state_vector_t state_vector_t;
 	typedef typename DIMENSIONS::state_vector_array_t state_vector_array_t;
 	typedef typename DIMENSIONS::state_vector_array2_t state_vector_array2_t;
-	typedef typename DIMENSIONS::control_vector_t input_vector_t;
-	typedef typename DIMENSIONS::control_vector_array_t input_vector_array_t;
-	typedef typename DIMENSIONS::control_vector_array2_t input_vector_array2_t;
-	typedef typename DIMENSIONS::control_feedback_t control_feedback_t;
-	typedef typename DIMENSIONS::control_feedback_array_t control_feedback_array_t;
-	typedef typename DIMENSIONS::control_feedback_array2_t control_feedback_array2_t;
+	typedef typename DIMENSIONS::input_vector_t input_vector_t;
+	typedef typename DIMENSIONS::input_vector_array_t input_vector_array_t;
+	typedef typename DIMENSIONS::input_vector_array2_t input_vector_array2_t;
+	typedef typename DIMENSIONS::input_state_t input_state_t;
+	typedef typename DIMENSIONS::input_state_array_t input_state_array_t;
+	typedef typename DIMENSIONS::input_state_array2_t input_state_array2_t;
 	typedef typename DIMENSIONS::state_matrix_t state_matrix_t;
 	typedef typename DIMENSIONS::state_matrix_array_t state_matrix_array_t;
 	typedef typename DIMENSIONS::state_matrix_array2_t state_matrix_array2_t;
-	typedef typename DIMENSIONS::control_matrix_t control_matrix_t;
-	typedef typename DIMENSIONS::control_matrix_array_t control_matrix_array_t;
-	typedef typename DIMENSIONS::control_matrix_array2_t control_matrix_array2_t;
-	typedef typename DIMENSIONS::control_gain_matrix_t control_gain_matrix_t;
-	typedef typename DIMENSIONS::control_gain_matrix_array_t control_gain_matrix_array_t;
-	typedef typename DIMENSIONS::control_gain_matrix_array2_t control_gain_matrix_array2_t;
+	typedef typename DIMENSIONS::input_matrix_t input_matrix_t;
+	typedef typename DIMENSIONS::input_matrix_array_t input_matrix_array_t;
+	typedef typename DIMENSIONS::input_matrix_array2_t input_matrix_array2_t;
+	typedef typename DIMENSIONS::state_input_matrix_t state_input_matrix_t;
+	typedef typename DIMENSIONS::state_input_matrix_array_t state_input_matrix_array_t;
+	typedef typename DIMENSIONS::state_input_matrix_array2_t state_input_matrix_array2_t;
 	typedef typename DIMENSIONS::constraint1_vector_t constraint1_vector_t;
 	typedef typename DIMENSIONS::constraint1_vector_array_t constraint1_vector_array_t;
 	typedef typename DIMENSIONS::constraint1_vector_array2_t constraint1_vector_array2_t;
 	typedef typename DIMENSIONS::constraint1_state_matrix_t constraint1_state_matrix_t;
 	typedef typename DIMENSIONS::constraint1_state_matrix_array_t constraint1_state_matrix_array_t;
 	typedef typename DIMENSIONS::constraint1_state_matrix_array2_t constraint1_state_matrix_array2_t;
-	typedef typename DIMENSIONS::constraint1_control_matrix_t constraint1_control_matrix_t;
-	typedef typename DIMENSIONS::constraint1_control_matrix_array_t constraint1_control_matrix_array_t;
-	typedef typename DIMENSIONS::constraint1_control_matrix_array2_t constraint1_control_matrix_array2_t;
+	typedef typename DIMENSIONS::constraint1_input_matrix_t constraint1_input_matrix_t;
+	typedef typename DIMENSIONS::constraint1_input_matrix_array_t constraint1_input_matrix_array_t;
+	typedef typename DIMENSIONS::constraint1_input_matrix_array2_t constraint1_input_matrix_array2_t;
 	typedef typename DIMENSIONS::control_constraint1_matrix_t control_constraint1_matrix_t;
 	typedef typename DIMENSIONS::control_constraint1_matrix_array_t control_constraint1_matrix_array_t;
 	typedef typename DIMENSIONS::control_constraint1_matrix_array2_t control_constraint1_matrix_array2_t;

@@ -34,7 +34,7 @@ bool checkSystemDynamics(
 	typedef typename system_dynamics_t::state_vector_t			state_vector_t;
 	typedef typename system_dynamics_t::state_matrix_t			state_matrix_t;
 	typedef typename system_dynamics_t::input_vector_t			input_vector_t;
-	typedef typename system_dynamics_t::control_gain_matrix_t	control_gain_matrix_t;
+	typedef typename system_dynamics_t::state_input_matrix_t	state_input_matrix_t;
 
 	bool success = true;
 
@@ -60,7 +60,7 @@ bool checkSystemDynamics(
 			success = false;
 		}
 
-		control_gain_matrix_t B, ad_B;
+		state_input_matrix_t B, ad_B;
 		linearSystem1->getFlowMapDerivativeInput(B);
 		linearSystem2->getFlowMapDerivativeInput(ad_B);
 		if (!B.isApprox(ad_B, precision)) {
@@ -78,7 +78,7 @@ bool checkSystemDynamics(
 			success = false;
 		}
 
-		control_gain_matrix_t H, ad_H;
+		state_input_matrix_t H, ad_H;
 		linearSystem1->getJumpMapDerivativeInput(H);
 		linearSystem2->getJumpMapDerivativeInput(ad_H);
 		if (!H.isApprox(ad_H, precision)) {
@@ -109,13 +109,13 @@ struct dynamics_parameters
 	typedef typename system_dynamics_t::state_vector_t			state_vector_t;
 	typedef typename system_dynamics_t::state_matrix_t			state_matrix_t;
 	typedef typename system_dynamics_t::input_vector_t			input_vector_t;
-	typedef typename system_dynamics_t::control_gain_matrix_t	control_gain_matrix_t;
+	typedef typename system_dynamics_t::state_input_matrix_t	state_input_matrix_t;
 
     // Define cost parameters
 	state_matrix_t 			A = state_matrix_t::Random();
-	control_gain_matrix_t 	B = control_gain_matrix_t::Random();
+	state_input_matrix_t 	B = state_input_matrix_t::Random();
 	state_matrix_t 			G = state_matrix_t::Random();;
-	control_gain_matrix_t 	H = control_gain_matrix_t::Random();
+	state_input_matrix_t 	H = state_input_matrix_t::Random();
 };
 
 /******************************************************************************/

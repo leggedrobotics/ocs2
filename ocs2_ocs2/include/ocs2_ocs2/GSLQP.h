@@ -65,25 +65,25 @@ public:
 	typedef typename DIMENSIONS::state_vector_t 	  state_vector_t;
 	typedef typename DIMENSIONS::state_vector_array_t state_vector_array_t;
 	typedef typename DIMENSIONS::state_vector_array2_t state_vector_array2_t;
-	typedef typename DIMENSIONS::control_vector_t 		control_vector_t;
-	typedef typename DIMENSIONS::control_vector_array_t control_vector_array_t;
-	typedef typename DIMENSIONS::control_vector_array2_t control_vector_array2_t;
-	typedef typename DIMENSIONS::control_feedback_t 	  control_feedback_t;
-	typedef typename DIMENSIONS::control_feedback_array_t control_feedback_array_t;
+	typedef typename DIMENSIONS::input_vector_t 		input_vector_t;
+	typedef typename DIMENSIONS::input_vector_array_t input_vector_array_t;
+	typedef typename DIMENSIONS::input_vector_array2_t input_vector_array2_t;
+	typedef typename DIMENSIONS::input_state_t 	  input_state_t;
+	typedef typename DIMENSIONS::input_state_array_t input_state_array_t;
 	typedef typename DIMENSIONS::state_matrix_t 	  state_matrix_t;
 	typedef typename DIMENSIONS::state_matrix_array_t state_matrix_array_t;
 	typedef typename DIMENSIONS::state_matrix_array2_t state_matrix_array2_t;
-	typedef typename DIMENSIONS::control_matrix_t 		control_matrix_t;
-	typedef typename DIMENSIONS::control_matrix_array_t control_matrix_array_t;
-	typedef typename DIMENSIONS::control_gain_matrix_t 		 control_gain_matrix_t;
-	typedef typename DIMENSIONS::control_gain_matrix_array_t control_gain_matrix_array_t;
+	typedef typename DIMENSIONS::input_matrix_t 		input_matrix_t;
+	typedef typename DIMENSIONS::input_matrix_array_t input_matrix_array_t;
+	typedef typename DIMENSIONS::state_input_matrix_t 		 state_input_matrix_t;
+	typedef typename DIMENSIONS::state_input_matrix_array_t state_input_matrix_array_t;
 	typedef typename DIMENSIONS::constraint1_vector_t       constraint1_vector_t;
 	typedef typename DIMENSIONS::constraint1_vector_array_t constraint1_vector_array_t;
 	typedef typename DIMENSIONS::constraint1_vector_array2_t constraint1_vector_array2_t;
 	typedef typename DIMENSIONS::constraint1_state_matrix_t       constraint1_state_matrix_t;
 	typedef typename DIMENSIONS::constraint1_state_matrix_array_t constraint1_state_matrix_array_t;
-	typedef typename DIMENSIONS::constraint1_control_matrix_t       constraint1_control_matrix_t;
-	typedef typename DIMENSIONS::constraint1_control_matrix_array_t constraint1_control_matrix_array_t;
+	typedef typename DIMENSIONS::constraint1_input_matrix_t       constraint1_input_matrix_t;
+	typedef typename DIMENSIONS::constraint1_input_matrix_array_t constraint1_input_matrix_array_t;
 	typedef typename DIMENSIONS::control_constraint1_matrix_t       control_constraint1_matrix_t;
 	typedef typename DIMENSIONS::control_constraint1_matrix_array_t control_constraint1_matrix_array_t;
 	typedef typename DIMENSIONS::constraint2_vector_t       constraint2_vector_t;
@@ -153,7 +153,7 @@ public:
 			const controller_array_t& controllersStock,
 			std::vector<scalar_array_t>& timeTrajectoriesStock,
 			state_vector_array2_t& stateTrajectoriesStock,
-			control_vector_array2_t& inputTrajectoriesStock,
+			input_vector_array2_t& inputTrajectoriesStock,
 			std::vector<std::vector<size_t> >& nc1TrajectoriesStock,
 			constraint1_vector_array2_t& EvTrajectoryStock,
 			std::vector<std::vector<size_t> >& nc2TrajectoriesStock,
@@ -177,7 +177,7 @@ public:
 			const controller_array_t& controllersStock,
 			std::vector<scalar_array_t>& timeTrajectoriesStock,
 			state_vector_array2_t& stateTrajectoriesStock,
-			control_vector_array2_t& inputTrajectoriesStock);
+			input_vector_array2_t& inputTrajectoriesStock);
 
     /**
      * compute the cost for a given rollout
@@ -195,7 +195,7 @@ public:
      */
 	void calculateCostFunction(const std::vector<scalar_array_t>& timeTrajectoriesStock,
 			const state_vector_array2_t& stateTrajectoriesStock,
-			const control_vector_array2_t& inputTrajectoriesStock,
+			const input_vector_array2_t& inputTrajectoriesStock,
 			scalar_t& totalCost);
 
     /**
@@ -327,7 +327,7 @@ public:
      */
 	void getNominalTrajectories(std::vector<scalar_array_t>& nominalTimeTrajectoriesStock,
 			state_vector_array2_t& nominalStateTrajectoriesStock,
-			control_vector_array2_t& nominalInputTrajectoriesStock);
+			input_vector_array2_t& nominalInputTrajectoriesStock);
 
     /**
      * run the SLQ algorithm for a given state and switching times based on the BVP method

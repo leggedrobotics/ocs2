@@ -42,16 +42,16 @@ public:
 	typedef typename DIMENSIONS::eigen_scalar_array_t eigen_scalar_array_t;
 	typedef typename DIMENSIONS::state_vector_t 	  state_vector_t;
 	typedef typename DIMENSIONS::state_vector_array_t state_vector_array_t;
-	typedef typename DIMENSIONS::control_vector_t 		control_vector_t;
-	typedef typename DIMENSIONS::control_vector_array_t control_vector_array_t;
-	typedef typename DIMENSIONS::control_feedback_t 	  control_feedback_t;
-	typedef typename DIMENSIONS::control_feedback_array_t control_feedback_array_t;
+	typedef typename DIMENSIONS::input_vector_t 		input_vector_t;
+	typedef typename DIMENSIONS::input_vector_array_t input_vector_array_t;
+	typedef typename DIMENSIONS::input_state_t 	  input_state_t;
+	typedef typename DIMENSIONS::input_state_array_t input_state_array_t;
 	typedef typename DIMENSIONS::state_matrix_t 	  state_matrix_t;
 	typedef typename DIMENSIONS::state_matrix_array_t state_matrix_array_t;
-	typedef typename DIMENSIONS::control_matrix_t 		control_matrix_t;
-	typedef typename DIMENSIONS::control_matrix_array_t control_matrix_array_t;
-	typedef typename DIMENSIONS::control_gain_matrix_t 		 control_gain_matrix_t;
-	typedef typename DIMENSIONS::control_gain_matrix_array_t control_gain_matrix_array_t;
+	typedef typename DIMENSIONS::input_matrix_t 		input_matrix_t;
+	typedef typename DIMENSIONS::input_matrix_array_t input_matrix_array_t;
+	typedef typename DIMENSIONS::state_input_matrix_t 		 state_input_matrix_t;
+	typedef typename DIMENSIONS::state_input_matrix_array_t state_input_matrix_array_t;
 
 	/**
 	 * Default constructor.
@@ -61,24 +61,24 @@ public:
 		__Sv(state_vector_t::Zero()),
 		__s (eigen_scalar_t::Zero()),
 		__Am(state_matrix_t::Zero()),
-		__Bm(control_gain_matrix_t::Zero()),
+		__Bm(state_input_matrix_t::Zero()),
 		__q (eigen_scalar_t::Zero()),
 		__Qv(state_vector_t::Zero()),
 		__Qm(state_matrix_t::Zero()),
-		__Rv(control_vector_t::Zero()),
-		__RmInv(control_matrix_t::Zero()),
-		__Rm(control_matrix_t::Zero()),
-		__Pm(control_feedback_t::Zero()),
+		__Rv(input_vector_t::Zero()),
+		__RmInv(input_matrix_t::Zero()),
+		__Rm(input_matrix_t::Zero()),
+		__Pm(input_state_t::Zero()),
 		__dSmdt(state_matrix_t::Zero()),
 		__dSmdz(state_matrix_t::Zero()),
 		__dSvdt(state_vector_t::Zero()),
 		__dSvdz(state_vector_t::Zero()),
 		__dsdt(eigen_scalar_t::Zero()),
 		__dsdz(eigen_scalar_t::Zero()),
-		__Lm(control_feedback_t::Zero()),
-		__Lv(control_vector_t::Zero()),
+		__Lm(input_state_t::Zero()),
+		__Lv(input_vector_t::Zero()),
 		__AtransposeSm(state_matrix_t::Zero()),
-		__LmtransposeRm(control_gain_matrix_t::Zero())
+		__LmtransposeRm(state_input_matrix_t::Zero())
 		{}
 
 	/**
@@ -161,10 +161,10 @@ public:
 	void setData(const scalar_t& learningRate,
 			const size_t& activeSubsystem, const scalar_t& switchingTimeStart, const scalar_t& switchingTimeFinal,
 			const scalar_array_t* timeStampPtr,
-			const state_matrix_array_t* AmPtr, const control_gain_matrix_array_t* BmPtr,
+			const state_matrix_array_t* AmPtr, const state_input_matrix_array_t* BmPtr,
 			const eigen_scalar_array_t* qPtr, const state_vector_array_t* QvPtr, const state_matrix_array_t* QmPtr,
-			const control_vector_array_t* RvPtr, const control_matrix_array_t* RmInversePtr, const control_matrix_array_t* RmPtr,
-			const control_feedback_array_t* PmPtr)  {
+			const input_vector_array_t* RvPtr, const input_matrix_array_t* RmInversePtr, const input_matrix_array_t* RmPtr,
+			const input_state_array_t* PmPtr)  {
 
 		SystemBase<STATE_DIM*(STATE_DIM+1)/2+STATE_DIM+1>::numFunctionCalls_ = 0;
 
@@ -202,7 +202,7 @@ public:
 	 * @param [in] allSs: Single vector constructed by concatenating Sm, Sv and s.
 	 * @param [out] derivatives: d(allSs)/dz.
 	 */
-	void computeDerivative(const scalar_t& z, const s_vector_t& allSs, s_vector_t& derivatives) {
+	void computeFlowMap(const scalar_t& z, const s_vector_t& allSs, s_vector_t& derivatives) {
 
 		SystemBase<STATE_DIM*(STATE_DIM+1)/2+STATE_DIM+1>::numFunctionCalls_++;
 
@@ -284,40 +284,40 @@ private:
 	scalar_t switchingTimeFinal_;
 
 	LinearInterpolation<state_matrix_t,Eigen::aligned_allocator<state_matrix_t> > AmFunc_;
-	LinearInterpolation<control_gain_matrix_t,Eigen::aligned_allocator<control_gain_matrix_t> > BmFunc_;
+	LinearInterpolation<state_input_matrix_t,Eigen::aligned_allocator<state_input_matrix_t> > BmFunc_;
 
 	LinearInterpolation<eigen_scalar_t,Eigen::aligned_allocator<eigen_scalar_t> > qFunc_;
 	LinearInterpolation<state_vector_t,Eigen::aligned_allocator<state_vector_t> > QvFunc_;
 	LinearInterpolation<state_matrix_t,Eigen::aligned_allocator<state_matrix_t> > QmFunc_;
-	LinearInterpolation<control_vector_t,Eigen::aligned_allocator<control_vector_t> > RvFunc_;
-	LinearInterpolation<control_matrix_t,Eigen::aligned_allocator<control_matrix_t> > RmInverseFunc_;
-	LinearInterpolation<control_matrix_t,Eigen::aligned_allocator<control_matrix_t> > RmFunc_;
-	LinearInterpolation<control_feedback_t,Eigen::aligned_allocator<control_feedback_t> > PmFunc_;
+	LinearInterpolation<input_vector_t,Eigen::aligned_allocator<input_vector_t> > RvFunc_;
+	LinearInterpolation<input_matrix_t,Eigen::aligned_allocator<input_matrix_t> > RmInverseFunc_;
+	LinearInterpolation<input_matrix_t,Eigen::aligned_allocator<input_matrix_t> > RmFunc_;
+	LinearInterpolation<input_state_t,Eigen::aligned_allocator<input_state_t> > PmFunc_;
 
 
-	// members required only in computeDerivative()
+	// members required only in computeFlowMap()
 	state_matrix_t __Sm;
 	state_vector_t __Sv;
 	eigen_scalar_t __s;
 	state_matrix_t __Am;
-	control_gain_matrix_t __Bm;
+	state_input_matrix_t __Bm;
 	eigen_scalar_t __q;
 	state_vector_t __Qv;
 	state_matrix_t __Qm;
-	control_vector_t __Rv;
-	control_matrix_t __RmInv;
-	control_matrix_t __Rm;
-	control_feedback_t __Pm;
+	input_vector_t __Rv;
+	input_matrix_t __RmInv;
+	input_matrix_t __Rm;
+	input_state_t __Pm;
 	state_matrix_t __dSmdt;
 	state_matrix_t __dSmdz;
 	state_vector_t __dSvdt;
 	state_vector_t __dSvdz;
 	eigen_scalar_t __dsdt;
 	eigen_scalar_t __dsdz;
-	control_feedback_t __Lm;
-	control_vector_t __Lv;
+	input_state_t __Lm;
+	input_vector_t __Lv;
 	state_matrix_t __AtransposeSm;
-	control_gain_matrix_t __LmtransposeRm;
+	state_input_matrix_t __LmtransposeRm;
 };
 
 }

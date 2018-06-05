@@ -187,7 +187,7 @@ void SystemDynamicsBaseAD<Derived, STATE_DIM, INPUT_DIM, logic_rules_template_t>
 /******************************************************************************************************/
 template <class Derived, size_t STATE_DIM, size_t INPUT_DIM, class logic_rules_template_t>
 void SystemDynamicsBaseAD<Derived, STATE_DIM, INPUT_DIM, logic_rules_template_t>::getFlowMapDerivativeInput(
-		control_gain_matrix_t& B) {
+		state_input_matrix_t& B) {
 
 	B = flowJacobian_.template block<input_dim_, state_dim_>(1 + state_dim_, 0).transpose();
 }
@@ -217,7 +217,7 @@ void SystemDynamicsBaseAD<Derived, STATE_DIM, INPUT_DIM, logic_rules_template_t>
 /******************************************************************************************************/
 template <class Derived, size_t STATE_DIM, size_t INPUT_DIM, class logic_rules_template_t>
 void SystemDynamicsBaseAD<Derived, STATE_DIM, INPUT_DIM, logic_rules_template_t>::getJumpMapDerivativeInput(
-		control_gain_matrix_t& H) {
+		state_input_matrix_t& H) {
 
 	H = jumpJacobian_.template block<input_dim_, state_dim_>(1 + state_dim_, 0).transpose();
 }

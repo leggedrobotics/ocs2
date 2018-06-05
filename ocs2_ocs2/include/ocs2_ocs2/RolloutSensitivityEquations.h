@@ -34,13 +34,13 @@ public:
 	typedef typename DIMENSIONS::scalar_array_t scalar_array_t;
 	typedef typename DIMENSIONS::state_vector_t 	  state_vector_t;
 	typedef typename DIMENSIONS::state_vector_array_t state_vector_array_t;
-	typedef typename DIMENSIONS::control_vector_t 		control_vector_t;
-	typedef typename DIMENSIONS::control_vector_array_t control_vector_array_t;
-	typedef typename DIMENSIONS::control_feedback_t 	  control_feedback_t;
+	typedef typename DIMENSIONS::input_vector_t 		input_vector_t;
+	typedef typename DIMENSIONS::input_vector_array_t input_vector_array_t;
+	typedef typename DIMENSIONS::input_state_t 	  input_state_t;
 	typedef typename DIMENSIONS::state_matrix_t 	  state_matrix_t;
 	typedef typename DIMENSIONS::state_matrix_array_t state_matrix_array_t;
-	typedef typename DIMENSIONS::control_gain_matrix_t 		 control_gain_matrix_t;
-	typedef typename DIMENSIONS::control_gain_matrix_array_t control_gain_matrix_array_t;
+	typedef typename DIMENSIONS::state_input_matrix_t 		 state_input_matrix_t;
+	typedef typename DIMENSIONS::state_input_matrix_array_t state_input_matrix_array_t;
 
 	typedef Eigen::Matrix<double,STATE_DIM,Eigen::Dynamic> 	nabla_state_matrix_t;
 	typedef std::vector<nabla_state_matrix_t> 				nabla_state_matrix_array_t;
@@ -86,7 +86,7 @@ public:
 	 */
 	void setData(const size_t& activeSubsystem, const scalar_array_t& switchingTimes, const sensitivity_controller_t* sensitivityControllerPtr,
 			const scalar_array_t* timeTrajectoryPtr, const state_vector_array_t*  outputTimeDerivativeTrajectoryPtr,
-			const state_matrix_array_t* AmTrajectoryPtr, const control_gain_matrix_array_t* BmTrajectoryPtr)  {
+			const state_matrix_array_t* AmTrajectoryPtr, const state_input_matrix_array_t* BmTrajectoryPtr)  {
 
 		activeSubsystem_ = activeSubsystem;
 		switchingTimes_ = switchingTimes;
@@ -113,7 +113,7 @@ public:
 	 * @param [in] nabla_Xv
 	 * @param [out] derivatives
 	 */
-	void computeDerivative(const scalar_t& z, const Eigen::VectorXd& nabla_Xv, Eigen::VectorXd& derivatives) {
+	void computeFlowMap(const scalar_t& z, const Eigen::VectorXd& nabla_Xv, Eigen::VectorXd& derivatives) {
 
 		// denormalized time
 		scalar_t t = switchingTimes_[activeSubsystem_] + z*(switchingTimes_[activeSubsystem_+1]-switchingTimes_[activeSubsystem_]);
@@ -124,7 +124,7 @@ public:
 		state_matrix_t Am;
 		AmFunc_.interpolate(t, Am);
 		size_t greatestLessTimeStampIndex = AmFunc_.getGreatestLessTimeStampIndex();
-		control_gain_matrix_t Bm;
+		state_input_matrix_t Bm;
 		BmFunc_.interpolate(t, Bm, greatestLessTimeStampIndex);
 		state_vector_t dxdt;
 		stateTimeDevFunc_.interpolate(t, dxdt, greatestLessTimeStampIndex);
@@ -154,7 +154,7 @@ public:
 	 */
 	void computeInputSensitivity(const scalar_t& t, const nabla_state_matrix_t& nabla_Xm, nabla_input_matrix_t& nabla_Um) {
 
-		control_feedback_t Km;
+		input_state_t Km;
 		KmFunc_.interpolate(t, Km);
 		size_t greatestLessTimeStampIndex = KmFunc_.getGreatestLessTimeStampIndex();
 
@@ -170,13 +170,13 @@ private:
 	scalar_array_t switchingTimes_;
 	size_t numSubsystems_;
 
-	LinearInterpolation<control_feedback_t,Eigen::aligned_allocator<control_feedback_t> > KmFunc_;
+	LinearInterpolation<input_state_t,Eigen::aligned_allocator<input_state_t> > KmFunc_;
 	LinearInterpolation<nabla_input_matrix_t, Eigen::aligned_allocator<nabla_input_matrix_t> > LvFunc_;
 
 	LinearInterpolation<state_vector_t,Eigen::aligned_allocator<state_vector_t> > stateTimeDevFunc_;
 
 	LinearInterpolation<state_matrix_t,Eigen::aligned_allocator<state_matrix_t> > AmFunc_;
-	LinearInterpolation<control_gain_matrix_t,Eigen::aligned_allocator<control_gain_matrix_t> > BmFunc_;
+	LinearInterpolation<state_input_matrix_t,Eigen::aligned_allocator<state_input_matrix_t> > BmFunc_;
 
 };
 

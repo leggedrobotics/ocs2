@@ -53,11 +53,11 @@ public:
 	typedef typename BASE::state_vector_t   			state_vector_t;
 	typedef typename BASE::input_vector_t 				input_vector_t;
 	typedef typename BASE::state_matrix_t   			state_matrix_t;
-	typedef typename BASE::control_gain_matrix_t 		control_gain_matrix_t;
+	typedef typename BASE::state_input_matrix_t 		state_input_matrix_t;
 	typedef typename BASE::constraint1_vector_t 		constraint1_vector_t;
 	typedef typename BASE::constraint2_vector_t 		constraint2_vector_t;
 	typedef typename BASE::constraint1_state_matrix_t   constraint1_state_matrix_t;
-	typedef typename BASE::constraint1_control_matrix_t constraint1_control_matrix_t;
+	typedef typename BASE::constraint1_input_matrix_t constraint1_input_matrix_t;
 	typedef typename BASE::constraint2_state_matrix_t   constraint2_state_matrix_t;
 
 	/**
@@ -233,7 +233,7 @@ public:
 	 *
 	 * @param [out] D: \f$ D(t) \f$ matrix.
 	 */
-	virtual void getConstraint1DerivativesControl(constraint1_control_matrix_t& D) override;
+	virtual void getConstraint1DerivativesControl(constraint1_input_matrix_t& D) override;
 
 	/**
 	 * The F matrix at a given operating point for the linearized state-only constraints,

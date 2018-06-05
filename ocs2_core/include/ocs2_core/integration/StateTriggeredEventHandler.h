@@ -25,6 +25,7 @@ public:
 	typedef typename BASE::scalar_array_t 		scalar_array_t;
 	typedef typename BASE::state_vector_t		state_vector_t;
 	typedef typename BASE::state_vector_array_t state_vector_array_t;
+	typedef typename BASE::dynamic_vector_t 	dynamic_vector_t;
 
 	/**
 	 * Default constructor
@@ -59,9 +60,9 @@ public:
 	virtual void setEventTimesGuard(
 			const scalar_t& minEventTimeDifference = 1e-2,
 			const scalar_t& lastEventTriggeredTime = std::numeric_limits<scalar_t>::lowest(),
-			const scalar_array_t& lastGuardSurfacesValues = scalar_array_t()) {
+			const dynamic_vector_t& lastGuardSurfacesValues = dynamic_vector_t::Zero(0)) {
 
-		if (lastEventTriggeredTime > std::numeric_limits<scalar_t>::lowest() && lastGuardSurfacesValues.empty())
+		if (lastEventTriggeredTime > std::numeric_limits<scalar_t>::lowest() && lastGuardSurfacesValues.size()==0)
 			throw std::runtime_error("Since the time of the last event is provided, "
 					"the value of the guard functions at that time should also be provided.");
 
@@ -75,7 +76,7 @@ public:
 	 *
 	 * @return The value of the guard surfaces.
 	 */
-	const scalar_array_t& getGuardSurfacesValues() const {
+	const dynamic_vector_t& getGuardSurfacesValues() const {
 
 		return guardSurfacesValuesPrevious_;
 	}
@@ -112,23 +113,23 @@ public:
 
 //		std::cout << "guardSurfacesValue: ";
 //		for (size_t i=0; i<guardSurfacesValuesCurrent_.size(); i++)
-//			if (guardSurfacesValuesCurrent_[i]<0.6)
-//				std::cout << ",   [" << i << "]: " << guardSurfacesValuesCurrent_[i];
+//			if (guardSurfacesValuesCurrent_(i)<0.6)
+//				std::cout << ",   [" << i << "]: " << guardSurfacesValuesCurrent_(i);
 //		std::cout << "\n";
 //
 //		for (size_t i=0; i<guardSurfacesValuesPrevious_.size(); i++)
-//			std::cout << "[" << i << "]:\t" << guardSurfacesValuesPrevious_[i] <<
-//				"\t-->\t" << guardSurfacesValuesCurrent_[i] << std::endl;
+//			std::cout << "[" << i << "]:\t" << guardSurfacesValuesPrevious_(i) <<
+//				"\t-->\t" << guardSurfacesValuesCurrent_(i) << std::endl;
 
 		bool eventTriggered = false;
 		for (size_t i=0; i<guardSurfacesValuesPrevious_.size(); i++)
-			if (guardSurfacesValuesCurrent_[i]<=0 && guardSurfacesValuesPrevious_[i]>0) {
+			if (guardSurfacesValuesCurrent_[i]<=0 && guardSurfacesValuesPrevious_(i)>0) {
 				eventTriggered = true;
 				triggeredEventSurface_ = i;
 			}
 
 		if (eventTriggered==false) {
-			guardSurfacesValuesPrevious_.swap(guardSurfacesValuesCurrent_);
+			guardSurfacesValuesPrevious_ = guardSurfacesValuesCurrent_;
 		}
 
 		return eventTriggered;
@@ -221,7 +222,7 @@ public:
 			zeroCrossingState = v1/delta_v*x2 - v2/delta_v*x1;
 		}
 
-		scalar_array_t zeroCrossingGuardSurfacesValues;
+		dynamic_vector_t zeroCrossingGuardSurfacesValues;
 		BASE::systemPtr_->computeGuardSurfaces(zeroCrossingTime, zeroCrossingState, zeroCrossingGuardSurfacesValues);
 //		std::cout << "\t zero-crossing time: " << zeroCrossingTime << std::endl;
 //		std::cout << "\t zero-crossing value[" << triggeredEventSurface_ << "]: " <<
@@ -234,8 +235,8 @@ protected:
 
 	size_t triggeredEventSurface_;
 
-	scalar_array_t guardSurfacesValuesCurrent_;
-	scalar_array_t guardSurfacesValuesPrevious_;	// memory
+	dynamic_vector_t guardSurfacesValuesCurrent_;
+	dynamic_vector_t guardSurfacesValuesPrevious_;	// memory
 
 	scalar_t minEventTimeDifference_;
 	scalar_t lastEventTriggeredTime_;	// memory

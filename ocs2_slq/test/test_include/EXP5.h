@@ -27,26 +27,26 @@ public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
 	typedef Eigen::Matrix<double, 4, 1> state_vector_t;
-	typedef Eigen::Matrix<double, 2, 1> control_vector_t;
+	typedef Eigen::Matrix<double, 2, 1> input_vector_t;
 
 
 	EXP5_Sys1() {
 	}
 	~EXP5_Sys1() {}
 
-	void computeDerivative(const double& t, const state_vector_t& x, const control_vector_t& u, state_vector_t& dxdt)  {
+	void computeFlowMap(const double& t, const state_vector_t& x, const input_vector_t& u, state_vector_t& dxdt)  {
 		dxdt(0) = x(1);
 		dxdt(1) = u(0);
 		dxdt(2) = x(3);
 		dxdt(3) = u(1);
 	}
 
-//	void computeConstriant2(const double& t, const state_vector_t& x, size_t& numConstraint1, control_vector_t& g1)  override {
+//	void computeConstriant2(const double& t, const state_vector_t& x, size_t& numConstraint1, input_vector_t& g1)  override {
 //		numConstraint1 = 1;
 //		g1(0) = x(2) - x(0) - d0;
 //	}
 
-	void computeFinalConstriant2(const double& t, const state_vector_t& x, size_t& numFinalConstraint2, control_vector_t& g2Final)  {
+	void computeFinalConstriant2(const double& t, const state_vector_t& x, size_t& numFinalConstraint2, input_vector_t& g2Final)  {
 		numFinalConstraint2 = 1;
 		g2Final(0) = x(2) - x(0) - d0;
 	}
@@ -76,7 +76,7 @@ public:
 		A(0,1) = 1.0;
 		A(2,3) = 1.0;
 	}
-	void getDerivativesControl(control_gain_matrix_t& B) {
+	void getDerivativesControl(state_input_matrix_t& B) {
 		B.setZero();
 		B(1,0) = 1.0;
 		B(3,1) = 1.0;
@@ -127,13 +127,13 @@ public:
 		dLdxx.setZero();
 	}
 
-	void controlDerivative(control_vector_t& dLdu)  {
+	void controlDerivative(input_vector_t& dLdu)  {
 		dLdu = R*u_;
 	}
 
-	void controlSecondDerivative(control_matrix_t& dLduu)  { dLduu = R; }
+	void controlSecondDerivative(input_matrix_t& dLduu)  { dLduu = R; }
 
-	void stateControlDerivative(control_feedback_t& dLdxu) { dLdxu.setZero(); }
+	void stateControlDerivative(input_state_t& dLdxu) { dLdxu.setZero(); }
 
 	void terminalCost(scalar_t& Phi) {
 		Phi = 0.5* (x_-x_ref).transpose()*Q_final*(x_-x_ref);
@@ -152,7 +152,7 @@ public:
 	};
 
 private:
-	control_matrix_t R;
+	input_matrix_t R;
 	state_matrix_t Q_final;
 	state_vector_t x_ref;
 };

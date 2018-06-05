@@ -423,7 +423,7 @@ void GLQP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::approximateLQWorker(
 	costFunctionsPtrStock_[workerIndex]->stateSecondDerivative(QmStock_[i][k]);
 	costFunctionsPtrStock_[workerIndex]->controlDerivative(RvStock_[i][k]);
 	costFunctionsPtrStock_[workerIndex]->controlSecondDerivative(RmStock_[i][k]);
-	RmInverseStock_[i][k] = RmStock_[i][k].llt().solve(control_matrix_t::Identity());
+	RmInverseStock_[i][k] = RmStock_[i][k].llt().solve(input_matrix_t::Identity());
 	costFunctionsPtrStock_[workerIndex]->stateControlDerivative(PmStock_[i][k]);
 
 	// making sure that constrained Qm is PSD
@@ -737,7 +737,7 @@ void GLQP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::solveRiccatiEquationsWorker(
 		if (i==0 && NE>0 && std::abs(stratNormalizedTime-SsNormalizedEventTimes.front())<OCS2NumericTraits<double>::limit_epsilon()) {
 			SsNormalizedEventsPastTheEndIndecesStock_[partitionIndex][0] = 0;
 			typename riccati_equations_t::s_vector_t allSsFinalTemp = allSsFinal;
-			riccatiEquationsPtrStock_[workerIndex]->mapState(endTime, allSsFinalTemp, allSsFinal);
+			riccatiEquationsPtrStock_[workerIndex]->computeJumpMap(endTime, allSsFinalTemp, allSsFinal);
 			continue;
 		}
 
@@ -748,7 +748,7 @@ void GLQP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::solveRiccatiEquationsWorker(
 
 		if (i<NE) {
 			SsNormalizedEventsPastTheEndIndecesStock_[partitionIndex][i] = allSsTrajectory.size();
-			riccatiEquationsPtrStock_[workerIndex]->mapState(endTime, allSsTrajectory.back(), allSsFinal);
+			riccatiEquationsPtrStock_[workerIndex]->computeJumpMap(endTime, allSsTrajectory.back(), allSsFinal);
 		}
 
 	}  // end of i loop

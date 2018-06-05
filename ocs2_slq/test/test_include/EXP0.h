@@ -65,7 +65,7 @@ public:
 	EXP0_Sys1() {}
 	~EXP0_Sys1() {}
 
-	void computeDerivative( const double& t, const Eigen::Vector2d& x, const Eigen::Matrix<double,1,1>& u, Eigen::Vector2d& dxdt)  {
+	void computeFlowMap( const double& t, const Eigen::Vector2d& x, const Eigen::Matrix<double,1,1>& u, Eigen::Vector2d& dxdt)  {
 		Eigen::Matrix2d A;
 		A << 0.6, 1.2, -0.8, 3.4;
 		Eigen::Vector2d B;
@@ -90,7 +90,7 @@ public:
 	EXP0_Sys2() {}
 	~EXP0_Sys2() {}
 
-	void computeDerivative( const double& t, const Eigen::Vector2d& x, const Eigen::Matrix<double,1,1>& u, Eigen::Vector2d& dxdt)  {
+	void computeFlowMap( const double& t, const Eigen::Vector2d& x, const Eigen::Matrix<double,1,1>& u, Eigen::Vector2d& dxdt)  {
 		Eigen::Matrix2d A;
 		A << 4, 3, -1, 0;
 		Eigen::Vector2d B;
@@ -146,12 +146,12 @@ public:
 		return new EXP0_System(*this);
 	}
 
-	void computeDerivative(const scalar_t& t, const state_vector_t& x, const input_vector_t& u,
+	void computeFlowMap(const scalar_t& t, const state_vector_t& x, const input_vector_t& u,
 			state_vector_t& dxdt) override {
 
 		activeSubsystem_ = findActiveSubsystemFnc_(t);
 
-		subsystemDynamicsPtr_[activeSubsystem_]->computeDerivative(t, x, u, dxdt);
+		subsystemDynamicsPtr_[activeSubsystem_]->computeFlowMap(t, x, u, dxdt);
 	}
 
 public:
@@ -172,7 +172,7 @@ public:
 	~EXP0_SysDerivative1() {};
 
 	void getFlowMapDerivativeState(state_matrix_t& A) override { A << 0.6, 1.2, -0.8, 3.4; }
-	void getFlowMapDerivativeInput(control_gain_matrix_t& B) override { B << 1, 1; }
+	void getFlowMapDerivativeInput(state_input_matrix_t& B) override { B << 1, 1; }
 
 	EXP0_SysDerivative1* clone() const override {
 		return new EXP0_SysDerivative1(*this);
@@ -192,7 +192,7 @@ public:
 	~EXP0_SysDerivative2() {};
 
 	void getFlowMapDerivativeState(state_matrix_t& A) override { A << 4, 3, -1, 0; }
-	void getFlowMapDerivativeInput(control_gain_matrix_t& B) override { B << 2, -1; }
+	void getFlowMapDerivativeInput(state_input_matrix_t& B) override { B << 2, -1; }
 
 	EXP0_SysDerivative2* clone() const {
 		return new EXP0_SysDerivative2(*this);
@@ -256,7 +256,7 @@ public:
 		subsystemDerivativesPtr_[activeSubsystem_]->getFlowMapDerivativeState(A);
 	}
 
-	void getFlowMapDerivativeInput(control_gain_matrix_t& B) override {
+	void getFlowMapDerivativeInput(state_input_matrix_t& B) override {
 		subsystemDerivativesPtr_[activeSubsystem_]->getFlowMapDerivativeInput(B);
 	}
 
@@ -288,9 +288,9 @@ public:
 	void getIntermediateCostDerivativeState(state_vector_t& dLdx) { dLdx << 0.0, (x_(1)-2.0); }
 	void getIntermediateCostSecondDerivativeState(state_matrix_t& dLdxx)  { dLdxx << 0.0, 0.0, 0.0, 1.0; }
 	void getIntermediateCostDerivativeInput(input_vector_t& dLdu)  { dLdu << u_; }
-	void getIntermediateCostSecondDerivativeInput(control_matrix_t& dLduu)  { dLduu << 1.0; }
+	void getIntermediateCostSecondDerivativeInput(input_matrix_t& dLduu)  { dLduu << 1.0; }
 
-	void getIntermediateCostDerivativeInputState(control_feedback_t& dLdxu) { dLdxu.setZero(); }
+	void getIntermediateCostDerivativeInputState(input_state_t& dLdxu) { dLdxu.setZero(); }
 
 	void getTerminalCost(scalar_t& Phi) { Phi = 0; }
 	void getTerminalCostDerivativeState(state_vector_t& dPhidx)  { dPhidx.setZero(); }
@@ -319,9 +319,9 @@ public:
 	void getIntermediateCostDerivativeState(state_vector_t& dLdx) { dLdx << 0.0, (x_(1)-2.0); }
 	void getIntermediateCostSecondDerivativeState(state_matrix_t& dLdxx)  { dLdxx << 0.0, 0.0, 0.0, 1.0; }
 	void getIntermediateCostDerivativeInput(input_vector_t& dLdu)  { dLdu << u_; }
-	void getIntermediateCostSecondDerivativeInput(control_matrix_t& dLduu)  { dLduu << 1.0; }
+	void getIntermediateCostSecondDerivativeInput(input_matrix_t& dLduu)  { dLduu << 1.0; }
 
-	void getIntermediateCostDerivativeInputState(control_feedback_t& dLdxu) { dLdxu.setZero(); }
+	void getIntermediateCostDerivativeInputState(input_state_t& dLdxu) { dLdxu.setZero(); }
 
 	void getTerminalCost(scalar_t& Phi) { Phi = 0.5*(x_(0)-4.0)*(x_(0)-4.0) + 0.5*(x_(1)-2.0)*(x_(1)-2.0); }
 	void getTerminalCostDerivativeState(state_vector_t& dPhidx)  { dPhidx << (x_(0)-4.0), (x_(1)-2.0); }
@@ -397,11 +397,11 @@ public:
 	void getIntermediateCostDerivativeInput(input_vector_t& dLdu)  {
 		subsystemCostsPtr_[activeSubsystem_]->getIntermediateCostDerivativeInput(dLdu);
 	}
-	void getIntermediateCostSecondDerivativeInput(control_matrix_t& dLduu)  {
+	void getIntermediateCostSecondDerivativeInput(input_matrix_t& dLduu)  {
 		subsystemCostsPtr_[activeSubsystem_]->getIntermediateCostSecondDerivativeInput(dLduu);
 	}
 
-	void getIntermediateCostDerivativeInputState(control_feedback_t& dLdxu) {
+	void getIntermediateCostDerivativeInputState(input_state_t& dLdxu) {
 		subsystemCostsPtr_[activeSubsystem_]->getIntermediateCostDerivativeInputState(dLdxu);
 	}
 

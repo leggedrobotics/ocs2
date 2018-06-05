@@ -29,7 +29,7 @@ public:
 	EXP3_Sys1() {}
 	~EXP3_Sys1() {}
 
-	void computeDerivative(const double& t, const Eigen::Vector2d& x, const Eigen::Vector2d& u, Eigen::Vector2d& dxdt)  {
+	void computeFlowMap(const double& t, const Eigen::Vector2d& x, const Eigen::Vector2d& u, Eigen::Vector2d& dxdt)  {
 //		dxdt(0) = x(0) + u(0)*sin(x(0)) - u(1)*cos(x(1));
 //		dxdt(1) = -x(1) - u(0)*cos(x(1)) + u(1)*sin(x(0));
 		dxdt(0) = x(0) + u(0)*sin(x(0));
@@ -59,7 +59,7 @@ public:
 	EXP3_Sys2() {}
 	~EXP3_Sys2() {}
 
-	void computeDerivative( const double& t, const Eigen::Vector2d& x, const Eigen::Vector2d& u, Eigen::Vector2d& dxdt)  {
+	void computeFlowMap( const double& t, const Eigen::Vector2d& x, const Eigen::Vector2d& u, Eigen::Vector2d& dxdt)  {
 //		dxdt(0) = x(1) + u(0)*sin(x(1)) - u(1)*cos(x(0));
 //		dxdt(1) = -x(0) - u(0)*cos(x(0)) + u(1)*sin(x(1));
 		dxdt(0) = x(1) + u(0)*sin(x(1));
@@ -89,7 +89,7 @@ public:
 	EXP3_Sys3() {}
 	~EXP3_Sys3() {}
 
-	void computeDerivative( const double& t, const Eigen::Vector2d& x, const Eigen::Vector2d& u, Eigen::Vector2d& dxdt)  {
+	void computeFlowMap( const double& t, const Eigen::Vector2d& x, const Eigen::Vector2d& u, Eigen::Vector2d& dxdt)  {
 //		dxdt(0) = -x(0) - u(0)*sin(x(0)) + u(1)*cos(x(1));
 //		dxdt(1) = x(1) + u(0)*cos(x(1)) - u(1)*sin(x(0));
 		dxdt(0) = -x(0) - u(0)*sin(x(0));
@@ -122,14 +122,14 @@ public:
 //		A << 1+u_(0)*cos(x_(0)), u_(1)*sin(x_(1)), u_(1)*cos(x_(0)), -1+u_(0)*sin(x_(1));
 		A << 1+u_(0)*cos(x_(0)), 0.0, 0.0, -1+u_(0)*sin(x_(1));
 	}
-	void getDerivativesControl(control_gain_matrix_t& B) {
+	void getDerivativesControl(state_input_matrix_t& B) {
 //		B << sin(x_(0)), -cos(x_(1)), -cos(x_(1)), sin(x_(0));
 		B << sin(x_(0)), 0.0, -cos(x_(1)), 0.0;
 	}
 	void getConstraint1DerivativesState(constraint1_state_matrix_t& C) {
 		C.topRows<1>() << u_(1)*cos(x_(0)), u_(1)*sin(x_(1));
 	}
-	void getConstraint1DerivativesControl(constraint1_control_matrix_t& D) {
+	void getConstraint1DerivativesControl(constraint1_input_matrix_t& D) {
 		D.topRows<1>() << 0.0, sin(x_(0))-cos(x_(1))+0.1;
 	}
 
@@ -154,14 +154,14 @@ public:
 //		A << u_(1)*sin(x_(1)), 1+u_(0)*cos(x_(1)), -1+u_(0)*sin(x_(0)), u_(1)*cos(x_(1));
 		A << 0.0, 1+u_(0)*cos(x_(1)), -1+u_(0)*sin(x_(0)), 0.0;
 	}
-	void getDerivativesControl(control_gain_matrix_t& B) {
+	void getDerivativesControl(state_input_matrix_t& B) {
 //		B << sin(x_(1)), -cos(x_(0)), -cos(x_(0)), sin(x_(1));
 		B << sin(x_(1)), 0.0, -cos(x_(0)), 0.0;
 	}
 	void getConstraint1DerivativesState(constraint1_state_matrix_t& C) {
 		C.topRows<1>() << u_(1)*sin(x_(1)), -u_(1)*cos(x_(1));
 	}
-	void getConstraint1DerivativesControl(constraint1_control_matrix_t& D) {
+	void getConstraint1DerivativesControl(constraint1_input_matrix_t& D) {
 		D.topRows<1>() << 0.0, sin(x_(1))-cos(x_(0))+0.1;
 	}
 
@@ -186,14 +186,14 @@ public:
 //		A << -1-u_(0)*cos(x_(0)), -u_(1)*sin(x_(1)), -u_(1)*cos(x_(0)), 1-u_(0)*sin(x_(1));
 		A << -1-u_(0)*cos(x_(0)), 0.0, 0.0, 1-u_(0)*sin(x_(1));
 	}
-	void getDerivativesControl(control_gain_matrix_t& B) {
+	void getDerivativesControl(state_input_matrix_t& B) {
 //		B << -sin(x_(0)), cos(x_(1)), cos(x_(1)), -sin(x_(0));
 		B << -sin(x_(0)), 0.0, cos(x_(1)), 0.0;
 	}
 	void getConstraint1DerivativesState(constraint1_state_matrix_t& C) {
 		C.topRows<1>() << -u_(1)*cos(x_(0)), -u_(1)*sin(x_(1));
 	}
-	void getConstraint1DerivativesControl(constraint1_control_matrix_t& D) {
+	void getConstraint1DerivativesControl(constraint1_input_matrix_t& D) {
 		D.topRows<1>() << 0.0, -sin(x_(0))+cos(x_(1))+0.1;
 	}
 
@@ -218,10 +218,10 @@ public:
 
 	void stateDerivative(state_vector_t& dLdx) { dLdx << (x_(0)-1.0), (x_(1)+1.0); }
 	void stateSecondDerivative(state_matrix_t& dLdxx)  { dLdxx << 1.0, 0.0, 0.0, 1.0; }
-	void controlDerivative(control_vector_t& dLdu)  { dLdu << u_(0), alpha_*u_(1); }
-	void controlSecondDerivative(control_matrix_t& dLduu)  { dLduu << 1.0, 0.0, 0.0, alpha_; }
+	void controlDerivative(input_vector_t& dLdu)  { dLdu << u_(0), alpha_*u_(1); }
+	void controlSecondDerivative(input_matrix_t& dLduu)  { dLduu << 1.0, 0.0, 0.0, alpha_; }
 
-	void stateControlDerivative(control_feedback_t& dLdxu) { dLdxu.setZero(); }
+	void stateControlDerivative(input_state_t& dLdxu) { dLdxu.setZero(); }
 
 	void terminalCost(scalar_t& Phi) { Phi = 0; }
 	void terminalCostStateDerivative(state_vector_t& dPhidx)  { dPhidx.setZero(); }
@@ -251,10 +251,10 @@ public:
 
 	void stateDerivative(state_vector_t& dLdx) { dLdx << (x_(0)-1.0), (x_(1)+1.0); }
 	void stateSecondDerivative(state_matrix_t& dLdxx)  { dLdxx << 1.0, 0.0, 0.0, 1.0; }
-	void controlDerivative(control_vector_t& dLdu)  { dLdu << u_(0), alpha_*u_(1); }
-	void controlSecondDerivative(control_matrix_t& dLduu)  { dLduu << 1.0, 0.0, 0.0, alpha_; }
+	void controlDerivative(input_vector_t& dLdu)  { dLdu << u_(0), alpha_*u_(1); }
+	void controlSecondDerivative(input_matrix_t& dLduu)  { dLduu << 1.0, 0.0, 0.0, alpha_; }
 
-	void stateControlDerivative(control_feedback_t& dLdxu) { dLdxu.setZero(); }
+	void stateControlDerivative(input_state_t& dLdxu) { dLdxu.setZero(); }
 
 	void terminalCost(scalar_t& Phi) { Phi = 0; }
 	void terminalCostStateDerivative(state_vector_t& dPhidx)  { dPhidx.setZero(); }
@@ -284,10 +284,10 @@ public:
 
 	void stateDerivative(state_vector_t& dLdx) { dLdx << (x_(0)-1.0), (x_(1)+1.0); }
 	void stateSecondDerivative(state_matrix_t& dLdxx)  { dLdxx << 1.0, 0.0, 0.0, 1.0; }
-	void controlDerivative(control_vector_t& dLdu)  { dLdu << u_(0), alpha_*u_(1); }
-	void controlSecondDerivative(control_matrix_t& dLduu)  { dLduu << 1.0, 0.0, 0.0, alpha_; }
+	void controlDerivative(input_vector_t& dLdu)  { dLdu << u_(0), alpha_*u_(1); }
+	void controlSecondDerivative(input_matrix_t& dLduu)  { dLduu << 1.0, 0.0, 0.0, alpha_; }
 
-	void stateControlDerivative(control_feedback_t& dLdxu) { dLdxu.setZero(); }
+	void stateControlDerivative(input_state_t& dLdxu) { dLdxu.setZero(); }
 
 	void terminalCost(scalar_t& Phi) { Phi = 0.5*pow(x_(0)-1.0, 2) + 0.5*pow(x_(1)+1.0, 2); }
 	void terminalCostStateDerivative(state_vector_t& dPhidx)  { dPhidx << (x_(0)-1.0), (x_(1)+1.0); }

@@ -46,13 +46,13 @@ public:
 	 * @param [in] x: Current state.
 	 * @param [out] dxdt: Current state time derivative
 	 */
-	void computeDerivative(const double& t, const state_vector_t& x, state_vector_t& dxdt) override {
+	void computeFlowMap(const double& t, const state_vector_t& x, state_vector_t& dxdt) override {
 		dxdt = Gm_*x + Gv_;
 	}
 
 
 private:
-	// members required in computeDerivative
+	// members required in computeFlowMap
 	state_matrix_t Gm_;
 	state_vector_t Gv_;
 };

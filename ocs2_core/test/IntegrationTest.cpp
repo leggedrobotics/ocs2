@@ -25,7 +25,7 @@ public:
 	SecondOrderSystem() {}
 	~SecondOrderSystem() {}
 
-	void computeDerivative(
+	void computeFlowMap(
 			const double& t,
 			const Eigen::Matrix<double,2,1>& x,
 			const Eigen::Matrix<double,1,1>& u,
@@ -57,7 +57,7 @@ TEST(IntegrationTest, SecondOrderSystem_ODE45)
 
 	SecondOrderSystem::scalar_array_t cntTimeStamp {0, 10};
 	SecondOrderSystem::input_vector_array_t uff(2, SecondOrderSystem::input_vector_t::Ones());
-	SecondOrderSystem::control_feedback_array_t k(2, SecondOrderSystem::control_feedback_t::Zero());
+	SecondOrderSystem::input_state_array_t k(2, SecondOrderSystem::input_state_t::Zero());
 
 	SecondOrderSystem::controller_t controller;
 	controller.time_ = cntTimeStamp;
@@ -115,7 +115,7 @@ TEST(IntegrationTest, SecondOrderSystem_AdamsBashfort)
 
 	SecondOrderSystem::scalar_array_t cntTimeStamp {0, 10};
 	SecondOrderSystem::input_vector_array_t uff(2, SecondOrderSystem::input_vector_t::Ones());
-	SecondOrderSystem::control_feedback_array_t k(2, SecondOrderSystem::control_feedback_t::Zero());
+	SecondOrderSystem::input_state_array_t k(2, SecondOrderSystem::input_state_t::Zero());
 
 	SecondOrderSystem::controller_t controller;
 	controller.time_ = cntTimeStamp;
@@ -176,7 +176,7 @@ TEST(IntegrationTest, SecondOrderSystem_AdamsBashfortMoulton)
 
 	SecondOrderSystem::scalar_array_t cntTimeStamp {0, 10};
 	SecondOrderSystem::input_vector_array_t uff(2, SecondOrderSystem::input_vector_t::Ones());
-	SecondOrderSystem::control_feedback_array_t k(2, SecondOrderSystem::control_feedback_t::Zero());
+	SecondOrderSystem::input_state_array_t k(2, SecondOrderSystem::input_state_t::Zero());
 
 	SecondOrderSystem::controller_t controller;
 	controller.time_ = cntTimeStamp;

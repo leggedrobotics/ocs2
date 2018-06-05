@@ -26,13 +26,13 @@ public:
 	typedef typename BASE::state_vector_t 			state_vector_t;
 	typedef typename BASE::state_matrix_t 			state_matrix_t;
 	typedef typename BASE::input_vector_t  			input_vector_t;
-	typedef typename BASE::control_gain_matrix_t	control_gain_matrix_t;
+	typedef typename BASE::state_input_matrix_t	state_input_matrix_t;
 
 	LinearSystemDynamics(
 			const state_matrix_t& A,
-			const control_gain_matrix_t& B,
+			const state_input_matrix_t& B,
 			const state_matrix_t& G,
-			const control_gain_matrix_t& H)
+			const state_input_matrix_t& H)
 	: A_(A)
 	, B_(B)
 	, G_(G)
@@ -103,7 +103,7 @@ public:
 	 *
 	 * @param [out] B: \f$ B(t) \f$ matrix.
 	 */
-	virtual void getFlowMapDerivativeInput(control_gain_matrix_t& B) override {
+	virtual void getFlowMapDerivativeInput(state_input_matrix_t& B) override {
 
 		B = B_;
 	}
@@ -125,16 +125,16 @@ public:
 	 *
 	 * @param [out] H: \f$ H \f$ matrix.
 	 */
-	virtual void getJumpMapDerivativeInput(control_gain_matrix_t& H) override {
+	virtual void getJumpMapDerivativeInput(state_input_matrix_t& H) override {
 
 		H = H_;
 	}
 
 private:
 	state_matrix_t 			A_;
-	control_gain_matrix_t 	B_;
+	state_input_matrix_t 	B_;
 	state_matrix_t 			G_;
-	control_gain_matrix_t 	H_;
+	state_input_matrix_t 	H_;
 };
 
 } // namespace ocs2

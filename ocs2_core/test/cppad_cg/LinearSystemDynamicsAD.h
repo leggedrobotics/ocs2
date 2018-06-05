@@ -27,13 +27,13 @@ public:
 	typedef typename BASE::state_vector_t 			state_vector_t;
 	typedef typename BASE::state_matrix_t 			state_matrix_t;
 	typedef typename BASE::input_vector_t  			input_vector_t;
-	typedef typename BASE::control_gain_matrix_t	control_gain_matrix_t;
+	typedef typename BASE::state_input_matrix_t	state_input_matrix_t;
 
 	LinearSystemDynamicsAD(
 			const state_matrix_t& A,
-			const control_gain_matrix_t& B,
+			const state_input_matrix_t& B,
 			const state_matrix_t& G,
-			const control_gain_matrix_t& H)
+			const state_input_matrix_t& H)
 	: A_(A)
 	, B_(B)
 	, G_(G)
@@ -85,9 +85,9 @@ public:
 
 private:
 	state_matrix_t 			A_;
-	control_gain_matrix_t 	B_;
+	state_input_matrix_t 	B_;
 	state_matrix_t 			G_;
-	control_gain_matrix_t 	H_;
+	state_input_matrix_t 	H_;
 };
 
 } // namespace ocs2

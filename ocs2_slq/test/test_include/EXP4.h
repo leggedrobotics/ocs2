@@ -27,17 +27,17 @@ public:
 	EXP4_Sys() {}
 	~EXP4_Sys() {}
 
-	void computeDerivative(const double& t, const state_vector_t& x, const control_vector_t& u, state_vector_t& dxdt)  {
+	void computeFlowMap(const double& t, const state_vector_t& x, const input_vector_t& u, state_vector_t& dxdt)  {
 		Dimensions<6,4>::state_matrix_t A;
 		A.setZero(); A(0,2)=1.0; A(1,3)=1.0;
 
-		Dimensions<6,4>::control_gain_matrix_t B;
+		Dimensions<6,4>::state_input_matrix_t B;
 		B << Eigen::MatrixXd::Zero(2,4), Eigen::MatrixXd::Identity(4,4);
 
 		dxdt = A*x + B*u;
 	}
 
-	void computeConstriant1(const double& t, const state_vector_t& x, const control_vector_t& u, size_t& numConstraint1, control_vector_t& g1)  override {
+	void computeConstriant1(const double& t, const state_vector_t& x, const input_vector_t& u, size_t& numConstraint1, input_vector_t& g1)  override {
 		numConstraint1 = 1;
 		g1(0) = (x(4)-x(0))*(u(2)-x(2)) + (x(5)-x(1))*(u(3)-x(3));
 	}
@@ -62,13 +62,13 @@ public:
 	void getDerivativeState(state_matrix_t& A)  {
 		A.setZero(); A(0,2)=1.0; A(1,3)=1.0;
 	}
-	void getDerivativesControl(control_gain_matrix_t& B) {
+	void getDerivativesControl(state_input_matrix_t& B) {
 		B << Eigen::MatrixXd::Zero(2,4), Eigen::MatrixXd::Identity(4,4);
 	}
 	void getConstraint1DerivativesState(constraint1_state_matrix_t& C) {
 		C.topRows<1>() << -(u_(2)-x_(2)), -(u_(3)-x_(3)), -(x_(4)-x_(0)), -(x_(5)-x_(1)), (u_(2)-x_(2)), (u_(3)-x_(3));
 	}
-	void getConstraint1DerivativesControl(constraint1_control_matrix_t& D) {
+	void getConstraint1DerivativesControl(constraint1_input_matrix_t& D) {
 		D.topRows<1>() << 0.0, 0.0, (x_(4)-x_(0)), (x_(5)-x_(1));
 	}
 
@@ -103,10 +103,10 @@ public:
 
 	void stateDerivative(state_vector_t& dLdx) { dLdx.setZero(); }
 	void stateSecondDerivative(state_matrix_t& dLdxx)  { dLdxx.setZero(); }
-	void controlDerivative(control_vector_t& dLdu)  { dLdu = R_*u_; }
-	void controlSecondDerivative(control_matrix_t& dLduu)  { dLduu = R_; }
+	void controlDerivative(input_vector_t& dLdu)  { dLdu = R_*u_; }
+	void controlSecondDerivative(input_matrix_t& dLduu)  { dLduu = R_; }
 
-	void stateControlDerivative(control_feedback_t& dLdxu) { dLdxu.setZero(); }
+	void stateControlDerivative(input_state_t& dLdxu) { dLdxu.setZero(); }
 
 	void terminalCost(scalar_t& Phi) { Phi = 0.5*(x_-xFinal_).transpose()*QFinal_*(x_-xFinal_); }
 	void terminalCostStateDerivative(state_vector_t& dPhidx)  { dPhidx = QFinal_*(x_-xFinal_); }
@@ -119,7 +119,7 @@ public:
 private:
 	state_vector_t xFinal_;
 	state_matrix_t QFinal_;
-	control_matrix_t R_;
+	input_matrix_t R_;
 };
 
 #endif /* EXP4_H_ */

@@ -91,30 +91,30 @@ public:
 	typedef typename DIMENSIONS::state_vector_t state_vector_t;
 	typedef typename DIMENSIONS::state_vector_array_t state_vector_array_t;
 	typedef typename DIMENSIONS::state_vector_array2_t state_vector_array2_t;
-	typedef typename DIMENSIONS::control_vector_t input_vector_t;
-	typedef typename DIMENSIONS::control_vector_array_t input_vector_array_t;
-	typedef typename DIMENSIONS::control_vector_array2_t input_vector_array2_t;
-	typedef typename DIMENSIONS::control_feedback_t control_feedback_t;
-	typedef typename DIMENSIONS::control_feedback_array_t control_feedback_array_t;
-	typedef typename DIMENSIONS::control_feedback_array2_t control_feedback_array2_t;
+	typedef typename DIMENSIONS::input_vector_t input_vector_t;
+	typedef typename DIMENSIONS::input_vector_array_t input_vector_array_t;
+	typedef typename DIMENSIONS::input_vector_array2_t input_vector_array2_t;
+	typedef typename DIMENSIONS::input_state_t input_state_t;
+	typedef typename DIMENSIONS::input_state_array_t input_state_array_t;
+	typedef typename DIMENSIONS::input_state_array2_t input_state_array2_t;
 	typedef typename DIMENSIONS::state_matrix_t state_matrix_t;
 	typedef typename DIMENSIONS::state_matrix_array_t state_matrix_array_t;
 	typedef typename DIMENSIONS::state_matrix_array2_t state_matrix_array2_t;
-	typedef typename DIMENSIONS::control_matrix_t control_matrix_t;
-	typedef typename DIMENSIONS::control_matrix_array_t control_matrix_array_t;
-	typedef typename DIMENSIONS::control_matrix_array2_t control_matrix_array2_t;
-	typedef typename DIMENSIONS::control_gain_matrix_t control_gain_matrix_t;
-	typedef typename DIMENSIONS::control_gain_matrix_array_t control_gain_matrix_array_t;
-	typedef typename DIMENSIONS::control_gain_matrix_array2_t control_gain_matrix_array2_t;
+	typedef typename DIMENSIONS::input_matrix_t input_matrix_t;
+	typedef typename DIMENSIONS::input_matrix_array_t input_matrix_array_t;
+	typedef typename DIMENSIONS::input_matrix_array2_t input_matrix_array2_t;
+	typedef typename DIMENSIONS::state_input_matrix_t state_input_matrix_t;
+	typedef typename DIMENSIONS::state_input_matrix_array_t state_input_matrix_array_t;
+	typedef typename DIMENSIONS::state_input_matrix_array2_t state_input_matrix_array2_t;
 	typedef typename DIMENSIONS::constraint1_vector_t constraint1_vector_t;
 	typedef typename DIMENSIONS::constraint1_vector_array_t constraint1_vector_array_t;
 	typedef typename DIMENSIONS::constraint1_vector_array2_t constraint1_vector_array2_t;
 	typedef typename DIMENSIONS::constraint1_state_matrix_t constraint1_state_matrix_t;
 	typedef typename DIMENSIONS::constraint1_state_matrix_array_t constraint1_state_matrix_array_t;
 	typedef typename DIMENSIONS::constraint1_state_matrix_array2_t constraint1_state_matrix_array2_t;
-	typedef typename DIMENSIONS::constraint1_control_matrix_t constraint1_control_matrix_t;
-	typedef typename DIMENSIONS::constraint1_control_matrix_array_t constraint1_control_matrix_array_t;
-	typedef typename DIMENSIONS::constraint1_control_matrix_array2_t constraint1_control_matrix_array2_t;
+	typedef typename DIMENSIONS::constraint1_input_matrix_t constraint1_input_matrix_t;
+	typedef typename DIMENSIONS::constraint1_input_matrix_array_t constraint1_input_matrix_array_t;
+	typedef typename DIMENSIONS::constraint1_input_matrix_array2_t constraint1_input_matrix_array2_t;
 	typedef typename DIMENSIONS::control_constraint1_matrix_t control_constraint1_matrix_t;
 	typedef typename DIMENSIONS::control_constraint1_matrix_array_t control_constraint1_matrix_array_t;
 	typedef typename DIMENSIONS::control_constraint1_matrix_array2_t control_constraint1_matrix_array2_t;
@@ -1150,12 +1150,12 @@ protected:
 	controller_array_t deletedcontrollersStock_;	// needed for concatenating the new controller to the old one
 
 	state_matrix_array2_t        		AmTrajectoryStock_;
-	control_gain_matrix_array2_t 		BmTrajectoryStock_;
+	state_input_matrix_array2_t 		BmTrajectoryStock_;
 
 	std::vector<std::vector<size_t>>    nc1TrajectoriesStock_;  	// nc1: Number of the Type-1  active constraints
 	constraint1_vector_array2_t			EvTrajectoryStock_;
 	constraint1_state_matrix_array2_t   CmTrajectoryStock_;
-	constraint1_control_matrix_array2_t DmTrajectoryStock_;
+	constraint1_input_matrix_array2_t DmTrajectoryStock_;
 
 	std::vector<size_array_t> 			nc2TrajectoriesStock_;  // nc2: Number of the Type-2 active constraints
 	constraint2_vector_array2_t 		HvTrajectoryStock_;
@@ -1172,20 +1172,20 @@ protected:
 	state_vector_array2_t 		QvTrajectoryStock_;
 	state_matrix_array2_t 		QmTrajectoryStock_;
 	input_vector_array2_t		RvTrajectoryStock_;
-	control_matrix_array2_t		RmTrajectoryStock_;
-	control_feedback_array2_t	PmTrajectoryStock_;
+	input_matrix_array2_t		RmTrajectoryStock_;
+	input_state_array2_t	PmTrajectoryStock_;
 
-	control_matrix_array2_t 	RmInverseTrajectoryStock_;
+	input_matrix_array2_t 	RmInverseTrajectoryStock_;
 	state_matrix_array2_t   	AmConstrainedTrajectoryStock_;
 	state_matrix_array2_t   	QmConstrainedTrajectoryStock_;
 	state_vector_array2_t  		QvConstrainedTrajectoryStock_;
-	control_matrix_array2_t 	RmConstrainedTrajectoryStock_;
+	input_matrix_array2_t 	RmConstrainedTrajectoryStock_;
 	control_constraint1_matrix_array2_t DmDagerTrajectoryStock_;
 	input_vector_array2_t   	EvProjectedTrajectoryStock_;  // DmDager * Ev
-	control_feedback_array2_t 	CmProjectedTrajectoryStock_;  // DmDager * Cm
-	control_matrix_array2_t   	DmProjectedTrajectoryStock_;  // DmDager * Dm
-	control_gain_matrix_array2_t BmConstrainedTrajectoryStock_;
-	control_feedback_array2_t 	PmConstrainedTrajectoryStock_;
+	input_state_array2_t 	CmProjectedTrajectoryStock_;  // DmDager * Cm
+	input_matrix_array2_t   	DmProjectedTrajectoryStock_;  // DmDager * Dm
+	state_input_matrix_array2_t BmConstrainedTrajectoryStock_;
+	input_state_array2_t 	PmConstrainedTrajectoryStock_;
 	input_vector_array2_t 		RvConstrainedTrajectoryStock_;
 
 	std::vector<std::shared_ptr<riccati_equations_t>> 							riccatiEquationsPtrStock_;
@@ -1216,24 +1216,24 @@ protected:
 	// functions for controller and lagrange multiplier
 	std::vector<LinearInterpolation<state_vector_t,Eigen::aligned_allocator<state_vector_t> >>   	nominalStateFunc_;
 	std::vector<LinearInterpolation<input_vector_t,Eigen::aligned_allocator<input_vector_t> >> 		nominalInputFunc_;
-	std::vector<LinearInterpolation<control_gain_matrix_t,Eigen::aligned_allocator<control_gain_matrix_t> >> BmFunc_;
-	std::vector<LinearInterpolation<control_feedback_t,Eigen::aligned_allocator<control_feedback_t> >> 	PmFunc_;
-	std::vector<LinearInterpolation<control_matrix_t,Eigen::aligned_allocator<control_matrix_t> >>     	RmInverseFunc_;
+	std::vector<LinearInterpolation<state_input_matrix_t,Eigen::aligned_allocator<state_input_matrix_t> >> BmFunc_;
+	std::vector<LinearInterpolation<input_state_t,Eigen::aligned_allocator<input_state_t> >> 	PmFunc_;
+	std::vector<LinearInterpolation<input_matrix_t,Eigen::aligned_allocator<input_matrix_t> >>     	RmInverseFunc_;
 	std::vector<LinearInterpolation<input_vector_t,Eigen::aligned_allocator<input_vector_t> >>     		RvFunc_;
 	std::vector<LinearInterpolation<input_vector_t,Eigen::aligned_allocator<input_vector_t> >>     		EvProjectedFunc_;
-	std::vector<LinearInterpolation<control_feedback_t,Eigen::aligned_allocator<control_feedback_t> >> 	CmProjectedFunc_;
-	std::vector<LinearInterpolation<control_matrix_t,Eigen::aligned_allocator<control_matrix_t> >>     	DmProjectedFunc_;
+	std::vector<LinearInterpolation<input_state_t,Eigen::aligned_allocator<input_state_t> >> 	CmProjectedFunc_;
+	std::vector<LinearInterpolation<input_matrix_t,Eigen::aligned_allocator<input_matrix_t> >>     	DmProjectedFunc_;
 
 	// function for Riccati error equation
 	std::vector<LinearInterpolation<state_matrix_t, Eigen::aligned_allocator<state_matrix_t> >> SmFuncs_;
 	//
-	void LmFunc_ (const size_t& partitionIndex, const size_t& timeIndex, control_feedback_t& Lm) {
+	void LmFunc_ (const size_t& partitionIndex, const size_t& timeIndex, input_state_t& Lm) {
 		Lm = -RmInverseTrajectoryStock_[partitionIndex][timeIndex] * ( PmTrajectoryStock_[partitionIndex][timeIndex] +
 				BmTrajectoryStock_[partitionIndex][timeIndex].transpose()*SmTrajectoryStock_[partitionIndex][timeIndex] );
 	};
 	//
-	void LmConstrainedFunc_ (const size_t& partitionIndex, const size_t& timeIndex, const control_feedback_t& Lm, control_feedback_t& LmConstrained) {
-		LmConstrained = (control_matrix_t::Identity()-DmProjectedTrajectoryStock_[partitionIndex][timeIndex]) * Lm;
+	void LmConstrainedFunc_ (const size_t& partitionIndex, const size_t& timeIndex, const input_state_t& Lm, input_state_t& LmConstrained) {
+		LmConstrained = (input_matrix_t::Identity()-DmProjectedTrajectoryStock_[partitionIndex][timeIndex]) * Lm;
 	};
 	//
 	void LvConstrainedFunc_ (const size_t& partitionIndex, const size_t& timeIndex, input_vector_t& LvConstrained) {
@@ -1247,7 +1247,7 @@ protected:
 	};
 	//
 	void ControllerFunc_ (const size_t& partitionIndex, const size_t& timeIndex, const scalar_t& constraintStepSize,
-			const control_feedback_t& LmConstrained, const input_vector_t& LvConstrained, const input_vector_t& LveConstrained) {
+			const input_state_t& LmConstrained, const input_vector_t& LvConstrained, const input_vector_t& LveConstrained) {
 		// k
 		nominalControllersStock_[partitionIndex].k_[timeIndex] = LmConstrained - CmProjectedTrajectoryStock_[partitionIndex][timeIndex];
 		// uff

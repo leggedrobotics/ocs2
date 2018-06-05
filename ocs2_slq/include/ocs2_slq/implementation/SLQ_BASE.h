@@ -276,7 +276,7 @@ typename SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::state_vector_t
 		} catch (const size_t& eventID) {
 
 			eventsPastTheEndIndeces.push_back( timeTrajectory.size() );
-			systemDynamicsPtrStock_[workerIndex]->mapState(timeTrajectory.back(), stateTrajectory.back(), x0);
+			systemDynamicsPtrStock_[workerIndex]->computeJumpMap(timeTrajectory.back(), stateTrajectory.back(), x0);
 
 			eventTimes.push_back(timeTrajectory.back());
 			subsystemID.push_back(eventID);
@@ -467,7 +467,7 @@ typename SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::state_vector_t
 
 		if (i<finalItr) {
 			eventsPastTheEndIndeces.push_back( stateTrajectory.size() );
-			systemDynamicsPtrStock_[workerIndex]->mapState(timeTrajectory.back(), stateTrajectory.back(), beginState);
+			systemDynamicsPtrStock_[workerIndex]->computeJumpMap(timeTrajectory.back(), stateTrajectory.back(), beginState);
 		}
 
 	}  // end of i loop
@@ -476,7 +476,7 @@ typename SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::state_vector_t
 	// input might not be defined since no control policy is available)
 	if (finalItr<numEvents && finalTime>=switchingTimes[finalItr+1]) {
 		eventsPastTheEndIndeces.push_back( stateTrajectory.size() );
-		systemDynamicsPtrStock_[workerIndex]->mapState(timeTrajectory.back(), stateTrajectory.back(), beginState);
+		systemDynamicsPtrStock_[workerIndex]->computeJumpMap(timeTrajectory.back(), stateTrajectory.back(), beginState);
 		return beginState;
 
 	} else {
@@ -1115,7 +1115,7 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::approximateLQWorker(
 		CmProjectedTrajectoryStock_[i][k] = DmDager * Cm;
 		DmProjectedTrajectoryStock_[i][k] = DmDager * Dm;
 
-		control_matrix_t DmNullSpaceProjection = control_matrix_t::Identity() - DmProjectedTrajectoryStock_[i][k];
+		input_matrix_t DmNullSpaceProjection = input_matrix_t::Identity() - DmProjectedTrajectoryStock_[i][k];
 		state_matrix_t   PmTransDmDagerCm = PmTrajectoryStock_[i][k].transpose()*CmProjectedTrajectoryStock_[i][k];
 
 		AmConstrainedTrajectoryStock_[i][k] = AmTrajectoryStock_[i][k] - BmTrajectoryStock_[i][k]*CmProjectedTrajectoryStock_[i][k];
@@ -1270,15 +1270,15 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculateControllerWorker (
 	// local variables
 	state_vector_t nominalState;
 	input_vector_t nominalInput;
-	control_gain_matrix_t Bm;
-	control_feedback_t Pm;
+	state_input_matrix_t Bm;
+	input_state_t Pm;
 	input_vector_t Rv;
-	control_matrix_t RmInverse;
+	input_matrix_t RmInverse;
 	input_vector_t EvProjected;
-	control_feedback_t CmProjected;
-	control_matrix_t DmProjected;
+	input_state_t CmProjected;
+	input_matrix_t DmProjected;
 	control_constraint1_matrix_t DmDager;
-	control_matrix_t Rm;
+	input_matrix_t Rm;
 
 	// interpolate
 	nominalStateFunc_[workerIndex].interpolate(time, nominalState);
@@ -1293,11 +1293,11 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculateControllerWorker (
 	CmProjectedFunc_[workerIndex].interpolate(time, CmProjected, greatestLessTimeStampIndex);
 	DmProjectedFunc_[workerIndex].interpolate(time, DmProjected, greatestLessTimeStampIndex);
 
-	control_feedback_t Lm  = RmInverse * (Pm + Bm.transpose()*SmTrajectoryStock_[i][k]);
+	input_state_t Lm  = RmInverse * (Pm + Bm.transpose()*SmTrajectoryStock_[i][k]);
 	input_vector_t     Lv  = RmInverse * (Rv + Bm.transpose()*SvTrajectoryStock_[i][k]);
 	input_vector_t     Lve = RmInverse * (Bm.transpose()*SveTrajectoryStock_[i][k]);
 
-	control_matrix_t DmNullProjection = control_matrix_t::Identity()-DmProjected;
+	input_matrix_t DmNullProjection = input_matrix_t::Identity()-DmProjected;
 	nominalControllersStock_[i].k_[k]   = -DmNullProjection*Lm - CmProjected;
 	nominalControllersStock_[i].uff_[k] = nominalInput - nominalControllersStock_[i].k_[k]*nominalState
 			- constraintStepSize_ * (DmNullProjection*Lve + EvProjected);
@@ -1471,7 +1471,7 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::solveRiccatiEquationsWorker(
 		if (index==N) {
 			SsNormalizedEventsPastTheEndIndecesStock_[partitionIndex].push_back( 0 );
 			typename riccati_equations_t::s_vector_t allSsFinalTemp = allSsFinal;
-			riccatiEquationsPtrStock_[workerIndex]->mapState(startNormalizedTime, allSsFinalTemp, allSsFinal);
+			riccatiEquationsPtrStock_[workerIndex]->computeJumpMap(startNormalizedTime, allSsFinalTemp, allSsFinal);
 
 		} else {
 
@@ -1495,7 +1495,7 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::solveRiccatiEquationsWorker(
 
 		if (i < numActiveSubsystems-1) {
 			SsNormalizedEventsPastTheEndIndecesStock_[partitionIndex].push_back( allSsTrajectory.size() );
-			riccatiEquationsPtrStock_[workerIndex]->mapState(endTime, allSsTrajectory.back(), allSsFinal);
+			riccatiEquationsPtrStock_[workerIndex]->computeJumpMap(endTime, allSsTrajectory.back(), allSsFinal);
 		}
 
 	}  // end of i loop
@@ -1592,7 +1592,7 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::solveRiccatiEquationsForNomi
 
 		if (index==N) {
 			typename riccati_equations_t::s_vector_t allSsFinalTemp = allSsFinal;
-			riccatiEquationsPtrStock_[workerIndex]->mapState(SsNormalizedTimeTrajectoryStock_[partitionIndex].front(), allSsFinalTemp, allSsFinal);
+			riccatiEquationsPtrStock_[workerIndex]->computeJumpMap(SsNormalizedTimeTrajectoryStock_[partitionIndex].front(), allSsFinalTemp, allSsFinal);
 
 		} else {
 
@@ -1615,7 +1615,7 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::solveRiccatiEquationsForNomi
 				settings_.minTimeStep_, settings_.absTolODE_, settings_.relTolODE_, maxNumSteps, true);
 
 		if (i < numActiveSubsystems-1) {
-			riccatiEquationsPtrStock_[workerIndex]->mapState(*endTimeItr, allSsTrajectory.back(), allSsFinal);
+			riccatiEquationsPtrStock_[workerIndex]->computeJumpMap(*endTimeItr, allSsTrajectory.back(), allSsFinal);
 		}
 
 	}  // end of i loop
@@ -1689,7 +1689,7 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::solveErrorRiccatiEquationWor
 	state_vector_array_t GvTrajectory(N);
 	state_matrix_array_t GmTrajectory(N);
 	state_matrix_t Sm;
-	control_feedback_t Lm;
+	input_state_t Lm;
 	for (int k=N-1; k>=0; k--) {
 
 		// Sm
@@ -1730,7 +1730,7 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::solveErrorRiccatiEquationWor
 		const size_t& index = SsNormalizedEventsPastTheEndIndecesStock_[partitionIndex][k];
 
 		if (index==0) {
-			errorEquationPtrStock_[workerIndex]->mapState(SsNormalizedTimeTrajectoryStock_[partitionIndex].front(), SveFinal, SveFinalInternal);
+			errorEquationPtrStock_[workerIndex]->computeJumpMap(SsNormalizedTimeTrajectoryStock_[partitionIndex].front(), SveFinal, SveFinalInternal);
 		} else {
 			SveNormalizedEventsPastTheEndIndeces.push_back(index);
 		}
@@ -1751,7 +1751,7 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::solveErrorRiccatiEquationWor
 				settings_.minTimeStep_, settings_.absTolODE_, settings_.relTolODE_, maxNumSteps, true);
 
 		if (i < numActiveSubsystems-1) {
-			errorEquationPtrStock_[workerIndex]->mapState(*endTimeItr, SveTrajectory.back(), SveFinalInternal);
+			errorEquationPtrStock_[workerIndex]->computeJumpMap(*endTimeItr, SveTrajectory.back(), SveFinalInternal);
 		}
 
 	}  // end of i loop
@@ -1856,7 +1856,7 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::solveSlqRiccatiEquationsWork
 		if (index==N) {
 			SsNormalizedEventsPastTheEndIndecesStock_[partitionIndex].push_back( 0 );
 			typename slq_riccati_equations_t::s_vector_t allSsFinalTemp = allSsFinal;
-			slqRiccatiEquationsPtrStock_[workerIndex]->mapState(startNormalizedTime, allSsFinalTemp, allSsFinal);
+			slqRiccatiEquationsPtrStock_[workerIndex]->computeJumpMap(startNormalizedTime, allSsFinalTemp, allSsFinal);
 
 		} else {
 
@@ -1880,7 +1880,7 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::solveSlqRiccatiEquationsWork
 
 		if (i < numActiveSubsystems-1) {
 			SsNormalizedEventsPastTheEndIndecesStock_[partitionIndex].push_back( allSsTrajectory.size() );
-			slqRiccatiEquationsPtrStock_[workerIndex]->mapState(endTime, allSsTrajectory.back(), allSsFinal);
+			slqRiccatiEquationsPtrStock_[workerIndex]->computeJumpMap(endTime, allSsTrajectory.back(), allSsFinal);
 		}
 
 	}  // end of i loop
@@ -2014,7 +2014,7 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::fullRiccatiBackwardSweepWork
 
 	state_matrix_t _Gm;
 	state_vector_t _Gv, _Gve;
-	control_feedback_t _Lm, _LmConstrained;
+	input_state_t _Lm, _LmConstrained;
 	input_vector_t _LvConstrained, _LveConstrained;
 	Eigen::Matrix<scalar_t, 2*STATE_DIM, STATE_DIM> _X_H_0, _X_H_1;
 	Eigen::Matrix<scalar_t, 2*STATE_DIM, 2*STATE_DIM> _H;
@@ -2340,13 +2340,13 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculateInputConstraintLagr
 	// functions for controller and lagrane multiplier
 	LinearInterpolation<state_vector_t,Eigen::aligned_allocator<state_vector_t> >     nominalStateFunc;
 
-	LinearInterpolation<control_gain_matrix_t,Eigen::aligned_allocator<control_gain_matrix_t> > BmFunc;
-	LinearInterpolation<control_feedback_t,Eigen::aligned_allocator<control_feedback_t> > PmFunc;
-	LinearInterpolation<control_matrix_t,Eigen::aligned_allocator<control_matrix_t> >     RmInverseFunc;
+	LinearInterpolation<state_input_matrix_t,Eigen::aligned_allocator<state_input_matrix_t> > BmFunc;
+	LinearInterpolation<input_state_t,Eigen::aligned_allocator<input_state_t> > PmFunc;
+	LinearInterpolation<input_matrix_t,Eigen::aligned_allocator<input_matrix_t> >     RmInverseFunc;
 	LinearInterpolation<input_vector_t,Eigen::aligned_allocator<input_vector_t> >     RvFunc;
 	LinearInterpolation<input_vector_t,Eigen::aligned_allocator<input_vector_t> >     EvProjectedFunc;
-	LinearInterpolation<control_feedback_t,Eigen::aligned_allocator<control_feedback_t> > CmProjectedFunc;
-	LinearInterpolation<control_matrix_t,Eigen::aligned_allocator<control_matrix_t> >     RmFunc;
+	LinearInterpolation<input_state_t,Eigen::aligned_allocator<input_state_t> > CmProjectedFunc;
+	LinearInterpolation<input_matrix_t,Eigen::aligned_allocator<input_matrix_t> >     RmFunc;
 	LinearInterpolation<control_constraint1_matrix_t,Eigen::aligned_allocator<control_constraint1_matrix_t> > DmDagerFunc;
 
 	lagrangeMultiplierFunctionsStock.resize(numPartitionings_);
@@ -2409,20 +2409,20 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculateInputConstraintLagr
 			nominalStateFunc.interpolate(time, nominalState);
 			greatestLessTimeStampIndex = nominalStateFunc.getGreatestLessTimeStampIndex();
 
-			control_gain_matrix_t Bm;
+			state_input_matrix_t Bm;
 			BmFunc.interpolate(time, Bm, greatestLessTimeStampIndex);
-			control_feedback_t Pm;
+			input_state_t Pm;
 			PmFunc.interpolate(time, Pm, greatestLessTimeStampIndex);
 			input_vector_t Rv;
 			RvFunc.interpolate(time, Rv, greatestLessTimeStampIndex);
-			control_matrix_t RmInverse;
+			input_matrix_t RmInverse;
 			RmInverseFunc.interpolate(time, RmInverse, greatestLessTimeStampIndex);
 			input_vector_t EvProjected;
 			EvProjectedFunc.interpolate(time, EvProjected, greatestLessTimeStampIndex);
-			control_feedback_t CmProjected;
+			input_state_t CmProjected;
 			CmProjectedFunc.interpolate(time, CmProjected, greatestLessTimeStampIndex);
 
-			control_feedback_t Lm  = RmInverse * (Pm + Bm.transpose()*SmTrajectoryStock_[i][k]);
+			input_state_t Lm  = RmInverse * (Pm + Bm.transpose()*SmTrajectoryStock_[i][k]);
 			input_vector_t   Lv  = RmInverse * (Rv + Bm.transpose()*SvTrajectoryStock_[i][k]);
 			input_vector_t   Lve = RmInverse * (Bm.transpose()*SveTrajectoryStock_[i][k]);
 
@@ -2430,7 +2430,7 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculateInputConstraintLagr
 
 			control_constraint1_matrix_t DmDager;
 			DmDagerFunc.interpolate(time, DmDager, greatestLessTimeStampIndex);
-			control_matrix_t Rm;
+			input_matrix_t Rm;
 			RmFunc.interpolate(time, Rm, greatestLessTimeStampIndex);
 
 			Eigen::MatrixXd DmDagerTransRm = DmDager.leftCols(nc1).transpose() * Rm;
@@ -2758,10 +2758,10 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::truncateConterller(
 	size_t greatestLessTimeStampIndex = uffFunc.getGreatestLessTimeStampIndex();
 
 	// interpolating k
-	LinearInterpolation<control_feedback_t,Eigen::aligned_allocator<control_feedback_t> > kFunc;
+	LinearInterpolation<input_state_t,Eigen::aligned_allocator<input_state_t> > kFunc;
 	kFunc.setTimeStamp(&controllersStock[initActivePartition].time_);
 	kFunc.setData(&controllersStock[initActivePartition].k_);
-	control_feedback_t kInit;
+	input_state_t kInit;
 	kFunc.interpolate(initTime, kInit, greatestLessTimeStampIndex);
 
 	// deleting the controller in the active subsystem for the subsystems before initTime

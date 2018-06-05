@@ -31,9 +31,9 @@ public:
 	typedef typename DIMENSIONS::scalar_t scalar_t;
 	typedef typename DIMENSIONS::state_vector_t state_vector_t;
 	typedef typename DIMENSIONS::state_matrix_t state_matrix_t;
-	typedef typename DIMENSIONS::control_vector_t input_vector_t;
-	typedef typename DIMENSIONS::control_matrix_t control_matrix_t;
-	typedef typename DIMENSIONS::control_feedback_t control_feedback_t;
+	typedef typename DIMENSIONS::input_vector_t input_vector_t;
+	typedef typename DIMENSIONS::input_matrix_t input_matrix_t;
+	typedef typename DIMENSIONS::input_state_t input_state_t;
 
 	/**
 	 * Constructor for the running and final cost function defined as the following:
@@ -48,7 +48,7 @@ public:
 	 */
 	QuadraticCostFunction(
 			const state_matrix_t& Q,
-			const control_matrix_t& R,
+			const input_matrix_t& R,
 			const state_vector_t& x_nominal,
 			const input_vector_t& u_nominal,
 			const state_vector_t& x_final,
@@ -138,7 +138,7 @@ public:
      *
      * @param [out] dLduu: Second order derivative of the intermediate cost with respect to input vector.
      */
-	virtual void getIntermediateCostSecondDerivativeInput(control_matrix_t& dLduu) override {
+	virtual void getIntermediateCostSecondDerivativeInput(input_matrix_t& dLduu) override {
 		dLduu = R_;
 	}
 
@@ -147,8 +147,8 @@ public:
      *
      * @param [out] dLdux: Second order derivative of the intermediate cost with respect to input vector and state.
      */
-	virtual void getIntermediateCostDerivativeInputState(control_feedback_t& dLdux) override {
-		dLdux = control_feedback_t::Zero();
+	virtual void getIntermediateCostDerivativeInputState(input_state_t& dLdux) override {
+		dLdux = input_state_t::Zero();
 	}
 
     /**
@@ -198,7 +198,7 @@ protected:
 
 	input_vector_t u_deviation_;
 	input_vector_t u_nominal_;
-	control_matrix_t R_;
+	input_matrix_t R_;
 
 	state_vector_t x_final_;
 	state_matrix_t Q_final_;

@@ -40,29 +40,44 @@ public:
 	typedef std::shared_ptr<ControlledSystemBase<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> > Ptr;
 	typedef std::shared_ptr<const ControlledSystemBase<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> > ConstPtr;
 
+	typedef SystemBase<STATE_DIM> BASE;
+
 	typedef Dimensions<STATE_DIM, INPUT_DIM> DIMENSIONS;
-	typedef typename DIMENSIONS::scalar_t scalar_t;
-	typedef typename DIMENSIONS::scalar_array_t scalar_array_t;
-	typedef typename DIMENSIONS::state_vector_t state_vector_t;
-	typedef typename DIMENSIONS::control_vector_t input_vector_t;
-	typedef typename DIMENSIONS::control_vector_array_t input_vector_array_t;
-	typedef typename DIMENSIONS::control_feedback_t control_feedback_t;
-	typedef typename DIMENSIONS::control_feedback_array_t control_feedback_array_t;
-	typedef typename DIMENSIONS::controller_t controller_t;
-	typedef typename DIMENSIONS::constraint1_vector_t constraint1_vector_t;
-	typedef typename DIMENSIONS::constraint2_vector_t constraint2_vector_t;
+	typedef typename DIMENSIONS::scalar_t 				scalar_t;
+	typedef typename DIMENSIONS::scalar_array_t 		scalar_array_t;
+	typedef typename DIMENSIONS::state_vector_t 		state_vector_t;
+	typedef typename DIMENSIONS::input_vector_t 		input_vector_t;
+	typedef typename DIMENSIONS::input_vector_array_t 	input_vector_array_t;
+	typedef typename DIMENSIONS::input_state_t 			input_state_t;
+	typedef typename DIMENSIONS::input_state_array_t 	input_state_array_t;
+	typedef typename DIMENSIONS::controller_t 			controller_t;
+	typedef typename DIMENSIONS::constraint1_vector_t 	constraint1_vector_t;
+	typedef typename DIMENSIONS::constraint2_vector_t 	constraint2_vector_t;
+	typedef typename DIMENSIONS::dynamic_vector_t 		dynamic_vector_t;
 
 	/**
 	 * The default constructor.
 	 */
 	ControlledSystemBase()
-	: modelUpdated_(true)
+
+	: BASE()
+	, controllerIsSet_(false)
+	{
+		reset();
+	}
+
+	/**
+	 * Copy constructor.
+	 */
+	ControlledSystemBase(const ControlledSystemBase& rhs)
+
+	: ControlledSystemBase()
 	{}
 
 	/**
-	 * The default destructor.
+	 * Default destructor.
 	 */
-	virtual ~ControlledSystemBase() {}
+	virtual ~ControlledSystemBase() = default;
 
 	/**
 	 * Sets the linear control policy using the controller class.
@@ -80,7 +95,16 @@ public:
 		linInterpolateK_.setTimeStamp(&controller_.time_);
 		linInterpolateK_.setData(&controller_.k_);
 
-		modelUpdated_ = true;
+		controllerIsSet_ = true;
+	}
+
+	/**
+	 * Resets the internal classes.
+	 */
+	virtual void reset() {
+
+		linInterpolateK_.reset();
+		linInterpolateUff_.reset();
 	}
 
 	/**
@@ -91,9 +115,10 @@ public:
 	 * @param [in] uff: Feedforward term trajectory, \f$ u_{ff} \f$.
 	 * @param [in] k: Feedback term trajectory, \f$ K \f$.
 	 */
-	void setController(const scalar_array_t& controllerTime,
+	void setController(
+			const scalar_array_t& controllerTime,
 			const input_vector_array_t& uff,
-			const control_feedback_array_t& k) {
+			const input_state_array_t& k) {
 
 		controller_.time_ = controllerTime;
 		controller_.uff_ = uff;
@@ -109,13 +134,16 @@ public:
 	 * @param [in] x: Current state.
 	 * @return Current input.
 	 */
-	input_vector_t computeInput(const scalar_t& t, const state_vector_t& x)
-	{
+	input_vector_t computeInput(
+			const scalar_t& t,
+			const state_vector_t& x) {
+
 		input_vector_t uff;
 		linInterpolateUff_.interpolate(t, uff);
+		int greatestLessTimeStampIndex = linInterpolateUff_.getGreatestLessTimeStampIndex();
 
-		control_feedback_t k;
-		linInterpolateK_.interpolate(t, k);
+		input_state_t k;
+		linInterpolateK_.interpolate(t, k, greatestLessTimeStampIndex);
 
 		return uff + k*x;
 	}
@@ -127,12 +155,14 @@ public:
 	 * @param [in] x: Current state.
 	 * @param [out] dxdt: Current state time derivative.
 	 */
-	void computeDerivative(const scalar_t& t, const state_vector_t& x, state_vector_t& dxdt)  {
+	void computeFlowMap(
+			const scalar_t& t,
+			const state_vector_t& x,
+			state_vector_t& dxdt)  {
 
-		SystemBase<STATE_DIM>::numFunctionCalls_++;
-
+		BASE::numFunctionCalls_++;
 		input_vector_t u = computeInput(t, x);
-		computeDerivative(t, x, u, dxdt);
+		computeFlowMap(t, x, u, dxdt);
 	}
 
 	/**
@@ -165,7 +195,7 @@ public:
 	 * @param [in] u: Current input.
 	 * @param [out] dxdt: Current state time derivative.
 	 */
-	virtual void computeDerivative(
+	virtual void computeFlowMap(
 			const scalar_t& t,
 			const state_vector_t& x,
 			const input_vector_t& u,
@@ -178,15 +208,16 @@ public:
 	 * @param [in] state: transition state
 	 * @param [out] mappedState: mapped state after transition
 	 */
-	virtual void mapState(
+	virtual void computeJumpMap(
 			const scalar_t& time,
 			const state_vector_t& state,
 			state_vector_t& mappedState) override {
 
-		SystemBase<STATE_DIM>::mapState(time, state, mappedState);
+		BASE::computeJumpMap(time, state, mappedState);
 	}
 
 	/**
+	 * Interface method to the guard surfaces.
 	 *
 	 * @param [in] time: transition time
 	 * @param [in] state: transition state
@@ -195,18 +226,18 @@ public:
 	virtual void computeGuardSurfaces(
 			const scalar_t& time,
 			const state_vector_t& state,
-			scalar_array_t& guardSurfacesValue) override {
+			dynamic_vector_t& guardSurfacesValue) override {
 
-		SystemBase<STATE_DIM>::computeGuardSurfaces(time, state, guardSurfacesValue);
+		BASE::computeGuardSurfaces(time, state, guardSurfacesValue);
 	}
 
 protected:
 	controller_t controller_;
 
-	bool modelUpdated_;
+	bool controllerIsSet_;
 
 	LinearInterpolation<input_vector_t, Eigen::aligned_allocator<input_vector_t> > linInterpolateUff_;
-	LinearInterpolation<control_feedback_t, Eigen::aligned_allocator<control_feedback_t> > linInterpolateK_;
+	LinearInterpolation<input_state_t, Eigen::aligned_allocator<input_state_t> > linInterpolateK_;
 };
 
 } // namespace ocs2

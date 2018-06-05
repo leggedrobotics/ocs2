@@ -51,18 +51,18 @@ public:
 	typedef typename DIMENSIONS::state_vector_t 	  state_vector_t;
 	typedef typename DIMENSIONS::state_vector_array_t state_vector_array_t;
 	typedef typename DIMENSIONS::state_vector_array2_t state_vector_array2_t;
-	typedef typename DIMENSIONS::control_vector_t 		control_vector_t;
-	typedef typename DIMENSIONS::control_vector_array_t control_vector_array_t;
-	typedef typename DIMENSIONS::control_vector_array2_t control_vector_array2_t;
-	typedef typename DIMENSIONS::control_feedback_t 	  control_feedback_t;
-	typedef typename DIMENSIONS::control_feedback_array_t control_feedback_array_t;
+	typedef typename DIMENSIONS::input_vector_t 		input_vector_t;
+	typedef typename DIMENSIONS::input_vector_array_t input_vector_array_t;
+	typedef typename DIMENSIONS::input_vector_array2_t input_vector_array2_t;
+	typedef typename DIMENSIONS::input_state_t 	  input_state_t;
+	typedef typename DIMENSIONS::input_state_array_t input_state_array_t;
 	typedef typename DIMENSIONS::state_matrix_t 	  state_matrix_t;
 	typedef typename DIMENSIONS::state_matrix_array_t state_matrix_array_t;
 	typedef typename DIMENSIONS::state_matrix_array2_t state_matrix_array2_t;
-	typedef typename DIMENSIONS::control_matrix_t 		control_matrix_t;
-	typedef typename DIMENSIONS::control_matrix_array_t control_matrix_array_t;
-	typedef typename DIMENSIONS::control_gain_matrix_t 		 control_gain_matrix_t;
-	typedef typename DIMENSIONS::control_gain_matrix_array_t control_gain_matrix_array_t;
+	typedef typename DIMENSIONS::input_matrix_t 		input_matrix_t;
+	typedef typename DIMENSIONS::input_matrix_array_t input_matrix_array_t;
+	typedef typename DIMENSIONS::state_input_matrix_t 		 state_input_matrix_t;
+	typedef typename DIMENSIONS::state_input_matrix_array_t state_input_matrix_array_t;
 
 	/**
 	 *
@@ -79,7 +79,7 @@ public:
 			const std::vector<std::shared_ptr<DerivativesBase<STATE_DIM, INPUT_DIM> > >& subsystemDerivativesPtr,
 			const std::vector<std::shared_ptr<CostFunctionBaseOCS2<STATE_DIM, INPUT_DIM> > >& subsystemCostFunctionsPtr,
 			const state_vector_array_t&   stateOperatingPoints,
-			const control_vector_array_t& inputOperatingPoints,
+			const input_vector_array_t& inputOperatingPoints,
 			const std::vector<size_t>& systemStockIndexes,
 			const Options_t& options = Options_t::Options(),
 			const bool& runAsInitializer = true)
@@ -154,7 +154,7 @@ public:
 			const controller_array_t& controllersStock,
 			std::vector<scalar_array_t>& timeTrajectoriesStock,
 			state_vector_array2_t& stateTrajectoriesStock,
-			control_vector_array2_t& inputTrajectoriesStock);
+			input_vector_array2_t& inputTrajectoriesStock);
 
 	/**
 	 * Calculates cost of a rollout.
@@ -166,7 +166,7 @@ public:
 	 */
 	void rolloutCost(const std::vector<scalar_array_t>& timeTrajectoriesStock,
 			const state_vector_array2_t& stateTrajectoriesStock,
-			const control_vector_array2_t& inputTrajectoriesStock,
+			const input_vector_array2_t& inputTrajectoriesStock,
 			scalar_t& totalCost);
 
 	/**
@@ -218,7 +218,7 @@ private:
 	std::vector<std::shared_ptr<CostFunctionBaseOCS2<STATE_DIM, INPUT_DIM> > > subsystemCostFunctionsPtrStock_;
 
 	state_vector_array_t   stateOperatingPointsStock_;
-	control_vector_array_t inputOperatingPointsStock_;
+	input_vector_array_t inputOperatingPointsStock_;
 
 	std::vector<size_t> systemStockIndexes_;
 
@@ -231,17 +231,17 @@ private:
 	controller_array_t controllersStock_;
 
 	state_matrix_array_t        AmStock_;
-	control_gain_matrix_array_t BmStock_;
+	state_input_matrix_array_t BmStock_;
 	state_vector_array_t       GvStock_;
 
 	state_vector_t QvFinal_;
 	state_matrix_t QmFinal_;
 	state_vector_array_t QvStock_;
 	state_matrix_array_t QmStock_;
-	control_vector_array_t RvStock_;
-	control_matrix_array_t RmStock_;
-	control_matrix_array_t RmInverseStock_;
-	control_feedback_array_t PmStock_;
+	input_vector_array_t RvStock_;
+	input_matrix_array_t RmStock_;
+	input_matrix_array_t RmInverseStock_;
+	input_state_array_t PmStock_;
 
 	std::vector<scalar_array_t> timeTrajectoryStock_;
 	state_vector_array2_t  SvTrajectoryStock_;

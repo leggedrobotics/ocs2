@@ -10,6 +10,8 @@
 
 #include <Eigen/Dense>
 
+#include "ocs2_core/Dimensions.h"
+
 namespace ocs2{
 
 /**
@@ -23,29 +25,46 @@ class SystemBase
 public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
+	typedef Dimensions<STATE_DIM, 0> DIMENSIONS;
+	typedef typename DIMENSIONS::scalar_t         scalar_t;
+	typedef typename DIMENSIONS::state_vector_t	  state_vector_t;
+	typedef typename DIMENSIONS::dynamic_vector_t dynamic_vector_t;
+
     /**
      * Default constructor
      */
 	SystemBase()
-		: numFunctionCalls_(0) {}
+	: numFunctionCalls_(0)
+	{}
 
 	/**
 	 * Default destructor
 	 */
-	virtual ~SystemBase() {}
+	virtual ~SystemBase() = default;
+
+    /**
+     * Default copy constructor
+     */
+	SystemBase(const SystemBase& rhs)
+	: SystemBase()
+	{}
 
 	/**
 	 * Gets the number of function calls.
 	 *
 	 * @return size_t: number of function calls
 	 */
-	size_t getNumFunctionCalls() {return numFunctionCalls_;}
+	size_t getNumFunctionCalls() {
+		return numFunctionCalls_;
+	}
 
 	/**
 	 * Resets the number of function calls to zero.
 	 *
 	 */
-	void resetNumFunctionCalls() {numFunctionCalls_ = 0;}
+	void resetNumFunctionCalls() {
+		numFunctionCalls_ = 0;
+	}
 
 	/**
 	 * Computes the autonomous system dynamics.
@@ -53,10 +72,10 @@ public:
 	 * @param [in] x: Current state.
 	 * @param [out] dxdt: Current state time derivative
 	 */
-	virtual void computeDerivative(
-			const double& t,
-			const Eigen::Matrix<double,STATE_DIM,1>& x,
-			Eigen::Matrix<double,STATE_DIM,1>& dxdt) = 0;
+	virtual void computeFlowMap(
+			const scalar_t& t,
+			const state_vector_t& x,
+			state_vector_t& dxdt) = 0;
 
 	/**
 	 * State map at the transition time
@@ -65,33 +84,32 @@ public:
 	 * @param [in] state: transition state
 	 * @param [out] mappedState: mapped state after transition
 	 */
-	virtual void mapState(
-			const double& time,
-			const Eigen::Matrix<double,STATE_DIM,1>& state,
-			Eigen::Matrix<double,STATE_DIM,1>& mappedState) {
+	virtual void computeJumpMap(
+			const scalar_t& time,
+			const state_vector_t& state,
+			state_vector_t& mappedState) {
 
 		mappedState = state;
 	}
 
 	/**
+	 * Interface method to the guard surfaces.
 	 *
 	 * @param [in] time: transition time
 	 * @param [in] state: transition state
 	 * @param [out] guardSurfacesValue: An array of guard surfaces values
 	 */
 	virtual void computeGuardSurfaces(
-			const double& time,
-			const Eigen::Matrix<double,STATE_DIM,1>& state,
-			std::vector<double>& guardSurfacesValue) {
+			const scalar_t& time,
+			const state_vector_t& state,
+			dynamic_vector_t& guardSurfacesValue) {
 
-		guardSurfacesValue.clear();
-		guardSurfacesValue.push_back(-1);
+		guardSurfacesValue = -dynamic_vector_t::Ones(1);
 	}
 
 protected:
 	size_t numFunctionCalls_;
 
-private:
 };
 
 } // namespace ocs2

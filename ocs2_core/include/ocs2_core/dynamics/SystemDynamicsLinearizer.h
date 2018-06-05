@@ -39,7 +39,7 @@ public:
 	typedef typename Base::state_vector_t state_vector_t;
 	typedef typename Base::state_matrix_t state_matrix_t;
 	typedef typename Base::input_vector_t input_vector_t;
-	typedef typename Base::control_gain_matrix_t control_gain_matrix_t;
+	typedef typename Base::state_input_matrix_t state_input_matrix_t;
 
 	/**
 	 * Constructor
@@ -108,7 +108,7 @@ public:
 		Base::setCurrentStateAndControl(t, x, u);
 
 		if (doubleSidedDerivative_==false)
-			nonlinearSystemPtr_->computeDerivative(Base::t_, Base::x_, Base::u_, f_);
+			nonlinearSystemPtr_->computeFlowMap(Base::t_, Base::x_, Base::u_, f_);
 	}
 
 	/**
@@ -131,7 +131,7 @@ public:
 
 			// get evaluation of f(x,u)
 			state_vector_t fPlusPerturbed;
-			nonlinearSystemPtr_->computeDerivative(Base::t_, xPlusPerturbed, Base::u_, fPlusPerturbed);
+			nonlinearSystemPtr_->computeFlowMap(Base::t_, xPlusPerturbed, Base::u_, fPlusPerturbed);
 
 			if (doubleSidedDerivative_)  {
 
@@ -139,7 +139,7 @@ public:
 				xMinusPerturbed(i) -= h;
 
 				state_vector_t fMinusPerturbed;
-				nonlinearSystemPtr_->computeDerivative(Base::t_, xMinusPerturbed, Base::u_, fMinusPerturbed);
+				nonlinearSystemPtr_->computeFlowMap(Base::t_, xMinusPerturbed, Base::u_, fMinusPerturbed);
 
 				if(isSecondOrderSystem_)  {
 					A.template topLeftCorner<STATE_DIM/2, STATE_DIM/2>().setZero();
@@ -168,7 +168,7 @@ public:
 	 *
 	 * @param [out] B: \f$ B(t) \f$ matrix.
 	 */
-	virtual void getDerivativesControl(control_gain_matrix_t& B) override  {
+	virtual void getDerivativesControl(state_input_matrix_t& B) override  {
 
 		Eigen::Matrix<double, STATE_DIM, INPUT_DIM> tempB;
 
@@ -184,7 +184,7 @@ public:
 
 			// get evaluation of f(x,u)
 			state_vector_t fPlusPerturbed;
-			nonlinearSystemPtr_->computeDerivative(Base::t_, Base::x_, uPlusPerturbed, fPlusPerturbed);
+			nonlinearSystemPtr_->computeFlowMap(Base::t_, Base::x_, uPlusPerturbed, fPlusPerturbed);
 
 			if (doubleSidedDerivative_)  {
 
@@ -192,7 +192,7 @@ public:
 				uMinusPerturbed(i) -= h;
 
 				state_vector_t fMinusPerturbed;
-				nonlinearSystemPtr_->computeDerivative(Base::t_, Base::x_, uMinusPerturbed, fMinusPerturbed);
+				nonlinearSystemPtr_->computeFlowMap(Base::t_, Base::x_, uMinusPerturbed, fMinusPerturbed);
 
 				if(isSecondOrderSystem_)  {
 					tempB.template topRows<STATE_DIM/2>().setZero();

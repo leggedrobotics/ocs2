@@ -18,7 +18,7 @@ void GSLQP<STATE_DIM, INPUT_DIM>::rollout(const scalar_t& initTime,
 		const controller_array_t& controllersStock,
 		std::vector<scalar_array_t>& timeTrajectoriesStock,
 		state_vector_array2_t& stateTrajectoriesStock,
-		control_vector_array2_t& inputTrajectoriesStock)  {
+		input_vector_array2_t& inputTrajectoriesStock)  {
 
 	slqpPtr_->rollout(initTime, initState, finalTime,
 			controllersStock, timeTrajectoriesStock, stateTrajectoriesStock, inputTrajectoriesStock);
@@ -32,7 +32,7 @@ void GSLQP<STATE_DIM, INPUT_DIM>::rollout(const scalar_t& initTime,
 		const controller_array_t& controllersStock,
 		std::vector<scalar_array_t>& timeTrajectoriesStock,
 		state_vector_array2_t& stateTrajectoriesStock,
-		control_vector_array2_t& inputTrajectoriesStock,
+		input_vector_array2_t& inputTrajectoriesStock,
 		std::vector<std::vector<size_t> >& nc1TrajectoriesStock,
 		constraint1_vector_array2_t& EvTrajectoryStock,
 		std::vector<std::vector<size_t> >& nc2TrajectoriesStock,
@@ -54,7 +54,7 @@ template <size_t STATE_DIM, size_t INPUT_DIM>
 void GSLQP<STATE_DIM, INPUT_DIM>::calculateCostFunction(
 		const std::vector<scalar_array_t>& timeTrajectoriesStock,
 		const state_vector_array2_t& stateTrajectoriesStock,
-		const control_vector_array2_t& inputTrajectoriesStock,
+		const input_vector_array2_t& inputTrajectoriesStock,
 		scalar_t& totalCost)  {
 
 	slqpPtr_->calculateCostFunction(timeTrajectoriesStock, stateTrajectoriesStock, inputTrajectoriesStock,
@@ -204,7 +204,7 @@ void GSLQP<STATE_DIM, INPUT_DIM>::getCostFuntionDerivative(Eigen::VectorXd& cost
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
 void GSLQP<STATE_DIM, INPUT_DIM>::getNominalTrajectories(std::vector<scalar_array_t>& nominalTimeTrajectoriesStock,
-		state_vector_array2_t& nominalStateTrajectoriesStock, control_vector_array2_t& nominalInputTrajectoriesStock)   {
+		state_vector_array2_t& nominalStateTrajectoriesStock, input_vector_array2_t& nominalInputTrajectoriesStock)   {
 
 	slqpPtr_->getNominalTrajectories(nominalTimeTrajectoriesStock, nominalStateTrajectoriesStock, nominalInputTrajectoriesStock);
 }
@@ -281,11 +281,11 @@ template <size_t STATE_DIM, size_t INPUT_DIM>
 void GSLQP<STATE_DIM, INPUT_DIM>::calculateSensitivityControllerFeedback(sensitivity_controller_array_t& sensitivityControllersStock) {
 
 
-	LinearInterpolation<control_gain_matrix_t,Eigen::aligned_allocator<control_gain_matrix_t> > BmFunc;
-	LinearInterpolation<control_feedback_t,Eigen::aligned_allocator<control_feedback_t> > PmFunc;
-	LinearInterpolation<control_matrix_t,Eigen::aligned_allocator<control_matrix_t> >     RmInverseFunc;
-	LinearInterpolation<control_feedback_t,Eigen::aligned_allocator<control_feedback_t> > CmProjectedFunc;
-	LinearInterpolation<control_matrix_t,Eigen::aligned_allocator<control_matrix_t> >     DmProjectedFunc;
+	LinearInterpolation<state_input_matrix_t,Eigen::aligned_allocator<state_input_matrix_t> > BmFunc;
+	LinearInterpolation<input_state_t,Eigen::aligned_allocator<input_state_t> > PmFunc;
+	LinearInterpolation<input_matrix_t,Eigen::aligned_allocator<input_matrix_t> >     RmInverseFunc;
+	LinearInterpolation<input_state_t,Eigen::aligned_allocator<input_state_t> > CmProjectedFunc;
+	LinearInterpolation<input_matrix_t,Eigen::aligned_allocator<input_matrix_t> >     DmProjectedFunc;
 
 	for (int i=0; i<numSubsystems_; i++) {
 
@@ -313,20 +313,20 @@ void GSLQP<STATE_DIM, INPUT_DIM>::calculateSensitivityControllerFeedback(sensiti
 
 			const double& time = slqpPtr_->SsTimeTrajectoryStock_[i][k];
 
-			control_gain_matrix_t Bm;
+			state_input_matrix_t Bm;
 			BmFunc.interpolate(time, Bm);
 			size_t greatestLessTimeStampIndex = BmFunc.getGreatestLessTimeStampIndex();
-			control_feedback_t Pm;
+			input_state_t Pm;
 			PmFunc.interpolate(time, Pm, greatestLessTimeStampIndex);
-			control_matrix_t RmInverse;
+			input_matrix_t RmInverse;
 			RmInverseFunc.interpolate(time, RmInverse, greatestLessTimeStampIndex);
-			control_feedback_t CmProjected;
+			input_state_t CmProjected;
 			CmProjectedFunc.interpolate(time, CmProjected, greatestLessTimeStampIndex);
-			control_matrix_t DmProjected;
+			input_matrix_t DmProjected;
 			DmProjectedFunc.interpolate(time, DmProjected, greatestLessTimeStampIndex);
 
-			control_feedback_t Lm  = RmInverse * (Pm + Bm.transpose()*slqpPtr_->SmTrajectoryStock_[i][k]);
-			control_matrix_t DmNullProjection = control_matrix_t::Identity()-DmProjected;
+			input_state_t Lm  = RmInverse * (Pm + Bm.transpose()*slqpPtr_->SmTrajectoryStock_[i][k]);
+			input_matrix_t DmNullProjection = input_matrix_t::Identity()-DmProjected;
 			sensitivityControllersStock[i].k_[k] = -DmNullProjection*Lm - CmProjected;
 
 			// checking the numerical stability of the controller parameters
@@ -351,8 +351,8 @@ template <size_t STATE_DIM, size_t INPUT_DIM>
 void GSLQP<STATE_DIM, INPUT_DIM>::calculateLQSensitivityControllerForward(
 		sensitivity_controller_array_t& sensitivityControllersStock)  {
 
-	LinearInterpolation<control_matrix_t,Eigen::aligned_allocator<control_matrix_t> > RmInverseFunc;
-	LinearInterpolation<control_gain_matrix_t,Eigen::aligned_allocator<control_gain_matrix_t> > BmFunc;
+	LinearInterpolation<input_matrix_t,Eigen::aligned_allocator<input_matrix_t> > RmInverseFunc;
+	LinearInterpolation<state_input_matrix_t,Eigen::aligned_allocator<state_input_matrix_t> > BmFunc;
 	LinearInterpolation<nabla_input_matrix_t> nabla_RvFunc;
 
 	for (int i=0; i<numSubsystems_; i++) {
@@ -375,11 +375,11 @@ void GSLQP<STATE_DIM, INPUT_DIM>::calculateLQSensitivityControllerForward(
 			const double& t = sensitivityControllersStock[i].time_[k];
 
 			// Bm
-			control_gain_matrix_t Bm;
+			state_input_matrix_t Bm;
 			BmFunc.interpolate(t, Bm);
 			size_t greatestLessTimeStampIndex = BmFunc.getGreatestLessTimeStampIndex();
 			// RmInverse
-			control_matrix_t RmInverse;
+			input_matrix_t RmInverse;
 			RmInverseFunc.interpolate(t, RmInverse, greatestLessTimeStampIndex);
 
 			// nabla_Rv
@@ -408,8 +408,8 @@ void GSLQP<STATE_DIM, INPUT_DIM>::calculateBVPSensitivityControllerForward(
 
 	if (switchingTimeIndex < 1)  throw std::runtime_error("The initial switching time (startTime) is fixed and cost function derivative is not defined.");
 
-	LinearInterpolation<control_matrix_t,Eigen::aligned_allocator<control_matrix_t> > RmInverseFunc;
-	LinearInterpolation<control_gain_matrix_t,Eigen::aligned_allocator<control_gain_matrix_t> > BmFunc;
+	LinearInterpolation<input_matrix_t,Eigen::aligned_allocator<input_matrix_t> > RmInverseFunc;
+	LinearInterpolation<state_input_matrix_t,Eigen::aligned_allocator<state_input_matrix_t> > BmFunc;
 
 	sensitivityControllersStock.resize(numSubsystems_);
 
@@ -431,11 +431,11 @@ void GSLQP<STATE_DIM, INPUT_DIM>::calculateBVPSensitivityControllerForward(
 			const double& t = slqpPtr_->SsTimeTrajectoryStock_[i][k];
 
 			// Bm
-			control_gain_matrix_t Bm;
+			state_input_matrix_t Bm;
 			BmFunc.interpolate(t, Bm);
 			size_t greatestLessTimeStampIndex = BmFunc.getGreatestLessTimeStampIndex();
 			// RmInverse
-			control_matrix_t RmInverse;
+			input_matrix_t RmInverse;
 			RmInverseFunc.interpolate(t, RmInverse, greatestLessTimeStampIndex);
 
 //			if (switchingTimeIndex-1==0)
@@ -513,9 +513,9 @@ void GSLQP<STATE_DIM, INPUT_DIM>::approximateNominalLQPSensitivity2SwitchingTime
 	// calculate nabla_q, nabla_Qv, nabla_Rv
 	LinearInterpolation<state_vector_t,Eigen::aligned_allocator<state_vector_t> > QvFunc;
 	LinearInterpolation<state_matrix_t,Eigen::aligned_allocator<state_matrix_t> > QmFunc;
-	LinearInterpolation<control_vector_t,Eigen::aligned_allocator<control_vector_t> > RvFunc;
-	LinearInterpolation<control_matrix_t,Eigen::aligned_allocator<control_matrix_t> > RmFunc;
-	LinearInterpolation<control_feedback_t,Eigen::aligned_allocator<control_feedback_t> > PmFunc;
+	LinearInterpolation<input_vector_t,Eigen::aligned_allocator<input_vector_t> > RvFunc;
+	LinearInterpolation<input_matrix_t,Eigen::aligned_allocator<input_matrix_t> > RmFunc;
+	LinearInterpolation<input_state_t,Eigen::aligned_allocator<input_state_t> > PmFunc;
 
 	nablaqTrajectoryStock_.resize(numSubsystems_);
 	nablaQvTrajectoryStock_.resize(numSubsystems_);
@@ -544,16 +544,16 @@ void GSLQP<STATE_DIM, INPUT_DIM>::approximateNominalLQPSensitivity2SwitchingTime
 
 		for (int k=0; k<N; k++) {
 
-			control_matrix_t Rm;
+			input_matrix_t Rm;
 			RmFunc.interpolate(sensitivityTimeTrajectoryStock_[i][k], Rm);
 			size_t greatestLessTimeStampIndex = RmFunc.getGreatestLessTimeStampIndex();
 			state_vector_t Qv;
 			QvFunc.interpolate(sensitivityTimeTrajectoryStock_[i][k], Qv, greatestLessTimeStampIndex);
 			state_matrix_t Qm;
 			QmFunc.interpolate(sensitivityTimeTrajectoryStock_[i][k], Qm, greatestLessTimeStampIndex);
-			control_vector_t Rv;
+			input_vector_t Rv;
 			RvFunc.interpolate(sensitivityTimeTrajectoryStock_[i][k], Rv, greatestLessTimeStampIndex);
-			control_feedback_t Pm;
+			input_state_t Pm;
 			PmFunc.interpolate(sensitivityTimeTrajectoryStock_[i][k], Pm, greatestLessTimeStampIndex);
 
 			nablaqTrajectoryStock_[i][k]  = Qv.transpose()*nablaStateTrajectoryStock_[i][k] + Rv.transpose()*nablaInputTrajectoryStock_[i][k];
@@ -589,8 +589,8 @@ void GSLQP<STATE_DIM, INPUT_DIM>::calculateStateTimeDerivative()  {
 		for (size_t k=0; k<N; k++) {
 			const scalar_t& 	    t = slqpPtr_->nominalTimeTrajectoriesStock_[i][k];
 			const state_vector_t&   x = slqpPtr_->nominalStateTrajectoriesStock_[i][k];
-			const control_vector_t& u = slqpPtr_->nominalInputTrajectoriesStock_[i][k];
-			slqpPtr_->getSubsystemDynamicsPtrStock()[i]->computeDerivative(t, x, u, nominalStateTimeDerivativeTrajectoriesStock_[i][k]);
+			const input_vector_t& u = slqpPtr_->nominalInputTrajectoriesStock_[i][k];
+			slqpPtr_->getSubsystemDynamicsPtrStock()[i]->computeFlowMap(t, x, u, nominalStateTimeDerivativeTrajectoriesStock_[i][k]);
 
 		}  // end of k loop
 	}  // end of i loop
@@ -695,7 +695,7 @@ void GSLQP<STATE_DIM, INPUT_DIM>::calculateBVPCostFunctionDerivative(
 				&slqpPtr_->nominalTimeTrajectoriesStock_[i], &slqpPtr_->qTrajectoryStock_[i]);
 		LinearInterpolation<state_vector_t, Eigen::aligned_allocator<state_vector_t> > QvFunc(
 				&slqpPtr_->nominalTimeTrajectoriesStock_[i], &slqpPtr_->QvTrajectoryStock_[i]);
-		LinearInterpolation<control_vector_t, Eigen::aligned_allocator<control_vector_t> > RvFunc(
+		LinearInterpolation<input_vector_t, Eigen::aligned_allocator<input_vector_t> > RvFunc(
 				&slqpPtr_->nominalTimeTrajectoriesStock_[i], &slqpPtr_->RvTrajectoryStock_[i]);
 
 		Eigen::VectorXd previousIntermediatecostFunctionDev(numSubsystems_-1);
@@ -708,7 +708,7 @@ void GSLQP<STATE_DIM, INPUT_DIM>::calculateBVPCostFunctionDerivative(
 			state_vector_t Qv;
 			QvFunc.interpolate(t, Qv);
 			size_t greatestLessTimeStampIndex = QvFunc.getGreatestLessTimeStampIndex();
-			control_vector_t Rv;
+			input_vector_t Rv;
 			RvFunc.interpolate(t, Rv, greatestLessTimeStampIndex);
 			eigen_scalar_t q;
 			qFunc.interpolate(t, q, greatestLessTimeStampIndex);

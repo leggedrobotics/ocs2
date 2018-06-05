@@ -49,13 +49,15 @@ public:
 	 * @param [in] timeStampPtr: A pointer to time stamp.
 	 * @param [in] dataPtr: A pointer to the data.
 	 */
-	LinearInterpolation(const std::vector<scalar_t>* timeStampPtr, const std::vector<Data_T,Alloc>* dataPtr)
+	LinearInterpolation(
+			const std::vector<scalar_t>* timeStampPtr,
+			const std::vector<Data_T,Alloc>* dataPtr)
 
-	: index_(0),
-	  zeroFunction_(false),
-	  timeStampSize_(timeStampPtr->size()),
-	  timeStampPtr_(timeStampPtr),
-	  dataPtr_(dataPtr)
+	: index_(0)
+	, zeroFunction_(false)
+	, timeStampSize_(timeStampPtr->size())
+	, timeStampPtr_(timeStampPtr)
+	, dataPtr_(dataPtr)
 	{
 		checkTimeStamp();
 		if (dataPtr_==NULL)  throw std::runtime_error("dataPtr is not initialized.");
@@ -66,18 +68,20 @@ public:
 	 *
 	 * @param [in] arg: Instance of the other class.
 	 */
-	LinearInterpolation(const LinearInterpolation& arg):
-		index_(arg.index_),
-		timeStampSize_(arg.timeStampSize_),
-		zeroFunction_(arg.zeroFunction_),
-		timeStampPtr_(arg.timeStampPtr_),
-		dataPtr_(arg.dataPtr_)
+	LinearInterpolation(const LinearInterpolation& arg)
+
+	: index_(arg.index_)
+	, timeStampSize_(arg.timeStampSize_)
+	, zeroFunction_(arg.zeroFunction_)
+	, timeStampPtr_(arg.timeStampPtr_)
+	, dataPtr_(arg.dataPtr_)
 	{}
 
 	/**
 	 * Reset function
 	 */
 	void reset()  {
+
 		index_ = 0;
 		zeroFunction_ = false;
 	}
@@ -87,7 +91,8 @@ public:
      *
      * @param [in] timeStampPtr: A pointer to time stamp.
      */
-	void setTimeStamp(const std::vector<scalar_t>* timeStampPtr)	{
+	void setTimeStamp(const std::vector<scalar_t>* timeStampPtr) {
+
 		reset();
 		timeStampSize_ = timeStampPtr->size();
 		timeStampPtr_ = timeStampPtr;
@@ -99,7 +104,8 @@ public:
      *
      * @param [in] dataPtr: A pointer to the data.
      */
-	void setData(const std::vector<Data_T,Alloc>* dataPtr)	{
+	void setData(const std::vector<Data_T,Alloc>* dataPtr) {
+
 		reset();
 		dataPtr_ = dataPtr;
 		if (dataPtr_==NULL)  throw std::runtime_error("dataPtr is not initialized.");
@@ -108,7 +114,8 @@ public:
     /**
      * Sets zero
      */
-	void setZero()	{
+	void setZero() {
+
 		reset();
 		zeroFunction_ = true;
 	}
@@ -121,7 +128,10 @@ public:
      * @param [in]  greatestLessTimeStampIndex (optional): The greatest smaller time stamp index. If provided, the interpolation will skip
      * the search scheme and readily calculates the output.
      */
-	void interpolate(const scalar_t& enquiryTime, Data_T& enquiryData, int greatestLessTimeStampIndex = -1) {
+	void interpolate(
+			const scalar_t& enquiryTime,
+			Data_T& enquiryData,
+			int greatestLessTimeStampIndex = -1) {
 
 		if (zeroFunction_==true)  {
 			enquiryData.setZero();
@@ -156,7 +166,10 @@ public:
 	 * Returns the greatest smaller time stamp index found in the last interpolation function call.
 	 * @return The greatest smaller time stamp index.
 	 */
-	int getGreatestLessTimeStampIndex() { return index_; }
+	int getGreatestLessTimeStampIndex() {
+
+		return index_;
+	}
 
 protected:
     /**
@@ -192,8 +205,11 @@ protected:
      * Checks the time stamp
      */
 	void checkTimeStamp() {
-		if (timeStampPtr_==NULL)  	throw std::runtime_error("timeStampPtr is not initialized.");
-		if (timeStampSize_==0)  	throw std::runtime_error("LinearInterpolation is not initialized.");
+
+		if (timeStampPtr_==NULL)
+			throw std::runtime_error("timeStampPtr is not initialized.");
+		if (timeStampSize_==0)
+			throw std::runtime_error("LinearInterpolation is not initialized.");
 	}
 
 private:

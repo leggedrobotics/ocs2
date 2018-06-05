@@ -199,7 +199,7 @@ void ConstraintBaseAD<Derived, STATE_DIM, INPUT_DIM, logic_rules_template_t>::ge
 /******************************************************************************************************/
 template <class Derived, size_t STATE_DIM, size_t INPUT_DIM, class logic_rules_template_t>
 void ConstraintBaseAD<Derived, STATE_DIM, INPUT_DIM, logic_rules_template_t>::getConstraint1DerivativesControl(
-		constraint1_control_matrix_t& D) {
+		constraint1_input_matrix_t& D) {
 
 	D = stateInputJacobian_.template block<input_dim_, MAX_CONSTRAINT_DIM_>(1 + state_dim_, 0).transpose();
 }

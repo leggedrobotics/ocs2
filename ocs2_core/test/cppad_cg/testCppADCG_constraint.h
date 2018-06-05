@@ -34,11 +34,11 @@ bool checkSystemDynamics(
 	typedef typename constraint_t::state_vector_t   		state_vector_t;
 	typedef typename constraint_t::input_vector_t 			input_vector_t;
 	typedef typename constraint_t::state_matrix_t   		state_matrix_t;
-	typedef typename constraint_t::control_gain_matrix_t 	control_gain_matrix_t;
+	typedef typename constraint_t::state_input_matrix_t 	state_input_matrix_t;
 	typedef typename constraint_t::constraint1_vector_t 	constraint1_vector_t;
 	typedef typename constraint_t::constraint2_vector_t 	constraint2_vector_t;
 	typedef typename constraint_t::constraint1_state_matrix_t   constraint1_state_matrix_t;
-	typedef typename constraint_t::constraint1_control_matrix_t constraint1_control_matrix_t;
+	typedef typename constraint_t::constraint1_input_matrix_t constraint1_input_matrix_t;
 	typedef typename constraint_t::constraint2_state_matrix_t   constraint2_state_matrix_t;
 
 	bool success = true;
@@ -100,7 +100,7 @@ bool checkSystemDynamics(
 			success = false;
 		}
 
-		constraint1_control_matrix_t D1, ad_D1;
+		constraint1_input_matrix_t D1, ad_D1;
 		constraint1->getConstraint1DerivativesControl(D1);
 		constraint2->getConstraint1DerivativesControl(ad_D1);
 		if (!D1.topRows(n1).isApprox(ad_D1.topRows(ad_n1), precision)) {
@@ -149,18 +149,18 @@ struct constraint_parameters
 	typedef typename constraint_t::state_vector_t   		state_vector_t;
 	typedef typename constraint_t::input_vector_t 			input_vector_t;
 	typedef typename constraint_t::state_matrix_t   		state_matrix_t;
-	typedef typename constraint_t::control_gain_matrix_t 	control_gain_matrix_t;
+	typedef typename constraint_t::state_input_matrix_t 	state_input_matrix_t;
 	typedef typename constraint_t::constraint1_vector_t 	constraint1_vector_t;
 	typedef typename constraint_t::constraint2_vector_t 	constraint2_vector_t;
 	typedef typename constraint_t::constraint1_state_matrix_t   constraint1_state_matrix_t;
-	typedef typename constraint_t::constraint1_control_matrix_t constraint1_control_matrix_t;
+	typedef typename constraint_t::constraint1_input_matrix_t constraint1_input_matrix_t;
 	typedef typename constraint_t::constraint2_state_matrix_t   constraint2_state_matrix_t;
 
     // Define constraint parameters
 	size_t numStateInputConstraint = input_dim_-1;
 	constraint1_vector_t 			e = constraint1_vector_t::Random();
 	constraint1_state_matrix_t 		C = constraint1_state_matrix_t::Random();
-	constraint1_control_matrix_t 	D = constraint1_control_matrix_t::Random();
+	constraint1_input_matrix_t 	D = constraint1_input_matrix_t::Random();
 
 	size_t numStateOnlyConstraint = input_dim_-1;
 	constraint2_vector_t 		h = constraint2_vector_t::Random();

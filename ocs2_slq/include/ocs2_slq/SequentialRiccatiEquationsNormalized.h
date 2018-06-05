@@ -47,16 +47,16 @@ public:
 	typedef typename DIMENSIONS::eigen_scalar_array_t eigen_scalar_array_t;
 	typedef typename DIMENSIONS::state_vector_t 	  state_vector_t;
 	typedef typename DIMENSIONS::state_vector_array_t state_vector_array_t;
-	typedef typename DIMENSIONS::control_vector_t 		input_vector_t;
-	typedef typename DIMENSIONS::control_vector_array_t input_vector_array_t;
-	typedef typename DIMENSIONS::control_feedback_t 	  control_feedback_t;
-	typedef typename DIMENSIONS::control_feedback_array_t control_feedback_array_t;
+	typedef typename DIMENSIONS::input_vector_t 		input_vector_t;
+	typedef typename DIMENSIONS::input_vector_array_t input_vector_array_t;
+	typedef typename DIMENSIONS::input_state_t 	  input_state_t;
+	typedef typename DIMENSIONS::input_state_array_t input_state_array_t;
 	typedef typename DIMENSIONS::state_matrix_t 	  state_matrix_t;
 	typedef typename DIMENSIONS::state_matrix_array_t state_matrix_array_t;
-	typedef typename DIMENSIONS::control_matrix_t 		control_matrix_t;
-	typedef typename DIMENSIONS::control_matrix_array_t control_matrix_array_t;
-	typedef typename DIMENSIONS::control_gain_matrix_t 		 control_gain_matrix_t;
-	typedef typename DIMENSIONS::control_gain_matrix_array_t control_gain_matrix_array_t;
+	typedef typename DIMENSIONS::input_matrix_t 		input_matrix_t;
+	typedef typename DIMENSIONS::input_matrix_array_t input_matrix_array_t;
+	typedef typename DIMENSIONS::state_input_matrix_t 		 state_input_matrix_t;
+	typedef typename DIMENSIONS::state_input_matrix_array_t state_input_matrix_array_t;
 
 	/**
 	 * Default constructor.
@@ -69,24 +69,24 @@ public:
 	  Sv_(state_vector_t::Zero()),
 	  s_ (eigen_scalar_t::Zero()),
 	  Am_(state_matrix_t::Zero()),
-	  Bm_(control_gain_matrix_t::Zero()),
+	  Bm_(state_input_matrix_t::Zero()),
 	  q_ (eigen_scalar_t::Zero()),
 	  Qv_(state_vector_t::Zero()),
 	  Qm_(state_matrix_t::Zero()),
 	  Rv_(input_vector_t::Zero()),
-	  RmInv_(control_matrix_t::Zero()),
-	  Rm_(control_matrix_t::Zero()),
-	  Pm_(control_feedback_t::Zero()),
+	  RmInv_(input_matrix_t::Zero()),
+	  Rm_(input_matrix_t::Zero()),
+	  Pm_(input_state_t::Zero()),
 	  dSmdt_(state_matrix_t::Zero()),
 	  dSmdz_(state_matrix_t::Zero()),
 	  dSvdt_(state_vector_t::Zero()),
 	  dSvdz_(state_vector_t::Zero()),
 	  dsdt_(eigen_scalar_t::Zero()),
 	  dsdz_(eigen_scalar_t::Zero()),
-	  Lm_(control_feedback_t::Zero()),
+	  Lm_(input_state_t::Zero()),
 	  Lv_(input_vector_t::Zero()),
 	  Am_transposeSm_(state_matrix_t::Zero()),
-	  Lm_transposeRm_(control_gain_matrix_t::Zero())
+	  Lm_transposeRm_(state_input_matrix_t::Zero())
 	{}
 
 	/**
@@ -167,10 +167,10 @@ public:
 	 */
 	void setData(const scalar_t& switchingTimeStart, const scalar_t& switchingTimeFinal,
 			const scalar_array_t* timeStampPtr,
-			const state_matrix_array_t* AmPtr, const control_gain_matrix_array_t* BmPtr,
+			const state_matrix_array_t* AmPtr, const state_input_matrix_array_t* BmPtr,
 			const eigen_scalar_array_t* qPtr, const state_vector_array_t* QvPtr, const state_matrix_array_t* QmPtr,
-			const input_vector_array_t* RvPtr, const control_matrix_array_t* RmInversePtr, const control_matrix_array_t* RmPtr,
-			const control_feedback_array_t* PmPtr,
+			const input_vector_array_t* RvPtr, const input_matrix_array_t* RmInversePtr, const input_matrix_array_t* RmPtr,
+			const input_state_array_t* PmPtr,
 			const size_array_t* eventsPastTheEndIndecesPtr,
 			const eigen_scalar_array_t* qFinalPtr, const state_vector_array_t* QvFinalPtr, const state_matrix_array_t* QmFianlPtr)  {
 
@@ -234,7 +234,7 @@ public:
 	 * @param [in] state: transition state
 	 * @param [out] mappedState: mapped state after transition
 	 */
-	void mapState(const scalar_t& z, const s_vector_t& state, s_vector_t& mappedState) override {
+	void computeJumpMap(const scalar_t& z, const s_vector_t& state, s_vector_t& mappedState) override {
 
 		scalar_t time = switchingTimeFinal_ - scalingFactor_*z;
 
@@ -256,7 +256,7 @@ public:
 	 * @param [in] allSs: Single vector constructed by concatenating Sm, Sv and s.
 	 * @param [out] derivatives: d(allSs)/dz.
 	 */
-	void computeDerivative(const scalar_t& z, const s_vector_t& allSs, s_vector_t& derivatives) {
+	void computeFlowMap(const scalar_t& z, const s_vector_t& allSs, s_vector_t& derivatives) {
 
 		SystemBase<STATE_DIM*(STATE_DIM+1)/2+STATE_DIM+1>::numFunctionCalls_++;
 
@@ -368,40 +368,40 @@ private:
 	scalar_t scalingFactor_;
 
 	LinearInterpolation<state_matrix_t,Eigen::aligned_allocator<state_matrix_t> > AmFunc_;
-	LinearInterpolation<control_gain_matrix_t,Eigen::aligned_allocator<control_gain_matrix_t> > BmFunc_;
+	LinearInterpolation<state_input_matrix_t,Eigen::aligned_allocator<state_input_matrix_t> > BmFunc_;
 
 	LinearInterpolation<eigen_scalar_t,Eigen::aligned_allocator<eigen_scalar_t> > qFunc_;
 	LinearInterpolation<state_vector_t,Eigen::aligned_allocator<state_vector_t> > QvFunc_;
 	LinearInterpolation<state_matrix_t,Eigen::aligned_allocator<state_matrix_t> > QmFunc_;
 	LinearInterpolation<input_vector_t,Eigen::aligned_allocator<input_vector_t> > RvFunc_;
-	LinearInterpolation<control_matrix_t,Eigen::aligned_allocator<control_matrix_t> > RmInverseFunc_;
-	LinearInterpolation<control_matrix_t,Eigen::aligned_allocator<control_matrix_t> > RmFunc_;
-	LinearInterpolation<control_feedback_t,Eigen::aligned_allocator<control_feedback_t> > PmFunc_;
+	LinearInterpolation<input_matrix_t,Eigen::aligned_allocator<input_matrix_t> > RmInverseFunc_;
+	LinearInterpolation<input_matrix_t,Eigen::aligned_allocator<input_matrix_t> > RmFunc_;
+	LinearInterpolation<input_state_t,Eigen::aligned_allocator<input_state_t> > PmFunc_;
 
 
-	// members required only in computeDerivative()
+	// members required only in computeFlowMap()
 	state_matrix_t Sm_;
 	state_vector_t Sv_;
 	eigen_scalar_t s_;
 	state_matrix_t Am_;
-	control_gain_matrix_t Bm_;
+	state_input_matrix_t Bm_;
 	eigen_scalar_t q_;
 	state_vector_t Qv_;
 	state_matrix_t Qm_;
 	input_vector_t Rv_;
-	control_matrix_t RmInv_;
-	control_matrix_t Rm_;
-	control_feedback_t Pm_;
+	input_matrix_t RmInv_;
+	input_matrix_t Rm_;
+	input_state_t Pm_;
 	state_matrix_t dSmdt_;
 	state_matrix_t dSmdz_;
 	state_vector_t dSvdt_;
 	state_vector_t dSvdz_;
 	eigen_scalar_t dsdt_;
 	eigen_scalar_t dsdz_;
-	control_feedback_t Lm_;
+	input_state_t Lm_;
 	input_vector_t     Lv_;
 	state_matrix_t Am_transposeSm_;
-	control_gain_matrix_t Lm_transposeRm_;
+	state_input_matrix_t Lm_transposeRm_;
 
 	std::vector<double> eventTime_;
 	const eigen_scalar_array_t* qFinalPtr_;

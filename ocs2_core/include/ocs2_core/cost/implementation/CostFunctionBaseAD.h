@@ -186,7 +186,7 @@ void CostFunctionBaseAD<Derived, STATE_DIM, INPUT_DIM, logic_rules_template_t>::
 /******************************************************************************************************/
 template <class Derived, size_t STATE_DIM, size_t INPUT_DIM, class logic_rules_template_t>
 void CostFunctionBaseAD<Derived, STATE_DIM, INPUT_DIM, logic_rules_template_t>::getIntermediateCostSecondDerivativeInput(
-		control_matrix_t& dLduu) {
+		input_matrix_t& dLduu) {
 
 	dLduu = intermediateHessian_.template block<input_dim_, input_dim_>(1+state_dim_, 1+state_dim_);
 }
@@ -196,7 +196,7 @@ void CostFunctionBaseAD<Derived, STATE_DIM, INPUT_DIM, logic_rules_template_t>::
 /******************************************************************************************************/
 template <class Derived, size_t STATE_DIM, size_t INPUT_DIM, class logic_rules_template_t>
 void CostFunctionBaseAD<Derived, STATE_DIM, INPUT_DIM, logic_rules_template_t>::getIntermediateCostDerivativeInputState(
-		control_feedback_t& dLdux) {
+		input_state_t& dLdux) {
 
 	dLdux = intermediateHessian_.template block<input_dim_, state_dim_>(1+state_dim_, 1);
 }

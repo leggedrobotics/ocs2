@@ -35,16 +35,16 @@ public:
 	typedef typename DIMENSIONS::eigen_scalar_array_t eigen_scalar_array_t;
 	typedef typename DIMENSIONS::state_vector_t 	  state_vector_t;
 	typedef typename DIMENSIONS::state_vector_array_t state_vector_array_t;
-	typedef typename DIMENSIONS::control_vector_t 		control_vector_t;
-	typedef typename DIMENSIONS::control_vector_array_t control_vector_array_t;
-	typedef typename DIMENSIONS::control_feedback_t 	  control_feedback_t;
-	typedef typename DIMENSIONS::control_feedback_array_t control_feedback_array_t;
+	typedef typename DIMENSIONS::input_vector_t 		input_vector_t;
+	typedef typename DIMENSIONS::input_vector_array_t input_vector_array_t;
+	typedef typename DIMENSIONS::input_state_t 	  input_state_t;
+	typedef typename DIMENSIONS::input_state_array_t input_state_array_t;
 	typedef typename DIMENSIONS::state_matrix_t 	  state_matrix_t;
 	typedef typename DIMENSIONS::state_matrix_array_t state_matrix_array_t;
-	typedef typename DIMENSIONS::control_matrix_t 		control_matrix_t;
-	typedef typename DIMENSIONS::control_matrix_array_t control_matrix_array_t;
-	typedef typename DIMENSIONS::control_gain_matrix_t 		 control_gain_matrix_t;
-	typedef typename DIMENSIONS::control_gain_matrix_array_t control_gain_matrix_array_t;
+	typedef typename DIMENSIONS::input_matrix_t 		input_matrix_t;
+	typedef typename DIMENSIONS::input_matrix_array_t input_matrix_array_t;
+	typedef typename DIMENSIONS::state_input_matrix_t 		 state_input_matrix_t;
+	typedef typename DIMENSIONS::state_input_matrix_array_t state_input_matrix_array_t;
 
 	/**
 	 * Default constructor.
@@ -102,10 +102,10 @@ public:
 	 * @param [in] Pm: The trajectory of \f$ P_m \f$ .
 	 */
 	void setData(const scalar_t& timeStart, const scalar_t& timeFinal,
-			const state_matrix_t& Am, const control_gain_matrix_t& Bm,
+			const state_matrix_t& Am, const state_input_matrix_t& Bm,
 			const eigen_scalar_t& q, const state_vector_t& Qv, const state_matrix_t& Qm,
-			const control_vector_t& Rv, const control_matrix_t& Rm,
-			const control_feedback_t& Pm)  {
+			const input_vector_t& Rv, const input_matrix_t& Rm,
+			const input_state_t& Pm)  {
 
 		timeStart_ = timeStart;
 		timeFinal_ = timeFinal;
@@ -126,7 +126,7 @@ public:
 	 * @param [in] state: Single vector constructed by concatenating Sm, Sv and s.
 	 * @param [out] derivative: d(state)/dt.
 	 */
-	void computeDerivative(const scalar_t& t,
+	void computeFlowMap(const scalar_t& t,
 			const Eigen::Matrix<double,S_DIM_,1>& state,
 			Eigen::Matrix<double,S_DIM_,1>& derivative) {
 
@@ -190,14 +190,14 @@ private:
 	scalar_t timeFinal_;
 
 	state_matrix_t Am_;
-	control_gain_matrix_t Bm_;
+	state_input_matrix_t Bm_;
 
 	eigen_scalar_t q_;
 	state_vector_t Qv_;
 	state_matrix_t Qm_;
-	control_vector_t Rv_;
-	control_matrix_t Rm_;
-	control_feedback_t Pm_;
+	input_vector_t Rv_;
+	input_matrix_t Rm_;
+	input_state_t Pm_;
 
 };
 

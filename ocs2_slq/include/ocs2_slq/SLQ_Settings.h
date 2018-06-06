@@ -28,49 +28,50 @@ public:
 	/**
 	 * Default constructor.
 	 */
-	SLQ_Settings() :
-		maxNumIterationsSLQ_(15),
-		minLearningRateGSLQP_(0.05),
-		maxLearningRateGSLQP_(1.0),
-		lineSearchContractionRate_(0.5),
-		minRelCostGSLQP_(1e-3),
-		stateConstraintPenaltyCoeff_(0.0),
-		stateConstraintPenaltyBase_(1.0),
-		meritFunctionRho_(1.0),
-		constraintStepSize_(1.0),
-		displayInfo_(false),
-		displayShortSummary_(false),
-		warmStartGSLQP_(false),
-		useLQForDerivatives_(false),
+	SLQ_Settings()
+	: maxNumIterationsSLQ_(15)
+	, minLearningRateGSLQP_(0.05)
+	, maxLearningRateGSLQP_(1.0)
+	, lineSearchContractionRate_(0.5)
+	, minRelCostGSLQP_(1e-3)
+	, stateConstraintPenaltyCoeff_(0.0)
+	, stateConstraintPenaltyBase_(1.0)
+	, meritFunctionRho_(1.0)
+	, constraintStepSize_(1.0)
+	, displayInfo_(false)
+	, displayShortSummary_(false)
+	, warmStartGSLQP_(false)
+	, useLQForDerivatives_(false)
 
-		absTolODE_(1e-9),
-		relTolODE_(1e-6),
-		maxNumStepsPerSecond_(5000),
-		minTimeStep_(1e-3),
-		minAbsConstraint1ISE_(1e-3),
-		minRelConstraint1ISE_(1e-3),
+	, absTolODE_(1e-9)
+	, relTolODE_(1e-6)
+	, maxNumStepsPerSecond_(5000)
+	, minTimeStep_(1e-3)
+	, minAbsConstraint1ISE_(1e-3)
+	, minRelConstraint1ISE_(1e-3)
 
-		simulationIsConstrained_(false),
-		noStateConstraints_(false),
+	, simulationIsConstrained_(false)
+	, noStateConstraints_(false)
+	, useMakePSD_(true)
 
-		displayGradientDescent_(false),
-		tolGradientDescent_(1e-2),
-		acceptableTolGradientDescent_(1e-1),
-		maxIterationGradientDescent_(20),
-		minLearningRateNLP_(0.05),
-		maxLearningRateNLP_(1.0),
-		useAscendingLineSearchNLP_(true),
-		minEventTimeDifference_(0.0),
+	, displayGradientDescent_(false)
+	, tolGradientDescent_(1e-2)
+	, acceptableTolGradientDescent_(1e-1)
+	, maxIterationGradientDescent_(20)
+	, minLearningRateNLP_(0.05)
+	, maxLearningRateNLP_(1.0)
+	, useAscendingLineSearchNLP_(true)
+	, minEventTimeDifference_(0.0)
 
-		RiccatiIntegratorType_(RICCATI_INTEGRATOR_TYPE::ODE45),
-		adams_integrator_dt_(0.001),
+	, RiccatiIntegratorType_(RICCATI_INTEGRATOR_TYPE::ODE45)
+	, adams_integrator_dt_(0.001)
 
-		useMultiThreading_(false),
-		nThreads_(4),
-		debugPrintMP_(false),
-		lsStepsizeGreedy_(true),
-		checkNumericalStability_(true),
-		useRiccatiSolver_(true)
+	, useMultiThreading_(false)
+	, nThreads_(4)
+	, debugPrintMP_(false)
+	, lsStepsizeGreedy_(true)
+	, checkNumericalStability_(true)
+	, useRiccatiSolver_(true)
 	{}
 
 	/**
@@ -139,10 +140,14 @@ public:
 	/** This value determines the maximum permitted relative ISE (Integral of Square Error) for constrained type-1.*/
 	double minRelConstraint1ISE_;
 
+	/** Skips calculation of the error correction term (Sve) if the constrained simulation is used for forward simulation.*/
 	bool simulationIsConstrained_;
 
 	/** Set true, if a problem does not have state-only constraints. This significantly decreases the runtime of the algorithm. */
 	bool noStateConstraints_;
+
+	/** If true SLQ makes sure that PSD matrices remain PSD which increases the numerical stability at the expense of extra computation.*/
+	bool useMakePSD_;
 
 	/** This value determines to display the log output of GSLQ. */
 	bool displayGradientDescent_;
@@ -350,6 +355,14 @@ inline void SLQ_Settings::loadSettings(const std::string& filename, bool verbose
 	}
 	catch (const std::exception& e){
 		if (verbose)  std::cerr << " #### Option loader : option 'noStateConstraints' .................. " << noStateConstraints_ << "   \t(default)" << std::endl;
+	}
+
+	try	{
+		useMakePSD_ = pt.get<bool>("slq.useMakePSD");
+		if (verbose)  std::cerr << " #### Option loader : option 'useMakePSD' .......................... " << useMakePSD_ << std::endl;
+	}
+	catch (const std::exception& e){
+		if (verbose)  std::cerr << " #### Option loader : option 'useMakePSD' .......................... " << useMakePSD_ << "   \t(default)" << std::endl;
 	}
 
 	try	{

@@ -81,7 +81,7 @@ GLQP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::GLQP(
 
 		typedef Eigen::aligned_allocator<riccati_equations_t> riccati_equations_alloc_t;
 		riccatiEquationsPtrStock_.push_back(std::move(
-				std::allocate_shared<riccati_equations_t, riccati_equations_alloc_t>(riccati_equations_alloc_t()) ));
+				std::allocate_shared<riccati_equations_t, riccati_equations_alloc_t>(riccati_equations_alloc_t(), settings_.useMakePSD_) ));
 
 		switch(settings_.RiccatiIntegratorType_) {
 
@@ -427,7 +427,8 @@ void GLQP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::approximateLQWorker(
 	costFunctionsPtrStock_[workerIndex]->stateControlDerivative(PmStock_[i][k]);
 
 	// making sure that constrained Qm is PSD
-	makePSD(QmStock_[i][k]);
+	if (settings_.useMakePSD_==true)
+		makePSD(QmStock_[i][k]);
 
 	if (settings_.displayInfo_ && k%2==1) {
 		std::cout<< "stateOperatingPoint[" << i << "][" << k << "]: \n" << stateOperatingPointsStock_[i][k].transpose() << std::endl;
@@ -455,7 +456,8 @@ void GLQP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::approximateLQWorker(
 			costFunctionsPtrStock_[workerIndex]->terminalCostStateSecondDerivative(QmFinalStock_[i][ke]);
 
 			// making sure that Qm remains PSD
-			makePSD(QmFinalStock_[i][ke]);
+			if (settings_.useMakePSD_==true)
+				makePSD(QmFinalStock_[i][ke]);
 
 			if (settings_.displayInfo_) {
 				std::cout<< "qFinal["  << i << "][" << k << "]: \t" << qFinalStock_[i][ke] << std::endl;
@@ -560,8 +562,8 @@ bool GLQP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::makePSD(Eigen::MatrixBase<Derive
 
 	if (hasNegativeEigenValue)
 		squareMatrix = eig.eigenvectors() * lambda.asDiagonal() * eig.eigenvectors().inverse();
-//	else
-//		squareMatrix = 0.5*(squareMatrix+squareMatrix.transpose()).eval();
+	else
+		squareMatrix = 0.5*(squareMatrix+squareMatrix.transpose()).eval();
 
 	return hasNegativeEigenValue;
 }

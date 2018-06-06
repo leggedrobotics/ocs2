@@ -145,12 +145,14 @@ void LQP<STATE_DIM, INPUT_DIM, NUM_Subsystems>::approximateOptimalControlProblem
 		}
 
 		// making sure that Qm is PSD
-		makePSD(QmStock_[i]);
+		if (options_.useMakePSD_==true)
+			makePSD(QmStock_[i]);
 
 		if (i==NUM_Subsystems-1)  {
 			subsystemCostFunctionsPtrStock_[i]->getTerminalCostSecondDerivativeState(QmFinal_);
 			// making sure that Qm is PSD
-			makePSD(QmFinal_);
+			if(options_.useMakePSD_==true)
+				makePSD(QmFinal_);
 
 			if (runAsInitializer_==true)
 				QvFinal_.setZero();
@@ -240,7 +242,7 @@ template <size_t STATE_DIM, size_t INPUT_DIM, size_t NUM_Subsystems>
 void LQP<STATE_DIM, INPUT_DIM, NUM_Subsystems>::SolveRiccatiEquations()  {
 
 	// general bvp solver
-	SolveBVP<STATE_DIM, INPUT_DIM> bvpSolver;
+	SolveBVP<STATE_DIM, INPUT_DIM> bvpSolver(options_.useMakePSD_);
 
 	// final value for the last Riccati equations
 	state_vector_t SvFinal = state_vector_t::Zero();

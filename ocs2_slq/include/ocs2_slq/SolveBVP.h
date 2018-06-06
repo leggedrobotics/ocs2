@@ -57,15 +57,15 @@ public:
 	/**
 	 * Default constructor.
 	 */
-	SolveBVP()
-	: bvpEquationsPtr_(new BVP()),
-	  bvpOdeSolver_(bvpEquationsPtr_)
+	SolveBVP(const bool& useMakePSD)
+	: bvpEquationsPtr_(new BVP(useMakePSD))
+	, bvpOdeSolver_(bvpEquationsPtr_)
 	{}
 
 	/**
 	 * Default destructor.
 	 */
-	~SolveBVP()  {}
+	~SolveBVP() = default;
 
     /**
      * Sets coefficients of the model.

@@ -57,12 +57,14 @@ public:
 	/**
 	 * Default constructor.
 	 */
-	BVPEquations() {}
+	BVPEquations(const bool& useMakePSD)
+	: useMakePSD_(useMakePSD)
+	{}
 
 	/**
 	 * Default destructor.
 	 */
-	~BVPEquations() {}
+	~BVPEquations() = default;
 
 	/**
 	 * Transcribe symmetric matrix Mm and vector Sv into a single vector.
@@ -157,7 +159,10 @@ public:
 		convert2Matrix(MSv, Mm, Sv);
 
 		// numerical consideration
-		makePSD(Mm);
+		if (useMakePSD_==true)
+			bool hasNegativeEigenValue = makePSD(Mm);
+		else
+			Mm += state_state_matrix_t::Identity()*(1e-5);
 
 		state_state_matrix_t Am;
 		AmFunc_.interpolate(t, Am);
@@ -230,6 +235,7 @@ public:
 	}
 
 private:
+	bool useMakePSD_;
 	double startTime_;
 	double finalTime_;
 

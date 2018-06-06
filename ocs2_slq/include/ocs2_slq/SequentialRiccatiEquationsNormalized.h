@@ -61,38 +61,39 @@ public:
 	/**
 	 * Default constructor.
 	 */
-	SequentialRiccatiEquationsNormalized()
-	: switchingTimeStart_(0.0),
-	  switchingTimeFinal_(1.0),
-	  scalingFactor_(1.0),
-	  Sm_(state_matrix_t::Zero()),
-	  Sv_(state_vector_t::Zero()),
-	  s_ (eigen_scalar_t::Zero()),
-	  Am_(state_matrix_t::Zero()),
-	  Bm_(state_input_matrix_t::Zero()),
-	  q_ (eigen_scalar_t::Zero()),
-	  Qv_(state_vector_t::Zero()),
-	  Qm_(state_matrix_t::Zero()),
-	  Rv_(input_vector_t::Zero()),
-	  RmInv_(input_matrix_t::Zero()),
-	  Rm_(input_matrix_t::Zero()),
-	  Pm_(input_state_t::Zero()),
-	  dSmdt_(state_matrix_t::Zero()),
-	  dSmdz_(state_matrix_t::Zero()),
-	  dSvdt_(state_vector_t::Zero()),
-	  dSvdz_(state_vector_t::Zero()),
-	  dsdt_(eigen_scalar_t::Zero()),
-	  dsdz_(eigen_scalar_t::Zero()),
-	  Lm_(input_state_t::Zero()),
-	  Lv_(input_vector_t::Zero()),
-	  Am_transposeSm_(state_matrix_t::Zero()),
-	  Lm_transposeRm_(state_input_matrix_t::Zero())
+	SequentialRiccatiEquationsNormalized(const bool& useMakePSD)
+	: useMakePSD_(useMakePSD)
+	, switchingTimeStart_(0.0)
+	, switchingTimeFinal_(1.0)
+	, scalingFactor_(1.0)
+	, Sm_(state_matrix_t::Zero())
+	, Sv_(state_vector_t::Zero())
+	, s_ (eigen_scalar_t::Zero())
+	, Am_(state_matrix_t::Zero())
+	, Bm_(state_input_matrix_t::Zero())
+	, q_ (eigen_scalar_t::Zero())
+	, Qv_(state_vector_t::Zero())
+	, Qm_(state_matrix_t::Zero())
+	, Rv_(input_vector_t::Zero())
+	, RmInv_(input_matrix_t::Zero())
+	, Rm_(input_matrix_t::Zero())
+	, Pm_(input_state_t::Zero())
+	, dSmdt_(state_matrix_t::Zero())
+	, dSmdz_(state_matrix_t::Zero())
+	, dSvdt_(state_vector_t::Zero())
+	, dSvdz_(state_vector_t::Zero())
+	, dsdt_(eigen_scalar_t::Zero())
+	, dsdz_(eigen_scalar_t::Zero())
+	, Lm_(input_state_t::Zero())
+	, Lv_(input_vector_t::Zero())
+	, Am_transposeSm_(state_matrix_t::Zero())
+	, Lm_transposeRm_(state_input_matrix_t::Zero())
 	{}
 
 	/**
 	 * Default destructor.
 	 */
-	~SequentialRiccatiEquationsNormalized() {}
+	~SequentialRiccatiEquationsNormalized() = default;
 
 	/**
 	 * Transcribe symmetric matrix Sm, vector Sv and scalar s into a single vector
@@ -266,8 +267,10 @@ public:
 		convert2Matrix(allSs, Sm_, Sv_, s_);
 
 		// numerical consideration
-//		bool hasNegativeEigenValue = makePSD(Sm_);
-		Sm_ += state_matrix_t::Identity()*(1e-5);
+		if(useMakePSD_==true)
+			bool hasNegativeEigenValue = makePSD(Sm_);
+		else
+			Sm_ += state_matrix_t::Identity()*(1e-5);
 
 		AmFunc_.interpolate(t, Am_);
 		size_t greatestLessTimeStampIndex = AmFunc_.getGreatestLessTimeStampIndex();
@@ -363,6 +366,7 @@ protected:
 	}
 
 private:
+	bool useMakePSD_;
 	scalar_t switchingTimeStart_;
 	scalar_t switchingTimeFinal_;
 	scalar_t scalingFactor_;

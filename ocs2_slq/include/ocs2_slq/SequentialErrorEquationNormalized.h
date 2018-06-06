@@ -39,12 +39,14 @@ public:
 	/**
 	 * Default constructor.
 	 */
-	SequentialErrorEquationNormalized() {}
+	SequentialErrorEquationNormalized(const bool& useMakePSD)
+	: useMakePSD_(useMakePSD)
+	{}
 
 	/**
 	 * Default destructor.
 	 */
-	~SequentialErrorEquationNormalized() {}
+	~SequentialErrorEquationNormalized() = default;
 
 	/**
 	 * Sets coefficients of the model.
@@ -110,6 +112,7 @@ public:
 
 
 private:
+	bool useMakePSD_;
 	scalar_t switchingTimeStart_;
 	scalar_t switchingTimeFinal_;
 

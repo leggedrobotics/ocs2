@@ -49,12 +49,14 @@ public:
 	/**
 	 * Default constructor.
 	 */
-	PartialRiccatiEquations() {}
+	PartialRiccatiEquations(const bool& useMakePSD)
+	: useMakePSD_(useMakePSD)
+	{}
 
 	/**
 	 * Default destructor.
 	 */
-	~PartialRiccatiEquations() {}
+	~PartialRiccatiEquations() = default;
 
 	/**
 	 * Transcribe symmetric matrix Sm, vector Sv and scalar s into a single vector
@@ -135,6 +137,12 @@ public:
 		eigen_scalar_t s;
 		convert2Matrix(state, Sm, Sv, s);
 
+		// numerical consideration
+		if(useMakePSD_==true)
+			bool hasNegativeEigenValue = makePSD(Sm);
+		else
+			Sm += state_matrix_t::Identity()*(1e-5);
+
 		state_matrix_t dSmdt, dSmdz;
 		state_vector_t dSvdt, dSvdz;
 		eigen_scalar_t dsdt, dsdz;
@@ -149,9 +157,6 @@ public:
 		dSvdz = (timeFinal_-timeStart_)*dSvdt;
 		dsdz  = (timeFinal_-timeStart_)*dsdt;
 
-//		if (makePSD(dSmdz))
-//			std::cout << "time: " << t << std::endl;
-
 		convert2Vector(dSmdz, dSvdz, dsdz, derivative);
 	}
 
@@ -165,7 +170,8 @@ protected:
 	template <typename Derived>
 	bool makePSD(Eigen::MatrixBase<Derived>& squareMatrix) {
 
-		if (squareMatrix.rows() != squareMatrix.cols())  throw std::runtime_error("Not a square matrix: makePSD() method is for square matrix.");
+		if (squareMatrix.rows() != squareMatrix.cols())
+			throw std::runtime_error("Not a square matrix: makePSD() method is for square matrix.");
 
 		Eigen::SelfAdjointEigenSolver<Derived> eig(squareMatrix);
 		Eigen::VectorXd lambda = eig.eigenvalues();
@@ -179,13 +185,14 @@ protected:
 
 		if (hasNegativeEigenValue)
 			squareMatrix = eig.eigenvectors() * lambda.asDiagonal() * eig.eigenvectors().inverse();
-		//	else
-		//		squareMatrix = 0.5*(squareMatrix+squareMatrix.transpose()).eval();
+		else
+			squareMatrix = 0.5*(squareMatrix+squareMatrix.transpose()).eval();
 
 		return hasNegativeEigenValue;
 	}
 
 private:
+	bool useMakePSD_;
 	scalar_t timeStart_;
 	scalar_t timeFinal_;
 

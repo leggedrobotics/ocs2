@@ -142,15 +142,15 @@ SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::SLQ_BASE(
 
 		typedef Eigen::aligned_allocator<riccati_equations_t> riccati_equations_alloc_t;
 		riccatiEquationsPtrStock_.push_back( std::move(
-				std::allocate_shared<riccati_equations_t, riccati_equations_alloc_t>(riccati_equations_alloc_t()) ) );
+				std::allocate_shared<riccati_equations_t, riccati_equations_alloc_t>(riccati_equations_alloc_t(), settings_.useMakePSD_) ) );
 
 		typedef Eigen::aligned_allocator<error_equation_t> error_equation_alloc_t;
 		errorEquationPtrStock_.push_back( std::move(
-				std::allocate_shared<error_equation_t, error_equation_alloc_t>(error_equation_alloc_t()) ) );
+				std::allocate_shared<error_equation_t, error_equation_alloc_t>(error_equation_alloc_t(), settings_.useMakePSD_) ) );
 
 		typedef Eigen::aligned_allocator<slq_riccati_equations_t> slq_riccati_equations_alloc_t;
 		slqRiccatiEquationsPtrStock_.push_back( std::move(
-				std::allocate_shared<slq_riccati_equations_t, slq_riccati_equations_alloc_t>(slq_riccati_equations_alloc_t()) ) );
+				std::allocate_shared<slq_riccati_equations_t, slq_riccati_equations_alloc_t>(slq_riccati_equations_alloc_t(), settings_.useMakePSD_) ) );
 
 		switch(settings_.RiccatiIntegratorType_) {
 
@@ -993,7 +993,6 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::approximateOptimalControlPro
 /******************************************************************************************************/
 /******************************************************************************************************/
 // FIXME: optize the temporal variables: (e.g. Eigen::MatrixXd Cm = CmTrajectoryStock_[i][k].topRows(nc1);)
-// FIXME: makePSD is active
 template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
 void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::approximateLQWorker(
 		size_t workerIndex,
@@ -1132,7 +1131,8 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::approximateLQWorker(
 	}
 
 	// making sure that constrained Qm is PSD
-	makePSD(QmConstrainedTrajectoryStock_[i][k]);
+	if (settings_.useMakePSD_==true)
+		makePSD(QmConstrainedTrajectoryStock_[i][k]);
 
 	// if a switch took place calculate switch related variables
 	size_t NE = nominalEventsPastTheEndIndecesStock_[i].size();
@@ -1171,7 +1171,8 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::approximateLQWorker(
 			}
 
 			// making sure that Qm remains PSD
-			makePSD(QmFinalStock_[i][ke]);
+			if (settings_.useMakePSD_==true)
+				makePSD(QmFinalStock_[i][ke]);
 
 			break;
 		}
@@ -2050,11 +2051,11 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::fullRiccatiBackwardSweepWork
 		deltaT = nominalTimeTrajectoriesStock_[partitionIndex][k] - nominalTimeTrajectoriesStock_[partitionIndex][k+1];
 
 		if (eventDetected==true) {
-//			makePSD(QmFinalStock_[partitionIndex][remainingEvents]);
+//			if (settings_.useMakePSD_==true)  makePSD(QmFinalStock_[partitionIndex][remainingEvents]);
 			SmTrajectoryStock_[partitionIndex][k]  = SmTrajectoryStock_[partitionIndex][k+1] + QmFinalStock_[partitionIndex][remainingEvents];
 
 		} else {
-//			makePSD(QmConstrainedTrajectoryStock_[partitionIndex][k]);
+//			if (settings_.useMakePSD_==true)  makePSD(QmConstrainedTrajectoryStock_[partitionIndex][k]);
 			_H.template topLeftCorner<STATE_DIM,STATE_DIM>() = AmConstrainedTrajectoryStock_[partitionIndex][k] -
 					BmConstrainedTrajectoryStock_[partitionIndex][k]*RmInverseTrajectoryStock_[partitionIndex][k]*PmConstrainedTrajectoryStock_[partitionIndex][k];
 			_H.template topRightCorner<STATE_DIM,STATE_DIM>() = 0.5 * BmConstrainedTrajectoryStock_[partitionIndex][k] *
@@ -2156,6 +2157,8 @@ bool SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::makePSD(Eigen::MatrixBase<De
 	} else {
 		squareMatrix = 0.5*(squareMatrix+squareMatrix.transpose()).eval();
 	}
+
+	return hasNegativeEigenValue;
 }
 
 /******************************************************************************************************/

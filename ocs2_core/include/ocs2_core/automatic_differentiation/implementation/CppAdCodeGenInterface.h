@@ -50,6 +50,7 @@ CppAdCodeGenInterface<DOMAIN_DIM, RANGE_DIM, SCALAR_T>::CppAdCodeGenInterface(
     , rowsHessian_(0)
     , colsHessian_(0)
     , relatedDependent_(0)
+    , compiler_()
     , hessianWeight_(range_vector_t::Zero(BASE::range_dim_))
 {
 //	CppadParallelSetting::initParallel(2 + 1);
@@ -245,8 +246,9 @@ void CppAdCodeGenInterface<DOMAIN_DIM, RANGE_DIM, SCALAR_T>::createModels(
     	p2.saveSourcesTo(modelName + "_sources");
 
     // compile and load dynamic liberary
-    CppAD::cg::GccCompiler<SCALAR_T> compiler;
-    dynamicLib_.reset(p.createDynamicLibrary(compiler));
+    CppAD::cg::GccCompiler<SCALAR_T> compiler_;
+
+    dynamicLib_.reset(p.createDynamicLibrary(compiler_));
 
     // get model
     model_.reset(dynamicLib_->model(modelName));

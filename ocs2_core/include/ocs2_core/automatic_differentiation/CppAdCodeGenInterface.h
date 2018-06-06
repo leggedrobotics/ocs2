@@ -92,6 +92,33 @@ public:
 			domain_matrix_t& hessian,
 			size_t outputIndex=0) override;
 
+
+	void getCompileFlags(std::vector<std::string>& cFlags) const {
+		cFlags = compiler_.getCompileFlags();
+	}
+
+	void setCompileFlags(const std::vector<std::string>& cFlags) {
+		compiler_.setCompileFlags(cFlags);
+	}
+
+	void addCompileFlag(const std::vector<std::string>& cFlags) {
+		for (const std::string& flag : cFlags)
+			compiler_.addCompileFlags(flag);
+	}
+
+	void getCompileLibFlags(std::vector<std::string>& cFlags) const {
+		cFlags = compiler_.getCompileLibFlags();
+	}
+
+	void setCompileLibFlags(const std::vector<std::string>& cFlags) {
+		compiler_.setCompileLibFlags(cFlags);
+	}
+
+	void addCompileLibFlags(const std::vector<std::string>& cFlags) {
+		for (const std::string& flag : cFlags)
+			compiler_.addCompileLibFlags(flag);
+	}
+
 private:
 	typedef Eigen::Matrix<SCALAR_T, 1, Eigen::Dynamic> 	dynamic_vector_t;
 	typedef Eigen::Map<dynamic_vector_t> 				dynamic_vector_map_t;
@@ -111,6 +138,7 @@ private:
 	std::vector<size_t> colsHessian_;
 	std::vector<std::set<size_t> > relatedDependent_;
 
+	CppAD::cg::GccCompiler<SCALAR_T> compiler_;
     std::unique_ptr<CppAD::cg::DynamicLib<SCALAR_T>> dynamicLib_;
     std::unique_ptr<CppAD::cg::GenericModel<SCALAR_T>> model_;
 

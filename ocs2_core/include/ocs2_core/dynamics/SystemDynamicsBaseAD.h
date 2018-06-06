@@ -288,6 +288,23 @@ public:
 	virtual void getGuardSurfacesDerivativeInput(dynamic_input_matrix_t& D_u_gamma) override;
 
 
+	void getCompileFlags(std::vector<std::string>& cFlags) {
+		flowMapADInterfacePtr_->getCompileFlags(cFlags);
+	}
+
+	void setCompileFlags(const std::vector<std::string>& cFlags) {
+		flowMapADInterfacePtr_->setCompileFlags(cFlags);
+		jumpMapADInterfacePtr_->setCompileFlags(cFlags);
+		guardSurfacesADInterfacePtr_->setCompileFlags(cFlags);
+	}
+
+	void addCompileFlag(const std::vector<std::string>& cFlags) {
+		flowMapADInterfacePtr_->addCompileFlags(cFlags);
+		jumpMapADInterfacePtr_->addCompileFlags(cFlags);
+		guardSurfacesADInterfacePtr_->addCompileFlags(cFlags);
+	}
+
+
 protected:
 	typedef CppAdCodeGenInterface<domain_dim_, state_dim_, scalar_t> map_ad_interface_t;
 	typedef CppAdCodeGenInterface<domain_dim_, num_modes_, scalar_t> guard_ad_interface_t;

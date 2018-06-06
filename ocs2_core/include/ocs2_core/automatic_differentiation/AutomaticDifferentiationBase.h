@@ -14,7 +14,7 @@
 
 namespace ocs2{
 
-template <size_t DOMAIN_DIM, size_t RANGE_DIM, typename SCALAR_T>
+template <int DOMAIN_DIM, int RANGE_DIM, typename SCALAR_T>
 class AutomaticDifferentiationBase
 {
 public:
@@ -27,16 +27,21 @@ public:
 	typedef Eigen::Matrix<SCALAR_T, RANGE_DIM, DOMAIN_DIM>	range_domain_matrix_t;
 	typedef Eigen::Matrix<SCALAR_T, DOMAIN_DIM, RANGE_DIM>	domain_range_matrix_t;
 
-	AutomaticDifferentiationBase() = default;
+	AutomaticDifferentiationBase(
+			const int& domainDim = DOMAIN_DIM,
+			const int& rangeDim  = RANGE_DIM)
+	: domain_dim_(domainDim)
+	, range_dim_(rangeDim)
+	{}
 
 	virtual ~AutomaticDifferentiationBase() = default;
 
 	inline size_t domain() {
-		return DOMAIN_DIM;
+		return domain_dim_;
 	}
 
 	inline size_t range() {
-		return RANGE_DIM;
+		return range_dim_;
 	}
 
 	virtual void computeForwardModel(bool computeForwardModel) = 0;
@@ -46,6 +51,13 @@ public:
 	virtual void computeHessianModel(bool computeHessianModel) = 0;
 
 	virtual AutomaticDifferentiationBase* clone() const = 0;
+
+	virtual void createModels(
+			const int& domainDim,
+			const int& rangeDim,
+			const std::string& modelName,
+			const std::string& libraryFolder = "",
+			const bool verbose = true) = 0;
 
 	virtual void createModels(
 			const std::string& modelName,
@@ -85,8 +97,8 @@ protected:
 		rowsJacobian.clear();
 		colsJacobian.clear();
 
-		for (size_t i=0; i<RANGE_DIM; i++)
-			for (size_t j=0; j<DOMAIN_DIM; j++)
+		for (size_t i=0; i<range_dim_; i++)
+			for (size_t j=0; j<domain_dim_; j++)
 				if (sparsityPattern(i,j)>0) {
 					rowsJacobian.push_back(i);
 					colsJacobian.push_back(j);
@@ -98,13 +110,19 @@ protected:
 		rowsHessian.clear();
 		colsHessian.clear();
 
-		for (size_t i=0; i<DOMAIN_DIM; i++)
-			for (size_t j=i; j<DOMAIN_DIM; j++)
+		for (size_t i=0; i<domain_dim_; i++)
+			for (size_t j=i; j<domain_dim_; j++)
 				if (sparsityPatternSum(i)>0 && sparsityPatternSum(j)>0) {
 					rowsHessian.push_back(i);
 					colsHessian.push_back(j);
 				}
 	}
+
+	/*
+	 * Variables
+	 */
+	int domain_dim_;
+	int range_dim_;
 
 };
 

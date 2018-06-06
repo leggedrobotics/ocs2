@@ -96,7 +96,7 @@ public:
 			const SCALAR_T& time,
 			const Eigen::Matrix<SCALAR_T, STATE_DIM, 1>& state,
 			const Eigen::Matrix<SCALAR_T, INPUT_DIM, 1>& input,
-			Eigen::Matrix<SCALAR_T, Eigen::Dynamic, 1>& constraintVector);
+			Eigen::Matrix<SCALAR_T, Eigen::Dynamic, 1>& constraintVector) {}
 
 	/**
 	 * Get the number of state-input active equality constriants.
@@ -104,7 +104,10 @@ public:
 	 * @param [in] time: time.
 	 * @return number of state-input active equality constriants.
 	 */
-	virtual size_t numStateInputConstraint(const scalar_t& time) override = 0;
+	virtual size_t numStateInputConstraint(const scalar_t& time) override {
+
+		return 0;
+	}
 
 	/**
 	 * Interface method to the state-only equality constriants. This method should be implemented by the derived class.
@@ -118,7 +121,7 @@ public:
 	void stateOnlyConstraint(
 			const SCALAR_T& time,
 			const Eigen::Matrix<SCALAR_T, STATE_DIM, 1>& state,
-			Eigen::Matrix<SCALAR_T, Eigen::Dynamic, 1>& constraintVector);
+			Eigen::Matrix<SCALAR_T, Eigen::Dynamic, 1>& constraintVector) {}
 
 	/**
 	 * Get the number of state-only active equality constriants.
@@ -126,7 +129,10 @@ public:
 	 * @param [in] time: time.
 	 * @return number of state-only active equality constriants.
 	 */
-	virtual size_t numStateOnlyConstraint(const scalar_t& time) override = 0;
+	virtual size_t numStateOnlyConstraint(const scalar_t& time) override {
+
+		return 0;
+	}
 
 	/**
 	 * Interface method to the state-only final equality constriants. This method should be implemented by the derived class.
@@ -140,7 +146,7 @@ public:
 	void stateOnlyFinalConstraint(
 			const SCALAR_T& time,
 			const Eigen::Matrix<SCALAR_T, STATE_DIM, 1>& state,
-			Eigen::Matrix<SCALAR_T, Eigen::Dynamic, 1>& constraintVector);
+			Eigen::Matrix<SCALAR_T, Eigen::Dynamic, 1>& constraintVector) {}
 
 	/**
 	 * Get the number of final state-only active equality constriants.
@@ -148,7 +154,10 @@ public:
 	 * @param [in] time: time.
 	 * @return number of final state-only active equality constriants.
 	 */
-	virtual size_t numStateOnlyFinalConstraint(const scalar_t& time) override = 0;
+	virtual size_t numStateOnlyFinalConstraint(const scalar_t& time) override {
+
+		return 0;
+	}
 
 	/**
 	 * creates the forward model, the Jacobian model, and the Hessian model.

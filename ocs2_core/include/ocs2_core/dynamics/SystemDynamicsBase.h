@@ -28,7 +28,7 @@ namespace ocs2{
  * @tparam INPUT_DIM: Dimension of the control input space.
  * @tparam LOGIC_RULES_T: Logic Rules type (default NullLogicRules).
  */
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T=NullLogicRules<STATE_DIM,INPUT_DIM>>
+template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T=NullLogicRules<STATE_DIM,INPUT_DIM>, size_t NUM_MODES=1>
 class SystemDynamicsBase
 		: public DerivativesBase<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>
 		, public ControlledSystemBase<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>
@@ -38,9 +38,9 @@ public:
 
 	enum
 	{
+		num_modes_	= NUM_MODES,
 		state_dim_ 	= STATE_DIM,
 		input_dim_ 	= INPUT_DIM,
-		domain_dim_	= 1 + state_dim_ + input_dim_,
 	};
 
 	typedef std::shared_ptr<SystemDynamicsBase<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> > Ptr;
@@ -50,23 +50,22 @@ public:
 	typedef ControlledSystemBase<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> 	DYN_BASE;
 
 	typedef Dimensions<STATE_DIM, INPUT_DIM> DIMENSIONS;
-	typedef typename DIMENSIONS::scalar_t 						scalar_t;
-	typedef typename DIMENSIONS::state_vector_t   				state_vector_t;
-	typedef typename DIMENSIONS::input_vector_t 				input_vector_t;
-	typedef typename DIMENSIONS::state_matrix_t 				state_matrix_t;
-	typedef typename DIMENSIONS::state_input_matrix_t 			state_input_matrix_t;
-	typedef typename DIMENSIONS::constraint1_state_matrix_t   	constraint1_state_matrix_t;
-	typedef typename DIMENSIONS::constraint1_input_matrix_t 	constraint1_input_matrix_t;
-	typedef typename DIMENSIONS::constraint2_state_matrix_t   	constraint2_state_matrix_t;
-
-	typedef Eigen::Matrix<scalar_t, Eigen::Dynamic, 1> 			dynamic_vector_t;
-	typedef Eigen::Matrix<scalar_t, Eigen::Dynamic, STATE_DIM> 	dynamic_state_vector_t;
-	typedef Eigen::Matrix<scalar_t, Eigen::Dynamic, INPUT_DIM> 	dynamic_input_vector_t;
+	typedef typename DIMENSIONS::scalar_t 				scalar_t;
+	typedef typename DIMENSIONS::state_vector_t   		state_vector_t;
+	typedef typename DIMENSIONS::input_vector_t 		input_vector_t;
+	typedef typename DIMENSIONS::state_matrix_t 		state_matrix_t;
+	typedef typename DIMENSIONS::state_input_matrix_t 	state_input_matrix_t;
+	typedef typename DIMENSIONS::dynamic_vector_t		dynamic_vector_t;
+	typedef typename DIMENSIONS::dynamic_state_matrix_t	dynamic_state_matrix_t;
+	typedef typename DIMENSIONS::dynamic_input_matrix_t dynamic_input_matrix_t;
 
 	/**
 	 * Default constructor
 	 */
-	SystemDynamicsBase() = default;
+	SystemDynamicsBase() {
+		if (NUM_MODES==0)
+			throw std::runtime_error("The system should have at least one mode.");
+	}
 
 	/**
 	 * Copy constructor
@@ -125,20 +124,25 @@ public:
 	virtual void computeJumpMap(
 			const scalar_t& time,
 			const state_vector_t& state,
-			const input_vector_t& input,
-			state_vector_t& jumpedState) = 0;
+			state_vector_t& jumpedState)  {
+
+		DYN_BASE::computeJumpMap(time, state, jumpedState);
+	}
 
 	/**
 	 * Interface method to the guard surfaces.
 	 *
 	 * @param [in] time: transition time
 	 * @param [in] state: transition state
-	 * @param [out] guardSurfacesValue: An array of guard surfaces values
+	 * @param [out] guardSurfacesValue: A vector of guard surfaces values
 	 */
 	virtual void computeGuardSurfaces(
 			const scalar_t& time,
 			const state_vector_t& state,
-			dynamic_vector_t& guardSurfacesValue) = 0;
+			dynamic_vector_t& guardSurfacesValue) {
+
+		DYN_BASE::computeGuardSurfaces(time, state, guardSurfacesValue);
+	}
 
 
     /**
@@ -151,7 +155,10 @@ public:
 	virtual void setCurrentStateAndControl(
 			const scalar_t& time,
 			const state_vector_t& state,
-			const input_vector_t& input) = 0;
+			const input_vector_t& input) {
+
+		DEV_BASE::setCurrentStateAndControl(time, state, input);
+	}
 
 
 	/**
@@ -160,7 +167,10 @@ public:
 	 *
 	 * @param [out] df: \f$ \frac{\partial f}{\partial t} \f$ matrix.
 	 */
-	virtual void getFlowMapDerivativeTime(state_vector_t& df) = 0;
+	virtual void getFlowMapDerivativeTime(state_vector_t& df) {
+
+		DEV_BASE::getFlowMapDerivativeTime(df);
+	}
 
 	/**
 	 * The A matrix at a given operating point for the linearized system flow map.
@@ -185,7 +195,10 @@ public:
 	 *
 	 * @param [out] dg: \f$ \frac{\partial g}{\partial t} \f$ matrix.
 	 */
-	virtual void getJumpMapDerivativeTime(state_vector_t& dg) = 0;
+	virtual void getJumpMapDerivativeTime(state_vector_t& dg) {
+
+		DEV_BASE::getJumpMapDerivativeTime(dg);
+	}
 
 	/**
 	 * The G matrix at a given operating point for the linearized system jump map.
@@ -193,7 +206,10 @@ public:
 	 *
 	 * @param [out] G: \f$ G \f$ matrix.
 	 */
-	virtual void getJumpMapDerivativeState(state_matrix_t& G) = 0;
+	virtual void getJumpMapDerivativeState(state_matrix_t& G) {
+
+		DEV_BASE::getJumpMapDerivativeState(G);
+	}
 
 	/**
 	 * The H matrix at a given operating point for the linearized system jump map.
@@ -201,7 +217,10 @@ public:
 	 *
 	 * @param [out] H: \f$ H \f$ matrix.
 	 */
-	virtual void getJumpMapDerivativeInput(state_input_matrix_t& H) = 0;
+	virtual void getJumpMapDerivativeInput(state_input_matrix_t& H) {
+
+		DEV_BASE::getJumpMapDerivativeInput(H);
+	}
 
 
 	/**
@@ -209,21 +228,30 @@ public:
 	 *
 	 * @param [out] D_t_gamma: Derivative of the guard surfaces w.r.t. time.
 	 */
-	virtual void getGuardSurfacesDerivativeTime(dynamic_vector_t& D_t_gamma) = 0;
+	virtual void getGuardSurfacesDerivativeTime(dynamic_vector_t& D_t_gamma) {
+
+		DEV_BASE::getGuardSurfacesDerivativeTime(D_t_gamma);
+	}
 
 	/**
 	 * Get at a given operating point the derivative of the guard surfaces w.r.t. input vector.
 	 *
 	 * @param [out] D_x_gamma: Derivative of the guard surfaces w.r.t. state vector.
 	 */
-	virtual void getGuardSurfacesDerivativeState(dynamic_state_matrix_t& D_x_gamma) = 0;
+	virtual void getGuardSurfacesDerivativeState(dynamic_state_matrix_t& D_x_gamma) {
+
+		DEV_BASE::getGuardSurfacesDerivativeState(D_x_gamma);
+	}
 
 	/**
 	 * Get at a given operating point the derivative of the guard surfaces w.r.t. input vector.
 	 *
 	 * @param [out] D_u_gamma: Derivative of the guard surfaces w.r.t. input vector.
 	 */
-	virtual void getGuardSurfacesDerivativeInput(dynamic_input_matrix_t& D_u_gamma) = 0;
+	virtual void getGuardSurfacesDerivativeInput(dynamic_input_matrix_t& D_u_gamma) {
+
+		DEV_BASE::getGuardSurfacesDerivativeInput(D_u_gamma);
+	}
 
 protected:
 

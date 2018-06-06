@@ -50,46 +50,6 @@ typename ConstraintBaseAD<Derived, STATE_DIM, INPUT_DIM, logic_rules_template_t>
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <class Derived, size_t STATE_DIM, size_t INPUT_DIM, class logic_rules_template_t>
-template <typename SCALAR_T>
-void ConstraintBaseAD<Derived, STATE_DIM, INPUT_DIM, logic_rules_template_t>::stateInputConstraint(
-		const SCALAR_T& time,
-		const Eigen::Matrix<SCALAR_T, STATE_DIM, 1>& state,
-		const Eigen::Matrix<SCALAR_T, INPUT_DIM, 1>& input,
-		Eigen::Matrix<SCALAR_T, Eigen::Dynamic, 1>& constraintVector) {
-
-	static_cast<Derived *>(this)->stateInputConstraint<SCALAR_T>(time, state, input, constraintVector);
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-template <class Derived, size_t STATE_DIM, size_t INPUT_DIM, class logic_rules_template_t>
-template <typename SCALAR_T>
-void ConstraintBaseAD<Derived, STATE_DIM, INPUT_DIM, logic_rules_template_t>::stateOnlyConstraint(
-		const SCALAR_T& time,
-		const Eigen::Matrix<SCALAR_T, STATE_DIM, 1>& state,
-		Eigen::Matrix<SCALAR_T, Eigen::Dynamic, 1>& constraintVector) {
-
-	static_cast<Derived *>(this)->stateOnlyConstraint<SCALAR_T>(time, state, constraintVector);
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-template <class Derived, size_t STATE_DIM, size_t INPUT_DIM, class logic_rules_template_t>
-template <typename SCALAR_T>
-void ConstraintBaseAD<Derived, STATE_DIM, INPUT_DIM, logic_rules_template_t>::stateOnlyFinalConstraint(
-		const SCALAR_T& time,
-		const Eigen::Matrix<SCALAR_T, STATE_DIM, 1>& state,
-		Eigen::Matrix<SCALAR_T, Eigen::Dynamic, 1>& constraintVector) {
-
-	static_cast<Derived *>(this)->stateOnlyFinalConstraint<SCALAR_T>(time, state, constraintVector);
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-template <class Derived, size_t STATE_DIM, size_t INPUT_DIM, class logic_rules_template_t>
 void ConstraintBaseAD<Derived, STATE_DIM, INPUT_DIM, logic_rules_template_t>::createModels(
 		const std::string& modelName,
 		const std::string& libraryFolder) {
@@ -237,7 +197,7 @@ void ConstraintBaseAD<Derived, STATE_DIM, INPUT_DIM, logic_rules_template_t>::st
 	Eigen::Matrix<ad_scalar_t, INPUT_DIM, 1> u = tapedInput.segment(1+STATE_DIM, INPUT_DIM);
 
 	g1.resize(MAX_CONSTRAINT_DIM_);
-	stateInputConstraint<ad_scalar_t>(t, x, u, g1);
+	static_cast<Derived *>(this)->template stateInputConstraint<ad_scalar_t>(t, x, u, g1);
 
 	if (g1.size()>MAX_CONSTRAINT_DIM_)
 		throw std::runtime_error("The max number of constraints is exceeded!");
@@ -257,7 +217,7 @@ void ConstraintBaseAD<Derived, STATE_DIM, INPUT_DIM, logic_rules_template_t>::st
 	Eigen::Matrix<ad_scalar_t, STATE_DIM, 1> x = tapedInput.segment(1, STATE_DIM);
 
 	g2.resize(MAX_CONSTRAINT_DIM_);
-	stateOnlyConstraint<ad_scalar_t>(t, x, g2);
+	static_cast<Derived *>(this)->template stateOnlyConstraint<ad_scalar_t>(t, x, g2);
 
 	if (g2.size()>MAX_CONSTRAINT_DIM_)
 		throw std::runtime_error("The max number of constraints is exceeded!");
@@ -277,7 +237,7 @@ void ConstraintBaseAD<Derived, STATE_DIM, INPUT_DIM, logic_rules_template_t>::st
 	Eigen::Matrix<ad_scalar_t, STATE_DIM, 1> x = tapedInput.segment(1, STATE_DIM);
 
 	g2Final.resize(MAX_CONSTRAINT_DIM_);
-	stateOnlyFinalConstraint<ad_scalar_t>(t, x, g2Final);
+	static_cast<Derived *>(this)->template stateOnlyFinalConstraint<ad_scalar_t>(t, x, g2Final);
 
 	if (g2Final.size()>MAX_CONSTRAINT_DIM_)
 		throw std::runtime_error("The max number of constraints is exceeded!");

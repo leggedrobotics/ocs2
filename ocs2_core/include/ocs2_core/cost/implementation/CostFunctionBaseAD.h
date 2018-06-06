@@ -57,7 +57,7 @@ void CostFunctionBaseAD<Derived, STATE_DIM, INPUT_DIM, logic_rules_template_t>::
 		const Eigen::Matrix<SCALAR_T, INPUT_DIM, 1>& input,
 		SCALAR_T& costValue) {
 
-	static_cast<Derived *>(this)->intermediateCostFunction<SCALAR_T>(time, state, input, costValue);
+	throw std::runtime_error("intermediateCostFunction() method should be implemented by the derived class.");
 }
 
 /******************************************************************************************************/
@@ -70,7 +70,7 @@ void CostFunctionBaseAD<Derived, STATE_DIM, INPUT_DIM, logic_rules_template_t>::
 		const Eigen::Matrix<SCALAR_T, STATE_DIM, 1>& state,
 		SCALAR_T& costValue) {
 
-	static_cast<Derived *>(this)->terminalCostFunction<SCALAR_T>(time, state, costValue);
+	throw std::runtime_error("terminalCostFunction() method should be implemented by the derived class.");
 }
 
 /******************************************************************************************************/
@@ -249,7 +249,7 @@ void CostFunctionBaseAD<Derived, STATE_DIM, INPUT_DIM, logic_rules_template_t>::
 
 	costValue.resize(1);
 	ad_scalar_t& costValueScalar = costValue(0);
-	intermediateCostFunction<ad_scalar_t>(t, x, u, costValueScalar);
+	static_cast<Derived *>(this)->template intermediateCostFunction<ad_scalar_t>(t, x, u, costValueScalar);
 }
 
 /******************************************************************************************************/
@@ -265,7 +265,7 @@ void CostFunctionBaseAD<Derived, STATE_DIM, INPUT_DIM, logic_rules_template_t>::
 
 	costValue.resize(1);
 	ad_scalar_t& costValueScalar = costValue(0);
-	terminalCostFunction<ad_scalar_t>(t, x, costValueScalar);
+	static_cast<Derived *>(this)->template terminalCostFunction<ad_scalar_t>(t, x, costValueScalar);
 }
 
 /******************************************************************************************************/

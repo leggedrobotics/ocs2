@@ -15,7 +15,7 @@
 
 namespace ocs2{
 
-template <size_t DOMAIN_DIM, size_t RANGE_DIM, typename SCALAR_T=double>
+template <int DOMAIN_DIM, int RANGE_DIM, typename SCALAR_T=double>
 class CppAdCodeGenInterface : public AutomaticDifferentiationBase<DOMAIN_DIM, RANGE_DIM, SCALAR_T>
 {
 public:
@@ -41,9 +41,13 @@ public:
 			const ad_funtion_t& adFunction,
 			const range_domain_matrix_t& sparsityPattern);
 
-	~CppAdCodeGenInterface() {
-//		CppadParallelSetting::resetParallel();
-	}
+	CppAdCodeGenInterface(
+			const int& domainDim,
+			const int& rangeDim,
+			const ad_funtion_t& adFunction,
+			const range_domain_matrix_t& sparsityPattern);
+
+	~CppAdCodeGenInterface() = default;
 
 	CppAdCodeGenInterface(const CppAdCodeGenInterface& rhs);
 
@@ -56,6 +60,13 @@ public:
 	void computeHessianModel(bool computeHessianModel) override;
 
 	void createModels(
+			const std::string& modelName,
+			const std::string& libraryFolder = "",
+			const bool verbose = true) override;
+
+	void createModels(
+			const int& domainDim,
+			const int& rangeDim,
 			const std::string& modelName,
 			const std::string& libraryFolder = "",
 			const bool verbose = true) override;

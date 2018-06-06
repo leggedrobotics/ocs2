@@ -11,7 +11,7 @@
 #include <Eigen/Dense>
 
 #include <ocs2_core/Dimensions.h>
-#include <ocs2_core/dynamics/SystemBase.h>
+#include <ocs2_core/integration/ODE_Base.h>
 #include <ocs2_core/misc/LinearInterpolation.h>
 
 namespace ocs2{
@@ -23,7 +23,7 @@ namespace ocs2{
  * @tparam INPUT_DIM: Dimension of the control input space.
  */
 template <size_t STATE_DIM, size_t INPUT_DIM>
-class SequentialErrorEquation : public SystemBase<STATE_DIM>
+class SequentialErrorEquation : public ODE_Base<STATE_DIM>
 {
 public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW

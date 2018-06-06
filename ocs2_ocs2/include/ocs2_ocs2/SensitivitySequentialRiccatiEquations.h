@@ -12,7 +12,7 @@
 #include <Eigen/Dense>
 
 #include <ocs2_core/Dimensions.h>
-#include <ocs2_core/dynamics/SystemBase.h>
+#include <ocs2_core/integration/ODE_Base.h>
 #include <ocs2_core/misc/LinearInterpolation.h>
 
 namespace ocs2{
@@ -23,7 +23,7 @@ namespace ocs2{
  * @tparam INPUT_DIM
  */
 template <size_t STATE_DIM, size_t INPUT_DIM>
-class SensitivitySequentialRiccatiEquations : public SystemBase<Eigen::Dynamic>
+class SensitivitySequentialRiccatiEquations : public ODE_Base<Eigen::Dynamic>
 {
 public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW

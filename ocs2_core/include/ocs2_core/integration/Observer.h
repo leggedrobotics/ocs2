@@ -13,7 +13,7 @@
 #include <vector>
 
 #include "ocs2_core/integration/SystemEventHandler.h"
-#include "ocs2_core/dynamics/SystemBase.h"
+#include "ocs2_core/integration/ODE_Base.h"
 
 
 namespace ocs2{

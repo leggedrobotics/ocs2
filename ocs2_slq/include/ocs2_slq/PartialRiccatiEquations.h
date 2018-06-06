@@ -10,7 +10,7 @@
 
 #include <Eigen/Dense>
 
-#include <ocs2_core/dynamics/SystemBase.h>
+#include <ocs2_core/integration/ODE_Base.h>
 
 namespace ocs2{
 
@@ -21,7 +21,7 @@ namespace ocs2{
  * @tparam INPUT_DIM: Dimension of the control input space.
  */
 template <size_t STATE_DIM, size_t INPUT_DIM>
-class PartialRiccatiEquations : public SystemBase<STATE_DIM*STATE_DIM+STATE_DIM+1>
+class PartialRiccatiEquations : public ODE_Base<STATE_DIM*STATE_DIM+STATE_DIM+1>
 {
 public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW

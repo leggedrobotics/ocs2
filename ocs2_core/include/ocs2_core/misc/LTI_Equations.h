@@ -8,7 +8,7 @@
 #ifndef OCS2_LTI_EQUATIONS_H_
 #define OCS2_LTI_EQUATIONS_H_
 
-#include "ocs2_core/dynamics/SystemBase.h"
+#include "ocs2_core/integration/ODE_Base.h"
 
 namespace ocs2{
 
@@ -18,7 +18,7 @@ namespace ocs2{
  * @tparam STATE_DIM: Dimension of the state space.
  */
 template <int STATE_DIM>
-class LTI_Equations : public SystemBase<STATE_DIM>
+class LTI_Equations : public ODE_Base<STATE_DIM>
 {
 public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW

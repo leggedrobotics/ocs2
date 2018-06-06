@@ -23,7 +23,7 @@ namespace ocs2{
  * @tparam INPUT_DIM
  */
 template <size_t STATE_DIM, size_t INPUT_DIM>
-class RolloutSensitivityEquations : public SystemBase<Eigen::Dynamic>
+class RolloutSensitivityEquations : public ODE_Base<Eigen::Dynamic>
 {
 public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW

@@ -1,12 +1,12 @@
 /*
- * SystemBase.h
+ * ODE_Base.h
  *
  *  Created on: Jan 3, 2016
  *      Author: farbod
  */
 
-#ifndef SYSTEMBASE_OCS2_H_
-#define SYSTEMBASE_OCS2_H_
+#ifndef ODE_BASE_OCS2_H_
+#define ODE_BASE_OCS2_H_
 
 #include <Eigen/Dense>
 
@@ -20,7 +20,7 @@ namespace ocs2{
  * @tparam STATE_DIM: Dimension of the state space.
  */
 template <int STATE_DIM>
-class SystemBase
+class ODE_Base
 {
 public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
@@ -33,20 +33,20 @@ public:
     /**
      * Default constructor
      */
-	SystemBase()
+	ODE_Base()
 	: numFunctionCalls_(0)
 	{}
 
 	/**
 	 * Default destructor
 	 */
-	virtual ~SystemBase() = default;
+	virtual ~ODE_Base() = default;
 
     /**
      * Default copy constructor
      */
-	SystemBase(const SystemBase& rhs)
-	: SystemBase()
+	ODE_Base(const ODE_Base& rhs)
+	: ODE_Base()
 	{}
 
 	/**
@@ -114,4 +114,4 @@ protected:
 
 } // namespace ocs2
 
-#endif /* SYSTEMBASE_H_ */
+#endif /* ODE_BASE_OCS2_H_ */

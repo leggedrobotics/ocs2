@@ -14,7 +14,7 @@
 #include <Eigen/Dense>
 
 #include "ocs2_core/Dimensions.h"
-#include "ocs2_core/dynamics/SystemBase.h"
+#include "ocs2_core/integration/ODE_Base.h"
 #include "ocs2_core/misc/LinearInterpolation.h"
 #include "ocs2_core/logic/rules/LogicRulesBase.h"
 #include "ocs2_core/logic/rules/NullLogicRules.h"
@@ -30,7 +30,7 @@ namespace ocs2{
  * @tparam LOGIC_RULES_T: Logic Rules type (default NullLogicRules).
  */
 template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T=NullLogicRules<STATE_DIM,INPUT_DIM>>
-class ControlledSystemBase : public SystemBase<STATE_DIM>
+class ControlledSystemBase : public ODE_Base<STATE_DIM>
 {
 public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
@@ -40,7 +40,7 @@ public:
 	typedef std::shared_ptr<ControlledSystemBase<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> > Ptr;
 	typedef std::shared_ptr<const ControlledSystemBase<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> > ConstPtr;
 
-	typedef SystemBase<STATE_DIM> BASE;
+	typedef ODE_Base<STATE_DIM> BASE;
 
 	typedef Dimensions<STATE_DIM, INPUT_DIM> DIMENSIONS;
 	typedef typename DIMENSIONS::scalar_t 				scalar_t;

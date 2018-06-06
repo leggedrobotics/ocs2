@@ -16,7 +16,7 @@
 #include <ocs2_core/integration/Integrator.h>
 #include <ocs2_core/misc/LinearInterpolation.h>
 
-#include "ocs2_slq/BVPEquations.h"
+#include "ocs2_slq/bvp_solver/BVPEquations.h"
 
 namespace ocs2{
 

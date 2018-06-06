@@ -30,22 +30,23 @@ public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
 	enum {
-		/** If STATE_DIM=n, Then: n(n+1)/2 entries from triangular matrix Sm, n entries from vector Sv and +1 one from a scalar */
+		/** If STATE_DIM=n, Then: n(n+1)/2 entries from triangular matrix Sm, n entries from vector Sv_ and +1 one from a scalar */
 		Full_ODE_VECTOR_DIM = STATE_DIM*STATE_DIM+STATE_DIM
 	};
 
-	typedef Eigen::Matrix<double, Full_ODE_VECTOR_DIM, 1> full_ode_vector_t;
+	typedef double scalar_t;
+	typedef Eigen::Matrix<scalar_t, Full_ODE_VECTOR_DIM, 1> full_ode_vector_t;
 	typedef std::vector<full_ode_vector_t, Eigen::aligned_allocator<full_ode_vector_t> > full_ode_vector_array_t;
 
-	typedef Eigen::Matrix<double, 1, 1> eigen_scalar_t;
-	typedef Eigen::Matrix<double, STATE_DIM, 1> state_vector_t;
-	typedef Eigen::Matrix<double, INPUT_DIM, 1> input_vector_t;
-	typedef Eigen::Matrix<double, STATE_DIM, STATE_DIM> state_state_matrix_t;
-	typedef Eigen::Matrix<double, INPUT_DIM, INPUT_DIM> input_input_matrix_t;
-	typedef Eigen::Matrix<double, INPUT_DIM, STATE_DIM> input_state_matrix_t;
-	typedef Eigen::Matrix<double, STATE_DIM, INPUT_DIM> state_input_matrix_t;
+	typedef Eigen::Matrix<scalar_t, 1, 1> eigen_scalar_t;
+	typedef Eigen::Matrix<scalar_t, STATE_DIM, 1> state_vector_t;
+	typedef Eigen::Matrix<scalar_t, INPUT_DIM, 1> input_vector_t;
+	typedef Eigen::Matrix<scalar_t, STATE_DIM, STATE_DIM> state_state_matrix_t;
+	typedef Eigen::Matrix<scalar_t, INPUT_DIM, INPUT_DIM> input_input_matrix_t;
+	typedef Eigen::Matrix<scalar_t, INPUT_DIM, STATE_DIM> input_state_matrix_t;
+	typedef Eigen::Matrix<scalar_t, STATE_DIM, INPUT_DIM> state_input_matrix_t;
 
-	typedef std::vector<double> double_array_t;
+	typedef std::vector<scalar_t> scalar_array_t;
 	typedef std::vector<eigen_scalar_t, Eigen::aligned_allocator<eigen_scalar_t> > eigen_scalar_array_t;
 	typedef std::vector<state_vector_t, Eigen::aligned_allocator<state_vector_t> > state_vector_array_t;
 	typedef std::vector<input_vector_t, Eigen::aligned_allocator<input_vector_t> > input_vector_array_t;
@@ -67,29 +68,29 @@ public:
 	~BVPEquations() = default;
 
 	/**
-	 * Transcribe symmetric matrix Mm and vector Sv into a single vector.
+	 * Transcribe symmetric matrix Mm_ and vector Sv_ into a single vector.
 	 *
-     * @param [in] Mm: \f$ M_m \f$
-     * @param [in] Sv: \f$ S_v \f$
-     * @param [out] MSv: Single vector constructed by concatenating Mm and Sv.
+     * @param [in] Mm_: \f$ M_m \f$
+     * @param [in] Sv_: \f$ S_v \f$
+     * @param [out] MSv: Single vector constructed by concatenating Mm_ and Sv_.
      */
-	static void convert2Vector(const state_state_matrix_t& Mm, const state_vector_t& Sv, full_ode_vector_t& MSv)  {
+	static void convert2Vector(const state_state_matrix_t& Mm_, const state_vector_t& Sv_, full_ode_vector_t& MSv)  {
 
-		MSv << Eigen::Map<const Eigen::VectorXd>(Mm.data(),STATE_DIM*STATE_DIM),
-				Eigen::Map<const Eigen::VectorXd>(Sv.data(),STATE_DIM);
+		MSv << Eigen::Map<const Eigen::VectorXd>(Mm_.data(),STATE_DIM*STATE_DIM),
+				Eigen::Map<const Eigen::VectorXd>(Sv_.data(),STATE_DIM);
 	}
 
 	/**
-	 * Transcribes the stacked vector allSs into a symmetric matrix, Mm and a vector, Sv.
+	 * Transcribes the stacked vector allSs into a symmetric matrix, Mm_ and a vector, Sv_.
 	 *
-     * @param [in] MSv: Single vector constructed by concatenating Mm and Sv.
-     * @param [out] Mm: \f$ M_m \f$
-     * @param [out] Sv: \f$ S_v \f$
+     * @param [in] MSv: Single vector constructed by concatenating Mm_ and Sv_.
+     * @param [out] Mm_: \f$ M_m \f$
+     * @param [out] Sv_: \f$ S_v \f$
      */
-	static void convert2Matrix(const full_ode_vector_t& MSv, state_state_matrix_t& Mm, state_vector_t& Sv)  {
+	static void convert2Matrix(const full_ode_vector_t& MSv, state_state_matrix_t& Mm_, state_vector_t& Sv_)  {
 
-		Mm = Eigen::Map<const state_state_matrix_t>(MSv.data(),STATE_DIM,STATE_DIM);
-		Sv = Eigen::Map<const state_vector_t>(MSv.data()+STATE_DIM*STATE_DIM, STATE_DIM);
+		Mm_ = Eigen::Map<const state_state_matrix_t>(MSv.data(),STATE_DIM,STATE_DIM);
+		Sv_ = Eigen::Map<const state_vector_t>(MSv.data()+STATE_DIM*STATE_DIM, STATE_DIM);
 	}
 
     /**
@@ -107,7 +108,7 @@ public:
  	 * @param [in] RmPtr: A pointer to the trajectory of \f$ R_m(t) \f$ .
      * @param [in] RmInversePtr: A pointer to the trajectory of \f$ R_m^{-1}(t) \f$ .
      */
-	void setData(const double_array_t* timeStampPtr,
+	void setData(const scalar_array_t* timeStampPtr,
 			const state_state_matrix_array_t* AmPtr, const state_state_matrix_array_t* OmPtr, const state_input_matrix_array_t* BmPtr, const state_vector_array_t* GvPtr,
 			const state_vector_array_t* QvPtr, const state_state_matrix_array_t* QmPtr, const input_state_matrix_array_t* PmPtr,
 			const input_vector_array_t* RvPtr, const input_input_matrix_array_t* RmPtr, const input_input_matrix_array_t* RmInversePtr)  {
@@ -124,9 +125,9 @@ public:
 		RmFunc_.setTimeStamp(timeStampPtr);
 		RmInverseFunc_.setTimeStamp(timeStampPtr);
 
-		if (AmPtr) AmFunc_.setData(AmPtr); else  throw std::runtime_error("Am is not set.");
+		if (AmPtr) AmFunc_.setData(AmPtr); else  throw std::runtime_error("Am_ is not set.");
 		if (OmPtr) OmFunc_.setData(OmPtr); else  OmFunc_.setZero();
-		if (BmPtr) BmFunc_.setData(BmPtr); else  throw std::runtime_error("Bm is not set.");
+		if (BmPtr) BmFunc_.setData(BmPtr); else  throw std::runtime_error("Bm_ is not set.");
 		if (GvPtr) GvFunc_.setData(GvPtr); else  GvFunc_.setZero();
 
 		if (QvPtr) QvFunc_.setData(QvPtr); else  QvFunc_.setZero();
@@ -134,8 +135,8 @@ public:
 		if (PmPtr) PmFunc_.setData(PmPtr); else  PmFunc_.setZero();
 
 		if (RvPtr) RvFunc_.setData(RvPtr); else  RvFunc_.setZero();
-		if (RmPtr) RmFunc_.setData(RmPtr); else  throw std::runtime_error("Rm is not set.");
-		if (RmInversePtr) RmInverseFunc_.setData(RmInversePtr); else  throw std::runtime_error("RmInverse is not set.");
+		if (RmPtr) RmFunc_.setData(RmPtr); else  throw std::runtime_error("Rm_ is not set.");
+		if (RmInversePtr) RmInverseFunc_.setData(RmInversePtr); else  throw std::runtime_error("RmInverse_ is not set.");
 
 		startTime_ = timeStampPtr->front();
 		finalTime_ = timeStampPtr->back();
@@ -144,65 +145,51 @@ public:
     /**
      * Computes derivative
      * @param [in] z: Normalized time.
-     * @param [in] MSv: Single vector constructed by concatenating Mm, Sv.
+     * @param [in] MSv: Single vector constructed by concatenating Mm_, Sv_.
      * @param [out] derivatives: derivatives: d(MSv)/dz.
      */
-	void computeFlowMap(const double& z, const full_ode_vector_t& MSv, full_ode_vector_t& derivatives) override {
+	void computeFlowMap(const scalar_t& z, const full_ode_vector_t& MSv, full_ode_vector_t& derivatives) override {
 
 		// denormalized time
-		if (z>1 || z<0)  throw std::runtime_error("The normalized time should be between zero and one.");
+		if (z>1 || z<0)
+			throw std::runtime_error("The normalized time should be between zero and one.");
 
-		double t = finalTime_ - (finalTime_-startTime_)*z;
+		scalar_t t = finalTime_ - (finalTime_-startTime_)*z;
 
-		state_state_matrix_t Mm;
-		state_vector_t Sv;
-		convert2Matrix(MSv, Mm, Sv);
+		convert2Matrix(MSv, Mm_, Sv_);
 
 		// numerical consideration
 		if (useMakePSD_==true)
-			bool hasNegativeEigenValue = makePSD(Mm);
+			bool hasNegativeEigenValue = makePSD(Mm_);
 		else
-			Mm += state_state_matrix_t::Identity()*(1e-5);
+			Mm_ += state_state_matrix_t::Identity()*(1e-5);
 
-		state_state_matrix_t Am;
-		AmFunc_.interpolate(t, Am);
+		AmFunc_.interpolate(t, Am_);
 		size_t greatestLessTimeStampIndex = AmFunc_.getGreatestLessTimeStampIndex();
-		state_state_matrix_t Om;
-		OmFunc_.interpolate(t, Om, greatestLessTimeStampIndex);
-		state_input_matrix_t Bm;
-		BmFunc_.interpolate(t, Bm, greatestLessTimeStampIndex);
-		state_vector_t Gv;
-		GvFunc_.interpolate(t, Gv, greatestLessTimeStampIndex);
+		OmFunc_.interpolate(t, Om_, greatestLessTimeStampIndex);
+		BmFunc_.interpolate(t, Bm_, greatestLessTimeStampIndex);
+		GvFunc_.interpolate(t, Gv_, greatestLessTimeStampIndex);
 
-		state_vector_t Qv;
-		QvFunc_.interpolate(t, Qv, greatestLessTimeStampIndex);
-		state_state_matrix_t Qm;
-		QmFunc_.interpolate(t, Qm, greatestLessTimeStampIndex);
-		input_state_matrix_t Pm;
-		PmFunc_.interpolate(t, Pm, greatestLessTimeStampIndex);
-		input_vector_t Rv;
-		RvFunc_.interpolate(t, Rv, greatestLessTimeStampIndex);
-		input_input_matrix_t Rm;
-		RmFunc_.interpolate(t, Rm, greatestLessTimeStampIndex);
-		input_input_matrix_t RmInverse;
-		RmInverseFunc_.interpolate(t, RmInverse, greatestLessTimeStampIndex);
+		QvFunc_.interpolate(t, Qv_, greatestLessTimeStampIndex);
+		QmFunc_.interpolate(t, Qm_, greatestLessTimeStampIndex);
+		PmFunc_.interpolate(t, Pm_, greatestLessTimeStampIndex);
+		RvFunc_.interpolate(t, Rv_, greatestLessTimeStampIndex);
+		RmFunc_.interpolate(t, Rm_, greatestLessTimeStampIndex);
+		RmInverseFunc_.interpolate(t, RmInverse_, greatestLessTimeStampIndex);
 
-		state_state_matrix_t dMmdt, dMmdz;
-		state_vector_t dSvdt, dSvdz;
-
-		// Uv = -Lv - Km*x
-		input_vector_t       Lv = RmInverse*(Rv+Bm.transpose()*Sv);
-		input_state_matrix_t Km = RmInverse*(Pm+Bm.transpose()*Mm);
+		// Uv = -Lv_ - Km_*x
+		Lv_ = RmInverse_*(Rv_+Bm_.transpose()*Sv_);
+		Km_ = RmInverse_*(Pm_+Bm_.transpose()*Mm_);
 
 		// Riccati equations for the original system
-		dMmdt = Qm + Am.transpose()*Mm + Mm.transpose()*Am + Mm.transpose()*Om*Mm - Km.transpose()*Rm*Km;
-		dSvdt = (Qv+Mm*Gv) + Am.transpose()*Sv + Mm.transpose()*Om*Sv - Km.transpose()*Rm*Lv;
+		dMmdt_ = Qm_ + Am_.transpose()*Mm_ + Mm_.transpose()*Am_ + Mm_.transpose()*Om_*Mm_ - Km_.transpose()*Rm_*Km_;
+		dSvdt_ = (Qv_+Mm_*Gv_) + Am_.transpose()*Sv_ + Mm_.transpose()*Om_*Sv_ - Km_.transpose()*Rm_*Lv_;
 
 		// Riccati equations for the equivalent system
-		dMmdz = (finalTime_-startTime_)*dMmdt;
-		dSvdz = (finalTime_-startTime_)*dSvdt;
+		dMmdz_ = (finalTime_-startTime_)*dMmdt_;
+		dSvdz_ = (finalTime_-startTime_)*dSvdt_;
 
-		convert2Vector(dMmdz, dSvdz, derivatives);
+		convert2Vector(dMmdz_, dSvdz_, derivatives);
 	}
 
 	/**
@@ -236,8 +223,8 @@ public:
 
 private:
 	bool useMakePSD_;
-	double startTime_;
-	double finalTime_;
+	scalar_t startTime_;
+	scalar_t finalTime_;
 
 	LinearInterpolation<state_state_matrix_t, Eigen::aligned_allocator<state_state_matrix_t> > AmFunc_;
 	LinearInterpolation<state_state_matrix_t, Eigen::aligned_allocator<state_state_matrix_t> > OmFunc_;
@@ -251,6 +238,25 @@ private:
 	LinearInterpolation<input_state_matrix_t, Eigen::aligned_allocator<input_state_matrix_t> > PmFunc_;
 	LinearInterpolation<input_input_matrix_t, Eigen::aligned_allocator<input_input_matrix_t> > RmFunc_;
 	LinearInterpolation<input_input_matrix_t, Eigen::aligned_allocator<input_input_matrix_t> > RmInverseFunc_;
+
+	state_state_matrix_t Mm_;
+	state_vector_t Sv_;
+	state_state_matrix_t Am_;
+	state_state_matrix_t Om_;
+	state_input_matrix_t Bm_;
+	state_vector_t Gv_;
+	state_vector_t Qv_;
+	state_state_matrix_t Qm_;
+	input_state_matrix_t Pm_;
+	input_vector_t Rv_;
+	input_input_matrix_t Rm_;
+	input_input_matrix_t RmInverse_;
+	state_state_matrix_t dMmdt_;
+	state_state_matrix_t dMmdz_;
+	state_vector_t dSvdt_;
+	state_vector_t dSvdz_;
+	input_vector_t       Lv_;
+	input_state_matrix_t Km_;
 
 };
 

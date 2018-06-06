@@ -38,11 +38,11 @@
 #include <ocs2_core/initialization/SystemOperatingTrajectoriesBase.h>
 
 #include <ocs2_slq/SLQ_Settings.h>
-#include <ocs2_slq/SequentialRiccatiEquations.h>
-#include <ocs2_slq/SequentialRiccatiEquationsNormalized.h>
-#include <ocs2_slq/SequentialErrorEquation.h>
-#include <ocs2_slq/SequentialErrorEquationNormalized.h>
-#include <ocs2_slq/SLQ_RiccatiEquationsNormalized.h>
+#include <ocs2_slq/riccati_equations/SequentialRiccatiEquations.h>
+#include <ocs2_slq/riccati_equations/SequentialRiccatiEquationsNormalized.h>
+#include <ocs2_slq/riccati_equations/SequentialErrorEquation.h>
+#include <ocs2_slq/riccati_equations/SequentialErrorEquationNormalized.h>
+#include <ocs2_slq/riccati_equations/SLQ_RiccatiEquationsNormalized.h>
 
 #include <chrono>
 

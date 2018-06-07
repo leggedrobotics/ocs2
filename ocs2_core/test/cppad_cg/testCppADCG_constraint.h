@@ -26,7 +26,8 @@ template <size_t STATE_DIM, size_t INPUT_DIM>
 bool checkSystemDynamics(
 		const size_t numTests,
 		ocs2::ConstraintBase<STATE_DIM, INPUT_DIM> *const constraint1,
-		ocs2::ConstraintBase<STATE_DIM, INPUT_DIM> *const constraint2) {
+		ocs2::ConstraintBase<STATE_DIM, INPUT_DIM> *const constraint2,
+		bool& success) {
 
 	typedef ocs2::ConstraintBase<STATE_DIM, INPUT_DIM> constraint_t;
 
@@ -41,7 +42,7 @@ bool checkSystemDynamics(
 	typedef typename constraint_t::constraint1_input_matrix_t constraint1_input_matrix_t;
 	typedef typename constraint_t::constraint2_state_matrix_t   constraint2_state_matrix_t;
 
-	bool success = true;
+	success = true;
 
 	const scalar_t precision = 1e-9;
 
@@ -128,8 +129,6 @@ bool checkSystemDynamics(
 		}
 
 	} // end of for loop
-
-	return success;
 }
 
 /******************************************************************************/
@@ -211,7 +210,8 @@ TEST(testCppADCG_constraint, constraint_test)
 			constraintParam.h_f, constraintParam.F_f);
 	ad_linearConstraint.createModels("testCppADCG_constraint", libraryFolder);
 
-	bool success = checkSystemDynamics(100, &linearConstraint, &ad_linearConstraint);
+	bool success;
+	checkSystemDynamics(100, &linearConstraint, &ad_linearConstraint, success);
 
 	ASSERT_TRUE(success);
 }
@@ -258,7 +258,8 @@ TEST(testCppADCG_constraint, clone_test)
 
 	base_constraint_t::Ptr ad_linearConstraintPtr(ad_linearConstraint.clone());
 
-	bool success = checkSystemDynamics(100, &linearConstraint, ad_linearConstraintPtr.get());
+	bool success;
+	checkSystemDynamics(100, &linearConstraint, ad_linearConstraintPtr.get(), success);
 
 	ASSERT_TRUE(success);
 }
@@ -312,14 +313,18 @@ TEST(testCppADCG_constraint, multithread_test)
 	/***************************************************************************
 	 *               Multi-thread test
 	 **************************************************************************/
-    std::thread thread1(checkSystemDynamics<state_dim_, input_dim_>, 10000, &linearConstraint, &ad_linearConstraint);
+	bool success = false;
+    std::thread thread1(checkSystemDynamics<state_dim_, input_dim_>, 10000, &linearConstraint, &ad_linearConstraint, std::ref(success));
 
-    std::thread thread2(checkSystemDynamics<state_dim_, input_dim_>, 10000, linearConstraintPtr.get(), ad_linearConstraintPtr.get());
+    bool successClone = false;
+    std::thread thread2(checkSystemDynamics<state_dim_, input_dim_>, 10000, linearConstraintPtr.get(), ad_linearConstraintPtr.get(), std::ref(successClone));
 
     if (thread1.joinable())
     	thread1.join();
     if (thread2.joinable())
     	thread2.join();
+
+    ASSERT_TRUE(success && successClone);
 }
 
 }  // end of namespace testCppADCG_constraint

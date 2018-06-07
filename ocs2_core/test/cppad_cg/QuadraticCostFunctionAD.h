@@ -31,21 +31,23 @@ public:
 	typedef typename BASE::input_vector_t  			input_vector_t;
 	typedef typename BASE::input_vector_array_t 	input_vector_array_t;
 	typedef typename BASE::input_matrix_t 		input_matrix_t;
-	typedef typename BASE::input_state_t 		input_state_t;
+	typedef typename BASE::input_state_matrix_t 		input_state_matrix_t;
 
 	QuadraticCostFunctionAD(
 			const state_matrix_t& Q,
 			const input_matrix_t& R,
-			const state_vector_t& x_nominal,
-			const input_vector_t& u_nominal,
-			const state_vector_t& x_final,
-			const state_matrix_t& Q_final)
+			const state_vector_t& xNominal,
+			const input_vector_t& uNominal,
+			const state_matrix_t& QFinal,
+			const state_vector_t& xFinal,
+			const input_state_matrix_t& P = input_state_matrix_t::Zero())
 	: Q_(Q)
 	, R_(R)
-	, x_nominal_(x_nominal)
-	, u_nominal_(u_nominal)
-	, x_final_(x_final)
-	, Q_final_(Q_final)
+	, P_(P)
+	, QFinal_(QFinal)
+	, xNominal_(xNominal)
+	, uNominal_(uNominal)
+	, xFinal_(xFinal)
 	{}
 
 	virtual ~QuadraticCostFunctionAD() = default;
@@ -57,11 +59,12 @@ public:
 			const Eigen::Matrix<SCALAR_T, INPUT_DIM, 1>& input,
 			SCALAR_T& costValue) {
 
-		Eigen::Matrix<SCALAR_T, STATE_DIM, 1> x_deviation = state - x_nominal_.template cast<SCALAR_T>();
-		Eigen::Matrix<SCALAR_T, INPUT_DIM, 1> u_deviation = input - u_nominal_.template cast<SCALAR_T>();
+		Eigen::Matrix<SCALAR_T, STATE_DIM, 1> xDeviation = state - xNominal_.template cast<SCALAR_T>();
+		Eigen::Matrix<SCALAR_T, INPUT_DIM, 1> uDeviation = input - uNominal_.template cast<SCALAR_T>();
 
-		costValue = 0.5 * x_deviation.dot(Q_.template cast<SCALAR_T>() * x_deviation) +
-				0.5 * u_deviation.dot(R_.template cast<SCALAR_T>() * u_deviation);
+		costValue = 0.5 * xDeviation.dot(Q_.template cast<SCALAR_T>() * xDeviation)
+				+ 0.5 * uDeviation.dot(R_.template cast<SCALAR_T>() * uDeviation)
+				+ uDeviation.dot(P_.template cast<SCALAR_T>() * xDeviation);;
 	}
 
 	template <typename SCALAR_T>
@@ -70,21 +73,19 @@ public:
 			const Eigen::Matrix<SCALAR_T, STATE_DIM, 1>& state,
 			SCALAR_T& costValue) {
 
-		Eigen::Matrix<SCALAR_T, STATE_DIM, 1> x_deviation = state - x_final_.template cast<SCALAR_T>();
-		costValue = 0.5 * x_deviation.dot(Q_final_.template cast<SCALAR_T>() * x_deviation);
+		Eigen::Matrix<SCALAR_T, STATE_DIM, 1> x_deviation = state - xFinal_.template cast<SCALAR_T>();
+		costValue = 0.5 * x_deviation.dot(QFinal_.template cast<SCALAR_T>() * x_deviation);
 	}
 
 private:
-	state_vector_t x_deviation_;
-	state_vector_t x_nominal_;
 	state_matrix_t Q_;
-
-	input_vector_t u_deviation_;
-	input_vector_t u_nominal_;
 	input_matrix_t R_;
+	input_state_matrix_t P_;
+	state_matrix_t QFinal_;
 
-	state_vector_t x_final_;
-	state_matrix_t Q_final_;
+	state_vector_t xNominal_;
+	input_vector_t uNominal_;
+	state_vector_t xFinal_;
 };
 
 } // namespace ocs2

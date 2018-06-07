@@ -8,8 +8,9 @@
 #ifndef TESTCPPADCG_DYNAMICS_OCS2_H_
 #define TESTCPPADCG_DYNAMICS_OCS2_H_
 
-#include <iostream>
 #include <mutex>
+#include <iostream>
+#include <functional>
 #include <gtest/gtest.h>
 #include <boost/filesystem.hpp>
 
@@ -23,10 +24,11 @@ namespace testCppADCG_dynamics
 /******************************************************************************/
 /******************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
-bool checkSystemDynamics(
+void checkSystemDynamics(
 		const size_t numTests,
 		ocs2::DerivativesBase<STATE_DIM, INPUT_DIM> *const linearSystem1,
-		ocs2::DerivativesBase<STATE_DIM, INPUT_DIM> *const linearSystem2) {
+		ocs2::DerivativesBase<STATE_DIM, INPUT_DIM> *const linearSystem2,
+		bool& success) {
 
 	typedef ocs2::DerivativesBase<STATE_DIM, INPUT_DIM> system_dynamics_t;
 
@@ -36,7 +38,7 @@ bool checkSystemDynamics(
 	typedef typename system_dynamics_t::input_vector_t			input_vector_t;
 	typedef typename system_dynamics_t::state_input_matrix_t	state_input_matrix_t;
 
-	bool success = true;
+	success = true;
 
 	const scalar_t precision = 1e-9;
 
@@ -88,8 +90,6 @@ bool checkSystemDynamics(
 		}
 
 	} // end of for loop
-
-	return success;
 }
 
 /******************************************************************************/
@@ -149,7 +149,8 @@ TEST(testCppADCG_dynamics, system_dynamics_test)
 			dynamicsParam.G, dynamicsParam.H);
 	ad_linearSystem.createModels("testCppADCG_dynamics", libraryFolder);
 
-	bool success = checkSystemDynamics(100, &linearSystem, &ad_linearSystem);
+	bool success;
+	checkSystemDynamics(100, &linearSystem, &ad_linearSystem, success);
 
 	ASSERT_TRUE(success);
 }
@@ -188,7 +189,8 @@ TEST(testCppADCG_dynamics, clone_test)
 
 	base_cost_t::Ptr ad_linearSystemPtr(ad_linearSystem.clone());
 
-	bool success = checkSystemDynamics(100, &linearSystem, ad_linearSystemPtr.get());
+	bool success;
+	checkSystemDynamics(100, &linearSystem, ad_linearSystemPtr.get(), success);
 
 	ASSERT_TRUE(success);
 }
@@ -234,14 +236,18 @@ TEST(testCppADCG_dynamics, multithread_test)
 	/***************************************************************************
 	 *               Multi-thread test
 	 **************************************************************************/
-    std::thread thread1(checkSystemDynamics<state_dim_, input_dim_>, 10000, &linearSystem, &ad_linearSystem);
+	bool success = false;
+    std::thread thread1(checkSystemDynamics<state_dim_, input_dim_>, 10000, &linearSystem, &ad_linearSystem, std::ref(success));
 
-    std::thread thread2(checkSystemDynamics<state_dim_, input_dim_>, 10000, linearSystemPtr.get(), ad_linearSystemPtr.get());
+    bool successClone = false;
+    std::thread thread2(checkSystemDynamics<state_dim_, input_dim_>, 10000, linearSystemPtr.get(), ad_linearSystemPtr.get(), std::ref(successClone));
 
     if (thread1.joinable())
     	thread1.join();
     if (thread2.joinable())
     	thread2.join();
+
+    ASSERT_TRUE(success && successClone);
 }
 
 }  // end of namespace testCppADCG_dynamics

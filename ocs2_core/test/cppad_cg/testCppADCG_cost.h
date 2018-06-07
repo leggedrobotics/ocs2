@@ -10,6 +10,7 @@
 
 #include <iostream>
 #include <mutex>
+#include <functional>
 #include <gtest/gtest.h>
 #include <boost/filesystem.hpp>
 
@@ -23,21 +24,22 @@ namespace testCppADCG_cost
 /******************************************************************************/
 /******************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
-bool checkCostFunction(
+void checkCostFunction(
 		const size_t numTests,
 		ocs2::CostFunctionBase<STATE_DIM, INPUT_DIM> *const quadraticCost1,
-		ocs2::CostFunctionBase<STATE_DIM, INPUT_DIM> *const quadraticCost2) {
+		ocs2::CostFunctionBase<STATE_DIM, INPUT_DIM> *const quadraticCost2,
+		bool& success) {
 
-	typedef ocs2::QuadraticCostFunction<STATE_DIM, INPUT_DIM> 	quadratic_cost_t;
+	typedef ocs2::QuadraticCostFunction<STATE_DIM, INPUT_DIM> quadratic_cost_t;
 
 	typedef typename quadratic_cost_t::scalar_t				scalar_t;
 	typedef typename quadratic_cost_t::state_vector_t		state_vector_t;
 	typedef typename quadratic_cost_t::state_matrix_t		state_matrix_t;
 	typedef typename quadratic_cost_t::input_vector_t		input_vector_t;
 	typedef typename quadratic_cost_t::input_matrix_t		input_matrix_t;
-	typedef typename quadratic_cost_t::input_state_t	input_state_t;
+	typedef typename quadratic_cost_t::input_state_matrix_t	input_state_matrix_t;
 
-	bool success = true;
+	success = true;
 
 	const scalar_t precision = 1e-9;
 
@@ -97,7 +99,7 @@ bool checkCostFunction(
 			success = false;
 		}
 
-		input_state_t dLdxu, ad_dLdxu;
+		input_state_matrix_t dLdxu, ad_dLdxu;
 		quadraticCost1->getIntermediateCostDerivativeInputState(dLdxu);
 		quadraticCost2->getIntermediateCostDerivativeInputState(ad_dLdxu);
 		if (!dLdxu.isApprox(ad_dLdxu, precision)) {
@@ -134,7 +136,6 @@ bool checkCostFunction(
 		}
 	} // end of for loop
 
-	return success;
 }
 
 /******************************************************************************/
@@ -154,16 +155,31 @@ struct cost_parameters
 	typedef base_cost_t::state_vector_t		state_vector_t;
 	typedef base_cost_t::state_matrix_t		state_matrix_t;
 	typedef base_cost_t::input_vector_t		input_vector_t;
-	typedef base_cost_t::input_matrix_t	input_matrix_t;
-	typedef base_cost_t::input_state_t	input_state_t;
+	typedef base_cost_t::input_matrix_t		input_matrix_t;
+	typedef base_cost_t::input_state_matrix_t input_state_matrix_t;
+
+	cost_parameters()
+	: Q(5.0 * state_matrix_t::Random())
+	, R(3.0*input_matrix_t::Random())
+	, P(2.0*input_state_matrix_t::Random())
+	, xNominal(state_vector_t::Random())
+	, uNominal(input_vector_t::Random())
+	, QFinal(4.0 * state_matrix_t::Random())
+	, xFinal(state_vector_t::Random())
+	{
+		Q = (Q+Q.transpose()).eval();
+		R = (R+R.transpose()).eval();
+		QFinal = (QFinal+QFinal.transpose()).eval();
+	}
 
     // Define cost parameters
-	state_matrix_t Q = 10.0 * state_matrix_t::Identity();
-	input_matrix_t R = input_matrix_t::Identity();;
-	state_vector_t x_nominal = state_vector_t::Zero();
-	input_vector_t u_nominal = input_vector_t::Zero();
-	state_vector_t x_final = state_vector_t::Ones();;
-	state_matrix_t Q_final = 4.0 * state_matrix_t::Identity();
+	state_matrix_t Q;
+	input_matrix_t R;
+	input_state_matrix_t  P;
+	state_vector_t xNominal;
+	input_vector_t uNominal;
+	state_matrix_t QFinal;
+	state_vector_t xFinal;
 };
 
 /******************************************************************************/
@@ -190,15 +206,16 @@ struct cost_parameters
 //    std::string libraryFolder = filePath.parent_path().generic_string() + "/testCppADCG_generated";
 //
 //	quadratic_cost_t quadraticCost(
-//			costParam.Q, costParam.R, costParam.x_nominal, costParam.u_nominal,
-//			costParam.x_final, costParam.Q_final);
+//			costParam.Q, costParam.R, costParam.xNominal, costParam.uNominal,
+//			costParam.QFinal, costParam.xFinal, costParam.P);
 //
 //	ad_quadratic_cost_t ad_quadraticCost(
-//			costParam.Q, costParam.R, costParam.x_nominal, costParam.u_nominal,
-//			costParam.x_final, costParam.Q_final);
+//			costParam.Q, costParam.R, costParam.xNominal, costParam.uNominal,
+//			costParam.QFinal, costParam.xFinal, costParam.P);
 //	ad_quadraticCost.createModels("testCppADCG_cost", libraryFolder);
 //
-//	bool success = checkCostFunction(100, &quadraticCost, &ad_quadraticCost);
+//	bool success;
+//	checkCostFunction(100, &quadraticCost, &ad_quadraticCost, success);
 //
 //	ASSERT_TRUE(success);
 //}
@@ -227,17 +244,18 @@ struct cost_parameters
 //    std::string libraryFolder = filePath.parent_path().generic_string() + "/testCppADCG_generated";
 //
 //	quadratic_cost_t quadraticCost(
-//			costParam.Q, costParam.R, costParam.x_nominal, costParam.u_nominal,
-//			costParam.x_final, costParam.Q_final);
+//			costParam.Q, costParam.R, costParam.xNominal, costParam.uNominal,
+//			costParam.QFinal, costParam.xFinal, costParam.P);
 //
 //	ad_quadratic_cost_t ad_quadraticCost(
-//			costParam.Q, costParam.R, costParam.x_nominal, costParam.u_nominal,
-//			costParam.x_final, costParam.Q_final);
+//			costParam.Q, costParam.R, costParam.xNominal, costParam.uNominal,
+//			costParam.xFinal, costParam.QFinal);
 //	ad_quadraticCost.createModels("testCppADCG_cost", libraryFolder);
 //
 //	base_cost_t::Ptr ad_quadraticCostPtr(ad_quadraticCost.clone());
 //
-//	bool success = checkCostFunction(100, &quadraticCost, ad_quadraticCostPtr.get());
+//	bool success;
+//	checkCostFunction(100, &quadraticCost, ad_quadraticCostPtr.get(), success);
 //
 //	ASSERT_TRUE(success);
 //}
@@ -266,15 +284,14 @@ TEST(testCppADCG_cost, multithread_test)
     std::string libraryFolder = filePath.parent_path().generic_string() + "/testCppADCG_generated";
 
 	quadratic_cost_t quadraticCost(
-			costParam.Q, costParam.R, costParam.x_nominal, costParam.u_nominal,
-			costParam.x_final, costParam.Q_final);
+			costParam.Q, costParam.R, costParam.xNominal, costParam.uNominal,
+			costParam.QFinal, costParam.xFinal, costParam.P);
 
 	base_cost_t::Ptr quadraticCostPtr(quadraticCost.clone());
-	base_cost_t::Ptr quadraticCostPtr1(quadraticCost.clone());
 
 	ad_quadratic_cost_t ad_quadraticCost(
-			costParam.Q, costParam.R, costParam.x_nominal, costParam.u_nominal,
-			costParam.x_final, costParam.Q_final);
+			costParam.Q, costParam.R, costParam.xNominal, costParam.uNominal,
+			costParam.QFinal, costParam.xFinal, costParam.P);
 
 	ad_quadraticCost.createModels("testCppADCG_cost", libraryFolder);
 
@@ -284,14 +301,18 @@ TEST(testCppADCG_cost, multithread_test)
 	/***************************************************************************
 	 *               Multi-thread test
 	 **************************************************************************/
-    std::thread thread1(checkCostFunction<state_dim_, input_dim_>, 10000, &quadraticCost, &ad_quadraticCost);
+	bool success = false;
+    std::thread thread1(checkCostFunction<state_dim_, input_dim_>, 10000, &quadraticCost, &ad_quadraticCost, std::ref(success));
 
-    std::thread thread2(checkCostFunction<state_dim_, input_dim_>, 10000, quadraticCostPtr.get(), ad_quadraticCostPtr.get());
+    bool successClone = false;
+    std::thread thread2(checkCostFunction<state_dim_, input_dim_>, 10000, quadraticCostPtr.get(), ad_quadraticCostPtr.get(), std::ref(successClone));
 
     if (thread1.joinable())
     	thread1.join();
     if (thread2.joinable())
     	thread2.join();
+
+    ASSERT_TRUE(success && successClone);
 }
 
 }  // end of namespace testCppADCG_cost

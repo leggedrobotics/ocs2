@@ -339,7 +339,7 @@ public:
 	void getIntermediateCostDerivativeInput(input_vector_t& dLdu)  { dLdu << u_; }
 	void getIntermediateCostSecondDerivativeInput(input_matrix_t& dLduu)  { dLduu << 1.0; }
 
-	void getIntermediateCostDerivativeInputState(input_state_t& dLdxu) { dLdxu.setZero(); }
+	void getIntermediateCostDerivativeInputState(input_state_matrix_t& dLdxu) { dLdxu.setZero(); }
 
 	void getTerminalCost(scalar_t& Phi) { Phi = 0; }
 	void getTerminalCostDerivativeState(state_vector_t& dPhidx)  { dPhidx.setZero(); }
@@ -369,7 +369,7 @@ public:
 	void getIntermediateCostDerivativeInput(input_vector_t& dLdu)  { dLdu << u_; }
 	void getIntermediateCostSecondDerivativeInput(input_matrix_t& dLduu)  { dLduu << 1.0; }
 
-	void getIntermediateCostDerivativeInputState(input_state_t& dLdxu) { dLdxu.setZero(); }
+	void getIntermediateCostDerivativeInputState(input_state_matrix_t& dLdxu) { dLdxu.setZero(); }
 
 	void getTerminalCost(scalar_t& Phi) { Phi = 0; }
 	void getTerminalCostDerivativeState(state_vector_t& dPhidx)  { dPhidx.setZero(); }
@@ -399,7 +399,7 @@ public:
 	void getIntermediateCostDerivativeInput(input_vector_t& dLdu)  { dLdu << u_; }
 	void getIntermediateCostSecondDerivativeInput(input_matrix_t& dLduu)  { dLduu << 1.0; }
 
-	void getIntermediateCostDerivativeInputState(input_state_t& dLdxu) { dLdxu.setZero(); }
+	void getIntermediateCostDerivativeInputState(input_state_matrix_t& dLdxu) { dLdxu.setZero(); }
 
 	void getTerminalCost(scalar_t& Phi) { Phi = 0.5*pow(x_(0)-1.0, 2) + 0.5*pow(x_(1)+1.0, 2); }
 	void getTerminalCostDerivativeState(state_vector_t& dPhidx)  { dPhidx << (x_(0)-1.0), (x_(1)+1.0); }
@@ -482,7 +482,7 @@ public:
 		subsystemCostsPtr_[activeSubsystem_]->getIntermediateCostSecondDerivativeInput(dLduu);
 	}
 
-	void getIntermediateCostDerivativeInputState(input_state_t& dLdxu) {
+	void getIntermediateCostDerivativeInputState(input_state_matrix_t& dLdxu) {
 		subsystemCostsPtr_[activeSubsystem_]->getIntermediateCostDerivativeInputState(dLdxu);
 	}
 

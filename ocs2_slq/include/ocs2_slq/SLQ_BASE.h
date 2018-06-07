@@ -94,9 +94,9 @@ public:
 	typedef typename DIMENSIONS::input_vector_t input_vector_t;
 	typedef typename DIMENSIONS::input_vector_array_t input_vector_array_t;
 	typedef typename DIMENSIONS::input_vector_array2_t input_vector_array2_t;
-	typedef typename DIMENSIONS::input_state_t input_state_t;
-	typedef typename DIMENSIONS::input_state_array_t input_state_array_t;
-	typedef typename DIMENSIONS::input_state_array2_t input_state_array2_t;
+	typedef typename DIMENSIONS::input_state_matrix_t input_state_matrix_t;
+	typedef typename DIMENSIONS::input_state_matrix_array_t input_state_matrix_array_t;
+	typedef typename DIMENSIONS::input_state_matrix_array2_t input_state_matrix_array2_t;
 	typedef typename DIMENSIONS::state_matrix_t state_matrix_t;
 	typedef typename DIMENSIONS::state_matrix_array_t state_matrix_array_t;
 	typedef typename DIMENSIONS::state_matrix_array2_t state_matrix_array2_t;
@@ -1173,7 +1173,7 @@ protected:
 	state_matrix_array2_t 		QmTrajectoryStock_;
 	input_vector_array2_t		RvTrajectoryStock_;
 	input_matrix_array2_t		RmTrajectoryStock_;
-	input_state_array2_t	PmTrajectoryStock_;
+	input_state_matrix_array2_t	PmTrajectoryStock_;
 
 	input_matrix_array2_t 	RmInverseTrajectoryStock_;
 	state_matrix_array2_t   	AmConstrainedTrajectoryStock_;
@@ -1182,10 +1182,10 @@ protected:
 	input_matrix_array2_t 	RmConstrainedTrajectoryStock_;
 	control_constraint1_matrix_array2_t DmDagerTrajectoryStock_;
 	input_vector_array2_t   	EvProjectedTrajectoryStock_;  // DmDager * Ev
-	input_state_array2_t 	CmProjectedTrajectoryStock_;  // DmDager * Cm
+	input_state_matrix_array2_t 	CmProjectedTrajectoryStock_;  // DmDager * Cm
 	input_matrix_array2_t   	DmProjectedTrajectoryStock_;  // DmDager * Dm
 	state_input_matrix_array2_t BmConstrainedTrajectoryStock_;
-	input_state_array2_t 	PmConstrainedTrajectoryStock_;
+	input_state_matrix_array2_t 	PmConstrainedTrajectoryStock_;
 	input_vector_array2_t 		RvConstrainedTrajectoryStock_;
 
 	std::vector<std::shared_ptr<riccati_equations_t>> 							riccatiEquationsPtrStock_;
@@ -1217,22 +1217,22 @@ protected:
 	std::vector<LinearInterpolation<state_vector_t,Eigen::aligned_allocator<state_vector_t> >>   	nominalStateFunc_;
 	std::vector<LinearInterpolation<input_vector_t,Eigen::aligned_allocator<input_vector_t> >> 		nominalInputFunc_;
 	std::vector<LinearInterpolation<state_input_matrix_t,Eigen::aligned_allocator<state_input_matrix_t> >> BmFunc_;
-	std::vector<LinearInterpolation<input_state_t,Eigen::aligned_allocator<input_state_t> >> 	PmFunc_;
+	std::vector<LinearInterpolation<input_state_matrix_t,Eigen::aligned_allocator<input_state_matrix_t> >> 	PmFunc_;
 	std::vector<LinearInterpolation<input_matrix_t,Eigen::aligned_allocator<input_matrix_t> >>     	RmInverseFunc_;
 	std::vector<LinearInterpolation<input_vector_t,Eigen::aligned_allocator<input_vector_t> >>     		RvFunc_;
 	std::vector<LinearInterpolation<input_vector_t,Eigen::aligned_allocator<input_vector_t> >>     		EvProjectedFunc_;
-	std::vector<LinearInterpolation<input_state_t,Eigen::aligned_allocator<input_state_t> >> 	CmProjectedFunc_;
+	std::vector<LinearInterpolation<input_state_matrix_t,Eigen::aligned_allocator<input_state_matrix_t> >> 	CmProjectedFunc_;
 	std::vector<LinearInterpolation<input_matrix_t,Eigen::aligned_allocator<input_matrix_t> >>     	DmProjectedFunc_;
 
 	// function for Riccati error equation
 	std::vector<LinearInterpolation<state_matrix_t, Eigen::aligned_allocator<state_matrix_t> >> SmFuncs_;
 	//
-	void LmFunc_ (const size_t& partitionIndex, const size_t& timeIndex, input_state_t& Lm) {
+	void LmFunc_ (const size_t& partitionIndex, const size_t& timeIndex, input_state_matrix_t& Lm) {
 		Lm = -RmInverseTrajectoryStock_[partitionIndex][timeIndex] * ( PmTrajectoryStock_[partitionIndex][timeIndex] +
 				BmTrajectoryStock_[partitionIndex][timeIndex].transpose()*SmTrajectoryStock_[partitionIndex][timeIndex] );
 	};
 	//
-	void LmConstrainedFunc_ (const size_t& partitionIndex, const size_t& timeIndex, const input_state_t& Lm, input_state_t& LmConstrained) {
+	void LmConstrainedFunc_ (const size_t& partitionIndex, const size_t& timeIndex, const input_state_matrix_t& Lm, input_state_matrix_t& LmConstrained) {
 		LmConstrained = (input_matrix_t::Identity()-DmProjectedTrajectoryStock_[partitionIndex][timeIndex]) * Lm;
 	};
 	//
@@ -1247,7 +1247,7 @@ protected:
 	};
 	//
 	void ControllerFunc_ (const size_t& partitionIndex, const size_t& timeIndex, const scalar_t& constraintStepSize,
-			const input_state_t& LmConstrained, const input_vector_t& LvConstrained, const input_vector_t& LveConstrained) {
+			const input_state_matrix_t& LmConstrained, const input_vector_t& LvConstrained, const input_vector_t& LveConstrained) {
 		// k
 		nominalControllersStock_[partitionIndex].k_[timeIndex] = LmConstrained - CmProjectedTrajectoryStock_[partitionIndex][timeIndex];
 		// uff

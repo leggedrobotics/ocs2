@@ -48,8 +48,8 @@ public:
 	typedef typename DIMENSIONS::state_vector_array_t state_vector_array_t;
 	typedef typename DIMENSIONS::input_vector_t 		input_vector_t;
 	typedef typename DIMENSIONS::input_vector_array_t input_vector_array_t;
-	typedef typename DIMENSIONS::input_state_t 	  input_state_t;
-	typedef typename DIMENSIONS::input_state_array_t input_state_array_t;
+	typedef typename DIMENSIONS::input_state_matrix_t 	  input_state_matrix_t;
+	typedef typename DIMENSIONS::input_state_matrix_array_t input_state_matrix_array_t;
 	typedef typename DIMENSIONS::state_matrix_t 	  state_matrix_t;
 	typedef typename DIMENSIONS::state_matrix_array_t state_matrix_array_t;
 	typedef typename DIMENSIONS::input_matrix_t 		input_matrix_t;
@@ -80,9 +80,9 @@ public:
 	, Rv_(input_vector_t::Zero())
 	, RmInv_(input_matrix_t::Zero())
 	, Rm_(input_matrix_t::Zero())
-	, Pm_(input_state_t::Zero())
+	, Pm_(input_state_matrix_t::Zero())
 	, Ev_(input_vector_t::Zero())
-	, Cm_(input_state_t::Zero())
+	, Cm_(input_state_matrix_t::Zero())
 	, dSmdt_(state_matrix_t::Zero())
 	, dSmdz_(state_matrix_t::Zero())
 	, dSvdt_(state_vector_t::Zero())
@@ -91,7 +91,7 @@ public:
 	, dSvedz_(state_vector_t::Zero())
 	, dsdt_(eigen_scalar_t::Zero())
 	, dsdz_(eigen_scalar_t::Zero())
-	, Lm_(input_state_t::Zero())
+	, Lm_(input_state_matrix_t::Zero())
 	, Lv_(input_vector_t::Zero())
 	, Lve_(input_vector_t::Zero())
 	, Am_transposeSm_(state_matrix_t::Zero())
@@ -201,8 +201,8 @@ public:
 			const state_matrix_array_t* AmPtr, const state_input_matrix_array_t* BmPtr,
 			const eigen_scalar_array_t* qPtr, const state_vector_array_t* QvPtr, const state_matrix_array_t* QmPtr,
 			const input_vector_array_t* RvPtr, const input_matrix_array_t* RmInversePtr, const input_matrix_array_t* RmPtr,
-			const input_state_array_t* PmPtr,
-			const input_vector_array_t* EvPtr, const input_state_array_t* CmPtr,
+			const input_state_matrix_array_t* PmPtr,
+			const input_vector_array_t* EvPtr, const input_state_matrix_array_t* CmPtr,
 			const size_array_t* eventsPastTheEndIndecesPtr,
 			const eigen_scalar_array_t* qFinalPtr, const state_vector_array_t* QvFinalPtr, const state_matrix_array_t* QmFianlPtr)  {
 
@@ -426,9 +426,9 @@ private:
 	LinearInterpolation<input_vector_t,Eigen::aligned_allocator<input_vector_t> > RvFunc_;
 	LinearInterpolation<input_matrix_t,Eigen::aligned_allocator<input_matrix_t> > RmInverseFunc_;
 	LinearInterpolation<input_matrix_t,Eigen::aligned_allocator<input_matrix_t> > RmFunc_;
-	LinearInterpolation<input_state_t,Eigen::aligned_allocator<input_state_t> > PmFunc_;
+	LinearInterpolation<input_state_matrix_t,Eigen::aligned_allocator<input_state_matrix_t> > PmFunc_;
 	LinearInterpolation<input_vector_t,Eigen::aligned_allocator<input_vector_t> > 		  EvFunc_;
-	LinearInterpolation<input_state_t,Eigen::aligned_allocator<input_state_t> > CmFunc_;
+	LinearInterpolation<input_state_matrix_t,Eigen::aligned_allocator<input_state_matrix_t> > CmFunc_;
 
 	// members required only in computeFlowMap()
 	state_matrix_t Sm_;
@@ -443,9 +443,9 @@ private:
 	input_vector_t Rv_;
 	input_matrix_t RmInv_;
 	input_matrix_t Rm_;
-	input_state_t Pm_;
+	input_state_matrix_t Pm_;
 	input_vector_t Ev_;
-	input_state_t Cm_;
+	input_state_matrix_t Cm_;
 	state_matrix_t dSmdt_;
 	state_matrix_t dSmdz_;
 	state_vector_t dSvdt_;
@@ -454,7 +454,7 @@ private:
 	state_vector_t dSvedz_;
 	eigen_scalar_t dsdt_;
 	eigen_scalar_t dsdz_;
-	input_state_t Lm_;
+	input_state_matrix_t Lm_;
 	input_vector_t     Lv_;
 	input_vector_t     Lve_;
 	state_matrix_t Am_transposeSm_;

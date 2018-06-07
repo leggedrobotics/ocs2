@@ -47,7 +47,7 @@ public:
 	typedef typename BASE::input_vector_t  			input_vector_t;
 	typedef typename BASE::input_vector_array_t 	input_vector_array_t;
 	typedef typename BASE::input_matrix_t 		input_matrix_t;
-	typedef typename BASE::input_state_t 		input_state_t;
+	typedef typename BASE::input_state_matrix_t 		input_state_matrix_t;
 
 
 	/**
@@ -190,7 +190,7 @@ public:
      *
      * @param [out] dLdux: Second order derivative of the intermediate cost with respect to input vector and state.
      */
-	virtual void getIntermediateCostDerivativeInputState(input_state_t& dLdux) override;
+	virtual void getIntermediateCostDerivativeInputState(input_state_matrix_t& dLdux) override;
 
     /**
      * Get the terminal cost.

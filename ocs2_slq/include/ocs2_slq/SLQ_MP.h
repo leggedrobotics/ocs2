@@ -51,9 +51,9 @@ public:
 	typedef typename DIMENSIONS::input_vector_t input_vector_t;
 	typedef typename DIMENSIONS::input_vector_array_t input_vector_array_t;
 	typedef typename DIMENSIONS::input_vector_array2_t input_vector_array2_t;
-	typedef typename DIMENSIONS::input_state_t input_state_t;
-	typedef typename DIMENSIONS::input_state_array_t input_state_array_t;
-	typedef typename DIMENSIONS::input_state_array2_t input_state_array2_t;
+	typedef typename DIMENSIONS::input_state_matrix_t input_state_matrix_t;
+	typedef typename DIMENSIONS::input_state_matrix_array_t input_state_matrix_array_t;
+	typedef typename DIMENSIONS::input_state_matrix_array2_t input_state_matrix_array2_t;
 	typedef typename DIMENSIONS::state_matrix_t state_matrix_t;
 	typedef typename DIMENSIONS::state_matrix_array_t state_matrix_array_t;
 	typedef typename DIMENSIONS::state_matrix_array2_t state_matrix_array2_t;

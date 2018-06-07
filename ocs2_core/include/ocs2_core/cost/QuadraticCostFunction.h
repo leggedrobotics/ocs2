@@ -25,7 +25,7 @@ class QuadraticCostFunction : public CostFunctionBase< STATE_DIM, INPUT_DIM, LOG
 public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-	typedef CostFunctionBase<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> Base;
+	typedef CostFunctionBase<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> BASE;
 
 	typedef Dimensions<STATE_DIM, INPUT_DIM> DIMENSIONS;
 	typedef typename DIMENSIONS::scalar_t scalar_t;
@@ -33,7 +33,7 @@ public:
 	typedef typename DIMENSIONS::state_matrix_t state_matrix_t;
 	typedef typename DIMENSIONS::input_vector_t input_vector_t;
 	typedef typename DIMENSIONS::input_matrix_t input_matrix_t;
-	typedef typename DIMENSIONS::input_state_t input_state_t;
+	typedef typename DIMENSIONS::input_state_matrix_t input_state_matrix_t;
 
 	/**
 	 * Constructor for the running and final cost function defined as the following:
@@ -41,24 +41,26 @@ public:
 	 * - \f$ \Phi = 0.5(x-x_{final})' Q_{final} (x-x_{final}) \f$.
 	 * @param [in] Q: \f$ Q \f$
 	 * @param [in] R: \f$ R \f$
-	 * @param [in] x_nominal: \f$ x_{nominal}\f$
-	 * @param [in] u_nominal: \f$ u_{nominal}\f$
-	 * @param [in] x_final: \f$ x_{final}\f$
-	 * @param [in] Q_final: \f$ Q_{final}\f$
+	 * @param [in] xNominal: \f$ x_{nominal}\f$
+	 * @param [in] uNominal: \f$ u_{nominal}\f$
+	 * @param [in] xFinal: \f$ x_{final}\f$
+	 * @param [in] QFinal: \f$ Q_{final}\f$
 	 */
 	QuadraticCostFunction(
 			const state_matrix_t& Q,
 			const input_matrix_t& R,
-			const state_vector_t& x_nominal,
-			const input_vector_t& u_nominal,
-			const state_vector_t& x_final,
-			const state_matrix_t& Q_final)
+			const state_vector_t& xNominal,
+			const input_vector_t& uNominal,
+			const state_matrix_t& QFinal,
+			const state_vector_t& xFinal,
+			const input_state_matrix_t& P = input_state_matrix_t::Zero())
 	: Q_(Q)
 	, R_(R)
-	, x_nominal_(x_nominal)
-	, u_nominal_(u_nominal)
-	, x_final_(x_final)
-	, Q_final_(Q_final)
+	, P_(P)
+	, QFinal_(QFinal)
+	, xNominal_(xNominal)
+	, uNominal_(uNominal)
+	, xFinal_(xFinal)
 	{}
 
 	virtual ~QuadraticCostFunction() = default;
@@ -72,10 +74,22 @@ public:
 	 * @param [in] partitionIndex: index of the time partition.
 	 * @param [in] algorithmName: The algorithm that class this class (default not defined).
 	 */
-	virtual void initializeModel(LogicRulesMachine<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>& logicRulesMachine,
-			const size_t& partitionIndex, const char* algorithmName=NULL) override {
+	virtual void initializeModel(
+			LogicRulesMachine<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>& logicRulesMachine,
+			const size_t& partitionIndex,
+			const char* algorithmName=NULL) override {
 
-		Base::initializeModel(logicRulesMachine, partitionIndex, algorithmName);
+		BASE::initializeModel(logicRulesMachine, partitionIndex, algorithmName);
+	}
+
+    /**
+     * Returns pointer to the class.
+     *
+     * @return A raw pointer to the class.
+     */
+	virtual QuadraticCostFunction* clone() const override {
+
+		return new QuadraticCostFunction<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>(*this);
 	}
 
 	/**
@@ -90,9 +104,9 @@ public:
 			const state_vector_t& x,
 			const input_vector_t& u) override {
 
-		Base::setCurrentStateAndControl(t, x, u);
-		x_deviation_ = x - x_nominal_;
-		u_deviation_ = u - u_nominal_;
+		BASE::setCurrentStateAndControl(t, x, u);
+		xDeviation_ = x - xNominal_;
+		uDeviation_ = u - uNominal_;
 	}
 
     /**
@@ -102,8 +116,8 @@ public:
      */
 	virtual void getIntermediateCost(scalar_t& L) override {
 
-		L = 0.5 * x_deviation_.dot(Q_ * x_deviation_) +
-				0.5 * u_deviation_.dot(R_ * u_deviation_);
+		L = 0.5 * xDeviation_.dot(Q_ * xDeviation_) + 0.5 * uDeviation_.dot(R_ * uDeviation_) +
+				uDeviation_.dot(P_ * xDeviation_);
 	}
 
     /**
@@ -112,7 +126,8 @@ public:
      * @param [out] dLdx: First order derivative of the intermediate cost with respect to state vector.
      */
 	virtual void getIntermediateCostDerivativeState(state_vector_t& dLdx) override {
-		dLdx =  Q_ * x_deviation_;
+
+		dLdx =  Q_ * xDeviation_ + P_.transpose() * uDeviation_;
 	}
 
     /**
@@ -121,6 +136,7 @@ public:
      * @param [out] dLdxx: Second order derivative of the intermediate cost with respect to state vector.
      */
 	virtual void getIntermediateCostSecondDerivativeState(state_matrix_t& dLdxx) override {
+
 		dLdxx = Q_;
 	}
 
@@ -130,7 +146,8 @@ public:
      * @param [out] dLdu: First order derivative of the intermediate cost with respect to input vector.
      */
 	virtual void getIntermediateCostDerivativeInput(input_vector_t& dLdu) override {
-		dLdu = R_ * u_deviation_;
+
+		dLdu = R_ * uDeviation_ + P_ * xDeviation_;
 	}
 
     /**
@@ -139,6 +156,7 @@ public:
      * @param [out] dLduu: Second order derivative of the intermediate cost with respect to input vector.
      */
 	virtual void getIntermediateCostSecondDerivativeInput(input_matrix_t& dLduu) override {
+
 		dLduu = R_;
 	}
 
@@ -147,8 +165,9 @@ public:
      *
      * @param [out] dLdux: Second order derivative of the intermediate cost with respect to input vector and state.
      */
-	virtual void getIntermediateCostDerivativeInputState(input_state_t& dLdux) override {
-		dLdux = input_state_t::Zero();
+	virtual void getIntermediateCostDerivativeInputState(input_state_matrix_t& dLdux) override {
+
+		dLdux = P_;
 	}
 
     /**
@@ -158,8 +177,8 @@ public:
      */
 	virtual void getTerminalCost(scalar_t& cost) override {
 
-		state_vector_t x_deviation_final = this->x_ - x_final_;
-		cost = 0.5 * x_deviation_final.dot(Q_final_ * x_deviation_final);
+		state_vector_t xDeviationFinal = BASE::x_ - xFinal_;
+		cost = 0.5 * xDeviationFinal.dot(QFinal_ * xDeviationFinal);
 	}
 
     /**
@@ -169,8 +188,8 @@ public:
      */
 	virtual void getTerminalCostDerivativeState(state_vector_t& dPhidx) override {
 
-		state_vector_t x_deviation_final = this->x_ - x_final_;
-		dPhidx = Q_final_ * x_deviation_final;
+		state_vector_t xDeviationFinal = BASE::x_ - xFinal_;
+		dPhidx = QFinal_ * xDeviationFinal;
 	}
 
     /**
@@ -179,30 +198,23 @@ public:
      * @param [out] dPhidxx: Second order final cost derivative with respect to state vector.
      */
 	virtual void getTerminalCostSecondDerivativeState(state_matrix_t& dPhidxx) override {
-		dPhidxx = Q_final_;
-	}
 
-    /**
-     * Returns pointer to the class.
-     *
-     * @return A raw pointer to the class.
-     */
-	virtual QuadraticCostFunction<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>* clone() const override {
-		return new QuadraticCostFunction<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>(*this);
+		dPhidxx = QFinal_;
 	}
 
 protected:
-	state_vector_t x_deviation_;
-	state_vector_t x_nominal_;
 	state_matrix_t Q_;
-
-	input_vector_t u_deviation_;
-	input_vector_t u_nominal_;
 	input_matrix_t R_;
+	input_state_matrix_t P_;
+	state_matrix_t QFinal_;
 
-	state_vector_t x_final_;
-	state_matrix_t Q_final_;
+	state_vector_t xNominal_;
+	input_vector_t uNominal_;
 
+	state_vector_t xDeviation_;
+	input_vector_t uDeviation_;
+
+	state_vector_t xFinal_;
 };
 
 } // namespace ocs2

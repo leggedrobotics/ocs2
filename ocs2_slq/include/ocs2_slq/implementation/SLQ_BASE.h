@@ -1272,11 +1272,11 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculateControllerWorker (
 	state_vector_t nominalState;
 	input_vector_t nominalInput;
 	state_input_matrix_t Bm;
-	input_state_t Pm;
+	input_state_matrix_t Pm;
 	input_vector_t Rv;
 	input_matrix_t RmInverse;
 	input_vector_t EvProjected;
-	input_state_t CmProjected;
+	input_state_matrix_t CmProjected;
 	input_matrix_t DmProjected;
 	control_constraint1_matrix_t DmDager;
 	input_matrix_t Rm;
@@ -1294,7 +1294,7 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculateControllerWorker (
 	CmProjectedFunc_[workerIndex].interpolate(time, CmProjected, greatestLessTimeStampIndex);
 	DmProjectedFunc_[workerIndex].interpolate(time, DmProjected, greatestLessTimeStampIndex);
 
-	input_state_t Lm  = RmInverse * (Pm + Bm.transpose()*SmTrajectoryStock_[i][k]);
+	input_state_matrix_t Lm  = RmInverse * (Pm + Bm.transpose()*SmTrajectoryStock_[i][k]);
 	input_vector_t     Lv  = RmInverse * (Rv + Bm.transpose()*SvTrajectoryStock_[i][k]);
 	input_vector_t     Lve = RmInverse * (Bm.transpose()*SveTrajectoryStock_[i][k]);
 
@@ -1690,7 +1690,7 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::solveErrorRiccatiEquationWor
 	state_vector_array_t GvTrajectory(N);
 	state_matrix_array_t GmTrajectory(N);
 	state_matrix_t Sm;
-	input_state_t Lm;
+	input_state_matrix_t Lm;
 	for (int k=N-1; k>=0; k--) {
 
 		// Sm
@@ -2015,7 +2015,7 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::fullRiccatiBackwardSweepWork
 
 	state_matrix_t _Gm;
 	state_vector_t _Gv, _Gve;
-	input_state_t _Lm, _LmConstrained;
+	input_state_matrix_t _Lm, _LmConstrained;
 	input_vector_t _LvConstrained, _LveConstrained;
 	Eigen::Matrix<scalar_t, 2*STATE_DIM, STATE_DIM> _X_H_0, _X_H_1;
 	Eigen::Matrix<scalar_t, 2*STATE_DIM, 2*STATE_DIM> _H;
@@ -2344,11 +2344,11 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculateInputConstraintLagr
 	LinearInterpolation<state_vector_t,Eigen::aligned_allocator<state_vector_t> >     nominalStateFunc;
 
 	LinearInterpolation<state_input_matrix_t,Eigen::aligned_allocator<state_input_matrix_t> > BmFunc;
-	LinearInterpolation<input_state_t,Eigen::aligned_allocator<input_state_t> > PmFunc;
+	LinearInterpolation<input_state_matrix_t,Eigen::aligned_allocator<input_state_matrix_t> > PmFunc;
 	LinearInterpolation<input_matrix_t,Eigen::aligned_allocator<input_matrix_t> >     RmInverseFunc;
 	LinearInterpolation<input_vector_t,Eigen::aligned_allocator<input_vector_t> >     RvFunc;
 	LinearInterpolation<input_vector_t,Eigen::aligned_allocator<input_vector_t> >     EvProjectedFunc;
-	LinearInterpolation<input_state_t,Eigen::aligned_allocator<input_state_t> > CmProjectedFunc;
+	LinearInterpolation<input_state_matrix_t,Eigen::aligned_allocator<input_state_matrix_t> > CmProjectedFunc;
 	LinearInterpolation<input_matrix_t,Eigen::aligned_allocator<input_matrix_t> >     RmFunc;
 	LinearInterpolation<control_constraint1_matrix_t,Eigen::aligned_allocator<control_constraint1_matrix_t> > DmDagerFunc;
 
@@ -2414,7 +2414,7 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculateInputConstraintLagr
 
 			state_input_matrix_t Bm;
 			BmFunc.interpolate(time, Bm, greatestLessTimeStampIndex);
-			input_state_t Pm;
+			input_state_matrix_t Pm;
 			PmFunc.interpolate(time, Pm, greatestLessTimeStampIndex);
 			input_vector_t Rv;
 			RvFunc.interpolate(time, Rv, greatestLessTimeStampIndex);
@@ -2422,10 +2422,10 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculateInputConstraintLagr
 			RmInverseFunc.interpolate(time, RmInverse, greatestLessTimeStampIndex);
 			input_vector_t EvProjected;
 			EvProjectedFunc.interpolate(time, EvProjected, greatestLessTimeStampIndex);
-			input_state_t CmProjected;
+			input_state_matrix_t CmProjected;
 			CmProjectedFunc.interpolate(time, CmProjected, greatestLessTimeStampIndex);
 
-			input_state_t Lm  = RmInverse * (Pm + Bm.transpose()*SmTrajectoryStock_[i][k]);
+			input_state_matrix_t Lm  = RmInverse * (Pm + Bm.transpose()*SmTrajectoryStock_[i][k]);
 			input_vector_t   Lv  = RmInverse * (Rv + Bm.transpose()*SvTrajectoryStock_[i][k]);
 			input_vector_t   Lve = RmInverse * (Bm.transpose()*SveTrajectoryStock_[i][k]);
 
@@ -2761,10 +2761,10 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::truncateConterller(
 	size_t greatestLessTimeStampIndex = uffFunc.getGreatestLessTimeStampIndex();
 
 	// interpolating k
-	LinearInterpolation<input_state_t,Eigen::aligned_allocator<input_state_t> > kFunc;
+	LinearInterpolation<input_state_matrix_t,Eigen::aligned_allocator<input_state_matrix_t> > kFunc;
 	kFunc.setTimeStamp(&controllersStock[initActivePartition].time_);
 	kFunc.setData(&controllersStock[initActivePartition].k_);
-	input_state_t kInit;
+	input_state_matrix_t kInit;
 	kFunc.interpolate(initTime, kInit, greatestLessTimeStampIndex);
 
 	// deleting the controller in the active subsystem for the subsystems before initTime
@@ -3226,6 +3226,10 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::run(
 		std::cerr << "++++++++++++++++ SLQ solver is initialized +++++++++++++++++" << std::endl;
 		std::cerr << "++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++" << std::endl;
 	}
+
+	std::cout << "settings_.maxNumIterationsSLQ_: " << settings_.maxNumIterationsSLQ_ << std::endl;
+	std::cout << "settings_.maxLearningRateGSLQP_: " << settings_.maxLearningRateGSLQP_ << std::endl;
+	std::cout << "settings_.minLearningRateGSLQP_: " << settings_.minLearningRateGSLQP_ << std::endl;
 
 	// update numPartitionings_ if it has been changed
 	if (numPartitionings_+1 != partitioningTimes.size()) {

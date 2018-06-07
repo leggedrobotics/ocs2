@@ -25,7 +25,7 @@ void checkCostFunction(
 	typedef typename quadratic_cost_t::state_matrix_t		state_matrix_t;
 	typedef typename quadratic_cost_t::input_vector_t		input_vector_t;
 	typedef typename quadratic_cost_t::input_matrix_t		input_matrix_t;
-	typedef typename quadratic_cost_t::input_state_t	input_state_t;
+	typedef typename quadratic_cost_t::input_state_matrix_t	input_state_matrix_t;
 
 	const scalar_t precision = 1e-9;
 
@@ -80,7 +80,7 @@ void checkCostFunction(
 			std::cout << "al_dLduu: \n" << ad_dLduu << std::endl;
 		}
 
-		input_state_t dLdxu, ad_dLdxu;
+		input_state_matrix_t dLdxu, ad_dLdxu;
 		quadraticCost1->stateControlDerivative(dLdxu);
 		quadraticCost2->stateControlDerivative(ad_dLdxu);
 		if (!dLdxu.isApprox(ad_dLdxu, precision)) {
@@ -132,7 +132,7 @@ int main(int argc, char** argv)
 	typedef base_cost_t::state_matrix_t		state_matrix_t;
 	typedef base_cost_t::input_vector_t		input_vector_t;
 	typedef base_cost_t::input_matrix_t	input_matrix_t;
-	typedef base_cost_t::input_state_t	input_state_t;
+	typedef base_cost_t::input_state_matrix_t	input_state_matrix_t;
 
     /***************************************************************************
      *               path to save the generated dynamic-library

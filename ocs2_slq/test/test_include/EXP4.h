@@ -106,7 +106,7 @@ public:
 	void controlDerivative(input_vector_t& dLdu)  { dLdu = R_*u_; }
 	void controlSecondDerivative(input_matrix_t& dLduu)  { dLduu = R_; }
 
-	void stateControlDerivative(input_state_t& dLdxu) { dLdxu.setZero(); }
+	void stateControlDerivative(input_state_matrix_t& dLdxu) { dLdxu.setZero(); }
 
 	void terminalCost(scalar_t& Phi) { Phi = 0.5*(x_-xFinal_).transpose()*QFinal_*(x_-xFinal_); }
 	void terminalCostStateDerivative(state_vector_t& dPhidx)  { dPhidx = QFinal_*(x_-xFinal_); }

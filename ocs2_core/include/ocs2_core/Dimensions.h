@@ -80,11 +80,11 @@ public:
 	typedef std::vector<state_input_matrix_array_t, Eigen::aligned_allocator<state_input_matrix_array_t> > state_input_matrix_array2_t;
 
 	/** Fixed-size input_state matrix type with size \f$ n_u * n_x \f$ . */
-	typedef Eigen::Matrix<scalar_t, INPUT_DIM, STATE_DIM> input_state_t;
+	typedef Eigen::Matrix<scalar_t, INPUT_DIM, STATE_DIM> input_state_matrix_t;
 	/** Input_state matrix trajectory type. */
-	typedef std::vector<input_state_t, Eigen::aligned_allocator<input_state_t> > input_state_array_t;
+	typedef std::vector<input_state_matrix_t, Eigen::aligned_allocator<input_state_matrix_t> > input_state_matrix_array_t;
 	/** Array of input_state matrix trajectory type. */
-	typedef std::vector<input_state_array_t, Eigen::aligned_allocator<input_state_array_t> > input_state_array2_t;
+	typedef std::vector<input_state_matrix_array_t, Eigen::aligned_allocator<input_state_matrix_array_t> > input_state_matrix_array2_t;
 
 	/** Fixed-size control input vector type with size \f$ n_u \f$ . */
 	typedef Eigen::Matrix<scalar_t, INPUT_DIM, 1> input_vector_t;

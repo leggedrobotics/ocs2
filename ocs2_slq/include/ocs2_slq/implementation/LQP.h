@@ -261,7 +261,7 @@ void LQP<STATE_DIM, INPUT_DIM, NUM_Subsystems>::SolveRiccatiEquations()  {
 		input_vector_array_t RvTrajectory(2, RvStock_[i]);
 		input_matrix_array_t RmTrajectory(2, RmStock_[i]);
 		input_matrix_array_t   RmInverseTrajectory(2, RmInverseStock_[i]);
-		input_state_array_t PmTrajectory(2, PmStock_[i]);
+		input_state_matrix_array_t PmTrajectory(2, PmStock_[i]);
 
 		// set data for Riccati equations
 		bvpSolver.setData(&timeTrajectory,

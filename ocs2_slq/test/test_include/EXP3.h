@@ -221,7 +221,7 @@ public:
 	void controlDerivative(input_vector_t& dLdu)  { dLdu << u_(0), alpha_*u_(1); }
 	void controlSecondDerivative(input_matrix_t& dLduu)  { dLduu << 1.0, 0.0, 0.0, alpha_; }
 
-	void stateControlDerivative(input_state_t& dLdxu) { dLdxu.setZero(); }
+	void stateControlDerivative(input_state_matrix_t& dLdxu) { dLdxu.setZero(); }
 
 	void terminalCost(scalar_t& Phi) { Phi = 0; }
 	void terminalCostStateDerivative(state_vector_t& dPhidx)  { dPhidx.setZero(); }
@@ -254,7 +254,7 @@ public:
 	void controlDerivative(input_vector_t& dLdu)  { dLdu << u_(0), alpha_*u_(1); }
 	void controlSecondDerivative(input_matrix_t& dLduu)  { dLduu << 1.0, 0.0, 0.0, alpha_; }
 
-	void stateControlDerivative(input_state_t& dLdxu) { dLdxu.setZero(); }
+	void stateControlDerivative(input_state_matrix_t& dLdxu) { dLdxu.setZero(); }
 
 	void terminalCost(scalar_t& Phi) { Phi = 0; }
 	void terminalCostStateDerivative(state_vector_t& dPhidx)  { dPhidx.setZero(); }
@@ -287,7 +287,7 @@ public:
 	void controlDerivative(input_vector_t& dLdu)  { dLdu << u_(0), alpha_*u_(1); }
 	void controlSecondDerivative(input_matrix_t& dLduu)  { dLduu << 1.0, 0.0, 0.0, alpha_; }
 
-	void stateControlDerivative(input_state_t& dLdxu) { dLdxu.setZero(); }
+	void stateControlDerivative(input_state_matrix_t& dLdxu) { dLdxu.setZero(); }
 
 	void terminalCost(scalar_t& Phi) { Phi = 0.5*pow(x_(0)-1.0, 2) + 0.5*pow(x_(1)+1.0, 2); }
 	void terminalCostStateDerivative(state_vector_t& dPhidx)  { dPhidx << (x_(0)-1.0), (x_(1)+1.0); }

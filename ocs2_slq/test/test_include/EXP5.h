@@ -133,7 +133,7 @@ public:
 
 	void controlSecondDerivative(input_matrix_t& dLduu)  { dLduu = R; }
 
-	void stateControlDerivative(input_state_t& dLdxu) { dLdxu.setZero(); }
+	void stateControlDerivative(input_state_matrix_t& dLdxu) { dLdxu.setZero(); }
 
 	void terminalCost(scalar_t& Phi) {
 		Phi = 0.5* (x_-x_ref).transpose()*Q_final*(x_-x_ref);

@@ -68,7 +68,7 @@ public:
 	typedef typename quadruped_interface_t::input_vector_array2_t	input_vector_array2_t;
 	typedef typename quadruped_interface_t::controller_t			controller_t;
 	typedef typename quadruped_interface_t::controller_array_t		controller_array_t;
-	typedef typename quadruped_interface_t::control_feedback_t 	   	control_feedback_t;
+	typedef typename quadruped_interface_t::input_state_t 	   	input_state_t;
 
 	typedef typename quadruped_interface_t::feet_z_planner_t		feet_z_planner_t;
 	typedef typename quadruped_interface_t::feet_z_planner_ptr_t	feet_z_planner_ptr_t;

@@ -20,7 +20,6 @@
 
 #include <ocs2_core/misc/loadEigenMatrix.h>
 
-#include <ocs2_slq/GLQP.h>
 #include <ocs2_slq/SLQ.h>
 #include <ocs2_slq/SLQ_MP.h>
 //#include <ocs2_ocs2/OCS2Projected.h>
@@ -81,15 +80,15 @@ public:
 	typedef typename dimension_t::state_vector_t 			state_vector_t;
 	typedef typename dimension_t::state_vector_array_t 		state_vector_array_t;
 	typedef typename dimension_t::state_vector_array2_t 	state_vector_array2_t;
-	typedef typename dimension_t::control_vector_t 		  	input_vector_t;
-	typedef typename dimension_t::control_vector_array_t  	input_vector_array_t;
-	typedef typename dimension_t::control_vector_array2_t 	input_vector_array2_t;
+	typedef typename dimension_t::input_vector_t 		  	input_vector_t;
+	typedef typename dimension_t::input_vector_array_t  	input_vector_array_t;
+	typedef typename dimension_t::input_vector_array2_t 	input_vector_array2_t;
 	typedef typename dimension_t::eigen_scalar_t			eigen_scalar_t;
 	typedef typename dimension_t::eigen_scalar_array_t		eigen_scalar_array_t;
 	typedef typename dimension_t::state_matrix_t			state_matrix_t;
-	typedef typename dimension_t::control_matrix_t			control_matrix_t;
-	typedef typename dimension_t::control_feedback_t 	   	control_feedback_t;
-	typedef typename dimension_t::control_feedback_array_t 	control_feedback_array_t;
+	typedef typename dimension_t::input_matrix_t			input_matrix_t;
+	typedef typename dimension_t::input_state_matrix_t 	   	input_state_matrix_t;
+	typedef typename dimension_t::input_state_matrix_array_t 	input_state_matrix_array_t;
 
 	typedef ocs2::CostDesiredTrajectories<scalar_t> 		cost_desired_trajectories_t;
 
@@ -114,14 +113,12 @@ public:
 
 	typedef ocs2::ModeSequenceTemplate<scalar_t> mode_sequence_template_t;
 
-	typedef ocs2::GLQP<STATE_DIM, INPUT_DIM, logic_rules_t>		lq_t;
 	typedef ocs2::SLQ_BASE<STATE_DIM, INPUT_DIM, logic_rules_t>	slq_base_t;
 	typedef ocs2::SLQ<STATE_DIM, INPUT_DIM, logic_rules_t>  	slq_t;
 	typedef ocs2::SLQ_MP<STATE_DIM, INPUT_DIM, logic_rules_t>  	slq_mp_t;
 //	typedef ocs2::OCS2Projected<STATE_DIM, INPUT_DIM> 			ocs2_t;
 	typedef ocs2::MPC_SLQ<STATE_DIM, INPUT_DIM, logic_rules_t>	mpc_t;
 
-	typedef typename lq_t::Ptr 			lq_ptr_t;
 	typedef typename slq_base_t::Ptr 	slq_base_ptr_t;
 	typedef typename slq_t::Ptr  		slq_ptr_t;
 	typedef typename slq_mp_t::Ptr  	slq_mp_ptr_t;
@@ -494,7 +491,7 @@ protected:
 	ground_profile_ptr_t groundProfilePtr_;
 
 	state_matrix_t Q_;
-	control_matrix_t R_;
+	input_matrix_t R_;
 	state_matrix_t 	QFinal_;
 	state_vector_t 	xFinal_;
 
@@ -532,8 +529,6 @@ protected:
 	eigen_scalar_array_t iterationISE2_;
 	eigen_scalar_array_t ocs2Iterationcost_;
 
-	//
-	lq_ptr_t lqPtr_;
 	// SLQ
 	slq_base_ptr_t	slqPtr_;
 	// OCS2
@@ -555,14 +550,14 @@ protected:
 	scalar_array_t 			timeTrajectory_;
 	state_vector_array_t 	stateTrajectory_;
 	input_vector_array_t 	inputTrajectory_;
-	scalar_array_t 			controllerTimeTrajectory_;
-	control_feedback_array_t controllerFBTrajectory_;
-	input_vector_array_t 	controllerFFTrajector_;
+	scalar_array_t 			   controllerTimeTrajectory_;
+	input_vector_array_t 	   controllerFFTrajector_;
+	input_state_matrix_array_t controllerFBTrajectory_;
 
 	ocs2::LinearInterpolation<state_vector_t, Eigen::aligned_allocator<state_vector_t> > 		linInterpolateState_;
 	ocs2::LinearInterpolation<input_vector_t, Eigen::aligned_allocator<input_vector_t> > 		linInterpolateInput_;
 	ocs2::LinearInterpolation<input_vector_t, Eigen::aligned_allocator<input_vector_t> > 		linInterpolateUff_;
-	ocs2::LinearInterpolation<control_feedback_t, Eigen::aligned_allocator<control_feedback_t>> linInterpolateK_;
+	ocs2::LinearInterpolation<input_state_matrix_t, Eigen::aligned_allocator<input_state_matrix_t>> linInterpolateK_;
 
 };
 

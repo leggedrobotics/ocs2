@@ -54,8 +54,8 @@ public:
 	typedef typename BASE::state_vector_array_t			state_vector_array_t;
 	typedef typename BASE::input_vector_t 		 		input_vector_t;
 	typedef typename BASE::input_vector_array_t  		input_vector_array_t;
-	typedef typename BASE::control_feedback_t 	   		control_feedback_t;
-	typedef typename BASE::control_feedback_array_t  	control_feedback_array_t;
+	typedef typename BASE::input_state_matrix_t 	   	input_state_matrix_t;
+	typedef typename BASE::input_state_matrix_array_t  	input_state_matrix_array_t;
 	typedef typename BASE::system_observation_t 		system_observation_t;
 
 	typedef Eigen::Matrix<scalar_t,3,1>	vector_3d_t;

@@ -51,8 +51,8 @@ public:
 	typedef typename BASE::state_vector_array_t		state_vector_array_t;
 	typedef typename BASE::input_vector_t			input_vector_t;
 	typedef typename BASE::input_vector_array_t		input_vector_array_t;
-	typedef typename BASE::control_feedback_t		control_feedback_t;
-	typedef typename BASE::control_feedback_array_t control_feedback_array_t;
+	typedef typename BASE::input_state_matrix_t		input_state_matrix_t;
+	typedef typename BASE::input_state_matrix_array_t input_state_matrix_array_t;
 
 	typedef typename BASE::cost_desired_trajectories_t cost_desired_trajectories_t;
 

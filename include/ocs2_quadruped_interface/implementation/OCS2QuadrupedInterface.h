@@ -580,18 +580,6 @@ void OCS2QuadrupedInterface<JOINT_COORD_SIZE>::runSLQ(
 		std::cerr << "Warm initialization." << std::endl;
 		slqPtr_->run(initTime_, initSwitchedState_, finalTime_, partitioningTimes_, initialControllersStock);
 	}
-//	if (initialControllersStock.empty()==true) {
-//		std::cerr << "Cold initialization." << std::endl;
-//		lqPtr_->run(initTime_, initSwitchedState_, finalTime_, partitioningTimes_, 0.0,
-//				desiredTimeTrajectoriesStock_, desiredStateTrajectoriesStock_);
-//		lqPtr_->getController(controllersStock_);
-//
-//	} else {
-//		std::cerr << "Warm initialization." << std::endl;
-//		controllersStock_ = initialControllersStock;
-//	}
-//	slqPtr_->run(initTime_, initSwitchedState_, finalTime_, partitioningTimes_,
-//			controllersStock_, desiredTimeTrajectoriesStock_, desiredStateTrajectoriesStock_);
 
 	// get the optimizer outputs
 	ocs2Iterationcost_.clear();

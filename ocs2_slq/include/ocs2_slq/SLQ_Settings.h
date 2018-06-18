@@ -334,7 +334,7 @@ inline void SLQ_Settings::loadSettings(const std::string& filename, bool verbose
 	}
 
 	try	{
-		maxNumStepsPerSecond_ = pt.get<size_t>("slq.maxNumStepsPerSecond");
+		maxNumStepsPerSecond_ = pt.get<double>("slq.maxNumStepsPerSecond");
 		if (verbose)  std::cerr << " #### Option loader : option 'maxNumStepsPerSecond' ................ " << maxNumStepsPerSecond_ << std::endl;
 	}
 	catch (const std::exception& e){

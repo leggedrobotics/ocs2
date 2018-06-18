@@ -47,8 +47,8 @@ catkin_package(
   
   LIBRARIES 
     ocs2_anymal_interface
-    ocs2_anymal_mpc
-    ocs2_anymal_mrt
+    mpc_ros_anymal
+    mrt_ros_anymal
     
   CATKIN_DEPENDS
     ocs2_core
@@ -85,28 +85,28 @@ target_link_libraries(ocs2_anymal_interface
   ${catkin_LIBRARIES}
 )
 
-add_library(ocs2_anymal_mpc
-  src/OCS2AnymalMPC.cpp
+add_library(mpc_ros_anymal
+  src/MPC_ROS_Anymal.cpp
 )
-add_dependencies(ocs2_anymal_mpc
+add_dependencies(mpc_ros_anymal
   ocs2_anymal_interface
   ${${PROJECT_NAME}_EXPORTED_TARGETS}
   ${catkin_EXPORTED_TARGETS}
 )
-target_link_libraries(ocs2_anymal_mpc
+target_link_libraries(mpc_ros_anymal
   ocs2_anymal_interface
   ${catkin_LIBRARIES}
 )
 
-add_library(ocs2_anymal_mrt
-  src/OCS2AnymalMRT.cpp
+add_library(mrt_ros_anymal
+  src/MRT_ROS_Anymal.cpp
 )
-add_dependencies(ocs2_anymal_mrt
+add_dependencies(mrt_ros_anymal
   ocs2_anymal_interface
   ${${PROJECT_NAME}_EXPORTED_TARGETS}
   ${catkin_EXPORTED_TARGETS}
 )
-target_link_libraries(ocs2_anymal_mrt
+target_link_libraries(mrt_ros_anymal
   ocs2_anymal_interface
   ${catkin_LIBRARIES}
 )
@@ -136,28 +136,28 @@ target_link_libraries(PlanningTest
   ${catkin_LIBRARIES}
 )
 
-add_executable(AnymalMPC
+add_executable(anymal_mpc_node
   src/AnymalMPC.cpp
 )
-add_dependencies(AnymalMPC
-  ocs2_anymal_mpc
+add_dependencies(anymal_mpc_node
+  mpc_ros_anymal
   ${${PROJECT_NAME}_EXPORTED_TARGETS}
   ${catkin_EXPORTED_TARGETS}
 )
-target_link_libraries(AnymalMPC
-  ocs2_anymal_mpc
+target_link_libraries(anymal_mpc_node
+  mpc_ros_anymal
   ${catkin_LIBRARIES}
 )
 
-add_executable(MPC_Simulator
-  src/MPC_DummySimulator.cpp
+add_executable(dummy_mrt_node
+  test/DummyMRT.cpp
 )
-add_dependencies(MPC_Simulator
+add_dependencies(dummy_mrt_node
   ocs2_anymal_interface
   ${${PROJECT_NAME}_EXPORTED_TARGETS}
   ${catkin_EXPORTED_TARGETS}
 )
-target_link_libraries(MPC_Simulator
+target_link_libraries(dummy_mrt_node
   ocs2_anymal_interface
   ${catkin_LIBRARIES}
 )

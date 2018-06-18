@@ -11,7 +11,7 @@
 
 #include <boost/filesystem.hpp>
 
-#include "ocs2_anymal_interface/OCS2AnymalMPC.h"
+#include "ocs2_anymal_interface/MPC_ROS_Anymal.h"
 
 int main( int argc, char* argv[] )
 {
@@ -26,7 +26,7 @@ int main( int argc, char* argv[] )
 	std::cout << "Loading task file: " << taskFile << std::endl;
 
 	// launch MPC nodes
-	anymal::OCS2AnymalMPC ocs2AnymalMPC(taskFile);
+	anymal::MPC_ROS_Anymal ocs2AnymalMPC(taskFile);
 	ocs2AnymalMPC.launchNodes(argc, argv);
 }
 

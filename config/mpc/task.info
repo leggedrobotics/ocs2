@@ -42,6 +42,7 @@ switchingModes
   	[1]     STANCE
 }
 
+
 templateSubsystemsSequence
 {
   	[0]     LF_RH
@@ -120,8 +121,12 @@ slq
 
 mpc
 {
-  numIterations				1
-  maxNumIterations			1
+  runtimeNumIterations		1
+  initMaxNumIterations		1
+	
+  runtimeLearningRate			1.0
+  initMaxLearningRate         1.0            
+  initMinLearningRate         1.0    
 
   debugPrint				1
   coldStart					0

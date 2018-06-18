@@ -5,11 +5,11 @@
  *      Author: farbod
  */
 
-#include "ocs2_quadruped_interface/TargetPoseCommand.h"
+#include "ocs2_quadruped_interface/TargetTrajectories_ROS_Quadruped.h"
 
 int main( int argc, char* argv[] )
 {
-	switched_model::TargetPoseCommand targetPoseCommand("anymal");
+	switched_model::TargetTrajectories_ROS_Quadruped<double> targetPoseCommand("anymal");
 
 	targetPoseCommand.launchNodes(argc, argv);
 

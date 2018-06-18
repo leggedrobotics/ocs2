@@ -58,15 +58,19 @@ public:
 	typedef typename Base::state_matrix_t 		state_matrix_t;
 	typedef typename Base::input_vector_t  		input_vector_t;
 	typedef typename Base::input_vector_array_t input_vector_array_t;
-	typedef typename Base::control_matrix_t 	control_matrix_t;
-	typedef typename Base::control_feedback_t 	control_feedback_t;
+	typedef typename Base::input_matrix_t 	    input_matrix_t;
+	typedef typename Base::input_state_matrix_t input_state_matrix_t;
+
+	typedef typename Base::cost_desired_trajectories_t 	cost_desired_trajectories_t;
+	typedef typename Base::dynamic_vector_t 			dynamic_vector_t;
+	typedef typename Base::dynamic_vector_array_t 		dynamic_vector_array_t;
 
 	/**
 	 * Construntor
 	 */
 	SwitchedModelCostBase(const kinematic_model_t& kinematicModel, const com_model_t& comModel,
 			const state_matrix_t& Q,
-			const control_matrix_t& R,
+			const input_matrix_t& R,
 			const state_matrix_t& QFinal,
 			const state_vector_t& xFinal,
 			const scalar_t& copWeightMax = 0.0,
@@ -160,14 +164,14 @@ public:
      *
      * @param [out] dLduu: Second order cost derivative with respect to input vector.
      */
-	virtual void getIntermediateCostSecondDerivativeInput(control_matrix_t& dLduu) override;
+	virtual void getIntermediateCostSecondDerivativeInput(input_matrix_t& dLduu) override;
 
     /**
      * Gets the state, control input derivative.
      *
      * @param [out] dLdux: Second order cost derivative with respect to state and input vector.
      */
-	virtual void getIntermediateCostDerivativeInputState(control_feedback_t& dLdux) override;
+	virtual void getIntermediateCostDerivativeInputState(input_state_matrix_t& dLdux) override;
 
     /**
      * Gets the terminal cost.
@@ -197,7 +201,7 @@ protected:
 	 * @param R
 	 * @return
 	 */
-	control_matrix_t correctedInputCost(const contact_flag_t& stanceLeg, const control_matrix_t& R);
+	input_matrix_t correctedInputCost(const contact_flag_t& stanceLeg, const input_matrix_t& R);
 
 	/**
 	 *
@@ -239,10 +243,10 @@ private:
 
 	state_matrix_t Q_;
 	state_matrix_t Q_desired_;
-	control_matrix_t R_;
-	control_matrix_t R_desired_;
-	std::map<contact_flag_t, control_matrix_t, std::less<contact_flag_t>,
-	  Eigen::aligned_allocator<std::pair<const contact_flag_t, control_matrix_t>> > R_Bank_;
+	input_matrix_t R_;
+	input_matrix_t R_desired_;
+	std::map<contact_flag_t, input_matrix_t, std::less<contact_flag_t>,
+	  Eigen::aligned_allocator<std::pair<const contact_flag_t, input_matrix_t>> > R_Bank_;
 
 	state_matrix_t QFinal_;
 	state_matrix_t QFinal_desired_;

@@ -170,7 +170,7 @@ void ComDynamicsDerivativeBase<JOINT_COORD_SIZE>::getFlowMapDerivativeState(stat
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t JOINT_COORD_SIZE>
-void ComDynamicsDerivativeBase<JOINT_COORD_SIZE>::getFlowMapDerivativeInput(control_gain_matrix_t& B)  {
+void ComDynamicsDerivativeBase<JOINT_COORD_SIZE>::getFlowMapDerivativeInput(state_input_matrix_t& B)  {
 
 
 	// B matrix
@@ -244,7 +244,7 @@ void ComDynamicsDerivativeBase<JOINT_COORD_SIZE>::getApproximateDerivativesJoint
 //				-o_gravityVector_(2), constrainedIntegration_);
 //		state_vector_t dxdt;
 //		comDyamics.setData(stanceLegs_, qJoints_, dqJoints_);
-//		comDyamics.computeDerivative(t_, x_, u_, dxdt);
+//		comDyamics.computeFlowMap(t_, x_, u_, dxdt);
 //
 //		Eigen::Matrix<double,6,12> partial;
 //		for (size_t j=0; j<12; j++)

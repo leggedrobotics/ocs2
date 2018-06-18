@@ -367,7 +367,7 @@ void ComKinoConstraintBase<JOINT_COORD_SIZE>::getConstraint1DerivativesState(con
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t JOINT_COORD_SIZE>
-void ComKinoConstraintBase<JOINT_COORD_SIZE>::getConstraint1DerivativesControl(constraint1_control_matrix_t& D) {
+void ComKinoConstraintBase<JOINT_COORD_SIZE>::getConstraint1DerivativesControl(constraint1_input_matrix_t& D) {
 
 	// D matrix
 	/*			lambda		dqJoints

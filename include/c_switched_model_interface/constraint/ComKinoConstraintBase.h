@@ -52,10 +52,10 @@ public:
 	typedef typename Base::state_matrix_t state_matrix_t;
 	typedef typename Base::state_vector_t state_vector_t;
 	typedef typename Base::input_vector_t input_vector_t;
-	typedef typename Base::control_gain_matrix_t control_gain_matrix_t;
+	typedef typename Base::state_input_matrix_t 		state_input_matrix_t;
 	typedef typename Base::constraint1_vector_t 		constraint1_vector_t;
 	typedef typename Base::constraint1_state_matrix_t 	constraint1_state_matrix_t;
-	typedef typename Base::constraint1_control_matrix_t constraint1_control_matrix_t;
+	typedef typename Base::constraint1_input_matrix_t constraint1_input_matrix_t;
 	typedef typename Base::constraint2_vector_t 		constraint2_vector_t;
 	typedef typename Base::constraint2_state_matrix_t 	constraint2_state_matrix_t;
 
@@ -175,7 +175,7 @@ public:
 	 *
 	 * @param D: a nc1-by-nu matrix
 	 */
-	virtual void getConstraint1DerivativesControl(constraint1_control_matrix_t& D)  override;
+	virtual void getConstraint1DerivativesControl(constraint1_input_matrix_t& D)  override;
 
 	/**
 	 * calculate and retrieve the F matrix (i.e. the state derivative of the state-only constraints w.r.t. state vector).

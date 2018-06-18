@@ -38,7 +38,7 @@ void ComKinoDynamicsBase<JOINT_COORD_SIZE>::initializeModel(logic_rules_machine_
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t JOINT_COORD_SIZE>
-void ComKinoDynamicsBase<JOINT_COORD_SIZE>::computeDerivative(const scalar_t& t,
+void ComKinoDynamicsBase<JOINT_COORD_SIZE>::computeFlowMap(const scalar_t& t,
 		const state_vector_t& x,
 		const input_vector_t& u,
 		state_vector_t& dxdt)   {
@@ -51,7 +51,7 @@ void ComKinoDynamicsBase<JOINT_COORD_SIZE>::computeDerivative(const scalar_t& t,
 
 	// CoM state time derivatives
 	typename ComDynamicsBase<JOINT_COORD_SIZE>::state_vector_t stateDerivativeCoM;
-	comDynamics_.computeDerivative(t, x.template head<12>(), u.template head<12>(), stateDerivativeCoM);
+	comDynamics_.computeFlowMap(t, x.template head<12>(), u.template head<12>(), stateDerivativeCoM);
 
 	// extended state time derivatives
 	dxdt << stateDerivativeCoM, u.template tail<12>();
@@ -135,7 +135,7 @@ template <size_t JOINT_COORD_SIZE>
 void ComKinoDynamicsBase<JOINT_COORD_SIZE>::computeGuardSurfaces(
 		const scalar_t& t,
 		const state_vector_t& x,
-		std::vector<scalar_t>& guardSurfacesValue) {
+		dynamic_vector_t& guardSurfacesValue) {
 
 	// Rotation matrix from Base frame (or the coincided frame world frame) to Origin frame (global world).
 	Eigen::Matrix3d o_R_b = RotationMatrixBasetoOrigin(x.template head<3>());
@@ -165,8 +165,7 @@ void ComKinoDynamicsBase<JOINT_COORD_SIZE>::computeGuardSurfaces(
 
 	const size_t numContactPoints = 4;
 	const size_t numModes = std::pow(2,numContactPoints);
-	guardSurfacesValue.clear();
-	guardSurfacesValue.reserve(numModes);
+	guardSurfacesValue.resize(numModes);
 
 	for (size_t i=0; i<numModes; i++) {
 
@@ -184,7 +183,7 @@ void ComKinoDynamicsBase<JOINT_COORD_SIZE>::computeGuardSurfaces(
 		Eigen::Vector4d expEachLegGuardSurfaces = eachLegGuardSurfaces.unaryExpr(
 					[&](const scalar_t& x) { return std::exp(options_.eta_*x); });
 		Eigen::Vector4d softMax = eachLegGuardSurfaces.cwiseProduct(expEachLegGuardSurfaces);
-		guardSurfacesValue.push_back( softMax.sum() / expEachLegGuardSurfaces.sum() );
+		guardSurfacesValue(i) = softMax.sum() / expEachLegGuardSurfaces.sum();
 		// Max
 //		guardSurfacesValue.push_back(eachLegGuardSurfaces.maxCoeff());
 

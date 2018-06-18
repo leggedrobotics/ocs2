@@ -51,7 +51,7 @@ void ComDynamicsBase<JOINT_COORD_SIZE>::setData(const std::array<bool,4>& stance
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t JOINT_COORD_SIZE>
-void ComDynamicsBase<JOINT_COORD_SIZE>::computeDerivative(const scalar_t& t,
+void ComDynamicsBase<JOINT_COORD_SIZE>::computeFlowMap(const scalar_t& t,
 		const state_vector_t& x,
 		const input_vector_t& u,
 		state_vector_t& dxdt)   {

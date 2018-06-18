@@ -89,7 +89,7 @@ void ComKinoDynamicsDerivativeBase<JOINT_COORD_SIZE>::getFlowMapDerivativeState(
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t JOINT_COORD_SIZE>
-void ComKinoDynamicsDerivativeBase<JOINT_COORD_SIZE>::getFlowMapDerivativeInput(control_gain_matrix_t& B)  {
+void ComKinoDynamicsDerivativeBase<JOINT_COORD_SIZE>::getFlowMapDerivativeInput(state_input_matrix_t& B)  {
 
 	// B matrix
 	/*			lambda		jointsVel=omega

@@ -15,7 +15,7 @@ SwitchedModelCostBase<JOINT_COORD_SIZE>::SwitchedModelCostBase(
 		const kinematic_model_t& kinematicModel,
 		const com_model_t& comModel,
 		const state_matrix_t& Q,
-		const control_matrix_t& R,
+		const input_matrix_t& R,
 		const state_matrix_t& QFinal,
 		const state_vector_t& xFinal,
 		const scalar_t& copWeightMax /*= 0.0*/,
@@ -104,10 +104,11 @@ void SwitchedModelCostBase<JOINT_COORD_SIZE>::setCurrentStateAndControl(const sc
 	// R matrix
 	R_ = R_Bank_[stanceLegs_];
 
-	state_vector_t xNominal;
+	dynamic_vector_t xNominal;
 	Base::xNominalFunc_.interpolate(t, xNominal);
+
 	xDeviation_ = x - xNominal;
-	input_vector_t uNominal;
+	dynamic_vector_t uNominal;
 	Base::uNominalFunc_.interpolate(t, uNominal);
 	uDeviation_ = u - uNominal;
 
@@ -192,7 +193,7 @@ void SwitchedModelCostBase<JOINT_COORD_SIZE>::getIntermediateCostDerivativeInput
 /******************************************************************************************************/
 template <size_t JOINT_COORD_SIZE>
 void SwitchedModelCostBase<JOINT_COORD_SIZE>::getIntermediateCostSecondDerivativeInput(
-		control_matrix_t& dLduu)  {
+		input_matrix_t& dLduu)  {
 
 	dLduu = R_;
 	dLduu.template topLeftCorner<12,12>() += copWeight_*hessLambda_copCost_;
@@ -204,7 +205,7 @@ void SwitchedModelCostBase<JOINT_COORD_SIZE>::getIntermediateCostSecondDerivativ
 /******************************************************************************************************/
 template <size_t JOINT_COORD_SIZE>
 void SwitchedModelCostBase<JOINT_COORD_SIZE>::getIntermediateCostDerivativeInputState(
-		control_feedback_t& dLdux)  {
+		input_state_matrix_t& dLdux)  {
 
 	dLdux.setZero();
 	dLdux.template topRightCorner<12,12>() += copWeight_*devLambdaJoints_copCost_;
@@ -245,12 +246,12 @@ void SwitchedModelCostBase<JOINT_COORD_SIZE>::getTerminalCostSecondDerivativeSta
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t JOINT_COORD_SIZE>
-typename SwitchedModelCostBase<JOINT_COORD_SIZE>::control_matrix_t
+typename SwitchedModelCostBase<JOINT_COORD_SIZE>::input_matrix_t
 	SwitchedModelCostBase<JOINT_COORD_SIZE>::correctedInputCost(
 			const contact_flag_t& stanceLeg,
-			const control_matrix_t& R) {
+			const input_matrix_t& R) {
 
-	control_matrix_t nondiagonalR = R;
+	input_matrix_t nondiagonalR = R;
 	scalar_t meanRz = (R(2,2)+R(5,5)+R(8,8)+R(11,11))/4;
 	for (size_t j=0; j<4; j++)
 		for (size_t k=0; k<=j; k++)

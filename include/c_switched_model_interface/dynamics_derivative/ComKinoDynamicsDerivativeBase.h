@@ -50,9 +50,9 @@ public:
 	typedef typename Base::state_matrix_t state_matrix_t;
 	typedef typename Base::state_vector_t state_vector_t;
 	typedef typename Base::input_vector_t input_vector_t;
-	typedef typename Base::control_gain_matrix_t control_gain_matrix_t;
+	typedef typename Base::state_input_matrix_t state_input_matrix_t;
 	typedef typename Base::constraint1_state_matrix_t constraint1_state_matrix_t;
-	typedef typename Base::constraint1_control_matrix_t constraint1_control_matrix_t;
+	typedef typename Base::constraint1_input_matrix_t constraint1_input_matrix_t;
 	typedef typename Base::constraint2_state_matrix_t constraint2_state_matrix_t;
 
 	typedef typename SwitchedModel<JOINT_COORD_SIZE>::base_coordinate_t  base_coordinate_t;
@@ -124,7 +124,7 @@ public:
 	 *
 	 * @param B: a ny-by-nu matrix
 	 */
-	virtual void getFlowMapDerivativeInput(control_gain_matrix_t& B)  override;
+	virtual void getFlowMapDerivativeInput(state_input_matrix_t& B)  override;
 
 	/**
 	 * set the stance legs

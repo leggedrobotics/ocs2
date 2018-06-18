@@ -50,6 +50,7 @@ public:
 	typedef typename Base::scalar_t scalar_t;
 	typedef typename Base::state_vector_t state_vector_t;
 	typedef typename Base::input_vector_t input_vector_t;
+	typedef typename Base::dynamic_vector_t dynamic_vector_t;
 	typedef typename Base::constraint1_vector_t constraint1_vector_t;
 	typedef typename Base::constraint2_vector_t constraint2_vector_t;
 
@@ -128,7 +129,7 @@ public:
 	 * 		+ hyQ's joints' angel time derivatives (12-state)
 	 *
 	 */
-	virtual void computeDerivative(const scalar_t& t,
+	virtual void computeFlowMap(const scalar_t& t,
 			const state_vector_t& x,
 			const input_vector_t& u,
 			state_vector_t& dxdt) override;
@@ -150,7 +151,7 @@ public:
 	 * @param [in] state: transition state
 	 * @param [out] mappedState: mapped state after transition
 	 */
-	virtual void mapState(
+	virtual void computeJumpMap(
 			const scalar_t& time,
 			const state_vector_t& state,
 			state_vector_t& mappedState) override {
@@ -167,7 +168,7 @@ public:
 	virtual void computeGuardSurfaces(
 			const scalar_t& t,
 			const state_vector_t& x,
-			std::vector<scalar_t>& guardSurfacesValue) override;
+			dynamic_vector_t& guardSurfacesValue) override;
 
 
 private:

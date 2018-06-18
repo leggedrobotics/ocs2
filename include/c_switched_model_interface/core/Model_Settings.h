@@ -51,7 +51,7 @@ inline void Model_Settings::loadSettings(const std::string& filename, bool verbo
 	boost::property_tree::ptree pt;
 	boost::property_tree::read_info(filename, pt);
 
-	if (verbose)  std::cerr << "\n #### Robot Model Setings:" << std::endl;
+	if (verbose)  std::cerr << "\n #### Robot Model Settings:" << std::endl;
 	if (verbose)  std::cerr << " #### ==================================================" << std::endl;
 
 	try {

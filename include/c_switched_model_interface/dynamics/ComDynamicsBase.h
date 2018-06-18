@@ -108,14 +108,14 @@ public:
 	 * 		+ CoM angular and linear accelerations w.r.t CoM frame (6-states)
 	 *
 	 */
-	virtual void computeDerivative(const scalar_t& t,
+	virtual void computeFlowMap(const scalar_t& t,
 			const state_vector_t& x,
 			const input_vector_t& u,
 			state_vector_t& dxdt) override;
 
 	/**
 	 * set joints' angel and angular velocity, and stance leg configuration. This data is
-	 * required in computeDerivative() method.
+	 * required in computeFlowMap() method.
 	 */
 	void setData(const std::array<bool,4>& stanceLegs,
 			const joint_coordinate_t& qJoints,
@@ -130,37 +130,37 @@ public:
 	static Eigen::Matrix3d AngularVelocitiesToEulerAngleDerivativesMatrix (const Eigen::Vector3d& eulerAngles);
 
 	/**
-	 * user interface for retrieving stance legs. Note this value is updated after each call of computeDerivative() method.
+	 * user interface for retrieving stance legs. Note this value is updated after each call of computeFlowMap() method.
 	 */
 	void getStanceLegs(std::array<bool,4>& stanceLegs) const;
 
 	/**
-	 * user interface for retrieving feet's positions. Note this value is updated after each call of computeDerivative() method.
+	 * user interface for retrieving feet's positions. Note this value is updated after each call of computeFlowMap() method.
 	 */
 	void getFeetPositions(std::array<Eigen::Vector3d,4>& b_base2StanceFeet) const;
 
 	/**
-	 * user interface for retrieving base pose in origin frame. Note this value is updated after each call of computeDerivative() method.
+	 * user interface for retrieving base pose in origin frame. Note this value is updated after each call of computeFlowMap() method.
 	 */
 	void getBasePose(base_coordinate_t& o_basePose) const;
 
 	/**
-	 * user interface for CoM dynamics elements: The inertial matrix. Note this value is updated after each call of computeDerivative() method.
+	 * user interface for CoM dynamics elements: The inertial matrix. Note this value is updated after each call of computeFlowMap() method.
 	 */
 	Eigen::Matrix<double, 6, 6>  getM() const;
 
 	/**
-	 * user interface for CoM dynamics elements: The inverse of the inertial matrix. Note this value is updated after each call of computeDerivative() method.
+	 * user interface for CoM dynamics elements: The inverse of the inertial matrix. Note this value is updated after each call of computeFlowMap() method.
 	 */
 	Eigen::Matrix<double, 6, 6>  getMInverse() const;
 
 	/**
-	 * user interface for CoM dynamics elements: The coriolis and centrifugal forces vector. Note this value is updated after each call of computeDerivative() method.
+	 * user interface for CoM dynamics elements: The coriolis and centrifugal forces vector. Note this value is updated after each call of computeFlowMap() method.
 	 */
 	Eigen::Matrix<double, 6, 1>  getC() const;
 
 	/**
-	 * user interface for CoM dynamics elements: The gravity force vector. Note this value is updated after each call of computeDerivative() method.
+	 * user interface for CoM dynamics elements: The gravity force vector. Note this value is updated after each call of computeFlowMap() method.
 	 */
 	Eigen::Matrix<double, 6, 1>  getG() const;
 

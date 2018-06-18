@@ -111,7 +111,7 @@ public:
 	/**
 	 * calculate and retrieve the B matrix
 	 */
-	virtual void getFlowMapDerivativeInput(control_gain_matrix_t& B)  override;
+	virtual void getFlowMapDerivativeInput(state_input_matrix_t& B)  override;
 
 	/**
 	 * calculate and retrieve the approximate derivatives w.r.t. joints

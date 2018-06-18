@@ -22,7 +22,7 @@ public:
 	typedef SwitchedModelCostBase<12> Base;
 
 	AnymalCost(const state_matrix_t& Q,
-			const control_matrix_t& R,
+			const input_matrix_t& R,
 			const state_matrix_t& QFinal,
 			const state_vector_t& xFinal,
 			const scalar_t& copWeightMax = 0.0,

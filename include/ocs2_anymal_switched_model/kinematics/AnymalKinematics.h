@@ -47,16 +47,16 @@ public:
 
 private:
 	// RBD homogeneous transforms of feet
-	iit::ANYmal::HomogeneousTransforms::Type_fr_trunk_X_fr_LF_foot fr_trunk_X_fr_LF_foot_;
-	iit::ANYmal::HomogeneousTransforms::Type_fr_trunk_X_fr_RF_foot fr_trunk_X_fr_RF_foot_;
-	iit::ANYmal::HomogeneousTransforms::Type_fr_trunk_X_fr_LH_foot fr_trunk_X_fr_LH_foot_;
-	iit::ANYmal::HomogeneousTransforms::Type_fr_trunk_X_fr_RH_foot fr_trunk_X_fr_RH_foot_;
+	iit::ANYmal::HomogeneousTransforms::Type_fr_base_X_fr_LF_FOOT fr_trunk_X_fr_LF_foot_;
+	iit::ANYmal::HomogeneousTransforms::Type_fr_base_X_fr_RF_FOOT fr_trunk_X_fr_RF_foot_;
+	iit::ANYmal::HomogeneousTransforms::Type_fr_base_X_fr_LH_FOOT fr_trunk_X_fr_LH_foot_;
+	iit::ANYmal::HomogeneousTransforms::Type_fr_base_X_fr_RH_FOOT fr_trunk_X_fr_RH_foot_;
 
 	// RBD Jacobian of feet
-	iit::ANYmal::Jacobians::Type_fr_trunk_J_fr_LF_foot fr_trunk_J_fr_LF_foot_;
-	iit::ANYmal::Jacobians::Type_fr_trunk_J_fr_RF_foot fr_trunk_J_fr_RF_foot_;
-	iit::ANYmal::Jacobians::Type_fr_trunk_J_fr_LH_foot fr_trunk_J_fr_LH_foot_;
-	iit::ANYmal::Jacobians::Type_fr_trunk_J_fr_RH_foot fr_trunk_J_fr_RH_foot_;
+	iit::ANYmal::Jacobians::Type_fr_base_J_fr_LF_FOOT fr_trunk_J_fr_LF_foot_;
+	iit::ANYmal::Jacobians::Type_fr_base_J_fr_RF_FOOT fr_trunk_J_fr_RF_foot_;
+	iit::ANYmal::Jacobians::Type_fr_base_J_fr_LH_FOOT fr_trunk_J_fr_LH_foot_;
+	iit::ANYmal::Jacobians::Type_fr_base_J_fr_RH_FOOT fr_trunk_J_fr_RH_foot_;
 
 };
 

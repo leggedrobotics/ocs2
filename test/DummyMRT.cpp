@@ -21,7 +21,7 @@ int main( int argc, char* argv[] )
 	typedef OCS2AnymalInterface ocs2_robot_interface_t;
 
 	const std::string robotName = "anymal";
-	const OCS2AnymalInterface::scalar_t mrtLoopFrequency = 250;
+	const OCS2AnymalInterface::scalar_t mrtLoopFrequency = 400;
 
 	/******************************************************************************************************/
 	if ( argc <= 1) throw std::runtime_error("No task file specified. Aborting.");

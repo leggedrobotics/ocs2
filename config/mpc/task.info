@@ -91,6 +91,7 @@ slq
   AbsTolODE                	    1e-5  ;1e-6
   RelTolODE                   	1e-3  ;1e-4
   minTimeStep					1e-3
+  useMakePSD					0
   maxNumStepsPerSecond         	50000
   simulationIsConstrained      	0
   noStateConstraints			0
@@ -137,7 +138,7 @@ mpc
   useFeedbackPolicy			0
   forwardSimulationTime		28	; [ms] MRT time
 
-  rosMsgTimeWindow			300	; [ms]
+  rosMsgTimeWindow			200	; [ms]
   adaptiveRosMsgTimeWindow	0
 
   simulatedMPCloopTime		0	; [ms] asynchronous MPC constant delay (On hardware should ALWAYS be 0)

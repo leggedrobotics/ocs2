@@ -294,7 +294,7 @@ bool MRT_ROS_Quadruped<JOINT_COORD_SIZE>::updateNodes(
 	currentObservation.input().template segment<JOINT_COORD_SIZE>(12) =
 			rbdState.template tail<JOINT_COORD_SIZE>();
 	// mode
-	currentObservation.mode() = switched_model::stanceLeg2ModeNumber(contactFlag);
+	currentObservation.subsystem() = switched_model::stanceLeg2ModeNumber(contactFlag);
 
 	// publish the current observation
 	BASE::publishObservation(currentObservation);

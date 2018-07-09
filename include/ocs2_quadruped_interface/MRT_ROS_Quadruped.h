@@ -123,7 +123,7 @@ public:
 	 *
 	 * @return True if the policy is updated.
 	 */
-	bool updateNodes(
+	virtual bool updateNodes(
 			const contact_flag_t& contactFlag,
 			const scalar_t& time,
 			const rbd_state_vector_t& rbdState);
@@ -187,7 +187,7 @@ protected:
 	 * @param [in] touchdownStateStock: An array of feet positions at touch-down.
 	 * @param [in] touchdownInputStock: An array of feet velocities at touch-down.
 	 */
-	void updateFeetTrajectories(
+	virtual void updateFeetTrajectories(
 			const scalar_array_t& eventTimes,
 			const size_array_t& subsystemsSequence,
 			const scalar_array_t& touchdownTimeStock,
@@ -203,7 +203,7 @@ protected:
 	 * @param [out] o_feetVelocity: Feet's velocity in the origin frame.
 	 * @param [out] o_contactForces: Feet's acting contact force in the origin frame.
 	 */
-	void computeFeetState(
+	virtual void computeFeetState(
 			const state_vector_t& state,
 			const input_vector_t& input,
 			vector_3d_array_t& o_feetPosition,

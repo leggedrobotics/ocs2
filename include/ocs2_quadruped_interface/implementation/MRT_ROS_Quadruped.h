@@ -66,7 +66,7 @@ void MRT_ROS_Quadruped<JOINT_COORD_SIZE>::modifyBufferFeedforwardPolicy(
 			touchdownInputStockBuffer_.push_back(mpcInputTrajectoryBuffer[i]);
 			// making the reference and the measured EE velocity the same
 			if (i==0)
-				touchdownInputStockBuffer_[0].template tail<12>() = planInitObservationBuffer.input().template tail<12>();
+				touchdownInputStockBuffer_[0].template segment<JOINT_COORD_SIZE>(12) = planInitObservationBuffer.input().template segment<JOINT_COORD_SIZE>(12);
 		}
 	} // end of i loop
 	touchdownTimeStockBuffer_.push_back(mpcTimeTrajectoryBuffer.back());
@@ -185,8 +185,8 @@ void MRT_ROS_Quadruped<JOINT_COORD_SIZE>::computeFeetState(
 
 	base_coordinate_t comPose = state.template head<6>();
 	base_coordinate_t comLocalVelocities = state.template segment<6>(6);
-	joint_coordinate_t qJoints  = state.template tail<12>();
-	joint_coordinate_t dqJoints = input.template tail<12>();
+	joint_coordinate_t qJoints  = state.template segment<JOINT_COORD_SIZE>(12);
+	joint_coordinate_t dqJoints = input.template segment<JOINT_COORD_SIZE>(12);
 
 	base_coordinate_t basePose;
 	ocs2QuadrupedInterfacePtr_->getComModel().calculateBasePose(qJoints, comPose, basePose);
@@ -232,6 +232,10 @@ void MRT_ROS_Quadruped<JOINT_COORD_SIZE>::computePlan(
 		base_coordinate_t& o_comVelocityRef,
 		base_coordinate_t& o_comAccelerationRef,
 		contact_flag_t& stanceLegs)  {
+
+	if (time > BASE::mpcTimeTrajectory_.back())
+		ROS_WARN_STREAM("The requested time is greater than the received plan: "
+				+ std::to_string(time) + ">" + std::to_string(BASE::mpcTimeTrajectory_.back()));
 
 	// optimal switched model state and input
 	BASE::mpcLinInterpolateState_.interpolate(time, stateRef_);
@@ -285,9 +289,9 @@ bool MRT_ROS_Quadruped<JOINT_COORD_SIZE>::updateNodes(
 	currentObservation.time() = time;
 	// state
 	ocs2QuadrupedInterfacePtr_->computeSwitchedModelState(rbdState, currentObservation.state());
-	// inuput
-	currentObservation.input().template tail<JOINT_COORD_SIZE>().setZero();
-	currentObservation.input().template tail<JOINT_COORD_SIZE>() =
+	// input
+	currentObservation.input().template segment<12>(0).setZero();
+	currentObservation.input().template segment<JOINT_COORD_SIZE>(12) =
 			rbdState.template tail<JOINT_COORD_SIZE>();
 	// mode
 	currentObservation.mode() = switched_model::stanceLeg2ModeNumber(contactFlag);

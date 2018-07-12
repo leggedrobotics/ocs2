@@ -27,26 +27,23 @@
 #include <ocs2_mpc/MPC_Settings.h>
 #include <ocs2_mpc/MPC_SLQ.h>
 
-#include <c_switched_model_interface/core/Model_Settings.h>
-#include <c_switched_model_interface/core/SwitchedModel.h>
-#include <c_switched_model_interface/core/MotionPhaseDefinition.h>
-#include <c_switched_model_interface/core/SwitchedModelStateEstimator.h>
-
-#include <c_switched_model_interface/foot_planner/cpg/SplineCPG.h>
-#include "c_switched_model_interface/foot_planner/FeetZDirectionPlanner.h"
-#include <c_switched_model_interface/logic/SwitchedModelLogicRulesBase.h>
-#include <c_switched_model_interface/dynamics/ComKinoDynamicsBase.h>
-#include <c_switched_model_interface/dynamics_derivative/ComKinoDynamicsDerivativeBase.h>
-#include <c_switched_model_interface/constraint/ComKinoConstraintBase.h>
-#include <c_switched_model_interface/cost/SwitchedModelCostBase.h>
-#include <c_switched_model_interface/initialization/ComKinoOperatingPointsBase.h>
-#include <c_switched_model_interface/ground/FlatGroundProfile.h>
-
-#include <c_switched_model_interface/misc/WeightCompensationForces.h>
-
-#include <c_switched_model_interface/state_constraint/EndEffectorConstraintBase.h>
-#include <c_switched_model_interface/state_constraint/EllipticalConstraint.h>
-#include <c_switched_model_interface/state_constraint/EndEffectorConstraintsUtilities.h>
+#include <ocs2_switched_model_interface/core/Model_Settings.h>
+#include <ocs2_switched_model_interface/core/MotionPhaseDefinition.h>
+#include <ocs2_switched_model_interface/core/SwitchedModel.h>
+#include <ocs2_switched_model_interface/ground/FlatGroundProfile.h>
+#include <ocs2_switched_model_interface/logic/SwitchedModelLogicRulesBase.h>
+#include <ocs2_switched_model_interface/misc/WeightCompensationForces.h>
+#include <ocs2_switched_model_interface/state_constraint/EndEffectorConstraintBase.h>
+#include <ocs2_switched_model_interface/constraint/ComKinoConstraintBase.h>
+#include <ocs2_switched_model_interface/core/SwitchedModelStateEstimator.h>
+#include <ocs2_switched_model_interface/cost/SwitchedModelCostBase.h>
+#include <ocs2_switched_model_interface/dynamics/ComKinoDynamicsBase.h>
+#include <ocs2_switched_model_interface/dynamics_derivative/ComKinoDynamicsDerivativeBase.h>
+#include <ocs2_switched_model_interface/foot_planner/cpg/SplineCPG.h>
+#include <ocs2_switched_model_interface/foot_planner/FeetZDirectionPlanner.h>
+#include <ocs2_switched_model_interface/initialization/ComKinoOperatingPointsBase.h>
+#include <ocs2_switched_model_interface/state_constraint/EllipticalConstraint.h>
+#include <ocs2_switched_model_interface/state_constraint/EndEffectorConstraintsUtilities.h>
 
 
 namespace switched_model {

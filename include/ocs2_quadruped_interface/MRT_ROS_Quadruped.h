@@ -10,10 +10,10 @@
 
 #include <ocs2_comm_interfaces/ocs2_ros_interfaces/mrt/MRT_ROS_Interface.h>
 
-#include <c_switched_model_interface/misc/CubicSpline.h>
-#include <c_switched_model_interface/foot_planner/cpg/SplineCPG.h>
-#include "c_switched_model_interface/foot_planner/FeetZDirectionPlanner.h"
-#include <c_switched_model_interface/logic/SwitchedModelLogicRulesBase.h>
+#include <ocs2_switched_model_interface/misc/CubicSpline.h>
+#include <ocs2_switched_model_interface/foot_planner/cpg/SplineCPG.h>
+#include <ocs2_switched_model_interface/foot_planner/FeetZDirectionPlanner.h>
+#include <ocs2_switched_model_interface/logic/SwitchedModelLogicRulesBase.h>
 
 #include "ocs2_quadruped_interface/OCS2QuadrupedInterface.h"
 

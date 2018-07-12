@@ -5,7 +5,7 @@
  *      Author: farbod
  */
 
-#include "c_switched_model_interface/state_constraint/EndEffectorConstraintBase.h"
+#include "ocs2_switched_model_interface/state_constraint/EndEffectorConstraintBase.h"
 
 namespace switched_model {
 

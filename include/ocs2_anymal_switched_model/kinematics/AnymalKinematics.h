@@ -8,10 +8,9 @@
 #ifndef ANYMAL_ANYMALKINEMATICS_H_
 #define ANYMAL_ANYMALKINEMATICS_H_
 
-#include <c_switched_model_interface/core/KinematicsModelBase.h>
-
 #include <iit/robots/anymal/transforms.h>
 #include <iit/robots/anymal/jacobians.h>
+#include <ocs2_switched_model_interface/core/KinematicsModelBase.h>
 
 namespace anymal {
 

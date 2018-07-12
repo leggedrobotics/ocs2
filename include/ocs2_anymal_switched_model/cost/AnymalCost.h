@@ -8,9 +8,9 @@
 #ifndef ANYMAL_ANYMALCOST_H_
 #define ANYMAL_ANYMALCOST_H_
 
-#include <c_switched_model_interface/cost/SwitchedModelCostBase.h>
 #include <ocs2_anymal_switched_model/dynamics/AnymalCom.h>
 #include <ocs2_anymal_switched_model/kinematics/AnymalKinematics.h>
+#include <ocs2_switched_model_interface/cost/SwitchedModelCostBase.h>
 
 namespace anymal {
 

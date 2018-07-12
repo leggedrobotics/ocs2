@@ -8,12 +8,11 @@
 #ifndef ANYMAL_ANYMALCOM_H_
 #define ANYMAL_ANYMALCOM_H_
 
-#include <c_switched_model_interface/core/ComModelBase.h>
-
 #include <iit/robots/anymal/inertia_properties.h>
 #include <iit/robots/anymal/transforms.h>
 #include <iit/robots/anymal/jsim.h>
 #include <iit/robots/anymal/miscellaneous.h>
+#include <ocs2_switched_model_interface/core/ComModelBase.h>
 
 namespace anymal
 {
@@ -33,8 +32,7 @@ public:
 	 */
 	AnymalCom();
 
-	~AnymalCom()
-	{}
+	~AnymalCom() = default;
 
 	/**
 	 * Clone AnymalCom class.

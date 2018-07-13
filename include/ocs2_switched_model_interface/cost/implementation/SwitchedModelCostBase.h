@@ -126,7 +126,7 @@ void SwitchedModelCostBase<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::setCurrentSt
 
 		copWeight_ = copWeightMax_ * std::exp( -0.5 * std::pow((t-Base::timeMean_)/Base::timeSD_, 2) );
 
-		copErrorCostFunc(x.template tail<12>(), u.template head<12>(),
+		copErrorCostFunc(x.template segment<12>(12), u.template head<12>(),
 				copCost_, devJoints_copCost_, devLambda_copCost_,
 				hessJoints_copCost_, hessLambda_copCost_, devLambdaJoints_copCost_);
 
@@ -168,7 +168,7 @@ void SwitchedModelCostBase<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::getIntermedi
 	state_vector_t costQintermediate = QIntermediate_ * xDeviationIntermediate_ * normalization_ * std::exp(-0.5 * dtSquared_ / sigmaSquared_);
 	dLdx = costQ + costQintermediate;
 
-	dLdx.template tail<12>() += copWeight_*devJoints_copCost_;
+	dLdx.template segment<12>(12) += copWeight_*devJoints_copCost_;
 }
 
 /******************************************************************************************************/
@@ -179,7 +179,7 @@ void SwitchedModelCostBase<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::getIntermedi
 		state_matrix_t& dLdxx)  {
 
 	dLdxx = Q_ + QIntermediate_ * normalization_ * std::exp(-0.5 * dtSquared_ / sigmaSquared_);
-	dLdxx.template bottomRightCorner<12,12>() += copWeight_*hessJoints_copCost_;
+	dLdxx.template block<12,12>(12,12) += copWeight_*hessJoints_copCost_;
 }
 
 /******************************************************************************************************/
@@ -213,7 +213,7 @@ void SwitchedModelCostBase<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::getIntermedi
 		input_state_matrix_t& dLdux)  {
 
 	dLdux.setZero();
-	dLdux.template topRightCorner<12,12>() += copWeight_*devLambdaJoints_copCost_;
+	dLdux.template block<12,12>(0,12) += copWeight_*devLambdaJoints_copCost_;
 }
 
 /******************************************************************************************************/
@@ -258,7 +258,7 @@ typename SwitchedModelCostBase<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::input_ma
 
 	input_matrix_t nondiagonalR = R;
 	scalar_t meanRz = 0;
-	for (size_t i=2; i<INPUT_DIM; i+=3)
+	for (size_t i=2; i<(12+JOINT_COORD_SIZE); i+=3)
 		meanRz += R(i,i)/NUM_CONTACT_POINTS_;
 	for (size_t j=0; j<NUM_CONTACT_POINTS_; j++)
 		for (size_t k=0; k<=j; k++)

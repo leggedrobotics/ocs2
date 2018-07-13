@@ -29,7 +29,7 @@ namespace switched_model {
 
 template <size_t JOINT_COORD_SIZE, size_t STATE_DIM=12+JOINT_COORD_SIZE, size_t INPUT_DIM=12+JOINT_COORD_SIZE>
 class SwitchedModelCostBase : public
-ocs2::CostFunctionBase<12+JOINT_COORD_SIZE, 12+JOINT_COORD_SIZE, SwitchedModelPlannerLogicRules<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM, double>>
+ocs2::CostFunctionBase<STATE_DIM, INPUT_DIM, SwitchedModelPlannerLogicRules<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM, double>>
 {
 public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW

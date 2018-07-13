@@ -6,7 +6,7 @@
 #define OCS2_COMKINODYNAMICSDERIVATIVEAUGMENTED_H
 
 #include "ComKinoDynamicsDerivativeBase.h"
-#include "../dynamics/filterDynamics.h"
+#include "ocs2_switched_model_interface/dynamics/filterDynamics.h"
 
 namespace switched_model {
 
@@ -14,7 +14,10 @@ namespace switched_model {
     class ComKinoDynamicsDerivativeAugmented : public ocs2::DerivativesBase<
         12 + JOINT_COORD_SIZE + INPUTFILTER_STATE_SIZE,
         12 + JOINT_COORD_SIZE + INPUTFILTER_INPUT_SIZE,
-        SwitchedModelPlannerLogicRules < 12 + JOINT_COORD_SIZE + INPUTFILTER_STATE_SIZE>>
+        SwitchedModelPlannerLogicRules<
+        JOINT_COORD_SIZE,
+        12+JOINT_COORD_SIZE+INPUTFILTER_STATE_SIZE,
+        12+JOINT_COORD_SIZE+INPUTFILTER_INPUT_SIZE>>
 {
     public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
@@ -28,7 +31,10 @@ namespace switched_model {
         using BASE = ocs2::DerivativesBase<
             12 + JOINT_COORD_SIZE + INPUTFILTER_STATE_SIZE,
             12 + JOINT_COORD_SIZE + INPUTFILTER_INPUT_SIZE,
-            SwitchedModelPlannerLogicRules < 12 + JOINT_COORD_SIZE + INPUTFILTER_STATE_SIZE>>;
+            SwitchedModelPlannerLogicRules<
+            JOINT_COORD_SIZE,
+            12+JOINT_COORD_SIZE+INPUTFILTER_STATE_SIZE,
+            12+JOINT_COORD_SIZE+INPUTFILTER_INPUT_SIZE>>;
         using scalar_t = BASE::scalar_t ;
         using state_matrix_t = BASE::state_matrix_t;
         using state_vector_t = BASE::state_vector_t;

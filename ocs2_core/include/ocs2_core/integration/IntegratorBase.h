@@ -107,12 +107,12 @@ public:
 
 	/**
 	 * Output integration based on a given time trajectory. This method can solve ODEs with time-dependent events.
-	 * In this case, user should pass past-the-end indeces of events on the input time trajectory. Moreover, this
+	 * In this case, user should pass past-the-end indices of events on the input time trajectory. Moreover, this
 	 * method assumes that there are two identical time values in the input time-trajectory at the moments of event
 	 * triggerings. This method uses ODE_Base::computeJumpMap() method for state transition at events.
 	 *
 	 * @param [in] initialState: Initial state.
-	 * @param [in] beginTimeItr: The iterator to the begining of the time stamp trajectory.
+	 * @param [in] beginTimeItr: The iterator to the beginning of the time stamp trajectory.
 	 * @param [in] endTimeItr: The iterator to the end of the time stamp trajectory.
 	 * @param [out] stateTrajectory: Output state trajectory.
 	 * @param [in] dtInitial: Initial time step.

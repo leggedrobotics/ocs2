@@ -74,10 +74,13 @@ public:
      * @param [in] Sv_: \f$ S_v \f$
      * @param [out] MSv: Single vector constructed by concatenating Mm_ and Sv_.
      */
-	static void convert2Vector(const state_state_matrix_t& Mm_, const state_vector_t& Sv_, full_ode_vector_t& MSv)  {
+	static void convert2Vector(
+			const state_state_matrix_t& Mm_,
+			const state_vector_t& Sv_,
+			full_ode_vector_t& MSv)  {
 
 		MSv << Eigen::Map<const Eigen::VectorXd>(Mm_.data(),STATE_DIM*STATE_DIM),
-				Eigen::Map<const Eigen::VectorXd>(Sv_.data(),STATE_DIM);
+			   Eigen::Map<const Eigen::VectorXd>(Sv_.data(),STATE_DIM);
 	}
 
 	/**
@@ -87,7 +90,10 @@ public:
      * @param [out] Mm_: \f$ M_m \f$
      * @param [out] Sv_: \f$ S_v \f$
      */
-	static void convert2Matrix(const full_ode_vector_t& MSv, state_state_matrix_t& Mm_, state_vector_t& Sv_)  {
+	static void convert2Matrix(
+			const full_ode_vector_t& MSv,
+			state_state_matrix_t& Mm_,
+			state_vector_t& Sv_)  {
 
 		Mm_ = Eigen::Map<const state_state_matrix_t>(MSv.data(),STATE_DIM,STATE_DIM);
 		Sv_ = Eigen::Map<const state_vector_t>(MSv.data()+STATE_DIM*STATE_DIM, STATE_DIM);
@@ -108,10 +114,19 @@ public:
  	 * @param [in] RmPtr: A pointer to the trajectory of \f$ R_m(t) \f$ .
      * @param [in] RmInversePtr: A pointer to the trajectory of \f$ R_m^{-1}(t) \f$ .
      */
-	void setData(const scalar_array_t* timeStampPtr,
-			const state_state_matrix_array_t* AmPtr, const state_state_matrix_array_t* OmPtr, const state_input_matrix_array_t* BmPtr, const state_vector_array_t* GvPtr,
-			const state_vector_array_t* QvPtr, const state_state_matrix_array_t* QmPtr, const input_state_matrix_array_t* PmPtr,
-			const input_vector_array_t* RvPtr, const input_input_matrix_array_t* RmPtr, const input_input_matrix_array_t* RmInversePtr)  {
+	void setData(
+			const scalar_array_t* timeStampPtr,
+			const state_state_matrix_array_t* AmPtr,
+			const state_state_matrix_array_t* OmPtr,
+			const state_input_matrix_array_t* BmPtr,
+			const state_vector_array_t* GvPtr,
+			const state_vector_array_t* QvPtr,
+			const state_state_matrix_array_t* QmPtr,
+			const input_state_matrix_array_t* PmPtr,
+			const input_vector_array_t* RvPtr,
+			const input_input_matrix_array_t* RmPtr,
+			const input_input_matrix_array_t* RmInversePtr)  {
+
 		AmFunc_.setTimeStamp(timeStampPtr);
 		OmFunc_.setTimeStamp(timeStampPtr);
 		BmFunc_.setTimeStamp(timeStampPtr);
@@ -148,7 +163,10 @@ public:
      * @param [in] MSv: Single vector constructed by concatenating Mm_, Sv_.
      * @param [out] derivatives: derivatives: d(MSv)/dz.
      */
-	void computeFlowMap(const scalar_t& z, const full_ode_vector_t& MSv, full_ode_vector_t& derivatives) override {
+	void computeFlowMap(
+			const scalar_t& z,
+			const full_ode_vector_t& MSv,
+			full_ode_vector_t& derivatives) override {
 
 		// denormalized time
 		if (z>1 || z<0)
@@ -201,7 +219,8 @@ public:
 	template <typename Derived>
 	static bool makePSD(Eigen::MatrixBase<Derived>& squareMatrix) {
 
-		if (squareMatrix.rows() != squareMatrix.cols())  throw std::runtime_error("Not a square matrix: makePSD() method is for square matrix.");
+		if (squareMatrix.rows() != squareMatrix.cols())
+			throw std::runtime_error("Not a square matrix: makePSD() method is for square matrix.");
 
 		Eigen::SelfAdjointEigenSolver<Derived> eig(squareMatrix);
 		Eigen::VectorXd lambda = eig.eigenvalues();

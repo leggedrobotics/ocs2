@@ -710,7 +710,7 @@ void SLQ_MP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::solveSequentialRiccatiEquation
 				BASE::solveSlqRiccatiEquationsWorker(workerIndex, i,
 						BASE::SmFinalStock_[i], BASE::SvFinalStock_[i], BASE::sFinalStock_[i], BASE::SveFinalStock_[i]);
 			} else {
-				scalar_t constraintStepSize = BASE::updateFeedForwardPoliciesStock_[i] ? BASE::settings_.constraintStepSize_ : 0.0;
+				scalar_t constraintStepSize = BASE::initialControllerDesignStock_[i] ? 0.0 : BASE::settings_.constraintStepSize_;
 				BASE::fullRiccatiBackwardSweepWorker(workerIndex, i,
 						BASE::SmFinalStock_[i], BASE::SvFinalStock_[i], BASE::SveFinalStock_[i], BASE::sFinalStock_[i],
 						constraintStepSize);
@@ -819,7 +819,7 @@ void SLQ_MP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::executeRiccatiSolver(size_t th
 			BASE::solveSlqRiccatiEquationsWorker(threadId, i,
 					SmFinal, SvFinal, sFinal, SveFinal);
 		} else {
-			scalar_t constraintStepSize = BASE::updateFeedForwardPoliciesStock_[i] ? BASE::settings_.constraintStepSize_ : 0.0;
+			scalar_t constraintStepSize = BASE::initialControllerDesignStock_[i] ? 0.0 : BASE::settings_.constraintStepSize_;
 			BASE::fullRiccatiBackwardSweepWorker(threadId, i,
 					SmFinal, SvFinal, SveFinal, sFinal,
 					constraintStepSize);

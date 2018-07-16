@@ -60,10 +60,10 @@ bool checkSolution(
 		const std::vector<std::vector<double>>& eventTimesStockResult,
 		const std::vector<std::vector<size_t>>& switchedSystemIDsStockResult) {
 
-	size_t numPartitionings = eventTimesStockResult.size();
+	size_t numPartitions = eventTimesStockResult.size();
 
 	bool testPass = true;
-	for (size_t i=0; i<numPartitionings; i++) {
+	for (size_t i=0; i<numPartitions; i++) {
 		if (eventTimesStockResult[i]!=logicRulesMachine.getEventTimes(i))
 			if (eventTimesStockResult[i].empty() && logicRulesMachine.getSwitchingTimes(i).empty() )
 				continue;
@@ -71,7 +71,7 @@ bool checkSolution(
 				testPass = false;
 			}
 	}
-	for (size_t i=0; i<numPartitionings; i++) {
+	for (size_t i=0; i<numPartitions; i++) {
 		if (switchedSystemIDsStockResult[i] != logicRulesMachine.getEventCounters(i))
 			testPass = false;
 	}
@@ -92,7 +92,7 @@ TEST(testLogicRulesMachine, LogicRulesMachine)
 
 	std::vector<double> logicRulesEventTimes;
 
-	std::cout << std::endl;
+	std::cerr << std::endl;
 
 	// result
 	bool testPass;
@@ -105,8 +105,8 @@ TEST(testLogicRulesMachine, LogicRulesMachine)
 	logicRulesMachine.setLogicRules(logicRules);
 	logicRulesMachine.updateLogicRules(partitioningTimes, controllerStock);
 
-	std::cout << std::endl << "======================" << std::endl;
-	std::cout << "### No switch:" << std::endl;
+	std::cerr << std::endl << "======================" << std::endl;
+	std::cerr << "### No switch:" << std::endl;
 	logicRulesMachine.display();
 
 	eventTimesStockResult[0] = std::vector<double>{};
@@ -127,8 +127,8 @@ TEST(testLogicRulesMachine, LogicRulesMachine)
 	logicRulesMachine.setLogicRules(logicRules);
 	logicRulesMachine.updateLogicRules(partitioningTimes, controllerStock);
 
-	std::cout << std::endl << "======================" << std::endl;
-	std::cout << "### Switches at the end of partitions:" << std::endl;
+	std::cerr << std::endl << "======================" << std::endl;
+	std::cerr << "### Switches at the end of partitions:" << std::endl;
 	logicRulesMachine.display();
 
 	eventTimesStockResult[0] = std::vector<double>{1};
@@ -149,8 +149,8 @@ TEST(testLogicRulesMachine, LogicRulesMachine)
 	logicRulesMachine.setLogicRules(logicRules);
 	logicRulesMachine.updateLogicRules(partitioningTimes, controllerStock);
 
-	std::cout << std::endl << "======================" << std::endl;
-	std::cout << "### Switches after time interval:" << std::endl;
+	std::cerr << std::endl << "======================" << std::endl;
+	std::cerr << "### Switches after time interval:" << std::endl;
 	logicRulesMachine.display();
 
 	eventTimesStockResult[0] = std::vector<double>{};
@@ -171,8 +171,8 @@ TEST(testLogicRulesMachine, LogicRulesMachine)
 	logicRulesMachine.setLogicRules(logicRules);
 	logicRulesMachine.updateLogicRules(partitioningTimes, controllerStock);
 
-	std::cout << std::endl << "======================" << std::endl;
-	std::cout << "### Switches before time interval:" << std::endl;
+	std::cerr << std::endl << "======================" << std::endl;
+	std::cerr << "### Switches before time interval:" << std::endl;
 	logicRulesMachine.display();
 
 	eventTimesStockResult[0] = std::vector<double>{};
@@ -193,8 +193,8 @@ TEST(testLogicRulesMachine, LogicRulesMachine)
 	logicRulesMachine.setLogicRules(logicRules);
 	logicRulesMachine.updateLogicRules(partitioningTimes, controllerStock);
 
-	std::cout << std::endl << "======================" << std::endl;
-	std::cout << "### Switches in the middle:" << std::endl;
+	std::cerr << std::endl << "======================" << std::endl;
+	std::cerr << "### Switches in the middle:" << std::endl;
 	logicRulesMachine.display();
 
 	eventTimesStockResult[0] = std::vector<double>{0.5};
@@ -215,8 +215,8 @@ TEST(testLogicRulesMachine, LogicRulesMachine)
 	logicRulesMachine.setLogicRules(logicRules);
 	logicRulesMachine.updateLogicRules(partitioningTimes, controllerStock);
 
-	std::cout << std::endl << "======================" << std::endl;
-	std::cout << "### No switch in middle partition:" << std::endl;
+	std::cerr << std::endl << "======================" << std::endl;
+	std::cerr << "### No switch in middle partition:" << std::endl;
 	logicRulesMachine.display();
 
 	eventTimesStockResult[0] = std::vector<double>{0.5};
@@ -244,20 +244,20 @@ TEST(testLogicRulesMachine, shortPartition)
 	logicRules.set(logicRulesEventTimes);
 	logicRulesMachine.setLogicRules(logicRules);
 
-	std::cout << std::endl;
+	std::cerr << std::endl;
 
 	// result
 	bool testPass;
 	std::vector<std::vector<double>> eventTimesStockResult;
 	std::vector<std::vector<size_t>> switchedSystemIDsStockResult;
 
-	// Small time partition with one event
+	// Partially overlapping with one event
 	partitioningTimes = std::vector<double>{1.5, 2.0, 3.0};
 	controllerStock.resize(partitioningTimes.size()-1);
 	logicRulesMachine.updateLogicRules(partitioningTimes, controllerStock);
 
-	std::cout << std::endl << "======================" << std::endl;
-	std::cout << "### Small time partition with one event:" << std::endl;
+	std::cerr << std::endl << "======================" << std::endl;
+	std::cerr << "### Partially overlapping with one event:" << std::endl;
 	logicRulesMachine.display();
 
 	eventTimesStockResult.resize(2);
@@ -273,13 +273,13 @@ TEST(testLogicRulesMachine, shortPartition)
 	ASSERT_TRUE(testPass);
 
 
-	// Small time partition with no event
+	// Partially overlapping with no event
 	partitioningTimes = std::vector<double>{0.5, 1.0, 2.0, 2.5};
 	controllerStock.resize(partitioningTimes.size()-1);
 	logicRulesMachine.updateLogicRules(partitioningTimes, controllerStock);
 
-	std::cout << std::endl << "======================" << std::endl;
-	std::cout << "### Small time partition with no event:" << std::endl;
+	std::cerr << std::endl << "======================" << std::endl;
+	std::cerr << "### Partially overlapping with no event:" << std::endl;
 	logicRulesMachine.display();
 
 	eventTimesStockResult.resize(1);

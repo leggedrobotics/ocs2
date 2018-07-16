@@ -43,18 +43,18 @@ void HybridLogicRulesMachine<STATE_DIM, INPUT_DIM, logic_rules_template_t>::setu
 	//**********************************************//
 	//**************** LogicMachine ****************//
 	//**********************************************//
-	const size_t numPartitionings = partitioningTimes.size()-1;
+	const size_t numPartitions = partitioningTimes.size()-1;
 
 	BASE::logicRulesModified_ = false;
-	BASE::numPartitionings_   = numPartitionings;
-	BASE::partitioningTimes_  = partitioningTimes;
+	BASE::numPartitions_ = numPartitions;
+	BASE::partitioningTimes_ = partitioningTimes;
 
-	BASE::eventTimesStock_.resize(numPartitionings);
-	BASE::eventCountersStock_.resize(numPartitionings);
-	BASE::switchingTimesStock_.resize(numPartitionings);
+	BASE::eventTimesStock_.resize(numPartitions);
+	BASE::eventCountersStock_.resize(numPartitions);
+	BASE::switchingTimesStock_.resize(numPartitions);
 
 	// for the future partitions
-	for (size_t i=initActivePartition+1; i<numPartitionings; i++) {
+	for (size_t i=initActivePartition+1; i<numPartitions; i++) {
 		BASE::eventTimesStock_[i].clear();
 		BASE::eventCountersStock_[i].clear();
 		BASE::switchingTimesStock_[i] = scalar_array_t {partitioningTimes[i], partitioningTimes[i+1]};

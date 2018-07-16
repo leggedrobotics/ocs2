@@ -52,11 +52,11 @@ public:
 	LogicRulesMachine()
 	: logicRulesModified_(false),
 	  logicRulesModifiedOffline_(false),
-	  numPartitionings_(1),
+	  numPartitions_(1),
 	  partitioningTimes_{-10000,10000},
 	  eventTimesStock_(1,scalar_array_t(0)),
 	  switchingTimesStock_(1,partitioningTimes_),
-	  eventCountersStock_(1,size_array_t(1,0))
+	  eventCountersStock_(1,size_array_t{0})
 	{}
 
 	/**
@@ -69,11 +69,11 @@ public:
 	  logicRulesInUse_(logicRules),
 	  logicRulesModified_(false),
 	  logicRulesModifiedOffline_(false),
-	  numPartitionings_(1),
+	  numPartitions_(1),
 	  partitioningTimes_{-10000,10000},
 	  eventTimesStock_(1,scalar_array_t(0)),
 	  switchingTimesStock_(1,partitioningTimes_),
-	  eventCountersStock_(1,size_array_t(1,0))
+	  eventCountersStock_(1,size_array_t{0})
 	{}
 
 	/**
@@ -180,6 +180,13 @@ public:
 	size_t getNumEvents(size_t partitionIndex) const;
 
 	/**
+	 * Returns the number of the partitions.
+	 *
+	 * @return Number of the partitions.
+	 */
+	const size_t& getnumPartitions() const;
+
+	/**
 	 * Returns a Lambda expression which can be used to find the current active event counter.
 	 *
 	 * @param partitionIndex: index of the time partition
@@ -225,12 +232,15 @@ protected:
 	bool logicRulesModified_;
 	bool logicRulesModifiedOffline_;
 
-	size_t numPartitionings_;
+	size_t numPartitions_;
 	scalar_array_t partitioningTimes_;
 
 	std::vector<scalar_array_t> eventTimesStock_;
 	std::vector<scalar_array_t> switchingTimesStock_;
 	std::vector<size_array_t> eventCountersStock_;
+
+public:
+	friend class EventTimeIndexer;
 };
 
 } // namespace ocs2

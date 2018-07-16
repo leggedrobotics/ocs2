@@ -1,10 +1,12 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(ocs2_core) 
 
-find_package(catkin REQUIRED COMPONENTS cmake_modules) 
+find_package(catkin REQUIRED COMPONENTS 
+  cmake_modules
+) 
 find_package(Boost REQUIRED COMPONENTS 
-  filesystem 
   system
+  filesystem 
 )
 
 ## Eign3
@@ -15,15 +17,15 @@ if( NOT EIGEN_INCLUDE_DIRS )
 endif()
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread -fopenmp -std=c++11 -Wfatal-errors -Wl,--no-as-needed")
-# add flags "-Wl,--no-as-needed" if using gcc 4.8.2 or lower
 
 catkin_package(
   INCLUDE_DIRS 
     include
     include/external
-#  LIBRARIES ocs2_core
 #  CATKIN_DEPENDS other_catkin_pkg
-  DEPENDS boost eigen
+  DEPENDS 
+    boost 
+    eigen
 )
 
 include_directories(
@@ -33,7 +35,6 @@ include_directories(
   ${Boost_INCLUDE_DIRS}
   ${catkin_INCLUDE_DIRS}
 )
-
 
 find_package(Doxygen)
 if(DOXYGEN_FOUND)
@@ -54,12 +55,13 @@ endif()
 #############
 ## Testing ##
 #############
-
 ## Info ==============================
-## to run tests, cd package/src and run 
+## to run tests, cd package folder and run
+## $ catkin build -DCMAKE_BUILD_TYPE=RelWithDebInfo --this
 ## $ catkin run_tests --no-deps --this
+## to see the summary of unit test results run
+## $ catkin_test_results ../../../build/ocs2_core
 
-## unit tests  catkin_add_gtest
 catkin_add_gtest(integration_unittest 
   test/IntegrationTest.cpp)
 target_link_libraries(integration_unittest

@@ -87,7 +87,7 @@ public:
 	}
 
 	/**
-	 * Gets the Operating ponits for the system in time interval [startTime, finalTime] where there is
+	 * Gets the operating points for the system in time interval [startTime, finalTime] where there is
 	 * no intermediate switches except possibly the end time.
 	 *
 	 * @param [in] initialState: Initial state.

@@ -533,30 +533,11 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::rolloutTrajectory(
 		// final time
 		tf = (i != finalActivePartition) ? partitioningTimes[i+1] : finalTime;
 
-		std::cout << ">>> " << i << std::endl;
-
 		// call rollout worker for the partition 'i' on the thread 'threadId'
 		x0 = rolloutTimeTriggeredWorker(threadId, i,
 				t0, x0, tf, controllersStock[i],
 				timeTrajectoriesStock[i], eventsPastTheEndIndecesStock[i],
 				stateTrajectoriesStock[i], inputTrajectoriesStock[i]);
-
-		std::cout << "timeTrajectoriesStock size: " << timeTrajectoriesStock[i].size() << std::endl;
-		for (auto ti : timeTrajectoriesStock[i])
-			std::cout << ti << ", ";
-		std::cout << std::endl;
-		std::cout << "eventsPastTheEndIndecesStock size: " << eventsPastTheEndIndecesStock[i].size() << std::endl;
-		for (auto ti : eventsPastTheEndIndecesStock[i])
-			std::cout << ti << ", ";
-		std::cout << std::endl;
-		std::cout << "stateTrajectoriesStock size: " << stateTrajectoriesStock[i].size() << std::endl;
-		for (auto xi : stateTrajectoriesStock[i])
-			std::cout << xi.transpose() << "\n";
-		std::cout << std::endl;
-		std::cout << "inputTrajectoriesStock size: " << inputTrajectoriesStock[i].size() << std::endl;
-		for (auto ui : inputTrajectoriesStock[i])
-			std::cout << ui.transpose() << "\n";
-		std::cout << std::endl << std::endl;
 
 		// reset the initial time
 		t0 = timeTrajectoriesStock[i].back();

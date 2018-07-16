@@ -5,7 +5,7 @@
  *      Author: farbod
  */
 
-namespace ocs2{
+namespace ocs2 {
 
 /******************************************************************************************************/
 /******************************************************************************************************/
@@ -146,6 +146,15 @@ size_t LogicRulesMachine<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::getNumEvents(size
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
+const size_t& LogicRulesMachine<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::getnumPartitions() const  {
+
+	return numPartitions_;
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
 void LogicRulesMachine<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::updateLogicRules(
 		const scalar_array_t& partitioningTimes,
 		controller_array_t& controllerStock) {
@@ -162,7 +171,7 @@ void LogicRulesMachine<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::updateLogicRules(
 		if (partitioningTimes.size()<2)
 			throw std::runtime_error("Time partitioning vector should include at least the start and final time.");
 
-		numPartitionings_ = partitioningTimes.size()-1;
+		numPartitions_ = partitioningTimes.size()-1;
 		partitioningTimes_ = partitioningTimes;
 		// recomputes the distribution of the switched systems over the time partitions.
 		findEventsDistribution(partitioningTimes, eventTimesStock_, switchingTimesStock_,
@@ -194,23 +203,23 @@ void LogicRulesMachine<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::findEventsDistribut
 	const size_t numSubsystems = allEventTimes.size()+1;
 
 	/*
-	 * Finding the distribution of the event's indeces over partitions.
+	 * Finding the distribution of the event's indices over partitions.
 	 */
 	int lastIndex = 0;
 	int firstActiveSwitchinTimeIndex = -1;
-	std::vector<size_array_t> eventIndecesStock(numPartitionings_, size_array_t(0));
+	std::vector<size_array_t> eventIndecesStock(numPartitions_, size_array_t(0));
 	for (size_t i=0; i<allEventTimes.size(); i++) {
 
 		const scalar_t& ti = allEventTimes[i];
 
 		int index = findActiveIntervalIndex(partitioningTimes, ti, lastIndex);
 
-		if (index < 0 || index==numPartitionings_)  continue;
+		if (index < 0 || index==numPartitions_)  continue;
 
 		// At the very first active index
 		if (firstActiveSwitchinTimeIndex==-1)  {
 			// if switch happens at the startTime ignore it
-			if (ti < partitioningTimes.front() + OCS2NumericTraits<double>::limit_epsilon())  continue;
+			if (ti < partitioningTimes.front() + OCS2NumericTraits<scalar_t>::limit_epsilon())  continue;
 
 			// save the very first active index
 			firstActiveSwitchinTimeIndex = i;
@@ -221,7 +230,7 @@ void LogicRulesMachine<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::findEventsDistribut
 	}  // end of i loop
 
 	/*
-	 * the fist active susbsystem
+	 * the fist active subsystem
 	 */
 	size_t currActiveSubsystemIndex;
 	if (firstActiveSwitchinTimeIndex != -1)  // the normal case
@@ -234,7 +243,7 @@ void LogicRulesMachine<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::findEventsDistribut
 			currActiveSubsystemIndex = 0;
 
 		} else {
-			if (allEventTimes.back() < partitioningTimes.front()+OCS2NumericTraits<double>::limit_epsilon())
+			if (allEventTimes.back() < partitioningTimes.front()+OCS2NumericTraits<scalar_t>::limit_epsilon())
 				currActiveSubsystemIndex = numSubsystems-1;
 
 			else if (allEventTimes.front() >= partitioningTimes.back())
@@ -249,9 +258,9 @@ void LogicRulesMachine<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::findEventsDistribut
 	/*
 	 * Finding the distributions of the event's times and switched systems over partitions based on eventIndecesStock.
 	 */
-	eventTimesStock = std::vector<scalar_array_t>(numPartitionings_, scalar_array_t(0));  // a subsystem might not have any switches
-	eventCountersStock = std::vector<size_array_t>(numPartitionings_, size_array_t(1,0));  // a subsystem has been assigned at least one system ID
-	for (size_t i=0; i<numPartitionings_; i++) {
+	eventTimesStock = std::vector<scalar_array_t>(numPartitions_, scalar_array_t(0));  // a subsystem might have no switches
+	eventCountersStock = std::vector<size_array_t>(numPartitions_, size_array_t{0});  // a subsystem has been assigned at least one system ID
+	for (size_t i=0; i<numPartitions_; i++) {
 
 		eventCountersStock[i][0] = currActiveSubsystemIndex;
 
@@ -260,10 +269,10 @@ void LogicRulesMachine<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::findEventsDistribut
 			size_t& index = eventIndecesStock[i][j];
 			eventTimesStock[i].push_back( allEventTimes[index] );
 
-			// since a switch happended the next switched system should be pushed to this partitions switched systems list
-			// unless the swich happend at the end of the time partition
+			// since a switch happened the next switched system should be pushed to this partitions switched systems list
+			// unless the switch happened at the end of the time partition
 			currActiveSubsystemIndex++;
-			if (partitioningTimes[i+1] - eventTimesStock[i].back() > OCS2NumericTraits<double>::limit_epsilon()) {
+			if (partitioningTimes[i+1] - eventTimesStock[i].back() > OCS2NumericTraits<scalar_t>::limit_epsilon()) {
 				eventCountersStock[i].push_back(currActiveSubsystemIndex);
 			}
 
@@ -273,8 +282,8 @@ void LogicRulesMachine<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::findEventsDistribut
 	/*
 	 * calculates switching times
 	 */
-	switchingTimesStock.resize(numPartitionings_);
-	for (size_t i=0; i<numPartitionings_; i++) {
+	switchingTimesStock.resize(numPartitions_);
+	for (size_t i=0; i<numPartitions_; i++) {
 
 		const size_t numSubsystems = eventCountersStock_[i].size();
 		scalar_array_t& switchingTimes = switchingTimesStock[i];
@@ -307,12 +316,22 @@ void LogicRulesMachine<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::display() const {
 	size_t itr;
 
 	itr = 0;
+	std::cerr << "Time partitions:\n\t ";
+	for (size_t i=0; i<partitioningTimes_.size()-1; i++) {  // printing
+		std::cerr << itr << ":[";
+		itr++;
+		std::cerr << partitioningTimes_[i] << ", " << partitioningTimes_[i+1];
+		std::cerr << "],  ";
+	}
+	std::cerr << std::endl;
+
+	itr = 0;
 	std::cerr << "Switching times distribution for partitions:\n\t ";
-	for (auto& switchingTimes : switchingTimesStock_) {  // printing
+	for (const auto& switchingTimes : switchingTimesStock_) {  // printing
 		std::cerr << itr << ":{";
 		itr++;
 
-		for (auto& ti : switchingTimes) {
+		for (const auto& ti : switchingTimes) {
 			std::cerr << ti << ", ";
 		}
 		if (!switchingTimes.empty())  std::cerr << "\b\b";
@@ -322,11 +341,11 @@ void LogicRulesMachine<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::display() const {
 
 	itr = 0;
 	std::cerr << "Event times distribution for partitions:\n\t ";
-	for (auto& events : eventTimesStock_) {  // printing
+	for (const auto& events : eventTimesStock_) {  // printing
 		std::cerr << itr << ":{";
 		itr++;
 
-		for (auto& ti : events) {
+		for (const auto& ti : events) {
 			std::cerr << ti << ", ";
 		}
 		if (!events.empty())  std::cerr << "\b\b";
@@ -336,11 +355,11 @@ void LogicRulesMachine<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::display() const {
 
 	itr = 0;
 	std::cerr << "Event counters distribution for partitions:\n\t ";
-	for (auto& eventCounters : eventCountersStock_) {  // printing
+	for (const auto& eventCounters : eventCountersStock_) {  // printing
 		std::cerr << itr << ":{";
 		itr++;
 
-		for (auto& i : eventCounters) {
+		for (const auto& i : eventCounters) {
 			std::cerr << i << ", ";
 		}
 		if (!eventCounters.empty())  std::cerr << "\b\b";

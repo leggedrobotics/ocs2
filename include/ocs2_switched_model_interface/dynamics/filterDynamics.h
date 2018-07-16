@@ -44,6 +44,7 @@ public:
         if (filterSettings.state_dim != STATE_DIM) {throw std::runtime_error("FilterDynamics state size error");};
         if (filterSettings.input_dim != INPUT_DIM) {throw std::runtime_error("FilterDynamics input size error");};
         if (filterSettings.output_dim != OUTPUT_DIM) {throw std::runtime_error("FilterDynamics output size error");};
+        if (filterSettings.output_dim > filterSettings.state_dim) {throw std::runtime_error("FilterDynamics can't have more outputs than states");};
 
         A_ = filterSettings.A;
         B_ = filterSettings.B;

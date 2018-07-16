@@ -24,7 +24,11 @@ namespace switched_model {
         using ComKinoDynamicsDerivativeBase_t = ComKinoDynamicsDerivativeBase<JOINT_COORD_SIZE>;
         using kinematic_model_t = ComKinoDynamicsDerivativeBase_t::kinematic_model_t;
         using com_model_t = ComKinoDynamicsDerivativeBase_t::com_model_t;
-        using logic_rules_machine_t = ComKinoDynamicsDerivativeBase_t::logic_rules_machine_t;
+
+        using logic_rules_machine_t = SwitchedModelPlannerLogicRules<
+            JOINT_COORD_SIZE,
+            12+JOINT_COORD_SIZE+INPUTFILTER_STATE_SIZE,
+            12+JOINT_COORD_SIZE+INPUTFILTER_INPUT_SIZE>;
 
         using input_filter_t = FilterDynamics<INPUTFILTER_STATE_SIZE, INPUTFILTER_INPUT_SIZE, 12+JOINT_COORD_SIZE>;
 
@@ -35,12 +39,6 @@ namespace switched_model {
             JOINT_COORD_SIZE,
             12+JOINT_COORD_SIZE+INPUTFILTER_STATE_SIZE,
             12+JOINT_COORD_SIZE+INPUTFILTER_INPUT_SIZE>>;
-        using scalar_t = BASE::scalar_t ;
-        using state_matrix_t = BASE::state_matrix_t;
-        using state_vector_t = BASE::state_vector_t;
-        using input_vector_t = BASE::input_vector_t;
-        using state_input_matrix_t = BASE::state_input_matrix_t;
-        using dynamic_vector_t = BASE::dynamic_vector_t;
 
         ComKinoDynamicsDerivativeAugmented(const FilterSettings& filterSettings,
                                            const kinematic_model_t& kinematicModel,

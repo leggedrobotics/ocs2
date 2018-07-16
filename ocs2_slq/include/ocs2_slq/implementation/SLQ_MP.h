@@ -157,7 +157,7 @@ void SLQ_MP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::lineSearch(bool computeISEs) {
 	event_handler_t::DeactivateKillIntegration();
 
 	// clear the feedforward increments
-	for (size_t i=0; i<BASE::numPartitionings_; i++)
+	for (size_t i=0; i<BASE::numPartitions_; i++)
 		BASE::nominalControllersStock_[i].deltaUff_.clear();
 
 	// display
@@ -508,11 +508,11 @@ void SLQ_MP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::executeLineSearchWorker(size_t
 	scalar_t lsTotalCost;
 	scalar_t lsConstraint1ISE, lsConstraint2ISE;
 	scalar_t lsConstraint1MaxNorm, lsConstraint2MaxNorm;
-	controller_array_t          lsControllersStock(BASE::numPartitionings_);
-	std::vector<scalar_array_t>	lsTimeTrajectoriesStock(BASE::numPartitionings_);
-	std::vector<size_array_t>	lsEventsPastTheEndIndecesStock(BASE::numPartitionings_);
-	state_vector_array2_t   	lsStateTrajectoriesStock(BASE::numPartitionings_);
-	input_vector_array2_t 		lsInputTrajectoriesStock(BASE::numPartitionings_);
+	controller_array_t          lsControllersStock(BASE::numPartitions_);
+	std::vector<scalar_array_t>	lsTimeTrajectoriesStock(BASE::numPartitions_);
+	std::vector<size_array_t>	lsEventsPastTheEndIndecesStock(BASE::numPartitions_);
+	state_vector_array2_t   	lsStateTrajectoriesStock(BASE::numPartitions_);
+	input_vector_array2_t 		lsInputTrajectoriesStock(BASE::numPartitions_);
 
 	while(true)  {
 
@@ -681,7 +681,7 @@ void SLQ_MP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::solveSequentialRiccatiEquation
 	// solve it sequentially for the first time when useParallelRiccatiSolverFromInitItr_ is false
 	if(BASE::iteration_==0 && BASE::useParallelRiccatiSolverFromInitItr_==false) {
 
-		for (int i=BASE::numPartitionings_-1; i>=0; i--)  {
+		for (int i=BASE::numPartitions_-1; i>=0; i--)  {
 
 			if (i<(signed)BASE::initActivePartition_ || i>(signed)BASE::finalActivePartition_) {
 
@@ -741,7 +741,7 @@ void SLQ_MP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::solveSequentialRiccatiEquation
 			BASE::printString("[MP]: Will wait now until workers have done RiccatiSolver Task.");
 
 		std::unique_lock<std::mutex> waitLock(riccatiSolverBarrierMutex_);
-		while(numSubsystemsProcessed_.load() < BASE::numPartitionings_){
+		while(numSubsystemsProcessed_.load() < BASE::numPartitions_){
 			riccatiSolverCompletedCondition_.wait(waitLock);
 		}
 		waitLock.unlock();
@@ -860,7 +860,7 @@ void SLQ_MP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::distributeWork(){
 	startingIndicesRiccatiWorker_.resize(N);
 	endingIndicesRiccatiWorker_.resize(N);
 
-//	if (BASE::numPartitionings_ < N)
+//	if (BASE::numPartitions_ < N)
 //		throw std::runtime_error("Number of threads is bigger than number of subsystems");
 
 	int subsystemsPerThread = (BASE::finalActivePartition_-BASE::initActivePartition_+1) / N;
@@ -880,7 +880,7 @@ void SLQ_MP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::distributeWork(){
 	}
 
 	// adding the inactive subsystems
-	endingIndicesRiccatiWorker_.front() = BASE::numPartitionings_-1;
+	endingIndicesRiccatiWorker_.front() = BASE::numPartitions_-1;
 	startingIndicesRiccatiWorker_.back() = 0;
 
 	if (BASE::settings_.displayInfo_) {

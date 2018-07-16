@@ -58,7 +58,7 @@ namespace ocs2{
  * @tparam INPUT_DIM: Dimension of the control input space.
  * @tparam LOGIC_RULES_T: Logic Rules type (default NullLogicRules).
  */
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T=NullLogicRules<STATE_DIM,INPUT_DIM> >
+template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T=NullLogicRules<STATE_DIM,INPUT_DIM>>
 class SLQ_BASE
 {
 public:
@@ -66,7 +66,7 @@ public:
 	static_assert(std::is_base_of<LogicRulesBase<STATE_DIM, INPUT_DIM>, LOGIC_RULES_T>::value,
 			"LOGIC_RULES_T must inherit from LogicRulesBase");
 
-	typedef std::shared_ptr<SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>>	Ptr;
+	typedef std::shared_ptr<SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>> Ptr;
 
 	typedef SLQ_RiccatiEquationsNormalized<STATE_DIM, INPUT_DIM>		slq_riccati_equations_t;
 //	typedef SequentialRiccatiEquations<STATE_DIM, INPUT_DIM> 			riccati_equations_t;
@@ -76,7 +76,7 @@ public:
 //	typedef LTI_Equations<STATE_DIM> LTI_Equation_t;
 
 
-	typedef Dimensions<STATE_DIM, INPUT_DIM> 	DIMENSIONS;
+	typedef Dimensions<STATE_DIM, INPUT_DIM> DIMENSIONS;
 
 	typedef typename DIMENSIONS::controller_t controller_t;
 	typedef typename DIMENSIONS::controller_array_t controller_array_t;
@@ -148,7 +148,8 @@ public:
 
 	typedef HybridLogicRulesMachine<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> 	hybrid_logic_rules_machine_t;
 
-	state_vector_t rolloutStateTriggeredWorker(size_t workerIndex,
+	state_vector_t rolloutStateTriggeredWorker(
+			size_t workerIndex,
 			const size_t& partitionIndex,
 			const scalar_t& initTime,
 			const state_vector_t& initState,
@@ -163,7 +164,8 @@ public:
 			scalar_array_t& guardSurfacesValues,
 			hybrid_logic_rules_machine_t& hybridLlogicRulesMachine);
 
-	void rolloutStateTriggeredTrajectory(const scalar_t& initTime,
+	void rolloutStateTriggeredTrajectory(
+			const scalar_t& initTime,
 			const state_vector_t& initState,
 			const scalar_t& finalTime,
 			const scalar_array_t& partitioningTimes,
@@ -180,7 +182,7 @@ public:
 	 * Default constructor.
 	 */
 	SLQ_BASE()
-	: numPartitionings_(0)
+	: numPartitions_(0)
 	{}
 
 	/**
@@ -192,7 +194,7 @@ public:
 	 * @param [in] costFunctionPtr: The cost function (intermediate and terminal costs) and its derivatives for subsystems.
 	 * @param [in] operatingTrajectoriesPtr: The operating trajectories of system which will be used for initialization of SLQ.
 	 * @param [in] settings: Structure containing the settings for the SLQ algorithm.
-	 * @param [in] logicRulesPtr: The logic rules used for implementing mixed logical dynamical systems.
+	 * @param [in] logicRulesPtr: The logic rules used for implementing mixed-logic dynamical systems.
 	 * @param [in] heuristicsFunctionPtr: Heuristic function used in the infinite time optimal control formulation. If it is not
 	 * defined, we will use the terminal cost function defined in costFunctionPtr.
 	 */
@@ -206,7 +208,7 @@ public:
 			  const cost_function_base_t* heuristicsFunctionPtr = nullptr);
 
 	/**
-	 * destructor.
+	 * Destructor.
 	 */
 	virtual ~SLQ_BASE();
 
@@ -225,7 +227,8 @@ public:
 	 * @param [out] inputTrajectoriesStock: Array of trajectories containing the output control input trajectory.
 	 * @param [in] threadId: Working thread (default is 0).
 	 */
-	void rolloutTrajectory(const scalar_t& initTime,
+	void rolloutTrajectory(
+			const scalar_t& initTime,
 			const state_vector_t& initState,
 			const scalar_t& finalTime,
 			const scalar_array_t& partitioningTimes,
@@ -237,7 +240,7 @@ public:
 			size_t threadId = 0);
 
 	/**
-	 * The class for performing roll-out. It uses the given control policies and initial state,
+	 * The class for performing rollout. It uses the given control policies and initial state,
 	 * to integrate the system dynamics in time period [initTime, finalTime] and only return the final state.
 	 *
 	 * @param [in] initTime: The initial time.
@@ -250,7 +253,8 @@ public:
 	 * @param [out] finalActiveSubsystemIndex: The final active subsystem.
 	 * @param [in] threadId: Working thread (default is 0).
 	 */
-	void rolloutFinalState(const scalar_t& initTime,
+	void rolloutFinalState(
+			const scalar_t& initTime,
 			const state_vector_t& initState,
 			const scalar_t& finalTime,
 			const scalar_array_t& partitioningTimes,
@@ -268,8 +272,8 @@ public:
 	 * @param [in] stateTrajectoriesStock: Array of trajectories containing the output state trajectory.
 	 * @param [in] inputTrajectoriesStock: Array of trajectories containing the output control input trajectory.
 	 * @param [out] nc1TrajectoriesStock: Array of trajectories containing the number of the active state-input constraints.
-	 * @param [out] EvTrajectoryStock: Array of trajectories containing the value of the state-input constraints (if the roll-out is constrained the value is
-	 * always zero otherwise it is nonzero).
+	 * @param [out] EvTrajectoryStock: Array of trajectories containing the value of the state-input constraints (if the
+	 * rollout is constrained the value is always zero otherwise it is nonzero).
 	 * @param [out] nc2TrajectoriesStock: Array of trajectories containing the number of the active state-only constraints.
 	 * @param [out] HvTrajectoryStock: Array of trajectories containing the value of the state-only constraints.
 	 * @param [out] nc2FinalStock: Array containing the number of the active final state-only constraints.
@@ -290,14 +294,14 @@ public:
 			size_t threadId = 0);
 
 	/**
-	 * Calculates cost of a roll-out.
+	 * Calculates cost of a rollout.
 	 *
 	 * @param [in] threadId: Working thread.
-	 * @param [in] timeTrajectoriesStock: Array of trajectories containing the time trajectory stamp of a roll-out.
+	 * @param [in] timeTrajectoriesStock: Array of trajectories containing the time trajectory stamp of a rollout.
 	 * @param [in] eventsPastTheEndIndecesStock: Array of indices containing past-the-end index of events trigger.
-	 * @param [in] stateTrajectoriesStock: Array of trajectories containing the state trajectory of a roll-out.
-	 * @param [in] inputTrajectoriesStock: Array of trajectories containing the control input trajectory of a roll-out.
-	 * @param [out] totalCost: The total cost of the roll-out.
+	 * @param [in] stateTrajectoriesStock: Array of trajectories containing the state trajectory of a rollout.
+	 * @param [in] inputTrajectoriesStock: Array of trajectories containing the control input trajectory of a rollout.
+	 * @param [out] totalCost: The total cost of the rollout.
 	 * @param [in] threadId: Working thread (default is 0).
 	 */
 	void calculateRolloutCost(
@@ -309,13 +313,13 @@ public:
 			size_t threadId = 0);
 
 	/**
-	 * Calculates the cost function plus penalty for state-only constraints of a roll-out.
+	 * Calculates the cost function plus penalty for state-only constraints of a rollout.
 	 *
 	 * @param [in] threadId: Working thread.
-	 * @param [in] timeTrajectoriesStock: Array of trajectories containing the time trajectory stamp of a roll-out.
+	 * @param [in] timeTrajectoriesStock: Array of trajectories containing the time trajectory stamp of a rollout.
 	 * @param [in] eventsPastTheEndIndecesStock: Array of indices containing past-the-end index of events trigger.
-	 * @param [in] stateTrajectoriesStock: Array of trajectories containing the state trajectory of a roll-out.
-	 * @param [in] inputTrajectoriesStock: Array of trajectories containing the control input trajectory of a roll-out.
+	 * @param [in] stateTrajectoriesStock: Array of trajectories containing the state trajectory of a rollout.
+	 * @param [in] inputTrajectoriesStock: Array of trajectories containing the control input trajectory of a rollout.
 	 * @param [in] constraint2ISE: Type-2 constraint's ISE (Integral Squared Error).
 	 * @param [in] nc2FinalStock: Array containing the number of the active final state-only constraints.
 	 * @param [in] HvFinalStock: Array containing the value of the final state-only constraints.
@@ -378,11 +382,11 @@ public:
 	void calculateController();
 
 	/**
-	 * Line search on the feedforwrd parts of the controller. It uses the following approach for line search:
+	 * Line search on the feedforward parts of the controller. It uses the following approach for line search:
 	 * The constraint TYPE-1 correction term is directly added through a user defined stepSize (defined in settings_.constraintStepSize_).
 	 * But the cost minimization term is optimized through a line-search strategy defined in SLQ settings.
 	 *
-	 * @param [in] computeISEs: Whether lineSearch needs to calculate ISEs indeces for type_1 and type-2 constraints.
+	 * @param [in] computeISEs: Whether lineSearch needs to calculate ISEs indices for type_1 and type-2 constraints.
 	 */
 	virtual void lineSearch(bool computeISEs) = 0;
 
@@ -426,7 +430,8 @@ public:
 	 * @param [in] partitioningTimes: The partitioning times between subsystems.
 	 * @param [in] costDesiredTrajectories: The cost desired trajectories.
 	 */
-	void run(const scalar_t& initTime,
+	void run(
+			const scalar_t& initTime,
 			const state_vector_t& initState,
 			const scalar_t& finalTime,
 			const scalar_array_t& partitioningTimes);
@@ -445,7 +450,8 @@ public:
 	 * which was designed by the previous call of the "run" routine, you should pass INTERNAL_CONTROLLER().
 	 * @param [in] costDesiredTrajectories: The cost desired trajectories.
 	 */
-	void run(const scalar_t& initTime,
+	void run(
+			const scalar_t& initTime,
 			const state_vector_t& initState,
 			const scalar_t& finalTime,
 			const scalar_array_t& partitioningTimes,
@@ -469,7 +475,7 @@ public:
 
 	/**
 	 * Upon activation in the multi-thread SLQ class (SLQ_MP), the parallelization of the backward pass takes
-	 * place from the the first iteration which normally become effective after the first itration.
+	 * place from the the first iteration which normally become effective after the first iteration.
 	 *
 	 * @param [in] flag: If set true, the parallel Riccati solver will be used from the first iteration.
 	 */
@@ -736,11 +742,11 @@ public:
 
 protected:
 	/**
-	 * Sets up optimizer for different number of partitionings.
+	 * Sets up optimizer for different number of partitions.
 	 *
-	 * @param [in] numPartitionings: number of partitionings
+	 * @param [in] numPartitions: number of partitions.
 	 */
-	virtual void setupOptimizer(const size_t& numPartitionings);
+	virtual void setupOptimizer(const size_t& numPartitions);
 
 
 	/**
@@ -773,7 +779,8 @@ protected:
 	 * @param [out] inputTrajectory: The control input trajectory.
 	 * @return The final state (state jump is considered if it took place)
 	 */
-	state_vector_t rolloutTimeTriggeredWorker(size_t workerIndex,
+	state_vector_t rolloutTimeTriggeredWorker(
+			size_t workerIndex,
 			const size_t& partitionIndex,
 			const scalar_t& initTime,
 			const state_vector_t& initState,
@@ -795,7 +802,8 @@ protected:
 	 * @param [in] inputTrajectory: The control input trajectory.
 	 * @param [out] totalCost: The total cost.
 	 */
-	void calculateCostWorker(size_t workerIndex,
+	void calculateCostWorker(
+			size_t workerIndex,
 			const size_t& partitionIndex,
 			const scalar_array_t& timeTrajectory,
 			const size_array_t& eventsPastTheEndIndeces,
@@ -819,7 +827,8 @@ protected:
 	 * @param [out] nc2Finals: Number of active final type-2 constraints.
 	 * @param [out] HvFinals: Final type-2 constraints.
 	 */
-	void calculateConstraintsWorker(size_t workerIndex,
+	void calculateConstraintsWorker(
+			size_t workerIndex,
 			const size_t& partitionIndex,
 			const scalar_array_t& timeTrajectory,
 			const size_array_t& eventsPastTheEndIndeces,
@@ -839,7 +848,8 @@ protected:
 	 * @param [in] partitionIndex: Time partition index
 	 * @param [in] timeIndex: Time index in the partition
 	 */
-	void approximateLQWorker(size_t workerIndex,
+	void approximateLQWorker(
+			size_t workerIndex,
 			const size_t& partitionIndex,
 			const size_t& timeIndex);
 
@@ -850,7 +860,8 @@ protected:
 	 * @param [in] partitionIndex: Time partition index
 	 * @param [in] timeIndex: Time index in the partition
 	 */
-	void calculateControllerWorker(size_t workerIndex,
+	void calculateControllerWorker(
+			size_t workerIndex,
 			const size_t& partitionIndex,
 			const size_t& timeIndex);
 
@@ -870,7 +881,8 @@ protected:
 	 * @param lsStateTrajectoriesStock
 	 * @param lsInputTrajectoriesStock
 	 */
-	void lineSearchWorker(size_t workerIndex,
+	void lineSearchWorker(
+			size_t workerIndex,
 			scalar_t learningRate,
 			scalar_t& lsTotalCost,
 			scalar_t& lsConstraint1ISE,
@@ -917,7 +929,7 @@ protected:
 			const eigen_scalar_t& sFinal);
 
 	/**
-	 * Type_1 constraints error correction compensation which solves a set of erro Riccati equations for the partition in the given index.
+	 * Type_1 constraints error correction compensation which solves a set of error Riccati equations for the partition in the given index.
 	 *
 	 * @param [in] workerIndex: Working agent index.
 	 * @param [in] partitionIndex: The requested partition index to solve Riccati equations.
@@ -947,7 +959,7 @@ protected:
 			const state_vector_t& SveFinal);
 
 	/**
-	 * Full Backward Sweep method uses exp method instead of ode to solve Riccati equations.
+	 * Full Backward Sweep method uses exponential method instead of ODE to solve Riccati equations.
 	 *
 	 * @param [in] workerIndex: Working agent index.
 	 * @param [in] partitionIndex: The requested partition index to solve Riccati equations.
@@ -978,10 +990,10 @@ protected:
 			const double& deltaTime);
 
 	/**
-	 * Computes the Lagrage multiplier over the given roll-out.
+	 * Computes the Lagrange multiplier over the given rollout.
 	 *
-	 * @param [in] timeTrajectoriesStock: roll-out simulated time steps
-	 * @param [in] stateTrajectoriesStock: roll-out outputs
+	 * @param [in] timeTrajectoriesStock: rollout simulated time steps
+	 * @param [in] stateTrajectoriesStock: rollout outputs
 	 * @param [in] lagrangeMultiplierFunctionsStock: the coefficients of the linear function for lagrangeMultiplier
 	 * @param [out] lagrangeTrajectoriesStock: lagrangeMultiplier value over the given trajectory
 	 */
@@ -992,11 +1004,11 @@ protected:
 			std::vector<std::vector<Eigen::VectorXd>>& lagrangeTrajectoriesStock);
 
 	/**
-	 * Computes the co-state over the given roll-out.
+	 * Computes the costate over the given rollout.
 	 *
-	 * @param [in] timeTrajectoriesStock: roll-out simulated time steps
-	 * @param [in] stateTrajectoriesStock: roll-out outputs
-	 * @param [out] costateTrajectoriesStock: co-state vector for the given trajectory
+	 * @param [in] timeTrajectoriesStock: rollout simulated time steps
+	 * @param [in] stateTrajectoriesStock: rollout outputs
+	 * @param [out] costateTrajectoriesStock: costate vector for the given trajectory
 	 */
 	void calculateRolloutCostate(
 			const std::vector<scalar_array_t>& timeTrajectoriesStock,
@@ -1013,12 +1025,12 @@ protected:
 	void calculateInputConstraintLagrangian(std::vector<lagrange_t>& lagrangeMultiplierFunctionsStock);
 
 	/**
-	 * compute the merit function for given roll-out
+	 * compute the merit function for given rollout
 	 *
 	 * @param [in] timeTrajectoriesStock: simulation time trajectory
-	 * @param [in] nc1TrajectoriesStock: roll-out's number of active constraints in each time step
-	 * @param [in] EvTrajectoryStock: roll-out's constraints value
-	 * @param [in] lagrangeTrajectoriesStock: constraint Lagrange multiplier for the given roll-out
+	 * @param [in] nc1TrajectoriesStock: rollout's number of active constraints in each time step
+	 * @param [in] EvTrajectoryStock: rollout's constraints value
+	 * @param [in] lagrangeTrajectoriesStock: constraint Lagrange multiplier for the given rollout
 	 * @param [in] totalCost: the total cost of the trajectory
 	 * @param [out] meritFunctionValue: the total merit function value of the trajectory
 	 * @param [out] constraintISE: Integral of Square Error (ISE)
@@ -1034,6 +1046,7 @@ protected:
 
 	/**
 	 * Makes the matrix PSD.
+	 *
 	 * @tparam Derived type.
 	 * @param [out] squareMatrix: The matrix to become PSD.
 	 * @return boolean:
@@ -1098,7 +1111,7 @@ protected:
 
 	size_t initActivePartition_;
 	size_t finalActivePartition_;
-	size_t numPartitionings_;
+	size_t numPartitions_;
 	scalar_array_t partitioningTimes_;
 
 	const std::vector<scalar_array_t>* 	desiredTimeTrajectoryStockPtr_;
@@ -1111,7 +1124,12 @@ protected:
 	scalar_t learningRateStar_ = 1.0;  // The optimal learning rate.
 	scalar_t maxLearningRate_  = 1.0;  // The maximum permitted learning rate (settings_.maxLearningRateGSLQP_).
 	scalar_t constraintStepSize_ = 1.0;
-	std::vector<bool> updateFeedForwardPoliciesStock_;   // update controller with the feedforward component of cost or type-1 constraints (0 or 1)
+
+	// It is true if an initial controller is not provided for a partition which causes that the first
+	// iteration of SLQ to design an initial controller (LQR). In this case:
+	// 1) The feedforward component and the type-1 constraint input are set to zero
+	// 2) Final cost will be ignored
+	std::vector<bool> initialControllerDesignStock_;
 
 	size_t iteration_;
 	eigen_scalar_array_t iterationCost_;
@@ -1135,7 +1153,7 @@ protected:
 	std::vector<typename operating_trajectories_base_t::Ptr> operatingTrajectoriesPtrStock_;
 
 	std::vector<typename state_triggered_event_handler_t::Ptr> eventsPtrStock_;
-	std::vector<std::shared_ptr<ODE45<STATE_DIM>>> 	integratorsPtrStock_;
+	std::vector<std::shared_ptr<ODE45<STATE_DIM>>> integratorsPtrStock_;
 
 	controller_array_t 			nominalControllersStock_;
 	std::vector<scalar_array_t> nominalTimeTrajectoriesStock_;
@@ -1149,12 +1167,12 @@ protected:
 
 	controller_array_t deletedcontrollersStock_;	// needed for concatenating the new controller to the old one
 
-	state_matrix_array2_t        		AmTrajectoryStock_;
-	state_input_matrix_array2_t 		BmTrajectoryStock_;
+	state_matrix_array2_t 		AmTrajectoryStock_;
+	state_input_matrix_array2_t BmTrajectoryStock_;
 
-	std::vector<std::vector<size_t>>    nc1TrajectoriesStock_;  	// nc1: Number of the Type-1  active constraints
-	constraint1_vector_array2_t			EvTrajectoryStock_;
-	constraint1_state_matrix_array2_t   CmTrajectoryStock_;
+	std::vector<std::vector<size_t>>  nc1TrajectoriesStock_;  	// nc1: Number of the Type-1  active constraints
+	constraint1_vector_array2_t       EvTrajectoryStock_;
+	constraint1_state_matrix_array2_t CmTrajectoryStock_;
 	constraint1_input_matrix_array2_t DmTrajectoryStock_;
 
 	std::vector<size_array_t> 			nc2TrajectoriesStock_;  // nc2: Number of the Type-2 active constraints
@@ -1176,16 +1194,16 @@ protected:
 	input_state_matrix_array2_t	PmTrajectoryStock_;
 
 	input_matrix_array2_t 	RmInverseTrajectoryStock_;
-	state_matrix_array2_t   	AmConstrainedTrajectoryStock_;
-	state_matrix_array2_t   	QmConstrainedTrajectoryStock_;
-	state_vector_array2_t  		QvConstrainedTrajectoryStock_;
+	state_matrix_array2_t   AmConstrainedTrajectoryStock_;
+	state_matrix_array2_t   QmConstrainedTrajectoryStock_;
+	state_vector_array2_t  	QvConstrainedTrajectoryStock_;
 	input_matrix_array2_t 	RmConstrainedTrajectoryStock_;
 	control_constraint1_matrix_array2_t DmDagerTrajectoryStock_;
 	input_vector_array2_t   	EvProjectedTrajectoryStock_;  // DmDager * Ev
-	input_state_matrix_array2_t 	CmProjectedTrajectoryStock_;  // DmDager * Cm
+	input_state_matrix_array2_t CmProjectedTrajectoryStock_;  // DmDager * Cm
 	input_matrix_array2_t   	DmProjectedTrajectoryStock_;  // DmDager * Dm
 	state_input_matrix_array2_t BmConstrainedTrajectoryStock_;
-	input_state_matrix_array2_t 	PmConstrainedTrajectoryStock_;
+	input_state_matrix_array2_t PmConstrainedTrajectoryStock_;
 	input_vector_array2_t 		RvConstrainedTrajectoryStock_;
 
 	std::vector<std::shared_ptr<riccati_equations_t>> 							riccatiEquationsPtrStock_;
@@ -1214,18 +1232,18 @@ protected:
 	state_matrix_t SmHeuristics_;
 
 	// functions for controller and lagrange multiplier
-	std::vector<LinearInterpolation<state_vector_t,Eigen::aligned_allocator<state_vector_t> >>   	nominalStateFunc_;
-	std::vector<LinearInterpolation<input_vector_t,Eigen::aligned_allocator<input_vector_t> >> 		nominalInputFunc_;
+	std::vector<LinearInterpolation<state_vector_t,Eigen::aligned_allocator<state_vector_t> >>  nominalStateFunc_;
+	std::vector<LinearInterpolation<input_vector_t,Eigen::aligned_allocator<input_vector_t> >> 	nominalInputFunc_;
 	std::vector<LinearInterpolation<state_input_matrix_t,Eigen::aligned_allocator<state_input_matrix_t> >> BmFunc_;
-	std::vector<LinearInterpolation<input_state_matrix_t,Eigen::aligned_allocator<input_state_matrix_t> >> 	PmFunc_;
-	std::vector<LinearInterpolation<input_matrix_t,Eigen::aligned_allocator<input_matrix_t> >>     	RmInverseFunc_;
-	std::vector<LinearInterpolation<input_vector_t,Eigen::aligned_allocator<input_vector_t> >>     		RvFunc_;
-	std::vector<LinearInterpolation<input_vector_t,Eigen::aligned_allocator<input_vector_t> >>     		EvProjectedFunc_;
-	std::vector<LinearInterpolation<input_state_matrix_t,Eigen::aligned_allocator<input_state_matrix_t> >> 	CmProjectedFunc_;
-	std::vector<LinearInterpolation<input_matrix_t,Eigen::aligned_allocator<input_matrix_t> >>     	DmProjectedFunc_;
+	std::vector<LinearInterpolation<input_state_matrix_t,Eigen::aligned_allocator<input_state_matrix_t> >> PmFunc_;
+	std::vector<LinearInterpolation<input_matrix_t,Eigen::aligned_allocator<input_matrix_t>>> RmInverseFunc_;
+	std::vector<LinearInterpolation<input_vector_t,Eigen::aligned_allocator<input_vector_t>>> RvFunc_;
+	std::vector<LinearInterpolation<input_vector_t,Eigen::aligned_allocator<input_vector_t>>> EvProjectedFunc_;
+	std::vector<LinearInterpolation<input_state_matrix_t,Eigen::aligned_allocator<input_state_matrix_t> >> CmProjectedFunc_;
+	std::vector<LinearInterpolation<input_matrix_t,Eigen::aligned_allocator<input_matrix_t>>> DmProjectedFunc_;
 
 	// function for Riccati error equation
-	std::vector<LinearInterpolation<state_matrix_t, Eigen::aligned_allocator<state_matrix_t> >> SmFuncs_;
+	std::vector<LinearInterpolation<state_matrix_t, Eigen::aligned_allocator<state_matrix_t>>> SmFuncs_;
 	//
 	void LmFunc_ (const size_t& partitionIndex, const size_t& timeIndex, input_state_matrix_t& Lm) {
 		Lm = -RmInverseTrajectoryStock_[partitionIndex][timeIndex] * ( PmTrajectoryStock_[partitionIndex][timeIndex] +
@@ -1258,10 +1276,9 @@ protected:
 		nominalControllersStock_[partitionIndex].deltaUff_[timeIndex] = LvConstrained;
 	};
 
-
 public:
 	template <size_t GSLQP_STATE_DIM, size_t GSLQP_INPUT_DIM>
-	friend class GSLQP;
+	friend class GSLQ;
 
 private:
 	std::mutex outputDisplayGuardMutex_;

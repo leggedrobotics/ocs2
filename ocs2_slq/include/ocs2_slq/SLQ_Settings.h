@@ -40,8 +40,8 @@ public:
 	, constraintStepSize_(1.0)
 	, displayInfo_(false)
 	, displayShortSummary_(false)
-	, warmStartGSLQP_(false)
-	, useLQForDerivatives_(false)
+	, warmStartGSLQP_(false)				// GSLQ
+	, useLQForDerivatives_(false)			// GSLQ
 
 	, absTolODE_(1e-9)
 	, relTolODE_(1e-6)
@@ -54,14 +54,14 @@ public:
 	, noStateConstraints_(false)
 	, useMakePSD_(true)
 
-	, displayGradientDescent_(false)
-	, tolGradientDescent_(1e-2)
-	, acceptableTolGradientDescent_(1e-1)
-	, maxIterationGradientDescent_(20)
-	, minLearningRateNLP_(0.05)
-	, maxLearningRateNLP_(1.0)
-	, useAscendingLineSearchNLP_(true)
-	, minEventTimeDifference_(0.0)
+	, displayGradientDescent_(false)		// GSLQ
+	, tolGradientDescent_(1e-2)				// GSLQ
+	, acceptableTolGradientDescent_(1e-1)	// GSLQ
+	, maxIterationGradientDescent_(20)		// GSLQ
+	, minLearningRateNLP_(0.05)				// GSLQ
+	, maxLearningRateNLP_(1.0)				// GSLQ
+	, useAscendingLineSearchNLP_(true)		// GSLQ
+	, minEventTimeDifference_(0.0)			// GSLQ
 
 	, RiccatiIntegratorType_(RICCATI_INTEGRATOR_TYPE::ODE45)
 	, adams_integrator_dt_(0.001)

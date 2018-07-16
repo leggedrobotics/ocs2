@@ -29,7 +29,7 @@ SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::SLQ_BASE(
 	, costDesiredTrajectoriesBuffer_()
 	, costDesiredTrajectoriesUpdated_(false)
 	, rewindCounter_(0)
-	, numPartitionings_(0)
+	, numPartitions_(0)
 {
 	if (logicRulesPtr != nullptr)
 		logicRulesMachinePtr_ = logic_rules_machine_ptr_t( new logic_rules_machine_t(*logicRulesPtr) );
@@ -315,24 +315,24 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::rolloutStateTriggeredTraject
 		input_vector_array2_t& inputTrajectoriesStock,
 		size_t threadId /*= 0*/)  {
 
-	size_t numPartitionings = partitioningTimes.size()-1;
+	size_t numPartitions = partitioningTimes.size()-1;
 
-	if (controllersStock.size() != numPartitionings)
+	if (controllersStock.size() != numPartitions)
 		throw std::runtime_error("controllersStock has less controllers then the number of subsystems");
 
-	timeTrajectoriesStock.resize(numPartitionings);
-	eventsPastTheEndIndecesStock.resize(numPartitionings);
-	stateTrajectoriesStock.resize(numPartitionings);
-	inputTrajectoriesStock.resize(numPartitionings);
+	timeTrajectoriesStock.resize(numPartitions);
+	eventsPastTheEndIndecesStock.resize(numPartitions);
+	stateTrajectoriesStock.resize(numPartitions);
+	inputTrajectoriesStock.resize(numPartitions);
 
 	// finding the active subsystem index at initTime
 	size_t initActivePartition = findActivePartitionIndex(partitioningTimes, initTime);
 	// finding the active subsystem index at initTime
 	size_t finalActivePartition = findActivePartitionIndex(partitioningTimes, finalTime);
 
-	std::vector<scalar_array_t> eventTimesStock(numPartitionings);
-	std::vector<scalar_array_t> switchingTimesStock(numPartitionings);
-	std::vector<size_array_t>   switchedSystemIDsStock(numPartitionings);
+	std::vector<scalar_array_t> eventTimesStock(numPartitions);
+	std::vector<scalar_array_t> switchingTimesStock(numPartitions);
+	std::vector<size_array_t>   switchedSystemIDsStock(numPartitions);
 
 
 	scalar_array_t eventTimes;
@@ -345,7 +345,7 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::rolloutStateTriggeredTraject
 	state_vector_t x0 = initState;
 	scalar_array_t guardSurfacesValues;
 	scalar_t tf;
-	for (size_t i=0; i<numPartitionings; i++)  {
+	for (size_t i=0; i<numPartitions; i++)  {
 
 		// for subsystems before the initial time
 		if (i<initActivePartition  ||  i>finalActivePartition) {
@@ -359,7 +359,7 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::rolloutStateTriggeredTraject
 		// final time
 		tf = (i != finalActivePartition) ? partitioningTimes[i+1] : finalTime;
 
-		// call rolloutTimeTriggeredWorker for the partition 'i' on the thread 'threadId'
+		// call rolloutStateTriggeredWorker for the partition 'i' on the thread 'threadId'
 		x0 = rolloutStateTriggeredWorker(threadId, i,
 				t0, x0, tf, controllersStock[i],
 				timeTrajectoriesStock[i], eventsPastTheEndIndecesStock[i],
@@ -448,11 +448,11 @@ typename SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::state_vector_t
 
 		// simulate subsystem
 		if (controller.empty()==false) {
-			// integrate controled system
+			// integrate controlled system
 			dynamicsIntegratorsPtrStock_[workerIndex]->integrate(beginState, beginTime, endTime,
 					stateTrajectory, timeTrajectory,
 					settings_.minTimeStep_, settings_.absTolODE_, settings_.relTolODE_, maxNumSteps, true);
-			// compute control input trajectory and concatinate to inputTrajectory
+			// compute control input trajectory and concatenate to inputTrajectory
 			for ( ; k_u<timeTrajectory.size(); k_u++) {
 				inputTrajectory.emplace_back( systemDynamicsPtrStock_[workerIndex]->computeInput(
 						timeTrajectory[k_u], stateTrajectory[k_u]) );
@@ -472,9 +472,12 @@ typename SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::state_vector_t
 
 	}  // end of i loop
 
-	// push the last jump eventsPastTheEndIndeces if it took place. Note: we don't push the state because that the
-	// input might not be defined since no control policy is available)
-	if (finalItr<numEvents && finalTime>=switchingTimes[finalItr+1]) {
+	// If an event has happened at the final time push it to the eventsPastTheEndIndeces
+	// numEvents>finalItr means that there the final active subsystem is before an event time.
+	// Note: we don't push the state because that the input might not be defined since no control policy is available)
+	bool eventAtFinalTime = numEvents>finalItr &&
+			logicRulesMachinePtr_->getEventTimes(partitionIndex)[finalItr]<finalTime+OCS2NumericTraits<scalar_t>::limit_epsilon();
+	if (eventAtFinalTime) {
 		eventsPastTheEndIndeces.push_back( stateTrajectory.size() );
 		systemDynamicsPtrStock_[workerIndex]->computeJumpMap(timeTrajectory.back(), stateTrajectory.back(), beginState);
 		return beginState;
@@ -498,15 +501,15 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::rolloutTrajectory(
 		input_vector_array2_t& inputTrajectoriesStock,
 		size_t threadId /*= 0*/)  {
 
-	size_t numPartitionings = partitioningTimes.size()-1;
+	size_t numPartitions = partitioningTimes.size()-1;
 
-	if (controllersStock.size() != numPartitionings)
+	if (controllersStock.size() != numPartitions)
 		throw std::runtime_error("controllersStock has less controllers then the number of subsystems");
 
-	timeTrajectoriesStock.resize(numPartitionings);
-	eventsPastTheEndIndecesStock.resize(numPartitionings);
-	stateTrajectoriesStock.resize(numPartitionings);
-	inputTrajectoriesStock.resize(numPartitionings);
+	timeTrajectoriesStock.resize(numPartitions);
+	eventsPastTheEndIndecesStock.resize(numPartitions);
+	stateTrajectoriesStock.resize(numPartitions);
+	inputTrajectoriesStock.resize(numPartitions);
 
 	// finding the active subsystem index at initTime
 	size_t initActivePartition = findActivePartitionIndex(partitioningTimes, initTime);
@@ -516,10 +519,10 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::rolloutTrajectory(
 	scalar_t t0 = initTime;
 	state_vector_t x0 = initState;
 	scalar_t tf;
-	for (size_t i=0; i<numPartitionings; i++)  {
+	for (size_t i=0; i<numPartitions; i++)  {
 
 		// for subsystems before the initial time
-		if (i<initActivePartition  ||  i>finalActivePartition) {
+		if (i<initActivePartition || i>finalActivePartition) {
 			timeTrajectoriesStock[i].clear();
 			eventsPastTheEndIndecesStock[i].clear();
 			stateTrajectoriesStock[i].clear();
@@ -530,11 +533,30 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::rolloutTrajectory(
 		// final time
 		tf = (i != finalActivePartition) ? partitioningTimes[i+1] : finalTime;
 
-		// call rolloutTimeTriggeredWorker for the partition 'i' on the thread 'threadId'
+		std::cout << ">>> " << i << std::endl;
+
+		// call rollout worker for the partition 'i' on the thread 'threadId'
 		x0 = rolloutTimeTriggeredWorker(threadId, i,
 				t0, x0, tf, controllersStock[i],
 				timeTrajectoriesStock[i], eventsPastTheEndIndecesStock[i],
 				stateTrajectoriesStock[i], inputTrajectoriesStock[i]);
+
+		std::cout << "timeTrajectoriesStock size: " << timeTrajectoriesStock[i].size() << std::endl;
+		for (auto ti : timeTrajectoriesStock[i])
+			std::cout << ti << ", ";
+		std::cout << std::endl;
+		std::cout << "eventsPastTheEndIndecesStock size: " << eventsPastTheEndIndecesStock[i].size() << std::endl;
+		for (auto ti : eventsPastTheEndIndecesStock[i])
+			std::cout << ti << ", ";
+		std::cout << std::endl;
+		std::cout << "stateTrajectoriesStock size: " << stateTrajectoriesStock[i].size() << std::endl;
+		for (auto xi : stateTrajectoriesStock[i])
+			std::cout << xi.transpose() << "\n";
+		std::cout << std::endl;
+		std::cout << "inputTrajectoriesStock size: " << inputTrajectoriesStock[i].size() << std::endl;
+		for (auto ui : inputTrajectoriesStock[i])
+			std::cout << ui.transpose() << "\n";
+		std::cout << std::endl << std::endl;
 
 		// reset the initial time
 		t0 = timeTrajectoriesStock[i].back();
@@ -559,9 +581,9 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::rolloutFinalState (
 		size_t& finalActivePartition,
 		size_t threadId /*= 0*/) {
 
-	size_t numPartitionings = partitioningTimes.size()-1;
+	size_t numPartitions = partitioningTimes.size()-1;
 
-	if (controllersStock.size() != numPartitionings)
+	if (controllersStock.size() != numPartitions)
 		throw std::runtime_error("controllersStock has less controllers then the number of subsystems");
 
 	scalar_array_t 			timeTrajectory;
@@ -701,17 +723,17 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculateRolloutConstraints(
 	// constraint type 1 computations which consists of number of active constraints at each time point
 	// and the value of the constraint (if the rollout is constrained the value is always zero otherwise
 	// it is nonzero)
-	nc1TrajectoriesStock.resize(numPartitionings_);
-	EvTrajectoryStock.resize(numPartitionings_);
+	nc1TrajectoriesStock.resize(numPartitions_);
+	EvTrajectoryStock.resize(numPartitions_);
 
 	// constraint type 2 computations which consists of number of active constraints at each time point
 	// and the value of the constraint
-	nc2TrajectoriesStock.resize(numPartitionings_);
-	HvTrajectoryStock.resize(numPartitionings_);
-	nc2FinalStock.resize(numPartitionings_);
-	HvFinalStock.resize(numPartitionings_);
+	nc2TrajectoriesStock.resize(numPartitions_);
+	HvTrajectoryStock.resize(numPartitions_);
+	nc2FinalStock.resize(numPartitions_);
+	HvFinalStock.resize(numPartitions_);
 
-	for (size_t i=0; i<numPartitionings_; i++) {
+	for (size_t i=0; i<numPartitions_; i++) {
 
 		calculateConstraintsWorker(threadId, i,
 				timeTrajectoriesStock[i], eventsPastTheEndIndecesStock[i],
@@ -741,7 +763,7 @@ SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculateConstraintISE(
 	scalar_t currentSquaredNormError;
 	scalar_t nextSquaredNormError;
 
-	for (size_t i=0; i<numPartitionings_; i++)  {
+	for (size_t i=0; i<numPartitions_; i++)  {
 
 		currentSquaredNormError = 0.0;
 		nextSquaredNormError = 0.0;
@@ -839,7 +861,7 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculateRolloutCost(
 
 	totalCost = 0.0;
 
-	for (size_t i=0; i<numPartitionings_; i++) {
+	for (size_t i=0; i<numPartitions_; i++) {
 		scalar_t cost;
 		calculateCostWorker(threadId, i,
 				timeTrajectoriesStock[i], eventsPastTheEndIndecesStock[i],
@@ -890,7 +912,7 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculateRolloutCost(
 
 	// final constraint type 2
 	if (settings_.noStateConstraints_==false)
-		for (size_t i=0; i<numPartitionings_; i++) {
+		for (size_t i=0; i<numPartitions_; i++) {
 			for (size_t k=0; k<nc2FinalStock[i].size(); k++) {
 				const size_t& nc2Final = nc2FinalStock[i][k];
 				totalCost += 0.5 * stateConstraintPenalty * HvFinalStock[i][k].head(nc2Final).squaredNorm();
@@ -904,7 +926,7 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculateRolloutCost(
 template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
 void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::approximateOptimalControlProblem()  {
 
-	for (size_t i=0; i<numPartitionings_; i++) {
+	for (size_t i=0; i<numPartitions_; i++) {
 
 		// intermediate LQ variables
 		size_t N = nominalTimeTrajectoriesStock_[i].size();
@@ -1185,7 +1207,7 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::approximateLQWorker(
 template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
 void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculateController() {
 
-	for (size_t i=0; i<numPartitionings_; i++)  {
+	for (size_t i=0; i<numPartitions_; i++)  {
 
 		if (i<initActivePartition_ || i>finalActivePartition_) {
 			nominalControllersStock_[i].clear();
@@ -1202,7 +1224,7 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculateController() {
 		// if the partition is not active
 		if (N==0)  continue;
 
-		// initialize interpolators
+		// initialize interpolating function
 		for (size_t j = 0; j<settings_.nThreads_; j++) {
 
 			// functions for controller
@@ -1245,7 +1267,7 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculateController() {
 		}  // end of j loop
 
 		// current partition update
-		constraintStepSize_ = updateFeedForwardPoliciesStock_[i] ? settings_.constraintStepSize_ : 0.0;
+		constraintStepSize_ = initialControllerDesignStock_[i] ? 0.0 : settings_.constraintStepSize_;
 
 		/*
 		 * perform the calculatePartitionController for partition i
@@ -1336,7 +1358,7 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::lineSearchWorker(
 		input_vector_array2_t& lsInputTrajectoriesStock)  {
 
 	// modifying uff by local increments
-	for (size_t i=0; i<numPartitionings_; i++)
+	for (size_t i=0; i<numPartitions_; i++)
 		for (size_t k=0; k<lsControllersStock[i].time_.size(); k++)
 			lsControllersStock[i].uff_[k] += learningRate * lsControllersStock[i].deltaUff_[k];
 
@@ -1349,12 +1371,12 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::lineSearchWorker(
 				workerIndex);
 
 		// calculate rollout constraints
-		std::vector<size_array_t>   lsNc1TrajectoriesStock(numPartitionings_);
-		constraint1_vector_array2_t lsEvTrajectoryStock(numPartitionings_);
-		std::vector<size_array_t>   lsNc2TrajectoriesStock(numPartitionings_);
-		constraint2_vector_array2_t lsHvTrajectoryStock(numPartitionings_);
-		std::vector<size_array_t>	lsNc2FinalStock(numPartitionings_);
-		constraint2_vector_array2_t	lsHvFinalStock(numPartitionings_);
+		std::vector<size_array_t>   lsNc1TrajectoriesStock(numPartitions_);
+		constraint1_vector_array2_t lsEvTrajectoryStock(numPartitions_);
+		std::vector<size_array_t>   lsNc2TrajectoriesStock(numPartitions_);
+		constraint2_vector_array2_t lsHvTrajectoryStock(numPartitions_);
+		std::vector<size_array_t>	lsNc2FinalStock(numPartitions_);
+		constraint2_vector_array2_t	lsHvFinalStock(numPartitions_);
 
 		if (lsComputeISEs_==true) {
 			// calculate rollout constraints
@@ -1390,7 +1412,7 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::lineSearchWorker(
 					+ " \t cost: " + std::to_string(lsTotalCost) + " \t constraint ISE: " + std::to_string(lsConstraint1ISE) + "\n";
 
 			finalConstraintDisplay += "\t final constraint type-2:   ";
-			for(size_t i=0; i<numPartitionings_; i++) {
+			for(size_t i=0; i<numPartitions_; i++) {
 				finalConstraintDisplay += "[" + std::to_string(i) + "]: ";
 				for (size_t j=0; j<lsNc2FinalStock[i].size(); j++)
 					for (size_t m=0; m<lsNc2FinalStock[i][j]; m++)
@@ -2241,12 +2263,12 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculateRolloutLagrangeMult
 	typedef Eigen::Matrix<double, Eigen::Dynamic, 1> constraint_vector_t;
 	typedef Eigen::Matrix<double, Eigen::Dynamic, STATE_DIM> constraint_matrix_t;
 
-	lagrangeTrajectoriesStock.resize(numPartitionings_);
+	lagrangeTrajectoriesStock.resize(numPartitions_);
 
 	LinearInterpolation<constraint_vector_t, Eigen::aligned_allocator<constraint_vector_t> > vffFunc;
 	LinearInterpolation<constraint_matrix_t, Eigen::aligned_allocator<constraint_matrix_t> > vfbFunc;
 
-	for (size_t i=0; i<numPartitionings_; i++) {
+	for (size_t i=0; i<numPartitions_; i++) {
 
 		size_t N = timeTrajectoriesStock[i].size();
 		lagrangeTrajectoriesStock[i].resize(N);
@@ -2291,9 +2313,9 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculateRolloutCostate(
 	LinearInterpolation<state_vector_t,Eigen::aligned_allocator<state_vector_t> > SvFunc;
 	LinearInterpolation<state_vector_t,Eigen::aligned_allocator<state_vector_t> > nominalStateFunc;
 
-	costateTrajectoriesStock.resize(numPartitionings_);
+	costateTrajectoriesStock.resize(numPartitions_);
 
-	for (size_t i=0; i<numPartitionings_; i++) {
+	for (size_t i=0; i<numPartitions_; i++) {
 
 		size_t N = timeTrajectoriesStock[i].size();
 		costateTrajectoriesStock[i].resize(N);
@@ -2352,9 +2374,9 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculateInputConstraintLagr
 	LinearInterpolation<input_matrix_t,Eigen::aligned_allocator<input_matrix_t> >     RmFunc;
 	LinearInterpolation<control_constraint1_matrix_t,Eigen::aligned_allocator<control_constraint1_matrix_t> > DmDagerFunc;
 
-	lagrangeMultiplierFunctionsStock.resize(numPartitionings_);
+	lagrangeMultiplierFunctionsStock.resize(numPartitions_);
 
-	for (size_t i=0; i<numPartitionings_; i++) {
+	for (size_t i=0; i<numPartitions_; i++) {
 
 		if (i<initActivePartition_ || i>finalActivePartition_) {
 			lagrangeMultiplierFunctionsStock[i].clear();
@@ -2486,7 +2508,7 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculateMeritFunction(
 	scalar_t currentIntermediateMerit;
 	scalar_t nextIntermediateMerit;
 
-	for (size_t i=0; i<numPartitionings_; i++)
+	for (size_t i=0; i<numPartitions_; i++)
 	{
 		// integrates the intermediate merit using the trapezoidal approximation method
 		currentIntermediateMerit = 0.0;
@@ -2739,8 +2761,8 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::truncateConterller(
 		size_t& initActivePartition,
 		controller_array_t& deletedcontrollersStock) {
 
-	deletedcontrollersStock.resize(numPartitionings_);
-	for (size_t i=0; i<numPartitionings_; i++)
+	deletedcontrollersStock.resize(numPartitions_);
+	for (size_t i=0; i<numPartitions_; i++)
 		deletedcontrollersStock[i].clear();
 
 	// finding the active subsystem index at initTime_
@@ -2808,11 +2830,11 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::rewindOptimizer(const size_t
 	// increment rewindCounter_
 	rewindCounter_ += firstIndex;
 
-	if (firstIndex > numPartitionings_)
+	if (firstIndex > numPartitions_)
 		throw std::runtime_error("Index for rewinding is greater than the current size.");
 
-	const size_t preservedLength = numPartitionings_ - firstIndex;
-	for (size_t i=0; i<numPartitionings_; i++)
+	const size_t preservedLength = numPartitions_ - firstIndex;
+	for (size_t i=0; i<numPartitions_; i++)
 		if (i<preservedLength) {
 			nominalControllersStock_[i].swap(nominalControllersStock_[firstIndex+i]);
 			SmFinalStock_[i]  = SmFinalStock_[firstIndex+i];
@@ -2843,75 +2865,75 @@ const unsigned long long int& SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::get
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::setupOptimizer(const size_t& numPartitionings) {
+void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::setupOptimizer(const size_t& numPartitions) {
 
-	if (numPartitionings==0)
+	if (numPartitions==0)
 		throw std::runtime_error("Number of Partitionings cannot be zero!");
 
-	nullDesiredTimeTrajectoryStockPtr_  = std::vector<scalar_array_t>( numPartitionings, scalar_array_t() );
-	nullDesiredStateTrajectoryStockPtr_ = state_vector_array2_t( numPartitionings, state_vector_array_t() );
-	nullDesiredInputTrajectoryStockPtr_ = input_vector_array2_t( numPartitionings, input_vector_array_t() );
+	nullDesiredTimeTrajectoryStockPtr_  = std::vector<scalar_array_t>( numPartitions, scalar_array_t() );
+	nullDesiredStateTrajectoryStockPtr_ = state_vector_array2_t( numPartitions, state_vector_array_t() );
+	nullDesiredInputTrajectoryStockPtr_ = input_vector_array2_t( numPartitions, input_vector_array_t() );
 
 	/*
 	 * Riccati solver variables and controller update
 	 */
-	SmFinalStock_  = state_matrix_array_t(numPartitionings, state_matrix_t::Zero());
-	SvFinalStock_  = state_vector_array_t(numPartitionings, state_vector_t::Zero());
-	SveFinalStock_ = state_vector_array_t(numPartitionings, state_vector_t::Zero());
-	sFinalStock_   = eigen_scalar_array_t(numPartitionings, eigen_scalar_t::Zero());
-	xFinalStock_   = state_vector_array_t(numPartitionings, state_vector_t::Zero());
+	SmFinalStock_  = state_matrix_array_t(numPartitions, state_matrix_t::Zero());
+	SvFinalStock_  = state_vector_array_t(numPartitions, state_vector_t::Zero());
+	SveFinalStock_ = state_vector_array_t(numPartitions, state_vector_t::Zero());
+	sFinalStock_   = eigen_scalar_array_t(numPartitions, eigen_scalar_t::Zero());
+	xFinalStock_   = state_vector_array_t(numPartitions, state_vector_t::Zero());
 
-	SsTimeTrajectoryStock_.resize(numPartitionings);
-	SsNormalizedTimeTrajectoryStock_.resize(numPartitionings);
-	SsNormalizedEventsPastTheEndIndecesStock_.resize(numPartitionings);
-	sTrajectoryStock_.resize(numPartitionings);
-	SvTrajectoryStock_.resize(numPartitionings);
-	SveTrajectoryStock_.resize(numPartitionings);
-	SmTrajectoryStock_.resize(numPartitionings);
+	SsTimeTrajectoryStock_.resize(numPartitions);
+	SsNormalizedTimeTrajectoryStock_.resize(numPartitions);
+	SsNormalizedEventsPastTheEndIndecesStock_.resize(numPartitions);
+	sTrajectoryStock_.resize(numPartitions);
+	SvTrajectoryStock_.resize(numPartitions);
+	SveTrajectoryStock_.resize(numPartitions);
+	SmTrajectoryStock_.resize(numPartitions);
 
-	updateFeedForwardPoliciesStock_.resize(numPartitionings);
+	initialControllerDesignStock_.resize(numPartitions);
 
 	/*
 	 * approximate LQ variables
 	 */
-	AmTrajectoryStock_.resize(numPartitionings);
-	BmTrajectoryStock_.resize(numPartitionings);
+	AmTrajectoryStock_.resize(numPartitions);
+	BmTrajectoryStock_.resize(numPartitions);
 
-	nc1TrajectoriesStock_.resize(numPartitionings);
-	EvTrajectoryStock_.resize(numPartitionings);
-	CmTrajectoryStock_.resize(numPartitionings);
-	DmTrajectoryStock_.resize(numPartitionings);
-	nc2TrajectoriesStock_.resize(numPartitionings);
-	HvTrajectoryStock_.resize(numPartitionings);
-	FmTrajectoryStock_.resize(numPartitionings);
+	nc1TrajectoriesStock_.resize(numPartitions);
+	EvTrajectoryStock_.resize(numPartitions);
+	CmTrajectoryStock_.resize(numPartitions);
+	DmTrajectoryStock_.resize(numPartitions);
+	nc2TrajectoriesStock_.resize(numPartitions);
+	HvTrajectoryStock_.resize(numPartitions);
+	FmTrajectoryStock_.resize(numPartitions);
 
-	qTrajectoryStock_.resize(numPartitionings);
-	QvTrajectoryStock_.resize(numPartitionings);
-	QmTrajectoryStock_.resize(numPartitionings);
-	RvTrajectoryStock_.resize(numPartitionings);
-	RmTrajectoryStock_.resize(numPartitionings);
-	RmInverseTrajectoryStock_.resize(numPartitionings);
-	PmTrajectoryStock_.resize(numPartitionings);
+	qTrajectoryStock_.resize(numPartitions);
+	QvTrajectoryStock_.resize(numPartitions);
+	QmTrajectoryStock_.resize(numPartitions);
+	RvTrajectoryStock_.resize(numPartitions);
+	RmTrajectoryStock_.resize(numPartitions);
+	RmInverseTrajectoryStock_.resize(numPartitions);
+	PmTrajectoryStock_.resize(numPartitions);
 
-	nc2FinalStock_.resize(numPartitionings);
-	HvFinalStock_.resize(numPartitionings);
-	FmFinalStock_.resize(numPartitionings);
-	qFinalStock_.resize(numPartitionings);
-	QvFinalStock_.resize(numPartitionings);
-	QmFinalStock_.resize(numPartitionings);
+	nc2FinalStock_.resize(numPartitions);
+	HvFinalStock_.resize(numPartitions);
+	FmFinalStock_.resize(numPartitions);
+	qFinalStock_.resize(numPartitions);
+	QvFinalStock_.resize(numPartitions);
+	QmFinalStock_.resize(numPartitions);
 
 	// constraint type 1 coefficients
-	DmDagerTrajectoryStock_.resize(numPartitionings);
-	AmConstrainedTrajectoryStock_.resize(numPartitionings);
-	QmConstrainedTrajectoryStock_.resize(numPartitionings);
-	QvConstrainedTrajectoryStock_.resize(numPartitionings);
-	EvProjectedTrajectoryStock_.resize(numPartitionings);
-	CmProjectedTrajectoryStock_.resize(numPartitionings);
-	DmProjectedTrajectoryStock_.resize(numPartitionings);
-	RmConstrainedTrajectoryStock_.resize(numPartitionings);
-	BmConstrainedTrajectoryStock_.resize(numPartitionings);
-	PmConstrainedTrajectoryStock_.resize(numPartitionings);
-	RvConstrainedTrajectoryStock_.resize(numPartitionings);
+	DmDagerTrajectoryStock_.resize(numPartitions);
+	AmConstrainedTrajectoryStock_.resize(numPartitions);
+	QmConstrainedTrajectoryStock_.resize(numPartitions);
+	QvConstrainedTrajectoryStock_.resize(numPartitions);
+	EvProjectedTrajectoryStock_.resize(numPartitions);
+	CmProjectedTrajectoryStock_.resize(numPartitions);
+	DmProjectedTrajectoryStock_.resize(numPartitions);
+	RmConstrainedTrajectoryStock_.resize(numPartitions);
+	BmConstrainedTrajectoryStock_.resize(numPartitions);
+	PmConstrainedTrajectoryStock_.resize(numPartitions);
+	RvConstrainedTrajectoryStock_.resize(numPartitions);
 }
 
 /******************************************************************************************************/
@@ -3231,26 +3253,26 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::run(
 	std::cout << "settings_.maxLearningRateGSLQP_: " << settings_.maxLearningRateGSLQP_ << std::endl;
 	std::cout << "settings_.minLearningRateGSLQP_: " << settings_.minLearningRateGSLQP_ << std::endl;
 
-	// update numPartitionings_ if it has been changed
-	if (numPartitionings_+1 != partitioningTimes.size()) {
-		numPartitionings_  = partitioningTimes.size()-1;
+	// update numPartitions_ if it has been changed
+	if (numPartitions_+1 != partitioningTimes.size()) {
+		numPartitions_  = partitioningTimes.size()-1;
 		partitioningTimes_ = partitioningTimes;
-		setupOptimizer(numPartitionings_);
+		setupOptimizer(numPartitions_);
 	}
 
 	// update partitioningTimes_
 	partitioningTimes_ = partitioningTimes;
 
 	// Use the input controller if it is not empty otherwise use the internal controller (nominalControllersStock_).
-	// In the later case 2 senarios are possible: either the internal controller is already set (such as the MPC case
+	// In the later case 2 scenarios are possible: either the internal controller is already set (such as the MPC case
 	// where the warm starting option is set true) or the internal controller is empty in which instead of performing
-	// a rollout the operating tarjectories will be used.
+	// a rollout the operating trajectories will be used.
 	if (controllersStock.empty()==false) {
 		nominalControllersStock_ = controllersStock;
-		if (controllersStock.size() != numPartitionings_)
+		if (controllersStock.size() != numPartitions_)
 			throw std::runtime_error("controllersStock has less controllers than the number of partitions.");
 	} else {
-		if (nominalControllersStock_.size() != numPartitionings_)
+		if (nominalControllersStock_.size() != numPartitions_)
 			throw std::runtime_error("The internal controller is not compatible with the number of partitions.");
 	}
 
@@ -3260,7 +3282,7 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::run(
 		costDesiredTrajectories_.swap(costDesiredTrajectoriesBuffer_);
 	}
 
-	// update the LOGIC_RULES in the begining of the run routine and adjust the nominal controllerStock based on an user-defined function
+	// update the LOGIC_RULES in the beginning of the run routine and adjust the nominal controllerStock based on an user-defined function
 	logicRulesMachinePtr_->updateLogicRules(partitioningTimes_, nominalControllersStock_);
 
 	// display
@@ -3297,22 +3319,22 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::run(
 	if (settings_.displayInfo_)
 		std::cerr << "\n#### Iteration " << iteration_ << " (Dynamics might have been violated)" << std::endl;
 
-	// if a controller is not set for a partition prevent feedforwrd policy to be updated for that partition
-	for (size_t i=0; i<numPartitionings_; i++)
-		updateFeedForwardPoliciesStock_[i] = nominalControllersStock_[i].time_.empty() ? false : true;
+	// if a controller is not set for a partition
+	for (size_t i=0; i<numPartitions_; i++)
+		initialControllerDesignStock_[i] = nominalControllersStock_[i].empty() ? true : false;
 
 	// run SLQ initializer and update the member variables
 	runInit();
 
 	// after iteration zero always allow feedforward policy update
-	for (size_t i=0; i<numPartitionings_; i++)
-		updateFeedForwardPoliciesStock_[i] = true;
+	for (size_t i=0; i<numPartitions_; i++)
+		initialControllerDesignStock_[i] = false;
 
 	iterationCost_.push_back( (Eigen::VectorXd(1) << nominalTotalCost_).finished() );
 	iterationISE1_.push_back( (Eigen::VectorXd(1) << nominalConstraint1ISE_).finished() );
 	iterationISE2_.push_back( (Eigen::VectorXd(1) << nominalConstraint2ISE_).finished() );
 
-	// convergence conditions varaibles
+	// convergence conditions variables
 	scalar_t relCost;
 	scalar_t relConstraint1ISE;
 	bool isLearningRateStarZero = false;
@@ -3323,7 +3345,7 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::run(
 	// SLQ main loop
 	while (iteration_+1<settings_.maxNumIterationsSLQ_ && isOptimizationConverged==false)  {
 
-		// increament iteration counter
+		// increment iteration counter
 		iteration_++;
 
 		scalar_t costCashed = nominalTotalCost_;
@@ -3332,7 +3354,7 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::run(
 		// display
 		if (settings_.displayInfo_)  std::cerr << "\n#### Iteration " << iteration_ << std::endl;
 
-		// run the an itration of the SLQ algorithm and update the member variables
+		// run the an iteration of the SLQ algorithm and update the member variables
 		runIteration();
 
 		iterationCost_.push_back( (Eigen::VectorXd(1) << nominalTotalCost_).finished() );
@@ -3372,8 +3394,7 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::run(
 
 	/*
 	 * solve Sequential Riccati Equations with learningRate 0.0,
-	 * calculate the nominal co-state,
-	 * add the deleted controller parts
+	 * calculate the nominal costate
 	 */
 //	runExit();
 

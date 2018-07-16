@@ -34,7 +34,7 @@ public:
 
 	typedef SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> BASE;
 
-	typedef typename BASE::DIMENSIONS		DIMENSIONS;
+	typedef typename BASE::DIMENSIONS DIMENSIONS;
 
 	typedef typename DIMENSIONS::template LinearFunction_t<Eigen::Dynamic> lagrange_t;
 	typedef typename DIMENSIONS::controller_t controller_t;

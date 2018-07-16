@@ -22,7 +22,7 @@ GLQP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::GLQP(
 
 		: settings_(settings),
 		  logicRulesMachine_(logicRules),
-		  numPartitionings_(0)
+		  numPartitions_(0)
 {
 	// Dynamics, derivatives, and cost
 	systemDynamicsPtrStock_.clear();
@@ -177,12 +177,12 @@ void GLQP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::findOperatingPoints(
 		input_vector_array2_t& inputOperatingPointsStock,
 		size_t threadId /*= 0*/)  {
 
-	size_t numPartitionings = partitioningTimes.size()-1;
+	size_t numPartitions = partitioningTimes.size()-1;
 
-	timeOperatingPointsStock.resize(numPartitionings);
-	eventsPastTheEndIndecesStock.resize(numPartitionings);
-	stateOperatingPointsStock.resize(numPartitionings);
-	inputOperatingPointsStock.resize(numPartitionings);
+	timeOperatingPointsStock.resize(numPartitions);
+	eventsPastTheEndIndecesStock.resize(numPartitions);
+	stateOperatingPointsStock.resize(numPartitions);
+	inputOperatingPointsStock.resize(numPartitions);
 
 	// finding the active subsystem index at initTime
 	size_t initActiveSubsystemIndex = findActiveSubsystemIndex(partitioningTimes, initTime);
@@ -192,7 +192,7 @@ void GLQP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::findOperatingPoints(
 	scalar_t t0 = initTime;
 	state_vector_t x0 = initState;
 	scalar_t tf;
-	for (size_t i=0; i<numPartitionings; i++)  {
+	for (size_t i=0; i<numPartitions; i++)  {
 
 		// for subsystems before the initial time
 		if (i<initActiveSubsystemIndex  ||  i>finalActiveSubsystemIndex) {
@@ -229,15 +229,15 @@ void GLQP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::findOperatingPoints(
 //		state_vector_array2_t& stateTrajectoriesStock,
 //		input_vector_array2_t& inputTrajectoriesStock)  {
 //
-//	if (controllersStock.size() != numPartitionings_)
+//	if (controllersStock.size() != numPartitions_)
 //		throw std::runtime_error("controllersStock has less controllers then the number of subsystems");
 //
-//	timeTrajectoriesStock.resize(numPartitionings_);
-//	stateTrajectoriesStock.resize(numPartitionings_);
-//	inputTrajectoriesStock.resize(numPartitionings_);
+//	timeTrajectoriesStock.resize(numPartitions_);
+//	stateTrajectoriesStock.resize(numPartitions_);
+//	inputTrajectoriesStock.resize(numPartitions_);
 //
 //	state_vector_t x0 = initState;
-//	for (int i=0; i<numPartitionings_; i++) {
+//	for (int i=0; i<numPartitions_; i++) {
 //
 //		timeTrajectoriesStock[i].clear();
 //		stateTrajectoriesStock[i].clear();
@@ -272,7 +272,7 @@ void GLQP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::findOperatingPoints(
 //		scalar_t& totalCost)  {
 //
 //	totalCost = 0.0;
-//	for (int i=0; i<numPartitionings_; i++) {
+//	for (int i=0; i<numPartitions_; i++) {
 //
 //		scalar_t currentIntermediateCost;
 //		scalar_t nextIntermediateCost;
@@ -294,7 +294,7 @@ void GLQP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::findOperatingPoints(
 //		}
 //
 //		// terminal cost
-//		if (i==numPartitionings_-1)  {
+//		if (i==numPartitions_-1)  {
 //			scalar_t finalCost;
 //			costFunctionsPtrStock_[i]->setCurrentStateAndControl(timeTrajectoriesStock[i].back(), stateTrajectoriesStock[i].back(), inputTrajectoriesStock[i].back());
 //			costFunctionsPtrStock_[i]->terminalCost(finalCost);
@@ -310,7 +310,7 @@ void GLQP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::findOperatingPoints(
 template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
 void GLQP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::approximateOptimalControlProblem()  {
 
-	for (size_t i=0; i<numPartitionings_; i++) {
+	for (size_t i=0; i<numPartitions_; i++) {
 
 		// intermediate LQ variables
 		size_t N = stateOperatingPointsStock_[i].size();
@@ -476,7 +476,7 @@ void GLQP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::approximateLQWorker(
 //template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
 //void GLQP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculateController(const scalar_t& learningRate, controller_array_t& controllersStock) {
 //
-//	for (int i=0; i<numPartitionings_; i++) {
+//	for (int i=0; i<numPartitions_; i++) {
 //
 //		controllersStock[i].time_ = SsTimeTrajectoryStock_[i];
 //
@@ -507,7 +507,7 @@ void GLQP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::approximateLQWorker(
 //template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
 //void GLQP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::transformeLocalValueFuntion2Global() {
 //
-//	for (int i=0; i<numPartitionings_; i++)
+//	for (int i=0; i<numPartitions_; i++)
 //		for (int k=0; k<SsTimeTrajectoryStock_[i].size(); k++) {
 //
 //			sTrajectoryStock_[i][k] = sTrajectoryStock_[i][k] - stateOperatingPointsStock_[i].transpose()*SvTrajectoryStock_[i][k] +
@@ -584,7 +584,7 @@ void GLQP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::getController(controller_array_t
 //void GLQP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::getValueFuntion(const scalar_t& time, const state_vector_t& state, scalar_t& valueFuntion)  {
 //
 //	int activeSubsystem = -1;
-//	for (int i=0; i<numPartitionings_; i++)  {
+//	for (int i=0; i<numPartitions_; i++)  {
 //		activeSubsystem = i;
 //		if (partitioningTimes_[i]<=time && time<partitioningTimes_[i+1])
 //			break;
@@ -610,16 +610,16 @@ void GLQP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::getController(controller_array_t
 //template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
 //void GLQP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::solveRiccatiEquations()  {
 //
-//	SsTimeTrajectoryStock_.resize(numPartitionings_);
-//	sTrajectoryStock_.resize(numPartitionings_);
-//	SvTrajectoryStock_.resize(numPartitionings_);
-//	SmTrajectoryStock_.resize(numPartitionings_);
+//	SsTimeTrajectoryStock_.resize(numPartitions_);
+//	sTrajectoryStock_.resize(numPartitions_);
+//	SvTrajectoryStock_.resize(numPartitions_);
+//	SmTrajectoryStock_.resize(numPartitions_);
 //
 //	// final value for the last Riccati equations
 //	Eigen::Matrix<double,riccati_equations_t::S_DIM_,1> allSsFinal;
 //	riccati_equations_t::convert2Vector(QmFinal_, QvFinal_, qFinal_, allSsFinal);
 //
-//	for (int i=numPartitionings_-1; i>=0; i--) {
+//	for (int i=numPartitions_-1; i>=0; i--) {
 //
 //		// set data for Riccati equations
 //		auto riccatiEquationsPtr = std::allocate_shared< riccati_equations_t,
@@ -807,7 +807,7 @@ void GLQP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::solveRiccatiEquations(
 	SvFinalStock_[finalActivePartition_+1]  = SvFinal;
 	sFinalStock_[finalActivePartition_+1]   = sFinal;
 
-	for (int i=numPartitionings_-1; i>=0; i--) {
+	for (int i=numPartitions_-1; i>=0; i--) {
 
 		if (i< (signed)initActivePartition_ || i > (signed)finalActivePartition_) {
 
@@ -840,56 +840,56 @@ void GLQP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::solveRiccatiEquations(
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void GLQP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::setupOptimizer(const size_t& numPartitionings) {
+void GLQP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::setupOptimizer(const size_t& numPartitions) {
 
-	if (numPartitionings==0)
+	if (numPartitions==0)
 		throw std::runtime_error("Number of Partitionings cannot be zero!");
 
 	/*
 	 * Desired cost trajectories
 	 */
-	desiredTimeTrajectoryPtrStock_.resize(numPartitionings);
-	desiredStateTrajectoryPtrStock_.resize(numPartitionings);
-	desiredInputTrajectoryPtrStock_.resize(numPartitionings);
+	desiredTimeTrajectoryPtrStock_.resize(numPartitions);
+	desiredStateTrajectoryPtrStock_.resize(numPartitions);
+	desiredInputTrajectoryPtrStock_.resize(numPartitions);
 
-	timeOperatingPointsStock_.resize(numPartitionings);
-	eventsPastTheEndIndecesStock_.resize(numPartitionings);
-	stateOperatingPointsStock_.resize(numPartitionings);
-	inputOperatingPointsStock_.resize(numPartitionings);
+	timeOperatingPointsStock_.resize(numPartitions);
+	eventsPastTheEndIndecesStock_.resize(numPartitions);
+	stateOperatingPointsStock_.resize(numPartitions);
+	inputOperatingPointsStock_.resize(numPartitions);
 
-	controllersStock_.resize(numPartitionings);
+	controllersStock_.resize(numPartitions);
 
 	/*
 	 * approximate LQ variables
 	 */
-	AmStock_.resize(numPartitionings);
-	BmStock_.resize(numPartitionings);
+	AmStock_.resize(numPartitions);
+	BmStock_.resize(numPartitions);
 
-	qFinalStock_.resize(numPartitionings);
-	QvFinalStock_.resize(numPartitionings);
-	QmFinalStock_.resize(numPartitionings);
+	qFinalStock_.resize(numPartitions);
+	QvFinalStock_.resize(numPartitions);
+	QmFinalStock_.resize(numPartitions);
 
-	qStock_.resize(numPartitionings);
-	QvStock_.resize(numPartitionings);
-	QmStock_.resize(numPartitionings);
-	RvStock_.resize(numPartitionings);
-	RmStock_.resize(numPartitionings);
-	RmInverseStock_.resize(numPartitionings);
-	PmStock_.resize(numPartitionings);
+	qStock_.resize(numPartitions);
+	QvStock_.resize(numPartitions);
+	QmStock_.resize(numPartitions);
+	RvStock_.resize(numPartitions);
+	RmStock_.resize(numPartitions);
+	RmInverseStock_.resize(numPartitions);
+	PmStock_.resize(numPartitions);
 
 	/*
 	 * Riccati solver variables and controller update
 	 */
-	SsTimeTrajectoryStock_.resize(numPartitionings);
-	SsNormalizedTimeTrajectoryStock_.resize(numPartitionings);
-	SsNormalizedEventsPastTheEndIndecesStock_.resize(numPartitionings);
-	sTrajectoryStock_.resize(numPartitionings);
-	SvTrajectoryStock_.resize(numPartitionings);
-	SmTrajectoryStock_.resize(numPartitionings);
+	SsTimeTrajectoryStock_.resize(numPartitions);
+	SsNormalizedTimeTrajectoryStock_.resize(numPartitions);
+	SsNormalizedEventsPastTheEndIndecesStock_.resize(numPartitions);
+	sTrajectoryStock_.resize(numPartitions);
+	SvTrajectoryStock_.resize(numPartitions);
+	SmTrajectoryStock_.resize(numPartitions);
 
-	sFinalStock_.resize(numPartitionings);
-	SvFinalStock_.resize(numPartitionings);
-	SmFinalStock_.resize(numPartitionings);
+	sFinalStock_.resize(numPartitions);
+	SvFinalStock_.resize(numPartitions);
+	SmFinalStock_.resize(numPartitions);
 }
 
 
@@ -907,11 +907,11 @@ void GLQP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::run(
 		const state_vector_array2_t& desiredStateTrajectoriesStock /*= state_vector_array2_t()*/,
 		const input_vector_array2_t& desiredInputTrajectoriesStock /*= input_vector_array2_t()*/)  {
 
-	// update numPartitionings_ if it has been changed
-	if (numPartitionings_+1 != partitioningTimes.size()) {
-		numPartitionings_  = partitioningTimes.size()-1;
+	// update numPartitions_ if it has been changed
+	if (numPartitions_+1 != partitioningTimes.size()) {
+		numPartitions_  = partitioningTimes.size()-1;
 		partitioningTimes_ = partitioningTimes;
-		setupOptimizer(numPartitionings_);
+		setupOptimizer(numPartitions_);
 	}
 
 	// update partitioningTimes_
@@ -920,14 +920,14 @@ void GLQP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::run(
 	// set desired trajectories for cost
 	if (desiredTimeTrajectoriesStock.empty()==false) {
 
-		if (desiredTimeTrajectoriesStock.size() != numPartitionings_)
+		if (desiredTimeTrajectoriesStock.size() != numPartitions_)
 			throw std::runtime_error("desiredTimeTrajectoriesStock has less elements than the number of partitions.");
-		if (desiredStateTrajectoriesStock.size() != numPartitionings_)
+		if (desiredStateTrajectoriesStock.size() != numPartitions_)
 			throw std::runtime_error("desiredStateTrajectoriesStock has less elements than the number of partitions.");
-		if (desiredInputTrajectoriesStock.size() != numPartitionings_ && desiredInputTrajectoriesStock.empty()==false)
+		if (desiredInputTrajectoriesStock.size() != numPartitions_ && desiredInputTrajectoriesStock.empty()==false)
 			throw std::runtime_error("desiredInputTrajectoriesStock has less elements than the number of partitions.");
 
-		for (size_t i=0; i<numPartitionings_; i++) {
+		for (size_t i=0; i<numPartitions_; i++) {
 
 			desiredTimeTrajectoryPtrStock_[i] = std::shared_ptr<const scalar_array_t>(&desiredTimeTrajectoriesStock[i]);
 			desiredStateTrajectoryPtrStock_[i] = std::shared_ptr<const state_vector_array_t>(&desiredStateTrajectoriesStock[i]);
@@ -971,7 +971,7 @@ void GLQP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::run(
 	solveRiccatiEquations(SmHeuristics_, SvHeuristics_, sHeuristics_);
 
 //	// calculate controller
-//	controllersStock_.resize(numPartitionings_);
+//	controllersStock_.resize(numPartitions_);
 //	calculateController(learningRate, controllersStock_);
 //
 //	// transforme the local value funtion to the global representation

@@ -144,11 +144,11 @@ void SLQ<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::lineSearch(bool computeISEs)  {
 	scalar_t lsTotalCost;
 	scalar_t lsConstraint1ISE, lsConstraint2ISE;
 	scalar_t lsConstraint1MaxNorm, lsConstraint2MaxNorm;
-	controller_array_t			lsControllersStock(BASE::numPartitionings_);
-	std::vector<scalar_array_t>	lsTimeTrajectoriesStock(BASE::numPartitionings_);
-	std::vector<size_array_t>	lsEventsPastTheEndIndecesStock(BASE::numPartitionings_);
-	state_vector_array2_t   	lsStateTrajectoriesStock(BASE::numPartitionings_);
-	input_vector_array2_t 		lsInputTrajectoriesStock(BASE::numPartitionings_);
+	controller_array_t			lsControllersStock(BASE::numPartitions_);
+	std::vector<scalar_array_t>	lsTimeTrajectoriesStock(BASE::numPartitions_);
+	std::vector<size_array_t>	lsEventsPastTheEndIndecesStock(BASE::numPartitions_);
+	state_vector_array2_t   	lsStateTrajectoriesStock(BASE::numPartitions_);
+	input_vector_array2_t 		lsInputTrajectoriesStock(BASE::numPartitions_);
 
 	while (learningRate >= BASE::settings_.minLearningRateGSLQP_)  {
 
@@ -189,7 +189,7 @@ void SLQ<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::lineSearch(bool computeISEs)  {
 		BASE::learningRateStar_ = 0.0;
 
 	// clear the feedforward increments
-	for (size_t i=0; i<BASE::numPartitionings_; i++)
+	for (size_t i=0; i<BASE::numPartitions_; i++)
 		BASE::nominalControllersStock_[i].deltaUff_.clear();
 
 	// display
@@ -215,9 +215,9 @@ void SLQ<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::solveSequentialRiccatiEquations(
 	BASE::SveFinalStock_[BASE::finalActivePartition_] = state_vector_t::Zero();
 	BASE::sFinalStock_[BASE::finalActivePartition_]   = sFinal;
 
-	for (int i=BASE::numPartitionings_-1; i>=0; i--) {
+	for (int i=BASE::numPartitions_-1; i>=0; i--) {
 
-		if (i< (signed)BASE::initActivePartition_ || i > (signed)BASE::finalActivePartition_) {
+		if (i<(signed)BASE::initActivePartition_ || i>(signed)BASE::finalActivePartition_) {
 
 			BASE::SsTimeTrajectoryStock_[i].clear();
 			BASE::SsNormalizedTimeTrajectoryStock_[i].clear();

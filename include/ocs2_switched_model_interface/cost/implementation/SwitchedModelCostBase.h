@@ -258,8 +258,8 @@ typename SwitchedModelCostBase<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::input_ma
 
 	input_matrix_t nondiagonalR = R;
 	scalar_t meanRz = 0;
-	for (size_t i=2; i<(12+JOINT_COORD_SIZE); i+=3)
-		meanRz += R(i,i)/NUM_CONTACT_POINTS_;
+	for (size_t i=2; i<12; i+=3)
+		meanRz += R(i,i) / static_cast<double>(NUM_CONTACT_POINTS_);
 	for (size_t j=0; j<NUM_CONTACT_POINTS_; j++)
 		for (size_t k=0; k<=j; k++)
 			if (k==j) {

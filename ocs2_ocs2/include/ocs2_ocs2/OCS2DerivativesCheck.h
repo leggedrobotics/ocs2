@@ -8,7 +8,7 @@
 #ifndef OCS2_DERIVATIVESCHECK_H_
 #define OCS2_DERIVATIVESCHECK_H_
 
-#include "ocs2_ocs2/GSLQPSolver.h"
+#include "ocs2_ocs2/GSLQSolver.h"
 
 namespace ocs2{
 
@@ -26,7 +26,7 @@ public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
 	typedef GLQP<STATE_DIM, INPUT_DIM, OUTPUT_DIM, NUM_Subsystems> GLQP_t;
-	typedef GSLQP<STATE_DIM, INPUT_DIM, OUTPUT_DIM, NUM_Subsystems> GSLQP_t;
+	typedef GSLQ<STATE_DIM, INPUT_DIM, OUTPUT_DIM, NUM_Subsystems> GSLQ_t;
 
 	typedef Dimensions<STATE_DIM, INPUT_DIM, OUTPUT_DIM> DIMENSIONS;
 	typedef typename DIMENSIONS::controller_t controller_t;
@@ -67,7 +67,7 @@ public:
 			const input_vector_array_t& inputOperatingPoints,
 			const std::vector<size_t>& systemStockIndex)
 
-	: gslqpSolver_(subsystemDynamicsPtr, subsystemDerivativesPtr, subsystemCostFunctionsPtr,
+	: gslqSolver_(subsystemDynamicsPtr, subsystemDerivativesPtr, subsystemCostFunctionsPtr,
 	  				stateOperatingPoints, inputOperatingPoints, systemStockIndex, Options_t(), MP_Options_t())
 	{}
 
@@ -81,16 +81,16 @@ public:
 	void check(const state_vector_t& initState, const std::vector<scalar_t>& switchingTimes)  {
 		Eigen::IOFormat CleanFmt(4, 0, ", ", "\n", "[", "]");
 
-		gslqpSolver_.reset();
-		gslqpSolver_.options().maxIterationGSLQP_ = 30;
-		gslqpSolver_.options().warmStartGSLQP_ = true;
+		gslqSolver_.reset();
+		gslqSolver_.options().maxIterationGSLQ_ = 30;
+		gslqSolver_.options().warmStartGSLQ_ = true;
 
-		gslqpSolver_.run(initState, switchingTimes);
-		gslqpCostDerivative_ = gslqpSolver_.costDerivative();
-		std::cout << "cost0: " << gslqpSolver_.cost() << std::endl;
+		gslqSolver_.run(initState, switchingTimes);
+		gslqCostDerivative_ = gslqSolver_.costDerivative();
+		std::cout << "cost0: " << gslqSolver_.cost() << std::endl;
 
 		// finite difference derivative
-		gslqpSolver_.options().maxIterationGSLQP_ = 10;
+		gslqSolver_.options().maxIterationGSLQ_ = 10;
 
 		for (size_t i=0; i<NUM_Subsystems-1; i++) {
 
@@ -100,26 +100,26 @@ public:
 			switchingTimesPlusPerturbed[i+1] += h;
 			std::cout << "x+: " << (Eigen::VectorXd::Map(switchingTimesPlusPerturbed.data(),NUM_Subsystems+1)).transpose().format(CleanFmt) << std::endl;
 			//
-			gslqpSolver_.run(initState, switchingTimesPlusPerturbed);
-			double costPlusPerturbed = gslqpSolver_.cost();
+			gslqSolver_.run(initState, switchingTimesPlusPerturbed);
+			double costPlusPerturbed = gslqSolver_.cost();
 			std::cout << "cost+: " << costPlusPerturbed << std::endl;
 
 			std::vector<scalar_t> switchingTimesMinusPerturbed(switchingTimes);
 			switchingTimesMinusPerturbed[i+1] -= h;
 			std::cout << "x-: " << (Eigen::VectorXd::Map(switchingTimesMinusPerturbed.data(),NUM_Subsystems+1)).transpose().format(CleanFmt) << std::endl;
 			//
-			gslqpSolver_.run(initState, switchingTimesMinusPerturbed);
-			double costMinusPerturbed = gslqpSolver_.cost();
+			gslqSolver_.run(initState, switchingTimesMinusPerturbed);
+			double costMinusPerturbed = gslqSolver_.cost();
 			std::cout << "cost+: " << costMinusPerturbed << std::endl;
 
 			fdCostDerivative_(i) = (costPlusPerturbed-costMinusPerturbed) / (2.0*h);
 		}
 
-		parameters_t delta = gslqpCostDerivative_-fdCostDerivative_;
+		parameters_t delta = gslqCostDerivative_-fdCostDerivative_;
 		Eigen::VectorXd eigenSwitchingTimes = Eigen::VectorXd::Map(switchingTimes.data(),NUM_Subsystems+1);
 
 		std::cout << "Switching time: \t" << eigenSwitchingTimes.transpose().format(CleanFmt) << std::endl;
-		std::cout << "GSLQP derivatives: \t" << gslqpCostDerivative_.transpose().format(CleanFmt) << std::endl;
+		std::cout << "GSLQ derivatives: \t" << gslqCostDerivative_.transpose().format(CleanFmt) << std::endl;
 		std::cout << "FD derivatives: \t" << fdCostDerivative_.transpose().format(CleanFmt) << std::endl;
 		std::cout << "Difference: \t\t" << delta.transpose().format(CleanFmt) << std::endl << std::endl;
 
@@ -131,10 +131,10 @@ public:
 private:
 	const double eps_= sqrt(1e-2);
 
-	parameters_t gslqpCostDerivative_;
+	parameters_t gslqCostDerivative_;
 	parameters_t fdCostDerivative_;
 
-	GSLQPSolver<STATE_DIM, INPUT_DIM, OUTPUT_DIM, NUM_Subsystems> gslqpSolver_;
+	GSLQSolver<STATE_DIM, INPUT_DIM, OUTPUT_DIM, NUM_Subsystems> gslqSolver_;
 
 };
 

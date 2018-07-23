@@ -18,15 +18,15 @@
 
 namespace switched_model {
 
-template <size_t JOINT_COORD_SIZE>
-class MPC_ROS_Quadruped : public ocs2::MPC_ROS_Interface<12+JOINT_COORD_SIZE, 12+JOINT_COORD_SIZE, typename OCS2QuadrupedInterface<JOINT_COORD_SIZE>::logic_rules_t>
+template <size_t JOINT_COORD_SIZE, size_t STATE_DIM=12+JOINT_COORD_SIZE, size_t INPUT_DIM=12+JOINT_COORD_SIZE>
+class MPC_ROS_Quadruped : public ocs2::MPC_ROS_Interface<STATE_DIM, INPUT_DIM, typename OCS2QuadrupedInterface<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::logic_rules_t>
 {
 public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-	typedef std::shared_ptr<MPC_ROS_Quadruped<JOINT_COORD_SIZE>> Ptr;
+	typedef std::shared_ptr<MPC_ROS_Quadruped<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>> Ptr;
 
-	typedef OCS2QuadrupedInterface<JOINT_COORD_SIZE> quadruped_interface_t;
+	typedef OCS2QuadrupedInterface<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM> quadruped_interface_t;
 	typedef typename quadruped_interface_t::Ptr 					quadruped_interface_ptr_t;
 	typedef typename quadruped_interface_t::contact_flag_t			contact_flag_t;
 	typedef typename quadruped_interface_t::generalized_coordinate_t generalized_coordinate_t;

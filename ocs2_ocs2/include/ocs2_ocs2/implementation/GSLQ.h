@@ -271,6 +271,11 @@ void GSLQ<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::collectSlqData(slq_t* slqPtr) {
 	PmConstrainedTrajectoriesStock_.swap(slqPtr->PmConstrainedTrajectoryStock_);
 	RvConstrainedTrajectoriesStock_.swap(slqPtr->RvConstrainedTrajectoryStock_);
 
+	// terminal cost which is interpreted as the Heuristic function
+	sHeuristics_.swap(slqPtr->sHeuristics_);
+	SvHeuristics_.swap(slqPtr->SvHeuristics_);
+	SmHeuristics_.swap(slqPtr->SmHeuristics_);
+
 	// Riccati coefficients
 	SsTimeTrajectoriesStock_.swap(slqPtr->SsTimeTrajectoryStock_);
 	SsNormalizedTimeTrajectoriesStock_.swap(slqPtr->SsNormalizedTimeTrajectoryStock_);
@@ -1402,22 +1407,8 @@ void GSLQ<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculateCostDerivative(
 
 	}  // end of i loop
 
-	// TODO: add heuristic to SLQ
-//	throw std::runtime_error("The Heuristic cost evaluation is missing.");
-	// calculate the Heuristics function at the final time
-//	// initialize
-//	heuristicsFunctionsPtrStock_[threadId]->initializeModel(*logicRulesMachinePtr_, finalActivePartition_, "SLQ");
-//	// set desired trajectories
-//	heuristicsFunctionsPtrStock_[threadId]->setCostDesiredTrajectories(costDesiredTrajectories_);
-//	// set state-input
-//	heuristicsFunctionsPtrStock_[threadId]->setCurrentStateAndControl(
-//			timeTrajectoriesStock[finalActivePartition_].back(),
-//			stateTrajectoriesStock[finalActivePartition_].back(),
-//			inputTrajectoriesStock[finalActivePartition_].back());
-//	// compute
-//	scalar_t sHeuristics;
-//	heuristicsFunctionsPtrStock_[threadId]->getTerminalCost(sHeuristics);
-//	totalCost += sHeuristics;
+	// add the Heuristics function at the final time
+	costDerivative += sHeuristics_(0);
 }
 
 /******************************************************************************************************/

@@ -24,7 +24,6 @@
 #include <ocs2_core/misc/LinearInterpolation.h>
 
 #include <ocs2_slq/SLQ_BASE.h>
-#include <ocs2_slq/bvp_solver/SolveBVP.h>
 
 #include "ocs2_ocs2/EventTimeIndexer.h"
 #include "ocs2_ocs2/sensitivity_equations/SensitivitySequentialRiccatiEquations.h"
@@ -572,6 +571,11 @@ private:
 	state_input_matrix_array2_t BmConstrainedTrajectoriesStock_;
 	input_state_matrix_array2_t PmConstrainedTrajectoriesStock_;
 	input_vector_array2_t 		RvConstrainedTrajectoriesStock_;
+
+	// terminal cost which is interpreted as the Heuristic function
+	eigen_scalar_t sHeuristics_;
+	state_vector_t SvHeuristics_;
+	state_matrix_t SmHeuristics_;
 
 	std::vector<scalar_array_t>	SsTimeTrajectoriesStock_;
 	std::vector<scalar_array_t> SsNormalizedTimeTrajectoriesStock_;

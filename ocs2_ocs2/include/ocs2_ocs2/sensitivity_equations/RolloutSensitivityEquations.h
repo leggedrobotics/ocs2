@@ -36,10 +36,14 @@ public:
 	typedef typename DIMENSIONS::scalar_array_t scalar_array_t;
 	typedef typename DIMENSIONS::state_vector_t       state_vector_t;
 	typedef typename DIMENSIONS::state_vector_array_t state_vector_array_t;
+	typedef typename DIMENSIONS::input_vector_t       input_vector_t;
+	typedef typename DIMENSIONS::input_vector_array_t input_vector_array_t;
 	typedef typename DIMENSIONS::state_matrix_t       state_matrix_t;
 	typedef typename DIMENSIONS::state_matrix_array_t state_matrix_array_t;
 	typedef typename DIMENSIONS::state_input_matrix_t       state_input_matrix_t;
 	typedef typename DIMENSIONS::state_input_matrix_array_t state_input_matrix_array_t;
+	typedef typename DIMENSIONS::input_state_matrix_t       input_state_matrix_t;
+	typedef typename DIMENSIONS::input_state_matrix_array_t input_state_matrix_array_t;
 
 	/**
 	 * The default constructor.
@@ -50,6 +54,16 @@ public:
 	 * Default destructor.
 	 */
 	virtual ~RolloutSensitivityEquations() = default;
+
+	/**
+	 * Returns pointer to the class.
+	 *
+	 * @return A raw pointer to the class.
+	 */
+	virtual RolloutSensitivityEquations<STATE_DIM, INPUT_DIM>* clone() const {
+
+		return new RolloutSensitivityEquations<STATE_DIM, INPUT_DIM>(*this);
+	}
 
 	/**
 	 * Sets Data
@@ -119,7 +133,7 @@ public:
 
 		if (multiplier_ > 0) {
 			flowMapFunc_.interpolate(t, flowMap_, greatestLessTimeStampIndex);
-			derivative = Am_*nabla_x + Bm_*nabla_u + multiplier_*flowMapFunc_;
+			derivative = Am_*nabla_x + Bm_*nabla_u + multiplier_*flowMap_;
 		} else {
 			derivative = Am_*nabla_x + Bm_*nabla_u;
 		}

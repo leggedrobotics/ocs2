@@ -43,6 +43,8 @@ public:
 	typedef typename DIMENSIONS::input_state_matrix_array_t input_state_matrix_array_t;
 	typedef typename DIMENSIONS::state_matrix_t       state_matrix_t;
 	typedef typename DIMENSIONS::state_matrix_array_t state_matrix_array_t;
+	typedef typename DIMENSIONS::input_matrix_t       input_matrix_t;
+	typedef typename DIMENSIONS::input_matrix_array_t input_matrix_array_t;
 	typedef typename DIMENSIONS::state_input_matrix_t 		state_input_matrix_t;
 	typedef typename DIMENSIONS::state_input_matrix_array_t state_input_matrix_array_t;
 	typedef typename DIMENSIONS::constraint1_vector_t       constraint1_vector_t;
@@ -60,6 +62,16 @@ public:
 	 * Default destructor.
 	 */
 	~BvpSensitivityEquations() = default;
+
+	/**
+	 * Returns pointer to the class.
+	 *
+	 * @return A raw pointer to the class.
+	 */
+	virtual BvpSensitivityEquations<STATE_DIM, INPUT_DIM>* clone() const {
+
+		return new BvpSensitivityEquations<STATE_DIM, INPUT_DIM>(*this);
+	}
 
 	/**
 	 * Sets Data
@@ -156,7 +168,7 @@ public:
 	 */
 	void computeFlowMap(
 			const scalar_t& z,
-			const state_vector_t& m,
+			const state_vector_t& Mv,
 			state_vector_t& dMvdz) override {
 
 		BASE::numFunctionCalls_++;
@@ -181,8 +193,8 @@ public:
 		greatestLessTimeStampIndex = KmFunc_.getGreatestLessTimeStampIndex();
 		SmFunc_.interpolate(t, Sm_, greatestLessTimeStampIndex);
 
-		dMvdt_ = (AmConstrained_ - Bm_*Rm_*(CmConstrained_+Km_)).transpose() * Mv
-				+ multiplier_ * (Qv_ + Am_.transpose() + Cm_.transpose() + Sm_*flowMap_);
+		dMvdt_ = (AmConstrained_ - Bm_*Rm_*(CmConstrained_+Km_)).transpose()*Mv + multiplier_*(
+				Qv_ + Am_.transpose()*costate_ + Cm_.transpose()*lagrangian_ + Sm_*flowMap_);
 
 		dMvdz = scalingFactor_ * dMvdt_;
 	}
@@ -208,18 +220,18 @@ private:
 	LinearInterpolation<input_state_matrix_t,Eigen::aligned_allocator<input_state_matrix_t>> KmFunc_;
 	LinearInterpolation<state_matrix_t,Eigen::aligned_allocator<state_matrix_t>> SmFunc_;
 
-	state_matrix_array_t Am_;
-	state_input_matrix_array_t Bm_;
-	constraint1_state_matrix_array_t Cm_;
-	state_matrix_array_t AmConstrained_;
-	input_state_matrix_array_t CmConstrained_;
-	state_vector_array_t Qv_;
-	input_matrix_array_t Rm_;
+	state_matrix_t Am_;
+	state_input_matrix_t Bm_;
+	constraint1_state_matrix_t Cm_;
+	state_matrix_t AmConstrained_;
+	input_state_matrix_t CmConstrained_;
+	state_vector_t Qv_;
+	input_matrix_t Rm_;
 	state_vector_t flowMap_;
-	state_vector_array_t costate_;
-	constraint1_vector_array_t lagrangian_;
-	controller_t Km_;
-	state_matrix_array_t Sm_;
+	state_vector_t costate_;
+	constraint1_vector_t lagrangian_;
+	input_state_matrix_t Km_;
+	state_matrix_t Sm_;
 
 	state_vector_t dMvdt_;
 };

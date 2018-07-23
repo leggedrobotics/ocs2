@@ -11,39 +11,39 @@ namespace ocs2 {
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-GSLQ<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::GSLQ(const slq_t* slqPtr)
-	: slqPtr_(slqPtr)
-	, settingsPtr_(slqPtr->settings_)
-	, logicRulesMachinePtr_(slqPtr->logicRulesMachinePtr_)
+GSLQ<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::GSLQ(slq_t& slq)
+	: slqPtr_(&slq)
+	, settingsPtr_(&slq.settings_)
+	, logicRulesMachinePtr_(slq.logicRulesMachinePtr_)
 	, numPartitions_(0)
 {
 	// check if the SLQ solver is provided.
 	if (!slqPtr_)
 		throw std::runtime_error("A pointer to a SLQ solver should be provided.");
 
-	systemDynamicsPtr_.reset(slqPtr->systemDynamicsPtrStock_.front().clone());
+	systemDynamicsPtr_.reset(slq.systemDynamicsPtrStock_.front()->clone());
 
 	bvpSensitivityEquationsPtrStock_.clear();
-	bvpSensitivityEquationsPtrStock_.reserve(slqPtr_->nThreads_);
+	bvpSensitivityEquationsPtrStock_.reserve(settingsPtr_->nThreads_);
 	bvpSensitivityIntegratorsPtrStock_.clear();
-	bvpSensitivityIntegratorsPtrStock_.reserve(slqPtr_->nThreads_);
+	bvpSensitivityIntegratorsPtrStock_.reserve(settingsPtr_->nThreads_);
 
 	rolloutSensitivityEquationsPtrStock_.clear();
-	rolloutSensitivityEquationsPtrStock_.reserve(slqPtr_->nThreads_);
+	rolloutSensitivityEquationsPtrStock_.reserve(settingsPtr_->nThreads_);
 	rolloutSensitivityIntegratorsPtrStock_.clear();
-	rolloutSensitivityIntegratorsPtrStock_.reserve(slqPtr_->nThreads_);
+	rolloutSensitivityIntegratorsPtrStock_.reserve(settingsPtr_->nThreads_);
 
 	riccatiSensitivityEquationsPtrStock_.clear();
-	riccatiSensitivityEquationsPtrStock_.reserve(slqPtr_->nThreads_);
+	riccatiSensitivityEquationsPtrStock_.reserve(settingsPtr_->nThreads_);
 	riccatiSensitivityIntegratorsPtrStock_.clear();
-	riccatiSensitivityIntegratorsPtrStock_.reserve(slqPtr_->nThreads_);
+	riccatiSensitivityIntegratorsPtrStock_.reserve(settingsPtr_->nThreads_);
 
-	for (size_t i=0; i<slqPtr_->nThreads_; i++)  {
+	for (size_t i=0; i<settingsPtr_->nThreads_; i++)  {
 
 		typedef Eigen::aligned_allocator<bvp_sensitivity_equations_t> bvp_sensitivity_equations_alloc_t;
 		bvpSensitivityEquationsPtrStock_.push_back( std::move(
 				std::allocate_shared<bvp_sensitivity_equations_t, bvp_sensitivity_equations_alloc_t>(
-						bvp_sensitivity_equations_alloc_t(), slqPtr_->useMakePSD_) ) );
+						bvp_sensitivity_equations_alloc_t()) ) );
 
 		typedef Eigen::aligned_allocator<rollout_sensitivity_equations_t> rollout_sensitivity_equations_alloc_t;
 		rolloutSensitivityEquationsPtrStock_.push_back( std::move(
@@ -55,7 +55,7 @@ GSLQ<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::GSLQ(const slq_t* slqPtr)
 				std::allocate_shared<riccati_sensitivity_equations_t, riccati_sensitivity_equations_alloc_t>(
 						riccati_sensitivity_equations_alloc_t()) ) );
 
-		switch(slqPtr_->RiccatiIntegratorType_) {
+		switch(settingsPtr_->RiccatiIntegratorType_) {
 
 		case DIMENSIONS::RICCATI_INTEGRATOR_TYPE::ODE45 : {
 			bvpSensitivityIntegratorsPtrStock_.emplace_back (
@@ -65,7 +65,8 @@ GSLQ<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::GSLQ(const slq_t* slqPtr)
 					new ODE45<STATE_DIM>(rolloutSensitivityEquationsPtrStock_.back()) );
 
 			riccatiSensitivityIntegratorsPtrStock_.emplace_back (
-					new ODE45<STATE_DIM>(riccatiSensitivityEquationsPtrStock_.back()) );
+					new ODE45<riccati_sensitivity_equations_t::S_DIM_>(
+							riccatiSensitivityEquationsPtrStock_.back()) );
 
 			break;
 		}
@@ -82,7 +83,8 @@ GSLQ<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::GSLQ(const slq_t* slqPtr)
 					new IntegratorBulirschStoer<STATE_DIM>(rolloutSensitivityEquationsPtrStock_.back()) );
 
 			riccatiSensitivityIntegratorsPtrStock_.emplace_back (
-					new IntegratorBulirschStoer<STATE_DIM>(riccatiSensitivityEquationsPtrStock_.back()) );
+					new IntegratorBulirschStoer<riccati_sensitivity_equations_t::S_DIM_>(
+							riccatiSensitivityEquationsPtrStock_.back()) );
 
 			break;
 		}
@@ -93,10 +95,10 @@ GSLQ<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::GSLQ(const slq_t* slqPtr)
 	}  // end of i loop
 
 	// calculateBVPSensitivityControllerForward & calculateLQSensitivityControllerForward
-	BmFuncStock_.resize(slqPtr_->nThreads_);
-	RmInverseFuncStock_.resize(slqPtr_->nThreads_);
-	DmProjectedFuncStock_.resize(slqPtr_->nThreads_);
-	nablaRvFuncStock_.resize(slqPtr_->nThreads_);
+	BmFuncStock_.resize(settingsPtr_->nThreads_);
+	RmInverseFuncStock_.resize(settingsPtr_->nThreads_);
+	DmProjectedFuncStock_.resize(settingsPtr_->nThreads_);
+	nablaRvFuncStock_.resize(settingsPtr_->nThreads_);
 }
 
 /******************************************************************************************************/
@@ -115,33 +117,33 @@ void GSLQ<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::setupOptimizer(const size_t& num
 	nominalControllersStock_.resize(numPartitions);
 
 	// optimized trajectories
+	optimizedTimeTrajectoriesStock_.resize(numPartitions);
+	optimizedEventsPastTheEndIndecesStock_.resize(numPartitions);
+	optimizedStateTrajectoriesStock_.resize(numPartitions);
+	optimizedInputTrajectoriesStock_.resize(numPartitions);
+
+	// nominal trajectories
 	nominalTimeTrajectoriesStock_.resize(numPartitions);
 	nominalEventsPastTheEndIndecesStock_.resize(numPartitions);
 	nominalStateTrajectoriesStock_.resize(numPartitions);
 	nominalInputTrajectoriesStock_.resize(numPartitions);
-
-	// nominal trajectories
-	nominalPrevTimeTrajectoriesStock_.resize(numPartitions);
-	nominalPrevEventsPastTheEndIndecesStock_.resize(numPartitions);
-	nominalPrevStateTrajectoriesStock_.resize(numPartitions);
-	nominalPrevInputTrajectoriesStock_.resize(numPartitions);
 
 	/*
 	 * Data which can be swapped. Note that these variables should have correct size.
 	 * Otherwise use setOptimizer() to construct them with correct size
 	 */
 	// linearized system coefficients
-	AmTrajectoryStock_.resize(numPartitions);
-	BmTrajectoryStock_.resize(numPartitions);
+	AmTrajectoriesStock_.resize(numPartitions);
+	BmTrajectoriesStock_.resize(numPartitions);
 
 	nc1TrajectoriesStock_.resize(numPartitions);
-	EvTrajectoryStock_.resize(numPartitions);
-	CmTrajectoryStock_.resize(numPartitions);
-	DmTrajectoryStock_.resize(numPartitions);
+	EvTrajectoriesStock_.resize(numPartitions);
+	CmTrajectoriesStock_.resize(numPartitions);
+	DmTrajectoriesStock_.resize(numPartitions);
 
 	nc2TrajectoriesStock_.resize(numPartitions);
-	HvTrajectoryStock_.resize(numPartitions);
-	FmTrajectoryStock_.resize(numPartitions);
+	HvTrajectoriesStock_.resize(numPartitions);
+	FmTrajectoriesStock_.resize(numPartitions);
 	nc2FinalStock_.resize(numPartitions);
 	HvFinalStock_.resize(numPartitions);
 	FmFinalStock_.resize(numPartitions);
@@ -151,35 +153,35 @@ void GSLQ<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::setupOptimizer(const size_t& num
 	QvFinalStock_.resize(numPartitions);
 	QmFinalStock_.resize(numPartitions);
 
-	qTrajectoryStock_.resize(numPartitions);
-	QvTrajectoryStock_.resize(numPartitions);
-	QmTrajectoryStock_.resize(numPartitions);
-	RvTrajectoryStock_.resize(numPartitions);
-	RmTrajectoryStock_.resize(numPartitions);
-	PmTrajectoryStock_.resize(numPartitions);
+	qTrajectoriesStock_.resize(numPartitions);
+	QvTrajectoriesStock_.resize(numPartitions);
+	QmTrajectoriesStock_.resize(numPartitions);
+	RvTrajectoriesStock_.resize(numPartitions);
+	RmTrajectoriesStock_.resize(numPartitions);
+	PmTrajectoriesStock_.resize(numPartitions);
 
 	// constrained projected variables
-	RmInverseTrajectoryStock_.resize(numPartitions);
-	AmConstrainedTrajectoryStock_.resize(numPartitions);
-	QmConstrainedTrajectoryStock_.resize(numPartitions);
-	QvConstrainedTrajectoryStock_.resize(numPartitions);
-	RmConstrainedTrajectoryStock_.resize(numPartitions);
-	DmDagerTrajectoryStock_.resize(numPartitions);
-	EvProjectedTrajectoryStock_.resize(numPartitions);
-	CmProjectedTrajectoryStock_.resize(numPartitions);
-	DmProjectedTrajectoryStock_.resize(numPartitions);
-	BmConstrainedTrajectoryStock_.resize(numPartitions);
-	PmConstrainedTrajectoryStock_.resize(numPartitions);
-	RvConstrainedTrajectoryStock_.resize(numPartitions);
+	RmInverseTrajectoriesStock_.resize(numPartitions);
+	AmConstrainedTrajectoriesStock_.resize(numPartitions);
+	QmConstrainedTrajectoriesStock_.resize(numPartitions);
+	QvConstrainedTrajectoriesStock_.resize(numPartitions);
+	RmConstrainedTrajectoriesStock_.resize(numPartitions);
+	DmDagerTrajectoriesStock_.resize(numPartitions);
+	EvProjectedTrajectoriesStock_.resize(numPartitions);
+	CmProjectedTrajectoriesStock_.resize(numPartitions);
+	DmProjectedTrajectoriesStock_.resize(numPartitions);
+	BmConstrainedTrajectoriesStock_.resize(numPartitions);
+	PmConstrainedTrajectoriesStock_.resize(numPartitions);
+	RvConstrainedTrajectoriesStock_.resize(numPartitions);
 
 	// Riccati coefficients
-	SsTimeTrajectoryStock_.resize(numPartitions);
-	SsNormalizedTimeTrajectoryStock_.resize(numPartitions);
+	SsTimeTrajectoriesStock_.resize(numPartitions);
+	SsNormalizedTimeTrajectoriesStock_.resize(numPartitions);
 	SsNormalizedEventsPastTheEndIndecesStock_.resize(numPartitions);
-	SmTrajectoryStock_.resize(numPartitions);
-	SvTrajectoryStock_.resize(numPartitions);
-	SveTrajectoryStock_.resize(numPartitions);
-	sTrajectoryStock_.resize(numPartitions);
+	SmTrajectoriesStock_.resize(numPartitions);
+	SvTrajectoriesStock_.resize(numPartitions);
+	SveTrajectoriesStock_.resize(numPartitions);
+	sTrajectoriesStock_.resize(numPartitions);
 
 	/*
 	 * GSLQ variables
@@ -193,7 +195,7 @@ void GSLQ<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::setupOptimizer(const size_t& num
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void GSLQ<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::collectSlqData(const slq_t* slqPtr) {
+void GSLQ<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::collectSlqData(slq_t* slqPtr) {
 
 	/*
 	 * Data which should be copied
@@ -212,71 +214,71 @@ void GSLQ<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::collectSlqData(const slq_t* slqP
 	nominalControllersStock_ = slqPtr->nominalControllersStock_;
 
 	// optimized trajectories
-	nominalTimeTrajectoriesStock_        = slqPtr->nominalTimeTrajectoriesStock_;
-	nominalEventsPastTheEndIndecesStock_ = slqPtr->nominalEventsPastTheEndIndecesStock_;
-	nominalStateTrajectoriesStock_       = slqPtr->nominalStateTrajectoriesStock_;
-	nominalInputTrajectoriesStock_       = slqPtr->nominalInputTrajectoriesStock_;
+	optimizedTimeTrajectoriesStock_        = slqPtr->nominalTimeTrajectoriesStock_;
+	optimizedEventsPastTheEndIndecesStock_ = slqPtr->nominalEventsPastTheEndIndecesStock_;
+	optimizedStateTrajectoriesStock_       = slqPtr->nominalStateTrajectoriesStock_;
+	optimizedInputTrajectoriesStock_       = slqPtr->nominalInputTrajectoriesStock_;
 
 	// nominal trajectories
-	nominalPrevTimeTrajectoriesStock_        = slqPtr_->nominalPrevTimeTrajectoriesStock_;
-	nominalPrevEventsPastTheEndIndecesStock_ = slqPtr_->nominalPrevEventsPastTheEndIndecesStock_;
-	nominalPrevStateTrajectoriesStock_       = slqPtr_->nominalPrevStateTrajectoriesStock_;
-	nominalPrevInputTrajectoriesStock_       = slqPtr_->nominalPrevInputTrajectoriesStock_;
+	nominalTimeTrajectoriesStock_        = slqPtr->nominalPrevTimeTrajectoriesStock_;
+	nominalEventsPastTheEndIndecesStock_ = slqPtr->nominalPrevEventsPastTheEndIndecesStock_;
+	nominalStateTrajectoriesStock_       = slqPtr->nominalPrevStateTrajectoriesStock_;
+	nominalInputTrajectoriesStock_       = slqPtr->nominalPrevInputTrajectoriesStock_;
 
 	/*
 	 * Data which can be swapped. Note that these variables should have correct size.
 	 * Otherwise use setOptimizer() to construct them with correct size
 	 */
 	// linearized system coefficients
-	AmTrajectoryStock_.swap(slqPtr_->AmTrajectoryStock_);
-	BmTrajectoryStock_.swap(slqPtr_->BmTrajectoryStock_);
+	AmTrajectoriesStock_.swap(slqPtr->AmTrajectoryStock_);
+	BmTrajectoriesStock_.swap(slqPtr->BmTrajectoryStock_);
 
-	nc1TrajectoriesStock_.swap(slqPtr_->nc1TrajectoriesStock_);
-	EvTrajectoryStock_.swap(slqPtr_->EvTrajectoryStock_);
-	CmTrajectoryStock_.swap(slqPtr_->CmTrajectoryStock_);
-	DmTrajectoryStock_.swap(slqPtr_->DmTrajectoryStock_);
+	nc1TrajectoriesStock_.swap(slqPtr->nc1TrajectoriesStock_);
+	EvTrajectoriesStock_.swap(slqPtr->EvTrajectoryStock_);
+	CmTrajectoriesStock_.swap(slqPtr->CmTrajectoryStock_);
+	DmTrajectoriesStock_.swap(slqPtr->DmTrajectoryStock_);
 
-	nc2TrajectoriesStock_.swap(slqPtr_->nc2TrajectoriesStock_);
-	HvTrajectoryStock_.swap(slqPtr_->HvTrajectoryStock_);
-	FmTrajectoryStock_.swap(slqPtr_->FmTrajectoryStock_);
-	nc2FinalStock_.swap(slqPtr_->nc2FinalStock_);
-	HvFinalStock_.swap(slqPtr_->HvFinalStock_);
-	FmFinalStock_.swap(slqPtr_->FmFinalStock_);
+	nc2TrajectoriesStock_.swap(slqPtr->nc2TrajectoriesStock_);
+	HvTrajectoriesStock_.swap(slqPtr->HvTrajectoryStock_);
+	FmTrajectoriesStock_.swap(slqPtr->FmTrajectoryStock_);
+	nc2FinalStock_.swap(slqPtr->nc2FinalStock_);
+	HvFinalStock_.swap(slqPtr->HvFinalStock_);
+	FmFinalStock_.swap(slqPtr->FmFinalStock_);
 
 	// cost quadratic approximation coefficients
-	qFinalStock_.swap(slqPtr_->qFinalStock_);
-	QvFinalStock_.swap(slqPtr_->QvFinalStock_);
-	QmFinalStock_.swap(slqPtr_->QmFinalStock_);
+	qFinalStock_.swap(slqPtr->qFinalStock_);
+	QvFinalStock_.swap(slqPtr->QvFinalStock_);
+	QmFinalStock_.swap(slqPtr->QmFinalStock_);
 
-	qTrajectoryStock_.swap(slqPtr_->qTrajectoryStock_);
-	QvTrajectoryStock_.swap(QvTrajectoryStock_);
-	QmTrajectoryStock_.swap(QmTrajectoryStock_);
-	RvTrajectoryStock_.swap(RvTrajectoryStock_);
-	RmTrajectoryStock_.swap(RmTrajectoryStock_);
-	PmTrajectoryStock_.swap(PmTrajectoryStock_);
+	qTrajectoriesStock_.swap(slqPtr->qTrajectoryStock_);
+	QvTrajectoriesStock_.swap(slqPtr->QvTrajectoryStock_);
+	QmTrajectoriesStock_.swap(slqPtr->QmTrajectoryStock_);
+	RvTrajectoriesStock_.swap(slqPtr->RvTrajectoryStock_);
+	RmTrajectoriesStock_.swap(slqPtr->RmTrajectoryStock_);
+	PmTrajectoriesStock_.swap(slqPtr->PmTrajectoryStock_);
 
 	// constrained projected variables
-	RmInverseTrajectoryStock_.swap(slqPtr_->RmInverseTrajectoryStock_);
-	AmConstrainedTrajectoryStock_.swap(slqPtr_->AmConstrainedTrajectoryStock_);
-	QmConstrainedTrajectoryStock_.swap(slqPtr_->QmConstrainedTrajectoryStock_);
-	QvConstrainedTrajectoryStock_.swap(slqPtr_->QvConstrainedTrajectoryStock_);
-	RmConstrainedTrajectoryStock_.swap(slqPtr_->RmConstrainedTrajectoryStock_);
-	DmDagerTrajectoryStock_.swap(slqPtr_->DmDagerTrajectoryStock_);
-	EvProjectedTrajectoryStock_.swap(slqPtr_->EvProjectedTrajectoryStock_);
-	CmProjectedTrajectoryStock_.swap(slqPtr_->CmProjectedTrajectoryStock_);
-	DmProjectedTrajectoryStock_.swap(slqPtr_->DmProjectedTrajectoryStock_);
-	BmConstrainedTrajectoryStock_.swap(slqPtr_->BmConstrainedTrajectoryStock_);
-	PmConstrainedTrajectoryStock_.swap(slqPtr_->PmConstrainedTrajectoryStock_);
-	RvConstrainedTrajectoryStock_.swap(slqPtr_->RvConstrainedTrajectoryStock_);
+	RmInverseTrajectoriesStock_.swap(slqPtr->RmInverseTrajectoryStock_);
+	AmConstrainedTrajectoriesStock_.swap(slqPtr->AmConstrainedTrajectoryStock_);
+	QmConstrainedTrajectoriesStock_.swap(slqPtr->QmConstrainedTrajectoryStock_);
+	QvConstrainedTrajectoriesStock_.swap(slqPtr->QvConstrainedTrajectoryStock_);
+	RmConstrainedTrajectoriesStock_.swap(slqPtr->RmConstrainedTrajectoryStock_);
+	DmDagerTrajectoriesStock_.swap(slqPtr->DmDagerTrajectoryStock_);
+	EvProjectedTrajectoriesStock_.swap(slqPtr->EvProjectedTrajectoryStock_);
+	CmProjectedTrajectoriesStock_.swap(slqPtr->CmProjectedTrajectoryStock_);
+	DmProjectedTrajectoriesStock_.swap(slqPtr->DmProjectedTrajectoryStock_);
+	BmConstrainedTrajectoriesStock_.swap(slqPtr->BmConstrainedTrajectoryStock_);
+	PmConstrainedTrajectoriesStock_.swap(slqPtr->PmConstrainedTrajectoryStock_);
+	RvConstrainedTrajectoriesStock_.swap(slqPtr->RvConstrainedTrajectoryStock_);
 
 	// Riccati coefficients
-	SsTimeTrajectoryStock_.swap(slqPtr->SsTimeTrajectoryStock_);
-	SsNormalizedTimeTrajectoryStock_.swap(slqPtr->SsNormalizedTimeTrajectoryStock_);
+	SsTimeTrajectoriesStock_.swap(slqPtr->SsTimeTrajectoryStock_);
+	SsNormalizedTimeTrajectoriesStock_.swap(slqPtr->SsNormalizedTimeTrajectoryStock_);
 	SsNormalizedEventsPastTheEndIndecesStock_.swap(slqPtr->SsNormalizedEventsPastTheEndIndecesStock_);
-	SmTrajectoryStock_.swap(slqPtr->SmTrajectoryStock_);
-	SvTrajectoryStock_.swap(slqPtr->SvTrajectoryStock_);
-	SveTrajectoryStock_.swap(slqPtr->SveTrajectoryStock_);
-	sTrajectoryStock_.swap(slqPtr->sTrajectoryStock_);
+	SmTrajectoriesStock_.swap(slqPtr->SmTrajectoryStock_);
+	SvTrajectoriesStock_.swap(slqPtr->SvTrajectoryStock_);
+	SveTrajectoriesStock_.swap(slqPtr->SveTrajectoryStock_);
+	sTrajectoriesStock_.swap(slqPtr->sTrajectoryStock_);
 }
 
 /******************************************************************************************************/
@@ -355,17 +357,17 @@ void GSLQ<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculateRolloutCostate(
 		}
 
 		SmFunc_.reset();
-		SmFunc_.setTimeStamp(&SsTimeTrajectoryStock_[i]);
-		SmFunc_.setData(&SmTrajectoryStock_[i]);
+		SmFunc_.setTimeStamp(&SsTimeTrajectoriesStock_[i]);
+		SmFunc_.setData(&SmTrajectoriesStock_[i]);
 		SvFunc_.reset();
-		SvFunc_.setTimeStamp(&SsTimeTrajectoryStock_[i]);
-		SvFunc_.setData(&SvTrajectoryStock_[i]);
+		SvFunc_.setTimeStamp(&SsTimeTrajectoriesStock_[i]);
+		SvFunc_.setData(&SvTrajectoriesStock_[i]);
 		SveFunc_.reset();
-		SveFunc_.setTimeStamp(&SsTimeTrajectoryStock_[i]);
-		SveFunc_.setData(&SveTrajectoryStock_[i]);
+		SveFunc_.setTimeStamp(&SsTimeTrajectoriesStock_[i]);
+		SveFunc_.setData(&SveTrajectoriesStock_[i]);
 		nominalStateFunc_.reset();
-		nominalStateFunc_.setTimeStamp(&nominalPrevTimeTrajectoriesStock_[i]);
-		nominalStateFunc_.setData(&nominalPrevStateTrajectoriesStock_[i]);
+		nominalStateFunc_.setTimeStamp(&nominalTimeTrajectoriesStock_[i]);
+		nominalStateFunc_.setData(&nominalStateTrajectoriesStock_[i]);
 
 		const size_t N = timeTrajectoriesStock[i].size();
 		costateTrajectoriesStock[i].resize(N);
@@ -385,7 +387,7 @@ void GSLQ<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculateRolloutCostate(
 			nominalStateFunc_.interpolate(t, nominalState);
 
 			costateTrajectoriesStock[i][k] = Sve + Sv
-					+ learningRate * Sm * (stateTrajectoriesStock[i][k]-nominalState);
+					+ learningRate * Sm * (nominalStateTrajectoriesStock_[i][k]-nominalState);
 
 		}  // end of k loop
 	}  // end of i loop
@@ -421,46 +423,46 @@ void GSLQ<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculateInputConstraintLagrangi
 
 		xFunc.reset();
 		xFunc.setTimeStamp(&nominalTimeTrajectoriesStock_[i]);
-		xFunc.setData(&nominalPrevStateTrajectoriesStock_[i]);
+		xFunc.setData(&nominalStateTrajectoriesStock_[i]);
 
 		BmFunc.reset();
 		BmFunc.setTimeStamp(&nominalTimeTrajectoriesStock_[i]);
-		BmFunc.setData(&BmTrajectoryStock_[i]);
+		BmFunc.setData(&BmTrajectoriesStock_[i]);
 
 		PmFunc.reset();
 		PmFunc.setTimeStamp(&nominalTimeTrajectoriesStock_[i]);
-		PmFunc.setData(&PmTrajectoryStock_[i]);
+		PmFunc.setData(&PmTrajectoriesStock_[i]);
 
 		RvFunc.reset();
 		RvFunc.setTimeStamp(&nominalTimeTrajectoriesStock_[i]);
-		RvFunc.setData(&RvTrajectoryStock_[i]);
-
-		EvProjectedFunc.reset();
-		EvProjectedFunc.setTimeStamp(&nominalTimeTrajectoriesStock_[i]);
-		EvProjectedFunc.setData(&EvProjectedTrajectoryStock_[i]);
-
-		CmProjectedFunc.reset();
-		CmProjectedFunc.setTimeStamp(&nominalTimeTrajectoriesStock_[i]);
-		CmProjectedFunc.setData(&CmProjectedTrajectoryStock_[i]);
+		RvFunc.setData(&RvTrajectoriesStock_[i]);
 
 		RmFunc.reset();
 		RmFunc.setTimeStamp(&nominalTimeTrajectoriesStock_[i]);
-		RmFunc.setData(&RmTrajectoryStock_[i]);
+		RmFunc.setData(&RmTrajectoriesStock_[i]);
+
+		EvProjectedFunc.reset();
+		EvProjectedFunc.setTimeStamp(&nominalTimeTrajectoriesStock_[i]);
+		EvProjectedFunc.setData(&EvProjectedTrajectoriesStock_[i]);
+
+		CmProjectedFunc.reset();
+		CmProjectedFunc.setTimeStamp(&nominalTimeTrajectoriesStock_[i]);
+		CmProjectedFunc.setData(&CmProjectedTrajectoriesStock_[i]);
 
 		DmDagerFunc.reset();
 		DmDagerFunc.setTimeStamp(&nominalTimeTrajectoriesStock_[i]);
-		DmDagerFunc.setData(&DmDagerTrajectoryStock_[i]);
+		DmDagerFunc.setData(&DmDagerTrajectoriesStock_[i]);
 
-		size_t N = SsTimeTrajectoryStock_[i].size();
+		const size_t N = SsTimeTrajectoriesStock_[i].size();
 
-		lagrangeMultiplierFunctionsStock[i].time_ = SsTimeTrajectoryStock_[i];
+		lagrangeMultiplierFunctionsStock[i].time_ = SsTimeTrajectoriesStock_[i];
 		lagrangeMultiplierFunctionsStock[i].k_.resize(N);
 		lagrangeMultiplierFunctionsStock[i].uff_.resize(N);
 		lagrangeMultiplierFunctionsStock[i].deltaUff_.resize(N);
 
 		for (size_t k=0; k<N; k++) {
 
-			const double& time = SsTimeTrajectoryStock_[i][k];
+			const scalar_t& time = SsTimeTrajectoriesStock_[i][k];
 			size_t greatestLessTimeStampIndex;
 
 			state_vector_t nominalState;
@@ -484,9 +486,9 @@ void GSLQ<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculateInputConstraintLagrangi
 
 			const size_t& nc1 = nc1TrajectoriesStock_[i][greatestLessTimeStampIndex];
 
-			const state_matrix_t& Sm  = SmTrajectoryStock_[i][k];
-			const state_vector_t& Sv  = SvTrajectoryStock_[i][k];
-			const state_vector_t& Sve = SveTrajectoryStock_[i][k];
+			const state_matrix_t& Sm  = SmTrajectoriesStock_[i][k];
+			const state_vector_t& Sv  = SvTrajectoriesStock_[i][k];
+			const state_vector_t& Sve = SveTrajectoriesStock_[i][k];
 
 			dynamic_input_matrix_t DmDagerTransRm = DmDager.leftCols(nc1).transpose() * Rm;
 
@@ -600,7 +602,7 @@ template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
 size_t GSLQ<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::findActivePartitionIndex(
 		const scalar_array_t& partitioningTimes,
 		const scalar_t& time,
-		bool ceilingFunction /*= true*/) {
+		bool ceilingFunction /*= true*/) const {
 
 	int activeSubsystemIndex;
 	if (ceilingFunction==true)
@@ -631,28 +633,26 @@ template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
 void GSLQ<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::computeEquivalentSystemMultiplier(
 		const size_t& eventTimeIndex,
 		const size_t& activeSubsystem,
-		scalar_t& multiplier) {
-
-	const scalar_array_t& eventTimes = eventTimes();
+		scalar_t& multiplier) const {
 
 	if (activeSubsystem == eventTimeIndex+1) {
-		if (activeSubsystem+1 == eventTimes.size()) {
-			if (finalTime_<eventTimes[eventTimeIndex])
+		if (activeSubsystem+1 == eventTimes().size()) {
+			if (finalTime_<eventTimes()[eventTimeIndex])
 				throw std::runtime_error("final time is smaller than the last triggered event time.");
 			else
-				multiplier = -1.0 / (finalTime_ - eventTimes[eventTimeIndex]);
+				multiplier = -1.0 / (finalTime_ - eventTimes()[eventTimeIndex]);
 		} else {
-			multiplier = -1.0 / (eventTimes[eventTimeIndex+1] - eventTimes[eventTimeIndex]);
+			multiplier = -1.0 / (eventTimes()[eventTimeIndex+1] - eventTimes()[eventTimeIndex]);
 		}
 
 	} else if (activeSubsystem == eventTimeIndex)
 		if (activeSubsystem == 0) {
-			if (finalTime_<eventTimes[eventTimeIndex])
+			if (finalTime_<eventTimes()[eventTimeIndex])
 				throw std::runtime_error("Initial time is greater than the last triggered event time.");
 			else
-				multiplier = 1.0 / (eventTimes[eventTimeIndex] - initTime_);
+				multiplier = 1.0 / (eventTimes()[eventTimeIndex] - initTime_);
 		} else {
-			multiplier = 1.0 / (eventTimes[eventTimeIndex] - eventTimes[eventTimeIndex-1]);
+			multiplier = 1.0 / (eventTimes()[eventTimeIndex] - eventTimes()[eventTimeIndex-1]);
 		}
 	else
 		multiplier = 0.0;
@@ -663,13 +663,17 @@ void GSLQ<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::computeEquivalentSystemMultiplie
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
 void GSLQ<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::getRolloutSensitivity2SwitchingTime(
+		const size_t& eventTimeIndex,
 		std::vector<scalar_array_t>& sensitivityTimeTrajectoriesStock,
-		std::vector<nabla_state_matrix_array_t>& sensitivityStateTrajectoriesStock,
-		std::vector<nabla_input_matrix_array_t>& sensitivityInputTrajectoriesStock)  {
+		state_matrix_array2_t& sensitivityStateTrajectoriesStock,
+		input_matrix_array2_t& sensitivityInputTrajectoriesStock)  {
 
-	sensitivityTimeTrajectoriesStock  = sensitivityTimeTrajectoryStock_;
-	sensitivityStateTrajectoriesStock = sensitivityStateTrajectoryStock_;
-	sensitivityInputTrajectoriesStock = sensitivityInputTrajectoryStock_;
+	if (eventTimeIndex+1 > numEventTimes_)
+		throw std::runtime_error("The requested event index is out of bound.");
+
+	sensitivityTimeTrajectoriesStock  = nominalTimeTrajectoriesStock_;
+	sensitivityStateTrajectoriesStock = sensitivityStateTrajectoriesStockSet_[eventTimeIndex];
+	sensitivityInputTrajectoriesStock = sensitivityInputTrajectoriesStockSet_[eventTimeIndex];
 }
 
 /******************************************************************************************************/
@@ -709,9 +713,12 @@ void GSLQ<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::getCostFuntion(
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void GSLQ<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::getCostFuntionDerivative(dynamic_vector_t& costFunctionDerivative)  {
+template <typename Derived>
+void GSLQ<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::getCostFuntionDerivative(
+		Eigen::MatrixBase<Derived> const& costFunctionDerivative) const {
 
-	costFunctionDerivative = nominalCostFuntionDerivative_;
+	// refer to Eigen documentation under the topic "Writing Functions Taking Eigen Types as Parameters"
+	const_cast<Eigen::MatrixBase<Derived>&>(costFunctionDerivative) = nominalCostFuntionDerivative_;
 }
 
 /******************************************************************************************************/
@@ -730,9 +737,10 @@ void GSLQ<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::getNominalTrajectories(
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-const GSLQ<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::scalar_array_t& eventTimes() const {
+const typename GSLQ<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::scalar_array_t&
+	GSLQ<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::eventTimes() const {
 
-	return logicRulesMachinePtr_->getLogicRulesPtr->eventTimes();
+	return logicRulesMachinePtr_->getLogicRulesPtr()->eventTimes();
 }
 
 /******************************************************************************************************/
@@ -743,18 +751,18 @@ void GSLQ<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::propagateRolloutSensitivity(
 		size_t workerIndex,
 		const size_t& eventTimeIndex,
 		const controller_array_t& controllersStock,
-		const input_vector_array_t& LvTrajectoryStock,
-		const std::vector<scalar_array_t>& sensitivityTimeTrajectoryStock,
-		const std::vector<scalar_array_t>& eventsPastTheEndIndecesStock,
-		state_vector_array2_t& sensitivityStateTrajectoryStock,
-		input_vector_array2_t& sensitivityInputTrajectoryStock)  {
+		const input_vector_array2_t& LvTrajectoriesStock,
+		const std::vector<scalar_array_t>& sensitivityTimeTrajectoriesStock,
+		const std::vector<size_array_t>& eventsPastTheEndIndecesStock,
+		state_vector_array2_t& sensitivityStateTrajectoriesStock,
+		input_vector_array2_t& sensitivityInputTrajectoriesStock)  {
 
 	if (eventTimeIndex<activeEventTimeBeginIndex_ || eventTimeIndex>=activeEventTimeEndIndex_)
 		throw std::runtime_error("The index is associated to an inactive event or it is out of range.");
 
 	// resizing
-	sensitivityStateTrajectoryStock.resize(numPartitions_);
-	sensitivityInputTrajectoryStock.resize(numPartitions_);
+	sensitivityStateTrajectoriesStock.resize(numPartitions_);
+	sensitivityInputTrajectoriesStock.resize(numPartitions_);
 
 	// Initial state sensitivity (which is zero)
 	state_vector_t nabla_xInit = state_vector_t::Zero();
@@ -763,41 +771,41 @@ void GSLQ<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::propagateRolloutSensitivity(
 
 		// skip inactive partitions
 		if (i<initActivePartition_ || i>finalActivePartition_) {
-			sensitivityStateTrajectoryStock[i].clear();
-			sensitivityInputTrajectoryStock[i].clear();
+			sensitivityStateTrajectoriesStock[i].clear();
+			sensitivityInputTrajectoriesStock[i].clear();
 			continue;
 		}
 
-		const size_t N  = sensitivityTimeTrajectoryStock[i].size();
+		const size_t N  = sensitivityTimeTrajectoriesStock[i].size();
 		const size_t NE = eventsPastTheEndIndecesStock[i].size();
 
 		// set data for rollout sensitivity equation
 		rolloutSensitivityEquationsPtrStock_[workerIndex]->reset();
 		rolloutSensitivityEquationsPtrStock_[workerIndex]->setData(
-				sensitivityTimeTrajectoryStock[i],
-				&AmTrajectoryStock_[i], &BmTrajectoryStock_[i], nominalFlowMapTrajectoriesStock_[i],
-				controllersStock[i].time_,
-				LvTrajectoryStock[i], controllersStock[i].k_);
+				&sensitivityTimeTrajectoriesStock[i],
+				&AmTrajectoriesStock_[i], &BmTrajectoriesStock_[i], &nominalFlowMapTrajectoriesStock_[i],
+				&controllersStock[i].time_,
+				&LvTrajectoriesStock[i], &controllersStock[i].k_);
 
 		// max number of steps of integration
 		const size_t maxNumSteps = settingsPtr_->maxNumStepsPerSecond_ *
-				std::max(1.0, sensitivityTimeTrajectoryStock[i].back()-sensitivityTimeTrajectoryStock[i].front());
+				std::max(1.0, sensitivityTimeTrajectoriesStock[i].back()-sensitivityTimeTrajectoriesStock[i].front());
 
 		// resizing
-		sensitivityStateTrajectoryStock[i].clear();
-		sensitivityStateTrajectoryStock[i].reserve(N);
-		sensitivityInputTrajectoryStock[i].clear();
-		sensitivityInputTrajectoryStock[i].reserve(N);
+		sensitivityStateTrajectoriesStock[i].clear();
+		sensitivityStateTrajectoriesStock[i].reserve(N);
+		sensitivityInputTrajectoriesStock[i].clear();
+		sensitivityInputTrajectoriesStock[i].reserve(N);
 
 		// integrating
 		size_t k_u = 0;
 		typename scalar_array_t::const_iterator beginTimeItr, endTimeItr;
 		for (size_t j=0; j<=NE; j++) {
 
-			beginTimeItr = (j==0) ? sensitivityTimeTrajectoryStock[i].begin()
-					: sensitivityTimeTrajectoryStock[i].begin() + eventsPastTheEndIndecesStock[i][j];
-			endTimeItr = (j==NE) ? sensitivityTimeTrajectoryStock[i].end()
-					: sensitivityTimeTrajectoryStock[i].begin() + eventsPastTheEndIndecesStock[i][j+1];
+			beginTimeItr = (j==0) ? sensitivityTimeTrajectoriesStock[i].begin()
+					: sensitivityTimeTrajectoriesStock[i].begin() + eventsPastTheEndIndecesStock[i][j-1];
+			endTimeItr = (j==NE) ? sensitivityTimeTrajectoriesStock[i].end()
+					: sensitivityTimeTrajectoriesStock[i].begin() + eventsPastTheEndIndecesStock[i][j];
 
 			// if it should be integrated
 			if (endTimeItr != beginTimeItr) {
@@ -813,28 +821,28 @@ void GSLQ<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::propagateRolloutSensitivity(
 				rolloutSensitivityEquationsPtrStock_[workerIndex]->setMultiplier(multiplier);
 
 				// solve sensitivity ODE
-				rolloutSensitivityIntegratorsPtrStock_[workerIndex].integrate(
+				rolloutSensitivityIntegratorsPtrStock_[workerIndex]->integrate(
 						nabla_xInit, beginTimeItr, endTimeItr,
-						sensitivityStateTrajectoryStock[i],
-						settingsPtr_->minTimeStep_, settingsPtr_->AbsTolODE_, settingsPtr_->RelTolODE_);
+						sensitivityStateTrajectoriesStock[i],
+						settingsPtr_->minTimeStep_, settingsPtr_->absTolODE_, settingsPtr_->relTolODE_);
 
 				// compute input sensitivity
-				for ( ; k_u<sensitivityStateTrajectory.size(); k_u++) {
-					sensitivityInputTrajectoryStock[i].emplace_back(
+				for ( ; k_u<sensitivityStateTrajectoriesStock[i].size(); k_u++) {
+					sensitivityInputTrajectoriesStock[i].emplace_back(
 							rolloutSensitivityEquationsPtrStock_[workerIndex]->computeInput(
-									sensitivityTimeTrajectoryStock[i][k_u], sensitivityStateTrajectoryStock[i][k_u]) );
+									sensitivityTimeTrajectoriesStock[i][k_u], sensitivityStateTrajectoriesStock[i][k_u]) );
 				} // end of k loop
 			}
 
 			// compute jump map
 			if (j < NE) {
-				nabla_xInit =  sensitivityStateTrajectory.back();
+				nabla_xInit =  sensitivityStateTrajectoriesStock[i].back();
 			}
 
 		}  // end of j loop
 
 		// reset the initial state
-		nabla_xInit = sensitivityStateTrajectory.back();
+		nabla_xInit = sensitivityStateTrajectoriesStock[i].back();
 
 	}  // end of i loop
 }
@@ -844,18 +852,18 @@ void GSLQ<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::propagateRolloutSensitivity(
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
 void GSLQ<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::approximateNominalLQPSensitivity2SwitchingTime(
-		const state_vector_array2_t& sensitivityStateTrajectoryStock,
-		const state_matrix_array2_t& sensitivityInputTrajectoryStock,
-		eigen_scalar_array2_t& nablaqTrajectoryStock,
-		state_vector_array2_t& nablaQvTrajectoryStock,
-		input_vector_array2_t& nablaRvTrajectoryStock,
+		const state_vector_array2_t& sensitivityStateTrajectoriesStock,
+		const input_vector_array2_t& sensitivityInputTrajectoriesStock,
+		eigen_scalar_array2_t& nablaqTrajectoriesStock,
+		state_vector_array2_t& nablaQvTrajectoriesStock,
+		input_vector_array2_t& nablaRvTrajectoriesStock,
 		eigen_scalar_array2_t& nablaqFinalStock,
 		state_vector_array2_t& nablaQvFinalStock) const {
 
 	// resizing
-	nablaqTrajectoryStock.resize(numPartitions_);
-	nablaQvTrajectoryStock.resize(numPartitions_);
-	nablaRvTrajectoryStock.resize(numPartitions_);
+	nablaqTrajectoriesStock.resize(numPartitions_);
+	nablaQvTrajectoriesStock.resize(numPartitions_);
+	nablaRvTrajectoriesStock.resize(numPartitions_);
 	nablaqFinalStock.resize(numPartitions_);
 	nablaQvFinalStock.resize(numPartitions_);
 
@@ -863,50 +871,50 @@ void GSLQ<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::approximateNominalLQPSensitivity
 
 		// skip inactive partitions
 		if (i<initActivePartition_ || i>finalActivePartition_) {
-			nablaqTrajectoryStock[i].clear();
-			nablaQvTrajectoryStock[i].clear();
-			nablaRvTrajectoryStock[i].clear();
+			nablaqTrajectoriesStock[i].clear();
+			nablaQvTrajectoriesStock[i].clear();
+			nablaRvTrajectoriesStock[i].clear();
 			nablaqFinalStock[i].clear();
 			nablaQvFinalStock[i].clear();
 			continue;
 		}
 
-		const size_t N  = nominalTimeTrajectoryStock_[i].size();
+		const size_t N  = nominalTimeTrajectoriesStock_[i].size();
 		const size_t NE = nominalEventsPastTheEndIndecesStock_[i].size();
 		auto eventsPastTheEndItr = nominalEventsPastTheEndIndecesStock_[i].begin();
 
 		// resizing
-		nablaqTrajectoryStock[i].resize(N);
-		nablaQvTrajectoryStock[i].resize(N);
-		nablaRvTrajectoryStock[i].resize(N);
+		nablaqTrajectoriesStock[i].resize(N);
+		nablaQvTrajectoriesStock[i].resize(N);
+		nablaRvTrajectoriesStock[i].resize(N);
 		nablaqFinalStock[i].resize(NE);
 		nablaQvFinalStock[i].resize(NE);
 
 		for (size_t k=0; k<N; k++) {
 
-			const input_matrix_t& Rm = RmTrajectoryStock_[i][k];
-			const state_vector_t& Qv = QvTrajectoryStock_[i][k];
-			const state_matrix_t& Qm = QmTrajectoryStock_[i][k];
-			const input_vector_t& Rv = RvTrajectoryStock_[i][k];
-			const input_state_matrix_t& Pm = PmTrajectoryStock_[i][k];
+			const input_matrix_t& Rm = RmTrajectoriesStock_[i][k];
+			const state_vector_t& Qv = QvTrajectoriesStock_[i][k];
+			const state_matrix_t& Qm = QmTrajectoriesStock_[i][k];
+			const input_vector_t& Rv = RvTrajectoriesStock_[i][k];
+			const input_state_matrix_t& Pm = PmTrajectoriesStock_[i][k];
 
-			nablaqTrajectoryStock[i][k]  = Qv.transpose()*sensitivityStateTrajectoryStock[i][k] +
-					Rv.transpose()*sensitivityInputTrajectoryStock[i][k];
-			nablaQvTrajectoryStock[i][k] = Qm*sensitivityStateTrajectoryStock[i][k] +
-					Pm.transpose()*sensitivityInputTrajectoryStock[i][k];
-			nablaRvTrajectoryStock[i][k] = Pm*sensitivityStateTrajectoryStock[i][k] +
-					Rm*sensitivityInputTrajectoryStock[i][k];
+			nablaqTrajectoriesStock[i][k]  = Qv.transpose()*sensitivityStateTrajectoriesStock[i][k] +
+					Rv.transpose()*sensitivityInputTrajectoriesStock[i][k];
+			nablaQvTrajectoriesStock[i][k] = Qm*sensitivityStateTrajectoriesStock[i][k] +
+					Pm.transpose()*sensitivityInputTrajectoriesStock[i][k];
+			nablaRvTrajectoriesStock[i][k] = Pm*sensitivityStateTrajectoriesStock[i][k] +
+					Rm*sensitivityInputTrajectoriesStock[i][k];
 
 			// terminal cost sensitivity to switching times
-			if (eventsPastTheEndItr!=eventsPastTheEndIndeces.end() && k+1==*eventsPastTheEndItr) {
+			if (eventsPastTheEndItr!=nominalEventsPastTheEndIndecesStock_[i].end() && k+1==*eventsPastTheEndItr) {
 
 				const size_t eventIndex = eventsPastTheEndItr - nominalEventsPastTheEndIndecesStock_[i].begin();
 				const size_t timeIndex = *eventsPastTheEndItr - 1;
-				const state_vector_t& Qv = QvFinalStock_[eventIndex];
-				const state_matrix_t& Qm = QmFinalStock_[eventIndex];
+				const state_vector_t& Qv = QvFinalStock_[i][eventIndex];
+				const state_matrix_t& Qm = QmFinalStock_[i][eventIndex];
 
-				nablaqFinalStock[eventIndex]  = Qv.transpose()*sensitivityStateTrajectoryStock[i][timeIndex];
-				nablaQvFinalStock[eventIndex] = Qm*sensitivityStateTrajectoryStock[i][timeIndex];
+				nablaqFinalStock[i][eventIndex]  = Qv.transpose()*sensitivityStateTrajectoriesStock[i][timeIndex];
+				nablaQvFinalStock[i][eventIndex] = Qm*sensitivityStateTrajectoriesStock[i][timeIndex];
 
 				eventsPastTheEndItr++;
 			}
@@ -922,20 +930,20 @@ void GSLQ<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::solveSensitivityRiccatiEquations
 		size_t workerIndex,
 		const size_t& eventTimeIndex,
 		const scalar_t& learningRate,
-		eigen_scalar_array_t& nablasTrajectoryStock,
-		state_vector_array_t& nablaSvTrajectoryStock,
-		state_matrix_array_t& nablaSmTrajectoryStock)  {
+		eigen_scalar_array2_t& nablasTrajectoriesStock,
+		state_vector_array2_t& nablaSvTrajectoriesStock,
+		state_matrix_array2_t& nablaSmTrajectoriesStock)  {
 
 	if (eventTimeIndex<activeEventTimeBeginIndex_ || eventTimeIndex>=activeEventTimeEndIndex_)
 		throw std::runtime_error("The index is associated to an inactive event or it is out of range.");
 
-	using typename riccati_sensitivity_equations_t::s_vector_t;
-	using typename riccati_sensitivity_equations_t::s_vector_array_t;
+	typedef typename riccati_sensitivity_equations_t::s_vector_t s_vector_t;
+	typedef typename riccati_sensitivity_equations_t::s_vector_array_t s_vector_array_t;
 
 	// Resizing
-	nablasTrajectoryStock.resize(numPartitions_);
-	nablaSvTrajectoryStock.resize(numPartitions_);
-	nablaSmTrajectoryStock.resize(numPartitions_);
+	nablasTrajectoriesStock.resize(numPartitions_);
+	nablaSvTrajectoriesStock.resize(numPartitions_);
+	nablaSmTrajectoriesStock.resize(numPartitions_);
 
 	// temporal final value for the last Riccati equations
 	s_vector_t SsFinalTemp = s_vector_t::Zero();
@@ -946,55 +954,55 @@ void GSLQ<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::solveSensitivityRiccatiEquations
 
 		// skip inactive partitions
 		if (i<initActivePartition_ || i>finalActivePartition_) {
-			nablasTrajectoryStock[i].clear();
-			nablaSvTrajectoryStock[i].clear();
-			nablaSmTrajectoryStock[i].clear();
+			nablasTrajectoriesStock[i].clear();
+			nablaSvTrajectoriesStock[i].clear();
+			nablaSmTrajectoriesStock[i].clear();
 			continue;
 		}
 
-		const size_t N  = SsNormalizedTimeTrajectoryStock_[i].size();
+		const size_t N  = SsNormalizedTimeTrajectoriesStock_[i].size();
 		const size_t NE = SsNormalizedEventsPastTheEndIndecesStock_[i].size();
 
 		// set data for Riccati sensitivity equations
 		riccatiSensitivityEquationsPtrStock_[workerIndex]->reset();
 		riccatiSensitivityEquationsPtrStock_[workerIndex]->setData(
 				learningRate, partitioningTimes_[i], partitioningTimes_[i+1],
-				&SsTimeTrajectoryStock_[i],
-				&SmTrajectoryStock_[i],
-				&SvTrajectoryStock_[i],
+				&SsTimeTrajectoriesStock_[i],
+				&SmTrajectoriesStock_[i],
+				&SvTrajectoriesStock_[i],
 				&nominalTimeTrajectoriesStock_[i],
-				&AmTrajectoryStock_[i],
-				&BmTrajectoryStock_[i],
-				&qTrajectoryStock_[i],
-				&QvTrajectoryStock_[i],
-				&QmTrajectoryStock_[i],
-				&RvTrajectoryStock_[i],
-				&RmInverseTrajectoryStock_[i],
-				&RmTrajectoryStock_[i],
-				&PmTrajectoryStock_[i],
-				&nablaqTrajectoryStockSet_[eventTimeIndex][i],
-				&nablaQvTrajectoryStockSet_[eventTimeIndex][i],
-				&nablaRvTrajectoryStockSet_[eventTimeIndex][i]);
+				&AmTrajectoriesStock_[i],
+				&BmTrajectoriesStock_[i],
+				&qTrajectoriesStock_[i],
+				&QvTrajectoriesStock_[i],
+				&QmTrajectoriesStock_[i],
+				&RvTrajectoriesStock_[i],
+				&RmInverseTrajectoriesStock_[i],
+				&RmTrajectoriesStock_[i],
+				&PmTrajectoriesStock_[i],
+				&nablaqTrajectoriesStockSet_[eventTimeIndex][i],
+				&nablaQvTrajectoriesStockSet_[eventTimeIndex][i],
+				&nablaRvTrajectoriesStockSet_[eventTimeIndex][i]);
 
 		// max number of steps of integration
 		const size_t maxNumSteps = settingsPtr_->maxNumStepsPerSecond_ *
-				std::max(1.0, SsNormalizedTimeTrajectoryStock_[i].back()-SsNormalizedTimeTrajectoryStock_[i].front());
+				std::max(1.0, SsNormalizedTimeTrajectoriesStock_[i].back()-SsNormalizedTimeTrajectoriesStock_[i].front());
 
 		// output containers resizing
-		nablasTrajectoryStock[i].resize(N);
-		nablaSvTrajectoryStock[i].resize(N);
-		nablaSmTrajectoryStock[i].resize(N);
+		nablasTrajectoriesStock[i].resize(N);
+		nablaSvTrajectoriesStock[i].resize(N);
+		nablaSmTrajectoriesStock[i].resize(N);
 		allSsTrajectory.clear();
 		allSsTrajectory.reserve(N);
 
 		// integrating the Riccati sensitivity equations
 		typename scalar_array_t::const_iterator beginTimeItr, endTimeItr;
-		for (size_t j=0; j<NE+1; j++) {
+		for (size_t j=0; j<=NE; j++) {
 
-			beginTimeItr = (j==0) ? SsNormalizedTimeTrajectoryStock_[i].begin()
-					: SsNormalizedTimeTrajectoryStock_[i].begin() + SsNormalizedEventsPastTheEndIndecesStock_[i][j];
-			endTimeItr = (j==NE) ? SsNormalizedTimeTrajectoryStock_[i].end()
-					: SsNormalizedTimeTrajectoryStock_[i].begin() + SsNormalizedEventsPastTheEndIndecesStock_[i][j+1];
+			beginTimeItr = (j==0) ? SsNormalizedTimeTrajectoriesStock_[i].begin()
+					: SsNormalizedTimeTrajectoriesStock_[i].begin() + SsNormalizedEventsPastTheEndIndecesStock_[i][j-1];
+			endTimeItr = (j==NE) ? SsNormalizedTimeTrajectoriesStock_[i].end()
+					: SsNormalizedTimeTrajectoriesStock_[i].begin() + SsNormalizedEventsPastTheEndIndecesStock_[i][j];
 
 			// if the event time does not take place at the end of partition
 			if (endTimeItr != beginTimeItr) {
@@ -1011,10 +1019,10 @@ void GSLQ<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::solveSensitivityRiccatiEquations
 				riccatiSensitivityEquationsPtrStock_[workerIndex]->setMultiplier(multiplier);
 
 				// solve Riccati sensitivity equations
-				riccatiSensitivityIntegratorsPtrStock_[workerIndex].integrate(
+				riccatiSensitivityIntegratorsPtrStock_[workerIndex]->integrate(
 						SsFinalTemp, beginTimeItr, endTimeItr,
 						allSsTrajectory,
-						settingsPtr_->minTimeStep_, settingsPtr_->AbsTolODE_, settingsPtr_->RelTolODE_, maxNumSteps, true);
+						settingsPtr_->minTimeStep_, settingsPtr_->absTolODE_, settingsPtr_->relTolODE_, maxNumSteps, true);
 			}
 
 			if (j < NE) {
@@ -1029,7 +1037,7 @@ void GSLQ<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::solveSensitivityRiccatiEquations
 		// construct 'nable_Sm', 'nable_Sv', and 'nable_s'
 		for (size_t k=0; k<N; k++) {
 			riccati_sensitivity_equations_t::convert2Matrix(allSsTrajectory[N-1-k],
-					nablaSmTrajectoryStock[i][k], nablaSvTrajectoryStock[i][k], nablasTrajectoryStock[i][k]);
+					nablaSmTrajectoriesStock[i][k], nablaSvTrajectoriesStock[i][k], nablasTrajectoriesStock[i][k]);
 		}  // end of k loop
 
 	}  // end of i loop
@@ -1064,7 +1072,7 @@ void GSLQ<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::solveSensitivityBVP(
 			continue;
 		}
 
-		const size_t N  = SsNormalizedTimeTrajectoryStock_[i].size();
+		const size_t N  = SsNormalizedTimeTrajectoriesStock_[i].size();
 		const size_t NE = SsNormalizedEventsPastTheEndIndecesStock_[i].size();
 
 		// set data for Riccati equations
@@ -1073,14 +1081,15 @@ void GSLQ<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::solveSensitivityBVP(
 		bvpSensitivityEquationsPtrStock_[workerIndex]->setData(
 				partitioningTimes_[i], partitioningTimes_[i+1],
 				&nominalTimeTrajectoriesStock_[i],
-				&AmTrajectoryStock_[i], &BmTrajectoryStock_[i], &CmTrajectoryStock_[i],
-				&AmConstrainedTrajectoryStock_[i], &CmTrajectoryStock_[i],
-				&QvConstrainedTrajectoryStock_[i], &RmTrajectoryStock_[i], &nominalLagrangianTrajectoriesStock_[i],
-				&nominalControllersStock_[i].time_, &nominalControllersStock_[i].k_, &SmTrajectoryStock_[i]);
+				&AmTrajectoriesStock_[i], &BmTrajectoriesStock_[i], &CmTrajectoriesStock_[i],
+				&AmConstrainedTrajectoriesStock_[i], &CmTrajectoriesStock_[i],
+				&QvTrajectoriesStock_[i], &RmTrajectoriesStock_[i],
+				&nominalFlowMapTrajectoriesStock_[i], &nominalCostateTrajectoriesStock_[i], &nominalLagrangianTrajectoriesStock_[i],
+				&nominalControllersStock_[i].time_, &nominalControllersStock_[i].k_, &SmTrajectoriesStock_[i]);
 
 		// max number of steps of integration
 		const size_t maxNumSteps = settingsPtr_->maxNumStepsPerSecond_ *
-				std::max(1.0, SsNormalizedTimeTrajectoryStock_[i].back()-SsNormalizedTimeTrajectoryStock_[i].front());
+				std::max(1.0, SsNormalizedTimeTrajectoriesStock_[i].back()-SsNormalizedTimeTrajectoriesStock_[i].front());
 
 		// output containers resizing
 		MvTrajectoriesStock[i].resize(N);
@@ -1089,12 +1098,12 @@ void GSLQ<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::solveSensitivityBVP(
 
 		// integrating the Riccati equations
 		typename scalar_array_t::const_iterator beginTimeItr, endTimeItr;
-		for (size_t j=0; j<NE+1; j++) {
+		for (size_t j=0; j<=NE; j++) {
 
-			beginTimeItr = (j==0) ? SsNormalizedTimeTrajectoryStock_[i].begin()
-					: SsNormalizedTimeTrajectoryStock_[i].begin() + SsNormalizedEventsPastTheEndIndecesStock_[i][j];
-			endTimeItr = (j==NE) ? SsNormalizedTimeTrajectoryStock_[i].end()
-					: SsNormalizedTimeTrajectoryStock_[i].begin() + SsNormalizedEventsPastTheEndIndecesStock_[i][j+1];
+			beginTimeItr = (j==0) ? SsNormalizedTimeTrajectoriesStock_[i].begin()
+					: SsNormalizedTimeTrajectoriesStock_[i].begin() + SsNormalizedEventsPastTheEndIndecesStock_[i][j-1];
+			endTimeItr = (j==NE) ? SsNormalizedTimeTrajectoriesStock_[i].end()
+					: SsNormalizedTimeTrajectoriesStock_[i].begin() + SsNormalizedEventsPastTheEndIndecesStock_[i][j];
 
 			// if the event time does not take place at the end of partition
 			if (endTimeItr != beginTimeItr) {
@@ -1140,10 +1149,10 @@ void GSLQ<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::solveSensitivityBVP(
 				}
 				catch(const std::exception& error)
 				{
-					std::cerr << "what(): " << error.what() << " at time " << SsTimeTrajectoryStock_[i][k] << " [sec]." << std::endl;
+					std::cerr << "what(): " << error.what() << " at time " << SsTimeTrajectoriesStock_[i][k] << " [sec]." << std::endl;
 					for (int kp=k; kp<k+10; kp++)  {
 						if (kp >= N) continue;
-						std::cerr << "Mv[" << SsTimeTrajectoryStock_[i][kp] << "]:\t"<< MvTrajectoryStock_[i][kp].transpose().norm() << std::endl;
+						std::cerr << "Mv[" << SsTimeTrajectoriesStock_[i][kp] << "]:\t"<< MvTrajectoriesStock[i][kp].transpose().norm() << std::endl;
 					}
 					exit(0);
 				}
@@ -1160,37 +1169,37 @@ void GSLQ<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculateLQSensitivityController
 		size_t workerIndex,
 		const size_t& eventTimeIndex,
 		const std::vector<scalar_array_t>& timeTrajectoriesStock,
-		const state_vector_array2_t& nablaSvTrajectoryStock,
-		input_vector_array2_t& nablaLvTrajectoryStock) {
+		const state_vector_array2_t& nablaSvTrajectoriesStock,
+		input_vector_array2_t& nablaLvTrajectoriesStock) {
 
 	if (eventTimeIndex<activeEventTimeBeginIndex_ || eventTimeIndex>=activeEventTimeEndIndex_)
 		throw std::runtime_error("The index is associated to an inactive event or it is out of range.");
 
 	// resizing
-	nablaLvTrajectoryStock.resize(numPartitions_);
+	nablaLvTrajectoriesStock.resize(numPartitions_);
 
 	for (size_t i=0; i<numSubsystems_; i++) {
 
 		// skip inactive partitions
 		if (i<initActivePartition_ || i>finalActivePartition_) {
-			nablaLvTrajectoryStock[i].clear();
+			nablaLvTrajectoriesStock[i].clear();
 			continue;
 		}
 
 		// set data
 		BmFuncStock_[workerIndex].reset();
 		BmFuncStock_[workerIndex].setTimeStamp(&nominalTimeTrajectoriesStock_[i]);
-		BmFuncStock_[workerIndex].setData(&BmTrajectoryStock_[i]);
+		BmFuncStock_[workerIndex].setData(&BmTrajectoriesStock_[i]);
 		RmInverseFuncStock_[workerIndex].reset();
 		RmInverseFuncStock_[workerIndex].setTimeStamp(&nominalTimeTrajectoriesStock_[i]);
-		RmInverseFuncStock_[workerIndex].setData(&RmInverseTrajectoryStock_[i]);
+		RmInverseFuncStock_[workerIndex].setData(&RmInverseTrajectoriesStock_[i]);
 		nablaRvFuncStock_[workerIndex].reset();
 		nablaRvFuncStock_[workerIndex].setTimeStamp(&nominalTimeTrajectoriesStock_[i]);
-		nablaRvFuncStock_[workerIndex].setData(&nablaRvTrajectoryStockSet_[eventTimeIndex][i]);
+		nablaRvFuncStock_[workerIndex].setData(&nablaRvTrajectoriesStockSet_[eventTimeIndex][i]);
 
 		// resizing
-		const size_t N = nablaSvTrajectoryStock[i].size();
-		nablaLvTrajectoryStock[i].resize(N);
+		const size_t N = nablaSvTrajectoriesStock[i].size();
+		nablaLvTrajectoriesStock[i].resize(N);
 
 		for (size_t k=0; k<N; k++) {
 
@@ -1208,7 +1217,7 @@ void GSLQ<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculateLQSensitivityController
 			input_vector_t nablaRv;
 			nablaRvFuncStock_[workerIndex].interpolate(t, nablaRv, greatestLessTimeStampIndex);
 
-			nablaLvTrajectoryStock[i][k] = -RmInverse * (nablaRv + Bm.transpose()*nablaSvTrajectoryStock[i][k]);
+			nablaLvTrajectoriesStock[i][k] = -RmInverse * (nablaRv + Bm.transpose()*nablaSvTrajectoriesStock[i][k]);
 		}  // end of k loop
 	}  // end of i loop
 }
@@ -1240,15 +1249,15 @@ void GSLQ<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculateBVPSensitivityControlle
 		// set data
 		BmFuncStock_[workerIndex].reset();
 		BmFuncStock_[workerIndex].setTimeStamp(&nominalTimeTrajectoriesStock_[i]);
-		BmFuncStock_[workerIndex].setData(BmTrajectoryStock_[i]);
+		BmFuncStock_[workerIndex].setData(&BmTrajectoriesStock_[i]);
 		RmInverseFuncStock_[workerIndex].reset();
 		RmInverseFuncStock_[workerIndex].setTimeStamp(&nominalTimeTrajectoriesStock_[i]);
-		RmInverseFuncStock_[workerIndex].setData(&RmInverseTrajectoryStock_[i]);
+		RmInverseFuncStock_[workerIndex].setData(&RmInverseTrajectoriesStock_[i]);
 		DmProjectedFuncStock_[workerIndex].reset();
 		DmProjectedFuncStock_[workerIndex].setTimeStamp(&nominalTimeTrajectoriesStock_[i]);
-		DmProjectedFuncStock_[workerIndex].setData(&DmProjectedTrajectoryStock_[i]);
+		DmProjectedFuncStock_[workerIndex].setData(&DmProjectedTrajectoriesStock_[i]);
 
-		const size_t N = timeTrajectoriesStock.size();
+		const size_t N = timeTrajectoriesStock[i].size();
 		LvTrajectoriesStock[i].resize(N);
 		for (size_t k=0; k<N; k++) {
 
@@ -1257,7 +1266,7 @@ void GSLQ<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculateBVPSensitivityControlle
 			// Bm
 			state_input_matrix_t Bm;
 			BmFuncStock_[workerIndex].interpolate(t, Bm);
-			size_t greatestLessTimeStampIndex = BmFunc.getGreatestLessTimeStampIndex();
+			size_t greatestLessTimeStampIndex = BmFuncStock_[workerIndex].getGreatestLessTimeStampIndex();
 			// RmInverse
 			input_matrix_t RmInverse;
 			RmInverseFuncStock_[workerIndex].interpolate(t, RmInverse, greatestLessTimeStampIndex);
@@ -1305,22 +1314,22 @@ void GSLQ<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::getValueFuntionDerivative(
 	deltsState = state - nominalState;
 
 	nablasFunc.reset();
-	nablasFunc.setTimeStamp(&SsTimeTrajectoryStock_[activePartition]);
-	nablasFunc.setData(&nablasTrajectoryStockSet_[eventTimeIndex][activePartition]);
+	nablasFunc.setTimeStamp(&SsTimeTrajectoriesStock_[activePartition]);
+	nablasFunc.setData(&nablasTrajectoriesStockSet_[eventTimeIndex][activePartition]);
 	nablasFunc.interpolate(time, nablas);
-	greatestLessTimeStampIndex = nablasFuncStock.getGreatestLessTimeStampIndex();
+	greatestLessTimeStampIndex = nablasFunc.getGreatestLessTimeStampIndex();
 
 	nablaSvFunc.reset();
-	nablaSvFunc.setTimeStamp(&SsTimeTrajectoryStock_[activePartition]);
-	nablaSvFunc.setData(&nablaSvTrajectoryStockSet_[eventTimeIndex][activePartition]);
+	nablaSvFunc.setTimeStamp(&SsTimeTrajectoriesStock_[activePartition]);
+	nablaSvFunc.setData(&nablaSvTrajectoriesStockSet_[eventTimeIndex][activePartition]);
 	nablaSvFunc.interpolate(time, nablaSv, greatestLessTimeStampIndex);
 
 	nablaSmFunc.reset();
-	nablaSmFunc.setTimeStamp(&SsTimeTrajectoryStock_[activePartition]);
-	nablaSmFunc.setData(&nablaSmTrajectoryStockSet_[eventTimeIndex][activePartition]);
+	nablaSmFunc.setTimeStamp(&SsTimeTrajectoriesStock_[activePartition]);
+	nablaSmFunc.setData(&nablaSmTrajectoriesStockSet_[eventTimeIndex][activePartition]);
 	nablaSmFunc.interpolate(time, nablaSm, greatestLessTimeStampIndex);
 
-	valueFunctionDerivative(eventTimeIndex) = nablas(0) +
+	valueFunctionDerivative = nablas(0) +
 			deltsState.dot(nablaSv) + 0.5*deltsState.dot(nablaSm*deltsState);
 
 }
@@ -1332,8 +1341,8 @@ template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
 void GSLQ<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculateCostDerivative(
 		size_t workerIndex,
 		const size_t& eventTimeIndex,
-		const state_vector_array2_t& sensitivityStateTrajectoryStock,
-		const input_vector_array2_t& sensitivityInputTrajectoryStock,
+		const state_vector_array2_t& sensitivityStateTrajectoriesStock,
+		const input_vector_array2_t& sensitivityInputTrajectoriesStock,
 		scalar_t& costDerivative) const {
 
 	if (eventTimeIndex<activeEventTimeBeginIndex_ || eventTimeIndex>=activeEventTimeEndIndex_)
@@ -1351,14 +1360,15 @@ void GSLQ<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculateCostDerivative(
 
 		for (size_t j=0; j<NE+1; j++) {
 
-			beginIndex = (j==0)  ? 0 : nominalEventsPastTheEndIndecesStock_[i][j];
-			endIndex   = (j==NE) ? N : nominalEventsPastTheEndIndecesStock_[i][j+1];
+			beginIndex = (j==0)  ? 0 : nominalEventsPastTheEndIndecesStock_[i][j-1];
+			endIndex   = (j==NE) ? N : nominalEventsPastTheEndIndecesStock_[i][j];
 
 			// integrates the intermediate cost sensitivity using the trapezoidal approximation method
 			if (beginIndex != endIndex) {
 
 				// finding the current active subsystem
-				scalar_t midTime = 0.5 * (*beginTimeItr+*(endTimeItr-1));
+				scalar_t midTime = 0.5 * ( nominalTimeTrajectoriesStock_[i][beginIndex] +
+						nominalTimeTrajectoriesStock_[i][endIndex-1]);
 				size_t activeSubsystem = findActiveSubsystemIndex(
 						eventTimes(), midTime);
 
@@ -1372,21 +1382,20 @@ void GSLQ<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculateCostDerivative(
 						prevIntermediatecostDev = currIntermediatecostDev;
 
 					currIntermediatecostDev =
-							multiplier * qTrajectoryStock_[i][k](0) +
-							sensitivityStateTrajectoryStock[i][k].transpose()*QvTrajectoryStock_[i][k] +
-							sensitivityInputTrajectoryStock[i][k].transpose()*RvTrajectoryStock_[i][k];
+							multiplier * qTrajectoriesStock_[i][k](0) +
+							sensitivityStateTrajectoriesStock[i][k].dot(QvTrajectoriesStock_[i][k]) +
+							sensitivityInputTrajectoriesStock[i][k].dot(RvTrajectoriesStock_[i][k]);
 
 					if (k>beginIndex) {
 						costDerivative += 0.5*(nominalTimeTrajectoriesStock_[i][k]-nominalTimeTrajectoriesStock_[i][k-1]) *
-								(currtIntermediatecostDev+prevIntermediatecostDev);
+								(currIntermediatecostDev+prevIntermediatecostDev);
 					}
 				}  // end of k loop
 			}
 
 			// terminal cost sensitivity at switching times
 			if (j < NE) {
-				costDerivative += sensitivityStateTrajectoryStock[i].back().transpose() * QvFinalStock_[i][j];
-				eventsPastTheEndItr++;
+				costDerivative += sensitivityStateTrajectoriesStock[i].back().transpose() * QvFinalStock_[i][j];
 			}
 		}  // end of j loop
 
@@ -1394,7 +1403,7 @@ void GSLQ<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculateCostDerivative(
 	}  // end of i loop
 
 	// TODO: add heuristic to SLQ
-	throw std::runtime_error("The Heuristic cost evaluation is missing.");
+//	throw std::runtime_error("The Heuristic cost evaluation is missing.");
 	// calculate the Heuristics function at the final time
 //	// initialize
 //	heuristicsFunctionsPtrStock_[threadId]->initializeModel(*logicRulesMachinePtr_, finalActivePartition_, "SLQ");
@@ -1420,17 +1429,17 @@ void GSLQ<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::runLQBasedMethod()  {
 	const size_t maxNumIteration = 3;
 
 	// resizing
-	nablaLvTrajectoryStockSet_.resize(numEventTimes_);
-	sensitivityStateTrajectoryStockSet_.resize(numEventTimes_);
-	sensitivityInputTrajectoryStockSet_.resize(numEventTimes_);
-	nablaqTrajectoryStockSet_.resize(numEventTimes_);
-	nablaQvTrajectoryStockSet_.resize(numEventTimes_);
-	nablaRvTrajectoryStockSet_.resize(numEventTimes_);
+	nablaLvTrajectoriesStockSet_.resize(numEventTimes_);
+	sensitivityStateTrajectoriesStockSet_.resize(numEventTimes_);
+	sensitivityInputTrajectoriesStockSet_.resize(numEventTimes_);
+	nablaqTrajectoriesStockSet_.resize(numEventTimes_);
+	nablaQvTrajectoriesStockSet_.resize(numEventTimes_);
+	nablaRvTrajectoriesStockSet_.resize(numEventTimes_);
 	nablaqFinalStockSet_.resize(numEventTimes_);
 	nablaQvFinalStockSet_.resize(numEventTimes_);
-	nablasTrajectoryStockSet_.resize(numEventTimes_);
-	nablaSvTrajectoryStockSet_.resize(numEventTimes_);
-	nablaSmTrajectoryStockSet_.resize(numEventTimes_);
+	nablasTrajectoriesStockSet_.resize(numEventTimes_);
+	nablaSvTrajectoriesStockSet_.resize(numEventTimes_);
+	nablaSmTrajectoriesStockSet_.resize(numEventTimes_);
 	nominalCostFuntionDerivative_.resize(numEventTimes_);
 
 	size_t iteration = 0;
@@ -1439,12 +1448,13 @@ void GSLQ<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::runLQBasedMethod()  {
 		// for each active event time
 		for (size_t index=0; index<numEventTimes_; index++) {
 
-			if (activeEventTcalculateBVPCostFunctionDerivativeimeBeginIndex_<=index && index<activeEventTimeEndIndex_) {
+			if (activeEventTimeBeginIndex_<=index && index<activeEventTimeEndIndex_) {
 
 				// for the first iteration set Lv to zero
 				if (iteration == 1) {
+					nablaLvTrajectoriesStockSet_[index].resize(numPartitions_);
 					for (size_t i=initActivePartition_; i<=finalActivePartition_; i++)
-						nablaLvTrajectoryStockSet_[index][i] = input_vector_array_t(
+						nablaLvTrajectoriesStockSet_[index][i] = input_vector_array_t(
 								nominalControllersStock_[i].time_.size(), input_vector_t::Zero());
 				}
 
@@ -1453,17 +1463,17 @@ void GSLQ<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::runLQBasedMethod()  {
 				// calculate rollout sensitivity to event times
 				propagateRolloutSensitivity(workerIndex, index,
 						nominalControllersStock_,
-						nablaLvTrajectoryStockSet_[index],
+						nablaLvTrajectoriesStockSet_[index],
 						nominalTimeTrajectoriesStock_,
 						nominalEventsPastTheEndIndecesStock_,
-						sensitivityStateTrajectoryStockSet_[index],
-						sensitivityInputTrajectoryStockSet_[index]);
+						sensitivityStateTrajectoriesStockSet_[index],
+						sensitivityInputTrajectoriesStockSet_[index]);
 
 				// approximate the nominal LQ sensitivity to switching times
 				approximateNominalLQPSensitivity2SwitchingTime(
-						sensitivityStateTrajectoryStockSet_[index], sensitivityInputTrajectoryStockSet_[index],
-						nablaqTrajectoryStockSet_[index],
-						nablaQvTrajectoryStockSet_[index], nablaRvTrajectoryStockSet_[index],
+						sensitivityStateTrajectoriesStockSet_[index], sensitivityInputTrajectoriesStockSet_[index],
+						nablaqTrajectoriesStockSet_[index],
+						nablaQvTrajectoriesStockSet_[index], nablaRvTrajectoriesStockSet_[index],
 						nablaqFinalStockSet_[index], nablaQvFinalStockSet_[index]);
 
 				// solve Riccati equations
@@ -1471,38 +1481,37 @@ void GSLQ<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::runLQBasedMethod()  {
 				const scalar_t learningRateStar = 0.0;
 				solveSensitivityRiccatiEquations(workerIndex, index,
 						learningRateStar,
-						nablasTrajectoryStockSet_[index],
-						nablaSvTrajectoryStockSet_[index],
-						nablaSmTrajectoryStockSet_[index]);
+						nablasTrajectoriesStockSet_[index],
+						nablaSvTrajectoriesStockSet_[index],
+						nablaSmTrajectoriesStockSet_[index]);
 
 				// calculate sensitivity controller feedforward part
 				calculateLQSensitivityControllerForward(workerIndex, index,
-						SsTimeTrajectoryStock_, nablaSvTrajectoryStockSet_[index],
-						nablaLvTrajectoryStockSet_[index]);
+						SsTimeTrajectoriesStock_, nablaSvTrajectoriesStockSet_[index],
+						nablaLvTrajectoriesStockSet_[index]);
 
 				// calculate the value function derivatives w.r.t. switchingTimes
 				getValueFuntionDerivative(index, initTime_, initState_,
 						nominalCostFuntionDerivative_(index));
 
 			} else if (iteration == 1) {
-				nablaLvTrajectoryStockSet_[index].clear();
-				sensitivityStateTrajectoryStockSet_[index].clear();
-				sensitivityInputTrajectoryStockSet_[index].clear();
-				nablaqTrajectoryStockSet_[index].clear();
-				nablaQvTrajectoryStockSet_[index].clear();
-				nablaRvTrajectoryStockSet_[index].clear();
+				nablaLvTrajectoriesStockSet_[index].clear();
+				sensitivityStateTrajectoriesStockSet_[index].clear();
+				sensitivityInputTrajectoriesStockSet_[index].clear();
+				nablaqTrajectoriesStockSet_[index].clear();
+				nablaQvTrajectoriesStockSet_[index].clear();
+				nablaRvTrajectoriesStockSet_[index].clear();
 				nablaqFinalStockSet_[index].clear();
 				nablaQvFinalStockSet_[index].clear();
-				nablasTrajectoryStockSet_[index].clear();
-				nablaSvTrajectoryStockSet_[index].clear();
-				nablaSmTrajectoryStockSet_[index].clear();
+				nablasTrajectoriesStockSet_[index].clear();
+				nablaSvTrajectoriesStockSet_[index].clear();
+				nablaSmTrajectoriesStockSet_[index].clear();
 				nominalCostFuntionDerivative_(index) = 0.0;
 			}
 
 		}  // end of index loop
 
 	}  // end of while loop
-
 }
 
 /******************************************************************************************************/
@@ -1512,48 +1521,48 @@ template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
 void GSLQ<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::runSweepingBVPMethod()  {
 
 	// resizing
-	MvTrajectoryStockSet_.resize(numEventTimes_);
-	LvTrajectoryStockSet_.resize(numEventTimes_);
-	sensitivityStateTrajectoryStockSet_.resize(numEventTimes_);
-	sensitivityInputTrajectoryStockSet_.resize(numEventTimes_);
+	MvTrajectoriesStockSet_.resize(numEventTimes_);
+	LvTrajectoriesStockSet_.resize(numEventTimes_);
+	sensitivityStateTrajectoriesStockSet_.resize(numEventTimes_);
+	sensitivityInputTrajectoriesStockSet_.resize(numEventTimes_);
 	nominalCostFuntionDerivative_.resize(numEventTimes_);
 
 	// for each active event time
 	for (size_t index=0; index<numEventTimes_; index++) {
 
-		if (activeEventTcalculateBVPCostFunctionDerivativeimeBeginIndex_<=index && index<activeEventTimeEndIndex_) {
+		if (activeEventTimeBeginIndex_<=index && index<activeEventTimeEndIndex_) {
 
 			const size_t workerIndex = 0;
 
 			// solve BVP to compute Mv
 			solveSensitivityBVP(workerIndex, index, state_vector_t::Zero(),
-					MvTrajectoryStockSet_[index]);
+					MvTrajectoriesStockSet_[index]);
 
 			// calculates sensitivity controller feedforward part, Lv
 			calculateBVPSensitivityControllerForward(workerIndex, index,
-					SsTimeTrajectoryStock_, MvTrajectoryStockSet_[index],
-					LvTrajectoryStockSet_[index]);
+					SsTimeTrajectoriesStock_, MvTrajectoriesStockSet_[index],
+					LvTrajectoriesStockSet_[index]);
 
 			// calculate rollout sensitivity to event times
 			propagateRolloutSensitivity(workerIndex, index,
 					nominalControllersStock_,
-					LvTrajectoryStockSet_[index],
+					LvTrajectoriesStockSet_[index],
 					nominalTimeTrajectoriesStock_,
 					nominalEventsPastTheEndIndecesStock_,
-					sensitivityStateTrajectoryStockSet_[index],
-					sensitivityInputTrajectoryStockSet_[index]);
+					sensitivityStateTrajectoriesStockSet_[index],
+					sensitivityInputTrajectoriesStockSet_[index]);
 
 			// calculate the cost function derivatives w.r.t. switchingTimes
 			calculateCostDerivative(workerIndex, index,
-					sensitivityStateTrajectoryStockSet_[index],
-					sensitivityInputTrajectoryStockSet_[index],
+					sensitivityStateTrajectoriesStockSet_[index],
+					sensitivityInputTrajectoriesStockSet_[index],
 					nominalCostFuntionDerivative_(index));
 
 		} else {
-			MvTrajectoryStockSet_[index].clear();
-			LvTrajectoryStockSet_[index].clear();
-			sensitivityStateTrajectoryStockSet_[index].clear();
-			sensitivityInputTrajectoryStockSet_[index].clear();
+			MvTrajectoriesStockSet_[index].clear();
+			LvTrajectoriesStockSet_[index].clear();
+			sensitivityStateTrajectoriesStockSet_[index].clear();
+			sensitivityInputTrajectoriesStockSet_[index].clear();
 			nominalCostFuntionDerivative_(index) = 0.0;
 		}
 
@@ -1585,7 +1594,7 @@ void GSLQ<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::run()  {
 	activeEventTimeEndIndex_   = findActiveSubsystemIndex(eventTimes(), slqPtr_->finalTime_);
 
 	// display
-	if (settingsPtr_->dispayInfo_)
+	if (settingsPtr_->displayInfo_)
 		std::cerr << "\n#### Calculating cost function sensitivity ..." << std::endl;
 
 	// use the LQ-based method or Sweeping-BVP method

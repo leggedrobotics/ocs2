@@ -58,7 +58,6 @@ public:
 
 	typedef Eigen::Matrix<scalar_t, S_DIM_,1> s_vector_t;
 	typedef std::vector<s_vector_t, Eigen::aligned_allocator<s_vector_t> > s_vector_array_t;
-	typedef Eigen::Matrix<scalar_t, S_DIM_,1> s_vector_t;
 
 	/**
 	 * Default constructor.
@@ -69,6 +68,16 @@ public:
 	 * Default destructor.
 	 */
 	~SensitivitySequentialRiccatiEquations() = default;
+
+	/**
+	 * Returns pointer to the class.
+	 *
+	 * @return A raw pointer to the class.
+	 */
+	virtual SensitivitySequentialRiccatiEquations<STATE_DIM, INPUT_DIM>* clone() const {
+
+		return new SensitivitySequentialRiccatiEquations<STATE_DIM, INPUT_DIM>(*this);
+	}
 
 	/**
 	 * Transcribe symmetric matrix nabla_Sm, vector nabla_Sv and
@@ -163,8 +172,8 @@ public:
 			const input_matrix_array_t* RmPtr,
 			const input_state_matrix_array_t* PmPtr,
 			const eigen_scalar_array_t* nablaqPtr,
-			const state_matrix_array_t* nablaQvPtr,
-			const input_matrix_array_t* nablaRvPtr)  {
+			const state_vector_array_t* nablaQvPtr,
+			const input_vector_array_t* nablaRvPtr)  {
 
 		BASE::resetNumFunctionCalls();
 

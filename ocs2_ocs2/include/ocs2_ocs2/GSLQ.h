@@ -34,7 +34,7 @@
 namespace ocs2 {
 
 /**
- * GSLQ Class
+ * GSLQ Class for computing gradient of the cost function w.r.t. switching times.
  *
  * @tparam STATE_DIM: Dimension of the state space.
  * @tparam INPUT_DIM: Dimension of the control input space.
@@ -109,6 +109,7 @@ public:
 	typedef typename DIMENSIONS::constraint2_state_matrix_array_t constraint2_state_matrix_array_t;
 	typedef typename DIMENSIONS::constraint2_state_matrix_array2_t constraint2_state_matrix_array2_t;
 	typedef typename DIMENSIONS::dynamic_vector_t dynamic_vector_t;
+	typedef typename DIMENSIONS::dynamic_input_matrix_t dynamic_input_matrix_t;
 
     typedef std::vector<eigen_scalar_array2_t, Eigen::aligned_allocator<eigen_scalar_array2_t>> eigen_scalar_array3_t;
     typedef std::vector<state_vector_array2_t, Eigen::aligned_allocator<state_vector_array2_t>> state_vector_array3_t;
@@ -122,7 +123,7 @@ public:
      * @param [in] slqPtr: A pointer to the SLQ instance for which the cost function gradient
      * would be calculated.
      */
-	GSLQ(const slq_t* slqPtr);
+	GSLQ(slq_t& slqPtr);
 
 	/**
 	 * Destructor.
@@ -130,16 +131,18 @@ public:
 	virtual ~GSLQ() = default;
 
     /**
-     * Gets the calculated rollout's sensitivity to event times.
+     * Gets the calculated rollout's sensitivity to an event time.
      *
+     * @param [in] eventTimeIndex: Event time index.
      * @param [out] sensitivityTimeTrajectoriesStock: time stamps of the sensitivity values.
      * @param [out] sensitivityStateTrajectoriesStock: state trajectory sensitivity to the switching times.
      * @param [out] sensitivityInputTrajectoriesStock: control input trajectory sensitivity to the switching times.
      */
 	void getRolloutSensitivity2SwitchingTime(
+			const size_t& eventTimeIndex,
 			std::vector<scalar_array_t>& sensitivityTimeTrajectoriesStock,
-			std::vector<nabla_state_matrix_array_t>& sensitivityStateTrajectoriesStock,
-			std::vector<nabla_input_matrix_array_t>& sensitivityInputTrajectoriesStock);
+			state_matrix_array2_t& sensitivityStateTrajectoriesStock,
+			input_matrix_array2_t& sensitivityInputTrajectoriesStock);
 
     /**
      * Gets the calculated optimal controller structure.
@@ -173,9 +176,11 @@ public:
     /**
      * Calculates the cost function's derivatives w.r.t. event times.
      *
-     * @param [out] costFuntionDerivative
+     * @param [out] costFunctionDerivative: cost function's derivatives w.r.t. event times.
      */
-	void getCostFuntionDerivative(dynamic_vector_t& costFuntionDerivative);
+	template <typename Derived>
+	void getCostFuntionDerivative(
+			Eigen::MatrixBase<Derived> const& costFunctionDerivative) const;
 
     /**
      * Gets the optimal state and input trajectories.
@@ -224,7 +229,7 @@ protected:
 	 *
 	 * @param [in] slqPtr: A pointer to the SLQ instance
 	 */
-	void collectSlqData(const slq_t* slqPtr);
+	void collectSlqData(slq_t* slqPtr);
 
 	/**
 	 * Computes the required data which are not computed in the SLQ.
@@ -319,7 +324,7 @@ protected:
 	void computeEquivalentSystemMultiplier(
 			const size_t& eventTimeIndex,
 			const size_t& activeSubsystem,
-			scalar_t& multiplier);
+			scalar_t& multiplier) const;
 
 	/**
 	 * Integrates the sensitivity equation of the rollout w.r.t. event times.
@@ -327,39 +332,39 @@ protected:
 	 * @param [in] workerIndex: Working agent index.
 	 * @param [in] eventTimeIndex: Event time index.
 	 * @param [in] controllersStock: Nominal controller.
-	 * @param [in] LvTrajectoryStock: Controller's feedforward sensitivity
-	 * @param [in] sensitivityTimeTrajectoryStock: Integration time trajectory.
+	 * @param [in] LvTrajectoriesStock: Controller's feedforward sensitivity
+	 * @param [in] sensitivityTimeTrajectoriesStock: Integration time trajectory.
 	 * @param [in] eventsPastTheEndIndecesStock: Indices containing past-the-end index of events trigger.
-	 * @param [out] sensitivityStateTrajectoryStock: Array of state sensitivity trajectory.
-	 * @param [out] sensitivityInputTrajectoryStock: Array of input sensitivity trajectory.
+	 * @param [out] sensitivityStateTrajectoriesStock: Array of state sensitivity trajectory.
+	 * @param [out] sensitivityInputTrajectoriesStock: Array of input sensitivity trajectory.
 	 */
 	void propagateRolloutSensitivity(
 			size_t workerIndex,
 			const size_t& eventTimeIndex,
 			const controller_array_t& controllersStock,
-			const input_vector_array_t& LvTrajectoryStock,
-			const std::vector<scalar_array_t>& sensitivityTimeTrajectoryStock,
-			const std::vector<scalar_array_t>& eventsPastTheEndIndecesStock,
-			state_vector_array2_t& sensitivityStateTrajectoryStock,
-			input_vector_array2_t& sensitivityInputTrajectoryStock);
+			const input_vector_array2_t& LvTrajectoriesStock,
+			const std::vector<scalar_array_t>& sensitivityTimeTrajectoriesStock,
+			const std::vector<size_array_t>& eventsPastTheEndIndecesStock,
+			state_vector_array2_t& sensitivityStateTrajectoriesStock,
+			input_vector_array2_t& sensitivityInputTrajectoriesStock);
 
 	/**
 	 * Approximates nominal LQ problem sensitivity to event times.
 	 *
-	 * @param [in] sensitivityStateTrajectoryStock: Array of state sensitivity trajectory.
-	 * @param [in] sensitivityInputTrajectoryStock: Array of input sensitivity trajectory.
-	 * @param [out] nablaqTrajectoryStock: Sensitivity of the cost's zero order variation.
-	 * @param [out] nablaQvTrajectoryStock: Sensitivity of the cost's first order state variation.
-	 * @param [out] nablaRvTrajectoryStock: Sensitivity of the cost's first order input variation.
+	 * @param [in] sensitivityStateTrajectoriesStock: Array of state sensitivity trajectory.
+	 * @param [in] sensitivityInputTrajectoriesStock: Array of input sensitivity trajectory.
+	 * @param [out] nablaqTrajectoriesStock: Sensitivity of the cost's zero order variation.
+	 * @param [out] nablaQvTrajectoriesStock: Sensitivity of the cost's first order state variation.
+	 * @param [out] nablaRvTrajectoriesStock: Sensitivity of the cost's first order input variation.
 	 * @param [out] nablaqFinalStock: Sensitivity of the final cost's zero order variation.
 	 * @param [out] nablaQvFinalStock: Sensitivity of the final cost's first order state variation.
 	 */
 	void approximateNominalLQPSensitivity2SwitchingTime(
-			const state_vector_array2_t& sensitivityStateTrajectoryStock,
-			const state_matrix_array2_t& sensitivityInputTrajectoryStock,
-			eigen_scalar_array2_t& nablaqTrajectoryStock,
-			state_vector_array2_t& nablaQvTrajectoryStock,
-			input_vector_array2_t& nablaRvTrajectoryStock,
+			const state_vector_array2_t& sensitivityStateTrajectoriesStock,
+			const input_vector_array2_t& sensitivityInputTrajectoriesStock,
+			eigen_scalar_array2_t& nablaqTrajectoriesStock,
+			state_vector_array2_t& nablaQvTrajectoriesStock,
+			input_vector_array2_t& nablaRvTrajectoriesStock,
 			eigen_scalar_array2_t& nablaqFinalStock,
 			state_vector_array2_t& nablaQvFinalStock) const;
 
@@ -369,17 +374,17 @@ protected:
 	 * @param [in] workerIndex: Working agent index.
 	 * @param [in] eventTimeIndex: Event time index.
 	 * @param [in] learningRate: learning rate typically should be zero.
-	 * @param [out] nablasTrajectoryStock: Sensitivity of the Riccati equations's zero order variation.
-	 * @param [out] nablaSvTrajectoryStock: Sensitivity of the Riccati equations's first order variation.
-	 * @param [out] nablaSmTrajectoryStock: Sensitivity of the Riccati equations's second order variation.
+	 * @param [out] nablasTrajectoriesStock: Sensitivity of the Riccati equations's zero order variation.
+	 * @param [out] nablaSvTrajectoriesStock: Sensitivity of the Riccati equations's first order variation.
+	 * @param [out] nablaSmTrajectoriesStock: Sensitivity of the Riccati equations's second order variation.
 	 */
 	void solveSensitivityRiccatiEquations(
 			size_t workerIndex,
 			const size_t& eventTimeIndex,
 			const scalar_t& learningRate,
-			eigen_scalar_array_t& nablasTrajectoryStock,
-			state_vector_array_t& nablaSvTrajectoryStock,
-			state_matrix_array_t& nablaSmTrajectoryStock);
+			eigen_scalar_array2_t& nablasTrajectoriesStock,
+			state_vector_array2_t& nablaSvTrajectoriesStock,
+			state_matrix_array2_t& nablaSmTrajectoriesStock);
 
 	/**
 	 * Solves a boundary value problem using a Riccati approach which later be used to
@@ -402,15 +407,15 @@ protected:
      * @param [in] workerIndex: Working agent index.
 	 * @param [in] eventTimeIndex: Event time index.
      * @param [in] timeTrajectoriesStock: Time stamp of the riccati solution
-     * @param [in] nablaSvTrajectoryStock: Sensitivity of the Riccati equations's first order variation.
-     * @param [out] nablaLvTrajectoryStock: Sensitivity of the control input increment to event times.
+     * @param [in] nablaSvTrajectoriesStock: Sensitivity of the Riccati equations's first order variation.
+     * @param [out] nablaLvTrajectoriesStock: Sensitivity of the control input increment to event times.
      */
 	void calculateLQSensitivityControllerForward(
 			size_t workerIndex,
 			const size_t& eventTimeIndex,
 			const std::vector<scalar_array_t>& timeTrajectoriesStock,
-			const state_vector_array2_t& nablaSvTrajectoryStock,
-			input_vector_array2_t& nablaLvTrajectoryStock);
+			const state_vector_array2_t& nablaSvTrajectoriesStock,
+			input_vector_array2_t& nablaLvTrajectoriesStock);
 
     /**
      * calculate the sensitivity of the control input increment to event times
@@ -441,27 +446,27 @@ protected:
 			const size_t& eventTimeIndex,
 			const scalar_t& time,
 			const state_vector_t& state,
-			const dynamic_vector_t& valueFunctionDerivative);
+			scalar_t& valueFunctionDerivative);
 
 	/**
 	 * calculates cost function derivative based on BVP solution
 	 *
 	 * @param [in] workerIndex: Working agent index.
 	 * @param [in] eventTimeIndex: Event time index.
-	 * @param [in] sensitivityStateTrajectoryStock: Array of state sensitivity trajectory.
-	 * @param [in] sensitivityInputTrajectoryStock: Array of input sensitivity trajectory.
+	 * @param [in] sensitivityStateTrajectoriesStock: Array of state sensitivity trajectory.
+	 * @param [in] sensitivityInputTrajectoriesStock: Array of input sensitivity trajectory.
 	 * @param [out] costDerivative: The cost function's derivative w.r.t. an event time.
 	 */
 	void calculateCostDerivative(
 			size_t workerIndex,
 			const size_t& eventTimeIndex,
-			const state_vector_array2_t& sensitivityStateTrajectoryStock,
-			const input_vector_array2_t& sensitivityInputTrajectoryStock,
+			const state_vector_array2_t& sensitivityStateTrajectoriesStock,
+			const input_vector_array2_t& sensitivityInputTrajectoriesStock,
 			scalar_t& costDerivative) const;
 
 private:
-	const slq_t* slqPtr_;
-	const SLQ_Settings* settingsPtr_;
+	slq_t* slqPtr_;
+	SLQ_Settings* settingsPtr_;
 	logic_rules_machine_ptr_t logicRulesMachinePtr_;
 
 	scalar_t initTime_;
@@ -485,24 +490,24 @@ private:
 	std::vector<std::shared_ptr<rollout_sensitivity_equations_t>> rolloutSensitivityEquationsPtrStock_;
 	std::vector<std::shared_ptr<IntegratorBase<STATE_DIM>>>       rolloutSensitivityIntegratorsPtrStock_;
 	std::vector<std::shared_ptr<riccati_sensitivity_equations_t>> riccatiSensitivityEquationsPtrStock_;
-	std::vector<std::shared_ptr<IntegratorBase<STATE_DIM>>>       riccatiSensitivityIntegratorsPtrStock_;
+	std::vector<std::shared_ptr<IntegratorBase<riccati_sensitivity_equations_t::S_DIM_>>> riccatiSensitivityIntegratorsPtrStock_;
 	//
-	eigen_scalar_array3_t nablaqTrajectoryStockSet_;
-	state_vector_array3_t nablaQvTrajectoryStockSet_;
-	input_vector_array3_t nablaRvTrajectoryStockSet_;
+	eigen_scalar_array3_t nablaqTrajectoriesStockSet_;
+	state_vector_array3_t nablaQvTrajectoriesStockSet_;
+	input_vector_array3_t nablaRvTrajectoriesStockSet_;
 	eigen_scalar_array3_t nablaqFinalStockSet_;
 	state_vector_array3_t nablaQvFinalStockSet_;
 
-	eigen_scalar_array3_t nablasTrajectoryStockSet_;
-	state_vector_array3_t nablaSvTrajectoryStockSet_;
-	state_matrix_array3_t nablaSmTrajectoryStockSet_;
-	input_vector_array3_t nablaLvTrajectoryStockSet_;
+	eigen_scalar_array3_t nablasTrajectoriesStockSet_;
+	state_vector_array3_t nablaSvTrajectoriesStockSet_;
+	state_matrix_array3_t nablaSmTrajectoriesStockSet_;
+	input_vector_array3_t nablaLvTrajectoriesStockSet_;
 
-	state_vector_array3_t MvTrajectoryStockSet_;  // Riccati solution for sensitivity controller feedforward
-	input_vector_array3_t LvTrajectoryStockSet_;  // sensitivity controller feedforward
+	state_vector_array3_t MvTrajectoriesStockSet_;  // Riccati solution for sensitivity controller feedforward
+	input_vector_array3_t LvTrajectoriesStockSet_;  // sensitivity controller feedforward
 
-	state_vector_array3_t sensitivityStateTrajectoryStockSet_;
-	state_matrix_array3_t sensitivityInputTrajectoryStockSet_;
+	state_vector_array3_t sensitivityStateTrajectoriesStockSet_;
+	input_vector_array3_t sensitivityInputTrajectoriesStockSet_;
 
 	dynamic_vector_t nominalCostFuntionDerivative_;
 
@@ -519,27 +524,27 @@ private:
 	 ******************/
 	controller_array_t nominalControllersStock_;
 
+	std::vector<scalar_array_t> optimizedTimeTrajectoriesStock_;
+	std::vector<size_array_t> 	optimizedEventsPastTheEndIndecesStock_;
+	state_vector_array2_t		optimizedStateTrajectoriesStock_;
+	input_vector_array2_t  		optimizedInputTrajectoriesStock_;
+
 	std::vector<scalar_array_t> nominalTimeTrajectoriesStock_;
 	std::vector<size_array_t> 	nominalEventsPastTheEndIndecesStock_;
 	state_vector_array2_t		nominalStateTrajectoriesStock_;
 	input_vector_array2_t  		nominalInputTrajectoriesStock_;
 
-	std::vector<scalar_array_t> nominalPrevTimeTrajectoriesStock_;
-	std::vector<size_array_t> 	nominalPrevEventsPastTheEndIndecesStock_;
-	state_vector_array2_t		nominalPrevStateTrajectoriesStock_;
-	input_vector_array2_t  		nominalPrevInputTrajectoriesStock_;
-
-	state_matrix_array2_t 		AmTrajectoryStock_;
-	state_input_matrix_array2_t BmTrajectoryStock_;
+	state_matrix_array2_t 		AmTrajectoriesStock_;
+	state_input_matrix_array2_t BmTrajectoriesStock_;
 
 	std::vector<size_array_t>         nc1TrajectoriesStock_;  	// nc1: Number of the Type-1  active constraints
-	constraint1_vector_array2_t       EvTrajectoryStock_;
-	constraint1_state_matrix_array2_t CmTrajectoryStock_;
-	constraint1_input_matrix_array2_t DmTrajectoryStock_;
+	constraint1_vector_array2_t       EvTrajectoriesStock_;
+	constraint1_state_matrix_array2_t CmTrajectoriesStock_;
+	constraint1_input_matrix_array2_t DmTrajectoriesStock_;
 
 	std::vector<size_array_t> 			nc2TrajectoriesStock_;  // nc2: Number of the Type-2 active constraints
-	constraint2_vector_array2_t 		HvTrajectoryStock_;
-	constraint2_state_matrix_array2_t 	FmTrajectoryStock_;
+	constraint2_vector_array2_t 		HvTrajectoriesStock_;
+	constraint2_state_matrix_array2_t 	FmTrajectoriesStock_;
 	std::vector<size_array_t>			nc2FinalStock_;
 	constraint2_vector_array2_t			HvFinalStock_;
 	constraint2_state_matrix_array2_t 	FmFinalStock_;
@@ -548,33 +553,33 @@ private:
 	state_vector_array2_t		QvFinalStock_;
 	state_matrix_array2_t		QmFinalStock_;
 
-	eigen_scalar_array2_t 		qTrajectoryStock_;
-	state_vector_array2_t 		QvTrajectoryStock_;
-	state_matrix_array2_t 		QmTrajectoryStock_;
-	input_vector_array2_t		RvTrajectoryStock_;
-	input_matrix_array2_t		RmTrajectoryStock_;
-	input_state_matrix_array2_t	PmTrajectoryStock_;
+	eigen_scalar_array2_t 		qTrajectoriesStock_;
+	state_vector_array2_t 		QvTrajectoriesStock_;
+	state_matrix_array2_t 		QmTrajectoriesStock_;
+	input_vector_array2_t		RvTrajectoriesStock_;
+	input_matrix_array2_t		RmTrajectoriesStock_;
+	input_state_matrix_array2_t	PmTrajectoriesStock_;
 
-	input_matrix_array2_t RmInverseTrajectoryStock_;
-	state_matrix_array2_t AmConstrainedTrajectoryStock_;
-	state_matrix_array2_t QmConstrainedTrajectoryStock_;
-	state_vector_array2_t QvConstrainedTrajectoryStock_;
-	input_matrix_array2_t RmConstrainedTrajectoryStock_;
-	control_constraint1_matrix_array2_t DmDagerTrajectoryStock_;
-	input_vector_array2_t   	EvProjectedTrajectoryStock_;  // DmDager * Ev
-	input_state_matrix_array2_t CmProjectedTrajectoryStock_;  // DmDager * Cm
-	input_matrix_array2_t   	DmProjectedTrajectoryStock_;  // DmDager * Dm
-	state_input_matrix_array2_t BmConstrainedTrajectoryStock_;
-	input_state_matrix_array2_t PmConstrainedTrajectoryStock_;
-	input_vector_array2_t 		RvConstrainedTrajectoryStock_;
+	input_matrix_array2_t RmInverseTrajectoriesStock_;
+	state_matrix_array2_t AmConstrainedTrajectoriesStock_;
+	state_matrix_array2_t QmConstrainedTrajectoriesStock_;
+	state_vector_array2_t QvConstrainedTrajectoriesStock_;
+	input_matrix_array2_t RmConstrainedTrajectoriesStock_;
+	control_constraint1_matrix_array2_t DmDagerTrajectoriesStock_;
+	input_vector_array2_t   	EvProjectedTrajectoriesStock_;  // DmDager * Ev
+	input_state_matrix_array2_t CmProjectedTrajectoriesStock_;  // DmDager * Cm
+	input_matrix_array2_t   	DmProjectedTrajectoriesStock_;  // DmDager * Dm
+	state_input_matrix_array2_t BmConstrainedTrajectoriesStock_;
+	input_state_matrix_array2_t PmConstrainedTrajectoriesStock_;
+	input_vector_array2_t 		RvConstrainedTrajectoriesStock_;
 
-	std::vector<scalar_array_t>	SsTimeTrajectoryStock_;
-	std::vector<scalar_array_t> SsNormalizedTimeTrajectoryStock_;
+	std::vector<scalar_array_t>	SsTimeTrajectoriesStock_;
+	std::vector<scalar_array_t> SsNormalizedTimeTrajectoriesStock_;
 	std::vector<size_array_t> 	SsNormalizedEventsPastTheEndIndecesStock_;
-	state_matrix_array2_t       SmTrajectoryStock_;
-	state_vector_array2_t       SvTrajectoryStock_;
-	state_vector_array2_t       SveTrajectoryStock_;
-	eigen_scalar_array2_t 		sTrajectoryStock_;
+	state_matrix_array2_t       SmTrajectoriesStock_;
+	state_vector_array2_t       SvTrajectoriesStock_;
+	state_vector_array2_t       SveTrajectoriesStock_;
+	eigen_scalar_array2_t 		sTrajectoriesStock_;
 
 	// calculateBVPSensitivityControllerForward & calculateLQSensitivityControllerForward
 	std::vector<EigenLinearInterpolation<state_input_matrix_t>> BmFuncStock_;

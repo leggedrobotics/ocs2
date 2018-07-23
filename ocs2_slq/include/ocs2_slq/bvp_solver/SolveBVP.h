@@ -178,8 +178,8 @@ public:
 	 * @param [in] relTolODE: Relative tolerance for ode solver.
 	 */
 	void solve(
-			const scalar_array_t::cost_iterator& timeTrajectoryBeginItr,
-			const scalar_array_t::cost_iterator& timeTrajectoryEndItr,
+			const typename scalar_array_t::cost_iterator& timeTrajectoryBeginItr,
+			const typename scalar_array_t::cost_iterator& timeTrajectoryEndItr,
 			const state_vector_t& QvFinal,
 			const state_state_matrix_t& QmFinal,
 			state_state_matrix_array_t& MmTrajectory,

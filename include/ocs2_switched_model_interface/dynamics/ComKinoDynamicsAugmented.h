@@ -21,17 +21,24 @@ namespace switched_model {
     {
     public:
         EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-        using ComKinoDynamicsBase_t = ComKinoDynamicsBase<JOINT_COORD_SIZE>;
-        using kinematic_model_t = ComKinoDynamicsBase_t::kinematic_model_t;
-        using com_model_t = ComKinoDynamicsBase_t::com_model_t;
-        using ground_profile_ptr_t = ComKinoDynamicsBase_t::ground_profile_ptr_t;
-        using flat_ground_profile_t = ComKinoDynamicsBase_t::flat_ground_profile_t;
-        using flat_ground_profile_ptr_t = ComKinoDynamicsBase_t::flat_ground_profile_ptr_t;
+        using ComKinoDynamicsBase_t = ComKinoDynamicsBase<JOINT_COORD_SIZE, 12+JOINT_COORD_SIZE, 12+JOINT_COORD_SIZE,
+            SwitchedModelPlannerLogicRules<
+            JOINT_COORD_SIZE,
+            12+JOINT_COORD_SIZE+INPUTFILTER_STATE_SIZE,
+            12+JOINT_COORD_SIZE+INPUTFILTER_INPUT_SIZE>>;
+        using kinematic_model_t = typename ComKinoDynamicsBase_t::kinematic_model_t;
+        using com_model_t = typename ComKinoDynamicsBase_t::com_model_t;
+        using ground_profile_ptr_t = typename ComKinoDynamicsBase_t::ground_profile_ptr_t;
+        using flat_ground_profile_t = typename ComKinoDynamicsBase_t::flat_ground_profile_t;
+        using flat_ground_profile_ptr_t = typename ComKinoDynamicsBase_t::flat_ground_profile_ptr_t;
+        using contact_flag_t = typename ComKinoDynamicsBase_t::contact_flag_t;
 
-        using logic_rules_machine_t = SwitchedModelPlannerLogicRules<
+        using logic_rules_t = SwitchedModelPlannerLogicRules<
             JOINT_COORD_SIZE,
             12+JOINT_COORD_SIZE+INPUTFILTER_STATE_SIZE,
             12+JOINT_COORD_SIZE+INPUTFILTER_INPUT_SIZE>;
+        using logic_rules_machine_t = typename ocs2::LogicRulesMachine<12+JOINT_COORD_SIZE+INPUTFILTER_STATE_SIZE,
+            12+JOINT_COORD_SIZE+INPUTFILTER_INPUT_SIZE, logic_rules_t>;
 
         using input_filter_t = FilterDynamics<INPUTFILTER_STATE_SIZE, INPUTFILTER_INPUT_SIZE, 12+JOINT_COORD_SIZE>;
 
@@ -42,6 +49,10 @@ namespace switched_model {
                 JOINT_COORD_SIZE,
                 12+JOINT_COORD_SIZE+INPUTFILTER_STATE_SIZE,
                 12+JOINT_COORD_SIZE+INPUTFILTER_INPUT_SIZE>>;
+        using scalar_t = typename BASE::scalar_t;
+        using state_vector_t = typename BASE::state_vector_t;
+        using input_vector_t = typename BASE::input_vector_t;
+        using dynamic_vector_t = typename BASE::dynamic_vector_t;
 
         ComKinoDynamicsAugmented(const FilterSettings& filterSettings,
                                  const kinematic_model_t& kinematicModel,
@@ -67,16 +78,16 @@ namespace switched_model {
         void computeFlowMap(const scalar_t& t, const state_vector_t& x, const input_vector_t& u, state_vector_t& dxdt) override
         {
 // ComKinoDynamics = first 12 + JOINT_COORD_SIZE rows
-          ComKinoDynamicsBase_t::state_vector_t x_comKinDynamics = x.template segment<12+JOINT_COORD_SIZE>(0);
-          ComKinoDynamicsBase_t::input_vector_t u_comKinDynamics = u.template segment<12+JOINT_COORD_SIZE>(0);
-          ComKinoDynamicsBase_t::state_vector_t dxdt_comKinDynamics;
+          typename ComKinoDynamicsBase_t::state_vector_t x_comKinDynamics = x.template segment<12+JOINT_COORD_SIZE>(0);
+          typename ComKinoDynamicsBase_t::input_vector_t u_comKinDynamics = u.template segment<12+JOINT_COORD_SIZE>(0);
+          typename ComKinoDynamicsBase_t::state_vector_t dxdt_comKinDynamics;
 
           comKinoDynamics_.computeFlowMap(t, x_comKinDynamics, u_comKinDynamics, dxdt_comKinDynamics);
           dxdt.template segment<12+JOINT_COORD_SIZE>(0) = dxdt_comKinDynamics;
 
 // input filter dynamics
-          input_filter_t::state_vector_t x_inputFilter = x.template segment<INPUTFILTER_STATE_SIZE>(12+JOINT_COORD_SIZE);
-          input_filter_t::input_vector_t u_inputFilter = u.template segment<INPUTFILTER_INPUT_SIZE>(12+JOINT_COORD_SIZE);
+          typename input_filter_t::state_vector_t x_inputFilter = x.template segment<INPUTFILTER_STATE_SIZE>(12+JOINT_COORD_SIZE);
+          typename input_filter_t::input_vector_t u_inputFilter = u.template segment<INPUTFILTER_INPUT_SIZE>(12+JOINT_COORD_SIZE);
           dxdt.template segment<INPUTFILTER_STATE_SIZE>(12+JOINT_COORD_SIZE) =
               inputFilter_.getA()*x_inputFilter + inputFilter_.getB()*u_inputFilter;
         };
@@ -86,8 +97,16 @@ namespace switched_model {
         }
 
         void computeGuardSurfaces(const scalar_t& t, const state_vector_t& x, dynamic_vector_t& guardSurfacesValue) override {
-          ComKinoDynamicsBase_t::state_vector_t x_comKinDynamics = x.template segment<12+JOINT_COORD_SIZE>(0);
+          typename ComKinoDynamicsBase_t::state_vector_t x_comKinDynamics = x.template segment<12+JOINT_COORD_SIZE>(0);
           comKinoDynamics_.computeGuardSurfaces(t, x_comKinDynamics, guardSurfacesValue);
+        };
+
+        void setStanceLegs (const contact_flag_t& stanceLegs) {
+          comKinoDynamics_.setStanceLegs(stanceLegs);
+        }
+
+        void getStanceLegs (contact_flag_t& stanceLegs) {
+          comKinoDynamics_.getStanceLegs(stanceLegs);
         };
 
     private:

@@ -155,8 +155,9 @@ template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM>
 void OCS2QuadrupedInterface<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::computeSwitchedModelState(
 		const rbd_state_vector_t& rbdState,
 		state_vector_t& comkinoState) {
-
-	switchedModelStateEstimator_.estimateComkinoModelState(rbdState, comkinoState);
+	typename state_estimator_t::comkino_model_state_t comKinoState_truesize;
+	switchedModelStateEstimator_.estimateComkinoModelState(rbdState, comKinoState_truesize);
+	comkinoState.template segment<12+JOINT_COORD_SIZE>(0) =	comKinoState_truesize;
 }
 
 /******************************************************************************************************/
@@ -168,7 +169,8 @@ void OCS2QuadrupedInterface<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::computeRbdM
 		const input_vector_t& comkinoInput,
 		rbd_state_vector_t& rbdState) {
 
-	switchedModelStateEstimator_.estimateRbdModelState(comkinoState, comkinoInput.template tail<JOINT_COORD_SIZE>(),
+	switchedModelStateEstimator_.estimateRbdModelState(comkinoState.template segment<12+JOINT_COORD_SIZE>(0),
+	    comkinoInput.template segment<JOINT_COORD_SIZE>(12),
 			rbdState);
 }
 

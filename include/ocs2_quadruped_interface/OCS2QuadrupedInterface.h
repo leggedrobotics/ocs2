@@ -56,8 +56,6 @@ public:
 
 	enum
 	{
-		STATE_DIM = STATE_DIM,
-		INPUT_DIM = INPUT_DIM,
 		RBD_STATE_DIM = 12 + 2*JOINT_COORD_SIZE
 	};
 
@@ -223,7 +221,7 @@ public:
 	 * @param [in] rbdState: RBD state
 	 * @param [out] comkinoState: Switched model state.
 	 */
-	void computeSwitchedModelState(
+	virtual void computeSwitchedModelState(
 			const rbd_state_vector_t& rbdState,
 			state_vector_t& comkinoState);
 

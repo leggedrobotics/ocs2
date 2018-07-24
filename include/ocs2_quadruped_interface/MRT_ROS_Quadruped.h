@@ -36,8 +36,6 @@ public:
 	typedef typename quadruped_interface_t::rbd_state_vector_t		rbd_state_vector_t;
 
 	enum {
-		STATE_DIM = quadruped_interface_t::STATE_DIM,
-		INPUT_DIM = quadruped_interface_t::INPUT_DIM,
 		RBD_STATE_DIM = quadruped_interface_t::RBD_STATE_DIM
 	};
 

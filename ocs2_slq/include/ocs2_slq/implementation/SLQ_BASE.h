@@ -268,7 +268,7 @@ typename SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::state_vector_t
 	while (t0 < finalTime-ocs2::OCS2NumericTraits<scalar_t>::week_epsilon()) {
 
 		try {
-			// integrate controled system
+			// integrate controlled system
 			integratorsPtrStock_[workerIndex]->integrate(x0, t0, finalTime,
 					stateTrajectory, timeTrajectory,
 					settings_.minTimeStep_, settings_.absTolODE_, settings_.relTolODE_, maxNumSteps, true);
@@ -289,7 +289,7 @@ typename SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::state_vector_t
 
 	}  // end of while loop
 
-	// compute control input trajectory and concatinate to inputTrajectory
+	// compute control input trajectory and concatenate to inputTrajectory
 	for (size_t k_u=0; k_u<timeTrajectory.size(); k_u++) {
 		inputTrajectory.emplace_back( systemDynamicsPtrStock_[workerIndex]->computeInput(
 				timeTrajectory[k_u], stateTrajectory[k_u]) );
@@ -799,24 +799,21 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculateCostWorker(
 	auto eventsPastTheEndItr = eventsPastTheEndIndeces.begin();
 
 	// integrates the intermediate cost using the trapezoidal approximation method
-	scalar_t currentIntermediateCost;
-	scalar_t nextIntermediateCost;
-	for (size_t k=0; k+1<timeTrajectory.size(); k++) {
+	scalar_t prevIntermediateCost = 0.0;
+	scalar_t currIntermediateCost = 0.0;
+	for (size_t k=0; k<timeTrajectory.size(); k++) {
 
-		if (k==0) {
-			costFunctionsPtrStock_[workerIndex]->setCurrentStateAndControl(timeTrajectory[k], stateTrajectory[k], inputTrajectory[k]);
-			costFunctionsPtrStock_[workerIndex]->getIntermediateCost(currentIntermediateCost);
-		} else
-		{
-			currentIntermediateCost = nextIntermediateCost;
-		}
+		if (k>0)
+			prevIntermediateCost = currIntermediateCost;
 
-		// feed next state and control to cost function
-		costFunctionsPtrStock_[workerIndex]->setCurrentStateAndControl(timeTrajectory[k+1], stateTrajectory[k+1], inputTrajectory[k+1]);
+		// feed state and control to cost function
+		costFunctionsPtrStock_[workerIndex]->setCurrentStateAndControl(
+				timeTrajectory[k], stateTrajectory[k], inputTrajectory[k]);
 		// getIntermediateCost intermediate cost for next time step
-		costFunctionsPtrStock_[workerIndex]->getIntermediateCost(nextIntermediateCost);
+		costFunctionsPtrStock_[workerIndex]->getIntermediateCost(currIntermediateCost);
 
-		totalCost += 0.5*(currentIntermediateCost+nextIntermediateCost)*(timeTrajectory[k+1]-timeTrajectory[k]);
+		if (k>0)
+			totalCost += 0.5*(prevIntermediateCost+currIntermediateCost)*(timeTrajectory[k]-timeTrajectory[k-1]);
 
 		// terminal cost at switching times
 		if (eventsPastTheEndItr!=eventsPastTheEndIndeces.end() && k+1==*eventsPastTheEndItr) {
@@ -1425,14 +1422,23 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::solveRiccatiEquationsWorker(
 
 	// set data for Riccati equations
 	riccatiEquationsPtrStock_[workerIndex]->reset();
-	riccatiEquationsPtrStock_[workerIndex]->setData(partitioningTimes_[partitionIndex], partitioningTimes_[partitionIndex+1],
+	riccatiEquationsPtrStock_[workerIndex]->setData(
+			partitioningTimes_[partitionIndex],
+			partitioningTimes_[partitionIndex+1],
 			&nominalTimeTrajectoriesStock_[partitionIndex],
-			&AmConstrainedTrajectoryStock_[partitionIndex], &BmTrajectoryStock_[partitionIndex],
-			&qTrajectoryStock_[partitionIndex], &QvConstrainedTrajectoryStock_[partitionIndex], &QmConstrainedTrajectoryStock_[partitionIndex],
-			&RvTrajectoryStock_[partitionIndex], &RmInverseTrajectoryStock_[partitionIndex], &RmConstrainedTrajectoryStock_[partitionIndex],
+			&AmConstrainedTrajectoryStock_[partitionIndex],
+			&BmTrajectoryStock_[partitionIndex],
+			&qTrajectoryStock_[partitionIndex],
+			&QvConstrainedTrajectoryStock_[partitionIndex],
+			&QmConstrainedTrajectoryStock_[partitionIndex],
+			&RvTrajectoryStock_[partitionIndex],
+			&RmInverseTrajectoryStock_[partitionIndex],
+			&RmConstrainedTrajectoryStock_[partitionIndex],
 			&PmTrajectoryStock_[partitionIndex],
 			&nominalEventsPastTheEndIndecesStock_[partitionIndex],
-			&qFinalStock_[partitionIndex], &QvFinalStock_[partitionIndex], &QmFinalStock_[partitionIndex]);
+			&qFinalStock_[partitionIndex],
+			&QvFinalStock_[partitionIndex],
+			&QmFinalStock_[partitionIndex]);
 
 	const size_t N  = nominalTimeTrajectoriesStock_[partitionIndex].size();
 	const size_t NE = nominalEventsPastTheEndIndecesStock_[partitionIndex].size();
@@ -1551,7 +1557,8 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::solveRiccatiEquationsForNomi
 
 	// set data for Riccati equations
 	riccatiEquationsPtrStock_[workerIndex]->reset();
-	riccatiEquationsPtrStock_[workerIndex]->setData(partitioningTimes_[partitionIndex], partitioningTimes_[partitionIndex+1],
+	riccatiEquationsPtrStock_[workerIndex]->setData(
+			partitioningTimes_[partitionIndex], partitioningTimes_[partitionIndex+1],
 			&nominalTimeTrajectoriesStock_[partitionIndex],
 			&AmConstrainedTrajectoryStock_[partitionIndex], &BmTrajectoryStock_[partitionIndex],
 			&qTrajectoryStock_[partitionIndex], &QvConstrainedTrajectoryStock_[partitionIndex], &QmConstrainedTrajectoryStock_[partitionIndex],
@@ -1594,6 +1601,9 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::solveRiccatiEquationsForNomi
 		const size_t& index = nominalEventsPastTheEndIndecesStock_[partitionIndex][k];
 		SsNormalizedEventsPastTheEndIndecesStock_[partitionIndex].push_back( N-index );
 
+		// if the event took place at the end of partition only use the jump map otherwise add
+		// the reverted end index to the temporal SsNormalizedEventsPastTheEndIndeces.
+		// In turn, this will cause that later the flow map is called over a time internal.
 		if (index==N) {
 			typename riccati_equations_t::s_vector_t allSsFinalTemp = allSsFinal;
 			riccatiEquationsPtrStock_[workerIndex]->computeJumpMap(SsNormalizedTimeTrajectoryStock_[partitionIndex].front(), allSsFinalTemp, allSsFinal);
@@ -2235,236 +2245,6 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::printRolloutInfo()  {
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculateRolloutLagrangeMultiplier(
-		const std::vector<scalar_array_t>& timeTrajectoriesStock,
-		const state_vector_array2_t& stateTrajectoriesStock,
-		const std::vector<lagrange_t>& lagrangeMultiplierFunctionsStock,
-		std::vector<std::vector<Eigen::VectorXd>>& lagrangeTrajectoriesStock)  {
-
-	typedef Eigen::Matrix<double, Eigen::Dynamic, 1> constraint_vector_t;
-	typedef Eigen::Matrix<double, Eigen::Dynamic, STATE_DIM> constraint_matrix_t;
-
-	lagrangeTrajectoriesStock.resize(numPartitions_);
-
-	LinearInterpolation<constraint_vector_t, Eigen::aligned_allocator<constraint_vector_t> > vffFunc;
-	LinearInterpolation<constraint_matrix_t, Eigen::aligned_allocator<constraint_matrix_t> > vfbFunc;
-
-	for (size_t i=0; i<numPartitions_; i++) {
-
-		size_t N = timeTrajectoriesStock[i].size();
-		lagrangeTrajectoriesStock[i].resize(N);
-
-		// if the subsystem is not simulated (e.g. due to the initial time)
-		if (N==0)  continue;
-
-		vffFunc.reset();
-		vffFunc.setTimeStamp(&lagrangeMultiplierFunctionsStock[i].time_);
-		vffFunc.setData(&lagrangeMultiplierFunctionsStock[i].uff_);
-
-		vfbFunc.reset();
-		vfbFunc.setTimeStamp(&lagrangeMultiplierFunctionsStock[i].time_);
-		vfbFunc.setData(&lagrangeMultiplierFunctionsStock[i].k_);
-
-		for (size_t k=0; k<N; k++) {
-
-			constraint_vector_t vff;
-			vffFunc.interpolate(timeTrajectoriesStock[i][k], vff);
-			size_t greatestLessTimeIndex = vffFunc.getGreatestLessTimeStampIndex();
-
-			constraint_matrix_t vfb;
-			vfbFunc.interpolate(timeTrajectoriesStock[i][k], vfb, greatestLessTimeIndex);
-
-			lagrangeTrajectoriesStock[i][k] = vff + vfb*stateTrajectoriesStock[i][k];
-
-		}  // end of k loop
-	}  // end of i loop
-}
-
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculateRolloutCostate(
-		const std::vector<scalar_array_t>& timeTrajectoriesStock,
-		const state_vector_array2_t& stateTrajectoriesStock,
-		state_vector_array2_t& costateTrajectoriesStock)  {
-
-	LinearInterpolation<state_matrix_t,Eigen::aligned_allocator<state_matrix_t> > SmFunc;
-	LinearInterpolation<state_vector_t,Eigen::aligned_allocator<state_vector_t> > SvFunc;
-	LinearInterpolation<state_vector_t,Eigen::aligned_allocator<state_vector_t> > nominalStateFunc;
-
-	costateTrajectoriesStock.resize(numPartitions_);
-
-	for (size_t i=0; i<numPartitions_; i++) {
-
-		size_t N = timeTrajectoriesStock[i].size();
-		costateTrajectoriesStock[i].resize(N);
-
-		// if the subsystem is not simulated (e.g. due to the initial time)
-		if (N==0) {
-			costateTrajectoriesStock[i].clear();
-			continue;
-		}
-
-		SmFunc.reset();
-		SmFunc.setTimeStamp(&SsTimeTrajectoryStock_[i]);
-		SmFunc.setData(&SmTrajectoryStock_[i]);
-		SvFunc.reset();
-		SvFunc.setTimeStamp(&SsTimeTrajectoryStock_[i]);
-		SvFunc.setData(&SvTrajectoryStock_[i]);
-		nominalStateFunc.reset();
-		nominalStateFunc.setTimeStamp(&nominalTimeTrajectoriesStock_[i]);
-		nominalStateFunc.setData(&nominalStateTrajectoriesStock_[i]);
-
-		for (size_t k=0; k<N; k++) {
-
-			const scalar_t& t = timeTrajectoriesStock[i][k];
-
-			state_matrix_t Sm;
-			SmFunc.interpolate(t, Sm);
-			size_t greatestLessTimeStampIndex = SmFunc.getGreatestLessTimeStampIndex();
-			state_vector_t Sv;
-			SvFunc.interpolate(t, Sv, greatestLessTimeStampIndex);
-
-			state_vector_t nominalState;
-			nominalStateFunc.interpolate(t, nominalState);
-
-			costateTrajectoriesStock[i][k] = Sv + Sm*(stateTrajectoriesStock[i][k]-nominalState);
-
-		}  // end of k loop
-	}  // end of i loop
-}
-
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculateInputConstraintLagrangian(std::vector<lagrange_t>& lagrangeMultiplierFunctionsStock) {
-
-	// functions for controller and lagrane multiplier
-	LinearInterpolation<state_vector_t,Eigen::aligned_allocator<state_vector_t> >     nominalStateFunc;
-
-	LinearInterpolation<state_input_matrix_t,Eigen::aligned_allocator<state_input_matrix_t> > BmFunc;
-	LinearInterpolation<input_state_matrix_t,Eigen::aligned_allocator<input_state_matrix_t> > PmFunc;
-	LinearInterpolation<input_matrix_t,Eigen::aligned_allocator<input_matrix_t> >     RmInverseFunc;
-	LinearInterpolation<input_vector_t,Eigen::aligned_allocator<input_vector_t> >     RvFunc;
-	LinearInterpolation<input_vector_t,Eigen::aligned_allocator<input_vector_t> >     EvProjectedFunc;
-	LinearInterpolation<input_state_matrix_t,Eigen::aligned_allocator<input_state_matrix_t> > CmProjectedFunc;
-	LinearInterpolation<input_matrix_t,Eigen::aligned_allocator<input_matrix_t> >     RmFunc;
-	LinearInterpolation<control_constraint1_matrix_t,Eigen::aligned_allocator<control_constraint1_matrix_t> > DmDagerFunc;
-
-	lagrangeMultiplierFunctionsStock.resize(numPartitions_);
-
-	for (size_t i=0; i<numPartitions_; i++) {
-
-		if (i<initActivePartition_ || i>finalActivePartition_) {
-			lagrangeMultiplierFunctionsStock[i].clear();
-			continue;
-		}
-		nominalStateFunc.reset();
-		nominalStateFunc.setTimeStamp( &(nominalTimeTrajectoriesStock_[i]) );
-		nominalStateFunc.setData( &(nominalStateTrajectoriesStock_[i]) );
-
-		BmFunc.reset();
-		BmFunc.setTimeStamp( &(nominalTimeTrajectoriesStock_[i]) );
-		BmFunc.setData( &(BmTrajectoryStock_[i]) );
-
-		PmFunc.reset();
-		PmFunc.setTimeStamp( &(nominalTimeTrajectoriesStock_[i]) );
-		PmFunc.setData( &(PmTrajectoryStock_[i]) );
-
-		RmInverseFunc.reset();
-		RmInverseFunc.setTimeStamp( &(nominalTimeTrajectoriesStock_[i]) );
-		RmInverseFunc.setData( &(RmInverseTrajectoryStock_[i]) );
-
-		RvFunc.reset();
-		RvFunc.setTimeStamp( &(nominalTimeTrajectoriesStock_[i]) );
-		RvFunc.setData( &(RvTrajectoryStock_[i]) );
-
-		EvProjectedFunc.reset();
-		EvProjectedFunc.setTimeStamp( &(nominalTimeTrajectoriesStock_[i]) );
-		EvProjectedFunc.setData( &(EvProjectedTrajectoryStock_[i]) );
-
-		CmProjectedFunc.reset();
-		CmProjectedFunc.setTimeStamp( &(nominalTimeTrajectoriesStock_[i]) );
-		CmProjectedFunc.setData( &(CmProjectedTrajectoryStock_[i]) );
-
-		RmFunc.reset();
-		RmFunc.setTimeStamp( &(nominalTimeTrajectoriesStock_[i]) );
-		RmFunc.setData( &(RmTrajectoryStock_[i]) );
-
-		DmDagerFunc.reset();
-		DmDagerFunc.setTimeStamp( &(nominalTimeTrajectoriesStock_[i]) );
-		DmDagerFunc.setData( &(DmDagerTrajectoryStock_[i]) );
-
-		size_t N = SsTimeTrajectoryStock_[i].size();
-
-		lagrangeMultiplierFunctionsStock[i].time_ = SsTimeTrajectoryStock_[i];
-		lagrangeMultiplierFunctionsStock[i].k_.resize(N);
-		lagrangeMultiplierFunctionsStock[i].uff_.resize(N);
-		lagrangeMultiplierFunctionsStock[i].deltaUff_.resize(N);
-
-		for (size_t k=0; k<N; k++) {
-
-			const double& time = SsTimeTrajectoryStock_[i][k];
-			size_t greatestLessTimeStampIndex;
-
-			state_vector_t nominalState;
-			nominalStateFunc.interpolate(time, nominalState);
-			greatestLessTimeStampIndex = nominalStateFunc.getGreatestLessTimeStampIndex();
-
-			state_input_matrix_t Bm;
-			BmFunc.interpolate(time, Bm, greatestLessTimeStampIndex);
-			input_state_matrix_t Pm;
-			PmFunc.interpolate(time, Pm, greatestLessTimeStampIndex);
-			input_vector_t Rv;
-			RvFunc.interpolate(time, Rv, greatestLessTimeStampIndex);
-			input_matrix_t RmInverse;
-			RmInverseFunc.interpolate(time, RmInverse, greatestLessTimeStampIndex);
-			input_vector_t EvProjected;
-			EvProjectedFunc.interpolate(time, EvProjected, greatestLessTimeStampIndex);
-			input_state_matrix_t CmProjected;
-			CmProjectedFunc.interpolate(time, CmProjected, greatestLessTimeStampIndex);
-
-			input_state_matrix_t Lm  = RmInverse * (Pm + Bm.transpose()*SmTrajectoryStock_[i][k]);
-			input_vector_t   Lv  = RmInverse * (Rv + Bm.transpose()*SvTrajectoryStock_[i][k]);
-			input_vector_t   Lve = RmInverse * (Bm.transpose()*SveTrajectoryStock_[i][k]);
-
-			const size_t& nc1 = nc1TrajectoriesStock_[i][greatestLessTimeStampIndex];
-
-			control_constraint1_matrix_t DmDager;
-			DmDagerFunc.interpolate(time, DmDager, greatestLessTimeStampIndex);
-			input_matrix_t Rm;
-			RmFunc.interpolate(time, Rm, greatestLessTimeStampIndex);
-
-			Eigen::MatrixXd DmDagerTransRm = DmDager.leftCols(nc1).transpose() * Rm;
-
-			lagrangeMultiplierFunctionsStock[i].k_[k]   = DmDagerTransRm * (CmProjected - Lm);
-			lagrangeMultiplierFunctionsStock[i].uff_[k] = DmDagerTransRm * (EvProjected-Lv-Lve)
-					- lagrangeMultiplierFunctionsStock[i].k_[k]*nominalState;
-			lagrangeMultiplierFunctionsStock[i].deltaUff_[k] = Eigen::VectorXd::Zero(nc1);
-
-			// checking the numerical stability
-			try {
-				if (lagrangeMultiplierFunctionsStock[i].k_[k] != lagrangeMultiplierFunctionsStock[i].k_[k])
-					throw std::runtime_error("Feedback lagrangeMultiplier is unstable.");
-				if (lagrangeMultiplierFunctionsStock[i].uff_[k] != lagrangeMultiplierFunctionsStock[i].uff_[k])
-					throw std::runtime_error("Feedforward lagrangeMultiplier is unstable.");
-			}
-			catch(const std::exception& error)  {
-				std::cerr << "what(): " << error.what() << " at time " << lagrangeMultiplierFunctionsStock[i].time_[k] << " [sec]." << std::endl;
-			}
-
-		}  // end of k loop
-	}  // end of i loop
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
 void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculateMeritFunction(
 		const std::vector<scalar_array_t>& timeTrajectoriesStock,
 		const std::vector<std::vector<size_t> >& nc1TrajectoriesStock,
@@ -2526,7 +2306,7 @@ size_t SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::findActivePartitionIndex(
 				-OCS2NumericTraits<scalar_t>::week_epsilon());
 
 	if (activeSubsystemIndex < 0) {
-		std::string mesg = "Given time is less than the strat time (i.e. givenTime < partitioningTimes.front()): "
+		std::string mesg = "Given time is less than the start time (i.e. givenTime < partitioningTimes.front()): "
 				+ std::to_string(time) + " < " + std::to_string(partitioningTimes.front());
 		throw std::runtime_error(mesg);
 	}
@@ -2566,7 +2346,8 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::getValueFuntion (
 	sFunc.interpolate(time, s, greatestLessTimeStampIndex);
 
 	state_vector_t xNominal;
-	LinearInterpolation<state_vector_t,Eigen::aligned_allocator<state_vector_t> > xNominalFunc(&nominalTimeTrajectoriesStock_[activeSubsystem], &nominalStateTrajectoriesStock_[activeSubsystem]);
+	LinearInterpolation<state_vector_t,Eigen::aligned_allocator<state_vector_t> > xNominalFunc(
+			&nominalTimeTrajectoriesStock_[activeSubsystem], &nominalStateTrajectoriesStock_[activeSubsystem]);
 	xNominalFunc.interpolate(time, xNominal);
 
 	state_vector_t deltaX = state-xNominal;
@@ -2849,11 +2630,25 @@ template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
 void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::setupOptimizer(const size_t& numPartitions) {
 
 	if (numPartitions==0)
-		throw std::runtime_error("Number of Partitionings cannot be zero!");
+		throw std::runtime_error("Number of partitions cannot be zero!");
 
 	nullDesiredTimeTrajectoryStockPtr_  = std::vector<scalar_array_t>( numPartitions, scalar_array_t() );
 	nullDesiredStateTrajectoryStockPtr_ = state_vector_array2_t( numPartitions, state_vector_array_t() );
 	nullDesiredInputTrajectoryStockPtr_ = input_vector_array2_t( numPartitions, input_vector_array_t() );
+
+	/*
+	 * nominal trajectories
+	 */
+	nominalControllersStock_.resize(numPartitions);
+	nominalTimeTrajectoriesStock_.resize(numPartitions);
+	nominalEventsPastTheEndIndecesStock_.resize(numPartitions);
+	nominalStateTrajectoriesStock_.resize(numPartitions);
+	nominalInputTrajectoriesStock_.resize(numPartitions);
+
+	nominalPrevTimeTrajectoriesStock_.resize(numPartitions);
+	nominalPrevEventsPastTheEndIndecesStock_.resize(numPartitions);
+	nominalPrevStateTrajectoriesStock_.resize(numPartitions);
+	nominalPrevInputTrajectoriesStock_.resize(numPartitions);
 
 	/*
 	 * Riccati solver variables and controller update
@@ -3195,6 +2990,27 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::runIteration() {
 		printRolloutInfo();
 }
 
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
+void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::runExit()  {
+
+	// add the deleted parts of the controller
+	for (size_t i=0; i<initActivePartition_; i++)
+		nominalControllersStock_[i].swap(deletedcontrollersStock_[i]);
+
+	if (deletedcontrollersStock_[initActivePartition_].time_.empty()==false) {
+
+		nominalControllersStock_[initActivePartition_].swap(deletedcontrollersStock_[initActivePartition_]);
+
+		for (size_t k=0; k<deletedcontrollersStock_[initActivePartition_].time_.size(); k++) {
+			nominalControllersStock_[initActivePartition_].time_.push_back(deletedcontrollersStock_[initActivePartition_].time_[k]);
+			nominalControllersStock_[initActivePartition_].uff_.push_back(deletedcontrollersStock_[initActivePartition_].uff_[k]);
+			nominalControllersStock_[initActivePartition_].k_.push_back(deletedcontrollersStock_[initActivePartition_].k_[k]);
+		}  // end of k loop
+	}
+}
 
 /******************************************************************************************************/
 /******************************************************************************************************/
@@ -3360,6 +3176,12 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::run(
 	auto start = std::chrono::steady_clock::now();
 #endif
 
+	// catch the nominal trajectories for which the LQ problem is constructed and solved
+	nominalPrevTimeTrajectoriesStock_.swap(nominalTimeTrajectoriesStock_);
+	nominalPrevEventsPastTheEndIndecesStock_.swap(nominalEventsPastTheEndIndecesStock_);
+	nominalPrevStateTrajectoriesStock_.swap(nominalStateTrajectoriesStock_);
+	nominalPrevInputTrajectoriesStock_.swap(nominalInputTrajectoriesStock_);
+
 	bool computeISEs = settings_.noStateConstraints_==false ||
 			settings_.displayInfo_==true || settings_.displayShortSummary_==true;
 
@@ -3374,25 +3196,9 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::run(
 #endif
 
 	/*
-	 * solve Sequential Riccati Equations with learningRate 0.0,
-	 * calculate the nominal costate
+	 * adds the deleted controller parts
 	 */
-//	runExit();
-
-	// adding the deleted controller parts
-	for (size_t i=0; i<initActivePartition_; i++)
-		nominalControllersStock_[i].swap(deletedcontrollersStock_[i]);
-
-	if (deletedcontrollersStock_[initActivePartition_].time_.empty()==false) {
-
-		nominalControllersStock_[initActivePartition_].swap(deletedcontrollersStock_[initActivePartition_]);
-
-		for (size_t k=0; k<deletedcontrollersStock_[initActivePartition_].time_.size(); k++) {
-			nominalControllersStock_[initActivePartition_].time_.push_back(deletedcontrollersStock_[initActivePartition_].time_[k]);
-			nominalControllersStock_[initActivePartition_].uff_.push_back(deletedcontrollersStock_[initActivePartition_].uff_[k]);
-			nominalControllersStock_[initActivePartition_].k_.push_back(deletedcontrollersStock_[initActivePartition_].k_[k]);
-		}
-	}
+	runExit();
 
 	// display
 	if (settings_.displayInfo_  || settings_.displayShortSummary_)  {

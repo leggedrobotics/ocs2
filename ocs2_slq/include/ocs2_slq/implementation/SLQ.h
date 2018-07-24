@@ -285,15 +285,8 @@ void SLQ<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::runIteration()  {
 template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
 void SLQ<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::runExit()  {
 
-	// linearizing the dynamics and quadratizing the cost function along nominal trajectories
-	BASE::approximateOptimalControlProblem();
-
-	// solve Riccati equations
-	solveSequentialRiccatiEquations(BASE::SmHeuristics_, BASE::SvHeuristics_, BASE::sHeuristics_);
-
-	// calculate the nominal co-state
-	BASE::calculateRolloutCostate(BASE::nominalTimeTrajectoriesStock_, BASE::nominalStateTrajectoriesStock_, BASE::nominalcostateTrajectoriesStock_);
-
+	// run BASE routine
+	BASE::runExit();
 }
 
 

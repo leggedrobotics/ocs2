@@ -133,7 +133,7 @@ public:
 	double relTolODE_;
 	/** This value determines the maximum number of integration points per a second for ode solvers. */
 	size_t maxNumStepsPerSecond_;
-	/** The minumum integration time step */
+	/** The minimum integration time step */
 	double minTimeStep_;
 	/** This value determines the maximum permitted absolute ISE (Integral of Square Error) for constrained type-1.*/
 	double minAbsConstraint1ISE_;
@@ -173,7 +173,7 @@ public:
 	bool checkNumericalStability_;
 	/** Riccati integrator type. */
 	size_t RiccatiIntegratorType_;
-	/** Adams integrator dt. */
+	/** Adams integrator's time step. */
 	double adams_integrator_dt_;
 
 	/** Use multi threading for the SLQ algorithms. */

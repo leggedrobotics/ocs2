@@ -903,11 +903,17 @@ void SLQ_MP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::distributeWork(){
 template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
 void SLQ_MP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::runInit() {
 
+	// disable Eigen multi-threading
+	Eigen::setNbThreads(1);
+
 	//distribute work
 	distributeWork();
 
 	// run BASE routine
 	BASE::runInit();
+
+	// restore default Eigen thread number
+	Eigen::setNbThreads(0);
 }
 
 /******************************************************************************************************/
@@ -935,18 +941,11 @@ void SLQ_MP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::runExit() {
 	// disable Eigen multi-threading
 	Eigen::setNbThreads(1);
 
-	// linearizing the dynamics and quadratizing the cost function along nominal trajectories
-	BASE::approximateOptimalControlProblem();
-
-	// solve Riccati equations
-	solveSequentialRiccatiEquations(BASE::SmHeuristics_, BASE::SvHeuristics_, BASE::sHeuristics_);
+	// run BASE routine
+	BASE::runExit();
 
 	// restore default Eigen thread number
 	Eigen::setNbThreads(0);
-
-	// calculate the nominal co-state
-	BASE::calculateRolloutCostate(BASE::nominalTimeTrajectoriesStock_, BASE::nominalStateTrajectoriesStock_, BASE::nominalcostateTrajectoriesStock_);
 }
-
 
 } // namespace ocs2

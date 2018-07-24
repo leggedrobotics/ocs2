@@ -417,7 +417,7 @@ public:
 	/**
 	 * Runs the exit method SLQ.
 	 */
-	virtual void runExit()  = 0;
+	virtual void runExit();
 
 	/**
 	 * The main routine of SLQ which runs SLQ for a given initial state, initial time, and final time. In order
@@ -748,7 +748,6 @@ protected:
 	 */
 	virtual void setupOptimizer(const size_t& numPartitions);
 
-
 	/**
 	 * Computes the linearized dynamics for a particular time partition
 	 *
@@ -990,41 +989,6 @@ protected:
 			const double& deltaTime);
 
 	/**
-	 * Computes the Lagrange multiplier over the given rollout.
-	 *
-	 * @param [in] timeTrajectoriesStock: rollout simulated time steps
-	 * @param [in] stateTrajectoriesStock: rollout outputs
-	 * @param [in] lagrangeMultiplierFunctionsStock: the coefficients of the linear function for lagrangeMultiplier
-	 * @param [out] lagrangeTrajectoriesStock: lagrangeMultiplier value over the given trajectory
-	 */
-	void calculateRolloutLagrangeMultiplier(
-			const std::vector<scalar_array_t>& timeTrajectoriesStock,
-			const state_vector_array2_t& stateTrajectoriesStock,
-			const std::vector<lagrange_t>& lagrangeMultiplierFunctionsStock,
-			std::vector<std::vector<Eigen::VectorXd>>& lagrangeTrajectoriesStock);
-
-	/**
-	 * Computes the costate over the given rollout.
-	 *
-	 * @param [in] timeTrajectoriesStock: rollout simulated time steps
-	 * @param [in] stateTrajectoriesStock: rollout outputs
-	 * @param [out] costateTrajectoriesStock: costate vector for the given trajectory
-	 */
-	void calculateRolloutCostate(
-			const std::vector<scalar_array_t>& timeTrajectoriesStock,
-			const state_vector_array2_t& stateTrajectoriesStock,
-			state_vector_array2_t& costateTrajectoriesStock);
-
-	/**
-	 * Calculates the linear function approximation of the type-1 constraint Lagrangian. This method uses the following variables:
-	 * 			- constrained, linearized model
-	 * 			- constrained, quadratized cost
-	 *
-	 * @param [out] lagrangeMultiplierFunctionsStock: the linear function approximation of the type-1 constraint Lagrangian.
-	 */
-	void calculateInputConstraintLagrangian(std::vector<lagrange_t>& lagrangeMultiplierFunctionsStock);
-
-	/**
 	 * compute the merit function for given rollout
 	 *
 	 * @param [in] timeTrajectoriesStock: simulation time trajectory
@@ -1142,7 +1106,7 @@ protected:
 	scalar_t nominalConstraint2ISE_;
 	scalar_t nominalConstraint2MaxNorm_;
 
-	// the partitions OC problems
+	//
 	std::vector<typename controlled_system_base_t::Ptr> systemDynamicsPtrStock_;
 	std::vector<typename derivatives_base_t::Ptr> 		systemDerivativesPtrStock_;
 	std::vector<typename constraint_base_t::Ptr> 		systemConstraintsPtrStock_;
@@ -1160,7 +1124,12 @@ protected:
 	std::vector<size_array_t> 	nominalEventsPastTheEndIndecesStock_;
 	state_vector_array2_t		nominalStateTrajectoriesStock_;
 	input_vector_array2_t  		nominalInputTrajectoriesStock_;
-	state_vector_array2_t   	nominalcostateTrajectoriesStock_;
+
+	// Used for catching the nominal trajectories for which the LQ problem is constructed and solved before terminating run()
+	std::vector<scalar_array_t> nominalPrevTimeTrajectoriesStock_;
+	std::vector<size_array_t> 	nominalPrevEventsPastTheEndIndecesStock_;
+	state_vector_array2_t		nominalPrevStateTrajectoriesStock_;
+	input_vector_array2_t  		nominalPrevInputTrajectoriesStock_;
 
 	bool lsComputeISEs_;  // whether lineSearch routine needs to calculate ISEs
 	controller_array_t initLScontrollersStock_;	  // needed for lineSearch
@@ -1170,7 +1139,7 @@ protected:
 	state_matrix_array2_t 		AmTrajectoryStock_;
 	state_input_matrix_array2_t BmTrajectoryStock_;
 
-	std::vector<std::vector<size_t>>  nc1TrajectoriesStock_;  	// nc1: Number of the Type-1  active constraints
+	std::vector<size_array_t>         nc1TrajectoriesStock_;  	// nc1: Number of the Type-1  active constraints
 	constraint1_vector_array2_t       EvTrajectoryStock_;
 	constraint1_state_matrix_array2_t CmTrajectoryStock_;
 	constraint1_input_matrix_array2_t DmTrajectoryStock_;
@@ -1206,12 +1175,12 @@ protected:
 	input_state_matrix_array2_t PmConstrainedTrajectoryStock_;
 	input_vector_array2_t 		RvConstrainedTrajectoryStock_;
 
-	std::vector<std::shared_ptr<riccati_equations_t>> 							riccatiEquationsPtrStock_;
-	std::vector<std::shared_ptr<IntegratorBase<riccati_equations_t::S_DIM_>>> 	riccatiIntegratorPtrStock_;
-	std::vector<std::shared_ptr<error_equation_t>> 								errorEquationPtrStock_;
-	std::vector<std::shared_ptr<IntegratorBase<STATE_DIM>>> 					errorIntegratorPtrStock_;
-	std::vector<std::shared_ptr<slq_riccati_equations_t>> 							slqRiccatiEquationsPtrStock_;
-	std::vector<std::shared_ptr<IntegratorBase<slq_riccati_equations_t::S_DIM_>>> 	slqRiccatiIntegratorPtrStock_;
+	std::vector<std::shared_ptr<slq_riccati_equations_t>>                         slqRiccatiEquationsPtrStock_;
+	std::vector<std::shared_ptr<IntegratorBase<slq_riccati_equations_t::S_DIM_>>> slqRiccatiIntegratorPtrStock_;
+	std::vector<std::shared_ptr<riccati_equations_t>>                         riccatiEquationsPtrStock_;
+	std::vector<std::shared_ptr<IntegratorBase<riccati_equations_t::S_DIM_>>> riccatiIntegratorPtrStock_;
+	std::vector<std::shared_ptr<error_equation_t>>          errorEquationPtrStock_;
+	std::vector<std::shared_ptr<IntegratorBase<STATE_DIM>>> errorIntegratorPtrStock_;
 
 	std::vector<scalar_array_t>	SsTimeTrajectoryStock_;
 	std::vector<scalar_array_t> SsNormalizedTimeTrajectoryStock_;
@@ -1232,18 +1201,18 @@ protected:
 	state_matrix_t SmHeuristics_;
 
 	// functions for controller and lagrange multiplier
-	std::vector<LinearInterpolation<state_vector_t,Eigen::aligned_allocator<state_vector_t> >>  nominalStateFunc_;
-	std::vector<LinearInterpolation<input_vector_t,Eigen::aligned_allocator<input_vector_t> >> 	nominalInputFunc_;
-	std::vector<LinearInterpolation<state_input_matrix_t,Eigen::aligned_allocator<state_input_matrix_t> >> BmFunc_;
-	std::vector<LinearInterpolation<input_state_matrix_t,Eigen::aligned_allocator<input_state_matrix_t> >> PmFunc_;
-	std::vector<LinearInterpolation<input_matrix_t,Eigen::aligned_allocator<input_matrix_t>>> RmInverseFunc_;
-	std::vector<LinearInterpolation<input_vector_t,Eigen::aligned_allocator<input_vector_t>>> RvFunc_;
-	std::vector<LinearInterpolation<input_vector_t,Eigen::aligned_allocator<input_vector_t>>> EvProjectedFunc_;
-	std::vector<LinearInterpolation<input_state_matrix_t,Eigen::aligned_allocator<input_state_matrix_t> >> CmProjectedFunc_;
-	std::vector<LinearInterpolation<input_matrix_t,Eigen::aligned_allocator<input_matrix_t>>> DmProjectedFunc_;
+	std::vector<EigenLinearInterpolation<state_vector_t>>       nominalStateFunc_;
+	std::vector<EigenLinearInterpolation<input_vector_t>> 	    nominalInputFunc_;
+	std::vector<EigenLinearInterpolation<state_input_matrix_t>> BmFunc_;
+	std::vector<EigenLinearInterpolation<input_state_matrix_t>> PmFunc_;
+	std::vector<EigenLinearInterpolation<input_matrix_t>>       RmInverseFunc_;
+	std::vector<EigenLinearInterpolation<input_vector_t>>       RvFunc_;
+	std::vector<EigenLinearInterpolation<input_vector_t>>       EvProjectedFunc_;
+	std::vector<EigenLinearInterpolation<input_state_matrix_t>> CmProjectedFunc_;
+	std::vector<EigenLinearInterpolation<input_matrix_t>>       DmProjectedFunc_;
 
 	// function for Riccati error equation
-	std::vector<LinearInterpolation<state_matrix_t, Eigen::aligned_allocator<state_matrix_t>>> SmFuncs_;
+	std::vector<EigenLinearInterpolation<state_matrix_t>> SmFuncs_;
 	//
 	void LmFunc_ (const size_t& partitionIndex, const size_t& timeIndex, input_state_matrix_t& Lm) {
 		Lm = -RmInverseTrajectoryStock_[partitionIndex][timeIndex] * ( PmTrajectoryStock_[partitionIndex][timeIndex] +
@@ -1276,12 +1245,12 @@ protected:
 		nominalControllersStock_[partitionIndex].deltaUff_[timeIndex] = LvConstrained;
 	};
 
-public:
-	template <size_t GSLQP_STATE_DIM, size_t GSLQP_INPUT_DIM>
-	friend class GSLQ;
-
 private:
 	std::mutex outputDisplayGuardMutex_;
+
+public:
+	template <size_t GSLQP_STATE_DIM, size_t GSLQP_INPUT_DIM, class GSLQP_LOGIC_RULES_T>
+	friend class GSLQ;
 
 };
 

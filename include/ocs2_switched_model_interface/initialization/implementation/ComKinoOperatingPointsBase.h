@@ -46,9 +46,10 @@ void ComKinoOperatingPointsBase<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::compute
 	for (size_t i=0; i<NUM_PHASES; i++) {
 
 		// state operating point
+    stateOperatingPoints[i].setZero();
 		stateOperatingPoints[i].template head<6>() = defaultConfiguration.template head<6>();
 		stateOperatingPoints[i].template segment<6>(6).setZero();
-		stateOperatingPoints[i].template tail<JOINT_COORD_SIZE>() = defaultConfiguration.template tail<JOINT_COORD_SIZE>();
+		stateOperatingPoints[i].template segment<JOINT_COORD_SIZE>(12) = defaultConfiguration.template segment<JOINT_COORD_SIZE>(12);
 
 		// Input operating point
 		computeInputOperatingPoints(stateOperatingPoints[i], possibleStanceLegs[i], inputOperatingPoints[i]);
@@ -71,9 +72,9 @@ void ComKinoOperatingPointsBase<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::compute
 	// Input operating point
 	std::array<vector3d_t,NUM_CONTACT_POINTS_> sphericalWeightCompensationForces;
 	weightCompensationForces_.computeCartesianForces(b_R_o*o_gravityVector_, stanceLegs,
-			switchedState.template tail<JOINT_COORD_SIZE>(), sphericalWeightCompensationForces);
+			switchedState.template segment<JOINT_COORD_SIZE>(12), sphericalWeightCompensationForces);
 
-	inputOperatingPoint.template tail<JOINT_COORD_SIZE>().setZero();
+	inputOperatingPoint.setZero();
 	for (size_t j=0; j<NUM_CONTACT_POINTS_; j++)
 		inputOperatingPoint.template segment<3>(3*j) = sphericalWeightCompensationForces[j];
 

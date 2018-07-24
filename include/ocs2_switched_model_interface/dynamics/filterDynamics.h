@@ -5,8 +5,6 @@
 #ifndef OCS2_FILTERDYNAMICS_H
 #define OCS2_FILTERDYNAMICS_H
 
-#endif //OCS2_FILTERDYNAMICS_H
-
 #include <Eigen/Dense>
 
 
@@ -80,3 +78,5 @@ private:
     C_t C_;
     D_t D_;
 };
+
+#endif //OCS2_FILTERDYNAMICS_H

@@ -32,7 +32,7 @@ class SystemOperatingTrajectoriesBase
 {
 public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-	static_assert(std::is_base_of<LogicRulesBase<STATE_DIM, INPUT_DIM>, LOGIC_RULES_T>::value,
+	static_assert(std::is_base_of<LogicRulesBase<LOGIC_RULES_T::state_dim, LOGIC_RULES_T::input_dim>, LOGIC_RULES_T>::value,
 			"LOGIC_RULES_T must inherit from LogicRulesBase");
 
 	typedef std::shared_ptr<SystemOperatingTrajectoriesBase<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> > Ptr;
@@ -67,7 +67,7 @@ public:
 	 * @param [in] algorithmName: The algorithm that class this class (default not defined).
 	 */
 	virtual void initializeModel(
-			LogicRulesMachine<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>& logicRulesMachine,
+			LogicRulesMachine<LOGIC_RULES_T::state_dim, LOGIC_RULES_T::input_dim, LOGIC_RULES_T>& logicRulesMachine,
 			const size_t& partitionIndex,
 			const char* algorithmName=NULL)
 	{}

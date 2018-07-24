@@ -86,12 +86,11 @@ public:
 			const state_matrix_array_t* AmConstrainedPtr,
 			const input_state_matrix_array_t* CmConstrainedPtr,
 			const state_vector_array_t* QvPtr,
-			const input_matrix_array_t* RmPtr,
 			const state_vector_array_t* flowMapPtr,
 			const state_vector_array_t* costatePtr,
 			const constraint1_vector_array_t* lagrangianPtr,
 			const scalar_array_t* SsTimeStampPtr,
-			const input_state_matrix_array_t* KmPtr,
+			const input_state_matrix_array_t* KmConstrainedPtr,
 			const state_matrix_array_t* SmPtr)  {
 
 		BASE::resetNumFunctionCalls();
@@ -112,8 +111,6 @@ public:
 		CmConstrainedFunc_.setData(CmConstrainedPtr);
 		QvFunc_.setTimeStamp(timeStampPtr);
 		QvFunc_.setData(QvPtr);
-		RmFunc_.setTimeStamp(timeStampPtr);
-		RmFunc_.setData(RmPtr);
 
 		flowMapFunc_.setTimeStamp(timeStampPtr);
 		flowMapFunc_.setData(flowMapPtr);
@@ -122,8 +119,8 @@ public:
 		lagrangianFunc_.setTimeStamp(timeStampPtr);
 		lagrangianFunc_.setData(lagrangianPtr);
 
-		KmFunc_.setTimeStamp(SsTimeStampPtr);
-		KmFunc_.setData(KmPtr);
+		KmConstrainedFunc_.setTimeStamp(SsTimeStampPtr);
+		KmConstrainedFunc_.setData(KmConstrainedPtr);
 		SmFunc_.setTimeStamp(SsTimeStampPtr);
 		SmFunc_.setData(SmPtr);
 	}
@@ -139,13 +136,12 @@ public:
 		AmConstrainedFunc_.reset();
 		CmConstrainedFunc_.reset();
 		QvFunc_.reset();
-		RmFunc_.reset();
 
 		flowMapFunc_.reset();
 		costateFunc_.reset();
 		lagrangianFunc_.reset();
 
-		KmFunc_.reset();
+		KmConstrainedFunc_.reset();
 		SmFunc_.reset();
 	}
 
@@ -183,17 +179,18 @@ public:
 		AmConstrainedFunc_.interpolate(t, AmConstrained_, greatestLessTimeStampIndex);
 		CmConstrainedFunc_.interpolate(t, CmConstrained_, greatestLessTimeStampIndex);
 		QvFunc_.interpolate(t, Qv_, greatestLessTimeStampIndex);
-		RmFunc_.interpolate(t, Rm_, greatestLessTimeStampIndex);
 
 		flowMapFunc_.interpolate(t, flowMap_, greatestLessTimeStampIndex);
 		costateFunc_.interpolate(t, costate_, greatestLessTimeStampIndex);
 		lagrangianFunc_.interpolate(t, lagrangian_, greatestLessTimeStampIndex);
 
-		KmFunc_.interpolate(t, Km_);
-		greatestLessTimeStampIndex = KmFunc_.getGreatestLessTimeStampIndex();
+		KmConstrainedFunc_.interpolate(t, KmConstrained_);
+		greatestLessTimeStampIndex = KmConstrainedFunc_.getGreatestLessTimeStampIndex();
 		SmFunc_.interpolate(t, Sm_, greatestLessTimeStampIndex);
 
-		dMvdt_ = (AmConstrained_ - Bm_*Rm_*(CmConstrained_+Km_)).transpose()*Mv + multiplier_*(
+		// here we have used RmConstrained = (I-DmConstrained).transpose() * Rm
+		// and Km = -(I-DmConstrained) \tilde{L} - CmConstrained_
+		dMvdt_ = (AmConstrained_ + Bm_*(CmConstrained_+KmConstrained_)).transpose()*Mv + multiplier_*(
 				Qv_ + Am_.transpose()*costate_ + Cm_.transpose()*lagrangian_ + Sm_*flowMap_);
 
 		dMvdz = scalingFactor_ * dMvdt_;
@@ -213,11 +210,10 @@ private:
 	LinearInterpolation<state_matrix_t,Eigen::aligned_allocator<state_matrix_t>> AmConstrainedFunc_;
 	LinearInterpolation<input_state_matrix_t,Eigen::aligned_allocator<input_state_matrix_t>> CmConstrainedFunc_;
 	LinearInterpolation<state_vector_t,Eigen::aligned_allocator<state_vector_t>> QvFunc_;
-	LinearInterpolation<input_matrix_t,Eigen::aligned_allocator<input_matrix_t>> RmFunc_;
 	LinearInterpolation<state_vector_t,Eigen::aligned_allocator<state_vector_t>> flowMapFunc_;
 	LinearInterpolation<state_vector_t,Eigen::aligned_allocator<state_vector_t>> costateFunc_;
 	LinearInterpolation<constraint1_vector_t,Eigen::aligned_allocator<constraint1_vector_t>> lagrangianFunc_;
-	LinearInterpolation<input_state_matrix_t,Eigen::aligned_allocator<input_state_matrix_t>> KmFunc_;
+	LinearInterpolation<input_state_matrix_t,Eigen::aligned_allocator<input_state_matrix_t>> KmConstrainedFunc_;
 	LinearInterpolation<state_matrix_t,Eigen::aligned_allocator<state_matrix_t>> SmFunc_;
 
 	state_matrix_t Am_;
@@ -226,11 +222,10 @@ private:
 	state_matrix_t AmConstrained_;
 	input_state_matrix_t CmConstrained_;
 	state_vector_t Qv_;
-	input_matrix_t Rm_;
 	state_vector_t flowMap_;
 	state_vector_t costate_;
 	constraint1_vector_t lagrangian_;
-	input_state_matrix_t Km_;
+	input_state_matrix_t KmConstrained_;
 	state_matrix_t Sm_;
 
 	state_vector_t dMvdt_;

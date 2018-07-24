@@ -247,14 +247,27 @@ protected:
 	/**
 	 * Computes the costate over the given rollout.
 	 *
-	 * @param [in] timeTrajectoriesStock: rollout simulated time steps
+	 * @param [in] timeTrajectoriesStock: the inquiry rollout time
+	 * @param [in] stateTrajectoriesStock: the inquiry rollout state
 	 * @param [out] costateTrajectoriesStock: costate vector for the given trajectory
 	 * @param [in] learningRate: the learning rate.
 	 */
 	void calculateRolloutCostate(
 			const std::vector<scalar_array_t>& timeTrajectoriesStock,
+			const state_vector_array2_t& stateTrajectoriesStock,
 			state_vector_array2_t& costateTrajectoriesStock,
 			scalar_t learningRate = 0.0);
+
+	/**
+	 * Computes the nominal costate over the given time.
+	 *
+	 * @param [in] timeTrajectoriesStock: the inquiry rollout time
+	 * @param [out] costateTrajectoriesStock: costate vector for the given trajectory
+	 * @param [in] learningRate: the learning rate.
+	 */
+	void calculateRolloutCostate(
+			const std::vector<scalar_array_t>& timeTrajectoriesStock,
+			state_vector_array2_t& costateTrajectoriesStock);
 
 	/**
 	 * Calculates the linear function approximation of the state-input constraint Lagrangian.
@@ -270,8 +283,8 @@ protected:
 	/**
 	 * Computes the Lagrange multiplier of the state-input constraint over the given rollout.
 	 *
-	 * @param [in] timeTrajectoriesStock: rollout simulated time steps
-	 * @param [in] stateTrajectoriesStock: rollout outputs
+	 * @param [in] timeTrajectoriesStock: the inquiry rollout time
+	 * @param [in] stateTrajectoriesStock: the inquiry rollout state
 	 * @param [in] lagrangeMultiplierFunctionsStock: the coefficients of the linear function for lagrangeMultiplier
 	 * @param [out] lagrangeTrajectoriesStock: lagrangeMultiplier value over the given trajectory
 	 */
@@ -282,8 +295,18 @@ protected:
 			constraint1_vector_array2_t& lagrangeTrajectoriesStock);
 
 	/**
+	 * Computes the Lagrange multiplier of the state-input constraint over the given time trajectory.
+	 *
+	 * @param [in] timeTrajectoriesStock: the inquiry rollout time
+	 * @param [out] lagrangeTrajectoriesStock: lagrangeMultiplier value over the given trajectory
+	 */
+	void calculateNominalRolloutLagrangeMultiplier(
+			const std::vector<scalar_array_t>& timeTrajectoriesStock,
+			constraint1_vector_array2_t& lagrangeTrajectoriesStock);
+
+	/**
 	 * Finds the active subsystem. It output is is in the set: {0, 1, ..., #eventTimes+1}.
-	 * Thus if no event takes place it returns zero, otherwise the ith subsystem is active
+	 * Thus if no event takes place it returns zero, otherwise the i'th subsystem is active
 	 * in the time period [te_{i-1}, te_{i}].
 	 *
 	 * @param [in] partitioningTimes: a sorted event times sequence.

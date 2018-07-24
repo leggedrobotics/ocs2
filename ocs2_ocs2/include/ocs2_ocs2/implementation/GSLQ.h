@@ -299,13 +299,10 @@ void GSLQ<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::computeMissingSlqData() {
 
 	// calculate costate
 	calculateRolloutCostate(nominalTimeTrajectoriesStock_,
-			nominalCostateTrajectoriesStock_, learningRate);
+			nominalCostateTrajectoriesStock_);
 
 	// calculate Lagrangian
-	lagrange_array_t lagrangeMultiplierFunctionsStock(numPartitions_);
-	calculateInputConstraintLagrangian(lagrangeMultiplierFunctionsStock, learningRate);
-	calculateRolloutLagrangeMultiplier(
-			nominalTimeTrajectoriesStock_, nominalStateTrajectoriesStock_, lagrangeMultiplierFunctionsStock,
+	calculateNominalRolloutLagrangeMultiplier(nominalTimeTrajectoriesStock_,
 			nominalLagrangianTrajectoriesStock_);
 }
 
@@ -348,6 +345,7 @@ void GSLQ<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculateFlowMap(
 template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
 void GSLQ<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculateRolloutCostate(
 		const std::vector<scalar_array_t>& timeTrajectoriesStock,
+		const state_vector_array2_t& stateTrajectoriesStock,
 		state_vector_array2_t& costateTrajectoriesStock,
 		scalar_t learningRate /*= 0.0*/ )  {
 
@@ -392,7 +390,50 @@ void GSLQ<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculateRolloutCostate(
 			nominalStateFunc_.interpolate(t, nominalState);
 
 			costateTrajectoriesStock[i][k] = Sve + Sv
-					+ learningRate * Sm * (nominalStateTrajectoriesStock_[i][k]-nominalState);
+					+ learningRate * Sm * (stateTrajectoriesStock[i][k]-nominalState);
+
+		}  // end of k loop
+	}  // end of i loop
+}
+
+/*****************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
+void GSLQ<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculateRolloutCostate(
+		const std::vector<scalar_array_t>& timeTrajectoriesStock,
+		state_vector_array2_t& costateTrajectoriesStock)  {
+
+	costateTrajectoriesStock.resize(numPartitions_);
+
+	for (size_t i=0; i<numPartitions_; i++) {
+
+		// skip the inactive partitions
+		if (i<initActivePartition_ || i>finalActivePartition_) {
+			costateTrajectoriesStock[i].clear();
+			continue;
+		}
+
+		SvFunc_.reset();
+		SvFunc_.setTimeStamp(&SsTimeTrajectoriesStock_[i]);
+		SvFunc_.setData(&SvTrajectoriesStock_[i]);
+		SveFunc_.reset();
+		SveFunc_.setTimeStamp(&SsTimeTrajectoriesStock_[i]);
+		SveFunc_.setData(&SveTrajectoriesStock_[i]);
+
+		const size_t N = timeTrajectoriesStock[i].size();
+		costateTrajectoriesStock[i].resize(N);
+		for (size_t k=0; k<N; k++) {
+
+			const scalar_t& t = timeTrajectoriesStock[i][k];
+
+			state_vector_t Sv;
+			SvFunc_.interpolate(t, Sv);
+			size_t greatestLessTimeStampIndex = SvFunc_.getGreatestLessTimeStampIndex();
+			state_vector_t Sve;
+			SveFunc_.interpolate(t, Sve, greatestLessTimeStampIndex);
+
+			costateTrajectoriesStock[i][k] = Sve + Sv;
 
 		}  // end of k loop
 	}  // end of i loop
@@ -512,17 +553,6 @@ void GSLQ<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculateInputConstraintLagrangi
 
 			deltaUff.setZero();
 
-			// checking the numerical stability
-			try {
-				if (lagrangeMultiplierFunctionsStock[i].k_[k] != lagrangeMultiplierFunctionsStock[i].k_[k])
-					throw std::runtime_error("Feedback lagrangeMultiplier is unstable.");
-				if (lagrangeMultiplierFunctionsStock[i].uff_[k] != lagrangeMultiplierFunctionsStock[i].uff_[k])
-					throw std::runtime_error("Feedforward lagrangeMultiplier is unstable.");
-			}
-			catch(const std::exception& error)  {
-				std::cerr << "what(): " << error.what() << " at time " << lagrangeMultiplierFunctionsStock[i].time_[k] << " [sec]." << std::endl;
-			}
-
 		}  // end of k loop
 	}  // end of i loop
 }
@@ -570,6 +600,44 @@ void GSLQ<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculateRolloutLagrangeMultipli
 			vfbFunc.interpolate(timeTrajectoriesStock[i][k], vfb, greatestLessTimeIndex);
 
 			lagrangeTrajectoriesStock[i][k] = vff + vfb*stateTrajectoriesStock[i][k];
+
+		}  // end of k loop
+	}  // end of i loop
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
+void GSLQ<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculateNominalRolloutLagrangeMultiplier(
+		const std::vector<scalar_array_t>& timeTrajectoriesStock,
+		constraint1_vector_array2_t& lagrangeTrajectoriesStock)  {
+
+	lagrangeTrajectoriesStock.resize(numPartitions_);
+
+	for (size_t i=0; i<numPartitions_; i++) {
+
+		// skip the inactive partitions
+		if (i<initActivePartition_ || i>finalActivePartition_) {
+			lagrangeTrajectoriesStock[i].clear();
+			continue;
+		}
+
+		size_t N = timeTrajectoriesStock[i].size();
+		lagrangeTrajectoriesStock[i].resize(N);
+		for (size_t k=0; k<N; k++) {
+
+			const size_t& nc1 = nc1TrajectoriesStock_[i][k];
+			const state_input_matrix_t& Bm = BmTrajectoriesStock_[i][k];
+			const input_vector_t& Rv = RvTrajectoriesStock_[i][k];
+			const input_matrix_t& Rm = RmTrajectoriesStock_[i][k];
+			const input_vector_t& EvProjected = EvProjectedTrajectoriesStock_[i][k];
+			const control_constraint1_matrix_t& DmDager = DmDagerTrajectoriesStock_[i][k];
+			const state_vector_t& costate = nominalCostateTrajectoriesStock_[i][k];
+
+			lagrangeTrajectoriesStock[i][k].head(nc1) = DmDager.leftCols(nc1).transpose() * (
+					Rm*EvProjected - Rv - Bm.transpose()*costate );
+			lagrangeTrajectoriesStock[i][k].tail(DIMENSIONS::MAX_CONSTRAINT1_DIM_-nc1).setZero();
 
 		}  // end of k loop
 	}  // end of i loop
@@ -1084,13 +1152,21 @@ void GSLQ<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::solveSensitivityBVP(
 		bvpSensitivityEquationsPtrStock_[workerIndex]->reset();
 		bvpSensitivityEquationsPtrStock_[workerIndex]->resetNumFunctionCalls();
 		bvpSensitivityEquationsPtrStock_[workerIndex]->setData(
-				partitioningTimes_[i], partitioningTimes_[i+1],
+				partitioningTimes_[i],
+				partitioningTimes_[i+1],
 				&nominalTimeTrajectoriesStock_[i],
-				&AmTrajectoriesStock_[i], &BmTrajectoriesStock_[i], &CmTrajectoriesStock_[i],
-				&AmConstrainedTrajectoriesStock_[i], &CmTrajectoriesStock_[i],
-				&QvTrajectoriesStock_[i], &RmTrajectoriesStock_[i],
-				&nominalFlowMapTrajectoriesStock_[i], &nominalCostateTrajectoriesStock_[i], &nominalLagrangianTrajectoriesStock_[i],
-				&nominalControllersStock_[i].time_, &nominalControllersStock_[i].k_, &SmTrajectoriesStock_[i]);
+				&AmTrajectoriesStock_[i],
+				&BmTrajectoriesStock_[i],
+				&CmTrajectoriesStock_[i],
+				&AmConstrainedTrajectoriesStock_[i],
+				&CmProjectedTrajectoriesStock_[i],
+				&QvTrajectoriesStock_[i],
+				&nominalFlowMapTrajectoriesStock_[i],
+				&nominalCostateTrajectoriesStock_[i],
+				&nominalLagrangianTrajectoriesStock_[i],
+				&nominalControllersStock_[i].time_,
+				&nominalControllersStock_[i].k_,
+				&SmTrajectoriesStock_[i]);
 
 		// max number of steps of integration
 		const size_t maxNumSteps = settingsPtr_->maxNumStepsPerSecond_ *

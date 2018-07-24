@@ -1,5 +1,5 @@
 /*
- * A unit test
+ * A unit test for example system 0
  *
  *  Created on: Sept 20, 2016
  *      Author: farbod
@@ -12,7 +12,7 @@
 
 #include <ocs2_slq/SLQ.h>
 #include <ocs2_slq/SLQ_MP.h>
-#include <ocs2_slq/test/EXP1.h>
+#include <ocs2_slq/test/EXP0.h>
 
 #include <ocs2_ocs2/GSLQ.h>
 
@@ -24,25 +24,25 @@ enum
 	INPUT_DIM = 1
 };
 
-TEST(exp1_gslq_test, exp1_gslq_test)
+TEST(exp0_gslq_test, exp0_gslq_test)
 {
 
 	// system dynamics
-	EXP1_System systemDynamics;
+	EXP0_System systemDynamics;
 
 	// system derivatives
-	EXP1_SystemDerivative systemDerivative;
+	EXP0_SystemDerivative systemDerivative;
 
 	// system constraints
-	EXP1_SystemConstraint systemConstraint;
+	EXP0_SystemConstraint systemConstraint;
 
 	// system cost functions
-	EXP1_CostFunction systemCostFunction;
+	EXP0_CostFunction systemCostFunction;
 
 	// system operatingTrajectories
 	Eigen::Matrix<double,STATE_DIM,1> stateOperatingPoint = Eigen::Matrix<double,STATE_DIM,1>::Zero();
 	Eigen::Matrix<double,INPUT_DIM,1> inputOperatingPoint = Eigen::Matrix<double,INPUT_DIM,1>::Zero();
-	EXP1_SystemOperatingTrajectories operatingTrajectories(stateOperatingPoint, inputOperatingPoint);
+	EXP0_SystemOperatingTrajectories operatingTrajectories(stateOperatingPoint, inputOperatingPoint);
 
 
 	/******************************************************************************************************/
@@ -61,35 +61,34 @@ TEST(exp1_gslq_test, exp1_gslq_test)
 	slqSettings.useLQForDerivatives_ = true;
 
 	// switching times
-	std::vector<double> switchingTimes {0.2262, 1.0176};
-	EXP1_LogicRules logicRules(switchingTimes);
+	std::vector<double> switchingTimes {0.1897};
+	EXP0_LogicRules logicRules(switchingTimes);
 
 	double startTime = 0.0;
-	double finalTime = 3.0;
+	double finalTime = 2.0;
 
 	// partitioning times
 	std::vector<double> partitioningTimes;
 	partitioningTimes.push_back(startTime);
 	partitioningTimes.push_back(switchingTimes[0]);
-	partitioningTimes.push_back(switchingTimes[1]);
 	partitioningTimes.push_back(finalTime);
 
-	Eigen::Vector2d initState(2.0, 3.0);
+	Eigen::Vector2d initState(0.0, 2.0);
 
 	/******************************************************************************************************/
 	/******************************************************************************************************/
 	/******************************************************************************************************/
 	// GSLQ - single core version
-	SLQ<STATE_DIM, INPUT_DIM, EXP1_LogicRules> slq(
+	SLQ<STATE_DIM, INPUT_DIM, EXP0_LogicRules> slq(
 			&systemDynamics, &systemDerivative,
 			&systemConstraint, &systemCostFunction,
 			&operatingTrajectories, slqSettings, &logicRules);
 
-	GSLQ<STATE_DIM, INPUT_DIM, EXP1_LogicRules> gslq(slq);
+	GSLQ<STATE_DIM, INPUT_DIM, EXP0_LogicRules> gslq(slq);
 
 
 //	// GSLQ MP version
-//	SLQ_MP<STATE_DIM, INPUT_DIM, EXP1_LogicRules> slq_mp(
+//	SLQ_MP<STATE_DIM, INPUT_DIM, EXP0_LogicRules> slq_mp(
 //			&systemDynamics, &systemDerivative,
 //			&systemConstraint, &systemCostFunction,
 //			&operatingTrajectories, slqSettings, &logicRules);
@@ -135,7 +134,7 @@ TEST(exp1_gslq_test, exp1_gslq_test)
 //	gslq_mp.getValueFuntion(0.0, initState, totalCost_mp);
 //
 	// value function derivative for both versions
-	Eigen::Matrix<double,2,1> costFunctionDerivative, costFunctionDerivative_mp;
+	Eigen::Matrix<double,1,1> costFunctionDerivative, costFunctionDerivative_mp;
 	gslq.getCostFuntionDerivative(costFunctionDerivative);
 //	gslq_mp.getCostFuntionDerivative(costFunctionDerivative_mp);
 
@@ -143,10 +142,7 @@ TEST(exp1_gslq_test, exp1_gslq_test)
 //	/******************************************************************************************************/
 //	/******************************************************************************************************/
 //	/******************************************************************************************************/
-	std::cout << "Single core switching times are: [" << switchingTimes[0] << ", ";
-	for (size_t i=1; i<switchingTimes.size()-1; i++)
-		std::cout << switchingTimes[i] << ", ";
-	std::cout << switchingTimes.back() << "]\n";
+	std::cout << "Single core switching times are: [" << switchingTimes[0] << "]\n";
 
 //	std::cout << "MP switching times are: [" << switchingTimes_mp[0] << ", ";
 //	for (size_t i=1; i<switchingTimes_mp.size()-1; i++)

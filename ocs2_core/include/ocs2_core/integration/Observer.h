@@ -52,8 +52,7 @@ public:
      * @param [in] x: Current state.
      * @param [in] t: Current time.
      */
-	void observe(const state_vector_t& x, const scalar_t& t)
-	{
+	void observe(const state_vector_t& x, const scalar_t& t) {
 
 		// Store data
 		stateTrajectoryPtr_->push_back(x);

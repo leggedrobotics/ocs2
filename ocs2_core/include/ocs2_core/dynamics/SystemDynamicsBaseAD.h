@@ -144,7 +144,7 @@ public:
 			const std::string& libraryFolder);
 
 	/**
-	 * laods the forward model, the Jacobian model, and the Hessian model.
+	 * Loads the forward model, the Jacobian model, and the Hessian model.
 	 *
 	 * @param modelName
 	 * @param libraryFolder

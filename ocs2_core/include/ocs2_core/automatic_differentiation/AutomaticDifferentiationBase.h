@@ -93,7 +93,7 @@ protected:
 			std::vector<size_t>& rowsHessian,
 			std::vector<size_t>& colsHessian)  {
 
-		// Jacobain
+		// Jacobian
 		rowsJacobian.clear();
 		colsJacobian.clear();
 

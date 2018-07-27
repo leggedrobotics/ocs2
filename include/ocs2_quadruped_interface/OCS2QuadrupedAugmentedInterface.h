@@ -29,10 +29,12 @@ namespace switched_model {
         using filter_state_t = Eigen::Matrix<double, INPUTFILTER_STATE_SIZE, 1>;
 
         OCS2QuadrupedAugmentedInterface(
+            const FilterSettings &filterSettings,
             const kinematic_model_t &kinematicModel,
             const com_model_t &comModel,
             const std::string &pathToConfigFolder) :
-            BASE(kinematicModel, comModel, pathToConfigFolder) {};
+            BASE(kinematicModel, comModel, pathToConfigFolder),
+            filterSettings_(filterSettings) {};
 
         virtual ~OCS2QuadrupedAugmentedInterface() = default;
 

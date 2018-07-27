@@ -90,6 +90,7 @@ slq
 
   AbsTolODE                	    1e-5  ;1e-6
   RelTolODE                   	1e-3  ;1e-4
+  riccatiCoffTolODE				1.0   ;1.0
   minTimeStep					1e-3
   useMakePSD					0
   maxNumStepsPerSecond         	50000
@@ -141,7 +142,8 @@ mpc
   rosMsgTimeWindow			200	; [ms]
   adaptiveRosMsgTimeWindow	0
 
-  simulatedMPCloopTime		0	; [ms] asynchronous MPC constant delay (On hardware should ALWAYS be 0)
+  mpcDesiredFrequency       100		; [Hz] -1
+  mrtDesiredFrequency       400	    ; [Hz]  
 }
 
 

@@ -49,7 +49,7 @@ void ComKinoOperatingPointsBase<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::compute
     stateOperatingPoints[i].setZero();
 		stateOperatingPoints[i].template head<6>() = defaultConfiguration.template head<6>();
 		stateOperatingPoints[i].template segment<6>(6).setZero();
-		stateOperatingPoints[i].template segment<JOINT_COORD_SIZE>(12) = defaultConfiguration.template segment<JOINT_COORD_SIZE>(12);
+		stateOperatingPoints[i].template segment<JOINT_COORD_SIZE>(12) = defaultConfiguration.template segment<JOINT_COORD_SIZE>(6);
 
 		// Input operating point
 		computeInputOperatingPoints(stateOperatingPoints[i], possibleStanceLegs[i], inputOperatingPoints[i]);

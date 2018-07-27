@@ -155,6 +155,11 @@ void SwitchedModelCostBase<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM, LOGIC_RULES_T
 	scalar_t costR = 0.5 * uDeviation_.transpose() * R_ * uDeviation_;
 
 	L = costQ + costQintermediate + costR + copWeight_*copCost_;
+
+#ifndef NDEBUG
+	std::cerr << "==== L: t=" << Base::t_ << "====" << std::endl;
+	std::cerr << L << std::endl;
+#endif
 }
 
 /******************************************************************************************************/
@@ -169,6 +174,11 @@ void SwitchedModelCostBase<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM, LOGIC_RULES_T
 	dLdx = costQ + costQintermediate;
 
 	dLdx.template segment<12>(12) += copWeight_*devJoints_copCost_;
+
+#ifndef NDEBUG
+	std::cerr << "==== dLdx: t=" << Base::t_ << "====" << std::endl;
+	std::cerr << dLdx.transpose() << std::endl;
+#endif
 }
 
 /******************************************************************************************************/
@@ -180,6 +190,11 @@ void SwitchedModelCostBase<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM, LOGIC_RULES_T
 
 	dLdxx = Q_ + QIntermediate_ * normalization_ * std::exp(-0.5 * dtSquared_ / sigmaSquared_);
 	dLdxx.template block<12,12>(12,12) += copWeight_*hessJoints_copCost_;
+
+#ifndef NDEBUG
+			std::cerr << "==== dLdxx: t=" << Base::t_ << "====" << std::endl;
+			std::cerr << dLdxx << std::endl;
+#endif
 }
 
 /******************************************************************************************************/
@@ -191,6 +206,11 @@ void SwitchedModelCostBase<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM, LOGIC_RULES_T
 
 	dLdu = R_ * uDeviation_;
 	dLdu.template head<12>() += copWeight_*devLambda_copCost_;
+
+#ifndef NDEBUG
+			std::cerr << "==== dLdu: t=" << Base::t_ << "====" << std::endl;
+			std::cerr << dLdu.transpose() << std::endl;
+#endif
 }
 
 /******************************************************************************************************/
@@ -203,6 +223,10 @@ void SwitchedModelCostBase<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM, LOGIC_RULES_T
 	dLduu = R_;
 	dLduu.template topLeftCorner<12,12>() += copWeight_*hessLambda_copCost_;
 
+#ifndef NDEBUG
+			std::cerr << "==== dLduu: t=" << Base::t_ << "====" << std::endl;
+			std::cerr << dLduu << std::endl;
+#endif
 }
 
 /******************************************************************************************************/
@@ -214,6 +238,11 @@ void SwitchedModelCostBase<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM, LOGIC_RULES_T
 
 	dLdux.setZero();
 	dLdux.template block<12,12>(0,12) += copWeight_*devLambdaJoints_copCost_;
+
+#ifndef NDEBUG
+			std::cerr << "==== dLdux: t=" << Base::t_ << "====" << std::endl;
+			std::cerr << dLdux << std::endl;
+			#endif
 }
 
 /******************************************************************************************************/

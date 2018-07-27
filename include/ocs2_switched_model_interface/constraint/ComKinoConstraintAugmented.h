@@ -81,6 +81,7 @@ namespace switched_model {
         };
 
         void setCurrentStateAndControl(const scalar_t& t, const state_vector_t& x, const input_vector_t& u) override {
+          BASE::setCurrentStateAndControl(t, x, u);
           typename ComKinConstraintBase_t::state_vector_t x_comKinoDynamics = x.template segment<12+JOINT_COORD_SIZE>(0);
           typename ComKinConstraintBase_t::input_vector_t u_comKinDynamics = u.template segment<12+JOINT_COORD_SIZE>(0);
           comKinConstraintBase_.setCurrentStateAndControl(t, x_comKinoDynamics, u_comKinDynamics);
@@ -93,8 +94,22 @@ namespace switched_model {
         void getConstraint1(constraint1_vector_t& e) override {
           typename ComKinConstraintBase_t::constraint1_vector_t e_comKinoDynamics;
           comKinConstraintBase_.getConstraint1(e_comKinoDynamics);
-          e.template segment<12+JOINT_COORD_SIZE>(0).setZero();
+
+          // in relative coordinates: e = C_i*x_i + D_i*u_i - u
+          e.template segment<12+JOINT_COORD_SIZE>(0) =
+              inputFilter_.getC()*BASE::x_.template segment<INPUTFILTER_STATE_SIZE>(12+JOINT_COORD_SIZE) +
+              inputFilter_.getD()*BASE::u_.template segment<INPUTFILTER_INPUT_SIZE>(12+JOINT_COORD_SIZE) -
+                  BASE::u_.template segment<12+JOINT_COORD_SIZE>(0);
           e.template segment<12+JOINT_COORD_SIZE>(12+JOINT_COORD_SIZE) = e_comKinoDynamics;
+
+#ifndef NDEBUG
+          std::cerr << "==== e: t=" << BASE::t_ << "====" << std::endl;
+          std::cerr << e << std::endl;
+          std::cerr << "==== e1: t=" << BASE::t_ << "====" << std::endl;
+          std::cerr << e.template segment<12+JOINT_COORD_SIZE>(0).transpose() << std::endl;
+          std::cerr << "==== e2: t=" << BASE::t_ << "====" << std::endl;
+          std::cerr << e.template segment<12+JOINT_COORD_SIZE>(12+JOINT_COORD_SIZE).transpose() << std::endl;
+#endif
         }
 
         size_t numStateInputConstraint(const scalar_t& time) override {
@@ -121,7 +136,7 @@ namespace switched_model {
         }
 
         size_t numStateOnlyFinalConstraint(const scalar_t& time) override {
-          comKinConstraintBase_.numStateOnlyFinalConstraint(time);
+          return comKinConstraintBase_.numStateOnlyFinalConstraint(time);
         }
 
         /*
@@ -137,6 +152,19 @@ namespace switched_model {
           C.template block<12+JOINT_COORD_SIZE, INPUTFILTER_STATE_SIZE>(0, 12+JOINT_COORD_SIZE) = inputFilter_.getC();
           C.template block<12+JOINT_COORD_SIZE, 12+JOINT_COORD_SIZE>(12+JOINT_COORD_SIZE, 0) = C_comKinoDynamics;
           C.template block<12+JOINT_COORD_SIZE, INPUTFILTER_STATE_SIZE>(12+JOINT_COORD_SIZE, 12+JOINT_COORD_SIZE).setZero();
+
+#ifndef NDEBUG
+          std::cerr << "==== C: t=" << BASE::t_ << "====" << std::endl;
+          std::cerr << C << std::endl;
+          std::cerr << "==== C11: t=" << BASE::t_ << "====" << std::endl;
+          std::cerr << C.template block<12+JOINT_COORD_SIZE, 12+JOINT_COORD_SIZE>(0, 0) << std::endl;
+          std::cerr << "==== C12: t=" << BASE::t_ << "====" << std::endl;
+          std::cerr << C.template block<12+JOINT_COORD_SIZE, INPUTFILTER_STATE_SIZE>(0, 12+JOINT_COORD_SIZE) << std::endl;
+          std::cerr << "==== C21: t=" << BASE::t_ << "====" << std::endl;
+          std::cerr << C.template block<12+JOINT_COORD_SIZE, 12+JOINT_COORD_SIZE>(12+JOINT_COORD_SIZE, 0) << std::endl;
+          std::cerr << "==== C22: t=" << BASE::t_ << "====" << std::endl;
+          std::cerr << C.template block<12+JOINT_COORD_SIZE, INPUTFILTER_STATE_SIZE>(12+JOINT_COORD_SIZE, 12+JOINT_COORD_SIZE) << std::endl;
+#endif
         }
 
         /*
@@ -152,6 +180,19 @@ namespace switched_model {
           D.template block<12+JOINT_COORD_SIZE, INPUTFILTER_INPUT_SIZE>(0, 12+JOINT_COORD_SIZE) = inputFilter_.getD();
           D.template block<12+JOINT_COORD_SIZE, 12+JOINT_COORD_SIZE>(12+JOINT_COORD_SIZE, 0) = D_comKinoDynamics;
           D.template block<12+JOINT_COORD_SIZE, INPUTFILTER_INPUT_SIZE>(12+JOINT_COORD_SIZE, 12+JOINT_COORD_SIZE).setZero();
+
+#ifndef NDEBUG
+          std::cerr << "==== D: t=" << BASE::t_ << "====" << std::endl;
+          std::cerr << D << std::endl;
+          std::cerr << "==== D11: t=" << BASE::t_ << "====" << std::endl;
+          std::cerr << D.template block<12+JOINT_COORD_SIZE, 12+JOINT_COORD_SIZE>(0, 0) << std::endl;
+          std::cerr << "==== D12: t=" << BASE::t_ << "====" << std::endl;
+          std::cerr << D.template block<12+JOINT_COORD_SIZE, INPUTFILTER_INPUT_SIZE>(0, 12+JOINT_COORD_SIZE) << std::endl;
+          std::cerr << "==== D21: t=" << BASE::t_ << "====" << std::endl;
+          std::cerr << D.template block<12+JOINT_COORD_SIZE, 12+JOINT_COORD_SIZE>(12+JOINT_COORD_SIZE, 0) << std::endl;
+          std::cerr << "==== D22: t=" << BASE::t_ << "====" << std::endl;
+          std::cerr << D.template block<12+JOINT_COORD_SIZE, INPUTFILTER_INPUT_SIZE>(12+JOINT_COORD_SIZE, 12+JOINT_COORD_SIZE) << std::endl;
+#endif
         }
 
         void getConstraint2DerivativesState(constraint2_state_matrix_t& F) override

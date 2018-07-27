@@ -76,6 +76,13 @@ namespace switched_model {
 
         void setCurrentStateAndControl(const scalar_t& t, const state_vector_t& x, const input_vector_t& u) override
         {
+          BASE::setCurrentStateAndControl(t, x, u);
+#ifndef NDEBUG
+          std::cout << "==== x: t=" << BASE::t_ << "====" << std::endl;
+          std::cout << BASE::x_.transpose() << std::endl;
+          std::cout << "==== u: t=" << BASE::t_ << "====" << std::endl;
+          std::cout << BASE::u_.transpose() << std::endl;
+#endif
           typename ComKinoDynamicsDerivativeBase_t::state_vector_t x_comKinoDynamics = x.template segment<12+JOINT_COORD_SIZE>(0);
           typename ComKinoDynamicsDerivativeBase_t::input_vector_t u_comKinDynamics = u.template segment<12+JOINT_COORD_SIZE>(0);
           comKinoDynamicsDerivativeBase_.setCurrentStateAndControl(t, x_comKinoDynamics, u_comKinDynamics);
@@ -95,6 +102,10 @@ namespace switched_model {
           // Off diagonal coupling blocks
           A.template block<12+JOINT_COORD_SIZE, INPUTFILTER_STATE_SIZE>(0, 12+JOINT_COORD_SIZE).setZero();
           A.template block<INPUTFILTER_STATE_SIZE, 12+JOINT_COORD_SIZE>(12+JOINT_COORD_SIZE, 0).setZero();
+#ifndef NDEBUG
+          std::cout << "==== A: t=" << BASE::t_ << "====" << std::endl;
+          std::cout << A << std::endl;
+#endif
         };
 
         void getFlowMapDerivativeInput(state_input_matrix_t& B)  override
@@ -111,6 +122,11 @@ namespace switched_model {
           // Off diagonal coupling blocks
           B.template block<12+JOINT_COORD_SIZE, INPUTFILTER_INPUT_SIZE>(0, 12+JOINT_COORD_SIZE).setZero();
           B.template block<INPUTFILTER_STATE_SIZE, 12+JOINT_COORD_SIZE>(12+JOINT_COORD_SIZE, 0).setZero();
+
+#ifndef NDEBUG
+          std::cout << "==== B: t=" << BASE::t_ << "====" << std::endl;
+          std::cout << B << std::endl;
+#endif
         }
 
         void setStanceLegs (const contact_flag_t& stanceLegs) {

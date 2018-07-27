@@ -52,8 +52,10 @@ public:
 
 	/**
 	 * Default constructor
+	 *
+	 * @param [in] dynamicLibraryIsCompiled: Whether a library is already complied.
 	 */
-	CostFunctionBaseAD();
+	CostFunctionBaseAD(const bool& dynamicLibraryIsCompiled = false);
 
 	/**
 	 * Copy constructor
@@ -129,7 +131,14 @@ public:
 	 *
 	 * @return true if the dynamic library is compiled
 	 */
-	bool isDynamicLibraryCompiled() const;
+	const bool& isDynamicLibraryCompiled() const;
+
+	/**
+	 * Whether or not the dynamic library is compiled.
+	 *
+	 * @return true if the dynamic library is compiled
+	 */
+	bool& isDynamicLibraryCompiled();
 
 	/**
 	 * Gets model name.
@@ -254,9 +263,10 @@ protected:
 	/**
 	 * Loads the forward model, the Jacobian model, and the Hessian model.
 	 *
-	 * @param [in] verbose: display information
+	 * @param [in] verbose: display information.
+	 * @return true if it successfully loads the library.
 	 */
-	void loadModels(bool verbose);
+	bool loadModels(bool verbose);
 
 private:
 	bool dynamicLibraryIsCompiled_;

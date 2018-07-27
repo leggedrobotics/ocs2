@@ -54,9 +54,11 @@ public:
 	typedef typename BASE::dynamic_input_matrix_t	dynamic_input_matrix_t;
 
 	/**
-	 * Default constructor
+	 * Default constructor.
+	 *
+	 * @param [in] dynamicLibraryIsCompiled: Whether a library is already complied.
 	 */
-	SystemDynamicsBaseAD();
+	SystemDynamicsBaseAD(const bool& dynamicLibraryIsCompiled = false);
 
 	/**
 	 * Copy constructor
@@ -159,7 +161,14 @@ public:
 	 *
 	 * @return true if the dynamic library is compiled
 	 */
-	bool isDynamicLibraryCompiled() const;
+	bool& isDynamicLibraryCompiled();
+
+	/**
+	 * Whether or not the dynamic library is compiled.
+	 *
+	 * @return true if the dynamic library is compiled
+	 */
+	const bool& isDynamicLibraryCompiled() const;
 
 	/**
 	 * Gets model name.
@@ -363,8 +372,9 @@ protected:
 	 * Loads the forward model, the Jacobian model, and the Hessian model.
 	 *
 	 * @param [in] verbose: display information
+	 * @return true if it successfully loads the library.
 	 */
-	void loadModels(bool verbose);
+	bool loadModels(bool verbose);
 
 private:
 	bool dynamicLibraryIsCompiled_;

@@ -10,9 +10,10 @@ namespace ocs2{
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <class Derived, size_t STATE_DIM, size_t INPUT_DIM, class logic_rules_template_t>
-ConstraintBaseAD<Derived, STATE_DIM, INPUT_DIM, logic_rules_template_t>::ConstraintBaseAD()
+ConstraintBaseAD<Derived, STATE_DIM, INPUT_DIM, logic_rules_template_t>::ConstraintBaseAD(
+		const bool& dynamicLibraryIsCompiled /*= false*/)
 	: BASE()
-	, dynamicLibraryIsCompiled_(false)
+	, dynamicLibraryIsCompiled_(dynamicLibraryIsCompiled)
 	, modelName_("")
 	, libraryFolder_("")
 {};
@@ -21,7 +22,8 @@ ConstraintBaseAD<Derived, STATE_DIM, INPUT_DIM, logic_rules_template_t>::Constra
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <class Derived, size_t STATE_DIM, size_t INPUT_DIM, class logic_rules_template_t>
-ConstraintBaseAD<Derived, STATE_DIM, INPUT_DIM, logic_rules_template_t>::ConstraintBaseAD(const ConstraintBaseAD& rhs)
+ConstraintBaseAD<Derived, STATE_DIM, INPUT_DIM, logic_rules_template_t>::ConstraintBaseAD(
+		const ConstraintBaseAD& rhs)
 
 	: BASE(rhs)
 	, dynamicLibraryIsCompiled_(rhs.dynamicLibraryIsCompiled_)
@@ -71,17 +73,30 @@ void ConstraintBaseAD<Derived, STATE_DIM, INPUT_DIM, logic_rules_template_t>::lo
 	modelName_ = modelName;
 	libraryFolder_ = libraryFolder;
 
-	if (dynamicLibraryIsCompiled_==true)
-		loadModels(false);
-	else
-		std::cerr << "WARNING: The dynamicLibraryIsCompiled_ flag is false." << std::endl;
+	if (dynamicLibraryIsCompiled_==true) {
+		bool libraryLoaded = loadModels(false);
+		if (libraryLoaded==false)
+			throw std::runtime_error("Constraint library is not found!");
+
+	} else {
+		throw std::runtime_error("Constraint library has not been compiled!");
+	}
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <class Derived, size_t STATE_DIM, size_t INPUT_DIM, class logic_rules_template_t>
-bool ConstraintBaseAD<Derived, STATE_DIM, INPUT_DIM, logic_rules_template_t>::isDynamicLibraryCompiled() const {
+const bool& ConstraintBaseAD<Derived, STATE_DIM, INPUT_DIM, logic_rules_template_t>::isDynamicLibraryCompiled() const {
+
+	return dynamicLibraryIsCompiled_;
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+template <class Derived, size_t STATE_DIM, size_t INPUT_DIM, class logic_rules_template_t>
+bool& ConstraintBaseAD<Derived, STATE_DIM, INPUT_DIM, logic_rules_template_t>::isDynamicLibraryCompiled() {
 
 	return dynamicLibraryIsCompiled_;
 }
@@ -312,14 +327,16 @@ void ConstraintBaseAD<Derived, STATE_DIM, INPUT_DIM, logic_rules_template_t>::cr
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <class Derived, size_t STATE_DIM, size_t INPUT_DIM, class logic_rules_template_t>
-void ConstraintBaseAD<Derived, STATE_DIM, INPUT_DIM, logic_rules_template_t>::loadModels(
+bool ConstraintBaseAD<Derived, STATE_DIM, INPUT_DIM, logic_rules_template_t>::loadModels(
 		bool verbose) {
 
-	stateInputADInterfacePtr_->loadModels(modelName_+"_stateInput", libraryFolder_, verbose);
+	bool stateInputLoaded = stateInputADInterfacePtr_->loadModels(modelName_+"_stateInput", libraryFolder_, verbose);
 
-	stateOnlyADInterfacePtr_->loadModels(modelName_+"_stateOnly", libraryFolder_, verbose);
+	bool stateOnlyLoaded = stateOnlyADInterfacePtr_->loadModels(modelName_+"_stateOnly", libraryFolder_, verbose);
 
-	stateOnlyFinalADInterfacePtr_->loadModels(modelName_+"_stateOnlyFinal", libraryFolder_, verbose);
+	bool stateOnlyFinalLoaded = stateOnlyFinalADInterfacePtr_->loadModels(modelName_+"_stateOnlyFinal", libraryFolder_, verbose);
+
+	return (stateInputLoaded && stateOnlyLoaded && stateOnlyFinalLoaded);
 }
 
 } // namespace ocs2

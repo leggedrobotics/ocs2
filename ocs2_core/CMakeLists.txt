@@ -62,32 +62,38 @@ endif()
 ## to see the summary of unit test results run
 ## $ catkin_test_results ../../../build/ocs2_core
 
-catkin_add_gtest(integration_unittest 
+catkin_add_gtest(integration_unittest
   test/IntegrationTest.cpp)
 target_link_libraries(integration_unittest
   ${catkin_LIBRARIES}
   ${Boost_LIBRARIES}
-) 
+)
 
-catkin_add_gtest(findIndex_unittest 
+catkin_add_gtest(findIndex_unittest
   test/testFindIndex.cpp)
 target_link_libraries(findIndex_unittest
   ${catkin_LIBRARIES}
   ${Boost_LIBRARIES}
 )
 
-catkin_add_gtest(logic_rules_machin_unittest 
+catkin_add_gtest(logic_rules_machin_unittest
   test/testLogicRulesMachine.cpp)
 target_link_libraries(logic_rules_machin_unittest
   ${catkin_LIBRARIES}
   ${Boost_LIBRARIES}
 )
 
-catkin_add_gtest(cppadcg_unittest 
+catkin_add_gtest(cppadcg_unittest
   test/testCppADCG.cpp)
 target_link_libraries(cppadcg_unittest
   ${Boost_LIBRARIES}
   ${catkin_LIBRARIES} -lm -ldl
 )
+
+catkin_add_gtest(test_transferfunctionbase
+        test/testTransferfunctionBase.cpp)
+target_link_libraries(test_transferfunctionbase
+        ${catkin_LIBRARIES}
+        )
 
 

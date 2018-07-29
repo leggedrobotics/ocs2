@@ -1,7 +1,7 @@
-/*
+/**
  * SLQ_MP.h
  *
- * Multicore version of SLQ
+ * Multi-thread implementation of SLQ
  *
  *  Created on: Jun 20, 2016
  *      Author: farbod
@@ -14,6 +14,8 @@
 #include <thread>
 #include <atomic>
 #include <condition_variable>
+
+#include <ocs2_core/misc/SetThreadPriority.h>
 
 #include "ocs2_slq/SLQ_BASE.h"
 
@@ -157,8 +159,10 @@ public:
 	 * @param [in] SmFinal: The final Sm for Riccati equation.
 	 * @param [in] SvFinal: The final Sv for Riccati equation.
 	 * @param [in] sFinal: The final s for Riccati equation.
+	 *
+	 * @return average time step
 	 */
-	void solveSequentialRiccatiEquations(
+	scalar_t solveSequentialRiccatiEquations(
 			const state_matrix_t& SmFinal,
 			const state_vector_t& SvFinal,
 			const eigen_scalar_t& sFinal) override;

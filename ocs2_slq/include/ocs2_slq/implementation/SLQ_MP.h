@@ -61,64 +61,12 @@ SLQ_MP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::~SLQ_MP()  {
 template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
 void SLQ_MP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::lineSearch(bool computeISEs) {
 
-	BASE::lsComputeISEs_ = computeISEs;
-
-	// display
-	if (BASE::settings_.displayInfo_) {
-		scalar_t maxDeltaUffNorm, maxDeltaUeeNorm;
-		BASE::calculateControllerUpdateMaxNorm(maxDeltaUffNorm, maxDeltaUeeNorm);
-
-		std::cerr << "max feedforward update norm:  " << maxDeltaUffNorm << std::endl;
-		std::cerr << "max type-1 error update norm: " << maxDeltaUeeNorm << std::endl;
-	}
-
 	// perform one rollout while the input correction for the type-1 constraint is considered.
-	BASE::rolloutTrajectory(BASE::initTime_, BASE::initState_, BASE::finalTime_,
-			BASE::partitioningTimes_, BASE::nominalControllersStock_,
-			BASE::nominalTimeTrajectoriesStock_, BASE::nominalEventsPastTheEndIndecesStock_,
-			BASE::nominalStateTrajectoriesStock_, BASE::nominalInputTrajectoriesStock_);
+	BASE::lineSearchBase(computeISEs);
 
-	if (BASE::lsComputeISEs_==true) {
-		// calculate constraint
-		BASE::calculateRolloutConstraints(BASE::nominalTimeTrajectoriesStock_, BASE::nominalEventsPastTheEndIndecesStock_,
-				BASE::nominalStateTrajectoriesStock_, BASE::nominalInputTrajectoriesStock_,
-				BASE::nc1TrajectoriesStock_, BASE::EvTrajectoryStock_,BASE::nc2TrajectoriesStock_,
-				BASE::HvTrajectoryStock_, BASE::nc2FinalStock_, BASE::HvFinalStock_);
-		// calculate constraint type-1 ISE and maximum norm
-		BASE::nominalConstraint1MaxNorm_ = BASE::calculateConstraintISE(
-				BASE::nominalTimeTrajectoriesStock_, BASE::nc1TrajectoriesStock_, BASE::EvTrajectoryStock_,
-				BASE::nominalConstraint1ISE_);
-		// calculates type-2 constraint ISE and maximum norm
-		BASE::nominalConstraint2MaxNorm_ = BASE::calculateConstraintISE(
-				BASE::nominalTimeTrajectoriesStock_, BASE::nc2TrajectoriesStock_, BASE::HvTrajectoryStock_,
-				BASE::nominalConstraint2ISE_);
-	} else {
-		BASE::nominalConstraint1ISE_ = BASE::nominalConstraint1MaxNorm_ = 0.0;
-		BASE::nominalConstraint2ISE_ = BASE::nominalConstraint2MaxNorm_ = 0.0;
-	}
-
-	// calculates cost
-	BASE::calculateRolloutCost(BASE::nominalTimeTrajectoriesStock_, BASE::nominalEventsPastTheEndIndecesStock_,
-			BASE::nominalStateTrajectoriesStock_, BASE::nominalInputTrajectoriesStock_,
-			BASE::nominalConstraint2ISE_, BASE::nc2FinalStock_, BASE::HvFinalStock_,
-			BASE::nominalTotalCost_);
-
+	BASE::lsComputeISEs_ = computeISEs;
 	baselineTotalCost_ = BASE::nominalTotalCost_;
 	BASE::learningRateStar_ = 0.0;	// input correction learning rate is zero
-
-	// display
-	if (BASE::settings_.displayInfo_)  {
-		std::cerr << "\t learningRate 0.0 \t cost: " << BASE::nominalTotalCost_ << " \t constraint ISE: " << BASE::nominalConstraint1ISE_ << std::endl;
-		std::cerr << "\t final constraint type-2:  ";
-		size_t itr = 0;
-		for(size_t i=BASE::initActivePartition_; i<=BASE::finalActivePartition_; i++)
-			for (size_t k=0; k<BASE::nc2FinalStock_[i].size(); k++) {
-				std::cerr << "[" << itr  << "]: " << BASE::HvFinalStock_[i][k].head(BASE::nc2FinalStock_[i][k]).transpose() << ",  ";
-				itr++;
-			}
-		std::cerr << std::endl;
-	}
-
 	BASE::initLScontrollersStock_ = BASE::nominalControllersStock_;  // this will serve to init the workers
 
 	subsystemProcessed_ = 0; // not required for linesearch, but assign to not let it dangle around
@@ -153,7 +101,7 @@ void SLQ_MP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::lineSearch(bool computeISEs) {
 
 	workerTask_ = IDLE;
 
-	// revitalize all integrators
+	// revitalize all integrator
 	event_handler_t::DeactivateKillIntegration();
 
 	// clear the feedforward increments
@@ -177,6 +125,7 @@ void SLQ_MP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::launchWorkerThreads()
 	workerThreads_.clear();
 	for (size_t i=0; i<BASE::settings_.nThreads_; i++) {
 		workerThreads_.push_back(std::thread(&SLQ_MP::threadWork, this, i));
+		SetThreadPriority(99, workerThreads_[i]);
 	}
 }
 
@@ -299,7 +248,7 @@ void SLQ_MP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::approximatePartitionLQ(const s
 
 	if (N > 0) {
 
-		// dispaly
+		// display
 		if(BASE::settings_.debugPrintMP_)
 			std::cerr << "[MP]: Activating threads to perform LQ approximation for partition " + std::to_string(partitionIndex) << std::endl;
 
@@ -312,7 +261,7 @@ void SLQ_MP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::approximatePartitionLQ(const s
 		workerWakeUpCondition_.notify_all();
 		lock.unlock();
 
-		// dispaly
+		// display
 		if(BASE::settings_.debugPrintMP_)
 			BASE::printString("[MP]: Waiting until threads finish LQ approximation for partition " + std::to_string(partitionIndex));
 
@@ -522,7 +471,7 @@ void SLQ_MP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::executeLineSearchWorker(size_t
 		// break condition
 		if (learningRate<BASE::settings_.minLearningRateGSLQP_ || alphaBestFound_.load()==true) {
 
-			// dispaly
+			// display
 			if(BASE::settings_.debugPrintMP_)  {
 				if (alphaBestFound_.load()==true)
 					BASE::printString("[MP]: [Thread " + std::to_string(threadId)
@@ -535,7 +484,7 @@ void SLQ_MP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::executeLineSearchWorker(size_t
 			break;
 		}
 
-		// dispaly
+		// display
 		if(BASE::settings_.debugPrintMP_)
 			BASE::printString("[MP]: [Thread " + std::to_string(threadId) + "]: Trying learningRate " + std::to_string(learningRate));
 
@@ -666,7 +615,8 @@ void SLQ_MP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::executeLineSearchWorker(size_t
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void SLQ_MP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::solveSequentialRiccatiEquations(
+typename SLQ_MP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::scalar_t
+	SLQ_MP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::solveSequentialRiccatiEquations(
 		const state_matrix_t& SmFinal,
 		const state_vector_t& SvFinal,
 		const eigen_scalar_t& sFinal){
@@ -675,7 +625,7 @@ void SLQ_MP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::solveSequentialRiccatiEquation
 
 	BASE::SmFinalStock_[BASE::finalActivePartition_]  = SmFinal;
 	BASE::SvFinalStock_[BASE::finalActivePartition_]  = SvFinal;
-	BASE::SveFinalStock_[BASE::finalActivePartition_] = state_vector_t::Zero();
+	BASE::SveFinalStock_[BASE::finalActivePartition_].setZero();
 	BASE::sFinalStock_[BASE::finalActivePartition_]   = sFinal;
 
 	// solve it sequentially for the first time when useParallelRiccatiSolverFromInitItr_ is false
@@ -755,6 +705,13 @@ void SLQ_MP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::solveSequentialRiccatiEquation
 		BASE::printString("----------------------------------");
 	}
 
+	// total number of call
+	size_t numSteps = 0;
+	for (size_t i=BASE::initActivePartition_; i<=BASE::finalActivePartition_; i++)
+		numSteps += BASE::SsTimeTrajectoryStock_[i].size();
+
+	// average time step
+	return (BASE::finalTime_-BASE::initTime_)/(scalar_t)numSteps;
 }
 
 /******************************************************************************************************/
@@ -763,11 +720,10 @@ void SLQ_MP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::solveSequentialRiccatiEquation
 template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
 void SLQ_MP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::executeRiccatiSolver(size_t threadId) {
 
-	for (int i = endingIndicesRiccatiWorker_[threadId]; i >= startingIndicesRiccatiWorker_[threadId]; i--) {
+	for (int i = endingIndicesRiccatiWorker_[threadId]; i>=startingIndicesRiccatiWorker_[threadId]; i--) {
 
 		if(BASE::settings_.debugPrintMP_)
 			BASE::printString("[MP]: Thread " + std::to_string(threadId) + " processing subsystem " + std::to_string(i));
-
 
 		// for inactive subsystems
 		if (i<(signed)BASE::initActivePartition_ || i>(signed)BASE::finalActivePartition_) {
@@ -807,7 +763,7 @@ void SLQ_MP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::executeRiccatiSolver(size_t th
 		// unlock data
 		dataReadLock.unlock();
 
-		// modify the end subsystem final values based on the catched values for asynchronous
+		// modify the end subsystem final values based on the cached values for asynchronous run
 		if (i==endingIndicesRiccatiWorker_[threadId] && i<BASE::finalActivePartition_) {
 			const state_vector_t& x = BASE::nominalStateTrajectoriesStock_[i+1].front();
 			SvFinal += SmFinal*(x-xFinal);
@@ -889,7 +845,7 @@ void SLQ_MP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::distributeWork(){
 		std::cerr << "Backward path work distribution:" << std::endl;
 		for (size_t i=0; i<N; i++){
 			std::cerr << "start: " << startingIndicesRiccatiWorker_[i] << "\t";
-			std::cout << "end: " << endingIndicesRiccatiWorker_[i]  << "\t";
+			std::cerr << "end: " << endingIndicesRiccatiWorker_[i]  << "\t";
 			std::cerr << "num: " << endingIndicesRiccatiWorker_[i]-startingIndicesRiccatiWorker_[i]+1 << std::endl;;
 		}
 		std::cerr << std::endl;

@@ -24,7 +24,7 @@ namespace ocs2{
 
 
 /**
- * Euler steppers
+ * Euler stepper
  */
 template <int STATE_DIM>
 using euler_t = boost::numeric::odeint::euler<
@@ -35,7 +35,7 @@ using euler_t = boost::numeric::odeint::euler<
 		boost::numeric::odeint::vector_space_algebra >;
 
 /**
- * Modified_Midpoint steppers
+ * Modified_Midpoint stepper
  */
 template <int STATE_DIM>
 using modified_midpoint_t = boost::numeric::odeint::modified_midpoint<
@@ -46,7 +46,7 @@ using modified_midpoint_t = boost::numeric::odeint::modified_midpoint<
 		boost::numeric::odeint::vector_space_algebra >;
 
 /**
- * 4th order Runge_Kutta steppers
+ * 4th order Runge_Kutta stepper
  */
 template <int STATE_DIM>
 using runge_kutta_4_t = boost::numeric::odeint::runge_kutta4<
@@ -57,7 +57,7 @@ using runge_kutta_4_t = boost::numeric::odeint::runge_kutta4<
 		boost::numeric::odeint::vector_space_algebra >;
 
 /**
- * 5th order Runge_Kutta_Dopri steppers
+ * 5th order Runge_Kutta_Dopri stepper
  */
 template <int STATE_DIM>
 using runge_kutta_dopri5_t = boost::numeric::odeint::runge_kutta_dopri5 <
@@ -68,14 +68,14 @@ using runge_kutta_dopri5_t = boost::numeric::odeint::runge_kutta_dopri5 <
 		boost::numeric::odeint::vector_space_algebra>;
 
 /**
- * Dense_output Runge_Kutta steppers
+ * Dense_output Runge_Kutta stepper
  */
 template <int STATE_DIM>
 using dense_runge_kutta5_t = boost::numeric::odeint::dense_output_runge_kutta <
 		boost::numeric::odeint::controlled_runge_kutta <runge_kutta_dopri5_t<STATE_DIM>> >;
 
 /**
- * Bulirsch_Stoer steppers
+ * Bulirsch_Stoer stepper
  */
 template <int STATE_DIM>
 using bulirsch_stoer_t = boost::numeric::odeint::bulirsch_stoer <
@@ -86,7 +86,7 @@ using bulirsch_stoer_t = boost::numeric::odeint::bulirsch_stoer <
 		boost::numeric::odeint::vector_space_algebra>;
 
 /**
- * Adams_Bashforth steppers
+ * Adams_Bashforth stepper
  */
 template <int STATE_DIM, size_t STEPS>
 using adams_bashforth_uncontrolled_t =
@@ -191,7 +191,7 @@ public:
 	/**
 	 * Adaptive time integration based on start time and final time. This method can solve ODEs with time-dependent events,
 	 * if eventsTime is not empty. In this case the output time-trajectory contains two identical values at the moments
-	 * of event triggerings. This method uses ODE_Base::computeJumpMap() method for state transition at events.
+	 * of event triggers. This method uses ODE_Base::computeJumpMap() method for state transition at events.
 	 *
 	 * @param [in] initialState: Initial state.
 	 * @param [in] startTime: Initial time.
@@ -234,12 +234,12 @@ public:
 
 	/**
 	 * Output integration based on a given time trajectory. This method can solve ODEs with time-dependent events.
-	 * In this case, user should pass past-the-end indeces of events on the input time trajectory. Moreover, this
+	 * In this case, user should pass past-the-end indices of events on the input time trajectory. Moreover, this
 	 * method assumes that there are two identical time values in the input time-trajectory at the moments of event
-	 * triggerings. This method uses ODE_Base::computeJumpMap() method for state transition at events.
+	 * triggers. This method uses ODE_Base::computeJumpMap() method for state transition at events.
 	 *
 	 * @param [in] initialState: Initial state.
-	 * @param [in] beginTimeItr: The iterator to the begining of the time stamp trajectory.
+	 * @param [in] beginTimeItr: The iterator to the beginning of the time stamp trajectory.
 	 * @param [in] endTimeItr: The iterator to the end of the time stamp trajectory.
 	 * @param [out] stateTrajectory: Output state trajectory.
 	 * @param [in] dtInitial: Initial time step.
@@ -292,7 +292,8 @@ private:
 	}
 
 	/**
-	 * Intialize
+	 * Initializes the integrator.
+	 *
 	 * @param [in] initialState
 	 * @param [in] t
 	 * @param [in] dt
@@ -365,7 +366,7 @@ private:
 	 * Integrate times specialized function
 	 * @tparam S: stepper type.
 	 * @param [in] initialState: Initial state.
-	 * @param [in] beginTimeItr: The iterator to the begining of the time stamp trajectory.
+	 * @param [in] beginTimeItr: The iterator to the beginning of the time stamp trajectory.
 	 * @param [in] endTimeItr: The iterator to the end of the time stamp trajectory.
 	 * @param [out] stateTrajectory: Output state trajectory.
 	 * @param [in] dtInitial: Initial time step.
@@ -391,7 +392,7 @@ private:
 	 * Integrate times specialized function
 	 * @tparam S: stepper type.
 	 * @param [in] initialState: Initial state.
-	 * @param [in] beginTimeItr: The iterator to the begining of the time stamp trajectory.
+	 * @param [in] beginTimeItr: The iterator to the beginning of the time stamp trajectory.
 	 * @param [in] endTimeItr: The iterator to the end of the time stamp trajectory.
 	 * @param [out] stateTrajectory: Output state trajectory.
 	 * @param [in] dtInitial: Initial time step.
@@ -430,7 +431,9 @@ private:
 	}
 
 	/**
-	 * Functionality to reset stepper. If we integrate with some other method, eg. adams_bashforth, we need to reset the stepper, hence specialize with initialize call
+	 * Functionality to reset stepper. If we integrate with some other method, e.g.
+	 * adams_bashforth, we need to reset the stepper, hence specialize with initialize call
+	 *
 	 * @tparam S
 	 * @param [in] initialState
 	 * @param [in] t: Time.

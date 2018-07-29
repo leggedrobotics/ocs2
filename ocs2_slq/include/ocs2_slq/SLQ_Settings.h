@@ -63,6 +63,7 @@ public:
 	, useAscendingLineSearchNLP_(true)		// GSLQ
 	, minEventTimeDifference_(0.0)			// GSLQ
 
+	, useNominalTimeForBackwardPass_(false)
 	, RiccatiIntegratorType_(RICCATI_INTEGRATOR_TYPE::ODE45)
 	, adams_integrator_dt_(0.001)
 
@@ -171,6 +172,9 @@ public:
 
 	/** Check the numerical stability of the algorithms for debugging purpose. */
 	bool checkNumericalStability_;
+
+	/** If true, SLQ solves the backward path over the nominal time trajectory. */
+	bool useNominalTimeForBackwardPass_;
 	/** Riccati integrator type. */
 	size_t RiccatiIntegratorType_;
 	/** Adams integrator's time step. */
@@ -451,6 +455,14 @@ inline void SLQ_Settings::loadSettings(const std::string& filename, bool verbose
 	}
 	catch (const std::exception& e){
 		if (verbose)  std::cerr << " #### Option loader : option 'minEventTimeDifference' .............. " << minEventTimeDifference_ << "   \t(default)" << std::endl;
+	}
+
+	try	{
+		useNominalTimeForBackwardPass_ = pt.get<bool>("slq.useNominalTimeForBackwardPass");
+		if (verbose)  std::cerr << " #### Option loader : option 'useNominalTimeForBackwardPass' ....... " << useNominalTimeForBackwardPass_ << std::endl;
+	}
+	catch (const std::exception& e){
+		if (verbose)  std::cerr << " #### Option loader : option 'useNominalTimeForBackwardPass' ....... " << useNominalTimeForBackwardPass_ << "   \t(default)" << std::endl;
 	}
 
 	try	{

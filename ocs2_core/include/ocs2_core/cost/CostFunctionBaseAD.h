@@ -134,13 +134,6 @@ public:
 	const bool& isDynamicLibraryCompiled() const;
 
 	/**
-	 * Whether or not the dynamic library is compiled.
-	 *
-	 * @return true if the dynamic library is compiled
-	 */
-	bool& isDynamicLibraryCompiled();
-
-	/**
 	 * Gets model name.
 	 *
 	 * @return model name
@@ -252,6 +245,11 @@ protected:
 	void terminalCostFunctionAD(
 			const ad_dynamic_vector_t& tapedInput,
 			ad_dynamic_vector_t& costValue);
+
+	/**
+	 * Sets all the required CppAdCodeGenInterfaces
+	 */
+	void setADInterfaces();
 
 	/**
 	 * Create the forward model, the Jacobian model, and the Hessian model.

@@ -161,13 +161,6 @@ public:
 	 *
 	 * @return true if the dynamic library is compiled
 	 */
-	bool& isDynamicLibraryCompiled();
-
-	/**
-	 * Whether or not the dynamic library is compiled.
-	 *
-	 * @return true if the dynamic library is compiled
-	 */
 	const bool& isDynamicLibraryCompiled() const;
 
 	/**
@@ -360,6 +353,11 @@ protected:
 	void systemGuardSurfacesAD(
 			const ad_dynamic_vector_t& tapedInput,
 			ad_dynamic_vector_t& gamma);
+
+	/**
+	 * Sets all the required CppAdCodeGenInterfaces
+	 */
+	void setADInterfaces();
 
 	/**
 	 * Create the forward model, the Jacobian model, and the Hessian model.

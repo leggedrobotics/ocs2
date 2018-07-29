@@ -16,7 +16,10 @@ ConstraintBaseAD<Derived, STATE_DIM, INPUT_DIM, logic_rules_template_t>::Constra
 	, dynamicLibraryIsCompiled_(dynamicLibraryIsCompiled)
 	, modelName_("")
 	, libraryFolder_("")
-{};
+{
+	if (dynamicLibraryIsCompiled==true)
+		setADInterfaces();
+};
 
 /******************************************************************************************************/
 /******************************************************************************************************/
@@ -88,15 +91,6 @@ void ConstraintBaseAD<Derived, STATE_DIM, INPUT_DIM, logic_rules_template_t>::lo
 /******************************************************************************************************/
 template <class Derived, size_t STATE_DIM, size_t INPUT_DIM, class logic_rules_template_t>
 const bool& ConstraintBaseAD<Derived, STATE_DIM, INPUT_DIM, logic_rules_template_t>::isDynamicLibraryCompiled() const {
-
-	return dynamicLibraryIsCompiled_;
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-template <class Derived, size_t STATE_DIM, size_t INPUT_DIM, class logic_rules_template_t>
-bool& ConstraintBaseAD<Derived, STATE_DIM, INPUT_DIM, logic_rules_template_t>::isDynamicLibraryCompiled() {
 
 	return dynamicLibraryIsCompiled_;
 }
@@ -264,8 +258,7 @@ void ConstraintBaseAD<Derived, STATE_DIM, INPUT_DIM, logic_rules_template_t>::st
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <class Derived, size_t STATE_DIM, size_t INPUT_DIM, class logic_rules_template_t>
-void ConstraintBaseAD<Derived, STATE_DIM, INPUT_DIM, logic_rules_template_t>::createModels(
-		bool verbose) {
+void ConstraintBaseAD<Derived, STATE_DIM, INPUT_DIM, logic_rules_template_t>::setADInterfaces() {
 
 	stateInputConstraintAD_ = [this](
 			const ad_dynamic_vector_t& x,
@@ -308,16 +301,28 @@ void ConstraintBaseAD<Derived, STATE_DIM, INPUT_DIM, logic_rules_template_t>::cr
 	stateInputADInterfacePtr_->computeForwardModel(true);
 	stateInputADInterfacePtr_->computeJacobianModel(true);
 	stateInputADInterfacePtr_->computeHessianModel(false);
-	stateInputADInterfacePtr_->createModels(modelName_+"_stateInput", libraryFolder_, verbose);
 
 	stateOnlyADInterfacePtr_->computeForwardModel(true);
 	stateOnlyADInterfacePtr_->computeJacobianModel(true);
 	stateOnlyADInterfacePtr_->computeHessianModel(false);
-	stateOnlyADInterfacePtr_->createModels(modelName_+"_stateOnly", libraryFolder_, verbose);
 
 	stateOnlyFinalADInterfacePtr_->computeForwardModel(true);
 	stateOnlyFinalADInterfacePtr_->computeJacobianModel(true);
 	stateOnlyFinalADInterfacePtr_->computeHessianModel(false);
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+template <class Derived, size_t STATE_DIM, size_t INPUT_DIM, class logic_rules_template_t>
+void ConstraintBaseAD<Derived, STATE_DIM, INPUT_DIM, logic_rules_template_t>::createModels(
+		bool verbose) {
+
+	// sets all the required CppAdCodeGenInterfaces
+	setADInterfaces();
+
+	stateInputADInterfacePtr_->createModels(modelName_+"_stateInput", libraryFolder_, verbose);
+	stateOnlyADInterfacePtr_->createModels(modelName_+"_stateOnly", libraryFolder_, verbose);
 	stateOnlyFinalADInterfacePtr_->createModels(modelName_+"_stateOnlyFinal", libraryFolder_, verbose);
 
 	dynamicLibraryIsCompiled_ = true;

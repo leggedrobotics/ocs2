@@ -17,7 +17,10 @@ SystemDynamicsBaseAD<Derived, STATE_DIM, INPUT_DIM, logic_rules_template_t, NUM_
 	, dynamicLibraryIsCompiled_(dynamicLibraryIsCompiled)
 	, modelName_("")
 	, libraryFolder_("")
-{};
+{
+	if (dynamicLibraryIsCompiled==true)
+		setADInterfaces();
+};
 
 /******************************************************************************************************/
 /******************************************************************************************************/
@@ -143,15 +146,6 @@ void SystemDynamicsBaseAD<Derived, STATE_DIM, INPUT_DIM, logic_rules_template_t,
 /******************************************************************************************************/
 template <class Derived, size_t STATE_DIM, size_t INPUT_DIM, class logic_rules_template_t, size_t NUM_MODES>
 const bool& SystemDynamicsBaseAD<Derived, STATE_DIM, INPUT_DIM, logic_rules_template_t, NUM_MODES>::isDynamicLibraryCompiled() const {
-
-	return dynamicLibraryIsCompiled_;
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-template <class Derived, size_t STATE_DIM, size_t INPUT_DIM, class logic_rules_template_t, size_t NUM_MODES>
-bool& SystemDynamicsBaseAD<Derived, STATE_DIM, INPUT_DIM, logic_rules_template_t, NUM_MODES>::isDynamicLibraryCompiled() {
 
 	return dynamicLibraryIsCompiled_;
 }
@@ -378,8 +372,7 @@ void SystemDynamicsBaseAD<Derived, STATE_DIM, INPUT_DIM, logic_rules_template_t,
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <class Derived, size_t STATE_DIM, size_t INPUT_DIM, class logic_rules_template_t, size_t NUM_MODES>
-void SystemDynamicsBaseAD<Derived, STATE_DIM, INPUT_DIM, logic_rules_template_t, NUM_MODES>::createModels(
-		bool verbose) {
+void SystemDynamicsBaseAD<Derived, STATE_DIM, INPUT_DIM, logic_rules_template_t, NUM_MODES>::setADInterfaces() {
 
 	systemFlowMapAD_ = [this](
 			const ad_dynamic_vector_t& x,
@@ -417,16 +410,28 @@ void SystemDynamicsBaseAD<Derived, STATE_DIM, INPUT_DIM, logic_rules_template_t,
 	flowMapADInterfacePtr_->computeForwardModel(true);
 	flowMapADInterfacePtr_->computeJacobianModel(true);
 	flowMapADInterfacePtr_->computeHessianModel(false);
-	flowMapADInterfacePtr_->createModels(modelName_+"_flow_map", libraryFolder_, verbose);
 
 	jumpMapADInterfacePtr_->computeForwardModel(true);
 	jumpMapADInterfacePtr_->computeJacobianModel(true);
 	jumpMapADInterfacePtr_->computeHessianModel(false);
-	jumpMapADInterfacePtr_->createModels(modelName_+"_jump_map", libraryFolder_, verbose);
 
 	guardSurfacesADInterfacePtr_->computeForwardModel(true);
 	guardSurfacesADInterfacePtr_->computeJacobianModel(true);
 	guardSurfacesADInterfacePtr_->computeHessianModel(false);
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+template <class Derived, size_t STATE_DIM, size_t INPUT_DIM, class logic_rules_template_t, size_t NUM_MODES>
+void SystemDynamicsBaseAD<Derived, STATE_DIM, INPUT_DIM, logic_rules_template_t, NUM_MODES>::createModels(
+		bool verbose) {
+
+	// sets all the required CppAdCodeGenInterfaces
+	setADInterfaces();
+
+	flowMapADInterfacePtr_->createModels(modelName_+"_flow_map", libraryFolder_, verbose);
+	jumpMapADInterfacePtr_->createModels(modelName_+"_jump_map", libraryFolder_, verbose);
 	guardSurfacesADInterfacePtr_->createModels(modelName_+"_guard_surfaces", libraryFolder_, verbose);
 
 	dynamicLibraryIsCompiled_ = true;

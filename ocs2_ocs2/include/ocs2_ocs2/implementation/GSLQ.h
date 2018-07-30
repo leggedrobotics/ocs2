@@ -709,9 +709,9 @@ void GSLQ<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::computeEquivalentSystemMultiplie
 		scalar_t& multiplier) const {
 
 	if (activeSubsystem == eventTimeIndex+1) {
-		if (activeSubsystem+1 == eventTimes().size()) {
+		if (activeSubsystem == eventTimes().size()) {
 			if (finalTime_<eventTimes()[eventTimeIndex])
-				throw std::runtime_error("final time is smaller than the last triggered event time.");
+				throw std::runtime_error("Final time is smaller than the last triggered event time.");
 			else
 				multiplier = -1.0 / (finalTime_ - eventTimes()[eventTimeIndex]);
 		} else {
@@ -720,7 +720,7 @@ void GSLQ<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::computeEquivalentSystemMultiplie
 
 	} else if (activeSubsystem == eventTimeIndex)
 		if (activeSubsystem == 0) {
-			if (finalTime_<eventTimes()[eventTimeIndex])
+			if (initTime_>eventTimes()[eventTimeIndex])
 				throw std::runtime_error("Initial time is greater than the last triggered event time.");
 			else
 				multiplier = 1.0 / (eventTimes()[eventTimeIndex] - initTime_);
@@ -897,7 +897,9 @@ void GSLQ<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::propagateRolloutSensitivity(
 				rolloutSensitivityIntegratorsPtrStock_[workerIndex]->integrate(
 						nabla_xInit, beginTimeItr, endTimeItr,
 						sensitivityStateTrajectoriesStock[i],
-						settingsPtr_->minTimeStep_, settingsPtr_->absTolODE_, settingsPtr_->relTolODE_);
+						settingsPtr_->minTimeStep_,
+						settingsPtr_->absTolODE_,
+						settingsPtr_->relTolODE_);
 
 				// compute input sensitivity
 				for ( ; k_u<sensitivityStateTrajectoriesStock[i].size(); k_u++) {
@@ -999,10 +1001,26 @@ void GSLQ<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::approximateNominalLQPSensitivity
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
+void GSLQ<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::approximateNominalHeuristicsSensitivity2SwitchingTime(
+		const state_vector_t& sensitivityFinalState,
+		eigen_scalar_t& nablasHeuristics,
+		state_vector_t& nablaSvHeuristics) const {
+
+	nablasHeuristics  = SvHeuristics_.transpose() * sensitivityFinalState;
+	nablaSvHeuristics = SmHeuristics_ * sensitivityFinalState;
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
 void GSLQ<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::solveSensitivityRiccatiEquations(
 		size_t workerIndex,
 		const size_t& eventTimeIndex,
 		const scalar_t& learningRate,
+		const eigen_scalar_t& nablasHeuristics,
+		const state_vector_t& nablaSvHeuristics,
+		const state_matrix_t& nablaSmHeuristics,
 		eigen_scalar_array2_t& nablasTrajectoriesStock,
 		state_vector_array2_t& nablaSvTrajectoriesStock,
 		state_matrix_array2_t& nablaSmTrajectoriesStock)  {
@@ -1019,7 +1037,12 @@ void GSLQ<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::solveSensitivityRiccatiEquations
 	nablaSmTrajectoriesStock.resize(numPartitions_);
 
 	// temporal final value for the last Riccati equations
-	s_vector_t SsFinalTemp = s_vector_t::Zero();
+	s_vector_t SsFinal;
+	riccati_sensitivity_equations_t::convert2Vector(
+			nablaSmHeuristics,
+			nablaSvHeuristics,
+			nablasHeuristics,
+			SsFinal);
 	// output containers which is reverse
 	s_vector_array_t allSsTrajectory;
 
@@ -1083,8 +1106,7 @@ void GSLQ<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::solveSensitivityRiccatiEquations
 				// finding the current active subsystem
 				scalar_t midNormalizedTime = 0.5 * (*beginTimeItr+*(endTimeItr-1));
 				scalar_t midTime = partitioningTimes_[i+1] - (partitioningTimes_[i+1]-partitioningTimes_[i])*midNormalizedTime;
-				size_t activeSubsystem = findActiveSubsystemIndex(
-						eventTimes(), midTime);
+				size_t activeSubsystem = findActiveSubsystemIndex(eventTimes(), midTime);
 
 				// compute multiplier of the equivalent system
 				scalar_t multiplier;
@@ -1093,19 +1115,33 @@ void GSLQ<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::solveSensitivityRiccatiEquations
 
 				// solve Riccati sensitivity equations
 				riccatiSensitivityIntegratorsPtrStock_[workerIndex]->integrate(
-						SsFinalTemp, beginTimeItr, endTimeItr,
+						SsFinal, beginTimeItr, endTimeItr,
 						allSsTrajectory,
-						settingsPtr_->minTimeStep_, settingsPtr_->absTolODE_, settingsPtr_->relTolODE_, maxNumSteps, true);
+						settingsPtr_->minTimeStep_,
+						settingsPtr_->absTolODE_,
+						settingsPtr_->relTolODE_,
+						maxNumSteps, true);
+
+				// final value of the next subsystem
+				SsFinal = allSsTrajectory.back();
 			}
 
-			if (j < NE) {
-				SsFinalTemp = allSsTrajectory.back();
+			// final value of the next subsystem
+			if (j<NE) {
+				s_vector_t SsFinalTemp = s_vector_t::Zero();
+				riccati_sensitivity_equations_t::convert2Vector(
+						state_matrix_t::Zero(),
+						nablaQvFinalStockSet_[eventTimeIndex][i][NE-1-j],
+						nablaqFinalStockSet_[eventTimeIndex][i][NE-1-j],
+						SsFinalTemp);
+
+				SsFinal += SsFinalTemp;
 			}
 
 		}  // end of j loop
 
 		// final value of the next partition
-		SsFinalTemp = allSsTrajectory.back();
+		SsFinal = allSsTrajectory.back();
 
 		// construct 'nable_Sm', 'nable_Sv', and 'nable_s'
 		for (size_t k=0; k<N; k++) {
@@ -1192,8 +1228,7 @@ void GSLQ<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::solveSensitivityBVP(
 				// finding the current active subsystem
 				scalar_t midNormalizedTime = 0.5 * (*beginTimeItr+*(endTimeItr-1));
 				scalar_t midTime = partitioningTimes_[i+1] - (partitioningTimes_[i+1]-partitioningTimes_[i])*midNormalizedTime;
-				size_t activeSubsystem = findActiveSubsystemIndex(
-						eventTimes(), midTime);
+				size_t activeSubsystem = findActiveSubsystemIndex(eventTimes(), midTime);
 
 				// compute multiplier of the equivalent system
 				scalar_t multiplier;
@@ -1204,12 +1239,18 @@ void GSLQ<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::solveSensitivityBVP(
 				bvpSensitivityIntegratorsPtrStock_[workerIndex]->integrate(
 						MvFinalTemp, beginTimeItr, endTimeItr,
 						rMvTrajectory,
-						settingsPtr_->minTimeStep_, settingsPtr_->absTolODE_, settingsPtr_->relTolODE_, maxNumSteps, true);
+						settingsPtr_->minTimeStep_,
+						settingsPtr_->absTolODE_,
+						settingsPtr_->relTolODE_,
+						maxNumSteps, true);
+
+				// final value of the next subsystem
+				MvFinalTemp = rMvTrajectory.back();
 			}
 
+			// final value of the next subsystem
 			if (j < NE) {
-				bvpSensitivityEquationsPtrStock_[workerIndex]->computeJumpMap(*endTimeItr, rMvTrajectory.back(),
-						MvFinalTemp);
+//				MvFinalTemp += QvFinalStock_[i][NE-1-j];
 			}
 
 		}  // end of j loop
@@ -1439,7 +1480,7 @@ void GSLQ<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculateCostDerivative(
 		const size_t N  = nominalTimeTrajectoriesStock_[i].size();
 		const size_t NE = nominalEventsPastTheEndIndecesStock_[i].size();
 
-		for (size_t j=0; j<NE+1; j++) {
+		for (size_t j=0; j<=NE; j++) {
 
 			beginIndex = (j==0)  ? 0 : nominalEventsPastTheEndIndecesStock_[i][j-1];
 			endIndex   = (j==NE) ? N : nominalEventsPastTheEndIndecesStock_[i][j];
@@ -1450,8 +1491,7 @@ void GSLQ<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculateCostDerivative(
 				// finding the current active subsystem
 				scalar_t midTime = 0.5 * ( nominalTimeTrajectoriesStock_[i][beginIndex] +
 						nominalTimeTrajectoriesStock_[i][endIndex-1]);
-				size_t activeSubsystem = findActiveSubsystemIndex(
-						eventTimes(), midTime);
+				size_t activeSubsystem = findActiveSubsystemIndex(eventTimes(), midTime);
 
 				// compute multiplier of the equivalent system
 				scalar_t multiplier;
@@ -1476,15 +1516,14 @@ void GSLQ<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculateCostDerivative(
 
 			// terminal cost sensitivity at switching times
 			if (j < NE) {
-				costDerivative += sensitivityStateTrajectoriesStock[i].back().transpose() * QvFinalStock_[i][j];
+				costDerivative += sensitivityStateTrajectoriesStock[i].back().dot(QvFinalStock_[i][j]);
 			}
 		}  // end of j loop
 
-
 	}  // end of i loop
 
-	// add the Heuristics function at the final time
-	costDerivative += sHeuristics_(0);
+	// add the Heuristics function sensitivity at the final time
+	costDerivative += sensitivityStateTrajectoriesStock[finalActivePartition_].back().dot(SvHeuristics_);
 }
 
 /******************************************************************************************************/
@@ -1504,6 +1543,8 @@ void GSLQ<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::runLQBasedMethod()  {
 	nablaRvTrajectoriesStockSet_.resize(numEventTimes_);
 	nablaqFinalStockSet_.resize(numEventTimes_);
 	nablaQvFinalStockSet_.resize(numEventTimes_);
+	nablasHeuristics_.resize(numEventTimes_);
+	nablaSvHeuristics_.resize(numEventTimes_);
 	nablasTrajectoriesStockSet_.resize(numEventTimes_);
 	nablaSvTrajectoriesStockSet_.resize(numEventTimes_);
 	nablaSmTrajectoriesStockSet_.resize(numEventTimes_);
@@ -1543,11 +1584,17 @@ void GSLQ<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::runLQBasedMethod()  {
 						nablaQvTrajectoriesStockSet_[index], nablaRvTrajectoriesStockSet_[index],
 						nablaqFinalStockSet_[index], nablaQvFinalStockSet_[index]);
 
+				// approximate Heuristics
+				approximateNominalHeuristicsSensitivity2SwitchingTime(
+						sensitivityStateTrajectoriesStockSet_[index][finalActivePartition_].back(),
+						nablasHeuristics_[index], nablaSvHeuristics_[index]);
+
 				// solve Riccati equations
 				// prevents the changes in the nominal trajectories and just update the gains
 				const scalar_t learningRateStar = 0.0;
 				solveSensitivityRiccatiEquations(workerIndex, index,
 						learningRateStar,
+						nablasHeuristics_[index], nablaSvHeuristics_[index], state_matrix_t::Zero(),
 						nablasTrajectoriesStockSet_[index],
 						nablaSvTrajectoriesStockSet_[index],
 						nablaSmTrajectoriesStockSet_[index]);
@@ -1602,7 +1649,8 @@ void GSLQ<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::runSweepingBVPMethod()  {
 			const size_t workerIndex = 0;
 
 			// solve BVP to compute Mv
-			solveSensitivityBVP(workerIndex, index, state_vector_t::Zero(),
+			solveSensitivityBVP(workerIndex, index,
+					state_vector_t::Zero() /*SvHeuristics_*/,
 					MvTrajectoriesStockSet_[index]);
 
 			// calculates sensitivity controller feedforward part, Lv

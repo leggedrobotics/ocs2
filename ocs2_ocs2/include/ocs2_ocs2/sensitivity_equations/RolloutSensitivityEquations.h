@@ -131,7 +131,7 @@ public:
 		size_t greatestLessTimeStampIndex = AmFunc_.getGreatestLessTimeStampIndex();
 		BmFunc_.interpolate(t, Bm_, greatestLessTimeStampIndex);
 
-		if (multiplier_ > 0) {
+		if (std::abs(multiplier_) > 1e-9) {
 			flowMapFunc_.interpolate(t, flowMap_, greatestLessTimeStampIndex);
 			derivative = Am_*nabla_x + Bm_*nabla_u + multiplier_*flowMap_;
 		} else {

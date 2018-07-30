@@ -58,7 +58,7 @@ TEST(exp1_gslq_test, exp1_gslq_test)
 	slqSettings.maxNumIterationsSLQ_ = 30;
 	slqSettings.lsStepsizeGreedy_ = true;
 	slqSettings.noStateConstraints_ = true;
-	slqSettings.useLQForDerivatives_ = true;
+	slqSettings.useLQForDerivatives_ = false;
 
 	// switching times
 	std::vector<double> switchingTimes {0.2262, 1.0176};
@@ -96,7 +96,6 @@ TEST(exp1_gslq_test, exp1_gslq_test)
 
 	// run single core GSLQ
 	if (slqSettings.displayInfo_ || slqSettings.displayShortSummary_)
-		std::cerr << "\n>>> single-core SLQ" << std::endl;
 	slq.run(startTime, initState, finalTime, partitioningTimes);
 	gslq.run();
 

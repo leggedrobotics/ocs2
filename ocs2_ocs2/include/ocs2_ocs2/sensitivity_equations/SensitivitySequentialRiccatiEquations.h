@@ -284,14 +284,14 @@ public:
 		nabla_QvFunc_.interpolate(t, nabla_Qv_, greatestLessTimeStampIndex);
 		nabla_RvFunc_.interpolate(t, nabla_Rv_, greatestLessTimeStampIndex);
 
-		Lv_ = -invRm_ * (Rv_ + Bm_.transpose()*Sv_);
-		Lm_ = -invRm_ * (Pm_ + Bm_.transpose()*Sm_);
+		Lv_ = invRm_ * (Rv_ + Bm_.transpose()*Sv_);
+		Lm_ = invRm_ * (Pm_ + Bm_.transpose()*Sm_);
 
-		nabla_Lv_ = -invRm_ * (nabla_Rv_ + Bm_.transpose()*nabla_Sv_);
-		nabla_Lm_ = -invRm_ * Bm_.transpose() * nabla_Sm_;
+		nabla_Lv_ = invRm_ * (nabla_Rv_ + Bm_.transpose()*nabla_Sv_);
+		nabla_Lm_ = invRm_ * Bm_.transpose() * nabla_Sm_;
 
 		// Riccati equations
-		if (multiplier_ > 0) {
+		if (std::abs(multiplier_) > 1e-9) {
 			dSmdt_ = Qm_ + Am_.transpose()*Sm_ + Sm_.transpose()*Am_ - Lm_.transpose()*Rm_*Lm_;
 			dSmdt_ = 0.5*(dSmdt_+dSmdt_.transpose()).eval();
 			dSvdt_ = Qv_ + Am_.transpose()*Sv_ - Lm_.transpose()*Rm_*Lv_;

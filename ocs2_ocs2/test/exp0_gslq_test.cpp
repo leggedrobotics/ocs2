@@ -95,7 +95,6 @@ TEST(exp0_gslq_test, exp0_gslq_test)
 
 	// run single core GSLQ
 	if (slqSettings.displayInfo_ || slqSettings.displayShortSummary_)
-		std::cerr << "\n>>> single-core SLQ" << std::endl;
 	slq.run(startTime, initState, finalTime, partitioningTimes);
 	gslq.run();
 

@@ -119,10 +119,10 @@ public:
     /**
      * Constructor.
      *
-     * @param [in] slqPtr: A pointer to the SLQ instance for which the cost function gradient
+     * @param [in] slq: A reference to the SLQ instance for which the cost function gradient
      * would be calculated.
      */
-	GSLQ(slq_t& slqPtr);
+	GSLQ(slq_t& slq);
 
 	/**
 	 * Destructor.
@@ -391,11 +391,26 @@ protected:
 			state_vector_array2_t& nablaQvFinalStock) const;
 
 	/**
+	 * Approximates nominal LQ problem sensitivity to event times.
+	 *
+	 * @param [in] sensitivityFinalState: Final state sensitivity.
+	 * @param [out] nablasHeuristics: Sensitivity of the Heuristics zero order variation.
+	 * @param [out] nablaSvHeuristics: Sensitivity of the Heuristics first order state variation.
+	 */
+	void approximateNominalHeuristicsSensitivity2SwitchingTime(
+			const state_vector_t& sensitivityFinalState,
+			eigen_scalar_t& nablasHeuristics,
+			state_vector_t& nablaSvHeuristics) const;
+
+	/**
 	 * Solves the SLQ Riccati equations sensitivity differential equations.
 	 *
 	 * @param [in] workerIndex: Working agent index.
 	 * @param [in] eventTimeIndex: Event time index.
 	 * @param [in] learningRate: learning rate typically should be zero.
+	 * @param [in] nablasHeuristics: Sensitivity of the Heuristics zero order variation.
+	 * @param [in] nablaSvHeuristics: Sensitivity of the Heuristics first order state variation.
+	 * @param [in] nablaSmHeuristics: Sensitivity of the Heuristics second order state variation.
 	 * @param [out] nablasTrajectoriesStock: Sensitivity of the Riccati equations's zero order variation.
 	 * @param [out] nablaSvTrajectoriesStock: Sensitivity of the Riccati equations's first order variation.
 	 * @param [out] nablaSmTrajectoriesStock: Sensitivity of the Riccati equations's second order variation.
@@ -404,6 +419,9 @@ protected:
 			size_t workerIndex,
 			const size_t& eventTimeIndex,
 			const scalar_t& learningRate,
+			const eigen_scalar_t& nablasHeuristics,
+			const state_vector_t& nablaSvHeuristics,
+			const state_matrix_t& nablaSmHeuristics,
 			eigen_scalar_array2_t& nablasTrajectoriesStock,
 			state_vector_array2_t& nablaSvTrajectoriesStock,
 			state_matrix_array2_t& nablaSmTrajectoriesStock);
@@ -519,6 +537,8 @@ private:
 	input_vector_array3_t nablaRvTrajectoriesStockSet_;
 	eigen_scalar_array3_t nablaqFinalStockSet_;
 	state_vector_array3_t nablaQvFinalStockSet_;
+	eigen_scalar_array_t  nablasHeuristics_;
+	state_vector_array_t  nablaSvHeuristics_;
 
 	eigen_scalar_array3_t nablasTrajectoriesStockSet_;
 	state_vector_array3_t nablaSvTrajectoriesStockSet_;

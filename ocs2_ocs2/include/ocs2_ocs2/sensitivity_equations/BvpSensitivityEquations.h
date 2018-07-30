@@ -190,8 +190,28 @@ public:
 
 		// here we have used RmConstrained = (I-DmConstrained).transpose() * Rm
 		// and Km = -(I-DmConstrained) \tilde{L} - CmConstrained_
-		dMvdt_ = (AmConstrained_ + Bm_*(CmConstrained_+KmConstrained_)).transpose()*Mv + multiplier_*(
-				Qv_ + Am_.transpose()*costate_ + Cm_.transpose()*lagrangian_ + Sm_*flowMap_);
+		dMvdt_ = (AmConstrained_ + Bm_*(CmConstrained_+KmConstrained_)).transpose()*Mv +
+				multiplier_*(Qv_ + Am_.transpose()*costate_ + Cm_.transpose()*lagrangian_ + Sm_*flowMap_);
+
+		// TODO: delete me
+//		std::cout << "[" << t << "]" << std::endl;
+//		std::cout << "qv" << std::endl;
+//		std::cout <<
+//				multiplier_*(
+//						Qv_ + Am_.transpose()*costate_ + Cm_.transpose()*lagrangian_
+//				).transpose()
+//				<< std::endl;
+//		std::cout << "gv" << std::endl;
+//		std::cout << multiplier_*(flowMap_).transpose() << std::endl;
+//		std::cout << "S" << std::endl;
+//		std::cout << Sm_ << std::endl;
+//		std::cout << "qv+S*gv" << std::endl;
+//		std::cout <<
+//				multiplier_*(
+//						Qv_ + Am_.transpose()*costate_ + Cm_.transpose()*lagrangian_ + Sm_*flowMap_
+//						).transpose()
+//				<< std::endl;
+//		std::cout << std::endl;
 
 		dMvdz = scalingFactor_ * dMvdt_;
 	}

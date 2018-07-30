@@ -57,7 +57,7 @@ TEST(exp0_ocs2_test, exp0_ocs2_test)
 	slqSettings.nThreads_ = 3;
 	slqSettings.maxNumIterationsSLQ_ = 50;
 	slqSettings.maxIterationGradientDescent_ = 5;
-	slqSettings.warmStartGSLQP_ = false;
+	slqSettings.warmStartGSLQ_ = false;
 	slqSettings.useLQForDerivatives_ = false;
 	slqSettings.displayGradientDescent_ = false;
 	slqSettings.useLQForDerivatives_ = false;

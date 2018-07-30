@@ -134,7 +134,7 @@ void OCS2QuadrupedInterface<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::loadSetting
 	// Ground profile class
 	scalar_t groundHight;
 	estimateFlatGround(initRbdState_, contact_flag_t{1,1,1,1}, groundHight);
-	std::cerr << "Ground Profile Hight: " << groundHight << std::endl << std::endl;
+	std::cerr << "Ground Profile Height: " << groundHight << std::endl << std::endl;
 	groundProfilePtr_ = flat_ground_profile_ptr_t( new flat_ground_profile_t(groundHight) );
 }
 

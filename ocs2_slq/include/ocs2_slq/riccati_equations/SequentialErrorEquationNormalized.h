@@ -28,6 +28,8 @@ class SequentialErrorEquationNormalized : public ODE_Base<STATE_DIM>
 public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
+	typedef ODE_Base<STATE_DIM> BASE;
+
 	typedef Dimensions<STATE_DIM, INPUT_DIM> DIMENSIONS;
 	typedef typename DIMENSIONS::scalar_t 		scalar_t;
 	typedef typename DIMENSIONS::scalar_array_t scalar_array_t;
@@ -59,6 +61,8 @@ public:
 	 */
 	void setData(const scalar_t& switchingTimeStart, const scalar_t& switchingTimeFinal,
 			scalar_array_t* const timeStampPtr, state_vector_array_t* const GvPtr, state_matrix_array_t* const GmPtr)  {
+
+		BASE::resetNumFunctionCalls();
 
 		switchingTimeStart_ = switchingTimeStart;
 		switchingTimeFinal_ = switchingTimeFinal;
@@ -98,6 +102,8 @@ public:
 	 * @param [out] derivatives: d(Sve)/dz
 	 */
 	void computeFlowMap(const scalar_t& z, const state_vector_t& Sve, state_vector_t& derivatives) {
+
+		BASE::numFunctionCalls_++;
 
 		// denormalized time
 		const scalar_t t = switchingTimeFinal_ + (switchingTimeStart_-switchingTimeFinal_)*z;

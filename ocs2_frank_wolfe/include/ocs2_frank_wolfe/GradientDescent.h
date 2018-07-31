@@ -5,8 +5,8 @@
  *      Author: farbod
  */
 
-#ifndef OCS2_GRADIENTDESCENT_H_
-#define OCS2_GRADIENTDESCENT_H_
+#ifndef OCS2_GRADIENTDESCENT_OCS2_H_
+#define OCS2_GRADIENTDESCENT_OCS2_H_
 
 #include <vector>
 #include <limits>
@@ -15,6 +15,7 @@
 #include <iostream>
 #include <Eigen/Dense>
 
+// GNU Linear Programming Kit
 #include <glpk.h>
 
 namespace nlp {
@@ -72,7 +73,7 @@ public:
 	/**
 	 * This is the default destructor.
 	 */
-	~GradientDescent() {}
+	virtual ~GradientDescent() = default;
 
 	/**
 	 * Gets the cost.
@@ -223,4 +224,4 @@ private:
 
 }  // end of nlp namespace
 
-#endif /* OCS2_GRADIENTDESCENT_H_ */
+#endif /* OCS2_GRADIENTDESCENT_OCS2_H_ */

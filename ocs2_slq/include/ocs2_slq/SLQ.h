@@ -133,8 +133,10 @@ public:
 	 * @param [in] SmFinal: The final Sm for Riccati equation.
 	 * @param [in] SvFinal: The final Sv for Riccati equation.
 	 * @param [in] sFinal: The final s for Riccati equation.
+	 *
+	 * @return average time step
 	 */
-	void solveSequentialRiccatiEquations(
+	scalar_t solveSequentialRiccatiEquations(
 			const state_matrix_t& SmFinal,
 			const state_vector_t& SvFinal,
 			const eigen_scalar_t& sFinal) override;

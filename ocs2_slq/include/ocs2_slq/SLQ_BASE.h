@@ -46,7 +46,8 @@
 
 #include <chrono>
 
-//#define BENCHMARK
+#define BENCHMARK
+#define USE_SEPARATE_RICCATI_SOLVER
 
 namespace ocs2{
 
@@ -74,69 +75,68 @@ public:
 //	typedef SequentialErrorEquation<STATE_DIM, INPUT_DIM>			 	error_equation_t;
 	typedef SequentialErrorEquationNormalized<STATE_DIM, INPUT_DIM> 	error_equation_t;
 //	typedef LTI_Equations<STATE_DIM> LTI_Equation_t;
+	using hamiltonian_equation_t = LTI_Equations<2*STATE_DIM, STATE_DIM, double>;
+	using hamiltonian_increment_equation_t = LTI_Equations<STATE_DIM, 1, double>;
 
 
 	typedef Dimensions<STATE_DIM, INPUT_DIM> DIMENSIONS;
 
-	typedef typename DIMENSIONS::controller_t controller_t;
+	typedef typename DIMENSIONS::controller_t       controller_t;
 	typedef typename DIMENSIONS::controller_array_t controller_array_t;
-	typedef typename DIMENSIONS::lagrange_t lagrange_t;
-	typedef typename DIMENSIONS::lagrange_array_t lagrange_array_t;
-	typedef typename DIMENSIONS::size_array_t size_array_t;
-	typedef typename DIMENSIONS::scalar_t scalar_t;
+	typedef typename DIMENSIONS::size_array_t   size_array_t;
+	typedef typename DIMENSIONS::scalar_t       scalar_t;
 	typedef typename DIMENSIONS::scalar_array_t scalar_array_t;
-	typedef typename DIMENSIONS::eigen_scalar_t eigen_scalar_t;
-	typedef typename DIMENSIONS::eigen_scalar_array_t eigen_scalar_array_t;
+	typedef typename DIMENSIONS::eigen_scalar_t        eigen_scalar_t;
+	typedef typename DIMENSIONS::eigen_scalar_array_t  eigen_scalar_array_t;
 	typedef typename DIMENSIONS::eigen_scalar_array2_t eigen_scalar_array2_t;
-	typedef typename DIMENSIONS::state_vector_t state_vector_t;
-	typedef typename DIMENSIONS::state_vector_array_t state_vector_array_t;
+	typedef typename DIMENSIONS::state_vector_t        state_vector_t;
+	typedef typename DIMENSIONS::state_vector_array_t  state_vector_array_t;
 	typedef typename DIMENSIONS::state_vector_array2_t state_vector_array2_t;
-	typedef typename DIMENSIONS::input_vector_t input_vector_t;
-	typedef typename DIMENSIONS::input_vector_array_t input_vector_array_t;
+	typedef typename DIMENSIONS::input_vector_t        input_vector_t;
+	typedef typename DIMENSIONS::input_vector_array_t  input_vector_array_t;
 	typedef typename DIMENSIONS::input_vector_array2_t input_vector_array2_t;
-	typedef typename DIMENSIONS::input_state_matrix_t input_state_matrix_t;
-	typedef typename DIMENSIONS::input_state_matrix_array_t input_state_matrix_array_t;
+	typedef typename DIMENSIONS::input_state_matrix_t        input_state_matrix_t;
+	typedef typename DIMENSIONS::input_state_matrix_array_t  input_state_matrix_array_t;
 	typedef typename DIMENSIONS::input_state_matrix_array2_t input_state_matrix_array2_t;
-	typedef typename DIMENSIONS::state_matrix_t state_matrix_t;
-	typedef typename DIMENSIONS::state_matrix_array_t state_matrix_array_t;
+	typedef typename DIMENSIONS::state_matrix_t        state_matrix_t;
+	typedef typename DIMENSIONS::state_matrix_array_t  state_matrix_array_t;
 	typedef typename DIMENSIONS::state_matrix_array2_t state_matrix_array2_t;
-	typedef typename DIMENSIONS::input_matrix_t input_matrix_t;
-	typedef typename DIMENSIONS::input_matrix_array_t input_matrix_array_t;
+	typedef typename DIMENSIONS::input_matrix_t        input_matrix_t;
+	typedef typename DIMENSIONS::input_matrix_array_t  input_matrix_array_t;
 	typedef typename DIMENSIONS::input_matrix_array2_t input_matrix_array2_t;
-	typedef typename DIMENSIONS::state_input_matrix_t state_input_matrix_t;
-	typedef typename DIMENSIONS::state_input_matrix_array_t state_input_matrix_array_t;
+	typedef typename DIMENSIONS::state_input_matrix_t        state_input_matrix_t;
+	typedef typename DIMENSIONS::state_input_matrix_array_t  state_input_matrix_array_t;
 	typedef typename DIMENSIONS::state_input_matrix_array2_t state_input_matrix_array2_t;
-	typedef typename DIMENSIONS::constraint1_vector_t constraint1_vector_t;
-	typedef typename DIMENSIONS::constraint1_vector_array_t constraint1_vector_array_t;
+	typedef typename DIMENSIONS::constraint1_vector_t        constraint1_vector_t;
+	typedef typename DIMENSIONS::constraint1_vector_array_t  constraint1_vector_array_t;
 	typedef typename DIMENSIONS::constraint1_vector_array2_t constraint1_vector_array2_t;
-	typedef typename DIMENSIONS::constraint1_state_matrix_t constraint1_state_matrix_t;
-	typedef typename DIMENSIONS::constraint1_state_matrix_array_t constraint1_state_matrix_array_t;
+	typedef typename DIMENSIONS::constraint1_state_matrix_t        constraint1_state_matrix_t;
+	typedef typename DIMENSIONS::constraint1_state_matrix_array_t  constraint1_state_matrix_array_t;
 	typedef typename DIMENSIONS::constraint1_state_matrix_array2_t constraint1_state_matrix_array2_t;
-	typedef typename DIMENSIONS::constraint1_input_matrix_t constraint1_input_matrix_t;
-	typedef typename DIMENSIONS::constraint1_input_matrix_array_t constraint1_input_matrix_array_t;
+	typedef typename DIMENSIONS::constraint1_input_matrix_t        constraint1_input_matrix_t;
+	typedef typename DIMENSIONS::constraint1_input_matrix_array_t  constraint1_input_matrix_array_t;
 	typedef typename DIMENSIONS::constraint1_input_matrix_array2_t constraint1_input_matrix_array2_t;
-	typedef typename DIMENSIONS::control_constraint1_matrix_t control_constraint1_matrix_t;
-	typedef typename DIMENSIONS::control_constraint1_matrix_array_t control_constraint1_matrix_array_t;
+	typedef typename DIMENSIONS::control_constraint1_matrix_t        control_constraint1_matrix_t;
+	typedef typename DIMENSIONS::control_constraint1_matrix_array_t  control_constraint1_matrix_array_t;
 	typedef typename DIMENSIONS::control_constraint1_matrix_array2_t control_constraint1_matrix_array2_t;
-	typedef typename DIMENSIONS::constraint2_vector_t       constraint2_vector_t;
-	typedef typename DIMENSIONS::constraint2_vector_array_t constraint2_vector_array_t;
+	typedef typename DIMENSIONS::constraint2_vector_t        constraint2_vector_t;
+	typedef typename DIMENSIONS::constraint2_vector_array_t  constraint2_vector_array_t;
 	typedef typename DIMENSIONS::constraint2_vector_array2_t constraint2_vector_array2_t;
-	typedef typename DIMENSIONS::constraint2_state_matrix_t       constraint2_state_matrix_t;
-	typedef typename DIMENSIONS::constraint2_state_matrix_array_t constraint2_state_matrix_array_t;
+	typedef typename DIMENSIONS::constraint2_state_matrix_t        constraint2_state_matrix_t;
+	typedef typename DIMENSIONS::constraint2_state_matrix_array_t  constraint2_state_matrix_array_t;
 	typedef typename DIMENSIONS::constraint2_state_matrix_array2_t constraint2_state_matrix_array2_t;
 
 	typedef Eigen::Matrix<scalar_t, Eigen::Dynamic, 1> 	dynamic_vector_t;
 	typedef std::vector<dynamic_vector_t>				dynamic_vector_array_t;
 
-	typedef ControlledSystemBase<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>	controlled_system_base_t;
-	typedef SystemEventHandler<STATE_DIM>								event_handler_t;
-	typedef StateTriggeredEventHandler<STATE_DIM>						state_triggered_event_handler_t;
-	typedef DerivativesBase<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>		derivatives_base_t;
-	typedef ConstraintBase<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>			constraint_base_t;
-	typedef CostFunctionBase<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>		cost_function_base_t;
+	typedef SystemEventHandler<STATE_DIM>         event_handler_t;
+	typedef StateTriggeredEventHandler<STATE_DIM> state_triggered_event_handler_t;
+	typedef ControlledSystemBase<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> controlled_system_base_t;
+	typedef DerivativesBase<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>      derivatives_base_t;
+	typedef ConstraintBase<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>       constraint_base_t;
+	typedef CostFunctionBase<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> cost_function_base_t;
+	typedef CostDesiredTrajectories<scalar_t>                     cost_desired_trajectories_t;
 	typedef SystemOperatingTrajectoriesBase<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> operating_trajectories_base_t;
-
-	typedef CostDesiredTrajectories<scalar_t> 								cost_desired_trajectories_t;
 
 	typedef LogicRulesMachine<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>	logic_rules_machine_t;
 	typedef typename logic_rules_machine_t::Ptr						logic_rules_machine_ptr_t;
@@ -146,7 +146,7 @@ public:
 // TODO: do not push to remote
 public:
 
-	typedef HybridLogicRulesMachine<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> 	hybrid_logic_rules_machine_t;
+	typedef HybridLogicRulesMachine<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> hybrid_logic_rules_machine_t;
 
 	state_vector_t rolloutStateTriggeredWorker(
 			size_t workerIndex,
@@ -181,9 +181,7 @@ public:
 	/**
 	 * Default constructor.
 	 */
-	SLQ_BASE()
-	: numPartitions_(0)
-	{}
+	SLQ_BASE() = default;
 
 	/**
 	 * Constructor
@@ -226,8 +224,10 @@ public:
 	 * @param [out] stateTrajectoriesStock: Array of trajectories containing the output state trajectory.
 	 * @param [out] inputTrajectoriesStock: Array of trajectories containing the output control input trajectory.
 	 * @param [in] threadId: Working thread (default is 0).
+	 *
+	 * @return average time step.
 	 */
-	void rolloutTrajectory(
+	scalar_t rolloutTrajectory(
 			const scalar_t& initTime,
 			const state_vector_t& initState,
 			const scalar_t& finalTime,
@@ -396,8 +396,10 @@ public:
 	 * @param [in] SmFinal: The final Sm for Riccati equation.
 	 * @param [in] SvFinal: The final Sv for Riccati equation.
 	 * @param [in] sFinal: The final s for Riccati equation.
+	 *
+	 * @return average time step
 	 */
-	virtual void solveSequentialRiccatiEquations(
+	virtual scalar_t solveSequentialRiccatiEquations(
 			const state_matrix_t& SmFinal,
 			const state_vector_t& SvFinal,
 			const eigen_scalar_t& sFinal) = 0;
@@ -417,7 +419,7 @@ public:
 	/**
 	 * Runs the exit method SLQ.
 	 */
-	virtual void runExit()  = 0;
+	virtual void runExit();
 
 	/**
 	 * The main routine of SLQ which runs SLQ for a given initial state, initial time, and final time. In order
@@ -480,6 +482,14 @@ public:
 	 * @param [in] flag: If set true, the parallel Riccati solver will be used from the first iteration.
 	 */
 	void useParallelRiccatiSolverFromInitItr(bool flag);
+
+	/**
+	 * SLQ-MPC activates this if the final time of the MPC will increase by the length of a time partition instead
+	 * of commonly used scheme where the final time is gradual increased.
+	 *
+	 * @param [in] flag: If set true, the final time of the MPC will increase by the length of a time partition.
+	 */
+	void blockwiseMovingHorizon(bool flag);
 
 	/**
 	 * Gets the cost function and ISEs of the type-1 and type-2 constraints at the initial time.
@@ -748,7 +758,6 @@ protected:
 	 */
 	virtual void setupOptimizer(const size_t& numPartitions);
 
-
 	/**
 	 * Computes the linearized dynamics for a particular time partition
 	 *
@@ -866,6 +875,13 @@ protected:
 			const size_t& timeIndex);
 
 	/**
+	 * Performs one rollout while the input correction for the type-1 constraint is considered.
+	 *
+	 * @param [in] computeISEs: Whether needs to calculate ISEs indices for type_1 and type-2 constraints.
+	 */
+	void lineSearchBase(bool computeISEs);
+
+	/**
 	 * Line search with a specific learning rate.
 	 *
 	 * @param workerIndex
@@ -976,53 +992,26 @@ protected:
 			const state_vector_t& SveFinal, const eigen_scalar_t& sFinal,
 			const scalar_t& constraintStepSize);
 
-	template<size_t DIM1, size_t DIM2>
-	Eigen::Matrix<double, DIM1, DIM2> solveLTIMatrix(
-			const Eigen::Matrix<double, DIM1, DIM1>& A,
-			const Eigen::Matrix<double, DIM1, DIM2>& x0,
-			const double& deltaTime);
 
-	template<int DIM1>
-	Eigen::Matrix<double, DIM1, 1> solveLTI(
-			const Eigen::Matrix<double, DIM1, DIM1>& Gm,
-			const Eigen::Matrix<double, DIM1, 1>& Gv,
-			const Eigen::Matrix<double, DIM1, 1>& x0,
-			const double& deltaTime);
+	template<int DIM1, int DIM2=1>
+	Eigen::Matrix<scalar_t, DIM1, DIM2> solveLTI(
+			const std::shared_ptr<IntegratorBase<DIM1*DIM2>>& firstOrderOdeIntegrator,
+			const Eigen::Matrix<scalar_t, DIM1, DIM2>& x0,
+			const scalar_t& deltaTime);
 
-	/**
-	 * Computes the Lagrange multiplier over the given rollout.
-	 *
-	 * @param [in] timeTrajectoriesStock: rollout simulated time steps
-	 * @param [in] stateTrajectoriesStock: rollout outputs
-	 * @param [in] lagrangeMultiplierFunctionsStock: the coefficients of the linear function for lagrangeMultiplier
-	 * @param [out] lagrangeTrajectoriesStock: lagrangeMultiplier value over the given trajectory
-	 */
-	void calculateRolloutLagrangeMultiplier(
-			const std::vector<scalar_array_t>& timeTrajectoriesStock,
-			const state_vector_array2_t& stateTrajectoriesStock,
-			const std::vector<lagrange_t>& lagrangeMultiplierFunctionsStock,
-			std::vector<std::vector<Eigen::VectorXd>>& lagrangeTrajectoriesStock);
+	Eigen::Matrix<scalar_t, 2*STATE_DIM, STATE_DIM> integrateHamiltonian(
+			size_t workerIndex,
+			const Eigen::Matrix<scalar_t, 2*STATE_DIM, 2*STATE_DIM>& Hm,
+			const Eigen::Matrix<scalar_t, 2*STATE_DIM, STATE_DIM>& x0,
+			const scalar_t& deltaTime);
 
-	/**
-	 * Computes the costate over the given rollout.
-	 *
-	 * @param [in] timeTrajectoriesStock: rollout simulated time steps
-	 * @param [in] stateTrajectoriesStock: rollout outputs
-	 * @param [out] costateTrajectoriesStock: costate vector for the given trajectory
-	 */
-	void calculateRolloutCostate(
-			const std::vector<scalar_array_t>& timeTrajectoriesStock,
-			const state_vector_array2_t& stateTrajectoriesStock,
-			state_vector_array2_t& costateTrajectoriesStock);
+	Eigen::Matrix<scalar_t, STATE_DIM, 1> integrateIncrement(
+			size_t workerIndex,
+			const Eigen::Matrix<scalar_t, STATE_DIM, STATE_DIM>& Gm,
+			const Eigen::Matrix<scalar_t, STATE_DIM, 1>& Gv,
+			const Eigen::Matrix<scalar_t, STATE_DIM, 1>& x0,
+			const scalar_t& deltaTime);
 
-	/**
-	 * Calculates the linear function approximation of the type-1 constraint Lagrangian. This method uses the following variables:
-	 * 			- constrained, linearized model
-	 * 			- constrained, quadratized cost
-	 *
-	 * @param [out] lagrangeMultiplierFunctionsStock: the linear function approximation of the type-1 constraint Lagrangian.
-	 */
-	void calculateInputConstraintLagrangian(std::vector<lagrange_t>& lagrangeMultiplierFunctionsStock);
 
 	/**
 	 * compute the merit function for given rollout
@@ -1104,6 +1093,8 @@ protected:
 	unsigned long long int rewindCounter_;
 
 	bool useParallelRiccatiSolverFromInitItr_ = false;
+	// If true the final time of the MPC will increase by a time partition instead of common gradual increase.
+	bool blockwiseMovingHorizon_ = false;
 
 	scalar_t initTime_;
 	scalar_t finalTime_;
@@ -1111,7 +1102,7 @@ protected:
 
 	size_t initActivePartition_;
 	size_t finalActivePartition_;
-	size_t numPartitions_;
+	size_t numPartitions_ = 0;
 	scalar_array_t partitioningTimes_;
 
 	const std::vector<scalar_array_t>* 	desiredTimeTrajectoryStockPtr_;
@@ -1142,7 +1133,11 @@ protected:
 	scalar_t nominalConstraint2ISE_;
 	scalar_t nominalConstraint2MaxNorm_;
 
-	// the partitions OC problems
+	// Forward pass and backward pass average time step
+	scalar_t avgTimeStepFP_;
+	scalar_t avgTimeStepBP_;
+
+	//
 	std::vector<typename controlled_system_base_t::Ptr> systemDynamicsPtrStock_;
 	std::vector<typename derivatives_base_t::Ptr> 		systemDerivativesPtrStock_;
 	std::vector<typename constraint_base_t::Ptr> 		systemConstraintsPtrStock_;
@@ -1160,7 +1155,12 @@ protected:
 	std::vector<size_array_t> 	nominalEventsPastTheEndIndecesStock_;
 	state_vector_array2_t		nominalStateTrajectoriesStock_;
 	input_vector_array2_t  		nominalInputTrajectoriesStock_;
-	state_vector_array2_t   	nominalcostateTrajectoriesStock_;
+
+	// Used for catching the nominal trajectories for which the LQ problem is constructed and solved before terminating run()
+	std::vector<scalar_array_t> nominalPrevTimeTrajectoriesStock_;
+	std::vector<size_array_t> 	nominalPrevEventsPastTheEndIndecesStock_;
+	state_vector_array2_t		nominalPrevStateTrajectoriesStock_;
+	input_vector_array2_t  		nominalPrevInputTrajectoriesStock_;
 
 	bool lsComputeISEs_;  // whether lineSearch routine needs to calculate ISEs
 	controller_array_t initLScontrollersStock_;	  // needed for lineSearch
@@ -1170,7 +1170,7 @@ protected:
 	state_matrix_array2_t 		AmTrajectoryStock_;
 	state_input_matrix_array2_t BmTrajectoryStock_;
 
-	std::vector<std::vector<size_t>>  nc1TrajectoriesStock_;  	// nc1: Number of the Type-1  active constraints
+	std::vector<size_array_t>         nc1TrajectoriesStock_;  	// nc1: Number of the Type-1  active constraints
 	constraint1_vector_array2_t       EvTrajectoryStock_;
 	constraint1_state_matrix_array2_t CmTrajectoryStock_;
 	constraint1_input_matrix_array2_t DmTrajectoryStock_;
@@ -1206,12 +1206,17 @@ protected:
 	input_state_matrix_array2_t PmConstrainedTrajectoryStock_;
 	input_vector_array2_t 		RvConstrainedTrajectoryStock_;
 
-	std::vector<std::shared_ptr<riccati_equations_t>> 							riccatiEquationsPtrStock_;
-	std::vector<std::shared_ptr<IntegratorBase<riccati_equations_t::S_DIM_>>> 	riccatiIntegratorPtrStock_;
-	std::vector<std::shared_ptr<error_equation_t>> 								errorEquationPtrStock_;
-	std::vector<std::shared_ptr<IntegratorBase<STATE_DIM>>> 					errorIntegratorPtrStock_;
-	std::vector<std::shared_ptr<slq_riccati_equations_t>> 							slqRiccatiEquationsPtrStock_;
-	std::vector<std::shared_ptr<IntegratorBase<slq_riccati_equations_t::S_DIM_>>> 	slqRiccatiIntegratorPtrStock_;
+	std::vector<std::shared_ptr<slq_riccati_equations_t>>                         slqRiccatiEquationsPtrStock_;
+	std::vector<std::shared_ptr<IntegratorBase<slq_riccati_equations_t::S_DIM_>>> slqRiccatiIntegratorPtrStock_;
+	std::vector<std::shared_ptr<riccati_equations_t>>                         riccatiEquationsPtrStock_;
+	std::vector<std::shared_ptr<IntegratorBase<riccati_equations_t::S_DIM_>>> riccatiIntegratorPtrStock_;
+	std::vector<std::shared_ptr<error_equation_t>>          errorEquationPtrStock_;
+	std::vector<std::shared_ptr<IntegratorBase<STATE_DIM>>> errorIntegratorPtrStock_;
+
+	std::vector<std::shared_ptr<hamiltonian_equation_t>> hamiltonianEquationPtrStock_;
+	std::vector<std::shared_ptr<IntegratorBase<hamiltonian_equation_t::LTI_DIM_>>> hamiltonianIntegratorPtrStock_;
+	std::vector<std::shared_ptr<hamiltonian_increment_equation_t>> hamiltonianIncrementEquationPtrStock_;
+	std::vector<std::shared_ptr<IntegratorBase<hamiltonian_increment_equation_t::LTI_DIM_>>> hamiltonianIncrementIntegratorPtrStock_;
 
 	std::vector<scalar_array_t>	SsTimeTrajectoryStock_;
 	std::vector<scalar_array_t> SsNormalizedTimeTrajectoryStock_;
@@ -1232,19 +1237,20 @@ protected:
 	state_matrix_t SmHeuristics_;
 
 	// functions for controller and lagrange multiplier
-	std::vector<LinearInterpolation<state_vector_t,Eigen::aligned_allocator<state_vector_t> >>  nominalStateFunc_;
-	std::vector<LinearInterpolation<input_vector_t,Eigen::aligned_allocator<input_vector_t> >> 	nominalInputFunc_;
-	std::vector<LinearInterpolation<state_input_matrix_t,Eigen::aligned_allocator<state_input_matrix_t> >> BmFunc_;
-	std::vector<LinearInterpolation<input_state_matrix_t,Eigen::aligned_allocator<input_state_matrix_t> >> PmFunc_;
-	std::vector<LinearInterpolation<input_matrix_t,Eigen::aligned_allocator<input_matrix_t>>> RmInverseFunc_;
-	std::vector<LinearInterpolation<input_vector_t,Eigen::aligned_allocator<input_vector_t>>> RvFunc_;
-	std::vector<LinearInterpolation<input_vector_t,Eigen::aligned_allocator<input_vector_t>>> EvProjectedFunc_;
-	std::vector<LinearInterpolation<input_state_matrix_t,Eigen::aligned_allocator<input_state_matrix_t> >> CmProjectedFunc_;
-	std::vector<LinearInterpolation<input_matrix_t,Eigen::aligned_allocator<input_matrix_t>>> DmProjectedFunc_;
+	std::vector<EigenLinearInterpolation<state_vector_t>>       nominalStateFunc_;
+	std::vector<EigenLinearInterpolation<input_vector_t>> 	    nominalInputFunc_;
+	std::vector<EigenLinearInterpolation<state_input_matrix_t>> BmFunc_;
+	std::vector<EigenLinearInterpolation<input_state_matrix_t>> PmFunc_;
+	std::vector<EigenLinearInterpolation<input_matrix_t>>       RmInverseFunc_;
+	std::vector<EigenLinearInterpolation<input_vector_t>>       RvFunc_;
+	std::vector<EigenLinearInterpolation<input_vector_t>>       EvProjectedFunc_;
+	std::vector<EigenLinearInterpolation<input_state_matrix_t>> CmProjectedFunc_;
+	std::vector<EigenLinearInterpolation<input_matrix_t>>       DmProjectedFunc_;
 
 	// function for Riccati error equation
-	std::vector<LinearInterpolation<state_matrix_t, Eigen::aligned_allocator<state_matrix_t>>> SmFuncs_;
-	//
+	std::vector<EigenLinearInterpolation<state_matrix_t>> SmFuncs_;
+
+	// Functions for solving Backward pass through Mobius scheme
 	void LmFunc_ (const size_t& partitionIndex, const size_t& timeIndex, input_state_matrix_t& Lm) {
 		Lm = -RmInverseTrajectoryStock_[partitionIndex][timeIndex] * ( PmTrajectoryStock_[partitionIndex][timeIndex] +
 				BmTrajectoryStock_[partitionIndex][timeIndex].transpose()*SmTrajectoryStock_[partitionIndex][timeIndex] );
@@ -1276,12 +1282,25 @@ protected:
 		nominalControllersStock_[partitionIndex].deltaUff_[timeIndex] = LvConstrained;
 	};
 
-public:
-	template <size_t GSLQP_STATE_DIM, size_t GSLQP_INPUT_DIM>
-	friend class GSLQ;
-
 private:
 	std::mutex outputDisplayGuardMutex_;
+
+#ifdef BENCHMARK
+	// Benchmarking
+	size_t BENCHMARK_nIterationsLQ_ = 0;
+	size_t BENCHMARK_nIterationsBP_ = 0;
+	size_t BENCHMARK_nIterationsFP_ = 0;
+	scalar_t BENCHMARK_tAvgLQ_=0.0;
+	scalar_t BENCHMARK_tAvgBP_=0.0;
+	scalar_t BENCHMARK_tAvgFP_=0.0;
+	std::chrono::time_point<std::chrono::steady_clock> BENCHMARK_start_;
+	std::chrono::time_point<std::chrono::steady_clock> BENCHMARK_end_;
+	std::chrono::duration<double> BENCHMARK_diff_;
+#endif
+
+public:
+	template <size_t GSLQP_STATE_DIM, size_t GSLQP_INPUT_DIM, class GSLQP_LOGIC_RULES_T>
+	friend class GSLQ;
 
 };
 
@@ -1289,4 +1308,4 @@ private:
 
 #include "implementation/SLQ_BASE.h"
 
-#endif /* SLQ_H_ */
+#endif /* SLQ_BASE_OCS2_H_ */

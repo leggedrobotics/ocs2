@@ -80,25 +80,6 @@ public:
 	virtual ~ControlledSystemBase() = default;
 
 	/**
-	 * Sets the linear control policy using the controller class.
-	 * The controller class is defined as \f$ u(t,x) = u_{ff}(t) + K(t) * x \f$.
-	 *
-	 * @param [in] controller: The control policy.
-	 */
-	void setController(const controller_t& controller) {
-
-		controller_ = controller;
-
-		linInterpolateUff_.setTimeStamp(&controller_.time_);
-		linInterpolateUff_.setData(&controller_.uff_);
-
-		linInterpolateK_.setTimeStamp(&controller_.time_);
-		linInterpolateK_.setData(&controller_.k_);
-
-		controllerIsSet_ = true;
-	}
-
-	/**
 	 * Resets the internal classes.
 	 */
 	virtual void reset() {
@@ -108,23 +89,36 @@ public:
 	}
 
 	/**
+	 * Sets the linear control policy using the controller class.
+	 * The controller class is defined as \f$ u(t,x) = u_{ff}(t) + K(t) * x \f$.
+	 *
+	 * @param [in] controller: The control policy.
+	 */
+	void setController(const controller_t& controller) {
+
+		setController(controller.time_, controller.uff_, controller.k_);
+	}
+
+	/**
 	 * Sets the linear control policy using the feedback and feedforward components.
 	 * The controller class is defined as \f$ u(t,x) = u_{ff}(t) + K(t) * x \f$.
 	 *
 	 * @param [in] controllerTime: Time stamp.
-	 * @param [in] uff: Feedforward term trajectory, \f$ u_{ff} \f$.
-	 * @param [in] k: Feedback term trajectory, \f$ K \f$.
+	 * @param [in] controllerFeedforward: Feedforward term trajectory, \f$ u_{ff} \f$.
+	 * @param [in] controllerFeedback: Feedback term trajectory, \f$ K \f$.
 	 */
 	void setController(
 			const scalar_array_t& controllerTime,
-			const input_vector_array_t& uff,
-			const input_state_matrix_array_t& k) {
+			const input_vector_array_t& controllerFeedforward,
+			const input_state_matrix_array_t& controllerFeedback) {
 
-		controller_.time_ = controllerTime;
-		controller_.uff_ = uff;
-		controller_.k_ = k;
+		linInterpolateUff_.setTimeStamp(&controllerTime);
+		linInterpolateUff_.setData(&controllerFeedforward);
 
-		setController(controller_);
+		linInterpolateK_.setTimeStamp(&controllerTime);
+		linInterpolateK_.setData(&controllerFeedback);
+
+		controllerIsSet_ = true;
 	}
 
 	/**
@@ -232,12 +226,10 @@ public:
 	}
 
 protected:
-	controller_t controller_;
-
 	bool controllerIsSet_;
 
-	LinearInterpolation<input_vector_t, Eigen::aligned_allocator<input_vector_t> > linInterpolateUff_;
-	LinearInterpolation<input_state_matrix_t, Eigen::aligned_allocator<input_state_matrix_t> > linInterpolateK_;
+	EigenLinearInterpolation<input_vector_t> linInterpolateUff_;
+	EigenLinearInterpolation<input_state_matrix_t> linInterpolateK_;
 };
 
 } // namespace ocs2

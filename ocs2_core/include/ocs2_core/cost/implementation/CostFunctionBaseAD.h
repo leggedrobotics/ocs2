@@ -11,12 +11,16 @@ namespace ocs2{
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <class Derived, size_t STATE_DIM, size_t INPUT_DIM, class logic_rules_template_t>
-CostFunctionBaseAD<Derived, STATE_DIM, INPUT_DIM, logic_rules_template_t>::CostFunctionBaseAD()
+CostFunctionBaseAD<Derived, STATE_DIM, INPUT_DIM, logic_rules_template_t>::CostFunctionBaseAD(
+		const bool& dynamicLibraryIsCompiled /*= false*/)
 	: BASE()
-	, dynamicLibraryIsCompiled_(false)
+	, dynamicLibraryIsCompiled_(dynamicLibraryIsCompiled)
 	, modelName_("")
 	, libraryFolder_("")
-{};
+{
+	if (dynamicLibraryIsCompiled==true)
+		setADInterfaces();
+};
 
 /******************************************************************************************************/
 /******************************************************************************************************/
@@ -98,17 +102,21 @@ void CostFunctionBaseAD<Derived, STATE_DIM, INPUT_DIM, logic_rules_template_t>::
 	modelName_ = modelName;
 	libraryFolder_ = libraryFolder;
 
-	if (dynamicLibraryIsCompiled_==true)
-		loadModels(false);
-	else
-		std::cerr << "WARNING: The dynamicLibraryIsCompiled_ flag is false." << std::endl;
+	if (dynamicLibraryIsCompiled_==true) {
+		bool libraryLoaded = loadModels(false);
+		if (libraryLoaded==false)
+			throw std::runtime_error("CostFunction library is not found!");
+
+	} else {
+		throw std::runtime_error("CostFunction library has not been compiled!");
+	}
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <class Derived, size_t STATE_DIM, size_t INPUT_DIM, class logic_rules_template_t>
-bool CostFunctionBaseAD<Derived, STATE_DIM, INPUT_DIM, logic_rules_template_t>::isDynamicLibraryCompiled() const {
+const bool& CostFunctionBaseAD<Derived, STATE_DIM, INPUT_DIM, logic_rules_template_t>::isDynamicLibraryCompiled() const {
 
 	return dynamicLibraryIsCompiled_;
 }
@@ -272,8 +280,7 @@ void CostFunctionBaseAD<Derived, STATE_DIM, INPUT_DIM, logic_rules_template_t>::
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <class Derived, size_t STATE_DIM, size_t INPUT_DIM, class logic_rules_template_t>
-void CostFunctionBaseAD<Derived, STATE_DIM, INPUT_DIM, logic_rules_template_t>::createModels(
-		bool verbose) {
+void CostFunctionBaseAD<Derived, STATE_DIM, INPUT_DIM, logic_rules_template_t>::setADInterfaces() {
 
 	intermediateCostAD_ = [this](
 			const ad_dynamic_vector_t& x,
@@ -303,11 +310,23 @@ void CostFunctionBaseAD<Derived, STATE_DIM, INPUT_DIM, logic_rules_template_t>::
 	intermediateADInterfacePtr_->computeForwardModel(true);
 	intermediateADInterfacePtr_->computeJacobianModel(true);
 	intermediateADInterfacePtr_->computeHessianModel(true);
-	intermediateADInterfacePtr_->createModels(modelName_+"_intermediate", libraryFolder_, verbose);
 
 	terminalADInterfacePtr_->computeForwardModel(true);
 	terminalADInterfacePtr_->computeJacobianModel(true);
 	terminalADInterfacePtr_->computeHessianModel(true);
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+template <class Derived, size_t STATE_DIM, size_t INPUT_DIM, class logic_rules_template_t>
+void CostFunctionBaseAD<Derived, STATE_DIM, INPUT_DIM, logic_rules_template_t>::createModels(
+		bool verbose) {
+
+	// sets all the required CppAdCodeGenInterfaces
+	setADInterfaces();
+
+	intermediateADInterfacePtr_->createModels(modelName_+"_intermediate", libraryFolder_, verbose);
 	terminalADInterfacePtr_->createModels(modelName_+"_terminal", libraryFolder_, verbose);
 
 	dynamicLibraryIsCompiled_ = true;
@@ -317,12 +336,14 @@ void CostFunctionBaseAD<Derived, STATE_DIM, INPUT_DIM, logic_rules_template_t>::
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <class Derived, size_t STATE_DIM, size_t INPUT_DIM, class logic_rules_template_t>
-void CostFunctionBaseAD<Derived, STATE_DIM, INPUT_DIM, logic_rules_template_t>::loadModels(
+bool CostFunctionBaseAD<Derived, STATE_DIM, INPUT_DIM, logic_rules_template_t>::loadModels(
 		bool verbose) {
 
-	intermediateADInterfacePtr_->loadModels(modelName_+"_intermediate", libraryFolder_, verbose);
+	bool intermediateLoaded = intermediateADInterfacePtr_->loadModels(modelName_+"_intermediate", libraryFolder_, verbose);
 
-	terminalADInterfacePtr_->loadModels(modelName_+"_terminal", libraryFolder_, verbose);
+	bool terminalLoaded = terminalADInterfacePtr_->loadModels(modelName_+"_terminal", libraryFolder_, verbose);
+
+	return (intermediateLoaded && terminalLoaded);
 }
 
 } // namespace ocs2

@@ -75,68 +75,11 @@ void SLQ<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculatePartitionController(cons
 template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
 void SLQ<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::lineSearch(bool computeISEs)  {
 
-	const size_t workerIndex = 0;
-
-	BASE::lsComputeISEs_ = computeISEs;
-
-	// display
-	if (BASE::settings_.displayInfo_)  {
-		scalar_t maxDeltaUffNorm, maxDeltaUeeNorm;
-		BASE::calculateControllerUpdateMaxNorm(maxDeltaUffNorm, maxDeltaUeeNorm);
-
-		std::cerr << "max feedforward update norm:  " << maxDeltaUffNorm << std::endl;
-		std::cerr << "max type-1 error update norm: " << maxDeltaUeeNorm << std::endl;
-	}
-
 	// perform one rollout while the input correction for the type-1 constraint is considered.
-	BASE::rolloutTrajectory(BASE::initTime_, BASE::initState_, BASE::finalTime_,
-			BASE::partitioningTimes_, BASE::nominalControllersStock_,
-			BASE::nominalTimeTrajectoriesStock_, BASE::nominalEventsPastTheEndIndecesStock_,
-			BASE::nominalStateTrajectoriesStock_, BASE::nominalInputTrajectoriesStock_);
+	BASE::lineSearchBase(computeISEs);
 
-	if (BASE::lsComputeISEs_==true) {
-		// calculate constraint
-		BASE::calculateRolloutConstraints(BASE::nominalTimeTrajectoriesStock_, BASE::nominalEventsPastTheEndIndecesStock_,
-				BASE::nominalStateTrajectoriesStock_, BASE::nominalInputTrajectoriesStock_,
-				BASE::nc1TrajectoriesStock_, BASE::EvTrajectoryStock_,BASE::nc2TrajectoriesStock_,
-				BASE::HvTrajectoryStock_, BASE::nc2FinalStock_, BASE::HvFinalStock_);
-		// calculate constraint type-1 ISE and maximum norm
-		BASE::nominalConstraint1MaxNorm_ = BASE::calculateConstraintISE(
-				BASE::nominalTimeTrajectoriesStock_, BASE::nc1TrajectoriesStock_, BASE::EvTrajectoryStock_,
-				BASE::nominalConstraint1ISE_);
-		// calculates type-2 constraint ISE and maximum norm
-		BASE::nominalConstraint2MaxNorm_ = BASE::calculateConstraintISE(
-				BASE::nominalTimeTrajectoriesStock_, BASE::nc2TrajectoriesStock_, BASE::HvTrajectoryStock_,
-				BASE::nominalConstraint2ISE_);
-		// calculates cost
-		BASE::calculateRolloutCost(BASE::nominalTimeTrajectoriesStock_, BASE::nominalEventsPastTheEndIndecesStock_,
-				BASE::nominalStateTrajectoriesStock_, BASE::nominalInputTrajectoriesStock_,
-				BASE::nominalConstraint2ISE_, BASE::nc2FinalStock_, BASE::HvFinalStock_,
-				BASE::nominalTotalCost_);
-	} else {
-		// calculate constraint type-1 ISE and maximum norm
-		BASE::nominalConstraint1ISE_ = BASE::nominalConstraint1MaxNorm_ = 0.0;
-		// calculates type-2 constraint ISE and maximum norm
-		BASE::nominalConstraint2ISE_ = BASE::nominalConstraint2MaxNorm_ = 0.0;
-		// calculates cost
-		BASE::calculateRolloutCost(BASE::nominalTimeTrajectoriesStock_, BASE::nominalEventsPastTheEndIndecesStock_,
-				BASE::nominalStateTrajectoriesStock_, BASE::nominalInputTrajectoriesStock_,
-				BASE::nominalTotalCost_);
-	}
-
-	// display
-	if (BASE::settings_.displayInfo_)  {
-		std::cerr << "\t learningRate 0.0 \t cost: " << BASE::nominalTotalCost_ << " \t constraint ISE: " << BASE::nominalConstraint1ISE_ << std::endl;
-		std::cerr << "\t final constraint type-2:  ";
-		size_t itr = 0;
-		for(size_t i=BASE::initActivePartition_; i<=BASE::finalActivePartition_; i++)
-			for (size_t k=0; k<BASE::nc2FinalStock_[i].size(); k++) {
-				std::cerr << "[" << itr  << "]: " << BASE::HvFinalStock_[i][k].head(BASE::nc2FinalStock_[i][k]).transpose() << ",  ";
-				itr++;
-			}
-		std::cerr << std::endl;
-	}
-
+	const size_t workerIndex = 0;
+	BASE::lsComputeISEs_ = computeISEs;
 	scalar_t learningRate = BASE::maxLearningRate_;
 	BASE::initLScontrollersStock_ = BASE::nominalControllersStock_;
 
@@ -202,7 +145,8 @@ void SLQ<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::lineSearch(bool computeISEs)  {
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void SLQ<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::solveSequentialRiccatiEquations(
+typename SLQ<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::scalar_t
+	SLQ<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::solveSequentialRiccatiEquations(
 		const state_matrix_t& SmFinal,
 		const state_vector_t& SvFinal,
 		const eigen_scalar_t& sFinal)  {
@@ -256,6 +200,13 @@ void SLQ<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::solveSequentialRiccatiEquations(
 		}
 	}  // end of i loop
 
+	// total number of call
+	size_t numSteps = 0;
+	for (size_t i=BASE::initActivePartition_; i<=BASE::finalActivePartition_; i++)
+		numSteps += BASE::SsTimeTrajectoryStock_[i].size();
+
+	// average time step
+	return (BASE::finalTime_-BASE::initTime_)/(scalar_t)numSteps;
 }
 
 
@@ -285,15 +236,8 @@ void SLQ<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::runIteration()  {
 template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
 void SLQ<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::runExit()  {
 
-	// linearizing the dynamics and quadratizing the cost function along nominal trajectories
-	BASE::approximateOptimalControlProblem();
-
-	// solve Riccati equations
-	solveSequentialRiccatiEquations(BASE::SmHeuristics_, BASE::SvHeuristics_, BASE::sHeuristics_);
-
-	// calculate the nominal co-state
-	BASE::calculateRolloutCostate(BASE::nominalTimeTrajectoriesStock_, BASE::nominalStateTrajectoriesStock_, BASE::nominalcostateTrajectoriesStock_);
-
+	// run BASE routine
+	BASE::runExit();
 }
 
 

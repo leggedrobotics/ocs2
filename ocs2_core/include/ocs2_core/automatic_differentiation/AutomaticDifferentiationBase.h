@@ -64,7 +64,7 @@ public:
 			const std::string& libraryFolder = "",
 			const bool verbose = true) = 0;
 
-	virtual void loadModels(
+	virtual bool loadModels(
 			const std::string& modelName,
 			const std::string& libraryFolder = "",
 			const bool verbose = true) = 0;
@@ -93,7 +93,7 @@ protected:
 			std::vector<size_t>& rowsHessian,
 			std::vector<size_t>& colsHessian)  {
 
-		// Jacobain
+		// Jacobian
 		rowsJacobian.clear();
 		colsJacobian.clear();
 

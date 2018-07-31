@@ -88,7 +88,7 @@ public:
 	/**
 	 * Retrieves the event times.
 	 *
-	 * @return A const reference to eventTimes_.
+	 * @return A constant reference to eventTimes_.
 	 */
 	const scalar_array_t& eventTimes() const {
 
@@ -98,7 +98,7 @@ public:
 	/**
 	 * Retrieves the event times.
 	 *
-	 * @return A const reference to eventTimes_.
+	 * @return A constant reference to eventTimes_.
 	 */
 	scalar_array_t& eventTimes() {
 
@@ -126,14 +126,14 @@ public:
 	 * Rewinds the class. This method is only called in the MPC class.
 	 *
 	 * @param [in] lowerBoundTime: The smallest time for which the logicRules should be defined.
-	 * @param [in] upperBoundTime: The greates time for which the logicRules should be defined.
+	 * @param [in] upperBoundTime: The greatest time for which the logicRules should be defined.
 	 */
 	virtual void rewind(
 			const scalar_t& lowerBoundTime,
 			const scalar_t& upperBoundTime) = 0;
 
 	/**
-	 * Adjusts controller. This methos is called my the logicMachine whenever the logicRuls are updated.
+	 * Adjusts controller. This method is called my the logicMachine whenever the logicRuls are updated.
 	 * It allows the user to modify the controller to adapt to the changes of logics.
 	 *
 	 * @param controller: Control policy which should be adjusted.
@@ -142,7 +142,7 @@ public:
 
 	/**
 	 * This method can be used to update the internal variables. This method will be called by any
-	 * program that trys to update the logic rules variables.
+	 * program that tries to update the logic rules variables.
 	 */
 	virtual void update() = 0;
 

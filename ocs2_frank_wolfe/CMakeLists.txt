@@ -44,8 +44,8 @@ add_library(ocs2_frank_wolfe_lib
 )
 
 ## Declare a C++ executable
-add_executable(quadratic_test src/test/QuadraticTest.cpp)
-add_executable(matyas_test src/test/MatyasTest.cpp)
+add_executable(quadratic_test test/QuadraticTest.cpp)
+add_executable(matyas_test test/MatyasTest.cpp)
 add_executable(glpk_test src/glpk_test/testGLPK.cpp)
 
 ## Specify libraries to link a library or executable target against

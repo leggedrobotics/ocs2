@@ -61,9 +61,11 @@ public:
 	typedef typename BASE::constraint2_state_matrix_t   constraint2_state_matrix_t;
 
 	/**
-	 * Default constructor
+	 * Default constructor.
+	 *
+	 * @param [in] dynamicLibraryIsCompiled: Whether a library is already complied.
 	 */
-	ConstraintBaseAD();
+	ConstraintBaseAD(const bool& dynamicLibraryIsCompiled = false);
 
 	/**
 	 * Copy constructor
@@ -83,13 +85,13 @@ public:
 	virtual BASE* clone() const override;
 
 	/**
-	 * Interface method to the state-input equality constriants. This method should be implemented by the derived class.
+	 * Interface method to the state-input equality constraints. This method should be implemented by the derived class.
 	 *
 	 * @tparam scalar type. All the floating point operations should be with this type.
 	 * @param [in] time: time.
 	 * @param [in] state: state vector.
 	 * @param [in] input: input vector
-	 * @param [out] constraintVector: constriant vecotr.
+	 * @param [out] constraintVector: constraints vector.
 	 */
 	template <typename SCALAR_T>
 	void stateInputConstraint(
@@ -99,10 +101,10 @@ public:
 			Eigen::Matrix<SCALAR_T, Eigen::Dynamic, 1>& constraintVector) {}
 
 	/**
-	 * Get the number of state-input active equality constriants.
+	 * Get the number of state-input active equality constraints.
 	 *
 	 * @param [in] time: time.
-	 * @return number of state-input active equality constriants.
+	 * @return number of state-input active equality constraints.
 	 */
 	virtual size_t numStateInputConstraint(const scalar_t& time) override {
 
@@ -110,12 +112,12 @@ public:
 	}
 
 	/**
-	 * Interface method to the state-only equality constriants. This method should be implemented by the derived class.
+	 * Interface method to the state-only equality constraints. This method should be implemented by the derived class.
 	 *
 	 * @tparam scalar type. All the floating point operations should be with this type.
 	 * @param [in] time: time.
 	 * @param [in] state: state vector.
-	 * @param [out] constraintVector: constriant vecotr.
+	 * @param [out] constraintVector: constraint vector.
 	 */
 	template <typename SCALAR_T>
 	void stateOnlyConstraint(
@@ -124,10 +126,10 @@ public:
 			Eigen::Matrix<SCALAR_T, Eigen::Dynamic, 1>& constraintVector) {}
 
 	/**
-	 * Get the number of state-only active equality constriants.
+	 * Get the number of state-only active equality constraints.
 	 *
 	 * @param [in] time: time.
-	 * @return number of state-only active equality constriants.
+	 * @return number of state-only active equality constraints.
 	 */
 	virtual size_t numStateOnlyConstraint(const scalar_t& time) override {
 
@@ -135,12 +137,12 @@ public:
 	}
 
 	/**
-	 * Interface method to the state-only final equality constriants. This method should be implemented by the derived class.
+	 * Interface method to the state-only final equality constraints. This method should be implemented by the derived class.
 	 *
 	 * @tparam scalar type. All the floating point operations should be with this type.
 	 * @param [in] time: time.
 	 * @param [in] state: state vector.
-	 * @param [out] constraintVector: constriant vecotr.
+	 * @param [out] constraintVector: constraint vector.
 	 */
 	template <typename SCALAR_T>
 	void stateOnlyFinalConstraint(
@@ -149,10 +151,10 @@ public:
 			Eigen::Matrix<SCALAR_T, Eigen::Dynamic, 1>& constraintVector) {}
 
 	/**
-	 * Get the number of final state-only active equality constriants.
+	 * Get the number of final state-only active equality constraints.
 	 *
 	 * @param [in] time: time.
-	 * @return number of final state-only active equality constriants.
+	 * @return number of final state-only active equality constraints.
 	 */
 	virtual size_t numStateOnlyFinalConstraint(const scalar_t& time) override {
 
@@ -186,7 +188,7 @@ public:
 	 *
 	 * @return true if the dynamic library is compiled
 	 */
-	bool isDynamicLibraryCompiled() const;
+	const bool& isDynamicLibraryCompiled() const;
 
 	/**
 	 * Gets model name.
@@ -303,6 +305,11 @@ protected:
 			ad_dynamic_vector_t& g2Final);
 
 	/**
+	 * Sets all the required CppAdCodeGenInterfaces
+	 */
+	void setADInterfaces();
+
+	/**
 	 * Create the forward model, the Jacobian model, and the Hessian model.
 	 *
 	 * @param [in] verbose: display information.
@@ -313,8 +320,9 @@ protected:
 	 * Loads the forward model, the Jacobian model, and the Hessian model.
 	 *
 	 * @param [in] verbose: display information
+	 * @return true if it successfully loads the library.
 	 */
-	void loadModels(bool verbose);
+	bool loadModels(bool verbose);
 
 private:
 	bool dynamicLibraryIsCompiled_;

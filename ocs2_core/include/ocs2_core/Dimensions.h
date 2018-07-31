@@ -114,12 +114,26 @@ public:
 	/** Array of dynamic-state matrix trajectory type. */
 	typedef std::vector<dynamic_state_matrix_array_t, Eigen::aligned_allocator<dynamic_state_matrix_array_t> > dynamic_state_matrix_array2_t;
 
+	/** n_x by dynamic-size matrix type. */
+	typedef Eigen::Matrix<scalar_t, STATE_DIM, Eigen::Dynamic> state_dynamic_matrix_t;
+	/** state_dynamic matrix trajectory type. */
+	typedef std::vector<state_dynamic_matrix_t, Eigen::aligned_allocator<state_dynamic_matrix_t> > state_dynamic_matrix_array_t;
+	/** Array of state_dynamic matrix trajectory type. */
+	typedef std::vector<state_dynamic_matrix_array_t, Eigen::aligned_allocator<state_dynamic_matrix_array_t> > state_dynamic_matrix_array2_t;
+
 	/** Dynamic-size by n_u matrix type. */
 	typedef Eigen::Matrix<scalar_t, Eigen::Dynamic, INPUT_DIM> dynamic_input_matrix_t;
 	/** Dynamic-input matrix trajectory type. */
 	typedef std::vector<dynamic_input_matrix_t, Eigen::aligned_allocator<dynamic_input_matrix_t> > dynamic_input_matrix_array_t;
 	/** Array of dynamic-input matrix trajectory type. */
 	typedef std::vector<dynamic_input_matrix_array_t, Eigen::aligned_allocator<dynamic_input_matrix_array_t> > dynamic_input_matrix_array2_t;
+
+	/** n_u by dynamic-size matrix type. */
+	typedef Eigen::Matrix<scalar_t, Eigen::Dynamic, INPUT_DIM> input_dynamic_matrix_t;
+	/** input_dynamic matrix trajectory type. */
+	typedef std::vector<input_dynamic_matrix_t, Eigen::aligned_allocator<input_dynamic_matrix_t> > input_dynamic_matrix_array_t;
+	/** Array of input_dynamic matrix trajectory type. */
+	typedef std::vector<input_dynamic_matrix_array_t, Eigen::aligned_allocator<input_dynamic_matrix_array_t> > input_dynamic_matrix_array2_t;
 
 	/** Fixed-size vector type with size \f$ n_x^2 \f$ . */
     typedef Eigen::Matrix<scalar_t, STATE_DIM*STATE_DIM , 1 > state_matrix_vectorized_t;
@@ -175,7 +189,7 @@ public:
 
 
 	/**
-	 * Affine function class in the form \f$ u_{ff}(t) + K(t) \f$ where \f$ u_{ff} \f$ is a vector of size \f$ d_1 \f$ and
+	 * Affine function class in the form \f$ u_{ff}(t) + K(t) x \f$ where \f$ u_{ff} \f$ is a vector of size \f$ d_1 \f$ and
 	 * \f$ K \f$ is a matrix of size \f$ d_1 * n_x \f$.
 	 *
 	 * @tparam DIM1: \f$ d_1 \f$.
@@ -185,16 +199,21 @@ public:
 	/** Array of LinearFunction_t */
 	template <int DIM1, int DIM2=1>
 	using linearFunction_array_t = std::vector<LinearFunction_t<DIM1,DIM2>, Eigen::aligned_allocator<LinearFunction_t<DIM1,DIM2>> >;
+	/** 2D array of LinearFunction_t */
+	template <int DIM1, int DIM2=1>
+	using linearFunction_array2_t = std::vector<linearFunction_array_t<DIM1,DIM2>, Eigen::aligned_allocator<linearFunction_array_t<DIM1,DIM2>> >;
 
 	/** Linear control policy in the form \f$ u_{ff}(t) + K(t) \f$. */
 	typedef LinearFunction_t<INPUT_DIM,1>		controller_t;
 	/** Array of linear control policy. */
 	typedef linearFunction_array_t<INPUT_DIM,1> controller_array_t;
+	/** 2D array of linear control policy. */
+	typedef linearFunction_array2_t<INPUT_DIM,1> controller_array2_t;
 
-	/** Linear funtion for lagrange multiplier */
-	typedef LinearFunction_t<Eigen::Dynamic,1> lagrange_t;
+	/** Linear function for lagrange multiplier */
+	typedef LinearFunction_t<MAX_CONSTRAINT1_DIM_,1> lagrange_t;
 	/** Array of lagrange multiplier */
-	typedef linearFunction_array_t<Eigen::Dynamic,1> lagrange_array_t;
+	typedef linearFunction_array_t<MAX_CONSTRAINT1_DIM_,1> lagrange_array_t;
 
 	/**
 	 * Riccati integrator type.

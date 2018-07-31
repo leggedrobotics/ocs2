@@ -11,12 +11,16 @@ namespace ocs2{
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <class Derived, size_t STATE_DIM, size_t INPUT_DIM, class logic_rules_template_t, size_t NUM_MODES>
-SystemDynamicsBaseAD<Derived, STATE_DIM, INPUT_DIM, logic_rules_template_t, NUM_MODES>::SystemDynamicsBaseAD()
+SystemDynamicsBaseAD<Derived, STATE_DIM, INPUT_DIM, logic_rules_template_t, NUM_MODES>::SystemDynamicsBaseAD(
+		const bool& dynamicLibraryIsCompiled /*= false*/)
 	: BASE()
-	, dynamicLibraryIsCompiled_(false)
+	, dynamicLibraryIsCompiled_(dynamicLibraryIsCompiled)
 	, modelName_("")
 	, libraryFolder_("")
-{};
+{
+	if (dynamicLibraryIsCompiled==true)
+		setADInterfaces();
+};
 
 /******************************************************************************************************/
 /******************************************************************************************************/
@@ -127,17 +131,21 @@ void SystemDynamicsBaseAD<Derived, STATE_DIM, INPUT_DIM, logic_rules_template_t,
 	modelName_ = modelName;
 	libraryFolder_ = libraryFolder;
 
-	if (dynamicLibraryIsCompiled_==true)
-		loadModels(false);
-	else
-		std::cerr << "WARNING: The dynamicLibraryIsCompiled_ flag is false." << std::endl;
+	if (dynamicLibraryIsCompiled_==true) {
+		bool libraryLoaded = loadModels(false);
+		if (libraryLoaded==false)
+			throw std::runtime_error("SystemDynamics library is not found!");
+
+	} else {
+		throw std::runtime_error("SystemDynamics library has not been compiled!");
+	}
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <class Derived, size_t STATE_DIM, size_t INPUT_DIM, class logic_rules_template_t, size_t NUM_MODES>
-bool SystemDynamicsBaseAD<Derived, STATE_DIM, INPUT_DIM, logic_rules_template_t, NUM_MODES>::isDynamicLibraryCompiled() const {
+const bool& SystemDynamicsBaseAD<Derived, STATE_DIM, INPUT_DIM, logic_rules_template_t, NUM_MODES>::isDynamicLibraryCompiled() const {
 
 	return dynamicLibraryIsCompiled_;
 }
@@ -364,8 +372,7 @@ void SystemDynamicsBaseAD<Derived, STATE_DIM, INPUT_DIM, logic_rules_template_t,
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <class Derived, size_t STATE_DIM, size_t INPUT_DIM, class logic_rules_template_t, size_t NUM_MODES>
-void SystemDynamicsBaseAD<Derived, STATE_DIM, INPUT_DIM, logic_rules_template_t, NUM_MODES>::createModels(
-		bool verbose) {
+void SystemDynamicsBaseAD<Derived, STATE_DIM, INPUT_DIM, logic_rules_template_t, NUM_MODES>::setADInterfaces() {
 
 	systemFlowMapAD_ = [this](
 			const ad_dynamic_vector_t& x,
@@ -403,16 +410,28 @@ void SystemDynamicsBaseAD<Derived, STATE_DIM, INPUT_DIM, logic_rules_template_t,
 	flowMapADInterfacePtr_->computeForwardModel(true);
 	flowMapADInterfacePtr_->computeJacobianModel(true);
 	flowMapADInterfacePtr_->computeHessianModel(false);
-	flowMapADInterfacePtr_->createModels(modelName_+"_flow_map", libraryFolder_, verbose);
 
 	jumpMapADInterfacePtr_->computeForwardModel(true);
 	jumpMapADInterfacePtr_->computeJacobianModel(true);
 	jumpMapADInterfacePtr_->computeHessianModel(false);
-	jumpMapADInterfacePtr_->createModels(modelName_+"_jump_map", libraryFolder_, verbose);
 
 	guardSurfacesADInterfacePtr_->computeForwardModel(true);
 	guardSurfacesADInterfacePtr_->computeJacobianModel(true);
 	guardSurfacesADInterfacePtr_->computeHessianModel(false);
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+template <class Derived, size_t STATE_DIM, size_t INPUT_DIM, class logic_rules_template_t, size_t NUM_MODES>
+void SystemDynamicsBaseAD<Derived, STATE_DIM, INPUT_DIM, logic_rules_template_t, NUM_MODES>::createModels(
+		bool verbose) {
+
+	// sets all the required CppAdCodeGenInterfaces
+	setADInterfaces();
+
+	flowMapADInterfacePtr_->createModels(modelName_+"_flow_map", libraryFolder_, verbose);
+	jumpMapADInterfacePtr_->createModels(modelName_+"_jump_map", libraryFolder_, verbose);
 	guardSurfacesADInterfacePtr_->createModels(modelName_+"_guard_surfaces", libraryFolder_, verbose);
 
 	dynamicLibraryIsCompiled_ = true;
@@ -422,14 +441,16 @@ void SystemDynamicsBaseAD<Derived, STATE_DIM, INPUT_DIM, logic_rules_template_t,
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <class Derived, size_t STATE_DIM, size_t INPUT_DIM, class logic_rules_template_t, size_t NUM_MODES>
-void SystemDynamicsBaseAD<Derived, STATE_DIM, INPUT_DIM, logic_rules_template_t, NUM_MODES>::loadModels(
+bool SystemDynamicsBaseAD<Derived, STATE_DIM, INPUT_DIM, logic_rules_template_t, NUM_MODES>::loadModels(
 		bool verbose) {
 
-	flowMapADInterfacePtr_->loadModels(modelName_+"_flow_map", libraryFolder_, verbose);
+	bool flowMapLoaded = flowMapADInterfacePtr_->loadModels(modelName_+"_flow_map", libraryFolder_, verbose);
 
-	jumpMapADInterfacePtr_->loadModels(modelName_+"_jump_map", libraryFolder_, verbose);
+	bool jumpMapLoaded = jumpMapADInterfacePtr_->loadModels(modelName_+"_jump_map", libraryFolder_, verbose);
 
-	guardSurfacesADInterfacePtr_->loadModels(modelName_+"_guard_surfaces", libraryFolder_, verbose);
+	bool guardSurfacesLoaded = guardSurfacesADInterfacePtr_->loadModels(modelName_+"_guard_surfaces", libraryFolder_, verbose);
+
+	return (flowMapLoaded && jumpMapLoaded && guardSurfacesLoaded);
 }
 
 } // namespace ocs2

@@ -71,7 +71,7 @@ public:
 			const std::string& libraryFolder = "",
 			const bool verbose = true) override;
 
-	void loadModels(
+	bool loadModels(
 			const std::string& modelName,
 			const std::string& libraryFolder = "",
 			const bool verbose = true) override;

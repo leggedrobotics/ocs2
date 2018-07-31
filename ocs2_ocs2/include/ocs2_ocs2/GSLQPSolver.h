@@ -1,34 +1,34 @@
 /**
- * GSLQPSolver.h
+ * GSLQSolver.h
  *
  *  Created on: Jan 18, 2016
  *      Author: farbod
  */
 
-#ifndef GSLQPSOLVER_OCS2_H_
-#define GSLQPSOLVER_OCS2_H_
+#ifndef GSLQSOLVER_OCS2_H_
+#define GSLQSOLVER_OCS2_H_
 
 #include <ocs2_slq/GLQP.h>
 
-#include "ocs2_ocs2/GSLQP.h"
+#include "ocs2_ocs2/GSLQ.h"
 
 namespace ocs2{
 
 /**
- * GSLQP Solver Class
+ * GSLQ Solver Class
  * @tparam STATE_DIM
  * @tparam INPUT_DIM
  * @tparam OUTPUT_DIM
  * @tparam NUM_Subsystems
  */
 template <size_t STATE_DIM, size_t INPUT_DIM, size_t OUTPUT_DIM, size_t NUM_Subsystems>
-class GSLQPSolver
+class GSLQSolver
 {
 public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
 	typedef GLQP<STATE_DIM, INPUT_DIM, OUTPUT_DIM, NUM_Subsystems> GLQP_t;
-	typedef GSLQP<STATE_DIM, INPUT_DIM, OUTPUT_DIM, NUM_Subsystems> GSLQP_t;
+	typedef GSLQ<STATE_DIM, INPUT_DIM, OUTPUT_DIM, NUM_Subsystems> GSLQ_t;
 
 	typedef Dimensions<STATE_DIM, INPUT_DIM, OUTPUT_DIM> DIMENSIONS;
 	typedef typename DIMENSIONS::controller_t controller_t;
@@ -56,7 +56,8 @@ public:
     /**
      * Constructor
      */
-	GSLQPSolver(const std::vector<std::shared_ptr<ControlledSystemBase<STATE_DIM, INPUT_DIM> > >& subsystemDynamicsPtr,
+	GSLQSolver(
+			const std::vector<std::shared_ptr<ControlledSystemBase<STATE_DIM, INPUT_DIM> > >& subsystemDynamicsPtr,
 			const std::vector<std::shared_ptr<DerivativesBase<STATE_DIM, INPUT_DIM> > >& subsystemDerivativesPtr,
 			const std::vector<std::shared_ptr<CostFunctionBaseOCS2<STATE_DIM, INPUT_DIM> > >& subsystemCostFunctionsPtr,
 			const state_vector_array_t&   stateOperatingPoints,
@@ -65,18 +66,18 @@ public:
 			const Options_t& options = Options_t::Options(),
 			const MP_Options_t& mpOptions = MP_Options_t::MP_Options() )
 
-	: subsystemDynamicsPtr_(subsystemDynamicsPtr),
-	  subsystemDerivativesPtr_(subsystemDerivativesPtr),
-	  subsystemCostFunctionsPtr_(subsystemCostFunctionsPtr),
-	  stateOperatingPoints_(stateOperatingPoints),
-	  inputOperatingPoints_(inputOperatingPoints),
-	  systemStockIndex_(systemStockIndex),
-	  options_(options),
-	  mp_options_(mpOptions),
-	  controllersStock_(NUM_Subsystems)
+	: subsystemDynamicsPtr_(subsystemDynamicsPtr)
+	, subsystemDerivativesPtr_(subsystemDerivativesPtr)
+	, subsystemCostFunctionsPtr_(subsystemCostFunctionsPtr)
+	, stateOperatingPoints_(stateOperatingPoints)
+	, inputOperatingPoints_(inputOperatingPoints)
+	, systemStockIndex_(systemStockIndex)
+	, options_(options)
+	, mp_options_(mpOptions)
+	, controllersStock_(NUM_Subsystems)
 	{}
 
-	virtual ~GSLQPSolver() {}
+	virtual ~GSLQSolver() {}
 
     /**
      * Returns cost
@@ -118,7 +119,9 @@ public:
 	 * @param [in] initState
 	 * @param [in] switchingTimes
 	 */
-	void run(const double& initTime, const state_vector_t& initState, const std::vector<scalar_t>& switchingTimes);
+	void run(const double& initTime,
+			const state_vector_t& initState,
+			const std::vector<scalar_t>& switchingTimes);
 
 
 protected:
@@ -149,6 +152,6 @@ private:
 
 } // namespace ocs2
 
-#include "implementation/GSLQPSolver.h"
+#include "implementation/GSLQSolver.h"
 
-#endif /* GSLQPSOLVER_H_ */
+#endif /* GSLQSOLVER_H_ */

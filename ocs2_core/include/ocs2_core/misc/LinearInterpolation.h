@@ -222,6 +222,9 @@ private:
 
 };
 
+// Specialization for Eigen types
+template <typename Data_T>
+using EigenLinearInterpolation = LinearInterpolation<Data_T, Eigen::aligned_allocator<Data_T>>;
 
 } // namespace ocs2
 

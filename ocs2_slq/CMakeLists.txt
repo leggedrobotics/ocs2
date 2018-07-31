@@ -2,8 +2,6 @@ cmake_minimum_required(VERSION 2.8.3)
 project(ocs2_slq)
 
 ## Find catkin macros and libraries
-## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
-## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS 
   cmake_modules 
   ocs2_core
@@ -22,9 +20,13 @@ endif()
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread -fopenmp -std=c++11 -Wfatal-errors -Wl,--no-as-needed")
 
+###################################
+## catkin specific configuration ##
+###################################
 catkin_package(
   INCLUDE_DIRS 
     include
+    test/include
   CATKIN_DEPENDS 
     ocs2_core
   DEPENDS 
@@ -32,13 +34,21 @@ catkin_package(
     eigen
 )
 
+###########
+## Build ##
+###########
+
 include_directories(
   include
+  test/include
   ${EIGEN_INCLUDE_DIRS}
   ${Boost_INCLUDE_DIRS}
   ${catkin_INCLUDE_DIRS}
 )
 
+#############
+## Doxygen ##
+#############
 find_package(Doxygen)
 if(DOXYGEN_FOUND)
 

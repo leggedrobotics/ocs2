@@ -35,8 +35,7 @@ public:
 		S_DIM_ = STATE_DIM*(STATE_DIM+1)/2 + STATE_DIM + 1
 	};
 
-	typedef Eigen::Matrix<double,S_DIM_,1> s_vector_t;
-	typedef std::vector<s_vector_t, Eigen::aligned_allocator<s_vector_t> > s_vector_array_t;
+	typedef ODE_Base<S_DIM_> BASE;
 
 	typedef Dimensions<STATE_DIM, INPUT_DIM> DIMENSIONS;
 	typedef typename DIMENSIONS::controller_t controller_t;
@@ -47,19 +46,23 @@ public:
 	typedef typename DIMENSIONS::eigen_scalar_array_t eigen_scalar_array_t;
 	typedef typename DIMENSIONS::state_vector_t 	  state_vector_t;
 	typedef typename DIMENSIONS::state_vector_array_t state_vector_array_t;
-	typedef typename DIMENSIONS::input_vector_t 		input_vector_t;
+	typedef typename DIMENSIONS::input_vector_t       input_vector_t;
 	typedef typename DIMENSIONS::input_vector_array_t input_vector_array_t;
-	typedef typename DIMENSIONS::input_state_matrix_t 	  input_state_matrix_t;
+	typedef typename DIMENSIONS::input_state_matrix_t       input_state_matrix_t;
 	typedef typename DIMENSIONS::input_state_matrix_array_t input_state_matrix_array_t;
-	typedef typename DIMENSIONS::state_matrix_t 	  state_matrix_t;
+	typedef typename DIMENSIONS::state_matrix_t       state_matrix_t;
 	typedef typename DIMENSIONS::state_matrix_array_t state_matrix_array_t;
-	typedef typename DIMENSIONS::input_matrix_t 		input_matrix_t;
+	typedef typename DIMENSIONS::input_matrix_t       input_matrix_t;
 	typedef typename DIMENSIONS::input_matrix_array_t input_matrix_array_t;
-	typedef typename DIMENSIONS::state_input_matrix_t 		 state_input_matrix_t;
+	typedef typename DIMENSIONS::state_input_matrix_t       state_input_matrix_t;
 	typedef typename DIMENSIONS::state_input_matrix_array_t state_input_matrix_array_t;
+	typedef typename DIMENSIONS::dynamic_vector_t dynamic_vector_t;
+
+	typedef Eigen::Matrix<scalar_t, S_DIM_,1> s_vector_t;
+	typedef std::vector<s_vector_t, Eigen::aligned_allocator<s_vector_t> > s_vector_array_t;
 
 	/**
-	 * Default constructor.
+	 * Constructor.
 	 */
 	SequentialRiccatiEquationsNormalized(const bool& useMakePSD)
 	: useMakePSD_(useMakePSD)
@@ -96,27 +99,32 @@ public:
 	~SequentialRiccatiEquationsNormalized() = default;
 
 	/**
-	 * Transcribe symmetric matrix Sm, vector Sv and scalar s into a single vector
+	 * Transcribe symmetric matrix Sm, vector Sv and scalar s into a single vector.
 	 *
 	 * @param [in] Sm: \f$ S_m \f$
 	 * @param [in] Sv: \f$ S_v \f$
 	 * @param [in] s: \f$ s \f$
 	 * @param [out] allSs: Single vector constructed by concatenating Sm, Sv and s.
 	 */
-	static void convert2Vector(const state_matrix_t& Sm, const state_vector_t& Sv, const eigen_scalar_t& s, s_vector_t& allSs)  {
+	static void convert2Vector(
+			const state_matrix_t& Sm,
+			const state_vector_t& Sv,
+			const eigen_scalar_t& s,
+			s_vector_t& allSs)  {
 
-		/*Sm is symmetric. Here, we only extract the upper triangular part and transcribe it in column-wise fashion into allSs*/
+		/* Sm is symmetric. Here, we only extract the upper triangular part and transcribe it in column-wise fashion into allSs*/
 		size_t count = 0;	// count the total number of scalar entries covered
 		size_t nRows = 0;
-		for(size_t nCols=0; nCols < STATE_DIM; nCols++)
-		{
+		for(size_t nCols=0; nCols < STATE_DIM; nCols++) {
 			nRows = nCols+1;
-			allSs.template segment(count, nRows) << Eigen::Map<const Eigen::VectorXd>(Sm.data() + nCols*STATE_DIM, nRows);
+			allSs.template segment(count, nRows) <<
+					Eigen::Map<const dynamic_vector_t>(Sm.data() + nCols*STATE_DIM, nRows);
 			count += nRows;
 		}
 
 		/* add data from Sv on top*/
-		allSs.template segment<STATE_DIM>((STATE_DIM*(STATE_DIM+1))/2) <<  Eigen::Map<const Eigen::VectorXd>(Sv.data(), STATE_DIM);
+		allSs.template segment<STATE_DIM>((STATE_DIM*(STATE_DIM+1))/2) <<
+				Eigen::Map<const dynamic_vector_t>(Sv.data(), STATE_DIM);
 
 		/* add s as last element*/
 		allSs.template tail<1> () << s;
@@ -124,29 +132,38 @@ public:
 
     /**
     * Transcribes the stacked vector allSs into a symmetric matrix, Sm, a vector, Sv and a single scalar, s.
+    *
     * @param [in] allSs: Single vector constructed by concatenating Sm, Sv and s.
-	 * @param [out] Sm: \f$ S_m \f$
-	 * @param [out] Sv: \f$ S_v \f$
-	 * @param [out] s: \f$ s \f$
+    * @param [out] Sm: \f$ S_m \f$
+    * @param [out] Sv: \f$ S_v \f$
+    * @param [out] s: \f$ s \f$
     */
-	static void convert2Matrix(const s_vector_t& allSs, state_matrix_t& Sm, state_vector_t& Sv, eigen_scalar_t& s)  {
+	static void convert2Matrix(
+			const s_vector_t& allSs,
+			state_matrix_t& Sm,
+			state_vector_t& Sv,
+			eigen_scalar_t& s)  {
 
-		/*Sm is symmetric. Here, we map the first entries from allSs onto the respective elements in the symmetric matrix*/
+		/* Sm is symmetric. Here, we map the first entries from allSs onto the respective elements in the symmetric matrix*/
 		size_t count = 0;
 		size_t nCols = 0;
 		for(size_t rows=0; rows < STATE_DIM; rows++)
 		{
 			nCols = rows+1;
-			Sm.template block(rows, 0, 1, nCols)  << Eigen::Map<const Eigen::VectorXd>(allSs.data()+count, nCols).transpose();
-			Sm.template block(0, rows, nCols-1, 1)  << Eigen::Map<const Eigen::VectorXd>(allSs.data()+count, nCols-1); // "nCols-1" because diagonal elements have already been covered
+			Sm.template block(rows, 0, 1, nCols)  <<
+					Eigen::Map<const dynamic_vector_t>(allSs.data()+count, nCols).transpose();
+			// "nCols-1" because diagonal elements have already been covered
+			Sm.template block(0, rows, nCols-1, 1)  <<
+					Eigen::Map<const dynamic_vector_t>(allSs.data()+count, nCols-1);
 			count += nCols;
 		}
 
-		/*extract the vector Sv*/
-		Sv = Eigen::Map<const Eigen::VectorXd>(allSs.data()+(STATE_DIM*(STATE_DIM+1))/2, STATE_DIM);
+		/* extract the vector Sv*/
+		Sv = Eigen::Map<const dynamic_vector_t>(
+				allSs.data()+(STATE_DIM*(STATE_DIM+1))/2, STATE_DIM);
 
-		/*extract s as the last element */
-		s  = allSs.template tail<1>();
+		/* extract s as the last element */
+		s = allSs.template tail<1>();
 	}
 
 	/**
@@ -166,16 +183,25 @@ public:
 	 * @param [in] RmPtr: A pointer to the trajectory of \f$ R_m(t) \f$ .
 	 * @param [in] PmPtr: A pointer to the trajectory of \f$ P_m(t) \f$ .
 	 */
-	void setData(const scalar_t& switchingTimeStart, const scalar_t& switchingTimeFinal,
+	void setData(
+			const scalar_t& switchingTimeStart,
+			const scalar_t& switchingTimeFinal,
 			const scalar_array_t* timeStampPtr,
-			const state_matrix_array_t* AmPtr, const state_input_matrix_array_t* BmPtr,
-			const eigen_scalar_array_t* qPtr, const state_vector_array_t* QvPtr, const state_matrix_array_t* QmPtr,
-			const input_vector_array_t* RvPtr, const input_matrix_array_t* RmInversePtr, const input_matrix_array_t* RmPtr,
+			const state_matrix_array_t* AmPtr,
+			const state_input_matrix_array_t* BmPtr,
+			const eigen_scalar_array_t* qPtr,
+			const state_vector_array_t* QvPtr,
+			const state_matrix_array_t* QmPtr,
+			const input_vector_array_t* RvPtr,
+			const input_matrix_array_t* RmInversePtr,
+			const input_matrix_array_t* RmPtr,
 			const input_state_matrix_array_t* PmPtr,
 			const size_array_t* eventsPastTheEndIndecesPtr,
-			const eigen_scalar_array_t* qFinalPtr, const state_vector_array_t* QvFinalPtr, const state_matrix_array_t* QmFianlPtr)  {
+			const eigen_scalar_array_t* qFinalPtr,
+			const state_vector_array_t* QvFinalPtr,
+			const state_matrix_array_t* QmFianlPtr)  {
 
-		ODE_Base<STATE_DIM*(STATE_DIM+1)/2+STATE_DIM+1>::numFunctionCalls_ = 0;
+		BASE::resetNumFunctionCalls();
 
 		switchingTimeStart_ = switchingTimeStart;
 		switchingTimeFinal_ = switchingTimeFinal;
@@ -201,11 +227,11 @@ public:
 		PmFunc_.setTimeStamp(timeStampPtr);
 		PmFunc_.setData(PmPtr);
 
-		eventTime_.clear();
-		eventTime_.reserve(eventsPastTheEndIndecesPtr->size());
+		eventTimes_.clear();
+		eventTimes_.reserve(eventsPastTheEndIndecesPtr->size());
 
 		for (const size_t& pastTheEndIndex : *eventsPastTheEndIndecesPtr)
-			eventTime_.push_back( timeStampPtr->at(pastTheEndIndex-1) );
+			eventTimes_.push_back( timeStampPtr->at(pastTheEndIndex-1) );
 
 		qFinalPtr_  = qFinalPtr;
 		QvFinalPtr_ = QvFinalPtr;
@@ -235,13 +261,16 @@ public:
 	 * @param [in] state: transition state
 	 * @param [out] mappedState: mapped state after transition
 	 */
-	void computeJumpMap(const scalar_t& z, const s_vector_t& state, s_vector_t& mappedState) override {
+	void computeJumpMap(
+			const scalar_t& z,
+			const s_vector_t& state,
+			s_vector_t& mappedState) override {
 
 		scalar_t time = switchingTimeFinal_ - scalingFactor_*z;
 
-		size_t index = find(eventTime_, time);
+		size_t index = find(eventTimes_, time);
 
-		if (index == eventTime_.size())
+		if (index == eventTimes_.size())
 			throw std::runtime_error("The Riccati state jump time is not defined.");
 
 		s_vector_t allSsJump;
@@ -257,9 +286,12 @@ public:
 	 * @param [in] allSs: Single vector constructed by concatenating Sm, Sv and s.
 	 * @param [out] derivatives: d(allSs)/dz.
 	 */
-	void computeFlowMap(const scalar_t& z, const s_vector_t& allSs, s_vector_t& derivatives) {
+	void computeFlowMap(
+			const scalar_t& z,
+			const s_vector_t& allSs,
+			s_vector_t& derivatives) override {
 
-		ODE_Base<STATE_DIM*(STATE_DIM+1)/2+STATE_DIM+1>::numFunctionCalls_++;
+		BASE::numFunctionCalls_++;
 
 		// denormalized time
 		const scalar_t t = switchingTimeFinal_ - scalingFactor_*z;
@@ -371,17 +403,16 @@ private:
 	scalar_t switchingTimeFinal_;
 	scalar_t scalingFactor_;
 
-	LinearInterpolation<state_matrix_t,Eigen::aligned_allocator<state_matrix_t> > AmFunc_;
-	LinearInterpolation<state_input_matrix_t,Eigen::aligned_allocator<state_input_matrix_t> > BmFunc_;
+	EigenLinearInterpolation<state_matrix_t> AmFunc_;
+	EigenLinearInterpolation<state_input_matrix_t> BmFunc_;
 
-	LinearInterpolation<eigen_scalar_t,Eigen::aligned_allocator<eigen_scalar_t> > qFunc_;
-	LinearInterpolation<state_vector_t,Eigen::aligned_allocator<state_vector_t> > QvFunc_;
-	LinearInterpolation<state_matrix_t,Eigen::aligned_allocator<state_matrix_t> > QmFunc_;
-	LinearInterpolation<input_vector_t,Eigen::aligned_allocator<input_vector_t> > RvFunc_;
-	LinearInterpolation<input_matrix_t,Eigen::aligned_allocator<input_matrix_t> > RmInverseFunc_;
-	LinearInterpolation<input_matrix_t,Eigen::aligned_allocator<input_matrix_t> > RmFunc_;
-	LinearInterpolation<input_state_matrix_t,Eigen::aligned_allocator<input_state_matrix_t> > PmFunc_;
-
+	EigenLinearInterpolation<eigen_scalar_t> qFunc_;
+	EigenLinearInterpolation<state_vector_t> QvFunc_;
+	EigenLinearInterpolation<state_matrix_t> QmFunc_;
+	EigenLinearInterpolation<input_vector_t> RvFunc_;
+	EigenLinearInterpolation<input_matrix_t> RmInverseFunc_;
+	EigenLinearInterpolation<input_matrix_t> RmFunc_;
+	EigenLinearInterpolation<input_state_matrix_t> PmFunc_;
 
 	// members required only in computeFlowMap()
 	state_matrix_t Sm_;
@@ -407,7 +438,7 @@ private:
 	state_matrix_t Am_transposeSm_;
 	state_input_matrix_t Lm_transposeRm_;
 
-	std::vector<double> eventTime_;
+	scalar_array_t eventTimes_;
 	const eigen_scalar_array_t* qFinalPtr_;
 	const state_vector_array_t* QvFinalPtr_;
 	const state_matrix_array_t* QmFianlPtr_;

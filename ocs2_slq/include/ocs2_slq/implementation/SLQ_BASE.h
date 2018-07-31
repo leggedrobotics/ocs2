@@ -5,7 +5,6 @@
  *      Author: farbod
  */
 
-#define USE_SEPARATE_RICCATI_SOLVER
 
 namespace ocs2
 {
@@ -29,7 +28,6 @@ SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::SLQ_BASE(
 	, costDesiredTrajectoriesBuffer_()
 	, costDesiredTrajectoriesUpdated_(false)
 	, rewindCounter_(0)
-	, numPartitions_(0)
 {
 	if (logicRulesPtr != nullptr)
 		logicRulesMachinePtr_ = logic_rules_machine_ptr_t( new logic_rules_machine_t(*logicRulesPtr) );
@@ -177,6 +175,28 @@ SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::SLQ_BASE(
 
 	}  // end of i loop
 
+	hamiltonianEquationPtrStock_.clear();
+	hamiltonianEquationPtrStock_.reserve(settings_.nThreads_);
+	hamiltonianIntegratorPtrStock_.clear();
+	hamiltonianIntegratorPtrStock_.reserve(settings_.nThreads_);
+
+	hamiltonianIncrementEquationPtrStock_.clear();
+	hamiltonianIncrementEquationPtrStock_.reserve(settings_.nThreads_);
+	hamiltonianIncrementIntegratorPtrStock_.clear();
+	hamiltonianIncrementIntegratorPtrStock_.reserve(settings_.nThreads_);
+
+	for (size_t i=0; i<settings_.nThreads_; i++)  {
+		hamiltonianEquationPtrStock_.emplace_back(
+				new hamiltonian_equation_t());
+		hamiltonianIntegratorPtrStock_.emplace_back(
+				new ODE45<hamiltonian_equation_t::LTI_DIM_>(hamiltonianEquationPtrStock_[i]));
+
+		hamiltonianIncrementEquationPtrStock_.emplace_back(
+				new hamiltonian_increment_equation_t());
+		hamiltonianIncrementIntegratorPtrStock_.emplace_back(
+				new ODE45<hamiltonian_increment_equation_t::LTI_DIM_>(hamiltonianIncrementEquationPtrStock_[i]));
+	}  // end of i loop
+
 }
 
 /******************************************************************************************************/
@@ -186,9 +206,17 @@ template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
 SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::~SLQ_BASE()  {
 
 #ifdef BENCHMARK
-	std::cout<<"Avg time for Forward Pass:      " << tAvgFP << " ms " << std::endl;
-	std::cout<<"Avg time for Backward Pass:     " << tAvgBP << " ms " << std::endl;
-	std::cout<<"Avg time for LQ Approximation:  " << tAvgLQ << " ms " << std::endl;
+	auto BENCHMARK_total = BENCHMARK_tAvgFP_ + BENCHMARK_tAvgBP_ + BENCHMARK_tAvgLQ_;
+	if (BENCHMARK_total>0) {
+		std::cerr << std::endl << "#####################################################" << std::endl;
+		std::cerr << "Benchmarking over " << BENCHMARK_nIterationsBP_ << " samples." << std::endl;
+		std::cerr << "Average time for Forward Pass:      " << BENCHMARK_tAvgFP_ << " [ms] \t(" <<
+				BENCHMARK_tAvgFP_/BENCHMARK_total*100 << "%)" << std::endl;
+		std::cerr << "Average time for Backward Pass:     " << BENCHMARK_tAvgBP_ << " [ms] \t(" <<
+				BENCHMARK_tAvgBP_/BENCHMARK_total*100 << "%)" << std::endl;
+		std::cerr << "Average time for LQ Approximation:  " << BENCHMARK_tAvgLQ_ << " [ms] \t(" <<
+				BENCHMARK_tAvgLQ_/BENCHMARK_total*100 << "%)" << std::endl;
+	}
 #endif
 }
 
@@ -268,7 +296,7 @@ typename SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::state_vector_t
 	while (t0 < finalTime-ocs2::OCS2NumericTraits<scalar_t>::week_epsilon()) {
 
 		try {
-			// integrate controled system
+			// integrate controlled system
 			integratorsPtrStock_[workerIndex]->integrate(x0, t0, finalTime,
 					stateTrajectory, timeTrajectory,
 					settings_.minTimeStep_, settings_.absTolODE_, settings_.relTolODE_, maxNumSteps, true);
@@ -289,7 +317,7 @@ typename SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::state_vector_t
 
 	}  // end of while loop
 
-	// compute control input trajectory and concatinate to inputTrajectory
+	// compute control input trajectory and concatenate to inputTrajectory
 	for (size_t k_u=0; k_u<timeTrajectory.size(); k_u++) {
 		inputTrajectory.emplace_back( systemDynamicsPtrStock_[workerIndex]->computeInput(
 				timeTrajectory[k_u], stateTrajectory[k_u]) );
@@ -428,10 +456,10 @@ typename SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::state_vector_t
 		systemDynamicsPtrStock_[workerIndex]->setController(controller);
 		// reset function calls counter
 		systemDynamicsPtrStock_[workerIndex]->resetNumFunctionCalls();
-		// initialize subsystem
-		systemDynamicsPtrStock_[workerIndex]->initializeModel(*logicRulesMachinePtr_, partitionIndex, "SLQ");
 		// Reset the event class
 		systemEventHandlersPtrStock_[workerIndex]->reset();
+		// initialize subsystem
+		systemDynamicsPtrStock_[workerIndex]->initializeModel(*logicRulesMachinePtr_, partitionIndex, "SLQ");
 
 	} else {
 		// initialize operatingTrajectories
@@ -489,7 +517,8 @@ typename SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::state_vector_t
 
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::rolloutTrajectory(
+typename SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::scalar_t
+	SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::rolloutTrajectory(
 		const scalar_t& initTime,
 		const state_vector_t& initState,
 		const scalar_t& finalTime,
@@ -519,6 +548,7 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::rolloutTrajectory(
 	scalar_t t0 = initTime;
 	state_vector_t x0 = initState;
 	scalar_t tf;
+	size_t numSteps = 0;
 	for (size_t i=0; i<numPartitions; i++)  {
 
 		// for subsystems before the initial time
@@ -533,23 +563,37 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::rolloutTrajectory(
 		// final time
 		tf = (i != finalActivePartition) ? partitioningTimes[i+1] : finalTime;
 
+		// if blockwiseMovingHorizon_ is not set, use the previous partition's controller for
+		// the first rollout of the partition. However for the very first run of the SLQ
+		// it will still use operating trajectories if an initial controller is not provided.
+		const controller_t* controllerPtrTemp = &controllersStock[i];
+		if (blockwiseMovingHorizon_==false)
+			if (controllerPtrTemp->empty()==true && i>0 && controllersStock[i-1].empty()==false)
+				controllerPtrTemp = &controllersStock[i-1];
+
 		// call rollout worker for the partition 'i' on the thread 'threadId'
 		x0 = rolloutTimeTriggeredWorker(threadId, i,
-				t0, x0, tf, controllersStock[i],
+				t0, x0, tf, *controllerPtrTemp,
 				timeTrajectoriesStock[i], eventsPastTheEndIndecesStock[i],
 				stateTrajectoriesStock[i], inputTrajectoriesStock[i]);
 
 		// reset the initial time
 		t0 = timeTrajectoriesStock[i].back();
 
+		// total number of steps
+		numSteps += timeTrajectoriesStock[i].size();
+
 	}  // end of i loop
 
 	if (x0 != x0)
 		throw std::runtime_error("System became unstable during the SLQ rollout.");
+
+	// average time step
+	return (finalTime-initTime)/(scalar_t)numSteps;
 }
 
 /******************************************************************************************************/
-// FIXME (speed improvement): inputs are not necessary to be computed for all the time steps
+// TODO (speed improvement): inputs are not necessary to be computed for all the time steps
 template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
 void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::rolloutFinalState (
 		const scalar_t& initTime,
@@ -587,9 +631,17 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::rolloutFinalState (
 		// final time
 		tf = (i != finalActivePartition) ? partitioningTimes[i+1] : finalTime;
 
+		// if blockwiseMovingHorizon_ is not set, use the previous partition's controller for
+		// the first rollout of the partition. However for the very first run of the SLQ
+		// it will still use operating trajectories if an initial controller is not provided.
+		const controller_t* controllerPtrTemp = &controllersStock[i];
+		if (blockwiseMovingHorizon_==false)
+			if (controllerPtrTemp->empty()==true && i>0 && controllersStock[i-1].empty()==false)
+				controllerPtrTemp = &controllersStock[i-1];
+
 		// call rolloutTimeTriggeredWorker for the partition 'i' on the thread 'threadId'
 		x0 = rolloutTimeTriggeredWorker(threadId, i,
-				t0, x0, tf, controllersStock[i],
+				t0, x0, tf, *controllerPtrTemp,
 				timeTrajectory, eventsPastTheEndIndeces,
 				stateTrajectory, inputTrajectory);
 
@@ -799,24 +851,21 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculateCostWorker(
 	auto eventsPastTheEndItr = eventsPastTheEndIndeces.begin();
 
 	// integrates the intermediate cost using the trapezoidal approximation method
-	scalar_t currentIntermediateCost;
-	scalar_t nextIntermediateCost;
-	for (size_t k=0; k+1<timeTrajectory.size(); k++) {
+	scalar_t prevIntermediateCost = 0.0;
+	scalar_t currIntermediateCost = 0.0;
+	for (size_t k=0; k<timeTrajectory.size(); k++) {
 
-		if (k==0) {
-			costFunctionsPtrStock_[workerIndex]->setCurrentStateAndControl(timeTrajectory[k], stateTrajectory[k], inputTrajectory[k]);
-			costFunctionsPtrStock_[workerIndex]->getIntermediateCost(currentIntermediateCost);
-		} else
-		{
-			currentIntermediateCost = nextIntermediateCost;
-		}
+		if (k>0)
+			prevIntermediateCost = currIntermediateCost;
 
-		// feed next state and control to cost function
-		costFunctionsPtrStock_[workerIndex]->setCurrentStateAndControl(timeTrajectory[k+1], stateTrajectory[k+1], inputTrajectory[k+1]);
+		// feed state and control to cost function
+		costFunctionsPtrStock_[workerIndex]->setCurrentStateAndControl(
+				timeTrajectory[k], stateTrajectory[k], inputTrajectory[k]);
 		// getIntermediateCost intermediate cost for next time step
-		costFunctionsPtrStock_[workerIndex]->getIntermediateCost(nextIntermediateCost);
+		costFunctionsPtrStock_[workerIndex]->getIntermediateCost(currIntermediateCost);
 
-		totalCost += 0.5*(currentIntermediateCost+nextIntermediateCost)*(timeTrajectory[k+1]-timeTrajectory[k]);
+		if (k>0)
+			totalCost += 0.5*(prevIntermediateCost+currIntermediateCost)*(timeTrajectory[k]-timeTrajectory[k-1]);
 
 		// terminal cost at switching times
 		if (eventsPastTheEndItr!=eventsPastTheEndIndeces.end() && k+1==*eventsPastTheEndItr) {
@@ -995,7 +1044,7 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::approximateOptimalControlPro
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-// FIXME: optize the temporal variables: (e.g. Eigen::MatrixXd Cm = CmTrajectoryStock_[i][k].topRows(nc1);)
+// FIXME: optimize the temporal variables: (e.g. Eigen::MatrixXd Cm = CmTrajectoryStock_[i][k].topRows(nc1);)
 template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
 void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::approximateLQWorker(
 		size_t workerIndex,
@@ -1018,7 +1067,6 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::approximateLQWorker(
 	// get results
 	systemDerivativesPtrStock_[workerIndex]->getFlowMapDerivativeState(AmTrajectoryStock_[i][k]);
 	systemDerivativesPtrStock_[workerIndex]->getFlowMapDerivativeInput(BmTrajectoryStock_[i][k]);
-
 
 	/*
 	 * CONSTRAINTS and LINEARIZED CONSTRAINTS
@@ -1051,7 +1099,6 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::approximateLQWorker(
 		systemConstraintsPtrStock_[workerIndex]->getConstraint2DerivativesState(FmTrajectoryStock_[i][k]);
 	}
 
-
 	/*
 	 * QUADRATIC APPROXIMATION TO THE COST FUNCTION
 	 */
@@ -1068,7 +1115,7 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::approximateLQWorker(
 	costFunctionsPtrStock_[workerIndex]->getIntermediateCostSecondDerivativeState(QmTrajectoryStock_[i][k]);
 	costFunctionsPtrStock_[workerIndex]->getIntermediateCostDerivativeInput(RvTrajectoryStock_[i][k]);
 	costFunctionsPtrStock_[workerIndex]->getIntermediateCostSecondDerivativeInput(RmTrajectoryStock_[i][k]);
-	RmInverseTrajectoryStock_[i][k] = RmTrajectoryStock_[i][k].inverse();
+	RmInverseTrajectoryStock_[i][k] = RmTrajectoryStock_[i][k].ldlt().solve(input_matrix_t::Identity());
 	costFunctionsPtrStock_[workerIndex]->getIntermediateCostDerivativeInputState(PmTrajectoryStock_[i][k]);
 
 	/*
@@ -1105,12 +1152,23 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::approximateLQWorker(
 		}
 
 	} else {
-		Eigen::MatrixXd Cm = CmTrajectoryStock_[i][k].topRows(nc1);
-		Eigen::MatrixXd Dm = DmTrajectoryStock_[i][k].topRows(nc1);
-		Eigen::MatrixXd Ev = EvTrajectoryStock_[i][k].head(nc1);
+		typedef Eigen::Matrix<scalar_t, Eigen::Dynamic, Eigen::Dynamic> dynamic_matrix_t;
 
-		Eigen::MatrixXd RmProjected = ( Dm*RmInverseTrajectoryStock_[i][k]*Dm.transpose() ).inverse();
-		Eigen::MatrixXd DmDager = RmInverseTrajectoryStock_[i][k] * Dm.transpose() * RmProjected;
+		dynamic_matrix_t Cm = CmTrajectoryStock_[i][k].topRows(nc1);
+		dynamic_matrix_t Dm = DmTrajectoryStock_[i][k].topRows(nc1);
+		dynamic_matrix_t Ev = EvTrajectoryStock_[i][k].head(nc1);
+
+		// check numerical stability_
+		if (settings_.checkNumericalStability_==true && nc1>0)
+			if (Dm.colPivHouseholderQr().rank()!=nc1) {
+				printString(">>> WARNING: The state-input constraints are rank deficient "
+						"(at time " + std::to_string(nominalTimeTrajectoriesStock_[i][k]) + ")!");
+			}
+
+		dynamic_matrix_t RmProjected =
+				( Dm*RmInverseTrajectoryStock_[i][k]*Dm.transpose() ).ldlt().solve(dynamic_matrix_t::Identity(nc1,nc1));
+		dynamic_matrix_t DmDager =
+				RmInverseTrajectoryStock_[i][k] * Dm.transpose() * RmProjected;
 
 		DmDagerTrajectoryStock_[i][k].leftCols(nc1) = DmDager;
 		EvProjectedTrajectoryStock_[i][k] = DmDager * Ev;
@@ -1118,7 +1176,7 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::approximateLQWorker(
 		DmProjectedTrajectoryStock_[i][k] = DmDager * Dm;
 
 		input_matrix_t DmNullSpaceProjection = input_matrix_t::Identity() - DmProjectedTrajectoryStock_[i][k];
-		state_matrix_t   PmTransDmDagerCm = PmTrajectoryStock_[i][k].transpose()*CmProjectedTrajectoryStock_[i][k];
+		state_matrix_t PmTransDmDagerCm = PmTrajectoryStock_[i][k].transpose()*CmProjectedTrajectoryStock_[i][k];
 
 		AmConstrainedTrajectoryStock_[i][k] = AmTrajectoryStock_[i][k] - BmTrajectoryStock_[i][k]*CmProjectedTrajectoryStock_[i][k];
 		QmConstrainedTrajectoryStock_[i][k] = QmTrajectoryStock_[i][k] + Cm.transpose()*RmProjected*Cm - PmTransDmDagerCm - PmTransDmDagerCm.transpose();
@@ -1321,6 +1379,74 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculateControllerWorker (
 	}
 }
 
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
+void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::lineSearchBase(bool computeISEs) {
+
+	// display
+	if (settings_.displayInfo_) {
+		scalar_t maxDeltaUffNorm, maxDeltaUeeNorm;
+		calculateControllerUpdateMaxNorm(maxDeltaUffNorm, maxDeltaUeeNorm);
+
+		std::cerr << "max feedforward update norm:  " << maxDeltaUffNorm << std::endl;
+		std::cerr << "max type-1 error update norm: " << maxDeltaUeeNorm << std::endl;
+	}
+
+	// catch the nominal trajectories for which the LQ problem is constructed and solved
+	nominalPrevTimeTrajectoriesStock_.swap(nominalTimeTrajectoriesStock_);
+	nominalPrevEventsPastTheEndIndecesStock_.swap(nominalEventsPastTheEndIndecesStock_);
+	nominalPrevStateTrajectoriesStock_.swap(nominalStateTrajectoriesStock_);
+	nominalPrevInputTrajectoriesStock_.swap(nominalInputTrajectoriesStock_);
+
+	// perform one rollout while the input correction for the type-1 constraint is considered.
+	avgTimeStepFP_ = rolloutTrajectory(initTime_, initState_, finalTime_,
+			partitioningTimes_, nominalControllersStock_,
+			nominalTimeTrajectoriesStock_, nominalEventsPastTheEndIndecesStock_,
+			nominalStateTrajectoriesStock_, nominalInputTrajectoriesStock_);
+
+	if (computeISEs==true) {
+		// calculate constraint
+		calculateRolloutConstraints(nominalTimeTrajectoriesStock_, nominalEventsPastTheEndIndecesStock_,
+				nominalStateTrajectoriesStock_, nominalInputTrajectoriesStock_,
+				nc1TrajectoriesStock_, EvTrajectoryStock_,nc2TrajectoriesStock_,
+				HvTrajectoryStock_, nc2FinalStock_, HvFinalStock_);
+		// calculate constraint type-1 ISE and maximum norm
+		nominalConstraint1MaxNorm_ = calculateConstraintISE(
+				nominalTimeTrajectoriesStock_, nc1TrajectoriesStock_, EvTrajectoryStock_,
+				nominalConstraint1ISE_);
+		// calculates type-2 constraint ISE and maximum norm
+		nominalConstraint2MaxNorm_ = calculateConstraintISE(
+				nominalTimeTrajectoriesStock_, nc2TrajectoriesStock_, HvTrajectoryStock_,
+				nominalConstraint2ISE_);
+	} else {
+		// calculate constraint type-1 ISE and maximum norm
+		nominalConstraint1ISE_ = nominalConstraint1MaxNorm_ = 0.0;
+		// calculates type-2 constraint ISE and maximum norm
+		nominalConstraint2ISE_ = nominalConstraint2MaxNorm_ = 0.0;
+	}
+
+	// calculates cost
+	calculateRolloutCost(nominalTimeTrajectoriesStock_, nominalEventsPastTheEndIndecesStock_,
+			nominalStateTrajectoriesStock_, nominalInputTrajectoriesStock_,
+			nominalConstraint2ISE_, nc2FinalStock_, HvFinalStock_,
+			nominalTotalCost_);
+
+	// display
+	if (settings_.displayInfo_)  {
+		std::cerr << "\t learningRate 0.0 \t cost: " << nominalTotalCost_ << " \t constraint ISE: " << nominalConstraint1ISE_ << std::endl;
+		std::cerr << "\t final constraint type-2:  ";
+		size_t itr = 0;
+		for(size_t i=initActivePartition_; i<=finalActivePartition_; i++)
+			for (size_t k=0; k<nc2FinalStock_[i].size(); k++) {
+				std::cerr << "[" << itr  << "]: " << HvFinalStock_[i][k].head(nc2FinalStock_[i][k]).transpose() << ",  ";
+				itr++;
+			}
+		std::cerr << std::endl;
+		std::cerr << "\t forward pass average time step: " << avgTimeStepFP_*1e+3 << " [ms]." << std::endl;
+	}
+}
 
 /******************************************************************************************************/
 /******************************************************************************************************/
@@ -1344,8 +1470,9 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::lineSearchWorker(
 			lsControllersStock[i].uff_[k] += learningRate * lsControllersStock[i].deltaUff_[k];
 
 	try {
+
 		// perform a rollout
-		rolloutTrajectory(initTime_, initState_, finalTime_,
+		scalar_t avgTimeStepFP = rolloutTrajectory(initTime_, initState_, finalTime_,
 				partitioningTimes_, lsControllersStock,
 				lsTimeTrajectoriesStock, lsEventsPastTheEndIndecesStock,
 				lsStateTrajectoriesStock, lsInputTrajectoriesStock,
@@ -1391,7 +1518,6 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::lineSearchWorker(
 			std::string finalConstraintDisplay;
 			finalConstraintDisplay = "\t [Thread" + std::to_string(workerIndex) + "] - learningRate " + std::to_string(learningRate)
 					+ " \t cost: " + std::to_string(lsTotalCost) + " \t constraint ISE: " + std::to_string(lsConstraint1ISE) + "\n";
-
 			finalConstraintDisplay += "\t final constraint type-2:   ";
 			for(size_t i=0; i<numPartitions_; i++) {
 				finalConstraintDisplay += "[" + std::to_string(i) + "]: ";
@@ -1400,7 +1526,7 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::lineSearchWorker(
 						finalConstraintDisplay += std::to_string(lsHvFinalStock[i][j](m)) + ", ";
 				finalConstraintDisplay += "  ";
 			} // end of i loop
-
+			finalConstraintDisplay += "\n\t forward pass average time step: " + std::to_string(avgTimeStepFP*1e+3) + " [ms].";
 			printString(finalConstraintDisplay);
 		}
 
@@ -1425,20 +1551,30 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::solveRiccatiEquationsWorker(
 
 	// set data for Riccati equations
 	riccatiEquationsPtrStock_[workerIndex]->reset();
-	riccatiEquationsPtrStock_[workerIndex]->setData(partitioningTimes_[partitionIndex], partitioningTimes_[partitionIndex+1],
+	riccatiEquationsPtrStock_[workerIndex]->resetNumFunctionCalls();
+	riccatiEquationsPtrStock_[workerIndex]->setData(
+			partitioningTimes_[partitionIndex],
+			partitioningTimes_[partitionIndex+1],
 			&nominalTimeTrajectoriesStock_[partitionIndex],
-			&AmConstrainedTrajectoryStock_[partitionIndex], &BmTrajectoryStock_[partitionIndex],
-			&qTrajectoryStock_[partitionIndex], &QvConstrainedTrajectoryStock_[partitionIndex], &QmConstrainedTrajectoryStock_[partitionIndex],
-			&RvTrajectoryStock_[partitionIndex], &RmInverseTrajectoryStock_[partitionIndex], &RmConstrainedTrajectoryStock_[partitionIndex],
+			&AmConstrainedTrajectoryStock_[partitionIndex],
+			&BmTrajectoryStock_[partitionIndex],
+			&qTrajectoryStock_[partitionIndex],
+			&QvConstrainedTrajectoryStock_[partitionIndex],
+			&QmConstrainedTrajectoryStock_[partitionIndex],
+			&RvTrajectoryStock_[partitionIndex],
+			&RmInverseTrajectoryStock_[partitionIndex],
+			&RmConstrainedTrajectoryStock_[partitionIndex],
 			&PmTrajectoryStock_[partitionIndex],
 			&nominalEventsPastTheEndIndecesStock_[partitionIndex],
-			&qFinalStock_[partitionIndex], &QvFinalStock_[partitionIndex], &QmFinalStock_[partitionIndex]);
+			&qFinalStock_[partitionIndex],
+			&QvFinalStock_[partitionIndex],
+			&QmFinalStock_[partitionIndex]);
 
 	const size_t N  = nominalTimeTrajectoriesStock_[partitionIndex].size();
 	const size_t NE = nominalEventsPastTheEndIndecesStock_[partitionIndex].size();
 	const scalar_t scalingFactor = partitioningTimes_[partitionIndex]-partitioningTimes_[partitionIndex+1];
 
-	// Normalized start and final time and index for reccati equation
+	// Normalized start and final time and index for Riccati equation
 	scalar_t finalNormalizedTime = 1.0;
 	if (partitionIndex==initActivePartition_) {
 		finalNormalizedTime = (initTime_-partitioningTimes_[partitionIndex+1])  / scalingFactor;
@@ -1449,7 +1585,6 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::solveRiccatiEquationsWorker(
 	}
 
 	// max number of steps of integration
-	riccatiEquationsPtrStock_[workerIndex]->resetNumFunctionCalls();
 	size_t maxNumSteps = settings_.maxNumStepsPerSecond_ * std::max(1.0, finalNormalizedTime-startNormalizedTime);
 
 	// clear output containers
@@ -1495,7 +1630,10 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::solveRiccatiEquationsWorker(
 		// solve Riccati equations
 		riccatiIntegratorPtrStock_[workerIndex]->integrate(allSsFinal, beginTime, endTime,
 				allSsTrajectory, SsNormalizedTimeTrajectoryStock_[partitionIndex],
-				settings_.minTimeStep_, settings_.absTolODE_, settings_.relTolODE_, maxNumSteps, true);
+				settings_.minTimeStep_,
+				settings_.absTolODE_,
+				settings_.relTolODE_,
+				maxNumSteps, true);
 
 		if (i < numActiveSubsystems-1) {
 			SsNormalizedEventsPastTheEndIndecesStock_[partitionIndex].push_back( allSsTrajectory.size() );
@@ -1551,7 +1689,8 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::solveRiccatiEquationsForNomi
 
 	// set data for Riccati equations
 	riccatiEquationsPtrStock_[workerIndex]->reset();
-	riccatiEquationsPtrStock_[workerIndex]->setData(partitioningTimes_[partitionIndex], partitioningTimes_[partitionIndex+1],
+	riccatiEquationsPtrStock_[workerIndex]->setData(
+			partitioningTimes_[partitionIndex], partitioningTimes_[partitionIndex+1],
 			&nominalTimeTrajectoriesStock_[partitionIndex],
 			&AmConstrainedTrajectoryStock_[partitionIndex], &BmTrajectoryStock_[partitionIndex],
 			&qTrajectoryStock_[partitionIndex], &QvConstrainedTrajectoryStock_[partitionIndex], &QmConstrainedTrajectoryStock_[partitionIndex],
@@ -1594,6 +1733,9 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::solveRiccatiEquationsForNomi
 		const size_t& index = nominalEventsPastTheEndIndecesStock_[partitionIndex][k];
 		SsNormalizedEventsPastTheEndIndecesStock_[partitionIndex].push_back( N-index );
 
+		// if the event took place at the end of partition only use the jump map otherwise add
+		// the reverted end index to the temporal SsNormalizedEventsPastTheEndIndeces.
+		// In turn, this will cause that later the flow map is called over a time internal.
 		if (index==N) {
 			typename riccati_equations_t::s_vector_t allSsFinalTemp = allSsFinal;
 			riccatiEquationsPtrStock_[workerIndex]->computeJumpMap(SsNormalizedTimeTrajectoryStock_[partitionIndex].front(), allSsFinalTemp, allSsFinal);
@@ -1752,7 +1894,10 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::solveErrorRiccatiEquationWor
 		// solve Riccati equations
 		errorIntegratorPtrStock_[workerIndex]->integrate(SveFinalInternal, beginTimeItr, endTimeItr,
 				SveTrajectory,
-				settings_.minTimeStep_, settings_.absTolODE_, settings_.relTolODE_, maxNumSteps, true);
+				settings_.minTimeStep_,
+				settings_.absTolODE_,
+				settings_.relTolODE_,
+				maxNumSteps, true);
 
 		if (i < numActiveSubsystems-1) {
 			errorEquationPtrStock_[workerIndex]->computeJumpMap(*endTimeItr, SveTrajectory.back(), SveFinalInternal);
@@ -1800,8 +1945,11 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::solveSlqRiccatiEquationsWork
 
 #ifdef USE_SEPARATE_RICCATI_SOLVER
 
-	solveRiccatiEquationsWorker(workerIndex, partitionIndex, SmFinal, SvFinal, sFinal);
-//	solveRiccatiEquationsForNominalTimeWorker(workerIndex, partitionIndex, SmFinal, SvFinal, sFinal);
+	if(settings_.useNominalTimeForBackwardPass_==true)
+		solveRiccatiEquationsForNominalTimeWorker(workerIndex, partitionIndex, SmFinal, SvFinal, sFinal);
+	else
+		solveRiccatiEquationsWorker(workerIndex, partitionIndex, SmFinal, SvFinal, sFinal);
+
 
 	solveErrorRiccatiEquationWorker(workerIndex, partitionIndex, SveFinal);
 
@@ -1880,7 +2028,10 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::solveSlqRiccatiEquationsWork
 		// solve Riccati equations
 		slqRiccatiIntegratorPtrStock_[workerIndex]->integrate(allSsFinal, beginTime, endTime,
 				allSsTrajectory, SsNormalizedTimeTrajectoryStock_[partitionIndex],
-				settings_.minTimeStep_, settings_.absTolODE_, settings_.relTolODE_, maxNumSteps, true);
+				settings_.minTimeStep_,
+				settings_.absTolODE_,
+				settings_.relTolODE_,
+				maxNumSteps, true);
 
 		if (i < numActiveSubsystems-1) {
 			SsNormalizedEventsPastTheEndIndecesStock_[partitionIndex].push_back( allSsTrajectory.size() );
@@ -1928,66 +2079,104 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::solveSlqRiccatiEquationsWork
 #endif
 }
 
-
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-template<size_t DIM1, size_t DIM2>
-Eigen::Matrix<double, DIM1, DIM2> SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::solveLTIMatrix(
-		const Eigen::Matrix<double, DIM1, DIM1>& A,
-		const Eigen::Matrix<double, DIM1, DIM2>& x0,
-		const double& deltaTime) {
+template<int DIM1, int DIM2>
+Eigen::Matrix<typename SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::scalar_t, DIM1, DIM2>
+	SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::solveLTI(
+		const std::shared_ptr<IntegratorBase<DIM1*DIM2>>& firstOrderOdeIntegratorPtr,
+		const Eigen::Matrix<scalar_t, DIM1, DIM2>& x0,
+		const scalar_t& deltaTime) {
 
-	// dx = A x
-	// deltaTime = t-t0
+	// dx = A x + B u
+	using lti_equation_t = LTI_Equations<DIM1, DIM2, scalar_t>;
+	using vectorized_state_t = typename lti_equation_t::vectorized_state_t;
+	using vectorized_state_array_t = typename lti_equation_t::vectorized_state_array_t;
 
-//	Eigen::HessenbergDecomposition<Eigen::MatrixXd> hessA(DIM1);
-//	hessA.compute(A);
-//
-//	Eigen::Matrix<double, DIM1, DIM2> xf = hessA.matrixQ()
-//			* (hessA.matrixH()*deltaTime + Eigen::MatrixXd::Identity(DIM1, DIM1)*1e-3*deltaTime).exp()
-//			* hessA.matrixQ().transpose() * x0;
+	scalar_array_t timeTrajectory {0.0, deltaTime};
+	vectorized_state_array_t stateTrajectory;
+	stateTrajectory.reserve(2);
 
-	Eigen::Matrix<double, DIM1, DIM2> xf = (A*deltaTime).exp() * x0;
+#if DIM2==1
+	firstOrderOdeIntegrator.integrate(x0, timeTrajectory.begin(), timeTrajectory.end(),
+			stateTrajectory,
+			settings_.minTimeStep_, settings_.absTolODE_, settings_.relTolODE_);
+
+	return stateTrajectory.back();
+#else
+	vectorized_state_t x0Vectorized;
+	lti_equation_t::convert2Vector(x0, x0Vectorized);
+	firstOrderOdeIntegratorPtr->integrate(x0Vectorized, timeTrajectory.begin(), timeTrajectory.end(),
+			stateTrajectory,
+			settings_.minTimeStep_, settings_.absTolODE_, settings_.relTolODE_);
+
+	Eigen::Matrix<scalar_t, DIM1, DIM2> xf;
+	lti_equation_t::convert2Matrix(stateTrajectory.back(), xf);
+
 	return xf;
-
-//	Eigen::EigenSolver<Eigen::MatrixXd> esA(DIM1);
-//	esA.compute(A*deltaTime, /* computeEigenvectors = */ true);
-//	Eigen::VectorXcd expLamda = esA.eigenvalues().array().exp();
-//	Eigen::MatrixXcd V = esA.eigenvectors();
-//
-//	Eigen::Matrix<double, DIM1, DIM2> xf = (V * expLamda.asDiagonal() * V.inverse()).real() * x0;
-//	return xf;
+#endif
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-template<int DIM1>
-Eigen::Matrix<double, DIM1, 1> SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::solveLTI(
-		const Eigen::Matrix<double, DIM1, DIM1>& Gm,
-		const Eigen::Matrix<double, DIM1, 1>& Gv,
-		const Eigen::Matrix<double, DIM1, 1>& x0,
-		const double& deltaTime) {
+Eigen::Matrix<typename SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::scalar_t, 2*STATE_DIM, STATE_DIM>
+	SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::integrateHamiltonian(
+		size_t workerIndex,
+		const Eigen::Matrix<scalar_t, 2*STATE_DIM, 2*STATE_DIM>& Hm,
+		const Eigen::Matrix<scalar_t, 2*STATE_DIM, STATE_DIM>& x0,
+		const scalar_t& deltaTime) {
 
-	// dx = A x + B u
-	// set data for error equations
-	typedef LTI_Equations<DIM1> LTI_Equation_t;
-	std::shared_ptr<LTI_Equation_t> ltiEquationPtr( new LTI_Equation_t() );
-	ODE45<DIM1> firstOrderOde45(ltiEquationPtr);
-	ltiEquationPtr->setData(Gm, Gv);
+	const bool useExpMethod = false;
+	if (useExpMethod==true) {
+//
+//		Eigen::HessenbergDecomposition<Eigen::MatrixXd> hessA(DIM1);
+//		hessA.compute(A);
+//
+//		Eigen::Matrix<double, DIM1, DIM2> xf = hessA.matrixQ()
+//							* (hessA.matrixH()*deltaTime + Eigen::MatrixXd::Identity(DIM1, DIM1)*1e-3*deltaTime).exp()
+//							* hessA.matrixQ().transpose() * x0;
 
-	scalar_array_t timeTrajectory {0.0, deltaTime};
-	std::vector<Eigen::Matrix<double, DIM1, 1>, Eigen::aligned_allocator<Eigen::Matrix<double, DIM1, 1>> > stateTrajectory;
-	firstOrderOde45.integrate(x0, timeTrajectory.begin(), timeTrajectory.end(),
-			stateTrajectory,
-			settings_.minTimeStep_, settings_.absTolODE_, settings_.relTolODE_);
+//		Eigen::EigenSolver<Eigen::MatrixXd> esA(DIM1);
+//		esA.compute(A*deltaTime, /* computeEigenvectors = */ true);
+//		Eigen::VectorXcd expLamda = esA.eigenvalues().array().exp();
+//		Eigen::MatrixXcd V = esA.eigenvectors();
+//
+//		Eigen::Matrix<double, DIM1, DIM2> xf = (V * expLamda.asDiagonal() * V.inverse()).real() * x0;
 
-	Eigen::Matrix<double, DIM1, 1> xf = stateTrajectory.back();
+		Eigen::Matrix<scalar_t, 2*STATE_DIM, STATE_DIM> xf = (Hm*deltaTime).exp() * x0;
+		return xf;
 
-	return xf;
+	} else {
+
+		// set data
+		static Eigen::Matrix<scalar_t, 2*STATE_DIM, STATE_DIM> GvZero = Eigen::Matrix<scalar_t, 2*STATE_DIM, STATE_DIM>::Zero();
+		hamiltonianEquationPtrStock_[workerIndex]->setData(&Hm, &GvZero);
+
+		return solveLTI<2*STATE_DIM, STATE_DIM>(hamiltonianIntegratorPtrStock_[workerIndex],
+				x0, deltaTime);
+	}
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
+Eigen::Matrix<typename SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::scalar_t, STATE_DIM, 1>
+	SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::integrateIncrement(
+		size_t workerIndex,
+		const Eigen::Matrix<scalar_t, STATE_DIM, STATE_DIM>& Gm,
+		const Eigen::Matrix<scalar_t, STATE_DIM, 1>& Gv,
+		const Eigen::Matrix<scalar_t, STATE_DIM, 1>& x0,
+		const scalar_t& deltaTime) {
+
+	// set data
+	hamiltonianIncrementEquationPtrStock_[workerIndex]->setData(&Gm, &Gv);
+
+	return solveLTI<STATE_DIM, 1>(hamiltonianIncrementIntegratorPtrStock_[workerIndex], x0, deltaTime);
 }
 
 /******************************************************************************************************/
@@ -2055,7 +2244,8 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::fullRiccatiBackwardSweepWork
 
 		if (eventDetected==true) {
 //			if (settings_.useMakePSD_==true)  makePSD(QmFinalStock_[partitionIndex][remainingEvents]);
-			SmTrajectoryStock_[partitionIndex][k]  = SmTrajectoryStock_[partitionIndex][k+1] + QmFinalStock_[partitionIndex][remainingEvents];
+			SmTrajectoryStock_[partitionIndex][k] = SmTrajectoryStock_[partitionIndex][k+1] +
+					QmFinalStock_[partitionIndex][remainingEvents];
 
 		} else {
 //			if (settings_.useMakePSD_==true)  makePSD(QmConstrainedTrajectoryStock_[partitionIndex][k]);
@@ -2068,7 +2258,7 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::fullRiccatiBackwardSweepWork
 			_H.template bottomRightCorner<STATE_DIM,STATE_DIM>() = -_H.template topLeftCorner<STATE_DIM,STATE_DIM>().transpose();
 
 			_X_H_0.template bottomRows<STATE_DIM>() = -2.0*SmTrajectoryStock_[partitionIndex][k+1];
-			_X_H_1 = solveLTIMatrix<2*STATE_DIM, STATE_DIM>(_H, _X_H_0, deltaT);
+			_X_H_1 = integrateHamiltonian(workerIndex, _H, _X_H_0, deltaT);
 			SmTrajectoryStock_[partitionIndex][k] = -0.5 * _X_H_1.template bottomRows<STATE_DIM>() * _X_H_1.template topRows<STATE_DIM>().inverse();
 		}
 
@@ -2081,13 +2271,19 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::fullRiccatiBackwardSweepWork
 			sTrajectoryStock_[partitionIndex][k]   = sTrajectoryStock_[partitionIndex][k+1] + qFinalStock_[partitionIndex][remainingEvents];
 
 		} else {
-			_Gm  = (AmConstrainedTrajectoryStock_[partitionIndex][k] + BmConstrainedTrajectoryStock_[partitionIndex][k]*_LmConstrained).transpose();
-			_Gv  = (QvConstrainedTrajectoryStock_[partitionIndex][k] + _LmConstrained.transpose()*RvConstrainedTrajectoryStock_[partitionIndex][k]);
-			_Gve = (CmProjectedTrajectoryStock_[partitionIndex][k] + _Lm).transpose() * RmTrajectoryStock_[partitionIndex][k] * EvProjectedTrajectoryStock_[partitionIndex][k];
+			_Gm  = (AmConstrainedTrajectoryStock_[partitionIndex][k] +
+					BmConstrainedTrajectoryStock_[partitionIndex][k]*_LmConstrained).transpose();
+			_Gv  = (QvConstrainedTrajectoryStock_[partitionIndex][k] +
+					_LmConstrained.transpose()*RvConstrainedTrajectoryStock_[partitionIndex][k]);
+			_Gve = (CmProjectedTrajectoryStock_[partitionIndex][k] +
+					_Lm).transpose() * RmTrajectoryStock_[partitionIndex][k] * EvProjectedTrajectoryStock_[partitionIndex][k];
 
-			SvTrajectoryStock_[partitionIndex][k]  = solveLTI<STATE_DIM>(_Gm, _Gv,  SvTrajectoryStock_[partitionIndex][k+1],  -deltaT);
-			SveTrajectoryStock_[partitionIndex][k] = solveLTI<STATE_DIM>(_Gm, _Gve, SveTrajectoryStock_[partitionIndex][k+1], -deltaT);
-			sTrajectoryStock_[partitionIndex][k]   = sTrajectoryStock_[partitionIndex][k+1] - deltaT * qTrajectoryStock_[partitionIndex][k];
+			SvTrajectoryStock_[partitionIndex][k]  = integrateIncrement(workerIndex,
+					_Gm, _Gv,  SvTrajectoryStock_[partitionIndex][k+1], -deltaT);
+			SveTrajectoryStock_[partitionIndex][k] = integrateIncrement(workerIndex,
+					_Gm, _Gve, SveTrajectoryStock_[partitionIndex][k+1], -deltaT);
+			sTrajectoryStock_[partitionIndex][k]   = sTrajectoryStock_[partitionIndex][k+1] -
+					deltaT * qTrajectoryStock_[partitionIndex][k];
 		}
 
 		LvConstrainedFunc_(partitionIndex, k, _LvConstrained);
@@ -2229,236 +2425,8 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::printRolloutInfo()  {
 			itr++;
 		}
 	std::cerr << std::endl;
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculateRolloutLagrangeMultiplier(
-		const std::vector<scalar_array_t>& timeTrajectoriesStock,
-		const state_vector_array2_t& stateTrajectoriesStock,
-		const std::vector<lagrange_t>& lagrangeMultiplierFunctionsStock,
-		std::vector<std::vector<Eigen::VectorXd>>& lagrangeTrajectoriesStock)  {
-
-	typedef Eigen::Matrix<double, Eigen::Dynamic, 1> constraint_vector_t;
-	typedef Eigen::Matrix<double, Eigen::Dynamic, STATE_DIM> constraint_matrix_t;
-
-	lagrangeTrajectoriesStock.resize(numPartitions_);
-
-	LinearInterpolation<constraint_vector_t, Eigen::aligned_allocator<constraint_vector_t> > vffFunc;
-	LinearInterpolation<constraint_matrix_t, Eigen::aligned_allocator<constraint_matrix_t> > vfbFunc;
-
-	for (size_t i=0; i<numPartitions_; i++) {
-
-		size_t N = timeTrajectoriesStock[i].size();
-		lagrangeTrajectoriesStock[i].resize(N);
-
-		// if the subsystem is not simulated (e.g. due to the initial time)
-		if (N==0)  continue;
-
-		vffFunc.reset();
-		vffFunc.setTimeStamp(&lagrangeMultiplierFunctionsStock[i].time_);
-		vffFunc.setData(&lagrangeMultiplierFunctionsStock[i].uff_);
-
-		vfbFunc.reset();
-		vfbFunc.setTimeStamp(&lagrangeMultiplierFunctionsStock[i].time_);
-		vfbFunc.setData(&lagrangeMultiplierFunctionsStock[i].k_);
-
-		for (size_t k=0; k<N; k++) {
-
-			constraint_vector_t vff;
-			vffFunc.interpolate(timeTrajectoriesStock[i][k], vff);
-			size_t greatestLessTimeIndex = vffFunc.getGreatestLessTimeStampIndex();
-
-			constraint_matrix_t vfb;
-			vfbFunc.interpolate(timeTrajectoriesStock[i][k], vfb, greatestLessTimeIndex);
-
-			lagrangeTrajectoriesStock[i][k] = vff + vfb*stateTrajectoriesStock[i][k];
-
-		}  // end of k loop
-	}  // end of i loop
-}
-
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculateRolloutCostate(
-		const std::vector<scalar_array_t>& timeTrajectoriesStock,
-		const state_vector_array2_t& stateTrajectoriesStock,
-		state_vector_array2_t& costateTrajectoriesStock)  {
-
-	LinearInterpolation<state_matrix_t,Eigen::aligned_allocator<state_matrix_t> > SmFunc;
-	LinearInterpolation<state_vector_t,Eigen::aligned_allocator<state_vector_t> > SvFunc;
-	LinearInterpolation<state_vector_t,Eigen::aligned_allocator<state_vector_t> > nominalStateFunc;
-
-	costateTrajectoriesStock.resize(numPartitions_);
-
-	for (size_t i=0; i<numPartitions_; i++) {
-
-		size_t N = timeTrajectoriesStock[i].size();
-		costateTrajectoriesStock[i].resize(N);
-
-		// if the subsystem is not simulated (e.g. due to the initial time)
-		if (N==0) {
-			costateTrajectoriesStock[i].clear();
-			continue;
-		}
-
-		SmFunc.reset();
-		SmFunc.setTimeStamp(&SsTimeTrajectoryStock_[i]);
-		SmFunc.setData(&SmTrajectoryStock_[i]);
-		SvFunc.reset();
-		SvFunc.setTimeStamp(&SsTimeTrajectoryStock_[i]);
-		SvFunc.setData(&SvTrajectoryStock_[i]);
-		nominalStateFunc.reset();
-		nominalStateFunc.setTimeStamp(&nominalTimeTrajectoriesStock_[i]);
-		nominalStateFunc.setData(&nominalStateTrajectoriesStock_[i]);
-
-		for (size_t k=0; k<N; k++) {
-
-			const scalar_t& t = timeTrajectoriesStock[i][k];
-
-			state_matrix_t Sm;
-			SmFunc.interpolate(t, Sm);
-			size_t greatestLessTimeStampIndex = SmFunc.getGreatestLessTimeStampIndex();
-			state_vector_t Sv;
-			SvFunc.interpolate(t, Sv, greatestLessTimeStampIndex);
-
-			state_vector_t nominalState;
-			nominalStateFunc.interpolate(t, nominalState);
-
-			costateTrajectoriesStock[i][k] = Sv + Sm*(stateTrajectoriesStock[i][k]-nominalState);
-
-		}  // end of k loop
-	}  // end of i loop
-}
-
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculateInputConstraintLagrangian(std::vector<lagrange_t>& lagrangeMultiplierFunctionsStock) {
-
-	// functions for controller and lagrane multiplier
-	LinearInterpolation<state_vector_t,Eigen::aligned_allocator<state_vector_t> >     nominalStateFunc;
-
-	LinearInterpolation<state_input_matrix_t,Eigen::aligned_allocator<state_input_matrix_t> > BmFunc;
-	LinearInterpolation<input_state_matrix_t,Eigen::aligned_allocator<input_state_matrix_t> > PmFunc;
-	LinearInterpolation<input_matrix_t,Eigen::aligned_allocator<input_matrix_t> >     RmInverseFunc;
-	LinearInterpolation<input_vector_t,Eigen::aligned_allocator<input_vector_t> >     RvFunc;
-	LinearInterpolation<input_vector_t,Eigen::aligned_allocator<input_vector_t> >     EvProjectedFunc;
-	LinearInterpolation<input_state_matrix_t,Eigen::aligned_allocator<input_state_matrix_t> > CmProjectedFunc;
-	LinearInterpolation<input_matrix_t,Eigen::aligned_allocator<input_matrix_t> >     RmFunc;
-	LinearInterpolation<control_constraint1_matrix_t,Eigen::aligned_allocator<control_constraint1_matrix_t> > DmDagerFunc;
-
-	lagrangeMultiplierFunctionsStock.resize(numPartitions_);
-
-	for (size_t i=0; i<numPartitions_; i++) {
-
-		if (i<initActivePartition_ || i>finalActivePartition_) {
-			lagrangeMultiplierFunctionsStock[i].clear();
-			continue;
-		}
-		nominalStateFunc.reset();
-		nominalStateFunc.setTimeStamp( &(nominalTimeTrajectoriesStock_[i]) );
-		nominalStateFunc.setData( &(nominalStateTrajectoriesStock_[i]) );
-
-		BmFunc.reset();
-		BmFunc.setTimeStamp( &(nominalTimeTrajectoriesStock_[i]) );
-		BmFunc.setData( &(BmTrajectoryStock_[i]) );
-
-		PmFunc.reset();
-		PmFunc.setTimeStamp( &(nominalTimeTrajectoriesStock_[i]) );
-		PmFunc.setData( &(PmTrajectoryStock_[i]) );
-
-		RmInverseFunc.reset();
-		RmInverseFunc.setTimeStamp( &(nominalTimeTrajectoriesStock_[i]) );
-		RmInverseFunc.setData( &(RmInverseTrajectoryStock_[i]) );
-
-		RvFunc.reset();
-		RvFunc.setTimeStamp( &(nominalTimeTrajectoriesStock_[i]) );
-		RvFunc.setData( &(RvTrajectoryStock_[i]) );
-
-		EvProjectedFunc.reset();
-		EvProjectedFunc.setTimeStamp( &(nominalTimeTrajectoriesStock_[i]) );
-		EvProjectedFunc.setData( &(EvProjectedTrajectoryStock_[i]) );
-
-		CmProjectedFunc.reset();
-		CmProjectedFunc.setTimeStamp( &(nominalTimeTrajectoriesStock_[i]) );
-		CmProjectedFunc.setData( &(CmProjectedTrajectoryStock_[i]) );
-
-		RmFunc.reset();
-		RmFunc.setTimeStamp( &(nominalTimeTrajectoriesStock_[i]) );
-		RmFunc.setData( &(RmTrajectoryStock_[i]) );
-
-		DmDagerFunc.reset();
-		DmDagerFunc.setTimeStamp( &(nominalTimeTrajectoriesStock_[i]) );
-		DmDagerFunc.setData( &(DmDagerTrajectoryStock_[i]) );
-
-		size_t N = SsTimeTrajectoryStock_[i].size();
-
-		lagrangeMultiplierFunctionsStock[i].time_ = SsTimeTrajectoryStock_[i];
-		lagrangeMultiplierFunctionsStock[i].k_.resize(N);
-		lagrangeMultiplierFunctionsStock[i].uff_.resize(N);
-		lagrangeMultiplierFunctionsStock[i].deltaUff_.resize(N);
-
-		for (size_t k=0; k<N; k++) {
-
-			const double& time = SsTimeTrajectoryStock_[i][k];
-			size_t greatestLessTimeStampIndex;
-
-			state_vector_t nominalState;
-			nominalStateFunc.interpolate(time, nominalState);
-			greatestLessTimeStampIndex = nominalStateFunc.getGreatestLessTimeStampIndex();
-
-			state_input_matrix_t Bm;
-			BmFunc.interpolate(time, Bm, greatestLessTimeStampIndex);
-			input_state_matrix_t Pm;
-			PmFunc.interpolate(time, Pm, greatestLessTimeStampIndex);
-			input_vector_t Rv;
-			RvFunc.interpolate(time, Rv, greatestLessTimeStampIndex);
-			input_matrix_t RmInverse;
-			RmInverseFunc.interpolate(time, RmInverse, greatestLessTimeStampIndex);
-			input_vector_t EvProjected;
-			EvProjectedFunc.interpolate(time, EvProjected, greatestLessTimeStampIndex);
-			input_state_matrix_t CmProjected;
-			CmProjectedFunc.interpolate(time, CmProjected, greatestLessTimeStampIndex);
-
-			input_state_matrix_t Lm  = RmInverse * (Pm + Bm.transpose()*SmTrajectoryStock_[i][k]);
-			input_vector_t   Lv  = RmInverse * (Rv + Bm.transpose()*SvTrajectoryStock_[i][k]);
-			input_vector_t   Lve = RmInverse * (Bm.transpose()*SveTrajectoryStock_[i][k]);
-
-			const size_t& nc1 = nc1TrajectoriesStock_[i][greatestLessTimeStampIndex];
-
-			control_constraint1_matrix_t DmDager;
-			DmDagerFunc.interpolate(time, DmDager, greatestLessTimeStampIndex);
-			input_matrix_t Rm;
-			RmFunc.interpolate(time, Rm, greatestLessTimeStampIndex);
-
-			Eigen::MatrixXd DmDagerTransRm = DmDager.leftCols(nc1).transpose() * Rm;
-
-			lagrangeMultiplierFunctionsStock[i].k_[k]   = DmDagerTransRm * (CmProjected - Lm);
-			lagrangeMultiplierFunctionsStock[i].uff_[k] = DmDagerTransRm * (EvProjected-Lv-Lve)
-					- lagrangeMultiplierFunctionsStock[i].k_[k]*nominalState;
-			lagrangeMultiplierFunctionsStock[i].deltaUff_[k] = Eigen::VectorXd::Zero(nc1);
-
-			// checking the numerical stability
-			try {
-				if (lagrangeMultiplierFunctionsStock[i].k_[k] != lagrangeMultiplierFunctionsStock[i].k_[k])
-					throw std::runtime_error("Feedback lagrangeMultiplier is unstable.");
-				if (lagrangeMultiplierFunctionsStock[i].uff_[k] != lagrangeMultiplierFunctionsStock[i].uff_[k])
-					throw std::runtime_error("Feedforward lagrangeMultiplier is unstable.");
-			}
-			catch(const std::exception& error)  {
-				std::cerr << "what(): " << error.what() << " at time " << lagrangeMultiplierFunctionsStock[i].time_[k] << " [sec]." << std::endl;
-			}
-
-		}  // end of k loop
-	}  // end of i loop
+	std::cerr << "forward pass average time step:  " << avgTimeStepFP_*1e+3 << " [ms]." << std::endl;
+	std::cerr << "backward pass average time step: " << avgTimeStepBP_*1e+3 << " [ms]." << std::endl;
 }
 
 /******************************************************************************************************/
@@ -2526,7 +2494,7 @@ size_t SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::findActivePartitionIndex(
 				-OCS2NumericTraits<scalar_t>::week_epsilon());
 
 	if (activeSubsystemIndex < 0) {
-		std::string mesg = "Given time is less than the strat time (i.e. givenTime < partitioningTimes.front()): "
+		std::string mesg = "Given time is less than the start time (i.e. givenTime < partitioningTimes.front()): "
 				+ std::to_string(time) + " < " + std::to_string(partitioningTimes.front());
 		throw std::runtime_error(mesg);
 	}
@@ -2566,7 +2534,8 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::getValueFuntion (
 	sFunc.interpolate(time, s, greatestLessTimeStampIndex);
 
 	state_vector_t xNominal;
-	LinearInterpolation<state_vector_t,Eigen::aligned_allocator<state_vector_t> > xNominalFunc(&nominalTimeTrajectoriesStock_[activeSubsystem], &nominalStateTrajectoriesStock_[activeSubsystem]);
+	LinearInterpolation<state_vector_t,Eigen::aligned_allocator<state_vector_t> > xNominalFunc(
+			&nominalTimeTrajectoriesStock_[activeSubsystem], &nominalStateTrajectoriesStock_[activeSubsystem]);
 	xNominalFunc.interpolate(time, xNominal);
 
 	state_vector_t deltaX = state-xNominal;
@@ -2590,6 +2559,15 @@ template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
 void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::useParallelRiccatiSolverFromInitItr(bool flag) {
 
 	useParallelRiccatiSolverFromInitItr_ = flag;
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
+void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::blockwiseMovingHorizon(bool flag) {
+
+	blockwiseMovingHorizon_ = flag;
 }
 
 /******************************************************************************************************/
@@ -2849,11 +2827,25 @@ template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
 void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::setupOptimizer(const size_t& numPartitions) {
 
 	if (numPartitions==0)
-		throw std::runtime_error("Number of Partitionings cannot be zero!");
+		throw std::runtime_error("Number of partitions cannot be zero!");
 
 	nullDesiredTimeTrajectoryStockPtr_  = std::vector<scalar_array_t>( numPartitions, scalar_array_t() );
 	nullDesiredStateTrajectoryStockPtr_ = state_vector_array2_t( numPartitions, state_vector_array_t() );
 	nullDesiredInputTrajectoryStockPtr_ = input_vector_array2_t( numPartitions, input_vector_array_t() );
+
+	/*
+	 * nominal trajectories
+	 */
+	nominalControllersStock_.resize(numPartitions);
+	nominalTimeTrajectoriesStock_.resize(numPartitions);
+	nominalEventsPastTheEndIndecesStock_.resize(numPartitions);
+	nominalStateTrajectoriesStock_.resize(numPartitions);
+	nominalInputTrajectoriesStock_.resize(numPartitions);
+
+	nominalPrevTimeTrajectoriesStock_.resize(numPartitions);
+	nominalPrevEventsPastTheEndIndecesStock_.resize(numPartitions);
+	nominalPrevStateTrajectoriesStock_.resize(numPartitions);
+	nominalPrevInputTrajectoriesStock_.resize(numPartitions);
 
 	/*
 	 * Riccati solver variables and controller update
@@ -3063,22 +3055,24 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::runInit() {
 
 #ifdef BENCHMARK
 	// Benchmarking
-	static size_t nIterations = 0;
-	static scalar_t tAvgLQ=0.0, tAvgBP=0.0, tAvgFP=0.0;
-	nIterations++;
-	auto start = std::chrono::steady_clock::now();
+	BENCHMARK_nIterationsLQ_++;
+	BENCHMARK_nIterationsBP_++;
+	BENCHMARK_nIterationsFP_++;
+	BENCHMARK_start_ = std::chrono::steady_clock::now();
 #endif
 
 	// initial controller rollout
-	rolloutTrajectory(initTime_, initState_, finalTime_,
+	avgTimeStepFP_ = rolloutTrajectory(initTime_, initState_, finalTime_,
 			partitioningTimes_, nominalControllersStock_,
 			nominalTimeTrajectoriesStock_, nominalEventsPastTheEndIndecesStock_,
 			nominalStateTrajectoriesStock_, nominalInputTrajectoriesStock_);
 
 #ifdef BENCHMARK
-	end = std::chrono::steady_clock::now();
-	diff = end - start;
-	tAvgFP = ((1.0 - 1.0/nIterations)* tAvgFP) + (1.0/nIterations)*std::chrono::duration_cast<std::chrono::milliseconds>(diff).count();
+	BENCHMARK_end_ = std::chrono::steady_clock::now();
+	auto BENCHMARK_diff_ = BENCHMARK_end_ - BENCHMARK_start_;
+	BENCHMARK_tAvgFP_ = ((1.0 - 1.0/BENCHMARK_nIterationsFP_)* BENCHMARK_tAvgFP_) +
+			(1.0/BENCHMARK_nIterationsFP_)*std::chrono::duration_cast<std::chrono::milliseconds>(BENCHMARK_diff_).count();
+	BENCHMARK_start_ = std::chrono::steady_clock::now();
 #endif
 
 	// linearizing the dynamics and quadratizing the cost function along nominal trajectories
@@ -3107,22 +3101,24 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::runInit() {
 	}
 
 #ifdef BENCHMARK
-	auto end = std::chrono::steady_clock::now();
-	auto diff = end - start;
-	tAvgLQ = ((1.0 - 1.0/nIterations)* tAvgLQ) + (1.0/nIterations)*std::chrono::duration_cast<std::chrono::milliseconds>(diff).count();
-	start = std::chrono::steady_clock::now();
+	BENCHMARK_end_ = std::chrono::steady_clock::now();
+	BENCHMARK_diff_ = BENCHMARK_end_ - BENCHMARK_start_;
+	BENCHMARK_tAvgLQ_ = ((1.0 - 1.0/BENCHMARK_nIterationsLQ_)* BENCHMARK_tAvgLQ_) +
+			(1.0/BENCHMARK_nIterationsLQ_)*std::chrono::duration_cast<std::chrono::milliseconds>(BENCHMARK_diff_).count();
+	BENCHMARK_start_ = std::chrono::steady_clock::now();
 #endif
 
 	// solve Riccati equations
-	solveSequentialRiccatiEquations(SmHeuristics_, SvHeuristics_, sHeuristics_);
+	avgTimeStepBP_ = solveSequentialRiccatiEquations(SmHeuristics_, SvHeuristics_, sHeuristics_);
 	// calculate controller
 	if (settings_.useRiccatiSolver_==true)
 		calculateController();
 
 #ifdef BENCHMARK
-	end = std::chrono::steady_clock::now();
-	diff = end - start;
-	tAvgBP = ((1.0 - 1.0/nIterations)* tAvgBP) + (1.0/nIterations)*std::chrono::duration_cast<std::chrono::milliseconds>(diff).count();
+	BENCHMARK_end_ = std::chrono::steady_clock::now();
+	BENCHMARK_diff_ = BENCHMARK_end_ - BENCHMARK_start_;
+	BENCHMARK_tAvgBP_ = ((1.0 - 1.0/BENCHMARK_nIterationsBP_)* BENCHMARK_tAvgBP_) +
+			(1.0/BENCHMARK_nIterationsBP_)*std::chrono::duration_cast<std::chrono::milliseconds>(BENCHMARK_diff_).count();
 #endif
 
 	// display
@@ -3138,8 +3134,10 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::runIteration() {
 
 #ifdef BENCHMARK
 	// Benchmarking
-	nIterations++;
-	auto start = std::chrono::steady_clock::now();
+	BENCHMARK_nIterationsLQ_++;
+	BENCHMARK_nIterationsBP_++;
+	BENCHMARK_nIterationsFP_++;
+	BENCHMARK_start_ = std::chrono::steady_clock::now();
 #endif
 
 	bool computeISEs = settings_.displayInfo_==true || settings_.noStateConstraints_==false;
@@ -3149,10 +3147,11 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::runIteration() {
 	lineSearch(computeISEs);
 
 #ifdef BENCHMARK
-	end = std::chrono::steady_clock::now();
-	diff = end - start;
-	tAvgFP = ((1.0 - 1.0/nIterations)* tAvgFP) + (1.0/nIterations)*std::chrono::duration_cast<std::chrono::milliseconds>(diff).count();
-	start = std::chrono::steady_clock::now();
+	BENCHMARK_end_ = std::chrono::steady_clock::now();
+	BENCHMARK_diff_ = BENCHMARK_end_ - BENCHMARK_start_;
+	BENCHMARK_tAvgFP_ = ((1.0 - 1.0/BENCHMARK_nIterationsFP_)* BENCHMARK_tAvgFP_) +
+			(1.0/BENCHMARK_nIterationsFP_)*std::chrono::duration_cast<std::chrono::milliseconds>(BENCHMARK_diff_).count();
+	BENCHMARK_start_ = std::chrono::steady_clock::now();
 #endif
 
 	// linearizing the dynamics and quadratizing the cost function along nominal trajectories
@@ -3172,22 +3171,24 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::runIteration() {
 	}
 
 #ifdef BENCHMARK
-	auto end = std::chrono::steady_clock::now();
-	auto diff = end - start;
-	tAvgLQ = ((1.0 - 1.0/nIterations)* tAvgLQ) + (1.0/nIterations)*std::chrono::duration_cast<std::chrono::milliseconds>(diff).count();
-	start = std::chrono::steady_clock::now();
+	BENCHMARK_end_ = std::chrono::steady_clock::now();
+	BENCHMARK_diff_ = BENCHMARK_end_ - BENCHMARK_start_;
+	BENCHMARK_tAvgLQ_ = ((1.0 - 1.0/BENCHMARK_nIterationsLQ_)* BENCHMARK_tAvgLQ_) +
+			(1.0/BENCHMARK_nIterationsLQ_)*std::chrono::duration_cast<std::chrono::milliseconds>(BENCHMARK_diff_).count();
+	BENCHMARK_start_ = std::chrono::steady_clock::now();
 #endif
 
 	// solve Riccati equations
-	solveSequentialRiccatiEquations(SmHeuristics_, SvHeuristics_, sHeuristics_);
+	avgTimeStepBP_ = solveSequentialRiccatiEquations(SmHeuristics_, SvHeuristics_, sHeuristics_);
 	// calculate controller
 	if (settings_.useRiccatiSolver_==true)
 		calculateController();
 
 #ifdef BENCHMARK
-	end = std::chrono::steady_clock::now();
-	diff = end - start;
-	tAvgBP = ((1.0 - 1.0/nIterations)* tAvgBP) + (1.0/nIterations)*std::chrono::duration_cast<std::chrono::milliseconds>(diff).count();
+	BENCHMARK_end_ = std::chrono::steady_clock::now();
+	BENCHMARK_diff_ = BENCHMARK_end_ - BENCHMARK_start_;
+	BENCHMARK_tAvgBP_ = ((1.0 - 1.0/BENCHMARK_nIterationsBP_)* BENCHMARK_tAvgBP_) +
+			(1.0/BENCHMARK_nIterationsBP_)*std::chrono::duration_cast<std::chrono::milliseconds>(BENCHMARK_diff_).count();
 #endif
 
 	// display
@@ -3195,6 +3196,27 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::runIteration() {
 		printRolloutInfo();
 }
 
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
+void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::runExit()  {
+
+	// add the deleted parts of the controller
+	for (size_t i=0; i<initActivePartition_; i++)
+		nominalControllersStock_[i].swap(deletedcontrollersStock_[i]);
+
+	if (deletedcontrollersStock_[initActivePartition_].time_.empty()==false) {
+
+		nominalControllersStock_[initActivePartition_].swap(deletedcontrollersStock_[initActivePartition_]);
+
+		for (size_t k=0; k<deletedcontrollersStock_[initActivePartition_].time_.size(); k++) {
+			nominalControllersStock_[initActivePartition_].time_.push_back(deletedcontrollersStock_[initActivePartition_].time_[k]);
+			nominalControllersStock_[initActivePartition_].uff_.push_back(deletedcontrollersStock_[initActivePartition_].uff_[k]);
+			nominalControllersStock_[initActivePartition_].k_.push_back(deletedcontrollersStock_[initActivePartition_].k_[k]);
+		}  // end of k loop
+	}
+}
 
 /******************************************************************************************************/
 /******************************************************************************************************/
@@ -3229,10 +3251,6 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::run(
 		std::cerr << "++++++++++++++++ SLQ solver is initialized +++++++++++++++++" << std::endl;
 		std::cerr << "++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++" << std::endl;
 	}
-
-	std::cout << "settings_.maxNumIterationsSLQ_: " << settings_.maxNumIterationsSLQ_ << std::endl;
-	std::cout << "settings_.maxLearningRateGSLQP_: " << settings_.maxLearningRateGSLQP_ << std::endl;
-	std::cout << "settings_.minLearningRateGSLQP_: " << settings_.minLearningRateGSLQP_ << std::endl;
 
 	// update numPartitions_ if it has been changed
 	if (numPartitions_+1 != partitioningTimes.size()) {
@@ -3356,8 +3374,8 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::run(
 	if (settings_.displayInfo_)  std::cerr << "\n#### Final rollout" << std::endl;
 
 #ifdef BENCHMARK
-	nIterations++;
-	auto start = std::chrono::steady_clock::now();
+	BENCHMARK_nIterationsFP_++;
+	BENCHMARK_start_ = std::chrono::steady_clock::now();
 #endif
 
 	bool computeISEs = settings_.noStateConstraints_==false ||
@@ -3368,31 +3386,16 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::run(
 	lineSearch(computeISEs);
 
 #ifdef BENCHMARK
-	end = std::chrono::steady_clock::now();
-	diff = end - start;
-	tAvgFP = ((1.0 - 1.0/nIterations)* tAvgFP) + (1.0/nIterations)*std::chrono::duration_cast<std::chrono::milliseconds>(diff).count();
+	BENCHMARK_end_ = std::chrono::steady_clock::now();
+	BENCHMARK_diff_ = BENCHMARK_end_ - BENCHMARK_start_;
+	BENCHMARK_tAvgFP_ = ((1.0 - 1.0/BENCHMARK_nIterationsFP_)* BENCHMARK_tAvgFP_) +
+			(1.0/BENCHMARK_nIterationsFP_)*std::chrono::duration_cast<std::chrono::milliseconds>(BENCHMARK_diff_).count();
 #endif
 
 	/*
-	 * solve Sequential Riccati Equations with learningRate 0.0,
-	 * calculate the nominal costate
+	 * adds the deleted controller parts
 	 */
-//	runExit();
-
-	// adding the deleted controller parts
-	for (size_t i=0; i<initActivePartition_; i++)
-		nominalControllersStock_[i].swap(deletedcontrollersStock_[i]);
-
-	if (deletedcontrollersStock_[initActivePartition_].time_.empty()==false) {
-
-		nominalControllersStock_[initActivePartition_].swap(deletedcontrollersStock_[initActivePartition_]);
-
-		for (size_t k=0; k<deletedcontrollersStock_[initActivePartition_].time_.size(); k++) {
-			nominalControllersStock_[initActivePartition_].time_.push_back(deletedcontrollersStock_[initActivePartition_].time_[k]);
-			nominalControllersStock_[initActivePartition_].uff_.push_back(deletedcontrollersStock_[initActivePartition_].uff_[k]);
-			nominalControllersStock_[initActivePartition_].k_.push_back(deletedcontrollersStock_[initActivePartition_].k_[k]);
-		}
-	}
+	runExit();
 
 	// display
 	if (settings_.displayInfo_  || settings_.displayShortSummary_)  {

@@ -258,12 +258,12 @@ void CppAdCodeGenInterface<DOMAIN_DIM, RANGE_DIM, SCALAR_T>::createModels(
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <int DOMAIN_DIM, int RANGE_DIM, typename SCALAR_T>
-void CppAdCodeGenInterface<DOMAIN_DIM, RANGE_DIM, SCALAR_T>::loadModels(
+bool CppAdCodeGenInterface<DOMAIN_DIM, RANGE_DIM, SCALAR_T>::loadModels(
 		const std::string& modelName,
 		const std::string& libraryFolder /* = "" */,
 		const bool verbose /* = true */) {
 
-	// load dynamic liberary
+	// load dynamic library
 	std::string libraryName;
 	if (libraryFolder.empty()==false)
 		libraryName = libraryFolder + "/" + modelName + "_lib";
@@ -274,7 +274,12 @@ void CppAdCodeGenInterface<DOMAIN_DIM, RANGE_DIM, SCALAR_T>::loadModels(
 			libraryName + CppAD::cg::system::SystemInfo<>::DYNAMIC_LIB_EXTENSION) );
 
 	// get model
-	model_.reset(dynamicLib_->model(modelName));
+	if (dynamicLib_) {
+		model_.reset(dynamicLib_->model(modelName));
+		return true;
+	} else {
+		return false;
+	}
 }
 
 /******************************************************************************************************/

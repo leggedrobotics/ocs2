@@ -11,12 +11,13 @@
 
 #include "ocs2_frank_wolfe/GradientDescent.h"
 
+using namespace ocs2;
 using namespace nlp;
 
 /*
  * refer to: https://en.wikipedia.org/wiki/Test_functions_for_optimization
  */
-class MatyasGradientDescent : public GradientDescent
+class MatyasGradientDescent : public GradientDescent<double>
 {
 public:
 

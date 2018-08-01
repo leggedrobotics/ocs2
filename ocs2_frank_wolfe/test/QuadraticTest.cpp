@@ -9,9 +9,10 @@
 
 #include "ocs2_frank_wolfe/GradientDescent.h"
 
+using namespace ocs2;
 using namespace nlp;
 
-class QuadraticGradientDescent : public GradientDescent
+class QuadraticGradientDescent : public GradientDescent<double>
 {
 public:
 

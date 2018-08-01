@@ -1,7 +1,7 @@
 /**
  * OCS2Projected.h
  *
- *  Created on: Jul 21, 2016
+ *  Created on: July 21, 2016
  *      Author: farbod
  */
 
@@ -31,7 +31,7 @@ namespace ocs2{
  * @tparam LOGIC_RULES_T: Logic Rules type (default NullLogicRules).
  */
 template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T=NullLogicRules<STATE_DIM,INPUT_DIM>>
-class OCS2Projected : private nlp::GradientDescent
+class OCS2Projected : private nlp::GradientDescent<double>
 {
 public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
@@ -40,6 +40,8 @@ public:
 			"LOGIC_RULES_T must inherit from LogicRulesBase");
 
 	typedef std::shared_ptr<OCS2Projected<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>> Ptr;
+
+	typedef nlp::GradientDescent<double> BASE;
 
 	typedef SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> slq_base_t;
 	typedef SLQ<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>      slq_t;
@@ -50,28 +52,31 @@ public:
 	typedef typename slq_mp_t::Ptr  	slq_mp_ptr_t;
 	typedef typename gslq_t::Ptr 		gslq_ptr_t;
 
+	typedef typename slq_base_t::controlled_system_base_t      controlled_system_base_t;
+	typedef typename slq_base_t::derivatives_base_t            derivatives_base_t;
+	typedef typename slq_base_t::constraint_base_t             constraint_base_t;
+	typedef typename slq_base_t::cost_function_base_t          cost_function_base_t;
+	typedef typename slq_base_t::cost_desired_trajectories_t   cost_desired_trajectories_t;
+	typedef typename slq_base_t::operating_trajectories_base_t operating_trajectories_base_t;
+
+
 	typedef Dimensions<STATE_DIM, INPUT_DIM> DIMENSIONS;
 
-	typedef typename DIMENSIONS::controller_t 		controller_t;
-	typedef typename DIMENSIONS::controller_array_t controller_array_t;
-	typedef typename DIMENSIONS::scalar_t 		scalar_t;
-	typedef typename DIMENSIONS::scalar_array_t scalar_array_t;
-	typedef typename DIMENSIONS::eigen_scalar_t       eigen_scalar_t;
-	typedef typename DIMENSIONS::eigen_scalar_array_t eigen_scalar_array_t;
-	typedef typename DIMENSIONS::state_vector_t 	  state_vector_t;
-	typedef typename DIMENSIONS::state_vector_array_t state_vector_array_t;
+	typedef typename DIMENSIONS::controller_t          controller_t;
+	typedef typename DIMENSIONS::controller_array_t    controller_array_t;
+	typedef typename DIMENSIONS::controller_array2_t   controller_array2_t;
+	typedef typename DIMENSIONS::scalar_t              scalar_t;
+	typedef typename DIMENSIONS::scalar_array_t        scalar_array_t;
+	typedef typename DIMENSIONS::eigen_scalar_t        eigen_scalar_t;
+	typedef typename DIMENSIONS::eigen_scalar_array_t  eigen_scalar_array_t;
+	typedef typename DIMENSIONS::state_vector_t        state_vector_t;
+	typedef typename DIMENSIONS::state_vector_array_t  state_vector_array_t;
 	typedef typename DIMENSIONS::state_vector_array2_t state_vector_array2_t;
-	typedef typename DIMENSIONS::input_vector_t 		input_vector_t;
-	typedef typename DIMENSIONS::input_vector_array_t input_vector_array_t;
+	typedef typename DIMENSIONS::input_vector_t        input_vector_t;
+	typedef typename DIMENSIONS::input_vector_array_t  input_vector_array_t;
 	typedef typename DIMENSIONS::input_vector_array2_t input_vector_array2_t;
-	typedef typename DIMENSIONS::input_state_t 	  	 input_state_t;
-	typedef typename DIMENSIONS::input_state_array_t input_state_array_t;
-	typedef typename DIMENSIONS::state_matrix_t 	  state_matrix_t;
-	typedef typename DIMENSIONS::state_matrix_array_t state_matrix_array_t;
-	typedef typename DIMENSIONS::input_matrix_t 		input_matrix_t;
-	typedef typename DIMENSIONS::input_matrix_array_t 	input_matrix_array_t;
-	typedef typename DIMENSIONS::state_input_matrix_t 		state_input_matrix_t;
-	typedef typename DIMENSIONS::state_input_matrix_array_t state_input_matrix_array_t;
+	typedef typename DIMENSIONS::dynamic_vector_t      dynamic_vector_t;
+	typedef typename DIMENSIONS::dynamic_matrix_t      dynamic_matrix_t;
 
 	OCS2Projected()
 	: numSubsystems_(0)
@@ -87,12 +92,14 @@ public:
 	 * @param [in] inputOperatingPoints
 	 */
 	OCS2Projected(
-			const std::vector<std::shared_ptr<ControlledSystemBase<STATE_DIM, INPUT_DIM> > >& subsystemDynamicsPtr,
-			const std::vector<std::shared_ptr<DerivativesBase<STATE_DIM, INPUT_DIM> > >& subsystemDerivativesPtr,
-			const std::vector<std::shared_ptr<CostFunctionBase<STATE_DIM, INPUT_DIM> > >& subsystemCostFunctionsPtr,
-			const SLQ_Settings& slqSettings,
-			const state_vector_array_t& stateOperatingPoints,
-			const input_vector_array_t& inputOperatingPoints);
+			const controlled_system_base_t* systemDynamicsPtr,
+			const derivatives_base_t* systemDerivativesPtr,
+			const constraint_base_t* systemConstraintsPtr,
+			const cost_function_base_t* costFunctionPtr,
+			const operating_trajectories_base_t* operatingTrajectoriesPtr,
+			const SLQ_Settings& slqSettings = SLQ_Settings(),
+			const LOGIC_RULES_T* logicRulesPtr = nullptr,
+			const cost_function_base_t* heuristicsFunctionPtr = nullptr);
 
 	/**
 	 *
@@ -106,10 +113,10 @@ public:
 	void getCostFunction(scalar_t& costFunction) const;
 
 	/**
-	 * Gets the fucntion derivatives
+	 * Gets the function derivatives
 	 * @param [out] costFuntionDerivative
 	 */
-	void getCostFunctionDerivative(Eigen::VectorXd& costFuntionDerivative) const;
+	void getCostFunctionDerivative(dynamic_vector_t& costFuntionDerivative) const;
 
 	/**
 	 * Gets the controller stocks
@@ -122,10 +129,11 @@ public:
 	const controller_t& controller(size_t index) const;
 
 	/**
-	 * Gets switching times
-	 * @param [out] switchingTimes
+	 * Gets event times
+	 *
+	 * @param [out] eventTimes
 	 */
-	void getSwitchingTimes(scalar_array_t& switchingTimes) const;
+	void getEventTimes(scalar_array_t& eventTimes) const;
 
 	/**
 	 * Gets trajectories
@@ -157,7 +165,7 @@ public:
 	}
 
 	/**
-	 * Gets OCS2 iteraltion log
+	 * Gets OCS2 iteration log
 	 * @param [out] iterationCost
 	 */
 	void getOCS2IterationsLog(eigen_scalar_array_t& iterationCost) const { iterationCost = iterationCost_;}
@@ -200,32 +208,28 @@ public:
 
 	/**
 	 * Main run function
-	 * @param [in] initTime
-	 * @param [in] initState
-	 * @param [in] finalTime
-	 * @param [in] systemStockIndexes
-	 * @param [in] switchingTimes
-	 * @param [in] controllersStock
-	 * @param [in] desiredTimeTrajectoriesStock
-	 * @param [in] desiredStateTrajectoriesStock
+	 *
+	 * @param initTime
+	 * @param initState
+	 * @param finalTime
+	 * @param initEventTimes
+	 * @param costDesiredTrajectories
 	 */
 	void run(
 			const scalar_t& initTime,
 			const state_vector_t& initState,
 			const scalar_t& finalTime,
-			const std::vector<size_t>& systemStockIndexes = std::vector<size_t>(),
-			const std::vector<scalar_t>& switchingTimes = std::vector<scalar_t>(),
-			const controller_array_t& controllersStock = controller_array_t(),
-			const std::vector<scalar_array_t>& desiredTimeTrajectoriesStock = std::vector<scalar_array_t>(),
-			const state_vector_array2_t& desiredStateTrajectoriesStock = state_vector_array2_t());
+			const scalar_array_t& partitioningTimes,
+			const scalar_array_t& initEventTimes = std::vector<scalar_t>(),
+			const cost_desired_trajectories_t& costDesiredTrajectories = cost_desired_trajectories_t());
 
 private:
 	/**
-	 * Finds nearest neighbour
+	 * Finds nearest neighbor
 	 * @param [in] enquiryParameter
 	 * @return size_t:
 	 */
-	size_t findNearestController(const Eigen::VectorXd& enquiryParameter) const;
+	size_t findNearestController(const dynamic_vector_t& enquiryParameter) const;
 
 	/**
 	 * Calculates linear equality constraint
@@ -233,8 +237,8 @@ private:
 	 * @param [out] Bv
 	 */
 	void calculateLinearEqualityConstraint(
-			Eigen::MatrixXd& Am,
-			Eigen::VectorXd& Bv) override;
+			dynamic_matrix_t& Am,
+			dynamic_vector_t& Bv) override;
 
 	/**
 	 * Calculates gradient
@@ -243,9 +247,9 @@ private:
 	 * @param [out] gradient
 	 * @return boolean:
 	 */
-	bool calculateGradient(const size_t& id,
-			const Eigen::VectorXd& parameters,
-			Eigen::VectorXd& gradient) override;
+	virtual bool calculateGradient(const size_t& id,
+			const dynamic_vector_t& parameters,
+			dynamic_vector_t& gradient) override;
 
 	/**
 	 * Calculates cost
@@ -254,16 +258,16 @@ private:
 	 * @param [out] cost
 	 * @return boolean:
 	 */
-	bool calculateCost(
+	virtual bool calculateCost(
 			const size_t& id,
-			const Eigen::VectorXd& parameters,
+			const dynamic_vector_t& parameters,
 			scalar_t& cost) override;
 
 	/**
 	 * Get solution
 	 * @param [out] idStar
 	 */
-	void getSolution(size_t idStar) override;
+	virtual void getSolution(size_t idStar) override;
 
 	/**
 	 * rewind optimizer
@@ -275,19 +279,13 @@ private:
 			bool initRun = false);
 
 	/**
-	 * use disjoint Riccati approach
-	 * @param [in] useDisjointRiccati
-	 */
-	void setUseDisjointRiccati(bool useDisjointRiccati);
-
-	/**
 	 * Saves to bag
 	 * @param [in] id
 	 * @param [in] parameters
 	 */
 	void saveToBag(
 			size_t id,
-			const Eigen::VectorXd& parameters);
+			const dynamic_vector_t& parameters);
 
 	/**
 	 * Calculates initial controller
@@ -297,7 +295,7 @@ private:
 	 */
 	void calculateInitialController(
 			const state_vector_t& initState,
-			const scalar_array_t& switchingTimes,
+			const scalar_array_t& eventTimes,
 			controller_array_t& controllersStock);
 
 	/**
@@ -313,41 +311,42 @@ private:
 	std::vector<std::shared_ptr<CostFunctionBase<STATE_DIM, INPUT_DIM> > > 	subsystemCostFunctionsPtr_;
 	controller_array_t lqpControllersStock_;
 
-	scalar_t 		initTime_;
-	state_vector_t 	initState_;
-	scalar_t 		finalTime_;
-	size_t 			numSubsystems_;
-	std::vector<size_t> systemStockIndexes_;
-	scalar_array_t 		initSwitchingTimes_;
-	std::vector<scalar_array_t> desiredTimeTrajectoriesStock_;
-	state_vector_array2_t 		desiredStateTrajectoriesStock_;
+	scalar_t       initTime_;
+	state_vector_t initState_;
+	scalar_t       finalTime_;
+	size_t         numSubsystems_;
+	scalar_array_t partitioningTimes_;
+	size_t         numPartitions_;
+	scalar_array_t initEventTimes_;
 
 	// for rollout function
 	std::vector<std::shared_ptr<ControlledSystemBase<STATE_DIM, INPUT_DIM> > >  subsystemDynamicsPtrStock_;
-	std::vector<std::shared_ptr<CostFunctionBaseOCS2<STATE_DIM, INPUT_DIM> > > subsystemCostFunctionsPtrStock_;
+	std::vector<std::shared_ptr<CostFunctionBase<STATE_DIM, INPUT_DIM> > > subsystemCostFunctionsPtrStock_;
 	std::vector<std::shared_ptr<ODE45<STATE_DIM> > > subsystemSimulatorsStockPtr_;
 
 	// optimized solution variables
-	scalar_t       optimizedTotalCost_;
-	scalar_t       optimizedConstraintISE_;
-	scalar_array_t optimizedSwitchingTimes_;
+	scalar_t optimizedTotalCost_;
+	scalar_t optimizedConstraint1ISE_;
+	scalar_t optimizedConstraint2ISE_;
+	scalar_array_t optimizedEventTimes_;
 	controller_array_t optimizedControllersStock_;
 	std::vector<scalar_array_t> optimizedTimeTrajectoriesStock_;
-	state_vector_array2_t   optimizedStateTrajectoriesStock_;
+	state_vector_array2_t optimizedStateTrajectoriesStock_;
 	input_vector_array2_t optimizedInputTrajectoriesStock_;
-	Eigen::VectorXd 		costFuntionDerivative_;
+	dynamic_vector_t costFuntionDerivative_;
 
 	scalar_t currentTotalCost_;
-	Eigen::VectorXd currentCostFuntionDerivative_;
+	dynamic_vector_t currentCostFuntionDerivative_;
 
-	std::vector<Eigen::VectorXd> parameterBag_;
-	std::vector<controller_array_t, Eigen::aligned_allocator<controller_array_t> > controllersStockBag_;
+	std::vector<dynamic_vector_t> parameterBag_;
+	controller_array2_t controllersStockBag_;
 
-	gslq_ptr_t gslqSolver_;
+	std::vector<gslq_ptr_t> gslqSolverPtrs_;
 	std::vector<slq_base_ptr_t> slqSolverPtrs_;
 
 	eigen_scalar_array_t slqIterationCost_;
 	eigen_scalar_array_t slqIterationISE1_;
+	eigen_scalar_array_t slqIterationISE2_;
 };
 
 }  // end of ocs2 namespace

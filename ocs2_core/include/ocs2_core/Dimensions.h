@@ -107,6 +107,13 @@ public:
 	/** Array of dynamic vector's trajectory type. */
 	typedef std::vector<dynamic_vector_array_t, Eigen::aligned_allocator<dynamic_vector_array_t> > dynamic_vector_array2_t;
 
+	/** Dynamic-size matrix type. */
+	typedef Eigen::Matrix<scalar_t, Eigen::Dynamic, Eigen::Dynamic> dynamic_matrix_t;
+	/** Dynamic matrix's trajectory type. */
+	typedef std::vector<dynamic_matrix_t, Eigen::aligned_allocator<dynamic_matrix_t> > dynamic_matrix_array_t;
+	/** Array of dynamic matrix's trajectory type. */
+	typedef std::vector<dynamic_matrix_array_t, Eigen::aligned_allocator<dynamic_matrix_array_t> > dynamic_matrix_array2_t;
+
 	/** Dynamic-size by n_x matrix type. */
 	typedef Eigen::Matrix<scalar_t, Eigen::Dynamic, STATE_DIM> dynamic_state_matrix_t;
 	/** Dynamic-state matrix trajectory type. */

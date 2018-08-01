@@ -23,15 +23,15 @@ public:
 	typedef std::shared_ptr<const QuadraticCostFunctionAD<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> > ConstPtr;
 
 	typedef CostFunctionBaseAD<QuadraticCostFunctionAD<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>, STATE_DIM, INPUT_DIM> BASE;
-	typedef typename BASE::scalar_t       			scalar_t;
-	typedef typename BASE::scalar_array_t 			scalar_array_t;
-	typedef typename BASE::state_vector_t 			state_vector_t;
-	typedef typename BASE::state_vector_array_t 	state_vector_array_t;
-	typedef typename BASE::state_matrix_t 			state_matrix_t;
-	typedef typename BASE::input_vector_t  			input_vector_t;
-	typedef typename BASE::input_vector_array_t 	input_vector_array_t;
-	typedef typename BASE::input_matrix_t 		input_matrix_t;
-	typedef typename BASE::input_state_matrix_t 		input_state_matrix_t;
+	typedef typename BASE::scalar_t             scalar_t;
+	typedef typename BASE::scalar_array_t       scalar_array_t;
+	typedef typename BASE::state_vector_t       state_vector_t;
+	typedef typename BASE::state_vector_array_t state_vector_array_t;
+	typedef typename BASE::state_matrix_t       state_matrix_t;
+	typedef typename BASE::input_vector_t       input_vector_t;
+	typedef typename BASE::input_vector_array_t input_vector_array_t;
+	typedef typename BASE::input_matrix_t       input_matrix_t;
+	typedef typename BASE::input_state_matrix_t input_state_matrix_t;
 
 	QuadraticCostFunctionAD(
 			const state_matrix_t& Q,

@@ -63,28 +63,32 @@ endif()
 ## $ catkin_test_results ../../../build/ocs2_core
 
 catkin_add_gtest(integration_unittest 
-  test/IntegrationTest.cpp)
+  test/IntegrationTest.cpp
+)
 target_link_libraries(integration_unittest
   ${catkin_LIBRARIES}
   ${Boost_LIBRARIES}
 ) 
 
 catkin_add_gtest(findIndex_unittest 
-  test/testFindIndex.cpp)
+  test/testFindIndex.cpp
+)
 target_link_libraries(findIndex_unittest
   ${catkin_LIBRARIES}
   ${Boost_LIBRARIES}
 )
 
 catkin_add_gtest(logic_rules_machin_unittest 
-  test/testLogicRulesMachine.cpp)
+  test/testLogicRulesMachine.cpp
+)
 target_link_libraries(logic_rules_machin_unittest
   ${catkin_LIBRARIES}
   ${Boost_LIBRARIES}
 )
 
 catkin_add_gtest(cppadcg_unittest 
-  test/testCppADCG.cpp)
+  test/testCppADCG.cpp
+)
 target_link_libraries(cppadcg_unittest
   ${Boost_LIBRARIES}
   ${catkin_LIBRARIES} -lm -ldl

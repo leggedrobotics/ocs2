@@ -56,6 +56,7 @@ public:
 	typedef typename DIMENSIONS::input_vector_array_t input_vector_array_t;
 	typedef typename DIMENSIONS::input_matrix_t 		input_matrix_t;
 	typedef typename DIMENSIONS::input_state_matrix_t 	input_state_matrix_t;
+	typedef typename DIMENSIONS::state_input_matrix_t 	state_input_matrix_t;
 
 	typedef CostDesiredTrajectories<scalar_t> 								cost_desired_trajectories_t;
 	typedef typename cost_desired_trajectories_t::dynamic_vector_t			dynamic_vector_t;

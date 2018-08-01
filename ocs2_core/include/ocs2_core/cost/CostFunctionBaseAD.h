@@ -38,17 +38,15 @@ public:
 	typedef std::shared_ptr<const CostFunctionBaseAD<Derived, STATE_DIM, INPUT_DIM, LOGIC_RULES_T> > ConstPtr;
 
 	typedef CostFunctionBase<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> BASE;
-
-	typedef typename BASE::scalar_t       			scalar_t;
-	typedef typename BASE::scalar_array_t 			scalar_array_t;
-	typedef typename BASE::state_vector_t 			state_vector_t;
-	typedef typename BASE::state_vector_array_t 	state_vector_array_t;
-	typedef typename BASE::state_matrix_t 			state_matrix_t;
-	typedef typename BASE::input_vector_t  			input_vector_t;
-	typedef typename BASE::input_vector_array_t 	input_vector_array_t;
-	typedef typename BASE::input_matrix_t 		input_matrix_t;
-	typedef typename BASE::input_state_matrix_t 		input_state_matrix_t;
-
+	typedef typename BASE::scalar_t             scalar_t;
+	typedef typename BASE::scalar_array_t       scalar_array_t;
+	typedef typename BASE::state_vector_t       state_vector_t;
+	typedef typename BASE::state_vector_array_t state_vector_array_t;
+	typedef typename BASE::state_matrix_t       state_matrix_t;
+	typedef typename BASE::input_vector_t       input_vector_t;
+	typedef typename BASE::input_vector_array_t input_vector_array_t;
+	typedef typename BASE::input_matrix_t       input_matrix_t;
+	typedef typename BASE::input_state_matrix_t input_state_matrix_t;
 
 	/**
 	 * Default constructor
@@ -116,7 +114,7 @@ public:
 			const std::string& libraryFolder);
 
 	/**
-	 * laods the forward model, the Jacobian model, and the Hessian model.
+	 * loads the forward model, the Jacobian model, and the Hessian model.
 	 *
 	 * @param modelName
 	 * @param libraryFolder

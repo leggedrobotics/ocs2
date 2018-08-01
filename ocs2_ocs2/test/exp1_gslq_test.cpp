@@ -26,6 +26,7 @@ enum
 
 TEST(exp1_gslq_test, optimum_gradient_test)
 {
+
 	// system dynamics
 	EXP1_System systemDynamics;
 
@@ -43,6 +44,7 @@ TEST(exp1_gslq_test, optimum_gradient_test)
 	Eigen::Matrix<double,INPUT_DIM,1> inputOperatingPoint = Eigen::Matrix<double,INPUT_DIM,1>::Zero();
 	EXP1_SystemOperatingTrajectories operatingTrajectories(stateOperatingPoint, inputOperatingPoint);
 
+
 	/******************************************************************************************************/
 	/******************************************************************************************************/
 	/******************************************************************************************************/
@@ -52,6 +54,7 @@ TEST(exp1_gslq_test, optimum_gradient_test)
 	slqSettings.absTolODE_ = 1e-10;
 	slqSettings.relTolODE_ = 1e-7;
 	slqSettings.maxNumStepsPerSecond_ = 10000;
+	slqSettings.nThreads_ = 3;
 	slqSettings.maxNumIterationsSLQ_ = 30;
 	slqSettings.lsStepsizeGreedy_ = true;
 	slqSettings.noStateConstraints_ = true;

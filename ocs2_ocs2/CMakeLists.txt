@@ -90,7 +90,7 @@ target_link_libraries(exp1_gslq_test
   ${Boost_LIBRARIES}
 )
 
-#catkin_add_gtest(exp1_ocs2_test 
+
 #  test/exp1_ocs2_test.cpp
 #)
 #target_link_libraries(exp1_ocs2_test

@@ -96,30 +96,30 @@ public:
 		size_t N = desiredTimeTrajectory_.size();
 		for (size_t i=0; i<N; i++) {
 
-			std::cout << "time: " << std::setprecision(dispPrecision) <<
+			std::cerr << "time: " << std::setprecision(dispPrecision) <<
 					desiredTimeTrajectory_[i] << ",  " << std::endl;
 
 			// state
-			std::cout << "state: [";
+			std::cerr << "state: [";
 			for (size_t j=0; j<desiredStateTrajectory_[i].size(); j++) {
-				std::cout << std::setprecision(dispPrecision) <<
+				std::cerr << std::setprecision(dispPrecision) <<
 						desiredStateTrajectory_[i](j) << ",  ";
 			}
 			if (desiredStateTrajectory_[i].size()>0)
-				std::cout << "\b\b]" << ",  " << std::endl;
+				std::cerr << "\b\b]" << ",  " << std::endl;
 			else
-				std::cout << " ]" << ",  " << std::endl;
+				std::cerr << " ]" << ",  " << std::endl;
 
 			// input
-			std::cout << "input: [";
+			std::cerr << "input: [";
 			for (size_t j=0; j<desiredInputTrajectory_[i].size(); j++) {
-				std::cout << std::setprecision(dispPrecision) <<
+				std::cerr << std::setprecision(dispPrecision) <<
 						desiredInputTrajectory_[i](j) << ",  ";
 			}
 			if (desiredInputTrajectory_[i].size()>0)
-				std::cout << "\b\b]" << std::endl;
+				std::cerr << "\b\b]" << std::endl;
 			else
-				std::cout << " ]" << std::endl;
+				std::cerr << " ]" << std::endl;
 
 		}  // end of i loop
 	}

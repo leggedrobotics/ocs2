@@ -590,6 +590,14 @@ public:
 	const scalar_array_t& getEventTimes() const;
 
 	/**
+	 * Gets the cost function desired trajectories.
+	 *
+	 * @param [out] costDesiredTrajectories: A pointer to the cost function desired trajectories
+	 */
+	virtual void getCostDesiredTrajectoriesPtr(
+			const cost_desired_trajectories_t*& costDesiredTrajectoriesPtr) const;
+
+	/**
 	 * Sets the cost function desired trajectories.
 	 *
 	 * @param [in] costDesiredTrajectories: The cost function desired trajectories

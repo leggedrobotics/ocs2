@@ -2990,6 +2990,16 @@ const typename SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::scalar_array_t&
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
+void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::getCostDesiredTrajectoriesPtr(
+		const cost_desired_trajectories_t*& costDesiredTrajectoriesPtr) const {
+
+	costDesiredTrajectoriesPtr = &costDesiredTrajectories_;
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
 void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::setCostDesiredTrajectories(
 		const cost_desired_trajectories_t& costDesiredTrajectories) {
 

@@ -57,10 +57,10 @@ public:
 		if (gravitationalAcceleration<0)  throw std::runtime_error("Gravitational acceleration should be a positive value.");
 	}
 
-	virtual ~ComDynamicsBase() {}
+	virtual ~ComDynamicsBase() = default;
 
 	/**
-	 * copy construntor
+	 * copy constructor
 	 */
 	ComDynamicsBase(const ComDynamicsBase& rhs)
 

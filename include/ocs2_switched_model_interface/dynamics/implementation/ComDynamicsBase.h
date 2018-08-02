@@ -96,7 +96,7 @@ void ComDynamicsBase<JOINT_COORD_SIZE>::computeFlowMap(const scalar_t& t,
 	// gravity effect on CoM in CoM coordinate
 	MInverseG_ << Eigen::Vector3d::Zero(), -o_R_b.transpose() * o_gravityVector_;
 
-	// CoM Jacobin in the Base frame
+	// CoM Jacobian in the Base frame
 	b_comJacobainOmega_ = ( MInverse_*comModelPtr_->comMomentumJacobian(qJoints_) ).template topRows<3>();
 
 	// contact JacobianTransposeLambda

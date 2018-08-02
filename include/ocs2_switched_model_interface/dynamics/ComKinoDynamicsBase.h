@@ -80,7 +80,7 @@ public:
 	{}
 
 	/**
-	 * copy construntor
+	 * copy constructor
 	 */
 	ComKinoDynamicsBase(const ComKinoDynamicsBase& rhs)
 

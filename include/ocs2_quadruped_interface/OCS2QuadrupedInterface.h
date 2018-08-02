@@ -130,7 +130,7 @@ public:
 	/**
 	 * Constructor
 	 *
-	 * @param pathToConfigFolder: Path to config folder
+	 * @param pathToConfigFolder: Path to configuration folder
 	 */
 	OCS2QuadrupedInterface(
 			const kinematic_model_t& kinematicModel,
@@ -445,7 +445,7 @@ public:
 
 
 	double strideTime() {
-		return (initEventTimes_[1]-initEventTimes_[0]);
+		return modelSettings_.strideTime_;
 	}
 
 	double strideLength() {
@@ -465,7 +465,7 @@ protected:
 	void loadSettings(const std::string& pathToConfigFile);
 
 	/**
-	 * concatenate the contatiner stocks
+	 * concatenate the container stocks
 	 */
 	void concatenate();
 

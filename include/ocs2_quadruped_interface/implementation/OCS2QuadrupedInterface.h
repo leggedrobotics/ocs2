@@ -20,7 +20,7 @@ OCS2QuadrupedInterface<JOINT_COORD_SIZE>::OCS2QuadrupedInterface(
   comModelPtr_(comModel.clone()),
   switchedModelStateEstimator_(comModel)
 {
-	// load sertting from loading file
+	// load setting from loading file
 	loadSettings(pathToConfigFolder);
 
 	// logic rule

@@ -8,12 +8,12 @@
 #ifndef LINEARSYSTEMDYNAMICS_OCS2_H_
 #define LINEARSYSTEMDYNAMICS_OCS2_H_
 
-#include "ocs2_core/dynamics/DerivativesBase.h"
+#include "ocs2_core/dynamics/SystemDynamicsBase.h"
 
 namespace ocs2{
 
 template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T=ocs2::NullLogicRules<STATE_DIM,INPUT_DIM>>
-class LinearSystemDynamics : public DerivativesBase<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>
+class LinearSystemDynamics : public SystemDynamicsBase<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>
 {
 public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
@@ -21,18 +21,18 @@ public:
 	typedef std::shared_ptr<LinearSystemDynamics<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> > Ptr;
 	typedef std::shared_ptr<const LinearSystemDynamics<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> > ConstPtr;
 
-	typedef DerivativesBase<STATE_DIM, INPUT_DIM> BASE;
-	typedef typename BASE::scalar_t       			scalar_t;
-	typedef typename BASE::state_vector_t 			state_vector_t;
-	typedef typename BASE::state_matrix_t 			state_matrix_t;
-	typedef typename BASE::input_vector_t  			input_vector_t;
+	typedef SystemDynamicsBase<STATE_DIM, INPUT_DIM> BASE;
+	typedef typename BASE::scalar_t             scalar_t;
+	typedef typename BASE::state_vector_t       state_vector_t;
+	typedef typename BASE::state_matrix_t       state_matrix_t;
+	typedef typename BASE::input_vector_t       input_vector_t;
 	typedef typename BASE::state_input_matrix_t	state_input_matrix_t;
 
 	LinearSystemDynamics(
 			const state_matrix_t& A,
 			const state_input_matrix_t& B,
-			const state_matrix_t& G,
-			const state_input_matrix_t& H)
+			const state_matrix_t& G = state_matrix_t::Zero(),
+			const state_input_matrix_t& H = state_input_matrix_t::Zero())
 	: A_(A)
 	, B_(B)
 	, G_(G)
@@ -49,6 +49,38 @@ public:
 	virtual LinearSystemDynamics<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>* clone() const override {
 
 		return new LinearSystemDynamics<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>(*this);
+	}
+
+	/**
+	 * Interface method to the state flow map of the hybrid system.
+	 *
+	 * @param [in] t: time.
+	 * @param [in] x: state vector.
+	 * @param [in] u: input vector
+	 * @param [out] dxdt: state vector time derivative.
+	 */
+	virtual void computeFlowMap(
+			const scalar_t& t,
+			const state_vector_t& x,
+			const input_vector_t& u,
+			state_vector_t& dxdt) override {
+
+		dxdt = A_*x + B_*u;
+	}
+
+	/**
+	 * Interface method to the state jump map of the hybrid system.
+	 *
+	 * @param [in] t: time.
+	 * @param [in] x: state vector.
+	 * @param [out] xp: jumped state.
+	 */
+	virtual void computeJumpMap(
+			const scalar_t& t,
+			const state_vector_t& x,
+			state_vector_t& xp)  override {
+
+		xp = G_*x; //+ H_*u;
 	}
 
 	/**

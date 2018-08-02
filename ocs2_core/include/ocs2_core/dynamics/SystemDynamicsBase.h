@@ -99,7 +99,6 @@ public:
      */
 	virtual SystemDynamicsBase<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>* clone() const = 0;
 
-
 	/**
 	 * Interface method to the state flow map of the hybrid system.
 	 *

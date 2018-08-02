@@ -10,50 +10,25 @@
 
 #include "ocs2_core/integration/Integrator.h"
 #include "ocs2_core/integration/EventHandlerBase.h"
-#include "ocs2_core/dynamics/ControlledSystemBase.h"
+#include "ocs2_core/dynamics/LinearSystemDynamics.h"
 #include <ocs2_core/misc/FindActiveIntervalIndex.h>
 
 #include <gtest/gtest.h>
 
 using namespace ocs2;
 
-class SecondOrderSystem : public ControlledSystemBase<2,1>
-{
-public:
-	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-
-	SecondOrderSystem() {}
-	~SecondOrderSystem() {}
-
-	void computeFlowMap(
-			const double& t,
-			const Eigen::Matrix<double,2,1>& x,
-			const Eigen::Matrix<double,1,1>& u,
-			Eigen::Matrix<double,2,1>& dxdt) {
-
-		Eigen::Matrix2d A;
-		A << -2, -1, 1, 0;
-
-		Eigen::Vector2d B;
-		B << 1, 0;
-
-		dxdt = A*x + B*u;
-	}
-
-	SecondOrderSystem* clone() const override {
-		return new SecondOrderSystem(*this);
-	}
-
-private:
-
-};
-
 
 TEST(IntegrationTest, SecondOrderSystem_ODE45)
 {
 	bool resultsGood = true;
 
-	std::shared_ptr<SecondOrderSystem> sys = std::make_shared<SecondOrderSystem>();
+	Eigen::Matrix2d A;
+	A << -2, -1, 1, 0;
+	Eigen::Vector2d B;
+	B << 1, 0;
+
+	typedef LinearSystemDynamics<2,1> SecondOrderSystem;
+	ControlledSystemBase<2,1>::Ptr sys = ControlledSystemBase<2,1>::Ptr(new SecondOrderSystem(A, B));
 
 	SecondOrderSystem::scalar_array_t cntTimeStamp {0, 10};
 	SecondOrderSystem::input_vector_array_t uff(2, SecondOrderSystem::input_vector_t::Ones());
@@ -66,7 +41,7 @@ TEST(IntegrationTest, SecondOrderSystem_ODE45)
 
 	sys->setController(controller);
 
-	std::shared_ptr<ControlledSystemBase<2, 1> > sysClone1(sys->clone());
+	ControlledSystemBase<2, 1>::Ptr sysClone1(sys->clone());
 	resultsGood = sysClone1.unique();
 
 	ODE45<2> odeAdaptive(sys); // integrate adaptive
@@ -111,7 +86,13 @@ TEST(IntegrationTest, SecondOrderSystem_AdamsBashfort)
 {
 	bool resultsGood = true;
 
-	std::shared_ptr<SecondOrderSystem> sys = std::make_shared<SecondOrderSystem>();
+	Eigen::Matrix2d A;
+	A << -2, -1, 1, 0;
+	Eigen::Vector2d B;
+	B << 1, 0;
+
+	typedef LinearSystemDynamics<2,1> SecondOrderSystem;
+	ControlledSystemBase<2,1>::Ptr sys = ControlledSystemBase<2,1>::Ptr(new SecondOrderSystem(A, B));
 
 	SecondOrderSystem::scalar_array_t cntTimeStamp {0, 10};
 	SecondOrderSystem::input_vector_array_t uff(2, SecondOrderSystem::input_vector_t::Ones());
@@ -124,7 +105,7 @@ TEST(IntegrationTest, SecondOrderSystem_AdamsBashfort)
 
 	sys->setController(controller);
 
-	std::shared_ptr<ControlledSystemBase<2, 1> > sysClone1(sys->clone());
+	ControlledSystemBase<2, 1>::Ptr sysClone1(sys->clone());
 	resultsGood = sysClone1.unique();
 
 	const size_t order = 5;
@@ -172,7 +153,13 @@ TEST(IntegrationTest, SecondOrderSystem_AdamsBashfortMoulton)
 {
 	bool resultsGood = true;
 
-	std::shared_ptr<SecondOrderSystem> sys = std::make_shared<SecondOrderSystem>();
+	Eigen::Matrix2d A;
+	A << -2, -1, 1, 0;
+	Eigen::Vector2d B;
+	B << 1, 0;
+
+	typedef LinearSystemDynamics<2,1> SecondOrderSystem;
+	ControlledSystemBase<2,1>::Ptr sys = ControlledSystemBase<2,1>::Ptr(new SecondOrderSystem(A, B));
 
 	SecondOrderSystem::scalar_array_t cntTimeStamp {0, 10};
 	SecondOrderSystem::input_vector_array_t uff(2, SecondOrderSystem::input_vector_t::Ones());
@@ -185,7 +172,7 @@ TEST(IntegrationTest, SecondOrderSystem_AdamsBashfortMoulton)
 
 	sys->setController(controller);
 
-	std::shared_ptr<ControlledSystemBase<2, 1> > sysClone1(sys->clone());
+	ControlledSystemBase<2, 1>::Ptr sysClone1(sys->clone());
 	resultsGood =  sysClone1.unique();
 
 	const size_t order = 5;

@@ -40,7 +40,7 @@ public:
 	, constraintStepSize_(1.0)
 	, displayInfo_(false)
 	, displayShortSummary_(false)
-	, warmStartGSLQP_(false)				// GSLQ
+	, warmStartGSLQ_(false)				// GSLQ
 	, useLQForDerivatives_(false)			// GSLQ
 
 	, absTolODE_(1e-9)
@@ -124,7 +124,7 @@ public:
 	/** This value determines to display the a summary log of SLQ. */
 	bool displayShortSummary_;
 	/** This value determines to use a warm starting scheme for calculating cost gradients w.r.t. switching times. */
-	bool warmStartGSLQP_;
+	bool warmStartGSLQ_;
 	/** This value determines to use LQ-based method or sweeping method for calculating cost gradients w.r.t. switching times. */
 	bool useLQForDerivatives_;
 
@@ -306,11 +306,11 @@ inline void SLQ_Settings::loadSettings(const std::string& filename, bool verbose
 	}
 
 	try	{
-		warmStartGSLQP_ = pt.get<bool>("slq.warmStartGSLQP");
-		if (verbose)  std::cerr << " #### Option loader : option 'warmStartGSLQP' ...................... " << warmStartGSLQP_ << std::endl;
+		warmStartGSLQ_ = pt.get<bool>("slq.warmStartGSLQ");
+		if (verbose)  std::cerr << " #### Option loader : option 'warmStartGSLQ' ....................... " << warmStartGSLQ_ << std::endl;
 	}
 	catch (const std::exception& e){
-		if (verbose)  std::cerr << " #### Option loader : option 'warmStartGSLQP' ...................... " << warmStartGSLQP_ << "   \t(default)" << std::endl;
+		if (verbose)  std::cerr << " #### Option loader : option 'warmStartGSLQ' ....................... " << warmStartGSLQ_ << "   \t(default)" << std::endl;
 	}
 
 	try	{

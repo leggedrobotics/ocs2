@@ -125,9 +125,8 @@ public:
 	typedef typename DIMENSIONS::constraint2_state_matrix_t        constraint2_state_matrix_t;
 	typedef typename DIMENSIONS::constraint2_state_matrix_array_t  constraint2_state_matrix_array_t;
 	typedef typename DIMENSIONS::constraint2_state_matrix_array2_t constraint2_state_matrix_array2_t;
-
-	typedef Eigen::Matrix<scalar_t, Eigen::Dynamic, 1> 	dynamic_vector_t;
-	typedef std::vector<dynamic_vector_t>				dynamic_vector_array_t;
+	typedef typename DIMENSIONS::dynamic_vector_t       dynamic_vector_t;
+	typedef typename DIMENSIONS::dynamic_vector_array_t dynamic_vector_array_t;
 
 	typedef SystemEventHandler<STATE_DIM>         event_handler_t;
 	typedef StateTriggeredEventHandler<STATE_DIM> state_triggered_event_handler_t;

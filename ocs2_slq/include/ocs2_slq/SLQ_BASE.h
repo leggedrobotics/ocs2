@@ -210,6 +210,11 @@ public:
 	virtual ~SLQ_BASE();
 
 	/**
+	 * Resets the class to its state after construction.
+	 */
+	virtual void reset();
+
+	/**
 	 * Forward integrate the system dynamics with given controller. It uses the given control policies and initial state,
 	 * to integrate the system dynamics in time period [initTime, finalTime].
 	 *
@@ -1115,9 +1120,6 @@ protected:
 	const std::vector<scalar_array_t>* 	desiredTimeTrajectoryStockPtr_;
 	const state_vector_array2_t* 		desiredStateTrajectoryStockPtr_;
 	const input_vector_array2_t* 		desiredInputTrajectoryStockPtr_;
-	std::vector<scalar_array_t> 	  	nullDesiredTimeTrajectoryStockPtr_;
-	state_vector_array2_t 				nullDesiredStateTrajectoryStockPtr_;
-	input_vector_array2_t 				nullDesiredInputTrajectoryStockPtr_;
 
 	scalar_t learningRateStar_ = 1.0;  // The optimal learning rate.
 	scalar_t maxLearningRate_  = 1.0;  // The maximum permitted learning rate (settings_.maxLearningRateGSLQP_).

@@ -252,7 +252,7 @@ protected:
 	}
 
 private:
-	// multithreading helper variables
+	// multi-threading helper variables
 	std::vector<std::thread> workerThreads_;
 	std::atomic_bool workersActive_;
 	std::atomic_int workerTask_;

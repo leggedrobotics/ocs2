@@ -159,7 +159,7 @@ public:
 
 	/**
 	 * Gets the partitioning times.
-	 * @return const reference to partitioning times.
+	 * @return constant reference to partitioning times.
 	 */
 	const scalar_array_t& getPartitioningTimes() const;
 

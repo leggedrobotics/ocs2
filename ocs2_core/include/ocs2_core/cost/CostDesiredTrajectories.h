@@ -49,6 +49,12 @@ public:
 		return desiredTimeTrajectory_.empty();
 	}
 
+	void clear() {
+		desiredTimeTrajectory_.clear();
+		desiredStateTrajectory_.clear();
+		desiredInputTrajectory_.clear();
+	}
+
 	void swap(CostDesiredTrajectories<SCALAR_T>& other) {
 
 		desiredTimeTrajectory_.swap(other.desiredTimeTrajectory_);

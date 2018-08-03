@@ -224,6 +224,43 @@ SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::~SLQ_BASE()  {
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
+void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::reset() {
+
+	iteration_ = 0;
+	rewindCounter_ = 0;
+
+	learningRateStar_ = 1.0;
+	maxLearningRate_  = 1.0;
+	constraintStepSize_ = 1.0;
+
+	blockwiseMovingHorizon_ = false;
+	useParallelRiccatiSolverFromInitItr_ = false;
+
+	costDesiredTrajectories_.clear();
+	costDesiredTrajectoriesBuffer_.clear();
+	costDesiredTrajectoriesUpdated_ = false;
+
+	for (size_t i=0; i<numPartitions_; i++) {
+
+		// very important :)
+		nominalControllersStock_[i].clear();
+
+		// for Riccati equation parallel computation
+		SmFinalStock_[i]  = state_matrix_t::Zero();
+		SvFinalStock_[i]  = state_vector_t::Zero();
+		SveFinalStock_[i] = state_vector_t::Zero();
+		sFinalStock_[i]   = eigen_scalar_t::Zero();
+		xFinalStock_[i]   = state_vector_t::Zero();
+	}  // end of i loop
+
+//	logicRulesMachinePtr_;
+//	throw std::runtime_error("logicRulesMachinePtr_ in SLQ_BASE");
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
 typename SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::state_vector_t
 	SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::rolloutStateTriggeredWorker(
 			size_t workerIndex,
@@ -2828,10 +2865,6 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::setupOptimizer(const size_t&
 
 	if (numPartitions==0)
 		throw std::runtime_error("Number of partitions cannot be zero!");
-
-	nullDesiredTimeTrajectoryStockPtr_  = std::vector<scalar_array_t>( numPartitions, scalar_array_t() );
-	nullDesiredStateTrajectoryStockPtr_ = state_vector_array2_t( numPartitions, state_vector_array_t() );
-	nullDesiredInputTrajectoryStockPtr_ = input_vector_array2_t( numPartitions, input_vector_array_t() );
 
 	/*
 	 * nominal trajectories

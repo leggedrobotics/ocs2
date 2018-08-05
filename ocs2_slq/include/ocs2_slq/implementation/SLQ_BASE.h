@@ -2337,31 +2337,44 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::fullRiccatiBackwardSweepWork
 		for (int k=N-1; k>=0; k--) {
 			// checking the numerical stability of the Riccati equations
 			try {
-				if (SmTrajectoryStock_[partitionIndex][k].hasNaN())   throw std::runtime_error("Sm is unstable.");
-				if (SvTrajectoryStock_[partitionIndex][k].hasNaN())   throw std::runtime_error("Sv is unstable.");
-				if (SveTrajectoryStock_[partitionIndex][k].hasNaN())  throw std::runtime_error("Sve is unstable.");
-				if (sTrajectoryStock_[partitionIndex][k].hasNaN())    throw std::runtime_error("s is unstable.");
+				if (SmTrajectoryStock_[partitionIndex][k].hasNaN())
+					throw std::runtime_error("Sm is unstable.");
+				if (SvTrajectoryStock_[partitionIndex][k].hasNaN())
+					throw std::runtime_error("Sv is unstable.");
+				if (SveTrajectoryStock_[partitionIndex][k].hasNaN())
+					throw std::runtime_error("Sve is unstable.");
+				if (sTrajectoryStock_[partitionIndex][k].hasNaN())
+					throw std::runtime_error("s is unstable.");
 			}
 			catch(const std::exception& error) {
-				std::cerr << "what(): " << error.what() << " at time " << SsTimeTrajectoryStock_[partitionIndex][k] << " [sec]." << std::endl;
+				std::cerr << "what(): " << error.what() << " at time "
+						<< SsTimeTrajectoryStock_[partitionIndex][k] << " [sec]." << std::endl;
 				for (int kp=k; kp<k+10; kp++)  {
 					if (kp >= N) continue;
-					std::cerr << "Sm[" << SsTimeTrajectoryStock_[partitionIndex][kp] << "]:\n"<< SmTrajectoryStock_[partitionIndex][kp].norm() << std::endl;
-					std::cerr << "Sv[" << SsTimeTrajectoryStock_[partitionIndex][kp] << "]:\t"<< SvTrajectoryStock_[partitionIndex][kp].transpose().norm() << std::endl;
-					std::cerr << "Sve[" << SsTimeTrajectoryStock_[partitionIndex][kp] << "]:\t"<< SveTrajectoryStock_[partitionIndex][kp].transpose().norm() << std::endl;
-					std::cerr << "s["  << SsTimeTrajectoryStock_[partitionIndex][kp] << "]: \t"<< sTrajectoryStock_[partitionIndex][kp].transpose().norm() << std::endl;
+					std::cerr << "Sm[" << SsTimeTrajectoryStock_[partitionIndex][kp] << "]:\n"
+							<< SmTrajectoryStock_[partitionIndex][kp].norm() << std::endl;
+					std::cerr << "Sv[" << SsTimeTrajectoryStock_[partitionIndex][kp] << "]:\t"
+							<< SvTrajectoryStock_[partitionIndex][kp].transpose().norm() << std::endl;
+					std::cerr << "Sve[" << SsTimeTrajectoryStock_[partitionIndex][kp] << "]:\t"
+							<< SveTrajectoryStock_[partitionIndex][kp].transpose().norm() << std::endl;
+					std::cerr << "s["  << SsTimeTrajectoryStock_[partitionIndex][kp] << "]: \t"
+							<< sTrajectoryStock_[partitionIndex][kp].transpose().norm() << std::endl;
 				}
 				exit(0);
 			}
 
 			// checking the numerical stability of the controller parameters
 			try {
-				if (nominalControllersStock_[partitionIndex].k_[k].hasNaN())        throw std::runtime_error("Feedback gains are unstable.");
-				if (nominalControllersStock_[partitionIndex].uff_[k].hasNaN())      throw std::runtime_error("uff gains are unstable.");
-				if (nominalControllersStock_[partitionIndex].deltaUff_[k].hasNaN()) throw std::runtime_error("deltaUff is unstable.");
+				if (nominalControllersStock_[partitionIndex].k_[k].hasNaN())
+					throw std::runtime_error("Feedback gains are unstable.");
+				if (nominalControllersStock_[partitionIndex].uff_[k].hasNaN())
+					throw std::runtime_error("uff gains are unstable.");
+				if (nominalControllersStock_[partitionIndex].deltaUff_[k].hasNaN())
+					throw std::runtime_error("deltaUff is unstable.");
 			}
 			catch(const std::exception& error) {
-				std::cerr << "what(): " << error.what() << " at time " << nominalControllersStock_[partitionIndex].time_[k] << " [sec]." << std::endl;
+				std::cerr << "what(): " << error.what() << " at time "
+						<< nominalControllersStock_[partitionIndex].time_[k] << " [sec]." << std::endl;
 				exit(0);
 			}
 		}

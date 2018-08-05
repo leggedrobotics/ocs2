@@ -16,6 +16,7 @@
 #include <Eigen/StdVector>
 #include <vector>
 #include <type_traits>
+#include <chrono>
 #include <Eigen/Dense>
 #include <unsupported/Eigen/MatrixFunctions>
 
@@ -44,7 +45,6 @@
 #include <ocs2_slq/riccati_equations/SequentialErrorEquationNormalized.h>
 #include <ocs2_slq/riccati_equations/SLQ_RiccatiEquationsNormalized.h>
 
-#include <chrono>
 
 #define BENCHMARK
 #define USE_SEPARATE_RICCATI_SOLVER
@@ -141,6 +141,12 @@ public:
 	typedef typename logic_rules_machine_t::Ptr						logic_rules_machine_ptr_t;
 
 	using INTERNAL_CONTROLLER = controller_array_t;
+
+	/**
+	 * class for collecting SLQ data
+	 */
+	template <size_t OTHER_STATE_DIM, size_t OTHER_INPUT_DIM, class OTHER_LOGIC_RULES_T>
+	friend class SLQ_DataCollector;
 
 // TODO: do not push to remote
 public:
@@ -1306,10 +1312,6 @@ private:
 	std::chrono::time_point<std::chrono::steady_clock> BENCHMARK_end_;
 	std::chrono::duration<double> BENCHMARK_diff_;
 #endif
-
-public:
-	template <size_t GSLQP_STATE_DIM, size_t GSLQP_INPUT_DIM, class GSLQP_LOGIC_RULES_T>
-	friend class GSLQ;
 
 };
 

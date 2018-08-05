@@ -24,6 +24,7 @@
 #include <ocs2_core/misc/LinearInterpolation.h>
 
 #include <ocs2_slq/SLQ_BASE.h>
+#include <ocs2_slq/SLQ_DataCollector.h>
 
 #include "ocs2_ocs2/EventTimeIndexer.h"
 #include "ocs2_ocs2/sensitivity_equations/SensitivitySequentialRiccatiEquations.h"
@@ -51,6 +52,8 @@ public:
 	typedef std::shared_ptr<GSLQ<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>> Ptr;
 
 	typedef SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> slq_t;
+
+	typedef SLQ_DataCollector<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> slq_data_collector_t;
 
 	typedef BvpSensitivityEquations<STATE_DIM, INPUT_DIM> bvp_sensitivity_equations_t;
 	typedef RolloutSensitivityEquations<STATE_DIM, INPUT_DIM> rollout_sensitivity_equations_t;
@@ -224,25 +227,9 @@ protected:
 	virtual void setupOptimizer(const size_t& numPartitions);
 
 	/**
-	 * Collects the required data from SLQ instance. It uses swap method wherever it is possible.
-	 *
-	 * @param [in] slqPtr: A pointer to the SLQ instance
-	 */
-	void collectSlqData(slq_t* slqPtr);
-
-	/**
 	 * Computes the required data which are not computed in the SLQ.
 	 */
 	void computeMissingSlqData();
-
-	/**
-	 * Calculates the time derivatives of the nominal state trajectory.
-	 *
-	 * @param [out] nominalFlowMapTrajectoriesStock: An array of the time
-	 * derivatives of the nominal state trajectory.
-	 */
-	void calculateFlowMap(
-			state_vector_array2_t& nominalFlowMapTrajectoriesStock);
 
 	/**
 	 * Computes the costate over the given rollout.
@@ -505,18 +492,9 @@ protected:
 			scalar_t& costDerivative) const;
 
 private:
-	slq_t* slqPtr_;
-	SLQ_Settings* settingsPtr_;
-	logic_rules_machine_ptr_t logicRulesMachinePtr_;
-
-	scalar_t initTime_;
-	scalar_t finalTime_;
-	state_vector_t initState_;
-
-	size_t initActivePartition_;
-	size_t finalActivePartition_;
-	size_t numPartitions_;
-	scalar_array_t partitioningTimes_;
+	const slq_t* slqPtr_;
+	const SLQ_Settings* settingsPtr_;
+	logic_rules_machine_t* logicRulesMachinePtr_;
 
 	size_t numSubsystems_;
 	size_t numEventTimes_;
@@ -524,7 +502,17 @@ private:
 	size_t activeEventTimeBeginIndex_;
 	size_t activeEventTimeEndIndex_;
 
-	typename slq_t::controlled_system_base_t::Ptr systemDynamicsPtr_;
+	/******************
+	 * SLQ data collector
+	 ******************/
+	std::shared_ptr<slq_data_collector_t> dcPtr_;
+
+	/******************
+	 * SLQ missing variables
+	 ******************/
+	state_vector_array2_t       nominalCostateTrajectoriesStock_;
+	constraint1_vector_array2_t nominalLagrangianTrajectoriesStock_;
+
 	std::vector<std::shared_ptr<bvp_sensitivity_equations_t>> bvpSensitivityEquationsPtrStock_;
 	std::vector<std::shared_ptr<IntegratorBase<STATE_DIM>>>   bvpSensitivityIntegratorsPtrStock_;
 	std::vector<std::shared_ptr<rollout_sensitivity_equations_t>> rolloutSensitivityEquationsPtrStock_;
@@ -553,80 +541,6 @@ private:
 
 	dynamic_vector_t nominalCostFuntionDerivative_;
 
-
-	/******************
-	 * SLQ missing variables
-	 ******************/
-	state_vector_array2_t 		nominalFlowMapTrajectoriesStock_;
-	state_vector_array2_t  		nominalCostateTrajectoriesStock_;
-	constraint1_vector_array2_t nominalLagrangianTrajectoriesStock_;
-
-	/******************
-	 * SLQ variables image
-	 ******************/
-	controller_array_t nominalControllersStock_;
-
-	std::vector<scalar_array_t> optimizedTimeTrajectoriesStock_;
-	std::vector<size_array_t> 	optimizedEventsPastTheEndIndecesStock_;
-	state_vector_array2_t		optimizedStateTrajectoriesStock_;
-	input_vector_array2_t  		optimizedInputTrajectoriesStock_;
-
-	std::vector<scalar_array_t> nominalTimeTrajectoriesStock_;
-	std::vector<size_array_t> 	nominalEventsPastTheEndIndecesStock_;
-	state_vector_array2_t		nominalStateTrajectoriesStock_;
-	input_vector_array2_t  		nominalInputTrajectoriesStock_;
-
-	state_matrix_array2_t 		AmTrajectoriesStock_;
-	state_input_matrix_array2_t BmTrajectoriesStock_;
-
-	std::vector<size_array_t>         nc1TrajectoriesStock_;  	// nc1: Number of the Type-1  active constraints
-	constraint1_vector_array2_t       EvTrajectoriesStock_;
-	constraint1_state_matrix_array2_t CmTrajectoriesStock_;
-	constraint1_input_matrix_array2_t DmTrajectoriesStock_;
-
-	std::vector<size_array_t> 			nc2TrajectoriesStock_;  // nc2: Number of the Type-2 active constraints
-	constraint2_vector_array2_t 		HvTrajectoriesStock_;
-	constraint2_state_matrix_array2_t 	FmTrajectoriesStock_;
-	std::vector<size_array_t>			nc2FinalStock_;
-	constraint2_vector_array2_t			HvFinalStock_;
-	constraint2_state_matrix_array2_t 	FmFinalStock_;
-
-	eigen_scalar_array2_t		qFinalStock_;
-	state_vector_array2_t		QvFinalStock_;
-	state_matrix_array2_t		QmFinalStock_;
-
-	eigen_scalar_array2_t 		qTrajectoriesStock_;
-	state_vector_array2_t 		QvTrajectoriesStock_;
-	state_matrix_array2_t 		QmTrajectoriesStock_;
-	input_vector_array2_t		RvTrajectoriesStock_;
-	input_matrix_array2_t		RmTrajectoriesStock_;
-	input_state_matrix_array2_t	PmTrajectoriesStock_;
-
-	input_matrix_array2_t RmInverseTrajectoriesStock_;
-	state_matrix_array2_t AmConstrainedTrajectoriesStock_;
-	state_matrix_array2_t QmConstrainedTrajectoriesStock_;
-	state_vector_array2_t QvConstrainedTrajectoriesStock_;
-	input_matrix_array2_t RmConstrainedTrajectoriesStock_;
-	control_constraint1_matrix_array2_t DmDagerTrajectoriesStock_;
-	input_vector_array2_t   	EvProjectedTrajectoriesStock_;  // DmDager * Ev
-	input_state_matrix_array2_t CmProjectedTrajectoriesStock_;  // DmDager * Cm
-	input_matrix_array2_t   	DmProjectedTrajectoriesStock_;  // DmDager * Dm
-	state_input_matrix_array2_t BmConstrainedTrajectoriesStock_;
-	input_state_matrix_array2_t PmConstrainedTrajectoriesStock_;
-	input_vector_array2_t 		RvConstrainedTrajectoriesStock_;
-
-	// terminal cost which is interpreted as the Heuristic function
-	eigen_scalar_t sHeuristics_;
-	state_vector_t SvHeuristics_;
-	state_matrix_t SmHeuristics_;
-
-	std::vector<scalar_array_t>	SsTimeTrajectoriesStock_;
-	std::vector<scalar_array_t> SsNormalizedTimeTrajectoriesStock_;
-	std::vector<size_array_t> 	SsNormalizedEventsPastTheEndIndecesStock_;
-	state_matrix_array2_t       SmTrajectoriesStock_;
-	state_vector_array2_t       SvTrajectoriesStock_;
-	state_vector_array2_t       SveTrajectoriesStock_;
-	eigen_scalar_array2_t 		sTrajectoriesStock_;
 
 	// calculateBVPSensitivityControllerForward & calculateLQSensitivityControllerForward
 	std::vector<EigenLinearInterpolation<state_input_matrix_t>> BmFuncStock_;

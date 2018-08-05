@@ -14,9 +14,9 @@ template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
 void LogicRulesMachine<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::setLogicRules(const LOGIC_RULES_T& logicRules) {
 
 	logicRulesUpdated();
-	logicRulesModifiedOffline_ = true;
+	newLogicRulesInBuffer_ = true;
 
-	logicRules_ = logicRules;
+	logicRulesBuffer_ = logicRules;
 }
 
 /******************************************************************************************************/
@@ -34,13 +34,16 @@ void LogicRulesMachine<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::logicRulesUpdated()
 template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
 LOGIC_RULES_T& LogicRulesMachine<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::getLogicRules() {
 
-	return logicRulesInUse_;
+	return logicRules_;
 }
 
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
 const LOGIC_RULES_T& LogicRulesMachine<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::getLogicRules() const {
 
-	return logicRulesInUse_;
+	return logicRules_;
 }
 
 /******************************************************************************************************/
@@ -49,13 +52,16 @@ const LOGIC_RULES_T& LogicRulesMachine<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::get
 template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
 LOGIC_RULES_T* LogicRulesMachine<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::getLogicRulesPtr() {
 
-	return &logicRulesInUse_;
+	return &logicRules_;
 }
 
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
 const LOGIC_RULES_T* LogicRulesMachine<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::getLogicRulesPtr() const {
 
-	return &logicRulesInUse_;
+	return &logicRules_;
 }
 
 /******************************************************************************************************/
@@ -87,7 +93,6 @@ const typename LogicRulesMachine<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::scalar_ar
 
 	return switchingTimesStock_[index];
 }
-
 
 /******************************************************************************************************/
 /******************************************************************************************************/
@@ -160,9 +165,9 @@ void LogicRulesMachine<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::updateLogicRules(
 		controller_array_t& controllerStock) {
 
 	// if logic rules is modified update the logic
-	if (logicRulesModifiedOffline_ == true) {
-		logicRulesInUse_ = std::move(logicRules_);
-		logicRulesModifiedOffline_ = false;
+	if (newLogicRulesInBuffer_ == true) {
+		logicRules_ = std::move(logicRulesBuffer_);
+		newLogicRulesInBuffer_ = false;
 	}
 
 	// if partitioningTimes is updated

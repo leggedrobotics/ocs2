@@ -156,7 +156,7 @@ public:
 	/**
 	 * Retrieves the sequence of the triggered subsystems.
 	 *
-	 * @return A const reference to subsystemsSequence_.
+	 * @return A constant reference to subsystemsSequence_.
 	 */
 	const size_array_t& subsystemsSequence() const {
 
@@ -166,7 +166,7 @@ public:
 	/**
 	 * Retrieves the sequence of the triggered subsystems.
 	 *
-	 * @return A const reference to subsystemsSequence_.
+	 * @return A constant reference to subsystemsSequence_.
 	 */
 	size_array_t& subsystemsSequence() {
 
@@ -176,12 +176,12 @@ public:
 	/**
 	 * Used in the SLQ-MPC method to set the model sequence template.
 	 *
-	 * @param [in] modeSequenceTemplate: A dada type which includes all necessary information for modifying the logicRules.
+	 * @param [in] modeSequenceTemplate: A data type which includes all necessary information for modifying the logicRules.
 	 */
 	virtual void setModeSequenceTemplate(const logic_template_type& modeSequenceTemplate) = 0;
 
 	/**
-	 * Used in the SLQ-MPC method to inset a new user defined logic in the given time period.
+	 * Used in the SLQ-MPC method to insert a new user defined logic in the given time period.
 	 * Note: use the update method to at the end to update your derived class variables
 	 *
 	 * @param [in] startTime: The initial time from which the new logicRules template should be augmented.
@@ -203,7 +203,7 @@ public:
 			const scalar_t& upperBoundTime) = 0;
 
 	/**
-	 * Adjusts controller. This methos is called my the logicMachine whenever the logicRuls are updated.
+	 * Adjusts controller. This method is called my the logicMachine whenever the logicRuls are updated.
 	 * It allows the user to modify the controller to adapt to the changes of logics.
 	 *
 	 * @param controller: Control policy which should be adjusted.

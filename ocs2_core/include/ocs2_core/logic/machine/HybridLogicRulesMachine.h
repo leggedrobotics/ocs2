@@ -91,14 +91,14 @@ public:
 			const size_t& initSubsystemID);
 
 	/**
-	 * This method should be called for each partiton once, before calling push_back method
+	 * This method should be called for each partition once, before calling push_back method
 	 *
 	 * @param [in] partitionIndex: The current active time partition.
 	 */
 	void initLogicMachine(const size_t& partitionIndex);
 
 	/**
-	 *  Adds a new event at the end of the current logic ruls.
+	 *  Adds a new event at the end of the current logic rules.
 	 *
 	 * @param [in] partitionIndex: The current active time partition.
 	 * @param [in] eventTime: The time of the new event.

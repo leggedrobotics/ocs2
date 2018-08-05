@@ -10,6 +10,7 @@
 
 #include <utility>
 #include <memory>
+#include <atomic>
 #include <iostream>
 #include <string>
 #include <functional>
@@ -23,7 +24,9 @@
 namespace ocs2{
 
 /**
- * The logic rules machine class
+ * The logic rules machine class.
+ * Note that if logic rules are modified through get methods (e.g. getLogicRules),
+ * user should call logicRulesUpdated(); otherwise the changes may not become effective.
  *
  * @tparam STATE_DIM: Dimension of the state space.
  * @tparam INPUT_DIM: Dimension of the control input space.
@@ -50,13 +53,13 @@ public:
 	 * Default constructor.
 	 */
 	LogicRulesMachine()
-	: logicRulesModified_(false),
-	  logicRulesModifiedOffline_(false),
-	  numPartitions_(1),
-	  partitioningTimes_{-10000,10000},
-	  eventTimesStock_(1,scalar_array_t(0)),
-	  switchingTimesStock_(1,partitioningTimes_),
-	  eventCountersStock_(1,size_array_t{0})
+	: logicRulesModified_(false)
+	, newLogicRulesInBuffer_(false)
+	, numPartitions_(1)
+	, partitioningTimes_{-10000,10000}
+	, eventTimesStock_(1,scalar_array_t(0))
+	, switchingTimesStock_(1,partitioningTimes_)
+	, eventCountersStock_(1,size_array_t{0})
 	{}
 
 	/**
@@ -65,15 +68,15 @@ public:
 	 * @param logicRules: The logic rules class.
 	 */
 	LogicRulesMachine(const LOGIC_RULES_T& logicRules)
-	: logicRules_(logicRules),
-	  logicRulesInUse_(logicRules),
-	  logicRulesModified_(false),
-	  logicRulesModifiedOffline_(false),
-	  numPartitions_(1),
-	  partitioningTimes_{-10000,10000},
-	  eventTimesStock_(1,scalar_array_t(0)),
-	  switchingTimesStock_(1,partitioningTimes_),
-	  eventCountersStock_(1,size_array_t{0})
+	: logicRules_(logicRules)
+	, logicRulesBuffer_(logicRules)
+	, logicRulesModified_(false)
+	, newLogicRulesInBuffer_(false)
+	, numPartitions_(1)
+	, partitioningTimes_{-10000,10000}
+	, eventTimesStock_(1,scalar_array_t(0))
+	, switchingTimesStock_(1,partitioningTimes_)
+	, eventCountersStock_(1,size_array_t{0})
 	{}
 
 	/**
@@ -228,9 +231,9 @@ public:
 
 protected:
 	LOGIC_RULES_T logicRules_;
-	LOGIC_RULES_T logicRulesInUse_;
-	bool logicRulesModified_;
-	bool logicRulesModifiedOffline_;
+	LOGIC_RULES_T logicRulesBuffer_;
+	std::atomic<bool> logicRulesModified_;
+	std::atomic<bool> newLogicRulesInBuffer_;
 
 	size_t numPartitions_;
 	scalar_array_t partitioningTimes_;

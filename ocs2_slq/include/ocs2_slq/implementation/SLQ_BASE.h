@@ -207,7 +207,7 @@ SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::~SLQ_BASE()  {
 
 #ifdef BENCHMARK
 	auto BENCHMARK_total = BENCHMARK_tAvgFP_ + BENCHMARK_tAvgBP_ + BENCHMARK_tAvgLQ_;
-	if (BENCHMARK_total>0) {
+	if (BENCHMARK_total>0 && (settings_.displayInfo_  || settings_.displayShortSummary_)) {
 		std::cerr << std::endl << "#####################################################" << std::endl;
 		std::cerr << "Benchmarking over " << BENCHMARK_nIterationsBP_ << " samples." << std::endl;
 		std::cerr << "Average time for Forward Pass:      " << BENCHMARK_tAvgFP_ << " [ms] \t(" <<

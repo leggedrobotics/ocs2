@@ -1,0 +1,16 @@
+/*!
+\mainpage Overview
+
+\section ocs2_comm_interfaces_home OCS2 communication interfaces
+This module include type definitions, ODE integrator, base class for dynamics, constraints, and their derivatives.
+It also contains an efficient linear interpolation class and LTI system class.
+
+\section ocs2_mpc_documentation_section OCS2 Documentation
+This library consists of four main modules
+ - <a href="../../../ocs2_core/doc/html/index.html">ocs2_core</a>
+ - <a href="../../../ocs2_slq/doc/html/index.html">ocs2_slq</a>
+ - <a href="../../../ocs2_ocs2/doc/html/index.html">ocs2_ocs2</a>
+ - <a href="../../../ocs2_frank_wolfe/doc/html/index.html">ocs2_frank_wolfe</a>
+
+<a href="../../../ocs2_doc/doc/html/index.html">Back to Home Page</a>
+*/

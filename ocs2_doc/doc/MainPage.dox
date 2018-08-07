@@ -9,6 +9,7 @@ This library consists of four main modules
  - <a href="../../../ocs2_slq/doc/html/index.html">ocs2_slq</a>
  - <a href="../../../ocs2_ocs2/doc/html/index.html">ocs2_ocs2</a>
  - <a href="../../../ocs2_frank_wolfe/doc/html/index.html">ocs2_frank_wolfe</a>
+ - <a href="../../../ocs2_mpc/doc/html/index.html">ocs2_mpc</a>
 
 \section ocs2_doc_link_section OCS2 Modules
 
@@ -24,6 +25,9 @@ This module implements the continuous-time unconstrained OCS2 algorithm for swit
 
 \subsection ocs2_doc_ocs2_frank_wolfe Frank Wolfe Module:
 This module implemets the Frank-Wolfe algorithm \cite jaggi13 which is an iterative first-order gradient descent algorithm.
+
+\subsection ocs2_doc_ocs2_mpc MPC Module:
+This module implemets the real-time MPC algorithm.
 
 \section ocs2_doc_source_code Source Code
 The source code is available at <a href="https://bitbucket.org/adrlab/ocs2">https://bitbucket.org/adrlab/ocs2</a>

@@ -12,9 +12,9 @@ find_package(Boost REQUIRED COMPONENTS
 )
 
 ## Eign3
-set( EIGEN_INCLUDE_DIRS "$ENV{LOCAL_EIGEN3_INCLUDE_DIR}" )
-if( NOT EIGEN_INCLUDE_DIRS )
-    find_package(Eigen REQUIRED)
+set( EIGEN3_INCLUDE_DIRS "$ENV{LOCAL_EIGEN3_INCLUDE_DIR}" )
+if( NOT EIGEN3_INCLUDE_DIRS )
+    find_package(Eigen3 REQUIRED)
     message( WARNING "Uses Globally installed Eigen since LOCAL_EIGEN3_INCLUDE_DIR is not defined!")
 endif()
 
@@ -23,6 +23,7 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread -fopenmp -std=c++11 -Wfatal-err
 ###################################
 ## catkin specific configuration ##
 ###################################
+
 catkin_package(
   INCLUDE_DIRS 
     include
@@ -31,7 +32,7 @@ catkin_package(
     ocs2_core
   DEPENDS 
     boost 
-    eigen
+    eigen3
 )
 
 ###########
@@ -41,7 +42,7 @@ catkin_package(
 include_directories(
   include
   test/include
-  ${EIGEN_INCLUDE_DIRS}
+  ${EIGEN3_INCLUDE_DIRS}
   ${Boost_INCLUDE_DIRS}
   ${catkin_INCLUDE_DIRS}
 )
@@ -49,6 +50,7 @@ include_directories(
 #############
 ## Doxygen ##
 #############
+
 find_package(Doxygen)
 if(DOXYGEN_FOUND)
 

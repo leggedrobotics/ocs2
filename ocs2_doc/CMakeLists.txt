@@ -4,9 +4,21 @@ project (ocs2_doc)
 
 find_package(catkin REQUIRED)
 
+###################################
+## catkin specific configuration ##
+###################################
+
 catkin_package(
-    CATKIN_DEPENDS ocs2_core ocs2_frank_wolfe ocs2_slq ocs2_ocs2
+  CATKIN_DEPENDS 
+    ocs2_core 
+    ocs2_frank_wolfe 
+    ocs2_slq 
+    ocs2_ocs2
 )
+
+#############
+## Doxygen ##
+#############
 
 find_package(Doxygen)
 if(DOXYGEN_FOUND)

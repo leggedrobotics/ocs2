@@ -14,7 +14,6 @@
 #include <ocs2_slq/SLQ_MP.h>
 #include <ocs2_slq/test/EXP0.h>
 
-#include <ocs2_ocs2/GSLQ.h>
 #include "ocs2_ocs2/OCS2Projected.h"
 
 using namespace ocs2;

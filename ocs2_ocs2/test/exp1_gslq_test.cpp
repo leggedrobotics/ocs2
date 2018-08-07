@@ -14,7 +14,7 @@
 #include <ocs2_slq/SLQ_MP.h>
 #include <ocs2_slq/test/EXP1.h>
 
-#include <ocs2_ocs2/GSLQ.h>
+#include <ocs2_ocs2/GSLQ_BASE.h>
 
 using namespace ocs2;
 
@@ -51,9 +51,9 @@ TEST(exp1_gslq_test, optimum_gradient_test)
 	SLQ_Settings slqSettings;
 	slqSettings.displayInfo_ = false;
 	slqSettings.displayShortSummary_ = false;
-	slqSettings.absTolODE_ = 1e-10;
-	slqSettings.relTolODE_ = 1e-7;
-	slqSettings.maxNumStepsPerSecond_ = 10000;
+	slqSettings.absTolODE_ = 1e-12;
+	slqSettings.relTolODE_ = 1e-9;
+	slqSettings.maxNumStepsPerSecond_ = 50000;
 	slqSettings.nThreads_ = 3;
 	slqSettings.maxNumIterationsSLQ_ = 30;
 	slqSettings.lsStepsizeGreedy_ = true;
@@ -61,7 +61,7 @@ TEST(exp1_gslq_test, optimum_gradient_test)
 	slqSettings.useLQForDerivatives_ = false;
 	slqSettings.minRelCostGSLQP_ = 1e-3;
 
-	// switching times
+	// event times
 	std::vector<double> optimumEventTimes {0.2262, 1.0176};
 	EXP1_LogicRules logicRules(optimumEventTimes);
 
@@ -71,8 +71,8 @@ TEST(exp1_gslq_test, optimum_gradient_test)
 	// partitioning times
 	std::vector<double> partitioningTimes;
 	partitioningTimes.push_back(startTime);
-	partitioningTimes.push_back(optimumEventTimes[0]);
-	partitioningTimes.push_back(optimumEventTimes[1]);
+	partitioningTimes.push_back(1.0);
+	partitioningTimes.push_back(2.0);
 	partitioningTimes.push_back(finalTime);
 
 	Eigen::Vector2d initState(2.0, 3.0);
@@ -85,23 +85,30 @@ TEST(exp1_gslq_test, optimum_gradient_test)
 			&systemDynamics, &systemDerivative,
 			&systemConstraint, &systemCostFunction,
 			&operatingTrajectories, slqSettings, &logicRules);
+	// SLQ data collector
+	SLQ_DataCollector<STATE_DIM, INPUT_DIM, EXP1_LogicRules> slqDataCollector;
 	// GSLQ
-	GSLQ<STATE_DIM, INPUT_DIM, EXP1_LogicRules> gslq(slq);
+	GSLQ_BASE<STATE_DIM, INPUT_DIM, EXP1_LogicRules> gslq(slqSettings);
 
 	// run GSLQ using LQ
 	slq.settings().useLQForDerivatives_ = true;
+	gslq.settings().useLQForDerivatives_ = true;
 	slq.run(startTime, initState, finalTime, partitioningTimes);
-	gslq.run();
+	slqDataCollector.collect(&slq);
+	gslq.run(optimumEventTimes, &slqDataCollector);
 	// cost derivative
-	Eigen::Matrix<double,2,1> costFunctionDerivative_LQ;
+	Eigen::Matrix<double,1,1> costFunctionDerivative_LQ;
 	gslq.getCostFuntionDerivative(costFunctionDerivative_LQ);
 
 	// run GSLQ using BVP
 	slq.settings().useLQForDerivatives_ = false;
+	gslq.settings().useLQForDerivatives_ = false;
+	slq.reset();
 	slq.run(startTime, initState, finalTime, partitioningTimes);
-	gslq.run();
+	slqDataCollector.collect(&slq);
+	gslq.run(optimumEventTimes, &slqDataCollector);
 	// cost derivative
-	Eigen::Matrix<double,2,1> costFunctionDerivative_BVP;
+	Eigen::Matrix<double,1,1> costFunctionDerivative_BVP;
 	gslq.getCostFuntionDerivative(costFunctionDerivative_BVP);
 
 	// cost
@@ -111,27 +118,27 @@ TEST(exp1_gslq_test, optimum_gradient_test)
 	/******************************************************************************************************/
 	/******************************************************************************************************/
 	/******************************************************************************************************/
-	std::cout << "### Optimum event times are: [" << optimumEventTimes[0] << ", ";
+	std::cerr << "### Optimum event times are: [" << optimumEventTimes[0] << ", ";
 	for (size_t i=1; i<optimumEventTimes.size()-1; i++)
-		std::cout << optimumEventTimes[i] << ", ";
-	std::cout << optimumEventTimes.back() << "]\n";
+		std::cerr << optimumEventTimes[i] << ", ";
+	std::cerr << optimumEventTimes.back() << "]\n";
 
-	std::cout << "### Optimum cost is: " << costFunction << "\n";
+	std::cerr << "### Optimum cost is: " << costFunction << "\n";
 
-	std::cout << "### Optimum cost derivative LQ method:  [" << costFunctionDerivative_LQ(0) << ", ";
+	std::cerr << "### Optimum cost derivative LQ method:  [" << costFunctionDerivative_LQ(0) << ", ";
 	for (size_t i=1; i<costFunctionDerivative_LQ.size()-1; i++)
-		std::cout << costFunctionDerivative_LQ(i) << ", ";
-	std::cout << costFunctionDerivative_LQ.tail<1>()(0) << "]\n";
+		std::cerr << costFunctionDerivative_LQ(i) << ", ";
+	std::cerr << costFunctionDerivative_LQ.tail<1>()(0) << "]\n";
 
-	std::cout << "### Optimum cost derivative BVP method: [" << costFunctionDerivative_BVP(0) << ", ";
+	std::cerr << "### Optimum cost derivative BVP method: [" << costFunctionDerivative_BVP(0) << ", ";
 	for (size_t i=1; i<costFunctionDerivative_BVP.size()-1; i++)
-		std::cout << costFunctionDerivative_BVP(i) << ", ";
-	std::cout << costFunctionDerivative_BVP.tail<1>()(0) << "]\n";
+		std::cerr << costFunctionDerivative_BVP(i) << ", ";
+	std::cerr << costFunctionDerivative_BVP.tail<1>()(0) << "]\n";
 
-	ASSERT_LT(costFunctionDerivative_LQ.norm()/fabs(costFunction), 10*slqSettings.minRelCostGSLQP_) <<
+	ASSERT_LT(costFunctionDerivative_LQ.norm()/fabs(costFunction), 50*slqSettings.minRelCostGSLQP_ /*0.05*/) <<
 			"MESSAGE: GSLQ failed in the EXP1's cost derivative LQ test!";
 
-	ASSERT_LT(costFunctionDerivative_BVP.norm()/fabs(costFunction), 10*slqSettings.minRelCostGSLQP_) <<
+	ASSERT_LT(costFunctionDerivative_BVP.norm()/fabs(costFunction), 50*slqSettings.minRelCostGSLQP_ /*0.05*/) <<
 			"MESSAGE: GSLQ failed in the EXP1's cost derivative BVP test!";
 }
 

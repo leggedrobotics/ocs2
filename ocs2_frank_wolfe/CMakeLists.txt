@@ -80,10 +80,10 @@ target_link_libraries(matyas_test
   glpk
 )
 
-catkin_add_gtest(glpk_test 
-  test/testGLPK.cpp
-)
-target_link_libraries(glpk_test
-  ${catkin_LIBRARIES}
-  glpk
-)
+#catkin_add_gtest(glpk_test 
+#  test/testGLPK.cpp
+#)
+#target_link_libraries(glpk_test
+#  ${catkin_LIBRARIES}
+#  glpk
+#)

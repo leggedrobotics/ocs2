@@ -30,6 +30,8 @@ public:
 
 	typedef SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> slq_t;
 
+	typedef std::shared_ptr<SLQ_DataCollector<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>> Ptr;
+
 	typedef typename slq_t::controller_array_t controller_array_t;
 	typedef typename slq_t::size_array_t   size_array_t;
 	typedef typename slq_t::scalar_t       scalar_t;
@@ -78,9 +80,8 @@ public:
 	 * Collects the required data from SLQ instance. It uses swap method wherever it is possible.
 	 *
 	 * @param constSlqPtr: A pointer to the SLQ instance.
-	 * @return True if number of partitions is changed.
 	 */
-	bool collect(const slq_t* constSlqPtr);
+	void collect(const slq_t* constSlqPtr);
 
 	/******************
 	 * SLQ variables image
@@ -189,7 +190,6 @@ protected:
 			const state_vector_array2_t& stateTrajectoriesStock,
 			const input_vector_array2_t& inputTrajectoriesStock,
 			state_vector_array2_t& flowMapTrajectoriesStock);
-
 };
 
 } // namespace ocs2

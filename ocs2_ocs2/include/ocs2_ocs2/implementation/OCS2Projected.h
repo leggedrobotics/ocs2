@@ -21,11 +21,7 @@ OCS2Projected<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::OCS2Projected(
 		const LOGIC_RULES_T* logicRulesPtr /*= nullptr*/,
 		const cost_function_base_t* heuristicsFunctionPtr /*= nullptr*/)
 
-	: numSubsystems_(0)
-//	, subsystemDynamicsPtr_(subsystemDynamicsPtr)
-//	, subsystemDerivativesPtr_(subsystemDerivativesPtr)
-//	, subsystemCostFunctionsPtr_(subsystemCostFunctionsPtr)
-	, slqSettings_(slqSettings)
+	: slqSettings_(slqSettings)
 {
 
 	// NLP optimizer options
@@ -36,23 +32,27 @@ OCS2Projected<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::OCS2Projected(
 	BASE::nlpSettings().minLearningRate_  = slqSettings_.minLearningRateNLP_;
 	BASE::nlpSettings().minDisToBoundary_ = slqSettings_.minEventTimeDifference_;
 	BASE::nlpSettings().useAscendingLineSearchNLP_ = slqSettings_.useAscendingLineSearchNLP_;
-	adjustOptions();
+	BASE::adjustOptions();
 
-	// SLQ solvers
-	slqSolverPtrs_.resize(numLineSearch_+1);
-	gslqSolverPtrs_.resize(numLineSearch_+1);
+	// GSLQ
+	gslqSolverPtr_.reset(new gslq_t(slqSettings));
+
+	// SLQ data collector
+	slqDataCollectorPtr_.reset(new slq_data_collector_t());
+
+	slqSolverPtrs_.resize(BASE::numLineSearch()+1);
 	for (size_t i=0; i<slqSolverPtrs_.size(); i++) {
+
+		// SLQ solvers
 		if (slqSettings_.useMultiThreading_==true) {
-			slqSolverPtrs_[i] = slq_base_ptr_t(
+			slqSolverPtrs_[i].reset(
 					new slq_mp_t(systemDynamicsPtr, systemDerivativesPtr, systemConstraintsPtr, costFunctionPtr,
 							operatingTrajectoriesPtr, slqSettings, logicRulesPtr, heuristicsFunctionPtr) );
 		} else {
-			slqSolverPtrs_[i] = slq_base_ptr_t(
+			slqSolverPtrs_[i].reset(
 					new slq_t(systemDynamicsPtr, systemDerivativesPtr, systemConstraintsPtr, costFunctionPtr,
 							operatingTrajectoriesPtr, slqSettings, logicRulesPtr, heuristicsFunctionPtr) );
 		}
-
-		gslqSolverPtrs_[i] = gslq_ptr_t(new gslq_t(*slqSolverPtrs_[i]));
 
 	}  // end of i loop
 }
@@ -101,26 +101,6 @@ void OCS2Projected<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::getController(
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void OCS2Projected<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::getControllerPtr(
-		std::shared_ptr<controller_array_t>& controllersStock) const  {
-
-	controllersStock = std::make_shared<controller_array_t>(optimizedControllersStock_);
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-const typename OCS2Projected<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::controller_t&
-	OCS2Projected<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::controller(size_t index) const  {
-
-	return optimizedControllersStock_[index];
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
 void OCS2Projected<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::getNominalTrajectories(
 		std::vector<scalar_array_t>& optimizedTimeTrajectoriesStock,
 		state_vector_array2_t& optimizedStateTrajectoriesStock,
@@ -135,23 +115,33 @@ void OCS2Projected<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::getNominalTrajectories(
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-SLQ_Settings& OCS2Projected<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::slqSettings() {
+void OCS2Projected<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::getSLQIterationsLog(
+		eigen_scalar_array_t& slqIterationCost,
+		eigen_scalar_array_t& slqIterationISE1,
+		eigen_scalar_array_t& slqIterationISE2) const {
 
-	return slqSettings_;
+	slqIterationCost = slqIterationCost_;
+	slqIterationISE1 = slqIterationISE1_;
+	slqIterationISE2 = slqIterationISE2_;
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void OCS2Projected<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::getNominalTrajectoriesPtr(
-		std::shared_ptr<std::vector<scalar_array_t>>& optimizedTimeTrajectoriesStockPtr,
-		std::shared_ptr<state_vector_array2_t>& optimizedStateTrajectoriesStockPtr,
-		std::shared_ptr<input_vector_array2_t>& optimizedInputTrajectoriesStockPtr) const {
+void OCS2Projected<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::getOCS2IterationsLog(
+		eigen_scalar_array_t& iterationCost) const {
 
-	optimizedTimeTrajectoriesStockPtr  = std::make_shared<std::vector<scalar_array_t>>(optimizedTimeTrajectoriesStock_);
-	optimizedStateTrajectoriesStockPtr = std::make_shared<state_vector_array2_t>(optimizedStateTrajectoriesStock_);
-	optimizedInputTrajectoriesStockPtr = std::make_shared<input_vector_array2_t>(optimizedInputTrajectoriesStock_);
+	iterationCost = iterationCost_;
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
+SLQ_Settings& OCS2Projected<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::slqSettings() {
+
+	return slqSettings_;
 }
 
 /******************************************************************************************************/
@@ -171,9 +161,8 @@ size_t OCS2Projected<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::findNearestController
 
 	// min index
 	auto it = std::min_element(distance.begin(), distance.end());
-	size_t index = std::distance(distance.begin(), it);
 
-	return index;
+	return it - distance.begin();
 }
 
 /******************************************************************************************************/
@@ -195,8 +184,8 @@ void OCS2Projected<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculateLinearEquality
 	}
 
 	Bv = dynamic_vector_t::Zero(BASE::numParameters()+1);
-	Bv(0) = initEventTimes_.front();
-	Bv(BASE::numParameters()) = -initEventTimes_.back();
+	Bv(0) = initTime_;
+	Bv(BASE::numParameters()) = -finalTime_;
 }
 
 /******************************************************************************************************/
@@ -208,8 +197,16 @@ bool OCS2Projected<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculateGradient(
 		const dynamic_vector_t& parameters,
 		dynamic_vector_t& gradient) {
 
-	gslqSolverPtrs_[id]->run();
-	gslqSolverPtrs_[id]->getCostFuntionDerivative(costFuntionDerivative_);
+	// collect the SLQ data
+	slqDataCollectorPtr_->collect(slqSolverPtrs_[id].get());
+
+	// run GSLQ
+	gslqSolverPtr_->run(
+			scalar_array_t(parameters.data(), parameters.data()+parameters.size()),
+			slqDataCollectorPtr_.get());
+
+	// get gradient
+	gslqSolverPtr_->getCostFuntionDerivative(costFuntionDerivative_);
 	gradient = costFuntionDerivative_;
 
 	return true;
@@ -233,8 +230,11 @@ bool OCS2Projected<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculateCost(
 	LOGIC_RULES_T logicRules(eventTimes);
 	slqSolverPtrs_[id]->setLogicRules(logicRules);
 
-	// initial controller
-	if (slqSettings_.warmStartGSLQ_==true && parameterBag_.size()>0) {
+	// cold or warm start
+	bool warmStart = slqSettings_.warmStartGSLQ_==true && parameterBag_.size()>0;
+
+	// run SLQ using warm start
+	if (warmStart == true) {
 
 		// find most similar controller based on the parameter
 		size_t warmStartIndex = findNearestController(parameters);
@@ -247,10 +247,14 @@ bool OCS2Projected<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculateCost(
 		catch (const std::exception& e) {
 
 			std::cerr << "\t     exception: " << e.what();
-			return false;
+//			return false;
+			std::cerr << "\t     repeat SLQ with cold start." << std::endl;
+			warmStart = false;
 		}
+	}
 
-	} else {
+	// run SLQ using cold start
+	if (warmStart == false) {
 
 		// run SLQ
 		try {
@@ -263,10 +267,9 @@ bool OCS2Projected<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculateCost(
 		}
 	}
 
-
-	scalar_t unconstraintCost, constraintISE1, constraintISE2;
-	slqSolverPtrs_[id]->getPerformanceIndeces(unconstraintCost, constraintISE1, constraintISE2);
-	cost = unconstraintCost;
+	// get the cost and constraints ISE
+	scalar_t constraintISE1, constraintISE2;
+	slqSolverPtrs_[id]->getPerformanceIndeces(cost, constraintISE1, constraintISE2);
 
 	// display
 	if (BASE::nlpSettings().displayGradientDescent_) {
@@ -278,7 +281,7 @@ bool OCS2Projected<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculateCost(
 	// saving solution in the bag
 	saveToBag(id, parameters);
 
-	// status is false if the constraintISE is higher than minAbsConstraint1RMSE_
+	// status is false if the constraints ISE is higher than minAbsConstraint1RMSE_
 	bool status1 = (constraintISE1 <= slqSettings_.minAbsConstraint1ISE_) ? true : false;
 	bool status2 = (constraintISE2 <= slqSettings_.minAbsConstraint1ISE_) ? true : false;
 
@@ -302,246 +305,11 @@ void OCS2Projected<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::saveToBag(
 			timeTrajectoriesStockPtr, stateTrajectoriesStockPtr, inputTrajectoriesStockPtr);
 
 	// get the optimized controller
-	controller_array_t controllersStock(numPartitions_);
-	slqSolverPtrs_[id]->swapController(controllersStock);
-
-	// changing the controller structure to tracking controller
-	LinearInterpolation<state_vector_t,Eigen::aligned_allocator<state_vector_t> >   nominalStateFunc;
-	LinearInterpolation<input_vector_t,Eigen::aligned_allocator<input_vector_t> > nominalInputFunc;
-	for (size_t i=0; i<numPartitions_; i++) {
-
-		nominalStateFunc.setTimeStamp( &(timeTrajectoriesStockPtr->at(i)) );
-		nominalStateFunc.setData( &(stateTrajectoriesStockPtr->at(i)) );
-
-		nominalInputFunc.setTimeStamp( &(timeTrajectoriesStockPtr->at(i)) );
-		nominalInputFunc.setData( &(inputTrajectoriesStockPtr->at(i)) );
-
-		controllersStock[i].deltaUff_.resize(controllersStock[i].time_.size());
-		for (size_t k=0; k<controllersStock[i].time_.size(); k++) {
-
-			const scalar_t& time = controllersStock[i].time_[k];
-			state_vector_t nominalState;
-			nominalStateFunc.interpolate(time, nominalState);
-			size_t greatestLessTimeStampIndex = nominalStateFunc.getGreatestLessTimeStampIndex();
-			input_vector_t nominalInput;
-			nominalInputFunc.interpolate(time, nominalInput, greatestLessTimeStampIndex);
-
-			controllersStock[i].uff_[k] = -controllersStock[i].k_[k]*nominalState;
-			controllersStock[i].deltaUff_[k] = nominalInput;
-
-		} // end of k loop
-	}  // end of i loop
+	controller_array_t controllersStock = slqSolverPtrs_[id]->getController();
 
 	// save the parameter and controller in the Bag
 	parameterBag_.push_back(parameters);
-	controllersStockBag_.push_back(controllersStock);
-}
-
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void OCS2Projected<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculateInitialController(
-		const state_vector_t& initState,
-		const scalar_array_t& eventTimes,
-		controller_array_t& controllersStock) {
-//
-//
-//	// using GLQP for coldStart controller
-//	controller_array_t coldStartControllersStock(numPartitions_);
-//
-//	// calculate the coldStart controllers' cost
-//	std::vector<scalar_array_t> timeTrajectoriesStock(numPartitions_);
-//	state_vector_array2_t stateTrajectoriesStock(numPartitions_);
-//	input_vector_array2_t inputTrajectoriesStock(numPartitions_);
-//	scalar_t coldStartTotalCost = std::numeric_limits<scalar_t>::max();
-//	try {
-//		rollout(initTime_, initState_, finalTime_, switchingTimes, coldStartControllersStock,
-//				timeTrajectoriesStock, stateTrajectoriesStock, inputTrajectoriesStock);
-//		calculateCostFunction(timeTrajectoriesStock, stateTrajectoriesStock, inputTrajectoriesStock, coldStartTotalCost);
-//	}
-//	catch (const std::exception& e){
-//		std::cerr << "\t     Cold start failed!" << std::endl;
-//	}
-//
-//
-//	controller_array_t warmStartControllersStock(numPartitions_);
-//	scalar_t warmStartTotalCost = std::numeric_limits<scalar_t>::max();
-//	size_t warmStartIndex;
-//	if (slqSettings_.warmStartGSLQ_==true && parameterBag_.size()>0) {
-//
-//		// find most similar controller based on the parameter
-//		const dynamic_vector_t parameters = Eigen::Map<const dynamic_vector_t>(&switchingTimes[1], BASE::numParameters());
-//		warmStartIndex = findNearestController(parameters);
-//
-//		warmStartControllersStock = controllersStockBag_[warmStartIndex];
-//		// scaling the controller time to the current switchingTimes
-//		for (size_t i=0; i<numPartitions_; i++) {
-//			scalar_t scale = (switchingTimes[i+1]-switchingTimes[i]) / (warmStartControllersStock[i].time_.back()-warmStartControllersStock[i].time_.front());
-//			for (size_t k=0; k<warmStartControllersStock[i].time_.size(); k++) {
-//				warmStartControllersStock[i].time_[k] = switchingTimes[i] + scale*(warmStartControllersStock[i].time_[k]-warmStartControllersStock[i].time_.front());
-//				/*previously used by farbod to scale velocities with switching times: */
-//				warmStartControllersStock[i].uff_[k].head(12) += warmStartControllersStock[i].deltaUff_[k].head(12);
-//				warmStartControllersStock[i].uff_[k].tail(12) += warmStartControllersStock[i].deltaUff_[k].tail(12) / scale;
-//			} // end of k loop
-//		}  // end of i loop
-//
-//		// calculate the warmStart controllers' cost
-//		std::vector<scalar_array_t> timeTrajectoriesStock(numPartitions_);
-//		state_vector_array2_t stateTrajectoriesStock(numPartitions_);
-//		input_vector_array2_t inputTrajectoriesStock(numPartitions_);
-//		try {
-//			rollout(initTime_, initState_, finalTime_, switchingTimes, warmStartControllersStock,
-//					timeTrajectoriesStock, stateTrajectoriesStock, inputTrajectoriesStock);
-//			calculateCostFunction(timeTrajectoriesStock, stateTrajectoriesStock, inputTrajectoriesStock,
-//					warmStartTotalCost);
-//		} catch (const std::exception& e) {}
-//
-//	}
-//
-//	// choose which controller to use based on the cost function
-//	if (slqSettings_.warmStartGSLQ_==true && warmStartTotalCost<=coldStartTotalCost) {
-//		controllersStock.swap(warmStartControllersStock);
-//		std::cerr << "\t     Warm start!" << std::endl;
-//		if (BASE::nlpSettings().displayGradientDescent_)
-//			std::cerr << "\t     IndexFromBack: " << static_cast<int>(warmStartIndex-(parameterBag_.size()-1))
-//						<< "\t#parameters: " << parameterBag_[warmStartIndex].transpose().format(CleanFmtDisplay_) << std::endl;
-//	} else {
-//		controllersStock.swap(coldStartControllersStock);
-//		if (BASE::nlpSettings().displayGradientDescent_)  std::cerr << "\t     Cold start!" << std::endl;
-//	}
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void OCS2Projected<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::rollout(
-		const scalar_t& initTime,
-		const state_vector_t& initState,
-		const scalar_t& finalTime,
-		const scalar_array_t& switchingTimes,
-		const controller_array_t& controllersStock,
-		std::vector<scalar_array_t>& timeTrajectoriesStock,
-		state_vector_array2_t& stateTrajectoriesStock,
-		input_vector_array2_t& inputTrajectoriesStock)  {
-
-//	if (controllersStock.size() != numPartitions_)
-//		throw std::runtime_error("controllersStock has less controllers then the number of subsystems");
-//
-//	timeTrajectoriesStock.resize(numPartitions_);
-//	stateTrajectoriesStock.resize(numPartitions_);
-//	inputTrajectoriesStock.resize(numPartitions_);
-//
-//	// finding the active subsystem index at initTime
-//	size_t initActiveSubsystemIndex = slq_base_t::findActiveSubsystemIndex(switchingTimes, initTime);
-//	// finding the active subsystem index at initTime
-//	size_t finalActiveSubsystemIndex = slq_base_t::findActiveSubsystemIndex(switchingTimes, finalTime);
-//
-//	scalar_t t0 = initTime;
-//	state_vector_t x0 = initState;
-//	scalar_t tf;
-//	for (int i=0; i<numPartitions_; i++) {
-//
-//		// for subsystems before the initial time
-//		if (i<initActiveSubsystemIndex  ||  i>finalActiveSubsystemIndex) {
-//			timeTrajectoriesStock[i].clear();
-//			stateTrajectoriesStock[i].clear();
-//			inputTrajectoriesStock[i].clear();
-//			continue;
-//		}
-//
-//		timeTrajectoriesStock[i].clear();
-//		stateTrajectoriesStock[i].clear();
-//
-//		// max number of steps of integration
-//		size_t maxNumSteps = slqSettings_.maxNumStepsPerSecond_ * std::max(1.0, switchingTimes[i+1]-t0);
-//
-//		// initialize subsystem i
-//		subsystemDynamicsPtrStock_[i]->initializeModel(systemStockIndexes_, switchingTimes, x0, i, "GSLPQ");
-//
-//		// final time
-//		tf = (i != finalActiveSubsystemIndex) ? switchingTimes[i+1] : finalTime;
-//
-//		// set controller for subsystem i
-//		if (controllersStock[i].time_.empty()==false) {
-//			subsystemDynamicsPtrStock_[i]->setController(controllersStock[i]);
-//
-//		} else {
-//
-//			if (slqSettings_.dispayGSLQ_)  std::cout << "LQP controller is used at period: [" << t0 << ", " << tf << "]" << std::endl;
-//
-//			controller_t lqpPolicy = lqpControllersStock_[systemStockIndexes_[i]];
-//			scalar_t timeShift = t0-lqpPolicy.time_[0];
-//			for (size_t k=0; k<lqpPolicy.time_.size(); k++)
-//				lqpPolicy.time_[k] += timeShift;
-//
-//			subsystemDynamicsPtrStock_[i]->setController(lqpPolicy);
-//		}
-//
-//		// simulate subsystem i
-//		subsystemSimulatorsStockPtr_[i]->integrate(x0, t0, tf,
-//				stateTrajectoriesStock[i], timeTrajectoriesStock[i],
-//				1e-3, slqSettings_.AbsTolODE_, slqSettings_.RelTolODE_, maxNumSteps);
-//
-//		if (stateTrajectoriesStock[i].back() != stateTrajectoriesStock[i].back())
-//			throw std::runtime_error("System became unstable during the SLQ rollout.");
-//
-//		// compute control trajectory for subsystem i
-//		inputTrajectoriesStock[i].resize(timeTrajectoriesStock[i].size());
-//		for (int k=0; k<timeTrajectoriesStock[i].size(); k++) {
-//			subsystemDynamicsPtrStock_[i]->computeInput(timeTrajectoriesStock[i][k], stateTrajectoriesStock[i][k], inputTrajectoriesStock[i][k]);
-//		}
-//
-//		// reset the initial time and state
-//		t0 = timeTrajectoriesStock[i].back();
-//		x0 = stateTrajectoriesStock[i].back();
-//	}
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void OCS2Projected<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculateCostFunction(
-		const std::vector<scalar_array_t>& timeTrajectoriesStock,
-		const state_vector_array2_t& stateTrajectoriesStock,
-		const input_vector_array2_t& inputTrajectoriesStock,
-		scalar_t& totalCost)  {
-
-//	totalCost = 0.0;
-//	for (int i=0; i<numPartitions_; i++) {
-//
-//		// integrates the intermediate cost using the trapezoidal approximation method
-//		scalar_t currentIntermediateCost;
-//		scalar_t nextIntermediateCost;
-//		for (int k=0; k<timeTrajectoriesStock[i].size()-1; k++) {
-//
-//			if (k==0) {
-//				subsystemCostFunctionsPtrStock_[i]->setCurrentStateAndControl(timeTrajectoriesStock[i][k], stateTrajectoriesStock[i][k], inputTrajectoriesStock[i][k]);
-//				subsystemCostFunctionsPtrStock_[i]->evaluate(currentIntermediateCost);
-//			} else {
-//				currentIntermediateCost = nextIntermediateCost;
-//			}
-//
-//			// feed next state and control to cost function
-//			subsystemCostFunctionsPtrStock_[i]->setCurrentStateAndControl(timeTrajectoriesStock[i][k+1], stateTrajectoriesStock[i][k+1], inputTrajectoriesStock[i][k+1]);
-//			// evaluate intermediate cost for next time step
-//			subsystemCostFunctionsPtrStock_[i]->evaluate(nextIntermediateCost);
-//
-//			totalCost += 0.5*(currentIntermediateCost+nextIntermediateCost)*(timeTrajectoriesStock[i][k+1]-timeTrajectoriesStock[i][k]);
-//		}  // end of k loop
-//
-//		// terminal cost
-//		if (i==numSubsystems_-1)  {
-//			scalar_t finalCost;
-//			subsystemCostFunctionsPtrStock_[i]->setCurrentStateAndControl(timeTrajectoriesStock[i].back(), stateTrajectoriesStock[i].back(), inputTrajectoriesStock[i].back());
-//			subsystemCostFunctionsPtrStock_[i]->terminalCost(finalCost);
-//			totalCost += finalCost;
-//		}
-//
-//	}  // end of i loop
+	controllersStockBag_.push_back( std::move(controllersStock) );
 }
 
 /******************************************************************************************************/
@@ -577,17 +345,11 @@ void OCS2Projected<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::rewindOptimizer(
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void OCS2Projected<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::setupOptimizer() {
+void OCS2Projected<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::setupOptimizer(
+		const size_t& numPartitions) {
 
-//	subsystemDynamicsPtrStock_.resize(numPartitions_);
-//	subsystemCostFunctionsPtrStock_.resize(numPartitions_);
-//	subsystemSimulatorsStockPtr_.resize(numPartitions_);
-//
-//	for (int i=0; i<systemStockIndexes_.size(); i++) {
-//		subsystemDynamicsPtrStock_[i] = subsystemDynamicsPtr_[systemStockIndexes_[i]]->clone();
-//		subsystemCostFunctionsPtrStock_[i] = subsystemCostFunctionsPtr_[systemStockIndexes_[i]]->clone();
-//		subsystemSimulatorsStockPtr_[i] =  std::shared_ptr<ODE45<STATE_DIM>>( new ODE45<STATE_DIM>(subsystemDynamicsPtrStock_[i]) );
-//	}
+	if (numPartitions==0)
+		throw std::runtime_error("Number of partitions cannot be zero!");
 }
 
 /******************************************************************************************************/
@@ -599,33 +361,43 @@ void OCS2Projected<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::run(
 		const state_vector_t& initState,
 		const scalar_t& finalTime,
 		const scalar_array_t& partitioningTimes,
-		const scalar_array_t& initEventTimes /*= std::vector<scalar_t>()*/,
+		const scalar_array_t& initEventTimes,
 		const cost_desired_trajectories_t& costDesiredTrajectories /*= cost_desired_trajectories_t()*/) {
 
-	numSubsystems_  = initEventTimes.size()+1;
-	initEventTimes_ = initEventTimes;
-
-	setupOptimizer();
-
+	// clear the solutions bag
 	parameterBag_.clear();
 	controllersStockBag_.clear();
 
 	initTime_ = initTime;
 	initState_ = initState;
 	finalTime_ = finalTime;
-	numPartitions_ = partitioningTimes.size();
 	partitioningTimes_ = partitioningTimes;
+	initEventTimes_ = initEventTimes;
+	numSubsystems_  = initEventTimes.size()+1;
 
-	// update cost's desired trajectory if it is set
-	if (costDesiredTrajectories.empty()==false)
-		for (size_t i=0; i<slqSolverPtrs_.size(); i++)
-			slqSolverPtrs_[i]->setCostDesiredTrajectories(costDesiredTrajectories);
+	if (numPartitions_ != partitioningTimes.size()-1) {
+		numPartitions_ = partitioningTimes.size()-1;
+		setupOptimizer(numPartitions_);
+	}
 
-	for (size_t i=0; i<slqSolverPtrs_.size(); i++)
+	gslqSolverPtr_->settings() = slqSettings_;
+
+	// for each SLQ solver
+	for (size_t i=0; i<slqSolverPtrs_.size(); i++) {
+		// reset solvers
+		slqSolverPtrs_[i]->reset();
+		// set the settings (they might have been modified after construction)
 		slqSolverPtrs_[i]->settings() = slqSettings_;
+		// update cost's desired trajectory if it is set
+		if (costDesiredTrajectories.empty() == false)
+			slqSolverPtrs_[i]->setCostDesiredTrajectories(costDesiredTrajectories);
+	}
 
-	// run
-	dynamic_vector_t initParameters = Eigen::Map<dynamic_vector_t>(initEventTimes_.data(), numSubsystems_-1);
+	// from std vector to eEigen vector
+	dynamic_vector_t initParameters = Eigen::Map<dynamic_vector_t>(
+			initEventTimes_.data(), initEventTimes_.size());
+
+	// run the gradient descent algorithm
 	BASE::run(initParameters);
 
 }

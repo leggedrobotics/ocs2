@@ -50,25 +50,24 @@ TEST(exp0_ocs2_test, exp0_ocs2_test)
 	/******************************************************************************************************/
 	SLQ_Settings slqSettings;
 	slqSettings.displayInfo_ = false;
-	slqSettings.displayShortSummary_ = true;
+	slqSettings.displayShortSummary_ = false;
+	slqSettings.displayGradientDescent_ = true;
+	slqSettings.maxNumIterationsSLQ_ = 50;
+	slqSettings.minLearningRateGSLQP_ = 0.01;
 	slqSettings.absTolODE_ = 1e-10;
 	slqSettings.relTolODE_ = 1e-7;
-	slqSettings.maxNumStepsPerSecond_ = 10000;
-	slqSettings.nThreads_ = 3;
+	slqSettings.maxNumStepsPerSecond_ = 50000;
+	slqSettings.nThreads_ = 2;
+	slqSettings.useMultiThreading_ = false;  // no multi-thread
 	slqSettings.maxNumIterationsSLQ_ = 50;
-	slqSettings.maxIterationGradientDescent_ = 5;
+	slqSettings.maxIterationGradientDescent_ = 10;
 	slqSettings.warmStartGSLQ_ = false;
-	slqSettings.useLQForDerivatives_ = false;
-	slqSettings.displayGradientDescent_ = false;
-	slqSettings.useLQForDerivatives_ = false;
 	slqSettings.minLearningRateNLP_ = 0.01;
-	slqSettings.acceptableTolGradientDescent_ = 1e-3;
-	slqSettings.useAscendingLineSearchNLP_ = true;
-	slqSettings.minEventTimeDifference_ = 0.01;
+	slqSettings.useAscendingLineSearchNLP_ = false;
 
 	// switching times
-	std::vector<double> initSwitchingTimes {1.0};
-	EXP0_LogicRules logicRules(initSwitchingTimes);
+	std::vector<double> initEventTimes {1.0};
+	EXP0_LogicRules logicRules(initEventTimes);
 
 	double startTime = 0.0;
 	double finalTime = 2.0;
@@ -81,35 +80,57 @@ TEST(exp0_ocs2_test, exp0_ocs2_test)
 
 	Eigen::Vector2d initState(0.0, 2.0);
 
+	/******************************************************************************************************/
+	/******************************************************************************************************/
+	/******************************************************************************************************/
+	// GSLQ - single core version
+	OCS2Projected<STATE_DIM, INPUT_DIM, EXP0_LogicRules> ocs2(
+			&systemDynamics, &systemDerivative,
+			&systemConstraint, &systemCostFunction,
+			&operatingTrajectories, slqSettings, &logicRules);
+
+	// run ocs2 using LQ
+	ocs2.slqSettings().useLQForDerivatives_ = true;
+	ocs2.run(startTime, initState, finalTime, partitioningTimes, initEventTimes);
+	// optimized event times
+	std::vector<double> optEventTimes_LQ(initEventTimes.size());
+	ocs2.getEventTimes(optEventTimes_LQ);
+	// optimized cost
+	double cost_LQ;
+	ocs2.getCostFunction(cost_LQ);
+
+	// run ocs2 using BVP
+	ocs2.slqSettings().useLQForDerivatives_ = false;
+	ocs2.run(startTime, initState, finalTime, partitioningTimes, initEventTimes);
+	// optimized event times
+	std::vector<double> optEventTimes_BVP(initEventTimes.size());
+	ocs2.getEventTimes(optEventTimes_BVP);
+	// optimized cost
+	double cost_BVP;
+	ocs2.getCostFunction(cost_BVP);
+
 
 	/******************************************************************************************************/
 	/******************************************************************************************************/
 	/******************************************************************************************************/
+	std::cerr << "### Initial event times are: [" << initEventTimes[0] << "]\n";
 
-//	// setup single core version
-//	OCS2Projected<2,1,2,2> ocs2 (subsystemDynamicsPtr, subsystemDerivativesPtr, subsystemCostFunctionsPtr,
-//			stateOperatingPoints, inputOperatingPoints, systemStockIndex, slqSettings);
-//
-//	// setup multi core version
-//	slqSettings.useMultiThreading_ = true;
-//	slqSettings.nThreads_ = 2;
-//	OCS2Projected<2,1,2,2> ocs2_mp (subsystemDynamicsPtr, subsystemDerivativesPtr, subsystemCostFunctionsPtr,
-//				stateOperatingPoints, inputOperatingPoints, systemStockIndex, slqSettings);
-//
-//	ocs2.run(initSwitchingTimes[0], initState, initSwitchingTimes);
-//	ocs2_mp.run(initSwitchingTimes[0], initState, initSwitchingTimes);
-//
-//	std::vector<double> resultingSwitchingTimes,resultingSwitchingTimes_mp;
-//	ocs2.getSwitchingTimes(resultingSwitchingTimes);
-//	ocs2_mp.getSwitchingTimes(resultingSwitchingTimes_mp);
-//
-//	double cost, cost_mp;
-//	ocs2.getCostFunction(cost);
-//	ocs2_mp.getCostFunction(cost_mp);
-//
-//	std::cout << "resulting costs: " << cost << "  " << cost_mp << std::endl;
-//
-//	ASSERT_LT(fabs(cost - cost_mp), slqSettings.minRelCostGSLQ_);
+	std::cerr << "### Optimum cost LQ method: " << cost_LQ << std::endl;
+
+	std::cerr << "### Optimum event times LQ method: [" << optEventTimes_LQ[0] << "]\n";
+
+	std::cerr << "### Optimum cost BVP method: " << cost_BVP << std::endl;
+
+	std::cerr << "### Optimum event times BVP method: [" << optEventTimes_BVP[0] << "]\n";
+
+	const double optimumCost = 9.766;
+	const std::vector<double> optimumEventTimes {0.1897};
+
+	ASSERT_NEAR(cost_LQ, optimumCost, 10*slqSettings.minRelCostGSLQP_) <<
+			"MESSAGE: OCS2 failed in the EXP1 using LQ approach for calculating derivatives!";
+
+	ASSERT_NEAR(cost_BVP, optimumCost, 10*slqSettings.minRelCostGSLQP_) <<
+			"MESSAGE: OCS2 failed in the EXP1 using BVP approach for calculating derivatives!";
 }
 
 

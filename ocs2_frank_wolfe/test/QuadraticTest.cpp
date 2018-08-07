@@ -6,6 +6,7 @@
  */
 
 #include <iostream>
+#include <gtest/gtest.h>
 
 #include "ocs2_frank_wolfe/GradientDescent.h"
 
@@ -29,20 +30,22 @@ public:
 		const double maxX = 3.0;
 		const double minX = 1.0;
 
-		Am.resize(2*numParameters_,numParameters_);
-		Bm.resize(2*numParameters_);
+		Am.resize(2*numParameters(),numParameters());
+		Bm.resize(2*numParameters());
 
-		Am.topRows(numParameters_)    =  Eigen::MatrixXd::Identity(numParameters_, numParameters_);
-		Am.bottomRows(numParameters_) = -Eigen::MatrixXd::Identity(numParameters_, numParameters_);
+		Am.topRows(numParameters())    =  Eigen::MatrixXd::Identity(numParameters(), numParameters());
+		Am.bottomRows(numParameters()) = -Eigen::MatrixXd::Identity(numParameters(), numParameters());
 
-		Bm.head(numParameters_) = -maxX * Eigen::VectorXd::Ones(numParameters_);
-		Bm.tail(numParameters_) =  minX * Eigen::VectorXd::Ones(numParameters_);
+		Bm.head(numParameters()) = -maxX * Eigen::VectorXd::Ones(numParameters());
+		Bm.tail(numParameters()) =  minX * Eigen::VectorXd::Ones(numParameters());
+
+//		std::cout << "A\n" << Am << std::endl;
+//		std::cout << "B\n" << Bm << std::endl;
 	}
 
 };
 
-
-int main( int argc, char* argv[] )
+TEST(QuadraticTest, QuadraticTest)
 {
 
 	QuadraticGradientDescent quadraticGradientDescent;
@@ -57,4 +60,17 @@ int main( int argc, char* argv[] )
 
 	std::cout << "cost: " << cost << std::endl;
 	std::cout << "parameters: " << parameters.transpose() << std::endl;
+
+	const double optimalCost = 1.0;
+	const Eigen::Vector2d optimalParameters = Eigen::Vector2d::Ones();
+
+	ASSERT_NEAR(cost, optimalCost, 1e-3) <<
+			"MESSAGE: Frank_Wolfe failed in the Quadratic test!";
 }
+
+int main(int argc, char** argv)
+{
+	testing::InitGoogleTest(&argc, argv);
+	return RUN_ALL_TESTS();
+}
+

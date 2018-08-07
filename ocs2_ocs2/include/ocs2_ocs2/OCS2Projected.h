@@ -19,7 +19,7 @@
 #include <ocs2_slq/SLQ.h>
 #include <ocs2_slq/SLQ_MP.h>
 
-#include "ocs2_ocs2/GSLQ.h"
+#include "ocs2_ocs2/GSLQ_BASE.h"
 
 namespace ocs2{
 
@@ -43,14 +43,17 @@ public:
 
 	typedef nlp::GradientDescent<double> BASE;
 
-	typedef SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> slq_base_t;
-	typedef SLQ<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>      slq_t;
-	typedef SLQ_MP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>   slq_mp_t;
-	typedef GSLQ<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>     gslq_t;
-	typedef typename slq_base_t::Ptr 	slq_base_ptr_t;
-	typedef typename slq_t::Ptr  		slq_ptr_t;
-	typedef typename slq_mp_t::Ptr  	slq_mp_ptr_t;
-	typedef typename gslq_t::Ptr 		gslq_ptr_t;
+	typedef SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>  slq_base_t;
+	typedef SLQ<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>       slq_t;
+	typedef SLQ_MP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>    slq_mp_t;
+	typedef GSLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> gslq_t;
+	typedef typename slq_base_t::Ptr slq_base_ptr_t;
+	typedef typename slq_t::Ptr      slq_ptr_t;
+	typedef typename slq_mp_t::Ptr   slq_mp_ptr_t;
+	typedef typename gslq_t::Ptr     gslq_ptr_t;
+
+	typedef SLQ_DataCollector<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> slq_data_collector_t;
+	typedef typename slq_data_collector_t::Ptr slq_data_collector_ptr_t;
 
 	typedef typename slq_base_t::controlled_system_base_t      controlled_system_base_t;
 	typedef typename slq_base_t::derivatives_base_t            derivatives_base_t;
@@ -78,9 +81,10 @@ public:
 	typedef typename DIMENSIONS::dynamic_vector_t      dynamic_vector_t;
 	typedef typename DIMENSIONS::dynamic_matrix_t      dynamic_matrix_t;
 
-	OCS2Projected()
-	: numSubsystems_(0)
-	{}
+	/**
+	 * Default constructor.
+	 */
+	OCS2Projected() = default;
 
 	/**
 	 * Constructor
@@ -102,7 +106,7 @@ public:
 			const cost_function_base_t* heuristicsFunctionPtr = nullptr);
 
 	/**
-	 *
+	 * Default destructor.
 	 */
 	virtual ~OCS2Projected() = default;
 
@@ -122,11 +126,7 @@ public:
 	 * Gets the controller stocks
 	 * @param [out] controllersStock
 	 */
-	void getControllerPtr(std::shared_ptr<controller_array_t>& controllersStock) const;
-
 	void getController(controller_array_t& controllersStock) const;
-
-	const controller_t& controller(size_t index) const;
 
 	/**
 	 * Gets event times
@@ -146,65 +146,31 @@ public:
 			state_vector_array2_t& nominalStateTrajectoriesStock,
 			input_vector_array2_t& nominalInputTrajectoriesStock) const;
 
-	void getNominalTrajectoriesPtr(
-			std::shared_ptr<std::vector<scalar_array_t>>& optimizedTimeTrajectoriesStockPtr,
-			std::shared_ptr<state_vector_array2_t>& optimizedStateTrajectoriesStockPtr,
-			std::shared_ptr<input_vector_array2_t>& optimizedInputTrajectoriesStockPtr) const;
-
 	/**
-	 * Gets slq Iteration COst
-	 * @param [out] slqIterationCost
-	 * @param [out] slqIterationISE1
+	 * Gets iterations Log of SLQ.
+	 *
+	 * @param [out] iterationCost: Each SLQ iteration's cost.
+	 * @param [out] iterationISE1: Each SLQ iteration's type-1 constraints ISE.
+	 * @param [out] iterationISE2: Each SLQ iteration's type-2 constraints ISE.
 	 */
 	void getSLQIterationsLog(
 			eigen_scalar_array_t& slqIterationCost,
-			eigen_scalar_array_t& slqIterationISE1) const {
-
-		slqIterationCost = slqIterationCost_;
-		slqIterationISE1 = slqIterationISE1_;
-	}
+			eigen_scalar_array_t& slqIterationISE1,
+			eigen_scalar_array_t& slqIterationISE2) const;
 
 	/**
-	 * Gets OCS2 iteration log
-	 * @param [out] iterationCost
+	 * Gets iterations log of OCS2.
+	 *
+	 * @param [out] iterationCost: Each OCS2 iteration's cost.
 	 */
-	void getOCS2IterationsLog(eigen_scalar_array_t& iterationCost) const { iterationCost = iterationCost_;}
+	void getOCS2IterationsLog(eigen_scalar_array_t& iterationCost) const;
 
+	/**
+	 * Return a reference to SLQ settings which can be used to modify the settings.
+	 *
+	 * @return a reference to SLQ settings.
+	 */
 	SLQ_Settings& slqSettings();
-
-	/**
-	 * Rollout
-	 * @param [in] initTime
-	 * @param [in] initState
-	 * @param [in] finalTime
-	 * @param [in] switchingTimes
-	 * @param [in] controllersStock
-	 * @param [out] timeTrajectoriesStock
-	 * @param [out] stateTrajectoriesStock
-	 * @param [out] inputTrajectoriesStock
-	 */
-	void rollout(
-			const scalar_t& initTime,
-			const state_vector_t& initState,
-			const scalar_t& finalTime,
-			const scalar_array_t& switchingTimes,
-			const controller_array_t& controllersStock,
-			std::vector<scalar_array_t>& timeTrajectoriesStock,
-			state_vector_array2_t& stateTrajectoriesStock,
-			input_vector_array2_t& inputTrajectoriesStock);
-
-	/**
-	 * Calculates cost function
-	 * @param [in] timeTrajectoriesStock
-	 * @param [in] stateTrajectoriesStock
-	 * @param [in] inputTrajectoriesStock
-	 * @param [out] totalCost
-	 */
-	void calculateCostFunction(
-			const std::vector<scalar_array_t>& timeTrajectoriesStock,
-			const state_vector_array2_t& stateTrajectoriesStock,
-			const input_vector_array2_t& inputTrajectoriesStock,
-			scalar_t& totalCost);
 
 	/**
 	 * Main run function
@@ -220,7 +186,7 @@ public:
 			const state_vector_t& initState,
 			const scalar_t& finalTime,
 			const scalar_array_t& partitioningTimes,
-			const scalar_array_t& initEventTimes = std::vector<scalar_t>(),
+			const scalar_array_t& initEventTimes,
 			const cost_desired_trajectories_t& costDesiredTrajectories = cost_desired_trajectories_t());
 
 private:
@@ -232,31 +198,36 @@ private:
 	size_t findNearestController(const dynamic_vector_t& enquiryParameter) const;
 
 	/**
-	 * Calculates linear equality constraint
-	 * @param [out] Am
-	 * @param [out] Bv
+	 * Calculates the coefficients of the linear equality constraints. \n
+	 * \f$ A_m \theta + B_v = 0\f$
+	 *
+	 * @param [out] Am: The \f$ A_m\f$ matrix.
+	 * @param [out] Bv: THe \f$ B_v \f$ vector.
 	 */
 	void calculateLinearEqualityConstraint(
 			dynamic_matrix_t& Am,
 			dynamic_vector_t& Bv) override;
 
 	/**
-	 * Calculates gradient
-	 * @param [in] id
-	 * @param [in] parameters
-	 * @param [out] gradient
-	 * @return boolean:
+	 * Calculates the gradient direction.
+	 *
+	 * @param [in] id: Solver ID
+	 * @param [in] parameters: The current parameter vector.
+	 * @param [in] gradient: The gradient at the current parameter vector.
+	 * @return boolean: The success flag.
 	 */
-	virtual bool calculateGradient(const size_t& id,
+	virtual bool calculateGradient(
+			const size_t& id,
 			const dynamic_vector_t& parameters,
 			dynamic_vector_t& gradient) override;
 
 	/**
-	 * Calculates cost
-	 * @param [in] id
-	 * @param [in] parameters
-	 * @param [out] cost
-	 * @return boolean:
+	 * Calculates the cost function.
+	 *
+	 * @param [in] id: Solver ID
+	 * @param [in] parameters: The current parameter vector.
+	 * @param [in] cost: The cost for the current parameter vector.
+	 * @return boolean: The success flag.
 	 */
 	virtual bool calculateCost(
 			const size_t& id,
@@ -288,41 +259,22 @@ private:
 			const dynamic_vector_t& parameters);
 
 	/**
-	 * Calculates initial controller
-	 * @param [in] initState
-	 * @param [in] switchingTimes
-	 * @param [out] controllersStock
+	 * Sets up optimizer for different number of partitions.
+	 *
+	 * @param [in] numPartitions: number of partitions.
 	 */
-	void calculateInitialController(
-			const state_vector_t& initState,
-			const scalar_array_t& eventTimes,
-			controller_array_t& controllersStock);
-
-	/**
-	 * Set up optimizer
-	 */
-	void setupOptimizer();
+	virtual void setupOptimizer(const size_t& numPartitions);
 
 private:
 	SLQ_Settings slqSettings_;
 
-	std::vector<std::shared_ptr<ControlledSystemBase<STATE_DIM, INPUT_DIM> > >  subsystemDynamicsPtr_;
-	std::vector<std::shared_ptr<DerivativesBase<STATE_DIM, INPUT_DIM> > > 	subsystemDerivativesPtr_;
-	std::vector<std::shared_ptr<CostFunctionBase<STATE_DIM, INPUT_DIM> > > 	subsystemCostFunctionsPtr_;
-	controller_array_t lqpControllersStock_;
-
 	scalar_t       initTime_;
 	state_vector_t initState_;
 	scalar_t       finalTime_;
-	size_t         numSubsystems_;
+	size_t         numSubsystems_ = 0;
 	scalar_array_t partitioningTimes_;
 	size_t         numPartitions_;
 	scalar_array_t initEventTimes_;
-
-	// for rollout function
-	std::vector<std::shared_ptr<ControlledSystemBase<STATE_DIM, INPUT_DIM> > >  subsystemDynamicsPtrStock_;
-	std::vector<std::shared_ptr<CostFunctionBase<STATE_DIM, INPUT_DIM> > > subsystemCostFunctionsPtrStock_;
-	std::vector<std::shared_ptr<ODE45<STATE_DIM> > > subsystemSimulatorsStockPtr_;
 
 	// optimized solution variables
 	scalar_t optimizedTotalCost_;
@@ -341,7 +293,8 @@ private:
 	std::vector<dynamic_vector_t> parameterBag_;
 	controller_array2_t controllersStockBag_;
 
-	std::vector<gslq_ptr_t> gslqSolverPtrs_;
+	gslq_ptr_t gslqSolverPtr_;
+	slq_data_collector_ptr_t slqDataCollectorPtr_;
 	std::vector<slq_base_ptr_t> slqSolverPtrs_;
 
 	eigen_scalar_array_t slqIterationCost_;

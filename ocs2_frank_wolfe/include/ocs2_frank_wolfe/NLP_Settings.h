@@ -26,7 +26,7 @@ public:
 	, maxLearningRate_(1.0)
 	, minLearningRate_(0.05)
 	, useAscendingLineSearchNLP_(true)
-	, minDisToBoundary_(0.01)
+	, minDisToBoundary_(0.0)
 	{}
 
 	/** This value determines to display the log output.*/

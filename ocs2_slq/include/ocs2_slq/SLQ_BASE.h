@@ -521,7 +521,7 @@ public:
 	size_t getNumIterations() const;
 
 	/**
-	 * Gets Iterations Log of SLQ.
+	 * Gets iterations Log of SLQ.
 	 *
 	 * @param [out] iterationCost: Each iteration's cost.
 	 * @param [out] iterationISE1: Each iteration's type-1 constraints ISE.

@@ -29,6 +29,9 @@ namespace nlp {
  * algorithm. For more discussion on this algorithm, the reader should refer to
  * \cite jaggi13 .
  *
+ * User should override three methods namely:
+ * calculateCost, calculateGradient, calculateLinearEqualityConstraint, and getSolution.
+ *
  * @tparam SCALAR_T: Floating point type.
  */
 template <typename SCALAR_T=double>
@@ -74,6 +77,56 @@ public:
 			Eigen::MatrixBase<Derived>& parameters) const;
 
 	/**
+	 * Gets the iteration cost log.
+	 *
+	 * @param [out] iterationCost: The cost value in each iteration.
+	 */
+	void getIterationsLog(eigen_scalar_array_t& iterationCost) const;
+
+	/**
+	 * Gets a constant reference to the optimal solver's ID.
+	 *
+	 * @return A constant reference to the optimal solver's ID.
+	 */
+	const size_t& optimalSolutionID() const;
+
+	/**
+	 * Gets a constant reference to the NLP of settings.
+	 *
+	 * @return A constant reference to the NLP of settings.
+	 */
+	NLP_Settings& nlpSettings();
+
+	/**
+	 * Gets a constant reference to the number of parameters.
+	 *
+	 * @return A constant reference to the number of parameters.
+	 */
+	const size_t& numParameters() const;
+
+	/**
+	 * Gets a constant reference to the number of constraints.
+	 *
+	 * @return A constant reference to the number of constraints.
+	 */
+	const size_t& numConstraints() const;
+
+	/**
+	 * Gets a constant reference to the maximum allowed number of line-searches.
+	 *
+	 * @return A constant reference to the maximum allowed number of line-searches.
+	 */
+	const size_t& numLineSearch() const;
+
+	/**
+	 * This method runs the Frank-Wolfe algorithm which the initial parameter \f$\theta_0\f$.
+	 *
+	 * @param [in] initParameters: The initial parameter vector (\f$\theta_0\f$)
+	 */
+	void run(const dynamic_vector_t& initParameters);
+
+protected:
+	/**
 	 * Calculates the coefficients of the linear equality constraints. \n
 	 * \f$ A_m \theta + B_v = 0\f$
 	 *
@@ -85,32 +138,11 @@ public:
 			dynamic_vector_t& Bv);
 
 	/**
-	 * Gets the solution ID.
-	 *
-	 * @param [in] idStar: The ID of the best solution.
-	 */
-	virtual void getSolution(size_t idStar)  {}
-
-	/**
-	 * Gets the iteration cost log.
-	 *
-	 * @param [out] iterationCost: The cost value in each iteration.
-	 */
-	void getIterationsLog(eigen_scalar_array_t& iterationCost) const;
-
-	/**
-	 * This method runs the Frank-Wolfe algorithm which the initial parameter \f$\theta_0\f$.
-	 *
-	 * @param [in] initParameters: The initial parameter vector (\f$\theta_0\f$)
-	 */
-	void run(const dynamic_vector_t& initParameters);
-
-	/**
-	 * Calculates the cost.
+	 * Calculates the cost function.
 	 *
 	 * @param [in] id: Solver ID
 	 * @param [in] parameters: The current parameter vector.
-	 * @param [out] cost: Gradient at the current parameter vector.
+	 * @param [in] cost: The cost for the current parameter vector.
 	 * @return boolean: The success flag.
 	 */
 	virtual bool calculateCost(
@@ -131,22 +163,13 @@ public:
 			const dynamic_vector_t& parameters,
 			dynamic_vector_t& gradient);
 
-	NLP_Settings& nlpSettings() {
+	/**
+	 * Gets the solution ID.
+	 *
+	 * @param [in] idStar: The ID of the best solution.
+	 */
+	virtual void getSolution(size_t idStar)  {}
 
-		return nlpSettings_;
-	}
-
-	size_t& numParameters() {
-
-		return numParameters_;
-	}
-
-	size_t& numConstraints() {
-
-		return numConstraints_;
-	}
-
-protected:
 	/**
 	 * Calculate the Frank Wolfe gradient.
 	 *
@@ -209,7 +232,7 @@ protected:
 	 */
 	Eigen::IOFormat CleanFmtDisplay_;
 
-protected:
+private:
 	/*
 	 * Variables
 	 */
@@ -220,19 +243,20 @@ protected:
 	dynamic_vector_t linearEqualityConstraintGv_;
 	dynamic_matrix_t linearEqualityConstraintAmNull_;
 
-	SCALAR_T cost_;
 	size_t numParameters_;
 	size_t numLineSearch_;
 	size_t numConstraints_;
-	dynamic_vector_t parameters_;
-	dynamic_vector_t gradient_;
-	size_t id_;
-	size_t numFuntionCall_ = 0;
+
+	SCALAR_T optimizedCost_;
+	size_t optimizedID_;
+	dynamic_vector_t optimizedParameters_;
+	dynamic_vector_t optimizedGradient_;
+	size_t numFuntionCall_;
 
 	eigen_scalar_array_t iterationCost_;
 
 private:
-	glp_prob *lpPtr_;
+	glp_prob* lpPtr_;
 };
 
 }  // end of nlp namespace

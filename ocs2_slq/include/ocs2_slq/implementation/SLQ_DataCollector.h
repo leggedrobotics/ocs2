@@ -11,7 +11,8 @@ namespace ocs2 {
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-bool SLQ_DataCollector<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::collect(const slq_t* constSlqPtr) {
+void SLQ_DataCollector<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::collect(
+		const slq_t* constSlqPtr) {
 
 	slq_t* slqPtr = const_cast<slq_t*>(constSlqPtr);
 
@@ -116,8 +117,6 @@ bool SLQ_DataCollector<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::collect(const slq_t
 			nominalStateTrajectoriesStock_,
 			nominalInputTrajectoriesStock_,
 			nominalFlowMapTrajectoriesStock_);
-
-	return numPartitionsChanged;
 }
 
 /******************************************************************************************************/

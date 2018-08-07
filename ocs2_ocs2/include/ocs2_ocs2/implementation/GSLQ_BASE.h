@@ -1,7 +1,7 @@
 /*
- * Implementation of GSLQ.h
+ * GSLQ_BASE.h
  *
- *  Created on: Jan 5, 2016
+ *  Created on: Aug 7, 2018
  *      Author: farbod
  */
 
@@ -11,32 +11,26 @@ namespace ocs2 {
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-GSLQ<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::GSLQ(slq_t& slq)
-	: slqPtr_(&slq)
-	, settingsPtr_(&slq.settings())
-	, logicRulesMachinePtr_(slq.getLogicRulesMachinePtr())
-	, dcPtr_(new slq_data_collector_t())
+GSLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::GSLQ_BASE(
+		const SLQ_Settings& settings /*= SLQ_Settings())*/)
+	: settings_(settings)
 {
-	// check if the SLQ solver is provided.
-	if (!slqPtr_)
-		throw std::runtime_error("A pointer to a SLQ solver should be provided.");
-
 	bvpSensitivityEquationsPtrStock_.clear();
-	bvpSensitivityEquationsPtrStock_.reserve(settingsPtr_->nThreads_);
+	bvpSensitivityEquationsPtrStock_.reserve(settings_.nThreads_);
 	bvpSensitivityIntegratorsPtrStock_.clear();
-	bvpSensitivityIntegratorsPtrStock_.reserve(settingsPtr_->nThreads_);
+	bvpSensitivityIntegratorsPtrStock_.reserve(settings_.nThreads_);
 
 	rolloutSensitivityEquationsPtrStock_.clear();
-	rolloutSensitivityEquationsPtrStock_.reserve(settingsPtr_->nThreads_);
+	rolloutSensitivityEquationsPtrStock_.reserve(settings_.nThreads_);
 	rolloutSensitivityIntegratorsPtrStock_.clear();
-	rolloutSensitivityIntegratorsPtrStock_.reserve(settingsPtr_->nThreads_);
+	rolloutSensitivityIntegratorsPtrStock_.reserve(settings_.nThreads_);
 
 	riccatiSensitivityEquationsPtrStock_.clear();
-	riccatiSensitivityEquationsPtrStock_.reserve(settingsPtr_->nThreads_);
+	riccatiSensitivityEquationsPtrStock_.reserve(settings_.nThreads_);
 	riccatiSensitivityIntegratorsPtrStock_.clear();
-	riccatiSensitivityIntegratorsPtrStock_.reserve(settingsPtr_->nThreads_);
+	riccatiSensitivityIntegratorsPtrStock_.reserve(settings_.nThreads_);
 
-	for (size_t i=0; i<settingsPtr_->nThreads_; i++)  {
+	for (size_t i=0; i<settings_.nThreads_; i++)  {
 
 		typedef Eigen::aligned_allocator<bvp_sensitivity_equations_t> bvp_sensitivity_equations_alloc_t;
 		bvpSensitivityEquationsPtrStock_.push_back( std::move(
@@ -53,7 +47,7 @@ GSLQ<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::GSLQ(slq_t& slq)
 				std::allocate_shared<riccati_sensitivity_equations_t, riccati_sensitivity_equations_alloc_t>(
 						riccati_sensitivity_equations_alloc_t()) ) );
 
-		switch(settingsPtr_->RiccatiIntegratorType_) {
+		switch(settings_.RiccatiIntegratorType_) {
 
 		case DIMENSIONS::RICCATI_INTEGRATOR_TYPE::ODE45 : {
 			bvpSensitivityIntegratorsPtrStock_.emplace_back (
@@ -93,17 +87,18 @@ GSLQ<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::GSLQ(slq_t& slq)
 	}  // end of i loop
 
 	// calculateBVPSensitivityControllerForward & calculateLQSensitivityControllerForward
-	BmFuncStock_.resize(settingsPtr_->nThreads_);
-	RmInverseFuncStock_.resize(settingsPtr_->nThreads_);
-	DmProjectedFuncStock_.resize(settingsPtr_->nThreads_);
-	nablaRvFuncStock_.resize(settingsPtr_->nThreads_);
+	BmFuncStock_.resize(settings_.nThreads_);
+	RmInverseFuncStock_.resize(settings_.nThreads_);
+	DmProjectedFuncStock_.resize(settings_.nThreads_);
+	nablaRvFuncStock_.resize(settings_.nThreads_);
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void GSLQ<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::setupOptimizer(const size_t& numPartitions) {
+void GSLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::setupOptimizer(
+		const size_t& numPartitions) {
 
 	if (numPartitions==0)
 		throw std::runtime_error("The number of Partitions cannot be zero!");
@@ -113,7 +108,7 @@ void GSLQ<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::setupOptimizer(const size_t& num
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void GSLQ<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::computeMissingSlqData() {
+void GSLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::computeMissingSlqData() {
 
 	const scalar_t learningRate = 0.0;
 
@@ -130,15 +125,15 @@ void GSLQ<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::computeMissingSlqData() {
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void GSLQ<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculateRolloutCostate(
+void GSLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculateRolloutCostate(
 		const std::vector<scalar_array_t>& timeTrajectoriesStock,
 		const state_vector_array2_t& stateTrajectoriesStock,
 		state_vector_array2_t& costateTrajectoriesStock,
 		scalar_t learningRate /*= 0.0*/ )  {
 
-	costateTrajectoriesStock.resize(dcPtr_->numPartitions_);
+	costateTrajectoriesStock.resize(numPartitions_);
 
-	for (size_t i=0; i<dcPtr_->numPartitions_; i++) {
+	for (size_t i=0; i<numPartitions_; i++) {
 
 		// skip the inactive partitions
 		if (i<dcPtr_->initActivePartition_ || i>dcPtr_->finalActivePartition_) {
@@ -187,13 +182,13 @@ void GSLQ<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculateRolloutCostate(
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void GSLQ<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculateRolloutCostate(
+void GSLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculateRolloutCostate(
 		const std::vector<scalar_array_t>& timeTrajectoriesStock,
 		state_vector_array2_t& costateTrajectoriesStock)  {
 
-	costateTrajectoriesStock.resize(dcPtr_->numPartitions_);
+	costateTrajectoriesStock.resize(numPartitions_);
 
-	for (size_t i=0; i<dcPtr_->numPartitions_; i++) {
+	for (size_t i=0; i<numPartitions_; i++) {
 
 		// skip the inactive partitions
 		if (i<dcPtr_->initActivePartition_ || i>dcPtr_->finalActivePartition_) {
@@ -230,7 +225,7 @@ void GSLQ<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculateRolloutCostate(
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void GSLQ<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculateInputConstraintLagrangian(
+void GSLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculateInputConstraintLagrangian(
 		lagrange_array_t& lagrangeMultiplierFunctionsStock,
 		scalar_t learningRate /*= 0.0*/) {
 
@@ -244,9 +239,9 @@ void GSLQ<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculateInputConstraintLagrangi
 	LinearInterpolation<input_state_matrix_t,Eigen::aligned_allocator<input_state_matrix_t>> CmProjectedFunc;
 	LinearInterpolation<control_constraint1_matrix_t,Eigen::aligned_allocator<control_constraint1_matrix_t>> DmDagerFunc;
 
-	lagrangeMultiplierFunctionsStock.resize(dcPtr_->numPartitions_);
+	lagrangeMultiplierFunctionsStock.resize(numPartitions_);
 
-	for (size_t i=0; i<dcPtr_->numPartitions_; i++) {
+	for (size_t i=0; i<numPartitions_; i++) {
 
 		// skip the inactive partitions
 		if (i<dcPtr_->initActivePartition_ || i>dcPtr_->finalActivePartition_) {
@@ -348,7 +343,7 @@ void GSLQ<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculateInputConstraintLagrangi
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void GSLQ<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculateRolloutLagrangeMultiplier(
+void GSLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculateRolloutLagrangeMultiplier(
 		const std::vector<scalar_array_t>& timeTrajectoriesStock,
 		const state_vector_array2_t& stateTrajectoriesStock,
 		const lagrange_array_t& lagrangeMultiplierFunctionsStock,
@@ -357,9 +352,9 @@ void GSLQ<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculateRolloutLagrangeMultipli
 	LinearInterpolation<constraint1_vector_t, Eigen::aligned_allocator<constraint1_vector_t> > vffFunc;
 	LinearInterpolation<constraint1_state_matrix_t, Eigen::aligned_allocator<constraint1_state_matrix_t> > vfbFunc;
 
-	lagrangeTrajectoriesStock.resize(dcPtr_->numPartitions_);
+	lagrangeTrajectoriesStock.resize(numPartitions_);
 
-	for (size_t i=0; i<dcPtr_->numPartitions_; i++) {
+	for (size_t i=0; i<numPartitions_; i++) {
 
 		// skip the inactive partitions
 		if (i<dcPtr_->initActivePartition_ || i>dcPtr_->finalActivePartition_) {
@@ -396,13 +391,13 @@ void GSLQ<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculateRolloutLagrangeMultipli
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void GSLQ<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculateNominalRolloutLagrangeMultiplier(
+void GSLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculateNominalRolloutLagrangeMultiplier(
 		const std::vector<scalar_array_t>& timeTrajectoriesStock,
 		constraint1_vector_array2_t& lagrangeTrajectoriesStock)  {
 
-	lagrangeTrajectoriesStock.resize(dcPtr_->numPartitions_);
+	lagrangeTrajectoriesStock.resize(numPartitions_);
 
-	for (size_t i=0; i<dcPtr_->numPartitions_; i++) {
+	for (size_t i=0; i<numPartitions_; i++) {
 
 		// skip the inactive partitions
 		if (i<dcPtr_->initActivePartition_ || i>dcPtr_->finalActivePartition_) {
@@ -434,7 +429,7 @@ void GSLQ<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculateNominalRolloutLagrangeM
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-size_t GSLQ<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::findActiveSubsystemIndex(
+size_t GSLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::findActiveSubsystemIndex(
 		const scalar_array_t& eventTimes,
 		const scalar_t& time,
 		bool ceilingFunction /*= true*/) const {
@@ -459,7 +454,7 @@ size_t GSLQ<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::findActiveSubsystemIndex(
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-size_t GSLQ<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::findActivePartitionIndex(
+size_t GSLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::findActivePartitionIndex(
 		const scalar_array_t& partitioningTimes,
 		const scalar_t& time,
 		bool ceilingFunction /*= true*/) const {
@@ -490,29 +485,29 @@ size_t GSLQ<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::findActivePartitionIndex(
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void GSLQ<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::computeEquivalentSystemMultiplier(
+void GSLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::computeEquivalentSystemMultiplier(
 		const size_t& eventTimeIndex,
 		const size_t& activeSubsystem,
 		scalar_t& multiplier) const {
 
 	if (activeSubsystem == eventTimeIndex+1) {
-		if (activeSubsystem == eventTimes().size()) {
-			if (dcPtr_->finalTime_<eventTimes()[eventTimeIndex])
+		if (activeSubsystem == eventTimes_.size()) {
+			if (dcPtr_->finalTime_<eventTimes_[eventTimeIndex])
 				throw std::runtime_error("Final time is smaller than the last triggered event time.");
 			else
-				multiplier = -1.0 / (dcPtr_->finalTime_ - eventTimes()[eventTimeIndex]);
+				multiplier = -1.0 / (dcPtr_->finalTime_ - eventTimes_[eventTimeIndex]);
 		} else {
-			multiplier = -1.0 / (eventTimes()[eventTimeIndex+1] - eventTimes()[eventTimeIndex]);
+			multiplier = -1.0 / (eventTimes_[eventTimeIndex+1] - eventTimes_[eventTimeIndex]);
 		}
 
 	} else if (activeSubsystem == eventTimeIndex)
 		if (activeSubsystem == 0) {
-			if (dcPtr_->initTime_>eventTimes()[eventTimeIndex])
+			if (dcPtr_->initTime_>eventTimes_[eventTimeIndex])
 				throw std::runtime_error("Initial time is greater than the last triggered event time.");
 			else
-				multiplier = 1.0 / (eventTimes()[eventTimeIndex] - dcPtr_->initTime_);
+				multiplier = 1.0 / (eventTimes_[eventTimeIndex] - dcPtr_->initTime_);
 		} else {
-			multiplier = 1.0 / (eventTimes()[eventTimeIndex] - eventTimes()[eventTimeIndex-1]);
+			multiplier = 1.0 / (eventTimes_[eventTimeIndex] - eventTimes_[eventTimeIndex-1]);
 		}
 	else
 		multiplier = 0.0;
@@ -522,7 +517,7 @@ void GSLQ<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::computeEquivalentSystemMultiplie
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void GSLQ<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::getRolloutSensitivity2SwitchingTime(
+void GSLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::getRolloutSensitivity2SwitchingTime(
 		const size_t& eventTimeIndex,
 		std::vector<scalar_array_t>& sensitivityTimeTrajectoriesStock,
 		state_matrix_array2_t& sensitivityStateTrajectoriesStock,
@@ -540,33 +535,9 @@ void GSLQ<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::getRolloutSensitivity2SwitchingT
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void GSLQ<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::getController(
-		controller_array_t& controllersStock) {
+SLQ_Settings& GSLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::settings() {
 
-	slqPtr_->getController(controllersStock);
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void GSLQ<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::getValueFuntion(
-		const scalar_t& time,
-		const state_vector_t& state,
-		scalar_t& valueFuntion)  {
-
-	slqPtr_->getValueFuntion(time, state, valueFuntion);
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void GSLQ<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::getCostFuntion(
-		scalar_t& costFunction,
-		scalar_t& constraintISE)  {
-
-	slqPtr_->getCostFuntion(costFunction, constraintISE);
+	return settings_;
 }
 
 /******************************************************************************************************/
@@ -574,7 +545,7 @@ void GSLQ<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::getCostFuntion(
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
 template <typename Derived>
-void GSLQ<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::getCostFuntionDerivative(
+void GSLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::getCostFuntionDerivative(
 		Eigen::MatrixBase<Derived> const& costFunctionDerivative) const {
 
 	// refer to Eigen documentation under the topic "Writing Functions Taking Eigen Types as Parameters"
@@ -585,30 +556,17 @@ void GSLQ<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::getCostFuntionDerivative(
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void GSLQ<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::getNominalTrajectories(
-		std::vector<scalar_array_t>& nominalTimeTrajectoriesStock,
-		state_vector_array2_t& nominalStateTrajectoriesStock,
-		input_vector_array2_t& nominalInputTrajectoriesStock)   {
+const typename GSLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::scalar_array_t&
+	GSLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::eventTimes() const {
 
-	slqPtr_->getNominalTrajectories(nominalTimeTrajectoriesStock,
-			nominalStateTrajectoriesStock, nominalInputTrajectoriesStock);
+	return eventTimes_;
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-const typename GSLQ<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::scalar_array_t&
-	GSLQ<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::eventTimes() const {
-
-	return logicRulesMachinePtr_->getLogicRulesPtr()->eventTimes();
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void GSLQ<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::propagateRolloutSensitivity(
+void GSLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::propagateRolloutSensitivity(
 		size_t workerIndex,
 		const size_t& eventTimeIndex,
 		const controller_array_t& controllersStock,
@@ -622,13 +580,13 @@ void GSLQ<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::propagateRolloutSensitivity(
 		throw std::runtime_error("The index is associated to an inactive event or it is out of range.");
 
 	// resizing
-	sensitivityStateTrajectoriesStock.resize(dcPtr_->numPartitions_);
-	sensitivityInputTrajectoriesStock.resize(dcPtr_->numPartitions_);
+	sensitivityStateTrajectoriesStock.resize(numPartitions_);
+	sensitivityInputTrajectoriesStock.resize(numPartitions_);
 
 	// Initial state sensitivity (which is zero)
 	state_vector_t nabla_xInit = state_vector_t::Zero();
 
-	for (size_t i=0; i<dcPtr_->numPartitions_; i++) {
+	for (size_t i=0; i<numPartitions_; i++) {
 
 		// skip inactive partitions
 		if (i<dcPtr_->initActivePartition_ || i>dcPtr_->finalActivePartition_) {
@@ -650,7 +608,7 @@ void GSLQ<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::propagateRolloutSensitivity(
 				&LvTrajectoriesStock[i], &controllersStock[i].k_);
 
 		// max number of steps of integration
-		const size_t maxNumSteps = settingsPtr_->maxNumStepsPerSecond_ *
+		const size_t maxNumSteps = settings_.maxNumStepsPerSecond_ *
 				std::max(1.0, sensitivityTimeTrajectoriesStock[i].back()-sensitivityTimeTrajectoriesStock[i].front());
 
 		// resizing
@@ -675,7 +633,7 @@ void GSLQ<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::propagateRolloutSensitivity(
 				// finding the current active subsystem
 				scalar_t midTime = 0.5 * (*beginTimeItr+*(endTimeItr-1));
 				size_t activeSubsystem = findActiveSubsystemIndex(
-						eventTimes(), midTime);
+						eventTimes_, midTime);
 
 				// compute multiplier of the equivalent system
 				scalar_t multiplier;
@@ -686,9 +644,9 @@ void GSLQ<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::propagateRolloutSensitivity(
 				rolloutSensitivityIntegratorsPtrStock_[workerIndex]->integrate(
 						nabla_xInit, beginTimeItr, endTimeItr,
 						sensitivityStateTrajectoriesStock[i],
-						settingsPtr_->minTimeStep_,
-						settingsPtr_->absTolODE_,
-						settingsPtr_->relTolODE_,
+						settings_.minTimeStep_,
+						settings_.absTolODE_,
+						settings_.relTolODE_,
 						maxNumSteps, true);
 
 				// compute input sensitivity
@@ -716,7 +674,7 @@ void GSLQ<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::propagateRolloutSensitivity(
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void GSLQ<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::approximateNominalLQPSensitivity2SwitchingTime(
+void GSLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::approximateNominalLQPSensitivity2SwitchingTime(
 		const state_vector_array2_t& sensitivityStateTrajectoriesStock,
 		const input_vector_array2_t& sensitivityInputTrajectoriesStock,
 		eigen_scalar_array2_t& nablaqTrajectoriesStock,
@@ -726,13 +684,13 @@ void GSLQ<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::approximateNominalLQPSensitivity
 		state_vector_array2_t& nablaQvFinalStock) const {
 
 	// resizing
-	nablaqTrajectoriesStock.resize(dcPtr_->numPartitions_);
-	nablaQvTrajectoriesStock.resize(dcPtr_->numPartitions_);
-	nablaRvTrajectoriesStock.resize(dcPtr_->numPartitions_);
-	nablaqFinalStock.resize(dcPtr_->numPartitions_);
-	nablaQvFinalStock.resize(dcPtr_->numPartitions_);
+	nablaqTrajectoriesStock.resize(numPartitions_);
+	nablaQvTrajectoriesStock.resize(numPartitions_);
+	nablaRvTrajectoriesStock.resize(numPartitions_);
+	nablaqFinalStock.resize(numPartitions_);
+	nablaQvFinalStock.resize(numPartitions_);
 
-	for (size_t i=0; i<dcPtr_->numPartitions_; i++) {
+	for (size_t i=0; i<numPartitions_; i++) {
 
 		// skip inactive partitions
 		if (i<dcPtr_->initActivePartition_ || i>dcPtr_->finalActivePartition_) {
@@ -791,7 +749,7 @@ void GSLQ<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::approximateNominalLQPSensitivity
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void GSLQ<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::approximateNominalHeuristicsSensitivity2SwitchingTime(
+void GSLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::approximateNominalHeuristicsSensitivity2SwitchingTime(
 		const state_vector_t& sensitivityFinalState,
 		eigen_scalar_t& nablasHeuristics,
 		state_vector_t& nablaSvHeuristics) const {
@@ -804,7 +762,7 @@ void GSLQ<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::approximateNominalHeuristicsSens
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void GSLQ<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::solveSensitivityRiccatiEquations(
+void GSLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::solveSensitivityRiccatiEquations(
 		size_t workerIndex,
 		const size_t& eventTimeIndex,
 		const scalar_t& learningRate,
@@ -822,9 +780,9 @@ void GSLQ<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::solveSensitivityRiccatiEquations
 	typedef typename riccati_sensitivity_equations_t::s_vector_array_t s_vector_array_t;
 
 	// Resizing
-	nablasTrajectoriesStock.resize(dcPtr_->numPartitions_);
-	nablaSvTrajectoriesStock.resize(dcPtr_->numPartitions_);
-	nablaSmTrajectoriesStock.resize(dcPtr_->numPartitions_);
+	nablasTrajectoriesStock.resize(numPartitions_);
+	nablaSvTrajectoriesStock.resize(numPartitions_);
+	nablaSmTrajectoriesStock.resize(numPartitions_);
 
 	// temporal final value for the last Riccati equations
 	s_vector_t SsFinal;
@@ -871,7 +829,7 @@ void GSLQ<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::solveSensitivityRiccatiEquations
 				&nablaRvTrajectoriesStockSet_[eventTimeIndex][i]);
 
 		// max number of steps of integration
-		const size_t maxNumSteps = settingsPtr_->maxNumStepsPerSecond_ *
+		const size_t maxNumSteps = settings_.maxNumStepsPerSecond_ *
 				std::max(1.0, dcPtr_->SsNormalizedTimeTrajectoriesStock_[i].back()-dcPtr_->SsNormalizedTimeTrajectoriesStock_[i].front());
 
 		// output containers resizing
@@ -896,7 +854,7 @@ void GSLQ<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::solveSensitivityRiccatiEquations
 				// finding the current active subsystem
 				scalar_t midNormalizedTime = 0.5 * (*beginTimeItr+*(endTimeItr-1));
 				scalar_t midTime = dcPtr_->partitioningTimes_[i+1] - (dcPtr_->partitioningTimes_[i+1]-dcPtr_->partitioningTimes_[i])*midNormalizedTime;
-				size_t activeSubsystem = findActiveSubsystemIndex(eventTimes(), midTime);
+				size_t activeSubsystem = findActiveSubsystemIndex(eventTimes_, midTime);
 
 				// compute multiplier of the equivalent system
 				scalar_t multiplier;
@@ -907,9 +865,9 @@ void GSLQ<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::solveSensitivityRiccatiEquations
 				riccatiSensitivityIntegratorsPtrStock_[workerIndex]->integrate(
 						SsFinal, beginTimeItr, endTimeItr,
 						allSsTrajectory,
-						settingsPtr_->minTimeStep_,
-						settingsPtr_->absTolODE_,
-						settingsPtr_->relTolODE_,
+						settings_.minTimeStep_,
+						settings_.absTolODE_,
+						settings_.relTolODE_,
 						maxNumSteps, true);
 
 				// final value of the next subsystem
@@ -946,7 +904,7 @@ void GSLQ<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::solveSensitivityRiccatiEquations
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void GSLQ<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::solveSensitivityBVP(
+void GSLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::solveSensitivityBVP(
 		size_t workerIndex,
 		const size_t& eventTimeIndex,
 		const state_vector_t& MvFinal,
@@ -956,14 +914,14 @@ void GSLQ<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::solveSensitivityBVP(
 		throw std::runtime_error("The index is associated to an inactive event or it is out of range.");
 
 	// Resizing
-	MvTrajectoriesStock.resize(dcPtr_->numPartitions_);
+	MvTrajectoriesStock.resize(numPartitions_);
 
 	// temporal final value for the last Riccati equations
 	state_vector_t MvFinalTemp = MvFinal;
 	// output containers which is reverse
 	state_vector_array_t rMvTrajectory;
 
-	for (int i=dcPtr_->numPartitions_-1; i>=0; i--) {
+	for (int i=numPartitions_-1; i>=0; i--) {
 
 		// skip inactive partitions
 		if (i<dcPtr_->initActivePartition_ || i>dcPtr_->finalActivePartition_) {
@@ -995,7 +953,7 @@ void GSLQ<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::solveSensitivityBVP(
 				&dcPtr_->SmTrajectoriesStock_[i]);
 
 		// max number of steps of integration
-		const size_t maxNumSteps = settingsPtr_->maxNumStepsPerSecond_ *
+		const size_t maxNumSteps = settings_.maxNumStepsPerSecond_ *
 				std::max(1.0, dcPtr_->SsNormalizedTimeTrajectoriesStock_[i].back()-dcPtr_->SsNormalizedTimeTrajectoriesStock_[i].front());
 
 		// output containers resizing
@@ -1018,7 +976,7 @@ void GSLQ<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::solveSensitivityBVP(
 				// finding the current active subsystem
 				scalar_t midNormalizedTime = 0.5 * (*beginTimeItr+*(endTimeItr-1));
 				scalar_t midTime = dcPtr_->partitioningTimes_[i+1] - (dcPtr_->partitioningTimes_[i+1]-dcPtr_->partitioningTimes_[i])*midNormalizedTime;
-				size_t activeSubsystem = findActiveSubsystemIndex(eventTimes(), midTime);
+				size_t activeSubsystem = findActiveSubsystemIndex(eventTimes_, midTime);
 
 				// compute multiplier of the equivalent system
 				scalar_t multiplier;
@@ -1029,9 +987,9 @@ void GSLQ<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::solveSensitivityBVP(
 				bvpSensitivityIntegratorsPtrStock_[workerIndex]->integrate(
 						MvFinalTemp, beginTimeItr, endTimeItr,
 						rMvTrajectory,
-						settingsPtr_->minTimeStep_,
-						settingsPtr_->absTolODE_,
-						settingsPtr_->relTolODE_,
+						settings_.minTimeStep_,
+						settings_.absTolODE_,
+						settings_.relTolODE_,
 						maxNumSteps, true);
 
 				// final value of the next subsystem
@@ -1053,7 +1011,7 @@ void GSLQ<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::solveSensitivityBVP(
 			MvTrajectoriesStock[i][k] = rMvTrajectory[N-1-k];
 
 		// testing the numerical stability of the Riccati equations
-		if (settingsPtr_->checkNumericalStability_)
+		if (settings_.checkNumericalStability_)
 			for (int k=N-1; k>=0; k--) {
 				try {
 					if (MvTrajectoriesStock[i][k].hasNaN())
@@ -1077,7 +1035,7 @@ void GSLQ<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::solveSensitivityBVP(
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void GSLQ<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculateLQSensitivityControllerForward(
+void GSLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculateLQSensitivityControllerForward(
 		size_t workerIndex,
 		const size_t& eventTimeIndex,
 		const std::vector<scalar_array_t>& timeTrajectoriesStock,
@@ -1088,7 +1046,7 @@ void GSLQ<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculateLQSensitivityController
 		throw std::runtime_error("The index is associated to an inactive event or it is out of range.");
 
 	// resizing
-	nablaLvTrajectoriesStock.resize(dcPtr_->numPartitions_);
+	nablaLvTrajectoriesStock.resize(numPartitions_);
 
 	for (size_t i=0; i<numSubsystems_; i++) {
 
@@ -1138,7 +1096,7 @@ void GSLQ<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculateLQSensitivityController
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void GSLQ<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculateBVPSensitivityControllerForward(
+void GSLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculateBVPSensitivityControllerForward(
 		size_t workerIndex,
 		const size_t& eventTimeIndex,
 		const std::vector<scalar_array_t>& timeTrajectoriesStock,
@@ -1149,9 +1107,9 @@ void GSLQ<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculateBVPSensitivityControlle
 		throw std::runtime_error("The index is associated to an inactive event or it is out of range.");
 
 	// resizing
-	LvTrajectoriesStock.resize(dcPtr_->numPartitions_);
+	LvTrajectoriesStock.resize(numPartitions_);
 
-	for (size_t i=0; i<dcPtr_->numPartitions_; i++) {
+	for (size_t i=0; i<numPartitions_; i++) {
 
 		if (i<dcPtr_->initActivePartition_ || i>dcPtr_->finalActivePartition_) {
 			LvTrajectoriesStock[i].clear();
@@ -1196,7 +1154,7 @@ void GSLQ<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculateBVPSensitivityControlle
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void GSLQ<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::getValueFuntionDerivative(
+void GSLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::getValueFuntionDerivative(
 		const size_t& eventTimeIndex,
 		const scalar_t& time,
 		const state_vector_t& state,
@@ -1250,7 +1208,7 @@ void GSLQ<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::getValueFuntionDerivative(
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void GSLQ<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculateCostDerivative(
+void GSLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculateCostDerivative(
 		size_t workerIndex,
 		const size_t& eventTimeIndex,
 		const state_vector_array2_t& sensitivityStateTrajectoriesStock,
@@ -1281,7 +1239,7 @@ void GSLQ<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculateCostDerivative(
 				// finding the current active subsystem
 				scalar_t midTime = 0.5 * ( dcPtr_->nominalTimeTrajectoriesStock_[i][beginIndex] +
 						dcPtr_->nominalTimeTrajectoriesStock_[i][endIndex-1]);
-				size_t activeSubsystem = findActiveSubsystemIndex(eventTimes(), midTime);
+				size_t activeSubsystem = findActiveSubsystemIndex(eventTimes_, midTime);
 
 				// compute multiplier of the equivalent system
 				scalar_t multiplier;
@@ -1320,7 +1278,7 @@ void GSLQ<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculateCostDerivative(
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void GSLQ<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::runLQBasedMethod()  {
+void GSLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::runLQBasedMethod()  {
 
 	const size_t maxNumIteration = 3;
 
@@ -1350,7 +1308,7 @@ void GSLQ<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::runLQBasedMethod()  {
 
 				// for the first iteration set Lv to zero
 				if (iteration == 1) {
-					nablaLvTrajectoriesStockSet_[index].resize(dcPtr_->numPartitions_);
+					nablaLvTrajectoriesStockSet_[index].resize(numPartitions_);
 					for (size_t i=dcPtr_->initActivePartition_; i<=dcPtr_->finalActivePartition_; i++)
 						nablaLvTrajectoriesStockSet_[index][i] = input_vector_array_t(
 								dcPtr_->optimizedControllersStock_[i].time_.size(), input_vector_t::Zero());
@@ -1422,7 +1380,7 @@ void GSLQ<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::runLQBasedMethod()  {
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void GSLQ<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::runSweepingBVPMethod()  {
+void GSLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::runSweepingBVPMethod()  {
 
 	// compute missing data in SLQ
 	computeMissingSlqData();
@@ -1481,29 +1439,34 @@ void GSLQ<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::runSweepingBVPMethod()  {
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void GSLQ<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::run()  {
+void GSLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::run(
+		const scalar_array_t& eventTimes,
+		const slq_data_collector_t* dcPtr)  {
 
-	// collect data from the SLQ instance
-	bool numPartitionsChanged = dcPtr_->collect(slqPtr_);
-
-	// update sizes if number of partitions has been changed
-	if (numPartitionsChanged)
-		setupOptimizer(dcPtr_->numPartitions_);
-
-	// number of event and subsystems
-	numEventTimes_ = eventTimes().size();
+	// event time an number of event and subsystems
+	eventTimes_ = eventTimes;
+	numEventTimes_ = eventTimes_.size();
 	numSubsystems_ = numEventTimes_ + 1;
 
+	// data collector pointer
+	dcPtr_ = dcPtr;
+
+	// update sizes if number of partitions has been changed
+	if (numPartitions_ != dcPtr_->numPartitions_) {
+		numPartitions_ = dcPtr_->numPartitions_;
+		setupOptimizer(numPartitions_);
+	}
+
 	// find active event times range: [activeEventTimeBeginIndex_, activeEventTimeEndIndex_)
-	activeEventTimeBeginIndex_ = findActiveSubsystemIndex(eventTimes(), dcPtr_->initTime_);
-	activeEventTimeEndIndex_   = findActiveSubsystemIndex(eventTimes(), dcPtr_->finalTime_);
+	activeEventTimeBeginIndex_ = findActiveSubsystemIndex(eventTimes_, dcPtr_->initTime_);
+	activeEventTimeEndIndex_   = findActiveSubsystemIndex(eventTimes_, dcPtr_->finalTime_);
 
 	// display
-	if (settingsPtr_->displayInfo_)
+	if (settings_.displayInfo_)
 		std::cerr << "\n#### Calculating cost function sensitivity ..." << std::endl;
 
 	// use the LQ-based method or Sweeping-BVP method
-	if (settingsPtr_->useLQForDerivatives_==true) {
+	if (settings_.useLQForDerivatives_==true) {
 		runLQBasedMethod();
 	} else {
 		runSweepingBVPMethod();
@@ -1512,4 +1475,3 @@ void GSLQ<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::run()  {
 
 
 } // namespace ocs2
-

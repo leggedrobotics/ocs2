@@ -4,9 +4,9 @@
 #- Project related configuration options
 #---------------------------------------------------------------------------
 DOXYFILE_ENCODING      = UTF-8
-PROJECT_NAME           = "OCS2: communication interfaces"
+PROJECT_NAME           = "OCS2: ROS interfaces"
 PROJECT_NUMBER         = v1.0.0
-PROJECT_BRIEF          = "OCS2 communication interfaces"
+PROJECT_BRIEF          = "OCS2 ROS interfaces"
 PROJECT_LOGO           = "../../ocs2_doc/doc/logo/logo.png"
 OUTPUT_DIRECTORY       = .
 CREATE_SUBDIRS         = NO
@@ -216,9 +216,9 @@ HTML_FOOTER            =
 HTML_STYLESHEET        =
 HTML_EXTRA_STYLESHEET  =
 HTML_EXTRA_FILES       =
-HTML_COLORSTYLE_HUE    = 10
-HTML_COLORSTYLE_SAT    = 96
-HTML_COLORSTYLE_GAMMA  = 57
+HTML_COLORSTYLE_HUE    = 27
+HTML_COLORSTYLE_SAT    = 42
+HTML_COLORSTYLE_GAMMA  = 51
 HTML_TIMESTAMP         = YES
 HTML_DYNAMIC_MENUS     = YES
 HTML_DYNAMIC_SECTIONS  = NO

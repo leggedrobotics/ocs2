@@ -4,12 +4,13 @@
 \section ocs2_doc_home OCS2
 This is a C++ library for an efficient continuous-time optimal control implementation.  
 
-This library consists of four main modules
- - <a href="../../../ocs2_core/doc/html/index.html">ocs2_core</a>
- - <a href="../../../ocs2_slq/doc/html/index.html">ocs2_slq</a>
- - <a href="../../../ocs2_ocs2/doc/html/index.html">ocs2_ocs2</a>
- - <a href="../../../ocs2_frank_wolfe/doc/html/index.html">ocs2_frank_wolfe</a>
- - <a href="../../../ocs2_mpc/doc/html/index.html">ocs2_mpc</a>
+This library consists of the following main modules
+ - <a href="../../../ocs2_core/doc/html/index.html">Core</a>
+ - <a href="../../../ocs2_slq/doc/html/index.html">SLQ</a>
+ - <a href="../../../ocs2_ocs2/doc/html/index.html">OCS2</a>
+ - <a href="../../../ocs2_mpc/doc/html/index.html">MPC</a>
+ - <a href="../../../ocs2_comm_interfaces/doc/html/index.html">ROS Interfaces</a>
+ - <a href="../../../ocs2_frank_wolfe/doc/html/index.html">Frank Wolfe</a>
 
 \section ocs2_doc_link_section OCS2 Modules
 
@@ -33,12 +34,13 @@ This module implemets the real-time MPC algorithm.
 The source code is available at <a href="https://bitbucket.org/adrlab/ocs2">https://bitbucket.org/adrlab/ocs2</a>
 
 \section ocs2_doc_ack Acknowledgement
-\subsection contribs Contributors:
+ 
+ \subsection ocs2_doc_lead Lead and Maintanance:
+ - Farbod Farshidian, farbod (dot) farshidian (at) gmail (dot) com
+
+\subsection ocs2_doc_contributors Contributors:
  - Farbod Farshidian
  - Asutosh Satapathy
  - Markus Giftthaler
  
- \subsection Project Lead and Maintanance:
- - Farbod Farshidian, farbod (dot) farshidian (at) gmail (dot) com
-
 */

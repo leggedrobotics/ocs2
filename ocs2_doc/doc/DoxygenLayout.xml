@@ -3,7 +3,16 @@
   <!-- Navigation index tabs for HTML output -->
   <navindex>
     <tab type="mainpage" visible="yes" title=""/>
-    <tab type="pages" visible="no" title="" intro=""/>
+    
+    <!-- Link to other packages -->
+    <tab type="user" url="../../../ocs2_core/doc/html/index.html" title="Core Module" intro=""/>
+    <tab type="user" url="../../../ocs2_slq/doc/html/index.html" title="SLQ Module" intro=""/>
+    <tab type="user" url="../../../ocs2_ocs2/doc/html/index.html" title="OCS2 Module" intro=""/>
+    <tab type="user" url="../../../ocs2_mpc/doc/html/index.html" title="MPC Module" intro=""/>
+    <tab type="user" url="../../../ocs2_comm_interfaces/doc/html/index.html" title="ROS Interfaces Module" intro=""/>
+    <tab type="user" url="../../../ocs2_frank_wolfe/doc/html/index.html" title="Frank-Wolfe Module" intro=""/>
+    
+    <tab type="pages" visible="yes" title="" intro=""/>
     <tab type="modules" visible="no" title="" intro=""/>
     <tab type="namespaces" visible="yes" title="">
       <tab type="namespacelist" visible="yes" title="" intro=""/>
@@ -20,16 +29,7 @@
       <tab type="globals" visible="no" title="" intro=""/>
     </tab>
     <tab type="examples" visible="yes" title="" intro=""/>
-    <tab type="user" url="@ref ocs2_doc_installation" title="Installation" intro=""/>
-    <tab type="user" url="@ref ocs2_doc_example" title="Examples" intro=""/>
 
-    <!-- Link to other packages -->
-    <tab type="user" url="../../../ocs2_core/doc/html/index.html" title="Core" intro=""/>
-    <tab type="user" url="../../../ocs2_slq/doc/html/index.html" title="SLQ" intro=""/>
-    <tab type="user" url="../../../ocs2_ocs2/doc/html/index.html" title="OCS2" intro=""/>
-    <tab type="user" url="../../../ocs2_mpc/doc/html/index.html" title="MPC" intro=""/>
-    <tab type="user" url="../../../ocs2_comm_interfaces/doc/html/index.html" title="ROS Interfaces" intro=""/>
-    <tab type="user" url="../../../ocs2_frank_wolfe/doc/html/index.html" title="Frank Wolfe" intro=""/>
   </navindex>
 
   <!-- Layout definition for a class page -->

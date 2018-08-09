@@ -100,13 +100,6 @@ public:
 	virtual ~ConstraintBaseAD() = default;
 
 	/**
-	 * Returns pointer to the base class.
-	 *
-	 * @return A raw pointer to the class.
-	 */
-	virtual BASE* clone() const override;
-
-	/**
 	 * Interface method to the state-input equality constraints. This method should be implemented by the derived class.
 	 *
 	 * @tparam scalar type. All the floating point operations should be with this type.
@@ -283,6 +276,27 @@ public:
 	 * @param [out] F_f: \f$ F_f(t) \f$ matrix.
 	 */
 	virtual void getFinalConstraint2DerivativesState(constraint2_state_matrix_t& F_f) final;
+
+	/**
+	 * Returns pointer to the base class.
+	 *
+	 * @return A raw pointer to the class.
+	 */
+	virtual BASE* clone() const final;
+
+	/**
+	 * Initialization of the system Constraints cannot be override.
+	 *
+	 * @param [in] logicRulesMachine: A class which contains and parse the logic rules e.g
+	 * method findActiveSubsystemHandle returns a Lambda expression which can be used to
+	 * find the ID of the current active subsystem.
+	 * @param [in] partitionIndex: index of the time partition.
+	 * @param [in] algorithmName: The algorithm that class this class (default not defined).
+	 */
+	virtual void initializeModel(
+			LogicRulesMachine<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>& logicRulesMachine,
+			const size_t& partitionIndex,
+			const char* algorithmName = nullptr) final {}
 
 
 protected:

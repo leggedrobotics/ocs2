@@ -92,13 +92,6 @@ public:
 	 */
 	virtual ~SystemDynamicsBaseAD() = default;
 
-    /**
-     * Returns pointer to the base class.
-     *
-     * @return A raw pointer to the class.
-     */
-	virtual BASE* clone() const override;
-
 	/**
 	 * Interface method to the state flow map of the hybrid system. This method should be implemented by the derived class.
 	 *
@@ -310,6 +303,27 @@ public:
 	 * @param [out] D_u_gamma: Derivative of the guard surfaces w.r.t. input vector.
 	 */
 	virtual void getGuardSurfacesDerivativeInput(dynamic_input_matrix_t& D_u_gamma) final;
+
+    /**
+     * Returns pointer to the base class.
+     *
+     * @return A raw pointer to the class.
+     */
+	virtual BASE* clone() const final;
+
+	/**
+	 * Initialization of the system dynamics derivatives cannot be override anymore.
+	 *
+	 * @param [in] logicRulesMachine: A class which contains and parse the logic rules e.g
+	 * method findActiveSubsystemHandle returns a Lambda expression which can be used to
+	 * find the ID of the current active subsystem.
+	 * @param [in] partitionIndex: index of the time partition.
+	 * @param [in] algorithmName: The algorithm that class this class (default not defined).
+	 */
+	void initializeModel(
+			LogicRulesMachine<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>& logicRulesMachine,
+			const size_t& partitionIndex,
+			const char* algorithmName=NULL) final {}
 
 
 	void getCompileFlags(std::vector<std::string>& cFlags) {

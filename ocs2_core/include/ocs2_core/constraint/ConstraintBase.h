@@ -138,10 +138,10 @@ public:
 	virtual void getConstraint1(constraint1_vector_t& e)  {}
 
 	/**
-	 * Get the number of state-input active equality constriants.
+	 * Get the number of state-input active equality constraints.
 	 *
 	 * @param [in] time: time.
-	 * @return number of state-input active equality constriants.
+	 * @return number of state-input active equality constraints.
 	 */
 	virtual size_t numStateInputConstraint(const scalar_t& time) {
 
@@ -156,10 +156,10 @@ public:
 	virtual void getConstraint2(constraint2_vector_t& h) {}
 
 	/**
-	 * Get the number of state-only active equality constriants.
+	 * Get the number of state-only active equality constraints.
 	 *
 	 * @param [in] time: time.
-	 * @return number of state-only active equality constriants.
+	 * @return number of state-only active equality constraints.
 	 */
 	virtual size_t numStateOnlyConstraint(const scalar_t& time) {
 
@@ -174,10 +174,10 @@ public:
 	virtual void getFinalConstraint2(constraint2_vector_t& h_f) {}
 
 	/**
-	 * Get the number of final state-only active equality constriants.
+	 * Get the number of final state-only active equality constraints.
 	 *
 	 * @param [in] time: time.
-	 * @return number of final state-only active equality constriants.
+	 * @return number of final state-only active equality constraints.
 	 */
 	virtual size_t numStateOnlyFinalConstraint(const scalar_t& time) {
 

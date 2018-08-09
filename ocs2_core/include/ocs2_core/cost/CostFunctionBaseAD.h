@@ -87,13 +87,6 @@ public:
 	 */
 	virtual ~CostFunctionBaseAD() = default;
 
-    /**
-     * Returns pointer to the base class.
-     *
-     * @return A raw pointer to the class.
-     */
-	virtual BASE* clone() const override;
-
 	/**
 	 * Interface method to the intermediate cost function. This method should be implemented by the derived class.
 	 *
@@ -170,70 +163,91 @@ public:
 	virtual void setCurrentStateAndControl(
 			const scalar_t& t,
 			const state_vector_t& x,
-			const input_vector_t& u) override;
+			const input_vector_t& u) final;
 
     /**
      * Get the intermediate cost.
      *
      * @param [out] L: The intermediate cost value.
      */
-	virtual void getIntermediateCost(scalar_t& L) override;
+	virtual void getIntermediateCost(scalar_t& L) final;
 
     /**
      * Get the state derivative of the intermediate cost.
      *
      * @param [out] dLdx: First order derivative of the intermediate cost with respect to state vector.
      */
-	virtual void getIntermediateCostDerivativeState(state_vector_t& dLdx) override;
+	virtual void getIntermediateCostDerivativeState(state_vector_t& dLdx) final;
 
     /**
      * Get state second order derivative of the intermediate cost.
      *
      * @param [out] dLdxx: Second order derivative of the intermediate cost with respect to state vector.
      */
-	virtual void getIntermediateCostSecondDerivativeState(state_matrix_t& dLdxx) override;
+	virtual void getIntermediateCostSecondDerivativeState(state_matrix_t& dLdxx) final;
 
     /**
      * Get control input derivative of the intermediate cost.
      *
      * @param [out] dLdu: First order derivative of the intermediate cost with respect to input vector.
      */
-	virtual void getIntermediateCostDerivativeInput(input_vector_t& dLdu) override;
+	virtual void getIntermediateCostDerivativeInput(input_vector_t& dLdu) final;
 
     /**
      * Get control input second derivative of the intermediate cost.
      *
      * @param [out] dLduu: Second order derivative of the intermediate cost with respect to input vector.
      */
-	virtual void getIntermediateCostSecondDerivativeInput(input_matrix_t& dLduu) override;
+	virtual void getIntermediateCostSecondDerivativeInput(input_matrix_t& dLduu) final;
 
     /**
      * Get the input-state derivative of the intermediate cost.
      *
      * @param [out] dLdux: Second order derivative of the intermediate cost with respect to input vector and state.
      */
-	virtual void getIntermediateCostDerivativeInputState(input_state_matrix_t& dLdux) override;
+	virtual void getIntermediateCostDerivativeInputState(input_state_matrix_t& dLdux) final;
 
     /**
      * Get the terminal cost.
      *
      * @param [out] Phi: The final cost value.
      */
-	virtual void getTerminalCost(scalar_t& Phi) override;
+	virtual void getTerminalCost(scalar_t& Phi) final;
 
     /**
      * Get the terminal cost state derivative.
      *
      * @param [out] dPhidx: First order final cost derivative with respect to state vector.
      */
-	virtual void getTerminalCostDerivativeState(state_vector_t& dPhidx) override;
+	virtual void getTerminalCostDerivativeState(state_vector_t& dPhidx) final;
 
     /**
      * Get the terminal cost state second derivative
      *
      * @param [out] dPhidxx: Second order final cost derivative with respect to state vector.
      */
-	virtual void getTerminalCostSecondDerivativeState(state_matrix_t& dPhidxx) override;
+	virtual void getTerminalCostSecondDerivativeState(state_matrix_t& dPhidxx) final;
+
+    /**
+     * Returns pointer to the base class.
+     *
+     * @return A raw pointer to the class.
+     */
+	virtual BASE* clone() const final;
+
+	/**
+	 * Initialization of the cost function cannot be override.
+	 *
+	 * @param [in] logicRulesMachine: A class which contains and parse the logic rules e.g
+	 * method findActiveSubsystemHandle returns a Lambda expression which can be used to
+	 * find the ID of the current active subsystem.
+	 * @param [in] partitionIndex: index of the time partition.
+	 * @param [in] algorithmName: The algorithm that class this class (default not defined).
+	 */
+	virtual void initializeModel(
+			LogicRulesMachine<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>& logicRulesMachine,
+			const size_t& partitionIndex,
+			const char* algorithmName = nullptr) final {}
 
 protected:
 	typedef ocs2::CppAdCodeGenInterface<domain_dim_, 1, scalar_t> ad_interface_t;

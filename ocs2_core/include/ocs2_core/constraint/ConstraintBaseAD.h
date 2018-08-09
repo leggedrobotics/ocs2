@@ -195,7 +195,7 @@ public:
 			const std::string& libraryFolder);
 
 	/**
-	 * laods the forward model, the Jacobian model, and the Hessian model.
+	 * Loads the forward model, the Jacobian model, and the Hessian model.
 	 *
 	 * @param modelName
 	 * @param libraryFolder
@@ -229,28 +229,28 @@ public:
 	virtual void setCurrentStateAndControl(
 			const scalar_t& t,
 			const state_vector_t& x,
-			const input_vector_t& u) override;
+			const input_vector_t& u) final;
 
 	/**
 	 * Computes the state-input equality constraints.
 	 *
 	 * @param [out] e: The state-input equality constraints value.
 	 */
-	virtual void getConstraint1(constraint1_vector_t& e) override;
+	virtual void getConstraint1(constraint1_vector_t& e) final;
 
 	/**
 	 * Compute the state-only equality constraints.
 	 *
 	 * @param [out] h: The state-only equality constraints value.
 	 */
-	virtual void getConstraint2(constraint2_vector_t& h) override;
+	virtual void getConstraint2(constraint2_vector_t& h) final;
 
 	/**
 	 * Compute the final state-only equality constraints.
 	 *
 	 * @param [out] h_f: The final state-only equality constraints value.
 	 */
-	virtual void getFinalConstraint2(constraint2_vector_t& h_f) override;
+	virtual void getFinalConstraint2(constraint2_vector_t& h_f) final;
 
 	/**
 	 * The C matrix at a given operating point for the linearized state-input constraints,
@@ -258,7 +258,7 @@ public:
 	 *
 	 * @param [out] C: \f$ C(t) \f$ matrix.
 	 */
-	virtual void getConstraint1DerivativesState(constraint1_state_matrix_t& C) override;
+	virtual void getConstraint1DerivativesState(constraint1_state_matrix_t& C) final;
 
 	/**
 	 * The D matrix at a given operating point for the linearized state-input constraints,
@@ -266,7 +266,7 @@ public:
 	 *
 	 * @param [out] D: \f$ D(t) \f$ matrix.
 	 */
-	virtual void getConstraint1DerivativesControl(constraint1_input_matrix_t& D) override;
+	virtual void getConstraint1DerivativesControl(constraint1_input_matrix_t& D) final;
 
 	/**
 	 * The F matrix at a given operating point for the linearized state-only constraints,
@@ -274,7 +274,7 @@ public:
 	 *
 	 * @param [out] F: \f$ F(t) \f$ matrix.
 	 */
-	virtual void getConstraint2DerivativesState(constraint2_state_matrix_t& F) override;
+	virtual void getConstraint2DerivativesState(constraint2_state_matrix_t& F) final;
 
 	/**
 	 * The F matrix at a given operating point for the linearized terminal state-only constraints,
@@ -282,7 +282,7 @@ public:
 	 *
 	 * @param [out] F_f: \f$ F_f(t) \f$ matrix.
 	 */
-	virtual void getFinalConstraint2DerivativesState(constraint2_state_matrix_t& F_f) override;
+	virtual void getFinalConstraint2DerivativesState(constraint2_state_matrix_t& F_f) final;
 
 
 protected:

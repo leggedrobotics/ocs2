@@ -118,10 +118,10 @@ public:
 	}
 
 	/**
-	 * Get the number of state-input active equality constriants.
+	 * Get the number of state-input active equality constraints.
 	 *
 	 * @param [in] time: time.
-	 * @return number of state-input active equality constriants.
+	 * @return number of state-input active equality constraints.
 	 */
 	virtual size_t numStateInputConstraint(const scalar_t& time) override {
 
@@ -140,10 +140,10 @@ public:
 	}
 
 	/**
-	 * Get the number of state-only active equality constriants.
+	 * Get the number of state-only active equality constraints.
 	 *
 	 * @param [in] time: time.
-	 * @return number of state-only active equality constriants.
+	 * @return number of state-only active equality constraints.
 	 */
 	virtual size_t numStateOnlyConstraint(const scalar_t& time) {
 
@@ -162,10 +162,10 @@ public:
 	}
 
 	/**
-	 * Get the number of final state-only active equality constriants.
+	 * Get the number of final state-only active equality constraints.
 	 *
 	 * @param [in] time: time.
-	 * @return number of final state-only active equality constriants.
+	 * @return number of final state-only active equality constraints.
 	 */
 	virtual size_t numStateOnlyFinalConstraint(const scalar_t& time) {
 

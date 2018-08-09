@@ -83,7 +83,7 @@ The source code is available at <a href="https://bitbucket.org/adrlab/ocs2">http
 
 \section cs2_doc_how_to_use How to use the OCS2 Toolbox
 
-To get started with the control toolbox, please see Getting Started.
+To get started with the control toolbox, please see \ref ocs2_doc_getting_started.
 
 \section support Support
 
@@ -114,7 +114,6 @@ Real-Time Motion Planning of Legged Robots: A Model Predictive Control Approach.
 In IEEE-RAS 17th International Conference on Humanoid Robots (Humanoids),
 IEEE 2017, pp. 577-584 
 (<a href="https://arxiv.org/abs/1710.04029" target="_blank">pdf</a>).
-
 
 - Farbod Farshidian, Michael Neunert, Alexander W. Winkler, Gonzalo Rey, Jonas
 Buchli. An Efficient Optimal Planning and Control Framework For Quadrupedal

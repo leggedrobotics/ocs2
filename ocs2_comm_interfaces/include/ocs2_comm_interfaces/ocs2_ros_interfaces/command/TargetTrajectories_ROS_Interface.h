@@ -58,19 +58,32 @@ public:
 	typedef SCALAR_T scalar_t;
 
 	typedef CostDesiredTrajectories<scalar_t> cost_desired_trajectories_t;
-	typedef typename cost_desired_trajectories_t::scalar_array_t 		 	scalar_array_t;
-	typedef typename cost_desired_trajectories_t::dynamic_vector_t 			dynamic_vector_t;
-	typedef typename cost_desired_trajectories_t::dynamic_vector_array_t 	dynamic_vector_array_t;
+	typedef typename cost_desired_trajectories_t::scalar_array_t         scalar_array_t;
+	typedef typename cost_desired_trajectories_t::dynamic_vector_t       dynamic_vector_t;
+	typedef typename cost_desired_trajectories_t::dynamic_vector_array_t dynamic_vector_array_t;
 
+	/**
+	 * Constructor.
+	 *
+	 * @param [in] nodeName: The node's name.
+	 */
 	TargetTrajectories_ROS_Interface(
 			const std::string& nodeName = "robot_mpc");
 
-	virtual ~TargetTrajectories_ROS_Interface() = default;
+	/**
+	 * Destructor.
+	 */
+	virtual ~TargetTrajectories_ROS_Interface();
 
 	/**
 	 * Resets the class to its instantiate state.
 	 */
 	virtual void reset() {}
+
+	/**
+	 * ShutdownNodes publisher nodes.
+	 */
+	void shutdownNodes();
 
 	/**
 	 * This is the main routine which launches the publisher node for MPC's

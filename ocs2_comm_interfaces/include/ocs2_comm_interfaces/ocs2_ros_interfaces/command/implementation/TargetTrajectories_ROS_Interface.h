@@ -42,6 +42,15 @@ TargetTrajectories_ROS_Interface<SCALAR_T>::TargetTrajectories_ROS_Interface(
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <typename SCALAR_T>
+TargetTrajectories_ROS_Interface<SCALAR_T>::~TargetTrajectories_ROS_Interface() {
+
+	shutdownNodes();
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+template <typename SCALAR_T>
 void TargetTrajectories_ROS_Interface<SCALAR_T>::publishTargetTrajectories(
 		const cost_desired_trajectories_t& costDesiredTrajectories) {
 
@@ -49,6 +58,15 @@ void TargetTrajectories_ROS_Interface<SCALAR_T>::publishTargetTrajectories(
 			mpcTargetTrajectoriesMsg_);
 
 	mpcTargetTrajectoriesPublisher_.publish(mpcTargetTrajectoriesMsg_);
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+template <typename SCALAR_T>
+void TargetTrajectories_ROS_Interface<SCALAR_T>::shutdownNodes() {
+
+	mpcTargetTrajectoriesPublisher_.shutdown();
 }
 
 /******************************************************************************************************/

@@ -168,8 +168,11 @@ void RosMsgConversions<STATE_DIM, INPUT_DIM>::ReadTargetTrajectoriesMsg(
 	dynamic_vector_array_t& desiredStateTrajectory = costDesiredTrajectories.desiredStateTrajectory();
 	dynamic_vector_array_t& desiredInputTrajectory = costDesiredTrajectories.desiredInputTrajectory();
 
-	// state and time
 	size_t N = targetTrajectoriesMsg.stateTrajectory.size();
+	if (N==0)
+		throw std::runtime_error("An empty target trajectories message is received.");
+
+	// state and time
 	desiredTimeTrajectory.resize(N);
 	desiredStateTrajectory.resize(N);
 	for (size_t i=0; i<N; i++) {

@@ -9,18 +9,18 @@ namespace switched_model {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM>
-ComKinoDynamicsBase<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>*
-	ComKinoDynamicsBase<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::clone() const {
+template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
+ComKinoDynamicsBase<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM, LOGIC_RULES_T>*
+	ComKinoDynamicsBase<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::clone() const {
 
-	return new ComKinoDynamicsBase<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>(*this);
+	return new ComKinoDynamicsBase<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM, LOGIC_RULES_T>(*this);
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM>
-void ComKinoDynamicsBase<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::initializeModel(
+template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
+void ComKinoDynamicsBase<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::initializeModel(
 		logic_rules_machine_t& logicRulesMachine,
 		const size_t& partitionIndex,
 		const char* algorithmName/*=NULL*/) {
@@ -40,8 +40,8 @@ void ComKinoDynamicsBase<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::initializeMode
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM>
-void ComKinoDynamicsBase<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::computeFlowMap(
+template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
+void ComKinoDynamicsBase<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::computeFlowMap(
 		const scalar_t& t,
 		const state_vector_t& x,
 		const input_vector_t& u,
@@ -64,8 +64,8 @@ void ComKinoDynamicsBase<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::computeFlowMap
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-//template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM>
-//void ComKinoDynamicsBase<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::computeGuardSurfaces(
+//template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
+//void ComKinoDynamicsBase<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::computeGuardSurfaces(
 //		const scalar_t& t,
 //		const state_vector_t& x,
 //		std::vector<scalar_t>& guardSurfacesValue) {
@@ -134,8 +134,8 @@ void ComKinoDynamicsBase<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::computeFlowMap
 //	std::cout << "\b\b}\n";
 //}
 
-template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM>
-void ComKinoDynamicsBase<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::computeGuardSurfaces(
+template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
+void ComKinoDynamicsBase<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::computeGuardSurfaces(
 		const scalar_t& t,
 		const state_vector_t& x,
 		dynamic_vector_t& guardSurfacesValue) {
@@ -207,16 +207,16 @@ void ComKinoDynamicsBase<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::computeGuardSu
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM>
-void ComKinoDynamicsBase<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::setStanceLegs (const contact_flag_t& stanceLegs)  {
+template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
+void ComKinoDynamicsBase<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::setStanceLegs (const contact_flag_t& stanceLegs)  {
 	stanceLegs_ = stanceLegs;
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM>
-void ComKinoDynamicsBase<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::getStanceLegs (contact_flag_t& stanceLegs)  const {
+template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
+void ComKinoDynamicsBase<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::getStanceLegs (contact_flag_t& stanceLegs)  const {
 	stanceLegs = stanceLegs_;
 }
 

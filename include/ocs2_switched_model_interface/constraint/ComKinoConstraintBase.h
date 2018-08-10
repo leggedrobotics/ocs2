@@ -25,9 +25,12 @@
 
 namespace switched_model {
 
-template <size_t JOINT_COORD_SIZE, size_t STATE_DIM=12+JOINT_COORD_SIZE, size_t INPUT_DIM=12+JOINT_COORD_SIZE>
+template <size_t JOINT_COORD_SIZE,
+		size_t STATE_DIM=12+JOINT_COORD_SIZE,
+		size_t INPUT_DIM=12+JOINT_COORD_SIZE,
+		class LOGIC_RULES_T=SwitchedModelPlannerLogicRules<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM, double>>
 class ComKinoConstraintBase : public
-ocs2::ConstraintBase<12+JOINT_COORD_SIZE, 12+JOINT_COORD_SIZE, SwitchedModelPlannerLogicRules<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM, double>>
+ocs2::ConstraintBase<12+JOINT_COORD_SIZE, 12+JOINT_COORD_SIZE, LOGIC_RULES_T>
 {
 public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
@@ -39,11 +42,11 @@ public:
 		NUM_CONTACT_POINTS_ = SwitchedModel<JOINT_COORD_SIZE>::NUM_CONTACT_POINTS
 	};
 
-	typedef SwitchedModelPlannerLogicRules<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM, double> logic_rules_t;
+	typedef LOGIC_RULES_T logic_rules_t;
 	typedef typename logic_rules_t::foot_cpg_t 				foot_cpg_t;
 	typedef typename logic_rules_t::feet_cpg_ptr_t 			feet_cpg_ptr_t;
 	typedef typename logic_rules_t::feet_cpg_const_ptr_t	feet_cpg_const_ptr_t;
-	typedef ocs2::LogicRulesMachine<STATE_DIM, INPUT_DIM, logic_rules_t> logic_rules_machine_t;
+	typedef ocs2::LogicRulesMachine<LOGIC_RULES_T::state_dim, LOGIC_RULES_T::input_dim, logic_rules_t> logic_rules_machine_t;
 
 	typedef ocs2::ConstraintBase<STATE_DIM, INPUT_DIM, logic_rules_t> Base;
 
@@ -96,7 +99,7 @@ public:
 	/**
 	 * clone ComKinoConstraintBase class.
 	 */
-	virtual ComKinoConstraintBase<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>* clone() const override;
+	virtual ComKinoConstraintBase<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM, LOGIC_RULES_T>* clone() const override;
 
 	/**
 	 * Initializes the system dynamics. This method should always be called at the very first call of the model.

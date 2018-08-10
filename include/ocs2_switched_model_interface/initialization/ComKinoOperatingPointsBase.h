@@ -22,15 +22,13 @@ namespace switched_model {
 
 template <size_t JOINT_COORD_SIZE, size_t STATE_DIM=12+JOINT_COORD_SIZE, size_t INPUT_DIM=12+JOINT_COORD_SIZE>
 class ComKinoOperatingPointsBase : public
-ocs2::SystemOperatingPoint<12+JOINT_COORD_SIZE, 12+JOINT_COORD_SIZE, SwitchedModelPlannerLogicRules<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM, double>>
+ocs2::SystemOperatingPoint<STATE_DIM, INPUT_DIM, SwitchedModelPlannerLogicRules<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM, double>>
 {
 public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
 	enum
 	{
-		STATE_DIM_ = STATE_DIM,
-		INPUT_DIM_ = INPUT_DIM,
 		NUM_CONTACT_POINTS_ = SwitchedModel<JOINT_COORD_SIZE>::NUM_CONTACT_POINTS
 	};
 

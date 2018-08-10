@@ -57,20 +57,7 @@ MRT_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::MRT_ROS_Interface(
 template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
 MRT_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::~MRT_ROS_Interface() {
 
-#ifdef PUBLISH_THREAD
-	ROS_INFO_STREAM("Shutting down workers ...");
-
-	std::unique_lock<std::mutex> lk(publisherMutex_);
-	terminateThread_ = true;
-	lk.unlock();
-
-	msgReady_.notify_all();
-
-	if (publisherWorker_.joinable())
-		publisherWorker_.join();
-
-	ROS_INFO_STREAM("All workers are shut down.");
-#endif
+	shutdownNodes();
 }
 
 /******************************************************************************************************/
@@ -534,6 +521,32 @@ void MRT_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::evaluateFeedbackPol
 
 	size_t index = findActiveSubsystemFnc_(time);
 	subsystem = logicMachinePtr_->getLogicRulesPtr()->subsystemsSequence().at(index);
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
+void MRT_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::shutdownNodes() {
+
+#ifdef PUBLISH_THREAD
+	ROS_INFO_STREAM("Shutting down workers ...");
+
+	std::unique_lock<std::mutex> lk(publisherMutex_);
+	terminateThread_ = true;
+	lk.unlock();
+
+	msgReady_.notify_all();
+
+	if (publisherWorker_.joinable())
+		publisherWorker_.join();
+
+	ROS_INFO_STREAM("All workers are shut down.");
+#endif
+
+	// shutdown publishers
+	dummyPublisher_.shutdown();
+	mpcObservationPublisher_.shutdown();
 }
 
 /******************************************************************************************************/

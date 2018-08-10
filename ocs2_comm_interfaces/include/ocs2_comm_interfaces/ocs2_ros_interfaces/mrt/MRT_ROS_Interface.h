@@ -206,6 +206,11 @@ public:
 			size_t& subsystem);
 
 	/**
+	 * Shutdowns the ROS nodes.
+	 */
+	void shutdownNodes();
+
+	/**
 	 * Launches the ROS nodes to communicate with the MPC node.
 	 *
 	 * @param [in] argc: Command line number of arguments.

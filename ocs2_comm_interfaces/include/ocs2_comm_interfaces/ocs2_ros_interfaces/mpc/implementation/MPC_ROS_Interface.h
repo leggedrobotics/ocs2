@@ -60,20 +60,7 @@ MPC_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::MPC_ROS_Interface(
 template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
 MPC_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::~MPC_ROS_Interface() {
 
-#ifdef PUBLISH_THREAD
-	ROS_INFO_STREAM("Shutting down workers ...");
-
-	std::unique_lock<std::mutex> lk(publisherMutex_);
-	terminateThread_ = true;
-	lk.unlock();
-
-	msgReady_.notify_all();
-
-	if (publisherWorker_.joinable())
-		publisherWorker_.join();
-
-	ROS_INFO_STREAM("All workers are shut down.");
-#endif
+	shutdownNodes();
 }
 
 /******************************************************************************************************/
@@ -525,6 +512,33 @@ void MPC_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::mpcTargetTrajectori
 	desiredTrajectoriesUpdated_ = true;
 
 	RosMsgConversions<0, 0>::ReadTargetTrajectoriesMsg(*msg, costDesiredTrajectories_);
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
+void MPC_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::shutdownNodes() {
+
+#ifdef PUBLISH_THREAD
+	ROS_INFO_STREAM("Shutting down workers ...");
+
+	std::unique_lock<std::mutex> lk(publisherMutex_);
+	terminateThread_ = true;
+	lk.unlock();
+
+	msgReady_.notify_all();
+
+	if (publisherWorker_.joinable())
+		publisherWorker_.join();
+
+	ROS_INFO_STREAM("All workers are shut down.");
+#endif
+
+	// shutdown publishers
+	mpcFeedforwardPolicyPublisher_.shutdown();
+	mpcFeedbackPolicyPublisher_.shutdown();
+	dummyPublisher_.shutdown();
 }
 
 /******************************************************************************************************/

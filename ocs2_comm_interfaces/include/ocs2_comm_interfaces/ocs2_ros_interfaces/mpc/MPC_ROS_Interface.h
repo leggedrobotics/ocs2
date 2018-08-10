@@ -137,6 +137,11 @@ public:
 	virtual void reset();
 
 	/**
+	 * Shutdowns the ROS nodes.
+	 */
+	void shutdownNodes();
+
+	/**
 	 * This is the main routine which launches all the nodes required for MPC to run which includes:
 	 * (1) The MPC policy publisher (either feedback or feedforward policy).
 	 * (2) The observation subscriber which gets the current measured state to invoke the MPC run routine.

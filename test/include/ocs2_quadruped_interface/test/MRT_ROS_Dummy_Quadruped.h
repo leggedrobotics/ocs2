@@ -77,12 +77,21 @@ public:
 			const std::string& robotName = "robot",
 			const scalar_t& mpcDesiredFrequency = -1);
 
-		MRT_ROS_Dummy_Quadruped(
-				const quadruped_interface_ptr_t& ocs2QuadrupedInterfacePtr,
-				const typename BASE::mrt_ptr_t mrtPtr,
-				const scalar_t& mrtDesiredFrequency,
-				const std::string& robotName = "robot",
-				const scalar_t& mpcDesiredFrequency = -1);
+	/**
+	 * Constructor.
+	 *
+	 * @param [in] ocs2QuadrupedInterfacePtr
+	 * @param [in] mrtPtr: A pointer to MRT instance
+	 * @param [in] mrtDesiredFrequency: MRT loop frequency in Hz
+	 * @param [in] robotName
+	 * @param [in] mpcDesiredFrequency: MPC loop frequency in Hz
+	 */
+	MRT_ROS_Dummy_Quadruped(
+			const quadruped_interface_ptr_t& ocs2QuadrupedInterfacePtr,
+			const typename BASE::mrt_ptr_t mrtPtr,
+			const scalar_t& mrtDesiredFrequency,
+			const std::string& robotName = "robot",
+			const scalar_t& mpcDesiredFrequency = -1);
 
 	/**
 	 * Destructor.

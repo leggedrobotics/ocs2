@@ -55,8 +55,11 @@ public:
 	typedef typename Dimensions<STATE_DIM, INPUT_DIM>::controller_t 		controller_t;
 	typedef typename Dimensions<STATE_DIM, INPUT_DIM>::controller_array_t 	controller_array_t;
 
-	static constexpr size_t state_dim = STATE_DIM;
-	static constexpr size_t input_dim = INPUT_DIM;
+	enum
+	{
+		state_dim_ = STATE_DIM,
+		input_dim_ = INPUT_DIM
+	};
 
 	/**
 	 * Default constructor

@@ -23,13 +23,13 @@
 
 namespace switched_model {
 
-template <size_t JOINT_COORD_SIZE>
-class MRT_ROS_Dummy_Quadruped : public ocs2::MRT_ROS_Dummy_Loop<12+JOINT_COORD_SIZE, 12+JOINT_COORD_SIZE, typename OCS2QuadrupedInterface<JOINT_COORD_SIZE>::logic_rules_t>
+template <size_t JOINT_COORD_SIZE, size_t STATE_DIM=12+JOINT_COORD_SIZE, size_t INPUT_DIM=12+JOINT_COORD_SIZE>
+class MRT_ROS_Dummy_Quadruped : public ocs2::MRT_ROS_Dummy_Loop<STATE_DIM, INPUT_DIM, typename OCS2QuadrupedInterface<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::logic_rules_t>
 {
 public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-	typedef OCS2QuadrupedInterface<JOINT_COORD_SIZE> quadruped_interface_t;
+	typedef OCS2QuadrupedInterface<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM> quadruped_interface_t;
 	typedef typename quadruped_interface_t::Ptr quadruped_interface_ptr_t;
 
 	typedef typename quadruped_interface_t::contact_flag_t			contact_flag_t;
@@ -39,8 +39,6 @@ public:
 	typedef typename quadruped_interface_t::rbd_state_vector_t		rbd_state_vector_t;
 
 	enum {
-		STATE_DIM = quadruped_interface_t::STATE_DIM,
-		INPUT_DIM = quadruped_interface_t::INPUT_DIM,
 		RBD_STATE_DIM = quadruped_interface_t::RBD_STATE_DIM
 	};
 
@@ -61,7 +59,7 @@ public:
 	typedef Eigen::Matrix<scalar_t,3,1>	vector_3d_t;
 	typedef std::array<vector_3d_t,4>	vector_3d_array_t;
 
-	typedef MRT_ROS_Quadruped<JOINT_COORD_SIZE> mrt_t;
+	typedef MRT_ROS_Quadruped<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM> mrt_t;
 	typedef typename mrt_t::Ptr 				mrt_ptr_t;
 
 
@@ -75,6 +73,22 @@ public:
 	 */
 	MRT_ROS_Dummy_Quadruped(
 			const quadruped_interface_ptr_t& ocs2QuadrupedInterfacePtr,
+			const scalar_t& mrtDesiredFrequency,
+			const std::string& robotName = "robot",
+			const scalar_t& mpcDesiredFrequency = -1);
+
+	/**
+	 * Constructor.
+	 *
+	 * @param [in] ocs2QuadrupedInterfacePtr
+	 * @param [in] mrtPtr: A pointer to MRT instance
+	 * @param [in] mrtDesiredFrequency: MRT loop frequency in Hz
+	 * @param [in] robotName
+	 * @param [in] mpcDesiredFrequency: MPC loop frequency in Hz
+	 */
+	MRT_ROS_Dummy_Quadruped(
+			const quadruped_interface_ptr_t& ocs2QuadrupedInterfacePtr,
+			const typename BASE::mrt_ptr_t mrtPtr,
 			const scalar_t& mrtDesiredFrequency,
 			const std::string& robotName = "robot",
 			const scalar_t& mpcDesiredFrequency = -1);

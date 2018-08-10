@@ -11,8 +11,8 @@ namespace switched_model {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t JOINT_COORD_SIZE>
-MPC_ROS_Quadruped<JOINT_COORD_SIZE>::MPC_ROS_Quadruped(
+template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM>
+MPC_ROS_Quadruped<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::MPC_ROS_Quadruped(
 		const quadruped_interface_ptr_t& ocs2QuadrupedInterfacePtr,
 		const std::string& robotName /*robot*/)
 
@@ -23,8 +23,8 @@ MPC_ROS_Quadruped<JOINT_COORD_SIZE>::MPC_ROS_Quadruped(
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t JOINT_COORD_SIZE>
-void MPC_ROS_Quadruped<JOINT_COORD_SIZE>::reset() {
+template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM>
+void MPC_ROS_Quadruped<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::reset() {
 
 	BASE::reset();
 
@@ -35,8 +35,8 @@ void MPC_ROS_Quadruped<JOINT_COORD_SIZE>::reset() {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t JOINT_COORD_SIZE>
-void MPC_ROS_Quadruped<JOINT_COORD_SIZE>::initCall(
+template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM>
+void MPC_ROS_Quadruped<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::initCall(
 		const system_observation_t& initObservation) {
 
 	// the default state
@@ -49,8 +49,8 @@ void MPC_ROS_Quadruped<JOINT_COORD_SIZE>::initCall(
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t JOINT_COORD_SIZE>
-void MPC_ROS_Quadruped<JOINT_COORD_SIZE>::initGoalState(
+template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM>
+void MPC_ROS_Quadruped<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::initGoalState(
 		const system_observation_t& initObservation,
 		cost_desired_trajectories_t& costDesiredTrajectories) {
 
@@ -67,8 +67,8 @@ void MPC_ROS_Quadruped<JOINT_COORD_SIZE>::initGoalState(
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t JOINT_COORD_SIZE>
-void MPC_ROS_Quadruped<JOINT_COORD_SIZE>::adjustTargetTrajectories(
+template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM>
+void MPC_ROS_Quadruped<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::adjustTargetTrajectories(
 		const system_observation_t& currentObservation,
 		cost_desired_trajectories_t& costDesiredTrajectories) {
 
@@ -101,8 +101,8 @@ void MPC_ROS_Quadruped<JOINT_COORD_SIZE>::adjustTargetTrajectories(
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t JOINT_COORD_SIZE>
-void MPC_ROS_Quadruped<JOINT_COORD_SIZE>::targetPoseToDesiredTrajectories(
+template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM>
+void MPC_ROS_Quadruped<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::targetPoseToDesiredTrajectories(
 		const scalar_t& currentTime,
 		const state_vector_t& currentState,
 		const scalar_t& startDelay,
@@ -121,16 +121,18 @@ void MPC_ROS_Quadruped<JOINT_COORD_SIZE>::targetPoseToDesiredTrajectories(
 			costDesiredTrajectories.desiredStateTrajectory();
 	xDesiredTrajectory.resize(2);
 	xDesiredTrajectory[0].resize(STATE_DIM);
+	xDesiredTrajectory[0].setZero();
 	xDesiredTrajectory[0].template head<6>()     = currentState.template head<6>();
 	xDesiredTrajectory[0].template segment<6>(6) = Eigen::Matrix<scalar_t, 6, 1>::Zero();
-	xDesiredTrajectory[0].template tail<12>()    = initState_.template tail<12>();
+	xDesiredTrajectory[0].template segment<12>(12)    = initState_.template segment<12>(12);
 
 	xDesiredTrajectory[1].resize(STATE_DIM);
+	xDesiredTrajectory[1].setZero();
 	xDesiredTrajectory[1].template segment<3>(0) = initState_. template segment<3>(0)   + targetPoseDisplacement.template segment<3>(0);
 	xDesiredTrajectory[1].template segment<2>(3) = currentState. template segment<2>(3) + targetPoseDisplacement.template segment<2>(3);
 	xDesiredTrajectory[1].template segment<1>(5) = initState_. template segment<1>(5)   + targetPoseDisplacement.template segment<1>(5);
 	xDesiredTrajectory[1].template segment<6>(6) = Eigen::Matrix<scalar_t, 6, 1>::Zero();
-	xDesiredTrajectory[1].template tail<12>()    = initState_.template tail<12>();
+	xDesiredTrajectory[1].template segment<12>(12)    = initState_.template segment<12>(12);
 
 	// Desired input trajectory
 	typename cost_desired_trajectories_t::dynamic_vector_array_t& uDesiredTrajectory =

@@ -48,7 +48,7 @@
 
 namespace switched_model {
 
-template <size_t JOINT_COORD_SIZE>
+template <size_t JOINT_COORD_SIZE, size_t STATE_DIM = 12+JOINT_COORD_SIZE, size_t INPUT_DIM = 12+JOINT_COORD_SIZE>
 class OCS2QuadrupedInterface
 {
 public:
@@ -56,12 +56,10 @@ public:
 
 	enum
 	{
-		STATE_DIM = 12+JOINT_COORD_SIZE,
-		INPUT_DIM = 12+JOINT_COORD_SIZE,
 		RBD_STATE_DIM = 12 + 2*JOINT_COORD_SIZE
 	};
 
-	typedef std::shared_ptr<OCS2QuadrupedInterface<JOINT_COORD_SIZE>> Ptr;
+	typedef std::shared_ptr<OCS2QuadrupedInterface<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>> Ptr;
 
 	typedef ComModelBase<JOINT_COORD_SIZE> com_model_t;
 	typedef KinematicsModelBase<JOINT_COORD_SIZE> kinematic_model_t;
@@ -105,7 +103,7 @@ public:
 	typedef FeetZDirectionPlanner<scalar_t, cpg_t>	feet_z_planner_t;
 	typedef typename feet_z_planner_t::Ptr			feet_z_planner_ptr_t;
 
-	typedef SwitchedModelPlannerLogicRules<JOINT_COORD_SIZE> 	logic_rules_t;
+	typedef SwitchedModelPlannerLogicRules<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM> 	logic_rules_t;
 	typedef typename logic_rules_t::Ptr							logic_rules_ptr_t;
 
 	typedef ocs2::ModeSequenceTemplate<scalar_t> mode_sequence_template_t;
@@ -223,7 +221,7 @@ public:
 	 * @param [in] rbdState: RBD state
 	 * @param [out] comkinoState: Switched model state.
 	 */
-	void computeSwitchedModelState(
+	virtual void computeSwitchedModelState(
 			const rbd_state_vector_t& rbdState,
 			state_vector_t& comkinoState);
 

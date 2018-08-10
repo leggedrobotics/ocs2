@@ -10,8 +10,8 @@ namespace switched_model {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t JOINT_COORD_SIZE>
-MRT_ROS_Dummy_Quadruped<JOINT_COORD_SIZE>::MRT_ROS_Dummy_Quadruped(
+template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM>
+MRT_ROS_Dummy_Quadruped<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::MRT_ROS_Dummy_Quadruped(
 		const quadruped_interface_ptr_t& ocs2QuadrupedInterfacePtr,
 		const scalar_t& mrtDesiredFrequency,
 		const std::string& robotName /*= "robot"*/,
@@ -30,8 +30,29 @@ MRT_ROS_Dummy_Quadruped<JOINT_COORD_SIZE>::MRT_ROS_Dummy_Quadruped(
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t JOINT_COORD_SIZE>
-MRT_ROS_Dummy_Quadruped<JOINT_COORD_SIZE>::~MRT_ROS_Dummy_Quadruped() {
+template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM>
+MRT_ROS_Dummy_Quadruped<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::MRT_ROS_Dummy_Quadruped(
+		const quadruped_interface_ptr_t& ocs2QuadrupedInterfacePtr,
+		const typename BASE::mrt_ptr_t mrtPtr,
+		const scalar_t& mrtDesiredFrequency,
+		const std::string& robotName /*= "robot"*/,
+		const scalar_t& mpcDesiredFrequency /*= -1*/)
+
+		: BASE(mrtPtr, mrtDesiredFrequency, mpcDesiredFrequency)
+		, ocs2QuadrupedInterfacePtr_(ocs2QuadrupedInterfacePtr)
+		, robotName_(robotName)
+{
+#ifdef SAVE_ROS_BAG
+	rosbagFile_ = "ocs2_" + robotName_ + "_traj.bag";
+	bag_.open(rosbagFile_, rosbag::bagmode::Write);
+#endif
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM>
+MRT_ROS_Dummy_Quadruped<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::~MRT_ROS_Dummy_Quadruped() {
 
 #ifdef SAVE_ROS_BAG
 	ROS_INFO_STREAM("ROS Bag file is being saved to \"" + rosbagFile_ + "\" ...");
@@ -44,8 +65,8 @@ MRT_ROS_Dummy_Quadruped<JOINT_COORD_SIZE>::~MRT_ROS_Dummy_Quadruped() {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t JOINT_COORD_SIZE>
-void MRT_ROS_Dummy_Quadruped<JOINT_COORD_SIZE>::launchVisualizerNode(int argc, char* argv[]) {
+template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM>
+void MRT_ROS_Dummy_Quadruped<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::launchVisualizerNode(int argc, char* argv[]) {
 
 	ros::init(argc, argv, robotName_ + "_visualization_node");
 
@@ -66,8 +87,8 @@ void MRT_ROS_Dummy_Quadruped<JOINT_COORD_SIZE>::launchVisualizerNode(int argc, c
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t JOINT_COORD_SIZE>
-void MRT_ROS_Dummy_Quadruped<JOINT_COORD_SIZE>::publishVisualizer(
+template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM>
+void MRT_ROS_Dummy_Quadruped<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::publishVisualizer(
 		const system_observation_t& observation) {
 
 	vector_3d_array_t o_feetPositionRef;
@@ -101,8 +122,8 @@ void MRT_ROS_Dummy_Quadruped<JOINT_COORD_SIZE>::publishVisualizer(
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t JOINT_COORD_SIZE>
-void MRT_ROS_Dummy_Quadruped<JOINT_COORD_SIZE>::publishXppVisualizer(
+template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM>
+void MRT_ROS_Dummy_Quadruped<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::publishXppVisualizer(
 		const scalar_t& time,
 		const base_coordinate_t& basePose,
 		const base_coordinate_t& baseLocalVelocities,

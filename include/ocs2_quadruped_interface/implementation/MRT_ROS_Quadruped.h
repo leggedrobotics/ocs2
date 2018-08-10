@@ -10,8 +10,8 @@ namespace switched_model {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t JOINT_COORD_SIZE>
-MRT_ROS_Quadruped<JOINT_COORD_SIZE>::MRT_ROS_Quadruped(
+template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM>
+MRT_ROS_Quadruped<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::MRT_ROS_Quadruped(
 		const quadruped_interface_ptr_t& ocs2QuadrupedInterfacePtr,
 		const std::string& robotName /*robot*/)
 
@@ -31,8 +31,8 @@ MRT_ROS_Quadruped<JOINT_COORD_SIZE>::MRT_ROS_Quadruped(
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t JOINT_COORD_SIZE>
-void MRT_ROS_Quadruped<JOINT_COORD_SIZE>::reset() {
+template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM>
+void MRT_ROS_Quadruped<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::reset() {
 
 	BASE::reset();
 }
@@ -40,8 +40,8 @@ void MRT_ROS_Quadruped<JOINT_COORD_SIZE>::reset() {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t JOINT_COORD_SIZE>
-void MRT_ROS_Quadruped<JOINT_COORD_SIZE>::modifyBufferFeedforwardPolicy(
+template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM>
+void MRT_ROS_Quadruped<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::modifyBufferFeedforwardPolicy(
 		const system_observation_t& planInitObservationBuffer,
 		scalar_array_t& mpcTimeTrajectoryBuffer,
 		state_vector_array_t& mpcStateTrajectoryBuffer,
@@ -77,8 +77,8 @@ void MRT_ROS_Quadruped<JOINT_COORD_SIZE>::modifyBufferFeedforwardPolicy(
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t JOINT_COORD_SIZE>
-void MRT_ROS_Quadruped<JOINT_COORD_SIZE>::loadModifiedFeedforwardPolicy(
+template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM>
+void MRT_ROS_Quadruped<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::loadModifiedFeedforwardPolicy(
 		bool& logicUpdated,
 		bool& policyUpdated,
 		scalar_array_t& mpcTimeTrajectory,
@@ -118,8 +118,8 @@ void MRT_ROS_Quadruped<JOINT_COORD_SIZE>::loadModifiedFeedforwardPolicy(
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t JOINT_COORD_SIZE>
-void MRT_ROS_Quadruped<JOINT_COORD_SIZE>::updateFeetTrajectories(
+template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM>
+void MRT_ROS_Quadruped<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::updateFeetTrajectories(
 		const scalar_array_t& eventTimes,
 		const size_array_t& subsystemsSequence,
 		const scalar_array_t& touchdownTimeStock,
@@ -175,8 +175,8 @@ void MRT_ROS_Quadruped<JOINT_COORD_SIZE>::updateFeetTrajectories(
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t JOINT_COORD_SIZE>
-void MRT_ROS_Quadruped<JOINT_COORD_SIZE>::computeFeetState(
+template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM>
+void MRT_ROS_Quadruped<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::computeFeetState(
 		const state_vector_t& state,
 		const input_vector_t& input,
 		vector_3d_array_t& o_feetPosition,
@@ -222,8 +222,8 @@ void MRT_ROS_Quadruped<JOINT_COORD_SIZE>::computeFeetState(
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t JOINT_COORD_SIZE>
-void MRT_ROS_Quadruped<JOINT_COORD_SIZE>::computePlan(
+template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM>
+void MRT_ROS_Quadruped<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::computePlan(
 		const scalar_t& time,
 		vector_3d_array_t& o_feetPositionRef,
 		vector_3d_array_t& o_feetVelocityRef,
@@ -275,8 +275,8 @@ void MRT_ROS_Quadruped<JOINT_COORD_SIZE>::computePlan(
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t JOINT_COORD_SIZE>
-bool MRT_ROS_Quadruped<JOINT_COORD_SIZE>::updateNodes(
+template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM>
+bool MRT_ROS_Quadruped<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::updateNodes(
 		const contact_flag_t& contactFlag,
 		const scalar_t& time,
 		const rbd_state_vector_t& rbdState) {

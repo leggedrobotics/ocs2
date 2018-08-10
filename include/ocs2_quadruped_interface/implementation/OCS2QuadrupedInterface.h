@@ -10,8 +10,8 @@ namespace switched_model {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t JOINT_COORD_SIZE>
-OCS2QuadrupedInterface<JOINT_COORD_SIZE>::OCS2QuadrupedInterface(
+template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM>
+OCS2QuadrupedInterface<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::OCS2QuadrupedInterface(
 		const kinematic_model_t& kinematicModel,
 		const com_model_t& comModel,
 		const std::string& pathToConfigFolder)
@@ -34,8 +34,8 @@ OCS2QuadrupedInterface<JOINT_COORD_SIZE>::OCS2QuadrupedInterface(
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t JOINT_COORD_SIZE>
-void OCS2QuadrupedInterface<JOINT_COORD_SIZE>::loadSettings(const std::string& pathToConfigFile) {
+template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM>
+void OCS2QuadrupedInterface<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::loadSettings(const std::string& pathToConfigFile) {
 
 	// load SLQ settings
 	slqSettings_.loadSettings(pathToConfigFile, true);
@@ -141,9 +141,9 @@ void OCS2QuadrupedInterface<JOINT_COORD_SIZE>::loadSettings(const std::string& p
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t JOINT_COORD_SIZE>
-typename OCS2QuadrupedInterface<JOINT_COORD_SIZE>::logic_rules_t&
-	OCS2QuadrupedInterface<JOINT_COORD_SIZE>::getLogicRules() {
+template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM>
+typename OCS2QuadrupedInterface<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::logic_rules_t&
+	OCS2QuadrupedInterface<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::getLogicRules() {
 
 	return *logicRulesPtr_;
 }
@@ -151,32 +151,34 @@ typename OCS2QuadrupedInterface<JOINT_COORD_SIZE>::logic_rules_t&
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t JOINT_COORD_SIZE>
-void OCS2QuadrupedInterface<JOINT_COORD_SIZE>::computeSwitchedModelState(
+template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM>
+void OCS2QuadrupedInterface<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::computeSwitchedModelState(
 		const rbd_state_vector_t& rbdState,
 		state_vector_t& comkinoState) {
-
-	switchedModelStateEstimator_.estimateComkinoModelState(rbdState, comkinoState);
+	typename state_estimator_t::comkino_model_state_t comKinoState_truesize;
+	switchedModelStateEstimator_.estimateComkinoModelState(rbdState, comKinoState_truesize);
+	comkinoState.template segment<12+JOINT_COORD_SIZE>(0) =	comKinoState_truesize;
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t JOINT_COORD_SIZE>
-void OCS2QuadrupedInterface<JOINT_COORD_SIZE>::computeRbdModelState(
+template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM>
+void OCS2QuadrupedInterface<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::computeRbdModelState(
 		const state_vector_t& comkinoState,
 		const input_vector_t& comkinoInput,
 		rbd_state_vector_t& rbdState) {
 
-	switchedModelStateEstimator_.estimateRbdModelState(comkinoState, comkinoInput.template tail<JOINT_COORD_SIZE>(),
+	switchedModelStateEstimator_.estimateRbdModelState(comkinoState.template segment<12+JOINT_COORD_SIZE>(0),
+	    comkinoInput.template segment<JOINT_COORD_SIZE>(12),
 			rbdState);
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t JOINT_COORD_SIZE>
-void OCS2QuadrupedInterface<JOINT_COORD_SIZE>::computeComLocalAcceleration(
+template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM>
+void OCS2QuadrupedInterface<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::computeComLocalAcceleration(
 			const state_vector_t& comkinoState,
 			const input_vector_t& comkinoInput,
 			base_coordinate_t& comLocalAcceleration) {
@@ -191,8 +193,8 @@ void OCS2QuadrupedInterface<JOINT_COORD_SIZE>::computeComLocalAcceleration(
 	Eigen::VectorBlock<const state_vector_t,6> xCOM  = comkinoState.template segment<6>(0);
 	Eigen::VectorBlock<const state_vector_t,3> b_W_com = comkinoState.template segment<3>(6);
 	Eigen::VectorBlock<const state_vector_t,3> b_V_com = comkinoState.template segment<3>(9);
-	Eigen::VectorBlock<const state_vector_t,12> qJoints  = comkinoState.template tail<12>();
-	Eigen::VectorBlock<const input_vector_t,12> dqJoints = comkinoInput.template tail<12>();
+	Eigen::VectorBlock<const state_vector_t,12> qJoints  = comkinoState.template segment<12>(12);
+	Eigen::VectorBlock<const input_vector_t,12> dqJoints = comkinoInput.template segment<12>(12);
 	Eigen::VectorBlock<const input_vector_t,3*4> lambda  = comkinoInput.template head<12>();
 
 	// Rotation matrix from Base frame (or the coincided frame world frame) to Origin frame (global world).
@@ -250,8 +252,8 @@ void OCS2QuadrupedInterface<JOINT_COORD_SIZE>::computeComLocalAcceleration(
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t JOINT_COORD_SIZE>
-void OCS2QuadrupedInterface<JOINT_COORD_SIZE>::computeComStateInOrigin(
+template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM>
+void OCS2QuadrupedInterface<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::computeComStateInOrigin(
 		const state_vector_t& comkinoState,
 		const input_vector_t& comkinoInput,
 		base_coordinate_t& o_comPose,
@@ -287,8 +289,8 @@ void OCS2QuadrupedInterface<JOINT_COORD_SIZE>::computeComStateInOrigin(
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t JOINT_COORD_SIZE>
-void OCS2QuadrupedInterface<JOINT_COORD_SIZE>::estimateFlatGround(
+template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM>
+void OCS2QuadrupedInterface<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::estimateFlatGround(
 		const rbd_state_vector_t& rbdState,
 		const contact_flag_t& contactFlag,
 		scalar_t& groundHight) const {
@@ -298,18 +300,22 @@ void OCS2QuadrupedInterface<JOINT_COORD_SIZE>::estimateFlatGround(
 	std::array<Eigen::Vector3d,4> feetPositions;
 	kinematicModelPtr_->feetPositionsOriginFrame(feetPositions);
 
-	groundHight = 0.0;
+	scalar_t totalHeight = 0.0;
+	int feetInContact = 0;
 	for (size_t j=0; j<4; j++)
-		if (contactFlag[j]==true)
-			groundHight += 0.25*feetPositions[j](2);
+		if (contactFlag[j]==true){
+			feetInContact++;
+			totalHeight += feetPositions[j](2);
+	}
+	groundHight = totalHeight / scalar_t(feetInContact);
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t JOINT_COORD_SIZE>
-typename OCS2QuadrupedInterface<JOINT_COORD_SIZE>::kinematic_model_t&
-	OCS2QuadrupedInterface<JOINT_COORD_SIZE>::getKinematicModel() {
+template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM>
+typename OCS2QuadrupedInterface<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::kinematic_model_t&
+	OCS2QuadrupedInterface<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::getKinematicModel() {
 
 	return *kinematicModelPtr_;
 }
@@ -317,9 +323,9 @@ typename OCS2QuadrupedInterface<JOINT_COORD_SIZE>::kinematic_model_t&
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t JOINT_COORD_SIZE>
-typename OCS2QuadrupedInterface<JOINT_COORD_SIZE>::com_model_t&
-	OCS2QuadrupedInterface<JOINT_COORD_SIZE>::getComModel() {
+template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM>
+typename OCS2QuadrupedInterface<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::com_model_t&
+	OCS2QuadrupedInterface<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::getComModel() {
 
 	return *comModelPtr_;
 }
@@ -327,18 +333,18 @@ typename OCS2QuadrupedInterface<JOINT_COORD_SIZE>::com_model_t&
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t JOINT_COORD_SIZE>
-typename OCS2QuadrupedInterface<JOINT_COORD_SIZE>::slq_base_t&
-	OCS2QuadrupedInterface<JOINT_COORD_SIZE>::getSLQ() {
+template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM>
+typename OCS2QuadrupedInterface<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::slq_base_t&
+	OCS2QuadrupedInterface<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::getSLQ() {
 
 	return *slqPtr_;
 }
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t JOINT_COORD_SIZE>
-typename OCS2QuadrupedInterface<JOINT_COORD_SIZE>::slq_base_ptr_t&
-	OCS2QuadrupedInterface<JOINT_COORD_SIZE>::getSLQPtr() {
+template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM>
+typename OCS2QuadrupedInterface<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::slq_base_ptr_t&
+	OCS2QuadrupedInterface<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::getSLQPtr() {
 
 	return slqPtr_;
 }
@@ -346,9 +352,9 @@ typename OCS2QuadrupedInterface<JOINT_COORD_SIZE>::slq_base_ptr_t&
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t JOINT_COORD_SIZE>
-typename OCS2QuadrupedInterface<JOINT_COORD_SIZE>::mpc_t&
-	OCS2QuadrupedInterface<JOINT_COORD_SIZE>::getMPC() {
+template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM>
+typename OCS2QuadrupedInterface<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::mpc_t&
+	OCS2QuadrupedInterface<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::getMPC() {
 
 	return *mpcPtr_;
 }
@@ -356,9 +362,9 @@ typename OCS2QuadrupedInterface<JOINT_COORD_SIZE>::mpc_t&
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t JOINT_COORD_SIZE>
-typename OCS2QuadrupedInterface<JOINT_COORD_SIZE>::mpc_ptr_t&
-	OCS2QuadrupedInterface<JOINT_COORD_SIZE>::getMPCPtr() {
+template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM>
+typename OCS2QuadrupedInterface<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::mpc_ptr_t&
+	OCS2QuadrupedInterface<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::getMPCPtr() {
 
 	return mpcPtr_;
 }
@@ -366,8 +372,8 @@ typename OCS2QuadrupedInterface<JOINT_COORD_SIZE>::mpc_ptr_t&
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t JOINT_COORD_SIZE>
-void OCS2QuadrupedInterface<JOINT_COORD_SIZE>::getPerformanceIndeces(
+template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM>
+void OCS2QuadrupedInterface<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::getPerformanceIndeces(
 		scalar_t& costFunction,
 		scalar_t& constriantISE1,
 		scalar_t& constriantISE2) const {
@@ -380,8 +386,8 @@ void OCS2QuadrupedInterface<JOINT_COORD_SIZE>::getPerformanceIndeces(
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t JOINT_COORD_SIZE>
-void OCS2QuadrupedInterface<JOINT_COORD_SIZE>::getOptimizedControllerPtr(
+template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM>
+void OCS2QuadrupedInterface<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::getOptimizedControllerPtr(
 		const controller_array_t*& controllersStockPtr) const {
 
 	controllersStockPtr = controllersStockPtr_;
@@ -390,8 +396,8 @@ void OCS2QuadrupedInterface<JOINT_COORD_SIZE>::getOptimizedControllerPtr(
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t JOINT_COORD_SIZE>
-void OCS2QuadrupedInterface<JOINT_COORD_SIZE>::getOptimizedTrajectoriesPtr(
+template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM>
+void OCS2QuadrupedInterface<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::getOptimizedTrajectoriesPtr(
 		const std::vector<scalar_array_t>*& timeTrajectoriesStockPtr,
 		const state_vector_array2_t*& stateTrajectoriesStockPtr,
 		const input_vector_array2_t*& inputTrajectoriesStockPtr) const {
@@ -404,8 +410,8 @@ void OCS2QuadrupedInterface<JOINT_COORD_SIZE>::getOptimizedTrajectoriesPtr(
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t JOINT_COORD_SIZE>
-void OCS2QuadrupedInterface<JOINT_COORD_SIZE>::getEventTimesPtr(
+template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM>
+void OCS2QuadrupedInterface<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::getEventTimesPtr(
 		const scalar_array_t*& eventTimesPtr) const {
 
 	eventTimesPtr = &eventTimes_;
@@ -414,8 +420,8 @@ void OCS2QuadrupedInterface<JOINT_COORD_SIZE>::getEventTimesPtr(
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t JOINT_COORD_SIZE>
-void OCS2QuadrupedInterface<JOINT_COORD_SIZE>::getSubsystemsSequencePtr(
+template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM>
+void OCS2QuadrupedInterface<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::getSubsystemsSequencePtr(
 		const size_array_t*& subsystemsSequencePtr) const {
 
 	subsystemsSequencePtr = &subsystemsSequence_;
@@ -424,8 +430,8 @@ void OCS2QuadrupedInterface<JOINT_COORD_SIZE>::getSubsystemsSequencePtr(
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t JOINT_COORD_SIZE>
-void OCS2QuadrupedInterface<JOINT_COORD_SIZE>::getContactFlagsSequencePtr(
+template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM>
+void OCS2QuadrupedInterface<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::getContactFlagsSequencePtr(
 		const std::vector<contact_flag_t>*& contactFlagsSequencePtr) const {
 
 	contactFlagsSequencePtr = &contactFlagsSequence_;
@@ -434,8 +440,8 @@ void OCS2QuadrupedInterface<JOINT_COORD_SIZE>::getContactFlagsSequencePtr(
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t JOINT_COORD_SIZE>
-void OCS2QuadrupedInterface<JOINT_COORD_SIZE>::getGapIndicatorPtrs(
+template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM>
+void OCS2QuadrupedInterface<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::getGapIndicatorPtrs(
 		std::vector<EndEffectorConstraintBase::ConstPtr>& gapIndicatorPtrs) const {
 
 	gapIndicatorPtrs = gapIndicatorPtrs_;
@@ -444,8 +450,8 @@ void OCS2QuadrupedInterface<JOINT_COORD_SIZE>::getGapIndicatorPtrs(
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t JOINT_COORD_SIZE>
-void OCS2QuadrupedInterface<JOINT_COORD_SIZE>::getIterationsLog(
+template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM>
+void OCS2QuadrupedInterface<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::getIterationsLog(
 		eigen_scalar_array_t& iterationCost,
 		eigen_scalar_array_t& iterationISE1,
 		eigen_scalar_array_t& ocs2Iterationcost) const {
@@ -458,8 +464,8 @@ void OCS2QuadrupedInterface<JOINT_COORD_SIZE>::getIterationsLog(
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t JOINT_COORD_SIZE>
-ocs2::MPC_Settings& OCS2QuadrupedInterface<JOINT_COORD_SIZE>::getMpcSettings() {
+template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM>
+ocs2::MPC_Settings& OCS2QuadrupedInterface<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::getMpcSettings() {
 
 	return mpcSettings_;
 }
@@ -467,8 +473,8 @@ ocs2::MPC_Settings& OCS2QuadrupedInterface<JOINT_COORD_SIZE>::getMpcSettings() {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t JOINT_COORD_SIZE>
-ocs2::SLQ_Settings& OCS2QuadrupedInterface<JOINT_COORD_SIZE>::getSlqSettings() {
+template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM>
+ocs2::SLQ_Settings& OCS2QuadrupedInterface<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::getSlqSettings() {
 
 	return slqPtr_->settings();
 }
@@ -476,8 +482,8 @@ ocs2::SLQ_Settings& OCS2QuadrupedInterface<JOINT_COORD_SIZE>::getSlqSettings() {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t JOINT_COORD_SIZE>
-Model_Settings& OCS2QuadrupedInterface<JOINT_COORD_SIZE>::getModelSettings() {
+template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM>
+Model_Settings& OCS2QuadrupedInterface<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::getModelSettings() {
 
 	return modelSettings_;
 }
@@ -485,8 +491,8 @@ Model_Settings& OCS2QuadrupedInterface<JOINT_COORD_SIZE>::getModelSettings() {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t JOINT_COORD_SIZE>
-void OCS2QuadrupedInterface<JOINT_COORD_SIZE>::getLoadedInitialState(rbd_state_vector_t& initRbdState) const {
+template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM>
+void OCS2QuadrupedInterface<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::getLoadedInitialState(rbd_state_vector_t& initRbdState) const {
 
 	initRbdState = initRbdState_;
 }
@@ -494,8 +500,8 @@ void OCS2QuadrupedInterface<JOINT_COORD_SIZE>::getLoadedInitialState(rbd_state_v
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t JOINT_COORD_SIZE>
-void OCS2QuadrupedInterface<JOINT_COORD_SIZE>::concatenate()  {
+template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM>
+void OCS2QuadrupedInterface<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::concatenate()  {
 
 	timeTrajectory_  = timeTrajectoriesStockPtr_->at(0);
 	stateTrajectory_ = stateTrajectoriesStockPtr_->at(0);
@@ -531,8 +537,8 @@ void OCS2QuadrupedInterface<JOINT_COORD_SIZE>::concatenate()  {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t JOINT_COORD_SIZE>
-void OCS2QuadrupedInterface<JOINT_COORD_SIZE>::runSLQ(
+template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM>
+void OCS2QuadrupedInterface<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::runSLQ(
 		const scalar_t& initTime,
 		const rbd_state_vector_t& initRbdState,
 		const scalar_t& finalTime,
@@ -604,8 +610,8 @@ void OCS2QuadrupedInterface<JOINT_COORD_SIZE>::runSLQ(
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t JOINT_COORD_SIZE>
-bool OCS2QuadrupedInterface<JOINT_COORD_SIZE>::runMPC(
+template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM>
+bool OCS2QuadrupedInterface<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::runMPC(
 		const scalar_t& initTime,
 		const rbd_state_vector_t& initState)  {
 
@@ -635,8 +641,8 @@ bool OCS2QuadrupedInterface<JOINT_COORD_SIZE>::runMPC(
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t JOINT_COORD_SIZE>
-void OCS2QuadrupedInterface<JOINT_COORD_SIZE>::runOCS2(
+template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM>
+void OCS2QuadrupedInterface<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::runOCS2(
 		const scalar_t& initTime,
 		const rbd_state_vector_t& initHyQState,
 		const scalar_array_t& switchingTimes /*=scalar_array_t()*/)  {
@@ -669,8 +675,8 @@ void OCS2QuadrupedInterface<JOINT_COORD_SIZE>::runOCS2(
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t JOINT_COORD_SIZE>
-void OCS2QuadrupedInterface<JOINT_COORD_SIZE>::loadSimulationSettings(
+template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM>
+void OCS2QuadrupedInterface<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::loadSimulationSettings(
 		const std::string& filename,
 		scalar_t& dt,
 		scalar_t& tFinal,
@@ -701,8 +707,8 @@ void OCS2QuadrupedInterface<JOINT_COORD_SIZE>::loadSimulationSettings(
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t JOINT_COORD_SIZE>
-void OCS2QuadrupedInterface<JOINT_COORD_SIZE>::loadVisualizationSettings(
+template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM>
+void OCS2QuadrupedInterface<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::loadVisualizationSettings(
 		const std::string& filename,
 		scalar_t& slowdown,
 		scalar_t& vizTime) {

@@ -300,10 +300,14 @@ void OCS2QuadrupedInterface<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::estimateFla
 	std::array<Eigen::Vector3d,4> feetPositions;
 	kinematicModelPtr_->feetPositionsOriginFrame(feetPositions);
 
-	groundHight = 0.0;
+	scalar_t totalHeight = 0.0;
+	int feetInContact = 0;
 	for (size_t j=0; j<4; j++)
-		if (contactFlag[j]==true)
-			groundHight += 0.25*feetPositions[j](2);
+		if (contactFlag[j]==true){
+			feetInContact++;
+			totalHeight += feetPositions[j](2);
+	}
+	groundHight = totalHeight / scalar_t(feetInContact);
 }
 
 /******************************************************************************************************/

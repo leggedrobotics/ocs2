@@ -1,12 +1,26 @@
-cmake_minimum_required (VERSION 2.8)
+cmake_minimum_required (VERSION 2.8.3)
 
 project (ocs2_doc)
 
 find_package(catkin REQUIRED)
 
+###################################
+## catkin specific configuration ##
+###################################
+
 catkin_package(
-    CATKIN_DEPENDS ocs2_core ocs2_frank_wolfe ocs2_slq ocs2_ocs2
+  CATKIN_DEPENDS 
+    ocs2_core 
+    ocs2_frank_wolfe 
+    ocs2_slq 
+    ocs2_ocs2
+    ocs2_mpc
+    ocs2_comm_interfaces
 )
+
+#############
+## Doxygen ##
+#############
 
 find_package(Doxygen)
 if(DOXYGEN_FOUND)

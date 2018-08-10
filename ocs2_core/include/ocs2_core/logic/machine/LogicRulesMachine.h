@@ -1,15 +1,38 @@
-/*
- * LogicRulesMachine.h
- *
- *  Created on: Nov 28, 2017
- *      Author: farbod
- */
+/******************************************************************************
+Copyright (c) 2017, Farbod Farshidian. All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+* Redistributions of source code must retain the above copyright notice, this
+  list of conditions and the following disclaimer.
+
+* Redistributions in binary form must reproduce the above copyright notice,
+  this list of conditions and the following disclaimer in the documentation
+  and/or other materials provided with the distribution.
+
+* Neither the name of the copyright holder nor the names of its
+  contributors may be used to endorse or promote products derived from
+  this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+******************************************************************************/
 
 #ifndef LOGICRULESMACHINE_OCS2_H_
 #define LOGICRULESMACHINE_OCS2_H_
 
 #include <utility>
 #include <memory>
+#include <atomic>
 #include <iostream>
 #include <string>
 #include <functional>
@@ -23,7 +46,9 @@
 namespace ocs2{
 
 /**
- * The logic rules machine class
+ * The logic rules machine class.
+ * Note that if logic rules are modified through get methods (e.g. getLogicRules),
+ * user should call logicRulesUpdated(); otherwise the changes may not become effective.
  *
  * @tparam STATE_DIM: Dimension of the state space.
  * @tparam INPUT_DIM: Dimension of the control input space.
@@ -50,13 +75,13 @@ public:
 	 * Default constructor.
 	 */
 	LogicRulesMachine()
-	: logicRulesModified_(false),
-	  logicRulesModifiedOffline_(false),
-	  numPartitions_(1),
-	  partitioningTimes_{-10000,10000},
-	  eventTimesStock_(1,scalar_array_t(0)),
-	  switchingTimesStock_(1,partitioningTimes_),
-	  eventCountersStock_(1,size_array_t{0})
+	: logicRulesModified_(false)
+	, newLogicRulesInBuffer_(false)
+	, numPartitions_(1)
+	, partitioningTimes_{-10000,10000}
+	, eventTimesStock_(1,scalar_array_t(0))
+	, switchingTimesStock_(1,partitioningTimes_)
+	, eventCountersStock_(1,size_array_t{0})
 	{}
 
 	/**
@@ -65,15 +90,15 @@ public:
 	 * @param logicRules: The logic rules class.
 	 */
 	LogicRulesMachine(const LOGIC_RULES_T& logicRules)
-	: logicRules_(logicRules),
-	  logicRulesInUse_(logicRules),
-	  logicRulesModified_(false),
-	  logicRulesModifiedOffline_(false),
-	  numPartitions_(1),
-	  partitioningTimes_{-10000,10000},
-	  eventTimesStock_(1,scalar_array_t(0)),
-	  switchingTimesStock_(1,partitioningTimes_),
-	  eventCountersStock_(1,size_array_t{0})
+	: logicRules_(logicRules)
+	, logicRulesBuffer_(logicRules)
+	, logicRulesModified_(false)
+	, newLogicRulesInBuffer_(false)
+	, numPartitions_(1)
+	, partitioningTimes_{-10000,10000}
+	, eventTimesStock_(1,scalar_array_t(0))
+	, switchingTimesStock_(1,partitioningTimes_)
+	, eventCountersStock_(1,size_array_t{0})
 	{}
 
 	/**
@@ -159,7 +184,7 @@ public:
 
 	/**
 	 * Gets the partitioning times.
-	 * @return const reference to partitioning times.
+	 * @return constant reference to partitioning times.
 	 */
 	const scalar_array_t& getPartitioningTimes() const;
 
@@ -228,9 +253,9 @@ public:
 
 protected:
 	LOGIC_RULES_T logicRules_;
-	LOGIC_RULES_T logicRulesInUse_;
-	bool logicRulesModified_;
-	bool logicRulesModifiedOffline_;
+	LOGIC_RULES_T logicRulesBuffer_;
+	std::atomic<bool> logicRulesModified_;
+	std::atomic<bool> newLogicRulesInBuffer_;
 
 	size_t numPartitions_;
 	scalar_array_t partitioningTimes_;

@@ -20,6 +20,9 @@
     <tab type="user" url="../../../ocs2_doc/doc/html/index.html" title="Main Page" intro=""/>
     <tab type="user" url="../../../ocs2_core/doc/html/index.html" title="Core" intro=""/>
     <tab type="user" url="../../../ocs2_slq/doc/html/index.html" title="SLQ" intro=""/>
+    <tab type="user" url="../../../ocs2_ocs2/doc/html/index.html" title="OCS2" intro=""/>
+    <tab type="user" url="../../../ocs2_mpc/doc/html/index.html" title="MPC" intro=""/>
+    <tab type="user" url="../../../ocs2_comm_interfaces/doc/html/index.html" title="ROS Interfaces" intro=""/>
     <tab type="user" url="../../../ocs2_frank_wolfe/doc/html/index.html" title="Frank Wolfe" intro=""/>
   </navindex>
 

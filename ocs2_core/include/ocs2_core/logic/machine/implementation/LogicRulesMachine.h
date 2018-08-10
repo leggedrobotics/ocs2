@@ -1,9 +1,31 @@
-/*
- * LogicRulesMachine.h
- *
- *  Created on: Dec 19, 2017
- *      Author: farbod
- */
+/******************************************************************************
+Copyright (c) 2017, Farbod Farshidian. All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+* Redistributions of source code must retain the above copyright notice, this
+  list of conditions and the following disclaimer.
+
+* Redistributions in binary form must reproduce the above copyright notice,
+  this list of conditions and the following disclaimer in the documentation
+  and/or other materials provided with the distribution.
+
+* Neither the name of the copyright holder nor the names of its
+  contributors may be used to endorse or promote products derived from
+  this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+******************************************************************************/
 
 namespace ocs2 {
 
@@ -14,9 +36,9 @@ template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
 void LogicRulesMachine<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::setLogicRules(const LOGIC_RULES_T& logicRules) {
 
 	logicRulesUpdated();
-	logicRulesModifiedOffline_ = true;
+	newLogicRulesInBuffer_ = true;
 
-	logicRules_ = logicRules;
+	logicRulesBuffer_ = logicRules;
 }
 
 /******************************************************************************************************/
@@ -34,13 +56,16 @@ void LogicRulesMachine<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::logicRulesUpdated()
 template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
 LOGIC_RULES_T& LogicRulesMachine<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::getLogicRules() {
 
-	return logicRulesInUse_;
+	return logicRules_;
 }
 
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
 const LOGIC_RULES_T& LogicRulesMachine<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::getLogicRules() const {
 
-	return logicRulesInUse_;
+	return logicRules_;
 }
 
 /******************************************************************************************************/
@@ -49,13 +74,16 @@ const LOGIC_RULES_T& LogicRulesMachine<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::get
 template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
 LOGIC_RULES_T* LogicRulesMachine<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::getLogicRulesPtr() {
 
-	return &logicRulesInUse_;
+	return &logicRules_;
 }
 
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
 const LOGIC_RULES_T* LogicRulesMachine<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::getLogicRulesPtr() const {
 
-	return &logicRulesInUse_;
+	return &logicRules_;
 }
 
 /******************************************************************************************************/
@@ -87,7 +115,6 @@ const typename LogicRulesMachine<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::scalar_ar
 
 	return switchingTimesStock_[index];
 }
-
 
 /******************************************************************************************************/
 /******************************************************************************************************/
@@ -160,9 +187,9 @@ void LogicRulesMachine<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::updateLogicRules(
 		controller_array_t& controllerStock) {
 
 	// if logic rules is modified update the logic
-	if (logicRulesModifiedOffline_ == true) {
-		logicRulesInUse_ = std::move(logicRules_);
-		logicRulesModifiedOffline_ = false;
+	if (newLogicRulesInBuffer_ == true) {
+		logicRules_ = std::move(logicRulesBuffer_);
+		newLogicRulesInBuffer_ = false;
 	}
 
 	// if partitioningTimes is updated

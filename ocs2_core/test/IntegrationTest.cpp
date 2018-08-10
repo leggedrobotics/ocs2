@@ -1,59 +1,56 @@
-/*
- * A unit test
- *
- *  Created on: Sept 25, 2017
- *      Author: farbodf
- */
+/******************************************************************************
+Copyright (c) 2017, Farbod Farshidian. All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+* Redistributions of source code must retain the above copyright notice, this
+  list of conditions and the following disclaimer.
+
+* Redistributions in binary form must reproduce the above copyright notice,
+  this list of conditions and the following disclaimer in the documentation
+  and/or other materials provided with the distribution.
+
+* Neither the name of the copyright holder nor the names of its
+  contributors may be used to endorse or promote products derived from
+  this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+******************************************************************************/
 
 #include <memory>
 #include <fstream>
 
 #include "ocs2_core/integration/Integrator.h"
 #include "ocs2_core/integration/EventHandlerBase.h"
-#include "ocs2_core/dynamics/ControlledSystemBase.h"
+#include "ocs2_core/dynamics/LinearSystemDynamics.h"
 #include <ocs2_core/misc/FindActiveIntervalIndex.h>
 
 #include <gtest/gtest.h>
 
 using namespace ocs2;
 
-class SecondOrderSystem : public ControlledSystemBase<2,1>
-{
-public:
-	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-
-	SecondOrderSystem() {}
-	~SecondOrderSystem() {}
-
-	void computeFlowMap(
-			const double& t,
-			const Eigen::Matrix<double,2,1>& x,
-			const Eigen::Matrix<double,1,1>& u,
-			Eigen::Matrix<double,2,1>& dxdt) {
-
-		Eigen::Matrix2d A;
-		A << -2, -1, 1, 0;
-
-		Eigen::Vector2d B;
-		B << 1, 0;
-
-		dxdt = A*x + B*u;
-	}
-
-	SecondOrderSystem* clone() const override {
-		return new SecondOrderSystem(*this);
-	}
-
-private:
-
-};
-
 
 TEST(IntegrationTest, SecondOrderSystem_ODE45)
 {
 	bool resultsGood = true;
 
-	std::shared_ptr<SecondOrderSystem> sys = std::make_shared<SecondOrderSystem>();
+	Eigen::Matrix2d A;
+	A << -2, -1, 1, 0;
+	Eigen::Vector2d B;
+	B << 1, 0;
+
+	typedef LinearSystemDynamics<2,1> SecondOrderSystem;
+	ControlledSystemBase<2,1>::Ptr sys = ControlledSystemBase<2,1>::Ptr(new SecondOrderSystem(A, B));
 
 	SecondOrderSystem::scalar_array_t cntTimeStamp {0, 10};
 	SecondOrderSystem::input_vector_array_t uff(2, SecondOrderSystem::input_vector_t::Ones());
@@ -66,7 +63,7 @@ TEST(IntegrationTest, SecondOrderSystem_ODE45)
 
 	sys->setController(controller);
 
-	std::shared_ptr<ControlledSystemBase<2, 1> > sysClone1(sys->clone());
+	ControlledSystemBase<2, 1>::Ptr sysClone1(sys->clone());
 	resultsGood = sysClone1.unique();
 
 	ODE45<2> odeAdaptive(sys); // integrate adaptive
@@ -111,7 +108,13 @@ TEST(IntegrationTest, SecondOrderSystem_AdamsBashfort)
 {
 	bool resultsGood = true;
 
-	std::shared_ptr<SecondOrderSystem> sys = std::make_shared<SecondOrderSystem>();
+	Eigen::Matrix2d A;
+	A << -2, -1, 1, 0;
+	Eigen::Vector2d B;
+	B << 1, 0;
+
+	typedef LinearSystemDynamics<2,1> SecondOrderSystem;
+	ControlledSystemBase<2,1>::Ptr sys = ControlledSystemBase<2,1>::Ptr(new SecondOrderSystem(A, B));
 
 	SecondOrderSystem::scalar_array_t cntTimeStamp {0, 10};
 	SecondOrderSystem::input_vector_array_t uff(2, SecondOrderSystem::input_vector_t::Ones());
@@ -124,7 +127,7 @@ TEST(IntegrationTest, SecondOrderSystem_AdamsBashfort)
 
 	sys->setController(controller);
 
-	std::shared_ptr<ControlledSystemBase<2, 1> > sysClone1(sys->clone());
+	ControlledSystemBase<2, 1>::Ptr sysClone1(sys->clone());
 	resultsGood = sysClone1.unique();
 
 	const size_t order = 5;
@@ -172,7 +175,13 @@ TEST(IntegrationTest, SecondOrderSystem_AdamsBashfortMoulton)
 {
 	bool resultsGood = true;
 
-	std::shared_ptr<SecondOrderSystem> sys = std::make_shared<SecondOrderSystem>();
+	Eigen::Matrix2d A;
+	A << -2, -1, 1, 0;
+	Eigen::Vector2d B;
+	B << 1, 0;
+
+	typedef LinearSystemDynamics<2,1> SecondOrderSystem;
+	ControlledSystemBase<2,1>::Ptr sys = ControlledSystemBase<2,1>::Ptr(new SecondOrderSystem(A, B));
 
 	SecondOrderSystem::scalar_array_t cntTimeStamp {0, 10};
 	SecondOrderSystem::input_vector_array_t uff(2, SecondOrderSystem::input_vector_t::Ones());
@@ -185,7 +194,7 @@ TEST(IntegrationTest, SecondOrderSystem_AdamsBashfortMoulton)
 
 	sys->setController(controller);
 
-	std::shared_ptr<ControlledSystemBase<2, 1> > sysClone1(sys->clone());
+	ControlledSystemBase<2, 1>::Ptr sysClone1(sys->clone());
 	resultsGood =  sysClone1.unique();
 
 	const size_t order = 5;

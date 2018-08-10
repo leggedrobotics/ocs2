@@ -1,9 +1,31 @@
-/*
- * SLQ_BASE.h
- *
- *  Created on: August 14, 2016
- *      Author: farbod
- */
+/******************************************************************************
+Copyright (c) 2017, Farbod Farshidian. All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+* Redistributions of source code must retain the above copyright notice, this
+  list of conditions and the following disclaimer.
+
+* Redistributions in binary form must reproduce the above copyright notice,
+  this list of conditions and the following disclaimer in the documentation
+  and/or other materials provided with the distribution.
+
+* Neither the name of the copyright holder nor the names of its
+  contributors may be used to endorse or promote products derived from
+  this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+******************************************************************************/
 
 #ifndef SLQ_BASE_OCS2_H_
 #define SLQ_BASE_OCS2_H_
@@ -16,6 +38,7 @@
 #include <Eigen/StdVector>
 #include <vector>
 #include <type_traits>
+#include <chrono>
 #include <Eigen/Dense>
 #include <unsupported/Eigen/MatrixFunctions>
 
@@ -44,9 +67,8 @@
 #include <ocs2_slq/riccati_equations/SequentialErrorEquationNormalized.h>
 #include <ocs2_slq/riccati_equations/SLQ_RiccatiEquationsNormalized.h>
 
-#include <chrono>
 
-#define BENCHMARK
+//#define BENCHMARK
 #define USE_SEPARATE_RICCATI_SOLVER
 
 namespace ocs2{
@@ -125,9 +147,8 @@ public:
 	typedef typename DIMENSIONS::constraint2_state_matrix_t        constraint2_state_matrix_t;
 	typedef typename DIMENSIONS::constraint2_state_matrix_array_t  constraint2_state_matrix_array_t;
 	typedef typename DIMENSIONS::constraint2_state_matrix_array2_t constraint2_state_matrix_array2_t;
-
-	typedef Eigen::Matrix<scalar_t, Eigen::Dynamic, 1> 	dynamic_vector_t;
-	typedef std::vector<dynamic_vector_t>				dynamic_vector_array_t;
+	typedef typename DIMENSIONS::dynamic_vector_t       dynamic_vector_t;
+	typedef typename DIMENSIONS::dynamic_vector_array_t dynamic_vector_array_t;
 
 	typedef SystemEventHandler<STATE_DIM>         event_handler_t;
 	typedef StateTriggeredEventHandler<STATE_DIM> state_triggered_event_handler_t;
@@ -142,6 +163,12 @@ public:
 	typedef typename logic_rules_machine_t::Ptr						logic_rules_machine_ptr_t;
 
 	using INTERNAL_CONTROLLER = controller_array_t;
+
+	/**
+	 * class for collecting SLQ data
+	 */
+	template <size_t OTHER_STATE_DIM, size_t OTHER_INPUT_DIM, class OTHER_LOGIC_RULES_T>
+	friend class SLQ_DataCollector;
 
 // TODO: do not push to remote
 public:
@@ -209,6 +236,11 @@ public:
 	 * Destructor.
 	 */
 	virtual ~SLQ_BASE();
+
+	/**
+	 * Resets the class to its state after construction.
+	 */
+	virtual void reset();
 
 	/**
 	 * Forward integrate the system dynamics with given controller. It uses the given control policies and initial state,
@@ -511,7 +543,7 @@ public:
 	size_t getNumIterations() const;
 
 	/**
-	 * Gets Iterations Log of SLQ.
+	 * Gets iterations Log of SLQ.
 	 *
 	 * @param [out] iterationCost: Each iteration's cost.
 	 * @param [out] iterationISE1: Each iteration's type-1 constraints ISE.
@@ -589,6 +621,14 @@ public:
 	 * @return eventTimes: Array of the event times.
 	 */
 	const scalar_array_t& getEventTimes() const;
+
+	/**
+	 * Gets the cost function desired trajectories.
+	 *
+	 * @param [out] costDesiredTrajectories: A pointer to the cost function desired trajectories
+	 */
+	virtual void getCostDesiredTrajectoriesPtr(
+			const cost_desired_trajectories_t*& costDesiredTrajectoriesPtr) const;
 
 	/**
 	 * Sets the cost function desired trajectories.
@@ -1108,9 +1148,6 @@ protected:
 	const std::vector<scalar_array_t>* 	desiredTimeTrajectoryStockPtr_;
 	const state_vector_array2_t* 		desiredStateTrajectoryStockPtr_;
 	const input_vector_array2_t* 		desiredInputTrajectoryStockPtr_;
-	std::vector<scalar_array_t> 	  	nullDesiredTimeTrajectoryStockPtr_;
-	state_vector_array2_t 				nullDesiredStateTrajectoryStockPtr_;
-	input_vector_array2_t 				nullDesiredInputTrajectoryStockPtr_;
 
 	scalar_t learningRateStar_ = 1.0;  // The optimal learning rate.
 	scalar_t maxLearningRate_  = 1.0;  // The maximum permitted learning rate (settings_.maxLearningRateGSLQP_).
@@ -1297,10 +1334,6 @@ private:
 	std::chrono::time_point<std::chrono::steady_clock> BENCHMARK_end_;
 	std::chrono::duration<double> BENCHMARK_diff_;
 #endif
-
-public:
-	template <size_t GSLQP_STATE_DIM, size_t GSLQP_INPUT_DIM, class GSLQP_LOGIC_RULES_T>
-	friend class GSLQ;
 
 };
 

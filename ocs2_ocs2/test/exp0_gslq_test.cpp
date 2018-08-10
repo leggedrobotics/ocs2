@@ -1,9 +1,31 @@
-/*
- * A unit test for example system 0
- *
- *  Created on: Sept 20, 2016
- *      Author: farbod
- */
+/******************************************************************************
+Copyright (c) 2017, Farbod Farshidian. All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+* Redistributions of source code must retain the above copyright notice, this
+  list of conditions and the following disclaimer.
+
+* Redistributions in binary form must reproduce the above copyright notice,
+  this list of conditions and the following disclaimer in the documentation
+  and/or other materials provided with the distribution.
+
+* Neither the name of the copyright holder nor the names of its
+  contributors may be used to endorse or promote products derived from
+  this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+******************************************************************************/
 
 #include <iostream>
 #include <cstdlib>
@@ -14,7 +36,7 @@
 #include <ocs2_slq/SLQ_MP.h>
 #include <ocs2_slq/test/EXP0.h>
 
-#include <ocs2_ocs2/GSLQ.h>
+#include <ocs2_ocs2/GSLQ_BASE.h>
 
 using namespace ocs2;
 
@@ -24,7 +46,7 @@ enum
 	INPUT_DIM = 1
 };
 
-TEST(exp0_gslq_test, exp0_gslq_test)
+TEST(exp0_gslq_test, optimum_gradient_test)
 {
 
 	// system dynamics
@@ -50,7 +72,7 @@ TEST(exp0_gslq_test, exp0_gslq_test)
 	/******************************************************************************************************/
 	SLQ_Settings slqSettings;
 	slqSettings.displayInfo_ = false;
-	slqSettings.displayShortSummary_ = true;
+	slqSettings.displayShortSummary_ = false;
 	slqSettings.absTolODE_ = 1e-10;
 	slqSettings.relTolODE_ = 1e-7;
 	slqSettings.maxNumStepsPerSecond_ = 10000;
@@ -58,11 +80,11 @@ TEST(exp0_gslq_test, exp0_gslq_test)
 	slqSettings.maxNumIterationsSLQ_ = 30;
 	slqSettings.lsStepsizeGreedy_ = true;
 	slqSettings.noStateConstraints_ = true;
-	slqSettings.useLQForDerivatives_ = true;
+	slqSettings.minRelCostGSLQP_ = 5e-4;
 
 	// switching times
-	std::vector<double> switchingTimes {0.1897};
-	EXP0_LogicRules logicRules(switchingTimes);
+	std::vector<double> optimumEventTimes {0.1897};
+	EXP0_LogicRules logicRules(optimumEventTimes);
 
 	double startTime = 0.0;
 	double finalTime = 2.0;
@@ -70,7 +92,7 @@ TEST(exp0_gslq_test, exp0_gslq_test)
 	// partitioning times
 	std::vector<double> partitioningTimes;
 	partitioningTimes.push_back(startTime);
-	partitioningTimes.push_back(switchingTimes[0]);
+	partitioningTimes.push_back(optimumEventTimes[0]);
 	partitioningTimes.push_back(finalTime);
 
 	Eigen::Vector2d initState(0.0, 2.0);
@@ -78,91 +100,56 @@ TEST(exp0_gslq_test, exp0_gslq_test)
 	/******************************************************************************************************/
 	/******************************************************************************************************/
 	/******************************************************************************************************/
-	// GSLQ - single core version
+	// SLQ - single core version
 	SLQ<STATE_DIM, INPUT_DIM, EXP0_LogicRules> slq(
 			&systemDynamics, &systemDerivative,
 			&systemConstraint, &systemCostFunction,
 			&operatingTrajectories, slqSettings, &logicRules);
+	// SLQ data collector
+	SLQ_DataCollector<STATE_DIM, INPUT_DIM, EXP0_LogicRules> slqDataCollector;
+	// GSLQ
+	GSLQ_BASE<STATE_DIM, INPUT_DIM, EXP0_LogicRules> gslq(slqSettings);
 
-	GSLQ<STATE_DIM, INPUT_DIM, EXP0_LogicRules> gslq(slq);
-
-
-//	// GSLQ MP version
-//	SLQ_MP<STATE_DIM, INPUT_DIM, EXP0_LogicRules> slq_mp(
-//			&systemDynamics, &systemDerivative,
-//			&systemConstraint, &systemCostFunction,
-//			&operatingTrajectories, slqSettings, &logicRules);
-
-	// run single core GSLQ
-	if (slqSettings.displayInfo_ || slqSettings.displayShortSummary_)
+	// run GSLQ using LQ
+	slq.settings().useLQForDerivatives_ = true;
+	gslq.settings().useLQForDerivatives_ = true;
 	slq.run(startTime, initState, finalTime, partitioningTimes);
-	gslq.run();
+	slqDataCollector.collect(&slq);
+	gslq.run(optimumEventTimes, &slqDataCollector);
+	// cost derivative
+	Eigen::Matrix<double,1,1> costFunctionDerivative_LQ;
+	gslq.getCostFuntionDerivative(costFunctionDerivative_LQ);
 
-//	// run multi-core GSLQ
-//	if (slqSettings.displayInfo_ || slqSettings.displayShortSummary_)
-//		std::cerr << "\n>>> multi-core SLQ" << std::endl;
-//	slq_mp.run(startTime, initState, finalTime, partitioningTimes);
+	// run GSLQ using BVP
+	slq.settings().useLQForDerivatives_ = false;
+	gslq.settings().useLQForDerivatives_ = false;
+	slq.reset();
+	slq.run(startTime, initState, finalTime, partitioningTimes);
+	slqDataCollector.collect(&slq);
+	gslq.run(optimumEventTimes, &slqDataCollector);
+	// cost derivative
+	Eigen::Matrix<double,1,1> costFunctionDerivative_BVP;
+	gslq.getCostFuntionDerivative(costFunctionDerivative_BVP);
+
+	// cost
+	double costFunction, constraint1ISE, constraint2ISE;
+	slq.getPerformanceIndeces(costFunction, constraint1ISE, constraint2ISE);
 
 	/******************************************************************************************************/
 	/******************************************************************************************************/
 	/******************************************************************************************************/
-//	// run both the mp and the single core version
-//	gslq.run(switchingTimes[0], initState, switchingTimes);
-//	gslq_mp.run(switchingTimes_mp[0], initState, switchingTimes_mp);
-//
-//	// get controller
-//	gslq.getController(controllersStock);
-//	gslq_mp.getController(controllersStock_mp);
-//
-//	// rollout both versions
-//	std::vector<GSLQ<2,1,2,3>::scalar_array_t> timeTrajectoriesStock, timeTrajectoriesStock_mp;
-//	std::vector<GSLQ<2,1,2,3>::state_vector_array_t> stateTrajectoriesStock, stateTrajectoriesStock_mp;
-//	std::vector<GSLQ<2,1,2,3>::control_vector_array_t> controlTrajectoriesStock, controlTrajectoriesStock_mp;
-//	gslq.rollout(switchingTimes[0], initState, controllersStock, timeTrajectoriesStock, stateTrajectoriesStock, controlTrajectoriesStock);
-//	gslq_mp.rollout(switchingTimes_mp[0], initState, controllersStock_mp, timeTrajectoriesStock_mp, stateTrajectoriesStock_mp, controlTrajectoriesStock_mp);
-//
-//	// compute cost for both versions
-//	double rolloutCost, rolloutCost_mp;
-//	gslq.calculateCostFunction(timeTrajectoriesStock, stateTrajectoriesStock, controlTrajectoriesStock, rolloutCost);
-//	gslq_mp.calculateCostFunction(timeTrajectoriesStock_mp, stateTrajectoriesStock_mp, controlTrajectoriesStock_mp, rolloutCost_mp);
-//
-//	// value function for both versions
-//	double totalCost;
-//	double totalCost_mp;
-//	gslq.getValueFuntion(0.0, initState, totalCost);
-//	gslq_mp.getValueFuntion(0.0, initState, totalCost_mp);
-//
-	// value function derivative for both versions
-	Eigen::Matrix<double,1,1> costFunctionDerivative, costFunctionDerivative_mp;
-	gslq.getCostFuntionDerivative(costFunctionDerivative);
-//	gslq_mp.getCostFuntionDerivative(costFunctionDerivative_mp);
+	std::cerr << "### Optimum event times are: [" << optimumEventTimes[0] << "]\n";
 
+	std::cerr << "### Optimum cost is: " << costFunction << "\n";
 
-//	/******************************************************************************************************/
-//	/******************************************************************************************************/
-//	/******************************************************************************************************/
-	std::cout << "Single core switching times are: [" << switchingTimes[0] << "]\n";
+	std::cerr << "### Optimum cost derivative LQ method:  [" << costFunctionDerivative_LQ(0) << "]\n";
+	std::cerr << "### Optimum cost derivative BVP method: [" << costFunctionDerivative_BVP(0) << "]\n";
 
-//	std::cout << "MP switching times are: [" << switchingTimes_mp[0] << ", ";
-//	for (size_t i=1; i<switchingTimes_mp.size()-1; i++)
-//		std::cout << switchingTimes_mp[i] << ", ";
-//	std::cout << switchingTimes_mp.back() << "]\n";
-//
-//	for (size_t i=0; i<switchingTimes_mp.size(); i++)
-//			ASSERT_LT(fabs(switchingTimes_mp[i]-switchingTimes[i]), 1e-4);
-//
-//	std::cout << "The single core total cost in the test rollout: " << rolloutCost << std::endl;
-//	std::cout << "The MP total cost in the test rollout: " << rolloutCost_mp << std::endl;
-//	ASSERT_LT(fabs(rolloutCost_mp - rolloutCost), 10*gslqOptions.minRelCostGSLQ_);
-//
-	std::cout << "The single core total cost derivative: " << costFunctionDerivative.transpose() << std::endl;
-//	std::cout << "The MP total cost derivative: " << costFunctionDerivative_mp.transpose() << std::endl;
-////	for (size_t i=0; i<costFunctionDerivative_mp.size(); i++)
-////		ASSERT_LT(fabs(costFunctionDerivative[i]-costFunctionDerivative_mp[i]), gslqOptions.minRelCostGSLQ_*10);
-//
-//	std::cout << "SLQ_MP cost			" << totalCost_mp << std::endl;
-//	std::cout << "single core cost 		" << totalCost << std::endl;
-//	ASSERT_LT(fabs(totalCost_mp - totalCost), 10*gslqOptions.minRelCostGSLQ_);
+	ASSERT_LT(costFunctionDerivative_LQ.norm()/fabs(costFunction), 10*slqSettings.minRelCostGSLQP_) <<
+			"MESSAGE: GSLQ failed in the EXP0's cost derivative LQ test!";
+
+	ASSERT_LT(costFunctionDerivative_BVP.norm()/fabs(costFunction), 10*slqSettings.minRelCostGSLQP_) <<
+			"MESSAGE: GSLQ failed in the EXP0's cost derivative BVP test!";
 }
 
 

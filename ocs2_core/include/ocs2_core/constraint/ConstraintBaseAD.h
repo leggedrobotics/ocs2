@@ -1,9 +1,31 @@
-/*
- * ConstraintBaseAD.h
- *
- *  Created on: May 2, 2018
- *      Author: farbod
- */
+/******************************************************************************
+Copyright (c) 2017, Farbod Farshidian. All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+* Redistributions of source code must retain the above copyright notice, this
+  list of conditions and the following disclaimer.
+
+* Redistributions in binary form must reproduce the above copyright notice,
+  this list of conditions and the following disclaimer in the documentation
+  and/or other materials provided with the distribution.
+
+* Neither the name of the copyright holder nor the names of its
+  contributors may be used to endorse or promote products derived from
+  this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+******************************************************************************/
 
 #ifndef CONSTRAINTBASEAD_OCS2_H_
 #define CONSTRAINTBASEAD_OCS2_H_
@@ -76,13 +98,6 @@ public:
 	 * Default destructor
 	 */
 	virtual ~ConstraintBaseAD() = default;
-
-	/**
-	 * Returns pointer to the base class.
-	 *
-	 * @return A raw pointer to the class.
-	 */
-	virtual BASE* clone() const override;
 
 	/**
 	 * Interface method to the state-input equality constraints. This method should be implemented by the derived class.
@@ -173,7 +188,7 @@ public:
 			const std::string& libraryFolder);
 
 	/**
-	 * laods the forward model, the Jacobian model, and the Hessian model.
+	 * Loads the forward model, the Jacobian model, and the Hessian model.
 	 *
 	 * @param modelName
 	 * @param libraryFolder
@@ -207,28 +222,28 @@ public:
 	virtual void setCurrentStateAndControl(
 			const scalar_t& t,
 			const state_vector_t& x,
-			const input_vector_t& u) override;
+			const input_vector_t& u) final;
 
 	/**
 	 * Computes the state-input equality constraints.
 	 *
 	 * @param [out] e: The state-input equality constraints value.
 	 */
-	virtual void getConstraint1(constraint1_vector_t& e) override;
+	virtual void getConstraint1(constraint1_vector_t& e) final;
 
 	/**
 	 * Compute the state-only equality constraints.
 	 *
 	 * @param [out] h: The state-only equality constraints value.
 	 */
-	virtual void getConstraint2(constraint2_vector_t& h) override;
+	virtual void getConstraint2(constraint2_vector_t& h) final;
 
 	/**
 	 * Compute the final state-only equality constraints.
 	 *
 	 * @param [out] h_f: The final state-only equality constraints value.
 	 */
-	virtual void getFinalConstraint2(constraint2_vector_t& h_f) override;
+	virtual void getFinalConstraint2(constraint2_vector_t& h_f) final;
 
 	/**
 	 * The C matrix at a given operating point for the linearized state-input constraints,
@@ -236,7 +251,7 @@ public:
 	 *
 	 * @param [out] C: \f$ C(t) \f$ matrix.
 	 */
-	virtual void getConstraint1DerivativesState(constraint1_state_matrix_t& C) override;
+	virtual void getConstraint1DerivativesState(constraint1_state_matrix_t& C) final;
 
 	/**
 	 * The D matrix at a given operating point for the linearized state-input constraints,
@@ -244,7 +259,7 @@ public:
 	 *
 	 * @param [out] D: \f$ D(t) \f$ matrix.
 	 */
-	virtual void getConstraint1DerivativesControl(constraint1_input_matrix_t& D) override;
+	virtual void getConstraint1DerivativesControl(constraint1_input_matrix_t& D) final;
 
 	/**
 	 * The F matrix at a given operating point for the linearized state-only constraints,
@@ -252,7 +267,7 @@ public:
 	 *
 	 * @param [out] F: \f$ F(t) \f$ matrix.
 	 */
-	virtual void getConstraint2DerivativesState(constraint2_state_matrix_t& F) override;
+	virtual void getConstraint2DerivativesState(constraint2_state_matrix_t& F) final;
 
 	/**
 	 * The F matrix at a given operating point for the linearized terminal state-only constraints,
@@ -260,7 +275,28 @@ public:
 	 *
 	 * @param [out] F_f: \f$ F_f(t) \f$ matrix.
 	 */
-	virtual void getFinalConstraint2DerivativesState(constraint2_state_matrix_t& F_f) override;
+	virtual void getFinalConstraint2DerivativesState(constraint2_state_matrix_t& F_f) final;
+
+	/**
+	 * Returns pointer to the base class.
+	 *
+	 * @return A raw pointer to the class.
+	 */
+	virtual BASE* clone() const final;
+
+	/**
+	 * Initialization of the system Constraints cannot be override.
+	 *
+	 * @param [in] logicRulesMachine: A class which contains and parse the logic rules e.g
+	 * method findActiveSubsystemHandle returns a Lambda expression which can be used to
+	 * find the ID of the current active subsystem.
+	 * @param [in] partitionIndex: index of the time partition.
+	 * @param [in] algorithmName: The algorithm that class this class (default not defined).
+	 */
+	virtual void initializeModel(
+			LogicRulesMachine<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>& logicRulesMachine,
+			const size_t& partitionIndex,
+			const char* algorithmName = nullptr) final {}
 
 
 protected:

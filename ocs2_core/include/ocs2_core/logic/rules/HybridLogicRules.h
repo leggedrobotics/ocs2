@@ -1,9 +1,31 @@
-/*
- * HybridLogicRules.h
- *
- *  Created on: Mar 22, 2018
- *      Author: farbod
- */
+/******************************************************************************
+Copyright (c) 2017, Farbod Farshidian. All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+* Redistributions of source code must retain the above copyright notice, this
+  list of conditions and the following disclaimer.
+
+* Redistributions in binary form must reproduce the above copyright notice,
+  this list of conditions and the following disclaimer in the documentation
+  and/or other materials provided with the distribution.
+
+* Neither the name of the copyright holder nor the names of its
+  contributors may be used to endorse or promote products derived from
+  this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+******************************************************************************/
 
 #ifndef HYBRIDLOGICRULES_OCS2_H_
 #define HYBRIDLOGICRULES_OCS2_H_
@@ -156,7 +178,7 @@ public:
 	/**
 	 * Retrieves the sequence of the triggered subsystems.
 	 *
-	 * @return A const reference to subsystemsSequence_.
+	 * @return A constant reference to subsystemsSequence_.
 	 */
 	const size_array_t& subsystemsSequence() const {
 
@@ -166,7 +188,7 @@ public:
 	/**
 	 * Retrieves the sequence of the triggered subsystems.
 	 *
-	 * @return A const reference to subsystemsSequence_.
+	 * @return A constant reference to subsystemsSequence_.
 	 */
 	size_array_t& subsystemsSequence() {
 
@@ -176,12 +198,12 @@ public:
 	/**
 	 * Used in the SLQ-MPC method to set the model sequence template.
 	 *
-	 * @param [in] modeSequenceTemplate: A dada type which includes all necessary information for modifying the logicRules.
+	 * @param [in] modeSequenceTemplate: A data type which includes all necessary information for modifying the logicRules.
 	 */
 	virtual void setModeSequenceTemplate(const logic_template_type& modeSequenceTemplate) = 0;
 
 	/**
-	 * Used in the SLQ-MPC method to inset a new user defined logic in the given time period.
+	 * Used in the SLQ-MPC method to insert a new user defined logic in the given time period.
 	 * Note: use the update method to at the end to update your derived class variables
 	 *
 	 * @param [in] startTime: The initial time from which the new logicRules template should be augmented.
@@ -203,7 +225,7 @@ public:
 			const scalar_t& upperBoundTime) = 0;
 
 	/**
-	 * Adjusts controller. This methos is called my the logicMachine whenever the logicRuls are updated.
+	 * Adjusts controller. This method is called my the logicMachine whenever the logicRuls are updated.
 	 * It allows the user to modify the controller to adapt to the changes of logics.
 	 *
 	 * @param controller: Control policy which should be adjusted.

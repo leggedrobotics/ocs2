@@ -1,10 +1,31 @@
-/*
- * Implementation of SLQ_BASE.h
- *
- *  Created on: October 7, 2016
- *      Author: farbod
- */
+/******************************************************************************
+Copyright (c) 2017, Farbod Farshidian. All rights reserved.
 
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+* Redistributions of source code must retain the above copyright notice, this
+  list of conditions and the following disclaimer.
+
+* Redistributions in binary form must reproduce the above copyright notice,
+  this list of conditions and the following disclaimer in the documentation
+  and/or other materials provided with the distribution.
+
+* Neither the name of the copyright holder nor the names of its
+  contributors may be used to endorse or promote products derived from
+  this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+******************************************************************************/
 
 namespace ocs2
 {
@@ -207,7 +228,7 @@ SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::~SLQ_BASE()  {
 
 #ifdef BENCHMARK
 	auto BENCHMARK_total = BENCHMARK_tAvgFP_ + BENCHMARK_tAvgBP_ + BENCHMARK_tAvgLQ_;
-	if (BENCHMARK_total>0) {
+	if (BENCHMARK_total>0 && (settings_.displayInfo_  || settings_.displayShortSummary_)) {
 		std::cerr << std::endl << "#####################################################" << std::endl;
 		std::cerr << "Benchmarking over " << BENCHMARK_nIterationsBP_ << " samples." << std::endl;
 		std::cerr << "Average time for Forward Pass:      " << BENCHMARK_tAvgFP_ << " [ms] \t(" <<
@@ -218,6 +239,43 @@ SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::~SLQ_BASE()  {
 				BENCHMARK_tAvgLQ_/BENCHMARK_total*100 << "%)" << std::endl;
 	}
 #endif
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
+void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::reset() {
+
+	iteration_ = 0;
+	rewindCounter_ = 0;
+
+	learningRateStar_ = 1.0;
+	maxLearningRate_  = 1.0;
+	constraintStepSize_ = 1.0;
+
+	blockwiseMovingHorizon_ = false;
+	useParallelRiccatiSolverFromInitItr_ = false;
+
+	costDesiredTrajectories_.clear();
+	costDesiredTrajectoriesBuffer_.clear();
+	costDesiredTrajectoriesUpdated_ = false;
+
+	for (size_t i=0; i<numPartitions_; i++) {
+
+		// very important :)
+		nominalControllersStock_[i].clear();
+
+		// for Riccati equation parallel computation
+		SmFinalStock_[i]  = state_matrix_t::Zero();
+		SvFinalStock_[i]  = state_vector_t::Zero();
+		SveFinalStock_[i] = state_vector_t::Zero();
+		sFinalStock_[i]   = eigen_scalar_t::Zero();
+		xFinalStock_[i]   = state_vector_t::Zero();
+	}  // end of i loop
+
+//	logicRulesMachinePtr_;
+//	throw std::runtime_error("logicRulesMachinePtr_ in SLQ_BASE");
 }
 
 /******************************************************************************************************/
@@ -2300,31 +2358,44 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::fullRiccatiBackwardSweepWork
 		for (int k=N-1; k>=0; k--) {
 			// checking the numerical stability of the Riccati equations
 			try {
-				if (SmTrajectoryStock_[partitionIndex][k].hasNaN())   throw std::runtime_error("Sm is unstable.");
-				if (SvTrajectoryStock_[partitionIndex][k].hasNaN())   throw std::runtime_error("Sv is unstable.");
-				if (SveTrajectoryStock_[partitionIndex][k].hasNaN())  throw std::runtime_error("Sve is unstable.");
-				if (sTrajectoryStock_[partitionIndex][k].hasNaN())    throw std::runtime_error("s is unstable.");
+				if (SmTrajectoryStock_[partitionIndex][k].hasNaN())
+					throw std::runtime_error("Sm is unstable.");
+				if (SvTrajectoryStock_[partitionIndex][k].hasNaN())
+					throw std::runtime_error("Sv is unstable.");
+				if (SveTrajectoryStock_[partitionIndex][k].hasNaN())
+					throw std::runtime_error("Sve is unstable.");
+				if (sTrajectoryStock_[partitionIndex][k].hasNaN())
+					throw std::runtime_error("s is unstable.");
 			}
 			catch(const std::exception& error) {
-				std::cerr << "what(): " << error.what() << " at time " << SsTimeTrajectoryStock_[partitionIndex][k] << " [sec]." << std::endl;
+				std::cerr << "what(): " << error.what() << " at time "
+						<< SsTimeTrajectoryStock_[partitionIndex][k] << " [sec]." << std::endl;
 				for (int kp=k; kp<k+10; kp++)  {
 					if (kp >= N) continue;
-					std::cerr << "Sm[" << SsTimeTrajectoryStock_[partitionIndex][kp] << "]:\n"<< SmTrajectoryStock_[partitionIndex][kp].norm() << std::endl;
-					std::cerr << "Sv[" << SsTimeTrajectoryStock_[partitionIndex][kp] << "]:\t"<< SvTrajectoryStock_[partitionIndex][kp].transpose().norm() << std::endl;
-					std::cerr << "Sve[" << SsTimeTrajectoryStock_[partitionIndex][kp] << "]:\t"<< SveTrajectoryStock_[partitionIndex][kp].transpose().norm() << std::endl;
-					std::cerr << "s["  << SsTimeTrajectoryStock_[partitionIndex][kp] << "]: \t"<< sTrajectoryStock_[partitionIndex][kp].transpose().norm() << std::endl;
+					std::cerr << "Sm[" << SsTimeTrajectoryStock_[partitionIndex][kp] << "]:\n"
+							<< SmTrajectoryStock_[partitionIndex][kp].norm() << std::endl;
+					std::cerr << "Sv[" << SsTimeTrajectoryStock_[partitionIndex][kp] << "]:\t"
+							<< SvTrajectoryStock_[partitionIndex][kp].transpose().norm() << std::endl;
+					std::cerr << "Sve[" << SsTimeTrajectoryStock_[partitionIndex][kp] << "]:\t"
+							<< SveTrajectoryStock_[partitionIndex][kp].transpose().norm() << std::endl;
+					std::cerr << "s["  << SsTimeTrajectoryStock_[partitionIndex][kp] << "]: \t"
+							<< sTrajectoryStock_[partitionIndex][kp].transpose().norm() << std::endl;
 				}
 				exit(0);
 			}
 
 			// checking the numerical stability of the controller parameters
 			try {
-				if (nominalControllersStock_[partitionIndex].k_[k].hasNaN())        throw std::runtime_error("Feedback gains are unstable.");
-				if (nominalControllersStock_[partitionIndex].uff_[k].hasNaN())      throw std::runtime_error("uff gains are unstable.");
-				if (nominalControllersStock_[partitionIndex].deltaUff_[k].hasNaN()) throw std::runtime_error("deltaUff is unstable.");
+				if (nominalControllersStock_[partitionIndex].k_[k].hasNaN())
+					throw std::runtime_error("Feedback gains are unstable.");
+				if (nominalControllersStock_[partitionIndex].uff_[k].hasNaN())
+					throw std::runtime_error("uff gains are unstable.");
+				if (nominalControllersStock_[partitionIndex].deltaUff_[k].hasNaN())
+					throw std::runtime_error("deltaUff is unstable.");
 			}
 			catch(const std::exception& error) {
-				std::cerr << "what(): " << error.what() << " at time " << nominalControllersStock_[partitionIndex].time_[k] << " [sec]." << std::endl;
+				std::cerr << "what(): " << error.what() << " at time "
+						<< nominalControllersStock_[partitionIndex].time_[k] << " [sec]." << std::endl;
 				exit(0);
 			}
 		}
@@ -2829,10 +2900,6 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::setupOptimizer(const size_t&
 	if (numPartitions==0)
 		throw std::runtime_error("Number of partitions cannot be zero!");
 
-	nullDesiredTimeTrajectoryStockPtr_  = std::vector<scalar_array_t>( numPartitions, scalar_array_t() );
-	nullDesiredStateTrajectoryStockPtr_ = state_vector_array2_t( numPartitions, state_vector_array_t() );
-	nullDesiredInputTrajectoryStockPtr_ = input_vector_array2_t( numPartitions, input_vector_array_t() );
-
 	/*
 	 * nominal trajectories
 	 */
@@ -2984,6 +3051,16 @@ const typename SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::scalar_array_t&
 	SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::getEventTimes() const {
 
 	return logicRulesMachinePtr_->getLogicRulesPtr()->eventTimes();
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
+void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::getCostDesiredTrajectoriesPtr(
+		const cost_desired_trajectories_t*& costDesiredTrajectoriesPtr) const {
+
+	costDesiredTrajectoriesPtr = &costDesiredTrajectories_;
 }
 
 /******************************************************************************************************/

@@ -1,9 +1,31 @@
-/*
- * CostFunctionBaseAD.h
- *
- *  Created on: Apr 25, 2018
- *      Author: farbod
- */
+/******************************************************************************
+Copyright (c) 2017, Farbod Farshidian. All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+* Redistributions of source code must retain the above copyright notice, this
+  list of conditions and the following disclaimer.
+
+* Redistributions in binary form must reproduce the above copyright notice,
+  this list of conditions and the following disclaimer in the documentation
+  and/or other materials provided with the distribution.
+
+* Neither the name of the copyright holder nor the names of its
+  contributors may be used to endorse or promote products derived from
+  this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+******************************************************************************/
 
 #ifndef COSTFUNCTIONBASEAD_OCS2_H_
 #define COSTFUNCTIONBASEAD_OCS2_H_
@@ -38,17 +60,15 @@ public:
 	typedef std::shared_ptr<const CostFunctionBaseAD<Derived, STATE_DIM, INPUT_DIM, LOGIC_RULES_T> > ConstPtr;
 
 	typedef CostFunctionBase<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> BASE;
-
-	typedef typename BASE::scalar_t       			scalar_t;
-	typedef typename BASE::scalar_array_t 			scalar_array_t;
-	typedef typename BASE::state_vector_t 			state_vector_t;
-	typedef typename BASE::state_vector_array_t 	state_vector_array_t;
-	typedef typename BASE::state_matrix_t 			state_matrix_t;
-	typedef typename BASE::input_vector_t  			input_vector_t;
-	typedef typename BASE::input_vector_array_t 	input_vector_array_t;
-	typedef typename BASE::input_matrix_t 		input_matrix_t;
-	typedef typename BASE::input_state_matrix_t 		input_state_matrix_t;
-
+	typedef typename BASE::scalar_t             scalar_t;
+	typedef typename BASE::scalar_array_t       scalar_array_t;
+	typedef typename BASE::state_vector_t       state_vector_t;
+	typedef typename BASE::state_vector_array_t state_vector_array_t;
+	typedef typename BASE::state_matrix_t       state_matrix_t;
+	typedef typename BASE::input_vector_t       input_vector_t;
+	typedef typename BASE::input_vector_array_t input_vector_array_t;
+	typedef typename BASE::input_matrix_t       input_matrix_t;
+	typedef typename BASE::input_state_matrix_t input_state_matrix_t;
 
 	/**
 	 * Default constructor
@@ -66,13 +86,6 @@ public:
 	 * Default destructor
 	 */
 	virtual ~CostFunctionBaseAD() = default;
-
-    /**
-     * Returns pointer to the base class.
-     *
-     * @return A raw pointer to the class.
-     */
-	virtual BASE* clone() const override;
 
 	/**
 	 * Interface method to the intermediate cost function. This method should be implemented by the derived class.
@@ -116,7 +129,7 @@ public:
 			const std::string& libraryFolder);
 
 	/**
-	 * laods the forward model, the Jacobian model, and the Hessian model.
+	 * loads the forward model, the Jacobian model, and the Hessian model.
 	 *
 	 * @param modelName
 	 * @param libraryFolder
@@ -150,70 +163,91 @@ public:
 	virtual void setCurrentStateAndControl(
 			const scalar_t& t,
 			const state_vector_t& x,
-			const input_vector_t& u) override;
+			const input_vector_t& u) final;
 
     /**
      * Get the intermediate cost.
      *
      * @param [out] L: The intermediate cost value.
      */
-	virtual void getIntermediateCost(scalar_t& L) override;
+	virtual void getIntermediateCost(scalar_t& L) final;
 
     /**
      * Get the state derivative of the intermediate cost.
      *
      * @param [out] dLdx: First order derivative of the intermediate cost with respect to state vector.
      */
-	virtual void getIntermediateCostDerivativeState(state_vector_t& dLdx) override;
+	virtual void getIntermediateCostDerivativeState(state_vector_t& dLdx) final;
 
     /**
      * Get state second order derivative of the intermediate cost.
      *
      * @param [out] dLdxx: Second order derivative of the intermediate cost with respect to state vector.
      */
-	virtual void getIntermediateCostSecondDerivativeState(state_matrix_t& dLdxx) override;
+	virtual void getIntermediateCostSecondDerivativeState(state_matrix_t& dLdxx) final;
 
     /**
      * Get control input derivative of the intermediate cost.
      *
      * @param [out] dLdu: First order derivative of the intermediate cost with respect to input vector.
      */
-	virtual void getIntermediateCostDerivativeInput(input_vector_t& dLdu) override;
+	virtual void getIntermediateCostDerivativeInput(input_vector_t& dLdu) final;
 
     /**
      * Get control input second derivative of the intermediate cost.
      *
      * @param [out] dLduu: Second order derivative of the intermediate cost with respect to input vector.
      */
-	virtual void getIntermediateCostSecondDerivativeInput(input_matrix_t& dLduu) override;
+	virtual void getIntermediateCostSecondDerivativeInput(input_matrix_t& dLduu) final;
 
     /**
      * Get the input-state derivative of the intermediate cost.
      *
      * @param [out] dLdux: Second order derivative of the intermediate cost with respect to input vector and state.
      */
-	virtual void getIntermediateCostDerivativeInputState(input_state_matrix_t& dLdux) override;
+	virtual void getIntermediateCostDerivativeInputState(input_state_matrix_t& dLdux) final;
 
     /**
      * Get the terminal cost.
      *
      * @param [out] Phi: The final cost value.
      */
-	virtual void getTerminalCost(scalar_t& Phi) override;
+	virtual void getTerminalCost(scalar_t& Phi) final;
 
     /**
      * Get the terminal cost state derivative.
      *
      * @param [out] dPhidx: First order final cost derivative with respect to state vector.
      */
-	virtual void getTerminalCostDerivativeState(state_vector_t& dPhidx) override;
+	virtual void getTerminalCostDerivativeState(state_vector_t& dPhidx) final;
 
     /**
      * Get the terminal cost state second derivative
      *
      * @param [out] dPhidxx: Second order final cost derivative with respect to state vector.
      */
-	virtual void getTerminalCostSecondDerivativeState(state_matrix_t& dPhidxx) override;
+	virtual void getTerminalCostSecondDerivativeState(state_matrix_t& dPhidxx) final;
+
+    /**
+     * Returns pointer to the base class.
+     *
+     * @return A raw pointer to the class.
+     */
+	virtual BASE* clone() const final;
+
+	/**
+	 * Initialization of the cost function cannot be override.
+	 *
+	 * @param [in] logicRulesMachine: A class which contains and parse the logic rules e.g
+	 * method findActiveSubsystemHandle returns a Lambda expression which can be used to
+	 * find the ID of the current active subsystem.
+	 * @param [in] partitionIndex: index of the time partition.
+	 * @param [in] algorithmName: The algorithm that class this class (default not defined).
+	 */
+	virtual void initializeModel(
+			LogicRulesMachine<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>& logicRulesMachine,
+			const size_t& partitionIndex,
+			const char* algorithmName = nullptr) final {}
 
 protected:
 	typedef ocs2::CppAdCodeGenInterface<domain_dim_, 1, scalar_t> ad_interface_t;

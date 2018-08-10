@@ -10,31 +10,42 @@ find_package(Boost REQUIRED COMPONENTS
 )
 
 ## Eign3
-set( EIGEN_INCLUDE_DIRS "$ENV{LOCAL_EIGEN3_INCLUDE_DIR}" )
-if( NOT EIGEN_INCLUDE_DIRS )
-    find_package(Eigen REQUIRED)
+set( EIGEN3_INCLUDE_DIRS "$ENV{LOCAL_EIGEN3_INCLUDE_DIR}" )
+if( NOT EIGEN3_INCLUDE_DIRS )
+    find_package(Eigen3 REQUIRED)
     message( WARNING "Uses Globally installed Eigen since LOCAL_EIGEN3_INCLUDE_DIR is not defined!")
 endif()
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread -fopenmp -std=c++11 -Wfatal-errors -Wl,--no-as-needed")
 
+###################################
+## catkin specific configuration ##
+###################################
+
 catkin_package(
   INCLUDE_DIRS 
     include
     include/external
-#  CATKIN_DEPENDS other_catkin_pkg
   DEPENDS 
     boost 
-    eigen
+    eigen3
 )
+
+###########
+## Build ##
+###########
 
 include_directories(
   include
   include/external
-  ${EIGEN_INCLUDE_DIRS}
+  ${EIGEN3_INCLUDE_DIRS}
   ${Boost_INCLUDE_DIRS}
   ${catkin_INCLUDE_DIRS}
 )
+
+#############
+## Doxygen ##
+#############
 
 find_package(Doxygen)
 if(DOXYGEN_FOUND)
@@ -62,38 +73,42 @@ endif()
 ## to see the summary of unit test results run
 ## $ catkin_test_results ../../../build/ocs2_core
 
-catkin_add_gtest(integration_unittest
-  test/IntegrationTest.cpp)
+catkin_add_gtest(integration_unittest 
+  test/IntegrationTest.cpp
+)
 target_link_libraries(integration_unittest
   ${catkin_LIBRARIES}
   ${Boost_LIBRARIES}
-)
+) 
 
-catkin_add_gtest(findIndex_unittest
-  test/testFindIndex.cpp)
+catkin_add_gtest(findIndex_unittest 
+  test/testFindIndex.cpp
+)
 target_link_libraries(findIndex_unittest
   ${catkin_LIBRARIES}
   ${Boost_LIBRARIES}
 )
 
-catkin_add_gtest(logic_rules_machin_unittest
-  test/testLogicRulesMachine.cpp)
+catkin_add_gtest(logic_rules_machin_unittest 
+  test/testLogicRulesMachine.cpp
+)
 target_link_libraries(logic_rules_machin_unittest
   ${catkin_LIBRARIES}
   ${Boost_LIBRARIES}
 )
 
-catkin_add_gtest(cppadcg_unittest
-  test/testCppADCG.cpp)
+catkin_add_gtest(cppadcg_unittest 
+  test/testCppADCG.cpp
+)
 target_link_libraries(cppadcg_unittest
   ${Boost_LIBRARIES}
   ${catkin_LIBRARIES} -lm -ldl
 )
 
 catkin_add_gtest(test_transferfunctionbase
-        test/testTransferfunctionBase.cpp)
+  test/testTransferfunctionBase.cpp)
 target_link_libraries(test_transferfunctionbase
-        ${catkin_LIBRARIES}
-        )
+  ${catkin_LIBRARIES}
+)
 
 

@@ -115,7 +115,7 @@ public:
 	 * @param [in] algorithmName: The algorithm that class this class (default not defined).
 	 */
 	virtual void initializeModel(
-			LogicRulesMachine<LOGIC_RULES_T::state_dim, LOGIC_RULES_T::input_dim, LOGIC_RULES_T>& logicRulesMachine,
+			LogicRulesMachine<LOGIC_RULES_T::state_dim_, LOGIC_RULES_T::input_dim_, LOGIC_RULES_T>& logicRulesMachine,
 			const size_t& partitionIndex,
 			const char* algorithmName = nullptr)
 	{}

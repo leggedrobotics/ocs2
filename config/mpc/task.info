@@ -29,6 +29,7 @@ model_settings
   impulseWeight       		0.0
   impulseSigmeFactor  		0.1
 
+  strideTime                0.0		; 0.8
   mpcStrideLength           0.2
   numPhasesInfullGaitCycle  2
   
@@ -90,7 +91,6 @@ slq
 
   AbsTolODE                	    1e-5  ;1e-6
   RelTolODE                   	1e-3  ;1e-4
-  riccatiCoffTolODE				1.0   ;1.0
   minTimeStep					1e-3
   useMakePSD					0
   maxNumStepsPerSecond         	50000
@@ -113,6 +113,7 @@ slq
   debugPrintMP                	0
   lsStepsizeGreedy            	1
 
+  useNominalTimeForBackwardPass 1
   RiccatiIntegratorType       	1 		; ODE45 = 1, ADAMS_BASHFORTH = 2, BULIRSCH_STOER = 3, ADAMS_BASHFORTH_MOULTON = 4
   adams_integrator_dt			0.01
 
@@ -123,27 +124,27 @@ slq
 
 mpc
 {
-  runtimeNumIterations		1
-  initMaxNumIterations		1
+  runtimeNumIterations            1
+  initMaxNumIterations            1
 	
-  runtimeLearningRate			1.0
-  initMaxLearningRate         1.0            
-  initMinLearningRate         1.0    
+  runtimeLearningRate             1.0
+  initMinLearningRate             1.0    
+  initMaxLearningRate             1.0            
 
-  debugPrint				1
-  coldStart					0
-  recedingHorizon			1	; use receding horizon MPC
+  debugPrint                      1
+  coldStart                       0
+  recedingHorizon                 1	; use receding horizon MPC
 
-  useParallelRiccatiSolver	1		; use disjoint riccati solver in MP case and recedingHorizon fashion
+  useParallelRiccatiSolver        1	; use disjoint riccati solver in MP case and recedingHorizon fashion
 
-  useFeedbackPolicy			0
-  forwardSimulationTime		28	; [ms] MRT time
+  useFeedbackPolicy               0
+  forwardSimulationTime           28	; [ms] MRT time
 
-  rosMsgTimeWindow			200	; [ms]
-  adaptiveRosMsgTimeWindow	0
+  rosMsgTimeWindow                200	; [ms]
+  adaptiveRosMsgTimeWindow        0
 
-  mpcDesiredFrequency       100		; [Hz] -1
-  mrtDesiredFrequency       400	    ; [Hz]  
+  mpcDesiredFrequency             100 ; [Hz]
+  mrtDesiredFrequency             400 ; [Hz]  
 }
 
 

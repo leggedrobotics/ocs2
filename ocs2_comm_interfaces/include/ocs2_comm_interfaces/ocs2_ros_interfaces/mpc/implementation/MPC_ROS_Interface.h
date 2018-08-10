@@ -411,10 +411,6 @@ void MPC_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::mpcObservationCallb
 	// update the desired trajectories
 	if(desiredTrajectoriesUpdated_==true) {
 
-		std::unique_lock<std::mutex> lk(targetMutex_);
-
-		desiredTrajectoriesUpdated_ = false;
-
 		// user defined modification of the CostDesiredTrajectories at the moment o setting
 		adjustTargetTrajectories(currentObservation, costDesiredTrajectories_);
 
@@ -426,7 +422,7 @@ void MPC_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::mpcObservationCallb
 		// set CostDesiredTrajectories
 		mpcPtr_->swapCostDesiredTrajectories(costDesiredTrajectories_);
 
-		lk.unlock();
+		desiredTrajectoriesUpdated_ = false;
 
 	} else if (mpcSettings_.recedingHorizon_==false) {
 		return;
@@ -514,12 +510,8 @@ template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
 void MPC_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::mpcTargetTrajectoriesCallback(
 		const ocs2_comm_interfaces::mpc_target_trajectories::ConstPtr& msg) {
 
-	std::unique_lock<std::mutex> lk(targetMutex_);
-
 	RosMsgConversions<0, 0>::ReadTargetTrajectoriesMsg(*msg, costDesiredTrajectories_);
 	desiredTrajectoriesUpdated_ = true;
-
-	lk.unlock();
 }
 
 /******************************************************************************************************/

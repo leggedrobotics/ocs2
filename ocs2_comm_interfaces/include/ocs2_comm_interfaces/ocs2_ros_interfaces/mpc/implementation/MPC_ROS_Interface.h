@@ -509,9 +509,9 @@ template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
 void MPC_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::mpcTargetTrajectoriesCallback(
 		const ocs2_comm_interfaces::mpc_target_trajectories::ConstPtr& msg) {
 
-	desiredTrajectoriesUpdated_ = true;
-
 	RosMsgConversions<0, 0>::ReadTargetTrajectoriesMsg(*msg, costDesiredTrajectories_);
+	// it should be after conversion otherwise data racing happens
+	desiredTrajectoriesUpdated_ = true;
 }
 
 /******************************************************************************************************/

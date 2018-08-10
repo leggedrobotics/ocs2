@@ -62,7 +62,7 @@ public:
 	virtual ~ComDynamicsDerivativeBase() {}
 
 	/**
-	 * copy construntor
+	 * copy constructor
 	 */
 	ComDynamicsDerivativeBase(const ComDynamicsDerivativeBase& rhs)
 
@@ -93,7 +93,10 @@ public:
 	/**
 	 * Set state and input.
 	 */
-	virtual void setCurrentStateAndControl(const scalar_t& t, const state_vector_t& x, const input_vector_t& u) override;
+	virtual void setCurrentStateAndControl(
+			const scalar_t& t,
+			const state_vector_t& x,
+			const input_vector_t& u) override;
 
 	/**
 	 * set the current state and contact force input
@@ -105,12 +108,12 @@ public:
 	/**
 	 * calculate and retrieve the A matrix
 	 */
-	virtual void getFlowMapDerivativeState(state_matrix_t& A)  override;
+	virtual void getFlowMapDerivativeState(state_matrix_t& A)  final;
 
 	/**
 	 * calculate and retrieve the B matrix
 	 */
-	virtual void getFlowMapDerivativeInput(state_input_matrix_t& B)  override;
+	virtual void getFlowMapDerivativeInput(state_input_matrix_t& B)  final;
 
 	/**
 	 * calculate and retrieve the approximate derivatives w.r.t. joints

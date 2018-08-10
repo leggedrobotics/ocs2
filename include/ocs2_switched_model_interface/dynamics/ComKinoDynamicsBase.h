@@ -136,7 +136,7 @@ public:
 	virtual void computeFlowMap(const scalar_t& t,
 			const state_vector_t& x,
 			const input_vector_t& u,
-			state_vector_t& dxdt) override;
+			state_vector_t& dxdt) final;
 
 	/**
 	 * set the stance legs
@@ -158,7 +158,7 @@ public:
 	virtual void computeJumpMap(
 			const scalar_t& time,
 			const state_vector_t& state,
-			state_vector_t& mappedState) override {
+			state_vector_t& mappedState) final {
 
 		mappedState = state;
 	}
@@ -172,7 +172,7 @@ public:
 	virtual void computeGuardSurfaces(
 			const scalar_t& t,
 			const state_vector_t& x,
-			dynamic_vector_t& guardSurfacesValue) override;
+			dynamic_vector_t& guardSurfacesValue) final;
 
 
 private:

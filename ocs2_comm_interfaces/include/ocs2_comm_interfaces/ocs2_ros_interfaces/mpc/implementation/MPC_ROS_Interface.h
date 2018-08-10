@@ -40,6 +40,7 @@ MPC_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::MPC_ROS_Interface(
 	: mpcPtr_(&mpc)
 	, mpcSettings_(mpc.settings())
 	, nodeName_(nodeName)
+	, desiredTrajectoriesUpdated_(false)
 {
 	// correcting rosMsgTimeWindow
 	if (mpcSettings_.recedingHorizon_==false)
@@ -410,6 +411,8 @@ void MPC_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::mpcObservationCallb
 	// update the desired trajectories
 	if(desiredTrajectoriesUpdated_==true) {
 
+		std::unique_lock<std::mutex> lk(targetMutex_);
+
 		desiredTrajectoriesUpdated_ = false;
 
 		// user defined modification of the CostDesiredTrajectories at the moment o setting
@@ -422,6 +425,8 @@ void MPC_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::mpcObservationCallb
 
 		// set CostDesiredTrajectories
 		mpcPtr_->swapCostDesiredTrajectories(costDesiredTrajectories_);
+
+		lk.unlock();
 
 	} else if (mpcSettings_.recedingHorizon_==false) {
 		return;
@@ -509,9 +514,12 @@ template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
 void MPC_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::mpcTargetTrajectoriesCallback(
 		const ocs2_comm_interfaces::mpc_target_trajectories::ConstPtr& msg) {
 
+	std::unique_lock<std::mutex> lk(targetMutex_);
+
 	RosMsgConversions<0, 0>::ReadTargetTrajectoriesMsg(*msg, costDesiredTrajectories_);
-	// it should be after conversion otherwise data racing happens
 	desiredTrajectoriesUpdated_ = true;
+
+	lk.unlock();
 }
 
 /******************************************************************************************************/

@@ -317,6 +317,9 @@ protected:
 	std::mutex publisherMutex_;
 	std::condition_variable msgReady_;
 
+	// data
+	std::mutex targetMutex_;
+
 	size_t numIterations_;
 	scalar_t maxDelay_;
 	scalar_t meanDelay_;
@@ -327,7 +330,7 @@ protected:
 
 	bool initialCall_;
 
-	std::atomic<bool> desiredTrajectoriesUpdated_;
+	bool desiredTrajectoriesUpdated_;
 	cost_desired_trajectories_t costDesiredTrajectories_;
 	cost_desired_trajectories_t defaultCostDesiredTrajectories_;
 };

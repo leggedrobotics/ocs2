@@ -5,8 +5,8 @@
  *      Author: farbod
  */
 
-#ifndef COMKINOOPERATINGPOINTSBASE_AUGMENTED_H_
-#define COMKINOOPERATINGPOINTSBASE_AUGMENTED_H_
+#ifndef COMKINOOPERATINGPOINTSBASE_H_
+#define COMKINOOPERATINGPOINTSBASE_H_
 
 #include <ocs2_core/initialization/SystemOperatingPoint.h>
 
@@ -186,4 +186,4 @@ private:
 
 #include "implementation/ComKinoOperatingPointsBase.h"
 
-#endif /* COMKINOOPERATINGPOINTSBASE_AUGMENTED_H_ */
+#endif /* COMKINOOPERATINGPOINTSBASE_H_ */

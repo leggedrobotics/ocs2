@@ -11,8 +11,7 @@
 #include <array>
 #include <Eigen/Dense>
 
-#include <ocs2_core/misc/EigenQuadSolve.h>
-
+#include "ocs2_switched_model_interface/external/EigenQuadSolve.h"
 #include "ocs2_switched_model_interface/core/ComModelBase.h"
 #include "ocs2_switched_model_interface/core/KinematicsModelBase.h"
 #include "ocs2_switched_model_interface/core/SwitchedModel.h"

@@ -57,10 +57,10 @@ public:
 		if (gravitationalAcceleration<0)  throw std::runtime_error("Gravitational acceleration should be a positive value.");
 	}
 
-	virtual ~ComDynamicsBase() {}
+	virtual ~ComDynamicsBase() = default;
 
 	/**
-	 * copy construntor
+	 * copy constructor
 	 */
 	ComDynamicsBase(const ComDynamicsBase& rhs)
 
@@ -111,7 +111,7 @@ public:
 	virtual void computeFlowMap(const scalar_t& t,
 			const state_vector_t& x,
 			const input_vector_t& u,
-			state_vector_t& dxdt) override;
+			state_vector_t& dxdt) final;
 
 	/**
 	 * set joints' angel and angular velocity, and stance leg configuration. This data is

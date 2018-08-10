@@ -128,14 +128,14 @@ public:
 	 *
 	 * @param A: a nx-by-nx matrix
 	 */
-	virtual void getFlowMapDerivativeState(state_matrix_t& A)  override;
+	virtual void getFlowMapDerivativeState(state_matrix_t& A)  final;
 
 	/**
 	 * calculate and retrieve the B matrix (i.e. the state derivative of the dynamics w.r.t. input vector).
 	 *
 	 * @param B: a ny-by-nu matrix
 	 */
-	virtual void getFlowMapDerivativeInput(state_input_matrix_t& B)  override;
+	virtual void getFlowMapDerivativeInput(state_input_matrix_t& B)  final;
 
 	/**
 	 * set the stance legs

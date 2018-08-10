@@ -16,17 +16,18 @@ class Model_Settings
 {
 public:
 	Model_Settings()
-	: constrainedIntegration_(true),
-	  gravitationalAcceleration_(9.81),
-	  contactForceWeight_(0.1),
-	  zDirectionPositionWeight_(5.0),
-	  zDirectionVelocityWeight_(0.5),
-	  copWeight_(0.0),
-	  swingLegLiftOff_(0.3),
-	  mpcGoalCommandDelay_(0.5),
-	  mpcStrideLength_(0.35),
-	  numPhasesInfullGaitCycle_(4)
-	 {}
+	: constrainedIntegration_(true)
+	,  gravitationalAcceleration_(9.81)
+	,  contactForceWeight_(0.1)
+	,  zDirectionPositionWeight_(5.0)
+	,  zDirectionVelocityWeight_(0.5)
+	,  copWeight_(0.0)
+	,  swingLegLiftOff_(0.3)
+	,  mpcGoalCommandDelay_(0.5)
+	,  strideTime_(0.0)
+	,  mpcStrideLength_(0.35)
+	,  numPhasesInfullGaitCycle_(4)
+	{}
 
 	virtual ~Model_Settings() = default;
 
@@ -38,6 +39,7 @@ public:
 	double copWeight_;
 	double swingLegLiftOff_;
 	double mpcGoalCommandDelay_;
+	double strideTime_;
 	double mpcStrideLength_;
 	size_t numPhasesInfullGaitCycle_;
 
@@ -119,6 +121,14 @@ inline void Model_Settings::loadSettings(const std::string& filename, bool verbo
 	}
 	catch (const std::exception& e){
 		if (verbose)  std::cerr << " #### mpcGoalCommandDelay .......... " << mpcGoalCommandDelay_ << "\t(default)" << std::endl;
+	}
+
+	try {
+		strideTime_ = pt.get<double>("model_settings.strideTime");
+		if (verbose)  std::cerr << " #### strideTime ................... " << strideTime_ << std::endl;
+	}
+	catch (const std::exception& e){
+		if (verbose)  std::cerr << " #### strideTime ................... " << strideTime_ << "\t(default)" << std::endl;
 	}
 
 	try {

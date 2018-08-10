@@ -10,7 +10,7 @@
 
 #include <iomanip>
 
-#include <ocs2_comm_interfaces/ocs2_ros_interfaces/common/TargetTrajectories_ROS_Interface.h>
+#include <ocs2_comm_interfaces/ocs2_ros_interfaces/command/TargetTrajectories_ROS_Interface.h>
 
 #include "ocs2_quadruped_interface/TargetPoseCommand.h"
 

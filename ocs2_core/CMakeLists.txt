@@ -106,7 +106,8 @@ target_link_libraries(cppadcg_unittest
 )
 
 catkin_add_gtest(test_transferfunctionbase
-  test/testTransferfunctionBase.cpp)
+  test/testTransferfunctionBase.cpp
+)
 target_link_libraries(test_transferfunctionbase
   ${catkin_LIBRARIES}
 )

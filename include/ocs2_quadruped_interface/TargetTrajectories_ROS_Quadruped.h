@@ -10,7 +10,7 @@
 
 #include <iomanip>
 
-#include <ocs2_comm_interfaces/ocs2_ros_interfaces/common/TargetTrajectories_ROS_Interface.h>
+#include <ocs2_comm_interfaces/ocs2_ros_interfaces/command/TargetTrajectories_ROS_Interface.h>
 
 #include "ocs2_quadruped_interface/TargetPoseCommand.h"
 
@@ -48,7 +48,7 @@ public:
 
 		while (ros::ok()) {
 
-			// get commad line
+			// get command line
 			std::cout << "Enter XYZ displacement for the robot, separated by spaces: ";
 			typename TargetPoseCommand<SCALAR_T>::pose_vector_t targetPoseDisplacement;
 			targetPoseCommand_.getCommandLineTargetPoseDisplacement(targetPoseDisplacement);
@@ -63,7 +63,7 @@ public:
 				std::cout << std::setprecision(4) << targetPoseDisplacementLimited(i) << ", ";
 			std::cout << "\b\b]" << std::endl << std::endl;
 
-			// creat the message
+			// create the message
 			cost_desired_trajectories_t costDesiredTrajectories;
 			costDesiredTrajectories.desiredTimeTrajectory().resize(1);
 			costDesiredTrajectories.desiredTimeTrajectory()[0] = 0.0;
@@ -76,7 +76,7 @@ public:
 
 			BASE::publishTargetTrajectories(costDesiredTrajectories);
 
-		}  // enf of while loop
+		}  // end of while loop
 	}
 
 private:

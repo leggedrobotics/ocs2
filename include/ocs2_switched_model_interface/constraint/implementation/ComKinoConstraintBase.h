@@ -223,7 +223,7 @@ size_t ComKinoConstraintBase<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM, LOGIC_RULES
 /******************************************************************************************************/
 template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
 void ComKinoConstraintBase<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::getConstraint2(
-		constraint2_vector_t& h) {
+		constraint2_vector_t& g2) {
 
 	size_t numConstraint2 = 0;
 	if (options_.zDirectionPositionWeight_<std::numeric_limits<double>::epsilon())  return;
@@ -231,7 +231,7 @@ void ComKinoConstraintBase<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM, LOGIC_RULES_T
 	for (size_t i=0; i<NUM_CONTACT_POINTS_; i++)
 		if (stanceLegs_[i]==false && zDirectionRefsPtr_[i]!=nullptr) {
 
-			h(numConstraint2) = options_.zDirectionPositionWeight_ *
+			g2(numConstraint2) = options_.zDirectionPositionWeight_ *
 					( o_origin2StanceFeet_[i](2)-zDirectionRefsPtr_[i]->calculatePosition(Base::t_) );
 			numConstraint2++;
 		}  // end of if loop

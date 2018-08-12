@@ -106,7 +106,7 @@ TEST(exp1_gslq_test, exp1_gslq_test)
 	/******************************************************************************************************/
 	/******************************************************************************************************/
 	/******************************************************************************************************/
-	// GSLQ - single core version
+	// OCS2
 	OCS2Projected<STATE_DIM, INPUT_DIM, EXP1_LogicRules> ocs2(
 			&systemDynamics, &systemDerivative,
 			&systemConstraint, &systemCostFunction,

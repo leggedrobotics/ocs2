@@ -57,8 +57,8 @@ public:
 
 	~EXP1_LogicRules() = default;
 
-	EXP1_LogicRules(const scalar_array_t& switchingTimes)
-	: BASE(switchingTimes)
+	EXP1_LogicRules(const scalar_array_t& eventTimes)
+	: BASE(eventTimes)
 	{}
 
 	void rewind(const scalar_t& lowerBoundTime,
@@ -152,20 +152,24 @@ public:
 	: activeSubsystem_(0),
 	  subsystemDynamicsPtr_(3)
 	{
-		subsystemDynamicsPtr_[0] = std::allocate_shared<EXP1_Sys1, Eigen::aligned_allocator<EXP1_Sys1>>( Eigen::aligned_allocator<EXP1_Sys1>() );
-		subsystemDynamicsPtr_[1] = std::allocate_shared<EXP1_Sys2, Eigen::aligned_allocator<EXP1_Sys2>>( Eigen::aligned_allocator<EXP1_Sys2>() );
-		subsystemDynamicsPtr_[2] = std::allocate_shared<EXP1_Sys3, Eigen::aligned_allocator<EXP1_Sys3>>( Eigen::aligned_allocator<EXP1_Sys3>() );
+		subsystemDynamicsPtr_[0].reset( new EXP1_Sys1 );
+		subsystemDynamicsPtr_[1].reset( new EXP1_Sys2 );
+		subsystemDynamicsPtr_[2].reset( new EXP1_Sys3 );
 	}
 
-	~EXP1_System() {}
+	~EXP1_System() = default;
 
 	EXP1_System(const EXP1_System& other)
 	: activeSubsystem_(other.activeSubsystem_),
 	  subsystemDynamicsPtr_(3)
 	{
-		subsystemDynamicsPtr_[0] = Base::Ptr(other.subsystemDynamicsPtr_[0]->clone());
-		subsystemDynamicsPtr_[1] = Base::Ptr(other.subsystemDynamicsPtr_[1]->clone());
-		subsystemDynamicsPtr_[2] = Base::Ptr(other.subsystemDynamicsPtr_[2]->clone());
+		subsystemDynamicsPtr_[0].reset(other.subsystemDynamicsPtr_[0]->clone());
+		subsystemDynamicsPtr_[1].reset(other.subsystemDynamicsPtr_[1]->clone());
+		subsystemDynamicsPtr_[2].reset(other.subsystemDynamicsPtr_[2]->clone());
+	}
+
+	EXP1_System* clone() const override {
+		return new EXP1_System(*this);
 	}
 
 	void initializeModel(
@@ -178,10 +182,6 @@ public:
 		findActiveSubsystemFnc_ = std::move( logicRulesMachine.getHandleToFindActiveEventCounter(partitionIndex) );
 	}
 
-	EXP1_System* clone() const override {
-		return new EXP1_System(*this);
-	}
-
 	void computeFlowMap(const scalar_t& t, const state_vector_t& x, const input_vector_t& u,
 			state_vector_t& dxdt) override {
 
@@ -190,7 +190,7 @@ public:
 		subsystemDynamicsPtr_[activeSubsystem_]->computeFlowMap(t, x, u, dxdt);
 	}
 
-public:
+private:
 	int activeSubsystem_;
 	std::function<size_t(scalar_t)> findActiveSubsystemFnc_;
 	std::vector<Base::Ptr> subsystemDynamicsPtr_;
@@ -282,12 +282,9 @@ public:
 	: activeSubsystem_(0),
 	  subsystemDerivativesPtr_(3)
 	{
-		subsystemDerivativesPtr_[0] = std::allocate_shared<EXP1_SysDerivative1, Eigen::aligned_allocator<EXP1_SysDerivative1>>(
-				Eigen::aligned_allocator<EXP1_SysDerivative1>() );
-		subsystemDerivativesPtr_[1] = std::allocate_shared<EXP1_SysDerivative2, Eigen::aligned_allocator<EXP1_SysDerivative2>>(
-				Eigen::aligned_allocator<EXP1_SysDerivative2>() );
-		subsystemDerivativesPtr_[2] = std::allocate_shared<EXP1_SysDerivative3, Eigen::aligned_allocator<EXP1_SysDerivative3>>(
-				Eigen::aligned_allocator<EXP1_SysDerivative3>() );
+		subsystemDerivativesPtr_[0].reset( new EXP1_SysDerivative1 );
+		subsystemDerivativesPtr_[1].reset( new EXP1_SysDerivative2 );
+		subsystemDerivativesPtr_[2].reset( new EXP1_SysDerivative3 );
 	}
 
 	~EXP1_SystemDerivative() {}
@@ -296,9 +293,9 @@ public:
 	: activeSubsystem_(other.activeSubsystem_),
 	  subsystemDerivativesPtr_(3)
 	{
-		subsystemDerivativesPtr_[0] = Base::Ptr(other.subsystemDerivativesPtr_[0]->clone());
-		subsystemDerivativesPtr_[1] = Base::Ptr(other.subsystemDerivativesPtr_[1]->clone());
-		subsystemDerivativesPtr_[2] = Base::Ptr(other.subsystemDerivativesPtr_[2]->clone());
+		subsystemDerivativesPtr_[0].reset(other.subsystemDerivativesPtr_[0]->clone());
+		subsystemDerivativesPtr_[1].reset(other.subsystemDerivativesPtr_[1]->clone());
+		subsystemDerivativesPtr_[2].reset(other.subsystemDerivativesPtr_[2]->clone());
 	}
 
 
@@ -331,7 +328,7 @@ public:
 		subsystemDerivativesPtr_[activeSubsystem_]->getFlowMapDerivativeInput(B);
 	}
 
-public:
+private:
 	int activeSubsystem_;
 	std::function<size_t(scalar_t)> findActiveSubsystemFnc_;
 	std::vector<Base::Ptr> subsystemDerivativesPtr_;
@@ -447,12 +444,9 @@ public:
 	: activeSubsystem_(0),
 	  subsystemCostsPtr_(3)
 	{
-		subsystemCostsPtr_[0] = std::allocate_shared<EXP1_CostFunction1, Eigen::aligned_allocator<EXP1_CostFunction1>>(
-				Eigen::aligned_allocator<EXP1_CostFunction1>() );
-		subsystemCostsPtr_[1] = std::allocate_shared<EXP1_CostFunction2, Eigen::aligned_allocator<EXP1_CostFunction2>>(
-				Eigen::aligned_allocator<EXP1_CostFunction2>() );
-		subsystemCostsPtr_[2] = std::allocate_shared<EXP1_CostFunction3, Eigen::aligned_allocator<EXP1_CostFunction3>>(
-				Eigen::aligned_allocator<EXP1_CostFunction3>() );
+		subsystemCostsPtr_[0].reset( new EXP1_CostFunction1 );
+		subsystemCostsPtr_[1].reset( new EXP1_CostFunction2 );
+		subsystemCostsPtr_[2].reset( new EXP1_CostFunction3 );
 	}
 
 	~EXP1_CostFunction() {}
@@ -461,9 +455,9 @@ public:
 	: activeSubsystem_(other.activeSubsystem_),
 	  subsystemCostsPtr_(3)
 	{
-		subsystemCostsPtr_[0] = Base::Ptr(other.subsystemCostsPtr_[0]->clone());
-		subsystemCostsPtr_[1] = Base::Ptr(other.subsystemCostsPtr_[1]->clone());
-		subsystemCostsPtr_[2] = Base::Ptr(other.subsystemCostsPtr_[2]->clone());
+		subsystemCostsPtr_[0].reset(other.subsystemCostsPtr_[0]->clone());
+		subsystemCostsPtr_[1].reset(other.subsystemCostsPtr_[1]->clone());
+		subsystemCostsPtr_[2].reset(other.subsystemCostsPtr_[2]->clone());
 	}
 
 	void initializeModel(

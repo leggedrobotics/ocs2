@@ -82,6 +82,7 @@ void MPC_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::set(
 
 	// reset variables
 	reset();
+	resetRequested_ = false;
 
 	// Start thread for publishing
 #ifdef PUBLISH_THREAD

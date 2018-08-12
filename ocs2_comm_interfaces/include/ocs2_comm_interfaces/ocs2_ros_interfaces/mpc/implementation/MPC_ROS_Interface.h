@@ -109,7 +109,7 @@ void MPC_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::reset() {
 	initialCall_ = true;
 	numIterations_ = 0;
 
-	maxDelay_ = -1e6;
+	maxDelay_ = -1e+6;
 	meanDelay_ = 0.0;
 	currentDelay_ = 0.0;
 

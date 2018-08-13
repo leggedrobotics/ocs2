@@ -138,6 +138,7 @@ add_dependencies(PlanningTest
 target_link_libraries(PlanningTest
   ocs2_anymal_interface
   ${catkin_LIBRARIES}
+#  -lprofiler
 )
 
 add_executable(anymal_mpc_node

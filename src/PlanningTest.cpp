@@ -13,8 +13,6 @@
 #include <string>
 #include <Eigen/Dense>
 
-#include <boost/filesystem.hpp>
-
 #include <ros/ros.h>
 #include <rosbag/bag.h>
 #include <xpp_msgs/RobotStateCartesianTrajectory.h>
@@ -26,7 +24,9 @@
 #include <ocs2_core/misc/loadEigenMatrix.h>
 
 #include "ocs2_anymal_interface/OCS2AnymalInterface.h"
+#include <pathfile.h>
 
+//#include <gperftools/profiler.h>
 
 void mySigintHandler(int sig)  {
 	ros::shutdown();
@@ -53,9 +53,8 @@ int main( int argc, char* argv[] )
 	std::cout << "Current time: " << std::ctime(&currentDate);
 
 	if ( argc <= 1) throw std::runtime_error("No task file specified. Aborting.");
-	boost::filesystem::path filePath(__FILE__);
-	std::string taskFile = filePath.parent_path().parent_path().generic_string() + "/config/" + std::string(argv[1]) + "/task.info";
-	std::cout << "Loading task file: " << taskFile << std::endl;
+	std::string taskFile = std::string(PACKAGE_PATH) + "/config/" + std::string(argv[1]) + "/task.info";
+	std::cerr << "Loading task file: " << taskFile << std::endl;
 
 	double slowdown, visTime;
 	ocs2_robot_interface_t::loadVisualizationSettings(taskFile, slowdown, visTime);
@@ -68,24 +67,20 @@ int main( int argc, char* argv[] )
 	ocs2_robot_interface_t::loadSimulationSettings(taskFile, dt, finalTime, initSettlingTime);
 	initTime = initSettlingTime;
 
-	std::vector<double> partitioningTime(0);
-//	partitioningTime.push_back(0.0);
-//	partitioningTime.push_back(0.8);
-//	partitioningTime.push_back(1.6);
-//	partitioningTime.push_back(2.4);
-//	partitioningTime.push_back(3.2);
-
 	/******************************************************************************************************/
 	ocs2_robot_interface_t optimizationInterface(taskFile);
 
 	auto start = std::chrono::steady_clock::now();
 
+//	ProfilerStart("/home/farbod/Programs/anymal_ws/profiler_output");
 	// run SLQ
-	optimizationInterface.runSLQ(initTime, initialRbdState, finalTime, partitioningTime);
+	optimizationInterface.runSLQ(initTime, initialRbdState, finalTime);
 	// run OCS2
 //	optimizationInterface.runOCS2(0.0, initialRbdState);
 	// run MPC
 //	optimizationInterface.runMPC(0.0, initialRbdState);
+
+//	ProfilerStop();
 
 	auto end = std::chrono::steady_clock::now();
 	auto diff = end - start;

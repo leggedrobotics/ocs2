@@ -30,6 +30,7 @@
   <depend>ocs2_ocs2</depend>
   <depend>ocs2_mpc</depend>
   <depend>ocs2_comm_interfaces</depend>
+  <depend>ocs2_robotic_examples</depend>
   <depend>ocs2_switched_model_interface</depend>
   <depend>rosbag</depend>
   <depend>xpp_msgs</depend>

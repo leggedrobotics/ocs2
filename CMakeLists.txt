@@ -12,6 +12,7 @@ find_package(catkin REQUIRED COMPONENTS
   ocs2_ocs2
   ocs2_mpc
   ocs2_comm_interfaces
+  ocs2_robotic_examples
   ocs2_switched_model_interface
   rosbag
   xpp_msgs
@@ -49,6 +50,7 @@ catkin_package(
       ocs2_ocs2 
       ocs2_mpc 
       ocs2_comm_interfaces
+      ocs2_robotic_examples
       ocs2_switched_model_interface 
       xpp_msgs
       

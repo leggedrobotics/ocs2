@@ -92,89 +92,75 @@ void MRT_ROS_Dummy_Loop<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::run() {
 	size_t loopCounter = 0;
 	scalar_t time = initObservation_.time();
 
-	while(::ros::ok()) {
-		// reset MPC node
-		mrtPtr_->resetMpcNode();
+	// reset MPC node
+	mrtPtr_->resetMpcNode();
 
-		// wait for the initial MPC plan
-		ROS_INFO_STREAM("Waiting for the initial policy ...");
-		while (::ros::ok()) {
-			::ros::spinOnce();
-			// for initial plan
-			initObservation_.time() = time;
-			mrtPtr_->publishObservation(initObservation_);
-			if (mrtPtr_->initialPolicyReceived()==true)
-				break;
-			else
-				::ros::Duration(1.0/mrtDesiredFrequency_).sleep();
-		}
-		ROS_INFO_STREAM("Initial policy has been received.");
-
-
-		while(::ros::ok()) {
-
-			// this should be called before updatePolicy()
-			::ros::spinOnce();
-
-			// Checks for new policy and updates the policy
-			bool policyUpdated = false;
-			if (realtimeLoop_ == true) {
-				policyUpdated = mrtPtr_->updatePolicy();
-
-			} else if (loopCounter%frequencyRatio==0) {
-				while(::ros::ok()) {
-					policyUpdated = mrtPtr_->updatePolicy();
-					if (policyUpdated==true)
-						break;
-					else
-						::ros::spinOnce();
-				}
-				std::cout << "### Message received at " << time << std::endl;
-			}
-
-			// time and loop counter increment
-			loopCounter++;
-			time += (1.0/mrtDesiredFrequency_);
-
-			std::cout << "### Message received at " << time << std::endl;
-
-			// fake simulation of the dynamics
-			observation_.time() = time;
-			mrtPtr_->evaluateFeedforwardPolicy(observation_.time(),
-					observation_.state(), observation_.input(), observation_.subsystem());
-
-			// user-defined modifications before publishing
-			modifyObservation(observation_);
-
-			// publish observation
-			if(realtimeLoop_ == true) {
-				mrtPtr_->publishObservation(observation_);
-
-			} else if (loopCounter%frequencyRatio==0) {
-				mrtPtr_->publishObservation(observation_);
-				std::cout << "### Observation is published at " << time << std::endl;
-			}
-
-			// Visualization
-			publishVisualizer(observation_);
-
-			rosRate.sleep();
-
-			if (std::abs(time-4.0)<1e-4) {
-				std::cout << "Terminated once \n";
-				break;
-			}
-			if (std::abs(time-6.0)<1e-4) {
-				std::cout << "Terminated once \n";
-				break;
-			}
-			if (std::abs(time-8.8)<1e-4) {
-				std::cout << "Terminated once \n";
-				break;
-			}
-		}  // end of while loop
-
+	// wait for the initial MPC plan
+	ROS_INFO_STREAM("Waiting for the initial policy ...");
+	while (::ros::ok()) {
+		::ros::spinOnce();
+		// for initial plan
+		initObservation_.time() = time;
+		mrtPtr_->publishObservation(initObservation_);
+		if (mrtPtr_->initialPolicyReceived()==true)
+			break;
+		else
+			::ros::Duration(1.0/mrtDesiredFrequency_).sleep();
 	}
+	ROS_INFO_STREAM("Initial policy has been received.");
+
+
+	while(::ros::ok()) {
+
+		// this should be called before updatePolicy()
+		::ros::spinOnce();
+
+		// Checks for new policy and updates the policy
+		bool policyUpdated = false;
+		if (realtimeLoop_ == true) {
+			policyUpdated = mrtPtr_->updatePolicy();
+
+		} else if (loopCounter%frequencyRatio==0) {
+			while(::ros::ok()) {
+				policyUpdated = mrtPtr_->updatePolicy();
+				if (policyUpdated==true)
+					break;
+				else
+					::ros::spinOnce();
+			}
+			std::cout << "### Message received at " << time << std::endl;
+		}
+
+		// time and loop counter increment
+		loopCounter++;
+		time += (1.0/mrtDesiredFrequency_);
+
+		std::cout << "### Message received at " << time << std::endl;
+
+		// fake simulation of the dynamics
+		observation_.time() = time;
+		mrtPtr_->evaluateFeedforwardPolicy(observation_.time(),
+				observation_.state(), observation_.input(), observation_.subsystem());
+
+		// user-defined modifications before publishing
+		modifyObservation(observation_);
+
+		// publish observation
+		if(realtimeLoop_ == true) {
+			mrtPtr_->publishObservation(observation_);
+
+		} else if (loopCounter%frequencyRatio==0) {
+			mrtPtr_->publishObservation(observation_);
+			std::cout << "### Observation is published at " << time << std::endl;
+		}
+
+		// Visualization
+		publishVisualizer(observation_);
+
+		rosRate.sleep();
+
+	}  // end of while loop
+
 }
 
 } // namespace ocs2

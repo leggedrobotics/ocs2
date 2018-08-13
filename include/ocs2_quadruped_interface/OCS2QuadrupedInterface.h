@@ -24,8 +24,9 @@
 #include <ocs2_slq/SLQ_MP.h>
 //#include <ocs2_ocs2/OCS2Projected.h>
 
-#include <ocs2_mpc/MPC_Settings.h>
 #include <ocs2_mpc/MPC_SLQ.h>
+
+#include <ocs2_robotic_examples/common/RobotInterfaceBase.h>
 
 #include <ocs2_switched_model_interface/core/Model_Settings.h>
 #include <ocs2_switched_model_interface/core/MotionPhaseDefinition.h>
@@ -49,7 +50,7 @@
 namespace switched_model {
 
 template <size_t JOINT_COORD_SIZE, size_t STATE_DIM = 12+JOINT_COORD_SIZE, size_t INPUT_DIM = 12+JOINT_COORD_SIZE>
-class OCS2QuadrupedInterface
+class OCS2QuadrupedInterface : public ocs2::RobotInterfaceBase<STATE_DIM, INPUT_DIM>
 {
 public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
@@ -59,6 +60,8 @@ public:
 		RBD_STATE_DIM = 12 + 2*JOINT_COORD_SIZE
 	};
 
+	typedef ocs2::RobotInterfaceBase<STATE_DIM, INPUT_DIM> BASE;
+
 	typedef std::shared_ptr<OCS2QuadrupedInterface<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>> Ptr;
 
 	typedef ComModelBase<JOINT_COORD_SIZE> com_model_t;
@@ -66,7 +69,7 @@ public:
 
 	typedef SwitchedModelStateEstimator<JOINT_COORD_SIZE>	state_estimator_t;
 
-	typedef ocs2::Dimensions<STATE_DIM,INPUT_DIM> 			dimension_t;
+	typedef typename BASE::DIMENSIONS dimension_t;
 	typedef typename dimension_t::scalar_t		 			scalar_t;
 	typedef typename dimension_t::scalar_array_t 			scalar_array_t;
 	typedef typename dimension_t::size_array_t	 			size_array_t;
@@ -165,14 +168,12 @@ public:
 	 * @param initTime: Initial time.
 	 * @param initState: Initial robot's RBD state.
 	 * @param finalTime: Final time.
-	 * @param partitioningTimes: Time partitioning.
 	 * @param initialControllersStock: Initial controller (optional).
 	 */
 	void runSLQ (
 			const scalar_t& initTime,
 			const rbd_state_vector_t& initState,
 			const scalar_t& finalTime,
-			const scalar_array_t& partitioningTimes = scalar_array_t(),
 			const controller_array_t& initialControllersStock = controller_array_t());
 
 	/**
@@ -392,25 +393,11 @@ public:
 	void getGapIndicatorPtrs(std::vector<EndEffectorConstraintBase::ConstPtr>& gapIndicatorPtrs) const;
 
 	/**
-	 * Get MPC settings.
-	 *
-	 * @return MPC settings.
-	 */
-	ocs2::MPC_Settings& getMpcSettings();
-
-	/**
 	 * Get SLQ settings.
 	 *
 	 * @return SLQ settings.
 	 */
-	ocs2::SLQ_Settings& getSlqSettings();
-
-	/**
-	 * Get SLQ settings.
-	 *
-	 * @return SLQ settings.
-	 */
-	Model_Settings& getModelSettings();
+	Model_Settings& modelSettings();
 
 	/**
 	 * Gets the loaded initial RBD state.
@@ -460,7 +447,17 @@ protected:
 	 *
 	 * @param pathToConfigFile
 	 */
-	void loadSettings(const std::string& pathToConfigFile);
+	void loadSettings(const std::string& pathToConfigFile) final;
+
+	/**
+	 * Setups all optimizers which you require.
+	 *
+	 * @param [in] taskFile: Task's file full path.
+	 */
+	void setupOptimizer(const std::string& taskFile) final {
+
+		throw std::runtime_error("It has been overloaded.");
+	}
 
 	/**
 	 * concatenate the container stocks
@@ -477,9 +474,6 @@ protected:
 	state_estimator_t switchedModelStateEstimator_;
 
 	logic_rules_ptr_t logicRulesPtr_; // logic
-
-	ocs2::SLQ_Settings slqSettings_;
-	ocs2::MPC_Settings mpcSettings_;
 
 	Model_Settings modelSettings_;
 
@@ -500,8 +494,8 @@ protected:
 
 	scalar_t 		initTime_;
 	scalar_t 		finalTime_;
+	size_t 		    numPartitions_;
 	scalar_array_t	partitioningTimes_;
-	size_t 		    numPartitioningTimes_;
 
 	size_t 		   initNumSubsystems_;
 	scalar_array_t initEventTimes_;

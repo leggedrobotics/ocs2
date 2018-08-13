@@ -38,21 +38,28 @@ template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM>
 void OCS2QuadrupedInterface<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::loadSettings(const std::string& pathToConfigFile) {
 
 	// load SLQ settings
-	slqSettings_.loadSettings(pathToConfigFile, true);
+	BASE::slqSettings().loadSettings(pathToConfigFile, true);
 
 	// load MPC settings
-	mpcSettings_.loadSettings(pathToConfigFile, true);
+	BASE::mpcSettings().loadSettings(pathToConfigFile, true);
 
 	// load switched model settings
 	modelSettings_.loadSettings(pathToConfigFile, true);
 
 	std::cerr << std::endl;
 
-	scalar_t dt, finalTime, initSettlingTime;
-	loadSimulationSettings(pathToConfigFile, dt, finalTime, initSettlingTime);
+	// partitioning times
+	scalar_t timeHorizon;
+	BASE::definePartitioningTimes(pathToConfigFile,
+			timeHorizon, numPartitions_, partitioningTimes_, true);
+	// display
+	std::cerr << "Time Partition: {";
+	for (const auto& timePartition: partitioningTimes_)
+		std::cerr << timePartition << ", ";
+	std::cerr << "\b\b}" << std::endl;
 
 	initTime_ = 0.0;
-	finalTime_ = finalTime;
+	finalTime_ = timeHorizon;
 
 	// initial state of the switched system
 	ocs2::loadEigenMatrix(pathToConfigFile, "initialRobotState", initRbdState_);
@@ -103,20 +110,6 @@ void OCS2QuadrupedInterface<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::loadSetting
 		std::cerr << "\b\b}" << std::endl;
 	else
 		std::cerr << "}" << std::endl;
-
-	// partitioning times
-	partitioningTimes_.clear();
-	partitioningTimes_.push_back(initTime_);
-	for (const auto& t : initEventTimes_)
-		partitioningTimes_.push_back(t);
-	partitioningTimes_.push_back(finalTime_);
-	// display
-	std::cerr << "Time Partition: {";
-	for (const auto& timePartition: partitioningTimes_)
-		std::cerr << timePartition << ", ";
-	std::cerr << "\b\b}" << std::endl;
-	// Number of partitioning times
-	numPartitioningTimes_ = partitioningTimes_.size()-1;
 
 	// load the mode sequence template
 	std::cerr << std::endl;
@@ -465,25 +458,7 @@ void OCS2QuadrupedInterface<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::getIteratio
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM>
-ocs2::MPC_Settings& OCS2QuadrupedInterface<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::getMpcSettings() {
-
-	return mpcSettings_;
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM>
-ocs2::SLQ_Settings& OCS2QuadrupedInterface<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::getSlqSettings() {
-
-	return slqPtr_->settings();
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM>
-Model_Settings& OCS2QuadrupedInterface<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::getModelSettings() {
+Model_Settings& OCS2QuadrupedInterface<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::modelSettings() {
 
 	return modelSettings_;
 }
@@ -542,17 +517,11 @@ void OCS2QuadrupedInterface<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::runSLQ(
 		const scalar_t& initTime,
 		const rbd_state_vector_t& initRbdState,
 		const scalar_t& finalTime,
-		const scalar_array_t& partitioningTimes /*=scalar_array_t()*/,
 		const controller_array_t& initialControllersStock /*=controller_array_t()*/)  {
 
 	initTime_ = initTime;
 	finalTime_ = finalTime;
 	computeSwitchedModelState(initRbdState, initSwitchedState_);
-
-	if (partitioningTimes.empty()==false) {
-		partitioningTimes_ = partitioningTimes;
-		numPartitioningTimes_ = partitioningTimes.size()-1;
-	}
 
 	// reference trajectories
 	input_vector_t uNominalForWeightCompensation;

@@ -1,9 +1,8 @@
 
-simulationSettings
+mpcTimeHorizon
 {
-    dt                 0.001
-    tFinal 			   0.8		; 1.2		; 0.8
-    initSettlingTime   0.0
+    timehorizon        0.8		; 1.2		; 0.8
+    numPartitions      2
 }
 
 visualization

@@ -4,21 +4,21 @@
 
 \section getting_started_main_steps Main Steps
 
-After setting up you catkin workspace (refer to …), the next step is to 
+After setting up you catkin workspace (refer to \ref ocs2_doc_installation), the next step is to 
 define your optimal control problem by providing the following components
 
 - System dynamics and its linearization
 - Cost function and its quadratic approximation 
 - Constraints and their linearization (if the problem is constrained)
 - Logic-Rules (if you are dealing with a switched system or mixed logic problem)
-- Choosing proper operating points for the initial control design. 
+- Choosing proper operating trajectories for the initial iteration of optimizer. 
 
 \subsection getting_started_common Commonly-Used Methods
 
  Before moving on to the deatils on how each of these components should be 
  implemented, we discuss some of the methods which are repeatedly used
  
- - <class>::initializeModel: This method is almost used in all of the 
+ - <class_name>::initializeModel: This method is almost used in all of the 
  interface classes. This method gives the user the possibility to modify 
  and add variables that can effect the subsequent call of the class's methods. 
  This method also has access to a instance of the Logic-Rules. One of the 
@@ -27,8 +27,13 @@ define your optimal control problem by providing the following components
  current active logic (such as current active subsystem). The optimizer always 
  makes sure that this class is called before any other main methods of the class.
  
- - <class>::clone: The clone method is used to copy an object. It is usually implemented as 
- 
+ - <class_name>::clone: The clone method is used to copy an object. It is usually implemented as 
+ \code{.cpp}
+class_name* class_name::clone() const override
+{
+    return new class_name(*this);
+}
+\endcode
 where it uses the copy constructor of the class. User should take care of the 
 deep/shallow copying in this case.   
  
@@ -224,6 +229,15 @@ For regular problem where there is no logic, user can simply use ocs2::NullLogic
 
 \section getting_started_main_operating_pointss Operating Points
 
+As a sequential optimal control algorithm, SLQ requires a stable initial controller or equivalently 
+an initial stable rollout. We have unified these two concepts by introducing the concept of the nominal 
+trajectories (ocs2::SystemOperatingTrajectoriesBase). If an initial stable trajectory is already exist 
+(e.g. from another optimization algorithm) user can directly use them as an initial solution. 
+Otherwise, the user can conveniently define a few operation points where an LQR controller will 
+be designed by SLQ automatically (ocs2::SystemOperatingPoint). In fact, ocs::SystemOperatingPoint 
+interface is a derived case of the ocs2::SystemOperatingTrajectoriesBase. Note that using operating 
+points instead of the operating trajectories causes the initial iteration of SLQ to have unrealistic 
+cost and constraint ISE. 
 
  */
  

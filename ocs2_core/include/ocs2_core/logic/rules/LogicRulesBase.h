@@ -55,12 +55,6 @@ public:
 	typedef typename Dimensions<STATE_DIM, INPUT_DIM>::controller_t 		controller_t;
 	typedef typename Dimensions<STATE_DIM, INPUT_DIM>::controller_array_t 	controller_array_t;
 
-	enum
-	{
-		state_dim_ = STATE_DIM,
-		input_dim_ = INPUT_DIM
-	};
-
 	/**
 	 * Default constructor
 	 */

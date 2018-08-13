@@ -33,9 +33,9 @@ int main( int argc, char* argv[] )
 
 	switched_model::MRT_ROS_Dummy_Quadruped<12> dummySimulator(
 			optimizationInterfacePtr,
-			optimizationInterfacePtr->getMpcSettings().mrtDesiredFrequency_,
+			optimizationInterfacePtr->mpcSettings().mrtDesiredFrequency_,
 			robotName,
-			optimizationInterfacePtr->getMpcSettings().mpcDesiredFrequency_);
+			optimizationInterfacePtr->mpcSettings().mpcDesiredFrequency_);
 
 	dummySimulator.launchNodes(argc, argv);
 

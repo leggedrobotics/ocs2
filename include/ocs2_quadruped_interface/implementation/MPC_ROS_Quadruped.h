@@ -92,7 +92,7 @@ void MPC_ROS_Quadruped<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::adjustTargetTraj
 
 	// costDesiredTrajectories
 	targetPoseToDesiredTrajectories(currentObservation.time(), currentObservation.state(),
-			ocs2QuadrupedInterfacePtr_->getModelSettings().mpcGoalCommandDelay_,
+			ocs2QuadrupedInterfacePtr_->modelSettings().mpcGoalCommandDelay_,
 			targetReachingDuration, targetPoseDisplacement,
 			costDesiredTrajectories);
 }

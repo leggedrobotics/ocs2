@@ -17,7 +17,7 @@ MRT_ROS_Quadruped<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::MRT_ROS_Quadruped(
 
 		: BASE()
 		, ocs2QuadrupedInterfacePtr_(ocs2QuadrupedInterfacePtr)
-		, modelSettings_(ocs2QuadrupedInterfacePtr->getModelSettings())
+		, modelSettings_(ocs2QuadrupedInterfacePtr->modelSettings())
 {
 	// feet z-direction planner
 	feet_z_planner_ptr_t feetZDirectionPlannerPtr(

@@ -49,6 +49,12 @@ class LogicRulesBase
 public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
+	enum
+	{
+		state_dim_ = STATE_DIM,
+		input_dim_ = INPUT_DIM
+	};
+
 	typedef typename Dimensions<STATE_DIM, INPUT_DIM>::scalar_t 			scalar_t;
 	typedef typename Dimensions<STATE_DIM, INPUT_DIM>::scalar_array_t 		scalar_array_t;
 	typedef typename Dimensions<STATE_DIM, INPUT_DIM>::size_array_t 		size_array_t;

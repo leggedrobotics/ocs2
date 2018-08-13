@@ -82,6 +82,7 @@ void MPC_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::set(
 
 	// reset variables
 	reset();
+	resetRequested_ = false;
 
 	// Start thread for publishing
 #ifdef PUBLISH_THREAD
@@ -108,7 +109,7 @@ void MPC_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::reset() {
 	initialCall_ = true;
 	numIterations_ = 0;
 
-	maxDelay_ = -1e6;
+	maxDelay_ = -1e+6;
 	meanDelay_ = 0.0;
 	currentDelay_ = 0.0;
 
@@ -510,8 +511,10 @@ template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
 void MPC_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::mpcTargetTrajectoriesCallback(
 		const ocs2_comm_interfaces::mpc_target_trajectories::ConstPtr& msg) {
 
-	RosMsgConversions<0, 0>::ReadTargetTrajectoriesMsg(*msg, costDesiredTrajectories_);
-	desiredTrajectoriesUpdated_ = true;
+	if (desiredTrajectoriesUpdated_==false) {
+		RosMsgConversions<0, 0>::ReadTargetTrajectoriesMsg(*msg, costDesiredTrajectories_);
+		desiredTrajectoriesUpdated_ = true;
+	}
 }
 
 /******************************************************************************************************/

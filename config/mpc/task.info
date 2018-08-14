@@ -14,23 +14,24 @@ visualization
 
 model_settings
 {
-  constrainedIntegration    1
+  constrainedIntegration        1
   
-  gravitationalAcceleration 9.81
+  gravitationalAcceleration     9.81
   
-  contactForceWeight        1.0
-  zDirectionPositionWeight  0.0
-  zDirectionVelocityWeight  0.5
+  contactForceWeight            1.0
+  zDirectionPositionWeight      0.0
+  zDirectionVelocityWeight      0.5
 
-  swingLegLiftOff        	0.10
+  swingLegLiftOff               0.20
 
-  copWeight           		0.0    ; 600.0
-  impulseWeight       		0.0
-  impulseSigmeFactor  		0.1
+  copWeight                     0.0    ; 600.0
+  impulseWeight                 0.0
+  impulseSigmeFactor            0.1
 
-  strideTime                0.0		; 0.8
-  mpcStrideLength           0.2
-  numPhasesInfullGaitCycle  2
+  strideTime                    0.0		; 0.8
+  mpcStrideLength               0.2
+  numPhasesInfullGaitCycle      2
+  useFeetTrajectoryFiltering    0
   
   eps 	2e-4
   eta 	1e+2

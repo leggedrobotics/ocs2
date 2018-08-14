@@ -233,6 +233,8 @@ void MRT_ROS_Quadruped<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::computePlan(
 		base_coordinate_t& o_comAccelerationRef,
 		contact_flag_t& stanceLegs)  {
 
+	const bool useFeetTrajectoryFiltering_ = true;
+
 	if (time > BASE::mpcTimeTrajectory_.back())
 		ROS_WARN_STREAM("The requested time is greater than the received plan: "
 				+ std::to_string(time) + ">" + std::to_string(BASE::mpcTimeTrajectory_.back()));
@@ -242,32 +244,45 @@ void MRT_ROS_Quadruped<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::computePlan(
 	int greatestLessTimeStampIndex = BASE::mpcLinInterpolateState_.getGreatestLessTimeStampIndex();
 	BASE::mpcLinInterpolateInput_.interpolate(time, inputRef_, greatestLessTimeStampIndex);
 
-//	// calculates nominal position, velocity, and contact forces of the feet in the origin frame.
-//	// This also updates the kinematic model.
-//	computeFeetState(stateRef, stateRef, o_feetPositionRef, o_feetVelocityRef, o_contactForcesRef);
+	if (ocs2QuadrupedInterfacePtr_->modelSettings().useFeetTrajectoryFiltering_==false) {
+		size_t index = BASE::findActiveSubsystemFnc_(time);
+		stanceLegs = BASE::logicMachinePtr_->getLogicRulesPtr()->getContactFlagsSequence().at(index);
 
-	// filter swing leg trajectory
-	size_t index = BASE::findActiveSubsystemFnc_(time);
-	BASE::logicMachinePtr_->getLogicRulesPtr()->getMotionPhaseLogics(index, stanceLegs, feetZPlanPtr_);
+		// calculates nominal position, velocity, and contact forces of the feet in the origin frame.
+		// This also updates the kinematic model.
+		vector_3d_array_t o_contactForces;
+		computeFeetState(stateRef_, inputRef_, o_feetPositionRef, o_feetVelocityRef, o_contactForces);
 
-	// computes swing phase progress
-	computeSwingPhaseProgress(index, stanceLegs, time, swingPhaseProgress_);
+		// TODO: acceleration
+		for (size_t j=0; j<4; j++) {
+			o_feetAccelerationRef[j].setZero();
+		}
 
-	for (size_t j=0; j<4; j++) {
-		o_feetPositionRef[j] <<
-				feetXPlanPtrStock_[index][j]->evaluateSplinePosition(time),
-				feetYPlanPtrStock_[index][j]->evaluateSplinePosition(time),
-				feetZPlanPtr_[j]->calculatePosition(time);
+	} else {
+		// filter swing leg trajectory
+		size_t index = BASE::findActiveSubsystemFnc_(time);
+		BASE::logicMachinePtr_->getLogicRulesPtr()->getMotionPhaseLogics(index, stanceLegs, feetZPlanPtr_);
 
-		o_feetVelocityRef[j] <<
-				feetXPlanPtrStock_[index][j]->evaluateSplineVelocity(time),
-				feetYPlanPtrStock_[index][j]->evaluateSplineVelocity(time),
-				feetZPlanPtr_[j]->calculateVelocity(time);
+		// computes swing phase progress
+		computeSwingPhaseProgress(index, stanceLegs, time, swingPhaseProgress_);
 
-		o_feetAccelerationRef[j] <<
-				feetXPlanPtrStock_[index][j]->evaluateSplineAcceleration(time),
-				feetYPlanPtrStock_[index][j]->evaluateSplineAcceleration(time),
-				feetZPlanPtr_[j]->calculateAcceleration(time);
+		for (size_t j=0; j<4; j++) {
+
+			o_feetPositionRef[j] <<
+					feetXPlanPtrStock_[index][j]->evaluateSplinePosition(time),
+					feetYPlanPtrStock_[index][j]->evaluateSplinePosition(time),
+					feetZPlanPtr_[j]->calculatePosition(time);
+
+			o_feetVelocityRef[j] <<
+					feetXPlanPtrStock_[index][j]->evaluateSplineVelocity(time),
+					feetYPlanPtrStock_[index][j]->evaluateSplineVelocity(time),
+					feetZPlanPtr_[j]->calculateVelocity(time);
+
+			o_feetAccelerationRef[j] <<
+					feetXPlanPtrStock_[index][j]->evaluateSplineAcceleration(time),
+					feetYPlanPtrStock_[index][j]->evaluateSplineAcceleration(time),
+					feetZPlanPtr_[j]->calculateAcceleration(time);
+		}
 	}
 
 	// calculate CoM pose, velocity, and acceleration in the origin frame.

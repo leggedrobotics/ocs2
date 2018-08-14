@@ -96,6 +96,16 @@ include_directories(
   ${catkin_INCLUDE_DIRS}
 )
 
+add_executable(test_custom_callback_queue
+        test/test_custom_callback_queue.cpp
+        )
+add_dependencies(test_custom_callback_queue
+        ${catkin_EXPORTED_TARGETS}
+        )
+target_link_libraries(test_custom_callback_queue
+        ${catkin_LIBRARIES}
+        )
+
 #############
 ## Doxygen ##
 #############

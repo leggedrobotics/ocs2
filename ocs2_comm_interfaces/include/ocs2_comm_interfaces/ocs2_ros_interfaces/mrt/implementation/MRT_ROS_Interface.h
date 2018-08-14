@@ -209,7 +209,7 @@ void MRT_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::publishObservation(
 template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
 void MRT_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::publisherWorkerThread() {
 
-	while(::ros::ok()) {
+	while(true) {
 
 		std::unique_lock<std::mutex> lk(publisherMutex_);
 

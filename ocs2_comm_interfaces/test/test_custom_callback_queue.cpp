@@ -14,12 +14,10 @@ int main( int argc, char* argv[] ){
   ros::init(argc, argv, "my_node");
   ros::NodeHandle nh;
 
-  size_t message_queue_size = 1000;
-  ros::Publisher chatter_pub = n.advertise<std_msgs::String>("chatter", message_queue_size);
+  size_t publish_queue_size = 1000;
+  ros::Publisher chatter_pub = nh.advertise<std_msgs::String>("chatter", publish_queue_size);
 
-  ros::Subscriber sub = n.subscribe("chatter", 1000, chatterCallback);
-
-  ros::Subscriber sub = n.subs
-
+  size_t subscribe_queue_size = 1000;
+  ros::Subscriber sub = nh.subscribe("chatter", subscribe_queue_size, chatterCallback);
 
 }

@@ -17,16 +17,17 @@ class Model_Settings
 public:
 	Model_Settings()
 	: constrainedIntegration_(true)
-	,  gravitationalAcceleration_(9.81)
-	,  contactForceWeight_(0.1)
-	,  zDirectionPositionWeight_(5.0)
-	,  zDirectionVelocityWeight_(0.5)
-	,  copWeight_(0.0)
-	,  swingLegLiftOff_(0.3)
-	,  mpcGoalCommandDelay_(0.5)
-	,  strideTime_(0.0)
-	,  mpcStrideLength_(0.35)
-	,  numPhasesInfullGaitCycle_(4)
+	, gravitationalAcceleration_(9.81)
+	, contactForceWeight_(0.1)
+	, zDirectionPositionWeight_(5.0)
+	, zDirectionVelocityWeight_(0.5)
+	, copWeight_(0.0)
+	, swingLegLiftOff_(0.3)
+	, mpcGoalCommandDelay_(0.5)
+	, strideTime_(0.0)
+	, mpcStrideLength_(0.35)
+	, numPhasesInfullGaitCycle_(4)
+	, useFeetTrajectoryFiltering_(true)
 	{}
 
 	virtual ~Model_Settings() = default;
@@ -42,6 +43,7 @@ public:
 	double strideTime_;
 	double mpcStrideLength_;
 	size_t numPhasesInfullGaitCycle_;
+	bool useFeetTrajectoryFiltering_;
 
 	double eps_ = 0.01;
 	double eta_ = 10.0;
@@ -145,6 +147,14 @@ inline void Model_Settings::loadSettings(const std::string& filename, bool verbo
 	}
 	catch (const std::exception& e){
 		if (verbose)  std::cerr << " #### numPhasesInfullGaitCycle ..... " << numPhasesInfullGaitCycle_ << "\t(default)" << std::endl;
+	}
+
+	try {
+		useFeetTrajectoryFiltering_ = pt.get<bool>("model_settings.useFeetTrajectoryFiltering");
+		if (verbose)  std::cerr << " #### useFeetTrajectoryFiltering ... " << useFeetTrajectoryFiltering_ << std::endl;
+	}
+	catch (const std::exception& e){
+		if (verbose)  std::cerr << " #### useFeetTrajectoryFiltering ... " << useFeetTrajectoryFiltering_ << "\t(default)" << std::endl;
 	}
 
 	try {

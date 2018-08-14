@@ -130,9 +130,9 @@ public:
 			std::array<const cpg_t*, 4>& feetReferencePtr) const;
 
 	/**
-	 * Get a const pointer to state-only constraints for end-effectors.
+	 * Get a constant pointer to state-only constraints for end-effectors.
 	 *
-	 * @return A const pointer to the array of const pointer for endEffectorStateConstraint objects.
+	 * @return A constant pointer to the array of constant pointer for endEffectorStateConstraint objects.
 	 */
 	const std::vector<EndEffectorConstraintBase::ConstPtr>* getEndEffectorStateConstraintsPtr() const;
 
@@ -150,7 +150,7 @@ public:
 	virtual void update() override;
 
 	/**
-	 * Rewinds the class. This methid is only called in the MPC class.
+	 * Rewinds the class. This method is only called in the MPC class.
 	 *
 	 * @param [in] lowerBoundTime: The smallest time for which the logicRules should be defined.
 	 * @param [in] upperBoundTime: The greatest time for which the logicRules should be defined.
@@ -162,7 +162,7 @@ public:
 	/**
 	 * Used in the SLQ-MPC method to set the model sequence template.
 	 *
-	 * @param [in] modeSequenceTemplate: A dada type which includes all necessary information for modifying the logicRules.
+	 * @param [in] modeSequenceTemplate: A data type which includes all necessary information for modifying the logicRules.
 	 */
 	virtual void setModeSequenceTemplate(const logic_template_type& modeSequenceTemplate) override;
 

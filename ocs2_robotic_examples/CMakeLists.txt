@@ -21,6 +21,10 @@ endif()
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread -fopenmp -std=c++11 -Wfatal-errors -Wl,--no-as-needed")
 
+## Set PACKAGE_PATH
+set(PACKAGE_PATH ${${PROJECT_NAME}_SOURCE_DIR})
+configure_file(include/pathfile.h.in pathfile.h)
+
 ###################################
 ## catkin specific configuration ##
 ###################################

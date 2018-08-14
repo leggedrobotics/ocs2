@@ -35,7 +35,8 @@ OCS2QuadrupedInterface<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::OCS2QuadrupedInt
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM>
-void OCS2QuadrupedInterface<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::loadSettings(const std::string& pathToConfigFile) {
+void OCS2QuadrupedInterface<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::loadSettings(
+		const std::string& pathToConfigFile) {
 
 	// load SLQ settings
 	BASE::slqSettings().loadSettings(pathToConfigFile, true);

@@ -250,6 +250,9 @@ void MRT_ROS_Quadruped<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::computePlan(
 	size_t index = BASE::findActiveSubsystemFnc_(time);
 	BASE::logicMachinePtr_->getLogicRulesPtr()->getMotionPhaseLogics(index, stanceLegs, feetZPlanPtr_);
 
+	// computes swing phase progress
+	computeSwingPhaseProgress(index, stanceLegs, time, swingPhaseProgress_);
+
 	for (size_t j=0; j<4; j++) {
 		o_feetPositionRef[j] <<
 				feetXPlanPtrStock_[index][j]->evaluateSplinePosition(time),
@@ -270,6 +273,63 @@ void MRT_ROS_Quadruped<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::computePlan(
 	// calculate CoM pose, velocity, and acceleration in the origin frame.
 	ocs2QuadrupedInterfacePtr_->computeComStateInOrigin(stateRef_, inputRef_,
 			o_comPoseRef, o_comVelocityRef, o_comAccelerationRef);
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM>
+const typename MRT_ROS_Quadruped<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::scalar_t&
+	MRT_ROS_Quadruped<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::getsSwingPhaseProgress(
+			const size_t& legIndex) const {
+
+	return swingPhaseProgress_.at(legIndex);
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM>
+void MRT_ROS_Quadruped<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::computeSwingPhaseProgress(
+		const size_t& activeSubsystemIndex,
+		const contact_flag_t& stanceLegs,
+		const scalar_t& time,
+		std::array<scalar_t, 4>& swingPhaseProgress) const {
+
+	typedef std::vector<int> int_array_t;
+
+	const scalar_array_t& eventTimes = BASE::logicMachinePtr_->getLogicRulesPtr()->eventTimes();
+
+	std::array<int_array_t,4> startTimesIndices;
+	BASE::logicMachinePtr_->getLogicRulesPtr()->getFeetPlanner().getStartTimesIndices(startTimesIndices);
+
+	std::array<int_array_t,4> finalTimesIndices;
+	BASE::logicMachinePtr_->getLogicRulesPtr()->getFeetPlanner().getFinalTimesIndices(finalTimesIndices);
+
+	// for each leg
+	for (size_t j=0; j<4; j++) {
+
+		const int& swingStartIndex = startTimesIndices[j][activeSubsystemIndex];
+		const int& swingFinalIndex = finalTimesIndices[j][activeSubsystemIndex];
+
+		if (swingStartIndex == -1) {
+			throw std::runtime_error("The time of take-off for the first swing of the EE with ID "
+					+ std::to_string(j) + " is not defined.");
+		}
+		if (swingFinalIndex == eventTimes.size()) {
+			throw std::runtime_error("The time of touch-down for the last swing of the EE with ID "
+					+ std::to_string(j) + " is not defined.");
+		}
+
+		const scalar_t& swingStartTime = eventTimes[swingStartIndex];
+		const scalar_t& swingFinalTime = eventTimes[swingFinalIndex];
+
+		if (stanceLegs[j]==false)
+			swingPhaseProgress[j] = (time-swingStartTime) / (swingFinalTime-swingStartTime);
+		else
+			swingPhaseProgress[j] = 0.0;
+
+	}
 }
 
 /******************************************************************************************************/

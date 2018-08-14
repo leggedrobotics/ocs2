@@ -8,6 +8,8 @@
 #ifndef MRT_ROS_QUADRUPED_H_
 #define MRT_ROS_QUADRUPED_H_
 
+#include <array>
+
 #include <ocs2_comm_interfaces/ocs2_ros_interfaces/mrt/MRT_ROS_Interface.h>
 
 #include <ocs2_switched_model_interface/misc/CubicSpline.h>
@@ -111,6 +113,14 @@ public:
 			contact_flag_t& stanceLegs);
 
 	/**
+	 * Get the swing phase progress for a requested leg.
+	 *
+	 * @param [in] legIndex: Leg index.
+	 * @return swing phase progress
+	 */
+	const scalar_t& getsSwingPhaseProgress(const size_t& legIndex) const;
+
+	/**
 	 * Updates the publisher and subscriber nodes. Using the input measurements it constructs the observation
 	 * structure and publishes it using the base class method. It also checks calls the ros::spinOnce() and
 	 * checks for the policy update using the base class method.
@@ -128,7 +138,7 @@ public:
 
 protected:
 	/**
-	 * This method can be sed to modify the feedforward policy on the buffer without inputting the
+	 * This method can be used to modify the feedforward policy on the buffer without inputting the
 	 * main thread. Note that the variables that are on the buffer have the suffix Buffer. It is
 	 * important if any new variables are added to the policy also obey this rule. These buffer
 	 * variables can be later, in the customizedUpdatePolicy() method, swept to the in-use policy
@@ -155,8 +165,8 @@ protected:
 	 * protected with a mutex which blocks the policy callback. Moreover, this method
 	 * may be called in the main thread of the program. Thus, for efficiency and
 	 * practical considerations you should avoid computationally expensive operations.
-	 * For shuch operations you may want to use the modifyBufferFeedforwardPolicy()
-	 * methods whihc runs on a separate thread which directly modifies the received
+	 * For such operations you may want to use the modifyBufferFeedforwardPolicy()
+	 * methods which runs on a separate thread which directly modifies the received
 	 * policy messages on the data buffer.
 	 *
 	 * @param logicUpdated: Whether eventTimes or subsystemsSequence are updated form the last call.
@@ -193,6 +203,20 @@ protected:
 			const input_vector_array_t& touchdownInputStock);
 
 	/**
+	 * Computes swing phase progress.
+	 *
+	 * @param [in] activeSubsystemIndex: Active subsystem index
+	 * @param [in] stanceLegs: Stance leg flags
+	 * @param [in] time: current time.
+	 * @param [out] swingPhaseProgress: swing phase progress for legs.
+	 */
+	void computeSwingPhaseProgress(
+			const size_t& activeSubsystemIndex,
+			const contact_flag_t& stanceLegs,
+			const scalar_t& time,
+			std::array<scalar_t, 4>& swingPhaseProgress) const;
+
+	/**
 	 * Computes feet's position, velocity, and acting contact force in the origin frame.
 	 *
 	 * @param [in] state: state vector.
@@ -216,7 +240,8 @@ private:
 
 	Model_Settings modelSettings_;
 
-	std::array<const cpg_t*,4> 		feetZPlanPtr_;
+	std::array<const cpg_t*,4> feetZPlanPtr_;
+	std::array<scalar_t, 4> swingPhaseProgress_;
 
 	std::vector<std::array<cubic_spline_ptr_t,4>> feetXPlanPtrStock_;
 	std::vector<std::array<cubic_spline_ptr_t,4>> feetYPlanPtrStock_;

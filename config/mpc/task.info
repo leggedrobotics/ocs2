@@ -22,7 +22,7 @@ model_settings
   zDirectionPositionWeight  0.0
   zDirectionVelocityWeight  0.5
 
-  swingLegLiftOff        	0.10
+  swingLegLiftOff        	0.20
 
   copWeight           		0.0    ; 600.0
   impulseWeight       		0.0

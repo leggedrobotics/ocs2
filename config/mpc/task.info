@@ -2,7 +2,7 @@
 mpcTimeHorizon
 {
     timehorizon        0.8		; 1.2		; 0.8
-    numPartitions      2
+    numPartitions      5
 }
 
 visualization
@@ -109,7 +109,7 @@ slq
   useAscendingLineSearchNLP    	1
 
   useMultiThreading           	1
-  nThreads                    	4
+  nThreads                    	6
   debugPrintMP                	0
   lsStepsizeGreedy            	1
 

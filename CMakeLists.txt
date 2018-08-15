@@ -128,6 +128,19 @@ target_link_libraries(target_command_node
   ${catkin_LIBRARIES}
 )
 
+add_executable(target_command_node_old
+  src/AnymalTargetPoseCommand_old.cpp
+)
+add_dependencies(target_command_node_old
+  ${${PROJECT_NAME}_EXPORTED_TARGETS}
+  ${catkin_EXPORTED_TARGETS}
+)
+target_link_libraries(target_command_node_old
+  ${catkin_LIBRARIES}
+)
+
+
+
 add_executable(PlanningTest
   src/PlanningTest.cpp
 )

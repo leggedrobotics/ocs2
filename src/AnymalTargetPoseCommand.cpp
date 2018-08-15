@@ -5,15 +5,16 @@
  *      Author: farbod
  */
 
-#include "ocs2_quadruped_interface/TargetTrajectories_ROS_Quadruped.h"
+#include "ocs2_quadruped_interface/TargetTrajectories_Keyboard_Quadruped.h"
 
 int main( int argc, char* argv[] )
 {
-	switched_model::TargetTrajectories_ROS_Quadruped<double> targetPoseCommand("anymal");
+	switched_model::TargetTrajectories_Keyboard_Quadruped<double> targetPoseCommand(
+			"anymal");
 
 	targetPoseCommand.launchNodes(argc, argv);
 
-	targetPoseCommand.run();
+	const std::string commadMsg = "Enter XYZ displacement for the robot, separated by spaces";
+	targetPoseCommand.getKeyboardCommand(commadMsg);
 }
-
 

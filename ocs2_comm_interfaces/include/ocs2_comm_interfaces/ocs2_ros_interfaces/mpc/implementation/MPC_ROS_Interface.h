@@ -343,7 +343,7 @@ void MPC_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::publishFeedbackPoli
 template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
 void MPC_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::publisherWorkerThread() {
 
-	while(true) {
+	while(terminateThread_==false) {
 
 		std::unique_lock<std::mutex> lk(publisherMutex_);
 
@@ -359,6 +359,7 @@ void MPC_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::publisherWorkerThre
 		readyToPublish_ = false;
 
 		lk.unlock();
+		msgReady_.notify_one();
 
 		// publish the message
 		if (mpcSettings_.useFeedbackPolicy_==true)

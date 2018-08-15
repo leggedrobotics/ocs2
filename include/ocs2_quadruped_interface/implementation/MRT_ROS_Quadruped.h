@@ -26,6 +26,8 @@ MRT_ROS_Quadruped<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::MRT_ROS_Quadruped(
 	logic_rules_ptr_t logicRulesPtr( new logic_rules_t(feetZDirectionPlannerPtr) );
 	// Set Base
 	BASE::set(*logicRulesPtr, true, robotName);
+	// reset
+	reset();
 }
 
 /******************************************************************************************************/
@@ -33,8 +35,9 @@ MRT_ROS_Quadruped<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::MRT_ROS_Quadruped(
 /******************************************************************************************************/
 template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM>
 void MRT_ROS_Quadruped<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::reset() {
-
 	BASE::reset();
+	prev_o_feetVelocityRef_.fill(vector_3d_t::Zero());
+	prev_time_ = 0;
 }
 
 /******************************************************************************************************/
@@ -253,10 +256,11 @@ void MRT_ROS_Quadruped<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::computePlan(
 		vector_3d_array_t o_contactForces;
 		computeFeetState(stateRef_, inputRef_, o_feetPositionRef, o_feetVelocityRef, o_contactForces);
 
-		// TODO: acceleration
 		for (size_t j=0; j<4; j++) {
-			o_feetAccelerationRef[j].setZero();
+			o_feetAccelerationRef[j] = (o_feetVelocityRef[j]-prev_o_feetVelocityRef_[j]) / (time - prev_time_);
 		}
+		prev_time_ = time;
+		prev_o_feetVelocityRef_ = o_feetVelocityRef;
 
 	} else {
 		// filter swing leg trajectory

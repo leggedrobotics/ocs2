@@ -119,12 +119,12 @@ public:
 	 *
 	 * @param [in] logicRules: A logic rule class of derived from the hybrid logicRules base.
  	 * @param [in] useFeedforwardPolicy: Whether to receive the MPC feedforward (true) or MPC feedback policy (false).
-	 * @param [in] nodeName: The node's name.
+	 * @param [in] robotName: The robot's name.
 	 */
 	MRT_ROS_Interface(
 			const LOGIC_RULES_T& logicRules,
 			const bool& useFeedforwardPolicy = true,
-			const std::string& nodeName = "robot_mpc");
+			const std::string& robotName = "robot");
 
 	/**
 	 * Destructor
@@ -136,11 +136,11 @@ public:
 	 *
 	 * @param [in] logicRules: A logic rule class of derived from the hybrid logicRules base.
  	 * @param [in] useFeedforwardPolicy: Whether to receive the MPC feedforward (true) or MPC feedback policy (false).
-	 * @param [in] nodeName: The node's name.
+	 * @param [in] robotName: The robot's name.
 	 */
 	void set(const LOGIC_RULES_T& logicRules,
 			const bool& useFeedforwardPolicy = true,
-			const std::string& nodeName = "robot_mpc");
+			const std::string& robotName = "robot");
 
 	/**
 	 * Resets the class to its instantiate state.
@@ -389,7 +389,7 @@ protected:
 	 */
 	bool useFeedforwardPolicy_;
 
-	std::string nodeName_;
+	std::string robotName_;
 
 	logic_machine_ptr_t logicMachinePtr_;
 

@@ -27,8 +27,8 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  ******************************************************************************/
 
-#ifndef QUADROTOR_quadrotor_OCS2_H_
-#define QUADROTOR_quadrotor_OCS2_H_
+#ifndef MPC_ROS_QUADROTOR_OCS2_H_
+#define MPC_ROS_QUADROTOR_OCS2_H_
 
 #include <ocs2_comm_interfaces/ocs2_ros_interfaces/mpc/MPC_ROS_Interface.h>
 #include <ocs2_robotic_examples/command/TargetPoseTransformation.h>
@@ -37,7 +37,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 namespace ocs2 {
 namespace quadrotor {
 
-class MPC_ROS_QUADROTOR : public MPC_ROS_Interface<quadrotor::STATE_DIM_, quadrotor::INPUT_DIM_, NullLogicRules< quadrotor::STATE_DIM_, quadrotor::INPUT_DIM_>> {
+class MPC_ROS_Quadrotor : public MPC_ROS_Interface<quadrotor::STATE_DIM_, quadrotor::INPUT_DIM_, NullLogicRules< quadrotor::STATE_DIM_, quadrotor::INPUT_DIM_>> {
 public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
@@ -70,15 +70,15 @@ public:
 	/**
 	 * Default constructor
 	 */
-	MPC_ROS_QUADROTOR() = default;
+	MPC_ROS_Quadrotor() = default;
 
 	/**
 	 * Constructor.
 	 *
-	 * @param [in] mpcPtr: The MPC object to be interfaced.
+	 * @param [in] mpc: The MPC object to be interfaced.
 	 * @param [in] nodeName: The node's name.
 	 */
-	MPC_ROS_QUADROTOR(
+	MPC_ROS_Quadrotor(
 			mpc_t &mpc,
 			const std::string &nodeName = "robot_mpc")
 	: BASE(mpc, nodeName) {}
@@ -86,7 +86,7 @@ public:
 	/**
 	 * Destructor.
 	 */
-	virtual ~MPC_ROS_QUADROTOR() = default;
+	virtual ~MPC_ROS_Quadrotor() = default;
 
 	/**
 	 * Provides the initial target trajectories for the cost function.
@@ -183,4 +183,4 @@ private:
 } // namespace quadrotor
 } // namespace ocs2
 
-#endif /* QUADROTOR_quadrotor_OCS2_H_ */
+#endif /* MPC_ROS_QUADROTOR_OCS2_H_ */

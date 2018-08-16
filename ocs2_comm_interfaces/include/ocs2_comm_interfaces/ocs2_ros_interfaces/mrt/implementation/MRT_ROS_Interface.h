@@ -554,6 +554,15 @@ void MRT_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::shutdownNodes() {
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
+::ros::NodeHandlePtr& MRT_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::nodeHandle() {
+
+	return mrtRosNodeHandlePtr_;
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
 void MRT_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::launchNodes(int argc, char* argv[]) {
 
 	reset();
@@ -564,26 +573,28 @@ void MRT_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::launchNodes(int arg
 	// setup ROS
 	::ros::init(argc, argv, robotName_+"_mrt", ::ros::init_options::NoSigintHandler);
 	signal(SIGINT, MRT_ROS_Interface::sigintHandler);
-	::ros::NodeHandle nodeHandler;
+
+	mrtRosNodeHandlePtr_.reset(new ::ros::NodeHandle);
+	mrtRosNodeHandlePtr_->setCallbackQueue(&mrtCallbackQueue_);
 
 	// Observation publisher
-	mpcObservationPublisher_ = nodeHandler.advertise<ocs2_comm_interfaces::mpc_observation>(
+	mpcObservationPublisher_ = mrtRosNodeHandlePtr_->advertise<ocs2_comm_interfaces::mpc_observation>(
 			robotName_+"_mpc_observation", 1);
 
 	// SLQ-MPC subscriber
 	if (useFeedforwardPolicy_==true) {
-		mpcFeedforwardPolicySubscriber_ = nodeHandler.subscribe(
+		mpcFeedforwardPolicySubscriber_ = mrtRosNodeHandlePtr_->subscribe(
 				robotName_+"_mpc_ff_policy", 1, &MRT_ROS_Interface::mpcFeedforwardPolicyCallback, this);
 	} else {
-		mpcFeedbackPolicySubscriber_   = nodeHandler.subscribe(
+		mpcFeedbackPolicySubscriber_   = mrtRosNodeHandlePtr_->subscribe(
 				robotName_+"_mpc_fb_policy", 1, &MRT_ROS_Interface::mpcFeedbackPolicyCallback, this);
 	}
 
 	// dummy publisher
-	dummyPublisher_ = nodeHandler.advertise<ocs2_comm_interfaces::dummy>("ping", 1, true);
+	dummyPublisher_ = mrtRosNodeHandlePtr_->advertise<ocs2_comm_interfaces::dummy>("ping", 1, true);
 
 	// MPC reset service client
-	mpcResetServiceClient_ = nodeHandler.serviceClient<ocs2_comm_interfaces::reset>(robotName_+"_mpc_reset");
+	mpcResetServiceClient_ = mrtRosNodeHandlePtr_->serviceClient<ocs2_comm_interfaces::reset>(robotName_+"_mpc_reset");
 
 	// display
 #ifdef PUBLISH_THREAD
@@ -592,8 +603,14 @@ void MRT_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::launchNodes(int arg
 
 	ROS_INFO_STREAM("MRT node is ready.");
 
-	::ros::spinOnce();
+  spinMRT();
 }
+
+template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
+void MRT_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::spinMRT() {
+  mrtCallbackQueue_.callOne();
+};
+
 
 } // namespace ocs2
 

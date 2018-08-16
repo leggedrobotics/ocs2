@@ -98,7 +98,7 @@ void MRT_ROS_Dummy_Loop<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::run() {
 	// wait for the initial MPC plan
 	ROS_INFO_STREAM("Waiting for the initial policy ...");
 	while (::ros::ok()) {
-		::ros::spinOnce();
+    mrtPtr_->spinMRT();
 		// for initial plan
 		initObservation_.time() = time;
 		mrtPtr_->publishObservation(initObservation_);
@@ -113,7 +113,7 @@ void MRT_ROS_Dummy_Loop<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::run() {
 	while(::ros::ok()) {
 
 		// this should be called before updatePolicy()
-		::ros::spinOnce();
+    mrtPtr_->spinMRT();
 
 		// Checks for new policy and updates the policy
 		bool policyUpdated = false;
@@ -126,7 +126,7 @@ void MRT_ROS_Dummy_Loop<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::run() {
 				if (policyUpdated==true)
 					break;
 				else
-					::ros::spinOnce();
+          mrtPtr_->spinMRT();
 			}
 			std::cout << "### Message received at " << time << std::endl;
 		}

@@ -252,6 +252,10 @@ private:
 
 	state_vector_t stateRef_;
 	input_vector_t inputRef_;
+
+	// Acceleration finite difference memory
+	vector_3d_array_t prev_o_feetVelocityRef_;
+	scalar_t prev_time_;
 };
 
 } // end of namespace switched_model

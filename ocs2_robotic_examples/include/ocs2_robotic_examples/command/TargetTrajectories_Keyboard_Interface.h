@@ -42,7 +42,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 namespace ocs2 {
 
 /**
- * This class lets the uses to insert robot command form command line.
+ * This class lets the user to insert robot command form command line.
  *
  * @tparam SCALAR_T: scalar type.
  */

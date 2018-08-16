@@ -135,7 +135,7 @@ typename TargetTrajectories_Keyboard_Interface<SCALAR_T>::scalar_array_t
 			targetCommand.push_back(0.0);
 		}  // end of i loop
 
-	return targetComman;
+	return targetCommand;
 }
 
 } // namespace ocs2

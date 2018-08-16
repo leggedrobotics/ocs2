@@ -9,12 +9,14 @@
 
 int main( int argc, char* argv[] )
 {
-	switched_model::TargetTrajectories_Keyboard_Quadruped<double> targetPoseCommand(
-			"anymal");
+	switched_model::TargetTrajectories_Keyboard_Quadruped<double> targetPoseCommand("anymal");
 
 	targetPoseCommand.launchNodes(argc, argv);
 
-	const std::string commadMsg = "Enter XYZ displacement for the robot, separated by spaces";
+	const std::string commadMsg = "Enter XYZ displacement and RollPitchYaw for the robot, separated by spaces";
 	targetPoseCommand.getKeyboardCommand(commadMsg);
+
+	// Successful exit
+	return 0;
 }
 

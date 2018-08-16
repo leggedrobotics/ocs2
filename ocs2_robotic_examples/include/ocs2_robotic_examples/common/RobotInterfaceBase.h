@@ -162,9 +162,9 @@ protected:
 			size_t& numPartitions,
 			bool verbose = false) const;
 
-/**************
- * Variables
- **************/
+	/**************
+	 * Variables
+	 **************/
 	SLQ_Settings slqSettings_;
 	MPC_Settings mpcSettings_;
 

@@ -85,6 +85,9 @@ public:
 	, xFinal_(xFinal)
 	{}
 
+	/**
+	 * Destructor
+	 */
 	virtual ~QuadraticCostFunction() = default;
 
 	/**

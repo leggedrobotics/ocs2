@@ -31,8 +31,7 @@ template <size_t JOINT_COORD_SIZE,
 		size_t STATE_DIM=12+JOINT_COORD_SIZE,
 		size_t INPUT_DIM=12+JOINT_COORD_SIZE,
 		class LOGIC_RULES_T=SwitchedModelPlannerLogicRules<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM, double>>
-class SwitchedModelCostBase : public
-ocs2::CostFunctionBase<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>
+class SwitchedModelCostBase : public ocs2::CostFunctionBase<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>
 {
 public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
@@ -90,27 +89,11 @@ public:
 	/**
 	 * copy constructor
 	 */
-	SwitchedModelCostBase(const SwitchedModelCostBase& rhs)
+	SwitchedModelCostBase(const SwitchedModelCostBase& rhs);
 
-	: Base(rhs)
-	, kinematicModelPtr_(rhs.kinematicModelPtr_->clone())
-	, comModelPtr_(rhs.comModelPtr_->clone())
-	, Q_desired_(rhs.Q_desired_)
-	, R_desired_(rhs.R_desired_)
-	, R_Bank_(rhs.R_Bank_)
-	, QFinal_desired_(rhs.QFinal_desired_)
-	, xFinal_(rhs.xFinal_)
-	, copWeightMax_(rhs.copWeightMax_)
-	, QIntermediate_(rhs.QIntermediate_)
-	, xNominalIntermediate_(rhs.xNominalIntermediate_)
-	, sigma_(rhs.sigma_)
-	, sigmaSquared_(rhs.sigmaSquared_)
-	, normalization_(rhs.normalization_)
-	, tp_(rhs.tp_)
-	, dtSquared_(rhs.dtSquared_)
-	, copEstimatorPtr_(new cop_estimator_t(*rhs.kinematicModelPtr_, *rhs.comModelPtr_))
-	{}
-
+	/**
+	 * Destructor
+	 */
 	virtual ~SwitchedModelCostBase() = default;
 
 	/**
@@ -209,12 +192,24 @@ public:
 
 protected:
 	/**
+	 * Sets the time period.
+	 *
+	 * @param [in] timeStart: The start time of the period.
+	 * @param [in] timeFinal: The final time of the period.
+	 */
+	void setTimePeriod(
+			const scalar_t& timeStart,
+			const scalar_t& timeFinal);
+
+	/**
 	 *
 	 * @param stanceLeg
 	 * @param R
 	 * @return
 	 */
-	input_matrix_t correctedInputCost(const contact_flag_t& stanceLeg, const input_matrix_t& R);
+	input_matrix_t correctedInputCost(
+			const contact_flag_t& stanceLeg,
+			const input_matrix_t& R);
 
 	/**
 	 *
@@ -293,10 +288,15 @@ private:
 	Eigen::Matrix<scalar_t,12,12> devLambdaJoints_copCost_;
 
 	std::string algorithmName_;
+
+	scalar_t timeStart_;
+	scalar_t timeFinal_;
+	scalar_t timeSD_;
+	scalar_t timeMean_;
 };
 
 } //end of namespace switched_model
 
-#include "../../ocs2_switched_model_interface/cost/implementation/SwitchedModelCostBase.h"
+#include "implementation/SwitchedModelCostBase.h"
 
 #endif /* SWITCHEDMODELCOSTBASE_H_ */

@@ -24,22 +24,26 @@ SwitchedModelCostBase<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::Sw
 		const scalar_t& sigma /*= 1.0*/,
 		const scalar_t& tp /*= 0.0*/)
 
-	: Base(),
-	  kinematicModelPtr_(kinematicModel.clone()),
-	  comModelPtr_(comModel.clone()),
-	  Q_desired_(Q),
-	  R_desired_(R),
-	  QFinal_desired_(QFinal),
-	  xFinal_(xFinal),
-	  copWeightMax_(copWeightMax),
-	  QIntermediate_(QIntermediate),
-	  xNominalIntermediate_(xNominalIntermediate),
-	  sigma_(sigma),
-	  sigmaSquared_(sigma*sigma),
-	  normalization_(1.0 / (sigma_ * std::sqrt(2.0*M_PI)) ),
-	  tp_(tp),
-	  dtSquared_(0.0),
-	  copEstimatorPtr_(new cop_estimator_t(kinematicModel, comModel))
+	: Base()
+	, kinematicModelPtr_(kinematicModel.clone())
+	, comModelPtr_(comModel.clone())
+	, Q_desired_(Q)
+	, R_desired_(R)
+	, QFinal_desired_(QFinal)
+	, xFinal_(xFinal)
+	, copWeightMax_(copWeightMax)
+	, QIntermediate_(QIntermediate)
+	, xNominalIntermediate_(xNominalIntermediate)
+	, sigma_(sigma)
+	, sigmaSquared_(sigma*sigma)
+	, normalization_(1.0 / (sigma_ * std::sqrt(2.0*M_PI)) )
+	, tp_(tp)
+	, dtSquared_(0.0)
+	, copEstimatorPtr_(new cop_estimator_t(kinematicModel, comModel))
+	, timeStart_(0.0)
+	, timeFinal_(1.0)
+	, timeSD_(0.17)
+	, timeMean_(0.5)
 {
 	const size_t numMotionPhases = std::pow(2, (int)NUM_CONTACT_POINTS_);
 
@@ -49,6 +53,36 @@ SwitchedModelCostBase<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::Sw
 		R_Bank_[stanceLeg] = correctedInputCost(stanceLeg, R_desired_);
 	} // end of i loop
 }
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
+SwitchedModelCostBase<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::SwitchedModelCostBase(
+		const SwitchedModelCostBase& rhs)
+
+	: Base(rhs)
+	, kinematicModelPtr_(rhs.kinematicModelPtr_->clone())
+	, comModelPtr_(rhs.comModelPtr_->clone())
+	, Q_desired_(rhs.Q_desired_)
+	, R_desired_(rhs.R_desired_)
+	, R_Bank_(rhs.R_Bank_)
+	, QFinal_desired_(rhs.QFinal_desired_)
+	, xFinal_(rhs.xFinal_)
+	, copWeightMax_(rhs.copWeightMax_)
+	, QIntermediate_(rhs.QIntermediate_)
+	, xNominalIntermediate_(rhs.xNominalIntermediate_)
+	, sigma_(rhs.sigma_)
+	, sigmaSquared_(rhs.sigmaSquared_)
+	, normalization_(rhs.normalization_)
+	, tp_(rhs.tp_)
+	, dtSquared_(rhs.dtSquared_)
+	, copEstimatorPtr_(new cop_estimator_t(*rhs.kinematicModelPtr_, *rhs.comModelPtr_))
+	, timeStart_(rhs.timeStart_)
+	, timeFinal_(rhs.timeFinal_)
+	, timeSD_(rhs.timeSD_)
+	, timeMean_(rhs.timeMean_)
+{}
 
 /******************************************************************************************************/
 /******************************************************************************************************/
@@ -75,14 +109,29 @@ void SwitchedModelCostBase<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM, LOGIC_RULES_T
 
 	logicRulesPtr_ = logicRulesMachine.getLogicRulesPtr();
 
-	// set the start and final time for cost funtion
+	// set the start and final time for cost function
 	const scalar_array_t& partitioningTimes= logicRulesMachine.getPartitioningTimes();
-	Base::setTimePeriod(partitioningTimes[partitionIndex], partitioningTimes[partitionIndex+1]);
+	setTimePeriod(partitioningTimes[partitionIndex], partitioningTimes[partitionIndex+1]);
 
 	if (algorithmName!=NULL)
 		algorithmName_.assign(algorithmName);
 	else
 		algorithmName_.clear();
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
+void SwitchedModelCostBase<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::setTimePeriod(
+		const scalar_t& timeStart,
+		const scalar_t& timeFinal) {
+
+	timeStart_ = timeStart;
+	timeFinal_ = timeFinal;
+
+	timeSD_ = (timeFinal-timeStart) / 6.0;
+	timeMean_ = (timeFinal+timeStart) / 2.0;
 }
 
 /******************************************************************************************************/
@@ -99,10 +148,10 @@ void SwitchedModelCostBase<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM, LOGIC_RULES_T
 	size_t index = findActiveSubsystemFnc_(t);
 	logicRulesPtr_->getContactFlags(index, stanceLegs_);
 
-	// TODO: fix me. make it consistant
-	const scalar_t tSpan = Base::timeFinal_-Base::timeStart_;
-	const scalar_t tElapsedRatio = (t - Base::timeStart_)/tSpan;
+	// TODO: fix me. make it consistent
 	QFinal_.setZero();
+//	const scalar_t tSpan = timeFinal_-timeStart_;
+//	const scalar_t tElapsedRatio = (t - timeStart_)/tSpan;
 //	Q_ = (1.0-tElapsedRatio)*Q_desired_ + tElapsedRatio*QFinal_desired_;
 	Q_ = Q_desired_ + QFinal_desired_ / 1.0;
 
@@ -124,7 +173,7 @@ void SwitchedModelCostBase<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM, LOGIC_RULES_T
 	/* CoP constraint */
 	if (copWeightMax_ > std::numeric_limits<scalar_t>::epsilon())  {
 
-		copWeight_ = copWeightMax_ * std::exp( -0.5 * std::pow((t-Base::timeMean_)/Base::timeSD_, 2) );
+		copWeight_ = copWeightMax_ * std::exp( -0.5 * std::pow((t-timeMean_)/timeSD_, 2) );
 
 		copErrorCostFunc(x.template segment<12>(12), u.template head<12>(),
 				copCost_, devJoints_copCost_, devLambda_copCost_,

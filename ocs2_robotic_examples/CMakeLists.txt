@@ -91,14 +91,14 @@ include_directories(
 ## With catkin_make all packages are built within a single CMake context
 ## The recommended prefix ensures that target names across packages don't collide
 
-add_executable(quadrotor_mpc_node 
+add_executable(quadrotor_mpc 
   src/quadrotor/QuadrotorInterface.cpp
   src/quadrotor/MPC_Quadrotor_Node.cpp
 )
-add_dependencies(quadrotor_mpc_node
+add_dependencies(quadrotor_mpc
   ${catkin_EXPORTED_TARGETS}
 )
-target_link_libraries(quadrotor_mpc_node
+target_link_libraries(quadrotor_mpc
   ${catkin_LIBRARIES}
   ${Boost_LIBRARIES}
 )
@@ -115,32 +115,43 @@ target_link_libraries(quadrotor_dummy_test
   ${Boost_LIBRARIES}
 )
 
-
-
-
-add_executable(cartpole_mpc_node 
-  src/cart_pole/CartPoleInterface.cpp
-  src/cart_pole/MPC_Cartpole_Node.cpp
+add_executable(quadrotor_target
+  src/quadrotor/QuadrotorTargetPoseCommand.cpp
 )
-add_dependencies(cartpole_mpc_node
+add_dependencies(quadrotor_target
   ${catkin_EXPORTED_TARGETS}
 )
-target_link_libraries(cartpole_mpc_node
+target_link_libraries(quadrotor_target
   ${catkin_LIBRARIES}
   ${Boost_LIBRARIES}
 )
 
-add_executable(cartpole_dummy_test
-  src/cart_pole/CartPoleInterface.cpp
-  src/cart_pole/Dummy_Cartpole_Node.cpp
-)
-add_dependencies(cartpole_dummy_test
-  ${catkin_EXPORTED_TARGETS}
-)
-target_link_libraries(cartpole_dummy_test
-  dl
-  ${catkin_LIBRARIES}
-  ${Boost_LIBRARIES}
-  sfml-system sfml-window sfml-graphics
-)
+
+
+
+#add_executable(cartpole_mpc 
+#  src/cart_pole/CartPoleInterface.cpp
+#  src/cart_pole/MPC_Cartpole_Node.cpp
+#)
+#add_dependencies(cartpole_mpc
+#  ${catkin_EXPORTED_TARGETS}
+#)
+#target_link_libraries(cartpole_mpc
+#  ${catkin_LIBRARIES}
+#  ${Boost_LIBRARIES}
+#)
+#
+#add_executable(cartpole_dummy_test
+#  src/cart_pole/CartPoleInterface.cpp
+#  src/cart_pole/Dummy_Cartpole_Node.cpp
+#)
+#add_dependencies(cartpole_dummy_test
+#  ${catkin_EXPORTED_TARGETS}
+#)
+#target_link_libraries(cartpole_dummy_test
+#  dl
+#  ${catkin_LIBRARIES}
+#  ${Boost_LIBRARIES}
+#  sfml-system sfml-window sfml-graphics
+#)
 

@@ -27,27 +27,20 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  ******************************************************************************/
 
-// Quadrotor
-#include <ocs2_robotic_examples/examples/quadrotor/QuadrotorInterface.h>
-#include <ocs2_robotic_examples/examples/quadrotor/ros_comm/MPC_ROS_Quadrotor.h>
-#include <ocs2_mpc/MPC_SLQ.h>
+#include <ocs2_robotic_examples/examples/quadrotor/command/TargetTrajectories_Keyboard_Quadrotor.h>
 
 using namespace ocs2;
 using namespace quadrotor;
 
-int main(int argc, char **argv)
+int main( int argc, char* argv[] )
 {
-	// task file
-	if (argc <= 1) throw std::runtime_error("No task file specified. Aborting.");
-	std::string taskFileFolderName = std::string(argv[1]);
+	TargetTrajectories_Keyboard_Quadrotor<double> targetPoseCommand("quadrotor");
 
-	QuadrotorInterface quadrotorInterface(taskFileFolderName);
+	targetPoseCommand.launchNodes(argc, argv);
 
-	// Launch MPC ROS node
-	MPC_ROS_QUADROTOR mpcNode(*quadrotorInterface.getMPCPtr(), "quadrotor");
-	mpcNode.launchNodes(argc, argv);
+	const std::string commadMsg = "Enter XYZ displacement and RollPitchYaw for the robot, separated by spaces";
+	targetPoseCommand.getKeyboardCommand(commadMsg);
 
 	// Successful exit
 	return 0;
 }
-

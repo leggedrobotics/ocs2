@@ -31,6 +31,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define QUADROTOR_quadrotor_OCS2_H_
 
 #include <ocs2_comm_interfaces/ocs2_ros_interfaces/mpc/MPC_ROS_Interface.h>
+#include <ocs2_robotic_examples/command/TargetPoseTransformation.h>
 #include <ocs2_robotic_examples/examples/quadrotor/definitions.h>
 
 namespace ocs2 {
@@ -58,6 +59,9 @@ public:
 	typedef typename mpc_t::input_state_matrix_array_t input_state_matrix_array_t;
 
 	typedef CostDesiredTrajectories<scalar_t> cost_desired_trajectories_t;
+
+	typedef TargetPoseTransformation<scalar_t> target_pose_transformation_t;
+	typedef target_pose_transformation_t::pose_vector_t pose_vector_t;
 
 	typedef SystemObservation<quadrotor::STATE_DIM_, quadrotor::INPUT_DIM_> system_observation_t;
 
@@ -90,20 +94,89 @@ public:
 	 * @param [in] initObservation: The observation after the very fist call of the class or after call to reset().
 	 * @param [out] costDesiredTrajectories: The desired cost trajectories.
 	 */
-	virtual void initGoalState(
+	void initGoalState(
 			const system_observation_t &initObservation,
-			cost_desired_trajectories_t &costDesiredTrajectories) {
+			cost_desired_trajectories_t &costDesiredTrajectories) final {
 
-		// TODO: Is this alright?
-		costDesiredTrajectories.desiredTimeTrajectory().resize(2);
-		costDesiredTrajectories.desiredTimeTrajectory().at(0) = 0.0;
-		costDesiredTrajectories.desiredTimeTrajectory().at(1) = 1.0;
-		costDesiredTrajectories.desiredStateTrajectory().resize(2);
-		costDesiredTrajectories.desiredStateTrajectory().at(0) = state_vector_t::Zero();
-		costDesiredTrajectories.desiredStateTrajectory().at(1) = state_vector_t::Zero();
-		costDesiredTrajectories.desiredInputTrajectory().resize(2);
-		costDesiredTrajectories.desiredInputTrajectory().at(0) = input_vector_t::Zero();
-		costDesiredTrajectories.desiredInputTrajectory().at(1) = input_vector_t::Zero();
+		const scalar_t targetReachingDuration = 1.0;
+		const pose_vector_t targetPoseDisplacement = pose_vector_t::Zero();
+		const pose_vector_t targetVelocity = pose_vector_t::Zero();
+
+		// costDesiredTrajectories
+		targetPoseToDesiredTrajectories(
+				initObservation.time(), initObservation.state(),
+				0.0 /*startDelay*/,
+				targetReachingDuration, targetPoseDisplacement, targetVelocity,
+				costDesiredTrajectories);
+	}
+
+	/**
+	 * Adjusts the user-defined target trajectories for the cost based on the current observation.
+	 *
+	 * @param [in] currentObservation: The current observation.
+	 * @param costDesiredTrajectories: The received user-defined target trajectories which can be modified
+	 * based on the current observation.
+	 */
+	void adjustTargetTrajectories(
+			const system_observation_t& currentObservation,
+			cost_desired_trajectories_t& costDesiredTrajectories) final {
+
+		// targetPoseDisplacement
+		pose_vector_t targetPoseDisplacement, targetVelocity;
+		TargetPoseTransformation<scalar_t>::toTargetPoseDisplacement(costDesiredTrajectories.desiredStateTrajectory()[0],
+				targetPoseDisplacement, targetVelocity);
+
+		// targetReachingDuration
+		const scalar_t averageSpeed = 2.0;
+		scalar_t targetReachingDuration1 = targetPoseDisplacement.norm() / averageSpeed;
+		const scalar_t averageAcceleration = 10.0;
+		scalar_t targetReachingDuration2 = targetVelocity.norm() / averageAcceleration;
+		scalar_t targetReachingDuration = std::max(targetReachingDuration1, targetReachingDuration2);
+
+		// costDesiredTrajectories
+		targetPoseToDesiredTrajectories(
+				currentObservation.time(), currentObservation.state(),
+				0.0 /*startDelay*/,
+				targetReachingDuration, targetPoseDisplacement, targetVelocity,
+				costDesiredTrajectories);
+	}
+
+private:
+	void targetPoseToDesiredTrajectories(
+			const scalar_t& currentTime,
+			const state_vector_t& currentState,
+			const scalar_t& startDelay,
+			const scalar_t& targetReachingDuration,
+			const pose_vector_t& targetPoseDisplacement,
+			const pose_vector_t& targetVelocity,
+			cost_desired_trajectories_t& costDesiredTrajectories) {
+
+		// Desired time trajectory
+		scalar_array_t& tDesiredTrajectory = costDesiredTrajectories.desiredTimeTrajectory();
+		tDesiredTrajectory.resize(2);
+		tDesiredTrajectory[0] = currentTime + startDelay;
+		tDesiredTrajectory[1] = currentTime + startDelay + targetReachingDuration;
+
+		// Desired state trajectory
+		typename cost_desired_trajectories_t::dynamic_vector_array_t& xDesiredTrajectory =
+				costDesiredTrajectories.desiredStateTrajectory();
+		xDesiredTrajectory.resize(2);
+		xDesiredTrajectory[0].resize(quadrotor::STATE_DIM_);
+		xDesiredTrajectory[0].setZero();
+		xDesiredTrajectory[0].template segment<6>(0) = currentState.template segment<6>(0);
+		xDesiredTrajectory[0].template segment<6>(6) = currentState.template segment<6>(6);
+
+		xDesiredTrajectory[1].resize(quadrotor::STATE_DIM_);
+		xDesiredTrajectory[1].setZero();
+		xDesiredTrajectory[1].template segment<6>(0) = currentState. template segment<6>(0) + targetPoseDisplacement;
+		xDesiredTrajectory[1].template segment<6>(6) = targetVelocity;
+
+		// Desired input trajectory
+		typename cost_desired_trajectories_t::dynamic_vector_array_t& uDesiredTrajectory =
+				costDesiredTrajectories.desiredInputTrajectory();
+		uDesiredTrajectory.resize(2);
+		uDesiredTrajectory[0] = input_vector_t::Zero();
+		uDesiredTrajectory[1] = input_vector_t::Zero();
 	}
 };
 

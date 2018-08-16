@@ -39,7 +39,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 namespace ocs2 {
 namespace quadrotor {
 
-class QuadrotorCost : public QuadraticCostFunction<quadrotor::STATE_DIM_, quadrotor::INPUT_DIM_>
+class QuadrotorCost final : public QuadraticCostFunction<quadrotor::STATE_DIM_, quadrotor::INPUT_DIM_>
 {
 public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
@@ -52,6 +52,7 @@ public:
 	typedef typename BASE::state_vector_t state_vector_t;
 	typedef typename BASE::state_matrix_t state_matrix_t;
 	typedef typename BASE::input_vector_t input_vector_t;
+	typedef typename BASE::input_matrix_t input_matrix_t;
 
 	/**
 	 * Constructor for the running and final cost function defined as the following:
@@ -84,7 +85,7 @@ public:
      *
      * @return A raw pointer to the class.
      */
-	virtual QuadrotorCost* clone() const {
+	QuadrotorCost* clone() const {
 
 		return new QuadrotorCost(*this);
 	}

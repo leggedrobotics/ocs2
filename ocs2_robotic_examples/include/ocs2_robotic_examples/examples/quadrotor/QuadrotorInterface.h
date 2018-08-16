@@ -39,11 +39,11 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_robotic_examples/common/RobotInterfaceBase.h>
 
 // Quadrotor
+#include <ocs2_robotic_examples/examples/quadrotor/definitions.h>
 #include <ocs2_robotic_examples/examples/quadrotor/QuadrotorParameters.h>
 #include <ocs2_robotic_examples/examples/quadrotor/dynamics/QuadrotorSystemDynamics.h>
 #include <ocs2_robotic_examples/examples/quadrotor/dynamics/QuadrotorDynamicsDerivatives.h>
 #include <ocs2_robotic_examples/examples/quadrotor/cost/QuadrotorCost.h>
-#include <ocs2_robotic_examples/examples/quadrotor/definitions.h>
 #include <pathfile.h>
 
 namespace ocs2 {
@@ -57,13 +57,14 @@ public:
 	typedef RobotInterfaceBase<quadrotor::STATE_DIM_, quadrotor::INPUT_DIM_> BASE;
 
 	using dim_t = Dimensions<quadrotor::STATE_DIM_, quadrotor::INPUT_DIM_>;
-	using QuadrotorConstraint = ConstraintBase<dim_t::STATE_DIM_, dim_t::INPUT_DIM_>;
-	using QuadrotorOperatingPoint = SystemOperatingPoint<dim_t::STATE_DIM_, dim_t::INPUT_DIM_>;
+	using QuadrotorConstraint = ConstraintBase<quadrotor::STATE_DIM_, quadrotor::INPUT_DIM_>;
+	using QuadrotorOperatingPoint = SystemOperatingPoint<quadrotor::STATE_DIM_, quadrotor::INPUT_DIM_>;
 
-	typedef MPC_SLQ<dim_t::STATE_DIM_, dim_t::INPUT_DIM_> mpc_t;
+	typedef MPC_SLQ<quadrotor::STATE_DIM_, quadrotor::INPUT_DIM_> mpc_t;
 
 	/**
 	 * Constructor
+	 *
 	 * @param [in] taskFileFolderName: The name of the folder containing task file
 	 */
 	QuadrotorInterface(const std::string& taskFileFolderName);

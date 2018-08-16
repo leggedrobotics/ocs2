@@ -40,15 +40,15 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 namespace ocs2 {
 namespace quadrotor {
 
-template<typename ScalarType>
+template<typename SCALAR_T>
 class QuadrotorParameters
 {
 public:
 	QuadrotorParameters(
-			ScalarType quadrotorMass = 1.0,
-			ScalarType Thzz = 1.0,
-			ScalarType Thxxyy = 1.0,
-			ScalarType gravity = 9.8)
+			SCALAR_T quadrotorMass = 1.0,
+			SCALAR_T Thzz = 1.0,
+			SCALAR_T Thxxyy = 1.0,
+			SCALAR_T gravity = 9.8)
 	: quadrotorMass_(quadrotorMass)
 	, Thzz_(Thzz)
 	, Thxxyy_(Thxxyy)
@@ -66,7 +66,7 @@ public:
 		if (verbose) std::cerr << " #### =========================================" << std::endl;
 
 		try {
-			quadrotorMass_ = pt.get<ScalarType>("QuadrotorParameters.quadrotorMass");
+			quadrotorMass_ = pt.get<SCALAR_T>("QuadrotorParameters.quadrotorMass");
 			if (verbose) std::cerr << " #### quadrotorMass ......... " << quadrotorMass_ << std::endl;
 		}
 		catch (const std::exception &e) {
@@ -74,7 +74,7 @@ public:
 		}
 
 		try {
-			Thzz_ = pt.get<ScalarType>("QuadrotorParameters.Thzz");
+			Thzz_ = pt.get<SCALAR_T>("QuadrotorParameters.Thzz");
 			if (verbose) std::cerr << " #### Thzz .................. " << Thzz_ << std::endl;
 		}
 		catch (const std::exception &e) {
@@ -82,7 +82,7 @@ public:
 		}
 
 		try {
-			Thxxyy_ = pt.get<ScalarType>("QuadrotorParameters.Thxxyy");
+			Thxxyy_ = pt.get<SCALAR_T>("QuadrotorParameters.Thxxyy");
 			if (verbose) std::cerr << " #### Thxx/yy ............... " << Thxxyy_ << std::endl;
 		}
 		catch (const std::exception &e) {
@@ -91,7 +91,7 @@ public:
 
 
 		try {
-			gravity_ = pt.get<ScalarType>("QuadrotorParameters.gravity");
+			gravity_ = pt.get<SCALAR_T>("QuadrotorParameters.gravity");
 			if (verbose) std::cerr << " #### gravity ............... " << gravity_ << std::endl;
 		}
 		catch (const std::exception &e) {
@@ -102,10 +102,10 @@ public:
 
 public:
 	// For safety, these parameters cannot be modified
-	ScalarType quadrotorMass_; // [kg]
-	ScalarType Thzz_;
-	ScalarType Thxxyy_;
-	ScalarType gravity_;
+	SCALAR_T quadrotorMass_; // [kg]
+	SCALAR_T Thzz_;
+	SCALAR_T Thxxyy_;
+	SCALAR_T gravity_;
 
 
 };

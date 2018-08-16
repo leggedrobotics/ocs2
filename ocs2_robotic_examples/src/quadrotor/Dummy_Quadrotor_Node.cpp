@@ -69,6 +69,9 @@ int main(int argc, char **argv)
 
 	// run dummy
 	dummyQuadrotor.run();
+
+	// Successful exit
+	return 0;
 }
 
 

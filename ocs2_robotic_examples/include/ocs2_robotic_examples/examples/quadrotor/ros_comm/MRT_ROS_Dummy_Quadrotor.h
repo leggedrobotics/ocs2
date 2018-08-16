@@ -49,7 +49,7 @@ public:
 	/**
 	 * Constructor.
 	 *
-	 * @param [in] mrtPtr
+	 * @param [in] mrtPtr: A pointer to MRT.
 	 * @param [in] mrtDesiredFrequency: MRT loop frequency in Hz. This should always set to a positive number.
 	 * @param [in] mpcDesiredFrequency: MPC loop frequency in Hz. If set to a positive number, MPC loop
 	 * will be simulated to run by this frequency. Note that this might not be the MPC's realtime frequency.
@@ -145,6 +145,7 @@ protected:
 		visualizationPublisher_.publish(marker);
 	}
 
+private:
 	ros::Publisher visualizationPublisher_;
 };
 

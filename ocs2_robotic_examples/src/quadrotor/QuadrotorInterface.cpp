@@ -27,8 +27,7 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  ******************************************************************************/
 
-#include <ocs2_robotic_examples/examples/quadrotor/QuadrotorInterface.h>
-#include <ocs2_robotic_examples/examples/quadrotor/dynamics/QuadrotorSystemDynamics.h>
+#include "ocs2_robotic_examples/examples/quadrotor/QuadrotorInterface.h"
 
 namespace ocs2 {
 namespace quadrotor {
@@ -59,7 +58,7 @@ void QuadrotorInterface::loadSettings(const std::string& taskFile) {
 	/*
 	 * Default initial condition
 	 */
-	BASE::loadInitialState(taskFile, initialState_);
+	loadInitialState(taskFile, initialState_);
 
 	/*
 	 * SLQ-MPC settings
@@ -108,13 +107,13 @@ void QuadrotorInterface::loadSettings(const std::string& taskFile) {
 	initialInput_ = dim_t::input_vector_t::Zero();
 	initialInput_(0) = quadrotorParameters.quadrotorMass_*quadrotorParameters.gravity_;
 	quadrotorOperatingPointPtr_.reset( new QuadrotorOperatingPoint(
-			BASE::initialState_, BASE::initialInput_) );
+			initialState_, initialInput_) );
 
 	/*
 	 * Time partitioning which defines the time horizon and the number of data partitioning
 	 */
 	scalar_t timeHorizon;
-	BASE::definePartitioningTimes(taskFile, timeHorizon,
+	definePartitioningTimes(taskFile, timeHorizon,
 			numPartitions_, partitioningTimes_, true);
 }
 
@@ -130,8 +129,8 @@ void QuadrotorInterface::setupOptimizer(const std::string& taskFile) {
 			quadrotorCostPtr_.get(),
 			quadrotorOperatingPointPtr_.get(),
 			partitioningTimes_,
-			BASE::slqSettings_,
-			BASE::mpcSettings_));
+			slqSettings_,
+			mpcSettings_));
 }
 
 /******************************************************************************************************/

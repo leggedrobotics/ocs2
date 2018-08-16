@@ -42,4 +42,4 @@ enum quadrotor : size_t
 } // namespace quadrotor
 } // namespace ocs2
 
-#endif //DEFINITIONS_OCS2_H_
+#endif // DEFINITIONS_OCS2_H_

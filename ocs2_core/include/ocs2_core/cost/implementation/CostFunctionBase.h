@@ -52,20 +52,5 @@ void CostFunctionBase<STATE_DIM, INPUT_DIM, logic_rules_template_t>::getCostDesi
 	costDesiredTrajectories = *costDesiredTrajectoriesPtr_;
 }
 
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class logic_rules_template_t>
-void CostFunctionBase<STATE_DIM, INPUT_DIM, logic_rules_template_t>::setTimePeriod(
-		const scalar_t& timeStart,
-		const scalar_t& timeFinal) {
-
-	timeStart_ = timeStart;
-	timeFinal_ = timeFinal;
-
-	timeSD_ = (timeFinal-timeStart) / 6.0;
-	timeMean_ = (timeFinal+timeStart) / 2.0;
-}
-
 
 } // namespace ocs2

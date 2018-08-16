@@ -88,11 +88,7 @@ public:
 	 * Default constructor
 	 */
 	CostFunctionBase()
-	: timeStart_(0.0)
-	, timeFinal_(1.0)
-	, timeSD_(0.17)
-	, timeMean_(0.5)
-	, costDesiredTrajectoriesPtr_(nullptr)
+	: costDesiredTrajectoriesPtr_(nullptr)
 	, xNominalFunc_()
 	, uNominalFunc_()
 	{
@@ -231,23 +227,10 @@ public:
 	virtual void getTerminalCostSecondDerivativeState(state_matrix_t& dPhidxx) = 0;
 
 protected:
-	/**
-	 * Sets the time period.
-	 *
-	 * @param [in] timeStart: The start time of the period.
-	 * @param [in] timeFinal: The final time of the period.
-	 */
-	virtual void setTimePeriod(const scalar_t& timeStart, const scalar_t& timeFinal);
 
 /*
  * Variables
  */
-	scalar_t timeStart_ = 0.0;
-	scalar_t timeFinal_ = 1.0;
-
-	scalar_t timeSD_ = 0.17;  //1.0 / 6.0;
-	scalar_t timeMean_ = 0.5;
-
 	const cost_desired_trajectories_t* costDesiredTrajectoriesPtr_;
 
 	typename cost_desired_trajectories_t::dynamic_linear_interpolation_t xNominalFunc_;

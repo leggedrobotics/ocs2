@@ -39,7 +39,6 @@ using namespace quadrotor;
 
 int main(int argc, char **argv)
 {
-	ros::init(argc, argv, "quadrotor_communication");
 	// task file
 	if (argc <= 1) throw std::runtime_error("No task file specified. Aborting.");
 	std::string taskFileFolderName = std::string(argv[1]);

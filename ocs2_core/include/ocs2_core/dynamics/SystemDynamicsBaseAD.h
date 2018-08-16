@@ -1,9 +1,31 @@
-/*
- * SystemDynamicsBaseAD.h
- *
- *  Created on: Apr 27, 2018
- *      Author: farbod
- */
+/******************************************************************************
+Copyright (c) 2017, Farbod Farshidian. All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+* Redistributions of source code must retain the above copyright notice, this
+  list of conditions and the following disclaimer.
+
+* Redistributions in binary form must reproduce the above copyright notice,
+  this list of conditions and the following disclaimer in the documentation
+  and/or other materials provided with the distribution.
+
+* Neither the name of the copyright holder nor the names of its
+  contributors may be used to endorse or promote products derived from
+  this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+******************************************************************************/
 
 #ifndef SYSTEMDYNAMICSBASEAD_OCS2_H_
 #define SYSTEMDYNAMICSBASEAD_OCS2_H_
@@ -69,13 +91,6 @@ public:
 	 * Default destructor
 	 */
 	virtual ~SystemDynamicsBaseAD() = default;
-
-    /**
-     * Returns pointer to the base class.
-     *
-     * @return A raw pointer to the class.
-     */
-	virtual BASE* clone() const override;
 
 	/**
 	 * Interface method to the state flow map of the hybrid system. This method should be implemented by the derived class.
@@ -182,7 +197,7 @@ public:
 			const scalar_t& time,
 			const state_vector_t& state,
 			const input_vector_t& input,
-			state_vector_t& stateDerivative) override;
+			state_vector_t& stateDerivative) final;
 
 	/**
 	 * Interface method to the state jump map of the hybrid system.
@@ -194,7 +209,7 @@ public:
 	virtual void computeJumpMap(
 			const scalar_t& time,
 			const state_vector_t& state,
-			state_vector_t& jumpedState) override;
+			state_vector_t& jumpedState) final;
 
 	/**
 	 * Interface method to the guard surfaces.
@@ -206,19 +221,19 @@ public:
 	virtual void computeGuardSurfaces(
 			const scalar_t& time,
 			const state_vector_t& state,
-			dynamic_vector_t& guardSurfacesValue) override;
+			dynamic_vector_t& guardSurfacesValue) final;
 
     /**
      * Sets the current time, state, and control input.
      *
-     * @param [in] timet: Current time
+     * @param [in] time: Current time
      * @param [in] state: Current state vector
      * @param [in] input: Current input vector
      */
 	virtual void setCurrentStateAndControl(
 			const scalar_t& time,
 			const state_vector_t& state,
-			const input_vector_t& input) override;
+			const input_vector_t& input) final;
 
 	/**
 	 * Partial time derivative of the system flow map.
@@ -226,7 +241,7 @@ public:
 	 *
 	 * @param [out] df: \f$ \frac{\partial f}{\partial t} \f$ matrix.
 	 */
-	virtual void getFlowMapDerivativeTime(state_vector_t& df) override;
+	virtual void getFlowMapDerivativeTime(state_vector_t& df) final;
 
 	/**
 	 * The A matrix at a given operating point for the linearized system flow map.
@@ -234,7 +249,7 @@ public:
 	 *
 	 * @param [out] A: \f$ A(t) \f$ matrix.
 	 */
-	virtual void getFlowMapDerivativeState(state_matrix_t& A) override;
+	virtual void getFlowMapDerivativeState(state_matrix_t& A) final;
 
 	/**
 	 * The B matrix at a given operating point for the linearized system flow map.
@@ -242,7 +257,7 @@ public:
 	 *
 	 * @param [out] B: \f$ B(t) \f$ matrix.
 	 */
-	virtual void getFlowMapDerivativeInput(state_input_matrix_t& B) override;
+	virtual void getFlowMapDerivativeInput(state_input_matrix_t& B) final;
 
 	/**
 	 * Partial time derivative of the system jump map.
@@ -250,7 +265,7 @@ public:
 	 *
 	 * @param [out] dg: \f$ \frac{\partial g}{\partial t} \f$ matrix.
 	 */
-	virtual void getJumpMapDerivativeTime(state_vector_t& dg) override;
+	virtual void getJumpMapDerivativeTime(state_vector_t& dg) final;
 
 	/**
 	 * The G matrix at a given operating point for the linearized system jump map.
@@ -258,7 +273,7 @@ public:
 	 *
 	 * @param [out] G: \f$ G \f$ matrix.
 	 */
-	virtual void getJumpMapDerivativeState(state_matrix_t& G) override;
+	virtual void getJumpMapDerivativeState(state_matrix_t& G) final;
 
 	/**
 	 * The H matrix at a given operating point for the linearized system jump map.
@@ -266,28 +281,49 @@ public:
 	 *
 	 * @param [out] H: \f$ H \f$ matrix.
 	 */
-	virtual void getJumpMapDerivativeInput(state_input_matrix_t& H) override;
+	virtual void getJumpMapDerivativeInput(state_input_matrix_t& H) final;
 
 	/**
 	 * Get at a given operating point the derivative of the guard surfaces w.r.t. input vector.
 	 *
 	 * @param [out] D_t_gamma: Derivative of the guard surfaces w.r.t. time.
 	 */
-	virtual void getGuardSurfacesDerivativeTime(dynamic_vector_t& D_t_gamma) override;
+	virtual void getGuardSurfacesDerivativeTime(dynamic_vector_t& D_t_gamma) final;
 
 	/**
 	 * Get at a given operating point the derivative of the guard surfaces w.r.t. input vector.
 	 *
 	 * @param [out] D_x_gamma: Derivative of the guard surfaces w.r.t. state vector.
 	 */
-	virtual void getGuardSurfacesDerivativeState(dynamic_state_matrix_t& D_x_gamma) override;
+	virtual void getGuardSurfacesDerivativeState(dynamic_state_matrix_t& D_x_gamma) final;
 
 	/**
 	 * Get at a given operating point the derivative of the guard surfaces w.r.t. input vector.
 	 *
 	 * @param [out] D_u_gamma: Derivative of the guard surfaces w.r.t. input vector.
 	 */
-	virtual void getGuardSurfacesDerivativeInput(dynamic_input_matrix_t& D_u_gamma) override;
+	virtual void getGuardSurfacesDerivativeInput(dynamic_input_matrix_t& D_u_gamma) final;
+
+    /**
+     * Returns pointer to the base class.
+     *
+     * @return A raw pointer to the class.
+     */
+	virtual BASE* clone() const final;
+
+	/**
+	 * Initialization of the system dynamics derivatives cannot be override anymore.
+	 *
+	 * @param [in] logicRulesMachine: A class which contains and parse the logic rules e.g
+	 * method findActiveSubsystemHandle returns a Lambda expression which can be used to
+	 * find the ID of the current active subsystem.
+	 * @param [in] partitionIndex: index of the time partition.
+	 * @param [in] algorithmName: The algorithm that class this class (default not defined).
+	 */
+	void initializeModel(
+			LogicRulesMachine<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>& logicRulesMachine,
+			const size_t& partitionIndex,
+			const char* algorithmName=NULL) final {}
 
 
 	void getCompileFlags(std::vector<std::string>& cFlags) {

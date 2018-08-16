@@ -1,9 +1,31 @@
-/*
- * MPC_ROS_Interface.h
- *
- *  Created on: May 23, 2018
- *      Author: farbod
- */
+/******************************************************************************
+Copyright (c) 2017, Farbod Farshidian. All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+* Redistributions of source code must retain the above copyright notice, this
+  list of conditions and the following disclaimer.
+
+* Redistributions in binary form must reproduce the above copyright notice,
+  this list of conditions and the following disclaimer in the documentation
+  and/or other materials provided with the distribution.
+
+* Neither the name of the copyright holder nor the names of its
+  contributors may be used to endorse or promote products derived from
+  this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+******************************************************************************/
 
 namespace ocs2{
 
@@ -13,11 +35,12 @@ namespace ocs2{
 template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
 MPC_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::MPC_ROS_Interface(
 		mpc_t& mpc,
-		const std::string& nodeName /*= "robot_mpc"*/)
+		const std::string& robotName /*= "robot"*/)
 
 	: mpcPtr_(&mpc)
 	, mpcSettings_(mpc.settings())
-	, nodeName_(nodeName)
+	, robotName_(robotName)
+	, desiredTrajectoriesUpdated_(false)
 {
 	// correcting rosMsgTimeWindow
 	if (mpcSettings_.recedingHorizon_==false)
@@ -38,20 +61,7 @@ MPC_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::MPC_ROS_Interface(
 template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
 MPC_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::~MPC_ROS_Interface() {
 
-#ifdef PUBLISH_THREAD
-	ROS_INFO_STREAM("Shutting down workers ...");
-
-	std::unique_lock<std::mutex> lk(publisherMutex_);
-	terminateThread_ = true;
-	lk.unlock();
-
-	msgReady_.notify_all();
-
-	if (publisherWorker_.joinable())
-		publisherWorker_.join();
-
-	ROS_INFO_STREAM("All workers are shut down.");
-#endif
+	shutdownNodes();
 }
 
 /******************************************************************************************************/
@@ -60,11 +70,11 @@ MPC_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::~MPC_ROS_Interface() {
 template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
 void MPC_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::set(
 		mpc_t& mpc,
-		const std::string& nodeName /*= "robot_mpc"*/) {
+		const std::string& robotName /*= "robot"*/) {
 
 	mpcPtr_ = &mpc;
 	mpcSettings_ = mpc.settings();
-	nodeName_ = nodeName;
+	robotName_ = robotName;
 
 	// correcting rosMsgTimeWindow
 	if (mpcSettings_.recedingHorizon_==false)
@@ -72,6 +82,7 @@ void MPC_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::set(
 
 	// reset variables
 	reset();
+	resetRequested_ = false;
 
 	// Start thread for publishing
 #ifdef PUBLISH_THREAD
@@ -98,7 +109,7 @@ void MPC_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::reset() {
 	initialCall_ = true;
 	numIterations_ = 0;
 
-	maxDelay_ = -1e6;
+	maxDelay_ = -1e+6;
 	meanDelay_ = 0.0;
 	currentDelay_ = 0.0;
 
@@ -332,7 +343,7 @@ void MPC_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::publishFeedbackPoli
 template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
 void MPC_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::publisherWorkerThread() {
 
-	while(true) {
+	while(terminateThread_==false) {
 
 		std::unique_lock<std::mutex> lk(publisherMutex_);
 
@@ -348,6 +359,7 @@ void MPC_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::publisherWorkerThre
 		readyToPublish_ = false;
 
 		lk.unlock();
+		msgReady_.notify_one();
 
 		// publish the message
 		if (mpcSettings_.useFeedbackPolicy_==true)
@@ -401,8 +413,6 @@ void MPC_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::mpcObservationCallb
 	// update the desired trajectories
 	if(desiredTrajectoriesUpdated_==true) {
 
-		desiredTrajectoriesUpdated_ = false;
-
 		// user defined modification of the CostDesiredTrajectories at the moment o setting
 		adjustTargetTrajectories(currentObservation, costDesiredTrajectories_);
 
@@ -413,6 +423,8 @@ void MPC_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::mpcObservationCallb
 
 		// set CostDesiredTrajectories
 		mpcPtr_->swapCostDesiredTrajectories(costDesiredTrajectories_);
+
+		desiredTrajectoriesUpdated_ = false;
 
 	} else if (mpcSettings_.recedingHorizon_==false) {
 		return;
@@ -500,9 +512,37 @@ template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
 void MPC_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::mpcTargetTrajectoriesCallback(
 		const ocs2_comm_interfaces::mpc_target_trajectories::ConstPtr& msg) {
 
-	desiredTrajectoriesUpdated_ = true;
+	if (desiredTrajectoriesUpdated_==false) {
+		RosMsgConversions<0, 0>::ReadTargetTrajectoriesMsg(*msg, costDesiredTrajectories_);
+		desiredTrajectoriesUpdated_ = true;
+	}
+}
 
-	RosMsgConversions<0, 0>::ReadTargetTrajectoriesMsg(*msg, costDesiredTrajectories_);
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
+void MPC_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::shutdownNodes() {
+
+#ifdef PUBLISH_THREAD
+	ROS_INFO_STREAM("Shutting down workers ...");
+
+	std::unique_lock<std::mutex> lk(publisherMutex_);
+	terminateThread_ = true;
+	lk.unlock();
+
+	msgReady_.notify_all();
+
+	if (publisherWorker_.joinable())
+		publisherWorker_.join();
+
+	ROS_INFO_STREAM("All workers are shut down.");
+#endif
+
+	// shutdown publishers
+	mpcFeedforwardPolicyPublisher_.shutdown();
+	mpcFeedbackPolicyPublisher_.shutdown();
+	dummyPublisher_.shutdown();
 }
 
 /******************************************************************************************************/
@@ -518,32 +558,32 @@ void MPC_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::launchNodes(int arg
 	ROS_INFO_STREAM("MPC node is setting up ...");
 
 	// setup ROS
-	::ros::init(argc, argv, nodeName_+"_mpc", ::ros::init_options::NoSigintHandler);
+	::ros::init(argc, argv, robotName_+"_mpc", ::ros::init_options::NoSigintHandler);
 	signal(SIGINT, MPC_ROS_Interface::sigintHandler);
 	::ros::NodeHandle nodeHandler;
 
 	// Observation subscriber
 	mpcObservationSubscriber_ = nodeHandler.subscribe(
-			nodeName_+"_mpc_observation", 1, &MPC_ROS_Interface::mpcObservationCallback, this);
+			robotName_+"_mpc_observation", 1, &MPC_ROS_Interface::mpcObservationCallback, this);
 
 	// Goal subscriber
 	mpcTargetTrajectoriesSubscriber_ = nodeHandler.subscribe(
-			nodeName_+"_mpc_target", 1, &MPC_ROS_Interface::mpcTargetTrajectoriesCallback, this);
+			robotName_+"_mpc_target", 1, &MPC_ROS_Interface::mpcTargetTrajectoriesCallback, this);
 
 	// SLQ-MPC publisher
 	if (mpcSettings_.useFeedbackPolicy_==true) {
 		mpcFeedbackPolicyPublisher_ = nodeHandler.advertise<ocs2_comm_interfaces::mpc_feedback_policy>(
-				nodeName_+"_mpc_fb_policy", 1, true);
+				robotName_+"_mpc_fb_policy", 1, true);
 	} else {
 		mpcFeedforwardPolicyPublisher_ = nodeHandler.advertise<ocs2_comm_interfaces::mpc_feedforward_policy>(
-				nodeName_+"_mpc_ff_policy", 1, true);
+				robotName_+"_mpc_ff_policy", 1, true);
 	}
 
 	// dummy publisher
 	dummyPublisher_ = nodeHandler.advertise<ocs2_comm_interfaces::dummy>("ping", 1, true);
 
 	// MPC reset service server
-	mpcResetServiceServer_ = nodeHandler.advertiseService(nodeName_+"_mpc_reset",
+	mpcResetServiceServer_ = nodeHandler.advertiseService(robotName_+"_mpc_reset",
 			&MPC_ROS_Interface::resetMpcCallback, this);
 
 	// display

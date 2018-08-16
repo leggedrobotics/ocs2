@@ -1,9 +1,31 @@
-/*
- * MRT_ROS_Interface.h
- *
- *  Created on: May 23, 2018
- *      Author: farbod
- */
+/******************************************************************************
+Copyright (c) 2017, Farbod Farshidian. All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+* Redistributions of source code must retain the above copyright notice, this
+  list of conditions and the following disclaimer.
+
+* Redistributions in binary form must reproduce the above copyright notice,
+  this list of conditions and the following disclaimer in the documentation
+  and/or other materials provided with the distribution.
+
+* Neither the name of the copyright holder nor the names of its
+  contributors may be used to endorse or promote products derived from
+  this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+******************************************************************************/
 
 namespace ocs2 {
 
@@ -14,11 +36,11 @@ template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
 MRT_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::MRT_ROS_Interface(
 		const LOGIC_RULES_T& logicRules,
 		const bool& useFeedforwardPolicy /*= true*/,
-		const std::string& nodeName /*= "robot_mpc"*/)
+		const std::string& robotName /*= "robot"*/)
 
 	: logicMachinePtr_(new logic_machine_t(logicRules))
 	, useFeedforwardPolicy_(useFeedforwardPolicy)
-	, nodeName_(nodeName)
+	, robotName_(robotName)
 {
 	// reset variables
 	reset();
@@ -35,20 +57,7 @@ MRT_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::MRT_ROS_Interface(
 template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
 MRT_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::~MRT_ROS_Interface() {
 
-#ifdef PUBLISH_THREAD
-	ROS_INFO_STREAM("Shutting down workers ...");
-
-	std::unique_lock<std::mutex> lk(publisherMutex_);
-	terminateThread_ = true;
-	lk.unlock();
-
-	msgReady_.notify_all();
-
-	if (publisherWorker_.joinable())
-		publisherWorker_.join();
-
-	ROS_INFO_STREAM("All workers are shut down.");
-#endif
+	shutdownNodes();
 }
 
 /******************************************************************************************************/
@@ -58,13 +67,13 @@ template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
 void MRT_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::set(
 		const LOGIC_RULES_T& logicRules,
 		const bool& useFeedforwardPolicy /*= true*/,
-		const std::string& nodeName /*= "robot_mpc"*/) {
+		const std::string& robotName /*= "robot"*/) {
 
 	logicMachinePtr_ = logic_machine_ptr_t(new logic_machine_t(logicRules));
 
 	useFeedforwardPolicy_ = useFeedforwardPolicy;
 
-	nodeName_ = nodeName;
+	robotName_ = robotName;
 
 	// reset variables
 	reset();
@@ -200,7 +209,7 @@ void MRT_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::publishObservation(
 template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
 void MRT_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::publisherWorkerThread() {
 
-	while(true) {
+	while(terminateThread_==false) {
 
 		std::unique_lock<std::mutex> lk(publisherMutex_);
 
@@ -213,6 +222,7 @@ void MRT_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::publisherWorkerThre
 		readyToPublish_ = false;
 
 		lk.unlock();
+		msgReady_.notify_one();
 
 		// publish the message
 		mpcObservationPublisher_.publish(mpcObservationMsgBuffer_);
@@ -518,6 +528,41 @@ void MRT_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::evaluateFeedbackPol
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
+void MRT_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::shutdownNodes() {
+
+#ifdef PUBLISH_THREAD
+	ROS_INFO_STREAM("Shutting down workers ...");
+
+	std::unique_lock<std::mutex> lk(publisherMutex_);
+	terminateThread_ = true;
+	lk.unlock();
+
+	msgReady_.notify_all();
+
+	if (publisherWorker_.joinable())
+		publisherWorker_.join();
+
+	ROS_INFO_STREAM("All workers are shut down.");
+#endif
+
+	// shutdown publishers
+	dummyPublisher_.shutdown();
+	mpcObservationPublisher_.shutdown();
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
+::ros::NodeHandlePtr& MRT_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::nodeHandle() {
+
+	return mrtRosNodeHandlePtr_;
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
 void MRT_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::launchNodes(int argc, char* argv[]) {
 
 	reset();
@@ -526,28 +571,30 @@ void MRT_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::launchNodes(int arg
 	ROS_INFO_STREAM("MRT node is setting up ...");
 
 	// setup ROS
-	::ros::init(argc, argv, nodeName_+"_mrt", ::ros::init_options::NoSigintHandler);
+	::ros::init(argc, argv, robotName_+"_mrt", ::ros::init_options::NoSigintHandler);
 	signal(SIGINT, MRT_ROS_Interface::sigintHandler);
-	::ros::NodeHandle nodeHandler;
+
+	mrtRosNodeHandlePtr_.reset(new ::ros::NodeHandle);
+	mrtRosNodeHandlePtr_->setCallbackQueue(&mrtCallbackQueue_);
 
 	// Observation publisher
-	mpcObservationPublisher_ = nodeHandler.advertise<ocs2_comm_interfaces::mpc_observation>(
-			nodeName_+"_mpc_observation", 1);
+	mpcObservationPublisher_ = mrtRosNodeHandlePtr_->advertise<ocs2_comm_interfaces::mpc_observation>(
+			robotName_+"_mpc_observation", 1);
 
 	// SLQ-MPC subscriber
 	if (useFeedforwardPolicy_==true) {
-		mpcFeedforwardPolicySubscriber_ = nodeHandler.subscribe(
-				nodeName_+"_mpc_ff_policy", 1, &MRT_ROS_Interface::mpcFeedforwardPolicyCallback, this);
+		mpcFeedforwardPolicySubscriber_ = mrtRosNodeHandlePtr_->subscribe(
+				robotName_+"_mpc_ff_policy", 1, &MRT_ROS_Interface::mpcFeedforwardPolicyCallback, this);
 	} else {
-		mpcFeedbackPolicySubscriber_   = nodeHandler.subscribe(
-				nodeName_+"_mpc_fb_policy", 1, &MRT_ROS_Interface::mpcFeedbackPolicyCallback, this);
+		mpcFeedbackPolicySubscriber_   = mrtRosNodeHandlePtr_->subscribe(
+				robotName_+"_mpc_fb_policy", 1, &MRT_ROS_Interface::mpcFeedbackPolicyCallback, this);
 	}
 
 	// dummy publisher
-	dummyPublisher_ = nodeHandler.advertise<ocs2_comm_interfaces::dummy>("ping", 1, true);
+	dummyPublisher_ = mrtRosNodeHandlePtr_->advertise<ocs2_comm_interfaces::dummy>("ping", 1, true);
 
 	// MPC reset service client
-	mpcResetServiceClient_ = nodeHandler.serviceClient<ocs2_comm_interfaces::reset>(nodeName_+"_mpc_reset");
+	mpcResetServiceClient_ = mrtRosNodeHandlePtr_->serviceClient<ocs2_comm_interfaces::reset>(robotName_+"_mpc_reset");
 
 	// display
 #ifdef PUBLISH_THREAD
@@ -556,8 +603,14 @@ void MRT_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::launchNodes(int arg
 
 	ROS_INFO_STREAM("MRT node is ready.");
 
-	::ros::spinOnce();
+  spinMRT();
 }
+
+template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
+void MRT_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::spinMRT() {
+  mrtCallbackQueue_.callOne();
+};
+
 
 } // namespace ocs2
 

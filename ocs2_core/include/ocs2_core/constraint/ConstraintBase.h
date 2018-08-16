@@ -1,9 +1,31 @@
-/*
- * ConstraintBase.h
- *
- *  Created on: Dec 19, 2017
- *      Author: farbod
- */
+/******************************************************************************
+Copyright (c) 2017, Farbod Farshidian. All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+* Redistributions of source code must retain the above copyright notice, this
+  list of conditions and the following disclaimer.
+
+* Redistributions in binary form must reproduce the above copyright notice,
+  this list of conditions and the following disclaimer in the documentation
+  and/or other materials provided with the distribution.
+
+* Neither the name of the copyright holder nor the names of its
+  contributors may be used to endorse or promote products derived from
+  this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+******************************************************************************/
 
 #ifndef CONSTRAINTBASE_OCS2_H_
 #define CONSTRAINTBASE_OCS2_H_
@@ -116,10 +138,10 @@ public:
 	virtual void getConstraint1(constraint1_vector_t& e)  {}
 
 	/**
-	 * Get the number of state-input active equality constriants.
+	 * Get the number of state-input active equality constraints.
 	 *
 	 * @param [in] time: time.
-	 * @return number of state-input active equality constriants.
+	 * @return number of state-input active equality constraints.
 	 */
 	virtual size_t numStateInputConstraint(const scalar_t& time) {
 
@@ -129,15 +151,15 @@ public:
 	/**
 	 * get the state-only equality constraints.
 	 *
-	 * @param [out] h: The state-only equality constraints value.
+	 * @param [out] h: The state-only (in)equality constraints value.
 	 */
 	virtual void getConstraint2(constraint2_vector_t& h) {}
 
 	/**
-	 * Get the number of state-only active equality constriants.
+	 * Get the number of state-only active equality constraints.
 	 *
 	 * @param [in] time: time.
-	 * @return number of state-only active equality constriants.
+	 * @return number of state-only active (in)equality constraints.
 	 */
 	virtual size_t numStateOnlyConstraint(const scalar_t& time) {
 
@@ -147,15 +169,15 @@ public:
 	/**
 	 * Compute the final state-only equality constraints.
 	 *
-	 * @param [out] h_f: The final state-only equality constraints value.
+	 * @param [out] h_f: The final state-only (in)equality constraints value.
 	 */
 	virtual void getFinalConstraint2(constraint2_vector_t& h_f) {}
 
 	/**
-	 * Get the number of final state-only active equality constriants.
+	 * Get the number of final state-only active (in)equality constraints.
 	 *
 	 * @param [in] time: time.
-	 * @return number of final state-only active equality constriants.
+	 * @return number of final state-only active equality constraints.
 	 */
 	virtual size_t numStateOnlyFinalConstraint(const scalar_t& time) {
 

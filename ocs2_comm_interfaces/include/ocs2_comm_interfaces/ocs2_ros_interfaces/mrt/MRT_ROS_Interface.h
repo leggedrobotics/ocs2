@@ -1,9 +1,31 @@
-/*
- * MRT_ROS_Interface.h
- *
- *  Created on: May 23, 2018
- *      Author: farbod
- */
+/******************************************************************************
+Copyright (c) 2017, Farbod Farshidian. All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+* Redistributions of source code must retain the above copyright notice, this
+  list of conditions and the following disclaimer.
+
+* Redistributions in binary form must reproduce the above copyright notice,
+  this list of conditions and the following disclaimer in the documentation
+  and/or other materials provided with the distribution.
+
+* Neither the name of the copyright holder nor the names of its
+  contributors may be used to endorse or promote products derived from
+  this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+******************************************************************************/
 
 #ifndef MRT_ROS_INTERFACE_OCS2_H_
 #define MRT_ROS_INTERFACE_OCS2_H_
@@ -23,6 +45,7 @@
 #include <Eigen/Dense>
 
 #include <ros/ros.h>
+#include <ros/callback_queue.h>
 
 #include <ocs2_core/Dimensions.h>
 #include <ocs2_core/cost/CostDesiredTrajectories.h>
@@ -97,12 +120,12 @@ public:
 	 *
 	 * @param [in] logicRules: A logic rule class of derived from the hybrid logicRules base.
  	 * @param [in] useFeedforwardPolicy: Whether to receive the MPC feedforward (true) or MPC feedback policy (false).
-	 * @param [in] nodeName: The node's name.
+	 * @param [in] robotName: The robot's name.
 	 */
 	MRT_ROS_Interface(
 			const LOGIC_RULES_T& logicRules,
 			const bool& useFeedforwardPolicy = true,
-			const std::string& nodeName = "robot_mpc");
+			const std::string& robotName = "robot");
 
 	/**
 	 * Destructor
@@ -114,11 +137,11 @@ public:
 	 *
 	 * @param [in] logicRules: A logic rule class of derived from the hybrid logicRules base.
  	 * @param [in] useFeedforwardPolicy: Whether to receive the MPC feedforward (true) or MPC feedback policy (false).
-	 * @param [in] nodeName: The node's name.
+	 * @param [in] robotName: The robot's name.
 	 */
 	void set(const LOGIC_RULES_T& logicRules,
 			const bool& useFeedforwardPolicy = true,
-			const std::string& nodeName = "robot_mpc");
+			const std::string& robotName = "robot");
 
 	/**
 	 * Resets the class to its instantiate state.
@@ -184,12 +207,28 @@ public:
 			size_t& subsystem);
 
 	/**
+	 * Shutdowns the ROS nodes.
+	 */
+	void shutdownNodes();
+
+	/**
 	 * Launches the ROS nodes to communicate with the MPC node.
 	 *
 	 * @param [in] argc: Command line number of arguments.
 	 * @param [in] argv: Command line vector of arguments.
 	 */
 	void launchNodes(int argc, char* argv[]);
+
+	/**
+   * spin the MRT callback queue
+   */
+  void spinMRT();
+
+	/**
+	 *  Gets the node handle pointer to the MRT node,
+	 *  Use this to add subscribers to the custom MRT callback queue
+	 */
+	::ros::NodeHandlePtr& nodeHandle();
 
 	/**
 	 * Publishes the current observation on a separate thread
@@ -206,6 +245,8 @@ public:
 	 * This method also calls one of the loadModifiedFeedforwardPolicy() methods
 	 * or loadModifiedFeedbackPolicy() method (based on whether you are using the
 	 * feedback or feedforward policy).
+	 *
+	 * Make sure to call spinMRT() to check for new messages
 	 *
 	 * @return True if the policy is updated.
 	 */
@@ -362,9 +403,11 @@ protected:
 	 */
 	bool useFeedforwardPolicy_;
 
-	std::string nodeName_;
+	std::string robotName_;
 
 	logic_machine_ptr_t logicMachinePtr_;
+
+	::ros::NodeHandlePtr mrtRosNodeHandlePtr_;
 
 	// Publishers and subscribers
 	::ros::Publisher  dummyPublisher_;
@@ -379,6 +422,7 @@ protected:
 
 	// Multi-threading for subscribers
 	std::mutex subscriberMutex_;
+	::ros::CallbackQueue mrtCallbackQueue_;
 
 	// Multi-threading for publishers
 	bool terminateThread_;

@@ -22,7 +22,7 @@ library versions as provided in the package sources.
 \code{.sh}
 cd catkin_ws/src
 git clone git@bitbucket.org:adrlab/ocs2.git
-catkin build -DCMAKE_BUILD_TYPE=RELWITHDEBINFO -DCMAKE_CXX_FLAGS="-ffast-math"
+catkin build -DCMAKE_BUILD_TYPE=RelWithDebInfo
 
 \endcode
 

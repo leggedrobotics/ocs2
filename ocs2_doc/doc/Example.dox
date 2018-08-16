@@ -351,6 +351,7 @@ ocs2.run(startTime, initState, finalTime, partitioningTimes, initEventTimes);
 
 \subsection ocs2_doc_example_mpc MPC
 
-To see how to use the MPC method please refer to the robotic examples. 
+To see how to use the MPC method please refer to the 
+<a href="../../../ocs2_robotic_examples/doc/html/index.html">Robotic Examples</a>.
 
  */

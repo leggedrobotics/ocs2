@@ -11,6 +11,7 @@
     <tab type="user" url="../../../ocs2_mpc/doc/html/index.html" title="MPC Module" intro=""/>
     <tab type="user" url="../../../ocs2_comm_interfaces/doc/html/index.html" title="ROS Interfaces Module" intro=""/>
     <tab type="user" url="../../../ocs2_frank_wolfe/doc/html/index.html" title="Frank-Wolfe Module" intro=""/>
+    <tab type="user" url="../../../ocs2_robotic_examples/doc/html/index.html" title="Robotic Examples" intro=""/>
     
     <tab type="pages" visible="yes" title="" intro=""/>
     <tab type="modules" visible="no" title="" intro=""/>

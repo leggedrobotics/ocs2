@@ -45,6 +45,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <Eigen/Dense>
 
 #include <ros/ros.h>
+#include <ros/callback_queue.h>
 
 #include <ocs2_core/Dimensions.h>
 #include <ocs2_core/cost/CostDesiredTrajectories.h>
@@ -219,6 +220,17 @@ public:
 	void launchNodes(int argc, char* argv[]);
 
 	/**
+   * spin the MRT callback queue
+   */
+  void spinMRT();
+
+	/**
+	 *  Gets the node handle pointer to the MRT node,
+	 *  Use this to add subscribers to the custom MRT callback queue
+	 */
+	::ros::NodeHandlePtr& nodeHandle();
+
+	/**
 	 * Publishes the current observation on a separate thread
 	 * without blocking the main thread.
 	 *
@@ -233,6 +245,8 @@ public:
 	 * This method also calls one of the loadModifiedFeedforwardPolicy() methods
 	 * or loadModifiedFeedbackPolicy() method (based on whether you are using the
 	 * feedback or feedforward policy).
+	 *
+	 * Make sure to call spinMRT() to check for new messages
 	 *
 	 * @return True if the policy is updated.
 	 */
@@ -393,6 +407,8 @@ protected:
 
 	logic_machine_ptr_t logicMachinePtr_;
 
+	::ros::NodeHandlePtr mrtRosNodeHandlePtr_;
+
 	// Publishers and subscribers
 	::ros::Publisher  dummyPublisher_;
 	::ros::Publisher  mpcObservationPublisher_;
@@ -406,6 +422,7 @@ protected:
 
 	// Multi-threading for subscribers
 	std::mutex subscriberMutex_;
+	::ros::CallbackQueue mrtCallbackQueue_;
 
 	// Multi-threading for publishers
 	bool terminateThread_;

@@ -247,13 +247,13 @@ void MRT_ROS_Quadruped<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::computePlan(
 	int greatestLessTimeStampIndex = BASE::mpcLinInterpolateState_.getGreatestLessTimeStampIndex();
 	BASE::mpcLinInterpolateInput_.interpolate(time, inputRef_, greatestLessTimeStampIndex);
 
+	size_t index = BASE::findActiveSubsystemFnc_(time);
+	BASE::logicMachinePtr_->getLogicRulesPtr()->getMotionPhaseLogics(index, stanceLegs, feetZPlanPtr_);
+
+	// computes swing phase progress
+	computeSwingPhaseProgress(index, stanceLegs, time, swingPhaseProgress_);
+
 	if (ocs2QuadrupedInterfacePtr_->modelSettings().useFeetTrajectoryFiltering_==false) {
-		size_t index = BASE::findActiveSubsystemFnc_(time);
-		stanceLegs = BASE::logicMachinePtr_->getLogicRulesPtr()->getContactFlagsSequence().at(index);
-
-		// computes swing phase progress
-		computeSwingPhaseProgress(index, stanceLegs, time, swingPhaseProgress_);
-
 		// calculates nominal position, velocity, and contact forces of the feet in the origin frame.
 		// This also updates the kinematic model.
 		vector_3d_array_t o_contactForces;
@@ -267,12 +267,6 @@ void MRT_ROS_Quadruped<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::computePlan(
 
 	} else {
 		// filter swing leg trajectory
-		size_t index = BASE::findActiveSubsystemFnc_(time);
-		BASE::logicMachinePtr_->getLogicRulesPtr()->getMotionPhaseLogics(index, stanceLegs, feetZPlanPtr_);
-
-		// computes swing phase progress
-		computeSwingPhaseProgress(index, stanceLegs, time, swingPhaseProgress_);
-
 		for (size_t j=0; j<4; j++) {
 
 			o_feetPositionRef[j] <<

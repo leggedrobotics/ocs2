@@ -126,6 +126,7 @@ protected:
 			const scalar_t& startDelay,
 			const scalar_t& targetReachingDuration,
 			const base_coordinate_t& targetPoseDisplacement,
+			const base_coordinate_t& targetVelocity,
 			cost_desired_trajectories_t& costDesiredTrajectories);
 
 protected:

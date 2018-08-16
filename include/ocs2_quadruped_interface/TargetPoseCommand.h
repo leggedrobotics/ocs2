@@ -20,13 +20,21 @@ namespace switched_model {
 
 /**
  * Target pose
- * targetPoseDisplacement(0): Roll
- * targetPoseDisplacement(1): Pitch
- * targetPoseDisplacement(2): Yaw
+ * targetPoseDisplacementVelocity(0): X
+ * targetPoseDisplacementVelocity(1): Y
+ * targetPoseDisplacementVelocity(2): Z
  *
- * targetPoseDisplacement(3): X
- * targetPoseDisplacement(4): Y
- * targetPoseDisplacement(5): Z
+ * targetPoseDisplacementVelocity(3): Roll
+ * targetPoseDisplacementVelocity(4): Pitch
+ * targetPoseDisplacementVelocity(5): Yaw
+ *
+ * targetPoseDisplacementVelocity(6): v_X
+ * targetPoseDisplacementVelocity(7): v_Y
+ * targetPoseDisplacementVelocity(8): v_Z
+ *
+ * targetPoseDisplacementVelocity(9): \omega_X
+ * targetPoseDisplacementVelocity(10): \omega_Y
+ * targetPoseDisplacementVelocity(11): \omega_Z
  *
  *
  * Desired state:
@@ -41,34 +49,38 @@ namespace switched_model {
  * dState(5): position.y
  * dState(6): position.z
  *
+ * dState(7): angular_velocity.x
+ * dState(8): angular_velocity.y
+ * dState(9): angular_velocity.y
+ *
+ * dState(10): linear_velocity.x
+ * dState(11): linear_velocity.y
+ * dState(12): linear_velocity.z
+ *
  */
 
 template <typename SCALAR_T>
 class TargetPoseCommand
 {
 public:
-	enum DIM {
+	enum DIM
+	{
 		POSE_DIM_ = 6,
 	};
 
-	typedef SCALAR_T 									scalar_t;
-	typedef std::vector<scalar_t> 						scalar_array_t;
-	typedef Eigen::Matrix<scalar_t, POSE_DIM_, 1>		pose_vector_t;
-	typedef Eigen::Matrix<scalar_t, Eigen::Dynamic, 1>	cost_state_vector_t;
+	typedef SCALAR_T scalar_t;
+	typedef std::vector<scalar_t> scalar_array_t;
+	typedef Eigen::Matrix<scalar_t, POSE_DIM_, 1> pose_vector_t;
+	typedef Eigen::Matrix<scalar_t, Eigen::Dynamic, 1> dynamic_vector_t;
 
 	/**
-	 *
-	 * @param goalPoseLimit
+	 * Constructor
 	 */
-	TargetPoseCommand(
-			const scalar_array_t& goalPoseLimit = scalar_array_t{45.0, 45.0, 360.0, 2.0, 1.0, 0.3})
+	TargetPoseCommand() = default;
 
-	: goalPoseLimit_(goalPoseLimit)
-	{
-		if (goalPoseLimit_.size() != POSE_DIM_)
-			throw std::runtime_error("The goal pose limit should be of size 6.");
-	}
-
+	/**
+	 * Destructor
+	 */
 	~TargetPoseCommand() = default;
 
 	/**
@@ -76,10 +88,12 @@ public:
 	 *
 	 * @param [in] desiredState: The cost function's desired state.
 	 * @param [out] targetPoseDisplacement: The target pose displacement.
+	 * @param [out] targetVelocity: The target velocity.
 	 */
 	static void toTargetPoseDisplacement(
-			const cost_state_vector_t& desiredState,
-			pose_vector_t& targetPoseDisplacement) {
+			const dynamic_vector_t& desiredState,
+			pose_vector_t& targetPoseDisplacement,
+			pose_vector_t& targetVelocity) {
 
 		Eigen::Quaternion<scalar_t> qxyz(
 				desiredState(0),
@@ -91,38 +105,40 @@ public:
 		targetPoseDisplacement(3) = desiredState(4);
 		targetPoseDisplacement(4) = desiredState(5);
 		targetPoseDisplacement(5) = desiredState(6);
+
+		targetVelocity(0) = desiredState(7);
+		targetVelocity(1) = desiredState(8);
+		targetVelocity(2) = desiredState(9);
+		targetVelocity(3) = desiredState(10);
+		targetVelocity(4) = desiredState(11);
+		targetVelocity(5) = desiredState(12);
 	}
 
 	/**
 	 * Transforms the target pose displacement to the cost function's desired state.
-	 * Moreover, it clamps the targetPoseDisplacement to its limits.
 	 *
-	 * @param [in] targetPoseDisplacement: The target pose displacement.
+	 * @param [in] targetPoseDisplacementVelocity: The target base pose displacement and base local velocities.
 	 * @param [out] desiredState: The cost function's desired state.
-	 * @return: The clamped targetPoseDisplacement.
 	 */
-	pose_vector_t toCostDesiredState(
-				const pose_vector_t& targetPoseDisplacement,
-				cost_state_vector_t& desiredState) {
+	static void toCostDesiredState(
+				const scalar_array_t& targetPoseDisplacementVelocity,
+				dynamic_vector_t& desiredState) {
 
-		auto deg2rad = [](const scalar_t& deg) { return (deg*M_PI/180); };
+		if (targetPoseDisplacementVelocity.size()<12)
+			throw std::runtime_error("target command should have at least 12 elements.");
 
-		// limits
-		pose_vector_t targetPoseDisplacementLimited;
-		for (size_t i=0; i<POSE_DIM_; i++) {
-			if (std::abs(targetPoseDisplacement(i)) > goalPoseLimit_[i])
-				targetPoseDisplacementLimited(i) = (targetPoseDisplacement(i) > 0) ? goalPoseLimit_[i] : -goalPoseLimit_[i];
-			else
-				targetPoseDisplacementLimited(i) = targetPoseDisplacement(i);
-		}  // end of i loop
+		auto deg2rad = [](const scalar_t& deg) { return (deg*M_PI/180.0); };
 
-		desiredState.resize(POSE_DIM_+1);
+		desiredState.resize(targetPoseDisplacementVelocity.size()+1);
 
 		// Orientation
 		Eigen::Quaternion<scalar_t> qxyz =
-				Eigen::AngleAxis<scalar_t>(deg2rad(targetPoseDisplacementLimited[0]), Eigen::Vector3d::UnitX()) *  // roll
-				Eigen::AngleAxis<scalar_t>(deg2rad(targetPoseDisplacementLimited[1]), Eigen::Vector3d::UnitY()) *  // pitch
-				Eigen::AngleAxis<scalar_t>(deg2rad(targetPoseDisplacementLimited[2]), Eigen::Vector3d::UnitZ());   // yaw
+				Eigen::AngleAxis<scalar_t>(
+						deg2rad(targetPoseDisplacementVelocity[0]), Eigen::Vector3d::UnitX()) *  // roll
+				Eigen::AngleAxis<scalar_t>(
+						deg2rad(targetPoseDisplacementVelocity[1]), Eigen::Vector3d::UnitY()) *  // pitch
+				Eigen::AngleAxis<scalar_t>(
+						deg2rad(targetPoseDisplacementVelocity[2]), Eigen::Vector3d::UnitZ());   // yaw
 
 		desiredState(0) = qxyz.w();
 		desiredState(1) = qxyz.x();
@@ -130,51 +146,23 @@ public:
 		desiredState(3) = qxyz.z();
 
 		// Position
-		desiredState(4) = targetPoseDisplacementLimited[3];
-		desiredState(5) = targetPoseDisplacementLimited[4];
-		desiredState(6) = targetPoseDisplacementLimited[5];
+		desiredState(4) = targetPoseDisplacementVelocity[3];
+		desiredState(5) = targetPoseDisplacementVelocity[4];
+		desiredState(6) = targetPoseDisplacementVelocity[5];
 
-		return targetPoseDisplacementLimited;
+		// Angular velocity
+		desiredState(7) = targetPoseDisplacementVelocity[6];
+		desiredState(8) = targetPoseDisplacementVelocity[7];
+		desiredState(9) = targetPoseDisplacementVelocity[8];
+
+		// Linear velocity
+		desiredState(10) = targetPoseDisplacementVelocity[9];
+		desiredState(11) = targetPoseDisplacementVelocity[10];
+		desiredState(12) = targetPoseDisplacementVelocity[11];
 	}
-
-	/**
-	 * Gets the target pose displacement from command line. The first 3 input are the (x,y,z)
-	 * position and the 2nd three inputs are (roll,pitch,yaw) orientation.
-	 *
-	 * @param [out] targetPoseDisplacement: The target pose displacement.
-	 */
-	void getCommandLineTargetPoseDisplacement(pose_vector_t& targetPoseDisplacement) {
-
-		scalar_array_t commadInput(0);
-
-		std::string line;
-		std::getline(std::cin, line);
-		std::istringstream stream(line);
-		scalar_t in;
-		while (stream >> in)
-			commadInput.push_back(in);
-
-		// if the size is greater than POSE_DIM_
-		const size_t n = commadInput.size();
-		if (n > POSE_DIM_)
-			commadInput.erase(commadInput.begin()+POSE_DIM_, commadInput.end());
-		else
-			for (size_t i=n; i<POSE_DIM_; i++) {
-				commadInput.push_back(0.0);
-			}  // end of i loop
-
-		// reversing the order of the position and orientation.
-		for (size_t j=0; j<3; j++) {
-			targetPoseDisplacement(j) = commadInput[3+j];
-			targetPoseDisplacement(3+j) = commadInput[j];
-		}
-	}
-
 
 private:
-	scalar_array_t goalPoseLimit_;
 
-	scalar_array_t commadInput_;
 };
 
 } // end of namespace switched_model

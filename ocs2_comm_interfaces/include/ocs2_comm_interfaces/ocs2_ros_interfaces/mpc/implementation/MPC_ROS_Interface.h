@@ -35,11 +35,11 @@ namespace ocs2{
 template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
 MPC_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::MPC_ROS_Interface(
 		mpc_t& mpc,
-		const std::string& nodeName /*= "robot_mpc"*/)
+		const std::string& robotName /*= "robot"*/)
 
 	: mpcPtr_(&mpc)
 	, mpcSettings_(mpc.settings())
-	, nodeName_(nodeName)
+	, robotName_(robotName)
 	, desiredTrajectoriesUpdated_(false)
 {
 	// correcting rosMsgTimeWindow
@@ -70,11 +70,11 @@ MPC_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::~MPC_ROS_Interface() {
 template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
 void MPC_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::set(
 		mpc_t& mpc,
-		const std::string& nodeName /*= "robot_mpc"*/) {
+		const std::string& robotName /*= "robot"*/) {
 
 	mpcPtr_ = &mpc;
 	mpcSettings_ = mpc.settings();
-	nodeName_ = nodeName;
+	robotName_ = robotName;
 
 	// correcting rosMsgTimeWindow
 	if (mpcSettings_.recedingHorizon_==false)
@@ -558,32 +558,32 @@ void MPC_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::launchNodes(int arg
 	ROS_INFO_STREAM("MPC node is setting up ...");
 
 	// setup ROS
-	::ros::init(argc, argv, nodeName_+"_mpc", ::ros::init_options::NoSigintHandler);
+	::ros::init(argc, argv, robotName_+"_mpc", ::ros::init_options::NoSigintHandler);
 	signal(SIGINT, MPC_ROS_Interface::sigintHandler);
 	::ros::NodeHandle nodeHandler;
 
 	// Observation subscriber
 	mpcObservationSubscriber_ = nodeHandler.subscribe(
-			nodeName_+"_mpc_observation", 1, &MPC_ROS_Interface::mpcObservationCallback, this);
+			robotName_+"_mpc_observation", 1, &MPC_ROS_Interface::mpcObservationCallback, this);
 
 	// Goal subscriber
 	mpcTargetTrajectoriesSubscriber_ = nodeHandler.subscribe(
-			nodeName_+"_mpc_target", 1, &MPC_ROS_Interface::mpcTargetTrajectoriesCallback, this);
+			robotName_+"_mpc_target", 1, &MPC_ROS_Interface::mpcTargetTrajectoriesCallback, this);
 
 	// SLQ-MPC publisher
 	if (mpcSettings_.useFeedbackPolicy_==true) {
 		mpcFeedbackPolicyPublisher_ = nodeHandler.advertise<ocs2_comm_interfaces::mpc_feedback_policy>(
-				nodeName_+"_mpc_fb_policy", 1, true);
+				robotName_+"_mpc_fb_policy", 1, true);
 	} else {
 		mpcFeedforwardPolicyPublisher_ = nodeHandler.advertise<ocs2_comm_interfaces::mpc_feedforward_policy>(
-				nodeName_+"_mpc_ff_policy", 1, true);
+				robotName_+"_mpc_ff_policy", 1, true);
 	}
 
 	// dummy publisher
 	dummyPublisher_ = nodeHandler.advertise<ocs2_comm_interfaces::dummy>("ping", 1, true);
 
 	// MPC reset service server
-	mpcResetServiceServer_ = nodeHandler.advertiseService(nodeName_+"_mpc_reset",
+	mpcResetServiceServer_ = nodeHandler.advertiseService(robotName_+"_mpc_reset",
 			&MPC_ROS_Interface::resetMpcCallback, this);
 
 	// display

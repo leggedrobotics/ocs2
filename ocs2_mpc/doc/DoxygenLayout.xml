@@ -24,6 +24,7 @@
     <tab type="user" url="../../../ocs2_mpc/doc/html/index.html" title="MPC" intro=""/>
     <tab type="user" url="../../../ocs2_comm_interfaces/doc/html/index.html" title="ROS Interfaces" intro=""/>
     <tab type="user" url="../../../ocs2_frank_wolfe/doc/html/index.html" title="Frank Wolfe" intro=""/>
+    <tab type="user" url="../../../ocs2_robotic_examples/doc/html/index.html" title="Robotic Examples" intro=""/>
   </navindex>
 
   <!-- Layout definition for a class page -->

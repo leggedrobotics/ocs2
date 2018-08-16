@@ -110,12 +110,12 @@ public:
 	/**
 	 * Constructor.
 	 *
-	 * @param [in] mpcPtr: The MPC object to be interfaced.
-	 * @param [in] nodeName: The node's name.
+	 * @param [in] mpc: The MPC object to be interfaced.
+	 * @param [in] robotName: The robot's name.
 	 */
 	MPC_ROS_Interface(
 			mpc_t& mpc,
-			const std::string& nodeName = "robot_mpc");
+			const std::string& robotName = "robot");
 
 	/**
 	 * Destructor.
@@ -126,10 +126,10 @@ public:
 	 * Sets the class as its constructor.
 	 *
 	 * @param [in] mpcPtr: The MPC object to be interfaced.
-	 * @param [in] nodeName: The node's name.
+	 * @param [in] robotName: The robot's name.
 	 */
 	void set(mpc_t& mpc,
-			const std::string& nodeName = "robot_mpc");
+			const std::string& robotName = "robot");
 
 	/**
 	 * Resets the class to its instantiate state.
@@ -291,7 +291,7 @@ protected:
 	mpc_t* mpcPtr_;
 	MPC_Settings mpcSettings_;
 
-	std::string nodeName_;
+	std::string robotName_;
 
 	// Publishers and subscribers
 	::ros::Subscriber mpcObservationSubscriber_;

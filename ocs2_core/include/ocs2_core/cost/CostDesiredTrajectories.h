@@ -64,6 +64,12 @@ public:
 	, desiredInputTrajectory_(desiredInputTrajectory)
 	{}
 
+	CostDesiredTrajectories(const size_t& trajectorySize)
+	: desiredTimeTrajectory_(trajectorySize)
+	, desiredStateTrajectory_(trajectorySize)
+	, desiredInputTrajectory_(trajectorySize)
+	{}
+
 	~CostDesiredTrajectories() = default;
 
 	bool empty() const {

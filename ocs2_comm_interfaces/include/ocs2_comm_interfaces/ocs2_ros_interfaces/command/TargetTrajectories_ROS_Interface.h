@@ -58,17 +58,17 @@ public:
 	typedef SCALAR_T scalar_t;
 
 	typedef CostDesiredTrajectories<scalar_t> cost_desired_trajectories_t;
-	typedef typename cost_desired_trajectories_t::scalar_array_t         scalar_array_t;
-	typedef typename cost_desired_trajectories_t::dynamic_vector_t       dynamic_vector_t;
+	typedef typename cost_desired_trajectories_t::scalar_array_t scalar_array_t;
+	typedef typename cost_desired_trajectories_t::dynamic_vector_t dynamic_vector_t;
 	typedef typename cost_desired_trajectories_t::dynamic_vector_array_t dynamic_vector_array_t;
 
 	/**
 	 * Constructor.
 	 *
-	 * @param [in] nodeName: The node's name.
+	 * @param [in] robotName: The robot's name.
 	 */
 	TargetTrajectories_ROS_Interface(
-			const std::string& nodeName = "robot_mpc");
+			const std::string& robotName = "robot");
 
 	/**
 	 * Destructor.
@@ -103,7 +103,7 @@ public:
 			const cost_desired_trajectories_t& costDesiredTrajectories);
 
 protected:
-	std::string nodeName_;
+	std::string robotName_;
 
 	// Publisher
 	::ros::Publisher mpcTargetTrajectoriesPublisher_;

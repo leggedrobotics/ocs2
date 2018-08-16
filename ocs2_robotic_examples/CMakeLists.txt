@@ -115,3 +115,32 @@ target_link_libraries(quadrotor_dummy_test
   ${Boost_LIBRARIES}
 )
 
+
+
+
+add_executable(cartpole_mpc_node 
+  src/cart_pole/CartPoleInterface.cpp
+  src/cart_pole/MPC_Cartpole_Node.cpp
+)
+add_dependencies(cartpole_mpc_node
+  ${catkin_EXPORTED_TARGETS}
+)
+target_link_libraries(cartpole_mpc_node
+  ${catkin_LIBRARIES}
+  ${Boost_LIBRARIES}
+)
+
+add_executable(cartpole_dummy_test
+  src/cart_pole/CartPoleInterface.cpp
+  src/cart_pole/Dummy_Cartpole_Node.cpp
+)
+add_dependencies(cartpole_dummy_test
+  ${catkin_EXPORTED_TARGETS}
+)
+target_link_libraries(cartpole_dummy_test
+  dl
+  ${catkin_LIBRARIES}
+  ${Boost_LIBRARIES}
+  sfml-system sfml-window sfml-graphics
+)
+

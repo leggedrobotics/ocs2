@@ -1,7 +1,7 @@
 
 mpcTimeHorizon
 {
-    timehorizon        0.8		; 1.2		; 0.8
+    timehorizon        1.0		; 1.2		; 0.8
     numPartitions      5
 }
 

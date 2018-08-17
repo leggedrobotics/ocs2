@@ -1,7 +1,7 @@
 
 mpcTimeHorizon
 {
-    timehorizon        1.0		; 1.2		; 0.8
+    timehorizon        0.8		; 1.2		; 0.8
     numPartitions      5
 }
 
@@ -210,21 +210,21 @@ Q
    ; orientation
    (0,0) 2000.0     ; x
    (1,1) 2000.0     ; y
-   (2,2) 2000.0     ; z
+   (2,2) 0.0        ; z
 
    ; positon
-   (3,3) 1000.0      ; x
-   (4,4) 1000.0      ; y
+   (3,3) 0.0         ; x
+   (4,4) 0.0         ; y
    (5,5) 2000.0      ; z
 
    ; angular velocity
    (6,6) 200.0      ; x
    (7,7) 200.0      ; y
-   (8,8) 200.0      ; z
+   (8,8) 500.0      ; z
 
    ; translational velocity
-   (9,9)   100.0    ; x
-   (10,10) 100.0    ; y
+   (9,9)   500.0    ; x
+   (10,10) 500.0    ; y
    (11,11) 100.0    ; z
 
    ; LF joints

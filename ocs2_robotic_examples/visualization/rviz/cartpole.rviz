@@ -6,6 +6,8 @@ Panels:
       Expanded:
         - /Global Options1
         - /Status1
+        - /Grid1
+        - /Grid1/Offset1
       Splitter Ratio: 0.5
     Tree Height: 870
   - Class: rviz/Selection
@@ -43,16 +45,47 @@ Visualization Manager:
       Offset:
         X: 0
         Y: 0
-        Z: 0
+        Z: -1
       Plane: XY
-      Plane Cell Count: 10
+      Plane Cell Count: 100
       Reference Frame: <Fixed Frame>
       Value: true
+    - Alpha: 1
+      Class: rviz/RobotModel
+      Collision Enabled: false
+      Enabled: true
+      Links:
+        All Links Enabled: true
+        Expand Joint Details: false
+        Expand Link Details: false
+        Expand Tree: false
+        Link Tree Style: Links in Alphabetic Order
+        cart:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        pole:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        slideBar:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+      Name: RobotModel
+      Robot Description: robot_description
+      TF Prefix: ""
+      Update Interval: 0
+      Value: true
+      Visual Enabled: true
   Enabled: true
   Global Options:
-    Background Color: 48; 48; 48
+    Background Color: 255; 255; 255
     Default Light: true
-    Fixed Frame: map
+    Fixed Frame: slideBar
     Frame Rate: 30
   Name: root
   Tools:
@@ -73,7 +106,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 14.0492802
+      Distance: 16.0381012
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.0599999987
         Stereo Focal Distance: 1
@@ -88,10 +121,10 @@ Visualization Manager:
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.00999999978
-      Pitch: 0.290398359
+      Pitch: 0.289797395
       Target Frame: <Fixed Frame>
       Value: Orbit (rviz)
-      Yaw: 0.680398107
+      Yaw: 1.40040314
     Saved: ~
 Window Geometry:
   Displays:
@@ -109,5 +142,5 @@ Window Geometry:
   Views:
     collapsed: false
   Width: 1920
-  X: 1920
+  X: 0
   Y: 24

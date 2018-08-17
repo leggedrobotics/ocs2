@@ -2,8 +2,9 @@ cmake_minimum_required(VERSION 2.8.3)
 project(ocs2_robotic_examples)
 
 find_package(catkin REQUIRED COMPONENTS 
-  cmake_modules 
-  ocs2_core 
+  cmake_modules
+  tf
+  ocs2_core
   ocs2_slq 
   ocs2_ocs2
   ocs2_mpc
@@ -34,8 +35,9 @@ configure_file(include/pathfile.h.in pathfile.h)
 catkin_package(
   INCLUDE_DIRS 
     include
-  CATKIN_DEPENDS 
-    ocs2_core 
+  CATKIN_DEPENDS
+    tf
+    ocs2_core
     ocs2_slq 
     ocs2_ocs2
     ocs2_mpc

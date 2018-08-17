@@ -86,10 +86,8 @@ protected:
   * @param [in] argv: command line inputs' value.
   */
   virtual void launchVisualizerNode(int argc, char* argv[]) override {
-
     ros::init(argc, argv, "cartpole_visualization_node");
     ros::NodeHandle n;
-
     jointPublisher_ = n.advertise<sensor_msgs::JointState>("joint_states", 1);
     ROS_INFO_STREAM("Waiting for visualization subscriber ...");
     while(ros::ok() && jointPublisher_.getNumSubscribers() == 0)

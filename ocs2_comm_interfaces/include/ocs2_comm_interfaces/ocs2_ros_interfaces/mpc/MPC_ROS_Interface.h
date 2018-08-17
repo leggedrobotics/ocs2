@@ -110,7 +110,7 @@ public:
 	/**
 	 * Constructor.
 	 *
-	 * @param [in] mpcPtr: The MPC object to be interfaced.
+	 * @param [in] mpc: The MPC object to be interfaced.
 	 * @param [in] robotName: The robot's name.
 	 */
 	MPC_ROS_Interface(

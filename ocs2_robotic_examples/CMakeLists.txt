@@ -6,6 +6,8 @@ find_package(catkin REQUIRED COMPONENTS
   ocs2_core 
   ocs2_slq 
   ocs2_ocs2
+  ocs2_mpc
+  ocs2_comm_interfaces
 )
 find_package(Boost REQUIRED COMPONENTS 
   system
@@ -36,6 +38,8 @@ catkin_package(
     ocs2_core 
     ocs2_slq 
     ocs2_ocs2
+    ocs2_mpc
+    ocs2_comm_interfaces
   DEPENDS 
     boost 
     eigen3 
@@ -47,6 +51,7 @@ catkin_package(
 
 include_directories(
   include
+  ${CMAKE_CURRENT_BINARY_DIR}
   ${EIGEN3_INCLUDE_DIRS}
   ${Boost_INCLUDE_DIRS}
   ${catkin_INCLUDE_DIRS}
@@ -56,21 +61,21 @@ include_directories(
 ## Doxygen ##
 #############
 
-#find_package(Doxygen)
-#if(DOXYGEN_FOUND)
-#
-#    set(doxyfile_in ${CMAKE_CURRENT_SOURCE_DIR}/doc/ocs2_robotic_examples_doxyfile.in)
-#    set(doxyfile ${CMAKE_CURRENT_SOURCE_DIR}/Doxyfile)
-#
-#    configure_file(${doxyfile_in} ${doxyfile} @ONLY)
-#
-#    add_custom_target(doc
-#            COMMAND ${CMAKE_COMMAND} -E echo_append "Building OCS2 Documentation..."
-#            COMMAND ${DOXYGEN_EXECUTABLE} ${doxyfile}
-#            WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/doc
-#            COMMAND ${CMAKE_COMMAND} -E echo_append "OCS2 Documentation built in ${CMAKE_CURRENT_SOURCE_DIR}/doc"
-#            VERBATIM)
-#endif()
+find_package(Doxygen)
+if(DOXYGEN_FOUND)
+
+    set(doxyfile_in ${CMAKE_CURRENT_SOURCE_DIR}/doc/ocs2_robotic_examples_doxyfile.in)
+    set(doxyfile ${CMAKE_CURRENT_SOURCE_DIR}/Doxyfile)
+
+    configure_file(${doxyfile_in} ${doxyfile} @ONLY)
+
+    add_custom_target(doc
+            COMMAND ${CMAKE_COMMAND} -E echo_append "Building OCS2 Documentation..."
+            COMMAND ${DOXYGEN_EXECUTABLE} ${doxyfile}
+            WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/doc
+            COMMAND ${CMAKE_COMMAND} -E echo_append "OCS2 Documentation built in ${CMAKE_CURRENT_SOURCE_DIR}/doc"
+            VERBATIM)
+endif()
 
 #############
 ## Testing ##
@@ -81,3 +86,72 @@ include_directories(
 ## $ catkin run_tests --no-deps --this
 ## to see the summary of unit test results run
 ## $ catkin_test_results ../../../build/ocs2_ocs2
+
+## Declare a C++ executable
+## With catkin_make all packages are built within a single CMake context
+## The recommended prefix ensures that target names across packages don't collide
+
+add_executable(quadrotor_mpc 
+  src/quadrotor/QuadrotorInterface.cpp
+  src/quadrotor/MPC_Quadrotor_Node.cpp
+)
+add_dependencies(quadrotor_mpc
+  ${catkin_EXPORTED_TARGETS}
+)
+target_link_libraries(quadrotor_mpc
+  ${catkin_LIBRARIES}
+  ${Boost_LIBRARIES}
+)
+
+add_executable(quadrotor_dummy_test
+  src/quadrotor/QuadrotorInterface.cpp
+  src/quadrotor/Dummy_Quadrotor_Node.cpp
+)
+add_dependencies(quadrotor_dummy_test
+  ${catkin_EXPORTED_TARGETS}
+)
+target_link_libraries(quadrotor_dummy_test
+  ${catkin_LIBRARIES}
+  ${Boost_LIBRARIES}
+)
+
+add_executable(quadrotor_target
+  src/quadrotor/QuadrotorTargetPoseCommand.cpp
+)
+add_dependencies(quadrotor_target
+  ${catkin_EXPORTED_TARGETS}
+)
+target_link_libraries(quadrotor_target
+  ${catkin_LIBRARIES}
+  ${Boost_LIBRARIES}
+)
+
+
+
+
+#add_executable(cartpole_mpc 
+#  src/cart_pole/CartPoleInterface.cpp
+#  src/cart_pole/MPC_Cartpole_Node.cpp
+#)
+#add_dependencies(cartpole_mpc
+#  ${catkin_EXPORTED_TARGETS}
+#)
+#target_link_libraries(cartpole_mpc
+#  ${catkin_LIBRARIES}
+#  ${Boost_LIBRARIES}
+#)
+#
+#add_executable(cartpole_dummy_test
+#  src/cart_pole/CartPoleInterface.cpp
+#  src/cart_pole/Dummy_Cartpole_Node.cpp
+#)
+#add_dependencies(cartpole_dummy_test
+#  ${catkin_EXPORTED_TARGETS}
+#)
+#target_link_libraries(cartpole_dummy_test
+#  dl
+#  ${catkin_LIBRARIES}
+#  ${Boost_LIBRARIES}
+#  sfml-system sfml-window sfml-graphics
+#)
+

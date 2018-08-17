@@ -1,0 +1,156 @@
+; cartpole parameters
+CartPoleParameters
+{
+    cartMass      			1.0
+    poleMass 				1.0
+    poleLength 			    1.0
+    poleWidth 				0.05
+    gravity 				9.8
+}
+
+; Time Horizon
+mpcTimeHorizon
+{
+    timehorizon				4.0
+    numPartitions			2
+}
+
+; Mode sequence 
+subsystemsSequence
+{
+  	[0]     0
+}
+; Template mode sequence
+templateSubsystemsSequence
+{
+  	[0]     0
+}
+templateSwitchingTimes
+{
+}
+
+; SLQ settings
+slq
+{
+	maxNumIterationsSLQ          10		; 50                                          
+	minLearningRateGSLQP         1.0	; 0.1                                        	
+	maxLearningRateGSLQP         1.0                                          	
+	minRelCostGSLQP              0.1	; 0.01                                        	
+	stateConstraintPenaltyCoeff  100.0                                         	
+	stateConstraintPenaltyBase   1.1                                          	
+	meritFunctionRho             50.0                                         	
+	constraintStepSize           1.0	; 1.0                                          	
+	displayInfo                  1
+	displayShortSummary			 0                                            	
+	warmStartGSLQP               1    
+	useLQForDerivatives		     0                                        
+                                                                              	
+	AbsTolODE                    1e-12		;1e-5	;1e-6                                                                          
+	RelTolODE                    1e-9		;1e-3	;1e-4
+	minTimeStep					 1e-3                                         	
+	maxNumStepsPerSecond         1e+5		; 50000                                        	
+	simulationIsConstrained      0 
+	noStateConstraints			 1  
+	useMakePSD                   1                       	
+    minAbsConstraint1ISE         5e-3                                        	
+	minRelConstraint1ISE         5e-6
+	checkNumericalStability		 1                                            
+                                                                              	
+	displayGradientDescent       0                                                                             
+	tolGradientDescent           1e-2                                         	
+	acceptableTolGradientDescent 1e-2                                         	
+	maxIterationGradientDescent  5 
+	minLearningRateNLP           0.05
+    maxLearningRateNLP           0.6
+    useAscendingLineSearchNLP    1
+    
+    useMultiThreading    		0
+    nThreads                    4
+    debugPrintMP                0
+    lsStepsizeGreedy            1
+    
+    RiccatiIntegratorType       1        ; ODE45 = 1, ADAMS_BASHFORTH = 2, BULIRSCH_STOER = 3, ADAMS_BASHFORTH_MOULTON = 4
+    adams_integrator_dt         0.01    
+
+    useRiccatiSolver			1  
+    
+    minEventTimeDifference 		0.01                         	
+}                
+
+; MPC settings
+mpc
+{
+	runtimeNumIterations		1
+	initMaxNumIterations		50
+	
+	runtimeLearningRate			1.0
+	initMaxLearningRate         1.0            
+	initMinLearningRate         0.1                                        	
+	
+	debugPrint					1
+	coldStart					0
+	recedingHorizon				1 		: use receding horizon MPC
+
+	useParallelRiccatiSolver	0		; use disjoint riccati solver in MP case and recedingHorizon fashion
+	
+	useFeedbackPolicy			0
+	forwardSimulationTime		28		; [ms] MRT time
+	
+	rosMsgTimeWindow			1e+5	; [ms]
+	adaptiveRosMsgTimeWindow	0
+	
+	simulatedMPCloopTime		0		; [ms] asynchronous MPC constant delay (On hardware should ALWAYS be 0)  
+}                                                                                                                                 	
+                                                                              	
+                                                                              	
+; initial state                                                               	
+initialState                                                               	
+{
+   (0,0) 0.0    ; theta
+   (1,0) 0.0    ; x
+   (2,0) 0.0    ; theta_dot
+   (3,0) 0.0    ; x_dot
+}
+
+; state weight matrix
+Q
+{
+    scaling 1e+1
+
+   (0,0)  0.0	; theta
+   (1,1)  0.0	; x
+   (2,2)  10.0	; theta_dot
+   (3,3)  10.0	; x_dot
+}
+
+
+; control weight matrix
+R
+{
+   scaling 1e+1
+
+   (0,0)  1.0
+}
+
+
+; final state weight matrix
+Q_final
+{
+    scaling 1e+1
+	
+   ; orientation
+   (0,0)  10.0	; theta
+   (1,1)  10.0	; x
+   (2,2)  10.0	; theta_dot
+   (3,3)  10.0	; x_dot
+}
+
+; final goal
+x_final
+{
+   (0,0)  3.14	; theta
+   (1,0)  0.0	; x
+   (2,0)  0.0	; theta_dot
+   (3,0)  0.0	; x_dot
+}
+

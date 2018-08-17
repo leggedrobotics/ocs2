@@ -11,8 +11,7 @@
 #include <iomanip>
 
 #include <ocs2_robotic_examples/command/TargetTrajectories_Keyboard_Interface.h>
-
-#include "ocs2_quadruped_interface/TargetPoseCommand.h"
+#include <ocs2_robotic_examples/command/TargetPoseTransformation.h>
 
 namespace switched_model {
 
@@ -101,14 +100,13 @@ public:
 		// time
 		desiredTime = 0.0;
 		// state
-		TargetPoseCommand<scalar_t>::toCostDesiredState(
+		ocs2::TargetPoseTransformation<scalar_t>::toCostDesiredState(
 				commadLineTargetOrdeCorrected, desiredState);
 		// input
 		desiredInput = dynamic_vector_t::Zero(0);
 	}
 
 private:
-	TargetPoseCommand<SCALAR_T> targetPoseCommand_;
 
 };
 

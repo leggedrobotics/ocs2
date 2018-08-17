@@ -76,7 +76,7 @@ void MPC_ROS_Quadruped<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::adjustTargetTraj
 
 	// targetPoseDisplacement
 	base_coordinate_t targetPoseDisplacement, targetVelocity;
-	TargetPoseCommand<scalar_t>::toTargetPoseDisplacement(costDesiredTrajectories.desiredStateTrajectory()[0],
+	ocs2::TargetPoseTransformation<scalar_t>::toTargetPoseDisplacement(costDesiredTrajectories.desiredStateTrajectory()[0],
 			targetPoseDisplacement, targetVelocity);
 
 	// x direction
@@ -99,7 +99,6 @@ void MPC_ROS_Quadruped<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::adjustTargetTraj
 			targetReachingDuration, targetPoseDisplacement, targetVelocity,
 			costDesiredTrajectories);
 }
-
 
 /******************************************************************************************************/
 /******************************************************************************************************/

@@ -60,18 +60,28 @@ void MRT_ROS_Quadruped<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::modifyBufferFeed
 	touchdownInputStockBuffer_.clear();
 	touchdownInputStockBuffer_.reserve(NE+1);
 
-	for (size_t i=0; i<mpcTimeTrajectoryBuffer.size(); i++) {
+	// for the first point
+	touchdownTimeStockBuffer_.push_back(mpcTimeTrajectoryBuffer.front());
+	touchdownStateStockBuffer_.push_back(mpcStateTrajectoryBuffer.front());
+	touchdownInputStockBuffer_.push_back(mpcInputTrajectoryBuffer.front());
+	// making the reference and the measured EE velocity the same
+	touchdownInputStockBuffer_.front().template segment<JOINT_COORD_SIZE>(12) =
+			planInitObservationBuffer.input().template segment<JOINT_COORD_SIZE>(12);
 
-		// save touchdown information
-		if (i==0 || (mpcTimeTrajectoryBuffer[i]-mpcTimeTrajectoryBuffer[i-1])<ocs2::OCS2NumericTraits<scalar_t>::week_epsilon()) {
-			touchdownTimeStockBuffer_.push_back(mpcTimeTrajectoryBuffer[i]);
-			touchdownStateStockBuffer_.push_back(mpcStateTrajectoryBuffer[i]);
-			touchdownInputStockBuffer_.push_back(mpcInputTrajectoryBuffer[i]);
-			// making the reference and the measured EE velocity the same
-			if (i==0)
-				touchdownInputStockBuffer_[0].template segment<JOINT_COORD_SIZE>(12) = planInitObservationBuffer.input().template segment<JOINT_COORD_SIZE>(12);
+	// save touch-down information
+	for (size_t i=0; i<mpcTimeTrajectoryBuffer.size(); i++)
+		if (i==0 || (mpcTimeTrajectoryBuffer[i]-mpcTimeTrajectoryBuffer[i-1]) < ocs2::OCS2NumericTraits<scalar_t>::week_epsilon()) {
+			// if it is an event not end of partition
+			for (const scalar_t& ti : eventTimesBuffer)
+				if (std::abs(mpcTimeTrajectoryBuffer[i]-ti) < 1e-3) {
+					touchdownTimeStockBuffer_.push_back(mpcTimeTrajectoryBuffer[i]);
+					touchdownStateStockBuffer_.push_back(mpcStateTrajectoryBuffer[i]);
+					touchdownInputStockBuffer_.push_back(mpcInputTrajectoryBuffer[i]);
+					break;
+				}
 		}
-	} // end of i loop
+
+	// for the last point
 	touchdownTimeStockBuffer_.push_back(mpcTimeTrajectoryBuffer.back());
 	touchdownStateStockBuffer_.push_back(mpcStateTrajectoryBuffer.back());
 	touchdownInputStockBuffer_.push_back(mpcInputTrajectoryBuffer.back());
@@ -165,12 +175,20 @@ void MRT_ROS_Quadruped<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::updateFeetTrajec
 			feetYPlanPtrStock_[i][j] = std::make_shared<cubic_spline_t>();
 
 			feetXPlanPtrStock_[i][j]->set(
-					touchdownTimeStock[startIndex] /*t0*/, o_feetPositionStock[startIndex][j](0) /*p0*/, o_feetVelocityStock[startIndex][j](0) /*v0*/,
-					touchdownTimeStock[startIndex+1] /*t1*/, o_feetPositionStock[startIndex+1][j](0) /*p1*/, o_feetVelocityStock[startIndex+1][j](0) /*v1*/);
+					touchdownTimeStock[startIndex] /*t0*/,
+					o_feetPositionStock[startIndex][j](0) /*p0*/,
+					o_feetVelocityStock[startIndex][j](0) /*v0*/,
+					touchdownTimeStock[startIndex+1] /*t1*/,
+					o_feetPositionStock[startIndex+1][j](0) /*p1*/,
+					o_feetVelocityStock[startIndex+1][j](0) /*v1*/);
 
 			feetYPlanPtrStock_[i][j]->set(
-					touchdownTimeStock[startIndex] /*t0*/, o_feetPositionStock[startIndex][j](1) /*p0*/, o_feetVelocityStock[startIndex][j](1) /*v0*/,
-					touchdownTimeStock[startIndex+1] /*t1*/, o_feetPositionStock[startIndex+1][j](1) /*p1*/, o_feetVelocityStock[startIndex+1][j](1) /*v1*/);
+					touchdownTimeStock[startIndex] /*t0*/,
+					o_feetPositionStock[startIndex][j](1) /*p0*/,
+					o_feetVelocityStock[startIndex][j](1) /*v0*/,
+					touchdownTimeStock[startIndex+1] /*t1*/,
+					o_feetPositionStock[startIndex+1][j](1) /*p1*/,
+					o_feetVelocityStock[startIndex+1][j](1) /*v1*/);
 		}
 	}
 }

@@ -127,31 +127,29 @@ target_link_libraries(quadrotor_target
 )
 
 
+add_executable(cartpole_mpc
+  src/cart_pole/CartPoleInterface.cpp
+  src/cart_pole/MPC_Cartpole_Node.cpp
+)
+add_dependencies(cartpole_mpc
+  ${catkin_EXPORTED_TARGETS}
+)
+target_link_libraries(cartpole_mpc
+  ${catkin_LIBRARIES}
+  ${Boost_LIBRARIES}
+  dl
+)
 
-
-#add_executable(cartpole_mpc 
-#  src/cart_pole/CartPoleInterface.cpp
-#  src/cart_pole/MPC_Cartpole_Node.cpp
-#)
-#add_dependencies(cartpole_mpc
-#  ${catkin_EXPORTED_TARGETS}
-#)
-#target_link_libraries(cartpole_mpc
-#  ${catkin_LIBRARIES}
-#  ${Boost_LIBRARIES}
-#)
-#
-#add_executable(cartpole_dummy_test
-#  src/cart_pole/CartPoleInterface.cpp
-#  src/cart_pole/Dummy_Cartpole_Node.cpp
-#)
-#add_dependencies(cartpole_dummy_test
-#  ${catkin_EXPORTED_TARGETS}
-#)
-#target_link_libraries(cartpole_dummy_test
-#  dl
-#  ${catkin_LIBRARIES}
-#  ${Boost_LIBRARIES}
-#  sfml-system sfml-window sfml-graphics
-#)
+add_executable(cartpole_dummy_test
+  src/cart_pole/CartPoleInterface.cpp
+  src/cart_pole/Dummy_Cartpole_Node.cpp
+)
+add_dependencies(cartpole_dummy_test
+  ${catkin_EXPORTED_TARGETS}
+)
+target_link_libraries(cartpole_dummy_test
+  ${catkin_LIBRARIES}
+  ${Boost_LIBRARIES}
+  dl
+)
 

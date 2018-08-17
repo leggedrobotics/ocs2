@@ -31,8 +31,10 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define MRT_ROS_DUMMY_CARTPOLE_OCS2_H_
 
 #include <ocs2_comm_interfaces/test/MRT_ROS_Dummy_Loop.h>
-#include <ocs2_robotic_examples/examples/cart_pole/CartpoleVisualizer.hpp>
 #include <ocs2_robotic_examples/examples/cart_pole/definitions.h>
+
+#include <ros/ros.h>
+#include <sensor_msgs/JointState.h>
 
 namespace ocs2 {
 namespace cartpole {
@@ -56,10 +58,8 @@ public:
 			const mrt_ptr_t& mrtPtr,
 			const scalar_t& mrtDesiredFrequency,
 			const scalar_t& mpcDesiredFrequency)
-	: BASE(mrtPtr, mrtDesiredFrequency, mpcDesiredFrequency),
-	  visualizer_()
+	: BASE(mrtPtr, mrtDesiredFrequency, mpcDesiredFrequency)
 	{
-		visualizer_.start();
 	}
 
 	/**
@@ -76,19 +76,45 @@ public:
 		BASE::init(initObservation);
 	}
 
+
 protected:
+
+  /**
+  * Launches the visualization node
+  *
+  * @param [in] argc: command line number of inputs.
+  * @param [in] argv: command line inputs' value.
+  */
+  virtual void launchVisualizerNode(int argc, char* argv[]) override {
+
+    ros::init(argc, argv, "cartpole_visualization_node");
+    ros::NodeHandle n;
+
+    jointPublisher_ = n.advertise<sensor_msgs::JointState>("joint_states", 1);
+    ROS_INFO_STREAM("Waiting for visualization subscriber ...");
+    while(ros::ok() && jointPublisher_.getNumSubscribers() == 0)
+      ros::Rate(100).sleep();
+    ROS_INFO_STREAM("Visualization subscriber is connected.");
+  }
+
 	/**
 	 * Visualizes the current observation.
 	 *
 	 * @param [in] observation: The current observation.
 	 */
 	virtual void publishVisualizer(const system_observation_t& observation) override {
-		visualizer_.drawWorld(observation.state()(1), observation.state()(0), observation.input()(0));
+    sensor_msgs::JointState joint_state;
+    joint_state.header.stamp = ros::Time::now();
+    joint_state.name.resize(2);
+    joint_state.position.resize(2);
+    joint_state.name[0] ="slider_to_cart";
+    joint_state.name[1] ="cart_to_pole";
+    joint_state.position[0] = observation.state()(1);
+    joint_state.position[1] = observation.state()(0);
+    jointPublisher_.publish(joint_state);
 	}
 
-private:
-	CartpoleVisualizer visualizer_;
-
+  ros::Publisher jointPublisher_;
 };
 
 } // namespace cartpole

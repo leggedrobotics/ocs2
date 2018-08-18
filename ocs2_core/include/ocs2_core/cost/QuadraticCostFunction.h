@@ -199,7 +199,7 @@ public:
      */
 	virtual void getIntermediateCostDerivativeInput(input_vector_t& dLdu) override {
 
-		dLdu = R_ * uIntermediateDeviation_ + P_ * xIntermediateDeviation_;
+		dLdu = R_ * uDeviation_ + P_ * xDeviation_;
 	}
 
     /**

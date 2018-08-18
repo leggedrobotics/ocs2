@@ -68,7 +68,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_slq/riccati_equations/SLQ_RiccatiEquationsNormalized.h>
 
 
-//#define BENCHMARK
+#define BENCHMARK
 #define USE_SEPARATE_RICCATI_SOLVER
 
 namespace ocs2{

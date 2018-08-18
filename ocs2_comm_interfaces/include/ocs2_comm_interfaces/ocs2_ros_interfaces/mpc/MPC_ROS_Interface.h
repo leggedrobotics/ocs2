@@ -93,7 +93,7 @@ public:
 	typedef typename mpc_t::input_vector_array2_t		input_vector_array2_t;
 	typedef typename mpc_t::controller_t				controller_t;
 	typedef typename mpc_t::controller_array_t			controller_array_t;
-	typedef typename mpc_t::input_state_matrix_t 	   		input_state_matrix_t;
+	typedef typename mpc_t::input_state_matrix_t 	   	input_state_matrix_t;
 	typedef typename mpc_t::input_state_matrix_array_t 	input_state_matrix_array_t;
 
 	typedef CostDesiredTrajectories<scalar_t> cost_desired_trajectories_t;

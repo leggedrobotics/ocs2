@@ -134,7 +134,8 @@ template <int DOMAIN_DIM, int RANGE_DIM, typename SCALAR_T>
 void CppAdCodeGenInterface<DOMAIN_DIM, RANGE_DIM, SCALAR_T>::createModels(
 		const std::string& modelName,
 		const std::string& libraryFolder /* = "" */,
-		const bool verbose /* = true */) {
+		const bool verbose /* = true */,
+		bool cgJIT /*= true*/) {
 
 	if (BASE::domain_dim_<0)
 		throw std::runtime_error("Use the overloaded method which takes the domain and range dimensions "
@@ -144,7 +145,7 @@ void CppAdCodeGenInterface<DOMAIN_DIM, RANGE_DIM, SCALAR_T>::createModels(
 		throw std::runtime_error("Use the overloaded method which takes the domain and range dimensions "
 				"since the range dimension is not defined by the template.");
 
-	createModels(DOMAIN_DIM, RANGE_DIM, modelName, libraryFolder, verbose);
+	createModels(DOMAIN_DIM, RANGE_DIM, modelName, libraryFolder, verbose, cgJIT);
 }
 
 /******************************************************************************************************/
@@ -156,7 +157,8 @@ void CppAdCodeGenInterface<DOMAIN_DIM, RANGE_DIM, SCALAR_T>::createModels(
 		const int& rangeDim,
 		const std::string& modelName,
 		const std::string& libraryFolder /* = "" */,
-		const bool verbose /* = true */) {
+		bool verbose /* = true */,
+		bool cgJIT /*= true*/) {
 
 	BASE::domain_dim_ = domainDim;
 	BASE::range_dim_  = rangeDim;
@@ -234,46 +236,42 @@ void CppAdCodeGenInterface<DOMAIN_DIM, RANGE_DIM, SCALAR_T>::createModels(
     	cgen.setRelatedDependents(relatedDependent_);
     }
 
-//    domain_vector_t xtemp = domain_vector_t::Zero();
-//    cgen.setTypicalIndependentValues(std::vector<SCALAR_T>(xtemp.data(), xtemp.data()+BASE::domain_dim_));
-
-//    cgen.setCreateReverseOne(true);
-//    cgen.setMultiThreading(true);
-//    if (cgen.isJacobianMultiThreadingEnabled())
-//    	std::cout << ">>>>>>>>>>>>>>>>>>> isJacobianMultiThreadingEnabled \n";
-//    if (cgen.isHessianMultiThreadingEnabled())
-//        	std::cout << ">>>>>>>>>>>>>>>>>>> isHessianMultiThreadingEnabled \n";
-
     //
     CppAD::cg::ModelLibraryCSourceGen<SCALAR_T> libcgen(cgen);
 
-    // compile source code
-    std::string libraryName;
-    if (libraryFolder.empty()==false)
-    	libraryName = libraryFolder + "/" + modelName + "_lib";
-    else
-    	libraryName = modelName + "_lib";
-
-    CppAD::cg::DynamicModelLibraryProcessor<SCALAR_T> p(libcgen, libraryName);
-    if (verbose) {
-    	std::cerr << "Compiled Shared Library: " << p.getLibraryName() +
-    			CppAD::cg::system::SystemInfo<>::DYNAMIC_LIB_EXTENSION << std::endl;
-    }
-
     // save to files (not really required)
     CppAD::cg::SaveFilesModelLibraryProcessor<SCALAR_T> p2(libcgen);
-    if (libraryFolder.empty()==false)
+    if (libraryFolder.empty()==false) {
     	p2.saveSourcesTo(libraryFolder + "/" + modelName + "_sources");
-    else
+    } else {
     	p2.saveSourcesTo(modelName + "_sources");
+    }
 
-    // compile and load dynamic liberary
-    CppAD::cg::GccCompiler<SCALAR_T> compiler_;
+    if (cgJIT==true) {
+    	// compile source code
+    	std::string libraryName;
+    	if (libraryFolder.empty()==false)
+    		libraryName = libraryFolder + "/" + modelName + "_lib";
+    	else
+    		libraryName = modelName + "_lib";
 
-    dynamicLib_.reset(p.createDynamicLibrary(compiler_));
+    	CppAD::cg::DynamicModelLibraryProcessor<SCALAR_T> p(libcgen, libraryName);
+    	if (verbose) {
+    		std::cerr << "Compiled Shared Library: " << p.getLibraryName() +
+    				CppAD::cg::system::SystemInfo<>::DYNAMIC_LIB_EXTENSION << std::endl;
+    	}
 
-    // get model
-    model_.reset(dynamicLib_->model(modelName));
+    	// compile and load dynamic library
+    	CppAD::cg::GccCompiler<SCALAR_T> compiler_;
+
+    	dynamicLib_.reset(p.createDynamicLibrary(compiler_));
+
+    	// get model
+    	model_.reset(dynamicLib_->model(modelName));
+
+    } else {
+    	// TODO: .......................
+    }
 }
 
 /******************************************************************************************************/
@@ -283,7 +281,7 @@ template <int DOMAIN_DIM, int RANGE_DIM, typename SCALAR_T>
 bool CppAdCodeGenInterface<DOMAIN_DIM, RANGE_DIM, SCALAR_T>::loadModels(
 		const std::string& modelName,
 		const std::string& libraryFolder /* = "" */,
-		const bool verbose /* = true */) {
+		bool verbose /* = true */) {
 
 	// load dynamic library
 	std::string libraryName;

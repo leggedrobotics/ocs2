@@ -28,10 +28,10 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
 #include "cppad_cg/testCppADCG_Simple_linux.h"
-#include "cppad_cg/testCppADCG_NN_linux.h"
 #include "cppad_cg/testCppADCG_cost.h"
 #include "cppad_cg/testCppADCG_dynamics.h"
 #include "cppad_cg/testCppADCG_constraint.h"
+#include "cppad_cg/testCppADCG_NN_JIT.h"
 
 int main(int argc, char** argv)
 {

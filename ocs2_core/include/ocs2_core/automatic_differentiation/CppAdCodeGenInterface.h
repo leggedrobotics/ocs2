@@ -84,19 +84,21 @@ public:
 	void createModels(
 			const std::string& modelName,
 			const std::string& libraryFolder = "",
-			const bool verbose = true) override;
+			const bool verbose = true,
+			bool cgJIT = true) override;
 
 	void createModels(
 			const int& domainDim,
 			const int& rangeDim,
 			const std::string& modelName,
 			const std::string& libraryFolder = "",
-			const bool verbose = true) override;
+			bool verbose = true,
+			bool cgJIT = true) override;
 
 	bool loadModels(
 			const std::string& modelName,
 			const std::string& libraryFolder = "",
-			const bool verbose = true) override;
+			bool verbose = true) override;
 
 	void getSparsityPattern(
 			range_domain_matrix_t& sparsityPattern) const override;

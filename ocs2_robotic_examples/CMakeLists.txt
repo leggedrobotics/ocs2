@@ -93,6 +93,10 @@ endif()
 ## With catkin_make all packages are built within a single CMake context
 ## The recommended prefix ensures that target names across packages don't collide
 
+###############
+## Quadrotor ##
+###############
+
 add_executable(quadrotor_mpc 
   src/quadrotor/QuadrotorInterface.cpp
   src/quadrotor/MPC_Quadrotor_Node.cpp
@@ -128,6 +132,9 @@ target_link_libraries(quadrotor_target
   ${Boost_LIBRARIES}
 )
 
+###############
+## Cart Pole ##
+###############
 
 add_executable(cartpole_mpc
   src/cart_pole/CartPoleInterface.cpp

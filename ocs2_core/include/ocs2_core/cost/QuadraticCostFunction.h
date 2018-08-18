@@ -63,26 +63,26 @@ public:
 	 * - \f$ \Phi = 0.5(x-x_{final})' Q_{final} (x-x_{final}) \f$.
 	 * @param [in] Q: \f$ Q \f$
 	 * @param [in] R: \f$ R \f$
-	 * @param [in] xNominal: \f$ x_{nominal}\f$
-	 * @param [in] uNominal: \f$ u_{nominal}\f$
-	 * @param [in] xFinal: \f$ x_{final}\f$
+	 * @param [in] xNominalIntermediate: \f$ x_{nominal}\f$
+	 * @param [in] uNominalIntermediate: \f$ u_{nominal}\f$
+	 * @param [in] xNominalFinal: \f$ x_{final}\f$
 	 * @param [in] QFinal: \f$ Q_{final}\f$
 	 */
 	QuadraticCostFunction(
 			const state_matrix_t& Q,
 			const input_matrix_t& R,
-			const state_vector_t& xNominal,
-			const input_vector_t& uNominal,
+			const state_vector_t& xNominalIntermediate,
+			const input_vector_t& uNominalIntermediate,
 			const state_matrix_t& QFinal,
-			const state_vector_t& xFinal,
+			const state_vector_t& xNominalFinal,
 			const input_state_matrix_t& P = input_state_matrix_t::Zero())
 	: Q_(Q)
 	, R_(R)
 	, P_(P)
 	, QFinal_(QFinal)
-	, xNominal_(xNominal)
-	, uNominal_(uNominal)
-	, xFinal_(xFinal)
+	, xNominalIntermediate_(xNominalIntermediate)
+	, uNominalIntermediate_(uNominalIntermediate)
+	, xNominalFinal_(xNominalFinal)
 	{}
 
 	/**
@@ -118,20 +118,46 @@ public:
 	}
 
 	/**
-	 * Sets the current time, state, and control input
+	 * Sets the current time, state, and control input.
 	 *
-	 * @param [in] t: Current time
-	 * @param [in] x: Current state vector
-	 * @param [in] u: Current input vector
+	 * @param [in] t: Current time.
+	 * @param [in] x: Current state vector.
+	 * @param [in] u: Current input vector.
 	 */
 	virtual void setCurrentStateAndControl(
 			const scalar_t& t,
 			const state_vector_t& x,
 			const input_vector_t& u) override {
 
+		setCurrentStateAndControl(t, x, u,
+				xNominalIntermediate_, uNominalIntermediate_, xNominalFinal_);
+	}
+
+	/**
+	 * Sets the current time, state, control input, and desired state and input.
+	 *
+	 * @param [in] t: Current time.
+	 * @param [in] x: Current state vector.
+	 * @param [in] u: Current input vector.
+	 * @param [in] xNominalIntermediate: Intermediate desired state vector.
+	 * @param [in] uNominalIntermediate: Intermediate desired input vector.
+	 * @param [in] xNominalFinal: Final desired state vector.
+	 */
+	virtual void setCurrentStateAndControl(
+			const scalar_t& t,
+			const state_vector_t& x,
+			const input_vector_t& u,
+			const state_vector_t& xNominalIntermediate,
+			const input_vector_t& uNominalIntermediate,
+			const state_vector_t& xNominalFinal) {
+
 		BASE::setCurrentStateAndControl(t, x, u);
-		xDeviation_ = x - xNominal_;
-		uDeviation_ = u - uNominal_;
+
+		xNominalIntermediate_ = xNominalIntermediate;
+		uNominalIntermediate_ = uNominalIntermediate;
+		xNominalFinal_ = xNominalFinal;
+		xIntermediateDeviation_ = x - xNominalIntermediate;
+		uIntermediateDeviation_ = u - uNominalIntermediate;
 	}
 
     /**
@@ -141,8 +167,9 @@ public:
      */
 	virtual void getIntermediateCost(scalar_t& L) override {
 
-		L = 0.5 * xDeviation_.dot(Q_ * xDeviation_) + 0.5 * uDeviation_.dot(R_ * uDeviation_) +
-				uDeviation_.dot(P_ * xDeviation_);
+		L = 0.5 * xIntermediateDeviation_.dot(Q_ * xIntermediateDeviation_) +
+				0.5 * uIntermediateDeviation_.dot(R_ * uIntermediateDeviation_) +
+				uIntermediateDeviation_.dot(P_ * xIntermediateDeviation_);
 	}
 
     /**
@@ -152,7 +179,7 @@ public:
      */
 	virtual void getIntermediateCostDerivativeState(state_vector_t& dLdx) override {
 
-		dLdx =  Q_ * xDeviation_ + P_.transpose() * uDeviation_;
+		dLdx =  Q_ * xIntermediateDeviation_ + P_.transpose() * uIntermediateDeviation_;
 	}
 
     /**
@@ -172,7 +199,7 @@ public:
      */
 	virtual void getIntermediateCostDerivativeInput(input_vector_t& dLdu) override {
 
-		dLdu = R_ * uDeviation_ + P_ * xDeviation_;
+		dLdu = R_ * uIntermediateDeviation_ + P_ * xIntermediateDeviation_;
 	}
 
     /**
@@ -202,8 +229,8 @@ public:
      */
 	virtual void getTerminalCost(scalar_t& cost) override {
 
-		state_vector_t xDeviationFinal = BASE::x_ - xFinal_;
-		cost = 0.5 * xDeviationFinal.dot(QFinal_ * xDeviationFinal);
+		state_vector_t xFinalDeviation = BASE::x_ - xNominalFinal_;
+		cost = 0.5 * xFinalDeviation.dot(QFinal_ * xFinalDeviation);
 	}
 
     /**
@@ -213,8 +240,8 @@ public:
      */
 	virtual void getTerminalCostDerivativeState(state_vector_t& dPhidx) override {
 
-		state_vector_t xDeviationFinal = BASE::x_ - xFinal_;
-		dPhidx = QFinal_ * xDeviationFinal;
+		state_vector_t xFinalDeviation = BASE::x_ - xNominalFinal_;
+		dPhidx = QFinal_ * xFinalDeviation;
 	}
 
     /**
@@ -233,13 +260,13 @@ protected:
 	input_state_matrix_t P_;
 	state_matrix_t QFinal_;
 
-	state_vector_t xNominal_;
-	input_vector_t uNominal_;
+	state_vector_t xNominalIntermediate_;
+	input_vector_t uNominalIntermediate_;
 
-	state_vector_t xDeviation_;
-	input_vector_t uDeviation_;
+	state_vector_t xIntermediateDeviation_;
+	input_vector_t uIntermediateDeviation_;
 
-	state_vector_t xFinal_;
+	state_vector_t xNominalFinal_;
 };
 
 } // namespace ocs2

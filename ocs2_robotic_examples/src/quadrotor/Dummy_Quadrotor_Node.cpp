@@ -46,12 +46,11 @@ int main(int argc, char **argv)
 	// quadrotorInterface
 	QuadrotorInterface quadrotorInterface(taskFileFolderName);
 
-	typedef ocs2::MRT_ROS_Interface<quadrotor::STATE_DIM_, quadrotor::INPUT_DIM_> mrt_t;
+	typedef MRT_ROS_Interface<quadrotor::STATE_DIM_, quadrotor::INPUT_DIM_> mrt_t;
 	typedef typename mrt_t::Ptr	mrt_ptr_t;
 	typedef typename mrt_t::scalar_t scalar_t;
 	typedef typename mrt_t::system_observation_t system_observation_t;
-	typedef ocs2::NullLogicRules<quadrotor::STATE_DIM_, quadrotor::INPUT_DIM_> logic_rules_t;
-	typedef ocs2::Dimensions<4, 1> dim_t;
+	typedef NullLogicRules<quadrotor::STATE_DIM_, quadrotor::INPUT_DIM_> logic_rules_t;
 	mrt_ptr_t mrtPtr(new mrt_t(
 			logic_rules_t(), !quadrotorInterface.mpcSettings().useFeedbackPolicy_, "quadrotor"));
 

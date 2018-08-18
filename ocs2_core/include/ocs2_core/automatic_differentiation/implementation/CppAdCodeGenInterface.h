@@ -242,9 +242,9 @@ void CppAdCodeGenInterface<DOMAIN_DIM, RANGE_DIM, SCALAR_T>::createModels(
     // save to files (not really required)
     CppAD::cg::SaveFilesModelLibraryProcessor<SCALAR_T> p2(libcgen);
     if (libraryFolder.empty()==false) {
-    	p2.saveSourcesTo(libraryFolder + "/" + modelName + "_sources");
+    	p2.saveSourcesTo(libraryFolder + "/" + modelName + "_sources/cppad_generated");
     } else {
-    	p2.saveSourcesTo(modelName + "_sources");
+    	p2.saveSourcesTo(modelName + "_sources/cppad_generated");
     }
 
     if (cgJIT==true) {

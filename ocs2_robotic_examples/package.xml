@@ -41,11 +41,13 @@
   <!--   <test_depend>gtest</test_depend> -->
   <buildtool_depend>catkin</buildtool_depend>
   <build_depend>cmake_modules</build_depend>
+  <build_depend>tf </build_depend>
   <build_depend>ocs2_core</build_depend>
   <build_depend>ocs2_slq</build_depend>
   <build_depend>ocs2_ocs2</build_depend>
   <build_depend>ocs2_mpc</build_depend>
   <build_depend>ocs2_comm_interfaces</build_depend>
+  <run_depend>tf</run_depend>
   <run_depend>ocs2_core</run_depend>
   <run_depend>ocs2_slq</run_depend>
   <run_depend>ocs2_ocs2</run_depend>

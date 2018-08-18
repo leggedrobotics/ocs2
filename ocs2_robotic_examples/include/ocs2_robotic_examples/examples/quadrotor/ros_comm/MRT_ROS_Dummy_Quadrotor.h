@@ -30,8 +30,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifndef MRT_ROS_DUMMY_QUADROTOR_OCS2_H_
 #define MRT_ROS_DUMMY_QUADROTOR_OCS2_H_
 
-#include <visualization_msgs/Marker.h>
-#include <tf/tf.h>
+#include <tf/transform_broadcaster.h>
 
 #include <ocs2_comm_interfaces/test/MRT_ROS_Dummy_Loop.h>
 #include <ocs2_robotic_examples/examples/quadrotor/definitions.h>
@@ -84,15 +83,6 @@ protected:
 	 * @param [in] argv: command line inputs' value.
 	 */
 	virtual void launchVisualizerNode(int argc, char* argv[]) override {
-
-		ros::init(argc, argv, "quadrotor_visualization_node");
-
-		ros::NodeHandle n;
-		visualizationPublisher_ = n.advertise<visualization_msgs::Marker>("quadrotor_vis", 10);
-		ROS_INFO_STREAM("Waiting for visualization subscriber ...");
-		while(ros::ok() && visualizationPublisher_.getNumSubscribers() == 0)
-			ros::Rate(100).sleep();
-		ROS_INFO_STREAM("Visualization subscriber is connected.");
 	}
 
 	/**
@@ -101,52 +91,16 @@ protected:
 	 * @param [in] observation: The current observation.
 	 */
 	virtual void publishVisualizer(const system_observation_t& observation) override {
-
-		visualization_msgs::Marker marker;
-		marker.header.seq = 0;
-		marker.header.frame_id = "/world";
-		marker.lifetime = ros::Duration(1);
-		marker.id = 0;
-		marker.action = visualization_msgs::Marker::ADD;
-		marker.color.a = 1.0;
-
-		tf::Quaternion q = tf::createQuaternionFromRPY(observation.state()(3),
-				observation.state()(4),
-				observation.state()(5));
-		marker.pose.orientation.x = q.x();
-		marker.pose.orientation.y = q.y();
-		marker.pose.orientation.z = q.z();
-		marker.pose.orientation.w = q.w();
-
-		geometry_msgs::Point position;
-		position.x = observation.state()(0);
-		position.y = observation.state()(1);
-		position.z = observation.state()(2);
-		marker.pose.position = position;
-
-		marker.ns = "bar1";
-		marker.type = visualization_msgs::Marker::CUBE;
-		marker.scale.x = 0.2;
-		marker.scale.y = 0.02;
-		marker.scale.z = 0.02;
-		marker.color.r = 1;
-		marker.color.g = 0;
-		marker.color.b = 0;
-		visualizationPublisher_.publish(marker);
-
-		marker.ns = "bar2";
-		marker.type = visualization_msgs::Marker::CUBE;
-		marker.scale.x = 0.02;
-		marker.scale.y = 0.2;
-		marker.scale.z = 0.02;
-		marker.color.r = 1;
-		marker.color.g = 0;
-		marker.color.b = 0;
-		visualizationPublisher_.publish(marker);
+    static tf::TransformBroadcaster transformBroadcaster;
+    tf::Transform transform;
+    transform.setOrigin(tf::Vector3(observation.state()(0), observation.state()(1), observation.state()(2)));
+    tf::Quaternion q = tf::createQuaternionFromRPY(observation.state()(3),
+                                                   observation.state()(4),
+                                                   observation.state()(5));
+    transform.setRotation(q);
+    transformBroadcaster.sendTransform(tf::StampedTransform(transform, ros::Time::now(), "world", "base"));
 	}
 
-private:
-	ros::Publisher visualizationPublisher_;
 };
 
 } // namespace quadrotor

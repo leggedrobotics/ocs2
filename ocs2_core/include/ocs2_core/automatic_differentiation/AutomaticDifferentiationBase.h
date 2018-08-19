@@ -79,17 +79,19 @@ public:
 			const int& rangeDim,
 			const std::string& modelName,
 			const std::string& libraryFolder = "",
-			const bool verbose = true) = 0;
+			bool verbose = true,
+			bool cgJIT = true) = 0;
 
 	virtual void createModels(
 			const std::string& modelName,
 			const std::string& libraryFolder = "",
-			const bool verbose = true) = 0;
+			bool verbose = true,
+			bool cgJIT = true) = 0;
 
 	virtual bool loadModels(
 			const std::string& modelName,
 			const std::string& libraryFolder = "",
-			const bool verbose = true) = 0;
+			bool verbose = true) = 0;
 
 	virtual void getSparsityPattern(
 			range_domain_matrix_t& sparsityPattern) const = 0;

@@ -1,5 +1,0 @@
-<launch>
-  <node name="rviz" pkg="rviz" type="rviz" respawn="false" args="-d $(find ocs2_robotic_examples)/launch/quadrotor/rviz/quadrotor.rviz " />
-</launch>
-	
-

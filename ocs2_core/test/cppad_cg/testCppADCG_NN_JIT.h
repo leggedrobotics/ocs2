@@ -27,8 +27,8 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#ifndef TESTCPPADCG_NN_LINUX_OCS2_H_
-#define TESTCPPADCG_NN_LINUX_OCS2_H_
+#ifndef TESTCPPADCG_NN_JIT_OCS2_H_
+#define TESTCPPADCG_NN_JIT_OCS2_H_
 
 #include <iostream>
 #include <boost/filesystem.hpp>
@@ -109,8 +109,7 @@ bool checkHessian(const Eigen::Matrix<double, DOMAIN_DIM_, 1>& x,
 }
 
 
-TEST(testCppADCG_NN_linux, cppadcg_linux)
-//int main(int argc, char** argv)
+TEST(testCppADCG_NN_JIT, cppadcg_JIT)
 {
 
     typedef ocs2::CppAdCodeGenInterface<DOMAIN_DIM_, RANGE_DIM_> cppadcg_interface_t;
@@ -212,4 +211,4 @@ TEST(testCppADCG_NN_linux, cppadcg_linux)
 
 } // end of namespace cppadcg_nn_test
 
-#endif /* TESTCPPADCG_NN_LINUX_OCS2_H_ */
+#endif /* TESTCPPADCG_NN_JIT_OCS2_H_ */

@@ -166,6 +166,7 @@ add_dependencies(ballbot_dummy_test
 target_link_libraries(ballbot_dummy_test
   ${catkin_LIBRARIES}
   ${Boost_LIBRARIES}
+  dl
 )
 
 #add_executable(ballbot_target

@@ -31,6 +31,12 @@ public:
 		command_dim_ = 12
 	};
 
+	enum class COMMAND_MODE
+	{
+			POSITION,
+			VELOCITY
+	};
+
 	typedef ocs2::TargetTrajectories_Keyboard_Interface<SCALAR_T> BASE;
 	typedef typename BASE::scalar_t scalar_t;
 	typedef typename BASE::scalar_array_t scalar_array_t;
@@ -63,8 +69,9 @@ public:
 	TargetTrajectories_Keyboard_Quadruped(
 				const std::string& robotName = "robot",
 				const scalar_array_t& goalPoseLimit =
-						scalar_array_t{2.0, 1.0, 0.3, 45.0, 45.0, 360.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0})
-	: BASE(robotName, command_dim_, goalPoseLimit)
+						scalar_array_t{2.0, 1.0, 0.3, 45.0, 45.0, 360.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0},
+				const COMMAND_MODE command_mode = COMMAND_MODE::POSITION)
+	: BASE(robotName, command_dim_, goalPoseLimit), command_mode_(command_mode)
 	{}
 
 	/**
@@ -86,15 +93,30 @@ public:
 			dynamic_vector_t& desiredState,
 			dynamic_vector_t& desiredInput) final {
 
-		// reversing the order of the position and orientation.
 		scalar_array_t commadLineTargetOrdeCorrected(command_dim_);
-		for (size_t j=0; j<3; j++) {
-			// pose
-			commadLineTargetOrdeCorrected[j] = commadLineTarget[3+j];
-			commadLineTargetOrdeCorrected[3+j] = commadLineTarget[j];
-			// velocities
-			commadLineTargetOrdeCorrected[6+j] = commadLineTarget[9+j];
-			commadLineTargetOrdeCorrected[9+j] = commadLineTarget[6+j];
+		if (command_mode_ == COMMAND_MODE::POSITION) {
+			// reversing the order of the position and orientation.
+			for (size_t j = 0; j < 3; j++) {
+				// pose
+				commadLineTargetOrdeCorrected[j] = commadLineTarget[3 + j];
+				commadLineTargetOrdeCorrected[3 + j] = commadLineTarget[j];
+				// velocities
+				commadLineTargetOrdeCorrected[6 + j] = commadLineTarget[9 + j];
+				commadLineTargetOrdeCorrected[9 + j] = commadLineTarget[6 + j];
+			}
+		} else if (command_mode_ == COMMAND_MODE::VELOCITY) {
+			// reversing the order of the position and orientation.
+			// velocity before position and orientation
+			for (size_t j = 0; j < 3; j++) {
+				// velocities
+				commadLineTargetOrdeCorrected[6 + j] = commadLineTarget[3 + j];
+				commadLineTargetOrdeCorrected[9 + j] = commadLineTarget[j];
+				// pose
+				commadLineTargetOrdeCorrected[j] = commadLineTarget[9 + j];
+				commadLineTargetOrdeCorrected[3 + j] = commadLineTarget[6 + j];
+			}
+		} else {
+			std::runtime_error("Unkown command mode for target");
 		}
 
 		// time
@@ -107,7 +129,7 @@ public:
 	}
 
 private:
-
+		COMMAND_MODE command_mode_;
 };
 
 } // end of namespace switched_model

@@ -207,40 +207,40 @@ struct cost_parameters
 /******************************************************************************/
 /******************************************************************************/
 /******************************************************************************/
-//TEST(testCppADCG_cost, quadratic_cost_test)
-//{
-//	enum
-//	{
-//		state_dim_ = cost_parameters::state_dim_,
-//		input_dim_ = cost_parameters::input_dim_
-//	};
-//
-//	typedef ocs2::CostFunctionBase<state_dim_, input_dim_> 			base_cost_t;
-//	typedef ocs2::QuadraticCostFunction<state_dim_, input_dim_> 	quadratic_cost_t;
-//	typedef ocs2::QuadraticCostFunctionAD<state_dim_, input_dim_> 	ad_quadratic_cost_t;
-//
-//	cost_parameters costParam;
-//
-//    /***************************************************************************
-//     *               path to save the generated dynamic-library
-//     **************************************************************************/
-//    boost::filesystem::path filePath(__FILE__);
-//    std::string libraryFolder = filePath.parent_path().generic_string() + "/testCppADCG_generated";
-//
-//	quadratic_cost_t quadraticCost(
-//			costParam.Q, costParam.R, costParam.xNominal, costParam.uNominal,
-//			costParam.QFinal, costParam.xFinal, costParam.P);
-//
-//	ad_quadratic_cost_t ad_quadraticCost(
-//			costParam.Q, costParam.R, costParam.xNominal, costParam.uNominal,
-//			costParam.QFinal, costParam.xFinal, costParam.P);
-//	ad_quadraticCost.createModels("testCppADCG_cost", libraryFolder);
-//
-//	bool success;
-//	checkCostFunction(100, &quadraticCost, &ad_quadraticCost, success);
-//
-//	ASSERT_TRUE(success);
-//}
+TEST(testCppADCG_cost, quadratic_cost_test)
+{
+	enum
+	{
+		state_dim_ = cost_parameters::state_dim_,
+		input_dim_ = cost_parameters::input_dim_
+	};
+
+	typedef ocs2::CostFunctionBase<state_dim_, input_dim_> 			base_cost_t;
+	typedef ocs2::QuadraticCostFunction<state_dim_, input_dim_> 	quadratic_cost_t;
+	typedef ocs2::QuadraticCostFunctionAD<state_dim_, input_dim_> 	ad_quadratic_cost_t;
+
+	cost_parameters costParam;
+
+    /***************************************************************************
+     *               path to save the generated dynamic-library
+     **************************************************************************/
+    boost::filesystem::path filePath(__FILE__);
+    std::string libraryFolder = filePath.parent_path().generic_string() + "/testCppADCG_generated";
+
+	quadratic_cost_t quadraticCost(
+			costParam.Q, costParam.R, costParam.xNominal, costParam.uNominal,
+			costParam.QFinal, costParam.xFinal, costParam.P);
+
+	ad_quadratic_cost_t ad_quadraticCost(
+			costParam.Q, costParam.R, costParam.xNominal, costParam.uNominal,
+			costParam.QFinal, costParam.xFinal, costParam.P);
+	ad_quadraticCost.createModels("testCppADCG_cost", libraryFolder);
+
+	bool success;
+	checkCostFunction(100, &quadraticCost, &ad_quadraticCost, success);
+
+	ASSERT_TRUE(success);
+}
 
 /******************************************************************************/
 /******************************************************************************/

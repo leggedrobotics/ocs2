@@ -48,7 +48,8 @@ CostFunctionBaseAD<Derived, STATE_DIM, INPUT_DIM, logic_rules_template_t>::CostF
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <class Derived, size_t STATE_DIM, size_t INPUT_DIM, class logic_rules_template_t>
-CostFunctionBaseAD<Derived, STATE_DIM, INPUT_DIM, logic_rules_template_t>::CostFunctionBaseAD(const CostFunctionBaseAD& rhs)
+CostFunctionBaseAD<Derived, STATE_DIM, INPUT_DIM, logic_rules_template_t>::CostFunctionBaseAD(
+		const CostFunctionBaseAD& rhs)
 
 	: BASE(rhs)
 	, dynamicLibraryIsCompiled_(rhs.dynamicLibraryIsCompiled_)

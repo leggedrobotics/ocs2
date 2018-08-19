@@ -17,23 +17,19 @@ SwitchedModelCostBase<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::Sw
 		const state_matrix_t& Q,
 		const input_matrix_t& R,
 		const state_matrix_t& QFinal,
-		const state_vector_t& xFinal,
+		const state_vector_t& xNominalFinal,
 		const scalar_t& copWeightMax /*= 0.0*/,
-		const state_matrix_t& QIntermediate /*= state_matrix_t::Zero()*/,
-		const state_vector_t& xNominalIntermediate /*= state_vector_t::Zero()*/,
+		const state_matrix_t& QIntermediateGoal /*= state_matrix_t::Zero()*/,
+		const state_vector_t& xIntermediateGoal /*= state_vector_t::Zero()*/,
 		const scalar_t& sigma /*= 1.0*/,
 		const scalar_t& tp /*= 0.0*/)
 
-	: Base()
+	: BASE(Q, R, state_vector_t::Zero(), input_vector_t::Zero(), QFinal, xNominalFinal)
 	, kinematicModelPtr_(kinematicModel.clone())
 	, comModelPtr_(comModel.clone())
-	, Q_desired_(Q)
-	, R_desired_(R)
-	, QFinal_desired_(QFinal)
-	, xFinal_(xFinal)
 	, copWeightMax_(copWeightMax)
-	, QIntermediate_(QIntermediate)
-	, xNominalIntermediate_(xNominalIntermediate)
+	, QIntermediateGoal_(QIntermediateGoal)
+	, xIntermediateGoal_(xIntermediateGoal)
 	, sigma_(sigma)
 	, sigmaSquared_(sigma*sigma)
 	, normalization_(1.0 / (sigma_ * std::sqrt(2.0*M_PI)) )
@@ -50,7 +46,7 @@ SwitchedModelCostBase<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::Sw
 	for (size_t i=0; i<numMotionPhases; i++) {
 
 		contact_flag_t stanceLeg = modeNumber2StanceLeg(i);
-		R_Bank_[stanceLeg] = correctedInputCost(stanceLeg, R_desired_);
+		R_Bank_[stanceLeg] = correctedInputCost(stanceLeg, R);
 	} // end of i loop
 }
 
@@ -61,17 +57,13 @@ template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM, class LOG
 SwitchedModelCostBase<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::SwitchedModelCostBase(
 		const SwitchedModelCostBase& rhs)
 
-	: Base(rhs)
+	: BASE(rhs)
 	, kinematicModelPtr_(rhs.kinematicModelPtr_->clone())
 	, comModelPtr_(rhs.comModelPtr_->clone())
-	, Q_desired_(rhs.Q_desired_)
-	, R_desired_(rhs.R_desired_)
 	, R_Bank_(rhs.R_Bank_)
-	, QFinal_desired_(rhs.QFinal_desired_)
-	, xFinal_(rhs.xFinal_)
 	, copWeightMax_(rhs.copWeightMax_)
-	, QIntermediate_(rhs.QIntermediate_)
-	, xNominalIntermediate_(rhs.xNominalIntermediate_)
+	, QIntermediateGoal_(rhs.QIntermediateGoal_)
+	, xIntermediateGoal_(rhs.xIntermediateGoal_)
 	, sigma_(rhs.sigma_)
 	, sigmaSquared_(rhs.sigmaSquared_)
 	, normalization_(rhs.normalization_)
@@ -103,7 +95,7 @@ void SwitchedModelCostBase<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM, LOGIC_RULES_T
 		const size_t& partitionIndex,
 		const char* algorithmName/*=NULL*/) {
 
-	Base::initializeModel(logicRulesMachine, partitionIndex, algorithmName);
+	BASE::initializeModel(logicRulesMachine, partitionIndex, algorithmName);
 
 	findActiveSubsystemFnc_ = std::move( logicRulesMachine.getHandleToFindActiveEventCounter(partitionIndex) );
 
@@ -143,31 +135,23 @@ void SwitchedModelCostBase<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM, LOGIC_RULES_T
 		const state_vector_t& x,
 		const input_vector_t& u) {
 
-	Base::setCurrentStateAndControl(t, x, u);
-
+	// active subsystem
 	size_t index = findActiveSubsystemFnc_(t);
 	logicRulesPtr_->getContactFlags(index, stanceLegs_);
 
-	// TODO: fix me. make it consistent
-	QFinal_.setZero();
-//	const scalar_t tSpan = timeFinal_-timeStart_;
-//	const scalar_t tElapsedRatio = (t - timeStart_)/tSpan;
-//	Q_ = (1.0-tElapsedRatio)*Q_desired_ + tElapsedRatio*QFinal_desired_;
-	Q_ = Q_desired_ + QFinal_desired_ / 1.0;
-
 	// R matrix
-	R_ = R_Bank_[stanceLegs_];
+	BASE::R_ = R_Bank_[stanceLegs_];
 
 	dynamic_vector_t xNominal;
-	Base::xNominalFunc_.interpolate(t, xNominal);
-
-	xDeviation_ = x - xNominal;
+	BASE::xNominalFunc_.interpolate(t, xNominal);
 	dynamic_vector_t uNominal;
-	Base::uNominalFunc_.interpolate(t, uNominal);
-	uDeviation_ = u - uNominal;
+	BASE::uNominalFunc_.interpolate(t, uNominal);
 
-	xDeviationIntermediate_ = x - xNominalIntermediate_;
+	// set base class
+	BASE::setCurrentStateAndControl(t, x, u, xNominal, uNominal, xNominal);
 
+	// intermediate goal
+	xIntermediateDeviationGoal_ = x - xIntermediateGoal_;
 	dtSquared_ = (t-tp_) * (t-tp_);
 
 	/* CoP constraint */
@@ -187,7 +171,6 @@ void SwitchedModelCostBase<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM, LOGIC_RULES_T
 		hessLambda_copCost_.setZero();
 		devLambdaJoints_copCost_.setZero();
 	}
-
 }
 
 /******************************************************************************************************/
@@ -197,13 +180,12 @@ template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM, class LOG
 void SwitchedModelCostBase<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::getIntermediateCost(
 		scalar_t& L)  {
 
-	scalar_t costQ = 0.5 * xDeviation_.transpose() * Q_ * xDeviation_;
+	BASE::getIntermediateCost(L);
 
 	scalar_t costQintermediate = 0.5 * normalization_ * std::exp(-0.5 * dtSquared_ / sigmaSquared_) *
-			xDeviationIntermediate_.transpose() * QIntermediate_ * xDeviationIntermediate_;
-	scalar_t costR = 0.5 * uDeviation_.transpose() * R_ * uDeviation_;
+			xIntermediateDeviationGoal_.dot(QIntermediateGoal_*xIntermediateDeviationGoal_);
 
-	L = costQ + costQintermediate + costR + copWeight_*copCost_;
+	L += costQintermediate+ copWeight_*copCost_;
 }
 
 /******************************************************************************************************/
@@ -213,9 +195,11 @@ template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM, class LOG
 void SwitchedModelCostBase<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::getIntermediateCostDerivativeState(
 		state_vector_t& dLdx)  {
 
-	state_vector_t costQ = Q_ * xDeviation_;
-	state_vector_t costQintermediate = QIntermediate_ * xDeviationIntermediate_ * normalization_ * std::exp(-0.5 * dtSquared_ / sigmaSquared_);
-	dLdx = costQ + costQintermediate;
+	BASE::getIntermediateCostDerivativeState(dLdx);
+
+	state_vector_t costQintermediate = normalization_ * std::exp(-0.5 * dtSquared_ / sigmaSquared_) *
+			QIntermediateGoal_ * xIntermediateDeviationGoal_;
+	dLdx += costQintermediate;
 
 	dLdx.template segment<12>(12) += copWeight_*devJoints_copCost_;
 }
@@ -227,7 +211,10 @@ template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM, class LOG
 void SwitchedModelCostBase<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::getIntermediateCostSecondDerivativeState(
 		state_matrix_t& dLdxx)  {
 
-	dLdxx = Q_ + QIntermediate_ * normalization_ * std::exp(-0.5 * dtSquared_ / sigmaSquared_);
+	BASE::getIntermediateCostSecondDerivativeState(dLdxx);
+
+	dLdxx += normalization_ * std::exp(-0.5 * dtSquared_ / sigmaSquared_) * QIntermediateGoal_;
+
 	dLdxx.template block<12,12>(12,12) += copWeight_*hessJoints_copCost_;
 }
 
@@ -238,7 +225,8 @@ template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM, class LOG
 void SwitchedModelCostBase<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::getIntermediateCostDerivativeInput(
 		input_vector_t& dLdu)  {
 
-	dLdu = R_ * uDeviation_;
+	BASE::getIntermediateCostDerivativeInput(dLdu);
+
 	dLdu.template head<12>() += copWeight_*devLambda_copCost_;
 }
 
@@ -249,7 +237,8 @@ template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM, class LOG
 void SwitchedModelCostBase<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::getIntermediateCostSecondDerivativeInput(
 		input_matrix_t& dLduu)  {
 
-	dLduu = R_;
+	BASE::getIntermediateCostSecondDerivativeInput(dLduu);
+
 	dLduu.template topLeftCorner<12,12>() += copWeight_*hessLambda_copCost_;
 }
 
@@ -260,7 +249,8 @@ template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM, class LOG
 void SwitchedModelCostBase<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::getIntermediateCostDerivativeInputState(
 		input_state_matrix_t& dLdux)  {
 
-	dLdux.setZero();
+	BASE::getIntermediateCostDerivativeInputState(dLdux);
+
 	dLdux.template block<12,12>(0,12) += copWeight_*devLambdaJoints_copCost_;
 }
 
@@ -268,10 +258,10 @@ void SwitchedModelCostBase<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM, LOGIC_RULES_T
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void SwitchedModelCostBase<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::getTerminalCost(scalar_t& Phi) {
+void SwitchedModelCostBase<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::getTerminalCost(
+		scalar_t& Phi) {
 
-	state_vector_t x_deviation_final = Base::x_ - xFinal_;
-	Phi = 0.5 * x_deviation_final.transpose() * QFinal_ * x_deviation_final;
+	BASE::getTerminalCost(Phi);
 }
 
 /******************************************************************************************************/
@@ -281,8 +271,7 @@ template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM, class LOG
 void SwitchedModelCostBase<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::getTerminalCostDerivativeState(
 		state_vector_t& dPhidx) {
 
-	state_vector_t x_deviation_final = Base::x_ - xFinal_;
-	dPhidx =  QFinal_ * x_deviation_final;
+	BASE::getTerminalCostDerivativeState(dPhidx);
 }
 
 /******************************************************************************************************/
@@ -292,7 +281,7 @@ template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM, class LOG
 void SwitchedModelCostBase<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::getTerminalCostSecondDerivativeState(
 		state_matrix_t& dPhidxx)  {
 
-	dPhidxx = QFinal_;
+	BASE::getTerminalCostSecondDerivativeState(dPhidxx);
 }
 
 /******************************************************************************************************/

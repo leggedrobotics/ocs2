@@ -16,7 +16,7 @@
 #include <vector>
 #include <map>
 
-#include <ocs2_core/cost/CostFunctionBase.h>
+#include <ocs2_core/cost/QuadraticCostFunction.h>
 
 #include "ocs2_switched_model_interface/core/ComModelBase.h"
 #include "ocs2_switched_model_interface/core/CopEstimator.h"
@@ -31,12 +31,12 @@ template <size_t JOINT_COORD_SIZE,
 		size_t STATE_DIM=12+JOINT_COORD_SIZE,
 		size_t INPUT_DIM=12+JOINT_COORD_SIZE,
 		class LOGIC_RULES_T=SwitchedModelPlannerLogicRules<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM, double>>
-class SwitchedModelCostBase : public ocs2::CostFunctionBase<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>
+class SwitchedModelCostBase : public ocs2::QuadraticCostFunction<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>
 {
 public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-	enum
+	enum : size_t
 	{
 		STATE_DIM_ = STATE_DIM,
 		INPUT_DIM_ = INPUT_DIM,
@@ -46,7 +46,7 @@ public:
 	typedef LOGIC_RULES_T logic_rules_t;
 	typedef ocs2::LogicRulesMachine<STATE_DIM, INPUT_DIM, logic_rules_t> logic_rules_machine_t;
 
-	typedef ocs2::CostFunctionBase<STATE_DIM, INPUT_DIM, logic_rules_t> Base;
+	typedef ocs2::QuadraticCostFunction<STATE_DIM, INPUT_DIM, logic_rules_t> BASE;
 
 	typedef ComModelBase<JOINT_COORD_SIZE> com_model_t;
 	typedef KinematicsModelBase<JOINT_COORD_SIZE> kinematic_model_t;
@@ -56,19 +56,18 @@ public:
 	typedef typename SwitchedModel<JOINT_COORD_SIZE>::base_coordinate_t  base_coordinate_t;
 	typedef typename SwitchedModel<JOINT_COORD_SIZE>::joint_coordinate_t joint_coordinate_t;
 
-	typedef typename Base::scalar_t       		scalar_t;
-	typedef typename Base::scalar_array_t 		scalar_array_t;
-	typedef typename Base::state_vector_t 		state_vector_t;
-	typedef typename Base::state_vector_array_t state_vector_array_t;
-	typedef typename Base::state_matrix_t 		state_matrix_t;
-	typedef typename Base::input_vector_t  		input_vector_t;
-	typedef typename Base::input_vector_array_t input_vector_array_t;
-	typedef typename Base::input_matrix_t 	    input_matrix_t;
-	typedef typename Base::input_state_matrix_t input_state_matrix_t;
-
-	typedef typename Base::cost_desired_trajectories_t 	cost_desired_trajectories_t;
-	typedef typename Base::dynamic_vector_t 			dynamic_vector_t;
-	typedef typename Base::dynamic_vector_array_t 		dynamic_vector_array_t;
+	typedef typename BASE::scalar_t       		scalar_t;
+	typedef typename BASE::scalar_array_t 		scalar_array_t;
+	typedef typename BASE::state_vector_t 		state_vector_t;
+	typedef typename BASE::state_vector_array_t state_vector_array_t;
+	typedef typename BASE::state_matrix_t 		state_matrix_t;
+	typedef typename BASE::input_vector_t  		input_vector_t;
+	typedef typename BASE::input_vector_array_t input_vector_array_t;
+	typedef typename BASE::input_matrix_t 	    input_matrix_t;
+	typedef typename BASE::input_state_matrix_t input_state_matrix_t;
+	typedef typename BASE::dynamic_vector_t       dynamic_vector_t;
+	typedef typename BASE::dynamic_vector_array_t dynamic_vector_array_t;
+	typedef typename BASE::cost_desired_trajectories_t cost_desired_trajectories_t;
 
 	/**
 	 * Constructor
@@ -79,10 +78,10 @@ public:
 			const state_matrix_t& Q,
 			const input_matrix_t& R,
 			const state_matrix_t& QFinal,
-			const state_vector_t& xFinal,
+			const state_vector_t& xNominalFinal,
 			const scalar_t& copWeightMax = 0.0,
-			const state_matrix_t& QIntermediate = state_matrix_t::Zero(),
-			const state_vector_t& xNominalIntermediate = state_vector_t::Zero(),
+			const state_matrix_t& QIntermediateGoal = state_matrix_t::Zero(),
+			const state_vector_t& xIntermediateGoal = state_vector_t::Zero(),
 			const scalar_t& sigma = 1.0,
 			const scalar_t& tp = 0.0);
 
@@ -251,24 +250,16 @@ private:
 
 	contact_flag_t stanceLegs_;
 
-	state_matrix_t Q_;
-	state_matrix_t Q_desired_;
-	input_matrix_t R_;
-	input_matrix_t R_desired_;
 	std::map<contact_flag_t, input_matrix_t, std::less<contact_flag_t>,
 	  Eigen::aligned_allocator<std::pair<const contact_flag_t, input_matrix_t>> > R_Bank_;
-
-	state_matrix_t QFinal_;
-	state_matrix_t QFinal_desired_;
-	state_vector_t xFinal_;
 
 	scalar_t copWeightMax_;
 	scalar_t copWeight_;
 	scalar_t copCost_;
 
-	state_matrix_t QIntermediate_;
-	state_vector_t xNominalIntermediate_;
-	state_vector_t xDeviationIntermediate_;
+	state_matrix_t QIntermediateGoal_;
+	state_vector_t xIntermediateGoal_;
+	state_vector_t xIntermediateDeviationGoal_;
 
 	const scalar_t sigma_;
 	const scalar_t sigmaSquared_;
@@ -276,8 +267,8 @@ private:
 	const scalar_t tp_;
 	scalar_t dtSquared_;
 
-	state_vector_t xDeviation_;
-	input_vector_t uDeviation_;
+	state_vector_t xIntermediateDeviation_;
+	input_vector_t uIntermediateDeviation_;
 
 	typename cop_estimator_t::Ptr copEstimatorPtr_;
 

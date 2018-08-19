@@ -36,24 +36,29 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 namespace ocs2{
 
-template <int DOMAIN_DIM, int RANGE_DIM, typename SCALAR_T>
+template <int DOMAIN_DIM, int RANGE_DIM, typename SCALAR_T, int VARIABLE_DIM=DOMAIN_DIM>
 class AutomaticDifferentiationBase
 {
 public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-	typedef Eigen::Matrix<SCALAR_T, DOMAIN_DIM, 1>			domain_vector_t;
-	typedef Eigen::Matrix<SCALAR_T, DOMAIN_DIM, DOMAIN_DIM> domain_matrix_t;
-	typedef Eigen::Matrix<SCALAR_T, RANGE_DIM, 1>			range_vector_t;
-	typedef Eigen::Matrix<SCALAR_T, RANGE_DIM, RANGE_DIM> 	range_matrix_t;
-	typedef Eigen::Matrix<SCALAR_T, RANGE_DIM, DOMAIN_DIM>	range_domain_matrix_t;
-	typedef Eigen::Matrix<SCALAR_T, DOMAIN_DIM, RANGE_DIM>	domain_range_matrix_t;
+	typedef Eigen::Matrix<SCALAR_T, DOMAIN_DIM, 1>              domain_vector_t;
+	typedef Eigen::Matrix<SCALAR_T, DOMAIN_DIM, DOMAIN_DIM>     domain_matrix_t;
+	typedef Eigen::Matrix<SCALAR_T, RANGE_DIM, 1>               range_vector_t;
+	typedef Eigen::Matrix<SCALAR_T, RANGE_DIM, RANGE_DIM>       range_matrix_t;
+	typedef Eigen::Matrix<SCALAR_T, VARIABLE_DIM, 1>            variable_vector_t;
+	typedef Eigen::Matrix<SCALAR_T, VARIABLE_DIM, VARIABLE_DIM> variable_matrix_t;
+	typedef Eigen::Matrix<SCALAR_T, RANGE_DIM, DOMAIN_DIM>      range_domain_matrix_t;
+	typedef Eigen::Matrix<SCALAR_T, DOMAIN_DIM, RANGE_DIM>      domain_range_matrix_t;
 
 	AutomaticDifferentiationBase(
-			const int& domainDim = DOMAIN_DIM,
-			const int& rangeDim  = RANGE_DIM)
+			int domainDim = DOMAIN_DIM,
+			int rangeDim = RANGE_DIM,
+			int variableDim = VARIABLE_DIM)
+
 	: domain_dim_(domainDim)
 	, range_dim_(rangeDim)
+	, variable_dim_(variableDim)
 	{}
 
 	virtual ~AutomaticDifferentiationBase() = default;
@@ -106,7 +111,7 @@ public:
 
 	virtual bool getHessian(
 			const domain_vector_t& x,
-			domain_matrix_t& hessian, size_t outputIndex=0) = 0;
+			variable_matrix_t& hessian, size_t outputIndex=0) = 0;
 
 
 protected:
@@ -134,19 +139,22 @@ protected:
 		rowsHessian.clear();
 		colsHessian.clear();
 
-		for (size_t i=0; i<domain_dim_; i++)
+		for (size_t i=0; i<domain_dim_; i++) {
 			for (size_t j=i; j<domain_dim_; j++)
 				if (sparsityPatternSum(i)>0 && sparsityPatternSum(j)>0) {
 					rowsHessian.push_back(i);
 					colsHessian.push_back(j);
 				}
+		}
+
 	}
 
-	/*
+	/*************
 	 * Variables
-	 */
+	 *************/
 	int domain_dim_;
 	int range_dim_;
+	int variable_dim_;
 
 };
 

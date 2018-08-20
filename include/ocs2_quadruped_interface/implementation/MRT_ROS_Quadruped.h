@@ -254,8 +254,6 @@ void MRT_ROS_Quadruped<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::computePlan(
 		base_coordinate_t& o_comAccelerationRef,
 		contact_flag_t& stanceLegs)  {
 
-	const bool useFeetTrajectoryFiltering_ = true;
-
 	if (time > BASE::mpcTimeTrajectory_.back())
 		ROS_WARN_STREAM("The requested time is greater than the received plan: "
 				+ std::to_string(time) + ">" + std::to_string(BASE::mpcTimeTrajectory_.back()));
@@ -277,8 +275,18 @@ void MRT_ROS_Quadruped<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::computePlan(
 		vector_3d_array_t o_contactForces;
 		computeFeetState(stateRef_, inputRef_, o_feetPositionRef, o_feetVelocityRef, o_contactForces);
 
+		// One dt ahead
+		const scalar_t dt = 1.0/400.0;
+		state_vector_t stateRef_ahead_;
+		input_vector_t inputRef_ahead_;
+		BASE::mpcLinInterpolateState_.interpolate(time+dt, stateRef_ahead_);
+		BASE::mpcLinInterpolateInput_.interpolate(time+dt, inputRef_ahead_, greatestLessTimeStampIndex);
+		vector_3d_array_t o_feetPositionRef_ahead, o_feetVelocityRef_ahead;
+		vector_3d_array_t o_contactForces_ahead;
+		computeFeetState(stateRef_ahead_, inputRef_ahead_, o_feetPositionRef_ahead, o_feetVelocityRef_ahead, o_contactForces_ahead);
+
 		for (size_t j=0; j<4; j++) {
-			o_feetAccelerationRef[j] = (o_feetVelocityRef[j]-prev_o_feetVelocityRef_[j]) / (time - prev_time_);
+			o_feetAccelerationRef[j] = (o_feetVelocityRef_ahead[j]-o_feetVelocityRef[j]) / (dt);
 		}
 		prev_time_ = time;
 		prev_o_feetVelocityRef_ = o_feetVelocityRef;

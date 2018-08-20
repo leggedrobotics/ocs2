@@ -44,15 +44,13 @@ namespace quadrotor {
  * @tparam LOGIC_RULES_T: Logic Rules type (default NullLogicRules).
  */
 
-class MRT_ROS_Quadrotor : public MRT_ROS_Interface<quadrotor::STATE_DIM_, quadrotor::INPUT_DIM_, NullLogicRules< quadrotor::STATE_DIM_, quadrotor::INPUT_DIM_>>
+class MRT_ROS_Quadrotor : public MRT_ROS_Interface<quadrotor::STATE_DIM_, quadrotor::INPUT_DIM_>
 {
 public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-	typedef NullLogicRules<quadrotor::STATE_DIM_, quadrotor::INPUT_DIM_> logic_rules_t;
-	typedef MRT_ROS_Interface<quadrotor::STATE_DIM_, quadrotor::INPUT_DIM_, logic_rules_t> BASE;
-
-	typedef std::shared_ptr<MRT_ROS_Interface<quadrotor::STATE_DIM_, quadrotor::INPUT_DIM_, logic_rules_t>> Ptr;
+	typedef ocs2::NullLogicRules<quadrotor::STATE_DIM_, quadrotor::INPUT_DIM_> logic_rules_t;
+	typedef MRT_ROS_Interface<quadrotor::STATE_DIM_, quadrotor::INPUT_DIM_> BASE;
 
 	typedef Dimensions<quadrotor::STATE_DIM_, quadrotor::INPUT_DIM_> DIMENSIONS;
 	typedef typename DIMENSIONS::controller_t				controller_t;
@@ -71,9 +69,6 @@ public:
 
 	typedef RosMsgConversions<quadrotor::STATE_DIM_, quadrotor::INPUT_DIM_> ros_msg_conversions_t;
 
-	typedef ocs2::HybridLogicRulesMachine<quadrotor::STATE_DIM_,quadrotor::INPUT_DIM_,logic_rules_t> 	logic_machine_t;
-	typedef typename logic_machine_t::Ptr 										logic_machine_ptr_t;
-
 	typedef LinearInterpolation<state_vector_t, Eigen::aligned_allocator<state_vector_t> > state_linear_interpolation_t;
 	typedef LinearInterpolation<input_vector_t, Eigen::aligned_allocator<input_vector_t> > input_linear_interpolation_t;
 	typedef LinearInterpolation<input_state_matrix_t, Eigen::aligned_allocator<input_state_matrix_t>> gain_linear_interpolation_t;
@@ -88,19 +83,19 @@ public:
 	 *
 	 * @param [in] logicRules: A logic rule class of derived from the hybrid logicRules base.
 	 * @param [in] useFeedforwardPolicy: Whether to receive the MPC feedforward (true) or MPC feedback policy (false).
-	 * @param [in] nodeName: The node's name.
+	 * @param [in] robotName: The robot's name.
 	 */
 	MRT_ROS_Quadrotor(
 			const bool& useFeedforwardPolicy = true,
-			const std::string& nodeName = "robot_mpc")
+			const std::string& robotName = "robot")
 
-	: BASE(logic_rules_t(), useFeedforwardPolicy, nodeName)
+	: BASE(logic_rules_t(), useFeedforwardPolicy, robotName)
 	{}
 
 	/**
 	 * Destructor
 	 */
-	virtual ~MRT_ROS_Quadrotor() {};
+	virtual ~MRT_ROS_Quadrotor() = default;
 
 	/**
 	 * This method will be called either after the very fist call of the class or after a call to reset().

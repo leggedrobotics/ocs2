@@ -55,10 +55,18 @@ public:
 	typedef typename BASE::input_vector_t         input_vector_t;
 	typedef QuadrotorParameters<scalar_t>         quadrotor_parameters_t;
 
+	/**
+	 * Constructor
+	 *
+	 * @param quadrotorParameters: Quadrotor parameters.
+	 */
 	QuadrotorSystemDynamics(const quadrotor_parameters_t& quadrotorParameters)
 	: param_(quadrotorParameters)
 	{}
 
+	/**
+	 * Destructor
+	 */
 	~QuadrotorSystemDynamics() = default;
 
 	/**

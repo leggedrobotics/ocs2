@@ -62,16 +62,16 @@ public:
 	 * @param [in] R: \f$ R \f$
 	 * @param [in] xNominal: \f$ x_{nominal}\f$
 	 * @param [in] uNominal: \f$ u_{nominal}\f$
-	 * @param [in] xFinal: \f$ x_{final}\f$
 	 * @param [in] QFinal: \f$ Q_{final}\f$
+	 * @param [in] xFinal: \f$ x_{final}\f$
 	 */
 	QuadrotorCost(
 			const state_matrix_t& Q,
 			const input_matrix_t& R,
 			const state_vector_t& x_nominal,
 			const input_vector_t& u_nominal,
-			const state_vector_t& x_final,
-			const state_matrix_t& Q_final)
+			const state_matrix_t& Q_final,
+			const state_vector_t& x_final)
 	: QuadraticCostFunction(Q, R, x_nominal, u_nominal, Q_final, x_final)
 	{}
 
@@ -88,6 +88,27 @@ public:
 	QuadrotorCost* clone() const {
 
 		return new QuadrotorCost(*this);
+	}
+
+	/**
+	 * Sets the current time, state, and control input.
+	 *
+	 * @param [in] t: Current time.
+	 * @param [in] x: Current state vector.
+	 * @param [in] u: Current input vector.
+	 */
+	void setCurrentStateAndControl(
+			const scalar_t& t,
+			const state_vector_t& x,
+			const input_vector_t& u) {
+
+		dynamic_vector_t xNominal;
+		BASE::xNominalFunc_.interpolate(t, xNominal);
+		dynamic_vector_t uNominal;
+		BASE::uNominalFunc_.interpolate(t, uNominal);
+
+		// set base class
+		BASE::setCurrentStateAndControl(t, x, u, xNominal, uNominal, xNominal);
 	}
 
 private:

@@ -91,10 +91,10 @@ void QuadrotorInterface::loadSettings(const std::string& taskFile) {
 	std::cerr << "Q:  \n" << Q_ << std::endl;
 	std::cerr << "R:  \n" << R_ << std::endl;
 	std::cerr << "Q_final:\n" << QFinal_ << std::endl;
-	std::cerr << "x_init:   "   << initialState_.transpose() << std::endl;
-	std::cerr << "x_final:  "   << xFinal_.transpose() << std::endl;
+	std::cerr << "x_init:   " << initialState_.transpose() << std::endl;
+	std::cerr << "x_final:  " << xFinal_.transpose() << std::endl;
 
-	quadrotorCostPtr_.reset(new QuadrotorCost(Q_, R_, xNominal_, uNominal_, xFinal_, QFinal_));
+	quadrotorCostPtr_.reset(new QuadrotorCost(Q_, R_, xNominal_, uNominal_, QFinal_, xFinal_));
 
 	/*
 	 * Constraints

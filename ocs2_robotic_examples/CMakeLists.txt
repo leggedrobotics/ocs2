@@ -4,6 +4,9 @@ project(ocs2_robotic_examples)
 find_package(catkin REQUIRED COMPONENTS 
   cmake_modules
   tf
+  urdf
+  kdl_parser
+  robot_state_publisher
   ocs2_core
   ocs2_slq 
   ocs2_ocs2
@@ -37,6 +40,9 @@ catkin_package(
     include
   CATKIN_DEPENDS
     tf
+    urdf
+    kdl_parser
+    robot_state_publisher
     ocs2_core
     ocs2_slq 
     ocs2_ocs2
@@ -53,6 +59,7 @@ catkin_package(
 
 include_directories(
   include
+  include/ocs2_robotic_examples/rbd_libraries/robcogen
   ${CMAKE_CURRENT_BINARY_DIR}
   ${EIGEN3_INCLUDE_DIRS}
   ${Boost_INCLUDE_DIRS}
@@ -93,6 +100,10 @@ endif()
 ## With catkin_make all packages are built within a single CMake context
 ## The recommended prefix ensures that target names across packages don't collide
 
+###############
+## Quadrotor ##
+###############
+
 add_executable(quadrotor_mpc 
   src/quadrotor/QuadrotorInterface.cpp
   src/quadrotor/MPC_Quadrotor_Node.cpp
@@ -128,30 +139,74 @@ target_link_libraries(quadrotor_target
   ${Boost_LIBRARIES}
 )
 
+#############
+## Ballbot ##
+#############
 
-add_executable(cartpole_mpc
-  src/cart_pole/CartPoleInterface.cpp
-  src/cart_pole/MPC_Cartpole_Node.cpp
+add_executable(ballbot_mpc 
+  src/ballbot/BallbotInterface.cpp
+  src/ballbot/MPC_Ballbot_Node.cpp
 )
-add_dependencies(cartpole_mpc
+add_dependencies(ballbot_mpc
   ${catkin_EXPORTED_TARGETS}
 )
-target_link_libraries(cartpole_mpc
+target_link_libraries(ballbot_mpc
   ${catkin_LIBRARIES}
   ${Boost_LIBRARIES}
   dl
 )
 
-add_executable(cartpole_dummy_test
-  src/cart_pole/CartPoleInterface.cpp
-  src/cart_pole/Dummy_Cartpole_Node.cpp
+add_executable(ballbot_dummy_test
+  src/ballbot/BallbotInterface.cpp
+  src/ballbot/Dummy_Ballbot_Node.cpp
 )
-add_dependencies(cartpole_dummy_test
+add_dependencies(ballbot_dummy_test
   ${catkin_EXPORTED_TARGETS}
 )
-target_link_libraries(cartpole_dummy_test
+target_link_libraries(ballbot_dummy_test
   ${catkin_LIBRARIES}
   ${Boost_LIBRARIES}
   dl
 )
+
+#add_executable(ballbot_target
+#  src/ballbot/BallbotTargetPoseCommand.cpp
+#)
+#add_dependencies(ballbot_target
+#  ${catkin_EXPORTED_TARGETS}
+#)
+#target_link_libraries(ballbot_target
+#  ${catkin_LIBRARIES}
+#  ${Boost_LIBRARIES}
+#)
+
+###############
+## Cart Pole ##
+###############
+
+#add_executable(cartpole_mpc
+#  src/cart_pole/CartPoleInterface.cpp
+#  src/cart_pole/MPC_Cartpole_Node.cpp
+#)
+#add_dependencies(cartpole_mpc
+#  ${catkin_EXPORTED_TARGETS}
+#)
+#target_link_libraries(cartpole_mpc
+#  ${catkin_LIBRARIES}
+#  ${Boost_LIBRARIES}
+#  dl
+#)
+#
+#add_executable(cartpole_dummy_test
+#  src/cart_pole/CartPoleInterface.cpp
+#  src/cart_pole/Dummy_Cartpole_Node.cpp
+#)
+#add_dependencies(cartpole_dummy_test
+#  ${catkin_EXPORTED_TARGETS}
+#)
+#target_link_libraries(cartpole_dummy_test
+#  ${catkin_LIBRARIES}
+#  ${Boost_LIBRARIES}
+#  dl
+#)
 

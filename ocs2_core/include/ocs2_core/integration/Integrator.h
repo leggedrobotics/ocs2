@@ -315,7 +315,7 @@ private:
 
 	Stepper stepper_;
 
-#if (BOOST_VERSION / 100000 == 1 && BOOST_VERSION / 100 % 1000 > 55)
+#if (BOOST_VERSION / 100000 == 1 && BOOST_VERSION / 100 % 1000 > 60)
 	std::unique_ptr<boost::numeric::odeint::max_step_checker> maxStepCheckerPtr_;
 #endif
 

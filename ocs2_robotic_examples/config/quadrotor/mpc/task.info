@@ -39,12 +39,12 @@ slq
 	stateConstraintPenaltyBase       1.1                                          	
 	meritFunctionRho                 50.0                                         	
 	constraintStepSize               1.0	; 1.0                                          	
-	displayInfo                      1
+	displayInfo                      0
 	displayShortSummary              1                                            	
 	warmStartGSLQP                   1    
 	useLQForDerivatives              0                                        
                                                                               	
-	AbsTolODE                        1e-5	;1e-5	;1e-6                                                                          
+	AbsTolODE                        2e-5	;1e-5	;1e-6                                                                          
 	RelTolODE                        1e-3	;1e-3	;1e-4
 	minTimeStep                      1e-3                                         	
 	maxNumStepsPerSecond             50000                                        	
@@ -68,11 +68,11 @@ slq
     debugPrintMP                     0
     lsStepsizeGreedy                 1
     
-    useNominalTimeForBackwardPass    1  
+    useNominalTimeForBackwardPass    0  
     RiccatiIntegratorType            1        ; ODE45 = 1, ADAMS_BASHFORTH = 2, BULIRSCH_STOER = 3, ADAMS_BASHFORTH_MOULTON = 4
     adams_integrator_dt              0.01    
 
-    useRiccatiSolver                 0  
+    useRiccatiSolver                 1  
     
     minEventTimeDifference           0.01                         	
 }                
@@ -99,7 +99,7 @@ mpc
 	rosMsgTimeWindow			500		; [ms]
 	adaptiveRosMsgTimeWindow	0
 	
-	mpcDesiredFrequency		    -1		; [Hz] 
+	mpcDesiredFrequency		    100		; [Hz] 
 	mrtDesiredFrequency		    400	    ; [Hz]  
 }                                                                                                                                 	
                                                                               	
@@ -124,20 +124,20 @@ initialState
 ; state weight matrix
 Q
 {
-    scaling 1e-0
+   scaling 1e-0
 
-      (0,0)  0.0	; x
-      (1,1)  0.0	; y
-      (2,2)  0.0	; z
-      (3,3)  4.0	; phi
-      (4,4)  4.0	; theta
-      (5,5)  1.0	; psi
-      (6,6)  20.0	; u
-      (7,7)  20.0	; v
-      (8,8)  20.0	; w
-      (9,9)  4.0	; p
-      (10,10) 4.0	; q
-      (11,11) 4.0	; r
+   (0,0)   100.0	; x
+   (1,1)   100.0	; y
+   (2,2)   100.0	; z
+   (3,3)   20.0		; phi
+   (4,4)   20.0		; theta
+   (5,5)   20.0		; psi
+   (6,6)   10.0		; u
+   (7,7)   10.0		; v
+   (8,8)   10.0		; w
+   (9,9)   4.0		; p
+   (10,10) 4.0		; q
+   (11,11) 4.0		; r
 }
 
 
@@ -156,37 +156,35 @@ R
 ; final state weight matrix
 Q_final
 {
-    scaling 0e+0
+   scaling 0e-2
 
-      (0,0)  100.0	; x
-      (1,1)  100.0	; y
-      (2,2)  100.0	; z
-      (3,3)  4.0	; phi
-      (4,4)  4.0	; theta
-      (5,5)  0.2	; psi
-      (6,6)  100.0	; u
-      (7,7)  100.0	; v
-      (8,8)  100.0	; w
-      (9,9)  4.0	; p
-      (10,10) 4.0	; q
-      (11,11) 0.2	; r
-
+   (0,0)   100.0	; x
+   (1,1)   100.0	; y
+   (2,2)   100.0	; z
+   (3,3)   4.0		; phi
+   (4,4)   4.0		; theta
+   (5,5)   0.2		; psi
+   (6,6)   100.0	; u
+   (7,7)   100.0	; v
+   (8,8)   100.0	; w
+   (9,9)   4.0		; p
+   (10,10) 4.0		; q
+   (11,11) 0.2		; r
 }
 
 ; final goal
 x_final
 {
-   (0,0)  0.0	; x
-   (1,0)  0.0	; y
-   (2,0)  1.0	; z
-   (3,0)  0.0	; phi
-   (4,0)  0.0	; theta
-   (5,0)  0.0	; psi
-   (6,0)  0.0	; u
-   (7,0)  0.0	; v
-   (8,0)  0.0	; w
-   (9,0)  0.0	; p
+   (0,0)   0.0	; x
+   (1,0)   0.0	; y
+   (2,0)   1.0	; z
+   (3,0)   0.0	; phi
+   (4,0)   0.0	; theta
+   (5,0)   0.0	; psi
+   (6,0)   0.0	; u
+   (7,0)   0.0	; v
+   (8,0)   0.0	; w
+   (9,0)   0.0	; p
    (10,0)  0.0	; q
    (11,0)  0.0	; r
-
 }

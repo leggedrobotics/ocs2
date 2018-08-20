@@ -30,7 +30,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // Quadrotor
 #include <ocs2_robotic_examples/examples/quadrotor/QuadrotorInterface.h>
 #include <ocs2_robotic_examples/examples/quadrotor/ros_comm/MPC_ROS_Quadrotor.h>
-#include <ocs2_mpc/MPC_SLQ.h>
 
 using namespace ocs2;
 using namespace quadrotor;

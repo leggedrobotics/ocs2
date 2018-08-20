@@ -545,6 +545,11 @@ void MRT_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::shutdownNodes() {
 	ROS_INFO_STREAM("All workers are shut down.");
 #endif
 
+	// Clean up Callback queue
+	mrtCallbackQueue_.clear();
+	mpcFeedforwardPolicySubscriber_.shutdown();
+	mpcFeedbackPolicySubscriber_.shutdown();
+
 	// shutdown publishers
 	dummyPublisher_.shutdown();
 	mpcObservationPublisher_.shutdown();

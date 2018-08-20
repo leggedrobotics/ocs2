@@ -171,7 +171,7 @@ void CppAdCodeGenInterface<DOMAIN_DIM, RANGE_DIM, SCALAR_T, VARIABLE_DIM>::creat
 		bool verbose /* = true */,
 		bool cgJIT /*= true*/) {
 
-	BASE::domain_dim_ = domainDim;
+  BASE::domain_dim_ = domainDim;
 	BASE::range_dim_  = rangeDim;
 
 	if (BASE::domain_dim_<0)
@@ -188,24 +188,25 @@ void CppAdCodeGenInterface<DOMAIN_DIM, RANGE_DIM, SCALAR_T, VARIABLE_DIM>::creat
 	if (libraryFolder.empty()==false)
 		CppAD::cg::system::createFolder(libraryFolder);
 
+  if (libraryFolder.empty()==false) {
+    CppAD::cg::system::createFolder(libraryFolder + "/" + modelName + "_sources");
+  } else {
+    CppAD::cg::system::createFolder(modelName + "_sources");
+  }
+
     //***************************************************************************
     //                               the model
     //***************************************************************************
-
     // set and declare independent variables and start tape recording
 	ad_dynamic_vector_t x(BASE::domain_dim_);
     x.setZero();
     CppAD::Independent(x);
-
     // dependent variable vector
     ad_dynamic_vector_t y(BASE::range_dim_);
-
     // the model equation
     adFunction_(x, y);
-
     // create f: x -> y and stop tape recording
     ad_fun_t fun(x, y);
-
     // Optimize the operation sequence
     fun.optimize();
 
@@ -223,7 +224,6 @@ void CppAdCodeGenInterface<DOMAIN_DIM, RANGE_DIM, SCALAR_T, VARIABLE_DIM>::creat
 
     if (verbose) std::cerr << "Sparsity pattern of " << modelName <<
     		" model: \n" << sparsityPattern_ << std::endl;
-
     //*************************************************************************
     //                      Create the dynamic library
     //                 (generates and compiles source code)
@@ -251,7 +251,6 @@ void CppAdCodeGenInterface<DOMAIN_DIM, RANGE_DIM, SCALAR_T, VARIABLE_DIM>::creat
     	cgen.setCustomSparseHessianElements(rowsHessian_, colsHessian_);
     	cgen.setRelatedDependents(relatedDependent_);
     }
-
     //
     CppAD::cg::ModelLibraryCSourceGen<SCALAR_T> libcgen(cgen);
 
@@ -262,7 +261,6 @@ void CppAdCodeGenInterface<DOMAIN_DIM, RANGE_DIM, SCALAR_T, VARIABLE_DIM>::creat
     } else {
     	p2.saveSourcesTo(modelName + "_sources/cppad_generated");
     }
-
     if (cgJIT==true) {
     	// compile source code
     	std::string libraryName;
@@ -270,7 +268,6 @@ void CppAdCodeGenInterface<DOMAIN_DIM, RANGE_DIM, SCALAR_T, VARIABLE_DIM>::creat
     		libraryName = libraryFolder + "/" + modelName + "_lib";
     	else
     		libraryName = modelName + "_lib";
-
     	CppAD::cg::DynamicModelLibraryProcessor<SCALAR_T> p(libcgen, libraryName);
     	if (verbose) {
     		std::cerr << "Compiled Shared Library: " << p.getLibraryName() +
@@ -281,7 +278,6 @@ void CppAdCodeGenInterface<DOMAIN_DIM, RANGE_DIM, SCALAR_T, VARIABLE_DIM>::creat
     	CppAD::cg::GccCompiler<SCALAR_T> compiler_;
 
     	dynamicLib_.reset(p.createDynamicLibrary(compiler_));
-
     	// get model
     	model_.reset(dynamicLib_->model(modelName));
 

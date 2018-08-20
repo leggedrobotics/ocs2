@@ -265,7 +265,7 @@ void CppAdCodeGenInterface<DOMAIN_DIM, RANGE_DIM, SCALAR_T, VARIABLE_DIM>::creat
     	// compile source code
     	std::string libraryName;
     	if (libraryFolder.empty()==false)
-    		libraryName = libraryFolder + "/" + modelName + "_lib";
+    		libraryName = libraryFolder + "/" + modelName + "_sources/cppad_generated/" + modelName + "_lib";
     	else
     		libraryName = modelName + "_lib";
     	CppAD::cg::DynamicModelLibraryProcessor<SCALAR_T> p(libcgen, libraryName);
@@ -298,7 +298,7 @@ bool CppAdCodeGenInterface<DOMAIN_DIM, RANGE_DIM, SCALAR_T, VARIABLE_DIM>::loadM
 	// load dynamic library
 	std::string libraryName;
 	if (libraryFolder.empty()==false)
-		libraryName = libraryFolder + "/" + modelName + "_lib";
+		libraryName = libraryFolder + "/" + modelName + "_sources/cppad_generated/" + modelName + "_lib";
 	else
 		libraryName = modelName + "_lib";
 

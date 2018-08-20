@@ -27,20 +27,20 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  ******************************************************************************/
 
-#include "ocs2_robotic_examples/examples/quadrotor/QuadrotorInterface.h"
+#include "ocs2_robotic_examples/examples/ballbot/BallbotInterface.h"
 
 namespace ocs2 {
-namespace quadrotor {
+namespace ballbot {
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-QuadrotorInterface::QuadrotorInterface(const std::string& taskFileFolderName)
+BallbotInterface::BallbotInterface(const std::string& taskFileFolderName)
 {
-	taskFile_ = std::string(PACKAGE_PATH) + "/config/quadrotor/" + taskFileFolderName + "/task.info";
+	taskFile_ = std::string(PACKAGE_PATH) + "/config/ballbot/" + taskFileFolderName + "/task.info";
 	std::cerr << "Loading task file: " << taskFile_ << std::endl;
 
-	libraryFolder_ = std::string(PACKAGE_PATH) + "/auto_generated/quadrotor";
+	libraryFolder_ = std::string(PACKAGE_PATH) + "/auto_generated/ballbot";
 	std::cerr << "Generated library path: " << libraryFolder_ << std::endl;
 
 	// load setting from loading file
@@ -53,7 +53,7 @@ QuadrotorInterface::QuadrotorInterface(const std::string& taskFileFolderName)
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void QuadrotorInterface::loadSettings(const std::string& taskFile) {
+void BallbotInterface::loadSettings(const std::string& taskFile) {
 
 	/*
 	 * Default initial condition
@@ -67,25 +67,32 @@ void QuadrotorInterface::loadSettings(const std::string& taskFile) {
 	mpcSettings_.loadSettings(taskFile);
 
 	/*
-	 * quadrotor parameters
+	 * Dynamics
 	 */
-	QuadrotorParameters<dim_t::scalar_t> quadrotorParameters;
-	quadrotorParameters.loadSettings(taskFile);
+	bool dynamicLibraryIsCompiled = true;
 
-	/*
-	 * Dynamics and derivatives
-	 */
-	quadrotorSystemDynamicsPtr_.reset(new QuadrotorSystemDynamics(quadrotorParameters));
-	quadrotorDynamicsDerivativesPtr_.reset(new QuadrotorDynamicsDerivatives(quadrotorParameters));
+	// load the flag to generate library files from taskFile
+	boost::property_tree::ptree pt;
+	boost::property_tree::read_info(taskFile_, pt);
+	libraryFilesAreGenerated_ = pt.get<bool>("ballbot_interface.libraryFilesAreGenerated");
+
+	ballbotSystemDynamicsPtr_.reset(new BallbotSystemDynamics(dynamicLibraryIsCompiled));
+
+	if (libraryFilesAreGenerated_ == true){
+		ballbotSystemDynamicsPtr_->loadModels("ballbot_dynamics", libraryFolder_);
+	}else{
+		ballbotSystemDynamicsPtr_->createModels("ballbot_dynamics", libraryFolder_);
+	}
 
 	/*
 	 * Cost function
 	 */
-	loadEigenMatrix(taskFile, "Q", Q_);
-	loadEigenMatrix(taskFile, "R", R_);
-	loadEigenMatrix(taskFile, "Q_final", QFinal_);
-	loadEigenMatrix(taskFile, "x_final", xFinal_);
-	xNominal_ = dim_t::state_vector_t::Zero();
+	ocs2::loadEigenMatrix(taskFile, "Q", Q_);
+	ocs2::loadEigenMatrix(taskFile, "R", R_);
+	ocs2::loadEigenMatrix(taskFile, "Q_final", QFinal_);
+	ocs2::loadEigenMatrix(taskFile, "x_final", xFinal_);
+//	xNominal_ = dim_t::state_vector_t::Zero();
+	xNominal_ = xFinal_;
 	uNominal_ = dim_t::input_vector_t::Zero();
 
 	std::cerr << "Q:  \n" << Q_ << std::endl;
@@ -94,20 +101,19 @@ void QuadrotorInterface::loadSettings(const std::string& taskFile) {
 	std::cerr << "x_init:   " << initialState_.transpose() << std::endl;
 	std::cerr << "x_final:  " << xFinal_.transpose() << std::endl;
 
-	quadrotorCostPtr_.reset(new QuadrotorCost(Q_, R_, xNominal_, uNominal_, QFinal_, xFinal_));
+	ballbotCostPtr_.reset(new BallbotCost(Q_, R_, xNominal_, uNominal_, QFinal_, xFinal_));
 
 	/*
 	 * Constraints
 	 */
-	quadrotorConstraintPtr_.reset(new QuadrotorConstraint);
+	ballbotConstraintPtr_.reset(new ballbotConstraint_t);
 
 	/*
 	 * Initialization
 	 */
-	initialInput_ = dim_t::input_vector_t::Zero();
-	initialInput_(0) = quadrotorParameters.quadrotorMass_*quadrotorParameters.gravity_;
-	quadrotorOperatingPointPtr_.reset( new QuadrotorOperatingPoint(
-			initialState_, initialInput_) );
+//	cartPoleOperatingPointPtr_.reset(new CartPoleOperatingPoint(dim_t::state_vector_t::Zero(), dim_t::input_vector_t::Zero()));
+	ballbotOperatingPointPtr_.reset(new ballbotOperatingPoint_t(
+			initialState_, dim_t::input_vector_t::Zero()));
 
 	/*
 	 * Time partitioning which defines the time horizon and the number of data partitioning
@@ -120,14 +126,14 @@ void QuadrotorInterface::loadSettings(const std::string& taskFile) {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void QuadrotorInterface::setupOptimizer(const std::string& taskFile) {
+void BallbotInterface::setupOptimizer(const std::string& taskFile) {
 
 	mpcPtr_.reset(new mpc_t(
-			quadrotorSystemDynamicsPtr_.get(),
-			quadrotorDynamicsDerivativesPtr_.get(),
-			quadrotorConstraintPtr_.get(),
-			quadrotorCostPtr_.get(),
-			quadrotorOperatingPointPtr_.get(),
+			ballbotSystemDynamicsPtr_.get(),
+			ballbotSystemDynamicsPtr_.get(),
+			ballbotConstraintPtr_.get(),
+			ballbotCostPtr_.get(),
+			ballbotOperatingPointPtr_.get(),
 			partitioningTimes_,
 			slqSettings_,
 			mpcSettings_));
@@ -136,11 +142,11 @@ void QuadrotorInterface::setupOptimizer(const std::string& taskFile) {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-QuadrotorInterface::mpc_t::Ptr& QuadrotorInterface::getMPCPtr() {
+BallbotInterface::mpc_t::Ptr& BallbotInterface::getMPCPtr() {
 
 	return mpcPtr_;
 }
 
-} // namespace quadrotor
+} // namespace ballbot
 } // namespace ocs2
 

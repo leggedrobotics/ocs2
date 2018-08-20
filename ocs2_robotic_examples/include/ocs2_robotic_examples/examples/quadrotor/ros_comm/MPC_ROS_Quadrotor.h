@@ -37,26 +37,26 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 namespace ocs2 {
 namespace quadrotor {
 
-class MPC_ROS_Quadrotor : public MPC_ROS_Interface<quadrotor::STATE_DIM_, quadrotor::INPUT_DIM_, NullLogicRules< quadrotor::STATE_DIM_, quadrotor::INPUT_DIM_>> {
+class MPC_ROS_Quadrotor : public MPC_ROS_Interface<quadrotor::STATE_DIM_, quadrotor::INPUT_DIM_>
+{
 public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-	typedef NullLogicRules<quadrotor::STATE_DIM_, quadrotor::INPUT_DIM_> logic_rules_t;
-	typedef MPC_ROS_Interface<quadrotor::STATE_DIM_, quadrotor::INPUT_DIM_, logic_rules_t> BASE;
+	typedef MPC_ROS_Interface<quadrotor::STATE_DIM_, quadrotor::INPUT_DIM_> BASE;
 
-	typedef typename mpc_t::scalar_t scalar_t;
-	typedef typename mpc_t::scalar_array_t scalar_array_t;
-	typedef typename mpc_t::size_array_t size_array_t;
-	typedef typename mpc_t::state_vector_t state_vector_t;
-	typedef typename mpc_t::state_vector_array_t state_vector_array_t;
-	typedef typename mpc_t::state_vector_array2_t state_vector_array2_t;
-	typedef typename mpc_t::input_vector_t input_vector_t;
-	typedef typename mpc_t::input_vector_array_t input_vector_array_t;
-	typedef typename mpc_t::input_vector_array2_t input_vector_array2_t;
-	typedef typename mpc_t::controller_t controller_t;
-	typedef typename mpc_t::controller_array_t controller_array_t;
-	typedef typename mpc_t::input_state_matrix_t input_state_matrix_t;
-	typedef typename mpc_t::input_state_matrix_array_t input_state_matrix_array_t;
+	typedef typename BASE::scalar_t scalar_t;
+	typedef typename BASE::scalar_array_t scalar_array_t;
+	typedef typename BASE::size_array_t size_array_t;
+	typedef typename BASE::state_vector_t state_vector_t;
+	typedef typename BASE::state_vector_array_t state_vector_array_t;
+	typedef typename BASE::state_vector_array2_t state_vector_array2_t;
+	typedef typename BASE::input_vector_t input_vector_t;
+	typedef typename BASE::input_vector_array_t input_vector_array_t;
+	typedef typename BASE::input_vector_array2_t input_vector_array2_t;
+	typedef typename BASE::controller_t controller_t;
+	typedef typename BASE::controller_array_t controller_array_t;
+	typedef typename BASE::input_state_matrix_t input_state_matrix_t;
+	typedef typename BASE::input_state_matrix_array_t input_state_matrix_array_t;
 
 	typedef CostDesiredTrajectories<scalar_t> cost_desired_trajectories_t;
 
@@ -76,12 +76,12 @@ public:
 	 * Constructor.
 	 *
 	 * @param [in] mpc: The MPC object to be interfaced.
-	 * @param [in] nodeName: The node's name.
+	 * @param [in] robotName: The robot's name.
 	 */
 	MPC_ROS_Quadrotor(
 			mpc_t &mpc,
-			const std::string &nodeName = "robot_mpc")
-	: BASE(mpc, nodeName) {}
+			const std::string &robotName = "robot")
+	: BASE(mpc, robotName) {}
 
 	/**
 	 * Destructor.
@@ -125,6 +125,15 @@ public:
 		pose_vector_t targetPoseDisplacement, targetVelocity;
 		TargetPoseTransformation<scalar_t>::toTargetPoseDisplacement(costDesiredTrajectories.desiredStateTrajectory()[0],
 				targetPoseDisplacement, targetVelocity);
+
+		// reversing the order of the position and orientation.
+		Eigen::Matrix<scalar_t, 3, 1> temp;
+		temp = targetPoseDisplacement.head<3>();
+		targetPoseDisplacement.head<3>() = targetPoseDisplacement.tail<3>();
+		targetPoseDisplacement.tail<3>() = temp;
+		temp = targetVelocity.head<3>();
+		targetVelocity.head<3>() = targetVelocity.tail<3>();
+		targetVelocity.tail<3>() = temp;
 
 		// targetReachingDuration
 		const scalar_t averageSpeed = 2.0;

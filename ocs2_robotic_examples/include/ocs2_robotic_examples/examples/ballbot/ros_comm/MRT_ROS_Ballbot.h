@@ -27,32 +27,31 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  ******************************************************************************/
 
-#ifndef MRT_ROS_QUADROTOR_OCS2_H_
-#define MRT_ROS_QUADROTOR_OCS2_H_
+#ifndef MRT_ROS_BALLBOT_OCS2_H_
+#define MRT_ROS_BALLBOT_OCS2_H_
 
 #include <ocs2_comm_interfaces/ocs2_ros_interfaces/mrt/MRT_ROS_Interface.h>
-#include <ocs2_robotic_examples/examples/quadrotor/definitions.h>
+#include <ocs2_robotic_examples/examples/ballbot/definitions.h>
 
 namespace ocs2 {
-namespace quadrotor {
+namespace ballbot {
 
 /**
  * This class implements MRT (Model Reference Tracking) communication interface using ROS.
  *
- * @tparam quadrotor::STATE_DIM_: Dimension of the state space.
- * @tparam quadrotor::INPUT_DIM_: Dimension of the control input space.
+ * @tparam STATE_DIM: Dimension of the state space.
+ * @tparam ballbot::INPUT_DIM_: Dimension of the control input space.
  * @tparam LOGIC_RULES_T: Logic Rules type (default NullLogicRules).
  */
-
-class MRT_ROS_Quadrotor : public MRT_ROS_Interface<quadrotor::STATE_DIM_, quadrotor::INPUT_DIM_>
+class MRT_ROS_Ballbot : public ocs2::MRT_ROS_Interface<ballbot::STATE_DIM_, ballbot::INPUT_DIM_>
 {
 public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-	typedef ocs2::NullLogicRules<quadrotor::STATE_DIM_, quadrotor::INPUT_DIM_> logic_rules_t;
-	typedef MRT_ROS_Interface<quadrotor::STATE_DIM_, quadrotor::INPUT_DIM_> BASE;
+	typedef ocs2::NullLogicRules<ballbot::STATE_DIM_, ballbot::INPUT_DIM_> logic_rules_t;
+	typedef ocs2::MRT_ROS_Interface<ballbot::STATE_DIM_, ballbot::INPUT_DIM_> BASE;
 
-	typedef Dimensions<quadrotor::STATE_DIM_, quadrotor::INPUT_DIM_> DIMENSIONS;
+	typedef ocs2::Dimensions<ballbot::STATE_DIM_, ballbot::INPUT_DIM_> DIMENSIONS;
 	typedef typename DIMENSIONS::controller_t				controller_t;
 	typedef typename DIMENSIONS::controller_array_t			controller_array_t;
 	typedef typename DIMENSIONS::scalar_t					scalar_t;
@@ -62,21 +61,21 @@ public:
 	typedef typename DIMENSIONS::state_vector_array_t		state_vector_array_t;
 	typedef typename DIMENSIONS::input_vector_t 		 	input_vector_t;
 	typedef typename DIMENSIONS::input_vector_array_t  	input_vector_array_t;
-	typedef typename DIMENSIONS::input_state_matrix_t 	input_state_matrix_t;
-	typedef typename DIMENSIONS::input_state_matrix_array_t input_state_matrix_array_t;
+	typedef typename DIMENSIONS::input_state_matrix_t 	   	input_state_matrix_t;
+	typedef typename DIMENSIONS::input_state_matrix_array_t  	input_state_matrix_array_t;
 
-	typedef SystemObservation<quadrotor::STATE_DIM_, quadrotor::INPUT_DIM_> system_observation_t;
+	typedef ocs2::SystemObservation<ballbot::STATE_DIM_, ballbot::INPUT_DIM_> system_observation_t;
 
-	typedef RosMsgConversions<quadrotor::STATE_DIM_, quadrotor::INPUT_DIM_> ros_msg_conversions_t;
+	typedef ocs2::RosMsgConversions<ballbot::STATE_DIM_, ballbot::INPUT_DIM_> ros_msg_conversions_t;
 
-	typedef LinearInterpolation<state_vector_t, Eigen::aligned_allocator<state_vector_t> > state_linear_interpolation_t;
-	typedef LinearInterpolation<input_vector_t, Eigen::aligned_allocator<input_vector_t> > input_linear_interpolation_t;
-	typedef LinearInterpolation<input_state_matrix_t, Eigen::aligned_allocator<input_state_matrix_t>> gain_linear_interpolation_t;
+	typedef ocs2::LinearInterpolation<state_vector_t, Eigen::aligned_allocator<state_vector_t> > state_linear_interpolation_t;
+	typedef ocs2::LinearInterpolation<input_vector_t, Eigen::aligned_allocator<input_vector_t> > input_linear_interpolation_t;
+	typedef ocs2::LinearInterpolation<input_state_matrix_t, Eigen::aligned_allocator<input_state_matrix_t>> gain_linear_interpolation_t;
 
 	/**
 	 * Default constructor
 	 */
-	MRT_ROS_Quadrotor() = default;
+	MRT_ROS_Ballbot() = default;
 
 	/**
 	 * Constructor
@@ -85,7 +84,7 @@ public:
 	 * @param [in] useFeedforwardPolicy: Whether to receive the MPC feedforward (true) or MPC feedback policy (false).
 	 * @param [in] robotName: The robot's name.
 	 */
-	MRT_ROS_Quadrotor(
+	MRT_ROS_Ballbot(
 			const bool& useFeedforwardPolicy = true,
 			const std::string& robotName = "robot")
 
@@ -95,7 +94,7 @@ public:
 	/**
 	 * Destructor
 	 */
-	virtual ~MRT_ROS_Quadrotor() = default;
+	virtual ~MRT_ROS_Ballbot() = default;
 
 	/**
 	 * This method will be called either after the very fist call of the class or after a call to reset().
@@ -108,7 +107,7 @@ public:
 
 };
 
-} // namespace quadrotor
+} // namespace ballbot
 } // namespace ocs2
 
-#endif /* MRT_ROS_QUADROTOR_OCS2_H_ */
+#endif /* MRT_ROS_BALLBOT_OCS2_H_ */

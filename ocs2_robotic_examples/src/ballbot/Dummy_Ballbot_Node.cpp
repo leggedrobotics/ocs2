@@ -27,50 +27,50 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  ******************************************************************************/
 
-#include <visualization_msgs/Marker.h>
-
-#include <ocs2_robotic_examples/examples/quadrotor/QuadrotorInterface.h>
-#include <ocs2_robotic_examples/examples/quadrotor/definitions.h>
-#include <ocs2_robotic_examples/examples/quadrotor/ros_comm/MRT_ROS_Quadrotor.h>
-#include <ocs2_robotic_examples/examples/quadrotor/ros_comm/MRT_ROS_Dummy_Quadrotor.h>
+#include <ocs2_robotic_examples/examples/ballbot/BallbotInterface.h>
+#include <ocs2_robotic_examples/examples/ballbot/definitions.h>
+#include <ocs2_robotic_examples/examples/ballbot/ros_comm/MRT_ROS_Ballbot.h>
+#include <ocs2_robotic_examples/examples/ballbot/ros_comm/MRT_ROS_Dummy_Ballbot.h>
 
 using namespace ocs2;
-using namespace quadrotor;
+using namespace ballbot;
 
 int main(int argc, char **argv)
 {
+	ros::init(argc, argv, "ballbot_communication");
 	// task file
 	if (argc <= 1) throw std::runtime_error("No task file specified. Aborting.");
 	std::string taskFileFolderName = std::string(argv[1]);
 
-	// quadrotorInterface
-	QuadrotorInterface quadrotorInterface(taskFileFolderName);
+	// ballbotInterface
+	BallbotInterface ballbotInterface(taskFileFolderName);
 
-	typedef MRT_ROS_Interface<quadrotor::STATE_DIM_, quadrotor::INPUT_DIM_> mrt_t;
+	typedef MRT_ROS_Interface<ballbot::STATE_DIM_, ballbot::INPUT_DIM_> mrt_t;
 	typedef typename mrt_t::Ptr	mrt_ptr_t;
 	typedef typename mrt_t::scalar_t scalar_t;
 	typedef typename mrt_t::system_observation_t system_observation_t;
-	typedef NullLogicRules<quadrotor::STATE_DIM_, quadrotor::INPUT_DIM_> logic_rules_t;
+	typedef NullLogicRules<ballbot::STATE_DIM_, ballbot::INPUT_DIM_> logic_rules_t;
 	mrt_ptr_t mrtPtr(new mrt_t(
-			logic_rules_t(), !quadrotorInterface.mpcSettings().useFeedbackPolicy_, "quadrotor"));
+			logic_rules_t(), !ballbotInterface.mpcSettings().useFeedbackPolicy_, "ballbot"));
 
-	// Dummy quadrotor
-	MRT_ROS_Dummy_Quadrotor dummyQuadrotor(
+	// Dummy ballbot
+	MRT_ROS_Dummy_Ballbot dummyBallbot(
 			mrtPtr,
-			quadrotorInterface.mpcSettings().mrtDesiredFrequency_,
-			quadrotorInterface.mpcSettings().mpcDesiredFrequency_);
+			ballbotInterface.mpcSettings().mrtDesiredFrequency_,
+			ballbotInterface.mpcSettings().mpcDesiredFrequency_);
 
-	dummyQuadrotor.launchNodes(argc, argv);
+	dummyBallbot.launchNodes(argc, argv);
 	// Initialize dummy
-	MRT_ROS_Dummy_Quadrotor::system_observation_t initObservation;
-	quadrotorInterface.getInitialState(initObservation.state());
-	dummyQuadrotor.init(initObservation);
+	MRT_ROS_Dummy_Ballbot::system_observation_t initObservation;
+	ballbotInterface.getInitialState(initObservation.state());
+	dummyBallbot.init(initObservation);
+
+	// temporarily test visualization
+	dummyBallbot.testVisualizerNode(initObservation);
 
 	// run dummy
-	dummyQuadrotor.run();
+	dummyBallbot.run();
 
 	// Successful exit
 	return 0;
 }
-
-

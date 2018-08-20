@@ -1,0 +1,57 @@
+<launch>
+
+  <!-- Set true for simulation of Rezero in Gazebo -->
+  <arg name="simulation" default="true"/>
+  <!-- Set true to simulate sensors without noise and bias -->
+  <arg name="perfect_sensors" default="true"/>
+  <!-- Set true to fix the base of Rezero in simulation -->
+  <arg name="fixed" default="false"/>
+  <!-- Set the path to the description parameter file -->
+  <arg name="description_parameter_name" default="rezero_base_parameters"/>
+  <!-- Set the path to the description parameter file -->
+  <!-- Bool to determine if the arm is used or not -->
+  <arg name="use_arm" default="true"/>
+  <arg name="description_parameter_file" default="$(find ballbot_interface)/urdf/rezero_description/urdf/parameters/rezero_arm_parameters.yaml"/>
+  <group unless="$(arg use_arm)">
+    <arg name="description_parameter_file" value="$(find ballbot_interface)/urdf/rezero_description/urdf/parameters/rezero_base_parameters.yaml"/>
+  </group>
+  <!-- Give the robot description parameter a name -->
+  <arg name="description_name" default="robot_description"/>
+  <!-- Set robot description path -->
+  <arg name="description_file" default="$(find ballbot_interface)/urdf/rezero_description/urdf/rezero_with_arm_sdf.urdf.xacro"/>
+  <!-- Set true to draw the meshes -->
+  <arg name="mesh" default="true"/>
+  <!-- Set the material color -->
+  <arg name="material_color_rgba" default="0.76078431 0.73333333 0.72156863 1.0"/>
+  <!-- Publish frequency -->
+  <arg name="publish_frequency" default="10"/>
+  <!-- Joint state topic name -->
+  <arg name="joint_states_topic" default="joint_states"/>
+  <!-- TF prefix -->
+  <arg name="tf_prefix" default=""/>
+
+  <!-- Run xacro script to generate Rezero description -->
+  <param name="$(arg description_name)" command="$(find xacro)/xacro --inorder
+    $(arg description_file)
+    simulation:=$(arg simulation)
+    fixed:=$(arg fixed)
+    mesh:=$(arg mesh)
+    material_color_rgba:='$(arg material_color_rgba)'
+    perfect_sensors:='$(arg perfect_sensors)'"/>
+
+  <param name="$(arg description_parameter_name)" value="$(arg description_parameter_file)"/>
+
+  <!-- Publish robot state (joints) as TF -->
+  <node name="rezero_robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher" output="screen">
+    <param name="publish_frequency" value="$(arg publish_frequency)"/>
+    <param name="use_tf_static"     value="true"/>
+    <param name="tf_prefix"         value="$(arg tf_prefix)"/>
+    <remap from="robot_description" to="$(arg description_name)"/>
+    <remap from="joint_states"      to="$(arg joint_states_topic)"/>
+  </node> 
+
+
+  <node name="rviz" pkg="rviz" type="rviz" respawn="false" args="-d $(find ballbot_interface)/config/rviz/rezero.rviz " />
+
+</launch>
+	

@@ -91,14 +91,14 @@ protected:
 	 * @param [in] observation: The current observation.
 	 */
 	virtual void publishVisualizer(const system_observation_t& observation) override {
-    static tf::TransformBroadcaster transformBroadcaster;
-    tf::Transform transform;
-    transform.setOrigin(tf::Vector3(observation.state()(0), observation.state()(1), observation.state()(2)));
-    tf::Quaternion q = tf::createQuaternionFromRPY(observation.state()(3),
-                                                   observation.state()(4),
-                                                   observation.state()(5));
-    transform.setRotation(q);
-    transformBroadcaster.sendTransform(tf::StampedTransform(transform, ros::Time::now(), "world", "base"));
+		static tf::TransformBroadcaster transformBroadcaster;
+		tf::Transform transform;
+		transform.setOrigin(tf::Vector3(observation.state()(0), observation.state()(1), observation.state()(2)));
+		tf::Quaternion q = tf::createQuaternionFromRPY(observation.state()(3),
+				observation.state()(4),
+				observation.state()(5));
+		transform.setRotation(q);
+		transformBroadcaster.sendTransform(tf::StampedTransform(transform, ros::Time::now(), "world", "base"));
 	}
 
 };

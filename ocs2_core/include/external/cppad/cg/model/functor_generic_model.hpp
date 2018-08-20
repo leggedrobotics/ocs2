@@ -771,6 +771,40 @@ public:
         }
     }
 
+    // OCS2 special
+    virtual void SparseHessian(const Base* x, size_t x_size,
+                               const Base* w, size_t w_size,
+                               std::vector<Base>& hess,
+                               std::vector<size_t>& row,
+                               std::vector<size_t>& col) override {
+        CPPADCG_ASSERT_KNOWN(_isLibraryReady, "Model library is not ready (possibly closed)");
+        CPPADCG_ASSERT_KNOWN(_sparseHessian != nullptr, "No sparse Hessian function defined in the dynamic library");
+        CPPADCG_ASSERT_KNOWN(x_size == _n, "Invalid independent array size");
+        CPPADCG_ASSERT_KNOWN(w_size == _m, "Invalid multiplier array size");
+        CPPADCG_ASSERT_KNOWN(_in.size() == 1, "The number of independent variable arrays is higher than 1,"
+                             " please use the variable size methods");
+        CPPADCG_ASSERT_KNOWN(_missingAtomicFunctions == 0, "Some atomic functions used by the compiled model have not been specified yet");
+
+        unsigned long const* drow, *dcol;
+        unsigned long nnz;
+        (*_hessianSparsity)(&drow, &dcol, &nnz);
+
+        hess.resize(nnz);
+        row.resize(nnz);
+        col.resize(nnz);
+
+        if (nnz > 0) {
+            std::copy(drow, drow + nnz, row.begin());
+            std::copy(dcol, dcol + nnz, col.begin());
+
+            _inHess[0] = x;
+            _inHess[1] = w;
+            _out[0] = &hess[0];
+
+            (*_sparseHessian)(&_inHess[0], &_out[0], _atomicFuncArg);
+        }
+    }
+
     virtual void SparseHessian(const Base* x, size_t x_size,
                                const Base* w, size_t w_size,
                                Base* hess,

@@ -27,32 +27,30 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#ifndef QUADROTOR_COST_OCS2_H_
-#define QUADROTOR_COST_OCS2_H_
+#ifndef BALLBOTCOST_OCS2_BALLBOT_OCS2_H_
+#define BALLBOTCOST_OCS2_BALLBOT_OCS2_H_
 
 #include <ocs2_core/cost/QuadraticCostFunction.h>
-#include <ocs2_core/logic/rules/NullLogicRules.h>
 
-#include <ocs2_robotic_examples/examples/quadrotor/QuadrotorParameters.h>
-#include <ocs2_robotic_examples/examples/quadrotor/definitions.h>
+#include <ocs2_robotic_examples/examples/ballbot/definitions.h>
 
 namespace ocs2 {
-namespace quadrotor {
+namespace ballbot {
 
-class QuadrotorCost final : public QuadraticCostFunction<quadrotor::STATE_DIM_, quadrotor::INPUT_DIM_>
+class BallbotCost final : public ocs2::QuadraticCostFunction<ballbot::STATE_DIM_, ballbot::INPUT_DIM_>
 {
 public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-	typedef std::shared_ptr<QuadrotorCost> Ptr;
-	typedef std::shared_ptr<const QuadrotorCost> ConstPtr;
 
-	typedef QuadraticCostFunction<quadrotor::STATE_DIM_, quadrotor::INPUT_DIM_> BASE;
+	typedef std::shared_ptr<BallbotCost> Ptr;
+	typedef std::shared_ptr<const BallbotCost> ConstPtr;
+
+	typedef ocs2::QuadraticCostFunction<ballbot::STATE_DIM_, ballbot::INPUT_DIM_> BASE;
 	typedef typename BASE::scalar_t scalar_t;
 	typedef typename BASE::state_vector_t state_vector_t;
 	typedef typename BASE::state_matrix_t state_matrix_t;
 	typedef typename BASE::input_vector_t input_vector_t;
-	typedef typename BASE::input_matrix_t input_matrix_t;
 
 	/**
 	 * Constructor for the running and final cost function defined as the following:
@@ -65,7 +63,7 @@ public:
 	 * @param [in] QFinal: \f$ Q_{final}\f$
 	 * @param [in] xFinal: \f$ x_{final}\f$
 	 */
-	QuadrotorCost(
+	BallbotCost(
 			const state_matrix_t& Q,
 			const input_matrix_t& R,
 			const state_vector_t& x_nominal,
@@ -78,16 +76,16 @@ public:
 	/**
 	 * Destructor
 	 */
-	~QuadrotorCost() = default;
+	~BallbotCost() = default;
 
     /**
      * Returns pointer to the class.
      *
      * @return A raw pointer to the class.
      */
-	QuadrotorCost* clone() const {
+	BallbotCost* clone() const {
 
-		return new QuadrotorCost(*this);
+		return new BallbotCost(*this);
 	}
 
 	/**
@@ -115,7 +113,7 @@ private:
 
 };
 
-} // namespace quadrotor
+} // namespace ballbot
 } // namespace ocs2
 
-#endif //QUADROTOR_COST_OCS2_H_
+#endif /* BALLBOTCOST_OCS2_BALLBOT_OCS2_H_ */

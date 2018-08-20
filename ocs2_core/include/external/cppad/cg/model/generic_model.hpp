@@ -754,6 +754,13 @@ public:
                                std::vector<size_t>& row,
                                std::vector<size_t>& col) = 0;
 
+    // OCS2 special
+    virtual void SparseHessian(const Base* x, size_t x_size,
+                               const Base* w, size_t w_size,
+                               std::vector<Base>& hess,
+                               std::vector<size_t>& row,
+                               std::vector<size_t>& col) = 0;
+
     virtual void SparseHessian(const Base* x, size_t x_size,
                                const Base* w, size_t w_size,
                                Base* hess,

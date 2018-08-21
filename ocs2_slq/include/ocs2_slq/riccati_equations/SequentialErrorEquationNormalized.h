@@ -63,8 +63,8 @@ public:
 	/**
 	 * Default constructor.
 	 */
-	SequentialErrorEquationNormalized(const bool& useMakePSD)
-	: useMakePSD_(useMakePSD)
+	SequentialErrorEquationNormalized(const bool& useMakePSD, const scalar_t& addedRiccatiDiagonal)
+	: useMakePSD_(useMakePSD), addedRiccatiDiagonal_(addedRiccatiDiagonal)
 	{}
 
 	/**
@@ -141,6 +141,7 @@ public:
 
 private:
 	bool useMakePSD_;
+	double addedRiccatiDiagonal_;
 	scalar_t switchingTimeStart_;
 	scalar_t switchingTimeFinal_;
 

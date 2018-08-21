@@ -100,11 +100,6 @@ void Integrator<STATE_DIM, Stepper>::integrate(
 	if (BASE::eventHandlerPtr_ && maxNumSteps<std::numeric_limits<size_t>::max())
 		BASE::eventHandlerPtr_->setMaxNumSteps(maxNumSteps);
 
-//#if (BOOST_VERSION / 100000 == 1 && BOOST_VERSION / 100 % 1000 > 60)
-//	if (!maxStepCheckerPtr_ || concatOutput==false)
-//		maxStepCheckerPtr_.reset(new boost::numeric::odeint::max_step_checker(maxNumSteps));
-//#endif
-
 	// reset the trajectories
 	if (concatOutput==false) {
 		timeTrajectory.clear();
@@ -195,18 +190,6 @@ typename std::enable_if<std::is_same<S, runge_kutta_dopri5_t<STATE_DIM>>::value,
 		scalar_t AbsTol,
 		scalar_t RelTol) {
 
-//#if (BOOST_VERSION / 100000 == 1 && BOOST_VERSION / 100 % 1000 > 60)
-//	boost::numeric::odeint::integrate_adaptive(
-//			boost::numeric::odeint::make_controlled<S>(AbsTol, RelTol),
-//			systemFunction_,
-//			initialState,
-//			startTime,
-//			finalTime,
-//			dtInitial,
-//			BASE::observer_.observeWrap,
-//			*maxStepCheckerPtr_);
-//
-//#else
 	boost::numeric::odeint::integrate_adaptive(
 			boost::numeric::odeint::make_controlled<S>(AbsTol, RelTol),
 			systemFunction_,
@@ -215,7 +198,6 @@ typename std::enable_if<std::is_same<S, runge_kutta_dopri5_t<STATE_DIM>>::value,
 			finalTime,
 			dtInitial,
 			BASE::observer_.observeWrap);
-//#endif
 }
 
 /******************************************************************************************************/
@@ -231,18 +213,7 @@ typename std::enable_if<!std::is_same<S, runge_kutta_dopri5_t<STATE_DIM>>::value
 		scalar_t dtInitial,
 		scalar_t AbsTol,
 		scalar_t RelTol) {
-//#if (BOOST_VERSION / 100000 == 1 && BOOST_VERSION / 100 % 1000 > 60)
-//	boost::numeric::odeint::integrate_adaptive(
-//			stepper_,
-//			systemFunction_,
-//			initialState,
-//			startTime,
-//			finalTime,
-//			dtInitial,
-//			BASE::observer_.observeWrap,
-//			*maxStepCheckerPtr_);
-//
-//#else
+
 	boost::numeric::odeint::integrate_adaptive(
 			stepper_,
 			systemFunction_,
@@ -251,7 +222,6 @@ typename std::enable_if<!std::is_same<S, runge_kutta_dopri5_t<STATE_DIM>>::value
 			finalTime,
 			dtInitial,
 			BASE::observer_.observeWrap);
-//#endif
 }
 
 /******************************************************************************************************/

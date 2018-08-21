@@ -78,7 +78,10 @@ public:
 	/**
 	 * Default constructor.
 	 */
-	SequentialRiccatiEquations(const bool& useMakePSD, const scalar_t& addedRiccatiDiagonal)
+	SequentialRiccatiEquations(
+			const bool& useMakePSD,
+			const scalar_t& addedRiccatiDiagonal)
+
 	: useMakePSD_(useMakePSD)
 	, addedRiccatiDiagonal_(addedRiccatiDiagonal)
 	, Sm_(state_matrix_t::Zero())

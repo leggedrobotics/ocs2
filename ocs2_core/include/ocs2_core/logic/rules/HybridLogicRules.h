@@ -39,21 +39,22 @@ namespace ocs2{
  *
  */
 template <typename scalar_t = double>
-class ModeSequenceTemplate
+struct ModeSequenceTemplate
 {
-public:
 	ModeSequenceTemplate()
 	: templateSwitchingTimes_(0),
 	  templateSubsystemsSequence_(0)
 	{}
 
 	/**
-	 * Defined as [t_0=0, t_1, .., t_n, t_(n+1)=T], where T is the overall duration of the template logic. t_1 to t_n are the event moments.
+	 * Defined as [t_0=0, t_1, .., t_n, t_(n+1)=T], where T is the overall duration
+	 * of the template logic. t_1 to t_n are the event moments.
 	 */
 	std::vector<scalar_t> templateSwitchingTimes_;
 
 	/**
-	 * Defined as [sys_0, sys_n], are the switching systems IDs. Here sys_i is active in period [t_i, t_(i+1)]
+	 * Defined as [sys_0, sys_n], are the switching systems IDs. Here sys_i is
+	 * active in period [t_i, t_(i+1)]
 	 */
 	std::vector<size_t> templateSubsystemsSequence_;
 

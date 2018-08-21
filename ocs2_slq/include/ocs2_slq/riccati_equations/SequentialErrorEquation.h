@@ -61,8 +61,12 @@ public:
 	/**
 	 * Default constructor.
 	 */
-	SequentialErrorEquation(const bool& useMakePSD, const scalar_t& addedRiccatiDiagonal)
-	: useMakePSD_(useMakePSD), addedRiccatiDiagonal_(addedRiccatiDiagonal)
+	SequentialErrorEquation(
+			const bool& useMakePSD,
+			const scalar_t& addedRiccatiDiagonal)
+
+	: useMakePSD_(useMakePSD)
+	, addedRiccatiDiagonal_(addedRiccatiDiagonal)
 	{}
 
 	/**

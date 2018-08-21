@@ -80,8 +80,12 @@ public:
 	/**
 	 * Default constructor.
 	 */
-	BVPEquations(const bool& useMakePSD, const scalar_t& addedRiccatiDiagonal)
-	: useMakePSD_(useMakePSD), addedRiccatiDiagonal_(addedRiccatiDiagonal)
+	BVPEquations(
+			const bool& useMakePSD,
+			const scalar_t& addedRiccatiDiagonal)
+
+	: useMakePSD_(useMakePSD)
+	, addedRiccatiDiagonal_(addedRiccatiDiagonal)
 	{}
 
 	/**

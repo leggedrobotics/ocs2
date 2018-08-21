@@ -85,7 +85,10 @@ public:
 	/**
 	 * Default constructor.
 	 */
-	SLQ_RiccatiEquationsNormalized(const bool& useMakePSD, const scalar_t& addedRiccatiDiagonal)
+	SLQ_RiccatiEquationsNormalized(
+			const bool& useMakePSD,
+			const scalar_t& addedRiccatiDiagonal)
+
 	: useMakePSD_(useMakePSD)
 	, addedRiccatiDiagonal_(addedRiccatiDiagonal)
 	, switchingTimeStart_(0.0)

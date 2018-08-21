@@ -104,70 +104,70 @@ endif()
 ## Quadrotor ##
 ###############
 
-add_executable(quadrotor_mpc 
-  src/quadrotor/QuadrotorInterface.cpp
-  src/quadrotor/MPC_Quadrotor_Node.cpp
-)
-add_dependencies(quadrotor_mpc
-  ${catkin_EXPORTED_TARGETS}
-)
-target_link_libraries(quadrotor_mpc
-  ${catkin_LIBRARIES}
-  ${Boost_LIBRARIES}
-)
-
-add_executable(quadrotor_dummy_test
-  src/quadrotor/QuadrotorInterface.cpp
-  src/quadrotor/Dummy_Quadrotor_Node.cpp
-)
-add_dependencies(quadrotor_dummy_test
-  ${catkin_EXPORTED_TARGETS}
-)
-target_link_libraries(quadrotor_dummy_test
-  ${catkin_LIBRARIES}
-  ${Boost_LIBRARIES}
-)
-
-add_executable(quadrotor_target
-  src/quadrotor/QuadrotorTargetPoseCommand.cpp
-)
-add_dependencies(quadrotor_target
-  ${catkin_EXPORTED_TARGETS}
-)
-target_link_libraries(quadrotor_target
-  ${catkin_LIBRARIES}
-  ${Boost_LIBRARIES}
-)
+#add_executable(quadrotor_mpc
+#  src/quadrotor/QuadrotorInterface.cpp
+#  src/quadrotor/MPC_Quadrotor_Node.cpp
+#)
+#add_dependencies(quadrotor_mpc
+#  ${catkin_EXPORTED_TARGETS}
+#)
+#target_link_libraries(quadrotor_mpc
+#  ${catkin_LIBRARIES}
+#  ${Boost_LIBRARIES}
+#)
+#
+#add_executable(quadrotor_dummy_test
+#  src/quadrotor/QuadrotorInterface.cpp
+#  src/quadrotor/Dummy_Quadrotor_Node.cpp
+#)
+#add_dependencies(quadrotor_dummy_test
+#  ${catkin_EXPORTED_TARGETS}
+#)
+#target_link_libraries(quadrotor_dummy_test
+#  ${catkin_LIBRARIES}
+#  ${Boost_LIBRARIES}
+#)
+#
+#add_executable(quadrotor_target
+#  src/quadrotor/QuadrotorTargetPoseCommand.cpp
+#)
+#add_dependencies(quadrotor_target
+#  ${catkin_EXPORTED_TARGETS}
+#)
+#target_link_libraries(quadrotor_target
+#  ${catkin_LIBRARIES}
+#  ${Boost_LIBRARIES}
+#)
 
 #############
 ## Ballbot ##
 #############
 
-add_executable(ballbot_mpc 
-  src/ballbot/BallbotInterface.cpp
-  src/ballbot/MPC_Ballbot_Node.cpp
-)
-add_dependencies(ballbot_mpc
-  ${catkin_EXPORTED_TARGETS}
-)
-target_link_libraries(ballbot_mpc
-  ${catkin_LIBRARIES}
-  ${Boost_LIBRARIES}
-  dl
-)
-
-add_executable(ballbot_dummy_test
-  src/ballbot/BallbotInterface.cpp
-  src/ballbot/Dummy_Ballbot_Node.cpp
-)
-add_dependencies(ballbot_dummy_test
-  ${catkin_EXPORTED_TARGETS}
-)
-target_link_libraries(ballbot_dummy_test
-  ${catkin_LIBRARIES}
-  ${Boost_LIBRARIES}
-  dl
-)
+#add_executable(ballbot_mpc
+#  src/ballbot/BallbotInterface.cpp
+#  src/ballbot/MPC_Ballbot_Node.cpp
+#)
+#add_dependencies(ballbot_mpc
+#  ${catkin_EXPORTED_TARGETS}
+#)
+#target_link_libraries(ballbot_mpc
+#  ${catkin_LIBRARIES}
+#  ${Boost_LIBRARIES}
+#  dl
+#)
+#
+#add_executable(ballbot_dummy_test
+#  src/ballbot/BallbotInterface.cpp
+#  src/ballbot/Dummy_Ballbot_Node.cpp
+#)
+#add_dependencies(ballbot_dummy_test
+#  ${catkin_EXPORTED_TARGETS}
+#)
+#target_link_libraries(ballbot_dummy_test
+#  ${catkin_LIBRARIES}
+#  ${Boost_LIBRARIES}
+#  dl
+#)
 
 #add_executable(ballbot_target
 #  src/ballbot/BallbotTargetPoseCommand.cpp

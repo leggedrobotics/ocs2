@@ -75,7 +75,7 @@ public:
 	, simulationIsConstrained_(false)
 	, noStateConstraints_(false)
 	, useMakePSD_(true)
-
+	, addedRiccatiDiagonal_(1e-5)
 	, displayGradientDescent_(false)		// GSLQ
 	, tolGradientDescent_(1e-2)				// GSLQ
 	, acceptableTolGradientDescent_(1e-1)	// GSLQ
@@ -171,6 +171,8 @@ public:
 
 	/** If true SLQ makes sure that PSD matrices remain PSD which increases the numerical stability at the expense of extra computation.*/
 	bool useMakePSD_;
+	/** Add diagonal term to riccati backward pass for numerical stability */
+	double addedRiccatiDiagonal_;
 
 	/** This value determines to display the log output of GSLQ. */
 	bool displayGradientDescent_;
@@ -389,6 +391,14 @@ inline void SLQ_Settings::loadSettings(const std::string& filename, bool verbose
 	}
 	catch (const std::exception& e){
 		if (verbose)  std::cerr << " #### Option loader : option 'useMakePSD' .......................... " << useMakePSD_ << "   \t(default)" << std::endl;
+	}
+
+	try	{
+		addedRiccatiDiagonal_ = pt.get<double>("slq.addedRiccatiDiagonal");
+		if (verbose)  std::cerr << " #### Option loader : option 'addedRiccatiDiagonal' ................ " << addedRiccatiDiagonal_ << std::endl;
+	}
+	catch (const std::exception& e){
+		if (verbose)  std::cerr << " #### Option loader : option 'addedRiccatiDiagonal' ................ " << addedRiccatiDiagonal_ << "   \t(default)" << std::endl;
 	}
 
 	try	{

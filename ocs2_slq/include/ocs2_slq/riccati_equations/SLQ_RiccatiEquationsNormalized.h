@@ -85,8 +85,9 @@ public:
 	/**
 	 * Default constructor.
 	 */
-	SLQ_RiccatiEquationsNormalized(const bool& useMakePSD)
+	SLQ_RiccatiEquationsNormalized(const bool& useMakePSD, const scalar_t& addedRiccatiDiagonal)
 	: useMakePSD_(useMakePSD)
+	, addedRiccatiDiagonal_(addedRiccatiDiagonal)
 	, switchingTimeStart_(0.0)
 	, switchingTimeFinal_(1.0)
 	, scalingFactor_(1.0)
@@ -331,7 +332,7 @@ public:
 		if(useMakePSD_==true)
 			bool hasNegativeEigenValue = makePSD(Sm_);
 		else
-			Sm_ += state_matrix_t::Identity()*(1e-5);
+			Sm_ += state_matrix_t::Identity()*(addedRiccatiDiagonal_);
 
 		AmFunc_.interpolate(t, Am_);
 		size_t greatestLessTimeStampIndex = AmFunc_.getGreatestLessTimeStampIndex();
@@ -435,6 +436,7 @@ protected:
 
 private:
 	bool useMakePSD_;
+	scalar_t addedRiccatiDiagonal_;
 	scalar_t switchingTimeStart_;
 	scalar_t switchingTimeFinal_;
 	scalar_t scalingFactor_;

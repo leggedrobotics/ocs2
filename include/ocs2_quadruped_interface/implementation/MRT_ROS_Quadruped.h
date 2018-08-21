@@ -275,8 +275,8 @@ void MRT_ROS_Quadruped<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::computePlan(
 		vector_3d_array_t o_contactForces;
 		computeFeetState(stateRef_, inputRef_, o_feetPositionRef, o_feetVelocityRef, o_contactForces);
 
-		// One dt ahead
-		const scalar_t dt = 1.0/400.0;
+		// One dt ahead, derive lookahead difference between two calls, protected by 0.001 minimum
+		const scalar_t dt = std::max(0.001, time - prev_time_);
 		state_vector_t stateRef_ahead_;
 		input_vector_t inputRef_ahead_;
 		BASE::mpcLinInterpolateState_.interpolate(time+dt, stateRef_ahead_);
@@ -286,7 +286,7 @@ void MRT_ROS_Quadruped<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::computePlan(
 		computeFeetState(stateRef_ahead_, inputRef_ahead_, o_feetPositionRef_ahead, o_feetVelocityRef_ahead, o_contactForces_ahead);
 
 		for (size_t j=0; j<4; j++) {
-			o_feetAccelerationRef[j] = (o_feetVelocityRef_ahead[j]-o_feetVelocityRef[j]) / (dt);
+			o_feetAccelerationRef[j] = (o_feetVelocityRef_ahead[j]-o_feetVelocityRef[j]) / dt;
 		}
 		prev_time_ = time;
 		prev_o_feetVelocityRef_ = o_feetVelocityRef;

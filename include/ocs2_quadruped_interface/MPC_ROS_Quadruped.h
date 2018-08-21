@@ -133,6 +133,7 @@ protected:
 	quadruped_interface_ptr_t ocs2QuadrupedInterfacePtr_;
 
 	state_vector_t initState_;
+	rbd_state_vector_t defaultConfiguration_;
 	input_vector_t initInput_;
 
 };

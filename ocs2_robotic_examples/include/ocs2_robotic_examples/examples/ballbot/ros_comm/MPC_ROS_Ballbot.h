@@ -37,7 +37,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 namespace ocs2 {
 namespace ballbot {
 
-
 class MPC_ROS_Ballbot : public ocs2::MPC_ROS_Interface<ballbot::STATE_DIM_, ballbot::INPUT_DIM_>
 {
 public:
@@ -101,12 +100,63 @@ public:
 		costDesiredTrajectories.desiredTimeTrajectory().at(0) = 0.0;
 		costDesiredTrajectories.desiredTimeTrajectory().at(1) = 1.0;
 		costDesiredTrajectories.desiredStateTrajectory().resize(2);
-		costDesiredTrajectories.desiredStateTrajectory().at(0) = state_vector_t::Zero();
-		costDesiredTrajectories.desiredStateTrajectory().at(1) = state_vector_t::Zero();
+		costDesiredTrajectories.desiredStateTrajectory().at(0) = initObservation.state();
+		costDesiredTrajectories.desiredStateTrajectory().at(1) = initObservation.state();
+		costDesiredTrajectories.desiredStateTrajectory().at(1).tail<5>().setZero();
 		costDesiredTrajectories.desiredInputTrajectory().resize(2);
 		costDesiredTrajectories.desiredInputTrajectory().at(0) = input_vector_t::Zero();
 		costDesiredTrajectories.desiredInputTrajectory().at(1) = input_vector_t::Zero();
 	}
+
+	/**
+	 * Adjusts the user-defined target trajectories for the cost based on the current observation.
+	 *
+	 * @param [in] currentObservation: The current observation.
+	 * @param costDesiredTrajectories: The received user-defined target trajectories which can be modified
+	 * based on the current observation.
+	 */
+	void adjustTargetTrajectories(
+			const system_observation_t& currentObservation,
+			cost_desired_trajectories_t& costDesiredTrajectories) final {
+
+		// Received command
+		const Eigen::Matrix<scalar_t, 3, 1> targetPoseDisplacement =
+				costDesiredTrajectories.desiredStateTrajectory().front().head<3>();
+		const Eigen::Matrix<scalar_t, 3, 1> targetVelocity =
+				costDesiredTrajectories.desiredStateTrajectory().front().tail<3>();
+
+		// Target reaching duration
+		const scalar_t averageSpeed = 2.0;
+		scalar_t targetReachingDuration1 = targetPoseDisplacement.norm() / averageSpeed;
+		const scalar_t averageAcceleration = 10.0;
+		scalar_t targetReachingDuration2 = targetVelocity.norm() / averageAcceleration;
+		scalar_t targetReachingDuration = std::max(targetReachingDuration1, targetReachingDuration2);
+
+		// Desired time trajectory
+		scalar_array_t& tDesiredTrajectory = costDesiredTrajectories.desiredTimeTrajectory();
+		tDesiredTrajectory.resize(2);
+		tDesiredTrajectory[0] = currentObservation.time();
+		tDesiredTrajectory[1] = currentObservation.time() + targetReachingDuration;
+
+		// Desired state trajectory
+		typename cost_desired_trajectories_t::dynamic_vector_array_t& xDesiredTrajectory =
+				costDesiredTrajectories.desiredStateTrajectory();
+		xDesiredTrajectory.resize(2);
+		xDesiredTrajectory[0] = currentObservation.state();
+		xDesiredTrajectory[1] = currentObservation.state();
+		xDesiredTrajectory[1].head<3>() += targetPoseDisplacement;
+		xDesiredTrajectory[1].tail<5>() << targetVelocity, 0.0, 0.0;
+
+		// Desired input trajectory
+		typename cost_desired_trajectories_t::dynamic_vector_array_t& uDesiredTrajectory =
+				costDesiredTrajectories.desiredInputTrajectory();
+		uDesiredTrajectory.resize(2);
+		uDesiredTrajectory[0] = input_vector_t::Zero();
+		uDesiredTrajectory[1] = input_vector_t::Zero();
+	}
+
+private:
+
 };
 
 } // namespace ballbot

@@ -169,44 +169,44 @@ target_link_libraries(ballbot_dummy_test
   dl
 )
 
-#add_executable(ballbot_target
-#  src/ballbot/BallbotTargetPoseCommand.cpp
-#)
-#add_dependencies(ballbot_target
-#  ${catkin_EXPORTED_TARGETS}
-#)
-#target_link_libraries(ballbot_target
-#  ${catkin_LIBRARIES}
-#  ${Boost_LIBRARIES}
-#)
+add_executable(ballbot_target
+  src/ballbot/BallbotTargetPoseCommand.cpp
+)
+add_dependencies(ballbot_target
+  ${catkin_EXPORTED_TARGETS}
+)
+target_link_libraries(ballbot_target
+  ${catkin_LIBRARIES}
+  ${Boost_LIBRARIES}
+)
 
 ###############
 ## Cart Pole ##
 ###############
 
-#add_executable(cartpole_mpc
-#  src/cart_pole/CartPoleInterface.cpp
-#  src/cart_pole/MPC_Cartpole_Node.cpp
-#)
-#add_dependencies(cartpole_mpc
-#  ${catkin_EXPORTED_TARGETS}
-#)
-#target_link_libraries(cartpole_mpc
-#  ${catkin_LIBRARIES}
-#  ${Boost_LIBRARIES}
-#  dl
-#)
-#
-#add_executable(cartpole_dummy_test
-#  src/cart_pole/CartPoleInterface.cpp
-#  src/cart_pole/Dummy_Cartpole_Node.cpp
-#)
-#add_dependencies(cartpole_dummy_test
-#  ${catkin_EXPORTED_TARGETS}
-#)
-#target_link_libraries(cartpole_dummy_test
-#  ${catkin_LIBRARIES}
-#  ${Boost_LIBRARIES}
-#  dl
-#)
+add_executable(cartpole_mpc
+  src/cart_pole/CartPoleInterface.cpp
+  src/cart_pole/MPC_Cartpole_Node.cpp
+)
+add_dependencies(cartpole_mpc
+  ${catkin_EXPORTED_TARGETS}
+)
+target_link_libraries(cartpole_mpc
+  ${catkin_LIBRARIES}
+  ${Boost_LIBRARIES}
+  dl
+)
+
+add_executable(cartpole_dummy_test
+  src/cart_pole/CartPoleInterface.cpp
+  src/cart_pole/Dummy_Cartpole_Node.cpp
+)
+add_dependencies(cartpole_dummy_test
+  ${catkin_EXPORTED_TARGETS}
+)
+target_link_libraries(cartpole_dummy_test
+  ${catkin_LIBRARIES}
+  ${Boost_LIBRARIES}
+  dl
+)
 

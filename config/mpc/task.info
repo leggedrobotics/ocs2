@@ -1,7 +1,7 @@
 
 mpcTimeHorizon
 {
-    timehorizon        1.0		; 1.2		; 0.8
+    timehorizon        0.8		; 1.2		; 0.8
     numPartitions      5
 }
 
@@ -28,7 +28,8 @@ model_settings
   impulseWeight                 0.0
   impulseSigmeFactor            0.1
 
-  strideTime                    0.0		; 0.8
+  mpcGoalCommandDelay           0.1
+  strideTime                    0.4		; 0.8
   mpcStrideLength               0.2
   numPhasesInfullGaitCycle      2
   useFeetTrajectoryFiltering    0
@@ -93,6 +94,7 @@ slq
   RelTolODE                   	1e-3  ;1e-4
   minTimeStep					1e-3
   useMakePSD					0
+  addedRiccatiDiagonal          1e-5
   maxNumStepsPerSecond         	50000
   simulationIsConstrained      	0
   noStateConstraints			0
@@ -159,21 +161,21 @@ initialRobotState
    ; position
    (3,0) 0.0     ; x
    (4,0) 0.0     ; y
-   (5,0) 0.534   ; z
+   (5,0) 0.4792  ; z
 
    ; joint state
-   (6,0)  -0.10501243337598698	; -0.1; -0.2      ; LF_HAA
-   (7,0)  0.7052973340502477	;  0.7;  0.723    ; LF_HFE
-   (8,0)  -1.122424036239878	; -1.0; -1.458    ; LF_KFE
-   (9,0)  0.123904388311189		;  0.1; -0.2      ; RF_HAA
-   (10,0) 0.7113821356379191	;  0.7;  0.723    ; RF_HFE
-   (11,0) -1.1189459556780335	; -1.0; -1.458    ; RF_KFE
-   (12,0) -0.10267170463831601	; -0.1; -0.2      ; LH_HAA
-   (13,0) -0.7265281050373982	; -0.7; -0.723    ; LH_HFE
-   (14,0) 1.0732212277843365	;  1.0;  1.458    ; LH_KFE
-   (15,0) 0.1029933784607886	;  0.1; -0.2      ; RH_HAA
-   (16,0) -0.7257066015028716	; -0.7; -0.723    ; RH_HFE
-   (17,0) 1.056909755891748		;  1.0;  1.458    ; RH_KFE
+   (6,0)  -0.1; -0.2      ; LF_HAA
+   (7,0)  0.7;  0.723    ; LF_HFE
+   (8,0)  -1.0; -1.458    ; LF_KFE
+   (9,0)  0.1; -0.2      ; RF_HAA
+   (10,0) 0.7;  0.723    ; RF_HFE
+   (11,0) -1.0; -1.458    ; RF_KFE
+   (12,0) -0.1; -0.2      ; LH_HAA
+   (13,0) -0.7; -0.723    ; LH_HFE
+   (14,0) 1.0;  1.458    ; LH_KFE
+   (15,0) 0.1; -0.2      ; RH_HAA
+   (16,0) -0.7; -0.723    ; RH_HFE
+   (17,0) 1.0;  1.458    ; RH_KFE
 
 
    ; angular velocity
@@ -230,22 +232,22 @@ Q
    ; LF joints
    (12,12) 100.0    ; LF_HAA
    (13,13) 100.0    ; LF_HFE
-   (14,14) 100.0    ; LF_KFE
+   (14,14) 50.0    ; LF_KFE
 
    ; RF joints
    (15,15) 100.0    ; RF_HAA
    (16,16) 100.0    ; RF_HFE
-   (17,17) 100.0    ; RF_KFE
+   (17,17) 50.0    ; RF_KFE
 
    ; LH joints
    (18,18) 100.0    ; LH_HAA
    (19,19) 100.0    ; LH_HFE
-   (20,20) 100.0    ; LH_KFE
+   (20,20) 50.0    ; LH_KFE
 
    ; RH joints
    (21,21) 100.0    ; RH_HAA
    (22,22) 100.0    ; RH_HFE
-   (23,23) 100.0    ; RH_KFE
+   (23,23) 50.0    ; RH_KFE
 }
 
 
@@ -278,22 +280,22 @@ R
    ; LF joint velocities
    (12,12) 1500   ; LF_HAA
    (13,13) 1000   ; LF_HFE
-   (14,14) 1000   ; LF_KFE
+   (14,14) 500   ; LF_KFE
 
    ; RF joint velocities
    (15,15) 1500    ; RF_HAA
    (16,16) 1000    ; RF_HFE
-   (17,17) 1000    ; RF_KFE
+   (17,17) 500    ; RF_KFE
 
    ; LH joint velocities
    (18,18) 1500    ; LH_HAA
    (19,19) 1000    ; LH_HFE
-   (20,20) 1000    ; LH_KFE
+   (20,20) 500    ; LH_KFE
 
    ; RH joint velocities
    (21,21) 1500    ; RH_HAA
    (22,22) 1000    ; RH_HFE
-   (23,23) 1000    ; RH_KFE
+   (23,23) 500    ; RH_KFE
 }
 
 

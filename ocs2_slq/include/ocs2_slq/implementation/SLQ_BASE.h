@@ -161,15 +161,21 @@ SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::SLQ_BASE(
 
 		typedef Eigen::aligned_allocator<riccati_equations_t> riccati_equations_alloc_t;
 		riccatiEquationsPtrStock_.push_back( std::move(
-				std::allocate_shared<riccati_equations_t, riccati_equations_alloc_t>(riccati_equations_alloc_t(), settings_.useMakePSD_) ) );
+				std::allocate_shared<riccati_equations_t, riccati_equations_alloc_t>(riccati_equations_alloc_t(),
+																																						 settings_.useMakePSD_,
+																																						 settings_.addedRiccatiDiagonal_) ) );
 
 		typedef Eigen::aligned_allocator<error_equation_t> error_equation_alloc_t;
 		errorEquationPtrStock_.push_back( std::move(
-				std::allocate_shared<error_equation_t, error_equation_alloc_t>(error_equation_alloc_t(), settings_.useMakePSD_) ) );
+				std::allocate_shared<error_equation_t, error_equation_alloc_t>(error_equation_alloc_t(),
+																																			 settings_.useMakePSD_,
+																																			 settings_.addedRiccatiDiagonal_) ) );
 
 		typedef Eigen::aligned_allocator<slq_riccati_equations_t> slq_riccati_equations_alloc_t;
 		slqRiccatiEquationsPtrStock_.push_back( std::move(
-				std::allocate_shared<slq_riccati_equations_t, slq_riccati_equations_alloc_t>(slq_riccati_equations_alloc_t(), settings_.useMakePSD_) ) );
+				std::allocate_shared<slq_riccati_equations_t, slq_riccati_equations_alloc_t>(slq_riccati_equations_alloc_t(),
+																																										 settings_.useMakePSD_,
+																																										 settings_.addedRiccatiDiagonal_) ) );
 
 		switch(settings_.RiccatiIntegratorType_) {
 

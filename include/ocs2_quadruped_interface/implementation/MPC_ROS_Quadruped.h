@@ -134,9 +134,9 @@ void MPC_ROS_Quadruped<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::targetPoseToDesi
 
 	xDesiredTrajectory[1].resize(STATE_DIM);
 	xDesiredTrajectory[1].setZero();
-	xDesiredTrajectory[1].template segment<3>(0) = defaultConfiguration_. template segment<3>(0)   + targetPoseDisplacement.template segment<3>(0);
+	xDesiredTrajectory[1].template segment<3>(0) = initState_. template segment<3>(0)   + targetPoseDisplacement.template segment<3>(0);
 	xDesiredTrajectory[1].template segment<2>(3) = currentState. template segment<2>(3) + targetPoseDisplacement.template segment<2>(3);
-	xDesiredTrajectory[1].template segment<1>(5) = defaultConfiguration_. template segment<1>(5)   + targetPoseDisplacement.template segment<1>(5);
+	xDesiredTrajectory[1].template segment<1>(5) = initState_. template segment<1>(5)   + targetPoseDisplacement.template segment<1>(5);
 	xDesiredTrajectory[1].template segment<6>(6) = targetVelocity;
 	xDesiredTrajectory[1].template segment<12>(12) = defaultConfiguration_.template segment<12>(6);
 

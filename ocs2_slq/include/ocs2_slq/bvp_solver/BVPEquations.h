@@ -80,8 +80,8 @@ public:
 	/**
 	 * Default constructor.
 	 */
-	BVPEquations(const bool& useMakePSD)
-	: useMakePSD_(useMakePSD)
+	BVPEquations(const bool& useMakePSD, const scalar_t& addedRiccatiDiagonal)
+	: useMakePSD_(useMakePSD), addedRiccatiDiagonal_(addedRiccatiDiagonal)
 	{}
 
 	/**
@@ -202,7 +202,7 @@ public:
 		if (useMakePSD_==true)
 			bool hasNegativeEigenValue = makePSD(Mm_);
 		else
-			Mm_ += state_state_matrix_t::Identity()*(1e-5);
+			Mm_ += state_state_matrix_t::Identity()*(addedRiccatiDiagonal_);
 
 		AmFunc_.interpolate(t, Am_);
 		size_t greatestLessTimeStampIndex = AmFunc_.getGreatestLessTimeStampIndex();
@@ -264,6 +264,7 @@ public:
 
 private:
 	bool useMakePSD_;
+	scalar_t addedRiccatiDiagonal_;
 	scalar_t startTime_;
 	scalar_t finalTime_;
 

@@ -37,24 +37,26 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 namespace ocs2{
 
-template <int DOMAIN_DIM, int RANGE_DIM, typename SCALAR_T=double>
-class CppAdCodeGenInterface : public AutomaticDifferentiationBase<DOMAIN_DIM, RANGE_DIM, SCALAR_T>
+template <int DOMAIN_DIM, int RANGE_DIM, typename SCALAR_T=double, int VARIABLE_DIM=DOMAIN_DIM>
+class CppAdCodeGenInterface : public AutomaticDifferentiationBase<DOMAIN_DIM, RANGE_DIM, SCALAR_T, VARIABLE_DIM>
 {
 public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-	typedef AutomaticDifferentiationBase<DOMAIN_DIM, RANGE_DIM, SCALAR_T> BASE;
+	typedef AutomaticDifferentiationBase<DOMAIN_DIM, RANGE_DIM, SCALAR_T, VARIABLE_DIM> BASE;
 
-	typedef typename BASE::domain_vector_t			domain_vector_t;
-	typedef typename BASE::domain_matrix_t			domain_matrix_t;
-	typedef typename BASE::range_vector_t			range_vector_t;
-	typedef typename BASE::range_matrix_t			range_matrix_t;
-	typedef typename BASE::range_domain_matrix_t	range_domain_matrix_t;
-	typedef typename BASE::domain_range_matrix_t	domain_range_matrix_t;
+	typedef typename BASE::domain_vector_t       domain_vector_t;
+	typedef typename BASE::domain_matrix_t       domain_matrix_t;
+	typedef typename BASE::range_vector_t        range_vector_t;
+	typedef typename BASE::range_matrix_t        range_matrix_t;
+	typedef typename BASE::variable_vector_t     variable_vector_t;
+	typedef typename BASE::variable_matrix_t     variable_matrix_t;
+	typedef typename BASE::range_domain_matrix_t range_domain_matrix_t;
+	typedef typename BASE::domain_range_matrix_t domain_range_matrix_t;
 
-	typedef CppAD::cg::CG<SCALAR_T> 	ad_base_t;
-    typedef CppAD::AD<ad_base_t> 		ad_scalar_t;
-    typedef CppAD::ADFun<ad_base_t> 	ad_fun_t;
+	typedef CppAD::cg::CG<SCALAR_T> ad_base_t;
+    typedef CppAD::AD<ad_base_t>    ad_scalar_t;
+    typedef CppAD::ADFun<ad_base_t> ad_fun_t;
 
     typedef Eigen::Matrix<ad_scalar_t, Eigen::Dynamic, 1> ad_dynamic_vector_t;
     typedef std::function<void(const ad_dynamic_vector_t&, ad_dynamic_vector_t&)> ad_funtion_t;
@@ -64,8 +66,9 @@ public:
 			const range_domain_matrix_t& sparsityPattern);
 
 	CppAdCodeGenInterface(
-			const int& domainDim,
-			const int& rangeDim,
+			int domainDim,
+			int rangeDim,
+			int variableDim,
 			const ad_funtion_t& adFunction,
 			const range_domain_matrix_t& sparsityPattern);
 
@@ -113,7 +116,7 @@ public:
 
 	bool getHessian(
 			const domain_vector_t& x,
-			domain_matrix_t& hessian,
+			variable_matrix_t& hessian,
 			size_t outputIndex=0) override;
 
 
@@ -160,13 +163,14 @@ private:
 	std::vector<size_t> colsJacobian_;
 	std::vector<size_t> rowsHessian_;
 	std::vector<size_t> colsHessian_;
+	std::vector<size_t> zeroCountHessian_;
 	std::vector<std::set<size_t> > relatedDependent_;
 
 	CppAD::cg::GccCompiler<SCALAR_T> compiler_;
     std::unique_ptr<CppAD::cg::DynamicLib<SCALAR_T>> dynamicLib_;
     std::unique_ptr<CppAD::cg::GenericModel<SCALAR_T>> model_;
 
-    range_vector_t hessianWeight_;
+    std::vector<SCALAR_T> hessianWeight_;
 
 };
 

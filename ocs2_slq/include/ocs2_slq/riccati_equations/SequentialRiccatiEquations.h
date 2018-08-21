@@ -78,8 +78,9 @@ public:
 	/**
 	 * Default constructor.
 	 */
-	SequentialRiccatiEquations(const bool& useMakePSD)
+	SequentialRiccatiEquations(const bool& useMakePSD, const scalar_t& addedRiccatiDiagonal)
 	: useMakePSD_(useMakePSD)
+	, addedRiccatiDiagonal_(addedRiccatiDiagonal)
 	, Sm_(state_matrix_t::Zero())
 	, Sv_(state_vector_t::Zero())
 	, s_ (eigen_scalar_t::Zero())
@@ -238,7 +239,7 @@ public:
 		if(useMakePSD_==true)
 			bool hasNegativeEigenValue = makePSD(Sm_);
 		else
-			Sm_ += state_matrix_t::Identity()*(1e-5);
+			Sm_ += state_matrix_t::Identity()*(addedRiccatiDiagonal_);
 
 		AmFunc_.interpolate(t, Am_);
 		size_t greatestLessTimeStampIndex = AmFunc_.getGreatestLessTimeStampIndex();
@@ -304,6 +305,7 @@ protected:
 
 private:
 	bool useMakePSD_;
+	scalar_t addedRiccatiDiagonal_;
 	scalar_t alpha_;
 
 	size_t activeSubsystem_;

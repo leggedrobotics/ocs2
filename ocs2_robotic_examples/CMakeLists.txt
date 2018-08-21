@@ -180,6 +180,47 @@ target_link_libraries(ballbot_target
   ${Boost_LIBRARIES}
 )
 
+#######################
+## Double Integrator ##
+#######################
+
+add_executable(double_integrator_mpc
+  src/double_integrator/DoubleIntegratorInterface.cpp
+  src/double_integrator/MPC_Double_Integrator_Node.cpp
+)
+add_dependencies(double_integrator_mpc
+  ${catkin_EXPORTED_TARGETS}
+)
+target_link_libraries(double_integrator_mpc
+  ${catkin_LIBRARIES}
+  ${Boost_LIBRARIES}
+  dl
+)
+
+add_executable(double_integrator_dummy_test
+  src/double_integrator/DoubleIntegratorInterface.cpp
+  src/double_integrator/Dummy_Double_Integrator_Node.cpp
+)
+add_dependencies(double_integrator_dummy_test
+  ${catkin_EXPORTED_TARGETS}
+)
+target_link_libraries(double_integrator_dummy_test
+  ${catkin_LIBRARIES}
+  ${Boost_LIBRARIES}
+  dl
+)
+
+add_executable(double_integrator_target
+  src/double_integrator/DoubleIntegratorTargetPoseCommand.cpp
+)
+add_dependencies(double_integrator_target
+  ${catkin_EXPORTED_TARGETS}
+)
+target_link_libraries(double_integrator_target
+  ${catkin_LIBRARIES}
+  ${Boost_LIBRARIES}
+)
+
 ###############
 ## Cart Pole ##
 ###############

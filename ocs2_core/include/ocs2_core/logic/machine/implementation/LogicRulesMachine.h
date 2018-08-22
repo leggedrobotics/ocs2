@@ -207,10 +207,7 @@ void LogicRulesMachine<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::updateLogicRules(
 
 	// adjust controller
 	if (logicRulesModified_==true && controllerStock.size()>0) {
-		// adjust controller
-		for (auto controllerItr=controllerStock.begin(); controllerItr!=controllerStock.end(); ++controllerItr)
-			if (controllerItr->time_.empty()==false)
-				this->getLogicRules().adjustController(*controllerItr);
+		this->getLogicRules().adjustController(controllerStock);
 	}
 
 	logicRulesModified_ = false;

@@ -90,12 +90,14 @@ public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
 	typedef LogicRulesBase<STATE_DIM, INPUT_DIM> BASE;
-
-	typedef typename BASE::size_array_t 		size_array_t;
-	typedef typename BASE::scalar_t 			scalar_t;
-	typedef typename BASE::scalar_array_t 		scalar_array_t;
-	typedef typename BASE::controller_t 		controller_t;
-	typedef typename BASE::controller_array_t 	controller_array_t;
+	typedef typename BASE::size_array_t          size_array_t;
+	typedef typename BASE::scalar_t              scalar_t;
+	typedef typename BASE::scalar_array_t        scalar_array_t;
+	typedef typename BASE::state_vector_t        state_vector_t;
+	typedef typename BASE::input_vector_t        input_vector_t;
+	typedef typename BASE::controller_t          controller_t;
+	typedef typename BASE::controller_array_t    controller_array_t;
+	typedef typename BASE::input_state_matrix_t  input_state_matrix_t;
 
 	typedef ModeSequenceTemplate<scalar_t> logic_template_type;
 
@@ -201,7 +203,8 @@ public:
 	 *
 	 * @param [in] modeSequenceTemplate: A data type which includes all necessary information for modifying the logicRules.
 	 */
-	virtual void setModeSequenceTemplate(const logic_template_type& modeSequenceTemplate) = 0;
+	virtual void setModeSequenceTemplate(
+			const logic_template_type& modeSequenceTemplate) = 0;
 
 	/**
 	 * Used in the SLQ-MPC method to insert a new user defined logic in the given time period.
@@ -229,9 +232,10 @@ public:
 	 * Adjusts controller. This method is called my the logicMachine whenever the logicRuls are updated.
 	 * It allows the user to modify the controller to adapt to the changes of logics.
 	 *
-	 * @param controller: Control policy which should be adjusted.
+	 * @param controllerStock: The control policy stock which will be modified.
 	 */
-	virtual void adjustController(controller_t& controller) const = 0;
+	virtual void adjustController(
+			controller_array_t& controllerStock) const = 0;
 
 	/**
 	 * This method can be used to update the internal variables. This method should be called by any

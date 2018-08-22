@@ -89,10 +89,10 @@ public:
 	NullLogicRules& operator=(const NullLogicRules& other) = default;
 
 	/**
-	 * Rewinds the class. This methid is only called in the MPC class.
+	 * Rewinds the class. This method is only called in the MPC class.
 	 *
 	 * @param [in] lowerBoundTime: The smallest time for which the logicRules should be defined.
-	 * @param [in] upperBoundTime: The greates time for which the logicRules should be defined.
+	 * @param [in] upperBoundTime: The greatest time for which the logicRules should be defined.
 	 */
 	virtual void rewind(
 			const scalar_t& lowerBoundTime,
@@ -100,17 +100,18 @@ public:
 	{}
 
 	/**
-	 * Adjusts controller. This methos is called my the logicMachine whenever the logicRuls are updated.
+	 * Adjusts controller. This method is called my the logicMachine whenever the logicRuls are updated.
 	 * Here no adjustments take place.
 	 *
-	 * @param controller: Control policy which should be adjusted.
+	 * @param controllerStock: The control policy stock which will be modified.
 	 */
-	virtual void adjustController(controller_t& controller) const override
+	virtual void adjustController(
+			controller_array_t& controllerStock) const override
 	{}
 
 	/**
 	 * This method can be used to update the internal variables. This method will be called by any
-	 * program that trys to update the logic rules variables.
+	 * program that tries to update the logic rules variables.
 	 */
 	virtual void update() override
 	{}
@@ -118,13 +119,13 @@ public:
 	/**
 	 * Used in the SLQ-MPC method to set the model sequence template.
 	 *
-	 * @param [in] modeSequenceTemplate: A dada type which includes all necessary information for modifying the logicRules.
+	 * @param [in] modeSequenceTemplate: A data type which includes all necessary information for modifying the logicRules.
 	 */
 	virtual void setModeSequenceTemplate(const logic_template_type& modeSequenceTemplate) override
 	{}
 
 	/**
-	 * Used in the SLQ-MPC method to inset a new user defined logic in the given time period.
+	 * Used in the SLQ-MPC method to insert a new user defined logic in the given time period.
 	 * Note: use the update method to at the end to update your derived class variables
 	 *
 	 * @param [in] startTime: The initial time from which the new logicRules template should be augmented.

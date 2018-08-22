@@ -212,7 +212,10 @@ void SwitchedModelLogicRulesBase<JOINT_COORD_SIZE,cpg_t,STATE_DIM,INPUT_DIM>::in
 	}
 
 	// add an intermediate stance phase
-	const scalar_t phaseTransitionStanceTime = 0.4;
+	scalar_t phaseTransitionStanceTime = 0.4;
+	if (BASE::subsystemsSequence_.size()>0 && BASE::subsystemsSequence_.back()==ModeNumber::STANCE)
+		phaseTransitionStanceTime = 0.0;
+
 	if (phaseTransitionStanceTime > 0.0) {
 		BASE::eventTimes_.push_back(startTime);
 		BASE::subsystemsSequence_.push_back(ModeNumber::STANCE);

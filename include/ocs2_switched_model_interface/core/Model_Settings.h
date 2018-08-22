@@ -28,6 +28,7 @@ public:
 	, mpcStrideLength_(0.35)
 	, numPhasesInfullGaitCycle_(4)
 	, useFeetTrajectoryFiltering_(true)
+	, feetFilterFrequency_(50.0)
 	{}
 
 	virtual ~Model_Settings() = default;
@@ -44,6 +45,7 @@ public:
 	double mpcStrideLength_;
 	size_t numPhasesInfullGaitCycle_;
 	bool useFeetTrajectoryFiltering_;
+	double feetFilterFrequency_;
 
 	double eps_ = 0.01;
 	double eta_ = 10.0;
@@ -155,6 +157,14 @@ inline void Model_Settings::loadSettings(const std::string& filename, bool verbo
 	}
 	catch (const std::exception& e){
 		if (verbose)  std::cerr << " #### useFeetTrajectoryFiltering ... " << useFeetTrajectoryFiltering_ << "\t(default)" << std::endl;
+	}
+
+	try {
+		feetFilterFrequency_ = pt.get<double>("model_settings.feetFilterFrequency");
+		if (verbose)  std::cerr << " #### feetFilterFrequency .......... " << feetFilterFrequency_ << std::endl;
+	}
+	catch (const std::exception& e){
+		if (verbose)  std::cerr << " #### feetFilterFrequency .......... " << feetFilterFrequency_ << "\t(default)" << std::endl;
 	}
 
 	try {

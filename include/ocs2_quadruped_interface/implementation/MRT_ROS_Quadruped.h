@@ -275,8 +275,8 @@ void MRT_ROS_Quadruped<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::computePlan(
 		vector_3d_array_t o_contactForces;
 		computeFeetState(stateRef_, inputRef_, o_feetPositionRef, o_feetVelocityRef, o_contactForces);
 
-		// One dt ahead, derive lookahead difference between two calls, protected by 0.001 minimum
-		const scalar_t dt = std::max(0.001, time - prev_time_);
+		// Look one dt ahead to obtain acceleration
+		const scalar_t dt = 1.0 / ocs2QuadrupedInterfacePtr_->modelSettings().feetFilterFrequency_;
 		state_vector_t stateRef_ahead_;
 		input_vector_t inputRef_ahead_;
 		BASE::mpcLinInterpolateState_.interpolate(time+dt, stateRef_ahead_);

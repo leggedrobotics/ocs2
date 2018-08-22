@@ -38,6 +38,120 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 using namespace ocs2;
 
+#include <algorithm>
+void adjustController(
+		const std::vector<double>& eventTimes,
+		Dimensions<2,1>::controller_array_t& controllerStock) {
+
+	// vector of (partition, index). -1 means end()
+	std::vector<std::pair<int,int>> eventsIndices(eventTimes.size(), std::pair<int,int>(-1, -1));
+
+	size_t indexStart = 0;
+	size_t p = 0; // partitionStart
+
+	for (size_t j=0; j<eventTimes.size(); j++) {
+
+		const Dimensions<2,1>::scalar_t& te = eventTimes[j];
+		std::pair<int,int>& ie = eventsIndices[j]; // (partition, index)
+
+		for (; p<controllerStock.size(); p++) {
+
+			auto beginItr = (j>0) ? controllerStock[p].time_.begin() + eventsIndices[j-1].second
+					: controllerStock[p].time_.begin();
+
+			auto lower = std::lower_bound(beginItr, controllerStock[p].time_.end(), te);
+
+			if (lower != controllerStock[p].time_.end()) {
+				ie.first = p;
+				ie.second = lower - controllerStock[p].time_.begin();
+				break;
+			}
+
+		} // end of p loop
+
+	} // end of j loop
+
+	std::vector<std::pair<int,int>> eventsIndicesOld(eventTimes.size(), std::pair<int,int>(-1, -1));
+	std::pair<int,int> expectedOldEventIndex = std::pair<int,int>(0, 0);
+	for (size_t j=0; j<eventTimes.size(); j++) {
+
+		// events before the controller start time
+		if (eventsIndices[j] == std::pair<int,int>(0,0)) {
+			eventsIndicesOld[j] = std::pair<int,int>(0, 0);
+			continue;
+		}
+		// events after the controller final time
+		if (eventsIndices[j] == std::pair<int,int>(-1,-1)) {
+			break;
+		}
+
+		for (size_t p=expectedOldEventIndex.first; p<controllerStock.size(); p++) {
+			for (size_t k=expectedOldEventIndex.second; k<controllerStock[p].time_.size()-1; k++) {
+
+				if (std::abs(controllerStock[p].time_[k]-controllerStock[p].time_[k+1]) < 1e-6) {
+					eventsIndicesOld[j] = expectedOldEventIndex;
+				}
+			} // end of k loop
+		} // end of p loop
+
+	} // end of j loop
+
+
+	for (size_t j=0; j<eventTimes.size(); j++) {
+
+		// events before the controller start time
+		if (eventsIndices[j] == std::pair<int,int>(0,0)) {
+			continue;
+		}
+		// events after the controller final time
+		if (eventsIndices[j] == std::pair<int,int>(-1,-1)) {
+			break;
+		}
+
+		std::pair<int,int> startIndex;
+		std::pair<int,int> finalIndex;
+		Dimensions<2,1>::input_vector_t uff;
+		Dimensions<2,1>::input_state_matrix_t K;
+
+		if (eventsIndices[j].first < eventsIndicesOld[j].first) {
+
+			startIndex = eventsIndices[j];
+			finalIndex = eventsIndicesOld[j];
+
+		} else if (eventsIndices[j].first > eventsIndicesOld[j].first) {
+
+			startIndex = eventsIndicesOld[j];
+			finalIndex = eventsIndices[j];
+
+		} else if (eventsIndices[j].first == eventsIndicesOld[j].first) {
+
+			startIndex.first = eventsIndices[j].first;
+			finalIndex.first = eventsIndices[j].first;
+
+			if (eventsIndices[j].second < eventsIndicesOld[j].second) {
+				uff = controllerStock[startIndex.first+1].uff_.front();
+				K = controllerStock[startIndex.first+1].k_.front();
+			} else {
+				uff = controllerStock[startIndex.first].uff_.back();
+				K = controllerStock[startIndex.first].k_.back();
+			}
+			startIndex.second = std::min(eventsIndices[j].second, eventsIndicesOld[j].second);
+			finalIndex.second = std::max(eventsIndices[j].second, eventsIndicesOld[j].second);
+		}
+
+
+		for (size_t i=startIndex.first; i<finalIndex.first; i++)
+			for (size_t k=startIndex.first; k<finalIndex.first; k++) {
+
+				controllerStock[i].k_[k] = K;
+				controllerStock[i].uff_[k] = uff;
+			}
+
+
+	} // end of j loop
+
+}
+
 enum
 {
 	STATE_DIM = 2,

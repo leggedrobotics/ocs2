@@ -81,11 +81,6 @@ public:
 		BASE::init(initObservation);
 	}
 
-	void initRobotStatePublisher(){
-
-
-	}
-
 	void updateTfPublisher(const system_observation_t& observation){
 
 		//compute positions of the markers based on system observation
@@ -94,49 +89,49 @@ public:
 		Eigen::Matrix3d rotationMatrixBaseToWorld;
 
 		quaternionBaseToWorld = Eigen::AngleAxisd{observation.state()(2), Eigen::Vector3d{0, 0, 1}}*
-						        Eigen::AngleAxisd{observation.state()(3), Eigen::Vector3d{0, 1, 0}}*
-								Eigen::AngleAxisd{observation.state()(4), Eigen::Vector3d{1, 0, 0}};
+				Eigen::AngleAxisd{observation.state()(3), Eigen::Vector3d{0, 1, 0}}*
+				Eigen::AngleAxisd{observation.state()(4), Eigen::Vector3d{1, 0, 0}};
 
 
 
-		rotationMatrixBaseToWorld = quaternionBaseToWorld.normalized().toRotationMatrix();
+				rotationMatrixBaseToWorld = quaternionBaseToWorld.normalized().toRotationMatrix();
 
-		positionWorldToBall << observation.state()(0), observation.state()(1), 0.125;
-
-
-		positionWorldToBase = positionWorldToBall + rotationMatrixBaseToWorld*Eigen::Vector3d(0.0, 0.0, 0.317);
-
-		positionWorldToArmBase = positionWorldToBall + rotationMatrixBaseToWorld*Eigen::Vector3d(0.0, 0.0, 0.317 + 0.266);
+				positionWorldToBall << observation.state()(0), observation.state()(1), 0.125;
 
 
-		// Broadcast transformation from rezero observation to robot base.
-		geometry_msgs::TransformStamped base_transform;
-		base_transform.header.frame_id = "odom";
-		base_transform.child_frame_id = "base";
-		base_transform.transform.translation.x = positionWorldToBase.x();
-	    base_transform.transform.translation.y = positionWorldToBase.y();
-		base_transform.transform.translation.z = positionWorldToBase.z();
-		// RViz wants orientationBaseToWorld:
-		base_transform.transform.rotation.w = quaternionBaseToWorld.w();
-		base_transform.transform.rotation.x = quaternionBaseToWorld.x();
-		base_transform.transform.rotation.y = quaternionBaseToWorld.y();
-		base_transform.transform.rotation.z = quaternionBaseToWorld.z();
+				positionWorldToBase = positionWorldToBall + rotationMatrixBaseToWorld*Eigen::Vector3d(0.0, 0.0, 0.317);
 
-		tfBroadcaster_.sendTransform(base_transform);
+				positionWorldToArmBase = positionWorldToBall + rotationMatrixBaseToWorld*Eigen::Vector3d(0.0, 0.0, 0.317 + 0.266);
 
-		// Broadcast transformation from rezero observation to robot ball
-		geometry_msgs::TransformStamped ball_transform;
-		ball_transform.header.frame_id = "base";
-		ball_transform.child_frame_id = "ball";
-		ball_transform.transform.translation.x = 0.0;
-	    ball_transform.transform.translation.y = 0.0;
-		ball_transform.transform.translation.z = -0.314;
-		ball_transform.transform.rotation.w = 1.0;
-		ball_transform.transform.rotation.x = 0.0;
-		ball_transform.transform.rotation.y = 0.0;
-		ball_transform.transform.rotation.z = 0.0;
 
-		tfBroadcaster_.sendTransform(ball_transform);
+				// Broadcast transformation from rezero observation to robot base.
+				geometry_msgs::TransformStamped base_transform;
+				base_transform.header.frame_id = "odom";
+				base_transform.child_frame_id = "base";
+				base_transform.transform.translation.x = positionWorldToBase.x();
+				base_transform.transform.translation.y = positionWorldToBase.y();
+				base_transform.transform.translation.z = positionWorldToBase.z();
+				// RViz wants orientationBaseToWorld:
+				base_transform.transform.rotation.w = quaternionBaseToWorld.w();
+				base_transform.transform.rotation.x = quaternionBaseToWorld.x();
+				base_transform.transform.rotation.y = quaternionBaseToWorld.y();
+				base_transform.transform.rotation.z = quaternionBaseToWorld.z();
+
+				tfBroadcaster_.sendTransform(base_transform);
+
+				// Broadcast transformation from rezero observation to robot ball
+				geometry_msgs::TransformStamped ball_transform;
+				ball_transform.header.frame_id = "base";
+				ball_transform.child_frame_id = "ball";
+				ball_transform.transform.translation.x = 0.0;
+				ball_transform.transform.translation.y = 0.0;
+				ball_transform.transform.translation.z = -0.314;
+				ball_transform.transform.rotation.w = 1.0;
+				ball_transform.transform.rotation.x = 0.0;
+				ball_transform.transform.rotation.y = 0.0;
+				ball_transform.transform.rotation.z = 0.0;
+
+				tfBroadcaster_.sendTransform(ball_transform);
 	}
 
 	void testVisualizerNode(const system_observation_t& observation){
@@ -171,7 +166,7 @@ public:
 
 		// Marker for Ball
 		visualization_msgs::Marker ballMarker;
-	    ballMarker.header.frame_id = "base";
+		ballMarker.header.frame_id = "base";
 		ballMarker.header.stamp = ros::Time();
 		ballMarker.ns = "";
 		ballMarker.id = 1;
@@ -183,7 +178,7 @@ public:
 		ballMarker.pose.orientation.x = 0.0;
 		ballMarker.pose.orientation.y = 0.0;
 		ballMarker.pose.orientation.z = 0.0;
-	    ballMarker.pose.orientation.w = 1.0;
+		ballMarker.pose.orientation.w = 1.0;
 		ballMarker.scale.x = 0.25;
 		ballMarker.scale.y = 0.25;
 		ballMarker.scale.z = 0.25;
@@ -287,11 +282,11 @@ protected:
 
 
 		// Marker for armbase
-	    visualization_msgs::Marker armbaseMarker;
-	    armbaseMarker.header.frame_id = "arm_base";
+		visualization_msgs::Marker armbaseMarker;
+		armbaseMarker.header.frame_id = "arm_base";
 		armbaseMarker.header.stamp = ros::Time();
-	    armbaseMarker.ns = "";
-	    armbaseMarker.id = 2;
+		armbaseMarker.ns = "";
+		armbaseMarker.id = 2;
 		armbaseMarker.type = visualization_msgs::Marker::MESH_RESOURCE;
 		armbaseMarker.mesh_resource = "package://ballbot_interface/urdf/meshes/ARM_BASE.stl";
 		armbaseMarker.action = visualization_msgs::Marker::ADD;
@@ -306,7 +301,7 @@ protected:
 		armbaseMarker.scale.y = 0.001;
 		armbaseMarker.scale.z = 0.001;
 		armbaseMarker.color.a = 1.0; // Don't forget to set the alpha!
-	    armbaseMarker.color.r = 0.5;
+		armbaseMarker.color.r = 0.5;
 		armbaseMarker.color.g = 0.5;
 		armbaseMarker.color.b = 0.5;
 		markerArray.markers.push_back(armbaseMarker);
@@ -330,7 +325,7 @@ protected:
 		shoulderMarker.scale.x = 0.001;
 		shoulderMarker.scale.y = 0.001;
 		shoulderMarker.scale.z = 0.001;
-	    shoulderMarker.color.a = 1.0; // Don't forget to set the alpha!
+		shoulderMarker.color.a = 1.0; // Don't forget to set the alpha!
 		shoulderMarker.color.r = 0.5;
 		shoulderMarker.color.g = 0.5;
 		shoulderMarker.color.b = 0.5;
@@ -338,7 +333,7 @@ protected:
 
 		// Marker for arm
 		visualization_msgs::Marker armMarker;
-	    armMarker.header.frame_id = "ARM";
+		armMarker.header.frame_id = "ARM";
 		armMarker.header.stamp = ros::Time();
 		armMarker.ns = "";
 		armMarker.id = 4;
@@ -361,7 +356,7 @@ protected:
 		armMarker.color.b = 0.5;
 		markerArray.markers.push_back(armMarker);
 
-	    // Marker for forearm
+		// Marker for forearm
 		visualization_msgs::Marker forearmMarker;
 		forearmMarker.header.frame_id = "FOREARM";
 		forearmMarker.header.stamp = ros::Time();

@@ -86,9 +86,12 @@ public:
 	/**
 	 * Constructor.
 	 */
-	SequentialRiccatiEquationsNormalized(const bool& useMakePSD, const scalar_t& addedRiccatiDiagonal)
+	SequentialRiccatiEquationsNormalized(
+			const bool& useMakePSD,
+			const scalar_t& addedRiccatiDiagonal)
+
 	: useMakePSD_(useMakePSD)
-  , addedRiccatiDiagonal_(addedRiccatiDiagonal)
+	, addedRiccatiDiagonal_(addedRiccatiDiagonal)
 	, switchingTimeStart_(0.0)
 	, switchingTimeFinal_(1.0)
 	, scalingFactor_(1.0)
@@ -422,7 +425,7 @@ protected:
 
 private:
 	bool useMakePSD_;
-  scalar_t addedRiccatiDiagonal_;
+	scalar_t addedRiccatiDiagonal_;
 	scalar_t switchingTimeStart_;
 	scalar_t switchingTimeFinal_;
 	scalar_t scalingFactor_;

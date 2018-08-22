@@ -64,12 +64,15 @@ public:
 
 	typedef std::shared_ptr<LogicRulesMachine<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>> Ptr;
 
-	typedef Dimensions<STATE_DIM, INPUT_DIM> 		DIMENSIONS;
-	typedef typename DIMENSIONS::size_array_t 		size_array_t;
-	typedef typename DIMENSIONS::scalar_t		 	scalar_t;
-	typedef typename DIMENSIONS::scalar_array_t 	scalar_array_t;
-	typedef typename DIMENSIONS::controller_t 		controller_t;
-	typedef typename DIMENSIONS::controller_array_t controller_array_t;
+	typedef Dimensions<STATE_DIM, INPUT_DIM> DIMENSIONS;
+	typedef typename DIMENSIONS::size_array_t          size_array_t;
+	typedef typename DIMENSIONS::scalar_t              scalar_t;
+	typedef typename DIMENSIONS::scalar_array_t        scalar_array_t;
+	typedef typename DIMENSIONS::state_vector_t        state_vector_t;
+	typedef typename DIMENSIONS::input_vector_t        input_vector_t;
+	typedef typename DIMENSIONS::controller_t          controller_t;
+	typedef typename DIMENSIONS::controller_array_t    controller_array_t;
+	typedef typename DIMENSIONS::input_state_matrix_t  input_state_matrix_t;
 
 	/**
 	 * Default constructor.

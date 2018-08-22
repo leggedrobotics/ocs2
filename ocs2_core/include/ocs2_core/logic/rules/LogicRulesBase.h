@@ -55,11 +55,15 @@ public:
 		input_dim_ = INPUT_DIM
 	};
 
-	typedef typename Dimensions<STATE_DIM, INPUT_DIM>::scalar_t           scalar_t;
-	typedef typename Dimensions<STATE_DIM, INPUT_DIM>::scalar_array_t     scalar_array_t;
-	typedef typename Dimensions<STATE_DIM, INPUT_DIM>::size_array_t       size_array_t;
-	typedef typename Dimensions<STATE_DIM, INPUT_DIM>::controller_t       controller_t;
-	typedef typename Dimensions<STATE_DIM, INPUT_DIM>::controller_array_t controller_array_t;
+	typedef Dimensions<STATE_DIM, INPUT_DIM> DIMENSIONS;
+	typedef typename DIMENSIONS::size_array_t          size_array_t;
+	typedef typename DIMENSIONS::scalar_t              scalar_t;
+	typedef typename DIMENSIONS::scalar_array_t        scalar_array_t;
+	typedef typename DIMENSIONS::state_vector_t        state_vector_t;
+	typedef typename DIMENSIONS::input_vector_t        input_vector_t;
+	typedef typename DIMENSIONS::controller_t          controller_t;
+	typedef typename DIMENSIONS::controller_array_t    controller_array_t;
+	typedef typename DIMENSIONS::input_state_matrix_t  input_state_matrix_t;
 
 	/**
 	 * Default constructor
@@ -161,9 +165,10 @@ public:
 	 * Adjusts controller. This method is called my the logicMachine whenever the logicRuls are updated.
 	 * It allows the user to modify the controller to adapt to the changes of logics.
 	 *
-	 * @param controller: Control policy which should be adjusted.
+	 * @param controllerStock: The control policy stock which will be modified.
 	 */
-	virtual void adjustController(controller_t& controller) const = 0;
+	virtual void adjustController(
+			controller_array_t& controllerStock) const = 0;
 
 	/**
 	 * This method can be used to update the internal variables. This method will be called by any

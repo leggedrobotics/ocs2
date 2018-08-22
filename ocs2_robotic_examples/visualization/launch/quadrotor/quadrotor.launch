@@ -1,0 +1,9 @@
+<launch>
+    <arg name="rviz"    default="true" />
+    <arg name="rvizconfig" default="$(find ocs2_robotic_examples)/visualization/rviz/quadrotor/quadrotor.rviz" />
+    <arg name="model" default="$(find ocs2_robotic_examples)/visualization/urdf/quadrotor/quadrotor.urdf"/>
+    <param name="robot_description" command="$(find xacro)/xacro --inorder $(arg model)" />
+    <node pkg="rviz" type="rviz" name="Quadrotor" args="-d $(arg rvizconfig)" output="screen" if="$(arg rviz)"/>
+</launch>
+	
+

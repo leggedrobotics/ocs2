@@ -1,8 +1,8 @@
 ; Time Horizon
 mpcTimeHorizon
 {
-    timehorizon				2.0
-    numPartitions			2
+    timehorizon      2.0
+    numPartitions    2
 }
 
 ; Mode sequence 
@@ -31,7 +31,7 @@ slq
 	meritFunctionRho               50.0                                         	
 	constraintStepSize             1.0	; 1.0                                          	
 	displayInfo                    0
-	displayShortSummary            0                                            	
+	displayShortSummary            1                                            	
 	warmStartGSLQP                 1    
 	useLQForDerivatives            0                                        
                                                                               	
@@ -78,7 +78,7 @@ mpc
 	initMaxLearningRate            1.0            
 	initMinLearningRate            0.1                                        	
 	                               
-	debugPrint                     0
+	debugPrint                     1
 	coldStart                      0
 	recedingHorizon                1 		; use receding horizon MPC
                                    
@@ -104,17 +104,17 @@ ballbot_interface
 ; initial state                                                               	
 initialState                                                               	
 {
-   (0,0) 0.0    ; px
-   (1,0) 0.0    ; py
-   (2,0) 0.0    ; thetaz
-   (3,0) 0.0    ; thetay
-   (4,0) 0.0	; thetax
-   (5,0) 0.0    ; px_dot
-   (6,0) 0.0    ; py_dot
-   (7,0) 0.0   ; thetaz_dot
-   (8,0) 0.0   ; thetay_dot
-   (9,0) 0.0	; thetax_dot
-  
+   (0,0) 0.0  ; px
+   (1,0) 0.0  ; py
+   (2,0) 0.0  ; thetaz
+   (3,0) 0.0  ; thetay
+   (4,0) 0.0  ; thetax
+   
+   (5,0) 0.0  ; px_dot
+   (6,0) 0.0  ; py_dot
+   (7,0) 0.0  ; thetaz_dot
+   (8,0) 0.0  ; thetay_dot
+   (9,0) 0.0  ; thetax_dot
 }
 
 ; state weight matrix
@@ -122,45 +122,42 @@ Q
 {
     scaling 1e+0
 
-   (0,0)  100.0	; px
-   (1,1)  100.0	; py
-   (2,2)  500.0	; thetaz
-   (3,3)  500.0	; thetay
-   (4,4)  500.0  ; thetax
+   (0,0) 100.0	; px
+   (1,1) 100.0	; py
+   (2,2) 500.0	; thetaz
+   (3,3) 500.0	; thetay
+   (4,4) 500.0  ; thetax
    
-   (5,5)   100.0 ; px_dot
-   (6,6)   100.0 ; py_dot
+   (5,5) 100.0 ; px_dot
+   (6,6) 100.0 ; py_dot
    (7,7) 50.0 ; thetaz_dot
    (8,8) 50.0 ; thetay_dot
    (9,9) 50.0 ; thetax_dot
 }
-
 
 ; control weight matrix
 R
 {
    scaling 1e+0
 
-   (0,0)  2.0	; torque wheel1
-   (1,1)  2.0   ; torque wheel2 
-   (2,2)  2.0   ; torque wheel3 
+   (0,0)  2.0  ; torque wheel1
+   (1,1)  2.0  ; torque wheel2 
+   (2,2)  2.0  ; torque wheel3 
 }
-
-
 
 ; final state weight matrix
 Q_final
 {
     scaling 1e+0
 	
-   (0,0)  0.0	; px
-   (1,1)  0.0	; py
-   (2,2)  0.0	; thetaz
-   (3,3)  0.0	; thetay
-   (4,4)  0.0  ; thetax
+   (0,0) 0.0  ; px
+   (1,1) 0.0  ; py
+   (2,2) 0.0  ; thetaz
+   (3,3) 0.0  ; thetay
+   (4,4) 0.0  ; thetax
    
-   (5,5)   0.0 ; px_dot
-   (6,6)   0.0 ; py_dot
+   (5,5) 0.0 ; px_dot
+   (6,6) 0.0 ; py_dot
    (7,7) 0.0 ; thetaz_dot
    (8,8) 0.0 ; thetay_dot
    (9,9) 0.0 ; thetax_dot
@@ -169,16 +166,16 @@ Q_final
 ; final goal
 x_final
 {
-   (0,0) 0.0    ; px
-   (1,0) 0.0    ; py
-   (2,0) 0.0    ; thetaz
-   (3,0) 0.0    ; thetay
-   (4,0) 0.0	; thetax
-   (5,0) 0.0    ; px_dot
-   (6,0) 0.0    ; py_dot
-   (7,0) 0.0   ; thetaz_dot
-   (8,0) 0.0   ; thetay_dot
-   (9,0) 0.0	; thetax_dot
+   (0,0) 0.0  ; px
+   (1,0) 0.0  ; py
+   (2,0) 0.0  ; thetaz
+   (3,0) 0.0  ; thetay
+   (4,0) 0.0  ; thetax
+   
+   (5,0) 0.0  ; px_dot
+   (6,0) 0.0  ; py_dot
+   (7,0) 0.0  ; thetaz_dot
+   (8,0) 0.0  ; thetay_dot
+   (9,0) 0.0  ; thetax_dot
 }
-
 

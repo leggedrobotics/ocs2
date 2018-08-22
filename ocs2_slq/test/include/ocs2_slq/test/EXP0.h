@@ -58,7 +58,7 @@ public:
 
 	~EXP0_LogicRules() = default;
 
-	EXP0_LogicRules(const BASE::scalar_array_t& switchingTimes)
+	EXP0_LogicRules(const scalar_array_t& switchingTimes)
 	: BASE(switchingTimes)
 	{}
 
@@ -66,7 +66,7 @@ public:
 			const scalar_t& upperBoundTime) override
 	{}
 
-	void adjustController(typename BASE::controller_t& controller) const override
+	void adjustController(controller_array_t& controllerStock) const override
 	{}
 
 	void update() override

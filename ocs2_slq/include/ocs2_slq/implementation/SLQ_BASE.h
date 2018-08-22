@@ -279,9 +279,6 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::reset() {
 		sFinalStock_[i]   = eigen_scalar_t::Zero();
 		xFinalStock_[i]   = state_vector_t::Zero();
 	}  // end of i loop
-
-//	logicRulesMachinePtr_;
-//	throw std::runtime_error("logicRulesMachinePtr_ in SLQ_BASE");
 }
 
 /******************************************************************************************************/

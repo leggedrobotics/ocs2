@@ -171,7 +171,7 @@ public:
 
 	/** If true SLQ makes sure that PSD matrices remain PSD which increases the numerical stability at the expense of extra computation.*/
 	bool useMakePSD_;
-	/** Add diagonal term to riccati backward pass for numerical stability */
+	/** Add diagonal term to Riccati backward pass for numerical stability. This process is only used when useMakePSD_ set to false.*/
 	double addedRiccatiDiagonal_;
 
 	/** This value determines to display the log output of GSLQ. */

@@ -37,6 +37,8 @@ public:
 	typedef typename BASE::scalar_array_t scalar_array_t;
 	typedef typename BASE::controller_t controller_t;
 	typedef typename BASE::controller_array_t controller_array_t;
+	typedef typename BASE::input_vector_t input_vector_t;
+	typedef typename BASE::input_state_matrix_t input_state_matrix_t;
 
 	typedef typename BASE::logic_template_type logic_template_type;
 
@@ -150,21 +152,12 @@ public:
 	virtual void update() override;
 
 	/**
-	 * Rewinds the class. This method is only called in the MPC class.
-	 *
-	 * @param [in] lowerBoundTime: The smallest time for which the logicRules should be defined.
-	 * @param [in] upperBoundTime: The greatest time for which the logicRules should be defined.
-	 */
-	virtual void rewind(
-			const scalar_t& lowerBoundTime,
-			const scalar_t& upperBoundTime) override;
-
-	/**
 	 * Used in the SLQ-MPC method to set the model sequence template.
 	 *
 	 * @param [in] modeSequenceTemplate: A data type which includes all necessary information for modifying the logicRules.
 	 */
-	virtual void setModeSequenceTemplate(const logic_template_type& modeSequenceTemplate) override;
+	virtual void setModeSequenceTemplate(
+			const logic_template_type& modeSequenceTemplate) override;
 
 	/**
 	 * Used in the SLQ-MPC method to insert a new user defined logic in the given time period.
@@ -177,13 +170,22 @@ public:
 			const scalar_t& finalTime) override;
 
 	/**
+	 * Rewinds the class. This method is only called in the MPC class.
+	 *
+	 * @param [in] lowerBoundTime: The smallest time for which the logicRules should be defined.
+	 * @param [in] upperBoundTime: The greatest time for which the logicRules should be defined.
+	 */
+	virtual void rewind(
+			const scalar_t& lowerBoundTime,
+			const scalar_t& upperBoundTime) override;
+
+	/**
 	 * Adjust the controller based on the last changes in the logic rules.
 	 *
-	 * @param controller: The controller which will be modified.
+	 * @param controllerStock: The controller stock which will be modified.
 	 */
-	virtual void adjustController(controller_t& controller) const override {
-		// TODO
-	}
+	virtual void adjustController(
+			controller_array_t& controllerStock) const override {}
 
 protected:
 	/**

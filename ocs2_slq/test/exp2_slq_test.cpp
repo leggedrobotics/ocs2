@@ -69,18 +69,18 @@ TEST(exp2_slq_test, Exp2_slq_test)
 	/******************************************************************************************************/
 	/******************************************************************************************************/
 	SLQ_Settings slqSettings;
-	slqSettings.displayInfo_ = true;
+	slqSettings.displayInfo_ = false;
 	slqSettings.displayShortSummary_ = true;
-	slqSettings.maxNumIterationsSLQ_ = 2;
+	slqSettings.maxNumIterationsSLQ_ = 30;
 	slqSettings.absTolODE_ = 1e-10;
 	slqSettings.relTolODE_ = 1e-7;
 	slqSettings.maxNumStepsPerSecond_ = 10000;
 	slqSettings.nThreads_ = 3;
 	slqSettings.useMakePSD_ = true;
-	slqSettings.maxNumIterationsSLQ_ = 30;
 	slqSettings.lsStepsizeGreedy_ = true;
 	slqSettings.noStateConstraints_ = true;
 	slqSettings.useNominalTimeForBackwardPass_ = false;
+	slqSettings.checkNumericalStability_ = false;
 
 	// switching times
 	std::vector<double> eventTimes {0.2, 1.2};

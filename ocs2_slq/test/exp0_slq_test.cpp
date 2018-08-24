@@ -79,6 +79,7 @@ TEST(exp0_slq_test, exp0_slq_test)
 	slqSettings.noStateConstraints_ = true;
 	slqSettings.minLearningRateGSLQP_ = 0.0001;
 	slqSettings.minRelCostGSLQP_ = 5e-4;
+	slqSettings.checkNumericalStability_ = false;
 
 	// switching times
 	std::vector<double> switchingTimes {0.1897};

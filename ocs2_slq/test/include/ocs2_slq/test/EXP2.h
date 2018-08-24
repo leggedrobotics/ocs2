@@ -361,7 +361,7 @@ public:
 		D.topRows<1>() << 0.0, sin(x_(0))-cos(x_(1))+0.1;
 	}
 
-	EXP2_constraint1* clone() const override {
+	EXP2_constraint1* clone() const final {
 		return new EXP2_constraint1(*this);
 	}
 };
@@ -425,7 +425,7 @@ public:
 		D.topRows<1>() << 0.0, sin(x_(1))-cos(x_(0))+0.1;
 	}
 
-	EXP2_constraint3* clone() const override {
+	EXP2_constraint3* clone() const final {
 		return new EXP2_constraint3(*this);
 	}
 };
@@ -481,6 +481,7 @@ public:
 
 		Base::setCurrentStateAndControl(t, x, u);
 		activeSubsystem_ = findActiveSubsystemFnc_(t);
+		subsystemConstraintPtr_[activeSubsystem_]->setCurrentStateAndControl(t, x, u);
 	}
 
 
@@ -609,7 +610,6 @@ public:
 
 private:
 	double alpha_ = 0.1;
-
 };
 
 /******************************************************************************************************/

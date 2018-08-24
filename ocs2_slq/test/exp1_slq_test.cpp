@@ -43,6 +43,9 @@ void adjustController(
 		const std::vector<double>& eventTimes,
 		Dimensions<2,1>::controller_array_t& controllerStock) {
 
+	/*******************************************************
+	 * Finds the indices of the new event times
+	 ******************************************************/
 	// vector of (partition, index). -1 means end()
 	std::vector<std::pair<int,int>> eventsIndices(eventTimes.size(), std::pair<int,int>(-1, -1));
 
@@ -71,6 +74,19 @@ void adjustController(
 
 	} // end of j loop
 
+	std::cout << "indices of the new eventTimes: " << std::endl;
+	for (auto& ind : eventsIndices) {
+		std::cout << ind.first << ", " << ind.second;
+		std::cout << "\t Size: " << controllerStock[ind.first].time_.size();
+		std::cout << "\t Before: " << controllerStock[ind.first].time_[ind.second-1];
+		std::cout << "\t Itself: " << controllerStock[ind.first].time_[ind.second];
+		std::cout << std::endl;
+	}
+
+
+	/*******************************************************
+	 * Event Times for which controller is designed
+	 ******************************************************/
 	std::vector<std::pair<int,int>> eventsIndicesOld(eventTimes.size(), std::pair<int,int>(-1, -1));
 	std::pair<int,int> expectedOldEventIndex = std::pair<int,int>(0, 0);
 	for (size_t j=0; j<eventTimes.size(); j++) {
@@ -86,69 +102,91 @@ void adjustController(
 		}
 
 		for (size_t p=expectedOldEventIndex.first; p<controllerStock.size(); p++) {
+
+			std::cout << std::endl;
+
 			for (size_t k=expectedOldEventIndex.second; k<controllerStock[p].time_.size()-1; k++) {
 
+//				std::cout << "k: " << k << std::endl;
+//				std::cout << "time: " << controllerStock[p].time_[k] << std::endl;
+//				std::cout << "next: " << controllerStock[p].time_[k+1] << std::endl;
+//				std::cout << "diff: " << std::abs(controllerStock[p].time_[k]-controllerStock[p].time_[k+1]) << std::endl;
+
 				if (std::abs(controllerStock[p].time_[k]-controllerStock[p].time_[k+1]) < 1e-6) {
+
+					expectedOldEventIndex.first = p;
+					expectedOldEventIndex.second = k;
 					eventsIndicesOld[j] = expectedOldEventIndex;
+					p = controllerStock.size(); // break the p loop
+					break;
 				}
 			} // end of k loop
 		} // end of p loop
 
 	} // end of j loop
 
-
-	for (size_t j=0; j<eventTimes.size(); j++) {
-
-		// events before the controller start time
-		if (eventsIndices[j] == std::pair<int,int>(0,0)) {
-			continue;
-		}
-		// events after the controller final time
-		if (eventsIndices[j] == std::pair<int,int>(-1,-1)) {
-			break;
-		}
-
-		std::pair<int,int> startIndex;
-		std::pair<int,int> finalIndex;
-		Dimensions<2,1>::input_vector_t uff;
-		Dimensions<2,1>::input_state_matrix_t K;
-
-		if (eventsIndices[j].first < eventsIndicesOld[j].first) {
-
-			startIndex = eventsIndices[j];
-			finalIndex = eventsIndicesOld[j];
-
-		} else if (eventsIndices[j].first > eventsIndicesOld[j].first) {
-
-			startIndex = eventsIndicesOld[j];
-			finalIndex = eventsIndices[j];
-
-		} else if (eventsIndices[j].first == eventsIndicesOld[j].first) {
-
-			startIndex.first = eventsIndices[j].first;
-			finalIndex.first = eventsIndices[j].first;
-
-			if (eventsIndices[j].second < eventsIndicesOld[j].second) {
-				uff = controllerStock[startIndex.first+1].uff_.front();
-				K = controllerStock[startIndex.first+1].k_.front();
-			} else {
-				uff = controllerStock[startIndex.first].uff_.back();
-				K = controllerStock[startIndex.first].k_.back();
-			}
-			startIndex.second = std::min(eventsIndices[j].second, eventsIndicesOld[j].second);
-			finalIndex.second = std::max(eventsIndices[j].second, eventsIndicesOld[j].second);
-		}
+	std::cout << "indices of the old eventTimes: " << std::endl;
+	for (auto& ind : eventsIndicesOld) {
+		std::cout << ind.first << ", " << ind.second;
+		std::cout << "\t Size: " << controllerStock[ind.first].time_.size();
+		std::cout << "\t Before: " << controllerStock[ind.first].time_[ind.second-1];
+		std::cout << "\t Itself: " << controllerStock[ind.first].time_[ind.second];
+		std::cout << std::endl;
+	}
 
 
-		for (size_t i=startIndex.first; i<finalIndex.first; i++)
-			for (size_t k=startIndex.first; k<finalIndex.first; k++) {
-
-				controllerStock[i].k_[k] = K;
-				controllerStock[i].uff_[k] = uff;
-			}
-
-
-	} // end of j loop
+//	for (size_t j=0; j<eventTimes.size(); j++) {
+//
+//		// events before the controller start time
+//		if (eventsIndices[j] == std::pair<int,int>(0,0)) {
+//			continue;
+//		}
+//		// events after the controller final time
+//		if (eventsIndices[j] == std::pair<int,int>(-1,-1)) {
+//			break;
+//		}
+//
+//		std::pair<int,int> startIndex;
+//		std::pair<int,int> finalIndex;
+//		Dimensions<2,1>::input_vector_t uff;
+//		Dimensions<2,1>::input_state_matrix_t K;
+//
+//		if (eventsIndices[j].first < eventsIndicesOld[j].first) {
+//
+//			startIndex = eventsIndices[j];
+//			finalIndex = eventsIndicesOld[j];
+//
+//		} else if (eventsIndices[j].first > eventsIndicesOld[j].first) {
+//
+//			startIndex = eventsIndicesOld[j];
+//			finalIndex = eventsIndices[j];
+//
+//		} else if (eventsIndices[j].first == eventsIndicesOld[j].first) {
+//
+//			startIndex.first = eventsIndices[j].first;
+//			finalIndex.first = eventsIndices[j].first;
+//
+//			if (eventsIndices[j].second < eventsIndicesOld[j].second) {
+//				uff = controllerStock[startIndex.first+1].uff_.front();
+//				K = controllerStock[startIndex.first+1].k_.front();
+//			} else {
+//				uff = controllerStock[startIndex.first].uff_.back();
+//				K = controllerStock[startIndex.first].k_.back();
+//			}
+//			startIndex.second = std::min(eventsIndices[j].second, eventsIndicesOld[j].second);
+//			finalIndex.second = std::max(eventsIndices[j].second, eventsIndicesOld[j].second);
+//		}
+//
+//
+//		for (size_t i=startIndex.first; i<finalIndex.first; i++)
+//			for (size_t k=startIndex.first; k<finalIndex.first; k++) {
+//
+//				controllerStock[i].k_[k] = K;
+//				controllerStock[i].uff_[k] = uff;
+//			}
+//
+//
+//	} // end of j loop
 
 }
 
@@ -174,8 +212,8 @@ TEST(exp1_slq_test, Exp1_slq_test)
 	EXP1_CostFunction systemCostFunction;
 
 	// system operatingTrajectories
-	Eigen::Matrix<double,2,1> stateOperatingPoint = Eigen::Matrix<double,2,1>::Zero();
-	Eigen::Matrix<double,1,1> inputOperatingPoint = Eigen::Matrix<double,1,1>::Zero();
+	Eigen::Matrix<double,STATE_DIM,1> stateOperatingPoint = Eigen::Matrix<double,STATE_DIM,1>::Zero();
+	Eigen::Matrix<double,INPUT_DIM,1> inputOperatingPoint = Eigen::Matrix<double,INPUT_DIM,1>::Zero();
 	EXP1_SystemOperatingTrajectories operatingTrajectories(stateOperatingPoint, inputOperatingPoint);
 
 
@@ -185,6 +223,7 @@ TEST(exp1_slq_test, Exp1_slq_test)
 	SLQ_Settings slqSettings;
 	slqSettings.displayInfo_ = false;
 	slqSettings.displayShortSummary_ = true;
+	slqSettings.maxNumIterationsSLQ_ = 2;
 	slqSettings.absTolODE_ = 1e-10;
 	slqSettings.relTolODE_ = 1e-7;
 	slqSettings.maxNumStepsPerSecond_ = 10000;
@@ -192,10 +231,11 @@ TEST(exp1_slq_test, Exp1_slq_test)
 	slqSettings.maxNumIterationsSLQ_ = 30;
 	slqSettings.lsStepsizeGreedy_ = true;
 	slqSettings.noStateConstraints_ = true;
+	slqSettings.useNominalTimeForBackwardPass_ = true;
 
 	// switching times
-	std::vector<double> switchingTimes {0.2262, 1.0176};
-	EXP1_LogicRules logicRules(switchingTimes);
+	std::vector<double> eventTimes {0.2, 1.2};
+	EXP1_LogicRules logicRules(eventTimes);
 
 	double startTime = 0.0;
 	double finalTime = 3.0;
@@ -203,8 +243,10 @@ TEST(exp1_slq_test, Exp1_slq_test)
 	// partitioning times
 	std::vector<double> partitioningTimes;
 	partitioningTimes.push_back(startTime);
-	partitioningTimes.push_back(switchingTimes[0]);
-	partitioningTimes.push_back(switchingTimes[1]);
+//	partitioningTimes.push_back(eventTimes[0]);
+//	partitioningTimes.push_back(eventTimes[1]);
+	partitioningTimes.push_back(1.0);
+	partitioningTimes.push_back(2.0);
 	partitioningTimes.push_back(finalTime);
 
 	Eigen::Vector2d initState(2.0, 3.0);
@@ -219,56 +261,38 @@ TEST(exp1_slq_test, Exp1_slq_test)
 			&systemConstraint, &systemCostFunction,
 			&operatingTrajectories, slqSettings, &logicRules);
 
-	// GSLQ MP version
-	SLQ_MP<STATE_DIM, INPUT_DIM, EXP1_LogicRules> slq_mp(
-			&systemDynamics, &systemDerivative,
-			&systemConstraint, &systemCostFunction,
-			&operatingTrajectories, slqSettings, &logicRules);
-
 	// run single core SLQ
 	if (slqSettings.displayInfo_ || slqSettings.displayShortSummary_)
 		std::cerr << "\n>>> single-core SLQ" << std::endl;
 	slq.run(startTime, initState, finalTime, partitioningTimes);
-
-	// run multi-core SLQ
-	if (slqSettings.displayInfo_ || slqSettings.displayShortSummary_)
-		std::cerr << "\n>>> multi-core SLQ" << std::endl;
-	slq_mp.run(startTime, initState, finalTime, partitioningTimes);
 
 	/******************************************************************************************************/
 	/******************************************************************************************************/
 	/******************************************************************************************************/
 	// get controller
 	SLQ_BASE<STATE_DIM, INPUT_DIM, EXP1_LogicRules>::controller_array_t controllersStock = slq.getController();
-	SLQ_BASE<STATE_DIM, INPUT_DIM, EXP1_LogicRules>::controller_array_t controllersStock_mp = slq_mp.getController();
 
 	// get performance indices
 	double totalCost, totalCost_mp;
 	double constraint1ISE, constraint1ISE_mp;
 	double constraint2ISE, constraint2ISE_mp;
 	slq.getPerformanceIndeces(totalCost, constraint1ISE, constraint2ISE);
-	slq_mp.getPerformanceIndeces(totalCost_mp, constraint1ISE_mp, constraint2ISE_mp);
+	slq.getPerformanceIndeces(totalCost_mp, constraint1ISE_mp, constraint2ISE_mp);
 
 	/******************************************************************************************************/
 	/******************************************************************************************************/
 	/******************************************************************************************************/
-	const double expectedCost = 5.4399;
-	ASSERT_LT(fabs(totalCost - expectedCost), 10*slqSettings.minRelCostGSLQP_) <<
-			"MESSAGE: SLQ failed in the EXP1's cost test!";
-	ASSERT_LT(fabs(totalCost_mp - expectedCost), 10*slqSettings.minRelCostGSLQP_) <<
-			"MESSAGE: SLQ_MP failed in the EXP1's cost test!";
+	std::cerr << std::endl << "Times Partitions:\n\t {";
+	for (auto& t: partitioningTimes)
+		std::cerr << t << ", ";
+	if (!partitioningTimes.empty())  std::cerr << "\b\b";
+	std::cerr << "}" << std::endl;
+	//
+	logicRules.display();
+	// Test
+	adjustController(eventTimes, controllersStock);
 
-	const double expectedISE1 = 0.0;
-	ASSERT_LT(fabs(constraint1ISE - expectedISE1), 10*slqSettings.minRelConstraint1ISE_) <<
-			"MESSAGE: SLQ failed in the EXP1's type-1 constraint ISE test!";
-	ASSERT_LT(fabs(constraint1ISE_mp - expectedISE1), 10*slqSettings.minRelConstraint1ISE_) <<
-			"MESSAGE: SLQ_MP failed in the EXP1's type-1 constraint ISE test!";
-
-	const double expectedISE2 = 0.0;
-	ASSERT_LT(fabs(constraint2ISE - expectedISE2), 10*slqSettings.minRelConstraint1ISE_) <<
-			"MESSAGE: SLQ failed in the EXP1's type-2 constraint ISE test!";
-	ASSERT_LT(fabs(constraint2ISE_mp - expectedISE2), 10*slqSettings.minRelConstraint1ISE_) <<
-			"MESSAGE: SLQ_MP failed in the EXP1's type-2 constraint ISE test!";
+	sleep(1);
 }
 
 
@@ -277,6 +301,5 @@ int main(int argc, char** argv)
 	testing::InitGoogleTest(&argc, argv);
 	return RUN_ALL_TESTS();
 }
-
 
 

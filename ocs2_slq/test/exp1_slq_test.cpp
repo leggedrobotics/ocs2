@@ -232,6 +232,7 @@ TEST(exp1_slq_test, Exp1_slq_test)
 	slqSettings.lsStepsizeGreedy_ = true;
 	slqSettings.noStateConstraints_ = true;
 	slqSettings.useNominalTimeForBackwardPass_ = true;
+	slqSettings.checkNumericalStability_ = false;
 
 	// switching times
 	std::vector<double> eventTimes {0.2, 1.2};
@@ -301,5 +302,6 @@ int main(int argc, char** argv)
 	testing::InitGoogleTest(&argc, argv);
 	return RUN_ALL_TESTS();
 }
+
 
 

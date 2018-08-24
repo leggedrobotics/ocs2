@@ -894,13 +894,53 @@ protected:
 	 * Calculates an LQ approximate of the optimal control problem at a given partition and a node.
 	 *
 	 * @param [in] workerIndex: Working agent index.
-	 * @param [in] partitionIndex: Time partition index
-	 * @param [in] timeIndex: Time index in the partition
+	 * @param [in] partitionIndex: Time partition index.
+	 * @param [in] timeIndex: Time index in the partition.
 	 */
 	void approximateLQWorker(
 			size_t workerIndex,
 			const size_t& partitionIndex,
 			const size_t& timeIndex);
+
+	/**
+	 * Calculates an LQ approximate of the unconstrained optimal control problem at a given partition and a node.
+	 *
+	 * @param [in] workerIndex: Working agent index.
+	 * @param [in] i: Time partition index.
+	 * @param [in] k: Time index in the partition.
+	 */
+	void approximateUnconstrainedLQWorker(
+			size_t workerIndex,
+			const size_t& i,
+			const size_t& k);
+
+	/**
+	 * Calculates an LQ approximate of the event times process.
+	 *
+	 * @param [in] workerIndex: Working agent index.
+	 * @param [in] i: Time partition index.
+	 * @param [in] k: Time index in the partition.
+	 * @param [in] stateConstraintPenalty: State-only constraint penalty.
+	 */
+	void approximateEventsLQWorker(
+			size_t workerIndex,
+			const size_t& i,
+			const size_t& k,
+			const scalar_t& stateConstraintPenalty);
+
+	/**
+	 * Modify the unconstrained LQ coefficients to constrained ones.
+	 *
+	 * @param [in] workerIndex: Working agent index.
+	 * @param [in] i: Time partition index.
+	 * @param [in] k: Time index in the partition.
+	 * @param [in] stateConstraintPenalty: State-only constraint penalty.
+	 */
+	void approximateConstrainedLQWorker(
+			size_t workerIndex,
+			const size_t& i,
+			const size_t& k,
+			const scalar_t& stateConstraintPenalty);
 
 	/**
 	 * Calculates controller at a given partition and a node.

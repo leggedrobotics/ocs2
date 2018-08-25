@@ -826,13 +826,15 @@ void GSLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::solveSensitivityRiccatiEqua
 			continue;
 		}
 
-		const size_t N  = dcPtr_->SsNormalizedTimeTrajectoriesStock_[i].size();
+		const size_t NS = dcPtr_->SsNormalizedTimeTrajectoriesStock_[i].size();
 		const size_t NE = dcPtr_->SsNormalizedEventsPastTheEndIndecesStock_[i].size();
 
 		// set data for Riccati sensitivity equations
 		riccatiSensitivityEquationsPtrStock_[workerIndex]->reset();
 		riccatiSensitivityEquationsPtrStock_[workerIndex]->setData(
-				learningRate, dcPtr_->partitioningTimes_[i], dcPtr_->partitioningTimes_[i+1],
+				learningRate,
+				dcPtr_->partitioningTimes_[i],
+				dcPtr_->partitioningTimes_[i+1],
 				&dcPtr_->SsTimeTrajectoriesStock_[i],
 				&dcPtr_->SmTrajectoriesStock_[i],
 				&dcPtr_->SvTrajectoriesStock_[i],
@@ -855,23 +857,28 @@ void GSLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::solveSensitivityRiccatiEqua
 				std::max(1.0, dcPtr_->SsNormalizedTimeTrajectoriesStock_[i].back()-dcPtr_->SsNormalizedTimeTrajectoriesStock_[i].front());
 
 		// output containers resizing
-		nablasTrajectoriesStock[i].resize(N);
-		nablaSvTrajectoriesStock[i].resize(N);
-		nablaSmTrajectoriesStock[i].resize(N);
 		allSsTrajectory.clear();
-		allSsTrajectory.reserve(N);
+		allSsTrajectory.reserve(NS);
+
+		// normalized switching times
+		size_array_t SsNormalizedSwitchingTimesIndices;
+		SsNormalizedSwitchingTimesIndices.reserve(NE+2);
+		SsNormalizedSwitchingTimesIndices.push_back( 0 );
+		for (size_t k=0; k<NE; k++) {
+			const size_t& index = dcPtr_->SsNormalizedEventsPastTheEndIndecesStock_[i][k];
+			SsNormalizedSwitchingTimesIndices.push_back(index);
+		}
+		SsNormalizedSwitchingTimesIndices.push_back( NS );
 
 		// integrating the Riccati sensitivity equations
 		typename scalar_array_t::const_iterator beginTimeItr, endTimeItr;
 		for (size_t j=0; j<=NE; j++) {
 
-			beginTimeItr = (j==0) ? dcPtr_->SsNormalizedTimeTrajectoriesStock_[i].begin()
-					: dcPtr_->SsNormalizedTimeTrajectoriesStock_[i].begin() + dcPtr_->SsNormalizedEventsPastTheEndIndecesStock_[i][j-1];
-			endTimeItr = (j==NE) ? dcPtr_->SsNormalizedTimeTrajectoriesStock_[i].end()
-					: dcPtr_->SsNormalizedTimeTrajectoriesStock_[i].begin() + dcPtr_->SsNormalizedEventsPastTheEndIndecesStock_[i][j];
+			beginTimeItr = dcPtr_->SsNormalizedTimeTrajectoriesStock_[i].begin() + SsNormalizedSwitchingTimesIndices[j];
+			endTimeItr   = dcPtr_->SsNormalizedTimeTrajectoriesStock_[i].begin() + SsNormalizedSwitchingTimesIndices[j+1];
 
 			// if the event time does not take place at the end of partition
-			if (endTimeItr != beginTimeItr) {
+			if (*beginTimeItr < *(endTimeItr-1)) {
 
 				// finding the current active subsystem
 				scalar_t midNormalizedTime = 0.5 * (*beginTimeItr+*(endTimeItr-1));
@@ -892,12 +899,14 @@ void GSLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::solveSensitivityRiccatiEqua
 						settings_.relTolODE_,
 						maxNumSteps, true);
 
-				// final value of the next subsystem
-				SsFinal = allSsTrajectory.back();
+			} else {
+				allSsTrajectory.push_back(SsFinal);
 			}
 
 			// final value of the next subsystem
-			if (j<NE) {
+			if (j < NE) {
+				SsFinal = allSsTrajectory.back();
+
 				s_vector_t SsFinalTemp = s_vector_t::Zero();
 				riccati_sensitivity_equations_t::convert2Vector(
 						state_matrix_t::Zero(),
@@ -913,9 +922,16 @@ void GSLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::solveSensitivityRiccatiEqua
 		// final value of the next partition
 		SsFinal = allSsTrajectory.back();
 
+		// check size
+		if (allSsTrajectory.size() != NS)
+			throw std::runtime_error("allSsTrajectory size is incorrect.");
+
 		// construct 'nable_Sm', 'nable_Sv', and 'nable_s'
-		for (size_t k=0; k<N; k++) {
-			riccati_sensitivity_equations_t::convert2Matrix(allSsTrajectory[N-1-k],
+		nablasTrajectoriesStock[i].resize(NS);
+		nablaSvTrajectoriesStock[i].resize(NS);
+		nablaSmTrajectoriesStock[i].resize(NS);
+		for (size_t k=0; k<NS; k++) {
+			riccati_sensitivity_equations_t::convert2Matrix(allSsTrajectory[NS-1-k],
 					nablaSmTrajectoriesStock[i][k], nablaSvTrajectoriesStock[i][k], nablasTrajectoriesStock[i][k]);
 		}  // end of k loop
 
@@ -935,11 +951,11 @@ void GSLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::solveSensitivityBVP(
 	if (eventTimeIndex<activeEventTimeBeginIndex_ || eventTimeIndex>=activeEventTimeEndIndex_)
 		throw std::runtime_error("The index is associated to an inactive event or it is out of range.");
 
-	// Resizing
+	// resizing
 	MvTrajectoriesStock.resize(numPartitions_);
 
 	// temporal final value for the last Riccati equations
-	state_vector_t MvFinalTemp = MvFinal;
+	state_vector_t MvFinalInternal = MvFinal;
 	// output containers which is reverse
 	state_vector_array_t rMvTrajectory;
 
@@ -950,9 +966,6 @@ void GSLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::solveSensitivityBVP(
 			MvTrajectoriesStock[i].clear();
 			continue;
 		}
-
-		const size_t N  = dcPtr_->SsNormalizedTimeTrajectoriesStock_[i].size();
-		const size_t NE = dcPtr_->SsNormalizedEventsPastTheEndIndecesStock_[i].size();
 
 		// set data for Riccati equations
 		bvpSensitivityEquationsPtrStock_[workerIndex]->reset();
@@ -974,26 +987,36 @@ void GSLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::solveSensitivityBVP(
 				&dcPtr_->optimizedControllersStock_[i].k_,
 				&dcPtr_->SmTrajectoriesStock_[i]);
 
+		const size_t NS = dcPtr_->SsNormalizedTimeTrajectoriesStock_[i].size();
+		const size_t NE = dcPtr_->SsNormalizedEventsPastTheEndIndecesStock_[i].size();
+
 		// max number of steps of integration
 		const size_t maxNumSteps = settings_.maxNumStepsPerSecond_ *
 				std::max(1.0, dcPtr_->SsNormalizedTimeTrajectoriesStock_[i].back()-dcPtr_->SsNormalizedTimeTrajectoriesStock_[i].front());
 
 		// output containers resizing
-		MvTrajectoriesStock[i].resize(N);
 		rMvTrajectory.clear();
-		rMvTrajectory.reserve(N);
+		rMvTrajectory.reserve(NS);
+
+		// normalized switching times
+		size_array_t SsNormalizedSwitchingTimesIndices;
+		SsNormalizedSwitchingTimesIndices.reserve(NE+2);
+		SsNormalizedSwitchingTimesIndices.push_back( 0 );
+		for (size_t k=0; k<NE; k++) {
+			const size_t& index = dcPtr_->SsNormalizedEventsPastTheEndIndecesStock_[i][k];
+			SsNormalizedSwitchingTimesIndices.push_back(index);
+		}
+		SsNormalizedSwitchingTimesIndices.push_back( NS );
 
 		// integrating the Riccati equations
 		typename scalar_array_t::const_iterator beginTimeItr, endTimeItr;
 		for (size_t j=0; j<=NE; j++) {
 
-			beginTimeItr = (j==0) ? dcPtr_->SsNormalizedTimeTrajectoriesStock_[i].begin()
-					: dcPtr_->SsNormalizedTimeTrajectoriesStock_[i].begin() + dcPtr_->SsNormalizedEventsPastTheEndIndecesStock_[i][j-1];
-			endTimeItr = (j==NE) ? dcPtr_->SsNormalizedTimeTrajectoriesStock_[i].end()
-					: dcPtr_->SsNormalizedTimeTrajectoriesStock_[i].begin() + dcPtr_->SsNormalizedEventsPastTheEndIndecesStock_[i][j];
+			beginTimeItr = dcPtr_->SsNormalizedTimeTrajectoriesStock_[i].begin() + SsNormalizedSwitchingTimesIndices[j];
+			endTimeItr   = dcPtr_->SsNormalizedTimeTrajectoriesStock_[i].begin() + SsNormalizedSwitchingTimesIndices[j+1];
 
 			// if the event time does not take place at the end of partition
-			if (endTimeItr != beginTimeItr) {
+			if (*beginTimeItr < *(endTimeItr-1)) {
 
 				// finding the current active subsystem
 				scalar_t midNormalizedTime = 0.5 * (*beginTimeItr+*(endTimeItr-1));
@@ -1007,44 +1030,49 @@ void GSLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::solveSensitivityBVP(
 
 				// solve Riccati equations
 				bvpSensitivityIntegratorsPtrStock_[workerIndex]->integrate(
-						MvFinalTemp, beginTimeItr, endTimeItr,
+						MvFinalInternal, beginTimeItr, endTimeItr,
 						rMvTrajectory,
 						settings_.minTimeStep_,
 						settings_.absTolODE_,
 						settings_.relTolODE_,
-						maxNumSteps, true);
+						maxNumSteps,
+						true);
 
-				// final value of the next subsystem
-				MvFinalTemp = rMvTrajectory.back();
+			} else {
+				rMvTrajectory.push_back(MvFinalInternal);
 			}
 
 			// final value of the next subsystem
 			if (j < NE) {
-//				MvFinalTemp += dcPtr_->QvFinalStock_[i][NE-1-j];
+				MvFinalInternal = rMvTrajectory.back();
+//				MvFinalInternal += dcPtr_->QvFinalStock_[i][NE-1-j];
 			}
 
 		}  // end of j loop
 
 		// final value of the next partition
-		MvFinalTemp = rMvTrajectory.back();
+		MvFinalInternal = rMvTrajectory.back();
+
+		// check size
+		if (rMvTrajectory.size() != NS)
+			throw std::runtime_error("MvTrajectory size is incorrect.");
 
 		// constructing 'Mv'
-		for (size_t k=0; k<N; k++)
-			MvTrajectoriesStock[i][k] = rMvTrajectory[N-1-k];
+		MvTrajectoriesStock[i].resize(NS);
+		std::reverse_copy(rMvTrajectory.begin(), rMvTrajectory.end(), MvTrajectoriesStock[i].begin());
 
 		// testing the numerical stability of the Riccati equations
 		if (settings_.checkNumericalStability_)
-			for (int k=N-1; k>=0; k--) {
+			for (int k=NS-1; k>=0; k--) {
 				try {
-					if (MvTrajectoriesStock[i][k].hasNaN())
-						throw std::runtime_error("Mv is unstable.");
-				}
-				catch(const std::exception& error)
-				{
+					if (!MvTrajectoriesStock[i][k].allFinite()) throw std::runtime_error("Mv is unstable.");
+
+				} catch(const std::exception& error) {
 					std::cerr << "what(): " << error.what() << " at time " << dcPtr_->SsTimeTrajectoriesStock_[i][k] << " [sec]." << std::endl;
 					for (int kp=k; kp<k+10; kp++)  {
-						if (kp >= N) continue;
-						std::cerr << "Mv[" << dcPtr_->SsTimeTrajectoriesStock_[i][kp] << "]:\t"<< MvTrajectoriesStock[i][kp].transpose().norm() << std::endl;
+						if (kp >= NS) continue;
+						std::cerr << "Mv[" << dcPtr_->SsTimeTrajectoriesStock_[i][kp] <<
+								"]:\t"<< MvTrajectoriesStock[i][kp].transpose().norm() << std::endl;
 					}
 					exit(0);
 				}

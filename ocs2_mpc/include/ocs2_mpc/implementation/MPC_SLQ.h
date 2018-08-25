@@ -96,14 +96,12 @@ MPC_SLQ<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::MPC_SLQ(
 		} // end of j loop
 		partitioningTimes_.push_back(initPartitioningTimes_[initnumPartitions_] + timeHorizon);
 
-
 	} else {
 		numPartitions_  = initnumPartitions_;
 		partitioningTimes_ = initPartitioningTimes_;
 	}
 
 	nullControllersStock_.resize(numPartitions_);
-
 
 	// SLQP
 	if (slqSettings.useMultiThreading_==true) {

@@ -119,8 +119,14 @@ MPC_SLQ<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::MPC_SLQ(
 	slqPtr_->blockwiseMovingHorizon(mpcSettings.blockwiseMovingHorizon_);
 
 	// set mode sequence template
-	if (modeSequenceTemplatePtr)
+	if (modeSequenceTemplatePtr) {
 		slqPtr_->getLogicRules().setModeSequenceTemplate(*modeSequenceTemplatePtr);
+
+		if (mpcSettings.recedingHorizon_==true) {
+			const scalar_t timeHorizon = initPartitioningTimes_.back() - initPartitioningTimes_.front();
+			slqPtr_->getLogicRules().insertModeSequenceTemplate(timeHorizon, 2.0*timeHorizon);
+		}
+	}
 }
 
 /******************************************************************************************************/

@@ -312,6 +312,8 @@ typename SwitchedModelCostBase<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM, LOGIC_RUL
 			}
 	nondiagonalR = 0.5*(nondiagonalR + nondiagonalR.transpose()).eval();
 
+
+
 	return nondiagonalR;
 }
 

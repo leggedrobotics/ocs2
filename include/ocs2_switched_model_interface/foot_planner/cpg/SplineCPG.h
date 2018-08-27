@@ -27,8 +27,14 @@ public:
 	: Base(0.15, 1.0)
 	{}
 
-	SplineCPG(const scalar_t& swingLegLiftOff, const scalar_t& swingTimeScale = 1.0)
-	: Base(swingLegLiftOff, swingTimeScale)
+	SplineCPG(
+			const scalar_t& swingLegLiftOff,
+			const scalar_t& swingTimeScale = 1.0,
+			const scalar_t& liftOffVelocity = 0.0,
+			const scalar_t& touchDownVelocity = 0.0)
+	: Base(swingLegLiftOff, swingTimeScale, liftOffVelocity, touchDownVelocity),
+    liftOffVelocity_(liftOffVelocity),
+    touchDownVelocity_(touchDownVelocity)
 	{}
 
 	~SplineCPG() = default;
@@ -46,8 +52,8 @@ public:
 
 		midTime_ = 0.5*(Base::startTime_+Base::finalTime_);
 
-		leftSpline_.set(Base::startTime_, startHight_ /*p0*/, 0.0 /*v0*/, midTime_ /*t1*/, Base::maxHight_ /*p1*/, 0.0 /*v1*/);
-		rightSpline_.set(midTime_, Base::maxHight_ /*p0*/, 0.0 /*v0*/, Base::finalTime_ /*t1*/, finalHight_ /*p1*/, 0.0 /*v1*/);
+		leftSpline_.set(Base::startTime_, startHight_ /*p0*/, liftOffVelocity_ /*v0*/, midTime_ /*t1*/, Base::maxHight_ /*p1*/, 0.0 /*v1*/);
+		rightSpline_.set(midTime_, Base::maxHight_ /*p0*/, 0.0 /*v0*/, Base::finalTime_ /*t1*/, finalHight_ /*p1*/, touchDownVelocity_ /*v1*/);
 	}
 
 	scalar_t calculatePosition(const scalar_t& time) const override {
@@ -76,6 +82,8 @@ private:
 
 	const scalar_t startHight_ = 0.0;
 	const scalar_t finalHight_ = 0.0;
+  const scalar_t liftOffVelocity_ = 0.0;
+  const scalar_t touchDownVelocity_ = 0.0;
 
 	CubicSpline<scalar_t> leftSpline_;
 	CubicSpline<scalar_t> rightSpline_;

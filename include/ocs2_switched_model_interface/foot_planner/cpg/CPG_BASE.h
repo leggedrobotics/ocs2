@@ -25,7 +25,11 @@ public:
 	: CPG_BASE(0.15, 1.0)
 	{}
 
-	CPG_BASE(const scalar_t& swingLegLiftOff, const scalar_t& swingTimeScale = 1.0)
+	CPG_BASE(
+			const scalar_t& swingLegLiftOff,
+			const scalar_t& swingTimeScale = 1.0,
+			const scalar_t& liftOffVelocity = 0.0,
+			const scalar_t& touchDownVelocity = 0.0)
 	: swingLegLiftOff_(swingLegLiftOff),
 	  swingTimeScale_(swingTimeScale)
 	{}

@@ -23,6 +23,8 @@ public:
 	, zDirectionVelocityWeight_(0.5)
 	, copWeight_(0.0)
 	, swingLegLiftOff_(0.3)
+	, liftOffVelocity_(0.0)
+	, touchDownVelocity_(0.0)
 	, mpcGoalCommandDelay_(0.5)
 	, strideTime_(0.0)
 	, mpcStrideLength_(0.35)
@@ -40,6 +42,8 @@ public:
 	double zDirectionVelocityWeight_;
 	double copWeight_;
 	double swingLegLiftOff_;
+	double liftOffVelocity_;
+	double touchDownVelocity_;
 	double mpcGoalCommandDelay_;
 	double strideTime_;
 	double mpcStrideLength_;
@@ -117,6 +121,22 @@ inline void Model_Settings::loadSettings(const std::string& filename, bool verbo
 	}
 	catch (const std::exception& e){
 		if (verbose)  std::cerr << " #### swingLegLiftOff .............. " << swingLegLiftOff_ << "\t(default)" << std::endl;
+	}
+
+	try {
+		liftOffVelocity_ = pt.get<double>("model_settings.liftOffVelocity");
+		if (verbose)  std::cerr << " #### liftOffVelocity .............. " << liftOffVelocity_ << std::endl;
+	}
+	catch (const std::exception& e){
+		if (verbose)  std::cerr << " #### liftOffVelocity .............. " << liftOffVelocity_ << "\t(default)" << std::endl;
+	}
+
+	try {
+		touchDownVelocity_ = pt.get<double>("model_settings.touchDownVelocity");
+		if (verbose)  std::cerr << " #### touchDownVelocity ............ " << touchDownVelocity_ << std::endl;
+	}
+	catch (const std::exception& e){
+		if (verbose)  std::cerr << " #### touchDownVelocity ............ " << touchDownVelocity_ << "\t(default)" << std::endl;
 	}
 
 	try {

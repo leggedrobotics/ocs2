@@ -13,10 +13,14 @@ namespace switched_model {
 template <typename scalar_t, class cpg_t>
 FeetZDirectionPlanner<scalar_t, cpg_t>::FeetZDirectionPlanner(
 		const scalar_t& swingLegLiftOff,
-		const scalar_t& swingTimeScale /*= *1.0*/)
+		const scalar_t& swingTimeScale /*= *1.0*/,
+		const scalar_t& liftOffVelocity /*= *0.0*/,
+		const scalar_t& touchDownVelocity /*= *0.0*/)
 
 	: swingLegLiftOff_(swingLegLiftOff),
 	  swingTimeScale_(swingTimeScale),
+		liftOffVelocity_(liftOffVelocity),
+		touchDownVelocity_(touchDownVelocity),
 	  phaseIDsStock_(0),
 	  eventTimes_(0)
 {}
@@ -30,6 +34,8 @@ FeetZDirectionPlanner<scalar_t, cpg_t>::FeetZDirectionPlanner(const FeetZDirecti
 	: BASE(rhs),
 	  swingLegLiftOff_(rhs.swingLegLiftOff_),
 	  swingTimeScale_(rhs.swingTimeScale_),
+		liftOffVelocity_(rhs.liftOffVelocity_),
+		touchDownVelocity_(rhs.touchDownVelocity_),
 	  phaseIDsStock_(0),
 	  eventTimes_(0)
 {}
@@ -76,7 +82,10 @@ void FeetZDirectionPlanner<scalar_t, cpg_t>::planSingleMode(
 	for (size_t j=0; j<4; j++)  {
 
 		// create the CPG from the given times
-		plannedCPG[j] = std::shared_ptr<cpg_t>( new cpg_t(swingLegLiftOff_, swingTimeScale_) );
+		plannedCPG[j] = std::shared_ptr<cpg_t>( new cpg_t(swingLegLiftOff_,
+																											swingTimeScale_,
+																											liftOffVelocity_,
+																											touchDownVelocity_) );
 
 		// skip if it is a stance leg
 		if (eesContactFlagStocks_[j][index]==false)  {

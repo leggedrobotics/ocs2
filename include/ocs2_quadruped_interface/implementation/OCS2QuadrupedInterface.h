@@ -24,7 +24,10 @@ OCS2QuadrupedInterface<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::OCS2QuadrupedInt
 	loadSettings(pathToConfigFolder);
 
 	// logic rule
-	feet_z_planner_ptr_t feetZPlannerPtr( new feet_z_planner_t(modelSettings_.swingLegLiftOff_, 1.0 /*swingTimeScale*/) );
+	feet_z_planner_ptr_t feetZPlannerPtr( new feet_z_planner_t(modelSettings_.swingLegLiftOff_,
+																														 1.0 /*swingTimeScale*/,
+																														 modelSettings_.liftOffVelocity_,
+																														 modelSettings_.touchDownVelocity_)	);
 
 	logicRulesPtr_ = logic_rules_ptr_t( new logic_rules_t(feetZPlannerPtr) );
 
@@ -70,6 +73,21 @@ void OCS2QuadrupedInterface<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::loadSetting
 	ocs2::loadEigenMatrix(pathToConfigFile, "Q", Q_);
 	ocs2::loadEigenMatrix(pathToConfigFile, "R", R_);
 	ocs2::loadEigenMatrix(pathToConfigFile, "Q_final", QFinal_);
+	// costs over cartesian velocities
+  Eigen::Matrix<double, 12, 12> J_allFeet;
+  kinematicModelPtr_->update(initRbdState_.template segment<18>(0));
+  for (int leg=0; leg<4; ++leg){
+    Eigen::Matrix<double, 6, 12> J_thisfoot;
+    kinematicModelPtr_->footJacobainBaseFrame(leg, J_thisfoot);
+    J_allFeet.block<3, 12>(3*leg, 0) = J_thisfoot.bottomRows<3>();
+  }
+  std::cout << "R before the feet: \n" <<  R_ << std::endl;
+  R_.template block<12, 12>(12, 12) = (J_allFeet.transpose() * R_.template block<12, 12>(12, 12) * J_allFeet).eval();
+  if (R_.rows()>24){
+    R_.template block<12, 12>(36, 36) = (J_allFeet.transpose() * R_.template block<12, 12>(36, 36) * J_allFeet).eval();
+  }
+  std::cout << "R for the feet: \n" <<  R_ << std::endl;
+
 	// target state
 	base_coordinate_t comFinalPose;
 	ocs2::loadEigenMatrix(pathToConfigFile, "CoM_final_pose", comFinalPose);

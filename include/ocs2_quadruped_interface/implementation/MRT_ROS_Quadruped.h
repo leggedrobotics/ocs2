@@ -21,7 +21,10 @@ MRT_ROS_Quadruped<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::MRT_ROS_Quadruped(
 {
 	// feet z-direction planner
 	feet_z_planner_ptr_t feetZDirectionPlannerPtr(
-			new feet_z_planner_t(modelSettings_.swingLegLiftOff_, 1.0 /*swingTimeScale*/) );
+			new feet_z_planner_t(modelSettings_.swingLegLiftOff_,
+													 1.0 /*swingTimeScale*/,
+													 modelSettings_.liftOffVelocity_,
+													 modelSettings_.touchDownVelocity_));
 	// Logic rule
 	logic_rules_ptr_t logicRulesPtr( new logic_rules_t(feetZDirectionPlannerPtr) );
 	// Set Base

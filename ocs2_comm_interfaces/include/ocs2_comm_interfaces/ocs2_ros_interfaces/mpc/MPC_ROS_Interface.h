@@ -45,9 +45,9 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <Eigen/Dense>
 
 #include <ros/ros.h>
+#include <ros/transport_hints.h>
 
 #include <ocs2_mpc/MPC_SLQ.h>
-
 
 // MPC messages
 #include <ocs2_comm_interfaces/mode_sequence.h>

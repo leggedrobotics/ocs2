@@ -36,6 +36,8 @@ model_settings
   
   eps 	2e-4
   eta 	1e+2
+  
+  torqueMixingFactor            0.5
 }
 
 switchingModes
@@ -93,7 +95,7 @@ slq
   RelTolODE                     1e-3  ;1e-4
   minTimeStep                   1e-3
   useMakePSD                    0
-  addedRiccatiDiagonal          1e-5
+  addedRiccatiDiagonal          1e-4
   maxNumStepsPerSecond          50000
   simulationIsConstrained       0
   noStateConstraints            0
@@ -216,7 +218,7 @@ Q
    ; positon
    (3,3) 1000.0      ; x
    (4,4) 1000.0      ; y
-   (5,5) 2000.0      ; z
+   (5,5) 3000.0      ; z
 
    ; angular velocity
    (6,6) 200.0      ; x
@@ -226,27 +228,27 @@ Q
    ; translational velocity
    (9,9)   100.0    ; x
    (10,10) 100.0    ; y
-   (11,11) 100.0    ; z
+   (11,11) 150.0    ; z
 
    ; LF joints
-   (12,12) 100.0    ; LF_HAA
-   (13,13) 100.0    ; LF_HFE
-   (14,14) 50.0    ; LF_KFE
+   (12,12) 20.0 ; LF_HAA  ; 100.0
+   (13,13) 20.0 ; LF_HFE  ; 70.0
+   (14,14) 10.0 ; LF_KFE  ; 50.0
 
    ; RF joints
-   (15,15) 100.0    ; RF_HAA
-   (16,16) 100.0    ; RF_HFE
-   (17,17) 50.0    ; RF_KFE
+   (15,15) 20.0 ; RF_HAA  ; 100.0
+   (16,16) 20.0 ; RF_HFE  ; 70.0
+   (17,17) 10.0 ; RF_KFE  ; 50.0
 
    ; LH joints
-   (18,18) 100.0    ; LH_HAA
-   (19,19) 100.0    ; LH_HFE
-   (20,20) 50.0    ; LH_KFE
+   (18,18) 20.0 ; LH_HAA  ; 100.0
+   (19,19) 20.0 ; LH_HFE  ; 70.0
+   (20,20) 10.0 ; LH_KFE  ; 50.0
 
    ; RH joints
-   (21,21) 100.0    ; RH_HAA
-   (22,22) 100.0    ; RH_HFE
-   (23,23) 50.0    ; RH_KFE
+   (21,21) 20.0 ; RH_HAA  ; 100.0
+   (22,22) 20.0 ; RH_HFE  ; 70.0
+   (23,23) 10.0 ; RH_KFE  ; 50.0
 }
 
 
@@ -277,24 +279,24 @@ R
 
 
    ; LF joint velocities
-   (12,12) 1500   ; LF_HAA
+   (12,12) 1000   ; LF_HAA
    (13,13) 1000   ; LF_HFE
-   (14,14) 500   ; LF_KFE
+   (14,14) 100   ; LF_KFE
 
    ; RF joint velocities
-   (15,15) 1500    ; RF_HAA
+   (15,15) 1000    ; RF_HAA
    (16,16) 1000    ; RF_HFE
-   (17,17) 500    ; RF_KFE
+   (17,17) 100    ; RF_KFE
 
    ; LH joint velocities
-   (18,18) 1500    ; LH_HAA
+   (18,18) 1000    ; LH_HAA
    (19,19) 1000    ; LH_HFE
-   (20,20) 500    ; LH_KFE
+   (20,20) 100    ; LH_KFE
 
    ; RH joint velocities
-   (21,21) 1500    ; RH_HAA
+   (21,21) 1000    ; RH_HAA
    (22,22) 1000    ; RH_HFE
-   (23,23) 500    ; RH_KFE
+   (23,23) 100    ; RH_KFE
 }
 
 

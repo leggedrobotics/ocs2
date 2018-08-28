@@ -117,7 +117,8 @@ void ComDynamicsBase<JOINT_COORD_SIZE>::computeFlowMap(const scalar_t& t,
 	Eigen::Matrix3d transformAngVel2EulerAngDev = AngularVelocitiesToEulerAngleDerivativesMatrix(x.head<3>());
 
 	// CoM dynamics
-	dxdt.segment<3>(0) = o_R_b * transformAngVel2EulerAngDev * (com_W_com - b_comJacobainOmega_*dqJoints_);
+//	dxdt.segment<3>(0) = o_R_b * transformAngVel2EulerAngDev * (com_W_com - b_comJacobainOmega_*dqJoints_);
+	dxdt.segment<3>(0) = transformAngVel2EulerAngDev * (com_W_com - b_comJacobainOmega_*dqJoints_);
 	dxdt.segment<3>(3) = o_R_b * com_V_com;
 	dxdt.tail<6>() = MInverse_ * (-C_ + JcTransposeLambda) - MInverseG_;
 

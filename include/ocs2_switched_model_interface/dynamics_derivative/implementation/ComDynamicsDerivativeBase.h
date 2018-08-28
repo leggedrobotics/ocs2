@@ -211,7 +211,9 @@ template <size_t JOINT_COORD_SIZE>
 void ComDynamicsDerivativeBase<JOINT_COORD_SIZE>::getApproximateDerivativesJoint(state_joint_matrix_t& partrialF_q)  {
 
 	// first three rows
-	partrialF_q.template block<3,12>(0,0) = -o_R_b_ * b_comJacobainTimeDerivative_.template topRows<3>();
+//	partrialF_q.template block<3,12>(0,0) = -o_R_b_ * b_comJacobainTimeDerivative_.template topRows<3>();
+	partrialF_q.template block<3,12>(0,0) = -jacobianOfAngularVelocityMapping_.block<3,3>(0,3) *
+	    b_comJacobainTimeDerivative_.template topRows<3>();
 
 	// second three rows
 	partrialF_q.template block<3,12>(3,0).setZero();

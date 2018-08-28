@@ -31,6 +31,7 @@ public:
 	, numPhasesInfullGaitCycle_(4)
 	, useFeetTrajectoryFiltering_(true)
 	, feetFilterFrequency_(50.0)
+	, torqueMixingFactor_(0.0)
 	{}
 
 	virtual ~Model_Settings() = default;
@@ -50,6 +51,7 @@ public:
 	size_t numPhasesInfullGaitCycle_;
 	bool useFeetTrajectoryFiltering_;
 	double feetFilterFrequency_;
+	double torqueMixingFactor_;
 
 	double eps_ = 0.01;
 	double eta_ = 10.0;
@@ -201,6 +203,14 @@ inline void Model_Settings::loadSettings(const std::string& filename, bool verbo
 	}
 	catch (const std::exception& e){
 		if (verbose)  std::cerr << " #### eta .................. " << eta_ << "\t(default)" << std::endl;
+	}
+
+	try {
+		torqueMixingFactor_ = pt.get<double>("model_settings.torqueMixingFactor");
+		if (verbose)  std::cerr << " #### torqueMixingFactor ... " << torqueMixingFactor_ << std::endl;
+	}
+	catch (const std::exception& e){
+		if (verbose)  std::cerr << " #### torqueMixingFactor.... " << torqueMixingFactor_ << "\t(default)" << std::endl;
 	}
 
 	if(verbose)  std::cerr << " #### ================================================ ####" << std::endl;

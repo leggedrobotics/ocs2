@@ -16,23 +16,23 @@ OCS2QuadrupedInterface<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::OCS2QuadrupedInt
 		const com_model_t& comModel,
 		const std::string& pathToConfigFolder)
 
-: kinematicModelPtr_(kinematicModel.clone()),
-  comModelPtr_(comModel.clone()),
-  switchedModelStateEstimator_(comModel)
-{
+		: kinematicModelPtr_(kinematicModel.clone()),
+		  comModelPtr_(comModel.clone()),
+		  switchedModelStateEstimator_(comModel)
+		  {
 	// load setting from loading file
 	loadSettings(pathToConfigFolder);
 
 	// logic rule
 	feet_z_planner_ptr_t feetZPlannerPtr( new feet_z_planner_t(modelSettings_.swingLegLiftOff_,
-																														 1.0 /*swingTimeScale*/,
-																														 modelSettings_.liftOffVelocity_,
-																														 modelSettings_.touchDownVelocity_)	);
+			1.0 /*swingTimeScale*/,
+			modelSettings_.liftOffVelocity_,
+			modelSettings_.touchDownVelocity_)	);
 
 	logicRulesPtr_ = logic_rules_ptr_t( new logic_rules_t(feetZPlannerPtr) );
 
 	logicRulesPtr_->setMotionConstraints(initSwitchingModes_, initEventTimes_, gapIndicatorPtrs_);
-}
+		  }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
@@ -74,19 +74,23 @@ void OCS2QuadrupedInterface<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::loadSetting
 	ocs2::loadEigenMatrix(pathToConfigFile, "R", R_);
 	ocs2::loadEigenMatrix(pathToConfigFile, "Q_final", QFinal_);
 	// costs over cartesian velocities
-  Eigen::Matrix<double, 12, 12> J_allFeet;
-  kinematicModelPtr_->update(initRbdState_.template segment<18>(0));
-  for (int leg=0; leg<4; ++leg){
-    Eigen::Matrix<double, 6, 12> J_thisfoot;
-    kinematicModelPtr_->footJacobainBaseFrame(leg, J_thisfoot);
-    J_allFeet.block<3, 12>(3*leg, 0) = J_thisfoot.bottomRows<3>();
-  }
-  std::cout << "R before the feet: \n" <<  R_ << std::endl;
-  R_.template block<12, 12>(12, 12) = (J_allFeet.transpose() * R_.template block<12, 12>(12, 12) * J_allFeet).eval();
-  if (R_.rows()>24){
-    R_.template block<12, 12>(36, 36) = (J_allFeet.transpose() * R_.template block<12, 12>(36, 36) * J_allFeet).eval();
-  }
-  std::cout << "R for the feet: \n" <<  R_ << std::endl;
+	Eigen::Matrix<double, 12, 12> J_allFeet;
+	kinematicModelPtr_->update(initRbdState_.template segment<18>(0));
+	for (int leg=0; leg<4; ++leg){
+		Eigen::Matrix<double, 6, 12> J_thisfoot;
+		kinematicModelPtr_->footJacobainBaseFrame(leg, J_thisfoot);
+		J_allFeet.block<3, 12>(3*leg, 0) = J_thisfoot.bottomRows<3>();
+	}
+	std::cout << "R before the feet: \n" <<  R_ << std::endl;
+	R_.template block<12, 12>(0, 0) = (0.05*R_.template block<12, 12>(0, 0) +  0.95* J_allFeet.transpose() * R_.template block<12, 12>(0, 0) * J_allFeet).eval();
+	R_.template block<12, 12>(12, 12) = (J_allFeet.transpose() * R_.template block<12, 12>(12, 12) * J_allFeet).eval();
+
+	if (STATE_DIM > 2*JOINT_COORD_SIZE){
+		R_.template block<12, 12>(24, 24) = (0.05*R_.template block<12, 12>(24, 24) +  0.95* J_allFeet.transpose() * R_.template block<12, 12>(24, 24) * J_allFeet).eval();
+		R_.template block<12, 12>(36, 36) = (J_allFeet.transpose() * R_.template block<12, 12>(36, 36) * J_allFeet).eval();
+	}
+
+	std::cout << "R for the feet: \n" <<  R_ << std::endl;
 
 	// target state
 	base_coordinate_t comFinalPose;
@@ -155,7 +159,7 @@ void OCS2QuadrupedInterface<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::loadSetting
 /******************************************************************************************************/
 template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM>
 typename OCS2QuadrupedInterface<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::logic_rules_t&
-	OCS2QuadrupedInterface<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::getLogicRules() {
+OCS2QuadrupedInterface<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::getLogicRules() {
 
 	return *logicRulesPtr_;
 }
@@ -182,7 +186,7 @@ void OCS2QuadrupedInterface<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::computeRbdM
 		rbd_state_vector_t& rbdState) {
 
 	switchedModelStateEstimator_.estimateRbdModelState(comkinoState.template segment<12+JOINT_COORD_SIZE>(0),
-	    comkinoInput.template segment<JOINT_COORD_SIZE>(12),
+			comkinoInput.template segment<JOINT_COORD_SIZE>(12),
 			rbdState);
 }
 
@@ -191,9 +195,9 @@ void OCS2QuadrupedInterface<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::computeRbdM
 /******************************************************************************************************/
 template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM>
 void OCS2QuadrupedInterface<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::computeComLocalAcceleration(
-			const state_vector_t& comkinoState,
-			const input_vector_t& comkinoInput,
-			base_coordinate_t& comLocalAcceleration) {
+		const state_vector_t& comkinoState,
+		const input_vector_t& comkinoInput,
+		base_coordinate_t& comLocalAcceleration) {
 
 	typedef Eigen::Matrix<scalar_t,3,3> matrix_3_t;
 	typedef Eigen::Matrix<scalar_t,3,1> vector_3_t;
@@ -234,7 +238,7 @@ void OCS2QuadrupedInterface<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::computeComL
 	matrix_3_t rotationMInverse = M.template topLeftCorner<3,3>().inverse();
 	matrix_6_t MInverse;
 	MInverse << rotationMInverse, 	matrix_3_t::Zero(),
-				matrix_3_t::Zero(), (1/M(5,5))*matrix_3_t::Identity();
+			matrix_3_t::Zero(), (1/M(5,5))*matrix_3_t::Identity();
 
 	// Coriolis and centrifugal forces
 	vector_6_t C;
@@ -289,13 +293,13 @@ void OCS2QuadrupedInterface<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::computeComS
 	// CoM velocity in the origin frame
 	o_comVelocity.template head<3>() = o_R_b *  b_W_com;
 	o_comVelocity.template tail<3>() = o_R_b *  b_V_com;
-//	o_comVelocity.template tail<3>() = o_R_b * (b_V_com - b_W_com.cross(o_r_com));
+	//	o_comVelocity.template tail<3>() = o_R_b * (b_V_com - b_W_com.cross(o_r_com));
 
 	// CoM acceleration in the origin frame
 	o_comAcceleration.template head<3>() = o_R_b *  comLocalAcceleration.template head<3>();
 	o_comAcceleration.template tail<3>() = o_R_b *  comLocalAcceleration.template tail<3>();
-//	o_comAcceleration.template tail<3>() = o_R_b * (comLocalAcceleration.template tail<3>() - comLocalAcceleration.template head<3>().cross(o_r_com)
-//			- b_W_com.cross(b_W_com.cross(o_r_com)));
+	//	o_comAcceleration.template tail<3>() = o_R_b * (comLocalAcceleration.template tail<3>() - comLocalAcceleration.template head<3>().cross(o_r_com)
+	//			- b_W_com.cross(b_W_com.cross(o_r_com)));
 }
 
 /******************************************************************************************************/
@@ -318,7 +322,7 @@ void OCS2QuadrupedInterface<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::estimateFla
 		if (contactFlag[j]==true){
 			feetInContact++;
 			totalHeight += feetPositions[j](2);
-	}
+		}
 	groundHight = totalHeight / scalar_t(feetInContact);
 }
 
@@ -327,7 +331,7 @@ void OCS2QuadrupedInterface<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::estimateFla
 /******************************************************************************************************/
 template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM>
 typename OCS2QuadrupedInterface<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::kinematic_model_t&
-	OCS2QuadrupedInterface<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::getKinematicModel() {
+OCS2QuadrupedInterface<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::getKinematicModel() {
 
 	return *kinematicModelPtr_;
 }
@@ -337,7 +341,7 @@ typename OCS2QuadrupedInterface<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::kinemat
 /******************************************************************************************************/
 template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM>
 typename OCS2QuadrupedInterface<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::com_model_t&
-	OCS2QuadrupedInterface<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::getComModel() {
+OCS2QuadrupedInterface<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::getComModel() {
 
 	return *comModelPtr_;
 }
@@ -347,7 +351,7 @@ typename OCS2QuadrupedInterface<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::com_mod
 /******************************************************************************************************/
 template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM>
 typename OCS2QuadrupedInterface<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::slq_base_t&
-	OCS2QuadrupedInterface<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::getSLQ() {
+OCS2QuadrupedInterface<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::getSLQ() {
 
 	return *slqPtr_;
 }
@@ -356,7 +360,7 @@ typename OCS2QuadrupedInterface<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::slq_bas
 /******************************************************************************************************/
 template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM>
 typename OCS2QuadrupedInterface<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::slq_base_ptr_t&
-	OCS2QuadrupedInterface<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::getSLQPtr() {
+OCS2QuadrupedInterface<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::getSLQPtr() {
 
 	return slqPtr_;
 }
@@ -366,7 +370,7 @@ typename OCS2QuadrupedInterface<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::slq_bas
 /******************************************************************************************************/
 template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM>
 typename OCS2QuadrupedInterface<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::mpc_t&
-	OCS2QuadrupedInterface<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::getMPC() {
+OCS2QuadrupedInterface<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::getMPC() {
 
 	return *mpcPtr_;
 }
@@ -376,7 +380,7 @@ typename OCS2QuadrupedInterface<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::mpc_t&
 /******************************************************************************************************/
 template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM>
 typename OCS2QuadrupedInterface<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::mpc_ptr_t&
-	OCS2QuadrupedInterface<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::getMPCPtr() {
+OCS2QuadrupedInterface<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::getMPCPtr() {
 
 	return mpcPtr_;
 }
@@ -562,8 +566,8 @@ void OCS2QuadrupedInterface<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::runSLQ(
 	slqPtr_->setCostDesiredTrajectories(costDesiredTrajectories_);
 
 	// TODO: numSubsystems_ is not set
-//	scalar_array_t costAnnealingStartTimes(numSubsystems_, switchingTimes_.front());
-//	scalar_array_t costAnnealingFinalTimes(numSubsystems_, switchingTimes_.back());
+	//	scalar_array_t costAnnealingStartTimes(numSubsystems_, switchingTimes_.front());
+	//	scalar_array_t costAnnealingFinalTimes(numSubsystems_, switchingTimes_.back());
 
 	// run slqp
 	if (initialControllersStock.empty()==true) {
@@ -591,7 +595,7 @@ void OCS2QuadrupedInterface<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::runSLQ(
 	subsystemsSequence_ = slqPtr_->getLogicRules().subsystemsSequence();
 	contactFlagsSequence_ = slqPtr_->getLogicRules().getContactFlagsSequence();
 
-//	concatenate();
+	//	concatenate();
 
 }
 
@@ -621,7 +625,7 @@ bool OCS2QuadrupedInterface<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::runMPC(
 	eventTimes_ = mpcPtr_->getLogicRules().eventTimes();
 
 	subsystemsSequence_ = mpcPtr_->getLogicRules().subsystemsSequence();
-//	contactFlagsSequence_ = mpcPtr_->getLogicRules().getContactFlagsSequence();
+	//	contactFlagsSequence_ = mpcPtr_->getLogicRules().getContactFlagsSequence();
 
 	return controllerIsUpdated;
 }
@@ -635,27 +639,27 @@ void OCS2QuadrupedInterface<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::runOCS2(
 		const rbd_state_vector_t& initHyQState,
 		const scalar_array_t& switchingTimes /*=scalar_array_t()*/)  {
 
-//	if (switchingTimes.empty()==true)
-//		switchingTimes_ = initEventTimes_;
-//	else
-//		switchingTimes_ = switchingTimes;
-//
-//	initTime_ = initTime;
-//	computeSwitchedModelState(initHyQState, initSwitchedState_);
-//
-//	// run ocs2
-//	ocs2Ptr_->run(initTime_, initSwitchedState_, switchingTimes_.back(), initSystemStockIndexes_, switchingTimes_,
-//			controller_array_t(),
-//			desiredTimeTrajectoriesStock_, desiredStateTrajectoriesStock_);
-//
-//	// get the optimizer outputs
-//	ocs2Ptr_->getOCS2IterationsLog(ocs2Iterationcost_);
-//	ocs2Ptr_->getSLQIterationsLog(iterationCost_, iterationISE1_);
-//	ocs2Ptr_->getCostFunction(costFunction_);
-//	constriantISE_ = iterationISE1_.back()(0);
-//	ocs2Ptr_->getSwitchingTimes(switchingTimes_);
-//	ocs2Ptr_->getController(controllersStock_);
-//	ocs2Ptr_->getNominalTrajectories(timeTrajectoriesStock_, stateTrajectoriesStock_, inputTrajectoriesStock_);
+	//	if (switchingTimes.empty()==true)
+	//		switchingTimes_ = initEventTimes_;
+	//	else
+	//		switchingTimes_ = switchingTimes;
+	//
+	//	initTime_ = initTime;
+	//	computeSwitchedModelState(initHyQState, initSwitchedState_);
+	//
+	//	// run ocs2
+	//	ocs2Ptr_->run(initTime_, initSwitchedState_, switchingTimes_.back(), initSystemStockIndexes_, switchingTimes_,
+	//			controller_array_t(),
+	//			desiredTimeTrajectoriesStock_, desiredStateTrajectoriesStock_);
+	//
+	//	// get the optimizer outputs
+	//	ocs2Ptr_->getOCS2IterationsLog(ocs2Iterationcost_);
+	//	ocs2Ptr_->getSLQIterationsLog(iterationCost_, iterationISE1_);
+	//	ocs2Ptr_->getCostFunction(costFunction_);
+	//	constriantISE_ = iterationISE1_.back()(0);
+	//	ocs2Ptr_->getSwitchingTimes(switchingTimes_);
+	//	ocs2Ptr_->getController(controllersStock_);
+	//	ocs2Ptr_->getNominalTrajectories(timeTrajectoriesStock_, stateTrajectoriesStock_, inputTrajectoriesStock_);
 
 }
 

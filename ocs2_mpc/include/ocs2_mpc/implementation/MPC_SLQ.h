@@ -27,26 +27,26 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-namespace ocs2
-{
+namespace ocs2 {
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
 MPC_SLQ<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::MPC_SLQ()
-	: BASE(),
-	  initnumPartitions_(0),
-	  initPartitioningTimes_(0),
-	  numPartitions_(0),
-	  partitioningTimes_(0),
-	  nullControllersStock_(0),
-	  initActivePartitionIndex_(0),
-	  finalActivePartitionIndex_(0),
-	  lastControlDesignTime_(0.0),
-	  optimizedTimeTrajectoriesStock_(0),
-	  optimizedStateTrajectoriesStock_(0),
-	  optimizedInputTrajectoriesStock_(0)
+
+	: BASE()
+	, initnumPartitions_(0)
+	, initPartitioningTimes_(0)
+	, numPartitions_(0)
+	, partitioningTimes_(0)
+	, nullControllersStock_(0)
+	, initActivePartitionIndex_(0)
+	, finalActivePartitionIndex_(0)
+	, lastControlDesignTime_(0.0)
+	, optimizedTimeTrajectoriesStock_(0)
+	, optimizedStateTrajectoriesStock_(0)
+	, optimizedInputTrajectoriesStock_(0)
 {}
 
 /******************************************************************************************************/

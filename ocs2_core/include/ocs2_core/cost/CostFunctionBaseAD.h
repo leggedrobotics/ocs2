@@ -247,7 +247,7 @@ public:
 	virtual void initializeModel(
 			LogicRulesMachine<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>& logicRulesMachine,
 			const size_t& partitionIndex,
-			const char* algorithmName = nullptr) final {}
+			const char* algorithmName = nullptr) {}
 
 protected:
 	typedef ocs2::CppAdCodeGenInterface<domain_dim_, 1, scalar_t> ad_interface_t;

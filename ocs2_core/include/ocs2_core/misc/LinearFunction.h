@@ -99,6 +99,15 @@ public:
 	bool empty() const {
 		return time_.empty();
 	}
+
+	/**
+	 * Returns the size of the controller (in particular the time stamp).
+	 *
+	 * @return the size of the controller.
+	 */
+	size_t size() const {
+		return time_.size();
+	}
 };
 
 } // namespace ocs2

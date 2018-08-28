@@ -50,7 +50,7 @@ namespace ocs2{
  * User can utilize the third input argument to incorporate his/her guessed output. The function then uses
  * this guessed index to start searching from. This can potentially increase the speed of the function if
  * the guess is reasonable. Notice that the overloaded function with two input arguments implements such a
- * heuristic for the case that the function is called for an increasing or a decreasing sequence of enquiries.
+ * heuristic for the case that the function is called for an increasing or a decreasing sequence of enquires.
  * However, unlike this function, the overloaded function is not atomic which is potentially problematic in
  * multi-thread settings.
  *
@@ -124,7 +124,7 @@ int findActiveIntervalIndex(
  * Note: do not assign this call output directly to unsigned integer, since the function may also return -1.
  *
  * This method also has an internal memory which remembers the output from the last call. Thus, if the
- * enquiries have an increasing or a decreasing trend it finds the solution faster. If you wish to
+ * enquires have an increasing or a decreasing trend it finds the solution faster. If you wish to
  * disable this feature, use the overloaded function with three inputs and set the last argument to
  * zero. Moreover, due to this internal memory this function call is not an atomic operation. In this
  * case, it is advised to use the overloaded function.

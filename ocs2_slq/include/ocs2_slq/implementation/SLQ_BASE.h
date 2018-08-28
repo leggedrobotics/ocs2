@@ -535,10 +535,13 @@ typename SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::state_vector_t
 		beginTime = i==beginItr ? initTime  : switchingTimes[i];
 		endTime   = i==finalItr ? finalTime : switchingTimes[i+1];
 
+//		beginTime += OCS2NumericTraits<scalar_t>::limit_epsilon();
+
 		// simulate subsystem
 		if (controller.empty()==false) {
 			// integrate controlled system
-			dynamicsIntegratorsPtrStock_[workerIndex]->integrate(beginState, beginTime, endTime,
+			dynamicsIntegratorsPtrStock_[workerIndex]->integrate(
+					beginState, beginTime, endTime,
 					stateTrajectory, timeTrajectory,
 					settings_.minTimeStep_, settings_.absTolODE_, settings_.relTolODE_, maxNumSteps, true);
 			// compute control input trajectory and concatenate to inputTrajectory
@@ -559,11 +562,27 @@ typename SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::state_vector_t
 			systemDynamicsPtrStock_[workerIndex]->computeJumpMap(timeTrajectory.back(), stateTrajectory.back(), beginState);
 		}
 
+//		std::cout << "\n partitionIndex: " << partitionIndex << std::endl;
+//		std::cout << "beginTime: " << beginTime << std::endl;
+//		std::cout << "endTime: " << endTime << std::endl;
+//		std::cout << "eventsPastTheEndIndeces:\n\{";
+//		for (auto& t: eventsPastTheEndIndeces)
+//			std::cout << t << ", ";
+//		if (!eventsPastTheEndIndeces.empty())  std::cerr << "\b\b";
+//		std::cout << "}" << std::endl;
+//		for (size_t k=0; k<timeTrajectory.size(); k++) {
+//			std::cout << "k:  " << k << std::endl;
+//			std::cout << "time:  " << timeTrajectory[k] << std::endl;
+//			std::cout << "state: " << stateTrajectory[k].transpose() << std::endl;
+//			std::cout << "input: " << inputTrajectory[k].transpose() << std::endl;
+//		}
+
 	}  // end of i loop
 
 	// If an event has happened at the final time push it to the eventsPastTheEndIndeces
-	// numEvents>finalItr means that there the final active subsystem is before an event time.
-	// Note: we don't push the state because that the input might not be defined since no control policy is available)
+	// numEvents>finalItr means that the final active subsystem is before an event time.
+	// Note: we woun't push the state because the input is not yet defined. rolloutTrajectory()
+	// will push state and input once the next partition state and input is defined.
 	bool eventAtFinalTime = numEvents>finalItr &&
 			logicRulesMachinePtr_->getEventTimes(partitionIndex)[finalItr]<finalTime+OCS2NumericTraits<scalar_t>::limit_epsilon();
 	if (eventAtFinalTime) {
@@ -654,6 +673,17 @@ typename SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::scalar_t
 
 	}  // end of i loop
 
+	// if there is an active event at the finalTime. We add the jumped state and final time, as well as the input.
+	// However the input is not valid since the controller is not defined for the next partition. This value wouldn't
+	// affect the algorithm since at final time only state and time are used e.g. in the Heuristic cost.
+	if (eventsPastTheEndIndecesStock[finalActivePartition].size()>0)
+		if(eventsPastTheEndIndecesStock[finalActivePartition].back()==stateTrajectoriesStock[finalActivePartition].size()) {
+//			timeTrajectoriesStock[finalActivePartition].push_back(t0);
+//			stateTrajectoriesStock[finalActivePartition].push_back(x0);
+//			inputTrajectoriesStock[finalActivePartition].push_back(inputTrajectoriesStock[finalActivePartition].back());
+			eventsPastTheEndIndecesStock[finalActivePartition].erase(eventsPastTheEndIndecesStock[finalActivePartition].end()-1);
+		}
+
 	if (x0 != x0)
 		throw std::runtime_error("System became unstable during the SLQ rollout.");
 
@@ -668,13 +698,13 @@ typename SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::scalar_t
 //			std::cout << t << ", ";
 //		if (!eventsPastTheEndIndecesStock[i].empty())  std::cerr << "\b\b";
 //		std::cout << "}" << std::endl;
-
-//		for (size_t k=0; k<timeTrajectoriesStock[i].size(); k++) {
-//			std::cout << "k:  " << k << std::endl;
-//			std::cout << "time:  " << timeTrajectoriesStock[i][k] << std::endl;
-//			std::cout << "state: " << stateTrajectoriesStock[i][k].transpose() << std::endl;
-//			std::cout << "input: " << inputTrajectoriesStock[i][k].transpose() << std::endl;
-//		}
+//
+//////		for (size_t k=0; k<timeTrajectoriesStock[i].size(); k++) {
+//////			std::cout << "k:  " << k << std::endl;
+//////			std::cout << "time:  " << timeTrajectoriesStock[i][k] << std::endl;
+//////			std::cout << "state: " << stateTrajectoriesStock[i][k].transpose() << std::endl;
+//////			std::cout << "input: " << inputTrajectoriesStock[i][k].transpose() << std::endl;
+//////		}
 //	}
 //	std::cout << "<<<<<<<<<<<<\n";
 
@@ -2010,7 +2040,6 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::solveRiccatiEquationsForNomi
 		}
 
 	}  // end of i loop
-
 
 	// check size
 	if (allSsTrajectory.size() != N)
@@ -3738,6 +3767,4 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::run(
 }
 
 }  // ocs2 namespace
-
-
 

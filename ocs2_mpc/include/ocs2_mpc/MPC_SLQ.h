@@ -278,7 +278,9 @@ protected:
 			size_t& initActivePartitionIndex,
 			size_t& finalActivePartitionIndex) const;
 
-private:
+	/***********
+	 * Variabes
+	 ***********/
 	typename slq_base_t::Ptr slqPtr_;
 
 	size_t initnumPartitions_;

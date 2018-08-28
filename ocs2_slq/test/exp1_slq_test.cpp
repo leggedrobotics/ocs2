@@ -36,159 +36,9 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_slq/SLQ_MP.h>
 #include <ocs2_slq/test/EXP1.h>
 
+#include <ocs2_core/misc/TrajectorySpreadingController.h>
+
 using namespace ocs2;
-
-#include <algorithm>
-void adjustController(
-		const std::vector<double>& eventTimes,
-		Dimensions<2,1>::controller_array_t& controllerStock) {
-
-	/*******************************************************
-	 * Finds the indices of the new event times
-	 ******************************************************/
-	// vector of (partition, index). -1 means end()
-	std::vector<std::pair<int,int>> eventsIndices(eventTimes.size(), std::pair<int,int>(-1, -1));
-
-	size_t indexStart = 0;
-	size_t p = 0; // partitionStart
-
-	for (size_t j=0; j<eventTimes.size(); j++) {
-
-		const Dimensions<2,1>::scalar_t& te = eventTimes[j];
-		std::pair<int,int>& ie = eventsIndices[j]; // (partition, index)
-
-		for (; p<controllerStock.size(); p++) {
-
-			auto beginItr = (j>0) ? controllerStock[p].time_.begin() + eventsIndices[j-1].second
-					: controllerStock[p].time_.begin();
-
-			auto lower = std::lower_bound(beginItr, controllerStock[p].time_.end(), te);
-
-			if (lower != controllerStock[p].time_.end()) {
-				ie.first = p;
-				ie.second = lower - controllerStock[p].time_.begin();
-				break;
-			}
-
-		} // end of p loop
-
-	} // end of j loop
-
-	std::cout << "indices of the new eventTimes: " << std::endl;
-	for (auto& ind : eventsIndices) {
-		std::cout << ind.first << ", " << ind.second;
-		std::cout << "\t Size: " << controllerStock[ind.first].time_.size();
-		std::cout << "\t Before: " << controllerStock[ind.first].time_[ind.second-1];
-		std::cout << "\t Itself: " << controllerStock[ind.first].time_[ind.second];
-		std::cout << std::endl;
-	}
-
-
-	/*******************************************************
-	 * Event Times for which controller is designed
-	 ******************************************************/
-	std::vector<std::pair<int,int>> eventsIndicesOld(eventTimes.size(), std::pair<int,int>(-1, -1));
-	std::pair<int,int> expectedOldEventIndex = std::pair<int,int>(0, 0);
-	for (size_t j=0; j<eventTimes.size(); j++) {
-
-		// events before the controller start time
-		if (eventsIndices[j] == std::pair<int,int>(0,0)) {
-			eventsIndicesOld[j] = std::pair<int,int>(0, 0);
-			continue;
-		}
-		// events after the controller final time
-		if (eventsIndices[j] == std::pair<int,int>(-1,-1)) {
-			break;
-		}
-
-		for (size_t p=expectedOldEventIndex.first; p<controllerStock.size(); p++) {
-
-			std::cout << std::endl;
-
-			for (size_t k=expectedOldEventIndex.second; k<controllerStock[p].time_.size()-1; k++) {
-
-//				std::cout << "k: " << k << std::endl;
-//				std::cout << "time: " << controllerStock[p].time_[k] << std::endl;
-//				std::cout << "next: " << controllerStock[p].time_[k+1] << std::endl;
-//				std::cout << "diff: " << std::abs(controllerStock[p].time_[k]-controllerStock[p].time_[k+1]) << std::endl;
-
-				if (std::abs(controllerStock[p].time_[k]-controllerStock[p].time_[k+1]) < 1e-6) {
-
-					expectedOldEventIndex.first = p;
-					expectedOldEventIndex.second = k;
-					eventsIndicesOld[j] = expectedOldEventIndex;
-					p = controllerStock.size(); // break the p loop
-					break;
-				}
-			} // end of k loop
-		} // end of p loop
-
-	} // end of j loop
-
-	std::cout << "indices of the old eventTimes: " << std::endl;
-	for (auto& ind : eventsIndicesOld) {
-		std::cout << ind.first << ", " << ind.second;
-		std::cout << "\t Size: " << controllerStock[ind.first].time_.size();
-		std::cout << "\t Before: " << controllerStock[ind.first].time_[ind.second-1];
-		std::cout << "\t Itself: " << controllerStock[ind.first].time_[ind.second];
-		std::cout << std::endl;
-	}
-
-
-//	for (size_t j=0; j<eventTimes.size(); j++) {
-//
-//		// events before the controller start time
-//		if (eventsIndices[j] == std::pair<int,int>(0,0)) {
-//			continue;
-//		}
-//		// events after the controller final time
-//		if (eventsIndices[j] == std::pair<int,int>(-1,-1)) {
-//			break;
-//		}
-//
-//		std::pair<int,int> startIndex;
-//		std::pair<int,int> finalIndex;
-//		Dimensions<2,1>::input_vector_t uff;
-//		Dimensions<2,1>::input_state_matrix_t K;
-//
-//		if (eventsIndices[j].first < eventsIndicesOld[j].first) {
-//
-//			startIndex = eventsIndices[j];
-//			finalIndex = eventsIndicesOld[j];
-//
-//		} else if (eventsIndices[j].first > eventsIndicesOld[j].first) {
-//
-//			startIndex = eventsIndicesOld[j];
-//			finalIndex = eventsIndices[j];
-//
-//		} else if (eventsIndices[j].first == eventsIndicesOld[j].first) {
-//
-//			startIndex.first = eventsIndices[j].first;
-//			finalIndex.first = eventsIndices[j].first;
-//
-//			if (eventsIndices[j].second < eventsIndicesOld[j].second) {
-//				uff = controllerStock[startIndex.first+1].uff_.front();
-//				K = controllerStock[startIndex.first+1].k_.front();
-//			} else {
-//				uff = controllerStock[startIndex.first].uff_.back();
-//				K = controllerStock[startIndex.first].k_.back();
-//			}
-//			startIndex.second = std::min(eventsIndices[j].second, eventsIndicesOld[j].second);
-//			finalIndex.second = std::max(eventsIndices[j].second, eventsIndicesOld[j].second);
-//		}
-//
-//
-//		for (size_t i=startIndex.first; i<finalIndex.first; i++)
-//			for (size_t k=startIndex.first; k<finalIndex.first; k++) {
-//
-//				controllerStock[i].k_[k] = K;
-//				controllerStock[i].uff_[k] = uff;
-//			}
-//
-//
-//	} // end of j loop
-
-}
 
 enum
 {
@@ -221,7 +71,7 @@ TEST(exp1_slq_test, Exp1_slq_test)
 	/******************************************************************************************************/
 	/******************************************************************************************************/
 	SLQ_Settings slqSettings;
-	slqSettings.displayInfo_ = false;
+	slqSettings.displayInfo_ = true;
 	slqSettings.displayShortSummary_ = true;
 	slqSettings.maxNumIterationsSLQ_ = 2;
 	slqSettings.absTolODE_ = 1e-10;
@@ -235,7 +85,7 @@ TEST(exp1_slq_test, Exp1_slq_test)
 	slqSettings.checkNumericalStability_ = false;
 
 	// switching times
-	std::vector<double> eventTimes {0.2, 1.2};
+	std::vector<double> eventTimes {0.2, 1.2, 3.0};
 	EXP1_LogicRules logicRules(eventTimes);
 
 	double startTime = 0.0;
@@ -265,7 +115,7 @@ TEST(exp1_slq_test, Exp1_slq_test)
 	// run single core SLQ
 	if (slqSettings.displayInfo_ || slqSettings.displayShortSummary_)
 		std::cerr << "\n>>> single-core SLQ" << std::endl;
-	slq.run(startTime, initState, finalTime, partitioningTimes);
+	slq.run(startTime+1e-4, initState, finalTime, partitioningTimes);
 
 	/******************************************************************************************************/
 	/******************************************************************************************************/
@@ -291,7 +141,18 @@ TEST(exp1_slq_test, Exp1_slq_test)
 	//
 	logicRules.display();
 	// Test
-	adjustController(eventTimes, controllersStock);
+	TrajectorySpreadingController<STATE_DIM, INPUT_DIM> trajectorySpreadingController;
+	eventTimes[0] = 1.0;
+	eventTimes[1] = 1.1;
+	eventTimes[2] = 3.5;
+	SLQ_BASE<STATE_DIM, INPUT_DIM, EXP1_LogicRules>::controller_array_t controllersStockNew = controllersStock;
+	trajectorySpreadingController.adjustController(eventTimes, controllersStockNew);
+
+	for (size_t i=0; i<controllersStock.size(); i++)
+		for (size_t k=0; k<controllersStock[i].size(); k++) {
+			std::cout << "[" << controllersStock[i].time_[k] << "]:  \t"    << controllersStock[i].uff_[k].transpose() << " \t";
+			std::cout << "[" << controllersStockNew[i].time_[k] << "]: " << controllersStockNew[i].uff_[k].transpose() << std::endl;
+		}
 
 	sleep(1);
 }
@@ -302,6 +163,4 @@ int main(int argc, char** argv)
 	testing::InitGoogleTest(&argc, argv);
 	return RUN_ALL_TESTS();
 }
-
-
 

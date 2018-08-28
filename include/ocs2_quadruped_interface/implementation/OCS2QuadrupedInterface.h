@@ -81,16 +81,15 @@ void OCS2QuadrupedInterface<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::loadSetting
 		kinematicModelPtr_->footJacobainBaseFrame(leg, J_thisfoot);
 		J_allFeet.block<3, 12>(3*leg, 0) = J_thisfoot.bottomRows<3>();
 	}
-	std::cout << "R before the feet: \n" <<  R_ << std::endl;
-	R_.template block<12, 12>(0, 0) = (0.05*R_.template block<12, 12>(0, 0) +  0.95* J_allFeet.transpose() * R_.template block<12, 12>(0, 0) * J_allFeet).eval();
+
+	const double alpha = modelSettings_.torqueMixingFactor_;
+	R_.template block<12, 12>(0, 0) = ((1.0-alpha)*R_.template block<12, 12>(0, 0) +  alpha* J_allFeet * R_.template block<12, 12>(0, 0) * J_allFeet.transpose()).eval();
 	R_.template block<12, 12>(12, 12) = (J_allFeet.transpose() * R_.template block<12, 12>(12, 12) * J_allFeet).eval();
 
 	if (STATE_DIM > 2*JOINT_COORD_SIZE){
-		R_.template block<12, 12>(24, 24) = (0.05*R_.template block<12, 12>(24, 24) +  0.95* J_allFeet.transpose() * R_.template block<12, 12>(24, 24) * J_allFeet).eval();
+		R_.template block<12, 12>(24, 24) = ((1.0-alpha)*R_.template block<12, 12>(24, 24) +  alpha* J_allFeet* R_.template block<12, 12>(24, 24) * J_allFeet.transpose()).eval();
 		R_.template block<12, 12>(36, 36) = (J_allFeet.transpose() * R_.template block<12, 12>(36, 36) * J_allFeet).eval();
 	}
-
-	std::cout << "R for the feet: \n" <<  R_ << std::endl;
 
 	// target state
 	base_coordinate_t comFinalPose;

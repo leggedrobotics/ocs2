@@ -1,7 +1,7 @@
 
 mpcTimeHorizon
 {
-    timehorizon        0.8		; 1.2		; 0.8
+    timehorizon        1.0		; 1.2		; 0.8
     numPartitions      5
 }
 
@@ -22,7 +22,9 @@ model_settings
   zDirectionPositionWeight      0.0
   zDirectionVelocityWeight      0.5
 
-  swingLegLiftOff               0.20
+  swingLegLiftOff               0.30
+  liftOffVelocity               0.0
+  touchDownVelocity             0.0
 
   copWeight                     0.0    ; 600.0
   impulseWeight                 0.0
@@ -33,10 +35,11 @@ model_settings
   mpcStrideLength               0.2
   numPhasesInfullGaitCycle      2
   useFeetTrajectoryFiltering    0
+  feetFilterFrequency           1000.0
   
   eps 	2e-4
   eta 	1e+2
-  
+
   torqueMixingFactor            0.5
 }
 
@@ -55,8 +58,8 @@ templateSubsystemsSequence
 templateSwitchingTimes
 {
   	[0]     0.0
-	[1]     0.4
-	[2]     0.8
+	[1]     0.35
+	[2]     0.70
 }
 
 
@@ -96,25 +99,24 @@ slq
   minTimeStep                   1e-3
   useMakePSD                    0
   addedRiccatiDiagonal          1e-4
-  maxNumStepsPerSecond          50000
-  simulationIsConstrained       0
-  noStateConstraints            0
-  minAbsConstraint1ISE          5e-3
-  minRelConstraint1ISE          5e-6
-  checkNumericalStability       0
+  maxNumStepsPerSecond         	50000
+  simulationIsConstrained      	0
+  noStateConstraints			0
+  minAbsConstraint1ISE         	5e-3
+  minRelConstraint1ISE         	5e-6
+  checkNumericalStability      	0
+  displayGradientDescent      	0
+  tolGradientDescent           	1e-2
+  acceptableTolGradientDescent 	1e-2
+  maxIterationGradientDescent  	5
+  minLearningRateNLP           	0.05
+  maxLearningRateNLP           	0.6
+  useAscendingLineSearchNLP    	1
 
-  displayGradientDescent        0
-  tolGradientDescent            1e-2
-  acceptableTolGradientDescent  1e-2
-  maxIterationGradientDescent   5
-  minLearningRateNLP            0.05
-  maxLearningRateNLP            0.6
-  useAscendingLineSearchNLP     1
-
-  useMultiThreading             1
-  nThreads                      6
-  debugPrintMP                  0
-  lsStepsizeGreedy              1
+  useMultiThreading           	1
+  nThreads                    	6
+  debugPrintMP                	0
+  lsStepsizeGreedy            	1
 
   useNominalTimeForBackwardPass 1
   RiccatiIntegratorType         1 		; ODE45 = 1, ADAMS_BASHFORTH = 2, BULIRSCH_STOER = 3, ADAMS_BASHFORTH_MOULTON = 4

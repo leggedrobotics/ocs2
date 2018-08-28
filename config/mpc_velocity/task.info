@@ -36,6 +36,8 @@ model_settings
 
   eps 	2e-4
   eta 	1e+2
+
+  torqueMixingFactor            0.5
 }
 
 switchingModes

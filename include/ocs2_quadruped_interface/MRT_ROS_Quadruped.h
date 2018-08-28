@@ -38,7 +38,7 @@ public:
 	typedef typename quadruped_interface_t::rbd_state_vector_t		rbd_state_vector_t;
 
 	enum {
-		RBD_STATE_DIM = quadruped_interface_t::RBD_STATE_DIM
+		rbd_state_dim_ = quadruped_interface_t::rbd_state_dim_
 	};
 
 	typedef ocs2::MRT_ROS_Interface<STATE_DIM, INPUT_DIM, typename quadruped_interface_t::logic_rules_t> BASE;

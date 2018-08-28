@@ -57,7 +57,9 @@ public:
 
 	enum
 	{
-		RBD_STATE_DIM = 12 + 2*JOINT_COORD_SIZE
+		state_dim_ = STATE_DIM,
+		input_dim_ = INPUT_DIM,
+		rbd_state_dim_ = 12 + 2*JOINT_COORD_SIZE
 	};
 
 	typedef ocs2::RobotInterfaceBase<STATE_DIM, INPUT_DIM> BASE;
@@ -95,7 +97,7 @@ public:
 	typedef typename switched_model_t::generalized_coordinate_t generalized_coordinate_t;
 	typedef typename switched_model_t::joint_coordinate_t 		joint_coordinate_t;
 	typedef typename switched_model_t::base_coordinate_t 		base_coordinate_t;
-	typedef Eigen::Matrix<scalar_t, RBD_STATE_DIM,1>			rbd_state_vector_t;
+	typedef Eigen::Matrix<scalar_t, rbd_state_dim_,1>			rbd_state_vector_t;
 
 	typedef GroundProfileBase<scalar_t> 		ground_profile_t;
 	typedef typename ground_profile_t::Ptr 		ground_profile_ptr_t;
@@ -107,7 +109,7 @@ public:
 	typedef typename feet_z_planner_t::Ptr			feet_z_planner_ptr_t;
 
 	typedef SwitchedModelPlannerLogicRules<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM> 	logic_rules_t;
-	typedef typename logic_rules_t::Ptr							logic_rules_ptr_t;
+	typedef typename logic_rules_t::Ptr logic_rules_ptr_t;
 
 	typedef ocs2::ModeSequenceTemplate<scalar_t> mode_sequence_template_t;
 

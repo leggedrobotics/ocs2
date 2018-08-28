@@ -564,11 +564,17 @@ void MPC_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::launchNodes(int arg
 
 	// Observation subscriber
 	mpcObservationSubscriber_ = nodeHandler.subscribe(
-			robotName_+"_mpc_observation", 1, &MPC_ROS_Interface::mpcObservationCallback, this);
+			robotName_+"_mpc_observation",
+			1,
+			&MPC_ROS_Interface::mpcObservationCallback, this,
+			::ros::TransportHints().udp());
 
 	// Goal subscriber
 	mpcTargetTrajectoriesSubscriber_ = nodeHandler.subscribe(
-			robotName_+"_mpc_target", 1, &MPC_ROS_Interface::mpcTargetTrajectoriesCallback, this);
+			robotName_+"_mpc_target",
+			1,
+			&MPC_ROS_Interface::mpcTargetTrajectoriesCallback, this,
+			::ros::TransportHints().udp());
 
 	// SLQ-MPC publisher
 	if (mpcSettings_.useFeedbackPolicy_==true) {

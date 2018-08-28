@@ -78,6 +78,7 @@ TEST(exp1_slq_test, Exp1_slq_test)
 	slqSettings.maxNumIterationsSLQ_ = 30;
 	slqSettings.lsStepsizeGreedy_ = true;
 	slqSettings.noStateConstraints_ = true;
+	slqSettings.checkNumericalStability_ = false;
 
 	// switching times
 	std::vector<double> switchingTimes {0.2262, 1.0176};

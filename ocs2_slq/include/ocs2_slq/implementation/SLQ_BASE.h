@@ -1115,8 +1115,29 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::approximateLQWorker(
 	const size_t& i = partitionIndex;
 	const size_t& k = timeIndex;
 
+	// unconstrained LQ problem
+	approximateUnconstrainedLQWorker(workerIndex, partitionIndex, timeIndex);
+
+	const scalar_t stateConstraintPenalty = settings_.stateConstraintPenaltyCoeff_ *
+				pow(settings_.stateConstraintPenaltyBase_, iteration_);
+
+	// modify the unconstrained LQ coefficients to constrained ones
+	approximateConstrainedLQWorker(workerIndex, partitionIndex, timeIndex, stateConstraintPenalty);
+
+	// calculate an LQ approximate of the event times process.
+	approximateEventsLQWorker(workerIndex, partitionIndex, timeIndex, stateConstraintPenalty);
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
+void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::approximateUnconstrainedLQWorker(
+		size_t workerIndex,
+		const size_t& i,
+		const size_t& k) {
 	/*
-	 * LINEARIZE SYSTEM DYNAMICS
+	 * linearize system dynamics
 	 */
 
 	// set data
@@ -1129,8 +1150,24 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::approximateLQWorker(
 	systemDerivativesPtrStock_[workerIndex]->getFlowMapDerivativeState(AmTrajectoryStock_[i][k]);
 	systemDerivativesPtrStock_[workerIndex]->getFlowMapDerivativeInput(BmTrajectoryStock_[i][k]);
 
+	// checking the numerical stability
+	if (settings_.checkNumericalStability_==true){
+		try {
+			if (!AmTrajectoryStock_[i][k].allFinite())
+				throw std::runtime_error("Flow map state derivativeState is not finite.");
+			if (!BmTrajectoryStock_[i][k].allFinite())
+				throw std::runtime_error("Flow map input derivativeState is not finite.");
+
+		} catch(const std::exception& error)  {
+			std::cerr << "what(): " << error.what() << " at time " << nominalTimeTrajectoriesStock_[i][k] << " [sec]." << std::endl;
+			std::cerr << "Am: \n" << AmTrajectoryStock_[i][k] << std::endl;
+			std::cerr << "Bm: \n" << BmTrajectoryStock_[i][k] << std::endl;
+			exit(0);
+		}
+	}
+
 	/*
-	 * CONSTRAINTS and LINEARIZED CONSTRAINTS
+	 * constraints and linearized constraints
 	 */
 
 	// set data
@@ -1160,8 +1197,40 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::approximateLQWorker(
 		systemConstraintsPtrStock_[workerIndex]->getConstraint2DerivativesState(FmTrajectoryStock_[i][k]);
 	}
 
+	if (settings_.checkNumericalStability_==true){
+		try {
+			const size_t& nc1 = nc1TrajectoriesStock_[i][k];
+			const size_t& nc2 = nc2TrajectoriesStock_[i][k];
+			if (nc1TrajectoriesStock_[i][k] > 0 && !EvTrajectoryStock_[i][k].head(nc1).allFinite())
+				throw std::runtime_error("Input-state constraint is not finite.");
+			if (nc1TrajectoriesStock_[i][k] > 0 && !CmTrajectoryStock_[i][k].topRows(nc1).allFinite())
+				throw std::runtime_error("Input-state constraint derivative w.r.t. state is not finite.");
+			if (nc1TrajectoriesStock_[i][k] > 0 && !DmTrajectoryStock_[i][k].topRows(nc1).allFinite())
+				throw std::runtime_error("Input-state constraint derivative w.r.t. input is not finite.");
+			if (nc2TrajectoriesStock_[i][k] > 0 && !HvTrajectoryStock_[i][k].head(nc2).allFinite())
+				throw std::runtime_error("State-only constraint is not finite.");
+			if (nc2TrajectoriesStock_[i][k] > 0 && !FmTrajectoryStock_[i][k].topRows(nc2).allFinite())
+				throw std::runtime_error("State-only constraint derivative w.r.t. state is not finite.");
+			size_t DmRank = DmTrajectoryStock_[i][k].topRows(nc1).colPivHouseholderQr().rank();
+			if (DmRank != nc1)
+				throw std::runtime_error("Input-state constraint derivative w.r.t. input is not full-row rank. It's rank "
+						"is " + std::to_string(DmRank) + " while the expected rank is " + std::to_string(nc1) + ".");
+
+		} catch(const std::exception& error)  {
+			const size_t& nc1 = nc1TrajectoriesStock_[i][k];
+			const size_t& nc2 = nc2TrajectoriesStock_[i][k];
+			std::cerr << "what(): " << error.what() << " at time " << nominalTimeTrajectoriesStock_[i][k] << " [sec]." << std::endl;
+			std::cerr << "Ev: " << EvTrajectoryStock_[i][k].head(nc1).transpose() << std::endl;
+			std::cerr << "Cm: \n" << CmTrajectoryStock_[i][k].topRows(nc1) << std::endl;
+			std::cerr << "Dm: \n" << DmTrajectoryStock_[i][k].topRows(nc1) << std::endl;
+			std::cerr << "Hv: " << HvTrajectoryStock_[i][k].head(nc2).transpose() << std::endl;
+			std::cerr << "Fm: \n" << FmTrajectoryStock_[i][k].topRows(nc2) << std::endl;
+			exit(0);
+		}
+	}
+
 	/*
-	 * QUADRATIC APPROXIMATION TO THE COST FUNCTION
+	 * quadratic approximation to the cost function
 	 */
 
 	// set data
@@ -1179,18 +1248,56 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::approximateLQWorker(
 	RmInverseTrajectoryStock_[i][k] = RmTrajectoryStock_[i][k].ldlt().solve(input_matrix_t::Identity());
 	costFunctionsPtrStock_[workerIndex]->getIntermediateCostDerivativeInputState(PmTrajectoryStock_[i][k]);
 
-	/*
-	 * Modify the unconstrained LQ coefficients to constrained ones
-	 */
+	// checking the numerical stability
+	if (settings_.checkNumericalStability_==true){
+		try {
+			if (!qTrajectoryStock_[i][k].allFinite())
+				throw std::runtime_error("Intermediate cost is is not finite.");
+			if (!QvTrajectoryStock_[i][k].allFinite())
+				throw std::runtime_error("Intermediate cost first derivative w.r.t. state is is not finite.");
+			if (!QmTrajectoryStock_[i][k].allFinite())
+				throw std::runtime_error("Intermediate cost second derivative w.r.t. state is is not finite.");
+			if (!RvTrajectoryStock_[i][k].allFinite())
+				throw std::runtime_error("Intermediate cost first derivative w.r.t. input is is not finite.");
+			if (!RmTrajectoryStock_[i][k].allFinite())
+				throw std::runtime_error("Intermediate cost second derivative w.r.t. input is is not finite.");
+			if (!PmTrajectoryStock_[i][k].allFinite())
+				throw std::runtime_error("Intermediate cost second derivative w.r.t. input-state is is not finite.");
+			if (RmTrajectoryStock_[i][k].ldlt().rcond() < Eigen::NumTraits<scalar_t>::epsilon())
+				throw std::runtime_error("R matrix is not invertible. It's reciprocal condition number is " +
+						std::to_string(RmTrajectoryStock_[i][k].ldlt().rcond()) + ".");
+		} catch(const std::exception& error)  {
+			std::cerr << "what(): " << error.what() << " at time " << nominalTimeTrajectoriesStock_[i][k] << " [sec]." << std::endl;
+			std::cerr << "q: " << qTrajectoryStock_[i][k] << std::endl;
+			std::cerr << "Qv: " << QvTrajectoryStock_[i][k].transpose() << std::endl;
+			std::cerr << "Qm: \n" << QmTrajectoryStock_[i][k] << std::endl;
+			std::cerr << "Rv: " << RvTrajectoryStock_[i][k].transpose() << std::endl;
+			std::cerr << "Rm: \n" << RmTrajectoryStock_[i][k] << std::endl;
+			std::cerr << "Pm: \n" << PmTrajectoryStock_[i][k] << std::endl;
+			exit(0);
+		}
+	}
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
+void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::approximateConstrainedLQWorker(
+			size_t workerIndex,
+			const size_t& i,
+			const size_t& k,
+			const scalar_t& stateConstraintPenalty) {
 
 	// constraint type 2 coefficients
-	const scalar_t stateConstraintPenalty = settings_.stateConstraintPenaltyCoeff_ *
-			pow(settings_.stateConstraintPenaltyBase_, iteration_);
 	const size_t& nc2 = nc2TrajectoriesStock_[i][k];
 	if (nc2 > 0) {
-		qTrajectoryStock_[i][k]  += 0.5 * stateConstraintPenalty * HvTrajectoryStock_[i][k].head(nc2).transpose() * HvTrajectoryStock_[i][k].head(nc2);
-		QvTrajectoryStock_[i][k] += stateConstraintPenalty * FmTrajectoryStock_[i][k].topRows(nc2).transpose() * HvTrajectoryStock_[i][k].head(nc2);
-		QmTrajectoryStock_[i][k] += stateConstraintPenalty * FmTrajectoryStock_[i][k].topRows(nc2).transpose() * FmTrajectoryStock_[i][k].topRows(nc2);
+		qTrajectoryStock_[i][k]  += 0.5 * stateConstraintPenalty *
+				HvTrajectoryStock_[i][k].head(nc2).transpose() * HvTrajectoryStock_[i][k].head(nc2);
+		QvTrajectoryStock_[i][k] += stateConstraintPenalty *
+				FmTrajectoryStock_[i][k].topRows(nc2).transpose() * HvTrajectoryStock_[i][k].head(nc2);
+		QmTrajectoryStock_[i][k] += stateConstraintPenalty *
+				FmTrajectoryStock_[i][k].topRows(nc2).transpose() * FmTrajectoryStock_[i][k].topRows(nc2);
 	}
 
 	// constraint type 1 coefficients
@@ -1239,9 +1346,12 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::approximateLQWorker(
 		input_matrix_t DmNullSpaceProjection = input_matrix_t::Identity() - DmProjectedTrajectoryStock_[i][k];
 		state_matrix_t PmTransDmDagerCm = PmTrajectoryStock_[i][k].transpose()*CmProjectedTrajectoryStock_[i][k];
 
-		AmConstrainedTrajectoryStock_[i][k] = AmTrajectoryStock_[i][k] - BmTrajectoryStock_[i][k]*CmProjectedTrajectoryStock_[i][k];
-		QmConstrainedTrajectoryStock_[i][k] = QmTrajectoryStock_[i][k] + Cm.transpose()*RmProjected*Cm - PmTransDmDagerCm - PmTransDmDagerCm.transpose();
-		QvConstrainedTrajectoryStock_[i][k] = QvTrajectoryStock_[i][k] - CmProjectedTrajectoryStock_[i][k].transpose()*RvTrajectoryStock_[i][k];
+		AmConstrainedTrajectoryStock_[i][k] = AmTrajectoryStock_[i][k] -
+				BmTrajectoryStock_[i][k]*CmProjectedTrajectoryStock_[i][k];
+		QmConstrainedTrajectoryStock_[i][k] = QmTrajectoryStock_[i][k] +
+				Cm.transpose()*RmProjected*Cm - PmTransDmDagerCm - PmTransDmDagerCm.transpose();
+		QvConstrainedTrajectoryStock_[i][k] = QvTrajectoryStock_[i][k] -
+				CmProjectedTrajectoryStock_[i][k].transpose()*RvTrajectoryStock_[i][k];
 		if (settings_.useRiccatiSolver_==true) {
 			RmConstrainedTrajectoryStock_[i][k] = DmNullSpaceProjection.transpose() * RmTrajectoryStock_[i][k] * DmNullSpaceProjection;
 		} else {
@@ -1255,6 +1365,17 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::approximateLQWorker(
 	// making sure that constrained Qm is PSD
 	if (settings_.useMakePSD_==true)
 		makePSD(QmConstrainedTrajectoryStock_[i][k]);
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
+void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::approximateEventsLQWorker(
+		size_t workerIndex,
+		const size_t& i,
+		const size_t& k,
+		const scalar_t& stateConstraintPenalty) 	{
 
 	// if a switch took place calculate switch related variables
 	size_t NE = nominalEventsPastTheEndIndecesStock_[i].size();
@@ -1264,10 +1385,12 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::approximateLQWorker(
 			/*
 			 *  Final constraint type 2
 			 */
-			nc2FinalStock_[i][ke] = systemConstraintsPtrStock_[workerIndex]->numStateOnlyFinalConstraint(nominalTimeTrajectoriesStock_[i][k]);
+			nc2FinalStock_[i][ke] = systemConstraintsPtrStock_[workerIndex]->numStateOnlyFinalConstraint(
+					nominalTimeTrajectoriesStock_[i][k]);
 
 			if (nc2FinalStock_[i][ke] > INPUT_DIM)
-				throw std::runtime_error("Number of active final type-2 constraints should be less-equal to the number of input dimension.");
+				throw std::runtime_error("Number of active final type-2 constraints should be "
+						"less-equal to the number of input dimension.");
 			// if final constraint type 2 is active
 			if (nc2FinalStock_[i][ke] > 0) {
 				systemConstraintsPtrStock_[workerIndex]->getFinalConstraint2(HvFinalStock_[i][ke]);
@@ -1287,9 +1410,12 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::approximateLQWorker(
 			// final constraint type 2 coefficients
 			const size_t& nc2 = nc2FinalStock_[i][ke];
 			if (nc2 > 0) {
-				qFinalStock_[i][ke]  += 0.5 * stateConstraintPenalty * HvFinalStock_[i][ke].head(nc2).transpose() * HvFinalStock_[i][ke].head(nc2);
-				QvFinalStock_[i][ke] += stateConstraintPenalty * FmFinalStock_[i][ke].topRows(nc2).transpose() * HvFinalStock_[i][ke].head(nc2);
-				QmFinalStock_[i][ke] += stateConstraintPenalty * FmFinalStock_[i][ke].topRows(nc2).transpose() * FmFinalStock_[i][ke].topRows(nc2);
+				qFinalStock_[i][ke]  += 0.5 * stateConstraintPenalty *
+						HvFinalStock_[i][ke].head(nc2).transpose() * HvFinalStock_[i][ke].head(nc2);
+				QvFinalStock_[i][ke] += stateConstraintPenalty *
+						FmFinalStock_[i][ke].topRows(nc2).transpose() * HvFinalStock_[i][ke].head(nc2);
+				QmFinalStock_[i][ke] += stateConstraintPenalty *
+						FmFinalStock_[i][ke].topRows(nc2).transpose() * FmFinalStock_[i][ke].topRows(nc2);
 			}
 
 			// making sure that Qm remains PSD
@@ -1719,9 +1845,9 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::solveRiccatiEquationsWorker(
 	if (settings_.checkNumericalStability_)
 		for (int k=NS-1; k>=0; k--) {
 			try {
-				if (SmTrajectoryStock_[partitionIndex][k].hasNaN())  throw std::runtime_error("Sm is unstable.");
-				if (SvTrajectoryStock_[partitionIndex][k].hasNaN())  throw std::runtime_error("Sv is unstable.");
-				if (sTrajectoryStock_[partitionIndex][k].hasNaN())   throw std::runtime_error("s is unstable.");
+				if (!SmTrajectoryStock_[partitionIndex][k].allFinite())  throw std::runtime_error("Sm is unstable.");
+				if (!SvTrajectoryStock_[partitionIndex][k].allFinite())  throw std::runtime_error("Sv is unstable.");
+				if (!sTrajectoryStock_[partitionIndex][k].allFinite())   throw std::runtime_error("s is unstable.");
 			}
 			catch(const std::exception& error)
 			{
@@ -1751,14 +1877,22 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::solveRiccatiEquationsForNomi
 	// set data for Riccati equations
 	riccatiEquationsPtrStock_[workerIndex]->reset();
 	riccatiEquationsPtrStock_[workerIndex]->setData(
-			partitioningTimes_[partitionIndex], partitioningTimes_[partitionIndex+1],
+			partitioningTimes_[partitionIndex],
+			partitioningTimes_[partitionIndex+1],
 			&nominalTimeTrajectoriesStock_[partitionIndex],
-			&AmConstrainedTrajectoryStock_[partitionIndex], &BmTrajectoryStock_[partitionIndex],
-			&qTrajectoryStock_[partitionIndex], &QvConstrainedTrajectoryStock_[partitionIndex], &QmConstrainedTrajectoryStock_[partitionIndex],
-			&RvTrajectoryStock_[partitionIndex], &RmInverseTrajectoryStock_[partitionIndex], &RmConstrainedTrajectoryStock_[partitionIndex],
+			&AmConstrainedTrajectoryStock_[partitionIndex],
+			&BmTrajectoryStock_[partitionIndex],
+			&qTrajectoryStock_[partitionIndex],
+			&QvConstrainedTrajectoryStock_[partitionIndex],
+			&QmConstrainedTrajectoryStock_[partitionIndex],
+			&RvTrajectoryStock_[partitionIndex],
+			&RmInverseTrajectoryStock_[partitionIndex],
+			&RmConstrainedTrajectoryStock_[partitionIndex],
 			&PmTrajectoryStock_[partitionIndex],
 			&nominalEventsPastTheEndIndecesStock_[partitionIndex],
-			&qFinalStock_[partitionIndex], &QvFinalStock_[partitionIndex], &QmFinalStock_[partitionIndex]);
+			&qFinalStock_[partitionIndex],
+			&QvFinalStock_[partitionIndex],
+			&QmFinalStock_[partitionIndex]);
 
 	const size_t N  = nominalTimeTrajectoriesStock_[partitionIndex].size();
 	const size_t NE = nominalEventsPastTheEndIndecesStock_[partitionIndex].size();
@@ -1842,9 +1976,9 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::solveRiccatiEquationsForNomi
 	if (settings_.checkNumericalStability_)
 		for (int k=N-1; k>=0; k--) {
 			try {
-				if (SmTrajectoryStock_[partitionIndex][k].hasNaN())  throw std::runtime_error("Sm is unstable.");
-				if (SvTrajectoryStock_[partitionIndex][k].hasNaN())  throw std::runtime_error("Sv is unstable.");
-				if (sTrajectoryStock_[partitionIndex][k].hasNaN())   throw std::runtime_error("s is unstable.");
+				if (!SmTrajectoryStock_[partitionIndex][k].allFinite())  throw std::runtime_error("Sm is unstable.");
+				if (!SvTrajectoryStock_[partitionIndex][k].allFinite())  throw std::runtime_error("Sv is unstable.");
+				if (!sTrajectoryStock_[partitionIndex][k].allFinite())   throw std::runtime_error("s is unstable");
 			}
 			catch(const std::exception& error)
 			{
@@ -1853,7 +1987,7 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::solveRiccatiEquationsForNomi
 					if (kp >= N) continue;
 					std::cerr << "Sm[" << SsTimeTrajectoryStock_[partitionIndex][kp] << "]:\n"<< SmTrajectoryStock_[partitionIndex][kp].norm() << std::endl;
 					std::cerr << "Sv[" << SsTimeTrajectoryStock_[partitionIndex][kp] << "]:\t"<< SvTrajectoryStock_[partitionIndex][kp].transpose().norm() << std::endl;
-					std::cerr << "s["  << SsTimeTrajectoryStock_[partitionIndex][kp] << "]: \t"<< sTrajectoryStock_[partitionIndex][kp].transpose().norm() << std::endl;
+					std::cerr << "s["  << SsTimeTrajectoryStock_[partitionIndex][kp] << "]:\t"<< sTrajectoryStock_[partitionIndex][kp].transpose().norm() << std::endl;
 				}
 				exit(0);
 			}
@@ -1981,11 +2115,14 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::solveErrorRiccatiEquationWor
 			catch(const std::exception& error) 	{
 				std::cerr << "what(): " << error.what() << " at time " << SsTimeTrajectoryStock_[partitionIndex][k] << " [sec]." << std::endl;
 				for (int kp=k; kp<NS; kp++){
-					std::cerr << "Sve[" << SsTimeTrajectoryStock_[partitionIndex][kp] << "]:\t"<< SveTrajectoryStock_[partitionIndex][kp].transpose().norm() << std::endl;
+					std::cerr << "Sve[" << SsTimeTrajectoryStock_[partitionIndex][kp] <<
+							"]:\t"<< SveTrajectoryStock_[partitionIndex][kp].transpose().norm() << std::endl;
 				}
 				for(int kp = 0; kp+1<nominalTimeTrajectoriesStock_[partitionIndex].size(); kp++){
-					std::cerr << "Gm[" << SsTimeTrajectoryStock_[partitionIndex][kp] << "]:\t"<< GmTrajectory[kp].transpose().norm() << std::endl;
-					std::cerr << "Gv[" << SsTimeTrajectoryStock_[partitionIndex][kp] << "]:\t"<< GvTrajectory[kp].transpose().norm() << std::endl;
+					std::cerr << "Gm[" << SsTimeTrajectoryStock_[partitionIndex][kp] <<
+							"]:\t"<< GmTrajectory[kp].transpose().norm() << std::endl;
+					std::cerr << "Gv[" << SsTimeTrajectoryStock_[partitionIndex][kp] <<
+							"]:\t"<< GvTrajectory[kp].transpose().norm() << std::endl;
 				}
 				exit(0);
 			}
@@ -2119,10 +2256,10 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::solveSlqRiccatiEquationsWork
 	if (settings_.checkNumericalStability_)
 		for (int k=NS-1; k>=0; k--) {
 			try {
-				if (SmTrajectoryStock_[partitionIndex][k].hasNaN())  throw std::runtime_error("Sm is unstable.");
-				if (SvTrajectoryStock_[partitionIndex][k].hasNaN())  throw std::runtime_error("Sv is unstable.");
-				if (sTrajectoryStock_[partitionIndex][k].hasNaN())   throw std::runtime_error("s is unstable.");
-				if (SveTrajectoryStock_[partitionIndex][k].hasNaN())  throw std::runtime_error("Sve is unstable.");
+				if (!SmTrajectoryStock_[partitionIndex][k].allFinite()())  throw std::runtime_error("Sm is unstable.");
+				if (!SvTrajectoryStock_[partitionIndex][k].allFinite())  throw std::runtime_error("Sv is unstable.");
+				if (!sTrajectoryStock_[partitionIndex][k].allFinite())    throw std::runtime_error("s is unstable.");
+				if (!SveTrajectoryStock_[partitionIndex][k].allFinite())throw std::runtime_error("Sve is unstable.");
 			}
 			catch(const std::exception& error)
 			{
@@ -2312,9 +2449,11 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::fullRiccatiBackwardSweepWork
 //			if (settings_.useMakePSD_==true)  makePSD(QmConstrainedTrajectoryStock_[partitionIndex][k]);
 			_H.template topLeftCorner<STATE_DIM,STATE_DIM>() = AmConstrainedTrajectoryStock_[partitionIndex][k] -
 					BmConstrainedTrajectoryStock_[partitionIndex][k]*RmInverseTrajectoryStock_[partitionIndex][k]*PmConstrainedTrajectoryStock_[partitionIndex][k];
-			_H.template topRightCorner<STATE_DIM,STATE_DIM>() = 0.5 * BmConstrainedTrajectoryStock_[partitionIndex][k] *
+			_H.template topRightCorner<STATE_DIM,STATE_DIM>() =
+					0.5 * BmConstrainedTrajectoryStock_[partitionIndex][k] *
 					RmInverseTrajectoryStock_[partitionIndex][k] * BmConstrainedTrajectoryStock_[partitionIndex][k].transpose();
-			_H.template bottomLeftCorner<STATE_DIM,STATE_DIM>() = 2.0 * (QmConstrainedTrajectoryStock_[partitionIndex][k] -
+			_H.template bottomLeftCorner<STATE_DIM,STATE_DIM>() =
+					2.0 * (QmConstrainedTrajectoryStock_[partitionIndex][k] -
 					PmConstrainedTrajectoryStock_[partitionIndex][k].transpose()*RmInverseTrajectoryStock_[partitionIndex][k]*PmConstrainedTrajectoryStock_[partitionIndex][k]);
 			_H.template bottomRightCorner<STATE_DIM,STATE_DIM>() = -_H.template topLeftCorner<STATE_DIM,STATE_DIM>().transpose();
 
@@ -2361,13 +2500,13 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::fullRiccatiBackwardSweepWork
 		for (int k=N-1; k>=0; k--) {
 			// checking the numerical stability of the Riccati equations
 			try {
-				if (SmTrajectoryStock_[partitionIndex][k].hasNaN())
+				if (!SmTrajectoryStock_[partitionIndex][k].allFinite())
 					throw std::runtime_error("Sm is unstable.");
-				if (SvTrajectoryStock_[partitionIndex][k].hasNaN())
+				if (!SvTrajectoryStock_[partitionIndex][k].allFinite())
 					throw std::runtime_error("Sv is unstable.");
-				if (SveTrajectoryStock_[partitionIndex][k].hasNaN())
+				if (!SveTrajectoryStock_[partitionIndex][k].allFinite())
 					throw std::runtime_error("Sve is unstable.");
-				if (sTrajectoryStock_[partitionIndex][k].hasNaN())
+				if (!sTrajectoryStock_[partitionIndex][k].allFinite())
 					throw std::runtime_error("s is unstable.");
 			}
 			catch(const std::exception& error) {

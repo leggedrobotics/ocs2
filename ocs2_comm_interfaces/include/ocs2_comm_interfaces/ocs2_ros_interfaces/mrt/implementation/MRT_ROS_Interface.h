@@ -589,10 +589,16 @@ void MRT_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::launchNodes(int arg
 	// SLQ-MPC subscriber
 	if (useFeedforwardPolicy_==true) {
 		mpcFeedforwardPolicySubscriber_ = mrtRosNodeHandlePtr_->subscribe(
-				robotName_+"_mpc_ff_policy", 1, &MRT_ROS_Interface::mpcFeedforwardPolicyCallback, this);
+				robotName_+"_mpc_ff_policy",
+				1,
+				&MRT_ROS_Interface::mpcFeedforwardPolicyCallback,
+				this, ::ros::TransportHints().udp());
 	} else {
 		mpcFeedbackPolicySubscriber_   = mrtRosNodeHandlePtr_->subscribe(
-				robotName_+"_mpc_fb_policy", 1, &MRT_ROS_Interface::mpcFeedbackPolicyCallback, this);
+				robotName_+"_mpc_fb_policy",
+				1,
+				&MRT_ROS_Interface::mpcFeedbackPolicyCallback, this,
+				::ros::TransportHints().udp());
 	}
 
 	// dummy publisher

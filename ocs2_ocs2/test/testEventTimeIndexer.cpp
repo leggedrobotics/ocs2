@@ -43,13 +43,13 @@ public:
 	typedef typename BASE::scalar_t scalar_t;
 	typedef typename BASE::scalar_array_t scalar_array_t;
 	typedef typename BASE::size_array_t size_array_t;
-	typedef typename BASE::controller_t controller_t;
+	typedef typename BASE::controller_array_t controller_array_t;
 
 	TestLogicRules() {}
 
 	virtual ~TestLogicRules() {}
 
-	void adjustController(controller_t& controller) const override
+	void adjustController(controller_array_t& controller) const override
 	{}
 
 	void set(const scalar_array_t& eventTimes) {

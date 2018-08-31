@@ -160,6 +160,17 @@ protected:
 			dynamic_vector_t& Bv);
 
 	/**
+	 * Calculates the coefficients of the linear inequality constraints. \n
+	 * \f$ C_m \theta + D_v < 0\f$
+	 *
+	 * @param [out] Cm: The \f$ C_m\f$ matrix.
+	 * @param [out] Dv: THe \f$ D_v \f$ vector.
+	 */
+	virtual void calculateLinearInequalityConstraint(
+			dynamic_matrix_t& Cm,
+			dynamic_vector_t& Dv);
+
+	/**
 	 * Calculates the cost function.
 	 *
 	 * @param [in] id: Solver ID
@@ -232,6 +243,16 @@ protected:
 	void setupLP();
 
 	/**
+	 * Sets the linear equality and active inequality to GLPK.
+	 *
+	 * @param [in] parameters: The current parameter vector.
+	 * @param [out] numActiveConstraints: The number of active constraints.
+	 */
+	void setConstraints(
+			const dynamic_vector_t& parameters,
+			size_t& numActiveConstraints);
+
+	/**
 	 * Calculate the gradient numerically
 	 *
 	 * @param [in] id: Solver ID
@@ -262,12 +283,13 @@ private:
 
 	dynamic_matrix_t linearEqualityConstraintAm_;
 	dynamic_vector_t linearEqualityConstraintBv_;
-	dynamic_vector_t linearEqualityConstraintGv_;
-	dynamic_matrix_t linearEqualityConstraintAmNull_;
+	dynamic_matrix_t linearInequalityConstraintCm_;
+	dynamic_vector_t linearInequalityConstraintDv_;
 
 	size_t numParameters_;
 	size_t numLineSearch_;
-	size_t numConstraints_;
+	size_t numActiveConstraints_;
+
 
 	SCALAR_T optimizedCost_;
 	size_t optimizedID_;

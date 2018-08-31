@@ -111,7 +111,7 @@ public:
 			const state_vector_array_t* flowMapPtr,
 			const state_vector_array_t* costatePtr,
 			const constraint1_vector_array_t* lagrangianPtr,
-			const scalar_array_t* SsTimeStampPtr,
+			const scalar_array_t* controllerTimeStampPtr,
 			const input_state_matrix_array_t* KmConstrainedPtr,
 			const state_matrix_array_t* SmPtr)  {
 
@@ -141,9 +141,9 @@ public:
 		lagrangianFunc_.setTimeStamp(timeStampPtr);
 		lagrangianFunc_.setData(lagrangianPtr);
 
-		KmConstrainedFunc_.setTimeStamp(SsTimeStampPtr);
+		KmConstrainedFunc_.setTimeStamp(controllerTimeStampPtr);
 		KmConstrainedFunc_.setData(KmConstrainedPtr);
-		SmFunc_.setTimeStamp(SsTimeStampPtr);
+		SmFunc_.setTimeStamp(controllerTimeStampPtr);
 		SmFunc_.setData(SmPtr);
 	}
 

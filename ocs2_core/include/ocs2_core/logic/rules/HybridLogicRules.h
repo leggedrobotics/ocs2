@@ -235,7 +235,7 @@ public:
 	 * @param controllerStock: The control policy stock which will be modified.
 	 */
 	virtual void adjustController(
-			controller_array_t& controllerStock) const = 0;
+			controller_array_t& controllerStock) = 0;
 
 	/**
 	 * This method can be used to update the internal variables. This method should be called by any

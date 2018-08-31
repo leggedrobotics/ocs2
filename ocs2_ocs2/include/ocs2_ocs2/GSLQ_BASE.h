@@ -56,7 +56,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ocs2_ocs2/sensitivity_equations/BvpSensitivityEquations.h"
 #include "ocs2_ocs2/sensitivity_equations/RolloutSensitivityEquations.h"
 
-namespace ocs2{
+namespace ocs2 {
 
 /**
  * GSLQ_BASE class for computing gradient of the cost function w.r.t. event times.
@@ -131,6 +131,7 @@ public:
 	typedef typename DIMENSIONS::constraint2_state_matrix_array_t constraint2_state_matrix_array_t;
 	typedef typename DIMENSIONS::constraint2_state_matrix_array2_t constraint2_state_matrix_array2_t;
 	typedef typename DIMENSIONS::dynamic_vector_t dynamic_vector_t;
+	typedef typename DIMENSIONS::dynamic_matrix_t dynamic_matrix_t;
 	typedef typename DIMENSIONS::dynamic_input_matrix_t dynamic_input_matrix_t;
 
     typedef std::vector<eigen_scalar_array2_t, Eigen::aligned_allocator<eigen_scalar_array2_t>> eigen_scalar_array3_t;
@@ -481,7 +482,9 @@ protected:
 			const input_vector_array2_t& sensitivityInputTrajectoriesStock,
 			scalar_t& costDerivative) const;
 
-private:
+	/***********
+	 * Variables
+	 **********/
 	std::shared_ptr<LOGIC_RULES_T> logicRulesPtr_;
 
 	SLQ_Settings settings_;
@@ -533,7 +536,6 @@ private:
 	input_vector_array3_t sensitivityInputTrajectoriesStockSet_;
 
 	dynamic_vector_t nominalCostFuntionDerivative_;
-
 
 	// calculateBVPSensitivityControllerForward & calculateLQSensitivityControllerForward
 	std::vector<EigenLinearInterpolation<state_input_matrix_t>> BmFuncStock_;

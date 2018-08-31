@@ -117,6 +117,8 @@ public:
 	size_t numPartitions_ = 0;
 	scalar_array_t partitioningTimes_;
 
+	unsigned long long int rewindCounter_;
+
 	controller_array_t optimizedControllersStock_;
 
 //	std::vector<scalar_array_t> optimizedTimeTrajectoriesStock_;

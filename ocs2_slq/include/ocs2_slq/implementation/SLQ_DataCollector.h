@@ -58,6 +58,8 @@ void SLQ_DataCollector<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::collect(
 	numPartitions_     = slqPtr->numPartitions_;
 	partitioningTimes_ = slqPtr->partitioningTimes_;
 
+	rewindCounter_ = slqPtr->rewindCounter_;
+
 	// optimized controller
 	optimizedControllersStock_ = slqPtr->nominalControllersStock_;
 

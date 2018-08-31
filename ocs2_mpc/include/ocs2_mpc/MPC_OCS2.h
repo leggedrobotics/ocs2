@@ -35,6 +35,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <condition_variable>
 
 #include <ocs2_slq/SLQ_DataCollector.h>
+#include <ocs2_ocs2/GSLQ_FW.h>
 
 #include "ocs2_mpc/MPC_SLQ.h"
 
@@ -59,6 +60,7 @@ public:
 	typedef std::shared_ptr<MPC_OCS2<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>> Ptr;
 
 	typedef SLQ_DataCollector<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> slq_data_collector_t;
+	typedef GSLQ_FW<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> gslq_t;
 
 	typedef MPC_SLQ<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> BASE;
 
@@ -158,6 +160,7 @@ protected:
 	void runOCS2();
 
 private:
+	typename gslq_t::Ptr gslqPtr_;
 
 	std::thread workerOCS2;
 
@@ -168,6 +171,8 @@ private:
 	std::condition_variable ocs2Synchronization_;
 
 	std::unique_ptr<slq_data_collector_t> slqDataCollectorPtr_;
+
+	scalar_array_t eventTimesOptimized_;
 };
 
 } // namespace ocs2

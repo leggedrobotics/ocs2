@@ -69,11 +69,13 @@ MPC_OCS2<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::MPC_OCS2(
 		   logicRulesPtr,
 		   modeSequenceTemplatePtr,
 		   heuristicsFunctionPtr)
+	, gslqPtr_(new gslq_t(slqSettings))
 	, workerOCS2(&MPC_OCS2::runOCS2, this)
 	, activateOCS2_(false)
 	, terminateOCS2_(false)
 	, slqDataCollectorPtr_(new slq_data_collector_t)
-{}
+{
+}
 
 /******************************************************************************************************/
 /******************************************************************************************************/
@@ -95,6 +97,7 @@ void MPC_OCS2<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::reset() {
 	BASE::reset();
 
 	activateOCS2_  = false;
+	eventTimesOptimized_.clear();
 }
 
 /******************************************************************************************************/
@@ -121,8 +124,25 @@ void MPC_OCS2<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::runOCS2() {
 		if (terminateOCS2_==true) break;
 
 		std::cout << "OCS2 started. " << std::endl;
-		sleep(2);
+
+		gslqPtr_->run(
+				BASE::slqPtr_->getLogicRules().eventTimes(),
+				slqDataCollectorPtr_.get(),
+				eventTimesOptimized_,
+				BASE::mpcSettings_.maxTimeStep_);
+
+		std::cout << "##########################################" << std::endl;
+		std::cout << "initTime:  " << slqDataCollectorPtr_->initTime_ << std::endl;
+		std::cout << "finalTime: " << slqDataCollectorPtr_->finalTime_ << std::endl;
+		std::cout << "eventTimes().size():          " << BASE::slqPtr_->getLogicRules().eventTimes().size() << std::endl;
+		std::cout << "eventTimesOptimized().size(): " << eventTimesOptimized_.size() << std::endl;
+		for (size_t i=0; i<BASE::slqPtr_->getLogicRules().eventTimes().size(); i++) {
+			std::cout << "[" << BASE::slqPtr_->getLogicRules().eventTimes()[i] <<
+					", " << eventTimesOptimized_[i]  << "]" << std::endl;
+		}
+
 		std::cout << "OCS2 finished. " << std::endl;
+
 
 		activateOCS2_ = false;
 		ocs2Lock.unlock();
@@ -142,11 +162,32 @@ bool MPC_OCS2<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::run(
 	std::cout << "time: " << currentTime << std::endl;
 
 	std::unique_lock<std::mutex> slqLock(dataCollectorMutex_, std::defer_lock_t());
+//	bool ownership = false;
+//	while(ownership==false)
+//		ownership = slqLock.try_lock();
 	bool ownership = slqLock.try_lock();
 	if (ownership == true) {
 
+		std::cout << "New Rewind: " << BASE::slqPtr_->getRewindCounter() << std::endl;
+		std::cout << "Old Rewind: " << slqDataCollectorPtr_->rewindCounter_ << std::endl;
+
+		if (currentTime>0.1 && BASE::slqPtr_->getRewindCounter() == slqDataCollectorPtr_->rewindCounter_) {
+			BASE::slqPtr_->getLogicRules().eventTimes() = eventTimesOptimized_;
+			BASE::slqPtr_->getLogicRulesMachinePtr()->logicRulesUpdated();
+		}
+
+		std::cout << "New eventTimes:\n\{";
+		for (auto& t: BASE::slqPtr_->getLogicRules().eventTimes())
+			std::cout << t << ", ";
+		if (!BASE::slqPtr_->getLogicRules().eventTimes().empty())  std::cout << "\b\b}\n";
+
+		std::cout << "Optimized eventTimes:\n\{";
+		for (auto& t: eventTimesOptimized_)
+			std::cout << t << ", ";
+		if (!eventTimesOptimized_.empty())  std::cout << "\b\b}\n";
+
 		std::cout << "SLQ_DataCollector" << std::endl;
-//		slqDataCollectorPtr_->collect(BASE::slqPtr_.get());
+		slqDataCollectorPtr_->collect(BASE::slqPtr_.get());
 
 		activateOCS2_ = true;
 		slqLock.unlock();

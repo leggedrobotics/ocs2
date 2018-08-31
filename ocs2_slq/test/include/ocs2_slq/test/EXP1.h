@@ -65,7 +65,7 @@ public:
 			const scalar_t& upperBoundTime) override
 	{}
 
-	void adjustController(controller_array_t& controllerStock) const override
+	void adjustController(controller_array_t& controllerStock) override
 	{}
 
 	void update() override

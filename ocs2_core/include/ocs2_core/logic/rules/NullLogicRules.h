@@ -106,7 +106,7 @@ public:
 	 * @param controllerStock: The control policy stock which will be modified.
 	 */
 	virtual void adjustController(
-			controller_array_t& controllerStock) const override
+			controller_array_t& controllerStock) override
 	{}
 
 	/**

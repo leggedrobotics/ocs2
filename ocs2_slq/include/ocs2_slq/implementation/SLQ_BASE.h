@@ -3543,20 +3543,20 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::runIteration() {
 template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
 void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::runExit()  {
 
-	// add the deleted parts of the controller
-	for (size_t i=0; i<initActivePartition_; i++)
-		nominalControllersStock_[i].swap(deletedcontrollersStock_[i]);
-
-	if (deletedcontrollersStock_[initActivePartition_].time_.empty()==false) {
-
-		nominalControllersStock_[initActivePartition_].swap(deletedcontrollersStock_[initActivePartition_]);
-
-		for (size_t k=0; k<deletedcontrollersStock_[initActivePartition_].time_.size(); k++) {
-			nominalControllersStock_[initActivePartition_].time_.push_back(deletedcontrollersStock_[initActivePartition_].time_[k]);
-			nominalControllersStock_[initActivePartition_].uff_.push_back(deletedcontrollersStock_[initActivePartition_].uff_[k]);
-			nominalControllersStock_[initActivePartition_].k_.push_back(deletedcontrollersStock_[initActivePartition_].k_[k]);
-		}  // end of k loop
-	}
+//	// add the deleted parts of the controller
+//	for (size_t i=0; i<initActivePartition_; i++)
+//		nominalControllersStock_[i].swap(deletedcontrollersStock_[i]);
+//
+//	if (deletedcontrollersStock_[initActivePartition_].time_.empty()==false) {
+//
+//		nominalControllersStock_[initActivePartition_].swap(deletedcontrollersStock_[initActivePartition_]);
+//
+//		for (size_t k=0; k<deletedcontrollersStock_[initActivePartition_].time_.size(); k++) {
+//			nominalControllersStock_[initActivePartition_].time_.push_back(deletedcontrollersStock_[initActivePartition_].time_[k]);
+//			nominalControllersStock_[initActivePartition_].uff_.push_back(deletedcontrollersStock_[initActivePartition_].uff_[k]);
+//			nominalControllersStock_[initActivePartition_].k_.push_back(deletedcontrollersStock_[initActivePartition_].k_[k]);
+//		}  // end of k loop
+//	}
 }
 
 /******************************************************************************************************/

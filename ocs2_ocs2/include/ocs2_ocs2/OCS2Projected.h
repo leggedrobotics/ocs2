@@ -27,8 +27,8 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#ifndef OCS2_OCS2PROJECTED_H_
-#define OCS2_OCS2PROJECTED_H_
+#ifndef OCS2_OCS2PROJECTED_OCS2_H_
+#define OCS2_OCS2PROJECTED_OCS2_H_
 
 #include <array>
 #include <memory>
@@ -328,4 +328,4 @@ private:
 
 #include "implementation/OCS2Projected.h"
 
-#endif /* OCS2_OCS2PROJECTED_H_ */
+#endif /* OCS2_OCS2PROJECTED_OCS2_H_ */

@@ -48,21 +48,21 @@ public:
 		return true;
 	}
 
-	void calculateLinearEqualityConstraint(Eigen::MatrixXd& Am, Eigen::VectorXd& Bm) override {
+	void calculateLinearInequalityConstraint(Eigen::MatrixXd& Cm, Eigen::VectorXd& Dv) override {
 		const double maxX = 3.0;
 		const double minX = 1.0;
 
-		Am.resize(2*numParameters(),numParameters());
-		Bm.resize(2*numParameters());
+		Cm.resize(2*numParameters(),numParameters());
+		Dv.resize(2*numParameters());
 
-		Am.topRows(numParameters())    =  Eigen::MatrixXd::Identity(numParameters(), numParameters());
-		Am.bottomRows(numParameters()) = -Eigen::MatrixXd::Identity(numParameters(), numParameters());
+		Cm.topRows(numParameters())    =  Eigen::MatrixXd::Identity(numParameters(), numParameters());
+		Cm.bottomRows(numParameters()) = -Eigen::MatrixXd::Identity(numParameters(), numParameters());
 
-		Bm.head(numParameters()) = -maxX * Eigen::VectorXd::Ones(numParameters());
-		Bm.tail(numParameters()) =  minX * Eigen::VectorXd::Ones(numParameters());
+		Dv.head(numParameters()) = -maxX * Eigen::VectorXd::Ones(numParameters());
+		Dv.tail(numParameters()) =  minX * Eigen::VectorXd::Ones(numParameters());
 
-//		std::cout << "A\n" << Am << std::endl;
-//		std::cout << "B\n" << Bm << std::endl;
+		std::cout << "C\n" << Cm << std::endl;
+		std::cout << "D\n" << Dv << std::endl;
 	}
 
 };
@@ -71,6 +71,14 @@ TEST(QuadraticTest, QuadraticTest)
 {
 
 	QuadraticGradientDescent quadraticGradientDescent;
+
+	quadraticGradientDescent.nlpSettings().displayGradientDescent_ = true;
+	quadraticGradientDescent.nlpSettings().maxIterations_ 	 = 3;
+	quadraticGradientDescent.nlpSettings().minRelCost_    	 = 1e-6;
+	quadraticGradientDescent.nlpSettings().maxLearningRate_  = 1.0;
+	quadraticGradientDescent.nlpSettings().minLearningRate_  = 0.05;
+	quadraticGradientDescent.nlpSettings().minDisToBoundary_ = 0.0;
+	quadraticGradientDescent.nlpSettings().useAscendingLineSearchNLP_ = false;
 
 	Eigen::Vector2d parameters = 2*Eigen::Vector2d::Ones();
 

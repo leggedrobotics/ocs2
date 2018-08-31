@@ -51,21 +51,21 @@ public:
 		return true;
 	}
 
-	void calculateLinearEqualityConstraint(Eigen::MatrixXd& Am, Eigen::VectorXd& Bm) override {
+	void calculateLinearInequalityConstraint(Eigen::MatrixXd& Cm, Eigen::VectorXd& Dv) override {
 		const double maxX = 10.0;
 		const double minX = -10.0;
 
-		Am.resize(2*numParameters(),numParameters());
-		Bm.resize(2*numParameters());
+		Cm.resize(2*numParameters(),numParameters());
+		Dv.resize(2*numParameters());
 
-		Am.topRows(numParameters())    =  Eigen::MatrixXd::Identity(numParameters(), numParameters());
-		Am.bottomRows(numParameters()) = -Eigen::MatrixXd::Identity(numParameters(), numParameters());
+		Cm.topRows(numParameters())    =  Eigen::MatrixXd::Identity(numParameters(), numParameters());
+		Cm.bottomRows(numParameters()) = -Eigen::MatrixXd::Identity(numParameters(), numParameters());
 
-		Bm.head(numParameters()) = -maxX * Eigen::VectorXd::Ones(numParameters());
-		Bm.tail(numParameters()) =  minX * Eigen::VectorXd::Ones(numParameters());
+		Dv.head(numParameters()) = -maxX * Eigen::VectorXd::Ones(numParameters());
+		Dv.tail(numParameters()) =  minX * Eigen::VectorXd::Ones(numParameters());
 
-		std::cout << "A\n" << Am << std::endl;
-		std::cout << "B\n" << Bm << std::endl;
+		std::cout << "C\n" << Cm << std::endl;
+		std::cout << "D\n" << Dv << std::endl;
 	}
 
 };

@@ -63,6 +63,7 @@ public:
 	, adaptiveRosMsgTimeWindow_(false)
 	, mpcDesiredFrequency_(-1)  // [Hz]
 	, mrtDesiredFrequency_(100)  // [Hz]
+	, maxTimeStep_(1e-3)
 	{}
 
 	/**
@@ -122,6 +123,8 @@ public:
 	 * tracking controller's frequency.
 	 */
 	double mrtDesiredFrequency_;
+
+	double maxTimeStep_;
 
 }; // end of MPC_Settings class
 
@@ -262,6 +265,14 @@ inline void MPC_Settings::loadSettings(const std::string& filename, bool verbose
 	}
 	catch (const std::exception& e){
 		if (verbose)  std::cerr << " #### Option loader : option 'mrtDesiredFrequency' ........ " << mrtDesiredFrequency_ << " (default)" << std::endl;
+	}
+
+	try	{
+		maxTimeStep_ = pt.get<double>("mpc.maxTimeStep");
+		if (verbose)  std::cerr << " #### Option loader : option 'maxTimeStep' ................ " << maxTimeStep_ << std::endl;
+	}
+	catch (const std::exception& e){
+		if (verbose)  std::cerr << " #### Option loader : option 'maxTimeStep' ................ " << maxTimeStep_ << " (default)" << std::endl;
 	}
 
 	if(verbose)

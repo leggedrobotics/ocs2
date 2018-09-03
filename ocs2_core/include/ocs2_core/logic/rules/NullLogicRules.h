@@ -100,13 +100,16 @@ public:
 	{}
 
 	/**
-	 * Adjusts controller. This method is called my the logicMachine whenever the logicRuls are updated.
-	 * Here no adjustments take place.
+	 * Adjust the controller based on the last changes in the logic rules.
 	 *
-	 * @param controllerStock: The control policy stock which will be modified.
+	 * @param [in] eventTimes: The new event times.
+	 * @param [in] controllerEventTimes: The control policy stock's event times.
+	 * @param controllerStock: The controller stock which will be modified.
 	 */
 	virtual void adjustController(
-			controller_array_t& controllerStock) override
+			const scalar_array_t& eventTimes,
+			const scalar_array_t& controllerEventTimes,
+			controller_array_t& controllerStock)
 	{}
 
 	/**

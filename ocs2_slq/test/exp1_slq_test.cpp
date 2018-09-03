@@ -142,11 +142,9 @@ TEST(exp1_slq_test, Exp1_slq_test)
 	logicRules.display();
 	// Test
 	TrajectorySpreadingController<STATE_DIM, INPUT_DIM> trajectorySpreadingController;
-	eventTimes[0] = 1.0;
-	eventTimes[1] = 1.1;
-	eventTimes[2] = 3.5;
+	std::vector<double> eventTimesNew {0.9, 0.9, 3.5};
 	SLQ_BASE<STATE_DIM, INPUT_DIM, EXP1_LogicRules>::controller_array_t controllersStockNew = controllersStock;
-	trajectorySpreadingController.adjustController(eventTimes, controllersStockNew);
+	trajectorySpreadingController.adjustController(eventTimesNew, eventTimes, controllersStockNew);
 
 	for (size_t i=0; i<controllersStock.size(); i++)
 		for (size_t k=0; k<controllersStock[i].size(); k++) {

@@ -143,7 +143,7 @@ std::function<size_t(typename LogicRulesMachine<STATE_DIM, INPUT_DIM, LOGIC_RULE
 		int index = findActiveIntervalIndex(switchingTimes, time, guessedIndex);
 
 		if (index < 0 || index >= eventCounters.size())
-			throw std::runtime_error("The enquiry time" + std::to_string(time) + "refers to an out-of-range subsystem.");
+			throw std::runtime_error("The enquiry time " + std::to_string(time) + " refers to an out-of-range subsystem.");
 
 		guessedIndex = index;
 
@@ -182,9 +182,8 @@ const size_t& LogicRulesMachine<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::getnumPart
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void LogicRulesMachine<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::updateLogicRules(
-		const scalar_array_t& partitioningTimes,
-		controller_array_t& controllerStock) {
+bool LogicRulesMachine<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::updateLogicRules(
+		const scalar_array_t& partitioningTimes) {
 
 	// if logic rules is modified update the logic
 	if (newLogicRulesInBuffer_ == true) {
@@ -205,12 +204,13 @@ void LogicRulesMachine<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::updateLogicRules(
 				eventCountersStock_);
 	}
 
-	// adjust controller
-	if (logicRulesModified_==true && controllerStock.size()>0) {
-		this->getLogicRules().adjustController(controllerStock);
+	// return true if logic rule was updated no the partition or any other conditions
+	if (logicRulesModified_ == true) {
+		logicRulesModified_ = false;
+		return true;
+	} else {
+		return false;
 	}
-
-	logicRulesModified_ = false;
 }
 
 /******************************************************************************************************/

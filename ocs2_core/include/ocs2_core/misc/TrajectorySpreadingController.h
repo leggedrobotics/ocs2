@@ -78,9 +78,11 @@ public:
 	~TrajectorySpreadingController() = default;
 
 	/**
+	 * Adjust the controller based on the last changes in the logic rules.
 	 *
-	 * @param eventTimes
-	 * @param controllersStock
+	 * @param [in] eventTimes: The new event times.
+	 * @param [in] controllerEventTimes: The control policy stock's event times.
+	 * @param controllerStock: The controller stock which will be modified.
 	 */
 	void adjustController(
 			const scalar_array_t& eventTimes,
@@ -119,7 +121,7 @@ protected:
 	 * @param ControlerEventTimeIndex
 	 * @param controllersStock
 	 */
-	void adjustController(
+	void spreadController(
 			const scalar_t& eventTime,
 			const index_t& eventTimeIndex,
 			const index_t& controlerEventTimeIndex,

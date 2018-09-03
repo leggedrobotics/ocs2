@@ -162,12 +162,15 @@ public:
 			const scalar_t& upperBoundTime) = 0;
 
 	/**
-	 * Adjusts controller. This method is called my the logicMachine whenever the logicRuls are updated.
-	 * It allows the user to modify the controller to adapt to the changes of logics.
+	 * Adjust the controller based on the last changes in the logic rules.
 	 *
-	 * @param controllerStock: The control policy stock which will be modified.
+	 * @param [in] eventTimes: The new event times.
+	 * @param [in] controllerEventTimes: The control policy stock's event times.
+	 * @param controllerStock: The controller stock which will be modified.
 	 */
 	virtual void adjustController(
+			const scalar_array_t& eventTimes,
+			const scalar_array_t& controllerEventTimes,
 			controller_array_t& controllerStock) = 0;
 
 	/**

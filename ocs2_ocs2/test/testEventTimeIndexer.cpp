@@ -49,7 +49,10 @@ public:
 
 	virtual ~TestLogicRules() {}
 
-	void adjustController(controller_array_t& controller) const override
+	void adjustController(
+			const scalar_array_t& eventTimes,
+			const scalar_array_t& controllerEventTimes,
+			controller_array_t& controllerStock) override
 	{}
 
 	void set(const scalar_array_t& eventTimes) {
@@ -73,17 +76,14 @@ TEST(testEventTimeIndexer, test_0)
 	TestLogicRules<1,1> logicRules;
 	LogicRulesMachine<1,1,TestLogicRules<1,1>> logicRulesMachine(logicRules);
 
-	LogicRulesMachine<1,1,TestLogicRules<1,1>>::controller_array_t controllerStock;
-
 	// Times
 	std::vector<double> partitioningTimes{0.5,1.5,2.5};
-	controllerStock.resize(partitioningTimes.size()-1);
 	std::vector<double> logicRulesEventTimes = std::vector<double>{0.25, 0.75, 1.25, 1.75, 2.25, 2.75};
 
 	// Set logic
 	logicRules.set(logicRulesEventTimes);
 	logicRulesMachine.setLogicRules(logicRules);
-	logicRulesMachine.updateLogicRules(partitioningTimes, controllerStock);
+	logicRulesMachine.updateLogicRules(partitioningTimes);
 
 	// expected result
 	EventTimeIndexer::size_array2_t subsystemsIndecesResult(logicRulesEventTimes.size()+1);
@@ -136,17 +136,14 @@ TEST(testEventTimeIndexer, test_1)
 	TestLogicRules<1,1> logicRules;
 	LogicRulesMachine<1,1,TestLogicRules<1,1>> logicRulesMachine(logicRules);
 
-	LogicRulesMachine<1,1,TestLogicRules<1,1>>::controller_array_t controllerStock;
-
 	// Times
 	std::vector<double> partitioningTimes{1, 2, 3};
-	controllerStock.resize(partitioningTimes.size()-1);
 	std::vector<double> logicRulesEventTimes = std::vector<double>{0, 1, 2, 3, 4};
 
 	// Set logic
 	logicRules.set(logicRulesEventTimes);
 	logicRulesMachine.setLogicRules(logicRules);
-	logicRulesMachine.updateLogicRules(partitioningTimes, controllerStock);
+	logicRulesMachine.updateLogicRules(partitioningTimes);
 
 	// expected result
 	EventTimeIndexer::size_array2_t subsystemsIndecesResult(logicRulesEventTimes.size()+1);
@@ -196,17 +193,14 @@ TEST(testEventTimeIndexer, test_2)
 	TestLogicRules<1,1> logicRules;
 	LogicRulesMachine<1,1,TestLogicRules<1,1>> logicRulesMachine(logicRules);
 
-	LogicRulesMachine<1,1,TestLogicRules<1,1>>::controller_array_t controllerStock;
-
 	// Times
 	std::vector<double> partitioningTimes{1, 2, 3, 4, 5};
-	controllerStock.resize(partitioningTimes.size()-1);
 	std::vector<double> logicRulesEventTimes = std::vector<double>{0, 4.1};
 
 	// Set logic
 	logicRules.set(logicRulesEventTimes);
 	logicRulesMachine.setLogicRules(logicRules);
-	logicRulesMachine.updateLogicRules(partitioningTimes, controllerStock);
+	logicRulesMachine.updateLogicRules(partitioningTimes);
 
 	// expected result
 	EventTimeIndexer::size_array2_t subsystemsIndecesResult(logicRulesEventTimes.size()+1);
@@ -247,17 +241,14 @@ TEST(testEventTimeIndexer, test_3)
 	TestLogicRules<1,1> logicRules;
 	LogicRulesMachine<1,1,TestLogicRules<1,1>> logicRulesMachine(logicRules);
 
-	LogicRulesMachine<1,1,TestLogicRules<1,1>>::controller_array_t controllerStock;
-
 	// Times
 	std::vector<double> partitioningTimes{1, 2.5, 3, 5};
-	controllerStock.resize(partitioningTimes.size()-1);
 	std::vector<double> logicRulesEventTimes = std::vector<double>{1.0, 1.5, 2.0, 3.5, 4.0};
 
 	// Set logic
 	logicRules.set(logicRulesEventTimes);
 	logicRulesMachine.setLogicRules(logicRules);
-	logicRulesMachine.updateLogicRules(partitioningTimes, controllerStock);
+	logicRulesMachine.updateLogicRules(partitioningTimes);
 
 	// expected result
 	EventTimeIndexer::size_array2_t subsystemsIndecesResult(logicRulesEventTimes.size()+1);

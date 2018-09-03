@@ -223,16 +223,14 @@ public:
 	std::function<size_t(scalar_t)> getHandleToFindActiveEventCounter(size_t partitionIndex) const;
 
 	/**
-	 * Updates the active logic rules based on the last set value (using LogicRulesMachine::setLogicRules) and
-	 * adjusts the controller based on LOGIC_RULES_T::adjustController() routine. Moreover, it recomputes the
-	 * distribution of the switched systems over the time partitions.
+	 * Updates the active logic rules based on the last set value (using LogicRulesMachine::setLogicRules).
+	 * Moreover, it recomputes the distribution of the switched systems over the time partitions.
 	 *
 	 * @param [in] partitioningTimes: Vector of time partitions.
-	 * @param [out] controllerStock: The controller which will be adjusted.
+	 * @return true if the logic rules was actually updated.
 	 */
-	virtual void updateLogicRules(
-			const scalar_array_t& partitioningTimes,
-			controller_array_t& controllerStock);
+	virtual bool updateLogicRules(
+			const scalar_array_t& partitioningTimes);
 
 	/**
 	 * Find distribution of the events over the time partitions.

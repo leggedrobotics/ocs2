@@ -11,6 +11,7 @@
 #include <mutex>
 
 #include <ocs2_core/logic/rules/HybridLogicRules.h>
+#include <ocs2_core/misc/TrajectorySpreadingController.h>
 
 #include "ocs2_switched_model_interface/core/SwitchedModel.h"
 #include "ocs2_switched_model_interface/foot_planner/cpg/CPG_BASE.h"
@@ -182,10 +183,14 @@ public:
 	/**
 	 * Adjust the controller based on the last changes in the logic rules.
 	 *
+	 * @param [in] eventTimes: The new event times.
+	 * @param [in] controllerEventTimes: The control policy stock's event times.
 	 * @param controllerStock: The controller stock which will be modified.
 	 */
 	virtual void adjustController(
-			controller_array_t& controllerStock) const override {}
+			const scalar_array_t& eventTimes,
+			const scalar_array_t& controllerEventTimes,
+			controller_array_t& controllerStock) override;
 
 protected:
 	/**
@@ -210,6 +215,8 @@ private:
 	std::vector<EndEffectorConstraintBase::ConstPtr> endEffectorStateConstraints_;
 
 	logic_template_type modeSequenceTemplate_;
+
+	ocs2::TrajectorySpreadingController<STATE_DIM, INPUT_DIM> trajectorySpreadingController_;
 };
 
 /**

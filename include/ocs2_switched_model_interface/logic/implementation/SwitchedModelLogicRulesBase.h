@@ -304,6 +304,20 @@ void SwitchedModelLogicRulesBase<JOINT_COORD_SIZE,cpg_t,STATE_DIM,INPUT_DIM>::ti
 	BASE::subsystemsSequence_.push_back(ModeNumber::STANCE);
 }
 
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+template <size_t JOINT_COORD_SIZE, class cpg_t, size_t STATE_DIM, size_t INPUT_DIM>
+void SwitchedModelLogicRulesBase<JOINT_COORD_SIZE,cpg_t,STATE_DIM,INPUT_DIM>::adjustController(
+		const scalar_array_t& eventTimes,
+		const scalar_array_t& controllerEventTimes,
+		controller_array_t& controllerStock) {
+
+	trajectorySpreadingController_.adjustController(
+			BASE::eventTimes(),
+			controllerEventTimes,
+			controllerStock);
+}
 
 } // namespace switched_model
 

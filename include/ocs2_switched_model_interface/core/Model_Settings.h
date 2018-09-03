@@ -32,6 +32,7 @@ public:
 	, useFeetTrajectoryFiltering_(true)
 	, feetFilterFrequency_(50.0)
 	, torqueMixingFactor_(0.0)
+	, gaitOptimization_(false)
 	{}
 
 	virtual ~Model_Settings() = default;
@@ -52,6 +53,7 @@ public:
 	bool useFeetTrajectoryFiltering_;
 	double feetFilterFrequency_;
 	double torqueMixingFactor_;
+	bool gaitOptimization_;
 
 	double eps_ = 0.01;
 	double eta_ = 10.0;
@@ -190,6 +192,22 @@ inline void Model_Settings::loadSettings(const std::string& filename, bool verbo
 	}
 
 	try {
+		torqueMixingFactor_ = pt.get<double>("model_settings.torqueMixingFactor");
+		if (verbose)  std::cerr << " #### torqueMixingFactor ........... " << torqueMixingFactor_ << std::endl;
+	}
+	catch (const std::exception& e){
+		if (verbose)  std::cerr << " #### torqueMixingFactor ........... " << torqueMixingFactor_ << "\t(default)" << std::endl;
+	}
+
+	try {
+		gaitOptimization_ = pt.get<bool>("model_settings.gaitOptimization");
+		if (verbose)  std::cerr << " #### gaitOptimization ............. " << gaitOptimization_ << std::endl;
+	}
+	catch (const std::exception& e){
+		if (verbose)  std::cerr << " #### gaitOptimization ............. " << gaitOptimization_ << "\t(default)" << std::endl;
+	}
+
+	try {
 		eps_ = pt.get<double>("model_settings.eps");
 		if (verbose)  std::cerr << " #### eps .................. " << eps_ << std::endl;
 	}
@@ -203,14 +221,6 @@ inline void Model_Settings::loadSettings(const std::string& filename, bool verbo
 	}
 	catch (const std::exception& e){
 		if (verbose)  std::cerr << " #### eta .................. " << eta_ << "\t(default)" << std::endl;
-	}
-
-	try {
-		torqueMixingFactor_ = pt.get<double>("model_settings.torqueMixingFactor");
-		if (verbose)  std::cerr << " #### torqueMixingFactor ... " << torqueMixingFactor_ << std::endl;
-	}
-	catch (const std::exception& e){
-		if (verbose)  std::cerr << " #### torqueMixingFactor.... " << torqueMixingFactor_ << "\t(default)" << std::endl;
 	}
 
 	if(verbose)  std::cerr << " #### ================================================ ####" << std::endl;

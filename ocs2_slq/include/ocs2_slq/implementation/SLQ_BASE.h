@@ -162,20 +162,20 @@ SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::SLQ_BASE(
 		typedef Eigen::aligned_allocator<riccati_equations_t> riccati_equations_alloc_t;
 		riccatiEquationsPtrStock_.push_back( std::move(
 				std::allocate_shared<riccati_equations_t, riccati_equations_alloc_t>(riccati_equations_alloc_t(),
-																																						 settings_.useMakePSD_,
-																																						 settings_.addedRiccatiDiagonal_) ) );
+						settings_.useMakePSD_,
+						settings_.addedRiccatiDiagonal_) ) );
 
 		typedef Eigen::aligned_allocator<error_equation_t> error_equation_alloc_t;
 		errorEquationPtrStock_.push_back( std::move(
 				std::allocate_shared<error_equation_t, error_equation_alloc_t>(error_equation_alloc_t(),
-																																			 settings_.useMakePSD_,
-																																			 settings_.addedRiccatiDiagonal_) ) );
+						settings_.useMakePSD_,
+						settings_.addedRiccatiDiagonal_) ) );
 
 		typedef Eigen::aligned_allocator<slq_riccati_equations_t> slq_riccati_equations_alloc_t;
 		slqRiccatiEquationsPtrStock_.push_back( std::move(
 				std::allocate_shared<slq_riccati_equations_t, slq_riccati_equations_alloc_t>(slq_riccati_equations_alloc_t(),
-																																										 settings_.useMakePSD_,
-																																										 settings_.addedRiccatiDiagonal_) ) );
+						settings_.useMakePSD_,
+						settings_.addedRiccatiDiagonal_) ) );
 
 		switch(settings_.RiccatiIntegratorType_) {
 
@@ -535,7 +535,7 @@ typename SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::state_vector_t
 		beginTime = i==beginItr ? initTime  : switchingTimes[i];
 		endTime   = i==finalItr ? finalTime : switchingTimes[i+1];
 
-//		beginTime += OCS2NumericTraits<scalar_t>::limit_epsilon();
+		beginTime += 10*OCS2NumericTraits<scalar_t>::week_epsilon();
 
 		// simulate subsystem
 		if (controller.empty()==false) {
@@ -652,21 +652,22 @@ typename SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::scalar_t
 				controllerPtrTemp = &controllersStock[i-1];
 
 		// call rollout worker for the partition 'i' on the thread 'threadId'
-		x0 = rolloutTimeTriggeredWorker(threadId, i,
+		state_vector_t xp0 = rolloutTimeTriggeredWorker(threadId, i,
 				t0, x0, tf, *controllerPtrTemp,
 				timeTrajectoriesStock[i], eventsPastTheEndIndecesStock[i],
 				stateTrajectoriesStock[i], inputTrajectoriesStock[i]);
 
-		// reset the initial time
-		t0 = timeTrajectoriesStock[i].back();
-
 		// if there was an event time at the end of the previous partition
 		if (initActivePartition<i && eventsPastTheEndIndecesStock[i-1].size()>0)
 			if(eventsPastTheEndIndecesStock[i-1].back()==stateTrajectoriesStock[i-1].size()) {
-				timeTrajectoriesStock[i-1].push_back(timeTrajectoriesStock[i].front());
-				stateTrajectoriesStock[i-1].push_back(stateTrajectoriesStock[i].front());
+				timeTrajectoriesStock[i-1].push_back(t0);
+				stateTrajectoriesStock[i-1].push_back(x0);
 				inputTrajectoriesStock[i-1].push_back(inputTrajectoriesStock[i].front());
 			}
+
+		// reset the initial time and state
+		t0 = timeTrajectoriesStock[i].back();
+		x0.swap(xp0);
 
 		// total number of steps
 		numSteps += timeTrajectoriesStock[i].size();
@@ -687,7 +688,7 @@ typename SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::scalar_t
 	if (x0 != x0)
 		throw std::runtime_error("System became unstable during the SLQ rollout.");
 
-//	std::cout << ">>>>>>>>>>>\n";
+//	std::cout << ">>>>>>>>>>> Rollout\n";
 //	for (size_t i=initActivePartition; i<=finalActivePartition; i++) {
 //		std::cout << "Partition: " << i << std::endl;
 //		std::cout << "time size:  " << timeTrajectoriesStock[i].size() << std::endl;
@@ -699,12 +700,12 @@ typename SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::scalar_t
 //		if (!eventsPastTheEndIndecesStock[i].empty())  std::cerr << "\b\b";
 //		std::cout << "}" << std::endl;
 //
-//////		for (size_t k=0; k<timeTrajectoriesStock[i].size(); k++) {
-//////			std::cout << "k:  " << k << std::endl;
-//////			std::cout << "time:  " << timeTrajectoriesStock[i][k] << std::endl;
-//////			std::cout << "state: " << stateTrajectoriesStock[i][k].transpose() << std::endl;
-//////			std::cout << "input: " << inputTrajectoriesStock[i][k].transpose() << std::endl;
-//////		}
+//		for (size_t k=0; k<timeTrajectoriesStock[i].size(); k++) {
+//			std::cout << "k:  " << k << std::endl;
+//			std::cout << "time:  " << timeTrajectoriesStock[i][k] << std::endl;
+////			std::cout << "state: " << stateTrajectoriesStock[i][k].transpose() << std::endl;
+////			std::cout << "input: " << inputTrajectoriesStock[i][k].transpose() << std::endl;
+//		}
 //	}
 //	std::cout << "<<<<<<<<<<<<\n";
 
@@ -1381,6 +1382,10 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::approximateConstrainedLQWork
 		dynamic_matrix_t Cm = CmTrajectoryStock_[i][k].topRows(nc1);
 		dynamic_matrix_t Dm = DmTrajectoryStock_[i][k].topRows(nc1);
 		dynamic_matrix_t Ev = EvTrajectoryStock_[i][k].head(nc1);
+
+//		// std::cout
+//		printString("[" + std::to_string(k) + "]" + std::to_string(nominalTimeTrajectoriesStock_[i][k]) + ": " +
+//				std::to_string(EvTrajectoryStock_[i][k].head(nc1).norm()));
 
 		// check numerical stability_
 		if (settings_.checkNumericalStability_==true && nc1>0)
@@ -3563,6 +3568,22 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::runExit()  {
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
+void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::adjustController(
+		const scalar_array_t& newEventTimes,
+		const scalar_array_t& controllerEventTimes) {
+
+	// adjust the nominal controllerStock using trajectory spreading
+	if (nominalControllersStock_.size()>0) {
+		logicRulesMachinePtr_->getLogicRules().adjustController(
+				newEventTimes, controllerEventTimes,
+				nominalControllersStock_);
+	}
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
 void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::run(
 		const scalar_t& initTime,
 		const state_vector_t& initState,
@@ -3574,7 +3595,6 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::run(
 	// call the "run" method which uses the internal controllers stock (i.e. nominalControllersStock_)
 	run(initTime, initState, finalTime, partitioningTimes, noInitialController);
 }
-
 
 /******************************************************************************************************/
 /******************************************************************************************************/
@@ -3622,8 +3642,14 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::run(
 		costDesiredTrajectories_.swap(costDesiredTrajectoriesBuffer_);
 	}
 
-	// update the LOGIC_RULES in the beginning of the run routine and adjust the nominal controllerStock based on an user-defined function
-	logicRulesMachinePtr_->updateLogicRules(partitioningTimes_, nominalControllersStock_);
+	// update the LOGIC_RULES in the beginning of the run routine
+	bool logicRulesModified = logicRulesMachinePtr_->updateLogicRules(partitioningTimes_);
+//	// adjust the nominal controllerStock based on an user-defined function
+//	if (logicRulesModified==true && nominalControllersStock_.size()>0 && eventTimesImage_.empty()==false) {
+//		logicRulesMachinePtr_->getLogicRules().adjustController(eventTimesImage_, nominalControllersStock_);
+//	}
+//	// update event times image
+//	eventTimesImage_ = logicRulesMachinePtr_->getLogicRules().eventTimes();
 
 	// display
 	if (settings_.displayInfo_) {

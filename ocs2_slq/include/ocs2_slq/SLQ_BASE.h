@@ -454,6 +454,16 @@ public:
 	virtual void runExit();
 
 	/**
+	 * Adjust the nominal controller based on the last changes in the logic rules.
+	 *
+	 * @param [in] newEventTimes: The new event times.
+	 * @param [in] controllerEventTimes: The control policy stock's event times.
+	 */
+	void adjustController(
+			const scalar_array_t& newEventTimes,
+			const scalar_array_t& controllerEventTimes);
+
+	/**
 	 * The main routine of SLQ which runs SLQ for a given initial state, initial time, and final time. In order
 	 * to retrieve the initial nominal trajectories in the forward pass, SLQ will use the given operatingTrajectories
 	 * in the constructor.

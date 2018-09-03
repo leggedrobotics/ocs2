@@ -84,6 +84,7 @@ public:
 	 */
 	void adjustController(
 			const scalar_array_t& eventTimes,
+			const scalar_array_t& controllerEventTimes,
 			controller_array_t& controllersStock);
 
 protected:
@@ -128,6 +129,7 @@ protected:
 	 * Variables
 	 ***********/
 	int initActivePartition_  = 0;
+	int finalActivePartition_ = 0;
 
 	std::vector<index_t> eventsIndices_;
 	std::vector<index_t> controllerEventsIndices_;

@@ -45,14 +45,14 @@ public:
 	 *
 	 * @return limit epsilon value.
 	 */
-	static inline T limit_epsilon() { return 1e-4; }
+	static inline T limit_epsilon() { return 1e-6; }
 
 	/**
 	 * Defines the precision during comparison.
 	 *
 	 * @return week epsilon value
 	 */
-	static inline T week_epsilon() { return 1e-6; }
+	static inline T week_epsilon() { return 1e-9; }
 };
 
 } // end of ocs2 namespace

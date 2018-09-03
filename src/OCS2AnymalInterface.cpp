@@ -64,18 +64,20 @@ void OCS2AnymalInterface::setupOptimizer(
 	}
 
 	// MPC
-//	mpcPtr = mpc_ptr_t( new mpc_t(dynamicsPtr_.get(), dynamicsDerivativesPtr_.get(), constraintsPtr_.get(),
-//			costFunctionPtr_.get(), operatingPointsPtr_.get(),
-//			partitioningTimes_,
-//			slqSettings_, mpcSettings_, logicRulesPtr.get(), modeSequenceTemplatePtr));
+	if (modelSettings_.gaitOptimization_ == false) {
+		mpcPtr = mpc_ptr_t( new mpc_t(dynamicsPtr_.get(), dynamicsDerivativesPtr_.get(), constraintsPtr_.get(),
+				costFunctionPtr_.get(), operatingPointsPtr_.get(),
+				partitioningTimes_,
+				slqSettings_, mpcSettings_, logicRulesPtr.get(), modeSequenceTemplatePtr));
 
+	} else {
+		typedef ocs2::MPC_OCS2<BASE::state_dim_, BASE::input_dim_, BASE::logic_rules_t>	mpc_ocs2_t;
 
-	typedef ocs2::MPC_OCS2<BASE::state_dim_, BASE::input_dim_, BASE::logic_rules_t>	mpc_ocs2_t;
-
-	mpcPtr = mpc_ptr_t( new mpc_ocs2_t(dynamicsPtr_.get(), dynamicsDerivativesPtr_.get(), constraintsPtr_.get(),
-			costFunctionPtr_.get(), operatingPointsPtr_.get(),
-			partitioningTimes_,
-			slqSettings_, mpcSettings_, logicRulesPtr.get(), modeSequenceTemplatePtr));
+		mpcPtr = mpc_ptr_t( new mpc_ocs2_t(dynamicsPtr_.get(), dynamicsDerivativesPtr_.get(), constraintsPtr_.get(),
+				costFunctionPtr_.get(), operatingPointsPtr_.get(),
+				partitioningTimes_,
+				slqSettings_, mpcSettings_, logicRulesPtr.get(), modeSequenceTemplatePtr));
+	}
 
 }
 

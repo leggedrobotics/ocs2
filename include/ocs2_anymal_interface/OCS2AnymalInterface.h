@@ -19,8 +19,6 @@
 
 #include <ocs2_quadruped_interface/OCS2QuadrupedInterface.h>
 
-#include <ocs2_mpc/MPC_OCS2.h>
-
 namespace anymal {
 
 class OCS2AnymalInterface : public switched_model::OCS2QuadrupedInterface<12>

@@ -31,7 +31,6 @@
   <depend>ocs2_mpc</depend>
   <depend>ocs2_anymal_switched_model</depend>
   <depend>ocs2_quadruped_interface</depend>
-  <depend>cereal</depend>
   <depend>xpp_msgs</depend>
 
   <!-- The export tag contains other, unspecified, tags -->

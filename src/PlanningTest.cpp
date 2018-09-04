@@ -17,9 +17,9 @@
 #include <rosbag/bag.h>
 #include <xpp_msgs/RobotStateCartesianTrajectory.h>
 
-#include <cereal/archives/xml.hpp>
-#include <cereal/types/vector.hpp>
-#include <cereal/types/Eigen.hpp>
+//#include <cereal/archives/xml.hpp>
+//#include <cereal/types/vector.hpp>
+//#include <cereal/types/Eigen.hpp>
 
 #include <ocs2_core/misc/loadEigenMatrix.h>
 

@@ -14,7 +14,6 @@ find_package(catkin REQUIRED COMPONENTS
   ocs2_mpc
   ocs2_anymal_switched_model
   ocs2_quadruped_interface
-  cereal
   xpp_msgs
 )
 

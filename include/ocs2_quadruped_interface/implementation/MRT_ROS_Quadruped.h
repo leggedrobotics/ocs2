@@ -79,8 +79,6 @@ void MRT_ROS_Quadruped<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::findsIndicesEven
 
 		// if the lower bound found
 		if (lower != timeTrajectory.end()) {
-			std::cout << "++\n te: " << eventTimes[j] << std::endl;
-			std::cout << " ie: " << ie << std::endl;
 			ie = lower - timeTrajectory.begin();
 		} else {
 			break;
@@ -138,12 +136,6 @@ void MRT_ROS_Quadruped<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::modifyBufferFeed
 		touchdownStateStockBuffer_.push_back(mpcStateTrajectoryBuffer[eventsIndices[i]+1]);
 		touchdownInputStockBuffer_.push_back(mpcInputTrajectoryBuffer[eventsIndices[i]+1]);
 	}
-
-	planInitObservationBuffer.display();
-	std::cout << "mpcTimeTrajectoryBuffer: \n";
-	for (auto t : mpcTimeTrajectoryBuffer)
-		std::cout << t << ", ";
-	std::cout << std::endl;
 
 	// for the last point
 	touchdownTimeStockBuffer_.push_back(mpcTimeTrajectoryBuffer.back());
@@ -234,13 +226,6 @@ void MRT_ROS_Quadruped<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::updateFeetTrajec
 		}
 
 		const size_t startIndex = i - initActiveSubsystem;
-
-//		std::cout << "startIndex: " << startIndex << std::endl;
-//		std::cout << "size:       " << touchdownTimeStock.size() << std::endl;
-//		std::cout << "numPhaseSequence: " << finalActiveSubsystem-initActiveSubsystem+1 << std::endl;
-//		std::cout << "touchdownTimeStock:     " << touchdownTimeStock[startIndex] << std::endl;
-//		std::cout << "touchdownTimeStock + 1: " << touchdownTimeStock[startIndex+1] << std::endl;
-
 
 		for (size_t j=0; j<4; j++) {
 

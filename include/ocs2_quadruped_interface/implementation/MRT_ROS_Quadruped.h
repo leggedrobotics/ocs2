@@ -20,15 +20,18 @@ MRT_ROS_Quadruped<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::MRT_ROS_Quadruped(
 		, modelSettings_(ocs2QuadrupedInterfacePtr->modelSettings())
 {
 	// feet z-direction planner
-	feet_z_planner_ptr_t feetZDirectionPlannerPtr(
-			new feet_z_planner_t(modelSettings_.swingLegLiftOff_,
-													 1.0 /*swingTimeScale*/,
-													 modelSettings_.liftOffVelocity_,
-													 modelSettings_.touchDownVelocity_));
-	// Logic rule
+	feet_z_planner_ptr_t feetZDirectionPlannerPtr(new feet_z_planner_t(
+			modelSettings_.swingLegLiftOff_,
+			1.0 /*swingTimeScale*/,
+			modelSettings_.liftOffVelocity_,
+			modelSettings_.touchDownVelocity_));
+
+	// logic rule
 	logic_rules_ptr_t logicRulesPtr( new logic_rules_t(feetZDirectionPlannerPtr) );
-	// Set Base
+
+	// set Base
 	BASE::set(*logicRulesPtr, true, robotName);
+
 	// reset
 	reset();
 }
@@ -38,9 +41,58 @@ MRT_ROS_Quadruped<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::MRT_ROS_Quadruped(
 /******************************************************************************************************/
 template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM>
 void MRT_ROS_Quadruped<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::reset() {
+
 	BASE::reset();
 	prev_o_feetVelocityRef_.fill(vector_3d_t::Zero());
 	prev_time_ = 0;
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM>
+void MRT_ROS_Quadruped<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::findsIndicesEventTimes(
+			const scalar_array_t& eventTimes,
+			const scalar_array_t& timeTrajectory,
+			std::vector<int>& eventsIndices) const {
+
+	// vector of (partition, index). -1 means end()
+	eventsIndices.clear();
+	eventsIndices.resize(eventTimes.size(), -1);
+
+	for (size_t j=0; j<eventTimes.size(); j++) {
+
+		const scalar_t te = eventTimes[j] - ocs2::OCS2NumericTraits<scalar_t>::week_epsilon();
+		int& ie = eventsIndices[j];
+
+		// skip if the controller is empty
+		if (timeTrajectory.empty() == true)
+			continue;
+
+		// if not the first event, use the index of the previous event in order to be more efficient.
+		// subjected to that they are in the same partition
+		typename scalar_array_t::const_iterator beginItr = timeTrajectory.begin();
+		if (j>0)
+			beginItr += eventsIndices[j-1];
+
+		auto lower = std::lower_bound(beginItr, timeTrajectory.end(), te);
+
+		// if the lower bound found
+		if (lower != timeTrajectory.end()) {
+			std::cout << "++\n te: " << eventTimes[j] << std::endl;
+			std::cout << " ie: " << ie << std::endl;
+			ie = lower - timeTrajectory.begin();
+		} else {
+			break;
+		}
+
+	} // end of j loop
+
+	// no event at the final time
+	for (int& ind: eventsIndices) {
+		if (ind == timeTrajectory.size()-1)
+			ind = -1;
+	}
 }
 
 /******************************************************************************************************/
@@ -72,17 +124,26 @@ void MRT_ROS_Quadruped<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::modifyBufferFeed
 			planInitObservationBuffer.input().template segment<JOINT_COORD_SIZE>(12);
 
 	// save touch-down information
-	for (size_t i=0; i<mpcTimeTrajectoryBuffer.size(); i++)
-		if (i==0 || (mpcTimeTrajectoryBuffer[i]-mpcTimeTrajectoryBuffer[i-1]) < ocs2::OCS2NumericTraits<scalar_t>::week_epsilon()) {
-			// if it is an event not end of partition
-			for (const scalar_t& ti : eventTimesBuffer)
-				if (std::abs(mpcTimeTrajectoryBuffer[i]-ti) < 1e-3) {
-					touchdownTimeStockBuffer_.push_back(mpcTimeTrajectoryBuffer[i]);
-					touchdownStateStockBuffer_.push_back(mpcStateTrajectoryBuffer[i]);
-					touchdownInputStockBuffer_.push_back(mpcInputTrajectoryBuffer[i]);
-					break;
-				}
-		}
+	std::vector<int> eventsIndices;
+	findsIndicesEventTimes(eventTimesBuffer, mpcTimeTrajectoryBuffer, eventsIndices);
+	for (size_t i=0; i<eventsIndices.size(); i++) {
+		// skip if it is before the controller time
+		if (eventsIndices[i] == 0)
+			continue;
+		// stop if it is after the controller time
+		if (eventsIndices[i] == -1)
+			break;
+
+		touchdownTimeStockBuffer_.push_back(mpcTimeTrajectoryBuffer[eventsIndices[i]+1]);
+		touchdownStateStockBuffer_.push_back(mpcStateTrajectoryBuffer[eventsIndices[i]+1]);
+		touchdownInputStockBuffer_.push_back(mpcInputTrajectoryBuffer[eventsIndices[i]+1]);
+	}
+
+	planInitObservationBuffer.display();
+	std::cout << "mpcTimeTrajectoryBuffer: \n";
+	for (auto t : mpcTimeTrajectoryBuffer)
+		std::cout << t << ", ";
+	std::cout << std::endl;
 
 	// for the last point
 	touchdownTimeStockBuffer_.push_back(mpcTimeTrajectoryBuffer.back());
@@ -104,7 +165,7 @@ void MRT_ROS_Quadruped<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::loadModifiedFeed
 		size_array_t& subsystemsSequence) {
 
 	// display
-	if (BASE::logicUpdated_==true) {
+	if (BASE::logicUpdated_==true && ocs2QuadrupedInterfacePtr_->mpcSettings().debugPrint_==true) {
 
 		std::cerr << "touchdownTimeStock: {";
 		for (const auto& t: touchdownTimeStockBuffer_)
@@ -127,8 +188,10 @@ void MRT_ROS_Quadruped<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::loadModifiedFeed
 		BASE::logicMachinePtr_->display();
 	}
 
-	updateFeetTrajectories(eventTimes, subsystemsSequence,
-			touchdownTimeStockBuffer_, touchdownStateStockBuffer_, touchdownInputStockBuffer_);
+	// for feet trajectory filtering
+	if (ocs2QuadrupedInterfacePtr_->modelSettings().useFeetTrajectoryFiltering_ == true)
+		updateFeetTrajectories(eventTimes, subsystemsSequence,
+				touchdownTimeStockBuffer_, touchdownStateStockBuffer_, touchdownInputStockBuffer_);
 }
 
 /******************************************************************************************************/
@@ -171,6 +234,13 @@ void MRT_ROS_Quadruped<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::updateFeetTrajec
 		}
 
 		const size_t startIndex = i - initActiveSubsystem;
+
+//		std::cout << "startIndex: " << startIndex << std::endl;
+//		std::cout << "size:       " << touchdownTimeStock.size() << std::endl;
+//		std::cout << "numPhaseSequence: " << finalActiveSubsystem-initActiveSubsystem+1 << std::endl;
+//		std::cout << "touchdownTimeStock:     " << touchdownTimeStock[startIndex] << std::endl;
+//		std::cout << "touchdownTimeStock + 1: " << touchdownTimeStock[startIndex+1] << std::endl;
+
 
 		for (size_t j=0; j<4; j++) {
 

@@ -138,6 +138,18 @@ public:
 
 protected:
 	/**
+	 * Finds the indices of a event times vector.
+	 *
+	 * @param eventTimes: Event time vector.
+	 * @param timeTrajectory: Control policy'r time stamp.
+	 * @param eventsIndices: event time indices over the control policy time stamp.
+	 */
+	void findsIndicesEventTimes(
+				const scalar_array_t& eventTimes,
+				const scalar_array_t& timeTrajectory,
+				std::vector<int>& eventsIndices) const;
+
+	/**
 	 * This method can be used to modify the feedforward policy on the buffer without inputting the
 	 * main thread. Note that the variables that are on the buffer have the suffix Buffer. It is
 	 * important if any new variables are added to the policy also obey this rule. These buffer

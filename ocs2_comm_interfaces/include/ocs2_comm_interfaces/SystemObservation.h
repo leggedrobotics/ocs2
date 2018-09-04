@@ -30,6 +30,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifndef SYSTEMOBSERVATION_OCS2_H_
 #define SYSTEMOBSERVATION_OCS2_H_
 
+#include <iostream>
+
 #include <ocs2_core/Dimensions.h>
 
 namespace ocs2{
@@ -78,6 +80,20 @@ public:
 
 	inline size_t& subsystem() { return subsystem_; };
 	inline const size_t& subsystem() const { return subsystem_; };
+
+	inline void display() const {
+		std::cerr << "Observation: " << std::endl;
+		std::cerr << "\t time:      " << time_ << std::endl;
+		std::cerr << "\t subsystem: " << subsystem_ << std::endl;
+		std::cerr << "\t state:    [";
+		for (int i=0; i<state_.size()-1; i++)
+			std::cerr << state_(i) << ", ";
+		std::cerr << state_(state_.size()-1) << "]" << std::endl;
+		std::cerr << "\t input:    [";
+		for (int i=0; i<input_.size()-1; i++)
+			std::cerr << input_(i) << ", ";
+		std::cerr << input_(input_.size()-1) << "]" << std::endl;
+	}
 
 private:
 	scalar_t 		time_;

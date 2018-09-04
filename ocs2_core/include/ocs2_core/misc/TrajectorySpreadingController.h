@@ -90,13 +90,12 @@ public:
 			controller_array_t& controllersStock);
 
 protected:
-
 	/**
 	 * Finds the indices of a event times vector.
 	 *
-	 * @param eventTimes
-	 * @param controllersStock
-	 * @param eventsIndices
+	 * @param eventTimes: Event time vector.
+	 * @param controllersStock: Control policy.
+	 * @param eventsIndices: event time indices over the control policy time stamp.
 	 */
 	void findsIndicesEventTimes(
 			const scalar_array_t& eventTimes,

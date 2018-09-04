@@ -146,17 +146,12 @@ bool MPC_OCS2<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::run(
 		const scalar_t& currentTime,
 		const state_vector_t& currentState)  {
 
-	// run base method
-	bool status = BASE::run(currentTime, currentState);
-
-	std::cout << "time: " << currentTime << std::endl;
-
 	std::unique_lock<std::mutex> slqLock(dataCollectorMutex_, std::defer_lock_t());
 //	bool ownership = false;
 //	while(ownership==false)
 //		ownership = slqLock.try_lock();
 	bool ownership = slqLock.try_lock();
-	if (ownership == true) {
+	if (ownership==true && BASE::initRun_==false) {
 
 //		std::cout << "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%" << std::endl;
 //
@@ -199,6 +194,9 @@ bool MPC_OCS2<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::run(
 		slqLock.unlock();
 		ocs2Synchronization_.notify_one();
 	}
+
+	// run the base method
+	bool status = BASE::run(currentTime, currentState);
 
 	return status;
 }

@@ -121,22 +121,12 @@ void MRT_ROS_Quadruped<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::modifyBufferFeed
 	touchdownInputStockBuffer_.front().template segment<JOINT_COORD_SIZE>(12) =
 			planInitObservationBuffer.input().template segment<JOINT_COORD_SIZE>(12);
 
-	std::cout << ">>>>>>>>>>>>>>>>>>>>>> \n";
-	std::cout << "mpcTimeTrajectoryBuffer: ";
-	for (auto t : mpcTimeTrajectoryBuffer)
-		std::cout << t << ", ";
-	std::cout << std::endl;
-
 	// find event indices
 	std::vector<int> eventsIndices;
 	findsIndicesEventTimes(eventTimesBuffer, mpcTimeTrajectoryBuffer, eventsIndices);
 
 	// save touch-down information
 	for (size_t i=0; i<eventsIndices.size(); i++) {
-
-		std::cout << ">>> eventsTimes:   " << eventTimesBuffer[i] << std::endl;
-		std::cout << ">>> eventsTimes+:   " << eventTimesBuffer[i]+ocs2::OCS2NumericTraits<scalar_t>::week_epsilon() << std::endl;
-		std::cout << ">>> eventsIndices: " << eventsIndices[i] << std::endl;
 
 		// skip if it is before the controller time
 		if (eventsIndices[i] == 0)
@@ -149,8 +139,6 @@ void MRT_ROS_Quadruped<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::modifyBufferFeed
 		touchdownStateStockBuffer_.push_back(mpcStateTrajectoryBuffer[eventsIndices[i]+1]);
 		touchdownInputStockBuffer_.push_back(mpcInputTrajectoryBuffer[eventsIndices[i]+1]);
 	}
-
-	std::cout << "<<<<<<<<<<<<<<<<<<<<<<< \n";
 
 	// for the last point
 	touchdownTimeStockBuffer_.push_back(mpcTimeTrajectoryBuffer.back());
@@ -231,14 +219,6 @@ void MRT_ROS_Quadruped<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::updateFeetTrajec
 	size_t initActiveSubsystem  = BASE::findActiveSubsystemFnc_(touchdownTimeStock.front());
 	size_t finalActiveSubsystem = BASE::findActiveSubsystemFnc_(touchdownTimeStock.back()-ocs2::OCS2NumericTraits<scalar_t>::week_epsilon());
 
-	std::cout << ">>>>>>>>>>>>>>>>>>>>>> \n";
-	std::cout << "initTime:  " << touchdownTimeStock.front() << std::endl;
-	std::cout << "initActiveSubsystem:  " << initActiveSubsystem << std::endl;
-	std::cout << "finalTime: " << touchdownTimeStock.back() << std::endl;
-	std::cout << "finalActiveSubsystem: " << finalActiveSubsystem << std::endl;
-	std::cout << "diff: " << finalActiveSubsystem-initActiveSubsystem+1 << std::endl;
-	std::cout << "size: " << touchdownTimeStock.size() << std::endl;
-
 	// XY plan
 	feetXPlanPtrStock_.resize(numPhaseSequence);
 	feetYPlanPtrStock_.resize(numPhaseSequence);
@@ -249,10 +229,6 @@ void MRT_ROS_Quadruped<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::updateFeetTrajec
 		}
 
 		const size_t startIndex = i - initActiveSubsystem;
-
-		std::cout << "Subsystem: " << i << std::endl;
-		std::cout << "Begin: " << touchdownTimeStock[startIndex] << std::endl;
-		std::cout << "End:   " << touchdownTimeStock[startIndex+1] << std::endl;
 
 		for (size_t j=0; j<4; j++) {
 
@@ -276,8 +252,6 @@ void MRT_ROS_Quadruped<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::updateFeetTrajec
 					o_feetVelocityStock[startIndex+1][j](1) /*v1*/);
 		}
 	}
-
-	std::cout << "<<<<<<<<<<<<<<<<<<<<<<<< \n";
 }
 
 /******************************************************************************************************/

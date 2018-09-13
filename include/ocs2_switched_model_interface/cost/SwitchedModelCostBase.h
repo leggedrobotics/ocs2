@@ -44,7 +44,7 @@ public:
 	};
 
 	typedef LOGIC_RULES_T logic_rules_t;
-	typedef ocs2::LogicRulesMachine<STATE_DIM, INPUT_DIM, logic_rules_t> logic_rules_machine_t;
+	typedef ocs2::LogicRulesMachine<logic_rules_t> logic_rules_machine_t;
 
 	typedef ocs2::QuadraticCostFunction<STATE_DIM, INPUT_DIM, logic_rules_t> BASE;
 

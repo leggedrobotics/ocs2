@@ -23,7 +23,7 @@
 namespace switched_model {
 
 template <size_t JOINT_COORD_SIZE>
-class ComDynamicsDerivativeBase : public ocs2::DerivativesBase<12,12,ocs2::NullLogicRules<12,12>>
+class ComDynamicsDerivativeBase : public ocs2::DerivativesBase<12,12, ocs2::NullLogicRules>
 {
 public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
@@ -34,10 +34,10 @@ public:
 		INPUT_DIM = 12
 	};
 
-	typedef ocs2::NullLogicRules<12,12> logic_rules_t;
-	typedef ocs2::LogicRulesMachine<STATE_DIM, INPUT_DIM, logic_rules_t> logic_rules_machine_t;
+	typedef ocs2::NullLogicRules logic_rules_t;
+	typedef ocs2::LogicRulesMachine<logic_rules_t> logic_rules_machine_t;
 
-	typedef ocs2::DerivativesBase<12,12,logic_rules_t> Base;
+	typedef ocs2::DerivativesBase<12,12, logic_rules_t> Base;
 
 	typedef ComModelBase<JOINT_COORD_SIZE> com_model_t;
 	typedef KinematicsModelBase<JOINT_COORD_SIZE> kinematic_model_t;

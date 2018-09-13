@@ -33,7 +33,7 @@ public:
 	};
 
 	typedef SwitchedModelPlannerLogicRules<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM, double> logic_rules_t;
-	typedef ocs2::LogicRulesMachine<STATE_DIM, INPUT_DIM, logic_rules_t> logic_rules_machine_t;
+	typedef ocs2::LogicRulesMachine<logic_rules_t> logic_rules_machine_t;
 
 	typedef ocs2::SystemOperatingPoint<STATE_DIM, INPUT_DIM, logic_rules_t> Base;
 

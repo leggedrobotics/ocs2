@@ -24,22 +24,24 @@ namespace switched_model {
  * Logic rules base class
  */
 template <size_t JOINT_COORD_SIZE, class cpg_t, size_t STATE_DIM=12+JOINT_COORD_SIZE, size_t INPUT_DIM=12+JOINT_COORD_SIZE>
-class SwitchedModelLogicRulesBase : public ocs2::HybridLogicRules<STATE_DIM, INPUT_DIM>
+class SwitchedModelLogicRulesBase : public ocs2::HybridLogicRules
 {
 public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
 	typedef std::shared_ptr<SwitchedModelLogicRulesBase<JOINT_COORD_SIZE,cpg_t,STATE_DIM,INPUT_DIM>> Ptr;
 
-	typedef ocs2::HybridLogicRules<STATE_DIM, INPUT_DIM> BASE;
+	typedef ocs2::HybridLogicRules BASE;
 
 	typedef typename BASE::size_array_t size_array_t;
 	typedef typename BASE::scalar_t scalar_t;
 	typedef typename BASE::scalar_array_t scalar_array_t;
-	typedef typename BASE::controller_t controller_t;
-	typedef typename BASE::controller_array_t controller_array_t;
-	typedef typename BASE::input_vector_t input_vector_t;
-	typedef typename BASE::input_state_matrix_t input_state_matrix_t;
+
+  typedef ocs2::Dimensions<STATE_DIM, INPUT_DIM> DIMENSIONS;
+	typedef typename DIMENSIONS::controller_t controller_t;
+	typedef typename DIMENSIONS::controller_array_t controller_array_t;
+	typedef typename DIMENSIONS::input_vector_t input_vector_t;
+	typedef typename DIMENSIONS::input_state_matrix_t input_state_matrix_t;
 
 	typedef typename BASE::logic_template_type logic_template_type;
 
@@ -190,7 +192,7 @@ public:
 	virtual void adjustController(
 			const scalar_array_t& eventTimes,
 			const scalar_array_t& controllerEventTimes,
-			controller_array_t& controllerStock) override;
+			controller_array_t& controllerStock);
 
 protected:
 	/**

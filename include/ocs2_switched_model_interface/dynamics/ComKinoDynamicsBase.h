@@ -45,7 +45,7 @@ public:
 	};
 
 	typedef LOGIC_RULES_T logic_rules_t;
-	typedef ocs2::LogicRulesMachine<LOGIC_RULES_T::state_dim_, LOGIC_RULES_T::input_dim_, logic_rules_t> logic_rules_machine_t;
+	typedef ocs2::LogicRulesMachine<logic_rules_t> logic_rules_machine_t;
 
 	typedef ocs2::ControlledSystemBase<STATE_DIM, INPUT_DIM, logic_rules_t> Base;
 

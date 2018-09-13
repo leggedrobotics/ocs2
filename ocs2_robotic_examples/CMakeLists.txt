@@ -104,7 +104,7 @@ endif()
 ## Quadrotor ##
 ###############
 
-add_executable(quadrotor_mpc 
+add_executable(quadrotor_mpc
   src/quadrotor/QuadrotorInterface.cpp
   src/quadrotor/MPC_Quadrotor_Node.cpp
 )
@@ -143,7 +143,7 @@ target_link_libraries(quadrotor_target
 ## Ballbot ##
 #############
 
-add_executable(ballbot_mpc 
+add_executable(ballbot_mpc
   src/ballbot/BallbotInterface.cpp
   src/ballbot/MPC_Ballbot_Node.cpp
 )

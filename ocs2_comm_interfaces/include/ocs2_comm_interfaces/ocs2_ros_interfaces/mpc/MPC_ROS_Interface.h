@@ -73,7 +73,7 @@ namespace ocs2{
  * @tparam INPUT_DIM: Dimension of the control input space.
  * @tparam LOGIC_RULES_T: Logic Rules type (default NullLogicRules).
  */
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T=NullLogicRules<STATE_DIM,INPUT_DIM>>
+template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T=NullLogicRules>
 class MPC_ROS_Interface
 {
 public:
@@ -82,19 +82,19 @@ public:
 	typedef std::shared_ptr<MPC_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>> Ptr;
 
 	typedef ocs2::MPC_SLQ<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> 	mpc_t;
-	typedef typename mpc_t::scalar_t					scalar_t;
-	typedef typename mpc_t::scalar_array_t				scalar_array_t;
-	typedef typename mpc_t::size_array_t				size_array_t;
-	typedef typename mpc_t::state_vector_t				state_vector_t;
-	typedef typename mpc_t::state_vector_array_t		state_vector_array_t;
-	typedef typename mpc_t::state_vector_array2_t		state_vector_array2_t;
-	typedef typename mpc_t::input_vector_t				input_vector_t;
-	typedef typename mpc_t::input_vector_array_t		input_vector_array_t;
-	typedef typename mpc_t::input_vector_array2_t		input_vector_array2_t;
-	typedef typename mpc_t::controller_t				controller_t;
-	typedef typename mpc_t::controller_array_t			controller_array_t;
-	typedef typename mpc_t::input_state_matrix_t 	   	input_state_matrix_t;
-	typedef typename mpc_t::input_state_matrix_array_t 	input_state_matrix_array_t;
+	typedef typename mpc_t::scalar_t       scalar_t;
+	typedef typename mpc_t::scalar_array_t scalar_array_t;
+	typedef typename mpc_t::size_array_t   size_array_t;
+	typedef typename mpc_t::state_vector_t        state_vector_t;
+	typedef typename mpc_t::state_vector_array_t  state_vector_array_t;
+	typedef typename mpc_t::state_vector_array2_t state_vector_array2_t;
+	typedef typename mpc_t::input_vector_t        input_vector_t;
+	typedef typename mpc_t::input_vector_array_t  input_vector_array_t;
+	typedef typename mpc_t::input_vector_array2_t input_vector_array2_t;
+	typedef typename mpc_t::controller_t       controller_t;
+	typedef typename mpc_t::controller_array_t controller_array_t;
+	typedef typename mpc_t::input_state_matrix_t       input_state_matrix_t;
+	typedef typename mpc_t::input_state_matrix_array_t input_state_matrix_array_t;
 
 	typedef CostDesiredTrajectories<scalar_t> cost_desired_trajectories_t;
 

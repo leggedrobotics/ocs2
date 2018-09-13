@@ -408,8 +408,7 @@ bool MRT_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::updatePolicy() {
 		// Tell logicMachine that logicRules are modified
 		logicMachinePtr_->logicRulesUpdated();
 		// update logicMachine
-		controller_array_t controllerStockTemp(0);
-		logicMachinePtr_->updateLogicRules(partitioningTimes_, controllerStockTemp);
+		logicMachinePtr_->updateLogicRules(partitioningTimes_);
 
 		// function for finding active subsystem
 		const size_t partitionIndex = 0; // we assume only one partition

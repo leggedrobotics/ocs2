@@ -27,8 +27,8 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#ifndef OCS2_OCS2PROJECTED_H_
-#define OCS2_OCS2PROJECTED_H_
+#ifndef OCS2_OCS2PROJECTED_OCS2_H_
+#define OCS2_OCS2PROJECTED_OCS2_H_
 
 #include <array>
 #include <memory>
@@ -52,13 +52,13 @@ namespace ocs2{
  * @tparam INPUT_DIM: Dimension of the control input space.
  * @tparam LOGIC_RULES_T: Logic Rules type (default NullLogicRules).
  */
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T=NullLogicRules<STATE_DIM,INPUT_DIM>>
+template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T=NullLogicRules>
 class OCS2Projected : private nlp::GradientDescent<double>
 {
 public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-	static_assert(std::is_base_of<LogicRulesBase<STATE_DIM, INPUT_DIM>, LOGIC_RULES_T>::value,
+	static_assert(std::is_base_of<LogicRulesBase, LOGIC_RULES_T>::value,
 			"LOGIC_RULES_T must inherit from LogicRulesBase");
 
 	typedef std::shared_ptr<OCS2Projected<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>> Ptr;
@@ -328,4 +328,4 @@ private:
 
 #include "implementation/OCS2Projected.h"
 
-#endif /* OCS2_OCS2PROJECTED_H_ */
+#endif /* OCS2_OCS2PROJECTED_OCS2_H_ */

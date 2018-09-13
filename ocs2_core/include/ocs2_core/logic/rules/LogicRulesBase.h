@@ -43,27 +43,15 @@ namespace ocs2{
 /**
  * Logic rules base class
  */
-template <size_t STATE_DIM, size_t INPUT_DIM>
 class LogicRulesBase
 {
 public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-	enum
-	{
-		state_dim_ = STATE_DIM,
-		input_dim_ = INPUT_DIM
-	};
-
-	typedef Dimensions<STATE_DIM, INPUT_DIM> DIMENSIONS;
-	typedef typename DIMENSIONS::size_array_t          size_array_t;
-	typedef typename DIMENSIONS::scalar_t              scalar_t;
-	typedef typename DIMENSIONS::scalar_array_t        scalar_array_t;
-	typedef typename DIMENSIONS::state_vector_t        state_vector_t;
-	typedef typename DIMENSIONS::input_vector_t        input_vector_t;
-	typedef typename DIMENSIONS::controller_t          controller_t;
-	typedef typename DIMENSIONS::controller_array_t    controller_array_t;
-	typedef typename DIMENSIONS::input_state_matrix_t  input_state_matrix_t;
+	typedef Dimensions<0, 0> DIMENSIONS;
+	typedef typename DIMENSIONS::size_array_t    size_array_t;
+	typedef typename DIMENSIONS::scalar_t        scalar_t;
+	typedef typename DIMENSIONS::scalar_array_t  scalar_array_t;
 
 	/**
 	 * Default constructor
@@ -160,15 +148,6 @@ public:
 	virtual void rewind(
 			const scalar_t& lowerBoundTime,
 			const scalar_t& upperBoundTime) = 0;
-
-	/**
-	 * Adjusts controller. This method is called my the logicMachine whenever the logicRuls are updated.
-	 * It allows the user to modify the controller to adapt to the changes of logics.
-	 *
-	 * @param controllerStock: The control policy stock which will be modified.
-	 */
-	virtual void adjustController(
-			controller_array_t& controllerStock) const = 0;
 
 	/**
 	 * This method can be used to update the internal variables. This method will be called by any

@@ -41,25 +41,19 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 namespace ocs2{
 
 /**
- * Null logic rules class
- *
- * @tparam STATE_DIM: Dimension of the state space.
- * @tparam INPUT_DIM: Dimension of the control input space.
+ * Null logic rules class.
  */
-template <size_t STATE_DIM, size_t INPUT_DIM>
-class NullLogicRules : public HybridLogicRules<STATE_DIM, INPUT_DIM>
+class NullLogicRules : public HybridLogicRules
 {
 public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-	typedef HybridLogicRules<STATE_DIM, INPUT_DIM> BASE;
+	typedef HybridLogicRules BASE;
 
-	typedef typename BASE::size_array_t 		size_array_t;
-	typedef typename BASE::scalar_t 			scalar_t;
-	typedef typename BASE::scalar_array_t 		scalar_array_t;
-	typedef typename BASE::controller_t 		controller_t;
-	typedef typename BASE::controller_array_t 	controller_array_t;
-	typedef typename BASE::logic_template_type 	logic_template_type;
+	typedef BASE::size_array_t         size_array_t;
+	typedef BASE::scalar_t             scalar_t;
+	typedef BASE::scalar_array_t       scalar_array_t;
+	typedef BASE::logic_template_type  logic_template_type;
 
 	/**
 	 * Constructor
@@ -97,16 +91,6 @@ public:
 	virtual void rewind(
 			const scalar_t& lowerBoundTime,
 			const scalar_t& upperBoundTime) override
-	{}
-
-	/**
-	 * Adjusts controller. This method is called my the logicMachine whenever the logicRuls are updated.
-	 * Here no adjustments take place.
-	 *
-	 * @param controllerStock: The control policy stock which will be modified.
-	 */
-	virtual void adjustController(
-			controller_array_t& controllerStock) const override
 	{}
 
 	/**

@@ -49,35 +49,35 @@ namespace ocs2{
  * @tparam INPUT_DIM: Dimension of the control input space.
  * @tparam LOGIC_RULES_T: Logic Rules type (default NullLogicRules).
  */
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T=NullLogicRules<STATE_DIM,INPUT_DIM>>
+template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T=NullLogicRules>
 class SystemOperatingTrajectoriesBase
 {
 public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-	static_assert(std::is_base_of<LogicRulesBase<STATE_DIM, INPUT_DIM>, LOGIC_RULES_T>::value,
+	static_assert(std::is_base_of<LogicRulesBase, LOGIC_RULES_T>::value,
 			"LOGIC_RULES_T must inherit from LogicRulesBase");
 
 	typedef std::shared_ptr<SystemOperatingTrajectoriesBase<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> > Ptr;
 	typedef std::shared_ptr<const SystemOperatingTrajectoriesBase<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> > ConstPtr;
 
 	typedef Dimensions<STATE_DIM, INPUT_DIM> DIMENSIONS;
-	typedef typename DIMENSIONS::scalar_t 				scalar_t;
-	typedef typename DIMENSIONS::scalar_array_t 		scalar_array_t;
-	typedef typename DIMENSIONS::size_array_t 			size_array_t;
-	typedef typename DIMENSIONS::state_vector_t   		state_vector_t;
-	typedef typename DIMENSIONS::state_vector_array_t   state_vector_array_t;
-	typedef typename DIMENSIONS::input_vector_t 		input_vector_t;
+	typedef typename DIMENSIONS::scalar_t             scalar_t;
+	typedef typename DIMENSIONS::scalar_array_t       scalar_array_t;
+	typedef typename DIMENSIONS::size_array_t         size_array_t;
+	typedef typename DIMENSIONS::state_vector_t       state_vector_t;
+	typedef typename DIMENSIONS::state_vector_array_t state_vector_array_t;
+	typedef typename DIMENSIONS::input_vector_t       input_vector_t;
 	typedef typename DIMENSIONS::input_vector_array_t input_vector_array_t;
 
 	/**
 	 * Default constructor
 	 */
-	SystemOperatingTrajectoriesBase() {}
+	SystemOperatingTrajectoriesBase() = default;
 
 	/**
 	 * Default destructor.
 	 */
-	virtual ~SystemOperatingTrajectoriesBase() {}
+	virtual ~SystemOperatingTrajectoriesBase() = default;
 
 	/**
 	 * Initializes the operating trajectories class.
@@ -89,7 +89,7 @@ public:
 	 * @param [in] algorithmName: The algorithm that class this class (default not defined).
 	 */
 	virtual void initializeModel(
-			LogicRulesMachine<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>& logicRulesMachine,
+			LogicRulesMachine<LOGIC_RULES_T>& logicRulesMachine,
 			const size_t& partitionIndex,
 			const char* algorithmName=NULL)
 	{}

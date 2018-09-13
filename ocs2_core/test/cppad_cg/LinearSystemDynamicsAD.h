@@ -32,9 +32,9 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "ocs2_core/dynamics/SystemDynamicsBaseAD.h"
 
-namespace ocs2{
+namespace ocs2 {
 
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T=ocs2::NullLogicRules<STATE_DIM,INPUT_DIM>>
+template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T=NullLogicRules>
 class LinearSystemDynamicsAD : public
 SystemDynamicsBaseAD<LinearSystemDynamicsAD<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>, STATE_DIM, INPUT_DIM, LOGIC_RULES_T>
 {
@@ -45,11 +45,11 @@ public:
 	typedef std::shared_ptr<const LinearSystemDynamicsAD<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> > ConstPtr;
 
 	typedef SystemDynamicsBaseAD<LinearSystemDynamicsAD<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>, STATE_DIM, INPUT_DIM> BASE;
-	typedef typename BASE::scalar_t       			scalar_t;
-	typedef typename BASE::state_vector_t 			state_vector_t;
-	typedef typename BASE::state_matrix_t 			state_matrix_t;
-	typedef typename BASE::input_vector_t  			input_vector_t;
-	typedef typename BASE::state_input_matrix_t	state_input_matrix_t;
+	typedef typename BASE::scalar_t             scalar_t;
+	typedef typename BASE::state_vector_t       state_vector_t;
+	typedef typename BASE::state_matrix_t       state_matrix_t;
+	typedef typename BASE::input_vector_t       input_vector_t;
+	typedef typename BASE::state_input_matrix_t state_input_matrix_t;
 
 	LinearSystemDynamicsAD(
 			const state_matrix_t& A,

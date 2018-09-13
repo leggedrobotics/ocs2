@@ -42,7 +42,7 @@ namespace ocs2{
  * @tparam INPUT_DIM: Dimension of the control input space.
  * @tparam LOGIC_RULES_T: Logic Rules type (default NullLogicRules).
  */
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T=NullLogicRules<STATE_DIM,INPUT_DIM>>
+template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T=NullLogicRules>
 class SystemOperatingPoint : public SystemOperatingTrajectoriesBase<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>
 {
 public:
@@ -52,12 +52,12 @@ public:
 
 	typedef std::shared_ptr<SystemOperatingPoint<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>> Ptr;
 
-	typedef typename Base::scalar_t 			scalar_t;
-	typedef typename Base::scalar_array_t 		scalar_array_t;
-	typedef typename Base::size_array_t 		size_array_t;
-	typedef typename Base::state_vector_t   	state_vector_t;
+	typedef typename Base::scalar_t             scalar_t;
+	typedef typename Base::scalar_array_t       scalar_array_t;
+	typedef typename Base::size_array_t         size_array_t;
+	typedef typename Base::state_vector_t       state_vector_t;
 	typedef typename Base::state_vector_array_t state_vector_array_t;
-	typedef typename Base::input_vector_t		input_vector_t;
+	typedef typename Base::input_vector_t       input_vector_t;
 	typedef typename Base::input_vector_array_t input_vector_array_t;
 
 	/**
@@ -90,7 +90,7 @@ public:
 	 * @param [in] algorithmName: The algorithm that class this class (default not defined).
 	 */
 	virtual void initializeModel(
-			LogicRulesMachine<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>& logicRulesMachine,
+			LogicRulesMachine<LOGIC_RULES_T>& logicRulesMachine,
 			const size_t& partitionIndex,
 			const char* algorithmName=NULL) override {
 

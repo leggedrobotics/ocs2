@@ -93,11 +93,11 @@ target_link_libraries(exp1_slq_test
   ${Boost_LIBRARIES}
 )
 
-#catkin_add_gtest(exp2_slq_test 
-#  test/exp2_slq_test.cpp
-#)
-#target_link_libraries(exp2_slq_test
-#  ${catkin_LIBRARIES}
-#  ${Boost_LIBRARIES}
-#)
+catkin_add_gtest(exp2_slq_test 
+  test/exp2_slq_test.cpp
+)
+target_link_libraries(exp2_slq_test
+  ${catkin_LIBRARIES}
+  ${Boost_LIBRARIES}
+)
 

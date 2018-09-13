@@ -32,8 +32,8 @@ namespace ocs2 {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void LogicRulesMachine<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::setLogicRules(const LOGIC_RULES_T& logicRules) {
+template <class LOGIC_RULES_T>
+void LogicRulesMachine<LOGIC_RULES_T>::setLogicRules(const LOGIC_RULES_T& logicRules) {
 
 	logicRulesUpdated();
 	newLogicRulesInBuffer_ = true;
@@ -44,8 +44,8 @@ void LogicRulesMachine<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::setLogicRules(const
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void LogicRulesMachine<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::logicRulesUpdated() {
+template <class LOGIC_RULES_T>
+void LogicRulesMachine<LOGIC_RULES_T>::logicRulesUpdated() {
 
 	logicRulesModified_ = true;
 }
@@ -53,8 +53,8 @@ void LogicRulesMachine<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::logicRulesUpdated()
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-LOGIC_RULES_T& LogicRulesMachine<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::getLogicRules() {
+template <class LOGIC_RULES_T>
+LOGIC_RULES_T& LogicRulesMachine<LOGIC_RULES_T>::getLogicRules() {
 
 	return logicRules_;
 }
@@ -62,8 +62,8 @@ LOGIC_RULES_T& LogicRulesMachine<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::getLogicR
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-const LOGIC_RULES_T& LogicRulesMachine<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::getLogicRules() const {
+template <class LOGIC_RULES_T>
+const LOGIC_RULES_T& LogicRulesMachine<LOGIC_RULES_T>::getLogicRules() const {
 
 	return logicRules_;
 }
@@ -71,8 +71,8 @@ const LOGIC_RULES_T& LogicRulesMachine<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::get
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-LOGIC_RULES_T* LogicRulesMachine<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::getLogicRulesPtr() {
+template <class LOGIC_RULES_T>
+LOGIC_RULES_T* LogicRulesMachine<LOGIC_RULES_T>::getLogicRulesPtr() {
 
 	return &logicRules_;
 }
@@ -80,8 +80,8 @@ LOGIC_RULES_T* LogicRulesMachine<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::getLogicR
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-const LOGIC_RULES_T* LogicRulesMachine<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::getLogicRulesPtr() const {
+template <class LOGIC_RULES_T>
+const LOGIC_RULES_T* LogicRulesMachine<LOGIC_RULES_T>::getLogicRulesPtr() const {
 
 	return &logicRules_;
 }
@@ -89,9 +89,9 @@ const LOGIC_RULES_T* LogicRulesMachine<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::get
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-const typename LogicRulesMachine<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::scalar_array_t&
-	LogicRulesMachine<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::getEventTimes(size_t index) const {
+template <class LOGIC_RULES_T>
+const typename LogicRulesMachine<LOGIC_RULES_T>::scalar_array_t&
+	LogicRulesMachine<LOGIC_RULES_T>::getEventTimes(size_t index) const {
 
 	return eventTimesStock_[index];
 }
@@ -99,9 +99,9 @@ const typename LogicRulesMachine<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::scalar_ar
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-const typename LogicRulesMachine<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::size_array_t&
-	LogicRulesMachine<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::getEventCounters(size_t index) const {
+template <class LOGIC_RULES_T>
+const typename LogicRulesMachine<LOGIC_RULES_T>::size_array_t&
+	LogicRulesMachine<LOGIC_RULES_T>::getEventCounters(size_t index) const {
 
 	return eventCountersStock_[index];
 }
@@ -109,9 +109,9 @@ const typename LogicRulesMachine<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::size_arra
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-const typename LogicRulesMachine<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::scalar_array_t&
-	LogicRulesMachine<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::getSwitchingTimes(size_t index) const {
+template <class LOGIC_RULES_T>
+const typename LogicRulesMachine<LOGIC_RULES_T>::scalar_array_t&
+	LogicRulesMachine<LOGIC_RULES_T>::getSwitchingTimes(size_t index) const {
 
 	return switchingTimesStock_[index];
 }
@@ -119,9 +119,9 @@ const typename LogicRulesMachine<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::scalar_ar
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-const typename LogicRulesMachine<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::scalar_array_t&
-	LogicRulesMachine<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::getPartitioningTimes() const {
+template <class LOGIC_RULES_T>
+const typename LogicRulesMachine<LOGIC_RULES_T>::scalar_array_t&
+	LogicRulesMachine<LOGIC_RULES_T>::getPartitioningTimes() const {
 
 	return partitioningTimes_;
 }
@@ -129,9 +129,9 @@ const typename LogicRulesMachine<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::scalar_ar
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-std::function<size_t(typename LogicRulesMachine<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::scalar_t)>
-	LogicRulesMachine<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::getHandleToFindActiveEventCounter(
+template <class LOGIC_RULES_T>
+std::function<size_t(typename LogicRulesMachine<LOGIC_RULES_T>::scalar_t)>
+	LogicRulesMachine<LOGIC_RULES_T>::getHandleToFindActiveEventCounter(
 		size_t partitionIndex) const {
 
 	const size_array_t& eventCounters = eventCountersStock_[partitionIndex];
@@ -143,7 +143,7 @@ std::function<size_t(typename LogicRulesMachine<STATE_DIM, INPUT_DIM, LOGIC_RULE
 		int index = findActiveIntervalIndex(switchingTimes, time, guessedIndex);
 
 		if (index < 0 || index >= eventCounters.size())
-			throw std::runtime_error("The enquiry time " + std::to_string(time) + " refers to an out-of-range subsystem.");
+			throw std::runtime_error("The enquiry time" + std::to_string(time) + "refers to an out-of-range subsystem.");
 
 		guessedIndex = index;
 
@@ -154,8 +154,8 @@ std::function<size_t(typename LogicRulesMachine<STATE_DIM, INPUT_DIM, LOGIC_RULE
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-size_t LogicRulesMachine<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::getNumEventCounters(size_t partitionIndex) const {
+template <class LOGIC_RULES_T>
+size_t LogicRulesMachine<LOGIC_RULES_T>::getNumEventCounters(size_t partitionIndex) const {
 
 	return eventCountersStock_[partitionIndex].size();
 }
@@ -163,8 +163,8 @@ size_t LogicRulesMachine<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::getNumEventCounte
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-size_t LogicRulesMachine<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::getNumEvents(size_t partitionIndex) const  {
+template <class LOGIC_RULES_T>
+size_t LogicRulesMachine<LOGIC_RULES_T>::getNumEvents(size_t partitionIndex) const  {
 
 	return eventTimesStock_[partitionIndex].size();
 }
@@ -172,8 +172,8 @@ size_t LogicRulesMachine<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::getNumEvents(size
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-const size_t& LogicRulesMachine<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::getnumPartitions() const  {
+template <class LOGIC_RULES_T>
+const size_t& LogicRulesMachine<LOGIC_RULES_T>::getnumPartitions() const  {
 
 	return numPartitions_;
 }
@@ -181,8 +181,8 @@ const size_t& LogicRulesMachine<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::getnumPart
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-bool LogicRulesMachine<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::updateLogicRules(
+template <class LOGIC_RULES_T>
+bool LogicRulesMachine<LOGIC_RULES_T>::updateLogicRules(
 		const scalar_array_t& partitioningTimes) {
 
 	// if logic rules is modified update the logic
@@ -216,8 +216,8 @@ bool LogicRulesMachine<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::updateLogicRules(
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void LogicRulesMachine<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::findEventsDistribution(
+template <class LOGIC_RULES_T>
+void LogicRulesMachine<LOGIC_RULES_T>::findEventsDistribution(
 		const scalar_array_t& partitioningTimes,
 		std::vector<scalar_array_t>& eventTimesStock,
 		std::vector<scalar_array_t>& switchingTimesStock,
@@ -332,8 +332,8 @@ void LogicRulesMachine<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::findEventsDistribut
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void LogicRulesMachine<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::display() const {
+template <class LOGIC_RULES_T>
+void LogicRulesMachine<LOGIC_RULES_T>::display() const {
 
 	this->getLogicRules().display();
 

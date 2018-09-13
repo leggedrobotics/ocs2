@@ -32,7 +32,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "ocs2_ocs2/GSLQSolver.h"
 
-namespace ocs2{
+namespace ocs2 {
 
 /**
  * OCS2 Derivatives Check Class

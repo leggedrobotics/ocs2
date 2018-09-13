@@ -50,9 +50,10 @@ int main(int argc, char **argv)
 	typedef typename mrt_t::Ptr	mrt_ptr_t;
 	typedef typename mrt_t::scalar_t scalar_t;
 	typedef typename mrt_t::system_observation_t system_observation_t;
-	typedef NullLogicRules<quadrotor::STATE_DIM_, quadrotor::INPUT_DIM_> logic_rules_t;
 	mrt_ptr_t mrtPtr(new mrt_t(
-			logic_rules_t(), !quadrotorInterface.mpcSettings().useFeedbackPolicy_, "quadrotor"));
+			NullLogicRules(),
+			!quadrotorInterface.mpcSettings().useFeedbackPolicy_,
+			"quadrotor"));
 
 	// Dummy quadrotor
 	MRT_ROS_Dummy_Quadrotor dummyQuadrotor(

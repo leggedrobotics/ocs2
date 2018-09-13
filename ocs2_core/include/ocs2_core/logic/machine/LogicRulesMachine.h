@@ -50,29 +50,23 @@ namespace ocs2{
  * Note that if logic rules are modified through get methods (e.g. getLogicRules),
  * user should call logicRulesUpdated(); otherwise the changes may not become effective.
  *
- * @tparam STATE_DIM: Dimension of the state space.
- * @tparam INPUT_DIM: Dimension of the control input space.
  * @tparam LOGIC_RULES_T: logical rule type.
  */
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
+template <class LOGIC_RULES_T>
 class LogicRulesMachine
 {
 public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-	static_assert(std::is_base_of<LogicRulesBase<STATE_DIM, INPUT_DIM>, LOGIC_RULES_T>::value,
+
+	static_assert(std::is_base_of<LogicRulesBase, LOGIC_RULES_T>::value,
 			"LOGIC_RULES_T must inherit from LogicRulesBase");
 
-	typedef std::shared_ptr<LogicRulesMachine<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>> Ptr;
+	typedef std::shared_ptr<LogicRulesMachine<LOGIC_RULES_T>> Ptr;
 
-	typedef Dimensions<STATE_DIM, INPUT_DIM> DIMENSIONS;
-	typedef typename DIMENSIONS::size_array_t          size_array_t;
-	typedef typename DIMENSIONS::scalar_t              scalar_t;
-	typedef typename DIMENSIONS::scalar_array_t        scalar_array_t;
-	typedef typename DIMENSIONS::state_vector_t        state_vector_t;
-	typedef typename DIMENSIONS::input_vector_t        input_vector_t;
-	typedef typename DIMENSIONS::controller_t          controller_t;
-	typedef typename DIMENSIONS::controller_array_t    controller_array_t;
-	typedef typename DIMENSIONS::input_state_matrix_t  input_state_matrix_t;
+	typedef Dimensions<0, 0> DIMENSIONS;
+	typedef DIMENSIONS::size_array_t   size_array_t;
+	typedef DIMENSIONS::scalar_t       scalar_t;
+	typedef DIMENSIONS::scalar_array_t scalar_array_t;
 
 	/**
 	 * Default constructor.

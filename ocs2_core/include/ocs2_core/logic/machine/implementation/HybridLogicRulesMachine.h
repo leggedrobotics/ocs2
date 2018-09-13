@@ -32,8 +32,8 @@ namespace ocs2{
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class logic_rules_template_t>
-void HybridLogicRulesMachine<STATE_DIM, INPUT_DIM, logic_rules_template_t>::setupLogicMachine(
+template <class logic_rules_template_t>
+void HybridLogicRulesMachine<logic_rules_template_t>::setupLogicMachine(
 		const scalar_array_t& partitioningTimes,
 		const scalar_t& initTime,
 		const size_t& initActivePartition,
@@ -42,7 +42,7 @@ void HybridLogicRulesMachine<STATE_DIM, INPUT_DIM, logic_rules_template_t>::setu
 	//**********************************************//
 	//****************** LogicRule *****************//
 	//**********************************************//
-	HybridLogicRules<STATE_DIM,INPUT_DIM>& logicRules = BASE::getLogicRules();
+	HybridLogicRules& logicRules = BASE::getLogicRules();
 
 	// delete the future event information
 	size_t index = std::lower_bound(logicRules.eventTimes().begin(), logicRules.eventTimes().end(), initTime) - logicRules.eventTimes().begin();
@@ -114,8 +114,8 @@ void HybridLogicRulesMachine<STATE_DIM, INPUT_DIM, logic_rules_template_t>::setu
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class logic_rules_template_t>
-void HybridLogicRulesMachine<STATE_DIM, INPUT_DIM, logic_rules_template_t>::initLogicMachine(
+template <class logic_rules_template_t>
+void HybridLogicRulesMachine<logic_rules_template_t>::initLogicMachine(
 		const size_t& partitionIndex) {
 
 	if (BASE::eventCountersStock_[partitionIndex].empty()==true) {
@@ -131,8 +131,8 @@ void HybridLogicRulesMachine<STATE_DIM, INPUT_DIM, logic_rules_template_t>::init
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class logic_rules_template_t>
-void HybridLogicRulesMachine<STATE_DIM, INPUT_DIM, logic_rules_template_t>::push_back(
+template <class logic_rules_template_t>
+void HybridLogicRulesMachine<logic_rules_template_t>::push_back(
 		const size_t& partitionIndex,
 		const scalar_t& eventTime,
 		const size_t& subsystemID) {
@@ -152,8 +152,8 @@ void HybridLogicRulesMachine<STATE_DIM, INPUT_DIM, logic_rules_template_t>::push
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class logic_rules_template_t>
-void HybridLogicRulesMachine<STATE_DIM, INPUT_DIM, logic_rules_template_t>::display() const {
+template <class logic_rules_template_t>
+void HybridLogicRulesMachine<logic_rules_template_t>::display() const {
 
 	BASE::display();
 

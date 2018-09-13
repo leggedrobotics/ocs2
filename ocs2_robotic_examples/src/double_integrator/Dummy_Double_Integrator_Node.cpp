@@ -48,8 +48,11 @@ int main(int argc, char **argv)
 	typedef typename mrt_t::Ptr	mrt_ptr_t;
 	typedef typename mrt_t::scalar_t scalar_t;
 	typedef typename mrt_t::system_observation_t system_observation_t;
-	typedef ocs2::NullLogicRules<double_integrator::STATE_DIM_, double_integrator::INPUT_DIM_> logic_rules_t;
-	mrt_ptr_t mrtPtr(new mrt_t(logic_rules_t(), !double_integratorInterface.mpcSettings().useFeedbackPolicy_, "double_integrator"));
+
+	mrt_ptr_t mrtPtr(new mrt_t(
+			NullLogicRules(),
+			!double_integratorInterface.mpcSettings().useFeedbackPolicy_,
+			"double_integrator"));
 
 	// Dummy double_integrator
 	MRT_ROS_Dummy_Linear_System dummyDoubleIntegrator(

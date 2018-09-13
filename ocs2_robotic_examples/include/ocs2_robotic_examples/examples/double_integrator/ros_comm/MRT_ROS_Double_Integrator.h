@@ -42,14 +42,12 @@ namespace double_integrator {
  *
  * @tparam double_integrator::STATE_DIM_: Dimension of the state space.
  * @tparam double_integrator::INPUT_DIM_: Dimension of the control input space.
- * @tparam LOGIC_RULES_T: Logic Rules type (default NullLogicRules).
  */
 class MRT_ROS_Linear_System : public MRT_ROS_Interface<double_integrator::STATE_DIM_, double_integrator::INPUT_DIM_>
 {
 public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-	typedef NullLogicRules<double_integrator::STATE_DIM_, double_integrator::INPUT_DIM_> logic_rules_t;
 	typedef MRT_ROS_Interface<double_integrator::STATE_DIM_, double_integrator::INPUT_DIM_> BASE;
 
 	typedef Dimensions<double_integrator::STATE_DIM_, double_integrator::INPUT_DIM_> DIMENSIONS;
@@ -68,9 +66,6 @@ public:
 	typedef SystemObservation<double_integrator::STATE_DIM_, double_integrator::INPUT_DIM_> system_observation_t;
 
 	typedef RosMsgConversions<double_integrator::STATE_DIM_, double_integrator::INPUT_DIM_> ros_msg_conversions_t;
-
-	typedef ocs2::HybridLogicRulesMachine<double_integrator::STATE_DIM_,double_integrator::INPUT_DIM_,logic_rules_t> 	logic_machine_t;
-	typedef typename logic_machine_t::Ptr 										logic_machine_ptr_t;
 
 	typedef LinearInterpolation<state_vector_t, Eigen::aligned_allocator<state_vector_t> > state_linear_interpolation_t;
 	typedef LinearInterpolation<input_vector_t, Eigen::aligned_allocator<input_vector_t> > input_linear_interpolation_t;
@@ -92,7 +87,7 @@ public:
 			const bool& useFeedforwardPolicy = true,
 			const std::string& robotName = "robot_mpc")
 
-	: BASE(logic_rules_t(), useFeedforwardPolicy, robotName)
+	: BASE(NullLogicRules(), useFeedforwardPolicy, robotName)
 	{}
 
 	/**

@@ -86,168 +86,154 @@ if(DOXYGEN_FOUND)
             VERBATIM)
 endif()
 
-#############
-## Testing ##
-#############
-## Info ==============================
-## to run tests, cd package folder and run
-## $ catkin build -DCMAKE_BUILD_TYPE=RelWithDebInfo --this
-## $ catkin run_tests --no-deps --this
-## to see the summary of unit test results run
-## $ catkin_test_results ../../../build/ocs2_ocs2
-
-## Declare a C++ executable
-## With catkin_make all packages are built within a single CMake context
-## The recommended prefix ensures that target names across packages don't collide
-
 ###############
 ## Quadrotor ##
 ###############
 
-#add_executable(quadrotor_mpc
-#  src/quadrotor/QuadrotorInterface.cpp
-#  src/quadrotor/MPC_Quadrotor_Node.cpp
-#)
-#add_dependencies(quadrotor_mpc
-#  ${catkin_EXPORTED_TARGETS}
-#)
-#target_link_libraries(quadrotor_mpc
-#  ${catkin_LIBRARIES}
-#  ${Boost_LIBRARIES}
-#)
-#
-#add_executable(quadrotor_dummy_test
-#  src/quadrotor/QuadrotorInterface.cpp
-#  src/quadrotor/Dummy_Quadrotor_Node.cpp
-#)
-#add_dependencies(quadrotor_dummy_test
-#  ${catkin_EXPORTED_TARGETS}
-#)
-#target_link_libraries(quadrotor_dummy_test
-#  ${catkin_LIBRARIES}
-#  ${Boost_LIBRARIES}
-#)
-#
-#add_executable(quadrotor_target
-#  src/quadrotor/QuadrotorTargetPoseCommand.cpp
-#)
-#add_dependencies(quadrotor_target
-#  ${catkin_EXPORTED_TARGETS}
-#)
-#target_link_libraries(quadrotor_target
-#  ${catkin_LIBRARIES}
-#  ${Boost_LIBRARIES}
-#)
+add_executable(quadrotor_mpc
+  src/quadrotor/QuadrotorInterface.cpp
+  src/quadrotor/MPC_Quadrotor_Node.cpp
+)
+add_dependencies(quadrotor_mpc
+  ${catkin_EXPORTED_TARGETS}
+)
+target_link_libraries(quadrotor_mpc
+  ${catkin_LIBRARIES}
+  ${Boost_LIBRARIES}
+)
+
+add_executable(quadrotor_dummy_test
+  src/quadrotor/QuadrotorInterface.cpp
+  src/quadrotor/Dummy_Quadrotor_Node.cpp
+)
+add_dependencies(quadrotor_dummy_test
+  ${catkin_EXPORTED_TARGETS}
+)
+target_link_libraries(quadrotor_dummy_test
+  ${catkin_LIBRARIES}
+  ${Boost_LIBRARIES}
+)
+
+add_executable(quadrotor_target
+  src/quadrotor/QuadrotorTargetPoseCommand.cpp
+)
+add_dependencies(quadrotor_target
+  ${catkin_EXPORTED_TARGETS}
+)
+target_link_libraries(quadrotor_target
+  ${catkin_LIBRARIES}
+  ${Boost_LIBRARIES}
+)
 
 #############
 ## Ballbot ##
 #############
 
-#add_executable(ballbot_mpc
-#  src/ballbot/BallbotInterface.cpp
-#  src/ballbot/MPC_Ballbot_Node.cpp
-#)
-#add_dependencies(ballbot_mpc
-#  ${catkin_EXPORTED_TARGETS}
-#)
-#target_link_libraries(ballbot_mpc
-#  ${catkin_LIBRARIES}
-#  ${Boost_LIBRARIES}
-#  dl
-#)
-#
-#add_executable(ballbot_dummy_test
-#  src/ballbot/BallbotInterface.cpp
-#  src/ballbot/Dummy_Ballbot_Node.cpp
-#)
-#add_dependencies(ballbot_dummy_test
-#  ${catkin_EXPORTED_TARGETS}
-#)
-#target_link_libraries(ballbot_dummy_test
-#  ${catkin_LIBRARIES}
-#  ${Boost_LIBRARIES}
-#  dl
-#)
-#
-#add_executable(ballbot_target
-#  src/ballbot/BallbotTargetPoseCommand.cpp
-#)
-#add_dependencies(ballbot_target
-#  ${catkin_EXPORTED_TARGETS}
-#)
-#target_link_libraries(ballbot_target
-#  ${catkin_LIBRARIES}
-#  ${Boost_LIBRARIES}
-#)
+add_executable(ballbot_mpc
+  src/ballbot/BallbotInterface.cpp
+  src/ballbot/MPC_Ballbot_Node.cpp
+)
+add_dependencies(ballbot_mpc
+  ${catkin_EXPORTED_TARGETS}
+)
+target_link_libraries(ballbot_mpc
+  ${catkin_LIBRARIES}
+  ${Boost_LIBRARIES}
+  dl
+)
+
+add_executable(ballbot_dummy_test
+  src/ballbot/BallbotInterface.cpp
+  src/ballbot/Dummy_Ballbot_Node.cpp
+)
+add_dependencies(ballbot_dummy_test
+  ${catkin_EXPORTED_TARGETS}
+)
+target_link_libraries(ballbot_dummy_test
+  ${catkin_LIBRARIES}
+  ${Boost_LIBRARIES}
+  dl
+)
+
+add_executable(ballbot_target
+  src/ballbot/BallbotTargetPoseCommand.cpp
+)
+add_dependencies(ballbot_target
+  ${catkin_EXPORTED_TARGETS}
+)
+target_link_libraries(ballbot_target
+  ${catkin_LIBRARIES}
+  ${Boost_LIBRARIES}
+)
 
 #######################
 ## Double Integrator ##
 #######################
 
-#add_executable(double_integrator_mpc
-#  src/double_integrator/DoubleIntegratorInterface.cpp
-#  src/double_integrator/MPC_Double_Integrator_Node.cpp
-#)
-#add_dependencies(double_integrator_mpc
-#  ${catkin_EXPORTED_TARGETS}
-#)
-#target_link_libraries(double_integrator_mpc
-#  ${catkin_LIBRARIES}
-#  ${Boost_LIBRARIES}
-#  dl
-#)
-#
-#add_executable(double_integrator_dummy_test
-#  src/double_integrator/DoubleIntegratorInterface.cpp
-#  src/double_integrator/Dummy_Double_Integrator_Node.cpp
-#)
-#add_dependencies(double_integrator_dummy_test
-#  ${catkin_EXPORTED_TARGETS}
-#)
-#target_link_libraries(double_integrator_dummy_test
-#  ${catkin_LIBRARIES}
-#  ${Boost_LIBRARIES}
-#  dl
-#)
-#
-#add_executable(double_integrator_target
-#  src/double_integrator/DoubleIntegratorTargetPoseCommand.cpp
-#)
-#add_dependencies(double_integrator_target
-#  ${catkin_EXPORTED_TARGETS}
-#)
-#target_link_libraries(double_integrator_target
-#  ${catkin_LIBRARIES}
-#  ${Boost_LIBRARIES}
-#)
+add_executable(double_integrator_mpc
+  src/double_integrator/DoubleIntegratorInterface.cpp
+  src/double_integrator/MPC_Double_Integrator_Node.cpp
+)
+add_dependencies(double_integrator_mpc
+  ${catkin_EXPORTED_TARGETS}
+)
+target_link_libraries(double_integrator_mpc
+  ${catkin_LIBRARIES}
+  ${Boost_LIBRARIES}
+  dl
+)
+
+add_executable(double_integrator_dummy_test
+  src/double_integrator/DoubleIntegratorInterface.cpp
+  src/double_integrator/Dummy_Double_Integrator_Node.cpp
+)
+add_dependencies(double_integrator_dummy_test
+  ${catkin_EXPORTED_TARGETS}
+)
+target_link_libraries(double_integrator_dummy_test
+  ${catkin_LIBRARIES}
+  ${Boost_LIBRARIES}
+  dl
+)
+
+add_executable(double_integrator_target
+  src/double_integrator/DoubleIntegratorTargetPoseCommand.cpp
+)
+add_dependencies(double_integrator_target
+  ${catkin_EXPORTED_TARGETS}
+)
+target_link_libraries(double_integrator_target
+  ${catkin_LIBRARIES}
+  ${Boost_LIBRARIES}
+)
 
 ###############
 ## Cart Pole ##
 ###############
 
-#add_executable(cartpole_mpc
-#  src/cart_pole/CartPoleInterface.cpp
-#  src/cart_pole/MPC_Cartpole_Node.cpp
-#)
-#add_dependencies(cartpole_mpc
-#  ${catkin_EXPORTED_TARGETS}
-#)
-#target_link_libraries(cartpole_mpc
-#  ${catkin_LIBRARIES}
-#  ${Boost_LIBRARIES}
-#  dl
-#)
-#
-#add_executable(cartpole_dummy_test
-#  src/cart_pole/CartPoleInterface.cpp
-#  src/cart_pole/Dummy_Cartpole_Node.cpp
-#)
-#add_dependencies(cartpole_dummy_test
-#  ${catkin_EXPORTED_TARGETS}
-#)
-#target_link_libraries(cartpole_dummy_test
-#  ${catkin_LIBRARIES}
-#  ${Boost_LIBRARIES}
-#  dl
-#)
+add_executable(cartpole_mpc
+  src/cart_pole/CartPoleInterface.cpp
+  src/cart_pole/MPC_Cartpole_Node.cpp
+)
+add_dependencies(cartpole_mpc
+  ${catkin_EXPORTED_TARGETS}
+)
+target_link_libraries(cartpole_mpc
+  ${catkin_LIBRARIES}
+  ${Boost_LIBRARIES}
+  dl
+)
+
+add_executable(cartpole_dummy_test
+  src/cart_pole/CartPoleInterface.cpp
+  src/cart_pole/Dummy_Cartpole_Node.cpp
+)
+add_dependencies(cartpole_dummy_test
+  ${catkin_EXPORTED_TARGETS}
+)
+target_link_libraries(cartpole_dummy_test
+  ${catkin_LIBRARIES}
+  ${Boost_LIBRARIES}
+  dl
+)
 

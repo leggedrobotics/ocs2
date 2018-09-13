@@ -47,12 +47,12 @@ namespace ocs2{
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-class EXP0_LogicRules : public LogicRulesBase<2,1>
+class EXP0_LogicRules : public LogicRulesBase
 {
 public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-	typedef LogicRulesBase<2,1> BASE;
+	typedef LogicRulesBase BASE;
 
 	EXP0_LogicRules() = default;
 
@@ -64,12 +64,6 @@ public:
 
 	void rewind(const scalar_t& lowerBoundTime,
 			const scalar_t& upperBoundTime) override
-	{}
-
-	void adjustController(
-			const scalar_array_t& eventTimes,
-			const scalar_array_t& controllerEventTimes,
-			controller_array_t& controllerStock) override
 	{}
 
 	void update() override
@@ -158,7 +152,7 @@ public:
 	}
 
 	void initializeModel(
-			LogicRulesMachine<2, 1, EXP0_LogicRules>& logicRulesMachine,
+			LogicRulesMachine<EXP0_LogicRules>& logicRulesMachine,
 			const size_t& partitionIndex,
 			const char* algorithmName=NULL) override {
 
@@ -257,7 +251,7 @@ public:
 
 
 	void initializeModel(
-			LogicRulesMachine<2, 1, EXP0_LogicRules>& logicRulesMachine,
+			LogicRulesMachine<EXP0_LogicRules>& logicRulesMachine,
 			const size_t& partitionIndex,
 			const char* algorithmName=NULL) override {
 
@@ -389,7 +383,7 @@ public:
 	}
 
 	void initializeModel(
-			LogicRulesMachine<2, 1, EXP0_LogicRules>& logicRulesMachine,
+			LogicRulesMachine<EXP0_LogicRules>& logicRulesMachine,
 			const size_t& partitionIndex,
 			const char* algorithmName=NULL) override {
 

@@ -77,7 +77,7 @@ namespace ocs2 {
  * @tparam INPUT_DIM: Dimension of the control input space.
  * @tparam LOGIC_RULES_T: Logic Rules type (default NullLogicRules).
  */
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T=NullLogicRules<STATE_DIM,INPUT_DIM>>
+template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T=NullLogicRules>
 class MRT_ROS_Interface
 {
 public:
@@ -104,8 +104,8 @@ public:
 
 	typedef RosMsgConversions<STATE_DIM, INPUT_DIM> ros_msg_conversions_t;
 
-	typedef ocs2::HybridLogicRulesMachine<STATE_DIM,INPUT_DIM,LOGIC_RULES_T> 	logic_machine_t;
-	typedef typename logic_machine_t::Ptr 										logic_machine_ptr_t;
+	typedef HybridLogicRulesMachine<LOGIC_RULES_T> logic_machine_t;
+	typedef typename logic_machine_t::Ptr          logic_machine_ptr_t;
 
 	typedef LinearInterpolation<state_vector_t, Eigen::aligned_allocator<state_vector_t> > state_linear_interpolation_t;
 	typedef LinearInterpolation<input_vector_t, Eigen::aligned_allocator<input_vector_t> > input_linear_interpolation_t;

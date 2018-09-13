@@ -33,28 +33,19 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 using namespace ocs2;
 
-template <size_t STATE_DIM, size_t INPUT_DIM>
-class TestLogicRules : public LogicRulesBase<STATE_DIM,INPUT_DIM>
+class TestLogicRules : public LogicRulesBase
 {
 public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-	typedef LogicRulesBase<STATE_DIM,INPUT_DIM> BASE;
-	typedef typename BASE::scalar_t scalar_t;
-	typedef typename BASE::scalar_array_t scalar_array_t;
-	typedef typename BASE::size_array_t size_array_t;
-	typedef typename BASE::controller_t controller_t;
-	typedef typename BASE::controller_array_t controller_array_t;
+	typedef LogicRulesBase BASE;
+	typedef BASE::scalar_t       scalar_t;
+	typedef BASE::scalar_array_t scalar_array_t;
+	typedef BASE::size_array_t   size_array_t;
 
-	TestLogicRules() {}
+	TestLogicRules() = default;
 
-	virtual ~TestLogicRules() {}
-
-	void adjustController(
-			const scalar_array_t& eventTimes,
-			const scalar_array_t& controllerEventTimes,
-			controller_array_t& controllerStock) override
-	{}
+	virtual ~TestLogicRules() = default;
 
 	void set(const scalar_array_t& eventTimes) {
 		BASE::eventTimes_ = eventTimes;
@@ -79,9 +70,8 @@ private:
  * @param switchedSystemIDsStockResult
  * @return
  */
-template <size_t STATE_DIM, size_t INPUT_DIM>
 bool checkSolution(
-		const LogicRulesMachine<STATE_DIM,INPUT_DIM,TestLogicRules<STATE_DIM,INPUT_DIM>>& logicRulesMachine,
+		const LogicRulesMachine<TestLogicRules>& logicRulesMachine,
 		const std::vector<std::vector<double>>& eventTimesStockResult,
 		const std::vector<std::vector<size_t>>& switchedSystemIDsStockResult) {
 
@@ -107,8 +97,8 @@ bool checkSolution(
 
 TEST(testLogicRulesMachine, LogicRulesMachine)
 {
-	TestLogicRules<1,1> logicRules;
-	LogicRulesMachine<1,1,TestLogicRules<1,1>> logicRulesMachine(logicRules);
+	TestLogicRules logicRules;
+	LogicRulesMachine<TestLogicRules> logicRulesMachine(logicRules);
 
 	std::vector<double> partitioningTimes{0,1,2,3};
 
@@ -256,11 +246,10 @@ TEST(testLogicRulesMachine, LogicRulesMachine)
 
 TEST(testLogicRulesMachine, shortPartition)
 {
-	TestLogicRules<1,1> logicRules;
-	LogicRulesMachine<1,1,TestLogicRules<1,1>> logicRulesMachine(logicRules);
+	TestLogicRules logicRules;
+	LogicRulesMachine<TestLogicRules> logicRulesMachine(logicRules);
 
 	std::vector<double> partitioningTimes;
-	LogicRulesMachine<1,1,TestLogicRules<1,1>>::controller_array_t controllerStock;
 
 	std::vector<double> logicRulesEventTimes{0.5, 2.5};
 	logicRules.set(logicRulesEventTimes);
@@ -317,5 +306,3 @@ int main(int argc, char** argv)
 	testing::InitGoogleTest(&argc, argv);
 	return RUN_ALL_TESTS();
 }
-
-

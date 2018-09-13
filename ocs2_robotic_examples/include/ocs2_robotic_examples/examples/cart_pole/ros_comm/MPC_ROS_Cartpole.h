@@ -36,74 +36,74 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 namespace ocs2 {
 namespace cartpole {
 
-class MPC_ROS_Cartpole : public MPC_ROS_Interface<cartpole::STATE_DIM_, cartpole::INPUT_DIM_, NullLogicRules< cartpole::STATE_DIM_, cartpole::INPUT_DIM_>> {
- public:
-  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+class MPC_ROS_Cartpole : public MPC_ROS_Interface<cartpole::STATE_DIM_, cartpole::INPUT_DIM_, NullLogicRules>
+{
+public:
+	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-  typedef NullLogicRules<cartpole::STATE_DIM_, cartpole::INPUT_DIM_> logic_rules_t;
-  typedef MPC_ROS_Interface<cartpole::STATE_DIM_, cartpole::INPUT_DIM_, logic_rules_t> BASE;
+	typedef MPC_ROS_Interface<cartpole::STATE_DIM_, cartpole::INPUT_DIM_, NullLogicRules> BASE;
 
-  typedef typename mpc_t::scalar_t scalar_t;
-  typedef typename mpc_t::scalar_array_t scalar_array_t;
-  typedef typename mpc_t::size_array_t size_array_t;
-  typedef typename mpc_t::state_vector_t state_vector_t;
-  typedef typename mpc_t::state_vector_array_t state_vector_array_t;
-  typedef typename mpc_t::state_vector_array2_t state_vector_array2_t;
-  typedef typename mpc_t::input_vector_t input_vector_t;
-  typedef typename mpc_t::input_vector_array_t input_vector_array_t;
-  typedef typename mpc_t::input_vector_array2_t input_vector_array2_t;
-  typedef typename mpc_t::controller_t controller_t;
-  typedef typename mpc_t::controller_array_t controller_array_t;
-  typedef typename mpc_t::input_state_matrix_t input_state_matrix_t;
-  typedef typename mpc_t::input_state_matrix_array_t input_state_matrix_array_t;
+	typedef typename mpc_t::scalar_t scalar_t;
+	typedef typename mpc_t::scalar_array_t scalar_array_t;
+	typedef typename mpc_t::size_array_t size_array_t;
+	typedef typename mpc_t::state_vector_t state_vector_t;
+	typedef typename mpc_t::state_vector_array_t state_vector_array_t;
+	typedef typename mpc_t::state_vector_array2_t state_vector_array2_t;
+	typedef typename mpc_t::input_vector_t input_vector_t;
+	typedef typename mpc_t::input_vector_array_t input_vector_array_t;
+	typedef typename mpc_t::input_vector_array2_t input_vector_array2_t;
+	typedef typename mpc_t::controller_t controller_t;
+	typedef typename mpc_t::controller_array_t controller_array_t;
+	typedef typename mpc_t::input_state_matrix_t input_state_matrix_t;
+	typedef typename mpc_t::input_state_matrix_array_t input_state_matrix_array_t;
 
-  typedef CostDesiredTrajectories<scalar_t> cost_desired_trajectories_t;
+	typedef CostDesiredTrajectories<scalar_t> cost_desired_trajectories_t;
 
-  typedef SystemObservation<cartpole::STATE_DIM_, cartpole::INPUT_DIM_> system_observation_t;
+	typedef SystemObservation<cartpole::STATE_DIM_, cartpole::INPUT_DIM_> system_observation_t;
 
-  typedef RosMsgConversions<cartpole::STATE_DIM_, cartpole::INPUT_DIM_> ros_msg_conversions_t;
+	typedef RosMsgConversions<cartpole::STATE_DIM_, cartpole::INPUT_DIM_> ros_msg_conversions_t;
 
-  /**
-   * Default constructor
-   */
-  MPC_ROS_Cartpole() = default;
+	/**
+	 * Default constructor
+	 */
+	MPC_ROS_Cartpole() = default;
 
-  /**
-   * Constructor.
-   *
-   * @param [in] mpcPtr: The MPC object to be interfaced.
-   * @param [in] nodeName: The node's name.
-   */
-  MPC_ROS_Cartpole(
-    mpc_t &mpc,
-    const std::string &nodeName = "robot_mpc")
-    : BASE(mpc, nodeName) {}
+	/**
+	 * Constructor.
+	 *
+	 * @param [in] mpcPtr: The MPC object to be interfaced.
+	 * @param [in] nodeName: The node's name.
+	 */
+	MPC_ROS_Cartpole(
+			mpc_t &mpc,
+			const std::string &nodeName = "robot_mpc")
+	: BASE(mpc, nodeName) {}
 
-  /**
-   * Destructor.
-   */
-  virtual ~MPC_ROS_Cartpole() = default;
+	/**
+	 * Destructor.
+	 */
+	virtual ~MPC_ROS_Cartpole() = default;
 
-  /**
-   * Provides the initial target trajectories for the cost function.
-   *
-   * @param [in] initObservation: The observation after the very fist call of the class or after call to reset().
-   * @param [out] costDesiredTrajectories: The desired cost trajectories.
-   */
-  virtual void initGoalState(
-    const system_observation_t &initObservation,
-    cost_desired_trajectories_t &costDesiredTrajectories) {
+	/**
+	 * Provides the initial target trajectories for the cost function.
+	 *
+	 * @param [in] initObservation: The observation after the very fist call of the class or after call to reset().
+	 * @param [out] costDesiredTrajectories: The desired cost trajectories.
+	 */
+	virtual void initGoalState(
+			const system_observation_t &initObservation,
+			cost_desired_trajectories_t &costDesiredTrajectories) {
 
-    costDesiredTrajectories.desiredTimeTrajectory().resize(2);
-    costDesiredTrajectories.desiredTimeTrajectory().at(0) = 0.0;
-    costDesiredTrajectories.desiredTimeTrajectory().at(1) = 1.0;
-    costDesiredTrajectories.desiredStateTrajectory().resize(2);
-    costDesiredTrajectories.desiredStateTrajectory().at(0) = state_vector_t::Zero();
-    costDesiredTrajectories.desiredStateTrajectory().at(1) = state_vector_t::Zero();
-    costDesiredTrajectories.desiredInputTrajectory().resize(2);
-    costDesiredTrajectories.desiredInputTrajectory().at(0) = input_vector_t::Zero();
-    costDesiredTrajectories.desiredInputTrajectory().at(1) = input_vector_t::Zero();
-  }
+		costDesiredTrajectories.desiredTimeTrajectory().resize(2);
+		costDesiredTrajectories.desiredTimeTrajectory().at(0) = 0.0;
+		costDesiredTrajectories.desiredTimeTrajectory().at(1) = 1.0;
+		costDesiredTrajectories.desiredStateTrajectory().resize(2);
+		costDesiredTrajectories.desiredStateTrajectory().at(0) = state_vector_t::Zero();
+		costDesiredTrajectories.desiredStateTrajectory().at(1) = state_vector_t::Zero();
+		costDesiredTrajectories.desiredInputTrajectory().resize(2);
+		costDesiredTrajectories.desiredInputTrajectory().at(0) = input_vector_t::Zero();
+		costDesiredTrajectories.desiredInputTrajectory().at(1) = input_vector_t::Zero();
+	}
 };
 
 } // namespace cartpole

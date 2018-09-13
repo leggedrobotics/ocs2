@@ -48,10 +48,11 @@ int main(int argc, char **argv)
 	typedef typename mrt_t::Ptr	mrt_ptr_t;
 	typedef typename mrt_t::scalar_t scalar_t;
 	typedef typename mrt_t::system_observation_t system_observation_t;
-	typedef NullLogicRules<cartpole::STATE_DIM_, cartpole::INPUT_DIM_> logic_rules_t;
 	typedef Dimensions<4, 1> dim_t;
 	mrt_ptr_t mrtPtr(new mrt_t(
-			logic_rules_t(), !cartPoleInterface.mpcSettings().useFeedbackPolicy_, "cartpole"));
+			NullLogicRules(),
+			!cartPoleInterface.mpcSettings().useFeedbackPolicy_,
+			"cartpole"));
 
 	// Dummy cartpole
 	const double mrtLoopFrequency = 100;

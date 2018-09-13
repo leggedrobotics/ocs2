@@ -45,8 +45,6 @@ public:
 	typedef std::shared_ptr<DoubleIntegratorDynamics> Ptr;
 	typedef std::shared_ptr<const DoubleIntegratorDynamics> ConstPtr;
 
-	typedef NullLogicRules<double_integrator::STATE_DIM_, double_integrator::INPUT_DIM_> logic_rules_t;
-
 	typedef ControlledSystemBase<double_integrator::STATE_DIM_, double_integrator::INPUT_DIM_> BASE;
 	typedef typename BASE::scalar_t               scalar_t;
 	typedef typename BASE::state_vector_t         state_vector_t;

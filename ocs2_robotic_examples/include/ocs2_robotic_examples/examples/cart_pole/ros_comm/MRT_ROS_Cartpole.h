@@ -41,18 +41,16 @@ namespace cartpole {
  *
  * @tparam cartpole::STATE_DIM_: Dimension of the state space.
  * @tparam cartpole::INPUT_DIM_: Dimension of the control input space.
- * @tparam LOGIC_RULES_T: Logic Rules type (default NullLogicRules).
  */
 
-class MRT_ROS_Cartpole : public MRT_ROS_Interface<cartpole::STATE_DIM_, cartpole::INPUT_DIM_, NullLogicRules< cartpole::STATE_DIM_, cartpole::INPUT_DIM_>>
+class MRT_ROS_Cartpole : public MRT_ROS_Interface<cartpole::STATE_DIM_, cartpole::INPUT_DIM_, NullLogicRules>
 {
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-  typedef NullLogicRules<cartpole::STATE_DIM_, cartpole::INPUT_DIM_> logic_rules_t;
-  typedef MRT_ROS_Interface<cartpole::STATE_DIM_, cartpole::INPUT_DIM_, logic_rules_t> BASE;
+  typedef MRT_ROS_Interface<cartpole::STATE_DIM_, cartpole::INPUT_DIM_, NullLogicRules> BASE;
 
-  typedef std::shared_ptr<MRT_ROS_Interface<cartpole::STATE_DIM_, cartpole::INPUT_DIM_, logic_rules_t>> Ptr;
+  typedef std::shared_ptr<MRT_ROS_Interface<cartpole::STATE_DIM_, cartpole::INPUT_DIM_, NullLogicRules>> Ptr;
 
   typedef Dimensions<cartpole::STATE_DIM_, cartpole::INPUT_DIM_> DIMENSIONS;
   typedef typename DIMENSIONS::controller_t				controller_t;
@@ -71,8 +69,8 @@ public:
 
   typedef RosMsgConversions<cartpole::STATE_DIM_, cartpole::INPUT_DIM_> ros_msg_conversions_t;
 
-  typedef HybridLogicRulesMachine<cartpole::STATE_DIM_,cartpole::INPUT_DIM_,logic_rules_t> 	logic_machine_t;
-  typedef typename logic_machine_t::Ptr logic_machine_ptr_t;
+  typedef HybridLogicRulesMachine<NullLogicRules> logic_machine_t;
+  typedef typename logic_machine_t::Ptr           logic_machine_ptr_t;
 
   typedef LinearInterpolation<state_vector_t, Eigen::aligned_allocator<state_vector_t> > state_linear_interpolation_t;
   typedef LinearInterpolation<input_vector_t, Eigen::aligned_allocator<input_vector_t> > input_linear_interpolation_t;
@@ -94,7 +92,7 @@ public:
       const bool& useFeedforwardPolicy = true,
       const std::string& nodeName = "robot_mpc")
 
-  : BASE(logic_rules_t(), useFeedforwardPolicy, nodeName)
+  : BASE(NullLogicRules(), useFeedforwardPolicy, nodeName)
   {}
 
   /**

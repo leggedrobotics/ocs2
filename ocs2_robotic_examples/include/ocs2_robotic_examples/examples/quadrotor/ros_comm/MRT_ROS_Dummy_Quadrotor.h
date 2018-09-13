@@ -38,12 +38,12 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 namespace ocs2 {
 namespace quadrotor {
 
-class MRT_ROS_Dummy_Quadrotor : public MRT_ROS_Dummy_Loop<quadrotor::STATE_DIM_, quadrotor::INPUT_DIM_, NullLogicRules< quadrotor::STATE_DIM_, quadrotor::INPUT_DIM_>> {
+class MRT_ROS_Dummy_Quadrotor : public MRT_ROS_Dummy_Loop<quadrotor::STATE_DIM_, quadrotor::INPUT_DIM_>
+{
 public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-	typedef NullLogicRules<quadrotor::STATE_DIM_, quadrotor::INPUT_DIM_> logic_rules_t;
-	typedef MRT_ROS_Dummy_Loop<quadrotor::STATE_DIM_, quadrotor::INPUT_DIM_, logic_rules_t> BASE;
+	typedef MRT_ROS_Dummy_Loop<quadrotor::STATE_DIM_, quadrotor::INPUT_DIM_> BASE;
 
 	/**
 	 * Constructor.

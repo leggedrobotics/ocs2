@@ -38,7 +38,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 namespace ocs2 {
 namespace double_integrator {
 
-class DoubleIntegratorCost : public QuadraticCostFunction<double_integrator::STATE_DIM_, double_integrator::INPUT_DIM_, NullLogicRules <double_integrator::STATE_DIM_, double_integrator::INPUT_DIM_>>
+class DoubleIntegratorCost : public QuadraticCostFunction<double_integrator::STATE_DIM_, double_integrator::INPUT_DIM_>
 {
 public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
@@ -46,9 +46,7 @@ public:
 	typedef std::shared_ptr<DoubleIntegratorCost> Ptr;
 	typedef std::shared_ptr<const DoubleIntegratorCost> ConstPtr;
 
-	typedef NullLogicRules<double_integrator::STATE_DIM_, double_integrator::INPUT_DIM_> logic_rules_t;
-
-	typedef QuadraticCostFunction<double_integrator::STATE_DIM_, double_integrator::INPUT_DIM_, logic_rules_t> BASE;
+	typedef QuadraticCostFunction<double_integrator::STATE_DIM_, double_integrator::INPUT_DIM_> BASE;
 	typedef typename BASE::scalar_t scalar_t;
 	typedef typename BASE::state_vector_t state_vector_t;
 	typedef typename BASE::state_matrix_t state_matrix_t;

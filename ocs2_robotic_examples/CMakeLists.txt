@@ -86,20 +86,6 @@ if(DOXYGEN_FOUND)
             VERBATIM)
 endif()
 
-#############
-## Testing ##
-#############
-## Info ==============================
-## to run tests, cd package folder and run
-## $ catkin build -DCMAKE_BUILD_TYPE=RelWithDebInfo --this
-## $ catkin run_tests --no-deps --this
-## to see the summary of unit test results run
-## $ catkin_test_results ../../../build/ocs2_ocs2
-
-## Declare a C++ executable
-## With catkin_make all packages are built within a single CMake context
-## The recommended prefix ensures that target names across packages don't collide
-
 ###############
 ## Quadrotor ##
 ###############

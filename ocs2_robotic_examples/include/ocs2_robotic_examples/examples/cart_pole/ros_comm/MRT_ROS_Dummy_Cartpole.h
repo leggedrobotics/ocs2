@@ -39,12 +39,12 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 namespace ocs2 {
 namespace cartpole {
 
-class MRT_ROS_Dummy_Cartpole : public MRT_ROS_Dummy_Loop<cartpole::STATE_DIM_, cartpole::INPUT_DIM_, NullLogicRules< cartpole::STATE_DIM_, cartpole::INPUT_DIM_>> {
+class MRT_ROS_Dummy_Cartpole : public MRT_ROS_Dummy_Loop<cartpole::STATE_DIM_, cartpole::INPUT_DIM_, NullLogicRules>
+{
 public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-	typedef NullLogicRules<cartpole::STATE_DIM_, cartpole::INPUT_DIM_> logic_rules_t;
-	typedef MRT_ROS_Dummy_Loop<cartpole::STATE_DIM_, cartpole::INPUT_DIM_, logic_rules_t> BASE;
+	typedef MRT_ROS_Dummy_Loop<cartpole::STATE_DIM_, cartpole::INPUT_DIM_, NullLogicRules> BASE;
 
 	/**
 	 * Constructor.

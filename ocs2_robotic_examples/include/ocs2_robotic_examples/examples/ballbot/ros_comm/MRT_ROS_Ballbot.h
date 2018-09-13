@@ -41,14 +41,12 @@ namespace ballbot {
  *
  * @tparam STATE_DIM: Dimension of the state space.
  * @tparam ballbot::INPUT_DIM_: Dimension of the control input space.
- * @tparam LOGIC_RULES_T: Logic Rules type (default NullLogicRules).
  */
 class MRT_ROS_Ballbot : public ocs2::MRT_ROS_Interface<ballbot::STATE_DIM_, ballbot::INPUT_DIM_>
 {
 public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-	typedef ocs2::NullLogicRules<ballbot::STATE_DIM_, ballbot::INPUT_DIM_> logic_rules_t;
 	typedef ocs2::MRT_ROS_Interface<ballbot::STATE_DIM_, ballbot::INPUT_DIM_> BASE;
 
 	typedef ocs2::Dimensions<ballbot::STATE_DIM_, ballbot::INPUT_DIM_> DIMENSIONS;
@@ -88,7 +86,7 @@ public:
 			const bool& useFeedforwardPolicy = true,
 			const std::string& robotName = "robot")
 
-	: BASE(logic_rules_t(), useFeedforwardPolicy, robotName)
+	: BASE(NullLogicRules(), useFeedforwardPolicy, robotName)
 	{}
 
 	/**

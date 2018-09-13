@@ -49,9 +49,10 @@ int main(int argc, char **argv)
 	typedef typename mrt_t::Ptr	mrt_ptr_t;
 	typedef typename mrt_t::scalar_t scalar_t;
 	typedef typename mrt_t::system_observation_t system_observation_t;
-	typedef NullLogicRules<ballbot::STATE_DIM_, ballbot::INPUT_DIM_> logic_rules_t;
 	mrt_ptr_t mrtPtr(new mrt_t(
-			logic_rules_t(), !ballbotInterface.mpcSettings().useFeedbackPolicy_, "ballbot"));
+			NullLogicRules(),
+			!ballbotInterface.mpcSettings().useFeedbackPolicy_,
+			"ballbot"));
 
 	// Dummy ballbot
 	MRT_ROS_Dummy_Ballbot dummyBallbot(

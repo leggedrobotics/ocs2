@@ -47,13 +47,11 @@ public:
 	typedef std::shared_ptr<QuadrotorSystemDynamics> Ptr;
 	typedef std::shared_ptr<const QuadrotorSystemDynamics> ConstPtr;
 
-	typedef NullLogicRules<quadrotor::STATE_DIM_, quadrotor::INPUT_DIM_> logic_rules_t;
-
 	typedef ControlledSystemBase<quadrotor::STATE_DIM_, quadrotor::INPUT_DIM_> BASE;
-	typedef typename BASE::scalar_t               scalar_t;
-	typedef typename BASE::state_vector_t         state_vector_t;
-	typedef typename BASE::input_vector_t         input_vector_t;
-	typedef QuadrotorParameters<scalar_t>         quadrotor_parameters_t;
+	typedef typename BASE::scalar_t       scalar_t;
+	typedef typename BASE::state_vector_t state_vector_t;
+	typedef typename BASE::input_vector_t input_vector_t;
+	typedef QuadrotorParameters<scalar_t> quadrotor_parameters_t;
 
 	/**
 	 * Constructor

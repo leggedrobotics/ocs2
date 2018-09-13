@@ -159,8 +159,8 @@ public:
 	typedef CostDesiredTrajectories<scalar_t>                     cost_desired_trajectories_t;
 	typedef SystemOperatingTrajectoriesBase<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> operating_trajectories_base_t;
 
-	typedef LogicRulesMachine<LOGIC_RULES_T>	logic_rules_machine_t;
-	typedef typename logic_rules_machine_t::Ptr						logic_rules_machine_ptr_t;
+	typedef LogicRulesMachine<LOGIC_RULES_T>     logic_rules_machine_t;
+	typedef typename logic_rules_machine_t::Ptr	 logic_rules_machine_ptr_t;
 
 	using INTERNAL_CONTROLLER = controller_array_t;
 

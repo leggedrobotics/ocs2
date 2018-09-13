@@ -3500,8 +3500,8 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::run(
 		costDesiredTrajectories_.swap(costDesiredTrajectoriesBuffer_);
 	}
 
-	// update the LOGIC_RULES in the beginning of the run routine and adjust the nominal controllerStock based on an user-defined function
-	logicRulesMachinePtr_->updateLogicRules(partitioningTimes_, nominalControllersStock_);
+	// update the LOGIC_RULES in the beginning of the run routine
+	logicRulesMachinePtr_->updateLogicRules(partitioningTimes_);
 
 	// display
 	if (settings_.displayInfo_) {

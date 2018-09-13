@@ -80,24 +80,16 @@ struct ModeSequenceTemplate
 /**
  * Hybrid logic rules base class
  *
- * @tparam STATE_DIM: Dimension of the state space.
- * @tparam INPUT_DIM: Dimension of the control input space.
  */
-template <size_t STATE_DIM, size_t INPUT_DIM>
-class HybridLogicRules : public LogicRulesBase<STATE_DIM, INPUT_DIM>
+class HybridLogicRules : public LogicRulesBase
 {
 public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-	typedef LogicRulesBase<STATE_DIM, INPUT_DIM> BASE;
-	typedef typename BASE::size_array_t          size_array_t;
-	typedef typename BASE::scalar_t              scalar_t;
-	typedef typename BASE::scalar_array_t        scalar_array_t;
-	typedef typename BASE::state_vector_t        state_vector_t;
-	typedef typename BASE::input_vector_t        input_vector_t;
-	typedef typename BASE::controller_t          controller_t;
-	typedef typename BASE::controller_array_t    controller_array_t;
-	typedef typename BASE::input_state_matrix_t  input_state_matrix_t;
+	typedef LogicRulesBase BASE;
+	typedef BASE::size_array_t   size_array_t;
+	typedef BASE::scalar_t       scalar_t;
+	typedef BASE::scalar_array_t scalar_array_t;
 
 	typedef ModeSequenceTemplate<scalar_t> logic_template_type;
 
@@ -227,15 +219,6 @@ public:
 	virtual void rewind(
 			const scalar_t& lowerBoundTime,
 			const scalar_t& upperBoundTime) = 0;
-
-	/**
-	 * Adjusts controller. This method is called my the logicMachine whenever the logicRuls are updated.
-	 * It allows the user to modify the controller to adapt to the changes of logics.
-	 *
-	 * @param controllerStock: The control policy stock which will be modified.
-	 */
-	virtual void adjustController(
-			controller_array_t& controllerStock) const = 0;
 
 	/**
 	 * This method can be used to update the internal variables. This method should be called by any

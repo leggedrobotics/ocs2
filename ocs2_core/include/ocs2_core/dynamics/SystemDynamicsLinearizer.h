@@ -49,7 +49,7 @@ namespace ocs2{
  * @tparam INPUT_DIM: Dimension of the control input space.
  * @tparam LOGIC_RULES_T: Logic Rules type (default NullLogicRules).
  */
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T=NullLogicRules<STATE_DIM>>
+template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T=NullLogicRules>
 class SystemDynamicsLinearizer : public DerivativesBase<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>
 {
 public:
@@ -106,8 +106,10 @@ public:
 	 * @param [in] partitionIndex: index of the time partition.
 	 * @param [in] algorithmName: The algorithm that class this class (default not defined).
 	 */
-	virtual void initializeModel(LogicRulesMachine<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>& logicRulesMachine,
-			const size_t& partitionIndex, const char* algorithmName=NULL) override {
+	virtual void initializeModel(
+			LogicRulesMachine<LOGIC_RULES_T>& logicRulesMachine,
+			const size_t& partitionIndex,
+			const char* algorithmName=NULL) override {
 
 		Base::initializeModel(logicRulesMachine, partitionIndex, algorithmName);
 		nonlinearSystemPtr_->initializeModel(logicRulesMachine, partitionIndex, algorithmName);

@@ -49,7 +49,7 @@ namespace ocs2{
  * @tparam INPUT_DIM: Dimension of the control input space.
  * @tparam LOGIC_RULES_T: Logic Rules type (default NullLogicRules).
  */
-template <class Derived, size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T=NullLogicRules<STATE_DIM,INPUT_DIM>>
+template <class Derived, size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T=NullLogicRules>
 class ConstraintBaseAD : public ConstraintBase<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>
 {
 public:
@@ -67,7 +67,8 @@ public:
 
 	typedef ConstraintBase<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> BASE;
 
-	enum {
+	enum
+	{
 		MAX_CONSTRAINT_DIM_ = INPUT_DIM
 	};
 
@@ -293,8 +294,8 @@ public:
 	 * @param [in] partitionIndex: index of the time partition.
 	 * @param [in] algorithmName: The algorithm that class this class (default not defined).
 	 */
-	virtual void initializeModel(
-			LogicRulesMachine<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>& logicRulesMachine,
+	void initializeModel(
+			LogicRulesMachine<LOGIC_RULES_T>& logicRulesMachine,
 			const size_t& partitionIndex,
 			const char* algorithmName = nullptr) final {}
 

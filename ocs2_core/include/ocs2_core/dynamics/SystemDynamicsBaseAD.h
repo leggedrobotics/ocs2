@@ -47,7 +47,7 @@ namespace ocs2{
  * @tparam INPUT_DIM: Dimension of the control input space.
  * @tparam LOGIC_RULES_T: Logic Rules type (default NullLogicRules).
  */
-template <class Derived, size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T=NullLogicRules<STATE_DIM,INPUT_DIM>, size_t NUM_MODES=1>
+template <class Derived, size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T=NullLogicRules, size_t NUM_MODES=1>
 class SystemDynamicsBaseAD : public SystemDynamicsBase<STATE_DIM, INPUT_DIM, LOGIC_RULES_T, NUM_MODES>
 {
 public:
@@ -321,7 +321,7 @@ public:
 	 * @param [in] algorithmName: The algorithm that class this class (default not defined).
 	 */
 	void initializeModel(
-			LogicRulesMachine<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>& logicRulesMachine,
+			LogicRulesMachine<LOGIC_RULES_T>& logicRulesMachine,
 			const size_t& partitionIndex,
 			const char* algorithmName=NULL) final {}
 

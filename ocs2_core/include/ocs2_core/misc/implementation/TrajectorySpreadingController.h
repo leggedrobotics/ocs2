@@ -120,42 +120,13 @@ void TrajectorySpreadingController<STATE_DIM, INPUT_DIM>::adjustController(
 		if (controllersStock[finalActivePartition_].empty()==false)
 			break;
 
-//	std::cout << "initTime:   " << controllersStock[initActivePartition_].time_.front()  << std::endl;
-//	std::cout << "initActivePartition_:   " << initActivePartition_  << std::endl;
-//	std::cout << "finalTime:  " << controllersStock[finalActivePartition_].time_.back()  << std::endl;
-//	std::cout << "finalActivePartition_:  " << finalActivePartition_ << std::endl;
-
 	// Finds the indices of the new event times
 	findsIndicesEventTimes(eventTimes, controllersStock,
 			eventsIndices_);
 
-//	std::cout << "indices of the new eventTimes: " << std::endl;
-//	for (auto& ind : eventsIndices_) {
-//		std::cout << "\t Index: " << "(" << ind.first << ", " << ind.second << ")";
-//		if (ind.first>=0 && ind.first<controllersStock.size()) {
-//			std::cout << "\t" << "Size: " << controllersStock[ind.first].time_.size();
-//			std::cout << "\t" << "Before: " << controllersStock[ind.first].time_[ind.second-1];
-//			std::cout << "\t" << "Itself: " << controllersStock[ind.first].time_[ind.second];
-//			std::cout << "\t" << "After:  " << controllersStock[ind.first].time_[ind.second+1];
-//		}
-//		std::cout << std::endl;
-//	}
-
 	// Finds the indices of the controller event times
 	findsIndicesEventTimes(controllerEventTimes, controllersStock,
 			controllerEventsIndices_);
-
-//	std::cout << "indices of the old eventTimes: " << std::endl;
-//	for (auto& ind : controllerEventsIndices_) {
-//		std::cout << "\t Index: " << "(" << ind.first << ", " << ind.second << ")";
-//		if (ind.first>=0 && ind.first<controllersStock.size()) {
-//			std::cout << "\t" << "Size:   " << controllersStock[ind.first].time_.size();
-//			std::cout << "\t" << "Before: " << controllersStock[ind.first].time_[ind.second-1];
-//			std::cout << "\t" << "Itself: " << controllersStock[ind.first].time_[ind.second];
-//			std::cout << "\t" << "After:  " << controllersStock[ind.first].time_[ind.second+1];
-//		}
-//		std::cout << std::endl;
-//	}
 
 	const size_t NE = std::min(eventTimes.size(), controllerEventTimes.size());
 
@@ -236,10 +207,6 @@ void TrajectorySpreadingController<STATE_DIM, INPUT_DIM>::spreadController(
 		controllersStock[eventTimeIndexPrev.first].time_[eventTimeIndexPrev.second] = eventTime;
 	}
 
-//	std::cout << "startIndex: [" << startIndex.first << ", " << startIndex.second << "]\n";
-//	std::cout << "finalIndex: [" << finalIndex.first << ", " << finalIndex.second << "]\n";
-//	std::cout << "+++ uffSpread: " << uffSpread.transpose() << std::endl;
-
 	// set inputs
 	for (size_t i=startIndex.first; i<=finalIndex.first; i++) {
 
@@ -251,8 +218,6 @@ void TrajectorySpreadingController<STATE_DIM, INPUT_DIM>::spreadController(
 			controllersStock[i].k_[k]    = kSpread;
 		} // end of k loop
 	} // end of i loop
-
-//	std::cout << "TrajectorySpreadingController Done!" << uffSpread.transpose() << std::endl;
 
 }
 

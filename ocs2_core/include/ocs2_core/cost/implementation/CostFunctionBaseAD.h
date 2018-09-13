@@ -42,7 +42,7 @@ CostFunctionBaseAD<Derived, STATE_DIM, INPUT_DIM, logic_rules_template_t>::CostF
 {
 	if (dynamicLibraryIsCompiled==true)
 		setADInterfaces();
-};
+}
 
 /******************************************************************************************************/
 /******************************************************************************************************/

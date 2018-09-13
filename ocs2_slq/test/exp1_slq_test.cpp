@@ -60,8 +60,8 @@ TEST(exp1_slq_test, Exp1_slq_test)
 	EXP1_CostFunction systemCostFunction;
 
 	// system operatingTrajectories
-	Eigen::Matrix<double,2,1> stateOperatingPoint = Eigen::Matrix<double,2,1>::Zero();
-	Eigen::Matrix<double,1,1> inputOperatingPoint = Eigen::Matrix<double,1,1>::Zero();
+	Eigen::Matrix<double,STATE_DIM,1> stateOperatingPoint = Eigen::Matrix<double,STATE_DIM,1>::Zero();
+	Eigen::Matrix<double,INPUT_DIM,1> inputOperatingPoint = Eigen::Matrix<double,INPUT_DIM,1>::Zero();
 	EXP1_SystemOperatingTrajectories operatingTrajectories(stateOperatingPoint, inputOperatingPoint);
 
 
@@ -71,6 +71,7 @@ TEST(exp1_slq_test, Exp1_slq_test)
 	SLQ_Settings slqSettings;
 	slqSettings.displayInfo_ = false;
 	slqSettings.displayShortSummary_ = true;
+	slqSettings.maxNumIterationsSLQ_ = 30;
 	slqSettings.absTolODE_ = 1e-10;
 	slqSettings.relTolODE_ = 1e-7;
 	slqSettings.maxNumStepsPerSecond_ = 10000;
@@ -78,6 +79,7 @@ TEST(exp1_slq_test, Exp1_slq_test)
 	slqSettings.maxNumIterationsSLQ_ = 30;
 	slqSettings.lsStepsizeGreedy_ = true;
 	slqSettings.noStateConstraints_ = true;
+	slqSettings.useNominalTimeForBackwardPass_ = true;
 	slqSettings.checkNumericalStability_ = false;
 
 	// switching times

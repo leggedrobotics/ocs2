@@ -81,12 +81,12 @@ namespace ocs2 {
  * @tparam INPUT_DIM: Dimension of the control input space.
  * @tparam LOGIC_RULES_T: Logic Rules type (default NullLogicRules).
  */
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T=NullLogicRules<STATE_DIM,INPUT_DIM>>
+template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T=NullLogicRules>
 class SLQ_BASE
 {
 public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-	static_assert(std::is_base_of<LogicRulesBase<STATE_DIM, INPUT_DIM>, LOGIC_RULES_T>::value,
+	static_assert(std::is_base_of<LogicRulesBase, LOGIC_RULES_T>::value,
 			"LOGIC_RULES_T must inherit from LogicRulesBase");
 
 	typedef std::shared_ptr<SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>> Ptr;
@@ -159,7 +159,7 @@ public:
 	typedef CostDesiredTrajectories<scalar_t>                     cost_desired_trajectories_t;
 	typedef SystemOperatingTrajectoriesBase<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> operating_trajectories_base_t;
 
-	typedef LogicRulesMachine<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>	logic_rules_machine_t;
+	typedef LogicRulesMachine<LOGIC_RULES_T>	logic_rules_machine_t;
 	typedef typename logic_rules_machine_t::Ptr						logic_rules_machine_ptr_t;
 
 	using INTERNAL_CONTROLLER = controller_array_t;
@@ -173,7 +173,7 @@ public:
 // TODO: do not push to remote
 public:
 
-	typedef HybridLogicRulesMachine<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> hybrid_logic_rules_machine_t;
+	typedef HybridLogicRulesMachine<LOGIC_RULES_T> hybrid_logic_rules_machine_t;
 
 	state_vector_t rolloutStateTriggeredWorker(
 			size_t workerIndex,

@@ -23,25 +23,19 @@ namespace switched_model {
 /**
  * Logic rules base class
  */
-template <size_t JOINT_COORD_SIZE, class cpg_t, size_t STATE_DIM=12+JOINT_COORD_SIZE, size_t INPUT_DIM=12+JOINT_COORD_SIZE>
+template <size_t JOINT_COORD_SIZE, class cpg_t>
 class SwitchedModelLogicRulesBase : public ocs2::HybridLogicRules
 {
 public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-	typedef std::shared_ptr<SwitchedModelLogicRulesBase<JOINT_COORD_SIZE,cpg_t,STATE_DIM,INPUT_DIM>> Ptr;
+	typedef std::shared_ptr<SwitchedModelLogicRulesBase<JOINT_COORD_SIZE,cpg_t>> Ptr;
 
 	typedef ocs2::HybridLogicRules BASE;
 
 	typedef typename BASE::size_array_t size_array_t;
 	typedef typename BASE::scalar_t scalar_t;
 	typedef typename BASE::scalar_array_t scalar_array_t;
-
-  typedef ocs2::Dimensions<STATE_DIM, INPUT_DIM> DIMENSIONS;
-	typedef typename DIMENSIONS::controller_t controller_t;
-	typedef typename DIMENSIONS::controller_array_t controller_array_t;
-	typedef typename DIMENSIONS::input_vector_t input_vector_t;
-	typedef typename DIMENSIONS::input_state_matrix_t input_state_matrix_t;
 
 	typedef typename BASE::logic_template_type logic_template_type;
 
@@ -182,18 +176,6 @@ public:
 			const scalar_t& lowerBoundTime,
 			const scalar_t& upperBoundTime) override;
 
-	/**
-	 * Adjust the controller based on the last changes in the logic rules.
-	 *
-	 * @param [in] eventTimes: The new event times.
-	 * @param [in] controllerEventTimes: The control policy stock's event times.
-	 * @param controllerStock: The controller stock which will be modified.
-	 */
-	virtual void adjustController(
-			const scalar_array_t& eventTimes,
-			const scalar_array_t& controllerEventTimes,
-			controller_array_t& controllerStock);
-
 protected:
 	/**
 	 * Extends the switch information from lowerBoundTime to upperBoundTime based on the template mode sequence.
@@ -218,14 +200,14 @@ private:
 
 	logic_template_type modeSequenceTemplate_;
 
-	ocs2::TrajectorySpreadingController<STATE_DIM, INPUT_DIM> trajectorySpreadingController_;
+//	ocs2::TrajectorySpreadingController<STATE_DIM, INPUT_DIM> trajectorySpreadingController_;
 };
 
 /**
  * Specialization for planner which uses only Z direction planner
  */
-template <size_t JOINT_COORD_SIZE, size_t STATE_DIM=12+JOINT_COORD_SIZE, size_t INPUT_DIM=12+JOINT_COORD_SIZE, typename scalar_t=double>
-using SwitchedModelPlannerLogicRules = SwitchedModelLogicRulesBase<JOINT_COORD_SIZE, CPG_BASE<scalar_t>, STATE_DIM, INPUT_DIM>;
+template <size_t JOINT_COORD_SIZE, typename scalar_t=double>
+using SwitchedModelPlannerLogicRules = SwitchedModelLogicRulesBase<JOINT_COORD_SIZE, CPG_BASE<scalar_t>>;
 
 } // namespace switched_model
 

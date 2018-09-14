@@ -10,8 +10,8 @@ namespace switched_model {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t JOINT_COORD_SIZE, class cpg_t, size_t STATE_DIM, size_t INPUT_DIM>
-SwitchedModelLogicRulesBase<JOINT_COORD_SIZE,cpg_t,STATE_DIM,INPUT_DIM>::SwitchedModelLogicRulesBase(
+template <size_t JOINT_COORD_SIZE, class cpg_t>
+SwitchedModelLogicRulesBase<JOINT_COORD_SIZE,cpg_t>::SwitchedModelLogicRulesBase(
 		const feet_planner_ptr_t& feetPlannerPtr)
 
 	: BASE()
@@ -21,8 +21,8 @@ SwitchedModelLogicRulesBase<JOINT_COORD_SIZE,cpg_t,STATE_DIM,INPUT_DIM>::Switche
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t JOINT_COORD_SIZE, class cpg_t, size_t STATE_DIM, size_t INPUT_DIM>
-SwitchedModelLogicRulesBase<JOINT_COORD_SIZE,cpg_t,STATE_DIM,INPUT_DIM>::SwitchedModelLogicRulesBase(
+template <size_t JOINT_COORD_SIZE, class cpg_t>
+SwitchedModelLogicRulesBase<JOINT_COORD_SIZE,cpg_t>::SwitchedModelLogicRulesBase(
 		const SwitchedModelLogicRulesBase& rhs)
 
 	: BASE(rhs)
@@ -36,9 +36,9 @@ SwitchedModelLogicRulesBase<JOINT_COORD_SIZE,cpg_t,STATE_DIM,INPUT_DIM>::Switche
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t JOINT_COORD_SIZE, class cpg_t, size_t STATE_DIM, size_t INPUT_DIM>
-SwitchedModelLogicRulesBase<JOINT_COORD_SIZE,cpg_t,STATE_DIM,INPUT_DIM>&
-	SwitchedModelLogicRulesBase<JOINT_COORD_SIZE,cpg_t,STATE_DIM,INPUT_DIM>::operator=(
+template <size_t JOINT_COORD_SIZE, class cpg_t>
+SwitchedModelLogicRulesBase<JOINT_COORD_SIZE,cpg_t>&
+	SwitchedModelLogicRulesBase<JOINT_COORD_SIZE,cpg_t>::operator=(
 		SwitchedModelLogicRulesBase&& other) {
 
 	if (this != &other) {
@@ -58,9 +58,9 @@ SwitchedModelLogicRulesBase<JOINT_COORD_SIZE,cpg_t,STATE_DIM,INPUT_DIM>&
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t JOINT_COORD_SIZE, class cpg_t, size_t STATE_DIM, size_t INPUT_DIM>
-SwitchedModelLogicRulesBase<JOINT_COORD_SIZE,cpg_t,STATE_DIM,INPUT_DIM>&
-	SwitchedModelLogicRulesBase<JOINT_COORD_SIZE,cpg_t,STATE_DIM,INPUT_DIM>::operator=(
+template <size_t JOINT_COORD_SIZE, class cpg_t>
+SwitchedModelLogicRulesBase<JOINT_COORD_SIZE,cpg_t>&
+	SwitchedModelLogicRulesBase<JOINT_COORD_SIZE,cpg_t>::operator=(
 		const SwitchedModelLogicRulesBase& other) {
 
 	if (this != &other) {
@@ -80,8 +80,8 @@ SwitchedModelLogicRulesBase<JOINT_COORD_SIZE,cpg_t,STATE_DIM,INPUT_DIM>&
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t JOINT_COORD_SIZE, class cpg_t, size_t STATE_DIM, size_t INPUT_DIM>
-void SwitchedModelLogicRulesBase<JOINT_COORD_SIZE,cpg_t,STATE_DIM,INPUT_DIM>::setMotionConstraints(
+template <size_t JOINT_COORD_SIZE, class cpg_t>
+void SwitchedModelLogicRulesBase<JOINT_COORD_SIZE,cpg_t>::setMotionConstraints(
 		const size_array_t& subsystemsSequence,
 		const scalar_array_t& eventTimes,
 		const std::vector<EndEffectorConstraintBase::ConstPtr>& endEffectorStateConstraints /*
@@ -96,8 +96,8 @@ void SwitchedModelLogicRulesBase<JOINT_COORD_SIZE,cpg_t,STATE_DIM,INPUT_DIM>::se
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t JOINT_COORD_SIZE, class cpg_t, size_t STATE_DIM, size_t INPUT_DIM>
-void SwitchedModelLogicRulesBase<JOINT_COORD_SIZE,cpg_t,STATE_DIM,INPUT_DIM>::update() {
+template <size_t JOINT_COORD_SIZE, class cpg_t>
+void SwitchedModelLogicRulesBase<JOINT_COORD_SIZE,cpg_t>::update() {
 
 	const size_t numSubsystems = BASE::subsystemsSequence_.size();
 
@@ -114,9 +114,9 @@ void SwitchedModelLogicRulesBase<JOINT_COORD_SIZE,cpg_t,STATE_DIM,INPUT_DIM>::up
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t JOINT_COORD_SIZE, class cpg_t, size_t STATE_DIM, size_t INPUT_DIM>
-const std::vector<typename SwitchedModelLogicRulesBase<JOINT_COORD_SIZE,cpg_t,STATE_DIM,INPUT_DIM>::contact_flag_t>&
-	SwitchedModelLogicRulesBase<JOINT_COORD_SIZE,cpg_t,STATE_DIM,INPUT_DIM>::getContactFlagsSequence() const {
+template <size_t JOINT_COORD_SIZE, class cpg_t>
+const std::vector<typename SwitchedModelLogicRulesBase<JOINT_COORD_SIZE,cpg_t>::contact_flag_t>&
+	SwitchedModelLogicRulesBase<JOINT_COORD_SIZE,cpg_t>::getContactFlagsSequence() const {
 
 	return contactFlagsStock_;
 }
@@ -124,8 +124,8 @@ const std::vector<typename SwitchedModelLogicRulesBase<JOINT_COORD_SIZE,cpg_t,ST
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t JOINT_COORD_SIZE, class cpg_t, size_t STATE_DIM, size_t INPUT_DIM>
-void SwitchedModelLogicRulesBase<JOINT_COORD_SIZE,cpg_t,STATE_DIM,INPUT_DIM>::getContactFlags(
+template <size_t JOINT_COORD_SIZE, class cpg_t>
+void SwitchedModelLogicRulesBase<JOINT_COORD_SIZE,cpg_t>::getContactFlags(
 		const size_t& index,
 		contact_flag_t& contactFlags) const {
 
@@ -138,8 +138,8 @@ void SwitchedModelLogicRulesBase<JOINT_COORD_SIZE,cpg_t,STATE_DIM,INPUT_DIM>::ge
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t JOINT_COORD_SIZE, class cpg_t, size_t STATE_DIM, size_t INPUT_DIM>
-void SwitchedModelLogicRulesBase<JOINT_COORD_SIZE,cpg_t,STATE_DIM,INPUT_DIM>::getMotionPhaseLogics(
+template <size_t JOINT_COORD_SIZE, class cpg_t>
+void SwitchedModelLogicRulesBase<JOINT_COORD_SIZE,cpg_t>::getMotionPhaseLogics(
 		const size_t& index,
 		contact_flag_t& contactFlags,
 		std::array<const cpg_t*, 4>& feetReferencePtr) const {
@@ -166,9 +166,9 @@ void SwitchedModelLogicRulesBase<JOINT_COORD_SIZE,cpg_t,STATE_DIM,INPUT_DIM>::ge
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t JOINT_COORD_SIZE, class cpg_t, size_t STATE_DIM, size_t INPUT_DIM>
+template <size_t JOINT_COORD_SIZE, class cpg_t>
 const std::vector<EndEffectorConstraintBase::ConstPtr>*
-	SwitchedModelLogicRulesBase<JOINT_COORD_SIZE,cpg_t,STATE_DIM,INPUT_DIM>::getEndEffectorStateConstraintsPtr() const {
+	SwitchedModelLogicRulesBase<JOINT_COORD_SIZE,cpg_t>::getEndEffectorStateConstraintsPtr() const {
 
 	return &endEffectorStateConstraints_;
 }
@@ -176,9 +176,9 @@ const std::vector<EndEffectorConstraintBase::ConstPtr>*
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t JOINT_COORD_SIZE, class cpg_t, size_t STATE_DIM, size_t INPUT_DIM>
-typename SwitchedModelLogicRulesBase<JOINT_COORD_SIZE,cpg_t,STATE_DIM,INPUT_DIM>::feet_planner_t&
-	SwitchedModelLogicRulesBase<JOINT_COORD_SIZE,cpg_t,STATE_DIM,INPUT_DIM>::getFeetPlanner() {
+template <size_t JOINT_COORD_SIZE, class cpg_t>
+typename SwitchedModelLogicRulesBase<JOINT_COORD_SIZE,cpg_t>::feet_planner_t&
+	SwitchedModelLogicRulesBase<JOINT_COORD_SIZE,cpg_t>::getFeetPlanner() {
 
 	return *feetPlannerPtr_;
 }
@@ -186,8 +186,8 @@ typename SwitchedModelLogicRulesBase<JOINT_COORD_SIZE,cpg_t,STATE_DIM,INPUT_DIM>
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t JOINT_COORD_SIZE, class cpg_t, size_t STATE_DIM, size_t INPUT_DIM>
-void SwitchedModelLogicRulesBase<JOINT_COORD_SIZE,cpg_t,STATE_DIM,INPUT_DIM>::setModeSequenceTemplate(
+template <size_t JOINT_COORD_SIZE, class cpg_t>
+void SwitchedModelLogicRulesBase<JOINT_COORD_SIZE,cpg_t>::setModeSequenceTemplate(
 		const logic_template_type& modeSequenceTemplate) {
 
 	modeSequenceTemplate_ = modeSequenceTemplate;
@@ -196,8 +196,8 @@ void SwitchedModelLogicRulesBase<JOINT_COORD_SIZE,cpg_t,STATE_DIM,INPUT_DIM>::se
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t JOINT_COORD_SIZE, class cpg_t, size_t STATE_DIM, size_t INPUT_DIM>
-void SwitchedModelLogicRulesBase<JOINT_COORD_SIZE,cpg_t,STATE_DIM,INPUT_DIM>::insertModeSequenceTemplate(
+template <size_t JOINT_COORD_SIZE, class cpg_t>
+void SwitchedModelLogicRulesBase<JOINT_COORD_SIZE,cpg_t>::insertModeSequenceTemplate(
 		const scalar_t& startTime,
 		const scalar_t& finalTime) {
 
@@ -231,8 +231,8 @@ void SwitchedModelLogicRulesBase<JOINT_COORD_SIZE,cpg_t,STATE_DIM,INPUT_DIM>::in
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t JOINT_COORD_SIZE, class cpg_t, size_t STATE_DIM, size_t INPUT_DIM>
-void SwitchedModelLogicRulesBase<JOINT_COORD_SIZE,cpg_t,STATE_DIM,INPUT_DIM>::rewind(
+template <size_t JOINT_COORD_SIZE, class cpg_t>
+void SwitchedModelLogicRulesBase<JOINT_COORD_SIZE,cpg_t>::rewind(
 		const scalar_t& lowerBoundTime,
 		const scalar_t& upperBoundTime) {
 
@@ -265,8 +265,8 @@ void SwitchedModelLogicRulesBase<JOINT_COORD_SIZE,cpg_t,STATE_DIM,INPUT_DIM>::re
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t JOINT_COORD_SIZE, class cpg_t, size_t STATE_DIM, size_t INPUT_DIM>
-void SwitchedModelLogicRulesBase<JOINT_COORD_SIZE,cpg_t,STATE_DIM,INPUT_DIM>::tileModeSequenceTemplate(
+template <size_t JOINT_COORD_SIZE, class cpg_t>
+void SwitchedModelLogicRulesBase<JOINT_COORD_SIZE,cpg_t>::tileModeSequenceTemplate(
 		const scalar_t& startTime,
 		const scalar_t& finalTime) {
 
@@ -304,20 +304,6 @@ void SwitchedModelLogicRulesBase<JOINT_COORD_SIZE,cpg_t,STATE_DIM,INPUT_DIM>::ti
 	BASE::subsystemsSequence_.push_back(ModeNumber::STANCE);
 }
 
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-template <size_t JOINT_COORD_SIZE, class cpg_t, size_t STATE_DIM, size_t INPUT_DIM>
-void SwitchedModelLogicRulesBase<JOINT_COORD_SIZE,cpg_t,STATE_DIM,INPUT_DIM>::adjustController(
-		const scalar_array_t& eventTimes,
-		const scalar_array_t& controllerEventTimes,
-		controller_array_t& controllerStock) {
-
-	trajectorySpreadingController_.adjustController(
-			BASE::eventTimes(),
-			controllerEventTimes,
-			controllerStock);
-}
 
 } // namespace switched_model
 

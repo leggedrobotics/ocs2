@@ -10,18 +10,18 @@ namespace switched_model {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM>
-ComKinoOperatingPointsBase<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>*
-	ComKinoOperatingPointsBase<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::clone() const {
+template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
+ComKinoOperatingPointsBase<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM, LOGIC_RULES_T>*
+	ComKinoOperatingPointsBase<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::clone() const {
 
-	return new ComKinoOperatingPointsBase<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>(*this);
+	return new ComKinoOperatingPointsBase<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM, LOGIC_RULES_T>(*this);
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM>
-void ComKinoOperatingPointsBase<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::computeOperatingPoints(
+template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
+void ComKinoOperatingPointsBase<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::computeOperatingPoints(
 		const generalized_coordinate_t& defaultConfiguration,
 		std::vector<contact_flag_t>& possibleStanceLegs,
 		state_vector_array_t& stateOperatingPoints,
@@ -61,8 +61,8 @@ void ComKinoOperatingPointsBase<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::compute
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM>
-void ComKinoOperatingPointsBase<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::computeInputOperatingPoints(
+template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
+void ComKinoOperatingPointsBase<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::computeInputOperatingPoints(
 		const state_vector_t& switchedState,
 		const contact_flag_t& stanceLegs,
 		input_vector_t& inputOperatingPoint) {
@@ -83,8 +83,8 @@ void ComKinoOperatingPointsBase<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::compute
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM>
-void ComKinoOperatingPointsBase<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::initializeModel(
+template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
+void ComKinoOperatingPointsBase<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::initializeModel(
 		logic_rules_machine_t& logicRulesMachine,
 		const size_t& partitionIndex,
 		const char* algorithmName /*=NULL*/) {
@@ -104,8 +104,8 @@ void ComKinoOperatingPointsBase<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::initial
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM>
-void ComKinoOperatingPointsBase<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::getSystemOperatingTrajectories(
+template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
+void ComKinoOperatingPointsBase<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::getSystemOperatingTrajectories(
 		const state_vector_t& initialState,
 		const scalar_t& startTime,
 		const scalar_t& finalTime,

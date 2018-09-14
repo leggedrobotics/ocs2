@@ -30,7 +30,7 @@ namespace switched_model {
 template <size_t JOINT_COORD_SIZE,
 		size_t STATE_DIM=12+JOINT_COORD_SIZE,
 		size_t INPUT_DIM=12+JOINT_COORD_SIZE,
-		class LOGIC_RULES_T=SwitchedModelPlannerLogicRules<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM, double>>
+		class LOGIC_RULES_T=SwitchedModelPlannerLogicRules<JOINT_COORD_SIZE, double>>
 class SwitchedModelCostBase : public ocs2::QuadraticCostFunction<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>
 {
 public:

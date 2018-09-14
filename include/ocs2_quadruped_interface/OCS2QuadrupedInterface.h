@@ -25,7 +25,7 @@
 //#include <ocs2_ocs2/OCS2Projected.h>
 
 #include <ocs2_mpc/MPC_SLQ.h>
-#include <ocs2_mpc/MPC_OCS2.h>
+//#include <ocs2_mpc/MPC_OCS2.h>
 
 #include <ocs2_robotic_examples/common/RobotInterfaceBase.h>
 
@@ -109,7 +109,7 @@ public:
 	typedef FeetZDirectionPlanner<scalar_t, cpg_t>	feet_z_planner_t;
 	typedef typename feet_z_planner_t::Ptr			feet_z_planner_ptr_t;
 
-	typedef SwitchedModelPlannerLogicRules<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM> 	logic_rules_t;
+	typedef SwitchedModelPlannerLogicRules<JOINT_COORD_SIZE> 	logic_rules_t;
 	typedef typename logic_rules_t::Ptr logic_rules_ptr_t;
 
 	typedef ocs2::ModeSequenceTemplate<scalar_t> mode_sequence_template_t;

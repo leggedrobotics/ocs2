@@ -36,14 +36,7 @@ template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
 MPC_SLQ<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::MPC_SLQ()
 
 	: BASE()
-	, initnumPartitions_(0)
-	, initPartitioningTimes_(0)
-	, numPartitions_(0)
-	, partitioningTimes_(0)
 	, nullControllersStock_(0)
-	, initActivePartitionIndex_(0)
-	, finalActivePartitionIndex_(0)
-	, lastControlDesignTime_(0.0)
 	, optimizedTimeTrajectoriesStock_(0)
 	, optimizedStateTrajectoriesStock_(0)
 	, optimizedInputTrajectoriesStock_(0)
@@ -66,42 +59,14 @@ MPC_SLQ<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::MPC_SLQ(
 		const mode_sequence_template_t* modeSequenceTemplatePtr /* = nullptr*/,
 		const cost_function_base_t* heuristicsFunctionPtr /*= nullptr*/)
 
-	: BASE(mpcSettings)
-	, initnumPartitions_(partitioningTimes.size()-1)
-	, initPartitioningTimes_(partitioningTimes)
-	, numPartitions_(0)
-	, partitioningTimes_(0)
+	: BASE(partitioningTimes, mpcSettings)
 	, nullControllersStock_(0)
-	, initActivePartitionIndex_(0)
-	, finalActivePartitionIndex_(0)
-	, lastControlDesignTime_(partitioningTimes.front())
 	, optimizedTimeTrajectoriesStock_(0)
 	, optimizedStateTrajectoriesStock_(0)
 	, optimizedInputTrajectoriesStock_(0)
 
 {
-	if (partitioningTimes.size() < 2)
-		throw std::runtime_error("There should be at least one time partition.");
-
-	if (mpcSettings.recedingHorizon_==true) {
-		numPartitions_ = 3*initnumPartitions_;
-		partitioningTimes_.clear();
-
-		const scalar_t timeHorizon = initPartitioningTimes_.back() - initPartitioningTimes_.front();
-
-		for (size_t j=0; j<3; j++) {
-			for (size_t i=0; i<initnumPartitions_; i++) {
-				partitioningTimes_.push_back( ((int)j-1)*timeHorizon + initPartitioningTimes_[i] );
-			} // end of i loop
-		} // end of j loop
-		partitioningTimes_.push_back(initPartitioningTimes_[initnumPartitions_] + timeHorizon);
-
-	} else {
-		numPartitions_  = initnumPartitions_;
-		partitioningTimes_ = initPartitioningTimes_;
-	}
-
-	nullControllersStock_.resize(numPartitions_);
+	nullControllersStock_.resize(BASE::numPartitions_);
 
 	// SLQP
 	if (slqSettings.useMultiThreading_==true) {
@@ -114,68 +79,18 @@ MPC_SLQ<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::MPC_SLQ(
 				slqSettings, logicRulesPtr, heuristicsFunctionPtr) );
 	}
 
-	// SLQ-MPC activates this if the final time of the MPC will increase by the length of a time partition instead
-	// of commonly used scheme where the final time is gradual increased.
-	slqPtr_->blockwiseMovingHorizon(mpcSettings.blockwiseMovingHorizon_);
+	// set base solver's pointer
+	BASE::setBaseSolverPtr(slqPtr_.get());
 
 	// set mode sequence template
 	if (modeSequenceTemplatePtr) {
-		slqPtr_->getLogicRules().setModeSequenceTemplate(*modeSequenceTemplatePtr);
+		slqPtr_->getLogicRulesPtr()->setModeSequenceTemplate(*modeSequenceTemplatePtr);
 
 		if (mpcSettings.recedingHorizon_==true) {
-			const scalar_t timeHorizon = initPartitioningTimes_.back() - initPartitioningTimes_.front();
-			slqPtr_->getLogicRules().insertModeSequenceTemplate(timeHorizon, 2.0*timeHorizon);
+			const scalar_t timeHorizon = BASE::initPartitioningTimes_.back() - BASE::initPartitioningTimes_.front();
+			slqPtr_->getLogicRulesPtr()->insertModeSequenceTemplate(timeHorizon, 2.0*timeHorizon);
 		}
 	}
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void MPC_SLQ<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::reset() {
-
-	BASE::reset();
-	slqPtr_->reset();
-	// reset it if time is reset in MRT
-//	lastControlDesignTime_ = 0.0;
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-typename MPC_SLQ<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::scalar_t
-	MPC_SLQ<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::getStartTime()  const {
-
-	return lastControlDesignTime_;
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-typename MPC_SLQ<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::scalar_t
-	MPC_SLQ<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::getFinalTime() const {
-
-	if (BASE::mpcSettings_.recedingHorizon_ == true)
-		return lastControlDesignTime_ + getTimeHorizon();
-	else
-		return initPartitioningTimes_.back();
-}
-
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-typename MPC_SLQ<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::scalar_t
-	MPC_SLQ<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::getTimeHorizon() const {
-
-	if (BASE::mpcSettings_.recedingHorizon_ == true)
-		return initPartitioningTimes_.back() - initPartitioningTimes_.front();
-	else
-		return initPartitioningTimes_.back() - lastControlDesignTime_;
 }
 
 /******************************************************************************************************/
@@ -191,201 +106,14 @@ SLQ_Settings& MPC_SLQ<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::slqSettings() {
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void MPC_SLQ<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::getPartitioningTimes(
-		scalar_array_t& partitioningTimes) const {
-
-	partitioningTimes.resize(finalActivePartitionIndex_+2);
-	for (size_t i=0; i<=finalActivePartitionIndex_+1; i++ )
-		partitioningTimes[i] = partitioningTimes_[i];
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-const typename MPC_SLQ<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::scalar_array_t&
-	MPC_SLQ<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::getEventTimes() const {
-
-	return slqPtr_->getEventTimes();
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void MPC_SLQ<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::setLogicRules(
-		const LOGIC_RULES_T& logicRules) {
-
-	slqPtr_->setLogicRules(logicRules);
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-const LOGIC_RULES_T& MPC_SLQ<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::getLogicRules() const {
-
-	return slqPtr_->getLogicRules();
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void MPC_SLQ<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::rewind() {
-
-	for (size_t i=0; i<2*initnumPartitions_; i++) {
-		partitioningTimes_[i] = partitioningTimes_[i+initnumPartitions_];
-	}
-
-	const scalar_t timeHorizon = initPartitioningTimes_.back() - initPartitioningTimes_.front();
-	for (size_t i=0; i<initnumPartitions_; i++) {
-		partitioningTimes_[i+2*initnumPartitions_] = 2.0*timeHorizon + partitioningTimes_[i];
-	}
-	partitioningTimes_[3*initnumPartitions_] = 3.0*timeHorizon + partitioningTimes_[0];
-
-	// SLQ internal variables
-	slqPtr_->rewindOptimizer(initnumPartitions_);
-
-	// Rewind the internal SLQ's logicRules. It is not necessary to call the
-	// LogicRulesMachine::updateLogicRules() method, since the partitioningTimes_
-	// is updated as well the update method will be called automatically.
-	// And controller are adjusted separately as well.
-	slqPtr_->getLogicRules().rewind(partitioningTimes_.front(), partitioningTimes_.back());
-//	slqPtr_->getLogicRulesMachinePtr()->logicRulesUpdated();
-
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void MPC_SLQ<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::adjustmentTimeHorizon(
-		const scalar_array_t& partitioningTimes,
-		scalar_t& initTime,
-		scalar_t& finalTime,
-		size_t& initActivePartitionIndex,
-		size_t& finalActivePartitionIndex) const {
-
-	// current active subsystem
-	initActivePartitionIndex = slq_base_t::findActivePartitionIndex(partitioningTimes, initTime);
-
-	if (initTime > partitioningTimes[initActivePartitionIndex+1] - 4e-3) {
-		initTime = partitioningTimes[initActivePartitionIndex+1] + 1e-5;
-		initActivePartitionIndex++;
-	}
-
-	// final active subsystem
-	finalActivePartitionIndex = slq_base_t::findActivePartitionIndex(partitioningTimes, finalTime);
-
-	// if it is at the very beginning of the partition (4e-3) reduce the final time to
-	// last partition final time otherwise set to the final time of the current partition
-	// (if blockwiseMovingHorizon is active)
-	if (finalTime < partitioningTimes[finalActivePartitionIndex] + 4e-3) {
-		finalTime = partitioningTimes[finalActivePartitionIndex];
-		finalActivePartitionIndex--;
-	} else {
-		if (BASE::mpcSettings_.blockwiseMovingHorizon_==true)
-			finalTime = partitioningTimes[finalActivePartitionIndex+1];
-	}
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void MPC_SLQ<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::getCostDesiredTrajectoriesPtr(
-		const cost_desired_trajectories_t*& costDesiredTrajectoriesPtr) const {
-
-	slqPtr_->getCostDesiredTrajectoriesPtr(costDesiredTrajectoriesPtr);
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void MPC_SLQ<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::setCostDesiredTrajectories(
-		const cost_desired_trajectories_t& costDesiredTrajectories) {
-
-	slqPtr_->setCostDesiredTrajectories(costDesiredTrajectories);
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void MPC_SLQ<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::setCostDesiredTrajectories(
-		const scalar_array_t& desiredTimeTrajectory,
-		const dynamic_vector_array_t& desiredStateTrajectory,
-		const dynamic_vector_array_t& desiredInputTrajectory) {
-
-	slqPtr_->setCostDesiredTrajectories(desiredTimeTrajectory,
-			desiredStateTrajectory, desiredInputTrajectory);
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void MPC_SLQ<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::swapCostDesiredTrajectories(
-		cost_desired_trajectories_t& costDesiredTrajectories) {
-
-	slqPtr_->swapCostDesiredTrajectories(costDesiredTrajectories);
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void MPC_SLQ<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::swapCostDesiredTrajectories(
-		scalar_array_t& desiredTimeTrajectory,
-		dynamic_vector_array_t& desiredStateTrajectory,
-		dynamic_vector_array_t& desiredInputTrajectory) {
-
-	slqPtr_->swapCostDesiredTrajectories(desiredTimeTrajectory,
-			desiredStateTrajectory, desiredInputTrajectory);
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
 void MPC_SLQ<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculateController(
-		scalar_t& initTime,
+		const scalar_t& initTime,
 		const state_vector_t& initState,
-		scalar_t& finalTime,
+		const scalar_t& finalTime,
 		const std::vector<scalar_array_t>*& timeTrajectoriesStockPtr,
 		const state_vector_array2_t*& stateTrajectoriesStockPtr,
 		const input_vector_array2_t*& inputTrajectoriesStockPtr,
 		const controller_array_t*& controllerStockPtr)  {
-
-
-	//******************************************************************************************
-	// rewind the optimizer
-	//******************************************************************************************
-	if (finalTime>partitioningTimes_.back() /*&& BASE::mpcSettings_.recedingHorizon_==true*/) {
-		if (BASE::mpcSettings_.debugPrint_)
-			std::cerr << "### SLQ is rewinded at time " << initTime << " [s]." << std::endl;
-
-		this->rewind();
-	}
-
-	//*****************************************************************************************
-	// time horizon adjustment
-	//*****************************************************************************************
-	this->adjustmentTimeHorizon(partitioningTimes_,
-			initTime, finalTime,
-			initActivePartitionIndex_, finalActivePartitionIndex_);
-
-	lastControlDesignTime_ = initTime;
-
-	// display
-	if (BASE::mpcSettings_.debugPrint_) {
-		std::cerr << "### MPC number of subsystems: " << finalActivePartitionIndex_-initActivePartitionIndex_+1 << "." << std::endl;
-		std::cerr << "### MPC time horizon is adjusted." << std::endl;
-		std::cerr << "\t### MPC final Time:   " << finalTime << " [s]." << std::endl;
-		std::cerr << "\t### MPC time horizon: " << finalTime-initTime << " [s]." << std::endl;
-	}
 
 	//*****************************************************************************************
 	// cost goal check
@@ -397,10 +125,10 @@ void MPC_SLQ<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculateController(
 	}
 
 	//*****************************************************************************************
-	// Updating some settings
+	// updating real-time iteration settings
 	//*****************************************************************************************
 	// number of iterations
-	if (BASE::initRun_==true /*|| slqPtr_->getController().at(finalActivePartitionIndex_).empty()==true*/) {
+	if (BASE::initRun_==true /*|| slqPtr_->getController().at(BASE::finalActivePartitionIndex_).empty()==true*/) {
 		slqPtr_->settings().maxNumIterationsSLQ_  = BASE::mpcSettings_.initMaxNumIterations_;
 		slqPtr_->settings().maxLearningRateGSLQP_ = BASE::mpcSettings_.initMaxLearningRate_;
 		slqPtr_->settings().minLearningRateGSLQP_ = BASE::mpcSettings_.initMinLearningRate_;
@@ -428,10 +156,10 @@ void MPC_SLQ<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculateController(
 		if (BASE::mpcSettings_.debugPrint_)
 			std::cerr << "### Using cold initialization." << std::endl;
 
-		slqPtr_->run(initTime, initState, finalTime, partitioningTimes_);
+		slqPtr_->run(initTime, initState, finalTime, BASE::partitioningTimes_);
 
 	} else {
-		slqPtr_->run(initTime, initState, finalTime, partitioningTimes_,
+		slqPtr_->run(initTime, initState, finalTime, BASE::partitioningTimes_,
 				typename slq_base_t::INTERNAL_CONTROLLER());
 	}
 
@@ -459,8 +187,8 @@ void MPC_SLQ<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculateController(
 	if (BASE::logicRulesTemplateUpdated_ == true) {
 
 		// set new templates
-		slqPtr_->getLogicRules().setModeSequenceTemplate(BASE::newLogicRulesTemplate_);
-		slqPtr_->getLogicRules().insertModeSequenceTemplate(finalTime, partitioningTimes_.back());
+		slqPtr_->getLogicRulesPtr()->setModeSequenceTemplate(BASE::newLogicRulesTemplate_);
+		slqPtr_->getLogicRulesPtr()->insertModeSequenceTemplate(finalTime, BASE::partitioningTimes_.back());
 		slqPtr_->getLogicRulesMachinePtr()->logicRulesUpdated();
 
 		BASE::logicRulesTemplateUpdated_ = false;

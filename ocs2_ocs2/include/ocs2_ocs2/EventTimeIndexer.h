@@ -71,13 +71,11 @@ public:
 	/**
 	 * Sets the class.
 	 *
-	 * @tparam STATE_DIM: Dimension of the state space.
-	 * @tparam INPUT_DIM: Dimension of the control input space.
 	 * @tparam LOGIC_RULES_T: Logical rule type.
 	 * @param [in] logicRulesMachine: Instance of the LogicRulesMachine.
 	 */
-	template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-	void set(const LogicRulesMachine<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>& logicRulesMachine);
+	template <class LOGIC_RULES_T>
+	void set(const LogicRulesMachine<LOGIC_RULES_T>& logicRulesMachine);
 
 	/**
 	 * Gets the total number of events.

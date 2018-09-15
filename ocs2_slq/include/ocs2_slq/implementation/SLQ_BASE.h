@@ -27,8 +27,7 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-namespace ocs2
-{
+namespace ocs2 {
 
 /******************************************************************************************************/
 /******************************************************************************************************/
@@ -44,7 +43,8 @@ SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::SLQ_BASE(
 		const LOGIC_RULES_T* logicRulesPtr /*= nullptr*/,
 		const cost_function_base_t* heuristicsFunctionPtr /* = nullptr*/)
 
-	: settings_(settings)
+	: BASE()
+	, settings_(settings)
 	, costDesiredTrajectories_()
 	, costDesiredTrajectoriesBuffer_()
 	, costDesiredTrajectoriesUpdated_(false)
@@ -415,9 +415,9 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::rolloutStateTriggeredTraject
 	inputTrajectoriesStock.resize(numPartitions);
 
 	// finding the active subsystem index at initTime
-	size_t initActivePartition = findActivePartitionIndex(partitioningTimes, initTime);
+	size_t initActivePartition = BASE::findActivePartitionIndex(partitioningTimes, initTime);
 	// finding the active subsystem index at initTime
-	size_t finalActivePartition = findActivePartitionIndex(partitioningTimes, finalTime);
+	size_t finalActivePartition = BASE::findActivePartitionIndex(partitioningTimes, finalTime);
 
 	std::vector<scalar_array_t> eventTimesStock(numPartitions);
 	std::vector<scalar_array_t> switchingTimesStock(numPartitions);
@@ -602,9 +602,9 @@ typename SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::scalar_t
 	inputTrajectoriesStock.resize(numPartitions);
 
 	// finding the active subsystem index at initTime
-	size_t initActivePartition = findActivePartitionIndex(partitioningTimes, initTime);
+	size_t initActivePartition = BASE::findActivePartitionIndex(partitioningTimes, initTime);
 	// finding the active subsystem index at initTime
-	size_t finalActivePartition = findActivePartitionIndex(partitioningTimes, finalTime);
+	size_t finalActivePartition = BASE::findActivePartitionIndex(partitioningTimes, finalTime);
 
 	scalar_t t0 = initTime;
 	state_vector_t x0 = initState;
@@ -678,8 +678,8 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::rolloutFinalState (
 	input_vector_t 		inputTrajectory;
 
 	// finding the active subsystem index at initTime and final time
-	size_t initActivePartition = findActivePartitionIndex(partitioningTimes, initTime);
-	finalActivePartition = findActivePartitionIndex(partitioningTimes, finalTime);
+	size_t initActivePartition = BASE::findActivePartitionIndex(partitioningTimes, initTime);
+	finalActivePartition = BASE::findActivePartitionIndex(partitioningTimes, finalTime);
 
 	scalar_t t0 = initTime, tf;
 	state_vector_t x0 = initState;
@@ -1329,7 +1329,7 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::approximateConstrainedLQWork
 		// check numerical stability_
 		if (settings_.checkNumericalStability_==true && nc1>0)
 			if (Dm.colPivHouseholderQr().rank()!=nc1) {
-				printString(">>> WARNING: The state-input constraints are rank deficient "
+				BASE::printString(">>> WARNING: The state-input constraints are rank deficient "
 						"(at time " + std::to_string(nominalTimeTrajectoriesStock_[i][k]) + ")!");
 			}
 
@@ -1714,13 +1714,13 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::lineSearchWorker(
 				finalConstraintDisplay += "  ";
 			} // end of i loop
 			finalConstraintDisplay += "\n\t forward pass average time step: " + std::to_string(avgTimeStepFP*1e+3) + " [ms].";
-			printString(finalConstraintDisplay);
+			BASE::printString(finalConstraintDisplay);
 		}
 
 	} catch(const std::exception& error) {
 		lsTotalCost  = std::numeric_limits<scalar_t>::max();
 		if(settings_.displayInfo_)
-			printString("\t [Thread" + std::to_string(workerIndex) + "] rollout with learningRate " +
+			BASE::printString("\t [Thread" + std::to_string(workerIndex) + "] rollout with learningRate " +
 					std::to_string(learningRate) + " is terminated.");
 	}
 }
@@ -2613,16 +2613,6 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculateControllerUpdateMax
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::printString(const std::string& text) {
-
-	std::lock_guard<std::mutex> outputDisplayGuard(outputDisplayGuardMutex_);
-	std::cerr << text << std::endl;
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
 void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::printRolloutInfo()  {
 
 	std::cerr << "optimization cost:         " << nominalTotalCost_ << std::endl;
@@ -2694,41 +2684,10 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculateMeritFunction(
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-size_t SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::findActivePartitionIndex(
-		const scalar_array_t& partitioningTimes,
-		const scalar_t& time,
-		bool ceilingFunction /*= true*/) {
-
-	int activeSubsystemIndex;
-	if (ceilingFunction==true)
-		activeSubsystemIndex = findActiveIntervalIndex(partitioningTimes, time, 0);
-	else
-		activeSubsystemIndex = findActiveIntervalIndex(partitioningTimes, time, 0,
-				-OCS2NumericTraits<scalar_t>::week_epsilon());
-
-	if (activeSubsystemIndex < 0) {
-		std::string mesg = "Given time is less than the start time (i.e. givenTime < partitioningTimes.front()): "
-				+ std::to_string(time) + " < " + std::to_string(partitioningTimes.front());
-		throw std::runtime_error(mesg);
-	}
-
-	if (activeSubsystemIndex == partitioningTimes.size()-1) {
-		std::string mesg = "Given time is greater than the final time (i.e. partitioningTimes.back() < givenTime): "
-				+ std::to_string(partitioningTimes.back()) + " < " + std::to_string(time);
-		throw std::runtime_error(mesg);
-	}
-
-	return (size_t)activeSubsystemIndex;
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
 void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::getValueFuntion (
 		const scalar_t& time, const state_vector_t& state, scalar_t& valueFuntion)  {
 
-	size_t activeSubsystem = findActivePartitionIndex(partitioningTimes_, time);
+	size_t activeSubsystem = BASE::findActivePartitionIndex(partitioningTimes_, time);
 
 	state_matrix_t Sm;
 	LinearInterpolation<state_matrix_t,Eigen::aligned_allocator<state_matrix_t> > SmFunc(
@@ -2938,7 +2897,7 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::truncateConterller(
 		deletedcontrollersStock[i].clear();
 
 	// finding the active subsystem index at initTime_
-	initActivePartition = findActivePartitionIndex(partitioningTimes, initTime);
+	initActivePartition = BASE::findActivePartitionIndex(partitioningTimes, initTime);
 
 	// saving the deleting part and clearing controllersStock
 	for (size_t i=0; i<initActivePartition; i++)
@@ -3171,28 +3130,18 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::setLogicRules(const LOGIC_RU
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-const LOGIC_RULES_T& SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::getLogicRules() const {
+const LOGIC_RULES_T* SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::getLogicRulesPtr() const {
 
-	return logicRulesMachinePtr_->getLogicRules();
+	return logicRulesMachinePtr_->getLogicRulesPtr();
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-LOGIC_RULES_T& SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::getLogicRules() {
+LOGIC_RULES_T* SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::getLogicRulesPtr() {
 
-	return logicRulesMachinePtr_->getLogicRules();
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-const typename SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::scalar_array_t&
-	SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::getEventTimes() const {
-
-	return logicRulesMachinePtr_->getLogicRulesPtr()->eventTimes();
+	return logicRulesMachinePtr_->getLogicRulesPtr();
 }
 
 /******************************************************************************************************/
@@ -3525,7 +3474,7 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::run(
 			nominalControllersStock_, initActivePartition_, deletedcontrollersStock_);
 
 	// the final active partition index.
-	finalActivePartition_ = findActivePartitionIndex(partitioningTimes_, finalTime_);
+	finalActivePartition_ = BASE::findActivePartitionIndex(partitioningTimes_, finalTime_);
 
 	// check if after the truncation the internal controller is empty
 	bool isInitInternalControllerEmpty = false;

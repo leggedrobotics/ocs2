@@ -32,12 +32,12 @@ namespace ocs2{
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
+template <class LOGIC_RULES_T>
 void EventTimeIndexer::set(
-		const LogicRulesMachine<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>& logicRulesMachine) {
+		const LogicRulesMachine<LOGIC_RULES_T>& logicRulesMachine) {
 
 	// total number of event times
-	numEventTimes_ = logicRulesMachine.getLogicRules().eventTimes().size();
+	numEventTimes_ = logicRulesMachine.getLogicRulesPtr()->eventTimes().size();
 	// number of subsystems
 	numSubsystems_ = numEventTimes_ + 1;
 	// number of partitions

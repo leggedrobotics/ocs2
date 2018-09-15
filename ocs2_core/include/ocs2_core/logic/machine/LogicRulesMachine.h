@@ -47,7 +47,7 @@ namespace ocs2{
 
 /**
  * The logic rules machine class.
- * Note that if logic rules are modified through get methods (e.g. getLogicRules),
+ * Note that if logic rules are modified through get methods (e.g. getLogicRulesPtr),
  * user should call logicRulesUpdated(); otherwise the changes may not become effective.
  *
  * @tparam LOGIC_RULES_T: logical rule type.
@@ -130,18 +130,6 @@ public:
 	 *
 	 */
 	void logicRulesUpdated();
-
-	/**
-	 * Get the active logic rules class
-	 * @return active logic rules class
-	 */
-	LOGIC_RULES_T& getLogicRules();
-
-	/**
-	 * Get the active logic rules class
-	 * @return active logic rules class
-	 */
-	const LOGIC_RULES_T& getLogicRules() const;
 
 	/**
 	 * Get the pointer to the active logic rules class

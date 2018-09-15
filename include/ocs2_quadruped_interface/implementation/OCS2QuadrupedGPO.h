@@ -46,7 +46,7 @@ void OCS2QuadrupedGPO<JOINT_COORD_SIZE>::reset() {
 //	feet_z_planner_ptr_t feetZPlannerPtr(
 //			new feet_z_planner_t(ocs2QuadrupedInterfacePtr_->getModelSettings().swingLegLiftOff_, 1.0 /*swingTimeScale*/) );
 //	optimizedLogicRules_ = logic_rules_t(feetZPlannerPtr);
-	optimizedLogicRules_ = slqPtr_->getLogicRules();
+	optimizedLogicRules_ = *slqPtr_->getLogicRulesPtr();
 }
 
 /******************************************************************************************************/

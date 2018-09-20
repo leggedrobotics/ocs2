@@ -61,6 +61,9 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_core/initialization/SystemOperatingTrajectoriesBase.h>
 
 #include <ocs2_oc/Solver_BASE.h>
+#include <ocs2_oc/rollout/RolloutBase.h>
+#include <ocs2_oc/rollout/TimeTriggeredRollout.h>
+#include <ocs2_oc/rollout/OperatingTrajectoriesRollout.h>
 
 #include <ocs2_slq/SLQ_Settings.h>
 #include <ocs2_slq/riccati_equations/SequentialRiccatiEquations.h>
@@ -158,6 +161,10 @@ public:
 	typedef ConstraintBase<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>       constraint_base_t;
 	typedef CostFunctionBase<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> cost_function_base_t;
 	typedef SystemOperatingTrajectoriesBase<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> operating_trajectories_base_t;
+
+	typedef RolloutBase<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> rollout_base_t;
+	typedef TimeTriggeredRollout<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> time_triggered_rollout_t;
+	typedef OperatingTrajectoriesRollout<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> operating_trajectorie_rollout_t;
 
 	typedef typename BASE::cost_desired_trajectories_t cost_desired_trajectories_t;
 
@@ -262,6 +269,18 @@ public:
 	 * @return average time step.
 	 */
 	scalar_t rolloutTrajectory(
+			const scalar_t& initTime,
+			const state_vector_t& initState,
+			const scalar_t& finalTime,
+			const scalar_array_t& partitioningTimes,
+			const controller_array_t& controllersStock,
+			std::vector<scalar_array_t>& timeTrajectoriesStock,
+			std::vector<size_array_t>& eventsPastTheEndIndecesStock,
+			state_vector_array2_t& stateTrajectoriesStock,
+			input_vector_array2_t& inputTrajectoriesStock,
+			size_t threadId = 0);
+
+	scalar_t rolloutTrajectory_new(
 			const scalar_t& initTime,
 			const state_vector_t& initState,
 			const scalar_t& finalTime,
@@ -1199,6 +1218,9 @@ protected:
 	std::vector<typename event_handler_t::Ptr>               systemEventHandlersPtrStock_;
 	std::vector<std::shared_ptr<ODE45<STATE_DIM>>>           dynamicsIntegratorsPtrStock_;
 	std::vector<typename operating_trajectories_base_t::Ptr> operatingTrajectoriesPtrStock_;
+
+	std::vector<typename rollout_base_t::Ptr> dynamicsForwardRolloutPtrStock_;
+	std::vector<typename rollout_base_t::Ptr> operatingTrajectoriesRolloutPtrStock_;
 
 	std::vector<typename state_triggered_event_handler_t::Ptr> eventsPtrStock_;
 	std::vector<std::shared_ptr<ODE45<STATE_DIM>>> integratorsPtrStock_;

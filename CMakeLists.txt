@@ -7,7 +7,7 @@ project(ocs2_anymal_switched_model)
 find_package(catkin REQUIRED COMPONENTS
     cmake_modules
     ocs2_switched_model_interface
-    ocs2_rbd_codegen
+    ocs2_robotic_examples
 )
 
 ## Eigen3
@@ -31,7 +31,7 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread -fopenmp -std=c++11 -Wfatal-err
 catkin_package(
     INCLUDE_DIRS include
     LIBRARIES ${PROJECT_NAME}
-    CATKIN_DEPENDS ocs2_switched_model_interface ocs2_rbd_codegen
+    CATKIN_DEPENDS ocs2_switched_model_interface ocs2_robotic_examples
 #   DEPENDS system_lib
 )
 

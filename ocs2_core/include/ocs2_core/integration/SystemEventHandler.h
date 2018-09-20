@@ -130,7 +130,7 @@ public:
 	 *
 	 * @param [out] stateTrajectory: The state trajectory which contains the current state vector as its last element.
 	 * @param [out] timeTrajectory: The time trajectory which contains the current time as its last element.
-	 * @retune boolean: A non-negative unique ID for the active events.
+	 * @return boolean: A non-negative unique ID for the active events.
 	 */
 	virtual int handleEvent(
 			state_vector_array_t& stateTrajectory,

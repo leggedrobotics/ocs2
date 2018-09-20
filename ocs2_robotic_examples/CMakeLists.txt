@@ -38,6 +38,7 @@ configure_file(include/pathfile.h.in pathfile.h)
 catkin_package(
   INCLUDE_DIRS 
     include
+    include/ocs2_robotic_examples/rbd_libraries/robcogen
   CATKIN_DEPENDS
     tf
     urdf

@@ -60,10 +60,11 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_core/logic/machine/HybridLogicRulesMachine.h>
 #include <ocs2_core/initialization/SystemOperatingTrajectoriesBase.h>
 
-#include <ocs2_oc/Solver_BASE.h>
+#include <ocs2_oc/oc_solver/Solver_BASE.h>
 #include <ocs2_oc/rollout/RolloutBase.h>
 #include <ocs2_oc/rollout/TimeTriggeredRollout.h>
 #include <ocs2_oc/rollout/OperatingTrajectoriesRollout.h>
+#include <ocs2_oc/rollout/StateTriggeredRollout.h>
 
 #include <ocs2_slq/SLQ_Settings.h>
 #include <ocs2_slq/riccati_equations/SequentialRiccatiEquations.h>
@@ -154,17 +155,17 @@ public:
 	typedef typename BASE::dynamic_vector_t                    dynamic_vector_t;
 	typedef typename BASE::dynamic_vector_array_t              dynamic_vector_array_t;
 
-	typedef SystemEventHandler<STATE_DIM>         event_handler_t;
-	typedef StateTriggeredEventHandler<STATE_DIM> state_triggered_event_handler_t;
+	typedef SystemEventHandler<STATE_DIM> event_handler_t;
 	typedef ControlledSystemBase<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> controlled_system_base_t;
 	typedef DerivativesBase<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>      derivatives_base_t;
 	typedef ConstraintBase<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>       constraint_base_t;
-	typedef CostFunctionBase<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> cost_function_base_t;
+	typedef CostFunctionBase<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>     cost_function_base_t;
 	typedef SystemOperatingTrajectoriesBase<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> operating_trajectories_base_t;
 
 	typedef RolloutBase<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> rollout_base_t;
 	typedef TimeTriggeredRollout<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> time_triggered_rollout_t;
 	typedef OperatingTrajectoriesRollout<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> operating_trajectorie_rollout_t;
+	typedef StateTriggeredRollout<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> state_triggered_rollout_t;
 
 	typedef typename BASE::cost_desired_trajectories_t cost_desired_trajectories_t;
 
@@ -181,24 +182,6 @@ public:
 
 // TODO: do not push to remote
 public:
-
-	typedef HybridLogicRulesMachine<LOGIC_RULES_T> hybrid_logic_rules_machine_t;
-
-	state_vector_t rolloutStateTriggeredWorker(
-			size_t workerIndex,
-			const size_t& partitionIndex,
-			const scalar_t& initTime,
-			const state_vector_t& initState,
-			const scalar_t& finalTime,
-			const controller_t& controller,
-			scalar_array_t& timeTrajectory,
-			size_array_t& eventsPastTheEndIndeces,
-			state_vector_array_t& stateTrajectory,
-			input_vector_array_t& inputTrajectory,
-			scalar_array_t& eventTimes,
-			size_array_t& subsystemID,
-			scalar_array_t& guardSurfacesValues,
-			hybrid_logic_rules_machine_t& hybridLlogicRulesMachine);
 
 	void rolloutStateTriggeredTrajectory(
 			const scalar_t& initTime,
@@ -1170,20 +1153,16 @@ protected:
 	scalar_t avgTimeStepBP_;
 
 	//
-	std::vector<typename controlled_system_base_t::Ptr>      systemDynamicsPtrStock_;
 	std::vector<typename derivatives_base_t::Ptr>            systemDerivativesPtrStock_;
 	std::vector<typename constraint_base_t::Ptr>             systemConstraintsPtrStock_;
 	std::vector<typename cost_function_base_t::Ptr>          costFunctionsPtrStock_;
 	std::vector<typename cost_function_base_t::Ptr>          heuristicsFunctionsPtrStock_;
-	std::vector<typename event_handler_t::Ptr>               systemEventHandlersPtrStock_;
-	std::vector<std::shared_ptr<ODE45<STATE_DIM>>>           dynamicsIntegratorsPtrStock_;
 	std::vector<typename operating_trajectories_base_t::Ptr> operatingTrajectoriesPtrStock_;
 
 	std::vector<typename rollout_base_t::Ptr> dynamicsForwardRolloutPtrStock_;
 	std::vector<typename rollout_base_t::Ptr> operatingTrajectoriesRolloutPtrStock_;
 
-	std::vector<typename state_triggered_event_handler_t::Ptr> eventsPtrStock_;
-	std::vector<std::shared_ptr<ODE45<STATE_DIM>>> integratorsPtrStock_;
+	std::vector<typename rollout_base_t::Ptr> state_dynamicsForwardRolloutPtrStock_;
 
 	controller_array_t          nominalControllersStock_;
 	std::vector<scalar_array_t> nominalTimeTrajectoriesStock_;

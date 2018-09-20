@@ -36,7 +36,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <Eigen/Dense>
 #include <vector>
 
-#include <ocs2_oc/Solver_BASE.h>
+#include <ocs2_oc/oc_solver/Solver_BASE.h>
 
 #include <ocs2_core/Dimensions.h>
 #include <ocs2_core/cost/CostDesiredTrajectories.h>

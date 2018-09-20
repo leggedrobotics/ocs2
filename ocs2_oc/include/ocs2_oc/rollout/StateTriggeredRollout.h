@@ -1,15 +1,252 @@
-/*
- * StateTriggeredRollout.h
+/******************************************************************************
+Copyright (c) 2017, Farbod Farshidian. All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+ * Redistributions of source code must retain the above copyright notice, this
+  list of conditions and the following disclaimer.
+
+ * Redistributions in binary form must reproduce the above copyright notice,
+  this list of conditions and the following disclaimer in the documentation
+  and/or other materials provided with the distribution.
+
+ * Neither the name of the copyright holder nor the names of its
+  contributors may be used to endorse or promote products derived from
+  this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ ******************************************************************************/
+
+#ifndef STATETRIGGERED_ROLLOUT_H_
+#define STATETRIGGERED_ROLLOUT_H_
+
+#include <memory>
+
+#include <ocs2_core/dynamics/ControlledSystemBase.h>
+#include <ocs2_core/integration/Integrator.h>
+#include <ocs2_core/integration/SystemEventHandler.h>
+#include <ocs2_core/integration/StateTriggeredEventHandler.h>
+#include <ocs2_core/logic/machine/HybridLogicRulesMachine.h>
+
+#include "RolloutBase.h"
+
+namespace ocs2 {
+
+/**
+ * This class is an interface class for forward rollout of the system dynamics.
  *
- *  Created on: Sep 18, 2018
- *      Author: farbod
+ * @tparam STATE_DIM: Dimension of the state space.
+ * @tparam INPUT_DIM: Dimension of the control input space.
+ * @tparam LOGIC_RULES_T: Logic Rules type (default NullLogicRules).
  */
+template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T=NullLogicRules>
+class StateTriggeredRollout : public RolloutBase<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>
+{
+public:
+	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-#ifndef STATETRIGGEREDROLLOUT_H_
-#define STATETRIGGEREDROLLOUT_H_
+	static_assert(std::is_base_of<LogicRulesBase, LOGIC_RULES_T>::value,
+			"LOGIC_RULES_T must inherit from LogicRulesBase");
 
+	typedef RolloutBase<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> BASE;
 
+	typedef typename BASE::controller_t         controller_t;
+	typedef typename BASE::size_array_t         size_array_t;
+	typedef typename BASE::scalar_t             scalar_t;
+	typedef typename BASE::scalar_array_t       scalar_array_t;
+	typedef typename BASE::state_vector_t       state_vector_t;
+	typedef typename BASE::state_vector_array_t state_vector_array_t;
+	typedef typename BASE::input_vector_t       input_vector_t;
+	typedef typename BASE::input_vector_array_t input_vector_array_t;
 
+	typedef SystemEventHandler<STATE_DIM> event_handler_t;
+	typedef StateTriggeredEventHandler<STATE_DIM> state_triggered_event_handler_t;
+	typedef ControlledSystemBase<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> controlled_system_base_t;
 
+	typedef LogicRulesMachine<LOGIC_RULES_T> logic_rules_machine_t;
+	typedef HybridLogicRulesMachine<LOGIC_RULES_T> hybrid_logic_rules_machine_t;
 
-#endif /* STATETRIGGEREDROLLOUT_H_ */
+	typedef IntegratorBase<STATE_DIM> ode_base_t;
+
+	/**
+	 * Constructor.
+	 *
+	 * @param [in] systemDynamics: The system dynamics for forward rollout.
+	 * @param [in] rolloutSettings: The rollout settings.
+	 * @param [in] algorithmName: The algorithm that calls this class (default not defined).
+	 */
+	StateTriggeredRollout(
+			const controlled_system_base_t& systemDynamics,
+			const Rollout_Settings& rolloutSettings = Rollout_Settings(),
+			const char* algorithmName = NULL)
+
+	: BASE(rolloutSettings, algorithmName)
+	, systemDynamicsPtr_(systemDynamics.clone())
+	, systemEventHandlersPtr_(new state_triggered_event_handler_t)
+	, dynamicsIntegratorsPtr_(new ODE45<STATE_DIM>(systemDynamicsPtr_, systemEventHandlersPtr_))
+	{}
+
+	/**
+	 * Default destructor.
+	 */
+	~StateTriggeredRollout() = default;
+
+	/**
+	 * Forward integrate the system dynamics with given controller. It uses the given control policies and initial state,
+	 * to integrate the system dynamics in time period [initTime, finalTime].
+	 *
+	 * @param [in] partitionIndex: Time partition index.
+	 * @param [in] initTime: The initial time.
+	 * @param [in] initState: The initial state.
+	 * @param [in] finalTime: The final time.
+	 * @param [in] controller: control policy.
+	 * @param [in] hybridLlogicRulesMachine: logic rules machine.
+	 * @param [out] timeTrajectory: The time trajectory stamp.
+	 * @param [out] eventsPastTheEndIndeces: Indices containing past-the-end index of events trigger.
+	 * @param [out] stateTrajectory: The state trajectory.
+	 * @param [out] inputTrajectory: The control input trajectory.
+	 *
+	 * @return The final state (state jump is considered if it took place)
+	 */
+	state_vector_t run(
+			const size_t& partitionIndex,
+			const scalar_t& initTime,
+			const state_vector_t& initState,
+			const scalar_t& finalTime,
+			const controller_t& controller,
+			logic_rules_machine_t& hybridLlogicRulesMachine,
+			scalar_array_t& timeTrajectory,
+			size_array_t& eventsPastTheEndIndeces,
+			state_vector_array_t& stateTrajectory,
+			input_vector_array_t& inputTrajectory) override {
+//
+//		scalar_array_t guardSurfacesValues;
+//		scalar_array_t eventTimes;
+//		size_array_t subsystemID;
+//
+//		if (initTime > finalTime)
+//			throw std::runtime_error("Initial time should be less-equal to final time.");
+//
+//		if (controller.empty() == true)
+//			throw std::runtime_error("The input controller is empty.");
+//
+//		if (eventTimes.empty()==false && guardSurfacesValues.empty()==true)
+//			throw std::runtime_error("Since the event times array is not empty, "
+//					"the last update of the guard functions value should be provided.");
+//
+//		// max number of steps for integration
+//		const size_t maxNumSteps =
+//				BASE::settings().maxNumStepsPerSecond_ * std::max(1.0, finalTime-initTime);
+//
+//		// clearing the output trajectories
+//		timeTrajectory.clear();
+//		timeTrajectory.reserve(maxNumSteps+1);
+//		stateTrajectory.clear();
+//		stateTrajectory.reserve(maxNumSteps+1);
+//		inputTrajectory.clear();
+//		inputTrajectory.reserve(maxNumSteps+1);
+//		eventsPastTheEndIndeces.clear();
+//
+//		// initialize the model and set controller
+//		if (controller.empty()==false) {
+//			// init Hybrid Logic Machine
+//			static_cast<hybrid_logic_rules_machine_t>(hybridLlogicRulesMachine).initLogicMachine(partitionIndex);
+////			std::cerr << std::endl << "+++++++++++++ partitionIndex: " << partitionIndex;
+////			static_cast<hybrid_logic_rules_machine_t>(hybridLlogicRulesMachine).display();
+//			// set controller
+//			systemDynamicsPtr_->setController(controller);
+//			// reset function calls counter
+//			systemDynamicsPtr_->resetNumFunctionCalls();
+//			// initialize subsystem
+//			systemDynamicsPtr_->initializeModel(hybridLlogicRulesMachine, partitionIndex, "SLQ");
+//			// Set event times control parameters
+//			if (eventTimes.empty()==true)
+//				systemEventHandlersPtr_->setEventTimesGuard(
+//						BASE::settings().minEventTimeDifference_);
+//			else
+//				systemEventHandlersPtr_->setEventTimesGuard(
+//						BASE::settings().minEventTimeDifference_, eventTimes.back(), guardSurfacesValues);
+//		}
+//
+//		// initial values of the guard surfaces
+//		if (subsystemID.empty()==true) {
+//			size_t activeSubsystem = 0;
+//			scalar_array_t initGuardSurfacesValue;
+//			systemDynamicsPtr_->computeGuardSurfaces(initTime, initState, initGuardSurfacesValue);
+//			for (size_t i=0; i<initGuardSurfacesValue.size(); i++)
+//				if (initGuardSurfacesValue[i]<0)
+//					activeSubsystem = i;
+//
+//			subsystemID.push_back(activeSubsystem);
+//		}
+//
+//		scalar_t t0 = initTime;
+//		state_vector_t x0 = initState;
+//
+//		while (t0 < finalTime-OCS2NumericTraits<scalar_t>::week_epsilon()) {
+//
+//			try {
+//				// integrate controlled system
+//				dynamicsIntegratorsPtr_->integrate(
+//						x0, t0, finalTime,
+//						stateTrajectory,
+//						timeTrajectory,
+//						BASE::settings().minTimeStep_,
+//						BASE::settings().absTolODE_,
+//						BASE::settings().relTolODE_,
+//						maxNumSteps,
+//						true);
+//
+//			} catch (const size_t& eventID) {
+//
+//				eventsPastTheEndIndeces.push_back( timeTrajectory.size() );
+//				systemDynamicsPtr_->computeJumpMap(timeTrajectory.back(), stateTrajectory.back(), x0);
+//
+//				eventTimes.push_back(timeTrajectory.back());
+//				subsystemID.push_back(eventID);
+//
+//				static_cast<hybrid_logic_rules_machine_t>(hybridLlogicRulesMachine).push_back(partitionIndex, timeTrajectory.back(), eventID);
+////				static_cast<hybrid_logic_rules_machine_t>(hybridLlogicRulesMachine).display();
+//			}
+//
+//			t0 = timeTrajectory.back();
+//
+//		}  // end of while loop
+//
+//		// compute control input trajectory and concatenate to inputTrajectory
+//		for (size_t k_u=0; k_u<timeTrajectory.size(); k_u++) {
+//			inputTrajectory.emplace_back( systemDynamicsPtr_->computeInput(
+//					timeTrajectory[k_u], stateTrajectory[k_u]) );
+//		} // end of k loop
+//
+//		// get the guardSurfacesValues
+//		guardSurfacesValues = systemEventHandlersPtr_->getGuardSurfacesValues();
+//
+//		return stateTrajectory.back();
+
+		return state_vector_t::Zero();
+	}
+
+private:
+	std::shared_ptr<controlled_system_base_t> systemDynamicsPtr_;
+
+	std::shared_ptr<event_handler_t> systemEventHandlersPtr_;
+
+	std::unique_ptr<ode_base_t> dynamicsIntegratorsPtr_;
+
+};
+
+} // namespace ocs2
+
+#endif /* STATETRIGGERED_ROLLOUT_H_ */
+

@@ -56,8 +56,6 @@ SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::SLQ_BASE(
 		logicRulesMachinePtr_ = logic_rules_machine_ptr_t( new logic_rules_machine_t(LOGIC_RULES_T()) );
 
 	// Dynamics, Constraints, derivatives, and cost
-	systemDynamicsPtrStock_.clear();
-	systemDynamicsPtrStock_.reserve(settings_.nThreads_);
 	systemDerivativesPtrStock_.clear();
 	systemDerivativesPtrStock_.reserve(settings_.nThreads_);
 	systemConstraintsPtrStock_.clear();
@@ -66,10 +64,6 @@ SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::SLQ_BASE(
 	costFunctionsPtrStock_.reserve(settings_.nThreads_);
 	heuristicsFunctionsPtrStock_.clear();
 	heuristicsFunctionsPtrStock_.reserve(settings_.nThreads_);
-	systemEventHandlersPtrStock_.clear();
-	systemEventHandlersPtrStock_.reserve(settings_.nThreads_);
-	dynamicsIntegratorsPtrStock_.clear();
-	dynamicsIntegratorsPtrStock_.reserve(settings_.nThreads_);
 
 	dynamicsForwardRolloutPtrStock_.resize(settings_.nThreads_);
 	operatingTrajectoriesRolloutPtrStock_.resize(settings_.nThreads_);
@@ -82,9 +76,6 @@ SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::SLQ_BASE(
 
 		operatingTrajectoriesRolloutPtrStock_[i].reset( new operating_trajectorie_rollout_t(
 				*operatingTrajectoriesPtr, settings_.rolloutSettings_, "SLQ") );
-
-		// initialize dynamics
-		systemDynamicsPtrStock_.emplace_back( systemDynamicsPtr->clone() );
 
 		// initialize linearized systems
 		systemDerivativesPtrStock_.emplace_back( systemDerivativesPtr->clone() );
@@ -104,37 +95,15 @@ SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::SLQ_BASE(
 		else // use the cost function if no heuristics function is defined
 			heuristicsFunctionsPtrStock_.emplace_back( costFunctionPtr->clone() );
 
-		// initialize events
-		typedef Eigen::aligned_allocator<event_handler_t> event_handler_alloc_t;
-		systemEventHandlersPtrStock_.push_back(std::move( std::allocate_shared<event_handler_t, event_handler_alloc_t>(event_handler_alloc_t()) ));
-
-		// initialize integrators
-		typedef ODE45<STATE_DIM> ode_t;
-		typedef Eigen::aligned_allocator<ode_t> ode_alloc_t;
-		dynamicsIntegratorsPtrStock_.push_back(std::move( std::allocate_shared<ode_t, ode_alloc_t>(
-				ode_alloc_t(), systemDynamicsPtrStock_.back(), systemEventHandlersPtrStock_.back()) ));
-
 	} // end of i loop
 
 
 	// State triggered
-	eventsPtrStock_.clear();
-	eventsPtrStock_.reserve(settings_.nThreads_);
-	integratorsPtrStock_.clear();
-	integratorsPtrStock_.reserve(settings_.nThreads_);
-	// initialize all subsystems, etc.
+	state_dynamicsForwardRolloutPtrStock_.resize(settings_.nThreads_);
 	for (size_t i=0; i<settings_.nThreads_; i++) {
 
-		// initialize events
-		typedef Eigen::aligned_allocator<state_triggered_event_handler_t> event_handler_alloc_t;
-		eventsPtrStock_.push_back(std::move( std::allocate_shared<state_triggered_event_handler_t, event_handler_alloc_t>(
-				event_handler_alloc_t()) ));
-
-		// initialize integrators
-		typedef ODE45<STATE_DIM> ode_t;
-		typedef Eigen::aligned_allocator<ode_t> ode_alloc_t;
-		integratorsPtrStock_.push_back(std::move( std::allocate_shared<ode_t, ode_alloc_t>(
-				ode_alloc_t(), systemDynamicsPtrStock_[i], eventsPtrStock_[i]) ));
+		state_dynamicsForwardRolloutPtrStock_[i].reset( new state_triggered_rollout_t(
+				*systemDynamicsPtr, settings_.rolloutSettings_, "SLQ") );
 
 	} // end of i loop
 
@@ -293,112 +262,6 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::reset() {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-typename SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::state_vector_t
-	SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::rolloutStateTriggeredWorker(
-			size_t workerIndex,
-			const size_t& partitionIndex,
-			const scalar_t& initTime,
-			const state_vector_t& initState,
-			const scalar_t& finalTime,
-			const controller_t& controller,
-			scalar_array_t& timeTrajectory,
-			size_array_t& eventsPastTheEndIndeces,
-			state_vector_array_t& stateTrajectory,
-			input_vector_array_t& inputTrajectory,
-			scalar_array_t& eventTimes,
-			size_array_t& subsystemID,
-			scalar_array_t& guardSurfacesValues,
-			hybrid_logic_rules_machine_t& hybridLlogicRulesMachine)  {
-
-	if (initTime > finalTime)
-		throw std::runtime_error("Initial time should be less-equal to final time.");
-	if (eventTimes.empty()==false && guardSurfacesValues.empty()==true)
-		throw std::runtime_error("Since the event times array is not empty, "
-				"the last update of the guard functions value should be provided.");
-
-	// max number of steps for integration
-	const size_t maxNumSteps = settings_.maxNumStepsPerSecond_ * std::max(1.0, finalTime-initTime);
-
-	// clearing the output trajectories
-	timeTrajectory.clear();
-	timeTrajectory.reserve(maxNumSteps+1);
-	stateTrajectory.clear();
-	stateTrajectory.reserve(maxNumSteps+1);
-	inputTrajectory.clear();
-	inputTrajectory.reserve(maxNumSteps+1);
-	eventsPastTheEndIndeces.clear();
-
-	// initialize the model and set controller
-	if (controller.empty()==false) {
-		// init Hybrid Logic Machine
-		hybridLlogicRulesMachine.initLogicMachine(partitionIndex);
-//		std::cerr << std::endl << "+++++++++++++ partitionIndex: " << partitionIndex;
-//		hybridLlogicRulesMachine.display();
-		// set controller
-		systemDynamicsPtrStock_[workerIndex]->setController(controller);
-		// reset function calls counter
-		systemDynamicsPtrStock_[workerIndex]->resetNumFunctionCalls();
-		// initialize subsystem
-		systemDynamicsPtrStock_[workerIndex]->initializeModel(hybridLlogicRulesMachine, partitionIndex, "SLQ");
-		// Set event times control parameters
-		if (eventTimes.empty()==true)
-			eventsPtrStock_[workerIndex]->setEventTimesGuard(settings_.minEventTimeDifference_);
-		else
-			eventsPtrStock_[workerIndex]->setEventTimesGuard(settings_.minEventTimeDifference_, eventTimes.back(), guardSurfacesValues);
-	}
-
-	// initial values of the guard surfaces
-	if (subsystemID.empty()==true) {
-		size_t activeSubsystem = 0;
-		scalar_array_t initGuardSurfacesValue;
-		systemDynamicsPtrStock_[workerIndex]->computeGuardSurfaces(initTime, initState, initGuardSurfacesValue);
-		for (size_t i=0; i<initGuardSurfacesValue.size(); i++)
-			if (initGuardSurfacesValue[i]<0)
-				activeSubsystem = i;
-
-		subsystemID.push_back(activeSubsystem);
-	}
-
-	scalar_t t0 = initTime;
-	state_vector_t x0 = initState;
-
-	while (t0 < finalTime-OCS2NumericTraits<scalar_t>::week_epsilon()) {
-
-		try {
-			// integrate controlled system
-			integratorsPtrStock_[workerIndex]->integrate(x0, t0, finalTime,
-					stateTrajectory, timeTrajectory,
-					settings_.minTimeStep_, settings_.absTolODE_, settings_.relTolODE_, maxNumSteps, true);
-
-		} catch (const size_t& eventID) {
-
-			eventsPastTheEndIndeces.push_back( timeTrajectory.size() );
-			systemDynamicsPtrStock_[workerIndex]->computeJumpMap(timeTrajectory.back(), stateTrajectory.back(), x0);
-
-			eventTimes.push_back(timeTrajectory.back());
-			subsystemID.push_back(eventID);
-
-			hybridLlogicRulesMachine.push_back(partitionIndex, timeTrajectory.back(), eventID);
-//			hybridLlogicRulesMachine.display();
-		}
-
-		t0 = timeTrajectory.back();
-
-	}  // end of while loop
-
-	// compute control input trajectory and concatenate to inputTrajectory
-	for (size_t k_u=0; k_u<timeTrajectory.size(); k_u++) {
-		inputTrajectory.emplace_back( systemDynamicsPtrStock_[workerIndex]->computeInput(
-				timeTrajectory[k_u], stateTrajectory[k_u]) );
-	} // end of k loop
-
-	// get the guardSurfacesValues
-	guardSurfacesValues = eventsPtrStock_[workerIndex]->getGuardSurfacesValues();
-
-	return stateTrajectory.back();
-}
-
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
 void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::rolloutStateTriggeredTrajectory(
@@ -436,12 +299,11 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::rolloutStateTriggeredTraject
 	scalar_array_t eventTimes;
 	size_array_t subsystemID;
 
-	hybrid_logic_rules_machine_t hybridLlogicRulesMachine;
+	HybridLogicRulesMachine<LOGIC_RULES_T> hybridLlogicRulesMachine;
 	hybridLlogicRulesMachine.setupLogicMachine(partitioningTimes, initTime, initActivePartition, 15);
 
 	scalar_t t0 = initTime;
 	state_vector_t x0 = initState;
-	scalar_array_t guardSurfacesValues;
 	scalar_t tf;
 	for (size_t i=0; i<numPartitions; i++)  {
 
@@ -458,12 +320,10 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::rolloutStateTriggeredTraject
 		tf = (i != finalActivePartition) ? partitioningTimes[i+1] : finalTime;
 
 		// call rolloutStateTriggeredWorker for the partition 'i' on the thread 'threadId'
-		x0 = rolloutStateTriggeredWorker(threadId, i,
-				t0, x0, tf, controllersStock[i],
+		x0 = state_dynamicsForwardRolloutPtrStock_[threadId]->run(
+				i, t0, x0, tf, controllersStock[i], hybridLlogicRulesMachine,
 				timeTrajectoriesStock[i], eventsPastTheEndIndecesStock[i],
-				stateTrajectoriesStock[i], inputTrajectoriesStock[i],
-				eventTimes, subsystemID, guardSurfacesValues,
-				hybridLlogicRulesMachine);
+				stateTrajectoriesStock[i], inputTrajectoriesStock[i]);
 
 		// reset the initial time
 		t0 = timeTrajectoriesStock[i].back();

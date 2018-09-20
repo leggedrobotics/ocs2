@@ -69,7 +69,6 @@ public:
 	typedef typename BASE::input_vector_array_t input_vector_array_t;
 
 	typedef SystemEventHandler<STATE_DIM> event_handler_t;
-	typedef StateTriggeredEventHandler<STATE_DIM> state_triggered_event_handler_t;
 	typedef ControlledSystemBase<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> controlled_system_base_t;
 
 	typedef LogicRulesMachine<LOGIC_RULES_T> logic_rules_machine_t;

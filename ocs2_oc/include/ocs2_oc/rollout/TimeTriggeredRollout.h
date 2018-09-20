@@ -147,10 +147,6 @@ public:
 		// index of the last subsystem
 		size_t finalItr = findActiveIntervalIndex(switchingTimes, finalTime, numSubsystems-1);
 
-		std::cout << "Temp partitionIndex: " << partitionIndex << std::endl;
-		std::cout << "beginItr: " << beginItr << std::endl;
-		std::cout << "finalItr: " << finalItr << std::endl;
-
 		// clearing the output trajectories
 		timeTrajectory.clear();
 		timeTrajectory.reserve(maxNumSteps+1);

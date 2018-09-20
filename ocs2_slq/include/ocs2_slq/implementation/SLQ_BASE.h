@@ -477,239 +477,10 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::rolloutStateTriggeredTraject
 }
 
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-typename SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::state_vector_t
-	SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::rolloutTimeTriggeredWorker(
-			size_t workerIndex,
-			const size_t& partitionIndex,
-			const scalar_t& initTime,
-			const state_vector_t& initState,
-			const scalar_t& finalTime,
-			const controller_t& controller,
-			scalar_array_t& timeTrajectory,
-			size_array_t& eventsPastTheEndIndeces,
-			state_vector_array_t& stateTrajectory,
-			input_vector_array_t& inputTrajectory)  {
-
-	if (initTime > finalTime)
-		throw std::runtime_error("Initial time should be less-equal to final time.");
-
-	const size_t numEvents = logicRulesMachinePtr_->getNumEvents(partitionIndex);
-	const size_t numSubsystems = logicRulesMachinePtr_->getNumEventCounters(partitionIndex);
-	const scalar_array_t& switchingTimes = logicRulesMachinePtr_->getSwitchingTimes(partitionIndex);
-
-	// max number of steps for integration
-	const size_t maxNumSteps = settings_.maxNumStepsPerSecond_ * std::max(1.0, finalTime-initTime);
-
-	// index of the first subsystem
-	size_t beginItr = 0;
-	if (partitionIndex==initActivePartition_)
-		beginItr = findActiveIntervalIndex(switchingTimes, initTime, 0);
-	// index of the last subsystem
-	size_t finalItr = numSubsystems-1;
-	if (partitionIndex==finalActivePartition_)
-		finalItr = findActiveIntervalIndex(switchingTimes, finalTime, numSubsystems-1);
-
-	std::cout << "partitionIndex: " << partitionIndex << std::endl;
-	std::cout << "beginItr: " << beginItr << std::endl;
-	std::cout << "finalItr: " << finalItr << std::endl;
-
-
-	// clearing the output trajectories
-	timeTrajectory.clear();
-	timeTrajectory.reserve(maxNumSteps+1);
-	stateTrajectory.clear();
-	stateTrajectory.reserve(maxNumSteps+1);
-	inputTrajectory.clear();
-	inputTrajectory.reserve(maxNumSteps+1);
-	eventsPastTheEndIndeces.clear();
-	eventsPastTheEndIndeces.reserve(numEvents);
-
-	// initialize the model and set controller
-	if (controller.empty()==false) {
-		// set controller
-		systemDynamicsPtrStock_[workerIndex]->setController(controller);
-		// reset function calls counter
-		systemDynamicsPtrStock_[workerIndex]->resetNumFunctionCalls();
-		// Reset the event class
-		systemEventHandlersPtrStock_[workerIndex]->reset();
-		// initialize subsystem
-		systemDynamicsPtrStock_[workerIndex]->initializeModel(*logicRulesMachinePtr_, partitionIndex, "SLQ");
-
-	} else {
-		// initialize operatingTrajectories
-		operatingTrajectoriesPtrStock_[workerIndex]->initializeModel(*logicRulesMachinePtr_, partitionIndex, "SLQ");
-	}
-
-	state_vector_t beginState = initState;
-	scalar_t beginTime, endTime;
-	size_t k_u = 0;  // control input iterator
-	for (size_t i=beginItr; i<=finalItr; i++) {
-
-		beginTime = i==beginItr ? initTime  : switchingTimes[i];
-		endTime   = i==finalItr ? finalTime : switchingTimes[i+1];
-
-		// simulate subsystem
-		if (controller.empty()==false) {
-			// integrate controlled system
-			dynamicsIntegratorsPtrStock_[workerIndex]->integrate(beginState, beginTime, endTime,
-					stateTrajectory, timeTrajectory,
-					settings_.minTimeStep_, settings_.absTolODE_, settings_.relTolODE_, maxNumSteps, true);
-			// compute control input trajectory and concatenate to inputTrajectory
-			for ( ; k_u<timeTrajectory.size(); k_u++) {
-				inputTrajectory.emplace_back( systemDynamicsPtrStock_[workerIndex]->computeInput(
-						timeTrajectory[k_u], stateTrajectory[k_u]) );
-			} // end of k loop
-
-		} else { // if no controller is assigned
-			// get operating trajectories
-			operatingTrajectoriesPtrStock_[workerIndex]->getSystemOperatingTrajectories(beginState, beginTime, endTime,
-					timeTrajectory, stateTrajectory, inputTrajectory,
-					true);
-		}
-
-		if (i<finalItr) {
-			eventsPastTheEndIndeces.push_back( stateTrajectory.size() );
-			systemDynamicsPtrStock_[workerIndex]->computeJumpMap(timeTrajectory.back(), stateTrajectory.back(), beginState);
-		}
-
-	}  // end of i loop
-
-	// If an event has happened at the final time push it to the eventsPastTheEndIndeces
-	// numEvents>finalItr means that there the final active subsystem is before an event time.
-	// Note: we don't push the state because that the input might not be defined since no control policy is available)
-	bool eventAtFinalTime = numEvents>finalItr &&
-			logicRulesMachinePtr_->getEventTimes(partitionIndex)[finalItr]<finalTime+OCS2NumericTraits<scalar_t>::limit_epsilon();
-	if (eventAtFinalTime) {
-		eventsPastTheEndIndeces.push_back( stateTrajectory.size() );
-		systemDynamicsPtrStock_[workerIndex]->computeJumpMap(timeTrajectory.back(), stateTrajectory.back(), beginState);
-		return beginState;
-
-	} else {
-		return stateTrajectory.back();
-	}
-}
-
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
 typename SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::scalar_t
 	SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::rolloutTrajectory(
-		const scalar_t& initTime,
-		const state_vector_t& initState,
-		const scalar_t& finalTime,
-		const scalar_array_t& partitioningTimes,
-		const controller_array_t& controllersStock,
-		std::vector<scalar_array_t>& timeTrajectoriesStock,
-		std::vector<size_array_t>& eventsPastTheEndIndecesStock,
-		state_vector_array2_t& stateTrajectoriesStock,
-		input_vector_array2_t& inputTrajectoriesStock,
-		size_t threadId /*= 0*/)  {
-
-	size_t numPartitions = partitioningTimes.size()-1;
-
-	if (controllersStock.size() != numPartitions)
-		throw std::runtime_error("controllersStock has less controllers then the number of subsystems");
-
-	timeTrajectoriesStock.resize(numPartitions);
-	eventsPastTheEndIndecesStock.resize(numPartitions);
-	stateTrajectoriesStock.resize(numPartitions);
-	inputTrajectoriesStock.resize(numPartitions);
-
-	// finding the active subsystem index at initTime
-	size_t initActivePartition = BASE::findActivePartitionIndex(partitioningTimes, initTime);
-	// finding the active subsystem index at initTime
-	size_t finalActivePartition = BASE::findActivePartitionIndex(partitioningTimes, finalTime);
-
-	scalar_t t0 = initTime;
-	state_vector_t x0 = initState;
-	scalar_t tf;
-	size_t numSteps = 0;
-	for (size_t i=0; i<numPartitions; i++)  {
-
-		// for subsystems before the initial time
-		if (i<initActivePartition || i>finalActivePartition) {
-			timeTrajectoriesStock[i].clear();
-			eventsPastTheEndIndecesStock[i].clear();
-			stateTrajectoriesStock[i].clear();
-			inputTrajectoriesStock[i].clear();
-			continue;
-		}
-
-		// final time
-		tf = (i != finalActivePartition) ? partitioningTimes[i+1] : finalTime;
-
-		// if blockwiseMovingHorizon_ is not set, use the previous partition's controller for
-		// the first rollout of the partition. However for the very first run of the SLQ
-		// it will still use operating trajectories if an initial controller is not provided.
-		const controller_t* controllerPtrTemp = &controllersStock[i];
-		if (blockwiseMovingHorizon_==false)
-			if (controllerPtrTemp->empty()==true && i>0 && controllersStock[i-1].empty()==false)
-				controllerPtrTemp = &controllersStock[i-1];
-
-		// call rollout worker for the partition 'i' on the thread 'threadId'
-		x0 = rolloutTimeTriggeredWorker(threadId, i,
-				t0, x0, tf, *controllerPtrTemp,
-				timeTrajectoriesStock[i], eventsPastTheEndIndecesStock[i],
-				stateTrajectoriesStock[i], inputTrajectoriesStock[i]);
-
-		// reset the initial time
-		t0 = timeTrajectoriesStock[i].back();
-
-		// total number of steps
-		numSteps += timeTrajectoriesStock[i].size();
-
-	}  // end of i loop
-
-	if (x0 != x0)
-		throw std::runtime_error("System became unstable during the SLQ rollout.");
-
-	std::vector<scalar_array_t> temp_timeTrajectoriesStock;
-	std::vector<size_array_t> temp_eventsPastTheEndIndecesStock;
-	state_vector_array2_t temp_stateTrajectoriesStock;
-	input_vector_array2_t temp_inputTrajectoriesStock;
-	scalar_t tt = rolloutTrajectory_new(
-			initTime,
-			initState,
-			finalTime,
-			partitioningTimes,
-			controllersStock,
-			temp_timeTrajectoriesStock,
-			temp_eventsPastTheEndIndecesStock,
-			temp_stateTrajectoriesStock,
-			temp_inputTrajectoriesStock,
-			threadId);
-
-	for (size_t i=0; i<numPartitions; i++)  {
-
-		std::cout << ">>>>>>>>>>>" << std::endl;
-		std::cout << "Partition: " << i << std::endl;
-		if (!timeTrajectoriesStock[i].empty()) {
-			std::cout << "Original: " << std::endl;
-			std::cout << "Time init:   " << timeTrajectoriesStock[i].front() << std::endl;
-			std::cout << "State init:  " << stateTrajectoriesStock[i].front().transpose() << std::endl;
-			std::cout << "Time final:  " << timeTrajectoriesStock[i].back() << std::endl;
-			std::cout << "State final: " << stateTrajectoriesStock[i].back().transpose() << std::endl;
-		}
-		if (!temp_timeTrajectoriesStock[i].empty()) {
-			std::cout << "New: " << std::endl;
-			std::cout << "Time init:   " << temp_timeTrajectoriesStock[i].front() << std::endl;
-			std::cout << "State init:  " << temp_stateTrajectoriesStock[i].front().transpose() << std::endl;
-			std::cout << "Time final:  " << temp_timeTrajectoriesStock[i].back() << std::endl;
-			std::cout << "State final: " << temp_stateTrajectoriesStock[i].back().transpose() << std::endl;
-		}
-
-		std::cout << std::endl;
-
-	}
-
-	// average time step
-	return (finalTime-initTime)/(scalar_t)numSteps;
-}
-
-/******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-typename SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::scalar_t
-	SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::rolloutTrajectory_new(
 		const scalar_t& initTime,
 		const state_vector_t& initState,
 		const scalar_t& finalTime,
@@ -838,11 +609,20 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::rolloutFinalState (
 			if (controllerPtrTemp->empty()==true && i>0 && controllersStock[i-1].empty()==false)
 				controllerPtrTemp = &controllersStock[i-1];
 
-		// call rolloutTimeTriggeredWorker for the partition 'i' on the thread 'threadId'
-		x0 = rolloutTimeTriggeredWorker(threadId, i,
-				t0, x0, tf, *controllerPtrTemp,
-				timeTrajectory, eventsPastTheEndIndeces,
-				stateTrajectory, inputTrajectory);
+		// call rollout worker for the partition 'i' on the thread 'threadId'
+		if (controllerPtrTemp->empty()==false) {
+			x0 = dynamicsForwardRolloutPtrStock_[threadId]->run(
+					i, t0, x0, tf, *controllerPtrTemp, *logicRulesMachinePtr_,
+					timeTrajectory, eventsPastTheEndIndeces,
+					stateTrajectory, inputTrajectory);
+
+		} else {
+			x0 = operatingTrajectoriesRolloutPtrStock_[threadId]->run(
+					i, t0, x0, tf, *controllerPtrTemp, *logicRulesMachinePtr_,
+					timeTrajectory, eventsPastTheEndIndeces,
+					stateTrajectory, inputTrajectory);
+		}
+
 
 		// reset the initial time
 		t0 = timeTrajectory.back();

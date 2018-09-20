@@ -280,18 +280,6 @@ public:
 			input_vector_array2_t& inputTrajectoriesStock,
 			size_t threadId = 0);
 
-	scalar_t rolloutTrajectory_new(
-			const scalar_t& initTime,
-			const state_vector_t& initState,
-			const scalar_t& finalTime,
-			const scalar_array_t& partitioningTimes,
-			const controller_array_t& controllersStock,
-			std::vector<scalar_array_t>& timeTrajectoriesStock,
-			std::vector<size_array_t>& eventsPastTheEndIndecesStock,
-			state_vector_array2_t& stateTrajectoriesStock,
-			input_vector_array2_t& inputTrajectoriesStock,
-			size_t threadId = 0);
-
 	/**
 	 * The class for performing rollout. It uses the given control policies and initial state,
 	 * to integrate the system dynamics in time period [initTime, finalTime] and only return the final state.
@@ -813,34 +801,6 @@ protected:
 	 * @param partitionIndex: Time partition index
 	 */
 	virtual void calculatePartitionController(const size_t& partitionIndex) = 0;
-
-	/**
-	 * Forward integrate the system dynamics with given controller. It uses the given control policies and initial state,
-	 * to integrate the system dynamics in time period [initTime, finalTime].
-	 *
-	 * @param [in] workerIndex: Working agent index.
-	 * @param [in] partitionIndex: Time partition index.
-	 * @param [in] initTime: The initial time.
-	 * @param [in] initState: The initial state.
-	 * @param [in] finalTime: The final time.
-	 * @param [in] controller: control policies.
-	 * @param [out] timeTrajectory: The time trajectory stamp.
-	 * @param [out] eventsPastTheEndIndeces: Indices containing past-the-end index of events trigger.
-	 * @param [out] stateTrajectory: The state trajectory.
-	 * @param [out] inputTrajectory: The control input trajectory.
-	 * @return The final state (state jump is considered if it took place)
-	 */
-	state_vector_t rolloutTimeTriggeredWorker(
-			size_t workerIndex,
-			const size_t& partitionIndex,
-			const scalar_t& initTime,
-			const state_vector_t& initState,
-			const scalar_t& finalTime,
-			const controller_t& controller,
-			scalar_array_t& timeTrajectory,
-			size_array_t& eventsPastTheEndIndeces,
-			state_vector_array_t& stateTrajectory,
-			input_vector_array_t& inputTrajectory);
 
 	/**
 	 * Calculates the total cost for the given trajectories.

@@ -30,7 +30,7 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread -fopenmp -std=c++11 -Wfatal-err
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
     INCLUDE_DIRS include
-    LIBRARIES ${PROJECT_NAME}
+    LIBRARIES ${PROJECT_NAME} generated_COM_lib
     CATKIN_DEPENDS ocs2_switched_model_interface ocs2_robotic_examples
 #   DEPENDS system_lib
 )
@@ -45,6 +45,19 @@ include_directories(
   include
   ${EIGEN_INCLUDE_DIRS}
   ${catkin_INCLUDE_DIRS}
+)
+
+add_library(generated_COM_lib
+        include/ocs2_anymal_switched_model/generated/miscellaneous.cpp
+)
+
+add_dependencies(generated_COM_lib
+        ${${PROJECT_NAME}_EXPORTED_TARGETS}
+        ${catkin_EXPORTED_TARGETS}
+        )
+
+target_link_libraries(generated_COM_lib
+        ${catkin_LIBRARIES}
 )
 
 add_library(${PROJECT_NAME}
@@ -65,6 +78,7 @@ add_dependencies(${PROJECT_NAME}
 )
 
 target_link_libraries(${PROJECT_NAME}
+  generated_COM_lib
   ${catkin_LIBRARIES}
 )
 

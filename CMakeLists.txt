@@ -14,6 +14,7 @@ find_package(catkin REQUIRED COMPONENTS
   ocs2_mpc
   ocs2_anymal_switched_model
   ocs2_quadruped_interface
+  ocs2_robotic_examples
   xpp_msgs
 )
 
@@ -60,6 +61,7 @@ catkin_package(
     ocs2_anymal_switched_model
     ocs2_quadruped_interface
     xpp_msgs
+    ocs2_robotic_examples
 )
 
 ###########

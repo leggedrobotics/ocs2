@@ -8,10 +8,10 @@
 #ifndef ANYMAL_ANYMALCOM_H_
 #define ANYMAL_ANYMALCOM_H_
 
-#include <iit/robots/anymal/inertia_properties.h>
-#include <iit/robots/anymal/transforms.h>
-#include <iit/robots/anymal/jsim.h>
-#include <iit/robots/anymal/miscellaneous.h>
+#include <ocs2_anymal_switched_model/generated/inertia_properties.h>
+#include <ocs2_anymal_switched_model/generated/transforms.h>
+#include <ocs2_anymal_switched_model/generated/jsim.h>
+#include <ocs2_anymal_switched_model/generated/miscellaneous.h>
 #include <ocs2_switched_model_interface/core/ComModelBase.h>
 
 namespace anymal

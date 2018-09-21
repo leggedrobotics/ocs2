@@ -60,6 +60,12 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_core/logic/machine/HybridLogicRulesMachine.h>
 #include <ocs2_core/initialization/SystemOperatingTrajectoriesBase.h>
 
+#include <ocs2_oc/oc_solver/Solver_BASE.h>
+#include <ocs2_oc/rollout/RolloutBase.h>
+#include <ocs2_oc/rollout/TimeTriggeredRollout.h>
+#include <ocs2_oc/rollout/OperatingTrajectoriesRollout.h>
+#include <ocs2_oc/rollout/StateTriggeredRollout.h>
+
 #include <ocs2_slq/SLQ_Settings.h>
 #include <ocs2_slq/riccati_equations/SequentialRiccatiEquations.h>
 #include <ocs2_slq/riccati_equations/SequentialRiccatiEquationsNormalized.h>
@@ -73,7 +79,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 namespace ocs2 {
 
-
 /**
  * This class is an interface class for the single-thread and multi-thread SLQ.
  *
@@ -82,12 +87,14 @@ namespace ocs2 {
  * @tparam LOGIC_RULES_T: Logic Rules type (default NullLogicRules).
  */
 template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T=NullLogicRules>
-class SLQ_BASE
+class SLQ_BASE : public Solver_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>
 {
 public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 	static_assert(std::is_base_of<LogicRulesBase, LOGIC_RULES_T>::value,
 			"LOGIC_RULES_T must inherit from LogicRulesBase");
+
+	typedef Solver_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> BASE;
 
 	typedef std::shared_ptr<SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>> Ptr;
 
@@ -100,64 +107,67 @@ public:
 	using hamiltonian_equation_t = LTI_Equations<2*STATE_DIM, STATE_DIM, double>;
 	using hamiltonian_increment_equation_t = LTI_Equations<STATE_DIM, 1, double>;
 
+	typedef typename BASE::DIMENSIONS                          DIMENSIONS;
+	typedef typename BASE::controller_t                        controller_t;
+	typedef typename BASE::controller_array_t                  controller_array_t;
+	typedef typename BASE::size_array_t                        size_array_t;
+	typedef typename BASE::scalar_t                            scalar_t;
+	typedef typename BASE::scalar_array_t                      scalar_array_t;
+	typedef typename BASE::eigen_scalar_t                      eigen_scalar_t;
+	typedef typename BASE::eigen_scalar_array_t                eigen_scalar_array_t;
+	typedef typename BASE::eigen_scalar_array2_t               eigen_scalar_array2_t;
+	typedef typename BASE::state_vector_t                      state_vector_t;
+	typedef typename BASE::state_vector_array_t                state_vector_array_t;
+	typedef typename BASE::state_vector_array2_t               state_vector_array2_t;
+	typedef typename BASE::input_vector_t                      input_vector_t;
+	typedef typename BASE::input_vector_array_t                input_vector_array_t;
+	typedef typename BASE::input_vector_array2_t               input_vector_array2_t;
+	typedef typename BASE::input_state_matrix_t                input_state_matrix_t;
+	typedef typename BASE::input_state_matrix_array_t          input_state_matrix_array_t;
+	typedef typename BASE::input_state_matrix_array2_t         input_state_matrix_array2_t;
+	typedef typename BASE::state_matrix_t                      state_matrix_t;
+	typedef typename BASE::state_matrix_array_t                state_matrix_array_t;
+	typedef typename BASE::state_matrix_array2_t               state_matrix_array2_t;
+	typedef typename BASE::input_matrix_t                      input_matrix_t;
+	typedef typename BASE::input_matrix_array_t                input_matrix_array_t;
+	typedef typename BASE::input_matrix_array2_t               input_matrix_array2_t;
+	typedef typename BASE::state_input_matrix_t                state_input_matrix_t;
+	typedef typename BASE::state_input_matrix_array_t          state_input_matrix_array_t;
+	typedef typename BASE::state_input_matrix_array2_t         state_input_matrix_array2_t;
+	typedef typename BASE::constraint1_vector_t                constraint1_vector_t;
+	typedef typename BASE::constraint1_vector_array_t          constraint1_vector_array_t;
+	typedef typename BASE::constraint1_vector_array2_t         constraint1_vector_array2_t;
+	typedef typename BASE::constraint1_state_matrix_t          constraint1_state_matrix_t;
+	typedef typename BASE::constraint1_state_matrix_array_t    constraint1_state_matrix_array_t;
+	typedef typename BASE::constraint1_state_matrix_array2_t   constraint1_state_matrix_array2_t;
+	typedef typename BASE::constraint1_input_matrix_t          constraint1_input_matrix_t;
+	typedef typename BASE::constraint1_input_matrix_array_t    constraint1_input_matrix_array_t;
+	typedef typename BASE::constraint1_input_matrix_array2_t   constraint1_input_matrix_array2_t;
+	typedef typename BASE::control_constraint1_matrix_t        control_constraint1_matrix_t;
+	typedef typename BASE::control_constraint1_matrix_array_t  control_constraint1_matrix_array_t;
+	typedef typename BASE::control_constraint1_matrix_array2_t control_constraint1_matrix_array2_t;
+	typedef typename BASE::constraint2_vector_t                constraint2_vector_t;
+	typedef typename BASE::constraint2_vector_array_t          constraint2_vector_array_t;
+	typedef typename BASE::constraint2_vector_array2_t         constraint2_vector_array2_t;
+	typedef typename BASE::constraint2_state_matrix_t          constraint2_state_matrix_t;
+	typedef typename BASE::constraint2_state_matrix_array_t    constraint2_state_matrix_array_t;
+	typedef typename BASE::constraint2_state_matrix_array2_t   constraint2_state_matrix_array2_t;
+	typedef typename BASE::dynamic_vector_t                    dynamic_vector_t;
+	typedef typename BASE::dynamic_vector_array_t              dynamic_vector_array_t;
 
-	typedef Dimensions<STATE_DIM, INPUT_DIM> DIMENSIONS;
-
-	typedef typename DIMENSIONS::controller_t       controller_t;
-	typedef typename DIMENSIONS::controller_array_t controller_array_t;
-	typedef typename DIMENSIONS::size_array_t   size_array_t;
-	typedef typename DIMENSIONS::scalar_t       scalar_t;
-	typedef typename DIMENSIONS::scalar_array_t scalar_array_t;
-	typedef typename DIMENSIONS::eigen_scalar_t        eigen_scalar_t;
-	typedef typename DIMENSIONS::eigen_scalar_array_t  eigen_scalar_array_t;
-	typedef typename DIMENSIONS::eigen_scalar_array2_t eigen_scalar_array2_t;
-	typedef typename DIMENSIONS::state_vector_t        state_vector_t;
-	typedef typename DIMENSIONS::state_vector_array_t  state_vector_array_t;
-	typedef typename DIMENSIONS::state_vector_array2_t state_vector_array2_t;
-	typedef typename DIMENSIONS::input_vector_t        input_vector_t;
-	typedef typename DIMENSIONS::input_vector_array_t  input_vector_array_t;
-	typedef typename DIMENSIONS::input_vector_array2_t input_vector_array2_t;
-	typedef typename DIMENSIONS::input_state_matrix_t        input_state_matrix_t;
-	typedef typename DIMENSIONS::input_state_matrix_array_t  input_state_matrix_array_t;
-	typedef typename DIMENSIONS::input_state_matrix_array2_t input_state_matrix_array2_t;
-	typedef typename DIMENSIONS::state_matrix_t        state_matrix_t;
-	typedef typename DIMENSIONS::state_matrix_array_t  state_matrix_array_t;
-	typedef typename DIMENSIONS::state_matrix_array2_t state_matrix_array2_t;
-	typedef typename DIMENSIONS::input_matrix_t        input_matrix_t;
-	typedef typename DIMENSIONS::input_matrix_array_t  input_matrix_array_t;
-	typedef typename DIMENSIONS::input_matrix_array2_t input_matrix_array2_t;
-	typedef typename DIMENSIONS::state_input_matrix_t        state_input_matrix_t;
-	typedef typename DIMENSIONS::state_input_matrix_array_t  state_input_matrix_array_t;
-	typedef typename DIMENSIONS::state_input_matrix_array2_t state_input_matrix_array2_t;
-	typedef typename DIMENSIONS::constraint1_vector_t        constraint1_vector_t;
-	typedef typename DIMENSIONS::constraint1_vector_array_t  constraint1_vector_array_t;
-	typedef typename DIMENSIONS::constraint1_vector_array2_t constraint1_vector_array2_t;
-	typedef typename DIMENSIONS::constraint1_state_matrix_t        constraint1_state_matrix_t;
-	typedef typename DIMENSIONS::constraint1_state_matrix_array_t  constraint1_state_matrix_array_t;
-	typedef typename DIMENSIONS::constraint1_state_matrix_array2_t constraint1_state_matrix_array2_t;
-	typedef typename DIMENSIONS::constraint1_input_matrix_t        constraint1_input_matrix_t;
-	typedef typename DIMENSIONS::constraint1_input_matrix_array_t  constraint1_input_matrix_array_t;
-	typedef typename DIMENSIONS::constraint1_input_matrix_array2_t constraint1_input_matrix_array2_t;
-	typedef typename DIMENSIONS::control_constraint1_matrix_t        control_constraint1_matrix_t;
-	typedef typename DIMENSIONS::control_constraint1_matrix_array_t  control_constraint1_matrix_array_t;
-	typedef typename DIMENSIONS::control_constraint1_matrix_array2_t control_constraint1_matrix_array2_t;
-	typedef typename DIMENSIONS::constraint2_vector_t        constraint2_vector_t;
-	typedef typename DIMENSIONS::constraint2_vector_array_t  constraint2_vector_array_t;
-	typedef typename DIMENSIONS::constraint2_vector_array2_t constraint2_vector_array2_t;
-	typedef typename DIMENSIONS::constraint2_state_matrix_t        constraint2_state_matrix_t;
-	typedef typename DIMENSIONS::constraint2_state_matrix_array_t  constraint2_state_matrix_array_t;
-	typedef typename DIMENSIONS::constraint2_state_matrix_array2_t constraint2_state_matrix_array2_t;
-	typedef typename DIMENSIONS::dynamic_vector_t       dynamic_vector_t;
-	typedef typename DIMENSIONS::dynamic_vector_array_t dynamic_vector_array_t;
-
-	typedef SystemEventHandler<STATE_DIM>         event_handler_t;
-	typedef StateTriggeredEventHandler<STATE_DIM> state_triggered_event_handler_t;
+	typedef SystemEventHandler<STATE_DIM> event_handler_t;
 	typedef ControlledSystemBase<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> controlled_system_base_t;
 	typedef DerivativesBase<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>      derivatives_base_t;
 	typedef ConstraintBase<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>       constraint_base_t;
-	typedef CostFunctionBase<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> cost_function_base_t;
-	typedef CostDesiredTrajectories<scalar_t>                     cost_desired_trajectories_t;
+	typedef CostFunctionBase<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>     cost_function_base_t;
 	typedef SystemOperatingTrajectoriesBase<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> operating_trajectories_base_t;
+
+	typedef RolloutBase<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> rollout_base_t;
+	typedef TimeTriggeredRollout<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> time_triggered_rollout_t;
+	typedef OperatingTrajectoriesRollout<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> operating_trajectorie_rollout_t;
+	typedef StateTriggeredRollout<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> state_triggered_rollout_t;
+
+	typedef typename BASE::cost_desired_trajectories_t cost_desired_trajectories_t;
 
 	typedef LogicRulesMachine<LOGIC_RULES_T>     logic_rules_machine_t;
 	typedef typename logic_rules_machine_t::Ptr	 logic_rules_machine_ptr_t;
@@ -172,24 +182,6 @@ public:
 
 // TODO: do not push to remote
 public:
-
-	typedef HybridLogicRulesMachine<LOGIC_RULES_T> hybrid_logic_rules_machine_t;
-
-	state_vector_t rolloutStateTriggeredWorker(
-			size_t workerIndex,
-			const size_t& partitionIndex,
-			const scalar_t& initTime,
-			const state_vector_t& initState,
-			const scalar_t& finalTime,
-			const controller_t& controller,
-			scalar_array_t& timeTrajectory,
-			size_array_t& eventsPastTheEndIndeces,
-			state_vector_array_t& stateTrajectory,
-			input_vector_array_t& inputTrajectory,
-			scalar_array_t& eventTimes,
-			size_array_t& subsystemID,
-			scalar_array_t& guardSurfacesValues,
-			hybrid_logic_rules_machine_t& hybridLlogicRulesMachine);
 
 	void rolloutStateTriggeredTrajectory(
 			const scalar_t& initTime,
@@ -240,7 +232,7 @@ public:
 	/**
 	 * Resets the class to its state after construction.
 	 */
-	virtual void reset();
+	virtual void reset() override;
 
 	/**
 	 * Forward integrate the system dynamics with given controller. It uses the given control policies and initial state,
@@ -468,7 +460,7 @@ public:
 			const scalar_t& initTime,
 			const state_vector_t& initState,
 			const scalar_t& finalTime,
-			const scalar_array_t& partitioningTimes);
+			const scalar_array_t& partitioningTimes) override;
 
 	/**
 	 * The main routine of SLQ which runs SLQ for a given initial state, initial time, and final time. In order
@@ -489,7 +481,7 @@ public:
 			const state_vector_t& initState,
 			const scalar_t& finalTime,
 			const scalar_array_t& partitioningTimes,
-			const controller_array_t& controllersStock);
+			const controller_array_t& controllersStock) override;
 
 	/**
 	 * Calculates the value function at the given time and state.
@@ -498,7 +490,10 @@ public:
 	 * @param [in] state: The inquiry state.
 	 * @param [out] valueFuntion: value function at the inquiry time and state.
 	 */
-	virtual void getValueFuntion(const scalar_t& time, const state_vector_t& state, scalar_t& valueFuntion);
+	virtual void getValueFuntion(
+			const scalar_t& time,
+			const state_vector_t& state,
+			scalar_t& valueFuntion);
 
 	/**
 	 * Gets a reference to the Options structure.
@@ -517,11 +512,11 @@ public:
 
 	/**
 	 * SLQ-MPC activates this if the final time of the MPC will increase by the length of a time partition instead
-	 * of commonly used scheme where the final time is gradual increased.
+	 * of commonly used scheme where the final time is gradually increased.
 	 *
 	 * @param [in] flag: If set true, the final time of the MPC will increase by the length of a time partition.
 	 */
-	void blockwiseMovingHorizon(bool flag);
+	void blockwiseMovingHorizon(bool flag) override;
 
 	/**
 	 * Gets the cost function and ISEs of the type-1 and type-2 constraints at the initial time.
@@ -533,14 +528,14 @@ public:
 	void getPerformanceIndeces(
 			scalar_t& costFunction,
 			scalar_t& constraint1ISE,
-			scalar_t& constraint2ISE) const;
+			scalar_t& constraint2ISE) const override;
 
 	/**
 	 * Gets number of iterations.
 	 *
 	 * @return Number of iterations.
 	 */
-	size_t getNumIterations() const;
+	size_t getNumIterations() const override;
 
 	/**
 	 * Gets iterations Log of SLQ.
@@ -552,7 +547,7 @@ public:
 	void getIterationsLog(
 			eigen_scalar_array_t& iterationCost,
 			eigen_scalar_array_t& iterationISE1,
-			eigen_scalar_array_t& iterationISE2) const;
+			eigen_scalar_array_t& iterationISE2) const override;
 
 	/**
 	 * Gets Iterations Log of SLQ
@@ -564,63 +559,56 @@ public:
 	void getIterationsLogPtr(
 			const eigen_scalar_array_t*& iterationCostPtr,
 			const eigen_scalar_array_t*& iterationISE1Ptr,
-			const eigen_scalar_array_t*& iterationISE2Ptr) const;
+			const eigen_scalar_array_t*& iterationISE2Ptr) const override;
 
 	/**
-	 * Gets final time of optimization
+	 * Returns the final time of optimization
 	 *
 	 * @return finalTime
 	 */
-	const scalar_t& getFinalTime() const;
+	const scalar_t& getFinalTime() const override;
 
 	/**
-	 * Gets final time of optimization
+	 * Returns final time of optimization
 	 *
 	 * @return finalTime
 	 */
-	const scalar_array_t& getPartitioningTimes() const;
+	const scalar_array_t& getPartitioningTimes() const override;
 
 	/**
-	 * Gets a pointer to the LogicRulesMachine
+	 * Returns a pointer to the LogicRulesMachine
 	 *
 	 * @return a pointer to LogicRulesMachine
 	 */
-	logic_rules_machine_t* getLogicRulesMachinePtr();
+	logic_rules_machine_t* getLogicRulesMachinePtr() override;
 
 	/**
-	 * Gets a pointer to the LogicRulesMachine
+	 * Returns a pointer to the LogicRulesMachine.
 	 *
 	 * @return a pointer to LogicRulesMachine
 	 */
-	const logic_rules_machine_t* getLogicRulesMachinePtr() const;
+	const logic_rules_machine_t* getLogicRulesMachinePtr() const override;
 
 	/**
-	 * set logic rules.
+	 * Sets logic rules.
 	 *
 	 * @param logicRules: This class will be passed to all of the dynamics and derivatives classes through initializeModel() routine.
 	 */
-	void setLogicRules(const LOGIC_RULES_T& logicRules);
+	void setLogicRules(const LOGIC_RULES_T& logicRules) override;
 
 	/**
-	 * get logic rules.
+	 * Returns a constant pointer to the logic rules.
 	 *
-	 * @return logicRules.
+	 * @return a constant pointer to the logic rules.
 	 */
-	const LOGIC_RULES_T& getLogicRules() const;
+	const LOGIC_RULES_T* getLogicRulesPtr() const override;
 
 	/**
-	 * get logic rules.
+	 * Returns a pointer to the logic rules.
 	 *
-	 * @return logicRules.
+	 * @return a pointer to the logic rules.
 	 */
-	LOGIC_RULES_T& getLogicRules();
-
-	/**
-	 * Gets an array of times indicating event times.
-	 *
-	 * @return eventTimes: Array of the event times.
-	 */
-	const scalar_array_t& getEventTimes() const;
+	LOGIC_RULES_T* getLogicRulesPtr() override;
 
 	/**
 	 * Gets the cost function desired trajectories.
@@ -628,7 +616,7 @@ public:
 	 * @param [out] costDesiredTrajectories: A pointer to the cost function desired trajectories
 	 */
 	virtual void getCostDesiredTrajectoriesPtr(
-			const cost_desired_trajectories_t*& costDesiredTrajectoriesPtr) const;
+			const cost_desired_trajectories_t*& costDesiredTrajectoriesPtr) const override;
 
 	/**
 	 * Sets the cost function desired trajectories.
@@ -636,7 +624,7 @@ public:
 	 * @param [in] costDesiredTrajectories: The cost function desired trajectories
 	 */
 	void setCostDesiredTrajectories(
-			const cost_desired_trajectories_t& costDesiredTrajectories);
+			const cost_desired_trajectories_t& costDesiredTrajectories) override;
 
 	/**
 	 * Sets the cost function desired trajectories.
@@ -648,7 +636,7 @@ public:
 	void setCostDesiredTrajectories(
 			const scalar_array_t& desiredTimeTrajectory,
 			const dynamic_vector_array_t& desiredStateTrajectory,
-			const dynamic_vector_array_t& desiredInputTrajectory);
+			const dynamic_vector_array_t& desiredInputTrajectory) override;
 
 	/**
 	 * Swaps the cost function desired trajectories.
@@ -656,7 +644,7 @@ public:
 	 * @param [in] costDesiredTrajectories: The cost function desired trajectories
 	 */
 	void swapCostDesiredTrajectories(
-			cost_desired_trajectories_t& costDesiredTrajectories);
+			cost_desired_trajectories_t& costDesiredTrajectories) override;
 
 	/**
 	 * Swaps the cost function desired trajectories.
@@ -668,28 +656,28 @@ public:
 	void swapCostDesiredTrajectories(
 			scalar_array_t& desiredTimeTrajectory,
 			dynamic_vector_array_t& desiredStateTrajectory,
-			dynamic_vector_array_t& desiredInputTrajectory);
+			dynamic_vector_array_t& desiredInputTrajectory) override;
 
 	/**
 	 * Whether the cost function desired trajectories is updated.
 	 *
 	 * @return true if it is updated.
 	 */
-	bool costDesiredTrajectoriesUpdated() const;
+	bool costDesiredTrajectoriesUpdated() const override;
 
 	/**
-	 * Gets the optimal array of the control policies.
+	 * Returns the optimal array of the control policies.
 	 *
 	 * @return controllersStock: The optimal array of the control policies.
 	 */
-	const controller_array_t& getController() const;
+	const controller_array_t& getController() const override;
 
 	/**
 	 * Gets a pointer to the optimal array of the control policies.
 	 *
 	 * @param [out] controllersStockPtr: A pointer to the optimal array of the control policies
 	 */
-	void getControllerPtr(const controller_array_t*& controllersStockPtr) const;
+	void getControllerPtr(const controller_array_t*& controllersStockPtr) const override;
 
 	/**
 	 * Swaps the output array of the control policies with the nominal one.
@@ -697,28 +685,28 @@ public:
 	 *
 	 * @param [out] controllersStock: A reference to the optimal array of the control policies
 	 */
-	void swapController(controller_array_t& controllersStock);
+	void swapController(controller_array_t& controllersStock) override;
 
 	/**
-	 * Gets the nominal time trajectories.
+	 * Returns the nominal time trajectories.
 	 *
 	 * @return nominalTimeTrajectoriesStock: Array of trajectories containing the output time trajectory stamp.
 	 */
-	const std::vector<scalar_array_t>& getNominalTimeTrajectories() const;
+	const std::vector<scalar_array_t>& getNominalTimeTrajectories() const override;
 
 	/**
-	 * Gets the nominal state trajectories.
+	 * Returns the nominal state trajectories.
 	 *
 	 * @return nominalStateTrajectoriesStock: Array of trajectories containing the output state trajectory.
 	 */
-	const state_vector_array2_t& getNominalStateTrajectories() const;
+	const state_vector_array2_t& getNominalStateTrajectories() const override;
 
 	/**
-	 * Gets the nominal input trajectories.
+	 * Returns the nominal input trajectories.
 	 *
 	 * @return nominalInputTrajectoriesStock: Array of trajectories containing the output control input trajectory.
 	 */
-	const input_vector_array2_t& getNominalInputTrajectories() const;
+	const input_vector_array2_t& getNominalInputTrajectories() const override;
 
 	/**
 	 * Gets a pointer to the nominal time, state, and input trajectories.
@@ -730,7 +718,7 @@ public:
 	void getNominalTrajectoriesPtr(
 			const std::vector<scalar_array_t>*& nominalTimeTrajectoriesStockPtr,
 			const state_vector_array2_t*& nominalStateTrajectoriesStockPtr,
-			const input_vector_array2_t*& nominalInputTrajectoriesStockPtr) const ;
+			const input_vector_array2_t*& nominalInputTrajectoriesStockPtr) const override;
 
 	/**
 	 * Swaps the the outputs with the nominal trajectories.
@@ -743,7 +731,7 @@ public:
 	void swapNominalTrajectories (
 			std::vector<scalar_array_t>& nominalTimeTrajectoriesStock,
 			state_vector_array2_t& nominalStateTrajectoriesStock,
-			input_vector_array2_t& nominalInputTrajectoriesStock);
+			input_vector_array2_t& nominalInputTrajectoriesStock) override;
 
 	/**
 	 * Calculates state-input constraints ISE (Integral of Square Error). It also return the maximum norm of the constraints.
@@ -761,33 +749,18 @@ public:
 			scalar_t& constraintISE);
 
 	/**
-	 * Finds the interval of partitioningTimes to which the input time belongs to it.
-	 * time is in interval i if: partitioningTimes[i] < t <= partitioningTimes[i+1]
-	 * Exception: if time=partitioningTimes[0] then time is interval 0
-	 *
-	 * @param [in] partitioningTimes: a sorted time sequence.
-	 * @param [in] time: Enquiry time.
-	 * @param [in] ceilingFunction: Use the ceiling function settings ().
-	 * @return Active subsystem index.
-	 */
-	static size_t findActivePartitionIndex(
-			const scalar_array_t& partitioningTimes,
-			const scalar_t& time,
-			bool ceilingFunction = true);
-
-	/**
 	 * Rewinds optimizer internal variables.
 	 *
 	 * @param [in] firstIndex: The index which we want to rewind to.
 	 */
-	void rewindOptimizer(const size_t& firstIndex);
+	void rewindOptimizer(const size_t& firstIndex) override;
 
 	/**
 	 * Get rewind counter.
 	 *
 	 * @return Number of partition rewinds since construction of the class.
 	 */
-	const unsigned long long int& getRewindCounter() const;
+	const unsigned long long int& getRewindCounter() const override;
 
 
 protected:
@@ -811,34 +784,6 @@ protected:
 	 * @param partitionIndex: Time partition index
 	 */
 	virtual void calculatePartitionController(const size_t& partitionIndex) = 0;
-
-	/**
-	 * Forward integrate the system dynamics with given controller. It uses the given control policies and initial state,
-	 * to integrate the system dynamics in time period [initTime, finalTime].
-	 *
-	 * @param [in] workerIndex: Working agent index.
-	 * @param [in] partitionIndex: Time partition index.
-	 * @param [in] initTime: The initial time.
-	 * @param [in] initState: The initial state.
-	 * @param [in] finalTime: The final time.
-	 * @param [in] controller: control policies.
-	 * @param [out] timeTrajectory: The time trajectory stamp.
-	 * @param [out] eventsPastTheEndIndeces: Indices containing past-the-end index of events trigger.
-	 * @param [out] stateTrajectory: The state trajectory.
-	 * @param [out] inputTrajectory: The control input trajectory.
-	 * @return The final state (state jump is considered if it took place)
-	 */
-	state_vector_t rolloutTimeTriggeredWorker(
-			size_t workerIndex,
-			const size_t& partitionIndex,
-			const scalar_t& initTime,
-			const state_vector_t& initState,
-			const scalar_t& finalTime,
-			const controller_t& controller,
-			scalar_array_t& timeTrajectory,
-			size_array_t& eventsPastTheEndIndeces,
-			state_vector_array_t& stateTrajectory,
-			input_vector_array_t& inputTrajectory);
 
 	/**
 	 * Calculates the total cost for the given trajectories.
@@ -1148,13 +1093,6 @@ protected:
 	void calculateControllerUpdateMaxNorm(
 			scalar_t& maxDeltaUffNorm,
 			scalar_t& maxDeltaUeeNorm);
-
-	/**
-	 * for nice debug printing
-	 * @param [in] text
-	 */
-	void printString(const std::string& text);
-
 	/**
 	 * Display rollout info
 	 */
@@ -1185,9 +1123,9 @@ protected:
 	size_t numPartitions_ = 0;
 	scalar_array_t partitioningTimes_;
 
-	const std::vector<scalar_array_t>* 	desiredTimeTrajectoryStockPtr_;
-	const state_vector_array2_t* 		desiredStateTrajectoryStockPtr_;
-	const input_vector_array2_t* 		desiredInputTrajectoryStockPtr_;
+	const std::vector<scalar_array_t>* desiredTimeTrajectoryStockPtr_;
+	const state_vector_array2_t*       desiredStateTrajectoryStockPtr_;
+	const input_vector_array2_t*       desiredInputTrajectoryStockPtr_;
 
 	scalar_t learningRateStar_ = 1.0;  // The optimal learning rate.
 	scalar_t maxLearningRate_  = 1.0;  // The maximum permitted learning rate (settings_.maxLearningRateGSLQP_).
@@ -1215,36 +1153,35 @@ protected:
 	scalar_t avgTimeStepBP_;
 
 	//
-	std::vector<typename controlled_system_base_t::Ptr> systemDynamicsPtrStock_;
-	std::vector<typename derivatives_base_t::Ptr> 		systemDerivativesPtrStock_;
-	std::vector<typename constraint_base_t::Ptr> 		systemConstraintsPtrStock_;
-	std::vector<typename cost_function_base_t::Ptr> 	costFunctionsPtrStock_;
-	std::vector<typename cost_function_base_t::Ptr> 	heuristicsFunctionsPtrStock_;
-	std::vector<typename event_handler_t::Ptr>			systemEventHandlersPtrStock_;
-	std::vector<std::shared_ptr<ODE45<STATE_DIM>>> 		dynamicsIntegratorsPtrStock_;
+	std::vector<typename derivatives_base_t::Ptr>            systemDerivativesPtrStock_;
+	std::vector<typename constraint_base_t::Ptr>             systemConstraintsPtrStock_;
+	std::vector<typename cost_function_base_t::Ptr>          costFunctionsPtrStock_;
+	std::vector<typename cost_function_base_t::Ptr>          heuristicsFunctionsPtrStock_;
 	std::vector<typename operating_trajectories_base_t::Ptr> operatingTrajectoriesPtrStock_;
 
-	std::vector<typename state_triggered_event_handler_t::Ptr> eventsPtrStock_;
-	std::vector<std::shared_ptr<ODE45<STATE_DIM>>> integratorsPtrStock_;
+	std::vector<typename rollout_base_t::Ptr> dynamicsForwardRolloutPtrStock_;
+	std::vector<typename rollout_base_t::Ptr> operatingTrajectoriesRolloutPtrStock_;
 
-	controller_array_t 			nominalControllersStock_;
+	std::vector<typename rollout_base_t::Ptr> state_dynamicsForwardRolloutPtrStock_;
+
+	controller_array_t          nominalControllersStock_;
 	std::vector<scalar_array_t> nominalTimeTrajectoriesStock_;
-	std::vector<size_array_t> 	nominalEventsPastTheEndIndecesStock_;
-	state_vector_array2_t		nominalStateTrajectoriesStock_;
-	input_vector_array2_t  		nominalInputTrajectoriesStock_;
+	std::vector<size_array_t>   nominalEventsPastTheEndIndecesStock_;
+	state_vector_array2_t       nominalStateTrajectoriesStock_;
+	input_vector_array2_t       nominalInputTrajectoriesStock_;
 
 	// Used for catching the nominal trajectories for which the LQ problem is constructed and solved before terminating run()
 	std::vector<scalar_array_t> nominalPrevTimeTrajectoriesStock_;
-	std::vector<size_array_t> 	nominalPrevEventsPastTheEndIndecesStock_;
-	state_vector_array2_t		nominalPrevStateTrajectoriesStock_;
-	input_vector_array2_t  		nominalPrevInputTrajectoriesStock_;
+	std::vector<size_array_t>   nominalPrevEventsPastTheEndIndecesStock_;
+	state_vector_array2_t       nominalPrevStateTrajectoriesStock_;
+	input_vector_array2_t       nominalPrevInputTrajectoriesStock_;
 
 	bool lsComputeISEs_;  // whether lineSearch routine needs to calculate ISEs
 	controller_array_t initLScontrollersStock_;	  // needed for lineSearch
 
 	controller_array_t deletedcontrollersStock_;	// needed for concatenating the new controller to the old one
 
-	state_matrix_array2_t 		AmTrajectoryStock_;
+	state_matrix_array2_t       AmTrajectoryStock_;
 	state_input_matrix_array2_t BmTrajectoryStock_;
 
 	std::vector<size_array_t>         nc1TrajectoriesStock_;  	// nc1: Number of the Type-1  active constraints
@@ -1252,36 +1189,36 @@ protected:
 	constraint1_state_matrix_array2_t CmTrajectoryStock_;
 	constraint1_input_matrix_array2_t DmTrajectoryStock_;
 
-	std::vector<size_array_t> 			nc2TrajectoriesStock_;  // nc2: Number of the Type-2 active constraints
-	constraint2_vector_array2_t 		HvTrajectoryStock_;
-	constraint2_state_matrix_array2_t 	FmTrajectoryStock_;
-	std::vector<size_array_t>			nc2FinalStock_;
-	constraint2_vector_array2_t			HvFinalStock_;
-	constraint2_state_matrix_array2_t 	FmFinalStock_;
+	std::vector<size_array_t>         nc2TrajectoriesStock_;  // nc2: Number of the Type-2 active constraints
+	constraint2_vector_array2_t       HvTrajectoryStock_;
+	constraint2_state_matrix_array2_t FmTrajectoryStock_;
+	std::vector<size_array_t>         nc2FinalStock_;
+	constraint2_vector_array2_t       HvFinalStock_;
+	constraint2_state_matrix_array2_t FmFinalStock_;
 
-	eigen_scalar_array2_t		qFinalStock_;
-	state_vector_array2_t		QvFinalStock_;
-	state_matrix_array2_t		QmFinalStock_;
+	eigen_scalar_array2_t qFinalStock_;
+	state_vector_array2_t QvFinalStock_;
+	state_matrix_array2_t QmFinalStock_;
 
-	eigen_scalar_array2_t 		qTrajectoryStock_;
-	state_vector_array2_t 		QvTrajectoryStock_;
-	state_matrix_array2_t 		QmTrajectoryStock_;
-	input_vector_array2_t		RvTrajectoryStock_;
-	input_matrix_array2_t		RmTrajectoryStock_;
-	input_state_matrix_array2_t	PmTrajectoryStock_;
+	eigen_scalar_array2_t       qTrajectoryStock_;
+	state_vector_array2_t       QvTrajectoryStock_;
+	state_matrix_array2_t       QmTrajectoryStock_;
+	input_vector_array2_t       RvTrajectoryStock_;
+	input_matrix_array2_t       RmTrajectoryStock_;
+	input_state_matrix_array2_t PmTrajectoryStock_;
 
-	input_matrix_array2_t 	RmInverseTrajectoryStock_;
-	state_matrix_array2_t   AmConstrainedTrajectoryStock_;
-	state_matrix_array2_t   QmConstrainedTrajectoryStock_;
-	state_vector_array2_t  	QvConstrainedTrajectoryStock_;
-	input_matrix_array2_t 	RmConstrainedTrajectoryStock_;
+	input_matrix_array2_t RmInverseTrajectoryStock_;
+	state_matrix_array2_t AmConstrainedTrajectoryStock_;
+	state_matrix_array2_t QmConstrainedTrajectoryStock_;
+	state_vector_array2_t QvConstrainedTrajectoryStock_;
+	input_matrix_array2_t RmConstrainedTrajectoryStock_;
 	control_constraint1_matrix_array2_t DmDagerTrajectoryStock_;
-	input_vector_array2_t   	EvProjectedTrajectoryStock_;  // DmDager * Ev
+	input_vector_array2_t       EvProjectedTrajectoryStock_;  // DmDager * Ev
 	input_state_matrix_array2_t CmProjectedTrajectoryStock_;  // DmDager * Cm
-	input_matrix_array2_t   	DmProjectedTrajectoryStock_;  // DmDager * Dm
+	input_matrix_array2_t       DmProjectedTrajectoryStock_;  // DmDager * Dm
 	state_input_matrix_array2_t BmConstrainedTrajectoryStock_;
 	input_state_matrix_array2_t PmConstrainedTrajectoryStock_;
-	input_vector_array2_t 		RvConstrainedTrajectoryStock_;
+	input_vector_array2_t       RvConstrainedTrajectoryStock_;
 
 	std::vector<std::shared_ptr<slq_riccati_equations_t>>                         slqRiccatiEquationsPtrStock_;
 	std::vector<std::shared_ptr<IntegratorBase<slq_riccati_equations_t::S_DIM_>>> slqRiccatiIntegratorPtrStock_;
@@ -1295,13 +1232,13 @@ protected:
 	std::vector<std::shared_ptr<hamiltonian_increment_equation_t>> hamiltonianIncrementEquationPtrStock_;
 	std::vector<std::shared_ptr<IntegratorBase<hamiltonian_increment_equation_t::LTI_DIM_>>> hamiltonianIncrementIntegratorPtrStock_;
 
-	std::vector<scalar_array_t>	SsTimeTrajectoryStock_;
+	std::vector<scalar_array_t> SsTimeTrajectoryStock_;
 	std::vector<scalar_array_t> SsNormalizedTimeTrajectoryStock_;
-	std::vector<size_array_t> 	SsNormalizedEventsPastTheEndIndecesStock_;
-	eigen_scalar_array2_t 		sTrajectoryStock_;
-	state_vector_array2_t 		SvTrajectoryStock_;
-	state_vector_array2_t 		SveTrajectoryStock_;
-	state_matrix_array2_t 		SmTrajectoryStock_;
+	std::vector<size_array_t>   SsNormalizedEventsPastTheEndIndecesStock_;
+	eigen_scalar_array2_t       sTrajectoryStock_;
+	state_vector_array2_t       SvTrajectoryStock_;
+	state_vector_array2_t       SveTrajectoryStock_;
+	state_matrix_array2_t       SmTrajectoryStock_;
 
 	eigen_scalar_array_t sFinalStock_;
 	state_vector_array_t SvFinalStock_;
@@ -1358,9 +1295,6 @@ protected:
 		// deltaUff
 		nominalControllersStock_[partitionIndex].deltaUff_[timeIndex] = LvConstrained;
 	};
-
-private:
-	std::mutex outputDisplayGuardMutex_;
 
 #ifdef BENCHMARK
 	// Benchmarking

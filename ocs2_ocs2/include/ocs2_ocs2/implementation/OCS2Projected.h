@@ -340,7 +340,7 @@ void OCS2Projected<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::saveToBag(
 template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
 void OCS2Projected<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::getSolution(size_t idStar)  {
 
-	optimizedEventTimes_ = slqSolverPtrs_[idStar]->getEventTimes();
+	optimizedEventTimes_ = slqSolverPtrs_[idStar]->getLogicRulesPtr()->eventTimes();
 	optimizedControllersStock_ = slqSolverPtrs_[idStar]->getController();
 	optimizedTimeTrajectoriesStock_  = slqSolverPtrs_[idStar]->getNominalTimeTrajectories();
 	optimizedStateTrajectoriesStock_ = slqSolverPtrs_[idStar]->getNominalStateTrajectories();

@@ -54,24 +54,6 @@ void LogicRulesMachine<LOGIC_RULES_T>::logicRulesUpdated() {
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <class LOGIC_RULES_T>
-LOGIC_RULES_T& LogicRulesMachine<LOGIC_RULES_T>::getLogicRules() {
-
-	return logicRules_;
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-template <class LOGIC_RULES_T>
-const LOGIC_RULES_T& LogicRulesMachine<LOGIC_RULES_T>::getLogicRules() const {
-
-	return logicRules_;
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-template <class LOGIC_RULES_T>
 LOGIC_RULES_T* LogicRulesMachine<LOGIC_RULES_T>::getLogicRulesPtr() {
 
 	return &logicRules_;
@@ -223,7 +205,7 @@ void LogicRulesMachine<LOGIC_RULES_T>::findEventsDistribution(
 		std::vector<scalar_array_t>& switchingTimesStock,
 		std::vector<size_array_t>& eventCountersStock) {
 
-	const scalar_array_t& allEventTimes = this->getLogicRules().eventTimes();
+	const scalar_array_t& allEventTimes = this->getLogicRulesPtr()->eventTimes();
 	const size_t numSubsystems = allEventTimes.size()+1;
 
 	/*
@@ -335,7 +317,7 @@ void LogicRulesMachine<LOGIC_RULES_T>::findEventsDistribution(
 template <class LOGIC_RULES_T>
 void LogicRulesMachine<LOGIC_RULES_T>::display() const {
 
-	this->getLogicRules().display();
+	this->getLogicRulesPtr()->display();
 
 	size_t itr;
 

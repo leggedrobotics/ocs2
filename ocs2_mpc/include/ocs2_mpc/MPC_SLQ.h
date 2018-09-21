@@ -76,17 +76,17 @@ public:
 
 	typedef CostDesiredTrajectories<scalar_t> cost_desired_trajectories_t;
 
-	typedef ocs2::SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>	slq_base_t;
-	typedef ocs2::SLQ<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>		slq_t;
-	typedef ocs2::SLQ_MP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>	slq_mp_t;
+	typedef ocs2::SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> slq_base_t;
+	typedef ocs2::SLQ<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>      slq_t;
+	typedef ocs2::SLQ_MP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>   slq_mp_t;
 
-	typedef ModeSequenceTemplate<scalar_t>					mode_sequence_template_t;
-	typedef typename slq_base_t::logic_rules_machine_t		logic_rules_machine_t;
-	typedef typename slq_base_t::controlled_system_base_t	controlled_system_base_t;
-	typedef typename slq_base_t::event_handler_t			event_handler_t;
-	typedef typename slq_base_t::derivatives_base_t			derivatives_base_t;
-	typedef typename slq_base_t::constraint_base_t			constraint_base_t;
-	typedef typename slq_base_t::cost_function_base_t		cost_function_base_t;
+	typedef ModeSequenceTemplate<scalar_t>                     mode_sequence_template_t;
+	typedef typename slq_base_t::logic_rules_machine_t         logic_rules_machine_t;
+	typedef typename slq_base_t::controlled_system_base_t      controlled_system_base_t;
+	typedef typename slq_base_t::event_handler_t               event_handler_t;
+	typedef typename slq_base_t::derivatives_base_t            derivatives_base_t;
+	typedef typename slq_base_t::constraint_base_t             constraint_base_t;
+	typedef typename slq_base_t::cost_function_base_t          cost_function_base_t;
 	typedef typename slq_base_t::operating_trajectories_base_t operating_trajectories_base_t;
 
 	/**
@@ -128,32 +128,6 @@ public:
 	virtual ~MPC_SLQ() = default;
 
 	/**
-	 * Resets the class to its state after construction.
-	 */
-	virtual void reset() override;
-
-	/**
-	 * Returns the initial time for which the optimizer is called.
-	 *
-	 * @return Initial time
-	 */
-	virtual scalar_t getStartTime() const override;
-
-	/**
-	 * Returns the final time for which the optimizer is called.
-	 *
-	 * @return Final time
-	 */
-	virtual scalar_t getFinalTime() const override;
-
-	/**
-	 * Returns the time horizon for which the optimizer is called.
-	 *
-	 * @return Time horizon
-	 */
-	virtual scalar_t getTimeHorizon() const override;
-
-	/**
 	 * Gets the SLQ settings structure.
 	 *
 	 * @return SLQ settings structure
@@ -161,143 +135,37 @@ public:
 	virtual SLQ_Settings& slqSettings();
 
 	/**
-	 * Gets partitioning time.
-	 *
-	 * @param [out] Partitioning times
-	 */
-	virtual void getPartitioningTimes(scalar_array_t& partitioningTimes) const;
-
-	/**
-	 * Gets an array of times indicating event times.
-	 *
-	 * @return eventTimes: Array of the event times.
-	 */
-	virtual const scalar_array_t& getEventTimes() const override;
-
-	/**
-	 * set logic rules.
-	 *
-	 * @param logicRules: This class will be passed to all of the dynamics and derivatives classes through initializeModel() routine.
-	 */
-	virtual void setLogicRules(const LOGIC_RULES_T& logicRules) override;
-
-	/**
-	 * get logic rules.
-	 *
-	 * @return logicRules.
-	 */
-	virtual const LOGIC_RULES_T& getLogicRules() const override;
-
-	/**
-	 * Gets the cost function desired trajectories.
-	 *
-	 * @param [out] costDesiredTrajectories: A pointer to the cost function desired trajectories
-	 */
-	virtual void getCostDesiredTrajectoriesPtr(
-			const cost_desired_trajectories_t*& costDesiredTrajectoriesPtr) const override;
-
-	/**
-	 * Sets the cost function desired trajectories.
-	 *
-	 * @param [in] costDesiredTrajectories: The cost function desired trajectories
-	 */
-	virtual void setCostDesiredTrajectories(
-			const cost_desired_trajectories_t& costDesiredTrajectories) override;
-
-	/**
-	 * Sets the cost function desired trajectories.
-	 *
-	 * @param [in] desiredTimeTrajectory: The desired time trajectory for cost.
-	 * @param [in] desiredStateTrajectory: The desired state trajectory for cost.
-	 * @param [in] desiredInputTrajectory: The desired input trajectory for cost.
-	 */
-	virtual void setCostDesiredTrajectories(
-			const scalar_array_t& desiredTimeTrajectory,
-			const dynamic_vector_array_t& desiredStateTrajectory,
-			const dynamic_vector_array_t& desiredInputTrajectory) override;
-
-	/**
-	 * Swaps the cost function desired trajectories.
-	 *
-	 * @param [in] costDesiredTrajectories: The cost function desired trajectories
-	 */
-	virtual void swapCostDesiredTrajectories(
-			cost_desired_trajectories_t& costDesiredTrajectories) override;
-
-	/**
-	 * Swaps the cost function desired trajectories.
-	 *
-	 * @param [in] desiredTimeTrajectory: The desired time trajectory for cost.
-	 * @param [in] desiredStateTrajectory: The desired state trajectory for cost.
-	 * @param [in] desiredInputTrajectory: The desired input trajectory for cost.
-	 */
-	virtual void swapCostDesiredTrajectories(
-			scalar_array_t& desiredTimeTrajectory,
-			dynamic_vector_array_t& desiredStateTrajectory,
-			dynamic_vector_array_t& desiredInputTrajectory) override;
-
-	/**
 	 * Solves the optimal control problem for the given state and time period ([initTime,finalTime]).
 	 *
-	 * @param [out] initTime: Initial time. This value can be adjusted by the optimizer.
+	 * @param [out] initTime: Initial time.
 	 * @param [in] initState: Initial state.
-	 * @param [out] finalTime: Final time. This value can be adjusted by the optimizer.
+	 * @param [out] finalTime: Final time.
 	 * @param [out] timeTrajectoriesStock_out: A pointer to the optimized time trajectories.
 	 * @param [out] stateTrajectoriesStock_out: A pointer to the optimized state trajectories.
 	 * @param [out] inputTrajectoriesStock_out: A pointer to the optimized input trajectories.
 	 * @param [out] controllerStock_out: A pointer to the optimized control policy.
 	 */
 	virtual void calculateController(
-			scalar_t& initTime,
+			const scalar_t& initTime,
 			const state_vector_t& initState,
-			scalar_t& finalTime,
+			const scalar_t& finalTime,
 			const std::vector<scalar_array_t>*& timeTrajectoriesStockPtr,
 			const state_vector_array2_t*& stateTrajectoriesStockPtr,
 			const input_vector_array2_t*& inputTrajectoriesStockPtr,
 			const controller_array_t*& controllerStockPtr) override;
 
 protected:
-	/**
-	 * Rewinds the SLQ-MPC.
-	 */
-	virtual void rewind();
-
-	/**
-	 * Adjustments time horizon.
-	 *
-	 * @param [in] partitioningTimes: Partitioning times after rewind.
-	 * @param [out] initTime: Adjustments initial time.
-	 * @param [out] finalTime: Adjustments final time.
-	 * @param [out] initActivePartitionIndex: Index of the initial active partition.
-	 * @param [out] finalActivePartitionIndex: Index of the final active partition.
-	 */
-	virtual void adjustmentTimeHorizon(
-			const scalar_array_t& partitioningTimes,
-			scalar_t& initTime,
-			scalar_t& finalTime,
-			size_t& initActivePartitionIndex,
-			size_t& finalActivePartitionIndex) const;
 
 	/***********
 	 * Variabes
 	 ***********/
 	typename slq_base_t::Ptr slqPtr_;
 
-	size_t initnumPartitions_;
-	scalar_array_t initPartitioningTimes_;
-	size_t numPartitions_;
-	scalar_array_t partitioningTimes_;
-
 	controller_array_t nullControllersStock_;
 
-	size_t initActivePartitionIndex_;
-	size_t finalActivePartitionIndex_;
-
-	scalar_t lastControlDesignTime_;
-
 	std::vector<scalar_array_t> optimizedTimeTrajectoriesStock_;
-	state_vector_array2_t 		optimizedStateTrajectoriesStock_;
-	input_vector_array2_t 		optimizedInputTrajectoriesStock_;
+	state_vector_array2_t       optimizedStateTrajectoriesStock_;
+	input_vector_array2_t       optimizedInputTrajectoriesStock_;
 
 };
 

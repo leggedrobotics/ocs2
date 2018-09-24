@@ -453,9 +453,9 @@ void MPC_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::mpcObservationCallb
 
 	// get a pointer to event times and motion sequence
 	const scalar_array_t* eventTimesPtr(nullptr);
-	eventTimesPtr = &mpcPtr_->getLogicRules().eventTimes();
+	eventTimesPtr = &mpcPtr_->getLogicRulesPtr()->eventTimes();
 	const size_array_t* subsystemsSequencePtr(nullptr);
-	subsystemsSequencePtr = &mpcPtr_->getLogicRules().subsystemsSequence();
+	subsystemsSequencePtr = &mpcPtr_->getLogicRulesPtr()->subsystemsSequence();
 
 	// measure the delay for sending ROS messages
 	if(mpcSettings_.adaptiveRosMsgTimeWindow_==true || mpcSettings_.debugPrint_){

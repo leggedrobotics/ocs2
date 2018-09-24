@@ -36,6 +36,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <Eigen/Dense>
 #include <vector>
 
+#include <ocs2_oc/oc_solver/Solver_BASE.h>
+
 #include <ocs2_core/Dimensions.h>
 #include <ocs2_core/cost/CostDesiredTrajectories.h>
 #include <ocs2_core/logic/rules/HybridLogicRules.h>
@@ -63,28 +65,40 @@ public:
 
 	typedef Dimensions <STATE_DIM, INPUT_DIM> DIMENSIONS;
 
-	typedef typename DIMENSIONS::controller_t       controller_t;
-	typedef typename DIMENSIONS::controller_array_t controller_array_t;
-	typedef typename DIMENSIONS::scalar_t       scalar_t;
-	typedef typename DIMENSIONS::scalar_array_t scalar_array_t;
-	typedef typename DIMENSIONS::size_array_t   size_array_t;
-	typedef typename DIMENSIONS::state_vector_t        state_vector_t;
-	typedef typename DIMENSIONS::state_vector_array_t  state_vector_array_t;
-	typedef typename DIMENSIONS::state_vector_array2_t state_vector_array2_t;
-	typedef typename DIMENSIONS::input_vector_t        input_vector_t;
-	typedef typename DIMENSIONS::input_vector_array_t  input_vector_array_t;
-	typedef typename DIMENSIONS::input_vector_array2_t input_vector_array2_t;
-	typedef typename DIMENSIONS::dynamic_vector_t       dynamic_vector_t;
-	typedef typename DIMENSIONS::dynamic_vector_array_t dynamic_vector_array_t;
+	typedef typename DIMENSIONS::controller_t               controller_t;
+	typedef typename DIMENSIONS::controller_array_t         controller_array_t;
+	typedef typename DIMENSIONS::scalar_t                   scalar_t;
+	typedef typename DIMENSIONS::scalar_array_t             scalar_array_t;
+	typedef typename DIMENSIONS::size_array_t               size_array_t;
+	typedef typename DIMENSIONS::state_vector_t             state_vector_t;
+	typedef typename DIMENSIONS::state_vector_array_t       state_vector_array_t;
+	typedef typename DIMENSIONS::state_vector_array2_t      state_vector_array2_t;
+	typedef typename DIMENSIONS::input_vector_t             input_vector_t;
+	typedef typename DIMENSIONS::input_vector_array_t       input_vector_array_t;
+	typedef typename DIMENSIONS::input_vector_array2_t      input_vector_array2_t;
+	typedef typename DIMENSIONS::input_state_matrix_t       input_state_matrix_t;
+	typedef typename DIMENSIONS::input_state_matrix_array_t input_state_matrix_array_t;
+	typedef typename DIMENSIONS::dynamic_vector_t           dynamic_vector_t;
+	typedef typename DIMENSIONS::dynamic_vector_array_t     dynamic_vector_array_t;
 
 	typedef CostDesiredTrajectories<scalar_t> cost_desired_trajectories_t;
+
+	typedef Solver_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> solver_base_t;
+	typedef typename solver_base_t::Ptr                      solver_base_ptr_t;
+
+	/**
+	 * Default constructor.
+	 */
+	MPC_BASE();
 
 	/**
 	 * Constructor
 	 *
 	 * @param [in] mpcSettings: Structure containing the settings for the MPC algorithm.
 	 */
-	MPC_BASE(const MPC_Settings &mpcSettings = MPC_Settings());
+	MPC_BASE(
+			const scalar_array_t& partitioningTimes,
+			const MPC_Settings &mpcSettings = MPC_Settings());
 
 	/**
 	 * destructor.
@@ -118,9 +132,9 @@ public:
 	 * @param [out] controllerStockPtr: A pointer to the optimized control policy.
 	 */
 	virtual void calculateController(
-			scalar_t &initTime,
+			const scalar_t &initTime,
 			const state_vector_t &initState,
-			scalar_t &finalTime,
+			const scalar_t &finalTime,
 			const std::vector<scalar_array_t>*& timeTrajectoriesStockPtr,
 			const state_vector_array2_t*& stateTrajectoriesStockPtr,
 			const input_vector_array2_t*& inputTrajectoriesStockPtr,
@@ -131,42 +145,50 @@ public:
 	 *
 	 * @return Initial time
 	 */
-	virtual scalar_t getStartTime() const = 0;
+	virtual scalar_t getStartTime() const;
 
 	/**
 	 * Returns the final time for which the optimizer is called.
 	 *
 	 * @return Final time
 	 */
-	virtual scalar_t getFinalTime() const = 0;
+	virtual scalar_t getFinalTime() const;
 
 	/**
 	 * Returns the time horizon for which the optimizer is called.
 	 *
 	 * @return Time horizon
 	 */
-	virtual scalar_t getTimeHorizon() const = 0;
+	virtual scalar_t getTimeHorizon() const;
 
 	/**
-	 * Gets an array of times indicating event times.
+	 * Gets partitioning time.
 	 *
-	 * @return eventTimes: Array of the event times.
+	 * @param [out] Partitioning times
 	 */
-	virtual const scalar_array_t& getEventTimes() const = 0;
+	virtual void getPartitioningTimes(scalar_array_t& partitioningTimes) const;
 
 	/**
-	 * set logic rules.
+	 * Sets logic rules.
 	 *
 	 * @param logicRules: This class will be passed to all of the dynamics and derivatives classes through initializeModel() routine.
 	 */
-	virtual void setLogicRules(const LOGIC_RULES_T& logicRules) = 0;
+	virtual void setLogicRules(const LOGIC_RULES_T& logicRules);
 
 	/**
-	 * get logic rules.
+	 * Gets a constant pointer to the logic rules.
 	 *
-	 * @return logicRules.
+	 * @return a constant pointer to the logic rules.
 	 */
-	virtual const LOGIC_RULES_T& getLogicRules() const = 0;
+	virtual const LOGIC_RULES_T* getLogicRulesPtr() const;
+
+	/**
+	 * Sets a new logicRules template.
+	 *
+	 * @param [in] newLogicRulesTemplate: New logicRules template
+	 */
+	virtual void setNewLogicRulesTemplate(
+			const typename LOGIC_RULES_T::logic_template_type& newLogicRulesTemplate);
 
 	/**
 	 * Gets a pointer to the optimal array of the control policies.
@@ -200,7 +222,7 @@ public:
 	 * @param [out] costDesiredTrajectories: A pointer to the cost function desired trajectories
 	 */
 	virtual void getCostDesiredTrajectoriesPtr(
-			const cost_desired_trajectories_t*& costDesiredTrajectoriesPtr) const = 0;
+			const cost_desired_trajectories_t*& costDesiredTrajectoriesPtr) const;
 
 	/**
 	 * Sets the cost function desired trajectories.
@@ -208,7 +230,7 @@ public:
 	 * @param [in] costDesiredTrajectories: The cost function desired trajectories
 	 */
 	virtual void setCostDesiredTrajectories(
-			const cost_desired_trajectories_t& costDesiredTrajectories) = 0;
+			const cost_desired_trajectories_t& costDesiredTrajectories);
 
 	/**
 	 * Sets the cost function desired trajectories.
@@ -220,7 +242,7 @@ public:
 	virtual void setCostDesiredTrajectories(
 			const scalar_array_t& desiredTimeTrajectory,
 			const dynamic_vector_array_t& desiredStateTrajectory,
-			const dynamic_vector_array_t& desiredInputTrajectory) = 0;
+			const dynamic_vector_array_t& desiredInputTrajectory);
 
 	/**
 	 * Swaps the cost function desired trajectories.
@@ -228,7 +250,7 @@ public:
 	 * @param [in] costDesiredTrajectories: The cost function desired trajectories
 	 */
 	virtual void swapCostDesiredTrajectories(
-			cost_desired_trajectories_t& costDesiredTrajectories) = 0;
+			cost_desired_trajectories_t& costDesiredTrajectories);
 
 	/**
 	 * Swaps the cost function desired trajectories.
@@ -240,17 +262,39 @@ public:
 	virtual void swapCostDesiredTrajectories(
 			scalar_array_t& desiredTimeTrajectory,
 			dynamic_vector_array_t& desiredStateTrajectory,
-			dynamic_vector_array_t& desiredInputTrajectory) = 0;
-	/**
-	 * Sets a new logicRules template.
-	 *
-	 * @param [in] newLogicRulesTemplate: New logicRules template
-	 */
-	virtual void setNewLogicRulesTemplate(
-			const typename LOGIC_RULES_T::logic_template_type& newLogicRulesTemplate);
-
+			dynamic_vector_array_t& desiredInputTrajectory);
 
 protected:
+	/**
+	 * Sets pointer of the base solver. This method should be called in the constructor of
+	 * the derived MPC class.
+	 *
+	 * @param solverPtr
+	 */
+	void setBaseSolverPtr(solver_base_t* solverPtr);
+
+	/**
+	 * Rewinds MPC.
+	 */
+	virtual void rewind();
+
+	/**
+	 * Adjustments time horizon.
+	 *
+	 * @param [in] partitioningTimes: Partitioning times after rewind.
+	 * @param [out] initTime: Adjustments initial time.
+	 * @param [out] finalTime: Adjustments final time.
+	 * @param [out] initActivePartitionIndex: Index of the initial active partition.
+	 * @param [out] finalActivePartitionIndex: Index of the final active partition.
+	 */
+	virtual void adjustmentTimeHorizon(
+			const scalar_array_t& partitioningTimes,
+			scalar_t& initTime,
+			scalar_t& finalTime,
+			size_t& initActivePartitionIndex,
+			size_t& finalActivePartitionIndex) const;
+
+
 	/*************
 	 * Variables *
 	 *************/
@@ -270,6 +314,18 @@ protected:
 	std::chrono::milliseconds measuredRuntimeMS_;
 	std::chrono::high_resolution_clock::time_point mpcStratTime_;
 
+	size_t initnumPartitions_;
+	scalar_array_t initPartitioningTimes_;
+	size_t numPartitions_;
+	scalar_array_t partitioningTimes_;
+
+	size_t initActivePartitionIndex_;
+	size_t finalActivePartitionIndex_;
+
+	scalar_t lastControlDesignTime_;
+
+private:
+	solver_base_t* solverPtr_;
 };
 
 

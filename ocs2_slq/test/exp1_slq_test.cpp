@@ -36,8 +36,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_slq/SLQ_MP.h>
 #include <ocs2_slq/test/EXP1.h>
 
-#include <ocs2_core/misc/TrajectorySpreadingController.h>
-
 using namespace ocs2;
 
 enum
@@ -71,22 +69,26 @@ TEST(exp1_slq_test, Exp1_slq_test)
 	/******************************************************************************************************/
 	/******************************************************************************************************/
 	SLQ_Settings slqSettings;
-	slqSettings.displayInfo_ = true;
+	slqSettings.displayInfo_ = false;
 	slqSettings.displayShortSummary_ = true;
-	slqSettings.maxNumIterationsSLQ_ = 2;
-	slqSettings.absTolODE_ = 1e-10;
-	slqSettings.relTolODE_ = 1e-7;
-	slqSettings.maxNumStepsPerSecond_ = 10000;
+	slqSettings.maxNumIterationsSLQ_ = 30;
 	slqSettings.nThreads_ = 3;
 	slqSettings.maxNumIterationsSLQ_ = 30;
 	slqSettings.lsStepsizeGreedy_ = true;
 	slqSettings.noStateConstraints_ = true;
 	slqSettings.useNominalTimeForBackwardPass_ = true;
 	slqSettings.checkNumericalStability_ = false;
+	slqSettings.absTolODE_ = 1e-10;
+	slqSettings.relTolODE_ = 1e-7;
+	slqSettings.maxNumStepsPerSecond_ = 10000;
+
+	slqSettings.rolloutSettings_.absTolODE_ = 1e-10;
+	slqSettings.rolloutSettings_.relTolODE_ = 1e-7;
+	slqSettings.rolloutSettings_.maxNumStepsPerSecond_ = 10000;
 
 	// switching times
-	std::vector<double> eventTimes {0.2, 1.2, 3.0};
-	EXP1_LogicRules logicRules(eventTimes);
+	std::vector<double> switchingTimes {0.2262, 1.0176};
+	EXP1_LogicRules logicRules(switchingTimes);
 
 	double startTime = 0.0;
 	double finalTime = 3.0;
@@ -94,10 +96,8 @@ TEST(exp1_slq_test, Exp1_slq_test)
 	// partitioning times
 	std::vector<double> partitioningTimes;
 	partitioningTimes.push_back(startTime);
-//	partitioningTimes.push_back(eventTimes[0]);
-//	partitioningTimes.push_back(eventTimes[1]);
-	partitioningTimes.push_back(1.0);
-	partitioningTimes.push_back(2.0);
+	partitioningTimes.push_back(switchingTimes[0]);
+	partitioningTimes.push_back(switchingTimes[1]);
 	partitioningTimes.push_back(finalTime);
 
 	Eigen::Vector2d initState(2.0, 3.0);
@@ -112,47 +112,56 @@ TEST(exp1_slq_test, Exp1_slq_test)
 			&systemConstraint, &systemCostFunction,
 			&operatingTrajectories, slqSettings, &logicRules);
 
+	// GSLQ MP version
+	SLQ_MP<STATE_DIM, INPUT_DIM, EXP1_LogicRules> slq_mp(
+			&systemDynamics, &systemDerivative,
+			&systemConstraint, &systemCostFunction,
+			&operatingTrajectories, slqSettings, &logicRules);
+
 	// run single core SLQ
 	if (slqSettings.displayInfo_ || slqSettings.displayShortSummary_)
 		std::cerr << "\n>>> single-core SLQ" << std::endl;
-	slq.run(startTime+1e-4, initState, finalTime, partitioningTimes);
+	slq.run(startTime, initState, finalTime, partitioningTimes);
+
+	// run multi-core SLQ
+	if (slqSettings.displayInfo_ || slqSettings.displayShortSummary_)
+		std::cerr << "\n>>> multi-core SLQ" << std::endl;
+	slq_mp.run(startTime, initState, finalTime, partitioningTimes);
 
 	/******************************************************************************************************/
 	/******************************************************************************************************/
 	/******************************************************************************************************/
 	// get controller
 	SLQ_BASE<STATE_DIM, INPUT_DIM, EXP1_LogicRules>::controller_array_t controllersStock = slq.getController();
+	SLQ_BASE<STATE_DIM, INPUT_DIM, EXP1_LogicRules>::controller_array_t controllersStock_mp = slq_mp.getController();
 
 	// get performance indices
 	double totalCost, totalCost_mp;
 	double constraint1ISE, constraint1ISE_mp;
 	double constraint2ISE, constraint2ISE_mp;
 	slq.getPerformanceIndeces(totalCost, constraint1ISE, constraint2ISE);
-	slq.getPerformanceIndeces(totalCost_mp, constraint1ISE_mp, constraint2ISE_mp);
+	slq_mp.getPerformanceIndeces(totalCost_mp, constraint1ISE_mp, constraint2ISE_mp);
 
 	/******************************************************************************************************/
 	/******************************************************************************************************/
 	/******************************************************************************************************/
-	std::cerr << std::endl << "Times Partitions:\n\t {";
-	for (auto& t: partitioningTimes)
-		std::cerr << t << ", ";
-	if (!partitioningTimes.empty())  std::cerr << "\b\b";
-	std::cerr << "}" << std::endl;
-	//
-	logicRules.display();
-	// Test
-	TrajectorySpreadingController<STATE_DIM, INPUT_DIM> trajectorySpreadingController;
-	std::vector<double> eventTimesNew {0.9, 0.9, 3.5};
-	SLQ_BASE<STATE_DIM, INPUT_DIM, EXP1_LogicRules>::controller_array_t controllersStockNew = controllersStock;
-	trajectorySpreadingController.adjustController(eventTimesNew, eventTimes, controllersStockNew);
+	const double expectedCost = 5.4399;
+	ASSERT_LT(fabs(totalCost - expectedCost), 10*slqSettings.minRelCostGSLQP_) <<
+			"MESSAGE: SLQ failed in the EXP1's cost test!";
+	ASSERT_LT(fabs(totalCost_mp - expectedCost), 10*slqSettings.minRelCostGSLQP_) <<
+			"MESSAGE: SLQ_MP failed in the EXP1's cost test!";
 
-	for (size_t i=0; i<controllersStock.size(); i++)
-		for (size_t k=0; k<controllersStock[i].size(); k++) {
-			std::cout << "[" << controllersStock[i].time_[k] << "]:  \t"    << controllersStock[i].uff_[k].transpose() << " \t";
-			std::cout << "[" << controllersStockNew[i].time_[k] << "]: " << controllersStockNew[i].uff_[k].transpose() << std::endl;
-		}
+	const double expectedISE1 = 0.0;
+	ASSERT_LT(fabs(constraint1ISE - expectedISE1), 10*slqSettings.minRelConstraint1ISE_) <<
+			"MESSAGE: SLQ failed in the EXP1's type-1 constraint ISE test!";
+	ASSERT_LT(fabs(constraint1ISE_mp - expectedISE1), 10*slqSettings.minRelConstraint1ISE_) <<
+			"MESSAGE: SLQ_MP failed in the EXP1's type-1 constraint ISE test!";
 
-	sleep(1);
+	const double expectedISE2 = 0.0;
+	ASSERT_LT(fabs(constraint2ISE - expectedISE2), 10*slqSettings.minRelConstraint1ISE_) <<
+			"MESSAGE: SLQ failed in the EXP1's type-2 constraint ISE test!";
+	ASSERT_LT(fabs(constraint2ISE_mp - expectedISE2), 10*slqSettings.minRelConstraint1ISE_) <<
+			"MESSAGE: SLQ_MP failed in the EXP1's type-2 constraint ISE test!";
 }
 
 

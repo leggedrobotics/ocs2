@@ -42,25 +42,26 @@ void HybridLogicRulesMachine<logic_rules_template_t>::setupLogicMachine(
 	//**********************************************//
 	//****************** LogicRule *****************//
 	//**********************************************//
-	HybridLogicRules& logicRules = BASE::getLogicRules();
-
 	// delete the future event information
-	size_t index = std::lower_bound(logicRules.eventTimes().begin(), logicRules.eventTimes().end(), initTime) - logicRules.eventTimes().begin();
-	logicRules.eventTimes().erase(logicRules.eventTimes().begin()+index, logicRules.eventTimes().end());
-	logicRules.subsystemsSequence().erase(logicRules.subsystemsSequence().begin()+index+1, logicRules.subsystemsSequence().end());
+	size_t index = std::lower_bound(BASE::getLogicRulesPtr()->eventTimes().begin(), BASE::getLogicRulesPtr()->eventTimes().end(), initTime) -
+					BASE::getLogicRulesPtr()->eventTimes().begin();
+	BASE::getLogicRulesPtr()->eventTimes().erase(
+			BASE::getLogicRulesPtr()->eventTimes().begin()+index, BASE::getLogicRulesPtr()->eventTimes().end());
+	BASE::getLogicRulesPtr()->subsystemsSequence().erase(
+			BASE::getLogicRulesPtr()->subsystemsSequence().begin()+index+1, BASE::getLogicRulesPtr()->subsystemsSequence().end());
 
 	// if the current subsystem is not the same as expected.
-	if (logicRules.subsystemsSequence().empty()) {
-		logicRules.subsystemsSequence().push_back(initSubsystemID);
+	if (BASE::getLogicRulesPtr()->subsystemsSequence().empty()) {
+		BASE::getLogicRulesPtr()->subsystemsSequence().push_back(initSubsystemID);
 
-	} else if (logicRules.subsystemsSequence().back()!=initSubsystemID) {
-		logicRules.eventTimes().push_back(initTime);
-		logicRules.subsystemsSequence().push_back(initSubsystemID);
+	} else if (BASE::getLogicRulesPtr()->subsystemsSequence().back()!=initSubsystemID) {
+		BASE::getLogicRulesPtr()->eventTimes().push_back(initTime);
+		BASE::getLogicRulesPtr()->subsystemsSequence().push_back(initSubsystemID);
 	}
-	// update logicRules
-	logicRules.update();
+	// update logic rules
+	BASE::getLogicRulesPtr()->update();
 
-	size_t initEventCounter = logicRules.subsystemsSequence().size()-1;
+	size_t initEventCounter = BASE::getLogicRulesPtr()->subsystemsSequence().size()-1;
 
 	//**********************************************//
 	//**************** LogicMachine ****************//
@@ -124,7 +125,7 @@ void HybridLogicRulesMachine<logic_rules_template_t>::initLogicMachine(
 		if (BASE::eventCountersStock_[partitionIndex-1].empty()==true)
 			throw std::runtime_error("ocs2::initLogicMachine function should have been called for the previous partition first.");
 
-		BASE::eventCountersStock_[partitionIndex].push_back(BASE::getLogicRules().subsystemsSequence().size()-1);
+		BASE::eventCountersStock_[partitionIndex].push_back(BASE::getLogicRulesPtr()->subsystemsSequence().size()-1);
 	}
 }
 
@@ -137,13 +138,13 @@ void HybridLogicRulesMachine<logic_rules_template_t>::push_back(
 		const scalar_t& eventTime,
 		const size_t& subsystemID) {
 
-	BASE::getLogicRules().eventTimes().push_back(eventTime);
-	BASE::getLogicRules().subsystemsSequence().push_back(subsystemID);
-	BASE::getLogicRules().update();
+	BASE::getLogicRulesPtr()->eventTimes().push_back(eventTime);
+	BASE::getLogicRulesPtr()->subsystemsSequence().push_back(subsystemID);
+	BASE::getLogicRulesPtr()->update();
 
 	BASE::eventTimesStock_[partitionIndex].push_back(eventTime);
 
-	BASE::eventCountersStock_[partitionIndex].push_back(BASE::getLogicRules().subsystemsSequence().size()-1);
+	BASE::eventCountersStock_[partitionIndex].push_back(BASE::getLogicRulesPtr()->subsystemsSequence().size()-1);
 
 	BASE::switchingTimesStock_[partitionIndex].push_back(BASE::switchingTimesStock_[partitionIndex].back());
 	*(BASE::switchingTimesStock_[partitionIndex].end()-2) = eventTime;
@@ -164,7 +165,7 @@ void HybridLogicRulesMachine<logic_rules_template_t>::display() const {
 		itr++;
 
 		for (auto& i : eventCounters) {
-			std::cerr << BASE::getLogicRules().subsystemsSequence()[i] << ", ";
+			std::cerr << BASE::getLogicRulesPtr()->subsystemsSequence()[i] << ", ";
 		}
 		if (!eventCounters.empty())  std::cerr << "\b\b";
 		std::cerr << "},  ";

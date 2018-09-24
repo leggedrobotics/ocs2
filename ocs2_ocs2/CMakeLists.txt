@@ -92,6 +92,7 @@ catkin_add_gtest(exp0_gslq_test
 target_link_libraries(exp0_gslq_test
   ${catkin_LIBRARIES}
   ${Boost_LIBRARIES}
+  glpk
 )
 
 catkin_add_gtest(exp1_gslq_test 
@@ -100,6 +101,7 @@ catkin_add_gtest(exp1_gslq_test
 target_link_libraries(exp1_gslq_test
   ${catkin_LIBRARIES}
   ${Boost_LIBRARIES}
+  glpk
 )
 
 catkin_add_gtest(exp0_ocs2_test 

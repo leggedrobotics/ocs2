@@ -37,6 +37,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <ocs2_core/Dimensions.h>
 
+#include <ocs2_oc/rollout/Rollout_Settings.h>
+
 namespace ocs2{
 
 /**
@@ -95,6 +97,8 @@ public:
 	, lsStepsizeGreedy_(true)
 	, checkNumericalStability_(true)
 	, useRiccatiSolver_(true)
+
+	, rolloutSettings_()
 	{}
 
 	/**
@@ -219,6 +223,9 @@ public:
 
 	/** If true, SLQ uses ode solver to solve the Riccati equations. Otherwise it uses matrix exponential to solve it. */
 	bool useRiccatiSolver_;
+
+	/** This structure contains the settings for forward rollout algorithms. */
+	Rollout_Settings rolloutSettings_;
 
 }; // end of SLQ_Settings class
 
@@ -547,6 +554,9 @@ inline void SLQ_Settings::loadSettings(const std::string& filename, bool verbose
 
 	if(verbose)
 		std::cerr <<" #### =============================================================================" << std::endl;
+
+
+	rolloutSettings_.loadSettings(filename, verbose);
 }
 
 } // namespace ocs2

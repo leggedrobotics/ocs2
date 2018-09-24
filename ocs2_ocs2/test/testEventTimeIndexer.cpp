@@ -33,30 +33,22 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 using namespace ocs2;
 
-template <size_t STATE_DIM, size_t INPUT_DIM>
-class TestLogicRules : public LogicRulesBase<STATE_DIM,INPUT_DIM>
+class TestLogicRules : public LogicRulesBase
 {
 public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-	typedef LogicRulesBase<STATE_DIM,INPUT_DIM> BASE;
-	typedef typename BASE::scalar_t scalar_t;
-	typedef typename BASE::scalar_array_t scalar_array_t;
-	typedef typename BASE::size_array_t size_array_t;
-	typedef typename BASE::controller_array_t controller_array_t;
+	typedef LogicRulesBase BASE;
+	typedef LogicRulesBase::scalar_t scalar_t;
+	typedef LogicRulesBase::scalar_array_t scalar_array_t;
+	typedef LogicRulesBase::size_array_t size_array_t;
 
 	TestLogicRules() {}
 
 	virtual ~TestLogicRules() {}
 
-	void adjustController(
-			const scalar_array_t& eventTimes,
-			const scalar_array_t& controllerEventTimes,
-			controller_array_t& controllerStock) override
-	{}
-
 	void set(const scalar_array_t& eventTimes) {
-		BASE::eventTimes_ = eventTimes;
+		eventTimes_ = eventTimes;
 	}
 
 	void update() override
@@ -73,8 +65,8 @@ private:
 
 TEST(testEventTimeIndexer, test_0)
 {
-	TestLogicRules<1,1> logicRules;
-	LogicRulesMachine<1,1,TestLogicRules<1,1>> logicRulesMachine(logicRules);
+	TestLogicRules logicRules;
+	LogicRulesMachine<TestLogicRules> logicRulesMachine(logicRules);
 
 	// Times
 	std::vector<double> partitioningTimes{0.5,1.5,2.5};
@@ -133,8 +125,8 @@ TEST(testEventTimeIndexer, test_0)
 
 TEST(testEventTimeIndexer, test_1)
 {
-	TestLogicRules<1,1> logicRules;
-	LogicRulesMachine<1,1,TestLogicRules<1,1>> logicRulesMachine(logicRules);
+	TestLogicRules logicRules;
+	LogicRulesMachine<TestLogicRules> logicRulesMachine(logicRules);
 
 	// Times
 	std::vector<double> partitioningTimes{1, 2, 3};
@@ -190,8 +182,8 @@ TEST(testEventTimeIndexer, test_1)
 
 TEST(testEventTimeIndexer, test_2)
 {
-	TestLogicRules<1,1> logicRules;
-	LogicRulesMachine<1,1,TestLogicRules<1,1>> logicRulesMachine(logicRules);
+	TestLogicRules logicRules;
+	LogicRulesMachine<TestLogicRules> logicRulesMachine(logicRules);
 
 	// Times
 	std::vector<double> partitioningTimes{1, 2, 3, 4, 5};
@@ -238,8 +230,8 @@ TEST(testEventTimeIndexer, test_2)
 
 TEST(testEventTimeIndexer, test_3)
 {
-	TestLogicRules<1,1> logicRules;
-	LogicRulesMachine<1,1,TestLogicRules<1,1>> logicRulesMachine(logicRules);
+	TestLogicRules logicRules;
+	LogicRulesMachine<TestLogicRules> logicRulesMachine(logicRules);
 
 	// Times
 	std::vector<double> partitioningTimes{1, 2.5, 3, 5};

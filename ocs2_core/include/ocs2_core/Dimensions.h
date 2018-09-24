@@ -52,7 +52,8 @@ public:
 	/**
 	 * Enum for Dimensions
 	 */
-	enum DIMS {
+	enum DIMS
+	{
 		/** The State space dimension. */
 		STATE_DIM_  = STATE_DIM,
 		/** The control input space dimension. */
@@ -61,6 +62,19 @@ public:
 		MAX_CONSTRAINT1_DIM_ = INPUT_DIM,
 		/** The maximum permitted number of state-only constraints. */
 		MAX_CONSTRAINT2_DIM_ = INPUT_DIM
+	};
+
+	/**
+	 * Riccati integrator type.
+	 */
+	enum RICCATI_INTEGRATOR_TYPE
+	{
+		/** ode45 type. */
+		ODE45 = 1,
+		/** adams-bashforth type. */
+		ADAMS_BASHFORTH = 2,
+		/** bulirch-store type. */
+		BULIRSCH_STOER = 3
 	};
 
 
@@ -243,18 +257,6 @@ public:
 	typedef LinearFunction_t<MAX_CONSTRAINT1_DIM_,1> lagrange_t;
 	/** Array of lagrange multiplier */
 	typedef linearFunction_array_t<MAX_CONSTRAINT1_DIM_,1> lagrange_array_t;
-
-	/**
-	 * Riccati integrator type.
-	 */
-	enum RICCATI_INTEGRATOR_TYPE{
-		/** ode45 type. */
-		ODE45 = 1,
-		/** adams-bashforth type. */
-		ADAMS_BASHFORTH = 2,
-		/** bulirch-store type. */
-		BULIRSCH_STOER = 3
-	};
 
 };
 

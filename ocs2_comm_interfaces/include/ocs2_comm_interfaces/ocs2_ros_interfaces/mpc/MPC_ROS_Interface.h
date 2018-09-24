@@ -47,7 +47,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ros/ros.h>
 #include <ros/transport_hints.h>
 
-#include <ocs2_mpc/MPC_SLQ.h>
+#include <ocs2_mpc/MPC_BASE.h>
 
 // MPC messages
 #include <ocs2_comm_interfaces/mode_sequence.h>
@@ -64,7 +64,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //#define PUBLISH_DUMMY
 #define PUBLISH_THREAD
 
-namespace ocs2{
+namespace ocs2 {
 
 /**
  * This class implements MPC communication interface using ROS.
@@ -81,18 +81,19 @@ public:
 
 	typedef std::shared_ptr<MPC_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>> Ptr;
 
-	typedef ocs2::MPC_SLQ<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> 	mpc_t;
-	typedef typename mpc_t::scalar_t       scalar_t;
-	typedef typename mpc_t::scalar_array_t scalar_array_t;
-	typedef typename mpc_t::size_array_t   size_array_t;
-	typedef typename mpc_t::state_vector_t        state_vector_t;
-	typedef typename mpc_t::state_vector_array_t  state_vector_array_t;
-	typedef typename mpc_t::state_vector_array2_t state_vector_array2_t;
-	typedef typename mpc_t::input_vector_t        input_vector_t;
-	typedef typename mpc_t::input_vector_array_t  input_vector_array_t;
-	typedef typename mpc_t::input_vector_array2_t input_vector_array2_t;
-	typedef typename mpc_t::controller_t       controller_t;
-	typedef typename mpc_t::controller_array_t controller_array_t;
+	typedef MPC_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> mpc_t;
+
+	typedef typename mpc_t::scalar_t                   scalar_t;
+	typedef typename mpc_t::scalar_array_t             scalar_array_t;
+	typedef typename mpc_t::size_array_t               size_array_t;
+	typedef typename mpc_t::state_vector_t             state_vector_t;
+	typedef typename mpc_t::state_vector_array_t       state_vector_array_t;
+	typedef typename mpc_t::state_vector_array2_t      state_vector_array2_t;
+	typedef typename mpc_t::input_vector_t             input_vector_t;
+	typedef typename mpc_t::input_vector_array_t       input_vector_array_t;
+	typedef typename mpc_t::input_vector_array2_t      input_vector_array2_t;
+	typedef typename mpc_t::controller_t               controller_t;
+	typedef typename mpc_t::controller_array_t         controller_array_t;
 	typedef typename mpc_t::input_state_matrix_t       input_state_matrix_t;
 	typedef typename mpc_t::input_state_matrix_array_t input_state_matrix_array_t;
 

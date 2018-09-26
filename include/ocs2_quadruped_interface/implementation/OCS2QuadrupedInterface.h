@@ -19,7 +19,7 @@ OCS2QuadrupedInterface<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::OCS2QuadrupedInt
 		: kinematicModelPtr_(kinematicModel.clone()),
 		  comModelPtr_(comModel.clone()),
 		  switchedModelStateEstimator_(comModel)
-		  {
+{
 	// load setting from loading file
 	loadSettings(pathToConfigFolder);
 
@@ -32,7 +32,7 @@ OCS2QuadrupedInterface<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::OCS2QuadrupedInt
 	logicRulesPtr_ = logic_rules_ptr_t( new logic_rules_t(feetZPlannerPtr) );
 
 	logicRulesPtr_->setMotionConstraints(initSwitchingModes_, initEventTimes_, gapIndicatorPtrs_);
-		  }
+}
 
 /******************************************************************************************************/
 /******************************************************************************************************/
@@ -53,9 +53,8 @@ void OCS2QuadrupedInterface<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::loadSetting
 	std::cerr << std::endl;
 
 	// partitioning times
-	scalar_t timeHorizon;
 	BASE::definePartitioningTimes(pathToConfigFile,
-			timeHorizon, numPartitions_, partitioningTimes_, true);
+			timeHorizon_, numPartitions_, partitioningTimes_, true);
 	// display
 	std::cerr << "Time Partition: {";
 	for (const auto& timePartition: partitioningTimes_)
@@ -63,7 +62,7 @@ void OCS2QuadrupedInterface<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::loadSetting
 	std::cerr << "\b\b}" << std::endl;
 
 	initTime_ = 0.0;
-	finalTime_ = timeHorizon;
+	finalTime_ = timeHorizon_;
 
 	// initial state of the switched system
 	ocs2::loadEigenMatrix(pathToConfigFile, "initialRobotState", initRbdState_);
@@ -73,7 +72,7 @@ void OCS2QuadrupedInterface<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::loadSetting
 	ocs2::loadEigenMatrix(pathToConfigFile, "Q", Q_);
 	ocs2::loadEigenMatrix(pathToConfigFile, "R", R_);
 	ocs2::loadEigenMatrix(pathToConfigFile, "Q_final", QFinal_);
-	// costs over cartesian velocities
+	// costs over Cartesian velocities
 	Eigen::Matrix<double, 12, 12> J_allFeet;
 	kinematicModelPtr_->update(initRbdState_.template segment<18>(0));
 	for (int leg=0; leg<4; ++leg){
@@ -489,9 +488,20 @@ Model_Settings& OCS2QuadrupedInterface<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM>
-void OCS2QuadrupedInterface<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::getLoadedInitialState(rbd_state_vector_t& initRbdState) const {
+void OCS2QuadrupedInterface<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::getLoadedInitialState(
+		rbd_state_vector_t& initRbdState) const {
 
 	initRbdState = initRbdState_;
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM>
+void OCS2QuadrupedInterface<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::getLoadedTimeHorizon(
+		scalar_t& timeHorizon) const {
+
+	timeHorizon = timeHorizon_;
 }
 
 /******************************************************************************************************/

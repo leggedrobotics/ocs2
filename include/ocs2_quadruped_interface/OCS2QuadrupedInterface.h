@@ -410,6 +410,13 @@ public:
 	void getLoadedInitialState(rbd_state_vector_t& initRbdState) const;
 
 	/**
+	 * Gets the time horizon of the MPC.
+	 *
+	 * @param [out] timeHorizon: The time horizon of the MPC.
+	 */
+	void getLoadedTimeHorizon(scalar_t& timeHorizon) const;
+
+	/**
 	 * This function loads the simulation-specific settings: dt, tFinal, initSettlingTime
 	 *
 	 * @param filename
@@ -423,7 +430,7 @@ public:
 			scalar_t& initSettlingTime);
 
 	/**
-	 * This function loads the visualization-specific settings: slowdown factor, vizualization time
+	 * This function loads the visualization-specific settings: slowdown factor, visualization time
 	 *
 	 * @param filename
 	 * @param slowdown
@@ -484,8 +491,8 @@ protected:
 
 	state_matrix_t Q_;
 	input_matrix_t R_;
-	state_matrix_t 	QFinal_;
-	state_vector_t 	xFinal_;
+	state_matrix_t QFinal_;
+	state_vector_t xFinal_;
 
 	scalar_t impulseWeight_;
 	scalar_t impulseSigmeFactor_;
@@ -495,10 +502,11 @@ protected:
 	rbd_state_vector_t 	initRbdState_;
 	state_vector_t initSwitchedState_;
 
-	scalar_t 		initTime_;
-	scalar_t 		finalTime_;
-	size_t 		    numPartitions_;
-	scalar_array_t	partitioningTimes_;
+	scalar_t        initTime_;
+	scalar_t        finalTime_;
+	scalar_t        timeHorizon_;
+	size_t          numPartitions_;
+	scalar_array_t  partitioningTimes_;
 
 	size_t 		   initNumSubsystems_;
 	scalar_array_t initEventTimes_;

@@ -112,6 +112,10 @@ void MPC_ROS_Quadruped<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::adjustTargetTraj
 
 			// state
 			costDesiredTrajectories.desiredStateTrajectory().at(i).conservativeResize(STATE_DIM);
+			// base z from initialization
+			costDesiredTrajectories.desiredStateTrajectory().at(i).template segment<1>(5) =
+					defaultConfiguration_. template segment<1>(5);
+			// joint angle from initialization
 			costDesiredTrajectories.desiredStateTrajectory().at(i).template segment<12>(12) =
 					defaultConfiguration_.template segment<12>(6);
 			// input
@@ -152,15 +156,16 @@ void MPC_ROS_Quadruped<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::targetPoseToDesi
 
 	xDesiredTrajectory[1].resize(STATE_DIM);
 	xDesiredTrajectory[1].setZero();
-  // Roll and pitch from config file
+	// Roll and pitch from initialization
 	xDesiredTrajectory[1].template segment<2>(0) = defaultConfiguration_. template segment<2>(0)   + targetPoseDisplacement.template segment<2>(0);
 	// Yaw from initialization
 	xDesiredTrajectory[1].template segment<1>(2) = initState_.template segment<1>(2)   + targetPoseDisplacement.template segment<1>(2);
 	// base x, y relative to current state
 	xDesiredTrajectory[1].template segment<2>(3) = currentState. template segment<2>(3) + targetPoseDisplacement.template segment<2>(3);
-	// base z from config file
+	// base z from initialization
 	xDesiredTrajectory[1].template segment<1>(5) = defaultConfiguration_. template segment<1>(5)   + targetPoseDisplacement.template segment<1>(5);
 	xDesiredTrajectory[1].template segment<6>(6) = targetVelocity;
+	// joint angle from initialization
 	xDesiredTrajectory[1].template segment<12>(12) = defaultConfiguration_.template segment<12>(6);
 
 	// Desired input trajectory

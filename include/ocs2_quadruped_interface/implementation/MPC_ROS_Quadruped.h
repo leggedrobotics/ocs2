@@ -77,30 +77,48 @@ void MPC_ROS_Quadruped<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::adjustTargetTraj
 		const system_observation_t& currentObservation,
 		cost_desired_trajectories_t& costDesiredTrajectories) {
 
-	// targetPoseDisplacement
-	base_coordinate_t targetPoseDisplacement, targetVelocity;
-	ocs2::TargetPoseTransformation<scalar_t>::toTargetPoseDisplacement(costDesiredTrajectories.desiredStateTrajectory()[0],
-			targetPoseDisplacement, targetVelocity);
+	if (costDesiredTrajectories.desiredStateTrajectory().size()==1) {
+		// targetPoseDisplacement
+		base_coordinate_t targetPoseDisplacement, targetVelocity;
+		ocs2::TargetPoseTransformation<scalar_t>::toTargetPoseDisplacement(costDesiredTrajectories.desiredStateTrajectory()[0],
+				targetPoseDisplacement, targetVelocity);
 
-	// x direction
-	size_t numReqiredStepsX = std::ceil(
-			std::abs(targetPoseDisplacement(3)) / (1.0*ocs2QuadrupedInterfacePtr_->strideLength()) );
-	// y direction
-	size_t numReqiredStepsY = std::ceil(
-			std::abs(targetPoseDisplacement(4)) / (0.5*ocs2QuadrupedInterfacePtr_->strideLength()) );
-	// max
-	size_t numReqiredSteps = std::max(numReqiredStepsX, numReqiredStepsY);
+		// x direction
+		size_t numReqiredStepsX = std::ceil(
+				std::abs(targetPoseDisplacement(3)) / (1.0*ocs2QuadrupedInterfacePtr_->strideLength()) );
+		// y direction
+		size_t numReqiredStepsY = std::ceil(
+				std::abs(targetPoseDisplacement(4)) / (0.5*ocs2QuadrupedInterfacePtr_->strideLength()) );
+		// max
+		size_t numReqiredSteps = std::max(numReqiredStepsX, numReqiredStepsY);
 
-	// targetReachingDuration
-	scalar_t targetReachingDuration = numReqiredSteps * ocs2QuadrupedInterfacePtr_->numPhasesInfullGaitCycle()
-			* ocs2QuadrupedInterfacePtr_->strideTime();
+		// targetReachingDuration
+		scalar_t targetReachingDuration = numReqiredSteps * ocs2QuadrupedInterfacePtr_->numPhasesInfullGaitCycle()
+					* ocs2QuadrupedInterfacePtr_->strideTime();
 
-	// costDesiredTrajectories
-	targetPoseToDesiredTrajectories(
-			currentObservation.time(), currentObservation.state(),
-			ocs2QuadrupedInterfacePtr_->modelSettings().mpcGoalCommandDelay_,
-			targetReachingDuration, targetPoseDisplacement, targetVelocity,
-			costDesiredTrajectories);
+		// costDesiredTrajectories
+		targetPoseToDesiredTrajectories(
+				currentObservation.time(), currentObservation.state(),
+				ocs2QuadrupedInterfacePtr_->modelSettings().mpcGoalCommandDelay_,
+				targetReachingDuration, targetPoseDisplacement, targetVelocity,
+				costDesiredTrajectories);
+	} else {
+
+		const size_t N = costDesiredTrajectories.desiredStateTrajectory().size();
+		costDesiredTrajectories.desiredInputTrajectory().resize(N);
+		for (size_t i=0; i<N; i++) {
+			// time
+			costDesiredTrajectories.desiredTimeTrajectory().at(i) += currentObservation.time();
+
+			// state
+			costDesiredTrajectories.desiredStateTrajectory().at(i).conservativeResize(STATE_DIM);
+			costDesiredTrajectories.desiredStateTrajectory().at(i).template segment<12>(12) =
+					defaultConfiguration_.template segment<12>(6);
+			// input
+			costDesiredTrajectories.desiredInputTrajectory().at(i).resize(INPUT_DIM);
+			costDesiredTrajectories.desiredInputTrajectory().at(i) = initInput_;
+		} // end of i loop
+	}
 }
 
 /******************************************************************************************************/

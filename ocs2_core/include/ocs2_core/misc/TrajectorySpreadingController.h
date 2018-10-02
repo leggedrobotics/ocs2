@@ -37,7 +37,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ocs2_core/Dimensions.h"
 #include "ocs2_core/OCS2NumericTraits.h"
 
-namespace ocs2{
+namespace ocs2 {
 
 template <size_t STATE_DIM, size_t INPUT_DIM>
 class TrajectorySpreadingController
@@ -52,16 +52,16 @@ public:
 	};
 
 	typedef Dimensions<STATE_DIM, INPUT_DIM> DIMENSIONS;
-	typedef typename DIMENSIONS::scalar_t       		scalar_t;
-	typedef typename DIMENSIONS::scalar_array_t 		scalar_array_t;
-	typedef typename DIMENSIONS::state_vector_t 		state_vector_t;
-	typedef typename DIMENSIONS::state_vector_array_t 	state_vector_array_t;
-	typedef typename DIMENSIONS::state_matrix_t 		state_matrix_t;
-	typedef typename DIMENSIONS::input_vector_t  		input_vector_t;
+	typedef typename DIMENSIONS::scalar_t               scalar_t;
+	typedef typename DIMENSIONS::scalar_array_t         scalar_array_t;
+	typedef typename DIMENSIONS::state_vector_t         state_vector_t;
+	typedef typename DIMENSIONS::state_vector_array_t   state_vector_array_t;
+	typedef typename DIMENSIONS::state_matrix_t         state_matrix_t;
+	typedef typename DIMENSIONS::input_vector_t         input_vector_t;
 	typedef typename DIMENSIONS::input_vector_array_t   input_vector_array_t;
-	typedef typename DIMENSIONS::input_matrix_t 		input_matrix_t;
-	typedef typename DIMENSIONS::input_state_matrix_t 	input_state_matrix_t;
-	typedef typename DIMENSIONS::state_input_matrix_t 	state_input_matrix_t;
+	typedef typename DIMENSIONS::input_matrix_t         input_matrix_t;
+	typedef typename DIMENSIONS::input_state_matrix_t   input_state_matrix_t;
+	typedef typename DIMENSIONS::state_input_matrix_t   state_input_matrix_t;
 	typedef typename DIMENSIONS::controller_t           controller_t;
 	typedef typename DIMENSIONS::controller_array_t     controller_array_t;
 
@@ -73,7 +73,7 @@ public:
 	TrajectorySpreadingController() = default;
 
 	/**
-	 * Deconstructor
+	 * Destructor
 	 */
 	~TrajectorySpreadingController() = default;
 

@@ -63,16 +63,18 @@ public:
 	typedef std::shared_ptr<const ConstraintBase<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> > ConstPtr;
 
 	typedef Dimensions<STATE_DIM, INPUT_DIM> DIMENSIONS;
-	typedef typename DIMENSIONS::scalar_t scalar_t;
-	typedef typename DIMENSIONS::state_vector_t   state_vector_t;
-	typedef typename DIMENSIONS::input_vector_t input_vector_t;
-	typedef typename DIMENSIONS::state_matrix_t   state_matrix_t;
-	typedef typename DIMENSIONS::state_input_matrix_t 	state_input_matrix_t;
-	typedef typename DIMENSIONS::constraint1_vector_t 	constraint1_vector_t;
-	typedef typename DIMENSIONS::constraint2_vector_t 	constraint2_vector_t;
-	typedef typename DIMENSIONS::constraint1_state_matrix_t   constraint1_state_matrix_t;
-	typedef typename DIMENSIONS::constraint1_input_matrix_t constraint1_input_matrix_t;
-	typedef typename DIMENSIONS::constraint2_state_matrix_t   constraint2_state_matrix_t;
+	typedef typename DIMENSIONS::scalar_t                    scalar_t;
+	typedef typename DIMENSIONS::state_vector_t              state_vector_t;
+	typedef typename DIMENSIONS::input_vector_t              input_vector_t;
+	typedef typename DIMENSIONS::state_matrix_t              state_matrix_t;
+	typedef typename DIMENSIONS::state_input_matrix_t        state_input_matrix_t;
+	typedef typename DIMENSIONS::constraint1_vector_t        constraint1_vector_t;
+	typedef typename DIMENSIONS::constraint1_vector_array_t  constraint1_vector_array_t;
+	typedef typename DIMENSIONS::constraint2_vector_t        constraint2_vector_t;
+	typedef typename DIMENSIONS::constraint2_vector_array_t  constraint2_vector_array_t;
+	typedef typename DIMENSIONS::constraint1_state_matrix_t  constraint1_state_matrix_t;
+	typedef typename DIMENSIONS::constraint1_input_matrix_t  constraint1_input_matrix_t;
+	typedef typename DIMENSIONS::constraint2_state_matrix_t  constraint2_state_matrix_t;
 
 	/**
 	 * Default constructor
@@ -199,6 +201,14 @@ public:
 	 * @param [out] D: \f$ D(t) \f$ matrix.
 	 */
 	virtual void getConstraint1DerivativesControl(constraint1_input_matrix_t& D) {}
+
+	/**
+	 * calculate and retrieve the the derivative of the state-input constraints w.r.t. event times.
+	 * Note that only g1DevArray[i] top rows are valid where nc1 is the number of active state-input constraints at the current time.
+	 *
+	 * @param g1DevArray: an array of nc1-by-1 vector
+	 */
+	virtual void getConstraint1DerivativesEventTimes(constraint1_vector_array_t& g1DevArray) { g1DevArray.clear(); }
 
 	/**
 	 * The F matrix at a given operating point for the linearized state-only constraints,

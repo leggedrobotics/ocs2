@@ -73,7 +73,11 @@ MPC_OCS2<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::MPC_OCS2(
 	, workerOCS2(&MPC_OCS2::runOCS2, this)
 	, activateOCS2_(false)
 	, terminateOCS2_(false)
-	, slqDataCollectorPtr_(new slq_data_collector_t)
+	, slqDataCollectorPtr_(new slq_data_collector_t(
+			systemDynamicsPtr,
+			systemDerivativesPtr,
+			systemConstraintsPtr,
+			costFunctionPtr))
 {
 }
 
@@ -126,7 +130,7 @@ void MPC_OCS2<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::runOCS2() {
 		std::cout << "OCS2 started. " << std::endl;
 
 		gslqPtr_->run(
-				BASE::slqPtr_->getLogicRules().eventTimes(),
+				BASE::slqPtr_->getLogicRulesPtr()->eventTimes(),
 				slqDataCollectorPtr_.get(),
 				eventTimesOptimized_,
 				BASE::mpcSettings_.maxTimeStep_);
@@ -177,12 +181,13 @@ bool MPC_OCS2<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::run(
 		if (currentTime>0.1 && BASE::slqPtr_->getRewindCounter() == slqDataCollectorPtr_->rewindCounter_) {
 
 			// adjust the SLQ internal controller using trajectory spreading approach
-			if (BASE::slqPtr_->getLogicRules().eventTimes().empty()==false) {
-				BASE::slqPtr_->adjustController(eventTimesOptimized_, BASE::slqPtr_->getLogicRules().eventTimes());
+			if (BASE::slqPtr_->getLogicRulesPtr()->eventTimes().empty()==false) {
+				BASE::slqPtr_->adjustController(
+						eventTimesOptimized_, BASE::slqPtr_->getLogicRulesPtr()->eventTimes());
 			}
 
-			BASE::slqPtr_->getLogicRules().eventTimes() = eventTimesOptimized_;
-			BASE::slqPtr_->getLogicRules().update();
+			BASE::slqPtr_->getLogicRulesPtr()->eventTimes() = eventTimesOptimized_;
+			BASE::slqPtr_->getLogicRulesPtr()->update();
 			BASE::slqPtr_->getLogicRulesMachinePtr()->logicRulesUpdated();
 
 		}

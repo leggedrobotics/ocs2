@@ -42,6 +42,11 @@ GSLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::GSLQ_BASE(
 	bvpSensitivityIntegratorsPtrStock_.clear();
 	bvpSensitivityIntegratorsPtrStock_.reserve(settings_.nThreads_);
 
+	bvpSensitivityErrorEquationsPtrStock_.clear();
+	bvpSensitivityErrorEquationsPtrStock_.reserve(settings_.nThreads_);
+	bvpSensitivityErrorIntegratorsPtrStock_.clear();
+	bvpSensitivityErrorIntegratorsPtrStock_.reserve(settings_.nThreads_);
+
 	rolloutSensitivityEquationsPtrStock_.clear();
 	rolloutSensitivityEquationsPtrStock_.reserve(settings_.nThreads_);
 	rolloutSensitivityIntegratorsPtrStock_.clear();
@@ -59,6 +64,11 @@ GSLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::GSLQ_BASE(
 				std::allocate_shared<bvp_sensitivity_equations_t, bvp_sensitivity_equations_alloc_t>(
 						bvp_sensitivity_equations_alloc_t()) ) );
 
+		typedef Eigen::aligned_allocator<bvp_sensitivity_error_equations_t> bvp_sensitivity_error_equations_alloc_t;
+		bvpSensitivityErrorEquationsPtrStock_.push_back( std::move(
+				std::allocate_shared<bvp_sensitivity_error_equations_t, bvp_sensitivity_error_equations_alloc_t>(
+						bvp_sensitivity_error_equations_alloc_t()) ) );
+
 		typedef Eigen::aligned_allocator<rollout_sensitivity_equations_t> rollout_sensitivity_equations_alloc_t;
 		rolloutSensitivityEquationsPtrStock_.push_back( std::move(
 				std::allocate_shared<rollout_sensitivity_equations_t, rollout_sensitivity_equations_alloc_t>(
@@ -74,6 +84,9 @@ GSLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::GSLQ_BASE(
 		case DIMENSIONS::RICCATI_INTEGRATOR_TYPE::ODE45 : {
 			bvpSensitivityIntegratorsPtrStock_.emplace_back (
 					new ODE45<STATE_DIM>(bvpSensitivityEquationsPtrStock_.back()) );
+
+			bvpSensitivityErrorIntegratorsPtrStock_.emplace_back (
+					new ODE45<STATE_DIM>(bvpSensitivityErrorEquationsPtrStock_.back()) );
 
 			rolloutSensitivityIntegratorsPtrStock_.emplace_back (
 					new ODE45<STATE_DIM>(rolloutSensitivityEquationsPtrStock_.back()) );
@@ -92,6 +105,9 @@ GSLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::GSLQ_BASE(
 		case DIMENSIONS::RICCATI_INTEGRATOR_TYPE::BULIRSCH_STOER : {
 			bvpSensitivityIntegratorsPtrStock_.emplace_back (
 					new IntegratorBulirschStoer<STATE_DIM>(bvpSensitivityEquationsPtrStock_.back()) );
+
+			bvpSensitivityErrorIntegratorsPtrStock_.emplace_back (
+					new IntegratorBulirschStoer<STATE_DIM>(bvpSensitivityErrorEquationsPtrStock_.back()) );
 
 			rolloutSensitivityIntegratorsPtrStock_.emplace_back (
 					new IntegratorBulirschStoer<STATE_DIM>(rolloutSensitivityEquationsPtrStock_.back()) );
@@ -112,6 +128,7 @@ GSLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::GSLQ_BASE(
 	BmFuncStock_.resize(settings_.nThreads_);
 	RmInverseFuncStock_.resize(settings_.nThreads_);
 	DmProjectedFuncStock_.resize(settings_.nThreads_);
+	EvDevEventTimesProjectedFuncStock_.resize(settings_.nThreads_);
 	nablaRvFuncStock_.resize(settings_.nThreads_);
 }
 
@@ -517,22 +534,29 @@ void GSLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::computeEquivalentSystemMult
 			if (dcPtr_->finalTime_<eventTimes_[eventTimeIndex])
 				throw std::runtime_error("Final time is smaller than the last triggered event time.");
 			else
-				multiplier = -1.0 / (dcPtr_->finalTime_ - eventTimes_[eventTimeIndex]);
+				timePeriod = dcPtr_->finalTime_ - eventTimes_[eventTimeIndex];
 		} else {
-			multiplier = -1.0 / (eventTimes_[eventTimeIndex+1] - eventTimes_[eventTimeIndex]);
+			timePeriod = eventTimes_[eventTimeIndex+1] - eventTimes_[eventTimeIndex];
 		}
 
-	} else if (activeSubsystem == eventTimeIndex)
+		multiplier = -1.0 / timePeriod;
+
+	} else if (activeSubsystem == eventTimeIndex) {
 		if (activeSubsystem == 0) {
 			if (dcPtr_->initTime_>eventTimes_[eventTimeIndex])
 				throw std::runtime_error("Initial time is greater than the last triggered event time.");
 			else
-				multiplier = 1.0 / (eventTimes_[eventTimeIndex] - dcPtr_->initTime_);
+				timePeriod = eventTimes_[eventTimeIndex] - dcPtr_->initTime_;
 		} else {
-			multiplier = 1.0 / (eventTimes_[eventTimeIndex] - eventTimes_[eventTimeIndex-1]);
+			timePeriod = eventTimes_[eventTimeIndex] - eventTimes_[eventTimeIndex-1];
 		}
-	else
+
+		multiplier = 1.0 / timePeriod;
+
+	} else {
+		timePeriod = 1.0;
 		multiplier = 0.0;
+	}
 }
 
 /******************************************************************************************************/
@@ -946,24 +970,30 @@ void GSLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::solveSensitivityBVP(
 		size_t workerIndex,
 		const size_t& eventTimeIndex,
 		const state_vector_t& MvFinal,
-		state_vector_array2_t& MvTrajectoriesStock) {
+		const state_vector_t& MveFinal,
+		state_vector_array2_t& MvTrajectoriesStock,
+		state_vector_array2_t& MveTrajectoriesStock) {
 
 	if (eventTimeIndex<activeEventTimeBeginIndex_ || eventTimeIndex>=activeEventTimeEndIndex_)
 		throw std::runtime_error("The index is associated to an inactive event or it is out of range.");
 
 	// resizing
 	MvTrajectoriesStock.resize(numPartitions_);
+	MveTrajectoriesStock.resize(numPartitions_);
 
 	// temporal final value for the last Riccati equations
-	state_vector_t MvFinalInternal = MvFinal;
+	state_vector_t MvFinalInternal  = MvFinal;
+	state_vector_t MveFinalInternal = MveFinal;
 	// output containers which is reverse
 	state_vector_array_t rMvTrajectory;
+	state_vector_array_t rMveTrajectory;
 
 	for (int i=numPartitions_-1; i>=0; i--) {
 
 		// skip inactive partitions
 		if (i<dcPtr_->initActivePartition_ || i>dcPtr_->finalActivePartition_) {
 			MvTrajectoriesStock[i].clear();
+			MveTrajectoriesStock[i].clear();
 			continue;
 		}
 
@@ -987,6 +1017,24 @@ void GSLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::solveSensitivityBVP(
 				&dcPtr_->optimizedControllersStock_[i].k_,
 				&dcPtr_->SmTrajectoriesStock_[i]);
 
+		// set data for Riccati error equations
+		bvpSensitivityErrorEquationsPtrStock_[workerIndex]->reset();
+		bvpSensitivityErrorEquationsPtrStock_[workerIndex]->resetNumFunctionCalls();
+		bvpSensitivityErrorEquationsPtrStock_[workerIndex]->setData(
+				dcPtr_->partitioningTimes_[i],
+				dcPtr_->partitioningTimes_[i+1],
+				&dcPtr_->nominalTimeTrajectoriesStock_[i],
+				&dcPtr_->BmTrajectoriesStock_[i],
+				&dcPtr_->AmConstrainedTrajectoriesStock_[i],
+				&dcPtr_->CmProjectedTrajectoriesStock_[i],
+				&dcPtr_->PmTrajectoriesStock_[i],
+				&dcPtr_->RmTrajectoriesStock_[i],
+				&dcPtr_->RmInverseTrajectoriesStock_[i],
+				&dcPtr_->RmConstrainedTrajectoriesStock_[i],
+				&dcPtr_->EvDevEventTimesProjectedTrajectoriesStockSet_[eventTimeIndex][i],
+				&dcPtr_->SsTimeTrajectoriesStock_[i],
+				&dcPtr_->SmTrajectoriesStock_[i]);
+
 		const size_t NS = dcPtr_->SsNormalizedTimeTrajectoriesStock_[i].size();
 		const size_t NE = dcPtr_->SsNormalizedEventsPastTheEndIndecesStock_[i].size();
 
@@ -997,6 +1045,8 @@ void GSLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::solveSensitivityBVP(
 		// output containers resizing
 		rMvTrajectory.clear();
 		rMvTrajectory.reserve(NS);
+		rMveTrajectory.clear();
+		rMveTrajectory.reserve(NS);
 
 		// normalized switching times
 		size_array_t SsNormalizedSwitchingTimesIndices;
@@ -1028,7 +1078,7 @@ void GSLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::solveSensitivityBVP(
 				computeEquivalentSystemMultiplier(eventTimeIndex, activeSubsystem, multiplier);
 				bvpSensitivityEquationsPtrStock_[workerIndex]->setMultiplier(multiplier);
 
-				// solve Riccati equations
+				// solve Riccati equations for Mv
 				bvpSensitivityIntegratorsPtrStock_[workerIndex]->integrate(
 						MvFinalInternal, beginTimeItr, endTimeItr,
 						rMvTrajectory,
@@ -1037,35 +1087,51 @@ void GSLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::solveSensitivityBVP(
 						settings_.relTolODE_,
 						maxNumSteps,
 						true);
+				// solve Riccati equations for Mve
+				bvpSensitivityErrorIntegratorsPtrStock_[workerIndex]->integrate(
+						MveFinalInternal, beginTimeItr, endTimeItr,
+						rMveTrajectory,
+						settings_.minTimeStep_,
+						settings_.absTolODE_,
+						settings_.relTolODE_,
+						maxNumSteps,
+						true);
+
 
 			} else {
 				rMvTrajectory.push_back(MvFinalInternal);
+				rMveTrajectory.push_back(MveFinalInternal);
 			}
 
 			// final value of the next subsystem
 			if (j < NE) {
-				MvFinalInternal = rMvTrajectory.back();
+				MvFinalInternal  = rMvTrajectory.back();
 //				MvFinalInternal += dcPtr_->QvFinalStock_[i][NE-1-j];
+				MveFinalInternal = rMveTrajectory.back();
 			}
 
 		}  // end of j loop
 
 		// final value of the next partition
-		MvFinalInternal = rMvTrajectory.back();
+		MvFinalInternal  = rMvTrajectory.back();
+		MveFinalInternal = rMveTrajectory.back();
 
 		// check size
 		if (rMvTrajectory.size() != NS)
 			throw std::runtime_error("MvTrajectory size is incorrect.");
 
-		// constructing 'Mv'
+		// constructing 'Mv' and 'Mve'
 		MvTrajectoriesStock[i].resize(NS);
 		std::reverse_copy(rMvTrajectory.begin(), rMvTrajectory.end(), MvTrajectoriesStock[i].begin());
+		MveTrajectoriesStock[i].resize(NS);
+		std::reverse_copy(rMveTrajectory.begin(), rMveTrajectory.end(), MveTrajectoriesStock[i].begin());
 
 		// testing the numerical stability of the Riccati equations
 		if (settings_.checkNumericalStability_)
 			for (int k=NS-1; k>=0; k--) {
 				try {
 					if (!MvTrajectoriesStock[i][k].allFinite()) throw std::runtime_error("Mv is unstable.");
+					if (!MveTrajectoriesStock[i][k].allFinite()) throw std::runtime_error("Mve is unstable.");
 
 				} catch(const std::exception& error) {
 					std::cerr << "what(): " << error.what() << " at time " << dcPtr_->SsTimeTrajectoriesStock_[i][k] << " [sec]." << std::endl;
@@ -1073,6 +1139,8 @@ void GSLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::solveSensitivityBVP(
 						if (kp >= NS) continue;
 						std::cerr << "Mv[" << dcPtr_->SsTimeTrajectoriesStock_[i][kp] <<
 								"]:\t"<< MvTrajectoriesStock[i][kp].transpose().norm() << std::endl;
+						std::cerr << "Mve[" << dcPtr_->SsTimeTrajectoriesStock_[i][kp] <<
+								"]:\t"<< MveTrajectoriesStock[i][kp].transpose().norm() << std::endl;
 					}
 					exit(0);
 				}
@@ -1151,6 +1219,7 @@ void GSLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculateBVPSensitivityCont
 		const size_t& eventTimeIndex,
 		const std::vector<scalar_array_t>& timeTrajectoriesStock,
 		const state_vector_array2_t& MvTrajectoriesStock,
+		const state_vector_array2_t& MveTrajectoriesStock,
 		input_vector_array2_t& LvTrajectoriesStock) {
 
 	if (eventTimeIndex<activeEventTimeBeginIndex_ || eventTimeIndex>=activeEventTimeEndIndex_)
@@ -1176,6 +1245,9 @@ void GSLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculateBVPSensitivityCont
 		DmProjectedFuncStock_[workerIndex].reset();
 		DmProjectedFuncStock_[workerIndex].setTimeStamp(&dcPtr_->nominalTimeTrajectoriesStock_[i]);
 		DmProjectedFuncStock_[workerIndex].setData(&dcPtr_->DmProjectedTrajectoriesStock_[i]);
+		EvDevEventTimesProjectedFuncStock_[workerIndex].reset();
+		EvDevEventTimesProjectedFuncStock_[workerIndex].setTimeStamp(&dcPtr_->nominalTimeTrajectoriesStock_[i]);
+		EvDevEventTimesProjectedFuncStock_[workerIndex].setData(&dcPtr_->EvDevEventTimesProjectedTrajectoriesStockSet_[eventTimeIndex][i]);
 
 		const size_t N = timeTrajectoriesStock[i].size();
 		LvTrajectoriesStock[i].resize(N);
@@ -1193,9 +1265,13 @@ void GSLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculateBVPSensitivityCont
 			// DmProjected
 			input_matrix_t DmProjected;
 			DmProjectedFuncStock_[workerIndex].interpolate(t, DmProjected, greatestLessTimeStampIndex);
+			//
+			input_vector_t EvDevEventTimeProjected;
+			EvDevEventTimesProjectedFuncStock_[workerIndex].interpolate(t, EvDevEventTimeProjected, greatestLessTimeStampIndex);
 
-			LvTrajectoriesStock[i][k] = -(input_matrix_t::Identity()-DmProjected)
-					* RmInverse * Bm.transpose() * MvTrajectoriesStock[i][k];
+			LvTrajectoriesStock[i][k] =
+					-(input_matrix_t::Identity()-DmProjected) * RmInverse * Bm.transpose() * (
+							MvTrajectoriesStock[i][k]+MveTrajectoriesStock[i][k]) - EvDevEventTimeProjected;
 		}  // end of k loop
 	}  // end of i loop
 }
@@ -1437,7 +1513,9 @@ void GSLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::runSweepingBVPMethod()  {
 
 	// resizing
 	MvTrajectoriesStockSet_.resize(numEventTimes_);
+	MveTrajectoriesStockSet_.resize(numEventTimes_);
 	LvTrajectoriesStockSet_.resize(numEventTimes_);
+	LveTrajectoriesStockSet_.resize(numEventTimes_);
 	sensitivityStateTrajectoriesStockSet_.resize(numEventTimes_);
 	sensitivityInputTrajectoriesStockSet_.resize(numEventTimes_);
 	nominalCostFuntionDerivative_.resize(numEventTimes_);
@@ -1449,14 +1527,18 @@ void GSLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::runSweepingBVPMethod()  {
 
 			const size_t workerIndex = 0;
 
-			// solve BVP to compute Mv
+			// solve BVP to compute 'Mv' and 'Mve'
 			solveSensitivityBVP(workerIndex, index,
 					state_vector_t::Zero() /*dcPtr_->SvHeuristics_*/,
-					MvTrajectoriesStockSet_[index]);
+					state_vector_t::Zero() /*dcPtr_->SveHeuristics_*/,
+					MvTrajectoriesStockSet_[index],
+					MveTrajectoriesStockSet_[index]);
 
-			// calculates sensitivity controller feedforward part, Lv
+			// calculates sensitivity controller feedforward part, 'Lv'
 			calculateBVPSensitivityControllerForward(workerIndex, index,
-					dcPtr_->SsTimeTrajectoriesStock_, MvTrajectoriesStockSet_[index],
+					dcPtr_->SsTimeTrajectoriesStock_,
+					MvTrajectoriesStockSet_[index],
+					MveTrajectoriesStockSet_[index],
 					LvTrajectoriesStockSet_[index]);
 
 			// calculate rollout sensitivity to event times
@@ -1476,7 +1558,9 @@ void GSLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::runSweepingBVPMethod()  {
 
 		} else {
 			MvTrajectoriesStockSet_[index].clear();
+			MveTrajectoriesStockSet_[index].clear();
 			LvTrajectoriesStockSet_[index].clear();
+			LveTrajectoriesStockSet_[index].clear();
 			sensitivityStateTrajectoriesStockSet_[index].clear();
 			sensitivityInputTrajectoriesStockSet_[index].clear();
 			nominalCostFuntionDerivative_(index) = 0.0;

@@ -54,6 +54,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ocs2_ocs2/EventTimeIndexer.h"
 #include "ocs2_ocs2/sensitivity_equations/SensitivitySequentialRiccatiEquations.h"
 #include "ocs2_ocs2/sensitivity_equations/BvpSensitivityEquations.h"
+#include "ocs2_ocs2/sensitivity_equations/BvpSensitivityErrorEquations.h"
 #include "ocs2_ocs2/sensitivity_equations/RolloutSensitivityEquations.h"
 
 namespace ocs2 {
@@ -78,7 +79,8 @@ public:
 
 	typedef SLQ_DataCollector<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> slq_data_collector_t;
 
-	typedef BvpSensitivityEquations<STATE_DIM, INPUT_DIM> bvp_sensitivity_equations_t;
+	typedef BvpSensitivityEquations<STATE_DIM, INPUT_DIM>      bvp_sensitivity_equations_t;
+	typedef BvpSensitivityErrorEquations<STATE_DIM, INPUT_DIM> bvp_sensitivity_error_equations_t;
 	typedef RolloutSensitivityEquations<STATE_DIM, INPUT_DIM> rollout_sensitivity_equations_t;
 	typedef SensitivitySequentialRiccatiEquations<STATE_DIM, INPUT_DIM> riccati_sensitivity_equations_t;
 
@@ -139,6 +141,8 @@ public:
     typedef std::vector<input_vector_array2_t, Eigen::aligned_allocator<input_vector_array2_t>> input_vector_array3_t;
     typedef std::vector<state_matrix_array2_t, Eigen::aligned_allocator<state_matrix_array2_t>> state_matrix_array3_t;
     typedef std::vector<input_matrix_array2_t, Eigen::aligned_allocator<input_matrix_array2_t>> input_matrix_array3_t;
+	typedef std::vector<constraint1_vector_array2_t, Eigen::aligned_allocator<constraint1_vector_array2_t>> constraint1_vector_array3_t;
+	typedef std::vector<constraint2_vector_array2_t, Eigen::aligned_allocator<constraint2_vector_array2_t>> constraint2_vector_array3_t;
 
     /**
      * Constructor.
@@ -319,7 +323,7 @@ protected:
 	 *
 	 * @param [in] eventTimeIndex: Event time index.
 	 * @param [in] activeSubsystem: Current active subsystem index.
-	 * @param [out] multiplier: Equivalent system formulation multiplier
+	 * @param [out] multiplier: Equivalent system formulation multiplier.
 	 */
 	void computeEquivalentSystemMultiplier(
 			const size_t& eventTimeIndex,
@@ -410,21 +414,25 @@ protected:
 	 *
 	 * @param [in] workerIndex: Working agent index.
 	 * @param [in] eventTimeIndex: Event time index.
-	 * @param [in] MvFinal: The final Heuristic value.
-	 * @param [out] MvTrajectoriesStock: Boundary value problem solution.
+	 * @param [in] MvFinal: The final Heuristic value for Mv.
+	 * @param [in] MveFinal: The final Heuristic value for Mve.
+	 * @param [out] MvTrajectoriesStock: Boundary value problem solution for Mv.
+	 * @param [out] MvTrajectoriesStock: Boundary value problem solution for Mve.
 	 */
 	void solveSensitivityBVP(
 			size_t workerIndex,
 			const size_t& eventTimeIndex,
 			const state_vector_t& MvFinal,
-			state_vector_array2_t& MvTrajectoriesStock);
+			const state_vector_t& MveFinal,
+			state_vector_array2_t& MvTrajectoriesStock,
+			state_vector_array2_t& MveTrajectoriesStock);
 
     /**
      * Calculates controller's feedforward part sensitivity for the LQ method.
      *
      * @param [in] workerIndex: Working agent index.
 	 * @param [in] eventTimeIndex: Event time index.
-     * @param [in] timeTrajectoriesStock: Time stamp of the riccati solution
+     * @param [in] timeTrajectoriesStock: Time stamp of the Riccati solution
      * @param [in] nablaSvTrajectoriesStock: Sensitivity of the Riccati equations's first order variation.
      * @param [out] nablaLvTrajectoriesStock: Sensitivity of the control input increment to event times.
      */
@@ -436,13 +444,13 @@ protected:
 			input_vector_array2_t& nablaLvTrajectoriesStock);
 
     /**
-     * calculate the sensitivity of the control input increment to event times
-     * based on the BVP method.
+     * calculate the sensitivity of the control input increment to event times based on the BVP method.
      *
      * @param [in] workerIndex: Working agent index.
 	 * @param [in] eventTimeIndex: Event time index.
      * @param [in] timeTrajectoriesStock: Time stamp of the BVP solution
-     * @param [in] MvTrajectoriesStock: BVP solution.
+     * @param [in] MvTrajectoriesStock: BVP solution for Mv.
+     * @param [in] MveTrajectoriesStock: BVP solution for Mve.
      * @param [out] LvTrajectoriesStock: Sensitivity of the control input increment to event times.
      */
 	void calculateBVPSensitivityControllerForward(
@@ -450,6 +458,7 @@ protected:
 			const size_t& eventTimeIndex,
 			const std::vector<scalar_array_t>& timeTrajectoriesStock,
 			const state_vector_array2_t& MvTrajectoriesStock,
+			const state_vector_array2_t& MveTrajectoriesStock,
 			input_vector_array2_t& LvTrajectoriesStock);
 
     /**
@@ -509,11 +518,13 @@ protected:
 	state_vector_array2_t       nominalCostateTrajectoriesStock_;
 	constraint1_vector_array2_t nominalLagrangianTrajectoriesStock_;
 
-	std::vector<std::shared_ptr<bvp_sensitivity_equations_t>> bvpSensitivityEquationsPtrStock_;
-	std::vector<std::shared_ptr<IntegratorBase<STATE_DIM>>>   bvpSensitivityIntegratorsPtrStock_;
-	std::vector<std::shared_ptr<rollout_sensitivity_equations_t>> rolloutSensitivityEquationsPtrStock_;
-	std::vector<std::shared_ptr<IntegratorBase<STATE_DIM>>>       rolloutSensitivityIntegratorsPtrStock_;
-	std::vector<std::shared_ptr<riccati_sensitivity_equations_t>> riccatiSensitivityEquationsPtrStock_;
+	std::vector<std::shared_ptr<bvp_sensitivity_equations_t>>        bvpSensitivityEquationsPtrStock_;
+	std::vector<std::shared_ptr<IntegratorBase<STATE_DIM>>>          bvpSensitivityIntegratorsPtrStock_;
+	std::vector<std::shared_ptr<bvp_sensitivity_error_equations_t>>  bvpSensitivityErrorEquationsPtrStock_;
+	std::vector<std::shared_ptr<IntegratorBase<STATE_DIM>>>          bvpSensitivityErrorIntegratorsPtrStock_;
+	std::vector<std::shared_ptr<rollout_sensitivity_equations_t>>    rolloutSensitivityEquationsPtrStock_;
+	std::vector<std::shared_ptr<IntegratorBase<STATE_DIM>>>          rolloutSensitivityIntegratorsPtrStock_;
+	std::vector<std::shared_ptr<riccati_sensitivity_equations_t>>    riccatiSensitivityEquationsPtrStock_;
 	std::vector<std::shared_ptr<IntegratorBase<riccati_sensitivity_equations_t::S_DIM_>>> riccatiSensitivityIntegratorsPtrStock_;
 	//
 	eigen_scalar_array3_t nablaqTrajectoriesStockSet_;
@@ -529,8 +540,10 @@ protected:
 	state_matrix_array3_t nablaSmTrajectoriesStockSet_;
 	input_vector_array3_t nablaLvTrajectoriesStockSet_;
 
-	state_vector_array3_t MvTrajectoriesStockSet_;  // Riccati solution for sensitivity controller feedforward
-	input_vector_array3_t LvTrajectoriesStockSet_;  // sensitivity controller feedforward
+	state_vector_array3_t MvTrajectoriesStockSet_;   // Riccati solution for sensitivity controller feedforward
+	state_vector_array3_t MveTrajectoriesStockSet_;  // Riccati solution for sensitivity controller error feedforward
+	input_vector_array3_t LvTrajectoriesStockSet_;   // sensitivity controller feedforward
+	input_vector_array3_t LveTrajectoriesStockSet_;  // error sensitivity controller feedforward
 
 	state_vector_array3_t sensitivityStateTrajectoriesStockSet_;
 	input_vector_array3_t sensitivityInputTrajectoriesStockSet_;
@@ -539,9 +552,10 @@ protected:
 
 	// calculateBVPSensitivityControllerForward & calculateLQSensitivityControllerForward
 	std::vector<EigenLinearInterpolation<state_input_matrix_t>> BmFuncStock_;
-	std::vector<EigenLinearInterpolation<input_matrix_t>> RmInverseFuncStock_;
-	std::vector<EigenLinearInterpolation<input_matrix_t>> DmProjectedFuncStock_;
-	std::vector<EigenLinearInterpolation<input_vector_t>> nablaRvFuncStock_;
+	std::vector<EigenLinearInterpolation<input_matrix_t>>       RmInverseFuncStock_;
+	std::vector<EigenLinearInterpolation<input_matrix_t>>       DmProjectedFuncStock_;
+	std::vector<EigenLinearInterpolation<input_vector_t>>       EvDevEventTimesProjectedFuncStock_;
+	std::vector<EigenLinearInterpolation<input_vector_t>>       nablaRvFuncStock_;
 
 	EigenLinearInterpolation<state_matrix_t> SmFunc_;
 	EigenLinearInterpolation<state_vector_t> SvFunc_;

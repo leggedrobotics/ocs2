@@ -73,7 +73,6 @@ public:
 	typedef typename DIMENSIONS::constraint1_vector_array_t constraint1_vector_array_t;
 	typedef typename DIMENSIONS::constraint1_state_matrix_t       constraint1_state_matrix_t;
 	typedef typename DIMENSIONS::constraint1_state_matrix_array_t constraint1_state_matrix_array_t;
-	typedef typename DIMENSIONS::controller_t controller_t;
 
 	/**
 	 * Constructor.
@@ -106,7 +105,7 @@ public:
 			const state_input_matrix_array_t* BmPtr,
 			const constraint1_state_matrix_array_t* CmPtr,
 			const state_matrix_array_t* AmConstrainedPtr,
-			const input_state_matrix_array_t* CmConstrainedPtr,
+			const input_state_matrix_array_t* CmProjectedPtr,
 			const state_vector_array_t* QvPtr,
 			const state_vector_array_t* flowMapPtr,
 			const state_vector_array_t* costatePtr,
@@ -129,8 +128,8 @@ public:
 		CmFunc_.setData(CmPtr);
 		AmConstrainedFunc_.setTimeStamp(timeStampPtr);
 		AmConstrainedFunc_.setData(AmConstrainedPtr);
-		CmConstrainedFunc_.setTimeStamp(timeStampPtr);
-		CmConstrainedFunc_.setData(CmConstrainedPtr);
+		CmProjectedFunc_.setTimeStamp(timeStampPtr);
+		CmProjectedFunc_.setData(CmProjectedPtr);
 		QvFunc_.setTimeStamp(timeStampPtr);
 		QvFunc_.setData(QvPtr);
 
@@ -156,7 +155,7 @@ public:
 		BmFunc_.reset();
 		CmFunc_.reset();
 		AmConstrainedFunc_.reset();
-		CmConstrainedFunc_.reset();
+		CmProjectedFunc_.reset();
 		QvFunc_.reset();
 
 		flowMapFunc_.reset();
@@ -199,7 +198,7 @@ public:
 		BmFunc_.interpolate(t, Bm_, greatestLessTimeStampIndex);
 		CmFunc_.interpolate(t, Cm_, greatestLessTimeStampIndex);
 		AmConstrainedFunc_.interpolate(t, AmConstrained_, greatestLessTimeStampIndex);
-		CmConstrainedFunc_.interpolate(t, CmConstrained_, greatestLessTimeStampIndex);
+		CmProjectedFunc_.interpolate(t, CmProjected_, greatestLessTimeStampIndex);
 		QvFunc_.interpolate(t, Qv_, greatestLessTimeStampIndex);
 
 		flowMapFunc_.interpolate(t, flowMap_, greatestLessTimeStampIndex);
@@ -211,29 +210,9 @@ public:
 		SmFunc_.interpolate(t, Sm_, greatestLessTimeStampIndex);
 
 		// here we have used RmConstrained = (I-DmConstrained).transpose() * Rm
-		// and Km = -(I-DmConstrained) \tilde{L} - CmConstrained_
-		dMvdt_ = (AmConstrained_ + Bm_*(CmConstrained_+KmConstrained_)).transpose()*Mv +
+		// and Km = -(I-DmConstrained) \tilde{L} - CmProjected_
+		dMvdt_ = (AmConstrained_ + Bm_*(CmProjected_+KmConstrained_)).transpose()*Mv +
 				multiplier_*(Qv_ + Am_.transpose()*costate_ + Cm_.transpose()*lagrangian_ + Sm_*flowMap_);
-
-		// TODO: delete me
-//		std::cout << "[" << t << "]" << std::endl;
-//		std::cout << "qv" << std::endl;
-//		std::cout <<
-//				multiplier_*(
-//						Qv_ + Am_.transpose()*costate_ + Cm_.transpose()*lagrangian_
-//				).transpose()
-//				<< std::endl;
-//		std::cout << "gv" << std::endl;
-//		std::cout << multiplier_*(flowMap_).transpose() << std::endl;
-//		std::cout << "S" << std::endl;
-//		std::cout << Sm_ << std::endl;
-//		std::cout << "qv+S*gv" << std::endl;
-//		std::cout <<
-//				multiplier_*(
-//						Qv_ + Am_.transpose()*costate_ + Cm_.transpose()*lagrangian_ + Sm_*flowMap_
-//						).transpose()
-//				<< std::endl;
-//		std::cout << std::endl;
 
 		dMvdz = scalingFactor_ * dMvdt_;
 	}
@@ -250,7 +229,7 @@ private:
 	LinearInterpolation<state_input_matrix_t,Eigen::aligned_allocator<state_input_matrix_t>> BmFunc_;
 	LinearInterpolation<constraint1_state_matrix_t,Eigen::aligned_allocator<constraint1_state_matrix_t>> CmFunc_;
 	LinearInterpolation<state_matrix_t,Eigen::aligned_allocator<state_matrix_t>> AmConstrainedFunc_;
-	LinearInterpolation<input_state_matrix_t,Eigen::aligned_allocator<input_state_matrix_t>> CmConstrainedFunc_;
+	LinearInterpolation<input_state_matrix_t,Eigen::aligned_allocator<input_state_matrix_t>> CmProjectedFunc_;
 	LinearInterpolation<state_vector_t,Eigen::aligned_allocator<state_vector_t>> QvFunc_;
 	LinearInterpolation<state_vector_t,Eigen::aligned_allocator<state_vector_t>> flowMapFunc_;
 	LinearInterpolation<state_vector_t,Eigen::aligned_allocator<state_vector_t>> costateFunc_;
@@ -262,7 +241,7 @@ private:
 	state_input_matrix_t Bm_;
 	constraint1_state_matrix_t Cm_;
 	state_matrix_t AmConstrained_;
-	input_state_matrix_t CmConstrained_;
+	input_state_matrix_t CmProjected_;
 	state_vector_t Qv_;
 	state_vector_t flowMap_;
 	state_vector_t costate_;

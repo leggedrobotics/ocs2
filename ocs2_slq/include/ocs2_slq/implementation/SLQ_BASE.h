@@ -338,133 +338,7 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::rolloutStateTriggeredTraject
 }
 
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-typename SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::state_vector_t
-	SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::rolloutTimeTriggeredWorker(
-			size_t workerIndex,
-			const size_t& partitionIndex,
-			const scalar_t& initTime,
-			const state_vector_t& initState,
-			const scalar_t& finalTime,
-			const controller_t& controller,
-			scalar_array_t& timeTrajectory,
-			size_array_t& eventsPastTheEndIndeces,
-			state_vector_array_t& stateTrajectory,
-			input_vector_array_t& inputTrajectory)  {
-
-	if (initTime > finalTime)
-		throw std::runtime_error("Initial time should be less-equal to final time.");
-
-	const size_t numEvents = logicRulesMachinePtr_->getNumEvents(partitionIndex);
-	const size_t numSubsystems = logicRulesMachinePtr_->getNumEventCounters(partitionIndex);
-	const scalar_array_t& switchingTimes = logicRulesMachinePtr_->getSwitchingTimes(partitionIndex);
-
-	// max number of steps for integration
-	const size_t maxNumSteps = settings_.maxNumStepsPerSecond_ * std::max(1.0, finalTime-initTime);
-
-	// index of the first subsystem
-	size_t beginItr = 0;
-	if (partitionIndex==initActivePartition_)
-		beginItr = findActiveIntervalIndex(switchingTimes, initTime, 0);
-	// index of the last subsystem
-	size_t finalItr = numSubsystems-1;
-	if (partitionIndex==finalActivePartition_)
-		finalItr = findActiveIntervalIndex(switchingTimes, finalTime, numSubsystems-1);
-
-	// clearing the output trajectories
-	timeTrajectory.clear();
-	timeTrajectory.reserve(maxNumSteps+1);
-	stateTrajectory.clear();
-	stateTrajectory.reserve(maxNumSteps+1);
-	inputTrajectory.clear();
-	inputTrajectory.reserve(maxNumSteps+1);
-	eventsPastTheEndIndeces.clear();
-	eventsPastTheEndIndeces.reserve(numEvents);
-
-	// initialize the model and set controller
-	if (controller.empty()==false) {
-		// set controller
-		systemDynamicsPtrStock_[workerIndex]->setController(controller);
-		// reset function calls counter
-		systemDynamicsPtrStock_[workerIndex]->resetNumFunctionCalls();
-		// Reset the event class
-		systemEventHandlersPtrStock_[workerIndex]->reset();
-		// initialize subsystem
-		systemDynamicsPtrStock_[workerIndex]->initializeModel(*logicRulesMachinePtr_, partitionIndex, "SLQ");
-
-	} else {
-		// initialize operatingTrajectories
-		operatingTrajectoriesPtrStock_[workerIndex]->initializeModel(*logicRulesMachinePtr_, partitionIndex, "SLQ");
-	}
-
-	state_vector_t beginState = initState;
-	scalar_t beginTime, endTime;
-	size_t k_u = 0;  // control input iterator
-	for (size_t i=beginItr; i<=finalItr; i++) {
-
-		beginTime = i==beginItr ? initTime  : switchingTimes[i];
-		endTime   = i==finalItr ? finalTime : switchingTimes[i+1];
-
-		beginTime += 10*OCS2NumericTraits<scalar_t>::week_epsilon();
-
-		// simulate subsystem
-		if (controller.empty()==false) {
-			// integrate controlled system
-			dynamicsIntegratorsPtrStock_[workerIndex]->integrate(
-					beginState, beginTime, endTime,
-					stateTrajectory, timeTrajectory,
-					settings_.minTimeStep_, settings_.absTolODE_, settings_.relTolODE_, maxNumSteps, true);
-			// compute control input trajectory and concatenate to inputTrajectory
-			for ( ; k_u<timeTrajectory.size(); k_u++) {
-				inputTrajectory.emplace_back( systemDynamicsPtrStock_[workerIndex]->computeInput(
-						timeTrajectory[k_u], stateTrajectory[k_u]) );
-			} // end of k loop
-
-		} else { // if no controller is assigned
-			// get operating trajectories
-			operatingTrajectoriesPtrStock_[workerIndex]->getSystemOperatingTrajectories(beginState, beginTime, endTime,
-					timeTrajectory, stateTrajectory, inputTrajectory,
-					true);
-		}
-
-		if (i<finalItr) {
-			eventsPastTheEndIndeces.push_back( stateTrajectory.size() );
-			systemDynamicsPtrStock_[workerIndex]->computeJumpMap(timeTrajectory.back(), stateTrajectory.back(), beginState);
-		}
-
-//		std::cout << "\n partitionIndex: " << partitionIndex << std::endl;
-//		std::cout << "beginTime: " << beginTime << std::endl;
-//		std::cout << "endTime: " << endTime << std::endl;
-//		std::cout << "eventsPastTheEndIndeces:\n\{";
-//		for (auto& t: eventsPastTheEndIndeces)
-//			std::cout << t << ", ";
-//		if (!eventsPastTheEndIndeces.empty())  std::cerr << "\b\b";
-//		std::cout << "}" << std::endl;
-//		for (size_t k=0; k<timeTrajectory.size(); k++) {
-//			std::cout << "k:  " << k << std::endl;
-//			std::cout << "time:  " << timeTrajectory[k] << std::endl;
-//			std::cout << "state: " << stateTrajectory[k].transpose() << std::endl;
-//			std::cout << "input: " << inputTrajectory[k].transpose() << std::endl;
-//		}
-
-	}  // end of i loop
-
-	// If an event has happened at the final time push it to the eventsPastTheEndIndeces
-	// numEvents>finalItr means that the final active subsystem is before an event time.
-	// Note: we woun't push the state because the input is not yet defined. rolloutTrajectory()
-	// will push state and input once the next partition state and input is defined.
-	bool eventAtFinalTime = numEvents>finalItr &&
-			logicRulesMachinePtr_->getEventTimes(partitionIndex)[finalItr]<finalTime+OCS2NumericTraits<scalar_t>::limit_epsilon();
-	if (eventAtFinalTime) {
-		eventsPastTheEndIndeces.push_back( stateTrajectory.size() );
-		systemDynamicsPtrStock_[workerIndex]->computeJumpMap(timeTrajectory.back(), stateTrajectory.back(), beginState);
-		return beginState;
-
-	} else {
-		return stateTrajectory.back();
-	}
-}
-
+/******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
 typename SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::scalar_t
@@ -522,15 +396,15 @@ typename SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::scalar_t
 				controllerPtrTemp = &controllersStock[i-1];
 
 		// call rollout worker for the partition 'i' on the thread 'threadId'
-		state_vector_t xp0;
+		state_vector_t x0Temp;
 		if (controllerPtrTemp->empty()==false) {
-			xp0 = dynamicsForwardRolloutPtrStock_[threadId]->run(
+			x0Temp = dynamicsForwardRolloutPtrStock_[threadId]->run(
 					i, t0, x0, tf, *controllerPtrTemp, *logicRulesMachinePtr_,
 					timeTrajectoriesStock[i], eventsPastTheEndIndecesStock[i],
 					stateTrajectoriesStock[i], inputTrajectoriesStock[i]);
 
 		} else {
-			xp0 = operatingTrajectoriesRolloutPtrStock_[threadId]->run(
+			x0Temp = operatingTrajectoriesRolloutPtrStock_[threadId]->run(
 					i, t0, x0, tf, *controllerPtrTemp, *logicRulesMachinePtr_,
 					timeTrajectoriesStock[i], eventsPastTheEndIndecesStock[i],
 					stateTrajectoriesStock[i], inputTrajectoriesStock[i]);
@@ -545,22 +419,17 @@ typename SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::scalar_t
 
 		// reset the initial time and state
 		t0 = timeTrajectoriesStock[i].back();
-		x0.swap(xp0);
+		x0.swap(x0Temp);
 
 		// total number of steps
 		numSteps += timeTrajectoriesStock[i].size();
 
 	}  // end of i loop
 
-	// if there is an active event at the finalTime. We add the jumped state and final time, as well as the input.
-	// However the input is not valid since the controller is not defined for the next partition. This value wouldn't
-	// affect the algorithm since at final time only state and time are used e.g. in the Heuristic cost.
+	// if there is an active event at the finalTime, we remove it.
 	if (eventsPastTheEndIndecesStock[finalActivePartition].size()>0)
 		if(eventsPastTheEndIndecesStock[finalActivePartition].back()==stateTrajectoriesStock[finalActivePartition].size()) {
-//			timeTrajectoriesStock[finalActivePartition].push_back(t0);
-//			stateTrajectoriesStock[finalActivePartition].push_back(x0);
-//			inputTrajectoriesStock[finalActivePartition].push_back(inputTrajectoriesStock[finalActivePartition].back());
-			eventsPastTheEndIndecesStock[finalActivePartition].erase(eventsPastTheEndIndecesStock[finalActivePartition].end()-1);
+			eventsPastTheEndIndecesStock[finalActivePartition].pop_back();
 		}
 
 	if (x0 != x0)
@@ -2098,23 +1967,6 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::solveErrorRiccatiEquationWor
 	SveTrajectoryStock_[partitionIndex].resize(SveTrajectory.size());
 	std::reverse_copy(SveTrajectory.begin(), SveTrajectory.end(), SveTrajectoryStock_[partitionIndex].begin());
 
-//	std::cout << ">>>>>>>>>>>\n";
-//	std::cout << "Partition: " << partitionIndex << std::endl;
-//	std::cout << "time size:  " << SsNormalizedTimeTrajectoryStock_[partitionIndex].size() << std::endl;
-//	std::cout << "Sve size:    " << SveTrajectory.size() << std::endl;
-//	std::cout << "SsNormalizedEventsPastTheEndIndeces:\n\{";
-//	for (auto& t: SsNormalizedEventsPastTheEndIndecesStock_[partitionIndex])
-//		std::cout << t << ", ";
-//	if (!SsNormalizedEventsPastTheEndIndecesStock_[partitionIndex].empty())  std::cerr << "\b\b";
-//	std::cout << "}" << std::endl;
-//
-//	for (size_t k=0; k<SsNormalizedTimeTrajectoryStock_[partitionIndex].size(); k++) {
-//		std::cout << "k:  " << k << std::endl;
-//		std::cout << "time:  " << SsNormalizedTimeTrajectoryStock_[partitionIndex][k] << std::endl;
-//		std::cout << "Sve:   " << SveTrajectory[k].transpose() << std::endl;
-//	}
-//	std::cout << "<<<<<<<<<<<<\n";
-
 	// Testing the numerical stability
 	if (settings_.checkNumericalStability_==true)
 		for (size_t k=0; k<NS; k++) {
@@ -3406,7 +3258,7 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::adjustController(
 
 	// adjust the nominal controllerStock using trajectory spreading
 	if (nominalControllersStock_.size()>0) {
-		logicRulesMachinePtr_->getLogicRules().adjustController(
+		trajectorySpreadingController_.adjustController(
 				newEventTimes, controllerEventTimes,
 				nominalControllersStock_);
 	}

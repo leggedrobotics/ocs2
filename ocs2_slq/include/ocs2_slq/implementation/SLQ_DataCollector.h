@@ -33,6 +33,22 @@ namespace ocs2 {
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
+SLQ_DataCollector<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::SLQ_DataCollector(
+		const controlled_system_base_t* systemDynamicsPtr,
+		const derivatives_base_t* systemDerivativesPtr,
+		const constraint_base_t* systemConstraintsPtr,
+		const cost_function_base_t* costFunctionPtr)
+
+	: systemDynamicsPtr_(systemDynamicsPtr->clone())
+	, systemDerivativesPtr_(systemDerivativesPtr->clone())
+	, systemConstraintsPtr_(systemConstraintsPtr->clone())
+	, costFunctionPtr_(costFunctionPtr->clone())
+{}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
 void SLQ_DataCollector<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::collect(
 		const slq_t* constSlqPtr) {
 
@@ -136,11 +152,21 @@ void SLQ_DataCollector<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::collect(
 	sTrajectoriesStock_.swap(slqPtr->sTrajectoryStock_);
 
 	// SLQ missing variables flow-map value
-	calculateFlowMap(constSlqPtr,
+	calculateFlowMap(
+			constSlqPtr,
 			nominalTimeTrajectoriesStock_,
 			nominalStateTrajectoriesStock_,
 			nominalInputTrajectoriesStock_,
 			nominalFlowMapTrajectoriesStock_);
+
+	// constraints derivatives w.r.t. to start and final time
+	calculateConstraintsSensitivity(
+			constSlqPtr,
+			nominalTimeTrajectoriesStock_,
+			nominalStateTrajectoriesStock_,
+			nominalInputTrajectoriesStock_,
+			EvDevEventTimesTrajectoriesStockSet_,
+			EvDevEventTimesProjectedTrajectoriesStockSet_);
 }
 
 /******************************************************************************************************/
@@ -154,15 +180,14 @@ void SLQ_DataCollector<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculateFlowMap(
 		const input_vector_array2_t& inputTrajectoriesStock,
 		state_vector_array2_t& flowMapTrajectoriesStock)  {
 
-	const size_t workerIndex = 0;
 	slq_t* slqPtr = const_cast<slq_t*>(constSlqPtr);
 
-	flowMapTrajectoriesStock.resize(slqPtr->numPartitions_);
+	flowMapTrajectoriesStock.resize(constSlqPtr->numPartitions_);
 
-	for (size_t i=0; i<slqPtr->numPartitions_; i++) {
+	for (size_t i=0; i<constSlqPtr->numPartitions_; i++) {
 
 		// skip the inactive subsystems
-		if (i<slqPtr->initActivePartition_ || i>slqPtr->finalActivePartition_) {
+		if (i<constSlqPtr->initActivePartition_ || i>constSlqPtr->finalActivePartition_) {
 			flowMapTrajectoriesStock[i].clear();
 			continue;
 		}
@@ -171,16 +196,83 @@ void SLQ_DataCollector<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculateFlowMap(
 		flowMapTrajectoriesStock[i].resize(N);
 
 		// set controller
-//		slqPtr->systemDynamicsPtrStock_[workerIndex]->setController(nominalControllersStock_[i]);
+		systemDynamicsPtr_->setController(slqPtr->nominalControllersStock_[i]);
 		// initialize subsystem
-		slqPtr->systemDynamicsPtrStock_[workerIndex]->initializeModel(*(slqPtr->logicRulesMachinePtr_), i, "SLQ");
+		systemDynamicsPtr_->initializeModel(*(slqPtr->getLogicRulesMachinePtr()), i, "SLQ");
 
 		for (size_t k=0; k<N; k++) {
-			slqPtr->systemDynamicsPtrStock_[workerIndex]->computeFlowMap(
+			systemDynamicsPtr_->computeFlowMap(
 					timeTrajectoriesStock[i][k],
 					stateTrajectoriesStock[i][k],
 					inputTrajectoriesStock[i][k],
 					flowMapTrajectoriesStock[i][k]);
+		}  // end of k loop
+	}  // end of i loop
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
+void SLQ_DataCollector<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculateConstraintsSensitivity(
+		const slq_t* constSlqPtr,
+		const std::vector<scalar_array_t>& timeTrajectoriesStock,
+		const state_vector_array2_t& stateTrajectoriesStock,
+		const input_vector_array2_t& inputTrajectoriesStock,
+		constraint1_vector_array3_t& EvDevEventTimesTrajectoriesStockSet,
+		input_vector_array3_t& EvDevEventTimesProjectedTrajectoriesStockSet) {
+
+	slq_t* slqPtr = const_cast<slq_t*>(constSlqPtr);
+
+	const size_t numEventTimes = constSlqPtr->getLogicRulesPtr()->getNumEventTimes();
+
+	// resizing
+	EvDevEventTimesTrajectoriesStockSet.resize(numEventTimes);
+	for (constraint1_vector_array2_t& EvDevEventTimesTrajectoriesStock : EvDevEventTimesTrajectoriesStockSet) {
+		EvDevEventTimesTrajectoriesStock.resize(constSlqPtr->numPartitions_);
+		for (size_t i=0; i<constSlqPtr->numPartitions_; i++) {
+			EvDevEventTimesTrajectoriesStock[i].resize(timeTrajectoriesStock[i].size());
+		} // end of i loop
+	}
+	EvDevEventTimesProjectedTrajectoriesStockSet.resize(numEventTimes);
+	for (constraint1_vector_array2_t& EvDevEventTimesProjectedTrajectoriesStock : EvDevEventTimesProjectedTrajectoriesStockSet) {
+		EvDevEventTimesProjectedTrajectoriesStock.resize(constSlqPtr->numPartitions_);
+		for (size_t i=0; i<constSlqPtr->numPartitions_; i++) {
+			EvDevEventTimesProjectedTrajectoriesStock[i].resize(timeTrajectoriesStock[i].size());
+		} // end of i loop
+	}
+
+	for (size_t i=0; i<constSlqPtr->numPartitions_; i++) {
+
+		// initialize subsystem
+		systemConstraintsPtr_->initializeModel(*(slqPtr->getLogicRulesMachinePtr()), i, "SLQ");
+
+		for (size_t k=0; k<timeTrajectoriesStock[i].size(); k++) {
+			// initialization
+			systemConstraintsPtr_->setCurrentStateAndControl(
+					timeTrajectoriesStock[i][k],
+					stateTrajectoriesStock[i][k],
+					inputTrajectoriesStock[i][k]);
+			// evaluation
+			constraint1_vector_array_t g1DevArray;
+			systemConstraintsPtr_->getConstraint1DerivativesEventTimes(g1DevArray);
+
+			if (g1DevArray.size()>0) {
+				if (g1DevArray.size()!=numEventTimes)
+					throw std::runtime_error("Incorrect dimension for constraint1 derivatives w.r.t. event times");
+
+				for (size_t j=0; j<EvDevEventTimesTrajectoriesStockSet.size(); j++) {
+					EvDevEventTimesTrajectoriesStockSet[j][i][k].swap(g1DevArray[j]);
+					EvDevEventTimesProjectedTrajectoriesStockSet[j][i][k] = DmDagerTrajectoriesStock_[i][k]*EvDevEventTimesTrajectoriesStockSet[j][i][k];
+				} // end of j loop
+
+			} else {
+				for (size_t j=0; j<EvDevEventTimesTrajectoriesStockSet.size(); j++) {
+					EvDevEventTimesTrajectoriesStockSet[j][i][k].setZero();
+					EvDevEventTimesProjectedTrajectoriesStockSet[j][i][k].setZero();
+				} // end of j loop
+			}
+
 		}  // end of k loop
 	}  // end of i loop
 }

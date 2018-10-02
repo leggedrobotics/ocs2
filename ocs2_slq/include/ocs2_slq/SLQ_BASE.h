@@ -54,6 +54,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_core/misc/LinearInterpolation.h>
 #include <ocs2_core/misc/LTI_Equations.h>
 #include <ocs2_core/misc/FindActiveIntervalIndex.h>
+#include <ocs2_core/misc/TrajectorySpreadingController.h>
 #include <ocs2_core/logic/rules/LogicRulesBase.h>
 #include <ocs2_core/logic/rules/NullLogicRules.h>
 #include <ocs2_core/logic/machine/LogicRulesMachine.h>
@@ -1146,6 +1147,9 @@ protected:
 	// 1) The feedforward component and the type-1 constraint input are set to zero
 	// 2) Final cost will be ignored
 	std::vector<bool> initialControllerDesignStock_;
+
+	// trajectory spreading
+	TrajectorySpreadingController<STATE_DIM, INPUT_DIM> trajectorySpreadingController_;
 
 	size_t iteration_;
 	eigen_scalar_array_t iterationCost_;

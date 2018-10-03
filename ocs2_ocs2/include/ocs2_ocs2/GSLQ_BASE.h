@@ -541,9 +541,8 @@ protected:
 	input_vector_array3_t nablaLvTrajectoriesStockSet_;
 
 	state_vector_array3_t MvTrajectoriesStockSet_;   // Riccati solution for sensitivity controller feedforward
-	state_vector_array3_t MveTrajectoriesStockSet_;  // Riccati solution for sensitivity controller error feedforward
+	state_vector_array3_t MveTrajectoriesStockSet_;  // Riccati solution for sensitivity controller feedforward error-correction term.
 	input_vector_array3_t LvTrajectoriesStockSet_;   // sensitivity controller feedforward
-	input_vector_array3_t LveTrajectoriesStockSet_;  // error sensitivity controller feedforward
 
 	state_vector_array3_t sensitivityStateTrajectoriesStockSet_;
 	input_vector_array3_t sensitivityInputTrajectoriesStockSet_;

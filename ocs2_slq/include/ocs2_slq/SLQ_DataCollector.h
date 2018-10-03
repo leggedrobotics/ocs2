@@ -207,9 +207,9 @@ public:
 	/******************
 	 * SLQ missing variables
 	 ******************/
-	state_vector_array2_t       nominalFlowMapTrajectoriesStock_;
-	constraint1_vector_array3_t EvDevEventTimesTrajectoriesStockSet_;
-	input_vector_array3_t       EvDevEventTimesProjectedTrajectoriesStockSet_;
+	state_vector_array2_t        nominalFlowMapTrajectoriesStock_;
+	constraint1_vector_array3_t  EvDevEventTimesTrajectoriesStockSet_;           // state-input constraint derivative w.r.t. event times
+	input_vector_array3_t        EvDevEventTimesProjectedTrajectoriesStockSet_;  // DmDager * EvDevEventTimes
 
 protected:
 	/**
@@ -239,16 +239,18 @@ protected:
 			state_vector_array2_t& flowMapTrajectoriesStock);
 
 	/**
-	 * Calculates sensitivity of the constraints to event times (the starting and terminal event times for all subsystems).
+	 * Calculates sensitivity of the state-input constraints to event times.
 	 *
 	 * @param [in] constSlqPtr: A pointer to the SLQ instance.
 	 * @param [in] timeTrajectoriesStock: The time trajectory stamp.
 	 * @param [in] stateTrajectoriesStock: The state trajectory.
 	 * @param [in] inputTrajectoriesStock: The control input trajectory.
-	 * @param [out] EvDevEventTimesTrajectoriesStockSet: Sensitivity of the constraints to the event event times.
-	 * @param [out] EvDevEventTimesProjectedTrajectoriesStockSet: Projected sensitivity of the constraints to the event event times.
+	 * @param [out] EvDevEventTimesTrajectoriesStockSet: The sensitivity of the state-input constraints to the event times. Here
+	 * EvDevEventTimesTrajectoriesStockSet[i] is the EvDevEventTimesTrajectoriesStock for the i'th event time.
+	 * @param [out] EvDevEventTimesProjectedTrajectoriesStockSet: The projected sensitivity of the state-input constraints to the event times,
+	 * Defined as (DmDager * EvDevEventTimes).
 	 */
-	void calculateConstraintsSensitivity(
+	void calculateStateInputConstraintsSensitivity(
 			const slq_t* constSlqPtr,
 			const std::vector<scalar_array_t>& timeTrajectoriesStock,
 			const state_vector_array2_t& stateTrajectoriesStock,

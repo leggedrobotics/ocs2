@@ -73,7 +73,6 @@ public:
 	typedef typename DIMENSIONS::constraint1_vector_array_t constraint1_vector_array_t;
 	typedef typename DIMENSIONS::constraint1_state_matrix_t       constraint1_state_matrix_t;
 	typedef typename DIMENSIONS::constraint1_state_matrix_array_t constraint1_state_matrix_array_t;
-	typedef typename DIMENSIONS::controller_t controller_t;
 
 	/**
 	 * Constructor.

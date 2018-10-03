@@ -986,7 +986,7 @@ void GSLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::solveSensitivityBVP(
 	// temporal final value for the last Riccati equations
 	state_vector_t MvFinalInternal  = MvFinal;
 	state_vector_t MveFinalInternal = MveFinal;
-	// output containers which is reverse
+	// output containers which is a reverse container
 	state_vector_array_t rMvTrajectory;
 	state_vector_array_t rMveTrajectory;
 
@@ -1118,9 +1118,11 @@ void GSLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::solveSensitivityBVP(
 		MvFinalInternal  = rMvTrajectory.back();
 		MveFinalInternal = rMveTrajectory.back();
 
-		// check size
+		// check sizes
 		if (rMvTrajectory.size() != NS)
 			throw std::runtime_error("MvTrajectory size is incorrect.");
+		if (rMveTrajectory.size() != NS)
+			throw std::runtime_error("MveTrajectory size is incorrect.");
 
 		// constructing 'Mv' and 'Mve'
 		MvTrajectoriesStock[i].resize(NS);
@@ -1267,7 +1269,7 @@ void GSLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculateBVPSensitivityCont
 			// DmProjected
 			input_matrix_t DmProjected;
 			DmProjectedFuncStock_[workerIndex].interpolate(t, DmProjected, greatestLessTimeStampIndex);
-			//
+			// EvDevEventTimesProjected
 			input_vector_t EvDevEventTimeProjected;
 			EvDevEventTimesProjectedFuncStock_[workerIndex].interpolate(t, EvDevEventTimeProjected, greatestLessTimeStampIndex);
 
@@ -1510,14 +1512,13 @@ void GSLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::runLQBasedMethod()  {
 template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
 void GSLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::runSweepingBVPMethod()  {
 
-	// compute missing data in SLQ
+	// compute missing data from SLQ run
 	computeMissingSlqData();
 
 	// resizing
 	MvTrajectoriesStockSet_.resize(numEventTimes_);
 	MveTrajectoriesStockSet_.resize(numEventTimes_);
 	LvTrajectoriesStockSet_.resize(numEventTimes_);
-	LveTrajectoriesStockSet_.resize(numEventTimes_);
 	sensitivityStateTrajectoriesStockSet_.resize(numEventTimes_);
 	sensitivityInputTrajectoriesStockSet_.resize(numEventTimes_);
 	nominalCostFuntionDerivative_.resize(numEventTimes_);
@@ -1532,7 +1533,7 @@ void GSLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::runSweepingBVPMethod()  {
 			// solve BVP to compute 'Mv' and 'Mve'
 			solveSensitivityBVP(workerIndex, index,
 					state_vector_t::Zero() /*dcPtr_->SvHeuristics_*/,
-					state_vector_t::Zero() /*dcPtr_->SveHeuristics_*/,
+					state_vector_t::Zero() /*SveHeuristics_*/,
 					MvTrajectoriesStockSet_[index],
 					MveTrajectoriesStockSet_[index]);
 
@@ -1562,7 +1563,6 @@ void GSLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::runSweepingBVPMethod()  {
 			MvTrajectoriesStockSet_[index].clear();
 			MveTrajectoriesStockSet_[index].clear();
 			LvTrajectoriesStockSet_[index].clear();
-			LveTrajectoriesStockSet_[index].clear();
 			sensitivityStateTrajectoriesStockSet_[index].clear();
 			sensitivityInputTrajectoriesStockSet_[index].clear();
 			nominalCostFuntionDerivative_(index) = 0.0;

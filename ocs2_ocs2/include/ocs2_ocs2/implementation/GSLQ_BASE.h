@@ -529,6 +529,8 @@ void GSLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::computeEquivalentSystemMult
 		const size_t& activeSubsystem,
 		scalar_t& multiplier) const {
 
+	scalar_t timePeriod;
+
 	if (activeSubsystem == eventTimeIndex+1) {
 		if (activeSubsystem == eventTimes_.size()) {
 			if (dcPtr_->finalTime_<eventTimes_[eventTimeIndex])

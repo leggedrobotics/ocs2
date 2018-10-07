@@ -20,27 +20,31 @@ namespace switched_model {
 /**
  * ModelKinematics Base Class
  * @tparam JOINT_COORD_SIZE
+ * @tparam SCALAR_T
  */
-template <size_t JOINT_COORD_SIZE>
+template <size_t JOINT_COORD_SIZE, typename SCALAR_T=double>
 class KinematicsModelBase
 {
 public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-	typedef std::unique_ptr<KinematicsModelBase<JOINT_COORD_SIZE>> Ptr;
+	typedef std::unique_ptr<KinematicsModelBase<JOINT_COORD_SIZE, SCALAR_T>> Ptr;
 
-	typedef typename SwitchedModel<JOINT_COORD_SIZE>::generalized_coordinate_t generalized_coordinate_t;
-	typedef typename SwitchedModel<JOINT_COORD_SIZE>::joint_coordinate_t joint_coordinate_t;
-	typedef typename SwitchedModel<JOINT_COORD_SIZE>::base_coordinate_t base_coordinate_t;
+	typedef typename SwitchedModel<JOINT_COORD_SIZE, SCALAR_T>::generalized_coordinate_t generalized_coordinate_t;
+	typedef typename SwitchedModel<JOINT_COORD_SIZE, SCALAR_T>::joint_coordinate_t   joint_coordinate_t;
+	typedef typename SwitchedModel<JOINT_COORD_SIZE, SCALAR_T>::base_coordinate_t    base_coordinate_t;
 
-	KinematicsModelBase(){};
+	typedef Eigen::Matrix<SCALAR_T, 3, 1> vector3d_t;
+	typedef Eigen::Matrix<SCALAR_T, 3, 3> matrix3d_t;
 
-	virtual ~KinematicsModelBase(){};
+	KinematicsModelBase() = default;
+
+	virtual ~KinematicsModelBase() = default;
 
 	/**
 	 * Clone KinematicsModelBase class.
 	 */
-	virtual KinematicsModelBase<JOINT_COORD_SIZE>* clone() const = 0;
+	virtual KinematicsModelBase<JOINT_COORD_SIZE, SCALAR_T>* clone() const = 0;
 
 	/**
 	 * Gets a (6+JOINT_COORD_SIZE)-by-1 generalized coordinate and calculates the rotation ...
@@ -54,7 +58,8 @@ public:
 	 * @param [in] qJoint
 	 */
 	template <typename BASE_COORDINATE, typename JOINT_COORDINATE>
-	void update(const Eigen::DenseBase<BASE_COORDINATE>& qBase,
+	void update(
+			const Eigen::DenseBase<BASE_COORDINATE>& qBase,
 			const Eigen::DenseBase<JOINT_COORDINATE>& qJoint);
 
 	/**
@@ -68,13 +73,16 @@ public:
 	 * @param [in] footIndex
 	 * @param [out] footPosition
 	 */
-	virtual void footPositionBaseFrame(const size_t& footIndex, Eigen::Vector3d& footPosition) = 0;
+	virtual void footPositionBaseFrame(
+			const size_t& footIndex,
+			vector3d_t& footPosition) = 0;
 
 	/**
 	 * Calculate the feet position in the Base frame
 	 * @param [out] feetPositions
 	 */
-	void feetPositionsBaseFrame(std::array<Eigen::Vector3d,4>& feetPositions);
+	void feetPositionsBaseFrame(
+			std::array<vector3d_t,4>& feetPositions);
 
 	/**
 	 * Calculate the feet position in the Origin frame
@@ -87,7 +95,9 @@ public:
 	 * @param [in] footIndex
 	 * @param [out] footPosition
 	 */
-	void footPositionOriginFrame(const size_t& footIndex, Eigen::Vector3d& footPosition);
+	void footPositionOriginFrame(
+			const size_t& footIndex,
+			vector3d_t& footPosition);
 
 	/**
 	 * Calculate feet Positions in Origin Frame
@@ -95,29 +105,35 @@ public:
 	 * @param [in] footIndex
 	 * @param [out] footPosition
 	 */
-	void footPositionOriginFrame(const generalized_coordinate_t& generalizedCoordinate,
-			const size_t& footIndex, Eigen::Vector3d& footPosition);
+	void footPositionOriginFrame(
+			const generalized_coordinate_t& generalizedCoordinate,
+			const size_t& footIndex,
+			vector3d_t& footPosition);
 
 	/**
 	 * Calculate feet Positions in Origin Frame
 	 * @param [out] feetPositions
 	 */
-	void feetPositionsOriginFrame(std::array<Eigen::Vector3d,4>& feetPositions);
+	void feetPositionsOriginFrame(
+			std::array<vector3d_t,4>& feetPositions);
 
 	/**
 	 * Calculate feet Positions in Origin Frame
 	 * @param [in] generalizedCoordinate
 	 * @param [out] feetPositions
 	 */
-	void feetPositionsOriginFrame(const generalized_coordinate_t& generalizedCoordinate,
-			std::array<Eigen::Vector3d,4>& feetPositions);
+	void feetPositionsOriginFrame(
+			const generalized_coordinate_t& generalizedCoordinate,
+			std::array<vector3d_t,4>& feetPositions);
 
 	/**
 	 * Calculate foot Jacobian in Base frame
 	 * @param [in] footIndex
 	 * @param [out] footJacobain
 	 */
-	virtual void footJacobainBaseFrame(const size_t& footIndex, Eigen::Matrix<double,6,JOINT_COORD_SIZE>& footJacobain) = 0;
+	virtual void footJacobainBaseFrame(
+			const size_t& footIndex,
+			Eigen::Matrix<SCALAR_T,6,JOINT_COORD_SIZE>& footJacobain) = 0;
 
 	/**
 	 * calculates the Jacobian matrix in the Inertia frame using rotation "i_R_b" from the Base frame to Inertia
@@ -128,10 +144,10 @@ public:
 	 * @param [out] i_J_point
 	 */
 	static void FromBaseJacobianToInertiaJacobian(
-			const Eigen::Matrix3d& i_R_b,
-			const Eigen::Vector3d& b_r_point,
-			const Eigen::Matrix<double,6,JOINT_COORD_SIZE>& b_J_point,
-			Eigen::Matrix<double,6,JOINT_COORD_SIZE + 6>& i_J_point);
+			const matrix3d_t& i_R_b,
+			const vector3d_t& b_r_point,
+			const Eigen::Matrix<SCALAR_T,6,JOINT_COORD_SIZE>& b_J_point,
+			Eigen::Matrix<SCALAR_T,6,JOINT_COORD_SIZE + 6>& i_J_point);
 
 	/**
 	 * calculates the velocity in the Inertia frame using rotation "i_R_b" from the Base frame to Inertia
@@ -144,23 +160,23 @@ public:
 	 * @param i_v_point
 	 */
 	static void FromBaseVelocityToInertiaVelocity(
-			const Eigen::Matrix3d& i_R_b,
+			const matrix3d_t& i_R_b,
 			const base_coordinate_t& baseLocalVelocities,
-			const Eigen::Vector3d& b_r_point,
-			const Eigen::Vector3d& b_v_point,
-			Eigen::Vector3d& i_v_point);
+			const vector3d_t& b_r_point,
+			const vector3d_t& b_v_point,
+			vector3d_t& i_v_point);
 
 	/**
 	 * Origin to base rotation matrix
-	 * @return Eigen::Matrix3d
+	 * @return matrix3d_t
 	 */
-	const Eigen::Matrix3d& rotationMatrixOrigintoBase() const;
+	const matrix3d_t& rotationMatrixOrigintoBase() const;
 
 
 protected:
 	base_coordinate_t  qBase_;
 	joint_coordinate_t qJoint_;
-	Eigen::Matrix3d b_R_o_;
+	matrix3d_t b_R_o_;
 
 };
 

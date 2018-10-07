@@ -2,7 +2,7 @@
  * ComModelBase.h
  *
  *  Created on: Aug 10, 2017
- *      Author: asutosh
+ *      Author: farbod
  */
 
 namespace switched_model {
@@ -10,16 +10,16 @@ namespace switched_model {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t JOINT_COORD_SIZE>
-Eigen::Matrix<double,6,JOINT_COORD_SIZE> ComModelBase<JOINT_COORD_SIZE>::comJacobainBaseFrame(
+template <size_t JOINT_COORD_SIZE, typename SCALAR_T>
+Eigen::Matrix<SCALAR_T,6,JOINT_COORD_SIZE> ComModelBase<JOINT_COORD_SIZE, SCALAR_T>::comJacobainBaseFrame(
 		const joint_coordinate_t& jointCoordinate) {
 
 	// CoM jacobian in the Base frame around CoM
-	Eigen::Matrix<double,6,6> I = comInertia(jointCoordinate);
-	Eigen::Matrix<double,6,6> I_inverse;
-	Eigen::Matrix3d rotationMInverse = I.topLeftCorner<3,3>().inverse();
-	I_inverse << rotationMInverse, 				   Eigen::Matrix3d::Zero(),
-			     Eigen::Matrix3d::Zero(),          (1/I(5,5))*Eigen::Matrix3d::Identity();
+	Eigen::Matrix<SCALAR_T,6,6> I = comInertia(jointCoordinate);
+	Eigen::Matrix<SCALAR_T,6,6> I_inverse;
+	matrix3d_t rotationMInverse = I.template topLeftCorner<3,3>().inverse();
+	I_inverse << rotationMInverse,    matrix3d_t::Zero(),
+			     matrix3d_t::Zero(),  (1/I(5,5))*matrix3d_t::Identity();
 
 	return I_inverse * comMomentumJacobian(jointCoordinate);
 }
@@ -27,17 +27,17 @@ Eigen::Matrix<double,6,JOINT_COORD_SIZE> ComModelBase<JOINT_COORD_SIZE>::comJaco
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t JOINT_COORD_SIZE>
-void ComModelBase<JOINT_COORD_SIZE>::calculateBasePose(
+template <size_t JOINT_COORD_SIZE, typename SCALAR_T>
+void ComModelBase<JOINT_COORD_SIZE, SCALAR_T>::calculateBasePose(
 		const joint_coordinate_t& qJoints,
 		const base_coordinate_t& comPose,
 		base_coordinate_t& basePose) {
 
 	// Rotation matrix from Base frame (or the coincided frame world frame) to Origin frame (global world).
-	Eigen::Matrix3d o_R_b = RotationMatrixBasetoOrigin(comPose.template head<3>());
+	matrix3d_t o_R_b = RotationMatrixBasetoOrigin(comPose.template head<3>());
 
 	// base to CoM displacement in the CoM frame
-	Eigen::Vector3d com_base2CoM = comPositionBaseFrame(qJoints);
+	vector3d_t com_base2CoM = comPositionBaseFrame(qJoints);
 
 	// base coordinate
 	basePose.template head<3>() = comPose.template segment<3>(0);
@@ -48,18 +48,18 @@ void ComModelBase<JOINT_COORD_SIZE>::calculateBasePose(
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t JOINT_COORD_SIZE>
-void ComModelBase<JOINT_COORD_SIZE>::calculateBaseLocalVelocities(
+template <size_t JOINT_COORD_SIZE, typename SCALAR_T>
+void ComModelBase<JOINT_COORD_SIZE, SCALAR_T>::calculateBaseLocalVelocities(
 		const joint_coordinate_t& qJoints,
 		const joint_coordinate_t& dqJoints,
 		const base_coordinate_t& comLocalVelocities,
 		base_coordinate_t& baseLocalVelocities) {
 
 	// base to CoM displacement in the CoM frame
-	Eigen::Vector3d com_base2CoM = comPositionBaseFrame(qJoints);
+	vector3d_t com_base2CoM = comPositionBaseFrame(qJoints);
 
-	// CoM Jacobin in the Base frame
-	Eigen::Matrix<double,6,JOINT_COORD_SIZE> b_comJacobain = comJacobainBaseFrame(qJoints);
+	// CoM Jacobian in the Base frame
+	Eigen::Matrix<SCALAR_T,6,JOINT_COORD_SIZE> b_comJacobain = comJacobainBaseFrame(qJoints);
 
 	// local velocities of Base (com_W_b)
 	baseLocalVelocities.template head<3>() = comLocalVelocities.template head<3>() - b_comJacobain.template topRows<3>()*dqJoints;

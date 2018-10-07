@@ -7,20 +7,21 @@
 
 
 namespace switched_model {
+namespace tpl {
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t JOINT_COORD_SIZE, typename scalar_t>
-void CopEstimator<JOINT_COORD_SIZE, scalar_t>::copErrorEstimator(
+template <size_t JOINT_COORD_SIZE, typename SCALAR_T>
+void CopEstimator<JOINT_COORD_SIZE, SCALAR_T>::copErrorEstimator(
 		const contact_flag_t& stanceLegs,
 		const joint_coordinate_t& qJoints,
 		const joint_coordinate_t& lambda,
-		Eigen::Matrix<scalar_t,2,1>& copError, // copError = xyMomentum_total - cop_des * lambda_total
-		Eigen::Matrix<scalar_t,2,JOINT_COORD_SIZE>& devJoints_copError,
-		Eigen::Matrix<scalar_t,2,JOINT_COORD_SIZE>& devLambda_copError) {
+		Eigen::Matrix<SCALAR_T,2,1>& copError, // copError = xyMomentum_total - cop_des * lambda_total
+		Eigen::Matrix<SCALAR_T,2,JOINT_COORD_SIZE>& devJoints_copError,
+		Eigen::Matrix<SCALAR_T,2,JOINT_COORD_SIZE>& devLambda_copError) {
 
-	scalar_t numStanceLegs = 0.0;
+	SCALAR_T numStanceLegs = 0.0;
 	b_totalPressureMoment_.setZero();
 	devJoints_b_totalPressureMoment_.setZero();
 	totalPressure_ = 0.0;
@@ -32,7 +33,7 @@ void CopEstimator<JOINT_COORD_SIZE, scalar_t>::copErrorEstimator(
 	for (size_t j=0; j<4; j++)
 		if (stanceLegs[j]==true) {
 
-			Eigen::Matrix<scalar_t,3,1> b_base2StanceFoot;
+			Eigen::Matrix<SCALAR_T,3,1> b_base2StanceFoot;
 			kinematicModelPtr_->footPositionBaseFrame(j, b_base2StanceFoot);
 			base_jacobian_matrix_t b_jacobianFoot;
 			kinematicModelPtr_->footJacobainBaseFrame(j, b_jacobianFoot);
@@ -82,20 +83,21 @@ void CopEstimator<JOINT_COORD_SIZE, scalar_t>::copErrorEstimator(
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t JOINT_COORD_SIZE, typename scalar_t>
-Eigen::Matrix<scalar_t,2,1> CopEstimator<JOINT_COORD_SIZE, scalar_t>::copErrorEstimator(
+template <size_t JOINT_COORD_SIZE, typename SCALAR_T>
+Eigen::Matrix<SCALAR_T,2,1> CopEstimator<JOINT_COORD_SIZE, SCALAR_T>::copErrorEstimator(
 		const contact_flag_t& stanceLegs,
 		const joint_coordinate_t& qJoints,
 		const joint_coordinate_t& lambda) {
 
-	Eigen::Matrix<scalar_t,2,1>  copError;
-	Eigen::Matrix<scalar_t,2,12> devLambda_copError;
-	Eigen::Matrix<scalar_t,2,JOINT_COORD_SIZE> devJoints_copError;
+	Eigen::Matrix<SCALAR_T,2,1>  copError;
+	Eigen::Matrix<SCALAR_T,2,12> devLambda_copError;
+	Eigen::Matrix<SCALAR_T,2,JOINT_COORD_SIZE> devJoints_copError;
 
 	copErrorEstimator(stanceLegs, qJoints, lambda, copError, devJoints_copError, devLambda_copError);
 
 	return copError;
 }
 
+} // end of namespace tpl
 } // end of namespace switched_model
 

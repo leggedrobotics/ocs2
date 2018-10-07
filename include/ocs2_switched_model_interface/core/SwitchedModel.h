@@ -18,7 +18,7 @@ namespace switched_model {
  * General typedefs and enums for all Base classes
  * @tparam JOINT_COORD_SIZE
  */
-template <size_t JOINT_COORD_SIZE>
+template <size_t JOINT_COORD_SIZE, typename SCALAR_T=double>
 class SwitchedModel
 {
 public:
@@ -35,16 +35,16 @@ public:
 		GENERALIZED_COORDINATE_SIZE = BASE_COORDINATE_SIZE + JOINT_COORD_SIZE
 	};
 
-	typedef std::array<bool,NUM_CONTACT_POINTS> contact_flag_t;
+	typedef std::array<bool, NUM_CONTACT_POINTS> contact_flag_t;
 
-	typedef Eigen::Matrix<double,GENERALIZED_COORDINATE_SIZE,1> generalized_coordinate_t;
-	typedef Eigen::Matrix<double,JOINT_COORDINATE_SIZE,1>       joint_coordinate_t;
-	typedef Eigen::Matrix<double,BASE_COORDINATE_SIZE,1>        base_coordinate_t;
+	typedef Eigen::Matrix<SCALAR_T, GENERALIZED_COORDINATE_SIZE,1> generalized_coordinate_t;
+	typedef Eigen::Matrix<SCALAR_T, JOINT_COORDINATE_SIZE,1>       joint_coordinate_t;
+	typedef Eigen::Matrix<SCALAR_T, BASE_COORDINATE_SIZE,1>        base_coordinate_t;
 
 };
 
 /**
- * Whether to use Inertia Matrix derivate
+ * Whether to use Inertia Matrix derived
  * @return
  */
 inline bool useInertiaMatrixDerivate() {
@@ -57,20 +57,21 @@ inline bool useInertiaMatrixDerivate() {
  * @param [in] eulerAngles
  * @return
  */
-template <typename Derived>
-inline Eigen::Matrix3d RotationMatrixOrigintoBase(const Eigen::DenseBase<Derived>& eulerAngles) {
+template <typename Derived, typename SCALAR_T=double>
+inline Eigen::Matrix<SCALAR_T, 3, 3> RotationMatrixOrigintoBase(const Eigen::DenseBase<Derived>& eulerAngles) {
 
-	if (eulerAngles.innerSize()!=3 || eulerAngles.outerSize()!=1)  throw std::runtime_error("Input argument should be a 3-by-1 vector.");
+	if (eulerAngles.innerSize()!=3 || eulerAngles.outerSize()!=1)
+		throw std::runtime_error("Input argument should be a 3-by-1 vector.");
 
 	// inputs are the intrinsic rotation angles in RADIANTS
-	double sinAlpha = sin(eulerAngles(0));
-	double cosAlpha = cos(eulerAngles(0));
-	double sinBeta  = sin(eulerAngles(1));
-	double cosBeta  = cos(eulerAngles(1));
-	double sinGamma = sin(eulerAngles(2));
-	double cosGamma = cos(eulerAngles(2));
+	SCALAR_T sinAlpha = sin(eulerAngles(0));
+	SCALAR_T cosAlpha = cos(eulerAngles(0));
+	SCALAR_T sinBeta  = sin(eulerAngles(1));
+	SCALAR_T cosBeta  = cos(eulerAngles(1));
+	SCALAR_T sinGamma = sin(eulerAngles(2));
+	SCALAR_T cosGamma = cos(eulerAngles(2));
 
-	Eigen::Matrix3d Rx, Ry, Rz;
+	Eigen::Matrix<SCALAR_T, 3, 3> Rx, Ry, Rz;
 	Rx << 1, 0, 0,					0, cosAlpha, sinAlpha,		0, -sinAlpha, cosAlpha;
 	Ry << cosBeta, 0, -sinBeta,		0, 1, 0,		 			sinBeta, 0, cosBeta;
 	Rz << cosGamma, sinGamma, 0, 	-sinGamma, cosGamma, 0,		0, 0, 1;
@@ -84,20 +85,21 @@ inline Eigen::Matrix3d RotationMatrixOrigintoBase(const Eigen::DenseBase<Derived
  * @param [in] eulerAngles
  * @return
  */
-template <typename Derived>
-inline Eigen::Matrix3d RotationMatrixBasetoOrigin(const Eigen::DenseBase<Derived>& eulerAngles) {
+template <typename Derived, typename SCALAR_T=double>
+inline Eigen::Matrix<SCALAR_T, 3, 3> RotationMatrixBasetoOrigin(const Eigen::DenseBase<Derived>& eulerAngles) {
 
-	if (eulerAngles.innerSize()!=3 || eulerAngles.outerSize()!=1)  throw std::runtime_error("Input argument should be a 3-by-1 vector.");
+	if (eulerAngles.innerSize()!=3 || eulerAngles.outerSize()!=1)
+		throw std::runtime_error("Input argument should be a 3-by-1 vector.");
 
 	// inputs are the intrinsic rotation angles in RADIANTS
-	double sinAlpha = sin(eulerAngles(0));
-	double cosAlpha = cos(eulerAngles(0));
-	double sinBeta  = sin(eulerAngles(1));
-	double cosBeta  = cos(eulerAngles(1));
-	double sinGamma = sin(eulerAngles(2));
-	double cosGamma = cos(eulerAngles(2));
+	SCALAR_T sinAlpha = sin(eulerAngles(0));
+	SCALAR_T cosAlpha = cos(eulerAngles(0));
+	SCALAR_T sinBeta  = sin(eulerAngles(1));
+	SCALAR_T cosBeta  = cos(eulerAngles(1));
+	SCALAR_T sinGamma = sin(eulerAngles(2));
+	SCALAR_T cosGamma = cos(eulerAngles(2));
 
-	Eigen::Matrix3d RxT, RyT, RzT;
+	Eigen::Matrix<SCALAR_T, 3, 3> RxT, RyT, RzT;
 	RxT << 1, 0, 0,					0, cosAlpha, -sinAlpha,		0, sinAlpha, cosAlpha;
 	RyT << cosBeta, 0, sinBeta,		0, 1, 0,		 			-sinBeta, 0, cosBeta;
 	RzT << cosGamma, -sinGamma, 0, 	sinGamma, cosGamma, 0,		0, 0, 1;
@@ -111,12 +113,12 @@ inline Eigen::Matrix3d RotationMatrixBasetoOrigin(const Eigen::DenseBase<Derived
  * @param [in] in
  * @return
  */
-template <typename Derived>
-inline Eigen::Matrix3d CrossProductMatrix(const Eigen::DenseBase<Derived>& in) {
+template <typename Derived, typename SCALAR_T=double>
+inline Eigen::Matrix<SCALAR_T, 3, 3> CrossProductMatrix(const Eigen::DenseBase<Derived>& in) {
 
 	if (in.innerSize()!=3 || in.outerSize()!=1)  throw std::runtime_error("Input argument should be a 3-by-1 vector.");
 
-	Eigen::Matrix3d out;
+	Eigen::Matrix<SCALAR_T, 3, 3> out;
 	out <<   0.0,   -in(2), +in(1),
 			+in(2),  0.0,   -in(0),
 			-in(1), +in(0),  0.0;

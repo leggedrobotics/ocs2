@@ -213,7 +213,8 @@ void CppAdCodeGenInterface<DOMAIN_DIM, RANGE_DIM, SCALAR_T, VARIABLE_DIM>::creat
     //**************************************************************************
     //                              Sparsity Pattern
     //**************************************************************************
-    BASE::extractSparsityPattern(sparsityPattern_,
+    BASE::extractSparsityPattern(
+    		sparsityPattern_,
     		rowsJacobian_, colsJacobian_,
     		rowsHessian_, colsHessian_);
 

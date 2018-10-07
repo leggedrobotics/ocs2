@@ -79,12 +79,13 @@ public:
 	MPC_ROS_Ballbot(
 			mpc_t &mpc,
 			const std::string &robotName = "robot")
-	: BASE(mpc, robotName) {}
+	: BASE(mpc, robotName)
+	{}
 
 	/**
 	 * Destructor.
 	 */
-	virtual ~MPC_ROS_Ballbot() = default;
+	~MPC_ROS_Ballbot() = default;
 
 	/**
 	 * Provides the initial target trajectories for the cost function.

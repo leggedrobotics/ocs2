@@ -155,7 +155,7 @@ size_t LogicRulesMachine<LOGIC_RULES_T>::getNumEvents(size_t partitionIndex) con
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <class LOGIC_RULES_T>
-const size_t& LogicRulesMachine<LOGIC_RULES_T>::getnumPartitions() const  {
+const size_t& LogicRulesMachine<LOGIC_RULES_T>::getNumPartitions() const  {
 
 	return numPartitions_;
 }

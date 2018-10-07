@@ -194,7 +194,7 @@ public:
 	 *
 	 * @return Number of the partitions.
 	 */
-	const size_t& getnumPartitions() const;
+	const size_t& getNumPartitions() const;
 
 	/**
 	 * Returns a Lambda expression which can be used to find the current active event counter.

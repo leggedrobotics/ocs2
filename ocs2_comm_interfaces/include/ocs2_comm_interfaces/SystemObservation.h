@@ -54,9 +54,25 @@ public:
 	typedef typename DIMENSIONS::state_vector_t 	state_vector_t;
 	typedef typename DIMENSIONS::input_vector_t 	input_vector_t;
 
-	SystemObservation() = default;
+	/**
+	 * Constructor
+	 */
+	SystemObservation()
+	: subsystem_(0)
+	, time_(0.0)
+	, state_(state_vector_t::Zero())
+	, input_(input_vector_t::Zero())
+	{}
+
+	/**
+	 * Destructor
+	 */
 	~SystemObservation() = default;
 
+	/**
+	 * Swap with other.
+	 * @param other
+	 */
 	void swap(SystemObservation<STATE_DIM, INPUT_DIM>& other) {
 
 		std::swap(time_, other.time_);
@@ -96,10 +112,10 @@ public:
 	}
 
 private:
-	scalar_t 		time_;
-	state_vector_t 	state_;
-	input_vector_t 	input_;
-	size_t			subsystem_;
+	size_t   subsystem_;
+	scalar_t time_;
+	state_vector_t state_;
+	input_vector_t input_;
 
 };
 

@@ -151,6 +151,51 @@ public:
 			state_vector_array_t& stateTrajectory,
 			input_vector_array_t& inputTrajectory) = 0;
 
+	/**
+	 * Prints out the rollout.
+	 *
+	 * @param [in] partitionIndex: Time partition index.
+	 * @param [in] timeTrajectory: The time trajectory stamp.
+	 * @param [in] eventsPastTheEndIndeces: Indices containing past-the-end index of events trigger.
+	 * @param [in] stateTrajectory: The state trajectory.
+	 * @param [in] inputTrajectory: The control input trajectory.
+	 */
+	static void display(
+			const size_t& partitionIndex,
+			const scalar_array_t& timeTrajectory,
+			const size_array_t& eventsPastTheEndIndeces,
+			const state_vector_array_t& stateTrajectory,
+			const input_vector_array_t& inputTrajectory) {
+
+		std::cout << std::endl << "++++++++++++++++++++++++++++++" << std::endl;
+		std::cout << "Partition: " << partitionIndex;
+		std::cout << std::endl << "++++++++++++++++++++++++++++++" << std::endl;
+		std::cout << "Trajectory length:      " << timeTrajectory.size() << std::endl;
+		std::cout << "Total number of events: " << eventsPastTheEndIndeces.size() << std::endl;
+		if (!eventsPastTheEndIndeces.empty()) {
+			std::cout << "Event times: ";
+			for (size_t ind : eventsPastTheEndIndeces)
+				std::cout << timeTrajectory[ind] << ", ";
+			std::cout << std::endl;
+		}
+		std::cout << std::endl;
+
+		size_t k = 0;
+		for (size_t i=0; i<=eventsPastTheEndIndeces.size(); i++) {
+			for (; k<timeTrajectory.size(); k++) {
+				std::cout << "k:     " << k << std::endl;
+				std::cout << "Time:  " << timeTrajectory[k] << std::endl;
+				std::cout << "State: " << stateTrajectory[k].transpose() << std::endl;
+				std::cout << "Input: " << inputTrajectory[k].transpose() << std::endl;
+
+				if (i<eventsPastTheEndIndeces.size() && k+1==eventsPastTheEndIndeces[i]) {
+					std::cout << "+++ event took place +++" << std::endl;
+					break;
+				}
+			} // end of k loop
+		} // end of i loop
+	}
+
 private:
 	Rollout_Settings rolloutSettings_;
 

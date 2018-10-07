@@ -87,7 +87,8 @@ protected:
 	 * @param [out] startTimeIndexStock: eventTimes[startTimesIndex] will be the take-off time for the requested leg.
 	 * @param [out] finalTimeIndexStock: eventTimes[finalTimesIndex] will be the touch-down time for the requested leg.
 	 */
-	void updateFootSchedule(const size_t& footIndex,
+	void updateFootSchedule(
+			const size_t& footIndex,
 			const size_array_t& phaseIDsStock,
 			const bool_array_t& contactFlagStock,
 			int_array_t& startTimeIndexStock,

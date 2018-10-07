@@ -29,22 +29,30 @@ public:
 
 	~SinCPG() {}
 
-	void setConstant() override {
+	void setConstant() final {
 		Base::set(0.0, 1.0, 0.0);
 		Base::maxHight_ = 0.0;
 	}
 
-	scalar_t calculatePosition(const scalar_t& time) const override {
+	scalar_t calculatePosition(const scalar_t& time) const final {
 		const scalar_t omega = M_PI/(Base::finalTime_-Base::startTime_);
 		scalar_t position = Base::maxHight_ * pow(sin( omega*(time-Base::startTime_) ), 2);
 		return position;
 	}
 
-	scalar_t calculateVelocity(const scalar_t& time) const override {
+	scalar_t calculateVelocity(const scalar_t& time) const final {
 		const scalar_t omega = M_PI/(Base::finalTime_-Base::startTime_);
 		scalar_t velocity = 2*omega * Base::maxHight_ * cos( omega*(time-Base::startTime_) ) *
 				sin( omega*(time-Base::startTime_) );
 		return velocity;
+	}
+
+	scalar_t calculateStartTimeDerivative(const scalar_t& time) const final {
+		throw std::runtime_error("calculateStartTimeDerivative method is not implemented.");
+	}
+
+	scalar_t calculateFinalTimeDerivative(const scalar_t& time) const final {
+		throw std::runtime_error("calculateFinalTimeDerivative method is not implemented.");
 	}
 
 private:

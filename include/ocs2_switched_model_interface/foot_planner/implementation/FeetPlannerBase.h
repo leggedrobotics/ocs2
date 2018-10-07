@@ -52,6 +52,10 @@ void FeetPlannerBase<scalar_t, cpg_t>::updateFootSchedule(
 
 			startTimeIndexStock[i] = startTimeIndex;
 			finalTimeIndexStock[i] = finalTimeIndex;
+
+		} else {
+			startTimeIndexStock[i] = 0;
+			finalTimeIndexStock[i] = 0;
 		}
 
 	} // end of i loop

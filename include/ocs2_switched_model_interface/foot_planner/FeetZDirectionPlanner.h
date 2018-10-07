@@ -43,10 +43,11 @@ public:
 	 * @param [in] swingLegLiftOff: Maximum swing leg lift-off
 	 * @param [in] swingTimeScale: The scaling factor for adapting swing leg's lift-off
 	 */
-	FeetZDirectionPlanner(const scalar_t& swingLegLiftOff,
-												const scalar_t& swingTimeScale = 1.0,
-												const scalar_t& liftOffVelocity = 0.0,
-												const scalar_t& touchDownVelocity = 0.0);
+	FeetZDirectionPlanner(
+			const scalar_t& swingLegLiftOff,
+			const scalar_t& swingTimeScale = 1.0,
+			const scalar_t& liftOffVelocity = 0.0,
+			const scalar_t& touchDownVelocity = 0.0);
 
 	/**
 	 * copy constructor

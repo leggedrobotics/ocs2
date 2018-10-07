@@ -34,6 +34,7 @@ public:
 		c0_ = p0;
 		c1_ = c2_ = c3_ = 0.0;
 
+		dev_c0_ = dev_c1_ = dev_c2_ = dev_c3_ = 0.0;
 	}
 
 	void set(const scalar_t& t0,  const scalar_t& p0, const scalar_t& v0,
@@ -50,10 +51,15 @@ public:
 		scalar_t dp = p1-p0;
 		scalar_t dv = v1-v0;
 
-		c0_ = p0;
-		c1_ = v0 * dt_;
-		c2_ =  3.0*dp - (3.0*v0 + dv) * dt_;
-		c3_ = -2.0*dp + (2.0*v0 + dv) * dt_;
+		dev_c0_ = 0.0;
+		dev_c1_ = v0;
+		dev_c2_ = -(3.0*v0 + dv);
+		dev_c3_ =  (2.0*v0 + dv);
+
+		c0_ = dev_c0_*dt_ + p0;
+		c1_ = dev_c1_*dt_;
+		c2_ = dev_c2_*dt_ + 3.0*dp;
+		c3_ = dev_c3_*dt_ - 2.0*dp;
 	}
 
 	scalar_t evaluateSplinePosition(const scalar_t& time) const {
@@ -69,6 +75,36 @@ public:
 	scalar_t evaluateSplineAcceleration(const scalar_t& time) const {
 		scalar_t tn = normalizedTime(time);
 		return (6.0*c3_*tn + 2.0*c2_) / std::pow(dt_,2);
+	}
+
+	scalar_t evaluateStartTimeDerivative(const scalar_t& t) const {
+
+		if (dt_ > std::numeric_limits<scalar_t>::epsilon()) {
+
+			scalar_t tn = normalizedTime(t);
+			scalar_t dev_coff = -(dev_c3_*std::pow(tn,3) + dev_c2_*std::pow(tn,2) + dev_c1_*tn + dev_c0_);
+
+			scalar_t dev_tn = -(t1_-t)/std::pow(dt_,2);
+
+			return evaluateSplineVelocity(t)*dt_*dev_tn + dev_coff;
+		} else {
+			return 0.0;
+		}
+	}
+
+	scalar_t evaluateFinalTimeDerivative(const scalar_t& t) const {
+
+		if (dt_ > std::numeric_limits<scalar_t>::epsilon()) {
+
+			scalar_t tn = normalizedTime(t);
+			scalar_t dev_coff = (dev_c3_*std::pow(tn,3) + dev_c2_*std::pow(tn,2) + dev_c1_*tn + dev_c0_);
+
+			scalar_t dev_tn = -(t-t0_)/std::pow(dt_,2);
+
+			return evaluateSplineVelocity(t)*dt_*dev_tn + dev_coff;
+		} else {
+			return 0.0;
+		}
 	}
 
 protected:
@@ -88,6 +124,11 @@ private:
 	scalar_t c1_;
 	scalar_t c2_;
 	scalar_t c3_;
+
+	scalar_t dev_c0_;  // derivative w.r.t. dt_
+	scalar_t dev_c1_;  // derivative w.r.t. dt_
+	scalar_t dev_c2_;  // derivative w.r.t. dt_
+	scalar_t dev_c3_;  // derivative w.r.t. dt_
 };
 
 

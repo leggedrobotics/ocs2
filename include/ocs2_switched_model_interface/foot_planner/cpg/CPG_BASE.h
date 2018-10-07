@@ -74,6 +74,15 @@ public:
 		return (velocityPlus-velocityMinus)/h;
 	}
 
+	virtual scalar_t calculateStartTimeDerivative(const scalar_t& time) const {
+
+		return 0.0;
+	}
+
+	virtual scalar_t calculateFinalTimeDerivative(const scalar_t& time) const {
+
+		return 0.0;
+	}
 
 protected:
 	scalar_t startTime_;

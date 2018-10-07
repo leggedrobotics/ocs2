@@ -11,7 +11,6 @@
 #include <mutex>
 
 #include <ocs2_core/logic/rules/HybridLogicRules.h>
-#include <ocs2_core/misc/TrajectorySpreadingController.h>
 
 #include "ocs2_switched_model_interface/core/SwitchedModel.h"
 #include "ocs2_switched_model_interface/foot_planner/cpg/CPG_BASE.h"
@@ -115,7 +114,7 @@ public:
 			contact_flag_t& contactFlags) const;
 
 	/**
-	 * Retrieves constraints information of the motion phase specified by th given index. This information
+	 * Retrieves constraints information of the motion phase specified by the given index. This information
 	 * is sufficient to determine the active constraints of the requested motion phase.
 	 *
 	 * @param [in] index: The requested motion phase.
@@ -199,8 +198,6 @@ private:
 	std::vector<EndEffectorConstraintBase::ConstPtr> endEffectorStateConstraints_;
 
 	logic_template_type modeSequenceTemplate_;
-
-//	ocs2::TrajectorySpreadingController<STATE_DIM, INPUT_DIM> trajectorySpreadingController_;
 };
 
 /**

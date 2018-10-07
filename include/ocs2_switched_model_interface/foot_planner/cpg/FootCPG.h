@@ -9,7 +9,7 @@
 #define FOOTCPG_H_
 
 #include <cmath>
-
+#include <Eigen/Core>
 #include "ocs2_switched_model_interface/foot_planner/cpg/SplineCPG.h"
 #include "ocs2_switched_model_interface/misc/CubicSpline.h"
 
@@ -102,6 +102,24 @@ public:
 		a(0) = xSplinePtr_->evaluateSplineAcceleration(time);
 		a(1) = ySplinePtr_->evaluateSplineAcceleration(time);
 		a(2) = zDoubleSplinePtr_->calculateAcceleration(time);
+		return a;
+	}
+
+	virtual Eigen::Vector3d calculateStartTimeDerivative(const scalar_t& time) const {
+
+		Eigen::Vector3d a;
+		a(0) = xSplinePtr_->evaluateStartTimeDerivative(time);
+		a(1) = ySplinePtr_->evaluateStartTimeDerivative(time);
+		a(2) = zDoubleSplinePtr_->calculateStartTimeDerivative(time);
+		return a;
+	}
+
+	virtual Eigen::Vector3d calculateFinalTimeDerivative(const scalar_t& time) const {
+
+		Eigen::Vector3d a;
+		a(0) = xSplinePtr_->evaluateFinalTimeDerivative(time);
+		a(1) = ySplinePtr_->evaluateFinalTimeDerivative(time);
+		a(2) = zDoubleSplinePtr_->calculateFinalTimeDerivative(time);
 		return a;
 	}
 

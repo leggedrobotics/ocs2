@@ -82,10 +82,8 @@ void FeetZDirectionPlanner<scalar_t, cpg_t>::planSingleMode(
 	for (size_t j=0; j<4; j++)  {
 
 		// create the CPG from the given times
-		plannedCPG[j] = std::shared_ptr<cpg_t>( new cpg_t(swingLegLiftOff_,
-																											swingTimeScale_,
-																											liftOffVelocity_,
-																											touchDownVelocity_) );
+		plannedCPG[j] = std::shared_ptr<cpg_t>(
+				new cpg_t(swingLegLiftOff_, swingTimeScale_, liftOffVelocity_, touchDownVelocity_) );
 
 		// skip if it is a stance leg
 		if (eesContactFlagStocks_[j][index]==false)  {
@@ -94,19 +92,19 @@ void FeetZDirectionPlanner<scalar_t, cpg_t>::planSingleMode(
 			const int& swingFinalIndex = BASE::finalTimesIndices_[j][index];
 
 			if (swingStartIndex == -1) {
-				std::cout << "Subsystem: " << index << " out of " << numSubsystems-1 << std::endl;
+				std::cerr << "Subsystem: " << index << " out of " << numSubsystems-1 << std::endl;
 				for (size_t i=0; i<phaseIDsStock_.size(); i++)
-					std::cout << "[" << i << "]: " << phaseIDsStock_[i] << ",  ";
-				std::cout << std::endl;
+					std::cerr << "[" << i << "]: " << phaseIDsStock_[i] << ",  ";
+				std::cerr << std::endl;
 
 				throw std::runtime_error("The time of take-off for the first swing of the EE with ID "
 						+ std::to_string(j) + " is not defined.");
 			}
 			if (swingFinalIndex == numSubsystems-1) {
-				std::cout << "Subsystem: " << index << " out of " << numSubsystems-1 << std::endl;
+				std::cerr << "Subsystem: " << index << " out of " << numSubsystems-1 << std::endl;
 				for (size_t i=0; i<phaseIDsStock_.size(); i++)
-					std::cout << "[" << i << "]: " << phaseIDsStock_[i] << ",  ";
-				std::cout << std::endl;
+					std::cerr << "[" << i << "]: " << phaseIDsStock_[i] << ",  ";
+				std::cerr << std::endl;
 
 				throw std::runtime_error("The time of touch-down for the last swing of the EE with ID "
 						+ std::to_string(j) + " is not defined.");

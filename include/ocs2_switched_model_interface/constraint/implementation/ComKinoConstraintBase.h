@@ -33,7 +33,7 @@ void ComKinoConstraintBase<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM, LOGIC_RULES_T
 
 	logicRulesPtr_ = logicRulesMachine.getLogicRulesPtr();
 
-	numSubsystems_ = logicRulesMachine.getNumEventCounters(partitionIndex);
+	numEventTimes_ = logicRulesMachine.getLogicRulesPtr()->getNumEventTimes();
 
 	endEffectorStateConstraintsPtr_ = logicRulesPtr_->getEndEffectorStateConstraintsPtr();
 
@@ -50,20 +50,26 @@ template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM, class LOG
 void ComKinoConstraintBase<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::setCurrentStateAndControl(
 		const scalar_t& t,
 		const state_vector_t& x,
-		const input_vector_t& u)  {
+		const input_vector_t& u) {
 
 	Base::setCurrentStateAndControl(t, x, u);
 
-	size_t index = findActiveSubsystemFnc_(t);
-	logicRulesPtr_->getMotionPhaseLogics(index, stanceLegs_, zDirectionRefsPtr_);
-	if (index+1 < numSubsystems_)
-		logicRulesPtr_->getContactFlags(index+1, nextPhaseStanceLegs_);
+	activeSubsystem_ = findActiveSubsystemFnc_(t);
+	logicRulesPtr_->getMotionPhaseLogics(activeSubsystem_, stanceLegs_, zDirectionRefsPtr_);
+
+	// if it is not the last subsystem (numSubsystems = numEventTimes_+1)
+	if (activeSubsystem_ < numEventTimes_)
+		logicRulesPtr_->getContactFlags(activeSubsystem_+1, nextPhaseStanceLegs_);
 	else
 		nextPhaseStanceLegs_.fill(true);
 
-	// HyQ's joints
+	// the indices of the event times on which a leg started and finished swinging.
+	logicRulesPtr_->getFeetPlanner().getStartTimesIndices(startTimesIndices_);
+	logicRulesPtr_->getFeetPlanner().getFinalTimesIndices(finalTimesIndices_);
+
+	// joints
 	qJoints_  = x.template tail<12>();
-	// HyQ's joints' velocities
+	// joints' velocities
 	dqJoints_ = u.template tail<12>();
 
 	// Rotation matrix from Base frame (or the coincided frame world frame) to Origin frame (global world).
@@ -119,7 +125,7 @@ void ComKinoConstraintBase<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM, LOGIC_RULES_T
 	}  // end of i loop
 
 
-	// feet Jacobins time derivative in the Base frame
+	// feet Jacobian time derivative in the Base frame
 	const double h = sqrt(Eigen::NumTraits<double>::epsilon());
 	joint_coordinate_t qJointsPlus = qJoints_ + dqJoints_*h;
 	kinematicModelPtr_->update(basePose_, qJointsPlus);
@@ -422,6 +428,43 @@ void ComKinoConstraintBase<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM, LOGIC_RULES_T
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
+void ComKinoConstraintBase<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::getConstraint1DerivativesEventTimes(
+		constraint1_vector_array_t& g1DevArray) {
+
+	// set all to zero
+	g1DevArray.resize(numEventTimes_);
+	for (constraint1_vector_t& g1Dev : g1DevArray)
+		g1Dev.setZero();
+
+	size_t nextFreeIndex = 0;
+	for (size_t j=0; j<NUM_CONTACT_POINTS_; j++) {
+		// the contact force at swing leg is zero
+		if (stanceLegs_[j]==false) {
+			nextFreeIndex += 3;
+		} else {
+			// stance foot velocity in the World frame
+			nextFreeIndex += 3;
+		}
+	} // end of j loop
+
+	// add the swing legs z direction constraints derivative, if its CPG is provided
+	for (size_t j=0; j<NUM_CONTACT_POINTS_; j++) {
+		if (stanceLegs_[j]==false && zDirectionRefsPtr_[j]!=nullptr) {
+			const int& startTimesIndex = startTimesIndices_[j][activeSubsystem_];
+			g1DevArray[startTimesIndex](nextFreeIndex) = -options_.zDirectionVelocityWeight_ *
+					zDirectionRefsPtr_[j]->calculateStartTimeDerivative(Base::t_);
+			const int& finalTimesIndex = finalTimesIndices_[j][activeSubsystem_];
+			g1DevArray[finalTimesIndex](nextFreeIndex) = -options_.zDirectionVelocityWeight_ *
+					zDirectionRefsPtr_[j]->calculateFinalTimeDerivative(Base::t_);
+			nextFreeIndex++;
+		}
+	} // end of j loop
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
 void ComKinoConstraintBase<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::getConstraint2DerivativesState(
 		constraint2_state_matrix_t& F)  {
 
@@ -441,7 +484,6 @@ void ComKinoConstraintBase<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM, LOGIC_RULES_T
 			F.template block<1,12>(numConstraint2,12) = options_.zDirectionPositionWeight_ * o_footJacobian.block<1,12>(2,6);
 			numConstraint2++;
 		}
-
 }
 
 /******************************************************************************************************/

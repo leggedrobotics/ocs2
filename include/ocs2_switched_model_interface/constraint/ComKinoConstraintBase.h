@@ -29,8 +29,7 @@ template <size_t JOINT_COORD_SIZE,
 		size_t STATE_DIM=12+JOINT_COORD_SIZE,
 		size_t INPUT_DIM=12+JOINT_COORD_SIZE,
 		class LOGIC_RULES_T=SwitchedModelPlannerLogicRules<JOINT_COORD_SIZE, double>>
-class ComKinoConstraintBase : public
-ocs2::ConstraintBase<12+JOINT_COORD_SIZE, 12+JOINT_COORD_SIZE, LOGIC_RULES_T>
+class ComKinoConstraintBase : public ocs2::ConstraintBase<12+JOINT_COORD_SIZE, 12+JOINT_COORD_SIZE, LOGIC_RULES_T>
 {
 public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
@@ -43,31 +42,35 @@ public:
 	};
 
 	typedef LOGIC_RULES_T logic_rules_t;
-	typedef typename logic_rules_t::foot_cpg_t 				foot_cpg_t;
-	typedef typename logic_rules_t::feet_cpg_ptr_t 			feet_cpg_ptr_t;
-	typedef typename logic_rules_t::feet_cpg_const_ptr_t	feet_cpg_const_ptr_t;
-	typedef ocs2::LogicRulesMachine<logic_rules_t> logic_rules_machine_t;
+	typedef typename logic_rules_t::foot_cpg_t            foot_cpg_t;
+	typedef typename logic_rules_t::feet_cpg_ptr_t        feet_cpg_ptr_t;
+	typedef typename logic_rules_t::feet_cpg_const_ptr_t  feet_cpg_const_ptr_t;
+	typedef ocs2::LogicRulesMachine<logic_rules_t>        logic_rules_machine_t;
 
 	typedef ocs2::ConstraintBase<STATE_DIM, INPUT_DIM, logic_rules_t> Base;
 
 	typedef ComModelBase<JOINT_COORD_SIZE> com_model_t;
 	typedef KinematicsModelBase<JOINT_COORD_SIZE> kinematic_model_t;
 
-	typedef typename Base::scalar_t scalar_t;
-	typedef typename Base::state_matrix_t state_matrix_t;
-	typedef typename Base::state_vector_t state_vector_t;
-	typedef typename Base::input_vector_t input_vector_t;
-	typedef typename Base::state_input_matrix_t 		state_input_matrix_t;
-	typedef typename Base::constraint1_vector_t 		constraint1_vector_t;
-	typedef typename Base::constraint1_state_matrix_t 	constraint1_state_matrix_t;
-	typedef typename Base::constraint1_input_matrix_t constraint1_input_matrix_t;
-	typedef typename Base::constraint2_vector_t 		constraint2_vector_t;
-	typedef typename Base::constraint2_state_matrix_t 	constraint2_state_matrix_t;
+	typedef std::vector<int>                           int_array_t;
+	typedef typename Base::scalar_t                    scalar_t;
+	typedef typename Base::state_matrix_t              state_matrix_t;
+	typedef typename Base::state_vector_t              state_vector_t;
+	typedef typename Base::input_vector_t              input_vector_t;
+	typedef typename Base::state_input_matrix_t        state_input_matrix_t;
+	typedef typename Base::constraint1_vector_t        constraint1_vector_t;
+	typedef typename Base::constraint1_vector_array_t  constraint1_vector_array_t;
+	typedef typename Base::constraint1_state_matrix_t  constraint1_state_matrix_t;
+	typedef typename Base::constraint1_input_matrix_t  constraint1_input_matrix_t;
+	typedef typename Base::constraint2_vector_t        constraint2_vector_t;
+	typedef typename Base::constraint2_vector_array_t  constraint2_vector_array_t;
+	typedef typename Base::constraint2_state_matrix_t  constraint2_state_matrix_t;
 
-	typedef typename SwitchedModel<JOINT_COORD_SIZE>::contact_flag_t     contact_flag_t;
-	typedef typename SwitchedModel<JOINT_COORD_SIZE>::base_coordinate_t  base_coordinate_t;
-	typedef typename SwitchedModel<JOINT_COORD_SIZE>::joint_coordinate_t joint_coordinate_t;
-	typedef Eigen::Matrix<double,6,JOINT_COORD_SIZE> base_jacobian_matrix_t;
+
+	typedef Eigen::Matrix<double,6,JOINT_COORD_SIZE>                      base_jacobian_matrix_t;
+	typedef typename SwitchedModel<JOINT_COORD_SIZE>::contact_flag_t      contact_flag_t;
+	typedef typename SwitchedModel<JOINT_COORD_SIZE>::base_coordinate_t   base_coordinate_t;
+	typedef typename SwitchedModel<JOINT_COORD_SIZE>::joint_coordinate_t  joint_coordinate_t;
 
 
 	ComKinoConstraintBase(
@@ -183,7 +186,16 @@ public:
 	 *
 	 * @param D: a nc1-by-nu matrix
 	 */
-	virtual void getConstraint1DerivativesControl(constraint1_input_matrix_t& D)  override;
+	virtual void getConstraint1DerivativesControl(constraint1_input_matrix_t& D) override;
+
+	/**
+	 * calculate and retrieve the the derivative of the state-input constraints w.r.t. event times.
+	 * g1DevArray[i] is a vector of dimension MAX_CONSTRAINT1_DIM_ which is the partial derivative of
+	 * state-input equality constraints with respect to i'th event time.
+	 *
+	 * @param [out] g1DevArray: an array of nc1-by-1 vector.
+	 */
+	virtual void getConstraint1DerivativesEventTimes(constraint1_vector_array_t& g1DevArray) override;
 
 	/**
 	 * calculate and retrieve the F matrix (i.e. the state derivative of the state-only constraints w.r.t. state vector).
@@ -222,14 +234,18 @@ private:
 
 	std::function<size_t(scalar_t)> findActiveSubsystemFnc_;
 
-	size_t numSubsystems_;
+	size_t numEventTimes_;
 
 	const std::vector<EndEffectorConstraintBase::ConstPtr>* endEffectorStateConstraintsPtr_;
 
+	size_t         activeSubsystem_;
 	contact_flag_t stanceLegs_;
 	contact_flag_t nextPhaseStanceLegs_;
 
 	std::array<const foot_cpg_t*, NUM_CONTACT_POINTS_> zDirectionRefsPtr_;
+
+	std::array<int_array_t,NUM_CONTACT_POINTS_> startTimesIndices_;
+	std::array<int_array_t,NUM_CONTACT_POINTS_> finalTimesIndices_;
 
 	joint_coordinate_t qJoints_;
 	joint_coordinate_t dqJoints_;

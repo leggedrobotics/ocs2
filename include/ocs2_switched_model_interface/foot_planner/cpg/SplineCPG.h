@@ -39,14 +39,14 @@ public:
 
 	~SplineCPG() = default;
 
-	void setConstant() override {
+	void setConstant() final {
 
 		Base::set(0.0, 1.0, 0.0);
 		leftSpline_.setConstant(startHight_);
 		rightSpline_.setConstant(startHight_);
 	}
 
-	void set(const scalar_t& startTime, const scalar_t& finalTime, const scalar_t& maxHight) override {
+	void set(const scalar_t& startTime, const scalar_t& finalTime, const scalar_t& maxHight) final {
 
 		Base::set(startTime, finalTime, maxHight);
 
@@ -56,25 +56,41 @@ public:
 		rightSpline_.set(midTime_, Base::maxHight_ /*p0*/, 0.0 /*v0*/, Base::finalTime_ /*t1*/, finalHight_ /*p1*/, touchDownVelocity_ /*v1*/);
 	}
 
-	scalar_t calculatePosition(const scalar_t& time) const override {
+	scalar_t calculatePosition(const scalar_t& time) const final {
 		if (time <= midTime_)
 			return leftSpline_.evaluateSplinePosition(time);
 		else
 			return rightSpline_.evaluateSplinePosition(time);
 	}
 
-	scalar_t calculateVelocity(const scalar_t& time) const override {
+	scalar_t calculateVelocity(const scalar_t& time) const final {
 		if (time <= midTime_)
 			return leftSpline_.evaluateSplineVelocity(time);
 		else
 			return rightSpline_.evaluateSplineVelocity(time);
 	}
 
-	scalar_t calculateAcceleration(const scalar_t& time) const override {
+	scalar_t calculateAcceleration(const scalar_t& time) const final {
 		if (time <= midTime_)
 			return leftSpline_.evaluateSplineAcceleration(time);
 		else
 			return rightSpline_.evaluateSplineAcceleration(time);
+	}
+
+	scalar_t calculateStartTimeDerivative(const scalar_t& time) const final {
+
+		if (time <= midTime_)
+			return leftSpline_.evaluateStartTimeDerivative(time) + 0.5*leftSpline_.evaluateFinalTimeDerivative(time);
+		else
+			return 0.5*rightSpline_.evaluateStartTimeDerivative(time);
+	}
+
+	scalar_t calculateFinalTimeDerivative(const scalar_t& time) const final {
+
+		if (time <= midTime_)
+			return 0.5*leftSpline_.evaluateFinalTimeDerivative(time);
+		else
+			return rightSpline_.evaluateFinalTimeDerivative(time) + 0.5*rightSpline_.evaluateStartTimeDerivative(time);
 	}
 
 private:

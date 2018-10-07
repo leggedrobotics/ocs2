@@ -256,7 +256,7 @@ void SLQ_DataCollector<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculateStateInput
 					inputTrajectoriesStock[i][k]);
 
 			// evaluation
-			constraint1_vector_array_t g1DevArray;
+			constraint1_vector_array_t g1DevArray(numEventTimes);
 			systemConstraintsPtr_->getConstraint1DerivativesEventTimes(g1DevArray);
 
 			// if derivatives where available

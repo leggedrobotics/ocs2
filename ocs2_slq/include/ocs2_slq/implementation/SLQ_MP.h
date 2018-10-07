@@ -90,6 +90,18 @@ void SLQ_MP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::lineSearch(bool computeISEs) {
 	BASE::learningRateStar_ = 0.0;	// input correction learning rate is zero
 	BASE::initLScontrollersStock_ = BASE::nominalControllersStock_;  // this will serve to init the workers
 
+	// if no line search
+	if (BASE::settings_.maxLearningRateGSLQP_ < OCS2NumericTraits<scalar_t>::limit_epsilon()) {
+		// clear the feedforward increments
+		for (size_t i=0; i<BASE::numPartitions_; i++)
+			BASE::nominalControllersStock_[i].deltaUff_.clear();
+		// display
+		if (BASE::settings_.displayInfo_)
+			std::cerr << "The chosen learningRate is: " << BASE::learningRateStar_ << std::endl;
+
+		return;
+	}
+
 	subsystemProcessed_ = 0; // not required for linesearch, but assign to not let it dangle around
 	alphaProcessed_.clear();
 	alphaTaken_ = 0;

@@ -435,26 +435,12 @@ typename SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::scalar_t
 	if (x0 != x0)
 		throw std::runtime_error("System became unstable during the SLQ rollout.");
 
-//	std::cout << ">>>>>>>>>>> Rollout\n";
-//	for (size_t i=initActivePartition; i<=finalActivePartition; i++) {
-//		std::cout << "Partition: " << i << std::endl;
-//		std::cout << "time size:  " << timeTrajectoriesStock[i].size() << std::endl;
-//		std::cout << "state size: " << stateTrajectoriesStock[i].size() << std::endl;
-//		std::cout << "input size: " << inputTrajectoriesStock[i].size() << std::endl;
-//		std::cout << "eventsPastTheEndIndeces:\n\{";
-//		for (auto& t: eventsPastTheEndIndecesStock[i])
-//			std::cout << t << ", ";
-//		if (!eventsPastTheEndIndecesStock[i].empty())  std::cerr << "\b\b";
-//		std::cout << "}" << std::endl;
-//
-//		for (size_t k=0; k<timeTrajectoriesStock[i].size(); k++) {
-//			std::cout << "k:  " << k << std::endl;
-//			std::cout << "time:  " << timeTrajectoriesStock[i][k] << std::endl;
-////			std::cout << "state: " << stateTrajectoriesStock[i][k].transpose() << std::endl;
-////			std::cout << "input: " << inputTrajectoriesStock[i][k].transpose() << std::endl;
-//		}
-//	}
-//	std::cout << "<<<<<<<<<<<<\n";
+	// debug print
+	if (settings_.debugPrintRollout_ == true)
+		for (size_t i=0; i<numPartitions; i++)  {
+			rollout_base_t::display(i, timeTrajectoriesStock[i], eventsPastTheEndIndecesStock[i],
+					stateTrajectoriesStock[i], inputTrajectoriesStock[i]);
+		}
 
 	// average time step
 	return (finalTime-initTime)/(scalar_t)numSteps;
@@ -3291,6 +3277,10 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::run(
 		const scalar_array_t& partitioningTimes,
 		const controller_array_t& controllersStock) {
 
+	// infeasible learning rate adjustment scheme
+	if (settings_.maxLearningRateGSLQP_ < settings_.minLearningRateGSLQP_-OCS2NumericTraits<scalar_t>::limit_epsilon())
+		throw std::runtime_error("The maximum learning rate is smaller than the minimum learning rate.");
+
 	if (settings_.displayInfo_) {
 		std::cerr << "++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++" << std::endl;
 		std::cerr << "++++++++++++++++ SLQ solver is initialized +++++++++++++++++" << std::endl;
@@ -3328,12 +3318,6 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::run(
 
 	// update the LOGIC_RULES in the beginning of the run routine
 	bool logicRulesModified = logicRulesMachinePtr_->updateLogicRules(partitioningTimes_);
-//	// adjust the nominal controllerStock based on an user-defined function
-//	if (logicRulesModified==true && nominalControllersStock_.size()>0 && eventTimesImage_.empty()==false) {
-//		logicRulesMachinePtr_->getLogicRules().adjustController(eventTimesImage_, nominalControllersStock_);
-//	}
-//	// update event times image
-//	eventTimesImage_ = logicRulesMachinePtr_->getLogicRules().eventTimes();
 
 	// display
 	if (settings_.displayInfo_) {

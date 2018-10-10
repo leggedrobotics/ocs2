@@ -43,7 +43,7 @@ namespace ocs2{
  * @tparam INPUT_DIM: Dimension of the control input space.
  * @tparam LOGIC_RULES_T: Logic Rules type (default NullLogicRules).
  */
-template <class Derived, size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T=NullLogicRules>
+template <class Derived, size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T=NullLogicRules, size_t LOGIC_VARIABLE_DIM=0>
 class CostFunctionBaseAD : public CostFunctionBase<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>
 {
 public:
@@ -53,22 +53,29 @@ public:
 	{
 		state_dim_ 	= STATE_DIM,
 		input_dim_ 	= INPUT_DIM,
-		domain_dim_	= 1 + state_dim_ + input_dim_,
+		logic_variable_dim_ = LOGIC_VARIABLE_DIM,
+		variable_dim_ = 1 + state_dim_ + input_dim_,
+		domain_dim_   = variable_dim_ + state_dim_ + input_dim_ + logic_variable_dim_,
 	};
 
-	typedef std::shared_ptr<CostFunctionBaseAD<Derived, STATE_DIM, INPUT_DIM, LOGIC_RULES_T> > Ptr;
-	typedef std::shared_ptr<const CostFunctionBaseAD<Derived, STATE_DIM, INPUT_DIM, LOGIC_RULES_T> > ConstPtr;
+	typedef std::shared_ptr<CostFunctionBaseAD<Derived, STATE_DIM, INPUT_DIM, LOGIC_RULES_T, LOGIC_VARIABLE_DIM> > Ptr;
+	typedef std::shared_ptr<const CostFunctionBaseAD<Derived, STATE_DIM, INPUT_DIM, LOGIC_RULES_T, LOGIC_VARIABLE_DIM> > ConstPtr;
 
 	typedef CostFunctionBase<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> BASE;
-	typedef typename BASE::scalar_t             scalar_t;
-	typedef typename BASE::scalar_array_t       scalar_array_t;
-	typedef typename BASE::state_vector_t       state_vector_t;
-	typedef typename BASE::state_vector_array_t state_vector_array_t;
-	typedef typename BASE::state_matrix_t       state_matrix_t;
-	typedef typename BASE::input_vector_t       input_vector_t;
-	typedef typename BASE::input_vector_array_t input_vector_array_t;
-	typedef typename BASE::input_matrix_t       input_matrix_t;
-	typedef typename BASE::input_state_matrix_t input_state_matrix_t;
+	typedef typename BASE::scalar_t                scalar_t;
+	typedef typename BASE::scalar_array_t          scalar_array_t;
+	typedef typename BASE::state_vector_t          state_vector_t;
+	typedef typename BASE::state_vector_array_t    state_vector_array_t;
+	typedef typename BASE::state_matrix_t          state_matrix_t;
+	typedef typename BASE::input_vector_t          input_vector_t;
+	typedef typename BASE::input_vector_array_t    input_vector_array_t;
+	typedef typename BASE::input_matrix_t          input_matrix_t;
+	typedef typename BASE::input_state_matrix_t    input_state_matrix_t;
+	typedef typename BASE::state_input_matrix_t    state_input_matrix_t;
+	typedef typename BASE::dynamic_vector_t        dynamic_vector_t;
+	typedef typename BASE::dynamic_vector_array_t  dynamic_vector_array_t;
+
+	typedef Eigen::Matrix<scalar_t, logic_variable_dim_, 1> logic_variable_t;
 
 	/**
 	 * Default constructor
@@ -93,7 +100,10 @@ public:
 	 * @tparam scalar type. All the floating point operations should be with this type.
 	 * @param [in] time: time.
 	 * @param [in] state: state vector.
-	 * @param [in] input: input vector
+	 * @param [in] input: input vector.
+	 * @param [in] stateDesired: desired state vector.
+	 * @param [in] inputDesired: desired input vector.
+	 * @param [in] logicVariable: logic variable vector.
 	 * @param [out] costValue: cost value.
 	 */
 	template <typename SCALAR_T>
@@ -101,6 +111,9 @@ public:
 			const SCALAR_T& time,
 			const Eigen::Matrix<SCALAR_T, STATE_DIM, 1>& state,
 			const Eigen::Matrix<SCALAR_T, INPUT_DIM, 1>& input,
+			const Eigen::Matrix<SCALAR_T, STATE_DIM, 1>& stateDesired,
+			const Eigen::Matrix<SCALAR_T, INPUT_DIM, 1>& inputDesired,
+			const Eigen::Matrix<SCALAR_T, LOGIC_VARIABLE_DIM, 1>& logicVariable,
 			SCALAR_T& costValue);
 
 	/**
@@ -109,13 +122,74 @@ public:
 	 * @tparam scalar type. All the floating point operations should be with this type.
 	 * @param [in] time: time.
 	 * @param [in] state: state vector.
+	 * @param [in] stateDesired: desired state vector.
+	 * @param [in] logicVariable: logic variable vector.
 	 * @param [out] costValue: cost value.
 	 */
 	template <typename SCALAR_T>
 	void terminalCostFunction(
 			const SCALAR_T& time,
 			const Eigen::Matrix<SCALAR_T, STATE_DIM, 1>& state,
+			const Eigen::Matrix<SCALAR_T, STATE_DIM, 1>& stateDesired,
+			const Eigen::Matrix<SCALAR_T, LOGIC_VARIABLE_DIM, 1>& logicVariable,
 			SCALAR_T& costValue);
+
+	/**
+	 * Gets a user-defined desired state at the give time.
+	 *
+	 * @param [in] t: Current time.
+	 * @return The desired state at the give time.
+	 */
+	state_vector_t getDesiredState(const scalar_t& t);
+
+	/**
+	 * Gets a user-defined desired input at the give time.
+	 *
+	 * @param [in] t: Current time.
+	 * @return The desired input at the give time.
+	 */
+	input_vector_t getDesiredInput(const scalar_t& t);
+
+	/**
+	 * Gets a user-defined logic variable based on the given logic rules.
+	 *
+	 * @param [in] logicRulesMachine: A class which contains and parse the logic rules e.g
+	 * method findActiveSubsystemHandle returns a Lambda expression which can be used to
+	 * find the ID of the current active subsystem.
+	 * @param [in] partitionIndex: index of the time partition.
+	 * @param [in] algorithmName: The algorithm that class this class (default not defined).
+	 * @return The the logic variables.
+	 */
+	logic_variable_t getlogicVariables(
+			LogicRulesMachine<LOGIC_RULES_T>& logicRulesMachine,
+			const size_t& partitionIndex,
+			const char* algorithmName = nullptr);
+
+	/**
+	 * Sets the current time, state, and control input.
+	 *
+	 *
+	 * @param [in] t: Current time.
+	 * @param [in] x: Current state vector.
+	 * @param [in] u: Current input vector.
+	 */
+	void setCurrentStateAndControl(
+			const scalar_t& t,
+			const state_vector_t& x,
+			const input_vector_t& u) final;
+
+	/**
+	 * Initializes the cost function. If LOGIC_RULES_T is not of type NullLogicRules, this
+	 * method will call user-defined getlogicVariables().
+	 *
+	 * @param [in] logicRulesMachine: A class which contains and parse the logic rules.
+	 * @param [in] partitionIndex: index of the time partition.
+	 * @param [in] algorithmName: The algorithm that class this class (default not defined).
+	 */
+	void initializeModel(
+			LogicRulesMachine<LOGIC_RULES_T>& logicRulesMachine,
+			const size_t& partitionIndex,
+			const char* algorithmName = nullptr) final;
 
 	/**
 	 * creates the forward model, the Jacobian model, and the Hessian model.
@@ -154,23 +228,18 @@ public:
 	std::string getModelName() const;
 
     /**
-     * Sets the current time, state, and control input
-     *
-     * @param [in] t: Current time
-     * @param [in] x: Current state vector
-     * @param [in] u: Current input vector
-     */
-	virtual void setCurrentStateAndControl(
-			const scalar_t& t,
-			const state_vector_t& x,
-			const input_vector_t& u) final;
-
-    /**
      * Get the intermediate cost.
      *
      * @param [out] L: The intermediate cost value.
      */
 	virtual void getIntermediateCost(scalar_t& L) final;
+
+	/**
+	 * Get the time derivative of the intermediate cost.
+	 *
+	 * @param [out] dLdt: The time derivative of intermediate cost.
+	 */
+	virtual void getIntermediateCostDerivativeTime(scalar_t& dLdt) final;
 
     /**
      * Get the state derivative of the intermediate cost.
@@ -214,6 +283,13 @@ public:
      */
 	virtual void getTerminalCost(scalar_t& Phi) final;
 
+	/**
+	 * Get the time derivative of terminal cost.
+	 *
+	 * @param [out] dPhidt: The time derivative of terminal cost.
+	 */
+	virtual void getTerminalCostDerivativeTime(scalar_t& dPhidt) final;
+
     /**
      * Get the terminal cost state derivative.
      *
@@ -235,30 +311,18 @@ public:
      */
 	virtual BASE* clone() const final;
 
-	/**
-	 * Initialization of the cost function cannot be override.
-	 *
-	 * @param [in] logicRulesMachine: A class which contains and parse the logic rules e.g
-	 * method findActiveSubsystemHandle returns a Lambda expression which can be used to
-	 * find the ID of the current active subsystem.
-	 * @param [in] partitionIndex: index of the time partition.
-	 * @param [in] algorithmName: The algorithm that class this class (default not defined).
-	 */
-	void initializeModel(
-			LogicRulesMachine<LOGIC_RULES_T>& logicRulesMachine,
-			const size_t& partitionIndex,
-			const char* algorithmName = nullptr) final {}
-
 protected:
-	typedef ocs2::CppAdCodeGenInterface<domain_dim_, 1, scalar_t> ad_interface_t;
+	typedef CppAdCodeGenInterface<domain_dim_, 1, scalar_t, variable_dim_> ad_interface_t;
 
-	typedef typename ad_interface_t::ad_scalar_t			ad_scalar_t;
-	typedef typename ad_interface_t::ad_dynamic_vector_t	ad_dynamic_vector_t;
-	typedef typename ad_interface_t::ad_funtion_t			ad_funtion_t;
-	typedef typename ad_interface_t::domain_vector_t		domain_vector_t;
-	typedef typename ad_interface_t::domain_matrix_t		domain_matrix_t;
-	typedef typename ad_interface_t::domain_range_matrix_t 	domain_range_matrix_t;
-	typedef typename ad_interface_t::range_domain_matrix_t 	range_domain_matrix_t;
+	typedef typename ad_interface_t::ad_scalar_t            ad_scalar_t;
+	typedef typename ad_interface_t::ad_dynamic_vector_t    ad_dynamic_vector_t;
+	typedef typename ad_interface_t::ad_funtion_t           ad_funtion_t;
+	typedef typename ad_interface_t::domain_vector_t        domain_vector_t;
+	typedef typename ad_interface_t::domain_matrix_t        domain_matrix_t;
+	typedef typename ad_interface_t::variable_vector_t      variable_vector_t;
+	typedef typename ad_interface_t::variable_matrix_t      variable_matrix_t;
+	typedef typename ad_interface_t::domain_range_matrix_t  domain_range_matrix_t;
+	typedef typename ad_interface_t::range_domain_matrix_t  range_domain_matrix_t;
 
 	/**
 	 * The intermediate cost function specialized with AD type.
@@ -300,6 +364,66 @@ protected:
 	 */
 	bool loadModels(bool verbose);
 
+	/**
+	 * Returns a pointer to the time variable.
+	 *
+	 * @param [in] tapedInput: The concatenated input of the variables.
+	 * @return A pointer to the time variable.
+	 */
+	template <typename Derived_Matrix>
+	typename Derived_Matrix::Scalar& timeVariable(
+			Eigen::MatrixBase<Derived_Matrix>& tapedInput);
+
+	/**
+	 * Returns a pointer to the state variables.
+	 *
+	 * @param [in] tapedInput: The concatenated input of the variables.
+	 * @return A pointer to the state variables.
+	 */
+	template <typename Derived_Matrix>
+	Eigen::Block<Derived_Matrix, STATE_DIM, 1> stateVariables(
+			Eigen::MatrixBase<Derived_Matrix>& tapedInput);
+
+	/**
+	 * Returns a pointer to the input variables.
+	 *
+	 * @param [in] tapedInput: The concatenated input of the variables.
+	 * @return A pointer to the input variables.
+	 */
+	template <typename Derived_Matrix>
+	Eigen::Block<Derived_Matrix, INPUT_DIM, 1> inputVariables(
+			Eigen::MatrixBase<Derived_Matrix>& tapedInput);
+
+	/**
+	 * Returns a pointer to desired state variables.
+	 *
+	 * @param [in] tapedInput: The concatenated input of the variables.
+	 * @return A pointer to the desired state variables.
+	 */
+	template <typename Derived_Matrix>
+	Eigen::Block<Derived_Matrix, STATE_DIM, 1> desiredStateVariables(
+			Eigen::MatrixBase<Derived_Matrix>& tapedInput);
+
+	/**
+	 * Returns a pointer to desired input variables.
+	 *
+	 * @param [in] tapedInput: The concatenated input of the variables.
+	 * @return A pointer to the desired input variables.
+	 */
+	template <typename Derived_Matrix>
+	Eigen::Block<Derived_Matrix, INPUT_DIM, 1> desiredInputVariables(
+			Eigen::MatrixBase<Derived_Matrix>& tapedInput);
+
+	/**
+	 * Returns a pointer to the logic variables.
+	 *
+	 * @param [in] tapedInput: The concatenated input of the variables.
+	 * @return A pointer to the logic variables.
+	 */
+	template <typename Derived_Matrix>
+	Eigen::Block<Derived_Matrix, LOGIC_VARIABLE_DIM, 1> logicVariables(
+			Eigen::MatrixBase<Derived_Matrix>& tapedInput);
+
 private:
 	bool dynamicLibraryIsCompiled_;
 	std::string modelName_;
@@ -314,13 +438,13 @@ private:
 	std::unique_ptr<ad_interface_t> intermediateADInterfacePtr_;
 	std::unique_ptr<ad_interface_t> terminalADInterfacePtr_;
 
-	domain_vector_t 		tapedInput_;
+	domain_vector_t tapedInput_;
 
-	domain_range_matrix_t 	intermediateJacobian_;
-	domain_matrix_t 		intermediateHessian_;
+	domain_range_matrix_t  intermediateJacobian_;
+	variable_matrix_t      intermediateHessian_;
 
-	domain_range_matrix_t 	terminalJacobian_;
-	domain_matrix_t 		terminalHessian_;
+	domain_range_matrix_t  terminalJacobian_;
+	variable_matrix_t      terminalHessian_;
 
 };
 

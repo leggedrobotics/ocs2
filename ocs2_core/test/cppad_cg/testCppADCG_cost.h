@@ -54,12 +54,12 @@ void checkCostFunction(
 
 	typedef ocs2::QuadraticCostFunction<STATE_DIM, INPUT_DIM> quadratic_cost_t;
 
-	typedef typename quadratic_cost_t::scalar_t				scalar_t;
-	typedef typename quadratic_cost_t::state_vector_t		state_vector_t;
-	typedef typename quadratic_cost_t::state_matrix_t		state_matrix_t;
-	typedef typename quadratic_cost_t::input_vector_t		input_vector_t;
-	typedef typename quadratic_cost_t::input_matrix_t		input_matrix_t;
-	typedef typename quadratic_cost_t::input_state_matrix_t	input_state_matrix_t;
+	typedef typename quadratic_cost_t::scalar_t              scalar_t;
+	typedef typename quadratic_cost_t::state_vector_t        state_vector_t;
+	typedef typename quadratic_cost_t::state_matrix_t        state_matrix_t;
+	typedef typename quadratic_cost_t::input_vector_t        input_vector_t;
+	typedef typename quadratic_cost_t::input_matrix_t        input_matrix_t;
+	typedef typename quadratic_cost_t::input_state_matrix_t  input_state_matrix_t;
 
 	success = true;
 
@@ -173,12 +173,12 @@ struct cost_parameters
 
 	typedef ocs2::CostFunctionBase<state_dim_, input_dim_> base_cost_t;
 
-	typedef base_cost_t::scalar_t			scalar_t;
-	typedef base_cost_t::state_vector_t		state_vector_t;
-	typedef base_cost_t::state_matrix_t		state_matrix_t;
-	typedef base_cost_t::input_vector_t		input_vector_t;
-	typedef base_cost_t::input_matrix_t		input_matrix_t;
-	typedef base_cost_t::input_state_matrix_t input_state_matrix_t;
+	typedef base_cost_t::scalar_t              scalar_t;
+	typedef base_cost_t::state_vector_t        state_vector_t;
+	typedef base_cost_t::state_matrix_t        state_matrix_t;
+	typedef base_cost_t::input_vector_t        input_vector_t;
+	typedef base_cost_t::input_matrix_t        input_matrix_t;
+	typedef base_cost_t::input_state_matrix_t  input_state_matrix_t;
 
 	cost_parameters()
 	: Q(5.0 * state_matrix_t::Random())
@@ -187,7 +187,6 @@ struct cost_parameters
 	, xNominal(state_vector_t::Random())
 	, uNominal(input_vector_t::Random())
 	, QFinal(4.0 * state_matrix_t::Random())
-	, xFinal(state_vector_t::Random())
 	{
 		Q = (Q+Q.transpose()).eval();
 		R = (R+R.transpose()).eval();
@@ -201,7 +200,6 @@ struct cost_parameters
 	state_vector_t xNominal;
 	input_vector_t uNominal;
 	state_matrix_t QFinal;
-	state_vector_t xFinal;
 };
 
 /******************************************************************************/
@@ -215,9 +213,9 @@ TEST(testCppADCG_cost, quadratic_cost_test)
 		input_dim_ = cost_parameters::input_dim_
 	};
 
-	typedef ocs2::CostFunctionBase<state_dim_, input_dim_> 			base_cost_t;
-	typedef ocs2::QuadraticCostFunction<state_dim_, input_dim_> 	quadratic_cost_t;
-	typedef ocs2::QuadraticCostFunctionAD<state_dim_, input_dim_> 	ad_quadratic_cost_t;
+	typedef ocs2::CostFunctionBase<state_dim_, input_dim_>      base_cost_t;
+	typedef ocs2::QuadraticCostFunction<state_dim_, input_dim_> quadratic_cost_t;
+	typedef ocs2::QuadraticCostFunctionAD<state_dim_, input_dim_, ocs2::NullLogicRules> ad_quadratic_cost_t;
 
 	cost_parameters costParam;
 
@@ -229,11 +227,11 @@ TEST(testCppADCG_cost, quadratic_cost_test)
 
 	quadratic_cost_t quadraticCost(
 			costParam.Q, costParam.R, costParam.xNominal, costParam.uNominal,
-			costParam.QFinal, costParam.xFinal, costParam.P);
+			costParam.QFinal, costParam.xNominal, costParam.P);
 
 	ad_quadratic_cost_t ad_quadraticCost(
 			costParam.Q, costParam.R, costParam.xNominal, costParam.uNominal,
-			costParam.QFinal, costParam.xFinal, costParam.P);
+			costParam.QFinal, costParam.P);
 	ad_quadraticCost.createModels("testCppADCG_cost", libraryFolder);
 
 	bool success;
@@ -245,42 +243,42 @@ TEST(testCppADCG_cost, quadratic_cost_test)
 /******************************************************************************/
 /******************************************************************************/
 /******************************************************************************/
-//TEST(testCppADCG_cost, clone_test)
-//{
-//	enum
-//	{
-//		state_dim_ = cost_parameters::state_dim_,
-//		input_dim_ = cost_parameters::input_dim_
-//	};
-//
-//	typedef ocs2::CostFunctionBase<state_dim_, input_dim_> 			base_cost_t;
-//	typedef ocs2::QuadraticCostFunction<state_dim_, input_dim_> 	quadratic_cost_t;
-//	typedef ocs2::QuadraticCostFunctionAD<state_dim_, input_dim_> 	ad_quadratic_cost_t;
-//
-//	cost_parameters costParam;
-//
-//    /***************************************************************************
-//     *               path to save the generated dynamic-library
-//     **************************************************************************/
-//    boost::filesystem::path filePath(__FILE__);
-//    std::string libraryFolder = filePath.parent_path().generic_string() + "/testCppADCG_generated";
-//
-//	quadratic_cost_t quadraticCost(
-//			costParam.Q, costParam.R, costParam.xNominal, costParam.uNominal,
-//			costParam.QFinal, costParam.xFinal, costParam.P);
-//
-//	ad_quadratic_cost_t ad_quadraticCost(
-//			costParam.Q, costParam.R, costParam.xNominal, costParam.uNominal,
-//			costParam.xFinal, costParam.QFinal);
-//	ad_quadraticCost.createModels("testCppADCG_cost", libraryFolder);
-//
-//	base_cost_t::Ptr ad_quadraticCostPtr(ad_quadraticCost.clone());
-//
-//	bool success;
-//	checkCostFunction(100, &quadraticCost, ad_quadraticCostPtr.get(), success);
-//
-//	ASSERT_TRUE(success);
-//}
+TEST(testCppADCG_cost, clone_test)
+{
+	enum
+	{
+		state_dim_ = cost_parameters::state_dim_,
+		input_dim_ = cost_parameters::input_dim_
+	};
+
+	typedef ocs2::CostFunctionBase<state_dim_, input_dim_>      base_cost_t;
+	typedef ocs2::QuadraticCostFunction<state_dim_, input_dim_> quadratic_cost_t;
+	typedef ocs2::QuadraticCostFunctionAD<state_dim_, input_dim_, ocs2::NullLogicRules> ad_quadratic_cost_t;
+
+	cost_parameters costParam;
+
+    /***************************************************************************
+     *               path to save the generated dynamic-library
+     **************************************************************************/
+    boost::filesystem::path filePath(__FILE__);
+    std::string libraryFolder = filePath.parent_path().generic_string() + "/testCppADCG_generated";
+
+	quadratic_cost_t quadraticCost(
+			costParam.Q, costParam.R, costParam.xNominal, costParam.uNominal,
+			costParam.QFinal, costParam.xNominal, costParam.P);
+
+	ad_quadratic_cost_t ad_quadraticCost(
+			costParam.Q, costParam.R, costParam.xNominal, costParam.uNominal,
+			costParam.QFinal, costParam.P);
+	ad_quadraticCost.createModels("testCppADCG_cost", libraryFolder);
+
+	base_cost_t::Ptr ad_quadraticCostPtr(ad_quadraticCost.clone());
+
+	bool success;
+	checkCostFunction(100, &quadraticCost, ad_quadraticCostPtr.get(), success);
+
+	ASSERT_TRUE(success);
+}
 
 /******************************************************************************/
 /******************************************************************************/
@@ -293,9 +291,9 @@ TEST(testCppADCG_cost, multithread_test)
 		input_dim_ = cost_parameters::input_dim_
 	};
 
-	typedef ocs2::CostFunctionBase<state_dim_, input_dim_> 			base_cost_t;
-	typedef ocs2::QuadraticCostFunction<state_dim_, input_dim_> 	quadratic_cost_t;
-	typedef ocs2::QuadraticCostFunctionAD<state_dim_, input_dim_> 	ad_quadratic_cost_t;
+	typedef ocs2::CostFunctionBase<state_dim_, input_dim_>      base_cost_t;
+	typedef ocs2::QuadraticCostFunction<state_dim_, input_dim_> quadratic_cost_t;
+	typedef ocs2::QuadraticCostFunctionAD<state_dim_, input_dim_, ocs2::NullLogicRules> ad_quadratic_cost_t;
 
 	cost_parameters costParam;
 
@@ -307,13 +305,13 @@ TEST(testCppADCG_cost, multithread_test)
 
 	quadratic_cost_t quadraticCost(
 			costParam.Q, costParam.R, costParam.xNominal, costParam.uNominal,
-			costParam.QFinal, costParam.xFinal, costParam.P);
+			costParam.QFinal, costParam.xNominal, costParam.P);
 
 	base_cost_t::Ptr quadraticCostPtr(quadraticCost.clone());
 
 	ad_quadratic_cost_t ad_quadraticCost(
 			costParam.Q, costParam.R, costParam.xNominal, costParam.uNominal,
-			costParam.QFinal, costParam.xFinal, costParam.P);
+			costParam.QFinal, costParam.P);
 
 	ad_quadraticCost.createModels("testCppADCG_cost", libraryFolder);
 

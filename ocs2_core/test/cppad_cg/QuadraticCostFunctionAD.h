@@ -34,17 +34,19 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 namespace ocs2 {
 
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T=NullLogicRules>
+template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T=NullLogicRules, size_t LOGIC_VARIABLE_DIM=0>
 class QuadraticCostFunctionAD : public
-CostFunctionBaseAD<QuadraticCostFunctionAD<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>, STATE_DIM, INPUT_DIM, LOGIC_RULES_T>
+CostFunctionBaseAD<QuadraticCostFunctionAD<STATE_DIM, INPUT_DIM, LOGIC_RULES_T, LOGIC_VARIABLE_DIM>, STATE_DIM, INPUT_DIM, LOGIC_RULES_T, LOGIC_VARIABLE_DIM>
 {
 public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-	typedef std::shared_ptr<QuadraticCostFunctionAD<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> > Ptr;
-	typedef std::shared_ptr<const QuadraticCostFunctionAD<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> > ConstPtr;
+	typedef std::shared_ptr<QuadraticCostFunctionAD<STATE_DIM, INPUT_DIM, LOGIC_RULES_T, LOGIC_VARIABLE_DIM> > Ptr;
+	typedef std::shared_ptr<const QuadraticCostFunctionAD<STATE_DIM, INPUT_DIM, LOGIC_RULES_T, LOGIC_VARIABLE_DIM> > ConstPtr;
 
-	typedef CostFunctionBaseAD<QuadraticCostFunctionAD<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>, STATE_DIM, INPUT_DIM> BASE;
+	typedef CostFunctionBaseAD<
+			QuadraticCostFunctionAD<STATE_DIM, INPUT_DIM, LOGIC_RULES_T, LOGIC_VARIABLE_DIM>,
+			STATE_DIM, INPUT_DIM, LOGIC_RULES_T, LOGIC_VARIABLE_DIM> BASE;
 	typedef typename BASE::scalar_t             scalar_t;
 	typedef typename BASE::scalar_array_t       scalar_array_t;
 	typedef typename BASE::state_vector_t       state_vector_t;
@@ -54,6 +56,7 @@ public:
 	typedef typename BASE::input_vector_array_t input_vector_array_t;
 	typedef typename BASE::input_matrix_t       input_matrix_t;
 	typedef typename BASE::input_state_matrix_t input_state_matrix_t;
+	typedef typename BASE::logic_variable_t     logic_variable_t;
 
 	QuadraticCostFunctionAD(
 			const state_matrix_t& Q,
@@ -61,7 +64,6 @@ public:
 			const state_vector_t& xNominal,
 			const input_vector_t& uNominal,
 			const state_matrix_t& QFinal,
-			const state_vector_t& xFinal,
 			const input_state_matrix_t& P = input_state_matrix_t::Zero())
 	: Q_(Q)
 	, R_(R)
@@ -69,34 +71,103 @@ public:
 	, QFinal_(QFinal)
 	, xNominal_(xNominal)
 	, uNominal_(uNominal)
-	, xFinal_(xFinal)
 	{}
 
+	/**
+	 * Default destructor.
+	 */
 	virtual ~QuadraticCostFunctionAD() = default;
 
+	/**
+	 * Interface method to the intermediate cost function. This method should be implemented by the derived class.
+	 *
+	 * @tparam scalar type. All the floating point operations should be with this type.
+	 * @param [in] time: time.
+	 * @param [in] state: state vector.
+	 * @param [in] input: input vector.
+	 * @param [in] stateDesired: desired state vector.
+	 * @param [in] inputDesired: desired input vector.
+	 * @param [in] logicVariable: logic variable vector.
+	 * @param [out] costValue: cost value.
+	 */
 	template <typename SCALAR_T>
 	void intermediateCostFunction(
 			const SCALAR_T& time,
 			const Eigen::Matrix<SCALAR_T, STATE_DIM, 1>& state,
 			const Eigen::Matrix<SCALAR_T, INPUT_DIM, 1>& input,
+			const Eigen::Matrix<SCALAR_T, STATE_DIM, 1>& stateDesired,
+			const Eigen::Matrix<SCALAR_T, INPUT_DIM, 1>& inputDesired,
+			const Eigen::Matrix<SCALAR_T, LOGIC_VARIABLE_DIM, 1>& logicVariable,
 			SCALAR_T& costValue) {
 
-		Eigen::Matrix<SCALAR_T, STATE_DIM, 1> xDeviation = state - xNominal_.template cast<SCALAR_T>();
-		Eigen::Matrix<SCALAR_T, INPUT_DIM, 1> uDeviation = input - uNominal_.template cast<SCALAR_T>();
+		Eigen::Matrix<SCALAR_T, STATE_DIM, 1> xDeviation = state - stateDesired;
+		Eigen::Matrix<SCALAR_T, INPUT_DIM, 1> uDeviation = input - inputDesired;
 
 		costValue = 0.5 * xDeviation.dot(Q_.template cast<SCALAR_T>() * xDeviation)
 				+ 0.5 * uDeviation.dot(R_.template cast<SCALAR_T>() * uDeviation)
 				+ uDeviation.dot(P_.template cast<SCALAR_T>() * xDeviation);;
 	}
 
+	/**
+	 * Interface method to the terminal cost function. This method should be implemented by the derived class.
+	 *
+	 * @tparam scalar type. All the floating point operations should be with this type.
+	 * @param [in] time: time.
+	 * @param [in] state: state vector.
+	 * @param [in] stateDesired: desired state vector.
+	 * @param [in] logicVariable: logic variable vector.
+	 * @param [out] costValue: cost value.
+	 */
 	template <typename SCALAR_T>
 	void terminalCostFunction(
 			const SCALAR_T& time,
 			const Eigen::Matrix<SCALAR_T, STATE_DIM, 1>& state,
+			const Eigen::Matrix<SCALAR_T, STATE_DIM, 1>& stateDesired,
+			const Eigen::Matrix<SCALAR_T, LOGIC_VARIABLE_DIM, 1>& logicVariable,
 			SCALAR_T& costValue) {
 
-		Eigen::Matrix<SCALAR_T, STATE_DIM, 1> x_deviation = state - xFinal_.template cast<SCALAR_T>();
-		costValue = 0.5 * x_deviation.dot(QFinal_.template cast<SCALAR_T>() * x_deviation);
+		Eigen::Matrix<SCALAR_T, STATE_DIM, 1> xDeviation = state - stateDesired;
+		costValue = 0.5 * xDeviation.dot(QFinal_.template cast<SCALAR_T>() * xDeviation);
+	}
+
+	/**
+	 * Gets a user-defined desired state at the give time.
+	 *
+	 * @param [in] t: Current time.
+	 * @return The desired state at the give time.
+	 */
+	state_vector_t getDesiredState(const scalar_t& t) {
+
+		return xNominal_;
+	}
+
+	/**
+	 * Gets a user-defined desired input at the give time.
+	 *
+	 * @param [in] t: Current time.
+	 * @return The desired input at the give time.
+	 */
+	input_vector_t getDesiredInput(const scalar_t& t) {
+
+		return uNominal_;
+	}
+
+	/**
+	 * Gets a user-defined logic variable based on the given logic rules.
+	 *
+	 * @param [in] logicRulesMachine: A class which contains and parse the logic rules e.g
+	 * method findActiveSubsystemHandle returns a Lambda expression which can be used to
+	 * find the ID of the current active subsystem.
+	 * @param [in] partitionIndex: index of the time partition.
+	 * @param [in] algorithmName: The algorithm that class this class (default not defined).
+	 * @return The the logic variables.
+	 */
+	logic_variable_t getlogicVariables(
+			LogicRulesMachine<LOGIC_RULES_T>& logicRulesMachine,
+			const size_t& partitionIndex,
+			const char* algorithmName = nullptr) {
+
+		return logic_variable_t::Zero();
 	}
 
 private:
@@ -107,7 +178,6 @@ private:
 
 	state_vector_t xNominal_;
 	input_vector_t uNominal_;
-	state_vector_t xFinal_;
 };
 
 } // namespace ocs2

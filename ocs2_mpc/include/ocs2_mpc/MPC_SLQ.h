@@ -74,13 +74,13 @@ public:
 	typedef typename DIMENSIONS::dynamic_vector_t       dynamic_vector_t;
 	typedef typename DIMENSIONS::dynamic_vector_array_t dynamic_vector_array_t;
 
-	typedef CostDesiredTrajectories<scalar_t> cost_desired_trajectories_t;
+	typedef typename BASE::cost_desired_trajectories_t  cost_desired_trajectories_t;
+	typedef typename BASE::mode_sequence_template_t     mode_sequence_template_t;
 
 	typedef ocs2::SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> slq_base_t;
 	typedef ocs2::SLQ<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>      slq_t;
 	typedef ocs2::SLQ_MP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>   slq_mp_t;
 
-	typedef ModeSequenceTemplate<scalar_t>                     mode_sequence_template_t;
 	typedef typename slq_base_t::logic_rules_machine_t         logic_rules_machine_t;
 	typedef typename slq_base_t::controlled_system_base_t      controlled_system_base_t;
 	typedef typename slq_base_t::event_handler_t               event_handler_t;
@@ -157,7 +157,7 @@ public:
 protected:
 
 	/***********
-	 * Variabes
+	 * Variables
 	 ***********/
 	typename slq_base_t::Ptr slqPtr_;
 

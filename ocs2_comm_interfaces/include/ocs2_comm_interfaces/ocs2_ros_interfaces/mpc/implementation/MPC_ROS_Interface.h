@@ -41,6 +41,7 @@ MPC_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::MPC_ROS_Interface(
 	, mpcSettings_(mpc.settings())
 	, robotName_(robotName)
 	, desiredTrajectoriesUpdated_(false)
+	, modeSequenceUpdated_(false)
 {
 	// correcting rosMsgTimeWindow
 	if (mpcSettings_.recedingHorizon_==false)
@@ -430,6 +431,23 @@ void MPC_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::mpcObservationCallb
 		return;
 	}
 
+	// update the mode sequence
+	if(modeSequenceUpdated_==true) {
+
+		// display
+		std::cerr << "### The mode sequence is updated at time "
+				<< std::setprecision(4) << currentObservation.time() << " as " << std::endl;
+		modeSequenceTemplate_.display();
+
+		// set CostDesiredTrajectories
+		mpcPtr_->setNewLogicRulesTemplate(modeSequenceTemplate_);
+
+		modeSequenceUpdated_ = false;
+
+	} else if (mpcSettings_.recedingHorizon_==false) {
+		return;
+	}
+
 	// run SLQ-MPC
 	bool controllerIsUpdated = mpcPtr_->run(
 			currentObservation.time(),
@@ -513,8 +531,21 @@ void MPC_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::mpcTargetTrajectori
 		const ocs2_comm_interfaces::mpc_target_trajectories::ConstPtr& msg) {
 
 	if (desiredTrajectoriesUpdated_==false) {
-		RosMsgConversions<0, 0>::ReadTargetTrajectoriesMsg(*msg, costDesiredTrajectories_);
+		RosMsgConversions<STATE_DIM, INPUT_DIM>::ReadTargetTrajectoriesMsg(*msg, costDesiredTrajectories_);
 		desiredTrajectoriesUpdated_ = true;
+	}
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
+void MPC_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::mpcModeSequenceCallback(
+		const ocs2_comm_interfaces::mode_sequence::ConstPtr& msg) {
+
+	if (modeSequenceUpdated_==false) {
+		RosMsgConversions<STATE_DIM, INPUT_DIM>::ReadModeSequenceTemplateMsg(*msg, modeSequenceTemplate_);
+		modeSequenceUpdated_ = true;
 	}
 }
 
@@ -574,6 +605,13 @@ void MPC_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::launchNodes(int arg
 			robotName_+"_mpc_target",
 			1,
 			&MPC_ROS_Interface::mpcTargetTrajectoriesCallback, this,
+			::ros::TransportHints().udp());
+
+	// Logic rules template subscriber
+	mpcModeSequenceSubscriber_ = nodeHandler.subscribe(
+			robotName_+"_mpc_mode_sequence",
+			1,
+			&MPC_ROS_Interface::mpcModeSequenceCallback, this,
 			::ros::TransportHints().udp());
 
 	// SLQ-MPC publisher

@@ -47,8 +47,9 @@ public:
 	/**
 	 * Constructor.
 	 *
-	 * @param robotName: The robot's name.
-	 * @param goalPoseLimit: Limits for the input command. It has size 12 with following entries.
+	 * @param [in] robotName: The robot's name.
+	 * @param [in] goalPoseLimit: Limits for the input command. It has size 12 with following entries.
+	 * @param [in] command_mode: Whether to use position mode or velocity mode.
 	 *
 	 * goalPoseLimit(0): X
 	 * goalPoseLimit(1): Y
@@ -116,7 +117,7 @@ public:
 				commadLineTargetOrdeCorrected[3 + j] = commadLineTarget[6 + j];
 			}
 		} else {
-			std::runtime_error("Unkown command mode for target");
+			std::runtime_error("Unknown command mode for target!");
 		}
 
 		// time

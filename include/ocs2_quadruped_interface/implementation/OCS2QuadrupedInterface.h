@@ -134,8 +134,8 @@ void OCS2QuadrupedInterface<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::loadSetting
 
 	// load the mode sequence template
 	std::cerr << std::endl;
-	loadModes(pathToConfigFile, "templateSubsystemsSequence", modeSequenceTemplate_.templateSubsystemsSequence_, true);
-	loadStdVector(pathToConfigFile, "templateSwitchingTimes", modeSequenceTemplate_.templateSwitchingTimes_, true);
+	ocs2::ModeSequenceTemplate<double> modeSequenceTemplate;
+	loadModeSequenceTemplate(pathToConfigFile, "defaultModeSequenceTemplate", modeSequenceTemplate_, true);
 	std::cerr << std::endl;
 
 	// Gap Indicators

@@ -173,6 +173,7 @@ private:
 	std::unique_ptr<slq_data_collector_t> slqDataCollectorPtr_;
 
 	scalar_array_t eventTimesOptimized_;
+	size_array_t   subsystemsSequenceOptimized_;
 };
 
 } // namespace ocs2

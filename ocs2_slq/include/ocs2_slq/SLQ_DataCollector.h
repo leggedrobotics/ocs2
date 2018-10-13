@@ -140,6 +140,9 @@ public:
 
 	unsigned long long int rewindCounter_;
 
+	scalar_array_t eventTimes_;
+	size_array_t   subsystemsSequence_;
+
 	controller_array_t optimizedControllersStock_;
 
 //	std::vector<scalar_array_t>  optimizedTimeTrajectoriesStock_;

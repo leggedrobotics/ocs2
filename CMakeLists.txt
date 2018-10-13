@@ -140,6 +140,17 @@ target_link_libraries(target_command_node_velocity
         ${catkin_LIBRARIES}
         )
 
+add_executable(gait_command_node
+  src/AnymalModeSequenceCommand.cpp
+)
+add_dependencies(gait_command_node
+  ${${PROJECT_NAME}_EXPORTED_TARGETS}
+  ${catkin_EXPORTED_TARGETS}
+)
+target_link_libraries(gait_command_node
+  ${catkin_LIBRARIES}
+)
+
 add_executable(PlanningTest
   src/PlanningTest.cpp
 )

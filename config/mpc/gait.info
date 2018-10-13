@@ -1,0 +1,113 @@
+list
+{
+  [0] stance
+  [1] trot
+  [2] flying_trot
+  [3] pace
+  [4] dynamic_walk
+  [5] static_walk
+}
+
+stance
+ {
+   templateSubsystemsSequence
+   {
+     [0]     STANCE
+   }
+   templateSwitchingTimes
+   {
+     [0]     0.0
+     [1]     0.5
+   }
+}
+
+trot
+ {
+   templateSubsystemsSequence
+   {
+     [0]     LF_RH
+     [1]     RF_LH
+   }
+   templateSwitchingTimes
+   {
+     [0]     0.0
+     [1]     0.35
+     [2]     0.70
+   }
+}
+
+flying_trot
+{
+  templateSubsystemsSequence
+  {
+    [0]     LF_RH
+    [1]     FLY
+    [2]     RF_LH
+    [3]     FLY
+  }
+  templateSwitchingTimes
+  {
+    [0]     0.0
+    [1]     0.2
+    [2]     0.3
+    [3]     0.5
+    [4]     0.6
+  }
+}
+
+pace
+{
+  templateSubsystemsSequence
+  {
+    [0]     LF_LH
+    [1]     RF_RH
+  }
+  templateSwitchingTimes
+  {
+    [0]     0.0
+    [1]     0.25
+    [2]     0.5
+  }
+}
+
+dynamic_walk
+{
+  templateSubsystemsSequence
+  {
+    [0]     LF_RF_RH
+    [1]     RF_RH
+    [2]     RF_LH_RH
+    [3]     LF_RF_LH
+    [4]     LF_LH
+    [5]     LF_LH_RH
+  }
+  templateSwitchingTimes
+  {
+    [0]     0.0
+    [1]     0.2
+    [2]     0.3
+    [3]     0.5
+    [4]     0.7
+    [5]     0.8
+    [6]     1.0
+  }
+}
+
+static_walk
+{
+  templateSubsystemsSequence
+  {
+    [0]     LF_RF_RH
+    [1]     RF_LH_RH
+    [2]     LF_RF_LH
+    [3]     LF_LH_RH
+  }
+  templateSwitchingTimes
+  {
+    [0]     0.0
+    [1]     0.5
+    [2]     1.0
+    [3]     1.5
+    [4]     2.0
+  }
+}

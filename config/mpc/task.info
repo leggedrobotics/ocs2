@@ -26,7 +26,7 @@ model_settings
   liftOffVelocity               0.0
   touchDownVelocity             0.0
 
-  copWeight                     0.0    ; 600.0
+  copWeight                     150.0    ; 600.0
   impulseWeight                 0.0
   impulseSigmeFactor            0.1
 
@@ -45,39 +45,22 @@ model_settings
 
 switchingModes
 {
-  	[0]     STANCE
-  	[1]     STANCE
+  [0]  STANCE
+  [1]  STANCE
 }
 
-
-templateSubsystemsSequence
+defaultModeSequenceTemplate
 {
-  	[0]     LF_RH
-	[1]     RF_LH
+  templateSubsystemsSequence
+  {
+    [0]  STANCE
+  }
+  templateSwitchingTimes
+  {
+    [0]  0.0
+    [1]  0.5
+  }
 }
-templateSwitchingTimes
-{
-  	[0]     0.0
-	[1]     0.35
-	[2]     0.70
-}
-
-
-;templateSubsystemsSequence
-;{
-;  	[0]     LF_RF_RH
-;	[1]     RF_LH_RH
-;	[2]     LF_RF_LH
-;	[3]     LF_LH_RH
-;}
-;templateSwitchingTimes
-;{
-;  	[0]     0.0
-;	[1]     0.6
-;	[2]     1.2
-;	[3]     1.8
-;	[4]     2.4
-;}
 
 slq
 {

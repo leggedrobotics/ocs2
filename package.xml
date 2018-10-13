@@ -29,6 +29,7 @@
   <depend>ocs2_slq</depend>
   <depend>ocs2_ocs2</depend>
   <depend>ocs2_mpc</depend>
+  <depend>ocs2_robotic_examples</depend>
   <depend>ocs2_anymal_switched_model</depend>
   <depend>ocs2_quadruped_interface</depend>
   <depend>xpp_msgs</depend>

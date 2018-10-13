@@ -38,7 +38,7 @@ model_settings
   eps 	2e-4
   eta 	1e+2
 
-  torqueMixingFactor            0.5
+  torqueMixingFactor            0.0
 }
 
 switchingModes
@@ -164,7 +164,7 @@ initialRobotState
    ; position
    (3,0) 0.0     ; x
    (4,0) 0.0     ; y
-   (5,0) 0.4792  ; z
+   (5,0) 0.4392  ; z
 
    ; joint state
    (6,0)  -0.1; -0.2      ; LF_HAA
@@ -215,21 +215,21 @@ Q
    ; orientation
    (0,0) 2000.0     ; x
    (1,1) 2000.0     ; y
-   (2,2) 0.0     ; z
+   (2,2) 2000.0     ; z
 
    ; positon
    (3,3) 0.0      ; x
-   (4,4) 0.0      ; y
+   (4,4) 1000.0      ; y
    (5,5) 3000.0      ; z
 
    ; angular velocity
    (6,6) 200.0      ; x
    (7,7) 200.0      ; y
-   (8,8) 500.0      ; z
+   (8,8) 200.0      ; z
 
    ; translational velocity
    (9,9)   500.0    ; x
-   (10,10) 500.0    ; y
+   (10,10) 100.0    ; y
    (11,11) 150.0    ; z
 
    ; LF joints
@@ -262,22 +262,22 @@ R
    ; LF contact forces
    (0,0)   1.0    ; LF_X    ; 10.0
    (1,1)   1.0    ; LF_Y    ; 10.0
-   (2,2)   1.0    ; LF_Z    ; 10.0
+   (2,2)   3.0    ; LF_Z    ; 10.0
 
    ; RF contact forces
    (3,3)   1.0    ; RF_X    ; 10.0
    (4,4)   1.0    ; RF_Y    ; 10.0
-   (5,5)   1.0    ; RF_Z    ; 10.0
+   (5,5)   3.0    ; RF_Z    ; 10.0
 
    ; LH contact forces
    (6,6)   1.0    ; LH_X    ; 10.0
    (7,7)   1.0    ; LH_Y    ; 10.0
-   (8,8)   1.0    ; LH_Z    ; 10.0
+   (8,8)   3.0    ; LH_Z    ; 10.0
 
    ; RH contact forces
    (9,9)   1.0    ; RH_X    ; 10.0
    (10,10) 1.0    ; RH_Y    ; 10.0
-   (11,11) 1.0    ; RH_Z    ; 10.0
+   (11,11) 3.0    ; RH_Z    ; 10.0
 
 
    ; LF joint velocities

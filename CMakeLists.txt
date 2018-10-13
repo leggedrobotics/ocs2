@@ -14,6 +14,7 @@ find_package(catkin REQUIRED COMPONENTS
   ocs2_mpc
   ocs2_anymal_switched_model
   ocs2_quadruped_interface
+  ocs2_robotic_examples
   xpp_msgs
 )
 
@@ -60,6 +61,7 @@ catkin_package(
     ocs2_anymal_switched_model
     ocs2_quadruped_interface
     xpp_msgs
+    ocs2_robotic_examples
 )
 
 ###########
@@ -136,6 +138,17 @@ add_dependencies(target_command_node_velocity
   ${catkin_EXPORTED_TARGETS}
 )
 target_link_libraries(target_command_node_velocity
+  ${catkin_LIBRARIES}
+)
+
+add_executable(gait_command_node
+  src/AnymalModeSequenceCommand.cpp
+)
+add_dependencies(gait_command_node
+  ${${PROJECT_NAME}_EXPORTED_TARGETS}
+  ${catkin_EXPORTED_TARGETS}
+)
+target_link_libraries(gait_command_node
   ${catkin_LIBRARIES}
 )
 

@@ -32,6 +32,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <ocs2_core/Dimensions.h>
 #include <ocs2_core/cost/CostDesiredTrajectories.h>
+#include <ocs2_core/logic/rules/HybridLogicRules.h>
 
 #include "ocs2_comm_interfaces/SystemObservation.h"
 
@@ -55,17 +56,25 @@ public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
 	typedef Dimensions<STATE_DIM, INPUT_DIM> DIMENSIONS;
-	typedef typename DIMENSIONS::scalar_t		scalar_t;
-	typedef typename DIMENSIONS::scalar_array_t	scalar_array_t;
-	typedef typename DIMENSIONS::size_array_t	size_array_t;
+	typedef typename DIMENSIONS::scalar_t                scalar_t;
+	typedef typename DIMENSIONS::scalar_array_t          scalar_array_t;
+	typedef typename DIMENSIONS::size_array_t	         size_array_t;
+	typedef typename DIMENSIONS::dynamic_vector_t        dynamic_vector_t;
+	typedef typename DIMENSIONS::dynamic_vector_array_t  dynamic_vector_array_t;
 
 	typedef SystemObservation<STATE_DIM, INPUT_DIM> system_observation_t;
 
-	typedef CostDesiredTrajectories<scalar_t> cost_desired_trajectories_t;
-	typedef typename cost_desired_trajectories_t::dynamic_vector_t       dynamic_vector_t;
-	typedef typename cost_desired_trajectories_t::dynamic_vector_array_t dynamic_vector_array_t;
+	typedef CostDesiredTrajectories<scalar_t>  cost_desired_trajectories_t;
+	typedef ModeSequenceTemplate<scalar_t>     mode_sequence_template_t;
 
+	/**
+	 * Default constructor.
+	 */
 	RosMsgConversions() = default;
+
+	/**
+	 * Default destructor.
+	 */
 	~RosMsgConversions() = default;
 
 	/**
@@ -115,6 +124,28 @@ public:
 			const ocs2_comm_interfaces::mode_sequence_<ContainerAllocator>& modeSequenceMsg,
 			scalar_array_t& eventTimes,
 			size_array_t& subsystemsSequence);
+
+	/**
+	 * Creates the mode sequence template message.
+	 *
+	 * @param [in] modeSequenceTemplate: The mode sequence template.
+	 * @param [out] modeSequenceMsg: The mode sequence message.
+	 */
+	template <class ContainerAllocator>
+	static void CreateModeSequenceTemplateMsg(
+			const mode_sequence_template_t& modeSequenceTemplate,
+			ocs2_comm_interfaces::mode_sequence_<ContainerAllocator>& modeSequenceMsg);
+
+	/**
+	 * Reads the mode sequence template message.
+	 *
+	 * @param [in] modeSequenceMsg: The mode sequence message.
+	 * @param [out] modeSequenceTemplate: The mode sequence template.
+	 */
+	template <class ContainerAllocator>
+	static void ReadModeSequenceTemplateMsg(
+			const ocs2_comm_interfaces::mode_sequence_<ContainerAllocator>& modeSequenceMsg,
+			mode_sequence_template_t& modeSequenceTemplate);
 
 	/**
 	 * Creates the target trajectories message.

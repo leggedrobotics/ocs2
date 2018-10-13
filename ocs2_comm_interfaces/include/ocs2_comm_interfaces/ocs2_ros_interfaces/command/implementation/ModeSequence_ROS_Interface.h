@@ -33,7 +33,7 @@ namespace ocs2{
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <typename SCALAR_T>
-TargetTrajectories_ROS_Interface<SCALAR_T>::TargetTrajectories_ROS_Interface(
+ModeSequence_ROS_Interface<SCALAR_T>::ModeSequence_ROS_Interface(
 			const std::string& robotName /*= "robot"*/)
 	: robotName_(robotName)
 {}
@@ -42,7 +42,7 @@ TargetTrajectories_ROS_Interface<SCALAR_T>::TargetTrajectories_ROS_Interface(
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <typename SCALAR_T>
-TargetTrajectories_ROS_Interface<SCALAR_T>::~TargetTrajectories_ROS_Interface() {
+ModeSequence_ROS_Interface<SCALAR_T>::~ModeSequence_ROS_Interface() {
 
 	shutdownNodes();
 }
@@ -51,47 +51,49 @@ TargetTrajectories_ROS_Interface<SCALAR_T>::~TargetTrajectories_ROS_Interface() 
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <typename SCALAR_T>
-void TargetTrajectories_ROS_Interface<SCALAR_T>::publishTargetTrajectories(
-		const cost_desired_trajectories_t& costDesiredTrajectories) {
+void ModeSequence_ROS_Interface<SCALAR_T>::publishModeSequenceTemplate(
+		const mode_sequence_template_t& modeSequenceTemplate) {
 
-	RosMsgConversions<0, 0>::CreateTargetTrajectoriesMsg(costDesiredTrajectories,
-			mpcTargetTrajectoriesMsg_);
+	RosMsgConversions<0, 0>::CreateModeSequenceTemplateMsg(modeSequenceTemplate,
+			modeSequenceTemplateMsg_);
 
-	mpcTargetTrajectoriesPublisher_.publish(mpcTargetTrajectoriesMsg_);
+	mpcModeSequencePublisher_.publish(modeSequenceTemplateMsg_);
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <typename SCALAR_T>
-void TargetTrajectories_ROS_Interface<SCALAR_T>::shutdownNodes() {
+void ModeSequence_ROS_Interface<SCALAR_T>::shutdownNodes() {
 
-	mpcTargetTrajectoriesPublisher_.shutdown();
+	mpcModeSequencePublisher_.shutdown();
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <typename SCALAR_T>
-void TargetTrajectories_ROS_Interface<SCALAR_T>::launchNodes(int argc, char* argv[]) {
+void ModeSequence_ROS_Interface<SCALAR_T>::launchNodes(int argc, char* argv[]) {
 
 	// reset counters and variables
 	reset();
 
 	// display
-	ROS_INFO_STREAM("TargetTrajectories node is setting up ...");
+	ROS_INFO_STREAM("ModeSequence node is setting up ...");
 
 	// setup ROS
-	::ros::init(argc, argv, robotName_+"_mpc_target");
+	::ros::init(argc, argv, robotName_+"_mpc_mode_sequence");
 	::ros::NodeHandle nodeHandler;
 
-	mpcTargetTrajectoriesPublisher_ = nodeHandler.advertise<ocs2_comm_interfaces::mpc_target_trajectories>(
-			robotName_ + "_mpc_target", 1, true);
+	mpcModeSequencePublisher_ = nodeHandler.advertise<ocs2_comm_interfaces::mode_sequence>(
+			robotName_ + "_mpc_mode_sequence", 1, true);
 
 	ros::spinOnce();
 
 	// display
-	ROS_INFO_STREAM(robotName_ + " target trajectories command node is ready.");
+	ROS_INFO_STREAM(robotName_ + " mode sequence command node is ready.");
 }
 
 } // namespace ocs2
+
+

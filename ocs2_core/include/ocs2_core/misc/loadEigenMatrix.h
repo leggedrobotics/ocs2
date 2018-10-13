@@ -58,7 +58,10 @@ namespace ocs2 {
  * @param [out] matrix: The loaded matrix.
  */
 template <typename Derived>
-inline void loadEigenMatrix(const std::string& filename, const std::string& matrixName, Eigen::MatrixBase<Derived>& matrix)  {
+inline void loadEigenMatrix(
+		const std::string& filename,
+		const std::string& matrixName,
+		Eigen::MatrixBase<Derived>& matrix)  {
 
 	typedef typename Eigen::MatrixBase<Derived>::Scalar scalar_t;
 

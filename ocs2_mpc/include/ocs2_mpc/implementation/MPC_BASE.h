@@ -372,7 +372,7 @@ const LOGIC_RULES_T* MPC_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::getLogicRule
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
 void MPC_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::setNewLogicRulesTemplate(
-		const typename LOGIC_RULES_T::logic_template_type& newLogicRulesTemplate) {
+		const mode_sequence_template_t& newLogicRulesTemplate) {
 
 	logicRulesTemplateUpdated_ = true;
 	newLogicRulesTemplate_ = newLogicRulesTemplate;

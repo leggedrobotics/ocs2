@@ -16,6 +16,8 @@
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/info_parser.hpp>
 
+#include <ocs2_core/logic/rules/HybridLogicRules.h>
+
 namespace switched_model {
 
 enum ModeNumber { // {LF, RF, LH, RH}
@@ -170,10 +172,11 @@ void loadStdVector(
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
+template<typename SCALAR_T>
 inline void loadModes(
 		const std::string& filename,
 		const std::string& topicName,
-		std::vector<size_t>& switchingModes,
+		std::vector<SCALAR_T>& switchingModes,
 		bool verbose = true) {
 
 	// read the modes from taskFile
@@ -197,6 +200,28 @@ inline void loadModes(
 				std::cerr << modeNumber2String(switchingModes[i]) << ", ";
 			std::cerr << "\b\b}" << std::endl;
 		}
+	}
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+template<typename SCALAR_T>
+inline void loadModeSequenceTemplate(
+		const std::string& filename,
+		const std::string& topicName,
+		ocs2::ModeSequenceTemplate<SCALAR_T>& modeSequenceTemplate,
+		bool verbose = true) {
+
+	// read the modes from file
+	try	{
+		loadModes(filename, topicName + ".templateSubsystemsSequence",
+				modeSequenceTemplate.templateSubsystemsSequence_, verbose);
+		loadStdVector(filename, topicName + ".templateSwitchingTimes",
+				modeSequenceTemplate.templateSwitchingTimes_, verbose);
+	}
+	catch (const std::exception& e){
+		std::cerr << "WARNING: Failed to load " + topicName + "!" << std::endl;
 	}
 }
 

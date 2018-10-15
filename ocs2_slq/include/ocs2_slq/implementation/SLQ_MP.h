@@ -146,7 +146,7 @@ void SLQ_MP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::launchWorkerThreads()
 	workerThreads_.clear();
 	for (size_t i=0; i<BASE::settings_.nThreads_; i++) {
 		workerThreads_.push_back(std::thread(&SLQ_MP::threadWork, this, i));
-		SetThreadPriority(99, workerThreads_[i]);
+		SetThreadPriority(BASE::settings_.threadPriority_, workerThreads_[i]);
 	}
 }
 

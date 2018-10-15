@@ -93,6 +93,7 @@ public:
 
 	, useMultiThreading_(false)
 	, nThreads_(4)
+	, threadPriority_(99)
 	, debugPrintMP_(false)
 	, lsStepsizeGreedy_(true)
 	, checkNumericalStability_(true)
@@ -212,6 +213,8 @@ public:
 	bool useMultiThreading_;
 	/** Number of threads used in the multi threading scheme. */
 	size_t nThreads_;
+	/** Priority of threads used in the multi threading scheme. */
+	int threadPriority_;
 	/** Special debugging output for multi threading scheme. */
 	bool debugPrintMP_;
 	/**
@@ -254,6 +257,14 @@ inline void SLQ_Settings::loadSettings(const std::string& filename, bool verbose
 	}
 	catch (const std::exception& e){
 		if (verbose)  std::cerr << " #### Option loader : option 'nThreads' ............................ " << nThreads_ << "   \t(default)" << std::endl;
+	}
+
+	try	{
+		threadPriority_ = pt.get<int>("slq.threadPriority");
+		if (verbose)  std::cerr << " #### Option loader : option 'threadPriority' ............................ " << threadPriority_ << std::endl;
+	}
+	catch (const std::exception& e){
+		if (verbose)  std::cerr << " #### Option loader : option 'threadPriority' ............................ " << threadPriority_ << "   \t(default)" << std::endl;
 	}
 
 	try	{

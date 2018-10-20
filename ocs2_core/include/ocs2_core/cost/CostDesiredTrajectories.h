@@ -32,6 +32,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <vector>
 #include <iomanip>
+#include <iostream>
 #include <Eigen/Dense>
 
 #include "ocs2_core/misc/LinearInterpolation.h"

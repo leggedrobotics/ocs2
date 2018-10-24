@@ -6,6 +6,7 @@ list
   [3] pace
   [4] dynamic_walk
   [5] static_walk
+  [6] amble
 }
 
 stance
@@ -47,11 +48,11 @@ flying_trot
   }
   templateSwitchingTimes
   {
-    [0]     0.0
-    [1]     0.2
-    [2]     0.3
-    [3]     0.5
-    [4]     0.6
+    [0]     0.00
+    [1]     0.27
+    [2]     0.30
+    [3]     0.57
+    [4]     0.60
   }
 }
 
@@ -60,13 +61,17 @@ pace
   templateSubsystemsSequence
   {
     [0]     LF_LH
-    [1]     RF_RH
+    [1]     FLY
+    [2]     RF_RH
+    [3]     FLY
   }
   templateSwitchingTimes
   {
     [0]     0.0
-    [1]     0.25
-    [2]     0.5
+    [1]     0.28
+    [2]     0.30
+    [3]     0.58
+    [4]     0.60
   }
 }
 
@@ -105,9 +110,29 @@ static_walk
   templateSwitchingTimes
   {
     [0]     0.0
-    [1]     0.5
-    [2]     1.0
-    [3]     1.5
-    [4]     2.0
+    [1]     0.3
+    [2]     0.6
+    [3]     0.9
+    [4]     1.2
   }
 }
+
+amble
+{
+  templateSubsystemsSequence
+  {
+    [0]     RF_LH
+    [1]     LF_LH
+    [2]     LF_RH
+    [3]     RF_RH
+  }         
+  templateSwitchingTimes
+  {
+    [0]     0.0
+    [1]     0.15
+    [2]     0.40
+    [3]     0.55
+    [4]     0.80
+  }
+}
+

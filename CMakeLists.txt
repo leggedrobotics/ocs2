@@ -48,21 +48,19 @@ include_directories(
 )
 
 add_library(generated_COM_lib
-        include/ocs2_anymal_switched_model/generated/miscellaneous.cpp
+  include/ocs2_anymal_switched_model/generated/miscellaneous.cpp
 )
-
 add_dependencies(generated_COM_lib
-        ${${PROJECT_NAME}_EXPORTED_TARGETS}
-        ${catkin_EXPORTED_TARGETS}
-        )
-
+  ${${PROJECT_NAME}_EXPORTED_TARGETS}
+  ${catkin_EXPORTED_TARGETS}
+)
 target_link_libraries(generated_COM_lib
-        ${catkin_LIBRARIES}
+  ${catkin_LIBRARIES}
 )
 
 add_library(${PROJECT_NAME}
-  src/AnymalCom.cpp
-  src/AnymalKinematics.cpp
+#  src/AnymalCom.cpp
+#  src/AnymalKinematics.cpp
   src/AnymalComKinoDynamics.cpp
   src/AnymalComKinoDynamicsDerivative.cpp
   src/AnymalComKinoConstraint.cpp

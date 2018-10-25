@@ -93,7 +93,7 @@ endif()
 
 SET(Quadrotor OFF CACHE BOOL "Build Quadrotor example.")
 
-if(Quadrotor==ON)
+if(${Quadrotor})
 
   add_executable(quadrotor_mpc
     src/quadrotor/QuadrotorInterface.cpp
@@ -138,7 +138,7 @@ endif()
 
 SET(Ballbot OFF CACHE BOOL "Build Ballbot example.")
 
-if(Ballbot==ON)
+if(${Ballbot})
 
   add_executable(ballbot_mpc
     src/ballbot/BallbotInterface.cpp
@@ -185,7 +185,7 @@ endif()
 
 SET(DoubleIntegrator OFF CACHE BOOL "Build Double Integrator example.")
 
-if(DoubleIntegrator==ON)
+if(${DoubleIntegrator})
 
   add_executable(double_integrator_mpc
     src/double_integrator/DoubleIntegratorInterface.cpp
@@ -232,7 +232,7 @@ endif()
 
 SET(CartPole OFF CACHE BOOL "Build Cart Pole example.")
 
-if(CartPole==ON)
+if(${CartPole})
 
   add_executable(cartpole_mpc
     src/cart_pole/CartPoleInterface.cpp

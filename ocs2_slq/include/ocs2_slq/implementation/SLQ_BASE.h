@@ -1642,24 +1642,6 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::solveRiccatiEquationsWorker(
 		SsTimeTrajectoryStock_[partitionIndex][k] = scalingFactor*SsNormalizedTimeTrajectoryStock_[partitionIndex][NS-1-k] + scalingFinal;
 	}  // end of k loop
 
-
-//	std::cout << ">>>>>>>>>>>\n";
-//	std::cout << "Partition: " << partitionIndex << std::endl;
-//	std::cout << "time size:  " << SsNormalizedTimeTrajectoryStock_[partitionIndex].size() << std::endl;
-//	std::cout << "Ss size:    " << allSsTrajectory.size() << std::endl;
-//	std::cout << "SsNormalizedEventsPastTheEndIndeces:\n\{";
-//	for (auto& t: SsNormalizedEventsPastTheEndIndecesStock_[partitionIndex])
-//		std::cout << t << ", ";
-//	if (!SsNormalizedEventsPastTheEndIndecesStock_[partitionIndex].empty())  std::cerr << "\b\b";
-//	std::cout << "}" << std::endl;
-//
-//	for (size_t k=0; k<SsNormalizedTimeTrajectoryStock_[partitionIndex].size(); k++) {
-//		std::cout << "k:  " << k << std::endl;
-//		std::cout << "time:  " << SsNormalizedTimeTrajectoryStock_[partitionIndex][k] << std::endl;
-//		std::cout << "Ss: " << allSsTrajectory[k].transpose() << std::endl;
-//	}
-//	std::cout << "<<<<<<<<<<<<\n";
-
 	// testing the numerical stability of the Riccati equations
 	if (settings_.checkNumericalStability_)
 		for (int k=NS-1; k>=0; k--) {
@@ -1797,23 +1779,6 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::solveRiccatiEquationsForNomi
 		riccati_equations_t::convert2Matrix(allSsTrajectory[N-1-k],
 				SmTrajectoryStock_[partitionIndex][k], SvTrajectoryStock_[partitionIndex][k], sTrajectoryStock_[partitionIndex][k]);
 	}  // end of k loop
-
-//	std::cout << ">>>>>>>>>>>\n";
-//	std::cout << "Partition: " << partitionIndex << std::endl;
-//	std::cout << "time size:  " << SsNormalizedTimeTrajectoryStock_[partitionIndex].size() << std::endl;
-//	std::cout << "Ss size:    " << allSsTrajectory.size() << std::endl;
-//	std::cout << "SsNormalizedEventsPastTheEndIndeces:\n\{";
-//	for (auto& t: SsNormalizedEventsPastTheEndIndecesStock_[partitionIndex])
-//		std::cout << t << ", ";
-//	if (!SsNormalizedEventsPastTheEndIndecesStock_[partitionIndex].empty())  std::cerr << "\b\b";
-//	std::cout << "}" << std::endl;
-//
-//	for (size_t k=0; k<SsNormalizedTimeTrajectoryStock_[partitionIndex].size(); k++) {
-//		std::cout << "k:  " << k << std::endl;
-//		std::cout << "time:  " << SsNormalizedTimeTrajectoryStock_[partitionIndex][k] << std::endl;
-//		std::cout << "Ss: " << allSsTrajectory[k].transpose() << std::endl;
-//	}
-//	std::cout << "<<<<<<<<<<<<\n";
 
 	// testing the numerical stability of the Riccati equations
 	if (settings_.checkNumericalStability_)

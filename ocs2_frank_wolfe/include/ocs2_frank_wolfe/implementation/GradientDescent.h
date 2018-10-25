@@ -337,16 +337,12 @@ void GradientDescent<SCALAR_T>::setConstraints(
 	// find active inequalities
 	dynamic_vector_t activeInequalities = linearInequalityConstraintCm_ * parameters + linearInequalityConstraintDv_;
 
-	std::cout << "activeInequalities: " << activeInequalities.transpose() << std::endl;
-
 	const size_t numActiveEqualities   = linearEqualityConstraintBv_.size();
 	const size_t numActiveInequalities = (activeInequalities.array()>=0).count();
 
 	numActiveConstraints = numActiveEqualities + numActiveInequalities;
 
-	std::cout << "numActiveConstraints: " << numActiveConstraints << std::endl;
-
-	// return if the problem is unconstraint
+	// return if the problem is unconstrained
 	if (numActiveConstraints==0) return;
 
 	// set the constraint limits
@@ -432,9 +428,9 @@ void GradientDescent<SCALAR_T>::frankWolfeGradient(
 	for (size_t i=0; i<numParameters_; i++)
 		parametersLp(i) = glp_get_col_prim(lpPtr_, i+1);
 
-//	// Frank-Wolfe gradient
-//	if (gradient.dot(parameters - parametersLp) <= 0)
-//		throw std::runtime_error("The Frank-Wolfe gradient is not in the descent direction.");
+	// Frank-Wolfe gradient
+	if (gradient.dot(parameters - parametersLp) <= 0)
+		throw std::runtime_error("The Frank-Wolfe gradient is not in the descent direction.");
 
 	gradient = parameters - parametersLp;
 }

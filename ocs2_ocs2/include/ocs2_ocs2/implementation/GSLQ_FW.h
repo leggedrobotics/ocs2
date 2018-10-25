@@ -193,7 +193,7 @@ void GSLQ_FW<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::run(
 
 	dynamic_vector_t gradient = maxStepSize * BASE::nominalCostFuntionDerivative_.normalized();
 
-	// Event time constrints
+	// Event time constraints
 	dynamic_matrix_t Cm;
 	dynamic_vector_t Dv;
 	eventTimesConstraint(eventTimes,
@@ -206,21 +206,8 @@ void GSLQ_FW<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::run(
 			BASE::activeEventTimeBeginIndex_, BASE::activeEventTimeEndIndex_,
 			Cm, Dv);
 
-//	std::cout << "eventTimes:\n\{";
-//	for (auto& t: eventTimes)
-//		std::cout << t << ", ";
-//	if (!eventTimes.empty())  std::cout << "\b\b}\n";
-//
-//	std::cout << "gradient:           \n\{" << BASE::nominalCostFuntionDerivative_.transpose() << "}" << std::endl;
-//	std::cout << "gradient Normalized:\n\{" << gradient.transpose() << "}" << std::endl;
-
 	// frank Wolfe solution
 	frankWolfeProblem(gradient, eventTimesOptimized);
-
-//	std::cout << "eventTimesOptimized:\n\{";
-//	for (auto& t: eventTimesOptimized)
-//		std::cout << t << ", ";
-//	if (!eventTimesOptimized.empty())  std::cout << "\b\b}\n";
 }
 
 } // namespace ocs2

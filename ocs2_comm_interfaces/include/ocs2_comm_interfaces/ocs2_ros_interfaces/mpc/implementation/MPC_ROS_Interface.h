@@ -402,9 +402,11 @@ void MPC_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::mpcObservationCallb
 		initGoalState(currentObservation, defaultCostDesiredTrajectories_);
 
 		// display
-		std::cerr << "### The target position is updated at time "
-				<< std::setprecision(4) << currentObservation.time() << " as " << std::endl;
-		defaultCostDesiredTrajectories_.display();
+		if (mpcSettings_.debugPrint_) {
+			std::cerr << "### The target position is updated at time "
+					  << std::setprecision(4) << currentObservation.time() << " as " << std::endl;
+			defaultCostDesiredTrajectories_.display();
+		}
 
 		// set CostDesiredTrajectories
 		mpcPtr_->swapCostDesiredTrajectories(defaultCostDesiredTrajectories_);
@@ -417,9 +419,11 @@ void MPC_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::mpcObservationCallb
 		adjustTargetTrajectories(currentObservation, costDesiredTrajectories_);
 
 		// display
-		std::cerr << "### The target position is updated at time "
-				<< std::setprecision(4) << currentObservation.time() << " as " << std::endl;
-		costDesiredTrajectories_.display();
+		if (mpcSettings_.debugPrint_) {
+			std::cerr << "### The target position is updated at time "
+					  << std::setprecision(4) << currentObservation.time() << " as " << std::endl;
+			costDesiredTrajectories_.display();
+		}
 
 		// set CostDesiredTrajectories
 		mpcPtr_->swapCostDesiredTrajectories(costDesiredTrajectories_);

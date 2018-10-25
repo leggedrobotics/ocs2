@@ -267,10 +267,10 @@ inline void SLQ_Settings::loadSettings(const std::string& filename, bool verbose
 
 	try	{
 		threadPriority_ = pt.get<int>("slq.threadPriority");
-		if (verbose)  std::cerr << " #### Option loader : option 'threadPriority' ............................ " << threadPriority_ << std::endl;
+		if (verbose)  std::cerr << " #### Option loader : option 'threadPriority' ...................... " << threadPriority_ << std::endl;
 	}
 	catch (const std::exception& e){
-		if (verbose)  std::cerr << " #### Option loader : option 'threadPriority' ............................ " << threadPriority_ << "   \t(default)" << std::endl;
+		if (verbose)  std::cerr << " #### Option loader : option 'threadPriority' ...................... " << threadPriority_ << "   \t(default)" << std::endl;
 	}
 
 	try	{

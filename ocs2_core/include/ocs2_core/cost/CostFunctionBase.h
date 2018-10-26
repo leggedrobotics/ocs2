@@ -69,20 +69,20 @@ public:
 
 	typedef Dimensions<STATE_DIM, INPUT_DIM> DIMENSIONS;
 
-	typedef typename DIMENSIONS::scalar_t       		scalar_t;
-	typedef typename DIMENSIONS::scalar_array_t 		scalar_array_t;
-	typedef typename DIMENSIONS::state_vector_t 		state_vector_t;
-	typedef typename DIMENSIONS::state_vector_array_t 	state_vector_array_t;
-	typedef typename DIMENSIONS::state_matrix_t 		state_matrix_t;
-	typedef typename DIMENSIONS::input_vector_t  		input_vector_t;
-	typedef typename DIMENSIONS::input_vector_array_t input_vector_array_t;
-	typedef typename DIMENSIONS::input_matrix_t 		input_matrix_t;
-	typedef typename DIMENSIONS::input_state_matrix_t 	input_state_matrix_t;
-	typedef typename DIMENSIONS::state_input_matrix_t 	state_input_matrix_t;
+	typedef typename DIMENSIONS::scalar_t                scalar_t;
+	typedef typename DIMENSIONS::scalar_array_t          scalar_array_t;
+	typedef typename DIMENSIONS::state_vector_t          state_vector_t;
+	typedef typename DIMENSIONS::state_vector_array_t    state_vector_array_t;
+	typedef typename DIMENSIONS::state_matrix_t          state_matrix_t;
+	typedef typename DIMENSIONS::input_vector_t          input_vector_t;
+	typedef typename DIMENSIONS::input_vector_array_t    input_vector_array_t;
+	typedef typename DIMENSIONS::input_matrix_t          input_matrix_t;
+	typedef typename DIMENSIONS::input_state_matrix_t    input_state_matrix_t;
+	typedef typename DIMENSIONS::state_input_matrix_t    state_input_matrix_t;
+	typedef typename DIMENSIONS::dynamic_vector_t        dynamic_vector_t;
+	typedef typename DIMENSIONS::dynamic_vector_array_t  dynamic_vector_array_t;
 
-	typedef CostDesiredTrajectories<scalar_t> 								cost_desired_trajectories_t;
-	typedef typename cost_desired_trajectories_t::dynamic_vector_t			dynamic_vector_t;
-	typedef typename cost_desired_trajectories_t::dynamic_vector_array_t	dynamic_vector_array_t;
+	typedef CostDesiredTrajectories<scalar_t> cost_desired_trajectories_t;
 
 	/**
 	 * Default constructor
@@ -170,6 +170,13 @@ public:
      */
 	virtual void getIntermediateCost(scalar_t& L) = 0;
 
+	/**
+	 * Get the time derivative of the intermediate cost.
+	 *
+	 * @param [out] dLdt: The time derivative of intermediate cost.
+	 */
+	virtual void getIntermediateCostDerivativeTime(scalar_t& dLdt) { dLdt = 0; }
+
     /**
      * Get the state derivative of the intermediate cost.
      *
@@ -211,6 +218,13 @@ public:
      * @param [out] Phi: The final cost value.
      */
 	virtual void getTerminalCost(scalar_t& Phi) = 0;
+
+	/**
+	 * Get the time derivative of terminal cost.
+	 *
+	 * @param [out] dPhidt: The time derivative of terminal cost.
+	 */
+	virtual void getTerminalCostDerivativeTime(scalar_t& dPhidt) { dPhidt = 0; }
 
     /**
      * Get the terminal cost state derivative of the terminal cost.

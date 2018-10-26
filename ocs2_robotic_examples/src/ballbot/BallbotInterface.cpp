@@ -69,14 +69,12 @@ void BallbotInterface::loadSettings(const std::string& taskFile) {
 	/*
 	 * Dynamics
 	 */
-	bool dynamicLibraryIsCompiled = true;
-
 	// load the flag to generate library files from taskFile
 	boost::property_tree::ptree pt;
 	boost::property_tree::read_info(taskFile_, pt);
 	libraryFilesAreGenerated_ = pt.get<bool>("ballbot_interface.libraryFilesAreGenerated");
 
-	ballbotSystemDynamicsPtr_.reset(new BallbotSystemDynamics(dynamicLibraryIsCompiled));
+	ballbotSystemDynamicsPtr_.reset(new BallbotSystemDynamics(libraryFilesAreGenerated_));
 
 	if (libraryFilesAreGenerated_ == true){
 		ballbotSystemDynamicsPtr_->loadModels("ballbot_dynamics", libraryFolder_);

@@ -42,7 +42,7 @@ namespace ballbot {
  * @tparam SCALAR_T: scalar type.
  */
 template <typename SCALAR_T>
-class TargetTrajectories_Keyboard_Ballbot : public ocs2::TargetTrajectories_Keyboard_Interface<SCALAR_T>
+class TargetTrajectories_Keyboard_Ballbot : public TargetTrajectories_Keyboard_Interface<SCALAR_T>
 {
 public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
@@ -52,7 +52,7 @@ public:
 		command_dim_ = 6
 	};
 
-	typedef ocs2::TargetTrajectories_Keyboard_Interface<SCALAR_T> BASE;
+	typedef TargetTrajectories_Keyboard_Interface<SCALAR_T> BASE;
 	typedef typename BASE::scalar_t scalar_t;
 	typedef typename BASE::scalar_array_t scalar_array_t;
 	typedef typename BASE::dynamic_vector_t dynamic_vector_t;

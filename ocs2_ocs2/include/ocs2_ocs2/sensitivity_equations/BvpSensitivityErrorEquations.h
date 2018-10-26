@@ -27,8 +27,8 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#ifndef BVPSENSITIVITYEQUATIONS_OCS2_H_
-#define BVPSENSITIVITYEQUATIONS_OCS2_H_
+#ifndef BVPSENSITIVITYERROREQUATIONS_OCS2_H_
+#define BVPSENSITIVITYERROREQUATIONS_OCS2_H_
 
 #include <Eigen/StdVector>
 #include <vector>
@@ -41,13 +41,13 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 namespace ocs2{
 
 /**
- * BVP sensitivity equations.
+ * BVP sensitivity error equations.
  *
  * @tparam STATE_DIM: Dimension of the state space.
  * @tparam INPUT_DIM: Dimension of the control input space.
  */
 template <size_t STATE_DIM, size_t INPUT_DIM>
-class BvpSensitivityEquations : public ODE_Base<STATE_DIM>
+class BvpSensitivityErrorEquations : public ODE_Base<STATE_DIM>
 {
 public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
@@ -77,21 +77,21 @@ public:
 	/**
 	 * Constructor.
 	 */
-	BvpSensitivityEquations() = default;
+	BvpSensitivityErrorEquations() = default;
 
 	/**
 	 * Default destructor.
 	 */
-	~BvpSensitivityEquations() = default;
+	~BvpSensitivityErrorEquations() = default;
 
 	/**
 	 * Returns pointer to the class.
 	 *
 	 * @return A raw pointer to the class.
 	 */
-	virtual BvpSensitivityEquations<STATE_DIM, INPUT_DIM>* clone() const {
+	virtual BvpSensitivityErrorEquations<STATE_DIM, INPUT_DIM>* clone() const {
 
-		return new BvpSensitivityEquations<STATE_DIM, INPUT_DIM>(*this);
+		return new BvpSensitivityErrorEquations<STATE_DIM, INPUT_DIM>(*this);
 	}
 
 	/**
@@ -101,18 +101,17 @@ public:
 			const scalar_t& switchingTimeStart,
 			const scalar_t& switchingTimeFinal,
 			const scalar_array_t* timeStampPtr,
-			const state_matrix_array_t* AmPtr,
 			const state_input_matrix_array_t* BmPtr,
-			const constraint1_state_matrix_array_t* CmPtr,
 			const state_matrix_array_t* AmConstrainedPtr,
 			const input_state_matrix_array_t* CmProjectedPtr,
-			const state_vector_array_t* QvPtr,
-			const state_vector_array_t* flowMapPtr,
-			const state_vector_array_t* costatePtr,
-			const constraint1_vector_array_t* lagrangianPtr,
-			const scalar_array_t* controllerTimeStampPtr,
-			const input_state_matrix_array_t* KmConstrainedPtr,
+			const input_state_matrix_array_t* PmPtr,
+			const input_matrix_array_t* RmPtr,
+			const input_matrix_array_t* RmInversePtr,
+			const input_matrix_array_t* RmConstrainedPtr,
+			const input_vector_array_t* EvDevProjectedPtr,
+			const scalar_array_t* SmTimeStampPtr,
 			const state_matrix_array_t* SmPtr)  {
+
 
 		BASE::resetNumFunctionCalls();
 
@@ -120,29 +119,23 @@ public:
 		switchingTimeFinal_ = switchingTimeFinal;
 		scalingFactor_      = switchingTimeFinal - switchingTimeStart;
 
-		AmFunc_.setTimeStamp(timeStampPtr);
-		AmFunc_.setData(AmPtr);
 		BmFunc_.setTimeStamp(timeStampPtr);
 		BmFunc_.setData(BmPtr);
-		CmFunc_.setTimeStamp(timeStampPtr);
-		CmFunc_.setData(CmPtr);
 		AmConstrainedFunc_.setTimeStamp(timeStampPtr);
 		AmConstrainedFunc_.setData(AmConstrainedPtr);
 		CmProjectedFunc_.setTimeStamp(timeStampPtr);
 		CmProjectedFunc_.setData(CmProjectedPtr);
-		QvFunc_.setTimeStamp(timeStampPtr);
-		QvFunc_.setData(QvPtr);
-
-		flowMapFunc_.setTimeStamp(timeStampPtr);
-		flowMapFunc_.setData(flowMapPtr);
-		costateFunc_.setTimeStamp(timeStampPtr);
-		costateFunc_.setData(costatePtr);
-		lagrangianFunc_.setTimeStamp(timeStampPtr);
-		lagrangianFunc_.setData(lagrangianPtr);
-
-		KmConstrainedFunc_.setTimeStamp(controllerTimeStampPtr);
-		KmConstrainedFunc_.setData(KmConstrainedPtr);
-		SmFunc_.setTimeStamp(controllerTimeStampPtr);
+		PmFunc_.setTimeStamp(timeStampPtr);
+		PmFunc_.setData(PmPtr);
+		RmFunc_.setTimeStamp(timeStampPtr);
+		RmFunc_.setData(RmPtr);
+		RmInverseFunc_.setTimeStamp(timeStampPtr);
+		RmInverseFunc_.setData(RmInversePtr);
+		RmConstrainedFunc_.setTimeStamp(timeStampPtr);
+		RmConstrainedFunc_.setData(RmConstrainedPtr);
+		EvDevProjectedFunc_.setTimeStamp(timeStampPtr);
+		EvDevProjectedFunc_.setData(EvDevProjectedPtr);
+		SmFunc_.setTimeStamp(SmTimeStampPtr);
 		SmFunc_.setData(SmPtr);
 	}
 
@@ -151,30 +144,15 @@ public:
 	 */
 	void reset() {
 
-		AmFunc_.reset();
 		BmFunc_.reset();
-		CmFunc_.reset();
 		AmConstrainedFunc_.reset();
 		CmProjectedFunc_.reset();
-		QvFunc_.reset();
-
-		flowMapFunc_.reset();
-		costateFunc_.reset();
-		lagrangianFunc_.reset();
-
-		KmConstrainedFunc_.reset();
+		PmFunc_.reset();
+		RmFunc_.reset();
+		RmInverseFunc_.reset();
+		RmConstrainedFunc_.reset();
+		EvDevProjectedFunc_.reset();
 		SmFunc_.reset();
-	}
-
-	/**
-	 * Sets the multiplier of exogenous part of the equation. It is either zero
-	 * or plus-minus 1/(s_{i+1}-s_{i})
-	 *
-	 * @param [in] multiplier: the multiplier of exogenous part of the equation.
-	 */
-	void setMultiplier(const scalar_t& multiplier) {
-
-		multiplier_ = multiplier;
 	}
 
 	/**
@@ -185,36 +163,33 @@ public:
 	 */
 	void computeFlowMap(
 			const scalar_t& z,
-			const state_vector_t& Mv,
-			state_vector_t& dMvdz) override {
+			const state_vector_t& Mve,
+			state_vector_t& dMvedz) override {
 
 		BASE::numFunctionCalls_++;
 
 		// denormalized time
 		const scalar_t t = switchingTimeFinal_ - scalingFactor_*z;
 
-		AmFunc_.interpolate(t, Am_);
-		size_t greatestLessTimeStampIndex = AmFunc_.getGreatestLessTimeStampIndex();
-		BmFunc_.interpolate(t, Bm_, greatestLessTimeStampIndex);
-		CmFunc_.interpolate(t, Cm_, greatestLessTimeStampIndex);
+		BmFunc_.interpolate(t, Bm_);
+		size_t greatestLessTimeStampIndex = BmFunc_.getGreatestLessTimeStampIndex();
 		AmConstrainedFunc_.interpolate(t, AmConstrained_, greatestLessTimeStampIndex);
 		CmProjectedFunc_.interpolate(t, CmProjected_, greatestLessTimeStampIndex);
-		QvFunc_.interpolate(t, Qv_, greatestLessTimeStampIndex);
+		PmFunc_.interpolate(t, Pm_, greatestLessTimeStampIndex);
+		RmFunc_.interpolate(t, Rm_, greatestLessTimeStampIndex);
+		RmInverseFunc_.interpolate(t, RmInverse_, greatestLessTimeStampIndex);
+		RmConstrainedFunc_.interpolate(t, RmConstrained_, greatestLessTimeStampIndex);
+		EvDevProjectedFunc_.interpolate(t, EvDevProjected_, greatestLessTimeStampIndex);
 
-		flowMapFunc_.interpolate(t, flowMap_, greatestLessTimeStampIndex);
-		costateFunc_.interpolate(t, costate_, greatestLessTimeStampIndex);
-		lagrangianFunc_.interpolate(t, lagrangian_, greatestLessTimeStampIndex);
+		SmFunc_.interpolate(t, Sm_);
 
-		KmConstrainedFunc_.interpolate(t, KmConstrained_);
-		greatestLessTimeStampIndex = KmConstrainedFunc_.getGreatestLessTimeStampIndex();
-		SmFunc_.interpolate(t, Sm_, greatestLessTimeStampIndex);
+		// Lm
+		Lm_ = RmInverse_*(Pm_+Bm_.transpose()*Sm_);
 
-		// here we have used RmConstrained = (I-DmConstrained).transpose() * Rm
-		// and Km = -(I-DmConstrained) \tilde{L} - CmProjected_
-		dMvdt_ = (AmConstrained_ + Bm_*(CmProjected_+KmConstrained_)).transpose()*Mv +
-				multiplier_*(Qv_ + Am_.transpose()*costate_ + Cm_.transpose()*lagrangian_ + Sm_*flowMap_);
+		dMvedt_ = (AmConstrained_ - Bm_*RmInverse_*RmConstrained_*Lm_).transpose()*Mve +
+				(CmProjected_-Lm_).transpose()*Rm_*EvDevProjected_;
 
-		dMvdz = scalingFactor_ * dMvdt_;
+		dMvedz = scalingFactor_ * dMvedt_;
 	}
 
 
@@ -225,33 +200,30 @@ private:
 
 	scalar_t multiplier_ = 0.0;
 
-	LinearInterpolation<state_matrix_t,Eigen::aligned_allocator<state_matrix_t>> AmFunc_;
 	LinearInterpolation<state_input_matrix_t,Eigen::aligned_allocator<state_input_matrix_t>> BmFunc_;
-	LinearInterpolation<constraint1_state_matrix_t,Eigen::aligned_allocator<constraint1_state_matrix_t>> CmFunc_;
 	LinearInterpolation<state_matrix_t,Eigen::aligned_allocator<state_matrix_t>> AmConstrainedFunc_;
 	LinearInterpolation<input_state_matrix_t,Eigen::aligned_allocator<input_state_matrix_t>> CmProjectedFunc_;
-	LinearInterpolation<state_vector_t,Eigen::aligned_allocator<state_vector_t>> QvFunc_;
-	LinearInterpolation<state_vector_t,Eigen::aligned_allocator<state_vector_t>> flowMapFunc_;
-	LinearInterpolation<state_vector_t,Eigen::aligned_allocator<state_vector_t>> costateFunc_;
-	LinearInterpolation<constraint1_vector_t,Eigen::aligned_allocator<constraint1_vector_t>> lagrangianFunc_;
-	LinearInterpolation<input_state_matrix_t,Eigen::aligned_allocator<input_state_matrix_t>> KmConstrainedFunc_;
+	LinearInterpolation<input_state_matrix_t,Eigen::aligned_allocator<input_state_matrix_t>> PmFunc_;
+	LinearInterpolation<input_matrix_t,Eigen::aligned_allocator<input_matrix_t>> RmFunc_;
+	LinearInterpolation<input_matrix_t,Eigen::aligned_allocator<input_matrix_t>> RmInverseFunc_;
+	LinearInterpolation<input_matrix_t,Eigen::aligned_allocator<input_matrix_t>> RmConstrainedFunc_;
+	LinearInterpolation<input_vector_t,Eigen::aligned_allocator<input_vector_t>> EvDevProjectedFunc_;
 	LinearInterpolation<state_matrix_t,Eigen::aligned_allocator<state_matrix_t>> SmFunc_;
 
-	state_matrix_t Am_;
 	state_input_matrix_t Bm_;
-	constraint1_state_matrix_t Cm_;
 	state_matrix_t AmConstrained_;
 	input_state_matrix_t CmProjected_;
-	state_vector_t Qv_;
-	state_vector_t flowMap_;
-	state_vector_t costate_;
-	constraint1_vector_t lagrangian_;
-	input_state_matrix_t KmConstrained_;
+	input_state_matrix_t Pm_;
+	input_matrix_t Rm_;
+	input_matrix_t RmInverse_;
+	input_matrix_t RmConstrained_;
+	input_vector_t EvDevProjected_;
 	state_matrix_t Sm_;
+	input_state_matrix_t Lm_;
 
-	state_vector_t dMvdt_;
+	state_vector_t dMvedt_;
 };
 
 } // namespace ocs2
 
-#endif /* BVPSENSITIVITYEQUATIONS_OCS2_H_ */
+#endif /* BVPSENSITIVITYERROREQUATIONS_OCS2_H_ */

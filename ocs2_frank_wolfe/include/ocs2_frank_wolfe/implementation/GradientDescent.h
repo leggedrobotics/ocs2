@@ -89,6 +89,18 @@ void GradientDescent<SCALAR_T>::calculateLinearEqualityConstraint(
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <typename SCALAR_T>
+void GradientDescent<SCALAR_T>::calculateLinearInequalityConstraint(
+		dynamic_matrix_t& Cm,
+		dynamic_vector_t& Dv)  {
+
+	Cm.resize(0,numParameters_);
+	Dv.resize(0);
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+template <typename SCALAR_T>
 void GradientDescent<SCALAR_T>::getIterationsLog(
 		eigen_scalar_array_t& iterationCost) const {
 
@@ -128,7 +140,7 @@ const size_t& GradientDescent<SCALAR_T>::numParameters() const {
 template <typename SCALAR_T>
 const size_t& GradientDescent<SCALAR_T>::numConstraints() const {
 
-	return numConstraints_;
+	return numActiveConstraints_;
 }
 
 /******************************************************************************************************/
@@ -190,8 +202,10 @@ void GradientDescent<SCALAR_T>::ascendingLineSearch(
 		// display
 		if (nlpSettings_.displayGradientDescent_) {
 			SCALAR_T lsMaxConstriant = 0.0;
-			if (linearEqualityConstraintBv_.rows()>0)
-				lsMaxConstriant = (linearEqualityConstraintAm_*lsParameters + linearEqualityConstraintBv_).maxCoeff() - nlpSettings_.minDisToBoundary_;
+			if (linearEqualityConstraintBv_.size()>0)
+				lsMaxConstriant = (linearEqualityConstraintAm_*lsParameters + linearEqualityConstraintBv_).maxCoeff();
+			if (linearInequalityConstraintDv_.size()>0)
+				lsMaxConstriant = std::max(lsMaxConstriant, (linearInequalityConstraintCm_*lsParameters + linearInequalityConstraintDv_).maxCoeff());
 			std::cerr << "\t [" << id <<"] learningRate: " << learningRate << "\t max NLP constraint: " << lsMaxConstriant << std::endl;
 			std::cerr << "\t     parameters:   " << lsParameters.transpose().format(CleanFmtDisplay_) << std::endl;
 		}
@@ -252,8 +266,10 @@ void GradientDescent<SCALAR_T>::decreasingLineSearch(
 		// display
 		if (nlpSettings_.displayGradientDescent_) {
 			SCALAR_T lsMaxConstriant = 0.0;
-			if (linearEqualityConstraintBv_.rows()>0)
-				lsMaxConstriant = (linearEqualityConstraintAm_*lsParameters + linearEqualityConstraintBv_).maxCoeff() - nlpSettings_.minDisToBoundary_;
+			if (linearEqualityConstraintBv_.size()>0)
+				lsMaxConstriant = (linearEqualityConstraintAm_*lsParameters + linearEqualityConstraintBv_).maxCoeff();
+			if (linearInequalityConstraintDv_.size()>0)
+				lsMaxConstriant = std::max(lsMaxConstriant, (linearInequalityConstraintCm_*lsParameters + linearInequalityConstraintDv_).maxCoeff());
 			std::cerr << "\t [" << id <<"] learningRate: " << learningRate << "\t maxNlpConstraint: " << lsMaxConstriant << std::endl;
 			std::cerr << "\t     parameters:   " << lsParameters.transpose().format(CleanFmtDisplay_) << std::endl;
 		}
@@ -297,9 +313,6 @@ void GradientDescent<SCALAR_T>::decreasingLineSearch(
 /******************************************************************************************************/
 template <typename SCALAR_T>
 void GradientDescent<SCALAR_T>::setupLP() {
-
-	if (numConstraints_==0) return;
-
 	// create a LP object
 	lpPtr_ = glp_create_prob();
 	glp_set_prob_name(lpPtr_, "FrankWolfe");
@@ -311,11 +324,41 @@ void GradientDescent<SCALAR_T>::setupLP() {
 	glp_add_cols(lpPtr_, numParameters_);
 	for (size_t i=0; i<numParameters_; i++)
 		glp_set_col_bnds(lpPtr_, i+1, GLP_FR, 0.0, 0.0);
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+template <typename SCALAR_T>
+void GradientDescent<SCALAR_T>::setConstraints(
+		const dynamic_vector_t& parameters,
+		size_t& numActiveConstraints) {
+
+	// find active inequalities
+	dynamic_vector_t activeInequalities = linearInequalityConstraintCm_ * parameters + linearInequalityConstraintDv_;
+
+	const size_t numActiveEqualities   = linearEqualityConstraintBv_.size();
+	const size_t numActiveInequalities = (activeInequalities.array()>=0).count();
+
+	numActiveConstraints = numActiveEqualities + numActiveInequalities;
+
+	// return if the problem is unconstrained
+	if (numActiveConstraints==0) return;
 
 	// set the constraint limits
-	glp_add_rows(lpPtr_, numConstraints_);
-	for (size_t i=0; i<numConstraints_; i++)
-		glp_set_row_bnds(lpPtr_, i+1, GLP_UP, 0.0, -linearEqualityConstraintBv_(i));
+	glp_add_rows(lpPtr_, numActiveConstraints);
+	size_t itr = 0;
+	// equalities
+	for (; itr<numActiveEqualities; itr++) {
+		glp_set_row_bnds(lpPtr_, itr+1, GLP_UP, 0.0, -linearEqualityConstraintBv_(itr));
+	}
+	// inequalities
+	for (size_t i=0; i<linearInequalityConstraintDv_.size(); i++) {
+		if (activeInequalities(i)>=0) {
+			glp_set_row_bnds(lpPtr_, itr+1, GLP_UP, 0.0, -linearInequalityConstraintDv_(i));
+			itr++;
+		}
+	}
 
 	// set the constraint coefficients
 	std::vector<SCALAR_T> values;
@@ -323,13 +366,29 @@ void GradientDescent<SCALAR_T>::setupLP() {
 	values.push_back(0.0);   // the 0 index is not used
 	xIndices.push_back(-1);  // the 0 index is not used
 	yIndices.push_back(-1);  // the 0 index is not used
-	for (size_t i=0; i<linearEqualityConstraintAm_.rows(); i++)
-		for (size_t j=0; j<linearEqualityConstraintAm_.cols(); j++)
-			if (fabs(linearEqualityConstraintAm_(i,j)) > Eigen::NumTraits<SCALAR_T>::epsilon()) {
-				values.push_back(linearEqualityConstraintAm_(i,j));
-				xIndices.push_back(i+1);
+
+	// equalities
+	itr = 0;
+	for (; itr<numActiveEqualities; itr++)
+		for (size_t j=0; j<numParameters_; j++)
+			if (fabs(linearEqualityConstraintAm_(itr,j)) > Eigen::NumTraits<SCALAR_T>::epsilon()) {
+				values.push_back(linearEqualityConstraintAm_(itr,j));
+				xIndices.push_back(itr+1);
 				yIndices.push_back(j+1);
 			}
+
+	// inequalities
+	for (size_t i=0; i<linearInequalityConstraintDv_.size(); i++)
+		if (activeInequalities(i)>=0) {
+			for (size_t j=0; j<numParameters_; j++)
+				if (fabs(linearInequalityConstraintCm_(i,j)) > Eigen::NumTraits<SCALAR_T>::epsilon()) {
+					values.push_back(linearInequalityConstraintCm_(i,j));
+					xIndices.push_back(itr+1);
+					yIndices.push_back(j+1);
+					itr++;
+				}
+		}
+
 	size_t numNonZeroCoeff = values.size()-1;
 
 	glp_load_matrix(lpPtr_, numNonZeroCoeff, xIndices.data(), yIndices.data(), values.data());
@@ -349,7 +408,7 @@ void GradientDescent<SCALAR_T>::frankWolfeGradient(
 		throw std::runtime_error("size of the gradient vector is not equal to the size of parameters vector.");
 
 	// return if no constraints are defined
-	if (numConstraints_==0)  return;
+	if (numActiveConstraints_==0)  return;
 
 	// set the LP of Frank-Wolfe algorithm cost function
 	for (size_t i=0; i<numParameters_; i++)
@@ -417,17 +476,24 @@ void GradientDescent<SCALAR_T>::run(const dynamic_vector_t& initParameters)  {
 
 	// linear equality constraint
 	calculateLinearEqualityConstraint(linearEqualityConstraintAm_, linearEqualityConstraintBv_);
-	if (linearEqualityConstraintAm_.rows() != linearEqualityConstraintBv_.rows())
-		throw std::runtime_error("Number of rows in linearEqualityConstraintAm and linearEqualityConstraintBm are not equal.");
+	if (linearEqualityConstraintAm_.rows() != linearEqualityConstraintBv_.size())
+		throw std::runtime_error("Number of rows in linearEqualityConstraintAm and linearEqualityConstraintBv are not equal.");
 	if (linearEqualityConstraintAm_.cols() != numParameters_)
 		throw std::runtime_error("Number of columns in linearEqualityConstraintAm is not equal to the size of parameters vector.");
 
-	// number of constraints
-	numConstraints_ = linearEqualityConstraintAm_.rows();
+	// linear inequality constraint
+	calculateLinearInequalityConstraint(linearInequalityConstraintCm_, linearInequalityConstraintDv_);
+	if (linearInequalityConstraintCm_.rows() != linearInequalityConstraintDv_.rows())
+		throw std::runtime_error("Number of rows in linearInequalityConstraintCm and linearInequalityConstraintDv are not equal.");
+	if (linearInequalityConstraintCm_.cols() != numParameters_)
+		throw std::runtime_error("Number of columns in linearInequalityConstraintCm is not equal to the size of parameters vector.");
 
-	// softening the constraint
-	if (numConstraints_>0)
-		linearEqualityConstraintBv_ += nlpSettings_.minDisToBoundary_*dynamic_vector_t::Ones(numConstraints_);
+//	// number of constraints
+//	numActiveConstraints_ = linearEqualityConstraintAm_.rows();
+//
+//	// softening the constraint
+//	if (numConstraints_>0)
+//		linearEqualityConstraintBv_ += nlpSettings_.minDisToBoundary_*dynamic_vector_t::Ones(numConstraints_);
 
 	// setup LP solver
 	setupLP();
@@ -444,10 +510,14 @@ void GradientDescent<SCALAR_T>::run(const dynamic_vector_t& initParameters)  {
 
 		SCALAR_T cashedCost = optimizedCost_;
 
+		// set constraints
+		setConstraints(optimizedParameters_, numActiveConstraints_);
+
 		// compute the gradient
 		calculateGradient(optimizedID_, optimizedParameters_, optimizedGradient_);
 		if (nlpSettings_.displayGradientDescent_)
 			std::cerr << "True gradient:      " << optimizedGradient_.transpose().format(CleanFmtDisplay_) << std::endl;
+
 		// compute the projected gradient
 		frankWolfeGradient(optimizedID_, optimizedParameters_, optimizedGradient_);
 		if (nlpSettings_.displayGradientDescent_)

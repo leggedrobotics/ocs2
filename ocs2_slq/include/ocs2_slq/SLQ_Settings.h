@@ -99,7 +99,10 @@ public:
 	, checkNumericalStability_(true)
 	, useRiccatiSolver_(true)
 
+	, debugPrintRollout_(false)
+
 	, rolloutSettings_()
+
 	{}
 
 	/**
@@ -227,6 +230,9 @@ public:
 	/** If true, SLQ uses ode solver to solve the Riccati equations. Otherwise it uses matrix exponential to solve it. */
 	bool useRiccatiSolver_;
 
+	/** Printing rollout trajectory for debugging. */
+	bool debugPrintRollout_;
+
 	/** This structure contains the settings for forward rollout algorithms. */
 	Rollout_Settings rolloutSettings_;
 
@@ -261,10 +267,10 @@ inline void SLQ_Settings::loadSettings(const std::string& filename, bool verbose
 
 	try	{
 		threadPriority_ = pt.get<int>("slq.threadPriority");
-		if (verbose)  std::cerr << " #### Option loader : option 'threadPriority' ............................ " << threadPriority_ << std::endl;
+		if (verbose)  std::cerr << " #### Option loader : option 'threadPriority' ...................... " << threadPriority_ << std::endl;
 	}
 	catch (const std::exception& e){
-		if (verbose)  std::cerr << " #### Option loader : option 'threadPriority' ............................ " << threadPriority_ << "   \t(default)" << std::endl;
+		if (verbose)  std::cerr << " #### Option loader : option 'threadPriority' ...................... " << threadPriority_ << "   \t(default)" << std::endl;
 	}
 
 	try	{
@@ -561,6 +567,14 @@ inline void SLQ_Settings::loadSettings(const std::string& filename, bool verbose
 	}
 	catch (const std::exception& e){
 		if (verbose)  std::cerr << " #### Option loader : option 'useRiccatiSolver' .................... " << useRiccatiSolver_ << "   \t(default)" << std::endl;
+	}
+
+	try	{
+		debugPrintRollout_ = pt.get<bool>("slq.debugPrintRollout");
+		if (verbose)  std::cerr << " #### Option loader : option 'debugPrintRollout' ................... " << debugPrintRollout_ << std::endl;
+	}
+	catch (const std::exception& e){
+		if (verbose)  std::cerr << " #### Option loader : option 'debugPrintRollout' ................... " << debugPrintRollout_ << "   \t(default)" << std::endl;
 	}
 
 	if(verbose)

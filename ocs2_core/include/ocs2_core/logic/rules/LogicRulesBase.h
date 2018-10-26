@@ -123,6 +123,16 @@ public:
 	}
 
 	/**
+	 * Retrieves the number of the event times.
+	 *
+	 * @return number of event times.
+	 */
+	size_t getNumEventTimes() const {
+
+		return eventTimes_.size();
+	}
+
+	/**
 	 * Displays event information.
 	 */
 	virtual void display() const {

@@ -102,7 +102,20 @@ void SLQ<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::lineSearch(bool computeISEs)  {
 	const size_t workerIndex = 0;
 	BASE::lsComputeISEs_ = computeISEs;
 	scalar_t learningRate = BASE::maxLearningRate_;
+	BASE::learningRateStar_ = 0.0;
 	BASE::initLScontrollersStock_ = BASE::nominalControllersStock_;
+
+	// if no line search
+	if (BASE::settings_.maxLearningRateGSLQP_ < OCS2NumericTraits<scalar_t>::limit_epsilon()) {
+		// clear the feedforward increments
+		for (size_t i=0; i<BASE::numPartitions_; i++)
+			BASE::nominalControllersStock_[i].deltaUff_.clear();
+		// display
+		if (BASE::settings_.displayInfo_)
+			std::cerr << "The chosen learningRate is: " << BASE::learningRateStar_ << std::endl;
+
+		return;
+	}
 
 	// local search forward simulation's variables
 	scalar_t lsTotalCost;

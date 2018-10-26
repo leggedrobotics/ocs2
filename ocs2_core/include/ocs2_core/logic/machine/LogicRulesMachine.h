@@ -194,7 +194,7 @@ public:
 	 *
 	 * @return Number of the partitions.
 	 */
-	const size_t& getnumPartitions() const;
+	const size_t& getNumPartitions() const;
 
 	/**
 	 * Returns a Lambda expression which can be used to find the current active event counter.
@@ -205,9 +205,8 @@ public:
 	std::function<size_t(scalar_t)> getHandleToFindActiveEventCounter(size_t partitionIndex) const;
 
 	/**
-	 * Updates the active logic rules based on the last set value (using LogicRulesMachine::setLogicRules) and
-	 * adjusts the controller based on LOGIC_RULES_T::adjustController() routine. Moreover, it recomputes the
-	 * distribution of the switched systems over the time partitions.
+	 * Updates the active logic rules based on the last set value (using LogicRulesMachine::setLogicRules).
+	 * Moreover, it recomputes the distribution of the switched systems over the time partitions.
 	 *
 	 * @param [in] partitioningTimes: Vector of time partitions.
 	 * @return true if the logic rules was actually updated.

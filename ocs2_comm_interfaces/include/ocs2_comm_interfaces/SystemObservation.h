@@ -30,6 +30,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifndef SYSTEMOBSERVATION_OCS2_H_
 #define SYSTEMOBSERVATION_OCS2_H_
 
+#include <iostream>
+
 #include <ocs2_core/Dimensions.h>
 
 namespace ocs2{
@@ -52,9 +54,25 @@ public:
 	typedef typename DIMENSIONS::state_vector_t 	state_vector_t;
 	typedef typename DIMENSIONS::input_vector_t 	input_vector_t;
 
-	SystemObservation() = default;
+	/**
+	 * Constructor
+	 */
+	SystemObservation()
+	: subsystem_(0)
+	, time_(0.0)
+	, state_(state_vector_t::Zero())
+	, input_(input_vector_t::Zero())
+	{}
+
+	/**
+	 * Destructor
+	 */
 	~SystemObservation() = default;
 
+	/**
+	 * Swap with other.
+	 * @param other
+	 */
 	void swap(SystemObservation<STATE_DIM, INPUT_DIM>& other) {
 
 		std::swap(time_, other.time_);
@@ -79,11 +97,25 @@ public:
 	inline size_t& subsystem() { return subsystem_; };
 	inline const size_t& subsystem() const { return subsystem_; };
 
+	inline void display() const {
+		std::cerr << "Observation: " << std::endl;
+		std::cerr << "\t time:      " << time_ << std::endl;
+		std::cerr << "\t subsystem: " << subsystem_ << std::endl;
+		std::cerr << "\t state:    [";
+		for (int i=0; i<state_.size()-1; i++)
+			std::cerr << state_(i) << ", ";
+		std::cerr << state_(state_.size()-1) << "]" << std::endl;
+		std::cerr << "\t input:    [";
+		for (int i=0; i<input_.size()-1; i++)
+			std::cerr << input_(i) << ", ";
+		std::cerr << input_(input_.size()-1) << "]" << std::endl;
+	}
+
 private:
-	scalar_t 		time_;
-	state_vector_t 	state_;
-	input_vector_t 	input_;
-	size_t			subsystem_;
+	size_t   subsystem_;
+	scalar_t time_;
+	state_vector_t state_;
+	input_vector_t input_;
 
 };
 

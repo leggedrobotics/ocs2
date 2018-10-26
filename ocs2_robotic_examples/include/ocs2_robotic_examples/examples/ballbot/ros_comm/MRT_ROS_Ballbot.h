@@ -42,25 +42,25 @@ namespace ballbot {
  * @tparam STATE_DIM: Dimension of the state space.
  * @tparam ballbot::INPUT_DIM_: Dimension of the control input space.
  */
-class MRT_ROS_Ballbot : public ocs2::MRT_ROS_Interface<ballbot::STATE_DIM_, ballbot::INPUT_DIM_>
+class MRT_ROS_Ballbot : public MRT_ROS_Interface<ballbot::STATE_DIM_, ballbot::INPUT_DIM_>
 {
 public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-	typedef ocs2::MRT_ROS_Interface<ballbot::STATE_DIM_, ballbot::INPUT_DIM_> BASE;
+	typedef MRT_ROS_Interface<ballbot::STATE_DIM_, ballbot::INPUT_DIM_> BASE;
 
-	typedef ocs2::Dimensions<ballbot::STATE_DIM_, ballbot::INPUT_DIM_> DIMENSIONS;
-	typedef typename DIMENSIONS::controller_t				controller_t;
-	typedef typename DIMENSIONS::controller_array_t			controller_array_t;
-	typedef typename DIMENSIONS::scalar_t					scalar_t;
-	typedef typename DIMENSIONS::scalar_array_t				scalar_array_t;
-	typedef typename DIMENSIONS::size_array_t				size_array_t;
-	typedef typename DIMENSIONS::state_vector_t 			state_vector_t;
-	typedef typename DIMENSIONS::state_vector_array_t		state_vector_array_t;
-	typedef typename DIMENSIONS::input_vector_t 		 	input_vector_t;
-	typedef typename DIMENSIONS::input_vector_array_t  	input_vector_array_t;
-	typedef typename DIMENSIONS::input_state_matrix_t 	   	input_state_matrix_t;
-	typedef typename DIMENSIONS::input_state_matrix_array_t  	input_state_matrix_array_t;
+	typedef Dimensions<ballbot::STATE_DIM_, ballbot::INPUT_DIM_> DIMENSIONS;
+	typedef typename DIMENSIONS::controller_t                controller_t;
+	typedef typename DIMENSIONS::controller_array_t          controller_array_t;
+	typedef typename DIMENSIONS::scalar_t                    scalar_t;
+	typedef typename DIMENSIONS::scalar_array_t              scalar_array_t;
+	typedef typename DIMENSIONS::size_array_t                size_array_t;
+	typedef typename DIMENSIONS::state_vector_t              state_vector_t;
+	typedef typename DIMENSIONS::state_vector_array_t        state_vector_array_t;
+	typedef typename DIMENSIONS::input_vector_t              input_vector_t;
+	typedef typename DIMENSIONS::input_vector_array_t        input_vector_array_t;
+	typedef typename DIMENSIONS::input_state_matrix_t        input_state_matrix_t;
+	typedef typename DIMENSIONS::input_state_matrix_array_t  input_state_matrix_array_t;
 
 	typedef ocs2::SystemObservation<ballbot::STATE_DIM_, ballbot::INPUT_DIM_> system_observation_t;
 
@@ -101,7 +101,8 @@ public:
 	 * @param [in] planObservation: The observation of the policy.
 	 */
 	virtual void initCall(
-			const system_observation_t& planObservation) {}
+			const system_observation_t& planObservation) override
+	{}
 
 };
 

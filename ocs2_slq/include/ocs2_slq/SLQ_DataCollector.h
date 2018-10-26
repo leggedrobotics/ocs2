@@ -88,10 +88,31 @@ public:
 	typedef typename slq_t::constraint2_state_matrix_array_t  constraint2_state_matrix_array_t;
 	typedef typename slq_t::constraint2_state_matrix_array2_t constraint2_state_matrix_array2_t;
 
+	typedef std::vector<state_vector_array2_t, Eigen::aligned_allocator<state_vector_array2_t>>             state_vector_array3_t;
+	typedef std::vector<input_vector_array2_t, Eigen::aligned_allocator<input_vector_array2_t>>             input_vector_array3_t;
+	typedef std::vector<constraint1_vector_array2_t, Eigen::aligned_allocator<constraint1_vector_array2_t>> constraint1_vector_array3_t;
+	typedef std::vector<constraint2_vector_array2_t, Eigen::aligned_allocator<constraint2_vector_array2_t>> constraint2_vector_array3_t;
+
+	typedef typename slq_t::controlled_system_base_t  controlled_system_base_t;
+	typedef typename slq_t::derivatives_base_t        derivatives_base_t;
+	typedef typename slq_t::constraint_base_t         constraint_base_t;
+	typedef typename slq_t::cost_function_base_t      cost_function_base_t;
+
 	/**
 	 * Default constructor.
 	 */
 	SLQ_DataCollector() = default;
+
+	/**
+	 * Constructor.
+	 *
+	 * @param [in] systemDynamicsPtr: The system dynamics.
+	 */
+	SLQ_DataCollector(
+			const controlled_system_base_t* systemDynamicsPtr,
+			const derivatives_base_t* systemDerivativesPtr,
+			const constraint_base_t* systemConstraintsPtr,
+			const cost_function_base_t* costFunctionPtr);
 
 	/**
 	 * Default destructor.
@@ -117,74 +138,81 @@ public:
 	size_t numPartitions_ = 0;
 	scalar_array_t partitioningTimes_;
 
+	unsigned long long int rewindCounter_;
+
+	scalar_array_t eventTimes_;
+	size_array_t   subsystemsSequence_;
+
 	controller_array_t optimizedControllersStock_;
 
-//	std::vector<scalar_array_t> optimizedTimeTrajectoriesStock_;
-//	std::vector<size_array_t> 	optimizedEventsPastTheEndIndecesStock_;
-//	state_vector_array2_t		optimizedStateTrajectoriesStock_;
-//	input_vector_array2_t  		optimizedInputTrajectoriesStock_;
+//	std::vector<scalar_array_t>  optimizedTimeTrajectoriesStock_;
+//	std::vector<size_array_t>    optimizedEventsPastTheEndIndecesStock_;
+//	state_vector_array2_t        optimizedStateTrajectoriesStock_;
+//	input_vector_array2_t        optimizedInputTrajectoriesStock_;
 
 	std::vector<scalar_array_t> nominalTimeTrajectoriesStock_;
-	std::vector<size_array_t> 	nominalEventsPastTheEndIndecesStock_;
-	state_vector_array2_t		nominalStateTrajectoriesStock_;
-	input_vector_array2_t  		nominalInputTrajectoriesStock_;
+	std::vector<size_array_t>   nominalEventsPastTheEndIndecesStock_;
+	state_vector_array2_t       nominalStateTrajectoriesStock_;
+	input_vector_array2_t       nominalInputTrajectoriesStock_;
 
-	state_matrix_array2_t 		AmTrajectoriesStock_;
+	state_matrix_array2_t       AmTrajectoriesStock_;
 	state_input_matrix_array2_t BmTrajectoriesStock_;
 
-	std::vector<size_array_t>         nc1TrajectoriesStock_;  	// nc1: Number of the Type-1  active constraints
-	constraint1_vector_array2_t       EvTrajectoriesStock_;
-	constraint1_state_matrix_array2_t CmTrajectoriesStock_;
-	constraint1_input_matrix_array2_t DmTrajectoriesStock_;
+	std::vector<size_array_t>          nc1TrajectoriesStock_;  	// nc1: Number of the Type-1  active constraints
+	constraint1_vector_array2_t        EvTrajectoriesStock_;
+	constraint1_state_matrix_array2_t  CmTrajectoriesStock_;
+	constraint1_input_matrix_array2_t  DmTrajectoriesStock_;
 
-	std::vector<size_array_t> 			nc2TrajectoriesStock_;  // nc2: Number of the Type-2 active constraints
-	constraint2_vector_array2_t 		HvTrajectoriesStock_;
-	constraint2_state_matrix_array2_t 	FmTrajectoriesStock_;
-	std::vector<size_array_t>			nc2FinalStock_;
-	constraint2_vector_array2_t			HvFinalStock_;
-	constraint2_state_matrix_array2_t 	FmFinalStock_;
+	std::vector<size_array_t>          nc2TrajectoriesStock_;  // nc2: Number of the Type-2 active constraints
+	constraint2_vector_array2_t        HvTrajectoriesStock_;
+	constraint2_state_matrix_array2_t  FmTrajectoriesStock_;
+	std::vector<size_array_t>          nc2FinalStock_;
+	constraint2_vector_array2_t        HvFinalStock_;
+	constraint2_state_matrix_array2_t  FmFinalStock_;
 
-	eigen_scalar_array2_t		qFinalStock_;
-	state_vector_array2_t		QvFinalStock_;
-	state_matrix_array2_t		QmFinalStock_;
+	eigen_scalar_array2_t        qFinalStock_;
+	state_vector_array2_t        QvFinalStock_;
+	state_matrix_array2_t        QmFinalStock_;
 
-	eigen_scalar_array2_t 		qTrajectoriesStock_;
-	state_vector_array2_t 		QvTrajectoriesStock_;
-	state_matrix_array2_t 		QmTrajectoriesStock_;
-	input_vector_array2_t		RvTrajectoriesStock_;
-	input_matrix_array2_t		RmTrajectoriesStock_;
-	input_state_matrix_array2_t	PmTrajectoriesStock_;
+	eigen_scalar_array2_t        qTrajectoriesStock_;
+	state_vector_array2_t        QvTrajectoriesStock_;
+	state_matrix_array2_t        QmTrajectoriesStock_;
+	input_vector_array2_t        RvTrajectoriesStock_;
+	input_matrix_array2_t        RmTrajectoriesStock_;
+	input_state_matrix_array2_t  PmTrajectoriesStock_;
 
-	input_matrix_array2_t RmInverseTrajectoriesStock_;
-	state_matrix_array2_t AmConstrainedTrajectoriesStock_;
-	state_matrix_array2_t QmConstrainedTrajectoriesStock_;
-	state_vector_array2_t QvConstrainedTrajectoriesStock_;
-	input_matrix_array2_t RmConstrainedTrajectoriesStock_;
-	control_constraint1_matrix_array2_t DmDagerTrajectoriesStock_;
-	input_vector_array2_t   	EvProjectedTrajectoriesStock_;  // DmDager * Ev
-	input_state_matrix_array2_t CmProjectedTrajectoriesStock_;  // DmDager * Cm
-	input_matrix_array2_t   	DmProjectedTrajectoriesStock_;  // DmDager * Dm
-	state_input_matrix_array2_t BmConstrainedTrajectoriesStock_;
-	input_state_matrix_array2_t PmConstrainedTrajectoriesStock_;
-	input_vector_array2_t 		RvConstrainedTrajectoriesStock_;
+	input_matrix_array2_t                RmInverseTrajectoriesStock_;
+	state_matrix_array2_t                AmConstrainedTrajectoriesStock_;
+	state_matrix_array2_t                QmConstrainedTrajectoriesStock_;
+	state_vector_array2_t                QvConstrainedTrajectoriesStock_;
+	input_matrix_array2_t                RmConstrainedTrajectoriesStock_;
+	control_constraint1_matrix_array2_t  DmDagerTrajectoriesStock_;
+	input_vector_array2_t                EvProjectedTrajectoriesStock_;  // DmDager * Ev
+	input_state_matrix_array2_t          CmProjectedTrajectoriesStock_;  // DmDager * Cm
+	input_matrix_array2_t                DmProjectedTrajectoriesStock_;  // DmDager * Dm
+	state_input_matrix_array2_t          BmConstrainedTrajectoriesStock_;
+	input_state_matrix_array2_t          PmConstrainedTrajectoriesStock_;
+	input_vector_array2_t                RvConstrainedTrajectoriesStock_;
 
 	// terminal cost which is interpreted as the Heuristic function
 	eigen_scalar_t sHeuristics_;
 	state_vector_t SvHeuristics_;
 	state_matrix_t SmHeuristics_;
 
-	std::vector<scalar_array_t>	SsTimeTrajectoriesStock_;
-	std::vector<scalar_array_t> SsNormalizedTimeTrajectoriesStock_;
-	std::vector<size_array_t> 	SsNormalizedEventsPastTheEndIndecesStock_;
-	state_matrix_array2_t       SmTrajectoriesStock_;
-	state_vector_array2_t       SvTrajectoriesStock_;
-	state_vector_array2_t       SveTrajectoriesStock_;
-	eigen_scalar_array2_t 		sTrajectoriesStock_;
+	std::vector<scalar_array_t>  SsTimeTrajectoriesStock_;
+	std::vector<scalar_array_t>  SsNormalizedTimeTrajectoriesStock_;
+	std::vector<size_array_t>    SsNormalizedEventsPastTheEndIndecesStock_;
+	state_matrix_array2_t        SmTrajectoriesStock_;
+	state_vector_array2_t        SvTrajectoriesStock_;
+	state_vector_array2_t        SveTrajectoriesStock_;
+	eigen_scalar_array2_t        sTrajectoriesStock_;
 
 	/******************
 	 * SLQ missing variables
 	 ******************/
-	state_vector_array2_t nominalFlowMapTrajectoriesStock_;
+	state_vector_array2_t        nominalFlowMapTrajectoriesStock_;
+	constraint1_vector_array3_t  EvDevEventTimesTrajectoriesStockSet_;           // state-input constraint derivative w.r.t. event times
+	input_vector_array3_t        EvDevEventTimesProjectedTrajectoriesStockSet_;  // DmDager * EvDevEventTimes
 
 protected:
 	/**
@@ -212,6 +240,33 @@ protected:
 			const state_vector_array2_t& stateTrajectoriesStock,
 			const input_vector_array2_t& inputTrajectoriesStock,
 			state_vector_array2_t& flowMapTrajectoriesStock);
+
+	/**
+	 * Calculates sensitivity of the state-input constraints to event times.
+	 *
+	 * @param [in] constSlqPtr: A pointer to the SLQ instance.
+	 * @param [in] timeTrajectoriesStock: The time trajectory stamp.
+	 * @param [in] stateTrajectoriesStock: The state trajectory.
+	 * @param [in] inputTrajectoriesStock: The control input trajectory.
+	 * @param [out] EvDevEventTimesTrajectoriesStockSet: The sensitivity of the state-input constraints to the event times. Here
+	 * EvDevEventTimesTrajectoriesStockSet[i] is the EvDevEventTimesTrajectoriesStock for the i'th event time.
+	 * @param [out] EvDevEventTimesProjectedTrajectoriesStockSet: The projected sensitivity of the state-input constraints to the event times,
+	 * Defined as (DmDager * EvDevEventTimes).
+	 */
+	void calculateStateInputConstraintsSensitivity(
+			const slq_t* constSlqPtr,
+			const std::vector<scalar_array_t>& timeTrajectoriesStock,
+			const state_vector_array2_t& stateTrajectoriesStock,
+			const input_vector_array2_t& inputTrajectoriesStock,
+			constraint1_vector_array3_t& EvDevEventTimesTrajectoriesStockSet,
+			input_vector_array3_t& EvDevEventTimesProjectedTrajectoriesStockSet);
+
+private:
+	std::unique_ptr<controlled_system_base_t>  systemDynamicsPtr_;
+	std::unique_ptr<derivatives_base_t>        systemDerivativesPtr_;
+	std::unique_ptr<constraint_base_t>         systemConstraintsPtr_;
+	std::unique_ptr<cost_function_base_t>      costFunctionPtr_;
+
 };
 
 } // namespace ocs2

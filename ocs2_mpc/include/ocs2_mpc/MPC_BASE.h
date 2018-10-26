@@ -81,7 +81,8 @@ public:
 	typedef typename DIMENSIONS::dynamic_vector_t           dynamic_vector_t;
 	typedef typename DIMENSIONS::dynamic_vector_array_t     dynamic_vector_array_t;
 
-	typedef CostDesiredTrajectories<scalar_t> cost_desired_trajectories_t;
+	typedef CostDesiredTrajectories<scalar_t>  cost_desired_trajectories_t;
+	typedef ModeSequenceTemplate<scalar_t>     mode_sequence_template_t;
 
 	typedef Solver_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> solver_base_t;
 	typedef typename solver_base_t::Ptr                      solver_base_ptr_t;
@@ -188,7 +189,7 @@ public:
 	 * @param [in] newLogicRulesTemplate: New logicRules template
 	 */
 	virtual void setNewLogicRulesTemplate(
-			const typename LOGIC_RULES_T::logic_template_type& newLogicRulesTemplate);
+			const mode_sequence_template_t& newLogicRulesTemplate);
 
 	/**
 	 * Gets a pointer to the optimal array of the control policies.
@@ -304,7 +305,7 @@ protected:
 
 	// user command variables
 	std::atomic<bool> logicRulesTemplateUpdated_;
-	typename LOGIC_RULES_T::logic_template_type newLogicRulesTemplate_;
+	mode_sequence_template_t newLogicRulesTemplate_;
 
 	const controller_array_t*          optimizedControllersStockPtr_;
 	const std::vector<scalar_array_t>* optimizedTimeTrajectoriesStockPtr_;

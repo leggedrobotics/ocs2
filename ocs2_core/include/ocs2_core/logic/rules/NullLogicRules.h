@@ -70,7 +70,7 @@ public:
 	/**
 	 * Destructor
 	 */
-	virtual ~NullLogicRules() = default;
+	~NullLogicRules() = default;
 
 	/**
 	 * Move assignment
@@ -90,14 +90,14 @@ public:
 	 */
 	virtual void rewind(
 			const scalar_t& lowerBoundTime,
-			const scalar_t& upperBoundTime) override
+			const scalar_t& upperBoundTime) final
 	{}
 
 	/**
 	 * This method can be used to update the internal variables. This method will be called by any
 	 * program that tries to update the logic rules variables.
 	 */
-	virtual void update() override
+	virtual void update() final
 	{}
 
 	/**
@@ -105,7 +105,8 @@ public:
 	 *
 	 * @param [in] modeSequenceTemplate: A data type which includes all necessary information for modifying the logicRules.
 	 */
-	virtual void setModeSequenceTemplate(const logic_template_type& modeSequenceTemplate) override
+	virtual void setModeSequenceTemplate(
+			const logic_template_type& modeSequenceTemplate) final
 	{}
 
 	/**
@@ -117,7 +118,7 @@ public:
 	 */
 	virtual void insertModeSequenceTemplate(
 			const scalar_t& startTime,
-			const scalar_t& finalTime) override
+			const scalar_t& finalTime) final
 	{}
 
 private:

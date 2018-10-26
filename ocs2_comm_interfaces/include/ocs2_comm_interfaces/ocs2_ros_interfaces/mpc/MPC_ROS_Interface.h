@@ -55,6 +55,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_comm_interfaces/mpc_feedback_policy.h>
 #include <ocs2_comm_interfaces/mpc_feedforward_policy.h>
 #include <ocs2_comm_interfaces/mpc_target_trajectories.h>
+#include <ocs2_comm_interfaces/mode_sequence.h>
 #include <ocs2_comm_interfaces/dummy.h>
 #include <ocs2_comm_interfaces/reset.h>
 
@@ -97,7 +98,8 @@ public:
 	typedef typename mpc_t::input_state_matrix_t       input_state_matrix_t;
 	typedef typename mpc_t::input_state_matrix_array_t input_state_matrix_array_t;
 
-	typedef CostDesiredTrajectories<scalar_t> cost_desired_trajectories_t;
+	typedef typename mpc_t::cost_desired_trajectories_t  cost_desired_trajectories_t;
+	typedef typename mpc_t::mode_sequence_template_t     mode_sequence_template_t;
 
 	typedef SystemObservation<STATE_DIM, INPUT_DIM> system_observation_t;
 
@@ -284,6 +286,14 @@ protected:
 	void mpcTargetTrajectoriesCallback(
 			const ocs2_comm_interfaces::mpc_target_trajectories::ConstPtr& msg);
 
+	/**
+	 * The callback method which receives the user-defined mode sequence message.
+	 *
+	 * @param [in] msg: The mode sequence message.
+	 */
+	void mpcModeSequenceCallback(
+			const ocs2_comm_interfaces::mode_sequence::ConstPtr& msg);
+
 
 protected:
 	/*
@@ -295,11 +305,12 @@ protected:
 	std::string robotName_;
 
 	// Publishers and subscribers
-	::ros::Subscriber mpcObservationSubscriber_;
-	::ros::Subscriber mpcTargetTrajectoriesSubscriber_;
-	::ros::Publisher  mpcFeedforwardPolicyPublisher_;
-	::ros::Publisher  mpcFeedbackPolicyPublisher_;
-	::ros::Publisher  dummyPublisher_;
+	::ros::Subscriber    mpcObservationSubscriber_;
+	::ros::Subscriber    mpcTargetTrajectoriesSubscriber_;
+	::ros::Subscriber    mpcModeSequenceSubscriber_;
+	::ros::Publisher     mpcFeedforwardPolicyPublisher_;
+	::ros::Publisher     mpcFeedbackPolicyPublisher_;
+	::ros::Publisher     dummyPublisher_;
 	::ros::ServiceServer mpcResetServiceServer_;
 
 	// MPC reset flags
@@ -329,8 +340,10 @@ protected:
 	bool initialCall_;
 
 	std::atomic<bool> desiredTrajectoriesUpdated_;
+	std::atomic<bool> modeSequenceUpdated_;
 	cost_desired_trajectories_t costDesiredTrajectories_;
 	cost_desired_trajectories_t defaultCostDesiredTrajectories_;
+	mode_sequence_template_t modeSequenceTemplate_;
 };
 
 } // namespace ocs2

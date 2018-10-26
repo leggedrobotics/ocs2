@@ -37,7 +37,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ocs2_core/Dimensions.h"
 #include "ocs2_core/OCS2NumericTraits.h"
 
-namespace ocs2{
+namespace ocs2 {
 
 template <size_t STATE_DIM, size_t INPUT_DIM>
 class TrajectorySpreadingController
@@ -52,16 +52,16 @@ public:
 	};
 
 	typedef Dimensions<STATE_DIM, INPUT_DIM> DIMENSIONS;
-	typedef typename DIMENSIONS::scalar_t       		scalar_t;
-	typedef typename DIMENSIONS::scalar_array_t 		scalar_array_t;
-	typedef typename DIMENSIONS::state_vector_t 		state_vector_t;
-	typedef typename DIMENSIONS::state_vector_array_t 	state_vector_array_t;
-	typedef typename DIMENSIONS::state_matrix_t 		state_matrix_t;
-	typedef typename DIMENSIONS::input_vector_t  		input_vector_t;
+	typedef typename DIMENSIONS::scalar_t               scalar_t;
+	typedef typename DIMENSIONS::scalar_array_t         scalar_array_t;
+	typedef typename DIMENSIONS::state_vector_t         state_vector_t;
+	typedef typename DIMENSIONS::state_vector_array_t   state_vector_array_t;
+	typedef typename DIMENSIONS::state_matrix_t         state_matrix_t;
+	typedef typename DIMENSIONS::input_vector_t         input_vector_t;
 	typedef typename DIMENSIONS::input_vector_array_t   input_vector_array_t;
-	typedef typename DIMENSIONS::input_matrix_t 		input_matrix_t;
-	typedef typename DIMENSIONS::input_state_matrix_t 	input_state_matrix_t;
-	typedef typename DIMENSIONS::state_input_matrix_t 	state_input_matrix_t;
+	typedef typename DIMENSIONS::input_matrix_t         input_matrix_t;
+	typedef typename DIMENSIONS::input_state_matrix_t   input_state_matrix_t;
+	typedef typename DIMENSIONS::state_input_matrix_t   state_input_matrix_t;
 	typedef typename DIMENSIONS::controller_t           controller_t;
 	typedef typename DIMENSIONS::controller_array_t     controller_array_t;
 
@@ -73,27 +73,29 @@ public:
 	TrajectorySpreadingController() = default;
 
 	/**
-	 * Deconstructor
+	 * Destructor
 	 */
 	~TrajectorySpreadingController() = default;
 
 	/**
+	 * Adjust the controller based on the last changes in the logic rules.
 	 *
-	 * @param eventTimes
-	 * @param controllersStock
+	 * @param [in] eventTimes: The new event times.
+	 * @param [in] controllerEventTimes: The control policy stock's event times.
+	 * @param controllerStock: The controller stock which will be modified.
 	 */
 	void adjustController(
 			const scalar_array_t& eventTimes,
+			const scalar_array_t& controllerEventTimes,
 			controller_array_t& controllersStock);
 
 protected:
-
 	/**
 	 * Finds the indices of a event times vector.
 	 *
-	 * @param eventTimes
-	 * @param controllersStock
-	 * @param eventsIndices
+	 * @param eventTimes: Event time vector.
+	 * @param controllersStock: Control policy.
+	 * @param eventsIndices: event time indices over the control policy time stamp.
 	 */
 	void findsIndicesEventTimes(
 			const scalar_array_t& eventTimes,
@@ -118,7 +120,7 @@ protected:
 	 * @param ControlerEventTimeIndex
 	 * @param controllersStock
 	 */
-	void adjustController(
+	void spreadController(
 			const scalar_t& eventTime,
 			const index_t& eventTimeIndex,
 			const index_t& controlerEventTimeIndex,
@@ -128,6 +130,7 @@ protected:
 	 * Variables
 	 ***********/
 	int initActivePartition_  = 0;
+	int finalActivePartition_ = 0;
 
 	std::vector<index_t> eventsIndices_;
 	std::vector<index_t> controllerEventsIndices_;

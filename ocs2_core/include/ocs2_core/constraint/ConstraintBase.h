@@ -38,10 +38,13 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ocs2_core/logic/rules/NullLogicRules.h"
 #include "ocs2_core/logic/machine/LogicRulesMachine.h"
 
-namespace ocs2{
+namespace ocs2 {
 
 /**
  * Base class for the constraints and its Derivatives. The linearized constraints are defined as: \n
+ * Here we consider two types of constraints: state-input constraints, \f$ g_1(x,u,T)\f$ and state-only
+ * constraints, \f$ g_2(x,T)\f$. \f$ x \f$, \f$ u \f$, and \f$ T \f$ are state, input, and vector of
+ * event times respectively.
  *
  * - Linearized state-input constraints:       \f$ C(t) \delta x + D(t) \delta u + e(t) = 0 \f$ \n
  * - Linearized only-state constraints:        \f$ F(t) \delta x + h(t) = 0 \f$ \n
@@ -63,16 +66,18 @@ public:
 	typedef std::shared_ptr<const ConstraintBase<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> > ConstPtr;
 
 	typedef Dimensions<STATE_DIM, INPUT_DIM> DIMENSIONS;
-	typedef typename DIMENSIONS::scalar_t scalar_t;
-	typedef typename DIMENSIONS::state_vector_t   state_vector_t;
-	typedef typename DIMENSIONS::input_vector_t input_vector_t;
-	typedef typename DIMENSIONS::state_matrix_t   state_matrix_t;
-	typedef typename DIMENSIONS::state_input_matrix_t 	state_input_matrix_t;
-	typedef typename DIMENSIONS::constraint1_vector_t 	constraint1_vector_t;
-	typedef typename DIMENSIONS::constraint2_vector_t 	constraint2_vector_t;
-	typedef typename DIMENSIONS::constraint1_state_matrix_t   constraint1_state_matrix_t;
-	typedef typename DIMENSIONS::constraint1_input_matrix_t constraint1_input_matrix_t;
-	typedef typename DIMENSIONS::constraint2_state_matrix_t   constraint2_state_matrix_t;
+	typedef typename DIMENSIONS::scalar_t                    scalar_t;
+	typedef typename DIMENSIONS::state_vector_t              state_vector_t;
+	typedef typename DIMENSIONS::input_vector_t              input_vector_t;
+	typedef typename DIMENSIONS::state_matrix_t              state_matrix_t;
+	typedef typename DIMENSIONS::state_input_matrix_t        state_input_matrix_t;
+	typedef typename DIMENSIONS::constraint1_vector_t        constraint1_vector_t;
+	typedef typename DIMENSIONS::constraint1_vector_array_t  constraint1_vector_array_t;
+	typedef typename DIMENSIONS::constraint2_vector_t        constraint2_vector_t;
+	typedef typename DIMENSIONS::constraint2_vector_array_t  constraint2_vector_array_t;
+	typedef typename DIMENSIONS::constraint1_state_matrix_t  constraint1_state_matrix_t;
+	typedef typename DIMENSIONS::constraint1_input_matrix_t  constraint1_input_matrix_t;
+	typedef typename DIMENSIONS::constraint2_state_matrix_t  constraint2_state_matrix_t;
 
 	/**
 	 * Default constructor
@@ -90,7 +95,7 @@ public:
 	virtual ~ConstraintBase() = default;
 
 	/**
-	 * Sets the current time, state, and control inout.
+	 * Sets the current time, state, and control input.
 	 *
 	 * @param [in] t: Current time.
 	 * @param [in] x: Current state.
@@ -100,13 +105,14 @@ public:
 			const scalar_t& t,
 			const state_vector_t& x,
 			const input_vector_t& u) {
+
 		t_ = t;
 		x_ = x;
 		u_ = u;
 	}
 
 	/**
-	 * Initializes the system Constraints.
+	 * Initializes the system constraints.
 	 *
 	 * @param [in] logicRulesMachine: A class which contains and parse the logic rules e.g
 	 * method findActiveSubsystemHandle returns a Lambda expression which can be used to
@@ -121,7 +127,7 @@ public:
 	{}
 
 	/**
-	 * Returns pointer to the class.
+	 * Clones the class.
 	 *
 	 * @return A raw pointer to the class.
 	 */
@@ -138,7 +144,7 @@ public:
 	virtual void getConstraint1(constraint1_vector_t& e)  {}
 
 	/**
-	 * Get the number of state-input active equality constraints.
+	 * Gets the number of active state-input equality constraints.
 	 *
 	 * @param [in] time: time.
 	 * @return number of state-input active equality constraints.
@@ -149,7 +155,7 @@ public:
 	}
 
 	/**
-	 * get the state-only equality constraints.
+	 * Gets the state-only equality constraints.
 	 *
 	 * @param [out] h: The state-only (in)equality constraints value.
 	 */
@@ -201,6 +207,21 @@ public:
 	virtual void getConstraint1DerivativesControl(constraint1_input_matrix_t& D) {}
 
 	/**
+	 * calculate and retrieve the the derivative of the state-input constraints w.r.t. event times.
+	 * g1DevArray[i] is a vector of dimension MAX_CONSTRAINT1_DIM_ which is the partial derivative of
+	 * state-input equality constraints with respect to i'th event time.
+	 *
+	 * Note that only nc1 top rows of g1DevArray[i] are valid where nc1 is the number of active
+	 * state-input constraints at the current time.
+	 *
+	 * If the constraints are not a function of event times either set the array size to zero (as the default)
+	 * implementation or set it to an array of zero vector with a size equal to number event times.
+	 *
+	 * @param [out] g1DevArray: an array of nc1-by-1 vector.
+	 */
+	virtual void getConstraint1DerivativesEventTimes(constraint1_vector_array_t& g1DevArray) { g1DevArray.clear(); }
+
+	/**
 	 * The F matrix at a given operating point for the linearized state-only constraints,
 	 * \f$ F(t) \delta x + h(t) = 0 \f$.
 	 *
@@ -217,11 +238,11 @@ public:
 	virtual void getFinalConstraint2DerivativesState(constraint2_state_matrix_t& F_f) {}
 
 protected:
-	scalar_t t_;
-	state_vector_t x_;
-	input_vector_t u_;
+	scalar_t        t_;
+	state_vector_t  x_;
+	input_vector_t  u_;
 };
 
-} // namespace ocs2
+} // end of namespace ocs2
 
 #endif /* CONSTRAINTBASE_OCS2_H_ */

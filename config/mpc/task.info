@@ -64,10 +64,10 @@ defaultModeSequenceTemplate
 
 slq
 {
-  maxNumIterationsSLQ           10		;50
-  minLearningRateGSLQP          1.0		;0.1
+  maxNumIterationsSLQ           10      ;50
+  minLearningRateGSLQP          1.0     ;0.1
   maxLearningRateGSLQP          1.0
-  minRelCostGSLQP               0.1  ;0.01
+  minRelCostGSLQP               0.1     ;0.01
   stateConstraintPenaltyCoeff   100.0
   stateConstraintPenaltyBase    1.1
   meritFunctionRho              50.0
@@ -82,24 +82,25 @@ slq
   minTimeStep                   1e-3
   useMakePSD                    0
   addedRiccatiDiagonal          1e-4
-  maxNumStepsPerSecond         	50000
-  simulationIsConstrained      	0
-  noStateConstraints			0
-  minAbsConstraint1ISE         	5e-3
-  minRelConstraint1ISE         	5e-6
-  checkNumericalStability      	0
-  displayGradientDescent      	0
-  tolGradientDescent           	1e-2
-  acceptableTolGradientDescent 	1e-2
-  maxIterationGradientDescent  	5
-  minLearningRateNLP           	0.05
-  maxLearningRateNLP           	0.6
-  useAscendingLineSearchNLP    	1
+  maxNumStepsPerSecond          50000
+  simulationIsConstrained       0
+  noStateConstraints            0
+  minAbsConstraint1ISE          5e-3
+  minRelConstraint1ISE          5e-6
+  checkNumericalStability       0
+  displayGradientDescent        0
+  tolGradientDescent            1e-2
+  acceptableTolGradientDescent  1e-2
+  maxIterationGradientDescent   5
+  minLearningRateNLP            0.05
+  maxLearningRateNLP            0.6
+  useAscendingLineSearchNLP     1
 
-  useMultiThreading           	1
-  nThreads                    	6
-  debugPrintMP                	0
-  lsStepsizeGreedy            	1
+  useMultiThreading             1
+  nThreads                      6
+  threadPriority                99
+  debugPrintMP                  0
+  lsStepsizeGreedy              1
 
   useNominalTimeForBackwardPass 1
   RiccatiIntegratorType         1 		; ODE45 = 1, ADAMS_BASHFORTH = 2, BULIRSCH_STOER = 3, ADAMS_BASHFORTH_MOULTON = 4

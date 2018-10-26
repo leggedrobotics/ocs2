@@ -88,6 +88,7 @@ add_dependencies(ocs2_anymal_interface
 )
 target_link_libraries(ocs2_anymal_interface
   ${catkin_LIBRARIES}
+  glpk
 )
 
 add_library(mpc_ros_anymal
@@ -130,15 +131,15 @@ target_link_libraries(target_command_node
 )
 
 add_executable(target_command_node_velocity
-        src/AnymalTargetVelocityCommand.cpp
-        )
+  src/AnymalTargetVelocityCommand.cpp
+)
 add_dependencies(target_command_node_velocity
-        ${${PROJECT_NAME}_EXPORTED_TARGETS}
-        ${catkin_EXPORTED_TARGETS}
-        )
+  ${${PROJECT_NAME}_EXPORTED_TARGETS}
+  ${catkin_EXPORTED_TARGETS}
+)
 target_link_libraries(target_command_node_velocity
-        ${catkin_LIBRARIES}
-        )
+  ${catkin_LIBRARIES}
+)
 
 add_executable(gait_command_node
   src/AnymalModeSequenceCommand.cpp

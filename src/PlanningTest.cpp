@@ -161,7 +161,7 @@ int main( int argc, char* argv[] )
 //	modeSequenceTemplate.display();
 //
 //	ocs2_robot_interface_t::logic_rules_t logicRules = static_cast<ocs2_robot_interface_t::logic_rules_t>(
-//			optimizationInterface.getSLQPtr()->getLogicRules());
+//			optimizationInterface.getSLQPtr()->getLogicRulesPtr());
 //	logicRules.display();
 //
 //	logicRules.setModeSequenceTemplate(1.0, 4.0, modeSequenceTemplate);

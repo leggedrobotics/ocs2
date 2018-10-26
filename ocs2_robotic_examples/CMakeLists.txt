@@ -91,9 +91,11 @@ endif()
 ## Quadrotor ##
 ###############
 
-SET(Quadrotor OFF CACHE BOOL "Build Quadrotor example.")
+SET(Quadrotor FALSE CACHE BOOL "Build Quadrotor example.")
 
 if(${Quadrotor})
+
+  MESSAGE("Quadrotor is compiling ...")
 
   add_executable(quadrotor_mpc
     src/quadrotor/QuadrotorInterface.cpp
@@ -136,9 +138,11 @@ endif()
 ## Ballbot ##
 #############
 
-SET(Ballbot OFF CACHE BOOL "Build Ballbot example.")
+SET(Ballbot FALSE CACHE BOOL "Build Ballbot example.")
 
 if(${Ballbot})
+
+  MESSAGE("Ballbot is compiling ...")
 
   add_executable(ballbot_mpc
     src/ballbot/BallbotInterface.cpp
@@ -183,9 +187,11 @@ endif()
 ## Double Integrator ##
 #######################
 
-SET(DoubleIntegrator OFF CACHE BOOL "Build Double Integrator example.")
+SET(DoubleIntegrator FALSE CACHE BOOL "Build Double Integrator example.")
 
 if(${DoubleIntegrator})
+
+  MESSAGE("DoubleIntegrator is compiling ...")
 
   add_executable(double_integrator_mpc
     src/double_integrator/DoubleIntegratorInterface.cpp
@@ -230,9 +236,11 @@ endif()
 ## Cart Pole ##
 ###############
 
-SET(CartPole OFF CACHE BOOL "Build Cart Pole example.")
+SET(CartPole FALSE CACHE BOOL "Build Cart Pole example.")
 
 if(${CartPole})
+
+  MESSAGE("CartPole is compiling ...")
 
   add_executable(cartpole_mpc
     src/cart_pole/CartPoleInterface.cpp

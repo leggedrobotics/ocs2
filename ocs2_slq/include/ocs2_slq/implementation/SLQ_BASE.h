@@ -1067,6 +1067,8 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::approximateUnconstrainedLQWo
 						std::to_string(RmTrajectoryStock_[i][k].ldlt().rcond()) + ".");
 		} catch(const std::exception& error)  {
 			std::cerr << "what(): " << error.what() << " at time " << nominalTimeTrajectoriesStock_[i][k] << " [sec]." << std::endl;
+			std::cerr << "x: " << nominalStateTrajectoriesStock_[i][k].transpose() << std::endl;
+			std::cerr << "u: " << nominalInputTrajectoriesStock_[i][k].transpose() << std::endl;
 			std::cerr << "q: " << qTrajectoryStock_[i][k] << std::endl;
 			std::cerr << "Qv: " << QvTrajectoryStock_[i][k].transpose() << std::endl;
 			std::cerr << "Qm: \n" << QmTrajectoryStock_[i][k] << std::endl;

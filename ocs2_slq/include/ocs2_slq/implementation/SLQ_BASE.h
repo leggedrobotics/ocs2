@@ -1140,25 +1140,25 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::approximateConstrainedLQWork
 				RmInverseTrajectoryStock_[i][k] * Dm.transpose() * RmProjected;
 
 		DmDagerTrajectoryStock_[i][k].leftCols(nc1) = DmDager;
-		EvProjectedTrajectoryStock_[i][k] = DmDager * Ev;
-		CmProjectedTrajectoryStock_[i][k] = DmDager * Cm;
-		DmProjectedTrajectoryStock_[i][k] = DmDager * Dm;
+		EvProjectedTrajectoryStock_[i][k].noalias() = DmDager * Ev;
+		CmProjectedTrajectoryStock_[i][k].noalias() = DmDager * Cm;
+		DmProjectedTrajectoryStock_[i][k].noalias() = DmDager * Dm;
 
 		input_matrix_t DmNullSpaceProjection = input_matrix_t::Identity() - DmProjectedTrajectoryStock_[i][k];
 		state_matrix_t PmTransDmDagerCm = PmTrajectoryStock_[i][k].transpose()*CmProjectedTrajectoryStock_[i][k];
 
-		AmConstrainedTrajectoryStock_[i][k] = AmTrajectoryStock_[i][k] -
-				BmTrajectoryStock_[i][k]*CmProjectedTrajectoryStock_[i][k];
-		QmConstrainedTrajectoryStock_[i][k] = QmTrajectoryStock_[i][k] +
-				Cm.transpose()*RmProjected*Cm - PmTransDmDagerCm - PmTransDmDagerCm.transpose();
-		QvConstrainedTrajectoryStock_[i][k] = QvTrajectoryStock_[i][k] -
-				CmProjectedTrajectoryStock_[i][k].transpose()*RvTrajectoryStock_[i][k];
+		AmConstrainedTrajectoryStock_[i][k] = AmTrajectoryStock_[i][k];
+		AmConstrainedTrajectoryStock_[i][k].noalias() -=	BmTrajectoryStock_[i][k]*CmProjectedTrajectoryStock_[i][k];
+		QmConstrainedTrajectoryStock_[i][k] = QmTrajectoryStock_[i][k] - PmTransDmDagerCm - PmTransDmDagerCm.transpose();
+		QmConstrainedTrajectoryStock_[i][k].noalias() +=	Cm.transpose()*RmProjected*Cm;
+		QvConstrainedTrajectoryStock_[i][k] = QvTrajectoryStock_[i][k];
+		QvConstrainedTrajectoryStock_[i][k].noalias() -= CmProjectedTrajectoryStock_[i][k].transpose()*RvTrajectoryStock_[i][k];
 		if (settings_.useRiccatiSolver_==true) {
-			RmConstrainedTrajectoryStock_[i][k] = DmNullSpaceProjection.transpose() * RmTrajectoryStock_[i][k] * DmNullSpaceProjection;
+			RmConstrainedTrajectoryStock_[i][k].noalias() = DmNullSpaceProjection.transpose() * RmTrajectoryStock_[i][k] * DmNullSpaceProjection;
 		} else {
-			BmConstrainedTrajectoryStock_[i][k] = BmTrajectoryStock_[i][k] * DmNullSpaceProjection;
-			PmConstrainedTrajectoryStock_[i][k] = DmNullSpaceProjection.transpose() * PmTrajectoryStock_[i][k];
-			RvConstrainedTrajectoryStock_[i][k] = DmNullSpaceProjection.transpose() * RvTrajectoryStock_[i][k];
+			BmConstrainedTrajectoryStock_[i][k].noalias() = BmTrajectoryStock_[i][k] * DmNullSpaceProjection;
+			PmConstrainedTrajectoryStock_[i][k].noalias() = DmNullSpaceProjection.transpose() * PmTrajectoryStock_[i][k];
+			RvConstrainedTrajectoryStock_[i][k].noalias() = DmNullSpaceProjection.transpose() * RvTrajectoryStock_[i][k];
 		}
 
 	}

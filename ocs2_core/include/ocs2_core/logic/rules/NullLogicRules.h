@@ -97,7 +97,7 @@ public:
 	 * This method can be used to update the internal variables. This method will be called by any
 	 * program that tries to update the logic rules variables.
 	 */
-	virtual void update() final
+	void update() final
 	{}
 
 	/**
@@ -105,7 +105,7 @@ public:
 	 *
 	 * @param [in] modeSequenceTemplate: A data type which includes all necessary information for modifying the logicRules.
 	 */
-	virtual void setModeSequenceTemplate(
+	void setModeSequenceTemplate(
 			const logic_template_type& modeSequenceTemplate) final
 	{}
 
@@ -116,7 +116,21 @@ public:
 	 * @param [in] startTime: The initial time from which the new logicRules template should be augmented.
 	 * @param [in] finalTime: The final time to which the new logicRules template should be augmented.
 	 */
-	virtual void insertModeSequenceTemplate(
+	void insertModeSequenceTemplate(
+			const scalar_t& startTime,
+			const scalar_t& finalTime) final
+	{}
+
+	/**
+	 * Used in the SLQ-MPC method to insert a new user defined logic in the given time period.
+	 * Note: use the update method to at the end to update your derived class variables
+	 *
+	 * @param [in] modeSequenceTemplate: A data type which includes all necessary information for modifying the logicRules.
+	 * @param [in] startTime: The initial time from which the new logicRules template should be augmented.
+	 * @param [in] finalTime: The final time to which the new logicRules template should be augmented.
+	 */
+	void insertModeSequenceTemplate(
+			const logic_template_type& modeSequenceTemplate,
 			const scalar_t& startTime,
 			const scalar_t& finalTime) final
 	{}

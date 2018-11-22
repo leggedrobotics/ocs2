@@ -276,6 +276,19 @@ bool MPC_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::run(
 		std::cerr << "\t### MPC time horizon: " << finalTime-initTime << " [s]." << std::endl;
 	}
 
+	//*****************************************************************************************
+	// Update logicRules if new logicRulesTemplate is set
+	//*****************************************************************************************
+	if (logicRulesTemplateUpdated_ == true) {
+
+		// set new templates
+		solverPtr_->getLogicRulesPtr()->setModeSequenceTemplate(newLogicRulesTemplate_);
+		solverPtr_->getLogicRulesPtr()->insertModeSequenceTemplate(finalTime, partitioningTimes_.back());
+		solverPtr_->getLogicRulesMachinePtr()->logicRulesUpdated();
+
+		logicRulesTemplateUpdated_ = false;
+	}
+
 	/******************************************************************************************
 	 * Calculate controller
 	 ******************************************************************************************/

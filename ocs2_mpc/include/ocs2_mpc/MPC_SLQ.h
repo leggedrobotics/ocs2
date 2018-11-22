@@ -135,6 +135,13 @@ public:
 	virtual SLQ_Settings& slqSettings();
 
 	/**
+	 * Gets a pointer to the underlying solver used in the MPC.
+	 *
+	 * @return A pointer to the underlying solver used in the MPC
+	 */
+	virtual slq_base_t* getSolverPtr() override;
+
+	/**
 	 * Solves the optimal control problem for the given state and time period ([initTime,finalTime]).
 	 *
 	 * @param [out] initTime: Initial time.

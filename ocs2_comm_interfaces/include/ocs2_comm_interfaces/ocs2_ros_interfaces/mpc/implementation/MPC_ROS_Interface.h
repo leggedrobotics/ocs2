@@ -413,10 +413,48 @@ void MPC_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::mpcObservationCallb
 		mpcPtr_->swapCostDesiredTrajectories(defaultCostDesiredTrajectories_);
 	}
 
+	// update the mode sequence
+	if(modeSequenceUpdated_==true) {
+
+		// display
+		std::cerr << "### The mode sequence is updated at time "
+				<< std::setprecision(4) << currentObservation.time() << " as " << std::endl;
+		modeSequenceTemplate_.display();
+
+		// user defined modification of the CostDesiredTrajectories when mode is updated
+		const cost_desired_trajectories_t* mpcCostDesiredTrajectoriesPtr;
+		mpcPtr_->getCostDesiredTrajectoriesPtr(mpcCostDesiredTrajectoriesPtr);
+		cost_desired_trajectories_t costDesiredTrajectoriesTemp = *mpcCostDesiredTrajectoriesPtr;
+		adjustModeSequence(currentObservation, costDesiredTrajectoriesTemp, modeSequenceTemplate_);
+
+		// check if costDesiredTrajectories is updated
+		if (costDesiredTrajectoriesTemp != *mpcCostDesiredTrajectoriesPtr) {
+			// display
+			if (mpcSettings_.debugPrint_) {
+				std::cerr << "### Since the modeSequence is updated, the target position is updated at time "
+						<< std::setprecision(4) << currentObservation.time() << " as " << std::endl;
+				costDesiredTrajectoriesTemp.display();
+			}
+
+			// set CostDesiredTrajectories
+			mpcPtr_->swapCostDesiredTrajectories(costDesiredTrajectoriesTemp);
+
+			desiredTrajectoriesUpdated_ = false;
+		}
+
+		// set CostDesiredTrajectories
+		mpcPtr_->setNewLogicRulesTemplate(modeSequenceTemplate_);
+
+		modeSequenceUpdated_ = false;
+
+	} else if (mpcSettings_.recedingHorizon_==false) {
+		return;
+	}
+
 	// update the desired trajectories
 	if(desiredTrajectoriesUpdated_==true) {
 
-		// user defined modification of the CostDesiredTrajectories at the moment o setting
+		// user defined modification of the CostDesiredTrajectories at the moment of setting
 		adjustTargetTrajectories(currentObservation, costDesiredTrajectories_);
 
 		// display
@@ -430,23 +468,6 @@ void MPC_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::mpcObservationCallb
 		mpcPtr_->swapCostDesiredTrajectories(costDesiredTrajectories_);
 
 		desiredTrajectoriesUpdated_ = false;
-
-	} else if (mpcSettings_.recedingHorizon_==false) {
-		return;
-	}
-
-	// update the mode sequence
-	if(modeSequenceUpdated_==true) {
-
-		// display
-		std::cerr << "### The mode sequence is updated at time "
-				<< std::setprecision(4) << currentObservation.time() << " as " << std::endl;
-		modeSequenceTemplate_.display();
-
-		// set CostDesiredTrajectories
-		mpcPtr_->setNewLogicRulesTemplate(modeSequenceTemplate_);
-
-		modeSequenceUpdated_ = false;
 
 	} else if (mpcSettings_.recedingHorizon_==false) {
 		return;

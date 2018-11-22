@@ -55,7 +55,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_comm_interfaces/mpc_feedback_policy.h>
 #include <ocs2_comm_interfaces/mpc_feedforward_policy.h>
 #include <ocs2_comm_interfaces/mpc_target_trajectories.h>
-#include <ocs2_comm_interfaces/mode_sequence.h>
 #include <ocs2_comm_interfaces/dummy.h>
 #include <ocs2_comm_interfaces/reset.h>
 
@@ -197,9 +196,13 @@ public:
 	 * Adjusts the user-defined mode sequence for time-triggered hybrid systems based on the current observation.
 	 *
 	 * @param [in] currentObservation: The current observation.
+	 * @param currentCostDesiredTrajectories: The current target trajectories which can be modified based on the current observation.
+	 * @param newLogicRulesTemplate: New logicRules template which can be modified based on the current observation.
 	 */
 	virtual void adjustModeSequence(
-			const system_observation_t& currentObservation) {}
+			const system_observation_t& currentObservation,
+			cost_desired_trajectories_t& currentCostDesiredTrajectories,
+			mode_sequence_template_t& newLogicRulesTemplate) {}
 
 protected:
 	/**

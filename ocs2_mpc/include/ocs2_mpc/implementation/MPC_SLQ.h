@@ -106,6 +106,16 @@ SLQ_Settings& MPC_SLQ<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::slqSettings() {
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
+typename MPC_SLQ<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::slq_base_t*
+MPC_SLQ<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::getSolverPtr() {
+
+	return slqPtr_.get();
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
 void MPC_SLQ<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculateController(
 		const scalar_t& initTime,
 		const state_vector_t& initState,
@@ -181,18 +191,18 @@ void MPC_SLQ<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculateController(
 	// get the optimal controller
 	slqPtr_->getControllerPtr(controllerStockPtr);
 
-	//*****************************************************************************************
-	// Update logicRules if new logicRulesTemplate is set
-	//*****************************************************************************************
-	if (BASE::logicRulesTemplateUpdated_ == true) {
-
-		// set new templates
-		slqPtr_->getLogicRulesPtr()->setModeSequenceTemplate(BASE::newLogicRulesTemplate_);
-		slqPtr_->getLogicRulesPtr()->insertModeSequenceTemplate(finalTime, BASE::partitioningTimes_.back());
-		slqPtr_->getLogicRulesMachinePtr()->logicRulesUpdated();
-
-		BASE::logicRulesTemplateUpdated_ = false;
-	}
+//	//*****************************************************************************************
+//	// Update logicRules if new logicRulesTemplate is set
+//	//*****************************************************************************************
+//	if (BASE::logicRulesTemplateUpdated_ == true) {
+//
+//		// set new templates
+//		slqPtr_->getLogicRulesPtr()->setModeSequenceTemplate(BASE::newLogicRulesTemplate_);
+//		slqPtr_->getLogicRulesPtr()->insertModeSequenceTemplate(finalTime, BASE::partitioningTimes_.back());
+//		slqPtr_->getLogicRulesMachinePtr()->logicRulesUpdated();
+//
+//		BASE::logicRulesTemplateUpdated_ = false;
+//	}
 
 }
 

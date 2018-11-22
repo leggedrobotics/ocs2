@@ -91,6 +91,20 @@ public:
 		desiredInputTrajectory_.swap(other.desiredInputTrajectory_);
 	}
 
+	bool operator==(
+			const CostDesiredTrajectories<SCALAR_T>& other) {
+		return
+				this->desiredTimeTrajectory()  == other.desiredTimeTrajectory() &&
+				this->desiredStateTrajectory() == other.desiredStateTrajectory() &&
+				this->desiredInputTrajectory() == other.desiredInputTrajectory();
+	}
+
+	bool operator!=(
+			const CostDesiredTrajectories<SCALAR_T>& other) {
+
+		return !(*this == other);
+	}
+
 	scalar_array_t& desiredTimeTrajectory() { return desiredTimeTrajectory_; }
 	const scalar_array_t& desiredTimeTrajectory() const { return desiredTimeTrajectory_; }
 

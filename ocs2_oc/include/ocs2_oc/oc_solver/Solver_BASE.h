@@ -154,7 +154,7 @@ public:
 
 	/**
 	 * The main routine of solver which runs the optimizer for a given initial state, initial time, final time, and
-	 * intial controller.
+	 * initial controller.
 	 *
 	 * @param [in] initTime: The initial time.
 	 * @param [in] initState: The initial state.

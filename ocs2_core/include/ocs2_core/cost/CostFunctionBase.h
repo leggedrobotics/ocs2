@@ -154,9 +154,9 @@ public:
      * @param [in] u: Current input vector
      */
 	virtual void setCurrentStateAndControl(
-			const scalar_t& t, const
-			state_vector_t& x, const
-			input_vector_t& u) {
+			const scalar_t& t,
+			const state_vector_t& x,
+			const input_vector_t& u) {
 
 		t_ = t;
 		x_ = x;

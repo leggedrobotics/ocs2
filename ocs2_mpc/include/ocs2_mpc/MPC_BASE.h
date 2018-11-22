@@ -142,6 +142,13 @@ public:
 			const controller_array_t*& controllerStockPtr) = 0;
 
 	/**
+	 * Gets a pointer to the underlying solver used in the MPC.
+	 *
+	 * @return A pointer to the underlying solver used in the MPC
+	 */
+	virtual solver_base_t* getSolverPtr() = 0;
+
+	/**
 	 * Returns the initial time for which the optimizer is called.
 	 *
 	 * @return Initial time
@@ -315,9 +322,9 @@ protected:
 	std::chrono::milliseconds measuredRuntimeMS_;
 	std::chrono::high_resolution_clock::time_point mpcStratTime_;
 
-	size_t initnumPartitions_;
+	size_t         initnumPartitions_;
 	scalar_array_t initPartitioningTimes_;
-	size_t numPartitions_;
+	size_t         numPartitions_;
 	scalar_array_t partitioningTimes_;
 
 	size_t initActivePartitionIndex_;

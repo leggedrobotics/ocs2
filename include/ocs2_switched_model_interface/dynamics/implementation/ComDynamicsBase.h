@@ -56,6 +56,26 @@ void ComDynamicsBase<JOINT_COORD_SIZE>::computeFlowMap(const scalar_t& t,
 		const input_vector_t& u,
 		state_vector_t& dxdt)   {
 
+	input_vector_t u_adapted;
+	if (enforceFrictionConeConstraint_){
+		u_adapted = u;
+		for (size_t i=0; i<4; i++) {
+			scalar_t Fx = u(3*i+0);
+			scalar_t Fy = u(3*i+1);
+			scalar_t Fz = std::max(u(3*i+2), scalar_t(0.0));
+			scalar_t FT = std::sqrt(Fx*Fx + Fy*Fy);
+			if (FT > (frictionCoefficient_*Fz)){
+				Fx *= frictionCoefficient_ * Fz / FT;
+				Fy *= frictionCoefficient_ * Fz / FT;
+			}
+			u_adapted(3*i+0) = Fx;
+			u_adapted(3*i+1) = Fy;
+			u_adapted(3*i+2) = Fz;
+		}
+	} else {
+		u_adapted = u;
+	}
+
 	// Rotation matrix from Base frame (or the coincided frame world frame) to Origin frame (global world).
 	Eigen::Matrix3d o_R_b = RotationMatrixBasetoOrigin(x.head<3>());
 
@@ -109,8 +129,8 @@ void ComDynamicsBase<JOINT_COORD_SIZE>::computeFlowMap(const scalar_t& t,
 
 		com_comToFoot  = com_base2StanceFeet_[i]-com_base2CoM_;
 
-		JcTransposeLambda.head<3>() += com_comToFoot.cross(u.segment<3>(3*i));
-		JcTransposeLambda.tail<3>() += u.segment<3>(3*i);
+		JcTransposeLambda.head<3>() += com_comToFoot.cross(u_adapted.segment<3>(3*i));
+		JcTransposeLambda.tail<3>() += u_adapted.segment<3>(3*i);
 	}
 
 	// angular velocities to Euler angle derivatives transformation

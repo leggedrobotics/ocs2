@@ -33,6 +33,8 @@ public:
 	, feetFilterFrequency_(50.0)
 	, torqueMixingFactor_(0.0)
 	, gaitOptimization_(false)
+	, enforceFrictionConeConstraint_(true)
+	, frictionCoefficient_(1.0)
 	{}
 
 	virtual ~Model_Settings() = default;
@@ -54,6 +56,8 @@ public:
 	double feetFilterFrequency_;
 	double torqueMixingFactor_;
 	bool gaitOptimization_;
+	bool enforceFrictionConeConstraint_;
+	double frictionCoefficient_;
 
 	double eps_ = 0.01;
 	double eta_ = 10.0;
@@ -205,6 +209,22 @@ inline void Model_Settings::loadSettings(const std::string& filename, bool verbo
 	}
 	catch (const std::exception& e){
 		if (verbose)  std::cerr << " #### gaitOptimization ............. " << gaitOptimization_ << "\t(default)" << std::endl;
+	}
+
+	try {
+		enforceFrictionConeConstraint_ = pt.get<bool>("model_settings.enforceFrictionConeConstraint");
+		if (verbose)  std::cerr << " #### enforceFrictionConeConstraint  " << enforceFrictionConeConstraint_ << std::endl;
+	}
+	catch (const std::exception& e){
+		if (verbose)  std::cerr << " #### enforceFrictionConeConstraint  " << enforceFrictionConeConstraint_ << "\t(default)" << std::endl;
+	}
+
+	try {
+		frictionCoefficient_ = pt.get<double>("model_settings.frictionCoefficient");
+		if (verbose)  std::cerr << " #### frictionCoefficient .......... " << frictionCoefficient_ << std::endl;
+	}
+	catch (const std::exception& e){
+		if (verbose)  std::cerr << " #### frictionCoefficient .......... " << frictionCoefficient_ << "\t(default)" << std::endl;
 	}
 
 	try {

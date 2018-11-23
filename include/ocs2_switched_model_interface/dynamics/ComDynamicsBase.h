@@ -46,13 +46,18 @@ public:
 
 
 	ComDynamicsBase(const kinematic_model_t& kinematicModel, const com_model_t& comModel,
-			const double& gravitationalAcceleration=9.81, const bool& constrainedIntegration=true)
+			const double& gravitationalAcceleration=9.81,
+									const bool& constrainedIntegration=true,
+									const bool& enforceFrictionConeConstraint=true,
+									const double& frictionCoefficient = 1.0)
 
 	: Base(),
 	  kinematicModelPtr_(kinematicModel.clone()),
 	  comModelPtr_(comModel.clone()),
 	  o_gravityVector_(0.0, 0.0, -gravitationalAcceleration),
-	  constrainedIntegration_(constrainedIntegration)
+	  constrainedIntegration_(constrainedIntegration),
+		enforceFrictionConeConstraint_(enforceFrictionConeConstraint),
+		frictionCoefficient_(frictionCoefficient)
 	{
 		if (gravitationalAcceleration<0)  throw std::runtime_error("Gravitational acceleration should be a positive value.");
 	}
@@ -68,7 +73,9 @@ public:
 	  kinematicModelPtr_(rhs.kinematicModelPtr_->clone()),
 	  comModelPtr_(rhs.comModelPtr_->clone()),
 	  o_gravityVector_(rhs.o_gravityVector_),
-	  constrainedIntegration_(rhs.constrainedIntegration_)
+	  constrainedIntegration_(rhs.constrainedIntegration_),
+		enforceFrictionConeConstraint_(rhs.enforceFrictionConeConstraint_),
+		frictionCoefficient_(rhs.frictionCoefficient_)
 	{}
 
 	/**
@@ -171,6 +178,8 @@ private:
 	Eigen::Vector3d o_gravityVector_;
 
 	bool constrainedIntegration_;
+	bool enforceFrictionConeConstraint_;
+	double frictionCoefficient_;
 
 	std::array<bool,4> stanceLegs_;
 	base_coordinate_t  q_base_;

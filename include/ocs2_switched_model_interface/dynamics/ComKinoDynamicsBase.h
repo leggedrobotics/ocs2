@@ -78,7 +78,11 @@ public:
 	  comModelPtr_(comModel.clone()),
 	  o_gravityVector_(0.0, 0.0, -options.gravitationalAcceleration_),
 	  options_(options),
-	  comDynamics_(kinematicModel, comModel, options.gravitationalAcceleration_, options.constrainedIntegration_),
+	  comDynamics_(kinematicModel, comModel,
+								 options.gravitationalAcceleration_,
+								 options.constrainedIntegration_,
+								 options.enforceFrictionConeConstraint_,
+								 options.frictionCoefficient_),
 	  groundProfilePtr_(groundProfilePtr)
 	{}
 

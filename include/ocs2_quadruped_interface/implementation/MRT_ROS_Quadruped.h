@@ -44,7 +44,6 @@ void MRT_ROS_Quadruped<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::reset() {
 
 	BASE::reset();
 	prev_o_feetVelocityRef_.fill(vector_3d_t::Zero());
-	prev_time_ = 0;
 }
 
 /******************************************************************************************************/
@@ -349,7 +348,6 @@ void MRT_ROS_Quadruped<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::computePlan(
 		for (size_t j=0; j<4; j++) {
 			o_feetAccelerationRef[j] = (o_feetVelocityRef_ahead[j]-o_feetVelocityRef[j]) / dt;
 		}
-		prev_time_ = time;
 		prev_o_feetVelocityRef_ = o_feetVelocityRef;
 
 	} else {

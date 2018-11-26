@@ -33,8 +33,10 @@ public:
 	, feetFilterFrequency_(50.0)
 	, torqueMixingFactor_(0.0)
 	, gaitOptimization_(false)
-	, enforceFrictionConeConstraint_(true)
+	, enforceFrictionConeConstraint_(false)
 	, frictionCoefficient_(1.0)
+	, enforceTorqueConstraint_(false)
+	, torqueLimit_(40.0)
 	{}
 
 	virtual ~Model_Settings() = default;
@@ -58,6 +60,8 @@ public:
 	bool gaitOptimization_;
 	bool enforceFrictionConeConstraint_;
 	double frictionCoefficient_;
+	bool enforceTorqueConstraint_;
+	double torqueLimit_;
 
 	double eps_ = 0.01;
 	double eta_ = 10.0;
@@ -225,6 +229,22 @@ inline void Model_Settings::loadSettings(const std::string& filename, bool verbo
 	}
 	catch (const std::exception& e){
 		if (verbose)  std::cerr << " #### frictionCoefficient .......... " << frictionCoefficient_ << "\t(default)" << std::endl;
+	}
+
+	try {
+		enforceTorqueConstraint_ = pt.get<bool>("model_settings.enforceTorqueConstraint");
+		if (verbose)  std::cerr << " #### enforceTorqueConstraint ...... " << enforceTorqueConstraint_ << std::endl;
+	}
+	catch (const std::exception& e){
+		if (verbose)  std::cerr << " #### enforceTorqueConstraint ...... " << enforceTorqueConstraint_ << "\t(default)" << std::endl;
+	}
+
+	try {
+		torqueLimit_ = pt.get<double>("model_settings.torqueLimit");
+		if (verbose)  std::cerr << " #### torqueLimit .................. " << torqueLimit_ << std::endl;
+	}
+	catch (const std::exception& e){
+		if (verbose)  std::cerr << " #### torqueLimit .................. " << torqueLimit_ << "\t(default)" << std::endl;
 	}
 
 	try {

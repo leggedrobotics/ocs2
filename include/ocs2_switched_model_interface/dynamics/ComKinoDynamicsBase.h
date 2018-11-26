@@ -82,7 +82,9 @@ public:
 								 options.gravitationalAcceleration_,
 								 options.constrainedIntegration_,
 								 options.enforceFrictionConeConstraint_,
-								 options.frictionCoefficient_),
+								 options.frictionCoefficient_,
+								 options.enforceTorqueConstraint_,
+								 options.torqueLimit_),
 	  groundProfilePtr_(groundProfilePtr)
 	{}
 

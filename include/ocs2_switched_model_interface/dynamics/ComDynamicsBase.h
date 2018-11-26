@@ -43,13 +43,18 @@ public:
 
 	typedef typename SwitchedModel<JOINT_COORD_SIZE>::base_coordinate_t  base_coordinate_t;
 	typedef typename SwitchedModel<JOINT_COORD_SIZE>::joint_coordinate_t joint_coordinate_t;
+	typedef Eigen::Matrix<double,6,JOINT_COORD_SIZE>                    base_jacobian_matrix_t;
+	typedef typename kinematic_model_t::matrix3d_t    matrix3d_t;
+	typedef typename kinematic_model_t::vector3d_t    vector3d_t;
 
 
 	ComDynamicsBase(const kinematic_model_t& kinematicModel, const com_model_t& comModel,
 			const double& gravitationalAcceleration=9.81,
 									const bool& constrainedIntegration=true,
-									const bool& enforceFrictionConeConstraint=true,
-									const double& frictionCoefficient = 1.0)
+									const bool& enforceFrictionConeConstraint=false,
+									const double& frictionCoefficient = 1.0,
+									const bool& enforceTorqueConstraint=false,
+									const double& torqueLimit = 40.0)
 
 	: Base(),
 	  kinematicModelPtr_(kinematicModel.clone()),
@@ -57,7 +62,9 @@ public:
 	  o_gravityVector_(0.0, 0.0, -gravitationalAcceleration),
 	  constrainedIntegration_(constrainedIntegration),
 		enforceFrictionConeConstraint_(enforceFrictionConeConstraint),
-		frictionCoefficient_(frictionCoefficient)
+		frictionCoefficient_(frictionCoefficient),
+		enforceTorqueConstraint_(enforceTorqueConstraint),
+		torqueLimit_(torqueLimit)
 	{
 		if (gravitationalAcceleration<0)  throw std::runtime_error("Gravitational acceleration should be a positive value.");
 	}
@@ -75,7 +82,9 @@ public:
 	  o_gravityVector_(rhs.o_gravityVector_),
 	  constrainedIntegration_(rhs.constrainedIntegration_),
 		enforceFrictionConeConstraint_(rhs.enforceFrictionConeConstraint_),
-		frictionCoefficient_(rhs.frictionCoefficient_)
+		frictionCoefficient_(rhs.frictionCoefficient_),
+		enforceTorqueConstraint_(rhs.enforceTorqueConstraint_),
+		torqueLimit_(rhs.torqueLimit_)
 	{}
 
 	/**
@@ -180,6 +189,9 @@ private:
 	bool constrainedIntegration_;
 	bool enforceFrictionConeConstraint_;
 	double frictionCoefficient_;
+
+	bool enforceTorqueConstraint_;
+	double torqueLimit_;
 
 	std::array<bool,4> stanceLegs_;
 	base_coordinate_t  q_base_;

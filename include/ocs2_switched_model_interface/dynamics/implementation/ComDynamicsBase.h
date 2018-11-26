@@ -55,27 +55,6 @@ void ComDynamicsBase<JOINT_COORD_SIZE>::computeFlowMap(const scalar_t& t,
 		const state_vector_t& x,
 		const input_vector_t& u,
 		state_vector_t& dxdt)   {
-
-	input_vector_t u_adapted;
-	if (enforceFrictionConeConstraint_){
-		u_adapted = u;
-		for (size_t i=0; i<4; i++) {
-			scalar_t Fx = u(3*i+0);
-			scalar_t Fy = u(3*i+1);
-			scalar_t Fz = std::max(u(3*i+2), scalar_t(0.0));
-			scalar_t FT = std::sqrt(Fx*Fx + Fy*Fy);
-			if (FT > (frictionCoefficient_*Fz)){
-				Fx *= frictionCoefficient_ * Fz / FT;
-				Fy *= frictionCoefficient_ * Fz / FT;
-			}
-			u_adapted(3*i+0) = Fx;
-			u_adapted(3*i+1) = Fy;
-			u_adapted(3*i+2) = Fz;
-		}
-	} else {
-		u_adapted = u;
-	}
-
 	// Rotation matrix from Base frame (or the coincided frame world frame) to Origin frame (global world).
 	Eigen::Matrix3d o_R_b = RotationMatrixBasetoOrigin(x.head<3>());
 
@@ -86,12 +65,55 @@ void ComDynamicsBase<JOINT_COORD_SIZE>::computeFlowMap(const scalar_t& t,
 	q_base_.template head<3>() = x.segment<3>(0);
 	q_base_.template tail<3>() = x.segment<3>(3) - o_R_b * com_base2CoM_;
 
+	// update kinematic model
+	kinematicModelPtr_->update(q_base_, qJoints_);
+
+	// Fiction cone constraint
+	input_vector_t u_adapted;
+	if (enforceFrictionConeConstraint_){
+		u_adapted = u;
+		for (size_t i=0; i<4; i++) {
+			if (stanceLegs_[i]) {
+				scalar_t Fx = u(3 * i + 0);
+				scalar_t Fy = u(3 * i + 1);
+				scalar_t Fz = std::max(u(3 * i + 2), scalar_t(0.0));
+				scalar_t FT = std::sqrt(Fx * Fx + Fy * Fy);
+				if (FT > (frictionCoefficient_ * Fz)) {
+					Fx *= frictionCoefficient_ * Fz / FT;
+					Fy *= frictionCoefficient_ * Fz / FT;
+					std::cout << "Friction clamping active" << std::endl;
+				}
+				u_adapted(3 * i + 0) = Fx;
+				u_adapted(3 * i + 1) = Fy;
+				u_adapted(3 * i + 2) = Fz;
+			}
+		}
+	} else {
+		u_adapted = u;
+	}
+
+	// Torque limits
+	// assuming tau = -JjT * lambda
+	// -tau_lim < - B_Jj^T * b_R_o * u_lambda < tau_lim
+	// o_R_b * B_Jj.inverse() * tau_lim < 	u_lambda   < -o_R_b * B_Jj.inverse() * tau_lim
+	if (enforceTorqueConstraint_){
+		base_jacobian_matrix_t base_jacobian_matrix;
+		for (size_t i=0; i<4; i++) {
+			if (stanceLegs_[i]) {
+				kinematicModelPtr_->footJacobainBaseFrame(i, base_jacobian_matrix);
+				matrix3d_t Jj = base_jacobian_matrix.block(3, 3 * i, 3, 3) + 1e-5 * matrix3d_t::Identity();
+				vector3d_t torques = -Jj.transpose() * (o_R_b.transpose() * u_adapted.segment(3 * i, 3));
+				torques(0) = std::min(std::max(-torqueLimit_, torques(0)), torqueLimit_);
+				torques(1) = std::min(std::max(-torqueLimit_, torques(1)), torqueLimit_);
+				torques(2) = std::min(std::max(-torqueLimit_, torques(2)), torqueLimit_);
+				u_adapted.segment(3 * i, 3) = -o_R_b * (Jj.inverse().transpose() * torques);
+			}
+		}
+	}
+
 	// local angular velocity (com_W_com) and local linear velocity (com_V_com) of CoM
 	Eigen::VectorBlock<const state_vector_t,3> com_W_com = x.segment<3>(6);
 	Eigen::VectorBlock<const state_vector_t,3> com_V_com = x.segment<3>(9);
-
-	// update kinematic model
-	kinematicModelPtr_->update(q_base_, qJoints_);
 
 	// base to stance feet displacement in the CoM frame
 	for (size_t i=0; i<4; i++)

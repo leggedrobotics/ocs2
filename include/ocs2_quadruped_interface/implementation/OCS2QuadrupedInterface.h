@@ -86,7 +86,7 @@ void OCS2QuadrupedInterface<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::loadSetting
 	R_.template block<12, 12>(0, 0) = ((1.0-alpha)*R_.template block<12, 12>(0, 0) +  alpha* J_allFeet * R_.template block<12, 12>(0, 0) * J_allFeet.transpose()).eval();
 	R_.template block<12, 12>(12, 12) = (J_allFeet.transpose() * R_.template block<12, 12>(12, 12) * J_allFeet).eval();
 
-	if (STATE_DIM > 2*JOINT_COORD_SIZE){
+	if (INPUT_DIM == 4*JOINT_COORD_SIZE){
 		R_.template block<12, 12>(24, 24) = ((1.0-alpha)*R_.template block<12, 12>(24, 24) +  alpha* J_allFeet* R_.template block<12, 12>(24, 24) * J_allFeet.transpose()).eval();
 		R_.template block<12, 12>(36, 36) = (J_allFeet.transpose() * R_.template block<12, 12>(36, 36) * J_allFeet).eval();
 	}
@@ -552,9 +552,9 @@ void OCS2QuadrupedInterface<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::runSLQ(
 		const scalar_t& finalTime,
 		const controller_array_t& initialControllersStock /*=controller_array_t()*/)  {
 
-	initTime_ = initTime;
-	finalTime_ = finalTime;
-	computeSwitchedModelState(initRbdState, initialState_);
+//	initTime_ = initTime;
+//	finalTime_ = finalTime;
+//	computeSwitchedModelState(initRbdState, initialState_);
 
 	// reference trajectories
 	input_vector_t uNominalForWeightCompensation;

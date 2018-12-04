@@ -21,7 +21,8 @@ OCS2QuadrupedInterface<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::OCS2QuadrupedInt
 		  switchedModelStateEstimator_(comModel)
 {
 	// load setting from loading file
-	loadSettings(pathToConfigFolder);
+	std::string pathToConfigFile = pathToConfigFolder + "/task.info";
+	loadSettings(pathToConfigFile);
 
 	// logic rule
 	feet_z_planner_ptr_t feetZPlannerPtr( new feet_z_planner_t(modelSettings_.swingLegLiftOff_,
@@ -66,7 +67,7 @@ void OCS2QuadrupedInterface<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::loadSetting
 
 	// initial state of the switched system
 	ocs2::loadEigenMatrix(pathToConfigFile, "initialRobotState", initRbdState_);
-	computeSwitchedModelState(initRbdState_, initSwitchedState_);
+	computeSwitchedModelState(initRbdState_, initialState_);
 
 	// cost function components
 	ocs2::loadEigenMatrix(pathToConfigFile, "Q", Q_);
@@ -85,7 +86,7 @@ void OCS2QuadrupedInterface<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::loadSetting
 	R_.template block<12, 12>(0, 0) = ((1.0-alpha)*R_.template block<12, 12>(0, 0) +  alpha* J_allFeet * R_.template block<12, 12>(0, 0) * J_allFeet.transpose()).eval();
 	R_.template block<12, 12>(12, 12) = (J_allFeet.transpose() * R_.template block<12, 12>(12, 12) * J_allFeet).eval();
 
-	if (STATE_DIM > 2*JOINT_COORD_SIZE){
+	if (INPUT_DIM == 4*JOINT_COORD_SIZE){
 		R_.template block<12, 12>(24, 24) = ((1.0-alpha)*R_.template block<12, 12>(24, 24) +  alpha* J_allFeet* R_.template block<12, 12>(24, 24) * J_allFeet.transpose()).eval();
 		R_.template block<12, 12>(36, 36) = (J_allFeet.transpose() * R_.template block<12, 12>(36, 36) * J_allFeet).eval();
 	}
@@ -93,7 +94,7 @@ void OCS2QuadrupedInterface<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::loadSetting
 	// target state
 	base_coordinate_t comFinalPose;
 	ocs2::loadEigenMatrix(pathToConfigFile, "CoM_final_pose", comFinalPose);
-	xFinal_ = initSwitchedState_;
+	xFinal_ = initialState_;
 	xFinal_.template head<6>() += comFinalPose;
 
 	// load the switchingModes
@@ -551,13 +552,13 @@ void OCS2QuadrupedInterface<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::runSLQ(
 		const scalar_t& finalTime,
 		const controller_array_t& initialControllersStock /*=controller_array_t()*/)  {
 
-	initTime_ = initTime;
-	finalTime_ = finalTime;
-	computeSwitchedModelState(initRbdState, initSwitchedState_);
+//	initTime_ = initTime;
+//	finalTime_ = finalTime;
+//	computeSwitchedModelState(initRbdState, initialState_);
 
 	// reference trajectories
 	input_vector_t uNominalForWeightCompensation;
-	designWeightCompensatingInput(initSwitchedState_, uNominalForWeightCompensation);
+	designWeightCompensatingInput(initialState_, uNominalForWeightCompensation);
 
 	// reference time
 	costDesiredTrajectories_.desiredTimeTrajectory().resize(2);
@@ -565,7 +566,7 @@ void OCS2QuadrupedInterface<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::runSLQ(
 	costDesiredTrajectories_.desiredTimeTrajectory().at(1) = initEventTimes_.back();
 	// reference state
 	costDesiredTrajectories_.desiredStateTrajectory().resize(2);
-	costDesiredTrajectories_.desiredStateTrajectory().at(0) = initSwitchedState_;
+	costDesiredTrajectories_.desiredStateTrajectory().at(0) = initialState_;
 	costDesiredTrajectories_.desiredStateTrajectory().at(1) = xFinal_;
 	// reference inputs for weight compensation
 	costDesiredTrajectories_.desiredInputTrajectory().resize(2);
@@ -581,11 +582,11 @@ void OCS2QuadrupedInterface<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::runSLQ(
 	// run slqp
 	if (initialControllersStock.empty()==true) {
 		std::cerr << "Cold initialization." << std::endl;
-		slqPtr_->run(initTime_, initSwitchedState_, finalTime_, partitioningTimes_);
+		slqPtr_->run(initTime_, initialState_, finalTime_, partitioningTimes_);
 
 	} else {
 		std::cerr << "Warm initialization." << std::endl;
-		slqPtr_->run(initTime_, initSwitchedState_, finalTime_, partitioningTimes_, initialControllersStock);
+		slqPtr_->run(initTime_, initialState_, finalTime_, partitioningTimes_, initialControllersStock);
 	}
 
 	// get the optimizer outputs
@@ -617,10 +618,10 @@ bool OCS2QuadrupedInterface<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::runMPC(
 		const rbd_state_vector_t& initState)  {
 
 	initTime_ = initTime;
-	computeSwitchedModelState(initState, initSwitchedState_);
+	computeSwitchedModelState(initState, initialState_);
 
 	// update controller
-	bool controllerIsUpdated = mpcPtr_->run(initTime_, initSwitchedState_);
+	bool controllerIsUpdated = mpcPtr_->run(initTime_, initialState_);
 
 	// get the optimizer outputs
 	mpcPtr_->getOptimizedControllerPtr(controllersStockPtr_);

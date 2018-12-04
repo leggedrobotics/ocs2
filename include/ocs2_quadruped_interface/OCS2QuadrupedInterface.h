@@ -500,7 +500,7 @@ protected:
 	std::vector<EndEffectorConstraintBase::ConstPtr> gapIndicatorPtrs_;
 
 	rbd_state_vector_t 	initRbdState_;
-	state_vector_t initSwitchedState_;
+	using BASE::initialState_;
 
 	scalar_t        initTime_;
 	scalar_t        finalTime_;

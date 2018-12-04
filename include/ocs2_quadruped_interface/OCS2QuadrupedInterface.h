@@ -396,9 +396,9 @@ public:
 	void getGapIndicatorPtrs(std::vector<EndEffectorConstraintBase::ConstPtr>& gapIndicatorPtrs) const;
 
 	/**
-	 * Get SLQ settings.
+	 * Get Model settings.
 	 *
-	 * @return SLQ settings.
+	 * @return Model settings.
 	 */
 	Model_Settings& modelSettings();
 

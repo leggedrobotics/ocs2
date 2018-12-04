@@ -469,11 +469,11 @@ template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM>
 void OCS2QuadrupedInterface<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::getIterationsLog(
 		eigen_scalar_array_t& iterationCost,
 		eigen_scalar_array_t& iterationISE1,
-		eigen_scalar_array_t& ocs2Iterationcost) const {
+		eigen_scalar_array_t& iterationISE2) const {
 
 	iterationCost = iterationCost_;
 	iterationISE1 = iterationISE1_;
-	ocs2Iterationcost = ocs2Iterationcost_;
+	iterationISE2 = ocs2Iterationcost_;
 }
 
 /******************************************************************************************************/

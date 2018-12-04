@@ -346,7 +346,7 @@ public:
 	void getIterationsLog(
 			eigen_scalar_array_t& iterationCost,
 			eigen_scalar_array_t& iterationISE1,
-			eigen_scalar_array_t& ocs2Iterationcost) const;
+			eigen_scalar_array_t& iterationISE2) const;
 
 	/**
 	 * Gets a pointer to the optimized array of the control policies.

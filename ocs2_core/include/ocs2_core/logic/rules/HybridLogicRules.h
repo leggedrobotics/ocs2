@@ -195,7 +195,7 @@ public:
 	 *
 	 * @param [in] modeSequenceTemplate: A data type which includes all necessary information for modifying the logicRules.
 	 */
-	virtual void setModeSequenceTemplate(
+	void setModeSequenceTemplate(
 			const logic_template_type& modeSequenceTemplate) {
 
 		modeSequenceTemplate_ = modeSequenceTemplate;
@@ -208,7 +208,7 @@ public:
 	 * @param [in] startTime: The initial time from which the new logicRules template should be augmented.
 	 * @param [in] finalTime: The final time to which the new logicRules template should be augmented.
 	 */
-	virtual void insertModeSequenceTemplate(
+	void insertModeSequenceTemplate(
 			const scalar_t& startTime,
 			const scalar_t& finalTime) {
 

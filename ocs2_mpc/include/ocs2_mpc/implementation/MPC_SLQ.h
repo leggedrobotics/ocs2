@@ -191,19 +191,6 @@ void MPC_SLQ<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculateController(
 	// get the optimal controller
 	slqPtr_->getControllerPtr(controllerStockPtr);
 
-//	//*****************************************************************************************
-//	// Update logicRules if new logicRulesTemplate is set
-//	//*****************************************************************************************
-//	if (BASE::logicRulesTemplateUpdated_ == true) {
-//
-//		// set new templates
-//		slqPtr_->getLogicRulesPtr()->setModeSequenceTemplate(BASE::newLogicRulesTemplate_);
-//		slqPtr_->getLogicRulesPtr()->insertModeSequenceTemplate(finalTime, BASE::partitioningTimes_.back());
-//		slqPtr_->getLogicRulesMachinePtr()->logicRulesUpdated();
-//
-//		BASE::logicRulesTemplateUpdated_ = false;
-//	}
-
 }
 
 } // namespace ocs2

@@ -283,7 +283,7 @@ bool MPC_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::run(
 
 		// set new templates
 		solverPtr_->getLogicRulesPtr()->setModeSequenceTemplate(newLogicRulesTemplate_);
-		solverPtr_->getLogicRulesPtr()->insertModeSequenceTemplate(finalTime, partitioningTimes_.back());
+		solverPtr_->getLogicRulesPtr()->insertInternalModeSequenceTemplate(finalTime, partitioningTimes_.back());
 		solverPtr_->getLogicRulesMachinePtr()->logicRulesUpdated();
 
 		logicRulesTemplateUpdated_ = false;

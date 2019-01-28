@@ -202,31 +202,28 @@ public:
 	}
 
 	/**
-	 * Used in the SLQ-MPC method to insert a new user defined logic in the given time period.
-	 * Note: use the update method to at the end to update your derived class variables
+	 * Returns the model model sequence template.
 	 *
-	 * @param [in] startTime: The initial time from which the new logicRules template should be augmented.
-	 * @param [in] finalTime: The final time to which the new logicRules template should be augmented.
+	 * @return Logic Rules template.
 	 */
-	void insertModeSequenceTemplate(
-			const scalar_t& startTime,
-			const scalar_t& finalTime) {
+	const logic_template_type& modeSequenceTemplate() const {
 
-		insertModeSequenceTemplate(modeSequenceTemplate_, startTime, finalTime);
+		return modeSequenceTemplate_;
 	}
 
 	/**
 	 * Used in the SLQ-MPC method to insert a new user defined logic in the given time period.
 	 * Note: use the update method to at the end to update your derived class variables
 	 *
-	 * @param [in] modeSequenceTemplate: A data type which includes all necessary information for modifying the logicRules.
 	 * @param [in] startTime: The initial time from which the new logicRules template should be augmented.
 	 * @param [in] finalTime: The final time to which the new logicRules template should be augmented.
 	 */
-	virtual void insertModeSequenceTemplate(
-			const logic_template_type& modeSequenceTemplate,
+	void insertInternalModeSequenceTemplate(
 			const scalar_t& startTime,
-			const scalar_t& finalTime) = 0;
+			const scalar_t& finalTime) {
+
+		insertModeSequenceTemplate(modeSequenceTemplate_, startTime, finalTime);
+	}
 
 	/**
 	 * Rewinds the class. This method is only called in the MPC class.
@@ -247,6 +244,23 @@ public:
 
 
 protected:
+
+	/**
+	 * Used in the SLQ-MPC method to insert a new user defined logic in the given time period.
+	 * Note: use the update method to at the end to update your derived class variables
+	 *
+	 * @param [in] modeSequenceTemplate: A data type which includes all necessary information for modifying the logicRules.
+	 * @param [in] startTime: The initial time from which the new logicRules template should be augmented.
+	 * @param [in] finalTime: The final time to which the new logicRules template should be augmented.
+	 */
+	virtual void insertModeSequenceTemplate(
+			const logic_template_type& modeSequenceTemplate,
+			const scalar_t& startTime,
+			const scalar_t& finalTime) = 0;
+
+	/**
+	 * Variables
+	 */
 	size_array_t subsystemsSequence_;
 
 	logic_template_type modeSequenceTemplate_;

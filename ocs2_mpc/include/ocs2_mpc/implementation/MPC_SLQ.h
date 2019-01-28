@@ -88,7 +88,7 @@ MPC_SLQ<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::MPC_SLQ(
 
 		if (mpcSettings.recedingHorizon_==true) {
 			const scalar_t timeHorizon = BASE::initPartitioningTimes_.back() - BASE::initPartitioningTimes_.front();
-			slqPtr_->getLogicRulesPtr()->insertModeSequenceTemplate(timeHorizon, 2.0*timeHorizon);
+			slqPtr_->getLogicRulesPtr()->insertInternalModeSequenceTemplate(timeHorizon, 2.0*timeHorizon);
 		}
 	}
 }

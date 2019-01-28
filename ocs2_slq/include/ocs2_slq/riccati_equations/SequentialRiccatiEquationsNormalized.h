@@ -342,17 +342,27 @@ public:
 		PmFunc_.interpolate(t, Pm_, greatestLessTimeStampIndex);
 
 		// Riccati equations for the original system
-		Lm_ = RmInv_*(Pm_+Bm_.transpose()*Sm_);
-		Lv_ = RmInv_*(Rv_+Bm_.transpose()*Sv_);
+		Lm_.noalias() = RmInv_*(Pm_+Bm_.transpose()*Sm_);
+		Lv_.noalias() = RmInv_*(Rv_+Bm_.transpose()*Sv_);
 
 		/*note: according to some discussions on stackoverflow, it does not buy computation time if multiplications
 		 * with symmetric matrices are executed using selfadjointView(). Doing the full multiplication seems to be faster
 		 * because of vectorization */
-		Am_transposeSm_ = (Sm_*Am_).transpose();
-		Lm_transposeRm_ = (Rm_*Lm_).transpose();
-		dSmdt_ = Qm_  + Am_transposeSm_ + Am_transposeSm_.transpose() - Lm_transposeRm_*Lm_;
-		dSvdt_ = Qv_  + Am_.transpose()*Sv_ - Lm_transposeRm_*Lv_;
-		dsdt_  = q_   - 0.5 *Lv_.transpose() *Rm_ * Lv_;
+		/*
+		 *  Expressions written base on guidelines in http://eigen.tuxfamily.org/dox/TopicWritingEfficientProductExpression.html
+		 */
+		Am_transposeSm_.noalias() = Am_.transpose()*Sm_.transpose();
+		Lm_transposeRm_.noalias() = Lm_.transpose()*Rm_.transpose();
+
+		dSmdt_ = Qm_ + Am_transposeSm_ + Am_transposeSm_.transpose();
+		dSmdt_.noalias() -= Lm_transposeRm_*Lm_;
+
+		dSvdt_ = Qv_;
+		dSvdt_.noalias() += Am_.transpose()*Sv_;
+		dSvdt_.noalias() -= Lm_transposeRm_*Lv_;
+
+		dsdt_  = q_;
+		dsdt_.noalias() -= 0.5 *Lv_.transpose()*Rm_ * Lv_;
 
 		// Riccati equations for the equivalent system
 		dSmdz_ = scalingFactor_ * dSmdt_;

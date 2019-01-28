@@ -187,17 +187,8 @@ typename SwitchedModelLogicRulesBase<JOINT_COORD_SIZE,cpg_t>::feet_planner_t&
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t JOINT_COORD_SIZE, class cpg_t>
-void SwitchedModelLogicRulesBase<JOINT_COORD_SIZE,cpg_t>::setModeSequenceTemplate(
-		const logic_template_type& modeSequenceTemplate) {
-
-	modeSequenceTemplate_ = modeSequenceTemplate;
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-template <size_t JOINT_COORD_SIZE, class cpg_t>
 void SwitchedModelLogicRulesBase<JOINT_COORD_SIZE,cpg_t>::insertModeSequenceTemplate(
+		const logic_template_type& modeSequenceTemplate,
 		const scalar_t& startTime,
 		const scalar_t& finalTime) {
 
@@ -222,7 +213,7 @@ void SwitchedModelLogicRulesBase<JOINT_COORD_SIZE,cpg_t>::insertModeSequenceTemp
 	}
 
 	// tile the mode sequence template from startTime+phaseTransitionStanceTime to finalTime.
-	tileModeSequenceTemplate(startTime+phaseTransitionStanceTime, finalTime);
+	tileModeSequenceTemplate(modeSequenceTemplate, startTime+phaseTransitionStanceTime, finalTime);
 
 	// update the internal variables
 	update();
@@ -256,7 +247,7 @@ void SwitchedModelLogicRulesBase<JOINT_COORD_SIZE,cpg_t>::rewind(
 	BASE::subsystemsSequence_.erase(BASE::subsystemsSequence_.end()-1, BASE::subsystemsSequence_.end());
 
 	// tile the template logic
-	tileModeSequenceTemplate(tilingStartTime, upperBoundTime);
+	tileModeSequenceTemplate(modeSequenceTemplate(), tilingStartTime, upperBoundTime);
 
 	// update the internal variables
 	update();
@@ -267,17 +258,18 @@ void SwitchedModelLogicRulesBase<JOINT_COORD_SIZE,cpg_t>::rewind(
 /******************************************************************************************************/
 template <size_t JOINT_COORD_SIZE, class cpg_t>
 void SwitchedModelLogicRulesBase<JOINT_COORD_SIZE,cpg_t>::tileModeSequenceTemplate(
+		const logic_template_type& modeSequenceTemplate,
 		const scalar_t& startTime,
 		const scalar_t& finalTime) {
 
-	const size_t numTemplateSubsystems = modeSequenceTemplate_.templateSubsystemsSequence_.size();
+	const size_t numTemplateSubsystems = modeSequenceTemplate.templateSubsystemsSequence_.size();
 
 	// If no template subsystem is defined, the last subsystem should continue for ever
 	if (numTemplateSubsystems == 0) {
 		return;
 	}
 
-	if (modeSequenceTemplate_.templateSwitchingTimes_.size() != numTemplateSubsystems+1) {
+	if (modeSequenceTemplate.templateSwitchingTimes_.size() != numTemplateSubsystems+1) {
 		throw std::runtime_error("The number of the subsystems in the user-defined template should be equal to "
 				"the number of the template switching times minus 1.");
 	}
@@ -291,10 +283,10 @@ void SwitchedModelLogicRulesBase<JOINT_COORD_SIZE,cpg_t>::tileModeSequenceTempla
 	// concatenate from index
 	while (BASE::eventTimes_.back() < finalTime) {
 
-		for (size_t i=0; i<modeSequenceTemplate_.templateSubsystemsSequence_.size(); i++) {
+		for (size_t i=0; i<modeSequenceTemplate.templateSubsystemsSequence_.size(); i++) {
 
-			BASE::subsystemsSequence_.push_back(modeSequenceTemplate_.templateSubsystemsSequence_[i]);
-			scalar_t deltaTime = modeSequenceTemplate_.templateSwitchingTimes_[i+1] - modeSequenceTemplate_.templateSwitchingTimes_[i];
+			BASE::subsystemsSequence_.push_back(modeSequenceTemplate.templateSubsystemsSequence_[i]);
+			scalar_t deltaTime = modeSequenceTemplate.templateSwitchingTimes_[i+1] - modeSequenceTemplate.templateSwitchingTimes_[i];
 			BASE::eventTimes_.push_back(BASE::eventTimes_.back()+deltaTime);
 		}  // end of i loop
 

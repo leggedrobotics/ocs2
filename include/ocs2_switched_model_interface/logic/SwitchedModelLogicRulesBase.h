@@ -148,24 +148,6 @@ public:
 	virtual void update() override;
 
 	/**
-	 * Used in the SLQ-MPC method to set the model sequence template.
-	 *
-	 * @param [in] modeSequenceTemplate: A data type which includes all necessary information for modifying the logicRules.
-	 */
-	virtual void setModeSequenceTemplate(
-			const logic_template_type& modeSequenceTemplate) override;
-
-	/**
-	 * Used in the SLQ-MPC method to insert a new user defined logic in the given time period.
-	 *
-	 * @param [in] startTime: The initial time from which the new logicRules template should be augmented.
-	 * @param [in] finalTime: The final time to which the new logicRules template should be augmented.
-	 */
-	virtual void insertModeSequenceTemplate(
-			const scalar_t& startTime,
-			const scalar_t& finalTime) override;
-
-	/**
 	 * Rewinds the class. This method is only called in the MPC class.
 	 *
 	 * @param [in] lowerBoundTime: The smallest time for which the logicRules should be defined.
@@ -176,13 +158,28 @@ public:
 			const scalar_t& upperBoundTime) override;
 
 protected:
+
+	/**
+	 * Used in the SLQ-MPC method to insert a new user defined logic in the given time period.
+	 *
+	 * @param [in] modeSequenceTemplate: A data type which includes all necessary information for modifying the logicRules.
+	 * @param [in] startTime: The initial time from which the new logicRules template should be augmented.
+	 * @param [in] finalTime: The final time to which the new logicRules template should be augmented.
+	 */
+	virtual void insertModeSequenceTemplate(
+			const logic_template_type& modeSequenceTemplate,
+			const scalar_t& startTime,
+			const scalar_t& finalTime) override;
+
 	/**
 	 * Extends the switch information from lowerBoundTime to upperBoundTime based on the template mode sequence.
 	 *
+	 * @param modeSequenceTemplate: Mode sequence template which should be tiled into logic rule.
 	 * @param [in] startTime: The initial time from which the logicRules template should be augmented.
 	 * @param [in] finalTime: The final time to which the logicRules template should be augmented.
 	 */
 	void tileModeSequenceTemplate(
+			const logic_template_type& modeSequenceTemplate,
 			const scalar_t& startTime,
 			const scalar_t& finalTime);
 
@@ -196,8 +193,6 @@ private:
 	mutable std::vector<bool>			feetReferenceUpdatedStock_;
 
 	std::vector<EndEffectorConstraintBase::ConstPtr> endEffectorStateConstraints_;
-
-	logic_template_type modeSequenceTemplate_;
 };
 
 /**

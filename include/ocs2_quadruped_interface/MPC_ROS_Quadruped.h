@@ -49,6 +49,8 @@ public:
 	typedef typename BASE::input_state_matrix_t		input_state_matrix_t;
 	typedef typename BASE::input_state_matrix_array_t input_state_matrix_array_t;
 
+	typedef typename BASE::mode_sequence_template_t mode_sequence_template_t;
+
 	typedef typename BASE::cost_desired_trajectories_t cost_desired_trajectories_t;
 
 	/**
@@ -112,9 +114,11 @@ public:
 	 * Adjusts the user-defined mode sequence for time-triggered hybrid systems based on the current observation.
 	 *
 	 * @param [in] currentObservation: The current observation.
+	 * @param newLogicRulesTemplate: New logicRules template which can be modified based on the current observation.
 	 */
 	virtual void adjustModeSequence(
-			const system_observation_t& currentObservation) override {}
+			const system_observation_t& currentObservation,
+			mode_sequence_template_t& newLogicRulesTemplate) override {}
 
 protected:
 	void targetPoseToDesiredTrajectories(

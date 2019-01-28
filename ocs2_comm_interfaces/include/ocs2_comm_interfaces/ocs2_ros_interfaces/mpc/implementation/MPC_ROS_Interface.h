@@ -421,26 +421,8 @@ void MPC_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::mpcObservationCallb
 				<< std::setprecision(4) << currentObservation.time() << " as " << std::endl;
 		modeSequenceTemplate_.display();
 
-		// user defined modification of the CostDesiredTrajectories when mode is updated
-		const cost_desired_trajectories_t* mpcCostDesiredTrajectoriesPtr;
-		mpcPtr_->getCostDesiredTrajectoriesPtr(mpcCostDesiredTrajectoriesPtr);
-		cost_desired_trajectories_t costDesiredTrajectoriesTemp = *mpcCostDesiredTrajectoriesPtr;
-		adjustModeSequence(currentObservation, costDesiredTrajectoriesTemp, modeSequenceTemplate_);
-
-		// check if costDesiredTrajectories is updated
-		if (costDesiredTrajectoriesTemp != *mpcCostDesiredTrajectoriesPtr) {
-			// display
-			if (mpcSettings_.debugPrint_) {
-				std::cerr << "### Since the modeSequence is updated, the target position is updated at time "
-						<< std::setprecision(4) << currentObservation.time() << " as " << std::endl;
-				costDesiredTrajectoriesTemp.display();
-			}
-
-			// set CostDesiredTrajectories
-			mpcPtr_->swapCostDesiredTrajectories(costDesiredTrajectoriesTemp);
-
-			desiredTrajectoriesUpdated_ = false;
-		}
+		// user defined modification of the modeSequenceTemplate at the moment of setting
+		adjustModeSequence(currentObservation, modeSequenceTemplate_);
 
 		// set CostDesiredTrajectories
 		mpcPtr_->setNewLogicRulesTemplate(modeSequenceTemplate_);

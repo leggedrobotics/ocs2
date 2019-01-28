@@ -196,12 +196,10 @@ public:
 	 * Adjusts the user-defined mode sequence for time-triggered hybrid systems based on the current observation.
 	 *
 	 * @param [in] currentObservation: The current observation.
-	 * @param currentCostDesiredTrajectories: The current target trajectories which can be modified based on the current observation.
 	 * @param newLogicRulesTemplate: New logicRules template which can be modified based on the current observation.
 	 */
 	virtual void adjustModeSequence(
 			const system_observation_t& currentObservation,
-			cost_desired_trajectories_t& currentCostDesiredTrajectories,
 			mode_sequence_template_t& newLogicRulesTemplate) {}
 
 protected:

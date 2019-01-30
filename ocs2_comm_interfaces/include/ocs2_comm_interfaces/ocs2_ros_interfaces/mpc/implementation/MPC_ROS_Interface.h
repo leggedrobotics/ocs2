@@ -116,6 +116,8 @@ void MPC_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::reset() {
 
 	terminateThread_ = false;
 	readyToPublish_  = false;
+	if (mpcPtr_ != nullptr)
+		mpcPtr_->reset();
 }
 
 /******************************************************************************************************/

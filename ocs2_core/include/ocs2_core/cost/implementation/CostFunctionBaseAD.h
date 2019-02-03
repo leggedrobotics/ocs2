@@ -32,8 +32,8 @@ namespace ocs2{
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <class Derived, size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T, size_t LOGIC_VARIABLE_DIM>
-CostFunctionBaseAD<Derived, STATE_DIM, INPUT_DIM, LOGIC_RULES_T, LOGIC_VARIABLE_DIM>::CostFunctionBaseAD(
+template <class Derived, size_t STATE_DIM, size_t REFERENCE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T, size_t LOGIC_VARIABLE_DIM>
+CostFunctionBaseAD<Derived, STATE_DIM, REFERENCE_DIM, INPUT_DIM, LOGIC_RULES_T, LOGIC_VARIABLE_DIM>::CostFunctionBaseAD(
 		const bool& dynamicLibraryIsCompiled /*= false*/)
 	: BASE()
 	, dynamicLibraryIsCompiled_(dynamicLibraryIsCompiled)
@@ -47,8 +47,8 @@ CostFunctionBaseAD<Derived, STATE_DIM, INPUT_DIM, LOGIC_RULES_T, LOGIC_VARIABLE_
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <class Derived, size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T, size_t LOGIC_VARIABLE_DIM>
-CostFunctionBaseAD<Derived, STATE_DIM, INPUT_DIM, LOGIC_RULES_T, LOGIC_VARIABLE_DIM>::CostFunctionBaseAD(
+template <class Derived, size_t STATE_DIM, size_t REFERENCE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T, size_t LOGIC_VARIABLE_DIM>
+CostFunctionBaseAD<Derived, STATE_DIM, REFERENCE_DIM, INPUT_DIM, LOGIC_RULES_T, LOGIC_VARIABLE_DIM>::CostFunctionBaseAD(
 		const CostFunctionBaseAD& rhs)
 
 	: BASE(rhs)
@@ -70,9 +70,9 @@ CostFunctionBaseAD<Derived, STATE_DIM, INPUT_DIM, LOGIC_RULES_T, LOGIC_VARIABLE_
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <class Derived, size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T, size_t LOGIC_VARIABLE_DIM>
-typename CostFunctionBaseAD<Derived, STATE_DIM, INPUT_DIM, LOGIC_RULES_T, LOGIC_VARIABLE_DIM>::BASE*
-	CostFunctionBaseAD<Derived, STATE_DIM, INPUT_DIM, LOGIC_RULES_T, LOGIC_VARIABLE_DIM>::clone() const {
+template <class Derived, size_t STATE_DIM, size_t REFERENCE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T, size_t LOGIC_VARIABLE_DIM>
+typename CostFunctionBaseAD<Derived, STATE_DIM, REFERENCE_DIM, INPUT_DIM, LOGIC_RULES_T, LOGIC_VARIABLE_DIM>::BASE*
+	CostFunctionBaseAD<Derived, STATE_DIM, REFERENCE_DIM, INPUT_DIM, LOGIC_RULES_T, LOGIC_VARIABLE_DIM>::clone() const {
 
 		return new Derived(static_cast<Derived const&>(*this));
 }
@@ -80,13 +80,13 @@ typename CostFunctionBaseAD<Derived, STATE_DIM, INPUT_DIM, LOGIC_RULES_T, LOGIC_
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <class Derived, size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T, size_t LOGIC_VARIABLE_DIM>
+template <class Derived, size_t STATE_DIM, size_t REFERENCE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T, size_t LOGIC_VARIABLE_DIM>
 template <typename SCALAR_T>
-void CostFunctionBaseAD<Derived, STATE_DIM, INPUT_DIM, LOGIC_RULES_T, LOGIC_VARIABLE_DIM>::intermediateCostFunction(
+void CostFunctionBaseAD<Derived, STATE_DIM, REFERENCE_DIM, INPUT_DIM, LOGIC_RULES_T, LOGIC_VARIABLE_DIM>::intermediateCostFunction(
 		const SCALAR_T& time,
 		const Eigen::Matrix<SCALAR_T, STATE_DIM, 1>& state,
 		const Eigen::Matrix<SCALAR_T, INPUT_DIM, 1>& input,
-		const Eigen::Matrix<SCALAR_T, STATE_DIM, 1>& stateDesired,
+		const Eigen::Matrix<SCALAR_T, REFERENCE_DIM, 1>& stateDesired,
 		const Eigen::Matrix<SCALAR_T, INPUT_DIM, 1>& inputDesired,
 		const Eigen::Matrix<SCALAR_T, LOGIC_VARIABLE_DIM, 1>& logicVariable,
 		SCALAR_T& costValue) {
@@ -97,12 +97,12 @@ void CostFunctionBaseAD<Derived, STATE_DIM, INPUT_DIM, LOGIC_RULES_T, LOGIC_VARI
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <class Derived, size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T, size_t LOGIC_VARIABLE_DIM>
+template <class Derived, size_t STATE_DIM, size_t REFERENCE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T, size_t LOGIC_VARIABLE_DIM>
 template <typename SCALAR_T>
-void CostFunctionBaseAD<Derived, STATE_DIM, INPUT_DIM, LOGIC_RULES_T, LOGIC_VARIABLE_DIM>::terminalCostFunction(
+void CostFunctionBaseAD<Derived, STATE_DIM, REFERENCE_DIM, INPUT_DIM, LOGIC_RULES_T, LOGIC_VARIABLE_DIM>::terminalCostFunction(
 		const SCALAR_T& time,
 		const Eigen::Matrix<SCALAR_T, STATE_DIM, 1>& state,
-		const Eigen::Matrix<SCALAR_T, STATE_DIM, 1>& stateDesired,
+		const Eigen::Matrix<SCALAR_T, REFERENCE_DIM, 1>& stateDesired,
 		const Eigen::Matrix<SCALAR_T, LOGIC_VARIABLE_DIM, 1>& logicVariable,
 		SCALAR_T& costValue) {
 
@@ -112,9 +112,9 @@ void CostFunctionBaseAD<Derived, STATE_DIM, INPUT_DIM, LOGIC_RULES_T, LOGIC_VARI
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <class Derived, size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T, size_t LOGIC_VARIABLE_DIM>
-typename CostFunctionBaseAD<Derived, STATE_DIM, INPUT_DIM, LOGIC_RULES_T, LOGIC_VARIABLE_DIM>::state_vector_t
-CostFunctionBaseAD<Derived, STATE_DIM, INPUT_DIM, LOGIC_RULES_T, LOGIC_VARIABLE_DIM>::getDesiredState(
+template <class Derived, size_t STATE_DIM, size_t REFERENCE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T, size_t LOGIC_VARIABLE_DIM>
+typename CostFunctionBaseAD<Derived, STATE_DIM, REFERENCE_DIM, INPUT_DIM, LOGIC_RULES_T, LOGIC_VARIABLE_DIM>::reference_vector_t
+CostFunctionBaseAD<Derived, STATE_DIM, REFERENCE_DIM, INPUT_DIM, LOGIC_RULES_T, LOGIC_VARIABLE_DIM>::getDesiredState(
 		const scalar_t& t) {
 
 	throw std::runtime_error("getDesiredState() method should be implemented by the derived class.");
@@ -123,9 +123,9 @@ CostFunctionBaseAD<Derived, STATE_DIM, INPUT_DIM, LOGIC_RULES_T, LOGIC_VARIABLE_
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <class Derived, size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T, size_t LOGIC_VARIABLE_DIM>
-typename CostFunctionBaseAD<Derived, STATE_DIM, INPUT_DIM, LOGIC_RULES_T, LOGIC_VARIABLE_DIM>::input_vector_t
-CostFunctionBaseAD<Derived, STATE_DIM, INPUT_DIM, LOGIC_RULES_T, LOGIC_VARIABLE_DIM>::getDesiredInput(
+template <class Derived, size_t STATE_DIM, size_t REFERENCE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T, size_t LOGIC_VARIABLE_DIM>
+typename CostFunctionBaseAD<Derived, STATE_DIM, REFERENCE_DIM, INPUT_DIM, LOGIC_RULES_T, LOGIC_VARIABLE_DIM>::input_vector_t
+CostFunctionBaseAD<Derived, STATE_DIM, REFERENCE_DIM, INPUT_DIM, LOGIC_RULES_T, LOGIC_VARIABLE_DIM>::getDesiredInput(
 		const scalar_t& t) {
 
 	throw std::runtime_error("getDesiredInput() method should be implemented by the derived class.");
@@ -134,9 +134,9 @@ CostFunctionBaseAD<Derived, STATE_DIM, INPUT_DIM, LOGIC_RULES_T, LOGIC_VARIABLE_
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <class Derived, size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T, size_t LOGIC_VARIABLE_DIM>
-typename CostFunctionBaseAD<Derived, STATE_DIM, INPUT_DIM, LOGIC_RULES_T, LOGIC_VARIABLE_DIM>::logic_variable_t
-CostFunctionBaseAD<Derived, STATE_DIM, INPUT_DIM, LOGIC_RULES_T, LOGIC_VARIABLE_DIM>::getlogicVariables(
+template <class Derived, size_t STATE_DIM, size_t REFERENCE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T, size_t LOGIC_VARIABLE_DIM>
+typename CostFunctionBaseAD<Derived, STATE_DIM, REFERENCE_DIM, INPUT_DIM, LOGIC_RULES_T, LOGIC_VARIABLE_DIM>::logic_variable_t
+CostFunctionBaseAD<Derived, STATE_DIM, REFERENCE_DIM, INPUT_DIM, LOGIC_RULES_T, LOGIC_VARIABLE_DIM>::getlogicVariables(
 		LogicRulesMachine<LOGIC_RULES_T>& logicRulesMachine,
 		const size_t& partitionIndex,
 		const char* algorithmName /*= nullptr*/) {
@@ -147,8 +147,8 @@ CostFunctionBaseAD<Derived, STATE_DIM, INPUT_DIM, LOGIC_RULES_T, LOGIC_VARIABLE_
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <class Derived, size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T, size_t LOGIC_VARIABLE_DIM>
-void CostFunctionBaseAD<Derived, STATE_DIM, INPUT_DIM, LOGIC_RULES_T, LOGIC_VARIABLE_DIM>::createModels(
+template <class Derived, size_t STATE_DIM, size_t REFERENCE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T, size_t LOGIC_VARIABLE_DIM>
+void CostFunctionBaseAD<Derived, STATE_DIM, REFERENCE_DIM, INPUT_DIM, LOGIC_RULES_T, LOGIC_VARIABLE_DIM>::createModels(
 		const std::string& modelName,
 		const std::string& libraryFolder) {
 
@@ -161,8 +161,8 @@ void CostFunctionBaseAD<Derived, STATE_DIM, INPUT_DIM, LOGIC_RULES_T, LOGIC_VARI
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <class Derived, size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T, size_t LOGIC_VARIABLE_DIM>
-void CostFunctionBaseAD<Derived, STATE_DIM, INPUT_DIM, LOGIC_RULES_T, LOGIC_VARIABLE_DIM>::loadModels(
+template <class Derived, size_t STATE_DIM, size_t REFERENCE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T, size_t LOGIC_VARIABLE_DIM>
+void CostFunctionBaseAD<Derived, STATE_DIM, REFERENCE_DIM, INPUT_DIM, LOGIC_RULES_T, LOGIC_VARIABLE_DIM>::loadModels(
 		const std::string& modelName,
 		const std::string& libraryFolder) {
 
@@ -182,8 +182,8 @@ void CostFunctionBaseAD<Derived, STATE_DIM, INPUT_DIM, LOGIC_RULES_T, LOGIC_VARI
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <class Derived, size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T, size_t LOGIC_VARIABLE_DIM>
-const bool& CostFunctionBaseAD<Derived, STATE_DIM, INPUT_DIM, LOGIC_RULES_T, LOGIC_VARIABLE_DIM>::isDynamicLibraryCompiled() const {
+template <class Derived, size_t STATE_DIM, size_t REFERENCE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T, size_t LOGIC_VARIABLE_DIM>
+const bool& CostFunctionBaseAD<Derived, STATE_DIM, REFERENCE_DIM, INPUT_DIM, LOGIC_RULES_T, LOGIC_VARIABLE_DIM>::isDynamicLibraryCompiled() const {
 
 	return dynamicLibraryIsCompiled_;
 }
@@ -191,8 +191,8 @@ const bool& CostFunctionBaseAD<Derived, STATE_DIM, INPUT_DIM, LOGIC_RULES_T, LOG
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <class Derived, size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T, size_t LOGIC_VARIABLE_DIM>
-std::string CostFunctionBaseAD<Derived, STATE_DIM, INPUT_DIM, LOGIC_RULES_T, LOGIC_VARIABLE_DIM>::getModelName() const {
+template <class Derived, size_t STATE_DIM, size_t REFERENCE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T, size_t LOGIC_VARIABLE_DIM>
+std::string CostFunctionBaseAD<Derived, STATE_DIM, REFERENCE_DIM, INPUT_DIM, LOGIC_RULES_T, LOGIC_VARIABLE_DIM>::getModelName() const {
 
 	return modelName_;
 }
@@ -200,8 +200,8 @@ std::string CostFunctionBaseAD<Derived, STATE_DIM, INPUT_DIM, LOGIC_RULES_T, LOG
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <class Derived, size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T, size_t LOGIC_VARIABLE_DIM>
-void CostFunctionBaseAD<Derived, STATE_DIM, INPUT_DIM, LOGIC_RULES_T, LOGIC_VARIABLE_DIM>::setCurrentStateAndControl(
+template <class Derived, size_t STATE_DIM, size_t REFERENCE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T, size_t LOGIC_VARIABLE_DIM>
+void CostFunctionBaseAD<Derived, STATE_DIM, REFERENCE_DIM, INPUT_DIM, LOGIC_RULES_T, LOGIC_VARIABLE_DIM>::setCurrentStateAndControl(
 		const scalar_t& t,
 		const state_vector_t& x,
 		const input_vector_t& u) {
@@ -221,8 +221,8 @@ void CostFunctionBaseAD<Derived, STATE_DIM, INPUT_DIM, LOGIC_RULES_T, LOGIC_VARI
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <class Derived, size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T, size_t LOGIC_VARIABLE_DIM>
-void CostFunctionBaseAD<Derived, STATE_DIM, INPUT_DIM, LOGIC_RULES_T, LOGIC_VARIABLE_DIM>::initializeModel(
+template <class Derived, size_t STATE_DIM, size_t REFERENCE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T, size_t LOGIC_VARIABLE_DIM>
+void CostFunctionBaseAD<Derived, STATE_DIM, REFERENCE_DIM, INPUT_DIM, LOGIC_RULES_T, LOGIC_VARIABLE_DIM>::initializeModel(
 		LogicRulesMachine<LOGIC_RULES_T>& logicRulesMachine,
 		const size_t& partitionIndex,
 		const char* algorithmName /*= nullptr*/) {
@@ -239,10 +239,10 @@ void CostFunctionBaseAD<Derived, STATE_DIM, INPUT_DIM, LOGIC_RULES_T, LOGIC_VARI
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <class Derived, size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T, size_t LOGIC_VARIABLE_DIM>
+template <class Derived, size_t STATE_DIM, size_t REFERENCE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T, size_t LOGIC_VARIABLE_DIM>
 template <typename Derived_Matrix>
 typename Derived_Matrix::Scalar&
-CostFunctionBaseAD<Derived, STATE_DIM, INPUT_DIM, LOGIC_RULES_T, LOGIC_VARIABLE_DIM>::timeVariable(
+CostFunctionBaseAD<Derived, STATE_DIM, REFERENCE_DIM, INPUT_DIM, LOGIC_RULES_T, LOGIC_VARIABLE_DIM>::timeVariable(
 		Eigen::MatrixBase<Derived_Matrix>& tapedInput) {
 
 	return tapedInput(0);
@@ -251,10 +251,10 @@ CostFunctionBaseAD<Derived, STATE_DIM, INPUT_DIM, LOGIC_RULES_T, LOGIC_VARIABLE_
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <class Derived, size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T, size_t LOGIC_VARIABLE_DIM>
+template <class Derived, size_t STATE_DIM, size_t REFERENCE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T, size_t LOGIC_VARIABLE_DIM>
 template <typename Derived_Matrix>
 Eigen::Block<Derived_Matrix, STATE_DIM, 1>
-CostFunctionBaseAD<Derived, STATE_DIM, INPUT_DIM, LOGIC_RULES_T, LOGIC_VARIABLE_DIM>::stateVariables(
+CostFunctionBaseAD<Derived, STATE_DIM, REFERENCE_DIM, INPUT_DIM, LOGIC_RULES_T, LOGIC_VARIABLE_DIM>::stateVariables(
 		Eigen::MatrixBase<Derived_Matrix>& tapedInput) {
 
 	return tapedInput.template segment<STATE_DIM>(1);
@@ -263,10 +263,10 @@ CostFunctionBaseAD<Derived, STATE_DIM, INPUT_DIM, LOGIC_RULES_T, LOGIC_VARIABLE_
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <class Derived, size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T, size_t LOGIC_VARIABLE_DIM>
+template <class Derived, size_t STATE_DIM, size_t REFERENCE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T, size_t LOGIC_VARIABLE_DIM>
 template <typename Derived_Matrix>
 Eigen::Block<Derived_Matrix, INPUT_DIM, 1>
-CostFunctionBaseAD<Derived, STATE_DIM, INPUT_DIM, LOGIC_RULES_T, LOGIC_VARIABLE_DIM>::inputVariables(
+CostFunctionBaseAD<Derived, STATE_DIM, REFERENCE_DIM, INPUT_DIM, LOGIC_RULES_T, LOGIC_VARIABLE_DIM>::inputVariables(
 		Eigen::MatrixBase<Derived_Matrix>& tapedInput) {
 
 	return tapedInput.template segment<INPUT_DIM>(1+STATE_DIM);
@@ -275,22 +275,22 @@ CostFunctionBaseAD<Derived, STATE_DIM, INPUT_DIM, LOGIC_RULES_T, LOGIC_VARIABLE_
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <class Derived, size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T, size_t LOGIC_VARIABLE_DIM>
+template <class Derived, size_t STATE_DIM, size_t REFERENCE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T, size_t LOGIC_VARIABLE_DIM>
 template <typename Derived_Matrix>
-Eigen::Block<Derived_Matrix, STATE_DIM, 1>
-CostFunctionBaseAD<Derived, STATE_DIM, INPUT_DIM, LOGIC_RULES_T, LOGIC_VARIABLE_DIM>::desiredStateVariables(
+Eigen::Block<Derived_Matrix, REFERENCE_DIM, 1>
+CostFunctionBaseAD<Derived, STATE_DIM, REFERENCE_DIM, INPUT_DIM, LOGIC_RULES_T, LOGIC_VARIABLE_DIM>::desiredStateVariables(
 		Eigen::MatrixBase<Derived_Matrix>& tapedInput) {
 
-	return tapedInput.template segment<STATE_DIM>(variable_dim_);
+	return tapedInput.template segment<REFERENCE_DIM>(variable_dim_);
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <class Derived, size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T, size_t LOGIC_VARIABLE_DIM>
+template <class Derived, size_t STATE_DIM, size_t REFERENCE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T, size_t LOGIC_VARIABLE_DIM>
 template <typename Derived_Matrix>
 Eigen::Block<Derived_Matrix, INPUT_DIM, 1>
-CostFunctionBaseAD<Derived, STATE_DIM, INPUT_DIM, LOGIC_RULES_T, LOGIC_VARIABLE_DIM>::desiredInputVariables(
+CostFunctionBaseAD<Derived, STATE_DIM, REFERENCE_DIM, INPUT_DIM, LOGIC_RULES_T, LOGIC_VARIABLE_DIM>::desiredInputVariables(
 		Eigen::MatrixBase<Derived_Matrix>& tapedInput) {
 
 	return tapedInput.template segment<INPUT_DIM>(variable_dim_+STATE_DIM);
@@ -299,10 +299,10 @@ CostFunctionBaseAD<Derived, STATE_DIM, INPUT_DIM, LOGIC_RULES_T, LOGIC_VARIABLE_
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <class Derived, size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T, size_t LOGIC_VARIABLE_DIM>
+template <class Derived, size_t STATE_DIM, size_t REFERENCE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T, size_t LOGIC_VARIABLE_DIM>
 template <typename Derived_Matrix>
 Eigen::Block<Derived_Matrix, LOGIC_VARIABLE_DIM, 1>
-CostFunctionBaseAD<Derived, STATE_DIM, INPUT_DIM, LOGIC_RULES_T, LOGIC_VARIABLE_DIM>::logicVariables(
+CostFunctionBaseAD<Derived, STATE_DIM, REFERENCE_DIM, INPUT_DIM, LOGIC_RULES_T, LOGIC_VARIABLE_DIM>::logicVariables(
 		Eigen::MatrixBase<Derived_Matrix>& tapedInput) {
 
 	return tapedInput.template tail<logic_variable_dim_>();
@@ -311,8 +311,8 @@ CostFunctionBaseAD<Derived, STATE_DIM, INPUT_DIM, LOGIC_RULES_T, LOGIC_VARIABLE_
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <class Derived, size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T, size_t LOGIC_VARIABLE_DIM>
-void CostFunctionBaseAD<Derived, STATE_DIM, INPUT_DIM, LOGIC_RULES_T, LOGIC_VARIABLE_DIM>::getIntermediateCost(
+template <class Derived, size_t STATE_DIM, size_t REFERENCE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T, size_t LOGIC_VARIABLE_DIM>
+void CostFunctionBaseAD<Derived, STATE_DIM, REFERENCE_DIM, INPUT_DIM, LOGIC_RULES_T, LOGIC_VARIABLE_DIM>::getIntermediateCost(
 		scalar_t& L) {
 
 	Eigen::Matrix<scalar_t, 1, 1> costValue;
@@ -323,8 +323,8 @@ void CostFunctionBaseAD<Derived, STATE_DIM, INPUT_DIM, LOGIC_RULES_T, LOGIC_VARI
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <class Derived, size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T, size_t LOGIC_VARIABLE_DIM>
-void CostFunctionBaseAD<Derived, STATE_DIM, INPUT_DIM, LOGIC_RULES_T, LOGIC_VARIABLE_DIM>::getIntermediateCostDerivativeTime(
+template <class Derived, size_t STATE_DIM, size_t REFERENCE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T, size_t LOGIC_VARIABLE_DIM>
+void CostFunctionBaseAD<Derived, STATE_DIM, REFERENCE_DIM, INPUT_DIM, LOGIC_RULES_T, LOGIC_VARIABLE_DIM>::getIntermediateCostDerivativeTime(
 		scalar_t& dLdt) {
 
 	dLdt = intermediateJacobian_(0);
@@ -333,8 +333,8 @@ void CostFunctionBaseAD<Derived, STATE_DIM, INPUT_DIM, LOGIC_RULES_T, LOGIC_VARI
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <class Derived, size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T, size_t LOGIC_VARIABLE_DIM>
-void CostFunctionBaseAD<Derived, STATE_DIM, INPUT_DIM, LOGIC_RULES_T, LOGIC_VARIABLE_DIM>::getIntermediateCostDerivativeState(
+template <class Derived, size_t STATE_DIM, size_t REFERENCE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T, size_t LOGIC_VARIABLE_DIM>
+void CostFunctionBaseAD<Derived, STATE_DIM, REFERENCE_DIM, INPUT_DIM, LOGIC_RULES_T, LOGIC_VARIABLE_DIM>::getIntermediateCostDerivativeState(
 		state_vector_t& dLdx) {
 
 	dLdx = intermediateJacobian_.template segment<state_dim_>(1);
@@ -343,8 +343,8 @@ void CostFunctionBaseAD<Derived, STATE_DIM, INPUT_DIM, LOGIC_RULES_T, LOGIC_VARI
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <class Derived, size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T, size_t LOGIC_VARIABLE_DIM>
-void CostFunctionBaseAD<Derived, STATE_DIM, INPUT_DIM, LOGIC_RULES_T, LOGIC_VARIABLE_DIM>::getIntermediateCostSecondDerivativeState(
+template <class Derived, size_t STATE_DIM, size_t REFERENCE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T, size_t LOGIC_VARIABLE_DIM>
+void CostFunctionBaseAD<Derived, STATE_DIM, REFERENCE_DIM, INPUT_DIM, LOGIC_RULES_T, LOGIC_VARIABLE_DIM>::getIntermediateCostSecondDerivativeState(
 		state_matrix_t& dLdxx) {
 
 	dLdxx = intermediateHessian_.template block<state_dim_, state_dim_>(1, 1);
@@ -353,8 +353,8 @@ void CostFunctionBaseAD<Derived, STATE_DIM, INPUT_DIM, LOGIC_RULES_T, LOGIC_VARI
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <class Derived, size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T, size_t LOGIC_VARIABLE_DIM>
-void CostFunctionBaseAD<Derived, STATE_DIM, INPUT_DIM, LOGIC_RULES_T, LOGIC_VARIABLE_DIM>::getIntermediateCostDerivativeInput(
+template <class Derived, size_t STATE_DIM, size_t REFERENCE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T, size_t LOGIC_VARIABLE_DIM>
+void CostFunctionBaseAD<Derived, STATE_DIM, REFERENCE_DIM, INPUT_DIM, LOGIC_RULES_T, LOGIC_VARIABLE_DIM>::getIntermediateCostDerivativeInput(
 		input_vector_t& dLdu) {
 
 	dLdu = intermediateJacobian_.template segment<input_dim_>(1+state_dim_);
@@ -363,8 +363,8 @@ void CostFunctionBaseAD<Derived, STATE_DIM, INPUT_DIM, LOGIC_RULES_T, LOGIC_VARI
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <class Derived, size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T, size_t LOGIC_VARIABLE_DIM>
-void CostFunctionBaseAD<Derived, STATE_DIM, INPUT_DIM, LOGIC_RULES_T, LOGIC_VARIABLE_DIM>::getIntermediateCostSecondDerivativeInput(
+template <class Derived, size_t STATE_DIM, size_t REFERENCE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T, size_t LOGIC_VARIABLE_DIM>
+void CostFunctionBaseAD<Derived, STATE_DIM, REFERENCE_DIM, INPUT_DIM, LOGIC_RULES_T, LOGIC_VARIABLE_DIM>::getIntermediateCostSecondDerivativeInput(
 		input_matrix_t& dLduu) {
 
 	dLduu = intermediateHessian_.template block<input_dim_, input_dim_>(1+state_dim_, 1+state_dim_);
@@ -373,8 +373,8 @@ void CostFunctionBaseAD<Derived, STATE_DIM, INPUT_DIM, LOGIC_RULES_T, LOGIC_VARI
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <class Derived, size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T, size_t LOGIC_VARIABLE_DIM>
-void CostFunctionBaseAD<Derived, STATE_DIM, INPUT_DIM, LOGIC_RULES_T, LOGIC_VARIABLE_DIM>::getIntermediateCostDerivativeInputState(
+template <class Derived, size_t STATE_DIM, size_t REFERENCE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T, size_t LOGIC_VARIABLE_DIM>
+void CostFunctionBaseAD<Derived, STATE_DIM, REFERENCE_DIM, INPUT_DIM, LOGIC_RULES_T, LOGIC_VARIABLE_DIM>::getIntermediateCostDerivativeInputState(
 		input_state_matrix_t& dLdux) {
 
 	dLdux = intermediateHessian_.template block<input_dim_, state_dim_>(1+state_dim_, 1);
@@ -383,8 +383,8 @@ void CostFunctionBaseAD<Derived, STATE_DIM, INPUT_DIM, LOGIC_RULES_T, LOGIC_VARI
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <class Derived, size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T, size_t LOGIC_VARIABLE_DIM>
-void CostFunctionBaseAD<Derived, STATE_DIM, INPUT_DIM, LOGIC_RULES_T, LOGIC_VARIABLE_DIM>::getTerminalCost(
+template <class Derived, size_t STATE_DIM, size_t REFERENCE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T, size_t LOGIC_VARIABLE_DIM>
+void CostFunctionBaseAD<Derived, STATE_DIM, REFERENCE_DIM, INPUT_DIM, LOGIC_RULES_T, LOGIC_VARIABLE_DIM>::getTerminalCost(
 		scalar_t& Phi) {
 
 	Eigen::Matrix<scalar_t, 1, 1> costValue;
@@ -395,8 +395,8 @@ void CostFunctionBaseAD<Derived, STATE_DIM, INPUT_DIM, LOGIC_RULES_T, LOGIC_VARI
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <class Derived, size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T, size_t LOGIC_VARIABLE_DIM>
-void CostFunctionBaseAD<Derived, STATE_DIM, INPUT_DIM, LOGIC_RULES_T, LOGIC_VARIABLE_DIM>::getTerminalCostDerivativeTime(
+template <class Derived, size_t STATE_DIM, size_t REFERENCE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T, size_t LOGIC_VARIABLE_DIM>
+void CostFunctionBaseAD<Derived, STATE_DIM, REFERENCE_DIM, INPUT_DIM, LOGIC_RULES_T, LOGIC_VARIABLE_DIM>::getTerminalCostDerivativeTime(
 		scalar_t& dPhidt) {
 
 	terminalADInterfacePtr_->getJacobian(tapedInput_, terminalJacobian_);
@@ -406,8 +406,8 @@ void CostFunctionBaseAD<Derived, STATE_DIM, INPUT_DIM, LOGIC_RULES_T, LOGIC_VARI
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <class Derived, size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T, size_t LOGIC_VARIABLE_DIM>
-void CostFunctionBaseAD<Derived, STATE_DIM, INPUT_DIM, LOGIC_RULES_T, LOGIC_VARIABLE_DIM>::getTerminalCostDerivativeState(
+template <class Derived, size_t STATE_DIM, size_t REFERENCE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T, size_t LOGIC_VARIABLE_DIM>
+void CostFunctionBaseAD<Derived, STATE_DIM, REFERENCE_DIM, INPUT_DIM, LOGIC_RULES_T, LOGIC_VARIABLE_DIM>::getTerminalCostDerivativeState(
 		state_vector_t& dPhidx) {
 
 	terminalADInterfacePtr_->getJacobian(tapedInput_, terminalJacobian_);
@@ -417,8 +417,8 @@ void CostFunctionBaseAD<Derived, STATE_DIM, INPUT_DIM, LOGIC_RULES_T, LOGIC_VARI
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <class Derived, size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T, size_t LOGIC_VARIABLE_DIM>
-void CostFunctionBaseAD<Derived, STATE_DIM, INPUT_DIM, LOGIC_RULES_T, LOGIC_VARIABLE_DIM>::getTerminalCostSecondDerivativeState(
+template <class Derived, size_t STATE_DIM, size_t REFERENCE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T, size_t LOGIC_VARIABLE_DIM>
+void CostFunctionBaseAD<Derived, STATE_DIM, REFERENCE_DIM, INPUT_DIM, LOGIC_RULES_T, LOGIC_VARIABLE_DIM>::getTerminalCostSecondDerivativeState(
 		state_matrix_t& dPhidxx) {
 
 	terminalADInterfacePtr_->getHessian(tapedInput_, terminalHessian_, 0);
@@ -428,8 +428,8 @@ void CostFunctionBaseAD<Derived, STATE_DIM, INPUT_DIM, LOGIC_RULES_T, LOGIC_VARI
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <class Derived, size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T, size_t LOGIC_VARIABLE_DIM>
-void CostFunctionBaseAD<Derived, STATE_DIM, INPUT_DIM, LOGIC_RULES_T, LOGIC_VARIABLE_DIM>::intermediateCostFunctionAD(
+template <class Derived, size_t STATE_DIM, size_t REFERENCE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T, size_t LOGIC_VARIABLE_DIM>
+void CostFunctionBaseAD<Derived, STATE_DIM, REFERENCE_DIM, INPUT_DIM, LOGIC_RULES_T, LOGIC_VARIABLE_DIM>::intermediateCostFunctionAD(
 		const ad_dynamic_vector_t& tapedInput,
 		ad_dynamic_vector_t& costValue) {
 
@@ -438,7 +438,7 @@ void CostFunctionBaseAD<Derived, STATE_DIM, INPUT_DIM, LOGIC_RULES_T, LOGIC_VARI
 	ad_scalar_t& t = timeVariable(tapedInputNonConst);
 	Eigen::Matrix<ad_scalar_t, STATE_DIM, 1> x = stateVariables(tapedInputNonConst);
 	Eigen::Matrix<ad_scalar_t, INPUT_DIM, 1> u = inputVariables(tapedInputNonConst);
-	Eigen::Matrix<ad_scalar_t, STATE_DIM, 1> xDesired = desiredStateVariables(tapedInputNonConst);
+	Eigen::Matrix<ad_scalar_t, REFERENCE_DIM, 1> xDesired = desiredStateVariables(tapedInputNonConst);
 	Eigen::Matrix<ad_scalar_t, INPUT_DIM, 1> uDesired = desiredInputVariables(tapedInputNonConst);
 	Eigen::Matrix<ad_scalar_t, LOGIC_VARIABLE_DIM, 1> logicVar = logicVariables(tapedInputNonConst);
 
@@ -453,8 +453,8 @@ void CostFunctionBaseAD<Derived, STATE_DIM, INPUT_DIM, LOGIC_RULES_T, LOGIC_VARI
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <class Derived, size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T, size_t LOGIC_VARIABLE_DIM>
-void CostFunctionBaseAD<Derived, STATE_DIM, INPUT_DIM, LOGIC_RULES_T, LOGIC_VARIABLE_DIM>::terminalCostFunctionAD(
+template <class Derived, size_t STATE_DIM, size_t REFERENCE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T, size_t LOGIC_VARIABLE_DIM>
+void CostFunctionBaseAD<Derived, STATE_DIM, REFERENCE_DIM, INPUT_DIM, LOGIC_RULES_T, LOGIC_VARIABLE_DIM>::terminalCostFunctionAD(
 		const ad_dynamic_vector_t& tapedInput,
 		ad_dynamic_vector_t& costValue) {
 
@@ -462,7 +462,7 @@ void CostFunctionBaseAD<Derived, STATE_DIM, INPUT_DIM, LOGIC_RULES_T, LOGIC_VARI
 
 	ad_scalar_t& t = timeVariable(tapedInputNonConst);
 	Eigen::Matrix<ad_scalar_t, STATE_DIM, 1> x = stateVariables(tapedInputNonConst);
-	Eigen::Matrix<ad_scalar_t, STATE_DIM, 1> xDesired = desiredStateVariables(tapedInputNonConst);
+	Eigen::Matrix<ad_scalar_t, REFERENCE_DIM, 1> xDesired = desiredStateVariables(tapedInputNonConst);
 	Eigen::Matrix<ad_scalar_t, LOGIC_VARIABLE_DIM, 1> logicVar = logicVariables(tapedInputNonConst);
 
 	costValue.resize(1);
@@ -475,8 +475,8 @@ void CostFunctionBaseAD<Derived, STATE_DIM, INPUT_DIM, LOGIC_RULES_T, LOGIC_VARI
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <class Derived, size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T, size_t LOGIC_VARIABLE_DIM>
-void CostFunctionBaseAD<Derived, STATE_DIM, INPUT_DIM, LOGIC_RULES_T, LOGIC_VARIABLE_DIM>::setADInterfaces() {
+template <class Derived, size_t STATE_DIM, size_t REFERENCE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T, size_t LOGIC_VARIABLE_DIM>
+void CostFunctionBaseAD<Derived, STATE_DIM, REFERENCE_DIM, INPUT_DIM, LOGIC_RULES_T, LOGIC_VARIABLE_DIM>::setADInterfaces() {
 
 	intermediateCostAD_ = [this](
 			const ad_dynamic_vector_t& x,
@@ -514,8 +514,8 @@ void CostFunctionBaseAD<Derived, STATE_DIM, INPUT_DIM, LOGIC_RULES_T, LOGIC_VARI
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <class Derived, size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T, size_t LOGIC_VARIABLE_DIM>
-void CostFunctionBaseAD<Derived, STATE_DIM, INPUT_DIM, LOGIC_RULES_T, LOGIC_VARIABLE_DIM>::createModels(
+template <class Derived, size_t STATE_DIM, size_t REFERENCE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T, size_t LOGIC_VARIABLE_DIM>
+void CostFunctionBaseAD<Derived, STATE_DIM, REFERENCE_DIM, INPUT_DIM, LOGIC_RULES_T, LOGIC_VARIABLE_DIM>::createModels(
 		bool verbose) {
 
 	// sets all the required CppAdCodeGenInterfaces
@@ -530,8 +530,8 @@ void CostFunctionBaseAD<Derived, STATE_DIM, INPUT_DIM, LOGIC_RULES_T, LOGIC_VARI
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <class Derived, size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T, size_t LOGIC_VARIABLE_DIM>
-bool CostFunctionBaseAD<Derived, STATE_DIM, INPUT_DIM, LOGIC_RULES_T, LOGIC_VARIABLE_DIM>::loadModels(
+template <class Derived, size_t STATE_DIM, size_t REFERENCE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T, size_t LOGIC_VARIABLE_DIM>
+bool CostFunctionBaseAD<Derived, STATE_DIM, REFERENCE_DIM, INPUT_DIM, LOGIC_RULES_T, LOGIC_VARIABLE_DIM>::loadModels(
 		bool verbose) {
 
 	bool intermediateLoaded = intermediateADInterfacePtr_->loadModels(modelName_+"_intermediate", libraryFolder_, verbose);

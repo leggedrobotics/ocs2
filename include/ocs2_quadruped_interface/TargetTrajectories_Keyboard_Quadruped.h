@@ -121,7 +121,7 @@ public:
 		}
 
 		// time
-		desiredTime = 0.0;
+		desiredTime = -1.0;
 		// state
 		ocs2::TargetPoseTransformation<scalar_t>::toCostDesiredState(
 				commadLineTargetOrdeCorrected, desiredState);

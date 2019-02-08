@@ -78,30 +78,105 @@ void MPC_ROS_Quadruped<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::adjustTargetTraj
 		cost_desired_trajectories_t& costDesiredTrajectories) {
 
 	if (costDesiredTrajectories.desiredStateTrajectory().size()==1) {
-		// targetPoseDisplacement
-		base_coordinate_t targetPoseDisplacement, targetVelocity;
-		ocs2::TargetPoseTransformation<scalar_t>::toTargetPoseDisplacement(costDesiredTrajectories.desiredStateTrajectory()[0],
-				targetPoseDisplacement, targetVelocity);
+//		// targetPoseDisplacement
+//		base_coordinate_t targetPoseDisplacement1, targetVelocity1;
+//		ocs2::TargetPoseTransformation<scalar_t>::toTargetPoseDisplacement(costDesiredTrajectories.desiredStateTrajectory()[0],
+//				targetPoseDisplacement1, targetVelocity1);
 
-		// x direction
-		size_t numReqiredStepsX = std::ceil(
-				std::abs(targetPoseDisplacement(3)) / (1.0*ocs2QuadrupedInterfacePtr_->strideLength()) );
-		// y direction
-		size_t numReqiredStepsY = std::ceil(
-				std::abs(targetPoseDisplacement(4)) / (0.5*ocs2QuadrupedInterfacePtr_->strideLength()) );
-		// max
-		size_t numReqiredSteps = std::max(numReqiredStepsX, numReqiredStepsY);
+		typename cost_desired_trajectories_t::scalar_array_t& tDesiredTrajectory =
+				costDesiredTrajectories.desiredTimeTrajectory();
+		typename cost_desired_trajectories_t::dynamic_vector_array_t& xDesiredTrajectory =
+				costDesiredTrajectories.desiredStateTrajectory();
+		typename cost_desired_trajectories_t::dynamic_vector_array_t& uDesiredTrajectory =
+				costDesiredTrajectories.desiredInputTrajectory();
 
-		// targetReachingDuration
-		scalar_t targetReachingDuration = numReqiredSteps * ocs2QuadrupedInterfacePtr_->numPhasesInfullGaitCycle()
-					* ocs2QuadrupedInterfacePtr_->strideTime();
 
-		// costDesiredTrajectories
-		targetPoseToDesiredTrajectories(
-				currentObservation.time(), currentObservation.state(),
-				ocs2QuadrupedInterfacePtr_->modelSettings().mpcGoalCommandDelay_,
-				targetReachingDuration, targetPoseDisplacement, targetVelocity,
-				costDesiredTrajectories);
+//		// costDesiredTrajectories
+//		targetPoseToDesiredTrajectories(
+//				currentObservation.time(), currentObservation.state(),
+//				ocs2QuadrupedInterfacePtr_->modelSettings().mpcGoalCommandDelay_,
+//				targetReachingDuration, targetPoseDisplacement1, targetVelocity1,
+//				costDesiredTrajectories);
+
+		scalar_t timeToTarget;
+		if (timeToTarget<0) {
+			// x direction
+			size_t numReqiredStepsX = std::ceil(
+					std::abs(xDesiredTrajectory[0](4)) / (1.0*ocs2QuadrupedInterfacePtr_->strideLength()) );
+			// y direction
+			size_t numReqiredStepsY = std::ceil(
+					std::abs(xDesiredTrajectory[0](5)) / (0.5*ocs2QuadrupedInterfacePtr_->strideLength()) );
+			// max
+			size_t numReqiredSteps = std::max(numReqiredStepsX, numReqiredStepsY);
+
+			// targetReachingDuration
+			timeToTarget = numReqiredSteps * ocs2QuadrupedInterfacePtr_->numPhasesInfullGaitCycle()
+										* ocs2QuadrupedInterfacePtr_->strideTime();
+
+			timeToTarget += ocs2QuadrupedInterfacePtr_->modelSettings().mpcGoalCommandDelay_;
+
+		} else {
+			timeToTarget = tDesiredTrajectory[0];
+		}
+
+		// Desired time trajectory
+		tDesiredTrajectory.resize(2);
+		tDesiredTrajectory[0] = currentObservation.time();
+		tDesiredTrajectory[1] = currentObservation.time() + timeToTarget;
+
+		// current orientation
+		Eigen::Quaternion<scalar_t> q_m =
+				Eigen::AngleAxis<scalar_t>(
+						currentObservation.state()(0), Eigen::Vector3d::UnitX()) *  // roll
+						Eigen::AngleAxis<scalar_t>(
+								currentObservation.state()(1), Eigen::Vector3d::UnitY()) *  // pitch
+								Eigen::AngleAxis<scalar_t>(
+										currentObservation.state()(2), Eigen::Vector3d::UnitZ());   // yaw
+		// desired pose changes
+		Eigen::Quaternion<scalar_t> q_d(
+				xDesiredTrajectory[0](0),
+				xDesiredTrajectory[0](1),
+				xDesiredTrajectory[0](2),
+				xDesiredTrajectory[0](3));
+
+		Eigen::Quaternion<scalar_t> qxyz = q_d*q_m;
+
+		base_coordinate_t targetPose;
+		targetPose.template head<3>() = qxyz.toRotationMatrix().eulerAngles(0, 1, 2);
+		targetPose(3) = xDesiredTrajectory[0](4) + currentObservation.state()(3);  // x
+		targetPose(4) = xDesiredTrajectory[0](5) + currentObservation.state()(4);  // y
+		targetPose(5) = xDesiredTrajectory[0](6) + currentObservation.state()(5);  // z
+
+		base_coordinate_t targetVelocity;
+		targetVelocity(0) = xDesiredTrajectory[0](7);
+		targetVelocity(1) = xDesiredTrajectory[0](8);
+		targetVelocity(2) = xDesiredTrajectory[0](9);
+		targetVelocity(3) = xDesiredTrajectory[0](10);
+		targetVelocity(4) = xDesiredTrajectory[0](11);
+		targetVelocity(5) = xDesiredTrajectory[0](12);
+
+
+		// Desired state trajectory
+		xDesiredTrajectory.resize(2);
+		xDesiredTrajectory[0].resize(STATE_DIM);
+		xDesiredTrajectory[0].setZero();
+		xDesiredTrajectory[0].template head<12>() = currentObservation.state().template head<12>();
+		xDesiredTrajectory[0].template segment<12>(12) = defaultConfiguration_.template segment<12>(6);
+
+		xDesiredTrajectory[1].resize(STATE_DIM);
+		xDesiredTrajectory[1].setZero();
+		// Roll and pitch from initialization
+		xDesiredTrajectory[1].template segment<6>(0) = targetPose;
+		// target velocities
+		xDesiredTrajectory[1].template segment<6>(6) = targetVelocity;
+		// joint angle from initialization
+		xDesiredTrajectory[1].template segment<12>(12) = defaultConfiguration_.template segment<12>(6);
+
+		// Desired input trajectory
+		uDesiredTrajectory.resize(2);
+		uDesiredTrajectory[0] = initInput_;
+		uDesiredTrajectory[1] = initInput_;
+
 	} else {
 
 		const size_t N = costDesiredTrajectories.desiredStateTrajectory().size();
@@ -160,10 +235,9 @@ void MPC_ROS_Quadruped<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::targetPoseToDesi
 	xDesiredTrajectory[1].template segment<2>(0) = defaultConfiguration_. template segment<2>(0)   + targetPoseDisplacement.template segment<2>(0);
 	// Yaw from initialization
 	xDesiredTrajectory[1].template segment<1>(2) = initState_.template segment<1>(2)   + targetPoseDisplacement.template segment<1>(2);
-	// base x, y relative to current state
-	xDesiredTrajectory[1].template segment<2>(3) = currentState. template segment<2>(3) + targetPoseDisplacement.template segment<2>(3);
-	// base z from initialization
-	xDesiredTrajectory[1].template segment<1>(5) = defaultConfiguration_. template segment<1>(5)   + targetPoseDisplacement.template segment<1>(5);
+	// base x, y, and z relative to current state
+	xDesiredTrajectory[1].template segment<3>(3) = currentState. template segment<3>(3) + targetPoseDisplacement.template segment<3>(3);
+	// target velocities
 	xDesiredTrajectory[1].template segment<6>(6) = targetVelocity;
 	// joint angle from initialization
 	xDesiredTrajectory[1].template segment<12>(12) = defaultConfiguration_.template segment<12>(6);

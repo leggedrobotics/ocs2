@@ -141,9 +141,11 @@ void MPC_ROS_Quadruped<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::adjustTargetTraj
 
 		base_coordinate_t targetPose;
 		targetPose.template head<3>() = qxyz.toRotationMatrix().eulerAngles(0, 1, 2);
-		targetPose(3) = xDesiredTrajectory[0](4) + currentObservation.state()(3);  // x
-		targetPose(4) = xDesiredTrajectory[0](5) + currentObservation.state()(4);  // y
-		targetPose(5) = xDesiredTrajectory[0](6) + currentObservation.state()(5);  // z
+		targetPose.template tail<3>() = qxyz.toRotationMatrix() * (
+				xDesiredTrajectory[0].template segment<3>(4) + currentObservation.state().template segment<3>(3));
+//		targetPose(3) = xDesiredTrajectory[0](4) + currentObservation.state()(3);  // x
+//		targetPose(4) = xDesiredTrajectory[0](5) + currentObservation.state()(4);  // y
+//		targetPose(5) = xDesiredTrajectory[0](6) + currentObservation.state()(5);  // z
 
 		base_coordinate_t targetVelocity;
 		targetVelocity(0) = xDesiredTrajectory[0](7);

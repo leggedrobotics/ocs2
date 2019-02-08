@@ -57,7 +57,7 @@ public:
 	  	input_desired_dim_ 	= INPUT_DESIRED_DIM,
 	  	logic_variable_dim_ = LOGIC_VARIABLE_DIM,
 		variable_dim_ = 1 + state_dim_ + input_dim_,
-		domain_dim_   = variable_dim_ + state_dim_ + input_dim_ + logic_variable_dim_,
+		domain_dim_   = variable_dim_ + state_desired_dim_ + state_desired_dim_ + logic_variable_dim_,
 	};
 
 	typedef std::shared_ptr<CostFunctionBaseAD<Derived, STATE_DIM, INPUT_DIM, LOGIC_RULES_T, LOGIC_VARIABLE_DIM, STATE_DESIRED_DIM, INPUT_DESIRED_DIM> > Ptr;

@@ -281,7 +281,7 @@ Eigen::Block<Derived_Matrix, STATE_DESIRED_DIM, 1>
 CostFunctionBaseAD<Derived, STATE_DIM, INPUT_DIM, LOGIC_RULES_T, LOGIC_VARIABLE_DIM, STATE_DESIRED_DIM, INPUT_DESIRED_DIM>::desiredStateVariables(
 		Eigen::MatrixBase<Derived_Matrix>& tapedInput) {
 
-	return tapedInput.template segment<STATE_DESIRED_DIM>(variable_dim_);
+	return tapedInput.template segment<STATE_DESIRED_DIM>(1+STATE_DIM+INPUT_DIM);
 }
 
 /******************************************************************************************************/
@@ -293,7 +293,7 @@ Eigen::Block<Derived_Matrix, INPUT_DESIRED_DIM, 1>
 CostFunctionBaseAD<Derived, STATE_DIM, INPUT_DIM, LOGIC_RULES_T, LOGIC_VARIABLE_DIM, STATE_DESIRED_DIM, INPUT_DESIRED_DIM>::desiredInputVariables(
 		Eigen::MatrixBase<Derived_Matrix>& tapedInput) {
 
-	return tapedInput.template segment<INPUT_DESIRED_DIM>(variable_dim_+STATE_DIM);
+	return tapedInput.template segment<INPUT_DESIRED_DIM>(1+STATE_DIM+INPUT_DIM+STATE_DESIRED_DIM);
 }
 
 /******************************************************************************************************/

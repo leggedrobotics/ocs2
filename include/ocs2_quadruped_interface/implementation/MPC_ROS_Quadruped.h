@@ -99,7 +99,7 @@ void MPC_ROS_Quadruped<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::adjustTargetTraj
 //				costDesiredTrajectories);
 
 		scalar_t timeToTarget;
-		if (timeToTarget<0) {
+		if (tDesiredTrajectory[0]<0) {
 			// x direction
 			size_t numReqiredStepsX = std::ceil(
 					std::abs(xDesiredTrajectory[0](4)) / (1.0*ocs2QuadrupedInterfacePtr_->strideLength()) );
@@ -113,16 +113,14 @@ void MPC_ROS_Quadruped<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::adjustTargetTraj
 			timeToTarget = numReqiredSteps * ocs2QuadrupedInterfacePtr_->numPhasesInfullGaitCycle()
 										* ocs2QuadrupedInterfacePtr_->strideTime();
 
-			timeToTarget += ocs2QuadrupedInterfacePtr_->modelSettings().mpcGoalCommandDelay_;
-
 		} else {
 			timeToTarget = tDesiredTrajectory[0];
 		}
 
 		// Desired time trajectory
 		tDesiredTrajectory.resize(2);
-		tDesiredTrajectory[0] = currentObservation.time();
-		tDesiredTrajectory[1] = currentObservation.time() + timeToTarget;
+		tDesiredTrajectory[0] = currentObservation.time() + ocs2QuadrupedInterfacePtr_->modelSettings().mpcGoalCommandDelay_;
+		tDesiredTrajectory[1] = currentObservation.time() + timeToTarget + ocs2QuadrupedInterfacePtr_->modelSettings().mpcGoalCommandDelay_;
 
 		// current orientation
 		Eigen::Quaternion<scalar_t> q_m =

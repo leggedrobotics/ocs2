@@ -65,7 +65,8 @@ void TargetTrajectories_Keyboard_Interface<SCALAR_T>::toCostDesiredTimeStateInpu
 		dynamic_vector_t& desiredInput) {
 
 	// time
-	desiredTime = 0.0;
+	desiredTime = -1.0;
+
 	// state
 	desiredState = Eigen::Map<const dynamic_vector_t>(
 			commadLineTarget.data(), targetCommandSize_);

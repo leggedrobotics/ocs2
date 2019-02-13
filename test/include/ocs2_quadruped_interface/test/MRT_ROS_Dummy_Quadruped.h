@@ -18,8 +18,7 @@
 
 #include <ocs2_comm_interfaces/test/MRT_ROS_Dummy_Loop.h>
 #include "ocs2_quadruped_interface/MRT_ROS_Quadruped.h"
-
-#define SAVE_ROS_BAG
+#include "ocs2_quadruped_interface/QuadrupedXppVisualizer.h"
 
 namespace switched_model {
 
@@ -61,6 +60,8 @@ public:
 
 	typedef MRT_ROS_Quadruped<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM> mrt_t;
 	typedef typename mrt_t::Ptr 				mrt_ptr_t;
+
+	typedef QuadrupedXppVisualizer<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM> visualizer_t;
 
 
 	/**
@@ -122,38 +123,9 @@ protected:
 	 */
 	virtual void publishVisualizer(const system_observation_t& observation) override;
 
-	/**
-	 * Publishes the xpp visualization messages and also if "SAVE_ROS_BAG" is defined, it saves then in a ROS bag file.
-	 *
-	 * @param time: time.
-	 * @param basePose: Base pose in the origin frame.
-	 * @param baseLocalVelocities: Base local velocities.
-	 * @param feetPosition: Feet position in the origin frame.
-	 * @param feetVelocity: Feet velocity in the origin frame.
-	 * @param feetAcceleration: Feet acceleration in the origin frame.
-	 * @param feetForce: Contact forces acting on the feet in the origin frame.
-	 */
-	void publishXppVisualizer(
-			const scalar_t& time,
-			const base_coordinate_t& basePose,
-			const base_coordinate_t& baseLocalVelocities,
-			const vector_3d_array_t& feetPosition,
-			const vector_3d_array_t& feetVelocity,
-			const vector_3d_array_t& feetAcceleration,
-			const vector_3d_array_t& feetForce);
-
 private:
 	quadruped_interface_ptr_t ocs2QuadrupedInterfacePtr_;
-	std::string robotName_;
-	std::string rosbagFile_;
-
-	ros::Publisher visualizationPublisher_;
-	ros::Time startTime_;
-
-#ifdef SAVE_ROS_BAG
-	rosbag::Bag bag_;
-	xpp_msgs::RobotStateCartesianTrajectory robotStateCartesianTrajectoryMsg_;
-#endif
+	visualizer_t quadrupedXppVisualizer_;
 };
 
 } // end of namespace switched_model

@@ -172,6 +172,14 @@ public:
 	 */
 	const matrix3d_t& rotationMatrixOrigintoBase() const;
 
+	/**
+	 * From unite quaternion to roll-pitch-yaw Euler angles.
+	 *
+	 * @param [in] q: Input unite quaternion.
+	 * @return roll-pitch-yaw Euler angles
+	 */
+	static vector3d_t ToEulerAngle(const Eigen::Quaternion<SCALAR_T>& q);
+
 
 protected:
 	base_coordinate_t  qBase_;

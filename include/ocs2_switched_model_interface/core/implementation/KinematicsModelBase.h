@@ -133,6 +133,36 @@ void KinematicsModelBase<JOINT_COORD_SIZE, SCALAR_T>::FromBaseVelocityToInertiaV
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t JOINT_COORD_SIZE, typename SCALAR_T>
+typename KinematicsModelBase<JOINT_COORD_SIZE, SCALAR_T>::vector3d_t
+KinematicsModelBase<JOINT_COORD_SIZE, SCALAR_T>::ToEulerAngle(
+		const Eigen::Quaternion<SCALAR_T>& q) {
+
+	vector3d_t rollPitchYaw;
+
+	// roll (x-axis rotation)
+	SCALAR_T sinr_cosp = +2.0 * (q.w() * q.x() + q.y() * q.z());
+	SCALAR_T cosr_cosp = +1.0 - 2.0 * (q.x() * q.x() + q.y() * q.y());
+	rollPitchYaw(0) = atan2(sinr_cosp, cosr_cosp);
+
+	// pitch (y-axis rotation)
+	SCALAR_T sinp = +2.0 * (q.w() * q.y() - q.z() * q.x());
+	if (fabs(sinp) >= 1)
+		rollPitchYaw(1) = copysign(M_PI / 2, sinp); // use 90 degrees if out of range
+	else
+		rollPitchYaw(1) = asin(sinp);
+
+	// yaw (z-axis rotation)
+	SCALAR_T siny_cosp = +2.0 * (q.w() * q.z() + q.x() * q.y());
+	SCALAR_T cosy_cosp = +1.0 - 2.0 * (q.y() * q.y() + q.z() * q.z());
+	rollPitchYaw(2) = atan2(siny_cosp, cosy_cosp);
+
+	return std::move(rollPitchYaw);
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+template <size_t JOINT_COORD_SIZE, typename SCALAR_T>
 const typename KinematicsModelBase<JOINT_COORD_SIZE, SCALAR_T>::matrix3d_t&
 	KinematicsModelBase<JOINT_COORD_SIZE, SCALAR_T>::rotationMatrixOrigintoBase() const  {
 

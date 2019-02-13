@@ -137,10 +137,8 @@ void MPC_ROS_Quadruped<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::adjustTargetTraj
 				xDesiredTrajectory[0](2),
 				xDesiredTrajectory[0](3));
 
-		Eigen::Quaternion<scalar_t> qxyz = q_d*q_m;
-
 		base_coordinate_t targetPose;
-		targetPose.template head<3>() = qxyz.toRotationMatrix().eulerAngles(0, 1, 2);
+		targetPose.template head<3>() = kinematic_model_t::ToEulerAngle(q_d*q_m);
 		targetPose.template tail<3>() = qxyz.toRotationMatrix() * (
 				xDesiredTrajectory[0].template segment<3>(4) + currentObservation.state().template segment<3>(3));
 //		targetPose(3) = xDesiredTrajectory[0](4) + currentObservation.state()(3);  // x

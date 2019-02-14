@@ -236,7 +236,7 @@ public:
 	 *    + dhdx_i(t) \delta x + dhdu_i(t) \delta u + e(t) >= 0 \f$.
 	 * @param [out] dhdu: \f$ dhdu(t) \f$ matrix.
 	 */
-	virtual void getInequalityConstraintDerivativesControl(input_vector_array_t& dhdu) override;
+	virtual void getInequalityConstraintDerivativesInput(input_vector_array_t& dhdu) override;
 
 	/**
 	 * The ddhdxdx matrices at a given operating point for the linearized inequality constraints,

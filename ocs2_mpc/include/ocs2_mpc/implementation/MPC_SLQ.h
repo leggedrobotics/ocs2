@@ -143,9 +143,9 @@ void MPC_SLQ<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculateController(
 		slqPtr_->settings().maxLearningRateGSLQP_ = BASE::mpcSettings_.initMaxLearningRate_;
 		slqPtr_->settings().minLearningRateGSLQP_ = BASE::mpcSettings_.initMinLearningRate_;
 	} else {
-		slqPtr_->settings().maxNumIterationsSLQ_  = BASE::mpcSettings_.runtimeNumIterations_;
-		slqPtr_->settings().maxLearningRateGSLQP_ = BASE::mpcSettings_.runtimeLearningRate_;
-		slqPtr_->settings().minLearningRateGSLQP_ = BASE::mpcSettings_.runtimeLearningRate_;
+		slqPtr_->settings().maxNumIterationsSLQ_  = BASE::mpcSettings_.runtimeMaxNumIterations_;
+		slqPtr_->settings().maxLearningRateGSLQP_ = BASE::mpcSettings_.runtimeMaxLearningRate_;
+		slqPtr_->settings().minLearningRateGSLQP_ = BASE::mpcSettings_.runtimeMinLearningRate_;
 	}
 
 	// use parallel Riccati solver at each call of realtime-iteration SLQ

@@ -13,6 +13,8 @@
 
 #include "ocs2_quadruped_interface/OCS2QuadrupedInterface.h"
 
+#define ABS_HEADING
+
 namespace switched_model {
 
 template <size_t JOINT_COORD_SIZE, size_t STATE_DIM=12+JOINT_COORD_SIZE, size_t INPUT_DIM=12+JOINT_COORD_SIZE>
@@ -121,6 +123,9 @@ public:
 			mode_sequence_template_t& newLogicRulesTemplate) override {}
 
 protected:
+	scalar_t estimeTimeToTarget(
+			const Eigen::Matrix<scalar_t,2,1>& xyDisplacement) const;
+
 	void targetPoseToDesiredTrajectories(
 			const scalar_t& currentTime,
 			const state_vector_t& currentState,

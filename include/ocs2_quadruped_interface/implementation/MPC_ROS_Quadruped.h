@@ -78,10 +78,6 @@ void MPC_ROS_Quadruped<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::adjustTargetTraj
 		cost_desired_trajectories_t& costDesiredTrajectories) {
 
 	if (costDesiredTrajectories.desiredStateTrajectory().size()==1) {
-//		// targetPoseDisplacement
-//		base_coordinate_t targetPoseDisplacement1, targetVelocity1;
-//		ocs2::TargetPoseTransformation<scalar_t>::toTargetPoseDisplacement(costDesiredTrajectories.desiredStateTrajectory()[0],
-//				targetPoseDisplacement1, targetVelocity1);
 
 		typename cost_desired_trajectories_t::scalar_array_t& tDesiredTrajectory =
 				costDesiredTrajectories.desiredTimeTrajectory();
@@ -90,32 +86,34 @@ void MPC_ROS_Quadruped<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::adjustTargetTraj
 		typename cost_desired_trajectories_t::dynamic_vector_array_t& uDesiredTrajectory =
 				costDesiredTrajectories.desiredInputTrajectory();
 
-
-//		// costDesiredTrajectories
-//		targetPoseToDesiredTrajectories(
-//				currentObservation.time(), currentObservation.state(),
-//				ocs2QuadrupedInterfacePtr_->modelSettings().mpcGoalCommandDelay_,
-//				targetReachingDuration, targetPoseDisplacement1, targetVelocity1,
-//				costDesiredTrajectories);
-
+#ifdef ABS_HEADING
+		// time to reach target
 		scalar_t timeToTarget;
-		if (tDesiredTrajectory[0]<0) {
-			// x direction
-			size_t numReqiredStepsX = std::ceil(
-					std::abs(xDesiredTrajectory[0](4)) / (1.0*ocs2QuadrupedInterfacePtr_->strideLength()) );
-			// y direction
-			size_t numReqiredStepsY = std::ceil(
-					std::abs(xDesiredTrajectory[0](5)) / (0.5*ocs2QuadrupedInterfacePtr_->strideLength()) );
-			// max
-			size_t numReqiredSteps = std::max(numReqiredStepsX, numReqiredStepsY);
-
-			// targetReachingDuration
-			timeToTarget = numReqiredSteps * ocs2QuadrupedInterfacePtr_->numPhasesInfullGaitCycle()
-										* ocs2QuadrupedInterfacePtr_->strideTime();
-
-		} else {
+		if (tDesiredTrajectory[0]<0)
+			timeToTarget = estimeTimeToTarget(xDesiredTrajectory[0].template segment<2>(4));
+		else
 			timeToTarget = tDesiredTrajectory[0];
-		}
+
+		// targetPoseDisplacement
+		base_coordinate_t targetPoseDisplacement, targetVelocity;
+		ocs2::TargetPoseTransformation<scalar_t>::toTargetPoseDisplacement(
+				costDesiredTrajectories.desiredStateTrajectory()[0],
+				targetPoseDisplacement, targetVelocity);
+
+		// costDesiredTrajectories
+		targetPoseToDesiredTrajectories(
+				currentObservation.time(), currentObservation.state(),
+				ocs2QuadrupedInterfacePtr_->modelSettings().mpcGoalCommandDelay_,
+				timeToTarget, targetPoseDisplacement, targetVelocity,
+				costDesiredTrajectories);
+
+#else
+		// time to reach target
+		scalar_t timeToTarget;
+		if (tDesiredTrajectory[0]<0)
+			timeToTarget = estimeTimeToTarget(xDesiredTrajectory[0].template segment<2>(4));
+		else
+			timeToTarget = tDesiredTrajectory[0];
 
 		// Desired time trajectory
 		tDesiredTrajectory.resize(2);
@@ -176,6 +174,7 @@ void MPC_ROS_Quadruped<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::adjustTargetTraj
 		uDesiredTrajectory.resize(2);
 		uDesiredTrajectory[0] = initInput_;
 		uDesiredTrajectory[1] = initInput_;
+#endif
 
 	} else {
 
@@ -198,6 +197,30 @@ void MPC_ROS_Quadruped<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::adjustTargetTraj
 			costDesiredTrajectories.desiredInputTrajectory().at(i) = initInput_;
 		} // end of i loop
 	}
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM>
+typename MPC_ROS_Quadruped<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::scalar_t
+MPC_ROS_Quadruped<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::estimeTimeToTarget(
+		const Eigen::Matrix<scalar_t,2,1>& xyDisplacement) const {
+
+	// x direction
+	size_t numReqiredStepsX = std::ceil(
+			std::abs(xyDisplacement(0)) / (1.0*ocs2QuadrupedInterfacePtr_->strideLength()) );
+	// y direction
+	size_t numReqiredStepsY = std::ceil(
+			std::abs(xyDisplacement(1)) / (0.5*ocs2QuadrupedInterfacePtr_->strideLength()) );
+	// max
+	size_t numReqiredSteps = std::max(numReqiredStepsX, numReqiredStepsY);
+
+	// targetReachingDuration
+	scalar_t timeToTarget = numReqiredSteps * ocs2QuadrupedInterfacePtr_->numPhasesInfullGaitCycle()
+			* ocs2QuadrupedInterfacePtr_->strideTime();
+
+	return timeToTarget;
 }
 
 /******************************************************************************************************/
@@ -235,8 +258,10 @@ void MPC_ROS_Quadruped<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::targetPoseToDesi
 	xDesiredTrajectory[1].template segment<2>(0) = defaultConfiguration_. template segment<2>(0)   + targetPoseDisplacement.template segment<2>(0);
 	// Yaw from initialization
 	xDesiredTrajectory[1].template segment<1>(2) = initState_.template segment<1>(2)   + targetPoseDisplacement.template segment<1>(2);
-	// base x, y, and z relative to current state
-	xDesiredTrajectory[1].template segment<3>(3) = currentState. template segment<3>(3) + targetPoseDisplacement.template segment<3>(3);
+	// base x, y relative to current state
+	xDesiredTrajectory[1].template segment<2>(3) = currentState. template segment<2>(3) + targetPoseDisplacement.template segment<2>(3);
+	// base z from initialization
+	xDesiredTrajectory[1].template segment<1>(5) = defaultConfiguration_. template segment<1>(5) + targetPoseDisplacement.template segment<1>(5);
 	// target velocities
 	xDesiredTrajectory[1].template segment<6>(6) = targetVelocity;
 	// joint angle from initialization

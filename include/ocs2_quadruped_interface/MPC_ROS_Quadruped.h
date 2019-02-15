@@ -33,6 +33,8 @@ public:
 	typedef typename quadruped_interface_t::base_coordinate_t 		base_coordinate_t;
 	typedef typename quadruped_interface_t::rbd_state_vector_t		rbd_state_vector_t;
 
+	typedef typename quadruped_interface_t::kinematic_model_t       kinematic_model_t;
+
 	enum {
 		rbd_state_dim_ = quadruped_interface_t::rbd_state_dim_
 	};

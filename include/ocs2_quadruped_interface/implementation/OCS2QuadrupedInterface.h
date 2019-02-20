@@ -21,7 +21,7 @@ OCS2QuadrupedInterface<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::OCS2QuadrupedInt
 		  switchedModelStateEstimator_(comModel)
 {
 	// load setting from loading file
-	std::string pathToConfigFile = pathToConfigFolder;
+	std::string pathToConfigFile = pathToConfigFolder + "/task.info";
 	loadSettings(pathToConfigFile);
 
 	// logic rule

@@ -126,6 +126,9 @@ public:
 //	typedef typename ocs2_t::Ptr 		ocs2_ptr_t;
 	typedef typename mpc_t::Ptr 		mpc_ptr_t;
 
+  	typedef ocs2::ControlledSystemBase<STATE_DIM, INPUT_DIM, logic_rules_t> controlled_system_base_t;
+  	typedef typename controlled_system_base_t::Ptr controlled_system_base_ptr_t;
+
 	/**
 	 * Default constructor
 	 */
@@ -164,6 +167,11 @@ public:
 	virtual void designWeightCompensatingInput(
 			const state_vector_t& switchedState,
 			input_vector_t& uForWeightCompensation) = 0;
+
+  	/**
+	 * get base class pointer to systemdynamics implementation
+	 */
+  	virtual controlled_system_base_ptr_t getSystemDynamicsPtr() = 0;
 
 	/**
 	 * Run the SLQ algorithm.
@@ -450,6 +458,7 @@ public:
 	size_t numPhasesInfullGaitCycle() {
 		return modelSettings_.numPhasesInfullGaitCycle_;
 	}
+
 
 protected:
 	/**

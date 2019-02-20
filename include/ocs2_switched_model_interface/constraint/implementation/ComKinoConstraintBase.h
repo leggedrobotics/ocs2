@@ -275,7 +275,7 @@ void ComKinoConstraintBase<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM, LOGIC_RULES_T
 			const scalar_t Fx = Base::u_(3 * i + 0);
 			const scalar_t Fy = Base::u_(3 * i + 1);
 			const scalar_t Fz = Base::u_(3 * i + 2);
-			h.push_back( Fz*sqrt(2.0*mu*mu)-sqrt(Fx*Fx+Fy*Fy+mu*mu*Fz*Fz) );
+			h.push_back( Fz*sqrt(2.0*mu*mu)-sqrt(Fx*Fx+Fy*Fy+mu*mu*Fz*Fz + 1.0) );
 		}
 	}
 }
@@ -552,14 +552,11 @@ void ComKinoConstraintBase<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM, LOGIC_RULES_T
 			const scalar_t Fx = Base::u_(3 * i + 0);
 			const scalar_t Fy = Base::u_(3 * i + 1);
 			const scalar_t Fz = Base::u_(3 * i + 2);
-			const scalar_t F_norm = sqrt(Fx*Fx+Fy*Fy+Fz*Fz*mu*mu);
-			if (F_norm > 0){
-				frictionConeDerivative(3 * i + 0) = -Fx/F_norm;
-				frictionConeDerivative(3 * i + 1) = -Fy/F_norm;
-				frictionConeDerivative(3 * i + 2) = -mu*mu*Fz/F_norm + sqrt(2.0*mu*mu);
-			} else {  // Fi / F_norm = 0 / 0 ==> 0
-				frictionConeDerivative(3 * i + 2) = sqrt(2.0*mu*mu);
-			}
+			const scalar_t F_norm = sqrt(Fx*Fx+Fy*Fy+Fz*Fz*mu*mu + 1.0);
+			frictionConeDerivative(3 * i + 0) = -Fx / F_norm;
+			frictionConeDerivative(3 * i + 1) = -Fy / F_norm;
+			frictionConeDerivative(3 * i + 2) = -mu*mu*Fz / F_norm + sqrt(2.0*mu*mu);
+
 			dhdu.push_back( frictionConeDerivative );
 		}
 	}
@@ -601,19 +598,18 @@ void ComKinoConstraintBase<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM, LOGIC_RULES_T
 			const scalar_t Fx = Base::u_(3 * i + 0);
 			const scalar_t Fy = Base::u_(3 * i + 1);
 			const scalar_t Fz = Base::u_(3 * i + 2);
-			const scalar_t F_norm2 = Fx*Fx+Fy*Fy+mu*mu*Fz*Fz;
-			if (F_norm2 > 0){
-				const scalar_t F_norm32 = pow(F_norm2, 1.5);
-				frictionConeHessian(3 * i + 0, 3 * i + 0) = -(Fy*Fy+mu*mu*Fz*Fz)/F_norm32;
-				frictionConeHessian(3 * i + 0, 3 * i + 1) = Fx*Fy/F_norm32;
-				frictionConeHessian(3 * i + 0, 3 * i + 2) = Fx*mu*mu*Fz/F_norm32;
-				frictionConeHessian(3 * i + 1, 3 * i + 0) = Fx*Fy/F_norm32;
-				frictionConeHessian(3 * i + 1, 3 * i + 1) = -(Fx*Fx+mu*mu*Fz*Fz)/F_norm32;
-				frictionConeHessian(3 * i + 1, 3 * i + 2) = Fy*mu*mu*Fz/F_norm32;
-				frictionConeHessian(3 * i + 2, 3 * i + 0) = Fx*mu*mu*Fz/F_norm32;
-				frictionConeHessian(3 * i + 2, 3 * i + 1) = Fy*mu*mu*Fz/F_norm32;
-				frictionConeHessian(3 * i + 2, 3 * i + 2) = -mu*mu*(Fx*Fx+Fy*Fy)/F_norm32;
-			} // else all terms are 0 / 0 ==> 0
+			const scalar_t F_norm2 = Fx*Fx+Fy*Fy+mu*mu*Fz*Fz + 1.0;
+
+			const scalar_t F_norm32 = pow(F_norm2, 1.5);
+			frictionConeHessian(3 * i + 0, 3 * i + 0) = -(Fy*Fy + mu*mu*Fz*Fz + 1.0) / F_norm32;
+			frictionConeHessian(3 * i + 0, 3 * i + 1) = Fx * Fy / F_norm32;
+			frictionConeHessian(3 * i + 0, 3 * i + 2) = Fx * mu*mu*Fz / F_norm32;
+			frictionConeHessian(3 * i + 1, 3 * i + 0) = Fx * Fy / F_norm32;
+			frictionConeHessian(3 * i + 1, 3 * i + 1) = -(Fx*Fx + mu*mu*Fz*Fz + 1.0) / F_norm32;
+			frictionConeHessian(3 * i + 1, 3 * i + 2) = Fy * mu*mu*Fz / F_norm32;
+			frictionConeHessian(3 * i + 2, 3 * i + 0) = Fx * mu*mu*Fz / F_norm32;
+			frictionConeHessian(3 * i + 2, 3 * i + 1) = Fy * mu*mu*Fz / F_norm32;
+			frictionConeHessian(3 * i + 2, 3 * i + 2) = -mu*mu * (Fx*Fx + Fy*Fy + 1.0) / F_norm32;
 
 			ddhdudu.push_back( frictionConeHessian );
 		}

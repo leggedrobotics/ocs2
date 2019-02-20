@@ -26,7 +26,7 @@ int main( int argc, char* argv[] )
 	/******************************************************************************************************/
 	if ( argc <= 1) throw std::runtime_error("No task file specified. Aborting.");
 	boost::filesystem::path filePath(__FILE__);
-	std::string taskFile = filePath.parent_path().parent_path().generic_string() + "/config/" + std::string(argv[1]) + "/task.info";
+	std::string taskFile = filePath.parent_path().parent_path().generic_string() + "/config/" + std::string(argv[1]);
 	std::cout << "Loading task file: " << taskFile << std::endl;
 
 	ocs2_robot_interface_t::Ptr optimizationInterfacePtr( new ocs2_robot_interface_t(taskFile) );

@@ -21,7 +21,7 @@ int main( int argc, char* argv[] )
 
 	// task file
 	if ( argc <= 1) throw std::runtime_error("No task file specified. Aborting.");
-	std::string taskFile = std::string(PACKAGE_PATH) + "/config/" + std::string(argv[1]) + "/task.info";
+	std::string taskFile = std::string(PACKAGE_PATH) + "/config/" + std::string(argv[1]);
 	std::cerr << "Loading task file: " << taskFile << std::endl;
 
 	// launch MPC nodes

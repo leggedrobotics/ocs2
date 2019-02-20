@@ -80,6 +80,18 @@ target_link_libraries(${PROJECT_NAME}
   ${catkin_LIBRARIES}
 )
 
+add_executable(debug_frictionCone
+        test/debug_frictionCone.cpp)
+add_dependencies(debug_frictionCone
+        ${PROJECT_NAME}
+        ${${PROJECT_NAME}_EXPORTED_TARGETS}
+        ${catkin_EXPORTED_TARGETS}
+        )
+target_link_libraries(debug_frictionCone
+        ${PROJECT_NAME}
+        ${catkin_LIBRARIES}
+        )
+
 #############
 ## Install ##
 #############

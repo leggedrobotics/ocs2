@@ -72,7 +72,7 @@ slq
   stateConstraintPenaltyBase    0.0
   meritFunctionRho              50.0
   constraintStepSize            1.0
-  displayInfo                   1
+  displayInfo                   0
   displayShortSummary           1
   warmStartGSLQP                1
   useLQForDerivatives           0
@@ -96,7 +96,7 @@ slq
   maxLearningRateNLP            0.6
   useAscendingLineSearchNLP     1
 
-  useMultiThreading             0
+  useMultiThreading             1
   nThreads                      5
   threadPriority                50
   debugPrintMP                  0
@@ -198,23 +198,23 @@ Q
     scaling 1e+0
 
    ; orientation
-   (0,0) 10.0     ; x
-   (1,1) 10.0     ; y
-   (2,2) 50.0     ; z
+   (0,0) 2000.0     ; x
+   (1,1) 2000.0     ; y
+   (2,2) 2000.0     ; z
 
    ; positon
    (3,3) 1000.0      ; x
    (4,4) 1000.0      ; y
-   (5,5) 5000.0      ; z
+   (5,5) 3000.0      ; z
 
    ; angular velocity
-   (6,6) 1.0      ; x
-   (7,7) 1.0      ; y
-   (8,8) 1.0      ; z
+   (6,6) 200.0      ; x
+   (7,7) 200.0      ; y
+   (8,8) 200.0      ; z
 
    ; translational velocity
-   (9,9)    50.0    ; x
-   (10,10)  50.0    ; y
+   (9,9)   100.0    ; x
+   (10,10) 100.0    ; y
    (11,11) 150.0    ; z
 
    ; LF joints
@@ -266,24 +266,24 @@ R
 
 
    ; LF joint velocities
-   (12,12) 100   ; LF_HAA
-   (13,13) 100   ; LF_HFE
-   (14,14) 10   ; LF_KFE
+   (12,12) 1000   ; LF_HAA
+   (13,13) 1000   ; LF_HFE
+   (14,14) 100   ; LF_KFE
 
    ; RF joint velocities
-   (15,15) 100    ; RF_HAA
-   (16,16) 100    ; RF_HFE
-   (17,17) 10    ; RF_KFE
+   (15,15) 1000    ; RF_HAA
+   (16,16) 1000    ; RF_HFE
+   (17,17) 100    ; RF_KFE
 
    ; LH joint velocities
-   (18,18) 100    ; LH_HAA
-   (19,19) 100    ; LH_HFE
-   (20,20) 10    ; LH_KFE
+   (18,18) 1000    ; LH_HAA
+   (19,19) 1000    ; LH_HFE
+   (20,20) 100    ; LH_KFE
 
    ; RH joint velocities
-   (21,21) 100    ; RH_HAA
-   (22,22) 100    ; RH_HFE
-   (23,23) 10    ; RH_KFE
+   (21,21) 1000    ; RH_HAA
+   (22,22) 1000    ; RH_HFE
+   (23,23) 100    ; RH_KFE
 }
 
 

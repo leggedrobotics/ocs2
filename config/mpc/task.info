@@ -65,7 +65,7 @@ defaultModeSequenceTemplate
 slq
 {
   maxNumIterationsSLQ           10      ;50
-  minLearningRateGSLQP          1.0     ;0.1
+  minLearningRateGSLQP          1e-4     ;0.1
   maxLearningRateGSLQP          1.0
   minRelCostGSLQP               0.1     ;0.01
   stateConstraintPenaltyCoeff   5.0
@@ -88,6 +88,7 @@ slq
   minAbsConstraint1ISE          5e-3
   minRelConstraint1ISE          5e-6
   checkNumericalStability       0
+
   displayGradientDescent        0
   tolGradientDescent            1e-2
   acceptableTolGradientDescent  1e-2
@@ -114,7 +115,7 @@ slq
 mpc
 {
   runtimeMaxNumIterations         1
-  initMaxNumIterations            10
+  initMaxNumIterations            1
 	
   runtimeMinLearningRate          1e-2
   runtimeMaxLearningRate          1.0
@@ -127,14 +128,16 @@ mpc
 
   useParallelRiccatiSolver        1	; use disjoint riccati solver in MP case and recedingHorizon fashion
 
-  useFeedbackPolicy               0
+  useFeedbackPolicy               1
   forwardSimulationTime           28	; [ms] MRT time
 
-  rosMsgTimeWindow                200	; [ms]
+  rosMsgTimeWindow                250	; [ms]
   adaptiveRosMsgTimeWindow        0
 
   mpcDesiredFrequency             100 ; [Hz]
-  mrtDesiredFrequency             400 ; [Hz]  
+  mrtDesiredFrequency             400 ; [Hz]
+
+  maxTimeStep                     10e-3
 }
 
 
@@ -198,9 +201,9 @@ Q
     scaling 1e+0
 
    ; orientation
-   (0,0) 2000.0     ; x
-   (1,1) 2000.0     ; y
-   (2,2) 2000.0     ; z
+   (0,0) 20.0     ; x
+   (1,1) 20.0     ; y
+   (2,2) 20.0     ; z
 
    ; positon
    (3,3) 1000.0      ; x
@@ -208,13 +211,13 @@ Q
    (5,5) 3000.0      ; z
 
    ; angular velocity
-   (6,6) 200.0      ; x
-   (7,7) 200.0      ; y
-   (8,8) 200.0      ; z
+   (6,6) 2.0      ; x
+   (7,7) 2.0      ; y
+   (8,8) 2.0      ; z
 
    ; translational velocity
-   (9,9)   100.0    ; x
-   (10,10) 100.0    ; y
+   (9,9)    50.0    ; x
+   (10,10)  50.0    ; y
    (11,11) 150.0    ; z
 
    ; LF joints

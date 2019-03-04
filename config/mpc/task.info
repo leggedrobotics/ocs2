@@ -2,7 +2,7 @@
 mpcTimeHorizon
 {
     timehorizon        1.0		; 1.2		; 0.8
-    numPartitions      4
+    numPartitions      2
 }
 
 visualization
@@ -22,11 +22,17 @@ model_settings
   zDirectionPositionWeight      0.0
   zDirectionVelocityWeight      0.5
 
+  enforceFrictionConeConstraint 0
+  frictionCoefficient           0.7
+
+  enforceTorqueConstraint       0
+  torqueLimit                   40.0
+
   swingLegLiftOff               0.30
   liftOffVelocity               0.0
-  touchDownVelocity             0.0
+  touchDownVelocity             -0.75
 
-  copWeight                     150.0    ; 600.0
+  copWeight                     300.0    ; 600.0
   impulseWeight                 0.0
   impulseSigmeFactor            0.1
 
@@ -81,7 +87,7 @@ slq
   RelTolODE                     1e-3  ;1e-4
   minTimeStep                   1e-3
   useMakePSD                    0
-  addedRiccatiDiagonal          1e-4
+  addedRiccatiDiagonal          1e-5
   maxNumStepsPerSecond          50000
   simulationIsConstrained       0
   noStateConstraints            0
@@ -131,7 +137,7 @@ mpc
   useFeedbackPolicy               1
   forwardSimulationTime           28	; [ms] MRT time
 
-  rosMsgTimeWindow                250	; [ms]
+  rosMsgTimeWindow                200	; [ms]
   adaptiveRosMsgTimeWindow        0
 
   mpcDesiredFrequency             100 ; [Hz]
@@ -152,7 +158,7 @@ initialRobotState
    ; position
    (3,0) 0.0     ; x
    (4,0) 0.0     ; y
-   (5,0) 0.4792  ; z
+   (5,0) 0.495  ; z
 
    ; joint state
    (6,0)  -0.1; -0.2      ; LF_HAA
@@ -201,24 +207,24 @@ Q
     scaling 1e+0
 
    ; orientation
-   (0,0) 20.0     ; x
-   (1,1) 20.0     ; y
-   (2,2) 20.0     ; z
+   (0,0) 1000.0     ; x
+   (1,1) 2000.0     ; y
+   (2,2)    0.0     ; z
 
    ; positon
    (3,3) 1000.0      ; x
    (4,4) 1000.0      ; y
-   (5,5) 3000.0      ; z
+   (5,5) 1500.0      ; z
 
    ; angular velocity
-   (6,6) 2.0      ; x
-   (7,7) 2.0      ; y
-   (8,8) 2.0      ; z
+   (6,6)   5.0      ; x
+   (7,7)  10.0      ; y
+   (8,8)  10.0      ; z
 
    ; translational velocity
-   (9,9)    50.0    ; x
-   (10,10)  50.0    ; y
-   (11,11) 150.0    ; z
+   (9,9)    15.0    ; x
+   (10,10)  15.0    ; y
+   (11,11)  30.0    ; z
 
    ; LF joints
    (12,12) 20.0 ; LF_HAA  ; 100.0

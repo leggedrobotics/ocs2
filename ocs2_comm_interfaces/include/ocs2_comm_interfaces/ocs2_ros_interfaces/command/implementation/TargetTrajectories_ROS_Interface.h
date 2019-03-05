@@ -86,7 +86,7 @@ void TargetTrajectories_ROS_Interface<SCALAR_T>::launchNodes(int argc, char* arg
 	::ros::NodeHandle nodeHandler;
 
 	mpcTargetTrajectoriesPublisher_ = nodeHandler.advertise<ocs2_comm_interfaces::mpc_target_trajectories>(
-			robotName_ + "_mpc_target", 1, true);
+			robotName_ + "_mpc_target", 1, false);
 
 	ros::spinOnce();
 

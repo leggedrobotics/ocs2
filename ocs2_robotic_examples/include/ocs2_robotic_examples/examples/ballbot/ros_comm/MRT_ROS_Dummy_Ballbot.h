@@ -117,7 +117,7 @@ public:
 				base_transform.transform.rotation.y = quaternionBaseToWorld.y();
 				base_transform.transform.rotation.z = quaternionBaseToWorld.z();
 
-				tfBroadcaster_.sendTransform(base_transform);
+				tfBroadcasterPtr_->sendTransform(base_transform);
 
 				// Broadcast transformation from rezero observation to robot ball
 				geometry_msgs::TransformStamped ball_transform;
@@ -131,7 +131,7 @@ public:
 				ball_transform.transform.rotation.y = 0.0;
 				ball_transform.transform.rotation.z = 0.0;
 
-				tfBroadcaster_.sendTransform(ball_transform);
+				tfBroadcasterPtr_->sendTransform(ball_transform);
 	}
 
 	void testVisualizerNode(const system_observation_t& observation){
@@ -218,7 +218,9 @@ protected:
 		if (!kdl_parser::treeFromUrdfModel(model, tree)) {
 			ROS_ERROR("Failed to extract kdl tree from xml robot description");
 		}
-		robotStatePublisher_.reset(new robot_state_publisher::RobotStatePublisher(tree));
+		robotStatePublisherPtr_.reset(new robot_state_publisher::RobotStatePublisher(tree));
+
+		tfBroadcasterPtr_.reset(new tf::TransformBroadcaster);
 	}
 
 	/**
@@ -390,8 +392,8 @@ protected:
 	 ************/
 	ros::Publisher visualizationPublisher_;
 	ros::Publisher posePublisher_;
-	tf::TransformBroadcaster tfBroadcaster_;
-	std::unique_ptr<robot_state_publisher::RobotStatePublisher> robotStatePublisher_;
+	std::unique_ptr<tf::TransformBroadcaster> tfBroadcasterPtr_;
+	std::unique_ptr<robot_state_publisher::RobotStatePublisher> robotStatePublisherPtr_;
 
 };
 

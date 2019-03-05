@@ -37,7 +37,6 @@ using namespace ballbot;
 
 int main(int argc, char **argv)
 {
-	ros::init(argc, argv, "ballbot_communication");
 	// task file
 	if (argc <= 1) throw std::runtime_error("No task file specified. Aborting.");
 	std::string taskFileFolderName = std::string(argv[1]);
@@ -45,12 +44,11 @@ int main(int argc, char **argv)
 	// ballbotInterface
 	BallbotInterface ballbotInterface(taskFileFolderName);
 
-	typedef MRT_ROS_Interface<ballbot::STATE_DIM_, ballbot::INPUT_DIM_> mrt_t;
-	typedef typename mrt_t::Ptr	mrt_ptr_t;
+	typedef MRT_ROS_Ballbot mrt_t;
+	typedef typename mrt_t::BASE::Ptr mrt_base_ptr_t;
 	typedef typename mrt_t::scalar_t scalar_t;
 	typedef typename mrt_t::system_observation_t system_observation_t;
-	mrt_ptr_t mrtPtr(new mrt_t(
-			NullLogicRules(),
+	mrt_base_ptr_t mrtPtr(new mrt_t(
 			!ballbotInterface.mpcSettings().useFeedbackPolicy_,
 			"ballbot"));
 
@@ -61,6 +59,7 @@ int main(int argc, char **argv)
 			ballbotInterface.mpcSettings().mpcDesiredFrequency_);
 
 	dummyBallbot.launchNodes(argc, argv);
+
 	// Initialize dummy
 	MRT_ROS_Dummy_Ballbot::system_observation_t initObservation;
 	ballbotInterface.getInitialState(initObservation.state());

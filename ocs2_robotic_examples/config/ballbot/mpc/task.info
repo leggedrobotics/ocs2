@@ -71,27 +71,28 @@ slq
 ; MPC settings
 mpc
 {
-	runtimeNumIterations           1
-	initMaxNumIterations           10
+	runtimeMaxNumIterations     1
+	initMaxNumIterations        10
 	                               
-	runtimeLearningRate            1
-	initMaxLearningRate            1.0
-	initMinLearningRate            0.1
+	runtimeMaxLearningRate      1.0
+	runtimeMinLearningRate      1.0
+	initMinLearningRate         0.1
+	initMaxLearningRate         1.0
 	                               
-	debugPrint                     1
-	coldStart                      0
-	recedingHorizon                1    ; use receding horizon MPC
-                                   
-	useParallelRiccatiSolver       1    ; use disjoint riccati solver in MP case and recedingHorizon fashion
-	                               
-	useFeedbackPolicy              0
-	forwardSimulationTime          28   ; [ms] MRT time
-	                               
-	rosMsgTimeWindow               200  ; [ms]
-	adaptiveRosMsgTimeWindow       0
-	                               
-	mpcDesiredFrequency            100  ; [Hz] 
-	mrtDesiredFrequency            400  ; [Hz] 
+	debugPrint                  1
+	coldStart                   0
+	recedingHorizon             1    ; use receding horizon MPC
+
+	useParallelRiccatiSolver    1    ; use disjoint riccati solver in MP case and recedingHorizon fashion
+
+	useFeedbackPolicy           0
+	forwardSimulationTime       28   ; [ms] MRT time
+
+	rosMsgTimeWindow            200  ; [ms]
+	adaptiveRosMsgTimeWindow    0
+
+	mpcDesiredFrequency         100  ; [Hz] 
+	mrtDesiredFrequency         400  ; [Hz] 
 }
 
 ; ballbot interface settings

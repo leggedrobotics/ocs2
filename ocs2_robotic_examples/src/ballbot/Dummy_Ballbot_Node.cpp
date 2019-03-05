@@ -45,9 +45,10 @@ int main(int argc, char **argv)
 	BallbotInterface ballbotInterface(taskFileFolderName);
 
 	typedef MRT_ROS_Ballbot mrt_t;
-	typedef typename mrt_t::BASE::Ptr mrt_base_ptr_t;
-	typedef typename mrt_t::scalar_t scalar_t;
-	typedef typename mrt_t::system_observation_t system_observation_t;
+	typedef mrt_t::BASE::Ptr mrt_base_ptr_t;
+	typedef mrt_t::scalar_t scalar_t;
+	typedef mrt_t::system_observation_t system_observation_t;
+
 	mrt_base_ptr_t mrtPtr(new mrt_t(
 			!ballbotInterface.mpcSettings().useFeedbackPolicy_,
 			"ballbot"));

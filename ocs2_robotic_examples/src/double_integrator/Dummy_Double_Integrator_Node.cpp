@@ -44,13 +44,12 @@ int main(int argc, char **argv)
 	// double_integratorInterface
 	DoubleIntegratorInterface double_integratorInterface(taskFileFolderName);
 
-	typedef ocs2::MRT_ROS_Interface<double_integrator::STATE_DIM_, double_integrator::INPUT_DIM_> mrt_t;
-	typedef typename mrt_t::Ptr	mrt_ptr_t;
-	typedef typename mrt_t::scalar_t scalar_t;
-	typedef typename mrt_t::system_observation_t system_observation_t;
+	typedef MRT_ROS_Double_Integrator mrt_t;
+	typedef mrt_t::BASE::Ptr mrt_base_ptr_t;
+	typedef mrt_t::scalar_t scalar_t;
+	typedef mrt_t::system_observation_t system_observation_t;
 
-	mrt_ptr_t mrtPtr(new mrt_t(
-			NullLogicRules(),
+	mrt_base_ptr_t mrtPtr(new mrt_t(
 			!double_integratorInterface.mpcSettings().useFeedbackPolicy_,
 			"double_integrator"));
 
@@ -59,7 +58,9 @@ int main(int argc, char **argv)
 			mrtPtr,
 			double_integratorInterface.mpcSettings().mrtDesiredFrequency_,
 			double_integratorInterface.mpcSettings().mpcDesiredFrequency_);
+
 	dummyDoubleIntegrator.launchNodes(argc, argv);
+
 	// Initialize dummy
 	MRT_ROS_Dummy_Linear_System::system_observation_t initObservation;
 	double_integratorInterface.getInitialState(initObservation.state());

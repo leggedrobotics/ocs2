@@ -43,7 +43,7 @@ namespace double_integrator {
  * @tparam double_integrator::STATE_DIM_: Dimension of the state space.
  * @tparam double_integrator::INPUT_DIM_: Dimension of the control input space.
  */
-class MRT_ROS_Linear_System : public MRT_ROS_Interface<double_integrator::STATE_DIM_, double_integrator::INPUT_DIM_>
+class MRT_ROS_Double_Integrator : public MRT_ROS_Interface<double_integrator::STATE_DIM_, double_integrator::INPUT_DIM_>
 {
 public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
@@ -74,7 +74,7 @@ public:
 	/**
 	 * Default constructor
 	 */
-	MRT_ROS_Linear_System() = default;
+	MRT_ROS_Double_Integrator() = default;
 
 	/**
 	 * Constructor
@@ -83,7 +83,7 @@ public:
 	 * @param [in] useFeedforwardPolicy: Whether to receive the MPC feedforward (true) or MPC feedback policy (false).
 	 * @param [in] robotName: The robot's name.
 	 */
-	MRT_ROS_Linear_System(
+	MRT_ROS_Double_Integrator(
 			const bool& useFeedforwardPolicy = true,
 			const std::string& robotName = "robot_mpc")
 
@@ -93,7 +93,7 @@ public:
 	/**
 	 * Destructor
 	 */
-	virtual ~MRT_ROS_Linear_System() = default;
+	virtual ~MRT_ROS_Double_Integrator() = default;
 
 	/**
 	 * This method will be called either after the very fist call of the class or after a call to reset().
@@ -102,7 +102,8 @@ public:
 	 * @param [in] planObservation: The observation of the policy.
 	 */
 	virtual void initCall(
-			const system_observation_t& planObservation) {}
+			const system_observation_t& planObservation)
+	{}
 
 private:
 

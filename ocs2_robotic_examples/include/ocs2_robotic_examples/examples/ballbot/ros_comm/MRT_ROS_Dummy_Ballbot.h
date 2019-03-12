@@ -169,7 +169,7 @@ protected:
 		baseMarker.ns = "";
 		baseMarker.id = 0;
 		baseMarker.type = visualization_msgs::Marker::MESH_RESOURCE;
-		baseMarker.mesh_resource = "package://ocs2_ballbot_no_arm_visualization/meshes/complete_robot_june.dae";
+		baseMarker.mesh_resource = "package://ocs2_robotic_examples/visualization/urdf/ballbot/meshes/complete_robot_june.dae";
 		baseMarker.action = visualization_msgs::Marker::ADD;
 		baseMarker.pose.position.x = 0.0;
 		baseMarker.pose.position.y = 0.0;

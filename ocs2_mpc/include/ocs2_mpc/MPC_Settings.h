@@ -55,7 +55,7 @@ public:
 	, initMinLearningRate_(1.0)
 	, debugPrint_(false)
 	, coldStart_(false)
-	, recedingHorizon_(false)
+	, recedingHorizon_(true)
 	, blockwiseMovingHorizon_(false)
 	, forwardSimulationTime_(0)   // [ms]
 	, useFeedbackPolicy_(false)

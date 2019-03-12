@@ -66,9 +66,6 @@ int main(int argc, char **argv)
 	ballbotInterface.getInitialState(initObservation.state());
 	dummyBallbot.init(initObservation);
 
-	// temporarily test visualization
-	dummyBallbot.testVisualizerNode(initObservation);
-
 	// run dummy
 	dummyBallbot.run();
 

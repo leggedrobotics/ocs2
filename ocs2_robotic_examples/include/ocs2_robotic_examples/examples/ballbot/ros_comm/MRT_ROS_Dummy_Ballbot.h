@@ -89,48 +89,53 @@ public:
 		Eigen::Matrix3d rotationMatrixBaseToWorld;
 
 		quaternionBaseToWorld = Eigen::AngleAxisd{observation.state()(2), Eigen::Vector3d{0, 0, 1}}*
-				Eigen::AngleAxisd{observation.state()(3), Eigen::Vector3d{0, 1, 0}}*
-				Eigen::AngleAxisd{observation.state()(4), Eigen::Vector3d{1, 0, 0}};
+								Eigen::AngleAxisd{observation.state()(3), Eigen::Vector3d{0, 1, 0}}*
+								Eigen::AngleAxisd{observation.state()(4), Eigen::Vector3d{1, 0, 0}};
 
 
 
-				rotationMatrixBaseToWorld = quaternionBaseToWorld.normalized().toRotationMatrix();
+		rotationMatrixBaseToWorld = quaternionBaseToWorld.normalized().toRotationMatrix();
 
-				positionWorldToBall << observation.state()(0), observation.state()(1), 0.125;
-
-
-				positionWorldToBase = positionWorldToBall + rotationMatrixBaseToWorld*Eigen::Vector3d(0.0, 0.0, 0.317);
-
-				positionWorldToArmBase = positionWorldToBall + rotationMatrixBaseToWorld*Eigen::Vector3d(0.0, 0.0, 0.317 + 0.266);
+		positionWorldToBall << observation.state()(0), observation.state()(1), 0.125;
 
 
-				// Broadcast transformation from rezero observation to robot base.
-				geometry_msgs::TransformStamped base_transform;
-				base_transform.header.frame_id = "odom";
-				base_transform.child_frame_id = "base";
-				base_transform.transform.translation.x = positionWorldToBase.x();
-				base_transform.transform.translation.y = positionWorldToBase.y();
-				base_transform.transform.translation.z = positionWorldToBase.z();
-				// RViz wants orientationBaseToWorld:
-				base_transform.transform.rotation.w = quaternionBaseToWorld.w();
-				base_transform.transform.rotation.x = quaternionBaseToWorld.x();
-				base_transform.transform.rotation.y = quaternionBaseToWorld.y();
-				base_transform.transform.rotation.z = quaternionBaseToWorld.z();
+		positionWorldToBase = positionWorldToBall + rotationMatrixBaseToWorld*Eigen::Vector3d(0.0, 0.0, 0.317);
 
+		positionWorldToArmBase = positionWorldToBall + rotationMatrixBaseToWorld*Eigen::Vector3d(0.0, 0.0, 0.317 + 0.266);
+
+
+		// Broadcast transformation from rezero observation to robot base.
+		geometry_msgs::TransformStamped base_transform;
+		base_transform.header.frame_id = "odom";
+		base_transform.child_frame_id = "base";
+		base_transform.transform.translation.x = positionWorldToBase.x();
+		base_transform.transform.translation.y = positionWorldToBase.y();
+		base_transform.transform.translation.z = positionWorldToBase.z();
+		// RViz wants orientationBaseToWorld:
+		base_transform.transform.rotation.w = quaternionBaseToWorld.w();
+		base_transform.transform.rotation.x = quaternionBaseToWorld.x();
+		base_transform.transform.rotation.y = quaternionBaseToWorld.y();
+		base_transform.transform.rotation.z = quaternionBaseToWorld.z();
+
+<<<<<<< HEAD
 				tfBroadcasterPtr_->sendTransform(base_transform);
+=======
+		tfBroadcasterPtr_->sendTransform(base_transform);
+>>>>>>> fix/ballbot_visualization
 
-				// Broadcast transformation from rezero observation to robot ball
-				geometry_msgs::TransformStamped ball_transform;
-				ball_transform.header.frame_id = "base";
-				ball_transform.child_frame_id = "ball";
-				ball_transform.transform.translation.x = 0.0;
-				ball_transform.transform.translation.y = 0.0;
-				ball_transform.transform.translation.z = -0.314;
-				ball_transform.transform.rotation.w = 1.0;
-				ball_transform.transform.rotation.x = 0.0;
-				ball_transform.transform.rotation.y = 0.0;
-				ball_transform.transform.rotation.z = 0.0;
+		// Broadcast transformation from rezero observation to robot ball
+		geometry_msgs::TransformStamped ball_transform;
+		ball_transform.header.frame_id = "base";
+		ball_transform.child_frame_id = "ball";
+		ball_transform.transform.translation.x = 0.0;
+		ball_transform.transform.translation.y = 0.0;
+		ball_transform.transform.translation.z = -0.317;
+		ball_transform.transform.rotation.w = 1.0;
+		ball_transform.transform.rotation.x = 0.0;
+		ball_transform.transform.rotation.y = 0.0;
+		ball_transform.transform.rotation.z = 0.0;
 
+<<<<<<< HEAD
 				tfBroadcasterPtr_->sendTransform(ball_transform);
 	}
 
@@ -189,6 +194,9 @@ public:
 		markerArray.markers.push_back(ballMarker);
 
 		visualizationPublisher_.publish(markerArray);
+=======
+		tfBroadcasterPtr_->sendTransform(ball_transform);
+>>>>>>> fix/ballbot_visualization
 	}
 
 protected:
@@ -209,6 +217,7 @@ protected:
 			ros::Rate(100).sleep();
 		ROS_INFO_STREAM("Visualization subscriber is connected.");
 
+<<<<<<< HEAD
 		// load a kdl-tree from the urdf robot description and initialize the robot state publisher
 		std::string urdfName = "robot_description";
 		urdf::Model model;
@@ -220,6 +229,8 @@ protected:
 		}
 		robotStatePublisherPtr_.reset(new robot_state_publisher::RobotStatePublisher(tree));
 
+=======
+>>>>>>> fix/ballbot_visualization
 		tfBroadcasterPtr_.reset(new tf::TransformBroadcaster);
 	}
 
@@ -239,12 +250,12 @@ protected:
 		baseMarker.ns = "";
 		baseMarker.id = 0;
 		baseMarker.type = visualization_msgs::Marker::MESH_RESOURCE;
-		baseMarker.mesh_resource = "package://ballbot_interface/urdf/meshes/complete_robot_june.dae";
+		baseMarker.mesh_resource = "package://ocs2_robotic_examples/visualization/urdf/ballbot/meshes/complete_robot_june.dae";
 		baseMarker.action = visualization_msgs::Marker::ADD;
 		baseMarker.pose.position.x = 0.0;
 		baseMarker.pose.position.y = 0.0;
 		// the mesh has its origin in the center of the ball
-		baseMarker.pose.position.z = -0.314;
+		baseMarker.pose.position.z = -0.317;
 		baseMarker.pose.orientation.x = 0.0;
 		baseMarker.pose.orientation.y = 0.0;
 		baseMarker.pose.orientation.z = 0.0;
@@ -268,7 +279,7 @@ protected:
 		ballMarker.action = visualization_msgs::Marker::ADD;
 		ballMarker.pose.position.x = 0.0;
 		ballMarker.pose.position.y = 0.0;
-		ballMarker.pose.position.z = -0.314;
+		ballMarker.pose.position.z = -0.317;
 		ballMarker.pose.orientation.x = 0.0;
 		ballMarker.pose.orientation.y = 0.0;
 		ballMarker.pose.orientation.z = 0.0;
@@ -282,107 +293,6 @@ protected:
 		ballMarker.color.b = 0.0;
 		markerArray.markers.push_back(ballMarker);
 
-
-		// Marker for armbase
-		visualization_msgs::Marker armbaseMarker;
-		armbaseMarker.header.frame_id = "arm_base";
-		armbaseMarker.header.stamp = ros::Time();
-		armbaseMarker.ns = "";
-		armbaseMarker.id = 2;
-		armbaseMarker.type = visualization_msgs::Marker::MESH_RESOURCE;
-		armbaseMarker.mesh_resource = "package://ballbot_interface/urdf/meshes/ARM_BASE.stl";
-		armbaseMarker.action = visualization_msgs::Marker::ADD;
-		armbaseMarker.pose.position.x = 0;
-		armbaseMarker.pose.position.y = 0;
-		armbaseMarker.pose.position.z = 0;
-		armbaseMarker.pose.orientation.x = 0.0;
-		armbaseMarker.pose.orientation.y = 0.0;
-		armbaseMarker.pose.orientation.z = 0.0;
-		armbaseMarker.pose.orientation.w = 1.0;
-		armbaseMarker.scale.x = 0.001;
-		armbaseMarker.scale.y = 0.001;
-		armbaseMarker.scale.z = 0.001;
-		armbaseMarker.color.a = 1.0; // Don't forget to set the alpha!
-		armbaseMarker.color.r = 0.5;
-		armbaseMarker.color.g = 0.5;
-		armbaseMarker.color.b = 0.5;
-		markerArray.markers.push_back(armbaseMarker);
-
-		// Marker for shoulder
-		visualization_msgs::Marker shoulderMarker;
-		shoulderMarker.header.frame_id = "SHOULDER";
-		shoulderMarker.header.stamp = ros::Time();
-		shoulderMarker.ns = "";
-		shoulderMarker.id = 3;
-		shoulderMarker.type = visualization_msgs::Marker::MESH_RESOURCE;
-		shoulderMarker.mesh_resource = "package://ballbot_interface/urdf/meshes/SHOULDER.stl";
-		shoulderMarker.action = visualization_msgs::Marker::ADD;
-		shoulderMarker.pose.position.x = 0;
-		shoulderMarker.pose.position.y = 0;
-		shoulderMarker.pose.position.z = 0;
-		shoulderMarker.pose.orientation.x = 0.0;
-		shoulderMarker.pose.orientation.y = 0.0;
-		shoulderMarker.pose.orientation.z = 0.0;
-		shoulderMarker.pose.orientation.w = 1.0;
-		shoulderMarker.scale.x = 0.001;
-		shoulderMarker.scale.y = 0.001;
-		shoulderMarker.scale.z = 0.001;
-		shoulderMarker.color.a = 1.0; // Don't forget to set the alpha!
-		shoulderMarker.color.r = 0.5;
-		shoulderMarker.color.g = 0.5;
-		shoulderMarker.color.b = 0.5;
-		markerArray.markers.push_back(shoulderMarker);
-
-		// Marker for arm
-		visualization_msgs::Marker armMarker;
-		armMarker.header.frame_id = "ARM";
-		armMarker.header.stamp = ros::Time();
-		armMarker.ns = "";
-		armMarker.id = 4;
-		armMarker.type = visualization_msgs::Marker::MESH_RESOURCE;
-		armMarker.mesh_resource = "package://ballbot_interface/urdf/meshes/ARM.stl";
-		armMarker.action = visualization_msgs::Marker::ADD;
-		armMarker.pose.position.x = 0;
-		armMarker.pose.position.y = 0;
-		armMarker.pose.position.z = 0;
-		armMarker.pose.orientation.x = 0.0;
-		armMarker.pose.orientation.y = 0.0;
-		armMarker.pose.orientation.z = 0.0;
-		armMarker.pose.orientation.w = 1.0;
-		armMarker.scale.x = 0.001;
-		armMarker.scale.y = 0.001;
-		armMarker.scale.z = 0.001;
-		armMarker.color.a = 1.0; // Don't forget to set the alpha!
-		armMarker.color.r = 0.5;
-		armMarker.color.g = 0.5;
-		armMarker.color.b = 0.5;
-		markerArray.markers.push_back(armMarker);
-
-		// Marker for forearm
-		visualization_msgs::Marker forearmMarker;
-		forearmMarker.header.frame_id = "FOREARM";
-		forearmMarker.header.stamp = ros::Time();
-		forearmMarker.ns = "";
-		forearmMarker.id = 5;
-		forearmMarker.type = visualization_msgs::Marker::MESH_RESOURCE;
-		forearmMarker.mesh_resource = "package://ballbot_interface/urdf/meshes/FOREARM.stl";
-		forearmMarker.action = visualization_msgs::Marker::ADD;
-		forearmMarker.pose.position.x = 0;
-		forearmMarker.pose.position.y = 0;
-		forearmMarker.pose.position.z = 0;
-		forearmMarker.pose.orientation.x = 0.0;
-		forearmMarker.pose.orientation.y = 0.0;
-		forearmMarker.pose.orientation.z = 0.0;
-		forearmMarker.pose.orientation.w = 1.0;
-		forearmMarker.scale.x = 0.001;
-		forearmMarker.scale.y = 0.001;
-		forearmMarker.scale.z = 0.001;
-		forearmMarker.color.a = 1.0; // Don't forget to set the alpha!
-		forearmMarker.color.r = 0.5;
-		forearmMarker.color.g = 0.5;
-		forearmMarker.color.b = 0.5;
-		markerArray.markers.push_back(forearmMarker);
-
 		//visualizationPublisher_.publish(baseMarker);
 		visualizationPublisher_.publish(markerArray);
 	}
@@ -393,7 +303,10 @@ protected:
 	ros::Publisher visualizationPublisher_;
 	ros::Publisher posePublisher_;
 	std::unique_ptr<tf::TransformBroadcaster> tfBroadcasterPtr_;
+<<<<<<< HEAD
 	std::unique_ptr<robot_state_publisher::RobotStatePublisher> robotStatePublisherPtr_;
+=======
+>>>>>>> fix/ballbot_visualization
 
 };
 

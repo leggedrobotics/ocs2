@@ -117,12 +117,6 @@ public:
 		base_transform.transform.rotation.y = quaternionBaseToWorld.y();
 		base_transform.transform.rotation.z = quaternionBaseToWorld.z();
 
-<<<<<<< HEAD
-				tfBroadcasterPtr_->sendTransform(base_transform);
-=======
-		tfBroadcasterPtr_->sendTransform(base_transform);
->>>>>>> fix/ballbot_visualization
-
 		// Broadcast transformation from rezero observation to robot ball
 		geometry_msgs::TransformStamped ball_transform;
 		ball_transform.header.frame_id = "base";
@@ -135,68 +129,7 @@ public:
 		ball_transform.transform.rotation.y = 0.0;
 		ball_transform.transform.rotation.z = 0.0;
 
-<<<<<<< HEAD
-				tfBroadcasterPtr_->sendTransform(ball_transform);
-	}
-
-	void testVisualizerNode(const system_observation_t& observation){
-
-		updateTfPublisher(observation);
-
-		visualization_msgs::MarkerArray markerArray;
-		// Marker for Base
-		visualization_msgs::Marker baseMarker;
-		baseMarker.header.frame_id = "base";
-		baseMarker.ns = "";
-		baseMarker.id = 0;
-		baseMarker.type = visualization_msgs::Marker::MESH_RESOURCE;
-		baseMarker.mesh_resource = "package://ballbot_interface/urdf/meshes/complete_robot_june.dae";
-		baseMarker.action = visualization_msgs::Marker::ADD;
-		baseMarker.pose.position.x = 0.0;
-		baseMarker.pose.position.y = 0.0;
-		// the mesh has its origin in the center of the ball
-		baseMarker.pose.position.z = -0.314;
-		baseMarker.pose.orientation.x = 0.0;
-		baseMarker.pose.orientation.y = 0.0;
-		baseMarker.pose.orientation.z = 0.0;
-		baseMarker.pose.orientation.w = 1.0;
-		baseMarker.scale.x = 1.0;
-		baseMarker.scale.y = 1.0;
-		baseMarker.scale.z = 1.0;
-		baseMarker.color.a = 1.0; // Don't forget to set the alpha!
-		baseMarker.color.r = 0.5;
-		baseMarker.color.g = 0.5;
-		baseMarker.color.b = 0.5;
-		markerArray.markers.push_back(baseMarker);
-
-		// Marker for Ball
-		visualization_msgs::Marker ballMarker;
-		ballMarker.header.frame_id = "base";
-		ballMarker.header.stamp = ros::Time();
-		ballMarker.ns = "";
-		ballMarker.id = 1;
-		ballMarker.type = visualization_msgs::Marker::SPHERE;
-		ballMarker.action = visualization_msgs::Marker::ADD;
-		ballMarker.pose.position.x = 0.0;
-		ballMarker.pose.position.y = 0.0;
-		ballMarker.pose.position.z = -0.314;
-		ballMarker.pose.orientation.x = 0.0;
-		ballMarker.pose.orientation.y = 0.0;
-		ballMarker.pose.orientation.z = 0.0;
-		ballMarker.pose.orientation.w = 1.0;
-		ballMarker.scale.x = 0.25;
-		ballMarker.scale.y = 0.25;
-		ballMarker.scale.z = 0.25;
-		ballMarker.color.a = 1.0; // Don't forget to set the alpha!
-		ballMarker.color.r = 0.0;
-		ballMarker.color.g = 0.0;
-		ballMarker.color.b = 0.0;
-		markerArray.markers.push_back(ballMarker);
-
-		visualizationPublisher_.publish(markerArray);
-=======
 		tfBroadcasterPtr_->sendTransform(ball_transform);
->>>>>>> fix/ballbot_visualization
 	}
 
 protected:
@@ -217,20 +150,6 @@ protected:
 			ros::Rate(100).sleep();
 		ROS_INFO_STREAM("Visualization subscriber is connected.");
 
-<<<<<<< HEAD
-		// load a kdl-tree from the urdf robot description and initialize the robot state publisher
-		std::string urdfName = "robot_description";
-		urdf::Model model;
-		if (!model.initParam(urdfName))
-			ROS_ERROR("URDF model load was NOT successful");
-		KDL::Tree tree;
-		if (!kdl_parser::treeFromUrdfModel(model, tree)) {
-			ROS_ERROR("Failed to extract kdl tree from xml robot description");
-		}
-		robotStatePublisherPtr_.reset(new robot_state_publisher::RobotStatePublisher(tree));
-
-=======
->>>>>>> fix/ballbot_visualization
 		tfBroadcasterPtr_.reset(new tf::TransformBroadcaster);
 	}
 
@@ -303,10 +222,6 @@ protected:
 	ros::Publisher visualizationPublisher_;
 	ros::Publisher posePublisher_;
 	std::unique_ptr<tf::TransformBroadcaster> tfBroadcasterPtr_;
-<<<<<<< HEAD
-	std::unique_ptr<robot_state_publisher::RobotStatePublisher> robotStatePublisherPtr_;
-=======
->>>>>>> fix/ballbot_visualization
 
 };
 

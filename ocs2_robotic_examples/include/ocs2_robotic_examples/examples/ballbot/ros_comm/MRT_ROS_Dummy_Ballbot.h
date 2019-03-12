@@ -117,6 +117,8 @@ public:
 		base_transform.transform.rotation.y = quaternionBaseToWorld.y();
 		base_transform.transform.rotation.z = quaternionBaseToWorld.z();
 
+		tfBroadcasterPtr_->sendTransform(base_transform);
+
 		// Broadcast transformation from rezero observation to robot ball
 		geometry_msgs::TransformStamped ball_transform;
 		ball_transform.header.frame_id = "base";

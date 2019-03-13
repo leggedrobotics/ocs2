@@ -205,6 +205,19 @@ if(${DoubleIntegrator})
     ${Boost_LIBRARIES}
     dl
   )
+
+  add_executable(double_integrator_pi
+    src/double_integrator/DoubleIntegratorInterface.cpp
+    src/double_integrator/PI_Double_Integrator.cpp
+  )
+  add_dependencies(double_integrator_pi
+    ${catkin_EXPORTED_TARGETS}
+  )
+  target_link_libraries(double_integrator_pi
+    ${catkin_LIBRARIES}
+    ${Boost_LIBRARIES}
+    dl
+  )
   
   add_executable(double_integrator_dummy_test
     src/double_integrator/DoubleIntegratorInterface.cpp

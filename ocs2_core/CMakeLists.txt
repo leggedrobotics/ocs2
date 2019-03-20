@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 2.8.3)
+cmake_minimum_required(VERSION 3.0)
 project(ocs2_core) 
 
 find_package(catkin REQUIRED COMPONENTS 
@@ -9,12 +9,7 @@ find_package(Boost REQUIRED COMPONENTS
   filesystem 
 )
 
-## Eign3
-set( EIGEN3_INCLUDE_DIRS "$ENV{LOCAL_EIGEN3_INCLUDE_DIR}" )
-if( NOT EIGEN3_INCLUDE_DIRS )
-    find_package(Eigen3 REQUIRED)
-    message( WARNING "Uses Globally installed Eigen since LOCAL_EIGEN3_INCLUDE_DIR is not defined!")
-endif()
+find_package(Eigen3 3.3 REQUIRED NO_MODULE)
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread -fopenmp -std=c++11 -Wfatal-errors -Wl,--no-as-needed")
 
@@ -26,9 +21,9 @@ catkin_package(
   INCLUDE_DIRS 
     include
     include/external
+    ${EIGEN3_INCLUDE_DIRS}
   DEPENDS 
-    boost 
-    eigen3
+    Boost
 )
 
 ###########

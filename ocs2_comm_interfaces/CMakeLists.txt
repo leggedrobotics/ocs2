@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 2.8.3)
+cmake_minimum_required(VERSION 3.0)
 project(ocs2_comm_interfaces)
 
 ## Find catkin macros and libraries
@@ -14,12 +14,7 @@ find_package(catkin REQUIRED COMPONENTS
   ocs2_mpc
 )
 
-## Eigen3
-set( EIGEN3_INCLUDE_DIRS "$ENV{LOCAL_EIGEN3_INCLUDE_DIR}" )
-if( NOT EIGEN3_INCLUDE_DIRS )
-    find_package(Eigen3 REQUIRED)
-    message( WARNING "Uses Globally installed Eigen since LOCAL_EIGEN3_INCLUDE_DIR is not defined!")
-endif()
+find_package(Eigen3 3.3 REQUIRED NO_MODULE)
 
 find_package(Boost REQUIRED COMPONENTS
   filesystem
@@ -60,7 +55,6 @@ generate_messages(
     std_msgs
 )
 
-
 ###################################
 ## catkin specific configuration ##
 ###################################
@@ -68,6 +62,7 @@ catkin_package(
   INCLUDE_DIRS 
     include 
     test/include
+    ${EIGEN3_INCLUDE_DIRS}
 #  LIBRARIES ocs2_quadruped_interface
   CATKIN_DEPENDS 
     roscpp
@@ -79,8 +74,7 @@ catkin_package(
     ocs2_ocs2 
     ocs2_mpc 
   DEPENDS 
-    boost 
-    eigen3
+    Boost
 )
 
 ###########

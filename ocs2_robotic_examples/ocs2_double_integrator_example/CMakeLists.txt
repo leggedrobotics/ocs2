@@ -1,0 +1,120 @@
+cmake_minimum_required(VERSION 3.0)
+project(ocs2_double_integrator_example)
+
+find_package(catkin REQUIRED COMPONENTS
+        roslib
+        ocs2_core
+        ocs2_slq
+        ocs2_ocs2
+        ocs2_mpc
+        ocs2_comm_interfaces
+        ocs2_robotic_tools
+        )
+
+find_package(Boost REQUIRED COMPONENTS
+        system
+        filesystem
+        )
+
+find_package(Eigen3 3.3 REQUIRED NO_MODULE)
+
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread -fopenmp -std=c++11 -Wfatal-errors -Wl,--no-as-needed")
+
+###################################
+## catkin specific configuration ##
+###################################
+
+catkin_package(
+        INCLUDE_DIRS
+            include
+            ${EIGEN3_INCLUDE_DIRS}
+        CATKIN_DEPENDS
+            ocs2_core
+            ocs2_slq
+            ocs2_ocs2
+            ocs2_mpc
+            ocs2_comm_interfaces
+            ocs2_robotic_tools
+        DEPENDS
+            Boost
+)
+
+###########
+## Build ##
+###########
+
+include_directories(
+        include
+        ${EIGEN3_INCLUDE_DIRS}
+        ${Boost_INCLUDE_DIRS}
+        ${catkin_INCLUDE_DIRS}
+)
+
+# double integrator interface library
+add_library(double_integrator_interface
+        src/DoubleIntegratorInterface.cpp
+        )
+add_dependencies(double_integrator_interface
+        ${catkin_EXPORTED_TARGETS}
+        )
+target_link_libraries(double_integrator_interface
+        ${catkin_LIBRARIES}
+        ${Boost_LIBRARIES}
+        dl
+        )
+
+# Mpc node
+add_executable(double_integrator_mpc
+        src/MPC_Double_Integrator_Node.cpp
+        )
+add_dependencies(double_integrator_mpc
+        ${catkin_EXPORTED_TARGETS}
+        )
+target_link_libraries(double_integrator_mpc
+        double_integrator_interface
+        ${catkin_LIBRARIES}
+        )
+
+# Dummy node
+add_executable(double_integrator_dummy_test
+        src/Dummy_Double_Integrator_Node.cpp
+        )
+add_dependencies(double_integrator_dummy_test
+        ${catkin_EXPORTED_TARGETS}
+        )
+target_link_libraries(double_integrator_dummy_test
+        double_integrator_interface
+        ${catkin_LIBRARIES}
+        )
+
+# Target node
+add_executable(double_integrator_target
+        src/DoubleIntegratorTargetPoseCommand.cpp
+        )
+add_dependencies(double_integrator_target
+        ${catkin_EXPORTED_TARGETS}
+        )
+target_link_libraries(double_integrator_target
+        ${catkin_LIBRARIES}
+        ${Boost_LIBRARIES}
+        )
+
+#############
+## Install ##
+#############
+
+install(TARGETS double_integrator_interface
+        ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+        LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+        RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+        )
+
+install(DIRECTORY include/${PROJECT_NAME}/
+        DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION})
+
+install(TARGETS double_integrator_mpc double_integrator_dummy_test double_integrator_target
+        RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})
+
+install(DIRECTORY urdf launch config
+        DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
+        )

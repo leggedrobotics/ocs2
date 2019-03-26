@@ -33,6 +33,12 @@ catkin_package(
 
 install(DIRECTORY
             include/${PROJECT_NAME}/
-            include/rbd_libraries/robcogen/iit/
         DESTINATION
             ${CATKIN_PACKAGE_INCLUDE_DESTINATION})
+
+install(DIRECTORY
+        include/${PROJECT_NAME}/rbd_libraries/robcogen/
+        DESTINATION
+        "${CATKIN_PACKAGE_INCLUDE_DESTINATION}/../")
+
+

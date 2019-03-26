@@ -61,6 +61,14 @@ if(DOXYGEN_FOUND)
             VERBATIM)
 endif()
 
+
+#############
+## Install ##
+#############
+
+install(DIRECTORY include/${PROJECT_NAME}/
+        DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION})
+
 #############
 ## Testing ##
 #############

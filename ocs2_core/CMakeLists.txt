@@ -39,6 +39,16 @@ include_directories(
 )
 
 #############
+## Install ##
+#############
+
+install(DIRECTORY include/${PROJECT_NAME}/
+        DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION})
+
+install(DIRECTORY include/external/
+        DESTINATION "${CATKIN_PACKAGE_INCLUDE_DESTINATION}/../")
+
+#############
 ## Doxygen ##
 #############
 

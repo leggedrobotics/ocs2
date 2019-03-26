@@ -41,7 +41,7 @@ void EventTimeIndexer::set(
 	// number of subsystems
 	numSubsystems_ = numEventTimes_ + 1;
 	// number of partitions
-	numPartitions_ = logicRulesMachine.getnumPartitions();
+	numPartitions_ = logicRulesMachine.getNumPartitions();
 	// number of subsystems in each partition
 	numSubsystemsStock_.resize(numPartitions_);
 	for (size_t i=0; i<numPartitions_; i++)

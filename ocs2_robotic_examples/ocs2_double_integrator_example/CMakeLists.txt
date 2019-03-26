@@ -115,6 +115,6 @@ install(DIRECTORY include/${PROJECT_NAME}/
 install(TARGETS double_integrator_mpc double_integrator_dummy_test double_integrator_target
         RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})
 
-install(DIRECTORY urdf launch config
+install(DIRECTORY urdf launch config rviz
         DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
         )

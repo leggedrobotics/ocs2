@@ -103,6 +103,6 @@ install(DIRECTORY include/${PROJECT_NAME}/
 install(TARGETS cartpole_mpc cartpole_dummy_test
         RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})
 
-install(DIRECTORY urdf launch config
+install(DIRECTORY urdf launch config rviz
         DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
         )

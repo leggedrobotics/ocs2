@@ -118,6 +118,6 @@ install(DIRECTORY include/${PROJECT_NAME}/
 install(TARGETS ballbot_mpc ballbot_dummy_test ballbot_target
         RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})
 
-install(DIRECTORY urdf launch config
+install(DIRECTORY urdf launch config rviz
         DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
         )

@@ -12,7 +12,7 @@ find_package(Boost REQUIRED COMPONENTS
   filesystem 
 )
 
-set(CMAKE_MODULE_PATH "${CMAKE_MODULE_PATH};${CMAKE_SOURCE_DIR}/cmake")
+list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_LIST_DIR}/cmake)
 find_package(glpk REQUIRED)
 
 find_package(Eigen3 3.3 REQUIRED NO_MODULE)

@@ -13,14 +13,14 @@ find_path(glpk_INCLUDE_DIR
         HINTS /usr/include
         )
 
-find_path(glpk_LIBRARIES
-        NAMES libglpk.a
+find_library(glpk_LIBRARY
+        NAMES glpk
         HINTS /usr/lib /usr/lib/x86_64-linux-gnu
         )
 
-if (glpk_INCLUDE_DIR AND glpk_LIBRARIES)
+if (glpk_INCLUDE_DIR AND glpk_LIBRARY)
     set(glpk_FOUND TRUE)
-endif (glpk_INCLUDE_DIR AND glpk_LIBRARIES)
+endif (glpk_INCLUDE_DIR AND glpk_LIBRARY)
 
 if (glpk_FOUND)
     if (NOT glpk_FOUND_QUIETLY)
@@ -33,5 +33,9 @@ else (glpk_FOUND)
     endif (glpk_FOUND_REQUIRED)
 endif (glpk_FOUND)
 
-mark_as_advanced(glpk_FOUND glpk_INCLUDE_DIR glpk_LIBRARIES )
+mark_as_advanced(glpk_FOUND glpk_INCLUDE_DIR glpk_LIBRARY )
+
+set(glpk_LIBRARIES ${glpk_LIBRARY} )
+set(glpk_INCLUDE_DIRS ${glpk_INCLUDE_DIR} )
+
 

@@ -4,7 +4,7 @@
   <version>0.0.0</version>
   <description>The c_switched_model_interface package</description>
 
-  <maintainer email="sasutosh@ethz.ch">sasutosh</maintainer>
+  <maintainer email="farbod@todo.ch">farbod</maintainer>
 
   <license>TODO</license>
 
@@ -13,8 +13,5 @@
   <depend>ocs2_core</depend>
   <depend>roscpp</depend>
 
-  <!-- The export tag contains other, unspecified, tags -->
-  <export>
-  	<gazebo_ros plugin_path="${prefix}/lib" gazebo_media_path="${prefix}/models" />
-  </export>
+
 </package>

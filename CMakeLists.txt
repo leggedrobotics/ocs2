@@ -1,18 +1,13 @@
-cmake_minimum_required(VERSION 2.8.3)
+cmake_minimum_required(VERSION 3.0)
 project(ocs2_switched_model_interface)
 
 find_package(catkin REQUIRED
-	cmake_modules
 	ocs2_core
 	roscpp
 )
 
 ## Eigen3
-set( EIGEN_INCLUDE_DIRS "$ENV{LOCAL_EIGEN3_INCLUDE_DIR}" )
-if( NOT EIGEN_INCLUDE_DIRS )
-    find_package(Eigen REQUIRED)
-    message( WARNING "Uses Globally installed Eigen since LOCAL_EIGEN3_INCLUDE_DIR is not defined!")
-endif()
+find_package(Eigen3 3.3 REQUIRED NO_MODULE)
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread -fopenmp -std=c++11 -Wfatal-errors -ffast-math")
 
@@ -20,8 +15,11 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread -fopenmp -std=c++11 -Wfatal-err
 ## catkin specific configuration ##
 ###################################
 catkin_package(
-	INCLUDE_DIRS include
-	LIBRARIES ${PROJECT_NAME}
+	INCLUDE_DIRS
+		include
+		${EIGEN_INCLUDE_DIRS}
+	LIBRARIES
+		${PROJECT_NAME}
 	CATKIN_DEPENDS 
 	    ocs2_core 
 	    roscpp
@@ -50,6 +48,19 @@ add_dependencies(${PROJECT_NAME}
 target_link_libraries(${PROJECT_NAME}
   ${catkin_LIBRARIES}
 )
+
+#############
+## Install ##
+#############
+
+install(TARGETS ${PROJECT_NAME}
+		ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+		LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+		RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+		)
+
+install(DIRECTORY include/${PROJECT_NAME}/
+		DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION})
 
 ###########################
 ## doxygen documentation ##

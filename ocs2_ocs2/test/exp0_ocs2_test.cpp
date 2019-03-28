@@ -46,7 +46,7 @@ enum
 	INPUT_DIM = 1
 };
 
-TEST(exp0_ocs2_test, exp0_ocs2_test)
+TEST(exp0_ocs2_test, DISABLED_exp0_ocs2_test)
 {
 	// system dynamics
 	EXP0_System systemDynamics;

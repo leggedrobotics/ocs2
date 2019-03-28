@@ -44,10 +44,12 @@
   <build_depend>ocs2_core</build_depend>
   <build_depend>ocs2_slq</build_depend>
   <build_depend>ocs2_frank_wolfe</build_depend>
+  <build_depend>libglpk-dev</build_depend>
   <run_depend>ocs2_core</run_depend>
   <run_depend>ocs2_slq</run_depend>
   <run_depend>ocs2_frank_wolfe</run_depend>
-
+  <run_depend>libglpk-dev</run_depend>  <!-- required for the buildserver to install libglpk-dev -->
+  <run_depend>glpk</run_depend> <!-- export the found glpk to dependent packages -->
 
   <!-- The export tag contains other, unspecified, tags -->
   <export>

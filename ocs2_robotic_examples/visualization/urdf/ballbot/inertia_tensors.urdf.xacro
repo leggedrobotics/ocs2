@@ -1,0 +1,39 @@
+<?xml version="1.0"?>
+
+<!-- This file contains macros for computing inertia tensors. -->
+
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+
+  <!-- Sphere -->
+  <xacro:macro name="inertial_sphere" params="m r">
+    <inertial>
+      <mass value="${m}"/>
+      <origin xyz="0 0 0"/>
+      <inertia ixx="${(2 / 5) * m * r * r}" ixy="0.0" ixz="0.0"
+        iyy="${(2 / 5) * m * r * r}" iyz="0.0" izz="${(2 / 5) * m * r * r}"/>
+    </inertial>
+  </xacro:macro>
+
+  <!-- Cuboid -->
+  <xacro:macro name="inertial_cuboid" params="m w h d">
+    <inertial>
+      <mass value="${m}"/>
+      <origin xyz="0 0 0"/>
+      <inertia ixx="${(1 / 12) * m * (h * h + d * d)}" ixy="0.0" ixz="0.0"
+        iyy="${(1 / 12) * m * (w * w + d * d)}" iyz="0.0"
+        izz="${(1 / 12) * m * (w * w + h * h)}"/>
+    </inertial>
+  </xacro:macro>
+
+  <!-- Cylinder -->
+  <xacro:macro name="inertial_cylinder" params="m r h">
+    <inertial>
+      <mass value="${m}"/>
+      <origin xyz="0 0 0"/>
+      <inertia ixx="${(1 / 12) * m * (3 * r * r + h * h)}" ixy="0.0" ixz="0.0"
+        iyy="${(1 / 12) * m * (3 * r * r + h * h)}" iyz="0.0"
+        izz="${(1 / 2) * m * r * r}"/>
+    </inertial>
+  </xacro:macro>
+
+</robot>

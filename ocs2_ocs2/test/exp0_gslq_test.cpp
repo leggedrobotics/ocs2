@@ -46,7 +46,7 @@ enum
 	INPUT_DIM = 1
 };
 
-TEST(exp0_gslq_test, optimum_gradient_test)
+TEST(exp0_gslq_test, DISABLED_optimum_gradient_test)
 {
 
 	// system dynamics

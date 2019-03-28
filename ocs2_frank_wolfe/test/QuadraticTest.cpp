@@ -67,7 +67,7 @@ public:
 
 };
 
-TEST(QuadraticTest, QuadraticTest)
+TEST(QuadraticTest, DISABLED_QuadraticTest)
 {
 
 	QuadraticGradientDescent quadraticGradientDescent;

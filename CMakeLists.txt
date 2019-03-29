@@ -5,17 +5,12 @@ project(ocs2_anymal_switched_model)
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS
-    cmake_modules
     ocs2_switched_model_interface
-    ocs2_robotic_examples
+    ocs2_robotic_tools
 )
 
 ## Eigen3
-set( EIGEN_INCLUDE_DIRS "$ENV{LOCAL_EIGEN3_INCLUDE_DIR}" )
-if( NOT EIGEN_INCLUDE_DIRS )
-    find_package(Eigen3 REQUIRED)
-    message( WARNING "Uses globally installed Eigen since LOCAL_EIGEN3_INCLUDE_DIR is not defined!")
-endif()
+find_package(Eigen3 3.3 REQUIRED NO_MODULE)
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread -fopenmp -std=c++11 -Wfatal-errors -ffast-math")
 
@@ -29,10 +24,16 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread -fopenmp -std=c++11 -Wfatal-err
 ## CATKIN_DEPENDS: catkin_packages dependent projects also need
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
-    INCLUDE_DIRS include
-    LIBRARIES ${PROJECT_NAME} generated_COM_lib
-    CATKIN_DEPENDS ocs2_switched_model_interface ocs2_robotic_examples
-#   DEPENDS system_lib
+    INCLUDE_DIRS
+        include
+        ${EIGEN_INCLUDE_DIRS}
+    LIBRARIES
+        ${PROJECT_NAME}
+        generated_COM_lib
+    CATKIN_DEPENDS
+        ocs2_switched_model_interface
+        ocs2_robotic_tools
+#   DEPENDS
 )
 
 ###########
@@ -59,8 +60,6 @@ target_link_libraries(generated_COM_lib
 )
 
 add_library(${PROJECT_NAME}
-#  src/AnymalCom.cpp
-#  src/AnymalKinematics.cpp
   src/AnymalComKinoDynamics.cpp
   src/AnymalComKinoDynamicsDerivative.cpp
   src/AnymalComKinoConstraint.cpp
@@ -84,51 +83,41 @@ target_link_libraries(${PROJECT_NAME}
 ## Install ##
 #############
 
-# all install targets should use catkin DESTINATION variables
-# See http://ros.org/doc/api/catkin/html/adv_user_guide/variables.html
+install(TARGETS generated_COM_lib ${PROJECT_NAME}
+        ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+        LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+        RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+        )
 
-## Mark executable scripts (Python etc.) for installation
-## in contrast to setup.py, you can choose the destination
-# install(PROGRAMS
-#   scripts/my_python_script
-#   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
-# )
-
-## Mark executables and/or libraries for installation
-# install(TARGETS c_anymal_switched_model c_anymal_switched_model_node
-#   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-#   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-#   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
-# )
-
-## Mark cpp header files for installation
-# install(DIRECTORY include/${PROJECT_NAME}/
-#   DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
-#   FILES_MATCHING PATTERN "*.h"
-#   PATTERN ".svn" EXCLUDE
-# )
-
-## Mark other files for installation (e.g. launch and bag files, etc.)
-# install(FILES
-#   # myfile1
-#   # myfile2
-#   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
-# )
+install(DIRECTORY
+            include/${PROJECT_NAME}/
+        DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION})
 
 #############
 ## Testing ##
 #############
 
-if(CATKIN_ENABLE_TESTING)
-  # Build unit tests
-  catkin_add_gtest(${PROJECT_NAME}_test
-      test/TestAnymalSwitchedModel.cpp
-  )
+# Build unit tests
+catkin_add_gtest(anymal_switched_model_test
+        test/TestAnymalSwitchedModel.cpp
+        )
 
-  add_dependencies(${PROJECT_NAME}_test ${catkin_EXPORTED_TARGETS})
+add_dependencies(anymal_switched_model_test ${catkin_EXPORTED_TARGETS})
 
-  target_link_libraries(${PROJECT_NAME}_test
-    ${PROJECT_NAME}
-    ${catkin_LIBRARIES}
-  )
-endif()
+target_link_libraries(anymal_switched_model_test
+        ${PROJECT_NAME}
+        ${catkin_LIBRARIES}
+        )
+
+#catkin_add_gtest(debug_frictionCone
+#        test/debug_frictionCone.cpp)
+#
+#add_dependencies(debug_frictionCone
+#        ${${PROJECT_NAME}_EXPORTED_TARGETS}
+#        ${catkin_EXPORTED_TARGETS}
+#        )
+#
+#target_link_libraries(debug_frictionCone
+#        ${PROJECT_NAME}
+#        ${catkin_LIBRARIES}
+#        )

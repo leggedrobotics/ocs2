@@ -8,7 +8,7 @@
 #ifndef ANYMAL_ANYMALKINEMATICS_H_
 #define ANYMAL_ANYMALKINEMATICS_H_
 
-#include <ocs2_robotic_examples/rbd_libraries/robcogen/iit/rbd/traits/TraitSelector.h>
+#include <ocs2_robotic_tools/rbd_libraries/robcogen/iit/rbd/traits/TraitSelector.h>
 
 #include <ocs2_anymal_switched_model/generated/transforms.h>
 #include <ocs2_anymal_switched_model/generated/jacobians.h>

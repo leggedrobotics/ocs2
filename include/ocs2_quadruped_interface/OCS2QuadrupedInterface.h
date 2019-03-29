@@ -22,7 +22,6 @@
 
 #include <ocs2_slq/SLQ.h>
 #include <ocs2_slq/SLQ_MP.h>
-//#include <ocs2_ocs2/OCS2Projected.h>
 
 #include <ocs2_mpc/MPC_SLQ.h>
 #include <ocs2_mpc/MPC_OCS2.h>

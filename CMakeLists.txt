@@ -5,10 +5,8 @@ project(ocs2_quadruped_interface)
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS
-  roscpp
   ocs2_core
   ocs2_slq
-  ocs2_ocs2
   ocs2_mpc
   ocs2_comm_interfaces
   ocs2_robotic_tools
@@ -41,15 +39,14 @@ catkin_package(
       test/include
       ${EIGEN_INCLUDE_DIRS}
 #  LIBRARIES ocs2_quadruped_interface
-   CATKIN_DEPENDS 
-      roscpp
-      ocs2_core 
-      ocs2_slq 
-      ocs2_ocs2 
-      ocs2_mpc 
+   CATKIN_DEPENDS
+      ocs2_core
+      ocs2_slq
+      ocs2_mpc
       ocs2_comm_interfaces
       ocs2_robotic_tools
-      ocs2_switched_model_interface 
+      ocs2_switched_model_interface
+      rosbag
       xpp_msgs
    DEPENDS
       Boost

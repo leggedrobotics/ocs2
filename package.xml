@@ -9,35 +9,20 @@
   <!-- <maintainer email="jane.doe@example.com">Jane Doe</maintainer> -->
   <maintainer email="farbod@todo.todo">farbod</maintainer>
 
-
   <!-- One license tag required, multiple allowed, one license per tag -->
   <license>TODO</license>
 
-
-  <!-- Url tags are optional, but mutiple are allowed, one per tag -->
-  <!-- <url type="website">http://wiki.ros.org/ocs2_anymal_interface</url> -->
-
-
-  <!-- Author tags are optional, mutiple are allowed, one per tag -->
-  <!-- <author email="jane.doe@example.com">Jane Doe</author> -->
-
   <buildtool_depend>catkin</buildtool_depend>
-  <build_depend>cmake_modules</build_depend>
-  
+
   <depend>roscpp</depend>
   <depend>ocs2_core</depend>
   <depend>ocs2_slq</depend>
   <depend>ocs2_ocs2</depend>
   <depend>ocs2_mpc</depend>
   <depend>ocs2_comm_interfaces</depend>
-  <depend>ocs2_robotic_examples</depend>
+  <depend>ocs2_robotic_tools</depend>
   <depend>ocs2_switched_model_interface</depend>
   <depend>rosbag</depend>
   <depend>xpp_msgs</depend>
 
-  <!-- The export tag contains other, unspecified, tags -->
-  <export>
-    <!-- Other tools can request additional information be placed here -->
-
-  </export>
 </package>

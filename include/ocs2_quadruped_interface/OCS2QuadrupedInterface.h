@@ -15,7 +15,7 @@
 #include <iostream>
 #include <string>
 #include <Eigen/Dense>
-#include<Eigen/StdVector>
+#include <Eigen/StdVector>
 #include <vector>
 
 #include <ocs2_core/misc/loadEigenMatrix.h>
@@ -27,7 +27,7 @@
 #include <ocs2_mpc/MPC_SLQ.h>
 #include <ocs2_mpc/MPC_OCS2.h>
 
-#include <ocs2_robotic_examples/common/RobotInterfaceBase.h>
+#include <ocs2_robotic_tools/common/RobotInterfaceBase.h>
 
 #include <ocs2_switched_model_interface/core/Model_Settings.h>
 #include <ocs2_switched_model_interface/core/MotionPhaseDefinition.h>

@@ -6,7 +6,7 @@
  */
 
 #include <ros/package.h>
-#include "ocs2_quadruped_interface/ModeSequence_Keyboard_Quadruped.h"
+#include <ocs2_quadruped_interface/ModeSequence_Keyboard_Quadruped.h>
 
 int main( int argc, char* argv[] )
 {

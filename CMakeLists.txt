@@ -6,16 +6,8 @@ project(ocs2_anymal_interface)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS
   roslib
-  roscpp
-  rosbag
-  ocs2_core
-  ocs2_slq
-  ocs2_ocs2
-  ocs2_mpc
   ocs2_anymal_switched_model
   ocs2_quadruped_interface
-  ocs2_robotic_tools
-  xpp_msgs
 )
 
 ## Eigen3
@@ -47,14 +39,8 @@ catkin_package(
     mrt_ros_anymal
     
   CATKIN_DEPENDS
-    ocs2_core
-    ocs2_slq
-    ocs2_ocs2
-    ocs2_mpc
     ocs2_anymal_switched_model
     ocs2_quadruped_interface
-    xpp_msgs
-    ocs2_robotic_tools
 
   DEPENDS
     Boost
@@ -69,7 +55,6 @@ catkin_package(
 # include_directories(include)
 include_directories(
   include
-  ${CMAKE_CURRENT_BINARY_DIR}
   ${EIGEN_INCLUDE_DIRS}
   ${catkin_INCLUDE_DIRS}
 )
@@ -85,7 +70,7 @@ add_dependencies(ocs2_anymal_interface
 target_link_libraries(ocs2_anymal_interface
   ${catkin_LIBRARIES}
 )
-set_property(TARGET ocs2_anymal_interface PROPERTY POSITION_INDEPENDENT_CODE ON)
+#set_property(TARGET ocs2_anymal_interface PROPERTY POSITION_INDEPENDENT_CODE ON)
 
 add_library(mpc_ros_anymal
   src/MPC_ROS_Anymal.cpp
@@ -112,7 +97,6 @@ target_link_libraries(mrt_ros_anymal
   ocs2_anymal_interface
   ${catkin_LIBRARIES}
 )
-
 
 # Declare a C++ Executable
 add_executable(target_command_node
@@ -148,17 +132,16 @@ target_link_libraries(gait_command_node
   ${catkin_LIBRARIES}
 )
 
-add_executable(PlanningTest
-  src/PlanningTest.cpp
+add_executable(planning
+        src/Planning.cpp
 )
-add_dependencies(PlanningTest
+add_dependencies(planning
   ${${PROJECT_NAME}_EXPORTED_TARGETS}
   ${catkin_EXPORTED_TARGETS}
 )
-target_link_libraries(PlanningTest
+target_link_libraries(planning
   ocs2_anymal_interface
   ${catkin_LIBRARIES}
-#  -lprofiler
 )
 
 add_executable(anymal_mpc_node
@@ -186,6 +169,36 @@ target_link_libraries(dummy_mrt_node
   ocs2_anymal_interface
   ${catkin_LIBRARIES}
 )
+
+
+#############
+## Install ##
+#############
+
+install(TARGETS
+            ocs2_anymal_interface
+            mpc_ros_anymal
+            mrt_ros_anymal
+        ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+        LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+        RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+        )
+
+install(DIRECTORY include/${PROJECT_NAME}/
+        DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION})
+
+install(TARGETS
+            target_command_node
+            target_command_node_velocity
+            gait_command_node
+            planning
+            anymal_mpc_node
+            dummy_mrt_node
+        RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})
+
+install(DIRECTORY config
+        DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
+        )
 
 #############
 ## Testing ##

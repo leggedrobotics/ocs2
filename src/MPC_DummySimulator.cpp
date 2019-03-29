@@ -10,8 +10,8 @@
 
 #include <ros/package.h>
 
+#include <ocs2_quadruped_interface/DummySimulator.h>
 #include "ocs2_anymal_interface/OCS2AnymalInterface.h"
-#include "ocs2_quadruped_interface/DummySimulator.h"
 
 using namespace anymal;
 

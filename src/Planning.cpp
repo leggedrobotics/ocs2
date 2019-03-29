@@ -6,8 +6,9 @@
 #include <iostream>
 
 #include <ros/package.h>
-#include "ocs2_anymal_interface/OCS2AnymalInterface.h"
 #include <ocs2_quadruped_interface/QuadrupedXppVisualizer.h>
+
+#include "ocs2_anymal_interface/OCS2AnymalInterface.h"
 
 int main( int argc, char* argv[] )
 {

@@ -14,17 +14,13 @@
 #include <Eigen/Dense>
 
 #include <ros/ros.h>
+#include <ros/package.h>
 #include <rosbag/bag.h>
 #include <xpp_msgs/RobotStateCartesianTrajectory.h>
-
-//#include <cereal/archives/xml.hpp>
-//#include <cereal/types/vector.hpp>
-//#include <cereal/types/Eigen.hpp>
 
 #include <ocs2_core/misc/loadEigenMatrix.h>
 
 #include "ocs2_anymal_interface/OCS2AnymalInterface.h"
-#include <pathfile.h>
 
 //#include <gperftools/profiler.h>
 
@@ -53,7 +49,7 @@ int main( int argc, char* argv[] )
 	std::cout << "Current time: " << std::ctime(&currentDate);
 
 	if ( argc <= 1) throw std::runtime_error("No task file specified. Aborting.");
-	std::string taskFile = std::string(PACKAGE_PATH) + "/config/" + std::string(argv[1]) + "/task.info";
+	std::string taskFile =  ros::package::getPath("ocs2_anymal_interface") + "/config/" + std::string(argv[1]) + "/task.info";
 	std::cerr << "Loading task file: " << taskFile << std::endl;
 
 	double slowdown, visTime;

@@ -1,1 +1,2 @@
+## ocs2 switched model interface
 [![Build Status](https://ci.leggedrobotics.com/buildStatus/icon?job=bitbucket_leggedrobotics/ocs2_switched_model_interface/master)](https://ci.leggedrobotics.com/job/bitbucket_leggedrobotics/job/ocs2_switched_model_interface/job/master/)

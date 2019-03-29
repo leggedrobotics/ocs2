@@ -13,6 +13,7 @@ using namespace anymal;
 class SwitchedModelTests : public ::testing::Test,
                            public TestAnymalSwitchedModel {
 public:
+  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
   typedef AnymalKinematics::generalized_coordinate_t generalized_coordinate_t;
   typedef AnymalKinematics::joint_coordinate_t joint_coordinate_t;
 };

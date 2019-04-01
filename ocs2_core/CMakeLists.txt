@@ -117,4 +117,11 @@ target_link_libraries(test_transferfunctionbase
   ${catkin_LIBRARIES}
 )
 
+catkin_add_gtest(test_loopshapingDefinition
+        test/loopshaping/testLoopshapingDefinition.cpp
+        )
+target_link_libraries(test_loopshapingDefinition
+        ${Boost_LIBRARIES}
+        ${catkin_LIBRARIES}
+        )
 

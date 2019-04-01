@@ -47,14 +47,15 @@ public:
 	 */
 	MPC_Settings()
 
-	: runtimeNumIterations_(15)
+	: runtimeMaxNumIterations_(15)
 	, initMaxNumIterations_(15)
-	, runtimeLearningRate_(1.0)
+	, runtimeMaxLearningRate_(1.0)
+	, runtimeMinLearningRate_(1.0)
 	, initMaxLearningRate_(1.0)
 	, initMinLearningRate_(1.0)
 	, debugPrint_(false)
 	, coldStart_(false)
-	, recedingHorizon_(false)
+	, recedingHorizon_(true)
 	, blockwiseMovingHorizon_(false)
 	, forwardSimulationTime_(0)   // [ms]
 	, useFeedbackPolicy_(false)
@@ -80,11 +81,13 @@ public:
 	 *** Variables **
 	 ****************/
 	/** Number of iterations which will be used during MPC regular loop.. */
-	size_t runtimeNumIterations_;
+	size_t runtimeMaxNumIterations_;
 	/** Number of iterations which will be used during MPC initial run. */
 	size_t initMaxNumIterations_;
-	/** Fixed learning rate which will be used during MPC regular loop. */
-	double runtimeLearningRate_;
+	/** Maximum learning rate which will be used during MPC regular loop. */
+	double runtimeMaxLearningRate_;
+	/** Maximum learning rate which will be used during MPC regular loop. */
+	double runtimeMinLearningRate_;
 	/** Maximum learning rate which will be used during MPC initial run. */
 	double initMaxLearningRate_;
 	/** Minimum learning rate which will be used during MPC initial run. */
@@ -140,11 +143,11 @@ inline void MPC_Settings::loadSettings(const std::string& filename, bool verbose
 	}
 
 	try	{
-		runtimeNumIterations_ = pt.get<size_t>("mpc.runtimeNumIterations");
-		if (verbose)  std::cerr << " #### Option loader : option 'runtimeNumIterations' ....... " << runtimeNumIterations_ << std::endl;
+		runtimeMaxNumIterations_ = pt.get<size_t>("mpc.runtimeMaxNumIterations");
+		if (verbose)  std::cerr << " #### Option loader : option 'runtimeMaxNumIterations' .... " << runtimeMaxNumIterations_ << std::endl;
 	}
 	catch (const std::exception& e){
-		if (verbose)  std::cerr << " #### Option loader : option 'runtimeNumIterations' ....... " << runtimeNumIterations_ << " (default)" << std::endl;
+		if (verbose)  std::cerr << " #### Option loader : option 'runtimeMaxNumIterations' .... " << runtimeMaxNumIterations_ << " (default)" << std::endl;
 	}
 
 	try	{
@@ -156,11 +159,19 @@ inline void MPC_Settings::loadSettings(const std::string& filename, bool verbose
 	}
 
 	try	{
-		runtimeLearningRate_ = pt.get<double>("mpc.runtimeLearningRate");
-		if (verbose)  std::cerr << " #### Option loader : option 'runtimeLearningRate' ........ " << runtimeLearningRate_ << std::endl;
+		runtimeMaxLearningRate_ = pt.get<double>("mpc.runtimeMaxLearningRate");
+		if (verbose)  std::cerr << " #### Option loader : option 'runtimeMaxLearningRate' ..... " << runtimeMaxLearningRate_ << std::endl;
 	}
 	catch (const std::exception& e){
-		if (verbose)  std::cerr << " #### Option loader : option 'runtimeLearningRate' ........ " << runtimeLearningRate_ << " (default)" << std::endl;
+		if (verbose)  std::cerr << " #### Option loader : option 'runtimeMaxLearningRate' ..... " << runtimeMaxLearningRate_ << " (default)" << std::endl;
+	}
+
+	try	{
+		runtimeMinLearningRate_ = pt.get<double>("mpc.runtimeMinLearningRate");
+		if (verbose)  std::cerr << " #### Option loader : option 'runtimeMinLearningRate' ..... " << runtimeMinLearningRate_ << std::endl;
+	}
+	catch (const std::exception& e){
+		if (verbose)  std::cerr << " #### Option loader : option 'runtimeMinLearningRate' ..... " << runtimeMinLearningRate_ << " (default)" << std::endl;
 	}
 
 	try	{

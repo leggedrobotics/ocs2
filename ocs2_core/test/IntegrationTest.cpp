@@ -27,20 +27,20 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
+#include <gtest/gtest.h>
+
 #include <memory>
 #include <fstream>
-
 #include "ocs2_core/integration/Integrator.h"
 #include "ocs2_core/integration/EventHandlerBase.h"
 #include "ocs2_core/dynamics/LinearSystemDynamics.h"
-#include <ocs2_core/misc/FindActiveIntervalIndex.h>
 
-#include <gtest/gtest.h>
+#include <ocs2_core/misc/FindActiveIntervalIndex.h>
 
 using namespace ocs2;
 
 
-TEST(IntegrationTest, SecondOrderSystem_ODE45)
+TEST(IntegrationTest, DISABLED_SecondOrderSystem_ODE45)
 {
 	bool resultsGood = true;
 
@@ -104,7 +104,7 @@ TEST(IntegrationTest, SecondOrderSystem_ODE45)
 }
 
 
-TEST(IntegrationTest, SecondOrderSystem_AdamsBashfort)
+TEST(IntegrationTest, DISABLED_SecondOrderSystem_AdamsBashfort)
 {
 	bool resultsGood = true;
 
@@ -171,7 +171,7 @@ TEST(IntegrationTest, SecondOrderSystem_AdamsBashfort)
 
 #if (BOOST_VERSION / 100000 == 1 && BOOST_VERSION / 100 % 1000 > 55)
 
-TEST(IntegrationTest, SecondOrderSystem_AdamsBashfortMoulton)
+TEST(IntegrationTest, DISABLED_SecondOrderSystem_AdamsBashfortMoulton)
 {
 	bool resultsGood = true;
 

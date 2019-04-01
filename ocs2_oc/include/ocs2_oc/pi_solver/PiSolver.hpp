@@ -1,9 +1,13 @@
 #pragma once
 
-#include <ocs2_core/cost/QuadraticCostFunction.h>
+#include <ocs2_core/constraint/ConstraintBase.h>
+#include <ocs2_core/control/PiController.h>
+#include <ocs2_core/cost/PathIntegralCostFunction.h>
 #include <ocs2_core/dynamics/ControlledSystemBase.h>
 #include <ocs2_oc/oc_solver/Solver_BASE.h>
+#include <ocs2_oc/rollout/TimeTriggeredRollout.h>
 
+#include <Eigen/Cholesky>
 #include <random>
 
 namespace ocs2 {
@@ -41,11 +45,26 @@ class PiSolver : public Solver_BASE<STATE_DIM, INPUT_DIM, NullLogicRules> {
   using input_vector_array2_t = typename Base::input_vector_array2_t;
 
   using controlled_system_base_t = ControlledSystemBase<STATE_DIM, INPUT_DIM, logic_rules_t>;
-  using cost_function_t = QuadraticCostFunction<STATE_DIM, INPUT_DIM, logic_rules_t>;
+  using cost_function_t = PathIntegralCostFunction<STATE_DIM, INPUT_DIM, logic_rules_t>;
+  using rollout_t = TimeTriggeredRollout<STATE_DIM, INPUT_DIM, logic_rules_t>;
+  using constraint_t = ConstraintBase<STATE_DIM, INPUT_DIM, logic_rules_t>;
+  using controller_t = PiController<STATE_DIM, INPUT_DIM>;
 
-  PiSolver(const typename controlled_system_base_t::Ptr systemDynamicsPtr, const typename cost_function_t::Ptr costFunctionPtr)
-      : systemDynamics_(systemDynamicsPtr), costFunction_(costFunctionPtr) {
+  PiSolver(const typename controlled_system_base_t::Ptr systemDynamicsPtr, const typename cost_function_t::Ptr costFunction,
+           const constraint_t constraint, scalar_t rollout_dt, scalar_t noiseScaling)
+      : systemDynamics_(systemDynamicsPtr),
+        costFunction_(costFunction),
+        rollout_(*systemDynamicsPtr, Rollout_Settings(1e-9, 1e-6, 5000, rollout_dt, IntegratorType::EULER)),
+        constraint_(constraint),
+        rollout_dt_(rollout_dt),
+        controller_(constraint, *costFunction, rollout_dt_, noiseScaling),
+        gamma_(noiseScaling) {
     // TODO(jcarius) how to ensure that we are given a control affine system?
+    // TODO(jcarius) how to ensure that we are given a suitable cost function?
+    // TODO(jcarius) how to ensure that the constraint is input-affine and full row-rank D?
+
+    // TODO(jcarius) enforce euler forward method in rollout and extract rollout_dt_
+    // see Euler-Maruyama method (https://infoscience.epfl.ch/record/143450/files/sde_tutorial.pdf)
   }
 
   ~PiSolver() override = default;
@@ -77,69 +96,52 @@ class PiSolver : public Solver_BASE<STATE_DIM, INPUT_DIM, NullLogicRules> {
     }
     costFunction_->setCostDesiredTrajectories(costDesiredTrajectories_);
 
-    // make sure the cost complies with our assumptions
-    input_state_matrix_t P;
-    costFunction_->getIntermediateCostDerivativeInputState(P);
-    if (!P.isZero()) {
-      std::cout << "The mixed term of the cost function should be zero. P = " << P << std::endl;
-    }
-
-    input_matrix_t R, Q;
-    costFunction_->getIntermediateCostSecondDerivativeInput(R);
-    constexpr scalar_t gamma(1.0);  // scaling of noise
-    Q = gamma * R.inverse();
-    std::cout << "Setting noise characteristic to Q:\n" << Q << std::endl;
-
-    constexpr size_t numSamples = 1;  //! number of random walks to be sampled
-    constexpr scalar_t dt = 0.01;     //! time discretization
-    const auto numSteps = static_cast<size_t>(std::floor((finalTime - initTime) / dt));
+    constexpr size_t numSamples = 10;  //! number of random walks to be sampled
+    const auto numSteps = static_cast<size_t>(std::floor((finalTime - initTime) / rollout_dt_));
 
     state_vector_array2_t state_vector_array2(numSamples, state_vector_array_t(numSteps));  //! vector of vectors of states
-    scalar_array_t trajectoryCost(numSamples, scalar_t(0.0));
-
-    // TODO(jcarius) random generator can be class members (?)
-    std::default_random_engine generator;
-    std::normal_distribution<scalar_t> distribution(scalar_t(0.0), scalar_t(1.0));
-    auto normal = [&](scalar_t) -> scalar_t { return distribution(generator); };  // dummy argument required by Eigen
+    scalar_array_t trajectoryCostVtilde(numSamples, scalar_t(0.0));
 
     scalar_t psi(0.0);  // value of Psi(x,t) for x=initState, t=init_time
     input_vector_t u_opt = input_vector_t::Zero();
 
     for (size_t sample = 0; sample < numSamples; sample++) {
-      // integrate with Euler-Maruyama method (https://infoscience.epfl.ch/record/143450/files/sde_tutorial.pdf)
-
       state_vector_array2[sample][0] = initState;
+      controller_.computeInput(initTime, initState);
+
       input_vector_t noiseOnDxDtAtTimeZero;
 
-      // TODO(jcarius) use rollout class
       for (size_t n = 0; n < numSteps - 1; n++) {
-        const auto stepTime = initTime + dt * n;
-        input_vector_t noiseInput = std::sqrt(dt) * Q * input_vector_t::NullaryExpr(normal);
-        state_vector_t dxdt, dxdt_withNoiseInput;
-        systemDynamics_->computeFlowMap(stepTime, state_vector_array2[sample][n], input_vector_t::Zero(), dxdt);
-        systemDynamics_->computeFlowMap(stepTime, state_vector_array2[sample][n], noiseInput, dxdt_withNoiseInput);
+        // calculate costs
+        trajectoryCostVtilde[sample] +=
+            controller_.V_ + 0.5 * (controller_.Ddagger_ * controller_.c_).dot(controller_.R_ * controller_.Ddagger_ * controller_.c_);
+        trajectoryCostVtilde[sample] -=
+            0.5 * controller_.r_.transpose() * (input_matrix_t::Identity() - controller_.Dtilde_) * controller_.Rinv_ * controller_.r_;
+        trajectoryCostVtilde[sample] -= (controller_.Ddagger_ * controller_.c_).transpose() * controller_.r_;
 
-        // the integration step
-        state_vector_array2[sample][n + 1] = state_vector_array2[sample][n] + dxdt * dt + (dxdt_withNoiseInput - dxdt);
+        const auto stepTime = initTime + rollout_dt_ * n;
+        typename rollout_t::logic_rules_machine_t logicRulesMachine;
+        typename rollout_t::scalar_array_t timeTrajectory;
+        typename rollout_t::size_array_t eventsPastTheEndIndeces;
+        typename rollout_t::state_vector_array_t stateTrajectory;
+        typename rollout_t::input_vector_array_t inputTrajectory;
+
+        // step forward in time
+        rollout_.run(0, stepTime, state_vector_array2[sample][n], stepTime + rollout_dt_, &controller_, logicRulesMachine, timeTrajectory,
+                     eventsPastTheEndIndeces, stateTrajectory, inputTrajectory);
 
         if (n == 0) {
-          noiseOnDxDtAtTimeZero = (dxdt_withNoiseInput - dxdt).template tail<1>() / dt;  // TODO(jcarius) dimensions manually selected
+          noiseOnDxDtAtTimeZero = controller_.noiseInput_;  // TODO(jcarius) is there a dt missing?
         }
-
-        // calculate costs
-        scalar_t intermediateCost;
-        costFunction_->setCurrentStateAndControl(stepTime, state_vector_array2[sample][n], input_vector_t::Zero());
-        costFunction_->getIntermediateCost(intermediateCost);
-        trajectoryCost[sample] += intermediateCost;
       }
       scalar_t terminalCost;
       costFunction_->setCurrentStateAndControl(finalTime, state_vector_array2[sample][numSteps - 1], input_vector_t::Zero());
       costFunction_->getTerminalCost(terminalCost);
-      trajectoryCost[sample] += terminalCost;
+      trajectoryCostVtilde[sample] += terminalCost;
 
       // TODO(jcarius) check how to implement this numerically stable
-      psi += exp(-trajectoryCost[sample] / gamma);
-      u_opt += noiseOnDxDtAtTimeZero * exp(-trajectoryCost[sample] / gamma);
+      psi += std::exp(-trajectoryCostVtilde[sample] / gamma_);
+      u_opt += noiseOnDxDtAtTimeZero * std::exp(-trajectoryCostVtilde[sample] / gamma_);
     }
 
     psi /= numSamples;
@@ -394,6 +396,14 @@ class PiSolver : public Solver_BASE<STATE_DIM, INPUT_DIM, NullLogicRules> {
  protected:
   typename controlled_system_base_t::Ptr systemDynamics_;
   typename cost_function_t::Ptr costFunction_;
+
+  constraint_t constraint_;
+
+  controller_t controller_;
+
+  rollout_t rollout_;
+  scalar_t rollout_dt_;  //! time step size of Euler integration rollout
+  scalar_t gamma_;       //! scaling of noise (~temperature)
 
   cost_desired_trajectories_t costDesiredTrajectories_;  // TODO(jcarius) should this be in the base class?
   cost_desired_trajectories_t costDesiredTrajectoriesBuffer_;

@@ -30,19 +30,19 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifndef MPC_ROS_INTERFACE_OCS2_H_
 #define MPC_ROS_INTERFACE_OCS2_H_
 
+#include <Eigen/Dense>
 #include <array>
-#include <memory>
-#include <vector>
-#include <thread>
-#include <mutex>
 #include <atomic>
+#include <chrono>
 #include <condition_variable>
 #include <csignal>
-#include <iostream>
-#include <string>
 #include <ctime>
-#include <chrono>
-#include <Eigen/Dense>
+#include <iostream>
+#include <memory>
+#include <mutex>
+#include <string>
+#include <thread>
+#include <vector>
 
 #include <ros/ros.h>
 #include <ros/transport_hints.h>
@@ -50,16 +50,18 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_mpc/MPC_BASE.h>
 
 // MPC messages
+#include <ocs2_comm_interfaces/dummy.h>
 #include <ocs2_comm_interfaces/mode_sequence.h>
-#include <ocs2_comm_interfaces/mpc_observation.h>
 #include <ocs2_comm_interfaces/mpc_feedback_policy.h>
 #include <ocs2_comm_interfaces/mpc_feedforward_policy.h>
+#include <ocs2_comm_interfaces/mpc_observation.h>
 #include <ocs2_comm_interfaces/mpc_target_trajectories.h>
-#include <ocs2_comm_interfaces/dummy.h>
 #include <ocs2_comm_interfaces/reset.h>
 
 #include "ocs2_comm_interfaces/SystemObservation.h"
 #include "ocs2_comm_interfaces/ocs2_ros_interfaces/common/RosMsgConversions.h"
+
+#include <ocs2_core/control/LinearController.h>
 
 //#define PUBLISH_DUMMY
 #define PUBLISH_THREAD
@@ -73,281 +75,258 @@ namespace ocs2 {
  * @tparam INPUT_DIM: Dimension of the control input space.
  * @tparam LOGIC_RULES_T: Logic Rules type (default NullLogicRules).
  */
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T=NullLogicRules>
-class MPC_ROS_Interface
-{
-public:
-	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T = NullLogicRules>
+class MPC_ROS_Interface {
+ public:
+  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-	typedef std::shared_ptr<MPC_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>> Ptr;
+  typedef std::shared_ptr<MPC_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>> Ptr;
 
-	typedef MPC_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> mpc_t;
+  typedef MPC_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> mpc_t;
 
-	typedef typename mpc_t::scalar_t                   scalar_t;
-	typedef typename mpc_t::scalar_array_t             scalar_array_t;
-	typedef typename mpc_t::size_array_t               size_array_t;
-	typedef typename mpc_t::state_vector_t             state_vector_t;
-	typedef typename mpc_t::state_vector_array_t       state_vector_array_t;
-	typedef typename mpc_t::state_vector_array2_t      state_vector_array2_t;
-	typedef typename mpc_t::input_vector_t             input_vector_t;
-	typedef typename mpc_t::input_vector_array_t       input_vector_array_t;
-	typedef typename mpc_t::input_vector_array2_t      input_vector_array2_t;
-	typedef typename mpc_t::controller_t               controller_t;
-	typedef typename mpc_t::controller_array_t         controller_array_t;
-	typedef typename mpc_t::input_state_matrix_t       input_state_matrix_t;
-	typedef typename mpc_t::input_state_matrix_array_t input_state_matrix_array_t;
+  typedef typename mpc_t::scalar_t scalar_t;
+  typedef typename mpc_t::scalar_array_t scalar_array_t;
+  typedef typename mpc_t::size_array_t size_array_t;
+  typedef typename mpc_t::state_vector_t state_vector_t;
+  typedef typename mpc_t::state_vector_array_t state_vector_array_t;
+  typedef typename mpc_t::state_vector_array2_t state_vector_array2_t;
+  typedef typename mpc_t::input_vector_t input_vector_t;
+  typedef typename mpc_t::input_vector_array_t input_vector_array_t;
+  typedef typename mpc_t::input_vector_array2_t input_vector_array2_t;
+  typedef typename mpc_t::input_state_matrix_t input_state_matrix_t;
+  typedef typename mpc_t::input_state_matrix_array_t input_state_matrix_array_t;
 
-	typedef typename mpc_t::cost_desired_trajectories_t  cost_desired_trajectories_t;
-	typedef typename mpc_t::mode_sequence_template_t     mode_sequence_template_t;
+  typedef typename mpc_t::cost_desired_trajectories_t cost_desired_trajectories_t;
+  typedef typename mpc_t::mode_sequence_template_t mode_sequence_template_t;
 
-	typedef SystemObservation<STATE_DIM, INPUT_DIM> system_observation_t;
+  typedef SystemObservation<STATE_DIM, INPUT_DIM> system_observation_t;
 
-	typedef RosMsgConversions<STATE_DIM, INPUT_DIM> ros_msg_conversions_t;
+  typedef LinearController<STATE_DIM, INPUT_DIM> controller_t;
+  typedef std::vector<controller_t, Eigen::aligned_allocator<controller_t>> controller_array_t;
 
-	/**
-	 * Default constructor
-	 */
-	MPC_ROS_Interface() = default;
+  typedef RosMsgConversions<STATE_DIM, INPUT_DIM> ros_msg_conversions_t;
 
-	/**
-	 * Constructor.
-	 *
-	 * @param [in] mpc: The MPC object to be interfaced.
-	 * @param [in] robotName: The robot's name.
-	 */
-	MPC_ROS_Interface(
-			mpc_t& mpc,
-			const std::string& robotName = "robot");
+  /**
+   * Default constructor
+   */
+  MPC_ROS_Interface() = default;
 
-	/**
-	 * Destructor.
-	 */
-	virtual ~MPC_ROS_Interface();
+  /**
+   * Constructor.
+   *
+   * @param [in] mpc: The MPC object to be interfaced.
+   * @param [in] robotName: The robot's name.
+   */
+  MPC_ROS_Interface(mpc_t& mpc, const std::string& robotName = "robot");
 
-	/**
-	 * Sets the class as its constructor.
-	 *
-	 * @param [in] mpcPtr: The MPC object to be interfaced.
-	 * @param [in] robotName: The robot's name.
-	 */
-	void set(mpc_t& mpc,
-			const std::string& robotName = "robot");
+  /**
+   * Destructor.
+   */
+  virtual ~MPC_ROS_Interface();
 
-	/**
-	 * Resets the class to its instantiate state.
-	 */
-	virtual void reset();
+  /**
+   * Sets the class as its constructor.
+   *
+   * @param [in] mpcPtr: The MPC object to be interfaced.
+   * @param [in] robotName: The robot's name.
+   */
+  void set(mpc_t& mpc, const std::string& robotName = "robot");
 
-	/**
-	 * Shutdowns the ROS nodes.
-	 */
-	void shutdownNodes();
+  /**
+   * Resets the class to its instantiate state.
+   */
+  virtual void reset();
 
-	/**
-	 * This is the main routine which launches all the nodes required for MPC to run which includes:
-	 * (1) The MPC policy publisher (either feedback or feedforward policy).
-	 * (2) The observation subscriber which gets the current measured state to invoke the MPC run routine.
-	 * (3) The desired trajectories subscriber which gets the goal information from user.
-	 * (4) The desired mode sequence which gets the predefined mode switches for time-triggered hybrid systems.
-	 *
-	 * @param [in] argc: Command line number of arguments.
-	 * @param [in] argv: Command line vector of arguments.
-	 */
-	void launchNodes(int argc, char* argv[]);
+  /**
+   * Shutdowns the ROS nodes.
+   */
+  void shutdownNodes();
 
-	/**
-	 * This method will be called either after the very fist call of the class or after a call to reset().
-	 * Users can use this function for any sort of initialization that they may need in the first call.
-	 *
-	 * @param [in] initObservation: The observation after the very fist call of the class or after call to reset().
-	 */
-	virtual void initCall(
-			const system_observation_t& initObservation) {}
+  /**
+   * This is the main routine which launches all the nodes required for MPC to run which includes:
+   * (1) The MPC policy publisher (either feedback or feedforward policy).
+   * (2) The observation subscriber which gets the current measured state to invoke the MPC run routine.
+   * (3) The desired trajectories subscriber which gets the goal information from user.
+   * (4) The desired mode sequence which gets the predefined mode switches for time-triggered hybrid systems.
+   *
+   * @param [in] argc: Command line number of arguments.
+   * @param [in] argv: Command line vector of arguments.
+   */
+  void launchNodes(int argc, char* argv[]);
 
-	/**
-	 * Provides the initial target trajectories for the cost function.
-	 *
-	 * @param [in] initObservation: The observation after the very fist call of the class or after call to reset().
-	 * @param [out] costDesiredTrajectories: The desired cost trajectories.
-	 */
-	virtual void initGoalState(
-			const system_observation_t& initObservation,
-			cost_desired_trajectories_t& costDesiredTrajectories) = 0;
+  /**
+   * This method will be called either after the very fist call of the class or after a call to reset().
+   * Users can use this function for any sort of initialization that they may need in the first call.
+   *
+   * @param [in] initObservation: The observation after the very fist call of the class or after call to reset().
+   */
+  virtual void initCall(const system_observation_t& initObservation) {}
 
-	/**
-	 * Provides the initial mode sequence for time-triggered hybrid systems.
-	 *
-	 * @param [in] initObservation: The observation after the very fist call of the class or after call to reset().
-	 */
-	virtual void initModeSequence(
-			const system_observation_t& initObservation) {}
+  /**
+   * Provides the initial target trajectories for the cost function.
+   *
+   * @param [in] initObservation: The observation after the very fist call of the class or after call to reset().
+   * @param [out] costDesiredTrajectories: The desired cost trajectories.
+   */
+  virtual void initGoalState(const system_observation_t& initObservation, cost_desired_trajectories_t& costDesiredTrajectories) = 0;
 
-	/**
-	 * Adjusts the user-defined target trajectories for the cost based on the current observation.
-	 *
-	 * @param [in] currentObservation: The current observation.
-	 * @param costDesiredTrajectories: The received user-defined target trajectories which can be modified based on the current observation.
-	 */
-	virtual void adjustTargetTrajectories(
-			const system_observation_t& currentObservation,
-			cost_desired_trajectories_t& costDesiredTrajectories) {}
+  /**
+   * Provides the initial mode sequence for time-triggered hybrid systems.
+   *
+   * @param [in] initObservation: The observation after the very fist call of the class or after call to reset().
+   */
+  virtual void initModeSequence(const system_observation_t& initObservation) {}
 
-	/**
-	 * Adjusts the user-defined mode sequence for time-triggered hybrid systems based on the current observation.
-	 *
-	 * @param [in] currentObservation: The current observation.
-	 * @param newLogicRulesTemplate: New logicRules template which can be modified based on the current observation.
-	 */
-	virtual void adjustModeSequence(
-			const system_observation_t& currentObservation,
-			mode_sequence_template_t& newLogicRulesTemplate) {}
+  /**
+   * Adjusts the user-defined target trajectories for the cost based on the current observation.
+   *
+   * @param [in] currentObservation: The current observation.
+   * @param costDesiredTrajectories: The received user-defined target trajectories which can be modified based on the current observation.
+   */
+  virtual void adjustTargetTrajectories(const system_observation_t& currentObservation,
+                                        cost_desired_trajectories_t& costDesiredTrajectories) {}
 
-protected:
-	/**
-	 * Signal handler
-	 *
-	 * @param sig: signal
-	 */
-	static void sigintHandler(int sig);
+  /**
+   * Adjusts the user-defined mode sequence for time-triggered hybrid systems based on the current observation.
+   *
+   * @param [in] currentObservation: The current observation.
+   * @param newLogicRulesTemplate: New logicRules template which can be modified based on the current observation.
+   */
+  virtual void adjustModeSequence(const system_observation_t& currentObservation, mode_sequence_template_t& newLogicRulesTemplate) {}
 
-	/**
-	 * Callback to reset MPC.
-	 *
-	 * @param req: Service request.
-	 * @param res: Service response.
-	 */
-	bool resetMpcCallback(
-			ocs2_comm_interfaces::reset::Request  &req,
-			ocs2_comm_interfaces::reset::Response &res);
+ protected:
+  /**
+   * Signal handler
+   *
+   * @param sig: signal
+   */
+  static void sigintHandler(int sig);
 
-	/**
-	 * Dummy publisher for network debugging.
-	 */
-	void publishDummy();
+  /**
+   * Callback to reset MPC.
+   *
+   * @param req: Service request.
+   * @param res: Service response.
+   */
+  bool resetMpcCallback(ocs2_comm_interfaces::reset::Request& req, ocs2_comm_interfaces::reset::Response& res);
 
-	/**
-	 * Publishes the MPC feedforward policy.
-	 *
-	 * @param [in] currentObservation: The observation that MPC designed from.
-	 * @param [in] controllerIsUpdated: Whether the policy is updated.
-	 * @param [in] costDesiredTrajectoriesPtr: The target trajectories that MPC optimized.
-	 * @param [in] timeTrajectoriesStockPtr: A pointer to the MPC optimized time trajectory.
-	 * @param [in] stateTrajectoriesStockPtr: A pointer to the  MPC optimized state trajectory.
-	 * @param [in] inputTrajectoriesStockPtr: A pointer to the  MPC optimized input trajectory.
-	 * @param [in] eventTimesPtr: A pointer to the event time sequence.
-	 * @param [in] subsystemsSequencePtr: A pointer to the subsystem sequence.
-	 */
-	void publishFeedforwardPolicy(
-			const system_observation_t& currentObservation,
-			const bool& controllerIsUpdated,
-			const cost_desired_trajectories_t*& costDesiredTrajectoriesPtr,
-			const std::vector<scalar_array_t>*& timeTrajectoriesStockPtr,
-			const state_vector_array2_t*& stateTrajectoriesStockPtr,
-			const input_vector_array2_t*& inputTrajectoriesStockPtr,
-			const scalar_array_t*& eventTimesPtr,
-			const size_array_t*& subsystemsSequencePtr);
+  /**
+   * Dummy publisher for network debugging.
+   */
+  void publishDummy();
 
-	/**
-	 * Publishes the MPC feedforward policy.
-	 *
-	 * @param [in] currentObservation: The observation that MPC designed from.
-	 * @param [in] controllerIsUpdated: Whether the policy is updated.
-	 * @param [in] costDesiredTrajectoriesPtr: The target trajectories that MPC optimized.
-	 * @param [in] controllerStockPtr: A pointer to the MPC optimized control policy.
-	 * @param [in] eventTimesPtr: A pointer to the event time sequence.
-	 * @param [in] subsystemsSequencePtr: A pointer to the subsystem sequence.
-	 */
-	void publishFeedbackPolicy(
-			const system_observation_t& currentObservation,
-			const bool& controllerIsUpdated,
-			const cost_desired_trajectories_t*& costDesiredTrajectoriesPtr,
-			const controller_array_t*& controllerStockPtr,
-			const scalar_array_t*& eventTimesPtr,
-			const size_array_t*& subsystemsSequencePtr);
+  /**
+   * Publishes the MPC feedforward policy.
+   *
+   * @param [in] currentObservation: The observation that MPC designed from.
+   * @param [in] controllerIsUpdated: Whether the policy is updated.
+   * @param [in] costDesiredTrajectoriesPtr: The target trajectories that MPC optimized.
+   * @param [in] timeTrajectoriesStockPtr: A pointer to the MPC optimized time trajectory.
+   * @param [in] stateTrajectoriesStockPtr: A pointer to the  MPC optimized state trajectory.
+   * @param [in] inputTrajectoriesStockPtr: A pointer to the  MPC optimized input trajectory.
+   * @param [in] eventTimesPtr: A pointer to the event time sequence.
+   * @param [in] subsystemsSequencePtr: A pointer to the subsystem sequence.
+   */
+  void publishFeedforwardPolicy(const system_observation_t& currentObservation, const bool& controllerIsUpdated,
+                                const cost_desired_trajectories_t*& costDesiredTrajectoriesPtr,
+                                const std::vector<scalar_array_t>*& timeTrajectoriesStockPtr,
+                                const state_vector_array2_t*& stateTrajectoriesStockPtr,
+                                const input_vector_array2_t*& inputTrajectoriesStockPtr, const scalar_array_t*& eventTimesPtr,
+                                const size_array_t*& subsystemsSequencePtr);
 
-	/**
-	 * Handles ROS publishing thread.
-	 */
-	void publisherWorkerThread();
+  /**
+   * Publishes the MPC feedforward policy.
+   *
+   * @param [in] currentObservation: The observation that MPC designed from.
+   * @param [in] controllerIsUpdated: Whether the policy is updated.
+   * @param [in] costDesiredTrajectoriesPtr: The target trajectories that MPC optimized.
+   * @param [in] controllerStockPtr: A pointer to the MPC optimized control policy.
+   * @param [in] eventTimesPtr: A pointer to the event time sequence.
+   * @param [in] subsystemsSequencePtr: A pointer to the subsystem sequence.
+   */
+  void publishFeedbackPolicy(const system_observation_t& currentObservation, const bool& controllerIsUpdated,
+                             const cost_desired_trajectories_t*& costDesiredTrajectoriesPtr, const controller_array_t*& controllerStockPtr,
+                             const scalar_array_t*& eventTimesPtr, const size_array_t*& subsystemsSequencePtr);
 
-	/**
-	 * The callback method which receives the current observation, invokes the MPC algorithm,
-	 * and finally publishes the optimized policy.
-	 *
-	 * @param [in] msg: The observation message.
-	 */
-	void mpcObservationCallback(
-			const ocs2_comm_interfaces::mpc_observation::ConstPtr& msg);
+  /**
+   * Handles ROS publishing thread.
+   */
+  void publisherWorkerThread();
 
-	/**
-	 * The callback method which receives the user-defined target trajectories message.
-	 *
-	 * @param [in] msg: The target trajectories message.
-	 */
-	void mpcTargetTrajectoriesCallback(
-			const ocs2_comm_interfaces::mpc_target_trajectories::ConstPtr& msg);
+  /**
+   * The callback method which receives the current observation, invokes the MPC algorithm,
+   * and finally publishes the optimized policy.
+   *
+   * @param [in] msg: The observation message.
+   */
+  void mpcObservationCallback(const ocs2_comm_interfaces::mpc_observation::ConstPtr& msg);
 
-	/**
-	 * The callback method which receives the user-defined mode sequence message.
-	 *
-	 * @param [in] msg: The mode sequence message.
-	 */
-	void mpcModeSequenceCallback(
-			const ocs2_comm_interfaces::mode_sequence::ConstPtr& msg);
+  /**
+   * The callback method which receives the user-defined target trajectories message.
+   *
+   * @param [in] msg: The target trajectories message.
+   */
+  void mpcTargetTrajectoriesCallback(const ocs2_comm_interfaces::mpc_target_trajectories::ConstPtr& msg);
 
+  /**
+   * The callback method which receives the user-defined mode sequence message.
+   *
+   * @param [in] msg: The mode sequence message.
+   */
+  void mpcModeSequenceCallback(const ocs2_comm_interfaces::mode_sequence::ConstPtr& msg);
 
-protected:
-	/*
-	 * Variables
-	 */
-	mpc_t* mpcPtr_;
-	MPC_Settings mpcSettings_;
+ protected:
+  /*
+   * Variables
+   */
+  mpc_t* mpcPtr_;
+  MPC_Settings mpcSettings_;
 
-	std::string robotName_;
+  std::string robotName_;
 
-	// Publishers and subscribers
-	::ros::Subscriber    mpcObservationSubscriber_;
-	::ros::Subscriber    mpcTargetTrajectoriesSubscriber_;
-	::ros::Subscriber    mpcModeSequenceSubscriber_;
-	::ros::Publisher     mpcFeedforwardPolicyPublisher_;
-	::ros::Publisher     mpcFeedbackPolicyPublisher_;
-	::ros::Publisher     dummyPublisher_;
-	::ros::ServiceServer mpcResetServiceServer_;
+  // Publishers and subscribers
+  ::ros::Subscriber mpcObservationSubscriber_;
+  ::ros::Subscriber mpcTargetTrajectoriesSubscriber_;
+  ::ros::Subscriber mpcModeSequenceSubscriber_;
+  ::ros::Publisher mpcFeedforwardPolicyPublisher_;
+  ::ros::Publisher mpcFeedbackPolicyPublisher_;
+  ::ros::Publisher dummyPublisher_;
+  ::ros::ServiceServer mpcResetServiceServer_;
 
-	// MPC reset flags
-	std::atomic<bool> resetRequested_;
+  // MPC reset flags
+  std::atomic<bool> resetRequested_;
 
-	// ROS messages
-	ocs2_comm_interfaces::mpc_feedback_policy    mpcFeedbackPolicyMsg_;
-	ocs2_comm_interfaces::mpc_feedforward_policy mpcFeedforwardPolicyMsg_;
-	ocs2_comm_interfaces::mpc_feedback_policy    mpcFeedbackPolicyMsgBuffer_;
-	ocs2_comm_interfaces::mpc_feedforward_policy mpcFeedforwardPolicyMsgBuffer_;
+  // ROS messages
+  ocs2_comm_interfaces::mpc_feedback_policy mpcFeedbackPolicyMsg_;
+  ocs2_comm_interfaces::mpc_feedforward_policy mpcFeedforwardPolicyMsg_;
+  ocs2_comm_interfaces::mpc_feedback_policy mpcFeedbackPolicyMsgBuffer_;
+  ocs2_comm_interfaces::mpc_feedforward_policy mpcFeedforwardPolicyMsgBuffer_;
 
-	// Multi-threading for publishers
-	bool terminateThread_;
-	bool readyToPublish_;
-	std::thread publisherWorker_;
-	std::mutex publisherMutex_;
-	std::condition_variable msgReady_;
+  // Multi-threading for publishers
+  bool terminateThread_;
+  bool readyToPublish_;
+  std::thread publisherWorker_;
+  std::mutex publisherMutex_;
+  std::condition_variable msgReady_;
 
-	size_t numIterations_;
-	scalar_t maxDelay_;
-	scalar_t meanDelay_;
-	scalar_t currentDelay_;
+  size_t numIterations_;
+  scalar_t maxDelay_;
+  scalar_t meanDelay_;
+  scalar_t currentDelay_;
 
-	std::chrono::time_point<std::chrono::steady_clock> startTimePoint_;
-	std::chrono::time_point<std::chrono::steady_clock> finalTimePoint_;
+  std::chrono::time_point<std::chrono::steady_clock> startTimePoint_;
+  std::chrono::time_point<std::chrono::steady_clock> finalTimePoint_;
 
-	bool initialCall_;
+  bool initialCall_;
 
-	std::atomic<bool> desiredTrajectoriesUpdated_;
-	std::atomic<bool> modeSequenceUpdated_;
-	cost_desired_trajectories_t costDesiredTrajectories_;
-	cost_desired_trajectories_t defaultCostDesiredTrajectories_;
-	mode_sequence_template_t modeSequenceTemplate_;
+  std::atomic<bool> desiredTrajectoriesUpdated_;
+  std::atomic<bool> modeSequenceUpdated_;
+  cost_desired_trajectories_t costDesiredTrajectories_;
+  cost_desired_trajectories_t defaultCostDesiredTrajectories_;
+  mode_sequence_template_t modeSequenceTemplate_;
 };
 
-} // namespace ocs2
+}  // namespace ocs2
 
 #include "implementation/MPC_ROS_Interface.h"
 

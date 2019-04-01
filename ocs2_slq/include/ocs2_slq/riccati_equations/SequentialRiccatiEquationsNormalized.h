@@ -324,12 +324,6 @@ public:
 
 		convert2Matrix(allSs, Sm_, Sv_, s_);
 
-		// numerical consideration
-		if(useMakePSD_==true)
-			bool hasNegativeEigenValue = makePSD(Sm_);
-		else
-			Sm_ += state_matrix_t::Identity()*(1e-5);
-
 		AmFunc_.interpolate(t, Am_);
 		size_t greatestLessTimeStampIndex = AmFunc_.getGreatestLessTimeStampIndex();
 		BmFunc_.interpolate(t, Bm_, greatestLessTimeStampIndex);
@@ -341,9 +335,20 @@ public:
 		RmFunc_.interpolate(t, Rm_, greatestLessTimeStampIndex);
 		PmFunc_.interpolate(t, Pm_, greatestLessTimeStampIndex);
 
+		// numerical consideration
+		if(useMakePSD_==true)
+			bool hasNegativeEigenValue = makePSD(Sm_);
+		else {
+			// TODO decide which one is correct
+			Qm_ += state_matrix_t::Identity()*(addedRiccatiDiagonal_);
+			// Sm_ += state_matrix_t::Identity()*(addedRiccatiDiagonal_);
+		}
+
 		// Riccati equations for the original system
-		Lm_.noalias() = RmInv_*(Pm_+Bm_.transpose()*Sm_);
-		Lv_.noalias() = RmInv_*(Rv_+Bm_.transpose()*Sv_);
+		Pm_.noalias() += Bm_.transpose()*Sm_; // ! Pm is changed to avoid an extra temporary
+		Lm_.noalias() = RmInv_*Pm_;
+		Rv_.noalias() += Bm_.transpose()*Sv_; // ! Rv is changed to avoid an extra temporary
+		Lv_.noalias() = RmInv_*Rv_;
 
 		/*note: according to some discussions on stackoverflow, it does not buy computation time if multiplications
 		 * with symmetric matrices are executed using selfadjointView(). Doing the full multiplication seems to be faster
@@ -354,22 +359,21 @@ public:
 		Am_transposeSm_.noalias() = Am_.transpose()*Sm_.transpose();
 		Lm_transposeRm_.noalias() = Lm_.transpose()*Rm_.transpose();
 
-		dSmdt_ = Qm_ + Am_transposeSm_ + Am_transposeSm_.transpose();
-		dSmdt_.noalias() -= Lm_transposeRm_*Lm_;
+		// dSmdt,  Qm_ used instead of temporary
+		Qm_ += Am_transposeSm_ + Am_transposeSm_.transpose();
+		Qm_.noalias() -= Lm_transposeRm_*Lm_;
+		Qm_ *= scalingFactor_;
 
-		dSvdt_ = Qv_;
-		dSvdt_.noalias() += Am_.transpose()*Sv_;
-		dSvdt_.noalias() -= Lm_transposeRm_*Lv_;
+		// dSvdt,  Qv_ used instead of temporary
+		Qv_.noalias() += Am_.transpose()*Sv_;
+		Qv_.noalias() -= Lm_transposeRm_*Lv_;
+		Qv_ *= scalingFactor_;
 
-		dsdt_  = q_;
-		dsdt_.noalias() -= 0.5 *Lv_.transpose()*Rm_ * Lv_;
+		// dsdt,   q_ used instead of temporary
+		q_.noalias() -= 0.5 *Lv_.transpose()*Rm_ * Lv_;
+		q_ *= scalingFactor_;
 
-		// Riccati equations for the equivalent system
-		dSmdz_ = scalingFactor_ * dSmdt_;
-		dSvdz_ = scalingFactor_ * dSvdt_;
-		dsdz_  = scalingFactor_ * dsdt_;
-
-		convert2Vector(dSmdz_, dSvdz_, dsdz_, derivatives);
+		convert2Vector(Qm_, Qv_, q_, derivatives);
 	}
 
 protected:

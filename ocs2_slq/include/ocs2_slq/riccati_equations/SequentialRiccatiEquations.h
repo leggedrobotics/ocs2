@@ -238,12 +238,6 @@ public:
 
 		convert2Matrix(allSs, Sm_, Sv_, s_);
 
-		// numerical consideration
-		if(useMakePSD_==true)
-			bool hasNegativeEigenValue = makePSD(Sm_);
-		else
-			Sm_ += state_matrix_t::Identity()*(addedRiccatiDiagonal_);
-
 		AmFunc_.interpolate(t, Am_);
 		size_t greatestLessTimeStampIndex = AmFunc_.getGreatestLessTimeStampIndex();
 		BmFunc_.interpolate(t, Bm_, greatestLessTimeStampIndex);
@@ -255,6 +249,14 @@ public:
 		RmFunc_.interpolate(t, Rm_, greatestLessTimeStampIndex);
 		PmFunc_.interpolate(t, Pm_, greatestLessTimeStampIndex);
 
+		// numerical consideration
+		if(useMakePSD_==true)
+			bool hasNegativeEigenValue = makePSD(Sm_);
+		else {
+			// TODO decide which one is correct
+			Qm_ += state_matrix_t::Identity()*(addedRiccatiDiagonal_);
+			// Sm_ += state_matrix_t::Identity()*(addedRiccatiDiagonal_);
+		}
 
 		// Riccati equations for the original system
 		Lm_ 	= RmInv_*(Pm_+Bm_.transpose()*Sm_);

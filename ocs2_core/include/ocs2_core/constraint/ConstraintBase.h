@@ -67,10 +67,18 @@ public:
 
 	typedef Dimensions<STATE_DIM, INPUT_DIM> DIMENSIONS;
 	typedef typename DIMENSIONS::scalar_t                    scalar_t;
+	typedef typename DIMENSIONS::scalar_array_t              scalar_array_t;
 	typedef typename DIMENSIONS::state_vector_t              state_vector_t;
+	typedef typename DIMENSIONS::state_vector_array_t        state_vector_array_t;
 	typedef typename DIMENSIONS::input_vector_t              input_vector_t;
+	typedef typename DIMENSIONS::input_vector_array_t        input_vector_array_t;
 	typedef typename DIMENSIONS::state_matrix_t              state_matrix_t;
+	typedef typename DIMENSIONS::state_matrix_array_t        state_matrix_array_t;
+	typedef typename DIMENSIONS::input_matrix_t              input_matrix_t;
+	typedef typename DIMENSIONS::input_matrix_array_t        input_matrix_array_t;
 	typedef typename DIMENSIONS::state_input_matrix_t        state_input_matrix_t;
+	typedef typename DIMENSIONS::input_state_matrix_t        input_state_matrix_t;
+	typedef typename DIMENSIONS::input_state_matrix_array_t  input_state_matrix_array_t;
 	typedef typename DIMENSIONS::constraint1_vector_t        constraint1_vector_t;
 	typedef typename DIMENSIONS::constraint1_vector_array_t  constraint1_vector_array_t;
 	typedef typename DIMENSIONS::constraint2_vector_t        constraint2_vector_t;
@@ -173,6 +181,26 @@ public:
 	}
 
 	/**
+ 	* Gets the inequality constraints.
+	 *
+	 *  h_i(x, u, t) >= 0
+ 	*
+ 	* @param [out] h: The inequality constraints value.
+ 	*/
+	virtual void getInequalityConstraint(scalar_array_t& h) {}
+
+	/**
+	 * Get the number of inequality constraints.
+	 *
+	 * @param [in] time: time.
+	 * @return number of inequality constraints.
+	 */
+	virtual size_t numInequalityConstraint(const scalar_t& time) {
+
+		return 0;
+	}
+
+	/**
 	 * Compute the final state-only equality constraints.
 	 *
 	 * @param [out] h_f: The final state-only (in)equality constraints value.
@@ -228,6 +256,46 @@ public:
 	 * @param [out] F: \f$ F(t) \f$ matrix.
 	 */
 	virtual void getConstraint2DerivativesState(constraint2_state_matrix_t& F) {}
+
+	/**
+	* The dhdx matrix at a given operating point for the linearized inequality constraints,
+	* \f$ 0.5 * \delta x ddhdxdx_i(t) \delta x + \delta u ddhdudx_i(t) \delta x + 0.5 * \delta u ddhdudu_i(t) \delta x
+	 *    + dhdx_i(t) \delta x + dhdu_i(t) \delta u + e(t) >= 0 \f$.
+	* @param [out] dhdx: \f$ dhdx(t) \f$ matrix.
+	*/
+	virtual void getInequalityConstraintDerivativesState(state_vector_array_t& dhdx) {}
+
+	/**
+	* The dhdu matrix at a given operating point for the linearized inequality constraints,
+	* \f$ 0.5 * \delta x ddhdxdx_i(t) \delta x + \delta u ddhdudx_i(t) \delta x + 0.5 * \delta u ddhdudu_i(t) \delta x
+	 *    + dhdx_i(t) \delta x + dhdu_i(t) \delta u + e(t) >= 0 \f$.
+	* @param [out] dhdu: \f$ dhdu(t) \f$ matrix.
+	*/
+	virtual void getInequalityConstraintDerivativesInput(input_vector_array_t& dhdu) {}
+
+	/**
+	* The ddhdxdx matrices at a given operating point for the linearized inequality constraints,
+	* \f$ 0.5 * \delta x ddhdxdx_i(t) \delta x + \delta u ddhdudx_i(t) \delta x + 0.5 * \delta u ddhdudu_i(t) \delta x
+	*    + dhdx_i(t) \delta x + dhdu_i(t) \delta u + e(t) >= 0 \f$.
+	* @param [out] ddhdxdx: \f$ ddhdxdx(t) \f$ matrix.
+	*/
+	virtual void getInequalityConstraintSecondDerivativesState(state_matrix_array_t& ddhdxdx) {}
+
+	/**
+	* The ddhdudu matrices at a given operating point for the linearized inequality constraints,
+	* \f$ 0.5 * \delta x ddhdxdx_i(t) \delta x + \delta u ddhdudx_i(t) \delta x + 0.5 * \delta u ddhdudu_i(t) \delta x
+	*    + dhdx_i(t) \delta x + dhdu_i(t) \delta u + e(t) >= 0 \f$.
+	* @param [out] ddhudu: \f$ ddhdudu(t) \f$ matrix.
+	*/
+	virtual void getInequalityConstraintSecondDerivativesInput(input_matrix_array_t& ddhdudu) {}
+
+	/**
+	* The ddhdudu matrices at a given operating point for the linearized inequality constraints,
+	* \f$ 0.5 * \delta x ddhdxdx_i(t) \delta x + \delta u ddhdudx_i(t) \delta x + 0.5 * \delta u ddhdudu_i(t) \delta x
+	*    + dhdx_i(t) \delta x + dhdu_i(t) \delta u + e(t) >= 0 \f$.
+	* @param [out] ddhudu: \f$ ddhdudu(t) \f$ matrix.
+	*/
+	virtual void getInequalityConstraintDerivativesInputState(input_state_matrix_array_t& ddhdudx) {}
 
 	/**
 	 * The F matrix at a given operating point for the linearized terminal state-only constraints,

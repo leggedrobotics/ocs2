@@ -323,7 +323,7 @@ void SLQ_MP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::executeApproximatePartitionLQW
 		size_t threadId,
 		const size_t& partitionIndex) {
 
-	size_t kCompleted_local;
+	size_t kCompleted_local = 0;
 	int N = BASE::nominalTimeTrajectoriesStock_[partitionIndex].size();
 	int k = -1;  // to make use that the while loop runs at least once
 
@@ -429,7 +429,7 @@ void SLQ_MP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::executeCalculatePartitionContr
 		size_t threadId,
 		const size_t& partitionIndex)  {
 
-	size_t kCompleted_local;
+	size_t kCompleted_local = 0;
 	int N = BASE::SsTimeTrajectoryStock_[partitionIndex].size();
 	int k = -1;  // to make use that the while loop runs at least once
 
@@ -488,7 +488,7 @@ void SLQ_MP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::executeLineSearchWorker(size_t
 
 	// local search forward simulation's variables
 	scalar_t lsTotalCost;
-	scalar_t lsConstraint1ISE, lsConstraint2ISE;
+	scalar_t lsConstraint1ISE, lsConstraint2ISE, lsInequalityConstraintPenalty, lsInequalityConstraintISE;
 	scalar_t lsConstraint1MaxNorm, lsConstraint2MaxNorm;
 	controller_array_t          lsControllersStock(BASE::numPartitions_);
 	std::vector<scalar_array_t>	lsTimeTrajectoriesStock(BASE::numPartitions_);
@@ -527,6 +527,8 @@ void SLQ_MP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::executeLineSearchWorker(size_t
 				lsTotalCost,
 				lsConstraint1ISE, lsConstraint1MaxNorm,
 				lsConstraint2ISE, lsConstraint2MaxNorm,
+				lsInequalityConstraintPenalty,
+				lsInequalityConstraintISE,
 				lsControllersStock,
 				lsTimeTrajectoriesStock, lsEventsPastTheEndIndecesStock,
 				lsStateTrajectoriesStock, lsInputTrajectoriesStock);
@@ -598,6 +600,8 @@ void SLQ_MP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::executeLineSearchWorker(size_t
 			BASE::nominalConstraint1MaxNorm_ = lsConstraint1MaxNorm;
 			BASE::nominalConstraint2ISE_ = lsConstraint2ISE;
 			BASE::nominalConstraint2MaxNorm_ = lsConstraint2MaxNorm;
+			BASE::nominalInequalityConstraintPenalty_ = lsInequalityConstraintPenalty;
+			BASE::nominalInequalityConstraintISE_ = lsInequalityConstraintISE;
 
 			BASE::nominalControllersStock_.swap(lsControllersStock);
 			BASE::nominalTimeTrajectoriesStock_.swap(lsTimeTrajectoriesStock);

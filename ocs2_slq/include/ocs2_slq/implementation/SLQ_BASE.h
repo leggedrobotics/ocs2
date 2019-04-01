@@ -65,6 +65,8 @@ SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::SLQ_BASE(
 	costFunctionsPtrStock_.reserve(settings_.nThreads_);
 	heuristicsFunctionsPtrStock_.clear();
 	heuristicsFunctionsPtrStock_.reserve(settings_.nThreads_);
+	penaltyPtrStock_.clear();
+	penaltyPtrStock_.reserve(settings_.nThreads_);
 
 	dynamicsForwardRolloutPtrStock_.resize(settings_.nThreads_);
 	operatingTrajectoriesRolloutPtrStock_.resize(settings_.nThreads_);
@@ -96,6 +98,11 @@ SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::SLQ_BASE(
 			heuristicsFunctionsPtrStock_.emplace_back( heuristicsFunctionPtr->clone() );
 		else // use the cost function if no heuristics function is defined
 			heuristicsFunctionsPtrStock_.emplace_back( costFunctionPtr->clone() );
+
+		// initialize penalty functions
+		penaltyPtrStock_.emplace_back(
+				std::shared_ptr<PenaltyBase<STATE_DIM, INPUT_DIM>>(new RelaxedBarrierPenalty<STATE_DIM, INPUT_DIM>(settings_.stateConstraintPenaltyBase_, settings_.stateConstraintPenaltyCoeff_))
+				);
 
 	} // end of i loop
 
@@ -536,6 +543,8 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculateConstraintsWorker(
 		constraint1_vector_array_t& EvTrajectory,
 		size_array_t& nc2Trajectory,
 		constraint2_vector_array_t& HvTrajectory,
+		size_array_t& ncIneqTrajectory,
+		scalar_array2_t& hTrajectory,
 		size_array_t& nc2Finals,
 		constraint2_vector_array_t& HvFinals) {
 
@@ -555,6 +564,10 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculateConstraintsWorker(
 	// and the value of the constraint
 	nc2Trajectory.resize(N);
 	HvTrajectory.resize(N);
+
+	// Inequality constraints
+	ncIneqTrajectory.resize(N);
+	hTrajectory.resize(N);
 
 	nc2Finals.clear();
 	nc2Finals.reserve(eventsPastTheEndIndeces.size());
@@ -581,6 +594,12 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculateConstraintsWorker(
 		systemConstraintsPtrStock_[workerIndex]->getConstraint2(HvTrajectory[k]);
 		if (nc2Trajectory[k] > INPUT_DIM)
 			throw std::runtime_error("Number of active type-2 constraints should be less-equal to the number of input dimension.");
+
+		// inequality constraints
+		ncIneqTrajectory[k] = systemConstraintsPtrStock_[workerIndex]->numInequalityConstraint(timeTrajectory[k]);
+		if (ncIneqTrajectory[k] > 0){
+			systemConstraintsPtrStock_[workerIndex]->getInequalityConstraint(hTrajectory[k]);
+		}
 
 		// switching time state-constraints
 		if (eventsPastTheEndItr!=eventsPastTheEndIndeces.end() && k+1==*eventsPastTheEndItr) {
@@ -610,6 +629,8 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculateRolloutConstraints(
 		constraint1_vector_array2_t& EvTrajectoryStock,
 		std::vector<size_array_t>& nc2TrajectoriesStock,
 		constraint2_vector_array2_t& HvTrajectoryStock,
+		std::vector<size_array_t>& ncIneqTrajectoriesStock,
+		scalar_array3_t& hTrajectoryStock,
 		std::vector<size_array_t>& nc2FinalStock,
 		constraint2_vector_array2_t& HvFinalStock,
 		size_t threadId /*= 0*/) {
@@ -628,6 +649,10 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculateRolloutConstraints(
 	nc2FinalStock.resize(numPartitions_);
 	HvFinalStock.resize(numPartitions_);
 
+	// Inequality constraints
+	ncIneqTrajectoriesStock.resize(numPartitions_);
+	hTrajectoryStock.resize(numPartitions_);
+
 	for (size_t i=0; i<numPartitions_; i++) {
 
 		calculateConstraintsWorker(threadId, i,
@@ -635,6 +660,7 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculateRolloutConstraints(
 				stateTrajectoriesStock[i], inputTrajectoriesStock[i],
 				nc1TrajectoriesStock[i], EvTrajectoryStock[i],
 				nc2TrajectoriesStock[i], HvTrajectoryStock[i],
+				ncIneqTrajectoriesStock[i], hTrajectoryStock[i],
 				nc2FinalStock[i], HvFinalStock[i]);
 	}  // end of i loop
 }
@@ -687,6 +713,70 @@ SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculateConstraintISE(
 
 	return sqrt(maxConstraintNorm);
 }
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
+typename SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::scalar_t
+SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculateInequalityConstraintPenalty (
+		const std::vector<scalar_array_t> &timeTrajectoriesStock,
+		const std::vector<size_array_t> &ncIneqTrajectoriesStock,
+		const scalar_array3_t &hTrajectoriesStock,
+		scalar_t& inequalityISE,
+		size_t workerIndex /* = 0 */ ) {
+
+		scalar_t constraintPenalty(0.0);
+		scalar_t currentPenalty(0.0);
+		scalar_t nextPenalty(0.0);
+
+		inequalityISE = 0.0;
+		scalar_t currentInequalityViolationSquaredNorm(0.0);
+		scalar_t nextInequalityViolationSquaredNorm(0.0);
+
+		for (size_t i=0; i<numPartitions_; i++)  {
+			for (size_t k=0; k+1<timeTrajectoriesStock[i].size(); k++)  {
+
+				if (k==0) {
+					const size_t& ncIneq = ncIneqTrajectoriesStock[i][0];
+					if (ncIneq>0){
+						currentPenalty = penaltyPtrStock_[workerIndex]->getPenaltyCost(ncIneq, hTrajectoriesStock[i][k]);
+                        currentInequalityViolationSquaredNorm = penaltyPtrStock_[workerIndex]->getConstraintViolationSquaredNorm(
+                                ncIneq, hTrajectoriesStock[i][k]);
+                    }
+					else {
+						currentPenalty = 0.0;
+						currentInequalityViolationSquaredNorm = 0.0;
+					}
+				} else {
+					currentPenalty = nextPenalty;
+					currentInequalityViolationSquaredNorm = nextInequalityViolationSquaredNorm;
+				}
+
+				const size_t& ncIneq_next = ncIneqTrajectoriesStock[i][k+1];
+				if (ncIneq_next>0){
+					nextPenalty = penaltyPtrStock_[workerIndex]->getPenaltyCost(ncIneq_next, hTrajectoriesStock[i][k+1]);
+                    nextInequalityViolationSquaredNorm = penaltyPtrStock_[workerIndex]->getConstraintViolationSquaredNorm(
+                            ncIneq_next, hTrajectoriesStock[i][k+1]);
+				} else {
+					nextPenalty = 0.0;
+                    nextInequalityViolationSquaredNorm = 0.0;
+				}
+
+                constraintPenalty += 0.5 * (currentPenalty + nextPenalty) *
+                                     (timeTrajectoriesStock[i][k + 1] - timeTrajectoriesStock[i][k]);
+                inequalityISE += 0.5 * (currentInequalityViolationSquaredNorm + nextInequalityViolationSquaredNorm) *
+                                 (timeTrajectoriesStock[i][k + 1] - timeTrajectoriesStock[i][k]);
+
+			}  // end of k loop
+		}  // end of i loop
+
+		return constraintPenalty;
+}
+
+
+
+
 
 /******************************************************************************************************/
 /******************************************************************************************************/
@@ -784,6 +874,7 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculateRolloutCost(
 		const state_vector_array2_t& stateTrajectoriesStock,
 		const input_vector_array2_t& inputTrajectoriesStock,
 		const scalar_t& constraint2ISE,
+		const scalar_t& inequalityConstraintPenalty,
 		const std::vector<size_array_t>& nc2FinalStock,
 		const constraint2_vector_array2_t& HvFinalStock,
 		scalar_t& totalCost,
@@ -799,6 +890,9 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculateRolloutCost(
 
 	// ISE of type-2 constraint
 	totalCost += 0.5 * stateConstraintPenalty * constraint2ISE;
+
+	// Inequality constraints
+	totalCost += inequalityConstraintPenalty;
 
 	// final constraint type 2
 	if (settings_.noStateConstraints_==false)
@@ -855,6 +949,15 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::approximateOptimalControlPro
 			PmConstrainedTrajectoryStock_[i].resize(N);
 			RvConstrainedTrajectoryStock_[i].resize(N);
 		}
+
+		// for inequality
+		ncIneqTrajectoriesStock_[i].resize(N);  // ncIneq: Number of inequality constraints
+		hTrajectoryStock_[i].resize(N);
+		dhdxTrajectoryStock_[i].resize(N);
+		ddhdxdxTrajectoryStock_[i].resize(N);
+		dhduTrajectoryStock_[i].resize(N);
+		ddhduduTrajectoryStock_[i].resize(N);
+		ddhdudxTrajectoryStock_[i].resize(N);
 
 		// switching times LQ variables
 		size_t NE = nominalEventsPastTheEndIndecesStock_[i].size();
@@ -996,6 +1099,17 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::approximateUnconstrainedLQWo
 		systemConstraintsPtrStock_[workerIndex]->getConstraint2DerivativesState(FmTrajectoryStock_[i][k]);
 	}
 
+	// Inequality constraint
+	ncIneqTrajectoriesStock_[i][k] = systemConstraintsPtrStock_[workerIndex]->numInequalityConstraint(nominalTimeTrajectoriesStock_[i][k]);
+	if (ncIneqTrajectoriesStock_[i][k] > 0){
+		systemConstraintsPtrStock_[workerIndex]->getInequalityConstraint(hTrajectoryStock_[i][k]);
+		systemConstraintsPtrStock_[workerIndex]->getInequalityConstraintDerivativesState(dhdxTrajectoryStock_[i][k]);
+		systemConstraintsPtrStock_[workerIndex]->getInequalityConstraintDerivativesInput(dhduTrajectoryStock_[i][k]);
+		systemConstraintsPtrStock_[workerIndex]->getInequalityConstraintSecondDerivativesState(ddhdxdxTrajectoryStock_[i][k]);
+		systemConstraintsPtrStock_[workerIndex]->getInequalityConstraintSecondDerivativesInput(ddhduduTrajectoryStock_[i][k]);
+		systemConstraintsPtrStock_[workerIndex]->getInequalityConstraintDerivativesInputState(ddhdudxTrajectoryStock_[i][k]);
+	}
+
 	if (settings_.checkNumericalStability_==true){
 		try {
 			const size_t& nc1 = nc1TrajectoriesStock_[i][k];
@@ -1044,7 +1158,6 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::approximateUnconstrainedLQWo
 	costFunctionsPtrStock_[workerIndex]->getIntermediateCostSecondDerivativeState(QmTrajectoryStock_[i][k]);
 	costFunctionsPtrStock_[workerIndex]->getIntermediateCostDerivativeInput(RvTrajectoryStock_[i][k]);
 	costFunctionsPtrStock_[workerIndex]->getIntermediateCostSecondDerivativeInput(RmTrajectoryStock_[i][k]);
-	RmInverseTrajectoryStock_[i][k] = RmTrajectoryStock_[i][k].ldlt().solve(input_matrix_t::Identity());
 	costFunctionsPtrStock_[workerIndex]->getIntermediateCostDerivativeInputState(PmTrajectoryStock_[i][k]);
 
 	// checking the numerical stability
@@ -1056,15 +1169,25 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::approximateUnconstrainedLQWo
 				throw std::runtime_error("Intermediate cost first derivative w.r.t. state is is not finite.");
 			if (!QmTrajectoryStock_[i][k].allFinite())
 				throw std::runtime_error("Intermediate cost second derivative w.r.t. state is is not finite.");
+			if (!QmTrajectoryStock_[i][k].isApprox(QmTrajectoryStock_[i][k].transpose()))
+				throw std::runtime_error("Intermediate cost second derivative w.r.t. state is is not self-adjoint.");
+			if (QmTrajectoryStock_[i][k].eigenvalues().real().minCoeff() < -Eigen::NumTraits<scalar_t>::epsilon())
+				throw std::runtime_error("Q matrix is not positive semi-definite. It's smallest eigenvalue is " +
+										 std::to_string(QmTrajectoryStock_[i][k].eigenvalues().real().minCoeff()) + ".");
 			if (!RvTrajectoryStock_[i][k].allFinite())
 				throw std::runtime_error("Intermediate cost first derivative w.r.t. input is is not finite.");
 			if (!RmTrajectoryStock_[i][k].allFinite())
 				throw std::runtime_error("Intermediate cost second derivative w.r.t. input is is not finite.");
+			if (!RmTrajectoryStock_[i][k].isApprox(RmTrajectoryStock_[i][k].transpose()))
+				throw std::runtime_error("Intermediate cost second derivative w.r.t. input is is not self-adjoint.");
 			if (!PmTrajectoryStock_[i][k].allFinite())
 				throw std::runtime_error("Intermediate cost second derivative w.r.t. input-state is is not finite.");
 			if (RmTrajectoryStock_[i][k].ldlt().rcond() < Eigen::NumTraits<scalar_t>::epsilon())
 				throw std::runtime_error("R matrix is not invertible. It's reciprocal condition number is " +
 						std::to_string(RmTrajectoryStock_[i][k].ldlt().rcond()) + ".");
+			if (RmTrajectoryStock_[i][k].eigenvalues().real().minCoeff() < Eigen::NumTraits<scalar_t>::epsilon())
+				throw std::runtime_error("R matrix is not positive definite. It's smallest eigenvalue is " +
+										 std::to_string(RmTrajectoryStock_[i][k].eigenvalues().real().minCoeff()) + ".");
 		} catch(const std::exception& error)  {
 			std::cerr << "what(): " << error.what() << " at time " << nominalTimeTrajectoriesStock_[i][k] << " [sec]." << std::endl;
 			std::cerr << "x: " << nominalStateTrajectoriesStock_[i][k].transpose() << std::endl;
@@ -1101,6 +1224,83 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::approximateConstrainedLQWork
 				FmTrajectoryStock_[i][k].topRows(nc2).transpose() * FmTrajectoryStock_[i][k].topRows(nc2);
 	}
 
+	// Inequality constraints
+	const size_t& ncIneq = ncIneqTrajectoriesStock_[i][k];
+	if (ncIneq > 0) {
+		scalar_t p;
+		state_vector_t dpdx;
+		input_vector_t dpdu;
+		state_matrix_t ddpdxdx;
+		input_matrix_t ddpdudu;
+		input_state_matrix_t ddpdudx;
+		p = penaltyPtrStock_[workerIndex]->getPenaltyCost(ncIneq, hTrajectoryStock_[i][k]);
+		penaltyPtrStock_[workerIndex]->getPenaltyCostDerivativeState(ncIneq, hTrajectoryStock_[i][k], dhdxTrajectoryStock_[i][k],
+														   dpdx);
+		penaltyPtrStock_[workerIndex]->getPenaltyCostDerivativeInput(ncIneq, hTrajectoryStock_[i][k], dhduTrajectoryStock_[i][k],
+														   dpdu);
+		penaltyPtrStock_[workerIndex]->getPenaltyCostSecondDerivativeState(ncIneq, hTrajectoryStock_[i][k],
+																 dhdxTrajectoryStock_[i][k],
+																 ddhdxdxTrajectoryStock_[i][k], ddpdxdx);
+		penaltyPtrStock_[workerIndex]->getPenaltyCostSecondDerivativeInput(ncIneq, hTrajectoryStock_[i][k],
+																 dhduTrajectoryStock_[i][k],
+																 ddhduduTrajectoryStock_[i][k], ddpdudu);
+		penaltyPtrStock_[workerIndex]->getPenaltyCostDerivativeInputState(ncIneq, hTrajectoryStock_[i][k],
+																dhdxTrajectoryStock_[i][k], dhduTrajectoryStock_[i][k],
+																ddhdudxTrajectoryStock_[i][k], ddpdudx);
+		qTrajectoryStock_[i][k][0] += p; // q is a 1x1 matrix, so access it with [0]
+		QvTrajectoryStock_[i][k] += dpdx;
+		QmTrajectoryStock_[i][k] += ddpdxdx;
+		RvTrajectoryStock_[i][k] += dpdu;
+		RmTrajectoryStock_[i][k] += ddpdudu;
+		PmTrajectoryStock_[i][k] += ddpdudx;
+
+		// checking the numerical stability again
+		if (settings_.checkNumericalStability_==true){
+			try {
+				if (!qTrajectoryStock_[i][k].allFinite())
+					throw std::runtime_error("Intermediate cost is is not finite.");
+				if (!QvTrajectoryStock_[i][k].allFinite())
+					throw std::runtime_error("Intermediate cost first derivative w.r.t. state is is not finite.");
+				if (!QmTrajectoryStock_[i][k].allFinite())
+					throw std::runtime_error("Intermediate cost second derivative w.r.t. state is is not finite.");
+				if (!QmTrajectoryStock_[i][k].isApprox(QmTrajectoryStock_[i][k].transpose()))
+					throw std::runtime_error("Intermediate cost second derivative w.r.t. state is is not self-adjoint.");
+				if (QmTrajectoryStock_[i][k].eigenvalues().real().minCoeff() < -Eigen::NumTraits<scalar_t>::epsilon())
+					throw std::runtime_error("Q matrix is not positive semi-definite. It's smallest eigenvalue is " +
+											 std::to_string(QmTrajectoryStock_[i][k].eigenvalues().real().minCoeff()) + ".");
+				if (!RvTrajectoryStock_[i][k].allFinite())
+					throw std::runtime_error("Intermediate cost first derivative w.r.t. input is is not finite.");
+				if (!RmTrajectoryStock_[i][k].allFinite())
+					throw std::runtime_error("Intermediate cost second derivative w.r.t. input is is not finite.");
+				if (!RmTrajectoryStock_[i][k].isApprox(RmTrajectoryStock_[i][k].transpose()))
+					throw std::runtime_error("Intermediate cost second derivative w.r.t. input is is not self-adjoint.");
+				if (!PmTrajectoryStock_[i][k].allFinite())
+					throw std::runtime_error("Intermediate cost second derivative w.r.t. input-state is is not finite.");
+				if (RmTrajectoryStock_[i][k].ldlt().rcond() < Eigen::NumTraits<scalar_t>::epsilon())
+					throw std::runtime_error("R matrix is not invertible. It's reciprocal condition number is " +
+											 std::to_string(RmTrajectoryStock_[i][k].ldlt().rcond()) + ".");
+				if (RmTrajectoryStock_[i][k].eigenvalues().real().minCoeff() < Eigen::NumTraits<scalar_t>::epsilon())
+					throw std::runtime_error("R matrix is not positive definite. It's smallest eigenvalue is " +
+											 std::to_string(RmTrajectoryStock_[i][k].eigenvalues().real().minCoeff()) + ".");
+			} catch(const std::exception& error)  {
+				std::cerr << "After adding inequality constraint penalty" << std::endl;
+				std::cerr << "what(): " << error.what() << " at time " << nominalTimeTrajectoriesStock_[i][k] << " [sec]." << std::endl;
+				std::cerr << "x: " << nominalStateTrajectoriesStock_[i][k].transpose() << std::endl;
+				std::cerr << "u: " << nominalInputTrajectoriesStock_[i][k].transpose() << std::endl;
+				std::cerr << "q: " << qTrajectoryStock_[i][k] << std::endl;
+				std::cerr << "Qv: " << QvTrajectoryStock_[i][k].transpose() << std::endl;
+				std::cerr << "Qm: \n" << QmTrajectoryStock_[i][k] << std::endl;
+				std::cerr << "Rv: " << RvTrajectoryStock_[i][k].transpose() << std::endl;
+				std::cerr << "Rm: \n" << RmTrajectoryStock_[i][k] << std::endl;
+				std::cerr << "Pm: \n" << PmTrajectoryStock_[i][k] << std::endl;
+				exit(0);
+			}
+		}
+	}
+
+	// Precompute R inverse after costs are adapted
+	RmInverseTrajectoryStock_[i][k] = RmTrajectoryStock_[i][k].ldlt().solve(input_matrix_t::Identity());
+
 	// constraint type 1 coefficients
 	const size_t& nc1 = nc1TrajectoriesStock_[i][k];
 	if (nc1 == 0) {
@@ -1123,9 +1323,8 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::approximateConstrainedLQWork
 	} else {
 		typedef Eigen::Matrix<scalar_t, Eigen::Dynamic, Eigen::Dynamic> dynamic_matrix_t;
 
-		dynamic_matrix_t Cm = CmTrajectoryStock_[i][k].topRows(nc1);
-		dynamic_matrix_t Dm = DmTrajectoryStock_[i][k].topRows(nc1);
-		dynamic_matrix_t Ev = EvTrajectoryStock_[i][k].head(nc1);
+    dynamic_matrix_t Cm = CmTrajectoryStock_[i][k].topRows(nc1);
+    dynamic_matrix_t Dm = DmTrajectoryStock_[i][k].topRows(nc1);
 
 		// check numerical stability_
 		if (settings_.checkNumericalStability_==true && nc1>0)
@@ -1134,26 +1333,27 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::approximateConstrainedLQWork
 						"(at time " + std::to_string(nominalTimeTrajectoriesStock_[i][k]) + ")!");
 			}
 
-		dynamic_matrix_t RmProjected =
-				( Dm*RmInverseTrajectoryStock_[i][k]*Dm.transpose() ).ldlt().solve(dynamic_matrix_t::Identity(nc1,nc1));
-		dynamic_matrix_t DmDager =
-				RmInverseTrajectoryStock_[i][k] * Dm.transpose() * RmProjected;
+    dynamic_matrix_t RmInvDmtranspose = RmInverseTrajectoryStock_[i][k]*Dm.transpose();
+		dynamic_matrix_t RmProjected = ( Dm * RmInvDmtranspose ).ldlt().solve(dynamic_matrix_t::Identity(nc1,nc1));
+		dynamic_matrix_t DmDager = RmInvDmtranspose * RmProjected;
 
 		DmDagerTrajectoryStock_[i][k].leftCols(nc1) = DmDager;
-		EvProjectedTrajectoryStock_[i][k].noalias() = DmDager * Ev;
+		EvProjectedTrajectoryStock_[i][k].noalias() = DmDager * EvTrajectoryStock_[i][k].head(nc1);
 		CmProjectedTrajectoryStock_[i][k].noalias() = DmDager * Cm;
 		DmProjectedTrajectoryStock_[i][k].noalias() = DmDager * Dm;
 
-		input_matrix_t DmNullSpaceProjection = input_matrix_t::Identity() - DmProjectedTrajectoryStock_[i][k];
-		state_matrix_t PmTransDmDagerCm = PmTrajectoryStock_[i][k].transpose()*CmProjectedTrajectoryStock_[i][k];
+    AmConstrainedTrajectoryStock_[i][k] = AmTrajectoryStock_[i][k];
+    AmConstrainedTrajectoryStock_[i][k].noalias() -=	BmTrajectoryStock_[i][k]*CmProjectedTrajectoryStock_[i][k];
 
-		AmConstrainedTrajectoryStock_[i][k] = AmTrajectoryStock_[i][k];
-		AmConstrainedTrajectoryStock_[i][k].noalias() -=	BmTrajectoryStock_[i][k]*CmProjectedTrajectoryStock_[i][k];
-		QmConstrainedTrajectoryStock_[i][k] = QmTrajectoryStock_[i][k] - PmTransDmDagerCm - PmTransDmDagerCm.transpose();
-		QmConstrainedTrajectoryStock_[i][k].noalias() +=	Cm.transpose()*RmProjected*Cm;
-		QvConstrainedTrajectoryStock_[i][k] = QvTrajectoryStock_[i][k];
-		QvConstrainedTrajectoryStock_[i][k].noalias() -= CmProjectedTrajectoryStock_[i][k].transpose()*RvTrajectoryStock_[i][k];
-		if (settings_.useRiccatiSolver_==true) {
+    state_matrix_t PmTransDmDagerCm = PmTrajectoryStock_[i][k].transpose()*CmProjectedTrajectoryStock_[i][k];
+    QmConstrainedTrajectoryStock_[i][k] = QmTrajectoryStock_[i][k] - PmTransDmDagerCm - PmTransDmDagerCm.transpose();
+    QmConstrainedTrajectoryStock_[i][k].noalias() +=	Cm.transpose()*RmProjected*Cm;
+
+    QvConstrainedTrajectoryStock_[i][k] = QvTrajectoryStock_[i][k];
+    QvConstrainedTrajectoryStock_[i][k].noalias() -= CmProjectedTrajectoryStock_[i][k].transpose()*RvTrajectoryStock_[i][k];
+
+    input_matrix_t DmNullSpaceProjection = input_matrix_t::Identity() - DmProjectedTrajectoryStock_[i][k];
+    if (settings_.useRiccatiSolver_==true) {
 			RmConstrainedTrajectoryStock_[i][k].noalias() = DmNullSpaceProjection.transpose() * RmTrajectoryStock_[i][k] * DmNullSpaceProjection;
 		} else {
 			BmConstrainedTrajectoryStock_[i][k].noalias() = BmTrajectoryStock_[i][k] * DmNullSpaceProjection;
@@ -1356,9 +1556,9 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculateControllerWorker (
 	// checking the numerical stability of the controller parameters
 	if (settings_.checkNumericalStability_==true){
 		try {
-			if (nominalControllersStock_[i].k_[k] != nominalControllersStock_[i].k_[k])
+			if (!nominalControllersStock_[i].k_[k].allFinite())
 				throw std::runtime_error("Feedback gains are unstable.");
-			if (nominalControllersStock_[i].deltaUff_[k] != nominalControllersStock_[i].deltaUff_[k])
+			if (!nominalControllersStock_[i].deltaUff_[k].allFinite())
 				throw std::runtime_error("feedForwardControl is unstable.");
 		}
 		catch(const std::exception& error)  {
@@ -1399,7 +1599,8 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::lineSearchBase(bool computeI
 		calculateRolloutConstraints(nominalTimeTrajectoriesStock_, nominalEventsPastTheEndIndecesStock_,
 				nominalStateTrajectoriesStock_, nominalInputTrajectoriesStock_,
 				nc1TrajectoriesStock_, EvTrajectoryStock_,nc2TrajectoriesStock_,
-				HvTrajectoryStock_, nc2FinalStock_, HvFinalStock_);
+				HvTrajectoryStock_, ncIneqTrajectoriesStock_, hTrajectoryStock_,
+				nc2FinalStock_, HvFinalStock_);
 		// calculate constraint type-1 ISE and maximum norm
 		nominalConstraint1MaxNorm_ = calculateConstraintISE(
 				nominalTimeTrajectoriesStock_, nc1TrajectoriesStock_, EvTrajectoryStock_,
@@ -1408,22 +1609,34 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::lineSearchBase(bool computeI
 		nominalConstraint2MaxNorm_ = calculateConstraintISE(
 				nominalTimeTrajectoriesStock_, nc2TrajectoriesStock_, HvTrajectoryStock_,
 				nominalConstraint2ISE_);
+		// calculate penalty
+		nominalInequalityConstraintPenalty_ = calculateInequalityConstraintPenalty(nominalTimeTrajectoriesStock_,
+																				   ncIneqTrajectoriesStock_,
+																				   hTrajectoryStock_,
+																				   nominalInequalityConstraintISE_);
 	} else {
 		// calculate constraint type-1 ISE and maximum norm
 		nominalConstraint1ISE_ = nominalConstraint1MaxNorm_ = 0.0;
 		// calculates type-2 constraint ISE and maximum norm
 		nominalConstraint2ISE_ = nominalConstraint2MaxNorm_ = 0.0;
+		// inequality constraints
+		nominalInequalityConstraintPenalty_ = 0.0;
+        nominalInequalityConstraintISE_ = 0.0;
 	}
 
 	// calculates cost
 	calculateRolloutCost(nominalTimeTrajectoriesStock_, nominalEventsPastTheEndIndecesStock_,
 			nominalStateTrajectoriesStock_, nominalInputTrajectoriesStock_,
-			nominalConstraint2ISE_, nc2FinalStock_, HvFinalStock_,
+			nominalConstraint2ISE_, nominalInequalityConstraintPenalty_,
+			nc2FinalStock_, HvFinalStock_,
 			nominalTotalCost_);
 
 	// display
 	if (settings_.displayInfo_)  {
-		std::cerr << "\t learningRate 0.0 \t cost: " << nominalTotalCost_ << " \t constraint ISE: " << nominalConstraint1ISE_ << std::endl;
+		std::cerr << "\t learningRate 0.0 \t cost: " << nominalTotalCost_ <<
+		" \t constraint ISE: " << nominalConstraint1ISE_ <<
+		" \t inequality penalty: " << nominalInequalityConstraintPenalty_ <<
+		" \t inequality ISE: " << nominalInequalityConstraintISE_ << std::endl;
 		std::cerr << "\t final constraint type-2:  ";
 		size_t itr = 0;
 		for(size_t i=initActivePartition_; i<=finalActivePartition_; i++)
@@ -1446,6 +1659,7 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::lineSearchWorker(
 		scalar_t& lsTotalCost,
 		scalar_t& lsConstraint1ISE, scalar_t& lsConstraint1MaxNorm,
 		scalar_t& lsConstraint2ISE, scalar_t& lsConstraint2MaxNorm,
+		scalar_t& lsInequalityConstraintPenalty, scalar_t& lsInequalityConstraintISE,
 		controller_array_t& lsControllersStock,
 		std::vector<scalar_array_t>& lsTimeTrajectoriesStock,
 		std::vector<size_array_t>& lsEventsPastTheEndIndecesStock,
@@ -1471,15 +1685,20 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::lineSearchWorker(
 		constraint1_vector_array2_t lsEvTrajectoryStock(numPartitions_);
 		std::vector<size_array_t>   lsNc2TrajectoriesStock(numPartitions_);
 		constraint2_vector_array2_t lsHvTrajectoryStock(numPartitions_);
+		std::vector<size_array_t>   lsNcIneqTrajectoriesStock(numPartitions_);
+		scalar_array3_t				lshTrajectoryStock(numPartitions_);
 		std::vector<size_array_t>	lsNc2FinalStock(numPartitions_);
 		constraint2_vector_array2_t	lsHvFinalStock(numPartitions_);
+
 
 		if (lsComputeISEs_==true) {
 			// calculate rollout constraints
 			calculateRolloutConstraints(lsTimeTrajectoriesStock, lsEventsPastTheEndIndecesStock,
 					lsStateTrajectoriesStock, lsInputTrajectoriesStock,
 					lsNc1TrajectoriesStock, lsEvTrajectoryStock,
-					lsNc2TrajectoriesStock, lsHvTrajectoryStock, lsNc2FinalStock, lsHvFinalStock,
+					lsNc2TrajectoriesStock, lsHvTrajectoryStock,
+					lsNcIneqTrajectoriesStock, lshTrajectoryStock,
+					lsNc2FinalStock, lsHvFinalStock,
 					workerIndex);
 			// calculate constraint type-1 ISE and maximum norm
 			lsConstraint1MaxNorm = calculateConstraintISE(lsTimeTrajectoriesStock,
@@ -1489,15 +1708,24 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::lineSearchWorker(
 			lsConstraint2MaxNorm = calculateConstraintISE(lsTimeTrajectoriesStock,
 					lsNc2TrajectoriesStock, lsHvTrajectoryStock,
 					lsConstraint2ISE);
+			// inequalityConstraints
+			lsInequalityConstraintPenalty = calculateInequalityConstraintPenalty(lsTimeTrajectoriesStock,
+																				 lsNcIneqTrajectoriesStock,
+																				 lshTrajectoryStock,
+                                                                                 lsInequalityConstraintISE,
+																				 workerIndex);
 		} else {
 			lsConstraint1ISE = lsConstraint1MaxNorm = 0.0;
 			lsConstraint2ISE = lsConstraint2MaxNorm = 0.0;
+			lsInequalityConstraintPenalty = 0.0;
+            lsInequalityConstraintISE = 0.0;
 		}
 
 		// calculate rollout cost
 		calculateRolloutCost(lsTimeTrajectoriesStock, lsEventsPastTheEndIndecesStock,
 				lsStateTrajectoriesStock, lsInputTrajectoriesStock,
-				lsConstraint2ISE, lsNc2FinalStock, lsHvFinalStock,
+				lsConstraint2ISE, lsInequalityConstraintPenalty,
+				lsNc2FinalStock, lsHvFinalStock,
 				lsTotalCost,
 				workerIndex);
 
@@ -1505,7 +1733,10 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::lineSearchWorker(
 		if (settings_.displayInfo_) {
 			std::string finalConstraintDisplay;
 			finalConstraintDisplay = "\t [Thread" + std::to_string(workerIndex) + "] - learningRate " + std::to_string(learningRate)
-					+ " \t cost: " + std::to_string(lsTotalCost) + " \t constraint ISE: " + std::to_string(lsConstraint1ISE) + "\n";
+					+ " \t cost: " + std::to_string(lsTotalCost) +
+					" \t constraint ISE: " + std::to_string(lsConstraint1ISE) +
+					" \t inequality penalty: " + std::to_string(lsInequalityConstraintPenalty) +
+                    " \t inequality ISE: " + std::to_string(lsInequalityConstraintISE) + "\n";
 			finalConstraintDisplay += "\t final constraint type-2:   ";
 			for(size_t i=0; i<numPartitions_; i++) {
 				finalConstraintDisplay += "[" + std::to_string(i) + "]: ";
@@ -1649,6 +1880,9 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::solveRiccatiEquationsWorker(
 		for (int k=NS-1; k>=0; k--) {
 			try {
 				if (!SmTrajectoryStock_[partitionIndex][k].allFinite())  throw std::runtime_error("Sm is unstable.");
+				if (SmTrajectoryStock_[partitionIndex][k].eigenvalues().real().minCoeff() < -Eigen::NumTraits<scalar_t>::epsilon())
+					throw std::runtime_error("Sm matrix is not positive semi-definite. It's smallest eigenvalue is " +
+											 std::to_string(SmTrajectoryStock_[partitionIndex][k].eigenvalues().real().minCoeff()) + ".");
 				if (!SvTrajectoryStock_[partitionIndex][k].allFinite())  throw std::runtime_error("Sv is unstable.");
 				if (!sTrajectoryStock_[partitionIndex][k].allFinite())   throw std::runtime_error("s is unstable.");
 			}
@@ -1787,6 +2021,9 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::solveRiccatiEquationsForNomi
 		for (int k=N-1; k>=0; k--) {
 			try {
 				if (!SmTrajectoryStock_[partitionIndex][k].allFinite())  throw std::runtime_error("Sm is unstable.");
+				if (SmTrajectoryStock_[partitionIndex][k].eigenvalues().real().minCoeff() < -Eigen::NumTraits<scalar_t>::epsilon())
+					throw std::runtime_error("Sm matrix is not positive semi-definite. It's smallest eigenvalue is " +
+											 std::to_string(SmTrajectoryStock_[partitionIndex][k].eigenvalues().real().minCoeff()) + ".");
 				if (!SvTrajectoryStock_[partitionIndex][k].allFinite())  throw std::runtime_error("Sv is unstable.");
 				if (!sTrajectoryStock_[partitionIndex][k].allFinite())   throw std::runtime_error("s is unstable");
 			}
@@ -2435,6 +2672,8 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::printRolloutInfo()  {
 	std::cerr << "constraint type-1 MaxNorm: " << nominalConstraint1MaxNorm_ << std::endl;
 	std::cerr << "constraint type-2 ISE:     " << nominalConstraint2ISE_ << std::endl;
 	std::cerr << "constraint type-2 MaxNorm: " << nominalConstraint2MaxNorm_ << std::endl;
+	std::cerr << "inequality Penalty:        " << nominalInequalityConstraintPenalty_ << std::endl;
+	std::cerr << "inequality ISE:            " << nominalInequalityConstraintISE_ << std::endl;
 	std::cerr << "final constraint type-2: 	 ";
 	size_t itr = 0;
 	for(size_t i=initActivePartition_; i<=finalActivePartition_; i++)
@@ -2890,6 +3129,15 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::setupOptimizer(const size_t&
 	BmConstrainedTrajectoryStock_.resize(numPartitions);
 	PmConstrainedTrajectoryStock_.resize(numPartitions);
 	RvConstrainedTrajectoryStock_.resize(numPartitions);
+
+	// Inequality
+	ncIneqTrajectoriesStock_.resize(numPartitions);  // ncIneq: Number of inequality constraints
+	hTrajectoryStock_.resize(numPartitions);
+	dhdxTrajectoryStock_.resize(numPartitions);
+	ddhdxdxTrajectoryStock_.resize(numPartitions);
+	dhduTrajectoryStock_.resize(numPartitions);
+	ddhduduTrajectoryStock_.resize(numPartitions);
+	ddhdudxTrajectoryStock_.resize(numPartitions);
 }
 
 /******************************************************************************************************/

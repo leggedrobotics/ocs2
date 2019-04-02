@@ -5,10 +5,12 @@
 #ifndef BALLBOT_CTRL_LOOPSHAPINGDEFINITION_H
 #define BALLBOT_CTRL_LOOPSHAPINGDEFINITION_H
 
+#include <vector>
 #include <Eigen/Dense>
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/info_parser.hpp>
 #include <ocs2_core/dynamics/TransferFunctionBase.h>
+#include <ocs2_core/logic/rules/NullLogicRules.h>
 
 namespace ocs2 {
 

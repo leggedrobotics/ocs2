@@ -123,5 +123,6 @@ catkin_add_gtest(test_loopshapingDefinition
 target_link_libraries(test_loopshapingDefinition
         ${Boost_LIBRARIES}
         ${catkin_LIBRARIES}
+        -lstdc++fs
         )
 

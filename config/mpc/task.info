@@ -128,13 +128,13 @@ mpc
   initMinLearningRate             1e-2
   initMaxLearningRate             1.0
 
-  debugPrint                      1
+  debugPrint                      0
   coldStart                       0
   recedingHorizon                 1	; use receding horizon MPC
 
   useParallelRiccatiSolver        1	; use disjoint riccati solver in MP case and recedingHorizon fashion
 
-  useFeedbackPolicy               1
+  useFeedbackPolicy               0
   forwardSimulationTime           28	; [ms] MRT time
 
   rosMsgTimeWindow                200	; [ms]
@@ -209,7 +209,7 @@ Q
    ; orientation
    (0,0) 1000.0     ; x
    (1,1) 2000.0     ; y
-   (2,2)    0.0     ; z
+   (2,2) 2000.0     ; z
 
    ; positon
    (3,3) 1000.0      ; x

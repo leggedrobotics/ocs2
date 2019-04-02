@@ -5,7 +5,7 @@
  *      Author: farbod
  */
 
-#include "ocs2_quadruped_interface/TargetTrajectories_Keyboard_Quadruped.h"
+#include <ocs2_quadruped_interface/TargetTrajectories_Keyboard_Quadruped.h>
 
 int main( int argc, char* argv[] )
 {

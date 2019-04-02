@@ -130,12 +130,13 @@ slq
 
 mpc
 {
-  runtimeNumIterations            1
+  runtimeMaxNumIterations         1
   initMaxNumIterations            1
-
-  runtimeLearningRate             1.0
-  initMinLearningRate             1.0
-  initMaxLearningRate             1.0
+	
+  runtimeMaxLearningRate          1.0
+  runtimeMinLearningRate          1.0
+  initMinLearningRate             1.0    
+  initMaxLearningRate             1.0    
 
   debugPrint                      1
   coldStart                       0

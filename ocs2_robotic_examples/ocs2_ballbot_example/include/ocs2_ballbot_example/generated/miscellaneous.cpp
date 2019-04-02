@@ -1,6 +1,5 @@
-#include "miscellaneous.h"
-
 #include <iit/rbd/utils.h>
+#include "miscellaneous.h"
 
 using namespace iit::Ballbot;
 using namespace iit::Ballbot::dyn;

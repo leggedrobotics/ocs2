@@ -1,0 +1,3 @@
+## ocs2 anymal switched model
+
+[![Build Status](https://ci.leggedrobotics.com/buildStatus/icon?job=bitbucket_leggedrobotics/ocs2_anymal_switched_model/master)](https://ci.leggedrobotics.com/job/bitbucket_leggedrobotics/job/ocs2_anymal_switched_model/job/master/)

@@ -17,12 +17,11 @@ namespace anymal {
 class TestAnymalSwitchedModel {
 
 public:
+  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
   TestAnymalSwitchedModel() :
-    stanceLegs_({{true,true,true,true}}),
-    comKinoDynamics_(stanceLegs_),
-    comKinoDynamicsDerivative_(stanceLegs_){
-
+    stanceLegs_({{true,true,true,true}})
+    {
   }
 
   void init() {
@@ -32,7 +31,6 @@ public:
 public:
   AnymalKinematics kinematics_;
   AnymalCom comDynamics_;
-
 
   std::array<bool,4> stanceLegs_;
   AnymalComKinoDynamics comKinoDynamics_;

@@ -43,7 +43,7 @@ namespace ocs2{
  * @tparam INPUT_DIM: Dimension of the control input space.
  * @tparam LOGIC_RULES_T: Logic Rules type (default NullLogicRules).
  */
-template <class Derived, size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T=NullLogicRules, size_t LOGIC_VARIABLE_DIM=0>
+template <class Derived, size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T=NullLogicRules, size_t LOGIC_VARIABLE_DIM=0, size_t STATE_DESIRED_DIM=STATE_DIM, size_t INPUT_DESIRED_DIM=INPUT_DIM>
 class CostFunctionBaseAD : public CostFunctionBase<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>
 {
 public:
@@ -52,14 +52,16 @@ public:
 	enum
 	{
 		state_dim_ 	= STATE_DIM,
+		state_desired_dim_ = STATE_DESIRED_DIM,
 		input_dim_ 	= INPUT_DIM,
-		logic_variable_dim_ = LOGIC_VARIABLE_DIM,
+	  	input_desired_dim_ 	= INPUT_DESIRED_DIM,
+	  	logic_variable_dim_ = LOGIC_VARIABLE_DIM,
 		variable_dim_ = 1 + state_dim_ + input_dim_,
-		domain_dim_   = variable_dim_ + state_dim_ + input_dim_ + logic_variable_dim_,
+		domain_dim_   = variable_dim_ + state_desired_dim_ + state_desired_dim_ + logic_variable_dim_,
 	};
 
-	typedef std::shared_ptr<CostFunctionBaseAD<Derived, STATE_DIM, INPUT_DIM, LOGIC_RULES_T, LOGIC_VARIABLE_DIM> > Ptr;
-	typedef std::shared_ptr<const CostFunctionBaseAD<Derived, STATE_DIM, INPUT_DIM, LOGIC_RULES_T, LOGIC_VARIABLE_DIM> > ConstPtr;
+	typedef std::shared_ptr<CostFunctionBaseAD<Derived, STATE_DIM, INPUT_DIM, LOGIC_RULES_T, LOGIC_VARIABLE_DIM, STATE_DESIRED_DIM, INPUT_DESIRED_DIM> > Ptr;
+	typedef std::shared_ptr<const CostFunctionBaseAD<Derived, STATE_DIM, INPUT_DIM, LOGIC_RULES_T, LOGIC_VARIABLE_DIM, STATE_DESIRED_DIM, INPUT_DESIRED_DIM> > ConstPtr;
 
 	typedef CostFunctionBase<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> BASE;
 	typedef typename BASE::scalar_t                scalar_t;
@@ -76,8 +78,12 @@ public:
 	typedef typename BASE::dynamic_vector_array_t  dynamic_vector_array_t;
 
 	typedef Eigen::Matrix<scalar_t, logic_variable_dim_, 1> logic_variable_t;
+  	typedef Eigen::Matrix<scalar_t, state_desired_dim_, 1> state_desired_vector_t;
+  	typedef Eigen::Matrix<scalar_t, input_desired_dim_, 1> input_desired_vector_t;
 
-	/**
+
+
+  /**
 	 * Default constructor
 	 *
 	 * @param [in] dynamicLibraryIsCompiled: Whether a library is already complied.
@@ -111,8 +117,8 @@ public:
 			const SCALAR_T& time,
 			const Eigen::Matrix<SCALAR_T, STATE_DIM, 1>& state,
 			const Eigen::Matrix<SCALAR_T, INPUT_DIM, 1>& input,
-			const Eigen::Matrix<SCALAR_T, STATE_DIM, 1>& stateDesired,
-			const Eigen::Matrix<SCALAR_T, INPUT_DIM, 1>& inputDesired,
+			const Eigen::Matrix<SCALAR_T, STATE_DESIRED_DIM, 1>& stateDesired,
+			const Eigen::Matrix<SCALAR_T, INPUT_DESIRED_DIM, 1>& inputDesired,
 			const Eigen::Matrix<SCALAR_T, LOGIC_VARIABLE_DIM, 1>& logicVariable,
 			SCALAR_T& costValue);
 
@@ -130,7 +136,7 @@ public:
 	void terminalCostFunction(
 			const SCALAR_T& time,
 			const Eigen::Matrix<SCALAR_T, STATE_DIM, 1>& state,
-			const Eigen::Matrix<SCALAR_T, STATE_DIM, 1>& stateDesired,
+			const Eigen::Matrix<SCALAR_T, STATE_DESIRED_DIM, 1>& stateDesired,
 			const Eigen::Matrix<SCALAR_T, LOGIC_VARIABLE_DIM, 1>& logicVariable,
 			SCALAR_T& costValue);
 
@@ -140,7 +146,7 @@ public:
 	 * @param [in] t: Current time.
 	 * @return The desired state at the give time.
 	 */
-	state_vector_t getDesiredState(const scalar_t& t);
+	state_desired_vector_t getDesiredState(const scalar_t& t);
 
 	/**
 	 * Gets a user-defined desired input at the give time.
@@ -148,7 +154,7 @@ public:
 	 * @param [in] t: Current time.
 	 * @return The desired input at the give time.
 	 */
-	input_vector_t getDesiredInput(const scalar_t& t);
+	input_desired_vector_t getDesiredInput(const scalar_t& t);
 
 	/**
 	 * Gets a user-defined logic variable based on the given logic rules.
@@ -401,7 +407,7 @@ protected:
 	 * @return A pointer to the desired state variables.
 	 */
 	template <typename Derived_Matrix>
-	Eigen::Block<Derived_Matrix, STATE_DIM, 1> desiredStateVariables(
+	Eigen::Block<Derived_Matrix, STATE_DESIRED_DIM, 1> desiredStateVariables(
 			Eigen::MatrixBase<Derived_Matrix>& tapedInput);
 
 	/**
@@ -411,7 +417,7 @@ protected:
 	 * @return A pointer to the desired input variables.
 	 */
 	template <typename Derived_Matrix>
-	Eigen::Block<Derived_Matrix, INPUT_DIM, 1> desiredInputVariables(
+	Eigen::Block<Derived_Matrix, INPUT_DESIRED_DIM, 1> desiredInputVariables(
 			Eigen::MatrixBase<Derived_Matrix>& tapedInput);
 
 	/**

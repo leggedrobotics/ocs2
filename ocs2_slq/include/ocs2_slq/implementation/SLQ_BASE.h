@@ -101,8 +101,10 @@ SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::SLQ_BASE(
 
 		// initialize penalty functions
 		penaltyPtrStock_.emplace_back(
-				std::shared_ptr<PenaltyBase<STATE_DIM, INPUT_DIM>>(new RelaxedBarrierPenalty<STATE_DIM, INPUT_DIM>(settings_.stateConstraintPenaltyBase_, settings_.stateConstraintPenaltyCoeff_))
-				);
+				std::shared_ptr<PenaltyBase<STATE_DIM, INPUT_DIM>>(new RelaxedBarrierPenalty<STATE_DIM, INPUT_DIM>(
+						settings_.inequalityConstraintMu_,
+						settings_.inequalityConstraintDelta_))
+		);
 
 	} // end of i loop
 

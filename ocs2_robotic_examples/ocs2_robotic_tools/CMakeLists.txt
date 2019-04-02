@@ -20,6 +20,7 @@ find_package(Eigen3 3.3 REQUIRED NO_MODULE)
 include_directories(
   include
   include/${PROJECT_NAME}/rbd_libraries/robcogen
+  ${catkin_INCLUDE_DIRS}
   ${EIGEN3_INCLUDE_DIRS}
 )
 

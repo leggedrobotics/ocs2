@@ -9,7 +9,7 @@
 #define MPC_ROS_QUADRUPED_H_
 
 #include <ocs2_comm_interfaces/ocs2_ros_interfaces/mpc/MPC_ROS_Interface.h>
-#include <ocs2_robotic_examples/command/TargetPoseTransformation.h>
+#include <ocs2_robotic_tools/command/TargetPoseTransformation.h>
 
 #include "ocs2_quadruped_interface/OCS2QuadrupedInterface.h"
 

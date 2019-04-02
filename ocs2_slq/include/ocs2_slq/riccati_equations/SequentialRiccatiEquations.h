@@ -259,19 +259,32 @@ public:
 		}
 
 		// Riccati equations for the original system
-		Lm_ 	= RmInv_*(Pm_+Bm_.transpose()*Sm_);
-		Lv_ 	= RmInv_*(Rv_+Bm_.transpose()*Sv_);
+		Pm_.noalias() += Bm_.transpose()*Sm_; // ! Pm is changed to avoid an extra temporary
+		Lm_.noalias() = RmInv_*Pm_;
+		Rv_.noalias() += Bm_.transpose()*Sv_; // ! Rv is changed to avoid an extra temporary
+		Lv_.noalias() = RmInv_*Rv_;
 
 		/*note: according to some discussions on stackoverflow, it does not buy computation time if multiplications
 		 * with symmetric matrices are executed using selfadjointView(). Doing the full multiplication seems to be faster
 		 * because of vectorization */
-		AtransposeSm_ = Am_.transpose()*Sm_;
-		LmtransposeRm_ = Lm_.transpose()*Rm_;
-		dSmdt_ = Qm_	+ AtransposeSm_ + AtransposeSm_.transpose() - LmtransposeRm_*Lm_;
-		dSvdt_ = Qv_  + Am_.transpose()*Sv_ - LmtransposeRm_*Lv_;
-		dsdt_  = q_   - 0.5*alpha_*(2.0-alpha_)*Lv_.transpose()*Rm_*Lv_;
+		/*
+		 *  Expressions written base on guidelines in http://eigen.tuxfamily.org/dox/TopicWritingEfficientProductExpression.html
+		 */
+		Am_transposeSm_.noalias() = Am_.transpose()*Sm_.transpose();
+		Lm_transposeRm_.noalias() = Lm_.transpose()*Rm_.transpose();
 
-		convert2Vector(dSmdt_, dSvdt_, dsdt_, derivatives);
+		// dSmdt,  Qm_ used instead of temporary
+		Qm_ += Am_transposeSm_ + Am_transposeSm_.transpose();
+		Qm_.noalias() -= Lm_transposeRm_*Lm_;
+
+		// dSvdt,  Qv_ used instead of temporary
+		Qv_.noalias() += Am_.transpose()*Sv_;
+		Qv_.noalias() -= Lm_transposeRm_*Lv_;
+
+		// dsdt,   q_ used instead of temporary
+		q_.noalias() -= 0.5*alpha_*(2.0-alpha_)* *Lv_.transpose()*Rm_ * Lv_;
+
+		convert2Vector(Qm_, Qv_, q_, derivatives);
 	}
 
 protected:
@@ -350,8 +363,8 @@ private:
 	eigen_scalar_t dsdz_;
 	input_state_matrix_t Lm_;
 	input_vector_t Lv_;
-	state_matrix_t AtransposeSm_;
-	state_input_matrix_t LmtransposeRm_;
+	state_matrix_t Am_transposeSm_;
+	state_input_matrix_t Lm_transposeRm_;
 };
 
 }

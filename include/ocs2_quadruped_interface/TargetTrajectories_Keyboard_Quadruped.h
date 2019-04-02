@@ -10,8 +10,8 @@
 
 #include <iomanip>
 
-#include <ocs2_robotic_examples/command/TargetTrajectories_Keyboard_Interface.h>
-#include <ocs2_robotic_examples/command/TargetPoseTransformation.h>
+#include <ocs2_robotic_tools/command/TargetTrajectories_Keyboard_Interface.h>
+#include <ocs2_robotic_tools/command/TargetPoseTransformation.h>
 
 namespace switched_model {
 

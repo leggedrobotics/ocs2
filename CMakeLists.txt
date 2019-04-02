@@ -1,29 +1,22 @@
-cmake_minimum_required(VERSION 2.8.3)
+cmake_minimum_required(VERSION 3.0)
 project(ocs2_quadruped_interface)
 
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS
-  cmake_modules
-  roscpp
   ocs2_core
   ocs2_slq
-  ocs2_ocs2
   ocs2_mpc
   ocs2_comm_interfaces
-  ocs2_robotic_examples
+  ocs2_robotic_tools
   ocs2_switched_model_interface
   rosbag
   xpp_msgs
 )
 
 ## Eigen3
-set( EIGEN_INCLUDE_DIRS "$ENV{LOCAL_EIGEN3_INCLUDE_DIR}" )
-if( NOT EIGEN_INCLUDE_DIRS )
-    find_package(Eigen REQUIRED)
-    message( WARNING "Uses Globally installed Eigen since LOCAL_EIGEN3_INCLUDE_DIR is not defined!")
-endif()
+find_package(Eigen3 3.3 REQUIRED NO_MODULE)
 
 find_package(Boost REQUIRED COMPONENTS
   filesystem
@@ -41,20 +34,22 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread -fopenmp -std=c++11 -Wfatal-err
 ## CATKIN_DEPENDS: catkin_packages dependent projects also need
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
-   INCLUDE_DIRS include test/include
+   INCLUDE_DIRS
+      include
+      test/include
+      ${EIGEN_INCLUDE_DIRS}
 #  LIBRARIES ocs2_quadruped_interface
-   CATKIN_DEPENDS 
-      roscpp
-      ocs2_core 
-      ocs2_slq 
-      ocs2_ocs2 
-      ocs2_mpc 
+   CATKIN_DEPENDS
+      ocs2_core
+      ocs2_slq
+      ocs2_mpc
       ocs2_comm_interfaces
-      ocs2_robotic_examples
-      ocs2_switched_model_interface 
+      ocs2_robotic_tools
+      ocs2_switched_model_interface
+      rosbag
       xpp_msgs
-      
-#  DEPENDS system_lib
+   DEPENDS
+      Boost
 )
 
 ###########
@@ -71,3 +66,11 @@ include_directories(
   ${catkin_INCLUDE_DIRS}
 )
 
+#############
+## Install ##
+#############
+
+install(DIRECTORY
+            include/${PROJECT_NAME}/
+            test/include/${PROJECT_NAME}/
+        DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION})

@@ -36,7 +36,7 @@ namespace switched_model {
         typedef typename DIMENSIONS::state_vector_t   state_vector_t;
         typedef typename DIMENSIONS::input_vector_t   input_vector_t;
         typedef ocs2::SystemObservation<STATE_DIM, INPUT_DIM> system_observation_t;
-        typedef typename system_observation_t::system_observation_array_t  system_observation_array_t;
+        typedef std::vector<system_observation_t, Eigen::aligned_allocator<system_observation_t>> system_observation_array_t;
 
         typedef Eigen::Matrix<scalar_t, 3, 1>	vector_3d_t;
         typedef std::array<vector_3d_t, 4>	vector_3d_array_t;

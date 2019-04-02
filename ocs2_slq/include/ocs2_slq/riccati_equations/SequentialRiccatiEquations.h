@@ -250,12 +250,10 @@ public:
 		PmFunc_.interpolate(t, Pm_, greatestLessTimeStampIndex);
 
 		// numerical consideration
-		if(useMakePSD_==true)
+		if ( useMakePSD_ ) {
 			bool hasNegativeEigenValue = makePSD(Sm_);
-		else {
-			// TODO decide which one is correct
-			Qm_ += state_matrix_t::Identity()*(addedRiccatiDiagonal_);
-			// Sm_ += state_matrix_t::Identity()*(addedRiccatiDiagonal_);
+		} else {
+			Qm_ += addedRiccatiDiagonal_ * state_matrix_t::Identity();
 		}
 
 		// Riccati equations for the original system

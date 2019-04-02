@@ -6,11 +6,11 @@
  */
 
 #include <gtest/gtest.h>
-#include <ocs2_comm_interfaces/ocs2_interfaces/mpc/MPC_Interface.h>
+#include <ocs2_comm_interfaces/ocs2_interfaces/MPC_Interface.h>
 
 using namespace ocs2;
 
-TEST(testOcs2InterfacesMpc, instantiation)
+TEST(testOcs2InterfacesMpc, instantiationDefaultContructor)
 {
   MPC_Interface<1, 1> mpcInterface;
 }

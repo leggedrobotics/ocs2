@@ -2,7 +2,7 @@
 <package format="2">
   <name>ocs2_switched_model_interface</name>
   <version>0.0.0</version>
-  <description>The c_switched_model_interface package</description>
+  <description>The ocs2_switched_model_interface package</description>
 
   <maintainer email="farbod@todo.ch">farbod</maintainer>
 
@@ -12,6 +12,5 @@
 
   <depend>ocs2_core</depend>
   <depend>roscpp</depend>
-
 
 </package>

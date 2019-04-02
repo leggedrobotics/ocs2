@@ -65,10 +65,10 @@ int main(int argc, char **argv)
 
 	//initialize reference:
 	mpc_t::cost_desired_trajectories_t costDesiredTrajectories;
-	costDesiredTrajectories.desiredTimeTrajectory().push_back(0);
-	costDesiredTrajectories.desiredTimeTrajectory().push_back(1);
+	costDesiredTrajectories.desiredTimeTrajectory().push_back(time);
+	costDesiredTrajectories.desiredTimeTrajectory().push_back(time+2.5);
 	mpc_t::state_vector_t goalState;
-	goalState << 1,1;
+	goalState << 1,0;
 	costDesiredTrajectories.desiredStateTrajectory().push_back(initialObservation.state());
 	costDesiredTrajectories.desiredStateTrajectory().push_back(goalState);
 	mpc_t::input_vector_t desiredInput;
@@ -79,7 +79,7 @@ int main(int argc, char **argv)
 
 
 	//run MPC for N iterations
-	int N = 50;
+	int N = 500;
 	for (int i=0; i<N; i++){
 		//run MPC
 		mpcInterface.advanceMpc();

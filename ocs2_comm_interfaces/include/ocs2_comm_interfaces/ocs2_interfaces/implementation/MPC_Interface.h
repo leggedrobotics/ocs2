@@ -240,10 +240,7 @@ bool MPC_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::updatePolicy() {
     eventTimes_.swap(mpcEventTimesBuffer_);
     logicUpdated_ = true;
   }
-  if (partitioningTimes_ != partitioningTimesBuffer_) {
-    partitioningTimes_.swap(partitioningTimesBuffer_);
-    logicUpdated_ = true;
-  }
+  partitioningTimesUpdate(partitioningTimes_);
 
   if (logicUpdated_==true) {
     // set mode sequence
@@ -339,6 +336,15 @@ void MPC_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::evaluateFeedbackPolicy(
 
   size_t index = findActiveSubsystemFnc_(time);
   subsystem = logicMachine_.getLogicRulesPtr()->subsystemsSequence().at(index);
+}
+
+template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
+void MPC_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::partitioningTimesUpdate(
+    scalar_array_t& partitioningTimes) const {
+
+  partitioningTimes.resize(2);
+  partitioningTimes[0] = currentObservation_.time();
+  partitioningTimes[1] = std::numeric_limits<scalar_t>::max();
 }
 
 }

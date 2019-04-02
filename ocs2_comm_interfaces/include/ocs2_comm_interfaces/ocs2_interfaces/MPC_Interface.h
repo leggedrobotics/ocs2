@@ -179,7 +179,6 @@ protected:
   //MPC outputs:
   size_array_t   mpcSubsystemsSequenceBuffer_;
   scalar_array_t mpcEventTimesBuffer_;
-  scalar_array_t partitioningTimesBuffer_;
   scalar_array_t mpcTimeTrajectoryBuffer_;
   state_vector_array_t mpcStateTrajectoryBuffer_;
   input_vector_array_t mpcInputTrajectoryBuffer_;
@@ -216,6 +215,16 @@ protected:
  * @return True if the policy is updated.
  */
   bool updatePolicy();
+
+  /**
+ * Constructs a partitioningTimes vector with 2 elements: current observation time
+ * and the maximum value of the numeric type scalar_t. This prevents
+ * the frequent update of the logicRules.
+ *
+ * @param [out] partitioningTimes: Partitioning time.
+ */
+  void partitioningTimesUpdate(
+      scalar_array_t& partitioningTimes) const;
 
 
 };

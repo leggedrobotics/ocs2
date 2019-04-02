@@ -143,8 +143,6 @@ public:
 	 */
 	virtual void getDerivativeState(state_matrix_t& A) override {
 
-		Eigen::Matrix<double, STATE_DIM, STATE_DIM> A;
-
 		for (size_t i=0; i<STATE_DIM; i++)  {
 
 			// inspired from http://en.wikipedia.org/wiki/Numerical_differentiation#Practical_considerations_using_floating_point_arithmetic

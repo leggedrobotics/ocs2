@@ -41,6 +41,7 @@
   <!--   <test_depend>gtest</test_depend> -->
   <buildtool_depend>catkin</buildtool_depend>
   <build_depend>cmake_modules</build_depend>
+  <build_depend>cmake_clang_tools</build_depend>
 
   <!-- The export tag contains other, unspecified, tags -->
   <export>

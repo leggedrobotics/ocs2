@@ -121,3 +121,16 @@ install(TARGETS ballbot_mpc ballbot_dummy_test ballbot_target
 install(DIRECTORY urdf launch config rviz
         DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
         )
+
+#############
+## Testing ##
+#############
+
+catkin_add_gtest(ballbot_integration_test
+        test/ballbotIntegrationTest.cpp
+        )
+target_link_libraries(ballbot_integration_test
+        ballbot_interface
+        ${catkin_LIBRARIES}
+        ${Boost_LIBRARIES}
+        )

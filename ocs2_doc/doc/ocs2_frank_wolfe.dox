@@ -1,0 +1,9 @@
+/*!
+\page ocs2_frank_wolfe OCS2: Frank-Wolfe
+
+This module implemets the Frank-Wolfe algorithm \cite jaggi13 which is an iterative first-order gradient descent method.
+
+
+[Back to Home Page](\ref index)
+
+*/

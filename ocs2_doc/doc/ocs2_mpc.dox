@@ -1,0 +1,9 @@
+/*!
+\page ocs2_mpc OCS2 MPC
+
+This module include type definitions, ODE integrator, base class for dynamics, constraints, and their derivatives.
+It also contains an efficient linear interpolation class and LTI system class.
+
+
+[Back to Home Page](\ref index)
+*/

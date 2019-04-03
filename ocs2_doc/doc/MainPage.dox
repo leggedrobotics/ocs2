@@ -29,7 +29,7 @@ This library consists of the following main modules:
 
 \subsection ocs2_doc_ocs2_core Core Module
 
-<a href="../../../ocs2_core/doc/html/index.html">Core Module</a> provides the followings features:
+[Core Module](\ref ocs2_core) provides the followings features:
 - Definition of the optimal control problem.
 - A numerical integration with different ODE solvers such as explicit and implicit solvers.
 - Interface classes for dynamics, constraints, and their derivatives.
@@ -41,7 +41,7 @@ code-generation or just-in-time (JIT) compilation.
 
 \subsection ocs2_doc_ocs2_slq SLQ Module
 
-<a href="../../../ocs2_slq/doc/html/index.html">SLQ Module</a> provides the followings features:
+[SLQ Module](\ref ocs2_slq) provides the followings features:
 - A continuous-time (un)constrained SLQ/ iLQR algorithm for (non-)switched systems \cite farshidian17a.
 - A continuous-time Riccati equations solver based on ODE solver.
 - A continuous-time Riccati equations solver based on linearized equation and exponential method.
@@ -51,7 +51,7 @@ approach \cite farshidian17d.
 
 \subsection ocs2_doc_ocs2_ocs2 OCS2 Module
 
-<a href="../../../ocs2_ocs2/doc/html/index.html">OCS2 Module</a> provides the followings features:
+[OCS2 Module](\ref ocs2_ocs2) provides the followings features:
 - A continuous-time unconstrained algorithm for computing the derivative of the optimized value function w.r.t. 
 switching times based on the underlying LQ problem \cite farshidian17b.
 - A continuous-time (un)constrained algorithm for computing the derivative of the optimized value function w.r.t. 
@@ -60,13 +60,13 @@ switching times based on a Riccati approach to solve the two-point Boundary Valu
 
 \subsection ocs2_doc_ocs2_mpc MPC Module
 
-<a href="../../../ocs2_mpc/doc/html/index.html">MPC Module</a> provides the followings features:
+[MPC Module](\ref ocs2_mpc) provides the followings features:
 - A general interface for Model Predictive Control (MPC).
 - A real-time MPC algorithm for (non-)switched systems using SLQ as the optimal control solver \cite farshidian17d.
 
 \subsection ocs2_doc_ros_interfaces ROS Interfaces Module
 
-<a href="../../../ocs2_comm_interfaces/doc/html/index.html">ROS Interfaces Module</a> provides the followings features:
+[ROS Interfaces Module](\ref ocs2_comm_interfaces) provides the followings features:
 - A ROS interface for MPC node with efficient message publishing scheme.
 - A ROS interface for MRT (Model Reference Tracking) node which allows a user-friendly access method to the MPC policy.
 - A command node for sending desired trajectory or the target goal to MPC node.
@@ -74,21 +74,21 @@ switching times based on a Riccati approach to solve the two-point Boundary Valu
 
 \subsection ocs2_doc_ocs2_frank_wolfe Frank Wolfe Module
 
-<a href="../../../ocs2_frank_wolfe/doc/html/index.html">Frank-Wolfe Module</a> provides the followings features:
+[Frank-Wolfe Module](\ref ocs2_frank_wolfe) provides the followings features:
 - An implementation of the Frank-Wolfe algorithm \cite jaggi13 which is an iterative first-order gradient descent algorithm.
 
 \section ocs2_doc_source_code Source Code
 
-The source code is available at <a href="https://bitbucket.org/adrlab/ocs2">https://bitbucket.org/adrlab/ocs2</a>
+The source code is available at <a href="https://bitbucket.org/leggedrobotics/ocs2_dev">Bitbucket</a>
 
 \section cs2_doc_how_to_use How to use the OCS2 Toolbox
 
-To get started with the control toolbox, please see \ref ocs2_doc_getting_started.
+To get started with the control toolbox, please see [Getting Started](\ref ocs2_doc_getting_started).
 
 \section support Support
 
 For any questions, issues or other troubleshooting please either
-- create an issue: https://bitbucket.org/adrlab/ocs2/issues
+- create an issue: https://bitbucket.org/leggedrobotics/ocs2_dev/issues
 - contact: Farbod Farshidian, farbod (dot) farshidian (at) gmail (dot) com
 
 \section ocs2_doc_ack Acknowledgement

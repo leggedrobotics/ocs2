@@ -1,0 +1,10 @@
+/*!
+\page ocs2_core OCS2 Core
+
+
+This module include type definitions, ODE integrator, base class for dynamics, constraints, and their derivatives.
+It also contains an efficient linear interpolation class and LTI system class.
+
+
+[Back to Home Page](\ref index)
+*/

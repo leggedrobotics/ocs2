@@ -534,10 +534,10 @@ void MRT_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::evaluateFeedbackPol
 template<size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
 void MRT_ROS_Interface<STATE_DIM,
                        INPUT_DIM,
-                       LOGIC_RULES_T>::initRollout(controlled_system_base_ptr_t controlSystemBasePtr,
+                       LOGIC_RULES_T>::initRollout(const controlled_system_base_t &controlSystemBase,
                                                    const Rollout_Settings &rolloutSettings) {
 
-  rolloutPtr_ = rollout_base_ptr_t(new time_triggered_rollout_t(*controlSystemBasePtr, rolloutSettings, "mrt"));
+  rolloutPtr_ = rollout_base_ptr_t(new time_triggered_rollout_t(controlSystemBase, rolloutSettings, "mrt"));
 }
 
 /******************************************************************************************************/

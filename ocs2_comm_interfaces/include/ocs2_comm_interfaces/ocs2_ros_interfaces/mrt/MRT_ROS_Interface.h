@@ -114,7 +114,7 @@ public:
 
   	typedef typename std::unique_ptr<RolloutBase<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>> rollout_base_ptr_t;
   	typedef TimeTriggeredRollout<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> time_triggered_rollout_t;
-	typedef typename ControlledSystemBase<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::Ptr controlled_system_base_ptr_t;
+	typedef typename ControlledSystemBase<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> controlled_system_base_t;
 
 	typedef LinearInterpolation<state_vector_t, Eigen::aligned_allocator<state_vector_t> > state_linear_interpolation_t;
 	typedef LinearInterpolation<input_vector_t, Eigen::aligned_allocator<input_vector_t> > input_linear_interpolation_t;
@@ -222,7 +222,7 @@ public:
 	 * @param [in] controlSystemBasePtr: Pointer to the system to roll out.
 	 * @param [in] rollout settings.
 	 */
-	void initRollout(controlled_system_base_ptr_t controlSystemBasePtr, const Rollout_Settings& rolloutSettings);
+	void initRollout(const controlled_system_base_t& controlSystemBase, const Rollout_Settings& rolloutSettings);
 
 	/**
 	 * rolls out feedback policy from current state

@@ -567,10 +567,10 @@ void MRT_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::rolloutFeedbackPoli
                        mpcStateTrajectory_,
                        mpcInputTrajectory_);
     } else {
-      throw std::runtime_error("MRT_ROS_interface: policy not updated before rollout");
+      throw std::runtime_error("MRT_ROS_interface: policy not updated before rollout.");
     }
   } else {
-    throw std::runtime_error("MRT_ROS_interface: rolloutPtr not initialized");
+    throw std::runtime_error("MRT_ROS_interface: rolloutPtr not initialized, call initRollout first.");
   }
 
   // Set rollout to be the mpc feedforward trajectory

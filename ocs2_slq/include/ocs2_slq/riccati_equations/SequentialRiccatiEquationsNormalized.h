@@ -143,7 +143,7 @@ public:
 		size_t nRows = 0;
 		for(size_t nCols=0; nCols < STATE_DIM; nCols++) {
 			nRows = nCols+1;
-			allSs.template segment(count, nRows) <<
+			allSs.segment(count, nRows) <<
 					Eigen::Map<const dynamic_vector_t>(Sm.data() + nCols*STATE_DIM, nRows);
 			count += nRows;
 		}
@@ -176,10 +176,10 @@ public:
 		for(size_t rows=0; rows < STATE_DIM; rows++)
 		{
 			nCols = rows+1;
-			Sm.template block(rows, 0, 1, nCols)  <<
+			Sm.block(rows, 0, 1, nCols)  <<
 					Eigen::Map<const dynamic_vector_t>(allSs.data()+count, nCols).transpose();
 			// "nCols-1" because diagonal elements have already been covered
-			Sm.template block(0, rows, nCols-1, 1)  <<
+			Sm.block(0, rows, nCols-1, 1)  <<
 					Eigen::Map<const dynamic_vector_t>(allSs.data()+count, nCols-1);
 			count += nCols;
 		}

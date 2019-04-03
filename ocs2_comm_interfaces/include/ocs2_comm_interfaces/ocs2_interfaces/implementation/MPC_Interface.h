@@ -13,7 +13,9 @@ MPC_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::MPC_Interface(
     , mpcSettings_(mpc.settings())
     , desiredTrajectoriesUpdated_(false)
     , modeSequenceUpdated_(false)
+    , observationUpdated_(false)
     , logicMachine_(logicRules)
+    , useFeedforwardPolicy_(useFeedforwardPolicy)
 {
   // correcting rosMsgTimeWindow
   if (mpcSettings_.recedingHorizon_==false)
@@ -80,16 +82,6 @@ MPC_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULSES_T>::advanceMpc(){
   if (initialCall_==true) {
     // reset the MPC solver since it is the beginning of the task
     mpcPtr_->reset();
-
-    // display
-    if (mpcSettings_.debugPrint_) {
-      std::cerr << "### The target position is updated at time "
-                << std::setprecision(4) << currentObservation_.time() << " as " << std::endl;
-      defaultCostDesiredTrajectories_.display();
-    }
-
-    // set CostDesiredTrajectories
-    mpcPtr_->swapCostDesiredTrajectories(defaultCostDesiredTrajectories_);
   }
 
   // update the mode sequence
@@ -132,6 +124,9 @@ MPC_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULSES_T>::advanceMpc(){
   bool controllerIsUpdated = mpcPtr_->run(
       currentObservation_.time(),
       currentObservation_.state());
+  //allow for new observations:
+  observationUpdated_ = false;
+
 
   const controller_array_t* controllersPtr(nullptr);
   const std::vector<scalar_array_t>* timeTrajectoriesPtr(nullptr);
@@ -254,6 +249,8 @@ bool MPC_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::updatePolicy() {
     const size_t partitionIndex = 0; // we assume only one partition
     findActiveSubsystemFnc_ = std::move(
         logicMachine_.getHandleToFindActiveEventCounter(partitionIndex) );
+
+    logicUpdated_ = false;
   }
 
   if (useFeedforwardPolicy_==true) {

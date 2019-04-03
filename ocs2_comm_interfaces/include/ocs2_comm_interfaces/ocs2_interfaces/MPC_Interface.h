@@ -158,14 +158,14 @@ protected:
   MPC_Settings mpcSettings_;
 
   size_t numIterations_;
-  scalar_t maxDelay_;
-  scalar_t meanDelay_;
-  scalar_t currentDelay_;
+  scalar_t maxDelay_ = 0;
+  scalar_t meanDelay_ = 0;
+  scalar_t currentDelay_ = 0;
 
   std::chrono::time_point<std::chrono::steady_clock> startTimePoint_;
   std::chrono::time_point<std::chrono::steady_clock> finalTimePoint_;
 
-  bool initialCall_;
+  bool initialCall_ = false;
 
   std::atomic<bool> observationUpdated_;
   std::atomic<bool> desiredTrajectoriesUpdated_;
@@ -173,7 +173,6 @@ protected:
 
   //MPC inputs
   cost_desired_trajectories_t costDesiredTrajectories_;
-  cost_desired_trajectories_t defaultCostDesiredTrajectories_;
   mode_sequence_template_t modeSequenceTemplate_;
   system_observation_t currentObservation_;
 

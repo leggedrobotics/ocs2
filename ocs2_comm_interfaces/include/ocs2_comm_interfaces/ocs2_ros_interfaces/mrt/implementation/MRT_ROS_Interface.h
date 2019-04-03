@@ -389,6 +389,8 @@ bool MRT_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::updatePolicy() {
 
   logicUpdated_ = false;
 
+  feedforwardGeneratedWithRollout_ = false;
+
   if (subsystemsSequence_ != subsystemsSequenceBuffer_) {
     subsystemsSequence_.swap(subsystemsSequenceBuffer_);
     logicUpdated_ = true;
@@ -448,8 +450,6 @@ bool MRT_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::updatePolicy() {
     loadModifiedFeedbackPolicy(logicUpdated_, policyUpdated_,
                                mpcController_,
                                eventTimes_, subsystemsSequence_);
-
-    feedforwardGeneratedWithRollout_ = false;
   }
 
   lk.unlock();

@@ -38,10 +38,10 @@ namespace double_integrator {
 /******************************************************************************************************/
 DoubleIntegratorInterface::DoubleIntegratorInterface(const std::string& taskFileFolderName)
 {
-	taskFile_ = ros::package::getPath("ocs2_double_integrator_example") + "/config/" + taskFileFolderName + "/task.info";
+	taskFile_ = ros::package::getPath("ocs2_double_integrator_noros_example") + "/config/" + taskFileFolderName + "/task.info";
 	std::cerr << "Loading task file: " << taskFile_ << std::endl;
 
-	libraryFolder_ = ros::package::getPath("ocs2_double_integrator_example") + "/auto_generated";
+	libraryFolder_ = ros::package::getPath("ocs2_double_integrator_noros_example") + "/auto_generated";
 	std::cerr << "Generated library path: " << libraryFolder_ << std::endl;
 
 	// load setting from loading file

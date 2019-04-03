@@ -29,7 +29,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
 #include "ocs2_double_integrator_example/DoubleIntegratorInterface.h"
-#include "ocs2_double_integrator_example/ros_comm/MPC_ROS_Double_Integrator.h"
 #include "ocs2_comm_interfaces/ocs2_interfaces/MPC_Interface.h"
 #include "ocs2_core/logic/rules/NullLogicRules.h"
 
@@ -66,25 +65,26 @@ int main(int argc, char **argv)
 	//initialize reference:
 	mpc_t::cost_desired_trajectories_t costDesiredTrajectories;
 	costDesiredTrajectories.desiredTimeTrajectory().push_back(time);
-	costDesiredTrajectories.desiredTimeTrajectory().push_back(time+2.5);
-	mpc_t::state_vector_t goalState;
+  costDesiredTrajectories.desiredTimeTrajectory().push_back(time+2.5);
+  mpc_t::state_vector_t goalState;
 	goalState << 1,0;
 	costDesiredTrajectories.desiredStateTrajectory().push_back(initialObservation.state());
 	costDesiredTrajectories.desiredStateTrajectory().push_back(goalState);
-	mpc_t::input_vector_t desiredInput;
+  mpc_t::input_vector_t desiredInput;
 	costDesiredTrajectories.desiredInputTrajectory().push_back(desiredInput);
 	costDesiredTrajectories.desiredInputTrajectory().push_back(desiredInput);
+  mpcInterface.setTargetTrajectories(costDesiredTrajectories);
 
-	mpcInterface.setTargetTrajectories(costDesiredTrajectories);
-
+  double f_control = 5;
+  //double f_control = doubleIntegratorInterface.mpcSettings().mpcDesiredFrequency_;
+  double T = 5;
 
 	//run MPC for N iterations
-	int N = 500;
+	int N = int(f_control * T);
 	for (int i=0; i<N; i++){
 		//run MPC
 		mpcInterface.advanceMpc();
-
-		time += 1.0/doubleIntegratorInterface.mpcSettings().mpcDesiredFrequency_;
+    time += 1.0/f_control;
 
 		if (mpcInterface.policyReceived()){
 			mpc_t::state_vector_t optimalState;
@@ -102,6 +102,7 @@ int main(int argc, char **argv)
 			observation.state() = optimalState;
 			initialObservation.time() = time;
 			mpcInterface.setCurrentObservation(observation);
+      mpcInterface.setTargetTrajectories(costDesiredTrajectories);
 		}
 
 	}

@@ -23,8 +23,9 @@
 #include <ocs2_comm_interfaces/SystemObservation.h>
 #include <ocs2_core/logic/machine/HybridLogicRulesMachine.h>
 
-//#define PUBLISH_DUMMY
-#define PUBLISH_THREAD
+//For RosWarnStream, can be removed if std::cout is used instead
+#include <ros/ros.h>
+
 
 namespace ocs2 {
 

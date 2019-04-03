@@ -112,7 +112,7 @@ public:
 	typedef HybridLogicRulesMachine<LOGIC_RULES_T> logic_machine_t;
 	typedef typename logic_machine_t::Ptr          logic_machine_ptr_t;
 
-  	typedef typename RolloutBase<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::Ptr rollout_base_ptr_t;
+  	typedef typename std::unique_ptr<RolloutBase<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>> rollout_base_ptr_t;
   	typedef TimeTriggeredRollout<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> time_triggered_rollout_t;
 	typedef typename ControlledSystemBase<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::Ptr controlled_system_base_ptr_t;
 
@@ -495,9 +495,7 @@ protected:
 
 	std::function<size_t(scalar_t)> findActiveSubsystemFnc_;
 
- private:
   	rollout_base_ptr_t rolloutPtr_;
-
 };
 
 } // namespace ocs2

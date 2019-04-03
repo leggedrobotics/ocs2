@@ -104,8 +104,8 @@ public:
 	, dsdz_(eigen_scalar_t::Zero())
 	, Lm_(input_state_matrix_t::Zero())
 	, Lv_(input_vector_t::Zero())
-	, AtransposeSm_(state_matrix_t::Zero())
-	, LmtransposeRm_(state_input_matrix_t::Zero())
+	, Am_transposeSm_(state_matrix_t::Zero())
+	, Lm_transposeRm_(state_input_matrix_t::Zero())
 	{}
 
 	/**

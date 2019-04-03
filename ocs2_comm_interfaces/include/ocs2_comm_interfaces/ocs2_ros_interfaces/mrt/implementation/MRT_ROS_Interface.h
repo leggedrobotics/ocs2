@@ -38,9 +38,10 @@ MRT_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::MRT_ROS_Interface(
     const bool &useFeedforwardPolicy /*= true*/,
     const std::string &robotName /*= "robot"*/)
 
-    : logicMachinePtr_(new logic_machine_t(logicRules)),
-      useFeedforwardPolicy_(useFeedforwardPolicy),
-      robotName_(robotName) {
+    : logicMachinePtr_(new logic_machine_t(logicRules))
+    , useFeedforwardPolicy_(useFeedforwardPolicy)
+    , feedforwardGeneratedWithRollout_(false)
+    , robotName_(robotName) {
   // reset variables
   reset();
 
@@ -588,8 +589,6 @@ void MRT_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::rolloutFeedbackPoli
 
   feedforwardGeneratedWithRollout_ = true;
 }
-
-
 
 /******************************************************************************************************/
 /******************************************************************************************************/

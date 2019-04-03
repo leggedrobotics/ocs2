@@ -55,29 +55,32 @@ int main(int argc, char **argv)
 	double time = 0;
 
 	//initialize observation:
-	mpc_t::system_observation_t initialObservation;
-	doubleIntegratorInterface.getInitialState(initialObservation.state());
-	initialObservation.time() = time;
+	mpc_t::system_observation_t observation;
+	doubleIntegratorInterface.getInitialState(observation.state());
+  observation.time() = time;
 
-	mpcInterface.setCurrentObservation(initialObservation);
+	mpcInterface.setCurrentObservation(observation);
 
 
 	//initialize reference:
 	mpc_t::cost_desired_trajectories_t costDesiredTrajectories;
 	costDesiredTrajectories.desiredTimeTrajectory().push_back(time);
-  costDesiredTrajectories.desiredTimeTrajectory().push_back(time+2.5);
+  costDesiredTrajectories.desiredTimeTrajectory().push_back(time+1);
+  costDesiredTrajectories.desiredTimeTrajectory().push_back(time+5);
   mpc_t::state_vector_t goalState;
 	goalState << 1,0;
-	costDesiredTrajectories.desiredStateTrajectory().push_back(initialObservation.state());
+	costDesiredTrajectories.desiredStateTrajectory().push_back(observation.state());
 	costDesiredTrajectories.desiredStateTrajectory().push_back(goalState);
+  costDesiredTrajectories.desiredStateTrajectory().push_back(goalState);
   mpc_t::input_vector_t desiredInput;
 	costDesiredTrajectories.desiredInputTrajectory().push_back(desiredInput);
 	costDesiredTrajectories.desiredInputTrajectory().push_back(desiredInput);
+  costDesiredTrajectories.desiredInputTrajectory().push_back(desiredInput);
   mpcInterface.setTargetTrajectories(costDesiredTrajectories);
 
-  double f_control = 5;
+  double f_control = 10;
   //double f_control = doubleIntegratorInterface.mpcSettings().mpcDesiredFrequency_;
-  double T = 5;
+  double T = 3;
 
 	//run MPC for N iterations
 	int N = int(f_control * T);
@@ -98,11 +101,9 @@ int main(int argc, char **argv)
 					<< std::endl << std::endl;
 
 			//use optimal state for the next observation:
-			mpc_t::system_observation_t observation;
 			observation.state() = optimalState;
-			initialObservation.time() = time;
+      observation.time() = time;
 			mpcInterface.setCurrentObservation(observation);
-      mpcInterface.setTargetTrajectories(costDesiredTrajectories);
 		}
 
 	}

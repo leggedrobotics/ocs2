@@ -126,3 +126,11 @@ target_link_libraries(test_loopshapingDefinition
         -lstdc++fs
         )
 
+catkin_add_gtest(test_loopshapingDynamics
+        test/loopshaping/testLoopshapingDynamics.cpp
+        )
+target_link_libraries(test_loopshapingDynamics
+        ${Boost_LIBRARIES}
+        ${catkin_LIBRARIES}
+        -lstdc++fs
+        )

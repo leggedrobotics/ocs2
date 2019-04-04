@@ -63,17 +63,27 @@ target_link_libraries(double_integrator_noros_interface
         dl
         )
 
-# Mpc node
-add_executable(double_integrator_noros_mpc
-        src/MPC_Double_Integrator_Node.cpp
+add_executable(double_integrator_synchronous_tracking
+  src/DoubleIntegratorSynchronousTracking.cpp
         )
-add_dependencies(double_integrator_noros_mpc
+add_dependencies(double_integrator_synchronous_tracking
         ${catkin_EXPORTED_TARGETS}
         )
-target_link_libraries(double_integrator_noros_mpc
+target_link_libraries(double_integrator_synchronous_tracking
         double_integrator_noros_interface
         ${catkin_LIBRARIES}
         )
+
+add_executable(double_integrator_asynchronous_tracking
+  src/DoubleIntegratorAsynchronousTracking.cpp
+  )
+add_dependencies(double_integrator_asynchronous_tracking
+  ${catkin_EXPORTED_TARGETS}
+  )
+target_link_libraries(double_integrator_asynchronous_tracking
+  double_integrator_noros_interface
+  ${catkin_LIBRARIES}
+  )
 
 #############
 ## Install ##
@@ -88,9 +98,9 @@ install(TARGETS double_integrator_noros_interface
 install(DIRECTORY include/${PROJECT_NAME}/
         DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION})
 
-install(TARGETS double_integrator_noros_mpc
+install(TARGETS double_integrator_synchronous_tracking double_integrator_asynchronous_tracking
         RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})
 
-install(DIRECTORY urdf launch config rviz
+install(DIRECTORY config
         DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
         )

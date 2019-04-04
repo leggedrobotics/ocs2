@@ -248,7 +248,10 @@ MPC_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULSES_T>::advanceMpc(){
 template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
 bool MPC_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::updatePolicy() {
 
-  if (mpcOutputBufferUpdated_==false) {
+  if (mpcOutputBufferUpdated_) {
+    mpcOutputBufferUpdated_ = false;
+  }
+  else{
     return false;
   }
 

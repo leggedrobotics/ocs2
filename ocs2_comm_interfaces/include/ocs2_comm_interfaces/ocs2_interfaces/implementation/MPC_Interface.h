@@ -17,10 +17,6 @@ MPC_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::MPC_Interface(
     , logicMachine_(logicRules)
     , useFeedforwardPolicy_(useFeedforwardPolicy)
 {
-  // correcting rosMsgTimeWindow
-  if (mpcSettings_.recedingHorizon_==false)
-    mpcSettings_.rosMsgTimeWindow_ = 1e+6;
-
   // reset variables
   reset();
 }
@@ -30,6 +26,38 @@ void MPC_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::reset() {
 
   initialCall_ = true;
   numIterations_ = 0;
+  desiredTrajectoriesUpdated_ = false;
+  observationUpdated_ = false;
+  mpcOutputBufferUpdated_ = false;
+  logicUpdated_ = false;
+
+  //MPC inputs
+  costDesiredTrajectories_.clear();
+  currentObservation_ = system_observation_t();
+
+  //MPC outputs:
+  mpcSubsystemsSequenceBuffer_.clear();
+  mpcEventTimesBuffer_.clear();
+  mpcTimeTrajectoryBuffer_.clear();
+  mpcStateTrajectoryBuffer_.clear();
+  mpcInputTrajectoryBuffer_.clear();
+  mpcControllerBuffer_.clear();
+  mpcSolverCostDesiredTrajectoriesBuffer_.clear();
+
+  //variables for the tracking controller:
+  eventTimes_.clear();
+  subsystemsSequence_.clear();
+  partitioningTimes_.clear();
+
+  mpcController_.clear();
+  mpcTimeTrajectory_.clear();
+  mpcStateTrajectory_.clear();
+  mpcInputTrajectory_.clear();
+  mpcLinInterpolateState_.reset();
+  mpcLinInterpolateInput_.reset();
+  mpcLinInterpolateUff_.reset();
+  mpcLinInterpolateK_.reset();
+  mpcCostDesiredTrajectories_.clear();
 
   if (mpcPtr_ != nullptr)
     mpcPtr_->reset();
@@ -73,7 +101,7 @@ void
 MPC_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULSES_T>::advanceMpc(){
 
 
-  if (mpcSettings_.adaptiveRosMsgTimeWindow_==true || mpcSettings_.debugPrint_)
+  if (mpcSettings_.debugPrint_)
     startTimePoint_ = std::chrono::steady_clock::now();
 
   // number of iterations
@@ -154,12 +182,14 @@ MPC_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULSES_T>::advanceMpc(){
   subsystemsSequencePtr = &mpcPtr_->getLogicRulesPtr()->subsystemsSequence();
 
   // measure the delay
-  if(mpcSettings_.adaptiveRosMsgTimeWindow_==true || mpcSettings_.debugPrint_){
+  if(mpcSettings_.debugPrint_){
     finalTimePoint_ = std::chrono::steady_clock::now();
     currentDelay_ = std::chrono::duration<scalar_t, std::milli>(finalTimePoint_-startTimePoint_).count();
     meanDelay_ += (currentDelay_-meanDelay_) / numIterations_;
     maxDelay_   = std::max(maxDelay_, currentDelay_);
   }
+
+  std::lock_guard<std::mutex> lock(mpcBufferMutex);
 
   //update buffers
   if (useFeedforwardPolicy_) {

@@ -16,7 +16,7 @@ namespace ocs2 {
  *   p(h)=\left\{
  *               \begin{array}{ll}
  *                 -\mu \ln(h) & if \quad  h > \delta, \\
- *                 -\mu \ln(\delta) + \frac{1}{2} \left( \left( \frac{h-2\delta}{\delta} \right)^2 - 1 \right) & otherwise,
+ *                 -\mu \ln(\delta) + \mu \frac{1}{2} \left( \left( \frac{h-2\delta}{\delta} \right)^2 - 1 \right) & otherwise,
  *               \end{array}
  *             \right.
  * \f]
@@ -31,7 +31,7 @@ class RelaxedBarrierPenalty final : public PenaltyBase<STATE_DIM, INPUT_DIM> {
 
   typedef typename PenaltyBase<STATE_DIM, INPUT_DIM>::scalar_t scalar_t;
 
-  explicit RelaxedBarrierPenalty(scalar_t mu, scalar_t delta) : mu_(mu), delta_(delta) {};
+  RelaxedBarrierPenalty(scalar_t mu, scalar_t delta) : mu_(mu), delta_(delta) {};
   virtual ~RelaxedBarrierPenalty() = default;
 
  private:

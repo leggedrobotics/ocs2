@@ -31,12 +31,12 @@ class RelaxedBarrierPenalty final : public PenaltyBase<STATE_DIM, INPUT_DIM> {
 
   typedef typename PenaltyBase<STATE_DIM, INPUT_DIM>::scalar_t scalar_t;
 
-  RelaxedBarrierPenalty(scalar_t mu, scalar_t delta) : mu_(mu), delta_(delta) {};
+  explicit RelaxedBarrierPenalty(scalar_t mu, scalar_t delta) : mu_(mu), delta_(delta) {};
   virtual ~RelaxedBarrierPenalty() = default;
 
  private:
-  scalar_t mu_ = 1e-1;
-  scalar_t delta_ = 1e-3;
+  scalar_t mu_;
+  scalar_t delta_;
 
   /**
   * Compute the penalty value at a certain constraint value.
@@ -48,7 +48,7 @@ class RelaxedBarrierPenalty final : public PenaltyBase<STATE_DIM, INPUT_DIM> {
     if (h > delta_) {
       return -mu_ * log(h);
     } else {
-      return mu_ * (-log(delta_) + scalar_t(0.5) * pow((h - 2.0 * delta_) / delta_, 2) - scalar_t(0.5));
+      return mu_ * (-log(delta_) + scalar_t(0.5) * pow((h - 2.0 * delta_) / delta_, 2.0) - scalar_t(0.5));
     };
   };
 
@@ -62,7 +62,7 @@ class RelaxedBarrierPenalty final : public PenaltyBase<STATE_DIM, INPUT_DIM> {
     if (h > delta_) {
       return -mu_ / h;
     } else {
-      return mu_ * ((h - 2 * delta_) / (delta_ * delta_));
+      return mu_ * ((h - 2.0 * delta_) / (delta_ * delta_));
     };
   };
 

@@ -118,7 +118,6 @@ int main(int argc, char **argv)
     }
 
     mpcInterface.setCurrentObservation(observation);
-    //run MPC
 
     std::cout << std::endl << "Start MPC iteration..." << std::endl;
     mpcInterface.advanceMpc();

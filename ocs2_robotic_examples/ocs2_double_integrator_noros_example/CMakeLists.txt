@@ -104,3 +104,18 @@ install(TARGETS double_integrator_synchronous_tracking double_integrator_asynchr
 install(DIRECTORY config
         DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
         )
+
+#############
+## Testing ##
+#############
+
+catkin_add_gtest(ocs2_double_integrator_integration_test
+  test/DoubleIntegratorIntegrationTest.cpp
+  )
+add_dependencies(ocs2_double_integrator_integration_test
+  ${catkin_EXPORTED_TARGETS}
+  )
+target_link_libraries(ocs2_double_integrator_integration_test
+  double_integrator_noros_interface
+  ${catkin_LIBRARIES}
+  )

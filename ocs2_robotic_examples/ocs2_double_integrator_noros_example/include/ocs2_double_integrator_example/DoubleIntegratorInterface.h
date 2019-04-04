@@ -89,6 +89,8 @@ public:
 	 */
 	mpc_t::Ptr& getMPCPtr();
 
+	const dim_t::state_vector_t& getXFinal(){return xFinal_;}
+
 
 protected:
 	/**

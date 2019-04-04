@@ -66,16 +66,12 @@ int main(int argc, char **argv)
 	mpc_t::cost_desired_trajectories_t costDesiredTrajectories;
 	costDesiredTrajectories.desiredTimeTrajectory().push_back(time);
   costDesiredTrajectories.desiredTimeTrajectory().push_back(time+1);
-  costDesiredTrajectories.desiredTimeTrajectory().push_back(time+5);
-  mpc_t::state_vector_t goalState;
-	goalState << 1,0;
+  mpc_t::state_vector_t goalState = doubleIntegratorInterface.getXFinal();
 	costDesiredTrajectories.desiredStateTrajectory().push_back(observation.state());
 	costDesiredTrajectories.desiredStateTrajectory().push_back(goalState);
-  costDesiredTrajectories.desiredStateTrajectory().push_back(goalState);
   mpc_t::input_vector_t desiredInput;
 	costDesiredTrajectories.desiredInputTrajectory().push_back(desiredInput);
 	costDesiredTrajectories.desiredInputTrajectory().push_back(desiredInput);
-  costDesiredTrajectories.desiredInputTrajectory().push_back(desiredInput);
   mpcInterface.setTargetTrajectories(costDesiredTrajectories);
 
   double f_control = 10;

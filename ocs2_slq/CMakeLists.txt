@@ -84,13 +84,13 @@ endif()
 ## to see the summary of unit test results run
 ## $ catkin_test_results ../../../build/ocs2_slq
 
-#catkin_add_gtest(exp0_slq_test 
-#  test/exp0_slq_test.cpp
-#)
-#target_link_libraries(exp0_slq_test
-#  ${catkin_LIBRARIES}
-#  ${Boost_LIBRARIES}
-#)
+catkin_add_gtest(exp0_slq_test 
+  test/exp0_slq_test.cpp
+)
+target_link_libraries(exp0_slq_test
+  ${catkin_LIBRARIES}
+  ${Boost_LIBRARIES}
+)
 
 catkin_add_gtest(exp1_slq_test 
   test/exp1_slq_test.cpp

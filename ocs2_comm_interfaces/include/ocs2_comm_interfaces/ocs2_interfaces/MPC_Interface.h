@@ -70,12 +70,6 @@ public:
   typedef LinearInterpolation<input_state_matrix_t, Eigen::aligned_allocator<input_state_matrix_t>> gain_linear_interpolation_t;
   typedef HybridLogicRulesMachine<LOGIC_RULES_T> logic_machine_t;
 
-
-  /**
-   * Default constructor, don't use this!
-   */
-  MPC_Interface() = default;
-
   /**
    * Constructor
    * @param mpc the mpc object

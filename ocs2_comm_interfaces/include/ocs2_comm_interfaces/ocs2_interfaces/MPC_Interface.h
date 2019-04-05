@@ -30,11 +30,11 @@
 namespace ocs2 {
 
 /**
- * This class implements MPC communication interface using ROS.
- *
- * @tparam STATE_DIM: Dimension of the state space.
- * @tparam INPUT_DIM: Dimension of the control input space.
- * @tparam LOGIC_RULES_T: Logic Rules type (default NullLogicRules).
+ * A lean ROS independent interface to OCS2. In incorporate  the functionality of the MPC and the MRT (trajectory tracking) modules.
+ * Please refer to ocs2_double_integrator_noros_example for a minimal example
+ * @tparam STATE_DIM
+ * @tparam INPUT_DIM
+ * @tparam LOGIC_RULES_T
  */
 template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T=NullLogicRules>
 class MPC_Interface
@@ -72,15 +72,16 @@ public:
 
 
   /**
-   * Default constructor
+   * Default constructor, don't use this!
    */
   MPC_Interface() = default;
 
   /**
-   * Constructor.
+   * Constructor
+   * @param mpc the mpc object
+   * @param logicRules
+   * @param useFeedforwardPolicy if true (default) the feed-forward optimal controls are calculated. If false, the affine feedback laws are calculated
    *
-   * @param [in] mpc: The MPC object to be interfaced.
-   * @param [in] robotName: The robot's name.
    */
   MPC_Interface(
       mpc_t& mpc,
@@ -98,20 +99,37 @@ public:
   virtual void reset();
 
   /**
-   *
-   * @param [in] currentObservation The new observation
+   * Set the new observation to be considered during the next MPC iteration.
+   * It is safe to set a new value while the MPC optimization is running
+   * @param [in] currentObservation the new observation
    */
   void setCurrentObservation(const system_observation_t& currentObservation);
 
+  /**
+   * Set new target trajectories to be tracked.
+   * It is safe to set a new value while the MPC optimization is running
+   * @param targetTrajectories
+   */
   void setTargetTrajectories(const cost_desired_trajectories_t& targetTrajectories);
 
+  /**
+   * Set a new mode sequence template
+   * It is safe to set a new value while the MPC optimization is running
+   * @param modeSequenceTemplate
+   */
   void setModeSequence(const mode_sequence_template_t& modeSequenceTemplate);
 
+  /**
+   * Advance the mpc module for one iteration.
+   * The evaluation methods can be called while this method is running.
+   * They will evaluate the last computed control law
+   */
   void advanceMpc();
 
   /**
- * Whether the initial MPC policy has been already received.
- */
+   * Call this before calling the evaluation methods.
+   * @return true if there is a policy to evaluated
+   */
   bool policyReceived() const { return !initialCall_;};;
 
   /**
@@ -232,8 +250,6 @@ protected:
  */
   void partitioningTimesUpdate(
       scalar_array_t& partitioningTimes) const;
-
-
 };
 
 } // namespace ocs2

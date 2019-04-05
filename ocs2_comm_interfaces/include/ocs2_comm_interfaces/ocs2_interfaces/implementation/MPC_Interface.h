@@ -67,33 +67,27 @@ template<size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
 void
 MPC_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::setTargetTrajectories(
     const cost_desired_trajectories_t& targetTrajectories) {
-
-  if (desiredTrajectoriesUpdated_ == false) {
-    costDesiredTrajectories_ = targetTrajectories;
-    desiredTrajectoriesUpdated_ = true;
-  }
+  std::lock_guard<std::mutex> lock(desiredTrajectoryMutex_);
+  costDesiredTrajectories_ = targetTrajectories;
+  desiredTrajectoriesUpdated_ = true;
 }
 
 template<size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
 void
 MPC_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::setCurrentObservation(
     const system_observation_t& currentObservation){
-
-  if (observationUpdated_ == false) {
-    currentObservation_ = currentObservation;
-    observationUpdated_ = true;
-  }
+  std::lock_guard<std::mutex> lock(observationMutex_);
+  currentObservation_ = currentObservation;
+  observationUpdated_ = true;
 }
 
 template<size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
 void
 MPC_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::setModeSequence(
     const mode_sequence_template_t& modeSequenceTemplate) {
-
-  if (modeSequenceUpdated_ == false) {
-    modeSequenceTemplate_ = modeSequenceTemplate;
-    modeSequenceUpdated_ = true;
-  }
+  std::lock_guard<std::mutex> lock(modeSequenceMutex_);
+  modeSequenceTemplate_ = modeSequenceTemplate;
+  modeSequenceUpdated_ = true;
 }
 
 template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULSES_T>
@@ -115,12 +109,12 @@ MPC_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULSES_T>::advanceMpc(){
   // update the mode sequence
   if(modeSequenceUpdated_==true) {
 
-    // display
+    std::lock_guard<std::mutex> lock(modeSequenceMutex_);
+
     std::cerr << "### The mode sequence is updated at time "
               << std::setprecision(4) << currentObservation_.time() << " as " << std::endl;
     modeSequenceTemplate_.display();
 
-    // set CostDesiredTrajectories
     mpcPtr_->setNewLogicRulesTemplate(modeSequenceTemplate_);
 
     modeSequenceUpdated_ = false;
@@ -131,7 +125,7 @@ MPC_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULSES_T>::advanceMpc(){
 
   // update the desired trajectories
   if(desiredTrajectoriesUpdated_==true) {
-
+    std::lock_guard<std::mutex> lock(desiredTrajectoryMutex_);
     // display
     if (mpcSettings_.debugPrint_) {
       std::cerr << "### The target position is updated at time "
@@ -148,12 +142,15 @@ MPC_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULSES_T>::advanceMpc(){
     return;
   }
 
-  // run SLQ-MPC
-  bool controllerIsUpdated = mpcPtr_->run(
-      currentObservation_.time(),
-      currentObservation_.state());
-  //allow for new observations:
-  observationUpdated_ = false;
+  {
+    std::lock_guard<std::mutex> lock(observationMutex_);
+    // run SLQ-MPC
+    bool controllerIsUpdated = mpcPtr_->run(
+        currentObservation_.time(),
+        currentObservation_.state());
+    //allow for new observations:
+    observationUpdated_ = false;
+  }
 
 
   const controller_array_t* controllersPtr(nullptr);
@@ -174,7 +171,6 @@ MPC_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULSES_T>::advanceMpc(){
 
 
   //TODO: Is this necessary? Has the trajectory been modified by the solver?
-  // get a pointer to CostDesiredTrajectories
   mpcPtr_->getCostDesiredTrajectoriesPtr(solverCostDesiredTrajectoriesPtr);
 
   // get a pointer to event times and motion sequence
@@ -240,7 +236,6 @@ MPC_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULSES_T>::advanceMpc(){
     std::cerr << "### Average duration of MPC optimization is: " << meanDelay_ << " [ms]." << std::endl;
     std::cerr << "### Maximum duration of MPC optimization is: " << maxDelay_ << " [ms]." << std::endl;
   }
-  // set the initialCall flag to false
   if (initialCall_==true)
     initialCall_ = false;
 }
@@ -259,7 +254,6 @@ bool MPC_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::updatePolicy() {
 
   mpcCostDesiredTrajectories_.swap(mpcSolverCostDesiredTrajectoriesBuffer_);
 
-  //TODO: How expensive are these checks? Does it make sense to do that or is it better to update the logic machine in any case
   if (subsystemsSequence_ != mpcSubsystemsSequenceBuffer_) {
     subsystemsSequence_.swap(mpcSubsystemsSequenceBuffer_);
     logicUpdated_ = true;
@@ -371,7 +365,7 @@ void MPC_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::evaluateFeedbackPolicy(
 template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
 void MPC_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::partitioningTimesUpdate(
     scalar_array_t& partitioningTimes) const {
-
+  //TODO: Is this correct?
   partitioningTimes.resize(2);
   partitioningTimes[0] = currentObservation_.time();
   partitioningTimes[1] = std::numeric_limits<scalar_t>::max();

@@ -97,6 +97,10 @@ public:
    */
   virtual void reset();
 
+  /**
+   *
+   * @param [in] currentObservation The new observation
+   */
   void setCurrentObservation(const system_observation_t& currentObservation);
 
   void setTargetTrajectories(const cost_desired_trajectories_t& targetTrajectories);
@@ -167,8 +171,11 @@ protected:
 
   bool initialCall_ = false;
 
+  std::mutex observationMutex_;
   std::atomic<bool> observationUpdated_;
+  std::mutex desiredTrajectoryMutex_;
   std::atomic<bool> desiredTrajectoriesUpdated_;
+  std::mutex modeSequenceMutex_;
   std::atomic<bool> modeSequenceUpdated_;
 
   //MPC inputs

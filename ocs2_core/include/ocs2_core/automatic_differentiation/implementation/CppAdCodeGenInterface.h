@@ -188,11 +188,11 @@ void CppAdCodeGenInterface<DOMAIN_DIM, RANGE_DIM, SCALAR_T, VARIABLE_DIM>::creat
 	if (libraryFolder.empty()==false)
 		CppAD::cg::system::createFolder(libraryFolder);
 
-  if (libraryFolder.empty()==false) {
-    CppAD::cg::system::createFolder(libraryFolder + "/" + modelName + "_sources");
-  } else {
-    CppAD::cg::system::createFolder(modelName + "_sources");
-  }
+	if (libraryFolder.empty()==false) {
+		CppAD::cg::system::createFolder(libraryFolder + "/" + modelName + "_sources");
+	} else {
+		CppAD::cg::system::createFolder(modelName + "_sources");
+	}
 
     //***************************************************************************
     //                               the model

@@ -58,7 +58,8 @@ namespace ocs2 {
         penaltySecondDerivativeState.setZero();
         for (size_t i = 0; i < numInequalityConstraints; i++) {
             penaltySecondDerivativeState.noalias() += getPenaltyFunctionDerivative(h[i]) * ddhdxdx[i];
-            penaltySecondDerivativeState.noalias() += getPenaltyFunctionHessian(h[i]) * dhdx[i] * dhdx[i].transpose();
+            penaltySecondDerivativeState.noalias() +=
+                getPenaltyFunctionSecondDerivative(h[i]) * dhdx[i] * dhdx[i].transpose();
         }
     };
 
@@ -74,7 +75,8 @@ namespace ocs2 {
     	penaltySecondDerivativeInput.setZero();
     	for (size_t i = 0; i < numInequalityConstraints; i++) {
             penaltySecondDerivativeInput.noalias() += getPenaltyFunctionDerivative(h[i]) * ddhdudu[i];
-            penaltySecondDerivativeInput.noalias() += getPenaltyFunctionHessian(h[i]) * dhdu[i] * dhdu[i].transpose();
+            penaltySecondDerivativeInput.noalias() +=
+                getPenaltyFunctionSecondDerivative(h[i]) * dhdu[i] * dhdu[i].transpose();
         }
     };
 
@@ -91,7 +93,8 @@ namespace ocs2 {
         penaltyDerivativeInputState.setZero();
         for (size_t i = 0; i < numInequalityConstraints; i++) {
             penaltyDerivativeInputState.noalias() += getPenaltyFunctionDerivative(h[i]) * ddhdudx[i];
-            penaltyDerivativeInputState.noalias() += getPenaltyFunctionHessian(h[i]) * dhdu[i] * dhdx[i].transpose();
+            penaltyDerivativeInputState.noalias() +=
+                getPenaltyFunctionSecondDerivative(h[i]) * dhdu[i] * dhdx[i].transpose();
         }
     };
 

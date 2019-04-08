@@ -38,12 +38,6 @@ class RelaxedBarrierPenalty final : public PenaltyBase<STATE_DIM, INPUT_DIM> {
   scalar_t mu_;
   scalar_t delta_;
 
-  /**
-  * Compute the penalty value at a certain constraint value.
-  *
-  * @param [in] h: Constraint value.
-  * @return penalty cost.
-  */
   virtual scalar_t getPenaltyFunctionValue(scalar_t h) const override {
     if (h > delta_) {
       return -mu_ * log(h);
@@ -52,12 +46,6 @@ class RelaxedBarrierPenalty final : public PenaltyBase<STATE_DIM, INPUT_DIM> {
     };
   };
 
-  /**
-  * Compute the penalty derivative at a certain constraint value.
-  *
-  * @param [in] h: Constraint value.
-  * @return penalty derivative with respect to constraint value.
-  */
   virtual scalar_t getPenaltyFunctionDerivative(scalar_t h) const override {
     if (h > delta_) {
       return -mu_ / h;
@@ -66,13 +54,7 @@ class RelaxedBarrierPenalty final : public PenaltyBase<STATE_DIM, INPUT_DIM> {
     };
   };
 
-  /**
-  * Compute the penalty second derivative at a certain constraint value.
-  *
-  * @param [in] h: Constraint value.
-  * @return penalty second derivative with respect to constraint value.
-  */
-  virtual scalar_t getPenaltyFunctionHessian(scalar_t h) const override {
+  virtual scalar_t getPenaltyFunctionSecondDerivative(scalar_t h) const override {
     if (h > delta_) {
       return mu_ / (h * h);
     } else {

@@ -153,7 +153,7 @@ class PenaltyBase {
   * @param [in] h: Constraint value.
   * @return penalty second derivative with respect to constraint value.
   */
-  virtual scalar_t getPenaltyFunctionHessian(scalar_t h) const = 0;
+  virtual scalar_t getPenaltyFunctionSecondDerivative(scalar_t h) const = 0;
 };
 }
 

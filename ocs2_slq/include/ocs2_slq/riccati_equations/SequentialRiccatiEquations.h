@@ -280,7 +280,7 @@ public:
 		Qv_.noalias() -= Lm_transposeRm_*Lv_;
 
 		// dsdt,   q_ used instead of temporary
-		q_.noalias() -= 0.5*alpha_*(2.0-alpha_)* *Lv_.transpose()*Rm_ * Lv_;
+		q_.noalias() -= 0.5*alpha_*(2.0-alpha_)* Lv_.transpose()*Rm_ * Lv_;
 
 		convert2Vector(Qm_, Qv_, q_, derivatives);
 	}

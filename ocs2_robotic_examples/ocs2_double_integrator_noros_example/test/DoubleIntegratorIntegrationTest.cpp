@@ -2,7 +2,7 @@
 // Created by johannes on 01.04.19.
 //
 #include <gtest/gtest.h>
-#include "ocs2_double_integrator_example/DoubleIntegratorInterface.h"
+#include "ocs2_double_integrator_noros_example/DoubleIntegratorInterface.h"
 #include "ocs2_comm_interfaces/ocs2_interfaces/MPC_Interface.h"
 #include "ocs2_core/logic/rules/NullLogicRules.h"
 #include <cmath>

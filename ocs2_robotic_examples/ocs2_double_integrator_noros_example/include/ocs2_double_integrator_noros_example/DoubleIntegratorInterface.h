@@ -44,10 +44,10 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_robotic_tools/common/RobotInterfaceBase.h>
 
 // Double Integrator
-#include "ocs2_double_integrator_example/definitions.h"
-#include "ocs2_double_integrator_example/dynamics/DoubleIntegratorDynamics.h"
-#include "ocs2_double_integrator_example/dynamics/DoubleIntegratorDynamicsDerivatives.h"
-#include "ocs2_double_integrator_example/cost/DoubleIntegratorCost.h"
+#include "ocs2_double_integrator_noros_example/definitions.h"
+#include "ocs2_double_integrator_noros_example/dynamics/DoubleIntegratorDynamics.h"
+#include "ocs2_double_integrator_noros_example/dynamics/DoubleIntegratorDynamicsDerivatives.h"
+#include "ocs2_double_integrator_noros_example/cost/DoubleIntegratorCost.h"
 
 namespace ocs2 {
 namespace double_integrator {

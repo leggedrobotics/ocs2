@@ -28,7 +28,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  ******************************************************************************/
 
 
-#include "ocs2_double_integrator_example/DoubleIntegratorInterface.h"
+#include "ocs2_double_integrator_noros_example/DoubleIntegratorInterface.h"
 #include "ocs2_comm_interfaces/ocs2_interfaces/MPC_Interface.h"
 #include "ocs2_core/logic/rules/NullLogicRules.h"
 

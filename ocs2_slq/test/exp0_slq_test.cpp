@@ -68,7 +68,7 @@ TEST(exp0_slq_test, exp0_slq_test)
 	/******************************************************************************************************/
 	/******************************************************************************************************/
 	SLQ_Settings slqSettings;
-	slqSettings.displayInfo_ = false;
+	slqSettings.displayInfo_ = true;
 	slqSettings.displayShortSummary_ = true;
 	slqSettings.absTolODE_ = 1e-10;
 	slqSettings.relTolODE_ = 1e-7;
@@ -119,21 +119,21 @@ TEST(exp0_slq_test, exp0_slq_test)
 	// run multi-core SLQ
 	if (slqSettings.displayInfo_ || slqSettings.displayShortSummary_)
 		std::cerr << "\n>>> multi-core SLQ" << std::endl;
-	slq_mp.run(startTime, initState, finalTime, partitioningTimes);
+//	slq_mp.run(startTime, initState, finalTime, partitioningTimes);
 
 	/******************************************************************************************************/
 	/******************************************************************************************************/
 	/******************************************************************************************************/
 	// get controller
 	SLQ_BASE<STATE_DIM, INPUT_DIM, EXP0_LogicRules>::controller_array_t controllersStock = slq.getController();
-	SLQ_BASE<STATE_DIM, INPUT_DIM, EXP0_LogicRules>::controller_array_t controllersStock_mp = slq_mp.getController();
+//	SLQ_BASE<STATE_DIM, INPUT_DIM, EXP0_LogicRules>::controller_array_t controllersStock_mp = slq_mp.getController();
 
 	// get performance indices
 	double totalCost, totalCost_mp;
 	double constraint1ISE, constraint1ISE_mp;
 	double constraint2ISE, constraint2ISE_mp;
 	slq.getPerformanceIndeces(totalCost, constraint1ISE, constraint2ISE);
-	slq_mp.getPerformanceIndeces(totalCost_mp, constraint1ISE_mp, constraint2ISE_mp);
+//	slq_mp.getPerformanceIndeces(totalCost_mp, constraint1ISE_mp, constraint2ISE_mp);
 
 	/******************************************************************************************************/
 	/******************************************************************************************************/

@@ -58,9 +58,6 @@ int main(int argc, char** argv) {
   std::cerr << "x_final:  " << xFinal.transpose() << std::endl;
   cost_t::Ptr cost(new cost_t(R, uNominal, V, r, Phi));
 
-  // constraint
-  solver_t::constraint_t constraint;
-
   dynamics_t::scalar_t initTime(0.0);
   dynamics_t::scalar_t finalTime(5.0);
   using cost_desired_trajectories_t = solver_t::cost_desired_trajectories_t;
@@ -70,16 +67,19 @@ int main(int argc, char** argv) {
   desiredStateArray[1] = xFinal;
   desiredInputArray[0].setZero(INPUT_DIM);
   desiredInputArray[1].setZero(INPUT_DIM);
-  constexpr double rollout_dt = 0.01;
-
   cost_desired_trajectories_t costDesiredTraj(desiredTimeArray, desiredStateArray, desiredInputArray);
+
+  // constraint
+  solver_t::constraint_t constraint;
+
+  constexpr double rollout_dt = 0.01;
 
   // MPC ROS Node
   // ocs2::double_integrator::DoubleIntegratorInterface doubleIntegratorInterface(argv[1]);
   ocs2::MPC_Settings mpcSettings;
   mpcSettings.loadSettings(taskFile);
   ocs2::MPC_PI<STATE_DIM, INPUT_DIM> mpc_pi(dynamics, cost, constraint, rollout_dt, mpcSettings);
-  //  mpc_pi.setCostDesiredTrajectories(costDesiredTraj);
+  mpc_pi.setCostDesiredTrajectories(costDesiredTraj);
   ocs2::double_integrator::MPC_ROS_Linear_System mpcNode(mpc_pi, "double_integrator");
 
   mpcNode.launchNodes(argc, argv);

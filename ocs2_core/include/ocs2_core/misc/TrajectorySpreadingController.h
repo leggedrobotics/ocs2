@@ -36,6 +36,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "ocs2_core/Dimensions.h"
 #include "ocs2_core/OCS2NumericTraits.h"
+#include "ocs2_core/control/LinearController.h"
 
 namespace ocs2 {
 
@@ -62,8 +63,8 @@ public:
 	typedef typename DIMENSIONS::input_matrix_t         input_matrix_t;
 	typedef typename DIMENSIONS::input_state_matrix_t   input_state_matrix_t;
 	typedef typename DIMENSIONS::state_input_matrix_t   state_input_matrix_t;
-	typedef typename DIMENSIONS::controller_t           controller_t;
-	typedef typename DIMENSIONS::controller_array_t     controller_array_t;
+
+	using controller_array_t = std::vector<LinearController<STATE_DIM, INPUT_DIM>*>;
 
 	typedef std::pair<int,int> index_t;  // (partition, index)
 

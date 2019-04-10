@@ -172,7 +172,7 @@ class ControlledSystemBase : public ODE_Base<STATE_DIM> {
     BASE::computeGuardSurfaces(time, state, guardSurfacesValue);
   }
 
- protected:
+ public:
   controller_t* controller_;  //! pointer to controller
 };
 

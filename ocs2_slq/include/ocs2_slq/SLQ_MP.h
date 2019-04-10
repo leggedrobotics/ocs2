@@ -58,8 +58,6 @@ public:
 	typedef typename BASE::DIMENSIONS DIMENSIONS;
 
 	typedef typename DIMENSIONS::template LinearFunction_t<Eigen::Dynamic> lagrange_t;
-	typedef typename DIMENSIONS::controller_t controller_t;
-	typedef typename DIMENSIONS::controller_array_t controller_array_t;
 	typedef typename DIMENSIONS::size_array_t size_array_t;
 	typedef typename DIMENSIONS::scalar_t scalar_t;
 	typedef typename DIMENSIONS::scalar_array_t scalar_array_t;
@@ -109,6 +107,11 @@ public:
 	typedef typename BASE::constraint_base_t			 constraint_base_t;
 	typedef typename BASE::cost_function_base_t			 cost_function_base_t;
 	typedef typename BASE::operating_trajectories_base_t operating_trajectories_base_t;
+
+    typedef typename BASE::controller_ptr_array_t    controller_ptr_array_t;
+    typedef typename BASE::linear_controller_t       linear_controller_t;
+    typedef typename BASE::linear_controller_array_t linear_controller_array_t;
+
 
 	/**
 	 * worker state enum

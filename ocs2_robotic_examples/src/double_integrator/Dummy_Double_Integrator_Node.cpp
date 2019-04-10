@@ -49,9 +49,7 @@ int main(int argc, char **argv)
 	typedef mrt_t::scalar_t scalar_t;
 	typedef mrt_t::system_observation_t system_observation_t;
 
-	mrt_base_ptr_t mrtPtr(new mrt_t(
-			!double_integratorInterface.mpcSettings().useFeedbackPolicy_,
-			"double_integrator"));
+	mrt_base_ptr_t mrtPtr(new mrt_t("double_integrator"));
 
 	// Dummy double_integrator
 	MRT_ROS_Dummy_Linear_System dummyDoubleIntegrator(

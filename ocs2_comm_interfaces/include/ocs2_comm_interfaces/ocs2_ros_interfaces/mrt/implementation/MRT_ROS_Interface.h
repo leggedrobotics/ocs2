@@ -27,6 +27,9 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
+#include <ocs2_core/control/LinearController.h>
+#include <ocs2_core/control/PiController.h>
+
 namespace ocs2 {
 
 /******************************************************************************************************/
@@ -35,11 +38,8 @@ namespace ocs2 {
 template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
 MRT_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::MRT_ROS_Interface(
 		const LOGIC_RULES_T& logicRules,
-		const bool& useFeedforwardPolicy /*= true*/,
 		const std::string& robotName /*= "robot"*/)
-
 	: logicMachinePtr_(new logic_machine_t(logicRules))
-	, useFeedforwardPolicy_(useFeedforwardPolicy)
 	, robotName_(robotName)
 {
 	// reset variables
@@ -66,12 +66,9 @@ MRT_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::~MRT_ROS_Interface() {
 template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
 void MRT_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::set(
 		const LOGIC_RULES_T& logicRules,
-		const bool& useFeedforwardPolicy /*= true*/,
 		const std::string& robotName /*= "robot"*/) {
 
 	logicMachinePtr_ = logic_machine_ptr_t(new logic_machine_t(logicRules));
-
-	useFeedforwardPolicy_ = useFeedforwardPolicy;
 
 	robotName_ = robotName;
 
@@ -112,9 +109,6 @@ void MRT_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::reset() {
 	readyToPublish_  = false;
 
 	mpcLinInterpolateState_.setZero();
-	mpcLinInterpolateInput_.setZero();
-	mpcLinInterpolateUff_.setZero();
-	mpcLinInterpolateK_.setZero();
 
 	eventTimes_.clear();
 	eventTimesBuffer_.clear();
@@ -233,8 +227,8 @@ void MRT_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::publisherWorkerThre
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void MRT_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::mpcFeedforwardPolicyCallback (
-		const ocs2_comm_interfaces::mpc_feedforward_policy::ConstPtr& msg) {
+void MRT_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::mpcPolicyCallback (
+		const ocs2_comm_interfaces::mpc_flattened_controller::ConstPtr& msg) {
 
 //	std::cout << "\t Plan is recieved at time: " << msg->initObservation.time << std::endl;
 
@@ -261,8 +255,6 @@ void MRT_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::mpcFeedforwardPolic
 	mpcTimeTrajectoryBuffer_.reserve(N);
 	mpcStateTrajectoryBuffer_.clear();
 	mpcStateTrajectoryBuffer_.reserve(N);
-	mpcInputTrajectoryBuffer_.clear();
-	mpcInputTrajectoryBuffer_.reserve(N);
 
 	for (size_t i=0; i<N; i++) {
 		// time
@@ -270,14 +262,41 @@ void MRT_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::mpcFeedforwardPolic
 		// state
 		mpcStateTrajectoryBuffer_.push_back( Eigen::Map<const Eigen::Matrix<float,STATE_DIM,1>>(
 				msg->stateTrajectory[i].value.data(), STATE_DIM).template cast<scalar_t>() );
-		// input
-		mpcInputTrajectoryBuffer_.push_back( Eigen::Map<const Eigen::Matrix<float,INPUT_DIM,1>>(
-				msg->inputTrajectory[i].value.data(), INPUT_DIM).template cast<scalar_t>() );
 	} // end of i loop
 
+    std::vector<scalar_array_t const *> controllerData(N, nullptr);
+    if(msg->data.size() != N){
+        throw std::runtime_error("Data has the wrong length");
+    }
+    for(int i=0; i<N; i++){
+        controllerData[i] = &(msg->data[i].data);
+    }
+
+    switch (msg->controllerType) {
+    case ocs2_comm_interfaces::mpc_flattened_controller::CONTROLLER_SLQ_FEEDFORWARD:
+    {
+        mpcControllerBuffer_.reset(); // no additional controller needed in this case
+        break;
+    }
+    case ocs2_comm_interfaces::mpc_flattened_controller::CONTROLLER_SLQ_FEEDBACK:
+    {
+        mpcControllerBuffer_ = std::make_unique<LinearController<STATE_DIM, INPUT_DIM>>();
+        mpcControllerBuffer_->unFlatten(mpcTimeTrajectoryBuffer_, controllerData);
+    }
+    case ocs2_comm_interfaces::mpc_flattened_controller::CONTROLLER_PATH_INTEGRAL:
+    {
+        //TODO(jcarius) instantiate PiController here
+        // mpcControllerBuffer_ = std::make_unique<PiController<STATE_DIM, INPUT_DIM>(...);
+        throw std::runtime_error("not implemented");
+    }
+    default:
+        throw std::runtime_error("MRT_ROS_Interface::mpcPolicyCallback -- Unknown controllerType");
+    }
+
+
 	// customized adjustment
-	modifyBufferFeedforwardPolicy(mpcInitObservationBuffer_,
-			mpcTimeTrajectoryBuffer_, mpcStateTrajectoryBuffer_, mpcInputTrajectoryBuffer_,
+	modifyBufferPolicy(mpcInitObservationBuffer_, mpcControllerBuffer_.get(),
+			mpcTimeTrajectoryBuffer_, mpcStateTrajectoryBuffer_,
 			eventTimesBuffer_, subsystemsSequenceBuffer_);
 
 	if (policyReceivedEver_==false && policyUpdatedBuffer_==true) {
@@ -291,75 +310,6 @@ void MRT_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::mpcFeedforwardPolic
 	// It is important that the buffer message's hash get updated at the very last
 	// since it will signal the updatePolicy method to swap buffer.
 	// Although data is protected from racing however it will cause unnecessary delay
-	messageHashBuffer_ = messageHashValue(mpcInitObservationBuffer_);
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void MRT_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::mpcFeedbackPolicyCallback (
-		const ocs2_comm_interfaces::mpc_feedback_policy::ConstPtr& msg) {
-
-//	std::cout << "\t Plan is received at time: " << msg->initObservation.time << std::endl;
-
-	std::unique_lock<std::mutex> lk(subscriberMutex_);
-
-	ros_msg_conversions_t::ReadObservationMsg(msg->initObservation,
-			mpcInitObservationBuffer_);
-
-	ros_msg_conversions_t::ReadTargetTrajectoriesMsg(msg->planTargetTrajectories,
-			mpcCostDesiredTrajectoriesBuffer_);
-
-	policyUpdatedBuffer_ = msg->controllerIsUpdated;
-
-	ros_msg_conversions_t::ReadModeSequenceMsg(msg->modeSequence,
-			eventTimesBuffer_, subsystemsSequenceBuffer_);
-
-	// time partitioning
-//	partitioningTimesBuffer_ = scalar_array_t {
-//		msg->slqControllerTrajectory.front().timeStamp, msg->slqControllerTrajectory.back().timeStamp};
-	partitioningTimesUpdate(msg->slqControllerTrajectory.front().timeStamp, partitioningTimesBuffer_);
-
-	const size_t N = msg->slqControllerTrajectory.size();
-	mpcControllerBuffer_.clear();
-	mpcControllerBuffer_.time_.reserve(N);
-	mpcControllerBuffer_.uff_.reserve(N);
-	mpcControllerBuffer_.k_.reserve(N);
-
-	input_vector_t uffTemp;
-	input_state_matrix_t kTemp;
-	for (size_t i=0; i<N; i++){
-
-		uffTemp = Eigen::Map<const Eigen::Matrix<float,INPUT_DIM,1>>(
-				msg->slqControllerTrajectory[i].uff.value.data(), INPUT_DIM).template cast<scalar_t>();
-
-		// covert from array to Eigen types
-		for(size_t p=0; p<INPUT_DIM; p++)
-			for(size_t q=0; q<STATE_DIM; q++)
-				kTemp(p,q) = msg->slqControllerTrajectory[i].gainMatrix[p*STATE_DIM + q];
-
-		mpcControllerBuffer_.time_.push_back(msg->slqControllerTrajectory[i].timeStamp);
-		mpcControllerBuffer_.uff_.push_back(uffTemp);
-		mpcControllerBuffer_.k_.push_back(kTemp);
-	}  //end i loop
-
-	// customized adjustment
-	modifyBufferFeedbackPolicy(mpcInitObservationBuffer_,
-			mpcControllerBuffer_,
-			eventTimesBuffer_, subsystemsSequenceBuffer_);
-
-	if (policyReceivedEver_==false && policyUpdatedBuffer_==true) {
-		policyReceivedEver_ = true;
-		initPlanObservation_ = mpcInitObservationBuffer_;
-		initCall(initPlanObservation_);
-	}
-
-	lk.unlock();
-
-	// It is important that the buffer message hash get updated the very last
-	// since it will signal the updatePolicy method to swap buffer.
-	// Although data is protected from racing however it will cause necessary delay
 	messageHashBuffer_ = messageHashValue(mpcInitObservationBuffer_);
 }
 
@@ -416,38 +366,19 @@ bool MRT_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::updatePolicy() {
 				logicMachinePtr_->getHandleToFindActiveEventCounter(partitionIndex) );
 	}
 
-	if (useFeedforwardPolicy_==true) {
 		mpcTimeTrajectory_.swap(mpcTimeTrajectoryBuffer_);
 		mpcStateTrajectory_.swap(mpcStateTrajectoryBuffer_);
-		mpcInputTrajectory_.swap(mpcInputTrajectoryBuffer_);
 
 		mpcLinInterpolateState_.reset();
 		mpcLinInterpolateState_.setTimeStamp(&mpcTimeTrajectory_);
 		mpcLinInterpolateState_.setData(&mpcStateTrajectory_);
 
-		mpcLinInterpolateInput_.reset();
-		mpcLinInterpolateInput_.setTimeStamp(&mpcTimeTrajectory_);
-		mpcLinInterpolateInput_.setData(&mpcInputTrajectory_);
+        mpcController_.swap(mpcControllerBuffer_);
 
-		loadModifiedFeedforwardPolicy(logicUpdated_, policyUpdated_,
-					mpcTimeTrajectory_, mpcStateTrajectory_, mpcInputTrajectory_,
+		loadModifiedPolicy(logicUpdated_, policyUpdated_, *(mpcController_.get()),
+					mpcTimeTrajectory_, mpcStateTrajectory_,
 					eventTimes_, subsystemsSequence_);
 
-	} else {
-		mpcController_.swap(mpcControllerBuffer_);
-
-		mpcLinInterpolateUff_.reset();
-		mpcLinInterpolateUff_.setTimeStamp(&mpcController_.time_);
-		mpcLinInterpolateUff_.setData(&mpcController_.uff_);
-
-		mpcLinInterpolateK_.reset();
-		mpcLinInterpolateK_.setTimeStamp(&mpcController_.time_);
-		mpcLinInterpolateK_.setData(&mpcController_.k_);
-
-		loadModifiedFeedbackPolicy(logicUpdated_, policyUpdated_,
-					mpcController_,
-					eventTimes_, subsystemsSequence_);
-	}
 
 	lk.unlock();
 
@@ -477,51 +408,21 @@ const typename MRT_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::cost_desi
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void MRT_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::evaluateFeedforwardPolicy(
+void MRT_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::evaluatePlan(
 		const scalar_t& time,
 		state_vector_t& mpcState,
-		input_vector_t& mpcInput,
 		size_t& subsystem) {
-
-	if (useFeedforwardPolicy_==false)
-		throw std::runtime_error("The MRT is set to receive the feedforward policy.");
 
 	if (time > mpcTimeTrajectory_.back())
 		ROS_WARN_STREAM("The requested time is greater than the received plan: "
 				+ std::to_string(time) + ">" + std::to_string(mpcTimeTrajectory_.back()));
 
 	mpcLinInterpolateState_.interpolate(time, mpcState);
-	int greatestLessTimeStampIndex = mpcLinInterpolateState_.getGreatestLessTimeStampIndex();
-	mpcLinInterpolateInput_.interpolate(time, mpcInput, greatestLessTimeStampIndex);
 
 	size_t index = findActiveSubsystemFnc_(time);
 	subsystem = logicMachinePtr_->getLogicRulesPtr()->subsystemsSequence().at(index);
 }
 
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void MRT_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::evaluateFeedbackPolicy(
-		const scalar_t& time,
-		input_vector_t& mpcUff,
-		input_state_matrix_t& mpcGain,
-		size_t& subsystem) {
-
-	if (useFeedforwardPolicy_==true)
-		throw std::runtime_error("The MRT is set to receive the feedback policy.");
-
-	if (time > mpcController_.time_.back())
-		ROS_WARN_STREAM("The requested time is greater than the received plan: "
-				+ std::to_string(time) + ">" + std::to_string(mpcController_.time_.back()));
-
-	mpcLinInterpolateUff_.interpolate(time, mpcUff);
-	int greatestLessTimeStampIndex = mpcLinInterpolateUff_.getGreatestLessTimeStampIndex();
-	mpcLinInterpolateK_.interpolate(time, mpcGain, greatestLessTimeStampIndex);
-
-	size_t index = findActiveSubsystemFnc_(time);
-	subsystem = logicMachinePtr_->getLogicRulesPtr()->subsystemsSequence().at(index);
-}
 
 /******************************************************************************************************/
 /******************************************************************************************************/
@@ -546,8 +447,7 @@ void MRT_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::shutdownNodes() {
 
 	// Clean up Callback queue
 	mrtCallbackQueue_.clear();
-	mpcFeedforwardPolicySubscriber_.shutdown();
-	mpcFeedbackPolicySubscriber_.shutdown();
+	mpcPolicySubscriber_.shutdown();
 
 	// shutdown publishers
 	dummyPublisher_.shutdown();
@@ -586,19 +486,12 @@ void MRT_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::launchNodes(int arg
 			robotName_+"_mpc_observation", 1);
 
 	// SLQ-MPC subscriber
-	if (useFeedforwardPolicy_==true) {
-		mpcFeedforwardPolicySubscriber_ = mrtRosNodeHandlePtr_->subscribe(
-				robotName_+"_mpc_ff_policy",
+
+		mpcPolicySubscriber_ = mrtRosNodeHandlePtr_->subscribe(
+				robotName_+"_mpc_policy",
 				1,
-				&MRT_ROS_Interface::mpcFeedforwardPolicyCallback,
+				&MRT_ROS_Interface::mpcPolicyCallback,
 				this, ::ros::TransportHints().udp());
-	} else {
-		mpcFeedbackPolicySubscriber_   = mrtRosNodeHandlePtr_->subscribe(
-				robotName_+"_mpc_fb_policy",
-				1,
-				&MRT_ROS_Interface::mpcFeedbackPolicyCallback, this,
-				::ros::TransportHints().udp());
-	}
 
 	// dummy publisher
 	dummyPublisher_ = mrtRosNodeHandlePtr_->advertise<ocs2_comm_interfaces::dummy>("ping", 1, true);

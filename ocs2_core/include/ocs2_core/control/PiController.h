@@ -7,6 +7,7 @@
 #include <ocs2_core/cost/PathIntegralCostFunction.h>
 #include "ocs2_core/constraint/ConstraintBase.h"
 #include "ocs2_core/dynamics/ControlledSystemBase.h"
+#include "ocs2_core/misc/LinearInterpolation.h"
 
 namespace ocs2 {
 
@@ -26,18 +27,21 @@ class PiController : public Controller<STATE_DIM, INPUT_DIM> {
   using Base = Controller<STATE_DIM, INPUT_DIM>;
 
   using scalar_t = typename Base::scalar_t;
+  using scalar_array_t = typename Base::scalar_array_t;
   using dimensions_t = typename Base::dimensions_t;
   using state_vector_t = typename dimensions_t::state_vector_t;
+  using state_vector_array_t = typename dimensions_t::state_vector_array_t;
   using input_vector_t = typename dimensions_t::input_vector_t;
+  using input_vector_array_t = typename dimensions_t::input_vector_array_t;
   using input_matrix_t = typename dimensions_t::input_matrix_t;
 
   using logic_rules_t = NullLogicRules;
   using constraint_t = ConstraintBase<STATE_DIM, INPUT_DIM, logic_rules_t>;
   using cost_function_t = PathIntegralCostFunction<STATE_DIM, INPUT_DIM, logic_rules_t>;
 
-  /**
-   * Constructor.
-   */
+    /**
+     * Constructor with full options
+     */
   PiController(const constraint_t& constraints, const cost_function_t& costs, const scalar_t rollout_dt, const scalar_t noiseScaling)
       : constraints_(constraints),
         costs_(costs),
@@ -47,6 +51,9 @@ class PiController : public Controller<STATE_DIM, INPUT_DIM> {
     eigenRandomNormalNullaryExpr_ = [&](scalar_t) -> scalar_t {
       return standardNormalDistribution_(generator_);
     };  // dummy argument required by Eigen
+
+    linInterpolateXNominal_.setZero();
+    linInterpolateUff_.setZero();
   }
 
   /**
@@ -71,7 +78,7 @@ class PiController : public Controller<STATE_DIM, INPUT_DIM> {
 
     // extract cost terms
     costs_.setCurrentStateAndControl(t, x, input_vector_t::Zero());
-    V_ = costs_.getIntermediateCost();                    // must have set zero input before
+    costs_.getIntermediateCost(V_);                       // must have set zero input before
     costs_.getIntermediateCostSecondDerivativeInput(R_);  // TODO(jcarius) do we need a R *= 2; here?
     Rinv_ = R_.inverse();                                 // TODO(jcarius) better way to to this?
     costs_.getIntermediateCostDerivativeInput(r_);        // must have set zero input before
@@ -81,12 +88,98 @@ class PiController : public Controller<STATE_DIM, INPUT_DIM> {
     Dtilde_ = Ddagger_ * D;
 
     input_matrix_t QQt = gamma_ * (input_matrix_t::Identity() - Dtilde_) * Rinv_;
-    input_matrix_t Q = QQt.llt().matrixL();
+    input_matrix_t Q;
+    if (!QQt.isZero()) {
+      Q = QQt.llt().matrixL();
+    } else {
+      Q.setZero();
+    }
 
-    input_vector_t constraintInput = (input_matrix_t::Identity() - Dtilde_) * Rinv_ * r_ - Ddagger_ * c_;
+    input_vector_t constraintInput = -(input_matrix_t::Identity() - Dtilde_) * Rinv_ * r_ - Ddagger_ * c_;
     noiseInput_ = Q / std::sqrt(rollout_dt_) * input_vector_t::NullaryExpr(eigenRandomNormalNullaryExpr_);
 
-    return constraintInput + noiseInput_;
+    input_vector_t uff;
+    linInterpolateUff_.interpolate(t, uff);
+
+    return constraintInput + noiseInput_ + uff;
+  }
+
+
+  virtual void flatten(scalar_t time, scalar_array_t& flatArray) const override {
+      throw std::runtime_error("not implemented");
+
+//      flatArray.clear();
+//      flatArray.reserve(time_.size() * (1+STATE_DIM+INPUT_DIM));
+
+//      std::copy(time_.begin(), time_.end(), std::back_inserter(flatArray));
+
+//      for(const auto& x : xNominal_){
+//          for(size_t i=0; i<STATE_DIM; i++){
+//                flatArray.push_back(x(i));
+//          }
+//      }
+
+//      for(const auto& u: uff_){
+//          for(size_t i=0; i<INPUT_DIM; i++){
+//              flatArray.push_back(u(i));
+//          }
+//      }
+  }
+
+
+  virtual void unFlatten(const scalar_array_t& timeArray, const std::vector<scalar_array_t const *>& flatArray2) override {
+      throw std::runtime_error("not implemented");
+
+//      const auto size = flatArray.size() / (1+STATE_DIM+INPUT_DIM);
+
+//      time_.clear();
+//      time_.reserve(size);
+//      time_.assign(flatArray.begin(), flatArray.begin()+size);
+
+//      xNominal_.clear();
+//      xNominal_.reserve(size);
+//      for(size_t i=0; i<size; i++){
+//          xNominal_.emplace_back(state_vector_t(flatArray.data() + size + i * STATE_DIM));
+//      }
+
+//      uff_.clear();
+//      uff_.reserve(size);
+//      for(size_t i=0; i<size; i++){
+//          uff_.emplace_back(input_vector_t(flatArray.data() + size + size * STATE_DIM + i * INPUT_DIM));
+//      }
+
+//      linInterpolateXNominal_.setTimeStamp(&time_);
+//      linInterpolateXNominal_.setData(&xNominal_);
+//      linInterpolateUff_.setTimeStamp(&time_);
+//      linInterpolateUff_.setData(&uff_);
+  }
+
+  /**
+   * @brief setFeedforwardInputAndState: Assign
+   * @param[in] time Time trajectory
+   * @param[in] xNominal Nominal state trajectory
+   * @param[in] uff Feedforward input trajectory
+   */
+  void setFeedforwardInputAndState(const scalar_array_t& time, const state_vector_array_t& xNominal, const input_vector_array_t& uff){
+      if((time.size() != xNominal.size()) or (time.size() != uff.size())){
+          throw std::runtime_error("PiController::setFeedforwardInputAndState -- Sizes don't match.");
+      }
+      time_ = time;
+      xNominal_ = xNominal;
+      uff_ = uff;
+
+      linInterpolateXNominal_.setTimeStamp(&time_);
+      linInterpolateXNominal_.setData(&xNominal_);
+      linInterpolateUff_.setTimeStamp(&time_);
+      linInterpolateUff_.setData(&uff_);
+  }
+
+  /**
+   * @brief Swap data with other object
+   * @param other the object to be swapped with
+   */
+  virtual void swap(PiController<STATE_DIM,INPUT_DIM>& other) {
+      throw std::runtime_error("not implemented");
   }
 
  public:
@@ -100,17 +193,31 @@ class PiController : public Controller<STATE_DIM, INPUT_DIM> {
   input_matrix_t Dtilde_;
   input_vector_t noiseInput_;
 
+  scalar_t gamma_;  //! scaling of noise
+
+
  protected:
   constraint_t constraints_;
   cost_function_t costs_;
   scalar_t rollout_dt_;
-  scalar_t gamma_;  //! scaling of noise
+
+  scalar_array_t time_; //! time array for uff and xNominal
+  state_vector_array_t xNominal_; //! nominal state trajectory w/out noise
+  input_vector_array_t uff_; //! feedforward inputs
+  EigenLinearInterpolation<state_vector_t> linInterpolateXNominal_; //! interpolation of xNominal_
+  EigenLinearInterpolation<input_vector_t> linInterpolateUff_; //! interpolation of uff_
+
 
   // random number generator
-  // TODO(jcarius) thready safety of these objects??
+  // TODO(jcarius) thread safety of these objects??
   std::default_random_engine generator_;
   std::normal_distribution<scalar_t> standardNormalDistribution_;
   std::function<scalar_t(scalar_t)> eigenRandomNormalNullaryExpr_;
 };
+
+template <size_t STATE_DIM, size_t INPUT_DIM>
+void swap(PiController<STATE_DIM,INPUT_DIM>& a, PiController<STATE_DIM,INPUT_DIM>& b){
+    a.swap(b);
+}
 
 }  // namespace ocs2

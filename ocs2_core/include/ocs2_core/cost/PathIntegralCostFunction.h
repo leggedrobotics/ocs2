@@ -67,7 +67,7 @@ class PathIntegralCostFunction : public CostFunctionBase<STATE_DIM, INPUT_DIM, L
    * @param [out] L: The intermediate cost value.
    */
   virtual void getIntermediateCost(scalar_t& L) override {
-    L = 0.5 * (this->u_ - uNominalIntermediate_).dot(R_ * (this->u_ - uNominalIntermediate_)) + V_(this->x_) + r_(this->x_).dot(this->x_);
+    L = scalar_t(0.5) * (this->u_ - uNominalIntermediate_).dot(R_ * (this->u_ - uNominalIntermediate_)) + V_(this->x_) + r_(this->x_).dot(this->u_);
   }
 
   /**

@@ -22,7 +22,7 @@ class MPC_PI : public MPC_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> {
   typedef typename DIMENSIONS::state_vector_t state_vector_t;
   typedef typename DIMENSIONS::state_vector_array2_t state_vector_array2_t;
   typedef typename DIMENSIONS::input_vector_array2_t input_vector_array2_t;
-  typedef typename BASE::controller_array_t controller_array_t;
+  typedef typename BASE::controller_ptr_array_t controller_ptr_array_t;
 
   typedef Solver_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> solver_base_t;
   typedef PiSolver<STATE_DIM, INPUT_DIM> solver_t;
@@ -55,13 +55,12 @@ class MPC_PI : public MPC_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> {
                                    const std::vector<scalar_array_t>*& timeTrajectoriesStockPtr,
                                    const state_vector_array2_t*& stateTrajectoriesStockPtr,
                                    const input_vector_array2_t*& inputTrajectoriesStockPtr,
-                                   const controller_array_t*& controllerStockPtr) override {
+                                   const controller_ptr_array_t*& controllerStockPtr) override {
     scalar_array_t partitioningTimesDummy;
     piSolverPtr_->run(initTime, initState, finalTime, partitioningTimesDummy);
 
     piSolverPtr_->getNominalTrajectoriesPtr(timeTrajectoriesStockPtr, stateTrajectoriesStockPtr, inputTrajectoriesStockPtr);
-
-    controllerStockPtr = nullptr;  // TODO(jcarius) make controllerStockPtr empty policy
+    piSolverPtr_->getControllerPtr(controllerStockPtr);
   }
 
   /**
@@ -69,7 +68,7 @@ class MPC_PI : public MPC_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> {
    *
    * @return A pointer to the underlying solver used in the MPC
    */
-  virtual solver_base_t* getSolverPtr() override { return piSolverPtr_.get(); }  // TODO(jcarius) should this happen in the base class
+  virtual solver_base_t* getSolverPtr() override { return piSolverPtr_.get(); }  // TODO(jcarius) should this happen in the base class?
 
  protected:
   typename solver_t::Ptr piSolverPtr_;

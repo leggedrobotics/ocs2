@@ -270,7 +270,7 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::rolloutStateTriggeredTraject
 		const state_vector_t& initState,
 		const scalar_t& finalTime,
 		const scalar_array_t& partitioningTimes,
-		const controller_array_t& controllersStock,
+		const linear_controller_array_t& controllersStock,
 		std::vector<scalar_array_t>& timeTrajectoriesStock,
 		std::vector<size_array_t>& eventsPastTheEndIndecesStock,
 		state_vector_array2_t& stateTrajectoriesStock,
@@ -347,7 +347,7 @@ typename SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::scalar_t
 		const state_vector_t& initState,
 		const scalar_t& finalTime,
 		const scalar_array_t& partitioningTimes,
-		const controller_array_t& controllersStock,
+		linear_controller_array_t& controllersStock,
 		std::vector<scalar_array_t>& timeTrajectoriesStock,
 		std::vector<size_array_t>& eventsPastTheEndIndecesStock,
 		state_vector_array2_t& stateTrajectoriesStock,
@@ -390,7 +390,7 @@ typename SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::scalar_t
 		// if blockwiseMovingHorizon_ is not set, use the previous partition's controller for
 		// the first rollout of the partition. However for the very first run of the SLQ
 		// it will still use operating trajectories if an initial controller is not provided.
-		const controller_t* controllerPtrTemp = &controllersStock[i];
+		linear_controller_t * controllerPtrTemp = &controllersStock[i];
 		if (blockwiseMovingHorizon_==false)
 			if (controllerPtrTemp->empty()==true && i>0 && controllersStock[i-1].empty()==false)
 				controllerPtrTemp = &controllersStock[i-1];
@@ -399,13 +399,13 @@ typename SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::scalar_t
 		state_vector_t x0Temp;
 		if (controllerPtrTemp->empty()==false) {
 			x0Temp = dynamicsForwardRolloutPtrStock_[threadId]->run(
-					i, t0, x0, tf, *controllerPtrTemp, *logicRulesMachinePtr_,
+					i, t0, x0, tf, controllerPtrTemp, *logicRulesMachinePtr_,
 					timeTrajectoriesStock[i], eventsPastTheEndIndecesStock[i],
 					stateTrajectoriesStock[i], inputTrajectoriesStock[i]);
 
 		} else {
 			x0Temp = operatingTrajectoriesRolloutPtrStock_[threadId]->run(
-					i, t0, x0, tf, *controllerPtrTemp, *logicRulesMachinePtr_,
+					i, t0, x0, tf, controllerPtrTemp, *logicRulesMachinePtr_,
 					timeTrajectoriesStock[i], eventsPastTheEndIndecesStock[i],
 					stateTrajectoriesStock[i], inputTrajectoriesStock[i]);
 		}
@@ -454,7 +454,7 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::rolloutFinalState (
 		const state_vector_t& initState,
 		const scalar_t& finalTime,
 		const scalar_array_t& partitioningTimes,
-		const controller_array_t& controllersStock,
+		const linear_controller_array_t& controllersStock,
 		state_vector_t& finalState,
 		input_vector_t& finalInput,
 		size_t& finalActivePartition,
@@ -1446,7 +1446,7 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::lineSearchWorker(
 		scalar_t& lsTotalCost,
 		scalar_t& lsConstraint1ISE, scalar_t& lsConstraint1MaxNorm,
 		scalar_t& lsConstraint2ISE, scalar_t& lsConstraint2MaxNorm,
-		controller_array_t& lsControllersStock,
+		linear_controller_array_t& lsControllersStock,
 		std::vector<scalar_array_t>& lsTimeTrajectoriesStock,
 		std::vector<size_array_t>& lsEventsPastTheEndIndecesStock,
 		state_vector_array2_t& lsStateTrajectoriesStock,
@@ -2612,10 +2612,11 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::getIterationsLogPtr(
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-const typename SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::controller_array_t&
+const typename SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::controller_ptr_array_t&
 	SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::getController() const {
 
-	return nominalControllersStock_;
+    //updateNominalControllerPtrStock(); // cannot be done in const member
+	return nominalControllerPtrStock_;
 }
 
 /******************************************************************************************************/
@@ -2623,9 +2624,10 @@ const typename SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::controller_array_t
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
 void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::getControllerPtr(
-		const controller_array_t*& controllersStockPtr) const {
+		const controller_ptr_array_t*& controllersStockPtr) const {
 
-	controllersStockPtr = &nominalControllersStock_;
+    //updateNominalControllerPtrStock(); // cannot be done in const member
+	controllersStockPtr = &nominalControllerPtrStock_;
 }
 
 /******************************************************************************************************/
@@ -2633,9 +2635,13 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::getControllerPtr(
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
 void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::swapController(
-		controller_array_t& controllersStock) {
+		controller_ptr_array_t& controllersStock) {
 
-	controllersStock.swap(nominalControllersStock_);
+    updateNominalControllerPtrStock();
+	controllersStock.swap(nominalControllerPtrStock_);
+
+    //TODO(jcarius) how to efficiently update nominalControllersStock_ here?
+    throw std::runtime_error("swapController not implemented");
 }
 
 /******************************************************************************************************/
@@ -2703,9 +2709,9 @@ template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
 void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::truncateConterller(
 		const scalar_array_t& partitioningTimes,
 		const double& initTime,
-		controller_array_t& controllersStock,
+		linear_controller_array_t& controllersStock,
 		size_t& initActivePartition,
-		controller_array_t& deletedcontrollersStock) {
+		linear_controller_array_t& deletedcontrollersStock) {
 
 	deletedcontrollersStock.resize(numPartitions_);
 	for (size_t i=0; i<numPartitions_; i++)
@@ -2796,6 +2802,7 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::rewindOptimizer(const size_t
 			sFinalStock_[i].setZero();
 			xFinalStock_[i].setZero();
 		}
+    updateNominalControllerPtrStock();
 }
 
 /******************************************************************************************************/
@@ -2820,6 +2827,7 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::setupOptimizer(const size_t&
 	 * nominal trajectories
 	 */
 	nominalControllersStock_.resize(numPartitions);
+    updateNominalControllerPtrStock();
 	nominalTimeTrajectoriesStock_.resize(numPartitions);
 	nominalEventsPastTheEndIndecesStock_.resize(numPartitions);
 	nominalStateTrajectoriesStock_.resize(numPartitions);
@@ -3227,10 +3235,14 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::run(
 		const scalar_t& finalTime,
 		const scalar_array_t& partitioningTimes) {
 
-	const controller_array_t noInitialController(partitioningTimes.size()-1, controller_t());
+    linear_controller_array_t noInitialController(partitioningTimes.size()-1, linear_controller_t());
+	controller_ptr_array_t noInitialControllerPtrArray(partitioningTimes.size()-1);
+    for(int i=0; i<noInitialController.size(); i++){
+        noInitialControllerPtrArray[i] = &noInitialController[i];
+    }
 
 	// call the "run" method which uses the internal controllers stock (i.e. nominalControllersStock_)
-	run(initTime, initState, finalTime, partitioningTimes, noInitialController);
+	run(initTime, initState, finalTime, partitioningTimes, noInitialControllerPtrArray);
 }
 
 /******************************************************************************************************/
@@ -3242,7 +3254,7 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::run(
 		const state_vector_t& initState,
 		const scalar_t& finalTime,
 		const scalar_array_t& partitioningTimes,
-		const controller_array_t& controllersStock) {
+		const controller_ptr_array_t& controllersStock) {
 
 	// infeasible learning rate adjustment scheme
 	if (settings_.maxLearningRateGSLQP_ < settings_.minLearningRateGSLQP_-OCS2NumericTraits<scalar_t>::limit_epsilon())
@@ -3264,14 +3276,27 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::run(
 	// update partitioningTimes_
 	partitioningTimes_ = partitioningTimes;
 
+
+
 	// Use the input controller if it is not empty otherwise use the internal controller (nominalControllersStock_).
 	// In the later case 2 scenarios are possible: either the internal controller is already set (such as the MPC case
 	// where the warm starting option is set true) or the internal controller is empty in which instead of performing
 	// a rollout the operating trajectories will be used.
-	if (controllersStock.empty()==false) {
-		nominalControllersStock_ = controllersStock;
+	if (not controllersStock.empty()) {
 		if (controllersStock.size() != numPartitions_)
 			throw std::runtime_error("controllersStock has less controllers than the number of partitions.");
+
+        nominalControllersStock_.clear();
+        nominalControllersStock_.reserve(numPartitions_);
+
+        // ensure initial controllers are of the right type, then assign
+        for(auto& controllersStock_i : controllersStock){
+            auto linearCtrlPtr = dynamic_cast<linear_controller_t*>(controllersStock_i);
+            if(linearCtrlPtr == nullptr){
+                throw std::runtime_error("SLQ_BASE::run -- controller must be a linear_controller_t.");
+            }
+            nominalControllersStock_.emplace_back(*linearCtrlPtr);
+        }
 	} else {
 		if (nominalControllersStock_.size() != numPartitions_)
 			throw std::runtime_error("The internal controller is not compatible with the number of partitions.");
@@ -3312,7 +3337,7 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::run(
 
 	// check if after the truncation the internal controller is empty
 	bool isInitInternalControllerEmpty = false;
-	for (const controller_t& controller: nominalControllersStock_) {
+	for (const linear_controller_t& controller: nominalControllersStock_) {
 		isInitInternalControllerEmpty = isInitInternalControllerEmpty || controller.empty();
 	}
 
@@ -3394,6 +3419,8 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::run(
 			(1.0/BENCHMARK_nIterationsFP_)*std::chrono::duration_cast<std::chrono::milliseconds>(BENCHMARK_diff_).count();
 #endif
 
+    updateNominalControllerPtrStock();
+
 	/*
 	 * adds the deleted controller parts
 	 */
@@ -3425,6 +3452,16 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::run(
 		std::cerr << std::endl;
 	}
 
+}
+
+template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
+void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::updateNominalControllerPtrStock() {
+    nominalControllerPtrStock_.clear();
+    nominalControllerPtrStock_.reserve(nominalControllersStock_.size());
+
+    for(auto& controller : nominalControllersStock_){
+        nominalControllerPtrStock_.push_back(&controller);
+    }
 }
 
 }  // ocs2 namespace

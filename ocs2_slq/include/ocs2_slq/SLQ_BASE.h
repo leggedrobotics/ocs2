@@ -60,6 +60,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_core/logic/machine/LogicRulesMachine.h>
 #include <ocs2_core/logic/machine/HybridLogicRulesMachine.h>
 #include <ocs2_core/initialization/SystemOperatingTrajectoriesBase.h>
+#include <ocs2_core/control/LinearController.h>
 
 #include <ocs2_oc/oc_solver/Solver_BASE.h>
 #include <ocs2_oc/rollout/RolloutBase.h>
@@ -109,8 +110,10 @@ public:
 	using hamiltonian_increment_equation_t = LTI_Equations<STATE_DIM, 1, double>;
 
 	typedef typename BASE::DIMENSIONS                          DIMENSIONS;
-	typedef typename BASE::controller_t                        controller_t;
-	typedef typename BASE::controller_array_t                  controller_array_t;
+    typedef typename BASE::controller_t                        controller_t;
+    typedef LinearController<STATE_DIM,INPUT_DIM>              linear_controller_t;
+    typedef typename linear_controller_t::array_t              linear_controller_array_t;
+    typedef typename BASE::controller_ptr_array_t              controller_ptr_array_t;
 	typedef typename BASE::size_array_t                        size_array_t;
 	typedef typename BASE::scalar_t                            scalar_t;
 	typedef typename BASE::scalar_array_t                      scalar_array_t;
@@ -173,8 +176,6 @@ public:
 	typedef LogicRulesMachine<LOGIC_RULES_T>     logic_rules_machine_t;
 	typedef typename logic_rules_machine_t::Ptr	 logic_rules_machine_ptr_t;
 
-	using INTERNAL_CONTROLLER = controller_array_t;
-
 	/**
 	 * class for collecting SLQ data
 	 */
@@ -189,7 +190,7 @@ public:
 			const state_vector_t& initState,
 			const scalar_t& finalTime,
 			const scalar_array_t& partitioningTimes,
-			const controller_array_t& controllersStock,
+			const linear_controller_array_t& controllersStock,
 			std::vector<scalar_array_t>& timeTrajectoriesStock,
 			std::vector<size_array_t>& eventsPastTheEndIndecesStock,
 			state_vector_array2_t& stateTrajectoriesStock,
@@ -257,7 +258,7 @@ public:
 			const state_vector_t& initState,
 			const scalar_t& finalTime,
 			const scalar_array_t& partitioningTimes,
-			const controller_array_t& controllersStock,
+			linear_controller_array_t& controllersStock,
 			std::vector<scalar_array_t>& timeTrajectoriesStock,
 			std::vector<size_array_t>& eventsPastTheEndIndecesStock,
 			state_vector_array2_t& stateTrajectoriesStock,
@@ -283,7 +284,7 @@ public:
 			const state_vector_t& initState,
 			const scalar_t& finalTime,
 			const scalar_array_t& partitioningTimes,
-			const controller_array_t& controllersStock,
+			const linear_controller_array_t& controllersStock,
 			state_vector_t& finalState,
 			input_vector_t& finalInput,
 			size_t& finalActiveSubsystemIndex,
@@ -492,7 +493,7 @@ public:
 			const state_vector_t& initState,
 			const scalar_t& finalTime,
 			const scalar_array_t& partitioningTimes,
-			const controller_array_t& controllersStock) override;
+			const controller_ptr_array_t& controllersStock) override;
 
 	/**
 	 * Calculates the value function at the given time and state.
@@ -681,14 +682,14 @@ public:
 	 *
 	 * @return controllersStock: The optimal array of the control policies.
 	 */
-	const controller_array_t& getController() const override;
+	const controller_ptr_array_t& getController() const override;
 
 	/**
 	 * Gets a pointer to the optimal array of the control policies.
 	 *
 	 * @param [out] controllersStockPtr: A pointer to the optimal array of the control policies
 	 */
-	void getControllerPtr(const controller_array_t*& controllersStockPtr) const override;
+	void getControllerPtr(const controller_ptr_array_t*& controllersStockPtr) const override;
 
 	/**
 	 * Swaps the output array of the control policies with the nominal one.
@@ -696,7 +697,7 @@ public:
 	 *
 	 * @param [out] controllersStock: A reference to the optimal array of the control policies
 	 */
-	void swapController(controller_array_t& controllersStock) override;
+	void swapController(controller_ptr_array_t& controllersStock) override;
 
 	/**
 	 * Returns the nominal time trajectories.
@@ -941,7 +942,7 @@ protected:
 			scalar_t& lsConstraint1MaxNorm,
 			scalar_t& lsConstraint2ISE,
 			scalar_t& lsConstraint2MaxNorm,
-			controller_array_t& lsControllersStock,
+			linear_controller_array_t& lsControllersStock,
 			std::vector<scalar_array_t>& lsTimeTrajectoriesStock,
 			std::vector<size_array_t>& lsEventsPastTheEndIndecesStock,
 			state_vector_array2_t& lsStateTrajectoriesStock,
@@ -1091,9 +1092,9 @@ protected:
 	void truncateConterller(
 			const scalar_array_t& partitioningTimes,
 			const double& initTime,
-			controller_array_t& controllersStock,
+			linear_controller_array_t& controllersStock,
 			size_t& initActiveSubsystemIndex,
-			controller_array_t& deletedcontrollersStock);
+			linear_controller_array_t& deletedcontrollersStock);
 
 	/**
 	 * Calculates max feedforward update norm and max type-1 error update norm.
@@ -1108,6 +1109,11 @@ protected:
 	 * Display rollout info
 	 */
 	void printRolloutInfo();
+
+    /**
+     * @brief updates pointers in nominalControllerPtrStock from memory location of nominalControllersStock_ members
+     */
+    void updateNominalControllerPtrStock();
 
 	/****************
 	 *** Variables **
@@ -1178,7 +1184,8 @@ protected:
 
 	std::vector<typename rollout_base_t::Ptr> state_dynamicsForwardRolloutPtrStock_;
 
-	controller_array_t          nominalControllersStock_;
+	linear_controller_array_t   nominalControllersStock_;
+    controller_ptr_array_t      nominalControllerPtrStock_;
 	std::vector<scalar_array_t> nominalTimeTrajectoriesStock_;
 	std::vector<size_array_t>   nominalEventsPastTheEndIndecesStock_;
 	state_vector_array2_t       nominalStateTrajectoriesStock_;
@@ -1191,9 +1198,9 @@ protected:
 	input_vector_array2_t       nominalPrevInputTrajectoriesStock_;
 
 	bool lsComputeISEs_;  // whether lineSearch routine needs to calculate ISEs
-	controller_array_t initLScontrollersStock_;	  // needed for lineSearch
+	linear_controller_array_t initLScontrollersStock_;	  // needed for lineSearch
 
-	controller_array_t deletedcontrollersStock_;	// needed for concatenating the new controller to the old one
+	linear_controller_array_t deletedcontrollersStock_;	// needed for concatenating the new controller to the old one
 
 	state_matrix_array2_t       AmTrajectoryStock_;
 	state_input_matrix_array2_t BmTrajectoryStock_;

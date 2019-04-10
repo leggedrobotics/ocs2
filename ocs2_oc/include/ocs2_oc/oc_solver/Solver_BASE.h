@@ -119,7 +119,8 @@ class Solver_BASE {
   typedef LogicRulesMachine<LOGIC_RULES_T> logic_rules_machine_t;
   typedef typename logic_rules_machine_t::Ptr logic_rules_machine_ptr_t;
 
-  typedef std::vector<Controller<STATE_DIM, INPUT_DIM>, Eigen::aligned_allocator<Controller<STATE_DIM, INPUT_DIM>>> controller_array_t;
+  typedef Controller<STATE_DIM, INPUT_DIM> controller_t;
+  typedef std::vector<controller_t*> controller_ptr_array_t;
 
   /**
    * Default constructor.
@@ -157,10 +158,9 @@ class Solver_BASE {
    * @param [in] finalTime: The final time.
    * @param [in] partitioningTimes: The time partitioning.
    * @param [in] controllersStock: Array of the initial control policies.
-   * @param [in] costDesiredTrajectories: The cost desired trajectories.
    */
   virtual void run(const scalar_t& initTime, const state_vector_t& initState, const scalar_t& finalTime,
-                   const scalar_array_t& partitioningTimes, const controller_array_t& controllersStock) = 0;
+                   const scalar_array_t& partitioningTimes, const controller_ptr_array_t& controllersStock) = 0;
 
   /**
    * MPC_BASE activates this if the final time of the MPC will increase by the length of a time partition instead
@@ -308,14 +308,14 @@ class Solver_BASE {
    *
    * @return controllersStock: The optimal array of the control policies.
    */
-  virtual const controller_array_t& getController() const = 0;
+  virtual const controller_ptr_array_t& getController() const = 0;
 
   /**
    * Gets a pointer to the optimal array of the control policies.
    *
    * @param [out] controllersStockPtr: A pointer to the optimal array of the control policies
    */
-  virtual void getControllerPtr(const controller_array_t*& controllersStockPtr) const = 0;
+  virtual void getControllerPtr(const controller_ptr_array_t*& controllersStockPtr) const = 0;
 
   /**
    * Swaps the output array of the control policies with the nominal one.
@@ -323,7 +323,7 @@ class Solver_BASE {
    *
    * @param [out] controllersStock: A reference to the optimal array of the control policies
    */
-  virtual void swapController(controller_array_t& controllersStock) = 0;
+  virtual void swapController(controller_ptr_array_t& controllersStock) = 0;
 
   /**
    * Returns the nominal time trajectories.

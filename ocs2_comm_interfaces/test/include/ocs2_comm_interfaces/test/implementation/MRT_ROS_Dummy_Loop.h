@@ -139,8 +139,10 @@ void MRT_ROS_Dummy_Loop<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::run() {
 
 		// fake simulation of the dynamics
 		observation_.time() = time;
-		mrtPtr_->evaluateFeedforwardPolicy(observation_.time(),
-				observation_.state(), observation_.input(), observation_.subsystem());
+		mrtPtr_->evaluatePlan(observation_.time(),
+				observation_.state(), observation_.subsystem());
+
+        //TODO(jcarius) call controller here to assign observation_.input()
 
 		// user-defined modifications before publishing
 		modifyObservation(observation_);

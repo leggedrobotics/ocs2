@@ -52,8 +52,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // MPC messages
 #include <ocs2_comm_interfaces/dummy.h>
 #include <ocs2_comm_interfaces/mode_sequence.h>
-#include <ocs2_comm_interfaces/mpc_feedback_policy.h>
-#include <ocs2_comm_interfaces/mpc_feedforward_policy.h>
+#include <ocs2_comm_interfaces/mpc_flattened_controller.h>
 #include <ocs2_comm_interfaces/mpc_observation.h>
 #include <ocs2_comm_interfaces/mpc_target_trajectories.h>
 #include <ocs2_comm_interfaces/reset.h>
@@ -101,8 +100,8 @@ class MPC_ROS_Interface {
 
   typedef SystemObservation<STATE_DIM, INPUT_DIM> system_observation_t;
 
-  typedef LinearController<STATE_DIM, INPUT_DIM> controller_t;
-  typedef std::vector<controller_t, Eigen::aligned_allocator<controller_t>> controller_array_t;
+  typedef Controller<STATE_DIM, INPUT_DIM> controller_t;
+  typedef std::vector<controller_t*> controller_ptr_array_t;
 
   typedef RosMsgConversions<STATE_DIM, INPUT_DIM> ros_msg_conversions_t;
 
@@ -221,32 +220,20 @@ class MPC_ROS_Interface {
    * @param [in] currentObservation: The observation that MPC designed from.
    * @param [in] controllerIsUpdated: Whether the policy is updated.
    * @param [in] costDesiredTrajectoriesPtr: The target trajectories that MPC optimized.
+   * @param [in] controllerStockPtr: A pointer to the MPC optimized control policy.
    * @param [in] timeTrajectoriesStockPtr: A pointer to the MPC optimized time trajectory.
    * @param [in] stateTrajectoriesStockPtr: A pointer to the  MPC optimized state trajectory.
    * @param [in] inputTrajectoriesStockPtr: A pointer to the  MPC optimized input trajectory.
    * @param [in] eventTimesPtr: A pointer to the event time sequence.
    * @param [in] subsystemsSequencePtr: A pointer to the subsystem sequence.
    */
-  void publishFeedforwardPolicy(const system_observation_t& currentObservation, const bool& controllerIsUpdated,
-                                const cost_desired_trajectories_t*& costDesiredTrajectoriesPtr,
-                                const std::vector<scalar_array_t>*& timeTrajectoriesStockPtr,
-                                const state_vector_array2_t*& stateTrajectoriesStockPtr,
-                                const input_vector_array2_t*& inputTrajectoriesStockPtr, const scalar_array_t*& eventTimesPtr,
-                                const size_array_t*& subsystemsSequencePtr);
-
-  /**
-   * Publishes the MPC feedforward policy.
-   *
-   * @param [in] currentObservation: The observation that MPC designed from.
-   * @param [in] controllerIsUpdated: Whether the policy is updated.
-   * @param [in] costDesiredTrajectoriesPtr: The target trajectories that MPC optimized.
-   * @param [in] controllerStockPtr: A pointer to the MPC optimized control policy.
-   * @param [in] eventTimesPtr: A pointer to the event time sequence.
-   * @param [in] subsystemsSequencePtr: A pointer to the subsystem sequence.
-   */
-  void publishFeedbackPolicy(const system_observation_t& currentObservation, const bool& controllerIsUpdated,
-                             const cost_desired_trajectories_t*& costDesiredTrajectoriesPtr, const controller_array_t*& controllerStockPtr,
-                             const scalar_array_t*& eventTimesPtr, const size_array_t*& subsystemsSequencePtr);
+  void publishPolicy(const system_observation_t& currentObservation, const bool& controllerIsUpdated,
+                     const cost_desired_trajectories_t*& costDesiredTrajectoriesPtr,
+                     const controller_ptr_array_t*& controllerStockPtr,
+                     const std::vector<scalar_array_t>*& timeTrajectoriesStockPtr,
+                     const state_vector_array2_t*& stateTrajectoriesStockPtr,
+                     const input_vector_array2_t*& inputTrajectoriesStockPtr, const scalar_array_t*& eventTimesPtr,
+                     const size_array_t*& subsystemsSequencePtr);
 
   /**
    * Handles ROS publishing thread.
@@ -288,8 +275,7 @@ class MPC_ROS_Interface {
   ::ros::Subscriber mpcObservationSubscriber_;
   ::ros::Subscriber mpcTargetTrajectoriesSubscriber_;
   ::ros::Subscriber mpcModeSequenceSubscriber_;
-  ::ros::Publisher mpcFeedforwardPolicyPublisher_;
-  ::ros::Publisher mpcFeedbackPolicyPublisher_;
+  ::ros::Publisher mpcPolicyPublisher_;
   ::ros::Publisher dummyPublisher_;
   ::ros::ServiceServer mpcResetServiceServer_;
 
@@ -297,10 +283,8 @@ class MPC_ROS_Interface {
   std::atomic<bool> resetRequested_;
 
   // ROS messages
-  ocs2_comm_interfaces::mpc_feedback_policy mpcFeedbackPolicyMsg_;
-  ocs2_comm_interfaces::mpc_feedforward_policy mpcFeedforwardPolicyMsg_;
-  ocs2_comm_interfaces::mpc_feedback_policy mpcFeedbackPolicyMsgBuffer_;
-  ocs2_comm_interfaces::mpc_feedforward_policy mpcFeedforwardPolicyMsgBuffer_;
+  ocs2_comm_interfaces::mpc_flattened_controller mpcPolicyMsg_;
+  ocs2_comm_interfaces::mpc_flattened_controller mpcPolicyMsgBuffer_;
 
   // Multi-threading for publishers
   bool terminateThread_;

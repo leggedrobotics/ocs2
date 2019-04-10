@@ -53,7 +53,6 @@ public:
 	typedef typename BASE::input_vector_array_t input_vector_array_t;
 	typedef typename BASE::input_vector_array2_t input_vector_array2_t;
 	typedef typename BASE::controller_t controller_t;
-	typedef typename BASE::controller_array_t controller_array_t;
 	typedef typename BASE::input_state_matrix_t input_state_matrix_t;
 	typedef typename BASE::input_state_matrix_array_t input_state_matrix_array_t;
 

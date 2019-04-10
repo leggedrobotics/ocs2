@@ -121,7 +121,7 @@ void SLQ<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::lineSearch(bool computeISEs)  {
 	scalar_t lsTotalCost;
 	scalar_t lsConstraint1ISE, lsConstraint2ISE;
 	scalar_t lsConstraint1MaxNorm, lsConstraint2MaxNorm;
-	controller_array_t			lsControllersStock(BASE::numPartitions_);
+	linear_controller_array_t	lsControllersStock(BASE::numPartitions_);
 	std::vector<scalar_array_t>	lsTimeTrajectoriesStock(BASE::numPartitions_);
 	std::vector<size_array_t>	lsEventsPastTheEndIndecesStock(BASE::numPartitions_);
 	state_vector_array2_t   	lsStateTrajectoriesStock(BASE::numPartitions_);

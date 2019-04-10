@@ -451,10 +451,9 @@ void MPC_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::swapCostDesiredTrajectories(
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void MPC_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::getOptimizedControllerPtr(
-		const controller_array_t*& optimizedControllersStockPtr) const {
+typename MPC_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::controller_ptr_array_t const * MPC_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::getOptimizedControllerPtr() const {
 
-	optimizedControllersStockPtr = optimizedControllersStockPtr_;
+	return optimizedControllersStockPtr_;
 }
 
 /******************************************************************************************************/

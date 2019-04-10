@@ -53,13 +53,10 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_core/misc/LinearInterpolation.h>
 #include <ocs2_core/logic/machine/HybridLogicRulesMachine.h>
 #include <ocs2_core/logic/rules/NullLogicRules.h>
+#include <ocs2_core/control/Controller.h>
 
 // MPC messages
-#include <ocs2_comm_interfaces/mode_sequence.h>
-#include <ocs2_comm_interfaces/mpc_observation.h>
-#include <ocs2_comm_interfaces/mpc_feedback_policy.h>
-#include <ocs2_comm_interfaces/mpc_feedforward_policy.h>
-#include <ocs2_comm_interfaces/mpc_target_trajectories.h>
+#include <ocs2_comm_interfaces/mpc_flattened_controller.h>
 #include <ocs2_comm_interfaces/dummy.h>
 #include <ocs2_comm_interfaces/reset.h>
 
@@ -86,8 +83,6 @@ public:
 	typedef std::shared_ptr<MRT_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>> Ptr;
 
 	typedef Dimensions<STATE_DIM, INPUT_DIM> DIMENSIONS;
-	typedef typename DIMENSIONS::controller_t       controller_t;
-	typedef typename DIMENSIONS::controller_array_t controller_array_t;
 	typedef typename DIMENSIONS::scalar_t       scalar_t;
 	typedef typename DIMENSIONS::scalar_array_t	scalar_array_t;
 	typedef typename DIMENSIONS::size_array_t   size_array_t;
@@ -108,8 +103,8 @@ public:
 	typedef typename logic_machine_t::Ptr          logic_machine_ptr_t;
 
 	typedef LinearInterpolation<state_vector_t, Eigen::aligned_allocator<state_vector_t> > state_linear_interpolation_t;
-	typedef LinearInterpolation<input_vector_t, Eigen::aligned_allocator<input_vector_t> > input_linear_interpolation_t;
-	typedef LinearInterpolation<input_state_matrix_t, Eigen::aligned_allocator<input_state_matrix_t>> gain_linear_interpolation_t;
+
+    typedef Controller<STATE_DIM,INPUT_DIM> controller_t;
 
 	/**
 	 * Default constructor
@@ -120,12 +115,10 @@ public:
 	 * Constructor
 	 *
 	 * @param [in] logicRules: A logic rule class of derived from the hybrid logicRules base.
- 	 * @param [in] useFeedforwardPolicy: Whether to receive the MPC feedforward (true) or MPC feedback policy (false).
 	 * @param [in] robotName: The robot's name.
 	 */
 	MRT_ROS_Interface(
 			const LOGIC_RULES_T& logicRules,
-			const bool& useFeedforwardPolicy = true,
 			const std::string& robotName = "robot");
 
 	/**
@@ -137,11 +130,9 @@ public:
 	 * Sets the class as its constructor.
 	 *
 	 * @param [in] logicRules: A logic rule class of derived from the hybrid logicRules base.
- 	 * @param [in] useFeedforwardPolicy: Whether to receive the MPC feedforward (true) or MPC feedback policy (false).
 	 * @param [in] robotName: The robot's name.
 	 */
 	void set(const LOGIC_RULES_T& logicRules,
-			const bool& useFeedforwardPolicy = true,
 			const std::string& robotName = "robot");
 
 	/**
@@ -175,37 +166,26 @@ public:
 	 */
 	const cost_desired_trajectories_t& mpcCostDesiredTrajectories() const;
 
-	/**
-	 * Evaluates the latest feedforward policy at the given time. The SLQ-MPC feedforward
-	 * policy includes two components. The optimized state and input trajectories. Moreover
-	 * it finds the active subsystem at the given time.
-	 *
-	 * @param [in] time: The inquiry time.
-	 * @param [out] mpcState: The feedforward policy's optimized state.
-	 * @param [out] mpcInput: The feedforward policy's optimized input.
-	 * @param [out] subsystem: The active subsystem.
-	 */
-	void evaluateFeedforwardPolicy(
-			const scalar_t& time,
+    /**
+     * @brief Interpolates nominal state and active subsystem at given time. Does not use the controller.
+     *
+     * @param[in] time the query time
+     * @param[out] mpcState the current nominal state
+     * @param[out] subsystem the active subsystem
+     */
+    void evaluatePlan(
+            const scalar_t& time,
 			state_vector_t& mpcState,
-			input_vector_t& mpcInput,
 			size_t& subsystem);
 
-	/**
-	 * Evaluates the latest feedback policy at the given time. The SLQ-MPC feedback
-	 * policy is defined as an affine time-state dependent function. Moreover it finds
-	 * the active subsystem at the given time.
-	 *
-	 * @param [in] time: The inquiry time.
-	 * @param [out] mpcUff: The feedback policy's optimized uff.
-	 * @param [out] mpcGain: The feedback policy's optimized gain matrix.
-	 * @param [out] subsystem: The active subsystem.
-	 */
-	void evaluateFeedbackPolicy(
-			const scalar_t& time,
-			input_vector_t& mpcUff,
-			input_state_matrix_t& mpcGain,
-			size_t& subsystem);
+    /**
+     * @brief getControllerPtr
+     * @return pointer to the controller
+     */
+    //TODO(jcarius) what about thread safety and object lifetime?
+    controller_t* getControllerPtr(){
+        return mpcController_.get();
+    }
 
 	/**
 	 * Shutdowns the ROS nodes.
@@ -243,9 +223,7 @@ public:
 	/**
 	 * Checks the data buffer for an update of the MPC policy. If a new policy
 	 * is available on the buffer this method will load it to the in-use policy.
-	 * This method also calls one of the loadModifiedFeedforwardPolicy() methods
-	 * or loadModifiedFeedbackPolicy() method (based on whether you are using the
-	 * feedback or feedforward policy).
+	 * This method also calls the loadModifiedPolicy() method.
 	 *
 	 * Make sure to call spinMRT() to check for new messages
 	 *
@@ -256,78 +234,33 @@ public:
 protected:
 	/**
 	 * The updatePolicy() method will call this method which allows the user to
-	 * customize the in-use feedforward policy. Note that this method is already
+	 * customize the in-use policy. Note that this method is already
 	 * protected with a mutex which blocks the policy callback. Moreover, this method
 	 * may be called in the main thread of the program. Thus, for efficiency and
 	 * practical considerations you should avoid computationally expensive operations.
-	 * For such operations you may want to use the modifyBufferFeedforwardPolicy()
-	 * methods which runs on a separate thread which directly modifies the received
-	 * policy messages on the data buffer.
-	 *
-	 * @param logicUpdated: Whether eventTimes or subsystemsSequence are updated form the last call.
-	 * @param policyUpdated: Whether the policy is updated.
-	 * @param mpcTimeTrajectory: The optimized time trajectory of the policy message on the buffer.
-	 * @param mpcStateTrajectory: The optimized state trajectory of the policy message on the buffer.
-	 * @param mpcInputTrajectory: The optimized input trajectory of the policy message on the buffer.
-	 * @param eventTimes: The event times of the policy.
-	 * @param subsystemsSequence: The subsystems sequence of the policy.
-	 */
-	virtual void loadModifiedFeedforwardPolicy(
-			bool& logicUpdated,
-			bool& policyUpdated,
-			scalar_array_t& mpcTimeTrajectory,
-			state_vector_array_t& mpcStateTrajectory,
-			input_vector_array_t& mpcInputTrajectory,
-			scalar_array_t& eventTimes,
-			size_array_t& subsystemsSequence) {}
-
-	/**
-	 * The updatePolicy() method will call this method which allows the user to
-	 * customize the in-use feedback policy. Note that this method is already
-	 * protected with a mutex which blocks the policy callback. Moreover, this method
-	 * may be called in the main thread of the program. Thus, for efficiency and
-	 * practical considerations you should avoid computationally expensive operations.
-	 * For such operations you may want to use the modifyBufferFeedforwardPolicy()
+	 * For such operations you may want to use the modifyBufferPolicy()
 	 * methods which runs on a separate thread which directly modifies the received
 	 * policy messages on the data buffer.
 	 *
 	 * @param logicUpdated: Whether eventTimes or subsystemsSequence are updated form the last call.
 	 * @param policyUpdated: Whether the policy is updated.
 	 * @param mpcController: The optimized feedback controller of the policy.
+	 * @param mpcTimeTrajectory: The optimized time trajectory of the policy message on the buffer.
+	 * @param mpcStateTrajectory: The optimized state trajectory of the policy message on the buffer.
 	 * @param eventTimes: The event times of the policy.
 	 * @param subsystemsSequence: The subsystems sequence of the policy.
 	 */
-	virtual void loadModifiedFeedbackPolicy(
+	virtual void loadModifiedPolicy(
 			bool& logicUpdated,
 			bool& policyUpdated,
-			controller_t& mpcController,
+            controller_t& mpcController,
+			scalar_array_t& mpcTimeTrajectory,
+			state_vector_array_t& mpcStateTrajectory,
 			scalar_array_t& eventTimes,
 			size_array_t& subsystemsSequence) {}
 
 	/**
-	 * This method can be used to modify the feedforward policy on the buffer without inputting the
-	 * main thread. Note that the variables that are on the buffer have the suffix Buffer. It is
-	 * important if any new variables are added to the policy also obey this rule. These buffer
-	 * variables can be later, in the customizedUpdatePolicy() method, swept to the in-use policy
-	 * memory.
-	 *
-	 * @param [in] mpcInitObservationBuffer: The observation of the policy message on the buffer.
-	 * @param mpcTimeTrajectoryBuffer: The optimized time trajectory of the policy message on the buffer.
-	 * @param mpcStateTrajectoryBuffer: The optimized state trajectory of the policy message on the buffer.
-	 * @param mpcInputTrajectoryBuffer: The optimized input trajectory of the policy message on the buffer.
-	 * @param eventTimesBuffer: The event times of the policy message on the buffer.
-	 * @param subsystemsSequenceBuffer: The subsystems sequence of the policy message on the buffer.
-	 */
-	virtual void modifyBufferFeedforwardPolicy(
-			const system_observation_t& mpcInitObservationBuffer,
-			scalar_array_t& mpcTimeTrajectoryBuffer,
-			state_vector_array_t& mpcStateTrajectoryBuffer,
-			input_vector_array_t& mpcInputTrajectoryBuffer,
-			scalar_array_t& eventTimesBuffer,
-			size_array_t& subsystemsSequenceBuffer) {}
-
-	/**
-	 * This method can be used to modify the feedback policy on the buffer without inputting the
+	 * This method can be used to modify the policy on the buffer without inputting the
 	 * main thread. Note that the variables that are on the buffer have the suffix Buffer. It is
 	 * important if any new variables are added to the policy also obey this rule. These buffer
 	 * variables can be later, in the customizedUpdatePolicy() method, swept to the in-use policy
@@ -335,12 +268,16 @@ protected:
 	 *
 	 * @param [in] mpcInitObservationBuffer: The observation of the policy message on the buffer.
 	 * @param mpcControllerBuffer: The optimized feedback controller of the policy message on the buffer.
+	 * @param mpcTimeTrajectoryBuffer: The optimized time trajectory of the policy message on the buffer.
+	 * @param mpcStateTrajectoryBuffer: The optimized state trajectory of the policy message on the buffer.
 	 * @param eventTimesBuffer: The event times of the policy message on the buffer.
 	 * @param subsystemsSequenceBuffer: The subsystems sequence of the policy message on the buffer.
 	 */
-	virtual void modifyBufferFeedbackPolicy(
+	virtual void modifyBufferPolicy(
 			const system_observation_t& mpcInitObservationBuffer,
-			controller_t& mpcControllerBuffer,
+            controller_t* mpcControllerBuffer,
+			scalar_array_t& mpcTimeTrajectoryBuffer,
+			state_vector_array_t& mpcStateTrajectoryBuffer,
 			scalar_array_t& eventTimesBuffer,
 			size_array_t& subsystemsSequenceBuffer) {}
 
@@ -357,20 +294,12 @@ protected:
 	void publishDummy();
 
 	/**
-	 * Callback method to receive the MPC feedforward policy as well as the mode sequence.
+	 * Callback method to receive the MPC policy as well as the mode sequence.
 	 *
-	 * @param msg: A constant pointer to mpc_feedforward_policy message.
+	 * @param msg: A constant pointer to the message
 	 */
-	void mpcFeedforwardPolicyCallback(
-			const ocs2_comm_interfaces::mpc_feedforward_policy::ConstPtr& msg);
-
-	/**
-	 * Callback method to receive the MPC feedback policy as well as the mode sequence.
-	 *
-	 * @param msg: A constant pointer to mpc_feedback_policy message.
-	 */
-	void mpcFeedbackPolicyCallback(
-			const ocs2_comm_interfaces::mpc_feedback_policy::ConstPtr& msg);
+	void mpcPolicyCallback(
+			const ocs2_comm_interfaces::mpc_flattened_controller::ConstPtr& msg);
 
 	/**
 	 * A thread function which sends the current state and checks for a new MPC update.
@@ -402,8 +331,6 @@ protected:
 	/*
 	 * Variables
 	 */
-	bool useFeedforwardPolicy_;
-
 	std::string robotName_;
 
 	logic_machine_ptr_t logicMachinePtr_;
@@ -413,8 +340,7 @@ protected:
 	// Publishers and subscribers
 	::ros::Publisher  dummyPublisher_;
 	::ros::Publisher  mpcObservationPublisher_;
-	::ros::Subscriber mpcFeedforwardPolicySubscriber_;
-	::ros::Subscriber mpcFeedbackPolicySubscriber_;
+	::ros::Subscriber mpcPolicySubscriber_;
 	::ros::ServiceClient mpcResetServiceClient_;
 
 	// ROS messages
@@ -451,18 +377,13 @@ protected:
 	scalar_array_t partitioningTimes_;
 	scalar_array_t partitioningTimesBuffer_;
 
-	controller_t         mpcController_;
-	controller_t         mpcControllerBuffer_;
+	std::unique_ptr<controller_t> mpcController_;
+	std::unique_ptr<controller_t> mpcControllerBuffer_;
 	scalar_array_t       mpcTimeTrajectory_;
 	scalar_array_t       mpcTimeTrajectoryBuffer_;
 	state_vector_array_t mpcStateTrajectory_;
 	state_vector_array_t mpcStateTrajectoryBuffer_;
-	input_vector_array_t mpcInputTrajectory_;
-	input_vector_array_t mpcInputTrajectoryBuffer_;
 	state_linear_interpolation_t mpcLinInterpolateState_;
-	input_linear_interpolation_t mpcLinInterpolateInput_;
-	input_linear_interpolation_t mpcLinInterpolateUff_;
-	gain_linear_interpolation_t  mpcLinInterpolateK_;
 	cost_desired_trajectories_t  mpcCostDesiredTrajectories_;
 	cost_desired_trajectories_t  mpcCostDesiredTrajectoriesBuffer_;
 

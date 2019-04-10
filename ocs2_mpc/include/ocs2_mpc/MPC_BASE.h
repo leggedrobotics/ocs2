@@ -39,7 +39,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_oc/oc_solver/Solver_BASE.h>
 
 #include <ocs2_core/Dimensions.h>
-#include <ocs2_core/control/LinearController.h>
+#include <ocs2_core/control/Controller.h>
 #include <ocs2_core/cost/CostDesiredTrajectories.h>
 #include <ocs2_core/logic/machine/LogicRulesMachine.h>
 #include <ocs2_core/logic/rules/HybridLogicRules.h>
@@ -79,8 +79,8 @@ class MPC_BASE {
   typedef typename DIMENSIONS::dynamic_vector_t dynamic_vector_t;
   typedef typename DIMENSIONS::dynamic_vector_array_t dynamic_vector_array_t;
 
-  typedef LinearController<STATE_DIM, INPUT_DIM> controller_t;
-  typedef std::vector<controller_t, Eigen::aligned_allocator<controller_t>> controller_array_t;
+  typedef Controller<STATE_DIM, INPUT_DIM> controller_t;
+  typedef std::vector<controller_t*> controller_ptr_array_t;
 
   typedef CostDesiredTrajectories<scalar_t> cost_desired_trajectories_t;
   typedef ModeSequenceTemplate<scalar_t> mode_sequence_template_t;
@@ -133,7 +133,7 @@ class MPC_BASE {
                                    const std::vector<scalar_array_t>*& timeTrajectoriesStockPtr,
                                    const state_vector_array2_t*& stateTrajectoriesStockPtr,
                                    const input_vector_array2_t*& inputTrajectoriesStockPtr,
-                                   const controller_array_t*& controllerStockPtr) = 0;
+                                   const controller_ptr_array_t*& controllerStockPtr) = 0;
 
   /**
    * Gets a pointer to the underlying solver used in the MPC.
@@ -194,9 +194,9 @@ class MPC_BASE {
   /**
    * Gets a pointer to the optimal array of the control policies.
    *
-   * @param [out] controllNominalersStock: A pointer to the optimal array of the control policies
+   * @return A pointer to the optimal array of the control policies
    */
-  void getOptimizedControllerPtr(const controller_array_t*& controllNominalersStock) const;
+  controller_ptr_array_t const * getOptimizedControllerPtr() const;
 
   /**
    * Gets a pointer to the optimized trajectories.
@@ -294,7 +294,7 @@ class MPC_BASE {
   std::atomic<bool> logicRulesTemplateUpdated_;
   mode_sequence_template_t newLogicRulesTemplate_;
 
-  const controller_array_t* optimizedControllersStockPtr_;
+  const controller_ptr_array_t* optimizedControllersStockPtr_;
   const std::vector<scalar_array_t>* optimizedTimeTrajectoriesStockPtr_;
   const state_vector_array2_t* optimizedStateTrajectoriesStockPtr_;
   const input_vector_array2_t* optimizedInputTrajectoriesStockPtr_;

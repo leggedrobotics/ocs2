@@ -51,8 +51,6 @@ public:
 	typedef MRT_ROS_Interface<double_integrator::STATE_DIM_, double_integrator::INPUT_DIM_> BASE;
 
 	typedef Dimensions<double_integrator::STATE_DIM_, double_integrator::INPUT_DIM_> DIMENSIONS;
-	typedef typename DIMENSIONS::controller_t       controller_t;
-	typedef typename DIMENSIONS::controller_array_t controller_array_t;
 	typedef typename DIMENSIONS::scalar_t       scalar_t;
 	typedef typename DIMENSIONS::scalar_array_t	scalar_array_t;
 	typedef typename DIMENSIONS::size_array_t   size_array_t;
@@ -84,10 +82,9 @@ public:
 	 * @param [in] robotName: The robot's name.
 	 */
 	MRT_ROS_Double_Integrator(
-			const bool& useFeedforwardPolicy = true,
 			const std::string& robotName = "robot_mpc")
 
-	: BASE(NullLogicRules(), useFeedforwardPolicy, robotName)
+	: BASE(NullLogicRules(), robotName)
 	{}
 
 	/**

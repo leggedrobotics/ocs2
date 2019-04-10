@@ -68,10 +68,11 @@ TEST(testLoopshapingDefinition, Cost_Augmentation_r) {
   constexpr size_t m_sys = 3;
   constexpr size_t n_q = 0;
   constexpr size_t n_r = 4;
+  constexpr size_t m_r = m_sys;
   constexpr size_t n_s = 0;
   constexpr size_t m_s = 0;
   constexpr size_t n_tot = n_sys + n_q + n_r + n_s;
-  constexpr size_t m_tot = m_sys + m_s;
+  constexpr size_t m_tot = m_sys;
 
   Eigen::Matrix<double, n_sys, n_sys> Q;
   Eigen::Matrix<double, m_sys, n_sys> P;
@@ -89,7 +90,7 @@ TEST(testLoopshapingDefinition, Cost_Augmentation_r) {
   Eigen::Matrix<double, n_sys, 1> x_sys;
   Eigen::Matrix<double, m_sys, 1> u_sys;
   Eigen::Matrix<double, n_q + n_r + n_s, 1> x_filter;
-  Eigen::Matrix<double, m_s, 1> u_filter;
+  Eigen::Matrix<double, m_r, 1> u_filter;
   Eigen::Matrix<double, n_tot, 1> x_tot;
   Eigen::Matrix<double, m_tot, 1> u_tot;
   x_sys.setZero();
@@ -100,7 +101,7 @@ TEST(testLoopshapingDefinition, Cost_Augmentation_r) {
   filter->concatenateSystemAndFilterInput(u_sys, u_filter, u_tot);
 
   QuadraticCostFunction<n_sys, m_sys> quadraticCost(Q, R, x_sys, u_sys, Q, x_sys, P);
-  LoopshapingCost<n_tot, m_tot, n_sys, m_sys, n_q + n_r + n_s, m_s> loopshapingCost(quadraticCost, filter);
+  LoopshapingCost<n_tot, m_tot, n_sys, m_sys, n_q + n_r + n_s, m_r> loopshapingCost(quadraticCost, filter);
   loopshapingCost.setCurrentStateAndControl(0.0, x_tot, u_tot);
 
   loopshapingCost.getIntermediateCostSecondDerivativeState(Q_augmented);

@@ -46,8 +46,8 @@ namespace ocs2 {
 
         static constexpr size_t filter_state_dim = FILTER_STATE_DIM;
         static constexpr size_t filter_input_dim = FILTER_INPUT_DIM;
-        using filter_state_vector_t = system_state_vector_t;
-        using filter_input_vector_t = system_input_vector_t;
+        using filter_state_vector_t = Eigen::Matrix<scalar_t, FILTER_STATE_DIM, 1>;
+        using filter_input_vector_t = Eigen::Matrix<scalar_t, FILTER_INPUT_DIM, 1>;
 
         using homogeneous_cost_matrix_t = Eigen::Matrix<scalar_t,
             full_state_dim + full_input_dim + 1,

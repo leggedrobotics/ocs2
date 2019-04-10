@@ -13,41 +13,46 @@
 #include "ocs2_core/loopshaping/LoopshapingDynamics.h"
 #include "ocs2_core/loopshaping/LoopshapingDynamicsDerivative.h"
 
+#include "testLoopshapingConfigurations.h"
+
 namespace ocs2 {
 
-
-class TestLoopShapingDynamics_r_filter : public ::testing::Test {
+template <class CONFIG>
+class TestFixtureLoopShapingDynamics : public ::testing::Test {
  protected:
-  static constexpr size_t FULL_STATE_DIM = 6;
-  static constexpr size_t FULL_INPUT_DIM = 3;
-  static constexpr size_t SYSTEM_STATE_DIM = 2;
-  static constexpr size_t SYSTEM_INPUT_DIM = 3;
-  static constexpr size_t FILTER_STATE_DIM = 4;
-  static constexpr size_t FILTER_INPUT_DIM = 3;
+  static constexpr size_t FULL_STATE_DIM = CONFIG::FULL_STATE_DIM;
+  static constexpr size_t FULL_INPUT_DIM = CONFIG::FULL_INPUT_DIM;
+  static constexpr size_t SYSTEM_STATE_DIM = CONFIG::SYSTEM_STATE_DIM;
+  static constexpr size_t SYSTEM_INPUT_DIM = CONFIG::SYSTEM_INPUT_DIM;
+  static constexpr size_t FILTER_STATE_DIM = CONFIG::FILTER_STATE_DIM;
+  static constexpr size_t FILTER_INPUT_DIM = CONFIG::FILTER_INPUT_DIM;
 
   using TestSystem = LinearSystemDynamics<SYSTEM_STATE_DIM, SYSTEM_INPUT_DIM>;
   using TestLoopshapingDynamics = LoopshapingDynamics<FULL_STATE_DIM, FULL_INPUT_DIM, SYSTEM_STATE_DIM, SYSTEM_INPUT_DIM, FILTER_STATE_DIM, FILTER_INPUT_DIM>;
   using TestLoopshapingDynamicsDerivative = LoopshapingDynamicsDerivative<FULL_STATE_DIM, FULL_INPUT_DIM, SYSTEM_STATE_DIM, SYSTEM_INPUT_DIM, FILTER_STATE_DIM, FILTER_INPUT_DIM>;
 
-  using state_vector_t = TestLoopshapingDynamics::state_vector_t;
-  using input_vector_t = TestLoopshapingDynamics::input_vector_t;
-  using system_state_vector_t = TestSystem::state_vector_t;
-  using system_input_vector_t = TestSystem::input_vector_t;
-  using filter_state_vector_t = TestLoopshapingDynamics::filter_state_vector_t;
-  using filter_input_vector_t = TestLoopshapingDynamics::filter_input_vector_t;
+  using state_vector_t = typename TestLoopshapingDynamics::state_vector_t;
+  using input_vector_t = typename TestLoopshapingDynamics::input_vector_t;
+  using state_matrix_t = typename TestLoopshapingDynamicsDerivative::state_matrix_t;
+  using state_input_matrix_t = typename TestLoopshapingDynamicsDerivative::state_input_matrix_t;
+  using system_state_vector_t = typename TestSystem::state_vector_t;
+  using system_input_vector_t = typename TestSystem::input_vector_t;
+  using system_state_matrix_t = typename TestSystem::state_matrix_t;
+  using system_state_input_matrix_t = typename TestSystem::state_input_matrix_t;
+  using filter_state_vector_t = typename TestLoopshapingDynamics::filter_state_vector_t;
+  using filter_input_vector_t = typename TestLoopshapingDynamics::filter_input_vector_t;
 
   void SetUp() override {
-    // Select the loopshaping file
-    const std::experimental::filesystem::path pathToTest(__FILE__);
-    const std::string settingsFile = std::string(pathToTest.parent_path()) + "/loopshaping_r.conf";
+    const std::experimental::filesystem::path pathToTest = std::experimental::filesystem::path(__FILE__);
+    const std::string settingsFile = std::string(pathToTest.parent_path()) + "/" + CONFIG::fileName;
 
     // Load loopshaping definition
     loopshapingDefinition_.reset(new LoopshapingDefinition());
     loopshapingDefinition_->loadSettings(settingsFile);
 
     // Create system dynamics
-    TestSystem::state_matrix_t A, G;
-    TestSystem::state_input_matrix_t B, H;
+    system_state_matrix_t A, G;
+    system_state_input_matrix_t B, H;
     A.setRandom();
     G.setRandom();
     B.setRandom();
@@ -101,7 +106,6 @@ class TestLoopShapingDynamics_r_filter : public ::testing::Test {
     loopshapingDefinition_->concatenateSystemAndFilterState(x_sys, x_filter, x);
     loopshapingDefinition_->concatenateSystemAndFilterInput(u_sys, u_filter, u);
   }
-
 };
 
 }; // namespace ocs2

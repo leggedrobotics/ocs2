@@ -7,7 +7,7 @@ DOXYFILE_ENCODING      = UTF-8
 PROJECT_NAME           = "OCS2 Manual"
 PROJECT_NUMBER         = v1.0.0
 PROJECT_BRIEF          = "OCS2 Documentation"
-PROJECT_LOGO           = "../../ocs2_doc/doc/logo/logo.png"
+PROJECT_LOGO           = "${DOXYGEN_IMAGE_DIRS}/logo.png"
 OUTPUT_DIRECTORY       = ${DOCSOURCE_DIR}
 CREATE_SUBDIRS         = NO
 ALLOW_UNICODE_NAMES    = NO
@@ -181,7 +181,7 @@ EXAMPLE_PATH           =
 EXAMPLE_PATTERNS       = *
 EXAMPLE_RECURSIVE      = NO
 IMAGE_PATH             = ${DOXYGEN_IMAGE_DIRS}
-INPUT_FILTER           =
+INPUT_FILTER           = "python3 ${DOXYGEN_FILTER_DIR}/ocs2_doc_filter.py"
 FILTER_PATTERNS        =
 FILTER_SOURCE_FILES    = NO
 FILTER_SOURCE_PATTERNS =
@@ -340,9 +340,7 @@ SKIP_FUNCTION_MACROS   = YES
 #---------------------------------------------------------------------------
 #- Configuration options related to external references
 #---------------------------------------------------------------------------
-TAGFILES               = tags/ocs2_core.tag=../../../ocs2_core/doc/html \
-                         tags/ocs2_slq.tag=../../../ocs2_slq/doc/html \
-                         tags/ocs2_ocs2.tag=../../../ocs2_ocs2/doc/html
+TAGFILES               =
 GENERATE_TAGFILE       =
 ALLEXTERNALS           = YES
 EXTERNAL_GROUPS        = YES

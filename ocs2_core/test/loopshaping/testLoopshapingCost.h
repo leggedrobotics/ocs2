@@ -69,6 +69,7 @@ class TestFixtureLoopShapingCost : public ::testing::Test {
     P.setRandom();
 
     // Make symmetric
+    Q_final = (0.5*Q_final.transpose() + 0.5*Q_final).eval();
     Q = (0.5*Q.transpose() + 0.5*Q).eval();
     R = (0.5*R.transpose() + 0.5*R).eval();
     testSystemCost.reset(new TestSystemCost(Q, R, x_sys_, u_sys_, Q_final, x_sys_, P));

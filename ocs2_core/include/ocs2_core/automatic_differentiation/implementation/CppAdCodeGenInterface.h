@@ -188,11 +188,11 @@ void CppAdCodeGenInterface<DOMAIN_DIM, RANGE_DIM, SCALAR_T, VARIABLE_DIM>::creat
 	if (libraryFolder.empty()==false)
 		CppAD::cg::system::createFolder(libraryFolder);
 
-  if (libraryFolder.empty()==false) {
-    CppAD::cg::system::createFolder(libraryFolder + "/" + modelName + "_sources");
-  } else {
-    CppAD::cg::system::createFolder(modelName + "_sources");
-  }
+	if (libraryFolder.empty()==false) {
+		CppAD::cg::system::createFolder(libraryFolder + "/" + modelName);
+	} else {
+		CppAD::cg::system::createFolder(modelName);
+	}
 
     //***************************************************************************
     //                               the model
@@ -258,9 +258,9 @@ void CppAdCodeGenInterface<DOMAIN_DIM, RANGE_DIM, SCALAR_T, VARIABLE_DIM>::creat
     // save to files (not really required)
     CppAD::cg::SaveFilesModelLibraryProcessor<SCALAR_T> p2(libcgen);
     if (libraryFolder.empty()==false) {
-    	p2.saveSourcesTo(libraryFolder + "/" + modelName + "_sources/cppad_generated");
+    	p2.saveSourcesTo(libraryFolder + "/" + modelName + "/cppad_generated");
     } else {
-    	p2.saveSourcesTo(modelName + "_sources/cppad_generated");
+    	p2.saveSourcesTo(modelName + "/cppad_generated");
     }
     if (cgJIT==true) {
     	// compile source code

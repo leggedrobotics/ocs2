@@ -133,7 +133,7 @@ class LinearInterpolation {
    * @param [in]  greatestLessTimeStampIndex (optional): The greatest smaller time stamp index. If provided, the interpolation will skip
    * the search scheme and readily calculates the output.
    */
-  void interpolate(const scalar_t& enquiryTime, Data_T& enquiryData, int greatestLessTimeStampIndex = -1) {
+  void interpolate(const scalar_t& enquiryTime, Data_T& enquiryData, int greatestLessTimeStampIndex = -1) const {
     if (zeroFunction_ == true) {
       enquiryData.setZero();
       return;
@@ -167,7 +167,7 @@ class LinearInterpolation {
    * Returns the greatest smaller time stamp index found in the last interpolation function call.
    * @return The greatest smaller time stamp index.
    */
-  int getGreatestLessTimeStampIndex() { return index_; }
+  int getGreatestLessTimeStampIndex() const { return index_; }
 
  protected:
   /**
@@ -176,7 +176,7 @@ class LinearInterpolation {
    * @param [in] enquiryTime: The enquiry time for interpolation.
    * @return The greatest smaller time stamp index.
    */
-  int find(const scalar_t& enquiryTime) {
+  int find(const scalar_t& enquiryTime) const {
     int index = -1;
 
     if (timeStampPtr_->at(index_) > enquiryTime) {
@@ -206,7 +206,7 @@ class LinearInterpolation {
   }
 
  private:
-  int index_;
+  mutable int index_;
   bool zeroFunction_;
 
   size_t timeStampSize_;

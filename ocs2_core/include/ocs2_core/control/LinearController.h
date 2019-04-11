@@ -49,16 +49,14 @@ class LinearController : public Controller<STATE_DIM, INPUT_DIM> {
     k_.clear();
   }
 
-  void clear() {
-      reset();
-  }
+  void clear() { reset(); }
 
   void initInterpolators() {
-      linInterpolateUff_.setTimeStamp(&time_);
-      linInterpolateUff_.setData(&uff_);
+    linInterpolateUff_.setTimeStamp(&time_);
+    linInterpolateUff_.setData(&uff_);
 
-      linInterpolateK_.setTimeStamp(&time_);
-      linInterpolateK_.setData(&k_);
+    linInterpolateK_.setTimeStamp(&time_);
+    linInterpolateK_.setData(&k_);
   }
 
   virtual input_vector_t computeInput(const scalar_t& t, const state_vector_t& x) override {
@@ -73,36 +71,84 @@ class LinearController : public Controller<STATE_DIM, INPUT_DIM> {
   }
 
   virtual void flatten(scalar_t time, scalar_array_t& flatArray) const override {
-      throw std::runtime_error("Not implemented");
+    flatArray.clear();
+    flatArray.resize(INPUT_DIM + INPUT_DIM * STATE_DIM);
+
+    input_vector_t uff;
+    linInterpolateUff_.interpolate(time, uff);
+    const auto greatestLessTimeStampIndex = linInterpolateUff_.getGreatestLessTimeStampIndex();
+
+    input_state_matrix_t k;
+    linInterpolateK_.interpolate(time, k, greatestLessTimeStampIndex);
+
+    for (int i = 0; i < INPUT_DIM; i++) {  // i loops through input dim
+      flatArray[i * (STATE_DIM + 1) + 0] = uff(i);
+      for (int j = 0; j < STATE_DIM; j++) {  // j loops through state dim
+        flatArray[i * (STATE_DIM + 1) + j + 1] = k(i, j);
+      }
+    }
   }
 
-  virtual void unFlatten(const scalar_array_t& timeArray, const std::vector<scalar_array_t const *>& flatArray2) override {
-      throw std::runtime_error("Not implemented");
+  virtual void unFlatten(const scalar_array_t& timeArray, const std::vector<scalar_array_t const*>& flatArray2) override {
+    time_ = timeArray;
+
+    uff_.clear();
+    uff_.reserve(flatArray2.size());
+
+    k_.clear();
+
+    const auto arrayLengthPerTime = flatArray2[0]->size();
+    bool loadFeedback = false;
+
+    switch (arrayLengthPerTime) {
+      case INPUT_DIM: {
+        break;
+      }
+      case (INPUT_DIM + INPUT_DIM * STATE_DIM): {
+        loadFeedback = true;
+        break;
+      }
+      default: { throw std::runtime_error("LinearController::unFlatten received array of wrong length."); }
+    }
+
+    for (const auto& arr : flatArray2) {     // loop through time
+      uff_.emplace_back(input_vector_t::Zero());
+      if(loadFeedback){
+          k_.emplace_back(input_state_matrix_t::Zero());
+      }
+
+      for (int i = 0; i < INPUT_DIM; i++) {  // loop through input dim
+        uff_.back()(i) = (*arr)[i * (STATE_DIM + 1) + 0];
+        if (loadFeedback) {
+          k_.back().row(i) = Eigen::Map<const Eigen::Matrix<scalar_t, 1, STATE_DIM>>(&((*arr)[i * (STATE_DIM + 1) + 1]), STATE_DIM);
+        }
+      }
+    }
   }
 
   /**
    * @brief Swap data with other object
    * @param other the object to be swapped with
    */
-  virtual void swap(LinearController<STATE_DIM,INPUT_DIM>& other) {
-      using std::swap;
+  virtual void swap(LinearController<STATE_DIM, INPUT_DIM>& other) {
+    using std::swap;
 
-      swap(time_, other.time_);
-      swap(uff_, other.uff_);
-      swap(deltaUff_, other.deltaUff_);
-      swap(k_, other.k_);
+    swap(time_, other.time_);
+    swap(uff_, other.uff_);
+    swap(deltaUff_, other.deltaUff_);
+    swap(k_, other.k_);
 
-      initInterpolators();
-      other.initInterpolators();
+    initInterpolators();
+    other.initInterpolators();
   }
 
   /**
    * @brief Fills all the data containers with zeros. Does not change size, does not change time array.
    */
   void setZero() {
-      std::fill(uff_.begin(), uff_.end(), input_vector_array_t::Zero());
-      std::fill(deltaUff_.begin(), deltaUff_.end(), input_vector_array_t::Zero());
-      std::fill(k_.begin(), k_.end(), input_state_matrix_array_t::Zero());
+    std::fill(uff_.begin(), uff_.end(), input_vector_array_t::Zero());
+    std::fill(deltaUff_.begin(), deltaUff_.end(), input_vector_array_t::Zero());
+    std::fill(k_.begin(), k_.end(), input_state_matrix_array_t::Zero());
   }
 
   /**
@@ -110,18 +156,14 @@ class LinearController : public Controller<STATE_DIM, INPUT_DIM> {
    *
    * @return true if the time container size is 0, false otherwise.
    */
-  bool empty() const{
-      return time_.empty();
-  }
+  bool empty() const { return time_.empty(); }
 
   /**
    * Returns the size of the controller (in particular the time stamp).
    *
    * @return the size of the controller.
    */
-  size_t size() const {
-      return time_.size();
-  }
+  size_t size() const { return time_.size(); }
 
  public:
   scalar_array_t time_;
@@ -135,8 +177,8 @@ class LinearController : public Controller<STATE_DIM, INPUT_DIM> {
 };
 
 template <size_t STATE_DIM, size_t INPUT_DIM>
-void swap(LinearController<STATE_DIM,INPUT_DIM>& a, LinearController<STATE_DIM,INPUT_DIM>& b){
-    a.swap(b);
+void swap(LinearController<STATE_DIM, INPUT_DIM>& a, LinearController<STATE_DIM, INPUT_DIM>& b) {
+  a.swap(b);
 }
 
 }  // namespace ocs2

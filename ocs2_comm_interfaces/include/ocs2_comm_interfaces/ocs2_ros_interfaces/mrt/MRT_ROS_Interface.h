@@ -55,6 +55,11 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_core/logic/rules/NullLogicRules.h>
 #include <ocs2_core/control/Controller.h>
 
+#include <ocs2_core/dynamics/ControlledSystemBase.h>
+#include <ocs2_oc/rollout/RolloutBase.h>
+#include <ocs2_oc/rollout/TimeTriggeredRollout.h>
+#include <ocs2_core/misc/FindActiveIntervalIndex.h>
+
 // MPC messages
 #include <ocs2_comm_interfaces/mpc_flattened_controller.h>
 #include <ocs2_comm_interfaces/dummy.h>
@@ -101,6 +106,10 @@ public:
 
 	typedef HybridLogicRulesMachine<LOGIC_RULES_T> logic_machine_t;
 	typedef typename logic_machine_t::Ptr          logic_machine_ptr_t;
+
+  	typedef typename std::unique_ptr<RolloutBase<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>> rollout_base_ptr_t;
+  	typedef TimeTriggeredRollout<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> time_triggered_rollout_t;
+	typedef ControlledSystemBase<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> controlled_system_base_t;
 
 	typedef LinearInterpolation<state_vector_t, Eigen::aligned_allocator<state_vector_t> > state_linear_interpolation_t;
 
@@ -186,6 +195,23 @@ public:
     controller_t* getControllerPtr(){
         return mpcController_.get();
     }
+
+  	/**
+	 * Initializes rollout class to roll out a feedback policy
+	 *
+	 * @param [in] controlSystemBasePtr: Pointer to the system to roll out.
+	 * @param [in] rollout settings.
+	 */
+	void initRollout(const controlled_system_base_t& controlSystemBase, const Rollout_Settings& rolloutSettings);
+
+	/**
+	 * rolls out feedback policy from current state
+	 *
+	 * @param [in] t0: start of the rollout
+	 * @param [in] initState: state to start rollout from
+	 * @param [in] rollout_time: duration of forward rollout
+	 */
+	void rolloutFeedbackPolicy(scalar_t t0, const state_vector_t& initState, scalar_t rollout_time);
 
 	/**
 	 * Shutdowns the ROS nodes.
@@ -331,6 +357,7 @@ protected:
 	/*
 	 * Variables
 	 */
+	bool feedforwardGeneratedWithRollout_;
 	std::string robotName_;
 
 	logic_machine_ptr_t logicMachinePtr_;
@@ -389,6 +416,7 @@ protected:
 
 	std::function<size_t(scalar_t)> findActiveSubsystemFnc_;
 
+  	rollout_base_ptr_t rolloutPtr_;
 };
 
 } // namespace ocs2

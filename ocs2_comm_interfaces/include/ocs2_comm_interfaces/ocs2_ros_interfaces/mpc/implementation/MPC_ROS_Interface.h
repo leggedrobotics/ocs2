@@ -116,6 +116,8 @@ void MPC_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::reset() {
 
 	terminateThread_ = false;
 	readyToPublish_  = false;
+	if (mpcPtr_ != nullptr)
+		mpcPtr_->reset();
 }
 
 /******************************************************************************************************/
@@ -510,7 +512,7 @@ void MPC_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::launchNodes(int arg
 			robotName_+"_mpc_target",
 			1,
 			&MPC_ROS_Interface::mpcTargetTrajectoriesCallback, this,
-			::ros::TransportHints().udp());
+			::ros::TransportHints().tcpNoDelay());
 
 	// Logic rules template subscriber
 	mpcModeSequenceSubscriber_ = nodeHandler.subscribe(

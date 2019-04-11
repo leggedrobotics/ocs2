@@ -44,7 +44,7 @@ enum
 	INPUT_DIM = 2
 };
 
-TEST(exp2_slq_test, Exp2_slq_test)
+TEST(exp2_slq_test, DISABLED_Exp2_slq_test)
 {
 
 	// system dynamics

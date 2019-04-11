@@ -35,11 +35,12 @@ namespace ocs2 {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
+template<size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
 MRT_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::MRT_ROS_Interface(
 		const LOGIC_RULES_T& logicRules,
 		const std::string& robotName /*= "robot"*/)
 	: logicMachinePtr_(new logic_machine_t(logicRules))
+	, feedforwardGeneratedWithRollout_(false)
 	, robotName_(robotName)
 {
 	// reset variables
@@ -47,180 +48,186 @@ MRT_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::MRT_ROS_Interface(
 
 	// Start thread for publishing
 #ifdef PUBLISH_THREAD
-	publisherWorker_ = std::thread(&MRT_ROS_Interface::publisherWorkerThread, this);
+  publisherWorker_ = std::thread(&MRT_ROS_Interface::publisherWorkerThread, this);
 #endif
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
+template<size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
 MRT_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::~MRT_ROS_Interface() {
 
-	shutdownNodes();
+  shutdownNodes();
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
+template<size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
 void MRT_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::set(
 		const LOGIC_RULES_T& logicRules,
 		const std::string& robotName /*= "robot"*/) {
 
-	logicMachinePtr_ = logic_machine_ptr_t(new logic_machine_t(logicRules));
+  logicMachinePtr_ = logic_machine_ptr_t(new logic_machine_t(logicRules));
 
 	robotName_ = robotName;
 
-	// reset variables
-	reset();
 
-	// Start thread for publishing
+  // reset variables
+  reset();
+
+  // Start thread for publishing
 #ifdef PUBLISH_THREAD
-	publisherWorker_ = std::thread(&MRT_ROS_Interface::publisherWorkerThread, this);
+  publisherWorker_ = std::thread(&MRT_ROS_Interface::publisherWorkerThread, this);
 #endif
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void MRT_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::sigintHandler(int sig)  {
+template<size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
+void MRT_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::sigintHandler(int sig) {
 
-	ROS_INFO_STREAM("Shutting MRT node.");
-	::ros::shutdown();
+  ROS_INFO_STREAM("Shutting MRT node.");
+  ::ros::shutdown();
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
+template<size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
 void MRT_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::reset() {
 
-	messageHash_ = std::numeric_limits<size_t>::max();
-	messageHashBuffer_ = 0;
+  messageHash_ = std::numeric_limits<size_t>::max();
+  messageHashBuffer_ = 0;
 
-	logicUpdated_        = false;
-	policyUpdated_       = false;
-	policyUpdatedBuffer_ = false;
-	policyReceivedEver_  = false;
+  logicUpdated_ = false;
+  policyUpdated_ = false;
+  policyUpdatedBuffer_ = false;
+  policyReceivedEver_ = false;
 
-	terminateThread_ = false;
-	readyToPublish_  = false;
+  terminateThread_ = false;
+  readyToPublish_ = false;
 
-	mpcLinInterpolateState_.setZero();
+  feedforwardGeneratedWithRollout_ = false;
 
-	eventTimes_.clear();
-	eventTimesBuffer_.clear();
-	subsystemsSequence_.clear();
-	subsystemsSequenceBuffer_.clear();
-	partitioningTimesUpdate(0.0, partitioningTimes_);
-	partitioningTimesUpdate(0.0, partitioningTimesBuffer_);
+  mpcLinInterpolateState_.setZero();
+
+  
+
+
+  eventTimes_.clear();
+  eventTimesBuffer_.clear();
+  subsystemsSequence_.clear();
+  subsystemsSequenceBuffer_.clear();
+  partitioningTimesUpdate(0.0, partitioningTimes_);
+  partitioningTimesUpdate(0.0, partitioningTimesBuffer_);
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
+template<size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
 size_t MRT_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::messageHashValue(
-		const system_observation_t& observation) const {
+    const system_observation_t &observation) const {
 
-	return observation.time() * 1.0e+6;
+  return observation.time() * 1.0e+6;
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
+template<size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
 void MRT_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::partitioningTimesUpdate(
-		const scalar_t& time,
-		scalar_array_t& partitioningTimes) const {
+    const scalar_t &time,
+    scalar_array_t &partitioningTimes) const {
 
-	partitioningTimes.resize(2);
-	partitioningTimes[0] = (policyReceivedEver_==true) ? initPlanObservation_.time() : time;
-	partitioningTimes[1] = std::numeric_limits<scalar_t>::max();
+  partitioningTimes.resize(2);
+  partitioningTimes[0] = (policyReceivedEver_ == true) ? initPlanObservation_.time() : time;
+  partitioningTimes[1] = std::numeric_limits<scalar_t>::max();
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
+template<size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
 void MRT_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::resetMpcNode() {
 
-	policyReceivedEver_ = false;
+  policyReceivedEver_ = false;
 
-	ocs2_comm_interfaces::reset resetSrv;
-	resetSrv.request.reset = true;
+  ocs2_comm_interfaces::reset resetSrv;
+  resetSrv.request.reset = true;
 
-	if (mpcResetServiceClient_.call(resetSrv)) {
-		ROS_INFO_STREAM("Waiting for MPC node to reset ...");
-		mpcResetServiceClient_.waitForExistence();
-		ROS_INFO_STREAM("MPC node is reset.");
+  if (mpcResetServiceClient_.call(resetSrv)) {
+    ROS_INFO_STREAM("Waiting for MPC node to reset ...");
+    mpcResetServiceClient_.waitForExistence();
+    ROS_INFO_STREAM("MPC node is reset.");
 
-	} else {
-		ROS_ERROR_STREAM("Failed to call service to reset MPC.");
-	}
+  } else {
+    ROS_ERROR_STREAM("Failed to call service to reset MPC.");
+  }
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
+template<size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
 void MRT_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::publishDummy() {
 
-	ocs2_comm_interfaces::dummy msg;
-	msg.ping = 1;
-	dummyPublisher_.publish(msg);
+  ocs2_comm_interfaces::dummy msg;
+  msg.ping = 1;
+  dummyPublisher_.publish(msg);
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
+template<size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
 void MRT_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::publishObservation(
-		const system_observation_t& currentObservation) {
+    const system_observation_t &currentObservation) {
 
 #ifdef PUBLISH_THREAD
-	std::unique_lock<std::mutex> lk(publisherMutex_);
+  std::unique_lock<std::mutex> lk(publisherMutex_);
 #endif
 
-	// create the message
-	ros_msg_conversions_t::CreateObservationMsg(currentObservation,  mpcObservationMsg_);
+  // create the message
+  ros_msg_conversions_t::CreateObservationMsg(currentObservation, mpcObservationMsg_);
 
-	// publish the current observation
+  // publish the current observation
 #ifdef PUBLISH_THREAD
-	readyToPublish_ = true;
-	lk.unlock();
-	msgReady_.notify_one();
+  readyToPublish_ = true;
+  lk.unlock();
+  msgReady_.notify_one();
 #else
-	mpcObservationPublisher_.publish(mpcObservationMsg_);
+  mpcObservationPublisher_.publish(mpcObservationMsg_);
 #endif
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
+template<size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
 void MRT_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::publisherWorkerThread() {
 
-	while(terminateThread_==false) {
+  while (terminateThread_ == false) {
 
-		std::unique_lock<std::mutex> lk(publisherMutex_);
+    std::unique_lock<std::mutex> lk(publisherMutex_);
 
-		msgReady_.wait(lk, [&]{ return (readyToPublish_ || terminateThread_); });
+    msgReady_.wait(lk, [&] { return (readyToPublish_ || terminateThread_); });
 
-		if (terminateThread_==true)  break;
+    if (terminateThread_ == true) break;
 
-		mpcObservationMsgBuffer_ = std::move(mpcObservationMsg_);
+    mpcObservationMsgBuffer_ = std::move(mpcObservationMsg_);
 
-		readyToPublish_ = false;
+    readyToPublish_ = false;
 
-		lk.unlock();
-		msgReady_.notify_one();
+    lk.unlock();
+    msgReady_.notify_one();
 
-		// publish the message
-		mpcObservationPublisher_.publish(mpcObservationMsgBuffer_);
-	}
+    // publish the message
+    mpcObservationPublisher_.publish(mpcObservationMsgBuffer_);
+  }
 }
 
 /******************************************************************************************************/
@@ -232,20 +239,20 @@ void MRT_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::mpcPolicyCallback (
 
 //	std::cout << "\t Plan is recieved at time: " << msg->initObservation.time << std::endl;
 
-	std::unique_lock<std::mutex> lk(subscriberMutex_);
+  std::unique_lock<std::mutex> lk(subscriberMutex_);
 
-	ros_msg_conversions_t::ReadObservationMsg(msg->initObservation,
-			mpcInitObservationBuffer_);
+  ros_msg_conversions_t::ReadObservationMsg(msg->initObservation,
+                                            mpcInitObservationBuffer_);
 
-	ros_msg_conversions_t::ReadTargetTrajectoriesMsg(msg->planTargetTrajectories,
-			mpcCostDesiredTrajectoriesBuffer_);
+  ros_msg_conversions_t::ReadTargetTrajectoriesMsg(msg->planTargetTrajectories,
+                                                   mpcCostDesiredTrajectoriesBuffer_);
 
-	policyUpdatedBuffer_ = msg->controllerIsUpdated;
+  policyUpdatedBuffer_ = msg->controllerIsUpdated;
 
-	ros_msg_conversions_t::ReadModeSequenceMsg(msg->modeSequence,
-			eventTimesBuffer_, subsystemsSequenceBuffer_);
+  ros_msg_conversions_t::ReadModeSequenceMsg(msg->modeSequence,
+                                             eventTimesBuffer_, subsystemsSequenceBuffer_);
 
-	// time partitioning
+  // time partitioning
 //	partitioningTimesBuffer_ = scalar_array_t {
 //		msg->timeTrajectory.front(), msg->timeTrajectory.back()};
 	partitioningTimesUpdate(msg->timeTrajectory.front(), partitioningTimesBuffer_);
@@ -311,12 +318,13 @@ void MRT_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::mpcPolicyCallback (
 	// since it will signal the updatePolicy method to swap buffer.
 	// Although data is protected from racing however it will cause unnecessary delay
 	messageHashBuffer_ = messageHashValue(mpcInitObservationBuffer_);
+
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
+template<size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
 bool MRT_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::updatePolicy() {
 
 	if (messageHash_ == messageHashBuffer_.load()) {
@@ -337,6 +345,8 @@ bool MRT_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::updatePolicy() {
 	policyUpdated_ = policyUpdatedBuffer_;
 
 	logicUpdated_ = false;
+
+	feedforwardGeneratedWithRollout_ = false;
 
 	if (subsystemsSequence_ != subsystemsSequenceBuffer_) {
 		subsystemsSequence_.swap(subsystemsSequenceBuffer_);
@@ -383,25 +393,26 @@ bool MRT_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::updatePolicy() {
 	lk.unlock();
 
 	return true;
+
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
+template<size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
 bool MRT_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::initialPolicyReceived() const {
 
-	return policyReceivedEver_;
+  return policyReceivedEver_;
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-const typename MRT_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::cost_desired_trajectories_t&
- MRT_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::mpcCostDesiredTrajectories() const {
+template<size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
+const typename MRT_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::cost_desired_trajectories_t &
+MRT_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::mpcCostDesiredTrajectories() const {
 
-	return mpcCostDesiredTrajectories_;
+  return mpcCostDesiredTrajectories_;
 }
 
 /******************************************************************************************************/
@@ -419,71 +430,131 @@ void MRT_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::evaluatePlan(
 
 	mpcLinInterpolateState_.interpolate(time, mpcState);
 
-	size_t index = findActiveSubsystemFnc_(time);
-	subsystem = logicMachinePtr_->getLogicRulesPtr()->subsystemsSequence().at(index);
+  size_t index = findActiveSubsystemFnc_(time);
+  subsystem = logicMachinePtr_->getLogicRulesPtr()->subsystemsSequence().at(index);
 }
 
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+template<size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
+void MRT_ROS_Interface<STATE_DIM,
+                       INPUT_DIM,
+                       LOGIC_RULES_T>::initRollout(const controlled_system_base_t &controlSystemBase,
+                                                   const Rollout_Settings &rolloutSettings) {
+
+  rolloutPtr_ = rollout_base_ptr_t(new time_triggered_rollout_t(controlSystemBase, rolloutSettings, "mrt"));
+}
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
+template<size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
+void MRT_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::rolloutFeedbackPolicy(scalar_t t0,
+                                                                                   const state_vector_t &initState,
+                                                                                   scalar_t rollout_time) {
+  size_t
+  activePartitionIndex = findActiveIntervalIndex(partitioningTimes_, t0, 0);
+
+  scalar_t final_time = t0 + rollout_time;
+  size_array_t eventsPastTheEndIndeces;
+
+  // Perform rollout
+  if (rolloutPtr_) {
+    if (policyUpdated_) {
+      rolloutPtr_->run(activePartitionIndex,
+                       t0,
+                       initState,
+                       final_time,
+                       mpcController_,
+                       *logicMachinePtr_,
+                       mpcTimeTrajectory_,
+                       eventsPastTheEndIndeces,
+                       mpcStateTrajectory_,
+                       mpcInputTrajectory_);
+    } else {
+      throw std::runtime_error("MRT_ROS_interface: policy not updated before rollout.");
+    }
+  } else {
+    throw std::runtime_error("MRT_ROS_interface: rolloutPtr not initialized, call initRollout first.");
+  }
+
+  // Set rollout to be the mpc feedforward trajectory
+  mpcLinInterpolateState_.reset();
+  mpcLinInterpolateState_.setTimeStamp(&mpcTimeTrajectory_);
+  mpcLinInterpolateState_.setData(&mpcStateTrajectory_);
+
+  mpcLinInterpolateInput_.reset();
+  mpcLinInterpolateInput_.setTimeStamp(&mpcTimeTrajectory_);
+  mpcLinInterpolateInput_.setData(&mpcInputTrajectory_);
+
+  loadModifiedFeedforwardPolicy(logicUpdated_, policyUpdated_,
+                                mpcTimeTrajectory_, mpcStateTrajectory_, mpcInputTrajectory_,
+                                eventTimes_, subsystemsSequence_);
+
+  feedforwardGeneratedWithRollout_ = true;
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+template<size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
 void MRT_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::shutdownNodes() {
 
 #ifdef PUBLISH_THREAD
-	ROS_INFO_STREAM("Shutting down workers ...");
+  ROS_INFO_STREAM("Shutting down workers ...");
 
-	std::unique_lock<std::mutex> lk(publisherMutex_);
-	terminateThread_ = true;
-	lk.unlock();
+  std::unique_lock<std::mutex> lk(publisherMutex_);
+  terminateThread_ = true;
+  lk.unlock();
 
-	msgReady_.notify_all();
+  msgReady_.notify_all();
 
-	if (publisherWorker_.joinable())
-		publisherWorker_.join();
+  if (publisherWorker_.joinable())
+    publisherWorker_.join();
 
-	ROS_INFO_STREAM("All workers are shut down.");
+  ROS_INFO_STREAM("All workers are shut down.");
 #endif
 
 	// Clean up Callback queue
 	mrtCallbackQueue_.clear();
 	mpcPolicySubscriber_.shutdown();
 
-	// shutdown publishers
-	dummyPublisher_.shutdown();
-	mpcObservationPublisher_.shutdown();
+  // shutdown publishers
+  dummyPublisher_.shutdown();
+  mpcObservationPublisher_.shutdown();
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-::ros::NodeHandlePtr& MRT_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::nodeHandle() {
+template<size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
+::ros::NodeHandlePtr &MRT_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::nodeHandle() {
 
-	return mrtRosNodeHandlePtr_;
+  return mrtRosNodeHandlePtr_;
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void MRT_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::launchNodes(int argc, char* argv[]) {
+template<size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
+void MRT_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::launchNodes(int argc, char *argv[]) {
 
-	reset();
+  reset();
 
-	// display
-	ROS_INFO_STREAM("MRT node is setting up ...");
+  // display
+  ROS_INFO_STREAM("MRT node is setting up ...");
 
-	// setup ROS
-	::ros::init(argc, argv, robotName_+"_mrt", ::ros::init_options::NoSigintHandler);
-	signal(SIGINT, MRT_ROS_Interface::sigintHandler);
+  // setup ROS
+  ::ros::init(argc, argv, robotName_ + "_mrt", ::ros::init_options::NoSigintHandler);
+  signal(SIGINT, MRT_ROS_Interface::sigintHandler);
 
-	mrtRosNodeHandlePtr_.reset(new ::ros::NodeHandle);
-	mrtRosNodeHandlePtr_->setCallbackQueue(&mrtCallbackQueue_);
+  mrtRosNodeHandlePtr_.reset(new ::ros::NodeHandle);
+  mrtRosNodeHandlePtr_->setCallbackQueue(&mrtCallbackQueue_);
 
-	// Observation publisher
-	mpcObservationPublisher_ = mrtRosNodeHandlePtr_->advertise<ocs2_comm_interfaces::mpc_observation>(
-			robotName_+"_mpc_observation", 1);
+  // Observation publisher
+  mpcObservationPublisher_ = mrtRosNodeHandlePtr_->advertise<ocs2_comm_interfaces::mpc_observation>(
+      robotName_ + "_mpc_observation", 1);
 
 	// SLQ-MPC subscriber
 
@@ -493,27 +564,27 @@ void MRT_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::launchNodes(int arg
 				&MRT_ROS_Interface::mpcPolicyCallback,
 				this, ::ros::TransportHints().udp());
 
-	// dummy publisher
-	dummyPublisher_ = mrtRosNodeHandlePtr_->advertise<ocs2_comm_interfaces::dummy>("ping", 1, true);
 
-	// MPC reset service client
-	mpcResetServiceClient_ = mrtRosNodeHandlePtr_->serviceClient<ocs2_comm_interfaces::reset>(robotName_+"_mpc_reset");
+  // dummy publisher
+  dummyPublisher_ = mrtRosNodeHandlePtr_->advertise<ocs2_comm_interfaces::dummy>("ping", 1, true);
 
-	// display
+  // MPC reset service client
+  mpcResetServiceClient_ = mrtRosNodeHandlePtr_->serviceClient<ocs2_comm_interfaces::reset>(robotName_ + "_mpc_reset");
+
+  // display
 #ifdef PUBLISH_THREAD
-	ROS_INFO_STREAM("Publishing MRT messages on a separate thread.");
+  ROS_INFO_STREAM("Publishing MRT messages on a separate thread.");
 #endif
 
-	ROS_INFO_STREAM("MRT node is ready.");
+  ROS_INFO_STREAM("MRT node is ready.");
 
   spinMRT();
 }
 
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
+template<size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
 void MRT_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::spinMRT() {
   mrtCallbackQueue_.callOne();
 };
-
 
 } // namespace ocs2
 

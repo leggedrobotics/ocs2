@@ -58,21 +58,27 @@ public:
 	typedef typename slq_t::size_array_t   size_array_t;
 	typedef typename slq_t::scalar_t       scalar_t;
 	typedef typename slq_t::scalar_array_t scalar_array_t;
+	typedef typename slq_t::scalar_array3_t scalar_array3_t;
 	typedef typename slq_t::eigen_scalar_t        eigen_scalar_t;
 	typedef typename slq_t::eigen_scalar_array_t  eigen_scalar_array_t;
 	typedef typename slq_t::eigen_scalar_array2_t eigen_scalar_array2_t;
 	typedef typename slq_t::state_vector_t        state_vector_t;
 	typedef typename slq_t::state_vector_array_t  state_vector_array_t;
 	typedef typename slq_t::state_vector_array2_t state_vector_array2_t;
+	typedef typename slq_t::state_vector_array3_t state_vector_array3_t;
 	typedef typename slq_t::input_vector_array_t  input_vector_array_t;
 	typedef typename slq_t::input_vector_array2_t input_vector_array2_t;
+	typedef typename slq_t::input_vector_array3_t input_vector_array3_t;
 	typedef typename slq_t::input_state_matrix_array_t  input_state_matrix_array_t;
 	typedef typename slq_t::input_state_matrix_array2_t input_state_matrix_array2_t;
+	typedef typename slq_t::input_state_matrix_array3_t input_state_matrix_array3_t;
 	typedef typename slq_t::state_matrix_array_t  state_matrix_array_t;
 	typedef typename slq_t::state_matrix_t        state_matrix_t;
 	typedef typename slq_t::state_matrix_array2_t state_matrix_array2_t;
+	typedef typename slq_t::state_matrix_array3_t state_matrix_array3_t;
 	typedef typename slq_t::input_matrix_array_t  input_matrix_array_t;
 	typedef typename slq_t::input_matrix_array2_t input_matrix_array2_t;
+	typedef typename slq_t::input_matrix_array3_t input_matrix_array3_t;
 	typedef typename slq_t::state_input_matrix_array_t  state_input_matrix_array_t;
 	typedef typename slq_t::state_input_matrix_array2_t state_input_matrix_array2_t;
 	typedef typename slq_t::constraint1_vector_array_t  constraint1_vector_array_t;
@@ -88,8 +94,6 @@ public:
 	typedef typename slq_t::constraint2_state_matrix_array_t  constraint2_state_matrix_array_t;
 	typedef typename slq_t::constraint2_state_matrix_array2_t constraint2_state_matrix_array2_t;
 
-	typedef std::vector<state_vector_array2_t, Eigen::aligned_allocator<state_vector_array2_t>>             state_vector_array3_t;
-	typedef std::vector<input_vector_array2_t, Eigen::aligned_allocator<input_vector_array2_t>>             input_vector_array3_t;
 	typedef std::vector<constraint1_vector_array2_t, Eigen::aligned_allocator<constraint1_vector_array2_t>> constraint1_vector_array3_t;
 	typedef std::vector<constraint2_vector_array2_t, Eigen::aligned_allocator<constraint2_vector_array2_t>> constraint2_vector_array3_t;
 
@@ -169,6 +173,14 @@ public:
 	std::vector<size_array_t>          nc2FinalStock_;
 	constraint2_vector_array2_t        HvFinalStock_;
 	constraint2_state_matrix_array2_t  FmFinalStock_;
+
+	std::vector<size_array_t>   ncIneqTrajectoriesStock_;  // ncIneq: Number of inequality constraints
+	scalar_array3_t       		hTrajectoryStock_;
+	state_vector_array3_t       dhdxTrajectoryStock_;
+	state_matrix_array3_t       ddhdxdxTrajectoryStock_;
+	input_vector_array3_t       dhduTrajectoryStock_;
+	input_matrix_array3_t       ddhduduTrajectoryStock_;
+	input_state_matrix_array3_t ddhdudxTrajectoryStock_;
 
 	eigen_scalar_array2_t        qFinalStock_;
 	state_vector_array2_t        QvFinalStock_;

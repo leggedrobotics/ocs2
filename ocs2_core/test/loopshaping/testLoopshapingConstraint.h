@@ -57,12 +57,24 @@ class TestFixtureLoopShapingConstraint : public ::testing::Test {
   using system_constraint1_input_matrix_t = typename TestSystemConstraint::constraint1_input_matrix_t;
   using system_constraint2_vector_t = typename TestSystemConstraint::constraint2_vector_t;
   using system_constraint2_state_matrix_t = typename TestSystemConstraint::constraint2_state_matrix_t;
+  using system_scalar_array_t = typename TestSystemConstraint::scalar_array_t;
+  using system_state_vector_array_t = typename TestSystemConstraint::state_vector_array_t;
+  using system_input_vector_array_t = typename TestSystemConstraint::input_vector_array_t;
+  using system_state_matrix_array_t = typename TestSystemConstraint::state_matrix_array_t;
+  using system_input_matrix_array_t = typename TestSystemConstraint::input_matrix_array_t;
+  using system_input_state_matrix_array_t = typename TestSystemConstraint::input_state_matrix_array_t;
 
   using constraint1_vector_t = typename TestLoopshapingConstraint::constraint1_vector_t;
   using constraint1_state_matrix_t = typename TestLoopshapingConstraint::constraint1_state_matrix_t;
   using constraint1_input_matrix_t = typename TestLoopshapingConstraint::constraint1_input_matrix_t;
   using constraint2_vector_t = typename TestLoopshapingConstraint::constraint2_vector_t;
   using constraint2_state_matrix_t = typename TestLoopshapingConstraint::constraint2_state_matrix_t;
+  using scalar_array_t = typename TestLoopshapingConstraint::scalar_array_t;
+  using state_vector_array_t = typename TestLoopshapingConstraint::state_vector_array_t;
+  using input_vector_array_t = typename TestLoopshapingConstraint::input_vector_array_t;
+  using state_matrix_array_t = typename TestLoopshapingConstraint::state_matrix_array_t;
+  using input_matrix_array_t = typename TestLoopshapingConstraint::input_matrix_array_t;
+  using input_state_matrix_array_t = typename TestLoopshapingConstraint::input_state_matrix_array_t;
 
   void SetUp() override {
     const std::experimental::filesystem::path pathToTest = std::experimental::filesystem::path(__FILE__);
@@ -84,16 +96,37 @@ class TestFixtureLoopShapingConstraint : public ::testing::Test {
     e.setRandom();
     C.setRandom();
     D.setRandom();
+
     size_t numStateOnlyConstraint = SYSTEM_STATE_DIM - 1;
     system_constraint2_vector_t h;
     system_constraint2_state_matrix_t F;
     h.setRandom();
     F.setRandom();
+
     size_t numStateOnlyFinalConstraint = SYSTEM_STATE_DIM - 1;
     system_constraint2_vector_t h_f;
     system_constraint2_state_matrix_t F_f;
     h_f.setRandom();
     F_f.setRandom();
+
+    size_t numInequalityConstraint = 10;
+    system_scalar_array_t h0;
+    system_state_vector_array_t dhdx;
+    system_input_vector_array_t dhdu;
+    system_state_matrix_array_t ddhdxdx;
+    system_input_matrix_array_t ddhdudu;
+    system_input_state_matrix_array_t ddhdudx;
+    for (size_t i=0; i<numInequalityConstraint; i++){
+      h0.push_back(i);
+      dhdx.push_back(system_state_vector_t::Random());
+      dhdu.push_back(system_input_vector_t::Random());
+      ddhdxdx.push_back(system_state_matrix_t::Random());
+      ddhdudu.push_back(system_input_matrix_t::Random());
+      ddhdudx.push_back(system_input_state_matrix_t::Random());
+      // Make symmetric
+      ddhdxdx[i] = (ddhdxdx[i].transpose()*ddhdxdx[i]).eval();
+      ddhdudu[i] = (ddhdudu[i].transpose()*ddhdudu[i]).eval();
+    }
 
     // Make system Constraint
     testSystemConstraint.reset(new TestSystemConstraint(numStateInputConstraint,
@@ -105,7 +138,14 @@ class TestFixtureLoopShapingConstraint : public ::testing::Test {
                                                         F,
                                                         numStateOnlyFinalConstraint,
                                                         h_f,
-                                                        F_f));
+                                                        F_f,
+                                                        numInequalityConstraint,
+                                                        h0,
+                                                        dhdx,
+                                                        dhdu,
+                                                        ddhdxdx,
+                                                        ddhdudu,
+                                                        ddhdudx));
 
     // Create Loopshaping constraint
     testLoopshapingConstraint.reset(new TestLoopshapingConstraint(*testSystemConstraint, loopshapingDefinition_));

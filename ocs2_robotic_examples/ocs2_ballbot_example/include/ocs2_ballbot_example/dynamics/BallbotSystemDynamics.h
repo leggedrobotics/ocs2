@@ -139,7 +139,7 @@ public:
 		iit::Ballbot::dyn::tpl::InertiaProperties<trait_t> inertias;
 		iit::Ballbot::tpl::MotionTransforms<trait_t> transforms;
 		iit::Ballbot::dyn::tpl::ForwardDynamics<trait_t> forward_dyn(inertias, transforms);
-		forward_dyn.fd(qdd, state.template head(5), state.template tail(5), new_input);
+		forward_dyn.fd(qdd, state.template head<5>(), state.template tail<5>(), new_input);
 
 
 		// dxdt

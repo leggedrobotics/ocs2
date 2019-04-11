@@ -89,6 +89,14 @@ class LinearController : public Controller<STATE_DIM, INPUT_DIM> {
     }
   }
 
+  virtual void flattenFeedforwardOnly(scalar_t time, scalar_array_t& flatArray) const override {
+      input_vector_t uff;
+      linInterpolateUff_.interpolate(time, uff);
+
+      //TODO(jcarius) should we subtract k*x_ref here?
+      flatArray = std::move(scalar_array_t(uff.data(), uff.data()+INPUT_DIM));
+  }
+
   virtual void unFlatten(const scalar_array_t& timeArray, const std::vector<scalar_array_t const*>& flatArray2) override {
     time_ = timeArray;
 

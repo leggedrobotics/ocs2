@@ -232,9 +232,12 @@ void MPC_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::publishPolicy(
 			mpcPolicyMsg_.timeTrajectory.push_back(timeTrajectory[k]);
 			mpcPolicyMsg_.stateTrajectory.push_back(mpcState);
 
-            //TODO(jcarius) how does the controller know to only serialize feedforward?
             mpcPolicyMsg_.data.emplace_back(ocs2_comm_interfaces::controller_data());
+            if(mpcSettings_.useFeedbackPolicy_){
             (*controllerStockPtr)[i]->flatten(timeTrajectory[k], mpcPolicyMsg_.data.back().data);
+            }else{
+                (*controllerStockPtr)[i]->flattenFeedforwardOnly(timeTrajectory[k], mpcPolicyMsg_.data.back().data);
+            }
 
 		}  // end of k loop
 	}  // end of i loop

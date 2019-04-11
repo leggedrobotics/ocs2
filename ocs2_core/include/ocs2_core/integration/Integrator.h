@@ -126,7 +126,7 @@ public:
 			scalar_t dtInitial = 0.01,
 			scalar_t AbsTol = 1e-6,
 			scalar_t RelTol = 1e-3,
-			size_t maxNumSteps = std::numeric_limits<size_t>::max(),
+			int maxNumSteps = std::numeric_limits<int>::max(),
 			bool concatOutput = false) final;
 
 	/**
@@ -157,7 +157,7 @@ public:
 			scalar_t dtInitial = 0.01,
 			scalar_t AbsTol = 1e-9,
 			scalar_t RelTol = 1e-6,
-			size_t maxNumSteps = std::numeric_limits<size_t>::max(),
+			int maxNumSteps = std::numeric_limits<int>::max(),
 			bool concatOutput = false) final;
 
 private:
@@ -191,7 +191,6 @@ private:
 	 * @param [in] dtInitial: Initial time step.
 	 * @param [in] AbsTol: The absolute tolerance error for ode solver.
 	 * @param [in] RelTol: The relative tolerance error for ode solver.
-	 * @param [in] maxNumSteps: The maximum number of integration points per a second for ode solver.
 	 * @return
 	 */
 	template <typename S>
@@ -216,7 +215,6 @@ private:
 	 * @param [in] dtInitial: Initial time step.
 	 * @param [in] AbsTol: The absolute tolerance error for ode solver.
 	 * @param [in] RelTol: The relative tolerance error for ode solver.
-	 * @param [in] maxNumSteps: The maximum number of integration points per a second for ode solver.
 	 * @return
 	 */
 	template <typename S>

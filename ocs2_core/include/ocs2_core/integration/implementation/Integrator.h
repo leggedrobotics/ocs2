@@ -92,12 +92,12 @@ void Integrator<STATE_DIM, Stepper>::integrate(
 		scalar_t dtInitial /*= 0.01*/,
 		scalar_t AbsTol /*= 1e-6*/,
 		scalar_t RelTol /*= 1e-3*/,
-		size_t maxNumSteps /*= std::numeric_limits<size_t>::max()*/,
+		int maxNumSteps /*= std::numeric_limits<int>::max()*/,
 		bool concatOutput /*= false*/)  {
 
 	state_vector_t internalStartState = initialState;
 
-	if (BASE::eventHandlerPtr_ && maxNumSteps<std::numeric_limits<size_t>::max())
+	if (BASE::eventHandlerPtr_ && maxNumSteps<std::numeric_limits<int>::max())
 		BASE::eventHandlerPtr_->setMaxNumSteps(maxNumSteps);
 
 	// reset the trajectories
@@ -124,12 +124,12 @@ void Integrator<STATE_DIM, Stepper>::integrate(
 		scalar_t dtInitial /*= 0.01*/,
 		scalar_t AbsTol /*= 1e-9*/,
 		scalar_t RelTol /*= 1e-6*/,
-		size_t maxNumSteps /*= std::numeric_limits<size_t>::max()*/,
+		int maxNumSteps /*= std::numeric_limits<int>::max()*/,
 		bool concatOutput /*= false*/)  {
 
 	state_vector_t internalStartState = initialState;
 
-	if (BASE::eventHandlerPtr_ && maxNumSteps<std::numeric_limits<size_t>::max())
+	if (BASE::eventHandlerPtr_ && maxNumSteps<std::numeric_limits<int>::max())
 		BASE::eventHandlerPtr_->setMaxNumSteps(maxNumSteps);
 
 #if (BOOST_VERSION / 100000 == 1 && BOOST_VERSION / 100 % 1000 > 60)

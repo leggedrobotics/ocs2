@@ -76,7 +76,7 @@ public:
 	 *
 	 * @return size_t: number of function calls
 	 */
-	size_t getNumFunctionCalls() {
+	int getNumFunctionCalls() {
 		return numFunctionCalls_;
 	}
 
@@ -130,7 +130,7 @@ public:
 	}
 
 protected:
-	size_t numFunctionCalls_;
+	int numFunctionCalls_;
 
 };
 

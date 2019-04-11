@@ -740,11 +740,10 @@ SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculateInequalityConstraintPena
 			for (size_t k=0; k+1<timeTrajectoriesStock[i].size(); k++)  {
 
 				if (k==0) {
-					const size_t& ncIneq = ncIneqTrajectoriesStock[i][0];
-					if (ncIneq>0){
-						currentPenalty = penaltyPtrStock_[workerIndex]->getPenaltyCost(ncIneq, hTrajectoriesStock[i][k]);
-                        currentInequalityViolationSquaredNorm = penaltyPtrStock_[workerIndex]->getConstraintViolationSquaredNorm(
-                                ncIneq, hTrajectoriesStock[i][k]);
+					if (ncIneqTrajectoriesStock[i][0]>0){
+						penaltyPtrStock_[workerIndex]->getPenaltyCost(hTrajectoriesStock[i][k], currentPenalty);
+                        penaltyPtrStock_[workerIndex]->getConstraintViolationSquaredNorm(
+                                hTrajectoriesStock[i][k], currentInequalityViolationSquaredNorm);
                     }
 					else {
 						currentPenalty = 0.0;
@@ -755,11 +754,10 @@ SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculateInequalityConstraintPena
 					currentInequalityViolationSquaredNorm = nextInequalityViolationSquaredNorm;
 				}
 
-				const size_t& ncIneq_next = ncIneqTrajectoriesStock[i][k+1];
-				if (ncIneq_next>0){
-					nextPenalty = penaltyPtrStock_[workerIndex]->getPenaltyCost(ncIneq_next, hTrajectoriesStock[i][k+1]);
-                    nextInequalityViolationSquaredNorm = penaltyPtrStock_[workerIndex]->getConstraintViolationSquaredNorm(
-                            ncIneq_next, hTrajectoriesStock[i][k+1]);
+				if (ncIneqTrajectoriesStock[i][k+1]>0){
+					penaltyPtrStock_[workerIndex]->getPenaltyCost(hTrajectoriesStock[i][k+1], nextPenalty);
+                    penaltyPtrStock_[workerIndex]->getConstraintViolationSquaredNorm(
+                            hTrajectoriesStock[i][k+1], nextInequalityViolationSquaredNorm);
 				} else {
 					nextPenalty = 0.0;
                     nextInequalityViolationSquaredNorm = 0.0;
@@ -775,9 +773,6 @@ SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculateInequalityConstraintPena
 
 		return constraintPenalty;
 }
-
-
-
 
 
 /******************************************************************************************************/
@@ -1227,26 +1222,25 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::approximateConstrainedLQWork
 	}
 
 	// Inequality constraints
-	const size_t& ncIneq = ncIneqTrajectoriesStock_[i][k];
-	if (ncIneq > 0) {
+	if (ncIneqTrajectoriesStock_[i][k] > 0) {
 		scalar_t p;
 		state_vector_t dpdx;
 		input_vector_t dpdu;
 		state_matrix_t ddpdxdx;
 		input_matrix_t ddpdudu;
 		input_state_matrix_t ddpdudx;
-		p = penaltyPtrStock_[workerIndex]->getPenaltyCost(ncIneq, hTrajectoryStock_[i][k]);
-		penaltyPtrStock_[workerIndex]->getPenaltyCostDerivativeState(ncIneq, hTrajectoryStock_[i][k], dhdxTrajectoryStock_[i][k],
+		penaltyPtrStock_[workerIndex]->getPenaltyCost(hTrajectoryStock_[i][k], p);
+		penaltyPtrStock_[workerIndex]->getPenaltyCostDerivativeState(hTrajectoryStock_[i][k], dhdxTrajectoryStock_[i][k],
 														   dpdx);
-		penaltyPtrStock_[workerIndex]->getPenaltyCostDerivativeInput(ncIneq, hTrajectoryStock_[i][k], dhduTrajectoryStock_[i][k],
+		penaltyPtrStock_[workerIndex]->getPenaltyCostDerivativeInput(hTrajectoryStock_[i][k], dhduTrajectoryStock_[i][k],
 														   dpdu);
-		penaltyPtrStock_[workerIndex]->getPenaltyCostSecondDerivativeState(ncIneq, hTrajectoryStock_[i][k],
+		penaltyPtrStock_[workerIndex]->getPenaltyCostSecondDerivativeState(hTrajectoryStock_[i][k],
 																 dhdxTrajectoryStock_[i][k],
 																 ddhdxdxTrajectoryStock_[i][k], ddpdxdx);
-		penaltyPtrStock_[workerIndex]->getPenaltyCostSecondDerivativeInput(ncIneq, hTrajectoryStock_[i][k],
+		penaltyPtrStock_[workerIndex]->getPenaltyCostSecondDerivativeInput(hTrajectoryStock_[i][k],
 																 dhduTrajectoryStock_[i][k],
 																 ddhduduTrajectoryStock_[i][k], ddpdudu);
-		penaltyPtrStock_[workerIndex]->getPenaltyCostDerivativeInputState(ncIneq, hTrajectoryStock_[i][k],
+		penaltyPtrStock_[workerIndex]->getPenaltyCostDerivativeInputState(hTrajectoryStock_[i][k],
 																dhdxTrajectoryStock_[i][k], dhduTrajectoryStock_[i][k],
 																ddhdudxTrajectoryStock_[i][k], ddpdudx);
 		qTrajectoryStock_[i][k][0] += p; // q is a 1x1 matrix, so access it with [0]
@@ -1300,7 +1294,7 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::approximateConstrainedLQWork
 		}
 	}
 
-	// Precompute R inverse after costs are adapted
+	// Pre-compute R inverse after costs are adapted
 	RmInverseTrajectoryStock_[i][k] = RmTrajectoryStock_[i][k].ldlt().solve(input_matrix_t::Identity());
 
 	// constraint type 1 coefficients

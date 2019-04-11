@@ -42,19 +42,27 @@ namespace ocs2 {
 
 /**
  * Base class for the constraints and its Derivatives. The linearized constraints are defined as: \n
- * Here we consider two types of constraints: state-input constraints, \f$ g_1(x,u,T)\f$ and state-only
- * constraints, \f$ g_2(x,T)\f$. \f$ x \f$, \f$ u \f$, and \f$ T \f$ are state, input, and vector of
+ * Here we consider three types of constraints:
+ *
+ * - state-input constraints, \f$ g_1(x,u,t) = 0\f$,
+ * - state-only constraints, \f$ g_2(x,t) = 0\f$.
+ * - inequality constraint, \f$ h(x,u,t) \geq 0\f$
+ *
+ * \f$ x \f$, \f$ u \f$, and \f$ t \f$ are state, input, and vector of
  * event times respectively.
  *
- * - Linearized state-input constraints:       \f$ C(t) \delta x + D(t) \delta u + e(t) = 0 \f$ \n
- * - Linearized only-state constraints:        \f$ F(t) \delta x + h(t) = 0 \f$ \n
+ * - Linearized state-input constraints:       \f$ C(t) \delta x + D(t) \delta u + e(t) = 0 \f$
+ * - Linearized only-state constraints:        \f$ F(t) \delta x + h(t) = 0 \f$
  * - Linearized only-state final constraints:  \f$ F_f(t) \delta x + h_f(t) = 0 \f$
+ * - Quadratic approximation of each inequality constraint: \f$ h_{0,i}(t) + h_{x,i}(t) \delta x + h_{u,i}(t) \delta u \f$ \n
+ *  \f$ \qquad + 0.5 \delta x  H_{xx,i}(t) \delta x +  \delta u  H_{ux,i}(t) \delta x + 0.5 \delta u  H_{uu,i}(t) \delta u
+ *  \geq  0 \quad \forall i \f$
  *
  * @tparam STATE_DIM: Dimension of the state space.
  * @tparam INPUT_DIM: Dimension of the control input space.
  * @tparam LOGIC_RULES_T: Logic Rules type (default NullLogicRules).
  */
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T=NullLogicRules>
+template<size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T=NullLogicRules>
 class ConstraintBase
 {
 public:
@@ -183,9 +191,9 @@ public:
 	/**
  	* Gets the inequality constraints.
 	 *
-	 *  h_i(x, u, t) >= 0
+	 *  \f$ h(x, u, t) \geq 0 \f$
  	*
- 	* @param [out] h: The inequality constraints value.
+ 	* @param [out] h: Vector of inequality constraints values.
  	*/
 	virtual void getInequalityConstraint(scalar_array_t& h) {}
 
@@ -258,42 +266,32 @@ public:
 	virtual void getConstraint2DerivativesState(constraint2_state_matrix_t& F) {}
 
 	/**
-	* The dhdx matrix at a given operating point for the linearized inequality constraints,
-	* \f$ 0.5 * \delta x ddhdxdx_i(t) \delta x + \delta u ddhdudx_i(t) \delta x + 0.5 * \delta u ddhdudu_i(t) \delta x
-	 *    + dhdx_i(t) \delta x + dhdu_i(t) \delta u + e(t) >= 0 \f$.
-	* @param [out] dhdx: \f$ dhdx(t) \f$ matrix.
+	* Get the derivative of the inequality constraints.
+	* @param [out] dhdx: Vector of derivatives for each constraint with respect to state vector.
 	*/
 	virtual void getInequalityConstraintDerivativesState(state_vector_array_t& dhdx) {}
 
 	/**
-	* The dhdu matrix at a given operating point for the linearized inequality constraints,
-	* \f$ 0.5 * \delta x ddhdxdx_i(t) \delta x + \delta u ddhdudx_i(t) \delta x + 0.5 * \delta u ddhdudu_i(t) \delta x
-	 *    + dhdx_i(t) \delta x + dhdu_i(t) \delta u + e(t) >= 0 \f$.
-	* @param [out] dhdu: \f$ dhdu(t) \f$ matrix.
+	* Get the derivative of the inequality constraints.
+	* @param [out] dhdu: Vector derivatives for each constraint with respect to input vector.
 	*/
 	virtual void getInequalityConstraintDerivativesInput(input_vector_array_t& dhdu) {}
 
 	/**
-	* The ddhdxdx matrices at a given operating point for the linearized inequality constraints,
-	* \f$ 0.5 * \delta x ddhdxdx_i(t) \delta x + \delta u ddhdudx_i(t) \delta x + 0.5 * \delta u ddhdudu_i(t) \delta x
-	*    + dhdx_i(t) \delta x + dhdu_i(t) \delta u + e(t) >= 0 \f$.
-	* @param [out] ddhdxdx: \f$ ddhdxdx(t) \f$ matrix.
+	* Get the second derivative of the inequality constraints.
+	* @param [out] ddhdxdx: Vector of second derivatives for each constraint with respect to state vector.
 	*/
 	virtual void getInequalityConstraintSecondDerivativesState(state_matrix_array_t& ddhdxdx) {}
 
 	/**
-	* The ddhdudu matrices at a given operating point for the linearized inequality constraints,
-	* \f$ 0.5 * \delta x ddhdxdx_i(t) \delta x + \delta u ddhdudx_i(t) \delta x + 0.5 * \delta u ddhdudu_i(t) \delta x
-	*    + dhdx_i(t) \delta x + dhdu_i(t) \delta u + e(t) >= 0 \f$.
-	* @param [out] ddhudu: \f$ ddhdudu(t) \f$ matrix.
+	* Get the second derivative of the inequality constraints.
+	* @param [out] ddhudu: Vector of second derivatives for each constraint with respect to input vector.
 	*/
 	virtual void getInequalityConstraintSecondDerivativesInput(input_matrix_array_t& ddhdudu) {}
 
 	/**
-	* The ddhdudu matrices at a given operating point for the linearized inequality constraints,
-	* \f$ 0.5 * \delta x ddhdxdx_i(t) \delta x + \delta u ddhdudx_i(t) \delta x + 0.5 * \delta u ddhdudu_i(t) \delta x
-	*    + dhdx_i(t) \delta x + dhdu_i(t) \delta u + e(t) >= 0 \f$.
-	* @param [out] ddhudu: \f$ ddhdudu(t) \f$ matrix.
+	* Get the second derivative of the inequality constraints.
+	* @param [out] ddhudx: Vector of second derivatives for each constraint with respect to input vector and state.
 	*/
 	virtual void getInequalityConstraintDerivativesInputState(input_state_matrix_array_t& ddhdudx) {}
 

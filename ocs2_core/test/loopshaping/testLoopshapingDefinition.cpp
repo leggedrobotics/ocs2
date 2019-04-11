@@ -14,6 +14,7 @@ using namespace ocs2;
 
 const std::experimental::filesystem::path pathToTest(__FILE__);
 const std::string settingsFile_r = std::string(pathToTest.parent_path()) + "/loopshaping_r.conf";
+const std::string settingsFile_r_simple = std::string(pathToTest.parent_path()) + "/loopshaping_r_simple.conf";
 const std::string settingsFile_s = std::string(pathToTest.parent_path()) + "/loopshaping_s.conf";
 const auto inf_ = std::numeric_limits<double>::infinity();
 
@@ -45,6 +46,15 @@ TEST(testLoopshapingDefinition, Loopshaping_Definition_r) {
 
   LoopshapingDefinition filter;
   filter.loadSettings(settingsFile_r);
+  filter.print();
+
+  ASSERT_TRUE(true);
+}
+
+TEST(testLoopshapingDefinition, Loopshaping_Definition_r_simple) {
+
+  LoopshapingDefinition filter;
+  filter.loadSettings(settingsFile_r_simple);
   filter.print();
 
   ASSERT_TRUE(true);

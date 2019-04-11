@@ -13,7 +13,7 @@ TYPED_TEST(TestFixtureLoopShapingCost, testApproximation) {
   // Test that quadratic approximation with loopshaping is consistent with a numdiff of the loopshaping cost
   const double eps = 1e-2;
   const double tol = 1e-9;
-  const int n_random_tests = 100;
+  const int n_random_tests = 10;
 
   for (int i = 0; i < n_random_tests; i++) {
     // Set random linearization point
@@ -33,12 +33,6 @@ TYPED_TEST(TestFixtureLoopShapingCost, testApproximation) {
     this->testLoopshapingCost->getIntermediateCostSecondDerivativeState(ddLdxdx);
     this->testLoopshapingCost->getIntermediateCostSecondDerivativeInput(ddLdudu);
     this->testLoopshapingCost->getIntermediateCostDerivativeInputState(ddLdudx);
-
-    std::cout << "x0: \t" << this->x_.transpose() << std::endl;
-    std::cout << "u0: \t" << this->u_.transpose() << std::endl;
-    std::cout << "L0: \t" << L0 << std::endl;
-    std::cout << "dLdx: \t " << dLdx.transpose() << std::endl;
-    std::cout << "dLdu: \t " << dLdu.transpose() << std::endl;
 
     // Pertubation
     typename TestFixtureLoopShapingCost<TypeParam>::state_vector_t x_disturbance;
@@ -61,27 +55,24 @@ TYPED_TEST(TestFixtureLoopShapingCost, testApproximation) {
     this->testLoopshapingCost->getIntermediateCost(L_disturbance);
 
     // Evaluate approximation
-    typename TestFixtureLoopShapingCost<TypeParam>::scalar_t L_approximation;
-    L_approximation = L0 + dLdx.transpose() * x_disturbance + dLdu.transpose() * u_disturbance
+    typename TestFixtureLoopShapingCost<TypeParam>::scalar_t L_quad_approximation;
+    typename TestFixtureLoopShapingCost<TypeParam>::scalar_t L_lin_approximation;
+    L_quad_approximation = L0 + dLdx.transpose() * x_disturbance + dLdu.transpose() * u_disturbance
         + 0.5*x_disturbance.transpose()*ddLdxdx*x_disturbance
         + 0.5*u_disturbance.transpose()*ddLdudu*u_disturbance
         + u_disturbance.transpose()*ddLdudx*x_disturbance;
-
-    std::cout << "x1: \t" << (this->x_ + x_disturbance).transpose() << std::endl;
-    std::cout << "u1: \t" << (this->u_ + u_disturbance).transpose() << std::endl;
-    std::cout << "L_disturbance " << L_disturbance << std::endl;
-    std::cout << "L_approximation " << L_approximation << std::endl;
+    L_lin_approximation = L0 + dLdx.transpose() * x_disturbance + dLdu.transpose() * u_disturbance;
 
       // Difference between new evaluation and approximation should be less than tol
-      ASSERT_LE(std::abs(L_disturbance - L_approximation), tol);
+      ASSERT_LE(std::abs(L_disturbance - L_quad_approximation), tol);
   };
 };
 
 TYPED_TEST(TestFixtureLoopShapingCost, testStateDerivative) {
   // Test that quadratic approximation with loopshaping is consistent with a numdiff of the loopshaping cost
-  const double eps = 1e-6;
+  const double eps = 1e-2;
   const double tol = 1e-9;
-  const int n_random_tests = 100;
+  const int n_random_tests = 10;
 
   for (int i = 0; i < n_random_tests; i++) {
     // Set random linearization point
@@ -117,20 +108,21 @@ TYPED_TEST(TestFixtureLoopShapingCost, testStateDerivative) {
     this->testLoopshapingCost->getIntermediateCost(L_disturbance);
 
     // Evaluate approximation
-    typename TestFixtureLoopShapingCost<TypeParam>::scalar_t L_approximation;
-    L_approximation = L0 + dLdx.transpose() * x_disturbance +
+    typename TestFixtureLoopShapingCost<TypeParam>::scalar_t L_quad_approximation, L_lin_approximation;
+    L_quad_approximation = L0 + dLdx.transpose() * x_disturbance +
         + 0.5*x_disturbance.transpose()*ddLdxdx*x_disturbance;
+    L_lin_approximation = L0 + dLdx.transpose() * x_disturbance;
 
     // Difference between new evaluation and approximation should be less than tol
-    ASSERT_LE(std::abs(L_disturbance - L_approximation), tol);
+    ASSERT_LE(std::abs(L_disturbance - L_quad_approximation), tol);
   };
 };
 
 TYPED_TEST(TestFixtureLoopShapingCost, testDerivativeInput) {
   // Test that quadratic approximation with loopshaping is consistent with a numdiff of the loopshaping cost
-  const double eps = 1e-6;
+  const double eps = 1e-2;
   const double tol = 1e-9;
-  const int n_random_tests = 100;
+  const int n_random_tests = 10;
 
   for (int i = 0; i < n_random_tests; i++) {
     // Set random linearization point
@@ -166,12 +158,12 @@ TYPED_TEST(TestFixtureLoopShapingCost, testDerivativeInput) {
     this->testLoopshapingCost->getIntermediateCost(L_disturbance);
 
     // Evaluate approximation
-    typename TestFixtureLoopShapingCost<TypeParam>::scalar_t L_approximation;
-    L_approximation = L0 + dLdu.transpose() * u_disturbance
+    typename TestFixtureLoopShapingCost<TypeParam>::scalar_t L_quad_approximation, L_lin_approximation;
+    L_quad_approximation = L0 + dLdu.transpose() * u_disturbance
         + 0.5*u_disturbance.transpose()*ddLdudu*u_disturbance;
 
     // Difference between new evaluation and approximation should be less than tol
-    ASSERT_LE(std::abs(L_disturbance - L_approximation), tol);
+    ASSERT_LE(std::abs(L_disturbance - L_quad_approximation), tol);
   };
 };
 

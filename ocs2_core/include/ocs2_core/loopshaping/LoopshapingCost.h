@@ -176,12 +176,12 @@ namespace ocs2 {
           auto& r_filter = loopshapingDefinition_->getInputFilter_r();
           auto& s_filter = loopshapingDefinition_->getInputFilter_s();
 
-          if (s_filter.getNumStates() > 0 ) {
+          if (s_filter.getNumOutputs() > 0 ) {
             dLdx.segment(0, system_state_dim) = gamma* q_filter_  + (1.0-gamma)* q_system_;
             dLdx.segment(system_state_dim, filter_state_dim).setZero();
           }
 
-          if (r_filter.getNumStates() > 0 ) {
+          if (r_filter.getNumOutputs() > 0 ) {
             dLdx.segment(0, system_state_dim) = gamma* q_filter_ + (1.0-gamma)* q_system_;
             dLdx.segment(system_state_dim, filter_state_dim) = gamma* r_filter.getC().transpose()* r_filter_;
           }
@@ -198,12 +198,12 @@ namespace ocs2 {
           auto& r_filter = loopshapingDefinition_->getInputFilter_r();
           auto& s_filter = loopshapingDefinition_->getInputFilter_s();
 
-          if (s_filter.getNumStates() > 0) {
+          if (s_filter.getNumOutputs() > 0) {
             dLdxx.setZero();
             dLdxx.block(0, 0, system_state_dim, system_state_dim) = gamma* Q_filter_  + (1.0-gamma)* Q_system_;
           }
 
-          if (r_filter.getNumStates() > 0 ) {
+          if (r_filter.getNumOutputs() > 0 ) {
             dLdxx.block(0, 0, system_state_dim, system_state_dim) = gamma* Q_filter_  + (1.0-gamma)* Q_system_;
             dLdxx.block(0, system_state_dim, system_state_dim, filter_state_dim) = gamma* P_filter_.transpose() * r_filter.getC();
             dLdxx.block(system_state_dim, 0, filter_state_dim, system_state_dim) = dLdxx.block(0, system_state_dim, system_state_dim, filter_state_dim).transpose();
@@ -222,12 +222,12 @@ namespace ocs2 {
           auto& r_filter = loopshapingDefinition_->getInputFilter_r();
           auto& s_filter = loopshapingDefinition_->getInputFilter_s();
 
-          if (s_filter.getNumStates() > 0 ){
+          if (s_filter.getNumOutputs() > 0 ){
             dLdu.segment(0, system_input_dim) = (1.0 - gamma) * r_system_;
             dLdu.segment(system_input_dim, filter_input_dim) = gamma * r_filter_;
           }
 
-          if (r_filter.getNumStates() > 0 ){
+          if (r_filter.getNumOutputs() > 0 ){
             dLdu.segment(0, system_input_dim) = gamma* r_filter.getD().transpose()* r_filter_ + (1.0-gamma) * r_system_;
           }
 
@@ -242,13 +242,13 @@ namespace ocs2 {
           auto& r_filter = loopshapingDefinition_->getInputFilter_r();
           auto& s_filter = loopshapingDefinition_->getInputFilter_s();
 
-          if (s_filter.getNumStates() > 0) {
+          if (s_filter.getNumOutputs() > 0) {
             dLduu.setZero();
             dLduu.block(0, 0, system_input_dim, system_input_dim) = (1.0 - gamma) * R_system_;
             dLduu.block(system_input_dim, system_input_dim, filter_input_dim, filter_input_dim) = gamma * R_filter_;
           }
 
-          if (r_filter.getNumStates() > 0) {
+          if (r_filter.getNumOutputs() > 0) {
             dLduu.block(0, 0, system_input_dim, system_input_dim) = gamma* r_filter.getD().transpose() * R_filter_ * r_filter.getD() + (1.0-gamma) * R_system_;
           }
 
@@ -263,14 +263,14 @@ namespace ocs2 {
           auto& r_filter = loopshapingDefinition_->getInputFilter_r();
           auto& s_filter = loopshapingDefinition_->getInputFilter_s();
 
-          if (s_filter.getNumStates() > 0){
+          if (s_filter.getNumOutputs() > 0){
             dLdux.block(0, 0, system_input_dim, system_state_dim) = (1.0 - gamma) * P_system_;
             dLdux.block(0, system_state_dim, system_input_dim, filter_state_dim).setZero();
             dLdux.block(system_input_dim, 0, filter_input_dim, system_state_dim) = gamma * P_filter_;
             dLdux.block(system_input_dim, system_state_dim, filter_input_dim, filter_state_dim).setZero();
           }
 
-          if (r_filter.getNumStates() > 0){
+          if (r_filter.getNumOutputs() > 0){
             dLdux.block(0, 0, system_input_dim, system_state_dim) = gamma* r_filter.getD().transpose()*P_filter_ + (1.0-gamma)*P_system_;
             dLdux.block(0, system_state_dim, system_input_dim, filter_state_dim) = gamma* r_filter.getD().transpose()*R_filter_*r_filter.getC();
           }

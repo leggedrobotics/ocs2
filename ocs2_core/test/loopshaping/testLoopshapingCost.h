@@ -67,6 +67,10 @@ class TestFixtureLoopShapingCost : public ::testing::Test {
     Q_final.setRandom();
     R.setRandom();
     P.setRandom();
+
+    // Make symmetric
+    Q = (0.5*Q.transpose() + 0.5*Q).eval();
+    R = (0.5*R.transpose() + 0.5*R).eval();
     testSystemCost.reset(new TestSystemCost(Q, R, x_sys_, u_sys_, Q_final, x_sys_, P));
 
     // Create Loopshaping costs
@@ -93,15 +97,10 @@ class TestFixtureLoopShapingCost : public ::testing::Test {
                            input_vector_t &u,
                            double range = 1.0) {
     // Set random state
-//    x_sys.setRandom();
-//    u_sys.setRandom();
-//    x_filter.setRandom();
-//    u_filter.setRandom();
-
-    x_sys.setOnes();
-    u_sys.setOnes();
-    x_filter.setOnes();
-    u_filter.setOnes();
+    x_sys.setRandom();
+    u_sys.setRandom();
+    x_filter.setRandom();
+    u_filter.setRandom();
 
     // Scale the randomness
     x_sys *= range;

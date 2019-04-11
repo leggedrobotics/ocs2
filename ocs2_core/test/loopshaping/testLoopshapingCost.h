@@ -55,7 +55,15 @@ class TestFixtureLoopShapingCost : public ::testing::Test {
 
     // Set up state and input
     t = 0.5;
+    const double eps = 1e-2;
     getRandomStateInput(x_sys_, u_sys_, x_filter_, u_filter_, x_, u_);
+    getRandomStateInput(x_sys_disturbance_,
+                        u_sys_disturbance_,
+                        x_filter_disturbance_,
+                        u_filter_disturbance_,
+                        x_disturbance_,
+                        u_disturbance_,
+                        eps);
 
     // Create system costs
     system_state_matrix_t Q, Q_final;
@@ -80,6 +88,8 @@ class TestFixtureLoopShapingCost : public ::testing::Test {
   std::unique_ptr<TestSystemCost> testSystemCost;
   std::unique_ptr<TestLoopshapingCost> testLoopshapingCost;
 
+  const double tol = 1e-9;
+
   double t;
   state_vector_t x_;
   input_vector_t u_;
@@ -87,6 +97,13 @@ class TestFixtureLoopShapingCost : public ::testing::Test {
   system_input_vector_t u_sys_;
   filter_state_vector_t x_filter_;
   filter_input_vector_t u_filter_;
+
+  state_vector_t x_disturbance_;
+  input_vector_t u_disturbance_;
+  system_state_vector_t x_sys_disturbance_;
+  system_input_vector_t u_sys_disturbance_;
+  filter_state_vector_t x_filter_disturbance_;
+  filter_input_vector_t u_filter_disturbance_;
 
   void getRandomStateInput(system_state_vector_t &x_sys,
                            system_input_vector_t &u_sys,

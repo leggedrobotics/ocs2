@@ -23,46 +23,29 @@ TYPED_TEST(TestFixtureLoopShapingDynamics, evaluateDynamics) {
 };
 
 TYPED_TEST(TestFixtureLoopShapingDynamics, evaluateDynamicsDerivative) {
-  // Test that dx = A delta_x + B delta_u + dx(x0, u0) is equal to dx(x0 + delta_x, u0 + delta_u);
-  const double eps = 1e-6;
-  const double tol = 1e-9;
-  const int n_random_tests = 100;
 
-  for (int i=0; i<n_random_tests; i++) {
-    // Set random linearization point
-    this->getRandomStateInput(this->x_sys_, this->u_sys_, this->x_filter_, this->u_filter_, this->x_, this->u_);
+  // Extract linearization
+  typename TestFixtureLoopShapingDynamics<TypeParam>::state_vector_t dx_0;
+  typename TestFixtureLoopShapingDynamics<TypeParam>::state_matrix_t A;
+  typename TestFixtureLoopShapingDynamics<TypeParam>::state_input_matrix_t B;
 
-    // Extract linearization
-    typename TestFixtureLoopShapingDynamics<TypeParam>::state_vector_t dx_0;
-    this->testLoopshapingDynamics->computeFlowMap(this->t, this->x_, this->u_, dx_0);
+  this->testLoopshapingDynamics->computeFlowMap(this->t, this->x_, this->u_, dx_0);
+  this->testLoopshapingDynamicsDerivative->getFlowMapDerivativeState(A);
+  this->testLoopshapingDynamicsDerivative->getFlowMapDerivativeInput(B);
 
-    typename TestFixtureLoopShapingDynamics<TypeParam>::state_matrix_t A;
-    typename TestFixtureLoopShapingDynamics<TypeParam>::state_input_matrix_t B;
-    this->testLoopshapingDynamicsDerivative->getFlowMapDerivativeState(A);
-    this->testLoopshapingDynamicsDerivative->getFlowMapDerivativeInput(B);
+  // Reevaluate at disturbed state
+  typename TestFixtureLoopShapingDynamics<TypeParam>::state_vector_t dx_disturbance;
+  this->testLoopshapingDynamics->computeFlowMap(this->t,
+                                                this->x_ + this->x_disturbance_,
+                                                this->u_ + this->u_disturbance_,
+                                                dx_disturbance);
 
-    // Pertubation
-    typename TestFixtureLoopShapingDynamics<TypeParam>::state_vector_t x_disturbance;
-    typename TestFixtureLoopShapingDynamics<TypeParam>::input_vector_t u_disturbance;
-    typename TestFixtureLoopShapingDynamics<TypeParam>::system_state_vector_t x_sys_disturbance;
-    typename TestFixtureLoopShapingDynamics<TypeParam>::system_input_vector_t u_sys_disturbance;
-    typename TestFixtureLoopShapingDynamics<TypeParam>::filter_state_vector_t x_filter_disturbance;
-    typename TestFixtureLoopShapingDynamics<TypeParam>::filter_input_vector_t u_filter_disturbance;
-    this->getRandomStateInput(x_sys_disturbance,
-                        u_sys_disturbance,
-                        x_filter_disturbance,
-                        u_filter_disturbance,
-                        x_disturbance,
-                        u_disturbance,
-                        eps);
+  // Evaluate approximation
+  typename TestFixtureLoopShapingDynamics<TypeParam>::state_vector_t dx_approximation;
+  dx_approximation = dx_0 + A * this->x_disturbance_ + B * this->u_disturbance_;
 
-    // Reevaluate at disturbed state
-    typename TestFixtureLoopShapingDynamics<TypeParam>::state_vector_t dx;
-    this->testLoopshapingDynamics->computeFlowMap(this->t, this->x_ + x_disturbance, this->u_ + u_disturbance, dx);
-
-    // Difference between new evaluation and linearization should be less than tol
-    ASSERT_LE((dx - (dx_0 + A * x_disturbance + B * u_disturbance)).array().abs().maxCoeff(), tol);
-  }
+  // Difference between new evaluation and linearization should be less than tol
+  ASSERT_LE((dx_disturbance - dx_approximation).array().abs().maxCoeff(), this->tol);
 };
 
 int main(int argc, char **argv) {

@@ -67,13 +67,23 @@ class TestFixtureLoopShapingDynamics : public ::testing::Test {
 
     // Set up state and input
     t = 0.5;
+    const double eps = 1e-2;
     getRandomStateInput(x_sys_, u_sys_, x_filter_, u_filter_, x_, u_);
+    getRandomStateInput(x_sys_disturbance_,
+                        u_sys_disturbance_,
+                        x_filter_disturbance_,
+                        u_filter_disturbance_,
+                        x_disturbance_,
+                        u_disturbance_,
+                        eps);
   };
 
   std::shared_ptr<LoopshapingDefinition> loopshapingDefinition_;
   std::unique_ptr<TestSystem> testSystem;
   std::unique_ptr<TestLoopshapingDynamics> testLoopshapingDynamics;
   std::unique_ptr<TestLoopshapingDynamicsDerivative> testLoopshapingDynamicsDerivative;
+
+  const double tol = 1e-9;
 
   double t;
   state_vector_t x_;
@@ -82,6 +92,13 @@ class TestFixtureLoopShapingDynamics : public ::testing::Test {
   system_input_vector_t u_sys_;
   filter_state_vector_t x_filter_;
   filter_input_vector_t u_filter_;
+
+  state_vector_t x_disturbance_;
+  input_vector_t u_disturbance_;
+  system_state_vector_t x_sys_disturbance_;
+  system_input_vector_t u_sys_disturbance_;
+  filter_state_vector_t x_filter_disturbance_;
+  filter_input_vector_t u_filter_disturbance_;
 
   void getRandomStateInput(system_state_vector_t &x_sys,
                            system_input_vector_t &u_sys,
@@ -106,6 +123,7 @@ class TestFixtureLoopShapingDynamics : public ::testing::Test {
     loopshapingDefinition_->concatenateSystemAndFilterState(x_sys, x_filter, x);
     loopshapingDefinition_->concatenateSystemAndFilterInput(u_sys, u_filter, u);
   }
+
 };
 
 }; // namespace ocs2

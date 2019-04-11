@@ -102,7 +102,7 @@ class LinearInterpolation {
   void setTimeStamp(const std::vector<scalar_t>* timeStampPtr) {
     reset();
     timeStampSize_ = timeStampPtr->size();
-    timeStampPtr_ = timeStampPtr;
+    timeStampPtr_ = timeStampPtr; //TODO(jcarius) this is bad - user would not assume we save this internally
     checkTimeStamp();
   }
 

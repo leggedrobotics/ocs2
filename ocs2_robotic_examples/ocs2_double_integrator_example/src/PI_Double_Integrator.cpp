@@ -2,10 +2,10 @@
 
 #include <ocs2_core/cost/PathIntegralCostFunction.h>
 #include <ocs2_mpc/MPC_PI.h>
-#include <ocs2_robotic_examples/examples/double_integrator/dynamics/DoubleIntegratorDynamics.h>
-//#include <ocs2_robotic_examples/examples/double_integrator/DoubleIntegratorInterface.h>
+#include <ocs2_double_integrator_example/dynamics/DoubleIntegratorDynamics.h>
+//#include <ocs2_double_integrator_example/dynamics/DoubleIntegratorInterface.h>
 #include <ocs2_mpc/MPC_Settings.h>
-#include <ocs2_robotic_examples/examples/double_integrator/ros_comm/MPC_ROS_Double_Integrator.h>
+#include <ocs2_double_integrator_example/ros_comm/MPC_ROS_Double_Integrator.h>
 #include <ros/package.h>
 
 #include <ocs2_core/misc/loadEigenMatrix.h>

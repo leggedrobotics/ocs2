@@ -453,8 +453,7 @@ template<size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
 void MRT_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::rolloutFeedbackPolicy(scalar_t t0,
                                                                                    const state_vector_t &initState,
                                                                                    scalar_t rollout_time) {
-  size_t
-  activePartitionIndex = findActiveIntervalIndex(partitioningTimes_, t0, 0);
+  size_t activePartitionIndex = findActiveIntervalIndex(partitioningTimes_, t0, 0);
 
   scalar_t final_time = t0 + rollout_time;
   size_array_t eventsPastTheEndIndeces;
@@ -462,16 +461,17 @@ void MRT_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::rolloutFeedbackPoli
   // Perform rollout
   if (rolloutPtr_) {
     if (policyUpdated_) {
+      input_vector_array_t inputTrajectoryDummy;
       rolloutPtr_->run(activePartitionIndex,
                        t0,
                        initState,
                        final_time,
-                       mpcController_,
+                       mpcController_.get(),
                        *logicMachinePtr_,
                        mpcTimeTrajectory_,
                        eventsPastTheEndIndeces,
                        mpcStateTrajectory_,
-                       mpcInputTrajectory_);
+                       inputTrajectoryDummy);
     } else {
       throw std::runtime_error("MRT_ROS_interface: policy not updated before rollout.");
     }
@@ -479,17 +479,14 @@ void MRT_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::rolloutFeedbackPoli
     throw std::runtime_error("MRT_ROS_interface: rolloutPtr not initialized, call initRollout first.");
   }
 
+  //TODO(jcarius) resetting should not be necessary
   // Set rollout to be the mpc feedforward trajectory
   mpcLinInterpolateState_.reset();
   mpcLinInterpolateState_.setTimeStamp(&mpcTimeTrajectory_);
   mpcLinInterpolateState_.setData(&mpcStateTrajectory_);
 
-  mpcLinInterpolateInput_.reset();
-  mpcLinInterpolateInput_.setTimeStamp(&mpcTimeTrajectory_);
-  mpcLinInterpolateInput_.setData(&mpcInputTrajectory_);
-
-  loadModifiedFeedforwardPolicy(logicUpdated_, policyUpdated_,
-                                mpcTimeTrajectory_, mpcStateTrajectory_, mpcInputTrajectory_,
+  loadModifiedPolicy(logicUpdated_, policyUpdated_, *mpcController_,
+                                mpcTimeTrajectory_, mpcStateTrajectory_,
                                 eventTimes_, subsystemsSequence_);
 
   feedforwardGeneratedWithRollout_ = true;

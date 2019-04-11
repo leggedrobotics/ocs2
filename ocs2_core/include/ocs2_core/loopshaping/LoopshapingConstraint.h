@@ -263,7 +263,9 @@ class LoopshapingConstraint final : public ConstraintBase<
       } else {
         D.template block(filter_constraint_dim, 0, numSystemConstraints, system_input_dim) =
             D_system.block(0, 0, numSystemConstraints, system_input_dim);
-        D.template block(filter_constraint_dim, system_input_dim, numSystemConstraints, filter_input_dim).setZero();
+        if (s_filter.getNumOutputs() > 0) {
+          D.template block(filter_constraint_dim, system_input_dim, numSystemConstraints, filter_input_dim).setZero();
+        }
       }
     }
   }

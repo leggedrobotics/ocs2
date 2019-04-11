@@ -119,8 +119,8 @@ class LoopshapingConstraint final : public ConstraintBase<
     }
 
     auto &s_filter = loopshapingDefinition_->getInputFilter_s();
-    if (s_filter.getNumStates() > 0 && !loopshapingDefinition_->eliminateInputs) {
-      filter_constraint_dim = system_input_dim;
+    if (s_filter.getNumOutputs() > 0 && !loopshapingDefinition_->eliminateInputs) {
+      filter_constraint_dim = s_filter.getNumOutputs();
     } else {
       filter_constraint_dim = 0;
     }
@@ -289,7 +289,7 @@ class LoopshapingConstraint final : public ConstraintBase<
 
       const auto &s_filter = loopshapingDefinition_->getInputFilter_s();
 
-      if (s_filter.getNumStates() > 0 && loopshapingDefinition_->eliminateInputs){
+      if (s_filter.getNumOutputs() > 0 && loopshapingDefinition_->eliminateInputs){
         system_input_vector_array_t system_dhdu;
         systemConstraint_->getInequalityConstraintDerivativesInput(system_dhdu);
         for (size_t i = 0; i < nIneq; i++) {
@@ -331,7 +331,7 @@ class LoopshapingConstraint final : public ConstraintBase<
 
       const auto &s_filter = loopshapingDefinition_->getInputFilter_s();
 
-      if (s_filter.getNumStates() > 0 && loopshapingDefinition_->eliminateInputs){
+      if (s_filter.getNumOutputs() > 0 && loopshapingDefinition_->eliminateInputs){
         system_input_matrix_array_t system_ddhdudu;
         system_input_state_matrix_array_t system_ddhdudx;
         systemConstraint_->getInequalityConstraintSecondDerivativesInput(system_ddhdudu);
@@ -375,7 +375,7 @@ class LoopshapingConstraint final : public ConstraintBase<
 
       const auto &s_filter = loopshapingDefinition_->getInputFilter_s();
 
-      if (s_filter.getNumStates() > 0 && loopshapingDefinition_->eliminateInputs){
+      if (s_filter.getNumOutputs() > 0 && loopshapingDefinition_->eliminateInputs){
         system_input_matrix_array_t system_ddhdudu;
         systemConstraint_->getInequalityConstraintSecondDerivativesInput(system_ddhdudu);
         for (size_t i = 0; i < nIneq; i++) {

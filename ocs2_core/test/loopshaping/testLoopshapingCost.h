@@ -4,8 +4,6 @@
 
 #pragma once
 
-#pragma once
-
 #include <gtest/gtest.h>
 #include <Eigen/Dense>
 #include <experimental/filesystem>

@@ -1,5 +1,7 @@
 # Flattened controller: A serialized controller
 
+# define controllerType Enum values
+uint8 CONTROLLER_UNKNOWN=0 # safety mechanism: message initalization to zero
 uint8 CONTROLLER_SLQ_FEEDFORWARD=1
 uint8 CONTROLLER_SLQ_FEEDBACK=2
 uint8 CONTROLLER_PATH_INTEGRAL=3

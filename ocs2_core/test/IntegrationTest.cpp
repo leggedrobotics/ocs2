@@ -34,6 +34,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ocs2_core/integration/Integrator.h"
 #include "ocs2_core/integration/EventHandlerBase.h"
 #include "ocs2_core/dynamics/LinearSystemDynamics.h"
+#include "ocs2_core/control/LinearController.h"
 
 #include <ocs2_core/misc/FindActiveIntervalIndex.h>
 
@@ -56,12 +57,13 @@ TEST(IntegrationTest, DISABLED_SecondOrderSystem_ODE45)
 	SecondOrderSystem::input_vector_array_t uff(2, SecondOrderSystem::input_vector_t::Ones());
 	SecondOrderSystem::input_state_matrix_array_t k(2, SecondOrderSystem::input_state_matrix_t::Zero());
 
-	SecondOrderSystem::controller_t controller;
-	controller.time_ = cntTimeStamp;
-	controller.uff_ = uff;
-	controller.k_ = k;
+    using controller_t = ocs2::LinearController<2,1>;
+    auto controller = std::unique_ptr<controller_t>(new controller_t);
+	controller->time_ = cntTimeStamp;
+	controller->uff_ = uff;
+	controller->k_ = k;
 
-	sys->setController(controller);
+	sys->setController(controller.get());
 
 	ControlledSystemBase<2, 1>::Ptr sysClone1(sys->clone());
 	resultsGood = sysClone1.unique();
@@ -120,12 +122,13 @@ TEST(IntegrationTest, DISABLED_SecondOrderSystem_AdamsBashfort)
 	SecondOrderSystem::input_vector_array_t uff(2, SecondOrderSystem::input_vector_t::Ones());
 	SecondOrderSystem::input_state_matrix_array_t k(2, SecondOrderSystem::input_state_matrix_t::Zero());
 
-	SecondOrderSystem::controller_t controller;
-	controller.time_ = cntTimeStamp;
-	controller.uff_ = uff;
-	controller.k_ = k;
+    using controller_t = ocs2::LinearController<2,1>;
+    auto controller = std::unique_ptr<controller_t>(new controller_t);
+	controller->time_ = cntTimeStamp;
+	controller->uff_ = uff;
+	controller->k_ = k;
 
-	sys->setController(controller);
+	sys->setController(controller.get());
 
 	ControlledSystemBase<2, 1>::Ptr sysClone1(sys->clone());
 	resultsGood = sysClone1.unique();
@@ -187,12 +190,13 @@ TEST(IntegrationTest, DISABLED_SecondOrderSystem_AdamsBashfortMoulton)
 	SecondOrderSystem::input_vector_array_t uff(2, SecondOrderSystem::input_vector_t::Ones());
 	SecondOrderSystem::input_state_matrix_array_t k(2, SecondOrderSystem::input_state_matrix_t::Zero());
 
-	SecondOrderSystem::controller_t controller;
-	controller.time_ = cntTimeStamp;
-	controller.uff_ = uff;
-	controller.k_ = k;
+    using controller_t = ocs2::LinearController<2,1>;
+    auto controller = std::unique_ptr<controller_t>(new controller_t);
+	controller->time_ = cntTimeStamp;
+	controller->uff_ = uff;
+	controller->k_ = k;
 
-	sys->setController(controller);
+	sys->setController(controller.get());
 
 	ControlledSystemBase<2, 1>::Ptr sysClone1(sys->clone());
 	resultsGood =  sysClone1.unique();

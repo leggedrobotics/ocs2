@@ -159,11 +159,9 @@ void MRT_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::resetMpcNode() {
   ocs2_comm_interfaces::reset resetSrv;
   resetSrv.request.reset = true;
 
-  if (mpcResetServiceClient_.call(resetSrv)) {
-    ROS_INFO_STREAM("Waiting for MPC node to reset ...");
-    mpcResetServiceClient_.waitForExistence();
+  if (mpcResetServiceClient_.waitForExistence()) {
+    mpcResetServiceClient_.call(resetSrv);
     ROS_INFO_STREAM("MPC node is reset.");
-
   } else {
     ROS_ERROR_STREAM("Failed to call service to reset MPC.");
   }
@@ -287,7 +285,8 @@ void MRT_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::mpcPolicyCallback (
     }
     case ocs2_comm_interfaces::mpc_flattened_controller::CONTROLLER_SLQ_FEEDBACK:
     {
-        mpcControllerBuffer_ = std::make_unique<LinearController<STATE_DIM, INPUT_DIM>>();
+        using controller_t = LinearController<STATE_DIM, INPUT_DIM>;
+        mpcControllerBuffer_ = std::unique_ptr<controller_t>(new controller_t());
         mpcControllerBuffer_->unFlatten(mpcTimeTrajectoryBuffer_, controllerData);
     }
     case ocs2_comm_interfaces::mpc_flattened_controller::CONTROLLER_PATH_INTEGRAL:

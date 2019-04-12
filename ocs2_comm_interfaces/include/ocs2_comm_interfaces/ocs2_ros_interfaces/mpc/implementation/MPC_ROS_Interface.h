@@ -190,6 +190,19 @@ void MPC_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::publishPolicy(
 	ros_msg_conversions_t::CreateModeSequenceMsg(*eventTimesPtr, *subsystemsSequencePtr,
 			mpcPolicyMsg_.modeSequence);
 
+    const auto controllerType = controllerStockPtr->front()->getType();
+
+    if(controllerType == "LinearController"){
+        if(mpcSettings_.useFeedbackPolicy_){
+        mpcPolicyMsg_.controllerType = ocs2_comm_interfaces::mpc_flattened_controller::CONTROLLER_SLQ_FEEDBACK;
+        }else{
+            mpcPolicyMsg_.controllerType = ocs2_comm_interfaces::mpc_flattened_controller::CONTROLLER_SLQ_FEEDFORWARD;
+        }
+    }
+    else if (controllerType == "PathIntegralController"){
+        mpcPolicyMsg_.controllerType = ocs2_comm_interfaces::mpc_flattened_controller::CONTROLLER_PATH_INTEGRAL;
+    }
+
 	// maximum length of the message
 	size_t I = timeTrajectoriesStockPtr->size();
 	size_t totalN = 0;

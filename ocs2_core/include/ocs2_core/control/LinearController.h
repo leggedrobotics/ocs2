@@ -11,6 +11,8 @@ class LinearController : public Controller<STATE_DIM, INPUT_DIM> {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
+  using Base = Controller<STATE_DIM, INPUT_DIM>;
+
   using dimensions_t = Dimensions<STATE_DIM, INPUT_DIM>;
   using scalar_t = typename dimensions_t::scalar_t;
   using scalar_array_t = typename dimensions_t::scalar_array_t;
@@ -23,12 +25,19 @@ class LinearController : public Controller<STATE_DIM, INPUT_DIM> {
   using self_t = LinearController<STATE_DIM, INPUT_DIM>;
   using array_t = std::vector<self_t, Eigen::aligned_allocator<self_t>>;
 
-  LinearController() = default;
+  LinearController()
+      : Base()
+        , linInterpolateUff_(&time_, &uff_)
+        , linInterpolateK_(&time_, &k_) {
+  }
 
   LinearController(const scalar_array_t& controllerTime, const input_vector_array_t& controllerFeedforward,
-                   const input_state_matrix_array_t& controllerFeedback) {
+                   const input_state_matrix_array_t& controllerFeedback) : LinearController() {
     setController(controllerTime, controllerFeedforward, controllerFeedback);
-  }
+    }
+
+  LinearController(const LinearController& other)
+      : LinearController(other.time_, other.uff_, other.k_){deltaUff_ = other.deltaUff_;}
 
   virtual ~LinearController() = default;
 
@@ -38,7 +47,6 @@ class LinearController : public Controller<STATE_DIM, INPUT_DIM> {
     uff_ = controllerFeedforward;
     k_ = controllerFeedback;
 
-    initInterpolators();
   }
 
   void reset() {
@@ -50,14 +58,6 @@ class LinearController : public Controller<STATE_DIM, INPUT_DIM> {
   }
 
   void clear() { reset(); }
-
-  void initInterpolators() {
-    linInterpolateUff_.setTimeStamp(&time_);
-    linInterpolateUff_.setData(&uff_);
-
-    linInterpolateK_.setTimeStamp(&time_);
-    linInterpolateK_.setData(&k_);
-  }
 
   virtual input_vector_t computeInput(const scalar_t& t, const state_vector_t& x) override {
     input_vector_t uff;
@@ -146,8 +146,6 @@ class LinearController : public Controller<STATE_DIM, INPUT_DIM> {
     swap(deltaUff_, other.deltaUff_);
     swap(k_, other.k_);
 
-    initInterpolators();
-    other.initInterpolators();
   }
 
   /**
@@ -172,6 +170,8 @@ class LinearController : public Controller<STATE_DIM, INPUT_DIM> {
    * @return the size of the controller.
    */
   size_t size() const { return time_.size(); }
+
+  virtual std::string getType() const override {return "LinearController";}
 
  public:
   scalar_array_t time_;

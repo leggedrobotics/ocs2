@@ -405,7 +405,7 @@ typename SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::scalar_t
 
 		} else {
 			x0Temp = operatingTrajectoriesRolloutPtrStock_[threadId]->run(
-					i, t0, x0, tf, controllerPtrTemp, *logicRulesMachinePtr_,
+					i, t0, x0, tf, nullptr, *logicRulesMachinePtr_,
 					timeTrajectoriesStock[i], eventsPastTheEndIndecesStock[i],
 					stateTrajectoriesStock[i], inputTrajectoriesStock[i]);
 		}

@@ -67,6 +67,12 @@ class Controller {
    * @param[in] flatArray2 The array the represents the compressed controller
    */
   virtual void unFlatten(const scalar_array_t& timeArray, const std::vector<scalar_array_t const*>& flatArray2) = 0;
+
+  /**
+   * @brief Prints the type of controller
+   * @return string: what type of controller this is
+   */
+  virtual std::string getType() const = 0;
 };
 
 }  // namespace ocs2

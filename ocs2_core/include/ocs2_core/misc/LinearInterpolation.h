@@ -55,8 +55,7 @@ class LinearInterpolation {
    * Default constructor.
    */
   LinearInterpolation()
-
-      : index_(0), zeroFunction_(false), timeStampSize_(0), timeStampPtr_(NULL), dataPtr_(NULL) {}
+      : index_(0), zeroFunction_(false), timeStampPtr_(nullptr), dataPtr_(nullptr) {}
 
   /**
    * Constructor
@@ -65,10 +64,9 @@ class LinearInterpolation {
    * @param [in] dataPtr: A pointer to the data.
    */
   LinearInterpolation(const std::vector<scalar_t>* timeStampPtr, const std::vector<Data_T, Alloc>* dataPtr)
-
-      : index_(0), zeroFunction_(false), timeStampSize_(timeStampPtr->size()), timeStampPtr_(timeStampPtr), dataPtr_(dataPtr) {
-    checkTimeStamp();
-    if (dataPtr_ == NULL) throw std::runtime_error("dataPtr is not initialized.");
+      : index_(0), zeroFunction_(false), timeStampPtr_(timeStampPtr), dataPtr_(dataPtr) {
+    if (timeStampPtr_ == nullptr) throw std::runtime_error("timeStampPtr is nullptr.");
+    if (dataPtr_ == nullptr) throw std::runtime_error("dataPtr is nullptr.");
   }
 
   /**
@@ -76,13 +74,7 @@ class LinearInterpolation {
    *
    * @param [in] arg: Instance of the other class.
    */
-  LinearInterpolation(const LinearInterpolation& arg)
-
-      : index_(arg.index_),
-        timeStampSize_(arg.timeStampSize_),
-        zeroFunction_(arg.zeroFunction_),
-        timeStampPtr_(arg.timeStampPtr_),
-        dataPtr_(arg.dataPtr_) {}
+  LinearInterpolation(const LinearInterpolation& arg) = default;
 
   /**
    * Reset function
@@ -90,8 +82,6 @@ class LinearInterpolation {
   void reset() {
     index_ = 0;
     zeroFunction_ = false;
-    timeStampPtr_ = nullptr;
-    dataPtr_ = nullptr;
   }
 
   /**
@@ -100,10 +90,9 @@ class LinearInterpolation {
    * @param [in] timeStampPtr: A pointer to time stamp.
    */
   void setTimeStamp(const std::vector<scalar_t>* timeStampPtr) {
+    if (timeStampPtr == nullptr) throw std::runtime_error("timeStampPtr is nullptr.");
     reset();
-    timeStampSize_ = timeStampPtr->size();
-    timeStampPtr_ = timeStampPtr; //TODO(jcarius) this is bad - user would not assume we save this internally
-    checkTimeStamp();
+    timeStampPtr_ = timeStampPtr;
   }
 
   /**
@@ -112,9 +101,9 @@ class LinearInterpolation {
    * @param [in] dataPtr: A pointer to the data.
    */
   void setData(const std::vector<Data_T, Alloc>* dataPtr) {
+    if (dataPtr == nullptr) throw std::runtime_error("dataPtr is nullptr.");
     reset();
     dataPtr_ = dataPtr;
-    if (dataPtr_ == NULL) throw std::runtime_error("dataPtr is not initialized.");
   }
 
   /**
@@ -139,18 +128,23 @@ class LinearInterpolation {
       return;
     }
 
-    if (dataPtr_->size() != timeStampSize_)
-      throw std::runtime_error("LinearInterpolation.h : The size of timeStamp vector is not equal to the size of data vector.");
+    const auto& timeStampArr = *timeStampPtr_;
+    const auto& dataArr = *dataPtr_;
 
-    if (enquiryTime <= timeStampPtr_->front()) {
-      enquiryData = dataPtr_->front();
+    const auto timeStampSize = timeStampArr.size();
+
+    if (timeStampSize==0 or (dataArr.size() != timeStampSize))
+      throw std::runtime_error("LinearInterpolation.h : Sizes not suitable for interpolation.");
+
+    if (enquiryTime <= timeStampArr.front()) {
+      enquiryData = dataArr.front();
       index_ = 0;
       return;
     }
 
-    if (enquiryTime >= timeStampPtr_->back()) {
-      enquiryData = dataPtr_->back();
-      index_ = timeStampSize_ - 1;
+    if (enquiryTime >= timeStampArr.back()) {
+      enquiryData = dataArr.back();
+      index_ = timeStampSize - 1;
       return;
     }
 
@@ -159,8 +153,8 @@ class LinearInterpolation {
     else
       index_ = greatestLessTimeStampIndex;
 
-    scalar_t alpha = (enquiryTime - timeStampPtr_->at(index_ + 1)) / (timeStampPtr_->at(index_) - timeStampPtr_->at(index_ + 1));
-    enquiryData = alpha * dataPtr_->at(index_) + (1 - alpha) * dataPtr_->at(index_ + 1);
+    scalar_t alpha = (enquiryTime - timeStampArr[index_ + 1]) / (timeStampArr[index_] - timeStampArr[index_ + 1]);
+    enquiryData = alpha * dataArr[index_] + (1 - alpha) * dataArr[index_ + 1];
   }
 
   /**
@@ -177,17 +171,20 @@ class LinearInterpolation {
    * @return The greatest smaller time stamp index.
    */
   int find(const scalar_t& enquiryTime) const {
+    const auto& timeStampArr = *timeStampPtr_;
+    const auto timeStampSize = timeStampArr.size();
+
     int index = -1;
 
-    if (timeStampPtr_->at(index_) > enquiryTime) {
+    if (timeStampArr[index_] > enquiryTime) {
       for (int i = index_; i >= 0; i--) {
         index = i;
-        if (timeStampPtr_->at(i) <= enquiryTime) break;
+        if (timeStampArr[i] <= enquiryTime) break;
       }
     } else {
-      for (int i = index_; i < timeStampSize_; i++) {
+      for (int i = index_; i < timeStampSize; i++) {
         index = i;
-        if (timeStampPtr_->at(i) > enquiryTime) {
+        if (timeStampArr[i] > enquiryTime) {
           index--;
           break;
         }
@@ -197,19 +194,11 @@ class LinearInterpolation {
     return index;
   }
 
-  /**
-   * Checks the time stamp
-   */
-  void checkTimeStamp() {
-    if (timeStampPtr_ == NULL) throw std::runtime_error("timeStampPtr is not initialized.");
-    if (timeStampSize_ == 0) throw std::runtime_error("LinearInterpolation is not initialized.");
-  }
-
  private:
   mutable int index_;
+
   bool zeroFunction_;
 
-  size_t timeStampSize_;
   const std::vector<scalar_t>* timeStampPtr_;
   const std::vector<Data_T, Alloc>* dataPtr_;
 };

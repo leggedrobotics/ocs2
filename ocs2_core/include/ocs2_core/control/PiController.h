@@ -174,13 +174,11 @@ class PiController : public Controller<STATE_DIM, INPUT_DIM> {
       linInterpolateUff_.setData(&uff_);
   }
 
-  /**
-   * @brief Swap data with other object
-   * @param other the object to be swapped with
-   */
   virtual void swap(PiController<STATE_DIM,INPUT_DIM>& other) {
       throw std::runtime_error("not implemented");
   }
+
+  virtual std::string getType() const override {return "PathIntegralController";}
 
  public:
   // values set in computeInput method

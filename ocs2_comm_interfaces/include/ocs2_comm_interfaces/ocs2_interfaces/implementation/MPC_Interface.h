@@ -5,25 +5,21 @@
 namespace ocs2 {
 
 template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-MPC_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::MPC_Interface(
-    mpc_t& mpc,
-    const LOGIC_RULES_T& logicRules,
-    const bool& useFeedforwardPolicy /*= true*/)
-    : mpcPtr_(&mpc)
-    , mpcSettings_(mpc.settings())
-    , desiredTrajectoriesUpdated_(false)
-    , modeSequenceUpdated_(false)
-    , observationUpdated_(false)
-    , logicMachine_(logicRules)
-    , useFeedforwardPolicy_(useFeedforwardPolicy)
-{
+MPC_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::MPC_Interface(mpc_t& mpc, const LOGIC_RULES_T& logicRules,
+                                                                  const bool& useFeedforwardPolicy /*= true*/)
+    : mpcPtr_(&mpc),
+      mpcSettings_(mpc.settings()),
+      desiredTrajectoriesUpdated_(false),
+      modeSequenceUpdated_(false),
+      observationUpdated_(false),
+      logicMachine_(logicRules),
+      useFeedforwardPolicy_(useFeedforwardPolicy) {
   // reset variables
   reset();
 }
 
 template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
 void MPC_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::reset() {
-
   initialCall_ = true;
   numIterations_ = 0;
   desiredTrajectoriesUpdated_ = false;
@@ -31,11 +27,11 @@ void MPC_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::reset() {
   mpcOutputBufferUpdated_ = false;
   logicUpdated_ = false;
 
-  //MPC inputs
+  // MPC inputs
   costDesiredTrajectories_.clear();
   currentObservation_ = system_observation_t();
 
-  //MPC outputs:
+  // MPC outputs:
   mpcSubsystemsSequenceBuffer_.clear();
   mpcEventTimesBuffer_.clear();
   mpcTimeTrajectoryBuffer_.clear();
@@ -44,7 +40,7 @@ void MPC_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::reset() {
   mpcControllerBuffer_.clear();
   mpcSolverCostDesiredTrajectoriesBuffer_.clear();
 
-  //variables for the tracking controller:
+  // variables for the tracking controller:
   eventTimes_.clear();
   subsystemsSequence_.clear();
   partitioningTimes_.clear();
@@ -59,138 +55,103 @@ void MPC_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::reset() {
   mpcLinInterpolateK_.reset();
   mpcCostDesiredTrajectories_.clear();
 
-  if (mpcPtr_ != nullptr)
-    mpcPtr_->reset();
+  if (mpcPtr_ != nullptr) mpcPtr_->reset();
 }
 
-template<size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void
-MPC_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::setTargetTrajectories(
-    const cost_desired_trajectories_t& targetTrajectories) {
+template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
+void MPC_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::setTargetTrajectories(const cost_desired_trajectories_t& targetTrajectories) {
   std::lock_guard<std::mutex> lock(desiredTrajectoryMutex_);
   costDesiredTrajectories_ = targetTrajectories;
   desiredTrajectoriesUpdated_ = true;
 }
 
-template<size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void
-MPC_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::setCurrentObservation(
-    const system_observation_t& currentObservation){
+template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
+void MPC_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::setCurrentObservation(const system_observation_t& currentObservation) {
   std::lock_guard<std::mutex> lock(observationMutex_);
   currentObservation_ = currentObservation;
   observationUpdated_ = true;
 }
 
-template<size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void
-MPC_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::setModeSequence(
-    const mode_sequence_template_t& modeSequenceTemplate) {
+template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
+void MPC_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::setModeSequence(const mode_sequence_template_t& modeSequenceTemplate) {
   std::lock_guard<std::mutex> lock(modeSequenceMutex_);
   modeSequenceTemplate_ = modeSequenceTemplate;
   modeSequenceUpdated_ = true;
 }
 
 template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULSES_T>
-void
-MPC_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULSES_T>::advanceMpc(){
-
-
-  if (mpcSettings_.debugPrint_)
-    startTimePoint_ = std::chrono::steady_clock::now();
+void MPC_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULSES_T>::advanceMpc() {
+  if (mpcSettings_.debugPrint_) startTimePoint_ = std::chrono::steady_clock::now();
 
   // number of iterations
   numIterations_++;
 
-  if (initialCall_==true) {
+  if (initialCall_ == true) {
     // reset the MPC solver since it is the beginning of the task
     mpcPtr_->reset();
   }
 
-  // update the mode sequence
-  if(modeSequenceUpdated_==true) {
-
-    std::lock_guard<std::mutex> lock(modeSequenceMutex_);
-
-    std::cerr << "### The mode sequence is updated at time "
-              << std::setprecision(4) << currentObservation_.time() << " as " << std::endl;
-    modeSequenceTemplate_.display();
-
-    mpcPtr_->setNewLogicRulesTemplate(modeSequenceTemplate_);
-
-    modeSequenceUpdated_ = false;
-
-  } else if (mpcSettings_.recedingHorizon_==false) {
-    return;
-  }
-
-  // update the desired trajectories
-  if(desiredTrajectoriesUpdated_==true) {
-    std::lock_guard<std::mutex> lock(desiredTrajectoryMutex_);
-    // display
-    if (mpcSettings_.debugPrint_) {
-      std::cerr << "### The target position is updated at time "
-                << std::setprecision(4) << currentObservation_.time() << " as " << std::endl;
-      costDesiredTrajectories_.display();
-    }
-
-    // set CostDesiredTrajectories
-    mpcPtr_->swapCostDesiredTrajectories(costDesiredTrajectories_);
-
-    desiredTrajectoriesUpdated_ = false;
-
-  } else if (mpcSettings_.recedingHorizon_==false) {
-    return;
-  }
+  updateModeSequence();
+  updateDesiredTrajectory();
 
   {
     std::lock_guard<std::mutex> lock(observationMutex_);
     // run SLQ-MPC
-    bool controllerIsUpdated = mpcPtr_->run(
-        currentObservation_.time(),
-        currentObservation_.state());
-    //allow for new observations:
+    mpcPtr_->run(currentObservation_.time(), currentObservation_.state());
+    // allow for new observations:
     observationUpdated_ = false;
   }
 
+  fillMpcOutputBuffers();
 
+  // measure the delay
+  if (mpcSettings_.debugPrint_) {
+    finalTimePoint_ = std::chrono::steady_clock::now();
+    currentDelay_ = std::chrono::duration<scalar_t, std::milli>(finalTimePoint_ - startTimePoint_).count();
+    meanDelay_ += (currentDelay_ - meanDelay_) / numIterations_;
+    maxDelay_ = std::max(maxDelay_, currentDelay_);
+  }
+
+  // display
+  if (mpcSettings_.debugPrint_) {
+    std::cerr << std::endl;
+    std::cerr << "### Average duration of MPC optimization is: " << meanDelay_ << " [ms]." << std::endl;
+    std::cerr << "### Maximum duration of MPC optimization is: " << maxDelay_ << " [ms]." << std::endl;
+  }
+  if (initialCall_ == true) initialCall_ = false;
+}
+
+template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
+void MPC_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::fillMpcOutputBuffers() {
   const controller_array_t* controllersPtr(nullptr);
   const std::vector<scalar_array_t>* timeTrajectoriesPtr(nullptr);
   const state_vector_array2_t* stateTrajectoriesPtr(nullptr);
   const input_vector_array2_t* inputTrajectoriesPtr(nullptr);
-  const scalar_array_t* eventTimesPtr(nullptr);;
-  const size_array_t* subsystemsSequencePtr(nullptr);;
-  const cost_desired_trajectories_t* solverCostDesiredTrajectoriesPtr(nullptr);;
+  const scalar_array_t* eventTimesPtr(nullptr);
+  ;
+  const size_array_t* subsystemsSequencePtr(nullptr);
+  ;
+  const cost_desired_trajectories_t* solverCostDesiredTrajectoriesPtr(nullptr);
+  ;
 
   // get a pointer to the optimized controller
   mpcPtr_->getOptimizedControllerPtr(controllersPtr);
   // get a pointer to the optimized trajectories
-  mpcPtr_->getOptimizedTrajectoriesPtr(
-      timeTrajectoriesPtr,
-      stateTrajectoriesPtr,
-      inputTrajectoriesPtr);
+  mpcPtr_->getOptimizedTrajectoriesPtr(timeTrajectoriesPtr, stateTrajectoriesPtr, inputTrajectoriesPtr);
 
-
-  //TODO: Is this necessary? Has the trajectory been modified by the solver?
+  // TODO: Is this necessary? Has the trajectory been modified by the solver?
   mpcPtr_->getCostDesiredTrajectoriesPtr(solverCostDesiredTrajectoriesPtr);
 
   // get a pointer to event times and motion sequence
   eventTimesPtr = &mpcPtr_->getLogicRulesPtr()->eventTimes();
   subsystemsSequencePtr = &mpcPtr_->getLogicRulesPtr()->subsystemsSequence();
 
-  // measure the delay
-  if(mpcSettings_.debugPrint_){
-    finalTimePoint_ = std::chrono::steady_clock::now();
-    currentDelay_ = std::chrono::duration<scalar_t, std::milli>(finalTimePoint_-startTimePoint_).count();
-    meanDelay_ += (currentDelay_-meanDelay_) / numIterations_;
-    maxDelay_   = std::max(maxDelay_, currentDelay_);
-  }
-
   std::lock_guard<std::mutex> lock(mpcBufferMutex);
 
-  //update buffers
+  // update buffers
   if (useFeedforwardPolicy_) {
     int N = 0;
-    for (int i =0; i<timeTrajectoriesPtr->size(); i++){
+    for (int i = 0; i < timeTrajectoriesPtr->size(); i++) {
       N += (*timeTrajectoriesPtr)[i].size();
     }
     mpcTimeTrajectoryBuffer_.clear();
@@ -199,15 +160,17 @@ MPC_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULSES_T>::advanceMpc(){
     mpcStateTrajectoryBuffer_.reserve(N);
     mpcInputTrajectoryBuffer_.clear();
     mpcInputTrajectoryBuffer_.reserve(N);
-    for (int i =0; i<timeTrajectoriesPtr->size(); i++){
-      mpcTimeTrajectoryBuffer_.insert(std::end(mpcTimeTrajectoryBuffer_), std::begin((*timeTrajectoriesPtr)[i]), std::end((*timeTrajectoriesPtr)[i]));
-      mpcStateTrajectoryBuffer_.insert(std::end(mpcStateTrajectoryBuffer_), std::begin((*stateTrajectoriesPtr)[i]), std::end((*stateTrajectoriesPtr)[i]));
-      mpcInputTrajectoryBuffer_.insert(std::end(mpcInputTrajectoryBuffer_), std::begin((*inputTrajectoriesPtr)[i]), std::end((*inputTrajectoriesPtr)[i]));
+    for (int i = 0; i < timeTrajectoriesPtr->size(); i++) {
+      mpcTimeTrajectoryBuffer_.insert(std::end(mpcTimeTrajectoryBuffer_), std::begin((*timeTrajectoriesPtr)[i]),
+                                      std::end((*timeTrajectoriesPtr)[i]));
+      mpcStateTrajectoryBuffer_.insert(std::end(mpcStateTrajectoryBuffer_), std::begin((*stateTrajectoriesPtr)[i]),
+                                       std::end((*stateTrajectoriesPtr)[i]));
+      mpcInputTrajectoryBuffer_.insert(std::end(mpcInputTrajectoryBuffer_), std::begin((*inputTrajectoriesPtr)[i]),
+                                       std::end((*inputTrajectoriesPtr)[i]));
     }
-  }
-  else{
+  } else {
     int N = 0;
-    for (int i =0; i<controllersPtr->size(); i++){
+    for (int i = 0; i < controllersPtr->size(); i++) {
       N += (*controllersPtr)[i].time_.size();
     }
     mpcControllerBuffer_.clear();
@@ -216,12 +179,15 @@ MPC_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULSES_T>::advanceMpc(){
     mpcControllerBuffer_.deltaUff_.reserve(N);
     mpcControllerBuffer_.uff_.reserve(N);
 
-    for (int i =0; i<controllersPtr->size(); i++){
-      const controller_t & currentController = (*controllersPtr)[i];
-      mpcControllerBuffer_.time_.insert(std::end(mpcControllerBuffer_.time_), std::begin(currentController.time_), std::end(currentController.time_));
+    for (int i = 0; i < controllersPtr->size(); i++) {
+      const controller_t& currentController = (*controllersPtr)[i];
+      mpcControllerBuffer_.time_.insert(std::end(mpcControllerBuffer_.time_), std::begin(currentController.time_),
+                                        std::end(currentController.time_));
       mpcControllerBuffer_.k_.insert(std::end(mpcControllerBuffer_.k_), std::begin(currentController.k_), std::end(currentController.k_));
-      mpcControllerBuffer_.deltaUff_.insert(std::end(mpcControllerBuffer_.deltaUff_), std::begin(currentController.deltaUff_), std::end(currentController.deltaUff_));
-      mpcControllerBuffer_.uff_.insert(std::end(mpcControllerBuffer_.uff_), std::begin(currentController.uff_), std::end(currentController.uff_));
+      mpcControllerBuffer_.deltaUff_.insert(std::end(mpcControllerBuffer_.deltaUff_), std::begin(currentController.deltaUff_),
+                                            std::end(currentController.deltaUff_));
+      mpcControllerBuffer_.uff_.insert(std::end(mpcControllerBuffer_.uff_), std::begin(currentController.uff_),
+                                       std::end(currentController.uff_));
     }
   }
 
@@ -229,24 +195,43 @@ MPC_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULSES_T>::advanceMpc(){
   mpcSubsystemsSequenceBuffer_ = *subsystemsSequencePtr;
   mpcSolverCostDesiredTrajectoriesBuffer_ = *solverCostDesiredTrajectoriesPtr;
   mpcOutputBufferUpdated_ = true;
+}
 
-  // display
-  if(mpcSettings_.debugPrint_){
-    std::cerr << std::endl;
-    std::cerr << "### Average duration of MPC optimization is: " << meanDelay_ << " [ms]." << std::endl;
-    std::cerr << "### Maximum duration of MPC optimization is: " << maxDelay_ << " [ms]." << std::endl;
+template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
+void MPC_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::updateDesiredTrajectory() {
+  if (desiredTrajectoriesUpdated_ == true) {
+    std::lock_guard<std::mutex> lock(desiredTrajectoryMutex_);
+    // display
+    if (mpcSettings_.debugPrint_) {
+      std::cerr << "### The target position is updated at time " << std::setprecision(4) << currentObservation_.time() << " as "
+                << std::endl;
+      costDesiredTrajectories_.display();
+    }
+    // set CostDesiredTrajectories
+    mpcPtr_->swapCostDesiredTrajectories(costDesiredTrajectories_);
+    desiredTrajectoriesUpdated_ = false;
   }
-  if (initialCall_==true)
-    initialCall_ = false;
+}
+
+template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
+void MPC_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::updateModeSequence() {
+  if (modeSequenceUpdated_ == true) {
+    std::lock_guard<std::mutex> lock(modeSequenceMutex_);
+
+    std::cerr << "### The mode sequence is updated at time " << std::setprecision(4) << currentObservation_.time() << " as " << std::endl;
+    modeSequenceTemplate_.display();
+
+    mpcPtr_->setNewLogicRulesTemplate(modeSequenceTemplate_);
+
+    modeSequenceUpdated_ = false;
+  }
 }
 
 template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
 bool MPC_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::updatePolicy() {
-
   if (mpcOutputBufferUpdated_) {
     mpcOutputBufferUpdated_ = false;
-  }
-  else{
+  } else {
     return false;
   }
 
@@ -264,7 +249,7 @@ bool MPC_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::updatePolicy() {
   }
   partitioningTimesUpdate(partitioningTimes_);
 
-  if (logicUpdated_==true) {
+  if (logicUpdated_ == true) {
     // set mode sequence
     logicMachine_.getLogicRulesPtr()->setModeSequence(subsystemsSequence_, eventTimes_);
     // Tell logicMachine that logicRules are modified
@@ -273,14 +258,13 @@ bool MPC_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::updatePolicy() {
     logicMachine_.updateLogicRules(partitioningTimes_);
 
     // function for finding active subsystem
-    const size_t partitionIndex = 0; // we assume only one partition
-    findActiveSubsystemFnc_ = std::move(
-        logicMachine_.getHandleToFindActiveEventCounter(partitionIndex) );
+    const size_t partitionIndex = 0;  // we assume only one partition
+    findActiveSubsystemFnc_ = std::move(logicMachine_.getHandleToFindActiveEventCounter(partitionIndex));
 
     logicUpdated_ = false;
   }
 
-  if (useFeedforwardPolicy_==true) {
+  if (useFeedforwardPolicy_ == true) {
     mpcTimeTrajectory_.swap(mpcTimeTrajectoryBuffer_);
     mpcStateTrajectory_.swap(mpcStateTrajectoryBuffer_);
     mpcInputTrajectory_.swap(mpcInputTrajectoryBuffer_);
@@ -312,20 +296,15 @@ bool MPC_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::updatePolicy() {
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void MPC_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::evaluateFeedforwardPolicy(
-    const scalar_t& time,
-    state_vector_t& mpcState,
-    input_vector_t& mpcInput,
-    size_t& subsystem) {
-
+void MPC_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::evaluateFeedforwardPolicy(const scalar_t& time, state_vector_t& mpcState,
+                                                                                   input_vector_t& mpcInput, size_t& subsystem) {
   updatePolicy();
 
-  if (useFeedforwardPolicy_==false)
-    throw std::runtime_error("The MRT is set to receive the feedforward policy.");
+  if (useFeedforwardPolicy_ == false) throw std::runtime_error("The MRT is set to receive the feedforward policy.");
 
   if (time > mpcTimeTrajectory_.back())
-    ROS_WARN_STREAM("The requested time is greater than the received plan: "
-                    + std::to_string(time) + ">" + std::to_string(mpcTimeTrajectory_.back()));
+    ROS_WARN_STREAM("The requested time is greater than the received plan: " + std::to_string(time) + ">" +
+                    std::to_string(mpcTimeTrajectory_.back()));
 
   mpcLinInterpolateState_.interpolate(time, mpcState);
   int greatestLessTimeStampIndex = mpcLinInterpolateState_.getGreatestLessTimeStampIndex();
@@ -339,20 +318,15 @@ void MPC_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::evaluateFeedforwardPoli
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void MPC_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::evaluateFeedbackPolicy(
-    const scalar_t& time,
-    input_vector_t& mpcUff,
-    input_state_matrix_t& mpcGain,
-    size_t& subsystem) {
-
+void MPC_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::evaluateFeedbackPolicy(const scalar_t& time, input_vector_t& mpcUff,
+                                                                                input_state_matrix_t& mpcGain, size_t& subsystem) {
   updatePolicy();
 
-  if (useFeedforwardPolicy_==true)
-    throw std::runtime_error("The MRT is set to receive the feedback policy.");
+  if (useFeedforwardPolicy_ == true) throw std::runtime_error("The MRT is set to receive the feedback policy.");
 
   if (time > mpcController_.time_.back())
-    ROS_WARN_STREAM("The requested time is greater than the received plan: "
-                    + std::to_string(time) + ">" + std::to_string(mpcController_.time_.back()));
+    ROS_WARN_STREAM("The requested time is greater than the received plan: " + std::to_string(time) + ">" +
+                    std::to_string(mpcController_.time_.back()));
 
   mpcLinInterpolateUff_.interpolate(time, mpcUff);
   int greatestLessTimeStampIndex = mpcLinInterpolateUff_.getGreatestLessTimeStampIndex();
@@ -363,12 +337,11 @@ void MPC_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::evaluateFeedbackPolicy(
 }
 
 template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void MPC_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::partitioningTimesUpdate(
-    scalar_array_t& partitioningTimes) const {
-  //TODO: Is this correct?
+void MPC_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::partitioningTimesUpdate(scalar_array_t& partitioningTimes) const {
+  // TODO: Is this correct?
   partitioningTimes.resize(2);
   partitioningTimes[0] = currentObservation_.time();
   partitioningTimes[1] = std::numeric_limits<scalar_t>::max();
 }
 
-}
+}  // namespace ocs2

@@ -27,55 +27,49 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  ******************************************************************************/
 
-
-#include "ocs2_double_integrator_noros_example/DoubleIntegratorInterface.h"
-#include "ocs2_comm_interfaces/ocs2_interfaces/MPC_Interface.h"
-#include "ocs2_core/logic/rules/NullLogicRules.h"
 #include <unistd.h>
 #include <thread>
+#include "ocs2_comm_interfaces/ocs2_interfaces/MPC_Interface.h"
+#include "ocs2_core/logic/rules/NullLogicRules.h"
+#include "ocs2_double_integrator_noros_example/DoubleIntegratorInterface.h"
 
 using namespace ocs2;
 using namespace double_integrator;
 using dim_t = ocs2::Dimensions<double_integrator_dims::STATE_DIM_, double_integrator_dims::INPUT_DIM_>;
 typedef MPC_Interface<dim_t::STATE_DIM_, dim_t::INPUT_DIM_> mpc_t;
 
+int main(int argc, char** argv) {
+  // task file
+  if (argc <= 1) throw std::runtime_error("No task file specified. Aborting.");
+  std::string taskFileFolderName = std::string(argv[1]);
 
-int main(int argc, char **argv)
-{
-	// task file
-	if (argc <= 1) throw std::runtime_error("No task file specified. Aborting.");
-	std::string taskFileFolderName = std::string(argv[1]);
+  NullLogicRules nullLogicRules;
 
-	NullLogicRules nullLogicRules;
+  DoubleIntegratorInterface doubleIntegratorInterface(taskFileFolderName);
+  mpc_t mpcInterface(*doubleIntegratorInterface.getMPCPtr(), nullLogicRules, true);
 
-	DoubleIntegratorInterface doubleIntegratorInterface(taskFileFolderName);
-	mpc_t mpcInterface(
-			*doubleIntegratorInterface.getMPCPtr(),
-			nullLogicRules,
-			true);
-
-	double time = 0;
+  double time = 0;
 
   mpc_t::state_vector_t initialState;
-	doubleIntegratorInterface.getInitialState(initialState);
+  doubleIntegratorInterface.getInitialState(initialState);
 
-	//initialize reference:
-	mpc_t::cost_desired_trajectories_t costDesiredTrajectories;
-	costDesiredTrajectories.desiredTimeTrajectory().push_back(time);
-  costDesiredTrajectories.desiredTimeTrajectory().push_back(time+1);
+  // initialize reference:
+  mpc_t::cost_desired_trajectories_t costDesiredTrajectories;
+  costDesiredTrajectories.desiredTimeTrajectory().push_back(time);
+  costDesiredTrajectories.desiredTimeTrajectory().push_back(time + 1);
   mpc_t::state_vector_t goalState = doubleIntegratorInterface.getXFinal();
-	costDesiredTrajectories.desiredStateTrajectory().push_back(initialState);
-	costDesiredTrajectories.desiredStateTrajectory().push_back(goalState);
+  costDesiredTrajectories.desiredStateTrajectory().push_back(initialState);
+  costDesiredTrajectories.desiredStateTrajectory().push_back(goalState);
   mpc_t::input_vector_t desiredInput;
-	costDesiredTrajectories.desiredInputTrajectory().push_back(desiredInput);
-	costDesiredTrajectories.desiredInputTrajectory().push_back(desiredInput);
+  costDesiredTrajectories.desiredInputTrajectory().push_back(desiredInput);
+  costDesiredTrajectories.desiredInputTrajectory().push_back(desiredInput);
   mpcInterface.setTargetTrajectories(costDesiredTrajectories);
 
   double f_mpc = 10;
-  double mpcIncrement =  1.0 / f_mpc;
+  double mpcIncrement = 1.0 / f_mpc;
   double f_tracking = 100;
-  double trackingIncrement =  1.0 / f_tracking;
-  //double f_control = doubleIntegratorInterface.mpcSettings().mpcDesiredFrequency_;
+  double trackingIncrement = 1.0 / f_tracking;
+  // double f_control = doubleIntegratorInterface.mpcSettings().mpcDesiredFrequency_;
   double T = 3;
 
   mpc_t::system_observation_t observation;
@@ -86,19 +80,16 @@ int main(int argc, char **argv)
 
   std::mutex timeStateMutex;
 
-  auto tracker = [&](){
+  auto tracker = [&]() {
     while (trackerRunning) {
       {
         std::lock_guard<std::mutex> lock(timeStateMutex);
         time += trackingIncrement;
         if (mpcInterface.policyReceived()) {
-          mpcInterface.evaluateFeedforwardPolicy(time, optimalState,
-                                                 optimalInput,
-                                                 subsystem);
-          std::cout << std::endl << "time:" << time
-                    << "  state:" << optimalState.transpose()
-                    << "  input:" << optimalInput.transpose()
-                    << std::endl << std::endl;
+          mpcInterface.evaluateFeedforwardPolicy(time, optimalState, optimalInput, subsystem);
+          std::cout << std::endl
+                    << "time:" << time << "  state:" << optimalState.transpose() << "  input:" << optimalInput.transpose() << std::endl
+                    << std::endl;
         }
       }
       usleep(uint(trackingIncrement * 1e6));
@@ -107,12 +98,12 @@ int main(int argc, char **argv)
 
   std::thread trackerThread(tracker);
 
-	//run MPC for N iterations
-	int N = int(f_mpc * T);
-	for (int i=0; i<N; i++){
+  // run MPC for N iterations
+  int N = int(f_mpc * T);
+  for (int i = 0; i < N; i++) {
     {
       std::lock_guard<std::mutex> lock(timeStateMutex);
-      //use optimal state for the next observation:
+      // use optimal state for the next observation:
       observation.state() = optimalState;
       observation.time() = time;
     }
@@ -125,10 +116,10 @@ int main(int argc, char **argv)
 
     usleep(uint(mpcIncrement * 1e6));
   }
-	trackerRunning = false;
+  trackerRunning = false;
   trackerThread.join();
-	// Successful exit
-	return 0;
+  // Successful exit
+  return 0;
 }
 
 /* EOF */

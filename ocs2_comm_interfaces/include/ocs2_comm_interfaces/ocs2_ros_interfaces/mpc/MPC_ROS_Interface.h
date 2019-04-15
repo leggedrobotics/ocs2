@@ -30,19 +30,19 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifndef MPC_ROS_INTERFACE_OCS2_H_
 #define MPC_ROS_INTERFACE_OCS2_H_
 
-#include <Eigen/Dense>
 #include <array>
+#include <memory>
+#include <vector>
+#include <thread>
+#include <mutex>
 #include <atomic>
-#include <chrono>
 #include <condition_variable>
 #include <csignal>
-#include <ctime>
 #include <iostream>
-#include <memory>
-#include <mutex>
 #include <string>
-#include <thread>
-#include <vector>
+#include <ctime>
+#include <chrono>
+#include <Eigen/Dense>
 
 #include <ros/ros.h>
 #include <ros/transport_hints.h>
@@ -50,11 +50,11 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_mpc/MPC_BASE.h>
 
 // MPC messages
-#include <ocs2_comm_interfaces/dummy.h>
 #include <ocs2_comm_interfaces/mode_sequence.h>
-#include <ocs2_comm_interfaces/mpc_flattened_controller.h>
 #include <ocs2_comm_interfaces/mpc_observation.h>
+#include <ocs2_comm_interfaces/mpc_flattened_controller.h>
 #include <ocs2_comm_interfaces/mpc_target_trajectories.h>
+#include <ocs2_comm_interfaces/dummy.h>
 #include <ocs2_comm_interfaces/reset.h>
 
 #include "ocs2_comm_interfaces/SystemObservation.h"
@@ -74,9 +74,10 @@ namespace ocs2 {
  * @tparam INPUT_DIM: Dimension of the control input space.
  * @tparam LOGIC_RULES_T: Logic Rules type (default NullLogicRules).
  */
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T = NullLogicRules>
-class MPC_ROS_Interface {
- public:
+template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T=NullLogicRules>
+class MPC_ROS_Interface
+{
+public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
 	typedef std::shared_ptr<MPC_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>> Ptr;
@@ -116,7 +117,9 @@ class MPC_ROS_Interface {
 	 * @param [in] mpc: The MPC object to be interfaced.
 	 * @param [in] robotName: The robot's name.
 	 */
-  MPC_ROS_Interface(mpc_t& mpc, const std::string& robotName = "robot");
+	MPC_ROS_Interface(
+			mpc_t& mpc,
+			const std::string& robotName = "robot");
 
 	/**
 	 * Destructor.
@@ -129,7 +132,8 @@ class MPC_ROS_Interface {
 	 * @param [in] mpcPtr: The MPC object to be interfaced.
 	 * @param [in] robotName: The robot's name.
 	 */
-  void set(mpc_t& mpc, const std::string& robotName = "robot");
+	void set(mpc_t& mpc,
+			const std::string& robotName = "robot");
 
 	/**
 	 * Resets the class to its instantiate state.
@@ -159,7 +163,8 @@ class MPC_ROS_Interface {
 	 *
 	 * @param [in] initObservation: The observation after the very fist call of the class or after call to reset().
 	 */
-  virtual void initCall(const system_observation_t& initObservation) {}
+	virtual void initCall(
+			const system_observation_t& initObservation) {}
 
 	/**
 	 * Provides the initial target trajectories for the cost function.
@@ -167,14 +172,17 @@ class MPC_ROS_Interface {
 	 * @param [in] initObservation: The observation after the very fist call of the class or after call to reset().
 	 * @param [out] costDesiredTrajectories: The desired cost trajectories.
 	 */
-  virtual void initGoalState(const system_observation_t& initObservation, cost_desired_trajectories_t& costDesiredTrajectories) = 0;
+	virtual void initGoalState(
+			const system_observation_t& initObservation,
+			cost_desired_trajectories_t& costDesiredTrajectories) = 0;
 
 	/**
 	 * Provides the initial mode sequence for time-triggered hybrid systems.
 	 *
 	 * @param [in] initObservation: The observation after the very fist call of the class or after call to reset().
 	 */
-  virtual void initModeSequence(const system_observation_t& initObservation) {}
+	virtual void initModeSequence(
+			const system_observation_t& initObservation) {}
 
 	/**
 	 * Adjusts the user-defined target trajectories for the cost based on the current observation.
@@ -182,7 +190,8 @@ class MPC_ROS_Interface {
 	 * @param [in] currentObservation: The current observation.
 	 * @param costDesiredTrajectories: The received user-defined target trajectories which can be modified based on the current observation.
 	 */
-  virtual void adjustTargetTrajectories(const system_observation_t& currentObservation,
+	virtual void adjustTargetTrajectories(
+			const system_observation_t& currentObservation,
 			cost_desired_trajectories_t& costDesiredTrajectories) {}
 
 	/**
@@ -191,9 +200,11 @@ class MPC_ROS_Interface {
 	 * @param [in] currentObservation: The current observation.
 	 * @param newLogicRulesTemplate: New logicRules template which can be modified based on the current observation.
 	 */
-  virtual void adjustModeSequence(const system_observation_t& currentObservation, mode_sequence_template_t& newLogicRulesTemplate) {}
+	virtual void adjustModeSequence(
+			const system_observation_t& currentObservation,
+			mode_sequence_template_t& newLogicRulesTemplate) {}
 
- protected:
+protected:
 	/**
 	 * Signal handler
 	 *
@@ -207,7 +218,9 @@ class MPC_ROS_Interface {
 	 * @param req: Service request.
 	 * @param res: Service response.
 	 */
-  bool resetMpcCallback(ocs2_comm_interfaces::reset::Request& req, ocs2_comm_interfaces::reset::Response& res);
+	bool resetMpcCallback(
+			ocs2_comm_interfaces::reset::Request  &req,
+			ocs2_comm_interfaces::reset::Response &res);
 
 	/**
 	 * Dummy publisher for network debugging.
@@ -220,19 +233,22 @@ class MPC_ROS_Interface {
 	 * @param [in] currentObservation: The observation that MPC designed from.
 	 * @param [in] controllerIsUpdated: Whether the policy is updated.
 	 * @param [in] costDesiredTrajectoriesPtr: The target trajectories that MPC optimized.
-   * @param [in] controllerStockPtr: A pointer to the MPC optimized control policy.
+	 * @param [in] controllerStockPtr: A pointer to the MPC optimized control policy.
 	 * @param [in] timeTrajectoriesStockPtr: A pointer to the MPC optimized time trajectory.
 	 * @param [in] stateTrajectoriesStockPtr: A pointer to the  MPC optimized state trajectory.
 	 * @param [in] inputTrajectoriesStockPtr: A pointer to the  MPC optimized input trajectory.
 	 * @param [in] eventTimesPtr: A pointer to the event time sequence.
 	 * @param [in] subsystemsSequencePtr: A pointer to the subsystem sequence.
 	 */
-  void publishPolicy(const system_observation_t& currentObservation, const bool& controllerIsUpdated,
+	void publishPolicy(
+			const system_observation_t& currentObservation,
+			const bool& controllerIsUpdated,
 			const cost_desired_trajectories_t*& costDesiredTrajectoriesPtr,
-                     const controller_ptr_array_t*& controllerStockPtr,
+			const controller_ptr_array_t*& controllerStockPtr,
 			const std::vector<scalar_array_t>*& timeTrajectoriesStockPtr,
 			const state_vector_array2_t*& stateTrajectoriesStockPtr,
-                     const input_vector_array2_t*& inputTrajectoriesStockPtr, const scalar_array_t*& eventTimesPtr,
+			const input_vector_array2_t*& inputTrajectoriesStockPtr,
+			const scalar_array_t*& eventTimesPtr,
 			const size_array_t*& subsystemsSequencePtr);
 
 	/**
@@ -246,23 +262,27 @@ class MPC_ROS_Interface {
 	 *
 	 * @param [in] msg: The observation message.
 	 */
-  void mpcObservationCallback(const ocs2_comm_interfaces::mpc_observation::ConstPtr& msg);
+	void mpcObservationCallback(
+			const ocs2_comm_interfaces::mpc_observation::ConstPtr& msg);
 
 	/**
 	 * The callback method which receives the user-defined target trajectories message.
 	 *
 	 * @param [in] msg: The target trajectories message.
 	 */
-  void mpcTargetTrajectoriesCallback(const ocs2_comm_interfaces::mpc_target_trajectories::ConstPtr& msg);
+	void mpcTargetTrajectoriesCallback(
+			const ocs2_comm_interfaces::mpc_target_trajectories::ConstPtr& msg);
 
 	/**
 	 * The callback method which receives the user-defined mode sequence message.
 	 *
 	 * @param [in] msg: The mode sequence message.
 	 */
-  void mpcModeSequenceCallback(const ocs2_comm_interfaces::mode_sequence::ConstPtr& msg);
+	void mpcModeSequenceCallback(
+			const ocs2_comm_interfaces::mode_sequence::ConstPtr& msg);
 
- protected:
+
+protected:
 	/*
 	 * Variables
 	 */
@@ -275,7 +295,7 @@ class MPC_ROS_Interface {
 	::ros::Subscriber    mpcObservationSubscriber_;
 	::ros::Subscriber    mpcTargetTrajectoriesSubscriber_;
 	::ros::Subscriber    mpcModeSequenceSubscriber_;
-  ::ros::Publisher mpcPolicyPublisher_;
+	::ros::Publisher     mpcPolicyPublisher_;
 	::ros::Publisher     dummyPublisher_;
 	::ros::ServiceServer mpcResetServiceServer_;
 
@@ -283,8 +303,8 @@ class MPC_ROS_Interface {
 	std::atomic<bool> resetRequested_;
 
 	// ROS messages
-  ocs2_comm_interfaces::mpc_flattened_controller mpcPolicyMsg_;
-  ocs2_comm_interfaces::mpc_flattened_controller mpcPolicyMsgBuffer_;
+	ocs2_comm_interfaces::mpc_flattened_controller mpcPolicyMsg_;
+	ocs2_comm_interfaces::mpc_flattened_controller mpcPolicyMsgBuffer_;
 
 	// Multi-threading for publishers
 	bool terminateThread_;

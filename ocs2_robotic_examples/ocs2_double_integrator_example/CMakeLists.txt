@@ -77,19 +77,6 @@ target_link_libraries(double_integrator_mpc
         ${catkin_LIBRARIES}
         )
 
-add_executable(double_integrator_pi
-  # src/double_integrator/DoubleIntegratorInterface.cpp
-  src/PI_Double_Integrator.cpp
-)
-add_dependencies(double_integrator_pi
-  ${catkin_EXPORTED_TARGETS}
-)
-target_link_libraries(double_integrator_pi
-  ${catkin_LIBRARIES}
-  ${Boost_LIBRARIES}
-  dl
-)
-
 # Dummy node
 add_executable(double_integrator_dummy_test
         src/Dummy_Double_Integrator_Node.cpp

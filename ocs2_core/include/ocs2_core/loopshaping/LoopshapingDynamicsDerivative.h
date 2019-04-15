@@ -108,7 +108,7 @@ namespace ocs2 {
           const auto& r_filter = loopshapingDefinition_->getInputFilter_r();
           const auto& s_filter = loopshapingDefinition_->getInputFilter_s();
 
-          if (r_filter.getNumStates() > 0){
+          if (r_filter.getNumOutputs() > 0){
             A.template block(system_state_dim,
                              system_state_dim,
                              r_filter.getNumStates(),
@@ -118,7 +118,7 @@ namespace ocs2 {
             A.template block(system_state_dim, 0, r_filter.getNumStates(), system_state_dim).setZero();
           }
 
-          if (s_filter.getNumStates() > 0){
+          if (s_filter.getNumOutputs() > 0){
             A.template block(system_state_dim,
                              system_state_dim,
                              s_filter.getNumStates(),
@@ -146,7 +146,7 @@ namespace ocs2 {
           const auto& r_filter = loopshapingDefinition_->getInputFilter_r();
           const auto& s_filter = loopshapingDefinition_->getInputFilter_s();
 
-          if (r_filter.getNumStates() > 0){
+          if (r_filter.getNumOutputs() > 0){
             B.template block(0, 0, system_state_dim, system_input_dim) = B_system;
             B.template block(system_state_dim,
                              0,
@@ -155,7 +155,7 @@ namespace ocs2 {
                 r_filter.getB();
           }
 
-          if (s_filter.getNumStates() > 0){
+          if (s_filter.getNumOutputs() > 0){
             if (loopshapingDefinition_->eliminateInputs){
               B.template block(0, 0, system_state_dim, s_filter.getNumInputs()) = B_system * s_filter.getD();
               B.template block(system_state_dim, 0,
@@ -203,12 +203,12 @@ namespace ocs2 {
           const auto& r_filter = loopshapingDefinition_->getInputFilter_r();
           const auto& s_filter = loopshapingDefinition_->getInputFilter_s();
 
-          if (r_filter.getNumStates() > 0){
+          if (r_filter.getNumOutputs() > 0){
             H.template block(0, 0, system_state_dim, system_input_dim) = H_system;
             H.template block(system_state_dim, 0, s_filter.getNumStates(), system_input_dim).setZero();
           }
 
-          if (s_filter.getNumStates() > 0){
+          if (s_filter.getNumOutputs() > 0){
             if (loopshapingDefinition_->eliminateInputs){
               H.template block(0, 0, system_state_dim, s_filter.getNumInputs()) = H_system * s_filter.getD();
               H.template block(system_state_dim, 0, s_filter.getNumStates(), s_filter.getNumInputs()).setZero();
@@ -240,11 +240,11 @@ namespace ocs2 {
           const auto& r_filter = loopshapingDefinition_->getInputFilter_r();
           const auto& s_filter = loopshapingDefinition_->getInputFilter_s();
 
-          if (r_filter.getNumStates() > 0){
+          if (r_filter.getNumOutputs() > 0){
             D_u_gamma.template block(0, 0, D_u_gamma.rows(), system_input_dim) = D_u_gamma_system;
           }
 
-          if (s_filter.getNumStates() > 0){
+          if (s_filter.getNumOutputs() > 0){
             if (loopshapingDefinition_->eliminateInputs){
               D_u_gamma.template block(0, 0, D_u_gamma.rows(), s_filter.getNumInputs()) = D_u_gamma_system * s_filter.getD();
             } else {

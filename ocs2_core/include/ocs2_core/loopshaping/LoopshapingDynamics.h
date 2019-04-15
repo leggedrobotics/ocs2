@@ -88,11 +88,11 @@ namespace ocs2 {
             const auto& r_filter = loopshapingDefinition_->getInputFilter_r();
             const auto& s_filter = loopshapingDefinition_->getInputFilter_s();
 
-            if (r_filter.getNumStates() > 0){
+            if (r_filter.getNumOutputs() > 0){
               filterstateDerivative = r_filter.getA() * filterstate + r_filter.getB() * systeminput;
             }
 
-            if (s_filter.getNumStates() > 0){
+            if (s_filter.getNumOutputs() > 0){
               filterstateDerivative = s_filter.getA() * filterstate + s_filter.getB() * filteredinput;
             }
 

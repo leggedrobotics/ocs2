@@ -11,6 +11,7 @@
 
 int main( int argc, char* argv[] )
 {
+    // TODO(Ruben) Turn this into a unit test
     typedef anymal::AnymalComKinoConstraint::scalar_t scalar_t;
 
     typedef anymal::AnymalComKinoConstraint::scalar_array_t scalar_array_t;

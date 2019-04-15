@@ -30,19 +30,19 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifndef MPC_BASE_OCS2_H_
 #define MPC_BASE_OCS2_H_
 
-#include <Eigen/Dense>
 #include <chrono>
 #include <cstddef>
 #include <memory>
+#include <Eigen/Dense>
 #include <vector>
 
 #include <ocs2_oc/oc_solver/Solver_BASE.h>
 
 #include <ocs2_core/Dimensions.h>
-#include <ocs2_core/control/Controller.h>
 #include <ocs2_core/cost/CostDesiredTrajectories.h>
-#include <ocs2_core/logic/machine/LogicRulesMachine.h>
 #include <ocs2_core/logic/rules/HybridLogicRules.h>
+#include <ocs2_core/logic/machine/LogicRulesMachine.h>
+#include <ocs2_core/control/Controller.h>
 
 #include "ocs2_mpc/MPC_Settings.h"
 
@@ -55,15 +55,16 @@ namespace ocs2 {
  * @tparam INPUT_DIM: Dimension of the control input space.
  * @tparam LOGIC_RULES_T: Logic Rules type (default NullLogicRules).
  */
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T = NullLogicRules>
+template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T=NullLogicRules>
 class MPC_BASE {
- public:
+public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-  static_assert(std::is_base_of<HybridLogicRules, LOGIC_RULES_T>::value, "LOGIC_RULES_T must inherit from HybridLogicRules");
+	static_assert(std::is_base_of<HybridLogicRules, LOGIC_RULES_T>::value,
+			"LOGIC_RULES_T must inherit from HybridLogicRules");
 
 	typedef std::shared_ptr<MPC_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>> Ptr;
 
-  typedef Dimensions<STATE_DIM, INPUT_DIM> DIMENSIONS;
+	typedef Dimensions <STATE_DIM, INPUT_DIM> DIMENSIONS;
 
 	typedef typename DIMENSIONS::scalar_t                   scalar_t;
 	typedef typename DIMENSIONS::scalar_array_t             scalar_array_t;
@@ -98,7 +99,9 @@ class MPC_BASE {
 	 *
 	 * @param [in] mpcSettings: Structure containing the settings for the MPC algorithm.
 	 */
-  MPC_BASE(const scalar_array_t& partitioningTimes, const MPC_Settings& mpcSettings = MPC_Settings());
+	MPC_BASE(
+			const scalar_array_t& partitioningTimes,
+			const MPC_Settings &mpcSettings = MPC_Settings());
 
 	/**
 	 * destructor.
@@ -116,7 +119,9 @@ class MPC_BASE {
 	 * @param [in] currentTime: The given time.
 	 * @param [in] currentState: The given state.
 	 */
-  virtual bool run(const scalar_t& currentTime, const state_vector_t& currentState);
+	virtual bool run(
+			const scalar_t& currentTime,
+			const state_vector_t& currentState);
 
 	/**
 	 * Solves the optimal control problem for the given state and time period ([initTime,finalTime]).
@@ -129,11 +134,14 @@ class MPC_BASE {
 	 * @param [out] inputTrajectoriesStockPtr: A pointer to the optimized input trajectories.
 	 * @param [out] controllerStockPtr: A pointer to the optimized control policy.
 	 */
-  virtual void calculateController(const scalar_t& initTime, const state_vector_t& initState, const scalar_t& finalTime,
+	virtual void calculateController(
+			const scalar_t &initTime,
+			const state_vector_t &initState,
+			const scalar_t &finalTime,
 			const std::vector<scalar_array_t>*& timeTrajectoriesStockPtr,
 			const state_vector_array2_t*& stateTrajectoriesStockPtr,
 			const input_vector_array2_t*& inputTrajectoriesStockPtr,
-                                   const controller_ptr_array_t*& controllerStockPtr) = 0;
+			const controller_ptr_array_t*& controllerStockPtr) = 0;
 
 	/**
 	 * Gets a pointer to the underlying solver used in the MPC.
@@ -189,14 +197,15 @@ class MPC_BASE {
 	 *
 	 * @param [in] newLogicRulesTemplate: New logicRules template
 	 */
-  virtual void setNewLogicRulesTemplate(const mode_sequence_template_t& newLogicRulesTemplate);
+	virtual void setNewLogicRulesTemplate(
+			const mode_sequence_template_t& newLogicRulesTemplate);
 
 	/**
 	 * Gets a pointer to the optimal array of the control policies.
 	 *
-   * @return A pointer to the optimal array of the control policies
+	 * @return A pointer to the optimal array of the control policies
 	 */
-  controller_ptr_array_t const * getOptimizedControllerPtr() const;
+	controller_ptr_array_t const * getOptimizedControllerPtr() const;
 
 	/**
 	 * Gets a pointer to the optimized trajectories.
@@ -205,7 +214,8 @@ class MPC_BASE {
 	 * @param [out] optimizedStateTrajectoriesStockPtr: A pointer to an array of trajectories containing the output state trajectory.
 	 * @param [out] optimizedInputTrajectoriesStockPtr: A pointer to an array of trajectories containing the output control input trajectory.
 	 */
-  void getOptimizedTrajectoriesPtr(const std::vector<scalar_array_t>*& optimizedTimeTrajectoriesStockPtr,
+	void getOptimizedTrajectoriesPtr(
+			const std::vector<scalar_array_t>*& optimizedTimeTrajectoriesStockPtr,
 			const state_vector_array2_t*& optimizedStateTrajectoriesStockPtr,
 			const input_vector_array2_t*& optimizedInputTrajectoriesStockPtr) const;
 
@@ -221,14 +231,16 @@ class MPC_BASE {
 	 *
 	 * @param [out] costDesiredTrajectories: A pointer to the cost function desired trajectories
 	 */
-  virtual void getCostDesiredTrajectoriesPtr(const cost_desired_trajectories_t*& costDesiredTrajectoriesPtr) const;
+	virtual void getCostDesiredTrajectoriesPtr(
+			const cost_desired_trajectories_t*& costDesiredTrajectoriesPtr) const;
 
 	/**
 	 * Sets the cost function desired trajectories.
 	 *
 	 * @param [in] costDesiredTrajectories: The cost function desired trajectories
 	 */
-  virtual void setCostDesiredTrajectories(const cost_desired_trajectories_t& costDesiredTrajectories);
+	virtual void setCostDesiredTrajectories(
+			const cost_desired_trajectories_t& costDesiredTrajectories);
 
 	/**
 	 * Sets the cost function desired trajectories.
@@ -237,7 +249,9 @@ class MPC_BASE {
 	 * @param [in] desiredStateTrajectory: The desired state trajectory for cost.
 	 * @param [in] desiredInputTrajectory: The desired input trajectory for cost.
 	 */
-  virtual void setCostDesiredTrajectories(const scalar_array_t& desiredTimeTrajectory, const dynamic_vector_array_t& desiredStateTrajectory,
+	virtual void setCostDesiredTrajectories(
+			const scalar_array_t& desiredTimeTrajectory,
+			const dynamic_vector_array_t& desiredStateTrajectory,
 			const dynamic_vector_array_t& desiredInputTrajectory);
 
 	/**
@@ -245,7 +259,8 @@ class MPC_BASE {
 	 *
 	 * @param [in] costDesiredTrajectories: The cost function desired trajectories
 	 */
-  virtual void swapCostDesiredTrajectories(cost_desired_trajectories_t& costDesiredTrajectories);
+	virtual void swapCostDesiredTrajectories(
+			cost_desired_trajectories_t& costDesiredTrajectories);
 
 	/**
 	 * Swaps the cost function desired trajectories.
@@ -254,10 +269,12 @@ class MPC_BASE {
 	 * @param [in] desiredStateTrajectory: The desired state trajectory for cost.
 	 * @param [in] desiredInputTrajectory: The desired input trajectory for cost.
 	 */
-  virtual void swapCostDesiredTrajectories(scalar_array_t& desiredTimeTrajectory, dynamic_vector_array_t& desiredStateTrajectory,
+	virtual void swapCostDesiredTrajectories(
+			scalar_array_t& desiredTimeTrajectory,
+			dynamic_vector_array_t& desiredStateTrajectory,
 			dynamic_vector_array_t& desiredInputTrajectory);
 
- protected:
+protected:
 	/**
 	 * Sets pointer of the base solver. This method should be called in the constructor of
 	 * the derived MPC class.
@@ -280,8 +297,13 @@ class MPC_BASE {
 	 * @param [out] initActivePartitionIndex: Index of the initial active partition.
 	 * @param [out] finalActivePartitionIndex: Index of the final active partition.
 	 */
-  virtual void adjustmentTimeHorizon(const scalar_array_t& partitioningTimes, scalar_t& initTime, scalar_t& finalTime,
-                                     size_t& initActivePartitionIndex, size_t& finalActivePartitionIndex) const;
+	virtual void adjustmentTimeHorizon(
+			const scalar_array_t& partitioningTimes,
+			scalar_t& initTime,
+			scalar_t& finalTime,
+			size_t& initActivePartitionIndex,
+			size_t& finalActivePartitionIndex) const;
+
 
 	/*************
 	 * Variables *
@@ -294,7 +316,7 @@ class MPC_BASE {
 	std::atomic<bool> logicRulesTemplateUpdated_;
 	mode_sequence_template_t newLogicRulesTemplate_;
 
-  const controller_ptr_array_t* optimizedControllersStockPtr_;
+	const controller_ptr_array_t* optimizedControllersStockPtr_;
 	const std::vector<scalar_array_t>* optimizedTimeTrajectoriesStockPtr_;
 	const state_vector_array2_t*       optimizedStateTrajectoriesStockPtr_;
 	const input_vector_array2_t*       optimizedInputTrajectoriesStockPtr_;
@@ -312,7 +334,7 @@ class MPC_BASE {
 
 	scalar_t lastControlDesignTime_;
 
- private:
+private:
 	solver_base_t* solverPtr_;
 };
 

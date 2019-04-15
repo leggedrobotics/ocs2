@@ -30,22 +30,22 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifndef ROLLOUT_BASE_OCS2_H_
 #define ROLLOUT_BASE_OCS2_H_
 
-#include <Eigen/Dense>
-#include <Eigen/StdVector>
 #include <algorithm>
-#include <array>
-#include <memory>
 #include <numeric>
 #include <type_traits>
+#include <memory>
+#include <Eigen/StdVector>
 #include <vector>
+#include <array>
+#include <Eigen/Dense>
 
 #include <ocs2_core/Dimensions.h>
 #include <ocs2_core/OCS2NumericTraits.h>
-#include <ocs2_core/control/Controller.h>
-#include <ocs2_core/logic/machine/LogicRulesMachine.h>
+#include <ocs2_core/misc/FindActiveIntervalIndex.h>
 #include <ocs2_core/logic/rules/LogicRulesBase.h>
 #include <ocs2_core/logic/rules/NullLogicRules.h>
-#include <ocs2_core/misc/FindActiveIntervalIndex.h>
+#include <ocs2_core/logic/machine/LogicRulesMachine.h>
+#include <ocs2_core/control/Controller.h>
 
 #include "Rollout_Settings.h"
 
@@ -58,12 +58,14 @@ namespace ocs2 {
  * @tparam INPUT_DIM: Dimension of the control input space.
  * @tparam LOGIC_RULES_T: Logic Rules type (default NullLogicRules).
  */
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T = NullLogicRules>
-class RolloutBase {
- public:
+template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T=NullLogicRules>
+class RolloutBase
+{
+public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-  static_assert(std::is_base_of<LogicRulesBase, LOGIC_RULES_T>::value, "LOGIC_RULES_T must inherit from LogicRulesBase");
+	static_assert(std::is_base_of<LogicRulesBase, LOGIC_RULES_T>::value,
+			"LOGIC_RULES_T must inherit from LogicRulesBase");
 
 	typedef std::shared_ptr<RolloutBase<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>> Ptr;
 
@@ -78,7 +80,7 @@ class RolloutBase {
 	typedef typename DIMENSIONS::input_vector_array_t input_vector_array_t;
 
 	typedef LogicRulesMachine<LOGIC_RULES_T>     logic_rules_machine_t;
-  typedef Controller<STATE_DIM, INPUT_DIM> controller_t;
+	typedef Controller<STATE_DIM, INPUT_DIM> controller_t;
 
 	/**
 	 * Default constructor.
@@ -86,9 +88,13 @@ class RolloutBase {
 	 * @param [in] rolloutSettings: The rollout settings.
 	 * @param [in] algorithmName: The algorithm that calls this class (default not defined).
 	 */
-  RolloutBase(const Rollout_Settings& rolloutSettings = Rollout_Settings(), const char* algorithmName = NULL)
+	RolloutBase(
+			const Rollout_Settings& rolloutSettings = Rollout_Settings(),
+			const char* algorithmName = NULL)
 
-      : rolloutSettings_(rolloutSettings), algorithmName_(algorithmName) {}
+	: rolloutSettings_(rolloutSettings)
+	, algorithmName_(algorithmName)
+	{}
 
 	/**
 	 * Default destructor.
@@ -100,14 +106,21 @@ class RolloutBase {
 	 *
 	 * @return The rollout settings.
 	 */
-  Rollout_Settings& settings() { return rolloutSettings_; }
+	Rollout_Settings& settings() {
+
+		return rolloutSettings_;
+	}
 
 	/**
 	 * Returns the algorithm's name which called this class.
 	 *
 	 * @return The algorithm's name which called this class.
 	 */
-  const char* algorithmName() { return algorithmName_; }
+	const char* algorithmName() {
+
+		return algorithmName_;
+	}
+
 
 	/**
 	 * Forward integrate the system dynamics with given controller. It uses the given control policies and initial state,
@@ -125,9 +138,16 @@ class RolloutBase {
 	 * @param [out] inputTrajectory: The control input trajectory.
 	 * @return The final state (state jump is considered if it took place)
 	 */
-  virtual state_vector_t run(const size_t& partitionIndex, const scalar_t& initTime, const state_vector_t& initState,
-                             const scalar_t& finalTime, controller_t* controller, logic_rules_machine_t& logicRulesMachine,
-                             scalar_array_t& timeTrajectory, size_array_t& eventsPastTheEndIndeces, state_vector_array_t& stateTrajectory,
+	virtual state_vector_t run(
+			const size_t& partitionIndex,
+			const scalar_t& initTime,
+			const state_vector_t& initState,
+			const scalar_t& finalTime,
+			controller_t* controller,
+			logic_rules_machine_t& logicRulesMachine,
+			scalar_array_t& timeTrajectory,
+			size_array_t& eventsPastTheEndIndeces,
+			state_vector_array_t& stateTrajectory,
 			input_vector_array_t& inputTrajectory) = 0;
 
 	/**
@@ -139,8 +159,13 @@ class RolloutBase {
 	 * @param [in] stateTrajectory: The state trajectory.
 	 * @param [in] inputTrajectory: The control input trajectory.
 	 */
-  static void display(const size_t& partitionIndex, const scalar_array_t& timeTrajectory, const size_array_t& eventsPastTheEndIndeces,
-                      const state_vector_array_t& stateTrajectory, const input_vector_array_t& inputTrajectory) {
+	static void display(
+			const size_t& partitionIndex,
+			const scalar_array_t& timeTrajectory,
+			const size_array_t& eventsPastTheEndIndeces,
+			const state_vector_array_t& stateTrajectory,
+			const input_vector_array_t& inputTrajectory) {
+
 		std::cerr << std::endl << "++++++++++++++++++++++++++++++" << std::endl;
 		std::cerr << "Partition: " << partitionIndex;
 		std::cerr << std::endl << "++++++++++++++++++++++++++++++" << std::endl;
@@ -148,20 +173,21 @@ class RolloutBase {
 		std::cerr << "Total number of events: " << eventsPastTheEndIndeces.size() << std::endl;
 		if (!eventsPastTheEndIndeces.empty()) {
 			std::cerr << "Event times: ";
-      for (size_t ind : eventsPastTheEndIndeces) std::cerr << timeTrajectory[ind] << ", ";
+			for (size_t ind : eventsPastTheEndIndeces)
+				std::cerr << timeTrajectory[ind] << ", ";
 			std::cerr << std::endl;
 		}
 		std::cerr << std::endl;
 
 		size_t k = 0;
-    for (size_t i = 0; i <= eventsPastTheEndIndeces.size(); i++) {
-      for (; k < timeTrajectory.size(); k++) {
+		for (size_t i=0; i<=eventsPastTheEndIndeces.size(); i++) {
+			for (; k<timeTrajectory.size(); k++) {
 				std::cerr << "k:     " << k << std::endl;
 				std::cerr << "Time:  " << timeTrajectory[k] << std::endl;
 				std::cerr << "State: " << stateTrajectory[k].transpose() << std::endl;
 				std::cerr << "Input: " << inputTrajectory[k].transpose() << std::endl;
 
-        if (i < eventsPastTheEndIndeces.size() && k + 1 == eventsPastTheEndIndeces[i]) {
+				if (i<eventsPastTheEndIndeces.size() && k+1==eventsPastTheEndIndeces[i]) {
 					std::cerr << "+++ event took place +++" << std::endl;
 					break;
 				}
@@ -169,7 +195,7 @@ class RolloutBase {
 		} // end of i loop
 	}
 
- private:
+private:
 	Rollout_Settings rolloutSettings_;
 
 	const char* algorithmName_;
@@ -179,4 +205,3 @@ class RolloutBase {
 } // namespace ocs2
 
 #endif /* ROLLOUT_BASE_OCS2_H_ */
-

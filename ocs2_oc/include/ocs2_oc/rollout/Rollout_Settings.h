@@ -30,28 +30,34 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifndef ROLLOUT_SETTINGS_OCS2_H_
 #define ROLLOUT_SETTINGS_OCS2_H_
 
-#include <boost/property_tree/info_parser.hpp>
-#include <boost/property_tree/ptree.hpp>
-#include <iostream>
 #include <string>
+#include <iostream>
+#include <boost/property_tree/ptree.hpp>
+#include <boost/property_tree/info_parser.hpp>
 
 #include <ocs2_core/Dimensions.h>
 #include <ocs2_core/integration/Integrator.h>
 
-namespace ocs2 {
+namespace ocs2{
 
 /**
  * This structure contains the settings for forward rollout algorithms.
  */
 class Rollout_Settings {
- public:
-  typedef Dimensions<0, 0>::RICCATI_INTEGRATOR_TYPE RICCATI_INTEGRATOR_TYPE;
+
+public:
+	typedef Dimensions<0,0>::RICCATI_INTEGRATOR_TYPE RICCATI_INTEGRATOR_TYPE;
 
 	/**
 	 * Default constructor.
 	 */
 	Rollout_Settings()
-      : absTolODE_(1e-9), relTolODE_(1e-6), maxNumStepsPerSecond_(5000), minTimeStep_(1e-3), integratorType_(IntegratorType::ODE45) {}
+	: absTolODE_(1e-9)
+	, relTolODE_(1e-6)
+	, maxNumStepsPerSecond_(5000)
+	, minTimeStep_(1e-3)
+	, integratorType_(IntegratorType::ODE45)
+	{}
 
   /**
    * Constructor with all settings as arguments
@@ -84,7 +90,7 @@ class Rollout_Settings {
 	 */
 	void loadSettings(const std::string& filename, bool verbose = true);
 
- public:
+public:
 	/****************
 	 *** Variables **
 	 ****************/
@@ -107,48 +113,47 @@ inline void Rollout_Settings::loadSettings(const std::string& filename, bool ver
 	boost::property_tree::ptree pt;
 	boost::property_tree::read_info(filename, pt);
 
-  if (verbose) {
+	if(verbose){
 		std::cerr << std::endl << " #### Rollout Settings: " << std::endl;
-    std::cerr << " #### =============================================================================" << std::endl;
+		std::cerr <<" #### =============================================================================" << std::endl;
 	}
 
 	try	{
 		absTolODE_ = pt.get<double>("slq.AbsTolODE");
 		if (verbose)  std::cerr << " #### Option loader : option 'AbsTolODE' ........................... " << absTolODE_ << std::endl;
-  } catch (const std::exception& e) {
-    if (verbose)
-      std::cerr << " #### Option loader : option 'AbsTolODE' ........................... " << absTolODE_ << "   \t(default)" << std::endl;
+	}
+	catch (const std::exception& e){
+		if (verbose)  std::cerr << " #### Option loader : option 'AbsTolODE' ........................... " << absTolODE_ << "   \t(default)" << std::endl;
 	}
 
 	try	{
 		relTolODE_ = pt.get<double>("slq.RelTolODE");
 		if (verbose)  std::cerr << " #### Option loader : option 'RelTolODE' ........................... " << relTolODE_ << std::endl;
-  } catch (const std::exception& e) {
-    if (verbose)
-      std::cerr << " #### Option loader : option 'RelTolODE' ........................... " << relTolODE_ << "   \t(default)" << std::endl;
+	}
+	catch (const std::exception& e){
+		if (verbose)  std::cerr << " #### Option loader : option 'RelTolODE' ........................... " << relTolODE_ << "   \t(default)" << std::endl;
 	}
 
 	try	{
 		maxNumStepsPerSecond_ = pt.get<double>("slq.maxNumStepsPerSecond");
 		if (verbose)  std::cerr << " #### Option loader : option 'maxNumStepsPerSecond' ................ " << maxNumStepsPerSecond_ << std::endl;
-  } catch (const std::exception& e) {
-    if (verbose)
-      std::cerr << " #### Option loader : option 'maxNumStepsPerSecond' ................ " << maxNumStepsPerSecond_ << "   \t(default)"
-                << std::endl;
+	}
+	catch (const std::exception& e){
+		if (verbose)  std::cerr << " #### Option loader : option 'maxNumStepsPerSecond' ................ " << maxNumStepsPerSecond_ << "   \t(default)" << std::endl;
 	}
 
 	try	{
 		minTimeStep_ = pt.get<double>("slq.minTimeStep");
 		if (verbose)  std::cerr << " #### Option loader : option 'minTimeStep' ......................... " << minTimeStep_ << std::endl;
-  } catch (const std::exception& e) {
-    if (verbose)
-      std::cerr << " #### Option loader : option 'minTimeStep' ......................... " << minTimeStep_ << "   \t(default)" << std::endl;
+	}
+	catch (const std::exception& e){
+		if (verbose)  std::cerr << " #### Option loader : option 'minTimeStep' ......................... " << minTimeStep_ << "   \t(default)" << std::endl;
 	}
 
-  if (verbose) std::cerr << " #### =============================================================================" << std::endl;
+	if(verbose)
+		std::cerr <<" #### =============================================================================" << std::endl;
 }
 
 } // namespace ocs2
 
 #endif /* ROLLOUT_SETTINGS_OCS2_H_ */
-

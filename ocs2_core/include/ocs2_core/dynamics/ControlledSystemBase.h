@@ -30,19 +30,19 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifndef CONTROLLEDSYSTEMBASE_OCS2_H_
 #define CONTROLLEDSYSTEMBASE_OCS2_H_
 
-#include <Eigen/Dense>
-#include <Eigen/StdVector>
 #include <cstring>
+#include <Eigen/StdVector>
 #include <vector>
+#include <Eigen/Dense>
 
 #include "ocs2_core/Dimensions.h"
-#include "ocs2_core/control/Controller.h"
 #include "ocs2_core/integration/ODE_Base.h"
-#include "ocs2_core/logic/machine/LogicRulesMachine.h"
+#include "ocs2_core/control/Controller.h"
 #include "ocs2_core/logic/rules/LogicRulesBase.h"
 #include "ocs2_core/logic/rules/NullLogicRules.h"
+#include "ocs2_core/logic/machine/LogicRulesMachine.h"
 
-namespace ocs2 {
+namespace ocs2{
 
 /**
  * The base class for non-autonomous system dynamics.
@@ -51,11 +51,13 @@ namespace ocs2 {
  * @tparam INPUT_DIM: Dimension of the control input space.
  * @tparam LOGIC_RULES_T: Logic Rules type (default NullLogicRules).
  */
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T = NullLogicRules>
-class ControlledSystemBase : public ODE_Base<STATE_DIM> {
- public:
+template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T=NullLogicRules>
+class ControlledSystemBase : public ODE_Base<STATE_DIM>
+{
+public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-  static_assert(std::is_base_of<LogicRulesBase, LOGIC_RULES_T>::value, "LOGIC_RULES_T must inherit from LogicRulesBase");
+	static_assert(std::is_base_of<LogicRulesBase, LOGIC_RULES_T>::value,
+			"LOGIC_RULES_T must inherit from LogicRulesBase");
 
 	typedef std::shared_ptr<ControlledSystemBase<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> > Ptr;
 	typedef std::shared_ptr<const ControlledSystemBase<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> > ConstPtr;
@@ -89,7 +91,8 @@ class ControlledSystemBase : public ODE_Base<STATE_DIM> {
 	 */
 	ControlledSystemBase(const ControlledSystemBase& rhs)
 
-      : ControlledSystemBase() {}
+	: ControlledSystemBase()
+	{}
 
 	/**
 	 * Default destructor.
@@ -99,14 +102,14 @@ class ControlledSystemBase : public ODE_Base<STATE_DIM> {
 	/**
 	 * Resets the internal classes.
 	 */
-  virtual void reset() { controller_ = nullptr; }
+	virtual void reset() { controller_ = nullptr; }
 
 	/**
-   * Sets the control policy using the controller class.
+	 * Sets the control policy using the controller class.
 	 *
 	 * @param [in] controller: The control policy.
 	 */
-  void setController(controller_t* controller) { controller_ = controller; }
+	void setController(controller_t* controller) { controller_ = controller; }
 
 	/**
 	 * Computes derivative of the autonomous system dynamics with the given control policy.
@@ -115,9 +118,13 @@ class ControlledSystemBase : public ODE_Base<STATE_DIM> {
 	 * @param [in] x: Current state.
 	 * @param [out] dxdt: Current state time derivative.
 	 */
-  void computeFlowMap(const scalar_t& t, const state_vector_t& x, state_vector_t& dxdt) {
+	void computeFlowMap(
+			const scalar_t& t,
+			const state_vector_t& x,
+			state_vector_t& dxdt)  {
+
 		BASE::numFunctionCalls_++;
-    auto u = controller_->computeInput(t, x);
+		auto u = controller_->computeInput(t, x);
 		computeFlowMap(t, x, u, dxdt);
 	}
 
@@ -130,8 +137,11 @@ class ControlledSystemBase : public ODE_Base<STATE_DIM> {
 	 * @param [in] partitionIndex: index of the time partition.
 	 * @param [in] algorithmName: The algorithm that class this class (default not defined).
 	 */
-  virtual void initializeModel(LogicRulesMachine<LOGIC_RULES_T>& logicRulesMachine, const size_t& partitionIndex,
-                               const char* algorithmName = NULL) {}
+	virtual void initializeModel(
+			LogicRulesMachine<LOGIC_RULES_T>& logicRulesMachine,
+			const size_t& partitionIndex,
+			const char* algorithmName=NULL)
+	{}
 
 	/**
 	 * Returns pointer to the class.
@@ -148,7 +158,11 @@ class ControlledSystemBase : public ODE_Base<STATE_DIM> {
 	 * @param [in] u: Current input.
 	 * @param [out] dxdt: Current state time derivative.
 	 */
-  virtual void computeFlowMap(const scalar_t& t, const state_vector_t& x, const input_vector_t& u, state_vector_t& dxdt) = 0;
+	virtual void computeFlowMap(
+			const scalar_t& t,
+			const state_vector_t& x,
+			const input_vector_t& u,
+			state_vector_t& dxdt) = 0;
 
 	/**
 	 * State map at the transition time
@@ -157,7 +171,11 @@ class ControlledSystemBase : public ODE_Base<STATE_DIM> {
 	 * @param [in] state: transition state
 	 * @param [out] mappedState: mapped state after transition
 	 */
-  virtual void computeJumpMap(const scalar_t& time, const state_vector_t& state, state_vector_t& mappedState) override {
+	virtual void computeJumpMap(
+			const scalar_t& time,
+			const state_vector_t& state,
+			state_vector_t& mappedState) override {
+
 		BASE::computeJumpMap(time, state, mappedState);
 	}
 
@@ -168,11 +186,15 @@ class ControlledSystemBase : public ODE_Base<STATE_DIM> {
 	 * @param [in] state: transition state
 	 * @param [out] guardSurfacesValue: An array of guard surfaces values
 	 */
-  virtual void computeGuardSurfaces(const scalar_t& time, const state_vector_t& state, dynamic_vector_t& guardSurfacesValue) override {
+	virtual void computeGuardSurfaces(
+			const scalar_t& time,
+			const state_vector_t& state,
+			dynamic_vector_t& guardSurfacesValue) override {
+
 		BASE::computeGuardSurfaces(time, state, guardSurfacesValue);
 	}
 
- public:
+public:
   controller_t* controller_;  //! pointer to controller
 };
 

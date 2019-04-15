@@ -30,11 +30,11 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifndef OCS2_LOADEIGENMATRIX_H_
 #define OCS2_LOADEIGENMATRIX_H_
 
-#include <Eigen/Dense>
 #include <iostream>
+#include <Eigen/Dense>
 
-#include <boost/property_tree/info_parser.hpp>
 #include <boost/property_tree/ptree.hpp>
+#include <boost/property_tree/info_parser.hpp>
 
 namespace ocs2 {
 
@@ -47,8 +47,7 @@ inline void loadScalar(const std::string& filename, const std::string& scalarNam
 }
 
 /**
- * An auxiliary function which loads an Eigen matrix from a file. The file uses property tree data structure with INFO format (refer to
- * www.goo.gl/fV3yWA).
+ * An auxiliary function which loads an Eigen matrix from a file. The file uses property tree data structure with INFO format (refer to www.goo.gl/fV3yWA).
  *
  * It has the following format:	<br>
  * matrixName	<br>
@@ -67,7 +66,11 @@ inline void loadScalar(const std::string& filename, const std::string& scalarNam
  * @param [out] matrix: The loaded matrix.
  */
 template <typename Derived>
-inline void loadEigenMatrix(const std::string& filename, const std::string& matrixName, Eigen::MatrixBase<Derived>& matrix) {
+inline void loadEigenMatrix(
+		const std::string& filename,
+		const std::string& matrixName,
+		Eigen::MatrixBase<Derived>& matrix)  {
+
 	typedef typename Eigen::MatrixBase<Derived>::Scalar scalar_t;
 
 	size_t rows = matrix.rows();
@@ -80,22 +83,25 @@ inline void loadEigenMatrix(const std::string& filename, const std::string& matr
 
 	scalar_t aij;
 	bool failed = false;
-  for (size_t i = 0; i < rows; i++)
-    for (size_t j = 0; j < cols; j++) {
+	for (size_t i=0; i<rows; i++)
+		for (size_t j=0; j<cols; j++)  {
 			try	{
-        aij = pt.get<scalar_t>(matrixName + "." + "(" + std::to_string(i) + "," + std::to_string(j) + ")");
-      } catch (const std::exception& e) {
+				aij = pt.get<scalar_t>(matrixName + "." + "(" +std::to_string(i) + "," + std::to_string(j) + ")");
+			}
+			catch (const std::exception& e){
 				aij = 0;
 				failed = true;
 			}
-      matrix(i, j) = scaling * aij;
+			matrix(i,j) = scaling * aij;
 		}
 
-  if (failed == true) {
+	if (failed==true)  {
 		std::cerr << "WARNING: Failed to load matrix type: " + matrixName + "!" << std::endl;
 	}
 }
 
-}  // namespace ocs2
+
+}  // end of ocs2 namespace
+
 
 #endif /* OCS2_LOADEIGENMATRIX_H_ */

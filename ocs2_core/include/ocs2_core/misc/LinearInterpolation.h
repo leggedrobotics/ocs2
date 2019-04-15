@@ -36,7 +36,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <memory>
 #include <vector>
 
-namespace ocs2 {
+
+namespace ocs2{
 
 /**
  * Linear Interpolation class.
@@ -44,9 +45,10 @@ namespace ocs2 {
  * @tparam Data_T: Date type
  * @tparam Alloc: Specialized allocation class
  */
-template <typename Data_T, class Alloc = std::allocator<Data_T>>
-class LinearInterpolation {
- public:
+template <typename Data_T, class Alloc=std::allocator<Data_T> >
+class LinearInterpolation
+{
+public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
 	typedef double scalar_t;
@@ -55,7 +57,12 @@ class LinearInterpolation {
 	 * Default constructor.
 	 */
 	LinearInterpolation()
-      : index_(0), zeroFunction_(false), timeStampPtr_(nullptr), dataPtr_(nullptr) {}
+
+	: index_(0),
+	  zeroFunction_(false),
+	  timeStampPtr_(nullptr),
+	  dataPtr_(nullptr)
+	{}
 
 	/**
 	 * Constructor
@@ -63,8 +70,15 @@ class LinearInterpolation {
 	 * @param [in] timeStampPtr: A pointer to time stamp.
 	 * @param [in] dataPtr: A pointer to the data.
 	 */
-  LinearInterpolation(const std::vector<scalar_t>* timeStampPtr, const std::vector<Data_T, Alloc>* dataPtr)
-      : index_(0), zeroFunction_(false), timeStampPtr_(timeStampPtr), dataPtr_(dataPtr) {
+	LinearInterpolation(
+			const std::vector<scalar_t>* timeStampPtr,
+			const std::vector<Data_T,Alloc>* dataPtr)
+
+	: index_(0)
+	, zeroFunction_(false)
+	, timeStampPtr_(timeStampPtr)
+	, dataPtr_(dataPtr)
+	{
     if (timeStampPtr_ == nullptr) throw std::runtime_error("timeStampPtr is nullptr.");
     if (dataPtr_ == nullptr) throw std::runtime_error("dataPtr is nullptr.");
 	}
@@ -74,7 +88,7 @@ class LinearInterpolation {
 	 *
 	 * @param [in] arg: Instance of the other class.
 	 */
-  LinearInterpolation(const LinearInterpolation& arg) = default;
+	LinearInterpolation(const LinearInterpolation& arg) = default;
 
 	/**
 	 * Reset function
@@ -101,7 +115,7 @@ class LinearInterpolation {
      *
      * @param [in] dataPtr: A pointer to the data.
      */
-  void setData(const std::vector<Data_T, Alloc>* dataPtr) {
+	void setData(const std::vector<Data_T, Alloc>* dataPtr) {
     if (dataPtr == nullptr) throw std::runtime_error("dataPtr is nullptr.");
 		reset();
 		dataPtr_ = dataPtr;
@@ -124,8 +138,12 @@ class LinearInterpolation {
      * @param [in]  greatestLessTimeStampIndex (optional): The greatest smaller time stamp index. If provided, the interpolation will skip
      * the search scheme and readily calculates the output.
      */
-  void interpolate(const scalar_t& enquiryTime, Data_T& enquiryData, int greatestLessTimeStampIndex = -1) const {
-    if (zeroFunction_ == true) {
+	void interpolate(
+			const scalar_t& enquiryTime,
+			Data_T& enquiryData,
+			int greatestLessTimeStampIndex = -1) const {
+
+		if (zeroFunction_==true) {
 			enquiryData.setZero();
 			return;
 		}
@@ -138,13 +156,13 @@ class LinearInterpolation {
     if (timeStampSize==0 or (dataArr.size() != timeStampSize))
       throw std::runtime_error("LinearInterpolation.h : Sizes not suitable for interpolation.");
 
-    if (enquiryTime <= timeStampArr.front()) {
+    if (enquiryTime<=timeStampArr.front()) {
       enquiryData = dataArr.front();
 			index_ = 0;
 			return;
 		}
 
-    if (enquiryTime >= timeStampArr.back()) {
+    if (enquiryTime>=timeStampArr.back()) {
       enquiryData = dataArr.back();
       index_ = timeStampSize - 1;
 			return;
@@ -163,16 +181,19 @@ class LinearInterpolation {
 	 * Returns the greatest smaller time stamp index found in the last interpolation function call.
 	 * @return The greatest smaller time stamp index.
 	 */
-  int getGreatestLessTimeStampIndex() const { return index_; }
+	int getGreatestLessTimeStampIndex() const {
 
- protected:
+		return index_;
+	}
+
+protected:
     /**
      * Finds the index of the greatest smaller time stamp index for the enquiry time.
      *
      * @param [in] enquiryTime: The enquiry time for interpolation.
      * @return The greatest smaller time stamp index.
      */
-  int find(const scalar_t& enquiryTime) const {
+	int find(const scalar_t& enquiryTime) const {
     const auto& timeStampArr = *timeStampPtr_;
     const auto timeStampSize = timeStampArr.size();
 

@@ -27,10 +27,17 @@ MRT_ROS_Quadruped<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::MRT_ROS_Quadruped(
 			modelSettings_.touchDownVelocity_));
 
 	// logic rule
-	logic_rules_ptr_t logicRulesPtr( new logic_rules_t(feetZDirectionPlannerPtr) );
+	logic_rules_ptr_t logicRulesPtr(new logic_rules_t(feetZDirectionPlannerPtr));
+
+	// set up the rollout
+	if (ocs2QuadrupedInterfacePtr->mpcSettings().useFeedbackPolicy_){
+      BASE::initRollout(*(ocs2QuadrupedInterfacePtr_->getSystemDynamicsPtr()),
+                        ocs2QuadrupedInterfacePtr_->slqSettings().rolloutSettings_);
+    }
 
 	// set Base
-	BASE::set(*logicRulesPtr, true, robotName);
+	bool useFeedforward = !ocs2QuadrupedInterfacePtr->mpcSettings().useFeedbackPolicy_;
+	BASE::set(*logicRulesPtr, useFeedforward, robotName);
 
 	// reset
 	reset();

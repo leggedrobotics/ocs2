@@ -61,6 +61,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_core/logic/machine/HybridLogicRulesMachine.h>
 #include <ocs2_core/initialization/SystemOperatingTrajectoriesBase.h>
 #include <ocs2_core/control/LinearController.h>
+#include <ocs2_core/constraint/RelaxedBarrierPenalty.h>
 
 #include <ocs2_oc/oc_solver/Solver_BASE.h>
 #include <ocs2_oc/rollout/RolloutBase.h>
@@ -117,27 +118,35 @@ public:
 	typedef typename BASE::size_array_t                        size_array_t;
 	typedef typename BASE::scalar_t                            scalar_t;
 	typedef typename BASE::scalar_array_t                      scalar_array_t;
+	typedef typename BASE::scalar_array2_t                     scalar_array2_t;
+	typedef typename BASE::scalar_array3_t                     scalar_array3_t;
 	typedef typename BASE::eigen_scalar_t                      eigen_scalar_t;
 	typedef typename BASE::eigen_scalar_array_t                eigen_scalar_array_t;
 	typedef typename BASE::eigen_scalar_array2_t               eigen_scalar_array2_t;
 	typedef typename BASE::state_vector_t                      state_vector_t;
 	typedef typename BASE::state_vector_array_t                state_vector_array_t;
 	typedef typename BASE::state_vector_array2_t               state_vector_array2_t;
+	typedef typename BASE::state_vector_array3_t               state_vector_array3_t;
 	typedef typename BASE::input_vector_t                      input_vector_t;
 	typedef typename BASE::input_vector_array_t                input_vector_array_t;
 	typedef typename BASE::input_vector_array2_t               input_vector_array2_t;
+	typedef typename BASE::input_vector_array3_t               input_vector_array3_t;
 	typedef typename BASE::input_state_matrix_t                input_state_matrix_t;
 	typedef typename BASE::input_state_matrix_array_t          input_state_matrix_array_t;
 	typedef typename BASE::input_state_matrix_array2_t         input_state_matrix_array2_t;
+	typedef typename BASE::input_state_matrix_array3_t         input_state_matrix_array3_t;
 	typedef typename BASE::state_matrix_t                      state_matrix_t;
 	typedef typename BASE::state_matrix_array_t                state_matrix_array_t;
 	typedef typename BASE::state_matrix_array2_t               state_matrix_array2_t;
+	typedef typename BASE::state_matrix_array3_t               state_matrix_array3_t;
 	typedef typename BASE::input_matrix_t                      input_matrix_t;
 	typedef typename BASE::input_matrix_array_t                input_matrix_array_t;
 	typedef typename BASE::input_matrix_array2_t               input_matrix_array2_t;
+	typedef typename BASE::input_matrix_array3_t               input_matrix_array3_t;
 	typedef typename BASE::state_input_matrix_t                state_input_matrix_t;
 	typedef typename BASE::state_input_matrix_array_t          state_input_matrix_array_t;
 	typedef typename BASE::state_input_matrix_array2_t         state_input_matrix_array2_t;
+	typedef typename BASE::state_input_matrix_array3_t         state_input_matrix_array3_t;
 	typedef typename BASE::constraint1_vector_t                constraint1_vector_t;
 	typedef typename BASE::constraint1_vector_array_t          constraint1_vector_array_t;
 	typedef typename BASE::constraint1_vector_array2_t         constraint1_vector_array2_t;
@@ -165,6 +174,7 @@ public:
 	typedef ConstraintBase<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>       constraint_base_t;
 	typedef CostFunctionBase<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>     cost_function_base_t;
 	typedef SystemOperatingTrajectoriesBase<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> operating_trajectories_base_t;
+	typedef PenaltyBase<STATE_DIM, INPUT_DIM> penalty_base_t;
 
 	typedef RolloutBase<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> rollout_base_t;
 	typedef TimeTriggeredRollout<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> time_triggered_rollout_t;
@@ -315,6 +325,8 @@ public:
 			constraint1_vector_array2_t& EvTrajectoryStock,
 			std::vector<size_array_t>& nc2TrajectoriesStock,
 			constraint2_vector_array2_t& HvTrajectoryStock,
+            std::vector<size_array_t>& ncIneqTrajectoriesStock,
+            scalar_array3_t& hTrajectoryStock,
 			std::vector<size_array_t>& nc2FinalStock,
 			constraint2_vector_array2_t& HvFinalStock,
 			size_t threadId = 0);
@@ -358,6 +370,7 @@ public:
 			const state_vector_array2_t& stateTrajectoriesStock,
 			const input_vector_array2_t& inputTrajectoriesStock,
 			const scalar_t& constraint2ISE,
+            const scalar_t& inequalityConstraintPenalty,
 			const std::vector<size_array_t>& nc2FinalStock,
 			const constraint2_vector_array2_t& HvFinalStock,
 			scalar_t& totalCost,
@@ -761,6 +774,22 @@ public:
 			scalar_t& constraintISE);
 
 	/**
+     * Calculate integrated penalty from inequality constraints.
+     *
+     * @param [in] timeTrajectoriesStock: Array of trajectories containing the time trajectory stamp.
+     * @param [in] ncIneqTrajectoriesStock: Array of trajectories containing the number of inequalityConstraints
+     * @param [in] hTrajectoriesStock: Array of trajectories containing the value of the inequality constraints.
+     * @param [in] penaltyPtrStock: Array of penalty function pointers.
+     * @return constraintPenalty: The inequality constraints penalty.
+     */
+	scalar_t calculateInequalityConstraintPenalty(
+                const std::vector<scalar_array_t>& timeTrajectoriesStock,
+                const std::vector<size_array_t>& ncIneqTrajectoriesStock,
+                const scalar_array3_t& hTrajectoriesStock,
+                scalar_t& inequalityISE,
+				size_t workerIndex = 0);
+
+	/**
 	 * Rewinds optimizer internal variables.
 	 *
 	 * @param [in] firstIndex: The index which we want to rewind to.
@@ -844,6 +873,8 @@ protected:
 			constraint1_vector_array_t& EvTrajectory,
 			size_array_t& nc2Trajectory,
 			constraint2_vector_array_t& HvTrajectory,
+            size_array_t& ncIneqTrajectory,
+            scalar_array2_t& hTrajectory,
 			size_array_t& nc2Finals,
 			constraint2_vector_array_t& HvFinals);
 
@@ -929,6 +960,8 @@ protected:
 	 * @param lsConstraint2ISE
 	 * @param lsConstraint2MaxNorm
 	 * @param lsControllersStock
+	 * @param lsInequalityConstraintPenalty
+	 * @param lsInequalityConstraintISE
 	 * @param lsTimeTrajectoriesStock
 	 * @param lsEventsPastTheEndIndecesStock
 	 * @param lsStateTrajectoriesStock
@@ -943,6 +976,8 @@ protected:
 			scalar_t& lsConstraint2ISE,
 			scalar_t& lsConstraint2MaxNorm,
 			linear_controller_array_t& lsControllersStock,
+            scalar_t& lsInequalityConstraintPenalty,
+			scalar_t& lsInequalityConstraintISE,
 			std::vector<scalar_array_t>& lsTimeTrajectoriesStock,
 			std::vector<size_array_t>& lsEventsPastTheEndIndecesStock,
 			state_vector_array2_t& lsStateTrajectoriesStock,
@@ -1240,6 +1275,18 @@ protected:
 	state_input_matrix_array2_t BmConstrainedTrajectoryStock_;
 	input_state_matrix_array2_t PmConstrainedTrajectoryStock_;
 	input_vector_array2_t       RvConstrainedTrajectoryStock_;
+
+	std::vector<std::shared_ptr<penalty_base_t>> penaltyPtrStock_;
+	scalar_t nominalInequalityConstraintPenalty_;
+	scalar_t nominalInequalityConstraintISE_;
+	std::vector<size_array_t>   ncIneqTrajectoriesStock_;  // ncIneq: Number of inequality constraints
+	scalar_array3_t       		hTrajectoryStock_;
+	state_vector_array3_t       dhdxTrajectoryStock_;
+	state_matrix_array3_t       ddhdxdxTrajectoryStock_;
+	input_vector_array3_t       dhduTrajectoryStock_;
+	input_matrix_array3_t       ddhduduTrajectoryStock_;
+	input_state_matrix_array3_t ddhdudxTrajectoryStock_;
+
 
 	std::vector<std::shared_ptr<slq_riccati_equations_t>>                         slqRiccatiEquationsPtrStock_;
 	std::vector<std::shared_ptr<IntegratorBase<slq_riccati_equations_t::S_DIM_>>> slqRiccatiIntegratorPtrStock_;

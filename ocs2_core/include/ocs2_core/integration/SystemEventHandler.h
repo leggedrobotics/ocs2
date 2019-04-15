@@ -73,7 +73,7 @@ public:
 	 * Default constructor
 	 */
 	SystemEventHandler()
-	: maxNumSteps_(std::numeric_limits<size_t>::max()),
+	: maxNumSteps_(std::numeric_limits<int>::max()),
 	  eventID_(std::numeric_limits<int>::min())
 	{}
 
@@ -92,7 +92,7 @@ public:
 	 *
 	 * @param [in] maxNumSteps: maximum number of integration points
 	 */
-	void setMaxNumSteps(size_t maxNumSteps) {
+	void setMaxNumSteps(int maxNumSteps) {
 		maxNumSteps_ = maxNumSteps;
 	}
 
@@ -157,9 +157,7 @@ public:
 
 protected:
 	static bool killIntegration_; /*=false*/
-
-	size_t maxNumSteps_;
-
+	int maxNumSteps_;
 	int eventID_;
 };
 

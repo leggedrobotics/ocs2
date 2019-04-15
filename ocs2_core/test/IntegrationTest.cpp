@@ -41,7 +41,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 using namespace ocs2;
 
 
-TEST(IntegrationTest, DISABLED_SecondOrderSystem_ODE45)
+TEST(IntegrationTest, SecondOrderSystem_ODE45)
 {
 	bool resultsGood = true;
 
@@ -106,7 +106,7 @@ TEST(IntegrationTest, DISABLED_SecondOrderSystem_ODE45)
 }
 
 
-TEST(IntegrationTest, DISABLED_SecondOrderSystem_AdamsBashfort)
+TEST(IntegrationTest, SecondOrderSystem_AdamsBashfort)
 {
 	bool resultsGood = true;
 
@@ -174,7 +174,7 @@ TEST(IntegrationTest, DISABLED_SecondOrderSystem_AdamsBashfort)
 
 #if (BOOST_VERSION / 100000 == 1 && BOOST_VERSION / 100 % 1000 > 55)
 
-TEST(IntegrationTest, DISABLED_SecondOrderSystem_AdamsBashfortMoulton)
+TEST(IntegrationTest, SecondOrderSystem_AdamsBashfortMoulton)
 {
 	bool resultsGood = true;
 

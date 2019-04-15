@@ -119,7 +119,7 @@ void SLQ<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::lineSearch(bool computeISEs)  {
 
 	// local search forward simulation's variables
 	scalar_t lsTotalCost;
-	scalar_t lsConstraint1ISE, lsConstraint2ISE;
+	scalar_t lsConstraint1ISE, lsConstraint2ISE, lsInequalityConstraintPenalty, lsInequalityConstraintISE;
 	scalar_t lsConstraint1MaxNorm, lsConstraint2MaxNorm;
 	linear_controller_array_t	lsControllersStock(BASE::numPartitions_);
 	std::vector<scalar_array_t>	lsTimeTrajectoriesStock(BASE::numPartitions_);
@@ -136,6 +136,8 @@ void SLQ<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::lineSearch(bool computeISEs)  {
 				lsConstraint1ISE, lsConstraint1MaxNorm,
 				lsConstraint2ISE, lsConstraint2MaxNorm,
 				lsControllersStock,
+				lsInequalityConstraintPenalty,
+				lsInequalityConstraintISE,
 				lsTimeTrajectoriesStock, lsEventsPastTheEndIndecesStock,
 				lsStateTrajectoriesStock, lsInputTrajectoriesStock);
 
@@ -155,6 +157,7 @@ void SLQ<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::lineSearch(bool computeISEs)  {
 		BASE::nominalConstraint1MaxNorm_ = lsConstraint1MaxNorm;
 		BASE::nominalConstraint2ISE_ 	 = lsConstraint2ISE;
 		BASE::nominalConstraint2MaxNorm_ = lsConstraint2MaxNorm;
+		BASE::nominalInequalityConstraintPenalty_ = lsInequalityConstraintPenalty;
 
 		BASE::nominalControllersStock_.swap(lsControllersStock);
 		BASE::nominalTimeTrajectoriesStock_.swap(lsTimeTrajectoriesStock);

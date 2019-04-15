@@ -82,9 +82,9 @@ int main( int argc, char* argv[] )
     scalar_t p;
     input_vector_t dpdu;
     input_matrix_t ddpdudu;
-    p = relaxedBarrierPenalty.getPenaltyCost(nIneq, h);
-    relaxedBarrierPenalty.getPenaltyCostDerivativeInput(nIneq, h, dhdu, dpdu);
-    relaxedBarrierPenalty.getPenaltyCostSecondDerivativeInput(nIneq, h, dhdu, ddhdudu, ddpdudu);
+    relaxedBarrierPenalty.getPenaltyCost(h, p);
+    relaxedBarrierPenalty.getPenaltyCostDerivativeInput(h, dhdu, dpdu);
+    relaxedBarrierPenalty.getPenaltyCostSecondDerivativeInput(h, dhdu, ddhdudu, ddpdudu);
     std::cout << "p: " << p << std::endl;
     std::cout << "dpdu: " << dpdu.transpose() << std::endl;
     std::cout << "ddpdudu: \n" << ddpdudu << std::endl;

@@ -25,30 +25,70 @@ class LinearController : public Controller<STATE_DIM, INPUT_DIM> {
   using self_t = LinearController<STATE_DIM, INPUT_DIM>;
   using array_t = std::vector<self_t, Eigen::aligned_allocator<self_t>>;
 
-  LinearController()
-      : Base()
-        , linInterpolateUff_(&time_, &uff_)
-        , linInterpolateK_(&time_, &k_) {
+  /**
+   * @brief Default constructor leaves object uninitialized
+   */
+  LinearController() : Base(), linInterpolateUff_(&time_, &uff_), linInterpolateK_(&time_, &k_) {}
+
+  /**
+   * @brief Constructor initializes all required members of the controller
+   */
+  LinearController(const scalar_array_t& controllerTime, const input_vector_array_t& controllerFeedforward,
+                   const input_state_matrix_array_t& controllerFeedback)
+      : LinearController() {
+    setController(controllerTime, controllerFeedforward, controllerFeedback);
   }
 
-  LinearController(const scalar_array_t& controllerTime, const input_vector_array_t& controllerFeedforward,
-                   const input_state_matrix_array_t& controllerFeedback) : LinearController() {
-    setController(controllerTime, controllerFeedforward, controllerFeedback);
-    }
+  /**
+   * @brief Copy constructor
+   * @param other LinearController object to copy from
+   */
+  LinearController(const LinearController& other) : LinearController(other.time_, other.uff_, other.k_) { deltaUff_ = other.deltaUff_; }
 
-  LinearController(const LinearController& other)
-      : LinearController(other.time_, other.uff_, other.k_){deltaUff_ = other.deltaUff_;}
+  /**
+   * @brief LinearController move constructor -- not implemented for now
+   * @param other LinearController object to move from
+   * @todo Implement
+   */
+  LinearController(LinearController&& other) = delete;
 
+  /**
+   * @brief Copy assignment (copy and swap idiom)
+   * @param other LinearController object to assign from
+   */
+  LinearController& operator=(LinearController other) {
+    other.swap(*this);
+    return *this;
+  }
+
+  /**
+   * @brief Move assignment -- not implemented for now
+   * @param other LinearController object to assign from
+   * @todo Implement
+   */
+  LinearController& operator=(LinearController&& other) = delete;
+
+  /**
+   * @brief Destructor
+   */
   virtual ~LinearController() = default;
 
+  /**
+   * @brief setController Assign control law
+   * @param controllerTime
+   * @param controllerFeedforward
+   * @param controllerFeedback
+   */
   void setController(const scalar_array_t& controllerTime, const input_vector_array_t& controllerFeedforward,
                      const input_state_matrix_array_t& controllerFeedback) {
     time_ = controllerTime;
     uff_ = controllerFeedforward;
     k_ = controllerFeedback;
-
   }
 
+  /**
+   * @brief reset revert back to empty controller
+   */
   void reset() {
     linInterpolateUff_.reset();
     linInterpolateK_.reset();
@@ -90,11 +130,11 @@ class LinearController : public Controller<STATE_DIM, INPUT_DIM> {
   }
 
   virtual void flattenFeedforwardOnly(scalar_t time, scalar_array_t& flatArray) const override {
-      input_vector_t uff;
-      linInterpolateUff_.interpolate(time, uff);
+    input_vector_t uff;
+    linInterpolateUff_.interpolate(time, uff);
 
-      //TODO(jcarius) should we subtract k*x_ref here?
-      flatArray = std::move(scalar_array_t(uff.data(), uff.data()+INPUT_DIM));
+    // TODO(jcarius) should we subtract k*x_ref here?
+    flatArray = std::move(scalar_array_t(uff.data(), uff.data() + INPUT_DIM));
   }
 
   virtual void unFlatten(const scalar_array_t& timeArray, const std::vector<scalar_array_t const*>& flatArray2) override {
@@ -119,10 +159,10 @@ class LinearController : public Controller<STATE_DIM, INPUT_DIM> {
       default: { throw std::runtime_error("LinearController::unFlatten received array of wrong length."); }
     }
 
-    for (const auto& arr : flatArray2) {     // loop through time
+    for (const auto& arr : flatArray2) {  // loop through time
       uff_.emplace_back(input_vector_t::Zero());
-      if(loadFeedback){
-          k_.emplace_back(input_state_matrix_t::Zero());
+      if (loadFeedback) {
+        k_.emplace_back(input_state_matrix_t::Zero());
       }
 
       for (int i = 0; i < INPUT_DIM; i++) {  // loop through input dim
@@ -139,13 +179,12 @@ class LinearController : public Controller<STATE_DIM, INPUT_DIM> {
    * @param other the object to be swapped with
    */
   virtual void swap(LinearController<STATE_DIM, INPUT_DIM>& other) {
-    using std::swap;
+    using std::swap;  // enable ADL
 
     swap(time_, other.time_);
     swap(uff_, other.uff_);
     swap(deltaUff_, other.deltaUff_);
     swap(k_, other.k_);
-
   }
 
   /**
@@ -171,7 +210,7 @@ class LinearController : public Controller<STATE_DIM, INPUT_DIM> {
    */
   size_t size() const { return time_.size(); }
 
-  virtual std::string getType() const override {return "LinearController";}
+  virtual std::string getType() const override { return "LinearController"; }
 
  public:
   scalar_array_t time_;

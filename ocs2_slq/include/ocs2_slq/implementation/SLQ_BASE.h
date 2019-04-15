@@ -1522,7 +1522,7 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::lineSearchWorker(
 		lsTotalCost  = std::numeric_limits<scalar_t>::max();
 		if(settings_.displayInfo_)
 			BASE::printString("\t [Thread" + std::to_string(workerIndex) + "] rollout with learningRate " +
-					std::to_string(learningRate) + " is terminated.");
+					std::to_string(learningRate) + " is terminated: " + error.what());
 	}
 }
 

@@ -133,16 +133,16 @@ target_link_libraries(gait_command_node
 )
 
 add_executable(planning
-        src/Planning.cpp
-)
+        src/planning.cpp
+        )
 add_dependencies(planning
-  ${${PROJECT_NAME}_EXPORTED_TARGETS}
-  ${catkin_EXPORTED_TARGETS}
-)
+        ${${PROJECT_NAME}_EXPORTED_TARGETS}
+        ${catkin_EXPORTED_TARGETS}
+        )
 target_link_libraries(planning
-  ocs2_anymal_interface
-  ${catkin_LIBRARIES}
-)
+        ocs2_anymal_interface
+        ${catkin_LIBRARIES}
+        )
 
 add_executable(anymal_mpc_node
   src/AnymalMPC.cpp

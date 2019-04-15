@@ -86,6 +86,8 @@ slq
   minRelCostGSLQP               0.1   ;0.01
   stateConstraintPenaltyCoeff   100.0
   stateConstraintPenaltyBase    1.1
+  inequalityConstraintDelta     5.0
+  inequalityConstraintMu        0.1
   meritFunctionRho              50.0
   constraintStepSize            1.0
   displayInfo                   0

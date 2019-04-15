@@ -38,7 +38,7 @@ public:
 
 	OCS2AnymalInterface(const std::string& pathToConfigFolder);
 
-	~OCS2AnymalInterface() {}
+	virtual ~OCS2AnymalInterface() = default;
 
 	/**
 	 * setup all optimizes
@@ -58,6 +58,10 @@ public:
 	void designWeightCompensatingInput(
 			const state_vector_t& switchedState,
 			input_vector_t& uForWeightCompensation) override;
+
+  	controlled_system_base_ptr_t getSystemDynamicsPtr() override {
+	  	return controlled_system_base_ptr_t(new system_dynamics_t(modelSettings_));
+  	}
 
 protected:
 	// dynamics

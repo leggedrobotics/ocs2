@@ -19,7 +19,7 @@ public:
 
 	AnymalComKinoConstraint(const AnymalComKinoConstraint& rhs);
 
-	~AnymalComKinoConstraint() {}
+	virtual ~AnymalComKinoConstraint() = default;
 
 	AnymalComKinoConstraint* clone() const override;
 

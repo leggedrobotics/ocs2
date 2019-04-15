@@ -47,10 +47,10 @@ class Rollout_Settings {
  public:
   typedef Dimensions<0, 0>::RICCATI_INTEGRATOR_TYPE RICCATI_INTEGRATOR_TYPE;
 
-  /**
-   * Default constructor.
-   */
-  Rollout_Settings()
+	/**
+	 * Default constructor.
+	 */
+	Rollout_Settings()
       : absTolODE_(1e-9), relTolODE_(1e-6), maxNumStepsPerSecond_(5000), minTimeStep_(1e-3), integratorType_(IntegratorType::ODE45) {}
 
   /**
@@ -63,89 +63,92 @@ class Rollout_Settings {
         minTimeStep_(minTimeStep),
         integratorType_(integratorType) {}
 
-  /**
-   * This function loads the "Rollout_Settings" variables from a config file. This file contains the settings for the Rollout algorithms.
-   * Here, we use the INFO format which was created specifically for the property tree library (refer to www.goo.gl/fV3yWA).
-   *
-   * It has the following format:	<br>
-   * rollout	<br>
-   * {	<br>
-   *   absTolODE                value		<br>
-   *   relTolODE                value		<br>
-   *   maxNumStepsPerSecond     value		<br>
-   *   minTimeStep              value		<br>
-   *   (and so on for the other fields)	<br>
-   * }	<br>
-   *
-   * If a value for a specific field is not defined it will set to the default value defined in "Rollout_Settings".
-   *
-   * @param [in] filename: File name which contains the configuration data.
-   * @param [in] verbose: Flag to determine whether to print out the loaded settings or not (The default is true).
-   */
-  void loadSettings(const std::string& filename, bool verbose = true);
+	/**
+	 * This function loads the "Rollout_Settings" variables from a config file. This file contains the settings for the Rollout algorithms.
+	 * Here, we use the INFO format which was created specifically for the property tree library (refer to www.goo.gl/fV3yWA).
+	 *
+	 * It has the following format:	<br>
+	 * rollout	<br>
+	 * {	<br>
+	 *   absTolODE                value		<br>
+	 *   relTolODE                value		<br>
+	 *   maxNumStepsPerSecond     value		<br>
+	 *   minTimeStep              value		<br>
+	 *   (and so on for the other fields)	<br>
+	 * }	<br>
+	 *
+	 * If a value for a specific field is not defined it will set to the default value defined in "Rollout_Settings".
+	 *
+	 * @param [in] filename: File name which contains the configuration data.
+	 * @param [in] verbose: Flag to determine whether to print out the loaded settings or not (The default is true).
+	 */
+	void loadSettings(const std::string& filename, bool verbose = true);
 
  public:
-  /****************
-   *** Variables **
-   ****************/
-  /** This value determines the absolute tolerance error for ode solvers. */
-  double absTolODE_;
-  /** This value determines the relative tolerance error for ode solvers. */
-  double relTolODE_;
-  /** This value determines the maximum number of integration points per a second for ode solvers. */
-  size_t maxNumStepsPerSecond_;
-  /** The minimum integration time step */
-  double minTimeStep_;
+	/****************
+	 *** Variables **
+	 ****************/
+	/** This value determines the absolute tolerance error for ode solvers. */
+	double absTolODE_;
+	/** This value determines the relative tolerance error for ode solvers. */
+	double relTolODE_;
+	/** This value determines the maximum number of integration points per a second for ode solvers. */
+	size_t maxNumStepsPerSecond_;
+	/** The minimum integration time step */
+	double minTimeStep_;
   /** Which integrator to use */
   IntegratorType integratorType_;
 
-};  // end of Rollout_Settings class
+}; // end of Rollout_Settings class
+
 
 inline void Rollout_Settings::loadSettings(const std::string& filename, bool verbose /*= true*/) {
-  boost::property_tree::ptree pt;
-  boost::property_tree::read_info(filename, pt);
+
+	boost::property_tree::ptree pt;
+	boost::property_tree::read_info(filename, pt);
 
   if (verbose) {
-    std::cerr << std::endl << " #### Rollout Settings: " << std::endl;
+		std::cerr << std::endl << " #### Rollout Settings: " << std::endl;
     std::cerr << " #### =============================================================================" << std::endl;
-  }
+	}
 
-  try {
-    absTolODE_ = pt.get<double>("slq.AbsTolODE");
-    if (verbose) std::cerr << " #### Option loader : option 'AbsTolODE' ........................... " << absTolODE_ << std::endl;
+	try	{
+		absTolODE_ = pt.get<double>("slq.AbsTolODE");
+		if (verbose)  std::cerr << " #### Option loader : option 'AbsTolODE' ........................... " << absTolODE_ << std::endl;
   } catch (const std::exception& e) {
     if (verbose)
       std::cerr << " #### Option loader : option 'AbsTolODE' ........................... " << absTolODE_ << "   \t(default)" << std::endl;
-  }
+	}
 
-  try {
-    relTolODE_ = pt.get<double>("slq.RelTolODE");
-    if (verbose) std::cerr << " #### Option loader : option 'RelTolODE' ........................... " << relTolODE_ << std::endl;
+	try	{
+		relTolODE_ = pt.get<double>("slq.RelTolODE");
+		if (verbose)  std::cerr << " #### Option loader : option 'RelTolODE' ........................... " << relTolODE_ << std::endl;
   } catch (const std::exception& e) {
     if (verbose)
       std::cerr << " #### Option loader : option 'RelTolODE' ........................... " << relTolODE_ << "   \t(default)" << std::endl;
-  }
+	}
 
-  try {
-    maxNumStepsPerSecond_ = pt.get<double>("slq.maxNumStepsPerSecond");
-    if (verbose) std::cerr << " #### Option loader : option 'maxNumStepsPerSecond' ................ " << maxNumStepsPerSecond_ << std::endl;
+	try	{
+		maxNumStepsPerSecond_ = pt.get<double>("slq.maxNumStepsPerSecond");
+		if (verbose)  std::cerr << " #### Option loader : option 'maxNumStepsPerSecond' ................ " << maxNumStepsPerSecond_ << std::endl;
   } catch (const std::exception& e) {
     if (verbose)
       std::cerr << " #### Option loader : option 'maxNumStepsPerSecond' ................ " << maxNumStepsPerSecond_ << "   \t(default)"
                 << std::endl;
-  }
+	}
 
-  try {
-    minTimeStep_ = pt.get<double>("slq.minTimeStep");
-    if (verbose) std::cerr << " #### Option loader : option 'minTimeStep' ......................... " << minTimeStep_ << std::endl;
+	try	{
+		minTimeStep_ = pt.get<double>("slq.minTimeStep");
+		if (verbose)  std::cerr << " #### Option loader : option 'minTimeStep' ......................... " << minTimeStep_ << std::endl;
   } catch (const std::exception& e) {
     if (verbose)
       std::cerr << " #### Option loader : option 'minTimeStep' ......................... " << minTimeStep_ << "   \t(default)" << std::endl;
-  }
+	}
 
   if (verbose) std::cerr << " #### =============================================================================" << std::endl;
 }
 
-}  // namespace ocs2
+} // namespace ocs2
 
 #endif /* ROLLOUT_SETTINGS_OCS2_H_ */
+

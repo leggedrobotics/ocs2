@@ -54,128 +54,128 @@ namespace ocs2 {
 template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T = NullLogicRules>
 class ControlledSystemBase : public ODE_Base<STATE_DIM> {
  public:
-  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
   static_assert(std::is_base_of<LogicRulesBase, LOGIC_RULES_T>::value, "LOGIC_RULES_T must inherit from LogicRulesBase");
 
-  typedef std::shared_ptr<ControlledSystemBase<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> > Ptr;
-  typedef std::shared_ptr<const ControlledSystemBase<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> > ConstPtr;
+	typedef std::shared_ptr<ControlledSystemBase<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> > Ptr;
+	typedef std::shared_ptr<const ControlledSystemBase<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> > ConstPtr;
 
-  typedef ODE_Base<STATE_DIM> BASE;
+	typedef ODE_Base<STATE_DIM> BASE;
 
-  typedef Dimensions<STATE_DIM, INPUT_DIM> DIMENSIONS;
-  typedef typename DIMENSIONS::scalar_t scalar_t;
-  typedef typename DIMENSIONS::scalar_array_t scalar_array_t;
-  typedef typename DIMENSIONS::state_vector_t state_vector_t;
-  typedef typename DIMENSIONS::state_vector_array_t state_vector_array_t;
-  typedef typename DIMENSIONS::input_vector_t input_vector_t;
-  typedef typename DIMENSIONS::input_vector_array_t input_vector_array_t;
-  typedef typename DIMENSIONS::input_state_matrix_t input_state_matrix_t;
-  typedef typename DIMENSIONS::input_state_matrix_array_t input_state_matrix_array_t;
-  typedef typename DIMENSIONS::constraint1_vector_t constraint1_vector_t;
-  typedef typename DIMENSIONS::constraint2_vector_t constraint2_vector_t;
-  typedef typename DIMENSIONS::dynamic_vector_t dynamic_vector_t;
+	typedef Dimensions<STATE_DIM, INPUT_DIM> DIMENSIONS;
+	typedef typename DIMENSIONS::scalar_t       scalar_t;
+	typedef typename DIMENSIONS::scalar_array_t scalar_array_t;
+	typedef typename DIMENSIONS::state_vector_t       state_vector_t;
+	typedef typename DIMENSIONS::state_vector_array_t state_vector_array_t;
+	typedef typename DIMENSIONS::input_vector_t       input_vector_t;
+	typedef typename DIMENSIONS::input_vector_array_t input_vector_array_t;
+	typedef typename DIMENSIONS::input_state_matrix_t       input_state_matrix_t;
+	typedef typename DIMENSIONS::input_state_matrix_array_t input_state_matrix_array_t;
+	typedef typename DIMENSIONS::constraint1_vector_t constraint1_vector_t;
+	typedef typename DIMENSIONS::constraint2_vector_t constraint2_vector_t;
+	typedef typename DIMENSIONS::dynamic_vector_t     dynamic_vector_t;
 
   typedef Controller<STATE_DIM, INPUT_DIM> controller_t;
 
-  /**
-   * The default constructor.
-   */
-  ControlledSystemBase()
+	/**
+	 * The default constructor.
+	 */
+	ControlledSystemBase()
 
       : BASE(), controller_(nullptr) {}
 
-  /**
-   * Copy constructor.
-   */
-  ControlledSystemBase(const ControlledSystemBase& rhs)
+	/**
+	 * Copy constructor.
+	 */
+	ControlledSystemBase(const ControlledSystemBase& rhs)
 
       : ControlledSystemBase() {}
 
-  /**
-   * Default destructor.
-   */
-  virtual ~ControlledSystemBase() = default;
+	/**
+	 * Default destructor.
+	 */
+	virtual ~ControlledSystemBase() = default;
 
-  /**
-   * Resets the internal classes.
-   */
+	/**
+	 * Resets the internal classes.
+	 */
   virtual void reset() { controller_ = nullptr; }
 
-  /**
+	/**
    * Sets the control policy using the controller class.
-   *
-   * @param [in] controller: The control policy.
-   */
+	 *
+	 * @param [in] controller: The control policy.
+	 */
   void setController(controller_t* controller) { controller_ = controller; }
 
-  /**
-   * Computes derivative of the autonomous system dynamics with the given control policy.
-   *
-   * @param [in] t: Current time.
-   * @param [in] x: Current state.
-   * @param [out] dxdt: Current state time derivative.
-   */
+	/**
+	 * Computes derivative of the autonomous system dynamics with the given control policy.
+	 *
+	 * @param [in] t: Current time.
+	 * @param [in] x: Current state.
+	 * @param [out] dxdt: Current state time derivative.
+	 */
   void computeFlowMap(const scalar_t& t, const state_vector_t& x, state_vector_t& dxdt) {
-    BASE::numFunctionCalls_++;
+		BASE::numFunctionCalls_++;
     auto u = controller_->computeInput(t, x);
-    computeFlowMap(t, x, u, dxdt);
-  }
+		computeFlowMap(t, x, u, dxdt);
+	}
 
-  /**
-   * Initializes the system dynamics.
-   *
-   * @param [in] logicRulesMachine: A class which contains and parse the logic rules e.g
-   * method findActiveSubsystemHandle returns a Lambda expression which can be used to
-   * find the ID of the current active subsystem.
-   * @param [in] partitionIndex: index of the time partition.
-   * @param [in] algorithmName: The algorithm that class this class (default not defined).
-   */
+	/**
+	 * Initializes the system dynamics.
+	 *
+	 * @param [in] logicRulesMachine: A class which contains and parse the logic rules e.g
+	 * method findActiveSubsystemHandle returns a Lambda expression which can be used to
+	 * find the ID of the current active subsystem.
+	 * @param [in] partitionIndex: index of the time partition.
+	 * @param [in] algorithmName: The algorithm that class this class (default not defined).
+	 */
   virtual void initializeModel(LogicRulesMachine<LOGIC_RULES_T>& logicRulesMachine, const size_t& partitionIndex,
                                const char* algorithmName = NULL) {}
 
-  /**
-   * Returns pointer to the class.
-   *
-   * @return A raw pointer to the class.
-   */
-  virtual ControlledSystemBase<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>* clone() const = 0;
+	/**
+	 * Returns pointer to the class.
+	 *
+	 * @return A raw pointer to the class.
+	 */
+	virtual ControlledSystemBase<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>* clone() const = 0;
 
-  /**
-   * Computes derivative of the autonomous system dynamics.
-   *
-   * @param [in] t: Current time.
-   * @param [in] x: Current state.
-   * @param [in] u: Current input.
-   * @param [out] dxdt: Current state time derivative.
-   */
+	/**
+	 * Computes derivative of the autonomous system dynamics.
+	 *
+	 * @param [in] t: Current time.
+	 * @param [in] x: Current state.
+	 * @param [in] u: Current input.
+	 * @param [out] dxdt: Current state time derivative.
+	 */
   virtual void computeFlowMap(const scalar_t& t, const state_vector_t& x, const input_vector_t& u, state_vector_t& dxdt) = 0;
 
-  /**
-   * State map at the transition time
-   *
-   * @param [in] time: transition time
-   * @param [in] state: transition state
-   * @param [out] mappedState: mapped state after transition
-   */
+	/**
+	 * State map at the transition time
+	 *
+	 * @param [in] time: transition time
+	 * @param [in] state: transition state
+	 * @param [out] mappedState: mapped state after transition
+	 */
   virtual void computeJumpMap(const scalar_t& time, const state_vector_t& state, state_vector_t& mappedState) override {
-    BASE::computeJumpMap(time, state, mappedState);
-  }
+		BASE::computeJumpMap(time, state, mappedState);
+	}
 
-  /**
-   * Interface method to the guard surfaces.
-   *
-   * @param [in] time: transition time
-   * @param [in] state: transition state
-   * @param [out] guardSurfacesValue: An array of guard surfaces values
-   */
+	/**
+	 * Interface method to the guard surfaces.
+	 *
+	 * @param [in] time: transition time
+	 * @param [in] state: transition state
+	 * @param [out] guardSurfacesValue: An array of guard surfaces values
+	 */
   virtual void computeGuardSurfaces(const scalar_t& time, const state_vector_t& state, dynamic_vector_t& guardSurfacesValue) override {
-    BASE::computeGuardSurfaces(time, state, guardSurfacesValue);
-  }
+		BASE::computeGuardSurfaces(time, state, guardSurfacesValue);
+	}
 
  public:
   controller_t* controller_;  //! pointer to controller
 };
 
-}  // namespace ocs2
+} // namespace ocs2
 
 #endif

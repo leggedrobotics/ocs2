@@ -3520,8 +3520,6 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::run(
 	// update partitioningTimes_
 	partitioningTimes_ = partitioningTimes;
 
-
-
 	// Use the input controller if it is not empty otherwise use the internal controller (nominalControllersStock_).
 	// In the later case 2 scenarios are possible: either the internal controller is already set (such as the MPC case
 	// where the warm starting option is set true) or the internal controller is empty in which instead of performing

@@ -39,59 +39,59 @@ namespace double_integrator {
 
 class DoubleIntegratorDynamics : public ControlledSystemBase<double_integrator::STATE_DIM_, double_integrator::INPUT_DIM_> {
  public:
-  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-  typedef std::shared_ptr<DoubleIntegratorDynamics> Ptr;
-  typedef std::shared_ptr<const DoubleIntegratorDynamics> ConstPtr;
+	typedef std::shared_ptr<DoubleIntegratorDynamics> Ptr;
+	typedef std::shared_ptr<const DoubleIntegratorDynamics> ConstPtr;
 
-  typedef ControlledSystemBase<double_integrator::STATE_DIM_, double_integrator::INPUT_DIM_> BASE;
-  typedef typename BASE::scalar_t scalar_t;
-  typedef typename BASE::state_vector_t state_vector_t;
-  typedef typename BASE::input_vector_t input_vector_t;
+	typedef ControlledSystemBase<double_integrator::STATE_DIM_, double_integrator::INPUT_DIM_> BASE;
+	typedef typename BASE::scalar_t               scalar_t;
+	typedef typename BASE::state_vector_t         state_vector_t;
+	typedef typename BASE::input_vector_t         input_vector_t;
 
-  typedef Dimensions<double_integrator::STATE_DIM_, double_integrator::INPUT_DIM_> DIMENSIONS;
-  typedef typename DIMENSIONS::state_matrix_t state_matrix_t;
-  typedef typename DIMENSIONS::state_input_matrix_t state_input_matrix_t;
+	typedef Dimensions<double_integrator::STATE_DIM_, double_integrator::INPUT_DIM_> DIMENSIONS;
+	typedef typename DIMENSIONS::state_matrix_t 		state_matrix_t;
+	typedef typename DIMENSIONS::state_input_matrix_t 	state_input_matrix_t;
 
-  /**
-   * Constructor
-   *
+	/**
+	 * Constructor
+	 *
    * @param [in] mass: the inertia of the particle
-   */
+	 */
   DoubleIntegratorDynamics(double mass) {
     A_ << 0.0, 1.0, 0.0, 0.0;
     B_ << 0.0, 1.0 / mass;
   }
 
-  /**
-   * Destructor
-   */
-  ~DoubleIntegratorDynamics() = default;
+	/**
+	 * Destructor
+	 */
+	~DoubleIntegratorDynamics() = default;
 
-  /**
-   * Returns pointer to the class.
-   *
-   * @return A raw pointer to the class.
-   */
+	/**
+	 * Returns pointer to the class.
+	 *
+	 * @return A raw pointer to the class.
+	 */
   virtual DoubleIntegratorDynamics* clone() const { return new DoubleIntegratorDynamics(*this); }
 
-  /**
-   * Computes derivative of the autonomous system dynamics with the given control policy.
-   *
-   * @param [in] t: Current time.
-   * @param [in] x: Current state.
-   * @param [out] dxdt: Current state time derivative.
-   */
+	/**
+	 * Computes derivative of the autonomous system dynamics with the given control policy.
+	 *
+	 * @param [in] t: Current time.
+	 * @param [in] x: Current state.
+	 * @param [out] dxdt: Current state time derivative.
+	 */
   void computeFlowMap(const scalar_t& time, const state_vector_t& state, const input_vector_t& input, state_vector_t& stateDerivative) {
     stateDerivative = A_ * state + B_ * input;
-  }
+	}
 
  private:
-  state_matrix_t A_;
-  state_input_matrix_t B_;
+	state_matrix_t A_;
+	state_input_matrix_t B_;
 };
 
-}  // namespace double_integrator
+} // namespace double_integrator
 }  // namespace ocs2
 
 #endif /* DOUBLE_INTEGRATOR_DYNAMICS_OCS2_H_ */

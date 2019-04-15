@@ -44,68 +44,69 @@ DoubleIntegratorInterface::DoubleIntegratorInterface(const std::string& taskFile
 	libraryFolder_ = ros::package::getPath("ocs2_double_integrator_example") + "/auto_generated";
 	std::cerr << "Generated library path: " << libraryFolder_ << std::endl;
 
-  // load setting from loading file
-  loadSettings(taskFile_);
+	// load setting from loading file
+	loadSettings(taskFile_);
 
-  // MPC
-  setupOptimizer(taskFile_);
+	// MPC
+	setupOptimizer(taskFile_);
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
 void DoubleIntegratorInterface::loadSettings(const std::string& taskFile) {
-  /*
-   * Default initial condition
-   */
-  loadInitialState(taskFile, initialState_);
 
-  /*
-   * SLQ-MPC settings
-   */
-  slqSettings_.loadSettings(taskFile);
-  mpcSettings_.loadSettings(taskFile);
+	/*
+	 * Default initial condition
+	 */
+	loadInitialState(taskFile, initialState_);
 
-  /*
-   * Dynamics
-   */
+	/*
+	 * SLQ-MPC settings
+	 */
+	slqSettings_.loadSettings(taskFile);
+	mpcSettings_.loadSettings(taskFile);
+
+	/*
+	 * Dynamics
+	 */
   dim_t::scalar_t mass;
   loadScalar(taskFile, "systemParameters.mass", mass);
   linearSystemDynamicsPtr_.reset(new DoubleIntegratorDynamics(mass));
   linearSystemDynamicsDerivativesPtr_.reset(new DoubleIntegratorDynamicsDerivatives(mass));
 
-  /*
-   * Cost function
-   */
-  loadEigenMatrix(taskFile, "Q", Q_);
-  loadEigenMatrix(taskFile, "R", R_);
-  loadEigenMatrix(taskFile, "Q_final", QFinal_);
-  loadEigenMatrix(taskFile, "x_final", xFinal_);
-  xNominal_ = dim_t::state_vector_t::Zero();
-  uNominal_ = dim_t::input_vector_t::Zero();
+	/*
+	 * Cost function
+	 */
+	loadEigenMatrix(taskFile, "Q", Q_);
+	loadEigenMatrix(taskFile, "R", R_);
+	loadEigenMatrix(taskFile, "Q_final", QFinal_);
+	loadEigenMatrix(taskFile, "x_final", xFinal_);
+	xNominal_ = dim_t::state_vector_t::Zero();
+	uNominal_ = dim_t::input_vector_t::Zero();
 
-  std::cerr << "Q:  \n" << Q_ << std::endl;
-  std::cerr << "R:  \n" << R_ << std::endl;
-  std::cerr << "Q_final:\n" << QFinal_ << std::endl;
-  std::cerr << "x_init:   " << initialState_.transpose() << std::endl;
-  std::cerr << "x_final:  " << xFinal_.transpose() << std::endl;
-  linearSystemCostPtr_.reset(new DoubleIntegratorCost(Q_, R_, QFinal_));
+	std::cerr << "Q:  \n" << Q_ << std::endl;
+	std::cerr << "R:  \n" << R_ << std::endl;
+	std::cerr << "Q_final:\n" << QFinal_ << std::endl;
+	std::cerr << "x_init:   "   << initialState_.transpose() << std::endl;
+	std::cerr << "x_final:  "   << xFinal_.transpose() << std::endl;
+	linearSystemCostPtr_.reset(new DoubleIntegratorCost(Q_, R_, QFinal_));
 
-  /*
-   * Constraints
-   */
-  linearSystemConstraintPtr_.reset(new DoubleIntegratorConstraint);
+	/*
+	 * Constraints
+	 */
+	linearSystemConstraintPtr_.reset(new DoubleIntegratorConstraint);
 
-  /*
-   * Initialization
-   */
-  //	cartPoleOperatingPointPtr_.reset(new CartPoleOperatingPoint(dim_t::state_vector_t::Zero(), dim_t::input_vector_t::Zero()));
+	/*
+	 * Initialization
+	 */
+	//	cartPoleOperatingPointPtr_.reset(new CartPoleOperatingPoint(dim_t::state_vector_t::Zero(), dim_t::input_vector_t::Zero()));
   linearSystemOperatingPointPtr_.reset(new DoubleIntegratorOperatingPoint(initialState_, dim_t::input_vector_t::Zero()));
 
-  /*
-   * Time partitioning which defines the time horizon and the number of data partitioning
-   */
-  scalar_t timeHorizon;
+	/*
+	 * Time partitioning which defines the time horizon and the number of data partitioning
+	 */
+	scalar_t timeHorizon;
   definePartitioningTimes(taskFile, timeHorizon, numPartitions_, partitioningTimes_, true);
 }
 
@@ -115,7 +116,7 @@ void DoubleIntegratorInterface::loadSettings(const std::string& taskFile) {
 void DoubleIntegratorInterface::setupOptimizer(const std::string& taskFile) {
   mpcPtr_.reset(new mpc_t(linearSystemDynamicsPtr_.get(), linearSystemDynamicsDerivativesPtr_.get(), linearSystemConstraintPtr_.get(),
                           linearSystemCostPtr_.get(), linearSystemOperatingPointPtr_.get(), partitioningTimes_, slqSettings_,
-                          mpcSettings_));
+			mpcSettings_));
 }
 
 /******************************************************************************************************/
@@ -123,5 +124,5 @@ void DoubleIntegratorInterface::setupOptimizer(const std::string& taskFile) {
 /******************************************************************************************************/
 DoubleIntegratorInterface::mpc_t::Ptr& DoubleIntegratorInterface::getMPCPtr() { return mpcPtr_; }
 
-}  // namespace double_integrator
-}  // namespace ocs2
+} // namespace double_integrator
+} // namespace ocs2

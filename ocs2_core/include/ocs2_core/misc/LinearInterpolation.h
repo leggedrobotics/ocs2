@@ -47,86 +47,88 @@ namespace ocs2 {
 template <typename Data_T, class Alloc = std::allocator<Data_T>>
 class LinearInterpolation {
  public:
-  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-  typedef double scalar_t;
+	typedef double scalar_t;
 
-  /**
-   * Default constructor.
-   */
-  LinearInterpolation()
+	/**
+	 * Default constructor.
+	 */
+	LinearInterpolation()
       : index_(0), zeroFunction_(false), timeStampPtr_(nullptr), dataPtr_(nullptr) {}
 
-  /**
-   * Constructor
-   *
-   * @param [in] timeStampPtr: A pointer to time stamp.
-   * @param [in] dataPtr: A pointer to the data.
-   */
+	/**
+	 * Constructor
+	 *
+	 * @param [in] timeStampPtr: A pointer to time stamp.
+	 * @param [in] dataPtr: A pointer to the data.
+	 */
   LinearInterpolation(const std::vector<scalar_t>* timeStampPtr, const std::vector<Data_T, Alloc>* dataPtr)
       : index_(0), zeroFunction_(false), timeStampPtr_(timeStampPtr), dataPtr_(dataPtr) {
     if (timeStampPtr_ == nullptr) throw std::runtime_error("timeStampPtr is nullptr.");
     if (dataPtr_ == nullptr) throw std::runtime_error("dataPtr is nullptr.");
-  }
+	}
 
-  /**
-   * Copy constructor
-   *
-   * @param [in] arg: Instance of the other class.
-   */
+	/**
+	 * Copy constructor
+	 *
+	 * @param [in] arg: Instance of the other class.
+	 */
   LinearInterpolation(const LinearInterpolation& arg) = default;
 
-  /**
-   * Reset function
-   */
-  void reset() {
-    index_ = 0;
-    zeroFunction_ = false;
-  }
+	/**
+	 * Reset function
+	 */
+	void reset()  {
 
-  /**
-   * Sets the time stamp.
-   *
-   * @param [in] timeStampPtr: A pointer to time stamp.
-   */
-  void setTimeStamp(const std::vector<scalar_t>* timeStampPtr) {
+		index_ = 0;
+		zeroFunction_ = false;
+	}
+
+    /**
+     * Sets the time stamp.
+     *
+     * @param [in] timeStampPtr: A pointer to time stamp.
+     */
+	void setTimeStamp(const std::vector<scalar_t>* timeStampPtr) {
     if (timeStampPtr == nullptr) throw std::runtime_error("timeStampPtr is nullptr.");
-    reset();
-    timeStampPtr_ = timeStampPtr;
-  }
+		reset();
+		timeStampPtr_ = timeStampPtr;
+	}
 
-  /**
-   * Sets data
-   *
-   * @param [in] dataPtr: A pointer to the data.
-   */
+    /**
+     * Sets data
+     *
+     * @param [in] dataPtr: A pointer to the data.
+     */
   void setData(const std::vector<Data_T, Alloc>* dataPtr) {
     if (dataPtr == nullptr) throw std::runtime_error("dataPtr is nullptr.");
-    reset();
-    dataPtr_ = dataPtr;
-  }
+		reset();
+		dataPtr_ = dataPtr;
+	}
 
-  /**
-   * Sets zero
-   */
-  void setZero() {
-    reset();
-    zeroFunction_ = true;
-  }
+    /**
+     * Sets zero
+     */
+	void setZero() {
 
-  /**
-   * Interpolate function.
-   *
-   * @param [in]  enquiryTime: The enquiry time for interpolation.
-   * @param [out] enquiryData: The value of the trajectory at the requested time.
-   * @param [in]  greatestLessTimeStampIndex (optional): The greatest smaller time stamp index. If provided, the interpolation will skip
-   * the search scheme and readily calculates the output.
-   */
+		reset();
+		zeroFunction_ = true;
+	}
+
+    /**
+     * Interpolate function.
+     *
+     * @param [in]  enquiryTime: The enquiry time for interpolation.
+     * @param [out] enquiryData: The value of the trajectory at the requested time.
+     * @param [in]  greatestLessTimeStampIndex (optional): The greatest smaller time stamp index. If provided, the interpolation will skip
+     * the search scheme and readily calculates the output.
+     */
   void interpolate(const scalar_t& enquiryTime, Data_T& enquiryData, int greatestLessTimeStampIndex = -1) const {
     if (zeroFunction_ == true) {
-      enquiryData.setZero();
-      return;
-    }
+			enquiryData.setZero();
+			return;
+		}
 
     const auto& timeStampArr = *timeStampPtr_;
     const auto& dataArr = *dataPtr_;
@@ -138,68 +140,68 @@ class LinearInterpolation {
 
     if (enquiryTime <= timeStampArr.front()) {
       enquiryData = dataArr.front();
-      index_ = 0;
-      return;
-    }
+			index_ = 0;
+			return;
+		}
 
     if (enquiryTime >= timeStampArr.back()) {
       enquiryData = dataArr.back();
       index_ = timeStampSize - 1;
-      return;
-    }
+			return;
+		}
 
-    if (greatestLessTimeStampIndex == -1)
-      index_ = find(enquiryTime);
-    else
-      index_ = greatestLessTimeStampIndex;
+		if (greatestLessTimeStampIndex == -1)
+			index_ = find(enquiryTime);
+		else
+			index_ = greatestLessTimeStampIndex;
 
     scalar_t alpha = (enquiryTime - timeStampArr[index_ + 1]) / (timeStampArr[index_] - timeStampArr[index_ + 1]);
     enquiryData = alpha * dataArr[index_] + (1 - alpha) * dataArr[index_ + 1];
-  }
+	}
 
-  /**
-   * Returns the greatest smaller time stamp index found in the last interpolation function call.
-   * @return The greatest smaller time stamp index.
-   */
+	/**
+	 * Returns the greatest smaller time stamp index found in the last interpolation function call.
+	 * @return The greatest smaller time stamp index.
+	 */
   int getGreatestLessTimeStampIndex() const { return index_; }
 
  protected:
-  /**
-   * Finds the index of the greatest smaller time stamp index for the enquiry time.
-   *
-   * @param [in] enquiryTime: The enquiry time for interpolation.
-   * @return The greatest smaller time stamp index.
-   */
+    /**
+     * Finds the index of the greatest smaller time stamp index for the enquiry time.
+     *
+     * @param [in] enquiryTime: The enquiry time for interpolation.
+     * @return The greatest smaller time stamp index.
+     */
   int find(const scalar_t& enquiryTime) const {
     const auto& timeStampArr = *timeStampPtr_;
     const auto timeStampSize = timeStampArr.size();
 
-    int index = -1;
+		int index = -1;
 
     if (timeStampArr[index_] > enquiryTime) {
       for (int i = index_; i >= 0; i--) {
-        index = i;
+				index = i;
         if (timeStampArr[i] <= enquiryTime) break;
-      }
-    } else {
+			}
+		} else {
       for (int i = index_; i < timeStampSize; i++) {
-        index = i;
+				index = i;
         if (timeStampArr[i] > enquiryTime) {
-          index--;
-          break;
-        }
-      }
-    }
+					index--;
+					break;
+				}
+			}
+		}
 
-    return index;
-  }
+		return index;
+	}
 
  private:
   mutable int index_;
 
-  bool zeroFunction_;
+	bool zeroFunction_;
 
-  const std::vector<scalar_t>* timeStampPtr_;
+	const std::vector<scalar_t>* timeStampPtr_;
   const std::vector<Data_T, Alloc>* dataPtr_;
 };
 
@@ -207,6 +209,6 @@ class LinearInterpolation {
 template <typename Data_T>
 using EigenLinearInterpolation = LinearInterpolation<Data_T, Eigen::aligned_allocator<Data_T>>;
 
-}  // namespace ocs2
+} // namespace ocs2
 
 #endif /* LINEARINTERPOLATION_H_ */

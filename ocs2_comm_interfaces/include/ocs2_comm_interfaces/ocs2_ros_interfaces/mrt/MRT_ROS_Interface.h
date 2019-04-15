@@ -175,22 +175,22 @@ public:
 	 */
 	const cost_desired_trajectories_t& mpcCostDesiredTrajectories() const;
 
-    /**
+	/**
      * @brief Interpolates nominal state and active subsystem at given time. Does not use the controller.
-     *
+	 *
      * @param[in] time the query time
      * @param[out] mpcState the current nominal state
      * @param[out] subsystem the active subsystem
-     */
+	 */
     void evaluatePlan(
-            const scalar_t& time,
+			const scalar_t& time,
 			state_vector_t& mpcState,
 			size_t& subsystem);
 
-    /**
+	/**
      * @brief getControllerPtr
      * @return pointer to the controller
-     */
+	 */
     //TODO(jcarius) what about thread safety and object lifetime?
     controller_t* getControllerPtr(){
         return mpcController_.get();

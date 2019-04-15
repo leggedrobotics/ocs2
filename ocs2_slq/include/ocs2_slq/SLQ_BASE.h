@@ -111,7 +111,7 @@ public:
 	using hamiltonian_increment_equation_t = LTI_Equations<STATE_DIM, 1, double>;
 
 	typedef typename BASE::DIMENSIONS                          DIMENSIONS;
-    typedef typename BASE::controller_t                        controller_t;
+	typedef typename BASE::controller_t                        controller_t;
     typedef LinearController<STATE_DIM,INPUT_DIM>              linear_controller_t;
     typedef typename linear_controller_t::array_t              linear_controller_array_t;
     typedef typename BASE::controller_ptr_array_t              controller_ptr_array_t;

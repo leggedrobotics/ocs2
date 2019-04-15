@@ -204,14 +204,14 @@ public:
 	EXP2_SysDerivative1() {};
 	~EXP2_SysDerivative1() {};
 
-	void getFlowMapDerivativeState(state_matrix_t& A) override {
-		A << u_(0)*cos(x_(0))+1, 0, 0, u_(0)*sin(x_(1))-1;
+	void getFlowMapDerivativeState(state_matrix_t& A) final {
+		A << u_(0)*cos(x_(0))+1, 0.0, 0.0, u_(0)*sin(x_(1))-1;
 	}
-	void getFlowMapDerivativeInput(state_input_matrix_t& B) override {
-		B << sin(x_(0)), 0, -cos(x_(1)), 0;
+	void getFlowMapDerivativeInput(state_input_matrix_t& B) final {
+		B << sin(x_(0)), 0.0, -cos(x_(1)), 0.0;
 	}
 
-	EXP2_SysDerivative1* clone() const override {
+	EXP2_SysDerivative1* clone() const final {
 		return new EXP2_SysDerivative1(*this);
 	}
 };
@@ -227,14 +227,14 @@ public:
 	EXP2_SysDerivative2() {};
 	~EXP2_SysDerivative2() {};
 
-	void getFlowMapDerivativeState(state_matrix_t& A) override {
-		A << 0, u_(0)*cos(x_(1))+1, u_(0)*sin(x_(0))-1, 0;
+	void getFlowMapDerivativeState(state_matrix_t& A) final {
+		A << 0.0, u_(0)*cos(x_(1))+1.0, u_(0)*sin(x_(0))-1.0, 0.0;
 	}
-	void getFlowMapDerivativeInput(state_input_matrix_t& B) override {
-		B << sin(x_(1)), 0, -cos(x_(0)), 0;
+	void getFlowMapDerivativeInput(state_input_matrix_t& B) final {
+		B << sin(x_(1)), 0.0, -cos(x_(0)), 0.0;
 	}
 
-	EXP2_SysDerivative2* clone() const override {
+	EXP2_SysDerivative2* clone() const final {
 		return new EXP2_SysDerivative2(*this);
 	}
 };
@@ -251,14 +251,14 @@ public:
 	EXP2_SysDerivative3() {};
 	~EXP2_SysDerivative3() {};
 
-	void getFlowMapDerivativeState(state_matrix_t& A) override {
-		A << -u_(0)*cos(x_(0))-1, 0, 0, 1-u_(0)*sin(x_(1));
+	void getFlowMapDerivativeState(state_matrix_t& A) final {
+		A << -u_(0)*cos(x_(0))-1.0, 0.0, 0.0, 1.0-u_(0)*sin(x_(1));
 	}
-	void getFlowMapDerivativeInput(state_input_matrix_t& B) override {
-		B << -sin(x_(0)), 0, cos(x_(1)), 0;
+	void getFlowMapDerivativeInput(state_input_matrix_t& B) final {
+		B << -sin(x_(0)), 0.0, cos(x_(1)), 0.0;
 	}
 
-	EXP2_SysDerivative3* clone() const override {
+	EXP2_SysDerivative3* clone() const final {
 		return new EXP2_SysDerivative3(*this);
 	}
 };
@@ -343,7 +343,7 @@ public:
 	~EXP2_constraint1() = default;
 
 	void getConstraint1(constraint1_vector_t& e)  final {
-		e(0) = u_(1)*sin(x_(0)) - u_(1)*cos(x_(1)) + 0.1*u_(1) - 1;
+		e(0) = u_(1)*sin(x_(0)) - u_(1)*cos(x_(1)) + 0.1*u_(1) - 1.0;
 	}
 
 	size_t numStateInputConstraint(const scalar_t& time) final {
@@ -383,7 +383,7 @@ public:
 	}
 
 	void getConstraint1DerivativesState(constraint1_state_matrix_t& C) final {
-		C.topRows<1>() << u_(1)*sin(x_(1)), -u_(1)*cos(x_(1));
+		C.topRows<1>() << u_(1)*sin(x_(0)), u_(1)*cos(x_(1));
 	}
 
 	void getConstraint1DerivativesControl(constraint1_input_matrix_t& D) final {
@@ -415,11 +415,11 @@ public:
 	}
 
 	void getConstraint1DerivativesState(constraint1_state_matrix_t& C) final {
-		C.topRows<1>() << u_(1)*sin(x_(1)), -u_(1)*cos(x_(1));
+		C.topRows<1>() << -u_(1)*cos(x_(0)), -u_(1)*sin(x_(1));
 	}
 
 	void getConstraint1DerivativesControl(constraint1_input_matrix_t& D) final {
-		D.topRows<1>() << 0.0, sin(x_(1))-cos(x_(0))+0.1;
+		D.topRows<1>() << 0.0, -sin(x_(0))+cos(x_(1))+0.1;
 	}
 
 	EXP2_constraint3* clone() const final {

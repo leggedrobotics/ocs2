@@ -112,7 +112,7 @@ TEST(exp1_slq_test, Exp1_slq_test)
 			&systemConstraint, &systemCostFunction,
 			&operatingTrajectories, slqSettings, &logicRules);
 
-	// GSLQ MP version
+	// SLQ - multi-core version
 	SLQ_MP<STATE_DIM, INPUT_DIM, EXP1_LogicRules> slq_mp(
 			&systemDynamics, &systemDerivative,
 			&systemConstraint, &systemCostFunction,

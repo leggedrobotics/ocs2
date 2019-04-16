@@ -162,7 +162,7 @@ public:
 			scalar_t dtInitial = 0.01,
 			scalar_t AbsTol = 1e-6,
 			scalar_t RelTol = 1e-3,
-			size_t maxNumSteps = std::numeric_limits<size_t>::max(),
+			int maxNumSteps = std::numeric_limits<int>::max(),
 			bool concatOutput = false
 	) = 0;
 
@@ -191,7 +191,7 @@ public:
 			scalar_t dtInitial = 0.01,
 			scalar_t AbsTol = 1e-9,
 			scalar_t RelTol = 1e-6,
-			size_t maxNumSteps = std::numeric_limits<size_t>::max(),
+			int maxNumSteps = std::numeric_limits<int>::max(),
 			bool concatOutput = false
 	) = 0;
 

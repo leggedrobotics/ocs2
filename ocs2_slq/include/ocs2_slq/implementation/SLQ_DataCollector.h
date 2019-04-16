@@ -114,6 +114,14 @@ void SLQ_DataCollector<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::collect(
 	HvFinalStock_.swap(slqPtr->HvFinalStock_);
 	FmFinalStock_.swap(slqPtr->FmFinalStock_);
 
+	ncIneqTrajectoriesStock_.swap(slqPtr->ncIneqTrajectoriesStock_);
+	hTrajectoryStock_.swap(slqPtr->hTrajectoryStock_);
+	dhdxTrajectoryStock_.swap(slqPtr->dhdxTrajectoryStock_);
+	ddhdxdxTrajectoryStock_.swap(slqPtr->ddhdxdxTrajectoryStock_);
+	dhduTrajectoryStock_.swap(slqPtr->dhduTrajectoryStock_);
+	ddhduduTrajectoryStock_.swap(slqPtr->ddhduduTrajectoryStock_);
+	ddhdudxTrajectoryStock_.swap(slqPtr->ddhdudxTrajectoryStock_);
+
 	// cost quadratic approximation coefficients
 	qFinalStock_.swap(slqPtr->qFinalStock_);
 	QvFinalStock_.swap(slqPtr->QvFinalStock_);

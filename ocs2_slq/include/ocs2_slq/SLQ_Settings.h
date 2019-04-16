@@ -60,6 +60,8 @@ public:
 	, minRelCostGSLQP_(1e-3)
 	, stateConstraintPenaltyCoeff_(0.0)
 	, stateConstraintPenaltyBase_(1.0)
+	, inequalityConstraintMu_(0.0)
+	, inequalityConstraintDelta_(1e-6)
 	, meritFunctionRho_(1.0)
 	, constraintStepSize_(1.0)
 	, displayInfo_(false)
@@ -145,6 +147,10 @@ public:
 	double stateConstraintPenaltyCoeff_;
 	/** The penalty function base, \f$ a \f$, for state-only constraints. \f$ p(i) = \alpha a^i \f$ */
 	double stateConstraintPenaltyBase_;
+	/** Scaling factor, \f$\mu\f$,  for the inequality constraints barrier */
+    double inequalityConstraintMu_;
+  	/** Threshold parameter, \f$\delta\f$, where the relaxed log barrier function changes from log to quadratic */
+    double inequalityConstraintDelta_;
 	/** merit function coefficient. */
 	double meritFunctionRho_;
 	/** Constant step size for type-1 constraints. */
@@ -319,6 +325,22 @@ inline void SLQ_Settings::loadSettings(const std::string& filename, bool verbose
 	}
 	catch (const std::exception& e){
 		if (verbose)  std::cerr << " #### Option loader : option 'stateConstraintPenaltyBase' .......... " << stateConstraintPenaltyBase_ << "   \t(default)" << std::endl;
+	}
+
+	try	{
+		inequalityConstraintMu_ = pt.get<double>("slq.inequalityConstraintMu");
+		if (verbose)  std::cerr << " #### Option loader : option 'inequalityConstraintMu' .............. " << inequalityConstraintMu_ << std::endl;
+	}
+	catch (const std::exception& e){
+		if (verbose)  std::cerr << " #### Option loader : option 'inequalityConstraintMu' .............. " << inequalityConstraintMu_ << "   \t(default)" << std::endl;
+	}
+
+	try	{
+		inequalityConstraintDelta_ = pt.get<double>("slq.inequalityConstraintDelta");
+		if (verbose)  std::cerr << " #### Option loader : option 'inequalityConstraintDelta' ........... " << inequalityConstraintDelta_ << std::endl;
+	}
+	catch (const std::exception& e){
+		if (verbose)  std::cerr << " #### Option loader : option 'inequalityConstraintDelta' ........... " << inequalityConstraintDelta_ << "   \t(default)" << std::endl;
 	}
 
 	try	{

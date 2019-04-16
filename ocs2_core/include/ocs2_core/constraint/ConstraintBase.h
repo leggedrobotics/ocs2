@@ -42,19 +42,27 @@ namespace ocs2 {
 
 /**
  * Base class for the constraints and its Derivatives. The linearized constraints are defined as: \n
- * Here we consider two types of constraints: state-input constraints, \f$ g_1(x,u,T)\f$ and state-only
- * constraints, \f$ g_2(x,T)\f$. \f$ x \f$, \f$ u \f$, and \f$ T \f$ are state, input, and vector of
+ * Here we consider three types of constraints:
+ *
+ * - state-input constraints, \f$ g_1(x,u,t) = 0\f$,
+ * - state-only constraints, \f$ g_2(x,t) = 0\f$.
+ * - inequality constraint, \f$ h(x,u,t) \geq 0\f$
+ *
+ * \f$ x \f$, \f$ u \f$, and \f$ t \f$ are state, input, and vector of
  * event times respectively.
  *
- * - Linearized state-input constraints:       \f$ C(t) \delta x + D(t) \delta u + e(t) = 0 \f$ \n
- * - Linearized only-state constraints:        \f$ F(t) \delta x + h(t) = 0 \f$ \n
+ * - Linearized state-input constraints:       \f$ C(t) \delta x + D(t) \delta u + e(t) = 0 \f$
+ * - Linearized only-state constraints:        \f$ F(t) \delta x + h(t) = 0 \f$
  * - Linearized only-state final constraints:  \f$ F_f(t) \delta x + h_f(t) = 0 \f$
+ * - Quadratic approximation of each inequality constraint: \f$ h_{0,i}(t) + h_{x,i}(t) \delta x + h_{u,i}(t) \delta u \f$ \n
+ *  \f$ \qquad + 0.5 \delta x  H_{xx,i}(t) \delta x +  \delta u  H_{ux,i}(t) \delta x + 0.5 \delta u  H_{uu,i}(t) \delta u
+ *  \geq  0 \quad \forall i \f$
  *
  * @tparam STATE_DIM: Dimension of the state space.
  * @tparam INPUT_DIM: Dimension of the control input space.
  * @tparam LOGIC_RULES_T: Logic Rules type (default NullLogicRules).
  */
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T=NullLogicRules>
+template<size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T=NullLogicRules>
 class ConstraintBase
 {
 public:
@@ -67,10 +75,18 @@ public:
 
 	typedef Dimensions<STATE_DIM, INPUT_DIM> DIMENSIONS;
 	typedef typename DIMENSIONS::scalar_t                    scalar_t;
+	typedef typename DIMENSIONS::scalar_array_t              scalar_array_t;
 	typedef typename DIMENSIONS::state_vector_t              state_vector_t;
+	typedef typename DIMENSIONS::state_vector_array_t        state_vector_array_t;
 	typedef typename DIMENSIONS::input_vector_t              input_vector_t;
+	typedef typename DIMENSIONS::input_vector_array_t        input_vector_array_t;
 	typedef typename DIMENSIONS::state_matrix_t              state_matrix_t;
+	typedef typename DIMENSIONS::state_matrix_array_t        state_matrix_array_t;
+	typedef typename DIMENSIONS::input_matrix_t              input_matrix_t;
+	typedef typename DIMENSIONS::input_matrix_array_t        input_matrix_array_t;
 	typedef typename DIMENSIONS::state_input_matrix_t        state_input_matrix_t;
+	typedef typename DIMENSIONS::input_state_matrix_t        input_state_matrix_t;
+	typedef typename DIMENSIONS::input_state_matrix_array_t  input_state_matrix_array_t;
 	typedef typename DIMENSIONS::constraint1_vector_t        constraint1_vector_t;
 	typedef typename DIMENSIONS::constraint1_vector_array_t  constraint1_vector_array_t;
 	typedef typename DIMENSIONS::constraint2_vector_t        constraint2_vector_t;
@@ -173,6 +189,26 @@ public:
 	}
 
 	/**
+ 	* Gets the inequality constraints.
+	 *
+	 *  \f$ h(x, u, t) \geq 0 \f$
+ 	*
+ 	* @param [out] h: Vector of inequality constraints values.
+ 	*/
+	virtual void getInequalityConstraint(scalar_array_t& h) {}
+
+	/**
+	 * Get the number of inequality constraints.
+	 *
+	 * @param [in] time: time.
+	 * @return number of inequality constraints.
+	 */
+	virtual size_t numInequalityConstraint(const scalar_t& time) {
+
+		return 0;
+	}
+
+	/**
 	 * Compute the final state-only equality constraints.
 	 *
 	 * @param [out] h_f: The final state-only (in)equality constraints value.
@@ -228,6 +264,36 @@ public:
 	 * @param [out] F: \f$ F(t) \f$ matrix.
 	 */
 	virtual void getConstraint2DerivativesState(constraint2_state_matrix_t& F) {}
+
+	/**
+	* Get the derivative of the inequality constraints.
+	* @param [out] dhdx: Vector of derivatives for each constraint with respect to state vector.
+	*/
+	virtual void getInequalityConstraintDerivativesState(state_vector_array_t& dhdx) {}
+
+	/**
+	* Get the derivative of the inequality constraints.
+	* @param [out] dhdu: Vector derivatives for each constraint with respect to input vector.
+	*/
+	virtual void getInequalityConstraintDerivativesInput(input_vector_array_t& dhdu) {}
+
+	/**
+	* Get the second derivative of the inequality constraints.
+	* @param [out] ddhdxdx: Vector of second derivatives for each constraint with respect to state vector.
+	*/
+	virtual void getInequalityConstraintSecondDerivativesState(state_matrix_array_t& ddhdxdx) {}
+
+	/**
+	* Get the second derivative of the inequality constraints.
+	* @param [out] ddhudu: Vector of second derivatives for each constraint with respect to input vector.
+	*/
+	virtual void getInequalityConstraintSecondDerivativesInput(input_matrix_array_t& ddhdudu) {}
+
+	/**
+	* Get the second derivative of the inequality constraints.
+	* @param [out] ddhudx: Vector of second derivatives for each constraint with respect to input vector and state.
+	*/
+	virtual void getInequalityConstraintDerivativesInputState(input_state_matrix_array_t& ddhdudx) {}
 
 	/**
 	 * The F matrix at a given operating point for the linearized terminal state-only constraints,

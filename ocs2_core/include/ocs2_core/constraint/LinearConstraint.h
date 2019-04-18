@@ -111,6 +111,7 @@ class LinearConstraint : public ConstraintBase<STATE_DIM, INPUT_DIM, LOGIC_RULES
       numStateOnlyFinalConstraint_(numStateOnlyFinalConstraint),
       h_f_(h_f),
       F_f_(F_f),
+      numInequalityConstraint_(numInequalityConstraint),
       h0_(h0),
       dhdx_(dhdx),
       dhdu_(dhdu),
@@ -191,7 +192,7 @@ class LinearConstraint : public ConstraintBase<STATE_DIM, INPUT_DIM, LOGIC_RULES
 
   virtual void getInequalityConstraint(scalar_array_t &h) override {
     h.clear();
-    for (size_t i = 0; i < numStateOnlyConstraint_; i++) {
+    for (size_t i = 0; i < numInequalityConstraint_; i++) {
       h.push_back(h0_[i] + dhdx_[i].transpose() * BASE::x_ + dhdu_[i].transpose() * BASE::u_ + 0.5 * BASE::x_.transpose() * ddhdxdx_[i] * BASE::x_
                       + 0.5 * BASE::u_.transpose() * ddhdudu_[i] * BASE::u_ + BASE::u_.transpose() * ddhdudx_[i] * BASE::x_);
     }
@@ -257,8 +258,18 @@ class LinearConstraint : public ConstraintBase<STATE_DIM, INPUT_DIM, LOGIC_RULES
     F = F_;
   }
 
-  virtual void getInequalityConstraintDerivativesState(state_vector_array_t &dhdx) override { dhdx = dhdx_; };
-  virtual void getInequalityConstraintDerivativesInput(input_vector_array_t &dhdu) override { dhdu = dhdu_; };
+  virtual void getInequalityConstraintDerivativesState(state_vector_array_t &dhdx) override {
+    dhdx.clear();
+    for (size_t i = 0; i < numInequalityConstraint_; i++) {
+      dhdx.push_back(dhdx_[i] + ddhdxdx_[i] * BASE::x_ + ddhdudx_[i].transpose() * BASE::u_);
+    }
+  };
+  virtual void getInequalityConstraintDerivativesInput(input_vector_array_t &dhdu) override {
+    dhdu.clear();
+    for (size_t i = 0; i < numInequalityConstraint_; i++) {
+      dhdu.push_back(dhdu_[i] + ddhdudu_[i] * BASE::u_ + ddhdudx_[i] * BASE::x_);
+    }
+  };
   virtual void getInequalityConstraintSecondDerivativesState(state_matrix_array_t &ddhdxdx) override {
     ddhdxdx = ddhdxdx_;
   };

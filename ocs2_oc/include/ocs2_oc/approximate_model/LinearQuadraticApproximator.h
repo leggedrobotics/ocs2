@@ -111,6 +111,52 @@ public:
 	~LinearQuadraticApproximator() = default;
 
 	/**
+	 * Initializes the system derivatives, constarints, and cost.
+	 *
+	 * @param [in] logicRulesMachine: A class which contains and parse the logic rules e.g
+	 * method findActiveSubsystemHandle returns a Lambda expression which can be used to
+	 * find the ID of the current active subsystem.
+	 * @param [in] partitionIndex: index of the time partition.
+	 * @param [in] algorithmName: The algorithm that class this class (default not defined).
+	 */
+	virtual void initializeModel(
+			LogicRulesMachine<LOGIC_RULES_T>& logicRulesMachine,
+			const size_t& partitionIndex,
+			const char* algorithmName=NULL)
+	{
+		// initialize subsystem i dynamics derivatives
+		systemDerivativesPtr_->initializeModel(logicRulesMachine, partitionIndex, "algorithmName");
+		// initialize subsystem i constraint
+		systemConstraintsPtr_->initializeModel(logicRulesMachine, partitionIndex, "algorithmName");
+		// initialize subsystem i cost
+		costFunctionPtr_->initializeModel(logicRulesMachine, partitionIndex, "algorithmName");
+	}
+
+	/**
+	 * Returns the system derivatives
+	 */
+	derivatives_base_t& systemDerivatives() {
+
+		return *systemDerivativesPtr_;
+	}
+
+	/**
+	 * Returns the constraints.
+	 */
+	constraint_base_t& systemConstraints() {
+
+		return *systemConstraintsPtr_;
+	}
+
+	/**
+	 * Returns the intermediate cost.
+	 */
+	cost_function_base_t& costFunction() {
+
+		return *costFunctionPtr_;
+	}
+
+	/**
 	 * Calculates an LQ approximate of the unconstrained optimal control problem at a given time, state, and input.
 	 *
 	 * @param [in] time: The current time.
@@ -125,6 +171,40 @@ public:
 		approximateDynamics(time, state, input);
 		approximateConstraints(time, state, input);
 		approximateIntermediateCost(time, state, input);
+	}
+
+	/**
+	 * Calculates an LQ approximate of the event times process.
+	 *
+	 * @param [in] time: The current time.
+	 * @param [in] state: The current state.
+	 * @param [in] input: The current input .
+	 */
+	void approximateUnconstrainedLQProblemAtEventTime(
+			const scalar_t& time,
+			const state_vector_t& state,
+			const input_vector_t& input) {
+
+		systemConstraintsPtr_->setCurrentStateAndControl(time, state, input);
+		systemConstraintsPtr_->setCurrentStateAndControl(time, state, input);
+
+		// Final state-only equality constraint
+		ncFinalEqStateOnly_ = systemConstraintsPtr_->numStateOnlyFinalConstraint(time);
+
+		if (ncFinalEqStateOnly_ > INPUT_DIM)
+			throw std::runtime_error("Number of active final type-2 constraints should be "
+					"less-equal to the number of input dimension.");
+
+		// if final constraint type 2 is active
+		if (ncFinalEqStateOnly_ > 0) {
+			systemConstraintsPtr_->getFinalConstraint2(HvFinal_);
+			systemConstraintsPtr_->getFinalConstraint2DerivativesState(FmFinal_);
+		}
+
+		// Final cost
+		costFunctionPtr_->getTerminalCost(qFinal_(0));
+		costFunctionPtr_->getTerminalCostDerivativeState(QvFinal_);
+		costFunctionPtr_->getTerminalCostSecondDerivativeState(QmFinal_);
 	}
 
 	/**
@@ -312,186 +392,20 @@ public:
 		RmInverse_ = Rm_.ldlt().solve(input_matrix_t::Identity());
 	}
 
-	void approximateConstrainedLQWorker(
-				size_t workerIndex,
-				const size_t& i,
-				const size_t& k,
-				const scalar_t& stateConstraintPenalty) {
-
-		// constraint type 2 coefficients
-		if (ncEqStateOnly_ > 0) {
-			q_  += 0.5 * stateConstraintPenalty *
-					Hv_.head(ncEqStateOnly_).transpose() * Hv_.head(ncEqStateOnly_);
-			Qv_ += stateConstraintPenalty *
-					Fm_.topRows(ncEqStateOnly_).transpose() * Hv_.head(ncEqStateOnly_);
-			Qm_ += stateConstraintPenalty *
-					Fm_.topRows(ncEqStateOnly_).transpose() * Fm_.topRows(ncEqStateOnly_);
-		}
-
-		// Inequality constraints
-		if (ncIneq_ > 0) {
-			scalar_t p;
-			state_vector_t dpdx;
-			input_vector_t dpdu;
-			state_matrix_t ddpdxdx;
-			input_matrix_t ddpdudu;
-			input_state_matrix_t ddpdudx;
-			penaltyPtrStock_[workerIndex]->getPenaltyCost(h_, p);
-			penaltyPtrStock_[workerIndex]->getPenaltyCostDerivativeState(h_, dhdx_,
-															   dpdx);
-			penaltyPtrStock_[workerIndex]->getPenaltyCostDerivativeInput(h_, dhdu_,
-															   dpdu);
-			penaltyPtrStock_[workerIndex]->getPenaltyCostSecondDerivativeState(h_,
-																	 dhdx_,
-																	 ddhdxdx_, ddpdxdx);
-			penaltyPtrStock_[workerIndex]->getPenaltyCostSecondDerivativeInput(h_,
-																	 dhdu_,
-																	 ddhdudu_, ddpdudu);
-			penaltyPtrStock_[workerIndex]->getPenaltyCostDerivativeInputState(h_,
-																	dhdx_, dhdu_,
-																	ddhdudx_, ddpdudx);
-			q_[0] += p; // q is a 1x1 matrix, so access it with [0]
-			Qv_ += dpdx;
-			Qm_ += ddpdxdx;
-			Rv_ += dpdu;
-			Rm_ += ddpdudu;
-			Pm_ += ddpdudx;
-
-			// checking the numerical stability again
-			if (checkNumericalStability_==true){
-				try {
-					if (!q_.allFinite())
-						throw std::runtime_error("Intermediate cost is is not finite.");
-					if (!Qv_.allFinite())
-						throw std::runtime_error("Intermediate cost first derivative w.r.t. state is is not finite.");
-					if (!Qm_.allFinite())
-						throw std::runtime_error("Intermediate cost second derivative w.r.t. state is is not finite.");
-					if (!Qm_.isApprox(Qm_.transpose()))
-						throw std::runtime_error("Intermediate cost second derivative w.r.t. state is is not self-adjoint.");
-					if (Qm_.eigenvalues().real().minCoeff() < -Eigen::NumTraits<scalar_t>::epsilon())
-						throw std::runtime_error("Q matrix is not positive semi-definite. It's smallest eigenvalue is " +
-												 std::to_string(Qm_.eigenvalues().real().minCoeff()) + ".");
-					if (!Rv_.allFinite())
-						throw std::runtime_error("Intermediate cost first derivative w.r.t. input is is not finite.");
-					if (!Rm_.allFinite())
-						throw std::runtime_error("Intermediate cost second derivative w.r.t. input is is not finite.");
-					if (!Rm_.isApprox(Rm_.transpose()))
-						throw std::runtime_error("Intermediate cost second derivative w.r.t. input is is not self-adjoint.");
-					if (!Pm_.allFinite())
-						throw std::runtime_error("Intermediate cost second derivative w.r.t. input-state is is not finite.");
-					if (Rm_.ldlt().rcond() < Eigen::NumTraits<scalar_t>::epsilon())
-						throw std::runtime_error("R matrix is not invertible. It's reciprocal condition number is " +
-												 std::to_string(Rm_.ldlt().rcond()) + ".");
-					if (Rm_.eigenvalues().real().minCoeff() < Eigen::NumTraits<scalar_t>::epsilon())
-						throw std::runtime_error("R matrix is not positive definite. It's smallest eigenvalue is " +
-												 std::to_string(Rm_.eigenvalues().real().minCoeff()) + ".");
-				} catch(const std::exception& error)  {
-					std::cerr << "After adding inequality constraint penalty" << std::endl;
-					std::cerr << "what(): " << error.what() << " at time " << time << " [sec]." << std::endl;
-					std::cerr << "x: " << state.transpose() << std::endl;
-					std::cerr << "u: " << input.transpose() << std::endl;
-					std::cerr << "q: " << q_ << std::endl;
-					std::cerr << "Qv: " << Qv_.transpose() << std::endl;
-					std::cerr << "Qm: \n" << Qm_ << std::endl;
-					std::cerr << "Rv: " << Rv_.transpose() << std::endl;
-					std::cerr << "Rm: \n" << Rm_ << std::endl;
-					std::cerr << "Pm: \n" << Pm_ << std::endl;
-					exit(0);
-				}
-			}
-		}
-
-		// Pre-compute R inverse after costs are adapted
-		RmInverse_ = Rm_.ldlt().solve(input_matrix_t::Identity());
-
-		// constraint type 1 coefficients
-		if (ncEqStateInput_ == 0) {
-			DmDager_.setZero();
-			EvProjected_.setZero();
-			CmProjected_.setZero();
-			DmProjected_.setZero();
-
-			AmConstrained_ = Am_;
-			QmConstrained_ = Qm_;
-			QvConstrained_ = Qv_;
-			if (settings_.useRiccatiSolver_==true) {
-				RmConstrained_ = Rm_;
-			} else {
-				BmConstrained_ = Bm_;
-				PmConstrained_ = Pm_;
-				RvConstrained_ = Rv_;
-			}
-
-		} else {
-			typedef Eigen::Matrix<scalar_t, Eigen::Dynamic, Eigen::Dynamic> dynamic_matrix_t;
-
-	    dynamic_matrix_t Cm = Cm_.topRows(ncEqStateInput_);
-	    dynamic_matrix_t Dm = Dm_.topRows(ncEqStateInput_);
-
-			// check numerical stability_
-			if (checkNumericalStability_==true && ncEqStateInput_>0)
-				if (Dm.colPivHouseholderQr().rank()!=ncEqStateInput_) {
-					BASE::printString(">>> WARNING: The state-input constraints are rank deficient "
-							"(at time " + std::to_string(time) + ")!");
-				}
-
-	    dynamic_matrix_t RmInvDmtranspose = RmInverse_*Dm.transpose();
-			dynamic_matrix_t RmProjected = ( Dm * RmInvDmtranspose ).ldlt().solve(dynamic_matrix_t::Identity(ncEqStateInput_,ncEqStateInput_));
-			dynamic_matrix_t DmDager = RmInvDmtranspose * RmProjected;
-
-			DmDager_.leftCols(ncEqStateInput_) = DmDager;
-			EvProjected_.noalias() = DmDager * Ev_.head(ncEqStateInput_);
-			CmProjected_.noalias() = DmDager * Cm;
-			DmProjected_.noalias() = DmDager * Dm;
-
-	    AmConstrained_ = Am_;
-	    AmConstrained_.noalias() -=	Bm_*CmProjected_;
-
-	    state_matrix_t PmTransDmDagerCm = Pm_.transpose()*CmProjected_;
-	    QmConstrained_ = Qm_ - PmTransDmDagerCm - PmTransDmDagerCm.transpose();
-	    QmConstrained_.noalias() +=	Cm.transpose()*RmProjected*Cm;
-
-	    QvConstrained_ = Qv_;
-	    QvConstrained_.noalias() -= CmProjected_.transpose()*Rv_;
-
-	    input_matrix_t DmNullSpaceProjection = input_matrix_t::Identity() - DmProjected_;
-	    if (settings_.useRiccatiSolver_==true) {
-				RmConstrained_.noalias() = DmNullSpaceProjection.transpose() * Rm_ * DmNullSpaceProjection;
-			} else {
-				BmConstrained_.noalias() = Bm_ * DmNullSpaceProjection;
-				PmConstrained_.noalias() = DmNullSpaceProjection.transpose() * Pm_;
-				RvConstrained_.noalias() = DmNullSpaceProjection.transpose() * Rv_;
-			}
-
-		}
-
-		// making sure that constrained Qm is PSD
-		if (settings_.useMakePSD_==true)
-			makePSD(QmConstrained_);
-	}
-
-
-
-private:
-	const char* algorithmName_;
-
-	std::unique_ptr<derivatives_base_t> systemDerivativesPtr_;
-	std::unique_ptr<constraint_base_t> systemConstraintsPtr_;
-	std::unique_ptr<cost_function_base_t> costFunctionPtr_;
-
+public:
 	state_matrix_t       Am_;
 	state_input_matrix_t Bm_;
 
-	size_t                     ncEqStateInput_;  	// nc1: Number of the Type-1  active constraints
+	size_t                     ncEqStateInput_; // Number of the state-input equality constraints
 	constraint1_vector_t       Ev_;
 	constraint1_state_matrix_t Cm_;
 	constraint1_input_matrix_t Dm_;
 
-	size_t                     ncEqStateOnly_;  // nc2: Number of the Type-2 active constraints
+	size_t                     ncEqStateOnly_;  // Number of the state-only equality constraints
 	constraint2_vector_t       Hv_;
 	constraint2_state_matrix_t Fm_;
 
-	size_t                     ncIneq_;  // ncIneq: Number of inequality constraints
+	size_t                     ncIneq_;         // Number of inequality constraints
 	scalar_array_t       	   h_;
 	state_vector_array_t       dhdx_;
 	state_matrix_array_t       ddhdxdx_;
@@ -507,23 +421,21 @@ private:
 	input_state_matrix_t Pm_;
 	input_matrix_t       RmInverse_;
 
+	size_t                     ncFinalEqStateOnly_;
+	constraint2_vector_t       HvFinal_;
+	constraint2_state_matrix_t FmFinal_;
 
-	state_matrix_t AmConstrained_;
-	state_matrix_t QmConstrained_;
-	state_vector_t QvConstrained_;
-	input_matrix_t RmConstrained_;
-	control_constraint1_matrix_t DmDager_;
-	input_vector_t       EvProjected_;  // DmDager * Ev
-	input_state_matrix_t CmProjected_;  // DmDager * Cm
-	input_matrix_t       DmProjected_;  // DmDager * Dm
-	state_input_matrix_t BmConstrained_;
-	input_state_matrix_t PmConstrained_;
-	input_vector_t       RvConstrained_;
+	eigen_scalar_t qFinal_;
+	state_vector_t QvFinal_;
+	state_matrix_t QmFinal_;
 
-//	std::vector<std::shared_ptr<penalty_base_t>> penaltyPtrStock_;
-//	scalar_t nominalInequalityConstraintPenalty_;
-//	scalar_t nominalInequalityConstraintISE_;
 
+private:
+	const char* algorithmName_;
+
+	std::unique_ptr<derivatives_base_t> systemDerivativesPtr_;
+	std::unique_ptr<constraint_base_t> systemConstraintsPtr_;
+	std::unique_ptr<cost_function_base_t> costFunctionPtr_;
 
 	const bool checkNumericalStability_ = true;
 

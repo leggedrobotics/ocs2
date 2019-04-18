@@ -65,6 +65,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_oc/oc_solver/Solver_BASE.h>
 #include <ocs2_oc/rollout/RolloutBase.h>
 #include <ocs2_oc/rollout/TimeTriggeredRollout.h>
+#include <ocs2_oc/approximate_model/LinearQuadraticApproximator.h>
 #include <ocs2_oc/rollout/OperatingTrajectoriesRollout.h>
 #include <ocs2_oc/rollout/StateTriggeredRollout.h>
 
@@ -175,6 +176,7 @@ public:
 
 	typedef RolloutBase<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> rollout_base_t;
 	typedef TimeTriggeredRollout<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> time_triggered_rollout_t;
+	typedef LinearQuadraticApproximator<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> linear_quadratic_approximator_t;
 	typedef OperatingTrajectoriesRollout<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> operating_trajectorie_rollout_t;
 	typedef StateTriggeredRollout<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> state_triggered_rollout_t;
 
@@ -1201,17 +1203,15 @@ protected:
 	scalar_t avgTimeStepFP_;
 	scalar_t avgTimeStepBP_;
 
-	//
-	std::vector<typename derivatives_base_t::Ptr>            systemDerivativesPtrStock_;
-	std::vector<typename constraint_base_t::Ptr>             systemConstraintsPtrStock_;
-	std::vector<typename cost_function_base_t::Ptr>          costFunctionsPtrStock_;
-	std::vector<typename cost_function_base_t::Ptr>          heuristicsFunctionsPtrStock_;
-	std::vector<typename operating_trajectories_base_t::Ptr> operatingTrajectoriesPtrStock_;
-
 	std::vector<typename rollout_base_t::Ptr> dynamicsForwardRolloutPtrStock_;
 	std::vector<typename rollout_base_t::Ptr> operatingTrajectoriesRolloutPtrStock_;
 
 	std::vector<typename rollout_base_t::Ptr> state_dynamicsForwardRolloutPtrStock_;
+
+	std::vector<std::unique_ptr<linear_quadratic_approximator_t>> linearQuadraticApproximatorPtrStock_;
+
+	std::vector<typename cost_function_base_t::Ptr>          heuristicsFunctionsPtrStock_;
+	std::vector<typename operating_trajectories_base_t::Ptr> operatingTrajectoriesPtrStock_;
 
 	controller_array_t          nominalControllersStock_;
 	std::vector<scalar_array_t> nominalTimeTrajectoriesStock_;

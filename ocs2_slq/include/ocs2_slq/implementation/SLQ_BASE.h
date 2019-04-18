@@ -57,12 +57,8 @@ SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::SLQ_BASE(
 		logicRulesMachinePtr_ = logic_rules_machine_ptr_t( new logic_rules_machine_t(LOGIC_RULES_T()) );
 
 	// Dynamics, Constraints, derivatives, and cost
-	systemDerivativesPtrStock_.clear();
-	systemDerivativesPtrStock_.reserve(settings_.nThreads_);
-	systemConstraintsPtrStock_.clear();
-	systemConstraintsPtrStock_.reserve(settings_.nThreads_);
-	costFunctionsPtrStock_.clear();
-	costFunctionsPtrStock_.reserve(settings_.nThreads_);
+	linearQuadraticApproximatorPtrStock_.clear();
+	linearQuadraticApproximatorPtrStock_.reserve(settings_.nThreads_);
 	heuristicsFunctionsPtrStock_.clear();
 	heuristicsFunctionsPtrStock_.reserve(settings_.nThreads_);
 	penaltyPtrStock_.clear();
@@ -74,21 +70,17 @@ SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::SLQ_BASE(
 	// initialize all subsystems, etc.
 	for (size_t i=0; i<settings_.nThreads_; i++) {
 
-		// initialize dynamics
+		// initialize rollout
 		dynamicsForwardRolloutPtrStock_[i].reset( new time_triggered_rollout_t(
 				*systemDynamicsPtr, settings_.rolloutSettings_, "SLQ") );
 
+		// initialize operating points
 		operatingTrajectoriesRolloutPtrStock_[i].reset( new operating_trajectorie_rollout_t(
 				*operatingTrajectoriesPtr, settings_.rolloutSettings_, "SLQ") );
 
-		// initialize linearized systems
-		systemDerivativesPtrStock_.emplace_back( systemDerivativesPtr->clone() );
-
-		// initialize constraints
-		systemConstraintsPtrStock_.emplace_back( systemConstraintsPtr->clone() );
-
-		// initialize cost functions
-		costFunctionsPtrStock_.emplace_back( costFunctionPtr->clone() );
+		// initialize LQ approximator
+		linearQuadraticApproximatorPtrStock_.emplace_back(new linear_quadratic_approximator_t(
+				*systemDerivativesPtr, *systemConstraintsPtr, *costFunctionPtr, "SLQ") );
 
 		// initialize operating trajectories
 		operatingTrajectoriesPtrStock_.emplace_back( operatingTrajectoriesPtr->clone() );
@@ -550,11 +542,13 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculateConstraintsWorker(
 		size_array_t& nc2Finals,
 		constraint2_vector_array_t& HvFinals) {
 
+	constraint_base_t& systemConstraints = linearQuadraticApproximatorPtrStock_[workerIndex]->systemConstraints();
+
 	size_t N = timeTrajectory.size();
 
 	// initialize subsystem i constraint
 	if (N>0)
-		systemConstraintsPtrStock_[workerIndex]->initializeModel(*logicRulesMachinePtr_, partitionIndex, "SLQ");
+		systemConstraints.initializeModel(*logicRulesMachinePtr_, partitionIndex, "SLQ");
 
 	// constraint type 1 computations which consists of number of active constraints at each time point
 	// and the value of the constraint (if the rollout is constrained the value is always zero otherwise
@@ -582,33 +576,33 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculateConstraintsWorker(
 	for (size_t k=0; k<N; k++) {
 
 		// set data
-		systemConstraintsPtrStock_[workerIndex]->setCurrentStateAndControl(
+		systemConstraints.setCurrentStateAndControl(
 				timeTrajectory[k], stateTrajectory[k], inputTrajectory[k]);
 
 		// constraint 1 type
-		nc1Trajectory[k] = systemConstraintsPtrStock_[workerIndex]->numStateInputConstraint(timeTrajectory[k]);
-		systemConstraintsPtrStock_[workerIndex]->getConstraint1(EvTrajectory[k]);
+		nc1Trajectory[k] = systemConstraints.numStateInputConstraint(timeTrajectory[k]);
+		systemConstraints.getConstraint1(EvTrajectory[k]);
 		if (nc1Trajectory[k] > INPUT_DIM)
 			throw std::runtime_error("Number of active type-1 constraints should be less-equal to the number of input dimension.");
 
 		// constraint type 2
-		nc2Trajectory[k] = systemConstraintsPtrStock_[workerIndex]->numStateOnlyConstraint(timeTrajectory[k]);
-		systemConstraintsPtrStock_[workerIndex]->getConstraint2(HvTrajectory[k]);
+		nc2Trajectory[k] = systemConstraints.numStateOnlyConstraint(timeTrajectory[k]);
+		systemConstraints.getConstraint2(HvTrajectory[k]);
 		if (nc2Trajectory[k] > INPUT_DIM)
 			throw std::runtime_error("Number of active type-2 constraints should be less-equal to the number of input dimension.");
 
 		// inequality constraints
-		ncIneqTrajectory[k] = systemConstraintsPtrStock_[workerIndex]->numInequalityConstraint(timeTrajectory[k]);
+		ncIneqTrajectory[k] = systemConstraints.numInequalityConstraint(timeTrajectory[k]);
 		if (ncIneqTrajectory[k] > 0){
-			systemConstraintsPtrStock_[workerIndex]->getInequalityConstraint(hTrajectory[k]);
+			systemConstraints.getInequalityConstraint(hTrajectory[k]);
 		}
 
 		// switching time state-constraints
 		if (eventsPastTheEndItr!=eventsPastTheEndIndeces.end() && k+1==*eventsPastTheEndItr) {
 			size_t nc2Final;
 			constraint2_vector_t HvFinal;
-			nc2Final = systemConstraintsPtrStock_[workerIndex]->numStateOnlyFinalConstraint(timeTrajectory[k]);
-			systemConstraintsPtrStock_[workerIndex]->getFinalConstraint2(HvFinal);
+			nc2Final = systemConstraints.numStateOnlyFinalConstraint(timeTrajectory[k]);
+			systemConstraints.getFinalConstraint2(HvFinal);
 			if (nc2Final > INPUT_DIM)
 				throw std::runtime_error("Number of active type-2 constraints at final time should be less-equal to the number of input dimension.");
 
@@ -788,13 +782,14 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculateCostWorker(
 		const input_vector_array_t& inputTrajectory,
 		scalar_t& totalCost)  {
 
-	totalCost = 0.0;
+	cost_function_base_t& costFunction = linearQuadraticApproximatorPtrStock_[workerIndex]->costFunction();
 
 	// initialize subsystem i cost
-	costFunctionsPtrStock_[workerIndex]->initializeModel(*logicRulesMachinePtr_, partitionIndex, "SLQ");
+	costFunction.initializeModel(*logicRulesMachinePtr_, partitionIndex, "SLQ");
 	// set desired trajectories
-	costFunctionsPtrStock_[workerIndex]->setCostDesiredTrajectories(costDesiredTrajectories_);
+	costFunction.setCostDesiredTrajectories(costDesiredTrajectories_);
 
+	totalCost = 0.0;
 	auto eventsPastTheEndItr = eventsPastTheEndIndeces.begin();
 
 	// integrates the intermediate cost using the trapezoidal approximation method
@@ -806,10 +801,10 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculateCostWorker(
 			prevIntermediateCost = currIntermediateCost;
 
 		// feed state and control to cost function
-		costFunctionsPtrStock_[workerIndex]->setCurrentStateAndControl(
+		costFunction.setCurrentStateAndControl(
 				timeTrajectory[k], stateTrajectory[k], inputTrajectory[k]);
 		// getIntermediateCost intermediate cost for next time step
-		costFunctionsPtrStock_[workerIndex]->getIntermediateCost(currIntermediateCost);
+		costFunction.getIntermediateCost(currIntermediateCost);
 
 		if (k>0)
 			totalCost += 0.5*(prevIntermediateCost+currIntermediateCost)*(timeTrajectory[k]-timeTrajectory[k-1]);
@@ -817,7 +812,7 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculateCostWorker(
 		// terminal cost at switching times
 		if (eventsPastTheEndItr!=eventsPastTheEndIndeces.end() && k+1==*eventsPastTheEndItr) {
 			scalar_t finalCost;
-			costFunctionsPtrStock_[workerIndex]->getTerminalCost(finalCost);
+			costFunction.getTerminalCost(finalCost);
 			totalCost += finalCost;
 
 			eventsPastTheEndItr++;
@@ -970,14 +965,9 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::approximateOptimalControlPro
 		if (N > 0) {
 
 			for(size_t j=0; j<settings_.nThreads_; j++) {
-				// initialize subsystem i dynamics derivatives
-				systemDerivativesPtrStock_[j]->initializeModel(*logicRulesMachinePtr_, i, "SLQ");
-				// initialize subsystem i constraint
-				systemConstraintsPtrStock_[j]->initializeModel(*logicRulesMachinePtr_, i, "SLQ");
-				// initialize subsystem i cost
-				costFunctionsPtrStock_[j]->initializeModel(*logicRulesMachinePtr_, i, "SLQ");
+				linearQuadraticApproximatorPtrStock_[j]->initializeModel(*logicRulesMachinePtr_, i, "SLQ");
 				// set desired trajectories
-				costFunctionsPtrStock_[j]->setCostDesiredTrajectories(costDesiredTrajectories_);
+				linearQuadraticApproximatorPtrStock_[j]->costFunction().setCostDesiredTrajectories(costDesiredTrajectories_);
 			}  // end of j loop
 
 			/*
@@ -1035,169 +1025,50 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::approximateUnconstrainedLQWo
 		size_t workerIndex,
 		const size_t& i,
 		const size_t& k) {
-	/*
-	 * linearize system dynamics
-	 */
 
-	// set data
-	systemDerivativesPtrStock_[workerIndex]->setCurrentStateAndControl(
+	linearQuadraticApproximatorPtrStock_[workerIndex]->approximateUnconstrainedLQProblem(
 			nominalTimeTrajectoriesStock_[i][k],
 			nominalStateTrajectoriesStock_[i][k],
 			nominalInputTrajectoriesStock_[i][k]);
 
-	// get results
-	systemDerivativesPtrStock_[workerIndex]->getFlowMapDerivativeState(AmTrajectoryStock_[i][k]);
-	systemDerivativesPtrStock_[workerIndex]->getFlowMapDerivativeInput(BmTrajectoryStock_[i][k]);
-
-	// checking the numerical stability
-	if (settings_.checkNumericalStability_==true){
-		try {
-			if (!AmTrajectoryStock_[i][k].allFinite())
-				throw std::runtime_error("Flow map state derivativeState is not finite.");
-			if (!BmTrajectoryStock_[i][k].allFinite())
-				throw std::runtime_error("Flow map input derivativeState is not finite.");
-
-		} catch(const std::exception& error)  {
-			std::cerr << "what(): " << error.what() << " at time " << nominalTimeTrajectoriesStock_[i][k] << " [sec]." << std::endl;
-			std::cerr << "Am: \n" << AmTrajectoryStock_[i][k] << std::endl;
-			std::cerr << "Bm: \n" << BmTrajectoryStock_[i][k] << std::endl;
-			exit(0);
-		}
-	}
+	/*
+	 * linearize system dynamics
+	 */
+	AmTrajectoryStock_[i][k].swap(linearQuadraticApproximatorPtrStock_[workerIndex]->Am_);
+	BmTrajectoryStock_[i][k].swap(linearQuadraticApproximatorPtrStock_[workerIndex]->Bm_);
 
 	/*
 	 * constraints and linearized constraints
 	 */
-
-	// set data
-	systemConstraintsPtrStock_[workerIndex]->setCurrentStateAndControl(
-			nominalTimeTrajectoriesStock_[i][k],
-			nominalStateTrajectoriesStock_[i][k],
-			nominalInputTrajectoriesStock_[i][k]);
-
-	// constraint type 1
-	nc1TrajectoriesStock_[i][k] = systemConstraintsPtrStock_[workerIndex]->numStateInputConstraint(nominalTimeTrajectoriesStock_[i][k]);
-	if (nc1TrajectoriesStock_[i][k] > INPUT_DIM)
-		throw std::runtime_error("Number of active type-1 constraints should be less-equal to the number of input dimension.");
-	// if constraint type 1 is active
-	if (nc1TrajectoriesStock_[i][k] > 0) {
-		systemConstraintsPtrStock_[workerIndex]->getConstraint1(EvTrajectoryStock_[i][k]);
-		systemConstraintsPtrStock_[workerIndex]->getConstraint1DerivativesState(CmTrajectoryStock_[i][k]);
-		systemConstraintsPtrStock_[workerIndex]->getConstraint1DerivativesControl(DmTrajectoryStock_[i][k]);
-	}
-
-	// constraint type 2
-	nc2TrajectoriesStock_[i][k] = systemConstraintsPtrStock_[workerIndex]->numStateOnlyConstraint(nominalTimeTrajectoriesStock_[i][k]);
-	if (nc2TrajectoriesStock_[i][k] > INPUT_DIM)
-		throw std::runtime_error("Number of active type-2 constraints should be less-equal to the number of input dimension.");
-	// if constraint type 2 is active
-	if (nc2TrajectoriesStock_[i][k] > 0) {
-		systemConstraintsPtrStock_[workerIndex]->getConstraint2(HvTrajectoryStock_[i][k]);
-		systemConstraintsPtrStock_[workerIndex]->getConstraint2DerivativesState(FmTrajectoryStock_[i][k]);
-	}
-
+	// State-input equality constraint
+	nc1TrajectoriesStock_[i][k] = linearQuadraticApproximatorPtrStock_[workerIndex]->ncEqStateInput_;
+	EvTrajectoryStock_[i][k].swap(linearQuadraticApproximatorPtrStock_[workerIndex]->Ev_);
+	CmTrajectoryStock_[i][k].swap(linearQuadraticApproximatorPtrStock_[workerIndex]->Cm_);
+	DmTrajectoryStock_[i][k].swap(linearQuadraticApproximatorPtrStock_[workerIndex]->Dm_);
+	// State-only equality constraint
+	nc2TrajectoriesStock_[i][k] = linearQuadraticApproximatorPtrStock_[workerIndex]->ncEqStateOnly_;
+	HvTrajectoryStock_[i][k].swap(linearQuadraticApproximatorPtrStock_[workerIndex]->Hv_);
+	FmTrajectoryStock_[i][k].swap(linearQuadraticApproximatorPtrStock_[workerIndex]->Fm_);
 	// Inequality constraint
-	ncIneqTrajectoriesStock_[i][k] = systemConstraintsPtrStock_[workerIndex]->numInequalityConstraint(nominalTimeTrajectoriesStock_[i][k]);
-	if (ncIneqTrajectoriesStock_[i][k] > 0){
-		systemConstraintsPtrStock_[workerIndex]->getInequalityConstraint(hTrajectoryStock_[i][k]);
-		systemConstraintsPtrStock_[workerIndex]->getInequalityConstraintDerivativesState(dhdxTrajectoryStock_[i][k]);
-		systemConstraintsPtrStock_[workerIndex]->getInequalityConstraintDerivativesInput(dhduTrajectoryStock_[i][k]);
-		systemConstraintsPtrStock_[workerIndex]->getInequalityConstraintSecondDerivativesState(ddhdxdxTrajectoryStock_[i][k]);
-		systemConstraintsPtrStock_[workerIndex]->getInequalityConstraintSecondDerivativesInput(ddhduduTrajectoryStock_[i][k]);
-		systemConstraintsPtrStock_[workerIndex]->getInequalityConstraintDerivativesInputState(ddhdudxTrajectoryStock_[i][k]);
-	}
-
-	if (settings_.checkNumericalStability_==true){
-		try {
-			const size_t& nc1 = nc1TrajectoriesStock_[i][k];
-			const size_t& nc2 = nc2TrajectoriesStock_[i][k];
-			if (nc1TrajectoriesStock_[i][k] > 0 && !EvTrajectoryStock_[i][k].head(nc1).allFinite())
-				throw std::runtime_error("Input-state constraint is not finite.");
-			if (nc1TrajectoriesStock_[i][k] > 0 && !CmTrajectoryStock_[i][k].topRows(nc1).allFinite())
-				throw std::runtime_error("Input-state constraint derivative w.r.t. state is not finite.");
-			if (nc1TrajectoriesStock_[i][k] > 0 && !DmTrajectoryStock_[i][k].topRows(nc1).allFinite())
-				throw std::runtime_error("Input-state constraint derivative w.r.t. input is not finite.");
-			if (nc2TrajectoriesStock_[i][k] > 0 && !HvTrajectoryStock_[i][k].head(nc2).allFinite())
-				throw std::runtime_error("State-only constraint is not finite.");
-			if (nc2TrajectoriesStock_[i][k] > 0 && !FmTrajectoryStock_[i][k].topRows(nc2).allFinite())
-				throw std::runtime_error("State-only constraint derivative w.r.t. state is not finite.");
-			size_t DmRank = DmTrajectoryStock_[i][k].topRows(nc1).colPivHouseholderQr().rank();
-			if (DmRank != nc1)
-				throw std::runtime_error("Input-state constraint derivative w.r.t. input is not full-row rank. It's rank "
-						"is " + std::to_string(DmRank) + " while the expected rank is " + std::to_string(nc1) + ".");
-
-		} catch(const std::exception& error)  {
-			const size_t& nc1 = nc1TrajectoriesStock_[i][k];
-			const size_t& nc2 = nc2TrajectoriesStock_[i][k];
-			std::cerr << "what(): " << error.what() << " at time " << nominalTimeTrajectoriesStock_[i][k] << " [sec]." << std::endl;
-			std::cerr << "Ev: " << EvTrajectoryStock_[i][k].head(nc1).transpose() << std::endl;
-			std::cerr << "Cm: \n" << CmTrajectoryStock_[i][k].topRows(nc1) << std::endl;
-			std::cerr << "Dm: \n" << DmTrajectoryStock_[i][k].topRows(nc1) << std::endl;
-			std::cerr << "Hv: " << HvTrajectoryStock_[i][k].head(nc2).transpose() << std::endl;
-			std::cerr << "Fm: \n" << FmTrajectoryStock_[i][k].topRows(nc2) << std::endl;
-			exit(0);
-		}
-	}
+	ncIneqTrajectoriesStock_[i][k] = linearQuadraticApproximatorPtrStock_[workerIndex]->ncIneq_;
+	hTrajectoryStock_[i][k].swap(linearQuadraticApproximatorPtrStock_[workerIndex]->h_);
+	dhdxTrajectoryStock_[i][k].swap(linearQuadraticApproximatorPtrStock_[workerIndex]->dhdx_);
+	dhduTrajectoryStock_[i][k].swap(linearQuadraticApproximatorPtrStock_[workerIndex]->dhdu_);
+	ddhdxdxTrajectoryStock_[i][k].swap(linearQuadraticApproximatorPtrStock_[workerIndex]->ddhdxdx_);
+	ddhduduTrajectoryStock_[i][k].swap(linearQuadraticApproximatorPtrStock_[workerIndex]->ddhdudu_);
+	ddhdudxTrajectoryStock_[i][k].swap(linearQuadraticApproximatorPtrStock_[workerIndex]->ddhdudx_);
 
 	/*
 	 * quadratic approximation to the cost function
 	 */
+	qTrajectoryStock_[i][k].swap(linearQuadraticApproximatorPtrStock_[workerIndex]->q_);
+	QvTrajectoryStock_[i][k].swap(linearQuadraticApproximatorPtrStock_[workerIndex]->Qv_);
+	QmTrajectoryStock_[i][k].swap(linearQuadraticApproximatorPtrStock_[workerIndex]->Qm_);
+	RvTrajectoryStock_[i][k].swap(linearQuadraticApproximatorPtrStock_[workerIndex]->Rv_);
+	RmTrajectoryStock_[i][k].swap(linearQuadraticApproximatorPtrStock_[workerIndex]->Rm_);
+	PmTrajectoryStock_[i][k].swap(linearQuadraticApproximatorPtrStock_[workerIndex]->Pm_);
+	RmInverseTrajectoryStock_[i][k].swap(linearQuadraticApproximatorPtrStock_[workerIndex]->RmInverse_);
 
-	// set data
-	costFunctionsPtrStock_[workerIndex]->setCurrentStateAndControl(
-			nominalTimeTrajectoriesStock_[i][k],
-			nominalStateTrajectoriesStock_[i][k],
-			nominalInputTrajectoriesStock_[i][k]);
-
-	// get results
-	costFunctionsPtrStock_[workerIndex]->getIntermediateCost(qTrajectoryStock_[i][k](0));
-	costFunctionsPtrStock_[workerIndex]->getIntermediateCostDerivativeState(QvTrajectoryStock_[i][k]);
-	costFunctionsPtrStock_[workerIndex]->getIntermediateCostSecondDerivativeState(QmTrajectoryStock_[i][k]);
-	costFunctionsPtrStock_[workerIndex]->getIntermediateCostDerivativeInput(RvTrajectoryStock_[i][k]);
-	costFunctionsPtrStock_[workerIndex]->getIntermediateCostSecondDerivativeInput(RmTrajectoryStock_[i][k]);
-	costFunctionsPtrStock_[workerIndex]->getIntermediateCostDerivativeInputState(PmTrajectoryStock_[i][k]);
-
-	// checking the numerical stability
-	if (settings_.checkNumericalStability_==true){
-		try {
-			if (!qTrajectoryStock_[i][k].allFinite())
-				throw std::runtime_error("Intermediate cost is is not finite.");
-			if (!QvTrajectoryStock_[i][k].allFinite())
-				throw std::runtime_error("Intermediate cost first derivative w.r.t. state is is not finite.");
-			if (!QmTrajectoryStock_[i][k].allFinite())
-				throw std::runtime_error("Intermediate cost second derivative w.r.t. state is is not finite.");
-			if (!QmTrajectoryStock_[i][k].isApprox(QmTrajectoryStock_[i][k].transpose()))
-				throw std::runtime_error("Intermediate cost second derivative w.r.t. state is is not self-adjoint.");
-			if (QmTrajectoryStock_[i][k].eigenvalues().real().minCoeff() < -Eigen::NumTraits<scalar_t>::epsilon())
-				throw std::runtime_error("Q matrix is not positive semi-definite. It's smallest eigenvalue is " +
-										 std::to_string(QmTrajectoryStock_[i][k].eigenvalues().real().minCoeff()) + ".");
-			if (!RvTrajectoryStock_[i][k].allFinite())
-				throw std::runtime_error("Intermediate cost first derivative w.r.t. input is is not finite.");
-			if (!RmTrajectoryStock_[i][k].allFinite())
-				throw std::runtime_error("Intermediate cost second derivative w.r.t. input is is not finite.");
-			if (!RmTrajectoryStock_[i][k].isApprox(RmTrajectoryStock_[i][k].transpose()))
-				throw std::runtime_error("Intermediate cost second derivative w.r.t. input is is not self-adjoint.");
-			if (!PmTrajectoryStock_[i][k].allFinite())
-				throw std::runtime_error("Intermediate cost second derivative w.r.t. input-state is is not finite.");
-			if (RmTrajectoryStock_[i][k].ldlt().rcond() < Eigen::NumTraits<scalar_t>::epsilon())
-				throw std::runtime_error("R matrix is not invertible. It's reciprocal condition number is " +
-						std::to_string(RmTrajectoryStock_[i][k].ldlt().rcond()) + ".");
-			if (RmTrajectoryStock_[i][k].eigenvalues().real().minCoeff() < Eigen::NumTraits<scalar_t>::epsilon())
-				throw std::runtime_error("R matrix is not positive definite. It's smallest eigenvalue is " +
-										 std::to_string(RmTrajectoryStock_[i][k].eigenvalues().real().minCoeff()) + ".");
-		} catch(const std::exception& error)  {
-			std::cerr << "what(): " << error.what() << " at time " << nominalTimeTrajectoriesStock_[i][k] << " [sec]." << std::endl;
-			std::cerr << "x: " << nominalStateTrajectoriesStock_[i][k].transpose() << std::endl;
-			std::cerr << "u: " << nominalInputTrajectoriesStock_[i][k].transpose() << std::endl;
-			std::cerr << "q: " << qTrajectoryStock_[i][k] << std::endl;
-			std::cerr << "Qv: " << QvTrajectoryStock_[i][k].transpose() << std::endl;
-			std::cerr << "Qm: \n" << QmTrajectoryStock_[i][k] << std::endl;
-			std::cerr << "Rv: " << RvTrajectoryStock_[i][k].transpose() << std::endl;
-			std::cerr << "Rm: \n" << RmTrajectoryStock_[i][k] << std::endl;
-			std::cerr << "Pm: \n" << PmTrajectoryStock_[i][k] << std::endl;
-			exit(0);
-		}
-	}
 }
 
 /******************************************************************************************************/
@@ -1294,9 +1165,6 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::approximateConstrainedLQWork
 		}
 	}
 
-	// Pre-compute R inverse after costs are adapted
-	RmInverseTrajectoryStock_[i][k] = RmTrajectoryStock_[i][k].ldlt().solve(input_matrix_t::Identity());
-
 	// constraint type 1 coefficients
 	const size_t& nc1 = nc1TrajectoriesStock_[i][k];
 	if (nc1 == 0) {
@@ -1379,27 +1247,20 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::approximateEventsLQWorker(
 	for (size_t ke=0; ke<NE; ke++)  {
 		if (nominalEventsPastTheEndIndecesStock_[i][ke] == k+1)  {
 
-			/*
-			 *  Final constraint type 2
-			 */
-			nc2FinalStock_[i][ke] = systemConstraintsPtrStock_[workerIndex]->numStateOnlyFinalConstraint(
-					nominalTimeTrajectoriesStock_[i][k]);
+			linearQuadraticApproximatorPtrStock_[workerIndex]->approximateUnconstrainedLQProblemAtEventTime(
+					nominalTimeTrajectoriesStock_[i][k],
+					nominalStateTrajectoriesStock_[i][k],
+					nominalInputTrajectoriesStock_[i][k]);
 
-			if (nc2FinalStock_[i][ke] > INPUT_DIM)
-				throw std::runtime_error("Number of active final type-2 constraints should be "
-						"less-equal to the number of input dimension.");
-			// if final constraint type 2 is active
-			if (nc2FinalStock_[i][ke] > 0) {
-				systemConstraintsPtrStock_[workerIndex]->getFinalConstraint2(HvFinalStock_[i][ke]);
-				systemConstraintsPtrStock_[workerIndex]->getFinalConstraint2DerivativesState(FmFinalStock_[i][ke]);
-			}
+			// Final state-only equality constraint
+			nc2FinalStock_[i][ke] = linearQuadraticApproximatorPtrStock_[workerIndex]->ncFinalEqStateOnly_;
+			HvFinalStock_[i][ke].swap(linearQuadraticApproximatorPtrStock_[workerIndex]->HvFinal_);
+			FmFinalStock_[i][ke].swap(linearQuadraticApproximatorPtrStock_[workerIndex]->FmFinal_);
 
-			/*
-			 * Final cost
-			 */
-			costFunctionsPtrStock_[workerIndex]->getTerminalCost(qFinalStock_[i][ke](0));
-			costFunctionsPtrStock_[workerIndex]->getTerminalCostDerivativeState(QvFinalStock_[i][ke]);
-			costFunctionsPtrStock_[workerIndex]->getTerminalCostSecondDerivativeState(QmFinalStock_[i][ke]);
+			// Final cost
+			qFinalStock_[i][ke].swap(linearQuadraticApproximatorPtrStock_[workerIndex]->qFinal_);
+			QvFinalStock_[i][ke].swap(linearQuadraticApproximatorPtrStock_[workerIndex]->QvFinal_);
+			QmFinalStock_[i][ke].swap(linearQuadraticApproximatorPtrStock_[workerIndex]->QmFinal_);
 
 			/*
 			 * Modify the unconstrained LQ coefficients to constrained ones

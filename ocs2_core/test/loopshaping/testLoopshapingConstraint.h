@@ -105,13 +105,13 @@ class TestFixtureLoopShapingConstraint : public ::testing::Test {
     C.setRandom();
     D.setRandom();
 
-    size_t numStateOnlyConstraint = SYSTEM_STATE_DIM - 1;
+    size_t numStateOnlyConstraint = SYSTEM_INPUT_DIM - 1; // max number of state constraints is system_input_dim
     system_constraint2_vector_t h;
     system_constraint2_state_matrix_t F;
     h.setRandom();
     F.setRandom();
 
-    size_t numStateOnlyFinalConstraint = SYSTEM_STATE_DIM - 1;
+    size_t numStateOnlyFinalConstraint = SYSTEM_INPUT_DIM - 1;
     system_constraint2_vector_t h_f;
     system_constraint2_state_matrix_t F_f;
     h_f.setRandom();

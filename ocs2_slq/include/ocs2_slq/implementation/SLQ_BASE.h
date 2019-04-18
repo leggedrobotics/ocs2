@@ -994,15 +994,11 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::approximateOptimalControlPro
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-// FIXME: optimize the temporal variables: (e.g. Eigen::MatrixXd Cm = CmTrajectoryStock_[i][k].topRows(nc1);)
 template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
 void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::approximateLQWorker(
 		size_t workerIndex,
 		const size_t& partitionIndex,
 		const size_t& timeIndex)  {
-
-	const size_t& i = partitionIndex;
-	const size_t& k = timeIndex;
 
 	// unconstrained LQ problem
 	approximateUnconstrainedLQWorker(workerIndex, partitionIndex, timeIndex);

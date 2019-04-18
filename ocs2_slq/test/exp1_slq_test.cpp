@@ -146,9 +146,9 @@ TEST(exp1_slq_test, Exp1_slq_test)
 	/******************************************************************************************************/
 	/******************************************************************************************************/
 	const double expectedCost = 5.4399;
-	ASSERT_LT(fabs(totalCost - expectedCost), 10*slqSettings.minRelCostGSLQP_) <<
+	ASSERT_LT(fabs(totalCost - expectedCost), 10*slqSettings.minRelCostSLQ_) <<
 			"MESSAGE: SLQ failed in the EXP1's cost test!";
-	ASSERT_LT(fabs(totalCost_mp - expectedCost), 10*slqSettings.minRelCostGSLQP_) <<
+	ASSERT_LT(fabs(totalCost_mp - expectedCost), 10*slqSettings.minRelCostSLQ_) <<
 			"MESSAGE: SLQ_MP failed in the EXP1's cost test!";
 
 	const double expectedISE1 = 0.0;

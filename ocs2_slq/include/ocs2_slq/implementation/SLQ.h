@@ -106,7 +106,7 @@ void SLQ<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::lineSearch(bool computeISEs)  {
 	BASE::initLScontrollersStock_ = BASE::nominalControllersStock_;
 
 	// if no line search
-	if (BASE::settings_.maxLearningRateGSLQP_ < OCS2NumericTraits<scalar_t>::limit_epsilon()) {
+	if (BASE::settings_.maxLearningRateSLQ_ < OCS2NumericTraits<scalar_t>::limit_epsilon()) {
 		// clear the feedforward increments
 		for (size_t i=0; i<BASE::numPartitions_; i++)
 			BASE::nominalControllersStock_[i].deltaUff_.clear();
@@ -127,7 +127,7 @@ void SLQ<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::lineSearch(bool computeISEs)  {
 	state_vector_array2_t   	lsStateTrajectoriesStock(BASE::numPartitions_);
 	input_vector_array2_t 		lsInputTrajectoriesStock(BASE::numPartitions_);
 
-	while (learningRate >= BASE::settings_.minLearningRateGSLQP_)  {
+	while (learningRate >= BASE::settings_.minLearningRateSLQ_)  {
 
 		// do a line search
 		lsControllersStock = BASE::initLScontrollersStock_;
@@ -150,7 +150,7 @@ void SLQ<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::lineSearch(bool computeISEs)  {
 	}  // end of while
 
 
-	if (learningRate >= BASE::settings_.minLearningRateGSLQP_)  {
+	if (learningRate >= BASE::settings_.minLearningRateSLQ_)  {
 		BASE::learningRateStar_ = learningRate;
 		BASE::nominalTotalCost_ = lsTotalCost;
 		BASE::nominalConstraint1ISE_ 	 = lsConstraint1ISE;

@@ -75,7 +75,7 @@ TEST(exp1_gslq_test, DISABLED_exp1_gslq_test)
 	slqSettings.displayShortSummary_ = false;
 	slqSettings.displayGradientDescent_ = true;
 	slqSettings.maxNumIterationsSLQ_ = 50;
-	slqSettings.minLearningRateGSLQP_ = 0.001;
+	slqSettings.minLearningRateSLQ_ = 0.001;
 	slqSettings.absTolODE_ = 1e-10;
 	slqSettings.relTolODE_ = 1e-7;
 	slqSettings.maxNumStepsPerSecond_ = 50000;
@@ -158,10 +158,10 @@ TEST(exp1_gslq_test, DISABLED_exp1_gslq_test)
 	const double optimumCost = 5.444;
 	const std::vector<double> optimumEventTimes {0.23, 1.02};
 
-	ASSERT_NEAR(cost_LQ, optimumCost, 10*slqSettings.minRelCostGSLQP_) <<
+	ASSERT_NEAR(cost_LQ, optimumCost, 10*slqSettings.minRelCostSLQ_) <<
 			"MESSAGE: OCS2 failed in the EXP1 using LQ approach for calculating derivatives!";
 
-	ASSERT_NEAR(cost_BVP, optimumCost, 10*slqSettings.minRelCostGSLQP_) <<
+	ASSERT_NEAR(cost_BVP, optimumCost, 10*slqSettings.minRelCostSLQ_) <<
 			"MESSAGE: OCS2 failed in the EXP1 using BVP approach for calculating derivatives!";
 }
 

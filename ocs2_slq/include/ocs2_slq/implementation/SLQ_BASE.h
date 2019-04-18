@@ -3231,7 +3231,7 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::runIteration() {
 	bool computeISEs = settings_.displayInfo_==true || settings_.noStateConstraints_==false;
 
 	// finding the optimal learningRate
-	maxLearningRate_ = settings_.maxLearningRateGSLQP_;
+	maxLearningRate_ = settings_.maxLearningRateSLQ_;
 	lineSearch(computeISEs);
 
 #ifdef BENCHMARK
@@ -3350,7 +3350,7 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::run(
 		const controller_array_t& controllersStock) {
 
 	// infeasible learning rate adjustment scheme
-	if (settings_.maxLearningRateGSLQP_ < settings_.minLearningRateGSLQP_-OCS2NumericTraits<scalar_t>::limit_epsilon())
+	if (settings_.maxLearningRateSLQ_ < settings_.minLearningRateSLQ_-OCS2NumericTraits<scalar_t>::limit_epsilon())
 		throw std::runtime_error("The maximum learning rate is smaller than the minimum learning rate.");
 
 	if (settings_.displayInfo_) {
@@ -3472,7 +3472,7 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::run(
 		relConstraint1ISE = std::abs(nominalConstraint1ISE_-constraint1ISECashed);
 		isConstraint1Satisfied  = nominalConstraint1ISE_<=settings_.minAbsConstraint1ISE_ || relConstraint1ISE<=settings_.minRelConstraint1ISE_;
 		isLearningRateStarZero  = learningRateStar_==0 && !isInitInternalControllerEmpty;
-		isCostFunctionConverged = relCost<=settings_.minRelCostGSLQP_ || isLearningRateStarZero;
+		isCostFunctionConverged = relCost<=settings_.minRelCostSLQ_ || isLearningRateStarZero;
 		isOptimizationConverged = isCostFunctionConverged==true && isConstraint1Satisfied==true;
 		isInitInternalControllerEmpty = false;
 
@@ -3489,7 +3489,7 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::run(
 			settings_.displayInfo_==true || settings_.displayShortSummary_==true;
 
 	// finding the final optimal learningRate and getting the optimal trajectories and controller
-	maxLearningRate_ = settings_.maxLearningRateGSLQP_;
+	maxLearningRate_ = settings_.maxLearningRateSLQ_;
 	lineSearch(computeISEs);
 
 #ifdef BENCHMARK

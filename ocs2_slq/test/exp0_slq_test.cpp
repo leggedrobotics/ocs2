@@ -75,8 +75,8 @@ TEST(exp0_slq_test, exp0_slq_test_single_core) {
   slqSettings.maxNumIterationsSLQ_ = 30;
   slqSettings.lsStepsizeGreedy_ = true;
   slqSettings.noStateConstraints_ = true;
-  slqSettings.minLearningRateGSLQP_ = 0.0001;
-  slqSettings.minRelCostGSLQP_ = 5e-4;
+  slqSettings.minLearningRateSLQ_ = 0.0001;
+  slqSettings.minRelCostSLQ_ = 5e-4;
   slqSettings.checkNumericalStability_ = false;
 
   slqSettings.rolloutSettings_.absTolODE_ = 1e-10;
@@ -140,9 +140,9 @@ TEST(exp0_slq_test, exp0_slq_test_single_core) {
   /******************************************************************************************************/
   /******************************************************************************************************/
   const double expectedCost = 9.7667;
-  ASSERT_LT(fabs(totalCost - expectedCost), 10 * slqSettings.minRelCostGSLQP_) <<
+  ASSERT_LT(fabs(totalCost - expectedCost), 10 * slqSettings.minRelCostSLQ_) <<
 		  "MESSAGE: SLQ failed in the EXP0's cost test!";
-  ASSERT_LT(fabs(totalCost_mp - expectedCost), 10*slqSettings.minRelCostGSLQP_) <<
+  ASSERT_LT(fabs(totalCost_mp - expectedCost), 10*slqSettings.minRelCostSLQ_) <<
 		  "MESSAGE: SLQ_MP failed in the EXP1's cost test!";
 
   const double expectedISE1 = 0.0;
@@ -193,8 +193,8 @@ TEST(exp0_slq_test, exp0_slq_test_single_core) {
 //  slqSettings.maxNumIterationsSLQ_ = 30;
 //  slqSettings.lsStepsizeGreedy_ = true;
 //  slqSettings.noStateConstraints_ = true;
-//  slqSettings.minLearningRateGSLQP_ = 0.0001;
-//  slqSettings.minRelCostGSLQP_ = 5e-4;
+//  slqSettings.minLearningRateSLQ_ = 0.0001;
+//  slqSettings.minRelCostSLQ_ = 5e-4;
 //  slqSettings.checkNumericalStability_ = false;
 //
 //  // switching times
@@ -243,7 +243,7 @@ TEST(exp0_slq_test, exp0_slq_test_single_core) {
 //  /******************************************************************************************************/
 //  /******************************************************************************************************/
 //  const double expectedCost = 9.7667;
-//  ASSERT_LT(fabs(totalCost_mp - expectedCost), 10 * slqSettings.minRelCostGSLQP_) <<
+//  ASSERT_LT(fabs(totalCost_mp - expectedCost), 10 * slqSettings.minRelCostSLQ_) <<
 //                                                                                  "MESSAGE: SLQ_MP failed in the EXP0's cost test!";
 //
 //  const double expectedISE1 = 0.0;

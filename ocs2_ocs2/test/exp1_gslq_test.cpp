@@ -81,7 +81,7 @@ TEST(exp1_gslq_test, DISABLED_optimum_gradient_test)
 	slqSettings.lsStepsizeGreedy_ = true;
 	slqSettings.noStateConstraints_ = true;
 	slqSettings.useLQForDerivatives_ = false;
-	slqSettings.minRelCostGSLQP_ = 1e-3;
+	slqSettings.minRelCostSLQ_ = 1e-3;
 
 	// event times
 	std::vector<double> optimumEventTimes {0.2262, 1.0176};
@@ -157,10 +157,10 @@ TEST(exp1_gslq_test, DISABLED_optimum_gradient_test)
 		std::cerr << costFunctionDerivative_BVP(i) << ", ";
 	std::cerr << costFunctionDerivative_BVP.tail<1>()(0) << "]\n";
 
-	ASSERT_LT(costFunctionDerivative_LQ.norm()/fabs(costFunction), 50*slqSettings.minRelCostGSLQP_ /*0.05*/) <<
+	ASSERT_LT(costFunctionDerivative_LQ.norm()/fabs(costFunction), 50*slqSettings.minRelCostSLQ_ /*0.05*/) <<
 			"MESSAGE: GSLQ failed in the EXP1's cost derivative LQ test!";
 
-	ASSERT_LT(costFunctionDerivative_BVP.norm()/fabs(costFunction), 50*slqSettings.minRelCostGSLQP_ /*0.05*/) <<
+	ASSERT_LT(costFunctionDerivative_BVP.norm()/fabs(costFunction), 50*slqSettings.minRelCostSLQ_ /*0.05*/) <<
 			"MESSAGE: GSLQ failed in the EXP1's cost derivative BVP test!";
 }
 

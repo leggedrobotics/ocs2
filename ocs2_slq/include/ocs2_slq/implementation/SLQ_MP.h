@@ -91,7 +91,7 @@ void SLQ_MP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::lineSearch(bool computeISEs) {
 	BASE::initLScontrollersStock_ = BASE::nominalControllersStock_;  // this will serve to init the workers
 
 	// if no line search
-	if (BASE::settings_.maxLearningRateGSLQP_ < OCS2NumericTraits<scalar_t>::limit_epsilon()) {
+	if (BASE::settings_.maxLearningRateSLQ_ < OCS2NumericTraits<scalar_t>::limit_epsilon()) {
 		// clear the feedforward increments
 		for (size_t i=0; i<BASE::numPartitions_; i++)
 			BASE::nominalControllersStock_[i].deltaUff_.clear();
@@ -108,7 +108,7 @@ void SLQ_MP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::lineSearch(bool computeISEs) {
 	alphaBestFound_ = false;
 	lsWorkerCompleted_ = 0;
 
-	size_t maxNumOfLineSearches =  (int) (log(BASE::settings_.minLearningRateGSLQP_/BASE::settings_.maxLearningRateGSLQP_) / log(BASE::settings_.lineSearchContractionRate_)) +1;
+	size_t maxNumOfLineSearches =  (int) (log(BASE::settings_.minLearningRateSLQ_/BASE::settings_.maxLearningRateSLQ_) / log(BASE::settings_.lineSearchContractionRate_)) +1;
 	alphaExpMax_ = maxNumOfLineSearches;
 	alphaExpBest_ = maxNumOfLineSearches;
 	alphaProcessed_ = std::vector<bool>(maxNumOfLineSearches, false);
@@ -502,7 +502,7 @@ void SLQ_MP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::executeLineSearchWorker(size_t
 		scalar_t learningRate = BASE::maxLearningRate_ * std::pow(BASE::settings_.lineSearchContractionRate_, alphaExp);
 
 		// break condition
-		if (learningRate<BASE::settings_.minLearningRateGSLQP_ || alphaBestFound_.load()==true) {
+		if (learningRate<BASE::settings_.minLearningRateSLQ_ || alphaBestFound_.load()==true) {
 
 			// display
 			if(BASE::settings_.debugPrintMP_)  {
@@ -511,7 +511,7 @@ void SLQ_MP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::executeLineSearchWorker(size_t
 						+ "]: Leaving executeLineSearchWorker because best alpha is found OR no improvement for any alpha");
 				else
 					BASE::printString("[MP]: [Thread "+ std::to_string(threadId)
-						+ "]: Leaving executeLineSearchWorker because learningRate is less than settings_.minLearningRateGSLQP_");
+						+ "]: Leaving executeLineSearchWorker because learningRate is less than settings_.minLearningRateSLQ_");
 			}
 
 			break;

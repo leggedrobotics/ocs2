@@ -54,10 +54,10 @@ public:
 	 */
 	SLQ_Settings()
 	: maxNumIterationsSLQ_(15)
-	, minLearningRateGSLQP_(0.05)
-	, maxLearningRateGSLQP_(1.0)
+	, minLearningRateSLQ_(0.05)
+	, maxLearningRateSLQ_(1.0)
 	, lineSearchContractionRate_(0.5)
-	, minRelCostGSLQP_(1e-3)
+	, minRelCostSLQ_(1e-3)
 	, stateConstraintPenaltyCoeff_(0.0)
 	, stateConstraintPenaltyBase_(1.0)
 	, inequalityConstraintMu_(0.0)
@@ -66,8 +66,6 @@ public:
 	, constraintStepSize_(1.0)
 	, displayInfo_(false)
 	, displayShortSummary_(false)
-	, warmStartGSLQ_(false)				// GSLQ
-	, useLQForDerivatives_(false)			// GSLQ
 
 	, absTolODE_(1e-9)
 	, relTolODE_(1e-6)
@@ -80,6 +78,9 @@ public:
 	, noStateConstraints_(false)
 	, useMakePSD_(true)
 	, addedRiccatiDiagonal_(1e-5)
+
+	, warmStartGSLQ_(false)				    // GSLQ
+	, useLQForDerivatives_(false)			// GSLQ
 	, displayGradientDescent_(false)		// GSLQ
 	, tolGradientDescent_(1e-2)				// GSLQ
 	, acceptableTolGradientDescent_(1e-1)	// GSLQ
@@ -114,10 +115,10 @@ public:
 	 * It has the following format:	<br>
 	 * slq	<br>
 	 * {	<br>
-	 *   maxIterationGSLQP        value		<br>
-	 *   minLearningRateGSLQP     value		<br>
-	 *   maxLearningRateGSLQP     value		<br>
-	 *   minRelCostGSLQP          value		<br>
+	 *   maxIterationSLQ        value		<br>
+	 *   minLearningRateSLQ     value		<br>
+	 *   maxLearningRateSLQ     value		<br>
+	 *   minRelCostSLQ          value		<br>
 	 *   (and so on for the other fields)	<br>
 	 * }	<br>
 	 *
@@ -136,13 +137,13 @@ public:
 	/** Maximum number of iterations of SLQ. */
 	size_t maxNumIterationsSLQ_;
 	/** Minimum number of iterations of SLQ. */
-	double minLearningRateGSLQP_;
+	double minLearningRateSLQ_;
 	/** Maximum learning rate of line-search scheme in SLQ. */
-	double maxLearningRateGSLQP_;
+	double maxLearningRateSLQ_;
 	/** Line-search scheme contraction rate. */
 	double lineSearchContractionRate_;
 	/** This value determines the termination condition based on the minimum relative changes of the cost. */
-	double minRelCostGSLQP_;
+	double minRelCostSLQ_;
 	/** The penalty function coefficient, \f$\alpha\f$, for state-only constraints. \f$ p(i) = \alpha a^i \f$ */
 	double stateConstraintPenaltyCoeff_;
 	/** The penalty function base, \f$ a \f$, for state-only constraints. \f$ p(i) = \alpha a^i \f$ */
@@ -288,27 +289,27 @@ inline void SLQ_Settings::loadSettings(const std::string& filename, bool verbose
 	}
 
 	try	{
-		minLearningRateGSLQP_ = pt.get<double>("slq.minLearningRateGSLQP");
-		if (verbose)  std::cerr << " #### Option loader : option 'minLearningRateGSLQP' ................ " << minLearningRateGSLQP_ << std::endl;
+		minLearningRateSLQ_ = pt.get<double>("slq.minLearningRateSLQ");
+		if (verbose)  std::cerr << " #### Option loader : option 'minLearningRateSLQ' ................ " << minLearningRateSLQ_ << std::endl;
 	}
 	catch (const std::exception& e){
-		if (verbose)  std::cerr << " #### Option loader : option 'minLearningRateGSLQP' ................ " << minLearningRateGSLQP_ << "   \t(default)" << std::endl;
+		if (verbose)  std::cerr << " #### Option loader : option 'minLearningRateSLQ' ................ " << minLearningRateSLQ_ << "   \t(default)" << std::endl;
 	}
 
 	try	{
-		maxLearningRateGSLQP_ = pt.get<double>("slq.maxLearningRateGSLQP");
-		if (verbose)  std::cerr << " #### Option loader : option 'maxLearningRateGSLQP' ................ " << maxLearningRateGSLQP_ << std::endl;
+		maxLearningRateSLQ_ = pt.get<double>("slq.maxLearningRateSLQ");
+		if (verbose)  std::cerr << " #### Option loader : option 'maxLearningRateSLQ' .................. " << maxLearningRateSLQ_ << std::endl;
 	}
 	catch (const std::exception& e){
-		if (verbose)  std::cerr << " #### Option loader : option 'maxLearningRateGSLQP' ................ " << maxLearningRateGSLQP_ << "   \t(default)" << std::endl;
+		if (verbose)  std::cerr << " #### Option loader : option 'maxLearningRateSLQ' .................. " << maxLearningRateSLQ_ << "   \t(default)" << std::endl;
 	}
 
 	try	{
-		minRelCostGSLQP_ = pt.get<double>("slq.minRelCostGSLQP");
-		if (verbose)  std::cerr << " #### Option loader : option 'minRelCostGSLQP' ..................... " << minRelCostGSLQP_ << std::endl;
+		minRelCostSLQ_ = pt.get<double>("slq.minRelCostSLQ");
+		if (verbose)  std::cerr << " #### Option loader : option 'minRelCostSLQ' ....................... " << minRelCostSLQ_ << std::endl;
 	}
 	catch (const std::exception& e){
-		if (verbose)  std::cerr << " #### Option loader : option 'minRelCostGSLQP' ..................... " << minRelCostGSLQP_ << "   \t(default)" << std::endl;
+		if (verbose)  std::cerr << " #### Option loader : option 'minRelCostSLQ' ....................... " << minRelCostSLQ_ << "   \t(default)" << std::endl;
 	}
 
 	try	{

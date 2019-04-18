@@ -33,9 +33,9 @@ templateSwitchingTimes
 slq
 {
 	maxNumIterationsSLQ          10     ; 50                                          
-	minLearningRateGSLQP         1.0    ; 0.1                                        	
-	maxLearningRateGSLQP         1.0                                          	
-	minRelCostGSLQP              0.1    ; 0.01                                        	
+	minLearningRateSLQ         1.0    ; 0.1                                        	
+	maxLearningRateSLQ         1.0                                          	
+	minRelCostSLQ              0.1    ; 0.01                                        	
 	stateConstraintPenaltyCoeff  100.0                                         	
 	stateConstraintPenaltyBase   1.1                                          	
 	meritFunctionRho             50.0                                         	

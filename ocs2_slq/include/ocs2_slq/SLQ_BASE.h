@@ -1176,7 +1176,7 @@ protected:
 	const input_vector_array2_t*       desiredInputTrajectoryStockPtr_;
 
 	scalar_t learningRateStar_ = 1.0;  // The optimal learning rate.
-	scalar_t maxLearningRate_  = 1.0;  // The maximum permitted learning rate (settings_.maxLearningRateGSLQP_).
+	scalar_t maxLearningRate_  = 1.0;  // The maximum permitted learning rate (settings_.maxLearningRateSLQ_).
 	scalar_t constraintStepSize_ = 1.0;
 
 	// It is true if an initial controller is not provided for a partition which causes that the first

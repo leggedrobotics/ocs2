@@ -12,7 +12,8 @@ catkin_package(
   CATKIN_DEPENDS 
     ocs2_core 
     ocs2_frank_wolfe 
-    ocs2_slq 
+    ocs2_slq
+    ocs2_ilqr 
     ocs2_ocs2
     ocs2_mpc
     ocs2_comm_interfaces

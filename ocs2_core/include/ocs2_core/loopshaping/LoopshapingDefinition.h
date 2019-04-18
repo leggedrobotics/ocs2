@@ -353,11 +353,11 @@ namespace ocs2 {
           dfdu.head(system_dfdu.size()) = system_dfdu;
         }
         else if (s_filter_.getNumOutputs() > 0 && eliminateInputs) {
-          dfdu.head(s_filter_.getNumStates()) = s_filter_.getD().transpose() * system_dfdu;
+          dfdu.head(s_filter_.getNumInputs()) = s_filter_.getD().transpose() * system_dfdu;
         }
         else if (s_filter_.getNumOutputs() > 0 && !eliminateInputs) {
           dfdu.head(system_dfdu.size()) = system_dfdu;
-          dfdu.tail(s_filter_.getNumStates()).setZero();
+          dfdu.tail(s_filter_.getNumInputs()).setZero();
         }
       };
 

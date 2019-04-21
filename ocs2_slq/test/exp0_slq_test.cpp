@@ -44,7 +44,7 @@ enum {
   INPUT_DIM = 1
 };
 
-TEST(exp0_slq_test, exp0_slq_test_single_core) {
+TEST(exp0_slq_test, exp0_slq_test) {
   // system dynamics
   EXP0_System systemDynamics;
 

@@ -73,6 +73,7 @@ public:
 	typedef typename DIMENSIONS::controller_t                        controller_t;
 	typedef typename DIMENSIONS::controller_array_t                  controller_array_t;
 	typedef typename DIMENSIONS::size_array_t                        size_array_t;
+	typedef typename DIMENSIONS::size_array2_t                       size_array2_t;
 	typedef typename DIMENSIONS::scalar_t                            scalar_t;
 	typedef typename DIMENSIONS::scalar_array_t                      scalar_array_t;
 	typedef typename DIMENSIONS::scalar_array2_t                     scalar_array2_t;
@@ -448,6 +449,16 @@ public:
 	 * @param [in] input text.
 	 */
 	void printString(const std::string& text);
+
+	/**
+	 * Makes the matrix PSD.
+	 *
+	 * @tparam Derived type.
+	 * @param [out] squareMatrix: The matrix to become PSD.
+	 * @return boolean:
+	 */
+	template <typename Derived>
+	static bool makePSD(Eigen::MatrixBase<Derived>& squareMatrix);
 
 
 private:

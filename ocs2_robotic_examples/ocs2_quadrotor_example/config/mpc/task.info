@@ -65,7 +65,7 @@ slq
     
     useMultiThreading                1
     nThreads                         4
-    debugPrintMP                     0
+    debugPrintMT                     0
     lsStepsizeGreedy                 1
     
     useNominalTimeForBackwardPass    0  

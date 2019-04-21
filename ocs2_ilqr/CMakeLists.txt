@@ -15,7 +15,7 @@ find_package(Boost REQUIRED COMPONENTS
 find_package(Eigen3 3.3 REQUIRED NO_MODULE)
 
 ## Compile as C++11, supported in ROS Kinetic and newer
-add_compile_options(-pthread -fopenmp -std=c++11 -Wfatal-errors -Wl,--no-as-needed)
+add_compile_options(-std=c++11 -Wfatal-errors -Wl,--no-as-needed)
 
 ###################################
 ## catkin specific configuration ##
@@ -24,6 +24,7 @@ add_compile_options(-pthread -fopenmp -std=c++11 -Wfatal-errors -Wl,--no-as-need
 catkin_package(
   INCLUDE_DIRS 
     include
+    test/include
     ${EIGEN3_INCLUDE_DIRS}
   CATKIN_DEPENDS 
     ocs2_core
@@ -38,6 +39,7 @@ catkin_package(
 
 include_directories(
   include
+  test/include
   ${EIGEN3_INCLUDE_DIRS}
   ${Boost_INCLUDE_DIRS}
   ${catkin_INCLUDE_DIRS}
@@ -83,14 +85,14 @@ install(DIRECTORY test/include/${PROJECT_NAME}/
 ## to see the summary of unit test results run
 ## $ catkin_test_results ../../../build/ocs2_ilqr
 
-#catkin_add_gtest(exp0_ilqr_test 
-#  test/exp0_ilqr_test.cpp
-#)
-#target_link_libraries(exp0_ilqr_test
-#  ${catkin_LIBRARIES}
-#  ${Boost_LIBRARIES}
-#)
-#
+catkin_add_gtest(exp0_ilqr_test 
+  test/exp0_ilqr_test.cpp
+)
+target_link_libraries(exp0_ilqr_test
+  ${catkin_LIBRARIES}
+  ${Boost_LIBRARIES}
+)
+
 #catkin_add_gtest(exp1_ilqr_test 
 #  test/exp1_ilqr_test.cpp
 #)

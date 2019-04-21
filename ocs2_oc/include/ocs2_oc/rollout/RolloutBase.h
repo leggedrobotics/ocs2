@@ -182,9 +182,9 @@ public:
 		for (size_t i=0; i<=eventsPastTheEndIndeces.size(); i++) {
 			for (; k<timeTrajectory.size(); k++) {
 				std::cerr << "k:     " << k << std::endl;
-				std::cerr << "Time:  " << timeTrajectory[k] << std::endl;
-				std::cerr << "State: " << stateTrajectory[k].transpose() << std::endl;
-				std::cerr << "Input: " << inputTrajectory[k].transpose() << std::endl;
+				std::cerr << "Time:  " << std::setprecision(9) << timeTrajectory[k] << std::endl;
+				std::cerr << "State: " << std::setprecision(3) << stateTrajectory[k].transpose() << std::endl;
+				std::cerr << "Input: " << std::setprecision(3) << inputTrajectory[k].transpose() << std::endl;
 
 				if (i<eventsPastTheEndIndeces.size() && k+1==eventsPastTheEndIndeces[i]) {
 					std::cerr << "+++ event took place +++" << std::endl;

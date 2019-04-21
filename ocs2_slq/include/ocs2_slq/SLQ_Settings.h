@@ -97,7 +97,7 @@ public:
 	, useMultiThreading_(false)
 	, nThreads_(4)
 	, threadPriority_(99)
-	, debugPrintMP_(false)
+	, debugPrintMT_(false)
 	, lsStepsizeGreedy_(true)
 	, checkNumericalStability_(true)
 	, useRiccatiSolver_(true)
@@ -226,7 +226,7 @@ public:
 	/** Priority of threads used in the multi threading scheme. */
 	int threadPriority_;
 	/** Special debugging output for multi threading scheme. */
-	bool debugPrintMP_;
+	bool debugPrintMT_;
 	/**
 	 * line search options in multi threading scheme.
 	 * - True: The largest acceptable step-size will be chosen. This strategy is equivalent to the single core one.
@@ -561,11 +561,11 @@ inline void SLQ_Settings::loadSettings(const std::string& filename, bool verbose
 	}
 
 	try	{
-		debugPrintMP_ = pt.get<bool>("slq.debugPrintMP");
-		if (verbose)  std::cerr << " #### Option loader : option 'debugPrintMP' ........................ " << debugPrintMP_ << std::endl;
+		debugPrintMT_ = pt.get<bool>("slq.debugPrintMT");
+		if (verbose)  std::cerr << " #### Option loader : option 'debugPrintMT' ........................ " << debugPrintMT_ << std::endl;
 	}
 	catch (const std::exception& e){
-		if (verbose)  std::cerr << " #### Option loader : option 'debugPrintMP' ........................ " << debugPrintMP_ << "   \t(default)" << std::endl;
+		if (verbose)  std::cerr << " #### Option loader : option 'debugPrintMT' ........................ " << debugPrintMT_ << "   \t(default)" << std::endl;
 	}
 
 	try	{

@@ -1107,16 +1107,6 @@ protected:
 			scalar_t& constraintISE);
 
 	/**
-	 * Makes the matrix PSD.
-	 *
-	 * @tparam Derived type.
-	 * @param [out] squareMatrix: The matrix to become PSD.
-	 * @return boolean:
-	 */
-	template <typename Derived>
-	bool makePSD(Eigen::MatrixBase<Derived>& squareMatrix);
-
-	/**
 	 * Truncates the internal array of the control policies based on the initTime.
 	 *
 	 * @param [in] partitioningTimes: Switching times.

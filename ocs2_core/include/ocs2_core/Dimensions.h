@@ -80,7 +80,9 @@ public:
 
     /** Unsigned integer type */
     // size_t is already defined
-    typedef std::vector<size_t> size_array_t;
+    typedef std::vector<size_t>       size_array_t;
+    // Array of size_array_t
+    typedef std::vector<size_array_t> size_array2_t;
 
     /** Scalar type. */
 	typedef double scalar_t;

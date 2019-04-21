@@ -1225,7 +1225,7 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::approximateConstrainedLQWork
 
 	// making sure that constrained Qm is PSD
 	if (settings_.useMakePSD_==true)
-		makePSD(QmConstrainedTrajectoryStock_[i][k]);
+		BASE::makePSD(QmConstrainedTrajectoryStock_[i][k]);
 }
 
 /******************************************************************************************************/
@@ -1274,7 +1274,7 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::approximateEventsLQWorker(
 
 			// making sure that Qm remains PSD
 			if (settings_.useMakePSD_==true)
-				makePSD(QmFinalStock_[i][ke]);
+				BASE::makePSD(QmFinalStock_[i][ke]);
 
 			break;
 		}
@@ -2346,12 +2346,12 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::fullRiccatiBackwardSweepWork
 		deltaT = nominalTimeTrajectoriesStock_[partitionIndex][k] - nominalTimeTrajectoriesStock_[partitionIndex][k+1];
 
 		if (eventDetected==true) {
-//			if (settings_.useMakePSD_==true)  makePSD(QmFinalStock_[partitionIndex][remainingEvents]);
+//			if (settings_.useMakePSD_==true)  BASE::makePSD(QmFinalStock_[partitionIndex][remainingEvents]);
 			SmTrajectoryStock_[partitionIndex][k] = SmTrajectoryStock_[partitionIndex][k+1] +
 					QmFinalStock_[partitionIndex][remainingEvents];
 
 		} else {
-//			if (settings_.useMakePSD_==true)  makePSD(QmConstrainedTrajectoryStock_[partitionIndex][k]);
+//			if (settings_.useMakePSD_==true)  BASE::makePSD(QmConstrainedTrajectoryStock_[partitionIndex][k]);
 			_H.template topLeftCorner<STATE_DIM,STATE_DIM>() = AmConstrainedTrajectoryStock_[partitionIndex][k] -
 					BmConstrainedTrajectoryStock_[partitionIndex][k]*RmInverseTrajectoryStock_[partitionIndex][k]*PmConstrainedTrajectoryStock_[partitionIndex][k];
 			_H.template topRightCorner<STATE_DIM,STATE_DIM>() =
@@ -2446,36 +2446,6 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::fullRiccatiBackwardSweepWork
 				exit(0);
 			}
 		}
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-template <typename Derived>
-bool SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::makePSD(Eigen::MatrixBase<Derived>& squareMatrix) {
-
-	if (squareMatrix.rows() != squareMatrix.cols())
-		throw std::runtime_error("Not a square matrix: makePSD() method is for square matrix.");
-
-	Eigen::SelfAdjointEigenSolver<Derived> eig(squareMatrix, Eigen::EigenvaluesOnly);
-	Eigen::VectorXd lambda = eig.eigenvalues();
-
-	bool hasNegativeEigenValue = false;
-	for (size_t j=0; j<lambda.size() ; j++)
-		if (lambda(j) < 0.0) {
-			hasNegativeEigenValue = true;
-			lambda(j) = 1e-6;
-		}
-
-	if (hasNegativeEigenValue) {
-		eig.compute(squareMatrix, Eigen::ComputeEigenvectors);
-		squareMatrix = eig.eigenvectors() * lambda.asDiagonal() * eig.eigenvectors().inverse();
-	} else {
-		squareMatrix = 0.5*(squareMatrix+squareMatrix.transpose()).eval();
-	}
-
-	return hasNegativeEigenValue;
 }
 
 /******************************************************************************************************/

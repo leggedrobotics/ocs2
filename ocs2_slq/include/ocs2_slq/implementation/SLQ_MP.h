@@ -65,13 +65,13 @@ SLQ_MP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::~SLQ_MP()  {
 
 	workerWakeUpCondition_.notify_all();
 
-	if(BASE::settings_.debugPrintMP_)
+	if(BASE::settings_.debugPrintMT_)
 		std::cerr << "Shutting down workers." << std::endl;
 
 	for (size_t i=0; i<workerThreads_.size(); i++)
 		workerThreads_[i].join();
 
-	if(BASE::settings_.debugPrintMP_)
+	if(BASE::settings_.debugPrintMT_)
 		std::cerr << "All workers shut down" << std::endl;
 }
 
@@ -113,9 +113,9 @@ void SLQ_MP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::lineSearch(bool computeISEs) {
 	alphaExpBest_ = maxNumOfLineSearches;
 	alphaProcessed_ = std::vector<bool>(maxNumOfLineSearches, false);
 
-	if(BASE::settings_.debugPrintMP_) {
-		std::cerr << "[MP]: calculated maximum number of line searches " + std::to_string(alphaExpMax_) << std::endl;
-		std::cerr << "[MP]: Waking up workers for line search " << std::endl;
+	if(BASE::settings_.debugPrintMT_) {
+		std::cerr << "[MT]: calculated maximum number of line searches " + std::to_string(alphaExpMax_) << std::endl;
+		std::cerr << "[MT]: Waking up workers for line search " << std::endl;
 	}
 
 	workerTask_ = LINE_SEARCH;
@@ -123,8 +123,8 @@ void SLQ_MP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::lineSearch(bool computeISEs) {
 	workerWakeUpCondition_.notify_all();
 	lock.unlock();
 
-	if(BASE::settings_.debugPrintMP_)
-		BASE::printString("[MP]: Will sleep now until we have results ");
+	if(BASE::settings_.debugPrintMT_)
+		BASE::printString("[MT]: Will sleep now until we have results ");
 
 
 	std::unique_lock<std::mutex> waitLock(alphaBestFoundMutex_);
@@ -168,8 +168,8 @@ void SLQ_MP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::launchWorkerThreads()
 template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
 void SLQ_MP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::threadWork(size_t threadId)
 {
-	if(BASE::settings_.debugPrintMP_)
-		BASE::printString("[MP]: [Thread " + std::to_string(threadId) + "]: launched");
+	if(BASE::settings_.debugPrintMT_)
+		BASE::printString("[MT]: [Thread " + std::to_string(threadId) + "]: launched");
 
 	// local variables
 	size_t uniqueProcessID = 0;
@@ -184,8 +184,8 @@ void SLQ_MP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::threadWork(size_t threadId)
 		iteration_local = BASE::iteration_;
 
 		// display
-		if(BASE::settings_.debugPrintMP_){
-			BASE::printString("[MP]: [Thread " + std::to_string(threadId) + "]: previous procId: " + std::to_string(uniqueProcessID) +
+		if(BASE::settings_.debugPrintMT_){
+			BASE::printString("[MT]: [Thread " + std::to_string(threadId) + "]: previous procId: " + std::to_string(uniqueProcessID) +
 					", current procId: " +std::to_string(generateUniqueProcessID(iteration_local, (int) workerTask_local, (int) subsystemProcessed_local)));
 		}
 
@@ -195,8 +195,8 @@ void SLQ_MP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::threadWork(size_t threadId)
 		 * */
 		if ( workerTask_local == IDLE || uniqueProcessID == generateUniqueProcessID(iteration_local, (int) workerTask_local, (int) subsystemProcessed_local))
 		{
-			if(BASE::settings_.debugPrintMP_)
-				BASE::printString("[MP]: [Thread " + std::to_string(threadId) + "]: going to sleep !");
+			if(BASE::settings_.debugPrintMT_)
+				BASE::printString("[MT]: [Thread " + std::to_string(threadId) + "]: going to sleep !");
 
 			// sleep until the state is not IDLE any more and we have a different process ID than before
 			std::unique_lock<std::mutex> waitLock(workerWakeUpMutex_);
@@ -209,8 +209,8 @@ void SLQ_MP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::threadWork(size_t threadId)
 			workerTask_local = workerTask_.load();
 			iteration_local = BASE::iteration_;
 
-			if(BASE::settings_.debugPrintMP_)
-				BASE::printString("[MP]: [Thread " + std::to_string(threadId) + "]: woke up !");
+			if(BASE::settings_.debugPrintMT_)
+				BASE::printString("[MT]: [Thread " + std::to_string(threadId) + "]: woke up !");
 		}
 
 		if (!workersActive_)
@@ -220,8 +220,8 @@ void SLQ_MP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::threadWork(size_t threadId)
 		{
 		case APPROXIMATE_LQ:
 		{
-			if(BASE::settings_.debugPrintMP_)
-				BASE::printString("[MP]: [Thread " + std::to_string(threadId) + "]: is busy with APPROXIMATE_LQ on partition "
+			if(BASE::settings_.debugPrintMT_)
+				BASE::printString("[MT]: [Thread " + std::to_string(threadId) + "]: is busy with APPROXIMATE_LQ on partition "
 						+ std::to_string(subsystemProcessed_local));
 
 			executeApproximatePartitionLQWorker(threadId, subsystemProcessed_local);
@@ -231,8 +231,8 @@ void SLQ_MP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::threadWork(size_t threadId)
 		}
 		case CALCULATE_CONTROLLER:
 		{
-			if(BASE::settings_.debugPrintMP_)
-				BASE::printString("[MP]: [Thread " + std::to_string(threadId) + "]: now busy with CALCULATE_CONTROLLER !");
+			if(BASE::settings_.debugPrintMT_)
+				BASE::printString("[MT]: [Thread " + std::to_string(threadId) + "]: now busy with CALCULATE_CONTROLLER !");
 
 			executeCalculatePartitionController(threadId, subsystemProcessed_local);
 			uniqueProcessID = generateUniqueProcessID (iteration_local, CALCULATE_CONTROLLER, subsystemProcessed_local);
@@ -241,8 +241,8 @@ void SLQ_MP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::threadWork(size_t threadId)
 		}
 		case LINE_SEARCH:
 		{
-			if(BASE::settings_.debugPrintMP_)
-				BASE::printString("[MP]: [Thread " + std::to_string(threadId) + "]: now busy with LINE_SEARCH !");
+			if(BASE::settings_.debugPrintMT_)
+				BASE::printString("[MT]: [Thread " + std::to_string(threadId) + "]: now busy with LINE_SEARCH !");
 
 			executeLineSearchWorker(threadId);
 			uniqueProcessID = generateUniqueProcessID (iteration_local, LINE_SEARCH, subsystemProcessed_local);
@@ -250,22 +250,22 @@ void SLQ_MP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::threadWork(size_t threadId)
 		}
 		case SOLVE_RICCATI:
 		{
-			if(BASE::settings_.debugPrintMP_)
-				BASE::printString("[MP]: [Thread "+ std::to_string(threadId) +"]: now busy with RiccatiSolver!");
+			if(BASE::settings_.debugPrintMT_)
+				BASE::printString("[MT]: [Thread "+ std::to_string(threadId) +"]: now busy with RiccatiSolver!");
 			uniqueProcessID = generateUniqueProcessID (iteration_local, SOLVE_RICCATI, subsystemProcessed_local);
 			executeRiccatiSolver(threadId);
 			break;
 		}
 		case SHUTDOWN:
 		{
-			if(BASE::settings_.debugPrintMP_)
-				BASE::printString("[MP]: [Thread "+ std::to_string(threadId) +"]: now shutting down!");
+			if(BASE::settings_.debugPrintMT_)
+				BASE::printString("[MT]: [Thread "+ std::to_string(threadId) +"]: now shutting down!");
 			return;
 		}
 		}
 
-		if(BASE::settings_.debugPrintMP_)
-			BASE::printString("[MP]: [Thread " + std::to_string(threadId) +"]: done with job. Will wait for next now!");
+		if(BASE::settings_.debugPrintMT_)
+			BASE::printString("[MT]: [Thread " + std::to_string(threadId) +"]: done with job. Will wait for next now!");
 	}
 }
 
@@ -282,8 +282,8 @@ void SLQ_MP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::approximatePartitionLQ(const s
 	if (N > 0) {
 
 		// display
-		if(BASE::settings_.debugPrintMP_)
-			std::cerr << "[MP]: Activating threads to perform LQ approximation for partition " + std::to_string(partitionIndex) << std::endl;
+		if(BASE::settings_.debugPrintMT_)
+			std::cerr << "[MT]: Activating threads to perform LQ approximation for partition " + std::to_string(partitionIndex) << std::endl;
 
 		kTaken_approx_[partitionIndex] = 0;
 		kCompleted_approx_[partitionIndex]= 0;
@@ -295,8 +295,8 @@ void SLQ_MP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::approximatePartitionLQ(const s
 		lock.unlock();
 
 		// display
-		if(BASE::settings_.debugPrintMP_)
-			BASE::printString("[MP]: Waiting until threads finish LQ approximation for partition " + std::to_string(partitionIndex));
+		if(BASE::settings_.debugPrintMT_)
+			BASE::printString("[MT]: Waiting until threads finish LQ approximation for partition " + std::to_string(partitionIndex));
 
 		// wait until all threads finish their task
 		std::unique_lock<std::mutex> waitLock(kCompletedMutex_);
@@ -309,8 +309,8 @@ void SLQ_MP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::approximatePartitionLQ(const s
 		workerTask_ = IDLE;
 
 		// display
-		if(BASE::settings_.debugPrintMP_)
-			std::cerr << "[MP]: Back to main thread, workers should now have finished LQ approximation for partition "
+		if(BASE::settings_.debugPrintMT_)
+			std::cerr << "[MT]: Back to main thread, workers should now have finished LQ approximation for partition "
 				+ std::to_string(partitionIndex) << std::endl;
 	}
 }
@@ -334,8 +334,8 @@ void SLQ_MP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::executeApproximatePartitionLQW
 
 		if(k < N) {
 			// display
-			if (BASE::settings_.debugPrintMP_ && k%10 == 0) {
-				BASE::printString("[MP]: [Thread " + std::to_string(threadId) + "], partition " + std::to_string(partitionIndex)
+			if (BASE::settings_.debugPrintMT_ && k%10 == 0) {
+				BASE::printString("[MT]: [Thread " + std::to_string(threadId) + "], partition " + std::to_string(partitionIndex)
 				+ ":Start approximating system LQ on index k = " + std::to_string(k) + " out of " + std::to_string(N-1));
 			}
 
@@ -356,16 +356,16 @@ void SLQ_MP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::executeApproximatePartitionLQW
 		lock.unlock();
 
 		// display
-		if(BASE::settings_.debugPrintMP_) {
-			BASE::printString("[MP]: [Thread " + std::to_string(threadId) + "], partition " + std::to_string(partitionIndex)
+		if(BASE::settings_.debugPrintMT_) {
+			BASE::printString("[MT]: [Thread " + std::to_string(threadId) + "], partition " + std::to_string(partitionIndex)
 				+ ", k " + std::to_string(k) + ", kCompleted_local " + std::to_string(kCompleted_local)
 				+ ", KMax " + std::to_string(N) + ": leaving executeApproximatePartitionLQWorker AND NOTIFYING ");
 		}
 
 	} else {
 		// display
-		if(BASE::settings_.debugPrintMP_){
-			BASE::printString("[MP]: [Thread " + std::to_string(threadId) + "], partition " + std::to_string(partitionIndex)
+		if(BASE::settings_.debugPrintMT_){
+			BASE::printString("[MT]: [Thread " + std::to_string(threadId) + "], partition " + std::to_string(partitionIndex)
 				+ ", k " + std::to_string(k) + ", kCompleted_local " + std::to_string(kCompleted_local)
 				+ ", KMax " + std::to_string(N) + ": leaving executeApproximatePartitionLQWorker but NOT notifying ");
 		}
@@ -386,8 +386,8 @@ void SLQ_MP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculatePartitionController(c
 	if (N > 0) {
 
 		// display
-		if(BASE::settings_.debugPrintMP_)
-			std::cerr << "[MP]: Waking up workers to calculate controller for partition "
+		if(BASE::settings_.debugPrintMT_)
+			std::cerr << "[MT]: Waking up workers to calculate controller for partition "
 				+ std::to_string(partitionIndex) << std::endl;
 
 		kTaken_ctrl_[partitionIndex] = 0;
@@ -399,8 +399,8 @@ void SLQ_MP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculatePartitionController(c
 		lock.unlock();
 
 		// display
-		if(BASE::settings_.debugPrintMP_)
-			BASE::printString("[MP]: Will wait now controllers have been calculated for partition "
+		if(BASE::settings_.debugPrintMT_)
+			BASE::printString("[MT]: Will wait now controllers have been calculated for partition "
 				+ std::to_string(partitionIndex));
 
 		// wait until all threads finish their task
@@ -414,8 +414,8 @@ void SLQ_MP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculatePartitionController(c
 		workerTask_ = IDLE;
 
 		// display
-		if(BASE::settings_.debugPrintMP_)
-			std::cerr << "[MP]: Back to main thread, workers should now have designed controllers for partition "
+		if(BASE::settings_.debugPrintMT_)
+			std::cerr << "[MT]: Back to main thread, workers should now have designed controllers for partition "
 				+ std::to_string(partitionIndex) << std::endl;
 	}
 }
@@ -441,8 +441,8 @@ void SLQ_MP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::executeCalculatePartitionContr
 		if(k<N) {
 
 			// display
-			if(BASE::settings_.debugPrintMP_ && k%10 == 0) {
-				BASE::printString("[MP]: [Thread " + std::to_string(threadId) + "]: Start calculating controller on index k = "
+			if(BASE::settings_.debugPrintMT_ && k%10 == 0) {
+				BASE::printString("[MT]: [Thread " + std::to_string(threadId) + "]: Start calculating controller on index k = "
 						+ std::to_string(k) + " out of " + std::to_string(N-1));
 			}
 
@@ -463,15 +463,15 @@ void SLQ_MP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::executeCalculatePartitionContr
 		lock.unlock();
 
 		// display
-		if(BASE::settings_.debugPrintMP_) {
-			BASE::printString("[MP]: [Thread " + std::to_string(threadId) + "], subsystem " + std::to_string(partitionIndex)
+		if(BASE::settings_.debugPrintMT_) {
+			BASE::printString("[MT]: [Thread " + std::to_string(threadId) + "], subsystem " + std::to_string(partitionIndex)
 				+ ": leaving executeCalculatePartitionController() AND NOTIFYING ");
 		}
 
 	} else {
 		// display
-		if(BASE::settings_.debugPrintMP_) {
-			BASE::printString("[MP]: [Thread " + std::to_string(threadId) + "], subsystem " + std::to_string(partitionIndex)
+		if(BASE::settings_.debugPrintMT_) {
+			BASE::printString("[MT]: [Thread " + std::to_string(threadId) + "], subsystem " + std::to_string(partitionIndex)
 				+ ": leaving executeCalculatePartitionController() but NOT notifying ");
 		}
 	}
@@ -483,8 +483,8 @@ void SLQ_MP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::executeCalculatePartitionContr
 template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
 void SLQ_MP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::executeLineSearchWorker(size_t threadId)
 {
-	if(BASE::settings_.debugPrintMP_)
-		BASE::printString("[MP]: [Thread " + std::to_string(threadId) + "]: Starting executeLineSearchWorker. ");
+	if(BASE::settings_.debugPrintMT_)
+		BASE::printString("[MT]: [Thread " + std::to_string(threadId) + "]: Starting executeLineSearchWorker. ");
 
 	// local search forward simulation's variables
 	scalar_t lsTotalCost;
@@ -505,12 +505,12 @@ void SLQ_MP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::executeLineSearchWorker(size_t
 		if (learningRate<BASE::settings_.minLearningRateSLQ_ || alphaBestFound_.load()==true) {
 
 			// display
-			if(BASE::settings_.debugPrintMP_)  {
+			if(BASE::settings_.debugPrintMT_)  {
 				if (alphaBestFound_.load()==true)
-					BASE::printString("[MP]: [Thread " + std::to_string(threadId)
+					BASE::printString("[MT]: [Thread " + std::to_string(threadId)
 						+ "]: Leaving executeLineSearchWorker because best alpha is found OR no improvement for any alpha");
 				else
-					BASE::printString("[MP]: [Thread "+ std::to_string(threadId)
+					BASE::printString("[MT]: [Thread "+ std::to_string(threadId)
 						+ "]: Leaving executeLineSearchWorker because learningRate is less than settings_.minLearningRateSLQ_");
 			}
 
@@ -518,8 +518,8 @@ void SLQ_MP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::executeLineSearchWorker(size_t
 		}
 
 		// display
-		if(BASE::settings_.debugPrintMP_)
-			BASE::printString("[MP]: [Thread " + std::to_string(threadId) + "]: Trying learningRate " + std::to_string(learningRate));
+		if(BASE::settings_.debugPrintMT_)
+			BASE::printString("[MT]: [Thread " + std::to_string(threadId) + "]: Trying learningRate " + std::to_string(learningRate));
 
 		// do a line search
 		lsControllersStock = BASE::initLScontrollersStock_;
@@ -536,8 +536,8 @@ void SLQ_MP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::executeLineSearchWorker(size_t
 		// break condition: make sure we do not alter an existing result
 		if (alphaBestFound_.load() == true)  {
 			// display
-			if(BASE::settings_.debugPrintMP_)
-				BASE::printString("[MP]: [Thread " + std::to_string(threadId)
+			if(BASE::settings_.debugPrintMT_)
+				BASE::printString("[MT]: [Thread " + std::to_string(threadId)
 					+ "]: Leaving executeLineSearchWorker because best alpha already found by another thread.");
 
 			break;
@@ -558,14 +558,14 @@ void SLQ_MP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::executeLineSearchWorker(size_t
 			if(lsTotalCost<(baselineTotalCost_*(1-1e-3*learningRate)) && learningRate>BASE::learningRateStar_)  {
 				updatePolicy = true;
 				// display
-				if(BASE::settings_.debugPrintMP_) {
-					BASE::printString("[MP]: [LS, Thread " + std::to_string(threadId) + "]: stepsize-greedy mode: better stepsize and cost found: "
+				if(BASE::settings_.debugPrintMT_) {
+					BASE::printString("[MT]: [LS, Thread " + std::to_string(threadId) + "]: stepsize-greedy mode: better stepsize and cost found: "
 							+ std::to_string(lsTotalCost) + " at learningRate: " + std::to_string(learningRate));
 				}
 			} else {
 				// display
-				if(BASE::settings_.debugPrintMP_) {
-					BASE::printString("[MP]: [LS, Thread " + std::to_string(threadId) + "]: stepsize-greedy mode: no better combination found, cost "
+				if(BASE::settings_.debugPrintMT_) {
+					BASE::printString("[MT]: [LS, Thread " + std::to_string(threadId) + "]: stepsize-greedy mode: no better combination found, cost "
 							+ std::to_string(lsTotalCost) + " at learningRate: " + std::to_string(learningRate));
 				}
 			}
@@ -578,13 +578,13 @@ void SLQ_MP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::executeLineSearchWorker(size_t
 
 			if(lsTotalCost < (BASE::nominalTotalCost_*(1-1e-3*learningRate)))  {
 				updatePolicy = true;
-				if(BASE::settings_.debugPrintMP_){
-					BASE::printString("[MP]: [LS, Thread " + std::to_string(threadId) + "]: cost-greedy mode : better cost found: "
+				if(BASE::settings_.debugPrintMT_){
+					BASE::printString("[MT]: [LS, Thread " + std::to_string(threadId) + "]: cost-greedy mode : better cost found: "
 							+ std::to_string(lsTotalCost) + " at learningRate: " + std::to_string(learningRate));
 				}
 			} else {
-				if(BASE::settings_.debugPrintMP_){
-					BASE::printString("[MP]: [LS, Thread " + std::to_string(threadId) + "]: cost-greedy mode : no better cost found, cost "
+				if(BASE::settings_.debugPrintMT_){
+					BASE::printString("[MT]: [LS, Thread " + std::to_string(threadId) + "]: cost-greedy mode : no better cost found, cost "
 							+ std::to_string(lsTotalCost) + " at learningRate: " + std::to_string(learningRate) + ". Best cost was "
 							+ std::to_string(BASE::nominalTotalCost_));
 				}
@@ -635,16 +635,16 @@ void SLQ_MP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::executeLineSearchWorker(size_t
 	// add to the number of threads that finished their tasks
 	lsWorkerCompleted_++;
 
-	if(BASE::settings_.debugPrintMP_)
-		BASE::printString("[MP]: [Thread " + std::to_string(threadId) + "]: Leaving executeLineSearchWorker ");
+	if(BASE::settings_.debugPrintMT_)
+		BASE::printString("[MT]: [Thread " + std::to_string(threadId) + "]: Leaving executeLineSearchWorker ");
 
 	if (lsWorkerCompleted_.load() >= BASE::settings_.nThreads_)  {
 		std::unique_lock<std::mutex> lock (alphaBestFoundMutex_);
 		alphaBestFoundCondition_.notify_all();
 		lock.unlock();
 
-		if(BASE::settings_.debugPrintMP_)
-			BASE::printString("[MP]: NOTIFYING LS WORKERs since all workers are now done.");
+		if(BASE::settings_.debugPrintMT_)
+			BASE::printString("[MT]: NOTIFYING LS WORKERs since all workers are now done.");
 	}
 }
 
@@ -716,16 +716,16 @@ typename SLQ_MP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::scalar_t
 	// solve it in parallel if useParallelRiccatiSolverFromInitItr_ is true
 	else {
 
-		if(BASE::settings_.debugPrintMP_)
-			BASE::printString("[MP]: Waking up workers to do RiccatiSolver Task.");
+		if(BASE::settings_.debugPrintMT_)
+			BASE::printString("[MT]: Waking up workers to do RiccatiSolver Task.");
 
 		workerTask_ = SOLVE_RICCATI;
 		std::unique_lock<std::mutex> lock (workerWakeUpMutex_);
 		workerWakeUpCondition_.notify_all();
 		lock.unlock();
 
-		if(BASE::settings_.debugPrintMP_)
-			BASE::printString("[MP]: Will wait now until workers have done RiccatiSolver Task.");
+		if(BASE::settings_.debugPrintMT_)
+			BASE::printString("[MT]: Will wait now until workers have done RiccatiSolver Task.");
 
 		std::unique_lock<std::mutex> waitLock(riccatiSolverBarrierMutex_);
 		while(numSubsystemsProcessed_.load() < BASE::numPartitions_){
@@ -736,8 +736,8 @@ typename SLQ_MP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::scalar_t
 		workerTask_ = IDLE;
 	}
 
-	if(BASE::settings_.debugPrintMP_){
-		BASE::printString("[MP]: Iteration: " + std::to_string(BASE::iteration_) + " done.");
+	if(BASE::settings_.debugPrintMT_){
+		BASE::printString("[MT]: Iteration: " + std::to_string(BASE::iteration_) + " done.");
 		BASE::printString("----------------------------------");
 		BASE::printString("----------------------------------");
 	}
@@ -759,8 +759,8 @@ void SLQ_MP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::executeRiccatiSolver(size_t th
 
 	for (int i = endingIndicesRiccatiWorker_[threadId]; i>=startingIndicesRiccatiWorker_[threadId]; i--) {
 
-		if(BASE::settings_.debugPrintMP_)
-			BASE::printString("[MP]: Thread " + std::to_string(threadId) + " processing subsystem " + std::to_string(i));
+		if(BASE::settings_.debugPrintMT_)
+			BASE::printString("[MT]: Thread " + std::to_string(threadId) + " processing subsystem " + std::to_string(i));
 
 		// for inactive subsystems
 		if (i<(signed)BASE::initActivePartition_ || i>(signed)BASE::finalActivePartition_) {

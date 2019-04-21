@@ -66,7 +66,7 @@ slq
     
     useMultiThreading           0
     nThreads                    4
-    debugPrintMP                0
+    debugPrintMT                0
     lsStepsizeGreedy            1
     
     RiccatiIntegratorType       1        ; ODE45 = 1, ADAMS_BASHFORTH = 2, BULIRSCH_STOER = 3, ADAMS_BASHFORTH_MOULTON = 4

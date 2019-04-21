@@ -34,7 +34,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <ocs2_slq/SLQ.h>
 #include <ocs2_slq/SLQ_MP.h>
-#include <ocs2_slq/test/EXP0.h>
+
+#include <ocs2_oc/test/EXP0.h>
 
 #include "ocs2_ocs2/OCS2Projected.h"
 

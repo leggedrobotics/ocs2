@@ -6,6 +6,10 @@
 
 namespace ocs2 {
 
+/**
+ * LinearController implements a time and state dependent controller of the
+ * form u[x,t] = k[t] * x + uff[t]
+ */
 template <size_t STATE_DIM, size_t INPUT_DIM>
 class LinearController : public Controller<STATE_DIM, INPUT_DIM> {
  public:
@@ -129,47 +133,25 @@ class LinearController : public Controller<STATE_DIM, INPUT_DIM> {
     }
   }
 
-  virtual void flattenFeedforwardOnly(scalar_t time, scalar_array_t& flatArray) const override {
-    input_vector_t uff;
-    linInterpolateUff_.interpolate(time, uff);
-
-    // TODO(jcarius) should we subtract k*x_ref here?
-    flatArray = std::move(scalar_array_t(uff.data(), uff.data() + INPUT_DIM));
-  }
-
   virtual void unFlatten(const scalar_array_t& timeArray, const std::vector<scalar_array_t const*>& flatArray2) override {
     time_ = timeArray;
 
     uff_.clear();
     uff_.reserve(flatArray2.size());
-
     k_.clear();
+    k_.reserve(flatArray2.size());
 
-    const auto arrayLengthPerTime = flatArray2[0]->size();
-    bool loadFeedback = false;
-
-    switch (arrayLengthPerTime) {
-      case INPUT_DIM: {
-        break;
-      }
-      case (INPUT_DIM + INPUT_DIM * STATE_DIM): {
-        loadFeedback = true;
-        break;
-      }
-      default: { throw std::runtime_error("LinearController::unFlatten received array of wrong length."); }
+    if(flatArray2[0]->size() != INPUT_DIM + INPUT_DIM * STATE_DIM){
+      throw std::runtime_error("LinearController::unFlatten received array of wrong length.");
     }
 
     for (const auto& arr : flatArray2) {  // loop through time
       uff_.emplace_back(input_vector_t::Zero());
-      if (loadFeedback) {
-        k_.emplace_back(input_state_matrix_t::Zero());
-      }
+      k_.emplace_back(input_state_matrix_t::Zero());
 
       for (int i = 0; i < INPUT_DIM; i++) {  // loop through input dim
         uff_.back()(i) = (*arr)[i * (STATE_DIM + 1) + 0];
-        if (loadFeedback) {
-          k_.back().row(i) = Eigen::Map<const Eigen::Matrix<scalar_t, 1, STATE_DIM>>(&((*arr)[i * (STATE_DIM + 1) + 1]), STATE_DIM);
-        }
+        k_.back().row(i) = Eigen::Map<const Eigen::Matrix<scalar_t, 1, STATE_DIM>>(&((*arr)[i * (STATE_DIM + 1) + 1]), STATE_DIM);
       }
     }
   }
@@ -210,7 +192,7 @@ class LinearController : public Controller<STATE_DIM, INPUT_DIM> {
    */
   size_t size() const { return time_.size(); }
 
-  virtual std::string getType() const override { return "LinearController"; }
+  virtual ControllerType getType() const override { return ControllerType::LINEAR; }
 
  public:
   scalar_array_t time_;

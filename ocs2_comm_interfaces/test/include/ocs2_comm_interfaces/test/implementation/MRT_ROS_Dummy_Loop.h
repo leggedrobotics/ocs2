@@ -143,6 +143,7 @@ void MRT_ROS_Dummy_Loop<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::run() {
 				observation_.state(), observation_.subsystem());
 
         //TODO(jcarius) call controller here to assign observation_.input()
+        //TODO(jcarius) check if predicted state trajectory agrees with received controller
 
 		// user-defined modifications before publishing
 		modifyObservation(observation_);

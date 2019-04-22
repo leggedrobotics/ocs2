@@ -27,6 +27,7 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
+#include <ocs2_core/control/FeedforwardController.h>
 #include <ocs2_core/control/LinearController.h>
 
 namespace ocs2 {
@@ -273,22 +274,18 @@ void MRT_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::mpcPolicyCallback(
   }
 
     switch (msg->controllerType) {
-    case ocs2_comm_interfaces::mpc_flattened_controller::CONTROLLER_SLQ_FEEDFORWARD:
+    case ocs2_comm_interfaces::mpc_flattened_controller::CONTROLLER_FEEDFORWARD:
     {
-        mpcControllerBuffer_.reset(); // no additional controller needed in this case
+        using controller_t = FeedforwardController<STATE_DIM, INPUT_DIM>;
+        mpcControllerBuffer_ = std::unique_ptr<controller_t>(new controller_t());
+        mpcControllerBuffer_->unFlatten(mpcTimeTrajectoryBuffer_, controllerData);
         break;
     }
-    case ocs2_comm_interfaces::mpc_flattened_controller::CONTROLLER_SLQ_FEEDBACK:
+    case ocs2_comm_interfaces::mpc_flattened_controller::CONTROLLER_LINEAR:
     {
         using controller_t = LinearController<STATE_DIM, INPUT_DIM>;
         mpcControllerBuffer_ = std::unique_ptr<controller_t>(new controller_t());
         mpcControllerBuffer_->unFlatten(mpcTimeTrajectoryBuffer_, controllerData);
-    }
-    case ocs2_comm_interfaces::mpc_flattened_controller::CONTROLLER_PATH_INTEGRAL:
-    {
-        //TODO(jcarius) instantiate PiController here
-        // mpcControllerBuffer_ = std::make_unique<PiController<STATE_DIM, INPUT_DIM>(...);
-        throw std::runtime_error("not implemented");
     }
     default:
         throw std::runtime_error("MRT_ROS_Interface::mpcPolicyCallback -- Unknown controllerType");

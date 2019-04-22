@@ -60,6 +60,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ocs2_comm_interfaces/SystemObservation.h"
 #include "ocs2_comm_interfaces/ocs2_ros_interfaces/common/RosMsgConversions.h"
 
+#include <ocs2_core/control/FeedforwardController.h>
 #include <ocs2_core/control/LinearController.h>
 
 //#define PUBLISH_DUMMY

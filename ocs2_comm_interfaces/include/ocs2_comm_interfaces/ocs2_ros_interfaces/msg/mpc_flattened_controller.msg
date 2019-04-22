@@ -2,9 +2,8 @@
 
 # define controllerType Enum values
 uint8 CONTROLLER_UNKNOWN=0 # safety mechanism: message initalization to zero
-uint8 CONTROLLER_SLQ_FEEDFORWARD=1
-uint8 CONTROLLER_SLQ_FEEDBACK=2
-uint8 CONTROLLER_PATH_INTEGRAL=3
+uint8 CONTROLLER_FEEDFORWARD=1
+uint8 CONTROLLER_LINEAR=2
 
 uint8                   controllerType         # what type of controller is this
 

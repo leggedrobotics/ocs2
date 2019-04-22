@@ -5,6 +5,7 @@
 #include <vector>
 
 #include "ocs2_core/Dimensions.h"
+#include "ocs2_core/control/ControllerType.h"
 
 namespace ocs2 {
 
@@ -52,16 +53,6 @@ class Controller {
   virtual void flatten(scalar_t time, scalar_array_t& flatArray) const = 0;
 
   /**
-   * @brief Saves the feedforward portion of the controller at a given time to an array structure for ROS transmission
-   * @note By default, the full flatten method is called. Derived classes should override if the controller has
-   * an explicit feedforward part to save transmission payload.
-   *
-   * @param[in] time query time
-   * @param[out] flatArray The array that is to be filled, i.e., the compressed controller
-   */
-  virtual void flattenFeedforwardOnly(scalar_t time, scalar_array_t& flatArray) const { flatten(time, flatArray); }
-
-  /**
    * @brief Restores and initializes the controller from a flattend array
    * @param[in] timeArray array of times
    * @param[in] flatArray2 The array the represents the compressed controller
@@ -70,9 +61,9 @@ class Controller {
 
   /**
    * @brief Prints the type of controller
-   * @return string: what type of controller this is
+   * @return ControllerType: what type of controller this is
    */
-  virtual std::string getType() const = 0;
+  virtual ControllerType getType() const = 0;
 };
 
 }  // namespace ocs2

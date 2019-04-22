@@ -190,18 +190,29 @@ void MPC_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::publishPolicy(
 	ros_msg_conversions_t::CreateModeSequenceMsg(*eventTimesPtr, *subsystemsSequencePtr,
 			mpcPolicyMsg_.modeSequence);
 
-    const auto controllerType = controllerStockPtr->front()->getType();
 
-    if(controllerType == "LinearController"){
-        if(mpcSettings_.useFeedbackPolicy_){
-        mpcPolicyMsg_.controllerType = ocs2_comm_interfaces::mpc_flattened_controller::CONTROLLER_SLQ_FEEDBACK;
-        }else{
-            mpcPolicyMsg_.controllerType = ocs2_comm_interfaces::mpc_flattened_controller::CONTROLLER_SLQ_FEEDFORWARD;
-        }
-    }
-    else if (controllerType == "PathIntegralController"){
-        mpcPolicyMsg_.controllerType = ocs2_comm_interfaces::mpc_flattened_controller::CONTROLLER_PATH_INTEGRAL;
-    }
+      auto controllerType = controllerStockPtr->front()->getType();
+
+      if(!mpcSettings_.useFeedbackPolicy_){
+        controllerType = ControllerType::FEEDFORWARD;
+      }
+
+      // translate controllerType enum into message enum
+      switch(controllerType){
+      case ControllerType::FEEDFORWARD :{
+        mpcPolicyMsg_.controllerType = ocs2_comm_interfaces::mpc_flattened_controller::CONTROLLER_FEEDFORWARD;
+        break;
+      }
+      case ControllerType::LINEAR :{
+        mpcPolicyMsg_.controllerType = ocs2_comm_interfaces::mpc_flattened_controller::CONTROLLER_LINEAR;
+        break;
+      }
+      default:{
+        throw std::runtime_error("MPC_ROS_Interface: Unknown controller type.");
+        break;
+      }
+
+      }
 
 	// maximum length of the message
 	size_t I = timeTrajectoriesStockPtr->size();
@@ -235,6 +246,13 @@ void MPC_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::publishPolicy(
 		if (timeTrajectory.back()  < t0)  continue;
 		if (timeTrajectory.front() > tf)  continue;
 
+                Controller<STATE_DIM, INPUT_DIM>* ctrlToBeSent = (*controllerStockPtr)[i];
+                std::unique_ptr<FeedforwardController<STATE_DIM, INPUT_DIM>> ffwCtrl;
+                if(!mpcSettings_.useFeedbackPolicy_){
+                  ffwCtrl.reset(new FeedforwardController<STATE_DIM, INPUT_DIM>(timeTrajectory, stateTrajectory, (*controllerStockPtr)[i]));
+                  ctrlToBeSent = ffwCtrl.get();
+                }
+
 		for (size_t k=0; k<N; k++) { // loop through time in partition i
 			// continue if elapsed time is smaller than computation time delay
 			if (k<N-1 && timeTrajectory[k+1]<t0)  continue;
@@ -247,13 +265,8 @@ void MPC_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::publishPolicy(
 			mpcPolicyMsg_.timeTrajectory.push_back(timeTrajectory[k]);
 			mpcPolicyMsg_.stateTrajectory.push_back(mpcState);
 
-            mpcPolicyMsg_.data.emplace_back(ocs2_comm_interfaces::controller_data());
-            if(mpcSettings_.useFeedbackPolicy_){
-            (*controllerStockPtr)[i]->flatten(timeTrajectory[k], mpcPolicyMsg_.data.back().data);
-            }else{
-                (*controllerStockPtr)[i]->flattenFeedforwardOnly(timeTrajectory[k], mpcPolicyMsg_.data.back().data);
-            }
-
+			mpcPolicyMsg_.data.emplace_back(ocs2_comm_interfaces::controller_data());
+			ctrlToBeSent->flatten(timeTrajectory[k], mpcPolicyMsg_.data.back().data);
 		}  // end of k loop
 	}  // end of i loop
 

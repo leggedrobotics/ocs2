@@ -246,10 +246,7 @@ void MRT_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::mpcPolicyCallback(
   ros_msg_conversions_t::ReadModeSequenceMsg(msg->modeSequence,
                                              eventTimesBuffer_, subsystemsSequenceBuffer_);
 
-  // time partitioning
-//	partitioningTimesBuffer_ = scalar_array_t {
-//		msg->timeTrajectory.front(), msg->timeTrajectory.back()};
-  partitioningTimesUpdate(msg->timeTrajectory.front(), partitioningTimesBuffer_);
+  partitioningTimesUpdate(mpcInitObservationBuffer_.time(), partitioningTimesBuffer_);
 
   const size_t N = msg->timeTrajectory.size();
   mpcTimeTrajectoryBuffer_.clear();
@@ -442,9 +439,9 @@ void MRT_ROS_Interface<STATE_DIM,
 /******************************************************************************************************/
 /******************************************************************************************************/
 template<size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void MRT_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::rolloutFeedbackPolicy(scalar_t t0,
-                                                                                   const state_vector_t &initState,
-                                                                                   scalar_t rollout_time) {
+void MRT_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::rolloutPolicy(scalar_t t0,
+                                                                           const state_vector_t &initState,
+                                                                           scalar_t rollout_time) {
   size_t
   activePartitionIndex = findActiveIntervalIndex(partitioningTimes_, t0, 0);
 

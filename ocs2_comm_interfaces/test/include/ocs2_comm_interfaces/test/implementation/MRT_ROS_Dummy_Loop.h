@@ -36,11 +36,14 @@ template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
 MRT_ROS_Dummy_Loop<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::MRT_ROS_Dummy_Loop(
 		const mrt_ptr_t& mrtPtr,
 		const scalar_t& mrtDesiredFrequency /*= 100*/,
-		const scalar_t& mpcDesiredFrequency /*= -1*/)
+		const scalar_t& mpcDesiredFrequency /*= -1*/,
+		controlled_system_base_t* system /* = nullptr*/,
+		Rollout_Settings rolloutSettings /*= Rollout_Settings()*/)
 
 	: mrtPtr_(mrtPtr)
 	, mrtDesiredFrequency_(mrtDesiredFrequency)
 	, mpcDesiredFrequency_(mpcDesiredFrequency)
+	, system_(system)
 	, realtimeLoop_(mpcDesiredFrequency<=0) // true if mpcDesiredFrequency is not set or it is negative
 	, initialized_(false)
 {
@@ -50,6 +53,10 @@ MRT_ROS_Dummy_Loop<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::MRT_ROS_Dummy_Loop(
 	if (mpcDesiredFrequency_>0)
 		ROS_WARN_STREAM("MPC loop is not realtime! "
 				"For realtime setting, set mpcDesiredFrequency to any negative number.");
+
+	if (system_){
+		mrtPtr_->initRollout(*system_, rolloutSettings);
+	}
 }
 
 /******************************************************************************************************/
@@ -109,6 +116,7 @@ void MRT_ROS_Dummy_Loop<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::run() {
 	}
 	ROS_INFO_STREAM("Initial policy has been received.");
 
+	observation_ = initObservation_;
 
 	while(::ros::ok()) {
 
@@ -131,19 +139,20 @@ void MRT_ROS_Dummy_Loop<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::run() {
 			std::cout << "### Message received at " << time << std::endl;
 		}
 
+		// integrate nominal dynamics if available, otherwise fake simulation
+		if(system_){
+			mrtPtr_->rolloutPolicy(time, observation_.state(), 1.0/mrtDesiredFrequency_);
+		}
+
 		// time and loop counter increment
 		loopCounter++;
 		time += (1.0/mrtDesiredFrequency_);
 
 		std::cout << "### Message received at " << time << std::endl;
 
-		// fake simulation of the dynamics
 		observation_.time() = time;
 		mrtPtr_->evaluatePlan(observation_.time(),
-				observation_.state(), observation_.subsystem());
-
-        //TODO(jcarius) call controller here to assign observation_.input()
-        //TODO(jcarius) check if predicted state trajectory agrees with received controller
+			observation_.state(), observation_.subsystem());
 
 		// user-defined modifications before publishing
 		modifyObservation(observation_);

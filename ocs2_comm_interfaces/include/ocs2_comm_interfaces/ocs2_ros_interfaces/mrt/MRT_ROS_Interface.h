@@ -205,13 +205,13 @@ public:
 	void initRollout(const controlled_system_base_t& controlSystemBase, const Rollout_Settings& rolloutSettings);
 
 	/**
-	 * rolls out feedback policy from current state
+	 * rolls out control policy from current state
 	 *
 	 * @param [in] t0: start of the rollout
 	 * @param [in] initState: state to start rollout from
 	 * @param [in] rollout_time: duration of forward rollout
 	 */
-	void rolloutFeedbackPolicy(scalar_t t0, const state_vector_t& initState, scalar_t rollout_time);
+	void rolloutPolicy(scalar_t t0, const state_vector_t& initState, scalar_t rollout_time);
 
 	/**
 	 * Shutdowns the ROS nodes.

@@ -57,8 +57,10 @@ public:
 	MRT_ROS_Dummy_Linear_System(
 			const mrt_ptr_t& mrtPtr,
 			const scalar_t& mrtDesiredFrequency,
-			const scalar_t& mpcDesiredFrequency)
-	: BASE(mrtPtr, mrtDesiredFrequency, mpcDesiredFrequency)
+			const scalar_t& mpcDesiredFrequency,
+			controlled_system_base_t* system = nullptr,
+			Rollout_Settings rolloutSettings = Rollout_Settings())
+	: BASE(mrtPtr, mrtDesiredFrequency, mpcDesiredFrequency, system, rolloutSettings)
 	{}
 
 	/**

@@ -133,7 +133,6 @@ class FeedforwardController : public Controller<STATE_DIM, INPUT_DIM> {
     input_vector_t uff;
     linInterpolateUff_.interpolate(time, uff);
 
-    // TODO(jcarius) should we subtract k*x_ref here?
     flatArray = std::move(scalar_array_t(uff.data(), uff.data() + INPUT_DIM));
   }
 

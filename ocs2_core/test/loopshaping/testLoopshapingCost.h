@@ -10,7 +10,7 @@
 
 #include "ocs2_core/cost/QuadraticCostFunction.h"
 #include "ocs2_core/loopshaping/LoopshapingDefinition.h"
-#include "ocs2_core/loopshaping/LoopshapingCost.h"
+#include "ocs2_core/loopshaping/cost/LoopshapingCost.h"
 
 #include "testLoopshapingConfigurations.h"
 

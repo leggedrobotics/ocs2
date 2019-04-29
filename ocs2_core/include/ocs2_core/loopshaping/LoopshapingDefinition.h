@@ -188,6 +188,8 @@ namespace ocs2 {
         size_t numOutputs_ = 0;
     };
 
+
+
     /*
      *  Class to assemble and store the loopshaping definition
      *  The definition contains three filters

@@ -64,7 +64,7 @@ class LoopshapingCost final : public CostFunctionBase<FULL_STATE_DIM, FULL_INPUT
       : BASE(),
         systemCost_(systemCost.clone()),
         loopshapingDefinition_(loopshapingDefinition) {
-
+    // TODO(Ruben): initialize safely elsewhere
     if (loopshapingDefinition_->getInputFilter_s().getNumOutputs() > 0) {
       loopshapingCostImplementation_.reset(new LoopshapingCostInputPattern<FULL_STATE_DIM,
                                                                            FULL_INPUT_DIM,

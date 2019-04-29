@@ -12,7 +12,7 @@
 
 #include "ocs2_core/constraint/LinearConstraint.h"
 #include "ocs2_core/loopshaping/LoopshapingDefinition.h"
-#include "ocs2_core/loopshaping/LoopshapingConstraint.h"
+#include "ocs2_core/loopshaping/constraint/LoopshapingConstraint.h"
 
 #include "testLoopshapingConfigurations.h"
 

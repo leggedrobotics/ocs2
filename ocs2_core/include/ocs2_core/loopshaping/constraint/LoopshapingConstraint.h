@@ -11,6 +11,11 @@
 #include "ocs2_core/logic/machine/LogicRulesMachine.h"
 #include "ocs2_core/loopshaping/LoopshapingDefinition.h"
 
+#include "ocs2_core/loopshaping/constraint/LoopshapingConstraintImplementationBase.h"
+#include "ocs2_core/loopshaping/constraint/LoopshapingConstraintEliminatePattern.h"
+#include "ocs2_core/loopshaping/constraint/LoopshapingConstraintInputPattern.h"
+#include "ocs2_core/loopshaping/constraint/LoopshapingConstraintOutputPattern.h"
+
 namespace ocs2 {
 template<size_t FULL_STATE_DIM, size_t FULL_INPUT_DIM,
     size_t SYSTEM_STATE_DIM, size_t SYSTEM_INPUT_DIM,
@@ -68,11 +73,48 @@ class LoopshapingConstraint final : public ConstraintBase<
   using filter_state_vector_t = Eigen::Matrix<scalar_t, filter_state_dim, 1>;
   using filter_input_vector_t = Eigen::Matrix<scalar_t, filter_input_dim, 1>;
 
+  using LoopshapingConstraintImplementation = LoopshapingConstraintImplementationBase<FULL_STATE_DIM, FULL_INPUT_DIM,
+                                                                          SYSTEM_STATE_DIM, SYSTEM_INPUT_DIM,
+                                                                          FILTER_STATE_DIM, FILTER_INPUT_DIM, NullLogicRules>;
+
   LoopshapingConstraint(const SYSTEM_CONSTRAINT &systemConstraint,
                         std::shared_ptr<LoopshapingDefinition> loopshapingDefinition) :
       BASE(),
       systemConstraint_(systemConstraint.clone()),
-      loopshapingDefinition_(loopshapingDefinition) {};
+      loopshapingDefinition_(loopshapingDefinition) {
+    // TODO(Ruben): initialize safely elsewhere
+    if (loopshapingDefinition_->getInputFilter_s().getNumOutputs() > 0) {
+      if (loopshapingDefinition_->eliminateInputs){
+        loopshapingConstraintImplementation_.reset(new LoopshapingConstraintEliminatePattern<FULL_STATE_DIM,
+                                                                                         FULL_INPUT_DIM,
+                                                                                         SYSTEM_STATE_DIM,
+                                                                                         SYSTEM_INPUT_DIM,
+                                                                                         FILTER_STATE_DIM,
+                                                                                         FILTER_INPUT_DIM,
+                                                                                         NullLogicRules>(systemConstraint_,
+                                                                                                         loopshapingDefinition_));
+      } else {
+        loopshapingConstraintImplementation_.reset(new LoopshapingConstraintInputPattern<FULL_STATE_DIM,
+                                                                                         FULL_INPUT_DIM,
+                                                                                         SYSTEM_STATE_DIM,
+                                                                                         SYSTEM_INPUT_DIM,
+                                                                                         FILTER_STATE_DIM,
+                                                                                         FILTER_INPUT_DIM,
+                                                                                         NullLogicRules>(systemConstraint_,
+                                                                                                         loopshapingDefinition_));
+      }
+    }
+    if (loopshapingDefinition_->getInputFilter_r().getNumOutputs() > 0) {
+      loopshapingConstraintImplementation_.reset(new LoopshapingConstraintOutputPattern<FULL_STATE_DIM,
+                                                                                       FULL_INPUT_DIM,
+                                                                                       SYSTEM_STATE_DIM,
+                                                                                       SYSTEM_INPUT_DIM,
+                                                                                       FILTER_STATE_DIM,
+                                                                                       FILTER_INPUT_DIM,
+                                                                                       NullLogicRules>(systemConstraint_,
+                                                                                                       loopshapingDefinition_));
+    }
+  };
 
   LoopshapingConstraint(std::shared_ptr<LoopshapingDefinition> loopshapingDefinition) :
       BASE(),
@@ -87,7 +129,7 @@ class LoopshapingConstraint final : public ConstraintBase<
       loopshapingDefinition_(obj.loopshapingDefinition_),
       filter_constraint_dim(obj.filter_constraint_dim) {
     if (obj.systemConstraint_) {
-      systemConstraint_ = std::unique_ptr<SYSTEM_CONSTRAINT>(obj.systemConstraint_->clone());
+      systemConstraint_ = std::shared_ptr<SYSTEM_CONSTRAINT>(obj.systemConstraint_->clone());
     };
   }
 
@@ -110,12 +152,18 @@ class LoopshapingConstraint final : public ConstraintBase<
       const state_vector_t &x,
       const input_vector_t &u) override {
     BASE::setCurrentStateAndControl(t, x, u);
+
+    filter_state_vector_t x_filter_;
+    filter_input_vector_t u_filter_;
+    system_state_vector_t x_system_;
+    system_input_vector_t u_system_;
+    loopshapingDefinition_->getSystemState(x, x_system_);
+    loopshapingDefinition_->getSystemInput(x, u, u_system_);
+    loopshapingDefinition_->getFilterState(x, x_filter_);
+    loopshapingDefinition_->getFilteredInput(x, u, u_filter_);
+
     if (systemConstraint_) {
-      system_state_vector_t systemstate;
-      system_input_vector_t systeminput;
-      loopshapingDefinition_->getSystemState(x, systemstate);
-      loopshapingDefinition_->getSystemInput(x, u, systeminput);
-      systemConstraint_->setCurrentStateAndControl(t, systemstate, systeminput);
+      systemConstraint_->setCurrentStateAndControl(t, x_system_, u_system_);
     }
 
     auto &s_filter = loopshapingDefinition_->getInputFilter_s();
@@ -124,32 +172,23 @@ class LoopshapingConstraint final : public ConstraintBase<
     } else {
       filter_constraint_dim = 0;
     }
+
+    if (s_filter.getNumOutputs() > 0) {
+      loopshapingConstraintImplementation_->setCurrentStateAndControl(t, x_system_, u_system_, x_filter_, u_filter_);
+    }
   }
 
   virtual void getConstraint1(constraint1_vector_t &e) override {
-    const auto &s_filter = loopshapingDefinition_->getInputFilter_s();
-
-    system_state_vector_t systemstate;
-    system_input_vector_t systeminput;
-    filter_state_vector_t filterstate;
-    filter_input_vector_t filteredinput;
-    loopshapingDefinition_->getSystemState(BASE::x_, systemstate);
-    loopshapingDefinition_->getSystemInput(BASE::x_, BASE::u_, systeminput);
-    loopshapingDefinition_->getFilterState(BASE::x_, filterstate);
-    loopshapingDefinition_->getFilteredInput(BASE::x_, BASE::u_, filteredinput);
-
-    // in relative coordinates: e = C_s*x_s + D_s*u_s - u
-    if (filter_constraint_dim > 0) {
-      e.template segment(0, filter_constraint_dim) =
-          s_filter.getC() * filterstate
-              + s_filter.getD() * filteredinput
-              - systeminput;
-    }
-
+    size_t numSystemConstraints = 0;
     if (systemConstraint_) {
+      numSystemConstraints = systemConstraint_->numStateInputConstraint(BASE::t_);
       system_contraint1_vector_t e_system;
       systemConstraint_->getConstraint1(e_system);
-      e.template segment<system_input_dim>(filter_constraint_dim) = e_system;
+      e.template segment<system_input_dim>(0) = e_system;
+    }
+
+    if (filter_constraint_dim > 0) {
+      loopshapingConstraintImplementation_->getConstraint1(numSystemConstraints, e);
     }
   }
 
@@ -208,66 +247,34 @@ class LoopshapingConstraint final : public ConstraintBase<
   }
 
   virtual void getConstraint1DerivativesState(constraint1_state_matrix_t &C) override {
-    /*
-     *  C = [0         C_filter;
-     *       C_system  0  ]
-     *    = [filter_out_dim x system_state_dim,    filter_out_dim x filterstate_dim
-     *       system_input_dim x system_state_dim,  system_input_dim x filterstate_dim
-     */
-    const auto &s_filter = loopshapingDefinition_->getInputFilter_s();
-
-    if (filter_constraint_dim > 0) {
-      C.template block(0, 0, filter_constraint_dim, system_state_dim).setZero();
-      C.template block(0, system_state_dim, filter_constraint_dim, s_filter.getNumStates()) = s_filter.getC();
-    }
-
+    size_t numSystemConstraints = 0;
     if (systemConstraint_) {
-      auto numSystemConstraints = systemConstraint_->numStateInputConstraint(BASE::t_);
+      numSystemConstraints = systemConstraint_->numStateInputConstraint(BASE::t_);
+
       system_constraint1_state_matrix_t C_system;
       systemConstraint_->getConstraint1DerivativesState(C_system);
-      C.template block(filter_constraint_dim, 0, numSystemConstraints, system_state_dim) =
-          C_system.block(0, 0, numSystemConstraints, system_state_dim);
-      if (loopshapingDefinition_->eliminateInputs) {
-        system_constraint1_input_matrix_t D_system;
-        systemConstraint_->getConstraint1DerivativesControl(D_system);
-        C.template block(filter_constraint_dim, system_state_dim, numSystemConstraints, filter_state_dim) =
-            D_system.block(0, 0, numSystemConstraints, system_input_dim) * s_filter.getC();
-      } else {
-        C.template block(filter_constraint_dim, system_state_dim, numSystemConstraints, filter_state_dim).setZero();
+      C.block(0, 0, numSystemConstraints, SYSTEM_STATE_DIM) = C_system.block(0, 0, numSystemConstraints, SYSTEM_STATE_DIM);
+      if (FULL_STATE_DIM > SYSTEM_STATE_DIM) {
+        C.block(0, SYSTEM_STATE_DIM, numSystemConstraints, FULL_STATE_DIM - SYSTEM_STATE_DIM).setZero();
       }
     }
+
+    loopshapingConstraintImplementation_->getConstraint1DerivativesState(numSystemConstraints, C);
   }
 
   virtual void getConstraint1DerivativesControl(constraint1_input_matrix_t &D) override {
-    /*
-     *  D = [-I      D_filter
-     *       D_system  0]
-     *    = [filter_out_dim x system_input_dim, filter_out_dim x filter_input_dim
-     *       system_input_dim x system_input_dim, system_input_dim x filter_input_dim
-     */
-    const auto &s_filter = loopshapingDefinition_->getInputFilter_s();
-
-    if (filter_constraint_dim) {
-      D.template block(0, 0, filter_constraint_dim, system_input_dim) =
-          -Eigen::Matrix<scalar_t, -1, -1>::Identity(filter_constraint_dim, system_input_dim);
-      D.template block(0, system_input_dim, filter_constraint_dim, filter_input_dim) = s_filter.getD();
-    }
-
+    size_t numSystemConstraints = 0;
     if (systemConstraint_) {
-      auto numSystemConstraints = systemConstraint_->numStateInputConstraint(BASE::t_);
+      numSystemConstraints = systemConstraint_->numStateInputConstraint(BASE::t_);
       system_constraint1_input_matrix_t D_system;
       systemConstraint_->getConstraint1DerivativesControl(D_system);
-      if (loopshapingDefinition_->eliminateInputs) {
-        D.template block(filter_constraint_dim, 0, numSystemConstraints, system_input_dim) =
-            D_system.block(0, 0, numSystemConstraints, system_input_dim) * s_filter.getD();
-      } else {
-        D.template block(filter_constraint_dim, 0, numSystemConstraints, system_input_dim) =
-            D_system.block(0, 0, numSystemConstraints, system_input_dim);
-        if (s_filter.getNumOutputs() > 0) {
-          D.template block(filter_constraint_dim, system_input_dim, numSystemConstraints, filter_input_dim).setZero();
-        }
+      D.block(0, 0, numSystemConstraints, SYSTEM_INPUT_DIM) = D_system.block(0, 0, numSystemConstraints, SYSTEM_INPUT_DIM);
+      if (FULL_INPUT_DIM > SYSTEM_INPUT_DIM) {
+        D.block(0, SYSTEM_INPUT_DIM, numSystemConstraints, FULL_INPUT_DIM - SYSTEM_INPUT_DIM).setZero();
       }
     }
+
+    loopshapingConstraintImplementation_->getConstraint1DerivativesControl(numSystemConstraints, D);
   }
 
   virtual void getConstraint2DerivativesState(constraint2_state_matrix_t &F) override {
@@ -280,115 +287,23 @@ class LoopshapingConstraint final : public ConstraintBase<
   }
 
   virtual void getInequalityConstraintDerivativesState(state_vector_array_t &dhdx) override {
-    dhdx.clear();
-    if (systemConstraint_) {
-      const auto nIneq = numInequalityConstraint(BASE::t_);
-      dhdx.resize(nIneq);
-
-      // Compute system inequality derivatives
-      system_state_vector_array_t system_dhdx;
-      systemConstraint_->getInequalityConstraintDerivativesState(system_dhdx);
-
-      const auto &s_filter = loopshapingDefinition_->getInputFilter_s();
-
-      if (s_filter.getNumOutputs() > 0 && loopshapingDefinition_->eliminateInputs){
-        system_input_vector_array_t system_dhdu;
-        systemConstraint_->getInequalityConstraintDerivativesInput(system_dhdu);
-        for (size_t i = 0; i < nIneq; i++) {
-          loopshapingDefinition_->functionDerivativeState(system_dhdx[i], system_dhdu[i], dhdx[i]);
-        }
-      } else {
-        for (size_t i = 0; i < nIneq; i++) {
-          loopshapingDefinition_->functionDerivativeState(system_dhdx[i], dhdx[i]);
-        }
-      }
-    }
+    loopshapingConstraintImplementation_->getInequalityConstraintDerivativesState(dhdx);
   }
 
   virtual void getInequalityConstraintDerivativesInput(input_vector_array_t &dhdu) override {
-    dhdu.clear();
-    if (systemConstraint_) {
-      const auto nIneq = numInequalityConstraint(BASE::t_);
-      dhdu.resize(nIneq);
-
-      // Compute system inequality derivatives
-      system_input_vector_array_t system_dhdu;
-      systemConstraint_->getInequalityConstraintDerivativesInput(system_dhdu);
-
-      for (size_t i = 0; i < nIneq; i++) {
-        loopshapingDefinition_->functionDerivativeInput(system_dhdu[i], dhdu[i]);
-      }
-    }
+    loopshapingConstraintImplementation_->getInequalityConstraintDerivativesInput(dhdu);
   }
 
   virtual void getInequalityConstraintSecondDerivativesState(state_matrix_array_t &ddhdxdx) override {
-    ddhdxdx.clear();
-    if (systemConstraint_) {
-      const auto nIneq = numInequalityConstraint(BASE::t_);
-      ddhdxdx.resize(nIneq);
-
-      // Compute system inequality constraint hessians
-      system_state_matrix_array_t system_ddhdxdx;
-      systemConstraint_->getInequalityConstraintSecondDerivativesState(system_ddhdxdx);
-
-      const auto &s_filter = loopshapingDefinition_->getInputFilter_s();
-
-      if (s_filter.getNumOutputs() > 0 && loopshapingDefinition_->eliminateInputs){
-        system_input_matrix_array_t system_ddhdudu;
-        system_input_state_matrix_array_t system_ddhdudx;
-        systemConstraint_->getInequalityConstraintSecondDerivativesInput(system_ddhdudu);
-        systemConstraint_->getInequalityConstraintDerivativesInputState(system_ddhdudx);
-        for (size_t i = 0; i < nIneq; i++) {
-          loopshapingDefinition_->functionSecondDerivativeState(system_ddhdxdx[i], system_ddhdudx[i], system_ddhdudu[i], ddhdxdx[i]);
-        }
-      } else {
-        for (size_t i = 0; i < nIneq; i++) {
-          loopshapingDefinition_->functionSecondDerivativeState(system_ddhdxdx[i], ddhdxdx[i]);
-        }
-      }
-    }
+    loopshapingConstraintImplementation_->getInequalityConstraintSecondDerivativesState(ddhdxdx);
   }
 
-  virtual void getInequalityConstraintSecondDerivativesInput(input_matrix_array_t &ddhdudu) {
-    ddhdudu.clear();
-    if (systemConstraint_) {
-      const auto nIneq = numInequalityConstraint(BASE::t_);
-      ddhdudu.resize(nIneq);
-
-      // Compute system constraint hessians
-      system_input_matrix_array_t system_ddhdudu;
-      systemConstraint_->getInequalityConstraintSecondDerivativesInput(system_ddhdudu);
-
-      for (size_t i = 0; i < nIneq; i++) {
-        loopshapingDefinition_->functionSecondDerivativeInput(system_ddhdudu[i], ddhdudu[i]);
-      }
-    }
+  virtual void getInequalityConstraintSecondDerivativesInput(input_matrix_array_t &ddhdudu) override {
+    loopshapingConstraintImplementation_->getInequalityConstraintSecondDerivativesInput(ddhdudu);
   }
 
-  virtual void getInequalityConstraintDerivativesInputState(input_state_matrix_array_t &ddhdudx) {
-    ddhdudx.clear();
-    if (systemConstraint_) {
-      const auto nIneq = numInequalityConstraint(BASE::t_);
-      ddhdudx.resize(nIneq);
-
-      // Compute system hessians
-      system_input_state_matrix_array_t system_ddhdudx;
-      systemConstraint_->getInequalityConstraintDerivativesInputState(system_ddhdudx);
-
-      const auto &s_filter = loopshapingDefinition_->getInputFilter_s();
-
-      if (s_filter.getNumOutputs() > 0 && loopshapingDefinition_->eliminateInputs){
-        system_input_matrix_array_t system_ddhdudu;
-        systemConstraint_->getInequalityConstraintSecondDerivativesInput(system_ddhdudu);
-        for (size_t i = 0; i < nIneq; i++) {
-          loopshapingDefinition_->functionDerivativeInputState(system_ddhdudx[i], system_ddhdudu[i], ddhdudx[i]);
-        }
-      } else {
-        for (size_t i = 0; i < nIneq; i++) {
-          loopshapingDefinition_->functionDerivativeInputState(system_ddhdudx[i], ddhdudx[i]);
-        }
-      }
-    }
+  virtual void getInequalityConstraintDerivativesInputState(input_state_matrix_array_t &ddhdudx) override {
+    loopshapingConstraintImplementation_->getInequalityConstraintDerivativesInputState(ddhdudx);
   }
 
   virtual void getFinalConstraint2DerivativesState(constraint2_state_matrix_t &F_f) {
@@ -401,7 +316,8 @@ class LoopshapingConstraint final : public ConstraintBase<
   }
 
  private:
-  std::unique_ptr<SYSTEM_CONSTRAINT> systemConstraint_;
+  std::shared_ptr<SYSTEM_CONSTRAINT> systemConstraint_;
+  std::unique_ptr<LoopshapingConstraintImplementation> loopshapingConstraintImplementation_;
   std::shared_ptr<LoopshapingDefinition> loopshapingDefinition_;
 };
 } // namespace ocs2;

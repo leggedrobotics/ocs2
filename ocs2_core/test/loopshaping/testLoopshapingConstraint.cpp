@@ -33,7 +33,7 @@ TYPED_TEST(TestFixtureLoopShapingConstraint, testStateInputConstraintEvaluation)
   this->testLoopshapingConstraint->getConstraint1(g1);
 
   // System part of the constraints should stay the same
-  ASSERT_LE((g1_system.segment(0, numSystemConstraints) - g1.segment(numExtraLoopshapingConstraints, numSystemConstraints)).array().abs().maxCoeff(), this->tol);
+  ASSERT_LE((g1_system.segment(0, numSystemConstraints) - g1.segment(0, numSystemConstraints)).array().abs().maxCoeff(), this->tol);
 };
 
 TYPED_TEST(TestFixtureLoopShapingConstraint, testStateInputConstraintApproximation) {

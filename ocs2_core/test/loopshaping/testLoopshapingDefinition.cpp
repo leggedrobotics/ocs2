@@ -5,8 +5,8 @@
 #include <gtest/gtest.h>
 
 #include <ocs2_core/loopshaping/LoopshapingDefinition.h>
-#include <ocs2_core/loopshaping/LoopshapingCost.h>
-#include <ocs2_core/loopshaping/LoopshapingConstraint.h>
+#include <ocs2_core/loopshaping/cost/LoopshapingCost.h>
+#include <ocs2_core/loopshaping/constraint/LoopshapingConstraint.h>
 #include <ocs2_core/cost/QuadraticCostFunction.h>
 #include <experimental/filesystem>
 

@@ -101,17 +101,20 @@ protected:
 	 * @param [in] observation: The current observation.
 	 */
 	virtual void publishVisualizer(
-			const system_observation_t& observation) override {
+			const system_observation_t& observation, const cost_desired_trajectories_t& goal) override {
 
 		sensor_msgs::JointState joint_state;
 		joint_state.header.stamp = ros::Time::now();
-		joint_state.name.resize(1);
-		joint_state.position.resize(1);
+		joint_state.name.resize(2);
+		joint_state.position.resize(2);
 		joint_state.name[0] ="slider_to_cart";
 		joint_state.position[0] = observation.state()(0);
+		joint_state.name[1] ="slider_to_goal";
+		joint_state.position[1] = goal.desiredStateTrajectory()[0](0);
 
 		jointPublisher_.publish(joint_state);
 		std::cout << "Obs " << observation.state()[0] << " , " << observation.state()[1] << std::endl;
+		std::cout << "Goal " << goal.desiredStateTrajectory()[0](0) << std::endl;
 		std::cout << "Input " << observation.input()[0] << std::endl;
 	}
 

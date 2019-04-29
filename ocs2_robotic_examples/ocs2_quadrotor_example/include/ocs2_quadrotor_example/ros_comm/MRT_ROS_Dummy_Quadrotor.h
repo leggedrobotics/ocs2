@@ -90,7 +90,7 @@ protected:
 	 *
 	 * @param [in] observation: The current observation.
 	 */
-	virtual void publishVisualizer(const system_observation_t& observation) override {
+	virtual void publishVisualizer(const system_observation_t& observation, const cost_desired_trajectories_t& goal) override {
 		static tf::TransformBroadcaster transformBroadcaster;
 		tf::Transform transform;
 		transform.setOrigin(tf::Vector3(observation.state()(0), observation.state()(1), observation.state()(2)));

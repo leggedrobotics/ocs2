@@ -157,7 +157,7 @@ protected:
 	 *
 	 * @param [in] observation: The current observation.
 	 */
-	virtual void publishVisualizer(const system_observation_t& observation) override {
+	virtual void publishVisualizer(const system_observation_t& observation, const cost_desired_trajectories_t& goal) override {
 
 		updateTfPublisher(observation);
 

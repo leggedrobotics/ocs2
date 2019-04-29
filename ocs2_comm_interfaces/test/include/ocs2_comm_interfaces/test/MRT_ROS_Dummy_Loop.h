@@ -62,6 +62,7 @@ public:
 	typedef typename mrt_t::input_state_matrix_array_t input_state_matrix_array_t;
 
 	typedef typename mrt_t::system_observation_t system_observation_t;
+	typedef typename mrt_t::cost_desired_trajectories_t cost_desired_trajectories_t;
 
 	/**
 	 * Constructor.
@@ -123,7 +124,7 @@ protected:
 	 *
 	 * @param [in] observation: The current observation.
 	 */
-	virtual void publishVisualizer(const system_observation_t& observation) {}
+	virtual void publishVisualizer(const system_observation_t& observation, const cost_desired_trajectories_t& goal) {}
 
 
 protected:

@@ -80,15 +80,15 @@ class LoopshapingConstraintOutputPattern final: public LoopshapingConstraintImpl
   };
 
   virtual void getConstraint1(size_t numSystemStateInputConstraints, constraint1_vector_t &e) override {
-
+    // State input constraints stay the same
   };
 
   virtual void getConstraint1DerivativesState(size_t numSystemStateInputConstraints, constraint1_state_matrix_t &C) override {
-
+    // State input constraints stay the same
   };
 
   virtual void getConstraint1DerivativesControl(size_t numSystemStateInputConstraints, constraint1_input_matrix_t &D) override {
-
+    // State input constraints stay the same
   };
 
   virtual void getInequalityConstraintDerivativesState(state_vector_array_t &dhdx) override {
@@ -98,9 +98,8 @@ class LoopshapingConstraintOutputPattern final: public LoopshapingConstraintImpl
       system_state_vector_array_t system_dhdx;
       systemConstraint_->getInequalityConstraintDerivativesState(system_dhdx);
 
-      const auto nIneq = systemConstraint_->numInequalityConstraint(t_);
-      dhdx.resize(nIneq);
-      for (size_t i = 0; i < nIneq; i++) {
+      dhdx.resize(system_dhdx.size());
+      for (size_t i = 0; i < system_dhdx.size(); i++) {
         dhdx[i].head(system_dhdx[i].size()) = system_dhdx[i];
         dhdx[i].tail(FILTER_STATE_DIM).setZero();
       }
@@ -110,14 +109,12 @@ class LoopshapingConstraintOutputPattern final: public LoopshapingConstraintImpl
   virtual void getInequalityConstraintDerivativesInput(input_vector_array_t &dhdu) override {
     dhdu.clear();
     if (systemConstraint_) {
-      const auto nIneq = systemConstraint_->numInequalityConstraint(t_);
-      dhdu.resize(nIneq);
-
       // Compute system inequality derivatives
       system_input_vector_array_t system_dhdu;
       systemConstraint_->getInequalityConstraintDerivativesInput(system_dhdu);
 
-      for (size_t i = 0; i < nIneq; i++) {
+      dhdu.resize(system_dhdu.size());
+      for (size_t i = 0; i < system_dhdu.size(); i++) {
         dhdu[i].head(system_dhdu[i].size()) = system_dhdu[i];
       }
     }
@@ -130,9 +127,8 @@ class LoopshapingConstraintOutputPattern final: public LoopshapingConstraintImpl
       system_state_matrix_array_t system_ddhdxdx;
       systemConstraint_->getInequalityConstraintSecondDerivativesState(system_ddhdxdx);
 
-      const auto nIneq = systemConstraint_->numInequalityConstraint(t_);
-      ddhdxdx.resize(nIneq);
-      for (size_t i = 0; i < nIneq; i++) {
+      ddhdxdx.resize(system_ddhdxdx.size());
+      for (size_t i = 0; i < system_ddhdxdx.size(); i++) {
         ddhdxdx[i].block(0, 0, SYSTEM_STATE_DIM, SYSTEM_STATE_DIM) = system_ddhdxdx[i];
         ddhdxdx[i].block(0, SYSTEM_STATE_DIM, SYSTEM_STATE_DIM, FILTER_STATE_DIM).setZero();
         ddhdxdx[i].block(SYSTEM_STATE_DIM, 0, FILTER_STATE_DIM, SYSTEM_STATE_DIM).setZero();
@@ -144,14 +140,12 @@ class LoopshapingConstraintOutputPattern final: public LoopshapingConstraintImpl
   virtual void getInequalityConstraintSecondDerivativesInput(input_matrix_array_t &ddhdudu) override {
     ddhdudu.clear();
     if (systemConstraint_) {
-      const auto nIneq = systemConstraint_->numInequalityConstraint(t_);
-      ddhdudu.resize(nIneq);
-
       // Compute system constraint hessians
       system_input_matrix_array_t system_ddhdudu;
       systemConstraint_->getInequalityConstraintSecondDerivativesInput(system_ddhdudu);
 
-      for (size_t i = 0; i < nIneq; i++) {
+      ddhdudu.resize(system_ddhdudu.size());
+      for (size_t i = 0; i < system_ddhdudu.size(); i++) {
         ddhdudu[i].block(0, 0, SYSTEM_INPUT_DIM, SYSTEM_INPUT_DIM) = system_ddhdudu[i];
       }
     }
@@ -164,9 +158,8 @@ class LoopshapingConstraintOutputPattern final: public LoopshapingConstraintImpl
       system_input_state_matrix_array_t system_ddhdudx;
       systemConstraint_->getInequalityConstraintDerivativesInputState(system_ddhdudx);
 
-      const auto nIneq = systemConstraint_->numInequalityConstraint(t_);
-      ddhdudx.resize(nIneq);
-      for (size_t i = 0; i < nIneq; i++) {
+      ddhdudx.resize(system_ddhdudx.size());
+      for (size_t i = 0; i < system_ddhdudx.size(); i++) {
         ddhdudx[i].block(0, 0, SYSTEM_INPUT_DIM, SYSTEM_STATE_DIM) = system_ddhdudx[i];
         ddhdudx[i].block(0, SYSTEM_STATE_DIM, SYSTEM_INPUT_DIM, FILTER_STATE_DIM).setZero();
       }

@@ -16,7 +16,7 @@ namespace ocs2 {
         size_t SYSTEM_STATE_DIM, size_t SYSTEM_INPUT_DIM,
         size_t FILTER_STATE_DIM, size_t FILTER_INPUT_DIM,
         class LOGIC_RULES_T=NullLogicRules>
-    class LoopshapingDynamicsDerivative final : public DerivativesBase<FULL_STATE_DIM, FULL_INPUT_DIM, LOGIC_RULES_T>
+    class LoopshapingDynamicsDerivative : public DerivativesBase<FULL_STATE_DIM, FULL_INPUT_DIM, LOGIC_RULES_T>
     {
     public:
         EIGEN_MAKE_ALIGNED_OPERATOR_NEW
@@ -48,10 +48,7 @@ namespace ocs2 {
         using filter_state_vector_t = Eigen::Matrix<scalar_t, filter_state_dim, 1>;
         using filter_input_vector_t = Eigen::Matrix<scalar_t, filter_input_dim, 1>;
 
-        LoopshapingDynamicsDerivative(const SYSTEM_DERIVATIVE& systemDerivative, std::shared_ptr<LoopshapingDefinition> loopshapingDefinition) :
-            BASE(),
-            systemDerivative_(systemDerivative.clone()),
-            loopshapingDefinition_(loopshapingDefinition) { };
+
 
         ~LoopshapingDynamicsDerivative() override = default;
 
@@ -73,6 +70,8 @@ namespace ocs2 {
           BASE::initializeModel(logicRulesMachine, partitionIndex, algorithmName);
           systemDerivative_->initializeModel(logicRulesMachine, partitionIndex, algorithmName);
         }
+
+      static std::unique_ptr<LoopshapingDynamicsDerivative> Create(const SYSTEM_DERIVATIVE& controlledSystem, std::shared_ptr<LoopshapingDefinition> loopshapingDefinition);
 
         void setCurrentStateAndControl(
             const scalar_t& t,
@@ -102,38 +101,39 @@ namespace ocs2 {
           // system
           system_state_matrix_t A_system;
           systemDerivative_->getFlowMapDerivativeState(A_system);
-          A.template block<system_state_dim, system_state_dim>(0, 0) = A_system;
 
-          // filters
-          const auto& r_filter = loopshapingDefinition_->getInputFilter_r();
-          const auto& s_filter = loopshapingDefinition_->getInputFilter_s();
+          loopshapingFlowMapDerivativeState(A_system, A);
 
-          if (r_filter.getNumOutputs() > 0){
-            A.template block(system_state_dim,
-                             system_state_dim,
-                             r_filter.getNumStates(),
-                             r_filter.getNumStates()) =
-                r_filter.getA();
-            A.template block(0, system_state_dim, system_state_dim, r_filter.getNumStates()).setZero();
-            A.template block(system_state_dim, 0, r_filter.getNumStates(), system_state_dim).setZero();
-          }
-
-          if (s_filter.getNumOutputs() > 0){
-            A.template block(system_state_dim,
-                             system_state_dim,
-                             s_filter.getNumStates(),
-                             s_filter.getNumStates()) =
-                s_filter.getA();
-            A.template block(system_state_dim, 0, s_filter.getNumStates(), system_state_dim).setZero();
-            if (loopshapingDefinition_->eliminateInputs){
-              system_state_input_matrix_t B_system;
-              systemDerivative_->getFlowMapDerivativeInput(B_system);
-              A.template block(0, system_state_dim, system_state_dim, s_filter.getNumStates()) =
-                  B_system * s_filter.getC();
-            } else{
-              A.template block(0, system_state_dim, system_state_dim, s_filter.getNumStates()).setZero();
-            }
-          }
+//          // filters
+//          const auto& r_filter = loopshapingDefinition_->getInputFilter_r();
+//          const auto& s_filter = loopshapingDefinition_->getInputFilter_s();
+//
+//          if (r_filter.getNumOutputs() > 0){
+//            A.template block(system_state_dim,
+//                             system_state_dim,
+//                             r_filter.getNumStates(),
+//                             r_filter.getNumStates()) =
+//                r_filter.getA();
+//            A.template block(0, system_state_dim, system_state_dim, r_filter.getNumStates()).setZero();
+//            A.template block(system_state_dim, 0, r_filter.getNumStates(), system_state_dim).setZero();
+//          }
+//
+//          if (s_filter.getNumOutputs() > 0){
+//            A.template block(system_state_dim,
+//                             system_state_dim,
+//                             s_filter.getNumStates(),
+//                             s_filter.getNumStates()) =
+//                s_filter.getA();
+//            A.template block(system_state_dim, 0, s_filter.getNumStates(), system_state_dim).setZero();
+//            if (loopshapingDefinition_->eliminateInputs){
+//              system_state_input_matrix_t B_system;
+//              systemDerivative_->getFlowMapDerivativeInput(B_system);
+//              A.template block(0, system_state_dim, system_state_dim, s_filter.getNumStates()) =
+//                  B_system * s_filter.getC();
+//            } else{
+//              A.template block(0, system_state_dim, system_state_dim, s_filter.getNumStates()).setZero();
+//            }
+//          }
         };
 
         void getFlowMapDerivativeInput(state_input_matrix_t& B) override
@@ -142,35 +142,37 @@ namespace ocs2 {
           system_state_input_matrix_t B_system;
           systemDerivative_->getFlowMapDerivativeInput(B_system);
 
-          // filter
-          const auto& r_filter = loopshapingDefinition_->getInputFilter_r();
-          const auto& s_filter = loopshapingDefinition_->getInputFilter_s();
+          loopshapingFlowMapDerivativeInput(B_system, B);
 
-          if (r_filter.getNumOutputs() > 0){
-            B.template block(0, 0, system_state_dim, system_input_dim) = B_system;
-            B.template block(system_state_dim,
-                             0,
-                             r_filter.getNumStates(),
-                             r_filter.getNumInputs()) =
-                r_filter.getB();
-          }
-
-          if (s_filter.getNumOutputs() > 0){
-            if (loopshapingDefinition_->eliminateInputs){
-              B.template block(0, 0, system_state_dim, s_filter.getNumInputs()) = B_system * s_filter.getD();
-              B.template block(system_state_dim, 0,
-                               s_filter.getNumStates(),
-                               s_filter.getNumInputs()) = s_filter.getB();
-            } else {
-              B.template block(0, 0, system_state_dim, system_input_dim) = B_system;
-              B.template block(system_state_dim,
-                               system_input_dim,
-                               s_filter.getNumStates(),
-                               s_filter.getNumInputs()) = s_filter.getB();
-              B.template block(0, system_input_dim, system_state_dim, s_filter.getNumInputs()).setZero();
-              B.template block(system_state_dim, 0, s_filter.getNumStates(), system_input_dim).setZero();
-            }
-          }
+//          // filter
+//          const auto& r_filter = loopshapingDefinition_->getInputFilter_r();
+//          const auto& s_filter = loopshapingDefinition_->getInputFilter_s();
+//
+//          if (r_filter.getNumOutputs() > 0){
+//            B.template block(0, 0, system_state_dim, system_input_dim) = B_system;
+//            B.template block(system_state_dim,
+//                             0,
+//                             r_filter.getNumStates(),
+//                             r_filter.getNumInputs()) =
+//                r_filter.getB();
+//          }
+//
+//          if (s_filter.getNumOutputs() > 0){
+//            if (loopshapingDefinition_->eliminateInputs){
+//              B.template block(0, 0, system_state_dim, s_filter.getNumInputs()) = B_system * s_filter.getD();
+//              B.template block(system_state_dim, 0,
+//                               s_filter.getNumStates(),
+//                               s_filter.getNumInputs()) = s_filter.getB();
+//            } else {
+//              B.template block(0, 0, system_state_dim, system_input_dim) = B_system;
+//              B.template block(system_state_dim,
+//                               system_input_dim,
+//                               s_filter.getNumStates(),
+//                               s_filter.getNumInputs()) = s_filter.getB();
+//              B.template block(0, system_input_dim, system_state_dim, s_filter.getNumInputs()).setZero();
+//              B.template block(system_state_dim, 0, s_filter.getNumStates(), system_input_dim).setZero();
+//            }
+//          }
         };
 
         void getJumpMapDerivativeTime(state_vector_t& dg) {
@@ -185,14 +187,8 @@ namespace ocs2 {
           // system
           system_state_matrix_t G_system;
           systemDerivative_->getJumpMapDerivativeState(G_system);
-          G.template block<system_state_dim, system_state_dim>(0, 0) = G_system;
 
-          // filter
-          G.template block<filter_state_dim, filter_state_dim>(system_state_dim, system_state_dim).setIdentity();
-
-          // Off diagonal coupling blocks
-          G.template block<system_state_dim, filter_state_dim>(0, system_state_dim).setZero();
-          G.template block<filter_state_dim, system_state_dim>(system_state_dim, 0).setZero();
+          loopshapingJumpMapDerivativeState(G_system, G);
         }
 
         void getJumpMapDerivativeInput(state_input_matrix_t& H) override {
@@ -200,65 +196,105 @@ namespace ocs2 {
           system_state_input_matrix_t H_system;
           systemDerivative_->getJumpMapDerivativeInput(H_system);
 
-          const auto& r_filter = loopshapingDefinition_->getInputFilter_r();
-          const auto& s_filter = loopshapingDefinition_->getInputFilter_s();
+          loopshapingJumpMapDerivativeInput(H_system, H);
 
-          if (r_filter.getNumOutputs() > 0){
-            H.template block(0, 0, system_state_dim, system_input_dim) = H_system;
-            H.template block(system_state_dim, 0, s_filter.getNumStates(), system_input_dim).setZero();
-          }
-
-          if (s_filter.getNumOutputs() > 0){
-            if (loopshapingDefinition_->eliminateInputs){
-              H.template block(0, 0, system_state_dim, s_filter.getNumInputs()) = H_system * s_filter.getD();
-              H.template block(system_state_dim, 0, s_filter.getNumStates(), s_filter.getNumInputs()).setZero();
-            } else {
-              H.template block(0, 0, system_state_dim, system_input_dim) = H_system;
-              H.template block(system_state_dim, system_input_dim, s_filter.getNumStates(), s_filter.getNumInputs()).setZero();
-              H.template block(0, system_input_dim, system_state_dim, s_filter.getNumInputs()).setZero();
-              H.template block(system_state_dim, 0, s_filter.getNumStates(), system_input_dim).setZero();
-            }
-          }
+//          const auto& r_filter = loopshapingDefinition_->getInputFilter_r();
+//          const auto& s_filter = loopshapingDefinition_->getInputFilter_s();
+//
+//          if (r_filter.getNumOutputs() > 0){
+//            H.template block(0, 0, system_state_dim, system_input_dim) = H_system;
+//            H.template block(system_state_dim, 0, s_filter.getNumStates(), system_input_dim).setZero();
+//          }
+//
+//          if (s_filter.getNumOutputs() > 0){
+//            if (loopshapingDefinition_->eliminateInputs){
+//              H.template block(0, 0, system_state_dim, s_filter.getNumInputs()) = H_system * s_filter.getD();
+//              H.template block(system_state_dim, 0, s_filter.getNumStates(), s_filter.getNumInputs()).setZero();
+//            } else {
+//              H.template block(0, 0, system_state_dim, system_input_dim) = H_system;
+//              H.template block(system_state_dim, system_input_dim, s_filter.getNumStates(), s_filter.getNumInputs()).setZero();
+//              H.template block(0, system_input_dim, system_state_dim, s_filter.getNumInputs()).setZero();
+//              H.template block(system_state_dim, 0, s_filter.getNumStates(), system_input_dim).setZero();
+//            }
+//          }
         }
 
         void getGuardSurfacesDerivativeTime(dynamic_vector_t& D_t_gamma) override {
-          systemDerivative_->getGuardSurfacesDerivativeTime(D_t_gamma);
+          throw std::runtime_error("[LoopshapingDynamicsDerivative] Guard surfaces not implemented");
         }
 
         void getGuardSurfacesDerivativeState(dynamic_state_matrix_t& D_x_gamma) override {
-          system_dynamic_state_matrix_t D_x_gamma_system;
-          systemDerivative_->getGuardSurfacesDerivativeState(D_x_gamma_system);
-          D_x_gamma.template block(0, 0, D_x_gamma.rows(), system_state_dim) = D_x_gamma_system;
-          D_x_gamma.template block(0, system_state_dim, D_x_gamma.rows(), filter_state_dim).setZero();
+          throw std::runtime_error("[LoopshapingDynamicsDerivative] Guard surfaces not implemented");
         }
 
         void getGuardSurfacesDerivativeInput(dynamic_input_matrix_t& D_u_gamma) override {
-          D_u_gamma.setZero();
-          system_dynamic_input_matrix_t D_u_gamma_system;
-          systemDerivative_->getGuardSurfacesDerivativeInput(D_u_gamma_system);
-
-          const auto& r_filter = loopshapingDefinition_->getInputFilter_r();
-          const auto& s_filter = loopshapingDefinition_->getInputFilter_s();
-
-          if (r_filter.getNumOutputs() > 0){
-            D_u_gamma.template block(0, 0, D_u_gamma.rows(), system_input_dim) = D_u_gamma_system;
-          }
-
-          if (s_filter.getNumOutputs() > 0){
-            if (loopshapingDefinition_->eliminateInputs){
-              D_u_gamma.template block(0, 0, D_u_gamma.rows(), s_filter.getNumInputs()) = D_u_gamma_system * s_filter.getD();
-            } else {
-              D_u_gamma.template block(0, 0, D_u_gamma.rows(), system_input_dim) = D_u_gamma_system;
-              D_u_gamma.template block(0, system_input_dim, D_u_gamma.rows(), filter_input_dim).setZero();
-            }
-          }
+          throw std::runtime_error("[LoopshapingDynamicsDerivative] Guard surfaces not implemented");
         }
 
-    private:
+     protected:
+      LoopshapingDynamicsDerivative(const SYSTEM_DERIVATIVE& systemDerivative, std::shared_ptr<LoopshapingDefinition> loopshapingDefinition) :
+          BASE(),
+          systemDerivative_(systemDerivative.clone()),
+          loopshapingDefinition_(loopshapingDefinition) { };
+
         std::unique_ptr<SYSTEM_DERIVATIVE> systemDerivative_;
         std::shared_ptr<LoopshapingDefinition> loopshapingDefinition_;
+
+     private:
+        virtual void loopshapingFlowMapDerivativeState(const system_state_matrix_t &A_system, state_matrix_t &A) = 0;
+        virtual void loopshapingFlowMapDerivativeInput(const system_state_input_matrix_t &B_system, state_input_matrix_t &B) = 0;
+        virtual void loopshapingJumpMapDerivativeState(const system_state_matrix_t &G_system, state_matrix_t &G) = 0;
+        virtual void loopshapingJumpMapDerivativeInput(const system_state_input_matrix_t &H_system, state_input_matrix_t &H) = 0;
     };
 
-}
+} // namespace ocs2
+
+#include "LoopshapingDynamicsDerivativeInputPattern.h"
+#include "LoopshapingDynamicsDerivativeOutputPattern.h"
+
+// Implement Factory method
+namespace ocs2 {
+template<size_t FULL_STATE_DIM, size_t FULL_INPUT_DIM,
+    size_t SYSTEM_STATE_DIM, size_t SYSTEM_INPUT_DIM,
+    size_t FILTER_STATE_DIM, size_t FILTER_INPUT_DIM,
+    class LOGIC_RULES_T>
+std::unique_ptr<LoopshapingDynamicsDerivative<FULL_STATE_DIM,
+                                    FULL_INPUT_DIM,
+                                    SYSTEM_STATE_DIM,
+                                    SYSTEM_INPUT_DIM,
+                                    FILTER_STATE_DIM,
+                                    FILTER_INPUT_DIM,
+                                    LOGIC_RULES_T>> LoopshapingDynamicsDerivative<FULL_STATE_DIM,
+                                                                        FULL_INPUT_DIM,
+                                                                        SYSTEM_STATE_DIM,
+                                                                        SYSTEM_INPUT_DIM,
+                                                                        FILTER_STATE_DIM,
+                                                                        FILTER_INPUT_DIM,
+                                                                        LOGIC_RULES_T>::Create(
+    const SYSTEM_DERIVATIVE &controlledSystem,
+    std::shared_ptr<LoopshapingDefinition> loopshapingDefinition) {
+  if (loopshapingDefinition->getInputFilter_s().getNumOutputs() > 0) {
+    return std::unique_ptr<LoopshapingDynamicsDerivative>(new LoopshapingDynamicsDerivativeInputPattern<FULL_STATE_DIM,
+                                                                                    FULL_INPUT_DIM,
+                                                                                    SYSTEM_STATE_DIM,
+                                                                                    SYSTEM_INPUT_DIM,
+                                                                                    FILTER_STATE_DIM,
+                                                                                    FILTER_INPUT_DIM,
+                                                                                    LOGIC_RULES_T>(controlledSystem,
+                                                                                                   std::move(
+                                                                                                       loopshapingDefinition)));
+  } else if (loopshapingDefinition->getInputFilter_r().getNumOutputs() > 0) {
+    return std::unique_ptr<LoopshapingDynamicsDerivative>(new LoopshapingDynamicsDerivativeOutputPattern<FULL_STATE_DIM,
+                                                                                     FULL_INPUT_DIM,
+                                                                                     SYSTEM_STATE_DIM,
+                                                                                     SYSTEM_INPUT_DIM,
+                                                                                     FILTER_STATE_DIM,
+                                                                                     FILTER_INPUT_DIM,
+                                                                                     LOGIC_RULES_T>(controlledSystem,
+                                                                                                    std::move(
+                                                                                                        loopshapingDefinition)));
+  }
+};
+}; // namespace ocs2
 
 #endif //OCS2_LOOPSHAPINGDYNAMICSDERIVATIVE_H

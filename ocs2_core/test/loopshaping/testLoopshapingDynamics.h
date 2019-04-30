@@ -10,8 +10,8 @@
 
 #include "ocs2_core/dynamics/LinearSystemDynamics.h"
 #include "ocs2_core/loopshaping/LoopshapingDefinition.h"
-#include "ocs2_core/loopshaping/LoopshapingDynamics.h"
-#include "ocs2_core/loopshaping/LoopshapingDynamicsDerivative.h"
+#include "ocs2_core/loopshaping/dynamics/LoopshapingDynamics.h"
+#include "ocs2_core/loopshaping/dynamics/LoopshapingDynamicsDerivative.h"
 
 #include "testLoopshapingConfigurations.h"
 
@@ -60,7 +60,7 @@ class TestFixtureLoopShapingDynamics : public ::testing::Test {
     testSystem.reset(new TestSystem(A, B, G, H));
 
     // Create Loopshaping Dynamics
-    testLoopshapingDynamics.reset(new TestLoopshapingDynamics(*testSystem, loopshapingDefinition_));
+    testLoopshapingDynamics = TestLoopshapingDynamics::Create(*testSystem, loopshapingDefinition_);
 
     // Create Loopshaping Derivatives
     testLoopshapingDynamicsDerivative.reset(new TestLoopshapingDynamicsDerivative(*testSystem, loopshapingDefinition_));

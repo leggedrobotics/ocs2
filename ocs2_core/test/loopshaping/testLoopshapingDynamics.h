@@ -63,7 +63,7 @@ class TestFixtureLoopShapingDynamics : public ::testing::Test {
     testLoopshapingDynamics = TestLoopshapingDynamics::Create(*testSystem, loopshapingDefinition_);
 
     // Create Loopshaping Derivatives
-    testLoopshapingDynamicsDerivative.reset(new TestLoopshapingDynamicsDerivative(*testSystem, loopshapingDefinition_));
+    testLoopshapingDynamicsDerivative = TestLoopshapingDynamicsDerivative::Create(*testSystem, loopshapingDefinition_);
 
     // Set up state and input
     t = 0.5;

@@ -63,28 +63,8 @@ class LoopshapingCost final : public CostFunctionBase<FULL_STATE_DIM, FULL_INPUT
                   std::shared_ptr<LoopshapingDefinition> loopshapingDefinition)
       : BASE(),
         systemCost_(systemCost.clone()),
-        loopshapingDefinition_(loopshapingDefinition) {
-    // TODO(Ruben): initialize safely elsewhere
-    if (loopshapingDefinition_->getInputFilter_s().getNumOutputs() > 0) {
-      loopshapingCostImplementation_.reset(new LoopshapingCostInputPattern<FULL_STATE_DIM,
-                                                                           FULL_INPUT_DIM,
-                                                                           SYSTEM_STATE_DIM,
-                                                                           SYSTEM_INPUT_DIM,
-                                                                           FILTER_STATE_DIM,
-                                                                           FILTER_INPUT_DIM,
-                                                                           NullLogicRules>(systemCost_,
-                                                                                           loopshapingDefinition_));
-    }
-    if (loopshapingDefinition_->getInputFilter_r().getNumOutputs() > 0) {
-      loopshapingCostImplementation_.reset(new LoopshapingCostOutputPattern<FULL_STATE_DIM,
-                                                                           FULL_INPUT_DIM,
-                                                                           SYSTEM_STATE_DIM,
-                                                                           SYSTEM_INPUT_DIM,
-                                                                           FILTER_STATE_DIM,
-                                                                           FILTER_INPUT_DIM,
-                                                                           NullLogicRules>(systemCost_,
-                                                                                           loopshapingDefinition_));
-    }
+        loopshapingDefinition_(std::move(loopshapingDefinition)) {
+    loadImplementation();
   }
 
   ~LoopshapingCost() override = default;
@@ -93,6 +73,7 @@ class LoopshapingCost final : public CostFunctionBase<FULL_STATE_DIM, FULL_INPUT
       BASE(),
       systemCost_(obj.systemCost_->clone()),
       loopshapingDefinition_(obj.loopshapingDefinition_) {
+    loadImplementation();
   }
 
   LoopshapingCost *clone() const override {
@@ -105,6 +86,7 @@ class LoopshapingCost final : public CostFunctionBase<FULL_STATE_DIM, FULL_INPUT
       const char *algorithmName = NULL) override {
     BASE::initializeModel(logicRulesMachine, partitionIndex, algorithmName);
     systemCost_->initializeModel(logicRulesMachine, partitionIndex, algorithmName);
+    loadImplementation();
   }
 
   void setCurrentStateAndControl(
@@ -207,6 +189,29 @@ class LoopshapingCost final : public CostFunctionBase<FULL_STATE_DIM, FULL_INPUT
   using BASE::uNominalFunc_;
 
  private:
+  void loadImplementation() {
+    if (loopshapingDefinition_->getInputFilter_s().getNumOutputs() > 0) {
+      loopshapingCostImplementation_.reset(new LoopshapingCostInputPattern<FULL_STATE_DIM,
+                                                                           FULL_INPUT_DIM,
+                                                                           SYSTEM_STATE_DIM,
+                                                                           SYSTEM_INPUT_DIM,
+                                                                           FILTER_STATE_DIM,
+                                                                           FILTER_INPUT_DIM,
+                                                                           NullLogicRules>(systemCost_,
+                                                                                           loopshapingDefinition_));
+    }
+    if (loopshapingDefinition_->getInputFilter_r().getNumOutputs() > 0) {
+      loopshapingCostImplementation_.reset(new LoopshapingCostOutputPattern<FULL_STATE_DIM,
+                                                                            FULL_INPUT_DIM,
+                                                                            SYSTEM_STATE_DIM,
+                                                                            SYSTEM_INPUT_DIM,
+                                                                            FILTER_STATE_DIM,
+                                                                            FILTER_INPUT_DIM,
+                                                                            NullLogicRules>(systemCost_,
+                                                                                            loopshapingDefinition_));
+    }
+  }
+
   std::shared_ptr<SYSTEMCOST> systemCost_;
   std::unique_ptr<LoopshapingCostImplementation> loopshapingCostImplementation_;
   std::shared_ptr<LoopshapingDefinition> loopshapingDefinition_;

@@ -312,146 +312,146 @@ namespace ocs2 {
             }
           }
         };
-
-      template<typename DerivedDerivativeSystemState, typename DerivedDerivativeState>
-      void functionDerivativeState(const DerivedDerivativeSystemState& system_dfdx,
-                                   DerivedDerivativeState& dfdx) {
-        if (r_filter_.getNumOutputs() > 0) {
-          dfdx.head(system_dfdx.size()) = system_dfdx;
-          dfdx.tail(r_filter_.getNumStates()).setZero();
-        }
-        else if (s_filter_.getNumOutputs() > 0 && eliminateInputs) {
-          throw std::runtime_error("[LoopshapingDefinition::functionDerivativeState] Use different functionDerivativeState");
-        }
-        else if (s_filter_.getNumOutputs() > 0 && !eliminateInputs) {
-          dfdx.head(system_dfdx.size()) = system_dfdx;
-          dfdx.tail(s_filter_.getNumStates()).setZero();
-        }
-      };
-
-      template<typename DerivedDerivativeSystemState, typename DerivedDerivativeSystemInput, typename DerivedDerivativeState>
-      void functionDerivativeState(const DerivedDerivativeSystemState& system_dfdx,
-                                   const DerivedDerivativeSystemInput& system_dfdu,
-                                   DerivedDerivativeState& dfdx) {
-        // R filter case
-        if (r_filter_.getNumOutputs() > 0) {
-          functionDerivativeState(system_dfdx, dfdx);
-        }
-          // S filter + eliminate inputs
-        else if (s_filter_.getNumOutputs() > 0 && eliminateInputs) {
-          dfdx.head(system_dfdx.size()) = system_dfdx;
-          dfdx.tail(s_filter_.getNumStates()) = s_filter_.getC().transpose() * system_dfdu;
-        }
-          // S filter without eliminate inputs
-        else if (s_filter_.getNumOutputs() > 0 && !eliminateInputs) {
-          functionDerivativeState(system_dfdx, dfdx);
-        }
-      };
-
-      template<typename DerivedDerivativeSystemInput, typename DerivedDerivativeInput>
-      void functionDerivativeInput(const DerivedDerivativeSystemInput& system_dfdu,
-                                   DerivedDerivativeInput& dfdu) {
-        if (r_filter_.getNumOutputs() > 0) {
-          dfdu.head(system_dfdu.size()) = system_dfdu;
-        }
-        else if (s_filter_.getNumOutputs() > 0 && eliminateInputs) {
-          dfdu.head(s_filter_.getNumInputs()) = s_filter_.getD().transpose() * system_dfdu;
-        }
-        else if (s_filter_.getNumOutputs() > 0 && !eliminateInputs) {
-          dfdu.head(system_dfdu.size()) = system_dfdu;
-          dfdu.tail(s_filter_.getNumInputs()).setZero();
-        }
-      };
-
-      template<typename DerivedSecondDerivativeSystemState, typename DerivedSecondDerivativeState>
-      void functionSecondDerivativeState(const DerivedSecondDerivativeSystemState& system_ddfdxdx,
-                                         DerivedSecondDerivativeState& ddfdxdx) {
-        if (r_filter_.getNumOutputs() > 0) {
-          ddfdxdx.block(0, 0, system_ddfdxdx.rows(), system_ddfdxdx.cols()) = system_ddfdxdx;
-          ddfdxdx.block(0, system_ddfdxdx.cols(), system_ddfdxdx.rows(), r_filter_.getNumStates()).setZero();
-          ddfdxdx.block(system_ddfdxdx.rows(), 0, r_filter_.getNumStates(), system_ddfdxdx.cols()).setZero();
-          ddfdxdx.block(system_ddfdxdx.rows(), system_ddfdxdx.cols(), r_filter_.getNumStates(), r_filter_.getNumStates()).setZero();
-        }
-        else if (s_filter_.getNumOutputs() > 0 && eliminateInputs) {
-          throw std::runtime_error("[LoopshapingDefinition::functionSecondDerivativeState] Use different functionSecondDerivativeState");
-        }
-        else if (s_filter_.getNumOutputs() > 0 && !eliminateInputs) {
-          ddfdxdx.block(0, 0, system_ddfdxdx.rows(), system_ddfdxdx.cols()) = system_ddfdxdx;
-          ddfdxdx.block(0, system_ddfdxdx.cols(), system_ddfdxdx.rows(), s_filter_.getNumStates()).setZero();
-          ddfdxdx.block(system_ddfdxdx.rows(), 0, s_filter_.getNumStates(), system_ddfdxdx.cols()).setZero();
-          ddfdxdx.block(system_ddfdxdx.rows(), system_ddfdxdx.cols(), s_filter_.getNumStates(), s_filter_.getNumStates()).setZero();
-        }
-      };
-
-      template<typename DerivedSecondDerivativeSystemState, typename DerivedDerivativeSystemInputState, typename DerivedSecondDerivativeSystemInput, typename DerivedSecondDerivativeState>
-      void functionSecondDerivativeState(const DerivedSecondDerivativeSystemState& system_ddfdxdx,
-                                         const DerivedDerivativeSystemInputState& system_ddfdudx,
-                                         const DerivedSecondDerivativeSystemInput& system_ddfdudu,
-                                         DerivedSecondDerivativeState& ddfdxdx) {
-        if (r_filter_.getNumOutputs() > 0) {
-          functionSecondDerivativeState(system_ddfdxdx, ddfdxdx);
-        }
-        else if (s_filter_.getNumOutputs() > 0 && eliminateInputs) {
-          ddfdxdx.block(0, 0, system_ddfdxdx.rows(), system_ddfdxdx.cols()) = system_ddfdxdx;
-          ddfdxdx.block(0, system_ddfdxdx.cols(), system_ddfdxdx.rows(), s_filter_.getNumStates()) = system_ddfdudx.transpose() * s_filter_.getC();
-          ddfdxdx.block(system_ddfdxdx.rows(), 0, s_filter_.getNumStates(), system_ddfdxdx.cols()) = ddfdxdx.block(0, system_ddfdxdx.cols(), system_ddfdxdx.rows(), s_filter_.getNumStates()).transpose();
-          ddfdxdx.block(system_ddfdxdx.rows(), system_ddfdxdx.cols(), s_filter_.getNumStates(), s_filter_.getNumStates()) = s_filter_.getC().transpose() * system_ddfdudu * s_filter_.getC();
-        }
-        else if (s_filter_.getNumOutputs() > 0 && !eliminateInputs) {
-          functionSecondDerivativeState(system_ddfdxdx, ddfdxdx);
-        }
-      };
-
-      template<typename DerivedSecondDerivativeSystemInput, typename DerivedSecondDerivativeInput>
-      void functionSecondDerivativeInput(const DerivedSecondDerivativeSystemInput& system_ddfdudu,
-                                         DerivedSecondDerivativeInput& ddfdudu) {
-        if (r_filter_.getNumOutputs() > 0) {
-          ddfdudu.block(0, 0, system_ddfdudu.rows(), system_ddfdudu.cols()) = system_ddfdudu;
-        }
-        else if (s_filter_.getNumOutputs() > 0 && eliminateInputs) {
-          ddfdudu.block(0, 0, s_filter_.getNumInputs(), s_filter_.getNumInputs()) = s_filter_.getD().transpose() * system_ddfdudu * s_filter_.getD();
-        }
-        else if (s_filter_.getNumOutputs() > 0 && !eliminateInputs) {
-          ddfdudu.block(0, 0, system_ddfdudu.rows(), system_ddfdudu.cols()) = system_ddfdudu;
-          ddfdudu.block(0, system_ddfdudu.cols(), system_ddfdudu.rows(), s_filter_.getNumInputs()).setZero();
-          ddfdudu.block(system_ddfdudu.rows(), 0, s_filter_.getNumInputs(), system_ddfdudu.cols()).setZero();
-          ddfdudu.block(system_ddfdudu.rows(), system_ddfdudu.cols(), s_filter_.getNumInputs(), s_filter_.getNumInputs()).setZero();
-        }
-      };
-
-      template<typename DerivedDerivativeSystemInputState, typename DerivedDerivativeInputState>
-      void functionDerivativeInputState(const DerivedDerivativeSystemInputState& system_ddfdudx,
-                                         DerivedDerivativeInputState& ddfdudx) {
-        if (r_filter_.getNumOutputs() > 0) {
-          ddfdudx.block(0, 0, system_ddfdudx.rows(), system_ddfdudx.cols()) = system_ddfdudx;
-          ddfdudx.block(0, system_ddfdudx.cols(), system_ddfdudx.rows(), r_filter_.getNumStates()).setZero();
-        }
-        else if (s_filter_.getNumOutputs() > 0 && eliminateInputs) {
-          throw std::runtime_error("[LoopshapingDefinition::functionDerivativeInputState] Use different functionDerivativeInputState");
-        }
-        else if (s_filter_.getNumOutputs() > 0 && !eliminateInputs) {
-          ddfdudx.block(0, 0, system_ddfdudx.rows(), system_ddfdudx.cols()) = system_ddfdudx;
-          ddfdudx.block(0, system_ddfdudx.cols(), system_ddfdudx.rows(), s_filter_.getNumStates()).setZero();
-          ddfdudx.block(system_ddfdudx.rows(), 0, s_filter_.getNumInputs(), system_ddfdudx.cols()).setZero();
-          ddfdudx.block(system_ddfdudx.rows(), system_ddfdudx.cols(), s_filter_.getNumInputs(), s_filter_.getNumStates()).setZero();
-        }
-      };
-
-      template<typename DerivedDerivativeSystemInputState, typename DerivedSecondDerivativeSystemInput, typename DerivedDerivativeInputState>
-      void functionDerivativeInputState(const DerivedDerivativeSystemInputState& system_ddfdudx,
-                                        const DerivedSecondDerivativeSystemInput& system_ddfdudu,
-                                        DerivedDerivativeInputState& ddfdudx) {
-        if (r_filter_.getNumOutputs() > 0) {
-          functionDerivativeInputState(system_ddfdudx, ddfdudx);
-        }
-        else if (s_filter_.getNumOutputs() > 0 && eliminateInputs) {
-          ddfdudx.block(0, 0, s_filter_.getNumInputs(), system_ddfdudx.cols()) = s_filter_.getD().transpose() * system_ddfdudx;
-          ddfdudx.block(0, system_ddfdudx.cols(), s_filter_.getNumInputs(), s_filter_.getNumStates()) = s_filter_.getD().transpose() * system_ddfdudx * s_filter_.getC();
-        }
-        else if (s_filter_.getNumOutputs() > 0 && !eliminateInputs) {
-          functionDerivativeInputState(system_ddfdudx, ddfdudx);
-        }
-      };
+//
+//      template<typename DerivedDerivativeSystemState, typename DerivedDerivativeState>
+//      void functionDerivativeState(const DerivedDerivativeSystemState& system_dfdx,
+//                                   DerivedDerivativeState& dfdx) {
+//        if (r_filter_.getNumOutputs() > 0) {
+//          dfdx.head(system_dfdx.size()) = system_dfdx;
+//          dfdx.tail(r_filter_.getNumStates()).setZero();
+//        }
+//        else if (s_filter_.getNumOutputs() > 0 && eliminateInputs) {
+//          throw std::runtime_error("[LoopshapingDefinition::functionDerivativeState] Use different functionDerivativeState");
+//        }
+//        else if (s_filter_.getNumOutputs() > 0 && !eliminateInputs) {
+//          dfdx.head(system_dfdx.size()) = system_dfdx;
+//          dfdx.tail(s_filter_.getNumStates()).setZero();
+//        }
+//      };
+//
+//      template<typename DerivedDerivativeSystemState, typename DerivedDerivativeSystemInput, typename DerivedDerivativeState>
+//      void functionDerivativeState(const DerivedDerivativeSystemState& system_dfdx,
+//                                   const DerivedDerivativeSystemInput& system_dfdu,
+//                                   DerivedDerivativeState& dfdx) {
+//        // R filter case
+//        if (r_filter_.getNumOutputs() > 0) {
+//          functionDerivativeState(system_dfdx, dfdx);
+//        }
+//          // S filter + eliminate inputs
+//        else if (s_filter_.getNumOutputs() > 0 && eliminateInputs) {
+//          dfdx.head(system_dfdx.size()) = system_dfdx;
+//          dfdx.tail(s_filter_.getNumStates()) = s_filter_.getC().transpose() * system_dfdu;
+//        }
+//          // S filter without eliminate inputs
+//        else if (s_filter_.getNumOutputs() > 0 && !eliminateInputs) {
+//          functionDerivativeState(system_dfdx, dfdx);
+//        }
+//      };
+//
+//      template<typename DerivedDerivativeSystemInput, typename DerivedDerivativeInput>
+//      void functionDerivativeInput(const DerivedDerivativeSystemInput& system_dfdu,
+//                                   DerivedDerivativeInput& dfdu) {
+//        if (r_filter_.getNumOutputs() > 0) {
+//          dfdu.head(system_dfdu.size()) = system_dfdu;
+//        }
+//        else if (s_filter_.getNumOutputs() > 0 && eliminateInputs) {
+//          dfdu.head(s_filter_.getNumInputs()) = s_filter_.getD().transpose() * system_dfdu;
+//        }
+//        else if (s_filter_.getNumOutputs() > 0 && !eliminateInputs) {
+//          dfdu.head(system_dfdu.size()) = system_dfdu;
+//          dfdu.tail(s_filter_.getNumInputs()).setZero();
+//        }
+//      };
+//
+//      template<typename DerivedSecondDerivativeSystemState, typename DerivedSecondDerivativeState>
+//      void functionSecondDerivativeState(const DerivedSecondDerivativeSystemState& system_ddfdxdx,
+//                                         DerivedSecondDerivativeState& ddfdxdx) {
+//        if (r_filter_.getNumOutputs() > 0) {
+//          ddfdxdx.block(0, 0, system_ddfdxdx.rows(), system_ddfdxdx.cols()) = system_ddfdxdx;
+//          ddfdxdx.block(0, system_ddfdxdx.cols(), system_ddfdxdx.rows(), r_filter_.getNumStates()).setZero();
+//          ddfdxdx.block(system_ddfdxdx.rows(), 0, r_filter_.getNumStates(), system_ddfdxdx.cols()).setZero();
+//          ddfdxdx.block(system_ddfdxdx.rows(), system_ddfdxdx.cols(), r_filter_.getNumStates(), r_filter_.getNumStates()).setZero();
+//        }
+//        else if (s_filter_.getNumOutputs() > 0 && eliminateInputs) {
+//          throw std::runtime_error("[LoopshapingDefinition::functionSecondDerivativeState] Use different functionSecondDerivativeState");
+//        }
+//        else if (s_filter_.getNumOutputs() > 0 && !eliminateInputs) {
+//          ddfdxdx.block(0, 0, system_ddfdxdx.rows(), system_ddfdxdx.cols()) = system_ddfdxdx;
+//          ddfdxdx.block(0, system_ddfdxdx.cols(), system_ddfdxdx.rows(), s_filter_.getNumStates()).setZero();
+//          ddfdxdx.block(system_ddfdxdx.rows(), 0, s_filter_.getNumStates(), system_ddfdxdx.cols()).setZero();
+//          ddfdxdx.block(system_ddfdxdx.rows(), system_ddfdxdx.cols(), s_filter_.getNumStates(), s_filter_.getNumStates()).setZero();
+//        }
+//      };
+//
+//      template<typename DerivedSecondDerivativeSystemState, typename DerivedDerivativeSystemInputState, typename DerivedSecondDerivativeSystemInput, typename DerivedSecondDerivativeState>
+//      void functionSecondDerivativeState(const DerivedSecondDerivativeSystemState& system_ddfdxdx,
+//                                         const DerivedDerivativeSystemInputState& system_ddfdudx,
+//                                         const DerivedSecondDerivativeSystemInput& system_ddfdudu,
+//                                         DerivedSecondDerivativeState& ddfdxdx) {
+//        if (r_filter_.getNumOutputs() > 0) {
+//          functionSecondDerivativeState(system_ddfdxdx, ddfdxdx);
+//        }
+//        else if (s_filter_.getNumOutputs() > 0 && eliminateInputs) {
+//          ddfdxdx.block(0, 0, system_ddfdxdx.rows(), system_ddfdxdx.cols()) = system_ddfdxdx;
+//          ddfdxdx.block(0, system_ddfdxdx.cols(), system_ddfdxdx.rows(), s_filter_.getNumStates()) = system_ddfdudx.transpose() * s_filter_.getC();
+//          ddfdxdx.block(system_ddfdxdx.rows(), 0, s_filter_.getNumStates(), system_ddfdxdx.cols()) = ddfdxdx.block(0, system_ddfdxdx.cols(), system_ddfdxdx.rows(), s_filter_.getNumStates()).transpose();
+//          ddfdxdx.block(system_ddfdxdx.rows(), system_ddfdxdx.cols(), s_filter_.getNumStates(), s_filter_.getNumStates()) = s_filter_.getC().transpose() * system_ddfdudu * s_filter_.getC();
+//        }
+//        else if (s_filter_.getNumOutputs() > 0 && !eliminateInputs) {
+//          functionSecondDerivativeState(system_ddfdxdx, ddfdxdx);
+//        }
+//      };
+//
+//      template<typename DerivedSecondDerivativeSystemInput, typename DerivedSecondDerivativeInput>
+//      void functionSecondDerivativeInput(const DerivedSecondDerivativeSystemInput& system_ddfdudu,
+//                                         DerivedSecondDerivativeInput& ddfdudu) {
+//        if (r_filter_.getNumOutputs() > 0) {
+//          ddfdudu.block(0, 0, system_ddfdudu.rows(), system_ddfdudu.cols()) = system_ddfdudu;
+//        }
+//        else if (s_filter_.getNumOutputs() > 0 && eliminateInputs) {
+//          ddfdudu.block(0, 0, s_filter_.getNumInputs(), s_filter_.getNumInputs()) = s_filter_.getD().transpose() * system_ddfdudu * s_filter_.getD();
+//        }
+//        else if (s_filter_.getNumOutputs() > 0 && !eliminateInputs) {
+//          ddfdudu.block(0, 0, system_ddfdudu.rows(), system_ddfdudu.cols()) = system_ddfdudu;
+//          ddfdudu.block(0, system_ddfdudu.cols(), system_ddfdudu.rows(), s_filter_.getNumInputs()).setZero();
+//          ddfdudu.block(system_ddfdudu.rows(), 0, s_filter_.getNumInputs(), system_ddfdudu.cols()).setZero();
+//          ddfdudu.block(system_ddfdudu.rows(), system_ddfdudu.cols(), s_filter_.getNumInputs(), s_filter_.getNumInputs()).setZero();
+//        }
+//      };
+//
+//      template<typename DerivedDerivativeSystemInputState, typename DerivedDerivativeInputState>
+//      void functionDerivativeInputState(const DerivedDerivativeSystemInputState& system_ddfdudx,
+//                                         DerivedDerivativeInputState& ddfdudx) {
+//        if (r_filter_.getNumOutputs() > 0) {
+//          ddfdudx.block(0, 0, system_ddfdudx.rows(), system_ddfdudx.cols()) = system_ddfdudx;
+//          ddfdudx.block(0, system_ddfdudx.cols(), system_ddfdudx.rows(), r_filter_.getNumStates()).setZero();
+//        }
+//        else if (s_filter_.getNumOutputs() > 0 && eliminateInputs) {
+//          throw std::runtime_error("[LoopshapingDefinition::functionDerivativeInputState] Use different functionDerivativeInputState");
+//        }
+//        else if (s_filter_.getNumOutputs() > 0 && !eliminateInputs) {
+//          ddfdudx.block(0, 0, system_ddfdudx.rows(), system_ddfdudx.cols()) = system_ddfdudx;
+//          ddfdudx.block(0, system_ddfdudx.cols(), system_ddfdudx.rows(), s_filter_.getNumStates()).setZero();
+//          ddfdudx.block(system_ddfdudx.rows(), 0, s_filter_.getNumInputs(), system_ddfdudx.cols()).setZero();
+//          ddfdudx.block(system_ddfdudx.rows(), system_ddfdudx.cols(), s_filter_.getNumInputs(), s_filter_.getNumStates()).setZero();
+//        }
+//      };
+//
+//      template<typename DerivedDerivativeSystemInputState, typename DerivedSecondDerivativeSystemInput, typename DerivedDerivativeInputState>
+//      void functionDerivativeInputState(const DerivedDerivativeSystemInputState& system_ddfdudx,
+//                                        const DerivedSecondDerivativeSystemInput& system_ddfdudu,
+//                                        DerivedDerivativeInputState& ddfdudx) {
+//        if (r_filter_.getNumOutputs() > 0) {
+//          functionDerivativeInputState(system_ddfdudx, ddfdudx);
+//        }
+//        else if (s_filter_.getNumOutputs() > 0 && eliminateInputs) {
+//          ddfdudx.block(0, 0, s_filter_.getNumInputs(), system_ddfdudx.cols()) = s_filter_.getD().transpose() * system_ddfdudx;
+//          ddfdudx.block(0, system_ddfdudx.cols(), s_filter_.getNumInputs(), s_filter_.getNumStates()) = s_filter_.getD().transpose() * system_ddfdudx * s_filter_.getC();
+//        }
+//        else if (s_filter_.getNumOutputs() > 0 && !eliminateInputs) {
+//          functionDerivativeInputState(system_ddfdudx, ddfdudx);
+//        }
+//      };
 
      private:
         MIMOFilterDefinition q_filter_, r_filter_, s_filter_;

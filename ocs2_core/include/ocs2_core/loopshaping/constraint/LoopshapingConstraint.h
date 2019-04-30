@@ -67,7 +67,7 @@ class LoopshapingConstraint final : public ConstraintBase<
                                                                                       SYSTEM_INPUT_DIM,
                                                                                       FILTER_STATE_DIM,
                                                                                       FILTER_INPUT_DIM,
-                                                                                      NullLogicRules>;
+                                                                                      LOGIC_RULES_T>;
 
   LoopshapingConstraint(const SYSTEM_CONSTRAINT &systemConstraint,
                         std::shared_ptr<LoopshapingDefinition> loopshapingDefinition) :
@@ -284,7 +284,7 @@ class LoopshapingConstraint final : public ConstraintBase<
                                                                                              SYSTEM_INPUT_DIM,
                                                                                              FILTER_STATE_DIM,
                                                                                              FILTER_INPUT_DIM,
-                                                                                             NullLogicRules>(
+                                                                                             LOGIC_RULES_T>(
             systemConstraint_,
             loopshapingDefinition_));
       } else {
@@ -294,7 +294,7 @@ class LoopshapingConstraint final : public ConstraintBase<
                                                                                          SYSTEM_INPUT_DIM,
                                                                                          FILTER_STATE_DIM,
                                                                                          FILTER_INPUT_DIM,
-                                                                                         NullLogicRules>(
+                                                                                         LOGIC_RULES_T>(
             systemConstraint_,
             loopshapingDefinition_));
       }
@@ -306,7 +306,7 @@ class LoopshapingConstraint final : public ConstraintBase<
                                                                                         SYSTEM_INPUT_DIM,
                                                                                         FILTER_STATE_DIM,
                                                                                         FILTER_INPUT_DIM,
-                                                                                        NullLogicRules>(
+                                                                                        LOGIC_RULES_T>(
           systemConstraint_,
           loopshapingDefinition_));
     }

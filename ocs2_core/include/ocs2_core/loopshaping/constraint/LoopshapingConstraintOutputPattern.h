@@ -18,7 +18,7 @@ template<size_t FULL_STATE_DIM, size_t FULL_INPUT_DIM,
     class LOGIC_RULES_T=NullLogicRules>
 class LoopshapingConstraintOutputPattern final: public LoopshapingConstraintImplementationBase<FULL_STATE_DIM, FULL_INPUT_DIM,
                                                                                               SYSTEM_STATE_DIM, SYSTEM_INPUT_DIM,
-                                                                                              FILTER_STATE_DIM, FILTER_INPUT_DIM, NullLogicRules> {
+                                                                                              FILTER_STATE_DIM, FILTER_INPUT_DIM, LOGIC_RULES_T> {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 

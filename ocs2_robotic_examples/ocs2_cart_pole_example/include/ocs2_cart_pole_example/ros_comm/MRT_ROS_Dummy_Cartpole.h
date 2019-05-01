@@ -99,18 +99,22 @@ protected:
 	 * Visualizes the current observation.
 	 *
 	 * @param [in] observation: The current observation.
+	 * @param [in] costDesiredTrajectories: The commanded target trajectory or point.
 	 */
-	virtual void publishVisualizer(const system_observation_t& observation, const cost_desired_trajectories_t& goal) override {
-    sensor_msgs::JointState joint_state;
-    joint_state.header.stamp = ros::Time::now();
-    joint_state.name.resize(2);
-    joint_state.position.resize(2);
-    joint_state.name[0] ="slider_to_cart";
-    joint_state.name[1] ="cart_to_pole";
-    joint_state.position[0] = observation.state()(1);
-    joint_state.position[1] = observation.state()(0);
-    jointPublisher_.publish(joint_state);
-	}
+  virtual void publishVisualizer(
+		  const system_observation_t& observation,
+		  const cost_desired_trajectories_t& costDesiredTrajectories) override {
+
+	  sensor_msgs::JointState joint_state;
+	  joint_state.header.stamp = ros::Time::now();
+	  joint_state.name.resize(2);
+	  joint_state.position.resize(2);
+	  joint_state.name[0] ="slider_to_cart";
+	  joint_state.name[1] ="cart_to_pole";
+	  joint_state.position[0] = observation.state()(1);
+	  joint_state.position[1] = observation.state()(0);
+	  jointPublisher_.publish(joint_state);
+  }
 
   ros::Publisher jointPublisher_;
 };

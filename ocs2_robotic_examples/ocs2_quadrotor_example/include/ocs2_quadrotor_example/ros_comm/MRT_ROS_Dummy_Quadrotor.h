@@ -89,8 +89,12 @@ protected:
 	 * Visualizes the current observation.
 	 *
 	 * @param [in] observation: The current observation.
+	 * @param [in] costDesiredTrajectories: The commanded target trajectory or point.
 	 */
-	virtual void publishVisualizer(const system_observation_t& observation, const cost_desired_trajectories_t& goal) override {
+	virtual void publishVisualizer(
+			const system_observation_t& observation,
+			const cost_desired_trajectories_t& costDesiredTrajectories) override {
+
 		static tf::TransformBroadcaster transformBroadcaster;
 		tf::Transform transform;
 		transform.setOrigin(tf::Vector3(observation.state()(0), observation.state()(1), observation.state()(2)));

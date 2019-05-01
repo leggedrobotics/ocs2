@@ -47,7 +47,7 @@
     <dynamics damping="0.0" friction="0.0"/>
   </joint>
 
-  <link name="goal">
+  <link name="target">
     <visual>
       <geometry>
         <sphere radius="0.2"/>
@@ -69,11 +69,11 @@
     </inertial>
   </link>
 
-  <joint name="slider_to_goal" type="prismatic">
+  <joint name="slider_to_target" type="prismatic">
     <axis xyz="1 0 0"/>
     <origin xyz="0.0 0.0 0.0"/>
     <parent link="slideBar"/>
-    <child link="goal"/>
+    <child link="target"/>
     <limit effort="100000.0" lower="-150" upper="150" velocity="50"/>
     <dynamics damping="0.0" friction="0.0"/>
   </joint>

@@ -99,9 +99,11 @@ protected:
 	 * Visualizes the current observation.
 	 *
 	 * @param [in] observation: The current observation.
+	 * @param [in] costDesiredTrajectories: The commanded target trajectory or point.
 	 */
 	virtual void publishVisualizer(
-			const system_observation_t& observation, const cost_desired_trajectories_t& goal) override {
+			const system_observation_t& observation,
+			const cost_desired_trajectories_t& costDesiredTrajectories) override {
 
 		sensor_msgs::JointState joint_state;
 		joint_state.header.stamp = ros::Time::now();
@@ -109,13 +111,13 @@ protected:
 		joint_state.position.resize(2);
 		joint_state.name[0] ="slider_to_cart";
 		joint_state.position[0] = observation.state()(0);
-		joint_state.name[1] ="slider_to_goal";
-		joint_state.position[1] = goal.desiredStateTrajectory()[0](0);
+		joint_state.name[1] ="slider_to_target";
+		joint_state.position[1] = costDesiredTrajectories.desiredStateTrajectory()[0](0);
 
 		jointPublisher_.publish(joint_state);
-		std::cout << "Obs " << observation.state()[0] << " , " << observation.state()[1] << std::endl;
-		std::cout << "Goal " << goal.desiredStateTrajectory()[0](0) << std::endl;
-		std::cout << "Input " << observation.input()[0] << std::endl;
+//		std::cout << "Target " << costDesiredTrajectories.desiredStateTrajectory()[0](0) << std::endl;
+//		std::cout << "State  " << observation.state()[0] << " , " << observation.state()[1] << std::endl;
+//		std::cout << "Input  " << observation.input()[0] << std::endl;
 	}
 
 private:

@@ -36,7 +36,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <tf/transform_broadcaster.h>
 
 #include <ocs2_comm_interfaces/test/MRT_ROS_Dummy_Loop.h>
-#include <ocs2_ballbot_example/misc/ballbotConstants.h>
+#include <ocs2_ballbot_example/BallbotParameters.h>
 #include "ocs2_ballbot_example/definitions.h"
 
 namespace ocs2 {
@@ -48,6 +48,7 @@ public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
 	typedef MRT_ROS_Dummy_Loop<ballbot::STATE_DIM_, ballbot::INPUT_DIM_> BASE;
+    typedef BallbotParameters<scalar_t> ballbot_parameters_t;
 
 	/**
 	 * Constructor.
@@ -93,8 +94,8 @@ public:
 
 		rotationMatrixBaseToWorld = quaternionBaseToWorld.normalized().toRotationMatrix();
 
-		positionWorldToBall << observation.state()(0), observation.state()(1), ocs2::ballbot::ballRadius_;
-		positionWorldToBase = positionWorldToBall + rotationMatrixBaseToWorld*Eigen::Vector3d(0.0, 0.0, ocs2::ballbot::heightBallCenterToBase_);
+		positionWorldToBall << observation.state()(0), observation.state()(1), param_.ballRadius_;
+		positionWorldToBase = positionWorldToBall + rotationMatrixBaseToWorld*Eigen::Vector3d(0.0, 0.0, param_.heightBallCenterToBase_);
 
 		// Broadcast transformation from rezero observation to robot base.
 		geometry_msgs::TransformStamped base_transform;
@@ -116,7 +117,7 @@ public:
 		ball_transform.child_frame_id = "ball";
 		ball_transform.transform.translation.x = 0.0;
 		ball_transform.transform.translation.y = 0.0;
-		ball_transform.transform.translation.z = -ocs2::ballbot::heightBallCenterToBase_;
+		ball_transform.transform.translation.z = -param_.heightBallCenterToBase_;
 		ball_transform.transform.rotation.w = 1.0;
 		ball_transform.transform.rotation.x = 0.0;
 		ball_transform.transform.rotation.y = 0.0;
@@ -126,7 +127,7 @@ public:
         // Broadcast transformation from odom to command
         const Eigen::Vector3d desiredPositionWorldToTarget = Eigen::Vector3d(costDesiredTrajectories.desiredStateTrajectory()[1](0),
                                                                              costDesiredTrajectories.desiredStateTrajectory()[1](1),
-                                                                             ocs2::ballbot::ballRadius_);
+                                                                             param_.ballRadius_);
         const Eigen::Quaterniond desiredQuaternionBaseToWorld = Eigen::AngleAxisd{costDesiredTrajectories.desiredStateTrajectory()[1](2), Eigen::Vector3d{0, 0, 1}}*
                                                                 Eigen::AngleAxisd{costDesiredTrajectories.desiredStateTrajectory()[1](3), Eigen::Vector3d{0, 1, 0}}*
                                                                 Eigen::AngleAxisd{costDesiredTrajectories.desiredStateTrajectory()[1](4), Eigen::Vector3d{1, 0, 0}};
@@ -188,7 +189,7 @@ protected:
 		baseMarker.pose.position.x = 0.0;
 		baseMarker.pose.position.y = 0.0;
 		// the mesh has its origin in the center of the ball
-		baseMarker.pose.position.z = -ocs2::ballbot::heightBallCenterToBase_;
+		baseMarker.pose.position.z = -param_.heightBallCenterToBase_;
 		baseMarker.pose.orientation.x = 0.0;
 		baseMarker.pose.orientation.y = 0.0;
 		baseMarker.pose.orientation.z = 0.0;
@@ -212,7 +213,7 @@ protected:
 		ballMarker.action = visualization_msgs::Marker::ADD;
 		ballMarker.pose.position.x = 0.0;
 		ballMarker.pose.position.y = 0.0;
-		ballMarker.pose.position.z = -ocs2::ballbot::heightBallCenterToBase_;
+		ballMarker.pose.position.z = -param_.heightBallCenterToBase_;
 		ballMarker.pose.orientation.x = 0.0;
 		ballMarker.pose.orientation.y = 0.0;
 		ballMarker.pose.orientation.z = 0.0;
@@ -235,6 +236,8 @@ protected:
 	ros::Publisher visualizationPublisher_;
 	ros::Publisher posePublisher_;
 	std::unique_ptr<tf::TransformBroadcaster> tfBroadcasterPtr_;
+
+    ballbot_parameters_t param_;
 
 };
 

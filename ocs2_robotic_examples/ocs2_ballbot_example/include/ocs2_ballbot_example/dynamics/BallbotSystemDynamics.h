@@ -44,6 +44,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ocs2_ballbot_example/generated/inertia_properties.h"
 #include "ocs2_ballbot_example/generated/transforms.h"
 #include "ocs2_ballbot_example/generated/jsim.h"
+#include <ocs2_ballbot_example/BallbotParameters.h>
 
 namespace ocs2 {
 namespace ballbot {
@@ -70,6 +71,9 @@ public:
 	typedef typename BASE::state_matrix_t state_matrix_t;
 	typedef typename BASE::input_vector_t input_vector_t;
 
+    typedef BallbotParameters<scalar_t> ballbot_parameters_t;
+    
+
 	/**
 	 * Constructor.
 	 *
@@ -77,7 +81,10 @@ public:
 	 */
 	BallbotSystemDynamics(const bool& dynamicLibraryIsCompiled = false)
 	: BASE(dynamicLibraryIsCompiled)
-	{}
+	{
+	    wheelRadius_ = param_.wheelRadius_;
+	    ballRadius_ = param_.ballRadius_;
+	}
 
 	/**
 	 * Destructor
@@ -148,8 +155,10 @@ public:
 	}
 
 private:
-	const scalar_t wheelRadius_ = 0.064;
-	const scalar_t ballRadius_ = 0.125;
+
+    ballbot_parameters_t param_;
+    scalar_t wheelRadius_;
+    scalar_t ballRadius_;
 
 };
 

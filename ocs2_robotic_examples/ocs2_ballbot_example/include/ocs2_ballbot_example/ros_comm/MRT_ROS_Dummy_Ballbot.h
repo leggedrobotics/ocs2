@@ -94,7 +94,7 @@ public:
 		rotationMatrixBaseToWorld = quaternionBaseToWorld.normalized().toRotationMatrix();
 
 		positionWorldToBall << observation.state()(0), observation.state()(1), ocs2::ballbot::ballRadius_;
-		positionWorldToBase = positionWorldToBall + rotationMatrixBaseToWorld*Eigen::Vector3d(0.0, 0.0, heightBallCenterToBase_);
+		positionWorldToBase = positionWorldToBall + rotationMatrixBaseToWorld*Eigen::Vector3d(0.0, 0.0, ocs2::ballbot::heightBallCenterToBase_);
 
 		// Broadcast transformation from rezero observation to robot base.
 		geometry_msgs::TransformStamped base_transform;
@@ -116,7 +116,7 @@ public:
 		ball_transform.child_frame_id = "ball";
 		ball_transform.transform.translation.x = 0.0;
 		ball_transform.transform.translation.y = 0.0;
-		ball_transform.transform.translation.z = -heightBallCenterToBase_;
+		ball_transform.transform.translation.z = -ocs2::ballbot::heightBallCenterToBase_;
 		ball_transform.transform.rotation.w = 1.0;
 		ball_transform.transform.rotation.x = 0.0;
 		ball_transform.transform.rotation.y = 0.0;

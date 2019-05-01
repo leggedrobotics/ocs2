@@ -123,7 +123,7 @@ public:
 			const cost_function_base_t* heuristicsFunctionPtr = nullptr);
 
 	/**
-	 * destructor.
+	 * Default destructor.
 	 */
 	virtual ~MPC_SLQ() = default;
 

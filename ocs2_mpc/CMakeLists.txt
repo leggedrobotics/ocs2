@@ -5,6 +5,7 @@ find_package(catkin REQUIRED COMPONENTS
   cmake_modules
   ocs2_core
   ocs2_slq
+  ocs2_ilqr
   ocs2_ocs2
 )
 find_package(Boost REQUIRED COMPONENTS
@@ -25,6 +26,7 @@ catkin_package(
   CATKIN_DEPENDS 
     ocs2_core 
     ocs2_slq 
+    ocs2_ilqr
     ocs2_ocs2
   DEPENDS 
     Boost

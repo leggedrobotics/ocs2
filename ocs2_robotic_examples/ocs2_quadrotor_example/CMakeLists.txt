@@ -4,9 +4,6 @@ project(ocs2_quadrotor_example)
 find_package(catkin REQUIRED COMPONENTS
         roslib
         tf
-        ocs2_core
-        ocs2_slq
-        ocs2_ocs2
         ocs2_mpc
         ocs2_comm_interfaces
         ocs2_robotic_tools
@@ -31,9 +28,6 @@ catkin_package(
             ${EIGEN3_INCLUDE_DIRS}
         CATKIN_DEPENDS
             tf
-            ocs2_core
-            ocs2_slq
-            ocs2_ocs2
             ocs2_mpc
             ocs2_comm_interfaces
             ocs2_robotic_tools

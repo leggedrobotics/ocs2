@@ -833,8 +833,8 @@ void ILQR_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::discreteLQWorker(
 		 dt = nominalTimeTrajectoriesStock_[i][k+1] - nominalTimeTrajectoriesStock_[i][k];
 	}
 
-	std::cerr << std::endl << "partition: " << i << std::endl;
-	std::cerr << "time: " << nominalTimeTrajectoriesStock_[i][k] << ",  dt: " << dt << std::endl;
+//	std::cerr << std::endl << "partition: " << i << std::endl;
+//	std::cerr << "time: " << nominalTimeTrajectoriesStock_[i][k] << ",  dt: " << dt << std::endl;
 
 	/*
 	 * linearize system dynamics
@@ -853,10 +853,10 @@ void ILQR_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::discreteLQWorker(
 	PmDtimeTrajectoryStock_[i][k] = PmTrajectoryStock_[i][k] * dt;
 	RmInverseDtimeTrajectoryStock_[i][k] = RmInverseTrajectoryStock_[i][k] / dt;
 
-	std::cerr << "A:\n" << AmTrajectoryStock_[i][k] << std::endl;
-	std::cerr << "B:\n" << BmTrajectoryStock_[i][k] << std::endl;
-	std::cerr << "R:\n" << RmDtimeTrajectoryStock_[i][k] << std::endl;
-	std::cerr << "R^{-1}:\n" << RmInverseDtimeTrajectoryStock_[i][k] << std::endl;
+//	std::cerr << "A:\n" << AmTrajectoryStock_[i][k] << std::endl;
+//	std::cerr << "B:\n" << BmTrajectoryStock_[i][k] << std::endl;
+//	std::cerr << "R:\n" << RmDtimeTrajectoryStock_[i][k] << std::endl;
+//	std::cerr << "R^{-1}:\n" << RmInverseDtimeTrajectoryStock_[i][k] << std::endl;
 }
 
 /******************************************************************************************************/
@@ -947,12 +947,14 @@ void ILQR_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculateController() {
 		 */
 		calculatePartitionController(i);
 
-		// correct the last controller element
-		nominalControllersStock_[i].k_[N-1]        = nominalControllersStock_[i].k_[N-2];
-		nominalControllersStock_[i].uff_[N-1]      = nominalControllersStock_[i].uff_[N-2];
-		nominalControllersStock_[i].deltaUff_[N-1] = nominalControllersStock_[i].deltaUff_[N-2];
-
 	}  // end of i loop
+
+	// correcting for the last controller element of partitions
+	for (size_t i=initActivePartition_; i<finalActivePartition_; i++) {
+		nominalControllersStock_[i].k_.back()        = nominalControllersStock_[i+1].k_.front();
+		nominalControllersStock_[i].uff_.back()      = nominalControllersStock_[i+1].uff_.front();
+		nominalControllersStock_[i].deltaUff_.back() = nominalControllersStock_[i+1].deltaUff_.front();
+	}
 }
 
 /******************************************************************************************************/
@@ -1225,10 +1227,8 @@ void ILQR_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::solveRiccatiEquationsWorker
 	GmTrajectoryStock_[partitionIndex].resize(N);
 	GvTrajectoryStock_[partitionIndex].resize(N);
 
-	// final value for the last Riccati equations plus final cost
-	sTrajectoryStock_[partitionIndex][N-1] = sFinal;
-	SvTrajectoryStock_[partitionIndex][N-1] = SvFinal;
-	SmTrajectoryStock_[partitionIndex][N-1] = SmFinal;
+	// terminate if the partition is not active
+	if (N==0) return;
 
 	// switching times
 	size_array_t SsSwitchingTimesIndices;
@@ -1245,59 +1245,71 @@ void ILQR_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::solveRiccatiEquationsWorker
 	state_vector_t SvFinalTemp = SvFinal;
 	eigen_scalar_t sFinalTemp  = sFinal;
 
+	/*
+	 * solving the Riccati equations
+	 */
 	int beginTimeItr;
 	int endTimeItr;
 
-	// integrating the Riccati equations
 	for (int i=NE; i>=0; i--) {
 
-		beginTimeItr = SsSwitchingTimesIndices[i];
-		endTimeItr   = SsSwitchingTimesIndices[i+1];
+		beginTimeItr = SsSwitchingTimesIndices[i];   // similar to std::begin()
+		endTimeItr   = SsSwitchingTimesIndices[i+1]; // similar to std::end()
 
-		// solve Riccati equations if interval length is not zero (no event time at final time)
+		/*
+		 * solution at final time of an interval (uses the continuous-time formulation)
+		 */
+		const size_t finalIndex = endTimeItr-1;
+		// note that these are the continuous time coefficients
+		const state_input_matrix_t& Bmc = BmTrajectoryStock_[partitionIndex][finalIndex];
+		const input_vector_t&       Rvc = RvTrajectoryStock_[partitionIndex][finalIndex];
+		const input_matrix_t&       Rmc = RmTrajectoryStock_[partitionIndex][finalIndex];
+		const input_state_matrix_t& Pmc = PmTrajectoryStock_[partitionIndex][finalIndex];
+		const input_matrix_t&       RmcInverse = RmInverseTrajectoryStock_[partitionIndex][finalIndex];
+
+		sTrajectoryStock_[partitionIndex][finalIndex]  = sFinalTemp;
+		SvTrajectoryStock_[partitionIndex][finalIndex] = SvFinalTemp;
+		SmTrajectoryStock_[partitionIndex][finalIndex] = SmFinalTemp;
+
+		HmTrajectoryStock_[partitionIndex][finalIndex] = Rmc;
+		HmInverseTrajectoryStock_[partitionIndex][finalIndex] = RmcInverse;
+		GmTrajectoryStock_[partitionIndex][finalIndex] = Pmc + Bmc.transpose() * SmFinalTemp;
+		GvTrajectoryStock_[partitionIndex][finalIndex] = Rvc + Bmc.transpose() * SvFinalTemp;
+
+
+		// solve Riccati equations if interval length is not zero
 		if (beginTimeItr < endTimeItr-1) {
-			for (int k=endTimeItr-1; k>=beginTimeItr; k--) {
-				if (k<endTimeItr-1) {
+			for (int k=endTimeItr-2; k>=beginTimeItr; k--) {
 
-					const state_matrix_t&       Am = AmDtimeTrajectoryStock_[partitionIndex][k];
-					const state_input_matrix_t& Bm = BmDtimeTrajectoryStock_[partitionIndex][k];
-					const eigen_scalar_t&       q  = qDtimeTrajectoryStock_[partitionIndex][k];
-					const state_vector_t&       Qv = QvDtimeTrajectoryStock_[partitionIndex][k];
-					const state_matrix_t&       Qm = QmDtimeTrajectoryStock_[partitionIndex][k];
-					const input_vector_t&       Rv = RvDtimeTrajectoryStock_[partitionIndex][k];
-					const input_matrix_t&       Rm = RmDtimeTrajectoryStock_[partitionIndex][k];
-					const input_state_matrix_t& Pm = PmDtimeTrajectoryStock_[partitionIndex][k];
+				const state_matrix_t&       Am = AmDtimeTrajectoryStock_[partitionIndex][k];
+				const state_input_matrix_t& Bm = BmDtimeTrajectoryStock_[partitionIndex][k];
+				const eigen_scalar_t&       q  = qDtimeTrajectoryStock_[partitionIndex][k];
+				const state_vector_t&       Qv = QvDtimeTrajectoryStock_[partitionIndex][k];
+				const state_matrix_t&       Qm = QmDtimeTrajectoryStock_[partitionIndex][k];
+				const input_vector_t&       Rv = RvDtimeTrajectoryStock_[partitionIndex][k];
+				const input_matrix_t&       Rm = RmDtimeTrajectoryStock_[partitionIndex][k];
+				const input_state_matrix_t& Pm = PmDtimeTrajectoryStock_[partitionIndex][k];
 
-					input_matrix_t&       Hm = HmTrajectoryStock_[partitionIndex][k];
-					input_matrix_t&       HmInverse = HmInverseTrajectoryStock_[partitionIndex][k];
-					input_vector_t&       Gv = GvTrajectoryStock_[partitionIndex][k];
-					input_state_matrix_t& Gm = GmTrajectoryStock_[partitionIndex][k];
+				input_matrix_t&       Hm = HmTrajectoryStock_[partitionIndex][k];
+				input_matrix_t&       HmInverse = HmInverseTrajectoryStock_[partitionIndex][k];
+				input_vector_t&       Gv = GvTrajectoryStock_[partitionIndex][k];
+				input_state_matrix_t& Gm = GmTrajectoryStock_[partitionIndex][k];
 
-					Hm = Rm + Bm.transpose() * SmTrajectoryStock_[partitionIndex][k+1] * Bm;
-					HmInverse = Hm.ldlt().solve(input_matrix_t::Identity());
-					Gm = Pm + Bm.transpose() * SmTrajectoryStock_[partitionIndex][k+1] * Am;
-					Gv = Rv + Bm.transpose() * SvTrajectoryStock_[partitionIndex][k+1];
+				Hm = Rm + Bm.transpose() * SmTrajectoryStock_[partitionIndex][k+1] * Bm;
+				HmInverse = Hm.ldlt().solve(input_matrix_t::Identity());
+				Gm = Pm + Bm.transpose() * SmTrajectoryStock_[partitionIndex][k+1] * Am;
+				Gv = Rv + Bm.transpose() * SvTrajectoryStock_[partitionIndex][k+1];
 
-					sTrajectoryStock_[partitionIndex][k] = q + sTrajectoryStock_[partitionIndex][k+1] -0.5*Gv.transpose()*HmInverse*Gv;
-					SvTrajectoryStock_[partitionIndex][k] = Qv + Am.transpose()*SvTrajectoryStock_[partitionIndex][k+1] - Gm.transpose()*HmInverse*Gv;
-					SmTrajectoryStock_[partitionIndex][k] = Qm + Am.transpose()*SmTrajectoryStock_[partitionIndex][k+1]*Am - Gm.transpose()*HmInverse*Gm;
-
-				} else {
-					sTrajectoryStock_[partitionIndex][k] = sFinalTemp;
-					SvTrajectoryStock_[partitionIndex][k] = SvFinalTemp;
-					SmTrajectoryStock_[partitionIndex][k] = SmFinalTemp;
-				}
+				sTrajectoryStock_[partitionIndex][k] = q + sTrajectoryStock_[partitionIndex][k+1] -0.5*Gv.transpose()*HmInverse*Gv;
+				SvTrajectoryStock_[partitionIndex][k] = Qv + Am.transpose()*SvTrajectoryStock_[partitionIndex][k+1] - Gm.transpose()*HmInverse*Gv;
+				SmTrajectoryStock_[partitionIndex][k] = Qm + Am.transpose()*SmTrajectoryStock_[partitionIndex][k+1]*Am - Gm.transpose()*HmInverse*Gm;
 			}
-		} else {
-			sTrajectoryStock_[partitionIndex][beginTimeItr] = sFinal;
-			SvTrajectoryStock_[partitionIndex][beginTimeItr] = SvFinal;
-			SmTrajectoryStock_[partitionIndex][beginTimeItr] = SmFinal;
 		}
 
-		if (i < NE) {
-			sFinalTemp  = sTrajectoryStock_[partitionIndex][beginTimeItr]  + qFinalStock_[partitionIndex][i];
-			SvFinalTemp = SvTrajectoryStock_[partitionIndex][beginTimeItr] + QvFinalStock_[partitionIndex][i];
-			SmFinalTemp = SmTrajectoryStock_[partitionIndex][beginTimeItr] + QmFinalStock_[partitionIndex][i];
+		if (i > 0) {
+			sFinalTemp  = sTrajectoryStock_[partitionIndex][beginTimeItr]  + qFinalStock_[partitionIndex][i-1];
+			SvFinalTemp = SvTrajectoryStock_[partitionIndex][beginTimeItr] + QvFinalStock_[partitionIndex][i-1];
+			SmFinalTemp = SmTrajectoryStock_[partitionIndex][beginTimeItr] + QmFinalStock_[partitionIndex][i-1];
 		}
 
 	}  // end of i loop

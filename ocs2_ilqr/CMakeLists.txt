@@ -91,10 +91,10 @@ target_link_libraries(exp0_ilqr_test
   ${Boost_LIBRARIES}
 )
 
-#catkin_add_gtest(exp1_ilqr_test 
-#  test/exp1_ilqr_test.cpp
-#)
-#target_link_libraries(exp1_ilqr_test
-#  ${catkin_LIBRARIES}
-#  ${Boost_LIBRARIES}
-#)
+catkin_add_gtest(exp1_ilqr_test 
+  test/exp1_ilqr_test.cpp
+)
+target_link_libraries(exp1_ilqr_test
+  ${catkin_LIBRARIES}
+  ${Boost_LIBRARIES}
+)

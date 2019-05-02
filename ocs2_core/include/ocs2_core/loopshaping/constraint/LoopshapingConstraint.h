@@ -60,8 +60,11 @@ class LoopshapingConstraint : public ConstraintBase<
 
   LoopshapingConstraint(const LoopshapingConstraint &obj) :
       BASE(),
-      systemConstraint_(obj.systemConstraint_->clone()),
-      loopshapingDefinition_(obj.loopshapingDefinition_) {}
+      loopshapingDefinition_(obj.loopshapingDefinition_) {
+    if (obj.systemConstraint_) {
+      systemConstraint_.reset(obj.systemConstraint_->clone());
+    }
+  }
 
   static std::unique_ptr<LoopshapingConstraint> Create(const SYSTEM_CONSTRAINT &systemConstraint,
                                                        std::shared_ptr<LoopshapingDefinition> loopshapingDefinition);

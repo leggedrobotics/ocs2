@@ -63,7 +63,7 @@ void MRT_ROS_Dummy_Quadruped<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::launchVisu
 /******************************************************************************************************/
 template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM>
 void MRT_ROS_Dummy_Quadruped<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::publishVisualizer(
-		const system_observation_t& observation) {
+		const system_observation_t& observation, const cost_desired_trajectories_t& costDesiredTrajectories) {
 
 		quadrupedXppVisualizer_.publishObservation(observation);
 }

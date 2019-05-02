@@ -54,6 +54,7 @@ public:
 	typedef typename BASE::input_state_matrix_t 	   	input_state_matrix_t;
 	typedef typename BASE::input_state_matrix_array_t  	input_state_matrix_array_t;
 	typedef typename BASE::system_observation_t 		system_observation_t;
+	typedef typename BASE::cost_desired_trajectories_t 		cost_desired_trajectories_t;
 
 	typedef Eigen::Matrix<scalar_t,3,1>	vector_3d_t;
 	typedef std::array<vector_3d_t,4>	vector_3d_array_t;
@@ -121,7 +122,8 @@ protected:
 	 *
 	 * @param [in] observation: The current observation.
 	 */
-	virtual void publishVisualizer(const system_observation_t& observation) override;
+	virtual void publishVisualizer(const system_observation_t& observation,
+			const cost_desired_trajectories_t& costDesiredTrajectories) override;
 
 private:
 	quadruped_interface_ptr_t ocs2QuadrupedInterfacePtr_;

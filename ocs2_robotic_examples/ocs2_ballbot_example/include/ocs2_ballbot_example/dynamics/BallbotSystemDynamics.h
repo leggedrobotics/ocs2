@@ -72,7 +72,6 @@ public:
 	typedef typename BASE::input_vector_t input_vector_t;
 
     typedef BallbotParameters<scalar_t> ballbot_parameters_t;
-    
 
 	/**
 	 * Constructor.

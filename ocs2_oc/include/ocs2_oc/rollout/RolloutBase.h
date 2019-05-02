@@ -179,8 +179,9 @@ public:
 		}
 		std::cerr << std::endl;
 
+		const size_t numSubsystems = eventsPastTheEndIndeces.size() + 1;
 		size_t k = 0;
-		for (size_t i=0; i<=eventsPastTheEndIndeces.size(); i++) {
+		for (size_t i=0; i<numSubsystems; i++) {
 			for (; k<timeTrajectory.size(); k++) {
 				std::cerr << "k:     " << k << std::endl;
 				std::cerr << "Time:  " << timeTrajectory[k] << std::endl;
@@ -189,6 +190,7 @@ public:
 
 				if (i<eventsPastTheEndIndeces.size() && k+1==eventsPastTheEndIndeces[i]) {
 					std::cerr << "+++ event took place +++" << std::endl;
+					k++;
 					break;
 				}
 			} // end of k loop

@@ -167,7 +167,7 @@ void MRT_ROS_Dummy_Loop<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::run() {
 		}
 
 		// Visualization
-		publishVisualizer(observation_);
+		publishVisualizer(observation_, mrtPtr_->mpcCostDesiredTrajectories());
 
 		rosRate.sleep();
 

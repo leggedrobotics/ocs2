@@ -6,11 +6,10 @@ CMakeCache.txt
 *.so
 Makefile
 .project
-.idea/*
+*.idea*
 .cproject
 *~
-*/.settings/*
-*/.idea/*
+*.settings*
 */doc/html/
 Doxyfile
 *.orig

@@ -49,6 +49,8 @@ public:
 	typedef ocs2::MRT_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> mrt_t;
 	typedef typename mrt_t::Ptr	mrt_ptr_t;
 
+	typedef typename mrt_t::controller_t       controller_t;
+	typedef typename mrt_t::controller_array_t controller_array_t;
 	typedef typename mrt_t::scalar_t             scalar_t;
 	typedef typename mrt_t::scalar_array_t       scalar_array_t;
 	typedef typename mrt_t::size_array_t         size_array_t;
@@ -61,6 +63,7 @@ public:
 
 	typedef typename mrt_t::system_observation_t system_observation_t;
 	typedef ControlledSystemBase<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> controlled_system_base_t;
+	typedef typename mrt_t::cost_desired_trajectories_t cost_desired_trajectories_t;
 
 	/**
 	 * Constructor.
@@ -126,9 +129,11 @@ protected:
 	 * Visualizes the current observation.
 	 *
 	 * @param [in] observation: The current observation.
+	 * @param [in] costDesiredTrajectories: The commanded target trajectory or point.
 	 */
-	virtual void publishVisualizer(const system_observation_t& observation) {}
-
+	virtual void publishVisualizer(
+			const system_observation_t& observation,
+			const cost_desired_trajectories_t& costDesiredTrajectories) {}
 
 protected:
 	/*

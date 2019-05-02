@@ -27,6 +27,8 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
+#include <thread>
+
 namespace ocs2{
 
 /******************************************************************************************************/
@@ -81,7 +83,7 @@ template <typename SCALAR_T>
 void TargetTrajectories_Keyboard_Interface<SCALAR_T>::getKeyboardCommand(
 		const std::string& commadMsg /*= "Enter command, separated by spaces"*/) {
 
-	while (ros::ok()) {
+	while (ros::ok() && ros::master::check()) {
 
 		// get command line
 		std::cout << commadMsg << ": ";
@@ -120,8 +122,25 @@ typename TargetTrajectories_Keyboard_Interface<SCALAR_T>::scalar_array_t
 
 	scalar_array_t targetCommand(0);
 
+	// Set up a thread to read user inputs
 	std::string line;
-	std::getline(std::cin, line);
+	bool lineRead;
+	std::thread thr([&line, &lineRead](){
+	  lineRead = false;
+	  getline(std::cin, line);
+	  lineRead = true;
+	});
+
+	// wait till line is read or terminate if ROS is gone.
+	ros::WallRate rate(30);
+	while (!lineRead) {
+		if (!ros::ok() || !ros::master::check()) {
+			std::terminate(); // Need to terminate thread that is still waiting for input
+		}
+		rate.sleep();
+	}
+	thr.join();
+
 	std::istringstream stream(line);
 	scalar_t in;
 	while (stream >> in)

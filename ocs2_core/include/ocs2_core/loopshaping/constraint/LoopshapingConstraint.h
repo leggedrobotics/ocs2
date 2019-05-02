@@ -11,17 +11,12 @@
 #include "ocs2_core/logic/machine/LogicRulesMachine.h"
 #include "ocs2_core/loopshaping/LoopshapingDefinition.h"
 
-#include "ocs2_core/loopshaping/constraint/LoopshapingConstraintImplementationBase.h"
-#include "ocs2_core/loopshaping/constraint/LoopshapingConstraintEliminatePattern.h"
-#include "ocs2_core/loopshaping/constraint/LoopshapingConstraintInputPattern.h"
-#include "ocs2_core/loopshaping/constraint/LoopshapingConstraintOutputPattern.h"
-
 namespace ocs2 {
 template<size_t FULL_STATE_DIM, size_t FULL_INPUT_DIM,
     size_t SYSTEM_STATE_DIM, size_t SYSTEM_INPUT_DIM,
     size_t FILTER_STATE_DIM, size_t FILTER_INPUT_DIM,
     class LOGIC_RULES_T=NullLogicRules>
-class LoopshapingConstraint final : public ConstraintBase<
+class LoopshapingConstraint : public ConstraintBase<
     FULL_STATE_DIM, FULL_INPUT_DIM, LOGIC_RULES_T> {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
@@ -61,44 +56,17 @@ class LoopshapingConstraint final : public ConstraintBase<
   using filter_state_vector_t = typename FILTER_DIMENSIONS::state_vector_t;
   using filter_input_vector_t = typename FILTER_DIMENSIONS::input_vector_t;
 
-  using LoopshapingConstraintImplementation = LoopshapingConstraintImplementationBase<FULL_STATE_DIM,
-                                                                                      FULL_INPUT_DIM,
-                                                                                      SYSTEM_STATE_DIM,
-                                                                                      SYSTEM_INPUT_DIM,
-                                                                                      FILTER_STATE_DIM,
-                                                                                      FILTER_INPUT_DIM,
-                                                                                      LOGIC_RULES_T>;
-
-  LoopshapingConstraint(const SYSTEM_CONSTRAINT &systemConstraint,
-                        std::shared_ptr<LoopshapingDefinition> loopshapingDefinition) :
-      BASE(),
-      systemConstraint_(systemConstraint.clone()),
-      loopshapingDefinition_(std::move(loopshapingDefinition)) {
-    loadImplementation();
-  };
-
-  LoopshapingConstraint(std::shared_ptr<LoopshapingDefinition> loopshapingDefinition) :
-      BASE(),
-      systemConstraint_(nullptr),
-      loopshapingDefinition_(std::move(loopshapingDefinition)) {
-    loadImplementation();
-  };
-
   ~LoopshapingConstraint() override = default;
 
   LoopshapingConstraint(const LoopshapingConstraint &obj) :
       BASE(),
-      systemConstraint_(nullptr),
-      loopshapingDefinition_(obj.loopshapingDefinition_) {
-    if (obj.systemConstraint_) {
-      systemConstraint_ = std::shared_ptr<SYSTEM_CONSTRAINT>(obj.systemConstraint_->clone());
-    };
-    loadImplementation();
-  }
+      systemConstraint_(obj.systemConstraint_->clone()),
+      loopshapingDefinition_(obj.loopshapingDefinition_) {}
 
-  LoopshapingConstraint *clone() const override {
-    return new LoopshapingConstraint(*this);
-  };
+  static std::unique_ptr<LoopshapingConstraint> Create(const SYSTEM_CONSTRAINT &systemConstraint,
+                                                       std::shared_ptr<LoopshapingDefinition> loopshapingDefinition);
+
+  static std::unique_ptr<LoopshapingConstraint> Create(std::shared_ptr<LoopshapingDefinition> loopshapingDefinition);
 
   void initializeModel(
       LogicRulesMachine<LOGIC_RULES_T> &logicRulesMachine,
@@ -108,7 +76,6 @@ class LoopshapingConstraint final : public ConstraintBase<
     if (systemConstraint_) {
       systemConstraint_->initializeModel(logicRulesMachine, partitionIndex, algorithmName);
     };
-    loadImplementation();
   }
 
   void setCurrentStateAndControl(
@@ -117,10 +84,7 @@ class LoopshapingConstraint final : public ConstraintBase<
       const input_vector_t &u) override {
     BASE::setCurrentStateAndControl(t, x, u);
 
-    filter_state_vector_t x_filter_;
-    filter_input_vector_t u_filter_;
-    system_state_vector_t x_system_;
-    system_input_vector_t u_system_;
+    t_ = t;
     loopshapingDefinition_->getSystemState(x, x_system_);
     loopshapingDefinition_->getSystemInput(x, u, u_system_);
     loopshapingDefinition_->getFilterState(x, x_filter_);
@@ -129,8 +93,6 @@ class LoopshapingConstraint final : public ConstraintBase<
     if (systemConstraint_) {
       systemConstraint_->setCurrentStateAndControl(t, x_system_, u_system_);
     }
-
-    loopshapingConstraintImplementation_->setCurrentStateAndControl(t, x_system_, u_system_, x_filter_, u_filter_);
   }
 
   void getConstraint1(constraint1_vector_t &e) override {
@@ -142,7 +104,7 @@ class LoopshapingConstraint final : public ConstraintBase<
       e.template segment<SYSTEM_INPUT_DIM>(0) = e_system;
     }
 
-    loopshapingConstraintImplementation_->getConstraint1(numSystemConstraints, e);
+    appendConstraint1(numSystemConstraints, e);
   }
 
   size_t numStateInputConstraint(const scalar_t &time) override {
@@ -150,7 +112,7 @@ class LoopshapingConstraint final : public ConstraintBase<
     if (systemConstraint_) {
       numSystemConstraints = systemConstraint_->numStateInputConstraint(time);
     }
-    return loopshapingConstraintImplementation_->numStateInputConstraint(numSystemConstraints, time);
+    return addNumStateInputConstraint(numSystemConstraints);
   }
 
   void getConstraint2(constraint2_vector_t &h) override {
@@ -215,7 +177,7 @@ class LoopshapingConstraint final : public ConstraintBase<
       }
     }
 
-    loopshapingConstraintImplementation_->getConstraint1DerivativesState(numSystemConstraints, C);
+    appendConstraint1DerivativeState(numSystemConstraints, C);
   }
 
   void getConstraint1DerivativesControl(constraint1_input_matrix_t &D) override {
@@ -233,7 +195,7 @@ class LoopshapingConstraint final : public ConstraintBase<
       }
     }
 
-    loopshapingConstraintImplementation_->getConstraint1DerivativesControl(numSystemConstraints, D);
+    appendConstraint1DerivativeControl(numSystemConstraints, D);
   }
 
   void getConstraint2DerivativesState(constraint2_state_matrix_t &F) override {
@@ -245,26 +207,6 @@ class LoopshapingConstraint final : public ConstraintBase<
     }
   }
 
-  void getInequalityConstraintDerivativesState(state_vector_array_t &dhdx) override {
-    loopshapingConstraintImplementation_->getInequalityConstraintDerivativesState(dhdx);
-  }
-
-  void getInequalityConstraintDerivativesInput(input_vector_array_t &dhdu) override {
-    loopshapingConstraintImplementation_->getInequalityConstraintDerivativesInput(dhdu);
-  }
-
-  void getInequalityConstraintSecondDerivativesState(state_matrix_array_t &ddhdxdx) override {
-    loopshapingConstraintImplementation_->getInequalityConstraintSecondDerivativesState(ddhdxdx);
-  }
-
-  void getInequalityConstraintSecondDerivativesInput(input_matrix_array_t &ddhdudu) override {
-    loopshapingConstraintImplementation_->getInequalityConstraintSecondDerivativesInput(ddhdudu);
-  }
-
-  void getInequalityConstraintDerivativesInputState(input_state_matrix_array_t &ddhdudx) override {
-    loopshapingConstraintImplementation_->getInequalityConstraintDerivativesInputState(ddhdudx);
-  }
-
   void getFinalConstraint2DerivativesState(constraint2_state_matrix_t &F_f) {
     if (systemConstraint_) {
       system_constraint2_state_matrix_t F_f_system;
@@ -274,48 +216,157 @@ class LoopshapingConstraint final : public ConstraintBase<
     }
   }
 
+ protected:
+  LoopshapingConstraint(const SYSTEM_CONSTRAINT &systemConstraint,
+                        std::shared_ptr<LoopshapingDefinition> loopshapingDefinition) :
+      BASE(),
+      systemConstraint_(systemConstraint.clone()),
+      loopshapingDefinition_(std::move(loopshapingDefinition)) {
+
+  };
+
+  LoopshapingConstraint(std::shared_ptr<LoopshapingDefinition> loopshapingDefinition) :
+      BASE(),
+      systemConstraint_(nullptr),
+      loopshapingDefinition_(std::move(loopshapingDefinition)) {
+
+  };
+
+  std::unique_ptr<SYSTEM_CONSTRAINT> systemConstraint_;
+  std::shared_ptr<LoopshapingDefinition> loopshapingDefinition_;
+
+  scalar_t t_;
+  filter_state_vector_t x_filter_;
+  filter_input_vector_t u_filter_;
+  system_state_vector_t x_system_;
+  system_input_vector_t u_system_;
+
  private:
-  void loadImplementation() {
-    if (loopshapingDefinition_->getInputFilter_s().getNumOutputs() > 0) {
-      if (loopshapingDefinition_->eliminateInputs) {
-        loopshapingConstraintImplementation_.reset(new LoopshapingConstraintEliminatePattern<FULL_STATE_DIM,
-                                                                                             FULL_INPUT_DIM,
-                                                                                             SYSTEM_STATE_DIM,
-                                                                                             SYSTEM_INPUT_DIM,
-                                                                                             FILTER_STATE_DIM,
-                                                                                             FILTER_INPUT_DIM,
-                                                                                             LOGIC_RULES_T>(
-            systemConstraint_,
-            loopshapingDefinition_));
-      } else {
-        loopshapingConstraintImplementation_.reset(new LoopshapingConstraintInputPattern<FULL_STATE_DIM,
+  // Interface for derived classes to append additional constraints. Adding nothing by default
+  virtual size_t addNumStateInputConstraint(size_t numSystemStateInputConstraints) { return numSystemStateInputConstraints; };
+  virtual void appendConstraint1(size_t numSystemStateInputConstraints, constraint1_vector_t &e) {};
+  virtual void appendConstraint1DerivativeState(size_t numSystemStateInputConstraints,
+                                                constraint1_state_matrix_t &C) {};
+  virtual void appendConstraint1DerivativeControl(size_t numSystemStateInputConstraints,
+                                                  constraint1_input_matrix_t &D) {};
+
+};
+} // namespace ocs2;
+
+#include "ocs2_core/loopshaping/constraint/LoopshapingConstraintEliminatePattern.h"
+#include "ocs2_core/loopshaping/constraint/LoopshapingConstraintInputPattern.h"
+#include "ocs2_core/loopshaping/constraint/LoopshapingConstraintOutputPattern.h"
+
+// Implement factory method
+namespace ocs2 {
+template<size_t FULL_STATE_DIM, size_t FULL_INPUT_DIM,
+    size_t SYSTEM_STATE_DIM, size_t SYSTEM_INPUT_DIM,
+    size_t FILTER_STATE_DIM, size_t FILTER_INPUT_DIM,
+    class LOGIC_RULES_T>
+std::unique_ptr<LoopshapingConstraint<FULL_STATE_DIM,
+                                      FULL_INPUT_DIM,
+                                      SYSTEM_STATE_DIM,
+                                      SYSTEM_INPUT_DIM,
+                                      FILTER_STATE_DIM,
+                                      FILTER_INPUT_DIM,
+                                      LOGIC_RULES_T>>
+LoopshapingConstraint<FULL_STATE_DIM,
+                      FULL_INPUT_DIM,
+                      SYSTEM_STATE_DIM,
+                      SYSTEM_INPUT_DIM,
+                      FILTER_STATE_DIM,
+                      FILTER_INPUT_DIM,
+                      LOGIC_RULES_T>::Create(std::shared_ptr<
+    LoopshapingDefinition> loopshapingDefinition) {
+  if (loopshapingDefinition->getInputFilter_s().getNumOutputs() > 0) {
+    if (loopshapingDefinition->eliminateInputs) {
+      return std::unique_ptr<LoopshapingConstraint>(new LoopshapingConstraintEliminatePattern<FULL_STATE_DIM,
+                                                                                              FULL_INPUT_DIM,
+                                                                                              SYSTEM_STATE_DIM,
+                                                                                              SYSTEM_INPUT_DIM,
+                                                                                              FILTER_STATE_DIM,
+                                                                                              FILTER_INPUT_DIM,
+                                                                                              LOGIC_RULES_T>(
+          std::move(loopshapingDefinition)));
+    } else {
+      return std::unique_ptr<LoopshapingConstraint>(new LoopshapingConstraintInputPattern<FULL_STATE_DIM,
+                                                                                          FULL_INPUT_DIM,
+                                                                                          SYSTEM_STATE_DIM,
+                                                                                          SYSTEM_INPUT_DIM,
+                                                                                          FILTER_STATE_DIM,
+                                                                                          FILTER_INPUT_DIM,
+                                                                                          LOGIC_RULES_T>(
+          std::move(loopshapingDefinition)));
+    }
+  }
+  if (loopshapingDefinition->getInputFilter_r().getNumOutputs() > 0) {
+    return std::unique_ptr<LoopshapingConstraint>(new LoopshapingConstraintOutputPattern<FULL_STATE_DIM,
                                                                                          FULL_INPUT_DIM,
                                                                                          SYSTEM_STATE_DIM,
                                                                                          SYSTEM_INPUT_DIM,
                                                                                          FILTER_STATE_DIM,
                                                                                          FILTER_INPUT_DIM,
                                                                                          LOGIC_RULES_T>(
-            systemConstraint_,
-            loopshapingDefinition_));
-      }
-    }
-    if (loopshapingDefinition_->getInputFilter_r().getNumOutputs() > 0) {
-      loopshapingConstraintImplementation_.reset(new LoopshapingConstraintOutputPattern<FULL_STATE_DIM,
-                                                                                        FULL_INPUT_DIM,
-                                                                                        SYSTEM_STATE_DIM,
-                                                                                        SYSTEM_INPUT_DIM,
-                                                                                        FILTER_STATE_DIM,
-                                                                                        FILTER_INPUT_DIM,
-                                                                                        LOGIC_RULES_T>(
-          systemConstraint_,
-          loopshapingDefinition_));
+        std::move(loopshapingDefinition)));
+  }
+}
+
+template<size_t FULL_STATE_DIM, size_t FULL_INPUT_DIM,
+    size_t SYSTEM_STATE_DIM, size_t SYSTEM_INPUT_DIM,
+    size_t FILTER_STATE_DIM, size_t FILTER_INPUT_DIM,
+    class LOGIC_RULES_T>
+std::unique_ptr<LoopshapingConstraint<FULL_STATE_DIM,
+                                      FULL_INPUT_DIM,
+                                      SYSTEM_STATE_DIM,
+                                      SYSTEM_INPUT_DIM,
+                                      FILTER_STATE_DIM,
+                                      FILTER_INPUT_DIM,
+                                      LOGIC_RULES_T>>
+LoopshapingConstraint<FULL_STATE_DIM,
+                      FULL_INPUT_DIM,
+                      SYSTEM_STATE_DIM,
+                      SYSTEM_INPUT_DIM,
+                      FILTER_STATE_DIM,
+                      FILTER_INPUT_DIM,
+                      LOGIC_RULES_T>::Create(const SYSTEM_CONSTRAINT &systemConstraint,
+                                             std::shared_ptr<
+                                                 LoopshapingDefinition> loopshapingDefinition) {
+  if (loopshapingDefinition->getInputFilter_s().getNumOutputs() > 0) {
+    if (loopshapingDefinition->eliminateInputs) {
+      return std::unique_ptr<LoopshapingConstraint>(new LoopshapingConstraintEliminatePattern<FULL_STATE_DIM,
+                                                                                              FULL_INPUT_DIM,
+                                                                                              SYSTEM_STATE_DIM,
+                                                                                              SYSTEM_INPUT_DIM,
+                                                                                              FILTER_STATE_DIM,
+                                                                                              FILTER_INPUT_DIM,
+                                                                                              LOGIC_RULES_T>(
+          systemConstraint,
+          std::move(loopshapingDefinition)));
+    } else {
+      return std::unique_ptr<LoopshapingConstraint>(new LoopshapingConstraintInputPattern<FULL_STATE_DIM,
+                                                                                          FULL_INPUT_DIM,
+                                                                                          SYSTEM_STATE_DIM,
+                                                                                          SYSTEM_INPUT_DIM,
+                                                                                          FILTER_STATE_DIM,
+                                                                                          FILTER_INPUT_DIM,
+                                                                                          LOGIC_RULES_T>(
+          systemConstraint,
+          std::move(loopshapingDefinition)));
     }
   }
+  if (loopshapingDefinition->getInputFilter_r().getNumOutputs() > 0) {
+    return std::unique_ptr<LoopshapingConstraint>(new LoopshapingConstraintOutputPattern<FULL_STATE_DIM,
+                                                                                         FULL_INPUT_DIM,
+                                                                                         SYSTEM_STATE_DIM,
+                                                                                         SYSTEM_INPUT_DIM,
+                                                                                         FILTER_STATE_DIM,
+                                                                                         FILTER_INPUT_DIM,
+                                                                                         LOGIC_RULES_T>(
+        systemConstraint,
+        std::move(loopshapingDefinition)));
+  }
+}
+} // namespace ocs2
 
-  std::shared_ptr<SYSTEM_CONSTRAINT> systemConstraint_;
-  std::unique_ptr<LoopshapingConstraintImplementation> loopshapingConstraintImplementation_;
-  std::shared_ptr<LoopshapingDefinition> loopshapingDefinition_;
-};
-} // namespace ocs2;
 
 #endif //OCS2_LOOPSHAPINGCONSTRAINT_H

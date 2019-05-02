@@ -50,6 +50,11 @@ class LoopshapingCost : public CostFunctionBase<FULL_STATE_DIM, FULL_INPUT_DIM, 
 
   ~LoopshapingCost() override = default;
 
+  LoopshapingCost(const LoopshapingCost &obj) :
+      BASE(),
+      systemCost_(obj.systemCost_->clone()),
+      loopshapingDefinition_(obj.loopshapingDefinition_) {}
+
   void initializeModel(
       LogicRulesMachine<LOGIC_RULES_T> &logicRulesMachine,
       const size_t &partitionIndex,
@@ -75,6 +80,7 @@ class LoopshapingCost : public CostFunctionBase<FULL_STATE_DIM, FULL_INPUT_DIM, 
     dynamic_vector_t uNominal;
     uNominalFunc_.interpolate(t, uNominal);
 
+    t_ = t;
     loopshapingDefinition_->getSystemState(x, x_system_);
     loopshapingDefinition_->getSystemInput(x, u, u_system_);
     loopshapingDefinition_->getFilterState(x, x_filter_);
@@ -210,7 +216,7 @@ class LoopshapingCost : public CostFunctionBase<FULL_STATE_DIM, FULL_INPUT_DIM, 
   };
 
  private:
-  std::shared_ptr<SYSTEMCOST> systemCost_;
+  std::unique_ptr<SYSTEMCOST> systemCost_;
 
   bool costApproximationValid_;
   bool costEvaluationValid_;

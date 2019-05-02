@@ -145,10 +145,10 @@ class LoopshapingDynamicsDerivative : public DerivativesBase<FULL_STATE_DIM, FUL
       systemDerivative_(systemDerivative.clone()),
       loopshapingDefinition_(std::move(loopshapingDefinition)) {};
 
-  std::unique_ptr<SYSTEM_DERIVATIVE> systemDerivative_;
   std::shared_ptr<LoopshapingDefinition> loopshapingDefinition_;
 
  private:
+  std::unique_ptr<SYSTEM_DERIVATIVE> systemDerivative_;
   virtual void loopshapingFlowMapDerivativeState(const system_state_matrix_t &A_system, state_matrix_t &A) = 0;
   virtual void loopshapingFlowMapDerivativeInput(const system_state_input_matrix_t &B_system,
                                                  state_input_matrix_t &B) = 0;

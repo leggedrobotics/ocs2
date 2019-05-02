@@ -12,6 +12,7 @@
 #include <vector>
 #include <string>
 #include <algorithm>
+#include <thread>
 
 #include <ocs2_comm_interfaces/ocs2_ros_interfaces/command/ModeSequence_ROS_Interface.h>
 #include <ocs2_switched_model_interface/core/MotionPhaseDefinition.h>
@@ -68,7 +69,7 @@ public:
 	void getKeyboardCommand(
 			const std::string& commadMsg = "Enter the desired gait, for the list of available gait enter list") {
 
-		while (ros::ok()) {
+		while (ros::ok() && ros::master::check()) {
 
 			// get command line
 			std::cout << commadMsg << ": ";
@@ -113,8 +114,25 @@ protected:
 
 		std::vector<std::string> gaitCommand(0);
 
+		// Set up a thread to read user inputs
 		std::string line;
-		std::getline(std::cin, line);
+		bool lineRead;
+		std::thread thr([&line, &lineRead](){
+		  lineRead = false;
+		  getline(std::cin, line);
+		  lineRead = true;
+		});
+
+		// wait till line is read or terminate if ROS is gone.
+		ros::WallRate rate(30);
+		while (!lineRead) {
+			if (!ros::ok() || !ros::master::check()) {
+				std::terminate(); // Need to terminate thread that is still waiting for input
+			}
+			rate.sleep();
+		}
+		thr.join();
+
 		std::istringstream stream(line);
 		std::string in;
 		while (stream >> in)

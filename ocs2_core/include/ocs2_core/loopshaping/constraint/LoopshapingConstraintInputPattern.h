@@ -69,42 +69,33 @@ class LoopshapingConstraintInputPattern final: public LoopshapingConstraint<FULL
   };
 
   void getInequalityConstraintDerivativesState(state_vector_array_t &dhdx) override {
+    this->computeSystemInequalityConstraintDerivatives();
     dhdx.clear();
     if (systemConstraint_) {
-      // Compute system inequality derivatives
-      system_state_vector_array_t system_dhdx;
-      systemConstraint_->getInequalityConstraintDerivativesState(system_dhdx);
-
       dhdx.resize(system_dhdx.size());
       for (size_t i = 0; i < system_dhdx.size(); i++) {
-        dhdx[i].head(system_dhdx[i].size()) = system_dhdx[i];
+        dhdx[i].head(SYSTEM_STATE_DIM) = system_dhdx[i];
         dhdx[i].tail(FILTER_STATE_DIM).setZero();
       }
     }
   };
 
   void getInequalityConstraintDerivativesInput(input_vector_array_t &dhdu) override {
+    this->computeSystemInequalityConstraintDerivatives();
     dhdu.clear();
     if (systemConstraint_) {
-      // Compute system inequality derivatives
-      system_input_vector_array_t system_dhdu;
-      systemConstraint_->getInequalityConstraintDerivativesInput(system_dhdu);
-
       dhdu.resize(system_dhdu.size());
       for (size_t i = 0; i < system_dhdu.size(); i++) {
-        dhdu[i].head(system_dhdu[i].size()) = system_dhdu[i];
+        dhdu[i].head(SYSTEM_INPUT_DIM) = system_dhdu[i];
         dhdu[i].tail(FILTER_INPUT_DIM).setZero();
       }
     }
   };
 
   void getInequalityConstraintSecondDerivativesState(state_matrix_array_t &ddhdxdx) override {
+    this->computeSystemInequalityConstraintDerivatives();
     ddhdxdx.clear();
     if (systemConstraint_) {
-      // Compute system inequality constraint hessians
-      system_state_matrix_array_t system_ddhdxdx;
-      systemConstraint_->getInequalityConstraintSecondDerivativesState(system_ddhdxdx);
-
       ddhdxdx.resize(system_ddhdxdx.size());
       for (size_t i = 0; i < system_ddhdxdx.size(); i++) {
         ddhdxdx[i].block(0, 0, SYSTEM_STATE_DIM, SYSTEM_STATE_DIM) = system_ddhdxdx[i];
@@ -116,12 +107,9 @@ class LoopshapingConstraintInputPattern final: public LoopshapingConstraint<FULL
   };
 
   void getInequalityConstraintSecondDerivativesInput(input_matrix_array_t &ddhdudu) override {
+    this->computeSystemInequalityConstraintDerivatives();
     ddhdudu.clear();
     if (systemConstraint_) {
-      // Compute system constraint hessians
-      system_input_matrix_array_t system_ddhdudu;
-      systemConstraint_->getInequalityConstraintSecondDerivativesInput(system_ddhdudu);
-
       ddhdudu.resize(system_ddhdudu.size());
       for (size_t i = 0; i < system_ddhdudu.size(); i++) {
         ddhdudu[i].block(0, 0, SYSTEM_INPUT_DIM, SYSTEM_INPUT_DIM) = system_ddhdudu[i];
@@ -133,12 +121,9 @@ class LoopshapingConstraintInputPattern final: public LoopshapingConstraint<FULL
   };
 
   void getInequalityConstraintDerivativesInputState(input_state_matrix_array_t &ddhdudx) override {
+    this->computeSystemInequalityConstraintDerivatives();
     ddhdudx.clear();
     if (systemConstraint_) {
-      // Compute system hessians
-      system_input_state_matrix_array_t system_ddhdudx;
-      systemConstraint_->getInequalityConstraintDerivativesInputState(system_ddhdudx);
-
       ddhdudx.resize(system_ddhdudx.size());
       for (size_t i = 0; i < system_ddhdudx.size(); i++) {
         ddhdudx[i].block(0, 0, SYSTEM_INPUT_DIM, SYSTEM_STATE_DIM) = system_ddhdudx[i];
@@ -158,6 +143,12 @@ class LoopshapingConstraintInputPattern final: public LoopshapingConstraint<FULL
   using BASE::u_filter_;
   using BASE::x_system_;
   using BASE::u_system_;
+
+  using BASE::system_dhdx;
+  using BASE::system_dhdu;
+  using BASE::system_ddhdxdx;
+  using BASE::system_ddhdudu;
+  using BASE::system_ddhdudx;
 
  private:
   size_t addNumStateInputConstraint(size_t numSystemStateInputConstraints) override {

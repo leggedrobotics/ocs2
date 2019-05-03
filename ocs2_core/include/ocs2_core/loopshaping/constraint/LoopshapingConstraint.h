@@ -61,7 +61,9 @@ class LoopshapingConstraint : public ConstraintBase<
 
   LoopshapingConstraint(const LoopshapingConstraint &obj) :
       BASE(),
-      loopshapingDefinition_(obj.loopshapingDefinition_) {
+      loopshapingDefinition_(obj.loopshapingDefinition_),
+      systemStateInputConstraintApproximationValid_(false),
+      systemInequalityConstraintApproximationValid_(false) {
     if (obj.systemConstraint_) {
       systemConstraint_.reset(obj.systemConstraint_->clone());
     }
@@ -80,12 +82,17 @@ class LoopshapingConstraint : public ConstraintBase<
     if (systemConstraint_) {
       systemConstraint_->initializeModel(logicRulesMachine, partitionIndex, algorithmName);
     };
+    systemStateInputConstraintApproximationValid_ = false;
+    systemInequalityConstraintApproximationValid_ = false;
   }
 
   void setCurrentStateAndControl(
       const scalar_t &t,
       const state_vector_t &x,
       const input_vector_t &u) override {
+    systemStateInputConstraintApproximationValid_ = false;
+    systemInequalityConstraintApproximationValid_ = false;
+
     BASE::setCurrentStateAndControl(t, x, u);
 
     t_ = t;
@@ -166,12 +173,11 @@ class LoopshapingConstraint : public ConstraintBase<
   }
 
   void getConstraint1DerivativesState(constraint1_state_matrix_t &C) override {
+    computeSystemStateInputConstraintDerivatives();
+
     size_t numSystemConstraints = 0;
     if (systemConstraint_) {
       numSystemConstraints = systemConstraint_->numStateInputConstraint(BASE::t_);
-
-      system_constraint1_state_matrix_t C_system;
-      systemConstraint_->getConstraint1DerivativesState(C_system);
       C.block(0, 0, numSystemConstraints, SYSTEM_STATE_DIM) =
           C_system.block(0, 0, numSystemConstraints, SYSTEM_STATE_DIM);
 
@@ -185,11 +191,11 @@ class LoopshapingConstraint : public ConstraintBase<
   }
 
   void getConstraint1DerivativesControl(constraint1_input_matrix_t &D) override {
+    computeSystemStateInputConstraintDerivatives();
+
     size_t numSystemConstraints = 0;
     if (systemConstraint_) {
       numSystemConstraints = systemConstraint_->numStateInputConstraint(BASE::t_);
-      system_constraint1_input_matrix_t D_system;
-      systemConstraint_->getConstraint1DerivativesControl(D_system);
       D.block(0, 0, numSystemConstraints, SYSTEM_INPUT_DIM) =
           D_system.block(0, 0, numSystemConstraints, SYSTEM_INPUT_DIM);
 
@@ -225,16 +231,16 @@ class LoopshapingConstraint : public ConstraintBase<
                         std::shared_ptr<LoopshapingDefinition> loopshapingDefinition) :
       BASE(),
       systemConstraint_(systemConstraint.clone()),
-      loopshapingDefinition_(std::move(loopshapingDefinition)) {
-
-  };
+      loopshapingDefinition_(std::move(loopshapingDefinition)),
+      systemStateInputConstraintApproximationValid_(false),
+      systemInequalityConstraintApproximationValid_(false) {  };
 
   LoopshapingConstraint(std::shared_ptr<LoopshapingDefinition> loopshapingDefinition) :
       BASE(),
       systemConstraint_(nullptr),
-      loopshapingDefinition_(std::move(loopshapingDefinition)) {
-
-  };
+      loopshapingDefinition_(std::move(loopshapingDefinition)),
+      systemStateInputConstraintApproximationValid_(false),
+      systemInequalityConstraintApproximationValid_(false) {  };
 
   std::unique_ptr<SYSTEM_CONSTRAINT> systemConstraint_;
   std::shared_ptr<LoopshapingDefinition> loopshapingDefinition_;
@@ -245,7 +251,46 @@ class LoopshapingConstraint : public ConstraintBase<
   system_state_vector_t x_system_;
   system_input_vector_t u_system_;
 
+  system_constraint1_state_matrix_t C_system;
+  system_constraint1_input_matrix_t D_system;
+  void computeSystemStateInputConstraintDerivatives() {
+    if (!systemStateInputConstraintApproximationValid_){
+      if (systemConstraint_) {
+        systemConstraint_->getConstraint1DerivativesState(C_system);
+        systemConstraint_->getConstraint1DerivativesControl(D_system);
+      }
+      systemStateInputConstraintApproximationValid_ = true;
+    }
+  }
+
+  system_state_vector_array_t system_dhdx;
+  system_input_vector_array_t system_dhdu;
+  system_state_matrix_array_t system_ddhdxdx;
+  system_input_matrix_array_t system_ddhdudu;
+  system_input_state_matrix_array_t system_ddhdudx;
+  void computeSystemInequalityConstraintDerivatives() {
+    if (!systemInequalityConstraintApproximationValid_){
+      if (systemConstraint_) {
+        system_dhdx.clear();
+        system_dhdu.clear();
+        system_ddhdxdx.clear();
+        system_ddhdudu.clear();
+        system_ddhdudx.clear();
+
+        systemConstraint_->getInequalityConstraintDerivativesState(system_dhdx);
+        systemConstraint_->getInequalityConstraintDerivativesInput(system_dhdu);
+        systemConstraint_->getInequalityConstraintSecondDerivativesState(system_ddhdxdx);
+        systemConstraint_->getInequalityConstraintSecondDerivativesInput(system_ddhdudu);
+        systemConstraint_->getInequalityConstraintDerivativesInputState(system_ddhdudx);
+        systemInequalityConstraintApproximationValid_ = true;
+      }
+    }
+  }
+
  private:
+  bool systemStateInputConstraintApproximationValid_;
+  bool systemInequalityConstraintApproximationValid_;
+
   // Interface for derived classes to append additional constraints. Adding nothing by default
   virtual size_t addNumStateInputConstraint(size_t numSystemStateInputConstraints) { return numSystemStateInputConstraints; };
   virtual void appendConstraint1(size_t numSystemStateInputConstraints, constraint1_vector_t &e) {};

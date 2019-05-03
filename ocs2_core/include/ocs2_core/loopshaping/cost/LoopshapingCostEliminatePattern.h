@@ -65,7 +65,7 @@ class LoopshapingCostEliminatePattern final : public LoopshapingCost<FULL_STATE_
         (1.0 - gamma) * P_system_.transpose() * s_filter.getC();
     dLdxx.block(SYSTEM_STATE_DIM, 0, FILTER_STATE_DIM, SYSTEM_STATE_DIM) =
         dLdxx.block(0, SYSTEM_STATE_DIM, SYSTEM_STATE_DIM, FILTER_STATE_DIM).transpose();
-    dLdxx.block(SYSTEM_STATE_DIM, SYSTEM_STATE_DIM, FILTER_STATE_DIM, FILTER_STATE_DIM) =
+    dLdxx.block(SYSTEM_STATE_DIM, SYSTEM_STATE_DIM, FILTER_STATE_DIM, FILTER_STATE_DIM).noalias() =
         (1.0 - gamma) * s_filter.getC().transpose() * R_system_ * s_filter.getC();
   };
 
@@ -89,7 +89,7 @@ class LoopshapingCostEliminatePattern final : public LoopshapingCost<FULL_STATE_
     const auto &gamma = loopshapingDefinition_->gamma;
     auto &s_filter = loopshapingDefinition_->getInputFilter_s();
     dLdux.block(0, 0, FILTER_INPUT_DIM, SYSTEM_STATE_DIM) = gamma * P_filter_ + (1.0 - gamma) * s_filter.getD().transpose() * P_system_;
-    dLdux.block(0, SYSTEM_STATE_DIM, FILTER_INPUT_DIM, FILTER_STATE_DIM) =
+    dLdux.block(0, SYSTEM_STATE_DIM, FILTER_INPUT_DIM, FILTER_STATE_DIM).noalias() =
         (1.0 - gamma) * s_filter.getD().transpose() * R_system_ * s_filter.getC();
   };
 

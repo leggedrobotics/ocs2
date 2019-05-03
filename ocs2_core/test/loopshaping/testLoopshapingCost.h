@@ -113,20 +113,18 @@ class TestFixtureLoopShapingCost : public ::testing::Test {
                            input_vector_t &u,
                            double range = 1.0) {
     // Set random state
-    x_sys.setRandom();
-    u_sys.setRandom();
-    x_filter.setRandom();
-    u_filter.setRandom();
+    x.setRandom();
+    u.setRandom();
 
     // Scale the randomness
-    x_sys *= range;
-    u_sys *= range;
-    x_filter *= range;
-    u_filter *= range;
+    x *= range;
+    u *= range;
 
-    // Get total state
-    loopshapingDefinition_->concatenateSystemAndFilterState(x_sys, x_filter, x);
-    loopshapingDefinition_->concatenateSystemAndFilterInput(u_sys, u_filter, u);
+    // Retreive system and filter state
+    loopshapingDefinition_->getSystemState(x, x_sys);
+    loopshapingDefinition_->getSystemInput(x, u, u_sys);
+    loopshapingDefinition_->getFilterState(x, x_filter);
+    loopshapingDefinition_->getFilteredInput(x, u, u_filter);
   }
 };
 

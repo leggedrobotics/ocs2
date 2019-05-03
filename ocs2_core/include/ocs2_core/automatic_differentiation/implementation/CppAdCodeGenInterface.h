@@ -275,9 +275,9 @@ void CppAdCodeGenInterface<DOMAIN_DIM, RANGE_DIM, SCALAR_T, VARIABLE_DIM>::creat
     				CppAD::cg::system::SystemInfo<>::DYNAMIC_LIB_EXTENSION << std::endl;
     	}
 
-		// Add random string to tmp folder to avoid race condition on the temporary objects
-		int randomFromClock = std::chrono::high_resolution_clock::now().time_since_epoch().count() % 1000;
-		std::string tmpFolder = std::string("cppadcg_tmp") + std::to_string(randomFromClock) + std::to_string(getpid());
+    	// Add random string to tmp folder to avoid race condition on the temporary objects
+    	int randomFromClock = std::chrono::high_resolution_clock::now().time_since_epoch().count() % 1000;
+    	std::string tmpFolder = std::string("cppadcg_tmp") + std::to_string(randomFromClock) + std::to_string(getpid());
     	compiler_.setTemporaryFolder(tmpFolder);
 
     	dynamicLib_.reset(p.createDynamicLibrary(compiler_));
@@ -285,7 +285,7 @@ void CppAdCodeGenInterface<DOMAIN_DIM, RANGE_DIM, SCALAR_T, VARIABLE_DIM>::creat
     	model_.reset(dynamicLib_->model(modelName));
 
     } else {
-    	// TODO: .......................
+    	// TODO:
     }
 }
 

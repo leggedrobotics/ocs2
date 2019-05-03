@@ -219,6 +219,7 @@ class LoopshapingCost : public CostFunctionBase<FULL_STATE_DIM, FULL_INPUT_DIM, 
 }; // namespace ocs2
 
 // include derived implementations to be dispatched by the factory method
+#include "LoopshapingCostEliminatePattern.h"
 #include "LoopshapingCostInputPattern.h"
 #include "LoopshapingCostOutputPattern.h"
 
@@ -245,15 +246,27 @@ LoopshapingCost<FULL_STATE_DIM,
                                        std::shared_ptr<
                                            LoopshapingDefinition> loopshapingDefinition) {
   if (loopshapingDefinition->getInputFilter_s().getNumOutputs() > 0) {
-    return std::unique_ptr<LoopshapingCost>(new LoopshapingCostInputPattern<FULL_STATE_DIM,
-                                                                            FULL_INPUT_DIM,
-                                                                            SYSTEM_STATE_DIM,
-                                                                            SYSTEM_INPUT_DIM,
-                                                                            FILTER_STATE_DIM,
-                                                                            FILTER_INPUT_DIM,
-                                                                            LOGIC_RULES_T>(systemCost,
-                                                                                            std::move(
-                                                                                                loopshapingDefinition)));
+    if (loopshapingDefinition->eliminateInputs){
+      return std::unique_ptr<LoopshapingCost>(new LoopshapingCostEliminatePattern<FULL_STATE_DIM,
+                                                                                  FULL_INPUT_DIM,
+                                                                                  SYSTEM_STATE_DIM,
+                                                                                  SYSTEM_INPUT_DIM,
+                                                                                  FILTER_STATE_DIM,
+                                                                                  FILTER_INPUT_DIM,
+                                                                                  LOGIC_RULES_T>(systemCost,
+                                                                                                 std::move(
+                                                                                                     loopshapingDefinition)));
+    } else {
+      return std::unique_ptr<LoopshapingCost>(new LoopshapingCostInputPattern<FULL_STATE_DIM,
+                                                                              FULL_INPUT_DIM,
+                                                                              SYSTEM_STATE_DIM,
+                                                                              SYSTEM_INPUT_DIM,
+                                                                              FILTER_STATE_DIM,
+                                                                              FILTER_INPUT_DIM,
+                                                                              LOGIC_RULES_T>(systemCost,
+                                                                                             std::move(
+                                                                                                 loopshapingDefinition)));
+    }
   } else if (loopshapingDefinition->getInputFilter_r().getNumOutputs() > 0) {
     return std::unique_ptr<LoopshapingCost>(
         new LoopshapingCostOutputPattern<FULL_STATE_DIM,

@@ -649,7 +649,7 @@ void MPC_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::launchNodes(int arg
 
 	// Equivalent to ros::spin() + check if master is alive
 	while( ros::ok() && ros::master::check() ) {
-		ros::getGlobalCallbackQueue()->callAvailable(ros::WallDuration(0.1));
+		::ros::getGlobalCallbackQueue()->callAvailable(ros::WallDuration(0.1));
 	}
 }
 

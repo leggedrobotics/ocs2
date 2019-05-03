@@ -27,7 +27,6 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#include <thread>
 
 namespace ocs2{
 
@@ -139,7 +138,8 @@ typename TargetTrajectories_Keyboard_Interface<SCALAR_T>::scalar_array_t
 		}
 		rate.sleep();
 	}
-	thr.join();
+	if (thr.joinable())
+		thr.join();
 
 	std::istringstream stream(line);
 	scalar_t in;

@@ -23,18 +23,16 @@ class LoopshapingDynamicsDerivative : public DerivativesBase<FULL_STATE_DIM, FUL
   using Ptr = std::shared_ptr<LoopshapingDynamicsDerivative>;
 
   using BASE = DerivativesBase<FULL_STATE_DIM, FULL_INPUT_DIM, LOGIC_RULES_T>;
-  using scalar_t = typename BASE::scalar_t;
-  using state_vector_t = typename BASE::state_vector_t;
-  using input_vector_t = typename BASE::input_vector_t;
-  using state_matrix_t = typename BASE::state_matrix_t;
-  using state_input_matrix_t = typename BASE::state_input_matrix_t;
-  using dynamic_vector_t = typename BASE::dynamic_vector_t;
-  using dynamic_state_matrix_t = typename BASE::dynamic_state_matrix_t;
-  using dynamic_input_matrix_t = typename BASE::dynamic_input_matrix_t;
+  using typename BASE::scalar_t;
+  using typename BASE::state_vector_t;
+  using typename BASE::input_vector_t;
+  using typename BASE::state_matrix_t;
+  using typename BASE::state_input_matrix_t;
+  using typename BASE::dynamic_vector_t;
+  using typename BASE::dynamic_state_matrix_t;
+  using typename BASE::dynamic_input_matrix_t;
 
   using SYSTEM_DERIVATIVE = DerivativesBase<SYSTEM_STATE_DIM, SYSTEM_INPUT_DIM, LOGIC_RULES_T>;
-  static constexpr size_t system_state_dim = SYSTEM_STATE_DIM;
-  static constexpr size_t system_input_dim = SYSTEM_INPUT_DIM;
   using system_state_vector_t = typename SYSTEM_DERIVATIVE::state_vector_t;
   using system_input_vector_t = typename SYSTEM_DERIVATIVE::input_vector_t;
   using system_state_matrix_t = typename SYSTEM_DERIVATIVE::state_matrix_t;
@@ -42,10 +40,8 @@ class LoopshapingDynamicsDerivative : public DerivativesBase<FULL_STATE_DIM, FUL
   using system_dynamic_state_matrix_t = typename SYSTEM_DERIVATIVE::dynamic_state_matrix_t;
   using system_dynamic_input_matrix_t = typename SYSTEM_DERIVATIVE::dynamic_input_matrix_t;
 
-  static constexpr size_t filter_state_dim = FILTER_STATE_DIM;
-  static constexpr size_t filter_input_dim = FILTER_INPUT_DIM;
-  using filter_state_vector_t = Eigen::Matrix<scalar_t, filter_state_dim, 1>;
-  using filter_input_vector_t = Eigen::Matrix<scalar_t, filter_input_dim, 1>;
+  using filter_state_vector_t = Eigen::Matrix<scalar_t, FILTER_STATE_DIM, 1>;
+  using filter_input_vector_t = Eigen::Matrix<scalar_t, FILTER_INPUT_DIM, 1>;
 
   ~LoopshapingDynamicsDerivative() override = default;
 

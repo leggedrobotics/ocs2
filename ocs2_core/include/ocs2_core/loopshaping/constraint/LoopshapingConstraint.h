@@ -24,37 +24,38 @@ class LoopshapingConstraint : public ConstraintBase<
   using Ptr = std::shared_ptr<LoopshapingConstraint>;
 
   using BASE = ConstraintBase<FULL_STATE_DIM, FULL_INPUT_DIM, LOGIC_RULES_T>;
+  using typename BASE::scalar_t;
+  using typename BASE::state_vector_t;
+  using typename BASE::input_vector_t;
+  using typename BASE::constraint1_vector_t;
+  using typename BASE::constraint1_state_matrix_t;
+  using typename BASE::constraint1_input_matrix_t;
+  using typename BASE::constraint2_vector_t;
+  using typename BASE::constraint2_state_matrix_t;
+  using typename BASE::scalar_array_t;
+  using typename BASE::state_vector_array_t;
+  using typename BASE::input_vector_array_t;
+  using typename BASE::state_matrix_array_t;
+  using typename BASE::input_matrix_array_t;
+  using typename BASE::input_state_matrix_array_t;
 
   using SYSTEM_CONSTRAINT = ConstraintBase<SYSTEM_STATE_DIM, SYSTEM_INPUT_DIM, LOGIC_RULES_T>;
+  using system_state_vector_t = typename SYSTEM_CONSTRAINT::state_vector_t;
+  using system_input_vector_t = typename SYSTEM_CONSTRAINT::input_vector_t;
+  using system_contraint1_vector_t = typename SYSTEM_CONSTRAINT::constraint1_vector_t;
+  using system_contraint2_vector_t = typename SYSTEM_CONSTRAINT::constraint2_vector_t;
+  using system_constraint1_state_matrix_t = typename SYSTEM_CONSTRAINT::constraint1_state_matrix_t;
+  using system_constraint1_input_matrix_t = typename SYSTEM_CONSTRAINT::constraint1_input_matrix_t;
+  using system_constraint2_state_matrix_t = typename SYSTEM_CONSTRAINT::constraint2_state_matrix_t;
+  using system_scalar_array_t = typename SYSTEM_CONSTRAINT::scalar_array_t;
+  using system_state_vector_array_t = typename SYSTEM_CONSTRAINT::state_vector_array_t;
+  using system_input_vector_array_t = typename SYSTEM_CONSTRAINT::input_vector_array_t;
+  using system_state_matrix_array_t = typename SYSTEM_CONSTRAINT::state_matrix_array_t;
+  using system_input_matrix_array_t = typename SYSTEM_CONSTRAINT::input_matrix_array_t;
+  using system_input_state_matrix_array_t = typename SYSTEM_CONSTRAINT::input_state_matrix_array_t;
 
-  using FULL_DIMENSIONS = ocs2::Dimensions<FULL_STATE_DIM, FULL_INPUT_DIM>;
-  using scalar_t = typename FULL_DIMENSIONS::scalar_t;
-  using state_vector_t = typename FULL_DIMENSIONS::state_vector_t;
-  using input_vector_t = typename FULL_DIMENSIONS::input_vector_t;
-  using constraint1_vector_t = typename FULL_DIMENSIONS::constraint1_vector_t;
-  using constraint1_state_matrix_t = typename FULL_DIMENSIONS::constraint1_state_matrix_t;
-  using constraint1_input_matrix_t = typename FULL_DIMENSIONS::constraint1_input_matrix_t;
-  using constraint2_vector_t = typename FULL_DIMENSIONS::constraint2_vector_t;
-  using constraint2_state_matrix_t = typename FULL_DIMENSIONS::constraint2_state_matrix_t;
-  using scalar_array_t = typename FULL_DIMENSIONS::scalar_array_t;
-  using state_vector_array_t = typename FULL_DIMENSIONS::state_vector_array_t;
-  using input_vector_array_t = typename FULL_DIMENSIONS::input_vector_array_t;
-  using state_matrix_array_t = typename FULL_DIMENSIONS::state_matrix_array_t;
-  using input_matrix_array_t = typename FULL_DIMENSIONS::input_matrix_array_t;
-  using input_state_matrix_array_t = typename FULL_DIMENSIONS::input_state_matrix_array_t;
-
-  using SYSTEM_DIMENSIONS = ocs2::Dimensions<SYSTEM_STATE_DIM, SYSTEM_INPUT_DIM>;
-  using system_state_vector_t = typename SYSTEM_DIMENSIONS::state_vector_t;
-  using system_input_vector_t = typename SYSTEM_DIMENSIONS::input_vector_t;
-  using system_contraint1_vector_t = typename SYSTEM_DIMENSIONS::constraint1_vector_t;
-  using system_contraint2_vector_t = typename SYSTEM_DIMENSIONS::constraint2_vector_t;
-  using system_constraint1_state_matrix_t = typename SYSTEM_DIMENSIONS::constraint1_state_matrix_t;
-  using system_constraint1_input_matrix_t = typename SYSTEM_DIMENSIONS::constraint1_input_matrix_t;
-  using system_constraint2_state_matrix_t = typename SYSTEM_DIMENSIONS::constraint2_state_matrix_t;
-
-  using FILTER_DIMENSIONS = ocs2::Dimensions<FILTER_STATE_DIM, FILTER_INPUT_DIM>;
-  using filter_state_vector_t = typename FILTER_DIMENSIONS::state_vector_t;
-  using filter_input_vector_t = typename FILTER_DIMENSIONS::input_vector_t;
+  using filter_state_vector_t = Eigen::Matrix<scalar_t, FILTER_STATE_DIM, 1>;
+  using filter_input_vector_t = Eigen::Matrix<scalar_t, FILTER_INPUT_DIM, 1>;
 
   ~LoopshapingConstraint() override = default;
 

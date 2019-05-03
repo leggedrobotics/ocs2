@@ -48,7 +48,9 @@ class LoopshapingDynamicsDerivative : public DerivativesBase<FULL_STATE_DIM, FUL
   LoopshapingDynamicsDerivative(const LoopshapingDynamicsDerivative &obj) :
       BASE(),
       systemDerivative_(obj.systemDerivative_->clone()),
-      loopshapingDefinition_(obj.loopshapingDefinition_) {}
+      loopshapingDefinition_(obj.loopshapingDefinition_),
+      systemApproximationValid_(false),
+      jumpMapApproximationValid_(false) {}
 
   void initializeModel(
       LogicRulesMachine<LOGIC_RULES_T> &logicRulesMachine,
@@ -56,6 +58,8 @@ class LoopshapingDynamicsDerivative : public DerivativesBase<FULL_STATE_DIM, FUL
       const char *algorithmName = NULL) override {
     BASE::initializeModel(logicRulesMachine, partitionIndex, algorithmName);
     systemDerivative_->initializeModel(logicRulesMachine, partitionIndex, algorithmName);
+    systemApproximationValid_ = false;
+    jumpMapApproximationValid_ = false;
   }
 
   static std::unique_ptr<LoopshapingDynamicsDerivative> Create(const SYSTEM_DERIVATIVE &controlledSystem,
@@ -65,6 +69,8 @@ class LoopshapingDynamicsDerivative : public DerivativesBase<FULL_STATE_DIM, FUL
       const scalar_t &t,
       const state_vector_t &x,
       const input_vector_t &u) override {
+    systemApproximationValid_ = false;
+    jumpMapApproximationValid_ = false;
     BASE::setCurrentStateAndControl(t, x, u);
 
     system_state_vector_t systemstate;
@@ -83,19 +89,13 @@ class LoopshapingDynamicsDerivative : public DerivativesBase<FULL_STATE_DIM, FUL
   }
 
   void getFlowMapDerivativeState(state_matrix_t &A) override {
-    // system
-    system_state_matrix_t A_system;
-    systemDerivative_->getFlowMapDerivativeState(A_system);
-
-    loopshapingFlowMapDerivativeState(A_system, A);
+    computeSystemDerivatives();
+    loopshapingFlowMapDerivativeState(A);
   };
 
   void getFlowMapDerivativeInput(state_input_matrix_t &B) override {
-    // system
-    system_state_input_matrix_t B_system;
-    systemDerivative_->getFlowMapDerivativeInput(B_system);
-
-    loopshapingFlowMapDerivativeInput(B_system, B);
+    computeSystemDerivatives();
+    loopshapingFlowMapDerivativeInput(B);
   };
 
   void getJumpMapDerivativeTime(state_vector_t &dg) {
@@ -107,19 +107,13 @@ class LoopshapingDynamicsDerivative : public DerivativesBase<FULL_STATE_DIM, FUL
   }
 
   void getJumpMapDerivativeState(state_matrix_t &G) override {
-    // system
-    system_state_matrix_t G_system;
-    systemDerivative_->getJumpMapDerivativeState(G_system);
-
-    loopshapingJumpMapDerivativeState(G_system, G);
+    computeJumpMapDerivatives();
+    loopshapingJumpMapDerivativeState(G);
   }
 
   void getJumpMapDerivativeInput(state_input_matrix_t &H) override {
-    // system
-    system_state_input_matrix_t H_system;
-    systemDerivative_->getJumpMapDerivativeInput(H_system);
-
-    loopshapingJumpMapDerivativeInput(H_system, H);
+    computeJumpMapDerivatives();
+    loopshapingJumpMapDerivativeInput(H);
   }
 
   void getGuardSurfacesDerivativeTime(dynamic_vector_t &D_t_gamma) override {
@@ -139,22 +133,45 @@ class LoopshapingDynamicsDerivative : public DerivativesBase<FULL_STATE_DIM, FUL
                                 std::shared_ptr<LoopshapingDefinition> loopshapingDefinition) :
       BASE(),
       systemDerivative_(systemDerivative.clone()),
-      loopshapingDefinition_(std::move(loopshapingDefinition)) {};
+      loopshapingDefinition_(std::move(loopshapingDefinition)),
+      systemApproximationValid_(false),
+      jumpMapApproximationValid_(false) {};
 
   std::shared_ptr<LoopshapingDefinition> loopshapingDefinition_;
+  system_state_input_matrix_t B_system_;
+  system_state_matrix_t A_system_;
+  system_state_input_matrix_t H_system_;
+  system_state_matrix_t G_system_;
 
  private:
   std::unique_ptr<SYSTEM_DERIVATIVE> systemDerivative_;
-  virtual void loopshapingFlowMapDerivativeState(const system_state_matrix_t &A_system, state_matrix_t &A) = 0;
-  virtual void loopshapingFlowMapDerivativeInput(const system_state_input_matrix_t &B_system,
-                                                 state_input_matrix_t &B) = 0;
-  virtual void loopshapingJumpMapDerivativeState(const system_state_matrix_t &G_system, state_matrix_t &G) = 0;
-  virtual void loopshapingJumpMapDerivativeInput(const system_state_input_matrix_t &H_system,
-                                                 state_input_matrix_t &H) = 0;
+
+  bool systemApproximationValid_;
+  void computeSystemDerivatives() {
+    if (!systemApproximationValid_){
+      systemDerivative_->getFlowMapDerivativeState(A_system_);
+      systemDerivative_->getFlowMapDerivativeInput(B_system_);
+      systemApproximationValid_ = true;
+    }
+  }
+  bool jumpMapApproximationValid_;
+  void computeJumpMapDerivatives() {
+    if (!jumpMapApproximationValid_){
+      systemDerivative_->getJumpMapDerivativeState(G_system_);
+      systemDerivative_->getJumpMapDerivativeInput(H_system_);
+      jumpMapApproximationValid_ = true;
+    }
+  }
+
+  virtual void loopshapingFlowMapDerivativeState(state_matrix_t &A) = 0;
+  virtual void loopshapingFlowMapDerivativeInput(state_input_matrix_t &B) = 0;
+  virtual void loopshapingJumpMapDerivativeState(state_matrix_t &G) = 0;
+  virtual void loopshapingJumpMapDerivativeInput(state_input_matrix_t &H) = 0;
 };
 
 } // namespace ocs2
 
+#include "LoopshapingDynamicsDerivativeEliminatePattern.h"
 #include "LoopshapingDynamicsDerivativeInputPattern.h"
 #include "LoopshapingDynamicsDerivativeOutputPattern.h"
 
@@ -180,16 +197,29 @@ std::unique_ptr<LoopshapingDynamicsDerivative<FULL_STATE_DIM,
     const SYSTEM_DERIVATIVE &controlledSystem,
     std::shared_ptr<LoopshapingDefinition> loopshapingDefinition) {
   if (loopshapingDefinition->getInputFilter_s().getNumOutputs() > 0) {
-    return std::unique_ptr<LoopshapingDynamicsDerivative>(new LoopshapingDynamicsDerivativeInputPattern<FULL_STATE_DIM,
-                                                                                                        FULL_INPUT_DIM,
-                                                                                                        SYSTEM_STATE_DIM,
-                                                                                                        SYSTEM_INPUT_DIM,
-                                                                                                        FILTER_STATE_DIM,
-                                                                                                        FILTER_INPUT_DIM,
-                                                                                                        LOGIC_RULES_T>(
-        controlledSystem,
-        std::move(
-            loopshapingDefinition)));
+    if (loopshapingDefinition->eliminateInputs){
+      return std::unique_ptr<LoopshapingDynamicsDerivative>(new LoopshapingDynamicsDerivativeEliminatePattern<FULL_STATE_DIM,
+                                                                                                          FULL_INPUT_DIM,
+                                                                                                          SYSTEM_STATE_DIM,
+                                                                                                          SYSTEM_INPUT_DIM,
+                                                                                                          FILTER_STATE_DIM,
+                                                                                                          FILTER_INPUT_DIM,
+                                                                                                          LOGIC_RULES_T>(
+          controlledSystem,
+          std::move(
+              loopshapingDefinition)));
+    } else {
+      return std::unique_ptr<LoopshapingDynamicsDerivative>(new LoopshapingDynamicsDerivativeInputPattern<FULL_STATE_DIM,
+                                                                                                          FULL_INPUT_DIM,
+                                                                                                          SYSTEM_STATE_DIM,
+                                                                                                          SYSTEM_INPUT_DIM,
+                                                                                                          FILTER_STATE_DIM,
+                                                                                                          FILTER_INPUT_DIM,
+                                                                                                          LOGIC_RULES_T>(
+          controlledSystem,
+          std::move(
+              loopshapingDefinition)));
+    }
   } else if (loopshapingDefinition->getInputFilter_r().getNumOutputs() > 0) {
     return std::unique_ptr<LoopshapingDynamicsDerivative>(new LoopshapingDynamicsDerivativeOutputPattern<FULL_STATE_DIM,
                                                                                                          FULL_INPUT_DIM,

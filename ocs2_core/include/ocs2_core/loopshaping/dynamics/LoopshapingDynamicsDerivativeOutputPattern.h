@@ -46,33 +46,35 @@ class LoopshapingDynamicsDerivativeOutputPattern final : public LoopshapingDynam
 
  protected:
   using BASE::loopshapingDefinition_;
+  using BASE::A_system_;
+  using BASE::B_system_;
+  using BASE::G_system_;
+  using BASE::H_system_;
 
  private:
-  void loopshapingFlowMapDerivativeState(const system_state_matrix_t &A_system, state_matrix_t &A) override {
+  void loopshapingFlowMapDerivativeState(state_matrix_t &A) override {
     const auto &r_filter = loopshapingDefinition_->getInputFilter_r();
-    A.block(0, 0, SYSTEM_STATE_DIM, SYSTEM_STATE_DIM) = A_system;
+    A.block(0, 0, SYSTEM_STATE_DIM, SYSTEM_STATE_DIM) = A_system_;
     A.block(0, SYSTEM_STATE_DIM, SYSTEM_STATE_DIM, FILTER_STATE_DIM).setZero();
     A.block(SYSTEM_STATE_DIM, 0, FILTER_STATE_DIM, SYSTEM_STATE_DIM).setZero();
     A.block(SYSTEM_STATE_DIM, SYSTEM_STATE_DIM, FILTER_STATE_DIM, FILTER_STATE_DIM) = r_filter.getA();
   };
 
-  void loopshapingFlowMapDerivativeInput(const system_state_input_matrix_t &B_system,
-                                         state_input_matrix_t &B) override {
+  void loopshapingFlowMapDerivativeInput(state_input_matrix_t &B) override {
     const auto &r_filter = loopshapingDefinition_->getInputFilter_r();
-    B.block(0, 0, SYSTEM_STATE_DIM, SYSTEM_INPUT_DIM) = B_system;
+    B.block(0, 0, SYSTEM_STATE_DIM, SYSTEM_INPUT_DIM) = B_system_;
     B.block(SYSTEM_STATE_DIM, 0, FILTER_STATE_DIM, FILTER_INPUT_DIM) = r_filter.getB();
   };
 
-  void loopshapingJumpMapDerivativeState(const system_state_matrix_t &G_system, state_matrix_t &G) override {
-    G.block(0, 0, SYSTEM_STATE_DIM, SYSTEM_STATE_DIM) = G_system;
+  void loopshapingJumpMapDerivativeState(state_matrix_t &G) override {
+    G.block(0, 0, SYSTEM_STATE_DIM, SYSTEM_STATE_DIM) = G_system_;
     G.block(0, SYSTEM_STATE_DIM, SYSTEM_STATE_DIM, FILTER_STATE_DIM).setZero();
     G.block(SYSTEM_STATE_DIM, 0, FILTER_STATE_DIM, SYSTEM_STATE_DIM).setZero();
     G.block(SYSTEM_STATE_DIM, SYSTEM_STATE_DIM, FILTER_STATE_DIM, FILTER_STATE_DIM).setIdentity();
   };
 
-  void loopshapingJumpMapDerivativeInput(const system_state_input_matrix_t &H_system,
-                                         state_input_matrix_t &H) override {
-    H.block(0, 0, SYSTEM_STATE_DIM, SYSTEM_INPUT_DIM) = H_system;
+  void loopshapingJumpMapDerivativeInput(state_input_matrix_t &H) override {
+    H.block(0, 0, SYSTEM_STATE_DIM, SYSTEM_INPUT_DIM) = H_system_;
     H.block(SYSTEM_STATE_DIM, 0, FILTER_STATE_DIM, SYSTEM_INPUT_DIM).setZero();
   };
 };

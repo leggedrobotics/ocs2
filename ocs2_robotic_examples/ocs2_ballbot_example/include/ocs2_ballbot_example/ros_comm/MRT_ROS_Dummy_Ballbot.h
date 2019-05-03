@@ -36,6 +36,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <tf/transform_broadcaster.h>
 
 #include <ocs2_comm_interfaces/test/MRT_ROS_Dummy_Loop.h>
+#include <ocs2_ballbot_example/BallbotParameters.h>
 #include "ocs2_ballbot_example/definitions.h"
 
 namespace ocs2 {
@@ -47,6 +48,7 @@ public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
 	typedef MRT_ROS_Dummy_Loop<ballbot::STATE_DIM_, ballbot::INPUT_DIM_> BASE;
+    typedef BallbotParameters<scalar_t> ballbot_parameters_t;
 
 	/**
 	 * Constructor.
@@ -78,10 +80,11 @@ public:
 		BASE::init(initObservation);
 	}
 
-	void updateTfPublisher(const system_observation_t& observation){
+	void updateTfPublisher(const system_observation_t& observation,
+                           const cost_desired_trajectories_t& costDesiredTrajectories){
 
 		//compute positions of the markers based on system observation
-		Eigen::Vector3d positionWorldToBall, positionWorldToBase, positionWorldToArmBase;
+		Eigen::Vector3d positionWorldToBall, positionWorldToBase;
 		Eigen::Quaterniond quaternionBaseToWorld;
 		Eigen::Matrix3d rotationMatrixBaseToWorld;
 
@@ -89,17 +92,10 @@ public:
 								Eigen::AngleAxisd{observation.state()(3), Eigen::Vector3d{0, 1, 0}}*
 								Eigen::AngleAxisd{observation.state()(4), Eigen::Vector3d{1, 0, 0}};
 
-
-
 		rotationMatrixBaseToWorld = quaternionBaseToWorld.normalized().toRotationMatrix();
 
-		positionWorldToBall << observation.state()(0), observation.state()(1), 0.125;
-
-
-		positionWorldToBase = positionWorldToBall + rotationMatrixBaseToWorld*Eigen::Vector3d(0.0, 0.0, 0.317);
-
-		positionWorldToArmBase = positionWorldToBall + rotationMatrixBaseToWorld*Eigen::Vector3d(0.0, 0.0, 0.317 + 0.266);
-
+		positionWorldToBall << observation.state()(0), observation.state()(1), param_.ballRadius_;
+		positionWorldToBase = positionWorldToBall + rotationMatrixBaseToWorld*Eigen::Vector3d(0.0, 0.0, param_.heightBallCenterToBase_);
 
 		// Broadcast transformation from rezero observation to robot base.
 		geometry_msgs::TransformStamped base_transform;
@@ -113,7 +109,6 @@ public:
 		base_transform.transform.rotation.x = quaternionBaseToWorld.x();
 		base_transform.transform.rotation.y = quaternionBaseToWorld.y();
 		base_transform.transform.rotation.z = quaternionBaseToWorld.z();
-
 		tfBroadcasterPtr_->sendTransform(base_transform);
 
 		// Broadcast transformation from rezero observation to robot ball
@@ -122,13 +117,31 @@ public:
 		ball_transform.child_frame_id = "ball";
 		ball_transform.transform.translation.x = 0.0;
 		ball_transform.transform.translation.y = 0.0;
-		ball_transform.transform.translation.z = -0.317;
+		ball_transform.transform.translation.z = -param_.heightBallCenterToBase_;
 		ball_transform.transform.rotation.w = 1.0;
 		ball_transform.transform.rotation.x = 0.0;
 		ball_transform.transform.rotation.y = 0.0;
 		ball_transform.transform.rotation.z = 0.0;
-
 		tfBroadcasterPtr_->sendTransform(ball_transform);
+
+        // Broadcast transformation from odom to command
+        const Eigen::Vector3d desiredPositionWorldToTarget = Eigen::Vector3d(costDesiredTrajectories.desiredStateTrajectory()[1](0),
+                                                                             costDesiredTrajectories.desiredStateTrajectory()[1](1),
+                                                                             0.0);
+        const Eigen::Quaterniond desiredQuaternionBaseToWorld = Eigen::AngleAxisd{costDesiredTrajectories.desiredStateTrajectory()[1](2), Eigen::Vector3d{0, 0, 1}}*
+                                                                Eigen::AngleAxisd{costDesiredTrajectories.desiredStateTrajectory()[1](3), Eigen::Vector3d{0, 1, 0}}*
+                                                                Eigen::AngleAxisd{costDesiredTrajectories.desiredStateTrajectory()[1](4), Eigen::Vector3d{1, 0, 0}};
+        geometry_msgs::TransformStamped command_frame_transform;
+        command_frame_transform.header.frame_id = "odom";
+        command_frame_transform.child_frame_id = "command";
+        command_frame_transform.transform.translation.x = desiredPositionWorldToTarget.x();
+        command_frame_transform.transform.translation.y = desiredPositionWorldToTarget.y();
+        command_frame_transform.transform.translation.z = desiredPositionWorldToTarget.z();
+        command_frame_transform.transform.rotation.w = desiredQuaternionBaseToWorld.w();
+        command_frame_transform.transform.rotation.x = desiredQuaternionBaseToWorld.x();
+        command_frame_transform.transform.rotation.y = desiredQuaternionBaseToWorld.y();
+        command_frame_transform.transform.rotation.z = desiredQuaternionBaseToWorld.z();
+        tfBroadcasterPtr_->sendTransform(command_frame_transform);
 	}
 
 protected:
@@ -162,7 +175,7 @@ protected:
 			const system_observation_t& observation,
 			const cost_desired_trajectories_t& costDesiredTrajectories) override {
 
-		updateTfPublisher(observation);
+		updateTfPublisher(observation, costDesiredTrajectories);
 
 		visualization_msgs::MarkerArray markerArray;
 		// Marker for Base
@@ -176,7 +189,7 @@ protected:
 		baseMarker.pose.position.x = 0.0;
 		baseMarker.pose.position.y = 0.0;
 		// the mesh has its origin in the center of the ball
-		baseMarker.pose.position.z = -0.317;
+		baseMarker.pose.position.z = -param_.heightBallCenterToBase_;
 		baseMarker.pose.orientation.x = 0.0;
 		baseMarker.pose.orientation.y = 0.0;
 		baseMarker.pose.orientation.z = 0.0;
@@ -200,7 +213,7 @@ protected:
 		ballMarker.action = visualization_msgs::Marker::ADD;
 		ballMarker.pose.position.x = 0.0;
 		ballMarker.pose.position.y = 0.0;
-		ballMarker.pose.position.z = -0.317;
+		ballMarker.pose.position.z = -param_.heightBallCenterToBase_;
 		ballMarker.pose.orientation.x = 0.0;
 		ballMarker.pose.orientation.y = 0.0;
 		ballMarker.pose.orientation.z = 0.0;
@@ -214,7 +227,6 @@ protected:
 		ballMarker.color.b = 0.0;
 		markerArray.markers.push_back(ballMarker);
 
-		//visualizationPublisher_.publish(baseMarker);
 		visualizationPublisher_.publish(markerArray);
 	}
 
@@ -224,6 +236,8 @@ protected:
 	ros::Publisher visualizationPublisher_;
 	ros::Publisher posePublisher_;
 	std::unique_ptr<tf::TransformBroadcaster> tfBroadcasterPtr_;
+
+    ballbot_parameters_t param_;
 
 };
 

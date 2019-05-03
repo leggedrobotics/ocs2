@@ -63,13 +63,37 @@ struct TestConfiguration_s_simple_filter {
 };
 const std::string TestConfiguration_s_simple_filter::fileName = "loopshaping_s_simple.conf";
 
+struct TestConfiguration_s_eliminate_filter {
+  static constexpr size_t SYSTEM_STATE_DIM = 2;
+  static constexpr size_t SYSTEM_INPUT_DIM = 3;
+  static constexpr size_t FILTER_STATE_DIM = 4;
+  static constexpr size_t FILTER_INPUT_DIM = 3;
+  static constexpr size_t FULL_STATE_DIM = SYSTEM_STATE_DIM + FILTER_STATE_DIM;
+  static constexpr size_t FULL_INPUT_DIM = FILTER_INPUT_DIM;
+  static const std::string fileName;
+};
+const std::string TestConfiguration_s_eliminate_filter::fileName = "loopshaping_s_eliminate.conf";
+
+struct TestConfiguration_s_simple_eliminate_filter {
+  static constexpr size_t SYSTEM_STATE_DIM = 2;
+  static constexpr size_t SYSTEM_INPUT_DIM = 3;
+  static constexpr size_t FILTER_STATE_DIM = 0;
+  static constexpr size_t FILTER_INPUT_DIM = 3;
+  static constexpr size_t FULL_STATE_DIM = SYSTEM_STATE_DIM + FILTER_STATE_DIM;
+  static constexpr size_t FULL_INPUT_DIM = FILTER_INPUT_DIM;
+  static const std::string fileName;
+};
+const std::string TestConfiguration_s_simple_eliminate_filter::fileName = "loopshaping_s_simple_eliminate.conf";
+
 // Add configurations here:
 typedef ::testing::Types<
     TestConfiguration_r_filter,
     TestConfiguration_r_simple_filter,
     TestConfiguration_r_ballbot_filter,
     TestConfiguration_s_filter,
-    TestConfiguration_s_simple_filter>
+    TestConfiguration_s_simple_filter,
+    TestConfiguration_s_eliminate_filter,
+    TestConfiguration_s_simple_eliminate_filter>
     FilterConfigurations;
 
 } // namespace ocs2

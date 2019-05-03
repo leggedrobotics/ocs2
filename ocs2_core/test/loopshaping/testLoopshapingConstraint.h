@@ -20,6 +20,8 @@ namespace ocs2 {
 
 template<class CONFIG>
 class TestFixtureLoopShapingConstraint : public ::testing::Test {
+ public:
+  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
  protected:
   static constexpr size_t FULL_STATE_DIM = CONFIG::FULL_STATE_DIM;
   static constexpr size_t FULL_INPUT_DIM = CONFIG::FULL_INPUT_DIM;

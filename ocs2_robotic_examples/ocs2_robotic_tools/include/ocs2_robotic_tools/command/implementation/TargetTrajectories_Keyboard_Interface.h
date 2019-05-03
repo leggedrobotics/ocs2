@@ -131,7 +131,7 @@ typename TargetTrajectories_Keyboard_Interface<SCALAR_T>::scalar_array_t
 	});
 
 	// wait till line is read or terminate if ROS is gone.
-	ros::WallRate rate(30);
+	::ros::WallRate rate(30);
 	while (!lineRead) {
 		if (!ros::ok() || !ros::master::check()) {
 			std::terminate(); // Need to terminate thread that is still waiting for input

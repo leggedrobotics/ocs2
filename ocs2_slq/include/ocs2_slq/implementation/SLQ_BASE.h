@@ -50,6 +50,7 @@ SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::SLQ_BASE(
 	, costDesiredTrajectoriesBuffer_()
 	, costDesiredTrajectoriesUpdated_(false)
 	, rewindCounter_(0)
+	, iteration_(0)
 {
 	if (logicRulesPtr != nullptr)
 		logicRulesMachinePtr_ = logic_rules_machine_ptr_t( new logic_rules_machine_t(*logicRulesPtr) );

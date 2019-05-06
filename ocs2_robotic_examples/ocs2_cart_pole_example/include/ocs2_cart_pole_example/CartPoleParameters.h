@@ -44,6 +44,9 @@ template<typename SCALAR_T>
 class CartPoleParameters
 {
 public:
+	/**
+	 * Constructor.
+	 */
 	CartPoleParameters(
 			SCALAR_T cartMass = 1.0,
 			SCALAR_T poleMass = 1.0,
@@ -51,17 +54,23 @@ public:
 			SCALAR_T poleWidth = 0.05,
 			SCALAR_T gravity = 9.8)
 
-: cartMass_(cartMass)
-, poleMass_(poleMass)
-, poleLength_(poleLength)
-, poleWidth_(poleWidth)
-, gravity_(gravity)
-{
+	: cartMass_(cartMass)
+	, poleMass_(poleMass)
+	, poleLength_(poleLength)
+	, poleWidth_(poleWidth)
+	, gravity_(gravity)
+	{
 		computeInertiaTerms();
-}
+	}
 
+	/**
+	 * Default destructor.
+	 */
 	~CartPoleParameters() = default;
 
+	/**
+	 * Displays the Cart-Pole's parameters.
+	 */
 	inline void display() {
 		std::cerr << "Cart-pole parameters: " << std::endl;
 		std::cerr << "cartMass:   " << cartMass_ << std::endl;
@@ -72,7 +81,9 @@ public:
 		std::cerr << "gravity:    " << gravity_ << std::endl;
 	}
 
-
+	/**
+	 * Loads the Cart-Pole's parameters.
+	 */
 	inline void loadSettings(const std::string& filename, bool verbose = true) {
 
 		boost::property_tree::ptree pt;

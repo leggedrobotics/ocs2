@@ -118,10 +118,10 @@ void MRT_ROS_Dummy_Loop<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::run() {
 
 	observation_ = initObservation_;
 
-	while(::ros::ok()) {
+	while( ::ros::ok()  && ::ros::master::check() ) {
 
 		// this should be called before updatePolicy()
-    mrtPtr_->spinMRT();
+    	mrtPtr_->spinMRT();
 
 		// Checks for new policy and updates the policy
 		bool policyUpdated = false;

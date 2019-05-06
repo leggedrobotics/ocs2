@@ -137,24 +137,24 @@ void ComKinoConstraintBase<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM, LOGIC_RULES_T
 	}  // end of i loop
 
 	// if GapIndicator is provided
-	if (endEffectorStateConstraintsPtr_ && endEffectorStateConstraintsPtr_->empty()==false)
-		for (size_t i=0; i<NUM_CONTACT_POINTS_; i++)  {
+	if (endEffectorStateConstraintsPtr_ && endEffectorStateConstraintsPtr_->empty()==false) {
+		for (size_t i = 0; i < NUM_CONTACT_POINTS_; i++) {
 			// check for the gaps
 			feetConstraintIsActive_[i] = false;
 
-			if (stanceLegs_[i]==false && nextPhaseStanceLegs_[i]==true)  {
+			if (stanceLegs_[i] == false && nextPhaseStanceLegs_[i] == true) {
 
 				feetConstraintValues_[i] = 0;
 				feetConstraintJacobains_[i].setZero();
-				for (const auto& eeConstraintPtr_ : *endEffectorStateConstraintsPtr_) {
+				for (const auto &eeConstraintPtr_ : *endEffectorStateConstraintsPtr_) {
 
-					if (eeConstraintPtr_->isActive(o_origin2StanceFeet_[i])==false)
+					if (eeConstraintPtr_->isActive(o_origin2StanceFeet_[i]) == false)
 						continue;
 
 					scalar_t constraintValue = eeConstraintPtr_->constraintValue(o_origin2StanceFeet_[i]);
-					if (constraintValue>std::numeric_limits<scalar_t>::epsilon()) {
-						feetConstraintIsActive_[i]  = true;
-						feetConstraintValues_[i] 	= constraintValue;
+					if (constraintValue > std::numeric_limits<scalar_t>::epsilon()) {
+						feetConstraintIsActive_[i] = true;
+						feetConstraintValues_[i] = constraintValue;
 						feetConstraintJacobains_[i] = eeConstraintPtr_->constraintDerivative(o_origin2StanceFeet_[i]);
 						break;
 					}  // end of if
@@ -162,6 +162,11 @@ void ComKinoConstraintBase<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM, LOGIC_RULES_T
 
 			}  // end of if
 		}  // end of i loop
+	} else {
+		for (size_t i = 0; i < NUM_CONTACT_POINTS_; i++) {
+			feetConstraintIsActive_[i] = false;
+		}
+	}
 }
 
 /******************************************************************************************************/

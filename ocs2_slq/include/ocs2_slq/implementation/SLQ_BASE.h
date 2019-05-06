@@ -136,6 +136,10 @@ SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::SLQ_BASE(
 	riccatiEquationsPtrStock_.reserve(settings_.nThreads_);
 	errorEquationPtrStock_.clear();
 	errorEquationPtrStock_.reserve(settings_.nThreads_);
+	riccatiEventPtrStock_.clear();
+	riccatiEventPtrStock_.reserve(settings_.nThreads_);
+	errorEventPtrStock_.clear();
+	errorEventPtrStock_.reserve(settings_.nThreads_);
 	riccatiIntegratorPtrStock_.clear();
 	riccatiIntegratorPtrStock_.reserve(settings_.nThreads_);
 	errorIntegratorPtrStock_.clear();
@@ -143,6 +147,8 @@ SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::SLQ_BASE(
 
 	slqRiccatiEquationsPtrStock_.clear();
 	slqRiccatiEquationsPtrStock_.reserve(settings_.nThreads_);
+	slqRiccatiEventPtrStock_.clear();
+	slqRiccatiEventPtrStock_.reserve(settings_.nThreads_);
 	slqRiccatiIntegratorPtrStock_.clear();
 	slqRiccatiIntegratorPtrStock_.reserve(settings_.nThreads_);
 
@@ -166,12 +172,30 @@ SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::SLQ_BASE(
 						settings_.useMakePSD_,
 						settings_.addedRiccatiDiagonal_) ) );
 
+		typedef SystemEventHandler<riccati_equations_t::S_DIM_> riccati_event_handler_t;
+		typedef Eigen::aligned_allocator<riccati_event_handler_t> riccati_event_handler_alloc_t;
+		riccatiEventPtrStock_.push_back( std::move(
+				std::allocate_shared<riccati_event_handler_t, riccati_event_handler_alloc_t>(riccati_event_handler_alloc_t()) ) );
+
+		typedef SystemEventHandler<STATE_DIM> error_event_handler_t;
+		typedef Eigen::aligned_allocator<error_event_handler_t> error_event_handler_alloc_t;
+		errorEventPtrStock_.push_back( std::move(
+				std::allocate_shared<error_event_handler_t, error_event_handler_alloc_t>(error_event_handler_alloc_t()) ) );
+
+		typedef SystemEventHandler<slq_riccati_equations_t::S_DIM_> slqRiccati_event_handler_t;
+		typedef Eigen::aligned_allocator<slqRiccati_event_handler_t> slqRiccati_event_handler_alloc_t;
+		slqRiccatiEventPtrStock_.push_back( std::move(
+				std::allocate_shared<slqRiccati_event_handler_t, slqRiccati_event_handler_alloc_t>(slqRiccati_event_handler_alloc_t()) ) );
+
 		switch(settings_.RiccatiIntegratorType_) {
 
 		case DIMENSIONS::RICCATI_INTEGRATOR_TYPE::ODE45 : {
-			riccatiIntegratorPtrStock_.emplace_back( new ODE45<riccati_equations_t::S_DIM_>(riccatiEquationsPtrStock_.back()) );
-			errorIntegratorPtrStock_.emplace_back( new ODE45<STATE_DIM>(errorEquationPtrStock_.back()) );
-			slqRiccatiIntegratorPtrStock_.emplace_back( new ODE45<slq_riccati_equations_t::S_DIM_>(slqRiccatiEquationsPtrStock_.back()) );
+			riccatiIntegratorPtrStock_.emplace_back(
+					new ODE45<riccati_equations_t::S_DIM_>(riccatiEquationsPtrStock_.back(), riccatiEventPtrStock_.back()) );
+			errorIntegratorPtrStock_.emplace_back(
+					new ODE45<STATE_DIM>(errorEquationPtrStock_.back(), errorEventPtrStock_.back()) );
+			slqRiccatiIntegratorPtrStock_.emplace_back(
+					new ODE45<slq_riccati_equations_t::S_DIM_>(slqRiccatiEquationsPtrStock_.back(), slqRiccatiEventPtrStock_.back()) );
 			break;
 		}
 		/*note: this case is not yet working. It would most likely work if we had an adaptive time adams-bashforth integrator */
@@ -180,9 +204,12 @@ SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::SLQ_BASE(
 			break;
 		}
 		case DIMENSIONS::RICCATI_INTEGRATOR_TYPE::BULIRSCH_STOER : {
-			riccatiIntegratorPtrStock_.emplace_back( new IntegratorBulirschStoer<riccati_equations_t::S_DIM_>(riccatiEquationsPtrStock_.back()) );
-			errorIntegratorPtrStock_.emplace_back( new IntegratorBulirschStoer<STATE_DIM>(errorEquationPtrStock_.back()) );
-			slqRiccatiIntegratorPtrStock_.emplace_back( new IntegratorBulirschStoer<slq_riccati_equations_t::S_DIM_>(slqRiccatiEquationsPtrStock_.back()) );
+			riccatiIntegratorPtrStock_.emplace_back(
+					new IntegratorBulirschStoer<riccati_equations_t::S_DIM_>(riccatiEquationsPtrStock_.back(), riccatiEventPtrStock_.back()) );
+			errorIntegratorPtrStock_.emplace_back(
+					new IntegratorBulirschStoer<STATE_DIM>(errorEquationPtrStock_.back(), errorEventPtrStock_.back()) );
+			slqRiccatiIntegratorPtrStock_.emplace_back(
+					new IntegratorBulirschStoer<slq_riccati_equations_t::S_DIM_>(slqRiccatiEquationsPtrStock_.back(), slqRiccatiEventPtrStock_.back()) );
 			break;
 		}
 		default:

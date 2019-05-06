@@ -1281,12 +1281,15 @@ protected:
 	input_state_matrix_array3_t ddhdudxTrajectoryStock_;
 
 
-	std::vector<std::shared_ptr<slq_riccati_equations_t>>                         slqRiccatiEquationsPtrStock_;
-	std::vector<std::shared_ptr<IntegratorBase<slq_riccati_equations_t::S_DIM_>>> slqRiccatiIntegratorPtrStock_;
-	std::vector<std::shared_ptr<riccati_equations_t>>                         riccatiEquationsPtrStock_;
-	std::vector<std::shared_ptr<IntegratorBase<riccati_equations_t::S_DIM_>>> riccatiIntegratorPtrStock_;
-	std::vector<std::shared_ptr<error_equation_t>>          errorEquationPtrStock_;
-	std::vector<std::shared_ptr<IntegratorBase<STATE_DIM>>> errorIntegratorPtrStock_;
+	std::vector<std::shared_ptr<slq_riccati_equations_t>>                             slqRiccatiEquationsPtrStock_;
+	std::vector<std::shared_ptr<SystemEventHandler<slq_riccati_equations_t::S_DIM_>>> slqRiccatiEventPtrStock_;
+	std::vector<std::shared_ptr<IntegratorBase<slq_riccati_equations_t::S_DIM_>>>     slqRiccatiIntegratorPtrStock_;
+	std::vector<std::shared_ptr<riccati_equations_t>>                             riccatiEquationsPtrStock_;
+	std::vector<std::shared_ptr<SystemEventHandler<riccati_equations_t::S_DIM_>>> riccatiEventPtrStock_;
+	std::vector<std::shared_ptr<IntegratorBase<riccati_equations_t::S_DIM_>>>     riccatiIntegratorPtrStock_;
+	std::vector<std::shared_ptr<error_equation_t>>              errorEquationPtrStock_;
+	std::vector<std::shared_ptr<SystemEventHandler<STATE_DIM>>> errorEventPtrStock_;
+	std::vector<std::shared_ptr<IntegratorBase<STATE_DIM>>>     errorIntegratorPtrStock_;
 
 	std::vector<std::shared_ptr<hamiltonian_equation_t>> hamiltonianEquationPtrStock_;
 	std::vector<std::shared_ptr<IntegratorBase<hamiltonian_equation_t::LTI_DIM_>>> hamiltonianIntegratorPtrStock_;

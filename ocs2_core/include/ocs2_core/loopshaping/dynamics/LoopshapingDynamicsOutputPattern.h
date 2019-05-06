@@ -18,7 +18,7 @@ class LoopshapingDynamicsOutputPattern final : public LoopshapingDynamics<FULL_S
 
   using BASE = LoopshapingDynamics<FULL_STATE_DIM, FULL_INPUT_DIM,
                                    SYSTEM_STATE_DIM, SYSTEM_INPUT_DIM,
-                                   FILTER_STATE_DIM, FILTER_INPUT_DIM, NullLogicRules>;
+                                   FILTER_STATE_DIM, FILTER_INPUT_DIM, LOGIC_RULES_T>;
   using typename BASE::SYSTEM;
   using typename BASE::filter_input_vector_t;
   using typename BASE::filter_state_vector_t;

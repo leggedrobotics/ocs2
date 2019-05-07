@@ -238,7 +238,7 @@ public:
 
 			// compute control input trajectory and concatenate to inputTrajectory
 			for ( ; k_u<timeTrajectory.size(); k_u++) {
-				inputTrajectory.emplace_back( systemDynamicsPtr_->controller_->computeInput(
+				inputTrajectory.emplace_back( systemDynamicsPtr_->controllerPtr()->computeInput(
 						timeTrajectory[k_u], stateTrajectory[k_u]) );
 			} // end of k loop
 

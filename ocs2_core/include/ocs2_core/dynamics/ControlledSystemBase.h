@@ -80,17 +80,17 @@ public:
   typedef Controller<STATE_DIM, INPUT_DIM> controller_t;
 
 	/**
-	 * The default constructor.
+	 * Default constructor.
 	 */
 	ControlledSystemBase()
-
-      : BASE(), controller_(nullptr) {}
+	: BASE()
+	, controllerPtr_(nullptr)
+	{}
 
 	/**
 	 * Copy constructor.
 	 */
 	ControlledSystemBase(const ControlledSystemBase& rhs)
-
 	: ControlledSystemBase()
 	{}
 
@@ -102,14 +102,18 @@ public:
 	/**
 	 * Resets the internal classes.
 	 */
-	virtual void reset() { controller_ = nullptr; }
+	virtual void reset() {
+		controllerPtr_ = nullptr;
+	}
 
 	/**
 	 * Sets the control policy using the controller class.
 	 *
-	 * @param [in] controller: The control policy.
+	 * @param [in] controllerPtr: A pointer to the control policy.
 	 */
-	void setController(controller_t* controller) { controller_ = controller; }
+	void setController(controller_t* controllerPtr) {
+		controllerPtr_ = controllerPtr;
+	}
 
 	/**
 	 * Computes derivative of the autonomous system dynamics with the given control policy.
@@ -124,7 +128,7 @@ public:
 			state_vector_t& dxdt)  {
 
 		BASE::numFunctionCalls_++;
-		auto u = controller_->computeInput(t, x);
+		input_vector_t u = controllerPtr_->computeInput(t, x);
 		computeFlowMap(t, x, u, dxdt);
 	}
 
@@ -194,8 +198,19 @@ public:
 		BASE::computeGuardSurfaces(time, state, guardSurfacesValue);
 	}
 
-public:
-  controller_t* controller_;  //! pointer to controller
+	/**
+	 * Returns the controller pointer.
+	 *
+	 * @return A pointer to controller.
+	 */
+	controller_t* controllerPtr() {
+
+		return controllerPtr_;
+	}
+
+private:
+  controller_t* controllerPtr_;  //! pointer to controller
+
 };
 
 } // namespace ocs2

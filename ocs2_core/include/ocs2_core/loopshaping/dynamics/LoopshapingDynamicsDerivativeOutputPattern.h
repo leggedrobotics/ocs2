@@ -53,7 +53,7 @@ class LoopshapingDynamicsDerivativeOutputPattern final : public LoopshapingDynam
 
  private:
   void loopshapingFlowMapDerivativeState(state_matrix_t &A) override {
-    const auto &r_filter = loopshapingDefinition_->getInputFilter_r();
+    const auto &r_filter = loopshapingDefinition_->getInputFilter();
     A.block(0, 0, SYSTEM_STATE_DIM, SYSTEM_STATE_DIM) = A_system_;
     A.block(0, SYSTEM_STATE_DIM, SYSTEM_STATE_DIM, FILTER_STATE_DIM).setZero();
     A.block(SYSTEM_STATE_DIM, 0, FILTER_STATE_DIM, SYSTEM_STATE_DIM).setZero();
@@ -61,7 +61,7 @@ class LoopshapingDynamicsDerivativeOutputPattern final : public LoopshapingDynam
   };
 
   void loopshapingFlowMapDerivativeInput(state_input_matrix_t &B) override {
-    const auto &r_filter = loopshapingDefinition_->getInputFilter_r();
+    const auto &r_filter = loopshapingDefinition_->getInputFilter();
     B.block(0, 0, SYSTEM_STATE_DIM, SYSTEM_INPUT_DIM) = B_system_;
     B.block(SYSTEM_STATE_DIM, 0, FILTER_STATE_DIM, FILTER_INPUT_DIM) = r_filter.getB();
   };

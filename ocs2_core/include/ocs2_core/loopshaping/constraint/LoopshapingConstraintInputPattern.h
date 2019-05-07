@@ -156,7 +156,7 @@ class LoopshapingConstraintInputPattern final: public LoopshapingConstraint<FULL
   };
 
   void appendConstraint1(size_t numSystemStateInputConstraints, constraint1_vector_t &e) override {
-    const auto &s_filter = loopshapingDefinition_->getInputFilter_s();
+    const auto &s_filter = loopshapingDefinition_->getInputFilter();
 
     e.template segment(numSystemStateInputConstraints, SYSTEM_INPUT_DIM) =
         s_filter.getC() * x_filter_
@@ -165,13 +165,13 @@ class LoopshapingConstraintInputPattern final: public LoopshapingConstraint<FULL
   };
 
   void appendConstraint1DerivativeState(size_t numSystemStateInputConstraints, constraint1_state_matrix_t &C) override {
-    const auto &s_filter = loopshapingDefinition_->getInputFilter_s();
+    const auto &s_filter = loopshapingDefinition_->getInputFilter();
     C.block(numSystemStateInputConstraints, 0, SYSTEM_INPUT_DIM, SYSTEM_STATE_DIM).setZero();
     C.block(numSystemStateInputConstraints, SYSTEM_STATE_DIM, SYSTEM_INPUT_DIM, FILTER_STATE_DIM) = s_filter.getC();
   };
 
   void appendConstraint1DerivativeControl(size_t numSystemStateInputConstraints, constraint1_input_matrix_t &D) override {
-    const auto &s_filter = loopshapingDefinition_->getInputFilter_s();
+    const auto &s_filter = loopshapingDefinition_->getInputFilter();
     D.block(numSystemStateInputConstraints, 0, SYSTEM_INPUT_DIM, SYSTEM_INPUT_DIM) =
         -Eigen::Matrix<scalar_t, SYSTEM_INPUT_DIM, SYSTEM_INPUT_DIM>::Identity();
     D.block(numSystemStateInputConstraints, SYSTEM_INPUT_DIM, SYSTEM_INPUT_DIM, FILTER_INPUT_DIM) = s_filter.getD();

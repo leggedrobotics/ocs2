@@ -76,7 +76,7 @@ class LoopshapingConstraintEliminatePattern final: public LoopshapingConstraint<
 
   void getInequalityConstraintDerivativesState(state_vector_array_t &dhdx) override {
     this->computeSystemInequalityConstraintDerivatives();
-    const auto &s_filter = loopshapingDefinition_->getInputFilter_s();
+    const auto &s_filter = loopshapingDefinition_->getInputFilter();
     dhdx.clear();
     if (systemConstraint_) {
       dhdx.resize(system_dhdx.size());
@@ -89,7 +89,7 @@ class LoopshapingConstraintEliminatePattern final: public LoopshapingConstraint<
 
   void getInequalityConstraintDerivativesInput(input_vector_array_t &dhdu) override {
     this->computeSystemInequalityConstraintDerivatives();
-    const auto &s_filter = loopshapingDefinition_->getInputFilter_s();
+    const auto &s_filter = loopshapingDefinition_->getInputFilter();
     dhdu.clear();
     if (systemConstraint_) {
       dhdu.resize(system_dhdu.size());
@@ -101,7 +101,7 @@ class LoopshapingConstraintEliminatePattern final: public LoopshapingConstraint<
 
   void getInequalityConstraintSecondDerivativesState(state_matrix_array_t &ddhdxdx) override {
     this->computeSystemInequalityConstraintDerivatives();
-    const auto &s_filter = loopshapingDefinition_->getInputFilter_s();
+    const auto &s_filter = loopshapingDefinition_->getInputFilter();
     ddhdxdx.clear();
     if (systemConstraint_) {
       ddhdxdx.resize(system_ddhdxdx.size());
@@ -118,7 +118,7 @@ class LoopshapingConstraintEliminatePattern final: public LoopshapingConstraint<
 
   void getInequalityConstraintSecondDerivativesInput(input_matrix_array_t &ddhdudu) override {
     this->computeSystemInequalityConstraintDerivatives();
-    const auto &s_filter = loopshapingDefinition_->getInputFilter_s();
+    const auto &s_filter = loopshapingDefinition_->getInputFilter();
     ddhdudu.clear();
     if (systemConstraint_) {
       ddhdudu.resize(system_ddhdudu.size());
@@ -130,7 +130,7 @@ class LoopshapingConstraintEliminatePattern final: public LoopshapingConstraint<
 
   void getInequalityConstraintDerivativesInputState(input_state_matrix_array_t &ddhdudx) override {
     this->computeSystemInequalityConstraintDerivatives();
-    const auto &s_filter = loopshapingDefinition_->getInputFilter_s();
+    const auto &s_filter = loopshapingDefinition_->getInputFilter();
     ddhdudx.clear();
     if (systemConstraint_) {
       ddhdudx.resize(system_ddhdudx.size());
@@ -165,14 +165,14 @@ class LoopshapingConstraintEliminatePattern final: public LoopshapingConstraint<
  private:
 
   void appendConstraint1DerivativeState(size_t numSystemStateInputConstraints, constraint1_state_matrix_t &C) override {
-    const auto &s_filter = loopshapingDefinition_->getInputFilter_s();
+    const auto &s_filter = loopshapingDefinition_->getInputFilter();
     // C.block(0, 0, numSystemStateInputConstraints, SYSTEM_STATE_DIM), stays unaltered
     C.block(0, SYSTEM_STATE_DIM, numSystemStateInputConstraints, FILTER_STATE_DIM).noalias() =
         D_system.block(0, 0, numSystemStateInputConstraints, SYSTEM_INPUT_DIM) * s_filter.getC();
   };
 
   void appendConstraint1DerivativeControl(size_t numSystemStateInputConstraints, constraint1_input_matrix_t &D) override {
-    const auto &s_filter = loopshapingDefinition_->getInputFilter_s();
+    const auto &s_filter = loopshapingDefinition_->getInputFilter();
     D.block(0, 0, numSystemStateInputConstraints, FILTER_INPUT_DIM).noalias() =
         D_system.block(0, 0, numSystemStateInputConstraints, SYSTEM_INPUT_DIM) * s_filter.getD();
   };

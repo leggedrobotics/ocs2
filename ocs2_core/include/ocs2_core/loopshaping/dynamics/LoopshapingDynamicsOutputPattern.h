@@ -40,7 +40,7 @@ class LoopshapingDynamicsOutputPattern final : public LoopshapingDynamics<FULL_S
 
  private:
   void filterFlowmap(const filter_state_vector_t &x_filter, const filter_input_vector_t &u_filter, const system_input_vector_t &u_system, filter_state_vector_t &filterStateDerivative) override {
-                const auto& r_filter = loopshapingDefinition_->getInputFilter_r();
+                const auto& r_filter = loopshapingDefinition_->getInputFilter();
     filterStateDerivative = r_filter.getA() * x_filter + r_filter.getB() * u_system;
   }
 

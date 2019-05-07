@@ -61,15 +61,9 @@ namespace ocs2 {
         }
 
         LoopshapingType getType() const {return loopshapingType_;};
-        size_t getNumStates() const {return filter_.getNumStates();};
-//        size_t getNumInputs() const {return filter_.getNumInputs();};
+        const Filter& getInputFilter() const {return filter_;};
 
-        const Filter& getInputFilter_r() const {return filter_;};
-        const Filter& getInputFilter_s() const {return filter_;};
-
-        void print() const {
-            filter_.print();
-        };
+        void print() const { filter_.print(); };
 
         double gamma = 0.9;
         bool eliminateInputs = false;
@@ -180,7 +174,7 @@ namespace ocs2 {
 
         void initializeEquilibriumFilterStateInput(const system_state_vector_t& system_state, const system_input_vector_t& system_input,
                                                    filter_state_vector_t& filter_state, filter_input_vector_t& filter_input) {
-            const auto &filter = loopshapingDefinition_->getInputFilter_s();
+            const auto &filter = loopshapingDefinition_->getInputFilter();
 
             filter_state_vector_t equilibriumFilterState;
             filter_input_vector_t equilibriumFilterInput;
@@ -227,7 +221,7 @@ namespace ocs2 {
 
         void advance(double dt, const system_state_vector_t& system_state, const system_input_vector_t& system_input,
                      const filter_input_vector_t& filter_input) {
-            const auto& filter = loopshapingDefinition_->getInputFilter_s();
+            const auto& filter = loopshapingDefinition_->getInputFilter();
 
             filter_state_vector_t filterstateDerivative;
 

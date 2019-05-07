@@ -4,6 +4,8 @@
 
 #include <gtest/gtest.h>
 
+
+#include <ocs2_core/loopshaping/LoopshapingMisc.h>
 #include <ocs2_core/loopshaping/LoopshapingDefinition.h>
 #include <ocs2_core/loopshaping/cost/LoopshapingCost.h>
 #include <ocs2_core/loopshaping/constraint/LoopshapingConstraint.h>
@@ -23,11 +25,11 @@ TEST(testLoopshapingDefinition, SISO_Definition) {
   boost::property_tree::ptree pt;
   boost::property_tree::read_info(settingsFile_r, pt);
 
-  SISOFilterDefinition filter0(pt, "r_filter", "Filter0");
+  Filter filter0 = LoopshapingPropertyTree::readSISOFilter(pt, "r_filter.Filter0");
   std::cout << "\nFilter0" << std::endl;
   filter0.print();
 
-  SISOFilterDefinition filter1(pt, "r_filter", "Filter1");
+  Filter filter1 = LoopshapingPropertyTree::readSISOFilter(pt, "r_filter.Filter1");
   std::cout << "\nFilter1" << std::endl;
   filter1.print();
 
@@ -35,16 +37,15 @@ TEST(testLoopshapingDefinition, SISO_Definition) {
 }
 
 TEST(testLoopshapingDefinition, MIMO_Definition) {
-
-  MIMOFilterDefinition filter;
-  filter.loadSettings(settingsFile_s, "s_inv_filter");
+  boost::property_tree::ptree pt;
+  boost::property_tree::read_info(settingsFile_s, pt);
+  Filter filter = LoopshapingPropertyTree::readMIMOFilter(pt, "s_inv_filter", true);
   filter.print();
 
   ASSERT_TRUE(true);
 }
 
 TEST(testLoopshapingDefinition, Loopshaping_Definition_r) {
-
   LoopshapingDefinition filter;
   filter.loadSettings(settingsFile_r);
   filter.print();

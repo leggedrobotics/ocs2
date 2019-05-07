@@ -11,184 +11,9 @@
 #include <boost/property_tree/info_parser.hpp>
 #include <ocs2_core/dynamics/TransferFunctionBase.h>
 #include <ocs2_core/logic/rules/NullLogicRules.h>
+#include <ocs2_core/loopshaping/LoopshapingMisc.h>
 
 namespace ocs2 {
-
-    class SISOFilterDefinition {
-    public:
-        EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-
-        SISOFilterDefinition(const boost::property_tree::ptree& pt, std::string filterMIMOName, std::string filterSISOName,
-        bool invert = false) {
-          std::string filterName = filterMIMOName + "." + filterSISOName;
-
-          // Get Sizes
-          size_t numRepeats = pt.get<size_t>(filterName + ".numRepeats");
-          size_t numPoles = pt.get<size_t>(filterName + ".numPoles");
-          size_t numZeros = pt.get<size_t>(filterName + ".numZeros");
-          double DCGain = pt.get<double>(filterName + ".DCGain");
-          numStates_ = numRepeats*numPoles;
-          numInputs_ = numRepeats;
-          numOutputs_ = numRepeats;
-
-          // Setup Filter, convention a0*s^n + a1*s^(n-1) + ... + an
-          Eigen::VectorXd numerator(numZeros+1);
-          numerator.setZero();
-          numerator(0) = 1.0;
-          for (size_t z = 0; z<numZeros; z++){
-            double zero = pt.get<double>(filterName + ".zeros." + "(" +std::to_string(z) + ")");
-            numerator.segment(1, z+1) -= zero*numerator.segment(0, z+1).eval();
-          }
-
-          Eigen::VectorXd denominator(numPoles+1);
-          denominator.setZero();
-          denominator(0) = 1.0;
-          for (size_t p = 0; p<numPoles; p++){
-            double pole = pt.get<double>(filterName + ".poles." + "(" +std::to_string(p) + ")");
-            denominator.segment(1, p+1) -= pole*denominator.segment(0, p+1).eval();
-          }
-
-          // Scale
-          if (DCGain > 0) {
-            double currentDCGain = numerator(numZeros) / denominator(numPoles);
-            if (currentDCGain < 1e-6 || currentDCGain > 1e6) {
-              throw std::runtime_error("Trouble rescaling transfer function, current DCGain: " + std::to_string(currentDCGain));
-            }
-            double scaling = DCGain / currentDCGain;
-            numerator *= scaling;
-          }
-
-          if (invert) {
-            Eigen::VectorXd temp;
-            temp = numerator;
-            numerator = denominator;
-            denominator = temp;
-          }
-
-          // Convert to state space
-          Eigen::MatrixXd a, b, c, d;
-          ocs2::tf2ss(numerator, denominator, a, b, c, d);
-
-          A_ = Eigen::MatrixXd::Zero(numStates_, numStates_);
-          B_ = Eigen::MatrixXd::Zero(numStates_, numInputs_);
-          C_ = Eigen::MatrixXd::Zero(numInputs_, numStates_);
-          D_ = Eigen::MatrixXd::Zero(numInputs_, numInputs_);
-          size_t statecount = 0;
-          for (size_t r = 0; r<numRepeats; r++){
-            A_.block(statecount, statecount, numPoles, numPoles) = a;
-            B_.block(statecount, r, numPoles, 1) = b;
-            C_.block(r, statecount, 1, numPoles) = c;
-            D_.block(r, r, 1, 1) = d;
-            statecount += numPoles;
-          }
-        }
-
-        size_t getNumStates() const {return numStates_;};
-        size_t getNumInputs() const {return numInputs_;};
-        size_t getNumOutputs() const {return numOutputs_;};
-
-        const Eigen::MatrixXd& getA() const {return A_;};
-        const Eigen::MatrixXd& getB() const {return B_;};
-        const Eigen::MatrixXd& getC() const {return C_;};
-        const Eigen::MatrixXd& getD() const {return D_;};
-
-        void print() const {
-          std::cout << "numStates: " << numStates_ << std::endl;
-          std::cout << "numInputs: " << numInputs_ << std::endl;
-          std::cout << "numOutputs: " << numOutputs_ << std::endl;
-          std::cout << "A: \n" << A_  << std::endl;
-          std::cout << "B: \n" << B_  << std::endl;
-          std::cout << "C: \n" << C_  << std::endl;
-          std::cout << "D: \n" << D_  << std::endl;
-        }
-
-    private:
-        Eigen::MatrixXd A_, B_, C_, D_;
-        size_t numStates_ = 0;
-        size_t numInputs_ = 0;
-        size_t numOutputs_ = 0;
-
-    };
-
-    class MIMOFilterDefinition {
-    public:
-        EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-
-        bool loadSettings(std::string settingsFile, std::string filterName, bool invert = false) {
-          boost::property_tree::ptree pt;
-          boost::property_tree::read_info(settingsFile, pt);
-          size_t numFilters = pt.get<size_t>(filterName + ".numFilters");
-
-          if (numFilters == 0){
-            numStates_ = 0;
-            numInputs_ = 0;
-            numOutputs_ = 0;
-            A_.resize(0,0);
-            B_.resize(0,0);
-            C_.resize(0,0);
-            D_.resize(0,0);
-          } else {
-
-            // Read Individual filters
-            std::vector<SISOFilterDefinition> sisoFilters;
-            sisoFilters.reserve(numFilters);
-            numStates_ = 0;
-            numInputs_ = 0;
-            numOutputs_ = 0;
-            for (size_t i = 0; i < numFilters; i++) {
-              sisoFilters.push_back(SISOFilterDefinition(pt, filterName, "Filter" + std::to_string(i), invert));
-              numStates_ += sisoFilters.back().getNumStates();
-              numInputs_ += sisoFilters.back().getNumInputs();
-              numOutputs_ += sisoFilters.back().getNumOutputs();
-            }
-
-            // Fill matrices
-            A_ = Eigen::MatrixXd::Zero(numStates_, numStates_);
-            B_ = Eigen::MatrixXd::Zero(numStates_, numInputs_);
-            C_ = Eigen::MatrixXd::Zero(numOutputs_, numStates_);
-            D_ = Eigen::MatrixXd::Zero(numOutputs_, numInputs_);
-            size_t statecount = 0;
-            size_t inputcount = 0;
-            size_t outputcount = 0;
-            for (const auto &filt : sisoFilters) {
-              A_.block(statecount, statecount, filt.getNumStates(), filt.getNumStates()) = filt.getA();
-              B_.block(statecount, inputcount, filt.getNumStates(), filt.getNumInputs()) = filt.getB();
-              C_.block(outputcount, statecount, filt.getNumOutputs(), filt.getNumStates()) = filt.getC();
-              D_.block(outputcount, inputcount, filt.getNumOutputs(), filt.getNumInputs()) = filt.getD();
-              statecount += filt.getNumStates();
-              inputcount += filt.getNumInputs();
-              outputcount += filt.getNumOutputs();
-            }
-          }
-        }
-
-        size_t getNumStates() const {return numStates_;};
-        size_t getNumInputs() const {return numInputs_;};
-        size_t getNumOutputs() const {return numOutputs_;};
-
-        const Eigen::MatrixXd& getA() const {return A_;};
-        const Eigen::MatrixXd& getB() const {return B_;};
-        const Eigen::MatrixXd& getC() const {return C_;};
-        const Eigen::MatrixXd& getD() const {return D_;};
-
-        void print() const {
-          std::cout << "numStates: " << numStates_ << std::endl;
-          std::cout << "numInputs: " << numInputs_ << std::endl;
-          std::cout << "numOutputs: " << numOutputs_ << std::endl;
-          std::cout << "A: \n" << A_  << std::endl;
-          std::cout << "B: \n" << B_  << std::endl;
-          std::cout << "C: \n" << C_  << std::endl;
-          std::cout << "D: \n" << D_  << std::endl;
-        }
-
-    private:
-        Eigen::MatrixXd A_, B_, C_, D_;
-        size_t numStates_ = 0;
-        size_t numInputs_ = 0;
-        size_t numOutputs_ = 0;
-    };
-
-
 
     /*
      *  Class to assemble and store the loopshaping definition
@@ -205,12 +30,12 @@ namespace ocs2 {
         bool loadSettings(std::string settingsFile) {
           bool success = true;
 
-          success &= q_filter_.loadSettings(settingsFile, "q_filter");
-          success &= r_filter_.loadSettings(settingsFile, "r_filter");
-          success &= s_filter_.loadSettings(settingsFile, "s_inv_filter", true);
-
           boost::property_tree::ptree pt;
           boost::property_tree::read_info(settingsFile, pt);
+
+          q_filter_ = LoopshapingPropertyTree::readMIMOFilter(pt, "q_filter");
+          r_filter_ = LoopshapingPropertyTree::readMIMOFilter(pt, "r_filter");
+          s_filter_ = LoopshapingPropertyTree::readMIMOFilter(pt, "s_inv_filter", true);
           gamma = pt.get<double>("gamma");
           eliminateInputs = pt.get<bool>("eliminateInputs");
           return success;
@@ -221,9 +46,9 @@ namespace ocs2 {
                                       + s_filter_.getNumStates();};
         size_t getNumInputs() const {return s_filter_.getNumInputs();};
 
-        const MIMOFilterDefinition& getStateFilter_q() const {return q_filter_;};
-        const MIMOFilterDefinition& getInputFilter_r() const {return r_filter_;};
-        const MIMOFilterDefinition& getInputFilter_s() const {return s_filter_;};
+        const Filter& getStateFilter_q() const {return q_filter_;};
+        const Filter& getInputFilter_r() const {return r_filter_;};
+        const Filter& getInputFilter_s() const {return s_filter_;};
 
         void print() const {
           std::cout << "q_filter: " << std::endl;
@@ -314,7 +139,7 @@ namespace ocs2 {
         };
 
      private:
-        MIMOFilterDefinition q_filter_, r_filter_, s_filter_;
+        Filter q_filter_, r_filter_, s_filter_;
     };
 
     template<size_t FULL_STATE_DIM, size_t FULL_INPUT_DIM,

@@ -1355,13 +1355,13 @@ protected:
 	void ControllerFunc_ (const size_t& partitionIndex, const size_t& timeIndex, const scalar_t& constraintStepSize,
 			const input_state_matrix_t& LmConstrained, const input_vector_t& LvConstrained, const input_vector_t& LveConstrained) {
 		// k
-		nominalControllersStock_[partitionIndex].k_[timeIndex] = LmConstrained - CmProjectedTrajectoryStock_[partitionIndex][timeIndex];
+		nominalControllersStock_[partitionIndex].gainArray_[timeIndex] = LmConstrained - CmProjectedTrajectoryStock_[partitionIndex][timeIndex];
 		// uff
-		nominalControllersStock_[partitionIndex].uff_[timeIndex] = nominalInputTrajectoriesStock_[partitionIndex][timeIndex] -
-				nominalControllersStock_[partitionIndex].k_[timeIndex] * nominalStateTrajectoriesStock_[partitionIndex][timeIndex] +
+		nominalControllersStock_[partitionIndex].biasArray_[timeIndex] = nominalInputTrajectoriesStock_[partitionIndex][timeIndex] -
+				nominalControllersStock_[partitionIndex].gainArray_[timeIndex] * nominalStateTrajectoriesStock_[partitionIndex][timeIndex] +
 				constraintStepSize * (LveConstrained - EvProjectedTrajectoryStock_[partitionIndex][timeIndex]);
 		// deltaUff
-		nominalControllersStock_[partitionIndex].deltaUff_[timeIndex] = LvConstrained;
+		nominalControllersStock_[partitionIndex].deltaBiasArray_[timeIndex] = LvConstrained;
 	};
 
 #ifdef BENCHMARK

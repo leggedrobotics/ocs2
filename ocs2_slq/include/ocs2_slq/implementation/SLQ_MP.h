@@ -94,7 +94,7 @@ void SLQ_MP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::lineSearch(bool computeISEs) {
 	if (BASE::settings_.maxLearningRateGSLQP_ < OCS2NumericTraits<scalar_t>::limit_epsilon()) {
 		// clear the feedforward increments
 		for (size_t i=0; i<BASE::numPartitions_; i++)
-			BASE::nominalControllersStock_[i].deltaUff_.clear();
+			BASE::nominalControllersStock_[i].deltaBiasArray_.clear();
 		// display
 		if (BASE::settings_.displayInfo_)
 			std::cerr << "The chosen learningRate is: " << BASE::learningRateStar_ << std::endl;
@@ -139,7 +139,7 @@ void SLQ_MP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::lineSearch(bool computeISEs) {
 
 	// clear the feedforward increments
 	for (size_t i=0; i<BASE::numPartitions_; i++)
-		BASE::nominalControllersStock_[i].deltaUff_.clear();
+		BASE::nominalControllersStock_[i].deltaBiasArray_.clear();
 
 	// display
 	if (BASE::settings_.displayInfo_)

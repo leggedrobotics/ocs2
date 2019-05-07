@@ -1439,10 +1439,10 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculateController() {
 
 		size_t N = SsTimeTrajectoryStock_[i].size();
 
-		nominalControllersStock_[i].time_ = SsTimeTrajectoryStock_[i];
-		nominalControllersStock_[i].k_.resize(N);
-		nominalControllersStock_[i].uff_.resize(N);
-		nominalControllersStock_[i].deltaUff_.resize(N);
+		nominalControllersStock_[i].timeStamp_ = SsTimeTrajectoryStock_[i];
+		nominalControllersStock_[i].gainArray_.resize(N);
+		nominalControllersStock_[i].biasArray_.resize(N);
+		nominalControllersStock_[i].deltaBiasArray_.resize(N);
 
 		// if the partition is not active
 		if (N==0)  continue;
@@ -1544,21 +1544,21 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculateControllerWorker (
 	input_vector_t     Lve = RmInverse * (Bm.transpose()*SveTrajectoryStock_[i][k]);
 
 	input_matrix_t DmNullProjection = input_matrix_t::Identity()-DmProjected;
-	nominalControllersStock_[i].k_[k]   = -DmNullProjection*Lm - CmProjected;
-	nominalControllersStock_[i].uff_[k] = nominalInput - nominalControllersStock_[i].k_[k]*nominalState
+	nominalControllersStock_[i].gainArray_[k]   = -DmNullProjection*Lm - CmProjected;
+	nominalControllersStock_[i].biasArray_[k] = nominalInput - nominalControllersStock_[i].gainArray_[k]*nominalState
 			- constraintStepSize_ * (DmNullProjection*Lve + EvProjected);
-	nominalControllersStock_[i].deltaUff_[k] = -DmNullProjection*Lv;
+	nominalControllersStock_[i].deltaBiasArray_[k] = -DmNullProjection*Lv;
 
 	// checking the numerical stability of the controller parameters
 	if (settings_.checkNumericalStability_==true){
 		try {
-			if (!nominalControllersStock_[i].k_[k].allFinite())
+			if (!nominalControllersStock_[i].gainArray_[k].allFinite())
 				throw std::runtime_error("Feedback gains are unstable.");
-			if (!nominalControllersStock_[i].deltaUff_[k].allFinite())
+			if (!nominalControllersStock_[i].deltaBiasArray_[k].allFinite())
 				throw std::runtime_error("feedForwardControl is unstable.");
 		}
 		catch(const std::exception& error)  {
-			std::cerr << "what(): " << error.what() << " at time " << nominalControllersStock_[i].time_[k] << " [sec]." << std::endl;
+			std::cerr << "what(): " << error.what() << " at time " << nominalControllersStock_[i].timeStamp_[k] << " [sec]." << std::endl;
 		}
 	}
 }
@@ -1664,8 +1664,8 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::lineSearchWorker(
 
 	// modifying uff by local increments
 	for (size_t i=0; i<numPartitions_; i++)
-		for (size_t k=0; k<lsControllersStock[i].time_.size(); k++)
-			lsControllersStock[i].uff_[k] += learningRate * lsControllersStock[i].deltaUff_[k];
+		for (size_t k=0; k<lsControllersStock[i].timeStamp_.size(); k++)
+			lsControllersStock[i].biasArray_[k] += learningRate * lsControllersStock[i].deltaBiasArray_[k];
 
 	try {
 
@@ -2446,10 +2446,10 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::fullRiccatiBackwardSweepWork
 	sTrajectoryStock_[partitionIndex].resize(N);
 
 	// controller parameters
-	nominalControllersStock_[partitionIndex].time_ = nominalTimeTrajectoriesStock_[partitionIndex];
-	nominalControllersStock_[partitionIndex].k_.resize(N);
-	nominalControllersStock_[partitionIndex].uff_.resize(N);
-	nominalControllersStock_[partitionIndex].deltaUff_.resize(N);
+	nominalControllersStock_[partitionIndex].timeStamp_ = nominalTimeTrajectoriesStock_[partitionIndex];
+	nominalControllersStock_[partitionIndex].gainArray_.resize(N);
+	nominalControllersStock_[partitionIndex].biasArray_.resize(N);
+	nominalControllersStock_[partitionIndex].deltaBiasArray_.resize(N);
 
 	state_matrix_t _Gm;
 	state_vector_t _Gv, _Gve;
@@ -2576,16 +2576,16 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::fullRiccatiBackwardSweepWork
 
 			// checking the numerical stability of the controller parameters
 			try {
-				if (nominalControllersStock_[partitionIndex].k_[k].hasNaN())
+				if (nominalControllersStock_[partitionIndex].gainArray_[k].hasNaN())
 					throw std::runtime_error("Feedback gains are unstable.");
-				if (nominalControllersStock_[partitionIndex].uff_[k].hasNaN())
+				if (nominalControllersStock_[partitionIndex].biasArray_[k].hasNaN())
 					throw std::runtime_error("uff gains are unstable.");
-				if (nominalControllersStock_[partitionIndex].deltaUff_[k].hasNaN())
+				if (nominalControllersStock_[partitionIndex].deltaBiasArray_[k].hasNaN())
 					throw std::runtime_error("deltaUff is unstable.");
 			}
 			catch(const std::exception& error) {
 				std::cerr << "what(): " << error.what() << " at time "
-						<< nominalControllersStock_[partitionIndex].time_[k] << " [sec]." << std::endl;
+						<< nominalControllersStock_[partitionIndex].timeStamp_[k] << " [sec]." << std::endl;
 				exit(0);
 			}
 		}
@@ -2641,16 +2641,16 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculateControllerUpdateMax
 		nominalInputFunc_[0].setTimeStamp( &(nominalTimeTrajectoriesStock_[i]) );
 		nominalInputFunc_[0].setData( &(nominalInputTrajectoriesStock_[i]) );
 
-		for (size_t k=0; k<nominalControllersStock_[i].time_.size(); k++)  {
+		for (size_t k=0; k<nominalControllersStock_[i].timeStamp_.size(); k++)  {
 
-			maxDeltaUffNorm = std::max(maxDeltaUffNorm, nominalControllersStock_[i].deltaUff_[k].norm());
+			maxDeltaUffNorm = std::max(maxDeltaUffNorm, nominalControllersStock_[i].deltaBiasArray_[k].norm());
 
 			state_vector_t nominalState;
-			nominalStateFunc_[0].interpolate(nominalControllersStock_[i].time_[k], nominalState);
+			nominalStateFunc_[0].interpolate(nominalControllersStock_[i].timeStamp_[k], nominalState);
 			size_t greatestLessTimeStampIndex = nominalStateFunc_[0].getGreatestLessTimeStampIndex();
 			input_vector_t nominalInput;
-			nominalInputFunc_[0].interpolate(nominalControllersStock_[i].time_[k], nominalInput, greatestLessTimeStampIndex);
-			input_vector_t deltaUee = nominalInput - nominalControllersStock_[i].k_[k]*nominalState - nominalControllersStock_[i].uff_[k];
+			nominalInputFunc_[0].interpolate(nominalControllersStock_[i].timeStamp_[k], nominalInput, greatestLessTimeStampIndex);
+			input_vector_t deltaUee = nominalInput - nominalControllersStock_[i].gainArray_[k]*nominalState - nominalControllersStock_[i].biasArray_[k];
 			maxDeltaUeeNorm = std::max(maxDeltaUeeNorm, deltaUee.norm());
 
 		}  // end of k loop
@@ -2959,49 +2959,49 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::truncateConterller(
 	for (size_t i=0; i<initActivePartition; i++)
 		deletedcontrollersStock[i].swap(controllersStock[i]);
 
-	if (controllersStock[initActivePartition].time_.empty()==true)  return;
+	if (controllersStock[initActivePartition].empty()==true)  return;
 
 	// interpolating uff
 	LinearInterpolation<input_vector_t,Eigen::aligned_allocator<input_vector_t> > uffFunc;
-	uffFunc.setTimeStamp(&controllersStock[initActivePartition].time_);
-	uffFunc.setData(&controllersStock[initActivePartition].uff_);
+	uffFunc.setTimeStamp(&controllersStock[initActivePartition].timeStamp_);
+	uffFunc.setData(&controllersStock[initActivePartition].biasArray_);
 	input_vector_t uffInit;
 	uffFunc.interpolate(initTime, uffInit);
 	size_t greatestLessTimeStampIndex = uffFunc.getGreatestLessTimeStampIndex();
 
 	// interpolating k
 	LinearInterpolation<input_state_matrix_t,Eigen::aligned_allocator<input_state_matrix_t> > kFunc;
-	kFunc.setTimeStamp(&controllersStock[initActivePartition].time_);
-	kFunc.setData(&controllersStock[initActivePartition].k_);
+	kFunc.setTimeStamp(&controllersStock[initActivePartition].timeStamp_);
+	kFunc.setData(&controllersStock[initActivePartition].gainArray_);
 	input_state_matrix_t kInit;
 	kFunc.interpolate(initTime, kInit, greatestLessTimeStampIndex);
 
 	// deleting the controller in the active subsystem for the subsystems before initTime
 	if (greatestLessTimeStampIndex>0) {
 
-		deletedcontrollersStock[initActivePartition].time_.resize(greatestLessTimeStampIndex+1);
-		deletedcontrollersStock[initActivePartition].uff_.resize(greatestLessTimeStampIndex+1);
-		deletedcontrollersStock[initActivePartition].k_.resize(greatestLessTimeStampIndex+1);
+		deletedcontrollersStock[initActivePartition].timeStamp_.resize(greatestLessTimeStampIndex+1);
+		deletedcontrollersStock[initActivePartition].biasArray_.resize(greatestLessTimeStampIndex+1);
+		deletedcontrollersStock[initActivePartition].gainArray_.resize(greatestLessTimeStampIndex+1);
 		for (size_t k=0; k<=greatestLessTimeStampIndex; k++) {
-			deletedcontrollersStock[initActivePartition].time_[k] = controllersStock[initActivePartition].time_[k];
-			deletedcontrollersStock[initActivePartition].uff_[k] = controllersStock[initActivePartition].uff_[k];
-			deletedcontrollersStock[initActivePartition].k_[k] = controllersStock[initActivePartition].k_[k];
+			deletedcontrollersStock[initActivePartition].timeStamp_[k] = controllersStock[initActivePartition].timeStamp_[k];
+			deletedcontrollersStock[initActivePartition].biasArray_[k] = controllersStock[initActivePartition].biasArray_[k];
+			deletedcontrollersStock[initActivePartition].gainArray_[k] = controllersStock[initActivePartition].gainArray_[k];
 		}
 
-		controllersStock[initActivePartition].time_.erase (
-				controllersStock[initActivePartition].time_.begin(),
-				controllersStock[initActivePartition].time_.begin()+greatestLessTimeStampIndex);
-		controllersStock[initActivePartition].uff_.erase (
-				controllersStock[initActivePartition].uff_.begin(),
-				controllersStock[initActivePartition].uff_.begin()+greatestLessTimeStampIndex);
-		controllersStock[initActivePartition].k_.erase (
-				controllersStock[initActivePartition].k_.begin(),
-				controllersStock[initActivePartition].k_.begin()+greatestLessTimeStampIndex);
+		controllersStock[initActivePartition].timeStamp_.erase (
+				controllersStock[initActivePartition].timeStamp_.begin(),
+				controllersStock[initActivePartition].timeStamp_.begin()+greatestLessTimeStampIndex);
+		controllersStock[initActivePartition].biasArray_.erase (
+				controllersStock[initActivePartition].biasArray_.begin(),
+				controllersStock[initActivePartition].biasArray_.begin()+greatestLessTimeStampIndex);
+		controllersStock[initActivePartition].gainArray_.erase (
+				controllersStock[initActivePartition].gainArray_.begin(),
+				controllersStock[initActivePartition].gainArray_.begin()+greatestLessTimeStampIndex);
 	}
 
-	controllersStock[initActivePartition].time_[0] = initTime;
-	controllersStock[initActivePartition].uff_[0] = uffInit;
-	controllersStock[initActivePartition].k_[0] = kInit;
+	controllersStock[initActivePartition].timeStamp_[0] = initTime;
+	controllersStock[initActivePartition].biasArray_[0] = uffInit;
+	controllersStock[initActivePartition].gainArray_[0] = kInit;
 
 }
 
@@ -3441,14 +3441,14 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::runExit()  {
 //	for (size_t i=0; i<initActivePartition_; i++)
 //		nominalControllersStock_[i].swap(deletedcontrollersStock_[i]);
 //
-//	if (deletedcontrollersStock_[initActivePartition_].time_.empty()==false) {
+//	if (deletedcontrollersStock_[initActivePartition_].timeStamp_.empty()==false) {
 //
 //		nominalControllersStock_[initActivePartition_].swap(deletedcontrollersStock_[initActivePartition_]);
 //
-//		for (size_t k=0; k<deletedcontrollersStock_[initActivePartition_].time_.size(); k++) {
-//			nominalControllersStock_[initActivePartition_].time_.push_back(deletedcontrollersStock_[initActivePartition_].time_[k]);
-//			nominalControllersStock_[initActivePartition_].uff_.push_back(deletedcontrollersStock_[initActivePartition_].uff_[k]);
-//			nominalControllersStock_[initActivePartition_].k_.push_back(deletedcontrollersStock_[initActivePartition_].k_[k]);
+//		for (size_t k=0; k<deletedcontrollersStock_[initActivePartition_].timeStamp_.size(); k++) {
+//			nominalControllersStock_[initActivePartition_].timeStamp_.push_back(deletedcontrollersStock_[initActivePartition_].timeStamp_[k]);
+//			nominalControllersStock_[initActivePartition_].biasArray_.push_back(deletedcontrollersStock_[initActivePartition_].biasArray_[k]);
+//			nominalControllersStock_[initActivePartition_].gainArray_.push_back(deletedcontrollersStock_[initActivePartition_].gainArray_[k]);
 //		}  // end of k loop
 //	}
 }

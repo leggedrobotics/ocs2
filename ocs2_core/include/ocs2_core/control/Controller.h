@@ -16,7 +16,8 @@ namespace ocs2 {
  * @tparam INPUT_DIM: Dimension of the control input space.
  */
 template <size_t STATE_DIM, size_t INPUT_DIM>
-class Controller {
+class Controller
+{
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
@@ -53,7 +54,7 @@ class Controller {
   virtual void flatten(scalar_t time, scalar_array_t& flatArray) const = 0;
 
   /**
-   * @brief Restores and initializes the controller from a flattend array
+   * @brief Restores and initializes the controller from a flattened array
    * @param[in] timeArray array of times
    * @param[in] flatArray2 The array the represents the compressed controller
    */
@@ -64,6 +65,25 @@ class Controller {
    * @return ControllerType: what type of controller this is
    */
   virtual ControllerType getType() const = 0;
+
+  /**
+   * @brief clears and reverts back to an empty controller.
+   * Therefore, if empty() method is called, it will return true.
+   */
+  virtual void clear() = 0;
+
+  /**
+   * @brief Fills all the data containers with zeros. Does not change size, does not change time array.
+   */
+  virtual void setZero() = 0;
+
+  /**
+   * Returns whether the class contains any information.
+   *
+   * @return true if it contains no information, false otherwise.
+   */
+  virtual bool empty() const = 0;
+
 };
 
 }  // namespace ocs2

@@ -140,9 +140,29 @@ public:
 	virtual void reset();
 
 	/**
-	 * Shutdowns the ROS nodes.
+	 * Shutdowns the ROS node.
 	 */
-	void shutdownNodes();
+	void shutdownNode();
+
+	/**
+	 * Initialize the ROS node.
+	 *
+	 * @param [in] argc: Command line number of arguments.
+	 * @param [in] argv: Command line vector of arguments.
+	 */
+	void initializeNode(int argc, char* argv[]);
+
+	/**
+	 * Returns a shared pointer to the node handle.
+	 *
+	 * @return shared pointer to the node handle.
+	 */
+	std::shared_ptr<ros::NodeHandle>& nodeHandlePtr();
+
+	/**
+	 * Spins ROS.
+	 */
+	void spin();
 
 	/**
 	 * This is the main routine which launches all the nodes required for MPC to run which includes:
@@ -305,6 +325,8 @@ protected:
 	MPC_Settings mpcSettings_;
 
 	std::string robotName_;
+
+	std::shared_ptr<ros::NodeHandle> nodeHandlerPtr_;
 
 	// Publishers and subscribers
 	::ros::Subscriber    mpcObservationSubscriber_;

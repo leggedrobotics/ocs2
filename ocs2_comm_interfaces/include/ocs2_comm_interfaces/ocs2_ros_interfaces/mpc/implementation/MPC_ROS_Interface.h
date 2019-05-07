@@ -62,7 +62,7 @@ MPC_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::MPC_ROS_Interface(
 template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
 MPC_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::~MPC_ROS_Interface() {
 
-	shutdownNodes();
+	shutdownNode();
 }
 
 /******************************************************************************************************/
@@ -562,7 +562,7 @@ void MPC_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::mpcModeSequenceCall
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void MPC_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::shutdownNodes() {
+void MPC_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::shutdownNode() {
 
 #ifdef PUBLISH_THREAD
 	ROS_INFO_STREAM("Shutting down workers ...");
@@ -589,35 +589,72 @@ void MPC_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::shutdownNodes() {
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
+void MPC_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::initializeNode(int argc, char* argv[]) {
+
+	if (!nodeHandlerPtr_) {
+		// display
+		ROS_INFO_STREAM("MPC node is setting up ...");
+
+		// setup ROS
+		::ros::init(argc, argv, robotName_+"_mpc", ::ros::init_options::NoSigintHandler);
+		signal(SIGINT, MPC_ROS_Interface::sigintHandler);
+
+		// node handle
+		nodeHandlerPtr_.reset(new ros::NodeHandle);
+	}
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
+std::shared_ptr<ros::NodeHandle>& MPC_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::nodeHandlePtr() {
+
+	return nodeHandlerPtr_;
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
+void MPC_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::spin() {
+
+	ROS_INFO_STREAM("Start spinning now ...");
+
+	// Equivalent to ros::spin() + check if master is alive
+	while(::ros::ok() && ::ros::master::check() ) {
+		::ros::getGlobalCallbackQueue()->callAvailable(ros::WallDuration(0.1));
+	}
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
 void MPC_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::launchNodes(int argc, char* argv[]) {
 
 	// reset counters and variables
 	reset();
 
-	// display
-	ROS_INFO_STREAM("MPC node is setting up ...");
-
-	// setup ROS
-	::ros::init(argc, argv, robotName_+"_mpc", ::ros::init_options::NoSigintHandler);
-	signal(SIGINT, MPC_ROS_Interface::sigintHandler);
-	::ros::NodeHandle nodeHandler;
+	// initialize node
+	initializeNode(argc, argv);
 
 	// Observation subscriber
-	mpcObservationSubscriber_ = nodeHandler.subscribe(
+	mpcObservationSubscriber_ = nodeHandlerPtr_->subscribe(
 			robotName_+"_mpc_observation",
 			1,
 			&MPC_ROS_Interface::mpcObservationCallback, this,
 			::ros::TransportHints().udp());
 
 	// Goal subscriber
-	mpcTargetTrajectoriesSubscriber_ = nodeHandler.subscribe(
+	mpcTargetTrajectoriesSubscriber_ = nodeHandlerPtr_->subscribe(
 			robotName_+"_mpc_target",
 			1,
 			&MPC_ROS_Interface::mpcTargetTrajectoriesCallback, this,
 			::ros::TransportHints().tcpNoDelay());
 
 	// Logic rules template subscriber
-	mpcModeSequenceSubscriber_ = nodeHandler.subscribe(
+	mpcModeSequenceSubscriber_ = nodeHandlerPtr_->subscribe(
 			robotName_+"_mpc_mode_sequence",
 			1,
 			&MPC_ROS_Interface::mpcModeSequenceCallback, this,
@@ -625,18 +662,18 @@ void MPC_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::launchNodes(int arg
 
 	// SLQ-MPC publisher
 	if (mpcSettings_.useFeedbackPolicy_==true) {
-		mpcFeedbackPolicyPublisher_ = nodeHandler.advertise<ocs2_comm_interfaces::mpc_feedback_policy>(
+		mpcFeedbackPolicyPublisher_ = nodeHandlerPtr_->advertise<ocs2_comm_interfaces::mpc_feedback_policy>(
 				robotName_+"_mpc_fb_policy", 1, true);
 	} else {
-		mpcFeedforwardPolicyPublisher_ = nodeHandler.advertise<ocs2_comm_interfaces::mpc_feedforward_policy>(
+		mpcFeedforwardPolicyPublisher_ = nodeHandlerPtr_->advertise<ocs2_comm_interfaces::mpc_feedforward_policy>(
 				robotName_+"_mpc_ff_policy", 1, true);
 	}
 
 	// dummy publisher
-	dummyPublisher_ = nodeHandler.advertise<ocs2_comm_interfaces::dummy>("ping", 1, true);
+	dummyPublisher_ = nodeHandlerPtr_->advertise<ocs2_comm_interfaces::dummy>("ping", 1, true);
 
 	// MPC reset service server
-	mpcResetServiceServer_ = nodeHandler.advertiseService(robotName_+"_mpc_reset",
+	mpcResetServiceServer_ = nodeHandlerPtr_->advertiseService(robotName_+"_mpc_reset",
 			&MPC_ROS_Interface::resetMpcCallback, this);
 
 	// display
@@ -645,12 +682,9 @@ void MPC_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::launchNodes(int arg
 #endif
 
 	ROS_INFO_STREAM("MPC node is ready.");
-	ROS_INFO_STREAM("Start spinning now ...");
 
-	// Equivalent to ros::spin() + check if master is alive
-	while( ros::ok() && ros::master::check() ) {
-		::ros::getGlobalCallbackQueue()->callAvailable(ros::WallDuration(0.1));
-	}
+	// spin
+	spin();
 }
 
 

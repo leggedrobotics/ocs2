@@ -196,42 +196,41 @@ std::unique_ptr<LoopshapingDynamicsDerivative<FULL_STATE_DIM,
                                                                                             LOGIC_RULES_T>::Create(
     const SYSTEM_DERIVATIVE &controlledSystem,
     std::shared_ptr<LoopshapingDefinition> loopshapingDefinition) {
-  if (loopshapingDefinition->getInputFilter_s().getNumOutputs() > 0) {
-    if (loopshapingDefinition->eliminateInputs){
-      return std::unique_ptr<LoopshapingDynamicsDerivative>(new LoopshapingDynamicsDerivativeEliminatePattern<FULL_STATE_DIM,
-                                                                                                          FULL_INPUT_DIM,
-                                                                                                          SYSTEM_STATE_DIM,
-                                                                                                          SYSTEM_INPUT_DIM,
-                                                                                                          FILTER_STATE_DIM,
-                                                                                                          FILTER_INPUT_DIM,
-                                                                                                          LOGIC_RULES_T>(
-          controlledSystem,
-          std::move(
-              loopshapingDefinition)));
-    } else {
-      return std::unique_ptr<LoopshapingDynamicsDerivative>(new LoopshapingDynamicsDerivativeInputPattern<FULL_STATE_DIM,
-                                                                                                          FULL_INPUT_DIM,
-                                                                                                          SYSTEM_STATE_DIM,
-                                                                                                          SYSTEM_INPUT_DIM,
-                                                                                                          FILTER_STATE_DIM,
-                                                                                                          FILTER_INPUT_DIM,
-                                                                                                          LOGIC_RULES_T>(
-          controlledSystem,
-          std::move(
-              loopshapingDefinition)));
+    switch (loopshapingDefinition->getType()) {
+        case LoopshapingType::outputpattern :
+            return std::unique_ptr<LoopshapingDynamicsDerivative>(new LoopshapingDynamicsDerivativeOutputPattern<FULL_STATE_DIM,
+                    FULL_INPUT_DIM,
+                    SYSTEM_STATE_DIM,
+                    SYSTEM_INPUT_DIM,
+                    FILTER_STATE_DIM,
+                    FILTER_INPUT_DIM,
+                    LOGIC_RULES_T>(
+                    controlledSystem,
+                    std::move(
+                            loopshapingDefinition)));
+        case LoopshapingType::inputpattern :
+            return std::unique_ptr<LoopshapingDynamicsDerivative>(new LoopshapingDynamicsDerivativeInputPattern<FULL_STATE_DIM,
+                    FULL_INPUT_DIM,
+                    SYSTEM_STATE_DIM,
+                    SYSTEM_INPUT_DIM,
+                    FILTER_STATE_DIM,
+                    FILTER_INPUT_DIM,
+                    LOGIC_RULES_T>(
+                    controlledSystem,
+                    std::move(
+                            loopshapingDefinition)));
+        case LoopshapingType::eliminatepattern :
+            return std::unique_ptr<LoopshapingDynamicsDerivative>(new LoopshapingDynamicsDerivativeEliminatePattern<FULL_STATE_DIM,
+                    FULL_INPUT_DIM,
+                    SYSTEM_STATE_DIM,
+                    SYSTEM_INPUT_DIM,
+                    FILTER_STATE_DIM,
+                    FILTER_INPUT_DIM,
+                    LOGIC_RULES_T>(
+                    controlledSystem,
+                    std::move(
+                            loopshapingDefinition)));
     }
-  } else if (loopshapingDefinition->getInputFilter_r().getNumOutputs() > 0) {
-    return std::unique_ptr<LoopshapingDynamicsDerivative>(new LoopshapingDynamicsDerivativeOutputPattern<FULL_STATE_DIM,
-                                                                                                         FULL_INPUT_DIM,
-                                                                                                         SYSTEM_STATE_DIM,
-                                                                                                         SYSTEM_INPUT_DIM,
-                                                                                                         FILTER_STATE_DIM,
-                                                                                                         FILTER_INPUT_DIM,
-                                                                                                         LOGIC_RULES_T>(
-        controlledSystem,
-        std::move(
-            loopshapingDefinition)));
-  }
 };
 }; // namespace ocs2
 

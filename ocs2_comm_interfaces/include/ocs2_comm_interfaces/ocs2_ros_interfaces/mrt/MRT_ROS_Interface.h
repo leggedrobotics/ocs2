@@ -456,7 +456,7 @@ protected:
 	ocs2_comm_interfaces::mpc_observation mpcObservationMsgBuffer_;
 
 	// Multi-threading for subscribers
-	std::mutex subscriberMutex_;
+	mutable std::mutex subscriberMutex_;
 	::ros::CallbackQueue mrtCallbackQueue_;
 
 	// Multi-threading for publishers

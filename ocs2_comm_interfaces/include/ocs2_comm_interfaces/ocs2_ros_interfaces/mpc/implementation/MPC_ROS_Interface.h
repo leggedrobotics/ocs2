@@ -647,7 +647,10 @@ void MPC_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::launchNodes(int arg
 	ROS_INFO_STREAM("MPC node is ready.");
 	ROS_INFO_STREAM("Start spinning now ...");
 
-	::ros::spin();
+	// Equivalent to ros::spin() + check if master is alive
+	while( ros::ok() && ros::master::check() ) {
+		::ros::getGlobalCallbackQueue()->callAvailable(ros::WallDuration(0.1));
+	}
 }
 
 

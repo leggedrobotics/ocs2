@@ -110,10 +110,10 @@ void MRT_ROS_Dummy_Loop<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::run() {
 	ROS_INFO_STREAM("Initial policy has been received.");
 
 
-	while(::ros::ok()) {
+	while( ::ros::ok()  && ::ros::master::check() ) {
 
 		// this should be called before updatePolicy()
-    mrtPtr_->spinMRT();
+    	mrtPtr_->spinMRT();
 
 		// Checks for new policy and updates the policy
 		bool policyUpdated = false;
@@ -155,7 +155,7 @@ void MRT_ROS_Dummy_Loop<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::run() {
 		}
 
 		// Visualization
-		publishVisualizer(observation_);
+		publishVisualizer(observation_, mrtPtr_->mpcCostDesiredTrajectories());
 
 		rosRate.sleep();
 

@@ -208,17 +208,21 @@ bool MPC_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::run(
 	// check if the current time exceeds the solver final limit
 	if (currentTime>=getFinalTime() && mpcSettings_.recedingHorizon_==true) {
 
-		if (initRun_==true)
-			throw std::runtime_error("The initial time is greater than the planning time in the first run.");
+		if (initRun_==true){
+		  for (int i=0; i<partitioningTimes_.size(); i++){
+		    partitioningTimes_[i] += currentTime;
+		  }
+		}
+		else {
+      std::cerr << std::endl << "#####################################################";
+      std::cerr << std::endl << "#####################################################";
+      std::cerr << std::endl << "#####################################################" << std::endl;
+      std::cerr << "### MPC is called at time:  " << currentTime << " [s]." << std::endl;
+      std::cerr << "WARNING: The MPC time-horizon is smaller than the MPC starting time." << std::endl;
+      std::cerr << "currentTime: " << currentTime << "\t Controller finalTime: " << getFinalTime() << std::endl;
 
-		std::cerr << std::endl << "#####################################################";
-		std::cerr << std::endl << "#####################################################";
-		std::cerr << std::endl << "#####################################################" << std::endl;
-		std::cerr << "### MPC is called at time:  " << currentTime << " [s]." << std::endl;
-		std::cerr << "WARNING: The MPC time-horizon is smaller than the MPC starting time." << std::endl;
-		std::cerr << "currentTime: " << currentTime << "\t Controller finalTime: " << getFinalTime() << std::endl;
-
-		return false;
+      return false;
+    }
 	}
 
 	// display

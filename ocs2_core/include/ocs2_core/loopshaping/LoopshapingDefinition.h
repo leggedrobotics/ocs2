@@ -28,6 +28,8 @@ namespace ocs2 {
     public:
         EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
+        double gamma = 0.9;
+
         bool loadSettings(std::string settingsFile) {
             bool success = true;
 
@@ -38,7 +40,7 @@ namespace ocs2 {
             Filter s_filter_ = LoopshapingPropertyTree::readMIMOFilter(pt, "s_inv_filter", true);
 
             gamma = pt.get<double>("gamma");
-            eliminateInputs = pt.get<bool>("eliminateInputs");
+            bool eliminateInputs = pt.get<bool>("eliminateInputs");
 
             if (r_filter_.getNumOutputs() > 0 && s_filter_.getNumOutputs() > 0) {
                 throw std::runtime_error("[LoopshapingDefinition] using both r and s filter not implemented");
@@ -64,9 +66,6 @@ namespace ocs2 {
         const Filter& getInputFilter() const {return filter_;};
 
         void print() const { filter_.print(); };
-
-        double gamma = 0.9;
-        bool eliminateInputs = false;
 
         template <typename DerivedStateVector, typename DerivedSystemState>
         void getSystemState(const DerivedStateVector& state, DerivedSystemState& systemState){
@@ -185,7 +184,8 @@ namespace ocs2 {
                 filter_state = - filter.getA().colPivHouseholderQr().solve(filter.getB() * system_input);
             }
 
-            if (loopshapingDefinition_->getType() == LoopshapingType::outputpattern && loopshapingDefinition_->getType() == LoopshapingType::eliminatepattern) {
+            if (loopshapingDefinition_->getType() == LoopshapingType::outputpattern ||
+                loopshapingDefinition_->getType() == LoopshapingType::eliminatepattern) {
                 // Solve
                 // [0  =  [  A_s    B_s    [x_s
                 //  u]       C_s    D_s  ]  v_s]

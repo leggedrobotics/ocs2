@@ -235,6 +235,26 @@ void MRT_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::mpcPolicyCallback(
 
   std::unique_lock<std::mutex> lk(subscriberMutex_);
 
+  // if the policy is not updated
+  if (msg->controllerIsUpdated==false) {
+	  mpcInitObservationBuffer_ = system_observation_t();
+	  mpcCostDesiredTrajectoriesBuffer_.clear();
+	  policyUpdatedBuffer_ = false;
+	  eventTimesBuffer_.clear();
+	  subsystemsSequenceBuffer_.clear();
+	  mpcTimeTrajectoryBuffer_.clear();
+	  mpcStateTrajectoryBuffer_.clear();
+
+	  lk.unlock();
+
+	  // It is important that the buffer message's hash get updated at the very last
+	  // since it will signal the updatePolicy method to swap buffer.
+	  // Although data is protected from racing however it will cause unnecessary delay
+	  messageHashBuffer_ = messageHashValue(mpcInitObservationBuffer_);
+
+	  return;
+  }
+
   ros_msg_conversions_t::ReadObservationMsg(msg->initObservation,
                                             mpcInitObservationBuffer_);
 
@@ -317,7 +337,8 @@ bool MRT_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::updatePolicy() {
 
   if (messageHash_ == messageHashBuffer_.load()) {
     return false;
-  } else if (policyUpdatedBuffer_ == false) {
+  }
+  if (policyUpdatedBuffer_ == false) {
     return false;
   }
 
@@ -382,6 +403,16 @@ bool MRT_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::updatePolicy() {
   lk.unlock();
 
   return true;
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+template<size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
+bool MRT_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::mpcIsTerminated() const {
+
+	std::lock_guard<std::mutex> lk(subscriberMutex_);
+	return !policyUpdated_;
 }
 
 /******************************************************************************************************/

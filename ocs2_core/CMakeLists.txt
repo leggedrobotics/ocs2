@@ -54,7 +54,7 @@ if(cmake_clang_tools_FOUND)
     TARGET ${PROJECT_NAME}_lintTarget
     SOURCE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/src ${CMAKE_CURRENT_SOURCE_DIR}/include/ocs2_core
     CT_HEADER_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/include
-    CF_FIX
+    # CF_FIX # temporarily disabled
   )
 endif(cmake_clang_tools_FOUND)
 

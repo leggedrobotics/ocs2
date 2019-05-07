@@ -621,9 +621,26 @@ void MPC_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::spin() {
 
 	ROS_INFO_STREAM("Start spinning now ...");
 
-	// Equivalent to ros::spin() + check if master is alive
-	while(::ros::ok() && ::ros::master::check() ) {
-		::ros::getGlobalCallbackQueue()->callAvailable(ros::WallDuration(0.1));
+	try
+	{
+		// Equivalent to ros::spin() + check if master is alive
+		while(::ros::ok() && ::ros::master::check() ) {
+			::ros::getGlobalCallbackQueue()->callAvailable(ros::WallDuration(0.1));
+		}
+	}
+	catch(...)
+	{
+		// declaring that MPC is not updated anymore
+		if (mpcSettings_.useFeedbackPolicy_==true) {
+			ocs2_comm_interfaces::mpc_feedback_policy mpcFeedbackPolicyMsg;
+			mpcFeedbackPolicyMsg.controllerIsUpdated = false;
+			mpcFeedbackPolicyPublisher_.publish(mpcFeedbackPolicyMsg);
+		} else {
+			ocs2_comm_interfaces::mpc_feedforward_policy mpcFeedforwardPolicyMsg;
+			mpcFeedforwardPolicyMsg.controllerIsUpdated = false;
+			mpcFeedforwardPolicyPublisher_.publish(mpcFeedforwardPolicyMsg);
+		}
+		throw;
 	}
 }
 

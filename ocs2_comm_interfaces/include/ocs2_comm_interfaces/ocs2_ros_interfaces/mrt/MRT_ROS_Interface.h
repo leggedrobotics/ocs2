@@ -279,6 +279,13 @@ public:
 	 */
 	bool updatePolicy();
 
+	/**
+	 * Returns if MPC has been terminated due to an exception.
+	 *
+	 * @return true if MPC falied.
+	 */
+	bool mpcIsTerminated() const;
+
 protected:
 	/**
 	 * The updatePolicy() method will call this method which allows the user to

@@ -115,10 +115,10 @@ TEST(exp1_ilqr_test, Exp1_ilqr_test)
 			&operatingTrajectories, ilqrSettings, &logicRules);
 
 	// ILQR - multi-threaded version
-	ILQR_MT<STATE_DIM, INPUT_DIM, EXP1_LogicRules> ilqrMT(
-			&systemDynamics, &systemDerivative,
-			&systemConstraint, &systemCostFunction,
-			&operatingTrajectories, ilqrSettings, &logicRules);
+//	ILQR_MT<STATE_DIM, INPUT_DIM, EXP1_LogicRules> ilqrMT(
+//			&systemDynamics, &systemDerivative,
+//			&systemConstraint, &systemCostFunction,
+//			&operatingTrajectories, ilqrSettings, &logicRules);
 
 	// run single_threaded core ILQR
 	if (ilqrSettings.displayInfo_ || ilqrSettings.displayShortSummary_)
@@ -126,23 +126,23 @@ TEST(exp1_ilqr_test, Exp1_ilqr_test)
 	ilqrST.run(startTime, initState, finalTime, partitioningTimes);
 
 	// run multi-threaded ILQR
-	if (ilqrSettings.displayInfo_ || ilqrSettings.displayShortSummary_)
-		std::cerr << "\n>>> multi-threaded ILQR" << std::endl;
-	ilqrMT.run(startTime, initState, finalTime, partitioningTimes);
+//	if (ilqrSettings.displayInfo_ || ilqrSettings.displayShortSummary_)
+//		std::cerr << "\n>>> multi-threaded ILQR" << std::endl;
+//	ilqrMT.run(startTime, initState, finalTime, partitioningTimes);
 
 	/******************************************************************************************************/
 	/******************************************************************************************************/
 	/******************************************************************************************************/
 	// get controller
 	ILQR_BASE<STATE_DIM, INPUT_DIM, EXP1_LogicRules>::controller_array_t controllersStockST = ilqrST.getController();
-	ILQR_BASE<STATE_DIM, INPUT_DIM, EXP1_LogicRules>::controller_array_t controllersStockMT = ilqrMT.getController();
+//	ILQR_BASE<STATE_DIM, INPUT_DIM, EXP1_LogicRules>::controller_array_t controllersStockMT = ilqrMT.getController();
 
 	// get performance indices
 	double totalCost_st, totalCost_mt;
 	double constraint1ISE_st, constraint1ISE_mt;
 	double constraint2ISE_st, constraint2ISE_mt;
 	ilqrST.getPerformanceIndeces(totalCost_st, constraint1ISE_st, constraint2ISE_st);
-	ilqrMT.getPerformanceIndeces(totalCost_mt, constraint1ISE_mt, constraint2ISE_mt);
+//	ilqrMT.getPerformanceIndeces(totalCost_mt, constraint1ISE_mt, constraint2ISE_mt);
 
 	/******************************************************************************************************/
 	/******************************************************************************************************/
@@ -150,20 +150,20 @@ TEST(exp1_ilqr_test, Exp1_ilqr_test)
 	const double expectedCost = 5.4399;
 	ASSERT_LT(fabs(totalCost_st - expectedCost), 10*ilqrSettings.minRelCostILQR_) <<
 			"MESSAGE: ILQR_ST failed in the EXP1's cost test!";
-	ASSERT_LT(fabs(totalCost_mt - expectedCost), 10*ilqrSettings.minRelCostILQR_) <<
-			"MESSAGE: ILQR_MT failed in the EXP1's cost test!";
+//	ASSERT_LT(fabs(totalCost_mt - expectedCost), 10*ilqrSettings.minRelCostILQR_) <<
+//			"MESSAGE: ILQR_MT failed in the EXP1's cost test!";
 
 	const double expectedISE1 = 0.0;
 	ASSERT_LT(fabs(constraint1ISE_st - expectedISE1), 10*ilqrSettings.minRelConstraint1ISE_) <<
 			"MESSAGE: ILQR_ST failed in the EXP1's type-1 constraint ISE test!";
-	ASSERT_LT(fabs(constraint1ISE_mt - expectedISE1), 10*ilqrSettings.minRelConstraint1ISE_) <<
-			"MESSAGE: ILQR_MT failed in the EXP1's type-1 constraint ISE test!";
+//	ASSERT_LT(fabs(constraint1ISE_mt - expectedISE1), 10*ilqrSettings.minRelConstraint1ISE_) <<
+//			"MESSAGE: ILQR_MT failed in the EXP1's type-1 constraint ISE test!";
 
 	const double expectedISE2 = 0.0;
 	ASSERT_LT(fabs(constraint2ISE_st - expectedISE2), 10*ilqrSettings.minRelConstraint1ISE_) <<
 			"MESSAGE: ILQR_ST failed in the EXP1's type-2 constraint ISE test!";
-	ASSERT_LT(fabs(constraint2ISE_mt - expectedISE2), 10*ilqrSettings.minRelConstraint1ISE_) <<
-			"MESSAGE: ILQR_MT failed in the EXP1's type-2 constraint ISE test!";
+//	ASSERT_LT(fabs(constraint2ISE_mt - expectedISE2), 10*ilqrSettings.minRelConstraint1ISE_) <<
+//			"MESSAGE: ILQR_MT failed in the EXP1's type-2 constraint ISE test!";
 }
 
 

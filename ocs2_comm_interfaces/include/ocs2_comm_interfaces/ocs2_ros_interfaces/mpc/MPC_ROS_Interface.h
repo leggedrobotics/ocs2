@@ -46,6 +46,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <ros/ros.h>
 #include <ros/transport_hints.h>
+#include <ros/callback_queue.h>
 
 #include <ocs2_mpc/MPC_BASE.h>
 

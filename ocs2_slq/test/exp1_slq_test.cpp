@@ -113,10 +113,10 @@ TEST(exp1_slq_test, Exp1_slq_test)
 			&operatingTrajectories, slqSettings, &logicRules);
 
 	// SLQ - multi-core version
-	SLQ_MP<STATE_DIM, INPUT_DIM, EXP1_LogicRules> slq_mp(
-			&systemDynamics, &systemDerivative,
-			&systemConstraint, &systemCostFunction,
-			&operatingTrajectories, slqSettings, &logicRules);
+//	SLQ_MP<STATE_DIM, INPUT_DIM, EXP1_LogicRules> slq_mp(
+//			&systemDynamics, &systemDerivative,
+//			&systemConstraint, &systemCostFunction,
+//			&operatingTrajectories, slqSettings, &logicRules);
 
 	// run single core SLQ
 	if (slqSettings.displayInfo_ || slqSettings.displayShortSummary_)
@@ -124,23 +124,23 @@ TEST(exp1_slq_test, Exp1_slq_test)
 	slq.run(startTime, initState, finalTime, partitioningTimes);
 
 	// run multi-core SLQ
-	if (slqSettings.displayInfo_ || slqSettings.displayShortSummary_)
-		std::cerr << "\n>>> multi-core SLQ" << std::endl;
-	slq_mp.run(startTime, initState, finalTime, partitioningTimes);
+//	if (slqSettings.displayInfo_ || slqSettings.displayShortSummary_)
+//		std::cerr << "\n>>> multi-core SLQ" << std::endl;
+//	slq_mp.run(startTime, initState, finalTime, partitioningTimes);
 
 	/******************************************************************************************************/
 	/******************************************************************************************************/
 	/******************************************************************************************************/
 	// get controller
 	SLQ_BASE<STATE_DIM, INPUT_DIM, EXP1_LogicRules>::controller_array_t controllersStock = slq.getController();
-	SLQ_BASE<STATE_DIM, INPUT_DIM, EXP1_LogicRules>::controller_array_t controllersStock_mp = slq_mp.getController();
+//	SLQ_BASE<STATE_DIM, INPUT_DIM, EXP1_LogicRules>::controller_array_t controllersStock_mp = slq_mp.getController();
 
 	// get performance indices
 	double totalCost, totalCost_mp;
 	double constraint1ISE, constraint1ISE_mp;
 	double constraint2ISE, constraint2ISE_mp;
 	slq.getPerformanceIndeces(totalCost, constraint1ISE, constraint2ISE);
-	slq_mp.getPerformanceIndeces(totalCost_mp, constraint1ISE_mp, constraint2ISE_mp);
+//	slq_mp.getPerformanceIndeces(totalCost_mp, constraint1ISE_mp, constraint2ISE_mp);
 
 	/******************************************************************************************************/
 	/******************************************************************************************************/
@@ -148,20 +148,20 @@ TEST(exp1_slq_test, Exp1_slq_test)
 	const double expectedCost = 5.4399;
 	ASSERT_LT(fabs(totalCost - expectedCost), 10*slqSettings.minRelCostGSLQP_) <<
 			"MESSAGE: SLQ failed in the EXP1's cost test!";
-	ASSERT_LT(fabs(totalCost_mp - expectedCost), 10*slqSettings.minRelCostGSLQP_) <<
-			"MESSAGE: SLQ_MP failed in the EXP1's cost test!";
+//	ASSERT_LT(fabs(totalCost_mp - expectedCost), 10*slqSettings.minRelCostGSLQP_) <<
+//			"MESSAGE: SLQ_MP failed in the EXP1's cost test!";
 
 	const double expectedISE1 = 0.0;
 	ASSERT_LT(fabs(constraint1ISE - expectedISE1), 10*slqSettings.minRelConstraint1ISE_) <<
 			"MESSAGE: SLQ failed in the EXP1's type-1 constraint ISE test!";
-	ASSERT_LT(fabs(constraint1ISE_mp - expectedISE1), 10*slqSettings.minRelConstraint1ISE_) <<
-			"MESSAGE: SLQ_MP failed in the EXP1's type-1 constraint ISE test!";
+//	ASSERT_LT(fabs(constraint1ISE_mp - expectedISE1), 10*slqSettings.minRelConstraint1ISE_) <<
+//			"MESSAGE: SLQ_MP failed in the EXP1's type-1 constraint ISE test!";
 
 	const double expectedISE2 = 0.0;
 	ASSERT_LT(fabs(constraint2ISE - expectedISE2), 10*slqSettings.minRelConstraint1ISE_) <<
 			"MESSAGE: SLQ failed in the EXP1's type-2 constraint ISE test!";
-	ASSERT_LT(fabs(constraint2ISE_mp - expectedISE2), 10*slqSettings.minRelConstraint1ISE_) <<
-			"MESSAGE: SLQ_MP failed in the EXP1's type-2 constraint ISE test!";
+//	ASSERT_LT(fabs(constraint2ISE_mp - expectedISE2), 10*slqSettings.minRelConstraint1ISE_) <<
+//			"MESSAGE: SLQ_MP failed in the EXP1's type-2 constraint ISE test!";
 }
 
 

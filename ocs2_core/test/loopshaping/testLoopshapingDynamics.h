@@ -12,6 +12,7 @@
 #include "ocs2_core/loopshaping/LoopshapingDefinition.h"
 #include "ocs2_core/loopshaping/dynamics/LoopshapingDynamics.h"
 #include "ocs2_core/loopshaping/dynamics/LoopshapingDynamicsDerivative.h"
+#include "ocs2_core/loopshaping/LoopshapingPropertyTree.h"
 
 #include "testLoopshapingConfigurations.h"
 
@@ -49,8 +50,7 @@ class TestFixtureLoopShapingDynamics : public ::testing::Test {
     const std::string settingsFile = std::string(pathToTest.parent_path()) + "/" + CONFIG::fileName;
 
     // Load loopshaping definition
-    loopshapingDefinition_.reset(new LoopshapingDefinition());
-    loopshapingDefinition_->loadSettings(settingsFile);
+    loopshapingDefinition_ = std::make_shared<LoopshapingDefinition>(std::move(LoopshapingPropertyTree::load(settingsFile)));
 
     // Create system dynamics
     system_state_matrix_t A, G;

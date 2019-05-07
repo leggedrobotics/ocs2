@@ -11,6 +11,7 @@
 #include "ocs2_core/cost/QuadraticCostFunction.h"
 #include "ocs2_core/loopshaping/LoopshapingDefinition.h"
 #include "ocs2_core/loopshaping/cost/LoopshapingCost.h"
+#include "ocs2_core/loopshaping/LoopshapingPropertyTree.h"
 
 #include "testLoopshapingConfigurations.h"
 
@@ -52,8 +53,8 @@ class TestFixtureLoopShapingCost : public ::testing::Test {
     const std::string settingsFile = std::string(pathToTest.parent_path()) + "/" + CONFIG::fileName;
 
     // Load loopshaping definition
-    loopshapingDefinition_.reset(new LoopshapingDefinition());
-    loopshapingDefinition_->loadSettings(settingsFile);
+      // Load loopshaping definition
+      loopshapingDefinition_ = std::make_shared<LoopshapingDefinition>(std::move(LoopshapingPropertyTree::load(settingsFile)));
 
     // Set up state and input
     t = 0.5;

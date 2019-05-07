@@ -6,12 +6,9 @@
 #define OCS2_LOOPSHAPINGDEFINITION_H
 
 #include <vector>
+#include <memory>
 #include <Eigen/Dense>
-#include <boost/property_tree/ptree.hpp>
-#include <boost/property_tree/info_parser.hpp>
-#include <ocs2_core/dynamics/TransferFunctionBase.h>
-#include <ocs2_core/logic/rules/NullLogicRules.h>
-#include <ocs2_core/loopshaping/LoopshapingMisc.h>
+#include <ocs2_core/loopshaping/LoopshapingFilter.h>
 
 namespace ocs2 {
 
@@ -28,39 +25,12 @@ namespace ocs2 {
     public:
         EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-        double gamma = 0.9;
+        double gamma;
 
-        bool loadSettings(std::string settingsFile) {
-            bool success = true;
-
-            boost::property_tree::ptree pt;
-            boost::property_tree::read_info(settingsFile, pt);
-
-            Filter r_filter_ = LoopshapingPropertyTree::readMIMOFilter(pt, "r_filter");
-            Filter s_filter_ = LoopshapingPropertyTree::readMIMOFilter(pt, "s_inv_filter", true);
-
-            gamma = pt.get<double>("gamma");
-            bool eliminateInputs = pt.get<bool>("eliminateInputs");
-
-            if (r_filter_.getNumOutputs() > 0 && s_filter_.getNumOutputs() > 0) {
-                throw std::runtime_error("[LoopshapingDefinition] using both r and s filter not implemented");
-            }
-
-            if (r_filter_.getNumOutputs() > 0) {
-                loopshapingType_ = LoopshapingType::outputpattern;
-                filter_ = r_filter_;
-            }
-            if (s_filter_.getNumOutputs() > 0) {
-                if (eliminateInputs){
-                    loopshapingType_ = LoopshapingType::eliminatepattern;
-                } else {
-                    loopshapingType_ = LoopshapingType::inputpattern;
-                }
-                filter_ = s_filter_;
-            }
-
-            return success;
-        }
+        LoopshapingDefinition(LoopshapingType loopshapingType, const Filter& filter, double gamma_in = 0.9) :
+        loopshapingType_(loopshapingType),
+        filter_(filter),
+        gamma(gamma_in) {}
 
         LoopshapingType getType() const {return loopshapingType_;};
         const Filter& getInputFilter() const {return filter_;};
@@ -135,8 +105,7 @@ namespace ocs2 {
 
     template<size_t FULL_STATE_DIM, size_t FULL_INPUT_DIM,
             size_t SYSTEM_STATE_DIM, size_t SYSTEM_INPUT_DIM,
-            size_t FILTER_STATE_DIM, size_t FILTER_INPUT_DIM,
-            class LOGIC_RULES_T=NullLogicRules>
+            size_t FILTER_STATE_DIM, size_t FILTER_INPUT_DIM>
     class LoopshapingFilterDynamics {
     public:
         EIGEN_MAKE_ALIGNED_OPERATOR_NEW
@@ -151,7 +120,7 @@ namespace ocs2 {
         using filter_input_vector_t = Eigen::Matrix<double, FILTER_INPUT_DIM, 1>;
 
         LoopshapingFilterDynamics(std::shared_ptr<LoopshapingDefinition> loopshapingDefinition) :
-                loopshapingDefinition_(loopshapingDefinition)
+                loopshapingDefinition_(std::move(loopshapingDefinition))
         {}
 
         void initializeEquilibriumState(const system_state_vector_t& system_state, const system_input_vector_t& system_input,
@@ -175,40 +144,20 @@ namespace ocs2 {
                                                    filter_state_vector_t& filter_state, filter_input_vector_t& filter_input) {
             const auto &filter = loopshapingDefinition_->getInputFilter();
 
-            filter_state_vector_t equilibriumFilterState;
-            filter_input_vector_t equilibriumFilterInput;
-
-            if (loopshapingDefinition_->getType() == LoopshapingType::outputpattern) {
-                // Solve
-                // 0 = A_r*x_r + B_r*u
-                filter_state = - filter.getA().colPivHouseholderQr().solve(filter.getB() * system_input);
-            }
-
-            if (loopshapingDefinition_->getType() == LoopshapingType::outputpattern ||
-                loopshapingDefinition_->getType() == LoopshapingType::eliminatepattern) {
-                // Solve
-                // [0  =  [  A_s    B_s    [x_s
-                //  u]       C_s    D_s  ]  v_s]
-                Eigen::MatrixXd ABCD(filter.getNumStates() + filter.getNumOutputs(),
-                                     filter.getNumStates() + filter.getNumInputs());
-                ABCD.block(0, 0, filter.getNumStates(), filter.getNumStates()) = filter.getA();
-                ABCD.block(0, filter.getNumStates(), filter.getNumStates(),
-                           filter.getNumInputs()) = filter.getB();
-                ABCD.block(filter.getNumStates(), 0, filter.getNumOutputs(),
-                           filter.getNumStates()) = filter.getC();
-                ABCD.block(filter.getNumStates(), filter.getNumStates(), filter.getNumOutputs(),
-                           filter.getNumInputs()) =
-                        filter.getD();
-
-                Eigen::VectorXd x_s_v_s;
-                Eigen::VectorXd zero_u(filter.getNumStates() + filter.getNumOutputs());
-                zero_u.segment(0, filter.getNumStates()).setZero();
-                zero_u.segment(filter.getNumStates(), filter.getNumOutputs()) = system_input;
-
-                x_s_v_s = ABCD.colPivHouseholderQr().solve(zero_u);
-
-                filter_state = x_s_v_s.segment(0, filter.getNumStates());
-                filter_input = x_s_v_s.segment(filter.getNumStates(), filter.getNumInputs());
+            switch (loopshapingDefinition_->getType()) {
+                case LoopshapingType::outputpattern :
+                    // Solve
+                    // 0 = A_r*x_r + B_r*u
+                    // v = C_r*x_r + D_r*u
+                    filter.findEquilibriumForInput(system_input, filter_state, filter_input);
+                    break;
+                case LoopshapingType::inputpattern :
+                case LoopshapingType::eliminatepattern :
+                    // Solve
+                    // [0  =  [  A_s    B_s    [x_s
+                    //  u]       C_s    D_s  ]  v_s]
+                    filter.findEquilibriumForOutput(system_input, filter_state, filter_input);
+                    break;
             }
 
             filter_state_ = filter_state;
@@ -225,16 +174,14 @@ namespace ocs2 {
 
             filter_state_vector_t filterstateDerivative;
 
-            if (loopshapingDefinition_->getType() == LoopshapingType::outputpattern) {
-                filterstateDerivative.segment(0, filter.getNumStates()) =
-                        filter.getA() * filter_state_
-                        + filter.getB() * system_input;
-            }
-
-            if (loopshapingDefinition_->getType() == LoopshapingType::outputpattern && loopshapingDefinition_->getType() == LoopshapingType::eliminatepattern) {
-                filterstateDerivative.segment(0, filter.getNumStates()) =
-                        filter.getA() * filter_state_
-                        + filter.getB() * filter_input;
+            switch (loopshapingDefinition_->getType()) {
+                case LoopshapingType::outputpattern :
+                    filterstateDerivative = filter.getA() * filter_state_ + filter.getB() * system_input;
+                    break;
+                case LoopshapingType::inputpattern :
+                case LoopshapingType::eliminatepattern :
+                    filterstateDerivative  = filter.getA() * filter_state_ + filter.getB() * filter_input;
+                    break;
             }
 
             filter_state_ += filterstateDerivative * dt;

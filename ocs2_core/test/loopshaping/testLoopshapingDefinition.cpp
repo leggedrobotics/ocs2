@@ -5,8 +5,8 @@
 #include <gtest/gtest.h>
 
 
-#include <ocs2_core/loopshaping/LoopshapingMisc.h>
 #include <ocs2_core/loopshaping/LoopshapingDefinition.h>
+#include <ocs2_core/loopshaping/LoopshapingPropertyTree.h>
 #include <ocs2_core/loopshaping/cost/LoopshapingCost.h>
 #include <ocs2_core/loopshaping/constraint/LoopshapingConstraint.h>
 #include <ocs2_core/cost/QuadraticCostFunction.h>
@@ -46,35 +46,28 @@ TEST(testLoopshapingDefinition, MIMO_Definition) {
 }
 
 TEST(testLoopshapingDefinition, Loopshaping_Definition_r) {
-  LoopshapingDefinition filter;
-  filter.loadSettings(settingsFile_r);
+  LoopshapingDefinition filter = LoopshapingPropertyTree::load(settingsFile_r);
   filter.print();
 
   ASSERT_TRUE(true);
 }
 
 TEST(testLoopshapingDefinition, Loopshaping_Definition_r_simple) {
-
-  LoopshapingDefinition filter;
-  filter.loadSettings(settingsFile_r_simple);
+  LoopshapingDefinition filter = LoopshapingPropertyTree::load(settingsFile_r_simple);
   filter.print();
 
   ASSERT_TRUE(true);
 }
 
 TEST(testLoopshapingDefinition, Loopshaping_Definition_s) {
-
-  LoopshapingDefinition filter;
-  filter.loadSettings(settingsFile_s);
+  LoopshapingDefinition filter = LoopshapingPropertyTree::load(settingsFile_s);
   filter.print();
 
   ASSERT_TRUE(true);
 }
 
 TEST(testLoopshapingDefinition, Loopshaping_Definition_s_simple) {
-
-  LoopshapingDefinition filter;
-  filter.loadSettings(settingsFile_s_simple);
+  LoopshapingDefinition filter = LoopshapingPropertyTree::load(settingsFile_s_simple);
   filter.print();
 
   ASSERT_TRUE(true);

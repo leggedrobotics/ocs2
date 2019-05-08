@@ -13,6 +13,7 @@
 #include "ocs2_core/constraint/LinearConstraint.h"
 #include "ocs2_core/loopshaping/LoopshapingDefinition.h"
 #include "ocs2_core/loopshaping/constraint/LoopshapingConstraint.h"
+#include "ocs2_core/loopshaping/LoopshapingPropertyTree.h"
 
 #include "testLoopshapingConfigurations.h"
 
@@ -82,9 +83,8 @@ class TestFixtureLoopShapingConstraint : public ::testing::Test {
     const std::experimental::filesystem::path pathToTest = std::experimental::filesystem::path(__FILE__);
     const std::string settingsFile = std::string(pathToTest.parent_path()) + "/" + CONFIG::fileName;
 
-    // Load loopshaping definition
-    loopshapingDefinition_.reset(new LoopshapingDefinition());
-    loopshapingDefinition_->loadSettings(settingsFile);
+      // Load loopshaping definition
+      loopshapingDefinition_ = std::make_shared<LoopshapingDefinition>(std::move(LoopshapingPropertyTree::load(settingsFile)));
 
     // Set up state and input
     t = 0.5;

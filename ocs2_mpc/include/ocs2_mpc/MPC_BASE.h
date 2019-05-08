@@ -82,8 +82,8 @@ public:
 	typedef typename DIMENSIONS::dynamic_vector_t           dynamic_vector_t;
 	typedef typename DIMENSIONS::dynamic_vector_array_t     dynamic_vector_array_t;
 
-  typedef Controller<STATE_DIM, INPUT_DIM> controller_t;
-  typedef std::vector<controller_t*> controller_ptr_array_t;
+	typedef Controller<STATE_DIM, INPUT_DIM> controller_t;
+	typedef std::vector<controller_t*> controller_ptr_array_t;
 
 	typedef CostDesiredTrajectories<scalar_t>  cost_desired_trajectories_t;
 	typedef ModeSequenceTemplate<scalar_t>     mode_sequence_template_t;

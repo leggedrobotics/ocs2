@@ -58,6 +58,22 @@ enum class IntegratorType {
 	ADAMS_BASHFORTH_MOULTON
 };
 
+std::string to_string(IntegratorType integratorType) {
+
+	switch(integratorType)
+	{
+	case IntegratorType::EULER: return std::string("EULER");
+	case IntegratorType::MODIFIED_MIDPOINT: return std::string("MODIFIED_MIDPOINT");
+	case IntegratorType::RK4: return std::string("RK4");
+	case IntegratorType::RK5_VARIABLE: return std::string("RK5_VARIABLE");
+	case IntegratorType::ODE45: return std::string("ODE45");
+	case IntegratorType::ADAMS_BASHFORTH: return std::string("ADAMS_BASHFORTH");
+	case IntegratorType::BULIRSCH_STOER: return std::string("BULIRSCH_STOER");
+	case IntegratorType::ADAMS_BASHFORTH_MOULTON: return std::string("ADAMS_BASHFORTH_MOULTON");
+	default: return std::to_string((int)integratorType);
+	}
+}
+
 /**
  * Integrator class for autonomous systems.
  *

@@ -37,13 +37,13 @@ MRT_ROS_Dummy_Loop<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::MRT_ROS_Dummy_Loop(
 		const mrt_ptr_t& mrtPtr,
 		const scalar_t& mrtDesiredFrequency /*= 100*/,
 		const scalar_t& mpcDesiredFrequency /*= -1*/,
-		controlled_system_base_t* system /* = nullptr*/,
+		controlled_system_base_t* systemPtr /* = nullptr*/,
 		Rollout_Settings rolloutSettings /*= Rollout_Settings()*/)
 
 	: mrtPtr_(mrtPtr)
 	, mrtDesiredFrequency_(mrtDesiredFrequency)
 	, mpcDesiredFrequency_(mpcDesiredFrequency)
-	, system_(system)
+	, systemPtr_(systemPtr)
 	, realtimeLoop_(mpcDesiredFrequency<=0) // true if mpcDesiredFrequency is not set or it is negative
 	, initialized_(false)
 {
@@ -54,8 +54,8 @@ MRT_ROS_Dummy_Loop<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::MRT_ROS_Dummy_Loop(
 		ROS_WARN_STREAM("MPC loop is not realtime! "
 				"For realtime setting, set mpcDesiredFrequency to any negative number.");
 
-	if (system_){
-		mrtPtr_->initRollout(*system_, rolloutSettings);
+	if (systemPtr_){
+		mrtPtr_->initRollout(*systemPtr_, rolloutSettings);
 	}
 }
 
@@ -140,7 +140,7 @@ void MRT_ROS_Dummy_Loop<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::run() {
 		}
 
 		// integrate nominal dynamics if available, otherwise fake simulation
-		if(system_){
+		if(systemPtr_){
 			mrtPtr_->rolloutPolicy(time, observation_.state(), 1.0/mrtDesiredFrequency_);
 		}
 

@@ -48,7 +48,9 @@ class FeedforwardController : public Controller<STATE_DIM, INPUT_DIM>
    * @param [in] controllerTime: Time stamp array of the controller
    * @param [in] controllerFeedforward: The feedforward control input array.
    */
-  FeedforwardController(const scalar_array_t& controllerTime, const input_vector_array_t& controllerFeedforward)
+  FeedforwardController(
+		  const scalar_array_t& controllerTime,
+		  const input_vector_array_t& controllerFeedforward)
   : FeedforwardController()
   {
     setController(controllerTime, controllerFeedforward);
@@ -60,7 +62,10 @@ class FeedforwardController : public Controller<STATE_DIM, INPUT_DIM>
    * @param [in] stateTrajectory the states for the rollout
    * @param [in] controller the controller to extract the feedforward controls from during a rollout
    */
-  FeedforwardController(const scalar_array_t& controllerTime, const state_vector_array_t& stateTrajectory, Base* controller)
+  FeedforwardController(
+		  const scalar_array_t& controllerTime,
+		  const state_vector_array_t& stateTrajectory,
+		  Base* controller)
   : FeedforwardController()
   {
     timeStamp_ = controllerTime;

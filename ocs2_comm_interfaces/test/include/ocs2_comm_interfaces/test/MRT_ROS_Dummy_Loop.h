@@ -71,7 +71,7 @@ public:
 	 * @param [in] mrtDesiredFrequency: MRT loop frequency in Hz. This should always set to a positive number.
 	 * @param [in] mpcDesiredFrequency: MPC loop frequency in Hz. If set to a positive number, MPC loop
 	 * will be simulated to run by this frequency. Note that this might not be the MPC's realtime frequency.
-	 * @param [in] system: Optional pointer to the system dynamics. If provided, the dummy will roll out the
+	 * @param [in] systemPtr: Optional pointer to the system dynamics. If provided, the dummy will roll out the
 	 * received controller using these dynamics instead of just sending back a planned state.
 	 * @param [in] rolloutSettings settings to use when dummy rolls out the received controller
 	 */
@@ -79,7 +79,7 @@ public:
 			const mrt_ptr_t& mrtPtr,
 			const scalar_t& mrtDesiredFrequency = 100,
 			const scalar_t& mpcDesiredFrequency = -1,
-			controlled_system_base_t* system = nullptr,
+			controlled_system_base_t* systemPtr = nullptr,
 			Rollout_Settings rolloutSettings = Rollout_Settings());
 
 
@@ -141,7 +141,7 @@ protected:
 	mrt_ptr_t mrtPtr_;
 	scalar_t mrtDesiredFrequency_;
 	scalar_t mpcDesiredFrequency_;
-	controlled_system_base_t* system_;
+	controlled_system_base_t* systemPtr_;
 
 	bool realtimeLoop_;
 	bool initialized_;

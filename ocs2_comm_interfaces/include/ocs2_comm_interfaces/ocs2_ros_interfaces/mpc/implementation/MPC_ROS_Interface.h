@@ -36,7 +36,6 @@ template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
 MPC_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::MPC_ROS_Interface(
 		mpc_t& mpc,
 		const std::string& robotName /*= "robot"*/)
-
 	: mpcPtr_(&mpc)
 	, mpcSettings_(mpc.settings())
 	, robotName_(robotName)
@@ -182,7 +181,7 @@ void MPC_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::publishPolicy(
 	ros_msg_conversions_t::CreateObservationMsg(currentObservation,
 			mpcPolicyMsg_.initObservation);
 
-	mpcPolicyMsg_.controllerIsUpdated  = controllerIsUpdated;
+	mpcPolicyMsg_.controllerIsUpdated = controllerIsUpdated;
 
 	ros_msg_conversions_t::CreateTargetTrajectoriesMsg(*costDesiredTrajectoriesPtr,
 			mpcPolicyMsg_.planTargetTrajectories);
@@ -190,42 +189,38 @@ void MPC_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::publishPolicy(
 	ros_msg_conversions_t::CreateModeSequenceMsg(*eventTimesPtr, *subsystemsSequencePtr,
 			mpcPolicyMsg_.modeSequence);
 
+	auto controllerType = controllerStockPtr->front()->getType();
+	if(mpcSettings_.useFeedbackPolicy_==false)
+		controllerType = ControllerType::FEEDFORWARD;
 
-      auto controllerType = controllerStockPtr->front()->getType();
-
-      if(!mpcSettings_.useFeedbackPolicy_){
-        controllerType = ControllerType::FEEDFORWARD;
-      }
-
-      // translate controllerType enum into message enum
-      switch(controllerType){
-      case ControllerType::FEEDFORWARD :{
-        mpcPolicyMsg_.controllerType = ocs2_comm_interfaces::mpc_flattened_controller::CONTROLLER_FEEDFORWARD;
-        break;
-      }
-      case ControllerType::LINEAR :{
-        mpcPolicyMsg_.controllerType = ocs2_comm_interfaces::mpc_flattened_controller::CONTROLLER_LINEAR;
-        break;
-      }
-      default:{
-        throw std::runtime_error("MPC_ROS_Interface: Unknown controller type.");
-        break;
-      }
-
-      }
+	// translate controllerType enum into message enum
+	switch(controllerType){
+	case ControllerType::FEEDFORWARD :{
+		mpcPolicyMsg_.controllerType = ocs2_comm_interfaces::mpc_flattened_controller::CONTROLLER_FEEDFORWARD;
+		break;
+	}
+	case ControllerType::LINEAR :{
+		mpcPolicyMsg_.controllerType = ocs2_comm_interfaces::mpc_flattened_controller::CONTROLLER_LINEAR;
+		break;
+	}
+	default:{
+		throw std::runtime_error("MPC_ROS_Interface: Unknown controller type.");
+		break;
+	}
+	}
 
 	// maximum length of the message
-	size_t I = timeTrajectoriesStockPtr->size();
+	size_t numPartitions = timeTrajectoriesStockPtr->size();
 	size_t totalN = 0;
-	for (size_t i=0; i<I; i++)
+	for (size_t i=0; i<numPartitions; i++)
 		totalN += timeTrajectoriesStockPtr->at(i).size();
 
 	mpcPolicyMsg_.timeTrajectory.clear();
 	mpcPolicyMsg_.timeTrajectory.reserve(totalN);
 	mpcPolicyMsg_.stateTrajectory.clear();
 	mpcPolicyMsg_.stateTrajectory.reserve(totalN);
-    mpcPolicyMsg_.data.clear();
-    mpcPolicyMsg_.data.reserve(totalN);
+	mpcPolicyMsg_.data.clear();
+	mpcPolicyMsg_.data.reserve(totalN);
 
 	ocs2_comm_interfaces::mpc_state mpcState;
 	mpcState.value.resize(STATE_DIM);
@@ -236,28 +231,29 @@ void MPC_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::publishPolicy(
 	if (tf < t0+2.0*meanDelay_*1e-3)
 		std::cout << "WARNING: Message publishing time-horizon is shorter than the MPC delay!" << std::endl;
 
-	for (size_t i=0; i<I; i++)  { // loop through partitions
+	for (size_t i=0; i<numPartitions; i++)  { // loop through partitions
 
 		const scalar_array_t& timeTrajectory        = (*timeTrajectoriesStockPtr)[i];
 		const state_vector_array_t& stateTrajectory = (*stateTrajectoriesStockPtr)[i];
+		const input_vector_array_t& inputTrajectory = (*inputTrajectoriesStockPtr)[i];
 
 		size_t N = timeTrajectory.size();
 		if (N == 0)  continue;
 		if (timeTrajectory.back()  < t0)  continue;
 		if (timeTrajectory.front() > tf)  continue;
 
-                Controller<STATE_DIM, INPUT_DIM>* ctrlToBeSent = (*controllerStockPtr)[i];
-                std::unique_ptr<FeedforwardController<STATE_DIM, INPUT_DIM>> ffwCtrl;
-                if(!mpcSettings_.useFeedbackPolicy_){
-                  ffwCtrl.reset(new FeedforwardController<STATE_DIM, INPUT_DIM>(timeTrajectory, stateTrajectory, (*controllerStockPtr)[i]));
-                  ctrlToBeSent = ffwCtrl.get();
-                }
+		Controller<STATE_DIM, INPUT_DIM>* ctrlToBeSent = (*controllerStockPtr)[i];
+		std::unique_ptr<FeedforwardController<STATE_DIM, INPUT_DIM>> ffwCtrl;
+		if(mpcSettings_.useFeedbackPolicy_==false){
+			ffwCtrl.reset(new FeedforwardController<STATE_DIM, INPUT_DIM>(timeTrajectory, inputTrajectory));
+			ctrlToBeSent = ffwCtrl.get();
+		}
 
 		for (size_t k=0; k<N; k++) { // loop through time in partition i
 			// continue if elapsed time is smaller than computation time delay
 			if (k<N-1 && timeTrajectory[k+1]<t0)  continue;
 			// break if the time exceed rosMsgTimeWindow
-			if (timeTrajectory[k]>tf)  break;
+			if (k>0 && timeTrajectory[k-1]>tf)  break;
 
 			for (size_t j=0; j<STATE_DIM; j++)
 				mpcState.value[j] = stateTrajectory[k](j);
@@ -301,7 +297,7 @@ void MPC_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::publisherWorkerThre
 		msgReady_.notify_one();
 
 		// publish the message
-			mpcPolicyPublisher_.publish(mpcPolicyMsgBuffer_);
+		mpcPolicyPublisher_.publish(mpcPolicyMsgBuffer_);
 	}
 }
 
@@ -445,10 +441,10 @@ void MPC_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::mpcObservationCallb
 #else
 
 	// publish optimized output
-		publishPolicy(currentObservation, controllerIsUpdated,
-				costDesiredTrajectoriesPtr, controllersStockPtr,
-				timeTrajectoriesStockPtr, stateTrajectoriesStockPtr, inputTrajectoriesStockPtr,
-				eventTimesPtr, subsystemsSequencePtr);
+	publishPolicy(currentObservation, controllerIsUpdated, costDesiredTrajectoriesPtr,
+			controllersStockPtr,
+			timeTrajectoriesStockPtr, stateTrajectoriesStockPtr, inputTrajectoriesStockPtr,
+			eventTimesPtr, subsystemsSequencePtr);
 
 #endif
 

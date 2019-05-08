@@ -49,16 +49,19 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ros/transport_hints.h>
 
 #include <ocs2_core/Dimensions.h>
+#include <ocs2_core/dynamics/ControlledSystemBase.h>
 #include <ocs2_core/cost/CostDesiredTrajectories.h>
-#include <ocs2_core/misc/LinearInterpolation.h>
 #include <ocs2_core/logic/machine/HybridLogicRulesMachine.h>
 #include <ocs2_core/logic/rules/NullLogicRules.h>
-#include <ocs2_core/control/Controller.h>
+#include <ocs2_core/misc/LinearInterpolation.h>
+#include <ocs2_core/misc/FindActiveIntervalIndex.h>
 
-#include <ocs2_core/dynamics/ControlledSystemBase.h>
+#include <ocs2_core/control/Controller.h>
+#include <ocs2_core/control/FeedforwardController.h>
+#include <ocs2_core/control/LinearController.h>
+
 #include <ocs2_oc/rollout/RolloutBase.h>
 #include <ocs2_oc/rollout/TimeTriggeredRollout.h>
-#include <ocs2_core/misc/FindActiveIntervalIndex.h>
 
 // MPC messages
 #include <ocs2_comm_interfaces/mpc_flattened_controller.h>
@@ -113,7 +116,7 @@ public:
 
 	typedef LinearInterpolation<state_vector_t, Eigen::aligned_allocator<state_vector_t> > state_linear_interpolation_t;
 
-    typedef Controller<STATE_DIM,INPUT_DIM> controller_t;
+	typedef Controller<STATE_DIM,INPUT_DIM> controller_t;
 
 	/**
 	 * Default constructor
@@ -176,13 +179,13 @@ public:
 	const cost_desired_trajectories_t& mpcCostDesiredTrajectories() const;
 
 	/**
-     * @brief Interpolates nominal state and active subsystem at given time. Does not use the controller.
+	 * @brief Interpolates nominal state and active subsystem at given time. Does not use the controller.
 	 *
-     * @param[in] time the query time
-     * @param[out] mpcState the current nominal state
-     * @param[out] subsystem the active subsystem
+	 * @param[in] time: the query time
+	 * @param[out] mpcState: the current nominal state
+	 * @param[out] subsystem: the active subsystem
 	 */
-    void evaluatePlan(
+	void evaluatePlan(
 			const scalar_t& time,
 			state_vector_t& mpcState,
 			size_t& subsystem);
@@ -193,7 +196,7 @@ public:
 	 */
     //TODO(jcarius) what about thread safety and object lifetime?
     controller_t* getControllerPtr(){
-        return mpcController_.get();
+        return mpcControllerPtr_.get();
     }
 
   	/**
@@ -211,7 +214,7 @@ public:
 	 * @param [in] initState: state to start rollout from
 	 * @param [in] rollout_time: duration of forward rollout
 	 */
-	void rolloutPolicy(scalar_t t0, const state_vector_t& initState, scalar_t rollout_time);
+	void rolloutPolicy(scalar_t t0, const state_vector_t& initState, const scalar_t& rollout_time);
 
 	/**
 	 * Shutdowns the ROS nodes.
@@ -227,9 +230,9 @@ public:
 	void launchNodes(int argc, char* argv[]);
 
 	/**
-   * spin the MRT callback queue
-   */
-  void spinMRT();
+	 * spin the MRT callback queue
+	 */
+	void spinMRT();
 
 	/**
 	 *  Gets the node handle pointer to the MRT node,
@@ -260,7 +263,7 @@ public:
 	/**
 	 * Returns if MPC has been terminated due to an exception.
 	 *
-	 * @return true if MPC falied.
+	 * @return true if MPC failed.
 	 */
 	bool mpcIsTerminated() const;
 
@@ -286,7 +289,7 @@ protected:
 	virtual void loadModifiedPolicy(
 			bool& logicUpdated,
 			bool& policyUpdated,
-            controller_t& mpcController,
+			controller_t& mpcController,
 			scalar_array_t& mpcTimeTrajectory,
 			state_vector_array_t& mpcStateTrajectory,
 			scalar_array_t& eventTimes,
@@ -308,7 +311,7 @@ protected:
 	 */
 	virtual void modifyBufferPolicy(
 			const system_observation_t& mpcInitObservationBuffer,
-            controller_t* mpcControllerBuffer,
+			controller_t* mpcControllerBuffer,
 			scalar_array_t& mpcTimeTrajectoryBuffer,
 			state_vector_array_t& mpcStateTrajectoryBuffer,
 			scalar_array_t& eventTimesBuffer,
@@ -411,8 +414,8 @@ protected:
 	scalar_array_t partitioningTimes_;
 	scalar_array_t partitioningTimesBuffer_;
 
-	std::unique_ptr<controller_t> mpcController_;
-	std::unique_ptr<controller_t> mpcControllerBuffer_;
+	std::unique_ptr<controller_t> mpcControllerPtr_;
+	std::unique_ptr<controller_t> mpcControllerBufferPtr_;
 	scalar_array_t       mpcTimeTrajectory_;
 	scalar_array_t       mpcTimeTrajectoryBuffer_;
 	state_vector_array_t mpcStateTrajectory_;

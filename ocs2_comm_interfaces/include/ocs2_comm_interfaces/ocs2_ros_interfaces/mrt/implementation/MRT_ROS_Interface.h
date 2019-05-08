@@ -27,9 +27,6 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#include <ocs2_core/control/FeedforwardController.h>
-#include <ocs2_core/control/LinearController.h>
-
 namespace ocs2 {
 
 /******************************************************************************************************/
@@ -233,99 +230,99 @@ void MRT_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::mpcPolicyCallback(
 
 //	std::cout << "\t Plan is recieved at time: " << msg->initObservation.time << std::endl;
 
-  std::unique_lock<std::mutex> lk(subscriberMutex_);
+	std::unique_lock<std::mutex> lk(subscriberMutex_);
 
-  // if the policy is not updated
-  if (msg->controllerIsUpdated==false) {
-	  mpcInitObservationBuffer_ = system_observation_t();
-	  mpcCostDesiredTrajectoriesBuffer_.clear();
-	  policyUpdatedBuffer_ = false;
-	  eventTimesBuffer_.clear();
-	  subsystemsSequenceBuffer_.clear();
-	  mpcTimeTrajectoryBuffer_.clear();
-	  mpcStateTrajectoryBuffer_.clear();
+	// if the policy is not updated
+	if (msg->controllerIsUpdated==false) {
+		mpcInitObservationBuffer_ = system_observation_t();
+		mpcCostDesiredTrajectoriesBuffer_.clear();
+		policyUpdatedBuffer_ = false;
+		eventTimesBuffer_.clear();
+		subsystemsSequenceBuffer_.clear();
+		mpcTimeTrajectoryBuffer_.clear();
+		mpcStateTrajectoryBuffer_.clear();
 
-	  lk.unlock();
+		lk.unlock();
 
-	  // It is important that the buffer message's hash get updated at the very last
-	  // since it will signal the updatePolicy method to swap buffer.
-	  // Although data is protected from racing however it will cause unnecessary delay
-	  messageHashBuffer_ = messageHashValue(mpcInitObservationBuffer_);
+		// It is important that the buffer message's hash get updated at the very last
+		// since it will signal the updatePolicy method to swap buffer.
+		// Although data is protected from racing however it will cause unnecessary delay
+		messageHashBuffer_ = messageHashValue(mpcInitObservationBuffer_);
 
-	  return;
-  }
+		return;
+	}
 
-  ros_msg_conversions_t::ReadObservationMsg(msg->initObservation,
-                                            mpcInitObservationBuffer_);
+	ros_msg_conversions_t::ReadObservationMsg(msg->initObservation,
+			mpcInitObservationBuffer_);
 
-  ros_msg_conversions_t::ReadTargetTrajectoriesMsg(msg->planTargetTrajectories,
-                                                   mpcCostDesiredTrajectoriesBuffer_);
+	ros_msg_conversions_t::ReadTargetTrajectoriesMsg(msg->planTargetTrajectories,
+			mpcCostDesiredTrajectoriesBuffer_);
 
-  policyUpdatedBuffer_ = msg->controllerIsUpdated;
+	policyUpdatedBuffer_ = msg->controllerIsUpdated;
 
-  ros_msg_conversions_t::ReadModeSequenceMsg(msg->modeSequence,
-                                             eventTimesBuffer_, subsystemsSequenceBuffer_);
+	ros_msg_conversions_t::ReadModeSequenceMsg(msg->modeSequence,
+			eventTimesBuffer_, subsystemsSequenceBuffer_);
 
-  partitioningTimesUpdate(mpcInitObservationBuffer_.time(), partitioningTimesBuffer_);
+	partitioningTimesUpdate(mpcInitObservationBuffer_.time(), partitioningTimesBuffer_);
 
-  const size_t N = msg->timeTrajectory.size();
-  mpcTimeTrajectoryBuffer_.clear();
-  mpcTimeTrajectoryBuffer_.reserve(N);
-  mpcStateTrajectoryBuffer_.clear();
-  mpcStateTrajectoryBuffer_.reserve(N);
+	const size_t N = msg->timeTrajectory.size();
+	mpcTimeTrajectoryBuffer_.clear();
+	mpcTimeTrajectoryBuffer_.reserve(N);
+	mpcStateTrajectoryBuffer_.clear();
+	mpcStateTrajectoryBuffer_.reserve(N);
 
-  for (size_t i = 0; i < N; i++) {
-    // time
-    mpcTimeTrajectoryBuffer_.push_back(msg->timeTrajectory[i]);
-    // state
-    mpcStateTrajectoryBuffer_.push_back(Eigen::Map<const Eigen::Matrix<float, STATE_DIM, 1>>(
-        msg->stateTrajectory[i].value.data(), STATE_DIM).template cast<scalar_t>() );
-  } // end of i loop
+	for (size_t i = 0; i < N; i++) {
+		// time
+		mpcTimeTrajectoryBuffer_.push_back(msg->timeTrajectory[i]);
+		// state
+		mpcStateTrajectoryBuffer_.push_back(Eigen::Map<const Eigen::Matrix<float, STATE_DIM, 1>>(
+				msg->stateTrajectory[i].value.data(), STATE_DIM).template cast<scalar_t>() );
+	} // end of i loop
 
-    std::vector<scalar_array_t const *> controllerData(N, nullptr);
-    if(msg->data.size() != N){
-        throw std::runtime_error("Data has the wrong length");
-    }
-    for(int i=0; i<N; i++){
-        controllerData[i] = &(msg->data[i].data);
-  }
+	std::vector<scalar_array_t const *> controllerData(N, nullptr);
+	if(msg->data.size() != N){
+		throw std::runtime_error("Data has the wrong length");
+	}
+	for(int i=0; i<N; i++){
+		controllerData[i] = &(msg->data[i].data);
+	}
 
-    switch (msg->controllerType) {
-    case ocs2_comm_interfaces::mpc_flattened_controller::CONTROLLER_FEEDFORWARD:
-    {
-        using controller_t = FeedforwardController<STATE_DIM, INPUT_DIM>;
-        mpcControllerBuffer_ = std::unique_ptr<controller_t>(new controller_t());
-        mpcControllerBuffer_->unFlatten(mpcTimeTrajectoryBuffer_, controllerData);
-        break;
-    }
-    case ocs2_comm_interfaces::mpc_flattened_controller::CONTROLLER_LINEAR:
-    {
-        using controller_t = LinearController<STATE_DIM, INPUT_DIM>;
-        mpcControllerBuffer_ = std::unique_ptr<controller_t>(new controller_t());
-        mpcControllerBuffer_->unFlatten(mpcTimeTrajectoryBuffer_, controllerData);
-    }
-    default:
-        throw std::runtime_error("MRT_ROS_Interface::mpcPolicyCallback -- Unknown controllerType");
-    }
+	switch (msg->controllerType) {
+	case ocs2_comm_interfaces::mpc_flattened_controller::CONTROLLER_FEEDFORWARD:
+	{
+		using controller_t = FeedforwardController<STATE_DIM, INPUT_DIM>;
+		mpcControllerBufferPtr_ = std::unique_ptr<controller_t>(new controller_t());
+		mpcControllerBufferPtr_->unFlatten(mpcTimeTrajectoryBuffer_, controllerData);
+		break;
+	}
+	case ocs2_comm_interfaces::mpc_flattened_controller::CONTROLLER_LINEAR:
+	{
+		using controller_t = LinearController<STATE_DIM, INPUT_DIM>;
+		mpcControllerBufferPtr_ = std::unique_ptr<controller_t>(new controller_t());
+		mpcControllerBufferPtr_->unFlatten(mpcTimeTrajectoryBuffer_, controllerData);
+	}
+	default:
+		throw std::runtime_error("MRT_ROS_Interface::mpcPolicyCallback -- Unknown controllerType");
+	}
 
 
-  // customized adjustment
-  modifyBufferPolicy(mpcInitObservationBuffer_, mpcControllerBuffer_.get(),
-      mpcTimeTrajectoryBuffer_, mpcStateTrajectoryBuffer_,
-                          eventTimesBuffer_, subsystemsSequenceBuffer_);
+	// customized adjustment
+	modifyBufferPolicy(mpcInitObservationBuffer_, mpcControllerBufferPtr_.get(),
+			mpcTimeTrajectoryBuffer_, mpcStateTrajectoryBuffer_,
+			eventTimesBuffer_, subsystemsSequenceBuffer_);
 
-  if (policyReceivedEver_ == false && policyUpdatedBuffer_ == true) {
-    policyReceivedEver_ = true;
-    initPlanObservation_ = mpcInitObservationBuffer_;
-    initCall(initPlanObservation_);
-  }
+	if (policyReceivedEver_ == false && policyUpdatedBuffer_ == true) {
+		policyReceivedEver_ = true;
+		initPlanObservation_ = mpcInitObservationBuffer_;
+		initCall(initPlanObservation_);
+	}
 
-  lk.unlock();
+	lk.unlock();
 
-  // It is important that the buffer message's hash get updated at the very last
-  // since it will signal the updatePolicy method to swap buffer.
-  // Although data is protected from racing however it will cause unnecessary delay
-  messageHashBuffer_ = messageHashValue(mpcInitObservationBuffer_);
+	// It is important that the buffer message's hash get updated at the very last
+	// since it will signal the updatePolicy method to swap buffer.
+	// Although data is protected from racing however it will cause unnecessary delay
+	messageHashBuffer_ = messageHashValue(mpcInitObservationBuffer_);
 
 }
 
@@ -335,74 +332,73 @@ void MRT_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::mpcPolicyCallback(
 template<size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
 bool MRT_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::updatePolicy() {
 
-  if (messageHash_ == messageHashBuffer_.load()) {
-    return false;
-  }
-  if (policyUpdatedBuffer_ == false) {
-    return false;
-  }
+	if (messageHash_ == messageHashBuffer_.load()) {
+		return false;
+	}
+	if (policyUpdatedBuffer_ == false) {
+		return false;
+	}
 
-  std::unique_lock<std::mutex> lk(subscriberMutex_);
+	std::unique_lock<std::mutex> lk(subscriberMutex_);
 
-  // should not be swapped
-  messageHash_ = messageHashBuffer_.load();
+	// should not be swapped
+	messageHash_ = messageHashBuffer_.load();
 
-  mpcInitObservation_.swap(mpcInitObservationBuffer_);
+	mpcInitObservation_.swap(mpcInitObservationBuffer_);
 
-  mpcCostDesiredTrajectories_.swap(mpcCostDesiredTrajectoriesBuffer_);
+	mpcCostDesiredTrajectories_.swap(mpcCostDesiredTrajectoriesBuffer_);
 
-  policyUpdated_ = policyUpdatedBuffer_;
+	policyUpdated_ = policyUpdatedBuffer_;
 
-  logicUpdated_ = false;
+	logicUpdated_ = false;
 
-  feedforwardGeneratedWithRollout_ = false;
+	feedforwardGeneratedWithRollout_ = false;
 
-  if (subsystemsSequence_ != subsystemsSequenceBuffer_) {
-    subsystemsSequence_.swap(subsystemsSequenceBuffer_);
-    logicUpdated_ = true;
-  }
-  if (eventTimes_ != eventTimesBuffer_) {
-    eventTimes_.swap(eventTimesBuffer_);
-    logicUpdated_ = true;
-  }
-  if (partitioningTimes_ != partitioningTimesBuffer_) {
-    partitioningTimes_.swap(partitioningTimesBuffer_);
-    logicUpdated_ = true;
-  }
+	if (subsystemsSequence_ != subsystemsSequenceBuffer_) {
+		subsystemsSequence_.swap(subsystemsSequenceBuffer_);
+		logicUpdated_ = true;
+	}
+	if (eventTimes_ != eventTimesBuffer_) {
+		eventTimes_.swap(eventTimesBuffer_);
+		logicUpdated_ = true;
+	}
+	if (partitioningTimes_ != partitioningTimesBuffer_) {
+		partitioningTimes_.swap(partitioningTimesBuffer_);
+		logicUpdated_ = true;
+	}
 
-  //
-  if (logicUpdated_ == true) {
-    // set mode sequence
-    logicMachinePtr_->getLogicRulesPtr()->setModeSequence(subsystemsSequence_, eventTimes_);
-    // Tell logicMachine that logicRules are modified
-    logicMachinePtr_->logicRulesUpdated();
-    // update logicMachine
-    logicMachinePtr_->updateLogicRules(partitioningTimes_);
+	//
+	if (logicUpdated_ == true) {
+		// set mode sequence
+		logicMachinePtr_->getLogicRulesPtr()->setModeSequence(subsystemsSequence_, eventTimes_);
+		// Tell logicMachine that logicRules are modified
+		logicMachinePtr_->logicRulesUpdated();
+		// update logicMachine
+		logicMachinePtr_->updateLogicRules(partitioningTimes_);
 
-    // function for finding active subsystem
-    const size_t partitionIndex = 0; // we assume only one partition
-    findActiveSubsystemFnc_ = std::move(
-        logicMachinePtr_->getHandleToFindActiveEventCounter(partitionIndex));
-  }
+		// function for finding active subsystem
+		const size_t partitionIndex = 0; // we assume only one partition
+		findActiveSubsystemFnc_ = std::move(
+				logicMachinePtr_->getHandleToFindActiveEventCounter(partitionIndex));
+	}
 
-    mpcTimeTrajectory_.swap(mpcTimeTrajectoryBuffer_);
-    mpcStateTrajectory_.swap(mpcStateTrajectoryBuffer_);
+	mpcTimeTrajectory_.swap(mpcTimeTrajectoryBuffer_);
+	mpcStateTrajectory_.swap(mpcStateTrajectoryBuffer_);
 
-    mpcLinInterpolateState_.reset();
-    mpcLinInterpolateState_.setTimeStamp(&mpcTimeTrajectory_);
-    mpcLinInterpolateState_.setData(&mpcStateTrajectory_);
+	mpcLinInterpolateState_.reset();
+	mpcLinInterpolateState_.setTimeStamp(&mpcTimeTrajectory_);
+	mpcLinInterpolateState_.setData(&mpcStateTrajectory_);
 
-    mpcController_.swap(mpcControllerBuffer_);
+	mpcControllerPtr_.swap(mpcControllerBufferPtr_);
 
-    loadModifiedPolicy(logicUpdated_, policyUpdated_,
-                       *(mpcController_.get()),
-                       mpcTimeTrajectory_, mpcStateTrajectory_,
-                       eventTimes_, subsystemsSequence_);
+	loadModifiedPolicy(logicUpdated_, policyUpdated_,
+			*mpcControllerPtr_,
+			mpcTimeTrajectory_, mpcStateTrajectory_,
+			eventTimes_, subsystemsSequence_);
 
+	lk.unlock();
 
-  lk.unlock();
-
-  return true;
+	return true;
 }
 
 /******************************************************************************************************/
@@ -470,11 +466,12 @@ void MRT_ROS_Interface<STATE_DIM,
 /******************************************************************************************************/
 /******************************************************************************************************/
 template<size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void MRT_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::rolloutPolicy(scalar_t t0,
-                                                                           const state_vector_t &initState,
-                                                                           scalar_t rollout_time) {
-  size_t
-  activePartitionIndex = findActiveIntervalIndex(partitioningTimes_, t0, 0);
+void MRT_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::rolloutPolicy(
+		scalar_t t0,
+		const state_vector_t &initState,
+		const scalar_t& rollout_time) {
+
+  size_t activePartitionIndex = findActiveIntervalIndex(partitioningTimes_, t0, 0);
 
   scalar_t final_time = t0 + rollout_time;
   size_array_t eventsPastTheEndIndeces;
@@ -487,7 +484,7 @@ void MRT_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::rolloutPolicy(scala
                        t0,
                        initState,
                        final_time,
-                       mpcController_.get(),
+                       mpcControllerPtr_.get(),
                        *logicMachinePtr_,
                        mpcTimeTrajectory_,
                        eventsPastTheEndIndeces,
@@ -506,7 +503,7 @@ void MRT_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::rolloutPolicy(scala
   mpcLinInterpolateState_.setTimeStamp(&mpcTimeTrajectory_);
   mpcLinInterpolateState_.setData(&mpcStateTrajectory_);
 
-  loadModifiedPolicy(logicUpdated_, policyUpdated_, *mpcController_,
+  loadModifiedPolicy(logicUpdated_, policyUpdated_, *mpcControllerPtr_,
                                 mpcTimeTrajectory_, mpcStateTrajectory_,
                                 eventTimes_, subsystemsSequence_);
 

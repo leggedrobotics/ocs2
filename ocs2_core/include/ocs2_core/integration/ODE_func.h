@@ -11,7 +11,7 @@
 namespace ocs2 {
 
 template <int STATE_DIM>
-class ODE_func : public ODE_Base<STATE_DIM> {
+class ODE_func final : public ODE_Base<STATE_DIM> {
  public:
   using BASE = ODE_Base<STATE_DIM>;
   using typename BASE::scalar_t;

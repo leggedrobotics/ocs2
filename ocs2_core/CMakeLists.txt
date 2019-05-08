@@ -152,3 +152,12 @@ target_link_libraries(test_loopshapingConstraint
         ${catkin_LIBRARIES}
         -lstdc++fs
         )
+
+catkin_add_gtest(test_loopshapingFilterDynamics
+        test/loopshaping/testLoopshapingFilterDynamics.cpp
+        )
+target_link_libraries(test_loopshapingFilterDynamics
+        ${Boost_LIBRARIES}
+        ${catkin_LIBRARIES}
+        -lstdc++fs
+        )

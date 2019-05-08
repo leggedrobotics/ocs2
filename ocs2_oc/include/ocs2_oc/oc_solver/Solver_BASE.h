@@ -72,6 +72,7 @@ public:
 	typedef Dimensions<STATE_DIM, INPUT_DIM> DIMENSIONS;
 
 	typedef typename DIMENSIONS::size_array_t                        size_array_t;
+	typedef typename DIMENSIONS::size_array2_t                       size_array2_t;
 	typedef typename DIMENSIONS::scalar_t                            scalar_t;
 	typedef typename DIMENSIONS::scalar_array_t                      scalar_array_t;
 	typedef typename DIMENSIONS::scalar_array2_t                     scalar_array2_t;
@@ -357,17 +358,9 @@ public:
 	/**
 	 * Gets a pointer to the optimal array of the control policies.
 	 *
-	 * @param [out] controllersStockPtr: A pointer to the optimal array of the control policies
+	 * @param [out] controllersPtrStock: A pointer to the optimal array of the control policies.
 	 */
-	virtual void getControllerPtr(const controller_ptr_array_t*& controllersStockPtr) const = 0;
-
-	/**
-	 * Swaps the output array of the control policies with the nominal one.
-	 * Care should be take since this method modifies the internal variable.
-	 *
-	 * @param [out] controllersStock: A reference to the optimal array of the control policies
-	 */
-	virtual void swapController(controller_ptr_array_t& controllersStock) = 0;
+	virtual void getControllerPtr(const controller_ptr_array_t*& controllersPtrStock) const = 0;
 
 	/**
 	 * Returns the nominal time trajectories.

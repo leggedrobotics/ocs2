@@ -308,8 +308,8 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::rolloutStateTriggeredTraject
 		const scalar_t& finalTime,
 		const scalar_array_t& partitioningTimes,
 		const linear_controller_array_t& controllersStock,
-		std::vector<scalar_array_t>& timeTrajectoriesStock,
-		std::vector<size_array_t>& eventsPastTheEndIndecesStock,
+		scalar_array2_t& timeTrajectoriesStock,
+		size_array2_t& eventsPastTheEndIndecesStock,
 		state_vector_array2_t& stateTrajectoriesStock,
 		input_vector_array2_t& inputTrajectoriesStock,
 		size_t threadId /*= 0*/)  {
@@ -329,9 +329,9 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::rolloutStateTriggeredTraject
 	// finding the active subsystem index at initTime
 	size_t finalActivePartition = BASE::findActivePartitionIndex(partitioningTimes, finalTime);
 
-	std::vector<scalar_array_t> eventTimesStock(numPartitions);
-	std::vector<scalar_array_t> switchingTimesStock(numPartitions);
-	std::vector<size_array_t>   switchedSystemIDsStock(numPartitions);
+	scalar_array2_t eventTimesStock(numPartitions);
+	scalar_array2_t switchingTimesStock(numPartitions);
+	size_array2_t   switchedSystemIDsStock(numPartitions);
 
 
 	scalar_array_t eventTimes;
@@ -385,8 +385,8 @@ typename SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::scalar_t
 		const scalar_t& finalTime,
 		const scalar_array_t& partitioningTimes,
 		linear_controller_array_t& controllersStock,
-		std::vector<scalar_array_t>& timeTrajectoriesStock,
-		std::vector<size_array_t>& eventsPastTheEndIndecesStock,
+		scalar_array2_t& timeTrajectoriesStock,
+		size_array2_t& eventsPastTheEndIndecesStock,
 		state_vector_array2_t& stateTrajectoriesStock,
 		input_vector_array2_t& inputTrajectoriesStock,
 		size_t threadId /*= 0*/)  {
@@ -651,17 +651,17 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculateConstraintsWorker(
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
 void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculateRolloutConstraints(
-		const std::vector<scalar_array_t>& timeTrajectoriesStock,
-		const std::vector<size_array_t>& eventsPastTheEndIndecesStock,
+		const scalar_array2_t& timeTrajectoriesStock,
+		const size_array2_t& eventsPastTheEndIndecesStock,
 		const state_vector_array2_t& stateTrajectoriesStock,
 		const input_vector_array2_t& inputTrajectoriesStock,
-		std::vector<size_array_t>& nc1TrajectoriesStock,
+		size_array2_t& nc1TrajectoriesStock,
 		constraint1_vector_array2_t& EvTrajectoryStock,
-		std::vector<size_array_t>& nc2TrajectoriesStock,
+		size_array2_t& nc2TrajectoriesStock,
 		constraint2_vector_array2_t& HvTrajectoryStock,
-		std::vector<size_array_t>& ncIneqTrajectoriesStock,
+		size_array2_t& ncIneqTrajectoriesStock,
 		scalar_array3_t& hTrajectoryStock,
-		std::vector<size_array_t>& nc2FinalStock,
+		size_array2_t& nc2FinalStock,
 		constraint2_vector_array2_t& HvFinalStock,
 		size_t threadId /*= 0*/) {
 
@@ -701,7 +701,7 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculateRolloutConstraints(
 template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
 typename SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::scalar_t
 SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculateConstraintISE(
-		const std::vector<scalar_array_t>& timeTrajectoriesStock,
+		const scalar_array2_t& timeTrajectoriesStock,
 		const std::vector<std::vector<size_t>>& nc1TrajectoriesStock,
 		const constraint1_vector_array2_t& EvTrajectoriesStock,
 		scalar_t& constraintISE)  {
@@ -750,8 +750,8 @@ SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculateConstraintISE(
 template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
 typename SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::scalar_t
 SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculateInequalityConstraintPenalty (
-		const std::vector<scalar_array_t> &timeTrajectoriesStock,
-		const std::vector<size_array_t> &ncIneqTrajectoriesStock,
+		const scalar_array2_t &timeTrajectoriesStock,
+		const size_array2_t &ncIneqTrajectoriesStock,
 		const scalar_array3_t &hTrajectoriesStock,
 		scalar_t& inequalityISE,
 		size_t workerIndex /* = 0 */ ) {
@@ -857,8 +857,8 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculateCostWorker(
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
 void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculateRolloutCost(
-		const std::vector<scalar_array_t>& timeTrajectoriesStock,
-		const std::vector<size_array_t>& eventsPastTheEndIndecesStock,
+		const scalar_array2_t& timeTrajectoriesStock,
+		const size_array2_t& eventsPastTheEndIndecesStock,
 		const state_vector_array2_t& stateTrajectoriesStock,
 		const input_vector_array2_t& inputTrajectoriesStock,
 		scalar_t& totalCost,
@@ -894,13 +894,13 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculateRolloutCost(
 /*****************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
 void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculateRolloutCost(
-		const std::vector<scalar_array_t>& timeTrajectoriesStock,
-		const std::vector<size_array_t>& eventsPastTheEndIndecesStock,
+		const scalar_array2_t& timeTrajectoriesStock,
+		const size_array2_t& eventsPastTheEndIndecesStock,
 		const state_vector_array2_t& stateTrajectoriesStock,
 		const input_vector_array2_t& inputTrajectoriesStock,
 		const scalar_t& constraint2ISE,
 		const scalar_t& inequalityConstraintPenalty,
-		const std::vector<size_array_t>& nc2FinalStock,
+		const size_array2_t& nc2FinalStock,
 		const constraint2_vector_array2_t& HvFinalStock,
 		scalar_t& totalCost,
 		size_t threadId /*= 0*/) {
@@ -1683,10 +1683,10 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::lineSearchWorker(
 		scalar_t& lsTotalCost,
 		scalar_t& lsConstraint1ISE, scalar_t& lsConstraint1MaxNorm,
 		scalar_t& lsConstraint2ISE, scalar_t& lsConstraint2MaxNorm,
-		linear_controller_array_t& lsControllersStock,
 		scalar_t& lsInequalityConstraintPenalty, scalar_t& lsInequalityConstraintISE,
-		std::vector<scalar_array_t>& lsTimeTrajectoriesStock,
-		std::vector<size_array_t>& lsEventsPastTheEndIndecesStock,
+		linear_controller_array_t& lsControllersStock,
+		scalar_array2_t& lsTimeTrajectoriesStock,
+		size_array2_t& lsEventsPastTheEndIndecesStock,
 		state_vector_array2_t& lsStateTrajectoriesStock,
 		input_vector_array2_t& lsInputTrajectoriesStock)  {
 
@@ -1705,13 +1705,13 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::lineSearchWorker(
 				workerIndex);
 
 		// calculate rollout constraints
-		std::vector<size_array_t>   lsNc1TrajectoriesStock(numPartitions_);
+		size_array2_t               lsNc1TrajectoriesStock(numPartitions_);
 		constraint1_vector_array2_t lsEvTrajectoryStock(numPartitions_);
-		std::vector<size_array_t>   lsNc2TrajectoriesStock(numPartitions_);
+		size_array2_t               lsNc2TrajectoriesStock(numPartitions_);
 		constraint2_vector_array2_t lsHvTrajectoryStock(numPartitions_);
-		std::vector<size_array_t>   lsNcIneqTrajectoriesStock(numPartitions_);
+		size_array2_t               lsNcIneqTrajectoriesStock(numPartitions_);
 		scalar_array3_t				lshTrajectoryStock(numPartitions_);
-		std::vector<size_array_t>	lsNc2FinalStock(numPartitions_);
+		size_array2_t               lsNc2FinalStock(numPartitions_);
 		constraint2_vector_array2_t	lsHvFinalStock(numPartitions_);
 
 
@@ -2689,6 +2689,20 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculateControllerUpdateMax
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
+void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::updateNominalControllerPtrStock() {
+
+    nominalControllerPtrStock_.clear();
+    nominalControllerPtrStock_.reserve(nominalControllersStock_.size());
+
+    for(linear_controller_t& controller : nominalControllersStock_){
+        nominalControllerPtrStock_.push_back(&controller);
+    }
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
 void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::printRolloutInfo()  {
 
 	std::cerr << "optimization cost:         " << nominalTotalCost_ << std::endl;
@@ -2715,7 +2729,7 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::printRolloutInfo()  {
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
 void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculateMeritFunction(
-		const std::vector<scalar_array_t>& timeTrajectoriesStock,
+		const scalar_array2_t& timeTrajectoriesStock,
 		const std::vector<std::vector<size_t> >& nc1TrajectoriesStock,
 		const constraint1_vector_array2_t& EvTrajectoryStock,
 		const std::vector<std::vector<Eigen::VectorXd>>& lagrangeTrajectoriesStock,
@@ -2887,31 +2901,17 @@ const typename SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::controller_ptr_arr
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
 void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::getControllerPtr(
-		const controller_ptr_array_t*& controllersStockPtr) const {
+		const controller_ptr_array_t*& controllersPtrStock) const {
 
     //updateNominalControllerPtrStock(); // cannot be done in const member
-	controllersStockPtr = &nominalControllerPtrStock_;
+	controllersPtrStock = &nominalControllerPtrStock_;
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::swapController(
-		controller_ptr_array_t& controllersStock) {
-
-    updateNominalControllerPtrStock();
-	controllersStock.swap(nominalControllerPtrStock_);
-
-    //TODO(jcarius) how to efficiently update nominalControllersStock_ here?
-    throw std::runtime_error("swapController not implemented");
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-const std::vector<typename SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::scalar_array_t>&
+const typename SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::scalar_array2_t&
 	SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::getNominalTimeTrajectories () const {
 
 	return nominalTimeTrajectoriesStock_;
@@ -2942,7 +2942,7 @@ const typename SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::input_vector_array
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
 void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::getNominalTrajectoriesPtr(
-		const std::vector<scalar_array_t>*& nominalTimeTrajectoriesStockPtr,
+		const scalar_array2_t*& nominalTimeTrajectoriesStockPtr,
 		const state_vector_array2_t*& nominalStateTrajectoriesStockPtr,
 		const input_vector_array2_t*& nominalInputTrajectoriesStockPtr) const  {
 
@@ -2956,7 +2956,7 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::getNominalTrajectoriesPtr(
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
 void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::swapNominalTrajectories (
-		std::vector<scalar_array_t>& nominalTimeTrajectoriesStock,
+		scalar_array2_t& nominalTimeTrajectoriesStock,
 		state_vector_array2_t& nominalStateTrajectoriesStock,
 		input_vector_array2_t& nominalInputTrajectoriesStock)  {
 
@@ -3030,7 +3030,6 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::truncateConterller(
 	controllersStock[initActivePartition].timeStamp_[0] = initTime;
 	controllersStock[initActivePartition].biasArray_[0] = uffInit;
 	controllersStock[initActivePartition].gainArray_[0] = kInit;
-
 }
 
 /******************************************************************************************************/
@@ -3065,7 +3064,8 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::rewindOptimizer(const size_t
 			sFinalStock_[i].setZero();
 			xFinalStock_[i].setZero();
 		}
-    updateNominalControllerPtrStock();
+
+	updateNominalControllerPtrStock();
 }
 
 /******************************************************************************************************/
@@ -3090,7 +3090,7 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::setupOptimizer(const size_t&
 	 * nominal trajectories
 	 */
 	nominalControllersStock_.resize(numPartitions);
-    updateNominalControllerPtrStock();
+	updateNominalControllerPtrStock();
 	nominalTimeTrajectoriesStock_.resize(numPartitions);
 	nominalEventsPastTheEndIndecesStock_.resize(numPartitions);
 	nominalStateTrajectoriesStock_.resize(numPartitions);
@@ -3507,9 +3507,11 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::run(
 		const scalar_t& finalTime,
 		const scalar_array_t& partitioningTimes) {
 
-    linear_controller_array_t noInitialController(partitioningTimes.size()-1, linear_controller_t());
-	controller_ptr_array_t noInitialControllerPtrArray(partitioningTimes.size()-1);
-    for(int i=0; i<noInitialController.size(); i++){
+	const size_t numPartitions = partitioningTimes.size()-1;
+
+    linear_controller_array_t noInitialController(numPartitions, linear_controller_t());
+	controller_ptr_array_t noInitialControllerPtrArray(numPartitions);
+    for(size_t i=0; i<numPartitions; i++){
         noInitialControllerPtrArray[i] = &noInitialController[i];
     }
 
@@ -3526,7 +3528,7 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::run(
 		const state_vector_t& initState,
 		const scalar_t& finalTime,
 		const scalar_array_t& partitioningTimes,
-		const controller_ptr_array_t& controllersStock) {
+		const controller_ptr_array_t& controllersPtrStock) {
 
 	// infeasible learning rate adjustment scheme
 	if (settings_.maxLearningRateGSLQP_ < settings_.minLearningRateGSLQP_-OCS2NumericTraits<scalar_t>::limit_epsilon())
@@ -3537,6 +3539,9 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::run(
 		std::cerr << "++++++++++++++++ SLQ solver is initialized +++++++++++++++++" << std::endl;
 		std::cerr << "++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++" << std::endl;
 	}
+
+	if (partitioningTimes.empty())
+		throw std::runtime_error("There should be at least one time partition.");
 
 	// update numPartitions_ if it has been changed
 	if (numPartitions_+1 != partitioningTimes.size()) {
@@ -3552,15 +3557,15 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::run(
 	// In the later case 2 scenarios are possible: either the internal controller is already set (such as the MPC case
 	// where the warm starting option is set true) or the internal controller is empty in which instead of performing
 	// a rollout the operating trajectories will be used.
-	if (not controllersStock.empty()) {
-		if (controllersStock.size() != numPartitions_)
-			throw std::runtime_error("controllersStock has less controllers than the number of partitions.");
+	if (controllersPtrStock.empty()==false) {
+		if (controllersPtrStock.size() != numPartitions_)
+			throw std::runtime_error("controllersPtrStock has less controllers than the number of partitions.");
 
         nominalControllersStock_.clear();
         nominalControllersStock_.reserve(numPartitions_);
 
         // ensure initial controllers are of the right type, then assign
-        for(auto& controllersStock_i : controllersStock){
+        for(auto& controllersStock_i : controllersPtrStock){
             auto linearCtrlPtr = dynamic_cast<linear_controller_t*>(controllersStock_i);
             if(linearCtrlPtr == nullptr){
                 throw std::runtime_error("SLQ_BASE::run -- controller must be a linear_controller_t.");
@@ -3722,16 +3727,6 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::run(
 		std::cerr << std::endl;
 	}
 
-}
-
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::updateNominalControllerPtrStock() {
-    nominalControllerPtrStock_.clear();
-    nominalControllerPtrStock_.reserve(nominalControllersStock_.size());
-
-    for(auto& controller : nominalControllersStock_){
-        nominalControllerPtrStock_.push_back(&controller);
-    }
 }
 
 }  // ocs2 namespace

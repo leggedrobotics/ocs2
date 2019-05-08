@@ -490,11 +490,11 @@ void SLQ_MP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::executeLineSearchWorker(size_t
 	scalar_t lsTotalCost;
 	scalar_t lsConstraint1ISE, lsConstraint2ISE, lsInequalityConstraintPenalty, lsInequalityConstraintISE;
 	scalar_t lsConstraint1MaxNorm, lsConstraint2MaxNorm;
-	linear_controller_array_t   lsControllersStock(BASE::numPartitions_);
-	std::vector<scalar_array_t>	lsTimeTrajectoriesStock(BASE::numPartitions_);
-	std::vector<size_array_t>	lsEventsPastTheEndIndecesStock(BASE::numPartitions_);
-	state_vector_array2_t   	lsStateTrajectoriesStock(BASE::numPartitions_);
-	input_vector_array2_t 		lsInputTrajectoriesStock(BASE::numPartitions_);
+	linear_controller_array_t lsControllersStock(BASE::numPartitions_);
+	scalar_array2_t lsTimeTrajectoriesStock(BASE::numPartitions_);
+	size_array2_t   lsEventsPastTheEndIndecesStock(BASE::numPartitions_);
+	state_vector_array2_t lsStateTrajectoriesStock(BASE::numPartitions_);
+	input_vector_array2_t lsInputTrajectoriesStock(BASE::numPartitions_);
 
 	while(true)  {
 
@@ -527,9 +527,8 @@ void SLQ_MP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::executeLineSearchWorker(size_t
 				lsTotalCost,
 				lsConstraint1ISE, lsConstraint1MaxNorm,
 				lsConstraint2ISE, lsConstraint2MaxNorm,
+				lsInequalityConstraintPenalty, lsInequalityConstraintISE,
 				lsControllersStock,
-				lsInequalityConstraintPenalty,
-				lsInequalityConstraintISE,
 				lsTimeTrajectoriesStock, lsEventsPastTheEndIndecesStock,
 				lsStateTrajectoriesStock, lsInputTrajectoriesStock);
 

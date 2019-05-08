@@ -54,9 +54,11 @@ public:
 	typedef typename BASE::DIMENSIONS DIMENSIONS;
 
 	typedef typename DIMENSIONS::template LinearFunction_t<Eigen::Dynamic> lagrange_t;
-	typedef typename DIMENSIONS::size_array_t size_array_t;
+	typedef typename DIMENSIONS::size_array_t  size_array_t;
+	typedef typename DIMENSIONS::size_array2_t size_array2_t;
 	typedef typename DIMENSIONS::scalar_t scalar_t;
-	typedef typename DIMENSIONS::scalar_array_t scalar_array_t;
+	typedef typename DIMENSIONS::scalar_array_t  scalar_array_t;
+	typedef typename DIMENSIONS::scalar_array2_t scalar_array2_t;
 	typedef typename DIMENSIONS::eigen_scalar_t eigen_scalar_t;
 	typedef typename DIMENSIONS::eigen_scalar_array_t eigen_scalar_array_t;
 	typedef typename DIMENSIONS::eigen_scalar_array2_t eigen_scalar_array2_t;
@@ -97,13 +99,15 @@ public:
 	typedef typename DIMENSIONS::constraint2_state_matrix_array_t constraint2_state_matrix_array_t;
 	typedef typename DIMENSIONS::constraint2_state_matrix_array2_t constraint2_state_matrix_array2_t;
 
+    typedef typename BASE::linear_controller_t           linear_controller_t;
+    typedef typename BASE::linear_controller_array_t     linear_controller_array_t;
+
 	typedef typename BASE::controlled_system_base_t		 controlled_system_base_t;
 	typedef typename BASE::event_handler_t	 			 event_handler_t;
 	typedef typename BASE::derivatives_base_t			 derivatives_base_t;
 	typedef typename BASE::constraint_base_t			 constraint_base_t;
 	typedef typename BASE::cost_function_base_t			 cost_function_base_t;
 	typedef typename BASE::operating_trajectories_base_t operating_trajectories_base_t;
-    typedef typename BASE::linear_controller_array_t     linear_controller_array_t;
 
 	/**
 	 * Default constructor.

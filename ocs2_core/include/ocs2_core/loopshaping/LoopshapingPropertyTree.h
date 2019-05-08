@@ -113,7 +113,7 @@ namespace ocs2 {
             return Filter(A, B, C, D);
         }
 
-        LoopshapingDefinition load(const std::string &settingsFile) {
+        std::shared_ptr<LoopshapingDefinition> load(const std::string &settingsFile) {
             // Read from settings File
             boost::property_tree::ptree pt;
             boost::property_tree::read_info(settingsFile, pt);
@@ -127,13 +127,13 @@ namespace ocs2 {
             }
 
             if (r_filter.getNumOutputs() > 0) {
-                return LoopshapingDefinition(LoopshapingType::outputpattern, r_filter, gamma);
+                return std::shared_ptr<LoopshapingDefinition>(new LoopshapingDefinition(LoopshapingType::outputpattern, r_filter, gamma));
             }
             if (s_filter.getNumOutputs() > 0) {
                 if (eliminateInputs){
-                    return LoopshapingDefinition(LoopshapingType::eliminatepattern, s_filter, gamma);
+                    return std::shared_ptr<LoopshapingDefinition>(new LoopshapingDefinition(LoopshapingType::eliminatepattern, s_filter, gamma));
                 } else {
-                    return LoopshapingDefinition(LoopshapingType::inputpattern, s_filter, gamma);
+                    return std::shared_ptr<LoopshapingDefinition>(new LoopshapingDefinition(LoopshapingType::inputpattern, s_filter, gamma));
                 }
             }
         }

@@ -98,100 +98,26 @@ namespace ocs2 {
             }
         };
 
+      template<typename DerivedSystemInput, typename DerivedFilterState, typename DerivedFilterInput>
+      void getFilterEquilibrium(const DerivedSystemInput &systemInput,
+                                DerivedFilterState &filterState,
+                                DerivedFilterInput &filterInput) {
+          switch (loopshapingType_) {
+              case LoopshapingType::outputpattern :
+                  // When systemInput is the input to the filter
+                  filter_.findEquilibriumForInput(systemInput, filterState, filterInput);
+              break;
+              case LoopshapingType::inputpattern :
+              case LoopshapingType::eliminatepattern :
+                  // When systemInput is the output of the filter
+                  filter_.findEquilibriumForOutput(systemInput, filterState, filterInput);
+              break;
+          }
+      }
+
     private:
         Filter filter_;
         LoopshapingType loopshapingType_;
-    };
-
-    template<size_t FULL_STATE_DIM, size_t FULL_INPUT_DIM,
-            size_t SYSTEM_STATE_DIM, size_t SYSTEM_INPUT_DIM,
-            size_t FILTER_STATE_DIM, size_t FILTER_INPUT_DIM>
-    class LoopshapingFilterDynamics {
-    public:
-        EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-
-        using Ptr = std::shared_ptr<LoopshapingFilterDynamics>;
-
-        using state_vector_t = Eigen::Matrix<double, FULL_STATE_DIM, 1>;
-        using input_vector_t = Eigen::Matrix<double, FULL_INPUT_DIM, 1>;
-        using system_state_vector_t = Eigen::Matrix<double, SYSTEM_STATE_DIM, 1>;
-        using system_input_vector_t = Eigen::Matrix<double, SYSTEM_INPUT_DIM, 1>;
-        using filter_state_vector_t = Eigen::Matrix<double, FILTER_STATE_DIM, 1>;
-        using filter_input_vector_t = Eigen::Matrix<double, FILTER_INPUT_DIM, 1>;
-
-        LoopshapingFilterDynamics(std::shared_ptr<LoopshapingDefinition> loopshapingDefinition) :
-                loopshapingDefinition_(std::move(loopshapingDefinition))
-        {}
-
-        void initializeEquilibriumState(const system_state_vector_t& system_state, const system_input_vector_t& system_input,
-                                        state_vector_t& state)
-        {
-            filter_state_vector_t filter_state;
-            initializeEquilibriumFilterState(system_state, system_input, filter_state);
-            state.segment(0, SYSTEM_STATE_DIM) = system_state;
-            state.segment(SYSTEM_STATE_DIM, FILTER_STATE_DIM) = filter_state;
-        }
-
-        void initializeEquilibriumFilterState(const system_state_vector_t& system_state, const system_input_vector_t& system_input,
-                                              filter_state_vector_t& filter_state)
-        {
-            filter_input_vector_t filter_input;
-            filter_input.setZero();
-            initializeEquilibriumFilterStateInput(system_state, system_input, filter_state, filter_input);
-        }
-
-        void initializeEquilibriumFilterStateInput(const system_state_vector_t& system_state, const system_input_vector_t& system_input,
-                                                   filter_state_vector_t& filter_state, filter_input_vector_t& filter_input) {
-            const auto &filter = loopshapingDefinition_->getInputFilter();
-
-            switch (loopshapingDefinition_->getType()) {
-                case LoopshapingType::outputpattern :
-                    // Solve
-                    // 0 = A_r*x_r + B_r*u
-                    // v = C_r*x_r + D_r*u
-                    filter.findEquilibriumForInput(system_input, filter_state, filter_input);
-                    break;
-                case LoopshapingType::inputpattern :
-                case LoopshapingType::eliminatepattern :
-                    // Solve
-                    // [0  =  [  A_s    B_s    [x_s
-                    //  u]       C_s    D_s  ]  v_s]
-                    filter.findEquilibriumForOutput(system_input, filter_state, filter_input);
-                    break;
-            }
-
-            filter_state_ = filter_state;
-        }
-
-        void advance(double dt, const system_state_vector_t& system_state, const system_input_vector_t& system_input)
-        {
-            advance(dt, system_state, system_input, filter_input_vector_t::Zero());
-        }
-
-        void advance(double dt, const system_state_vector_t& system_state, const system_input_vector_t& system_input,
-                     const filter_input_vector_t& filter_input) {
-            const auto& filter = loopshapingDefinition_->getInputFilter();
-
-            filter_state_vector_t filterstateDerivative;
-
-            switch (loopshapingDefinition_->getType()) {
-                case LoopshapingType::outputpattern :
-                    filterstateDerivative = filter.getA() * filter_state_ + filter.getB() * system_input;
-                    break;
-                case LoopshapingType::inputpattern :
-                case LoopshapingType::eliminatepattern :
-                    filterstateDerivative  = filter.getA() * filter_state_ + filter.getB() * filter_input;
-                    break;
-            }
-
-            filter_state_ += filterstateDerivative * dt;
-        }
-
-        const filter_state_vector_t& getFilterState() { return filter_state_; };
-
-    private:
-        std::shared_ptr<LoopshapingDefinition> loopshapingDefinition_;
-        filter_state_vector_t filter_state_;
     };
 
 } // namespace ocs2

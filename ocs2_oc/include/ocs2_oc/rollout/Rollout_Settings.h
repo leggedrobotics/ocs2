@@ -52,22 +52,30 @@ public:
 	 * Default constructor.
 	 */
 	Rollout_Settings()
-	: absTolODE_(1e-9)
-	, relTolODE_(1e-6)
-	, maxNumStepsPerSecond_(5000)
-	, minTimeStep_(1e-3)
-	, integratorType_(IntegratorType::ODE45)
+	: Rollout_Settings(1e-9, 1e-6, 5000, 1e-3, IntegratorType::ODE45)
 	{}
 
-  /**
-   * Constructor with all settings as arguments
-   */
-  Rollout_Settings(double absTolODE, double relTolODE, size_t maxNumStepsPerSecond, double minTimeStep, IntegratorType integratorType)
-      : absTolODE_(absTolODE),
-        relTolODE_(relTolODE),
-        maxNumStepsPerSecond_(maxNumStepsPerSecond),
-        minTimeStep_(minTimeStep),
-        integratorType_(integratorType) {}
+	/**
+	 * Constructor with all settings as arguments.
+	 *
+	 * @param [in] absTolODE: Absolute tolerance of the rollout.
+	 * @param [in] relTolODE: Relative tolerance of the rollout.
+	 * @param [in] maxNumStepsPerSecond: Maximum number of steps in the rollout.
+	 * @param [in] minTimeStep: Minimum time step of the rollout.
+	 * @param [in] integratorType: Rollout integration scheme type.
+	 */
+	Rollout_Settings(
+			double absTolODE,
+			double relTolODE,
+			size_t maxNumStepsPerSecond,
+			double minTimeStep,
+			IntegratorType integratorType)
+	: absTolODE_(absTolODE)
+	, relTolODE_(relTolODE)
+	, maxNumStepsPerSecond_(maxNumStepsPerSecond)
+	, minTimeStep_(minTimeStep)
+	, integratorType_(integratorType)
+	{}
 
 	/**
 	 * This function loads the "Rollout_Settings" variables from a config file. This file contains the settings for the Rollout algorithms.
@@ -102,8 +110,8 @@ public:
 	size_t maxNumStepsPerSecond_;
 	/** The minimum integration time step */
 	double minTimeStep_;
-  /** Which integrator to use */
-  IntegratorType integratorType_;
+	/** Rollout integration scheme type */
+	IntegratorType integratorType_;
 
 }; // end of Rollout_Settings class
 
@@ -148,6 +156,14 @@ inline void Rollout_Settings::loadSettings(const std::string& filename, bool ver
 	}
 	catch (const std::exception& e){
 		if (verbose)  std::cerr << " #### Option loader : option 'minTimeStep' ......................... " << minTimeStep_ << "   \t(default)" << std::endl;
+	}
+
+	try	{
+		integratorType_ = pt.get<int>("slq.integratorType");
+		if (verbose)  std::cerr << " #### Option loader : option 'integratorType' ...................... " << integratorType_ << std::endl;
+	}
+	catch (const std::exception& e){
+		if (verbose)  std::cerr << " #### Option loader : option 'integratorType' ...................... " << integratorType_ << "   \t(default)" << std::endl;
 	}
 
 	if(verbose)

@@ -79,7 +79,8 @@ public:
 	typedef typename DIMENSIONS::input_vector_t       input_vector_t;
 	typedef typename DIMENSIONS::input_vector_array_t input_vector_array_t;
 
-	typedef LogicRulesMachine<LOGIC_RULES_T>     logic_rules_machine_t;
+	typedef LogicRulesMachine<LOGIC_RULES_T> logic_rules_machine_t;
+
 	typedef Controller<STATE_DIM, INPUT_DIM> controller_t;
 
 	/**

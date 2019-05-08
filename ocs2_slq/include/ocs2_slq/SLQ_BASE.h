@@ -481,7 +481,6 @@ public:
 	 * @param [in] initState: The initial state.
 	 * @param [in] finalTime: The final time.
 	 * @param [in] partitioningTimes: The partitioning times between subsystems.
-	 * @param [in] costDesiredTrajectories: The cost desired trajectories.
 	 */
 	void run(
 			const scalar_t& initTime,
@@ -499,9 +498,11 @@ public:
 	 * @param [in] initState: The initial state.
 	 * @param [in] finalTime: The final time.
 	 * @param [in] partitioningTimes: The time partitioning.
-	 * @param [in] controllersPtrStock: Array of the initial control policies. If you want to use the control policy
-	 * which was designed by the previous call of the "run" routine, you should pass INTERNAL_CONTROLLER().
-	 * @param [in] costDesiredTrajectories: The cost desired trajectories.
+	 * @param [in] controllersPtrStock: Array of pointers to the initial control policies. If you want to use the control policy
+	 * which was designed by the previous call of the "run" routine, you should pass an empty array.
+	 * In the this case, two scenarios are possible: either the internal controller is already set (such as the MPC case
+	 * where the warm starting option is set true) or the internal controller is empty in which instead of performing
+	 * a rollout the operating trajectories will be used.
 	 */
 	void run(
 			const scalar_t& initTime,
@@ -693,16 +694,16 @@ public:
 	bool costDesiredTrajectoriesUpdated() const override;
 
 	/**
-	 * Returns the optimal array of the control policies.
+	 * Returns an array of pointer to the optimal control policies.
 	 *
-	 * @return controllersPtrStock: The optimal array of the control policies.
+	 * @return An array of pointers to the optimized control policies.
 	 */
 	const controller_ptr_array_t& getController() const override;
 
 	/**
-	 * Gets a pointer to the optimal array of the control policies.
+	 * Gets an array of pointer to the optimal control policies.
 	 *
-	 * @param [out] controllersStockPtr: A pointer to the optimal array of the control policies
+	 * @param [out] controllersStockPtr: An array of pointers to the optimized control policies.
 	 */
 	void getControllerPtr(const controller_ptr_array_t*& controllersStockPtr) const override;
 

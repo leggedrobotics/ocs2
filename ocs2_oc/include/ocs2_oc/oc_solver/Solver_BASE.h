@@ -130,8 +130,8 @@ public:
 	typedef LogicRulesMachine<LOGIC_RULES_T>     logic_rules_machine_t;
 	typedef typename logic_rules_machine_t::Ptr	 logic_rules_machine_ptr_t;
 
-  typedef Controller<STATE_DIM, INPUT_DIM> controller_t;
-  typedef std::vector<controller_t*> controller_ptr_array_t;
+	typedef Controller<STATE_DIM, INPUT_DIM> controller_t;
+	typedef std::vector<controller_t*>       controller_ptr_array_t;
 
 	/**
 	 * Default constructor.
@@ -155,7 +155,6 @@ public:
 	 * @param [in] initState: The initial state.
 	 * @param [in] finalTime: The final time.
 	 * @param [in] partitioningTimes: The partitioning times between subsystems.
-	 * @param [in] costDesiredTrajectories: The cost desired trajectories.
 	 */
 	virtual void run(
 			const scalar_t& initTime,
@@ -171,15 +170,18 @@ public:
 	 * @param [in] initState: The initial state.
 	 * @param [in] finalTime: The final time.
 	 * @param [in] partitioningTimes: The time partitioning.
-	 * @param [in] controllersStock: Array of the initial control policies.
-	 * @param [in] costDesiredTrajectories: The cost desired trajectories.
+	 * @param [in] controllersPtrStock: controllersPtrStock: Array of pointers to the initial control policies. If you want to use the control policy
+	 * which was designed by the previous call of the "run" routine, you should pass an empty array.
+	 * In the this case, two scenarios are possible: either the internal controller is already set (such as the MPC case
+	 * where the warm starting option is set true) or the internal controller is empty in which instead of performing
+	 * a rollout the operating trajectories will be used.
 	 */
 	virtual void run(
 			const scalar_t& initTime,
 			const state_vector_t& initState,
 			const scalar_t& finalTime,
 			const scalar_array_t& partitioningTimes,
-			const controller_ptr_array_t& controllersStock) = 0;
+			const controller_ptr_array_t& controllersPtrStock) = 0;
 
 	/**
 	 * MPC_BASE activates this if the final time of the MPC will increase by the length of a time partition instead
@@ -349,16 +351,16 @@ public:
 	virtual bool costDesiredTrajectoriesUpdated() const = 0;
 
 	/**
-	 * Returns the optimal array of the control policies.
+	 * Returns an array of pointer to the optimal control policies.
 	 *
-	 * @return controllersStock: The optimal array of the control policies.
+	 * @return An array of pointers to the optimized control policies.
 	 */
 	virtual const controller_ptr_array_t& getController() const = 0;
 
 	/**
-	 * Gets a pointer to the optimal array of the control policies.
+	 * Gets an array of pointer to the optimal control policies.
 	 *
-	 * @param [out] controllersPtrStock: A pointer to the optimal array of the control policies.
+	 * @param [out] controllersStockPtr: An array of pointers to the optimized control policies.
 	 */
 	virtual void getControllerPtr(const controller_ptr_array_t*& controllersPtrStock) const = 0;
 

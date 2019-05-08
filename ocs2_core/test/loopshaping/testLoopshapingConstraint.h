@@ -8,7 +8,6 @@
 
 #include <gtest/gtest.h>
 #include <Eigen/Dense>
-#include <experimental/filesystem>
 
 #include "ocs2_core/constraint/LinearConstraint.h"
 #include "ocs2_core/loopshaping/LoopshapingDefinition.h"
@@ -80,11 +79,8 @@ class TestFixtureLoopShapingConstraint : public ::testing::Test {
   using input_state_matrix_array_t = typename TestLoopshapingConstraint::input_state_matrix_array_t;
 
   void SetUp() override {
-    const std::experimental::filesystem::path pathToTest = std::experimental::filesystem::path(__FILE__);
-    const std::string settingsFile = std::string(pathToTest.parent_path()) + "/" + CONFIG::fileName;
-
-      // Load loopshaping definition
-      loopshapingDefinition_ = std::make_shared<LoopshapingDefinition>(std::move(LoopshapingPropertyTree::load(settingsFile)));
+    const std::string settingsFile = getAbsolutePathToConfigurationFile(CONFIG::fileName);
+    loopshapingDefinition_ = LoopshapingPropertyTree::load(settingsFile);
 
     // Set up state and input
     t = 0.5;

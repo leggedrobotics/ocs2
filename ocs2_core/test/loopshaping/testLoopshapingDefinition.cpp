@@ -4,7 +4,6 @@
 
 #include <gtest/gtest.h>
 
-
 #include <ocs2_core/loopshaping/LoopshapingDefinition.h>
 #include <ocs2_core/loopshaping/LoopshapingPropertyTree.h>
 #include <ocs2_core/loopshaping/cost/LoopshapingCost.h>
@@ -25,11 +24,11 @@ TEST(testLoopshapingDefinition, SISO_Definition) {
   boost::property_tree::ptree pt;
   boost::property_tree::read_info(settingsFile_r, pt);
 
-  Filter filter0 = LoopshapingPropertyTree::readSISOFilter(pt, "r_filter.Filter0");
+  auto filter0 = LoopshapingPropertyTree::readSISOFilter(pt, "r_filter.Filter0");
   std::cout << "\nFilter0" << std::endl;
   filter0.print();
 
-  Filter filter1 = LoopshapingPropertyTree::readSISOFilter(pt, "r_filter.Filter1");
+  auto filter1 = LoopshapingPropertyTree::readSISOFilter(pt, "r_filter.Filter1");
   std::cout << "\nFilter1" << std::endl;
   filter1.print();
 
@@ -39,36 +38,36 @@ TEST(testLoopshapingDefinition, SISO_Definition) {
 TEST(testLoopshapingDefinition, MIMO_Definition) {
   boost::property_tree::ptree pt;
   boost::property_tree::read_info(settingsFile_s, pt);
-  Filter filter = LoopshapingPropertyTree::readMIMOFilter(pt, "s_inv_filter", true);
+  auto filter = LoopshapingPropertyTree::readMIMOFilter(pt, "s_inv_filter", true);
   filter.print();
 
   ASSERT_TRUE(true);
 }
 
 TEST(testLoopshapingDefinition, Loopshaping_Definition_r) {
-  LoopshapingDefinition filter = LoopshapingPropertyTree::load(settingsFile_r);
-  filter.print();
+  auto filter = LoopshapingPropertyTree::load(settingsFile_r);
+  filter->print();
 
   ASSERT_TRUE(true);
 }
 
 TEST(testLoopshapingDefinition, Loopshaping_Definition_r_simple) {
-  LoopshapingDefinition filter = LoopshapingPropertyTree::load(settingsFile_r_simple);
-  filter.print();
+  auto filter = LoopshapingPropertyTree::load(settingsFile_r_simple);
+  filter->print();
 
   ASSERT_TRUE(true);
 }
 
 TEST(testLoopshapingDefinition, Loopshaping_Definition_s) {
-  LoopshapingDefinition filter = LoopshapingPropertyTree::load(settingsFile_s);
-  filter.print();
+  auto filter = LoopshapingPropertyTree::load(settingsFile_s);
+  filter->print();
 
   ASSERT_TRUE(true);
 }
 
 TEST(testLoopshapingDefinition, Loopshaping_Definition_s_simple) {
-  LoopshapingDefinition filter = LoopshapingPropertyTree::load(settingsFile_s_simple);
-  filter.print();
+  auto filter = LoopshapingPropertyTree::load(settingsFile_s_simple);
+  filter->print();
 
   ASSERT_TRUE(true);
 }

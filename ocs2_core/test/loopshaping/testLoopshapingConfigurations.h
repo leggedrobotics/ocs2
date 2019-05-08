@@ -5,6 +5,7 @@
 #pragma once
 
 #include <gtest/gtest.h>
+#include <experimental/filesystem>
 
 namespace ocs2 {
 
@@ -95,6 +96,13 @@ typedef ::testing::Types<
     TestConfiguration_s_eliminate_filter,
     TestConfiguration_s_simple_eliminate_filter>
     FilterConfigurations;
+
+std::string getAbsolutePathToConfigurationFile(const std::string& fileName){
+  const std::experimental::filesystem::path pathToTest = std::experimental::filesystem::path(__FILE__);
+  return std::string(pathToTest.parent_path()) + "/" + fileName;
+}
+
+
 
 } // namespace ocs2
 

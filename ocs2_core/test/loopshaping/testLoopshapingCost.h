@@ -49,12 +49,8 @@ class TestFixtureLoopShapingCost : public ::testing::Test {
   using filter_input_vector_t = typename TestLoopshapingCost::filter_input_vector_t;
 
   void SetUp() override {
-    const std::experimental::filesystem::path pathToTest = std::experimental::filesystem::path(__FILE__);
-    const std::string settingsFile = std::string(pathToTest.parent_path()) + "/" + CONFIG::fileName;
-
-    // Load loopshaping definition
-      // Load loopshaping definition
-      loopshapingDefinition_ = std::make_shared<LoopshapingDefinition>(std::move(LoopshapingPropertyTree::load(settingsFile)));
+    const std::string settingsFile = getAbsolutePathToConfigurationFile(CONFIG::fileName);
+    loopshapingDefinition_ = LoopshapingPropertyTree::load(settingsFile);
 
     // Set up state and input
     t = 0.5;

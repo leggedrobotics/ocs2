@@ -163,7 +163,7 @@ class FeedforwardController : public Controller<STATE_DIM, INPUT_DIM>
   }
 
   virtual void setZero() override {
-    std::fill(uffArray_.begin(), uffArray_.end(), input_vector_array_t::Zero());
+    std::fill(uffArray_.begin(), uffArray_.end(), input_vector_t::Zero());
   }
 
   /**

@@ -187,15 +187,6 @@ public:
 			state_vector_t& mpcState,
 			size_t& subsystem);
 
-	/**
-     * @brief getControllerPtr
-     * @return pointer to the controller
-	 */
-    //TODO(jcarius) what about thread safety and object lifetime?
-    controller_t* getControllerPtr(){
-        return mpcController_.get();
-    }
-
   	/**
 	 * Initializes rollout class to roll out a feedback policy
 	 *

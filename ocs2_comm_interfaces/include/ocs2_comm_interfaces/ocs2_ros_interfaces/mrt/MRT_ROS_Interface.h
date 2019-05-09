@@ -184,6 +184,8 @@ public:
 	 * @param[in] time: the query time
 	 * @param[out] mpcState: the current nominal state
 	 * @param[out] subsystem: the active subsystem
+	 *
+	 * TODO (farbod): We need to add the control input and the measured state.
 	 */
 	void evaluatePlan(
 			const scalar_t& time,
@@ -191,13 +193,13 @@ public:
 			size_t& subsystem);
 
 	/**
-     * @brief getControllerPtr
-     * @return pointer to the controller
+	 * @brief getControllerPtr
+	 * @return pointer to the controller
 	 */
-    //TODO(jcarius) what about thread safety and object lifetime?
-    controller_t* getControllerPtr(){
-        return mpcControllerPtr_.get();
-    }
+	//TODO(jcarius) what about thread safety and object lifetime?
+	controller_t* getControllerPtr(){
+		return mpcControllerPtr_.get();
+	}
 
   	/**
 	 * Initializes rollout class to roll out a feedback policy
@@ -252,7 +254,7 @@ public:
 	/**
 	 * Checks the data buffer for an update of the MPC policy. If a new policy
 	 * is available on the buffer this method will load it to the in-use policy.
-	 * This method also calls the loadModifiedPolicy() method.
+	 * This method also calls the modifyPolicy() method.
 	 *
 	 * Make sure to call spinMRT() to check for new messages
 	 *
@@ -279,16 +281,14 @@ protected:
 	 * policy messages on the data buffer.
 	 *
 	 * @param logicUpdated: Whether eventTimes or subsystemsSequence are updated form the last call.
-	 * @param policyUpdated: Whether the policy is updated.
 	 * @param mpcController: The optimized feedback controller of the policy.
 	 * @param mpcTimeTrajectory: The optimized time trajectory of the policy message on the buffer.
 	 * @param mpcStateTrajectory: The optimized state trajectory of the policy message on the buffer.
 	 * @param eventTimes: The event times of the policy.
 	 * @param subsystemsSequence: The subsystems sequence of the policy.
 	 */
-	virtual void loadModifiedPolicy(
+	virtual void modifyPolicy(
 			bool& logicUpdated,
-			bool& policyUpdated,
 			controller_t& mpcController,
 			scalar_array_t& mpcTimeTrajectory,
 			state_vector_array_t& mpcStateTrajectory,
@@ -331,6 +331,7 @@ protected:
 
 	/**
 	 * Callback method to receive the MPC policy as well as the mode sequence.
+	 * It only updates the policy variables with suffix (*Buffer_) variables.
 	 *
 	 * @param msg: A constant pointer to the message
 	 */
@@ -385,7 +386,8 @@ protected:
 	ocs2_comm_interfaces::mpc_observation mpcObservationMsgBuffer_;
 
 	// Multi-threading for subscribers
-	mutable std::mutex subscriberMutex_;
+	mutable std::mutex policyMutex_;        // for policy variables WITHOUT suffix (*Buffer_) variables
+	mutable std::mutex policyMutexBuffer_;  // for policy variables WITH suffix (*Buffer_) variables
 	::ros::CallbackQueue mrtCallbackQueue_;
 
 	// Multi-threading for publishers
@@ -398,11 +400,11 @@ protected:
 	bool logicUpdated_;
 	bool policyUpdated_;
 	bool policyUpdatedBuffer_;
-	bool policyReceivedEver_;
+	std::atomic<bool> policyReceivedEver_;
 	system_observation_t initPlanObservation_;
 
-	size_t             messageHash_;
-	std::atomic_size_t messageHashBuffer_;
+	size_t messageHash_;
+	size_t messageHashBuffer_;
 
 	system_observation_t mpcInitObservation_;
 	system_observation_t mpcInitObservationBuffer_;

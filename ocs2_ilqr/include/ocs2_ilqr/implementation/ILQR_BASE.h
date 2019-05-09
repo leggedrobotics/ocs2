@@ -80,7 +80,7 @@ ILQR_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::ILQR_BASE(
 
 		// initialize LQ approximator
 		linearQuadraticApproximatorPtrStock_.emplace_back(new linear_quadratic_approximator_t(
-				*systemDerivativesPtr, *systemConstraintsPtr, *costFunctionPtr, "ILQR") );
+				*systemDerivativesPtr, *systemConstraintsPtr, *costFunctionPtr, "ILQR", settings_.checkNumericalStability_) );
 
 		// initialize operating trajectories
 		operatingTrajectoriesPtrStock_.emplace_back( operatingTrajectoriesPtr->clone() );

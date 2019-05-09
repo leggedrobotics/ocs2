@@ -97,11 +97,13 @@ public:
 			const derivatives_base_t& systemDerivatives,
 			const constraint_base_t& systemConstraints,
 			const cost_function_base_t& costFunction,
-			const char* algorithmName = NULL)
+			const char algorithmName[] = nullptr,
+			bool checkNumericalCharacteristics = true)
 	: systemDerivativesPtr_(systemDerivatives.clone())
 	, systemConstraintsPtr_(systemConstraints.clone())
 	, costFunctionPtr_(costFunction.clone())
 	, algorithmName_(algorithmName)
+	, checkNumericalCharacteristics_(checkNumericalCharacteristics)
 	{}
 
 
@@ -109,6 +111,16 @@ public:
 	 * Default destructor.
 	 */
 	~LinearQuadraticApproximator() = default;
+
+	/**
+	 * Whether or not to check the numerical characteristics of the model.
+	 *
+	 * @param [in] checkNumericalCharacteristics: True if the numerical characteristics of the model should be checked.
+	 */
+	void checkNumericalCharacteristics(bool checkNumericalCharacteristics) {
+
+		checkNumericalCharacteristics_ = checkNumericalCharacteristics;
+	}
 
 	/**
 	 * Initializes the system derivatives, constarints, and cost.
@@ -228,7 +240,7 @@ public:
 		systemDerivativesPtr_->getFlowMapDerivativeInput(Bm_);
 
 		// checking the numerical stability
-		if (checkNumericalStability_==true){
+		if (checkNumericalCharacteristics_==true){
 			try {
 				if (!Am_.allFinite())
 					throw std::runtime_error("Flow map state derivativeState is not finite.");
@@ -292,7 +304,7 @@ public:
 			systemConstraintsPtr_->getInequalityConstraintDerivativesInputState(ddhdudx_);
 		}
 
-		if (checkNumericalStability_==true){
+		if (checkNumericalCharacteristics_==true){
 			try {
 				if (ncEqStateInput_ > 0 && !Ev_.head(ncEqStateInput_).allFinite())
 					throw std::runtime_error("Input-state constraint is not finite.");
@@ -347,7 +359,7 @@ public:
 		costFunctionPtr_->getIntermediateCostDerivativeInputState(Pm_);
 
 		// checking the numerical stability
-		if (checkNumericalStability_==true){
+		if (checkNumericalCharacteristics_==true){
 			try {
 				if (!q_.allFinite())
 					throw std::runtime_error("Intermediate cost is is not finite.");
@@ -431,14 +443,13 @@ public:
 
 
 private:
-	const char* algorithmName_;
 
 	std::unique_ptr<derivatives_base_t> systemDerivativesPtr_;
 	std::unique_ptr<constraint_base_t> systemConstraintsPtr_;
 	std::unique_ptr<cost_function_base_t> costFunctionPtr_;
 
-	const bool checkNumericalStability_ = true;
-
+	const char* algorithmName_;
+	bool checkNumericalCharacteristics_;
 };
 
 } // namespace ocs2

@@ -56,7 +56,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_core/misc/LinearInterpolation.h>
 #include <ocs2_core/misc/FindActiveIntervalIndex.h>
 
-#include <ocs2_core/control/Controller.h>
+#include <ocs2_core/control/ControllerBase.h>
 #include <ocs2_core/control/FeedforwardController.h>
 #include <ocs2_core/control/LinearController.h>
 
@@ -116,7 +116,7 @@ public:
 
 	typedef LinearInterpolation<state_vector_t, Eigen::aligned_allocator<state_vector_t> > state_linear_interpolation_t;
 
-	typedef Controller<STATE_DIM,INPUT_DIM> controller_t;
+	typedef ControllerBase<STATE_DIM,INPUT_DIM> controller_t;
 
 	/**
 	 * Default constructor
@@ -191,15 +191,6 @@ public:
 			const scalar_t& time,
 			state_vector_t& mpcState,
 			size_t& subsystem);
-
-	/**
-	 * @brief getControllerPtr
-	 * @return pointer to the controller
-	 */
-	//TODO(jcarius) what about thread safety and object lifetime?
-	controller_t* getControllerPtr(){
-		return mpcControllerPtr_.get();
-	}
 
   	/**
 	 * Initializes rollout class to roll out a feedback policy

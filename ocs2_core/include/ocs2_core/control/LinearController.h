@@ -1,6 +1,6 @@
 #pragma once
 
-#include "ocs2_core/control/Controller.h"
+#include "ocs2_core/control/ControllerBase.h"
 
 #include "ocs2_core/misc/LinearInterpolation.h"
 
@@ -11,11 +11,11 @@ namespace ocs2 {
  * form u[x,t] = k[t] * x + uff[t]
  */
 template <size_t STATE_DIM, size_t INPUT_DIM>
-class LinearController : public Controller<STATE_DIM, INPUT_DIM> {
+class LinearController : public ControllerBase<STATE_DIM, INPUT_DIM> {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-  using Base = Controller<STATE_DIM, INPUT_DIM>;
+  using Base = ControllerBase<STATE_DIM, INPUT_DIM>;
 
   using dimensions_t = Dimensions<STATE_DIM, INPUT_DIM>;
   using scalar_t = typename dimensions_t::scalar_t;

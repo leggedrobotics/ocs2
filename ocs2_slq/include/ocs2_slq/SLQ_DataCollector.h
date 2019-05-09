@@ -54,7 +54,7 @@ public:
 
 	typedef std::shared_ptr<SLQ_DataCollector<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>> Ptr;
 
-	typedef typename slq_t::controller_array_t controller_array_t;
+	typedef typename slq_t::linear_controller_array_t linear_controller_array_t;
 	typedef typename slq_t::size_array_t   size_array_t;
 	typedef typename slq_t::scalar_t       scalar_t;
 	typedef typename slq_t::scalar_array_t scalar_array_t;
@@ -147,7 +147,7 @@ public:
 	scalar_array_t eventTimes_;
 	size_array_t   subsystemsSequence_;
 
-	controller_array_t optimizedControllersStock_;
+	linear_controller_array_t optimizedControllersStock_;
 
 //	std::vector<scalar_array_t>  optimizedTimeTrajectoriesStock_;
 //	std::vector<size_array_t>    optimizedEventsPastTheEndIndecesStock_;

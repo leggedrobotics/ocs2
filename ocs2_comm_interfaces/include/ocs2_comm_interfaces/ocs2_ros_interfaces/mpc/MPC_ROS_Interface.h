@@ -103,7 +103,7 @@ public:
 
 	typedef SystemObservation<STATE_DIM, INPUT_DIM> system_observation_t;
 
-  typedef Controller<STATE_DIM, INPUT_DIM> controller_t;
+  typedef ControllerBase<STATE_DIM, INPUT_DIM> controller_t;
   typedef std::vector<controller_t*> controller_ptr_array_t;
 
 	typedef RosMsgConversions<STATE_DIM, INPUT_DIM> ros_msg_conversions_t;

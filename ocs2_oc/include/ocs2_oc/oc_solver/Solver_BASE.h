@@ -43,7 +43,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <unsupported/Eigen/MatrixFunctions>
 
 #include <ocs2_core/Dimensions.h>
-#include <ocs2_core/control/Controller.h>
+#include <ocs2_core/control/ControllerBase.h>
 #include <ocs2_core/cost/CostDesiredTrajectories.h>
 #include <ocs2_core/logic/rules/LogicRulesBase.h>
 #include <ocs2_core/logic/rules/NullLogicRules.h>
@@ -130,7 +130,7 @@ public:
 	typedef LogicRulesMachine<LOGIC_RULES_T>     logic_rules_machine_t;
 	typedef typename logic_rules_machine_t::Ptr	 logic_rules_machine_ptr_t;
 
-	typedef Controller<STATE_DIM, INPUT_DIM> controller_t;
+	typedef ControllerBase<STATE_DIM, INPUT_DIM> controller_t;
 	typedef std::vector<controller_t*>       controller_ptr_array_t;
 
 	/**

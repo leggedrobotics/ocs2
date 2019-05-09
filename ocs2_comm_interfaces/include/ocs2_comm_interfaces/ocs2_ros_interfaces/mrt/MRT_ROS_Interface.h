@@ -53,7 +53,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_core/misc/LinearInterpolation.h>
 #include <ocs2_core/logic/machine/HybridLogicRulesMachine.h>
 #include <ocs2_core/logic/rules/NullLogicRules.h>
-#include <ocs2_core/control/Controller.h>
+#include <ocs2_core/control/ControllerBase.h>
 
 #include <ocs2_core/dynamics/ControlledSystemBase.h>
 #include <ocs2_oc/rollout/RolloutBase.h>
@@ -113,7 +113,7 @@ public:
 
 	typedef LinearInterpolation<state_vector_t, Eigen::aligned_allocator<state_vector_t> > state_linear_interpolation_t;
 
-    typedef Controller<STATE_DIM,INPUT_DIM> controller_t;
+    typedef ControllerBase<STATE_DIM,INPUT_DIM> controller_t;
 
 	/**
 	 * Default constructor

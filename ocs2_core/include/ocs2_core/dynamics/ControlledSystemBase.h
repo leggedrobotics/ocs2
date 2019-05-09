@@ -37,7 +37,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "ocs2_core/Dimensions.h"
 #include "ocs2_core/integration/ODE_Base.h"
-#include "ocs2_core/control/Controller.h"
+#include "ocs2_core/control/ControllerBase.h"
 #include "ocs2_core/logic/rules/LogicRulesBase.h"
 #include "ocs2_core/logic/rules/NullLogicRules.h"
 #include "ocs2_core/logic/machine/LogicRulesMachine.h"
@@ -77,7 +77,7 @@ public:
 	typedef typename DIMENSIONS::constraint2_vector_t constraint2_vector_t;
 	typedef typename DIMENSIONS::dynamic_vector_t     dynamic_vector_t;
 
-  typedef Controller<STATE_DIM, INPUT_DIM> controller_t;
+  typedef ControllerBase<STATE_DIM, INPUT_DIM> controller_t;
 
 	/**
 	 * Default constructor.

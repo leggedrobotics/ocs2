@@ -16,7 +16,7 @@ namespace ocs2 {
  * @tparam INPUT_DIM: Dimension of the control input space.
  */
 template <size_t STATE_DIM, size_t INPUT_DIM>
-class Controller
+class ControllerBase
 {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
@@ -30,12 +30,12 @@ class Controller
   /**
    * Default constructor.
    */
-  Controller() = default;
+  ControllerBase() = default;
 
   /**
    * Default destructor.
    */
-  virtual ~Controller() = default;
+  virtual ~ControllerBase() = default;
 
   /**
    * @brief Computes the control command at a given time and state.

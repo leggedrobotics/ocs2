@@ -246,7 +246,7 @@ void MPC_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::publishPolicy(
 		if (timeTrajectory.back()  < t0)  continue;
 		if (timeTrajectory.front() > tf)  continue;
 
-                Controller<STATE_DIM, INPUT_DIM>* ctrlToBeSent = (*controllerStockPtr)[i];
+                controller_t* ctrlToBeSent = (*controllerStockPtr)[i];
                 std::unique_ptr<FeedforwardController<STATE_DIM, INPUT_DIM>> ffwCtrl;
                 if(!mpcSettings_.useFeedbackPolicy_){
                   ffwCtrl.reset(new FeedforwardController<STATE_DIM, INPUT_DIM>(timeTrajectory, stateTrajectory, (*controllerStockPtr)[i]));

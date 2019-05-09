@@ -120,7 +120,6 @@ namespace ocs2 {
             Filter r_filter = LoopshapingPropertyTree::readMIMOFilter(pt, "r_filter");
             Filter s_filter = LoopshapingPropertyTree::readMIMOFilter(pt, "s_inv_filter", true);
             auto gamma = pt.get<double>("gamma");
-            auto eliminateInputs = pt.get<bool>("eliminateInputs");
 
             if (r_filter.getNumOutputs() > 0 && s_filter.getNumOutputs() > 0) {
                 throw std::runtime_error("[LoopshapingDefinition] using both r and s filter not implemented");
@@ -130,6 +129,7 @@ namespace ocs2 {
                 return std::shared_ptr<LoopshapingDefinition>(new LoopshapingDefinition(LoopshapingType::outputpattern, r_filter, gamma));
             }
             if (s_filter.getNumOutputs() > 0) {
+                auto eliminateInputs = pt.get<bool>("eliminateInputs");
                 if (eliminateInputs){
                     return std::shared_ptr<LoopshapingDefinition>(new LoopshapingDefinition(LoopshapingType::eliminatepattern, s_filter, gamma));
                 } else {

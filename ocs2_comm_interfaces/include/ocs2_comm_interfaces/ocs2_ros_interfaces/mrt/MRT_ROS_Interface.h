@@ -279,6 +279,13 @@ public:
 	 */
 	bool updatePolicy();
 
+	/**
+	 * Returns if MPC has been terminated due to an exception.
+	 *
+	 * @return true if MPC falied.
+	 */
+	bool mpcIsTerminated() const;
+
 protected:
 	/**
 	 * The updatePolicy() method will call this method which allows the user to
@@ -449,7 +456,7 @@ protected:
 	ocs2_comm_interfaces::mpc_observation mpcObservationMsgBuffer_;
 
 	// Multi-threading for subscribers
-	std::mutex subscriberMutex_;
+	mutable std::mutex subscriberMutex_;
 	::ros::CallbackQueue mrtCallbackQueue_;
 
 	// Multi-threading for publishers

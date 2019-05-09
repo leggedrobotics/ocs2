@@ -96,8 +96,8 @@ SHOW_USED_FILES        = YES
 SHOW_FILES             = YES
 SHOW_NAMESPACES        = YES
 FILE_VERSION_FILTER    =
-LAYOUT_FILE            = DoxygenLayout.xml
-CITE_BIB_FILES         = cite.bib
+LAYOUT_FILE            = ${DOCSOURCE_DIR}/DoxygenLayout.xml
+CITE_BIB_FILES         = ${DOCSOURCE_DIR}/cite.bib
 #---------------------------------------------------------------------------
 #- Configuration options related to warning and progress messages
 #---------------------------------------------------------------------------

@@ -92,7 +92,7 @@ public:
 	 */
 	ControlledSystemBase(const ControlledSystemBase& rhs)
 	: ControlledSystemBase()
-	{}
+        {setController(rhs.controllerPtr());}
 
 	/**
 	 * Default destructor.
@@ -203,7 +203,7 @@ public:
 	 *
 	 * @return A pointer to controller.
 	 */
-	controller_t* controllerPtr() {
+	controller_t* controllerPtr() const {
 
 		return controllerPtr_;
 	}

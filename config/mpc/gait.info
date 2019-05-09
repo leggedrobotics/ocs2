@@ -5,9 +5,10 @@ list
   [2] standing_trot
   [3] flying_trot
   [4] pace
-  [5] dynamic_walk
-  [6] static_walk
-  [7] amble
+  [5] standing_pace
+  [6] dynamic_walk
+  [7] static_walk
+  [8] amble
 }
 
 stance
@@ -92,6 +93,25 @@ pace
     [2]     0.30
     [3]     0.58
     [4]     0.60
+  }
+}
+
+standing_pace
+{
+  templateSubsystemsSequence
+  {
+    [0]     LF_LH
+    [1]     STANCE
+    [2]     RF_RH
+    [3]     STANCE
+  }
+  templateSwitchingTimes
+  {
+    [0]     0.0
+    [1]     0.30
+    [2]     0.35
+    [3]     0.65
+    [4]     0.70
   }
 }
 

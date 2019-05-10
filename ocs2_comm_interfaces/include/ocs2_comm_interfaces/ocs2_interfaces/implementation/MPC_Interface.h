@@ -303,7 +303,7 @@ void MPC_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::evaluateFeedforwardPoli
   if (useFeedforwardPolicy_ == false) throw std::runtime_error("The MRT is set to receive the feedforward policy.");
 
   if (time > mpcTimeTrajectory_.back())
-    ROS_WARN_STREAM("The requested time is greater than the received plan: " + std::to_string(time) + ">" +
+    ROS_WARN_STREAM_THROTTLE(2, "The requested time is greater than the received plan: " + std::to_string(time) + ">" +
                     std::to_string(mpcTimeTrajectory_.back()));
 
   mpcLinInterpolateState_.interpolate(time, mpcState);
@@ -325,7 +325,7 @@ void MPC_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::evaluateFeedbackPolicy(
   if (useFeedforwardPolicy_ == true) throw std::runtime_error("The MRT is set to receive the feedback policy.");
 
   if (time > mpcController_.time_.back())
-    ROS_WARN_STREAM("The requested time is greater than the received plan: " + std::to_string(time) + ">" +
+    ROS_WARN_STREAM_THROTTLE(2, "The requested time is greater than the received plan: " + std::to_string(time) + ">" +
                     std::to_string(mpcController_.time_.back()));
 
   mpcLinInterpolateUff_.interpolate(time, mpcUff);

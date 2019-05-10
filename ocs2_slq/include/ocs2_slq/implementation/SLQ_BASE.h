@@ -1139,20 +1139,24 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::approximateUnconstrainedLQWo
 		try {
 			const size_t& nc1 = nc1TrajectoriesStock_[i][k];
 			const size_t& nc2 = nc2TrajectoriesStock_[i][k];
-			if (nc1TrajectoriesStock_[i][k] > 0 && !EvTrajectoryStock_[i][k].head(nc1).allFinite())
-				throw std::runtime_error("Input-state constraint is not finite.");
-			if (nc1TrajectoriesStock_[i][k] > 0 && !CmTrajectoryStock_[i][k].topRows(nc1).allFinite())
-				throw std::runtime_error("Input-state constraint derivative w.r.t. state is not finite.");
-			if (nc1TrajectoriesStock_[i][k] > 0 && !DmTrajectoryStock_[i][k].topRows(nc1).allFinite())
-				throw std::runtime_error("Input-state constraint derivative w.r.t. input is not finite.");
-			if (nc2TrajectoriesStock_[i][k] > 0 && !HvTrajectoryStock_[i][k].head(nc2).allFinite())
-				throw std::runtime_error("State-only constraint is not finite.");
-			if (nc2TrajectoriesStock_[i][k] > 0 && !FmTrajectoryStock_[i][k].topRows(nc2).allFinite())
-				throw std::runtime_error("State-only constraint derivative w.r.t. state is not finite.");
-			size_t DmRank = DmTrajectoryStock_[i][k].topRows(nc1).colPivHouseholderQr().rank();
-			if (DmRank != nc1)
-				throw std::runtime_error("Input-state constraint derivative w.r.t. input is not full-row rank. It's rank "
-						"is " + std::to_string(DmRank) + " while the expected rank is " + std::to_string(nc1) + ".");
+			if (nc1 > 0) {
+				if (nc1TrajectoriesStock_[i][k] > 0 && !EvTrajectoryStock_[i][k].head(nc1).allFinite())
+					throw std::runtime_error("Input-state constraint is not finite.");
+				if (nc1TrajectoriesStock_[i][k] > 0 && !CmTrajectoryStock_[i][k].topRows(nc1).allFinite())
+					throw std::runtime_error("Input-state constraint derivative w.r.t. state is not finite.");
+				if (nc1TrajectoriesStock_[i][k] > 0 && !DmTrajectoryStock_[i][k].topRows(nc1).allFinite())
+					throw std::runtime_error("Input-state constraint derivative w.r.t. input is not finite.");
+				size_t DmRank = DmTrajectoryStock_[i][k].topRows(nc1).colPivHouseholderQr().rank();
+				if (DmRank != nc1)
+					throw std::runtime_error("Input-state constraint derivative w.r.t. input is not full-row rank. It's rank "
+							"is " + std::to_string(DmRank) + " while the expected rank is " + std::to_string(nc1) + ".");
+			}
+			if (nc2 > 0) {
+				if (nc2TrajectoriesStock_[i][k] > 0 && !HvTrajectoryStock_[i][k].head(nc2).allFinite())
+					throw std::runtime_error("State-only constraint is not finite.");
+				if (nc2TrajectoriesStock_[i][k] > 0 && !FmTrajectoryStock_[i][k].topRows(nc2).allFinite())
+					throw std::runtime_error("State-only constraint derivative w.r.t. state is not finite.");
+			}
 
 		} catch(const std::exception& error)  {
 			const size_t& nc1 = nc1TrajectoriesStock_[i][k];

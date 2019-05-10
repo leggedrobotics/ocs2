@@ -24,6 +24,7 @@ class FeedforwardController : public ControllerBase<STATE_DIM, INPUT_DIM>
   using dimensions_t = Dimensions<STATE_DIM, INPUT_DIM>;
   using scalar_t = typename dimensions_t::scalar_t;
   using scalar_array_t = typename dimensions_t::scalar_array_t;
+  using float_array_t = typename Base::float_array_t;
   using state_vector_t = typename dimensions_t::state_vector_t;
   using state_vector_array_t = typename dimensions_t::state_vector_array_t;
   using input_vector_t = typename dimensions_t::input_vector_t;
@@ -135,25 +136,25 @@ class FeedforwardController : public ControllerBase<STATE_DIM, INPUT_DIM>
     return uff;
   }
 
-  virtual void flatten(scalar_t time, scalar_array_t& flatArray) const override {
+  virtual void flatten(scalar_t time, float_array_t& flatArray) const override {
     input_vector_t uff;
     linInterpolateUff_.interpolate(time, uff);
 
-    flatArray = std::move(scalar_array_t(uff.data(), uff.data() + INPUT_DIM));
+    flatArray = std::move(float_array_t(uff.data(), uff.data() + INPUT_DIM));
   }
 
-  virtual void unFlatten(const scalar_array_t& timeArray, const std::vector<scalar_array_t const*>& flatArray2) override {
+  virtual void unFlatten(const scalar_array_t& timeArray, const std::vector<float_array_t const*>& flatArray2) override {
+    if(flatArray2[0]->size() != INPUT_DIM){
+      throw std::runtime_error("FeedforwardController::unFlatten received array of wrong length.");
+    }
+
     timeStamp_ = timeArray;
 
     uffArray_.clear();
     uffArray_.reserve(flatArray2.size());
 
-    if(flatArray2[0]->size() != INPUT_DIM){
-      throw std::runtime_error("FeedforwardController::unFlatten received array of wrong length.");
-    }
-
     for (const auto& arr : flatArray2) {  // loop through time
-      uffArray_.emplace_back(Eigen::Map<const input_vector_t>(arr->data(), INPUT_DIM));
+      uffArray_.emplace_back(Eigen::Map<const Eigen::Matrix<float, INPUT_DIM, 1>>(arr->data(), INPUT_DIM).template cast<scalar_t>());
     }
   }
 

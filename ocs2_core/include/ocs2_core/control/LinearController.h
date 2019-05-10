@@ -20,6 +20,7 @@ class LinearController : public ControllerBase<STATE_DIM, INPUT_DIM> {
   using dimensions_t = Dimensions<STATE_DIM, INPUT_DIM>;
   using scalar_t = typename dimensions_t::scalar_t;
   using scalar_array_t = typename dimensions_t::scalar_array_t;
+  using float_array_t = typename Base::float_array_t;
   using state_vector_t = typename dimensions_t::state_vector_t;
   using input_vector_t = typename dimensions_t::input_vector_t;
   using input_vector_array_t = typename dimensions_t::input_vector_array_t;
@@ -118,7 +119,7 @@ class LinearController : public ControllerBase<STATE_DIM, INPUT_DIM> {
     return uff + k * x;
   }
 
-  virtual void flatten(scalar_t time, scalar_array_t& flatArray) const override {
+  virtual void flatten(scalar_t time, float_array_t& flatArray) const override {
     flatArray.clear();
     flatArray.resize(INPUT_DIM + INPUT_DIM * STATE_DIM);
 
@@ -130,14 +131,18 @@ class LinearController : public ControllerBase<STATE_DIM, INPUT_DIM> {
     linInterpolateGain_.interpolate(time, k, greatestLessTimeStampIndex);
 
     for (int i = 0; i < INPUT_DIM; i++) {  // i loops through input dim
-      flatArray[i * (STATE_DIM + 1) + 0] = uff(i);
+      flatArray[i * (STATE_DIM + 1) + 0] = static_cast<float>(uff(i));
       for (int j = 0; j < STATE_DIM; j++) {  // j loops through state dim
-        flatArray[i * (STATE_DIM + 1) + j + 1] = k(i, j);
+        flatArray[i * (STATE_DIM + 1) + j + 1] = static_cast<float>(k(i, j));
       }
     }
   }
 
-  virtual void unFlatten(const scalar_array_t& timeArray, const std::vector<scalar_array_t const*>& flatArray2) override {
+  virtual void unFlatten(const scalar_array_t& timeArray, const std::vector<float_array_t const*>& flatArray2) override {
+    if(flatArray2[0]->size() != INPUT_DIM + INPUT_DIM * STATE_DIM){
+      throw std::runtime_error("LinearController::unFlatten received array of wrong length.");
+    }
+
     timeStamp_ = timeArray;
 
     biasArray_.clear();
@@ -145,17 +150,13 @@ class LinearController : public ControllerBase<STATE_DIM, INPUT_DIM> {
     gainArray_.clear();
     gainArray_.reserve(flatArray2.size());
 
-    if(flatArray2[0]->size() != INPUT_DIM + INPUT_DIM * STATE_DIM){
-      throw std::runtime_error("LinearController::unFlatten received array of wrong length.");
-    }
-
     for (const auto& arr : flatArray2) {  // loop through time
       biasArray_.emplace_back(input_vector_t::Zero());
       gainArray_.emplace_back(input_state_matrix_t::Zero());
 
       for (int i = 0; i < INPUT_DIM; i++) {  // loop through input dim
-        biasArray_.back()(i) = (*arr)[i * (STATE_DIM + 1) + 0];
-        gainArray_.back().row(i) = Eigen::Map<const Eigen::Matrix<scalar_t, 1, STATE_DIM>>(&((*arr)[i * (STATE_DIM + 1) + 1]), STATE_DIM);
+        biasArray_.back()(i) = static_cast<scalar_t>((*arr)[i * (STATE_DIM + 1) + 0]);
+        gainArray_.back().row(i) = Eigen::Map<const Eigen::Matrix<float, 1, STATE_DIM>>(&((*arr)[i * (STATE_DIM + 1) + 1]), STATE_DIM).template cast<scalar_t>();
       }
     }
   }

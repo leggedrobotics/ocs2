@@ -294,7 +294,7 @@ void MRT_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::mpcPolicyCallback(
 	if(msg->data.size() != N)
 		throw std::runtime_error("Data has the wrong length");
 
-	std::vector<scalar_array_t const *> controllerDataPtrArray(N, nullptr);
+	std::vector<std::vector<float> const *> controllerDataPtrArray(N, nullptr);
 	for(int i=0; i<N; i++){
 		controllerDataPtrArray[i] = &(msg->data[i].data);
 	}

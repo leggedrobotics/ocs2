@@ -249,6 +249,9 @@ void MPC_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::publishPolicy(
 			ctrlToBeSent = ffwCtrl.get();
 		}
 
+		std::vector<std::vector<float>*> policyMsgDataPointers;
+		policyMsgDataPointers.reserve(N);
+
 		for (size_t k=0; k<N; k++) { // loop through time in partition i
 			// continue if elapsed time is smaller than computation time delay
 			if (k<N-1 && timeTrajectory[k+1]<t0)  continue;
@@ -262,8 +265,10 @@ void MPC_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::publishPolicy(
 			mpcPolicyMsg_.stateTrajectory.push_back(mpcState);
 
 			mpcPolicyMsg_.data.emplace_back(ocs2_comm_interfaces::controller_data());
-			ctrlToBeSent->flatten(timeTrajectory[k], mpcPolicyMsg_.data.back().data);
+			policyMsgDataPointers.push_back(&mpcPolicyMsg_.data.back().data);
 		}  // end of k loop
+
+		ctrlToBeSent->flatten(timeTrajectory, policyMsgDataPointers);
 	}  // end of i loop
 
 #ifdef PUBLISH_THREAD

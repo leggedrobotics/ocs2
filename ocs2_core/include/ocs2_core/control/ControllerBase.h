@@ -24,6 +24,7 @@ class ControllerBase
   using dimensions_t = Dimensions<STATE_DIM, INPUT_DIM>;
   using scalar_t = typename dimensions_t::scalar_t;
   using scalar_array_t = typename dimensions_t::scalar_array_t;
+  using float_array_t = std::vector<float>;
   using state_vector_t = typename dimensions_t::state_vector_t;
   using input_vector_t = typename dimensions_t::input_vector_t;
 
@@ -47,18 +48,18 @@ class ControllerBase
   virtual input_vector_t computeInput(const scalar_t& t, const state_vector_t& x) = 0;
 
   /**
-   * @brief Saves the controller at a given time to an array structure for ROS transmission
-   * @param[in] time query time
-   * @param[out] flatArray The array that is to be filled, i.e., the compressed controller
+   * @brief Saves the controller at given time to an array of arrays structure for ROS transmission
+   * @param[in] timeArray array of query times
+   * @param[out] flatArray2 The array of arrays that is to be filled, i.e., the compressed controller. One array per query time
    */
-  virtual void flatten(scalar_t time, scalar_array_t& flatArray) const = 0;
+  virtual void flatten(const scalar_array_t& timeArray, const std::vector<float_array_t*>& flatArray2) const = 0;
 
   /**
    * @brief Restores and initializes the controller from a flattened array
    * @param[in] timeArray array of times
    * @param[in] flatArray2 The array the represents the compressed controller
    */
-  virtual void unFlatten(const scalar_array_t& timeArray, const std::vector<scalar_array_t const*>& flatArray2) = 0;
+  virtual void unFlatten(const scalar_array_t& timeArray, const std::vector<float_array_t const*>& flatArray2) = 0;
 
   /**
    * @brief Prints the type of controller

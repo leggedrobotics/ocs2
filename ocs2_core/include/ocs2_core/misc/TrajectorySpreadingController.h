@@ -64,7 +64,8 @@ public:
 	typedef typename DIMENSIONS::input_state_matrix_t   input_state_matrix_t;
 	typedef typename DIMENSIONS::state_input_matrix_t   state_input_matrix_t;
 
-	using controller_array_t = std::vector<LinearController<STATE_DIM, INPUT_DIM>*>;
+	using controller_t = LinearController<STATE_DIM, INPUT_DIM>;
+	using controller_array_t =  typename controller_t::array_t;
 
 	typedef std::pair<int,int> index_t;  // (partition, index)
 

@@ -92,7 +92,9 @@ public:
 	 */
 	ControlledSystemBase(const ControlledSystemBase& rhs)
 	: ControlledSystemBase()
-        {setController(rhs.controllerPtr());}
+	{
+		setController(rhs.controllerPtr());
+	}
 
 	/**
 	 * Default destructor.

@@ -105,6 +105,8 @@ class LinearController : public ControllerBase<STATE_DIM, INPUT_DIM> {
     timeStamp_ = controllerTime;
     biasArray_ = controllerBias;
     gainArray_ = controllerGain;
+    linInterpolateBias_.reset();
+    linInterpolateGain_.reset();
   }
 
   virtual input_vector_t computeInput(const scalar_t& t, const state_vector_t& x) override {

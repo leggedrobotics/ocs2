@@ -700,7 +700,7 @@ void GSLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::propagateRolloutSensitivity
 				// compute input sensitivity
 				for ( ; k_u<sensitivityStateTrajectoriesStock[i].size(); k_u++) {
 					sensitivityInputTrajectoriesStock[i].emplace_back(
-							rolloutSensitivityEquationsPtrStock_[workerIndex]->computeInput(
+							rolloutSensitivityEquationsPtrStock_[workerIndex]->controllerPtr()->computeInput(
 									sensitivityTimeTrajectoriesStock[i][k_u], sensitivityStateTrajectoriesStock[i][k_u]) );
 				} // end of k loop
 			}

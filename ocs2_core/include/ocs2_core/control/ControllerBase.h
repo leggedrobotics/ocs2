@@ -48,11 +48,11 @@ class ControllerBase
   virtual input_vector_t computeInput(const scalar_t& t, const state_vector_t& x) = 0;
 
   /**
-   * @brief Saves the controller at a given time to an array structure for ROS transmission
-   * @param[in] time query time
-   * @param[out] flatArray The array that is to be filled, i.e., the compressed controller
+   * @brief Saves the controller at given time to an array of arrays structure for ROS transmission
+   * @param[in] timeArray array of query times
+   * @param[out] flatArray2 The array of arrays that is to be filled, i.e., the compressed controller. One array per query time
    */
-  virtual void flatten(scalar_t time, float_array_t& flatArray) const = 0;
+  virtual void flatten(const scalar_array_t& timeArray, const std::vector<float_array_t*>& flatArray2) const = 0;
 
   /**
    * @brief Restores and initializes the controller from a flattened array

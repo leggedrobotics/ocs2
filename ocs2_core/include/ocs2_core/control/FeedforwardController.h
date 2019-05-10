@@ -14,7 +14,7 @@ namespace ocs2 {
  * @tparam INPUT_DIM: Dimension of the control input space.
  */
 template <size_t STATE_DIM, size_t INPUT_DIM>
-class FeedforwardController : public ControllerBase<STATE_DIM, INPUT_DIM>
+class FeedforwardController final : public ControllerBase<STATE_DIM, INPUT_DIM>
 {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
@@ -136,7 +136,20 @@ class FeedforwardController : public ControllerBase<STATE_DIM, INPUT_DIM>
     return uff;
   }
 
-  virtual void flatten(scalar_t time, float_array_t& flatArray) const override {
+  virtual void flatten(const scalar_array_t& timeArray, const std::vector<float_array_t*>& flatArray2) const override {
+    const auto timeSize = timeArray.size();
+    const auto dataSize = flatArray2.size();
+
+    if(timeSize != dataSize){
+        throw std::runtime_error("timeSize and dataSize must be equal in flatten method.");
+      }
+
+    for (size_t i = 0; i < timeSize; i++) {
+        flattenSingle(timeArray[i], *(flatArray2[i]));
+      }
+  }
+
+  void flattenSingle(scalar_t time, float_array_t& flatArray) const {
     input_vector_t uff;
     linInterpolateUff_.interpolate(time, uff);
 

@@ -11,7 +11,7 @@ namespace ocs2 {
  * form u[x,t] = k[t] * x + uff[t]
  */
 template <size_t STATE_DIM, size_t INPUT_DIM>
-class LinearController : public ControllerBase<STATE_DIM, INPUT_DIM> {
+class LinearController final : public ControllerBase<STATE_DIM, INPUT_DIM> {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
@@ -119,7 +119,20 @@ class LinearController : public ControllerBase<STATE_DIM, INPUT_DIM> {
     return uff + k * x;
   }
 
-  virtual void flatten(scalar_t time, float_array_t& flatArray) const override {
+  virtual void flatten(const scalar_array_t& timeArray, const std::vector<float_array_t*>& flatArray2) const override {
+    const auto timeSize = timeArray.size();
+    const auto dataSize = flatArray2.size();
+
+    if(timeSize != dataSize){
+        throw std::runtime_error("timeSize and dataSize must be equal in flatten method.");
+      }
+
+    for (size_t i = 0; i < timeSize; i++) {
+        flattenSingle(timeArray[i], *(flatArray2[i]));
+      }
+  }
+
+  void flattenSingle(scalar_t time, float_array_t& flatArray) const {
     flatArray.clear();
     flatArray.resize(INPUT_DIM + INPUT_DIM * STATE_DIM);
 

@@ -178,41 +178,59 @@ public:
 	 */
 	const cost_desired_trajectories_t& mpcCostDesiredTrajectories() const;
 
-	/**
-	 * @brief Interpolates nominal state and active subsystem at given time. Does not use the controller.
-	 *
-	 * @param[in] time: the query time
-	 * @param[out] mpcState: the current nominal state
-	 * @param[out] subsystem: the active subsystem
-	 *
-	 * TODO (farbod): We need to add the control input and the measured state.
-	 */
-	void evaluatePlan(
-			const scalar_t& time,
-			state_vector_t& mpcState,
-			size_t& subsystem);
-
   	/**
 	 * Initializes rollout class to roll out a feedback policy
 	 *
 	 * @param [in] controlSystemBasePtr: Pointer to the system to roll out.
 	 * @param [in] rollout settings.
 	 */
-	void initRollout(const controlled_system_base_t& controlSystemBase, const Rollout_Settings& rolloutSettings);
+	void initRollout(
+			const controlled_system_base_t& controlSystemBase,
+			const Rollout_Settings& rolloutSettings);
 
 	/**
-	 * rolls out control policy from current state
+	 * @brief Interpolates nominal state and active subsystem at given time. Does not use the controller.
 	 *
-	 * @param [in] t0: start of the rollout
-	 * @param [in] initState: state to start rollout from
-	 * @param [in] rollout_time: duration of forward rollout
+	 * @param [in] currentTime: the query time.
+	 * @param [in] currentState: the query state.
+	 * @param [out] mpcState: the current nominal state of MPC.
+	 * @param [out] mpcInput: the optimized control input.
+	 * @param [out] subsystem: the active subsystem.
 	 */
-	void rolloutPolicy(scalar_t t0, const state_vector_t& initState, const scalar_t& rollout_time);
+	void evaluatePolicy(
+			const scalar_t& currentTime,
+			const state_vector_t& currentState,
+			state_vector_t& mpcState,
+			input_vector_t& mpcInput,
+			size_t& subsystem);
+
+	/**
+	 * Rolls out the control policy from the current time and state to get the next state and input using the MPC policy.
+	 *
+	 * @param [in] currentTime: start of the rollout.
+	 * @param [in] currentState: state to start rollout from.
+	 * @param [in] timeStep: duration of the forward rollout.
+	 * @param [out] mpcState: the new forwarded state of MPC.
+	 * @param [out] mpcInput: the new control input of MPC.
+	 * @param [out] subsystem: the active subsystem.
+	 */
+	void rolloutPolicy(
+			const scalar_t& currentTime,
+			const state_vector_t& currentState,
+			const scalar_t& timeStep,
+			state_vector_t& mpcState,
+			input_vector_t& mpcInput,
+			size_t& subsystem);
 
 	/**
 	 * Shutdowns the ROS nodes.
 	 */
 	void shutdownNodes();
+
+	/**
+	 * spin the MRT callback queue
+	 */
+	void spinMRT();
 
 	/**
 	 * Launches the ROS nodes to communicate with the MPC node.
@@ -221,11 +239,6 @@ public:
 	 * @param [in] argv: Command line vector of arguments.
 	 */
 	void launchNodes(int argc, char* argv[]);
-
-	/**
-	 * spin the MRT callback queue
-	 */
-	void spinMRT();
 
 	/**
 	 *  Gets the node handle pointer to the MRT node,
@@ -359,7 +372,6 @@ protected:
 	/*
 	 * Variables
 	 */
-	bool feedforwardGeneratedWithRollout_;
 	std::string robotName_;
 
 	logic_machine_ptr_t logicMachinePtr_;

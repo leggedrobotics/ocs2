@@ -91,6 +91,9 @@ void MRT_ROS_Dummy_Loop<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::run() {
 
 	::ros::Rate rosRate(mrtDesiredFrequency_); // in Hz
 
+	// time step
+	const scalar_t timeStep = (1.0/mrtDesiredFrequency_);
+
 	// set the frequency ratio between MRT loop and MPC loop in the case of non realtime test
 	size_t frequencyRatio = 1;
 	if (realtimeLoop_==false)
@@ -112,7 +115,7 @@ void MRT_ROS_Dummy_Loop<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::run() {
 		if (mrtPtr_->initialPolicyReceived()==true)
 			break;
 		else
-			::ros::Duration(1.0/mrtDesiredFrequency_).sleep();
+			::ros::Duration(timeStep).sleep();
 	}
 	ROS_INFO_STREAM("Initial policy has been received.");
 
@@ -134,25 +137,27 @@ void MRT_ROS_Dummy_Loop<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::run() {
 				if (policyUpdated==true)
 					break;
 				else
-          mrtPtr_->spinMRT();
+					mrtPtr_->spinMRT();
 			}
 			std::cout << "### Message received at " << time << std::endl;
 		}
 
+		std::cout << "### Message received at " << time << std::endl;
+
 		// integrate nominal dynamics if available, otherwise fake simulation
+		state_vector_t stateTemp = observation_.state();
 		if(systemPtr_){
-			mrtPtr_->rolloutPolicy(time, observation_.state(), 1.0/mrtDesiredFrequency_);
+			mrtPtr_->rolloutPolicy(time, stateTemp, timeStep,
+					observation_.state(), observation_.input(), observation_.subsystem());
+		} else {
+			mrtPtr_->evaluatePolicy(time+timeStep, stateTemp,
+					observation_.state(), observation_.input(), observation_.subsystem());
 		}
 
 		// time and loop counter increment
 		loopCounter++;
-		time += (1.0/mrtDesiredFrequency_);
-
-		std::cout << "### Message received at " << time << std::endl;
-
+		time += timeStep;
 		observation_.time() = time;
-		mrtPtr_->evaluatePlan(observation_.time(),
-			observation_.state(), observation_.subsystem());
 
 		// user-defined modifications before publishing
 		modifyObservation(observation_);

@@ -49,14 +49,14 @@ public:
 	typedef ocs2::MRT_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> mrt_t;
 	typedef typename mrt_t::Ptr	mrt_ptr_t;
 
-	typedef typename mrt_t::controller_t       controller_t;
-	typedef typename mrt_t::scalar_t             scalar_t;
-	typedef typename mrt_t::scalar_array_t       scalar_array_t;
-	typedef typename mrt_t::size_array_t         size_array_t;
-	typedef typename mrt_t::state_vector_t       state_vector_t;
-	typedef typename mrt_t::state_vector_array_t state_vector_array_t;
-	typedef typename mrt_t::input_vector_t       input_vector_t;
-	typedef typename mrt_t::input_vector_array_t input_vector_array_t;
+	typedef typename mrt_t::controller_t               controller_t;
+	typedef typename mrt_t::scalar_t                   scalar_t;
+	typedef typename mrt_t::scalar_array_t             scalar_array_t;
+	typedef typename mrt_t::size_array_t               size_array_t;
+	typedef typename mrt_t::state_vector_t             state_vector_t;
+	typedef typename mrt_t::state_vector_array_t       state_vector_array_t;
+	typedef typename mrt_t::input_vector_t             input_vector_t;
+	typedef typename mrt_t::input_vector_array_t       input_vector_array_t;
 	typedef typename mrt_t::input_state_matrix_t       input_state_matrix_t;
 	typedef typename mrt_t::input_state_matrix_array_t input_state_matrix_array_t;
 

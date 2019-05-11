@@ -1296,6 +1296,10 @@ void ILQR_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::solveRiccatiEquationsWorker
 				input_state_matrix_t& Gm = GmTrajectoryStock_[partitionIndex][k];
 
 				Hm = Rm + Bm.transpose() * SmTrajectoryStock_[partitionIndex][k+1] * Bm;
+				if (settings_.useMakePSD_==true)
+					BASE::makePSD(Hm);
+				else
+					Hm += settings_.addedRiccatiDiagonal_ * input_matrix_t::Identity();
 				HmInverse = Hm.ldlt().solve(input_matrix_t::Identity());
 				Gm = Pm + Bm.transpose() * SmTrajectoryStock_[partitionIndex][k+1] * Am;
 				Gv = Rv + Bm.transpose() * SvTrajectoryStock_[partitionIndex][k+1];

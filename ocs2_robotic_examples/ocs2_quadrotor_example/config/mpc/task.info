@@ -51,6 +51,7 @@ slq
     simulationIsConstrained          0 
     noStateConstraints               1  
     useMakePSD                       0
+    addedRiccatiDiagonal             1e-3
     minAbsConstraint1ISE             5e-3
     minRelConstraint1ISE             5e-6
     checkNumericalStability          0

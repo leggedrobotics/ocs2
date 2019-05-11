@@ -37,9 +37,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 namespace ocs2 {
 namespace double_integrator {
 
-class DoubleIntegratorDynamics : public ControlledSystemBase<double_integrator::STATE_DIM_, double_integrator::INPUT_DIM_>
-{
-public:
+class DoubleIntegratorDynamics : public ControlledSystemBase<double_integrator::STATE_DIM_, double_integrator::INPUT_DIM_> {
+ public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
 	typedef std::shared_ptr<DoubleIntegratorDynamics> Ptr;
@@ -57,15 +56,12 @@ public:
 	/**
 	 * Constructor
 	 *
-	 * @param [in] A: \f$ A(t) \f$ matrix.
-	 * @param [in] A: \f$ B(t) \f$ matrix.
+   * @param [in] mass: the inertia of the particle
 	 */
-	DoubleIntegratorDynamics(
-			const state_matrix_t& A,
-			const state_input_matrix_t& B)
-	: A_(A)
-	, B_(B)
-	{}
+  DoubleIntegratorDynamics(double mass) {
+    A_ << 0.0, 1.0, 0.0, 0.0;
+    B_ << 0.0, 1.0 / mass;
+  }
 
 	/**
 	 * Destructor
@@ -77,10 +73,7 @@ public:
 	 *
 	 * @return A raw pointer to the class.
 	 */
-	virtual DoubleIntegratorDynamics* clone() const {
-
-		return new DoubleIntegratorDynamics(*this);
-	}
+  virtual DoubleIntegratorDynamics* clone() const { return new DoubleIntegratorDynamics(*this); }
 
 	/**
 	 * Computes derivative of the autonomous system dynamics with the given control policy.
@@ -89,21 +82,16 @@ public:
 	 * @param [in] x: Current state.
 	 * @param [out] dxdt: Current state time derivative.
 	 */
-	void computeFlowMap(
-			const scalar_t& time,
-			const state_vector_t& state,
-			const input_vector_t& input,
-			state_vector_t& stateDerivative) {
-
-		stateDerivative = A_*state + B_*input;
+  void computeFlowMap(const scalar_t& time, const state_vector_t& state, const input_vector_t& input, state_vector_t& stateDerivative) {
+    stateDerivative = A_ * state + B_ * input;
 	}
 
-private:
+ private:
 	state_matrix_t A_;
 	state_input_matrix_t B_;
 };
 
 } // namespace double_integrator
-} //namespace ocs2
+}  // namespace ocs2
 
 #endif /* DOUBLE_INTEGRATOR_DYNAMICS_OCS2_H_ */

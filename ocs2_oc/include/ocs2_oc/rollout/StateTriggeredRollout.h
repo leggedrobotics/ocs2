@@ -123,7 +123,7 @@ public:
 			const scalar_t& initTime,
 			const state_vector_t& initState,
 			const scalar_t& finalTime,
-			const controller_t& controller,
+			controller_t* controller,
 			logic_rules_machine_t& hybridLlogicRulesMachine,
 			scalar_array_t& timeTrajectory,
 			size_array_t& eventsPastTheEndIndeces,

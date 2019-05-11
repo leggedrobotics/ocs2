@@ -45,6 +45,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_core/logic/rules/LogicRulesBase.h>
 #include <ocs2_core/logic/rules/NullLogicRules.h>
 #include <ocs2_core/logic/machine/LogicRulesMachine.h>
+#include <ocs2_core/control/ControllerBase.h>
 
 #include "Rollout_Settings.h"
 
@@ -70,7 +71,6 @@ public:
 
 	typedef Dimensions<STATE_DIM, INPUT_DIM> DIMENSIONS;
 
-	typedef typename DIMENSIONS::controller_t         controller_t;
 	typedef typename DIMENSIONS::size_array_t         size_array_t;
 	typedef typename DIMENSIONS::scalar_t             scalar_t;
 	typedef typename DIMENSIONS::scalar_array_t       scalar_array_t;
@@ -79,7 +79,9 @@ public:
 	typedef typename DIMENSIONS::input_vector_t       input_vector_t;
 	typedef typename DIMENSIONS::input_vector_array_t input_vector_array_t;
 
-	typedef LogicRulesMachine<LOGIC_RULES_T>     logic_rules_machine_t;
+	typedef LogicRulesMachine<LOGIC_RULES_T> logic_rules_machine_t;
+
+	typedef ControllerBase<STATE_DIM, INPUT_DIM> controller_t;
 
 	/**
 	 * Default constructor.
@@ -142,7 +144,7 @@ public:
 			const scalar_t& initTime,
 			const state_vector_t& initState,
 			const scalar_t& finalTime,
-			const controller_t& controller,
+			controller_t* controller,
 			logic_rules_machine_t& logicRulesMachine,
 			scalar_array_t& timeTrajectory,
 			size_array_t& eventsPastTheEndIndeces,
@@ -206,4 +208,3 @@ private:
 } // namespace ocs2
 
 #endif /* ROLLOUT_BASE_OCS2_H_ */
-

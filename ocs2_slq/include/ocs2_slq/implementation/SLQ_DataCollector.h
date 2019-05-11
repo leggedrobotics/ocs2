@@ -207,7 +207,7 @@ void SLQ_DataCollector<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculateFlowMap(
 		flowMapTrajectoriesStock[i].resize(N);
 
 		// set controller
-		systemDynamicsPtr_->setController(slqPtr->nominalControllersStock_[i]);
+		systemDynamicsPtr_->setController(&(slqPtr->nominalControllersStock_[i]));
 		// initialize subsystem
 		systemDynamicsPtr_->initializeModel(*(slqPtr->getLogicRulesMachinePtr()), i, "SLQ");
 

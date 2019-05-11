@@ -37,9 +37,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 namespace ocs2 {
 namespace double_integrator {
 
-class DoubleIntegratorDynamicsDerivatives : public DerivativesBase<double_integrator::STATE_DIM_, double_integrator::INPUT_DIM_>
-{
-public:
+class DoubleIntegratorDynamicsDerivatives : public DerivativesBase<double_integrator::STATE_DIM_, double_integrator::INPUT_DIM_> {
+ public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
 	typedef std::shared_ptr<DoubleIntegratorDynamicsDerivatives> Ptr;
@@ -55,15 +54,12 @@ public:
 	/**
 	 * Constructor
 	 *
-	 * @param [in] A: \f$ A(t) \f$ matrix.
-	 * @param [in] A: \f$ B(t) \f$ matrix.
+   * @param [in] mass: the inertia of the particle
 	 */
-	DoubleIntegratorDynamicsDerivatives(
-			state_matrix_t A,
-			state_input_matrix_t B)
-	: A_(A)
-	, B_(B)
-	{}
+  DoubleIntegratorDynamicsDerivatives(double mass) {
+    A_ << 0.0, 1.0, 0.0, 0.0;
+    B_ << 0.0, 1.0 / mass;
+  }
 
 	/**
 	 * Destructor
@@ -75,10 +71,7 @@ public:
 	 *
 	 * @return A raw pointer to the class.
 	 */
-	virtual DoubleIntegratorDynamicsDerivatives* clone() const {
-
-		return new DoubleIntegratorDynamicsDerivatives(*this);
-	}
+  virtual DoubleIntegratorDynamicsDerivatives* clone() const { return new DoubleIntegratorDynamicsDerivatives(*this); }
 
 	/**
 	 * Sets the current time, state, and control input.
@@ -87,14 +80,9 @@ public:
 	 * @param [in] x: Current state.
 	 * @param [in] u: Current input.
 	 */
-	virtual void setCurrentStateAndControl(
-			const scalar_t& t,
-			const state_vector_t& x,
-			const input_vector_t& u) {
-
+  virtual void setCurrentStateAndControl(const scalar_t& t, const state_vector_t& x, const input_vector_t& u) {
 		// BASE class method
 		BASE::setCurrentStateAndControl(t, x, u);
-
 	}
 
 	/**
@@ -103,11 +91,7 @@ public:
 	 *
 	 * @param [out] A: \f$ A(t) \f$ matrix.
 	 */
-	void getFlowMapDerivativeState(
-			state_matrix_t& A) {
-
-		A = A_;
-	}
+  void getFlowMapDerivativeState(state_matrix_t& A) { A = A_; }
 
 	/**
 	 * Get the B matrix at a given operating point for the linearized system flow map.
@@ -115,19 +99,14 @@ public:
 	 *
 	 * @param [out] B: \f$ B(t) \f$ matrix.
 	 */
-	void getFlowMapDerivativeInput(
-			state_input_matrix_t& B) {
+  void getFlowMapDerivativeInput(state_input_matrix_t& B) { B = B_; }
 
-		B = B_;
-	}
-
-private:
+ private:
 	state_matrix_t A_;
 	state_input_matrix_t B_;
-
 };
 
 } // namespace double_integrator
-} //namespace ocs2
+}  // namespace ocs2
 
 #endif /* DOUBLE_INTEGRATOR_DYNAMICS_DERIVATIVES_OCS2_H_ */

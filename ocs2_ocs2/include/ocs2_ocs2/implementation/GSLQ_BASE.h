@@ -617,7 +617,7 @@ template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
 void GSLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::propagateRolloutSensitivity(
 		size_t workerIndex,
 		const size_t& eventTimeIndex,
-		const controller_array_t& controllersStock,
+		const linear_controller_array_t& controllersStock,
 		const input_vector_array2_t& LvTrajectoriesStock,
 		const std::vector<scalar_array_t>& sensitivityTimeTrajectoriesStock,
 		const std::vector<size_array_t>& eventsPastTheEndIndecesStock,
@@ -652,8 +652,8 @@ void GSLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::propagateRolloutSensitivity
 				&dcPtr_->nominalTimeTrajectoriesStock_[i],
 				&dcPtr_->AmTrajectoriesStock_[i], &dcPtr_->BmTrajectoriesStock_[i],
 				&dcPtr_->nominalFlowMapTrajectoriesStock_[i],
-				&controllersStock[i].time_,
-				&LvTrajectoriesStock[i], &controllersStock[i].k_);
+				&controllersStock[i].timeStamp_,
+				&LvTrajectoriesStock[i], &controllersStock[i].gainArray_);
 
 		// max number of steps of integration
 		const size_t maxNumSteps = settings_.maxNumStepsPerSecond_ *
@@ -700,7 +700,7 @@ void GSLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::propagateRolloutSensitivity
 				// compute input sensitivity
 				for ( ; k_u<sensitivityStateTrajectoriesStock[i].size(); k_u++) {
 					sensitivityInputTrajectoriesStock[i].emplace_back(
-							rolloutSensitivityEquationsPtrStock_[workerIndex]->computeInput(
+							rolloutSensitivityEquationsPtrStock_[workerIndex]->controllerPtr()->computeInput(
 									sensitivityTimeTrajectoriesStock[i][k_u], sensitivityStateTrajectoriesStock[i][k_u]) );
 				} // end of k loop
 			}
@@ -1015,8 +1015,8 @@ void GSLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::solveSensitivityBVP(
 				&dcPtr_->nominalFlowMapTrajectoriesStock_[i],
 				&nominalCostateTrajectoriesStock_[i],
 				&nominalLagrangianTrajectoriesStock_[i],
-				&dcPtr_->optimizedControllersStock_[i].time_,
-				&dcPtr_->optimizedControllersStock_[i].k_,
+				&dcPtr_->optimizedControllersStock_[i].timeStamp_,
+				&dcPtr_->optimizedControllersStock_[i].gainArray_,
 				&dcPtr_->SmTrajectoriesStock_[i]);
 
 		// set data for Riccati error equations
@@ -1441,7 +1441,7 @@ void GSLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::runLQBasedMethod()  {
 					nablaLvTrajectoriesStockSet_[index].resize(numPartitions_);
 					for (size_t i=dcPtr_->initActivePartition_; i<=dcPtr_->finalActivePartition_; i++)
 						nablaLvTrajectoriesStockSet_[index][i] = input_vector_array_t(
-								dcPtr_->optimizedControllersStock_[i].time_.size(), input_vector_t::Zero());
+								dcPtr_->optimizedControllersStock_[i].timeStamp_.size(), input_vector_t::Zero());
 				}
 
 				const size_t workerIndex = 0;

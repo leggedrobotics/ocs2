@@ -42,6 +42,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_core/cost/CostDesiredTrajectories.h>
 #include <ocs2_core/logic/rules/HybridLogicRules.h>
 #include <ocs2_core/logic/machine/LogicRulesMachine.h>
+#include <ocs2_core/control/ControllerBase.h>
 
 #include "ocs2_mpc/MPC_Settings.h"
 
@@ -65,11 +66,11 @@ public:
 
 	typedef Dimensions <STATE_DIM, INPUT_DIM> DIMENSIONS;
 
-	typedef typename DIMENSIONS::controller_t               controller_t;
-	typedef typename DIMENSIONS::controller_array_t         controller_array_t;
 	typedef typename DIMENSIONS::scalar_t                   scalar_t;
 	typedef typename DIMENSIONS::scalar_array_t             scalar_array_t;
+	typedef typename DIMENSIONS::scalar_array2_t            scalar_array2_t;
 	typedef typename DIMENSIONS::size_array_t               size_array_t;
+	typedef typename DIMENSIONS::size_array2_t              size_array2_t;
 	typedef typename DIMENSIONS::state_vector_t             state_vector_t;
 	typedef typename DIMENSIONS::state_vector_array_t       state_vector_array_t;
 	typedef typename DIMENSIONS::state_vector_array2_t      state_vector_array2_t;
@@ -80,6 +81,9 @@ public:
 	typedef typename DIMENSIONS::input_state_matrix_array_t input_state_matrix_array_t;
 	typedef typename DIMENSIONS::dynamic_vector_t           dynamic_vector_t;
 	typedef typename DIMENSIONS::dynamic_vector_array_t     dynamic_vector_array_t;
+
+	typedef ControllerBase<STATE_DIM, INPUT_DIM> controller_t;
+	typedef std::vector<controller_t*> controller_ptr_array_t;
 
 	typedef CostDesiredTrajectories<scalar_t>  cost_desired_trajectories_t;
 	typedef ModeSequenceTemplate<scalar_t>     mode_sequence_template_t;
@@ -136,10 +140,10 @@ public:
 			const scalar_t &initTime,
 			const state_vector_t &initState,
 			const scalar_t &finalTime,
-			const std::vector<scalar_array_t>*& timeTrajectoriesStockPtr,
+			const scalar_array2_t*& timeTrajectoriesStockPtr,
 			const state_vector_array2_t*& stateTrajectoriesStockPtr,
 			const input_vector_array2_t*& inputTrajectoriesStockPtr,
-			const controller_array_t*& controllerStockPtr) = 0;
+			const controller_ptr_array_t*& controllerStockPtr) = 0;
 
 	/**
 	 * Gets a pointer to the underlying solver used in the MPC.
@@ -201,9 +205,9 @@ public:
 	/**
 	 * Gets a pointer to the optimal array of the control policies.
 	 *
-	 * @param [out] controllNominalersStock: A pointer to the optimal array of the control policies
+	 * @return A pointer to the optimal array of the control policies
 	 */
-	void getOptimizedControllerPtr(const controller_array_t*& controllNominalersStock) const;
+	controller_ptr_array_t const * getOptimizedControllerPtr() const;
 
 	/**
 	 * Gets a pointer to the optimized trajectories.
@@ -213,7 +217,7 @@ public:
 	 * @param [out] optimizedInputTrajectoriesStockPtr: A pointer to an array of trajectories containing the output control input trajectory.
 	 */
 	void getOptimizedTrajectoriesPtr(
-			const std::vector<scalar_array_t>*& optimizedTimeTrajectoriesStockPtr,
+			const scalar_array2_t*& optimizedTimeTrajectoriesStockPtr,
 			const state_vector_array2_t*& optimizedStateTrajectoriesStockPtr,
 			const input_vector_array2_t*& optimizedInputTrajectoriesStockPtr) const;
 
@@ -314,10 +318,10 @@ protected:
 	std::atomic<bool> logicRulesTemplateUpdated_;
 	mode_sequence_template_t newLogicRulesTemplate_;
 
-	const controller_array_t*          optimizedControllersStockPtr_;
-	const std::vector<scalar_array_t>* optimizedTimeTrajectoriesStockPtr_;
-	const state_vector_array2_t*       optimizedStateTrajectoriesStockPtr_;
-	const input_vector_array2_t*       optimizedInputTrajectoriesStockPtr_;
+	const controller_ptr_array_t* optimizedControllersStockPtr_;
+	const scalar_array2_t*        optimizedTimeTrajectoriesStockPtr_;
+	const state_vector_array2_t*  optimizedStateTrajectoriesStockPtr_;
+	const input_vector_array2_t*  optimizedInputTrajectoriesStockPtr_;
 
 	std::chrono::milliseconds measuredRuntimeMS_;
 	std::chrono::high_resolution_clock::time_point mpcStratTime_;

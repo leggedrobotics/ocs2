@@ -109,7 +109,7 @@ void SLQ<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::lineSearch(bool computeISEs)  {
 	if (BASE::settings_.maxLearningRateSLQ_ < OCS2NumericTraits<scalar_t>::limit_epsilon()) {
 		// clear the feedforward increments
 		for (size_t i=0; i<BASE::numPartitions_; i++)
-			BASE::nominalControllersStock_[i].deltaUff_.clear();
+			BASE::nominalControllersStock_[i].deltaBiasArray_.clear();
 		// display
 		if (BASE::settings_.displayInfo_)
 			std::cerr << "The chosen learningRate is: " << BASE::learningRateStar_ << std::endl;
@@ -121,11 +121,11 @@ void SLQ<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::lineSearch(bool computeISEs)  {
 	scalar_t lsTotalCost;
 	scalar_t lsConstraint1ISE, lsConstraint2ISE, lsInequalityConstraintPenalty, lsInequalityConstraintISE;
 	scalar_t lsConstraint1MaxNorm, lsConstraint2MaxNorm;
-	controller_array_t			lsControllersStock(BASE::numPartitions_);
-	std::vector<scalar_array_t>	lsTimeTrajectoriesStock(BASE::numPartitions_);
-	std::vector<size_array_t>	lsEventsPastTheEndIndecesStock(BASE::numPartitions_);
-	state_vector_array2_t   	lsStateTrajectoriesStock(BASE::numPartitions_);
-	input_vector_array2_t 		lsInputTrajectoriesStock(BASE::numPartitions_);
+	linear_controller_array_t lsControllersStock(BASE::numPartitions_);
+	scalar_array2_t lsTimeTrajectoriesStock(BASE::numPartitions_);
+	size_array2_t   lsEventsPastTheEndIndecesStock(BASE::numPartitions_);
+	state_vector_array2_t lsStateTrajectoriesStock(BASE::numPartitions_);
+	input_vector_array2_t lsInputTrajectoriesStock(BASE::numPartitions_);
 
 	while (learningRate >= BASE::settings_.minLearningRateSLQ_)  {
 
@@ -135,8 +135,7 @@ void SLQ<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::lineSearch(bool computeISEs)  {
 				lsTotalCost,
 				lsConstraint1ISE, lsConstraint1MaxNorm,
 				lsConstraint2ISE, lsConstraint2MaxNorm,
-				lsInequalityConstraintPenalty,
-				lsInequalityConstraintISE,
+				lsInequalityConstraintPenalty, lsInequalityConstraintISE,
 				lsControllersStock,
 				lsTimeTrajectoriesStock, lsEventsPastTheEndIndecesStock,
 				lsStateTrajectoriesStock, lsInputTrajectoriesStock);
@@ -170,7 +169,7 @@ void SLQ<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::lineSearch(bool computeISEs)  {
 
 	// clear the feedforward increments
 	for (size_t i=0; i<BASE::numPartitions_; i++)
-		BASE::nominalControllersStock_[i].deltaUff_.clear();
+		BASE::nominalControllersStock_[i].deltaBiasArray_.clear();
 
 	// display
 	if (BASE::settings_.displayInfo_)

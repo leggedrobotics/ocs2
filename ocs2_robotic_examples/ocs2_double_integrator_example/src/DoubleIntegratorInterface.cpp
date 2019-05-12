@@ -70,13 +70,10 @@ void DoubleIntegratorInterface::loadSettings(const std::string& taskFile) {
 	/*
 	 * Dynamics
 	 */
-	dim_t::state_matrix_t A;
-	A << 0.0, 1.0,
-		 0.0, 0.0;
-	dim_t::state_input_matrix_t B;
-	B << 0.0, 1.0;
-	linearSystemDynamicsPtr_.reset(new DoubleIntegratorDynamics(A, B));
-	linearSystemDynamicsDerivativesPtr_.reset(new DoubleIntegratorDynamicsDerivatives(A, B));
+  dim_t::scalar_t mass;
+  loadScalar(taskFile, "systemParameters.mass", mass);
+  linearSystemDynamicsPtr_.reset(new DoubleIntegratorDynamics(mass));
+  linearSystemDynamicsDerivativesPtr_.reset(new DoubleIntegratorDynamicsDerivatives(mass));
 
 	/*
 	 * Cost function
@@ -129,14 +126,6 @@ void DoubleIntegratorInterface::setupOptimizer(const std::string& taskFile) {
 			partitioningTimes_,
 			slqSettings_,
 			mpcSettings_));
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-SLQ_Settings& DoubleIntegratorInterface::slqSettings() {
-
-	return slqSettings_;
 }
 
 /******************************************************************************************************/

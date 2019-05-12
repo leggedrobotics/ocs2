@@ -45,7 +45,7 @@ enum
 	INPUT_DIM = 1
 };
 
-TEST(exp1_ilqr_test, Exp1_ilqr_test)
+TEST(exp1_ilqr_test, exp1_ilqr_test)
 {
 
 	// system dynamics

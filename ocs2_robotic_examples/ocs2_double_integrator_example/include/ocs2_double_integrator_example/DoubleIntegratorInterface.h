@@ -96,6 +96,11 @@ public:
 	 */
 	mpc_t::Ptr& getMPCPtr();
 
+	/**
+	 * Gets a pointer to the internal system dynamics
+	 * @return pointer to system dynamics
+	 */
+	DoubleIntegratorDynamics::Ptr getDynamicsPtr(){ return linearSystemDynamicsPtr_;}
 
 protected:
 	/**

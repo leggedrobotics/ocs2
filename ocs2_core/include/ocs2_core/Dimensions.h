@@ -78,10 +78,9 @@ public:
 	};
 
 
-    /** Unsigned integer type */
-    // size_t is already defined
-    typedef std::vector<size_t>       size_array_t;
-    // Array of size_array_t
+    /** size_t trajectory type. */
+    typedef std::vector<size_t> size_array_t;
+    /** Array of size_t trajectory type. */
     typedef std::vector<size_array_t> size_array2_t;
 
     /** Scalar type. */

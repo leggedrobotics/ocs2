@@ -141,7 +141,8 @@ class FeedforwardController final : public ControllerBase<STATE_DIM, INPUT_DIM>
     const auto dataSize = flatArray2.size();
 
     if(timeSize != dataSize){
-        throw std::runtime_error("timeSize and dataSize must be equal in flatten method.");
+        throw std::runtime_error("timeSize (" + std::to_string(timeSize) + ") and dataSize ("
+        		+ std::to_string(dataSize) + ") must be equal in flatten method.");
       }
 
     for (size_t i = 0; i < timeSize; i++) {

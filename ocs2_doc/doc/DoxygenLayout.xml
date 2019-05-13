@@ -3,16 +3,16 @@
   <!-- Navigation index tabs for HTML output -->
   <navindex>
     <tab type="mainpage" visible="yes" title=""/>
-    
+
     <!-- Link to other packages -->
-    <tab type="user" url="../../../ocs2_core/doc/html/index.html" title="Core Module" intro=""/>
-    <tab type="user" url="../../../ocs2_slq/doc/html/index.html" title="SLQ Module" intro=""/>
-    <tab type="user" url="../../../ocs2_ocs2/doc/html/index.html" title="OCS2 Module" intro=""/>
-    <tab type="user" url="../../../ocs2_mpc/doc/html/index.html" title="MPC Module" intro=""/>
-    <tab type="user" url="../../../ocs2_comm_interfaces/doc/html/index.html" title="ROS Interfaces Module" intro=""/>
-    <tab type="user" url="../../../ocs2_frank_wolfe/doc/html/index.html" title="Frank-Wolfe Module" intro=""/>
-    <tab type="user" url="../../../ocs2_robotic_examples/doc/html/index.html" title="Robotic Examples" intro=""/>
-    
+    <tab type="user" url="@ref ocs2_core_page" title="Core Module" intro=""/>
+    <tab type="user" url="@ref ocs2_slq_page" title="SLQ Module" intro=""/>
+    <tab type="user" url="@ref ocs2_ocs2_page" title="OCS2 Module" intro=""/>
+    <tab type="user" url="@ref ocs2_mpc_page" title="MPC Module" intro=""/>
+    <tab type="user" url="@ref ocs2_comm_interfaces_page" title="ROS Interfaces Module" intro=""/>
+    <tab type="user" url="@ref ocs2_frank_wolfe_page" title="Frank-Wolfe Module" intro=""/>
+    <tab type="user" url="@ref ocs2_robotic_examples_page" title="Robotic Examples" intro=""/>
+
     <tab type="pages" visible="yes" title="" intro=""/>
     <tab type="modules" visible="no" title="" intro=""/>
     <tab type="namespaces" visible="yes" title="">

@@ -50,9 +50,7 @@ int main(int argc, char **argv)
 	typedef mrt_t::system_observation_t system_observation_t;
 	typedef Dimensions<4, 1> dim_t;
 
-	mrt_base_ptr_t mrtPtr(new mrt_t(
-			!cartPoleInterface.mpcSettings().useFeedbackPolicy_,
-			"cartpole"));
+	mrt_base_ptr_t mrtPtr(new mrt_t("cartpole"));
 
 	// Dummy cartpole
 	const double mrtLoopFrequency = 100;

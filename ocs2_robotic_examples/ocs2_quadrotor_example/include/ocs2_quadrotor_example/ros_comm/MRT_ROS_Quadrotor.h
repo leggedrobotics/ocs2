@@ -52,7 +52,6 @@ public:
 
 	typedef Dimensions<quadrotor::STATE_DIM_, quadrotor::INPUT_DIM_> DIMENSIONS;
 	typedef typename DIMENSIONS::controller_t				controller_t;
-	typedef typename DIMENSIONS::controller_array_t			controller_array_t;
 	typedef typename DIMENSIONS::scalar_t					scalar_t;
 	typedef typename DIMENSIONS::scalar_array_t				scalar_array_t;
 	typedef typename DIMENSIONS::size_array_t				size_array_t;
@@ -83,11 +82,9 @@ public:
 	 * @param [in] useFeedforwardPolicy: Whether to receive the MPC feedforward (true) or MPC feedback policy (false).
 	 * @param [in] robotName: The robot's name.
 	 */
-	MRT_ROS_Quadrotor(
-			const bool& useFeedforwardPolicy = true,
-			const std::string& robotName = "robot")
+	MRT_ROS_Quadrotor(const std::string& robotName = "robot")
 
-	: BASE(NullLogicRules(), useFeedforwardPolicy, robotName)
+	: BASE(NullLogicRules(), robotName)
 	{}
 
 	/**

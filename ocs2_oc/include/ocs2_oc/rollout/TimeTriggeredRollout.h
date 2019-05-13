@@ -85,13 +85,56 @@ public:
 	TimeTriggeredRollout(
 			const controlled_system_base_t& systemDynamics,
 			const Rollout_Settings& rolloutSettings = Rollout_Settings(),
-			const char* algorithmName = NULL)
+			const char algorithmName[] = nullptr)
 
 	: BASE(rolloutSettings, algorithmName)
 	, systemDynamicsPtr_(systemDynamics.clone())
 	, systemEventHandlersPtr_(new event_handler_t)
-	, dynamicsIntegratorsPtr_(new ODE45<STATE_DIM>(systemDynamicsPtr_, systemEventHandlersPtr_))
-	{}
+	{
+		switch (rolloutSettings.integratorType_) {
+		case (IntegratorType::EULER): {
+			dynamicsIntegratorsPtr_.reset(new IntegratorEuler<STATE_DIM>(systemDynamicsPtr_, systemEventHandlersPtr_));
+			break;
+		}
+		case (IntegratorType::MODIFIED_MIDPOINT): {
+			dynamicsIntegratorsPtr_.reset(new IntegratorModifiedMidpoint<STATE_DIM>(systemDynamicsPtr_, systemEventHandlersPtr_));
+			break;
+		}
+		case (IntegratorType::RK4): {
+			dynamicsIntegratorsPtr_.reset(new IntegratorRK4<STATE_DIM>(systemDynamicsPtr_, systemEventHandlersPtr_));
+			break;
+		}
+		case (IntegratorType::RK5_VARIABLE): {
+			dynamicsIntegratorsPtr_.reset(new IntegratorRK5Variable<STATE_DIM>(systemDynamicsPtr_, systemEventHandlersPtr_));
+			break;
+		}
+		case (IntegratorType::ODE45): {
+			dynamicsIntegratorsPtr_.reset(new ODE45<STATE_DIM>(systemDynamicsPtr_, systemEventHandlersPtr_));
+			break;
+		}
+		case (IntegratorType::ADAMS_BASHFORTH): {
+			// TODO(jcarius) the number of steps should not be hardcoded
+			dynamicsIntegratorsPtr_.reset(new IntegratorAdamsBashforth<STATE_DIM, 1>(systemDynamicsPtr_, systemEventHandlersPtr_));
+			break;
+		}
+		case (IntegratorType::BULIRSCH_STOER): {
+			dynamicsIntegratorsPtr_.reset(new IntegratorBulirschStoer<STATE_DIM>(systemDynamicsPtr_, systemEventHandlersPtr_));
+			break;
+		}
+#if (BOOST_VERSION / 100000 == 1 && BOOST_VERSION / 100 % 1000 > 55)
+		case (IntegratorType::ADAMS_BASHFORTH_MOULTON): {
+			// TODO(jcarius) the number of steps should not be hardcoded
+			dynamicsIntegratorsPtr_.reset(new IntegratorAdamsBashforthMoulton<STATE_DIM, 1>(systemDynamicsPtr_, systemEventHandlersPtr_));
+			break;
+		}
+#endif
+		default: {
+			throw std::runtime_error("Integrator of type " +
+					std::to_string(static_cast<std::underlying_type<IntegratorType>::type>(rolloutSettings.integratorType_)) +
+					" not supported in TimeTriggeredRollout.");
+		}
+		}
+	}
 
 	/**
 	 * Default destructor.
@@ -120,7 +163,7 @@ public:
 			const scalar_t& initTime,
 			const state_vector_t& initState,
 			const scalar_t& finalTime,
-			const controller_t& controller,
+			controller_t* controller,
 			logic_rules_machine_t& logicRulesMachine,
 			scalar_array_t& timeTrajectory,
 			size_array_t& eventsPastTheEndIndeces,
@@ -130,8 +173,8 @@ public:
 		if (initTime > finalTime)
 			throw std::runtime_error("Initial time should be less-equal to final time.");
 
-		if (controller.empty() == true)
-			throw std::runtime_error("The input controller is empty.");
+		if (controller == nullptr)
+			throw std::runtime_error("The input controller is not set.");
 
 		const size_t numEvents = logicRulesMachine.getNumEvents(partitionIndex);
 		const size_t numSubsystems = logicRulesMachine.getNumEventCounters(partitionIndex);
@@ -195,7 +238,7 @@ public:
 
 			// compute control input trajectory and concatenate to inputTrajectory
 			for ( ; k_u<timeTrajectory.size(); k_u++) {
-				inputTrajectory.emplace_back( systemDynamicsPtr_->computeInput(
+				inputTrajectory.emplace_back( systemDynamicsPtr_->controllerPtr()->computeInput(
 						timeTrajectory[k_u], stateTrajectory[k_u]) );
 			} // end of k loop
 

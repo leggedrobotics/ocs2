@@ -54,7 +54,6 @@ public:
 
   typedef Dimensions<cartpole::STATE_DIM_, cartpole::INPUT_DIM_> DIMENSIONS;
   typedef typename DIMENSIONS::controller_t				controller_t;
-  typedef typename DIMENSIONS::controller_array_t			controller_array_t;
   typedef typename DIMENSIONS::scalar_t					scalar_t;
   typedef typename DIMENSIONS::scalar_array_t				scalar_array_t;
   typedef typename DIMENSIONS::size_array_t				size_array_t;
@@ -88,11 +87,9 @@ public:
    * @param [in] useFeedforwardPolicy: Whether to receive the MPC feedforward (true) or MPC feedback policy (false).
    * @param [in] nodeName: The node's name.
    */
-  MRT_ROS_Cartpole(
-      const bool& useFeedforwardPolicy = true,
-      const std::string& nodeName = "robot_mpc")
+  MRT_ROS_Cartpole(const std::string& nodeName = "robot_mpc")
 
-  : BASE(NullLogicRules(), useFeedforwardPolicy, nodeName)
+  : BASE(NullLogicRules(), nodeName)
   {}
 
   /**

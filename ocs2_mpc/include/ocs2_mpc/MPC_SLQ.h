@@ -34,6 +34,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_slq/SLQ_BASE.h>
 #include <ocs2_slq/SLQ.h>
 #include <ocs2_slq/SLQ_MP.h>
+#include <ocs2_core/control/LinearController.h>
 
 #include "ocs2_mpc/MPC_BASE.h"
 
@@ -57,25 +58,29 @@ public:
 	typedef MPC_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> BASE;
 
 	typedef Dimensions<STATE_DIM, INPUT_DIM> DIMENSIONS;
-	typedef typename DIMENSIONS::controller_t		controller_t;
-	typedef typename DIMENSIONS::controller_array_t	controller_array_t;
-	typedef typename DIMENSIONS::scalar_t		scalar_t;
-	typedef typename DIMENSIONS::scalar_array_t	scalar_array_t;
-	typedef typename DIMENSIONS::size_array_t	size_array_t;
-	typedef typename DIMENSIONS::state_vector_t 		state_vector_t;
-	typedef typename DIMENSIONS::state_vector_array_t	state_vector_array_t;
-	typedef typename DIMENSIONS::state_vector_array2_t 	state_vector_array2_t;
-	typedef typename DIMENSIONS::input_vector_t 		 input_vector_t;
-	typedef typename DIMENSIONS::input_vector_array_t  input_vector_array_t;
-	typedef typename DIMENSIONS::input_vector_array2_t input_vector_array2_t;
-	typedef typename DIMENSIONS::input_state_matrix_t 	   input_state_matrix_t;
+	typedef typename DIMENSIONS::scalar_t                    scalar_t;
+	typedef typename DIMENSIONS::scalar_array_t              scalar_array_t;
+	typedef typename DIMENSIONS::scalar_array2_t             scalar_array2_t;
+	typedef typename DIMENSIONS::size_array_t                size_array_t;
+	typedef typename DIMENSIONS::size_array2_t               size_array2_t;
+	typedef typename DIMENSIONS::state_vector_t              state_vector_t;
+	typedef typename DIMENSIONS::state_vector_array_t        state_vector_array_t;
+	typedef typename DIMENSIONS::state_vector_array2_t       state_vector_array2_t;
+	typedef typename DIMENSIONS::input_vector_t              input_vector_t;
+	typedef typename DIMENSIONS::input_vector_array_t        input_vector_array_t;
+	typedef typename DIMENSIONS::input_vector_array2_t       input_vector_array2_t;
+	typedef typename DIMENSIONS::input_state_matrix_t        input_state_matrix_t;
 	typedef typename DIMENSIONS::input_state_matrix_array_t  input_state_matrix_array_t;
 	typedef typename DIMENSIONS::input_state_matrix_array2_t input_state_matrix_array2_t;
-	typedef typename DIMENSIONS::dynamic_vector_t       dynamic_vector_t;
-	typedef typename DIMENSIONS::dynamic_vector_array_t dynamic_vector_array_t;
+	typedef typename DIMENSIONS::dynamic_vector_t             dynamic_vector_t;
+	typedef typename DIMENSIONS::dynamic_vector_array_t       dynamic_vector_array_t;
 
-	typedef typename BASE::cost_desired_trajectories_t  cost_desired_trajectories_t;
-	typedef typename BASE::mode_sequence_template_t     mode_sequence_template_t;
+	typedef typename BASE::cost_desired_trajectories_t cost_desired_trajectories_t;
+	typedef typename BASE::mode_sequence_template_t    mode_sequence_template_t;
+    typedef typename BASE::controller_ptr_array_t      controller_ptr_array_t;
+
+    typedef LinearController<STATE_DIM,INPUT_DIM> linear_controller_t;
+    typedef typename linear_controller_t::array_t linear_controller_array_t;
 
 	typedef ocs2::SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> slq_base_t;
 	typedef ocs2::SLQ<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>      slq_t;
@@ -123,7 +128,7 @@ public:
 			const cost_function_base_t* heuristicsFunctionPtr = nullptr);
 
 	/**
-	 * destructor.
+	 * Default destructor.
 	 */
 	virtual ~MPC_SLQ() = default;
 
@@ -147,19 +152,19 @@ public:
 	 * @param [out] initTime: Initial time.
 	 * @param [in] initState: Initial state.
 	 * @param [out] finalTime: Final time.
-	 * @param [out] timeTrajectoriesStock_out: A pointer to the optimized time trajectories.
-	 * @param [out] stateTrajectoriesStock_out: A pointer to the optimized state trajectories.
-	 * @param [out] inputTrajectoriesStock_out: A pointer to the optimized input trajectories.
+	 * @param [out] timeTrajectoriesStock: A pointer to the optimized time trajectories.
+	 * @param [out] stateTrajectoriesStock: A pointer to the optimized state trajectories.
+	 * @param [out] inputTrajectoriesStock: A pointer to the optimized input trajectories.
 	 * @param [out] controllerStock_out: A pointer to the optimized control policy.
 	 */
 	virtual void calculateController(
 			const scalar_t& initTime,
 			const state_vector_t& initState,
 			const scalar_t& finalTime,
-			const std::vector<scalar_array_t>*& timeTrajectoriesStockPtr,
+			const scalar_array2_t*& timeTrajectoriesStockPtr,
 			const state_vector_array2_t*& stateTrajectoriesStockPtr,
 			const input_vector_array2_t*& inputTrajectoriesStockPtr,
-			const controller_array_t*& controllerStockPtr) override;
+			const controller_ptr_array_t*& controllerStockPtr) override;
 
 protected:
 
@@ -168,11 +173,11 @@ protected:
 	 ***********/
 	typename slq_base_t::Ptr slqPtr_;
 
-	controller_array_t nullControllersStock_;
+	linear_controller_array_t nullControllersStock_;
 
-	std::vector<scalar_array_t> optimizedTimeTrajectoriesStock_;
-	state_vector_array2_t       optimizedStateTrajectoriesStock_;
-	input_vector_array2_t       optimizedInputTrajectoriesStock_;
+	scalar_array2_t       optimizedTimeTrajectoriesStock_;
+	state_vector_array2_t optimizedStateTrajectoriesStock_;
+	input_vector_array2_t optimizedInputTrajectoriesStock_;
 
 };
 

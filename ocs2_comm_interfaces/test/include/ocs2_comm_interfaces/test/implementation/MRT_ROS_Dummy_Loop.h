@@ -36,11 +36,14 @@ template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
 MRT_ROS_Dummy_Loop<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::MRT_ROS_Dummy_Loop(
 		const mrt_ptr_t& mrtPtr,
 		const scalar_t& mrtDesiredFrequency /*= 100*/,
-		const scalar_t& mpcDesiredFrequency /*= -1*/)
+		const scalar_t& mpcDesiredFrequency /*= -1*/,
+		controlled_system_base_t* systemPtr /* = nullptr*/,
+		Rollout_Settings rolloutSettings /*= Rollout_Settings()*/)
 
 	: mrtPtr_(mrtPtr)
 	, mrtDesiredFrequency_(mrtDesiredFrequency)
 	, mpcDesiredFrequency_(mpcDesiredFrequency)
+	, systemPtr_(systemPtr)
 	, realtimeLoop_(mpcDesiredFrequency<=0) // true if mpcDesiredFrequency is not set or it is negative
 	, initialized_(false)
 {
@@ -50,6 +53,10 @@ MRT_ROS_Dummy_Loop<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::MRT_ROS_Dummy_Loop(
 	if (mpcDesiredFrequency_>0)
 		ROS_WARN_STREAM("MPC loop is not realtime! "
 				"For realtime setting, set mpcDesiredFrequency to any negative number.");
+
+	if (systemPtr_){
+		mrtPtr_->initRollout(*systemPtr_, rolloutSettings);
+	}
 }
 
 /******************************************************************************************************/
@@ -84,6 +91,9 @@ void MRT_ROS_Dummy_Loop<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::run() {
 
 	::ros::Rate rosRate(mrtDesiredFrequency_); // in Hz
 
+	// time step
+	const scalar_t timeStep = (1.0/mrtDesiredFrequency_);
+
 	// set the frequency ratio between MRT loop and MPC loop in the case of non realtime test
 	size_t frequencyRatio = 1;
 	if (realtimeLoop_==false)
@@ -105,15 +115,16 @@ void MRT_ROS_Dummy_Loop<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::run() {
 		if (mrtPtr_->initialPolicyReceived()==true)
 			break;
 		else
-			::ros::Duration(1.0/mrtDesiredFrequency_).sleep();
+			::ros::Duration(timeStep).sleep();
 	}
 	ROS_INFO_STREAM("Initial policy has been received.");
 
+	observation_ = initObservation_;
 
-	while(::ros::ok()) {
+	while( ::ros::ok()  && ::ros::master::check() ) {
 
 		// this should be called before updatePolicy()
-    mrtPtr_->spinMRT();
+    	mrtPtr_->spinMRT();
 
 		// Checks for new policy and updates the policy
 		bool policyUpdated = false;
@@ -126,23 +137,27 @@ void MRT_ROS_Dummy_Loop<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::run() {
 				if (policyUpdated==true)
 					break;
 				else
-          mrtPtr_->spinMRT();
+					mrtPtr_->spinMRT();
 			}
 			std::cout << "### Message received at " << time << std::endl;
 		}
 
-		// time and loop counter increment
-		loopCounter++;
-		time += (1.0/mrtDesiredFrequency_);
-
 		std::cout << "### Message received at " << time << std::endl;
 
-		// fake simulation of the dynamics
-		observation_.time() = time;
-		mrtPtr_->evaluatePlan(observation_.time(),
-				observation_.state(), observation_.subsystem());
+		// integrate nominal dynamics if available, otherwise fake simulation
+		state_vector_t stateTemp = observation_.state();
+		if(systemPtr_){
+			mrtPtr_->rolloutPolicy(time, stateTemp, timeStep,
+					observation_.state(), observation_.input(), observation_.subsystem());
+		} else {
+			mrtPtr_->evaluatePolicy(time+timeStep, stateTemp,
+					observation_.state(), observation_.input(), observation_.subsystem());
+		}
 
-        //TODO(jcarius) call controller here to assign observation_.input()
+		// time and loop counter increment
+		loopCounter++;
+		time += timeStep;
+		observation_.time() = time;
 
 		// user-defined modifications before publishing
 		modifyObservation(observation_);
@@ -157,7 +172,7 @@ void MRT_ROS_Dummy_Loop<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::run() {
 		}
 
 		// Visualization
-		publishVisualizer(observation_);
+		publishVisualizer(observation_, mrtPtr_->mpcCostDesiredTrajectories());
 
 		rosRate.sleep();
 

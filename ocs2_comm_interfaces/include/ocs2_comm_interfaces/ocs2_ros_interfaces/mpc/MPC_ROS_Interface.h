@@ -46,6 +46,10 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <ros/ros.h>
 #include <ros/transport_hints.h>
+#include <ros/callback_queue.h>
+
+#include <ocs2_core/control/FeedforwardController.h>
+#include <ocs2_core/control/LinearController.h>
 
 #include <ocs2_mpc/MPC_BASE.h>
 
@@ -59,8 +63,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "ocs2_comm_interfaces/SystemObservation.h"
 #include "ocs2_comm_interfaces/ocs2_ros_interfaces/common/RosMsgConversions.h"
-
-#include <ocs2_core/control/LinearController.h>
 
 //#define PUBLISH_DUMMY
 #define PUBLISH_THREAD
@@ -101,8 +103,8 @@ public:
 
 	typedef SystemObservation<STATE_DIM, INPUT_DIM> system_observation_t;
 
-  typedef Controller<STATE_DIM, INPUT_DIM> controller_t;
-  typedef std::vector<controller_t*> controller_ptr_array_t;
+	typedef ControllerBase<STATE_DIM, INPUT_DIM> controller_t;
+	typedef std::vector<controller_t*>           controller_ptr_array_t;
 
 	typedef RosMsgConversions<STATE_DIM, INPUT_DIM> ros_msg_conversions_t;
 
@@ -141,9 +143,29 @@ public:
 	virtual void reset();
 
 	/**
-	 * Shutdowns the ROS nodes.
+	 * Shutdowns the ROS node.
 	 */
-	void shutdownNodes();
+	void shutdownNode();
+
+	/**
+	 * Initialize the ROS node.
+	 *
+	 * @param [in] argc: Command line number of arguments.
+	 * @param [in] argv: Command line vector of arguments.
+	 */
+	void initializeNode(int argc, char* argv[]);
+
+	/**
+	 * Returns a shared pointer to the node handle.
+	 *
+	 * @return shared pointer to the node handle.
+	 */
+	std::shared_ptr<ros::NodeHandle>& nodeHandlePtr();
+
+	/**
+	 * Spins ROS.
+	 */
+	void spin();
 
 	/**
 	 * This is the main routine which launches all the nodes required for MPC to run which includes:
@@ -228,7 +250,7 @@ protected:
 	void publishDummy();
 
 	/**
-	 * Publishes the MPC feedforward policy.
+	 * Publishes the MPC policy.
 	 *
 	 * @param [in] currentObservation: The observation that MPC designed from.
 	 * @param [in] controllerIsUpdated: Whether the policy is updated.
@@ -290,6 +312,8 @@ protected:
 	MPC_Settings mpcSettings_;
 
 	std::string robotName_;
+
+	std::shared_ptr<ros::NodeHandle> nodeHandlerPtr_;
 
 	// Publishers and subscribers
 	::ros::Subscriber    mpcObservationSubscriber_;

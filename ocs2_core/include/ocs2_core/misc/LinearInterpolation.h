@@ -57,7 +57,6 @@ public:
 	 * Default constructor.
 	 */
 	LinearInterpolation()
-
 	: index_(0),
 	  zeroFunction_(false),
 	  timeStampPtr_(nullptr),
@@ -73,14 +72,15 @@ public:
 	LinearInterpolation(
 			const std::vector<scalar_t>* timeStampPtr,
 			const std::vector<Data_T,Alloc>* dataPtr)
-
 	: index_(0)
 	, zeroFunction_(false)
 	, timeStampPtr_(timeStampPtr)
 	, dataPtr_(dataPtr)
 	{
-    if (timeStampPtr_ == nullptr) throw std::runtime_error("timeStampPtr is nullptr.");
-    if (dataPtr_ == nullptr) throw std::runtime_error("dataPtr is nullptr.");
+		if (timeStampPtr_ == nullptr)
+			throw std::runtime_error("timeStampPtr is nullptr.");
+		if (dataPtr_ == nullptr)
+			throw std::runtime_error("dataPtr is nullptr.");
 	}
 
 	/**
@@ -131,7 +131,7 @@ public:
 	}
 
     /**
-     * Interpolate function.
+     * Linearly interpolates at the given time.
      *
      * @param [in]  enquiryTime: The enquiry time for interpolation.
      * @param [out] enquiryData: The value of the trajectory at the requested time.
@@ -148,23 +148,23 @@ public:
 			return;
 		}
 
-    const auto& timeStampArr = *timeStampPtr_;
-    const auto& dataArr = *dataPtr_;
+		const std::vector<scalar_t>& timeStamp = *timeStampPtr_;
+		const std::vector<Data_T, Alloc>& dataArray = *dataPtr_;
 
-    const auto timeStampSize = timeStampArr.size();
+		const int timeStampSize = timeStamp.size();
 
-    if (timeStampSize==0 or (dataArr.size() != timeStampSize))
-      throw std::runtime_error("LinearInterpolation.h : Sizes not suitable for interpolation.");
+		if (timeStampSize==0 || dataArray.size()!=timeStampSize)
+			throw std::runtime_error("LinearInterpolation.h : Sizes not suitable for interpolation.");
 
-    if (enquiryTime<=timeStampArr.front()) {
-      enquiryData = dataArr.front();
+		if (enquiryTime<=timeStamp.front()) {
+			enquiryData = dataArray.front();
 			index_ = 0;
 			return;
 		}
 
-    if (enquiryTime>=timeStampArr.back()) {
-      enquiryData = dataArr.back();
-      index_ = timeStampSize - 1;
+		if (enquiryTime>=timeStamp.back()) {
+			enquiryData = dataArray.back();
+			index_ = timeStampSize - 1;
 			return;
 		}
 
@@ -173,8 +173,8 @@ public:
 		else
 			index_ = greatestLessTimeStampIndex;
 
-    scalar_t alpha = (enquiryTime - timeStampArr[index_ + 1]) / (timeStampArr[index_] - timeStampArr[index_ + 1]);
-    enquiryData = alpha * dataArr[index_] + (1 - alpha) * dataArr[index_ + 1];
+		scalar_t alpha = (enquiryTime - timeStamp[index_ + 1]) / (timeStamp[index_] - timeStamp[index_ + 1]);
+		enquiryData = alpha * dataArray[index_] + (1 - alpha) * dataArray[index_ + 1];
 	}
 
 	/**
@@ -194,20 +194,21 @@ protected:
      * @return The greatest smaller time stamp index.
      */
 	int find(const scalar_t& enquiryTime) const {
-    const auto& timeStampArr = *timeStampPtr_;
-    const auto timeStampSize = timeStampArr.size();
+
+		const std::vector<scalar_t>& timeStamp = *timeStampPtr_;
+		const int timeStampSize = timeStamp.size();
 
 		int index = -1;
 
-    if (timeStampArr[index_] > enquiryTime) {
-      for (int i = index_; i >= 0; i--) {
+		if (timeStamp[index_] > enquiryTime) {
+			for (int i = index_; i >= 0; i--) {
 				index = i;
-        if (timeStampArr[i] <= enquiryTime) break;
+				if (timeStamp[i] <= enquiryTime) break;
 			}
 		} else {
-      for (int i = index_; i < timeStampSize; i++) {
+			for (int i = index_; i < timeStampSize; i++) {
 				index = i;
-        if (timeStampArr[i] > enquiryTime) {
+				if (timeStamp[i] > enquiryTime) {
 					index--;
 					break;
 				}
@@ -217,13 +218,13 @@ protected:
 		return index;
 	}
 
- private:
-  mutable int index_;
+private:
+	mutable int index_;
 
 	bool zeroFunction_;
 
 	const std::vector<scalar_t>* timeStampPtr_;
-  const std::vector<Data_T, Alloc>* dataPtr_;
+	const std::vector<Data_T, Alloc>* dataPtr_;
 };
 
 // Specialization for Eigen types

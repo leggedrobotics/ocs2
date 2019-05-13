@@ -45,7 +45,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_core/logic/rules/LogicRulesBase.h>
 #include <ocs2_core/logic/rules/NullLogicRules.h>
 #include <ocs2_core/logic/machine/LogicRulesMachine.h>
-#include <ocs2_core/control/Controller.h>
+#include <ocs2_core/control/ControllerBase.h>
 
 #include "Rollout_Settings.h"
 
@@ -79,8 +79,9 @@ public:
 	typedef typename DIMENSIONS::input_vector_t       input_vector_t;
 	typedef typename DIMENSIONS::input_vector_array_t input_vector_array_t;
 
-	typedef LogicRulesMachine<LOGIC_RULES_T>     logic_rules_machine_t;
-	typedef Controller<STATE_DIM, INPUT_DIM> controller_t;
+	typedef LogicRulesMachine<LOGIC_RULES_T> logic_rules_machine_t;
+
+	typedef ControllerBase<STATE_DIM, INPUT_DIM> controller_t;
 
 	/**
 	 * Default constructor.
@@ -179,8 +180,9 @@ public:
 		}
 		std::cerr << std::endl;
 
+		const size_t numSubsystems = eventsPastTheEndIndeces.size() + 1;
 		size_t k = 0;
-		for (size_t i=0; i<=eventsPastTheEndIndeces.size(); i++) {
+		for (size_t i=0; i<numSubsystems; i++) {
 			for (; k<timeTrajectory.size(); k++) {
 				std::cerr << "k:     " << k << std::endl;
 				std::cerr << "Time:  " << timeTrajectory[k] << std::endl;
@@ -189,6 +191,7 @@ public:
 
 				if (i<eventsPastTheEndIndeces.size() && k+1==eventsPastTheEndIndeces[i]) {
 					std::cerr << "+++ event took place +++" << std::endl;
+					k++;
 					break;
 				}
 			} // end of k loop

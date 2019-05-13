@@ -58,10 +58,7 @@ TEST(IntegrationTest, SecondOrderSystem_ODE45)
 	SecondOrderSystem::input_state_matrix_array_t k(2, SecondOrderSystem::input_state_matrix_t::Zero());
 
     using controller_t = ocs2::LinearController<2,1>;
-    auto controller = std::unique_ptr<controller_t>(new controller_t);
-	controller->time_ = cntTimeStamp;
-	controller->uff_ = uff;
-	controller->k_ = k;
+    auto controller = std::unique_ptr<controller_t>(new controller_t(cntTimeStamp, uff, k));
 
 	sys->setController(controller.get());
 
@@ -123,10 +120,7 @@ TEST(IntegrationTest, SecondOrderSystem_AdamsBashfort)
 	SecondOrderSystem::input_state_matrix_array_t k(2, SecondOrderSystem::input_state_matrix_t::Zero());
 
     using controller_t = ocs2::LinearController<2,1>;
-    auto controller = std::unique_ptr<controller_t>(new controller_t);
-	controller->time_ = cntTimeStamp;
-	controller->uff_ = uff;
-	controller->k_ = k;
+    auto controller = std::unique_ptr<controller_t>(new controller_t(cntTimeStamp, uff, k));
 
 	sys->setController(controller.get());
 
@@ -191,10 +185,7 @@ TEST(IntegrationTest, SecondOrderSystem_AdamsBashfortMoulton)
 	SecondOrderSystem::input_state_matrix_array_t k(2, SecondOrderSystem::input_state_matrix_t::Zero());
 
     using controller_t = ocs2::LinearController<2,1>;
-    auto controller = std::unique_ptr<controller_t>(new controller_t);
-	controller->time_ = cntTimeStamp;
-	controller->uff_ = uff;
-	controller->k_ = k;
+    auto controller = std::unique_ptr<controller_t>(new controller_t(cntTimeStamp, uff, k));
 
 	sys->setController(controller.get());
 

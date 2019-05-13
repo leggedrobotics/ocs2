@@ -112,10 +112,8 @@ public:
 
 	typedef typename BASE::DIMENSIONS                          DIMENSIONS;
 	typedef typename BASE::controller_t                        controller_t;
-    typedef LinearController<STATE_DIM,INPUT_DIM>              linear_controller_t;
-    typedef typename linear_controller_t::array_t              linear_controller_array_t;
-    typedef typename BASE::controller_ptr_array_t              controller_ptr_array_t;
 	typedef typename BASE::size_array_t                        size_array_t;
+	typedef typename BASE::size_array2_t                       size_array2_t;
 	typedef typename BASE::scalar_t                            scalar_t;
 	typedef typename BASE::scalar_array_t                      scalar_array_t;
 	typedef typename BASE::scalar_array2_t                     scalar_array2_t;
@@ -168,6 +166,10 @@ public:
 	typedef typename BASE::dynamic_vector_t                    dynamic_vector_t;
 	typedef typename BASE::dynamic_vector_array_t              dynamic_vector_array_t;
 
+	typedef typename BASE::controller_ptr_array_t              controller_ptr_array_t;
+	typedef LinearController<STATE_DIM,INPUT_DIM>              linear_controller_t;
+	typedef typename linear_controller_t::array_t              linear_controller_array_t;
+
 	typedef SystemEventHandler<STATE_DIM> event_handler_t;
 	typedef ControlledSystemBase<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> controlled_system_base_t;
 	typedef DerivativesBase<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>      derivatives_base_t;
@@ -201,8 +203,8 @@ public:
 			const scalar_t& finalTime,
 			const scalar_array_t& partitioningTimes,
 			const linear_controller_array_t& controllersStock,
-			std::vector<scalar_array_t>& timeTrajectoriesStock,
-			std::vector<size_array_t>& eventsPastTheEndIndecesStock,
+			scalar_array2_t& timeTrajectoriesStock,
+			size_array2_t& eventsPastTheEndIndecesStock,
 			state_vector_array2_t& stateTrajectoriesStock,
 			input_vector_array2_t& inputTrajectoriesStock,
 			size_t threadId = 0);
@@ -269,8 +271,8 @@ public:
 			const scalar_t& finalTime,
 			const scalar_array_t& partitioningTimes,
 			linear_controller_array_t& controllersStock,
-			std::vector<scalar_array_t>& timeTrajectoriesStock,
-			std::vector<size_array_t>& eventsPastTheEndIndecesStock,
+			scalar_array2_t& timeTrajectoriesStock,
+			size_array2_t& eventsPastTheEndIndecesStock,
 			state_vector_array2_t& stateTrajectoriesStock,
 			input_vector_array2_t& inputTrajectoriesStock,
 			size_t threadId = 0);
@@ -317,17 +319,17 @@ public:
 	 * @param [in] threadId: Working thread (default is 0).
 	 */
 	void calculateRolloutConstraints(
-			const std::vector<scalar_array_t>& timeTrajectoriesStock,
-			const std::vector<size_array_t>& eventsPastTheEndIndecesStock,
+			const scalar_array2_t& timeTrajectoriesStock,
+			const size_array2_t& eventsPastTheEndIndecesStock,
 			const state_vector_array2_t& stateTrajectoriesStock,
 			const input_vector_array2_t& inputTrajectoriesStock,
-			std::vector<size_array_t>& nc1TrajectoriesStock,
+			size_array2_t& nc1TrajectoriesStock,
 			constraint1_vector_array2_t& EvTrajectoryStock,
-			std::vector<size_array_t>& nc2TrajectoriesStock,
+			size_array2_t& nc2TrajectoriesStock,
 			constraint2_vector_array2_t& HvTrajectoryStock,
-            std::vector<size_array_t>& ncIneqTrajectoriesStock,
+            size_array2_t& ncIneqTrajectoriesStock,
             scalar_array3_t& hTrajectoryStock,
-			std::vector<size_array_t>& nc2FinalStock,
+			size_array2_t& nc2FinalStock,
 			constraint2_vector_array2_t& HvFinalStock,
 			size_t threadId = 0);
 
@@ -343,8 +345,8 @@ public:
 	 * @param [in] threadId: Working thread (default is 0).
 	 */
 	void calculateRolloutCost(
-			const std::vector<scalar_array_t>& timeTrajectoriesStock,
-			const std::vector<size_array_t>& eventsPastTheEndIndecesStock,
+			const scalar_array2_t& timeTrajectoriesStock,
+			const size_array2_t& eventsPastTheEndIndecesStock,
 			const state_vector_array2_t& stateTrajectoriesStock,
 			const input_vector_array2_t& inputTrajectoriesStock,
 			scalar_t& totalCost,
@@ -365,13 +367,13 @@ public:
 	 * @param [in] threadId: Working thread (default is 0).
 	 */
 	void calculateRolloutCost(
-			const std::vector<scalar_array_t>& timeTrajectoriesStock,
-			const std::vector<size_array_t>& eventsPastTheEndIndecesStock,
+			const scalar_array2_t& timeTrajectoriesStock,
+			const size_array2_t& eventsPastTheEndIndecesStock,
 			const state_vector_array2_t& stateTrajectoriesStock,
 			const input_vector_array2_t& inputTrajectoriesStock,
 			const scalar_t& constraint2ISE,
             const scalar_t& inequalityConstraintPenalty,
-			const std::vector<size_array_t>& nc2FinalStock,
+			const size_array2_t& nc2FinalStock,
 			const constraint2_vector_array2_t& HvFinalStock,
 			scalar_t& totalCost,
 			size_t threadId = 0);
@@ -479,7 +481,6 @@ public:
 	 * @param [in] initState: The initial state.
 	 * @param [in] finalTime: The final time.
 	 * @param [in] partitioningTimes: The partitioning times between subsystems.
-	 * @param [in] costDesiredTrajectories: The cost desired trajectories.
 	 */
 	void run(
 			const scalar_t& initTime,
@@ -497,16 +498,18 @@ public:
 	 * @param [in] initState: The initial state.
 	 * @param [in] finalTime: The final time.
 	 * @param [in] partitioningTimes: The time partitioning.
-	 * @param [in] controllersStock: Array of the initial control policies. If you want to use the control policy
-	 * which was designed by the previous call of the "run" routine, you should pass INTERNAL_CONTROLLER().
-	 * @param [in] costDesiredTrajectories: The cost desired trajectories.
+	 * @param [in] controllersPtrStock: Array of pointers to the initial control policies. If you want to use the control policy
+	 * which was designed by the previous call of the "run" routine, you should pass an empty array.
+	 * In the this case, two scenarios are possible: either the internal controller is already set (such as the MPC case
+	 * where the warm starting option is set true) or the internal controller is empty in which instead of performing
+	 * a rollout the operating trajectories will be used.
 	 */
 	void run(
 			const scalar_t& initTime,
 			const state_vector_t& initState,
 			const scalar_t& finalTime,
 			const scalar_array_t& partitioningTimes,
-			const controller_ptr_array_t& controllersStock) override;
+			const controller_ptr_array_t& controllersPtrStock) override;
 
 	/**
 	 * Calculates the value function at the given time and state.
@@ -691,33 +694,25 @@ public:
 	bool costDesiredTrajectoriesUpdated() const override;
 
 	/**
-	 * Returns the optimal array of the control policies.
+	 * Returns an array of pointer to the optimal control policies.
 	 *
-	 * @return controllersStock: The optimal array of the control policies.
+	 * @return An array of pointers to the optimized control policies.
 	 */
 	const controller_ptr_array_t& getController() const override;
 
 	/**
-	 * Gets a pointer to the optimal array of the control policies.
+	 * Gets an array of pointer to the optimal control policies.
 	 *
-	 * @param [out] controllersStockPtr: A pointer to the optimal array of the control policies
+	 * @param [out] controllersStockPtr: An array of pointers to the optimized control policies.
 	 */
 	void getControllerPtr(const controller_ptr_array_t*& controllersStockPtr) const override;
-
-	/**
-	 * Swaps the output array of the control policies with the nominal one.
-	 * Care should be take since this method modifies the internal variable.
-	 *
-	 * @param [out] controllersStock: A reference to the optimal array of the control policies
-	 */
-	void swapController(controller_ptr_array_t& controllersStock) override;
 
 	/**
 	 * Returns the nominal time trajectories.
 	 *
 	 * @return nominalTimeTrajectoriesStock: Array of trajectories containing the output time trajectory stamp.
 	 */
-	const std::vector<scalar_array_t>& getNominalTimeTrajectories() const override;
+	const scalar_array2_t& getNominalTimeTrajectories() const override;
 
 	/**
 	 * Returns the nominal state trajectories.
@@ -741,7 +736,7 @@ public:
 	 * @param [out] nominalInputTrajectoriesStockPtr: A pointer to an array of trajectories containing the output control input trajectory.
 	 */
 	void getNominalTrajectoriesPtr(
-			const std::vector<scalar_array_t>*& nominalTimeTrajectoriesStockPtr,
+			const scalar_array2_t*& nominalTimeTrajectoriesStockPtr,
 			const state_vector_array2_t*& nominalStateTrajectoriesStockPtr,
 			const input_vector_array2_t*& nominalInputTrajectoriesStockPtr) const override;
 
@@ -754,7 +749,7 @@ public:
 	 * @param [out] nominalInputTrajectoriesStock: Array of trajectories containing the output control input trajectory.
 	 */
 	void swapNominalTrajectories (
-			std::vector<scalar_array_t>& nominalTimeTrajectoriesStock,
+			scalar_array2_t& nominalTimeTrajectoriesStock,
 			state_vector_array2_t& nominalStateTrajectoriesStock,
 			input_vector_array2_t& nominalInputTrajectoriesStock) override;
 
@@ -768,7 +763,7 @@ public:
 	 * @return maximum norm of the constraints.
 	 */
 	scalar_t calculateConstraintISE(
-			const std::vector<scalar_array_t>& timeTrajectoriesStock,
+			const scalar_array2_t& timeTrajectoriesStock,
 			const std::vector<std::vector<size_t>>& nc1TrajectoriesStock,
 			const constraint1_vector_array2_t& EvTrajectoriesStock,
 			scalar_t& constraintISE);
@@ -783,8 +778,8 @@ public:
      * @return constraintPenalty: The inequality constraints penalty.
      */
 	scalar_t calculateInequalityConstraintPenalty(
-                const std::vector<scalar_array_t>& timeTrajectoriesStock,
-                const std::vector<size_array_t>& ncIneqTrajectoriesStock,
+                const scalar_array2_t& timeTrajectoriesStock,
+                const size_array2_t& ncIneqTrajectoriesStock,
                 const scalar_array3_t& hTrajectoriesStock,
                 scalar_t& inequalityISE,
 				size_t workerIndex = 0);
@@ -959,9 +954,9 @@ protected:
 	 * @param lsConstraint1MaxNorm
 	 * @param lsConstraint2ISE
 	 * @param lsConstraint2MaxNorm
-	 * @param lsControllersStock
 	 * @param lsInequalityConstraintPenalty
 	 * @param lsInequalityConstraintISE
+	 * @param lsControllersStock
 	 * @param lsTimeTrajectoriesStock
 	 * @param lsEventsPastTheEndIndecesStock
 	 * @param lsStateTrajectoriesStock
@@ -975,11 +970,11 @@ protected:
 			scalar_t& lsConstraint1MaxNorm,
 			scalar_t& lsConstraint2ISE,
 			scalar_t& lsConstraint2MaxNorm,
-			linear_controller_array_t& lsControllersStock,
             scalar_t& lsInequalityConstraintPenalty,
 			scalar_t& lsInequalityConstraintISE,
-			std::vector<scalar_array_t>& lsTimeTrajectoriesStock,
-			std::vector<size_array_t>& lsEventsPastTheEndIndecesStock,
+			linear_controller_array_t& lsControllersStock,
+			scalar_array2_t& lsTimeTrajectoriesStock,
+			size_array2_t& lsEventsPastTheEndIndecesStock,
 			state_vector_array2_t& lsStateTrajectoriesStock,
 			input_vector_array2_t& lsInputTrajectoriesStock);
 
@@ -1097,7 +1092,7 @@ protected:
 	 * @param [out] constraintISE: Integral of Square Error (ISE)
 	 */
 	void calculateMeritFunction(
-			const std::vector<scalar_array_t>& timeTrajectoriesStock,
+			const scalar_array2_t& timeTrajectoriesStock,
 			const std::vector<std::vector<size_t> >& nc1TrajectoriesStock,
 			const constraint1_vector_array2_t& EvTrajectoryStock,
 			const std::vector<std::vector<Eigen::VectorXd>>&  lagrangeTrajectoriesStock,
@@ -1140,15 +1135,16 @@ protected:
 	void calculateControllerUpdateMaxNorm(
 			scalar_t& maxDeltaUffNorm,
 			scalar_t& maxDeltaUeeNorm);
+
+    /**
+     * Updates pointers in nominalControllerPtrStock from memory location of nominalControllersStock_ members.
+     */
+    void updateNominalControllerPtrStock();
+
 	/**
 	 * Display rollout info
 	 */
 	void printRolloutInfo();
-
-    /**
-     * @brief updates pointers in nominalControllerPtrStock from memory location of nominalControllersStock_ members
-     */
-    void updateNominalControllerPtrStock();
 
 	/****************
 	 *** Variables **
@@ -1175,7 +1171,7 @@ protected:
 	size_t numPartitions_ = 0;
 	scalar_array_t partitioningTimes_;
 
-	const std::vector<scalar_array_t>* desiredTimeTrajectoryStockPtr_;
+	const scalar_array2_t* desiredTimeTrajectoryStockPtr_;
 	const state_vector_array2_t*       desiredStateTrajectoryStockPtr_;
 	const input_vector_array2_t*       desiredInputTrajectoryStockPtr_;
 
@@ -1219,18 +1215,18 @@ protected:
 
 	std::vector<typename rollout_base_t::Ptr> state_dynamicsForwardRolloutPtrStock_;
 
-	linear_controller_array_t   nominalControllersStock_;
-    controller_ptr_array_t      nominalControllerPtrStock_;
-	std::vector<scalar_array_t> nominalTimeTrajectoriesStock_;
-	std::vector<size_array_t>   nominalEventsPastTheEndIndecesStock_;
-	state_vector_array2_t       nominalStateTrajectoriesStock_;
-	input_vector_array2_t       nominalInputTrajectoriesStock_;
+	linear_controller_array_t nominalControllersStock_;
+    controller_ptr_array_t    nominalControllerPtrStock_;
+	scalar_array2_t           nominalTimeTrajectoriesStock_;
+	size_array2_t             nominalEventsPastTheEndIndecesStock_;
+	state_vector_array2_t     nominalStateTrajectoriesStock_;
+	input_vector_array2_t     nominalInputTrajectoriesStock_;
 
 	// Used for catching the nominal trajectories for which the LQ problem is constructed and solved before terminating run()
-	std::vector<scalar_array_t> nominalPrevTimeTrajectoriesStock_;
-	std::vector<size_array_t>   nominalPrevEventsPastTheEndIndecesStock_;
-	state_vector_array2_t       nominalPrevStateTrajectoriesStock_;
-	input_vector_array2_t       nominalPrevInputTrajectoriesStock_;
+	scalar_array2_t       nominalPrevTimeTrajectoriesStock_;
+	size_array2_t         nominalPrevEventsPastTheEndIndecesStock_;
+	state_vector_array2_t nominalPrevStateTrajectoriesStock_;
+	input_vector_array2_t nominalPrevInputTrajectoriesStock_;
 
 	bool lsComputeISEs_;  // whether lineSearch routine needs to calculate ISEs
 	linear_controller_array_t initLScontrollersStock_;	  // needed for lineSearch
@@ -1240,15 +1236,15 @@ protected:
 	state_matrix_array2_t       AmTrajectoryStock_;
 	state_input_matrix_array2_t BmTrajectoryStock_;
 
-	std::vector<size_array_t>         nc1TrajectoriesStock_;  	// nc1: Number of the Type-1  active constraints
+	size_array2_t                     nc1TrajectoriesStock_;  	// nc1: Number of the Type-1  active constraints
 	constraint1_vector_array2_t       EvTrajectoryStock_;
 	constraint1_state_matrix_array2_t CmTrajectoryStock_;
 	constraint1_input_matrix_array2_t DmTrajectoryStock_;
 
-	std::vector<size_array_t>         nc2TrajectoriesStock_;  // nc2: Number of the Type-2 active constraints
+	size_array2_t                     nc2TrajectoriesStock_;  // nc2: Number of the Type-2 active constraints
 	constraint2_vector_array2_t       HvTrajectoryStock_;
 	constraint2_state_matrix_array2_t FmTrajectoryStock_;
-	std::vector<size_array_t>         nc2FinalStock_;
+	size_array2_t                     nc2FinalStock_;
 	constraint2_vector_array2_t       HvFinalStock_;
 	constraint2_state_matrix_array2_t FmFinalStock_;
 
@@ -1279,7 +1275,7 @@ protected:
 	std::vector<std::shared_ptr<penalty_base_t>> penaltyPtrStock_;
 	scalar_t nominalInequalityConstraintPenalty_;
 	scalar_t nominalInequalityConstraintISE_;
-	std::vector<size_array_t>   ncIneqTrajectoriesStock_;  // ncIneq: Number of inequality constraints
+	size_array2_t               ncIneqTrajectoriesStock_;  // ncIneq: Number of inequality constraints
 	scalar_array3_t       		hTrajectoryStock_;
 	state_vector_array3_t       dhdxTrajectoryStock_;
 	state_matrix_array3_t       ddhdxdxTrajectoryStock_;
@@ -1288,25 +1284,28 @@ protected:
 	input_state_matrix_array3_t ddhdudxTrajectoryStock_;
 
 
-	std::vector<std::shared_ptr<slq_riccati_equations_t>>                         slqRiccatiEquationsPtrStock_;
-	std::vector<std::shared_ptr<IntegratorBase<slq_riccati_equations_t::S_DIM_>>> slqRiccatiIntegratorPtrStock_;
-	std::vector<std::shared_ptr<riccati_equations_t>>                         riccatiEquationsPtrStock_;
-	std::vector<std::shared_ptr<IntegratorBase<riccati_equations_t::S_DIM_>>> riccatiIntegratorPtrStock_;
-	std::vector<std::shared_ptr<error_equation_t>>          errorEquationPtrStock_;
-	std::vector<std::shared_ptr<IntegratorBase<STATE_DIM>>> errorIntegratorPtrStock_;
+	std::vector<std::shared_ptr<slq_riccati_equations_t>>                             slqRiccatiEquationsPtrStock_;
+	std::vector<std::shared_ptr<SystemEventHandler<slq_riccati_equations_t::S_DIM_>>> slqRiccatiEventPtrStock_;
+	std::vector<std::shared_ptr<IntegratorBase<slq_riccati_equations_t::S_DIM_>>>     slqRiccatiIntegratorPtrStock_;
+	std::vector<std::shared_ptr<riccati_equations_t>>                             riccatiEquationsPtrStock_;
+	std::vector<std::shared_ptr<SystemEventHandler<riccati_equations_t::S_DIM_>>> riccatiEventPtrStock_;
+	std::vector<std::shared_ptr<IntegratorBase<riccati_equations_t::S_DIM_>>>     riccatiIntegratorPtrStock_;
+	std::vector<std::shared_ptr<error_equation_t>>              errorEquationPtrStock_;
+	std::vector<std::shared_ptr<SystemEventHandler<STATE_DIM>>> errorEventPtrStock_;
+	std::vector<std::shared_ptr<IntegratorBase<STATE_DIM>>>     errorIntegratorPtrStock_;
 
 	std::vector<std::shared_ptr<hamiltonian_equation_t>> hamiltonianEquationPtrStock_;
 	std::vector<std::shared_ptr<IntegratorBase<hamiltonian_equation_t::LTI_DIM_>>> hamiltonianIntegratorPtrStock_;
 	std::vector<std::shared_ptr<hamiltonian_increment_equation_t>> hamiltonianIncrementEquationPtrStock_;
 	std::vector<std::shared_ptr<IntegratorBase<hamiltonian_increment_equation_t::LTI_DIM_>>> hamiltonianIncrementIntegratorPtrStock_;
 
-	std::vector<scalar_array_t> SsTimeTrajectoryStock_;
-	std::vector<scalar_array_t> SsNormalizedTimeTrajectoryStock_;
-	std::vector<size_array_t>   SsNormalizedEventsPastTheEndIndecesStock_;
-	eigen_scalar_array2_t       sTrajectoryStock_;
-	state_vector_array2_t       SvTrajectoryStock_;
-	state_vector_array2_t       SveTrajectoryStock_;
-	state_matrix_array2_t       SmTrajectoryStock_;
+	scalar_array2_t SsTimeTrajectoryStock_;
+	scalar_array2_t SsNormalizedTimeTrajectoryStock_;
+	size_array2_t   SsNormalizedEventsPastTheEndIndecesStock_;
+	eigen_scalar_array2_t sTrajectoryStock_;
+	state_vector_array2_t SvTrajectoryStock_;
+	state_vector_array2_t SveTrajectoryStock_;
+	state_matrix_array2_t SmTrajectoryStock_;
 
 	eigen_scalar_array_t sFinalStock_;
 	state_vector_array_t SvFinalStock_;
@@ -1355,13 +1354,13 @@ protected:
 	void ControllerFunc_ (const size_t& partitionIndex, const size_t& timeIndex, const scalar_t& constraintStepSize,
 			const input_state_matrix_t& LmConstrained, const input_vector_t& LvConstrained, const input_vector_t& LveConstrained) {
 		// k
-		nominalControllersStock_[partitionIndex].k_[timeIndex] = LmConstrained - CmProjectedTrajectoryStock_[partitionIndex][timeIndex];
+		nominalControllersStock_[partitionIndex].gainArray_[timeIndex] = LmConstrained - CmProjectedTrajectoryStock_[partitionIndex][timeIndex];
 		// uff
-		nominalControllersStock_[partitionIndex].uff_[timeIndex] = nominalInputTrajectoriesStock_[partitionIndex][timeIndex] -
-				nominalControllersStock_[partitionIndex].k_[timeIndex] * nominalStateTrajectoriesStock_[partitionIndex][timeIndex] +
+		nominalControllersStock_[partitionIndex].biasArray_[timeIndex] = nominalInputTrajectoriesStock_[partitionIndex][timeIndex] -
+				nominalControllersStock_[partitionIndex].gainArray_[timeIndex] * nominalStateTrajectoriesStock_[partitionIndex][timeIndex] +
 				constraintStepSize * (LveConstrained - EvProjectedTrajectoryStock_[partitionIndex][timeIndex]);
 		// deltaUff
-		nominalControllersStock_[partitionIndex].deltaUff_[timeIndex] = LvConstrained;
+		nominalControllersStock_[partitionIndex].deltaBiasArray_[timeIndex] = LvConstrained;
 	};
 
 #ifdef BENCHMARK

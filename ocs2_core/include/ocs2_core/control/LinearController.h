@@ -1,21 +1,26 @@
 #pragma once
 
-#include "ocs2_core/control/Controller.h"
+#include "ocs2_core/control/ControllerBase.h"
 
 #include "ocs2_core/misc/LinearInterpolation.h"
 
 namespace ocs2 {
 
+/**
+ * LinearController implements a time and state dependent controller of the
+ * form u[x,t] = k[t] * x + uff[t]
+ */
 template <size_t STATE_DIM, size_t INPUT_DIM>
-class LinearController : public Controller<STATE_DIM, INPUT_DIM> {
+class LinearController final : public ControllerBase<STATE_DIM, INPUT_DIM> {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-  using Base = Controller<STATE_DIM, INPUT_DIM>;
+  using Base = ControllerBase<STATE_DIM, INPUT_DIM>;
 
   using dimensions_t = Dimensions<STATE_DIM, INPUT_DIM>;
   using scalar_t = typename dimensions_t::scalar_t;
   using scalar_array_t = typename dimensions_t::scalar_array_t;
+  using float_array_t = typename Base::float_array_t;
   using state_vector_t = typename dimensions_t::state_vector_t;
   using input_vector_t = typename dimensions_t::input_vector_t;
   using input_vector_array_t = typename dimensions_t::input_vector_array_t;
@@ -28,22 +33,37 @@ class LinearController : public Controller<STATE_DIM, INPUT_DIM> {
   /**
    * @brief Default constructor leaves object uninitialized
    */
-  LinearController() : Base(), linInterpolateUff_(&time_, &uff_), linInterpolateK_(&time_, &k_) {}
+  LinearController()
+  : Base()
+  , linInterpolateBias_(&timeStamp_, &biasArray_)
+  , linInterpolateGain_(&timeStamp_, &gainArray_)
+  {}
 
   /**
-   * @brief Constructor initializes all required members of the controller
+   * @brief Constructor initializes all required members of the controller.
+   *
+   * @param [in] controllerTime: Time stamp array of the controller
+   * @param [in] controllerBias: The bias array.
+   * @param [in] controllerGain: The feedback gain array.
    */
-  LinearController(const scalar_array_t& controllerTime, const input_vector_array_t& controllerFeedforward,
-                   const input_state_matrix_array_t& controllerFeedback)
-      : LinearController() {
-    setController(controllerTime, controllerFeedforward, controllerFeedback);
+  LinearController(
+		  const scalar_array_t& controllerTime,
+		  const input_vector_array_t& controllerBias,
+		  const input_state_matrix_array_t& controllerGain)
+  : LinearController()
+  {
+    setController(controllerTime, controllerBias, controllerGain);
   }
 
   /**
    * @brief Copy constructor
    * @param other LinearController object to copy from
    */
-  LinearController(const LinearController& other) : LinearController(other.time_, other.uff_, other.k_) { deltaUff_ = other.deltaUff_; }
+  LinearController(const LinearController& other)
+  : LinearController(other.timeStamp_, other.biasArray_, other.gainArray_)
+  {
+	  deltaBiasArray_ = other.deltaBiasArray_;
+  }
 
   /**
    * @brief LinearController move constructor -- not implemented for now
@@ -75,103 +95,108 @@ class LinearController : public Controller<STATE_DIM, INPUT_DIM> {
 
   /**
    * @brief setController Assign control law
-   * @param controllerTime
-   * @param controllerFeedforward
-   * @param controllerFeedback
+   * @param [in] controllerTime: Time stamp array of the controller
+   * @param [in] controllerBias: The bias array.
+   * @param [in] controllerGain: The feedback gain array.
    */
-  void setController(const scalar_array_t& controllerTime, const input_vector_array_t& controllerFeedforward,
-                     const input_state_matrix_array_t& controllerFeedback) {
-    time_ = controllerTime;
-    uff_ = controllerFeedforward;
-    k_ = controllerFeedback;
+  void setController(
+		  const scalar_array_t& controllerTime,
+		  const input_vector_array_t& controllerBias,
+		  const input_state_matrix_array_t& controllerGain) {
+    timeStamp_ = controllerTime;
+    biasArray_ = controllerBias;
+    gainArray_ = controllerGain;
+    linInterpolateBias_.reset();
+    linInterpolateGain_.reset();
   }
-
-  /**
-   * @brief reset revert back to empty controller
-   */
-  void reset() {
-    linInterpolateUff_.reset();
-    linInterpolateK_.reset();
-    time_.clear();
-    uff_.clear();
-    k_.clear();
-  }
-
-  void clear() { reset(); }
 
   virtual input_vector_t computeInput(const scalar_t& t, const state_vector_t& x) override {
     input_vector_t uff;
-    linInterpolateUff_.interpolate(t, uff);
-    auto greatestLessTimeStampIndex = linInterpolateUff_.getGreatestLessTimeStampIndex();
+    linInterpolateBias_.interpolate(t, uff);
+    auto greatestLessTimeStampIndex = linInterpolateBias_.getGreatestLessTimeStampIndex();
 
     input_state_matrix_t k;
-    linInterpolateK_.interpolate(t, k, greatestLessTimeStampIndex);
+    linInterpolateGain_.interpolate(t, k, greatestLessTimeStampIndex);
 
     return uff + k * x;
   }
 
-  virtual void flatten(scalar_t time, scalar_array_t& flatArray) const override {
+  virtual void flatten(const scalar_array_t& timeArray, const std::vector<float_array_t*>& flatArray2) const override {
+    const auto timeSize = timeArray.size();
+    const auto dataSize = flatArray2.size();
+
+    if(timeSize != dataSize){
+        throw std::runtime_error("timeSize and dataSize must be equal in flatten method.");
+      }
+
+    for (size_t i = 0; i < timeSize; i++) {
+        flattenSingle(timeArray[i], *(flatArray2[i]));
+      }
+  }
+
+  void flattenSingle(scalar_t time, float_array_t& flatArray) const {
     flatArray.clear();
     flatArray.resize(INPUT_DIM + INPUT_DIM * STATE_DIM);
 
     input_vector_t uff;
-    linInterpolateUff_.interpolate(time, uff);
-    const auto greatestLessTimeStampIndex = linInterpolateUff_.getGreatestLessTimeStampIndex();
+    linInterpolateBias_.interpolate(time, uff);
+    const auto greatestLessTimeStampIndex = linInterpolateBias_.getGreatestLessTimeStampIndex();
 
     input_state_matrix_t k;
-    linInterpolateK_.interpolate(time, k, greatestLessTimeStampIndex);
+    linInterpolateGain_.interpolate(time, k, greatestLessTimeStampIndex);
 
     for (int i = 0; i < INPUT_DIM; i++) {  // i loops through input dim
-      flatArray[i * (STATE_DIM + 1) + 0] = uff(i);
+      flatArray[i * (STATE_DIM + 1) + 0] = static_cast<float>(uff(i));
       for (int j = 0; j < STATE_DIM; j++) {  // j loops through state dim
-        flatArray[i * (STATE_DIM + 1) + j + 1] = k(i, j);
+        flatArray[i * (STATE_DIM + 1) + j + 1] = static_cast<float>(k(i, j));
       }
     }
   }
 
-  virtual void flattenFeedforwardOnly(scalar_t time, scalar_array_t& flatArray) const override {
-    input_vector_t uff;
-    linInterpolateUff_.interpolate(time, uff);
-
-    // TODO(jcarius) should we subtract k*x_ref here?
-    flatArray = std::move(scalar_array_t(uff.data(), uff.data() + INPUT_DIM));
-  }
-
-  virtual void unFlatten(const scalar_array_t& timeArray, const std::vector<scalar_array_t const*>& flatArray2) override {
-    time_ = timeArray;
-
-    uff_.clear();
-    uff_.reserve(flatArray2.size());
-
-    k_.clear();
-
-    const auto arrayLengthPerTime = flatArray2[0]->size();
-    bool loadFeedback = false;
-
-    switch (arrayLengthPerTime) {
-      case INPUT_DIM: {
-        break;
-      }
-      case (INPUT_DIM + INPUT_DIM * STATE_DIM): {
-        loadFeedback = true;
-        break;
-      }
-      default: { throw std::runtime_error("LinearController::unFlatten received array of wrong length."); }
+  virtual void unFlatten(const scalar_array_t& timeArray, const std::vector<float_array_t const*>& flatArray2) override {
+    if(flatArray2[0]->size() != INPUT_DIM + INPUT_DIM * STATE_DIM){
+      throw std::runtime_error("LinearController::unFlatten received array of wrong length.");
     }
+
+    timeStamp_ = timeArray;
+
+    biasArray_.clear();
+    biasArray_.reserve(flatArray2.size());
+    gainArray_.clear();
+    gainArray_.reserve(flatArray2.size());
 
     for (const auto& arr : flatArray2) {  // loop through time
-      uff_.emplace_back(input_vector_t::Zero());
-      if (loadFeedback) {
-        k_.emplace_back(input_state_matrix_t::Zero());
-      }
+      biasArray_.emplace_back(input_vector_t::Zero());
+      gainArray_.emplace_back(input_state_matrix_t::Zero());
 
       for (int i = 0; i < INPUT_DIM; i++) {  // loop through input dim
-        uff_.back()(i) = (*arr)[i * (STATE_DIM + 1) + 0];
-        if (loadFeedback) {
-          k_.back().row(i) = Eigen::Map<const Eigen::Matrix<scalar_t, 1, STATE_DIM>>(&((*arr)[i * (STATE_DIM + 1) + 1]), STATE_DIM);
-        }
+        biasArray_.back()(i) = static_cast<scalar_t>((*arr)[i * (STATE_DIM + 1) + 0]);
+        gainArray_.back().row(i) = Eigen::Map<const Eigen::Matrix<float, 1, STATE_DIM>>(&((*arr)[i * (STATE_DIM + 1) + 1]), STATE_DIM).template cast<scalar_t>();
       }
     }
+  }
+
+  virtual ControllerType getType() const override {
+	  return ControllerType::LINEAR;
+  }
+
+  virtual void clear() override {
+
+    linInterpolateBias_.reset();
+    linInterpolateGain_.reset();
+    timeStamp_.clear();
+    biasArray_.clear();
+    gainArray_.clear();
+  }
+
+  virtual void setZero() override {
+    std::fill(biasArray_.begin(), biasArray_.end(), input_vector_t::Zero());
+    std::fill(deltaBiasArray_.begin(), deltaBiasArray_.end(), input_vector_t::Zero());
+    std::fill(gainArray_.begin(), gainArray_.end(), input_state_matrix_t::Zero());
+  }
+
+  virtual bool empty() const override {
+	  return timeStamp_.empty();
   }
 
   /**
@@ -181,46 +206,30 @@ class LinearController : public Controller<STATE_DIM, INPUT_DIM> {
   virtual void swap(LinearController<STATE_DIM, INPUT_DIM>& other) {
     using std::swap;  // enable ADL
 
-    swap(time_, other.time_);
-    swap(uff_, other.uff_);
-    swap(deltaUff_, other.deltaUff_);
-    swap(k_, other.k_);
+    swap(timeStamp_, other.timeStamp_);
+    swap(biasArray_, other.biasArray_);
+    swap(deltaBiasArray_, other.deltaBiasArray_);
+    swap(gainArray_, other.gainArray_);
   }
-
-  /**
-   * @brief Fills all the data containers with zeros. Does not change size, does not change time array.
-   */
-  void setZero() {
-    std::fill(uff_.begin(), uff_.end(), input_vector_array_t::Zero());
-    std::fill(deltaUff_.begin(), deltaUff_.end(), input_vector_array_t::Zero());
-    std::fill(k_.begin(), k_.end(), input_state_matrix_array_t::Zero());
-  }
-
-  /**
-   * Returns whether the class is empty (i.e. whether its size is 0).
-   *
-   * @return true if the time container size is 0, false otherwise.
-   */
-  bool empty() const { return time_.empty(); }
 
   /**
    * Returns the size of the controller (in particular the time stamp).
    *
    * @return the size of the controller.
    */
-  size_t size() const { return time_.size(); }
-
-  virtual std::string getType() const override { return "LinearController"; }
+  size_t size() const {
+	  return timeStamp_.size();
+  }
 
  public:
-  scalar_array_t time_;
-  input_vector_array_t uff_;
-  input_vector_array_t deltaUff_;
-  input_state_matrix_array_t k_;
+  scalar_array_t timeStamp_;
+  input_vector_array_t biasArray_;
+  input_vector_array_t deltaBiasArray_;
+  input_state_matrix_array_t gainArray_;
 
  protected:
-  EigenLinearInterpolation<input_vector_t> linInterpolateUff_;
-  EigenLinearInterpolation<input_state_matrix_t> linInterpolateK_;
+  EigenLinearInterpolation<input_vector_t> linInterpolateBias_;
+  EigenLinearInterpolation<input_state_matrix_t> linInterpolateGain_;
 };
 
 template <size_t STATE_DIM, size_t INPUT_DIM>

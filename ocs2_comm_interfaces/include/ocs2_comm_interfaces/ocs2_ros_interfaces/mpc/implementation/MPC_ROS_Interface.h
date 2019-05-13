@@ -36,7 +36,6 @@ template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
 MPC_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::MPC_ROS_Interface(
 		mpc_t& mpc,
 		const std::string& robotName /*= "robot"*/)
-
 	: mpcPtr_(&mpc)
 	, mpcSettings_(mpc.settings())
 	, robotName_(robotName)
@@ -62,7 +61,7 @@ MPC_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::MPC_ROS_Interface(
 template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
 MPC_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::~MPC_ROS_Interface() {
 
-	shutdownNodes();
+	shutdownNode();
 }
 
 /******************************************************************************************************/
@@ -182,7 +181,7 @@ void MPC_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::publishPolicy(
 	ros_msg_conversions_t::CreateObservationMsg(currentObservation,
 			mpcPolicyMsg_.initObservation);
 
-	mpcPolicyMsg_.controllerIsUpdated  = controllerIsUpdated;
+	mpcPolicyMsg_.controllerIsUpdated = controllerIsUpdated;
 
 	ros_msg_conversions_t::CreateTargetTrajectoriesMsg(*costDesiredTrajectoriesPtr,
 			mpcPolicyMsg_.planTargetTrajectories);
@@ -190,31 +189,38 @@ void MPC_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::publishPolicy(
 	ros_msg_conversions_t::CreateModeSequenceMsg(*eventTimesPtr, *subsystemsSequencePtr,
 			mpcPolicyMsg_.modeSequence);
 
-    const auto controllerType = controllerStockPtr->front()->getType();
+	auto controllerType = controllerStockPtr->front()->getType();
+	if(mpcSettings_.useFeedbackPolicy_==false)
+		controllerType = ControllerType::FEEDFORWARD;
 
-    if(controllerType == "LinearController"){
-        if(mpcSettings_.useFeedbackPolicy_){
-        mpcPolicyMsg_.controllerType = ocs2_comm_interfaces::mpc_flattened_controller::CONTROLLER_SLQ_FEEDBACK;
-        }else{
-            mpcPolicyMsg_.controllerType = ocs2_comm_interfaces::mpc_flattened_controller::CONTROLLER_SLQ_FEEDFORWARD;
-        }
-    }
-    else if (controllerType == "PathIntegralController"){
-        mpcPolicyMsg_.controllerType = ocs2_comm_interfaces::mpc_flattened_controller::CONTROLLER_PATH_INTEGRAL;
-    }
+	// translate controllerType enum into message enum
+	switch(controllerType){
+	case ControllerType::FEEDFORWARD :{
+		mpcPolicyMsg_.controllerType = ocs2_comm_interfaces::mpc_flattened_controller::CONTROLLER_FEEDFORWARD;
+		break;
+	}
+	case ControllerType::LINEAR :{
+		mpcPolicyMsg_.controllerType = ocs2_comm_interfaces::mpc_flattened_controller::CONTROLLER_LINEAR;
+		break;
+	}
+	default:{
+		throw std::runtime_error("MPC_ROS_Interface: Unknown controller type.");
+		break;
+	}
+	}
 
 	// maximum length of the message
-	size_t I = timeTrajectoriesStockPtr->size();
+	size_t numPartitions = timeTrajectoriesStockPtr->size();
 	size_t totalN = 0;
-	for (size_t i=0; i<I; i++)
+	for (size_t i=0; i<numPartitions; i++)
 		totalN += timeTrajectoriesStockPtr->at(i).size();
 
 	mpcPolicyMsg_.timeTrajectory.clear();
 	mpcPolicyMsg_.timeTrajectory.reserve(totalN);
 	mpcPolicyMsg_.stateTrajectory.clear();
 	mpcPolicyMsg_.stateTrajectory.reserve(totalN);
-    mpcPolicyMsg_.data.clear();
-    mpcPolicyMsg_.data.reserve(totalN);
+	mpcPolicyMsg_.data.clear();
+	mpcPolicyMsg_.data.reserve(totalN);
 
 	ocs2_comm_interfaces::mpc_state mpcState;
 	mpcState.value.resize(STATE_DIM);
@@ -225,21 +231,33 @@ void MPC_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::publishPolicy(
 	if (tf < t0+2.0*meanDelay_*1e-3)
 		std::cout << "WARNING: Message publishing time-horizon is shorter than the MPC delay!" << std::endl;
 
-	for (size_t i=0; i<I; i++)  { // loop through partitions
+	for (size_t i=0; i<numPartitions; i++)  { // loop through partitions
 
 		const scalar_array_t& timeTrajectory        = (*timeTrajectoriesStockPtr)[i];
 		const state_vector_array_t& stateTrajectory = (*stateTrajectoriesStockPtr)[i];
+		const input_vector_array_t& inputTrajectory = (*inputTrajectoriesStockPtr)[i];
 
 		size_t N = timeTrajectory.size();
 		if (N == 0)  continue;
 		if (timeTrajectory.back()  < t0)  continue;
 		if (timeTrajectory.front() > tf)  continue;
 
+		controller_t* ctrlToBeSent = (*controllerStockPtr)[i];
+		std::unique_ptr<FeedforwardController<STATE_DIM, INPUT_DIM>> ffwCtrl;
+		if(mpcSettings_.useFeedbackPolicy_==false){
+			ffwCtrl.reset(new FeedforwardController<STATE_DIM, INPUT_DIM>(timeTrajectory, inputTrajectory));
+			ctrlToBeSent = ffwCtrl.get();
+		}
+
+		std::vector<std::vector<float>*> policyMsgDataPointers;
+		policyMsgDataPointers.reserve(N);
+
+		scalar_array_t timeTrajectoryTruncated;
 		for (size_t k=0; k<N; k++) { // loop through time in partition i
 			// continue if elapsed time is smaller than computation time delay
 			if (k<N-1 && timeTrajectory[k+1]<t0)  continue;
 			// break if the time exceed rosMsgTimeWindow
-			if (timeTrajectory[k]>tf)  break;
+			if (k>0 && timeTrajectory[k-1]>tf)  break;
 
 			for (size_t j=0; j<STATE_DIM; j++)
 				mpcState.value[j] = stateTrajectory[k](j);
@@ -247,14 +265,13 @@ void MPC_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::publishPolicy(
 			mpcPolicyMsg_.timeTrajectory.push_back(timeTrajectory[k]);
 			mpcPolicyMsg_.stateTrajectory.push_back(mpcState);
 
-            mpcPolicyMsg_.data.emplace_back(ocs2_comm_interfaces::controller_data());
-            if(mpcSettings_.useFeedbackPolicy_){
-            (*controllerStockPtr)[i]->flatten(timeTrajectory[k], mpcPolicyMsg_.data.back().data);
-            }else{
-                (*controllerStockPtr)[i]->flattenFeedforwardOnly(timeTrajectory[k], mpcPolicyMsg_.data.back().data);
-            }
-
+			mpcPolicyMsg_.data.emplace_back(ocs2_comm_interfaces::controller_data());
+			policyMsgDataPointers.push_back(&mpcPolicyMsg_.data.back().data);
+			timeTrajectoryTruncated.push_back(timeTrajectory[k]);
 		}  // end of k loop
+
+
+		ctrlToBeSent->flatten(timeTrajectoryTruncated, policyMsgDataPointers);
 	}  // end of i loop
 
 #ifdef PUBLISH_THREAD
@@ -288,7 +305,7 @@ void MPC_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::publisherWorkerThre
 		msgReady_.notify_one();
 
 		// publish the message
-			mpcPolicyPublisher_.publish(mpcPolicyMsgBuffer_);
+		mpcPolicyPublisher_.publish(mpcPolicyMsgBuffer_);
 	}
 }
 
@@ -432,10 +449,10 @@ void MPC_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::mpcObservationCallb
 #else
 
 	// publish optimized output
-		publishPolicy(currentObservation, controllerIsUpdated,
-				costDesiredTrajectoriesPtr, controllersStockPtr,
-				timeTrajectoriesStockPtr, stateTrajectoriesStockPtr, inputTrajectoriesStockPtr,
-				eventTimesPtr, subsystemsSequencePtr);
+	publishPolicy(currentObservation, controllerIsUpdated, costDesiredTrajectoriesPtr,
+			controllersStockPtr,
+			timeTrajectoriesStockPtr, stateTrajectoriesStockPtr, inputTrajectoriesStockPtr,
+			eventTimesPtr, subsystemsSequencePtr);
 
 #endif
 
@@ -474,7 +491,7 @@ void MPC_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::mpcModeSequenceCall
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void MPC_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::shutdownNodes() {
+void MPC_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::shutdownNode() {
 
 #ifdef PUBLISH_THREAD
 	ROS_INFO_STREAM("Shutting down workers ...");
@@ -500,49 +517,97 @@ void MPC_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::shutdownNodes() {
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
+void MPC_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::initializeNode(int argc, char* argv[]) {
+
+	if (!nodeHandlerPtr_) {
+		// display
+		ROS_INFO_STREAM("MPC node is setting up ...");
+
+		// setup ROS
+		::ros::init(argc, argv, robotName_+"_mpc", ::ros::init_options::NoSigintHandler);
+		signal(SIGINT, MPC_ROS_Interface::sigintHandler);
+
+		// node handle
+		nodeHandlerPtr_.reset(new ros::NodeHandle);
+	}
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
+std::shared_ptr<ros::NodeHandle>& MPC_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::nodeHandlePtr() {
+
+	return nodeHandlerPtr_;
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
+void MPC_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::spin() {
+
+	ROS_INFO_STREAM("Start spinning now ...");
+
+	try
+	{
+		// Equivalent to ros::spin() + check if master is alive
+		while(::ros::ok() && ::ros::master::check() ) {
+			::ros::getGlobalCallbackQueue()->callAvailable(ros::WallDuration(0.1));
+		}
+	}
+	catch(...)
+	{
+		// declaring that MPC is not updated anymore
+		ocs2_comm_interfaces::mpc_flattened_controller mpcPolicyMsg;
+		mpcPolicyMsg.controllerIsUpdated = false;
+		mpcPolicyPublisher_.publish(mpcPolicyMsg);
+		throw;
+	}
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
 void MPC_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::launchNodes(int argc, char* argv[]) {
 
 	// reset counters and variables
 	reset();
 
-	// display
-	ROS_INFO_STREAM("MPC node is setting up ...");
-
-	// setup ROS
-	::ros::init(argc, argv, robotName_+"_mpc", ::ros::init_options::NoSigintHandler);
-	signal(SIGINT, MPC_ROS_Interface::sigintHandler);
-	::ros::NodeHandle nodeHandler;
+	// initialize node
+	initializeNode(argc, argv);
 
 	// Observation subscriber
-	mpcObservationSubscriber_ = nodeHandler.subscribe(
+	mpcObservationSubscriber_ = nodeHandlerPtr_->subscribe(
 			robotName_+"_mpc_observation",
 			1,
 			&MPC_ROS_Interface::mpcObservationCallback, this,
 			::ros::TransportHints().udp());
 
 	// Goal subscriber
-	mpcTargetTrajectoriesSubscriber_ = nodeHandler.subscribe(
+	mpcTargetTrajectoriesSubscriber_ = nodeHandlerPtr_->subscribe(
 			robotName_+"_mpc_target",
 			1,
 			&MPC_ROS_Interface::mpcTargetTrajectoriesCallback, this,
 			::ros::TransportHints().tcpNoDelay());
 
 	// Logic rules template subscriber
-	mpcModeSequenceSubscriber_ = nodeHandler.subscribe(
+	mpcModeSequenceSubscriber_ = nodeHandlerPtr_->subscribe(
 			robotName_+"_mpc_mode_sequence",
 			1,
 			&MPC_ROS_Interface::mpcModeSequenceCallback, this,
 			::ros::TransportHints().udp());
 
 	// SLQ-MPC publisher
-		mpcPolicyPublisher_ = nodeHandler.advertise<ocs2_comm_interfaces::mpc_flattened_controller>(
+		mpcPolicyPublisher_ = nodeHandlerPtr_->advertise<ocs2_comm_interfaces::mpc_flattened_controller>(
 				robotName_+"_mpc_policy", 1, true);
 
 	// dummy publisher
-	dummyPublisher_ = nodeHandler.advertise<ocs2_comm_interfaces::dummy>("ping", 1, true);
+	dummyPublisher_ = nodeHandlerPtr_->advertise<ocs2_comm_interfaces::dummy>("ping", 1, true);
 
 	// MPC reset service server
-	mpcResetServiceServer_ = nodeHandler.advertiseService(robotName_+"_mpc_reset",
+	mpcResetServiceServer_ = nodeHandlerPtr_->advertiseService(robotName_+"_mpc_reset",
 			&MPC_ROS_Interface::resetMpcCallback, this);
 
 	// display
@@ -551,9 +616,9 @@ void MPC_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::launchNodes(int arg
 #endif
 
 	ROS_INFO_STREAM("MPC node is ready.");
-	ROS_INFO_STREAM("Start spinning now ...");
 
-	::ros::spin();
+	// spin
+	spin();
 }
 
 

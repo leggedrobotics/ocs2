@@ -120,7 +120,7 @@ void MPC_SLQ<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculateController(
 		const scalar_t& initTime,
 		const state_vector_t& initState,
 		const scalar_t& finalTime,
-		const std::vector<scalar_array_t>*& timeTrajectoriesStockPtr,
+		const scalar_array2_t*& timeTrajectoriesStockPtr,
 		const state_vector_array2_t*& stateTrajectoriesStockPtr,
 		const input_vector_array2_t*& inputTrajectoriesStockPtr,
 		const controller_ptr_array_t*& controllerStockPtr)  {

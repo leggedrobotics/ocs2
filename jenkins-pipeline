@@ -1,2 +1,2 @@
 library 'continuous_integration_pipeline'
-ciPipeline("--test-jobs 1")
+ciPipeline("--publish-doxygen --doxygen-access anymal_robot anymal_sim")

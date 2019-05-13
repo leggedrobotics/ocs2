@@ -36,7 +36,6 @@ template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
 MPC_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::MPC_ROS_Interface(
 		mpc_t& mpc,
 		const std::string& robotName /*= "robot"*/)
-
 	: mpcPtr_(&mpc)
 	, mpcSettings_(mpc.settings())
 	, robotName_(robotName)
@@ -164,10 +163,11 @@ void MPC_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::publishDummy() {
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void MPC_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::publishFeedforwardPolicy(
+void MPC_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::publishPolicy(
 		const system_observation_t& currentObservation,
 		const bool& controllerIsUpdated,
 		const cost_desired_trajectories_t*& costDesiredTrajectoriesPtr,
+        const controller_ptr_array_t*& controllerStockPtr,
 		const std::vector<scalar_array_t>*& timeTrajectoriesStockPtr,
 		const state_vector_array2_t*& stateTrajectoriesStockPtr,
 		const input_vector_array2_t*& inputTrajectoriesStockPtr,
@@ -179,33 +179,51 @@ void MPC_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::publishFeedforwardP
 #endif
 
 	ros_msg_conversions_t::CreateObservationMsg(currentObservation,
-			mpcFeedforwardPolicyMsg_.initObservation);
+			mpcPolicyMsg_.initObservation);
 
-	mpcFeedforwardPolicyMsg_.controllerIsUpdated  = controllerIsUpdated;
+	mpcPolicyMsg_.controllerIsUpdated = controllerIsUpdated;
 
 	ros_msg_conversions_t::CreateTargetTrajectoriesMsg(*costDesiredTrajectoriesPtr,
-			mpcFeedforwardPolicyMsg_.planTargetTrajectories);
+			mpcPolicyMsg_.planTargetTrajectories);
 
 	ros_msg_conversions_t::CreateModeSequenceMsg(*eventTimesPtr, *subsystemsSequencePtr,
-			mpcFeedforwardPolicyMsg_.modeSequence);
+			mpcPolicyMsg_.modeSequence);
+
+	auto controllerType = controllerStockPtr->front()->getType();
+	if(mpcSettings_.useFeedbackPolicy_==false)
+		controllerType = ControllerType::FEEDFORWARD;
+
+	// translate controllerType enum into message enum
+	switch(controllerType){
+	case ControllerType::FEEDFORWARD :{
+		mpcPolicyMsg_.controllerType = ocs2_comm_interfaces::mpc_flattened_controller::CONTROLLER_FEEDFORWARD;
+		break;
+	}
+	case ControllerType::LINEAR :{
+		mpcPolicyMsg_.controllerType = ocs2_comm_interfaces::mpc_flattened_controller::CONTROLLER_LINEAR;
+		break;
+	}
+	default:{
+		throw std::runtime_error("MPC_ROS_Interface: Unknown controller type.");
+		break;
+	}
+	}
 
 	// maximum length of the message
-	size_t I = timeTrajectoriesStockPtr->size();
+	size_t numPartitions = timeTrajectoriesStockPtr->size();
 	size_t totalN = 0;
-	for (size_t i=0; i<I; i++)
+	for (size_t i=0; i<numPartitions; i++)
 		totalN += timeTrajectoriesStockPtr->at(i).size();
 
-	mpcFeedforwardPolicyMsg_.timeTrajectory.clear();
-	mpcFeedforwardPolicyMsg_.timeTrajectory.reserve(totalN);
-	mpcFeedforwardPolicyMsg_.stateTrajectory.clear();
-	mpcFeedforwardPolicyMsg_.stateTrajectory.reserve(totalN);
-	mpcFeedforwardPolicyMsg_.inputTrajectory.clear();
-	mpcFeedforwardPolicyMsg_.inputTrajectory.reserve(totalN);
+	mpcPolicyMsg_.timeTrajectory.clear();
+	mpcPolicyMsg_.timeTrajectory.reserve(totalN);
+	mpcPolicyMsg_.stateTrajectory.clear();
+	mpcPolicyMsg_.stateTrajectory.reserve(totalN);
+	mpcPolicyMsg_.data.clear();
+	mpcPolicyMsg_.data.reserve(totalN);
 
 	ocs2_comm_interfaces::mpc_state mpcState;
 	mpcState.value.resize(STATE_DIM);
-	ocs2_comm_interfaces::mpc_input mpcInput;
-	mpcInput.value.resize(INPUT_DIM);
 
 	// The message truncation time
 	const scalar_t t0 = currentObservation.time() + currentDelay_*1e-3;
@@ -213,34 +231,47 @@ void MPC_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::publishFeedforwardP
 	if (tf < t0+2.0*meanDelay_*1e-3)
 		std::cout << "WARNING: Message publishing time-horizon is shorter than the MPC delay!" << std::endl;
 
-	for (size_t i=0; i<I; i++)  {
+	for (size_t i=0; i<numPartitions; i++)  { // loop through partitions
 
-		const scalar_array_t& timeTrajectory        = timeTrajectoriesStockPtr->at(i);
-		const state_vector_array_t& stateTrajectory = stateTrajectoriesStockPtr->at(i);
-		const input_vector_array_t& inputTrajectory = inputTrajectoriesStockPtr->at(i);
+		const scalar_array_t& timeTrajectory        = (*timeTrajectoriesStockPtr)[i];
+		const state_vector_array_t& stateTrajectory = (*stateTrajectoriesStockPtr)[i];
+		const input_vector_array_t& inputTrajectory = (*inputTrajectoriesStockPtr)[i];
 
 		size_t N = timeTrajectory.size();
 		if (N == 0)  continue;
 		if (timeTrajectory.back()  < t0)  continue;
 		if (timeTrajectory.front() > tf)  continue;
 
-		for (size_t k=0; k<N; k++) {
+		controller_t* ctrlToBeSent = (*controllerStockPtr)[i];
+		std::unique_ptr<FeedforwardController<STATE_DIM, INPUT_DIM>> ffwCtrl;
+		if(mpcSettings_.useFeedbackPolicy_==false){
+			ffwCtrl.reset(new FeedforwardController<STATE_DIM, INPUT_DIM>(timeTrajectory, inputTrajectory));
+			ctrlToBeSent = ffwCtrl.get();
+		}
+
+		std::vector<std::vector<float>*> policyMsgDataPointers;
+		policyMsgDataPointers.reserve(N);
+
+		scalar_array_t timeTrajectoryTruncated;
+		for (size_t k=0; k<N; k++) { // loop through time in partition i
 			// continue if elapsed time is smaller than computation time delay
 			if (k<N-1 && timeTrajectory[k+1]<t0)  continue;
 			// break if the time exceed rosMsgTimeWindow
-			if (timeTrajectory[k]>tf)  break;
+			if (k>0 && timeTrajectory[k-1]>tf)  break;
 
 			for (size_t j=0; j<STATE_DIM; j++)
 				mpcState.value[j] = stateTrajectory[k](j);
 
-			for (size_t j=0; j<INPUT_DIM; j++)
-				mpcInput.value[j] = inputTrajectory[k](j);
+			mpcPolicyMsg_.timeTrajectory.push_back(timeTrajectory[k]);
+			mpcPolicyMsg_.stateTrajectory.push_back(mpcState);
 
-			mpcFeedforwardPolicyMsg_.timeTrajectory.push_back(timeTrajectory[k]);
-			mpcFeedforwardPolicyMsg_.stateTrajectory.push_back(mpcState);
-			mpcFeedforwardPolicyMsg_.inputTrajectory.push_back(mpcInput);
-
+			mpcPolicyMsg_.data.emplace_back(ocs2_comm_interfaces::controller_data());
+			policyMsgDataPointers.push_back(&mpcPolicyMsg_.data.back().data);
+			timeTrajectoryTruncated.push_back(timeTrajectory[k]);
 		}  // end of k loop
+
+
+		ctrlToBeSent->flatten(timeTrajectoryTruncated, policyMsgDataPointers);
 	}  // end of i loop
 
 #ifdef PUBLISH_THREAD
@@ -248,96 +279,8 @@ void MPC_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::publishFeedforwardP
 	lk.unlock();
 	msgReady_.notify_one();
 #else
-	mpcFeedforwardPolicyPublisher_.publish(mpcFeedforwardPolicyMsg_);
+	mpcPolicyPublisher_.publish(mpcPolicyMsg_);
 #endif
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void MPC_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::publishFeedbackPolicy(
-		const system_observation_t& currentObservation,
-		const bool& controllerIsUpdated,
-		const cost_desired_trajectories_t*& costDesiredTrajectoriesPtr,
-		const controller_array_t*& controllerStockPtr,
-		const scalar_array_t*& eventTimesPtr,
-		const size_array_t*& subsystemsSequencePtr)  {
-
-#ifdef PUBLISH_THREAD
-	std::unique_lock<std::mutex> lk(publisherMutex_);
-#endif
-
-	ros_msg_conversions_t::CreateObservationMsg(currentObservation,
-			mpcFeedbackPolicyMsg_.initObservation);
-
-	mpcFeedbackPolicyMsg_.controllerIsUpdated  = controllerIsUpdated;
-
-	ros_msg_conversions_t::CreateTargetTrajectoriesMsg(*costDesiredTrajectoriesPtr,
-			mpcFeedbackPolicyMsg_.planTargetTrajectories);
-
-	ros_msg_conversions_t::CreateModeSequenceMsg(*eventTimesPtr, *subsystemsSequencePtr,
-			mpcFeedbackPolicyMsg_.modeSequence);
-
-	mpcFeedbackPolicyMsg_.dimInput = INPUT_DIM;
-	mpcFeedbackPolicyMsg_.dimState = STATE_DIM;
-
-	// maximum length of the message
-	size_t I = controllerStockPtr->size();
-	size_t totalN = 0;
-	for (size_t i=0; i<I; i++)
-		totalN += controllerStockPtr->at(i).time_.size();
-
-	mpcFeedbackPolicyMsg_.slqControllerTrajectory.clear();
-	mpcFeedbackPolicyMsg_.slqControllerTrajectory.reserve(totalN);
-
-	ocs2_comm_interfaces::slq_controller slqControllerMsg;
-	slqControllerMsg.uff.value.resize(INPUT_DIM);
-	slqControllerMsg.gainMatrix.resize(INPUT_DIM*STATE_DIM);
-
-	const scalar_t t0 = currentObservation.time() + currentDelay_*1e-3;
-	const scalar_t tf = currentObservation.time() + mpcSettings_.rosMsgTimeWindow_*1e-3;
-	if (tf < t0+2.0*meanDelay_*1e-3)
-		std::cout << "WARNING: Message publishing time-horizon is shorter than the MPC delay!" << std::endl;
-
-	for (size_t i=0; i<I; i++)  {
-
-		const controller_t& controller = controllerStockPtr->at(i);
-
-		size_t N = controller.time_.size();
-
-		if (N == 0)  continue;
-		if (controller.time_.back()  < t0)  continue;
-		if (controller.time_.front() > tf)  continue;
-
-		for (size_t k=0; k<N; k++) {
-			// continue if elapsed time is smaller than computation time delay
-			if (k<N-1 && controller.time_[k+1]<t0)  continue;
-			// break if the time exceed rosMsgTimeWindow
-			if (controller.time_[k]>tf)  break;
-
-			slqControllerMsg.timeStamp = controller.time_[k];
-
-			for (size_t p=0; p<INPUT_DIM; p++) {
-				slqControllerMsg.uff.value[p] = controller.uff_[k](p);
-				for (size_t q=0; q<STATE_DIM; q++)
-					slqControllerMsg.gainMatrix[p*STATE_DIM + q] = controller.k_[k](p,q);
-			} // end of p loop
-
-			mpcFeedbackPolicyMsg_.slqControllerTrajectory.push_back(slqControllerMsg);
-
-		}  // end of k loop
-
-	}  // end of i loop
-
-#ifdef PUBLISH_THREAD
-	readyToPublish_ = true;
-	lk.unlock();
-	msgReady_.notify_one();
-#else
-	mpcFeedbackPolicyPublisher_.publish(mpcFeedbackPolicyMsg_);
-#endif
-
 }
 
 /******************************************************************************************************/
@@ -354,10 +297,7 @@ void MPC_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::publisherWorkerThre
 
 		if (terminateThread_==true)  break;
 
-		if (mpcSettings_.useFeedbackPolicy_==true)
-			mpcFeedbackPolicyMsgBuffer_ = std::move(mpcFeedbackPolicyMsg_);
-		else
-			mpcFeedforwardPolicyMsgBuffer_ = std::move(mpcFeedforwardPolicyMsg_);
+		mpcPolicyMsgBuffer_ = std::move(mpcPolicyMsg_);
 
 		readyToPublish_ = false;
 
@@ -365,10 +305,7 @@ void MPC_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::publisherWorkerThre
 		msgReady_.notify_one();
 
 		// publish the message
-		if (mpcSettings_.useFeedbackPolicy_==true)
-			mpcFeedbackPolicyPublisher_.publish(mpcFeedbackPolicyMsgBuffer_);
-		else
-			mpcFeedforwardPolicyPublisher_.publish(mpcFeedforwardPolicyMsgBuffer_);
+		mpcPolicyPublisher_.publish(mpcPolicyMsgBuffer_);
 	}
 }
 
@@ -462,9 +399,8 @@ void MPC_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::mpcObservationCallb
 			currentObservation.time(),
 			currentObservation.state());
 
-	// get a pointer to the optimized controller
-	const controller_array_t* controllersStockPtr(nullptr);
-	mpcPtr_->getOptimizedControllerPtr(controllersStockPtr);
+	// get a pointer to the optimized controller const_controller_ptr_array_t
+	controller_ptr_array_t const * controllersStockPtr = mpcPtr_->getOptimizedControllerPtr();
 	// get a pointer to the optimized trajectories
 	const std::vector<scalar_array_t>* timeTrajectoriesStockPtr(nullptr);
 	const state_vector_array2_t* stateTrajectoriesStockPtr(nullptr);
@@ -513,17 +449,10 @@ void MPC_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::mpcObservationCallb
 #else
 
 	// publish optimized output
-	if (mpcSettings_.useFeedbackPolicy_==true) {
-		publishFeedbackPolicy(currentObservation, controllerIsUpdated,
-				costDesiredTrajectoriesPtr,
-				controllersStockPtr,
-				eventTimesPtr, subsystemsSequencePtr);
-	} else {
-		publishFeedforwardPolicy(currentObservation, controllerIsUpdated,
-				costDesiredTrajectoriesPtr,
-				timeTrajectoriesStockPtr, stateTrajectoriesStockPtr, inputTrajectoriesStockPtr,
-				eventTimesPtr, subsystemsSequencePtr);
-	}
+	publishPolicy(currentObservation, controllerIsUpdated, costDesiredTrajectoriesPtr,
+			controllersStockPtr,
+			timeTrajectoriesStockPtr, stateTrajectoriesStockPtr, inputTrajectoriesStockPtr,
+			eventTimesPtr, subsystemsSequencePtr);
 
 #endif
 
@@ -580,8 +509,7 @@ void MPC_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::shutdownNode() {
 #endif
 
 	// shutdown publishers
-	mpcFeedforwardPolicyPublisher_.shutdown();
-	mpcFeedbackPolicyPublisher_.shutdown();
+	mpcPolicyPublisher_.shutdown();
 	dummyPublisher_.shutdown();
 }
 
@@ -631,15 +559,9 @@ void MPC_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::spin() {
 	catch(...)
 	{
 		// declaring that MPC is not updated anymore
-		if (mpcSettings_.useFeedbackPolicy_==true) {
-			ocs2_comm_interfaces::mpc_feedback_policy mpcFeedbackPolicyMsg;
-			mpcFeedbackPolicyMsg.controllerIsUpdated = false;
-			mpcFeedbackPolicyPublisher_.publish(mpcFeedbackPolicyMsg);
-		} else {
-			ocs2_comm_interfaces::mpc_feedforward_policy mpcFeedforwardPolicyMsg;
-			mpcFeedforwardPolicyMsg.controllerIsUpdated = false;
-			mpcFeedforwardPolicyPublisher_.publish(mpcFeedforwardPolicyMsg);
-		}
+		ocs2_comm_interfaces::mpc_flattened_controller mpcPolicyMsg;
+		mpcPolicyMsg.controllerIsUpdated = false;
+		mpcPolicyPublisher_.publish(mpcPolicyMsg);
 		throw;
 	}
 }
@@ -678,13 +600,8 @@ void MPC_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::launchNodes(int arg
 			::ros::TransportHints().udp());
 
 	// SLQ-MPC publisher
-	if (mpcSettings_.useFeedbackPolicy_==true) {
-		mpcFeedbackPolicyPublisher_ = nodeHandlerPtr_->advertise<ocs2_comm_interfaces::mpc_feedback_policy>(
-				robotName_+"_mpc_fb_policy", 1, true);
-	} else {
-		mpcFeedforwardPolicyPublisher_ = nodeHandlerPtr_->advertise<ocs2_comm_interfaces::mpc_feedforward_policy>(
-				robotName_+"_mpc_ff_policy", 1, true);
-	}
+		mpcPolicyPublisher_ = nodeHandlerPtr_->advertise<ocs2_comm_interfaces::mpc_flattened_controller>(
+				robotName_+"_mpc_policy", 1, true);
 
 	// dummy publisher
 	dummyPublisher_ = nodeHandlerPtr_->advertise<ocs2_comm_interfaces::dummy>("ping", 1, true);

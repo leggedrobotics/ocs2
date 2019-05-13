@@ -1,3 +1,9 @@
+; system parameters
+systemParameters
+{
+    mass 1.0
+}
+
 ; Time Horizon
 mpcTimeHorizon
 {
@@ -32,6 +38,7 @@ slq
 	constraintStepSize           1.0     ; 1.0                                          	
 	displayInfo                  0
 	displayShortSummary          0
+	debugPrintRollout            0
 	warmStartGSLQP               1    
 	useLQForDerivatives          0                                        
                                                                               	

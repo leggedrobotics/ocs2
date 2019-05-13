@@ -52,11 +52,12 @@ install(DIRECTORY include/${PROJECT_NAME}/
 #############
 ## Testing ##
 #############
-## Info ==============================
-## to run tests, cd package folder and run
-## $ catkin build -DCMAKE_BUILD_TYPE=RelWithDebInfo --this
-## $ catkin run_tests --no-deps --this
-## to see the summary of unit test results run
-## $ catkin_test_results ../../../build/ocs2_mpc
+
+catkin_add_gtest(testMPC_OCS2
+        test/testMPC_OCS2.cpp
+        )
+target_link_libraries(testMPC_OCS2
+        ${catkin_LIBRARIES}
+        )
 
 

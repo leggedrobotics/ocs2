@@ -56,16 +56,16 @@ void TrajectorySpreadingController<STATE_DIM, INPUT_DIM>::findsIndicesEventTimes
 
 			// if not the first event, use the index of the previous event in order to be more efficient.
 			// subjected to that they are in the same partition
-			typename scalar_array_t::const_iterator beginItr = controllersStock[p].time_.begin();
+			typename scalar_array_t::const_iterator beginItr = controllersStock[p].timeStamp_.begin();
 			if (j>0 && eventsIndices[j-1].first==p)
 				beginItr += eventsIndices[j-1].second;
 
-			auto lower = std::lower_bound(beginItr, controllersStock[p].time_.end(), te);
+			auto lower = std::lower_bound(beginItr, controllersStock[p].timeStamp_.end(), te);
 
 			// if the lower bound found
-			if (lower != controllersStock[p].time_.end()) {
+			if (lower != controllersStock[p].timeStamp_.end()) {
 				ie.first = p;
-				ie.second = lower - controllersStock[p].time_.begin();
+				ie.second = lower - controllersStock[p].timeStamp_.begin();
 				break;
 			}
 
@@ -166,20 +166,20 @@ void TrajectorySpreadingController<STATE_DIM, INPUT_DIM>::spreadController(
 		eventTimeIndexPrev.second  = eventTimeIndex.second - 1;
 	} else {
 		eventTimeIndexPrev.first  = eventTimeIndex.first - 1;
-		eventTimeIndexPrev.second = controllersStock[eventTimeIndexPrev.first].time_.size() - 1;
+		eventTimeIndexPrev.second = controllersStock[eventTimeIndexPrev.first].timeStamp_.size() - 1;
 	}
 
 	// controller at the new event time
-	const scalar_t alpha = (eventTime - controllersStock[eventTimeIndexPrev.first].time_[eventTimeIndexPrev.second]) /
-			(controllersStock[eventTimeIndex.first].time_[eventTimeIndex.second] - controllersStock[eventTimeIndexPrev.first].time_[eventTimeIndexPrev.second]);
+	const scalar_t alpha = (eventTime - controllersStock[eventTimeIndexPrev.first].timeStamp_[eventTimeIndexPrev.second]) /
+			(controllersStock[eventTimeIndex.first].timeStamp_[eventTimeIndex.second] - controllersStock[eventTimeIndexPrev.first].timeStamp_[eventTimeIndexPrev.second]);
 	// feedforward part
 	input_vector_t uffCorrected;
-	uffCorrected = (1-alpha) * controllersStock[eventTimeIndexPrev.first].uff_[eventTimeIndexPrev.second] +
-			alpha * controllersStock[eventTimeIndex.first].uff_[eventTimeIndex.second];
+	uffCorrected = (1-alpha) * controllersStock[eventTimeIndexPrev.first].biasArray_[eventTimeIndexPrev.second] +
+			alpha * controllersStock[eventTimeIndex.first].biasArray_[eventTimeIndex.second];
 	// feedback part
 	input_state_matrix_t kCorrected;
-	kCorrected   = (1-alpha) * controllersStock[eventTimeIndexPrev.first].k_[eventTimeIndexPrev.second] +
-			alpha * controllersStock[eventTimeIndex.first].k_[eventTimeIndex.second];
+	kCorrected   = (1-alpha) * controllersStock[eventTimeIndexPrev.first].gainArray_[eventTimeIndexPrev.second] +
+			alpha * controllersStock[eventTimeIndex.first].gainArray_[eventTimeIndex.second];
 
 	index_t startIndex;
 	index_t finalIndex;
@@ -190,10 +190,10 @@ void TrajectorySpreadingController<STATE_DIM, INPUT_DIM>::spreadController(
 		finalIndex = controlerEventTimeIndex;
 
 		// it is definitely at the same partition since it is the controller event times
-		uffSpread = controllersStock[controlerEventTimeIndex.first].uff_[controlerEventTimeIndex.second+1];  // it should be +1
-		kSpread   = controllersStock[controlerEventTimeIndex.first].k_[controlerEventTimeIndex.second+1];    // it should be +1
+		uffSpread = controllersStock[controlerEventTimeIndex.first].biasArray_[controlerEventTimeIndex.second+1];  // it should be +1
+		kSpread   = controllersStock[controlerEventTimeIndex.first].gainArray_[controlerEventTimeIndex.second+1];    // it should be +1
 
-		controllersStock[eventTimeIndex.first].time_[eventTimeIndex.second] = eventTime;
+		controllersStock[eventTimeIndex.first].timeStamp_[eventTimeIndex.second] = eventTime;
 
 	} else {
 
@@ -201,10 +201,10 @@ void TrajectorySpreadingController<STATE_DIM, INPUT_DIM>::spreadController(
 		finalIndex = eventTimeIndexPrev;
 
 		// it is definitely at the same partition since it is the controller event times
-		uffSpread = controllersStock[controlerEventTimeIndex.first].uff_[controlerEventTimeIndex.second];
-		kSpread   = controllersStock[controlerEventTimeIndex.first].k_[controlerEventTimeIndex.second];
+		uffSpread = controllersStock[controlerEventTimeIndex.first].biasArray_[controlerEventTimeIndex.second];
+		kSpread   = controllersStock[controlerEventTimeIndex.first].gainArray_[controlerEventTimeIndex.second];
 
-		controllersStock[eventTimeIndexPrev.first].time_[eventTimeIndexPrev.second] = eventTime;
+		controllersStock[eventTimeIndexPrev.first].timeStamp_[eventTimeIndexPrev.second] = eventTime;
 	}
 
 	// set inputs
@@ -214,8 +214,8 @@ void TrajectorySpreadingController<STATE_DIM, INPUT_DIM>::spreadController(
 		const size_t finalItr = (i==finalIndex.first) ? finalIndex.second : controllersStock[i].size()-1;
 
 		for (size_t k=startItr; k<=finalItr; k++) {
-			controllersStock[i].uff_[k]  = uffSpread;
-			controllersStock[i].k_[k]    = kSpread;
+			controllersStock[i].biasArray_[k]  = uffSpread;
+			controllersStock[i].gainArray_[k]    = kSpread;
 		} // end of k loop
 	} // end of i loop
 

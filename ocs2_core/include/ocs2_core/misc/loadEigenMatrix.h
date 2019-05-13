@@ -39,6 +39,21 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 namespace ocs2 {
 
 /**
+ * An auxiliary function which loads a scalar value from a file. The file uses property tree data structure with INFO format (refer to www.goo.gl/fV3yWA).
+ *
+ * @param [in] filename: File name which contains the configuration data.
+ * @param [in] scalarName: The key name assigned to the scalar in the config file.
+ * @param [out] value: The loaded value.
+ */
+template <typename scalar_t>
+inline void loadScalar(const std::string& filename, const std::string& scalarName, scalar_t& value) {
+  boost::property_tree::ptree pt;
+  boost::property_tree::read_info(filename, pt);
+
+  value = pt.get<scalar_t>(scalarName);
+}
+
+/**
  * An auxiliary function which loads an Eigen matrix from a file. The file uses property tree data structure with INFO format (refer to www.goo.gl/fV3yWA).
  *
  * It has the following format:	<br>
@@ -94,7 +109,6 @@ inline void loadEigenMatrix(
 
 
 }  // end of ocs2 namespace
-
 
 
 #endif /* OCS2_LOADEIGENMATRIX_H_ */

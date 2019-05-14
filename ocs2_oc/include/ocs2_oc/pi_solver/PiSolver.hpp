@@ -21,7 +21,7 @@ namespace ocs2 {
  * https://github.com/cbfinn/gps/blob/master/python/gps/algorithm/traj_opt/traj_opt_pi2.py
  */
 template <size_t STATE_DIM, size_t INPUT_DIM>
-class PiSolver : public Solver_BASE<STATE_DIM, INPUT_DIM, NullLogicRules> {
+class PiSolver final : public Solver_BASE<STATE_DIM, INPUT_DIM, NullLogicRules> {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
@@ -292,8 +292,6 @@ controller_.gamma_ = gamma_;
   virtual void getControllerPtr(const controller_ptr_array_t*& controllersStockPtr) const override {
       controllersStockPtr = &nominalControllersPtrStock_;
   }
-
-  virtual void swapController(controller_ptr_array_t& controllersStock) override { throw std::runtime_error("not implemented."); }
 
   virtual const std::vector<scalar_array_t>& getNominalTimeTrajectories() const override { throw std::runtime_error("not implemented."); }
 

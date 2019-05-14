@@ -1,6 +1,6 @@
 #pragma once
 
-#include "ocs2_core/control/Controller.h"
+#include "ocs2_core/control/ControllerBase.h"
 
 #include <random>
 
@@ -20,14 +20,15 @@ namespace ocs2 {
 // TODO(jcarius) do we need the LOGIC_RULES_T template?
 
 template <size_t STATE_DIM, size_t INPUT_DIM>
-class PiController : public Controller<STATE_DIM, INPUT_DIM> {
+class PiController final : public ControllerBase<STATE_DIM, INPUT_DIM> {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-  using Base = Controller<STATE_DIM, INPUT_DIM>;
+  using Base = ControllerBase<STATE_DIM, INPUT_DIM>;
 
   using scalar_t = typename Base::scalar_t;
   using scalar_array_t = typename Base::scalar_array_t;
+  using float_array_t = typename Base::float_array_t;
   using dimensions_t = typename Base::dimensions_t;
   using state_vector_t = typename dimensions_t::state_vector_t;
   using state_vector_array_t = typename dimensions_t::state_vector_array_t;
@@ -105,7 +106,7 @@ class PiController : public Controller<STATE_DIM, INPUT_DIM> {
   }
 
 
-  virtual void flatten(scalar_t time, scalar_array_t& flatArray) const override {
+  virtual void flatten(const scalar_array_t& timeArray, const std::vector<float_array_t*>& flatArray2) const override {
       throw std::runtime_error("not implemented");
 
 //      flatArray.clear();
@@ -127,7 +128,7 @@ class PiController : public Controller<STATE_DIM, INPUT_DIM> {
   }
 
 
-  virtual void unFlatten(const scalar_array_t& timeArray, const std::vector<scalar_array_t const *>& flatArray2) override {
+  virtual void unFlatten(const scalar_array_t& timeArray, const std::vector<float_array_t const*>& flatArray2) override {
       throw std::runtime_error("not implemented");
 
 //      const auto size = flatArray.size() / (1+STATE_DIM+INPUT_DIM);
@@ -178,7 +179,21 @@ class PiController : public Controller<STATE_DIM, INPUT_DIM> {
       throw std::runtime_error("not implemented");
   }
 
-  virtual std::string getType() const override {return "PathIntegralController";}
+  virtual ControllerType getType() const override {return ControllerType::PATH_INTEGRAL;}
+
+  virtual void clear() override {
+    time_.clear();
+    xNominal_.clear();
+    uff_.clear();
+  }
+
+  virtual void setZero() override {
+    throw std::runtime_error("not implemented");
+  }
+
+  virtual bool empty() const override {
+    return time_.empty();
+  }
 
  public:
   // values set in computeInput method

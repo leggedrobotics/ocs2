@@ -304,7 +304,7 @@ void MRT_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::mpcPolicyCallback(
 
 	// customized adjustment
 	modifyBufferPolicy(mpcInitObservationBuffer_,
-			mpcControllerBufferPtr_.get(),
+			*mpcControllerBufferPtr_,
 			mpcTimeTrajectoryBuffer_, mpcStateTrajectoryBuffer_,
 			eventTimesBuffer_, subsystemsSequenceBuffer_);
 

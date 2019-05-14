@@ -53,10 +53,10 @@ class PiSolver final : public Solver_BASE<STATE_DIM, INPUT_DIM, NullLogicRules> 
   using constraint_t = ConstraintBase<STATE_DIM, INPUT_DIM, logic_rules_t>;
   using pi_controller_t = PiController<STATE_DIM, INPUT_DIM>;
 
-  PiSolver(const typename controlled_system_base_t::Ptr systemDynamicsPtr, const typename cost_function_t::Ptr costFunction,
+  PiSolver(const typename controlled_system_base_t::Ptr systemDynamicsPtr, std::unique_ptr<cost_function_t> costFunction,
            const constraint_t constraint, scalar_t rollout_dt, scalar_t noiseScaling)
       : systemDynamics_(systemDynamicsPtr),
-        costFunction_(costFunction),
+        costFunction_(std::move(costFunction)),
         rollout_(*systemDynamicsPtr, Rollout_Settings(1e-9, 1e-6, 5000, rollout_dt, IntegratorType::EULER)),
         constraint_(constraint),
         rollout_dt_(rollout_dt),
@@ -335,7 +335,7 @@ controller_.gamma_ = gamma_;
 
  protected:
   typename controlled_system_base_t::Ptr systemDynamics_;
-  typename cost_function_t::Ptr costFunction_;
+  std::unique_ptr<cost_function_t> costFunction_;
 
   constraint_t constraint_;
 

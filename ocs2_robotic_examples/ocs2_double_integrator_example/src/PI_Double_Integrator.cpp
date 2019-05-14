@@ -16,7 +16,6 @@ int main(int argc, char** argv) {
 
   std::string taskFile =
       ros::package::getPath("ocs2_robotic_examples") + "/config/double_integrator/" + std::string(argv[1]) + "/task.info";
-  std::cerr << "Loading task file: " << taskFile << std::endl;
 
   using dynamics_t = ocs2::double_integrator::DoubleIntegratorDynamics;
   constexpr auto STATE_DIM = dynamics_t::DIMENSIONS::STATE_DIM_;
@@ -33,7 +32,6 @@ int main(int argc, char** argv) {
   ocs2::loadEigenMatrix(taskFile, "initialState", xInitial);
 
   // Cost function
-  using cost_t = ocs2::PathIntegralCostFunction<STATE_DIM, INPUT_DIM>;
   dynamics_t::DIMENSIONS::state_matrix_t Q, QFinal;
   ocs2::loadEigenMatrix(taskFile, "Q", Q);
   ocs2::loadEigenMatrix(taskFile, "Q_final", QFinal);
@@ -56,7 +54,8 @@ int main(int argc, char** argv) {
   std::cerr << "Q_final:\n" << QFinal << std::endl;
   std::cerr << "x_init:   " << xInitial.transpose() << std::endl;
   std::cerr << "x_final:  " << xFinal.transpose() << std::endl;
-  cost_t::Ptr cost(new cost_t(R, uNominal, V, r, Phi));
+  using cost_t = ocs2::PathIntegralCostFunction<STATE_DIM, INPUT_DIM>;
+  std::unique_ptr<cost_t> cost(new cost_t(R, uNominal, V, r, Phi));
 
   dynamics_t::scalar_t initTime(0.0);
   dynamics_t::scalar_t finalTime(5.0);
@@ -78,7 +77,7 @@ int main(int argc, char** argv) {
   // ocs2::double_integrator::DoubleIntegratorInterface doubleIntegratorInterface(argv[1]);
   ocs2::MPC_Settings mpcSettings;
   mpcSettings.loadSettings(taskFile);
-  ocs2::MPC_PI<STATE_DIM, INPUT_DIM> mpc_pi(dynamics, cost, constraint, rollout_dt, mpcSettings);
+  ocs2::MPC_PI<STATE_DIM, INPUT_DIM> mpc_pi(dynamics, std::move(cost), constraint, rollout_dt, mpcSettings);
   mpc_pi.setCostDesiredTrajectories(costDesiredTraj);
   ocs2::double_integrator::MPC_ROS_Linear_System mpcNode(mpc_pi, "double_integrator");
 

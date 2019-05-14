@@ -30,11 +30,11 @@ class MPC_PI : public MPC_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> {
   typedef typename solver_t::cost_function_t cost_t;
   typedef typename solver_t::constraint_t constraint_t;
 
-  MPC_PI(typename dynamics_t::Ptr dynamics, typename cost_t::Ptr cost, const constraint_t constraint, scalar_t rollout_dt,
+  MPC_PI(typename dynamics_t::Ptr dynamics, std::unique_ptr<cost_t> cost, const constraint_t constraint, scalar_t rollout_dt,
          const MPC_Settings& settings)
       : BASE(scalar_array_t{0.0, 1.0}, settings) {
     scalar_t noiseScaling = 0.1;  // TODO(jcarius) set this in config file
-    piSolverPtr_.reset(new solver_t(dynamics, cost, constraint, rollout_dt, noiseScaling));
+    piSolverPtr_.reset(new solver_t(dynamics, std::move(cost), constraint, rollout_dt, noiseScaling));
     BASE::setBaseSolverPtr(piSolverPtr_.get());
   }
 
@@ -71,7 +71,7 @@ class MPC_PI : public MPC_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> {
   virtual solver_base_t* getSolverPtr() override { return piSolverPtr_.get(); }  // TODO(jcarius) should this happen in the base class?
 
  protected:
-  typename solver_t::Ptr piSolverPtr_;
+  std::unique_ptr<solver_t> piSolverPtr_;
 };
 
 }  // namespace ocs2

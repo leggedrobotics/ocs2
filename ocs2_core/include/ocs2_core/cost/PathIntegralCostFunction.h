@@ -15,13 +15,11 @@ namespace ocs2 {
  * @tparam LOGIC_RULES_T: Logic Rules type (default NullLogicRules).
  */
 template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T = NullLogicRules>
-class PathIntegralCostFunction : public CostFunctionBase<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> {
+class PathIntegralCostFunction final : public CostFunctionBase<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
   typedef CostFunctionBase<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> BASE;
-  typedef std::shared_ptr<PathIntegralCostFunction<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>> Ptr;
-  typedef std::shared_ptr<const PathIntegralCostFunction<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>> ConstPtr;
 
   typedef Dimensions<STATE_DIM, INPUT_DIM> DIMENSIONS;
   typedef typename DIMENSIONS::scalar_t scalar_t;

@@ -30,7 +30,7 @@ class ocs2_doc_filter:
     ## Error log file name.
     self.errorLogFile = "ocs2_doc_filter.error.log"
     ## Logging level.
-    self.logLevel = self.logNone
+    self.logLevel = self.logAll
 
   # Handles a file.
   def handleFile(self, fileName):
@@ -38,7 +38,7 @@ class ocs2_doc_filter:
       self.log('\nXXXXXXXXXX\nXX ' + filename + '\nXXXXXXXXXX\n\n')
       # Open the file. Use try to detect whether or not we have an actual file.
       try:
-        with open(filename, 'r') as inputFile:
+        with open(filename, 'r', encoding="utf-8") as inputFile:
           self.parseFile(inputFile)
         pass
       except IOError as e:
@@ -46,7 +46,7 @@ class ocs2_doc_filter:
     else:
       # just pass on to doxygen
       try:
-        with open(fileName, 'r') as inputFile:
+        with open(fileName, 'r', encoding="utf-8") as inputFile:
           self.log('\nXXXXXXXXXX\nXX ' + filename + ' --not edited--\nXXXXXXXXXX\n\n')
           theOutput = ''
           # print(inputFile.read())

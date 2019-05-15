@@ -33,6 +33,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <Eigen/StdVector>
 #include <vector>
 #include <Eigen/Dense>
+#include <iostream>
 
 #include <ocs2_core/Dimensions.h>
 #include <ocs2_core/integration/ODE_Base.h>
@@ -47,7 +48,7 @@ namespace ocs2{
  * @tparam INPUT_DIM: Dimension of the control input space.
  */
 template <size_t STATE_DIM, size_t INPUT_DIM>
-class SequentialRiccatiEquationsNormalized : public ODE_Base<STATE_DIM*(STATE_DIM+1)/2+STATE_DIM+1>
+class SequentialRiccatiEquationsNormalized final : public ODE_Base<STATE_DIM*(STATE_DIM+1)/2+STATE_DIM+1>
 {
 public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
@@ -121,7 +122,11 @@ public:
 	/**
 	 * Default destructor.
 	 */
-	~SequentialRiccatiEquationsNormalized() = default;
+	~SequentialRiccatiEquationsNormalized() {
+			std::cout << "RiccatiEquation setDataCount_ called " << setDataCount_ << " times" << std::endl;
+			std::cout << "RiccatiEquation called " << flowMapCount_ << " times" << std::endl;
+			std::cout << "Interpolation would have been called " << interpolationCount_ << " times" << std::endl;
+	};
 
 	/**
 	 * Transcribe symmetric matrix Sm, vector Sv and scalar s into a single vector.
@@ -227,6 +232,8 @@ public:
 			const state_matrix_array_t* QmFianlPtr)  {
 
 		BASE::resetNumFunctionCalls();
+		setDataCount_++;
+		interpolationCount_ += AmPtr->size();
 
 		switchingTimeStart_ = switchingTimeStart;
 		switchingTimeFinal_ = switchingTimeFinal;
@@ -252,6 +259,9 @@ public:
 		qFinalPtr_  = qFinalPtr;
 		QvFinalPtr_ = QvFinalPtr;
 		QmFianlPtr_ = QmFianlPtr;
+
+		// TODO Precompute terms here
+		// Possibly delete interpolators to unused data
 	}
 
 	/**
@@ -297,7 +307,7 @@ public:
 			const scalar_t& z,
 			const s_vector_t& allSs,
 			s_vector_t& derivatives) override {
-
+		flowMapCount_++;
 		BASE::numFunctionCalls_++;
 
 		// denormalized time
@@ -324,9 +334,9 @@ public:
 
 		// Riccati equations for the original system
 		Pm_.noalias() += Bm_.transpose()*Sm_; // ! Pm is changed to avoid an extra temporary
-		Lm_.noalias() = RmInv_*Pm_;
+		Lm_.noalias() = RmInv_*Pm_; // TODO precompute and interpolate
 		Rv_.noalias() += Bm_.transpose()*Sv_; // ! Rv is changed to avoid an extra temporary
-		Lv_.noalias() = RmInv_*Rv_;
+		Lv_.noalias() = RmInv_*Rv_; // TODO precompute and interpolate
 
 		/*note: according to some discussions on stackoverflow, it does not buy computation time if multiplications
 		 * with symmetric matrices are executed using selfadjointView(). Doing the full multiplication seems to be faster
@@ -335,20 +345,20 @@ public:
 		 *  Expressions written base on guidelines in http://eigen.tuxfamily.org/dox/TopicWritingEfficientProductExpression.html
 		 */
 		Am_transposeSm_.noalias() = Am_.transpose()*Sm_.transpose();
-		Lm_transposeRm_.noalias() = Lm_.transpose()*Rm_.transpose();
+		Lm_transposeRm_.noalias() = Lm_.transpose()*Rm_.transpose(); // TODO precompute and interpolate
 
 		// dSmdt,  Qm_ used instead of temporary
 		Qm_ += Am_transposeSm_ + Am_transposeSm_.transpose();
-		Qm_.noalias() -= Lm_transposeRm_*Lm_;
+		Qm_.noalias() -= Lm_transposeRm_*Lm_; // TODO precompute and interpolate
 		Qm_ *= scalingFactor_;
 
 		// dSvdt,  Qv_ used instead of temporary
 		Qv_.noalias() += Am_.transpose()*Sv_;
-		Qv_.noalias() -= Lm_transposeRm_*Lv_;
+		Qv_.noalias() -= Lm_transposeRm_*Lv_; // TODO precompute and interpolate
 		Qv_ *= scalingFactor_;
 
 		// dsdt,   q_ used instead of temporary
-		q_.noalias() -= 0.5 *Lv_.transpose()*Rm_ * Lv_;
+		q_.noalias() -= 0.5 *Lv_.transpose()*Rm_ * Lv_; // TODO precompute and interpolate
 		q_ *= scalingFactor_;
 
 		convert2Vector(Qm_, Qv_, q_, derivatives);
@@ -433,7 +443,12 @@ private:
 	EigenLinearInterpolation<input_matrix_t> RmFunc_;
 	EigenLinearInterpolation<input_state_matrix_t> PmFunc_;
 
-	// members required only in computeFlowMap()
+	// Precomputation
+//	bool preComputeRiccatiTerms_ = true;
+	// EigenLinearInterpolation< > linearTermFunc_
+	// state_matrix_array_t linearMatrixTerm_
+
+	// members required only in computeFlowMap() // TODO check which are being used
 	state_matrix_t Sm_;
 	state_vector_t Sv_;
 	eigen_scalar_t s_;
@@ -461,6 +476,35 @@ private:
 	const eigen_scalar_array_t* qFinalPtr_;
 	const state_vector_array_t* QvFinalPtr_;
 	const state_matrix_array_t* QmFianlPtr_;
+	
+//	static void computeRiccatiMatrixTerms(const state_matrix_array_t &Am,
+//                                     const state_input_matrix_array_t &Bm,
+//                                     const state_matrix_array_t &Qm,
+//                                     const input_matrix_array_t &RmInverse,
+//                                     const input_matrix_array_t &Rm,
+//                                     const input_state_matrix_array_t &Pm,
+//                                     const state_matrix_array_t &QmFinal,
+//                                     state_matrix_array_t &quadraticRiccatiMatrixTerm,
+//                                     state_matrix_array_t &linearRiccatiMatrixTerm,
+//                                     state_matrix_array_t &constantRiccatiMatrixTerm) {
+//	  // TODO
+//	}
+
+//  static void computeRiccatiMatrixTerms(const state_matrix_array_t &Am,
+//                                        const state_input_matrix_array_t &Bm,
+//                                        const state_matrix_array_t &Qm,
+//                                        const input_matrix_array_t &RmInverse,
+//                                        const input_matrix_array_t &Rm,
+//                                        const input_state_matrix_array_t &Pm,
+//                                        const state_matrix_array_t &QmFinal,
+//                                        state_matrix_array_t &quadraticRiccatiMatrixTerm,
+//                                        state_matrix_array_t &linearRiccatiMatrixTerm,
+//                                        state_matrix_array_t &constantRiccatiMatrixTerm) {
+//    // TODO
+//  }
+  int flowMapCount_ = 0;
+  int interpolationCount_ = 0;
+  int setDataCount_ = 0;
 };
 
 }

@@ -128,7 +128,6 @@ public:
 
 		if (zeroFunction_) {
 			enquiryData.setZero();
-			return index;
 		} else {
 			if (greatestLessTimeStampIndex < 0) { // No index provided -> search for it
 				index = find(timeStamp, enquiryTime);
@@ -137,16 +136,14 @@ public:
 			// Check bounds and extrapolate with zero order
 			if ( index >= static_cast<int>(timeStamp.size()-1) ) { // upper bound
 				enquiryData = dataArray.back();
-				return index;
 			} else if (index < 0) { // lower bound, with zero it is still between the first two timepoints
 				enquiryData = dataArray.front();
-				return index;
 			} else { // interpolation
 				scalar_t alpha = (enquiryTime - timeStamp[index + 1]) / (timeStamp[index] - timeStamp[index + 1]);
 				enquiryData = alpha * dataArray[index] + (1 - alpha) * dataArray[index + 1];
-				return index;
 			}
 		}
+		return index;
 	}
 
 protected:

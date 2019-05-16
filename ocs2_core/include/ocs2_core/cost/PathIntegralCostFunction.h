@@ -10,7 +10,7 @@ namespace ocs2 {
  * Cost Function for Path Integral Solver
  * Requires quadratic costs on the input and arbitrary state cost.
  * @warning Does not use costDesiredTrajectories at the moment
- * @todo use cost desired trajectories (access via xNominalFunc_, uNominalFunc_)
+ * @todo use cost desired trajectories (access via xNominalIntermediate_, uNominalIntermediate_)
  *
  * @tparam STATE_DIM: Dimension of the state space.
  * @tparam INPUT_DIM: Dimension of the control input space.

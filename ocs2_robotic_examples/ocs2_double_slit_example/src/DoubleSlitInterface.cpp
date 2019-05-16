@@ -79,8 +79,10 @@ void DoubleSlitInterface::setupOptimizer(const std::string& taskFile) {
 
   scalar_t rollout_dt;
   loadScalar(taskFile, "systemParameters.rollout_dt", rollout_dt);
+  scalar_t gamma;
+  loadScalar(taskFile, "pathIntegral.gamma", gamma);
 
-  piPtr_.reset(new pi_t(linearSystemDynamicsPtr_, std::move(costPtr_), *linearSystemConstraintPtr_,  rollout_dt, partitioningTimes_,  mpcSettings));
+  piPtr_.reset(new pi_mpc_t(linearSystemDynamicsPtr_, std::move(costPtr_), *linearSystemConstraintPtr_,  rollout_dt, gamma, partitioningTimes_,  mpcSettings));
 }
 
 DoubleSlitInterface::scalar_t DoubleSlitInterface::doubleSlitPotentialWall(dim_t::state_vector_t x, scalar_t t) const {

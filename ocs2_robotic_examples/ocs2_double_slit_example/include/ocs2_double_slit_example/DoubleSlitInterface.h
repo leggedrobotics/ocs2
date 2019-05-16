@@ -33,7 +33,7 @@ public:
 	using DoubleSlitOperatingPoint = ocs2::SystemOperatingPoint<dim_t::STATE_DIM_, dim_t::INPUT_DIM_>;
 
 	typedef ocs2::MPC_SLQ<dim_t::STATE_DIM_, dim_t::INPUT_DIM_> mpc_t;
-	typedef ocs2::MPC_PI<dim_t::STATE_DIM_, dim_t::INPUT_DIM_> pi_t;
+	typedef ocs2::MPC_PI<dim_t::STATE_DIM_, dim_t::INPUT_DIM_> pi_mpc_t;
 
 	/**
 	 * Constructor
@@ -70,7 +70,7 @@ public:
 	 * Gets a pointer to the internal PI-MPC class
 	 * @return Pointer to PI MPC
 	 */
-	pi_t* getPiPtr() { return piPtr_.get(); }
+	pi_mpc_t* getPiPtr() { return piPtr_.get(); }
 
 	/**
 	 * @brief doubleSlitPotentialWall models the potential wall of our problem
@@ -94,7 +94,7 @@ protected:
 	std::string taskFile_;
 
 	mpc_t::Ptr mpcPtr_;
-	std::unique_ptr<pi_t> piPtr_;
+	std::unique_ptr<pi_mpc_t> piPtr_;
 
 	DoubleSlitDynamics::Ptr linearSystemDynamicsPtr_;
 

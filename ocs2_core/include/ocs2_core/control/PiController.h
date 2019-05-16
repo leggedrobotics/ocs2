@@ -26,6 +26,7 @@ class PiController final : public ControllerBase<STATE_DIM, INPUT_DIM> {
 
   using Base = ControllerBase<STATE_DIM, INPUT_DIM>;
 
+  using dim_t = typename Base::dimensions_t;
   using scalar_t = typename Base::scalar_t;
   using scalar_array_t = typename Base::scalar_array_t;
   using float_array_t = typename Base::float_array_t;
@@ -55,6 +56,14 @@ class PiController final : public ControllerBase<STATE_DIM, INPUT_DIM> {
 
     linInterpolateXNominal_.setZero();
     linInterpolateUff_.setZero();
+
+    // check constraints
+    if(constraints_.numStateOnlyConstraint(0.0)){
+        throw std::runtime_error("PiController does not support state-only constraints");
+      }
+    if(constraints_.numInequalityConstraint(0.0)){
+        throw std::runtime_error("PiController does not support inequality constraints");
+      }
   }
 
   /**
@@ -70,23 +79,31 @@ class PiController final : public ControllerBase<STATE_DIM, INPUT_DIM> {
    * @return Current input.
    */
   virtual input_vector_t computeInput(const scalar_t& t, const state_vector_t& x) override {
-    // extract constraint terms
-    constraints_.setCurrentStateAndControl(t, x, input_vector_t::Zero());
-    typename constraint_t::constraint1_vector_t c;
-    constraints_.getConstraint1(c);
-    typename constraint_t::constraint1_input_matrix_t D;
-    constraints_.getConstraint1DerivativesControl(D);
-
     // extract cost terms
     costs_.setCurrentStateAndControl(t, x, input_vector_t::Zero());
     costs_.getIntermediateCost(V_);                       // must have set zero input before
     costs_.getIntermediateCostSecondDerivativeInput(R_);  // TODO(jcarius) do we need a R *= 2; here?
-    Rinv_ = R_.inverse();                                 // TODO(jcarius) better way to to this?
+    Rinv_ = R_.ldlt().solve(input_matrix_t::Identity());
     costs_.getIntermediateCostDerivativeInput(r_);        // must have set zero input before
 
-    // calculate auxiliary terms
-    Ddagger_ = Rinv_ * D.transpose() * (D * Rinv_ * D.transpose()).inverse();
-    Dtilde_ = Ddagger_ * D;
+    // extract constraint terms and calculate auxiliary quantities
+    const auto nc = constraints_.numStateInputConstraint(t);
+    if(nc){
+      constraints_.setCurrentStateAndControl(t, x, input_vector_t::Zero());
+      typename constraint_t::constraint1_vector_t c_full;
+      constraints_.getConstraint1(c_full);
+      c_ = c_full.topRows(nc);
+      typename constraint_t::constraint1_input_matrix_t D_full;
+      constraints_.getConstraint1DerivativesControl(D_full);
+      typename dim_t::dynamic_matrix_t D = D_full.topRows(nc);
+
+      Ddagger_ = Rinv_ * D.transpose() * (D * Rinv_ * D.transpose()).ldlt().solve(dim_t::dynamic_matrix_t::Identity(nc,nc));
+      Dtilde_ = Ddagger_ * D;
+     } else {
+      c_ = constraint_t::constraint1_vector_t::Zero();
+      Ddagger_ = dim_t::control_constraint1_matrix_t::Zero();
+      Dtilde_.setZero();
+    }
 
     input_matrix_t QQt = gamma_ * (input_matrix_t::Identity() - Dtilde_) * Rinv_;
     input_matrix_t Q;
@@ -96,13 +113,13 @@ class PiController final : public ControllerBase<STATE_DIM, INPUT_DIM> {
       Q.setZero();
     }
 
-    input_vector_t constraintInput = -(input_matrix_t::Identity() - Dtilde_) * Rinv_ * r_ - Ddagger_ * c_;
+    input_vector_t constrainedInput = -(input_matrix_t::Identity() - Dtilde_) * Rinv_ * r_ - Ddagger_ * c_;
     noiseInput_ = Q / std::sqrt(rollout_dt_) * input_vector_t::NullaryExpr(eigenRandomNormalNullaryExpr_);
 
     input_vector_t uff;
     linInterpolateUff_.interpolate(t, uff);
 
-    return constraintInput + noiseInput_ + uff;
+    return constrainedInput + noiseInput_ + uff;
   }
 
 
@@ -201,8 +218,8 @@ class PiController final : public ControllerBase<STATE_DIM, INPUT_DIM> {
   input_matrix_t R_;
   input_matrix_t Rinv_;
   input_vector_t r_;
-  typename constraint_t::constraint1_vector_t c_;
-  Eigen::Matrix<scalar_t, -1, -1> Ddagger_;
+  typename dim_t::dynamic_vector_t c_;
+  typename dim_t::dynamic_matrix_t Ddagger_;
   input_matrix_t Dtilde_;
   input_vector_t noiseInput_;
 

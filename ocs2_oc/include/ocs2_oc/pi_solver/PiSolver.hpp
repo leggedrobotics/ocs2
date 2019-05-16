@@ -116,7 +116,7 @@ class PiSolver final : public Solver_BASE<STATE_DIM, INPUT_DIM, NullLogicRules> 
             controller_.V_ + 0.5 * (controller_.Ddagger_ * controller_.c_).dot(controller_.R_ * controller_.Ddagger_ * controller_.c_);
         costVtilde[sample][n] -=
             0.5 * controller_.r_.transpose() * (input_matrix_t::Identity() - controller_.Dtilde_) * controller_.Rinv_ * controller_.r_;
-        costVtilde[sample][n] -= (controller_.Ddagger_ * controller_.c_).transpose() * controller_.r_;
+        costVtilde[sample][n] -= (controller_.Ddagger_ * controller_.c_).dot(controller_.r_);
 
         noiseInputVector_array2[sample][n] = controller_.noiseInput_;  // TODO(jcarius) is there a dt missing?
 

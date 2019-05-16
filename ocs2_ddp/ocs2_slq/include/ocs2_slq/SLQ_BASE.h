@@ -1205,8 +1205,8 @@ protected:
 	std::vector<typename cost_function_base_t::Ptr>          heuristicsFunctionsPtrStock_;
 	std::vector<typename operating_trajectories_base_t::Ptr> operatingTrajectoriesPtrStock_;
 
-	linear_controller_array_t nominalControllersStock_;
-	controller_ptr_array_t    nominalControllerPtrStock_;
+	linear_controller_array_t   nominalControllersStock_;
+	controller_ptr_array_t      nominalControllerPtrStock_;
 
 	std::vector<scalar_array_t> nominalTimeTrajectoriesStock_;
 	std::vector<size_array_t>   nominalEventsPastTheEndIndecesStock_;

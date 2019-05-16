@@ -306,20 +306,24 @@ public:
 
 		if (checkNumericalCharacteristics_==true){
 			try {
-				if (ncEqStateInput_ > 0 && !Ev_.head(ncEqStateInput_).allFinite())
-					throw std::runtime_error("Input-state constraint is not finite.");
-				if (ncEqStateInput_ > 0 && !Cm_.topRows(ncEqStateInput_).allFinite())
-					throw std::runtime_error("Input-state constraint derivative w.r.t. state is not finite.");
-				if (ncEqStateInput_ > 0 && !Dm_.topRows(ncEqStateInput_).allFinite())
-					throw std::runtime_error("Input-state constraint derivative w.r.t. input is not finite.");
-				if (ncEqStateOnly_ > 0 && !Hv_.head(ncEqStateOnly_).allFinite())
-					throw std::runtime_error("State-only constraint is not finite.");
-				if (ncEqStateOnly_ > 0 && !Fm_.topRows(ncEqStateOnly_).allFinite())
-					throw std::runtime_error("State-only constraint derivative w.r.t. state is not finite.");
-				size_t DmRank = Dm_.topRows(ncEqStateInput_).colPivHouseholderQr().rank();
-				if (DmRank != ncEqStateInput_)
-					throw std::runtime_error("Input-state constraint derivative w.r.t. input is not full-row rank. It's rank "
-							"is " + std::to_string(DmRank) + " while the expected rank is " + std::to_string(ncEqStateInput_) + ".");
+				if (ncEqStateInput_ > 0) {
+					if (!Ev_.head(ncEqStateInput_).allFinite())
+						throw std::runtime_error("Input-state constraint is not finite.");
+					if (!Cm_.topRows(ncEqStateInput_).allFinite())
+						throw std::runtime_error("Input-state constraint derivative w.r.t. state is not finite.");
+					if (!Dm_.topRows(ncEqStateInput_).allFinite())
+						throw std::runtime_error("Input-state constraint derivative w.r.t. input is not finite.");
+					size_t DmRank = Dm_.topRows(ncEqStateInput_).colPivHouseholderQr().rank();
+					if (DmRank != ncEqStateInput_)
+						throw std::runtime_error("Input-state constraint derivative w.r.t. input is not full-row rank. It's rank "
+								"is " + std::to_string(DmRank) + " while the expected rank is " + std::to_string(ncEqStateInput_) + ".");
+				}
+				if (ncEqStateOnly_ > 0) {
+					if (!Hv_.head(ncEqStateOnly_).allFinite())
+						throw std::runtime_error("State-only constraint is not finite.");
+					if (!Fm_.topRows(ncEqStateOnly_).allFinite())
+						throw std::runtime_error("State-only constraint derivative w.r.t. state is not finite.");
+				}
 
 			} catch(const std::exception& error)  {
 				std::cerr << "what(): " << error.what() << " at time " << time << " [sec]." << std::endl;

@@ -1,0 +1,8 @@
+/*!
+\page ocs2_slq_page OCS2 SLQ
+This module implements the continuous-time constrained SLQ algorithm for switched systems \cite farshidian17a .
+
+[Click to see all members of this module](\ref ocs2_slq)
+
+[Back to Home Page](\ref index)
+*/

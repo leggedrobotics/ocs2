@@ -52,7 +52,7 @@ public:
 	 * Default constructor.
 	 */
 	Rollout_Settings()
-	: Rollout_Settings(1e-9, 1e-6, 5000, 1e-3, IntegratorType::ODE45)
+	: Rollout_Settings(1e-9, 1e-6, 5000, 1e-3, IntegratorType::ODE45, false)
 	{}
 
 	/**
@@ -63,18 +63,21 @@ public:
 	 * @param [in] maxNumStepsPerSecond: Maximum number of steps in the rollout.
 	 * @param [in] minTimeStep: Minimum time step of the rollout.
 	 * @param [in] integratorType: Rollout integration scheme type.
+	 * @param [in] checkNumericalStability: Whether to check that the rollout is numerically stable.
 	 */
 	Rollout_Settings(
 			double absTolODE,
 			double relTolODE,
 			size_t maxNumStepsPerSecond,
 			double minTimeStep,
-			IntegratorType integratorType)
+			IntegratorType integratorType,
+			bool checkNumericalStability)
 	: absTolODE_(absTolODE)
 	, relTolODE_(relTolODE)
 	, maxNumStepsPerSecond_(maxNumStepsPerSecond)
 	, minTimeStep_(minTimeStep)
 	, integratorType_(integratorType)
+	, checkNumericalStability_(checkNumericalStability)
 	{}
 
 	/**
@@ -112,6 +115,8 @@ public:
 	double minTimeStep_;
 	/** Rollout integration scheme type */
 	IntegratorType integratorType_;
+	/** Whether to check that the rollout is numerically stable */
+	bool checkNumericalStability_;
 
 }; // end of Rollout_Settings class
 
@@ -164,6 +169,14 @@ inline void Rollout_Settings::loadSettings(const std::string& filename, bool ver
 	}
 	catch (const std::exception& e){
 		if (verbose)  std::cerr << " #### Option loader : option 'integratorType' ...................... " << ocs2::to_string(integratorType_) << "   \t(default)" << std::endl;
+	}
+
+	try	{
+		checkNumericalStability_ = pt.get<bool>("slq.checkNumericalStability");
+		if (verbose)  std::cerr << " #### Option loader : option 'checkNumericalStability' ............. " << checkNumericalStability_ << std::endl;
+	}
+	catch (const std::exception& e){
+		if (verbose)  std::cerr << " #### Option loader : option 'checkNumericalStability' ............. " << checkNumericalStability_ << "   \t(default)" << std::endl;
 	}
 
 	if(verbose)

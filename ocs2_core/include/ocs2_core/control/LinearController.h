@@ -199,6 +199,16 @@ class LinearController final : public ControllerBase<STATE_DIM, INPUT_DIM> {
 	  return timeStamp_.empty();
   }
 
+  virtual void display() const override {
+
+	  for (size_t k=0; k<timeStamp_.size(); k++) {
+		  std::cerr << "k: " << k << std::endl;
+		  std::cerr << "time: " << timeStamp_[k] << std::endl;
+		  std::cerr << "bias: " << biasArray_[k].transpose() << std::endl;
+		  std::cerr << "gain: " << biasArray_[k].rowwise().norm().transpose() << std::endl;
+	  }
+  }
+
   /**
    * @brief Swap data with other object
    * @param other the object to be swapped with

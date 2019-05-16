@@ -285,7 +285,7 @@ protected:
 	 * policy messages on the data buffer.
 	 *
 	 * @param logicUpdated: Whether eventTimes or subsystemsSequence are updated form the last call.
-	 * @param mpcController: The optimized feedback controller of the policy.
+	 * @param mpcController: The optimized control policy of MPC.
 	 * @param mpcTimeTrajectory: The optimized time trajectory of the policy message on the buffer.
 	 * @param mpcStateTrajectory: The optimized state trajectory of the policy message on the buffer.
 	 * @param eventTimes: The event times of the policy.
@@ -303,11 +303,10 @@ protected:
 	 * This method can be used to modify the policy on the buffer without inputting the
 	 * main thread. Note that the variables that are on the buffer have the suffix Buffer. It is
 	 * important if any new variables are added to the policy also obey this rule. These buffer
-	 * variables can be later, in the customizedUpdatePolicy() method, swept to the in-use policy
-	 * memory.
+	 * variables can be later, in the modifyPolicy() method, swept to the in-use policy memory.
 	 *
 	 * @param [in] mpcInitObservationBuffer: The observation of the policy message on the buffer.
-	 * @param mpcControllerBuffer: The optimized feedback controller of the policy message on the buffer.
+	 * @param mpcControllerBuffer: The optimized controller of the policy message on the buffer.
 	 * @param mpcTimeTrajectoryBuffer: The optimized time trajectory of the policy message on the buffer.
 	 * @param mpcStateTrajectoryBuffer: The optimized state trajectory of the policy message on the buffer.
 	 * @param eventTimesBuffer: The event times of the policy message on the buffer.
@@ -315,7 +314,7 @@ protected:
 	 */
 	virtual void modifyBufferPolicy(
 			const system_observation_t& mpcInitObservationBuffer,
-			controller_t* mpcControllerBuffer,
+			controller_t& mpcControllerBuffer,
 			scalar_array_t& mpcTimeTrajectoryBuffer,
 			state_vector_array_t& mpcStateTrajectoryBuffer,
 			scalar_array_t& eventTimesBuffer,

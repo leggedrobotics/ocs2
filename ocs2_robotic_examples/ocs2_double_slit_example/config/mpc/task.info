@@ -6,6 +6,11 @@ systemParameters
     barrierUpperEnd  10;
 }
 
+pathIntegral
+{
+  gamma 10 ; temperature: the lower it is, the more aggressive the softmin
+}
+
 mpcTimeHorizon
 {
     debugPrint 1

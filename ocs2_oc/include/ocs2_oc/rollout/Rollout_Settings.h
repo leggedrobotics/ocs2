@@ -36,6 +36,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <boost/property_tree/info_parser.hpp>
 
 #include <ocs2_core/Dimensions.h>
+#include <ocs2_core/integration/Integrator.h>
 
 namespace ocs2{
 
@@ -51,10 +52,32 @@ public:
 	 * Default constructor.
 	 */
 	Rollout_Settings()
-	: absTolODE_(1e-9)
-	, relTolODE_(1e-6)
-	, maxNumStepsPerSecond_(5000)
-	, minTimeStep_(1e-3)
+	: Rollout_Settings(1e-9, 1e-6, 5000, 1e-3, IntegratorType::ODE45, false)
+	{}
+
+	/**
+	 * Constructor with all settings as arguments.
+	 *
+	 * @param [in] absTolODE: Absolute tolerance of the rollout.
+	 * @param [in] relTolODE: Relative tolerance of the rollout.
+	 * @param [in] maxNumStepsPerSecond: Maximum number of steps in the rollout.
+	 * @param [in] minTimeStep: Minimum time step of the rollout.
+	 * @param [in] integratorType: Rollout integration scheme type.
+	 * @param [in] checkNumericalStability: Whether to check that the rollout is numerically stable.
+	 */
+	Rollout_Settings(
+			double absTolODE,
+			double relTolODE,
+			size_t maxNumStepsPerSecond,
+			double minTimeStep,
+			IntegratorType integratorType,
+			bool checkNumericalStability)
+	: absTolODE_(absTolODE)
+	, relTolODE_(relTolODE)
+	, maxNumStepsPerSecond_(maxNumStepsPerSecond)
+	, minTimeStep_(minTimeStep)
+	, integratorType_(integratorType)
+	, checkNumericalStability_(checkNumericalStability)
 	{}
 
 	/**
@@ -90,6 +113,10 @@ public:
 	size_t maxNumStepsPerSecond_;
 	/** The minimum integration time step */
 	double minTimeStep_;
+	/** Rollout integration scheme type */
+	IntegratorType integratorType_;
+	/** Whether to check that the rollout is numerically stable */
+	bool checkNumericalStability_;
 
 }; // end of Rollout_Settings class
 
@@ -136,6 +163,22 @@ inline void Rollout_Settings::loadSettings(const std::string& filename, bool ver
 		if (verbose)  std::cerr << " #### Option loader : option 'minTimeStep' ......................... " << minTimeStep_ << "   \t(default)" << std::endl;
 	}
 
+	try	{
+		integratorType_ = (IntegratorType)pt.get<int>("slq.integratorType");
+		if (verbose)  std::cerr << " #### Option loader : option 'integratorType' ...................... " << ocs2::to_string(integratorType_) << std::endl;
+	}
+	catch (const std::exception& e){
+		if (verbose)  std::cerr << " #### Option loader : option 'integratorType' ...................... " << ocs2::to_string(integratorType_) << "   \t(default)" << std::endl;
+	}
+
+	try	{
+		checkNumericalStability_ = pt.get<bool>("slq.checkNumericalStability");
+		if (verbose)  std::cerr << " #### Option loader : option 'checkNumericalStability' ............. " << checkNumericalStability_ << std::endl;
+	}
+	catch (const std::exception& e){
+		if (verbose)  std::cerr << " #### Option loader : option 'checkNumericalStability' ............. " << checkNumericalStability_ << "   \t(default)" << std::endl;
+	}
+
 	if(verbose)
 		std::cerr <<" #### =============================================================================" << std::endl;
 }
@@ -143,4 +186,3 @@ inline void Rollout_Settings::loadSettings(const std::string& filename, bool ver
 } // namespace ocs2
 
 #endif /* ROLLOUT_SETTINGS_OCS2_H_ */
-

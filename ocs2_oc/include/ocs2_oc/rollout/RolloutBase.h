@@ -45,6 +45,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_core/logic/rules/LogicRulesBase.h>
 #include <ocs2_core/logic/rules/NullLogicRules.h>
 #include <ocs2_core/logic/machine/LogicRulesMachine.h>
+#include <ocs2_core/control/ControllerBase.h>
 
 #include "Rollout_Settings.h"
 
@@ -70,7 +71,6 @@ public:
 
 	typedef Dimensions<STATE_DIM, INPUT_DIM> DIMENSIONS;
 
-	typedef typename DIMENSIONS::controller_t         controller_t;
 	typedef typename DIMENSIONS::size_array_t         size_array_t;
 	typedef typename DIMENSIONS::scalar_t             scalar_t;
 	typedef typename DIMENSIONS::scalar_array_t       scalar_array_t;
@@ -79,7 +79,9 @@ public:
 	typedef typename DIMENSIONS::input_vector_t       input_vector_t;
 	typedef typename DIMENSIONS::input_vector_array_t input_vector_array_t;
 
-	typedef LogicRulesMachine<LOGIC_RULES_T>     logic_rules_machine_t;
+	typedef LogicRulesMachine<LOGIC_RULES_T> logic_rules_machine_t;
+
+	typedef ControllerBase<STATE_DIM, INPUT_DIM> controller_t;
 
 	/**
 	 * Default constructor.
@@ -142,7 +144,7 @@ public:
 			const scalar_t& initTime,
 			const state_vector_t& initState,
 			const scalar_t& finalTime,
-			const controller_t& controller,
+			controller_t* controller,
 			logic_rules_machine_t& logicRulesMachine,
 			scalar_array_t& timeTrajectory,
 			size_array_t& eventsPastTheEndIndeces,
@@ -196,6 +198,58 @@ public:
 		} // end of i loop
 	}
 
+protected:
+	/**
+	 * Checks for the numerical stability if Rollout_Settings::checkNumericalStability_ is true.
+	 *
+	 * @param [in] partitionIndex: Time partition index.
+	 * @param [in] timeTrajectory: The time trajectory stamp.
+	 * @param [in] eventsPastTheEndIndeces: Indices containing past-the-end index of events trigger.
+	 * @param [in] stateTrajectory: The state trajectory.
+	 * @param [in] inputTrajectory: The control input trajectory.
+	 */
+	void checkNumericalStability(
+			const size_t& partitionIndex,
+			controller_t* controller,
+			const scalar_array_t& timeTrajectory,
+			const size_array_t& eventsPastTheEndIndeces,
+			const state_vector_array_t& stateTrajectory,
+			const input_vector_array_t& inputTrajectory) const {
+
+		if (rolloutSettings_.checkNumericalStability_==false)
+			return;
+
+		for (size_t i=0; i<timeTrajectory.size(); i++) {
+			try {
+				if (!stateTrajectory[i].allFinite())
+					throw std::runtime_error("Rollout: state is not finite");
+				if (!inputTrajectory[i].allFinite())
+					throw std::runtime_error("Rollout: input is not finite");
+			} catch(const std::exception& error) {
+
+				std::cerr << "what(): " << error.what() << " at time " + std::to_string(timeTrajectory[i]) + " [sec]." << std::endl;
+
+				// truncate trajectories
+				scalar_array_t timeTrajectoryTemp;
+				state_vector_array_t stateTrajectoryTemp;
+				input_vector_array_t inputTrajectoryTemp;
+				for (size_t j=0; j<=i; j++) {
+					timeTrajectoryTemp.push_back(timeTrajectory[j]);
+					stateTrajectoryTemp.push_back(stateTrajectory[j]);
+					inputTrajectoryTemp.push_back(inputTrajectory[j]);
+				}
+
+				// display
+				display(partitionIndex, timeTrajectoryTemp, eventsPastTheEndIndeces,
+						stateTrajectoryTemp, inputTrajectoryTemp);
+
+				controller->display();
+
+				exit(0);
+			}
+		} // end of i loop
+	}
+
 private:
 	Rollout_Settings rolloutSettings_;
 
@@ -206,4 +260,3 @@ private:
 } // namespace ocs2
 
 #endif /* ROLLOUT_BASE_OCS2_H_ */
-

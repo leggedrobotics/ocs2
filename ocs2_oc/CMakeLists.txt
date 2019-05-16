@@ -13,7 +13,11 @@ find_package(Boost REQUIRED COMPONENTS
 
 find_package(Eigen3 3.3 REQUIRED NO_MODULE)
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread -fopenmp -std=c++11 -Wfatal-errors -Wl,--no-as-needed")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread -fopenmp -Wfatal-errors -Wl,--no-as-needed")
+
+set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
 
 ###################################
 ## catkin specific configuration ##
@@ -47,25 +51,6 @@ include_directories(
 install(DIRECTORY include/${PROJECT_NAME}/
         DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION})
 
-#############
-## Doxygen ##
-#############
-
-#find_package(Doxygen)
-#if(DOXYGEN_FOUND)
-#
-#    set(doxyfile_in ${CMAKE_CURRENT_SOURCE_DIR}/doc/ocs2_slq_doxyfile.in)
-#    set(doxyfile ${CMAKE_CURRENT_SOURCE_DIR}/Doxyfile)
-#
-#    configure_file(${doxyfile_in} ${doxyfile} @ONLY)
-#
-#    add_custom_target(doc
-#            COMMAND ${CMAKE_COMMAND} -E echo_append "Building OCS2 Documentation..."
-#            COMMAND ${DOXYGEN_EXECUTABLE} ${doxyfile}
-#            WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/doc
-#            COMMAND ${CMAKE_COMMAND} -E echo_append "OCS2 Documentation built in ${CMAKE_CURRENT_SOURCE_DIR}/doc"
-#            VERBATIM)
-#endif()
 
 #############
 ## Testing ##

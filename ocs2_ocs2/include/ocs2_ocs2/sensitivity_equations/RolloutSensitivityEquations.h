@@ -35,6 +35,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <ocs2_core/Dimensions.h>
 #include <ocs2_core/dynamics/ControlledSystemBase.h>
+#include <ocs2_core/control/LinearController.h>
 #include <ocs2_core/misc/LinearInterpolation.h>
 
 namespace ocs2{
@@ -66,6 +67,8 @@ public:
 	typedef typename DIMENSIONS::state_input_matrix_array_t state_input_matrix_array_t;
 	typedef typename DIMENSIONS::input_state_matrix_t       input_state_matrix_t;
 	typedef typename DIMENSIONS::input_state_matrix_array_t input_state_matrix_array_t;
+
+	using linear_controller_t = LinearController<STATE_DIM, INPUT_DIM>;
 
 	/**
 	 * The default constructor.
@@ -108,10 +111,12 @@ public:
 		flowMapFunc_.setTimeStamp(timeTrajectoryPtr);
 		flowMapFunc_.setData(flowMapTrajectoryPtr);
 
-		this->setController(
+		linearController_.setController(
 				*sensitivityControllerTimePtr,
 				*sensitivityControllerFeedforwardPtr,
 				*sensitivityControllerFeedbackPtr);
+
+		this->setController(&linearController_);
 	}
 
 	/**
@@ -164,6 +169,7 @@ public:
 
 protected:
 	scalar_t multiplier_ = 0.0;
+	linear_controller_t linearController_;
 
 	state_matrix_t       Am_;
 	state_input_matrix_t Bm_;

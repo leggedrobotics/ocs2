@@ -30,7 +30,9 @@ add_message_files(
   DIRECTORY 
     include/ocs2_comm_interfaces/ocs2_ros_interfaces/msg
   FILES
+    controller_data.msg
     dummy.msg
+    mpc_flattened_controller.msg
     mpc_state.msg
     mpc_input.msg
     mpc_observation.msg
@@ -99,26 +101,6 @@ add_dependencies(test_custom_callback_queue
 target_link_libraries(test_custom_callback_queue
         ${catkin_LIBRARIES}
         )
-
-#############
-## Doxygen ##
-#############
-
-find_package(Doxygen)
-if(DOXYGEN_FOUND)
-
-    set(doxyfile_in ${CMAKE_CURRENT_SOURCE_DIR}/doc/ocs2_comm_interfaces_doxyfile.in)
-    set(doxyfile ${CMAKE_CURRENT_SOURCE_DIR}/Doxyfile)
-
-    configure_file(${doxyfile_in} ${doxyfile} @ONLY)
-
-    add_custom_target(doc
-            COMMAND ${CMAKE_COMMAND} -E echo_append "Building OCS2 Documentation..."
-            COMMAND ${DOXYGEN_EXECUTABLE} ${doxyfile}
-            WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/doc
-            COMMAND ${CMAKE_COMMAND} -E echo_append "OCS2 Documentation built in ${CMAKE_CURRENT_SOURCE_DIR}/doc"
-            VERBATIM)
-endif()
 
 
 #############

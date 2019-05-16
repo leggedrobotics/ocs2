@@ -91,10 +91,8 @@ public:
 		switchingTimeStart_ = switchingTimeStart;
 		switchingTimeFinal_ = switchingTimeFinal;
 
-		GvFunc_.setTimeStamp(timeStampPtr);
-		GvFunc_.setData(GvPtr);
-		GmFunc_.setTimeStamp(timeStampPtr);
-		GmFunc_.setData(GmPtr);
+		GvFunc_.setData(timeStampPtr, GvPtr);
+		GmFunc_.setData(timeStampPtr, GmPtr);
 	}
 
 	/**
@@ -109,8 +107,7 @@ public:
 		// denormalized time
 		scalar_t t = switchingTimeFinal_ - z;
 
-		GvFunc_.interpolate(t, __Gv);
-		size_t greatestLessTimeStampIndex = GvFunc_.getGreatestLessTimeStampIndex();
+		const auto greatestLessTimeStampIndex = GvFunc_.interpolate(t, __Gv);
 		GmFunc_.interpolate(t, __Gm, greatestLessTimeStampIndex);
 
 		// Error equation for the equivalent system

@@ -120,30 +120,17 @@ public:
 		switchingTimeFinal_ = switchingTimeFinal;
 		scalingFactor_      = switchingTimeFinal - switchingTimeStart;
 
-		AmFunc_.setTimeStamp(timeStampPtr);
-		AmFunc_.setData(AmPtr);
-		BmFunc_.setTimeStamp(timeStampPtr);
-		BmFunc_.setData(BmPtr);
-		CmFunc_.setTimeStamp(timeStampPtr);
-		CmFunc_.setData(CmPtr);
-		AmConstrainedFunc_.setTimeStamp(timeStampPtr);
-		AmConstrainedFunc_.setData(AmConstrainedPtr);
-		CmProjectedFunc_.setTimeStamp(timeStampPtr);
-		CmProjectedFunc_.setData(CmProjectedPtr);
-		QvFunc_.setTimeStamp(timeStampPtr);
-		QvFunc_.setData(QvPtr);
-
-		flowMapFunc_.setTimeStamp(timeStampPtr);
-		flowMapFunc_.setData(flowMapPtr);
-		costateFunc_.setTimeStamp(timeStampPtr);
-		costateFunc_.setData(costatePtr);
-		lagrangianFunc_.setTimeStamp(timeStampPtr);
-		lagrangianFunc_.setData(lagrangianPtr);
-
-		KmConstrainedFunc_.setTimeStamp(controllerTimeStampPtr);
-		KmConstrainedFunc_.setData(KmConstrainedPtr);
-		SmFunc_.setTimeStamp(controllerTimeStampPtr);
-		SmFunc_.setData(SmPtr);
+		AmFunc_.setData(timeStampPtr, AmPtr);
+		BmFunc_.setData(timeStampPtr, BmPtr);
+		CmFunc_.setData(timeStampPtr, CmPtr);
+		AmConstrainedFunc_.setData(timeStampPtr, AmConstrainedPtr);
+		CmProjectedFunc_.setData(timeStampPtr, CmProjectedPtr);
+		QvFunc_.setData(timeStampPtr, QvPtr);
+		flowMapFunc_.setData(timeStampPtr, flowMapPtr);
+		costateFunc_.setData(timeStampPtr, costatePtr);
+		lagrangianFunc_.setData(timeStampPtr, lagrangianPtr);
+		KmConstrainedFunc_.setData(timeStampPtr, KmConstrainedPtr);
+		SmFunc_.setData(timeStampPtr, SmPtr);
 	}
 
 	/**
@@ -151,19 +138,6 @@ public:
 	 */
 	void reset() {
 
-		AmFunc_.reset();
-		BmFunc_.reset();
-		CmFunc_.reset();
-		AmConstrainedFunc_.reset();
-		CmProjectedFunc_.reset();
-		QvFunc_.reset();
-
-		flowMapFunc_.reset();
-		costateFunc_.reset();
-		lagrangianFunc_.reset();
-
-		KmConstrainedFunc_.reset();
-		SmFunc_.reset();
 	}
 
 	/**
@@ -193,8 +167,7 @@ public:
 		// denormalized time
 		const scalar_t t = switchingTimeFinal_ - scalingFactor_*z;
 
-		AmFunc_.interpolate(t, Am_);
-		size_t greatestLessTimeStampIndex = AmFunc_.getGreatestLessTimeStampIndex();
+		auto greatestLessTimeStampIndex = AmFunc_.interpolate(t, Am_);
 		BmFunc_.interpolate(t, Bm_, greatestLessTimeStampIndex);
 		CmFunc_.interpolate(t, Cm_, greatestLessTimeStampIndex);
 		AmConstrainedFunc_.interpolate(t, AmConstrained_, greatestLessTimeStampIndex);
@@ -205,8 +178,7 @@ public:
 		costateFunc_.interpolate(t, costate_, greatestLessTimeStampIndex);
 		lagrangianFunc_.interpolate(t, lagrangian_, greatestLessTimeStampIndex);
 
-		KmConstrainedFunc_.interpolate(t, KmConstrained_);
-		greatestLessTimeStampIndex = KmConstrainedFunc_.getGreatestLessTimeStampIndex();
+		greatestLessTimeStampIndex = KmConstrainedFunc_.interpolate(t, KmConstrained_);
 		SmFunc_.interpolate(t, Sm_, greatestLessTimeStampIndex);
 
 		// here we have used RmConstrained = (I-DmConstrained).transpose() * Rm

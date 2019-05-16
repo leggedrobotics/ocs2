@@ -1481,44 +1481,16 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculateController() {
 
 		// initialize interpolating function
 		for (size_t j = 0; j<settings_.nThreads_; j++) {
-
 			// functions for controller
-			nominalStateFunc_[j].reset();
-			nominalStateFunc_[j].setTimeStamp( &(nominalTimeTrajectoriesStock_[i]) );
-			nominalStateFunc_[j].setData( &(nominalStateTrajectoriesStock_[i]) );
-
-			nominalInputFunc_[j].reset();
-			nominalInputFunc_[j].setTimeStamp( &(nominalTimeTrajectoriesStock_[i]) );
-			nominalInputFunc_[j].setData( &(nominalInputTrajectoriesStock_[i]) );
-
-			BmFunc_[j].reset();
-			BmFunc_[j].setTimeStamp( &(nominalTimeTrajectoriesStock_[i]) );
-			BmFunc_[j].setData( &(BmTrajectoryStock_[i]) );
-
-			PmFunc_[j].reset();
-			PmFunc_[j].setTimeStamp( &(nominalTimeTrajectoriesStock_[i]) );
-			PmFunc_[j].setData( &(PmTrajectoryStock_[i]) );
-
-			RmInverseFunc_[j].reset();
-			RmInverseFunc_[j].setTimeStamp( &(nominalTimeTrajectoriesStock_[i]) );
-			RmInverseFunc_[j].setData( &(RmInverseTrajectoryStock_[i]) );
-
-			RvFunc_[j].reset();
-			RvFunc_[j].setTimeStamp( &(nominalTimeTrajectoriesStock_[i]) );
-			RvFunc_[j].setData( &(RvTrajectoryStock_[i]) );
-
-			EvProjectedFunc_[j].reset();
-			EvProjectedFunc_[j].setTimeStamp( &(nominalTimeTrajectoriesStock_[i]) );
-			EvProjectedFunc_[j].setData( &(EvProjectedTrajectoryStock_[i]) );
-
-			CmProjectedFunc_[j].reset();
-			CmProjectedFunc_[j].setTimeStamp( &(nominalTimeTrajectoriesStock_[i]) );
-			CmProjectedFunc_[j].setData( &(CmProjectedTrajectoryStock_[i]) );
-
-			DmProjectedFunc_[j].reset();
-			DmProjectedFunc_[j].setTimeStamp( &(nominalTimeTrajectoriesStock_[i]) );
-			DmProjectedFunc_[j].setData( &(DmProjectedTrajectoryStock_[i]) );
-
+			nominalStateFunc_[j].setData(&(nominalTimeTrajectoriesStock_[i]), &(nominalStateTrajectoriesStock_[i]) );
+			nominalInputFunc_[j].setData(&(nominalTimeTrajectoriesStock_[i]), &(nominalInputTrajectoriesStock_[i]) );
+			BmFunc_[j].setData(&(nominalTimeTrajectoriesStock_[i]), &(BmTrajectoryStock_[i]) );
+			PmFunc_[j].setData(&(nominalTimeTrajectoriesStock_[i]), &(PmTrajectoryStock_[i]) );
+			RmInverseFunc_[j].setData(&(nominalTimeTrajectoriesStock_[i]), &(RmInverseTrajectoryStock_[i]) );
+			RvFunc_[j].setData( &(nominalTimeTrajectoriesStock_[i]), &(RvTrajectoryStock_[i]) );
+			EvProjectedFunc_[j].setData(&(nominalTimeTrajectoriesStock_[i]), &(EvProjectedTrajectoryStock_[i]) );
+			CmProjectedFunc_[j].setData(&(nominalTimeTrajectoriesStock_[i]), &(CmProjectedTrajectoryStock_[i]) );
+			DmProjectedFunc_[j].setData(&(nominalTimeTrajectoriesStock_[i]), &(DmProjectedTrajectoryStock_[i]) );
 		}  // end of j loop
 
 		// current partition update
@@ -1559,8 +1531,7 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculateControllerWorker (
 	input_matrix_t Rm;
 
 	// interpolate
-	nominalStateFunc_[workerIndex].interpolate(time, nominalState);
-	size_t greatestLessTimeStampIndex = nominalStateFunc_[workerIndex].getGreatestLessTimeStampIndex();
+	const auto greatestLessTimeStampIndex = nominalStateFunc_[workerIndex].interpolate(time, nominalState);
 	nominalInputFunc_[workerIndex].interpolate(time, nominalInput, greatestLessTimeStampIndex);
 
 	BmFunc_[workerIndex].interpolate(time, Bm, greatestLessTimeStampIndex);
@@ -2102,9 +2073,7 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::solveErrorRiccatiEquationWor
 	/*
 	 * Calculating the coefficients of the error equation
 	 */
-	SmFuncs_[workerIndex].reset();
-	SmFuncs_[workerIndex].setTimeStamp( &(SsTimeTrajectoryStock_[partitionIndex]) );
-	SmFuncs_[workerIndex].setData( &(SmTrajectoryStock_[partitionIndex]) );
+	SmFuncs_[workerIndex].setData( &(SsTimeTrajectoryStock_[partitionIndex]), &(SmTrajectoryStock_[partitionIndex]) );
 	state_vector_array_t GvTrajectory(N);
 	state_matrix_array_t GmTrajectory(N);
 	state_matrix_t Sm;
@@ -2665,21 +2634,15 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculateControllerUpdateMax
 	maxDeltaUeeNorm = 0.0;
 	for (size_t i=initActivePartition_; i<=finalActivePartition_; i++)  {
 
-		nominalStateFunc_[0].reset();
-		nominalStateFunc_[0].setTimeStamp( &(nominalTimeTrajectoriesStock_[i]) );
-		nominalStateFunc_[0].setData( &(nominalStateTrajectoriesStock_[i]) );
-
-		nominalInputFunc_[0].reset();
-		nominalInputFunc_[0].setTimeStamp( &(nominalTimeTrajectoriesStock_[i]) );
-		nominalInputFunc_[0].setData( &(nominalInputTrajectoriesStock_[i]) );
+		nominalStateFunc_[0].setData( &(nominalTimeTrajectoriesStock_[i]), &(nominalStateTrajectoriesStock_[i]) );
+		nominalInputFunc_[0].setData( &(nominalTimeTrajectoriesStock_[i]), &(nominalInputTrajectoriesStock_[i]) );
 
 		for (size_t k=0; k<nominalControllersStock_[i].timeStamp_.size(); k++)  {
 
 			maxDeltaUffNorm = std::max(maxDeltaUffNorm, nominalControllersStock_[i].deltaBiasArray_[k].norm());
 
 			state_vector_t nominalState;
-			nominalStateFunc_[0].interpolate(nominalControllersStock_[i].timeStamp_[k], nominalState);
-			size_t greatestLessTimeStampIndex = nominalStateFunc_[0].getGreatestLessTimeStampIndex();
+			const auto greatestLessTimeStampIndex = nominalStateFunc_[0].interpolate(nominalControllersStock_[i].timeStamp_[k], nominalState);
 			input_vector_t nominalInput;
 			nominalInputFunc_[0].interpolate(nominalControllersStock_[i].timeStamp_[k], nominalInput, greatestLessTimeStampIndex);
 			input_vector_t deltaUee = nominalInput - nominalControllersStock_[i].gainArray_[k]*nominalState - nominalControllersStock_[i].biasArray_[k];
@@ -2788,8 +2751,7 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::getValueFuntion (
 	state_matrix_t Sm;
 	LinearInterpolation<state_matrix_t,Eigen::aligned_allocator<state_matrix_t> > SmFunc(
 			&SsTimeTrajectoryStock_[activeSubsystem], &SmTrajectoryStock_[activeSubsystem]);
-	SmFunc.interpolate(time, Sm);
-	size_t greatestLessTimeStampIndex = SmFunc.getGreatestLessTimeStampIndex();
+	const auto greatestLessTimeStampIndex = SmFunc.interpolate(time, Sm);
 
 	state_vector_t Sv;
 	LinearInterpolation<state_vector_t,Eigen::aligned_allocator<state_vector_t> > SvFunc(
@@ -2995,16 +2957,13 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::truncateConterller(
 
 	// interpolating uff
 	LinearInterpolation<input_vector_t,Eigen::aligned_allocator<input_vector_t> > uffFunc;
-	uffFunc.setTimeStamp(&controllersStock[initActivePartition].timeStamp_);
-	uffFunc.setData(&controllersStock[initActivePartition].biasArray_);
+	uffFunc.setData(&controllersStock[initActivePartition].timeStamp_, &controllersStock[initActivePartition].biasArray_);
 	input_vector_t uffInit;
-	uffFunc.interpolate(initTime, uffInit);
-	size_t greatestLessTimeStampIndex = uffFunc.getGreatestLessTimeStampIndex();
+    const auto greatestLessTimeStampIndex = uffFunc.interpolate(initTime, uffInit);
 
 	// interpolating k
 	LinearInterpolation<input_state_matrix_t,Eigen::aligned_allocator<input_state_matrix_t> > kFunc;
-	kFunc.setTimeStamp(&controllersStock[initActivePartition].timeStamp_);
-	kFunc.setData(&controllersStock[initActivePartition].gainArray_);
+	kFunc.setData(&controllersStock[initActivePartition].timeStamp_, &controllersStock[initActivePartition].gainArray_);
 	input_state_matrix_t kInit;
 	kFunc.interpolate(initTime, kInit, greatestLessTimeStampIndex);
 

@@ -75,8 +75,6 @@ public:
 	typedef typename dimension_t::scalar_t		 			scalar_t;
 	typedef typename dimension_t::scalar_array_t 			scalar_array_t;
 	typedef typename dimension_t::size_array_t	 			size_array_t;
-	typedef typename dimension_t::controller_t		 		controller_t;
-	typedef typename dimension_t::controller_array_t 		controller_array_t;
 	typedef typename dimension_t::state_vector_t 			state_vector_t;
 	typedef typename dimension_t::state_vector_array_t 		state_vector_array_t;
 	typedef typename dimension_t::state_vector_array2_t 	state_vector_array2_t;
@@ -124,6 +122,10 @@ public:
 	typedef typename slq_mp_t::Ptr  	slq_mp_ptr_t;
 //	typedef typename ocs2_t::Ptr 		ocs2_ptr_t;
 	typedef typename mpc_t::Ptr 		mpc_ptr_t;
+
+	typedef typename slq_base_t::linear_controller_t    linear_controller_t;
+	typedef typename slq_base_t::controller_ptr_array_t controller_ptr_array_t;
+	typedef std::vector<linear_controller_t*>           linear_controller_ptr_array_t;
 
   	typedef ocs2::ControlledSystemBase<STATE_DIM, INPUT_DIM, logic_rules_t> controlled_system_base_t;
   	typedef typename controlled_system_base_t::Ptr controlled_system_base_ptr_t;
@@ -184,7 +186,7 @@ public:
 			const scalar_t& initTime,
 			const rbd_state_vector_t& initState,
 			const scalar_t& finalTime,
-			const controller_array_t& initialControllersStock = controller_array_t());
+			const linear_controller_ptr_array_t& initialControllersStock = linear_controller_ptr_array_t());
 
 	/**
 	 * Run the SLQ-MPC algorithm.
@@ -358,9 +360,9 @@ public:
 	/**
 	 * Gets a pointer to the optimized array of the control policies.
 	 *
-	 * @param [out] controllersStockPtr: A pointer to the optimal array of the control policies
+	 * @param [out] controllersPtrStock: A pointer to the optimal array of the control policies
 	 */
-	void getOptimizedControllerPtr(const controller_array_t*& controllersStockPtr) const;
+	void getOptimizedControllerPtr(const controller_ptr_array_t*& controllersPtrStock) const;
 
 	/**
 	 * Gets a pointer to the optimized time, state, and input trajectories.
@@ -548,7 +550,7 @@ protected:
 	size_array_t				subsystemsSequence_;
 	std::vector<contact_flag_t> contactFlagsSequence_;
 
-	const controller_array_t* 			controllersStockPtr_;
+	controller_ptr_array_t              controllersPtrStock_;
 	const std::vector<scalar_array_t>* 	timeTrajectoriesStockPtr_;
 	const state_vector_array2_t* 		stateTrajectoriesStockPtr_;
 	const input_vector_array2_t* 		inputTrajectoriesStockPtr_;

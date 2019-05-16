@@ -36,8 +36,7 @@ MRT_ROS_Quadruped<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::MRT_ROS_Quadruped(
     }
 
 	// set Base
-	bool useFeedforward = !ocs2QuadrupedInterfacePtr->mpcSettings().useFeedbackPolicy_;
-	BASE::set(*logicRulesPtr, useFeedforward, robotName);
+	BASE::set(*logicRulesPtr, robotName);
 
 	// reset
 	reset();
@@ -103,13 +102,17 @@ void MRT_ROS_Quadruped<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::findsIndicesEven
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM>
-void MRT_ROS_Quadruped<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::modifyBufferFeedforwardPolicy(
-		const system_observation_t& planInitObservationBuffer,
+void MRT_ROS_Quadruped<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::modifyBufferPolicy(
+		const system_observation_t& mpcInitObservationBuffer,
+		controller_t& mpcControllerBuffer,
 		scalar_array_t& mpcTimeTrajectoryBuffer,
 		state_vector_array_t& mpcStateTrajectoryBuffer,
-		input_vector_array_t& mpcInputTrajectoryBuffer,
 		scalar_array_t& eventTimesBuffer,
 		size_array_t& subsystemsSequenceBuffer) {
+
+	// only continue if we are using feedforward policy
+	if(mpcControllerBuffer.getType() != ocs2::ControllerType::FEEDFORWARD)
+		return;
 
 	const size_t NE = subsystemsSequenceBuffer.size();
 	touchdownTimeStockBuffer_.clear();
@@ -120,12 +123,14 @@ void MRT_ROS_Quadruped<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::modifyBufferFeed
 	touchdownInputStockBuffer_.reserve(NE+1);
 
 	// for the first point
-	touchdownTimeStockBuffer_.push_back(mpcTimeTrajectoryBuffer.front());
-	touchdownStateStockBuffer_.push_back(mpcStateTrajectoryBuffer.front());
-	touchdownInputStockBuffer_.push_back(mpcInputTrajectoryBuffer.front());
+	scalar_t& t_init = mpcTimeTrajectoryBuffer.front();
+	state_vector_t& x_init = mpcStateTrajectoryBuffer.front();
+	touchdownTimeStockBuffer_.push_back(t_init);
+	touchdownStateStockBuffer_.push_back(x_init);
+	touchdownInputStockBuffer_.push_back(mpcControllerBuffer.computeInput(t_init, x_init));
 	// making the reference and the measured EE velocity the same
 	touchdownInputStockBuffer_.front().template segment<JOINT_COORD_SIZE>(12) =
-			planInitObservationBuffer.input().template segment<JOINT_COORD_SIZE>(12);
+			mpcInitObservationBuffer.input().template segment<JOINT_COORD_SIZE>(12);
 
 	// find event indices
 	std::vector<int> eventsIndices;
@@ -141,29 +146,36 @@ void MRT_ROS_Quadruped<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::modifyBufferFeed
 		if (eventsIndices[i] == -1)
 			break;
 
-		touchdownTimeStockBuffer_.push_back(mpcTimeTrajectoryBuffer[eventsIndices[i]+1]);
-		touchdownStateStockBuffer_.push_back(mpcStateTrajectoryBuffer[eventsIndices[i]+1]);
-		touchdownInputStockBuffer_.push_back(mpcInputTrajectoryBuffer[eventsIndices[i]+1]);
+		scalar_t& t = mpcTimeTrajectoryBuffer[eventsIndices[i]+1];
+		state_vector_t& x = mpcStateTrajectoryBuffer[eventsIndices[i]+1];
+		touchdownTimeStockBuffer_.push_back(t);
+		touchdownStateStockBuffer_.push_back(x);
+		touchdownInputStockBuffer_.push_back(mpcControllerBuffer.computeInput(t, x));
 	}
 
 	// for the last point
-	touchdownTimeStockBuffer_.push_back(mpcTimeTrajectoryBuffer.back());
-	touchdownStateStockBuffer_.push_back(mpcStateTrajectoryBuffer.back());
-	touchdownInputStockBuffer_.push_back(mpcInputTrajectoryBuffer.back());
+	scalar_t& t_final = mpcTimeTrajectoryBuffer.back();
+	state_vector_t& x_final = mpcStateTrajectoryBuffer.back();
+	touchdownTimeStockBuffer_.push_back(t_final);
+	touchdownStateStockBuffer_.push_back(x_final);
+	touchdownInputStockBuffer_.push_back(mpcControllerBuffer.computeInput(t_final, x_final));
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM>
-void MRT_ROS_Quadruped<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::loadModifiedFeedforwardPolicy(
+void MRT_ROS_Quadruped<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::modifyPolicy(
 		bool& logicUpdated,
-		bool& policyUpdated,
+		controller_t& mpcController,
 		scalar_array_t& mpcTimeTrajectory,
 		state_vector_array_t& mpcStateTrajectory,
-		input_vector_array_t& mpcInputTrajectory,
 		scalar_array_t& eventTimes,
 		size_array_t& subsystemsSequence) {
+
+	// only continue if we are using feedforward policy
+	if(mpcController.getType() != ocs2::ControllerType::FEEDFORWARD)
+		return;
 
 	// display
 	if (BASE::logicUpdated_==true && ocs2QuadrupedInterfacePtr_->mpcSettings().debugPrint_==true) {
@@ -311,77 +323,221 @@ void MRT_ROS_Quadruped<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::computeFeetState
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM>
-void MRT_ROS_Quadruped<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::computePlan(
+void MRT_ROS_Quadruped<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::evaluatePolicy(
 		const scalar_t& time,
+		const state_vector_t& state,
 		vector_3d_array_t& o_feetPositionRef,
 		vector_3d_array_t& o_feetVelocityRef,
 		vector_3d_array_t& o_feetAccelerationRef,
 		base_coordinate_t& o_comPoseRef,
 		base_coordinate_t& o_comVelocityRef,
 		base_coordinate_t& o_comAccelerationRef,
-		contact_flag_t& stanceLegs)  {
-
-	if (time > BASE::mpcTimeTrajectory_.back())
-		ROS_WARN_STREAM("The requested time is greater than the received plan: "
-				+ std::to_string(time) + ">" + std::to_string(BASE::mpcTimeTrajectory_.back()));
+		contact_flag_t& stanceLegs) {
 
 	// optimal switched model state and input
-	BASE::mpcLinInterpolateState_.interpolate(time, stateRef_);
-	int greatestLessTimeStampIndex = BASE::mpcLinInterpolateState_.getGreatestLessTimeStampIndex();
-	BASE::mpcLinInterpolateInput_.interpolate(time, inputRef_, greatestLessTimeStampIndex);
+	state_vector_t stateRef;
+	input_vector_t inputRef;
+	size_t subsystem;
+	BASE::evaluatePolicy(time, state, stateRef, inputRef, subsystem);
 
-	size_t index = BASE::findActiveSubsystemFnc_(time);
-	BASE::logicMachinePtr_->getLogicRulesPtr()->getMotionPhaseLogics(index, stanceLegs, feetZPlanPtr_);
+	BASE::logicMachinePtr_->getLogicRulesPtr()->getMotionPhaseLogics(subsystem, stanceLegs, feetZPlanPtr_);
 
 	// computes swing phase progress
-	computeSwingPhaseProgress(index, stanceLegs, time, swingPhaseProgress_);
+	computeSwingPhaseProgress(subsystem, stanceLegs, time, swingPhaseProgress_);
 
 	if (ocs2QuadrupedInterfacePtr_->modelSettings().useFeetTrajectoryFiltering_==false) {
 		// calculates nominal position, velocity, and contact forces of the feet in the origin frame.
 		// This also updates the kinematic model.
 		vector_3d_array_t o_contactForces;
-		computeFeetState(stateRef_, inputRef_, o_feetPositionRef, o_feetVelocityRef, o_contactForces);
+		computeFeetState(stateRef, inputRef, o_feetPositionRef, o_feetVelocityRef, o_contactForces);
 
 		// Look one dt ahead to obtain acceleration
 		const scalar_t dt = 1.0 / ocs2QuadrupedInterfacePtr_->modelSettings().feetFilterFrequency_;
-		state_vector_t stateRef_ahead_;
-		input_vector_t inputRef_ahead_;
-		BASE::mpcLinInterpolateState_.interpolate(time+dt, stateRef_ahead_);
-		BASE::mpcLinInterpolateInput_.interpolate(time+dt, inputRef_ahead_, greatestLessTimeStampIndex);
+		state_vector_t stateRef_ahead;
+		input_vector_t inputRef_ahead;
+		size_t subsystem_ahead;
+		BASE::evaluatePolicy(time+dt, state, stateRef_ahead, inputRef_ahead, subsystem_ahead);
 		vector_3d_array_t o_feetPositionRef_ahead, o_feetVelocityRef_ahead;
 		vector_3d_array_t o_contactForces_ahead;
-		computeFeetState(stateRef_ahead_, inputRef_ahead_, o_feetPositionRef_ahead, o_feetVelocityRef_ahead, o_contactForces_ahead);
+		computeFeetState(stateRef_ahead, inputRef_ahead, o_feetPositionRef_ahead, o_feetVelocityRef_ahead, o_contactForces_ahead);
 
 		for (size_t j=0; j<4; j++) {
 			o_feetAccelerationRef[j] = (o_feetVelocityRef_ahead[j]-o_feetVelocityRef[j]) / dt;
 		}
-		prev_o_feetVelocityRef_ = o_feetVelocityRef;
 
 	} else {
 		// filter swing leg trajectory
 		for (size_t j=0; j<4; j++) {
 
 			o_feetPositionRef[j] <<
-					feetXPlanPtrStock_[index][j]->evaluateSplinePosition(time),
-					feetYPlanPtrStock_[index][j]->evaluateSplinePosition(time),
+					feetXPlanPtrStock_[subsystem][j]->evaluateSplinePosition(time),
+					feetYPlanPtrStock_[subsystem][j]->evaluateSplinePosition(time),
 					feetZPlanPtr_[j]->calculatePosition(time);
 
 			o_feetVelocityRef[j] <<
-					feetXPlanPtrStock_[index][j]->evaluateSplineVelocity(time),
-					feetYPlanPtrStock_[index][j]->evaluateSplineVelocity(time),
+					feetXPlanPtrStock_[subsystem][j]->evaluateSplineVelocity(time),
+					feetYPlanPtrStock_[subsystem][j]->evaluateSplineVelocity(time),
 					feetZPlanPtr_[j]->calculateVelocity(time);
 
 			o_feetAccelerationRef[j] <<
-					feetXPlanPtrStock_[index][j]->evaluateSplineAcceleration(time),
-					feetYPlanPtrStock_[index][j]->evaluateSplineAcceleration(time),
+					feetXPlanPtrStock_[subsystem][j]->evaluateSplineAcceleration(time),
+					feetYPlanPtrStock_[subsystem][j]->evaluateSplineAcceleration(time),
 					feetZPlanPtr_[j]->calculateAcceleration(time);
 		}
 	}
 
 	// calculate CoM pose, velocity, and acceleration in the origin frame.
-	ocs2QuadrupedInterfacePtr_->computeComStateInOrigin(stateRef_, inputRef_,
+	ocs2QuadrupedInterfacePtr_->computeComStateInOrigin(stateRef, inputRef,
 			o_comPoseRef, o_comVelocityRef, o_comAccelerationRef);
 }
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM>
+void MRT_ROS_Quadruped<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::rolloutPolicy(
+		const scalar_t& time,
+		const state_vector_t& state,
+		vector_3d_array_t& o_feetPositionRef,
+		vector_3d_array_t& o_feetVelocityRef,
+		vector_3d_array_t& o_feetAccelerationRef,
+		base_coordinate_t& o_comPoseRef,
+		base_coordinate_t& o_comVelocityRef,
+		base_coordinate_t& o_comAccelerationRef,
+		contact_flag_t& stanceLegs) {
+
+	// optimal switched model state and input
+	state_vector_t stateRef;
+	input_vector_t inputRef;
+	size_t subsystem;
+	BASE::evaluatePolicy(time, state, stateRef, inputRef, subsystem);
+
+	BASE::logicMachinePtr_->getLogicRulesPtr()->getMotionPhaseLogics(subsystem, stanceLegs, feetZPlanPtr_);
+
+	// computes swing phase progress
+	computeSwingPhaseProgress(subsystem, stanceLegs, time, swingPhaseProgress_);
+
+	if (ocs2QuadrupedInterfacePtr_->modelSettings().useFeetTrajectoryFiltering_==false) {
+		// calculates nominal position, velocity, and contact forces of the feet in the origin frame.
+		// This also updates the kinematic model.
+		vector_3d_array_t o_contactForces;
+		computeFeetState(stateRef, inputRef, o_feetPositionRef, o_feetVelocityRef, o_contactForces);
+
+		// Look one dt ahead to obtain acceleration
+		const scalar_t dt = 1.0 / ocs2QuadrupedInterfacePtr_->modelSettings().feetFilterFrequency_;
+		state_vector_t stateRef_ahead;
+		input_vector_t inputRef_ahead;
+		size_t subsystem_ahead;
+		BASE::rolloutPolicy(time, state, dt, stateRef_ahead, inputRef_ahead, subsystem_ahead);
+		vector_3d_array_t o_feetPositionRef_ahead, o_feetVelocityRef_ahead;
+		vector_3d_array_t o_contactForces_ahead;
+		computeFeetState(stateRef_ahead, inputRef_ahead, o_feetPositionRef_ahead, o_feetVelocityRef_ahead, o_contactForces_ahead);
+
+		for (size_t j=0; j<4; j++) {
+			o_feetAccelerationRef[j] = (o_feetVelocityRef_ahead[j]-o_feetVelocityRef[j]) / dt;
+		}
+
+	} else {
+		// filter swing leg trajectory
+		for (size_t j=0; j<4; j++) {
+
+			o_feetPositionRef[j] <<
+					feetXPlanPtrStock_[subsystem][j]->evaluateSplinePosition(time),
+					feetYPlanPtrStock_[subsystem][j]->evaluateSplinePosition(time),
+					feetZPlanPtr_[j]->calculatePosition(time);
+
+			o_feetVelocityRef[j] <<
+					feetXPlanPtrStock_[subsystem][j]->evaluateSplineVelocity(time),
+					feetYPlanPtrStock_[subsystem][j]->evaluateSplineVelocity(time),
+					feetZPlanPtr_[j]->calculateVelocity(time);
+
+			o_feetAccelerationRef[j] <<
+					feetXPlanPtrStock_[subsystem][j]->evaluateSplineAcceleration(time),
+					feetYPlanPtrStock_[subsystem][j]->evaluateSplineAcceleration(time),
+					feetZPlanPtr_[j]->calculateAcceleration(time);
+		}
+	}
+
+	// calculate CoM pose, velocity, and acceleration in the origin frame.
+	ocs2QuadrupedInterfacePtr_->computeComStateInOrigin(stateRef, inputRef,
+			o_comPoseRef, o_comVelocityRef, o_comAccelerationRef);
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+//template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM>
+//void MRT_ROS_Quadruped<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::computePlan(
+//		const scalar_t& time,
+//		vector_3d_array_t& o_feetPositionRef,
+//		vector_3d_array_t& o_feetVelocityRef,
+//		vector_3d_array_t& o_feetAccelerationRef,
+//		base_coordinate_t& o_comPoseRef,
+//		base_coordinate_t& o_comVelocityRef,
+//		base_coordinate_t& o_comAccelerationRef,
+//		contact_flag_t& stanceLegs)  {
+//
+//	if (time > BASE::mpcTimeTrajectory_.back())
+//		ROS_WARN_STREAM("The requested time is greater than the received plan: "
+//				+ std::to_string(time) + ">" + std::to_string(BASE::mpcTimeTrajectory_.back()));
+//
+//	// optimal switched model state and input
+//	BASE::mpcLinInterpolateState_.interpolate(time, stateRef_);
+//	int greatestLessTimeStampIndex = BASE::mpcLinInterpolateState_.getGreatestLessTimeStampIndex();
+//	BASE::mpcLinInterpolateInput_.interpolate(time, inputRef_, greatestLessTimeStampIndex);
+//
+//	size_t index = BASE::findActiveSubsystemFnc_(time);
+//	BASE::logicMachinePtr_->getLogicRulesPtr()->getMotionPhaseLogics(index, stanceLegs, feetZPlanPtr_);
+//
+//	// computes swing phase progress
+//	computeSwingPhaseProgress(index, stanceLegs, time, swingPhaseProgress_);
+//
+//	if (ocs2QuadrupedInterfacePtr_->modelSettings().useFeetTrajectoryFiltering_==false) {
+//		// calculates nominal position, velocity, and contact forces of the feet in the origin frame.
+//		// This also updates the kinematic model.
+//		vector_3d_array_t o_contactForces;
+//		computeFeetState(stateRef_, inputRef_, o_feetPositionRef, o_feetVelocityRef, o_contactForces);
+//
+//		// Look one dt ahead to obtain acceleration
+//		const scalar_t dt = 1.0 / ocs2QuadrupedInterfacePtr_->modelSettings().feetFilterFrequency_;
+//		state_vector_t stateRef_ahead_;
+//		input_vector_t inputRef_ahead_;
+//		BASE::mpcLinInterpolateState_.interpolate(time+dt, stateRef_ahead_);
+//		BASE::mpcLinInterpolateInput_.interpolate(time+dt, inputRef_ahead_, greatestLessTimeStampIndex);
+//		vector_3d_array_t o_feetPositionRef_ahead, o_feetVelocityRef_ahead;
+//		vector_3d_array_t o_contactForces_ahead;
+//		computeFeetState(stateRef_ahead_, inputRef_ahead_, o_feetPositionRef_ahead, o_feetVelocityRef_ahead, o_contactForces_ahead);
+//
+//		for (size_t j=0; j<4; j++) {
+//			o_feetAccelerationRef[j] = (o_feetVelocityRef_ahead[j]-o_feetVelocityRef[j]) / dt;
+//		}
+//		prev_o_feetVelocityRef_ = o_feetVelocityRef;
+//
+//	} else {
+//		// filter swing leg trajectory
+//		for (size_t j=0; j<4; j++) {
+//
+//			o_feetPositionRef[j] <<
+//					feetXPlanPtrStock_[index][j]->evaluateSplinePosition(time),
+//					feetYPlanPtrStock_[index][j]->evaluateSplinePosition(time),
+//					feetZPlanPtr_[j]->calculatePosition(time);
+//
+//			o_feetVelocityRef[j] <<
+//					feetXPlanPtrStock_[index][j]->evaluateSplineVelocity(time),
+//					feetYPlanPtrStock_[index][j]->evaluateSplineVelocity(time),
+//					feetZPlanPtr_[j]->calculateVelocity(time);
+//
+//			o_feetAccelerationRef[j] <<
+//					feetXPlanPtrStock_[index][j]->evaluateSplineAcceleration(time),
+//					feetYPlanPtrStock_[index][j]->evaluateSplineAcceleration(time),
+//					feetZPlanPtr_[j]->calculateAcceleration(time);
+//		}
+//	}
+//
+//	// calculate CoM pose, velocity, and acceleration in the origin frame.
+//	ocs2QuadrupedInterfacePtr_->computeComStateInOrigin(stateRef_, inputRef_,
+//			o_comPoseRef, o_comVelocityRef, o_comAccelerationRef);
+//}
 
 /******************************************************************************************************/
 /******************************************************************************************************/

@@ -10,6 +10,7 @@
 
 #include <array>
 
+#include <ocs2_core/control/ControllerType.h>
 #include <ocs2_comm_interfaces/ocs2_ros_interfaces/mrt/MRT_ROS_Interface.h>
 
 #include <ocs2_switched_model_interface/misc/CubicSpline.h>
@@ -43,8 +44,6 @@ public:
 
 	typedef ocs2::MRT_ROS_Interface<STATE_DIM, INPUT_DIM, typename quadruped_interface_t::logic_rules_t> BASE;
 	typedef typename BASE::system_observation_t 	system_observation_t;
-	typedef typename BASE::controller_t				controller_t;
-	typedef typename BASE::controller_array_t		controller_array_t;
 	typedef typename BASE::scalar_t					scalar_t;
 	typedef typename BASE::scalar_array_t			scalar_array_t;
 	typedef typename BASE::size_array_t				size_array_t;
@@ -54,6 +53,8 @@ public:
 	typedef typename BASE::input_vector_array_t		input_vector_array_t;
 	typedef typename BASE::input_state_matrix_t		input_state_matrix_t;
 	typedef typename BASE::input_state_matrix_array_t input_state_matrix_array_t;
+
+	typedef typename BASE::controller_t controller_t;
 
 	typedef FeetZDirectionPlanner<scalar_t,SplineCPG<scalar_t>>	feet_z_planner_t;
 	typedef typename feet_z_planner_t::Ptr						feet_z_planner_ptr_t;
@@ -94,16 +95,18 @@ public:
 	 * Computes the optimized plan for the given time based on the latest received optimized trajectory message.
 	 *
 	 * @param [in] time: inquiry time.
+	 * @param [in] state: inquiry state.
 	 * @param [out] o_feetPositionRef: Planned feet positions in the origin frame.
 	 * @param [out] o_feetVelocityRef: Planned feet velocities in the origin frame.
 	 * @param [out] o_feetAccelerationRef: Planned feet acceleration in the origin frame.
-	 * @param [out] comPoseRef: Planned CoM pose in the origin frame.
-	 * @param [out] comVelocityRef: Planned CoM velocity in the origin frame.
-	 * @param [out] comAccelerationRef: Planned CoM acceleration in the origin frame.
+	 * @param [out] o_comPoseRef: Planned CoM pose in the origin frame.
+	 * @param [out] o_comVelocityRef: Planned CoM velocity in the origin frame.
+	 * @param [out] o_comAccelerationRef: Planned CoM acceleration in the origin frame.
 	 * @param [out] stanceLegs: Planned stance legs.
 	 */
-	void computePlan(
+	void evaluatePolicy(
 			const scalar_t& time,
+			const state_vector_t& state,
 			vector_3d_array_t& o_feetPositionRef,
 			vector_3d_array_t& o_feetVelocityRef,
 			vector_3d_array_t& o_feetAccelerationRef,
@@ -111,6 +114,52 @@ public:
 			base_coordinate_t& o_comVelocityRef,
 			base_coordinate_t& o_comAccelerationRef,
 			contact_flag_t& stanceLegs);
+
+	/**
+	 * Computes the optimized plan for the given time based on the latest received optimized trajectory message.
+	 *
+	 * @param [in] time: inquiry time.
+	 * @param [in] state: inquiry state.
+	 * @param [out] o_feetPositionRef: Planned feet positions in the origin frame.
+	 * @param [out] o_feetVelocityRef: Planned feet velocities in the origin frame.
+	 * @param [out] o_feetAccelerationRef: Planned feet acceleration in the origin frame.
+	 * @param [out] o_comPoseRef: Planned CoM pose in the origin frame.
+	 * @param [out] o_comVelocityRef: Planned CoM velocity in the origin frame.
+	 * @param [out] o_comAccelerationRef: Planned CoM acceleration in the origin frame.
+	 * @param [out] stanceLegs: Planned stance legs.
+	 */
+	void rolloutPolicy(
+			const scalar_t& time,
+			const state_vector_t& state,
+			vector_3d_array_t& o_feetPositionRef,
+			vector_3d_array_t& o_feetVelocityRef,
+			vector_3d_array_t& o_feetAccelerationRef,
+			base_coordinate_t& o_comPoseRef,
+			base_coordinate_t& o_comVelocityRef,
+			base_coordinate_t& o_comAccelerationRef,
+			contact_flag_t& stanceLegs);
+
+//	/**
+//	 * Computes the optimized plan for the given time based on the latest received optimized trajectory message.
+//	 *
+//	 * @param [in] time: inquiry time.
+//	 * @param [out] o_feetPositionRef: Planned feet positions in the origin frame.
+//	 * @param [out] o_feetVelocityRef: Planned feet velocities in the origin frame.
+//	 * @param [out] o_feetAccelerationRef: Planned feet acceleration in the origin frame.
+//	 * @param [out] comPoseRef: Planned CoM pose in the origin frame.
+//	 * @param [out] comVelocityRef: Planned CoM velocity in the origin frame.
+//	 * @param [out] comAccelerationRef: Planned CoM acceleration in the origin frame.
+//	 * @param [out] stanceLegs: Planned stance legs.
+//	 */
+//	void computePlan(
+//			const scalar_t& time,
+//			vector_3d_array_t& o_feetPositionRef,
+//			vector_3d_array_t& o_feetVelocityRef,
+//			vector_3d_array_t& o_feetAccelerationRef,
+//			base_coordinate_t& o_comPoseRef,
+//			base_coordinate_t& o_comVelocityRef,
+//			base_coordinate_t& o_comAccelerationRef,
+//			contact_flag_t& stanceLegs);
 
 	/**
 	 * Get the swing phase progress for a requested leg.
@@ -145,56 +194,53 @@ protected:
 	 * @param eventsIndices: event time indices over the control policy time stamp.
 	 */
 	void findsIndicesEventTimes(
-				const scalar_array_t& eventTimes,
-				const scalar_array_t& timeTrajectory,
-				std::vector<int>& eventsIndices) const;
+			const scalar_array_t& eventTimes,
+			const scalar_array_t& timeTrajectory,
+			std::vector<int>& eventsIndices) const;
 
 	/**
-	 * This method can be used to modify the feedforward policy on the buffer without inputting the
+	 * This method can be used to modify the policy on the buffer without inputting the
 	 * main thread. Note that the variables that are on the buffer have the suffix Buffer. It is
 	 * important if any new variables are added to the policy also obey this rule. These buffer
-	 * variables can be later, in the customizedUpdatePolicy() method, swept to the in-use policy
-	 * memory.
+	 * variables can be later, in the modifyPolicy() method, swept to the in-use policy memory.
 	 *
-	 * @param [in] planInitObservationBuffer: The observation of the policy message on the buffer.
+	 * @param [in] mpcInitObservationBuffer: The observation of the policy message on the buffer.
+	 * @param mpcControllerBuffer: The optimized controller of the policy message on the buffer.
 	 * @param mpcTimeTrajectoryBuffer: The optimized time trajectory of the policy message on the buffer.
 	 * @param mpcStateTrajectoryBuffer: The optimized state trajectory of the policy message on the buffer.
-	 * @param mpcInputTrajectoryBuffer: The optimized input trajectory of the policy message on the buffer.
 	 * @param eventTimesBuffer: The event times of the policy message on the buffer.
 	 * @param subsystemsSequenceBuffer: The subsystems sequence of the policy message on the buffer.
 	 */
-	virtual void modifyBufferFeedforwardPolicy(
-			const system_observation_t& planInitObservationBuffer,
+	virtual void modifyBufferPolicy(
+			const system_observation_t& mpcInitObservationBuffer,
+			controller_t& mpcControllerBuffer,
 			scalar_array_t& mpcTimeTrajectoryBuffer,
 			state_vector_array_t& mpcStateTrajectoryBuffer,
-			input_vector_array_t& mpcInputTrajectoryBuffer,
 			scalar_array_t& eventTimesBuffer,
 			size_array_t& subsystemsSequenceBuffer) override;
 
 	/**
 	 * The updatePolicy() method will call this method which allows the user to
-	 * customize the in-use feedforward policy. Note that this method is already
+	 * customize the in-use policy. Note that this method is already
 	 * protected with a mutex which blocks the policy callback. Moreover, this method
 	 * may be called in the main thread of the program. Thus, for efficiency and
 	 * practical considerations you should avoid computationally expensive operations.
-	 * For such operations you may want to use the modifyBufferFeedforwardPolicy()
+	 * For such operations you may want to use the modifyBufferPolicy()
 	 * methods which runs on a separate thread which directly modifies the received
 	 * policy messages on the data buffer.
 	 *
 	 * @param logicUpdated: Whether eventTimes or subsystemsSequence are updated form the last call.
-	 * @param policyUpdated: Whether the policy is updated.
+	 * @param mpcController: The optimized control policy of MPC.
 	 * @param mpcTimeTrajectory: The optimized time trajectory of the policy message on the buffer.
 	 * @param mpcStateTrajectory: The optimized state trajectory of the policy message on the buffer.
-	 * @param mpcInputTrajectory: The optimized input trajectory of the policy message on the buffer.
 	 * @param eventTimes: The event times of the policy.
 	 * @param subsystemsSequence: The subsystems sequence of the policy.
 	 */
-	virtual void loadModifiedFeedforwardPolicy(
+	virtual void modifyPolicy(
 			bool& logicUpdated,
-			bool& policyUpdated,
+			controller_t& mpcController,
 			scalar_array_t& mpcTimeTrajectory,
 			state_vector_array_t& mpcStateTrajectory,
-			input_vector_array_t& mpcInputTrajectory,
 			scalar_array_t& eventTimes,
 			size_array_t& subsystemsSequence) override;
 
@@ -261,9 +307,6 @@ private:
 	scalar_array_t			touchdownTimeStockBuffer_;
 	state_vector_array_t 	touchdownStateStockBuffer_;
 	input_vector_array_t 	touchdownInputStockBuffer_;
-
-	state_vector_t stateRef_;
-	input_vector_t inputRef_;
 
 	// Acceleration finite difference memory
 	vector_3d_array_t prev_o_feetVelocityRef_;

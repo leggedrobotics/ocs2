@@ -41,8 +41,6 @@ public:
 
 	typedef ocs2::MPC_ROS_Interface<STATE_DIM, INPUT_DIM, typename quadruped_interface_t::logic_rules_t> BASE;
 	typedef typename BASE::system_observation_t 	system_observation_t;
-	typedef typename BASE::controller_t				controller_t;
-	typedef typename BASE::controller_array_t		controller_array_t;
 	typedef typename BASE::scalar_t					scalar_t;
 	typedef typename BASE::scalar_array_t			scalar_array_t;
 	typedef typename BASE::size_array_t				size_array_t;

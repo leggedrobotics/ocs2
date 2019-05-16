@@ -42,8 +42,6 @@ public:
 	};
 
 	typedef ocs2::MRT_ROS_Dummy_Loop<STATE_DIM, INPUT_DIM, typename quadruped_interface_t::logic_rules_t> BASE;
-	typedef typename BASE::controller_t					controller_t;
-	typedef typename BASE::controller_array_t			controller_array_t;
 	typedef typename BASE::scalar_t						scalar_t;
 	typedef typename BASE::scalar_array_t				scalar_array_t;
 	typedef typename BASE::size_array_t					size_array_t;

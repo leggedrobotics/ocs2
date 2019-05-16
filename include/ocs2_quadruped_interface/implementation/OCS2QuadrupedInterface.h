@@ -403,9 +403,9 @@ void OCS2QuadrupedInterface<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::getPerforma
 /******************************************************************************************************/
 template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM>
 void OCS2QuadrupedInterface<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::getOptimizedControllerPtr(
-		const controller_array_t*& controllersStockPtr) const {
+		const controller_ptr_array_t*& controllersPtrStock) const {
 
-	controllersStockPtr = controllersStockPtr_;
+	controllersPtrStock = controllersPtrStock_;
 }
 
 /******************************************************************************************************/
@@ -520,13 +520,15 @@ void OCS2QuadrupedInterface<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::concatenate
 		inputTrajectory_.insert(inputTrajectory_.end(), inputTrajectoriesStockPtr_->at(i).begin(), inputTrajectoriesStockPtr_->at(i).end());
 	}
 
-	controllerTimeTrajectory_ = controllersStockPtr_->at(0).time_;
-	controllerFBTrajectory_   = controllersStockPtr_->at(0).k_;
-	controllerFFTrajector_    = controllersStockPtr_->at(0).uff_;
-	for(size_t i=1; i<numSubsystems_; i++) {
-		controllerTimeTrajectory_.insert(controllerTimeTrajectory_.end(), controllersStockPtr_->at(i).time_.begin(), controllersStockPtr_->at(i).time_.end());
-		controllerFBTrajectory_.insert(controllerFBTrajectory_.end(), controllersStockPtr_->at(i).k_.begin(), controllersStockPtr_->at(i).k_.end());
-		controllerFFTrajector_.insert(controllerFFTrajector_.end(), controllersStockPtr_->at(i).uff_.begin(), controllersStockPtr_->at(i).uff_.end());
+
+	controllerTimeTrajectory_.clear();
+	controllerFBTrajectory_.clear();
+	controllerFFTrajector_.clear();
+	for(size_t i=0; i<numSubsystems_; i++) {
+		auto linearCtrlPtr = dynamic_cast<linear_controller_t*>(controllersPtrStock_[i]);
+		controllerTimeTrajectory_.insert(controllerTimeTrajectory_.end(), linearCtrlPtr->timeStamp_.begin(), linearCtrlPtr->timeStamp_.end());
+		controllerFBTrajectory_.insert(controllerFBTrajectory_.end(), linearCtrlPtr->gainArray_.begin(), linearCtrlPtr->gainArray_.end());
+		controllerFFTrajector_.insert(controllerFFTrajector_.end(), linearCtrlPtr->biasArray_.begin(), linearCtrlPtr->biasArray_.end());
 	}
 
 	linInterpolateState_.setTimeStamp(&timeTrajectory_);
@@ -550,7 +552,7 @@ void OCS2QuadrupedInterface<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::runSLQ(
 		const scalar_t& initTime,
 		const rbd_state_vector_t& initRbdState,
 		const scalar_t& finalTime,
-		const controller_array_t& initialControllersStock /*=controller_array_t()*/)  {
+		const linear_controller_ptr_array_t& initialControllersStock /*=linear_controller_ptr_array_t()*/)  {
 
 //	initTime_ = initTime;
 //	finalTime_ = finalTime;
@@ -586,7 +588,10 @@ void OCS2QuadrupedInterface<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::runSLQ(
 
 	} else {
 		std::cerr << "Warm initialization." << std::endl;
-		slqPtr_->run(initTime_, initialState_, finalTime_, partitioningTimes_, initialControllersStock);
+		controller_ptr_array_t initialControllersPtrStockTemp;
+		for(auto& controllerPtr_i : initialControllersStock)
+			initialControllersPtrStockTemp.push_back(controllerPtr_i);
+		slqPtr_->run(initTime_, initialState_, finalTime_, partitioningTimes_, initialControllersPtrStockTemp);
 	}
 
 	// get the optimizer outputs
@@ -594,7 +599,7 @@ void OCS2QuadrupedInterface<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::runSLQ(
 	slqPtr_->getIterationsLog(iterationCost_, iterationISE1_, iterationISE2_);
 	slqPtr_->getPerformanceIndeces(costFunction_, constriantISE1_, constriantISE2_);
 
-	slqPtr_->getControllerPtr(controllersStockPtr_);
+	controllersPtrStock_ = slqPtr_->getController();
 	slqPtr_->getNominalTrajectoriesPtr(
 			timeTrajectoriesStockPtr_,
 			stateTrajectoriesStockPtr_,
@@ -606,7 +611,6 @@ void OCS2QuadrupedInterface<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::runSLQ(
 	contactFlagsSequence_ = slqPtr_->getLogicRulesPtr()->getContactFlagsSequence();
 
 	//	concatenate();
-
 }
 
 /******************************************************************************************************/
@@ -624,7 +628,7 @@ bool OCS2QuadrupedInterface<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::runMPC(
 	bool controllerIsUpdated = mpcPtr_->run(initTime_, initialState_);
 
 	// get the optimizer outputs
-	mpcPtr_->getOptimizedControllerPtr(controllersStockPtr_);
+	mpcPtr_->getOptimizedControllerPtr(controllersPtrStock_);
 
 	mpcPtr_->getOptimizedTrajectoriesPtr(
 			timeTrajectoriesStockPtr_,

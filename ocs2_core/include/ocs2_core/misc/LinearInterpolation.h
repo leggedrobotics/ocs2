@@ -71,10 +71,11 @@ public:
 	 */
 	LinearInterpolation(
 			const std::vector<scalar_t>* timeStampPtr,
-			const std::vector<Data_T,Alloc>* dataPtr) : LinearInterpolation()
-	{
-		setData(timeStampPtr, dataPtr);
-	}
+			const std::vector<Data_T,Alloc>* dataPtr) :
+        zeroFunction_(false),
+        timeStampPtr_(timeStampPtr),
+        dataPtr_(dataPtr)
+	{ }
 
 	/**
 	 * Copy constructor
@@ -160,9 +161,8 @@ protected:
 	}
 
 private:
-	bool zeroFunction_{};
-
-	const std::vector<scalar_t>* timeStampPtr_{};
+	bool zeroFunction_;
+	const std::vector<scalar_t>* timeStampPtr_;
 	const std::vector<Data_T, Alloc>* dataPtr_;
 };
 

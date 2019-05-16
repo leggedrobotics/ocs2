@@ -106,14 +106,11 @@ class LinearController final : public ControllerBase<STATE_DIM, INPUT_DIM> {
     timeStamp_ = controllerTime;
     biasArray_ = controllerBias;
     gainArray_ = controllerGain;
-    linInterpolateBias_.reset();
-    linInterpolateGain_.reset();
   }
 
   virtual input_vector_t computeInput(const scalar_t& t, const state_vector_t& x) override {
     input_vector_t uff;
-    linInterpolateBias_.interpolate(t, uff);
-    auto greatestLessTimeStampIndex = linInterpolateBias_.getGreatestLessTimeStampIndex();
+    const auto greatestLessTimeStampIndex = linInterpolateBias_.interpolate(t, uff);
 
     input_state_matrix_t k;
     linInterpolateGain_.interpolate(t, k, greatestLessTimeStampIndex);
@@ -139,8 +136,7 @@ class LinearController final : public ControllerBase<STATE_DIM, INPUT_DIM> {
     flatArray.resize(INPUT_DIM + INPUT_DIM * STATE_DIM);
 
     input_vector_t uff;
-    linInterpolateBias_.interpolate(time, uff);
-    const auto greatestLessTimeStampIndex = linInterpolateBias_.getGreatestLessTimeStampIndex();
+    const auto greatestLessTimeStampIndex = linInterpolateBias_.interpolate(time, uff);
 
     input_state_matrix_t k;
     linInterpolateGain_.interpolate(time, k, greatestLessTimeStampIndex);
@@ -181,9 +177,6 @@ class LinearController final : public ControllerBase<STATE_DIM, INPUT_DIM> {
   }
 
   virtual void clear() override {
-
-    linInterpolateBias_.reset();
-    linInterpolateGain_.reset();
     timeStamp_.clear();
     biasArray_.clear();
     gainArray_.clear();

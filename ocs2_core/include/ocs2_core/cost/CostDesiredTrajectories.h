@@ -118,9 +118,7 @@ public:
 			dynamic_linear_interpolation_t& desiredStateFunc) const {
 
 		if (desiredStateTrajectory_.empty()==false) {
-			desiredStateFunc.reset();
-			desiredStateFunc.setTimeStamp(&desiredTimeTrajectory_);
-			desiredStateFunc.setData(&desiredStateTrajectory_);
+			desiredStateFunc.setData(&desiredTimeTrajectory_, &desiredStateTrajectory_);
 		} else {
 			desiredStateFunc.setZero();
 		}
@@ -130,9 +128,7 @@ public:
 			dynamic_linear_interpolation_t& desiredInputFunc) const {
 
 		if (desiredInputTrajectory_.empty()==false) {
-			desiredInputFunc.reset();
-			desiredInputFunc.setTimeStamp(&desiredTimeTrajectory_);
-			desiredInputFunc.setData(&desiredInputTrajectory_);
+			desiredInputFunc.setData(&desiredTimeTrajectory_, &desiredInputTrajectory_);
 		} else {
 			desiredInputFunc.setZero();
 		}

@@ -201,25 +201,16 @@ public:
 		switchingTimeStart_ = switchingTimeStart;
 		switchingTimeFinal_ = switchingTimeFinal;
 
-		AmFunc_.setTimeStamp(timeStampPtr);
-		AmFunc_.setData(AmPtr);
-		BmFunc_.setTimeStamp(timeStampPtr);
-		BmFunc_.setData(BmPtr);
+		AmFunc_.setData(timeStampPtr, AmPtr);
+		BmFunc_.setData(timeStampPtr, BmPtr);
 
-		qFunc_.setTimeStamp(timeStampPtr);
-		qFunc_.setData(qPtr);
-		QvFunc_.setTimeStamp(timeStampPtr);
-		QvFunc_.setData(QvPtr);
-		QmFunc_.setTimeStamp(timeStampPtr);
-		QmFunc_.setData(QmPtr);
-		RvFunc_.setTimeStamp(timeStampPtr);
-		RvFunc_.setData(RvPtr);
-		RmInverseFunc_.setTimeStamp(timeStampPtr);
-		RmInverseFunc_.setData(RmInversePtr);
-		RmFunc_.setTimeStamp(timeStampPtr);
-		RmFunc_.setData(RmPtr);
-		PmFunc_.setTimeStamp(timeStampPtr);
-		PmFunc_.setData(PmPtr);
+		qFunc_.setData(timeStampPtr, qPtr);
+		QvFunc_.setData(timeStampPtr, QvPtr);
+		QmFunc_.setData(timeStampPtr, QmPtr);
+		RvFunc_.setData(timeStampPtr, RvPtr);
+		RmInverseFunc_.setData(timeStampPtr, RmInversePtr);
+		RmFunc_.setData(timeStampPtr, RmPtr);
+		PmFunc_.setData(timeStampPtr, PmPtr);
 	}
 
 	/**
@@ -238,8 +229,7 @@ public:
 
 		convert2Matrix(allSs, Sm_, Sv_, s_);
 
-		AmFunc_.interpolate(t, Am_);
-		size_t greatestLessTimeStampIndex = AmFunc_.getGreatestLessTimeStampIndex();
+		const auto greatestLessTimeStampIndex = AmFunc_.interpolate(t, Am_);
 		BmFunc_.interpolate(t, Bm_, greatestLessTimeStampIndex);
 		qFunc_.interpolate(t, q_, greatestLessTimeStampIndex);
 		QvFunc_.interpolate(t, Qv_, greatestLessTimeStampIndex);

@@ -93,18 +93,15 @@ public:
 		switchingTimeStart_ = switchingTimeStart;
 		switchingTimeFinal_ = switchingTimeFinal;
 
-		GvFunc_.setTimeStamp(timeStampPtr);
-		GvFunc_.setData(GvPtr);
-		GmFunc_.setTimeStamp(timeStampPtr);
-		GmFunc_.setData(GmPtr);
+		GvFunc_.setData(timeStampPtr, GvPtr);
+		GmFunc_.setData(timeStampPtr, GmPtr);
 	}
 
 	/**
 	 * Reset the Error Riccati equation
 	 */
 	void reset() {
-		GvFunc_.reset();
-		GmFunc_.reset();
+		// TODO(ruben) remove this function and its callers
 	}
 
 	/**
@@ -134,8 +131,7 @@ public:
 		// denormalized time
 		const scalar_t t = switchingTimeFinal_ + (switchingTimeStart_-switchingTimeFinal_)*z;
 
-		GvFunc_.interpolate(t, Gv_);
-		size_t greatestLessTimeStampIndex = GvFunc_.getGreatestLessTimeStampIndex();
+		const auto greatestLessTimeStampIndex = GvFunc_.interpolate(t, Gv_);
 		GmFunc_.interpolate(t, Gm_, greatestLessTimeStampIndex);
 
 		// Error equation for the equivalent system

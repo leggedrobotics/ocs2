@@ -237,30 +237,19 @@ public:
 		switchingTimeFinal_ = switchingTimeFinal;
 		scalingFactor_      = switchingTimeFinal - switchingTimeStart;
 
-		AmFunc_.setTimeStamp(timeStampPtr);
-		AmFunc_.setData(AmPtr);
-		BmFunc_.setTimeStamp(timeStampPtr);
-		BmFunc_.setData(BmPtr);
+		AmFunc_.setData(timeStampPtr, AmPtr);
+		BmFunc_.setData(timeStampPtr, BmPtr);
 
-		qFunc_.setTimeStamp(timeStampPtr);
-		qFunc_.setData(qPtr);
-		QvFunc_.setTimeStamp(timeStampPtr);
-		QvFunc_.setData(QvPtr);
-		QmFunc_.setTimeStamp(timeStampPtr);
-		QmFunc_.setData(QmPtr);
-		RvFunc_.setTimeStamp(timeStampPtr);
-		RvFunc_.setData(RvPtr);
-		RmInverseFunc_.setTimeStamp(timeStampPtr);
-		RmInverseFunc_.setData(RmInversePtr);
-		RmFunc_.setTimeStamp(timeStampPtr);
-		RmFunc_.setData(RmPtr);
-		PmFunc_.setTimeStamp(timeStampPtr);
-		PmFunc_.setData(PmPtr);
+		qFunc_.setData(timeStampPtr, qPtr);
+		QvFunc_.setData(timeStampPtr, QvPtr);
+		QmFunc_.setData(timeStampPtr, QmPtr);
+		RvFunc_.setData(timeStampPtr, RvPtr);
+		RmInverseFunc_.setData(timeStampPtr, RmInversePtr);
+		RmFunc_.setData(timeStampPtr, RmPtr);
+		PmFunc_.setData(timeStampPtr, PmPtr);
 
-		EvFunc_.setTimeStamp(timeStampPtr);
-		EvFunc_.setData(EvPtr);
-		CmFunc_.setTimeStamp(timeStampPtr);
-		CmFunc_.setData(CmPtr);
+		EvFunc_.setData(timeStampPtr, EvPtr);
+		CmFunc_.setData(timeStampPtr, CmPtr);
 
 		eventTime_.clear();
 		eventTime_.reserve(eventsPastTheEndIndecesPtr->size());
@@ -277,18 +266,7 @@ public:
 	 * Reset the Riccati equation
 	 */
 	void reset() {
-
-		AmFunc_.reset();
-		BmFunc_.reset();
-		qFunc_.reset();
-		QvFunc_.reset();
-		QmFunc_.reset();
-		RvFunc_.reset();
-		RmInverseFunc_.reset();
-		RmFunc_.reset();
-		PmFunc_.reset();
-		EvFunc_.reset();
-		CmFunc_.reset();
+		// TODO(ruben) remove this function and its callers
 	}
 
 	/**
@@ -336,8 +314,7 @@ public:
 		else
 			Sm_ += state_matrix_t::Identity()*(addedRiccatiDiagonal_);
 
-		AmFunc_.interpolate(t, Am_);
-		size_t greatestLessTimeStampIndex = AmFunc_.getGreatestLessTimeStampIndex();
+		auto greatestLessTimeStampIndex = AmFunc_.interpolate(t, Am_);
 		BmFunc_.interpolate(t, Bm_, greatestLessTimeStampIndex);
 		qFunc_.interpolate(t, q_, greatestLessTimeStampIndex);
 		QvFunc_.interpolate(t, Qv_, greatestLessTimeStampIndex);

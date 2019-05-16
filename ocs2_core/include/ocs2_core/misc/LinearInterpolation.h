@@ -35,6 +35,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <memory>
 #include <vector>
+#include <algorithm>
 
 
 namespace ocs2{
@@ -57,8 +58,7 @@ public:
 	 * Default constructor.
 	 */
 	LinearInterpolation()
-	: index_(0),
-	  zeroFunction_(false),
+	: zeroFunction_(true),
 	  timeStampPtr_(nullptr),
 	  dataPtr_(nullptr)
 	{}
@@ -71,17 +71,11 @@ public:
 	 */
 	LinearInterpolation(
 			const std::vector<scalar_t>* timeStampPtr,
-			const std::vector<Data_T,Alloc>* dataPtr)
-	: index_(0)
-	, zeroFunction_(false)
-	, timeStampPtr_(timeStampPtr)
-	, dataPtr_(dataPtr)
-	{
-		if (timeStampPtr_ == nullptr)
-			throw std::runtime_error("timeStampPtr is nullptr.");
-		if (dataPtr_ == nullptr)
-			throw std::runtime_error("dataPtr is nullptr.");
-	}
+			const std::vector<Data_T,Alloc>* dataPtr) :
+        zeroFunction_(false),
+        timeStampPtr_(timeStampPtr),
+        dataPtr_(dataPtr)
+	{ }
 
 	/**
 	 * Copy constructor
@@ -90,43 +84,29 @@ public:
 	 */
 	LinearInterpolation(const LinearInterpolation& arg) = default;
 
-	/**
-	 * Reset function
-	 */
-	void reset()  {
-
-		index_ = 0;
-		zeroFunction_ = false;
-	}
-
     /**
-     * Sets the time stamp.
+     * Sets the time stamp and data.
      *
      * @param [in] timeStampPtr: A pointer to time stamp.
-     */
-	void setTimeStamp(const std::vector<scalar_t>* timeStampPtr) {
-    if (timeStampPtr == nullptr) throw std::runtime_error("timeStampPtr is nullptr.");
-		reset();
-		timeStampPtr_ = timeStampPtr;
-	}
-
-    /**
-     * Sets data
-     *
      * @param [in] dataPtr: A pointer to the data.
      */
-	void setData(const std::vector<Data_T, Alloc>* dataPtr) {
-    if (dataPtr == nullptr) throw std::runtime_error("dataPtr is nullptr.");
-		reset();
+	void setData(const std::vector<scalar_t>* timeStampPtr, const std::vector<Data_T, Alloc>* dataPtr) {
+    	if (timeStampPtr == nullptr) throw std::runtime_error("timeStampPtr is nullptr.");
+		if (dataPtr == nullptr) throw std::runtime_error("dataPtr is nullptr.");
+
+		zeroFunction_ = false;
+		timeStampPtr_ = timeStampPtr;
 		dataPtr_ = dataPtr;
+
+		if (timeStampPtr_->empty() || dataPtr_->size() != timeStampPtr_->size()){
+			throw std::runtime_error("LinearInterpolation.h : Sizes not suitable for interpolation.");
+		}
 	}
 
     /**
      * Sets zero
      */
 	void setZero() {
-
-		reset();
 		zeroFunction_ = true;
 	}
 
@@ -138,52 +118,32 @@ public:
      * @param [in]  greatestLessTimeStampIndex (optional): The greatest smaller time stamp index. If provided, the interpolation will skip
      * the search scheme and readily calculates the output.
      */
-	void interpolate(
+	int interpolate(
 			const scalar_t& enquiryTime,
 			Data_T& enquiryData,
 			int greatestLessTimeStampIndex = -1) const {
-
-		if (zeroFunction_==true) {
-			enquiryData.setZero();
-			return;
-		}
-
 		const std::vector<scalar_t>& timeStamp = *timeStampPtr_;
 		const std::vector<Data_T, Alloc>& dataArray = *dataPtr_;
+		int index = greatestLessTimeStampIndex;
 
-		const int timeStampSize = timeStamp.size();
+		if (zeroFunction_) {
+			enquiryData.setZero();
+		} else {
+			if (greatestLessTimeStampIndex < 0) { // No index provided -> search for it
+				index = find(timeStamp, enquiryTime);
+			}
 
-		if (timeStampSize==0 || dataArray.size()!=timeStampSize)
-			throw std::runtime_error("LinearInterpolation.h : Sizes not suitable for interpolation.");
-
-		if (greatestLessTimeStampIndex == -1)
-			index_ = find(enquiryTime);
-		else
-			index_ = greatestLessTimeStampIndex;
-
-		if (index_==-1) {
-			enquiryData = dataArray.front();
-			index_ = 0;
-			return;
+			// Check bounds and extrapolate with zero order
+			if ( index >= static_cast<int>(timeStamp.size()-1) ) { // upper bound
+				enquiryData = dataArray.back();
+			} else if (index < 0) { // lower bound, with zero it is still between the first two timepoints
+				enquiryData = dataArray.front();
+			} else { // interpolation
+				scalar_t alpha = (enquiryTime - timeStamp[index + 1]) / (timeStamp[index] - timeStamp[index + 1]);
+				enquiryData = alpha * dataArray[index] + (1 - alpha) * dataArray[index + 1];
+			}
 		}
-
-		if (index_ == timeStampSize-1) {
-			enquiryData = dataArray.back();
-			index_ = timeStampSize - 1;
-			return;
-		}
-
-		scalar_t alpha = (enquiryTime - timeStamp[index_ + 1]) / (timeStamp[index_] - timeStamp[index_ + 1]);
-		enquiryData = alpha * dataArray[index_] + (1 - alpha) * dataArray[index_ + 1];
-	}
-
-	/**
-	 * Returns the greatest smaller time stamp index found in the last interpolation function call.
-	 * @return The greatest smaller time stamp index.
-	 */
-	int getGreatestLessTimeStampIndex() const {
-
-		return index_;
+		return index;
 	}
 
 protected:
@@ -193,37 +153,12 @@ protected:
      * @param [in] enquiryTime: The enquiry time for interpolation.
      * @return The greatest smaller time stamp index.
      */
-	int find(const scalar_t& enquiryTime) const {
-
-		const std::vector<scalar_t>& timeStamp = *timeStampPtr_;
-		const int timeStampSize = timeStamp.size();
-
-		int index = -1;
-
-		if (timeStamp[index_] > enquiryTime) {
-			for (int i = index_; i >= 0; i--) {
-				index = i;
-				if (timeStamp[i] <= enquiryTime)
-					break;
-			}
-		} else {
-			for (int i = index_; i < timeStampSize; i++) {
-				index = i;
-				if (timeStamp[i] > enquiryTime) {
-					index--;
-					break;
-				}
-			}
-		}
-
-		return index;
+	static int find(const std::vector<scalar_t>& timeArray, scalar_t enquiryTime) {
+		return static_cast<int>(std::upper_bound(timeArray.begin(), timeArray.end(), enquiryTime) - timeArray.begin() - 1);
 	}
 
 private:
-	mutable int index_;
-
 	bool zeroFunction_;
-
 	const std::vector<scalar_t>* timeStampPtr_;
 	const std::vector<Data_T, Alloc>* dataPtr_;
 };

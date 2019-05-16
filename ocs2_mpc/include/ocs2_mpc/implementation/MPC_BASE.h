@@ -282,6 +282,9 @@ bool MPC_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::run(
 	if (logicRulesTemplateUpdated_ == true) {
 
 		// set new templates
+		if(!solverPtr_->getLogicRulesPtr()){
+			throw std::runtime_error("MPC Base: solverPtr_->getLogicRulesPtr() must not be nullptr.");
+		}
 		solverPtr_->getLogicRulesPtr()->setModeSequenceTemplate(newLogicRulesTemplate_);
 		solverPtr_->getLogicRulesPtr()->insertInternalModeSequenceTemplate(finalTime, partitioningTimes_.back());
 		solverPtr_->getLogicRulesMachinePtr()->logicRulesUpdated();
@@ -377,7 +380,11 @@ void MPC_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::setLogicRules(
 template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
 const LOGIC_RULES_T* MPC_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::getLogicRulesPtr() const {
 
-	return solverPtr_->getLogicRulesPtr();
+	auto result  = solverPtr_->getLogicRulesPtr();
+	if(!result){
+		throw std::runtime_error("MPC Base: solverPtr_->getLogicRulesPtr() must not be nullptr.");
+	}
+	return result;
 }
 
 /******************************************************************************************************/

@@ -9,6 +9,8 @@ namespace ocs2 {
 /**
  * Cost Function for Path Integral Solver
  * Requires quadratic costs on the input and arbitrary state cost.
+ * @warning Does not use costDesiredTrajectories at the moment
+ * @todo use cost desired trajectories (access via xNominalFunc_, uNominalFunc_)
  *
  * @tparam STATE_DIM: Dimension of the state space.
  * @tparam INPUT_DIM: Dimension of the control input space.
@@ -29,8 +31,9 @@ class PathIntegralCostFunction final : public CostFunctionBase<STATE_DIM, INPUT_
   typedef typename DIMENSIONS::input_matrix_t input_matrix_t;
   typedef typename DIMENSIONS::input_state_matrix_t input_state_matrix_t;
 
-  typedef std::function<scalar_t(const state_vector_t&)> potential_fct_t;
-  typedef std::function<input_vector_t(const state_vector_t&)> r_fct_t;
+  typedef std::function<scalar_t(const state_vector_t&, scalar_t)> potential_fct_t;
+  typedef std::function<scalar_t(const state_vector_t&)> final_cost_fct_t;
+  typedef std::function<input_vector_t(const state_vector_t&, scalar_t)> r_fct_t;
 
   /**
    * Constructor for the running and final cost function defined as the following:
@@ -38,11 +41,11 @@ class PathIntegralCostFunction final : public CostFunctionBase<STATE_DIM, INPUT_
    * - \f$ \Phi(x) \f$ arbitrary
    * @param [in] R: \f$ R \f$
    * @param [in] uNominalIntermediate: \f$ u_{n}\f$
-   * @param [in] V: \f$ V(x) \f$
-   * @param [in] r: \f$ r'(x) \f$
+   * @param [in] V: \f$ V(x,t) \f$
+   * @param [in] r: \f$ r(x,t) \f$
    */
   PathIntegralCostFunction(const input_matrix_t& R, const input_vector_t& uNominalIntermediate, potential_fct_t V, r_fct_t r,
-                           potential_fct_t Phi)
+                           final_cost_fct_t Phi)
       : R_(R), uNominalIntermediate_(uNominalIntermediate), V_(std::move(V)), r_(std::move(r)), Phi_(std::move(Phi)) {}
 
   /**
@@ -65,7 +68,8 @@ class PathIntegralCostFunction final : public CostFunctionBase<STATE_DIM, INPUT_
    * @param [out] L: The intermediate cost value.
    */
   virtual void getIntermediateCost(scalar_t& L) override {
-    L = scalar_t(0.5) * (this->u_ - uNominalIntermediate_).dot(R_ * (this->u_ - uNominalIntermediate_)) + V_(this->x_) + r_(this->x_).dot(this->u_);
+    L = scalar_t(0.5) * (this->u_ - uNominalIntermediate_).dot(R_ * (this->u_ - uNominalIntermediate_))
+        + V_(this->x_, this->t_) + r_(this->x_, this->t_).dot(this->u_);
   }
 
   /**
@@ -92,7 +96,7 @@ class PathIntegralCostFunction final : public CostFunctionBase<STATE_DIM, INPUT_
    * @param [out] dLdu: First order derivative of the intermediate cost with respect to input vector.
    */
   virtual void getIntermediateCostDerivativeInput(input_vector_t& dLdu) override {
-    dLdu = R_ * (this->u_ - uNominalIntermediate_) + r_(this->x_);
+    dLdu = R_ * (this->u_ - uNominalIntermediate_) + r_(this->x_, this->t_);
   }
 
   /**
@@ -142,6 +146,6 @@ class PathIntegralCostFunction final : public CostFunctionBase<STATE_DIM, INPUT_
 
   potential_fct_t V_;
   r_fct_t r_;
-  potential_fct_t Phi_;
+  final_cost_fct_t Phi_;
 };
 }  // namespace ocs2

@@ -31,8 +31,8 @@ class MPC_PI : public MPC_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> {
   typedef typename solver_t::constraint_t constraint_t;
 
   MPC_PI(typename dynamics_t::Ptr dynamics, std::unique_ptr<cost_t> cost, const constraint_t constraint, scalar_t rollout_dt,
-         const MPC_Settings& settings)
-      : BASE(scalar_array_t{0.0, 1.0}, settings) {
+         const scalar_array_t& partitioningTimes, const MPC_Settings& settings)
+      : BASE(partitioningTimes, settings) {
     scalar_t noiseScaling = 0.1;  // TODO(jcarius) set this in config file
     piSolverPtr_.reset(new solver_t(dynamics, std::move(cost), constraint, rollout_dt, noiseScaling));
     BASE::setBaseSolverPtr(piSolverPtr_.get());

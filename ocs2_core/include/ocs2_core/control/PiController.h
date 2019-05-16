@@ -49,7 +49,7 @@ class PiController final : public ControllerBase<STATE_DIM, INPUT_DIM> {
         rollout_dt_(rollout_dt),
         standardNormalDistribution_(scalar_t(0.0), scalar_t(1.0)),
         gamma_(noiseScaling) {
-    eigenRandomNormalNullaryExpr_ = [&](scalar_t) -> scalar_t {
+    eigenRandomNormalNullaryExpr_ = [this](scalar_t) -> scalar_t {
       return standardNormalDistribution_(generator_);
     };  // dummy argument required by Eigen
 

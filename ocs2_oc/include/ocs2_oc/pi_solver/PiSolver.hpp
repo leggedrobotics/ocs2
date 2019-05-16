@@ -57,10 +57,10 @@ class PiSolver final : public Solver_BASE<STATE_DIM, INPUT_DIM, NullLogicRules> 
            const constraint_t constraint, scalar_t rollout_dt, scalar_t noiseScaling)
       : systemDynamics_(systemDynamicsPtr),
         costFunction_(std::move(costFunction)),
-        rollout_(*systemDynamicsPtr, Rollout_Settings(1e-9, 1e-6, 5000, rollout_dt, IntegratorType::EULER)),
         constraint_(constraint),
+        controller_(constraint, *costFunction_, rollout_dt, noiseScaling), //!@warn need to use member var
+        rollout_(*systemDynamicsPtr, Rollout_Settings(1e-9, 1e-6, 5000, rollout_dt, IntegratorType::EULER)),
         rollout_dt_(rollout_dt),
-        controller_(constraint, *costFunction, rollout_dt, noiseScaling),
         gamma_(noiseScaling) {
     // TODO(jcarius) how to ensure that we are given a control affine system?
     // TODO(jcarius) how to ensure that we are given a suitable cost function?
@@ -89,8 +89,9 @@ class PiSolver final : public Solver_BASE<STATE_DIM, INPUT_DIM, NullLogicRules> 
     }
     costFunction_->setCostDesiredTrajectories(costDesiredTrajectories_);
 
-    constexpr size_t numSamples = 10;  // number of random walks to be sampled
-    const auto numSteps = static_cast<size_t>(std::floor((finalTime - initTime) / rollout_dt_));
+    constexpr size_t numSamples = 1;  // number of random walks to be sampled
+    const auto numSteps = static_cast<size_t>(std::round((finalTime - initTime) / rollout_dt_)) + 1;
+    std::cout << "numSteps = " << numSteps << std::endl;
 
     // setup containers to store rollout data
     state_vector_array2_t state_vector_array2(numSamples, state_vector_array_t(numSteps));      // vector of vectors of states
@@ -103,7 +104,9 @@ class PiSolver final : public Solver_BASE<STATE_DIM, INPUT_DIM, NullLogicRules> 
 
     // a sample is a single stochastic rollout from initTime to finalTime
     for (size_t sample = 0; sample < numSamples; sample++) {
-      state_vector_array2[sample][0] = initState;
+      // initialize stateTrajectory and controller for first loop iteration
+      typename rollout_t::state_vector_array_t stateTrajectory;
+      stateTrajectory.push_back(initState);
       controller_.computeInput(initTime, initState);
 
       // stepping through time to avoid recomputing quantities that the controller already computed
@@ -115,14 +118,16 @@ class PiSolver final : public Solver_BASE<STATE_DIM, INPUT_DIM, NullLogicRules> 
             0.5 * controller_.r_.transpose() * (input_matrix_t::Identity() - controller_.Dtilde_) * controller_.Rinv_ * controller_.r_;
         costVtilde[sample][n] -= (controller_.Ddagger_ * controller_.c_).transpose() * controller_.r_;
 
+        noiseInputVector_array2[sample][n] = controller_.noiseInput_;  // TODO(jcarius) is there a dt missing?
+
+        state_vector_array2[sample][n] = stateTrajectory.back();
+
+        // step forward in time
         const auto currStepTime = initTime + rollout_dt_ * n;
         typename rollout_t::logic_rules_machine_t logicRulesMachine;
         typename rollout_t::scalar_array_t timeTrajectory;
         typename rollout_t::size_array_t eventsPastTheEndIndeces;
-        typename rollout_t::state_vector_array_t stateTrajectory;
         typename rollout_t::input_vector_array_t inputTrajectory;
-
-        // step forward in time
         rollout_.run(0, currStepTime, state_vector_array2[sample][n], currStepTime + rollout_dt_, &controller_, logicRulesMachine,
                      timeTrajectory, eventsPastTheEndIndeces, stateTrajectory, inputTrajectory);
 
@@ -130,35 +135,35 @@ class PiSolver final : public Solver_BASE<STATE_DIM, INPUT_DIM, NullLogicRules> 
         if (timeTrajectory.size() != 2) {
           throw std::runtime_error("Expected rollout to do a single step only.");
         }
-        state_vector_array2[sample][n + 1] = stateTrajectory.back();
-        noiseInputVector_array2[sample][n] = controller_.noiseInput_;  // TODO(jcarius) is there a dt missing?
       }
-      scalar_t terminalCost;
+      std::cout << "extracting terms for final time " << initTime + rollout_dt_ * (numSteps - 1) << std::endl;
+      noiseInputVector_array2[sample][numSteps - 1] = controller_.noiseInput_;
+      state_vector_array2[sample][numSteps - 1] = stateTrajectory.back();
+
       costFunction_->setCurrentStateAndControl(finalTime, state_vector_array2[sample][numSteps - 1], input_vector_t::Zero());
-      costFunction_->getTerminalCost(terminalCost);
-      costVtilde[sample][numSteps - 1] = terminalCost;
+      costFunction_->getTerminalCost(costVtilde[sample][numSteps - 1]);
     }
 
-    // make a single rollout without noise to save as nominal state trajectory later
-controller_.gamma_ = 0.0;
-typename rollout_t::logic_rules_machine_t logicRulesMachine;
-typename rollout_t::scalar_array_t timeTrajectoryNominal;
-typename rollout_t::size_array_t eventsPastTheEndIndecesNominal;
-typename rollout_t::state_vector_array_t stateTrajectoryNominal;
-typename rollout_t::input_vector_array_t inputTrajectoryNominal;
-rollout_.run(0, initTime, initState, finalTime, &controller_, logicRulesMachine, timeTrajectoryNominal, eventsPastTheEndIndecesNominal, stateTrajectoryNominal, inputTrajectoryNominal);
+    // perform a single rollout without noise to save as nominal state trajectory later
+    controller_.gamma_ = 0.0;
+    typename rollout_t::logic_rules_machine_t logicRulesMachine;
+    typename rollout_t::scalar_array_t timeTrajectoryNominal;
+    typename rollout_t::size_array_t eventsPastTheEndIndecesNominal;
+    typename rollout_t::state_vector_array_t stateTrajectoryNominal;
+    typename rollout_t::input_vector_array_t inputTrajectoryNominal;
+    rollout_.run(0, initTime, initState, finalTime, &controller_, logicRulesMachine, timeTrajectoryNominal, eventsPastTheEndIndecesNominal, stateTrajectoryNominal, inputTrajectoryNominal);
 
-controller_.gamma_ = gamma_;
+    controller_.gamma_ = gamma_;
 
     // -------------------------------------------------------------------------
     // backward pass
     // collect cost to go and calculate psi and input across all samples
     // -------------------------------------------------------------------------
-    scalar_array2_t J(numSamples, scalar_array_t(numSteps, 0.0));      // value of J (cost-to-go) across time steps for each sample
-    scalar_array_t psi(numSteps, 0.0);                                 // value of Psi across time steps, averaged over samples
+    scalar_array2_t J(numSamples, scalar_array_t(numSteps, 0.0));  // value of J (cost-to-go) for each sample and each time step
+    scalar_array_t psi(numSteps, 0.0);                             // value of Psi for each time step, averaged over samples
     input_vector_array_t u_opt(numSteps, input_vector_t::Zero());  // value of optimal input across time steps, averaged over samples
 
-    // initialize cost-to-go for each sample
+    // initialize J for each sample
     for (size_t sample = 0; sample < numSamples; sample++) {
       J[sample][numSteps - 1] = costVtilde[sample][numSteps - 1];
     }
@@ -166,12 +171,12 @@ controller_.gamma_ = gamma_;
     // initialize psi
     psi[numSteps - 1] =
         std::accumulate(J.begin(), J.end(), scalar_t(0.0),
-                        [this, numSteps](const scalar_t& a, const scalar_array_t& b) { return a + std::exp((-1.0 / gamma_) * b[numSteps - 1]); }) /
+                        [this, numSteps](scalar_t a, const scalar_array_t& Ji) { return std::move(a) + std::exp(-Ji[numSteps - 1]/gamma_); }) /
         numSamples;
 
-    // initialize u
+    // initialize u for each sample
     for (size_t sample = 0; sample < numSamples; sample++) {
-        u_opt[numSteps-1] += noiseInputVector_array2[sample][numSteps-1] * std::exp((-1.0 / gamma_) * J[sample][numSteps - 1]);
+        u_opt[numSteps-1] += noiseInputVector_array2[sample][numSteps-1] * std::exp(-J[sample][numSteps - 1] / gamma_);
     }
     u_opt[numSteps-1] /= numSamples * psi[numSteps - 1];
 
@@ -183,12 +188,12 @@ controller_.gamma_ = gamma_;
       }
 
       psi[n] = std::accumulate(J.begin(), J.end(), scalar_t(0.0),
-                               [this,n](const scalar_t& a, const scalar_array_t& b) { return a + std::exp((-1.0 / gamma_) * b[n]); }) /
+                               [this,n](scalar_t a, const scalar_array_t& Ji) { return std::move(a) + std::exp(-Ji[n]/gamma_); }) /
                numSamples;
 
       // u_opt
       for (size_t sample = 0; sample < numSamples; sample++) {
-          u_opt[n] += noiseInputVector_array2[sample][n] * std::exp((-1.0 / gamma_) * J[sample][n]);
+          u_opt[n] += noiseInputVector_array2[sample][n] * std::exp(-J[sample][n] / gamma_);
       }
       u_opt[n] /= numSamples * psi[n];
     }
@@ -321,6 +326,14 @@ controller_.gamma_ = gamma_;
 
   virtual const unsigned long long int& getRewindCounter() const override { throw std::runtime_error("not implemented."); }
 
+  virtual const logic_rules_t* getLogicRulesPtr() const override {
+    return &logicRules_;
+  }
+
+  virtual logic_rules_t* getLogicRulesPtr() override {
+    return &logicRules_;
+  }
+
   /**
    * @brief updates pointers in nominalControllerPtrStock from memory location of nominalControllersStock_ members
    */
@@ -344,6 +357,8 @@ controller_.gamma_ = gamma_;
   rollout_t rollout_;
   scalar_t rollout_dt_;  //! time step size of Euler integration rollout
   scalar_t gamma_;       //! scaling of noise (~temperature)
+
+  logic_rules_t logicRules_;
 
   cost_desired_trajectories_t costDesiredTrajectories_;  // TODO(jcarius) should this be in the base class?
   cost_desired_trajectories_t costDesiredTrajectoriesBuffer_;

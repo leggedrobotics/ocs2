@@ -45,20 +45,23 @@ int main(int argc, char** argv) {
   dynamics_t::DIMENSIONS::input_vector_t uNominal;
   uNominal.setZero();
 
-  auto V = [Q](const dynamics_t::DIMENSIONS::state_vector_t& x) { return x.dot(Q * x); };
-  auto r = [](const dynamics_t::DIMENSIONS::state_vector_t& x) { return dynamics_t::DIMENSIONS::input_vector_t::Zero(); };
-  auto Phi = [QFinal](const dynamics_t::DIMENSIONS::state_vector_t& x) { return x.dot(QFinal * x); };
-
   std::cerr << "Q:  \n" << Q << std::endl;
   std::cerr << "R:  \n" << R << std::endl;
   std::cerr << "Q_final:\n" << QFinal << std::endl;
   std::cerr << "x_init:   " << xInitial.transpose() << std::endl;
   std::cerr << "x_final:  " << xFinal.transpose() << std::endl;
+
+  auto V = [Q](const dynamics_t::DIMENSIONS::state_vector_t& x) { return x.dot(Q * x); };
+  auto r = [](const dynamics_t::DIMENSIONS::state_vector_t& x) { return dynamics_t::DIMENSIONS::input_vector_t::Zero(); };
+  auto Phi = [QFinal](const dynamics_t::DIMENSIONS::state_vector_t& x) { return x.dot(QFinal * x); };
+
   using cost_t = ocs2::PathIntegralCostFunction<STATE_DIM, INPUT_DIM>;
   std::unique_ptr<cost_t> cost(new cost_t(R, uNominal, V, r, Phi));
 
-  dynamics_t::scalar_t initTime(0.0);
-  dynamics_t::scalar_t finalTime(5.0);
+  // cost desired trajectories (NOT used at the moment)
+  const dynamics_t::scalar_t initTime(0.0);
+  dynamics_t::scalar_t finalTime;
+  ocs2::loadScalar(taskFile, "mpcTimeHorizon.timehorizon", finalTime);
   using cost_desired_trajectories_t = solver_t::cost_desired_trajectories_t;
   cost_desired_trajectories_t::scalar_array_t desiredTimeArray{initTime, finalTime};
   cost_desired_trajectories_t::dynamic_vector_array_t desiredStateArray(2), desiredInputArray(2);

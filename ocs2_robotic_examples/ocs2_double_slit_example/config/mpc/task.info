@@ -1,0 +1,49 @@
+systemParameters
+{
+    rollout_dt 1;
+    barrierTimePosition 50 ; time steps to barrier
+    barrierLowerEnd -10;
+    barrierUpperEnd  10;
+}
+
+mpcTimeHorizon
+{
+    debugPrint 1
+    timehorizon 100
+    numPartitions 1
+}
+
+mpc
+{
+    debugPrint 1
+}
+
+timeHorizon 100; time steps to end
+
+initialState
+{
+  (0,0) 0.0
+}
+
+; state weight matrix
+Q
+{
+  scaling 1e-1
+  (0,0) 1.0
+}
+
+;  control weight matrix
+R
+{
+   scaling 1e-2
+
+   (0,0)  1.0
+}
+
+
+; final state weight matrix
+Q_final
+{
+  scaling 1e+1
+  (0,0)  1.0
+}

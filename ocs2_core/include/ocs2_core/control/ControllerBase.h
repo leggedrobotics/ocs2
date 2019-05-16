@@ -85,6 +85,12 @@ class ControllerBase
    */
   virtual bool empty() const = 0;
 
+  /**
+   * Displays controller's data.
+   */
+  virtual void display() const
+  {}
+
 };
 
 }  // namespace ocs2

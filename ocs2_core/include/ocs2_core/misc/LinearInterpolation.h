@@ -156,22 +156,22 @@ public:
 		if (timeStampSize==0 || dataArray.size()!=timeStampSize)
 			throw std::runtime_error("LinearInterpolation.h : Sizes not suitable for interpolation.");
 
-		if (enquiryTime<=timeStamp.front()) {
+		if (greatestLessTimeStampIndex == -1)
+			index_ = find(enquiryTime);
+		else
+			index_ = greatestLessTimeStampIndex;
+
+		if (index_==-1) {
 			enquiryData = dataArray.front();
 			index_ = 0;
 			return;
 		}
 
-		if (enquiryTime>=timeStamp.back()) {
+		if (index_ == timeStampSize-1) {
 			enquiryData = dataArray.back();
 			index_ = timeStampSize - 1;
 			return;
 		}
-
-		if (greatestLessTimeStampIndex == -1)
-			index_ = find(enquiryTime);
-		else
-			index_ = greatestLessTimeStampIndex;
 
 		scalar_t alpha = (enquiryTime - timeStamp[index_ + 1]) / (timeStamp[index_] - timeStamp[index_ + 1]);
 		enquiryData = alpha * dataArray[index_] + (1 - alpha) * dataArray[index_ + 1];
@@ -203,7 +203,8 @@ protected:
 		if (timeStamp[index_] > enquiryTime) {
 			for (int i = index_; i >= 0; i--) {
 				index = i;
-				if (timeStamp[i] <= enquiryTime) break;
+				if (timeStamp[i] <= enquiryTime)
+					break;
 			}
 		} else {
 			for (int i = index_; i < timeStampSize; i++) {

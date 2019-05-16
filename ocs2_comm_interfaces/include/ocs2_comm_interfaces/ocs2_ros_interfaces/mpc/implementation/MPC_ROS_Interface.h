@@ -189,8 +189,10 @@ void MPC_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::publishPolicy(
 	ros_msg_conversions_t::CreateModeSequenceMsg(*eventTimesPtr, *subsystemsSequencePtr,
 			mpcPolicyMsg_.modeSequence);
 
-	auto controllerType = controllerStockPtr->front()->getType();
-	if(mpcSettings_.useFeedbackPolicy_==false)
+	ControllerType controllerType;
+	if(mpcSettings_.useFeedbackPolicy_==true)
+		controllerType = controllerStockPtr->front()->getType();
+	else
 		controllerType = ControllerType::FEEDFORWARD;
 
 	// translate controllerType enum into message enum

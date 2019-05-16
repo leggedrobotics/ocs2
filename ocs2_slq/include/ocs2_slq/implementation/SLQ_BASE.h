@@ -3534,18 +3534,22 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::run(
 		const scalar_array_t& partitioningTimes,
 		const controller_ptr_array_t& controllersPtrStock) {
 
+	if (settings_.displayInfo_) {
+		std::cerr << std::endl;
+		std::cerr << "++++++++++++++++++++++++++++++++++++++++++++++++++++++" << std::endl;
+		std::cerr << "+++++++++++++ SLQ solver is initialized ++++++++++++++" << std::endl;
+		std::cerr << "++++++++++++++++++++++++++++++++++++++++++++++++++++++" << std::endl;
+	}
+
 	// infeasible learning rate adjustment scheme
 	if (settings_.maxLearningRateGSLQP_ < settings_.minLearningRateGSLQP_-OCS2NumericTraits<scalar_t>::limit_epsilon())
 		throw std::runtime_error("The maximum learning rate is smaller than the minimum learning rate.");
 
-	if (settings_.displayInfo_) {
-		std::cerr << "++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++" << std::endl;
-		std::cerr << "++++++++++++++++ SLQ solver is initialized +++++++++++++++++" << std::endl;
-		std::cerr << "++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++" << std::endl;
-	}
-
 	if (partitioningTimes.empty())
 		throw std::runtime_error("There should be at least one time partition.");
+
+	if (!initState.allFinite())
+		throw std::runtime_error("SLQ: initial state is not finite (time: " + std::to_string(initTime) + " [sec]).");
 
 	// update numPartitions_ if it has been changed
 	if (numPartitions_+1 != partitioningTimes.size()) {
@@ -3708,9 +3712,9 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::run(
 	// display
 	if (settings_.displayInfo_  || settings_.displayShortSummary_)  {
 
-		std::cerr << "\n++++++++++++++++++++++++++++++++++++++++++++++++++++++++++" << std::endl;
-		std::cerr <<   "++++++++++++++++ SLQ solver is terminated ++++++++++++++++" << std::endl;
-		std::cerr <<   "++++++++++++++++++++++++++++++++++++++++++++++++++++++++++" << std::endl;
+		std::cerr << "\n++++++++++++++++++++++++++++++++++++++++++++++++++++++" << std::endl;
+		std::cerr <<   "++++++++++++++ SLQ solver is terminated ++++++++++++++" << std::endl;
+		std::cerr <<   "++++++++++++++++++++++++++++++++++++++++++++++++++++++" << std::endl;
 		std::cerr << "Number of Iterations:      " <<  iteration_+1 << " out of " << settings_.maxNumIterationsSLQ_ << std::endl;
 
 		printRolloutInfo();

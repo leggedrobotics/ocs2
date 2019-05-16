@@ -703,9 +703,9 @@ public:
 	/**
 	 * Gets an array of pointer to the optimal control policies.
 	 *
-	 * @param [out] controllersStockPtr: An array of pointers to the optimized control policies.
+	 * @param [out] controllersPtrStock: An array of pointers to the optimized control policies.
 	 */
-	void getControllerPtr(const controller_ptr_array_t*& controllersStockPtr) const override;
+	void getControllerPtr(const controller_ptr_array_t*& controllersPtrStock) const override;
 
 	/**
 	 * Returns the nominal time trajectories.

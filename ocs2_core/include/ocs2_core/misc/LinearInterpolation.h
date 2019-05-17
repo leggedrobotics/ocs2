@@ -91,17 +91,17 @@ public:
      * @param [in] dataPtr: A pointer to the data.
      */
 	void setData(const std::vector<scalar_t>* timeStampPtr, const std::vector<Data_T, Alloc>* dataPtr) {
-    	if (timeStampPtr == nullptr) throw std::runtime_error("timeStampPtr is nullptr.");
-		if (dataPtr == nullptr) throw std::runtime_error("dataPtr is nullptr.");
+        if (timeStampPtr == nullptr) throw std::runtime_error("timeStampPtr is nullptr.");
+        if (dataPtr == nullptr) throw std::runtime_error("dataPtr is nullptr.");
 
-		zeroFunction_ = false;
-		timeStampPtr_ = timeStampPtr;
-		dataPtr_ = dataPtr;
+        zeroFunction_ = false;
+        timeStampPtr_ = timeStampPtr;
+        dataPtr_ = dataPtr;
 
-		if (timeStampPtr_->empty() || dataPtr_->size() != timeStampPtr_->size()){
-			throw std::runtime_error("LinearInterpolation.h : Sizes not suitable for interpolation.");
-		}
-	}
+        if (timeStampPtr_->empty() || dataPtr_->size() != timeStampPtr_->size()) {
+          throw std::runtime_error("LinearInterpolation.h : Sizes not suitable for interpolation.");
+        }
+    }
 
     /**
      * Sets zero
@@ -111,7 +111,9 @@ public:
 	}
 
     /**
-     * Linearly interpolates at the given time. When duplicate values exist the range is selected to the lower one, i.e.: ( ]
+     * Linearly interpolates at the given time. When duplicate values exist the lower range is selected s.t. ( ]
+     * Example: t = [0.0, 1.0, 1.0, 2.0]
+     * when querying tk = 1.0, the range (0.0, 1.0] is selected
      *
      * @param [in]  enquiryTime: The enquiry time for interpolation.
      * @param [out] enquiryData: The value of the trajectory at the requested time.
@@ -153,7 +155,7 @@ protected:
      * @return The greatest smaller time stamp index.
      */
     static int find(const std::vector<scalar_t>& timeArray, scalar_t enquiryTime) {
-    	// Idea for improvement: interpolation search mentioned here https://stackoverflow.com/questions/26613111/binary-search-with-hint
+    	//! @remark Idea for improvement: interpolation search mentioned here https://stackoverflow.com/questions/26613111/binary-search-with-hint
 		return static_cast<int>(std::lower_bound(timeArray.begin(), timeArray.end(), enquiryTime) - timeArray.begin() - 1);
 	}
 

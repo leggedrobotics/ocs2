@@ -115,21 +115,20 @@ public:
      *
      * @param [in]  enquiryTime: The enquiry time for interpolation.
      * @param [out] enquiryData: The value of the trajectory at the requested time.
-     * @param [in]  greatestLessTimeStampIndex (optional): The greatest smaller time stamp index. If provided, the interpolation will skip
+     * @param [in]  index (optional): The greatest smaller time stamp index. If provided, the interpolation will skip
      * the search scheme and readily calculates the output.
      */
 	int interpolate(
 			const scalar_t& enquiryTime,
 			Data_T& enquiryData,
-			int greatestLessTimeStampIndex = -1) const {
+			int index = -1) const {
 		const std::vector<scalar_t>& timeStamp = *timeStampPtr_;
 		const std::vector<Data_T, Alloc>& dataArray = *dataPtr_;
-		int index = greatestLessTimeStampIndex;
 
 		if (zeroFunction_) {
 			enquiryData.setZero();
 		} else {
-			if (greatestLessTimeStampIndex < 0) { // No index provided -> search for it
+			if (index < 0) { // No index provided -> search for it
 				index = find(timeStamp, enquiryTime);
 			}
 

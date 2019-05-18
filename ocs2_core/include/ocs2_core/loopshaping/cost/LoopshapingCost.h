@@ -70,11 +70,6 @@ class LoopshapingCost : public CostFunctionBase<FULL_STATE_DIM, FULL_INPUT_DIM, 
     costApproximationValid_ = false;
     costEvaluationValid_ = false;
 
-    dynamic_vector_t xNominal;
-    xNominalFunc_.interpolate(t, xNominal);
-    dynamic_vector_t uNominal;
-    uNominalFunc_.interpolate(t, uNominal);
-
     t_ = t;
     loopshapingDefinition_->getSystemState(x, x_system_);
     loopshapingDefinition_->getSystemInput(x, u, u_system_);

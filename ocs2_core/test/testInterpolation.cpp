@@ -37,15 +37,15 @@ TEST(testLinearInterpolation, testInterpolation) {
   // Before start
   test_interpolation(-1.0, -1, 0.0);
   // At start
-  test_interpolation(t[0], 0, t[0]);
+  test_interpolation(t[0], -1, t[0]);
   // First interval
   test_interpolation(0.5*t[0] + 0.5 *t[1], 0, 0.5*t[0] + 0.5 *t[1]);
   // Boundary to second interval
-  test_interpolation(t[1], 1, t[1]);
+  test_interpolation(t[1], 0, t[1]);
   // Last interval
   test_interpolation( 0.5*t[4] + 0.5*t[5], 4,  0.5*t[4] + 0.5*t[5]);
   // At End
-  test_interpolation( t[5], 5, t[5]);
+  test_interpolation( t[5], 4, t[5]);
   // Beyond end
   test_interpolation( t[5] + 1.0, 5, t[5]);
 }

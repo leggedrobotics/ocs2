@@ -91,10 +91,10 @@ public:
 	 * If a value for a specific field is not defined it will set to the default value defined in "SLQ_Settings".
 	 *
 	 * @param [in] filename: File name which contains the configuration data.
-	 * @param [in] fieldName: Field name which contains the configuration data.
-	 * @param [in] verbose: Flag to determine whether to print out the loaded settings or not (The default is true).
+	 * @param [in] fieldName: Field name which contains the configuration data (the default is slq).
+	 * @param [in] verbose: Flag to determine whether to print out the loaded settings or not (the default is true).
 	 */
-	void loadSettings(const std::string& filename, const std::string& fieldName, bool verbose = true);
+	void loadSettings(const std::string& filename, const std::string& fieldName = "slq", bool verbose = true);
 
 public:
 	/****************
@@ -142,14 +142,14 @@ public:
 }; // end of SLQ_Settings class
 
 
-inline void SLQ_Settings::loadSettings(const std::string& filename, const std::string& fieldName, bool verbose /*= true*/) {
+inline void SLQ_Settings::loadSettings(const std::string& filename, const std::string& fieldName /*= ilqr*/, bool verbose /*= true*/) {
 
 	boost::property_tree::ptree pt;
 	boost::property_tree::read_info(filename, pt);
 
-	ddpSettings_.loadSettings(filename + ".ddp", fieldName, verbose);
+	ddpSettings_.loadSettings(filename, fieldName+".ddp", verbose);
 
-	rolloutSettings_.loadSettings(filename + ".rollout", fieldName, verbose);
+	rolloutSettings_.loadSettings(filename , fieldName+".rollout", verbose);
 
 	if(verbose){
 		std::cerr << std::endl << " #### SLQ Settings: " << std::endl;

@@ -73,10 +73,10 @@ public:
 	 * If a value for a specific field is not defined it will set to the default value defined in "ILQR_Settings".
 	 *
 	 * @param [in] filename: File name which contains the configuration data.
-	 * @param [in] fieldName: Field name which contains the configuration data.
+	 * @param [in] fieldName: Field name which contains the configuration data (the default is ilqr).
 	 * @param [in] verbose: Flag to determine whether to print out the loaded settings or not (The default is true).
 	 */
-	void loadSettings(const std::string& filename, const std::string& fieldName, bool verbose = true);
+	void loadSettings(const std::string& filename, const std::string& fieldName = "ilqr", bool verbose = true);
 
 public:
 	/****************
@@ -92,14 +92,14 @@ public:
 }; // end of ILQR_Settings class
 
 
-inline void ILQR_Settings::loadSettings(const std::string& filename, const std::string& fieldName, bool verbose /*= true*/) {
+inline void ILQR_Settings::loadSettings(const std::string& filename, const std::string& fieldName /*= ilqr*/, bool verbose /*= true*/) {
 
 	boost::property_tree::ptree pt;
 	boost::property_tree::read_info(filename, pt);
 
-	ddpSettings_.loadSettings(filename + ".ddp", fieldName, verbose);
+	ddpSettings_.loadSettings(filename, fieldName+".ddp", verbose);
 
-	rolloutSettings_.loadSettings(filename + ".rollout", fieldName, verbose);
+	rolloutSettings_.loadSettings(filename, fieldName+".rollout", verbose);
 
 	if(verbose){
 		std::cerr << std::endl << " #### ILQR Settings: " << std::endl;

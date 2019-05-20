@@ -72,7 +72,6 @@ public:
 	, ddpSettings_()
 	, rolloutSettings_()
 
-
 	{}
 
 	/**

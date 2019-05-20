@@ -67,19 +67,19 @@ TEST(exp0_ilqr_test, exp0_ilqr_test) {
   /******************************************************************************************************/
   /******************************************************************************************************/
   ILQR_Settings ilqrSettings;
-  ilqrSettings.displayInfo_ = false;
-  ilqrSettings.displayShortSummary_ = true;
-  ilqrSettings.absTolODE_ = 1e-10;
-  ilqrSettings.relTolODE_ = 1e-7;
-  ilqrSettings.maxNumStepsPerSecond_ = 1000000;
-  ilqrSettings.nThreads_ = 3;
-  ilqrSettings.maxNumIterationsILQR_ = 30;
-  ilqrSettings.lsStepsizeGreedy_ = true;
-  ilqrSettings.noStateConstraints_ = true;
-  ilqrSettings.minLearningRateILQR_ = 0.0001;
-  ilqrSettings.minRelCostILQR_ = 5e-4;
-  ilqrSettings.checkNumericalStability_ = false;
-  ilqrSettings.debugPrintRollout_ = false;
+  ilqrSettings.ddpSettings_.displayInfo_ = false;
+  ilqrSettings.ddpSettings_.displayShortSummary_ = true;
+  ilqrSettings.ddpSettings_.absTolODE_ = 1e-10;
+  ilqrSettings.ddpSettings_.relTolODE_ = 1e-7;
+  ilqrSettings.ddpSettings_.maxNumStepsPerSecond_ = 1000000;
+  ilqrSettings.ddpSettings_.nThreads_ = 3;
+  ilqrSettings.ddpSettings_.maxNumIterations_ = 30;
+  ilqrSettings.ddpSettings_.lsStepsizeGreedy_ = true;
+  ilqrSettings.ddpSettings_.noStateConstraints_ = true;
+  ilqrSettings.ddpSettings_.minLearningRate_ = 0.0001;
+  ilqrSettings.ddpSettings_.minRelCost_ = 5e-4;
+  ilqrSettings.ddpSettings_.checkNumericalStability_ = false;
+  ilqrSettings.ddpSettings_.debugPrintRollout_ = false;
 
   ilqrSettings.rolloutSettings_.absTolODE_ = 1e-10;
   ilqrSettings.rolloutSettings_.relTolODE_ = 1e-7;
@@ -116,12 +116,12 @@ TEST(exp0_ilqr_test, exp0_ilqr_test) {
 //		  &operatingTrajectories, ilqrSettings, &logicRules);
 
   // run single_threaded core ILQR
-  if (ilqrSettings.displayInfo_ || ilqrSettings.displayShortSummary_)
+  if (ilqrSettings.ddpSettings_.displayInfo_ || ilqrSettings.ddpSettings_.displayShortSummary_)
 	  std::cerr << "\n>>> single-threaded ILQR" << std::endl;
   ilqrST.run(startTime, initState, finalTime, partitioningTimes);
 
   // run multi-threaded ILQR
-//  if (ilqrSettings.displayInfo_ || ilqrSettings.displayShortSummary_)
+//  if (ilqrSettings.ddpSettings_.displayInfo_ || ilqrSettings.ddpSettings_.displayShortSummary_)
 //	  std::cerr << "\n>>> multi-threaded ILQR" << std::endl;
 //  ilqrMT.run(startTime, initState, finalTime, partitioningTimes);
 
@@ -129,8 +129,8 @@ TEST(exp0_ilqr_test, exp0_ilqr_test) {
   /******************************************************************************************************/
   /******************************************************************************************************/
   // get controller
-  ILQR_BASE<STATE_DIM, INPUT_DIM, EXP0_LogicRules>::controller_array_t controllersStockST = ilqrST.getController();
-//  ILQR_BASE<STATE_DIM, INPUT_DIM, EXP0_LogicRules>::controller_array_t controllersStockMT = ilqrMT.getController();
+  ILQR_BASE<STATE_DIM, INPUT_DIM, EXP0_LogicRules>::controller_ptr_array_t controllersStockST = ilqrST.getController();
+//  ILQR_BASE<STATE_DIM, INPUT_DIM, EXP0_LogicRules>::controller_ptr_array_t controllersStockMT = ilqrMT.getController();
 
   // get performance indices
   double totalCost_st, totalCost_mt;
@@ -143,21 +143,21 @@ TEST(exp0_ilqr_test, exp0_ilqr_test) {
   /******************************************************************************************************/
   /******************************************************************************************************/
   const double expectedCost = 9.7667;
-  ASSERT_LT(fabs(totalCost_st - expectedCost), 10 * ilqrSettings.minRelCostILQR_) <<
+  ASSERT_LT(fabs(totalCost_st - expectedCost), 10 * ilqrSettings.ddpSettings_.minRelCost_) <<
 		  "MESSAGE: ILQR_ST failed in the EXP0's cost test!";
-//  ASSERT_LT(fabs(totalCost_mt - expectedCost), 10*ilqrSettings.minRelCostILQR_) <<
+//  ASSERT_LT(fabs(totalCost_mt - expectedCost), 10*ilqrSettings.ddpSettings_.minRelCost_) <<
 //		  "MESSAGE: ILQR_MT failed in the EXP1's cost test!";
 
   const double expectedISE1 = 0.0;
-  ASSERT_LT(fabs(constraint1ISE_st - expectedISE1), 10 * ilqrSettings.minRelConstraint1ISE_) <<
+  ASSERT_LT(fabs(constraint1ISE_st - expectedISE1), 10 * ilqrSettings.ddpSettings_.minRelConstraint1ISE_) <<
 		  "MESSAGE: ILQR_ST failed in the EXP0's type-1 constraint ISE test!";
-//  ASSERT_LT(fabs(constraint1ISE_mt - expectedISE1), 10*ilqrSettings.minRelConstraint1ISE_) <<
+//  ASSERT_LT(fabs(constraint1ISE_mt - expectedISE1), 10*ilqrSettings.ddpSettings_.minRelConstraint1ISE_) <<
 //		  "MESSAGE: ILQR_MT failed in the EXP1's type-1 constraint ISE test!";
 
   const double expectedISE2 = 0.0;
-  ASSERT_LT(fabs(constraint2ISE_st - expectedISE2), 10 * ilqrSettings.minRelConstraint1ISE_) <<
+  ASSERT_LT(fabs(constraint2ISE_st - expectedISE2), 10 * ilqrSettings.ddpSettings_.minRelConstraint1ISE_) <<
 		  "MESSAGE: ILQR_ST failed in the EXP0's type-2 constraint ISE test!";
-//  ASSERT_LT(fabs(constraint2ISE_mt - expectedISE2), 10*ilqrSettings.minRelConstraint1ISE_) <<
+//  ASSERT_LT(fabs(constraint2ISE_mt - expectedISE2), 10*ilqrSettings.ddpSettings_.minRelConstraint1ISE_) <<
 //		  "MESSAGE: ILQR_MT failed in the EXP1's type-2 constraint ISE test!";
 
 }

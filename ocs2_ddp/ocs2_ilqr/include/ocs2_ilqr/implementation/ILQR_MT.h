@@ -94,7 +94,7 @@ void ILQR_MT<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::lineSearch(bool computeISEs) 
 	if (BASE::settings_.ddpSettings_.maxLearningRate_ < OCS2NumericTraits<scalar_t>::limit_epsilon()) {
 		// clear the feedforward increments
 		for (size_t i=0; i<BASE::numPartitions_; i++)
-			BASE::nominalControllersStock_[i].deltaUff_.clear();
+			BASE::nominalControllersStock_[i].deltaBiasArray_.clear();
 		// display
 		if (BASE::settings_.ddpSettings_.displayInfo_)
 			std::cerr << "The chosen learningRate is: " << BASE::learningRateStar_ << std::endl;
@@ -139,7 +139,7 @@ void ILQR_MT<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::lineSearch(bool computeISEs) 
 
 	// clear the feedforward increments
 	for (size_t i=0; i<BASE::numPartitions_; i++)
-		BASE::nominalControllersStock_[i].deltaUff_.clear();
+		BASE::nominalControllersStock_[i].deltaBiasArray_.clear();
 
 	// display
 	if (BASE::settings_.ddpSettings_.displayInfo_)
@@ -441,7 +441,7 @@ void ILQR_MT<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::executeCalculatePartitionCont
 		if(k<N) {
 
 			// display
-			if(BASE::settings_.debugPrintMT_ && k%10 == 0) {
+			if(BASE::settings_.ddpSettings_.debugPrintMT_ && k%10 == 0) {
 				BASE::printString("[MT]: [Thread " + std::to_string(threadId) + "]: Start calculating controller on index k = "
 						+ std::to_string(k) + " out of " + std::to_string(N-1));
 			}
@@ -463,14 +463,14 @@ void ILQR_MT<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::executeCalculatePartitionCont
 		lock.unlock();
 
 		// display
-		if(BASE::settings_.debugPrintMT_) {
+		if(BASE::settings_.ddpSettings_.debugPrintMT_) {
 			BASE::printString("[MT]: [Thread " + std::to_string(threadId) + "], subsystem " + std::to_string(partitionIndex)
 				+ ": leaving executeCalculatePartitionController() AND NOTIFYING ");
 		}
 
 	} else {
 		// display
-		if(BASE::settings_.debugPrintMT_) {
+		if(BASE::settings_.ddpSettings_.debugPrintMT_) {
 			BASE::printString("[MT]: [Thread " + std::to_string(threadId) + "], subsystem " + std::to_string(partitionIndex)
 				+ ": leaving executeCalculatePartitionController() but NOT notifying ");
 		}
@@ -483,29 +483,29 @@ void ILQR_MT<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::executeCalculatePartitionCont
 template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
 void ILQR_MT<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::executeLineSearchWorker(size_t threadId)
 {
-	if(BASE::settings_.debugPrintMT_)
+	if(BASE::settings_.ddpSettings_.debugPrintMT_)
 		BASE::printString("[MT]: [Thread " + std::to_string(threadId) + "]: Starting executeLineSearchWorker. ");
 
 	// local search forward simulation's variables
 	scalar_t lsTotalCost;
 	scalar_t lsConstraint1ISE, lsConstraint2ISE, lsInequalityConstraintPenalty, lsInequalityConstraintISE;
 	scalar_t lsConstraint1MaxNorm, lsConstraint2MaxNorm;
-	controller_array_t          lsControllersStock(BASE::numPartitions_);
-	std::vector<scalar_array_t>	lsTimeTrajectoriesStock(BASE::numPartitions_);
-	std::vector<size_array_t>	lsEventsPastTheEndIndecesStock(BASE::numPartitions_);
-	state_vector_array2_t   	lsStateTrajectoriesStock(BASE::numPartitions_);
-	input_vector_array2_t 		lsInputTrajectoriesStock(BASE::numPartitions_);
+	linear_controller_array_t lsControllersStock(BASE::numPartitions_);
+	scalar_array2_t	lsTimeTrajectoriesStock(BASE::numPartitions_);
+	size_array2_t   lsEventsPastTheEndIndecesStock(BASE::numPartitions_);
+	state_vector_array2_t lsStateTrajectoriesStock(BASE::numPartitions_);
+	input_vector_array2_t lsInputTrajectoriesStock(BASE::numPartitions_);
 
 	while(true)  {
 
 		size_t alphaExp = alphaTaken_++;
-		scalar_t learningRate = BASE::maxLearningRate_ * std::pow(BASE::settings_.lineSearchContractionRate_, alphaExp);
+		scalar_t learningRate = BASE::maxLearningRate_ * std::pow(BASE::settings_.ddpSettings_.lineSearchContractionRate_, alphaExp);
 
 		// break condition
-		if (learningRate<BASE::settings_.minLearningRateILQR_ || alphaBestFound_.load()==true) {
+		if (learningRate<BASE::settings_.ddpSettings_.minLearningRate_ || alphaBestFound_.load()==true) {
 
 			// display
-			if(BASE::settings_.debugPrintMT_)  {
+			if(BASE::settings_.ddpSettings_.debugPrintMT_)  {
 				if (alphaBestFound_.load()==true)
 					BASE::printString("[MT]: [Thread " + std::to_string(threadId)
 						+ "]: Leaving executeLineSearchWorker because best alpha is found OR no improvement for any alpha");
@@ -518,7 +518,7 @@ void ILQR_MT<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::executeLineSearchWorker(size_
 		}
 
 		// display
-		if(BASE::settings_.debugPrintMT_)
+		if(BASE::settings_.ddpSettings_.debugPrintMT_)
 			BASE::printString("[MT]: [Thread " + std::to_string(threadId) + "]: Trying learningRate " + std::to_string(learningRate));
 
 		// do a line search
@@ -536,7 +536,7 @@ void ILQR_MT<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::executeLineSearchWorker(size_
 		// break condition: make sure we do not alter an existing result
 		if (alphaBestFound_.load() == true)  {
 			// display
-			if(BASE::settings_.debugPrintMT_)
+			if(BASE::settings_.ddpSettings_.debugPrintMT_)
 				BASE::printString("[MT]: [Thread " + std::to_string(threadId)
 					+ "]: Leaving executeLineSearchWorker because best alpha already found by another thread.");
 
@@ -548,7 +548,7 @@ void ILQR_MT<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::executeLineSearchWorker(size_
 
 		// Based on the LS policy check whether the best solution should be updated with these results.
 		bool updatePolicy = false;
-		if (BASE::settings_.lsStepsizeGreedy_==true)  {
+		if (BASE::settings_.ddpSettings_.lsStepsizeGreedy_==true)  {
 
 			/*
 			 * Use stepsize greedy where cost should be better than the last iteration but learning rate
@@ -558,13 +558,13 @@ void ILQR_MT<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::executeLineSearchWorker(size_
 			if(lsTotalCost<(baselineTotalCost_*(1-1e-3*learningRate)) && learningRate>BASE::learningRateStar_)  {
 				updatePolicy = true;
 				// display
-				if(BASE::settings_.debugPrintMT_) {
+				if(BASE::settings_.ddpSettings_.debugPrintMT_) {
 					BASE::printString("[MT]: [LS, Thread " + std::to_string(threadId) + "]: stepsize-greedy mode: better stepsize and cost found: "
 							+ std::to_string(lsTotalCost) + " at learningRate: " + std::to_string(learningRate));
 				}
 			} else {
 				// display
-				if(BASE::settings_.debugPrintMT_) {
+				if(BASE::settings_.ddpSettings_.debugPrintMT_) {
 					BASE::printString("[MT]: [LS, Thread " + std::to_string(threadId) + "]: stepsize-greedy mode: no better combination found, cost "
 							+ std::to_string(lsTotalCost) + " at learningRate: " + std::to_string(learningRate));
 				}
@@ -578,12 +578,12 @@ void ILQR_MT<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::executeLineSearchWorker(size_
 
 			if(lsTotalCost < (BASE::nominalTotalCost_*(1-1e-3*learningRate)))  {
 				updatePolicy = true;
-				if(BASE::settings_.debugPrintMT_){
+				if(BASE::settings_.ddpSettings_.debugPrintMT_){
 					BASE::printString("[MT]: [LS, Thread " + std::to_string(threadId) + "]: cost-greedy mode : better cost found: "
 							+ std::to_string(lsTotalCost) + " at learningRate: " + std::to_string(learningRate));
 				}
 			} else {
-				if(BASE::settings_.debugPrintMT_){
+				if(BASE::settings_.ddpSettings_.debugPrintMT_){
 					BASE::printString("[MT]: [LS, Thread " + std::to_string(threadId) + "]: cost-greedy mode : no better cost found, cost "
 							+ std::to_string(lsTotalCost) + " at learningRate: " + std::to_string(learningRate) + ". Best cost was "
 							+ std::to_string(BASE::nominalTotalCost_));
@@ -623,7 +623,7 @@ void ILQR_MT<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::executeLineSearchWorker(size_
 		if (allPreviousAlphasProcessed==true)  {
 			alphaBestFound_ = true;
 			event_handler_t::ActivateKillIntegration();	// kill all integrators
-			if (BASE::settings_.displayInfo_) {
+			if (BASE::settings_.ddpSettings_.displayInfo_) {
 				BASE::printString("\t LS: terminate other rollouts with different alphas. alpha_best found or terminating without improvement.");
 			}
 		}
@@ -635,15 +635,15 @@ void ILQR_MT<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::executeLineSearchWorker(size_
 	// add to the number of threads that finished their tasks
 	lsWorkerCompleted_++;
 
-	if(BASE::settings_.debugPrintMT_)
+	if(BASE::settings_.ddpSettings_.debugPrintMT_)
 		BASE::printString("[MT]: [Thread " + std::to_string(threadId) + "]: Leaving executeLineSearchWorker ");
 
-	if (lsWorkerCompleted_.load() >= BASE::settings_.nThreads_)  {
+	if (lsWorkerCompleted_.load() >= BASE::settings_.ddpSettings_.nThreads_)  {
 		std::unique_lock<std::mutex> lock (alphaBestFoundMutex_);
 		alphaBestFoundCondition_.notify_all();
 		lock.unlock();
 
-		if(BASE::settings_.debugPrintMT_)
+		if(BASE::settings_.ddpSettings_.debugPrintMT_)
 			BASE::printString("[MT]: NOTIFYING LS WORKERs since all workers are now done.");
 	}
 }
@@ -709,7 +709,7 @@ typename ILQR_MT<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::scalar_t
 	// solve it in parallel if useParallelRiccatiSolverFromInitItr_ is true
 	else {
 
-		if(BASE::settings_.debugPrintMT_)
+		if(BASE::settings_.ddpSettings_.debugPrintMT_)
 			BASE::printString("[MT]: Waking up workers to do RiccatiSolver Task.");
 
 		workerTask_ = SOLVE_RICCATI;
@@ -717,7 +717,7 @@ typename ILQR_MT<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::scalar_t
 		workerWakeUpCondition_.notify_all();
 		lock.unlock();
 
-		if(BASE::settings_.debugPrintMT_)
+		if(BASE::settings_.ddpSettings_.debugPrintMT_)
 			BASE::printString("[MT]: Will wait now until workers have done RiccatiSolver Task.");
 
 		std::unique_lock<std::mutex> waitLock(riccatiSolverBarrierMutex_);
@@ -729,7 +729,7 @@ typename ILQR_MT<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::scalar_t
 		workerTask_ = IDLE;
 	}
 
-	if(BASE::settings_.debugPrintMT_){
+	if(BASE::settings_.ddpSettings_.debugPrintMT_){
 		BASE::printString("[MT]: Iteration: " + std::to_string(BASE::iteration_) + " done.");
 		BASE::printString("----------------------------------");
 		BASE::printString("----------------------------------");
@@ -752,7 +752,7 @@ void ILQR_MT<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::executeRiccatiSolver(size_t t
 
 	for (int i = endingIndicesRiccatiWorker_[threadId]; i>=startingIndicesRiccatiWorker_[threadId]; i--) {
 
-		if(BASE::settings_.debugPrintMT_)
+		if(BASE::settings_.ddpSettings_.debugPrintMT_)
 			BASE::printString("[MT]: Thread " + std::to_string(threadId) + " processing subsystem " + std::to_string(i));
 
 		// for inactive subsystems
@@ -835,7 +835,7 @@ void ILQR_MT<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::executeRiccatiSolver(size_t t
 template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
 void ILQR_MT<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::distributeWork(){
 
-	const int N = BASE::settings_.nThreads_;
+	const int N = BASE::settings_.ddpSettings_.nThreads_;
 	startingIndicesRiccatiWorker_.resize(N);
 	endingIndicesRiccatiWorker_.resize(N);
 
@@ -862,7 +862,7 @@ void ILQR_MT<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::distributeWork(){
 	endingIndicesRiccatiWorker_.front() = BASE::numPartitions_-1;
 	startingIndicesRiccatiWorker_.back() = 0;
 
-	if (BASE::settings_.displayInfo_) {
+	if (BASE::settings_.ddpSettings_.displayInfo_) {
 		std::cerr << "Initial Active Subsystem: " << BASE::initActivePartition_ << std::endl;
 		std::cerr << "Final Active Subsystem:   " << BASE::finalActivePartition_ << std::endl;
 		std::cerr << "Backward path work distribution:" << std::endl;

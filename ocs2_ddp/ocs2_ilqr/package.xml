@@ -51,9 +51,9 @@
   <buildtool_depend>catkin</buildtool_depend>
   <build_depend>cmake_modules</build_depend>
   <build_depend>ocs2_core</build_depend>
-  <build_depend>ocs2_oc</build_depend>
+  <build_depend>ocs2_ddp_base</build_depend>
   <run_depend>ocs2_core</run_depend>
-  <run_depend>ocs2_oc</run_depend>
+  <run_depend>ocs2_ddp_base</run_depend>
 
 
   <!-- The export tag contains other, unspecified, tags -->

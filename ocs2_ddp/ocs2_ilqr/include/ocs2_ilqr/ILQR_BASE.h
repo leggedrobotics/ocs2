@@ -217,20 +217,6 @@ public:
 	virtual void lineSearch(bool computeISEs) = 0;
 
 	/**
-	 * Solves Riccati equations for all the partitions.
-	 *
-	 * @param [in] SmFinal: The final Sm for Riccati equation.
-	 * @param [in] SvFinal: The final Sv for Riccati equation.
-	 * @param [in] sFinal: The final s for Riccati equation.
-	 *
-	 * @return average time step
-	 */
-	virtual scalar_t solveSequentialRiccatiEquations(
-			const state_matrix_t& SmFinal,
-			const state_vector_t& SvFinal,
-			const eigen_scalar_t& sFinal) = 0;
-
-	/**
 	 * Gets a reference to the Options structure.
 	 *
 	 * @return a reference to the Options structure.
@@ -247,13 +233,6 @@ protected:
 	virtual void setupOptimizer(const size_t& numPartitions);
 
 	/**
-	 * Computes the linearized dynamics for a particular time partition
-	 *
-	 * @param [in] partitionIndex: Time partition index
-	 */
-	virtual void approximatePartitionLQ(const size_t& partitionIndex) = 0;
-
-	/**
 	 * Computes the controller for a particular time partition
 	 *
 	 * @param partitionIndex: Time partition index
@@ -267,10 +246,10 @@ protected:
 	 * @param [in] partitionIndex: Time partition index.
 	 * @param [in] timeIndex: Time index in the partition.
 	 */
-	void approximateLQWorker(
+	virtual void approximateLQWorker(
 			size_t workerIndex,
 			const size_t& partitionIndex,
-			const size_t& timeIndex);
+			const size_t& timeIndex) override;
 
 	/**
 	 * Calculates an LQ approximate of the unconstrained optimal control problem at a given partition and a node.
@@ -279,24 +258,10 @@ protected:
 	 * @param [in] i: Time partition index.
 	 * @param [in] k: Time index in the partition.
 	 */
-	void approximateUnconstrainedLQWorker(
+	virtual void approximateUnconstrainedLQWorker(
 			size_t workerIndex,
 			const size_t& i,
-			const size_t& k);
-
-	/**
-	 * Calculates an LQ approximate of the event times process.
-	 *
-	 * @param [in] workerIndex: Working agent index.
-	 * @param [in] i: Time partition index.
-	 * @param [in] k: Time index in the partition.
-	 * @param [in] stateConstraintPenalty: State-only constraint penalty.
-	 */
-	void approximateEventsLQWorker(
-			size_t workerIndex,
-			const size_t& i,
-			const size_t& k,
-			const scalar_t& stateConstraintPenalty);
+			const size_t& k) override;
 
 	/**
 	 * Calculates the discrete-time LQ approximation from the continuous-time LQ approximation.
@@ -317,51 +282,10 @@ protected:
 	 * @param [in] partitionIndex: Time partition index
 	 * @param [in] timeIndex: Time index in the partition
 	 */
-	void calculateControllerWorker(
+	virtual void calculateControllerWorker(
 			size_t workerIndex,
 			const size_t& partitionIndex,
-			const size_t& timeIndex);
-
-	/**
-	 * Performs one rollout while the input correction for the type-1 constraint is considered.
-	 *
-	 * @param [in] computeISEs: Whether needs to calculate ISEs indices for type_1 and type-2 constraints.
-	 */
-	void lineSearchBase(bool computeISEs);
-
-	/**
-	 * Line search with a specific learning rate.
-	 *
-	 * @param workerIndex
-	 * @param learningRate
-	 * @param lsTotalCost
-	 * @param lsConstraint1ISE
-	 * @param lsConstraint1MaxNorm
-	 * @param lsConstraint2ISE
-	 * @param lsConstraint2MaxNorm
-	 * @param lsInequalityConstraintPenalty
-	 * @param lsInequalityConstraintISE
-	 * @param lsControllersStock
-	 * @param lsTimeTrajectoriesStock
-	 * @param lsEventsPastTheEndIndecesStock
-	 * @param lsStateTrajectoriesStock
-	 * @param lsInputTrajectoriesStock
-	 */
-	void lineSearchWorker(
-			size_t workerIndex,
-			scalar_t learningRate,
-			scalar_t& lsTotalCost,
-			scalar_t& lsConstraint1ISE,
-			scalar_t& lsConstraint1MaxNorm,
-			scalar_t& lsConstraint2ISE,
-			scalar_t& lsConstraint2MaxNorm,
-            scalar_t& lsInequalityConstraintPenalty,
-			scalar_t& lsInequalityConstraintISE,
-			controller_array_t& lsControllersStock,
-			std::vector<scalar_array_t>& lsTimeTrajectoriesStock,
-			std::vector<size_array_t>& lsEventsPastTheEndIndecesStock,
-			state_vector_array2_t& lsStateTrajectoriesStock,
-			input_vector_array2_t& lsInputTrajectoriesStock);
+			const size_t& timeIndex) override;
 
 	/**
 	 * Solves a set of Riccati equations for the partition in the given index.
@@ -378,6 +302,7 @@ protected:
 			const state_matrix_t& SmFinal,
 			const state_vector_t& SvFinal,
 			const eigen_scalar_t& sFinal);
+
 	/**
 	 * Type_1 constraints error correction compensation which solves a set of error Riccati equations for the partition in the given index.
 	 *

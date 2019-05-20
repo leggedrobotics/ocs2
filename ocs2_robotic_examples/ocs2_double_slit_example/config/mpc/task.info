@@ -1,14 +1,14 @@
 systemParameters
 {
     rollout_dt 1;
-    barrierTimePosition 50 ; time steps to barrier
+    barrierTimePosition 53 ; time steps to barrier
     barrierLowerEnd -10;
     barrierUpperEnd  10;
 }
 
 pathIntegral
 {
-  gamma 10 ; temperature: the lower it is, the more aggressive the softmin
+  gamma 0.1 ; temperature: the lower it is, the more aggressive the softmin
 }
 
 mpcTimeHorizon

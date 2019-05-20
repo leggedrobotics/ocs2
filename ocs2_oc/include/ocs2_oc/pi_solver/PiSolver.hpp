@@ -160,42 +160,58 @@ class PiSolver final : public Solver_BASE<STATE_DIM, INPUT_DIM, NullLogicRules> 
     // collect cost to go and calculate psi and input across all samples
     // -------------------------------------------------------------------------
     scalar_array2_t J(numSamples, scalar_array_t(numSteps, 0.0));  // value of J (cost-to-go) for each sample and each time step
-    scalar_array_t psi(numSteps, 0.0);                             // value of Psi for each time step, averaged over samples
+    scalar_array_t psiDistorted(numSteps, 0.0);         // value of Psi for each time step, averaged over samples (distortion = scaling of exp argument for numerics)
     input_vector_array_t u_opt(numSteps, input_vector_t::Zero());  // value of optimal input across time steps, averaged over samples
 
-    // initialize J for each sample
+    // initialize J for each sample and find max across samples
+    scalar_t minJ_currStep = std::numeric_limits<scalar_t>::max();
     for (size_t sample = 0; sample < numSamples; sample++) {
       J[sample][numSteps - 1] = costVtilde[sample][numSteps - 1];
+
+      if(J[sample][numSteps - 1] < minJ_currStep){
+          minJ_currStep = J[sample][numSteps - 1];
+        }
     }
 
     // initialize psi
-    psi[numSteps - 1] =
+    psiDistorted[numSteps - 1] =
         std::accumulate(J.begin(), J.end(), scalar_t(0.0),
-                        [this, numSteps](scalar_t a, const scalar_array_t& Ji) { return std::move(a) + std::exp(-Ji[numSteps - 1]/gamma_); }) /
+                        [this, numSteps, minJ_currStep](scalar_t a, const scalar_array_t& Ji) { return std::move(a) + std::exp(-(Ji[numSteps - 1] - minJ_currStep)/gamma_); }) /
         numSamples;
 
     // initialize u for each sample
     for (size_t sample = 0; sample < numSamples; sample++) {
-        u_opt[numSteps-1] += noiseInputVector_array2[sample][numSteps-1] * std::exp(-J[sample][numSteps - 1] / gamma_);
+        u_opt[numSteps-1] += noiseInputVector_array2[sample][numSteps-1] * std::exp(-(J[sample][numSteps - 1] - minJ_currStep) / gamma_);
     }
-    u_opt[numSteps-1] /= numSamples * psi[numSteps - 1];
+    u_opt[numSteps-1] /= numSamples * psiDistorted[numSteps - 1];
 
     // propagate towards initial time
     for (int n = numSteps - 2; n >= 0; n--) {
       // calculate cost-to-go for this step for each sample
+      scalar_t minJ_currStep = std::numeric_limits<scalar_t>::max();
       for (size_t sample = 0; sample < numSamples; sample++) {
         J[sample][n] = J[sample][n + 1] + costVtilde[sample][n];
+
+        if(J[sample][n] < minJ_currStep){
+            minJ_currStep = J[sample][n];
+          }
       }
 
-      psi[n] = std::accumulate(J.begin(), J.end(), scalar_t(0.0),
-                               [this,n](scalar_t a, const scalar_array_t& Ji) { return std::move(a) + std::exp(-Ji[n]/gamma_); }) /
+      psiDistorted[n] = std::accumulate(J.begin(), J.end(), scalar_t(0.0),
+                               [this,n, minJ_currStep](scalar_t a, const scalar_array_t& Ji) { return std::move(a) + std::exp(-(Ji[n] - minJ_currStep)/gamma_); }) /
                numSamples;
+
+      if(psiDistorted[n] == 0.0){
+          std::cout << "warning: all samples have zero weight. settings u_opt to zero in step " << n << std::endl;
+          u_opt[n].setZero();
+          continue;
+      }
 
       // u_opt
       for (size_t sample = 0; sample < numSamples; sample++) {
-          u_opt[n] += noiseInputVector_array2[sample][n] * std::exp(-J[sample][n] / gamma_);
+          u_opt[n] += noiseInputVector_array2[sample][n] * std::exp(-(J[sample][n] - minJ_currStep) / gamma_);
       }
-      u_opt[n] /= numSamples * psi[n];
+      u_opt[n] /= numSamples * psiDistorted[n];
     }
 
 

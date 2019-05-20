@@ -36,7 +36,6 @@ template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
 MPC_SLQ<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::MPC_SLQ()
 
 	: BASE()
-	, nullControllersStock_(0)
 	, optimizedTimeTrajectoriesStock_(0)
 	, optimizedStateTrajectoriesStock_(0)
 	, optimizedInputTrajectoriesStock_(0)
@@ -60,16 +59,13 @@ MPC_SLQ<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::MPC_SLQ(
 		const cost_function_base_t* heuristicsFunctionPtr /*= nullptr*/)
 
 	: BASE(partitioningTimes, mpcSettings)
-	, nullControllersStock_(0)
 	, optimizedTimeTrajectoriesStock_(0)
 	, optimizedStateTrajectoriesStock_(0)
 	, optimizedInputTrajectoriesStock_(0)
 
 {
-	nullControllersStock_.resize(BASE::numPartitions_);
-
 	// SLQ
-	if (slqSettings.useMultiThreading_==true) {
+	if (slqSettings.ddpSettings_.useMultiThreading_==true) {
 		slqPtr_.reset( new slq_mp_t(
 				systemDynamicsPtr, systemDerivativesPtr, systemConstraintsPtr, costFunctionPtr, operatingTrajectoriesPtr,
 				slqSettings, logicRulesPtr, heuristicsFunctionPtr) );
@@ -139,13 +135,13 @@ void MPC_SLQ<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculateController(
 	//*****************************************************************************************
 	// number of iterations
 	if (BASE::initRun_==true /*|| slqPtr_->getController().at(BASE::finalActivePartitionIndex_).empty()==true*/) {
-		slqPtr_->settings().maxNumIterationsSLQ_  = BASE::mpcSettings_.initMaxNumIterations_;
-		slqPtr_->settings().maxLearningRateSLQ_ = BASE::mpcSettings_.initMaxLearningRate_;
-		slqPtr_->settings().minLearningRateSLQ_ = BASE::mpcSettings_.initMinLearningRate_;
+		slqPtr_->settings().ddpSettings_.maxNumIterations_  = BASE::mpcSettings_.initMaxNumIterations_;
+		slqPtr_->settings().ddpSettings_.maxLearningRate_ = BASE::mpcSettings_.initMaxLearningRate_;
+		slqPtr_->settings().ddpSettings_.minLearningRate_ = BASE::mpcSettings_.initMinLearningRate_;
 	} else {
-		slqPtr_->settings().maxNumIterationsSLQ_  = BASE::mpcSettings_.runtimeMaxNumIterations_;
-		slqPtr_->settings().maxLearningRateSLQ_ = BASE::mpcSettings_.runtimeMaxLearningRate_;
-		slqPtr_->settings().minLearningRateSLQ_ = BASE::mpcSettings_.runtimeMinLearningRate_;
+		slqPtr_->settings().ddpSettings_.maxNumIterations_  = BASE::mpcSettings_.runtimeMaxNumIterations_;
+		slqPtr_->settings().ddpSettings_.maxLearningRate_ = BASE::mpcSettings_.runtimeMaxLearningRate_;
+		slqPtr_->settings().ddpSettings_.minLearningRate_ = BASE::mpcSettings_.runtimeMinLearningRate_;
 	}
 
 	// use parallel Riccati solver at each call of realtime-iteration SLQ

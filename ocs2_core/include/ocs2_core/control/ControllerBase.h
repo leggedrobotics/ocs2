@@ -1,7 +1,10 @@
 #pragma once
 
-#include <Eigen/Dense>
+#include <string>
+#include <iostream>
 #include <memory>
+#include <Eigen/Dense>
+#include <Eigen/StdVector>
 #include <vector>
 
 #include "ocs2_core/Dimensions.h"

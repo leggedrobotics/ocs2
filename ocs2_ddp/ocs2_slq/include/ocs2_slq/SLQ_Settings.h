@@ -38,6 +38,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_core/Dimensions.h>
 
 #include <ocs2_oc/rollout/Rollout_Settings.h>
+#include <ocs2_ddp_base/DDP_Settings.h>
 
 namespace ocs2{
 
@@ -53,33 +54,7 @@ public:
 	 * Default constructor.
 	 */
 	SLQ_Settings()
-	: maxNumIterationsSLQ_(15)
-	, minLearningRateSLQ_(0.05)
-	, maxLearningRateSLQ_(1.0)
-	, lineSearchContractionRate_(0.5)
-	, minRelCostSLQ_(1e-3)
-	, stateConstraintPenaltyCoeff_(0.0)
-	, stateConstraintPenaltyBase_(1.0)
-	, inequalityConstraintMu_(0.0)
-	, inequalityConstraintDelta_(1e-6)
-	, meritFunctionRho_(1.0)
-	, constraintStepSize_(1.0)
-	, displayInfo_(false)
-	, displayShortSummary_(false)
-
-	, absTolODE_(1e-9)
-	, relTolODE_(1e-6)
-	, maxNumStepsPerSecond_(5000)
-	, minTimeStep_(1e-3)
-	, minAbsConstraint1ISE_(1e-3)
-	, minRelConstraint1ISE_(1e-3)
-
-	, simulationIsConstrained_(false)
-	, noStateConstraints_(false)
-	, useMakePSD_(true)
-	, addedRiccatiDiagonal_(1e-5)
-
-	, warmStartGSLQ_(false)				    // GSLQ
+	: warmStartGSLQ_(false)				    // GSLQ
 	, useLQForDerivatives_(false)			// GSLQ
 	, displayGradientDescent_(false)		// GSLQ
 	, tolGradientDescent_(1e-2)				// GSLQ
@@ -94,17 +69,9 @@ public:
 	, RiccatiIntegratorType_(RICCATI_INTEGRATOR_TYPE::ODE45)
 	, adams_integrator_dt_(0.001)
 
-	, useMultiThreading_(false)
-	, nThreads_(4)
-	, threadPriority_(99)
-	, debugPrintMT_(false)
-	, lsStepsizeGreedy_(true)
-	, checkNumericalStability_(true)
-	, useRiccatiSolver_(true)
-
-	, debugPrintRollout_(false)
-
+	, ddpSettings_()
 	, rolloutSettings_()
+
 
 	{}
 
@@ -125,69 +92,20 @@ public:
 	 * If a value for a specific field is not defined it will set to the default value defined in "SLQ_Settings".
 	 *
 	 * @param [in] filename: File name which contains the configuration data.
+	 * @param [in] fieldName: Field name which contains the configuration data.
 	 * @param [in] verbose: Flag to determine whether to print out the loaded settings or not (The default is true).
 	 */
-	void loadSettings(const std::string& filename, bool verbose = true);
+	void loadSettings(const std::string& filename, const std::string& fieldName, bool verbose = true);
 
 public:
 	/****************
 	 *** Variables **
 	 ****************/
 
-	/** Maximum number of iterations of SLQ. */
-	size_t maxNumIterationsSLQ_;
-	/** Minimum number of iterations of SLQ. */
-	double minLearningRateSLQ_;
-	/** Maximum learning rate of line-search scheme in SLQ. */
-	double maxLearningRateSLQ_;
-	/** Line-search scheme contraction rate. */
-	double lineSearchContractionRate_;
-	/** This value determines the termination condition based on the minimum relative changes of the cost. */
-	double minRelCostSLQ_;
-	/** The penalty function coefficient, \f$\alpha\f$, for state-only constraints. \f$ p(i) = \alpha a^i \f$ */
-	double stateConstraintPenaltyCoeff_;
-	/** The penalty function base, \f$ a \f$, for state-only constraints. \f$ p(i) = \alpha a^i \f$ */
-	double stateConstraintPenaltyBase_;
-	/** Scaling factor, \f$\mu\f$,  for the inequality constraints barrier */
-    double inequalityConstraintMu_;
-  	/** Threshold parameter, \f$\delta\f$, where the relaxed log barrier function changes from log to quadratic */
-    double inequalityConstraintDelta_;
-	/** merit function coefficient. */
-	double meritFunctionRho_;
-	/** Constant step size for type-1 constraints. */
-	double constraintStepSize_;
-	/** This value determines to display the log output of SLQ. */
-	bool displayInfo_;
-	/** This value determines to display the a summary log of SLQ. */
-	bool displayShortSummary_;
 	/** This value determines to use a warm starting scheme for calculating cost gradients w.r.t. switching times. */
 	bool warmStartGSLQ_;
 	/** This value determines to use LQ-based method or sweeping method for calculating cost gradients w.r.t. switching times. */
 	bool useLQForDerivatives_;
-
-	/** This value determines the absolute tolerance error for ode solvers. */
-	double absTolODE_;
-	/** This value determines the relative tolerance error for ode solvers. */
-	double relTolODE_;
-	/** This value determines the maximum number of integration points per a second for ode solvers. */
-	size_t maxNumStepsPerSecond_;
-	/** The minimum integration time step */
-	double minTimeStep_;
-	/** This value determines the maximum permitted absolute ISE (Integral of Square Error) for constrained type-1.*/
-	double minAbsConstraint1ISE_;
-	/** This value determines the maximum permitted relative ISE (Integral of Square Error) for constrained type-1.*/
-	double minRelConstraint1ISE_;
-
-	/** Skips calculation of the error correction term (Sve) if the constrained simulation is used for forward simulation.*/
-	bool simulationIsConstrained_;
-
-	/** Set true, if a problem does not have state-only constraints. This significantly decreases the runtime of the algorithm. */
-	bool noStateConstraints_;
-
-	/** If true SLQ makes sure that PSD matrices remain PSD which increases the numerical stability at the expense of extra computation.*/
-	bool useMakePSD_;
-	/** Add diagonal term to Riccati backward pass for numerical stability. This process is only used when useMakePSD_ set to false.*/
-	double addedRiccatiDiagonal_;
 
 	/** This value determines to display the log output of GSLQ. */
 	bool displayGradientDescent_;
@@ -209,9 +127,6 @@ public:
 	/** This value determines the minimum accepted difference between to consecutive events times.*/
 	double minEventTimeDifference_;
 
-	/** Check the numerical stability of the algorithms for debugging purpose. */
-	bool checkNumericalStability_;
-
 	/** If true, SLQ solves the backward path over the nominal time trajectory. */
 	bool useNominalTimeForBackwardPass_;
 	/** Riccati integrator type. */
@@ -219,26 +134,8 @@ public:
 	/** Adams integrator's time step. */
 	double adams_integrator_dt_;
 
-	/** Use multi threading for the SLQ algorithms. */
-	bool useMultiThreading_;
-	/** Number of threads used in the multi threading scheme. */
-	size_t nThreads_;
-	/** Priority of threads used in the multi threading scheme. */
-	int threadPriority_;
-	/** Special debugging output for multi threading scheme. */
-	bool debugPrintMT_;
-	/**
-	 * line search options in multi threading scheme.
-	 * - True: The largest acceptable step-size will be chosen. This strategy is equivalent to the single core one.
-	 * - False: The first acceptable step-size will be chosen.
-	 * */
-	bool lsStepsizeGreedy_;
-
-	/** If true, SLQ uses ode solver to solve the Riccati equations. Otherwise it uses matrix exponential to solve it. */
-	bool useRiccatiSolver_;
-
-	/** Printing rollout trajectory for debugging. */
-	bool debugPrintRollout_;
+	/** This structure contains the settings for DDP algorithms. */
+	DDP_Settings ddpSettings_;
 
 	/** This structure contains the settings for forward rollout algorithms. */
 	Rollout_Settings rolloutSettings_;
@@ -246,10 +143,14 @@ public:
 }; // end of SLQ_Settings class
 
 
-inline void SLQ_Settings::loadSettings(const std::string& filename, bool verbose /*= true*/) {
+inline void SLQ_Settings::loadSettings(const std::string& filename, const std::string& fieldName, bool verbose /*= true*/) {
 
 	boost::property_tree::ptree pt;
 	boost::property_tree::read_info(filename, pt);
+
+	ddpSettings_.loadSettings(filename + ".ddp", fieldName, verbose);
+
+	rolloutSettings_.loadSettings(filename + ".rollout", fieldName, verbose);
 
 	if(verbose){
 		std::cerr << std::endl << " #### SLQ Settings: " << std::endl;
@@ -257,127 +158,7 @@ inline void SLQ_Settings::loadSettings(const std::string& filename, bool verbose
 	}
 
 	try	{
-		useMultiThreading_ = pt.get<bool>("slq.useMultiThreading");
-		if (verbose)  std::cerr << " #### Option loader : option 'useMultiThreading' ................... " << useMultiThreading_ << std::endl;
-	}
-	catch (const std::exception& e){
-		if (verbose)  std::cerr << " #### Option loader : option 'useMultiThreading' ................... " << useMultiThreading_ << "   \t(default)" << std::endl;
-	}
-
-	try	{
-		nThreads_ = pt.get<int>("slq.nThreads");
-		if (verbose)  std::cerr << " #### Option loader : option 'nThreads' ............................ " << nThreads_ << std::endl;
-	}
-	catch (const std::exception& e){
-		if (verbose)  std::cerr << " #### Option loader : option 'nThreads' ............................ " << nThreads_ << "   \t(default)" << std::endl;
-	}
-
-	try	{
-		threadPriority_ = pt.get<int>("slq.threadPriority");
-		if (verbose)  std::cerr << " #### Option loader : option 'threadPriority' ...................... " << threadPriority_ << std::endl;
-	}
-	catch (const std::exception& e){
-		if (verbose)  std::cerr << " #### Option loader : option 'threadPriority' ...................... " << threadPriority_ << "   \t(default)" << std::endl;
-	}
-
-	try	{
-		maxNumIterationsSLQ_ = pt.get<int>("slq.maxNumIterationsSLQ");
-		if (verbose)  std::cerr << " #### Option loader : option 'maxNumIterationsSLQ' ................. " << maxNumIterationsSLQ_ << std::endl;
-	}
-	catch (const std::exception& e){
-		if (verbose)  std::cerr << " #### Option loader : option 'maxNumIterationsSLQ' ................. " << maxNumIterationsSLQ_ << "   \t(default)" << std::endl;
-	}
-
-	try	{
-		minLearningRateSLQ_ = pt.get<double>("slq.minLearningRateSLQ");
-		if (verbose)  std::cerr << " #### Option loader : option 'minLearningRateSLQ' ................ " << minLearningRateSLQ_ << std::endl;
-	}
-	catch (const std::exception& e){
-		if (verbose)  std::cerr << " #### Option loader : option 'minLearningRateSLQ' ................ " << minLearningRateSLQ_ << "   \t(default)" << std::endl;
-	}
-
-	try	{
-		maxLearningRateSLQ_ = pt.get<double>("slq.maxLearningRateSLQ");
-		if (verbose)  std::cerr << " #### Option loader : option 'maxLearningRateSLQ' .................. " << maxLearningRateSLQ_ << std::endl;
-	}
-	catch (const std::exception& e){
-		if (verbose)  std::cerr << " #### Option loader : option 'maxLearningRateSLQ' .................. " << maxLearningRateSLQ_ << "   \t(default)" << std::endl;
-	}
-
-	try	{
-		minRelCostSLQ_ = pt.get<double>("slq.minRelCostSLQ");
-		if (verbose)  std::cerr << " #### Option loader : option 'minRelCostSLQ' ....................... " << minRelCostSLQ_ << std::endl;
-	}
-	catch (const std::exception& e){
-		if (verbose)  std::cerr << " #### Option loader : option 'minRelCostSLQ' ....................... " << minRelCostSLQ_ << "   \t(default)" << std::endl;
-	}
-
-	try	{
-		stateConstraintPenaltyCoeff_ = pt.get<double>("slq.stateConstraintPenaltyCoeff");
-		if (verbose)  std::cerr << " #### Option loader : option 'stateConstraintPenaltyCoeff' ......... " << stateConstraintPenaltyCoeff_ << std::endl;
-	}
-	catch (const std::exception& e){
-		if (verbose)  std::cerr << " #### Option loader : option 'stateConstraintPenaltyCoeff' ......... " << stateConstraintPenaltyCoeff_ << "   \t(default)" << std::endl;
-	}
-
-	try	{
-		stateConstraintPenaltyBase_ = pt.get<double>("slq.stateConstraintPenaltyBase");
-		if (verbose)  std::cerr << " #### Option loader : option 'stateConstraintPenaltyBase' .......... " << stateConstraintPenaltyBase_ << std::endl;
-	}
-	catch (const std::exception& e){
-		if (verbose)  std::cerr << " #### Option loader : option 'stateConstraintPenaltyBase' .......... " << stateConstraintPenaltyBase_ << "   \t(default)" << std::endl;
-	}
-
-	try	{
-		inequalityConstraintMu_ = pt.get<double>("slq.inequalityConstraintMu");
-		if (verbose)  std::cerr << " #### Option loader : option 'inequalityConstraintMu' .............. " << inequalityConstraintMu_ << std::endl;
-	}
-	catch (const std::exception& e){
-		if (verbose)  std::cerr << " #### Option loader : option 'inequalityConstraintMu' .............. " << inequalityConstraintMu_ << "   \t(default)" << std::endl;
-	}
-
-	try	{
-		inequalityConstraintDelta_ = pt.get<double>("slq.inequalityConstraintDelta");
-		if (verbose)  std::cerr << " #### Option loader : option 'inequalityConstraintDelta' ........... " << inequalityConstraintDelta_ << std::endl;
-	}
-	catch (const std::exception& e){
-		if (verbose)  std::cerr << " #### Option loader : option 'inequalityConstraintDelta' ........... " << inequalityConstraintDelta_ << "   \t(default)" << std::endl;
-	}
-
-	try	{
-		meritFunctionRho_ = pt.get<double>("slq.meritFunctionRho");
-		if (verbose)  std::cerr << " #### Option loader : option 'meritFunctionRho' .................... " << meritFunctionRho_ << std::endl;
-	}
-	catch (const std::exception& e){
-		if (verbose)  std::cerr << " #### Option loader : option 'meritFunctionRho' .................... " << meritFunctionRho_ << "   \t(default)" << std::endl;
-	}
-
-	try	{
-		constraintStepSize_ = pt.get<double>("slq.constraintStepSize");
-		if (verbose)  std::cerr << " #### Option loader : option 'constraintStepSize' .................. " << constraintStepSize_ << std::endl;
-	}
-	catch (const std::exception& e){
-		if (verbose)  std::cerr << " #### Option loader : option 'constraintStepSize' .................. " << constraintStepSize_ << "   \t(default)" << std::endl;
-	}
-
-	try	{
-		displayInfo_ = pt.get<bool>("slq.displayInfo");
-		if (verbose)  std::cerr << " #### Option loader : option 'displayInfo' ......................... " << displayInfo_ << std::endl;
-	}
-	catch (const std::exception& e){
-		if (verbose)  std::cerr << " #### Option loader : option 'displayInfo' ......................... " << displayInfo_ << "   \t(default)" << std::endl;
-	}
-
-	try	{
-		displayShortSummary_ = pt.get<bool>("slq.displayShortSummary");
-		if (verbose)  std::cerr << " #### Option loader : option 'displayShortSummary' ................. " << displayShortSummary_ << std::endl;
-	}
-	catch (const std::exception& e){
-		if (verbose)  std::cerr << " #### Option loader : option 'displayShortSummary' ................. " << displayShortSummary_ << "   \t(default)" << std::endl;
-	}
-
-	try	{
-		warmStartGSLQ_ = pt.get<bool>("slq.warmStartGSLQ");
+		warmStartGSLQ_ = pt.get<bool>(fieldName + ".warmStartGSLQ");
 		if (verbose)  std::cerr << " #### Option loader : option 'warmStartGSLQ' ....................... " << warmStartGSLQ_ << std::endl;
 	}
 	catch (const std::exception& e){
@@ -385,7 +166,7 @@ inline void SLQ_Settings::loadSettings(const std::string& filename, bool verbose
 	}
 
 	try	{
-		useLQForDerivatives_ = pt.get<bool>("slq.useLQForDerivatives");
+		useLQForDerivatives_ = pt.get<bool>(fieldName + ".useLQForDerivatives");
 		if (verbose)  std::cerr << " #### Option loader : option 'useLQForDerivatives' ................. " << useLQForDerivatives_ << std::endl;
 	}
 	catch (const std::exception& e){
@@ -393,87 +174,7 @@ inline void SLQ_Settings::loadSettings(const std::string& filename, bool verbose
 	}
 
 	try	{
-		absTolODE_ = pt.get<double>("slq.AbsTolODE");
-		if (verbose)  std::cerr << " #### Option loader : option 'AbsTolODE' ........................... " << absTolODE_ << std::endl;
-	}
-	catch (const std::exception& e){
-		if (verbose)  std::cerr << " #### Option loader : option 'AbsTolODE' ........................... " << absTolODE_ << "   \t(default)" << std::endl;
-	}
-
-	try	{
-		relTolODE_ = pt.get<double>("slq.RelTolODE");
-		if (verbose)  std::cerr << " #### Option loader : option 'RelTolODE' ........................... " << relTolODE_ << std::endl;
-	}
-	catch (const std::exception& e){
-		if (verbose)  std::cerr << " #### Option loader : option 'RelTolODE' ........................... " << relTolODE_ << "   \t(default)" << std::endl;
-	}
-
-	try	{
-		maxNumStepsPerSecond_ = pt.get<double>("slq.maxNumStepsPerSecond");
-		if (verbose)  std::cerr << " #### Option loader : option 'maxNumStepsPerSecond' ................ " << maxNumStepsPerSecond_ << std::endl;
-	}
-	catch (const std::exception& e){
-		if (verbose)  std::cerr << " #### Option loader : option 'maxNumStepsPerSecond' ................ " << maxNumStepsPerSecond_ << "   \t(default)" << std::endl;
-	}
-
-	try	{
-		simulationIsConstrained_ = pt.get<bool>("slq.simulationIsConstrained");
-		if (verbose)  std::cerr << " #### Option loader : option 'simulationIsConstrained' ............. " << simulationIsConstrained_ << std::endl;
-	}
-	catch (const std::exception& e){
-		if (verbose)  std::cerr << " #### Option loader : option 'simulationIsConstrained' ............. " << simulationIsConstrained_ << "   \t(default)" << std::endl;
-	}
-
-	try	{
-		noStateConstraints_ = pt.get<bool>("slq.noStateConstraints");
-		if (verbose)  std::cerr << " #### Option loader : option 'noStateConstraints' .................. " << noStateConstraints_ << std::endl;
-	}
-	catch (const std::exception& e){
-		if (verbose)  std::cerr << " #### Option loader : option 'noStateConstraints' .................. " << noStateConstraints_ << "   \t(default)" << std::endl;
-	}
-
-	try	{
-		useMakePSD_ = pt.get<bool>("slq.useMakePSD");
-		if (verbose)  std::cerr << " #### Option loader : option 'useMakePSD' .......................... " << useMakePSD_ << std::endl;
-	}
-	catch (const std::exception& e){
-		if (verbose)  std::cerr << " #### Option loader : option 'useMakePSD' .......................... " << useMakePSD_ << "   \t(default)" << std::endl;
-	}
-
-	try	{
-		addedRiccatiDiagonal_ = pt.get<double>("slq.addedRiccatiDiagonal");
-		if (verbose)  std::cerr << " #### Option loader : option 'addedRiccatiDiagonal' ................ " << addedRiccatiDiagonal_ << std::endl;
-	}
-	catch (const std::exception& e){
-		if (verbose)  std::cerr << " #### Option loader : option 'addedRiccatiDiagonal' ................ " << addedRiccatiDiagonal_ << "   \t(default)" << std::endl;
-	}
-
-	try	{
-		minTimeStep_ = pt.get<double>("slq.minTimeStep");
-		if (verbose)  std::cerr << " #### Option loader : option 'minTimeStep' ......................... " << minTimeStep_ << std::endl;
-	}
-	catch (const std::exception& e){
-		if (verbose)  std::cerr << " #### Option loader : option 'minTimeStep' ......................... " << minTimeStep_ << "   \t(default)" << std::endl;
-	}
-
-	try	{
-		minAbsConstraint1ISE_ = pt.get<double>("slq.minAbsConstraint1ISE");
-		if (verbose)  std::cerr << " #### Option loader : option 'minAbsConstraint1ISE' ................ " << minAbsConstraint1ISE_ << std::endl;
-	}
-	catch (const std::exception& e){
-		if (verbose)  std::cerr << " #### Option loader : option 'minAbsConstraint1ISE' ................ " << minAbsConstraint1ISE_ << "   \t(default)" << std::endl;
-	}
-
-	try	{
-		minRelConstraint1ISE_ = pt.get<double>("slq.minRelConstraint1ISE");
-		if (verbose)  std::cerr << " #### Option loader : option 'minRelConstraint1ISE' ................ " << minRelConstraint1ISE_ << std::endl;
-	}
-	catch (const std::exception& e){
-		if (verbose)  std::cerr << " #### Option loader : option 'minRelConstraint1ISE' ................ " << minRelConstraint1ISE_ << "   \t(default)" << std::endl;
-	}
-
-	try	{
-		displayGradientDescent_ = pt.get<bool>("slq.displayGradientDescent");
+		displayGradientDescent_ = pt.get<bool>(fieldName + ".displayGradientDescent");
 		if (verbose)  std::cerr << " #### Option loader : option 'displayGradientDescent' .............. " << displayGradientDescent_ << std::endl;
 	}
 	catch (const std::exception& e){
@@ -481,7 +182,7 @@ inline void SLQ_Settings::loadSettings(const std::string& filename, bool verbose
 	}
 
 	try	{
-		tolGradientDescent_ = pt.get<double>("slq.tolGradientDescent");
+		tolGradientDescent_ = pt.get<double>(fieldName + ".tolGradientDescent");
 		if (verbose)  std::cerr << " #### Option loader : option 'tolGradientDescent' .................. " << tolGradientDescent_ << std::endl;
 	}
 	catch (const std::exception& e){
@@ -489,7 +190,7 @@ inline void SLQ_Settings::loadSettings(const std::string& filename, bool verbose
 	}
 
 	try	{
-		acceptableTolGradientDescent_ = pt.get<double>("slq.acceptableTolGradientDescent");
+		acceptableTolGradientDescent_ = pt.get<double>(fieldName + ".acceptableTolGradientDescent");
 		if (verbose)  std::cerr << " #### Option loader : option 'acceptableTolGradientDescent' ........ " << acceptableTolGradientDescent_ << std::endl;
 	}
 	catch (const std::exception& e){
@@ -497,7 +198,7 @@ inline void SLQ_Settings::loadSettings(const std::string& filename, bool verbose
 	}
 
 	try	{
-		maxIterationGradientDescent_ = pt.get<int>("slq.maxIterationGradientDescent");
+		maxIterationGradientDescent_ = pt.get<int>(fieldName + ".maxIterationGradientDescent");
 		if (verbose)  std::cerr << " #### Option loader : option 'maxIterationGradientDescent' ......... " << maxIterationGradientDescent_ << std::endl;
 	}
 	catch (const std::exception& e){
@@ -505,7 +206,7 @@ inline void SLQ_Settings::loadSettings(const std::string& filename, bool verbose
 	}
 
 	try	{
-		minLearningRateNLP_ = pt.get<double>("slq.minLearningRateNLP");
+		minLearningRateNLP_ = pt.get<double>(fieldName + ".minLearningRateNLP");
 		if (verbose)  std::cerr << " #### Option loader : option 'minLearningRateNLP' .................. " << minLearningRateNLP_ << std::endl;
 	}
 	catch (const std::exception& e){
@@ -513,7 +214,7 @@ inline void SLQ_Settings::loadSettings(const std::string& filename, bool verbose
 	}
 
 	try	{
-		maxLearningRateNLP_ = pt.get<double>("slq.maxLearningRateNLP");
+		maxLearningRateNLP_ = pt.get<double>(fieldName + ".maxLearningRateNLP");
 		if (verbose)  std::cerr << " #### Option loader : option 'maxLearningRateNLP' .................. " << maxLearningRateNLP_ << std::endl;
 	}
 	catch (const std::exception& e){
@@ -521,7 +222,7 @@ inline void SLQ_Settings::loadSettings(const std::string& filename, bool verbose
 	}
 
 	try	{
-		useAscendingLineSearchNLP_ = pt.get<bool>("slq.useAscendingLineSearchNLP");
+		useAscendingLineSearchNLP_ = pt.get<bool>(fieldName + ".useAscendingLineSearchNLP");
 		if (verbose)  std::cerr << " #### Option loader : option 'useAscendingLineSearchNLP' ........... " << useAscendingLineSearchNLP_ << std::endl;
 	}
 	catch (const std::exception& e){
@@ -529,7 +230,7 @@ inline void SLQ_Settings::loadSettings(const std::string& filename, bool verbose
 	}
 
 	try	{
-		minEventTimeDifference_ = pt.get<double>("slq.minEventTimeDifference");
+		minEventTimeDifference_ = pt.get<double>(fieldName + ".minEventTimeDifference");
 		if (verbose)  std::cerr << " #### Option loader : option 'minEventTimeDifference' .............. " << minEventTimeDifference_ << std::endl;
 	}
 	catch (const std::exception& e){
@@ -537,7 +238,7 @@ inline void SLQ_Settings::loadSettings(const std::string& filename, bool verbose
 	}
 
 	try	{
-		useNominalTimeForBackwardPass_ = pt.get<bool>("slq.useNominalTimeForBackwardPass");
+		useNominalTimeForBackwardPass_ = pt.get<bool>(fieldName + ".useNominalTimeForBackwardPass");
 		if (verbose)  std::cerr << " #### Option loader : option 'useNominalTimeForBackwardPass' ....... " << useNominalTimeForBackwardPass_ << std::endl;
 	}
 	catch (const std::exception& e){
@@ -545,7 +246,7 @@ inline void SLQ_Settings::loadSettings(const std::string& filename, bool verbose
 	}
 
 	try	{
-		RiccatiIntegratorType_ = pt.get<size_t>("slq.RiccatiIntegratorType");
+		RiccatiIntegratorType_ = pt.get<size_t>(fieldName + ".RiccatiIntegratorType");
 		if (verbose)  std::cerr << " #### Option loader : option 'RiccatiIntegratorType' ............... " << RiccatiIntegratorType_ << std::endl;
 	}
 	catch (const std::exception& e){
@@ -553,58 +254,15 @@ inline void SLQ_Settings::loadSettings(const std::string& filename, bool verbose
 	}
 
 	try	{
-		adams_integrator_dt_ = pt.get<double>("slq.adams_integrator_dt");
+		adams_integrator_dt_ = pt.get<double>(fieldName + ".adams_integrator_dt");
 		if (verbose)  std::cerr << " #### Option loader : option 'adams_integrator_dt' ................. " << adams_integrator_dt_ << std::endl;
 	}
 	catch (const std::exception& e){
 		if (verbose)  std::cerr << " #### Option loader : option 'adams_integrator_dt' ................. " << adams_integrator_dt_ << "   \t(default)" << std::endl;
 	}
 
-	try	{
-		debugPrintMT_ = pt.get<bool>("slq.debugPrintMT");
-		if (verbose)  std::cerr << " #### Option loader : option 'debugPrintMT' ........................ " << debugPrintMT_ << std::endl;
-	}
-	catch (const std::exception& e){
-		if (verbose)  std::cerr << " #### Option loader : option 'debugPrintMT' ........................ " << debugPrintMT_ << "   \t(default)" << std::endl;
-	}
-
-	try	{
-		lsStepsizeGreedy_ = pt.get<bool>("slq.lsStepsizeGreedy");
-		if (verbose)  std::cerr << " #### Option loader : option 'lsStepsizeGreedy' .................... " << lsStepsizeGreedy_ << std::endl;
-	}
-	catch (const std::exception& e){
-		if (verbose)  std::cerr << " #### Option loader : option 'lsStepsizeGreedy' .................... " << lsStepsizeGreedy_ << "   \t(default)" << std::endl;
-	}
-
-	try	{
-		checkNumericalStability_ = pt.get<bool>("slq.checkNumericalStability");
-		if (verbose)  std::cerr << " #### Option loader : option 'checkNumericalStability' ............. " << checkNumericalStability_ << std::endl;
-	}
-	catch (const std::exception& e){
-		if (verbose)  std::cerr << " #### Option loader : option 'checkNumericalStability' ............. " << checkNumericalStability_ << "   \t(default)" << std::endl;
-	}
-
-	try	{
-		useRiccatiSolver_ = pt.get<bool>("slq.useRiccatiSolver");
-		if (verbose)  std::cerr << " #### Option loader : option 'useRiccatiSolver' .................... " << useRiccatiSolver_ << std::endl;
-	}
-	catch (const std::exception& e){
-		if (verbose)  std::cerr << " #### Option loader : option 'useRiccatiSolver' .................... " << useRiccatiSolver_ << "   \t(default)" << std::endl;
-	}
-
-	try	{
-		debugPrintRollout_ = pt.get<bool>("slq.debugPrintRollout");
-		if (verbose)  std::cerr << " #### Option loader : option 'debugPrintRollout' ................... " << debugPrintRollout_ << std::endl;
-	}
-	catch (const std::exception& e){
-		if (verbose)  std::cerr << " #### Option loader : option 'debugPrintRollout' ................... " << debugPrintRollout_ << "   \t(default)" << std::endl;
-	}
-
 	if(verbose)
 		std::cerr <<" #### =============================================================================" << std::endl;
-
-
-	rolloutSettings_.loadSettings(filename, verbose);
 }
 
 } // namespace ocs2

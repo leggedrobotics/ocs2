@@ -65,13 +65,13 @@ ILQR_MT<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::~ILQR_MT()  {
 
 	workerWakeUpCondition_.notify_all();
 
-	if(BASE::settings_.debugPrintMT_)
+	if(BASE::settings_.ddpSettings_.debugPrintMT_)
 		std::cerr << "Shutting down workers." << std::endl;
 
 	for (size_t i=0; i<workerThreads_.size(); i++)
 		workerThreads_[i].join();
 
-	if(BASE::settings_.debugPrintMT_)
+	if(BASE::settings_.ddpSettings_.debugPrintMT_)
 		std::cerr << "All workers shut down" << std::endl;
 }
 
@@ -91,12 +91,12 @@ void ILQR_MT<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::lineSearch(bool computeISEs) 
 	BASE::initLScontrollersStock_ = BASE::nominalControllersStock_;  // this will serve to init the workers
 
 	// if no line search
-	if (BASE::settings_.maxLearningRateILQR_ < OCS2NumericTraits<scalar_t>::limit_epsilon()) {
+	if (BASE::settings_.ddpSettings_.maxLearningRate_ < OCS2NumericTraits<scalar_t>::limit_epsilon()) {
 		// clear the feedforward increments
 		for (size_t i=0; i<BASE::numPartitions_; i++)
 			BASE::nominalControllersStock_[i].deltaUff_.clear();
 		// display
-		if (BASE::settings_.displayInfo_)
+		if (BASE::settings_.ddpSettings_.displayInfo_)
 			std::cerr << "The chosen learningRate is: " << BASE::learningRateStar_ << std::endl;
 
 		return;
@@ -108,12 +108,12 @@ void ILQR_MT<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::lineSearch(bool computeISEs) 
 	alphaBestFound_ = false;
 	lsWorkerCompleted_ = 0;
 
-	size_t maxNumOfLineSearches =  (int) (log(BASE::settings_.minLearningRateILQR_/BASE::settings_.maxLearningRateILQR_) / log(BASE::settings_.lineSearchContractionRate_)) +1;
+	size_t maxNumOfLineSearches =  (int) (log(BASE::settings_.ddpSettings_.minLearningRate_/BASE::settings_.ddpSettings_.maxLearningRate_) / log(BASE::settings_.ddpSettings_.lineSearchContractionRate_)) +1;
 	alphaExpMax_ = maxNumOfLineSearches;
 	alphaExpBest_ = maxNumOfLineSearches;
 	alphaProcessed_ = std::vector<bool>(maxNumOfLineSearches, false);
 
-	if(BASE::settings_.debugPrintMT_) {
+	if(BASE::settings_.ddpSettings_.debugPrintMT_) {
 		std::cerr << "[MT]: calculated maximum number of line searches " + std::to_string(alphaExpMax_) << std::endl;
 		std::cerr << "[MT]: Waking up workers for line search " << std::endl;
 	}
@@ -123,12 +123,12 @@ void ILQR_MT<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::lineSearch(bool computeISEs) 
 	workerWakeUpCondition_.notify_all();
 	lock.unlock();
 
-	if(BASE::settings_.debugPrintMT_)
+	if(BASE::settings_.ddpSettings_.debugPrintMT_)
 		BASE::printString("[MT]: Will sleep now until we have results ");
 
 
 	std::unique_lock<std::mutex> waitLock(alphaBestFoundMutex_);
-	while(lsWorkerCompleted_.load() < BASE::settings_.nThreads_)
+	while(lsWorkerCompleted_.load() < BASE::settings_.ddpSettings_.nThreads_)
 		alphaBestFoundCondition_.wait(waitLock);
 	waitLock.unlock();
 
@@ -142,7 +142,7 @@ void ILQR_MT<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::lineSearch(bool computeISEs) 
 		BASE::nominalControllersStock_[i].deltaUff_.clear();
 
 	// display
-	if (BASE::settings_.displayInfo_)
+	if (BASE::settings_.ddpSettings_.displayInfo_)
 		std::cerr << "The chosen learningRate is: " + std::to_string(BASE::learningRateStar_) << std::endl;
 }
 
@@ -156,9 +156,9 @@ void ILQR_MT<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::launchWorkerThreads()
 	workerTask_ = IDLE;
 
 	workerThreads_.clear();
-	for (size_t i=0; i<BASE::settings_.nThreads_; i++) {
+	for (size_t i=0; i<BASE::settings_.ddpSettings_.nThreads_; i++) {
 		workerThreads_.push_back(std::thread(&ILQR_MT::threadWork, this, i));
-		SetThreadPriority(BASE::settings_.threadPriority_, workerThreads_[i]);
+		SetThreadPriority(BASE::settings_.ddpSettings_.threadPriority_, workerThreads_[i]);
 	}
 }
 
@@ -168,7 +168,7 @@ void ILQR_MT<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::launchWorkerThreads()
 template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
 void ILQR_MT<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::threadWork(size_t threadId)
 {
-	if(BASE::settings_.debugPrintMT_)
+	if(BASE::settings_.ddpSettings_.debugPrintMT_)
 		BASE::printString("[MT]: [Thread " + std::to_string(threadId) + "]: launched");
 
 	// local variables
@@ -184,7 +184,7 @@ void ILQR_MT<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::threadWork(size_t threadId)
 		iteration_local = BASE::iteration_;
 
 		// display
-		if(BASE::settings_.debugPrintMT_){
+		if(BASE::settings_.ddpSettings_.debugPrintMT_){
 			BASE::printString("[MT]: [Thread " + std::to_string(threadId) + "]: previous procId: " + std::to_string(uniqueProcessID) +
 					", current procId: " +std::to_string(generateUniqueProcessID(iteration_local, (int) workerTask_local, (int) subsystemProcessed_local)));
 		}
@@ -195,7 +195,7 @@ void ILQR_MT<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::threadWork(size_t threadId)
 		 * */
 		if ( workerTask_local == IDLE || uniqueProcessID == generateUniqueProcessID(iteration_local, (int) workerTask_local, (int) subsystemProcessed_local))
 		{
-			if(BASE::settings_.debugPrintMT_)
+			if(BASE::settings_.ddpSettings_.debugPrintMT_)
 				BASE::printString("[MT]: [Thread " + std::to_string(threadId) + "]: going to sleep !");
 
 			// sleep until the state is not IDLE any more and we have a different process ID than before
@@ -209,7 +209,7 @@ void ILQR_MT<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::threadWork(size_t threadId)
 			workerTask_local = workerTask_.load();
 			iteration_local = BASE::iteration_;
 
-			if(BASE::settings_.debugPrintMT_)
+			if(BASE::settings_.ddpSettings_.debugPrintMT_)
 				BASE::printString("[MT]: [Thread " + std::to_string(threadId) + "]: woke up !");
 		}
 
@@ -220,7 +220,7 @@ void ILQR_MT<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::threadWork(size_t threadId)
 		{
 		case APPROXIMATE_LQ:
 		{
-			if(BASE::settings_.debugPrintMT_)
+			if(BASE::settings_.ddpSettings_.debugPrintMT_)
 				BASE::printString("[MT]: [Thread " + std::to_string(threadId) + "]: is busy with APPROXIMATE_LQ on partition "
 						+ std::to_string(subsystemProcessed_local));
 
@@ -231,7 +231,7 @@ void ILQR_MT<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::threadWork(size_t threadId)
 		}
 		case CALCULATE_CONTROLLER:
 		{
-			if(BASE::settings_.debugPrintMT_)
+			if(BASE::settings_.ddpSettings_.debugPrintMT_)
 				BASE::printString("[MT]: [Thread " + std::to_string(threadId) + "]: now busy with CALCULATE_CONTROLLER !");
 
 			executeCalculatePartitionController(threadId, subsystemProcessed_local);
@@ -241,7 +241,7 @@ void ILQR_MT<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::threadWork(size_t threadId)
 		}
 		case LINE_SEARCH:
 		{
-			if(BASE::settings_.debugPrintMT_)
+			if(BASE::settings_.ddpSettings_.debugPrintMT_)
 				BASE::printString("[MT]: [Thread " + std::to_string(threadId) + "]: now busy with LINE_SEARCH !");
 
 			executeLineSearchWorker(threadId);
@@ -250,7 +250,7 @@ void ILQR_MT<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::threadWork(size_t threadId)
 		}
 		case SOLVE_RICCATI:
 		{
-			if(BASE::settings_.debugPrintMT_)
+			if(BASE::settings_.ddpSettings_.debugPrintMT_)
 				BASE::printString("[MT]: [Thread "+ std::to_string(threadId) +"]: now busy with RiccatiSolver!");
 			uniqueProcessID = generateUniqueProcessID (iteration_local, SOLVE_RICCATI, subsystemProcessed_local);
 			executeRiccatiSolver(threadId);
@@ -258,13 +258,13 @@ void ILQR_MT<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::threadWork(size_t threadId)
 		}
 		case SHUTDOWN:
 		{
-			if(BASE::settings_.debugPrintMT_)
+			if(BASE::settings_.ddpSettings_.debugPrintMT_)
 				BASE::printString("[MT]: [Thread "+ std::to_string(threadId) +"]: now shutting down!");
 			return;
 		}
 		}
 
-		if(BASE::settings_.debugPrintMT_)
+		if(BASE::settings_.ddpSettings_.debugPrintMT_)
 			BASE::printString("[MT]: [Thread " + std::to_string(threadId) +"]: done with job. Will wait for next now!");
 	}
 }
@@ -282,7 +282,7 @@ void ILQR_MT<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::approximatePartitionLQ(const 
 	if (N > 0) {
 
 		// display
-		if(BASE::settings_.debugPrintMT_)
+		if(BASE::settings_.ddpSettings_.debugPrintMT_)
 			std::cerr << "[MT]: Activating threads to perform LQ approximation for partition " + std::to_string(partitionIndex) << std::endl;
 
 		kTaken_approx_[partitionIndex] = 0;
@@ -295,7 +295,7 @@ void ILQR_MT<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::approximatePartitionLQ(const 
 		lock.unlock();
 
 		// display
-		if(BASE::settings_.debugPrintMT_)
+		if(BASE::settings_.ddpSettings_.debugPrintMT_)
 			BASE::printString("[MT]: Waiting until threads finish LQ approximation for partition " + std::to_string(partitionIndex));
 
 		// wait until all threads finish their task
@@ -309,7 +309,7 @@ void ILQR_MT<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::approximatePartitionLQ(const 
 		workerTask_ = IDLE;
 
 		// display
-		if(BASE::settings_.debugPrintMT_)
+		if(BASE::settings_.ddpSettings_.debugPrintMT_)
 			std::cerr << "[MT]: Back to main thread, workers should now have finished LQ approximation for partition "
 				+ std::to_string(partitionIndex) << std::endl;
 	}
@@ -334,7 +334,7 @@ void ILQR_MT<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::executeApproximatePartitionLQ
 
 		if(k < N) {
 			// display
-			if (BASE::settings_.debugPrintMT_ && k%10 == 0) {
+			if (BASE::settings_.ddpSettings_.debugPrintMT_ && k%10 == 0) {
 				BASE::printString("[MT]: [Thread " + std::to_string(threadId) + "], partition " + std::to_string(partitionIndex)
 				+ ":Start approximating system LQ on index k = " + std::to_string(k) + " out of " + std::to_string(N-1));
 			}
@@ -356,7 +356,7 @@ void ILQR_MT<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::executeApproximatePartitionLQ
 		lock.unlock();
 
 		// display
-		if(BASE::settings_.debugPrintMT_) {
+		if(BASE::settings_.ddpSettings_.debugPrintMT_) {
 			BASE::printString("[MT]: [Thread " + std::to_string(threadId) + "], partition " + std::to_string(partitionIndex)
 				+ ", k " + std::to_string(k) + ", kCompleted_local " + std::to_string(kCompleted_local)
 				+ ", KMax " + std::to_string(N) + ": leaving executeApproximatePartitionLQWorker AND NOTIFYING ");
@@ -364,7 +364,7 @@ void ILQR_MT<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::executeApproximatePartitionLQ
 
 	} else {
 		// display
-		if(BASE::settings_.debugPrintMT_){
+		if(BASE::settings_.ddpSettings_.debugPrintMT_){
 			BASE::printString("[MT]: [Thread " + std::to_string(threadId) + "], partition " + std::to_string(partitionIndex)
 				+ ", k " + std::to_string(k) + ", kCompleted_local " + std::to_string(kCompleted_local)
 				+ ", KMax " + std::to_string(N) + ": leaving executeApproximatePartitionLQWorker but NOT notifying ");
@@ -386,7 +386,7 @@ void ILQR_MT<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculatePartitionController(
 	if (N > 0) {
 
 		// display
-		if(BASE::settings_.debugPrintMT_)
+		if(BASE::settings_.ddpSettings_.debugPrintMT_)
 			std::cerr << "[MT]: Waking up workers to calculate controller for partition "
 				+ std::to_string(partitionIndex) << std::endl;
 
@@ -399,7 +399,7 @@ void ILQR_MT<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculatePartitionController(
 		lock.unlock();
 
 		// display
-		if(BASE::settings_.debugPrintMT_)
+		if(BASE::settings_.ddpSettings_.debugPrintMT_)
 			BASE::printString("[MT]: Will wait now controllers have been calculated for partition "
 				+ std::to_string(partitionIndex));
 
@@ -414,7 +414,7 @@ void ILQR_MT<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculatePartitionController(
 		workerTask_ = IDLE;
 
 		// display
-		if(BASE::settings_.debugPrintMT_)
+		if(BASE::settings_.ddpSettings_.debugPrintMT_)
 			std::cerr << "[MT]: Back to main thread, workers should now have designed controllers for partition "
 				+ std::to_string(partitionIndex) << std::endl;
 	}

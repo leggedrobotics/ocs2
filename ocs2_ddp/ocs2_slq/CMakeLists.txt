@@ -5,7 +5,7 @@ project(ocs2_slq)
 find_package(catkin REQUIRED COMPONENTS 
   cmake_modules 
   ocs2_core
-  ocs2_oc
+  ocs2_ddp_base
 )
 find_package(Boost REQUIRED COMPONENTS 
   system
@@ -26,7 +26,7 @@ catkin_package(
     ${EIGEN3_INCLUDE_DIRS}
   CATKIN_DEPENDS 
     ocs2_core
-    ocs2_oc
+    ocs2_ddp_base
   DEPENDS 
     Boost
 )

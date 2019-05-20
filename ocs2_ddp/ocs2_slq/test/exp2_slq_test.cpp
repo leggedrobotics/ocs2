@@ -71,19 +71,19 @@ TEST(exp2_slq_test, DISABLED_Exp2_slq_test)
 	/******************************************************************************************************/
 	/******************************************************************************************************/
 	SLQ_Settings slqSettings;
-	slqSettings.displayInfo_ = true;
-	slqSettings.displayShortSummary_ = true;
-	slqSettings.maxNumIterationsSLQ_ = 200;
-	slqSettings.absTolODE_ = 1e-10;
-	slqSettings.relTolODE_ = 1e-7;
-	slqSettings.constraintStepSize_ = 0.1;
-	slqSettings.maxNumStepsPerSecond_ = 10000;
-	slqSettings.nThreads_ = 3;
-	slqSettings.useMakePSD_ = true;
-	slqSettings.lsStepsizeGreedy_ = true;
-	slqSettings.noStateConstraints_ = true;
 	slqSettings.useNominalTimeForBackwardPass_ = false;
-	slqSettings.checkNumericalStability_ = true;
+	slqSettings.ddpSettings_.displayInfo_ = true;
+	slqSettings.ddpSettings_.displayShortSummary_ = true;
+	slqSettings.ddpSettings_.maxNumIterations_ = 200;
+	slqSettings.ddpSettings_.absTolODE_ = 1e-10;
+	slqSettings.ddpSettings_.relTolODE_ = 1e-7;
+	slqSettings.ddpSettings_.constraintStepSize_ = 0.1;
+	slqSettings.ddpSettings_.maxNumStepsPerSecond_ = 10000;
+	slqSettings.ddpSettings_.nThreads_ = 3;
+	slqSettings.ddpSettings_.useMakePSD_ = true;
+	slqSettings.ddpSettings_.lsStepsizeGreedy_ = true;
+	slqSettings.ddpSettings_.noStateConstraints_ = true;
+	slqSettings.ddpSettings_.checkNumericalStability_ = true;
 
 	// switching times
 	std::vector<double> eventTimes {0.2, 1.2};
@@ -111,7 +111,7 @@ TEST(exp2_slq_test, DISABLED_Exp2_slq_test)
 			&operatingTrajectories, slqSettings, &logicRules);
 
 	// run single core SLQ
-	if (slqSettings.displayInfo_ || slqSettings.displayShortSummary_)
+	if (slqSettings.ddpSettings_.displayInfo_ || slqSettings.ddpSettings_.displayShortSummary_)
 		std::cerr << "\n>>> single-core SLQ" << std::endl;
 	slq.run(startTime, initState, finalTime, partitioningTimes);
 

@@ -70,19 +70,18 @@ TEST(exp1_slq_test, Exp1_slq_test)
 	/******************************************************************************************************/
 	/******************************************************************************************************/
 	SLQ_Settings slqSettings;
-	slqSettings.displayInfo_ = false;
-	slqSettings.displayShortSummary_ = true;
-	slqSettings.maxNumIterationsSLQ_ = 30;
-	slqSettings.nThreads_ = 3;
-	slqSettings.maxNumIterationsSLQ_ = 30;
-	slqSettings.lsStepsizeGreedy_ = true;
-	slqSettings.noStateConstraints_ = true;
 	slqSettings.useNominalTimeForBackwardPass_ = true;
-	slqSettings.checkNumericalStability_ = false;
-	slqSettings.absTolODE_ = 1e-10;
-	slqSettings.relTolODE_ = 1e-7;
-	slqSettings.maxNumStepsPerSecond_ = 10000;
-
+	slqSettings.ddpSettings_.displayInfo_ = false;
+	slqSettings.ddpSettings_.displayShortSummary_ = true;
+	slqSettings.ddpSettings_.maxNumIterations_ = 30;
+	slqSettings.ddpSettings_.nThreads_ = 3;
+	slqSettings.ddpSettings_.maxNumIterations_ = 30;
+	slqSettings.ddpSettings_.lsStepsizeGreedy_ = true;
+	slqSettings.ddpSettings_.noStateConstraints_ = true;
+	slqSettings.ddpSettings_.checkNumericalStability_ = false;
+	slqSettings.ddpSettings_.absTolODE_ = 1e-10;
+	slqSettings.ddpSettings_.relTolODE_ = 1e-7;
+	slqSettings.ddpSettings_.maxNumStepsPerSecond_ = 10000;
 	slqSettings.rolloutSettings_.absTolODE_ = 1e-10;
 	slqSettings.rolloutSettings_.relTolODE_ = 1e-7;
 	slqSettings.rolloutSettings_.maxNumStepsPerSecond_ = 10000;
@@ -120,12 +119,12 @@ TEST(exp1_slq_test, Exp1_slq_test)
 //			&operatingTrajectories, slqSettings, &logicRules);
 
 	// run single core SLQ
-	if (slqSettings.displayInfo_ || slqSettings.displayShortSummary_)
+	if (slqSettings.ddpSettings_.displayInfo_ || slqSettings.ddpSettings_.displayShortSummary_)
 		std::cerr << "\n>>> single-core SLQ" << std::endl;
 	slqST.run(startTime, initState, finalTime, partitioningTimes);
 
 	// run multi-core SLQ
-//	if (slqSettings.displayInfo_ || slqSettings.displayShortSummary_)
+//	if (slqSettings.ddpSettings_.displayInfo_ || slqSettings.ddpSettings_.displayShortSummary_)
 //		std::cerr << "\n>>> multi-core SLQ" << std::endl;
 //	slqMT.run(startTime, initState, finalTime, partitioningTimes);
 
@@ -147,21 +146,21 @@ TEST(exp1_slq_test, Exp1_slq_test)
 	/******************************************************************************************************/
 	/******************************************************************************************************/
 	const double expectedCost = 5.4399;
-	ASSERT_LT(fabs(totalCostST - expectedCost), 10*slqSettings.minRelCostSLQ_) <<
+	ASSERT_LT(fabs(totalCostST - expectedCost), 10*slqSettings.ddpSettings_.minRelCost_) <<
 			"MESSAGE: SLQ failed in the EXP1's cost test!";
-//	ASSERT_LT(fabs(totalCostMT - expectedCost), 10*slqSettings.minRelCostGSLQP_) <<
+//	ASSERT_LT(fabs(totalCostMT - expectedCost), 10*slqSettings.ddpSettings_.minRelCost_) <<
 //			"MESSAGE: SLQ_MP failed in the EXP1's cost test!";
 
 	const double expectedISE1 = 0.0;
-	ASSERT_LT(fabs(constraint1ISE_ST - expectedISE1), 10*slqSettings.minRelConstraint1ISE_) <<
+	ASSERT_LT(fabs(constraint1ISE_ST - expectedISE1), 10*slqSettings.ddpSettings_.minRelConstraint1ISE_) <<
 			"MESSAGE: SLQ failed in the EXP1's type-1 constraint ISE test!";
-//	ASSERT_LT(fabs(constraint1ISE_MT - expectedISE1), 10*slqSettings.minRelConstraint1ISE_) <<
+//	ASSERT_LT(fabs(constraint1ISE_MT - expectedISE1), 10*slqSettings.ddpSettings_.minRelConstraint1ISE_) <<
 //			"MESSAGE: SLQ_MP failed in the EXP1's type-1 constraint ISE test!";
 
 	const double expectedISE2 = 0.0;
-	ASSERT_LT(fabs(constraint2ISE_ST - expectedISE2), 10*slqSettings.minRelConstraint1ISE_) <<
+	ASSERT_LT(fabs(constraint2ISE_ST - expectedISE2), 10*slqSettings.ddpSettings_.minRelConstraint1ISE_) <<
 			"MESSAGE: SLQ failed in the EXP1's type-2 constraint ISE test!";
-//	ASSERT_LT(fabs(constraint2ISE_MT - expectedISE2), 10*slqSettings.minRelConstraint1ISE_) <<
+//	ASSERT_LT(fabs(constraint2ISE_MT - expectedISE2), 10*slqSettings.ddpSettings_.minRelConstraint1ISE_) <<
 //			"MESSAGE: SLQ_MP failed in the EXP1's type-2 constraint ISE test!";
 }
 

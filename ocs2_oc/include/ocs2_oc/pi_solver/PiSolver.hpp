@@ -197,15 +197,16 @@ class PiSolver final : public Solver_BASE<STATE_DIM, INPUT_DIM, NullLogicRules> 
           }
       }
 
+      if(minJ_currStep == std::numeric_limits<scalar_t>::max()){
+          std::cout << "cost-to-go in timestep  " << n << " is infinite for all samples." << std::endl;
+          psiDistorted[n] = scalar_t(0.0);
+          u_opt[n].setZero();
+          continue;
+        }
+
       psiDistorted[n] = std::accumulate(J.begin(), J.end(), scalar_t(0.0),
                                [this,n, minJ_currStep](scalar_t a, const scalar_array_t& Ji) { return std::move(a) + std::exp(-(Ji[n] - minJ_currStep)/gamma_); }) /
                numSamples;
-
-      if(psiDistorted[n] == 0.0){
-          std::cout << "warning: all samples have zero weight. settings u_opt to zero in step " << n << std::endl;
-          u_opt[n].setZero();
-          continue;
-      }
 
       // u_opt
       for (size_t sample = 0; sample < numSamples; sample++) {

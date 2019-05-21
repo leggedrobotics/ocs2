@@ -89,9 +89,8 @@ class PiSolver final : public Solver_BASE<STATE_DIM, INPUT_DIM, NullLogicRules> 
     }
     costFunction_->setCostDesiredTrajectories(costDesiredTrajectories_);
 
-    constexpr size_t numSamples = 1;  // number of random walks to be sampled
+    constexpr size_t numSamples = 10;  // number of random walks to be sampled
     const auto numSteps = static_cast<size_t>(std::round((finalTime - initTime) / rollout_dt_)) + 1;
-    std::cout << "numSteps = " << numSteps << std::endl;
 
     // setup containers to store rollout data
     state_vector_array2_t state_vector_array2(numSamples, state_vector_array_t(numSteps));      // vector of vectors of states
@@ -136,7 +135,6 @@ class PiSolver final : public Solver_BASE<STATE_DIM, INPUT_DIM, NullLogicRules> 
           throw std::runtime_error("Expected rollout to do a single step only.");
         }
       }
-      std::cout << "extracting terms for final time " << initTime + rollout_dt_ * (numSteps - 1) << std::endl;
       noiseInputVector_array2[sample][numSteps - 1] = controller_.noiseInput_;
       state_vector_array2[sample][numSteps - 1] = stateTrajectory.back();
 
@@ -232,6 +230,9 @@ class PiSolver final : public Solver_BASE<STATE_DIM, INPUT_DIM, NullLogicRules> 
     nominalControllersStock_.push_back(pi_controller_t(constraint_, *costFunction_, rollout_dt_, 0.0));
     nominalControllersStock_.back().setFeedforwardInputAndState(nominalTimeTrajectoriesStock_[0], nominalStateTrajectoriesStock_[0], nominalInputTrajectoriesStock_[0]);
     updateNominalControllerPtrStock();
+
+    // debug printing
+    printIterationDebug(initTime, state_vector_array2, J);
   }
 
   virtual void run(const scalar_t& initTime, const state_vector_t& initState, const scalar_t& finalTime,
@@ -349,6 +350,19 @@ class PiSolver final : public Solver_BASE<STATE_DIM, INPUT_DIM, NullLogicRules> 
 
   virtual logic_rules_t* getLogicRulesPtr() override {
     return &logicRules_;
+  }
+
+  void printIterationDebug(scalar_t initTime, const state_vector_array2_t& state_vector_array2, const scalar_array2_t& J){
+    if(state_vector_array2.size() != J.size()){
+        throw std::runtime_error("printIterationDebug: Number of samples do not match");
+      }
+
+    for (int sample = 0; sample < J.size(); sample++) {
+        std::cout << "+++ Sample # " << sample << " +++ \ntime\tcost-to-go\tstateTransposed" << std::endl;
+        for(int n = 0; n < J[sample].size(); n++){
+            std::cout << initTime + n*rollout_dt_ << "\t" << J[sample][n] << "\t" << state_vector_array2[sample][n].transpose() << std::endl;
+          }
+      }
   }
 
   /**

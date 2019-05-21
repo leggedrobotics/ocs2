@@ -26,14 +26,10 @@ with open("console.log") as inFile:
             maxCost = cost
 
 
-print(maxCost)
-
-
 for data_i in sampleData:
-    colors = np.arctan(data_i[:,1] / maxCost)*2.0/np.pi
-    print(colors)
-    plt.scatter(data_i[:,0], data_i[:,2], c=cm.hot(colors), edgecolor='none')
-    plt.plot(data_i[:,0], data_i[:,2])
+    color = np.arctan(data_i[0,1] / maxCost)*1.8/np.pi
+    # plt.scatter(data_i[:,0], data_i[:,2], c=cm.hot(colors), edgecolor='none')
+    plt.plot(data_i[:,0], data_i[:,2], c=cm.gist_gray(color))
 
-plt.title('darker dots = lower cost-to-go')
+plt.title('darker colors = lower cost-to-go at first time step')
 plt.show()

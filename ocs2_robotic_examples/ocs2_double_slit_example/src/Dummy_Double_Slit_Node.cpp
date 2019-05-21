@@ -14,6 +14,8 @@ int main(int argc, char **argv)
 
 	// double_slitInterface
 	DoubleSlitInterface double_slitInterface(taskFileFolderName);
+	double rollout_dt;
+	loadScalar(double_slitInterface.taskFile_, "systemParameters.rollout_dt", rollout_dt);
 
 	typedef MRT_ROS_Double_Slit mrt_t;
 	typedef mrt_t::BASE::Ptr mrt_base_ptr_t;
@@ -27,7 +29,8 @@ int main(int argc, char **argv)
 			mrtPtr,
 			double_slitInterface.mpcSettings().mrtDesiredFrequency_,
 			double_slitInterface.mpcSettings().mpcDesiredFrequency_,
-			double_slitInterface.getDynamicsPtr().get());
+			double_slitInterface.getDynamicsPtr().get(),
+			Rollout_Settings(1e-9, 1e-6, 5000, rollout_dt, IntegratorType::EULER));
 
 	dummyDoubleSlit.launchNodes(argc, argv);
 

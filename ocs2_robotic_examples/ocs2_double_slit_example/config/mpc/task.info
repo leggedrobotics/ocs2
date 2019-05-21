@@ -1,46 +1,50 @@
 systemParameters
 {
     rollout_dt 1;
-    barrierTimePosition 53 ; time steps to barrier
-    barrierLowerEnd -10;
-    barrierUpperEnd  10;
+    barrierTimePosition 200 ; time steps to barrier
+    barrierLowerEnd -1.0;
+    barrierUpperEnd  1.0;
 }
 
 pathIntegral
 {
-  gamma 0.1 ; temperature: the lower it is, the more aggressive the softmin
+  gamma 0.1 ; temperature/level of noise
+  numSamples 2 ; how many trajectories to sample
 }
 
 mpcTimeHorizon
 {
     debugPrint 1
-    timehorizon 100
+    timehorizon 10
     numPartitions 1
 }
 
 mpc
 {
     debugPrint 1
+    mpcDesiredFrequency 1
+    mrtDesiredFrequency 1
+    maxTimeStep 1
 }
 
 timeHorizon 100; time steps to end
 
 initialState
 {
-  (0,0) 0.0
+  (0,0) 1.0
 }
 
 ; state weight matrix
 Q
 {
-  scaling 1e-1
+  scaling 1e+0
   (0,0) 1.0
 }
 
 ;  control weight matrix
 R
 {
-   scaling 1e-2
+   scaling 1e+2
 
    (0,0)  1.0
 }
@@ -49,6 +53,6 @@ R
 ; final state weight matrix
 Q_final
 {
-  scaling 1e+1
+  scaling 1e+0
   (0,0)  1.0
 }

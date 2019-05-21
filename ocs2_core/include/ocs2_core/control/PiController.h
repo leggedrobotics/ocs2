@@ -205,7 +205,9 @@ class PiController final : public ControllerBase<STATE_DIM, INPUT_DIM> {
   }
 
   virtual void setZero() override {
-    throw std::runtime_error("not implemented");
+    linInterpolateXNominal_.setZero();
+    linInterpolateUff_.setZero();
+    gamma_ = 0.0;
   }
 
   virtual bool empty() const override {

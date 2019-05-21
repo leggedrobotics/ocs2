@@ -80,7 +80,6 @@ public:
 	 */
 	scalar_t doubleSlitPotentialWall(dim_t::state_vector_t x, scalar_t t) const;
 
-protected:
 	/**
 	 * Loads the settings from the path file.
 	 *

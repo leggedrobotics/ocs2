@@ -177,7 +177,6 @@ class FeedforwardController final : public ControllerBase<STATE_DIM, INPUT_DIM>
   }
 
   virtual void clear() override {
-    linInterpolateUff_.reset();
     timeStamp_.clear();
     uffArray_.clear();
   }

@@ -119,24 +119,15 @@ public:
 		switchingTimeFinal_ = switchingTimeFinal;
 		scalingFactor_      = switchingTimeFinal - switchingTimeStart;
 
-		BmFunc_.setTimeStamp(timeStampPtr);
-		BmFunc_.setData(BmPtr);
-		AmConstrainedFunc_.setTimeStamp(timeStampPtr);
-		AmConstrainedFunc_.setData(AmConstrainedPtr);
-		CmProjectedFunc_.setTimeStamp(timeStampPtr);
-		CmProjectedFunc_.setData(CmProjectedPtr);
-		PmFunc_.setTimeStamp(timeStampPtr);
-		PmFunc_.setData(PmPtr);
-		RmFunc_.setTimeStamp(timeStampPtr);
-		RmFunc_.setData(RmPtr);
-		RmInverseFunc_.setTimeStamp(timeStampPtr);
-		RmInverseFunc_.setData(RmInversePtr);
-		RmConstrainedFunc_.setTimeStamp(timeStampPtr);
-		RmConstrainedFunc_.setData(RmConstrainedPtr);
-		EvDevProjectedFunc_.setTimeStamp(timeStampPtr);
-		EvDevProjectedFunc_.setData(EvDevProjectedPtr);
-		SmFunc_.setTimeStamp(SmTimeStampPtr);
-		SmFunc_.setData(SmPtr);
+		BmFunc_.setData(timeStampPtr, BmPtr);
+		AmConstrainedFunc_.setData(timeStampPtr, AmConstrainedPtr);
+		CmProjectedFunc_.setData(timeStampPtr, CmProjectedPtr);
+		PmFunc_.setData(timeStampPtr, PmPtr);
+		RmFunc_.setData(timeStampPtr, RmPtr);
+		RmInverseFunc_.setData(timeStampPtr, RmInversePtr);
+		RmConstrainedFunc_.setData(timeStampPtr, RmConstrainedPtr);
+		EvDevProjectedFunc_.setData(timeStampPtr, EvDevProjectedPtr);
+		SmFunc_.setData(timeStampPtr, SmPtr);
 	}
 
 	/**
@@ -144,15 +135,6 @@ public:
 	 */
 	void reset() {
 
-		BmFunc_.reset();
-		AmConstrainedFunc_.reset();
-		CmProjectedFunc_.reset();
-		PmFunc_.reset();
-		RmFunc_.reset();
-		RmInverseFunc_.reset();
-		RmConstrainedFunc_.reset();
-		EvDevProjectedFunc_.reset();
-		SmFunc_.reset();
 	}
 
 	/**
@@ -171,8 +153,7 @@ public:
 		// denormalized time
 		const scalar_t t = switchingTimeFinal_ - scalingFactor_*z;
 
-		BmFunc_.interpolate(t, Bm_);
-		size_t greatestLessTimeStampIndex = BmFunc_.getGreatestLessTimeStampIndex();
+		auto greatestLessTimeStampIndex = BmFunc_.interpolate(t, Bm_);
 		AmConstrainedFunc_.interpolate(t, AmConstrained_, greatestLessTimeStampIndex);
 		CmProjectedFunc_.interpolate(t, CmProjected_, greatestLessTimeStampIndex);
 		PmFunc_.interpolate(t, Pm_, greatestLessTimeStampIndex);

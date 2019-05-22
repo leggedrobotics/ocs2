@@ -141,7 +141,7 @@ public:
 	/**
 	 * Default destructor.
 	 */
-	virtual ~SLQ();
+	~SLQ();
 
 	/**
 	 * Line search on the feedforwrd parts of the controller. It uses the following approach for line search:

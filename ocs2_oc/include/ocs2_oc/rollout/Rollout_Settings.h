@@ -97,9 +97,10 @@ public:
 	 * If a value for a specific field is not defined it will set to the default value defined in "Rollout_Settings".
 	 *
 	 * @param [in] filename: File name which contains the configuration data.
+	 * @param [in] fieldName: Field name which contains the configuration data.
 	 * @param [in] verbose: Flag to determine whether to print out the loaded settings or not (The default is true).
 	 */
-	void loadSettings(const std::string& filename, bool verbose = true);
+	void loadSettings(const std::string& filename, const std::string& fieldName, bool verbose = true);
 
 public:
 	/****************
@@ -121,7 +122,7 @@ public:
 }; // end of Rollout_Settings class
 
 
-inline void Rollout_Settings::loadSettings(const std::string& filename, bool verbose /*= true*/) {
+inline void Rollout_Settings::loadSettings(const std::string& filename, const std::string& fieldName, bool verbose /*= true*/) {
 
 	boost::property_tree::ptree pt;
 	boost::property_tree::read_info(filename, pt);
@@ -132,7 +133,7 @@ inline void Rollout_Settings::loadSettings(const std::string& filename, bool ver
 	}
 
 	try	{
-		absTolODE_ = pt.get<double>("slq.AbsTolODE");
+		absTolODE_ = pt.get<double>(fieldName + ".AbsTolODE");
 		if (verbose)  std::cerr << " #### Option loader : option 'AbsTolODE' ........................... " << absTolODE_ << std::endl;
 	}
 	catch (const std::exception& e){
@@ -140,7 +141,7 @@ inline void Rollout_Settings::loadSettings(const std::string& filename, bool ver
 	}
 
 	try	{
-		relTolODE_ = pt.get<double>("slq.RelTolODE");
+		relTolODE_ = pt.get<double>(fieldName + ".RelTolODE");
 		if (verbose)  std::cerr << " #### Option loader : option 'RelTolODE' ........................... " << relTolODE_ << std::endl;
 	}
 	catch (const std::exception& e){
@@ -148,7 +149,7 @@ inline void Rollout_Settings::loadSettings(const std::string& filename, bool ver
 	}
 
 	try	{
-		maxNumStepsPerSecond_ = pt.get<double>("slq.maxNumStepsPerSecond");
+		maxNumStepsPerSecond_ = pt.get<double>(fieldName + ".maxNumStepsPerSecond");
 		if (verbose)  std::cerr << " #### Option loader : option 'maxNumStepsPerSecond' ................ " << maxNumStepsPerSecond_ << std::endl;
 	}
 	catch (const std::exception& e){
@@ -156,7 +157,7 @@ inline void Rollout_Settings::loadSettings(const std::string& filename, bool ver
 	}
 
 	try	{
-		minTimeStep_ = pt.get<double>("slq.minTimeStep");
+		minTimeStep_ = pt.get<double>(fieldName + ".minTimeStep");
 		if (verbose)  std::cerr << " #### Option loader : option 'minTimeStep' ......................... " << minTimeStep_ << std::endl;
 	}
 	catch (const std::exception& e){
@@ -164,7 +165,7 @@ inline void Rollout_Settings::loadSettings(const std::string& filename, bool ver
 	}
 
 	try	{
-		integratorType_ = (IntegratorType)pt.get<int>("slq.integratorType");
+		integratorType_ = (IntegratorType)pt.get<int>(fieldName + ".integratorType");
 		if (verbose)  std::cerr << " #### Option loader : option 'integratorType' ...................... " << ocs2::to_string(integratorType_) << std::endl;
 	}
 	catch (const std::exception& e){
@@ -172,7 +173,7 @@ inline void Rollout_Settings::loadSettings(const std::string& filename, bool ver
 	}
 
 	try	{
-		checkNumericalStability_ = pt.get<bool>("slq.checkNumericalStability");
+		checkNumericalStability_ = pt.get<bool>(fieldName + ".checkNumericalStability");
 		if (verbose)  std::cerr << " #### Option loader : option 'checkNumericalStability' ............. " << checkNumericalStability_ << std::endl;
 	}
 	catch (const std::exception& e){

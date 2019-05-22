@@ -12,7 +12,8 @@
 
   <buildtool_depend>catkin</buildtool_depend>
 
-  <run_depend>ocs2_ballbot_example</run_depend>
+  <run_depend>ocs2_slq</run_depend>
+  <run_depend>ocs2_ilqr</run_depend>
 
   <export>
     <metapackage />

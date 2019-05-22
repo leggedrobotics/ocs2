@@ -26,6 +26,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 catkin_package(
   INCLUDE_DIRS 
     include
+    test/include
     ${EIGEN3_INCLUDE_DIRS}
   CATKIN_DEPENDS 
     ocs2_core
@@ -39,6 +40,7 @@ catkin_package(
 
 include_directories(
   include
+  test/include
   ${EIGEN3_INCLUDE_DIRS}
   ${Boost_INCLUDE_DIRS}
   ${catkin_INCLUDE_DIRS}
@@ -49,6 +51,9 @@ include_directories(
 #############
 
 install(DIRECTORY include/${PROJECT_NAME}/
+        DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION})
+        
+install(DIRECTORY test/include/${PROJECT_NAME}/
         DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION})
 
 

@@ -44,15 +44,6 @@ void RobotInterfaceBase<STATE_DIM, INPUT_DIM>::getInitialState(
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
-SLQ_Settings& RobotInterfaceBase<STATE_DIM, INPUT_DIM>::slqSettings() {
-
-	return slqSettings_;
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM>
 MPC_Settings& RobotInterfaceBase<STATE_DIM, INPUT_DIM>::mpcSettings() {
 
 	return mpcSettings_;

@@ -961,7 +961,7 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::approximateUnconstrainedLQWo
 			std::cerr << "what(): " << error.what() << " at time " << nominalTimeTrajectoriesStock_[i][k] << " [sec]." << std::endl;
 			std::cerr << "Am: \n" << AmTrajectoryStock_[i][k] << std::endl;
 			std::cerr << "Bm: \n" << BmTrajectoryStock_[i][k] << std::endl;
-			exit(0);
+      throw;
 		}
 	}
 
@@ -1024,7 +1024,7 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::approximateUnconstrainedLQWo
 			std::cerr << "Dm: \n" << DmTrajectoryStock_[i][k].topRows(nc1) << std::endl;
 			std::cerr << "Hv: " << HvTrajectoryStock_[i][k].head(nc2).transpose() << std::endl;
 			std::cerr << "Fm: \n" << FmTrajectoryStock_[i][k].topRows(nc2) << std::endl;
-			exit(0);
+      throw;
 		}
 	}
 
@@ -1075,7 +1075,7 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::approximateUnconstrainedLQWo
 			std::cerr << "Rv: " << RvTrajectoryStock_[i][k].transpose() << std::endl;
 			std::cerr << "Rm: \n" << RmTrajectoryStock_[i][k] << std::endl;
 			std::cerr << "Pm: \n" << PmTrajectoryStock_[i][k] << std::endl;
-			exit(0);
+      throw;
 		}
 	}
 }
@@ -1661,7 +1661,7 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::solveRiccatiEquationsWorker(
 					std::cerr << "Sv[" << SsTimeTrajectoryStock_[partitionIndex][kp] << "]:\t"<< SvTrajectoryStock_[partitionIndex][kp].transpose().norm() << std::endl;
 					std::cerr << "s[" << SsTimeTrajectoryStock_[partitionIndex][kp] << "]: \t"<< sTrajectoryStock_[partitionIndex][kp].transpose().norm() << std::endl;
 				}
-				exit(0);
+        throw;
 			}
 		}
 }
@@ -1799,7 +1799,7 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::solveRiccatiEquationsForNomi
 					std::cerr << "Sv[" << SsTimeTrajectoryStock_[partitionIndex][kp] << "]:\t"<< SvTrajectoryStock_[partitionIndex][kp].transpose().norm() << std::endl;
 					std::cerr << "s["  << SsTimeTrajectoryStock_[partitionIndex][kp] << "]:\t"<< sTrajectoryStock_[partitionIndex][kp].transpose().norm() << std::endl;
 				}
-				exit(0);
+				throw;
 			}
 		}
 }
@@ -1940,7 +1940,7 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::solveErrorRiccatiEquationWor
 					std::cerr << "Gv[" << SsTimeTrajectoryStock_[partitionIndex][kp] <<
 							"]:\t"<< GvTrajectory[kp].transpose().norm() << std::endl;
 				}
-				exit(0);
+        throw;
 			}
 		}  // end of k loop
 }
@@ -2086,7 +2086,7 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::solveSlqRiccatiEquationsWork
 					std::cerr << "s[" << SsTimeTrajectoryStock_[partitionIndex][kp] << "]: \t"<< sTrajectoryStock_[partitionIndex][kp].transpose().norm() << std::endl;
 					std::cerr << "Sve[" << SsTimeTrajectoryStock_[partitionIndex][kp] << "]:\t"<< SveTrajectoryStock_[partitionIndex][kp].transpose().norm() << std::endl;
 				}
-				exit(0);
+				throw;
 			}
 		}
 #endif
@@ -2338,7 +2338,7 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::fullRiccatiBackwardSweepWork
 					std::cerr << "s["  << SsTimeTrajectoryStock_[partitionIndex][kp] << "]: \t"
 							<< sTrajectoryStock_[partitionIndex][kp].transpose().norm() << std::endl;
 				}
-				exit(0);
+        throw;
 			}
 
 			// checking the numerical stability of the controller parameters
@@ -2353,7 +2353,7 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::fullRiccatiBackwardSweepWork
 			catch(const std::exception& error) {
 				std::cerr << "what(): " << error.what() << " at time "
 						<< nominalControllersStock_[partitionIndex].time_[k] << " [sec]." << std::endl;
-				exit(0);
+        throw;
 			}
 		}
 }

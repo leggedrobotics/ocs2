@@ -1146,7 +1146,7 @@ void GSLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::solveSensitivityBVP(
 						std::cerr << "Mve[" << dcPtr_->SsTimeTrajectoriesStock_[i][kp] <<
 								"]:\t"<< MveTrajectoriesStock[i][kp].transpose().norm() << std::endl;
 					}
-					exit(0);
+          throw;
 				}
 			}
 

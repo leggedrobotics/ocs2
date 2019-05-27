@@ -186,10 +186,8 @@ class PiController final : public ControllerBase<STATE_DIM, INPUT_DIM> {
       xNominal_ = xNominal;
       uff_ = uff;
 
-      linInterpolateXNominal_.setTimeStamp(&time_);
-      linInterpolateXNominal_.setData(&xNominal_);
-      linInterpolateUff_.setTimeStamp(&time_);
-      linInterpolateUff_.setData(&uff_);
+      linInterpolateXNominal_.setData(&time_, &xNominal_);
+      linInterpolateUff_.setData(&time_, &uff_);
   }
 
   virtual void swap(PiController<STATE_DIM,INPUT_DIM>& other) {

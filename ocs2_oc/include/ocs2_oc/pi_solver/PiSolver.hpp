@@ -59,7 +59,7 @@ class PiSolver final : public Solver_BASE<STATE_DIM, INPUT_DIM, NullLogicRules> 
         costFunction_(std::move(costFunction)),
         constraint_(constraint),
         controller_(constraint, *costFunction_, rollout_dt, noiseScaling), //!@warn need to use member var
-        rollout_(*systemDynamicsPtr, Rollout_Settings(1e-9, 1e-6, 5000, rollout_dt, IntegratorType::EULER)),
+        rollout_(*systemDynamicsPtr, Rollout_Settings(1e-9, 1e-6, 5000, rollout_dt, IntegratorType::EULER, false)),
         rollout_dt_(rollout_dt),
         gamma_(noiseScaling),
         numSamples_(numSamples){

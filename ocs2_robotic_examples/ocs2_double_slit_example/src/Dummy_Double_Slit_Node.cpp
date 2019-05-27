@@ -30,7 +30,7 @@ int main(int argc, char **argv)
 			double_slitInterface.mpcSettings().mrtDesiredFrequency_,
 			double_slitInterface.mpcSettings().mpcDesiredFrequency_,
 			double_slitInterface.getDynamicsPtr().get(),
-			Rollout_Settings(1e-9, 1e-6, 5000, rollout_dt, IntegratorType::EULER));
+			Rollout_Settings(1e-9, 1e-6, 5000, rollout_dt, IntegratorType::EULER, false));
 
 	dummyDoubleSlit.launchNodes(argc, argv);
 

@@ -10,116 +10,113 @@ QuadrotorParameters
 ; Time Horizon
 mpcTimeHorizon
 {
-    timehorizon				2.0
-    numPartitions			2
+    timehorizon        2.0
+    numPartitions      2
 }
 
 ; Mode sequence 
 subsystemsSequence
 {
-  	[0]     0
+    [0]     0
 }
 ; Template mode sequence
 templateSubsystemsSequence
 {
-  	[0]     0
+    [0]     0
 }
 templateSwitchingTimes
 {
 }
 
 ; SLQ settings
-slq
+ilqr
 {
-	maxNumIterationsSLQ              10		; 50                                          
-	minLearningRateGSLQP             1.0	; 0.1                                        	
-	maxLearningRateGSLQP             1.0                                          	
-	minRelCostGSLQP                  0.1	; 0.01                                        	
-	stateConstraintPenaltyCoeff      100.0                                         	
-	stateConstraintPenaltyBase       1.1                                          	
-	meritFunctionRho                 50.0                                         	
-	constraintStepSize               1.0	; 1.0                                          	
-	displayInfo                      0
-	displayShortSummary              1                                            	
-	warmStartGSLQP                   1    
-	useLQForDerivatives              0                                        
-                                                                              	
-	AbsTolODE                        2e-5	;1e-5	;1e-6                                                                          
-	RelTolODE                        1e-3	;1e-3	;1e-4
-	minTimeStep                      1e-3                                         	
-	maxNumStepsPerSecond             50000                                        	
-	simulationIsConstrained          0 
-	noStateConstraints               1  
-	useMakePSD                       0                       	
-    minAbsConstraint1ISE             5e-3                                        	
-	minRelConstraint1ISE             5e-6
-	checkNumericalStability          0                                           
-                                                                              	
-	displayGradientDescent           0                                                                             
-	tolGradientDescent               1e-2                                         	
-	acceptableTolGradientDescent     1e-2                                         	
-	maxIterationGradientDescent      5 
-	minLearningRateNLP               0.05
-    maxLearningRateNLP               0.6
-    useAscendingLineSearchNLP        1
-    
-    useMultiThreading                1
-    nThreads                         4
-    debugPrintMP                     0
-    lsStepsizeGreedy                 1
-    
-    useNominalTimeForBackwardPass    0  
-    RiccatiIntegratorType            1        ; ODE45 = 1, ADAMS_BASHFORTH = 2, BULIRSCH_STOER = 3, ADAMS_BASHFORTH_MOULTON = 4
-    adams_integrator_dt              0.01    
+    ddp
+    {
+        maxNumIterations                 10     ; 50
+        minLearningRate                  1.0    ; 0.1
+        maxLearningRate                  1.0
+        minRelCost                       0.1    ; 0.01
+        stateConstraintPenaltyCoeff      100.0
+        stateConstraintPenaltyBase       1.1
+        meritFunctionRho                 50.0
+        constraintStepSize               1.0    ; 1.0
+        displayInfo                      0
+        displayShortSummary              1
 
-    useRiccatiSolver                 1  
-    
-    minEventTimeDifference           0.01                         	
-}                
+        AbsTolODE                        2e-5    ;1e-5	;1e-6
+        RelTolODE                        1e-3    ;1e-3	;1e-4
+        minTimeStep                      1e-3
+        maxNumStepsPerSecond             50000
+        simulationIsConstrained          0 
+        noStateConstraints               1  
+        useMakePSD                       0
+        addedRiccatiDiagonal             1e-3
+        minAbsConstraint1ISE             5e-3
+        minRelConstraint1ISE             5e-6
+        checkNumericalStability          0
+
+        useMultiThreading                1
+        nThreads                         4
+        debugPrintMT                     0
+        lsStepsizeGreedy                 1
+
+        useRiccatiSolver                 1
+    }
+
+    rollout
+    {
+        AbsTolODE                        2e-5    ;1e-5	;1e-6
+        RelTolODE                        1e-3    ;1e-3	;1e-4
+        minTimeStep                      1e-3
+        maxNumStepsPerSecond             50000
+        checkNumericalStability          0
+    }
+}
 
 ; MPC settings
 mpc
 {
-	runtimeMaxNumIterations     1
-	initMaxNumIterations        10
-	
-	runtimeMaxLearningRate      1.0
-	runtimeMinLearningRate      1.0
-	initMinLearningRate         0.1
-	initMaxLearningRate         1.0
-	
-	debugPrint                  1
-	coldStart                   0
-	recedingHorizon             1       ; use receding horizon MPC
+    runtimeMaxNumIterations     1
+    initMaxNumIterations        10
 
-	useParallelRiccatiSolver    1       ; use parallel riccati solver in MP case and recedingHorizon fashion
-	
-	useFeedbackPolicy           0
-	forwardSimulationTime       28      ; [ms] MRT time
-	
-	rosMsgTimeWindow            500     ; [ms]
-	adaptiveRosMsgTimeWindow    0
-	
-	mpcDesiredFrequency         100     ; [Hz] 
-	mrtDesiredFrequency         400     ; [Hz]  
-}                                                                                                                                 	
-                                                                              	
-                                                                              	
-; initial state                                                               	
-initialState                                                               	
+    runtimeMaxLearningRate      1.0
+    runtimeMinLearningRate      1.0
+    initMinLearningRate         0.1
+    initMaxLearningRate         1.0
+
+    debugPrint                  1
+    coldStart                   0
+    recedingHorizon             1       ; use receding horizon MPC
+
+    useParallelRiccatiSolver    1       ; use parallel riccati solver in MP case and recedingHorizon fashion
+
+    useFeedbackPolicy           0
+    forwardSimulationTime       28      ; [ms] MRT time
+
+    rosMsgTimeWindow            500     ; [ms]
+    adaptiveRosMsgTimeWindow    0
+
+    mpcDesiredFrequency         100     ; [Hz] 
+    mrtDesiredFrequency         400     ; [Hz]  
+}
+
+
+; initial state
+initialState
 {
-   (0,0)  0.0	; x
-   (1,0)  0.0	; y
-   (2,0)  1.0	; z
-   (3,0)  0.0	; phi
-   (4,0)  0.0	; theta
-   (5,0)  0.0	; psi
-   (6,0)  0.0	; u
-   (7,0)  0.0	; v
-   (8,0)  0.0	; w
-   (9,0)  0.0	; p
-   (10,0)  0.0	; q
-   (11,0)  0.0	; r
+   (0,0)  0.0   ; x
+   (1,0)  0.0   ; y
+   (2,0)  1.0   ; z
+   (3,0)  0.0   ; phi
+   (4,0)  0.0   ; theta
+   (5,0)  0.0   ; psi
+   (6,0)  0.0   ; u
+   (7,0)  0.0   ; v
+   (8,0)  0.0   ; w
+   (9,0)  0.0   ; p
+   (10,0)  0.0  ; q
+   (11,0)  0.0  ; r
 }
 
 ; state weight matrix
@@ -127,18 +124,18 @@ Q
 {
    scaling 1e-0
 
-   (0,0)   100.0	; x
-   (1,1)   100.0	; y
-   (2,2)   100.0	; z
-   (3,3)   20.0		; phi
-   (4,4)   20.0		; theta
-   (5,5)   20.0		; psi
-   (6,6)   10.0		; u
-   (7,7)   10.0		; v
-   (8,8)   10.0		; w
-   (9,9)   4.0		; p
-   (10,10) 4.0		; q
-   (11,11) 4.0		; r
+   (0,0)   100.0    ; x
+   (1,1)   100.0    ; y
+   (2,2)   100.0    ; z
+   (3,3)   50.0    ; phi
+   (4,4)   50.0    ; theta
+   (5,5)   50.0    ; psi
+   (6,6)   10.0    ; u
+   (7,7)   10.0    ; v
+   (8,8)   10.0    ; w
+   (9,9)   5.0     ; p
+   (10,10) 5.0     ; q
+   (11,11) 5.0     ; r
 }
 
 
@@ -147,7 +144,7 @@ R
 {
    scaling 1e+0
 
-   (0,0)  1.0	; Fz
+   (0,0)  1.0   ; Fz
    (1,1)  5.0   ; Mx
    (2,2)  5.0   ; My
    (3,3)  5.0   ; Mz
@@ -159,33 +156,33 @@ Q_final
 {
    scaling 0e-2
 
-   (0,0)   100.0	; x
-   (1,1)   100.0	; y
-   (2,2)   100.0	; z
-   (3,3)   4.0		; phi
-   (4,4)   4.0		; theta
-   (5,5)   0.2		; psi
-   (6,6)   100.0	; u
-   (7,7)   100.0	; v
-   (8,8)   100.0	; w
-   (9,9)   4.0		; p
-   (10,10) 4.0		; q
-   (11,11) 0.2		; r
+   (0,0)   100.0    ; x
+   (1,1)   100.0    ; y
+   (2,2)   100.0    ; z
+   (3,3)   4.0      ; phi
+   (4,4)   4.0      ; theta
+   (5,5)   0.2      ; psi
+   (6,6)   100.0    ; u
+   (7,7)   100.0    ; v
+   (8,8)   100.0    ; w
+   (9,9)   4.0      ; p
+   (10,10) 4.0      ; q
+   (11,11) 0.2      ; r
 }
 
 ; final goal
 x_final
 {
-   (0,0)   0.0	; x
-   (1,0)   0.0	; y
-   (2,0)   1.0	; z
-   (3,0)   0.0	; phi
-   (4,0)   0.0	; theta
-   (5,0)   0.0	; psi
-   (6,0)   0.0	; u
-   (7,0)   0.0	; v
-   (8,0)   0.0	; w
-   (9,0)   0.0	; p
-   (10,0)  0.0	; q
-   (11,0)  0.0	; r
+   (0,0)   0.0     ; x
+   (1,0)   0.0     ; y
+   (2,0)   1.0     ; z
+   (3,0)   0.0     ; phi
+   (4,0)   0.0     ; theta
+   (5,0)   0.0     ; psi
+   (6,0)   0.0     ; u
+   (7,0)   0.0     ; v
+   (8,0)   0.0     ; w
+   (9,0)   0.0     ; p
+   (10,0)  0.0     ; q
+   (11,0)  0.0     ; r
 }

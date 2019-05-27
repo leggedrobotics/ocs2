@@ -185,9 +185,9 @@ public:
 		for (size_t i=0; i<numSubsystems; i++) {
 			for (; k<timeTrajectory.size(); k++) {
 				std::cerr << "k:     " << k << std::endl;
-				std::cerr << "Time:  " << timeTrajectory[k] << std::endl;
-				std::cerr << "State: " << stateTrajectory[k].transpose() << std::endl;
-				std::cerr << "Input: " << inputTrajectory[k].transpose() << std::endl;
+				std::cerr << "Time:  " << std::setprecision(9) << timeTrajectory[k] << std::endl;
+				std::cerr << "State: " << std::setprecision(3) << stateTrajectory[k].transpose() << std::endl;
+				std::cerr << "Input: " << std::setprecision(3) << inputTrajectory[k].transpose() << std::endl;
 
 				if (i<eventsPastTheEndIndeces.size() && k+1==eventsPastTheEndIndeces[i]) {
 					std::cerr << "+++ event took place +++" << std::endl;
@@ -195,6 +195,58 @@ public:
 					break;
 				}
 			} // end of k loop
+		} // end of i loop
+	}
+
+protected:
+	/**
+	 * Checks for the numerical stability if Rollout_Settings::checkNumericalStability_ is true.
+	 *
+	 * @param [in] partitionIndex: Time partition index.
+	 * @param [in] timeTrajectory: The time trajectory stamp.
+	 * @param [in] eventsPastTheEndIndeces: Indices containing past-the-end index of events trigger.
+	 * @param [in] stateTrajectory: The state trajectory.
+	 * @param [in] inputTrajectory: The control input trajectory.
+	 */
+	void checkNumericalStability(
+			const size_t& partitionIndex,
+			controller_t* controller,
+			const scalar_array_t& timeTrajectory,
+			const size_array_t& eventsPastTheEndIndeces,
+			const state_vector_array_t& stateTrajectory,
+			const input_vector_array_t& inputTrajectory) const {
+
+		if (rolloutSettings_.checkNumericalStability_==false)
+			return;
+
+		for (size_t i=0; i<timeTrajectory.size(); i++) {
+			try {
+				if (!stateTrajectory[i].allFinite())
+					throw std::runtime_error("Rollout: state is not finite");
+				if (!inputTrajectory[i].allFinite())
+					throw std::runtime_error("Rollout: input is not finite");
+			} catch(const std::exception& error) {
+
+				std::cerr << "what(): " << error.what() << " at time " + std::to_string(timeTrajectory[i]) + " [sec]." << std::endl;
+
+				// truncate trajectories
+				scalar_array_t timeTrajectoryTemp;
+				state_vector_array_t stateTrajectoryTemp;
+				input_vector_array_t inputTrajectoryTemp;
+				for (size_t j=0; j<=i; j++) {
+					timeTrajectoryTemp.push_back(timeTrajectory[j]);
+					stateTrajectoryTemp.push_back(stateTrajectory[j]);
+					inputTrajectoryTemp.push_back(inputTrajectory[j]);
+				}
+
+				// display
+				display(partitionIndex, timeTrajectoryTemp, eventsPastTheEndIndeces,
+						stateTrajectoryTemp, inputTrajectoryTemp);
+
+				controller->display();
+
+				exit(0);
+			}
 		} // end of i loop
 	}
 

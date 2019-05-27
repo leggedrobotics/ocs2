@@ -102,14 +102,9 @@ public:
 			const input_vector_array_t* sensitivityControllerFeedforwardPtr,
 			const input_state_matrix_array_t* sensitivityControllerFeedbackPtr)  {
 
-		AmFunc_.setTimeStamp(timeTrajectoryPtr);
-		AmFunc_.setData(AmTrajectoryPtr);
-
-		BmFunc_.setTimeStamp(timeTrajectoryPtr);
-		BmFunc_.setData(BmTrajectoryPtr);
-
-		flowMapFunc_.setTimeStamp(timeTrajectoryPtr);
-		flowMapFunc_.setData(flowMapTrajectoryPtr);
+		AmFunc_.setData(timeTrajectoryPtr, AmTrajectoryPtr);
+		BmFunc_.setData(timeTrajectoryPtr, BmTrajectoryPtr);
+		flowMapFunc_.setData(timeTrajectoryPtr, flowMapTrajectoryPtr);
 
 		linearController_.setController(
 				*sensitivityControllerTimePtr,
@@ -124,9 +119,6 @@ public:
 	 */
 	void reset() {
 
-		AmFunc_.reset();
-		BmFunc_.reset();
-		flowMapFunc_.reset();
 	}
 
 	/**
@@ -154,8 +146,7 @@ public:
 			const input_vector_t& nabla_u,
 			state_vector_t& derivative) {
 
-		AmFunc_.interpolate(t, Am_);
-		size_t greatestLessTimeStampIndex = AmFunc_.getGreatestLessTimeStampIndex();
+		auto greatestLessTimeStampIndex = AmFunc_.interpolate(t, Am_);
 		BmFunc_.interpolate(t, Bm_, greatestLessTimeStampIndex);
 
 		if (std::abs(multiplier_) > 1e-9) {

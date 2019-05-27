@@ -52,7 +52,7 @@ public:
 	 * Default constructor.
 	 */
 	Rollout_Settings()
-	: Rollout_Settings(1e-9, 1e-6, 5000, 1e-3, IntegratorType::ODE45)
+	: Rollout_Settings(1e-9, 1e-6, 5000, 1e-3, IntegratorType::ODE45, false)
 	{}
 
 	/**
@@ -63,18 +63,21 @@ public:
 	 * @param [in] maxNumStepsPerSecond: Maximum number of steps in the rollout.
 	 * @param [in] minTimeStep: Minimum time step of the rollout.
 	 * @param [in] integratorType: Rollout integration scheme type.
+	 * @param [in] checkNumericalStability: Whether to check that the rollout is numerically stable.
 	 */
 	Rollout_Settings(
 			double absTolODE,
 			double relTolODE,
 			size_t maxNumStepsPerSecond,
 			double minTimeStep,
-			IntegratorType integratorType)
+			IntegratorType integratorType,
+			bool checkNumericalStability)
 	: absTolODE_(absTolODE)
 	, relTolODE_(relTolODE)
 	, maxNumStepsPerSecond_(maxNumStepsPerSecond)
 	, minTimeStep_(minTimeStep)
 	, integratorType_(integratorType)
+	, checkNumericalStability_(checkNumericalStability)
 	{}
 
 	/**
@@ -94,9 +97,10 @@ public:
 	 * If a value for a specific field is not defined it will set to the default value defined in "Rollout_Settings".
 	 *
 	 * @param [in] filename: File name which contains the configuration data.
+	 * @param [in] fieldName: Field name which contains the configuration data.
 	 * @param [in] verbose: Flag to determine whether to print out the loaded settings or not (The default is true).
 	 */
-	void loadSettings(const std::string& filename, bool verbose = true);
+	void loadSettings(const std::string& filename, const std::string& fieldName, bool verbose = true);
 
 public:
 	/****************
@@ -112,11 +116,13 @@ public:
 	double minTimeStep_;
 	/** Rollout integration scheme type */
 	IntegratorType integratorType_;
+	/** Whether to check that the rollout is numerically stable */
+	bool checkNumericalStability_;
 
 }; // end of Rollout_Settings class
 
 
-inline void Rollout_Settings::loadSettings(const std::string& filename, bool verbose /*= true*/) {
+inline void Rollout_Settings::loadSettings(const std::string& filename, const std::string& fieldName, bool verbose /*= true*/) {
 
 	boost::property_tree::ptree pt;
 	boost::property_tree::read_info(filename, pt);
@@ -127,7 +133,7 @@ inline void Rollout_Settings::loadSettings(const std::string& filename, bool ver
 	}
 
 	try	{
-		absTolODE_ = pt.get<double>("slq.AbsTolODE");
+		absTolODE_ = pt.get<double>(fieldName + ".AbsTolODE");
 		if (verbose)  std::cerr << " #### Option loader : option 'AbsTolODE' ........................... " << absTolODE_ << std::endl;
 	}
 	catch (const std::exception& e){
@@ -135,7 +141,7 @@ inline void Rollout_Settings::loadSettings(const std::string& filename, bool ver
 	}
 
 	try	{
-		relTolODE_ = pt.get<double>("slq.RelTolODE");
+		relTolODE_ = pt.get<double>(fieldName + ".RelTolODE");
 		if (verbose)  std::cerr << " #### Option loader : option 'RelTolODE' ........................... " << relTolODE_ << std::endl;
 	}
 	catch (const std::exception& e){
@@ -143,7 +149,7 @@ inline void Rollout_Settings::loadSettings(const std::string& filename, bool ver
 	}
 
 	try	{
-		maxNumStepsPerSecond_ = pt.get<double>("slq.maxNumStepsPerSecond");
+		maxNumStepsPerSecond_ = pt.get<double>(fieldName + ".maxNumStepsPerSecond");
 		if (verbose)  std::cerr << " #### Option loader : option 'maxNumStepsPerSecond' ................ " << maxNumStepsPerSecond_ << std::endl;
 	}
 	catch (const std::exception& e){
@@ -151,7 +157,7 @@ inline void Rollout_Settings::loadSettings(const std::string& filename, bool ver
 	}
 
 	try	{
-		minTimeStep_ = pt.get<double>("slq.minTimeStep");
+		minTimeStep_ = pt.get<double>(fieldName + ".minTimeStep");
 		if (verbose)  std::cerr << " #### Option loader : option 'minTimeStep' ......................... " << minTimeStep_ << std::endl;
 	}
 	catch (const std::exception& e){
@@ -159,11 +165,19 @@ inline void Rollout_Settings::loadSettings(const std::string& filename, bool ver
 	}
 
 	try	{
-		integratorType_ = (IntegratorType)pt.get<int>("slq.integratorType");
+		integratorType_ = (IntegratorType)pt.get<int>(fieldName + ".integratorType");
 		if (verbose)  std::cerr << " #### Option loader : option 'integratorType' ...................... " << ocs2::to_string(integratorType_) << std::endl;
 	}
 	catch (const std::exception& e){
 		if (verbose)  std::cerr << " #### Option loader : option 'integratorType' ...................... " << ocs2::to_string(integratorType_) << "   \t(default)" << std::endl;
+	}
+
+	try	{
+		checkNumericalStability_ = pt.get<bool>(fieldName + ".checkNumericalStability");
+		if (verbose)  std::cerr << " #### Option loader : option 'checkNumericalStability' ............. " << checkNumericalStability_ << std::endl;
+	}
+	catch (const std::exception& e){
+		if (verbose)  std::cerr << " #### Option loader : option 'checkNumericalStability' ............. " << checkNumericalStability_ << "   \t(default)" << std::endl;
 	}
 
 	if(verbose)

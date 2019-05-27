@@ -1,7 +1,10 @@
 #pragma once
 
-#include <Eigen/Dense>
+#include <string>
+#include <iostream>
 #include <memory>
+#include <Eigen/Dense>
+#include <Eigen/StdVector>
 #include <vector>
 
 #include "ocs2_core/Dimensions.h"
@@ -84,6 +87,12 @@ class ControllerBase
    * @return true if it contains no information, false otherwise.
    */
   virtual bool empty() const = 0;
+
+  /**
+   * Displays controller's data.
+   */
+  virtual void display() const
+  {}
 
 };
 

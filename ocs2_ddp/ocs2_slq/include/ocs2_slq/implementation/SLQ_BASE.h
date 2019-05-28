@@ -473,7 +473,7 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculateControllerWorker (
 	input_vector_t EvProjected;
 	input_state_matrix_t CmProjected;
 	input_matrix_t DmProjected;
-	control_constraint1_matrix_t DmDager;
+	input_constraint1_matrix_t DmDager;
 	input_matrix_t Rm;
 
 	// interpolate

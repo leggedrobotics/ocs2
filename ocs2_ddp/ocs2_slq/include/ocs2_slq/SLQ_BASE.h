@@ -112,9 +112,9 @@ public:
 	typedef typename BASE::constraint1_input_matrix_t          constraint1_input_matrix_t;
 	typedef typename BASE::constraint1_input_matrix_array_t    constraint1_input_matrix_array_t;
 	typedef typename BASE::constraint1_input_matrix_array2_t   constraint1_input_matrix_array2_t;
-	typedef typename BASE::control_constraint1_matrix_t        control_constraint1_matrix_t;
-	typedef typename BASE::control_constraint1_matrix_array_t  control_constraint1_matrix_array_t;
-	typedef typename BASE::control_constraint1_matrix_array2_t control_constraint1_matrix_array2_t;
+	typedef typename BASE::input_constraint1_matrix_t          input_constraint1_matrix_t;
+	typedef typename BASE::input_constraint1_matrix_array_t    input_constraint1_matrix_array_t;
+	typedef typename BASE::input_constraint1_matrix_array2_t   input_constraint1_matrix_array2_t;
 	typedef typename BASE::constraint2_vector_t                constraint2_vector_t;
 	typedef typename BASE::constraint2_vector_array_t          constraint2_vector_array_t;
 	typedef typename BASE::constraint2_vector_array2_t         constraint2_vector_array2_t;
@@ -454,7 +454,7 @@ protected:
 	state_matrix_array2_t       QmConstrainedTrajectoryStock_;
 	state_vector_array2_t       QvConstrainedTrajectoryStock_;
 	input_matrix_array2_t       RmConstrainedTrajectoryStock_;
-	control_constraint1_matrix_array2_t DmDagerTrajectoryStock_;
+	input_constraint1_matrix_array2_t DmDagerTrajectoryStock_;
 	input_vector_array2_t       EvProjectedTrajectoryStock_;  // DmDager * Ev
 	input_state_matrix_array2_t CmProjectedTrajectoryStock_;  // DmDager * Cm
 	input_matrix_array2_t       DmProjectedTrajectoryStock_;  // DmDager * Dm

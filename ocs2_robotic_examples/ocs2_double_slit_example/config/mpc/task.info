@@ -9,13 +9,13 @@ systemParameters
 pathIntegral
 {
   gamma 0.1 ; temperature/level of noise
-  numSamples 2 ; how many trajectories to sample
+  numSamples 50 ; how many trajectories to sample
 }
 
 mpcTimeHorizon
 {
     debugPrint 1
-    timehorizon 10
+    timehorizon 100
     numPartitions 1
 }
 
@@ -31,7 +31,7 @@ timeHorizon 100; time steps to end
 
 initialState
 {
-  (0,0) 1.0
+  (0,0) -1.0
 }
 
 ; state weight matrix

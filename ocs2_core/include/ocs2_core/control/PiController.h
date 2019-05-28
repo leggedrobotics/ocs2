@@ -41,6 +41,20 @@ class PiController final : public ControllerBase<STATE_DIM, INPUT_DIM> {
   using constraint_t = ConstraintBase<STATE_DIM, INPUT_DIM, logic_rules_t>;
   using cost_function_t = PathIntegralCostFunction<STATE_DIM, INPUT_DIM, logic_rules_t>;
 
+  struct PiControllerEvaluationData {
+    scalar_t t_; //! time of evaluation
+    state_vector_t x_; //! state
+    input_vector_t u_; //! calculated input
+    scalar_t V_;
+    input_matrix_t R_;
+    input_matrix_t Rinv_;
+    input_vector_t r_;
+    typename dim_t::dynamic_vector_t c_;
+    typename dim_t::dynamic_matrix_t Ddagger_;
+    input_matrix_t Dtilde_;
+    input_vector_t noiseInput_;
+  };
+
     /**
      * Constructor with full options
      */
@@ -49,7 +63,8 @@ class PiController final : public ControllerBase<STATE_DIM, INPUT_DIM> {
         costs_(costs),
         rollout_dt_(rollout_dt),
         standardNormalDistribution_(scalar_t(0.0), scalar_t(1.0)),
-        gamma_(noiseScaling) {
+        gamma_(noiseScaling),
+        cacheResults_(false) {
     eigenRandomNormalNullaryExpr_ = [this](scalar_t) -> scalar_t {
       return standardNormalDistribution_(generator_);
     };  // dummy argument required by Eigen
@@ -80,32 +95,38 @@ class PiController final : public ControllerBase<STATE_DIM, INPUT_DIM> {
    */
   virtual input_vector_t computeInput(const scalar_t& t, const state_vector_t& x) override {
     // extract cost terms
+    scalar_t V;
     costs_.setCurrentStateAndControl(t, x, input_vector_t::Zero());
-    costs_.getIntermediateCost(V_);                       // must have set zero input before
-    costs_.getIntermediateCostSecondDerivativeInput(R_);  // TODO(jcarius) do we need a R *= 2; here?
-    Rinv_ = R_.ldlt().solve(input_matrix_t::Identity());
-    costs_.getIntermediateCostDerivativeInput(r_);        // must have set zero input before
+    costs_.getIntermediateCost(V);                       // must have set zero input before
+    input_matrix_t R, Rinv;
+    costs_.getIntermediateCostSecondDerivativeInput(R);  // TODO(jcarius) do we need a R *= 2; here?
+    Rinv = R.ldlt().solve(input_matrix_t::Identity());
+    input_vector_t r;
+    costs_.getIntermediateCostDerivativeInput(r);        // must have set zero input before
 
     // extract constraint terms and calculate auxiliary quantities
+    typename dim_t::dynamic_vector_t c;
+    typename dim_t::dynamic_matrix_t Ddagger;
+    input_matrix_t Dtilde;
     const auto nc = constraints_.numStateInputConstraint(t);
     if(nc){
       constraints_.setCurrentStateAndControl(t, x, input_vector_t::Zero());
       typename constraint_t::constraint1_vector_t c_full;
       constraints_.getConstraint1(c_full);
-      c_ = c_full.topRows(nc);
+      c = c_full.topRows(nc);
       typename constraint_t::constraint1_input_matrix_t D_full;
       constraints_.getConstraint1DerivativesControl(D_full);
       typename dim_t::dynamic_matrix_t D = D_full.topRows(nc);
 
-      Ddagger_ = Rinv_ * D.transpose() * (D * Rinv_ * D.transpose()).ldlt().solve(dim_t::dynamic_matrix_t::Identity(nc,nc));
-      Dtilde_ = Ddagger_ * D;
+      Ddagger = Rinv * D.transpose() * (D * Rinv * D.transpose()).ldlt().solve(dim_t::dynamic_matrix_t::Identity(nc,nc));
+      Dtilde = Ddagger * D;
      } else {
-      c_ = constraint_t::constraint1_vector_t::Zero();
-      Ddagger_ = dim_t::control_constraint1_matrix_t::Zero();
-      Dtilde_.setZero();
+      c = constraint_t::constraint1_vector_t::Zero();
+      Ddagger = dim_t::control_constraint1_matrix_t::Zero();
+      Dtilde.setZero();
     }
 
-    input_matrix_t QQt = gamma_ * (input_matrix_t::Identity() - Dtilde_) * Rinv_;
+    input_matrix_t QQt = gamma_ * (input_matrix_t::Identity() - Dtilde) * Rinv;
     input_matrix_t Q;
     if (!QQt.isZero()) {
       Q = QQt.llt().matrixL();
@@ -113,13 +134,31 @@ class PiController final : public ControllerBase<STATE_DIM, INPUT_DIM> {
       Q.setZero();
     }
 
-    input_vector_t constrainedInput = -(input_matrix_t::Identity() - Dtilde_) * Rinv_ * r_ - Ddagger_ * c_;
-    noiseInput_ = Q / std::sqrt(rollout_dt_) * input_vector_t::NullaryExpr(eigenRandomNormalNullaryExpr_);
+    const input_vector_t constrainedInput = -(input_matrix_t::Identity() - Dtilde) * Rinv * r - Ddagger * c;
+    const input_vector_t noiseInput = Q / std::sqrt(rollout_dt_) * input_vector_t::NullaryExpr(eigenRandomNormalNullaryExpr_);
 
     input_vector_t uff;
     linInterpolateUff_.interpolate(t, uff);
 
-    return constrainedInput + noiseInput_ + uff;
+    const input_vector_t result = constrainedInput + noiseInput + uff;
+
+    if(cacheResults_){
+        cacheData_.emplace_back(PiControllerEvaluationData());
+        auto& data = cacheData_.back();
+        data.t_ = t;
+        data.x_ = x;
+        data.u_ = result;
+        data.V_ = V;
+        data.R_ = R;
+        data.Rinv_ = Rinv;
+        data.r_ = r;
+        data.c_ = c;
+        data.Ddagger_ = Ddagger;
+        data.Dtilde_ = Dtilde;
+        data.noiseInput_ = noiseInput;
+      }
+
+    return result;
   }
 
 
@@ -213,18 +252,11 @@ class PiController final : public ControllerBase<STATE_DIM, INPUT_DIM> {
   }
 
  public:
-  // values set in computeInput method
-  scalar_t V_;
-  input_matrix_t R_;
-  input_matrix_t Rinv_;
-  input_vector_t r_;
-  typename dim_t::dynamic_vector_t c_;
-  typename dim_t::dynamic_matrix_t Ddagger_;
-  input_matrix_t Dtilde_;
-  input_vector_t noiseInput_;
 
   scalar_t gamma_;  //! scaling of noise
+  bool cacheResults_; //! whether or not to keep recording results
 
+  std::vector<PiControllerEvaluationData> cacheData_;
 
  protected:
   constraint_t constraints_;

@@ -52,7 +52,7 @@ public:
 	 * Default constructor.
 	 */
 	Rollout_Settings()
-	: Rollout_Settings(1e-9, 1e-6, 5000, 1e-3, IntegratorType::ODE45, false)
+	: Rollout_Settings(1e-9, 1e-6, 5000, 1e-3, IntegratorType::ODE45, false, true)
 	{}
 
 	/**
@@ -64,6 +64,7 @@ public:
 	 * @param [in] minTimeStep: Minimum time step of the rollout.
 	 * @param [in] integratorType: Rollout integration scheme type.
 	 * @param [in] checkNumericalStability: Whether to check that the rollout is numerically stable.
+	 * @param [in] reconstructInputTrajectory: Whether to run controller again after integration to contstruct input trajectory
 	 */
 	Rollout_Settings(
 			double absTolODE,
@@ -71,13 +72,15 @@ public:
 			size_t maxNumStepsPerSecond,
 			double minTimeStep,
 			IntegratorType integratorType,
-			bool checkNumericalStability)
+			bool checkNumericalStability,
+	        bool reconstructInputTrajectory)
 	: absTolODE_(absTolODE)
 	, relTolODE_(relTolODE)
 	, maxNumStepsPerSecond_(maxNumStepsPerSecond)
 	, minTimeStep_(minTimeStep)
 	, integratorType_(integratorType)
 	, checkNumericalStability_(checkNumericalStability)
+	, reconstructInputTrajectory_(reconstructInputTrajectory)
 	{}
 
 	/**
@@ -118,6 +121,8 @@ public:
 	IntegratorType integratorType_;
 	/** Whether to check that the rollout is numerically stable */
 	bool checkNumericalStability_;
+	/** Whether to run controller again after integration to contstruct input trajectory */
+	bool reconstructInputTrajectory_;
 
 }; // end of Rollout_Settings class
 
@@ -178,6 +183,14 @@ inline void Rollout_Settings::loadSettings(const std::string& filename, const st
 	}
 	catch (const std::exception& e){
 		if (verbose)  std::cerr << " #### Option loader : option 'checkNumericalStability' ............. " << checkNumericalStability_ << "   \t(default)" << std::endl;
+	}
+
+	try	{
+		reconstructInputTrajectory_ = pt.get<bool>(fieldName + ".reconstructInputTrajectory");
+		if (verbose)  std::cerr << " #### Option loader : option 'reconstructInputTrajectory' ............. " << reconstructInputTrajectory_ << std::endl;
+	}
+	catch (const std::exception& e){
+		if (verbose)  std::cerr << " #### Option loader : option 'reconstructInputTrajectory' ............. " << reconstructInputTrajectory_ << "   \t(default)" << std::endl;
 	}
 
 	if(verbose)

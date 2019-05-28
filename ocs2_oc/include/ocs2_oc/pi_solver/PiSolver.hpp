@@ -59,7 +59,7 @@ class PiSolver final : public Solver_BASE<STATE_DIM, INPUT_DIM, NullLogicRules> 
         costFunction_(std::move(costFunction)),
         constraint_(constraint),
         controller_(constraint, *costFunction_, rollout_dt, noiseScaling), //!@warn need to use member var
-        rollout_(*systemDynamicsPtr, Rollout_Settings(1e-9, 1e-6, 5000, rollout_dt, IntegratorType::EULER, false)),
+        rollout_(*systemDynamicsPtr, Rollout_Settings(1e-9, 1e-6, 5000, rollout_dt, IntegratorType::EULER, false, false)),
         rollout_dt_(rollout_dt),
         gamma_(noiseScaling),
         numSamples_(numSamples){
@@ -99,48 +99,55 @@ class PiSolver final : public Solver_BASE<STATE_DIM, INPUT_DIM, NullLogicRules> 
     input_vector_array2_t noiseInputVector_array2(numSamples_, input_vector_array_t(numSteps));  // vector of vectors of inputs
     scalar_array2_t costVtilde(numSamples_, scalar_array_t(numSteps, 0.0));                      // vector of vectors of costs
 
+    controller_.cacheResults_ = true;
+    controller_.cacheData_.reserve(numSteps + 2); //TODO(jcarius) check if this is the size at the end
+
     // -------------------------------------------------------------------------
     // forward rollout
     // -------------------------------------------------------------------------
 
     // a sample is a single stochastic rollout from initTime to finalTime
     for (size_t sample = 0; sample < numSamples_; sample++) {
-      // initialize stateTrajectory and controller for first loop iteration
+      controller_.cacheData_.clear();
+
       typename rollout_t::state_vector_array_t stateTrajectory;
-      stateTrajectory.push_back(initState);
-      controller_.computeInput(initTime, initState);
-
-      // stepping through time to avoid recomputing quantities that the controller already computed
-      for (size_t n = 0; n < numSteps - 1; n++) {
-        // calculate costs
-        costVtilde[sample][n] =
-            controller_.V_ + 0.5 * (controller_.Ddagger_ * controller_.c_).dot(controller_.R_ * controller_.Ddagger_ * controller_.c_);
-        costVtilde[sample][n] -=
-            0.5 * controller_.r_.transpose() * (input_matrix_t::Identity() - controller_.Dtilde_) * controller_.Rinv_ * controller_.r_;
-        costVtilde[sample][n] -= (controller_.Ddagger_ * controller_.c_).dot(controller_.r_);
-
-        noiseInputVector_array2[sample][n] = controller_.noiseInput_;  // TODO(jcarius) is there a dt missing?
-        // ERROR HERE: we cannot assume that this noise input will actually be applied in the rollout -> stochasticity
-
-        state_vector_array2[sample][n] = stateTrajectory.back();
-
-        // step forward in time
-        const auto currStepTime = initTime + rollout_dt_ * n;
+      typename rollout_t::scalar_array_t timeTrajectory;
+      {
+        // braces to guard against usage of temporary rollout quantities
         typename rollout_t::logic_rules_machine_t logicRulesMachine;
-        typename rollout_t::scalar_array_t timeTrajectory;
         typename rollout_t::size_array_t eventsPastTheEndIndeces;
         typename rollout_t::input_vector_array_t inputTrajectory;
-        rollout_.run(0, currStepTime, state_vector_array2[sample][n], currStepTime + rollout_dt_, &controller_, logicRulesMachine,
+        rollout_.run(0, initTime, initState, finalTime, &controller_, logicRulesMachine,
                      timeTrajectory, eventsPastTheEndIndeces, stateTrajectory, inputTrajectory);
-
-        // extract results of step
-        if (timeTrajectory.size() != 2) {
-          throw std::runtime_error("Expected rollout to do a single step only.");
-        }
       }
-      noiseInputVector_array2[sample][numSteps - 1] = controller_.noiseInput_;
-      state_vector_array2[sample][numSteps - 1] = stateTrajectory.back();
 
+      if(controller_.cacheData_.size() != numSteps - 1){
+          throw std::runtime_error("integrator called controller too many times");
+      }
+
+      // extract cached data
+      for (size_t n = 0; n < numSteps - 1; n++){
+          auto& ctrlData = controller_.cacheData_[n];
+
+          // calculate costs
+          costVtilde[sample][n] =
+              ctrlData.V_ + 0.5 * (ctrlData.Ddagger_ * ctrlData.c_).dot(ctrlData.R_ * ctrlData.Ddagger_ * ctrlData.c_);
+          costVtilde[sample][n] -=
+              0.5 * ctrlData.r_.transpose() * (input_matrix_t::Identity() - ctrlData.Dtilde_) * ctrlData.Rinv_ * ctrlData.r_;
+          costVtilde[sample][n] -= (ctrlData.Ddagger_ * ctrlData.c_).dot(ctrlData.r_);
+
+          noiseInputVector_array2[sample][n] = ctrlData.noiseInput_;  // TODO(jcarius) is there a dt missing?
+          state_vector_array2[sample][n] = ctrlData.x_;
+
+          if(ctrlData.t_ >= finalTime){
+              throw std::runtime_error("time is beyond final time");
+           }
+       }
+
+      // final time
+      state_vector_array2[sample][numSteps - 1] = stateTrajectory.back();
+      controller_.computeInput(finalTime, state_vector_array2[sample][numSteps - 1]);
+      noiseInputVector_array2[sample][numSteps - 1] = controller_.cacheData_.back().noiseInput_;
       costFunction_->setCurrentStateAndControl(finalTime, state_vector_array2[sample][numSteps - 1], input_vector_t::Zero());
       costFunction_->getTerminalCost(costVtilde[sample][numSteps - 1]);
     }
@@ -226,6 +233,7 @@ class PiSolver final : public Solver_BASE<STATE_DIM, INPUT_DIM, NullLogicRules> 
     typename rollout_t::state_vector_array_t stateTrajectoryDummy(nominalTimeTrajectoriesStock_[0].size(), state_vector_t::Zero()); // not used inside controller
     controller_.gamma_ = 0.0;
     controller_.setFeedforwardInputAndState(nominalTimeTrajectoriesStock_[0], stateTrajectoryDummy, nominalInputTrajectoriesStock_[0]);
+    controller_.cacheResults_ = false;
 
     typename rollout_t::logic_rules_machine_t logicRulesMachine;
     typename rollout_t::scalar_array_t timeTrajectoryNominal;

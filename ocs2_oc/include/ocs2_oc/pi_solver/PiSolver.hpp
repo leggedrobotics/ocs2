@@ -69,6 +69,10 @@ class PiSolver final : public Solver_BASE<STATE_DIM, INPUT_DIM, NullLogicRules> 
 
     // TODO(jcarius) enforce euler forward method in rollout and extract rollout_dt_
     // see Euler-Maruyama method (https://infoscience.epfl.ch/record/143450/files/sde_tutorial.pdf)
+
+    auto seed = static_cast<unsigned int>(time(nullptr));
+    std::cout << "Setting random seed to controller: " << seed << std::endl;
+    controller_.setRandomSeed(seed);
   }
 
   ~PiSolver() override = default;
@@ -256,13 +260,13 @@ class PiSolver final : public Solver_BASE<STATE_DIM, INPUT_DIM, NullLogicRules> 
     updateNominalControllerPtrStock();
 
     // debug printing
-    printIterationDebug(initTime, state_vector_array2, J);
+//    printIterationDebug(initTime, state_vector_array2, J);
 
-    for (size_t sample = 0; sample < numSamples_; sample++) {
-      std::cout << "sample " << sample << " initNoise " << noiseInputVector_array2[sample][0].transpose()
-                << " init cost-to-go " << J[sample][0] << std::endl;
+//    for (size_t sample = 0; sample < numSamples_; sample++) {
+//      std::cout << "sample " << sample << " initNoise " << noiseInputVector_array2[sample][0].transpose()
+//                << " init cost-to-go " << J[sample][0] << std::endl;
 
-      }
+//      }
   }
 
   virtual void run(const scalar_t& initTime, const state_vector_t& initState, const scalar_t& finalTime,

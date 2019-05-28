@@ -1,15 +1,15 @@
 systemParameters
 {
     rollout_dt 1;
-    barrierTimePosition 200 ; time steps to barrier
-    barrierLowerEnd -1.0;
-    barrierUpperEnd  1.0;
+    barrierTimePosition 50 ; time steps to barrier
+    barrierLowerEnd -0.5;
+    barrierUpperEnd  0.5;
 }
 
 pathIntegral
 {
-  gamma 0.1 ; temperature/level of noise
-  numSamples 50 ; how many trajectories to sample
+  gamma 0.2 ; temperature/level of noise
+  numSamples 200 ; how many trajectories to sample
 }
 
 mpcTimeHorizon
@@ -31,7 +31,7 @@ timeHorizon 100; time steps to end
 
 initialState
 {
-  (0,0) -1.0
+  (0,0) 0.0
 }
 
 ; state weight matrix

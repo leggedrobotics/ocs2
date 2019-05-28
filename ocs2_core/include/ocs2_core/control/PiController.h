@@ -251,6 +251,10 @@ class PiController final : public ControllerBase<STATE_DIM, INPUT_DIM> {
     return time_.empty();
   }
 
+  void setRandomSeed(unsigned int seed){
+    generator_.seed(seed);
+  }
+
  public:
 
   scalar_t gamma_;  //! scaling of noise

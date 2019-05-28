@@ -20,13 +20,13 @@ namespace ocs2 {
 // TODO(jcarius) do we need the LOGIC_RULES_T template?
 
 template <size_t STATE_DIM, size_t INPUT_DIM>
-class PiController final : public ControllerBase<STATE_DIM, INPUT_DIM> {
+class PiController final : public ControllerBase<STATE_DIM, INPUT_DIM>
+{
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
   using Base = ControllerBase<STATE_DIM, INPUT_DIM>;
 
-  using dim_t = typename Base::dimensions_t;
   using scalar_t = typename Base::scalar_t;
   using scalar_array_t = typename Base::scalar_array_t;
   using float_array_t = typename Base::float_array_t;
@@ -36,6 +36,11 @@ class PiController final : public ControllerBase<STATE_DIM, INPUT_DIM> {
   using input_vector_t = typename dimensions_t::input_vector_t;
   using input_vector_array_t = typename dimensions_t::input_vector_array_t;
   using input_matrix_t = typename dimensions_t::input_matrix_t;
+  using dynamic_vector_t = typename Base::dimensions_t::dynamic_vector_t;
+  using dynamic_matrix_t = typename Base::dimensions_t::dynamic_matrix_t;
+  using constraint1_vector_t = typename Base::dimensions_t::constraint1_vector_t;
+  using constraint1_input_matrix_t = typename Base::dimensions_t::constraint1_input_matrix_t;
+  using input_constraint1_matrix_t = typename Base::dimensions_t::input_constraint1_matrix_t;
 
   using logic_rules_t = NullLogicRules;
   using constraint_t = ConstraintBase<STATE_DIM, INPUT_DIM, logic_rules_t>;
@@ -49,8 +54,8 @@ class PiController final : public ControllerBase<STATE_DIM, INPUT_DIM> {
     input_matrix_t R_;
     input_matrix_t Rinv_;
     input_vector_t r_;
-    typename dim_t::dynamic_vector_t c_;
-    typename dim_t::dynamic_matrix_t Ddagger_;
+    dynamic_vector_t c_;
+    dynamic_matrix_t Ddagger_;
     input_matrix_t Dtilde_;
     input_vector_t noiseInput_;
   };
@@ -105,24 +110,24 @@ class PiController final : public ControllerBase<STATE_DIM, INPUT_DIM> {
     costs_.getIntermediateCostDerivativeInput(r);        // must have set zero input before
 
     // extract constraint terms and calculate auxiliary quantities
-    typename dim_t::dynamic_vector_t c;
-    typename dim_t::dynamic_matrix_t Ddagger;
+    dynamic_vector_t c;
+    dynamic_matrix_t Ddagger;
     input_matrix_t Dtilde;
     const auto nc = constraints_.numStateInputConstraint(t);
     if(nc){
       constraints_.setCurrentStateAndControl(t, x, input_vector_t::Zero());
-      typename constraint_t::constraint1_vector_t c_full;
+      constraint1_vector_t c_full;
       constraints_.getConstraint1(c_full);
       c = c_full.topRows(nc);
-      typename constraint_t::constraint1_input_matrix_t D_full;
+      constraint1_input_matrix_t D_full;
       constraints_.getConstraint1DerivativesControl(D_full);
-      typename dim_t::dynamic_matrix_t D = D_full.topRows(nc);
+      dynamic_matrix_t D = D_full.topRows(nc);
 
-      Ddagger = Rinv * D.transpose() * (D * Rinv * D.transpose()).ldlt().solve(dim_t::dynamic_matrix_t::Identity(nc,nc));
+      Ddagger = Rinv * D.transpose() * (D * Rinv * D.transpose()).ldlt().solve(dynamic_matrix_t::Identity(nc,nc));
       Dtilde = Ddagger * D;
      } else {
-      c = constraint_t::constraint1_vector_t::Zero();
-      Ddagger = dim_t::control_constraint1_matrix_t::Zero();
+      c = constraint1_vector_t::Zero();
+      Ddagger = input_constraint1_matrix_t::Zero();
       Dtilde.setZero();
     }
 

@@ -187,10 +187,10 @@ inline void Rollout_Settings::loadSettings(const std::string& filename, const st
 
 	try	{
 		reconstructInputTrajectory_ = pt.get<bool>(fieldName + ".reconstructInputTrajectory");
-		if (verbose)  std::cerr << " #### Option loader : option 'reconstructInputTrajectory' ............. " << reconstructInputTrajectory_ << std::endl;
+		if (verbose)  std::cerr << " #### Option loader : option 'reconstructInputTrajectory' .......... " << reconstructInputTrajectory_ << std::endl;
 	}
 	catch (const std::exception& e){
-		if (verbose)  std::cerr << " #### Option loader : option 'reconstructInputTrajectory' ............. " << reconstructInputTrajectory_ << "   \t(default)" << std::endl;
+		if (verbose)  std::cerr << " #### Option loader : option 'reconstructInputTrajectory' .......... " << reconstructInputTrajectory_ << "   \t(default)" << std::endl;
 	}
 
 	if(verbose)

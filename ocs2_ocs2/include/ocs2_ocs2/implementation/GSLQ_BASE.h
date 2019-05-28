@@ -263,7 +263,7 @@ void GSLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculateInputConstraintLag
 	LinearInterpolation<input_matrix_t,Eigen::aligned_allocator<input_matrix_t>> RmFunc;
 	LinearInterpolation<input_vector_t,Eigen::aligned_allocator<input_vector_t>> EvProjectedFunc;
 	LinearInterpolation<input_state_matrix_t,Eigen::aligned_allocator<input_state_matrix_t>> CmProjectedFunc;
-	LinearInterpolation<control_constraint1_matrix_t,Eigen::aligned_allocator<control_constraint1_matrix_t>> DmDagerFunc;
+	LinearInterpolation<input_constraint1_matrix_t,Eigen::aligned_allocator<input_constraint1_matrix_t>> DmDagerFunc;
 
 	lagrangeMultiplierFunctionsStock.resize(numPartitions_);
 
@@ -309,7 +309,7 @@ void GSLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculateInputConstraintLag
 			CmProjectedFunc.interpolate(time, CmProjected, greatestLessTimeStampIndex);
 			input_matrix_t Rm;
 			RmFunc.interpolate(time, Rm, greatestLessTimeStampIndex);
-			control_constraint1_matrix_t DmDager;
+			input_constraint1_matrix_t DmDager;
 			DmDagerFunc.interpolate(time, DmDager, greatestLessTimeStampIndex);
 
 			const size_t& nc1 = dcPtr_->nc1TrajectoriesStock_[i][greatestLessTimeStampIndex];
@@ -408,7 +408,7 @@ void GSLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculateNominalRolloutLagr
 			const input_vector_t& Rv = dcPtr_->RvTrajectoriesStock_[i][k];
 			const input_matrix_t& Rm = dcPtr_->RmTrajectoriesStock_[i][k];
 			const input_vector_t& EvProjected = dcPtr_->EvProjectedTrajectoriesStock_[i][k];
-			const control_constraint1_matrix_t& DmDager = dcPtr_->DmDagerTrajectoriesStock_[i][k];
+			const input_constraint1_matrix_t& DmDager = dcPtr_->DmDagerTrajectoriesStock_[i][k];
 			const state_vector_t& costate = nominalCostateTrajectoriesStock_[i][k];
 
 			lagrangeTrajectoriesStock[i][k].head(nc1) = DmDager.leftCols(nc1).transpose() * (

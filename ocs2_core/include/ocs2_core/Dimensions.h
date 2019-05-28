@@ -226,12 +226,12 @@ public:
     /** Array of constraint1_input matrix trajectory type. */
     typedef std::vector<constraint1_input_matrix_array_t, Eigen::aligned_allocator<constraint1_input_matrix_array_t> > constraint1_input_matrix_array2_t;
 
-    /** Fixed-size control by type-1 constraint type with size \f$ n_u * {n_c}_1 \f$ . */
-    typedef Eigen::Matrix<scalar_t, INPUT_DIM, MAX_CONSTRAINT1_DIM_> control_constraint1_matrix_t;
+    /** Fixed-size control input by type-1 constraint type with size \f$ n_u * {n_c}_1 \f$ . */
+    typedef Eigen::Matrix<scalar_t, INPUT_DIM, MAX_CONSTRAINT1_DIM_> input_constraint1_matrix_t;
     /** Input-constraint1 matrix trajectory type. */
-    typedef std::vector<control_constraint1_matrix_t, Eigen::aligned_allocator<control_constraint1_matrix_t> > control_constraint1_matrix_array_t;
+    typedef std::vector<input_constraint1_matrix_t, Eigen::aligned_allocator<input_constraint1_matrix_t> > input_constraint1_matrix_array_t;
     /** Array of Input-constraint1 matrix trajectory type. */
-    typedef std::vector<control_constraint1_matrix_array_t, Eigen::aligned_allocator<control_constraint1_matrix_array_t> > control_constraint1_matrix_array2_t;
+    typedef std::vector<input_constraint1_matrix_array_t, Eigen::aligned_allocator<input_constraint1_matrix_array_t> > input_constraint1_matrix_array2_t;
 
     /** Fixed-size vector of state-only constraints (i.e. type-2 constraint) with size \f$ {n_c}_2 \f$ . */
     typedef Eigen::Matrix<scalar_t, MAX_CONSTRAINT2_DIM_, 1> constraint2_vector_t;

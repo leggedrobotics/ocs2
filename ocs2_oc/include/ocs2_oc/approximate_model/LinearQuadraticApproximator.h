@@ -82,7 +82,7 @@ public:
 	typedef typename DIMENSIONS::constraint1_vector_t          constraint1_vector_t;
 	typedef typename DIMENSIONS::constraint1_state_matrix_t    constraint1_state_matrix_t;
 	typedef typename DIMENSIONS::constraint1_input_matrix_t    constraint1_input_matrix_t;
-	typedef typename DIMENSIONS::control_constraint1_matrix_t  control_constraint1_matrix_t;
+	typedef typename DIMENSIONS::input_constraint1_matrix_t  input_constraint1_matrix_t;
 	typedef typename DIMENSIONS::constraint2_vector_t          constraint2_vector_t;
 	typedef typename DIMENSIONS::constraint2_state_matrix_t    constraint2_state_matrix_t;
 

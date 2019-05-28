@@ -59,6 +59,7 @@ class PiSolver final : public Solver_BASE<STATE_DIM, INPUT_DIM, NullLogicRules> 
         costFunction_(std::move(costFunction)),
         constraint_(constraint),
         controller_(constraint, *costFunction_, rollout_dt, noiseScaling), //!@warn need to use member var
+        numIterations_(0),
         rollout_(*systemDynamicsPtr, Rollout_Settings(1e-9, 1e-6, 5000, rollout_dt, IntegratorType::EULER, false, false)),
         rollout_dt_(rollout_dt),
         gamma_(noiseScaling),
@@ -84,10 +85,12 @@ class PiSolver final : public Solver_BASE<STATE_DIM, INPUT_DIM, NullLogicRules> 
     nominalStateTrajectoriesStock_.clear();
     nominalInputTrajectoriesStock_.clear();
     nominalControllersStock_.clear();
+    numIterations_ = 0;
   }
 
   virtual void run(const scalar_t& initTime, const state_vector_t& initState, const scalar_t& finalTime,
                    const scalar_array_t& partitioningTimes) override {
+    numIterations_++;
     std::cout << "mpc init state: " << initState.transpose() << std::endl;
 
     if (costDesiredTrajectoriesUpdated_) {
@@ -103,6 +106,7 @@ class PiSolver final : public Solver_BASE<STATE_DIM, INPUT_DIM, NullLogicRules> 
     input_vector_array2_t noiseInputVector_array2(numSamples_, input_vector_array_t(numSteps));  // vector of vectors of inputs
     scalar_array2_t costVtilde(numSamples_, scalar_array_t(numSteps, 0.0));                      // vector of vectors of costs
 
+    //TODO(jcarius) use previous solution and sample around that
     controller_.cacheResults_ = true;
     controller_.cacheData_.reserve(numSteps + 2); //TODO(jcarius) check if this is the size at the end
 
@@ -199,17 +203,19 @@ class PiSolver final : public Solver_BASE<STATE_DIM, INPUT_DIM, NullLogicRules> 
 
       if(minJ_currStep == std::numeric_limits<scalar_t>::max()){
           std::cout << "cost-to-go in timestep  " << n << " is infinite for all samples." << std::endl;
-          psiDistorted[n] = scalar_t(0.0);
-          u_opt[n].setZero();
-          continue;
+          if(numIterations_ - 1){
+            return;
+          } else {
+            break; // if running the first time, we have to fill time/input/state stock
+          }
         }
 
       psiDistorted[n] = std::accumulate(J.begin(), J.end(), scalar_t(0.0),
                                [this,n, minJ_currStep](scalar_t a, const scalar_array_t& Ji) { return std::move(a) + std::exp(-(Ji[n] - minJ_currStep)/gamma_); });
 
-      if(psiDistorted[n] / numSamples_ < 0.01){
-          std::cout << "Warning: Less than ~1% of samples are significant in step " << n << std::endl;
-        }
+//      if(psiDistorted[n] / numSamples_ < 0.01){
+//          std::cout << "Warning: Less than ~1% of samples are significant in step " << n << std::endl;
+//        }
 
       // u_opt
       for (size_t sample = 0; sample < numSamples_; sample++) {
@@ -285,8 +291,7 @@ class PiSolver final : public Solver_BASE<STATE_DIM, INPUT_DIM, NullLogicRules> 
   }
 
   virtual size_t getNumIterations() const override {
-    throw std::runtime_error("not implemented.");
-    return 0;
+    return numIterations_;
   }
 
   virtual void getIterationsLog(eigen_scalar_array_t& iterationCost, eigen_scalar_array_t& iterationISE1,
@@ -418,6 +423,8 @@ class PiSolver final : public Solver_BASE<STATE_DIM, INPUT_DIM, NullLogicRules> 
   constraint_t constraint_;
 
   pi_controller_t controller_;
+
+  size_t numIterations_;
 
   rollout_t rollout_;
   scalar_t rollout_dt_;  //! time step size of Euler integration rollout

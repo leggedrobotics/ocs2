@@ -53,6 +53,15 @@ class PiSolver final : public Solver_BASE<STATE_DIM, INPUT_DIM, NullLogicRules> 
   using constraint_t = ConstraintBase<STATE_DIM, INPUT_DIM, logic_rules_t>;
   using pi_controller_t = PiController<STATE_DIM, INPUT_DIM>;
 
+  /**
+   * @brief Constructor with all options
+   * @param systemDynamicsPtr: System dynamics
+   * @param costFunction: The cost function to optimize
+   * @param constraint: Any constraints for the dynamical system
+   * @param rollout_dt: The time step of the rollouts
+   * @param noiseScaling The level of noise (the temperature)
+   * @param numSamples How many
+   */
   PiSolver(const typename controlled_system_base_t::Ptr systemDynamicsPtr, std::unique_ptr<cost_function_t> costFunction,
            const constraint_t constraint, scalar_t rollout_dt, scalar_t noiseScaling, size_t numSamples)
       : systemDynamics_(systemDynamicsPtr),

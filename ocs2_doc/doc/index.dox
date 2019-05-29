@@ -2,7 +2,7 @@
 @mainpage Overview
 
 \section ocs2_doc_home OCS2
-This is a C++ library for an efficient continuous-time optimal control implementation.
+This is a C++ library for an efficient continuous and discrete time optimal control implementation.
 It includes methods for solving optimal control for continuous time problem with exogenous
 signal for switching in between predefine modes. The toolbox is capable of solving constrained problems.
 

@@ -154,6 +154,14 @@ class MPC_Interface {
    */
   void evaluateFeedbackPolicy(const scalar_t& time, input_vector_t& mpcUff, input_state_matrix_t& mpcGain, size_t& subsystem);
 
+  /**
+   * @brief Extract the nominal time, state, and input trajectories
+   * @param [out] t time array
+   * @param [out] x state array
+   * @param [out] u input array
+   */
+  void getMpcSolution(scalar_array_t& t, state_vector_array_t& x, input_vector_array_t& u);
+
  protected:
   /*
    * Variables

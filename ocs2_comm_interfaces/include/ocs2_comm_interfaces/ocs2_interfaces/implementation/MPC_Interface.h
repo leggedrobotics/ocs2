@@ -318,6 +318,19 @@ void MPC_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::evaluateFeedforwardPoli
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
+void MPC_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::getMpcSolution(scalar_array_t& t, state_vector_array_t& x, input_vector_array_t& u) {
+  if (!useFeedforwardPolicy_) throw std::runtime_error("The MRT is set to receive the feedforward policy.");
+
+  updatePolicy();
+  t = mpcTimeTrajectory_;
+  u = mpcInputTrajectory_;
+  x = mpcStateTrajectory_;
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
 void MPC_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::evaluateFeedbackPolicy(const scalar_t& time, input_vector_t& mpcUff,
                                                                                 input_state_matrix_t& mpcGain, size_t& subsystem) {
   updatePolicy();

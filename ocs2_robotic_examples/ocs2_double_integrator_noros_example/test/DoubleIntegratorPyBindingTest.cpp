@@ -1,0 +1,35 @@
+#include <gtest/gtest.h>
+
+#include <ocs2_double_integrator_noros_example/DoubleIntegratorPyBindings.hpp>
+
+TEST(DoubleIntegratorTest, pyBindings) {
+  using bindings_t = ocs2::double_integrator::DoubleIntegratorPyBindings;
+  using state_vector_t = bindings_t::state_vector_t;
+  using scalar_array_t = bindings_t::scalar_array_t;
+  using state_vector_array_t = bindings_t::state_vector_array_t;
+  using input_vector_array_t = bindings_t::input_vector_array_t;
+
+  auto bindings = bindings_t("mpc");
+
+  auto state = state_vector_t::Zero();
+  bindings.setObservation(0.0, state);
+
+  bindings.advanceMpc();
+
+  auto t_arr = scalar_array_t();
+  auto x_arr = state_vector_array_t();
+  auto u_arr = input_vector_array_t();
+
+  bindings.getMpcSolution(t_arr, x_arr, u_arr);
+
+  std::cout << "t\t\tx\t\tu" << std::endl;
+  for (size_t i = 0; i < t_arr.size(); i++) {
+    std::cout << std::setprecision(4);
+    std::cout << t_arr[i] << "\t\t" << x_arr[i].transpose() << "\t\t" << u_arr[i].transpose() << std::endl;
+  }
+}
+
+int main(int argc, char** argv) {
+  testing::InitGoogleTest(&argc, argv);
+  return RUN_ALL_TESTS();
+}

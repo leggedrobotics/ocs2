@@ -16,7 +16,7 @@ MPC_ROS_Quadruped<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::MPC_ROS_Quadruped(
 		const quadruped_interface_ptr_t& ocs2QuadrupedInterfacePtr,
 		const std::string& robotName /*robot*/)
 
-	: BASE(ocs2QuadrupedInterfacePtr->getMPC(), robotName)
+	: BASE(*ocs2QuadrupedInterfacePtr->getMPCPtr(), robotName)
 	, ocs2QuadrupedInterfacePtr_(ocs2QuadrupedInterfacePtr)
 {
 	ocs2QuadrupedInterfacePtr_->getLoadedInitialState(defaultConfiguration_);

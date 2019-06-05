@@ -20,6 +20,7 @@
 
 #include <ocs2_core/misc/loadEigenMatrix.h>
 
+#include <ocs2_slq/SLQ_Settings.h>
 #include <ocs2_slq/SLQ.h>
 #include <ocs2_slq/SLQ_MP.h>
 
@@ -319,12 +320,12 @@ public:
 	 */
 	slq_base_ptr_t& getSLQPtr();
 
-	/**
-	 * Gets a reference to the internal SLQ-MPC class.
-	 *
-	 * @return Reference to the internal MPC
-	 */
-	mpc_t& getMPC();
+//	/**
+//	 * Gets a reference to the internal SLQ-MPC class.
+//	 *
+//	 * @return Reference to the internal MPC
+//	 */
+//	mpc_t& getMPC();
 
 	/**
 	 * Gets a pointer to the internal SLQ-MPC class.
@@ -460,6 +461,13 @@ public:
 		return modelSettings_.numPhasesInfullGaitCycle_;
 	}
 
+	/**
+	 * Gets SLQ settings.
+	 *
+	 * @return SLQ settings
+	 */
+	ocs2::SLQ_Settings& slqSettings();
+
 
 protected:
 	/**
@@ -487,6 +495,7 @@ protected:
 /*
  * Variables
  */
+	ocs2::SLQ_Settings slqSettings_;
 
 	typename kinematic_model_t::Ptr kinematicModelPtr_;
 	typename com_model_t::Ptr comModelPtr_;

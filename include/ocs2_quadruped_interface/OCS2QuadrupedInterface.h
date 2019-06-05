@@ -359,11 +359,11 @@ public:
 			eigen_scalar_array_t& iterationISE2) const;
 
 	/**
-	 * Gets a pointer to the optimized array of the control policies.
+	 * Gets a pointer to the optimized array of the linear control policies.
 	 *
-	 * @param [out] controllersPtrStock: A pointer to the optimal array of the control policies
+	 * @param [out] controllersPtrStock: A pointer to the optimal array of the linear control policies
 	 */
-	void getOptimizedControllerPtr(const controller_ptr_array_t*& controllersPtrStock) const;
+	void getOptimizedControllerPtr(linear_controller_ptr_array_t& controllersPtrStock) const;
 
 	/**
 	 * Gets a pointer to the optimized time, state, and input trajectories.

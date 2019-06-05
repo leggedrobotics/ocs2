@@ -55,7 +55,7 @@ void OCS2AnymalInterface::setupOptimizer(
 	operatingPointsPtr_ = std::unique_ptr<operating_point_t>( new operating_point_t(modelSettings_, defaultCoordinate) );
 
 	// SLQ
-	if (slqSettings_.useMultiThreading_==true) {
+	if (slqSettings_.ddpSettings_.useMultiThreading_==true) {
 		slqPtr = slq_base_ptr_t(new slq_mp_t(dynamicsPtr_.get(), dynamicsDerivativesPtr_.get(), constraintsPtr_.get(),
 				costFunctionPtr_.get(), operatingPointsPtr_.get(), slqSettings_, logicRulesPtr.get()) );
 	} else {

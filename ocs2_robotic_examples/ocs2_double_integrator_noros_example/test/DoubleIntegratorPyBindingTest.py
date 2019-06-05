@@ -32,3 +32,13 @@ print("t\t\tx\t\tu")
 
 for t,x,u,Vx in zip(t_result, x_result, u_result,Vx_result):
   print(t, "\t\t", x, "\t\t", u, "\t\t", Vx)
+
+
+print("testing flow map and its derivative")
+dxdt = mpc.computeFlowMap(t_result[0], x_result[0], u_result[0])
+print("dxdt", dxdt)
+mpc.setFlowMapDerivativeStateAndControl(t_result[0], x_result[0], u_result[0])
+A = mpc.computeFlowMapDerivativeState()
+print("A", A)
+B = mpc.computeFlowMapDerivativeInput()
+print("B", B)

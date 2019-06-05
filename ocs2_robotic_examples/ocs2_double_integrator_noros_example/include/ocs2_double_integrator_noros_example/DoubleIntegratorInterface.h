@@ -90,6 +90,10 @@ class DoubleIntegratorInterface : public RobotInterfaceBase<double_integrator_di
 
   const dim_t::state_vector_t& getXFinal() { return xFinal_; }
 
+  DoubleIntegratorDynamics::Ptr getDynamicsPtr() { return linearSystemDynamicsPtr_; }
+
+  DoubleIntegratorDynamicsDerivatives::Ptr getDynamicsDerivativesPtr() { return linearSystemDynamicsDerivativesPtr_; }
+
  protected:
   /**
    * Loads the settings from the path file.

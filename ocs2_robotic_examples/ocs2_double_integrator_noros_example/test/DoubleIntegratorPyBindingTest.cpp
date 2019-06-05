@@ -32,6 +32,15 @@ TEST(DoubleIntegratorTest, pyBindings) {
     std::cout << std::setprecision(4);
     std::cout << t_arr[i] << "\t\t" << x_arr[i].transpose() << "\t\t" << u_arr[i].transpose() << "\t\t" << Vx_arr[i].transpose() << std::endl;
   }
+
+  auto dxdt = bindings.computeFlowMap(t_arr[0], x_arr[0], u_arr[0]);
+  std::cout << "dxdt: " << dxdt.transpose() << std::endl;
+
+  bindings.setFlowMapDerivativeStateAndControl(t_arr[0], x_arr[0], u_arr[0]);
+  auto A = bindings.computeFlowMapDerivativeState();
+  auto B = bindings.computeFlowMapDerivativeInput();
+
+  std::cout << "A\n" << A << "\nB\n" << B << std::endl;
 }
 
 int main(int argc, char** argv) {

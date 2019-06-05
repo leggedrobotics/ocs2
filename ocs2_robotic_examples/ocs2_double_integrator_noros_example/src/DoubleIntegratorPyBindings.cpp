@@ -9,6 +9,9 @@ DoubleIntegratorPyBindings::DoubleIntegratorPyBindings(const std::string& taskFi
   doubleIntegratorInterface_.reset(new ocs2::double_integrator::DoubleIntegratorInterface(taskFileFolder));
   mpcInterface_.reset(new mpc_t(*doubleIntegratorInterface_->getMPCPtr(), nullLogicRules_, true));
 
+  dynamics_.reset(doubleIntegratorInterface_->getDynamicsPtr()->clone());
+  dynamicsDerivatives_.reset(doubleIntegratorInterface_->getDynamicsDerivativesPtr()->clone());
+
   // initialize reference
   constexpr double time = 0.0;
   mpc_t::cost_desired_trajectories_t costDesiredTrajectories;
@@ -38,6 +41,30 @@ void DoubleIntegratorPyBindings::getMpcSolution(scalar_array_t& t, state_vector_
   for (size_t i = 0; i < t.size(); i++) {
     mpcInterface_->getValueFunctionStateDerivative(t[i], Vx[i]);
   }
+}
+
+DoubleIntegratorPyBindings::state_vector_t DoubleIntegratorPyBindings::computeFlowMap(double t, Eigen::Ref<const state_vector_t> x,
+                                                                                      Eigen::Ref<const input_vector_t> u) {
+  state_vector_t dxdt;
+  dynamics_->computeFlowMap(t, x, u, dxdt);
+  return dxdt;
+}
+
+void DoubleIntegratorPyBindings::setFlowMapDerivativeStateAndControl(double t, Eigen::Ref<const state_vector_t> x,
+                                                                     Eigen::Ref<const input_vector_t> u) {
+  dynamicsDerivatives_->setCurrentStateAndControl(t, x, u);
+}
+
+DoubleIntegratorPyBindings::state_matrix_t DoubleIntegratorPyBindings::computeFlowMapDerivativeState() {
+  state_matrix_t A;
+  dynamicsDerivatives_->getFlowMapDerivativeState(A);
+  return A;
+}
+
+DoubleIntegratorPyBindings::state_input_matrix_t DoubleIntegratorPyBindings::computeFlowMapDerivativeInput() {
+  state_input_matrix_t B;
+  dynamicsDerivatives_->getFlowMapDerivativeInput(B);
+  return B;
 }
 
 }  // namespace double_integrator

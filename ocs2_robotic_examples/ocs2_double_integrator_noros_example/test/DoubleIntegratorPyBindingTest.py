@@ -23,11 +23,12 @@ mpc.advanceMpc()
 t_result = scalar_array()
 x_result = state_vector_array()
 u_result = input_vector_array_t()
+Vx_result = state_vector_array()
 
-mpc.getMpcSolution(t_result, x_result, u_result)
+mpc.getMpcSolution(t_result, x_result, u_result, Vx_result)
 
 print("MPC solution has", t_result.__len__(), "time steps")
 print("t\t\tx\t\tu")
 
-for t,x,u in zip(t_result, x_result, u_result):
-  print(t, "\t\t", x, "\t\t", u)
+for t,x,u,Vx in zip(t_result, x_result, u_result,Vx_result):
+  print(t, "\t\t", x, "\t\t", u, "\t\t", Vx)

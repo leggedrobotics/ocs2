@@ -406,6 +406,13 @@ public:
 			input_vector_array2_t& nominalInputTrajectoriesStock) = 0;
 
 	/**
+	 * @brief Calculates the state derivative of the value function
+	 * @param [in] time the query time
+	 * @param [out] Vx partial derivative of the value function at requested time at nominal state
+	 */
+	virtual void getValueFunctionStateDerivative(scalar_t time, state_vector_t& Vx) = 0;
+
+	/**
 	 * Rewinds optimizer internal variables.
 	 *
 	 * @param [in] firstIndex: The index which we want to rewind to.

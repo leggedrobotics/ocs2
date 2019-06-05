@@ -357,4 +357,12 @@ void MPC_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::partitioningTimesUpdate
   partitioningTimes[1] = std::numeric_limits<scalar_t>::max();
 }
 
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
+void MPC_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::getValueFunctionStateDerivative(scalar_t time, state_vector_t& Vx){
+  mpcPtr_->getSolverPtr()->getValueFunctionStateDerivative(time, Vx);
+}
+
 }  // namespace ocs2

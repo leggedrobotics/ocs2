@@ -162,6 +162,13 @@ class MPC_Interface {
    */
   void getMpcSolution(scalar_array_t& t, state_vector_array_t& x, input_vector_array_t& u);
 
+  /**
+   * @brief Calculates the state derivative of the value function
+   * @param [in] time the query time
+   * @param [out] Vx partial derivative of the value function at requested time at nominal state
+   */
+  void getValueFunctionStateDerivative(scalar_t time, state_vector_t& Vx);
+
  protected:
   /*
    * Variables

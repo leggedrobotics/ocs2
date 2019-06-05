@@ -2534,6 +2534,41 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::getValueFuntion (
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
+void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::getValueFunctionStateDerivative(
+		scalar_t time,
+		state_vector_t& Vx)  {
+
+	auto activeSubsystem = BASE::findActivePartitionIndex(partitioningTimes_, time);
+
+	state_matrix_t Sm;
+	LinearInterpolation<state_matrix_t,Eigen::aligned_allocator<state_matrix_t> > SmFunc(
+			&SsTimeTrajectoryStock_[activeSubsystem], &SmTrajectoryStock_[activeSubsystem]);
+	SmFunc.interpolate(time, Sm);
+	size_t greatestLessTimeStampIndex = SmFunc.getGreatestLessTimeStampIndex();
+
+	state_vector_t xNominal;
+	LinearInterpolation<state_vector_t,Eigen::aligned_allocator<state_vector_t> > xNominalFunc(
+			&nominalTimeTrajectoriesStock_[activeSubsystem], &nominalStateTrajectoriesStock_[activeSubsystem]);
+	xNominalFunc.interpolate(time, xNominal);
+
+	state_vector_t Sv;
+	LinearInterpolation<state_vector_t,Eigen::aligned_allocator<state_vector_t> > SvFunc(
+			&SsTimeTrajectoryStock_[activeSubsystem], &SvTrajectoryStock_[activeSubsystem]);
+	SvFunc.interpolate(time, Sv, greatestLessTimeStampIndex);
+
+	state_vector_t Sve;
+	LinearInterpolation<state_vector_t,Eigen::aligned_allocator<state_vector_t> > SveFunc(
+			&SsTimeTrajectoryStock_[activeSubsystem], &SveTrajectoryStock_[activeSubsystem]);
+	SveFunc.interpolate(time, Sve, greatestLessTimeStampIndex);
+
+	Vx = Sm * xNominal + Sv + Sve;
+	//TODO(jcarius) do we need to take care of the final time differently?
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
 SLQ_Settings& SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::settings() {
 
 	return settings_;
@@ -2691,8 +2726,8 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::swapNominalTrajectories (
 		state_vector_array2_t& nominalStateTrajectoriesStock,
 		input_vector_array2_t& nominalInputTrajectoriesStock)  {
 
-	nominalTimeTrajectoriesStock.swap(nominalTimeTrajectoriesStock_);
-	nominalStateTrajectoriesStock.swap(nominalStateTrajectoriesStock_);
+	nominalTimeTrajectoriesStock = nominalTimeTrajectoriesStock_;
+	nominalStateTrajectoriesStock = nominalStateTrajectoriesStock_;
 	nominalInputTrajectoriesStock.swap(nominalInputTrajectoriesStock_);
 }
 

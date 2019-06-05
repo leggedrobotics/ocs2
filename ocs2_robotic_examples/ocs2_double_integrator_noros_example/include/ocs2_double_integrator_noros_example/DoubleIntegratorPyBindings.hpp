@@ -21,7 +21,7 @@ class DoubleIntegratorPyBindings final {
 
   void advanceMpc();
 
-  void getMpcSolution(scalar_array_t& t, state_vector_array_t& x, input_vector_array_t& u);
+  void getMpcSolution(scalar_array_t& t, state_vector_array_t& x, input_vector_array_t& u, state_vector_array_t& Vx);
 
  protected:
   std::unique_ptr<ocs2::double_integrator::DoubleIntegratorInterface> doubleIntegratorInterface_;

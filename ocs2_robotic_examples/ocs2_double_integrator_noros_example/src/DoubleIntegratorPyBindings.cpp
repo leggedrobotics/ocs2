@@ -29,10 +29,15 @@ void DoubleIntegratorPyBindings::setObservation(double t, Eigen::Ref<const state
 
 void DoubleIntegratorPyBindings::advanceMpc() { mpcInterface_->advanceMpc(); }
 
-void DoubleIntegratorPyBindings::getMpcSolution(scalar_array_t& t, state_vector_array_t& x, input_vector_array_t& u) {
+void DoubleIntegratorPyBindings::getMpcSolution(scalar_array_t& t, state_vector_array_t& x, input_vector_array_t& u,
+                                                state_vector_array_t& Vx) {
   // TODO(jcarius): should we interpolate here to expose constant time steps?!
   mpcInterface_->getMpcSolution(t, x, u);
-  // TODO(jcarius) also get cost-to-go
+  Vx.clear();
+  Vx.resize(t.size());
+  for (size_t i = 0; i < t.size(); i++) {
+    mpcInterface_->getValueFunctionStateDerivative(t[i], Vx[i]);
+  }
 }
 
 }  // namespace double_integrator

@@ -19,13 +19,18 @@ TEST(DoubleIntegratorTest, pyBindings) {
   auto t_arr = scalar_array_t();
   auto x_arr = state_vector_array_t();
   auto u_arr = input_vector_array_t();
+  auto Vx_arr = state_vector_array_t();
 
-  bindings.getMpcSolution(t_arr, x_arr, u_arr);
+  bindings.getMpcSolution(t_arr, x_arr, u_arr, Vx_arr);
 
-  std::cout << "t\t\tx\t\tu" << std::endl;
+  EXPECT_EQ(t_arr.size(), x_arr.size());
+  EXPECT_EQ(t_arr.size(), u_arr.size());
+  EXPECT_EQ(t_arr.size(), Vx_arr.size());
+
+  std::cout << "t\t\tx\t\tu\t\tVx" << std::endl;
   for (size_t i = 0; i < t_arr.size(); i++) {
     std::cout << std::setprecision(4);
-    std::cout << t_arr[i] << "\t\t" << x_arr[i].transpose() << "\t\t" << u_arr[i].transpose() << std::endl;
+    std::cout << t_arr[i] << "\t\t" << x_arr[i].transpose() << "\t\t" << u_arr[i].transpose() << "\t\t" << Vx_arr[i].transpose() << std::endl;
   }
 }
 

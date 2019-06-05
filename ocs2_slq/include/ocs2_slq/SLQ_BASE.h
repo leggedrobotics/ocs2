@@ -506,6 +506,8 @@ public:
 			const state_vector_t& state,
 			scalar_t& valueFuntion);
 
+	virtual void getValueFunctionStateDerivative(scalar_t time, state_vector_t& Vx) override;
+
 	/**
 	 * Gets a reference to the Options structure.
 	 *

@@ -18,7 +18,7 @@ PYBIND11_MODULE(DoubleIntegratorPyBindings3, m) {
       .def(pybind11::init<const std::string&>())
       .def("setObservation", &DoubleIntegratorPyBindings::setObservation, "t"_a, "x"_a.noconvert())
       .def("advanceMpc", &DoubleIntegratorPyBindings::advanceMpc)
-      .def("getMpcSolution", &DoubleIntegratorPyBindings::getMpcSolution, "t"_a.noconvert(), "x"_a.noconvert(), "u"_a.noconvert());
+      .def("getMpcSolution", &DoubleIntegratorPyBindings::getMpcSolution, "t"_a.noconvert(), "x"_a.noconvert(), "u"_a.noconvert(), "Vx"_a.noconvert());
 
   // bind scalar_array_t so it can be used natively in python
   pybind11::class_<DoubleIntegratorPyBindings::scalar_array_t>(m, "scalar_array")

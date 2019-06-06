@@ -42,3 +42,11 @@ A = mpc.computeFlowMapDerivativeState()
 print("A", A)
 B = mpc.computeFlowMapDerivativeInput()
 print("B", B)
+
+
+L = mpc.getRunningCost(t_result[0], x_result[0], u_result[0])
+print("L", L)
+dLdx = mpc.getRunningCostDerivativeState(t_result[0], x_result[0], u_result[0])
+print("dLdx", dLdx)
+dLdu = mpc.getRunningCostDerivativeInput(t_result[0], x_result[0], u_result[0])
+print("dLdu", dLdu)

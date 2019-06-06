@@ -16,13 +16,18 @@ PYBIND11_MODULE(DoubleIntegratorPyBindings2, m) {
   // bind the actual interface
   pybind11::class_<DoubleIntegratorPyBindings>(m, "mpc_interface")
       .def(pybind11::init<const std::string&>())
+      .def_property_readonly_static("STATE_DIM", [](pybind11::object) {return static_cast<int>(double_integrator_dims::STATE_DIM_);})
+      .def_property_readonly_static("INPUT_DIM", [](pybind11::object) {return static_cast<int>(double_integrator_dims::INPUT_DIM_);})
       .def("setObservation", &DoubleIntegratorPyBindings::setObservation, "t"_a, "x"_a.noconvert())
       .def("advanceMpc", &DoubleIntegratorPyBindings::advanceMpc)
       .def("getMpcSolution", &DoubleIntegratorPyBindings::getMpcSolution, "t"_a.noconvert(), "x"_a.noconvert(), "u"_a.noconvert(), "Vx"_a.noconvert())
       .def("computeFlowMap", &DoubleIntegratorPyBindings::computeFlowMap, "t"_a, "x"_a.noconvert(), "u"_a.noconvert())
       .def("setFlowMapDerivativeStateAndControl", &DoubleIntegratorPyBindings::setFlowMapDerivativeStateAndControl, "t"_a, "x"_a.noconvert(), "u"_a.noconvert())
       .def("computeFlowMapDerivativeState", &DoubleIntegratorPyBindings::computeFlowMapDerivativeState)
-      .def("computeFlowMapDerivativeInput", &DoubleIntegratorPyBindings::computeFlowMapDerivativeInput);
+      .def("computeFlowMapDerivativeInput", &DoubleIntegratorPyBindings::computeFlowMapDerivativeInput)
+      .def("getRunningCost", &DoubleIntegratorPyBindings::getRunningCost, "t"_a, "x"_a.noconvert(), "u"_a.noconvert())
+      .def("getRunningCostDerivativeState", &DoubleIntegratorPyBindings::getRunningCostDerivativeState, "t"_a, "x"_a.noconvert(), "u"_a.noconvert())
+      .def("getRunningCostDerivativeInput", &DoubleIntegratorPyBindings::getRunningCostDerivativeInput, "t"_a, "x"_a.noconvert(), "u"_a.noconvert());
 
   // bind scalar_array_t so it can be used natively in python
   pybind11::class_<DoubleIntegratorPyBindings::scalar_array_t>(m, "scalar_array")

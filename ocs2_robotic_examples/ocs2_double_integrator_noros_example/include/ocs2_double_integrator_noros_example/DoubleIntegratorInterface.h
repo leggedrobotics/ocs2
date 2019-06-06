@@ -94,6 +94,8 @@ class DoubleIntegratorInterface : public RobotInterfaceBase<double_integrator_di
 
   DoubleIntegratorDynamicsDerivatives::Ptr getDynamicsDerivativesPtr() { return linearSystemDynamicsDerivativesPtr_; }
 
+  DoubleIntegratorCost::Ptr getCostPtr() { return linearSystemCostPtr_; }
+
  protected:
   /**
    * Loads the settings from the path file.

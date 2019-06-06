@@ -41,6 +41,12 @@ TEST(DoubleIntegratorTest, pyBindings) {
   auto B = bindings.computeFlowMapDerivativeInput();
 
   std::cout << "A\n" << A << "\nB\n" << B << std::endl;
+
+  auto L = bindings.getRunningCost(t_arr[0], x_arr[0], u_arr[0]);
+  auto dLdx = bindings.getRunningCostDerivativeState(t_arr[0], x_arr[0], u_arr[0]);
+  auto dLdu = bindings.getRunningCostDerivativeInput(t_arr[0], x_arr[0], u_arr[0]);
+
+  std::cout << "L: " << L << "\ndLdx: " << dLdx.transpose() << "\ndLdu: " << dLdu.transpose() << std::endl;
 }
 
 int main(int argc, char** argv) {

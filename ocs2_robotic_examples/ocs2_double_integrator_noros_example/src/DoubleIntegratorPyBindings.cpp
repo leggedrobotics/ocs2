@@ -12,6 +12,8 @@ DoubleIntegratorPyBindings::DoubleIntegratorPyBindings(const std::string& taskFi
   dynamics_.reset(doubleIntegratorInterface_->getDynamicsPtr()->clone());
   dynamicsDerivatives_.reset(doubleIntegratorInterface_->getDynamicsDerivativesPtr()->clone());
 
+  cost_.reset(doubleIntegratorInterface_->getCostPtr()->clone());
+
   // initialize reference
   constexpr double time = 0.0;
   mpc_t::cost_desired_trajectories_t costDesiredTrajectories;
@@ -65,6 +67,27 @@ DoubleIntegratorPyBindings::state_input_matrix_t DoubleIntegratorPyBindings::com
   state_input_matrix_t B;
   dynamicsDerivatives_->getFlowMapDerivativeInput(B);
   return B;
+}
+
+double DoubleIntegratorPyBindings::getRunningCost(double t, Eigen::Ref<const state_vector_t> x, Eigen::Ref<const input_vector_t> u){
+  cost_->setCurrentStateAndControl(t, x, u);
+  double L;
+  cost_->getIntermediateCost(L);
+  return L;
+}
+
+DoubleIntegratorPyBindings::state_vector_t DoubleIntegratorPyBindings::getRunningCostDerivativeState(double t, Eigen::Ref<const state_vector_t> x, Eigen::Ref<const input_vector_t> u){
+  cost_->setCurrentStateAndControl(t, x, u);
+  state_vector_t dLdx;
+  cost_->getIntermediateCostDerivativeState(dLdx);
+  return dLdx;
+}
+
+DoubleIntegratorPyBindings::input_vector_t DoubleIntegratorPyBindings::getRunningCostDerivativeInput(double t, Eigen::Ref<const state_vector_t> x, Eigen::Ref<const input_vector_t> u){
+  cost_->setCurrentStateAndControl(t, x, u);
+  input_vector_t dLdu;
+  cost_->getIntermediateCostDerivativeInput(dLdu);
+  return dLdu;
 }
 
 }  // namespace double_integrator

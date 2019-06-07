@@ -756,10 +756,6 @@ void DDP_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::approximateUnconstrainedLQWo
 	// making sure that constrained Qm is PSD
 	if (ddpSettings_.useMakePSD_==true)
 		BASE::makePSD(QmTrajectoryStock_[i][k]);
-
-	// TODO: add support for the constrained ILQR
-	if (nc1TrajectoriesStock_[i][k]!=0 || nc2TrajectoriesStock_[i][k]!=0 || ncIneqTrajectoriesStock_[i][k]!=0)
-		throw std::runtime_error("We currently only support unconstrained ILQR.");
 }
 
 /******************************************************************************************************/

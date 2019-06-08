@@ -262,6 +262,49 @@ public:
 
 		// TODO Precompute terms here
 		// Possibly delete interpolators to unused data
+        if (preComputeRiccatiTerms_) {
+          Qm_minus_P_Rinv_R_Rinv_P.resize(RmPtr->size());
+          AmT_minus_P_Rinv_R_Rinv_B.resize(RmPtr->size());
+          B_Rinv_R_Rinv_B.resize(RmPtr->size());
+          Qv_minus_P_Rinv_R_Rinv_Rv_array.resize(RmPtr->size());
+          q_minus_half_Rv_Rinv_R_Rinv_Rv_.resize(RmPtr->size());
+          B_Rinv_R_Rinv_Rv_array.resize(RmPtr->size());
+
+          input_state_matrix_t Rinv_P, Rinv_B, R_Rinv_P;
+          input_vector_t Rinv_Rv, R_Rinv_Rv;
+          for (size_t i = 0; i < RmPtr->size(); i++){
+            // Temporary terms
+            Rinv_P.noalias() = (*RmInversePtr)[i] * (*PmPtr)[i];
+            Rinv_B.noalias() = (*RmInversePtr)[i] * (*BmPtr)[i].transpose();
+            R_Rinv_P.noalias() = (*RmPtr)[i] * Rinv_P;
+            Rinv_Rv.noalias() = (*RmInversePtr)[i] * (*RvPtr)[i];
+            R_Rinv_Rv.noalias() = (*RmPtr)[i] * Rinv_Rv;
+            // Precomputed terms
+            Qm_minus_P_Rinv_R_Rinv_P[i] = (*QmPtr)[i];
+            Qm_minus_P_Rinv_R_Rinv_P[i].noalias() -= Rinv_P.transpose() * R_Rinv_P;
+
+            AmT_minus_P_Rinv_R_Rinv_B[i] = (*AmPtr)[i].transpose();
+            AmT_minus_P_Rinv_R_Rinv_B[i].noalias() -= R_Rinv_P.transpose() * Rinv_B;
+
+            B_Rinv_R_Rinv_B[i].noalias() = Rinv_B.transpose() * (*RmPtr)[i] * Rinv_B;
+
+            Qv_minus_P_Rinv_R_Rinv_Rv_array[i] = (*QvPtr)[i];
+            Qv_minus_P_Rinv_R_Rinv_Rv_array[i].noalias() -= Rinv_P.transpose() * R_Rinv_Rv;
+
+            q_minus_half_Rv_Rinv_R_Rinv_Rv_[i] = (*qPtr)[i];
+            q_minus_half_Rv_Rinv_R_Rinv_Rv_[i].noalias() -= 0.5 * Rinv_Rv.transpose() * R_Rinv_Rv;
+
+            B_Rinv_R_Rinv_Rv_array[i] = Rinv_B.transpose() * R_Rinv_Rv;
+          }
+
+          Qm_minus_P_Rinv_R_Rinv_P_func.setData(timeStampPtr, &Qm_minus_P_Rinv_R_Rinv_P);
+          AmT_minus_P_Rinv_R_Rinv_B_func.setData(timeStampPtr, &AmT_minus_P_Rinv_R_Rinv_B);
+          B_Rinv_R_Rinv_B_func.setData(timeStampPtr, &B_Rinv_R_Rinv_B);
+          Qv_minus_P_Rinv_R_Rinv_Rv_func.setData(timeStampPtr, &Qv_minus_P_Rinv_R_Rinv_Rv_array);
+          q_minus_half_Rv_Rinv_R_Rinv_Rv_func.setData(timeStampPtr, &q_minus_half_Rv_Rinv_R_Rinv_Rv_);
+          B_Rinv_R_Rinv_Rv_func.setData(timeStampPtr, &B_Rinv_R_Rinv_Rv_array);
+        }
+
 	}
 
 	/**
@@ -304,65 +347,93 @@ public:
 	 * @param [out] derivatives: d(allSs)/dz.
 	 */
 	void computeFlowMap(
-			const scalar_t& z,
-			const s_vector_t& allSs,
-			s_vector_t& derivatives) override {
-		flowMapCount_++;
-		BASE::numFunctionCalls_++;
+        const scalar_t &z,
+        const s_vector_t &allSs,
+        s_vector_t &derivatives) override {
+      /*note: according to some discussions on stackoverflow, it does not buy computation time if multiplications
+       * with symmetric matrices are executed using selfadjointView(). Doing the full multiplication seems to be faster
+       * because of vectorization
+       */
+      /*
+       *  Expressions written base on guidelines in http://eigen.tuxfamily.org/dox/TopicWritingEfficientProductExpression.html
+       */
 
-		// denormalized time
-		const scalar_t t = switchingTimeFinal_ - scalingFactor_*z;
+      flowMapCount_++;
+      BASE::numFunctionCalls_++;
 
-		convert2Matrix(allSs, Sm_, Sv_, s_);
+      // denormalized time
+      const scalar_t t = switchingTimeFinal_ - scalingFactor_ * z;
 
-		const auto greatestLessTimeStampIndex = AmFunc_.interpolate(t, Am_);
-		BmFunc_.interpolate(t, Bm_, greatestLessTimeStampIndex);
-		qFunc_.interpolate(t, q_, greatestLessTimeStampIndex);
-		QvFunc_.interpolate(t, Qv_, greatestLessTimeStampIndex);
-		QmFunc_.interpolate(t, Qm_, greatestLessTimeStampIndex);
-		RvFunc_.interpolate(t, Rv_, greatestLessTimeStampIndex);
-		RmInverseFunc_.interpolate(t, RmInv_, greatestLessTimeStampIndex);
-		RmFunc_.interpolate(t, Rm_, greatestLessTimeStampIndex);
-		PmFunc_.interpolate(t, Pm_, greatestLessTimeStampIndex);
+      convert2Matrix(allSs, Sm_, Sv_, s_);
 
-		// numerical consideration
-		if ( useMakePSD_ ) {
-			bool hasNegativeEigenValue = makePSD(Sm_);
-		} else {
-			Qm_ += addedRiccatiDiagonal_ * state_matrix_t::Identity();
-		}
+      if (useMakePSD_) {
+        bool hasNegativeEigenValue = makePSD(Sm_);
+      }
 
-		// Riccati equations for the original system
-		Pm_.noalias() += Bm_.transpose()*Sm_; // ! Pm is changed to avoid an extra temporary
-		Lm_.noalias() = RmInv_*Pm_; // TODO precompute and interpolate
-		Rv_.noalias() += Bm_.transpose()*Sv_; // ! Rv is changed to avoid an extra temporary
-		Lv_.noalias() = RmInv_*Rv_; // TODO precompute and interpolate
+      if (preComputeRiccatiTerms_) {
+        // Use precomputed elements
+        state_matrix_t AmT_minus_P_Rinv_R_Rinv_Bm, B_Rinv_R_Rinv_Bm;
+        state_vector_t B_Rinv_R_Rinv_Rv;
+        const auto greatestLessTimeStampIndex = Qm_minus_P_Rinv_R_Rinv_P_func.interpolate(t, Qm_);
+        AmT_minus_P_Rinv_R_Rinv_B_func.interpolate(t, AmT_minus_P_Rinv_R_Rinv_Bm, greatestLessTimeStampIndex);
+        B_Rinv_R_Rinv_B_func.interpolate(t, B_Rinv_R_Rinv_Bm, greatestLessTimeStampIndex);
+        Qv_minus_P_Rinv_R_Rinv_Rv_func.interpolate(t, Qv_, greatestLessTimeStampIndex);
+        q_minus_half_Rv_Rinv_R_Rinv_Rv_func.interpolate(t, q_, greatestLessTimeStampIndex);
+        B_Rinv_R_Rinv_Rv_func.interpolate(t, B_Rinv_R_Rinv_Rv, greatestLessTimeStampIndex);
 
-		/*note: according to some discussions on stackoverflow, it does not buy computation time if multiplications
-		 * with symmetric matrices are executed using selfadjointView(). Doing the full multiplication seems to be faster
-		 * because of vectorization */
-		/*
-		 *  Expressions written base on guidelines in http://eigen.tuxfamily.org/dox/TopicWritingEfficientProductExpression.html
-		 */
-		Am_transposeSm_.noalias() = Am_.transpose()*Sm_.transpose();
-		Lm_transposeRm_.noalias() = Lm_.transpose()*Rm_.transpose(); // TODO precompute and interpolate
+        Am_transposeSm_.noalias() = AmT_minus_P_Rinv_R_Rinv_Bm * Sm_;
 
-		// dSmdt,  Qm_ used instead of temporary
-		Qm_ += Am_transposeSm_ + Am_transposeSm_.transpose();
-		Qm_.noalias() -= Lm_transposeRm_*Lm_; // TODO precompute and interpolate
-		Qm_ *= scalingFactor_;
+        // dSmdt,  Qm_ used instead of temporary
+        Qm_ += Am_transposeSm_ + Am_transposeSm_.transpose();
+        Qm_.noalias() -= Sm_.transpose() * B_Rinv_R_Rinv_Bm * Sm_;
 
-		// dSvdt,  Qv_ used instead of temporary
-		Qv_.noalias() += Am_.transpose()*Sv_;
-		Qv_.noalias() -= Lm_transposeRm_*Lv_; // TODO precompute and interpolate
-		Qv_ *= scalingFactor_;
+        // dSvdt,  Qv_ used instead of temporary
+        Qv_.noalias() += AmT_minus_P_Rinv_R_Rinv_Bm * Sv_;
+        Qv_.noalias() -= Sm_.transpose() * (B_Rinv_R_Rinv_Rv + B_Rinv_R_Rinv_Bm * Sv_);
 
-		// dsdt,   q_ used instead of temporary
-		q_.noalias() -= 0.5 *Lv_.transpose()*Rm_ * Lv_; // TODO precompute and interpolate
-		q_ *= scalingFactor_;
+        // dsdt,   q_ used instead of temporary
+        q_.noalias() -= Sv_.transpose() * B_Rinv_R_Rinv_Rv;
+        q_.noalias() -= 0.5 * Sv_.transpose() * B_Rinv_R_Rinv_Bm * Sv_;
+      } else {
+        const auto greatestLessTimeStampIndex = AmFunc_.interpolate(t, Am_);
+        BmFunc_.interpolate(t, Bm_, greatestLessTimeStampIndex);
+        qFunc_.interpolate(t, q_, greatestLessTimeStampIndex);
+        QvFunc_.interpolate(t, Qv_, greatestLessTimeStampIndex);
+        QmFunc_.interpolate(t, Qm_, greatestLessTimeStampIndex);
+        RvFunc_.interpolate(t, Rv_, greatestLessTimeStampIndex);
+        RmInverseFunc_.interpolate(t, RmInv_, greatestLessTimeStampIndex);
+        RmFunc_.interpolate(t, Rm_, greatestLessTimeStampIndex);
+        PmFunc_.interpolate(t, Pm_, greatestLessTimeStampIndex);
 
-		convert2Vector(Qm_, Qv_, q_, derivatives);
-	}
+        Pm_.noalias() += Bm_.transpose() * Sm_; // ! Pm is changed to avoid an extra temporary
+        Lm_.noalias() = RmInv_ * Pm_;
+        Rv_.noalias() += Bm_.transpose() * Sv_; // ! Rv is changed to avoid an extra temporary
+        Lv_.noalias() = RmInv_ * Rv_;
+
+        Am_transposeSm_.noalias() = Am_.transpose() * Sm_.transpose();
+        Lm_transposeRm_.noalias() = Lm_.transpose() * Rm_.transpose();
+
+        // dSmdt,  Qm_ used instead of temporary
+        Qm_ += Am_transposeSm_ + Am_transposeSm_.transpose();
+        Qm_.noalias() -= Lm_transposeRm_ * Lm_;
+
+        // dSvdt,  Qv_ used instead of temporary
+        Qv_.noalias() += Am_.transpose() * Sv_;
+        Qv_.noalias() -= Lm_transposeRm_ * Lv_;
+
+        // dsdt,   q_ used instead of temporary
+        q_.noalias() -= 0.5 * Lv_.transpose() * Rm_ * Lv_;
+      }
+
+      if (!useMakePSD_) {
+        Qm_ += addedRiccatiDiagonal_ * state_matrix_t::Identity();
+      }
+
+      Qm_ *= scalingFactor_;
+      Qv_ *= scalingFactor_;
+      q_ *= scalingFactor_;
+      convert2Vector(Qm_, Qv_, q_, derivatives);
+    }
 
 protected:
 	/**
@@ -438,15 +509,19 @@ private:
 	EigenLinearInterpolation<eigen_scalar_t> qFunc_;
 	EigenLinearInterpolation<state_vector_t> QvFunc_;
 	EigenLinearInterpolation<state_matrix_t> QmFunc_;
-	EigenLinearInterpolation<input_vector_t> RvFunc_;
-	EigenLinearInterpolation<input_matrix_t> RmInverseFunc_;
-	EigenLinearInterpolation<input_matrix_t> RmFunc_;
-	EigenLinearInterpolation<input_state_matrix_t> PmFunc_;
+  EigenLinearInterpolation<input_vector_t> RvFunc_;
+  EigenLinearInterpolation<input_matrix_t> RmInverseFunc_;
+  EigenLinearInterpolation<input_matrix_t> RmFunc_;
+  EigenLinearInterpolation<input_state_matrix_t> PmFunc_;
 
 	// Precomputation
-//	bool preComputeRiccatiTerms_ = true;
-	// EigenLinearInterpolation< > linearTermFunc_
-	// state_matrix_array_t linearMatrixTerm_
+	bool preComputeRiccatiTerms_ = true;
+	state_matrix_array_t Qm_minus_P_Rinv_R_Rinv_P, AmT_minus_P_Rinv_R_Rinv_B, B_Rinv_R_Rinv_B;
+    state_vector_array_t Qv_minus_P_Rinv_R_Rinv_Rv_array, B_Rinv_R_Rinv_Rv_array;
+    eigen_scalar_array_t q_minus_half_Rv_Rinv_R_Rinv_Rv_;
+    EigenLinearInterpolation<state_matrix_t> Qm_minus_P_Rinv_R_Rinv_P_func, AmT_minus_P_Rinv_R_Rinv_B_func, B_Rinv_R_Rinv_B_func;
+    EigenLinearInterpolation<state_vector_t> Qv_minus_P_Rinv_R_Rinv_Rv_func, B_Rinv_R_Rinv_Rv_func;
+    EigenLinearInterpolation<eigen_scalar_t> q_minus_half_Rv_Rinv_R_Rinv_Rv_func;
 
 	// members required only in computeFlowMap() // TODO check which are being used
 	state_matrix_t Sm_;
@@ -476,32 +551,7 @@ private:
 	const eigen_scalar_array_t* qFinalPtr_;
 	const state_vector_array_t* QvFinalPtr_;
 	const state_matrix_array_t* QmFianlPtr_;
-	
-//	static void computeRiccatiMatrixTerms(const state_matrix_array_t &Am,
-//                                     const state_input_matrix_array_t &Bm,
-//                                     const state_matrix_array_t &Qm,
-//                                     const input_matrix_array_t &RmInverse,
-//                                     const input_matrix_array_t &Rm,
-//                                     const input_state_matrix_array_t &Pm,
-//                                     const state_matrix_array_t &QmFinal,
-//                                     state_matrix_array_t &quadraticRiccatiMatrixTerm,
-//                                     state_matrix_array_t &linearRiccatiMatrixTerm,
-//                                     state_matrix_array_t &constantRiccatiMatrixTerm) {
-//	  // TODO
-//	}
 
-//  static void computeRiccatiMatrixTerms(const state_matrix_array_t &Am,
-//                                        const state_input_matrix_array_t &Bm,
-//                                        const state_matrix_array_t &Qm,
-//                                        const input_matrix_array_t &RmInverse,
-//                                        const input_matrix_array_t &Rm,
-//                                        const input_state_matrix_array_t &Pm,
-//                                        const state_matrix_array_t &QmFinal,
-//                                        state_matrix_array_t &quadraticRiccatiMatrixTerm,
-//                                        state_matrix_array_t &linearRiccatiMatrixTerm,
-//                                        state_matrix_array_t &constantRiccatiMatrixTerm) {
-//    // TODO
-//  }
   int flowMapCount_ = 0;
   int interpolationCount_ = 0;
   int setDataCount_ = 0;

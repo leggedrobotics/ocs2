@@ -101,28 +101,40 @@ void DoubleIntegratorInterface::loadSettings(const std::string& taskFile) {
 	 * Initialization
 	 */
 	//	cartPoleOperatingPointPtr_.reset(new CartPoleOperatingPoint(dim_t::state_vector_t::Zero(), dim_t::input_vector_t::Zero()));
-  linearSystemOperatingPointPtr_.reset(new DoubleIntegratorOperatingPoint(initialState_, dim_t::input_vector_t::Zero()));
+	linearSystemOperatingPointPtr_.reset(
+			new DoubleIntegratorOperatingPoint(initialState_, dim_t::input_vector_t::Zero()));
 
 	/*
 	 * Time partitioning which defines the time horizon and the number of data partitioning
 	 */
 	scalar_t timeHorizon;
-  definePartitioningTimes(taskFile, timeHorizon, numPartitions_, partitioningTimes_, true);
+	definePartitioningTimes(taskFile, timeHorizon,
+			numPartitions_, partitioningTimes_, true);
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
 void DoubleIntegratorInterface::setupOptimizer(const std::string& taskFile) {
-  mpcPtr_.reset(new mpc_t(linearSystemDynamicsPtr_.get(), linearSystemDynamicsDerivativesPtr_.get(), linearSystemConstraintPtr_.get(),
-                          linearSystemCostPtr_.get(), linearSystemOperatingPointPtr_.get(), partitioningTimes_, slqSettings_,
+
+	mpcPtr_.reset(new mpc_t(
+			linearSystemDynamicsPtr_.get(),
+			linearSystemDynamicsDerivativesPtr_.get(),
+			linearSystemConstraintPtr_.get(),
+      linearSystemCostPtr_.get(),
+			linearSystemOperatingPointPtr_.get(),
+			partitioningTimes_,
+			slqSettings_,
 			mpcSettings_));
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-DoubleIntegratorInterface::mpc_t::Ptr& DoubleIntegratorInterface::getMPCPtr() { return mpcPtr_; }
+DoubleIntegratorInterface::mpc_t::Ptr& DoubleIntegratorInterface::getMPCPtr() {
+
+	return mpcPtr_;
+}
 
 } // namespace double_integrator
 } // namespace ocs2

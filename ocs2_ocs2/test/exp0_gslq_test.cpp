@@ -34,7 +34,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <ocs2_slq/SLQ.h>
 #include <ocs2_slq/SLQ_MP.h>
-#include <ocs2_slq/test/EXP0.h>
+
+#include <ocs2_oc/test/EXP0.h>
 
 #include <ocs2_ocs2/GSLQ_BASE.h>
 
@@ -80,7 +81,7 @@ TEST(exp0_gslq_test, DISABLED_optimum_gradient_test)
 	slqSettings.maxNumIterationsSLQ_ = 30;
 	slqSettings.lsStepsizeGreedy_ = true;
 	slqSettings.noStateConstraints_ = true;
-	slqSettings.minRelCostGSLQP_ = 5e-4;
+	slqSettings.minRelCostSLQ_ = 5e-4;
 
 	// switching times
 	std::vector<double> optimumEventTimes {0.1897};
@@ -145,10 +146,10 @@ TEST(exp0_gslq_test, DISABLED_optimum_gradient_test)
 	std::cerr << "### Optimum cost derivative LQ method:  [" << costFunctionDerivative_LQ(0) << "]\n";
 	std::cerr << "### Optimum cost derivative BVP method: [" << costFunctionDerivative_BVP(0) << "]\n";
 
-	ASSERT_LT(costFunctionDerivative_LQ.norm()/fabs(costFunction), 10*slqSettings.minRelCostGSLQP_) <<
+	ASSERT_LT(costFunctionDerivative_LQ.norm()/fabs(costFunction), 10*slqSettings.minRelCostSLQ_) <<
 			"MESSAGE: GSLQ failed in the EXP0's cost derivative LQ test!";
 
-	ASSERT_LT(costFunctionDerivative_BVP.norm()/fabs(costFunction), 10*slqSettings.minRelCostGSLQP_) <<
+	ASSERT_LT(costFunctionDerivative_BVP.norm()/fabs(costFunction), 10*slqSettings.minRelCostSLQ_) <<
 			"MESSAGE: GSLQ failed in the EXP0's cost derivative BVP test!";
 }
 

@@ -38,26 +38,26 @@ GSLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::GSLQ_BASE(
 	: settings_(settings)
 {
 	bvpSensitivityEquationsPtrStock_.clear();
-	bvpSensitivityEquationsPtrStock_.reserve(settings_.nThreads_);
+	bvpSensitivityEquationsPtrStock_.reserve(settings_.ddpSettings_.nThreads_);
 	bvpSensitivityIntegratorsPtrStock_.clear();
-	bvpSensitivityIntegratorsPtrStock_.reserve(settings_.nThreads_);
+	bvpSensitivityIntegratorsPtrStock_.reserve(settings_.ddpSettings_.nThreads_);
 
 	bvpSensitivityErrorEquationsPtrStock_.clear();
-	bvpSensitivityErrorEquationsPtrStock_.reserve(settings_.nThreads_);
+	bvpSensitivityErrorEquationsPtrStock_.reserve(settings_.ddpSettings_.nThreads_);
 	bvpSensitivityErrorIntegratorsPtrStock_.clear();
-	bvpSensitivityErrorIntegratorsPtrStock_.reserve(settings_.nThreads_);
+	bvpSensitivityErrorIntegratorsPtrStock_.reserve(settings_.ddpSettings_.nThreads_);
 
 	rolloutSensitivityEquationsPtrStock_.clear();
-	rolloutSensitivityEquationsPtrStock_.reserve(settings_.nThreads_);
+	rolloutSensitivityEquationsPtrStock_.reserve(settings_.ddpSettings_.nThreads_);
 	rolloutSensitivityIntegratorsPtrStock_.clear();
-	rolloutSensitivityIntegratorsPtrStock_.reserve(settings_.nThreads_);
+	rolloutSensitivityIntegratorsPtrStock_.reserve(settings_.ddpSettings_.nThreads_);
 
 	riccatiSensitivityEquationsPtrStock_.clear();
-	riccatiSensitivityEquationsPtrStock_.reserve(settings_.nThreads_);
+	riccatiSensitivityEquationsPtrStock_.reserve(settings_.ddpSettings_.nThreads_);
 	riccatiSensitivityIntegratorsPtrStock_.clear();
-	riccatiSensitivityIntegratorsPtrStock_.reserve(settings_.nThreads_);
+	riccatiSensitivityIntegratorsPtrStock_.reserve(settings_.ddpSettings_.nThreads_);
 
-	for (size_t i=0; i<settings_.nThreads_; i++)  {
+	for (size_t i=0; i<settings_.ddpSettings_.nThreads_; i++)  {
 
 		typedef Eigen::aligned_allocator<bvp_sensitivity_equations_t> bvp_sensitivity_equations_alloc_t;
 		bvpSensitivityEquationsPtrStock_.push_back( std::move(
@@ -125,11 +125,11 @@ GSLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::GSLQ_BASE(
 	}  // end of i loop
 
 	// calculateBVPSensitivityControllerForward & calculateLQSensitivityControllerForward
-	BmFuncStock_.resize(settings_.nThreads_);
-	RmInverseFuncStock_.resize(settings_.nThreads_);
-	DmProjectedFuncStock_.resize(settings_.nThreads_);
-	EvDevEventTimesProjectedFuncStock_.resize(settings_.nThreads_);
-	nablaRvFuncStock_.resize(settings_.nThreads_);
+	BmFuncStock_.resize(settings_.ddpSettings_.nThreads_);
+	RmInverseFuncStock_.resize(settings_.ddpSettings_.nThreads_);
+	DmProjectedFuncStock_.resize(settings_.ddpSettings_.nThreads_);
+	EvDevEventTimesProjectedFuncStock_.resize(settings_.ddpSettings_.nThreads_);
+	nablaRvFuncStock_.resize(settings_.ddpSettings_.nThreads_);
 }
 
 /******************************************************************************************************/
@@ -263,7 +263,7 @@ void GSLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculateInputConstraintLag
 	LinearInterpolation<input_matrix_t,Eigen::aligned_allocator<input_matrix_t>> RmFunc;
 	LinearInterpolation<input_vector_t,Eigen::aligned_allocator<input_vector_t>> EvProjectedFunc;
 	LinearInterpolation<input_state_matrix_t,Eigen::aligned_allocator<input_state_matrix_t>> CmProjectedFunc;
-	LinearInterpolation<control_constraint1_matrix_t,Eigen::aligned_allocator<control_constraint1_matrix_t>> DmDagerFunc;
+	LinearInterpolation<input_constraint1_matrix_t,Eigen::aligned_allocator<input_constraint1_matrix_t>> DmDagerFunc;
 
 	lagrangeMultiplierFunctionsStock.resize(numPartitions_);
 
@@ -309,7 +309,7 @@ void GSLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculateInputConstraintLag
 			CmProjectedFunc.interpolate(time, CmProjected, greatestLessTimeStampIndex);
 			input_matrix_t Rm;
 			RmFunc.interpolate(time, Rm, greatestLessTimeStampIndex);
-			control_constraint1_matrix_t DmDager;
+			input_constraint1_matrix_t DmDager;
 			DmDagerFunc.interpolate(time, DmDager, greatestLessTimeStampIndex);
 
 			const size_t& nc1 = dcPtr_->nc1TrajectoriesStock_[i][greatestLessTimeStampIndex];
@@ -408,7 +408,7 @@ void GSLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculateNominalRolloutLagr
 			const input_vector_t& Rv = dcPtr_->RvTrajectoriesStock_[i][k];
 			const input_matrix_t& Rm = dcPtr_->RmTrajectoriesStock_[i][k];
 			const input_vector_t& EvProjected = dcPtr_->EvProjectedTrajectoriesStock_[i][k];
-			const control_constraint1_matrix_t& DmDager = dcPtr_->DmDagerTrajectoriesStock_[i][k];
+			const input_constraint1_matrix_t& DmDager = dcPtr_->DmDagerTrajectoriesStock_[i][k];
 			const state_vector_t& costate = nominalCostateTrajectoriesStock_[i][k];
 
 			lagrangeTrajectoriesStock[i][k].head(nc1) = DmDager.leftCols(nc1).transpose() * (
@@ -611,7 +611,7 @@ void GSLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::propagateRolloutSensitivity
 				&LvTrajectoriesStock[i], &controllersStock[i].gainArray_);
 
 		// max number of steps of integration
-		const size_t maxNumSteps = settings_.maxNumStepsPerSecond_ *
+		const size_t maxNumSteps = settings_.ddpSettings_.maxNumStepsPerSecond_ *
 				std::max(1.0, sensitivityTimeTrajectoriesStock[i].back()-sensitivityTimeTrajectoriesStock[i].front());
 
 		// resizing
@@ -647,9 +647,9 @@ void GSLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::propagateRolloutSensitivity
 				rolloutSensitivityIntegratorsPtrStock_[workerIndex]->integrate(
 						nabla_xInit, beginTimeItr, endTimeItr,
 						sensitivityStateTrajectoriesStock[i],
-						settings_.minTimeStep_,
-						settings_.absTolODE_,
-						settings_.relTolODE_,
+						settings_.ddpSettings_.minTimeStep_,
+						settings_.ddpSettings_.absTolODE_,
+						settings_.ddpSettings_.relTolODE_,
 						maxNumSteps, true);
 
 				// compute input sensitivity
@@ -834,7 +834,7 @@ void GSLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::solveSensitivityRiccatiEqua
 				&nablaRvTrajectoriesStockSet_[eventTimeIndex][i]);
 
 		// max number of steps of integration
-		const size_t maxNumSteps = settings_.maxNumStepsPerSecond_ *
+		const size_t maxNumSteps = settings_.ddpSettings_.maxNumStepsPerSecond_ *
 				std::max(1.0, dcPtr_->SsNormalizedTimeTrajectoriesStock_[i].back()-dcPtr_->SsNormalizedTimeTrajectoriesStock_[i].front());
 
 		// output containers resizing
@@ -875,9 +875,9 @@ void GSLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::solveSensitivityRiccatiEqua
 				riccatiSensitivityIntegratorsPtrStock_[workerIndex]->integrate(
 						SsFinal, beginTimeItr, endTimeItr,
 						allSsTrajectory,
-						settings_.minTimeStep_,
-						settings_.absTolODE_,
-						settings_.relTolODE_,
+						settings_.ddpSettings_.minTimeStep_,
+						settings_.ddpSettings_.absTolODE_,
+						settings_.ddpSettings_.relTolODE_,
 						maxNumSteps, true);
 
 			} else {
@@ -996,7 +996,7 @@ void GSLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::solveSensitivityBVP(
 		const size_t NE = dcPtr_->SsNormalizedEventsPastTheEndIndecesStock_[i].size();
 
 		// max number of steps of integration
-		const size_t maxNumSteps = settings_.maxNumStepsPerSecond_ *
+		const size_t maxNumSteps = settings_.ddpSettings_.maxNumStepsPerSecond_ *
 				std::max(1.0, dcPtr_->SsNormalizedTimeTrajectoriesStock_[i].back()-dcPtr_->SsNormalizedTimeTrajectoriesStock_[i].front());
 
 		// output containers resizing
@@ -1039,18 +1039,18 @@ void GSLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::solveSensitivityBVP(
 				bvpSensitivityIntegratorsPtrStock_[workerIndex]->integrate(
 						MvFinalInternal, beginTimeItr, endTimeItr,
 						rMvTrajectory,
-						settings_.minTimeStep_,
-						settings_.absTolODE_,
-						settings_.relTolODE_,
+						settings_.ddpSettings_.minTimeStep_,
+						settings_.ddpSettings_.absTolODE_,
+						settings_.ddpSettings_.relTolODE_,
 						maxNumSteps,
 						true);
 				// solve Riccati equations for Mve
 				bvpSensitivityErrorIntegratorsPtrStock_[workerIndex]->integrate(
 						MveFinalInternal, beginTimeItr, endTimeItr,
 						rMveTrajectory,
-						settings_.minTimeStep_,
-						settings_.absTolODE_,
-						settings_.relTolODE_,
+						settings_.ddpSettings_.minTimeStep_,
+						settings_.ddpSettings_.absTolODE_,
+						settings_.ddpSettings_.relTolODE_,
 						maxNumSteps,
 						true);
 
@@ -1086,7 +1086,7 @@ void GSLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::solveSensitivityBVP(
 		std::reverse_copy(rMveTrajectory.begin(), rMveTrajectory.end(), MveTrajectoriesStock[i].begin());
 
 		// testing the numerical stability of the Riccati equations
-		if (settings_.checkNumericalStability_)
+		if (settings_.ddpSettings_.checkNumericalStability_)
 			for (int k=NS-1; k>=0; k--) {
 				try {
 					if (!MvTrajectoriesStock[i][k].allFinite()) throw std::runtime_error("Mv is unstable.");
@@ -1528,7 +1528,7 @@ void GSLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::run(
 	activeEventTimeEndIndex_   = findActiveSubsystemIndex(eventTimes_, dcPtr_->finalTime_);
 
 	// display
-	if (settings_.displayInfo_)
+	if (settings_.ddpSettings_.displayInfo_)
 		std::cerr << "\n#### Calculating cost function sensitivity ..." << std::endl;
 
 	// use the LQ-based method or Sweeping-BVP method

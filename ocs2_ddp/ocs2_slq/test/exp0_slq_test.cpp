@@ -34,7 +34,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <ocs2_slq/SLQ.h>
 #include <ocs2_slq/SLQ_MP.h>
-#include <ocs2_slq/test/EXP0.h>
+
+#include <ocs2_oc/test/EXP0.h>
 
 using namespace ocs2;
 
@@ -66,19 +67,18 @@ TEST(exp0_slq_test, exp0_slq_test) {
   /******************************************************************************************************/
   /******************************************************************************************************/
   SLQ_Settings slqSettings;
-  slqSettings.displayInfo_ = false;
-  slqSettings.displayShortSummary_ = true;
-  slqSettings.absTolODE_ = 1e-10;
-  slqSettings.relTolODE_ = 1e-7;
-  slqSettings.maxNumStepsPerSecond_ = 10000;
-  slqSettings.nThreads_ = 3;
-  slqSettings.maxNumIterationsSLQ_ = 30;
-  slqSettings.lsStepsizeGreedy_ = true;
-  slqSettings.noStateConstraints_ = true;
-  slqSettings.minLearningRateGSLQP_ = 0.0001;
-  slqSettings.minRelCostGSLQP_ = 5e-4;
-  slqSettings.checkNumericalStability_ = false;
-
+  slqSettings.ddpSettings_.displayInfo_ = true;
+  slqSettings.ddpSettings_.displayShortSummary_ = true;
+  slqSettings.ddpSettings_.absTolODE_ = 1e-10;
+  slqSettings.ddpSettings_.relTolODE_ = 1e-7;
+  slqSettings.ddpSettings_.maxNumStepsPerSecond_ = 10000;
+  slqSettings.ddpSettings_.nThreads_ = 3;
+  slqSettings.ddpSettings_.maxNumIterations_ = 30;
+  slqSettings.ddpSettings_.lsStepsizeGreedy_ = true;
+  slqSettings.ddpSettings_.noStateConstraints_ = true;
+  slqSettings.ddpSettings_.minLearningRate_ = 0.0001;
+  slqSettings.ddpSettings_.minRelCost_ = 5e-4;
+  slqSettings.ddpSettings_.checkNumericalStability_ = false;
   slqSettings.rolloutSettings_.absTolODE_ = 1e-10;
   slqSettings.rolloutSettings_.relTolODE_ = 1e-7;
   slqSettings.rolloutSettings_.maxNumStepsPerSecond_ = 10000;
@@ -101,60 +101,61 @@ TEST(exp0_slq_test, exp0_slq_test) {
   /******************************************************************************************************/
   /******************************************************************************************************/
   /******************************************************************************************************/
-  // SLQ - single core version
-  SLQ<STATE_DIM, INPUT_DIM, EXP0_LogicRules> slq(
+  // SLQ - single-thread version
+  SLQ<STATE_DIM, INPUT_DIM, EXP0_LogicRules> slqST(
       &systemDynamics, &systemDerivative,
       &systemConstraint, &systemCostFunction,
       &operatingTrajectories, slqSettings, &logicRules);
 
-  // SLQ - multi-core version
-//  SLQ_MP<STATE_DIM, INPUT_DIM, EXP0_LogicRules> slq_mp(
+  // SLQ - multi-thread version
+//  SLQ_MP<STATE_DIM, INPUT_DIM, EXP0_LogicRules> slqMT(
 //		  &systemDynamics, &systemDerivative,
 //		  &systemConstraint, &systemCostFunction,
 //		  &operatingTrajectories, slqSettings, &logicRules);
 
   // run single core SLQ
-  if (slqSettings.displayInfo_ || slqSettings.displayShortSummary_)
+  if (slqSettings.ddpSettings_.displayInfo_ || slqSettings.ddpSettings_.displayShortSummary_)
     std::cerr << "\n>>> single-core SLQ" << std::endl;
-  slq.run(startTime, initState, finalTime, partitioningTimes);
+  slqST.run(startTime, initState, finalTime, partitioningTimes);
 
   // run multi-core SLQ
-//  if (slqSettings.displayInfo_ || slqSettings.displayShortSummary_)
+//  if (slqSettings.ddpSettings_.displayInfo_ || slqSettings.ddpSettings_.displayShortSummary_)
 //	  std::cerr << "\n>>> multi-core SLQ" << std::endl;
-//  slq_mp.run(startTime, initState, finalTime, partitioningTimes);
+//  slqMT.run(startTime, initState, finalTime, partitioningTimes);
 
   /******************************************************************************************************/
   /******************************************************************************************************/
   /******************************************************************************************************/
   // get controller
-  SLQ_BASE<STATE_DIM, INPUT_DIM, EXP0_LogicRules>::controller_ptr_array_t controllersPtrStock = slq.getController();
+  SLQ_BASE<STATE_DIM, INPUT_DIM, EXP0_LogicRules>::controller_ptr_array_t controllersPtrStockST = slqST.getController();
+//  SLQ_BASE<STATE_DIM, INPUT_DIM, EXP0_LogicRules>::controller_ptr_array_t controllersPtrStockMT = slqMT.getController();
 
   // get performance indices
-  double totalCost, totalCost_mp;
-  double constraint1ISE, constraint1ISE_mp;
-  double constraint2ISE, constraint2ISE_mp;
-  slq.getPerformanceIndeces(totalCost, constraint1ISE, constraint2ISE);
-//  slq_mp.getPerformanceIndeces(totalCost_mp, constraint1ISE_mp, constraint2ISE_mp);
+  double totalCostST, totalCostMT;
+  double constraint1ISE_ST, constraint1ISE_MT;
+  double constraint2ISE_ST, constraint2ISE_MT;
+  slqST.getPerformanceIndeces(totalCostST, constraint1ISE_ST, constraint2ISE_ST);
+//  slqMT.getPerformanceIndeces(totalCostMT, constraint1ISE_MT, constraint2ISE_MT);
 
   /******************************************************************************************************/
   /******************************************************************************************************/
   /******************************************************************************************************/
   const double expectedCost = 9.7667;
-  ASSERT_LT(fabs(totalCost - expectedCost), 10 * slqSettings.minRelCostGSLQP_) <<
+  ASSERT_LT(fabs(totalCostST - expectedCost), 10 * slqSettings.ddpSettings_.minRelCost_) <<
 		  "MESSAGE: SLQ failed in the EXP0's cost test!";
-//  ASSERT_LT(fabs(totalCost_mp - expectedCost), 10*slqSettings.minRelCostGSLQP_) <<
+//  ASSERT_LT(fabs(totalCostMT - expectedCost), 10*slqSettings.ddpSettings_.minRelCost_) <<
 //		  "MESSAGE: SLQ_MP failed in the EXP1's cost test!";
 
   const double expectedISE1 = 0.0;
-  ASSERT_LT(fabs(constraint1ISE - expectedISE1), 10 * slqSettings.minRelConstraint1ISE_) <<
+  ASSERT_LT(fabs(constraint1ISE_ST - expectedISE1), 10 * slqSettings.ddpSettings_.minRelConstraint1ISE_) <<
 		  "MESSAGE: SLQ failed in the EXP0's type-1 constraint ISE test!";
-//  ASSERT_LT(fabs(constraint1ISE_mp - expectedISE1), 10*slqSettings.minRelConstraint1ISE_) <<
+//  ASSERT_LT(fabs(constraint1ISE_MT - expectedISE1), 10*slqSettings.ddpSettings_.minRelConstraint1ISE_) <<
 //		  "MESSAGE: SLQ_MP failed in the EXP1's type-1 constraint ISE test!";
 
   const double expectedISE2 = 0.0;
-  ASSERT_LT(fabs(constraint2ISE - expectedISE2), 10 * slqSettings.minRelConstraint1ISE_) <<
+  ASSERT_LT(fabs(constraint2ISE_ST - expectedISE2), 10 * slqSettings.ddpSettings_.minRelConstraint1ISE_) <<
 		  "MESSAGE: SLQ failed in the EXP0's type-2 constraint ISE test!";
-//  ASSERT_LT(fabs(constraint2ISE_mp - expectedISE2), 10*slqSettings.minRelConstraint1ISE_) <<
+//  ASSERT_LT(fabs(constraint2ISE_MT - expectedISE2), 10*slqSettings.ddpSettings_.minRelConstraint1ISE_) <<
 //		  "MESSAGE: SLQ_MP failed in the EXP1's type-2 constraint ISE test!";
 }
 

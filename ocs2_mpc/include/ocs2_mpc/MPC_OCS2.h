@@ -125,7 +125,7 @@ public:
 			const cost_function_base_t* heuristicsFunctionPtr = nullptr);
 
 	/**
-	 * destructor.
+	 * Destructor.
 	 */
 	virtual ~MPC_OCS2();
 

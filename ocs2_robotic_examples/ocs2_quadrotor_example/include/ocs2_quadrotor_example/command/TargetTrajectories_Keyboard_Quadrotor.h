@@ -84,7 +84,7 @@ public:
 	TargetTrajectories_Keyboard_Quadrotor(
 				const std::string& robotName = "robot",
 				const scalar_array_t& goalPoseLimit =
-						scalar_array_t{2.0, 2.0, 2.0, 90.0, 90.0, 360.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0})
+						scalar_array_t{10.0, 10.0, 10.0, 90.0, 90.0, 360.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0})
 	: BASE(robotName, command_dim_, goalPoseLimit)
 	{}
 

@@ -31,10 +31,11 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define MPC_SLQ_OCS2_H_
 
 #include <ocs2_core/Dimensions.h>
+#include <ocs2_ddp_base/DDP_BASE.h>
+
 #include <ocs2_slq/SLQ_BASE.h>
 #include <ocs2_slq/SLQ.h>
 #include <ocs2_slq/SLQ_MP.h>
-#include <ocs2_core/control/LinearController.h>
 
 #include "ocs2_mpc/MPC_BASE.h"
 
@@ -53,46 +54,46 @@ class MPC_SLQ : public MPC_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>
 public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-	typedef std::shared_ptr<MPC_SLQ<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>> Ptr;
-
 	typedef MPC_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> BASE;
 
 	typedef Dimensions<STATE_DIM, INPUT_DIM> DIMENSIONS;
-	typedef typename DIMENSIONS::scalar_t                    scalar_t;
-	typedef typename DIMENSIONS::scalar_array_t              scalar_array_t;
-	typedef typename DIMENSIONS::scalar_array2_t             scalar_array2_t;
-	typedef typename DIMENSIONS::size_array_t                size_array_t;
-	typedef typename DIMENSIONS::size_array2_t               size_array2_t;
-	typedef typename DIMENSIONS::state_vector_t              state_vector_t;
-	typedef typename DIMENSIONS::state_vector_array_t        state_vector_array_t;
-	typedef typename DIMENSIONS::state_vector_array2_t       state_vector_array2_t;
-	typedef typename DIMENSIONS::input_vector_t              input_vector_t;
-	typedef typename DIMENSIONS::input_vector_array_t        input_vector_array_t;
-	typedef typename DIMENSIONS::input_vector_array2_t       input_vector_array2_t;
-	typedef typename DIMENSIONS::input_state_matrix_t        input_state_matrix_t;
-	typedef typename DIMENSIONS::input_state_matrix_array_t  input_state_matrix_array_t;
-	typedef typename DIMENSIONS::input_state_matrix_array2_t input_state_matrix_array2_t;
+	typedef typename DIMENSIONS::scalar_t                     scalar_t;
+	typedef typename DIMENSIONS::scalar_array_t               scalar_array_t;
+	typedef typename DIMENSIONS::scalar_array2_t              scalar_array2_t;
+	typedef typename DIMENSIONS::size_array_t                 size_array_t;
+	typedef typename DIMENSIONS::size_array2_t                size_array2_t;
+	typedef typename DIMENSIONS::state_vector_t               state_vector_t;
+	typedef typename DIMENSIONS::state_vector_array_t         state_vector_array_t;
+	typedef typename DIMENSIONS::state_vector_array2_t        state_vector_array2_t;
+	typedef typename DIMENSIONS::input_vector_t               input_vector_t;
+	typedef typename DIMENSIONS::input_vector_array_t         input_vector_array_t;
+	typedef typename DIMENSIONS::input_vector_array2_t        input_vector_array2_t;
+	typedef typename DIMENSIONS::input_state_matrix_t         input_state_matrix_t;
+	typedef typename DIMENSIONS::input_state_matrix_array_t   input_state_matrix_array_t;
+	typedef typename DIMENSIONS::input_state_matrix_array2_t  input_state_matrix_array2_t;
 	typedef typename DIMENSIONS::dynamic_vector_t             dynamic_vector_t;
 	typedef typename DIMENSIONS::dynamic_vector_array_t       dynamic_vector_array_t;
 
 	typedef typename BASE::cost_desired_trajectories_t cost_desired_trajectories_t;
 	typedef typename BASE::mode_sequence_template_t    mode_sequence_template_t;
-    typedef typename BASE::controller_ptr_array_t      controller_ptr_array_t;
+	typedef typename BASE::controller_ptr_array_t      controller_ptr_array_t;
 
-    typedef LinearController<STATE_DIM,INPUT_DIM> linear_controller_t;
-    typedef typename linear_controller_t::array_t linear_controller_array_t;
+	typedef LinearController<STATE_DIM,INPUT_DIM> linear_controller_t;
+	typedef typename linear_controller_t::array_t linear_controller_array_t;
+
+	typedef ocs2::DDP_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> ddp_base_t;
 
 	typedef ocs2::SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> slq_base_t;
 	typedef ocs2::SLQ<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>      slq_t;
 	typedef ocs2::SLQ_MP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>   slq_mp_t;
 
-	typedef typename slq_base_t::logic_rules_machine_t         logic_rules_machine_t;
-	typedef typename slq_base_t::controlled_system_base_t      controlled_system_base_t;
-	typedef typename slq_base_t::event_handler_t               event_handler_t;
-	typedef typename slq_base_t::derivatives_base_t            derivatives_base_t;
-	typedef typename slq_base_t::constraint_base_t             constraint_base_t;
-	typedef typename slq_base_t::cost_function_base_t          cost_function_base_t;
-	typedef typename slq_base_t::operating_trajectories_base_t operating_trajectories_base_t;
+	typedef typename ddp_base_t::logic_rules_machine_t         logic_rules_machine_t;
+	typedef typename ddp_base_t::controlled_system_base_t      controlled_system_base_t;
+	typedef typename ddp_base_t::event_handler_t               event_handler_t;
+	typedef typename ddp_base_t::derivatives_base_t            derivatives_base_t;
+	typedef typename ddp_base_t::constraint_base_t             constraint_base_t;
+	typedef typename ddp_base_t::cost_function_base_t          cost_function_base_t;
+	typedef typename ddp_base_t::operating_trajectories_base_t operating_trajectories_base_t;
 
 	/**
 	 * Default constructor.
@@ -171,9 +172,7 @@ protected:
 	/***********
 	 * Variables
 	 ***********/
-	typename slq_base_t::Ptr slqPtr_;
-
-	linear_controller_array_t nullControllersStock_;
+	std::unique_ptr<slq_base_t> slqPtr_;
 
 	scalar_array2_t       optimizedTimeTrajectoriesStock_;
 	state_vector_array2_t optimizedStateTrajectoriesStock_;

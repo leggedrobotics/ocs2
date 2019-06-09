@@ -339,11 +339,12 @@ void MRT_ROS_Quadruped<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::evaluatePolicy(
 	input_vector_t inputRef;
 	size_t subsystem;
 	BASE::evaluatePolicy(time, state, stateRef, inputRef, subsystem);
+	const size_t index = BASE::findActiveSubsystemFnc_(time);
 
-	BASE::logicMachinePtr_->getLogicRulesPtr()->getMotionPhaseLogics(subsystem, stanceLegs, feetZPlanPtr_);
+	BASE::logicMachinePtr_->getLogicRulesPtr()->getMotionPhaseLogics(index, stanceLegs, feetZPlanPtr_);
 
 	// computes swing phase progress
-	computeSwingPhaseProgress(subsystem, stanceLegs, time, swingPhaseProgress_);
+	computeSwingPhaseProgress(index, stanceLegs, time, swingPhaseProgress_);
 
 	if (ocs2QuadrupedInterfacePtr_->modelSettings().useFeetTrajectoryFiltering_==false) {
 		// calculates nominal position, velocity, and contact forces of the feet in the origin frame.
@@ -370,18 +371,18 @@ void MRT_ROS_Quadruped<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::evaluatePolicy(
 		for (size_t j=0; j<4; j++) {
 
 			o_feetPositionRef[j] <<
-					feetXPlanPtrStock_[subsystem][j]->evaluateSplinePosition(time),
-					feetYPlanPtrStock_[subsystem][j]->evaluateSplinePosition(time),
+					feetXPlanPtrStock_[index][j]->evaluateSplinePosition(time),
+					feetYPlanPtrStock_[index][j]->evaluateSplinePosition(time),
 					feetZPlanPtr_[j]->calculatePosition(time);
 
 			o_feetVelocityRef[j] <<
-					feetXPlanPtrStock_[subsystem][j]->evaluateSplineVelocity(time),
-					feetYPlanPtrStock_[subsystem][j]->evaluateSplineVelocity(time),
+					feetXPlanPtrStock_[index][j]->evaluateSplineVelocity(time),
+					feetYPlanPtrStock_[index][j]->evaluateSplineVelocity(time),
 					feetZPlanPtr_[j]->calculateVelocity(time);
 
 			o_feetAccelerationRef[j] <<
-					feetXPlanPtrStock_[subsystem][j]->evaluateSplineAcceleration(time),
-					feetYPlanPtrStock_[subsystem][j]->evaluateSplineAcceleration(time),
+					feetXPlanPtrStock_[index][j]->evaluateSplineAcceleration(time),
+					feetYPlanPtrStock_[index][j]->evaluateSplineAcceleration(time),
 					feetZPlanPtr_[j]->calculateAcceleration(time);
 		}
 	}
@@ -411,11 +412,12 @@ void MRT_ROS_Quadruped<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::rolloutPolicy(
 	input_vector_t inputRef;
 	size_t subsystem;
 	BASE::evaluatePolicy(time, state, stateRef, inputRef, subsystem);
+	const size_t index = BASE::findActiveSubsystemFnc_(time);
 
-	BASE::logicMachinePtr_->getLogicRulesPtr()->getMotionPhaseLogics(subsystem, stanceLegs, feetZPlanPtr_);
+	BASE::logicMachinePtr_->getLogicRulesPtr()->getMotionPhaseLogics(index, stanceLegs, feetZPlanPtr_);
 
 	// computes swing phase progress
-	computeSwingPhaseProgress(subsystem, stanceLegs, time, swingPhaseProgress_);
+	computeSwingPhaseProgress(index, stanceLegs, time, swingPhaseProgress_);
 
 	if (ocs2QuadrupedInterfacePtr_->modelSettings().useFeetTrajectoryFiltering_==false) {
 		// calculates nominal position, velocity, and contact forces of the feet in the origin frame.
@@ -442,18 +444,18 @@ void MRT_ROS_Quadruped<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::rolloutPolicy(
 		for (size_t j=0; j<4; j++) {
 
 			o_feetPositionRef[j] <<
-					feetXPlanPtrStock_[subsystem][j]->evaluateSplinePosition(time),
-					feetYPlanPtrStock_[subsystem][j]->evaluateSplinePosition(time),
+					feetXPlanPtrStock_[index][j]->evaluateSplinePosition(time),
+					feetYPlanPtrStock_[index][j]->evaluateSplinePosition(time),
 					feetZPlanPtr_[j]->calculatePosition(time);
 
 			o_feetVelocityRef[j] <<
-					feetXPlanPtrStock_[subsystem][j]->evaluateSplineVelocity(time),
-					feetYPlanPtrStock_[subsystem][j]->evaluateSplineVelocity(time),
+					feetXPlanPtrStock_[index][j]->evaluateSplineVelocity(time),
+					feetYPlanPtrStock_[index][j]->evaluateSplineVelocity(time),
 					feetZPlanPtr_[j]->calculateVelocity(time);
 
 			o_feetAccelerationRef[j] <<
-					feetXPlanPtrStock_[subsystem][j]->evaluateSplineAcceleration(time),
-					feetYPlanPtrStock_[subsystem][j]->evaluateSplineAcceleration(time),
+					feetXPlanPtrStock_[index][j]->evaluateSplineAcceleration(time),
+					feetYPlanPtrStock_[index][j]->evaluateSplineAcceleration(time),
 					feetZPlanPtr_[j]->calculateAcceleration(time);
 		}
 	}

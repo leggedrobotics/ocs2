@@ -103,7 +103,8 @@ SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::SLQ_BASE(
 		riccatiEquationsPtrStock_.push_back( std::move(
 				std::allocate_shared<riccati_equations_t, riccati_equations_alloc_t>(riccati_equations_alloc_t(),
 						settings_.ddpSettings_.useMakePSD_,
-						settings_.ddpSettings_.addedRiccatiDiagonal_) ) );
+						settings_.ddpSettings_.addedRiccatiDiagonal_,
+						settings_.preComputeRiccatiTerms_) ) );
 
 		typedef Eigen::aligned_allocator<error_equation_t> error_equation_alloc_t;
 		errorEquationPtrStock_.push_back( std::move(

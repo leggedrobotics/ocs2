@@ -284,6 +284,8 @@ private:
 	scalar_t timeFinal_;
 	scalar_t timeSD_;
 	scalar_t timeMean_;
+
+  	dynamic_vector_t inputFromContactFlags(contact_flag_t contactFlags);
 };
 
 } //end of namespace switched_model

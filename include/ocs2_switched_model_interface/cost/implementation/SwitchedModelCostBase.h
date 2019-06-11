@@ -41,13 +41,12 @@ SwitchedModelCostBase<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::Sw
 	, timeSD_(0.17)
 	, timeMean_(0.5)
 {
-	const size_t numMotionPhases = std::pow(2, (int)NUM_CONTACT_POINTS_);
-
-	for (size_t i=0; i<numMotionPhases; i++) {
-
-		contact_flag_t stanceLeg = modeNumber2StanceLeg(i);
-		R_Bank_[stanceLeg] = correctedInputCost(stanceLeg, R);
-	} // end of i loop
+//	const size_t numMotionPhases = std::pow(2, (int)NUM_CONTACT_POINTS_);
+//
+//	for (size_t i=0; i<numMotionPhases; i++) {
+//		contact_flag_t stanceLeg = modeNumber2StanceLeg(i);
+//		R_Bank_[stanceLeg] = correctedInputCost(stanceLeg, R);
+//	} // end of i loop
 }
 
 /******************************************************************************************************/
@@ -140,12 +139,12 @@ void SwitchedModelCostBase<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM, LOGIC_RULES_T
 	logicRulesPtr_->getContactFlags(index, stanceLegs_);
 
 	// R matrix
-	BASE::R_ = R_Bank_[stanceLegs_];
+//	BASE::R_ = R_Bank_[stanceLegs_];
 
 	dynamic_vector_t xNominal;
 	BASE::xNominalFunc_.interpolate(t, xNominal);
-	dynamic_vector_t uNominal;
-	BASE::uNominalFunc_.interpolate(t, uNominal);
+	dynamic_vector_t uNominal = inputFromContactFlags(stanceLegs_);
+//	BASE::uNominalFunc_.interpolate(t, uNominal);
 
 	// set base class
 	BASE::setCurrentStateAndControl(t, x, u, xNominal, uNominal, xNominal);
@@ -292,27 +291,40 @@ typename SwitchedModelCostBase<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM, LOGIC_RUL
 	SwitchedModelCostBase<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::correctedInputCost(
 			const contact_flag_t& stanceLeg,
 			const input_matrix_t& R) {
+	/*
+	 * 	This function adapts the Force part of the R matrix in the following ways. A
+	 * 	(Assumes R is diagonal in contact forces)
+	 *  1. Makes all costs in z-input direction equal to the mean of user input
+	 *  2. multiplies diagonal 3*3 blocks by 1.05 (otherwise R is not positive definite after adding cross terms)
+	 *  3. Creates cross terms between z forces of all legs such that redistribution of forces is free.
+	 *  	 Cost is evaluated on (sum of z force deviations)-squared instead of the elements squared
+	 *  	 Lz = (uz0 + .. uzn) * Rz (uz0 + .. uzn)
+	 */
 
 	input_matrix_t nondiagonalR = R;
+
+	// Get Average cost in force Z direction
 	scalar_t meanRz = 0;
-	for (size_t i=2; i<12; i+=3)
+	for (size_t i=2; i<12; i+=3) {
 		meanRz += R(i,i) / static_cast<double>(NUM_CONTACT_POINTS_);
-	for (size_t j=0; j<NUM_CONTACT_POINTS_; j++)
-		for (size_t k=0; k<=j; k++)
-			if (k==j) {
-				nondiagonalR(3*j+0,3*k+0) = 1.05*R(3*j+0,3*k+0);
-				nondiagonalR(3*j+1,3*k+1) = 1.05*R(3*j+1,3*k+1);
-				nondiagonalR(3*j+2,3*k+2) = 1.05*meanRz;
-			}
-			else {
-				if (stanceLeg[j] && stanceLeg[k])
-					nondiagonalR(3*j+2,3*k+2) = 2*meanRz;
-				else
-					nondiagonalR(3*j+2,3*k+2) = 0.0;
-			}
+	}
+
+	for (size_t j=0; j<NUM_CONTACT_POINTS_; j++) {
+		// Diagonal bock corresponding to jth contact
+		// Rjj = 1.05 * diag(Rxx, Ryy, Rmeanz);
+		nondiagonalR(3 * j + 0, 3 * j + 0) = 1.05 * R(3 * j + 0, 3 * j + 0);
+		nondiagonalR(3 * j + 1, 3 * j + 1) = 1.05 * R(3 * j + 1, 3 * j + 1);
+		nondiagonalR(3 * j + 2, 3 * j + 2) = 1.05 * meanRz;
+
+		// Fill lower diagonal for cross terms
+		for (size_t k = 0; k < j; k++) {
+			// Rjk = diag(0, 0, Rmeanz)  (factor 2 is removed after making it symmetric)
+			nondiagonalR(3 * j + 2, 3 * k + 2) = 2 * meanRz;
+		}
+	}
+
+	// Make Symmetric
 	nondiagonalR = 0.5*(nondiagonalR + nondiagonalR.transpose()).eval();
-
-
 
 	return nondiagonalR;
 }
@@ -359,6 +371,35 @@ double SwitchedModelCostBase<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM, LOGIC_RULES
 
 	return exp( -0.5 * pow( (x-mu)/sigma ,2) );
 }
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
+typename SwitchedModelCostBase<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::dynamic_vector_t SwitchedModelCostBase<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::inputFromContactFlags(contact_flag_t contactFlags) {
+  // Distribute total mass equally over active stance legs.
+  dynamic_vector_t inputs(INPUT_DIM);
+  inputs.setZero();
+
+  const scalar_t totalMass = comModelPtr_->totalMass() * 9.81;
+  const size_t numEE(4);
+  size_t numStanceLegs(0);
+
+  for (size_t i = 0; i < numEE; i++) {
+    if (contactFlags[i]) {
+      ++numStanceLegs;
+    }
+  }
+
+  if (numStanceLegs > 0){
+    for (size_t i = 0; i < numEE; i++) {
+      inputs(3 * i + 2) = totalMass / numStanceLegs;
+    }
+  }
+
+  return inputs;
+}
+
 
 } // namespace switched_model
 

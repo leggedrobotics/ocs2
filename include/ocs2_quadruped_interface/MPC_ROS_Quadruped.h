@@ -13,8 +13,6 @@
 
 #include "ocs2_quadruped_interface/OCS2QuadrupedInterface.h"
 
-#define ABS_HEADING
-
 namespace switched_model {
 
 template <size_t JOINT_COORD_SIZE, size_t STATE_DIM=12+JOINT_COORD_SIZE, size_t INPUT_DIM=12+JOINT_COORD_SIZE>
@@ -135,7 +133,6 @@ protected:
 			const base_coordinate_t& targetVelocity,
 			cost_desired_trajectories_t& costDesiredTrajectories);
 
-protected:
 	/*
 	 * Variables
 	 */

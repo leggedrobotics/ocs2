@@ -91,6 +91,8 @@ public:
 	 */
 	virtual void reset() override;
 
+	using BASE::evaluatePolicy;
+
 	/**
 	 * Computes the optimized plan for the given time based on the latest received optimized trajectory message.
 	 *
@@ -283,6 +285,7 @@ protected:
 	 * @param [out] o_feetVelocity: Feet's velocity in the origin frame.
 	 * @param [out] o_contactForces: Feet's acting contact force in the origin frame.
 	 */
+ public:
 	virtual void computeFeetState(
 			const state_vector_t& state,
 			const input_vector_t& input,

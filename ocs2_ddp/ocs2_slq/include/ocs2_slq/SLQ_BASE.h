@@ -42,7 +42,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <ocs2_slq/SLQ_Settings.h>
 
-#include <ocs2_slq/riccati_equations/SequentialRiccatiEquations.h>
 #include <ocs2_slq/riccati_equations/SequentialRiccatiEquationsNormalized.h>
 #include <ocs2_slq/riccati_equations/SequentialErrorEquation.h>
 #include <ocs2_slq/riccati_equations/SequentialErrorEquationNormalized.h>

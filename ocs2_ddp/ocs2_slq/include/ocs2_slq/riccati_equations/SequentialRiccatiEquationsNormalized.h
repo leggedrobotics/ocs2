@@ -88,12 +88,14 @@ class SequentialRiccatiEquationsNormalized final : public ODE_Base<STATE_DIM * (
   SequentialRiccatiEquationsNormalized(
       const bool &useMakePSD,
       const scalar_t &addedRiccatiDiagonal,
+      bool normalizeTime,
       bool preComputeRiccatiTerms = true)
       : useMakePSD_(useMakePSD)
       , addedRiccatiDiagonal_(addedRiccatiDiagonal)
       , switchingTimeStart_(0.0)
       , switchingTimeFinal_(1.0)
       , scalingFactor_(1.0)
+      , normalizeTime_(normalizeTime)
       , preComputeRiccatiTerms_(preComputeRiccatiTerms)
       , Sm_(state_matrix_t::Zero())
       , Sv_(state_vector_t::Zero())
@@ -227,7 +229,12 @@ class SequentialRiccatiEquationsNormalized final : public ODE_Base<STATE_DIM * (
 
     switchingTimeStart_ = switchingTimeStart;
     switchingTimeFinal_ = switchingTimeFinal;
-    scalingFactor_ = switchingTimeFinal - switchingTimeStart;
+
+    if (normalizeTime_){
+      scalingFactor_ = switchingTimeFinal - switchingTimeStart;
+    } else {
+      scalingFactor_ = 1.0;
+    }
 
     eventTimes_.clear();
     eventTimes_.reserve(eventsPastTheEndIndecesPtr->size());
@@ -485,6 +492,7 @@ class SequentialRiccatiEquationsNormalized final : public ODE_Base<STATE_DIM * (
   scalar_t switchingTimeStart_;
   scalar_t switchingTimeFinal_;
   scalar_t scalingFactor_;
+  bool normalizeTime_;
   bool preComputeRiccatiTerms_;
 
   EigenLinearInterpolation <state_matrix_t> AmFunc_;

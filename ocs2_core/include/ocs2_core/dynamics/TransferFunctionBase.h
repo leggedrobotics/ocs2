@@ -55,10 +55,12 @@ namespace ocs2 {
 
         TransferFunctionBase(Eigen::VectorXd numCoefficients,
                              Eigen::VectorXd denCoefficients,
-                             double timedelay=0.0) :
+                             double timedelay=0.0,
+                             bool balance = true) :
             numCoefficients_(numCoefficients),
             denCoefficients_(denCoefficients),
-            timeDelay_(timedelay)
+            timeDelay_(timedelay),
+            balance_(balance)
         {};
 
         void absorbDelay(size_t numZeros, size_t numPoles) {
@@ -114,14 +116,15 @@ namespace ocs2 {
             B << 1.0, Eigen::VectorXd::Zero(numStates - 1);
             C << numExtended.tail(numStates).transpose();
 
-            // Balance
-            Eigen::MatrixXd T(numStates, numStates);
-            T.setZero();
-            T.diagonal() = denCoefficients_.tail(numStates).cwiseSqrt();
-            T(0, 0) = 1.0;
-            A = T * A.eval() * T.inverse();
-            B = T * B.eval();
-            C = C.eval() * T.inverse();
+            if (balance_){
+              Eigen::MatrixXd T(numStates, numStates);
+              T.setZero();
+              T.diagonal() = denCoefficients_.tail(numStates).cwiseSqrt();
+              T(0, 0) = 1.0;
+              A = T * A.eval() * T.inverse();
+              B = T * B.eval();
+              C = C.eval() * T.inverse();
+            }
           }
         }
 
@@ -130,6 +133,7 @@ namespace ocs2 {
         double timeDelay_;
         double delayTol = 1e-6;
         bool delayAbsorbed = false;
+        bool balance_;
     };
 
     inline void tf2ss(Eigen::VectorXd numCoefficients,
@@ -138,8 +142,9 @@ namespace ocs2 {
                Eigen::MatrixXd& B,
                Eigen::MatrixXd& C,
                Eigen::MatrixXd& D,
-               double timeDelay=0.0){
-      TransferFunctionBase tf(numCoefficients, denCoefficients, timeDelay);
+               double timeDelay = 0.0,
+               bool balance = true){
+      TransferFunctionBase tf(numCoefficients, denCoefficients, timeDelay, balance);
       tf.getStateSpace(A, B, C, D);
     }
 

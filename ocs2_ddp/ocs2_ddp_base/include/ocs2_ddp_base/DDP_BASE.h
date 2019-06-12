@@ -363,7 +363,6 @@ public:
 	 * 	- PmTrajectoryStock_: \f$ P_m\f$ matrix.
 	 * 	- RvTrajectoryStock_: \f$ R_v\f$ vector.
 	 * 	- RmTrajectoryStock_: \f$ R_m\f$ matrix.
-	 * 	- RmInverseTrajectoryStock_: inverse of \f$ R_m\f$ matrix.
 	 *
 	 * 	- as well as the constrained coefficients of
 	 * 		- linearized system model
@@ -1098,7 +1097,6 @@ protected:
 	input_vector_array2_t       RvTrajectoryStock_;
 	input_matrix_array2_t       RmTrajectoryStock_;
 	input_state_matrix_array2_t PmTrajectoryStock_;
-	input_matrix_array2_t       RmInverseTrajectoryStock_;
 
 	eigen_scalar_array2_t       qFinalStock_;
 	state_vector_array2_t       QvFinalStock_;

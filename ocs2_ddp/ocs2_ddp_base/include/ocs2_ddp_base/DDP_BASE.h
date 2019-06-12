@@ -489,6 +489,11 @@ public:
 			const eigen_scalar_array_t*& iterationISE2Ptr) const override;
 
 	/**
+	* Write access to ddp settings
+	*/
+	DDP_Settings& ddpSettings();
+
+	/**
 	 * Returns an array of pointer to the optimal control policies.
 	 *
 	 * @return An array of pointers to the optimized control policies.
@@ -721,7 +726,6 @@ public:
 			const scalar_t& finalTime,
 			const scalar_array_t& partitioningTimes,
 			const controller_ptr_array_t& controllersPtrStock) override;
-
 
 protected:
 
@@ -975,8 +979,7 @@ protected:
 	 */
 	void printRolloutInfo();
 
-protected:
-
+	// Variables
 	DDP_Settings ddpSettings_;
 	Rollout_Settings rolloutSettings_;
 

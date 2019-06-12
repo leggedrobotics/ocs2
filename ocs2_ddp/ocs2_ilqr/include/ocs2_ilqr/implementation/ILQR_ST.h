@@ -99,12 +99,12 @@ void ILQR_ST<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::lineSearch(bool computeISEs) 
 	BASE::initLScontrollersStock_ = BASE::nominalControllersStock_;
 
 	// if no line search
-	if (BASE::settings_.ddpSettings_.maxLearningRate_ < OCS2NumericTraits<scalar_t>::limit_epsilon()) {
+	if (BASE::ddpsettings_.maxLearningRate_ < OCS2NumericTraits<scalar_t>::limit_epsilon()) {
 		// clear the feedforward increments
 		for (size_t i=0; i<BASE::numPartitions_; i++)
 			BASE::nominalControllersStock_[i].deltaBiasArray_.clear();
 		// display
-		if (BASE::settings_.ddpSettings_.displayInfo_)
+		if (BASE::ddpsettings_.displayInfo_)
 			std::cerr << "The chosen learningRate is: " << BASE::learningRateStar_ << std::endl;
 
 		return;
@@ -120,7 +120,7 @@ void ILQR_ST<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::lineSearch(bool computeISEs) 
 	state_vector_array2_t lsStateTrajectoriesStock(BASE::numPartitions_);
 	input_vector_array2_t lsInputTrajectoriesStock(BASE::numPartitions_);
 
-	while (learningRate >= BASE::settings_.ddpSettings_.minLearningRate_)  {
+	while (learningRate >= BASE::ddpsettings_.minLearningRate_)  {
 
 		// do a line search
 		lsControllersStock = BASE::initLScontrollersStock_;
@@ -138,12 +138,12 @@ void ILQR_ST<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::lineSearch(bool computeISEs) 
 		if (lsTotalCost < BASE::nominalTotalCost_*(1-1e-3*learningRate))
 			break;  // exit while loop
 		else
-			learningRate = BASE::settings_.ddpSettings_.lineSearchContractionRate_*learningRate;
+			learningRate = BASE::ddpsettings_.lineSearchContractionRate_*learningRate;
 
 	}  // end of while
 
 
-	if (learningRate >= BASE::settings_.ddpSettings_.minLearningRate_)  {
+	if (learningRate >= BASE::ddpsettings_.minLearningRate_)  {
 		BASE::learningRateStar_ = learningRate;
 		BASE::nominalTotalCost_ = lsTotalCost;
 		BASE::nominalConstraint1ISE_ 	 = lsConstraint1ISE;
@@ -166,7 +166,7 @@ void ILQR_ST<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::lineSearch(bool computeISEs) 
 		BASE::nominalControllersStock_[i].deltaBiasArray_.clear();
 
 	// display
-	if (BASE::settings_.ddpSettings_.displayInfo_)
+	if (BASE::ddpsettings_.displayInfo_)
 		std::cerr << "The chosen learningRate is: " << BASE::learningRateStar_ << std::endl;
 }
 

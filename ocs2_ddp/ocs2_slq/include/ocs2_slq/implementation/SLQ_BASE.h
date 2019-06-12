@@ -57,67 +57,67 @@ SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::SLQ_BASE(
 		, settings_(settings)
 {
 	// State triggered
-	state_dynamicsForwardRolloutPtrStock_.resize(settings_.ddpSettings_.nThreads_);
-	for (size_t i=0; i<settings_.ddpSettings_.nThreads_; i++) {
+	state_dynamicsForwardRolloutPtrStock_.resize(BASE::ddpSettings_.nThreads_);
+	for (size_t i=0; i<BASE::ddpSettings_.nThreads_; i++) {
 
 		state_dynamicsForwardRolloutPtrStock_[i].reset( new state_triggered_rollout_t(
-				*systemDynamicsPtr, settings_.rolloutSettings_, "SLQ") );
+				*systemDynamicsPtr, BASE::rolloutSettings_, "SLQ") );
 
 	} // end of i loop
 
 
 	// for controller design
-	BmFunc_.resize(settings_.ddpSettings_.nThreads_);
-	PmFunc_.resize(settings_.ddpSettings_.nThreads_);
-	RmInverseFunc_.resize(settings_.ddpSettings_.nThreads_);
-	RvFunc_.resize(settings_.ddpSettings_.nThreads_);
-	EvProjectedFunc_.resize(settings_.ddpSettings_.nThreads_);
-	CmProjectedFunc_.resize(settings_.ddpSettings_.nThreads_);
-	DmProjectedFunc_.resize(settings_.ddpSettings_.nThreads_);
+	BmFunc_.resize(BASE::ddpSettings_.nThreads_);
+	PmFunc_.resize(BASE::ddpSettings_.nThreads_);
+	RmInverseFunc_.resize(BASE::ddpSettings_.nThreads_);
+	RvFunc_.resize(BASE::ddpSettings_.nThreads_);
+	EvProjectedFunc_.resize(BASE::ddpSettings_.nThreads_);
+	CmProjectedFunc_.resize(BASE::ddpSettings_.nThreads_);
+	DmProjectedFunc_.resize(BASE::ddpSettings_.nThreads_);
 
 	// Riccati Solver
-	SmFuncs_.resize(settings_.ddpSettings_.nThreads_);
+	SmFuncs_.resize(BASE::ddpSettings_.nThreads_);
 	riccatiEquationsPtrStock_.clear();
-	riccatiEquationsPtrStock_.reserve(settings_.ddpSettings_.nThreads_);
+	riccatiEquationsPtrStock_.reserve(BASE::ddpSettings_.nThreads_);
 	errorEquationPtrStock_.clear();
-	errorEquationPtrStock_.reserve(settings_.ddpSettings_.nThreads_);
+	errorEquationPtrStock_.reserve(BASE::ddpSettings_.nThreads_);
 	riccatiEventPtrStock_.clear();
-	riccatiEventPtrStock_.reserve(settings_.ddpSettings_.nThreads_);
+	riccatiEventPtrStock_.reserve(BASE::ddpSettings_.nThreads_);
 	errorEventPtrStock_.clear();
-	errorEventPtrStock_.reserve(settings_.ddpSettings_.nThreads_);
+	errorEventPtrStock_.reserve(BASE::ddpSettings_.nThreads_);
 	riccatiIntegratorPtrStock_.clear();
-	riccatiIntegratorPtrStock_.reserve(settings_.ddpSettings_.nThreads_);
+	riccatiIntegratorPtrStock_.reserve(BASE::ddpSettings_.nThreads_);
 	errorIntegratorPtrStock_.clear();
-	errorIntegratorPtrStock_.reserve(settings_.ddpSettings_.nThreads_);
+	errorIntegratorPtrStock_.reserve(BASE::ddpSettings_.nThreads_);
 
 	slqRiccatiEquationsPtrStock_.clear();
-	slqRiccatiEquationsPtrStock_.reserve(settings_.ddpSettings_.nThreads_);
+	slqRiccatiEquationsPtrStock_.reserve(BASE::ddpSettings_.nThreads_);
 	slqRiccatiEventPtrStock_.clear();
-	slqRiccatiEventPtrStock_.reserve(settings_.ddpSettings_.nThreads_);
+	slqRiccatiEventPtrStock_.reserve(BASE::ddpSettings_.nThreads_);
 	slqRiccatiIntegratorPtrStock_.clear();
-	slqRiccatiIntegratorPtrStock_.reserve(settings_.ddpSettings_.nThreads_);
+	slqRiccatiIntegratorPtrStock_.reserve(BASE::ddpSettings_.nThreads_);
 
-	for (size_t i=0; i<settings_.ddpSettings_.nThreads_; i++)  {
+	for (size_t i=0; i<BASE::ddpSettings_.nThreads_; i++)  {
 
 		typedef Eigen::aligned_allocator<riccati_equations_t> riccati_equations_alloc_t;
 		riccatiEquationsPtrStock_.push_back( std::move(
 				std::allocate_shared<riccati_equations_t, riccati_equations_alloc_t>(riccati_equations_alloc_t(),
-						settings_.ddpSettings_.useMakePSD_,
-						settings_.ddpSettings_.addedRiccatiDiagonal_,
+						BASE::ddpSettings_.useMakePSD_,
+						BASE::ddpSettings_.addedRiccatiDiagonal_,
 						true,
 						settings_.preComputeRiccatiTerms_) ) );
 
 		typedef Eigen::aligned_allocator<error_equation_t> error_equation_alloc_t;
 		errorEquationPtrStock_.push_back( std::move(
 				std::allocate_shared<error_equation_t, error_equation_alloc_t>(error_equation_alloc_t(),
-						settings_.ddpSettings_.useMakePSD_,
-						settings_.ddpSettings_.addedRiccatiDiagonal_) ) );
+						BASE::ddpSettings_.useMakePSD_,
+						BASE::ddpSettings_.addedRiccatiDiagonal_) ) );
 
 		typedef Eigen::aligned_allocator<slq_riccati_equations_t> slq_riccati_equations_alloc_t;
 		slqRiccatiEquationsPtrStock_.push_back( std::move(
 				std::allocate_shared<slq_riccati_equations_t, slq_riccati_equations_alloc_t>(slq_riccati_equations_alloc_t(),
-						settings_.ddpSettings_.useMakePSD_,
-						settings_.ddpSettings_.addedRiccatiDiagonal_) ) );
+						BASE::ddpSettings_.useMakePSD_,
+						BASE::ddpSettings_.addedRiccatiDiagonal_) ) );
 
 		typedef SystemEventHandler<riccati_equations_t::S_DIM_> riccati_event_handler_t;
 		typedef Eigen::aligned_allocator<riccati_event_handler_t> riccati_event_handler_alloc_t;
@@ -166,16 +166,16 @@ SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::SLQ_BASE(
 	}  // end of i loop
 
 	hamiltonianEquationPtrStock_.clear();
-	hamiltonianEquationPtrStock_.reserve(settings_.ddpSettings_.nThreads_);
+	hamiltonianEquationPtrStock_.reserve(BASE::ddpSettings_.nThreads_);
 	hamiltonianIntegratorPtrStock_.clear();
-	hamiltonianIntegratorPtrStock_.reserve(settings_.ddpSettings_.nThreads_);
+	hamiltonianIntegratorPtrStock_.reserve(BASE::ddpSettings_.nThreads_);
 
 	hamiltonianIncrementEquationPtrStock_.clear();
-	hamiltonianIncrementEquationPtrStock_.reserve(settings_.ddpSettings_.nThreads_);
+	hamiltonianIncrementEquationPtrStock_.reserve(BASE::ddpSettings_.nThreads_);
 	hamiltonianIncrementIntegratorPtrStock_.clear();
-	hamiltonianIncrementIntegratorPtrStock_.reserve(settings_.ddpSettings_.nThreads_);
+	hamiltonianIncrementIntegratorPtrStock_.reserve(BASE::ddpSettings_.nThreads_);
 
-	for (size_t i=0; i<settings_.ddpSettings_.nThreads_; i++)  {
+	for (size_t i=0; i<BASE::ddpSettings_.nThreads_; i++)  {
 		hamiltonianEquationPtrStock_.emplace_back(
 				new hamiltonian_equation_t());
 		hamiltonianIntegratorPtrStock_.emplace_back(
@@ -206,7 +206,7 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::approximateOptimalControlPro
 		EvProjectedTrajectoryStock_[i].resize(N);
 		CmProjectedTrajectoryStock_[i].resize(N);
 		DmProjectedTrajectoryStock_[i].resize(N);
-		if (settings_.ddpSettings_.useRiccatiSolver_==true) {
+		if (BASE::ddpSettings_.useRiccatiSolver_==true) {
 			RmConstrainedTrajectoryStock_[i].resize(N);
 		} else {
 			BmConstrainedTrajectoryStock_[i].resize(N);
@@ -231,8 +231,8 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::approximateLQWorker(
 	// unconstrained LQ problem
 	BASE::approximateUnconstrainedLQWorker(workerIndex, partitionIndex, timeIndex);
 
-	const scalar_t stateConstraintPenalty = settings_.ddpSettings_.stateConstraintPenaltyCoeff_ *
-				pow(settings_.ddpSettings_.stateConstraintPenaltyBase_, BASE::iteration_);
+	const scalar_t stateConstraintPenalty = BASE::ddpSettings_.stateConstraintPenaltyCoeff_ *
+				pow(BASE::ddpSettings_.stateConstraintPenaltyBase_, BASE::iteration_);
 
 	// modify the unconstrained LQ coefficients to constrained ones
 	approximateConstrainedLQWorker(workerIndex, partitionIndex, timeIndex, stateConstraintPenalty);
@@ -294,7 +294,7 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::approximateConstrainedLQWork
 		BASE::PmTrajectoryStock_[i][k] += ddpdudx;
 
 		// checking the numerical stability again
-		if (settings_.ddpSettings_.checkNumericalStability_==true){
+		if (BASE::ddpSettings_.checkNumericalStability_==true){
 			try {
 				if (!BASE::qTrajectoryStock_[i][k].allFinite())
 					throw std::runtime_error("Intermediate cost is is not finite.");
@@ -348,7 +348,7 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::approximateConstrainedLQWork
 		AmConstrainedTrajectoryStock_[i][k] = BASE::AmTrajectoryStock_[i][k];
 		QmConstrainedTrajectoryStock_[i][k] = BASE::QmTrajectoryStock_[i][k];
 		QvConstrainedTrajectoryStock_[i][k] = BASE::QvTrajectoryStock_[i][k];
-		if (settings_.ddpSettings_.useRiccatiSolver_==true) {
+		if (BASE::ddpSettings_.useRiccatiSolver_==true) {
 			RmConstrainedTrajectoryStock_[i][k] = BASE::RmTrajectoryStock_[i][k];
 		} else {
 			BmConstrainedTrajectoryStock_[i][k] = BASE::BmTrajectoryStock_[i][k];
@@ -363,7 +363,7 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::approximateConstrainedLQWork
     dynamic_matrix_t Dm = BASE::DmTrajectoryStock_[i][k].topRows(nc1);
 
 		// check numerical stability_
-		if (settings_.ddpSettings_.checkNumericalStability_==true && nc1>0)
+		if (BASE::ddpSettings_.checkNumericalStability_==true && nc1>0)
 			if (Dm.colPivHouseholderQr().rank()!=nc1) {
 				BASE::printString(">>> WARNING: The state-input constraints are rank deficient "
 						"(at time " + std::to_string(BASE::nominalTimeTrajectoriesStock_[i][k]) + ")!");
@@ -389,7 +389,7 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::approximateConstrainedLQWork
     QvConstrainedTrajectoryStock_[i][k].noalias() -= CmProjectedTrajectoryStock_[i][k].transpose()*BASE::RvTrajectoryStock_[i][k];
 
     input_matrix_t DmNullSpaceProjection = input_matrix_t::Identity() - DmProjectedTrajectoryStock_[i][k];
-    if (settings_.ddpSettings_.useRiccatiSolver_==true) {
+    if (BASE::ddpSettings_.useRiccatiSolver_==true) {
 			RmConstrainedTrajectoryStock_[i][k].noalias() = DmNullSpaceProjection.transpose() * BASE::RmTrajectoryStock_[i][k] * DmNullSpaceProjection;
 		} else {
 			BmConstrainedTrajectoryStock_[i][k].noalias() = BASE::BmTrajectoryStock_[i][k] * DmNullSpaceProjection;
@@ -400,7 +400,7 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::approximateConstrainedLQWork
 	}
 
 	// making sure that constrained Qm is PSD
-	if (settings_.ddpSettings_.useMakePSD_==true)
+	if (BASE::ddpSettings_.useMakePSD_==true)
 		BASE::makePSD(QmConstrainedTrajectoryStock_[i][k]);
 }
 
@@ -428,7 +428,7 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculateController() {
 		if (N==0)  continue;
 
 		// initialize interpolating function
-		for (size_t j = 0; j<settings_.ddpSettings_.nThreads_; j++) {
+		for (size_t j = 0; j<BASE::ddpSettings_.nThreads_; j++) {
 			// functions for controller
 			BASE::nominalStateFunc_[j].setData(&(BASE::nominalTimeTrajectoriesStock_[i]), &(BASE::nominalStateTrajectoriesStock_[i]) );
 			BASE::nominalInputFunc_[j].setData(&(BASE::nominalTimeTrajectoriesStock_[i]), &(BASE::nominalInputTrajectoriesStock_[i]) );
@@ -442,7 +442,7 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculateController() {
 		}  // end of j loop
 
 		// current partition update
-		BASE::constraintStepSize_ = BASE::initialControllerDesignStock_[i] ? 0.0 : settings_.ddpSettings_.constraintStepSize_;
+		BASE::constraintStepSize_ = BASE::initialControllerDesignStock_[i] ? 0.0 : BASE::ddpSettings_.constraintStepSize_;
 
 		/*
 		 * perform the calculatePartitionController for partition i
@@ -501,7 +501,7 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculateControllerWorker (
 	BASE::nominalControllersStock_[i].deltaBiasArray_[k] = -DmNullProjection*Lv;
 
 	// checking the numerical stability of the controller parameters
-	if (settings_.ddpSettings_.checkNumericalStability_==true){
+	if (BASE::ddpSettings_.checkNumericalStability_==true){
 		try {
 			if (!BASE::nominalControllersStock_[i].gainArray_[k].allFinite())
 				throw std::runtime_error("Feedback gains are unstable.");
@@ -564,7 +564,7 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::solveRiccatiEquationsWorker(
 	}
 
 	// max number of steps of integration
-	size_t maxNumSteps = settings_.ddpSettings_.maxNumStepsPerSecond_ * std::max(1.0, finalNormalizedTime-startNormalizedTime);
+	size_t maxNumSteps = BASE::ddpSettings_.maxNumStepsPerSecond_ * std::max(1.0, finalNormalizedTime-startNormalizedTime);
 
 	// clear output containers
 	BASE::SsNormalizedTimeTrajectoryStock_[partitionIndex].clear();
@@ -600,9 +600,9 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::solveRiccatiEquationsWorker(
 			riccatiIntegratorPtrStock_[workerIndex]->integrate(
 					allSsFinal, beginTime, endTime,
 					allSsTrajectory, BASE::SsNormalizedTimeTrajectoryStock_[partitionIndex],
-					settings_.ddpSettings_.minTimeStep_,
-					settings_.ddpSettings_.absTolODE_,
-					settings_.ddpSettings_.relTolODE_,
+					BASE::ddpSettings_.minTimeStep_,
+					BASE::ddpSettings_.absTolODE_,
+					BASE::ddpSettings_.relTolODE_,
 					maxNumSteps,
 					true);
 		} else {
@@ -632,7 +632,7 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::solveRiccatiEquationsWorker(
 	}  // end of k loop
 
 	// testing the numerical stability of the Riccati equations
-	if (settings_.ddpSettings_.checkNumericalStability_)
+	if (BASE::ddpSettings_.checkNumericalStability_)
 		for (int k=NS-1; k>=0; k--) {
 			try {
 				if (!BASE::SmTrajectoryStock_[partitionIndex][k].allFinite())  throw std::runtime_error("Sm is unstable.");
@@ -710,7 +710,7 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::solveRiccatiEquationsForNomi
 	}
 
 	// max number of steps of integration
-	const size_t maxNumSteps = settings_.ddpSettings_.maxNumStepsPerSecond_ *
+	const size_t maxNumSteps = BASE::ddpSettings_.maxNumStepsPerSecond_ *
 			std::max(1.0, BASE::SsNormalizedTimeTrajectoryStock_[partitionIndex].back()-BASE::SsNormalizedTimeTrajectoryStock_[partitionIndex].front());
 
 	// output containers resizing
@@ -743,9 +743,9 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::solveRiccatiEquationsForNomi
 			riccatiIntegratorPtrStock_[workerIndex]->integrate(
 					allSsFinal, beginTimeItr, endTimeItr,
 					allSsTrajectory,
-					settings_.ddpSettings_.minTimeStep_,
-					settings_.ddpSettings_.absTolODE_,
-					settings_.ddpSettings_.relTolODE_,
+					BASE::ddpSettings_.minTimeStep_,
+					BASE::ddpSettings_.absTolODE_,
+					BASE::ddpSettings_.relTolODE_,
 					maxNumSteps,
 					true);
 		} else {
@@ -773,7 +773,7 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::solveRiccatiEquationsForNomi
 	}  // end of k loop
 
 	// testing the numerical stability of the Riccati equations
-	if (settings_.ddpSettings_.checkNumericalStability_)
+	if (BASE::ddpSettings_.checkNumericalStability_)
 		for (int k=N-1; k>=0; k--) {
 			try {
 				if (!BASE::SmTrajectoryStock_[partitionIndex][k].allFinite())  throw std::runtime_error("Sm is unstable.");
@@ -820,7 +820,7 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::solveErrorRiccatiEquationWor
 	const scalar_t scalingFactor = scalingStart - scalingFinal;  // this is negative
 
 	// Skip calculation of the error correction term (Sve) if the constrained simulation is used for forward simulation
-	if (settings_.ddpSettings_.simulationIsConstrained_==true) {
+	if (BASE::ddpSettings_.simulationIsConstrained_==true) {
 		BASE::SveTrajectoryStock_[partitionIndex].resize(NS);
 		for (size_t k=0; k<NS; k++)
 			BASE::SveTrajectoryStock_[partitionIndex][k].setZero();
@@ -856,7 +856,7 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::solveErrorRiccatiEquationWor
 			&BASE::nominalTimeTrajectoriesStock_[partitionIndex], &GvTrajectory, &GmTrajectory);
 
 	// max number of steps of integration
-	const size_t maxNumSteps = settings_.ddpSettings_.maxNumStepsPerSecond_
+	const size_t maxNumSteps = BASE::ddpSettings_.maxNumStepsPerSecond_
 			* std::max(1.0, BASE::SsNormalizedTimeTrajectoryStock_[partitionIndex].back()-BASE::SsNormalizedTimeTrajectoryStock_[partitionIndex].front());
 
 	// clear output
@@ -888,9 +888,9 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::solveErrorRiccatiEquationWor
 			errorIntegratorPtrStock_[workerIndex]->integrate(
 					SveFinalInternal, beginTimeItr, endTimeItr,
 					SveTrajectory,
-					settings_.ddpSettings_.minTimeStep_,
-					settings_.ddpSettings_.absTolODE_,
-					settings_.ddpSettings_.relTolODE_,
+					BASE::ddpSettings_.minTimeStep_,
+					BASE::ddpSettings_.absTolODE_,
+					BASE::ddpSettings_.relTolODE_,
 					maxNumSteps,
 					true);
 		} else {
@@ -912,7 +912,7 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::solveErrorRiccatiEquationWor
 	std::reverse_copy(SveTrajectory.begin(), SveTrajectory.end(), BASE::SveTrajectoryStock_[partitionIndex].begin());
 
 	// Testing the numerical stability
-	if (settings_.ddpSettings_.checkNumericalStability_==true)
+	if (BASE::ddpSettings_.checkNumericalStability_==true)
 		for (size_t k=0; k<NS; k++) {
 
 			// testing the numerical stability of the Riccati error equation
@@ -990,7 +990,7 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::solveSlqRiccatiEquationsWork
 	}
 
 	// max number of steps of integration
-	size_t maxNumSteps = settings_.ddpSettings_.maxNumStepsPerSecond_ * std::max(1.0, finalNormalizedTime-startNormalizedTime);
+	size_t maxNumSteps = BASE::ddpSettings_.maxNumStepsPerSecond_ * std::max(1.0, finalNormalizedTime-startNormalizedTime);
 
 	// clear output containers
 	BASE::SsNormalizedTimeTrajectoryStock_[partitionIndex].clear();
@@ -1026,9 +1026,9 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::solveSlqRiccatiEquationsWork
 			slqRiccatiIntegratorPtrStock_[workerIndex]->integrate(
 					allSsFinal, beginTime, endTime,
 					allSsTrajectory, BASE::SsNormalizedTimeTrajectoryStock_[partitionIndex],
-					settings_.ddpSettings_.minTimeStep_,
-					settings_.ddpSettings_.absTolODE_,
-					settings_.ddpSettings_.relTolODE_,
+					BASE::ddpSettings_.minTimeStep_,
+					BASE::ddpSettings_.absTolODE_,
+					BASE::ddpSettings_.relTolODE_,
 					maxNumSteps,
 					true);
 		} else {
@@ -1058,7 +1058,7 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::solveSlqRiccatiEquationsWork
 	}  // end of k loop
 
 	// testing the numerical stability of the Riccati equations
-	if (settings_.ddpSettings_.checkNumericalStability_)
+	if (BASE::ddpSettings_.checkNumericalStability_)
 		for (int k=NS-1; k>=0; k--) {
 			try {
 				if (!BASE::SmTrajectoryStock_[partitionIndex][k].allFinite())   throw std::runtime_error("Sm is unstable.");
@@ -1105,7 +1105,7 @@ Eigen::Matrix<typename SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::scalar_t, 
 #if DIM2==1
 	firstOrderOdeIntegrator.integrate(x0, timeTrajectory.begin(), timeTrajectory.end(),
 			stateTrajectory,
-			settings_.ddpSettings_.minTimeStep_, settings_.ddpSettings_.absTolODE_, settings_.ddpSettings_.relTolODE_);
+			BASE::ddpSettings_.minTimeStep_, BASE::ddpSettings_.absTolODE_, BASE::ddpSettings_.relTolODE_);
 
 	return stateTrajectory.back();
 #else
@@ -1113,7 +1113,7 @@ Eigen::Matrix<typename SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::scalar_t, 
 	lti_equation_t::convert2Vector(x0, x0Vectorized);
 	firstOrderOdeIntegratorPtr->integrate(x0Vectorized, timeTrajectory.begin(), timeTrajectory.end(),
 			stateTrajectory,
-			settings_.ddpSettings_.minTimeStep_, settings_.ddpSettings_.absTolODE_, settings_.ddpSettings_.relTolODE_);
+			BASE::ddpSettings_.minTimeStep_, BASE::ddpSettings_.absTolODE_, BASE::ddpSettings_.relTolODE_);
 
 	Eigen::Matrix<scalar_t, DIM1, DIM2> xf;
 	lti_equation_t::convert2Matrix(stateTrajectory.back(), xf);
@@ -1246,12 +1246,12 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::fullRiccatiBackwardSweepWork
 		deltaT = BASE::nominalTimeTrajectoriesStock_[partitionIndex][k] - BASE::nominalTimeTrajectoriesStock_[partitionIndex][k+1];
 
 		if (eventDetected==true) {
-//			if (settings_.ddpSettings_.useMakePSD_==true)  BASE::makePSD(BASE::QmFinalStock_[partitionIndex][remainingEvents]);
+//			if (BASE::ddpSettings_.useMakePSD_==true)  BASE::makePSD(BASE::QmFinalStock_[partitionIndex][remainingEvents]);
 			BASE::SmTrajectoryStock_[partitionIndex][k] = BASE::SmTrajectoryStock_[partitionIndex][k+1] +
 					BASE::QmFinalStock_[partitionIndex][remainingEvents];
 
 		} else {
-//			if (settings_.ddpSettings_.useMakePSD_==true)  BASE::makePSD(QmConstrainedTrajectoryStock_[partitionIndex][k]);
+//			if (BASE::ddpSettings_.useMakePSD_==true)  BASE::makePSD(QmConstrainedTrajectoryStock_[partitionIndex][k]);
 			_H.template topLeftCorner<STATE_DIM,STATE_DIM>() = AmConstrainedTrajectoryStock_[partitionIndex][k] -
 					BmConstrainedTrajectoryStock_[partitionIndex][k]*BASE::RmInverseTrajectoryStock_[partitionIndex][k]*PmConstrainedTrajectoryStock_[partitionIndex][k];
 			_H.template topRightCorner<STATE_DIM,STATE_DIM>() =
@@ -1301,7 +1301,7 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::fullRiccatiBackwardSweepWork
 	}
 
 	// testing the numerical stability
-	if (settings_.ddpSettings_.checkNumericalStability_==true)
+	if (BASE::ddpSettings_.checkNumericalStability_==true)
 		for (int k=N-1; k>=0; k--) {
 			// checking the numerical stability of the Riccati equations
 			try {

@@ -135,13 +135,13 @@ void MPC_ILQR<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculateController(
 	//*****************************************************************************************
 	// number of iterations
 	if (BASE::initRun_==true /*|| ilqrPtr_->getController().at(BASE::finalActivePartitionIndex_).empty()==true*/) {
-		ilqrPtr_->settings().ddpSettings_.maxNumIterations_  = BASE::mpcSettings_.initMaxNumIterations_;
-		ilqrPtr_->settings().ddpSettings_.maxLearningRate_ = BASE::mpcSettings_.initMaxLearningRate_;
-		ilqrPtr_->settings().ddpSettings_.minLearningRate_ = BASE::mpcSettings_.initMinLearningRate_;
+		ilqrPtr_->ddpSettings().maxNumIterations_  = BASE::mpcSettings_.initMaxNumIterations_;
+		ilqrPtr_->ddpSettings().maxLearningRate_ = BASE::mpcSettings_.initMaxLearningRate_;
+		ilqrPtr_->ddpSettings().minLearningRate_ = BASE::mpcSettings_.initMinLearningRate_;
 	} else {
-		ilqrPtr_->settings().ddpSettings_.maxNumIterations_  = BASE::mpcSettings_.runtimeMaxNumIterations_;
-		ilqrPtr_->settings().ddpSettings_.maxLearningRate_ = BASE::mpcSettings_.runtimeMaxLearningRate_;
-		ilqrPtr_->settings().ddpSettings_.minLearningRate_ = BASE::mpcSettings_.runtimeMinLearningRate_;
+		ilqrPtr_->ddpSettings().maxNumIterations_  = BASE::mpcSettings_.runtimeMaxNumIterations_;
+		ilqrPtr_->ddpSettings().maxLearningRate_ = BASE::mpcSettings_.runtimeMaxLearningRate_;
+		ilqrPtr_->ddpSettings().minLearningRate_ = BASE::mpcSettings_.runtimeMinLearningRate_;
 	}
 
 	// use parallel Riccati solver at each call of realtime-iteration ILQR

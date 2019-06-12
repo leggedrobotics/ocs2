@@ -47,6 +47,8 @@ model_settings
   eta 	1e+2
 
   torqueMixingFactor            0.0
+
+  gaitOptimization              0
 }
 
 switchingModes
@@ -101,10 +103,11 @@ slq
     constraintStepSize            1.0
     displayInfo                   0
     displayShortSummary           1
+    debugPrintRollout             0
     
     AbsTolODE                     1e-5  ;1e-6
     RelTolODE                     1e-3  ;1e-4
-    minTimeStep                   1e-3
+    minTimeStep                   1e-2
     useMakePSD                    0
     addedRiccatiDiagonal          1e-5
     maxNumStepsPerSecond          50000
@@ -127,9 +130,9 @@ slq
   {
     AbsTolODE                     1e-5  ;1e-6
     RelTolODE                     1e-3  ;1e-4
-    minTimeStep                   1e-3
+    minTimeStep                   1e-2
     maxNumStepsPerSecond          50000
-    checkNumericalStability        0
+    checkNumericalStability       0
   }
 }
 

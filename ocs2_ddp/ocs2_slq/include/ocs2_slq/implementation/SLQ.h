@@ -106,12 +106,12 @@ void SLQ<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::lineSearch(bool computeISEs)  {
 	BASE::initLScontrollersStock_ = BASE::nominalControllersStock_;
 
 	// if no line search
-	if (this->ddpsettings_.maxLearningRate_ < OCS2NumericTraits<scalar_t>::limit_epsilon()) {
+	if (BASE::ddpSettings_.maxLearningRate_ < OCS2NumericTraits<scalar_t>::limit_epsilon()) {
 		// clear the feedforward increments
 		for (size_t i=0; i<BASE::numPartitions_; i++)
 			BASE::nominalControllersStock_[i].deltaBiasArray_.clear();
 		// display
-		if (this->ddpsettings_.displayInfo_)
+		if (BASE::ddpSettings_.displayInfo_)
 			std::cerr << "The chosen learningRate is: " << BASE::learningRateStar_ << std::endl;
 
 		return;
@@ -127,7 +127,7 @@ void SLQ<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::lineSearch(bool computeISEs)  {
 	state_vector_array2_t lsStateTrajectoriesStock(BASE::numPartitions_);
 	input_vector_array2_t lsInputTrajectoriesStock(BASE::numPartitions_);
 
-	while (learningRate >= this->ddpsettings_.minLearningRate_)  {
+	while (learningRate >= BASE::ddpSettings_.minLearningRate_)  {
 
 		// do a line search
 		lsControllersStock = BASE::initLScontrollersStock_;
@@ -144,12 +144,12 @@ void SLQ<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::lineSearch(bool computeISEs)  {
 		if (lsTotalCost < BASE::nominalTotalCost_*(1-1e-3*learningRate))
 			break;  // exit while loop
 		else
-			learningRate = this->ddpsettings_.lineSearchContractionRate_*learningRate;
+			learningRate = BASE::ddpSettings_.lineSearchContractionRate_*learningRate;
 
 	}  // end of while
 
 
-	if (learningRate >= this->ddpsettings_.minLearningRate_)  {
+	if (learningRate >= BASE::ddpSettings_.minLearningRate_)  {
 		BASE::learningRateStar_ = learningRate;
 		BASE::nominalTotalCost_ = lsTotalCost;
 		BASE::nominalConstraint1ISE_ 	 = lsConstraint1ISE;
@@ -172,7 +172,7 @@ void SLQ<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::lineSearch(bool computeISEs)  {
 		BASE::nominalControllersStock_[i].deltaBiasArray_.clear();
 
 	// display
-	if (this->ddpsettings_.displayInfo_)
+	if (BASE::ddpSettings_.displayInfo_)
 		std::cerr << "The chosen learningRate is: " << BASE::learningRateStar_ << std::endl;
 }
 
@@ -216,11 +216,11 @@ typename SLQ<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::scalar_t
 			continue;
 		}
 
-		if (this->ddpsettings_.useRiccatiSolver_==true) {
+		if (BASE::ddpSettings_.useRiccatiSolver_==true) {
 			BASE::solveSlqRiccatiEquationsWorker(workerIndex, i,
 					BASE::SmFinalStock_[i], BASE::SvFinalStock_[i], BASE::sFinalStock_[i], BASE::SveFinalStock_[i]);
 		} else {
-			scalar_t constraintStepSize = BASE::initialControllerDesignStock_[i] ? 0.0 : this->ddpsettings_.constraintStepSize_;
+			scalar_t constraintStepSize = BASE::initialControllerDesignStock_[i] ? 0.0 : BASE::ddpSettings_.constraintStepSize_;
 			BASE::fullRiccatiBackwardSweepWorker(workerIndex, i,
 					BASE::SmFinalStock_[i], BASE::SvFinalStock_[i], BASE::SveFinalStock_[i], BASE::sFinalStock_[i],
 					constraintStepSize);

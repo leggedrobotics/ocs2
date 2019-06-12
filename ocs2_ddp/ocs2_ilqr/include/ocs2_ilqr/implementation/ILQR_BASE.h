@@ -98,8 +98,8 @@ void ILQR_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::approximateLQWorker(
 	// discretize LQ problem
 	discreteLQWorker(workerIndex, partitionIndex, timeIndex);
 
-	const scalar_t stateConstraintPenalty = BASE::ddpsettings_.stateConstraintPenaltyCoeff_ *
-				pow(BASE::ddpsettings_.stateConstraintPenaltyBase_, BASE::iteration_);
+	const scalar_t stateConstraintPenalty = BASE::ddpSettings_.stateConstraintPenaltyCoeff_ *
+				pow(BASE::ddpSettings_.stateConstraintPenaltyBase_, BASE::iteration_);
 
 //	// modify the unconstrained LQ coefficients to constrained ones
 //	approximateConstrainedLQWorker(workerIndex, partitionIndex, timeIndex, stateConstraintPenalty);
@@ -120,7 +120,7 @@ void ILQR_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::approximateUnconstrainedLQW
 	BASE::approximateUnconstrainedLQWorker(workerIndex, i, k);
 
 	// making sure that constrained Qm is PSD
-	if (BASE::ddpsettings_.useMakePSD_==true)
+	if (BASE::ddpSettings_.useMakePSD_==true)
 		BASE::makePSD(BASE::QmTrajectoryStock_[i][k]);
 
 	// TODO: add support for the constrained ILQR
@@ -185,7 +185,7 @@ void ILQR_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculateController() {
 		if (N==0)  continue;
 
 		// current partition update
-		BASE::constraintStepSize_ = BASE::initialControllerDesignStock_[i] ? 0.0 : BASE::ddpsettings_.constraintStepSize_;
+		BASE::constraintStepSize_ = BASE::initialControllerDesignStock_[i] ? 0.0 : BASE::ddpSettings_.constraintStepSize_;
 
 		/*
 		 * perform the calculatePartitionController for partition i
@@ -226,7 +226,7 @@ void ILQR_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculateControllerWorker (
 	BASE::nominalControllersStock_[i].deltaBiasArray_[k] = -Lv;
 
 	// checking the numerical stability of the controller parameters
-	if (BASE::ddpsettings_.checkNumericalStability_==true){
+	if (BASE::ddpSettings_.checkNumericalStability_==true){
 		try {
 			if (!BASE::nominalControllersStock_[i].gainArray_[k].allFinite())
 				throw std::runtime_error("Feedback gains are unstable.");
@@ -351,10 +351,10 @@ void ILQR_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::solveRiccatiEquationsWorker
 				input_state_matrix_t& Gm = GmTrajectoryStock_[partitionIndex][k];
 
 				Hm = Rm + Bm.transpose() * BASE::SmTrajectoryStock_[partitionIndex][k+1] * Bm;
-				if (BASE::ddpsettings_.useMakePSD_==true)
+				if (BASE::ddpSettings_.useMakePSD_==true)
 					BASE::makePSD(Hm);
 				else
-					Hm += BASE::ddpsettings_.addedRiccatiDiagonal_ * input_matrix_t::Identity();
+					Hm += BASE::ddpSettings_.addedRiccatiDiagonal_ * input_matrix_t::Identity();
 				HmInverse = Hm.ldlt().solve(input_matrix_t::Identity());
 				Gm = Pm + Bm.transpose() * BASE::SmTrajectoryStock_[partitionIndex][k+1] * Am;
 				Gv = Rv + Bm.transpose() * BASE::SvTrajectoryStock_[partitionIndex][k+1];
@@ -375,7 +375,7 @@ void ILQR_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::solveRiccatiEquationsWorker
 
 
 	// testing the numerical stability of the Riccati equations
-	if (BASE::ddpsettings_.checkNumericalStability_)
+	if (BASE::ddpSettings_.checkNumericalStability_)
 		for (int k=N-1; k>=0; k--) {
 			try {
 				if (!BASE::SmTrajectoryStock_[partitionIndex][k].allFinite())  throw std::runtime_error("Sm is unstable.");

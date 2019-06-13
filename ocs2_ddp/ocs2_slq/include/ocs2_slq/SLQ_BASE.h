@@ -122,6 +122,7 @@ public:
 	typedef typename BASE::constraint2_state_matrix_array2_t   constraint2_state_matrix_array2_t;
 	typedef typename BASE::dynamic_vector_t                    dynamic_vector_t;
 	typedef typename BASE::dynamic_vector_array_t              dynamic_vector_array_t;
+	typedef typename BASE::dynamic_matrix_array2_t             dynamic_matrix_array2_t;
 
 	typedef typename BASE::controller_ptr_array_t              controller_ptr_array_t;
 	typedef typename BASE::linear_controller_t                 linear_controller_t;
@@ -453,6 +454,7 @@ protected:
 	state_matrix_array2_t       QmConstrainedTrajectoryStock_;
 	state_vector_array2_t       QvConstrainedTrajectoryStock_;
 	input_matrix_array2_t       RmConstrainedTrajectoryStock_;
+	dynamic_matrix_array2_t     RmConstrainedCholTrajectoryStock_;
 	input_constraint1_matrix_array2_t DmDagerTrajectoryStock_;
 	input_vector_array2_t       EvProjectedTrajectoryStock_;  // DmDager * Ev
 	input_state_matrix_array2_t CmProjectedTrajectoryStock_;  // DmDager * Cm

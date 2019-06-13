@@ -147,6 +147,7 @@ public:
 	typedef typename BASE::constraint2_state_matrix_array2_t   constraint2_state_matrix_array2_t;
 	typedef typename BASE::dynamic_vector_t                    dynamic_vector_t;
 	typedef typename BASE::dynamic_vector_array_t              dynamic_vector_array_t;
+  	typedef typename BASE::dynamic_matrix_array2_t             dynamic_matrix_array2_t;
 
 	typedef typename BASE::controller_ptr_array_t  controller_ptr_array_t;
 	typedef LinearController<STATE_DIM,INPUT_DIM>  linear_controller_t;

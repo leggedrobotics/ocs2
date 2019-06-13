@@ -209,6 +209,7 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::approximateOptimalControlPro
         RmInverseTrajectoryStock_[i].resize(N);
 		if (BASE::ddpSettings_.useRiccatiSolver_==true) {
 			RmConstrainedTrajectoryStock_[i].resize(N);
+			RmConstrainedCholTrajectoryStock_[i].resize(N);
 		} else {
 			BmConstrainedTrajectoryStock_[i].resize(N);
 			PmConstrainedTrajectoryStock_[i].resize(N);
@@ -245,17 +246,17 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::approximateLQWorker(
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
+template<size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
 void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::approximateConstrainedLQWorker(
-			size_t workerIndex,
-			const size_t& i,
-			const size_t& k,
-			const scalar_t& stateConstraintPenalty) {
+		size_t workerIndex,
+		const size_t &i,
+		const size_t &k,
+		const scalar_t &stateConstraintPenalty) {
 
 	// constraint type 2 coefficients
-	const size_t& nc2 = BASE::nc2TrajectoriesStock_[i][k];
+	const size_t &nc2 = BASE::nc2TrajectoriesStock_[i][k];
 	if (nc2 > 0) {
-		BASE::qTrajectoryStock_[i][k]  += 0.5 * stateConstraintPenalty *
+		BASE::qTrajectoryStock_[i][k] += 0.5 * stateConstraintPenalty *
 				BASE::HvTrajectoryStock_[i][k].head(nc2).transpose() * BASE::HvTrajectoryStock_[i][k].head(nc2);
 		BASE::QvTrajectoryStock_[i][k] += stateConstraintPenalty *
 				BASE::FmTrajectoryStock_[i][k].topRows(nc2).transpose() * BASE::HvTrajectoryStock_[i][k].head(nc2);
@@ -285,7 +286,10 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::approximateConstrainedLQWork
 				BASE::hTrajectoryStock_[i][k], BASE::dhduTrajectoryStock_[i][k], BASE::ddhduduTrajectoryStock_[i][k],
 				ddpdudu);
 		BASE::penaltyPtrStock_[workerIndex]->getPenaltyCostDerivativeInputState(
-				BASE::hTrajectoryStock_[i][k], BASE::dhdxTrajectoryStock_[i][k], BASE::dhduTrajectoryStock_[i][k], BASE::ddhdudxTrajectoryStock_[i][k],
+				BASE::hTrajectoryStock_[i][k],
+				BASE::dhdxTrajectoryStock_[i][k],
+				BASE::dhduTrajectoryStock_[i][k],
+				BASE::ddhdudxTrajectoryStock_[i][k],
 				ddpdudx);
 		BASE::qTrajectoryStock_[i][k][0] += p; // q is a 1x1 matrix, so access it with [0]
 		BASE::QvTrajectoryStock_[i][k] += dpdx;
@@ -295,7 +299,7 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::approximateConstrainedLQWork
 		BASE::PmTrajectoryStock_[i][k] += ddpdudx;
 
 		// checking the numerical stability again
-		if (BASE::ddpSettings_.checkNumericalStability_==true){
+		if (BASE::ddpSettings_.checkNumericalStability_ == true) {
 			try {
 				if (!BASE::qTrajectoryStock_[i][k].allFinite())
 					throw std::runtime_error("Intermediate cost is is not finite.");
@@ -305,9 +309,10 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::approximateConstrainedLQWork
 					throw std::runtime_error("Intermediate cost second derivative w.r.t. state is is not finite.");
 				if (!BASE::QmTrajectoryStock_[i][k].isApprox(BASE::QmTrajectoryStock_[i][k].transpose()))
 					throw std::runtime_error("Intermediate cost second derivative w.r.t. state is is not self-adjoint.");
-				if (BASE::QmTrajectoryStock_[i][k].eigenvalues().real().minCoeff() < -Eigen::NumTraits<scalar_t>::epsilon())
+				if (BASE::QmTrajectoryStock_[i][k].eigenvalues().real().minCoeff()
+						< -Eigen::NumTraits<scalar_t>::epsilon())
 					throw std::runtime_error("Q matrix is not positive semi-definite. It's smallest eigenvalue is " +
-											 std::to_string(BASE::QmTrajectoryStock_[i][k].eigenvalues().real().minCoeff()) + ".");
+							std::to_string(BASE::QmTrajectoryStock_[i][k].eigenvalues().real().minCoeff()) + ".");
 				if (!BASE::RvTrajectoryStock_[i][k].allFinite())
 					throw std::runtime_error("Intermediate cost first derivative w.r.t. input is is not finite.");
 				if (!BASE::RmTrajectoryStock_[i][k].allFinite())
@@ -318,13 +323,15 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::approximateConstrainedLQWork
 					throw std::runtime_error("Intermediate cost second derivative w.r.t. input-state is is not finite.");
 				if (BASE::RmTrajectoryStock_[i][k].ldlt().rcond() < Eigen::NumTraits<scalar_t>::epsilon())
 					throw std::runtime_error("R matrix is not invertible. It's reciprocal condition number is " +
-											 std::to_string(BASE::RmTrajectoryStock_[i][k].ldlt().rcond()) + ".");
-				if (BASE::RmTrajectoryStock_[i][k].eigenvalues().real().minCoeff() < Eigen::NumTraits<scalar_t>::epsilon())
+							std::to_string(BASE::RmTrajectoryStock_[i][k].ldlt().rcond()) + ".");
+				if (BASE::RmTrajectoryStock_[i][k].eigenvalues().real().minCoeff()
+						< Eigen::NumTraits<scalar_t>::epsilon())
 					throw std::runtime_error("R matrix is not positive definite. It's smallest eigenvalue is " +
-											 std::to_string(BASE::RmTrajectoryStock_[i][k].eigenvalues().real().minCoeff()) + ".");
-			} catch(const std::exception& error)  {
+							std::to_string(BASE::RmTrajectoryStock_[i][k].eigenvalues().real().minCoeff()) + ".");
+			} catch (const std::exception &error) {
 				std::cerr << "After adding inequality constraint penalty" << std::endl;
-				std::cerr << "what(): " << error.what() << " at time " << BASE::nominalTimeTrajectoriesStock_[i][k] << " [sec]." << std::endl;
+				std::cerr << "what(): " << error.what() << " at time " << BASE::nominalTimeTrajectoriesStock_[i][k]
+						  << " [sec]." << std::endl;
 				std::cerr << "x: " << BASE::nominalStateTrajectoriesStock_[i][k].transpose() << std::endl;
 				std::cerr << "u: " << BASE::nominalInputTrajectoriesStock_[i][k].transpose() << std::endl;
 				std::cerr << "q: " << BASE::qTrajectoryStock_[i][k] << std::endl;
@@ -339,10 +346,17 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::approximateConstrainedLQWork
 	}
 
 	// Compute R inverse after inequalities are added to the cost
-    RmInverseTrajectoryStock_[i][k] = BASE::RmTrajectoryStock_[i][k].ldlt().solve(input_matrix_t::Identity());
+	// Compute LLT of R = L * L^T
+	// Rinv = L^(-T) * L^(-1)
+	Eigen::LLT<input_matrix_t> lltOfR(BASE::RmTrajectoryStock_[i][k]);
+	input_matrix_t lltOfR_LinvT = input_matrix_t::Identity();
+	lltOfR_LinvT = lltOfR.matrixU().solve(lltOfR_LinvT);
+
+//    RmInverseTrajectoryStock_[i][k] = BASE::RmTrajectoryStock_[i][k].ldlt().solve(input_matrix_t::Identity());
+	RmInverseTrajectoryStock_[i][k] = lltOfR_LinvT * lltOfR_LinvT.transpose();
 
 	// constraint type 1 coefficients
-	const size_t& nc1 = BASE::nc1TrajectoriesStock_[i][k];
+	const size_t &nc1 = BASE::nc1TrajectoriesStock_[i][k];
 	if (nc1 == 0) {
 		DmDagerTrajectoryStock_[i][k].setZero();
 		EvProjectedTrajectoryStock_[i][k].setZero();
@@ -352,7 +366,8 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::approximateConstrainedLQWork
 		AmConstrainedTrajectoryStock_[i][k] = BASE::AmTrajectoryStock_[i][k];
 		QmConstrainedTrajectoryStock_[i][k] = BASE::QmTrajectoryStock_[i][k];
 		QvConstrainedTrajectoryStock_[i][k] = BASE::QvTrajectoryStock_[i][k];
-		if (BASE::ddpSettings_.useRiccatiSolver_==true) {
+		RmConstrainedCholTrajectoryStock_[i][k].noalias() = lltOfR_LinvT;
+		if (BASE::ddpSettings_.useRiccatiSolver_ == true) {
 			RmConstrainedTrajectoryStock_[i][k] = BASE::RmTrajectoryStock_[i][k];
 		} else {
 			BmConstrainedTrajectoryStock_[i][k] = BASE::BmTrajectoryStock_[i][k];
@@ -363,18 +378,24 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::approximateConstrainedLQWork
 	} else {
 		typedef Eigen::Matrix<scalar_t, Eigen::Dynamic, Eigen::Dynamic> dynamic_matrix_t;
 
-    dynamic_matrix_t Cm = BASE::CmTrajectoryStock_[i][k].topRows(nc1);
-    dynamic_matrix_t Dm = BASE::DmTrajectoryStock_[i][k].topRows(nc1);
+		dynamic_matrix_t Cm = BASE::CmTrajectoryStock_[i][k].topRows(nc1);
+		dynamic_matrix_t Dm = BASE::DmTrajectoryStock_[i][k].topRows(nc1);
 
 		// check numerical stability_
-		if (BASE::ddpSettings_.checkNumericalStability_==true && nc1>0)
-			if (Dm.colPivHouseholderQr().rank()!=nc1) {
+		if (BASE::ddpSettings_.checkNumericalStability_ == true && nc1 > 0)
+			if (Dm.colPivHouseholderQr().rank() != nc1) {
 				BASE::printString(">>> WARNING: The state-input constraints are rank deficient "
-						"(at time " + std::to_string(BASE::nominalTimeTrajectoriesStock_[i][k]) + ")!");
+								  "(at time " + std::to_string(BASE::nominalTimeTrajectoriesStock_[i][k]) + ")!");
 			}
 
-    dynamic_matrix_t RmInvDmtranspose = RmInverseTrajectoryStock_[i][k]*Dm.transpose();
-		dynamic_matrix_t RmProjected = ( Dm * RmInvDmtranspose ).ldlt().solve(dynamic_matrix_t::Identity(nc1,nc1));
+		// Constraint Projectors
+		Eigen::HouseholderQR<dynamic_matrix_t> QRofDLinvT( lltOfR_LinvT.transpose() * Dm.transpose() );
+		dynamic_matrix_t QRofDLinvT_Q = QRofDLinvT.householderQ();
+		dynamic_matrix_t QRofDLinvT_Qu = QRofDLinvT_Q.rightCols(INPUT_DIM - nc1);
+		RmConstrainedCholTrajectoryStock_[i][k].noalias() = lltOfR_LinvT * QRofDLinvT_Qu;
+
+		dynamic_matrix_t RmInvDmtranspose = RmInverseTrajectoryStock_[i][k] * Dm.transpose();
+		dynamic_matrix_t RmProjected = (Dm * RmInvDmtranspose).ldlt().solve(dynamic_matrix_t::Identity(nc1, nc1));
 		dynamic_matrix_t DmDager = RmInvDmtranspose * RmProjected;
 
 		DmDagerTrajectoryStock_[i][k].leftCols(nc1) = DmDager;
@@ -382,29 +403,36 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::approximateConstrainedLQWork
 		CmProjectedTrajectoryStock_[i][k].noalias() = DmDager * Cm;
 		DmProjectedTrajectoryStock_[i][k].noalias() = DmDager * Dm;
 
-    AmConstrainedTrajectoryStock_[i][k] = BASE::AmTrajectoryStock_[i][k];
-    AmConstrainedTrajectoryStock_[i][k].noalias() -=	BASE::BmTrajectoryStock_[i][k]*CmProjectedTrajectoryStock_[i][k];
+		AmConstrainedTrajectoryStock_[i][k] = BASE::AmTrajectoryStock_[i][k];
+		AmConstrainedTrajectoryStock_[i][k].noalias() -=
+				BASE::BmTrajectoryStock_[i][k] * CmProjectedTrajectoryStock_[i][k];
 
-    state_matrix_t PmTransDmDagerCm = BASE::PmTrajectoryStock_[i][k].transpose()*CmProjectedTrajectoryStock_[i][k];
-    QmConstrainedTrajectoryStock_[i][k] = BASE::QmTrajectoryStock_[i][k] - PmTransDmDagerCm - PmTransDmDagerCm.transpose();
-    QmConstrainedTrajectoryStock_[i][k].noalias() +=	Cm.transpose()*RmProjected*Cm;
+		state_matrix_t
+				PmTransDmDagerCm = BASE::PmTrajectoryStock_[i][k].transpose() * CmProjectedTrajectoryStock_[i][k];
+		QmConstrainedTrajectoryStock_[i][k] =
+				BASE::QmTrajectoryStock_[i][k] - PmTransDmDagerCm - PmTransDmDagerCm.transpose();
+		QmConstrainedTrajectoryStock_[i][k].noalias() += Cm.transpose() * RmProjected * Cm;
 
-    QvConstrainedTrajectoryStock_[i][k] = BASE::QvTrajectoryStock_[i][k];
-    QvConstrainedTrajectoryStock_[i][k].noalias() -= CmProjectedTrajectoryStock_[i][k].transpose()*BASE::RvTrajectoryStock_[i][k];
+		QvConstrainedTrajectoryStock_[i][k] = BASE::QvTrajectoryStock_[i][k];
+		QvConstrainedTrajectoryStock_[i][k].noalias() -=
+				CmProjectedTrajectoryStock_[i][k].transpose() * BASE::RvTrajectoryStock_[i][k];
 
-    input_matrix_t DmNullSpaceProjection = input_matrix_t::Identity() - DmProjectedTrajectoryStock_[i][k];
-    if (BASE::ddpSettings_.useRiccatiSolver_==true) {
-			RmConstrainedTrajectoryStock_[i][k].noalias() = DmNullSpaceProjection.transpose() * BASE::RmTrajectoryStock_[i][k] * DmNullSpaceProjection;
+		input_matrix_t DmNullSpaceProjection = input_matrix_t::Identity() - DmProjectedTrajectoryStock_[i][k];
+		if (BASE::ddpSettings_.useRiccatiSolver_ == true) {
+			RmConstrainedTrajectoryStock_[i][k].noalias() =
+					DmNullSpaceProjection.transpose() * BASE::RmTrajectoryStock_[i][k] * DmNullSpaceProjection;
 		} else {
 			BmConstrainedTrajectoryStock_[i][k].noalias() = BASE::BmTrajectoryStock_[i][k] * DmNullSpaceProjection;
-			PmConstrainedTrajectoryStock_[i][k].noalias() = DmNullSpaceProjection.transpose() * BASE::PmTrajectoryStock_[i][k];
-			RvConstrainedTrajectoryStock_[i][k].noalias() = DmNullSpaceProjection.transpose() * BASE::RvTrajectoryStock_[i][k];
+			PmConstrainedTrajectoryStock_[i][k].noalias() =
+					DmNullSpaceProjection.transpose() * BASE::PmTrajectoryStock_[i][k];
+			RvConstrainedTrajectoryStock_[i][k].noalias() =
+					DmNullSpaceProjection.transpose() * BASE::RvTrajectoryStock_[i][k];
 		}
 
 	}
 
 	// making sure that constrained Qm is PSD
-	if (BASE::ddpSettings_.useMakePSD_==true)
+	if (BASE::ddpSettings_.useMakePSD_ == true)
 		BASE::makePSD(QmConstrainedTrajectoryStock_[i][k]);
 }
 
@@ -544,6 +572,7 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::solveRiccatiEquationsWorker(
 			&BASE::RvTrajectoryStock_[partitionIndex],
 			&RmInverseTrajectoryStock_[partitionIndex],
 			&RmConstrainedTrajectoryStock_[partitionIndex],
+			&RmConstrainedCholTrajectoryStock_[partitionIndex],
 			&BASE::PmTrajectoryStock_[partitionIndex],
 			&BASE::nominalEventsPastTheEndIndecesStock_[partitionIndex],
 			&BASE::qFinalStock_[partitionIndex],
@@ -686,6 +715,7 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::solveRiccatiEquationsForNomi
 			&BASE::RvTrajectoryStock_[partitionIndex],
 			&RmInverseTrajectoryStock_[partitionIndex],
 			&RmConstrainedTrajectoryStock_[partitionIndex],
+			&RmConstrainedCholTrajectoryStock_[partitionIndex],
 			&BASE::PmTrajectoryStock_[partitionIndex],
 			&BASE::nominalEventsPastTheEndIndecesStock_[partitionIndex],
 			&BASE::qFinalStock_[partitionIndex],
@@ -1379,6 +1409,7 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::setupOptimizer(const size_t&
 	CmProjectedTrajectoryStock_.resize(numPartitions);
 	DmProjectedTrajectoryStock_.resize(numPartitions);
 	RmConstrainedTrajectoryStock_.resize(numPartitions);
+	RmConstrainedCholTrajectoryStock_.resize(numPartitions);
 	BmConstrainedTrajectoryStock_.resize(numPartitions);
 	PmConstrainedTrajectoryStock_.resize(numPartitions);
 	RvConstrainedTrajectoryStock_.resize(numPartitions);

@@ -1,7 +1,7 @@
 ; Time Horizon
 mpcTimeHorizon
 {
-    timehorizon				1.0
+    timehorizon				10.0
     numPartitions			2
 }
 
@@ -22,6 +22,7 @@ templateSwitchingTimes
 ; SLQ settings
 slq
 {
+	addedRiccatiDiagonal         0
 	maxNumIterationsSLQ          10      ; 50                                          
 	minLearningRateGSLQP         1.0     ; 0.1                                        	
 	maxLearningRateGSLQP         1.0                                          	
@@ -133,7 +134,7 @@ Q_final
 ; final goal
 x_final
 {
-   (0,0) 2.0    ; x1
+   (0,0) 0.0    ; x1
    (1,0) 0.0    ; x2
 }
 

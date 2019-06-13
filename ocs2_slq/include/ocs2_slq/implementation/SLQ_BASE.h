@@ -2561,8 +2561,10 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::getValueFunctionStateDerivat
 			&SsTimeTrajectoryStock_[activeSubsystem], &SveTrajectoryStock_[activeSubsystem]);
 	SveFunc.interpolate(time, Sve, greatestLessTimeStampIndex);
 
-	Vx = Sm * xNominal + Sv + Sve;
-	//TODO(jcarius) do we need to take care of the final time differently?
+	state_vector_t state = xNominal; //TODO(jcarius) dummy, take this as a function argument
+	state_vector_t deltaX = state-xNominal;
+
+	Vx = Sm * deltaX + Sv + Sve;
 }
 
 /******************************************************************************************************/

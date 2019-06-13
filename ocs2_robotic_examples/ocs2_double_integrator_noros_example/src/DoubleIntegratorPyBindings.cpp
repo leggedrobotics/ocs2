@@ -13,6 +13,7 @@ DoubleIntegratorPyBindings::DoubleIntegratorPyBindings(const std::string& taskFi
   dynamicsDerivatives_.reset(doubleIntegratorInterface_->getDynamicsDerivativesPtr()->clone());
 
   cost_.reset(doubleIntegratorInterface_->getCostPtr()->clone());
+  //TODO(jcarius) should we set the costDesiredTrajectories here?
 
   // initialize reference
   constexpr double time = 0.0;

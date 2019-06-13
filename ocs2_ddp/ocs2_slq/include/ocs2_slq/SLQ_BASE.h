@@ -460,6 +460,7 @@ protected:
 	state_input_matrix_array2_t BmConstrainedTrajectoryStock_;
 	input_state_matrix_array2_t PmConstrainedTrajectoryStock_;
 	input_vector_array2_t       RvConstrainedTrajectoryStock_;
+  	input_matrix_array2_t       RmInverseTrajectoryStock_;
 
 	std::vector<std::shared_ptr<slq_riccati_equations_t>>                             slqRiccatiEquationsPtrStock_;
 	std::vector<std::shared_ptr<SystemEventHandler<slq_riccati_equations_t::S_DIM_>>> slqRiccatiEventPtrStock_;
@@ -490,7 +491,7 @@ protected:
 
 	// Functions for solving Backward pass through Mobius scheme
 	void LmFunc_ (const size_t& partitionIndex, const size_t& timeIndex, input_state_matrix_t& Lm) {
-		Lm = -BASE::RmInverseTrajectoryStock_[partitionIndex][timeIndex] * ( BASE::PmTrajectoryStock_[partitionIndex][timeIndex] +
+		Lm = -RmInverseTrajectoryStock_[partitionIndex][timeIndex] * ( BASE::PmTrajectoryStock_[partitionIndex][timeIndex] +
 				BASE::BmTrajectoryStock_[partitionIndex][timeIndex].transpose()*BASE::SmTrajectoryStock_[partitionIndex][timeIndex] );
 	};
 	//
@@ -499,12 +500,12 @@ protected:
 	};
 	//
 	void LvConstrainedFunc_ (const size_t& partitionIndex, const size_t& timeIndex, input_vector_t& LvConstrained) {
-		LvConstrained  = -BASE::RmInverseTrajectoryStock_[partitionIndex][timeIndex] * ( RvConstrainedTrajectoryStock_[partitionIndex][timeIndex] +
+		LvConstrained  = -RmInverseTrajectoryStock_[partitionIndex][timeIndex] * ( RvConstrainedTrajectoryStock_[partitionIndex][timeIndex] +
 				BmConstrainedTrajectoryStock_[partitionIndex][timeIndex].transpose()*BASE::SvTrajectoryStock_[partitionIndex][timeIndex]);
 	};
 	//
 	void LveConstrainedFunc_ (const size_t& partitionIndex, const size_t& timeIndex, input_vector_t& LveConstrained) {
-		LveConstrained = -BASE::RmInverseTrajectoryStock_[partitionIndex][timeIndex] *
+		LveConstrained = -RmInverseTrajectoryStock_[partitionIndex][timeIndex] *
 				BmConstrainedTrajectoryStock_[partitionIndex][timeIndex].transpose() * BASE::SveTrajectoryStock_[partitionIndex][timeIndex];
 	};
 	//

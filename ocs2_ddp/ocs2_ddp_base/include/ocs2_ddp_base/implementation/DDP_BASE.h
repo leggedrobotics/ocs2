@@ -659,8 +659,6 @@ void DDP_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::approximateOptimalControlPro
 		RvTrajectoryStock_[i].resize(N);
 		RmTrajectoryStock_[i].resize(N);
 		PmTrajectoryStock_[i].resize(N);
-		RmInverseTrajectoryStock_[i].resize(N);
-
 
 		// event times LQ variables
 		size_t NE = nominalEventsPastTheEndIndecesStock_[i].size();
@@ -751,7 +749,6 @@ void DDP_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::approximateUnconstrainedLQWo
 	RvTrajectoryStock_[i][k].swap(linearQuadraticApproximatorPtrStock_[workerIndex]->Rv_);
 	RmTrajectoryStock_[i][k].swap(linearQuadraticApproximatorPtrStock_[workerIndex]->Rm_);
 	PmTrajectoryStock_[i][k].swap(linearQuadraticApproximatorPtrStock_[workerIndex]->Pm_);
-	RmInverseTrajectoryStock_[i][k].swap(linearQuadraticApproximatorPtrStock_[workerIndex]->RmInverse_);
 
 	// making sure that constrained Qm is PSD
 	if (ddpSettings_.useMakePSD_==true)
@@ -1757,7 +1754,6 @@ void DDP_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::setupOptimizer(const size_t&
 	QmTrajectoryStock_.resize(numPartitions);
 	RvTrajectoryStock_.resize(numPartitions);
 	RmTrajectoryStock_.resize(numPartitions);
-	RmInverseTrajectoryStock_.resize(numPartitions);
 	PmTrajectoryStock_.resize(numPartitions);
 }
 

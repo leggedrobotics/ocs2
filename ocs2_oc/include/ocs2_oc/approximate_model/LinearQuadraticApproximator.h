@@ -403,9 +403,6 @@ public:
 				exit(0);
 			}
 		}
-
-		// Pre-compute R inverse after costs are adapted
-		RmInverse_ = Rm_.ldlt().solve(input_matrix_t::Identity());
 	}
 
 public:
@@ -435,7 +432,6 @@ public:
 	input_vector_t       Rv_;
 	input_matrix_t       Rm_;
 	input_state_matrix_t Pm_;
-	input_matrix_t       RmInverse_;
 
 	size_t                     ncFinalEqStateOnly_;
 	constraint2_vector_t       HvFinal_;

@@ -204,6 +204,7 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::approximateOptimalControlPro
 		EvProjectedTrajectoryStock_[i].resize(N);
 		CmProjectedTrajectoryStock_[i].resize(N);
 		DmProjectedTrajectoryStock_[i].resize(N);
+        RmInverseTrajectoryStock_[i].resize(N);
 		if (BASE::ddpSettings_.useRiccatiSolver_==true) {
 			RmConstrainedTrajectoryStock_[i].resize(N);
 		} else {
@@ -335,6 +336,9 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::approximateConstrainedLQWork
 		}
 	}
 
+	// Compute R inverse after inequalities are added to the cost
+    RmInverseTrajectoryStock_[i][k] = BASE::RmTrajectoryStock_[i][k].ldlt().solve(input_matrix_t::Identity());
+
 	// constraint type 1 coefficients
 	const size_t& nc1 = BASE::nc1TrajectoriesStock_[i][k];
 	if (nc1 == 0) {
@@ -367,7 +371,7 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::approximateConstrainedLQWork
 						"(at time " + std::to_string(BASE::nominalTimeTrajectoriesStock_[i][k]) + ")!");
 			}
 
-    dynamic_matrix_t RmInvDmtranspose = BASE::RmInverseTrajectoryStock_[i][k]*Dm.transpose();
+    dynamic_matrix_t RmInvDmtranspose = RmInverseTrajectoryStock_[i][k]*Dm.transpose();
 		dynamic_matrix_t RmProjected = ( Dm * RmInvDmtranspose ).ldlt().solve(dynamic_matrix_t::Identity(nc1,nc1));
 		dynamic_matrix_t DmDager = RmInvDmtranspose * RmProjected;
 
@@ -432,7 +436,7 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculateController() {
 			BASE::nominalInputFunc_[j].setData(&(BASE::nominalTimeTrajectoriesStock_[i]), &(BASE::nominalInputTrajectoriesStock_[i]) );
 			BmFunc_[j].setData(&(BASE::nominalTimeTrajectoriesStock_[i]), &(BASE::BmTrajectoryStock_[i]) );
 			PmFunc_[j].setData(&(BASE::nominalTimeTrajectoriesStock_[i]), &(BASE::PmTrajectoryStock_[i]) );
-			RmInverseFunc_[j].setData(&(BASE::nominalTimeTrajectoriesStock_[i]), &(BASE::RmInverseTrajectoryStock_[i]) );
+			RmInverseFunc_[j].setData(&(BASE::nominalTimeTrajectoriesStock_[i]), &(RmInverseTrajectoryStock_[i]) );
 			RvFunc_[j].setData( &(BASE::nominalTimeTrajectoriesStock_[i]), &(BASE::RvTrajectoryStock_[i]) );
 			EvProjectedFunc_[j].setData(&(BASE::nominalTimeTrajectoriesStock_[i]), &(EvProjectedTrajectoryStock_[i]) );
 			CmProjectedFunc_[j].setData(&(BASE::nominalTimeTrajectoriesStock_[i]), &(CmProjectedTrajectoryStock_[i]) );
@@ -536,7 +540,7 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::solveRiccatiEquationsWorker(
 			&QvConstrainedTrajectoryStock_[partitionIndex],
 			&QmConstrainedTrajectoryStock_[partitionIndex],
 			&BASE::RvTrajectoryStock_[partitionIndex],
-			&BASE::RmInverseTrajectoryStock_[partitionIndex],
+			&RmInverseTrajectoryStock_[partitionIndex],
 			&RmConstrainedTrajectoryStock_[partitionIndex],
 			&BASE::PmTrajectoryStock_[partitionIndex],
 			&BASE::nominalEventsPastTheEndIndecesStock_[partitionIndex],
@@ -678,7 +682,7 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::solveRiccatiEquationsForNomi
 			&QvConstrainedTrajectoryStock_[partitionIndex],
 			&QmConstrainedTrajectoryStock_[partitionIndex],
 			&BASE::RvTrajectoryStock_[partitionIndex],
-			&BASE::RmInverseTrajectoryStock_[partitionIndex],
+			&RmInverseTrajectoryStock_[partitionIndex],
 			&RmConstrainedTrajectoryStock_[partitionIndex],
 			&BASE::PmTrajectoryStock_[partitionIndex],
 			&BASE::nominalEventsPastTheEndIndecesStock_[partitionIndex],
@@ -838,10 +842,11 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::solveErrorRiccatiEquationWor
 		// Sm
 		SmFuncs_[workerIndex].interpolate(BASE::nominalTimeTrajectoriesStock_[partitionIndex][k], Sm);
 		// Lm
-		Lm = BASE::RmInverseTrajectoryStock_[partitionIndex][k]*(BASE::PmTrajectoryStock_[partitionIndex][k]+BASE::BmTrajectoryStock_[partitionIndex][k].transpose()*Sm);
+		Lm = RmInverseTrajectoryStock_[partitionIndex][k]*(BASE::PmTrajectoryStock_[partitionIndex][k]+BASE::BmTrajectoryStock_[partitionIndex][k].transpose()*Sm);
 
 		GmTrajectory[k] = AmConstrainedTrajectoryStock_[partitionIndex][k] -
-				BASE::BmTrajectoryStock_[partitionIndex][k]*BASE::RmInverseTrajectoryStock_[partitionIndex][k]*RmConstrainedTrajectoryStock_[partitionIndex][k]*Lm;
+				BASE::BmTrajectoryStock_[partitionIndex][k]*
+				RmInverseTrajectoryStock_[partitionIndex][k]*RmConstrainedTrajectoryStock_[partitionIndex][k]*Lm;
 
 		GvTrajectory[k] = (CmProjectedTrajectoryStock_[partitionIndex][k]-Lm).transpose()*
 				BASE::RmTrajectoryStock_[partitionIndex][k]*EvProjectedTrajectoryStock_[partitionIndex][k];
@@ -964,7 +969,7 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::solveSlqRiccatiEquationsWork
 			&BASE::nominalTimeTrajectoriesStock_[partitionIndex],
 			&AmConstrainedTrajectoryStock_[partitionIndex], &BASE::BmTrajectoryStock_[partitionIndex],
 			&BASE::qTrajectoryStock_[partitionIndex], &QvConstrainedTrajectoryStock_[partitionIndex], &QmConstrainedTrajectoryStock_[partitionIndex],
-			&BASE::RvTrajectoryStock_[partitionIndex], &BASE::RmInverseTrajectoryStock_[partitionIndex], &RmConstrainedTrajectoryStock_[partitionIndex],
+			&BASE::RvTrajectoryStock_[partitionIndex], &RmInverseTrajectoryStock_[partitionIndex], &RmConstrainedTrajectoryStock_[partitionIndex],
 			&BASE::PmTrajectoryStock_[partitionIndex],
 			&EvProjectedTrajectoryStock_[partitionIndex], &CmProjectedTrajectoryStock_[partitionIndex],
 			&BASE::nominalEventsPastTheEndIndecesStock_[partitionIndex],
@@ -1251,13 +1256,13 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::fullRiccatiBackwardSweepWork
 		} else {
 //			if (BASE::ddpSettings_.useMakePSD_==true)  BASE::makePSD(QmConstrainedTrajectoryStock_[partitionIndex][k]);
 			_H.template topLeftCorner<STATE_DIM,STATE_DIM>() = AmConstrainedTrajectoryStock_[partitionIndex][k] -
-					BmConstrainedTrajectoryStock_[partitionIndex][k]*BASE::RmInverseTrajectoryStock_[partitionIndex][k]*PmConstrainedTrajectoryStock_[partitionIndex][k];
+					BmConstrainedTrajectoryStock_[partitionIndex][k]*RmInverseTrajectoryStock_[partitionIndex][k]*PmConstrainedTrajectoryStock_[partitionIndex][k];
 			_H.template topRightCorner<STATE_DIM,STATE_DIM>() =
 					0.5 * BmConstrainedTrajectoryStock_[partitionIndex][k] *
-					BASE::RmInverseTrajectoryStock_[partitionIndex][k] * BmConstrainedTrajectoryStock_[partitionIndex][k].transpose();
+					RmInverseTrajectoryStock_[partitionIndex][k] * BmConstrainedTrajectoryStock_[partitionIndex][k].transpose();
 			_H.template bottomLeftCorner<STATE_DIM,STATE_DIM>() =
 					2.0 * (QmConstrainedTrajectoryStock_[partitionIndex][k] -
-					PmConstrainedTrajectoryStock_[partitionIndex][k].transpose()*BASE::RmInverseTrajectoryStock_[partitionIndex][k]*PmConstrainedTrajectoryStock_[partitionIndex][k]);
+					PmConstrainedTrajectoryStock_[partitionIndex][k].transpose()*RmInverseTrajectoryStock_[partitionIndex][k]*PmConstrainedTrajectoryStock_[partitionIndex][k]);
 			_H.template bottomRightCorner<STATE_DIM,STATE_DIM>() = -_H.template topLeftCorner<STATE_DIM,STATE_DIM>().transpose();
 
 			_X_H_0.template bottomRows<STATE_DIM>() = -2.0*BASE::SmTrajectoryStock_[partitionIndex][k+1];
@@ -1375,6 +1380,7 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::setupOptimizer(const size_t&
 	BmConstrainedTrajectoryStock_.resize(numPartitions);
 	PmConstrainedTrajectoryStock_.resize(numPartitions);
 	RvConstrainedTrajectoryStock_.resize(numPartitions);
+    RmInverseTrajectoryStock_.resize(numPartitions);
 }
 
 }  // ocs2 namespace

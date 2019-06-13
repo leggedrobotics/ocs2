@@ -158,7 +158,7 @@ void ILQR_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::discreteLQWorker(
 	RvDtimeTrajectoryStock_[i][k] = BASE::RvTrajectoryStock_[i][k] * dt;
 	RmDtimeTrajectoryStock_[i][k] = BASE::RmTrajectoryStock_[i][k] * dt;
 	PmDtimeTrajectoryStock_[i][k] = BASE::PmTrajectoryStock_[i][k] * dt;
-	RmInverseDtimeTrajectoryStock_[i][k] = BASE::RmInverseTrajectoryStock_[i][k] / dt;
+	RmInverseDtimeTrajectoryStock_[i][k] = RmDtimeTrajectoryStock_[i][k].ldlt().solve(input_matrix_t::Identity());
 }
 
 /******************************************************************************************************/
@@ -320,7 +320,7 @@ void ILQR_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::solveRiccatiEquationsWorker
 		const input_vector_t&       Rvc = BASE::RvTrajectoryStock_[partitionIndex][finalIndex];
 		const input_matrix_t&       Rmc = BASE::RmTrajectoryStock_[partitionIndex][finalIndex];
 		const input_state_matrix_t& Pmc = BASE::PmTrajectoryStock_[partitionIndex][finalIndex];
-		const input_matrix_t&       RmcInverse = BASE::RmInverseTrajectoryStock_[partitionIndex][finalIndex];
+		const input_matrix_t        RmcInverse = Rmc.ldlt().solve(input_matrix_t::Identity());;
 
 		BASE::sTrajectoryStock_[partitionIndex][finalIndex]  = sFinalTemp;
 		BASE::SvTrajectoryStock_[partitionIndex][finalIndex] = SvFinalTemp;

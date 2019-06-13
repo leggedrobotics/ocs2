@@ -2,6 +2,8 @@
 // Created by johannes on 01.04.19.
 //
 
+#include <ocs2_comm_interfaces/ocs2_interfaces/MPC_Interface.h>
+
 namespace ocs2 {
 
 template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
@@ -229,13 +231,14 @@ void MPC_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::updateModeSequence() {
 
 template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
 bool MPC_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::updatePolicy() {
+
+  std::lock_guard<std::mutex> lock(mpcBufferMutex);
+
   if (mpcOutputBufferUpdated_) {
     mpcOutputBufferUpdated_ = false;
   } else {
     return false;
   }
-
-  std::lock_guard<std::mutex> lock(mpcBufferMutex);
 
   mpcCostDesiredTrajectories_.swap(mpcSolverCostDesiredTrajectoriesBuffer_);
 
@@ -304,7 +307,7 @@ void MPC_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::evaluateFeedforwardPoli
 
   if (time > mpcTimeTrajectory_.back())
     ROS_WARN_STREAM_THROTTLE(2, "The requested time is greater than the received plan: " + std::to_string(time) + ">" +
-                    std::to_string(mpcTimeTrajectory_.back()));
+                                    std::to_string(mpcTimeTrajectory_.back()));
 
   mpcLinInterpolateState_.interpolate(time, mpcState);
   int greatestLessTimeStampIndex = mpcLinInterpolateState_.getGreatestLessTimeStampIndex();
@@ -326,7 +329,7 @@ void MPC_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::evaluateFeedbackPolicy(
 
   if (time > mpcController_.time_.back())
     ROS_WARN_STREAM_THROTTLE(2, "The requested time is greater than the received plan: " + std::to_string(time) + ">" +
-                    std::to_string(mpcController_.time_.back()));
+                                    std::to_string(mpcController_.time_.back()));
 
   mpcLinInterpolateUff_.interpolate(time, mpcUff);
   int greatestLessTimeStampIndex = mpcLinInterpolateUff_.getGreatestLessTimeStampIndex();
@@ -342,6 +345,27 @@ void MPC_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::partitioningTimesUpdate
   partitioningTimes.resize(2);
   partitioningTimes[0] = currentObservation_.time();
   partitioningTimes[1] = std::numeric_limits<scalar_t>::max();
+}
+
+template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
+const typename MPC_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::state_vector_array_t&
+MPC_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::getMpcStateTrajectory() {
+  updatePolicy();
+  return mpcStateTrajectory_;
+}
+
+template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
+const typename MPC_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::input_vector_array_t&
+MPC_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::getMpcInputTrajectory() {
+  updatePolicy();
+  return mpcInputTrajectory_;
+}
+
+template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
+const typename MPC_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::scalar_array_t&
+MPC_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::getMpcTimeTrajectory() {
+  updatePolicy();
+  return mpcTimeTrajectory_;
 }
 
 }  // namespace ocs2

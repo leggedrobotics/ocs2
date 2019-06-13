@@ -154,6 +154,12 @@ class MPC_Interface {
    */
   void evaluateFeedbackPolicy(const scalar_t& time, input_vector_t& mpcUff, input_state_matrix_t& mpcGain, size_t& subsystem);
 
+  const scalar_array_t &getMpcTimeTrajectory();
+
+  const state_vector_array_t &getMpcStateTrajectory();
+
+  const input_vector_array_t &getMpcInputTrajectory();
+
  protected:
   /*
    * Variables

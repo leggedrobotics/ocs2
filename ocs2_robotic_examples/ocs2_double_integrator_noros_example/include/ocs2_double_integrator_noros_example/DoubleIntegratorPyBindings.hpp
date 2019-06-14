@@ -24,7 +24,7 @@ class DoubleIntegratorPyBindings final {
 
   void advanceMpc();
 
-  void getMpcSolution(scalar_array_t& t, state_vector_array_t& x, input_vector_array_t& u, state_vector_array_t& Vx);
+  void getMpcSolution(scalar_array_t& t, state_vector_array_t& x, input_vector_array_t& u);
 
   state_vector_t computeFlowMap(double t, Eigen::Ref<const state_vector_t> x, Eigen::Ref<const input_vector_t> u);
   void setFlowMapDerivativeStateAndControl(double t, Eigen::Ref<const state_vector_t> x, Eigen::Ref<const input_vector_t> u);
@@ -34,6 +34,8 @@ class DoubleIntegratorPyBindings final {
   double getRunningCost(double t, Eigen::Ref<const state_vector_t> x, Eigen::Ref<const input_vector_t> u);
   state_vector_t getRunningCostDerivativeState(double t, Eigen::Ref<const state_vector_t> x, Eigen::Ref<const input_vector_t> u);
   input_vector_t getRunningCostDerivativeInput(double t, Eigen::Ref<const state_vector_t> x, Eigen::Ref<const input_vector_t> u);
+
+  state_vector_t getValueFunctionStateDerivative(double t, Eigen::Ref<const state_vector_t> x);
 
  protected:
   std::unique_ptr<ocs2::double_integrator::DoubleIntegratorInterface> doubleIntegratorInterface_;

@@ -35,15 +35,15 @@ void DoubleIntegratorPyBindings::setObservation(double t, Eigen::Ref<const state
 
 void DoubleIntegratorPyBindings::advanceMpc() { mpcInterface_->advanceMpc(); }
 
-void DoubleIntegratorPyBindings::getMpcSolution(scalar_array_t& t, state_vector_array_t& x, input_vector_array_t& u,
-                                                state_vector_array_t& Vx) {
+void DoubleIntegratorPyBindings::getMpcSolution(scalar_array_t& t, state_vector_array_t& x, input_vector_array_t& u) {
   // TODO(jcarius): should we interpolate here to expose constant time steps?!
   mpcInterface_->getMpcSolution(t, x, u);
-  Vx.clear();
-  Vx.resize(t.size());
-  for (size_t i = 0; i < t.size(); i++) {
-    mpcInterface_->getValueFunctionStateDerivative(t[i], Vx[i]);
-  }
+}
+
+DoubleIntegratorPyBindings::state_vector_t DoubleIntegratorPyBindings::getValueFunctionStateDerivative(double t, Eigen::Ref<const state_vector_t> x){
+  state_vector_t dVdx;
+  mpcInterface_->getValueFunctionStateDerivative(t, x, dVdx);
+  return dVdx;
 }
 
 DoubleIntegratorPyBindings::state_vector_t DoubleIntegratorPyBindings::computeFlowMap(double t, Eigen::Ref<const state_vector_t> x,

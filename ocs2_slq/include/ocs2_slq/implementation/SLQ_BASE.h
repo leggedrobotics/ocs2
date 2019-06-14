@@ -2536,6 +2536,7 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::getValueFuntion (
 template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
 void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::getValueFunctionStateDerivative(
 		scalar_t time,
+		const state_vector_t& state,
 		state_vector_t& Vx)  {
 
 	auto activeSubsystem = BASE::findActivePartitionIndex(partitioningTimes_, time);
@@ -2561,8 +2562,7 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::getValueFunctionStateDerivat
 			&SsTimeTrajectoryStock_[activeSubsystem], &SveTrajectoryStock_[activeSubsystem]);
 	SveFunc.interpolate(time, Sve, greatestLessTimeStampIndex);
 
-	state_vector_t state = xNominal; //TODO(jcarius) dummy, take this as a function argument
-	state_vector_t deltaX = state-xNominal;
+	state_vector_t deltaX = state - xNominal;
 
 	Vx = Sm * deltaX + Sv + Sve;
 }

@@ -410,7 +410,9 @@ public:
 	 * @param [in] time the query time
 	 * @param [out] Vx partial derivative of the value function at requested time at nominal state
 	 */
-	virtual void getValueFunctionStateDerivative(scalar_t time, state_vector_t& Vx) = 0;
+	virtual void getValueFunctionStateDerivative(scalar_t time,
+	                                             const state_vector_t& state,
+	                                             state_vector_t& Vx) = 0;
 
 	/**
 	 * Rewinds optimizer internal variables.

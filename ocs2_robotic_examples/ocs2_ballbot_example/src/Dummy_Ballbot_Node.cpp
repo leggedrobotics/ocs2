@@ -59,7 +59,7 @@ int main(int argc, char **argv)
 
 	dummyBallbot.launchNodes(argc, argv);
 
-	// initialize state
+	// initial state
 	MRT_ROS_Dummy_Ballbot::system_observation_t initObservation;
 	ballbotInterface.getInitialState(initObservation.state());
 

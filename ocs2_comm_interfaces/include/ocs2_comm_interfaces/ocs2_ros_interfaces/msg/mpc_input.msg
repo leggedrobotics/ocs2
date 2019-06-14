@@ -1,3 +1,3 @@
 # MPC internal model input vector 
 
-float32[] 	value
+float32[] value

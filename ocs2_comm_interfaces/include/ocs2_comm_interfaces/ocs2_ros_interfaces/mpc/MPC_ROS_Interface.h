@@ -138,9 +138,11 @@ public:
 			const std::string& robotName = "robot");
 
 	/**
-	 * Resets the class to its instantiate state.
+	 * Resets the class to its instantiation state.
+	 *
+	 * @param [in] initCostDesiredTrajectories: The initial desired cost trajectories.
 	 */
-	virtual void reset();
+	virtual void reset(const cost_desired_trajectories_t& initCostDesiredTrajectories);
 
 	/**
 	 * Shutdowns the ROS node.
@@ -187,16 +189,6 @@ public:
 	 */
 	virtual void initCall(
 			const system_observation_t& initObservation) {}
-
-	/**
-	 * Provides the initial target trajectories for the cost function.
-	 *
-	 * @param [in] initObservation: The observation after the very fist call of the class or after call to reset().
-	 * @param [out] costDesiredTrajectories: The desired cost trajectories.
-	 */
-	virtual void initGoalState(
-			const system_observation_t& initObservation,
-			cost_desired_trajectories_t& costDesiredTrajectories) = 0;
 
 	/**
 	 * Provides the initial mode sequence for time-triggered hybrid systems.
@@ -323,9 +315,6 @@ protected:
 	::ros::Publisher     dummyPublisher_;
 	::ros::ServiceServer mpcResetServiceServer_;
 
-	// MPC reset flags
-	std::atomic<bool> resetRequested_;
-
 	// ROS messages
 	ocs2_comm_interfaces::mpc_flattened_controller mpcPolicyMsg_;
 	ocs2_comm_interfaces::mpc_flattened_controller mpcPolicyMsgBuffer_;
@@ -345,13 +334,16 @@ protected:
 	std::chrono::time_point<std::chrono::steady_clock> startTimePoint_;
 	std::chrono::time_point<std::chrono::steady_clock> finalTimePoint_;
 
-	bool initialCall_;
-
 	std::atomic<bool> desiredTrajectoriesUpdated_;
 	std::atomic<bool> modeSequenceUpdated_;
 	cost_desired_trajectories_t costDesiredTrajectories_;
 	cost_desired_trajectories_t defaultCostDesiredTrajectories_;
 	mode_sequence_template_t modeSequenceTemplate_;
+
+	// MPC reset
+	bool initialCall_;
+	std::mutex resetMutex_;
+	std::atomic<bool> resetRequestedEver_;
 };
 
 } // namespace ocs2

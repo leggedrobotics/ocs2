@@ -1,5 +1,5 @@
 # Reset service 
-bool                     reset
-mpc_target_trajectories  targetTrajectories
+bool                                          reset
+ocs2_comm_interfaces/mpc_target_trajectories  targetTrajectories
 ---
-bool done
+bool                                          done

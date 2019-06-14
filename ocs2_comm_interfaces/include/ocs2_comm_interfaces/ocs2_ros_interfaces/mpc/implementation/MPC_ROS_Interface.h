@@ -596,8 +596,8 @@ void MPC_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::launchNodes(int arg
 			::ros::TransportHints().udp());
 
 	// SLQ-MPC publisher
-		mpcPolicyPublisher_ = nodeHandlerPtr_->advertise<ocs2_comm_interfaces::mpc_flattened_controller>(
-				robotName_+"_mpc_policy", 1, true);
+	mpcPolicyPublisher_ = nodeHandlerPtr_->advertise<ocs2_comm_interfaces::mpc_flattened_controller>(
+			robotName_+"_mpc_policy", 1, true);
 
 	// dummy publisher
 	dummyPublisher_ = nodeHandlerPtr_->advertise<ocs2_comm_interfaces::dummy>("ping", 1, true);

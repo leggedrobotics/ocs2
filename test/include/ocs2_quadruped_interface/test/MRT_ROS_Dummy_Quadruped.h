@@ -94,9 +94,9 @@ public:
 			const scalar_t& mpcDesiredFrequency = -1);
 
 	/**
-	 * Destructor.
+	 * Default destructor.
 	 */
-	virtual ~MRT_ROS_Dummy_Quadruped();
+	virtual ~MRT_ROS_Dummy_Quadruped() = default;
 
 
 protected:

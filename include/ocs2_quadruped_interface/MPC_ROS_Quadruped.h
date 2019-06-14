@@ -70,8 +70,10 @@ public:
 
 	/**
 	 * Resets the class to its instantiate state.
+	 *
+	 * @param [in] initCostDesiredTrajectories: The initial desired cost trajectories.
 	 */
-	virtual void reset() override;
+	virtual void reset(const cost_desired_trajectories_t& initCostDesiredTrajectories) override;
 
 	/**
 	 * This method will be called either after the very fist call of the class or after a call to reset().
@@ -81,16 +83,6 @@ public:
 	 */
 	virtual void initCall(
 			const system_observation_t& initObservation) override;
-
-	/**
-	 * Provides the initial target trajectories for the cost function.
-	 *
-	 * @param [in] initObservation: The observation after the very fist call of the class or after call to reset().
-	 * @param [out] costDesiredTrajectories: The desired cost trajectories.
-	 */
-	virtual void initGoalState(
-			const system_observation_t& initObservation,
-			cost_desired_trajectories_t& costDesiredTrajectories) override;
 
 	/**
 	 * Adjusts the user-defined target trajectories for the cost based on the current observation.

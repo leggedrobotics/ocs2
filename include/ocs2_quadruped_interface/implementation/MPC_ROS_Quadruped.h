@@ -26,9 +26,10 @@ MPC_ROS_Quadruped<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::MPC_ROS_Quadruped(
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM>
-void MPC_ROS_Quadruped<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::reset() {
+void MPC_ROS_Quadruped<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::reset(
+		const cost_desired_trajectories_t& initCostDesiredTrajectories) {
 
-	BASE::reset();
+	BASE::reset(initCostDesiredTrajectories);
 
 	initState_.setZero();
 	ocs2QuadrupedInterfacePtr_->getLoadedInitialState(defaultConfiguration_);
@@ -47,26 +48,6 @@ void MPC_ROS_Quadruped<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::initCall(
 
 	// Designs weight compensating input.
 	ocs2QuadrupedInterfacePtr_->designWeightCompensatingInput(initState_, initInput_);
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM>
-void MPC_ROS_Quadruped<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::initGoalState(
-		const system_observation_t& initObservation,
-		cost_desired_trajectories_t& costDesiredTrajectories) {
-
-	const scalar_t targetReachingDuration = 1.0;
-	const base_coordinate_t targetPoseDisplacement = base_coordinate_t::Zero();
-	const base_coordinate_t targetVelocity = base_coordinate_t::Zero();
-
-	// costDesiredTrajectories
-	targetPoseToDesiredTrajectories(
-			initObservation.time(), initObservation.state(),
-			0.0,
-			targetReachingDuration, targetPoseDisplacement, targetVelocity,
-			costDesiredTrajectories);
 }
 
 /******************************************************************************************************/

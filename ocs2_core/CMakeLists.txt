@@ -150,3 +150,11 @@ target_link_libraries(test_loopshapingFilterDynamics
         ${catkin_LIBRARIES}
         -lstdc++fs
         )
+
+catkin_add_gtest(test_QRhelpers
+        test/misc/testQRhelpers.cpp
+        )
+target_link_libraries(test_QRhelpers
+        ${Boost_LIBRARIES}
+        ${catkin_LIBRARIES}
+        )

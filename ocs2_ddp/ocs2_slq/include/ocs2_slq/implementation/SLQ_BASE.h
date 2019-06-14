@@ -208,7 +208,6 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::approximateOptimalControlPro
 		DmProjectedTrajectoryStock_[i].resize(N);
         RmInverseTrajectoryStock_[i].resize(N);
 		if (BASE::ddpSettings_.useRiccatiSolver_==true) {
-			RmConstrainedTrajectoryStock_[i].resize(N);
 			RmConstrainedCholTrajectoryStock_[i].resize(N);
 		} else {
 			BmConstrainedTrajectoryStock_[i].resize(N);
@@ -365,9 +364,8 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::approximateConstrainedLQWork
 		AmConstrainedTrajectoryStock_[i][k] = BASE::AmTrajectoryStock_[i][k];
 		QmConstrainedTrajectoryStock_[i][k] = BASE::QmTrajectoryStock_[i][k];
 		QvConstrainedTrajectoryStock_[i][k] = BASE::QvTrajectoryStock_[i][k];
-		RmConstrainedCholTrajectoryStock_[i][k].noalias() = lltOfR_LinvT;
 		if (BASE::ddpSettings_.useRiccatiSolver_ == true) {
-			RmConstrainedTrajectoryStock_[i][k] = BASE::RmTrajectoryStock_[i][k];
+            RmConstrainedCholTrajectoryStock_[i][k] = lltOfR_LinvT;
 		} else {
 			BmConstrainedTrajectoryStock_[i][k] = BASE::BmTrajectoryStock_[i][k];
 			PmConstrainedTrajectoryStock_[i][k] = BASE::PmTrajectoryStock_[i][k];
@@ -375,8 +373,6 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::approximateConstrainedLQWork
 		}
 
 	} else {
-		typedef Eigen::Matrix<scalar_t, Eigen::Dynamic, Eigen::Dynamic> dynamic_matrix_t;
-
 		dynamic_matrix_t Cm = BASE::CmTrajectoryStock_[i][k].topRows(nc1);
 		dynamic_matrix_t Dm = BASE::DmTrajectoryStock_[i][k].topRows(nc1);
 
@@ -387,15 +383,20 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::approximateConstrainedLQWork
 								  "(at time " + std::to_string(BASE::nominalTimeTrajectoriesStock_[i][k]) + ")!");
 			}
 
-		// Constraint Projectors
+		// Constraint Projectors are based on the QR decomposition
 		Eigen::HouseholderQR<dynamic_matrix_t> QRofDLinvT( lltOfR_LinvT.transpose() * Dm.transpose() );
 		dynamic_matrix_t QRofDLinvT_Q = QRofDLinvT.householderQ();
 		dynamic_matrix_t QRofDLinvT_Qu = QRofDLinvT_Q.rightCols(INPUT_DIM - nc1);
-		RmConstrainedCholTrajectoryStock_[i][k].noalias() = lltOfR_LinvT * QRofDLinvT_Qu;
+		dynamic_matrix_t QRofDLinvT_Qc = QRofDLinvT_Q.leftCols(nc1);
+		dynamic_matrix_t QRofDLinvT_Rc = QRofDLinvT.matrixQR().topLeftCorner(nc1, nc1).template triangularView<Eigen::Upper>();
 
-		dynamic_matrix_t RmInvDmtranspose = RmInverseTrajectoryStock_[i][k] * Dm.transpose();
-		dynamic_matrix_t RmProjected = (Dm * RmInvDmtranspose).ldlt().solve(dynamic_matrix_t::Identity(nc1, nc1));
-		dynamic_matrix_t DmDager = RmInvDmtranspose * RmProjected;
+		// Computes the inverse of Rc with an efficient in-place forward-backward substitution
+		dynamic_matrix_t QRofDLinvT_Rc_inverse = dynamic_matrix_t::Identity(nc1, nc1);
+		QRofDLinvT_Rc.template triangularView<Eigen::Upper>().solveInPlace(QRofDLinvT_Rc_inverse);
+
+		// Compute projects
+		dynamic_matrix_t RmProjected = QRofDLinvT_Rc_inverse * QRofDLinvT_Rc_inverse.transpose();
+		dynamic_matrix_t DmDager = RmInverseTrajectoryStock_[i][k] * ( Dm.transpose() * RmProjected );
 
 		DmDagerTrajectoryStock_[i][k].leftCols(nc1) = DmDager;
 		EvProjectedTrajectoryStock_[i][k].noalias() = DmDager * BASE::EvTrajectoryStock_[i][k].head(nc1);
@@ -418,8 +419,7 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::approximateConstrainedLQWork
 
 		input_matrix_t DmNullSpaceProjection = input_matrix_t::Identity() - DmProjectedTrajectoryStock_[i][k];
 		if (BASE::ddpSettings_.useRiccatiSolver_ == true) {
-			RmConstrainedTrajectoryStock_[i][k].noalias() =
-					DmNullSpaceProjection.transpose() * BASE::RmTrajectoryStock_[i][k] * DmNullSpaceProjection;
+            RmConstrainedCholTrajectoryStock_[i][k].noalias() = lltOfR_LinvT * QRofDLinvT_Qu;
 		} else {
 			BmConstrainedTrajectoryStock_[i][k].noalias() = BASE::BmTrajectoryStock_[i][k] * DmNullSpaceProjection;
 			PmConstrainedTrajectoryStock_[i][k].noalias() =
@@ -864,19 +864,20 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::solveErrorRiccatiEquationWor
 	state_matrix_array_t GmTrajectory(N);
 	state_matrix_t Sm;
 	input_state_matrix_t Lm;
+	input_vector_t RmEv;
 	for (int k=N-1; k>=0; k--) {
-
 		// Sm
 		SmFuncs_[workerIndex].interpolate(BASE::nominalTimeTrajectoriesStock_[partitionIndex][k], Sm);
 		// Lm
-		Lm = RmInverseTrajectoryStock_[partitionIndex][k]*(BASE::PmTrajectoryStock_[partitionIndex][k]+BASE::BmTrajectoryStock_[partitionIndex][k].transpose()*Sm);
+		Lm = BASE::PmTrajectoryStock_[partitionIndex][k];
+		Lm.noalias() += BASE::BmTrajectoryStock_[partitionIndex][k].transpose()*Sm;
 
-		GmTrajectory[k] = AmConstrainedTrajectoryStock_[partitionIndex][k] -
-				BASE::BmTrajectoryStock_[partitionIndex][k]*
-				RmInverseTrajectoryStock_[partitionIndex][k]*RmConstrainedTrajectoryStock_[partitionIndex][k]*Lm;
+		GmTrajectory[k] = AmConstrainedTrajectoryStock_[partitionIndex][k];
+        GmTrajectory[k].noalias() -= (BASE::BmTrajectoryStock_[partitionIndex][k]* RmConstrainedCholTrajectoryStock_[partitionIndex][k]) * (RmConstrainedCholTrajectoryStock_[partitionIndex][k].transpose() * Lm);
 
-		GvTrajectory[k] = (CmProjectedTrajectoryStock_[partitionIndex][k]-Lm).transpose()*
-				BASE::RmTrajectoryStock_[partitionIndex][k]*EvProjectedTrajectoryStock_[partitionIndex][k];
+        RmEv.noalias() = BASE::RmTrajectoryStock_[partitionIndex][k]*EvProjectedTrajectoryStock_[partitionIndex][k];
+		GvTrajectory[k] = CmProjectedTrajectoryStock_[partitionIndex][k].transpose() * RmEv;
+		GvTrajectory[k].noalias() -= Lm.transpose()* (RmInverseTrajectoryStock_[partitionIndex][k].transpose() * RmEv);
 	}  // end of k loop
 
 	// set data for error equations
@@ -1403,7 +1404,6 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::setupOptimizer(const size_t&
 	EvProjectedTrajectoryStock_.resize(numPartitions);
 	CmProjectedTrajectoryStock_.resize(numPartitions);
 	DmProjectedTrajectoryStock_.resize(numPartitions);
-	RmConstrainedTrajectoryStock_.resize(numPartitions);
 	RmConstrainedCholTrajectoryStock_.resize(numPartitions);
 	BmConstrainedTrajectoryStock_.resize(numPartitions);
 	PmConstrainedTrajectoryStock_.resize(numPartitions);

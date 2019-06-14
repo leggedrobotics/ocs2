@@ -123,6 +123,7 @@ public:
 	typedef typename DIMENSIONS::constraint2_state_matrix_array_t    constraint2_state_matrix_array_t;
 	typedef typename DIMENSIONS::constraint2_state_matrix_array2_t   constraint2_state_matrix_array2_t;
 	typedef typename DIMENSIONS::dynamic_vector_t                    dynamic_vector_t;
+	typedef typename DIMENSIONS::dynamic_matrix_t                    dynamic_matrix_t;
 	typedef typename DIMENSIONS::dynamic_vector_array_t              dynamic_vector_array_t;
   	typedef typename DIMENSIONS::dynamic_matrix_array2_t             dynamic_matrix_array2_t;
 

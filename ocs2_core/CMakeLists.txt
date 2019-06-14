@@ -106,4 +106,47 @@ target_link_libraries(test_transferfunctionbase
   ${catkin_LIBRARIES}
 )
 
+catkin_add_gtest(test_loopshapingDefinition
+        test/loopshaping/testLoopshapingDefinition.cpp
+        )
+target_link_libraries(test_loopshapingDefinition
+        ${Boost_LIBRARIES}
+        ${catkin_LIBRARIES}
+        -lstdc++fs
+        )
 
+catkin_add_gtest(test_loopshapingDynamics
+        test/loopshaping/testLoopshapingDynamics.cpp
+        )
+target_link_libraries(test_loopshapingDynamics
+        ${Boost_LIBRARIES}
+        ${catkin_LIBRARIES}
+        -lstdc++fs
+        )
+
+catkin_add_gtest(test_loopshapingCost
+        test/loopshaping/testLoopshapingCost.cpp
+        )
+target_link_libraries(test_loopshapingCost
+        ${Boost_LIBRARIES}
+        ${catkin_LIBRARIES}
+        -lstdc++fs
+        )
+
+catkin_add_gtest(test_loopshapingConstraint
+        test/loopshaping/testLoopshapingConstraint.cpp
+        )
+target_link_libraries(test_loopshapingConstraint
+        ${Boost_LIBRARIES}
+        ${catkin_LIBRARIES}
+        -lstdc++fs
+        )
+
+catkin_add_gtest(test_loopshapingFilterDynamics
+        test/loopshaping/testLoopshapingFilterDynamics.cpp
+        )
+target_link_libraries(test_loopshapingFilterDynamics
+        ${Boost_LIBRARIES}
+        ${catkin_LIBRARIES}
+        -lstdc++fs
+        )

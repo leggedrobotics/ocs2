@@ -154,8 +154,10 @@ public:
 
 	/**
 	 * Request the MPC node to reset. This method is a blocking method.
+	 *
+	 * @param [in] initCostDesiredTrajectories: The initial desired cost trajectories.
 	 */
-	void resetMpcNode();
+	void resetMpcNode(const cost_desired_trajectories_t& initCostDesiredTrajectories);
 
 	/**
 	 * This method will be called either after the very fist call of the class or after a call to reset().

@@ -61,13 +61,24 @@ int main(int argc, char **argv)
 
 	dummyCartpole.launchNodes(argc, argv);
 
-	// Initialize dummy
+	// initial state
 	MRT_ROS_Dummy_Cartpole::system_observation_t initObservation;
 	cartPoleInterface.getInitialState(initObservation.state());
-	dummyCartpole.init(initObservation);
+
+	// initial command
+	MRT_ROS_Dummy_Cartpole::cost_desired_trajectories_t initCostDesiredTrajectories;
+	initCostDesiredTrajectories.desiredTimeTrajectory().resize(2);
+	initCostDesiredTrajectories.desiredTimeTrajectory().at(0) = 0.0;
+	initCostDesiredTrajectories.desiredTimeTrajectory().at(1) = 1.0;
+	initCostDesiredTrajectories.desiredStateTrajectory().resize(2);
+	initCostDesiredTrajectories.desiredStateTrajectory().at(0) = MRT_ROS_Dummy_Cartpole::state_vector_t::Zero();
+	initCostDesiredTrajectories.desiredStateTrajectory().at(1) = MRT_ROS_Dummy_Cartpole::state_vector_t::Zero();
+	initCostDesiredTrajectories.desiredInputTrajectory().resize(2);
+	initCostDesiredTrajectories.desiredInputTrajectory().at(0) = MRT_ROS_Dummy_Cartpole::input_vector_t::Zero();
+	initCostDesiredTrajectories.desiredInputTrajectory().at(1) = MRT_ROS_Dummy_Cartpole::input_vector_t::Zero();
 
 	// run dummy
-	dummyCartpole.run();
+	dummyCartpole.run(initObservation, initCostDesiredTrajectories);
 
 	// Successful exit
 	return 0;

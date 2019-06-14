@@ -30,17 +30,14 @@ add_message_files(
   DIRECTORY 
     include/ocs2_comm_interfaces/ocs2_ros_interfaces/msg
   FILES
-    controller_data.msg
     dummy.msg
-    mpc_flattened_controller.msg
     mpc_state.msg
     mpc_input.msg
-    mpc_observation.msg
     mode_sequence.msg
-    slq_controller.msg
-    mpc_feedback_policy.msg
-    mpc_feedforward_policy.msg
+    mpc_observation.msg
     mpc_target_trajectories.msg
+    controller_data.msg
+    mpc_flattened_controller.msg
 )
 
 ## Add services

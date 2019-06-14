@@ -27,6 +27,8 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  ******************************************************************************/
 
+#include <ocs2_robotic_tools/command/TargetPoseTransformation.h>
+
 #include "ocs2_quadrotor_example/QuadrotorInterface.h"
 #include "ocs2_quadrotor_example/definitions.h"
 #include "ocs2_quadrotor_example/ros_comm/MRT_ROS_Quadrotor.h"
@@ -59,13 +61,21 @@ int main(int argc, char **argv)
 
 	dummyQuadrotor.launchNodes(argc, argv);
 
-	// Initialize dummy
+	// initial state
 	MRT_ROS_Dummy_Quadrotor::system_observation_t initObservation;
 	quadrotorInterface.getInitialState(initObservation.state());
-	dummyQuadrotor.init(initObservation);
+
+	// initial command
+	MRT_ROS_Dummy_Quadrotor::cost_desired_trajectories_t initCostDesiredTrajectories;
+	initCostDesiredTrajectories.desiredTimeTrajectory().resize(1);
+	initCostDesiredTrajectories.desiredStateTrajectory().resize(1);
+	initCostDesiredTrajectories.desiredInputTrajectory().resize(1);
+	MRT_ROS_Dummy_Quadrotor::scalar_array_t targetPoseDisplacementVelocity(12, 0.0);
+	TargetPoseTransformation<MRT_ROS_Dummy_Quadrotor::scalar_t>::toCostDesiredState(
+			targetPoseDisplacementVelocity, initCostDesiredTrajectories.desiredStateTrajectory().front());
 
 	// run dummy
-	dummyQuadrotor.run();
+	dummyQuadrotor.run(initObservation, initCostDesiredTrajectories);
 
 	// Successful exit
 	return 0;

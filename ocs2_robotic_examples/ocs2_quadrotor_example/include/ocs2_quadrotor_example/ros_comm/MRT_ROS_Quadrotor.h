@@ -99,7 +99,7 @@ public:
 	 * @param [in] planObservation: The observation of the policy.
 	 */
 	virtual void initCall(
-			const system_observation_t& planObservation) {}
+			const system_observation_t& planObservation) override {}
 
 };
 

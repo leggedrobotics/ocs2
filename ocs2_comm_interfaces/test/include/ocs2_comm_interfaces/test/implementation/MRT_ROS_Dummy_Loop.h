@@ -45,7 +45,6 @@ MRT_ROS_Dummy_Loop<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::MRT_ROS_Dummy_Loop(
 	, mpcDesiredFrequency_(mpcDesiredFrequency)
 	, systemPtr_(systemPtr)
 	, realtimeLoop_(mpcDesiredFrequency<=0) // true if mpcDesiredFrequency is not set or it is negative
-	, initialized_(false)
 {
 	if (mrtDesiredFrequency_<0)
 		throw std::runtime_error("MRT loop frequency should be a positive number.");
@@ -74,20 +73,9 @@ void MRT_ROS_Dummy_Loop<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::launchNodes(int ar
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void MRT_ROS_Dummy_Loop<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::init(const system_observation_t& initObservation) {
-
-	initialized_ = true;
-	initObservation_ = initObservation;
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void MRT_ROS_Dummy_Loop<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::run() {
-
-	if (initialized_==false)
-		throw std::runtime_error("The init() method should be called at least once before.");
+void MRT_ROS_Dummy_Loop<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::run(
+		const system_observation_t& initObservation,
+		const cost_desired_trajectories_t& initCostDesiredTrajectories) {
 
 	::ros::Rate rosRate(mrtDesiredFrequency_); // in Hz
 
@@ -100,18 +88,17 @@ void MRT_ROS_Dummy_Loop<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::run() {
 		frequencyRatio = mrtDesiredFrequency_/mpcDesiredFrequency_;
 
 	size_t loopCounter = 0;
-	scalar_t time = initObservation_.time();
+	scalar_t time = initObservation.time();
 
 	// reset MPC node
-	mrtPtr_->resetMpcNode();
+	mrtPtr_->resetMpcNode(initCostDesiredTrajectories);
 
 	// wait for the initial MPC plan
 	ROS_INFO_STREAM("Waiting for the initial policy ...");
-	while (::ros::ok()) {
-    mrtPtr_->spinMRT();
+	while (::ros::ok() && ::ros::master::check()) {
+		mrtPtr_->spinMRT();
 		// for initial plan
-		initObservation_.time() = time;
-		mrtPtr_->publishObservation(initObservation_);
+		mrtPtr_->publishObservation(initObservation);
 		if (mrtPtr_->initialPolicyReceived()==true)
 			break;
 		else
@@ -119,9 +106,9 @@ void MRT_ROS_Dummy_Loop<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::run() {
 	}
 	ROS_INFO_STREAM("Initial policy has been received.");
 
-	observation_ = initObservation_;
+	observation_ = initObservation;
 
-	while( ::ros::ok()  && ::ros::master::check() ) {
+	while(::ros::ok() && ::ros::master::check()) {
 
 		// this should be called before updatePolicy()
     	mrtPtr_->spinMRT();

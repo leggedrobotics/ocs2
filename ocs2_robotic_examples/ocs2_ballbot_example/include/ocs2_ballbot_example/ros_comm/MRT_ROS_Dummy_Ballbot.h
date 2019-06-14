@@ -70,79 +70,6 @@ public:
 	 */
 	virtual ~MRT_ROS_Dummy_Ballbot() = default;
 
-	/**
-	 * The initialization of the observation
-	 *
-	 * @param [in] initObservation: The initial observation.
-	 */
-	virtual void init(const system_observation_t& initObservation) override {
-
-		BASE::init(initObservation);
-	}
-
-	void updateTfPublisher(const system_observation_t& observation,
-                           const cost_desired_trajectories_t& costDesiredTrajectories){
-
-		//compute positions of the markers based on system observation
-		Eigen::Vector3d positionWorldToBall, positionWorldToBase;
-		Eigen::Quaterniond quaternionBaseToWorld;
-		Eigen::Matrix3d rotationMatrixBaseToWorld;
-
-		quaternionBaseToWorld = Eigen::AngleAxisd{observation.state()(2), Eigen::Vector3d{0, 0, 1}}*
-								Eigen::AngleAxisd{observation.state()(3), Eigen::Vector3d{0, 1, 0}}*
-								Eigen::AngleAxisd{observation.state()(4), Eigen::Vector3d{1, 0, 0}};
-
-		rotationMatrixBaseToWorld = quaternionBaseToWorld.normalized().toRotationMatrix();
-
-		positionWorldToBall << observation.state()(0), observation.state()(1), param_.ballRadius_;
-		positionWorldToBase = positionWorldToBall + rotationMatrixBaseToWorld*Eigen::Vector3d(0.0, 0.0, param_.heightBallCenterToBase_);
-
-		// Broadcast transformation from rezero observation to robot base.
-		geometry_msgs::TransformStamped base_transform;
-		base_transform.header.frame_id = "odom";
-		base_transform.child_frame_id = "base";
-		base_transform.transform.translation.x = positionWorldToBase.x();
-		base_transform.transform.translation.y = positionWorldToBase.y();
-		base_transform.transform.translation.z = positionWorldToBase.z();
-		// RViz wants orientationBaseToWorld:
-		base_transform.transform.rotation.w = quaternionBaseToWorld.w();
-		base_transform.transform.rotation.x = quaternionBaseToWorld.x();
-		base_transform.transform.rotation.y = quaternionBaseToWorld.y();
-		base_transform.transform.rotation.z = quaternionBaseToWorld.z();
-		tfBroadcasterPtr_->sendTransform(base_transform);
-
-		// Broadcast transformation from rezero observation to robot ball
-		geometry_msgs::TransformStamped ball_transform;
-		ball_transform.header.frame_id = "base";
-		ball_transform.child_frame_id = "ball";
-		ball_transform.transform.translation.x = 0.0;
-		ball_transform.transform.translation.y = 0.0;
-		ball_transform.transform.translation.z = -param_.heightBallCenterToBase_;
-		ball_transform.transform.rotation.w = 1.0;
-		ball_transform.transform.rotation.x = 0.0;
-		ball_transform.transform.rotation.y = 0.0;
-		ball_transform.transform.rotation.z = 0.0;
-		tfBroadcasterPtr_->sendTransform(ball_transform);
-
-        // Broadcast transformation from odom to command
-        const Eigen::Vector3d desiredPositionWorldToTarget = Eigen::Vector3d(costDesiredTrajectories.desiredStateTrajectory()[1](0),
-                                                                             costDesiredTrajectories.desiredStateTrajectory()[1](1),
-                                                                             0.0);
-        const Eigen::Quaterniond desiredQuaternionBaseToWorld = Eigen::AngleAxisd{costDesiredTrajectories.desiredStateTrajectory()[1](2), Eigen::Vector3d{0, 0, 1}}*
-                                                                Eigen::AngleAxisd{costDesiredTrajectories.desiredStateTrajectory()[1](3), Eigen::Vector3d{0, 1, 0}}*
-                                                                Eigen::AngleAxisd{costDesiredTrajectories.desiredStateTrajectory()[1](4), Eigen::Vector3d{1, 0, 0}};
-        geometry_msgs::TransformStamped command_frame_transform;
-        command_frame_transform.header.frame_id = "odom";
-        command_frame_transform.child_frame_id = "command";
-        command_frame_transform.transform.translation.x = desiredPositionWorldToTarget.x();
-        command_frame_transform.transform.translation.y = desiredPositionWorldToTarget.y();
-        command_frame_transform.transform.translation.z = desiredPositionWorldToTarget.z();
-        command_frame_transform.transform.rotation.w = desiredQuaternionBaseToWorld.w();
-        command_frame_transform.transform.rotation.x = desiredQuaternionBaseToWorld.x();
-        command_frame_transform.transform.rotation.y = desiredQuaternionBaseToWorld.y();
-        command_frame_transform.transform.rotation.z = desiredQuaternionBaseToWorld.z();
-        tfBroadcasterPtr_->sendTransform(command_frame_transform);
-	}
 
 protected:
 	/**
@@ -228,6 +155,70 @@ protected:
 		markerArray.markers.push_back(ballMarker);
 
 		visualizationPublisher_.publish(markerArray);
+	}
+
+	void updateTfPublisher(const system_observation_t& observation,
+			const cost_desired_trajectories_t& costDesiredTrajectories){
+
+		//compute positions of the markers based on system observation
+		Eigen::Vector3d positionWorldToBall, positionWorldToBase;
+		Eigen::Quaterniond quaternionBaseToWorld;
+		Eigen::Matrix3d rotationMatrixBaseToWorld;
+
+		quaternionBaseToWorld = Eigen::AngleAxisd{observation.state()(2), Eigen::Vector3d{0, 0, 1}}*
+				Eigen::AngleAxisd{observation.state()(3), Eigen::Vector3d{0, 1, 0}}*
+				Eigen::AngleAxisd{observation.state()(4), Eigen::Vector3d{1, 0, 0}};
+
+				rotationMatrixBaseToWorld = quaternionBaseToWorld.normalized().toRotationMatrix();
+
+				positionWorldToBall << observation.state()(0), observation.state()(1), param_.ballRadius_;
+				positionWorldToBase = positionWorldToBall + rotationMatrixBaseToWorld*Eigen::Vector3d(0.0, 0.0, param_.heightBallCenterToBase_);
+
+				// Broadcast transformation from rezero observation to robot base.
+				geometry_msgs::TransformStamped base_transform;
+				base_transform.header.frame_id = "odom";
+				base_transform.child_frame_id = "base";
+				base_transform.transform.translation.x = positionWorldToBase.x();
+				base_transform.transform.translation.y = positionWorldToBase.y();
+				base_transform.transform.translation.z = positionWorldToBase.z();
+				// RViz wants orientationBaseToWorld:
+				base_transform.transform.rotation.w = quaternionBaseToWorld.w();
+				base_transform.transform.rotation.x = quaternionBaseToWorld.x();
+				base_transform.transform.rotation.y = quaternionBaseToWorld.y();
+				base_transform.transform.rotation.z = quaternionBaseToWorld.z();
+				tfBroadcasterPtr_->sendTransform(base_transform);
+
+				// Broadcast transformation from rezero observation to robot ball
+				geometry_msgs::TransformStamped ball_transform;
+				ball_transform.header.frame_id = "base";
+				ball_transform.child_frame_id = "ball";
+				ball_transform.transform.translation.x = 0.0;
+				ball_transform.transform.translation.y = 0.0;
+				ball_transform.transform.translation.z = -param_.heightBallCenterToBase_;
+				ball_transform.transform.rotation.w = 1.0;
+				ball_transform.transform.rotation.x = 0.0;
+				ball_transform.transform.rotation.y = 0.0;
+				ball_transform.transform.rotation.z = 0.0;
+				tfBroadcasterPtr_->sendTransform(ball_transform);
+
+				// Broadcast transformation from odom to command
+				const Eigen::Vector3d desiredPositionWorldToTarget = Eigen::Vector3d(costDesiredTrajectories.desiredStateTrajectory()[1](0),
+						costDesiredTrajectories.desiredStateTrajectory()[1](1),
+						0.0);
+				const Eigen::Quaterniond desiredQuaternionBaseToWorld = Eigen::AngleAxisd{costDesiredTrajectories.desiredStateTrajectory()[1](2), Eigen::Vector3d{0, 0, 1}}*
+						Eigen::AngleAxisd{costDesiredTrajectories.desiredStateTrajectory()[1](3), Eigen::Vector3d{0, 1, 0}}*
+						Eigen::AngleAxisd{costDesiredTrajectories.desiredStateTrajectory()[1](4), Eigen::Vector3d{1, 0, 0}};
+						geometry_msgs::TransformStamped command_frame_transform;
+						command_frame_transform.header.frame_id = "odom";
+						command_frame_transform.child_frame_id = "command";
+						command_frame_transform.transform.translation.x = desiredPositionWorldToTarget.x();
+						command_frame_transform.transform.translation.y = desiredPositionWorldToTarget.y();
+						command_frame_transform.transform.translation.z = desiredPositionWorldToTarget.z();
+						command_frame_transform.transform.rotation.w = desiredQuaternionBaseToWorld.w();
+						command_frame_transform.transform.rotation.x = desiredQuaternionBaseToWorld.x();
+						command_frame_transform.transform.rotation.y = desiredQuaternionBaseToWorld.y();
+						command_frame_transform.transform.rotation.z = desiredQuaternionBaseToWorld.z();
+						tfBroadcasterPtr_->sendTransform(command_frame_transform);
 	}
 
 	/************

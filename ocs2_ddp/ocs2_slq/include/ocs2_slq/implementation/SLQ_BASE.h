@@ -352,7 +352,6 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::approximateConstrainedLQWork
 	input_matrix_t lltOfR_LinvT = input_matrix_t::Identity();
 	lltOfR_LinvT = lltOfR.matrixU().solve(lltOfR_LinvT);
 
-//    RmInverseTrajectoryStock_[i][k] = BASE::RmTrajectoryStock_[i][k].ldlt().solve(input_matrix_t::Identity());
 	RmInverseTrajectoryStock_[i][k] = lltOfR_LinvT * lltOfR_LinvT.transpose();
 
 	// constraint type 1 coefficients

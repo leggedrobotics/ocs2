@@ -33,7 +33,6 @@ TEST(BallbotIntegrationTest, createDummyMRT) {
   // Initialize dummy
   MRT_ROS_Dummy_Ballbot::system_observation_t initObservation;
   ballbotInterface.getInitialState(initObservation.state());
-  dummyBallbot.init(initObservation);
 
   ASSERT_TRUE(true);
 }

@@ -115,8 +115,7 @@ class SequentialRiccatiEquationsNormalized final : public ODE_Base<STATE_DIM * (
       , Rm_(input_matrix_t::Zero())
       , Pm_(input_state_matrix_t::Zero())
       , Lm_(input_state_matrix_t::Zero())
-      , Lv_(input_vector_t::Zero())
-      , Lm_transposeRm_(state_input_matrix_t::Zero()) {}
+      , Lv_(input_vector_t::Zero()) {}
 
   /**
    * Default destructor.
@@ -394,28 +393,26 @@ class SequentialRiccatiEquationsNormalized final : public ODE_Base<STATE_DIM * (
       AmFunc_.interpolate(t, Am_, greatestLessTimeStampIndex);
       BmFunc_.interpolate(t, Bm_, greatestLessTimeStampIndex);
       RvFunc_.interpolate(t, Rv_, greatestLessTimeStampIndex);
-      RmInverseFunc_.interpolate(t, RmInv_, greatestLessTimeStampIndex);
-      RmFunc_.interpolate(t, Rm_, greatestLessTimeStampIndex);
+      Rm_LinvTFunc_.interpolate(t, Rm_LinvT_, greatestLessTimeStampIndex);
       PmFunc_.interpolate(t, Pm_, greatestLessTimeStampIndex);
 
       Pm_.noalias() += Bm_.transpose() * Sm_; // ! Pm is changed to avoid an extra temporary
-      Lm_.noalias() = RmInv_ * Pm_;
+      Lm_.noalias() = Rm_LinvT_.transpose() * Pm_;
       Rv_.noalias() += Bm_.transpose() * Sv_; // ! Rv is changed to avoid an extra temporary
-      Lv_.noalias() = RmInv_ * Rv_;
+      Lv_.noalias() = Rm_LinvT_.transpose() * Rv_;
 
       Am_transposeSm_.noalias() = Am_.transpose() * Sm_.transpose();
-      Lm_transposeRm_.noalias() = Lm_.transpose() * Rm_.transpose();
 
       // dSmdt,  Qm_ used instead of temporary
       Qm_ += Am_transposeSm_ + Am_transposeSm_.transpose();
-      Qm_.noalias() -= Lm_transposeRm_ * Lm_;
+      Qm_.noalias() -= Lm_.transpose() * Lm_;
 
       // dSvdt,  Qv_ used instead of temporary
       Qv_.noalias() += Am_.transpose() * Sv_;
-      Qv_.noalias() -= Lm_transposeRm_ * Lv_;
+      Qv_.noalias() -= Lm_.transpose() * Lv_;
 
       // dsdt,   q_ used instead of temporary
-      q_.noalias() -= 0.5 * Lv_.transpose() * Rm_ * Lv_;
+      q_.noalias() -= 0.5 * Lv_.transpose() * Lv_;
     }
 
     if (!useMakePSD_) {
@@ -540,9 +537,8 @@ class SequentialRiccatiEquationsNormalized final : public ODE_Base<STATE_DIM * (
   input_matrix_t Rm_;
   dynamic_matrix_t Rm_LinvT_;
   input_state_matrix_t Pm_;
-  input_state_matrix_t Lm_;
-  input_vector_t Lv_;
-  state_input_matrix_t Lm_transposeRm_;
+  dynamic_matrix_t Lm_;
+  dynamic_vector_t Lv_;
 
   scalar_array_t eventTimes_;
   const eigen_scalar_array_t *qFinalPtr_;

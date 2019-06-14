@@ -9,9 +9,11 @@
 #include <iostream>
 #include <ros/package.h>
 #include <ocs2_quadruped_interface/test/MRT_ROS_Dummy_Quadruped.h>
+#include <ocs2_robotic_tools/command/TargetPoseTransformation.h>
 #include "ocs2_anymal_interface/OCS2AnymalInterface.h"
 
 using namespace anymal;
+using namespace switched_model;
 
 int main( int argc, char* argv[] )
 {
@@ -31,7 +33,7 @@ int main( int argc, char* argv[] )
 	ocs2_robot_interface_t::rbd_state_vector_t initRbdState;
 	optimizationInterfacePtr->getLoadedInitialState(initRbdState);
 
-	switched_model::MRT_ROS_Dummy_Quadruped<12> dummySimulator(
+	MRT_ROS_Dummy_Quadruped<12> dummySimulator(
 			optimizationInterfacePtr,
 			optimizationInterfacePtr->mpcSettings().mrtDesiredFrequency_,
 			robotName,
@@ -39,15 +41,25 @@ int main( int argc, char* argv[] )
 
 	dummySimulator.launchNodes(argc, argv);
 
-	switched_model::MRT_ROS_Dummy_Quadruped<12>::system_observation_t initObservation;
+	// initial state
+	MRT_ROS_Dummy_Quadruped<12>::system_observation_t initObservation;
 	initObservation.time()  = 0.0;
 	optimizationInterfacePtr->computeSwitchedModelState(initRbdState, initObservation.state());
 	initObservation.input().setZero();
 	initObservation.subsystem() = 15;
-	dummySimulator.init(initObservation);
 
-	dummySimulator.run();
+	// initial command
+	MRT_ROS_Dummy_Quadruped<12>::cost_desired_trajectories_t initCostDesiredTrajectories;
+	initCostDesiredTrajectories.desiredTimeTrajectory().resize(1);
+	initCostDesiredTrajectories.desiredStateTrajectory().resize(1);
+	initCostDesiredTrajectories.desiredInputTrajectory().resize(1);
+	MRT_ROS_Dummy_Quadruped<12>::scalar_array_t targetPoseDisplacementVelocity(12, 0.0);
+	ocs2::TargetPoseTransformation<MRT_ROS_Dummy_Quadruped<12>::scalar_t>::toCostDesiredState(
+			targetPoseDisplacementVelocity, initCostDesiredTrajectories.desiredStateTrajectory().front());
 
-	xpp_msgs::RobotStateCartesian point;
+	// run dummy
+	dummySimulator.run(initObservation, initCostDesiredTrajectories);
+
+//	xpp_msgs::RobotStateCartesian point;
 
 }

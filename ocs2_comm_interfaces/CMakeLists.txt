@@ -46,9 +46,12 @@ add_message_files(
 ## Add services
 add_service_files(
   DIRECTORY 
-    include/ocs2_comm_interfaces/ocs2_ros_interfaces/srv
+    include/ocs2_comm_interfaces/ocs2_ros_interfaces
   FILES
-    reset.srv
+    srv/reset.srv
+    msg/mpc_state.msg
+    msg/mpc_input.msg
+    msg/mpc_target_trajectories.msg
 )
 
 ## Generate added messages and services

@@ -1,4 +1,5 @@
 # Reset service 
-bool reset
+bool                     reset
+mpc_target_trajectories  targetTrajectories
 ---
 bool done

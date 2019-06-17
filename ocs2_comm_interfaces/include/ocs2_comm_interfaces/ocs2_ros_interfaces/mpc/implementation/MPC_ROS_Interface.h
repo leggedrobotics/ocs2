@@ -35,10 +35,12 @@ namespace ocs2{
 template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
 MPC_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::MPC_ROS_Interface(
 		mpc_t& mpc,
-		const std::string& robotName /*= "robot"*/)
+		const std::string& robotName /*= "robot"*/,
+		const task_listener_ptr_array_t& taskListenerArray /*= task_listener_ptr_array_t()*/)
 	: mpcPtr_(&mpc)
 	, mpcSettings_(mpc.settings())
 	, robotName_(robotName)
+	, taskListenerArray_(taskListenerArray)
 	, desiredTrajectoriesUpdated_(false)
 	, modeSequenceUpdated_(false)
 {
@@ -393,6 +395,10 @@ void MPC_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::mpcObservationCallb
 		return;
 	}
 
+	// update task listeners
+	for (auto& taskListener: taskListenerArray_)
+		taskListener->update();
+
 	// run SLQ-MPC
 	bool controllerIsUpdated = mpcPtr_->run(
 			currentObservation.time(),
@@ -605,6 +611,10 @@ void MPC_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::launchNodes(int arg
 	// MPC reset service server
 	mpcResetServiceServer_ = nodeHandlerPtr_->advertiseService(robotName_+"_mpc_reset",
 			&MPC_ROS_Interface::resetMpcCallback, this);
+
+	// subscribe task listeners
+	for (auto& taskListener: taskListenerArray_)
+		taskListener->subscribe(*nodeHandlerPtr_);
 
 	// display
 #ifdef PUBLISH_THREAD

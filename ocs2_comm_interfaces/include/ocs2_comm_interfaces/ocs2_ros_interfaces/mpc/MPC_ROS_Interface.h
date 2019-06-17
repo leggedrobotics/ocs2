@@ -63,6 +63,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "ocs2_comm_interfaces/SystemObservation.h"
 #include "ocs2_comm_interfaces/ocs2_ros_interfaces/common/RosMsgConversions.h"
+#include "ocs2_comm_interfaces/ocs2_ros_interfaces/task_listener/TaskListenerBase.h"
 
 //#define PUBLISH_DUMMY
 #define PUBLISH_THREAD
@@ -108,6 +109,8 @@ public:
 
 	typedef RosMsgConversions<STATE_DIM, INPUT_DIM> ros_msg_conversions_t;
 
+	typedef TaskListenerBase<float>::shared_ptr_array_t task_listener_ptr_array_t;
+
 	/**
 	 * Default constructor
 	 */
@@ -118,10 +121,12 @@ public:
 	 *
 	 * @param [in] mpc: The MPC object to be interfaced.
 	 * @param [in] robotName: The robot's name.
+	 * @param [in] taskListenerArray: An array of the shared_ptr to task listeners.
 	 */
 	MPC_ROS_Interface(
 			mpc_t& mpc,
-			const std::string& robotName = "robot");
+			const std::string& robotName = "robot",
+			const task_listener_ptr_array_t& taskListenerArray = task_listener_ptr_array_t());
 
 	/**
 	 * Destructor.
@@ -305,6 +310,8 @@ protected:
 
 	std::string robotName_;
 
+	task_listener_ptr_array_t taskListenerArray_;
+
 	std::shared_ptr<ros::NodeHandle> nodeHandlerPtr_;
 
 	// Publishers and subscribers
@@ -319,7 +326,7 @@ protected:
 	ocs2_comm_interfaces::mpc_flattened_controller mpcPolicyMsg_;
 	ocs2_comm_interfaces::mpc_flattened_controller mpcPolicyMsgBuffer_;
 
-	// Multi-threading for publishers
+	// multi-threading for publishers
 	bool terminateThread_;
 	bool readyToPublish_;
 	std::thread publisherWorker_;

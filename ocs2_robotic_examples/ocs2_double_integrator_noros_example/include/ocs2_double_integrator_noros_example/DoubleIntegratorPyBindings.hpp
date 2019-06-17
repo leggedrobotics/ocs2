@@ -17,14 +17,18 @@ class DoubleIntegratorPyBindings final {
   using input_vector_array_t = dim_t::input_vector_array_t;
   using state_matrix_t = dim_t::state_matrix_t;
   using state_input_matrix_t = dim_t::state_input_matrix_t;
+  using input_state_matrix_array_t = dim_t::input_state_matrix_array_t;
+  using state_matrix_array_t = dim_t::state_matrix_array_t;
 
-  DoubleIntegratorPyBindings(const std::string& taskFileFolder);
+  DoubleIntegratorPyBindings(const std::string& taskFileFolder, bool async=false);
+
+  ~DoubleIntegratorPyBindings();
 
   void setObservation(double t, Eigen::Ref<const state_vector_t> x);
 
   void advanceMpc();
 
-  void getMpcSolution(scalar_array_t& t, state_vector_array_t& x, input_vector_array_t& u);
+  void getMpcSolution(scalar_array_t& t, state_vector_array_t& x, input_vector_array_t& u, state_matrix_array_t& sigmaX);
 
   state_vector_t computeFlowMap(double t, Eigen::Ref<const state_vector_t> x, Eigen::Ref<const input_vector_t> u);
   void setFlowMapDerivativeStateAndControl(double t, Eigen::Ref<const state_vector_t> x, Eigen::Ref<const input_vector_t> u);
@@ -37,6 +41,8 @@ class DoubleIntegratorPyBindings final {
 
   state_vector_t getValueFunctionStateDerivative(double t, Eigen::Ref<const state_vector_t> x);
 
+  void runMpcAsync();
+
  protected:
   std::unique_ptr<ocs2::double_integrator::DoubleIntegratorInterface> doubleIntegratorInterface_;
   std::unique_ptr<mpc_t> mpcInterface_;
@@ -46,6 +52,14 @@ class DoubleIntegratorPyBindings final {
   std::unique_ptr<DoubleIntegratorDynamicsDerivatives> dynamicsDerivatives_;
 
   std::unique_ptr<DoubleIntegratorCost> cost_;
+
+  bool run_mpc_async_;
+  std::thread run_mpc_worker_;
+  std::mutex run_mpc_mutex_;
+  std::condition_variable run_mpc_cv_;
+  bool run_mpc_done_;
+  bool run_mpc_requested_;
+  bool shutdown_requested_;
 };
 
 }  // namespace double_integrator

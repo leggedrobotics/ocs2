@@ -160,7 +160,7 @@ class MPC_Interface {
    * @param [out] x state array
    * @param [out] u input array
    */
-  void getMpcSolution(scalar_array_t& t, state_vector_array_t& x, input_vector_array_t& u);
+  void getMpcSolution(scalar_array_t& t, state_vector_array_t& x, input_vector_array_t& u, input_state_matrix_array_t& k);
 
   /**
    * @brief Calculates the state derivative of the value function

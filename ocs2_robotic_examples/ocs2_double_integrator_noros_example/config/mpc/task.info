@@ -56,7 +56,7 @@ slq
     useAscendingLineSearchNLP    1
     
     useMultiThreading           0
-    nThreads                    4
+    nThreads                    1
     debugPrintMP                0
     lsStepsizeGreedy            1
     

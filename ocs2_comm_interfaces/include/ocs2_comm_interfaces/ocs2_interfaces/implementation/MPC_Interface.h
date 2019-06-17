@@ -149,7 +149,6 @@ void MPC_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::fillMpcOutputBuffers() 
   std::lock_guard<std::mutex> lock(mpcBufferMutex);
 
   // update buffers
-  if (useFeedforwardPolicy_) {
     int N = 0;
     for (int i = 0; i < timeTrajectoriesPtr->size(); i++) {
       N += (*timeTrajectoriesPtr)[i].size();
@@ -168,8 +167,8 @@ void MPC_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::fillMpcOutputBuffers() 
       mpcInputTrajectoryBuffer_.insert(std::end(mpcInputTrajectoryBuffer_), std::begin((*inputTrajectoriesPtr)[i]),
                                        std::end((*inputTrajectoriesPtr)[i]));
     }
-  } else {
-    int N = 0;
+
+    N = 0;
     for (int i = 0; i < controllersPtr->size(); i++) {
       N += (*controllersPtr)[i].time_.size();
     }
@@ -189,7 +188,6 @@ void MPC_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::fillMpcOutputBuffers() 
       mpcControllerBuffer_.uff_.insert(std::end(mpcControllerBuffer_.uff_), std::begin(currentController.uff_),
                                        std::end(currentController.uff_));
     }
-  }
 
   mpcEventTimesBuffer_ = *eventTimesPtr;
   mpcSubsystemsSequenceBuffer_ = *subsystemsSequencePtr;
@@ -264,7 +262,6 @@ bool MPC_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::updatePolicy() {
     logicUpdated_ = false;
   }
 
-  if (useFeedforwardPolicy_ == true) {
     mpcTimeTrajectory_.swap(mpcTimeTrajectoryBuffer_);
     mpcStateTrajectory_.swap(mpcStateTrajectoryBuffer_);
     mpcInputTrajectory_.swap(mpcInputTrajectoryBuffer_);
@@ -277,7 +274,6 @@ bool MPC_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::updatePolicy() {
     mpcLinInterpolateInput_.setTimeStamp(&mpcTimeTrajectory_);
     mpcLinInterpolateInput_.setData(&mpcInputTrajectory_);
 
-  } else {
     mpcController_.swap(mpcControllerBuffer_);
 
     mpcLinInterpolateUff_.reset();
@@ -287,7 +283,7 @@ bool MPC_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::updatePolicy() {
     mpcLinInterpolateK_.reset();
     mpcLinInterpolateK_.setTimeStamp(&mpcController_.time_);
     mpcLinInterpolateK_.setData(&mpcController_.k_);
-  }
+
 
   return true;
 }
@@ -318,13 +314,21 @@ void MPC_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::evaluateFeedforwardPoli
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void MPC_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::getMpcSolution(scalar_array_t& t, state_vector_array_t& x, input_vector_array_t& u) {
+void MPC_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::getMpcSolution(scalar_array_t& t, state_vector_array_t& x, input_vector_array_t& u, input_state_matrix_array_t& k) {
   if (!useFeedforwardPolicy_) throw std::runtime_error("The MRT is set to receive the feedforward policy.");
 
   updatePolicy();
   t = mpcTimeTrajectory_;
   u = mpcInputTrajectory_;
   x = mpcStateTrajectory_;
+
+  k.clear();
+  k.resize(t.size());
+  auto kIter = k.begin();
+
+  for(auto ti : t){
+      mpcLinInterpolateK_.interpolate(ti, *(kIter++));
+    }
 }
 
 /******************************************************************************************************/

@@ -205,58 +205,28 @@ public:
 		switchingTimeFinal_ = switchingTimeFinal;
 		scalingFactor_      = switchingTimeFinal - switchingTimeStart;
 
-		SvFunc_.setTimeStamp(SsTimePtr);
-		SvFunc_.setData(SvPtr);
-		SmFunc_.setTimeStamp(SsTimePtr);
-		SmFunc_.setData(SmPtr);
+		SvFunc_.setData(SsTimePtr, SvPtr);
+		SmFunc_.setData(SsTimePtr, SmPtr);
 
-		AmFunc_.setTimeStamp(timeStampPtr);
-		AmFunc_.setData(AmPtr);
-		BmFunc_.setTimeStamp(timeStampPtr);
-		BmFunc_.setData(BmPtr);
-
-		qFunc_.setTimeStamp(timeStampPtr);
-		qFunc_.setData(qPtr);
-		QvFunc_.setTimeStamp(timeStampPtr);
-		QvFunc_.setData(QvPtr);
-		QmFunc_.setTimeStamp(timeStampPtr);
-		QmFunc_.setData(QmPtr);
-		RvFunc_.setTimeStamp(timeStampPtr);
-		RvFunc_.setData(RvPtr);
-		RmInverseFunc_.setTimeStamp(timeStampPtr);
-		RmInverseFunc_.setData(RmInversePtr);
-		RmFunc_.setTimeStamp(timeStampPtr);
-		RmFunc_.setData(RmPtr);
-		PmFunc_.setTimeStamp(timeStampPtr);
-		PmFunc_.setData(PmPtr);
-
-		nabla_qFunc_.setTimeStamp(timeStampPtr);
-		nabla_qFunc_.setData(nablaqPtr);
-		nabla_QvFunc_.setTimeStamp(timeStampPtr);
-		nabla_QvFunc_.setData(nablaQvPtr);
-		nabla_RvFunc_.setTimeStamp(timeStampPtr);
-		nabla_RvFunc_.setData(nablaRvPtr);
+		AmFunc_.setData(timeStampPtr, AmPtr);
+		BmFunc_.setData(timeStampPtr, BmPtr);
+		qFunc_.setData(timeStampPtr, qPtr);
+		QvFunc_.setData(timeStampPtr, QvPtr);
+		QmFunc_.setData(timeStampPtr, QmPtr);
+		RvFunc_.setData(timeStampPtr, RvPtr);
+		RmInverseFunc_.setData(timeStampPtr, RmInversePtr);
+		RmFunc_.setData(timeStampPtr, RmPtr);
+		PmFunc_.setData(timeStampPtr, PmPtr);
+		nabla_qFunc_.setData(timeStampPtr, nablaqPtr);
+		nabla_QvFunc_.setData(timeStampPtr, nablaQvPtr);
+		nabla_RvFunc_.setData(timeStampPtr, nablaRvPtr);
 	}
 
 	/**
 	 * Reset the sensitivity Riccati equation
 	 */
 	void reset() {
-
-		SvFunc_.reset();
-		SmFunc_.reset();
-		AmFunc_.reset();
-		BmFunc_.reset();
-		qFunc_.reset();
-		QvFunc_.reset();
-		QmFunc_.reset();
-		RvFunc_.reset();
-		RmInverseFunc_.reset();
-		RmFunc_.reset();
-		PmFunc_.reset();
-		nabla_qFunc_.reset();
-		nabla_QvFunc_.reset();
-		nabla_RvFunc_.reset();
+		// TODO(ruben) remove this function and its callers
 	}
 
 	/**
@@ -288,12 +258,10 @@ public:
 
 		convert2Matrix(allSs, nabla_Sm_, nabla_Sv_, nabla_s_);
 
-		SvFunc_.interpolate(t, Sv_);
-		size_t greatestLessTimeStampIndex = SvFunc_.getGreatestLessTimeStampIndex();
+		auto greatestLessTimeStampIndex = SvFunc_.interpolate(t, Sv_);
 		SmFunc_.interpolate(t, Sm_, greatestLessTimeStampIndex);
 
-		AmFunc_.interpolate(t, Am_);
-		greatestLessTimeStampIndex = AmFunc_.getGreatestLessTimeStampIndex();
+		greatestLessTimeStampIndex = AmFunc_.interpolate(t, Am_);
 		BmFunc_.interpolate(t, Bm_, greatestLessTimeStampIndex);
 		qFunc_.interpolate(t, q_);
 		QvFunc_.interpolate(t, Qv_, greatestLessTimeStampIndex);

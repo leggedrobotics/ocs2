@@ -138,12 +138,16 @@ void MRT_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::partitioningTimesUp
 /******************************************************************************************************/
 /******************************************************************************************************/
 template<size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void MRT_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::resetMpcNode() {
+void MRT_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::resetMpcNode(
+		const cost_desired_trajectories_t& initCostDesiredTrajectories) {
 
   policyReceivedEver_ = false;
 
   ocs2_comm_interfaces::reset resetSrv;
   resetSrv.request.reset = true;
+
+  RosMsgConversions<STATE_DIM, INPUT_DIM>::CreateTargetTrajectoriesMsg(
+		  initCostDesiredTrajectories, resetSrv.request.targetTrajectories);
 
   if (mpcResetServiceClient_.waitForExistence()) {
     mpcResetServiceClient_.call(resetSrv);
@@ -221,7 +225,7 @@ template<size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
 void MRT_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::mpcPolicyCallback(
     const ocs2_comm_interfaces::mpc_flattened_controller::ConstPtr &msg) {
 
-//	std::cout << "\t Plan is recieved at time: " << msg->initObservation.time << std::endl;
+//	std::cout << "\t Plan is received at time: " << msg->initObservation.time << std::endl;
 
 	std::lock_guard<std::mutex> lk(policyMutexBuffer_);
 
@@ -304,7 +308,7 @@ void MRT_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::mpcPolicyCallback(
 
 	// customized adjustment
 	modifyBufferPolicy(mpcInitObservationBuffer_,
-			mpcControllerBufferPtr_.get(),
+			*mpcControllerBufferPtr_,
 			mpcTimeTrajectoryBuffer_, mpcStateTrajectoryBuffer_,
 			eventTimesBuffer_, subsystemsSequenceBuffer_);
 
@@ -375,10 +379,7 @@ bool MRT_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::updatePolicy() {
 
 	mpcTimeTrajectory_.swap(mpcTimeTrajectoryBuffer_);
 	mpcStateTrajectory_.swap(mpcStateTrajectoryBuffer_);
-
-	mpcLinInterpolateState_.reset();
-	mpcLinInterpolateState_.setTimeStamp(&mpcTimeTrajectory_);
-	mpcLinInterpolateState_.setData(&mpcStateTrajectory_);
+	mpcLinInterpolateState_.setData(&mpcTimeTrajectory_, &mpcStateTrajectory_);
 
 	mpcControllerPtr_.swap(mpcControllerBufferPtr_);
 

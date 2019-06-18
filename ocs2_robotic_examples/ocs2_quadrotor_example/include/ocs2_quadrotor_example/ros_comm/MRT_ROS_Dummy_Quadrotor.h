@@ -61,19 +61,9 @@ public:
 	{}
 
 	/**
-	 * Destructor.
+	 * Default destructor.
 	 */
 	virtual ~MRT_ROS_Dummy_Quadrotor() = default;
-
-	/**
-	 * The initialization of the observation
-	 *
-	 * @param [in] initObservation: The initial observation.
-	 */
-	virtual void init(const system_observation_t& initObservation) override {
-
-		BASE::init(initObservation);
-	}
 
 protected:
 	/**

@@ -67,15 +67,6 @@ public:
 	 */
 	virtual ~MRT_ROS_Dummy_Cartpole() = default;
 
-	/**
-	 * The initialization of the observation
-	 *
-	 * @param [in] initObservation: The initial observation.
-	 */
-	virtual void init(const system_observation_t& initObservation) {
-		BASE::init(initObservation);
-	}
-
 
 protected:
 

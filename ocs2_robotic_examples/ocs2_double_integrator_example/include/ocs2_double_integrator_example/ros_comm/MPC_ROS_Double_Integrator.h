@@ -84,24 +84,6 @@ public:
 	virtual ~MPC_ROS_Linear_System() = default;
 
 	/**
-	 * Provides the initial target trajectories for the cost function.
-	 *
-	 * @param [in] initObservation: The observation after the very fist call of the class or after call to reset().
-	 * @param [out] costDesiredTrajectories: The desired cost trajectories.
-	 */
-	virtual void initGoalState(
-			const system_observation_t &initObservation,
-			cost_desired_trajectories_t &costDesiredTrajectories) {
-
-		costDesiredTrajectories.desiredTimeTrajectory().resize(1);
-		costDesiredTrajectories.desiredTimeTrajectory().at(0) = 0.0;
-		costDesiredTrajectories.desiredStateTrajectory().resize(1);
-		costDesiredTrajectories.desiredStateTrajectory().at(0) = state_vector_t::Zero();
-		costDesiredTrajectories.desiredInputTrajectory().resize(1);
-		costDesiredTrajectories.desiredInputTrajectory().at(0) = input_vector_t::Zero();
-	}
-
-	/**
 	 * Adjusts the user-defined target trajectories for the cost based on the current observation.
 	 *
 	 * @param [in] currentObservation: The current observation.

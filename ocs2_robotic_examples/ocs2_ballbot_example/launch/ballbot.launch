@@ -1,43 +1,17 @@
 <launch>
+    <arg name="rviz"       default="true" />
+    <arg name="task_name"  default="mpc"/>
 
-  <!-- Set true for simulation of Ballbot in Gazebo -->
-  <arg name="simulation" default="true"/>
-  <!-- Set true to simulate sensors without noise and bias -->
-  <arg name="perfect_sensors" default="true"/>
-  <!-- Set true to fix the base of Ballbot in simulation -->
-  <arg name="fixed" default="false"/>
-  <!-- Set the path to the description parameter file -->
-  <arg name="description_parameter_name" default="rezero_base_parameters"/>
-  <!-- Set the path to the description parameter file -->
-  <!-- Bool to determine if the arm is used or not -->
-  <arg name="description_parameter_file" value="$(find ocs2_ballbot_example)/urdf/parameters/rezero_base_parameters.yaml"/>
-  <!-- Give the robot description parameter a name -->
-  <arg name="description_name" default="robot_description"/>
-  <!-- Set robot description path -->
-  <arg name="description_file" default="$(find ocs2_ballbot_example)/urdf/rezero_base_sdf.urdf.xacro"/>
-  <!-- Set true to draw the meshes -->
-  <arg name="mesh" default="true"/>
-  <!-- Set the material color -->
-  <arg name="material_color_rgba" default="0.76078431 0.73333333 0.72156863 1.0"/>
-  <!-- Publish frequency -->
-  <arg name="publish_frequency" default="10"/>
-  <!-- Joint state topic name -->
-  <arg name="joint_states_topic" default="joint_states"/>
-  <!-- TF prefix -->
-  <arg name="tf_prefix" default=""/>
+    <group if="$(arg rviz)">
+      <include file="$(find ocs2_ballbot_example)/launch/visualize.launch"/>
+    </group>
 
-  <!-- Run xacro script to generate Ballbot description -->
-  <param name="$(arg description_name)" command="$(find xacro)/xacro --inorder
-    $(arg description_file)
-    simulation:=$(arg simulation)
-    fixed:=$(arg fixed)
-    mesh:=$(arg mesh)
-    material_color_rgba:='$(arg material_color_rgba)'
-    perfect_sensors:='$(arg perfect_sensors)'"/>
+    <node pkg="ocs2_ballbot_example" type="ballbot_mpc" name="ballbot_mpc"
+          output="screen" args="$(arg task_name)" launch-prefix="gnome-terminal --"/>
 
-  <param name="$(arg description_parameter_name)" value="$(arg description_parameter_file)"/>
+    <node pkg="ocs2_ballbot_example" type="ballbot_dummy_test" name="ballbot_dummy_test"
+          output="screen" args="$(arg task_name)" launch-prefix="gnome-terminal --"/>
 
-  <node name="rviz" pkg="rviz" type="rviz" respawn="false" args="-d $(find ocs2_ballbot_example)/rviz/rezero.rviz " />
-
+    <node pkg="ocs2_ballbot_example" type="ballbot_target" name="ballbot_target"
+          output="screen" args="$(arg task_name)" launch-prefix="gnome-terminal --"/>
 </launch>
-	

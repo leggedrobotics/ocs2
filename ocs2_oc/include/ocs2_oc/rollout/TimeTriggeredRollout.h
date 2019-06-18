@@ -257,15 +257,20 @@ public:
 		bool eventAtFinalTime = numEvents>finalItr &&
 				logicRulesMachine.getEventTimes(partitionIndex)[finalItr]<finalTime+OCS2NumericTraits<scalar_t>::limit_epsilon();
 
+		// terminal state and event
+		state_vector_t terminalState;
 		if (eventAtFinalTime) {
 			eventsPastTheEndIndeces.push_back( stateTrajectory.size() );
 			systemDynamicsPtr_->computeJumpMap(
-					timeTrajectory.back(), stateTrajectory.back(), beginState);
-			return beginState;
-
+					timeTrajectory.back(), stateTrajectory.back(), terminalState);
 		} else {
-			return stateTrajectory.back();
+			terminalState = stateTrajectory.back();
 		}
+
+		// check for the numerical stability
+		BASE::checkNumericalStability(partitionIndex, controller, timeTrajectory, eventsPastTheEndIndeces, stateTrajectory, inputTrajectory);
+
+		return terminalState;
 	}
 
 private:

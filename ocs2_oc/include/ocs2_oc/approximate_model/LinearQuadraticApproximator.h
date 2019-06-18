@@ -191,8 +191,8 @@ public:
 			size_t &ncIneq,
 			scalar_array_t &h,
 			state_vector_array_t &dhdx,
-			state_matrix_array_t &ddhdxdx,
-			input_vector_array_t &dhdu,
+            input_vector_array_t &dhdu,
+            state_matrix_array_t &ddhdxdx,
 			input_matrix_array_t &ddhdudu,
 			input_state_matrix_array_t &ddhdudx,
 			eigen_scalar_t &q,
@@ -203,7 +203,7 @@ public:
 			input_state_matrix_t &Pm) {
 
 		approximateDynamics(time, state, input, Am, Bm);
-		approximateConstraints(time, state, input, ncEqStateInput, Ev, Cm, Dm, ncEqStateOnly, Hv, Fm, ncIneq, h, dhdx, ddhdxdx, dhdu, ddhdudu, ddhdudx);
+		approximateConstraints(time, state, input, ncEqStateInput, Ev, Cm, Dm, ncEqStateOnly, Hv, Fm, ncIneq, h, dhdx, dhdu, ddhdxdx, ddhdudu, ddhdudx);
 		approximateIntermediateCost(time, state, input, q, Qv, Qm, Rv, Rm, Pm);
 	}
 
@@ -252,8 +252,8 @@ public:
 			const scalar_t& time,
 			const state_vector_t& state,
 			const input_vector_t& input,
-			const state_matrix_t& Am,
-			const state_input_matrix_t& Bm) {
+			state_matrix_t& Am,
+			state_input_matrix_t& Bm) {
 
 		// set data
 		systemDerivativesPtr_->setCurrentStateAndControl(time, state, input);
@@ -301,8 +301,8 @@ public:
 			size_t &ncIneq,
 			scalar_array_t &h,
 			state_vector_array_t &dhdx,
-			state_matrix_array_t &ddhdxdx,
-			input_vector_array_t &dhdu,
+            input_vector_array_t &dhdu,
+            state_matrix_array_t &ddhdxdx,
 			input_matrix_array_t &ddhdudu,
 			input_state_matrix_array_t &ddhdudx) {
 

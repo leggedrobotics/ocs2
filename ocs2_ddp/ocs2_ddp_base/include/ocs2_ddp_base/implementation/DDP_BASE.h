@@ -711,44 +711,29 @@ void DDP_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::approximateUnconstrainedLQWo
 	linearQuadraticApproximatorPtrStock_[workerIndex]->approximateUnconstrainedLQProblem(
 			nominalTimeTrajectoriesStock_[i][k],
 			nominalStateTrajectoriesStock_[i][k],
-			nominalInputTrajectoriesStock_[i][k]);
-
-	/*
-	 * linearize system dynamics
-	 */
-	AmTrajectoryStock_[i][k].swap(linearQuadraticApproximatorPtrStock_[workerIndex]->Am_);
-	BmTrajectoryStock_[i][k].swap(linearQuadraticApproximatorPtrStock_[workerIndex]->Bm_);
-
-	/*
-	 * constraints and linearized constraints
-	 */
-	// State-input equality constraint
-	nc1TrajectoriesStock_[i][k] = linearQuadraticApproximatorPtrStock_[workerIndex]->ncEqStateInput_;
-	EvTrajectoryStock_[i][k].swap(linearQuadraticApproximatorPtrStock_[workerIndex]->Ev_);
-	CmTrajectoryStock_[i][k].swap(linearQuadraticApproximatorPtrStock_[workerIndex]->Cm_);
-	DmTrajectoryStock_[i][k].swap(linearQuadraticApproximatorPtrStock_[workerIndex]->Dm_);
-	// State-only equality constraint
-	nc2TrajectoriesStock_[i][k] = linearQuadraticApproximatorPtrStock_[workerIndex]->ncEqStateOnly_;
-	HvTrajectoryStock_[i][k].swap(linearQuadraticApproximatorPtrStock_[workerIndex]->Hv_);
-	FmTrajectoryStock_[i][k].swap(linearQuadraticApproximatorPtrStock_[workerIndex]->Fm_);
-	// Inequality constraint
-	ncIneqTrajectoriesStock_[i][k] = linearQuadraticApproximatorPtrStock_[workerIndex]->ncIneq_;
-	hTrajectoryStock_[i][k].swap(linearQuadraticApproximatorPtrStock_[workerIndex]->h_);
-	dhdxTrajectoryStock_[i][k].swap(linearQuadraticApproximatorPtrStock_[workerIndex]->dhdx_);
-	dhduTrajectoryStock_[i][k].swap(linearQuadraticApproximatorPtrStock_[workerIndex]->dhdu_);
-	ddhdxdxTrajectoryStock_[i][k].swap(linearQuadraticApproximatorPtrStock_[workerIndex]->ddhdxdx_);
-	ddhduduTrajectoryStock_[i][k].swap(linearQuadraticApproximatorPtrStock_[workerIndex]->ddhdudu_);
-	ddhdudxTrajectoryStock_[i][k].swap(linearQuadraticApproximatorPtrStock_[workerIndex]->ddhdudx_);
-
-	/*
-	 * quadratic approximation to the cost function
-	 */
-	qTrajectoryStock_[i][k].swap(linearQuadraticApproximatorPtrStock_[workerIndex]->q_);
-	QvTrajectoryStock_[i][k].swap(linearQuadraticApproximatorPtrStock_[workerIndex]->Qv_);
-	QmTrajectoryStock_[i][k].swap(linearQuadraticApproximatorPtrStock_[workerIndex]->Qm_);
-	RvTrajectoryStock_[i][k].swap(linearQuadraticApproximatorPtrStock_[workerIndex]->Rv_);
-	RmTrajectoryStock_[i][k].swap(linearQuadraticApproximatorPtrStock_[workerIndex]->Rm_);
-	PmTrajectoryStock_[i][k].swap(linearQuadraticApproximatorPtrStock_[workerIndex]->Pm_);
+			nominalInputTrajectoriesStock_[i][k],
+			AmTrajectoryStock_[i][k],
+			BmTrajectoryStock_[i][k],
+			nc1TrajectoriesStock_[i][k],
+			EvTrajectoryStock_[i][k],
+			CmTrajectoryStock_[i][k],
+			DmTrajectoryStock_[i][k],
+			nc2TrajectoriesStock_[i][k],
+			HvTrajectoryStock_[i][k],
+			FmTrajectoryStock_[i][k],
+			ncIneqTrajectoriesStock_[i][k],
+			hTrajectoryStock_[i][k],
+			dhdxTrajectoryStock_[i][k],
+			dhduTrajectoryStock_[i][k],
+			ddhdxdxTrajectoryStock_[i][k],
+			ddhduduTrajectoryStock_[i][k],
+			ddhdudxTrajectoryStock_[i][k],
+			qTrajectoryStock_[i][k],
+			QvTrajectoryStock_[i][k],
+			QmTrajectoryStock_[i][k],
+			RvTrajectoryStock_[i][k],
+			RmTrajectoryStock_[i][k],
+			PmTrajectoryStock_[i][k]);
 
 	// making sure that constrained Qm is PSD
 	if (ddpSettings_.useMakePSD_==true)

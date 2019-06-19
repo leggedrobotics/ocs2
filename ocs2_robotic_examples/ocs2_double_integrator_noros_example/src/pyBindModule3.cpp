@@ -8,6 +8,26 @@
 using namespace ocs2::double_integrator;
 using namespace pybind11::literals;
 
+// convenience macro to bind all kinds of std::vector-like types
+#define VECTOR_TYPE_BINDING(VTYPE, NAME)\
+  pybind11::class_<VTYPE>(m, NAME)\
+      .def(pybind11::init<>())\
+      .def("clear", &VTYPE::clear)\
+      .def("pop_back", &VTYPE::pop_back)\
+      .def("__getitem__",\
+           [](const VTYPE& v, size_t i) {\
+             if (i >= v.size()) throw pybind11::index_error();\
+             return v[i];\
+           })\
+      .def("__setitem__",\
+           [](VTYPE& v, size_t i, VTYPE::value_type val) {\
+             if (i >= v.size()) throw pybind11::index_error();\
+             v[i] = val;\
+           })\
+      .def("__len__", [](const VTYPE& v) { return v.size(); })\
+      .def("__iter__", [](VTYPE& v) { return pybind11::make_iterator(v.begin(), v.end()); },\
+           pybind11::keep_alive<0, 1>()); /* Keep vector alive while iterator is used */
+
 PYBIND11_MAKE_OPAQUE(DoubleIntegratorPyBindings::scalar_array_t);
 PYBIND11_MAKE_OPAQUE(DoubleIntegratorPyBindings::state_vector_array_t);
 PYBIND11_MAKE_OPAQUE(DoubleIntegratorPyBindings::input_vector_array_t);
@@ -31,82 +51,9 @@ PYBIND11_MODULE(DoubleIntegratorPyBindings3, m) {
       .def("getRunningCostDerivativeInput", &DoubleIntegratorPyBindings::getRunningCostDerivativeInput, "t"_a, "x"_a.noconvert(), "u"_a.noconvert())
       .def("getValueFunctionStateDerivative", &DoubleIntegratorPyBindings::getValueFunctionStateDerivative, "t"_a, "x"_a.noconvert());
 
-  // bind scalar_array_t so it can be used natively in python
-  pybind11::class_<DoubleIntegratorPyBindings::scalar_array_t>(m, "scalar_array")
-      .def(pybind11::init<>())
-      .def("clear", &DoubleIntegratorPyBindings::scalar_array_t::clear)
-      .def("pop_back", &DoubleIntegratorPyBindings::scalar_array_t::pop_back)
-      .def("__getitem__",
-           [](const DoubleIntegratorPyBindings::scalar_array_t& v, size_t i) {
-             if (i >= v.size()) throw pybind11::index_error();
-             return v[i];
-           })
-      .def("__setitem__",
-           [](DoubleIntegratorPyBindings::scalar_array_t& v, size_t i, DoubleIntegratorPyBindings::scalar_array_t::value_type val) {
-             if (i >= v.size()) throw pybind11::index_error();
-             v[i] = val;
-           })
-      .def("__len__", [](const DoubleIntegratorPyBindings::scalar_array_t& v) { return v.size(); })
-      .def("__iter__", [](DoubleIntegratorPyBindings::scalar_array_t& v) { return pybind11::make_iterator(v.begin(), v.end()); },
-           pybind11::keep_alive<0, 1>()); /* Keep vector alive while iterator is used */
-
-  // bind state_vector_array_t so it can be used natively in python
-  pybind11::class_<DoubleIntegratorPyBindings::state_vector_array_t>(m, "state_vector_array")
-      .def(pybind11::init<>())
-      .def("clear", &DoubleIntegratorPyBindings::state_vector_array_t::clear)
-      .def("pop_back", &DoubleIntegratorPyBindings::state_vector_array_t::pop_back)
-      .def("__getitem__",
-           [](const DoubleIntegratorPyBindings::state_vector_array_t& v, size_t i) {
-             if (i >= v.size()) throw pybind11::index_error();
-             return v[i];
-           })
-      .def("__setitem__",
-           [](DoubleIntegratorPyBindings::state_vector_array_t& v, size_t i,
-              DoubleIntegratorPyBindings::state_vector_array_t::value_type val) {
-             if (i >= v.size()) throw pybind11::index_error();
-             v[i] = val;
-           })
-      .def("__len__", [](const DoubleIntegratorPyBindings::state_vector_array_t& v) { return v.size(); })
-      .def("__iter__", [](DoubleIntegratorPyBindings::state_vector_array_t& v) { return pybind11::make_iterator(v.begin(), v.end()); },
-           pybind11::keep_alive<0, 1>()); /* Keep vector alive while iterator is used */
-
-  // bind input_vector_array_t so it can be used natively in python
-  pybind11::class_<DoubleIntegratorPyBindings::input_vector_array_t>(m, "input_vector_array_t")
-      .def(pybind11::init<>())
-      .def("clear", &DoubleIntegratorPyBindings::input_vector_array_t::clear)
-      .def("pop_back", &DoubleIntegratorPyBindings::input_vector_array_t::pop_back)
-      .def("__getitem__",
-           [](const DoubleIntegratorPyBindings::input_vector_array_t& v, size_t i) {
-             if (i >= v.size()) throw pybind11::index_error();
-             return v[i];
-           })
-      .def("__setitem__",
-           [](DoubleIntegratorPyBindings::input_vector_array_t& v, size_t i,
-              DoubleIntegratorPyBindings::input_vector_array_t::value_type val) {
-             if (i >= v.size()) throw pybind11::index_error();
-             v[i] = val;
-           })
-      .def("__len__", [](const DoubleIntegratorPyBindings::input_vector_array_t& v) { return v.size(); })
-      .def("__iter__", [](DoubleIntegratorPyBindings::input_vector_array_t& v) { return pybind11::make_iterator(v.begin(), v.end()); },
-           pybind11::keep_alive<0, 1>()); /* Keep vector alive while iterator is used */
-
-  // bind state_matrix_array_t so it can be used natively in python
-  pybind11::class_<DoubleIntegratorPyBindings::state_matrix_array_t>(m, "state_matrix_array_t")
-     .def(pybind11::init<>())
-     .def("clear", &DoubleIntegratorPyBindings::state_matrix_array_t::clear)
-     .def("pop_back", &DoubleIntegratorPyBindings::state_matrix_array_t::pop_back)
-     .def("__getitem__",
-          [](const DoubleIntegratorPyBindings::state_matrix_array_t& v, size_t i) {
-            if (i >= v.size()) throw pybind11::index_error();
-            return v[i];
-          })
-     .def("__setitem__",
-          [](DoubleIntegratorPyBindings::state_matrix_array_t& v, size_t i,
-             DoubleIntegratorPyBindings::state_matrix_array_t::value_type val) {
-            if (i >= v.size()) throw pybind11::index_error();
-            v[i] = val;
-          })
-     .def("__len__", [](const DoubleIntegratorPyBindings::state_matrix_array_t& v) { return v.size(); })
-     .def("__iter__", [](DoubleIntegratorPyBindings::state_matrix_array_t& v) { return pybind11::make_iterator(v.begin(), v.end()); },
-          pybind11::keep_alive<0, 1>()); /* Keep vector alive while iterator is used */
+  // bind vector types so they can be used natively in python
+  VECTOR_TYPE_BINDING(DoubleIntegratorPyBindings::scalar_array_t, "scalar_array")
+  VECTOR_TYPE_BINDING(DoubleIntegratorPyBindings::state_vector_array_t, "state_vector_array")
+  VECTOR_TYPE_BINDING(DoubleIntegratorPyBindings::input_vector_array_t, "input_vector_array_t")
+  VECTOR_TYPE_BINDING(DoubleIntegratorPyBindings::state_matrix_array_t, "state_matrix_array_t")
 }

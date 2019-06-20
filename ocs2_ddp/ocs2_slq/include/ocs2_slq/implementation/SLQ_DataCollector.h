@@ -139,7 +139,7 @@ void SLQ_DataCollector<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::collect(
 	AmConstrainedTrajectoriesStock_.swap(slqPtr->AmConstrainedTrajectoryStock_);
 	QmConstrainedTrajectoriesStock_.swap(slqPtr->QmConstrainedTrajectoryStock_);
 	QvConstrainedTrajectoriesStock_.swap(slqPtr->QvConstrainedTrajectoryStock_);
-	RmConstrainedTrajectoriesStock_.swap(slqPtr->RmConstrainedTrajectoryStock_);
+	RmInvConstrainedCholTrajectoryStock_.swap(slqPtr->RmInvConstrainedCholTrajectoryStock_);
 	DmDagerTrajectoriesStock_.swap(slqPtr->DmDagerTrajectoryStock_);
 	EvProjectedTrajectoriesStock_.swap(slqPtr->EvProjectedTrajectoryStock_);
 	CmProjectedTrajectoriesStock_.swap(slqPtr->CmProjectedTrajectoryStock_);
@@ -356,7 +356,7 @@ void SLQ_DataCollector<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::resizeDataContainer
 	AmConstrainedTrajectoriesStock_.resize(numPartitions);
 	QmConstrainedTrajectoriesStock_.resize(numPartitions);
 	QvConstrainedTrajectoriesStock_.resize(numPartitions);
-	RmConstrainedTrajectoriesStock_.resize(numPartitions);
+	RmInvConstrainedCholTrajectoryStock_.resize(numPartitions);
 	DmDagerTrajectoriesStock_.resize(numPartitions);
 	EvProjectedTrajectoriesStock_.resize(numPartitions);
 	CmProjectedTrajectoriesStock_.resize(numPartitions);

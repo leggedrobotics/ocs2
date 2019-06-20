@@ -417,7 +417,6 @@ protected:
 	state_matrix_array2_t       AmConstrainedTrajectoryStock_;
 	state_matrix_array2_t       QmConstrainedTrajectoryStock_;
 	state_vector_array2_t       QvConstrainedTrajectoryStock_;
-	input_matrix_array2_t       RmConstrainedTrajectoryStock_;
 	dynamic_matrix_array2_t     RmInvConstrainedCholTrajectoryStock_;
 	input_constraint1_matrix_array2_t DmDagerTrajectoryStock_;
 	input_vector_array2_t       EvProjectedTrajectoryStock_;  // DmDager * Ev

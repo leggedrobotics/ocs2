@@ -483,8 +483,6 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculateControllerWorker (
 	input_vector_t EvProjected;
 	input_state_matrix_t CmProjected;
 	input_matrix_t DmProjected;
-	input_constraint1_matrix_t DmDager;
-	input_matrix_t Rm;
 
 	// interpolate
 	const auto greatestLessTimeStampIndex = BASE::nominalStateFunc_[workerIndex].interpolate(time, nominalState);
@@ -503,7 +501,7 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculateControllerWorker (
 	input_vector_t     Lve = RmInverse * (Bm.transpose()*BASE::SveTrajectoryStock_[i][k]);
 
 	input_matrix_t DmNullProjection = input_matrix_t::Identity()-DmProjected;
-	BASE::nominalControllersStock_[i].gainArray_[k]   = -DmNullProjection*Lm - CmProjected;
+	BASE::nominalControllersStock_[i].gainArray_[k]   = -DmNullProjection * Lm - CmProjected;
 	BASE::nominalControllersStock_[i].biasArray_[k] = nominalInput - BASE::nominalControllersStock_[i].gainArray_[k]*nominalState
 			- BASE::constraintStepSize_ * (DmNullProjection*Lve + EvProjected);
 	BASE::nominalControllersStock_[i].deltaBiasArray_[k] = -DmNullProjection*Lv;

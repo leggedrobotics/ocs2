@@ -93,6 +93,7 @@ public:
 	typedef typename slq_t::constraint2_vector_array2_t constraint2_vector_array2_t;
 	typedef typename slq_t::constraint2_state_matrix_array_t  constraint2_state_matrix_array_t;
 	typedef typename slq_t::constraint2_state_matrix_array2_t constraint2_state_matrix_array2_t;
+	typedef typename slq_t::dynamic_matrix_array2_t dynamic_matrix_array2_t;
 
 	typedef std::vector<constraint1_vector_array2_t, Eigen::aligned_allocator<constraint1_vector_array2_t>> constraint1_vector_array3_t;
 	typedef std::vector<constraint2_vector_array2_t, Eigen::aligned_allocator<constraint2_vector_array2_t>> constraint2_vector_array3_t;
@@ -197,8 +198,8 @@ public:
 	state_matrix_array2_t                AmConstrainedTrajectoriesStock_;
 	state_matrix_array2_t                QmConstrainedTrajectoriesStock_;
 	state_vector_array2_t                QvConstrainedTrajectoriesStock_;
-	input_matrix_array2_t                RmConstrainedTrajectoriesStock_;
-	input_constraint1_matrix_array2_t    DmDagerTrajectoriesStock_;
+    dynamic_matrix_array2_t     		 RmInvConstrainedCholTrajectoryStock_;
+  	input_constraint1_matrix_array2_t    DmDagerTrajectoriesStock_;
 	input_vector_array2_t                EvProjectedTrajectoriesStock_;  // DmDager * Ev
 	input_state_matrix_array2_t          CmProjectedTrajectoriesStock_;  // DmDager * Cm
 	input_matrix_array2_t                DmProjectedTrajectoriesStock_;  // DmDager * Dm

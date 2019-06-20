@@ -30,15 +30,15 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifndef SEQUENTIALRICCATIEQUATIONSNORMALIZED_OCS2_H_
 #define SEQUENTIALRICCATIEQUATIONSNORMALIZED_OCS2_H_
 
-#include <Eigen/StdVector>
-#include <vector>
 #include <Eigen/Dense>
+#include <Eigen/StdVector>
 #include <iostream>
+#include <vector>
 
 #include <ocs2_core/Dimensions.h>
 #include <ocs2_core/integration/ODE_Base.h>
-#include <ocs2_core/misc/LinearInterpolation.h>
 #include <ocs2_core/misc/LinearAlgebra.h>
+#include <ocs2_core/misc/LinearInterpolation.h>
 #include <ocs2_core/misc/Lookup.h>
 
 namespace ocs2 {
@@ -49,17 +49,17 @@ namespace ocs2 {
  * @tparam STATE_DIM: Dimension of the state space.
  * @tparam INPUT_DIM: Dimension of the control input space.
  */
-template<size_t STATE_DIM, size_t INPUT_DIM>
-class SequentialRiccatiEquationsNormalized final : public ODE_Base<STATE_DIM * (STATE_DIM + 1) / 2 + STATE_DIM + 1> {
+template <size_t STATE_DIM, size_t INPUT_DIM>
+class SequentialRiccatiEquationsNormalized final : public ODE_Base<STATE_DIM*(STATE_DIM + 1) / 2 + STATE_DIM + 1> {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-    /** If STATE_DIM=n, Then: n(n+1)/2 entries from triangular matrix Sm, n entries from vector Sv and +1 one from a scalar */
+  /** If STATE_DIM=n, Then: n(n+1)/2 entries from triangular matrix Sm, n entries from vector Sv and +1 one from a scalar */
   static constexpr size_t S_DIM_ = (STATE_DIM * (STATE_DIM + 1) / 2 + STATE_DIM + 1);
 
-  typedef ODE_Base <S_DIM_> BASE;
+  typedef ODE_Base<S_DIM_> BASE;
 
-  typedef Dimensions <STATE_DIM, INPUT_DIM> DIMENSIONS;
+  typedef Dimensions<STATE_DIM, INPUT_DIM> DIMENSIONS;
   typedef typename DIMENSIONS::scalar_t scalar_t;
   typedef typename DIMENSIONS::scalar_array_t scalar_array_t;
   typedef typename DIMENSIONS::size_array_t size_array_t;
@@ -88,32 +88,29 @@ class SequentialRiccatiEquationsNormalized final : public ODE_Base<STATE_DIM * (
   /**
    * Constructor.
    */
-  SequentialRiccatiEquationsNormalized(
-      const bool &useMakePSD,
-      const scalar_t &addedRiccatiDiagonal,
-      bool normalizeTime,
-      bool preComputeRiccatiTerms = true)
-      : useMakePSD_(useMakePSD)
-      , addedRiccatiDiagonal_(addedRiccatiDiagonal)
-      , switchingTimeStart_(0.0)
-      , switchingTimeFinal_(1.0)
-      , scalingFactor_(1.0)
-      , normalizeTime_(normalizeTime)
-      , preComputeRiccatiTerms_(preComputeRiccatiTerms)
-      , Sm_(state_matrix_t::Zero())
-      , Sv_(state_vector_t::Zero())
-      , s_(eigen_scalar_t::Zero())
-      , Qm_(state_matrix_t::Zero())
-      , Qv_(state_vector_t::Zero())
-      , q_(eigen_scalar_t::Zero())
-      , AmT_minus_P_Rinv_Bm_(state_matrix_t::Zero())
-      , AmT_Sm_(state_matrix_t::Zero())
-      , Am_(state_matrix_t::Zero())
-      , Bm_(state_input_matrix_t::Zero())
-      , Rv_(input_vector_t::Zero())
-      , Pm_(input_state_matrix_t::Zero())
-      , Lm_(input_state_matrix_t::Zero())
-      , Lv_(input_vector_t::Zero()) {}
+  SequentialRiccatiEquationsNormalized(const bool& useMakePSD, const scalar_t& addedRiccatiDiagonal, bool normalizeTime,
+                                       bool preComputeRiccatiTerms = true)
+      : useMakePSD_(useMakePSD),
+        addedRiccatiDiagonal_(addedRiccatiDiagonal),
+        switchingTimeStart_(0.0),
+        switchingTimeFinal_(1.0),
+        scalingFactor_(1.0),
+        normalizeTime_(normalizeTime),
+        preComputeRiccatiTerms_(preComputeRiccatiTerms),
+        Sm_(state_matrix_t::Zero()),
+        Sv_(state_vector_t::Zero()),
+        s_(eigen_scalar_t::Zero()),
+        Qm_(state_matrix_t::Zero()),
+        Qv_(state_vector_t::Zero()),
+        q_(eigen_scalar_t::Zero()),
+        AmT_minus_P_Rinv_Bm_(state_matrix_t::Zero()),
+        AmT_Sm_(state_matrix_t::Zero()),
+        Am_(state_matrix_t::Zero()),
+        Bm_(state_input_matrix_t::Zero()),
+        Rv_(input_vector_t::Zero()),
+        Pm_(input_state_matrix_t::Zero()),
+        Lm_(input_state_matrix_t::Zero()),
+        Lv_(input_vector_t::Zero()) {}
 
   /**
    * Default destructor.
@@ -128,61 +125,45 @@ class SequentialRiccatiEquationsNormalized final : public ODE_Base<STATE_DIM * (
    * @param [in] s: \f$ s \f$
    * @param [out] allSs: Single vector constructed by concatenating Sm, Sv and s.
    */
-  static void convert2Vector(
-      const state_matrix_t &Sm,
-      const state_vector_t &Sv,
-      const eigen_scalar_t &s,
-      s_vector_t &allSs) {
-
+  static void convert2Vector(const state_matrix_t& Sm, const state_vector_t& Sv, const eigen_scalar_t& s, s_vector_t& allSs) {
     /* Sm is symmetric. Here, we only extract the upper triangular part and transcribe it in column-wise fashion into allSs*/
-    size_t count = 0;    // count the total number of scalar entries covered
+    size_t count = 0;  // count the total number of scalar entries covered
     size_t nRows = 0;
     for (size_t nCols = 0; nCols < STATE_DIM; nCols++) {
       nRows = nCols + 1;
-      allSs.segment(count, nRows) <<
-                                  Eigen::Map<const dynamic_vector_t>(Sm.data() + nCols * STATE_DIM, nRows);
+      allSs.segment(count, nRows) << Eigen::Map<const dynamic_vector_t>(Sm.data() + nCols * STATE_DIM, nRows);
       count += nRows;
     }
 
     /* add data from Sv on top*/
-    allSs.template segment<STATE_DIM>((STATE_DIM * (STATE_DIM + 1)) / 2) <<
-                                                                         Eigen::Map<const dynamic_vector_t>(Sv.data(),
-                                                                                                            STATE_DIM);
+    allSs.template segment<STATE_DIM>((STATE_DIM * (STATE_DIM + 1)) / 2) << Eigen::Map<const dynamic_vector_t>(Sv.data(), STATE_DIM);
 
     /* add s as last element*/
     allSs.template tail<1>() << s;
   }
 
   /**
-  * Transcribes the stacked vector allSs into a symmetric matrix, Sm, a vector, Sv and a single scalar, s.
-  *
-  * @param [in] allSs: Single vector constructed by concatenating Sm, Sv and s.
-  * @param [out] Sm: \f$ S_m \f$
-  * @param [out] Sv: \f$ S_v \f$
-  * @param [out] s: \f$ s \f$
-  */
-  static void convert2Matrix(
-      const s_vector_t &allSs,
-      state_matrix_t &Sm,
-      state_vector_t &Sv,
-      eigen_scalar_t &s) {
-
+   * Transcribes the stacked vector allSs into a symmetric matrix, Sm, a vector, Sv and a single scalar, s.
+   *
+   * @param [in] allSs: Single vector constructed by concatenating Sm, Sv and s.
+   * @param [out] Sm: \f$ S_m \f$
+   * @param [out] Sv: \f$ S_v \f$
+   * @param [out] s: \f$ s \f$
+   */
+  static void convert2Matrix(const s_vector_t& allSs, state_matrix_t& Sm, state_vector_t& Sv, eigen_scalar_t& s) {
     /* Sm is symmetric. Here, we map the first entries from allSs onto the respective elements in the symmetric matrix*/
     size_t count = 0;
     size_t nCols = 0;
     for (size_t rows = 0; rows < STATE_DIM; rows++) {
       nCols = rows + 1;
-      Sm.block(rows, 0, 1, nCols) <<
-                                  Eigen::Map<const dynamic_vector_t>(allSs.data() + count, nCols).transpose();
+      Sm.block(rows, 0, 1, nCols) << Eigen::Map<const dynamic_vector_t>(allSs.data() + count, nCols).transpose();
       // "nCols-1" because diagonal elements have already been covered
-      Sm.block(0, rows, nCols - 1, 1) <<
-                                      Eigen::Map<const dynamic_vector_t>(allSs.data() + count, nCols - 1);
+      Sm.block(0, rows, nCols - 1, 1) << Eigen::Map<const dynamic_vector_t>(allSs.data() + count, nCols - 1);
       count += nCols;
     }
 
     /* extract the vector Sv*/
-    Sv = Eigen::Map<const dynamic_vector_t>(
-        allSs.data() + (STATE_DIM * (STATE_DIM + 1)) / 2, STATE_DIM);
+    Sv = Eigen::Map<const dynamic_vector_t>(allSs.data() + (STATE_DIM * (STATE_DIM + 1)) / 2, STATE_DIM);
 
     /* extract s as the last element */
     s = allSs.template tail<1>();
@@ -205,29 +186,18 @@ class SequentialRiccatiEquationsNormalized final : public ODE_Base<STATE_DIM * (
    * @param [in] RmPtr: A pointer to the trajectory of \f$ R_m(t) \f$ .
    * @param [in] PmPtr: A pointer to the trajectory of \f$ P_m(t) \f$ .
    */
-  void setData(
-      const scalar_t &switchingTimeStart,
-      const scalar_t &switchingTimeFinal,
-      const scalar_array_t *timeStampPtr,
-      const state_matrix_array_t *AmPtr,
-      const state_input_matrix_array_t *BmPtr,
-      const eigen_scalar_array_t *qPtr,
-      const state_vector_array_t *QvPtr,
-      const state_matrix_array_t *QmPtr,
-      const input_vector_array_t *RvPtr,
-      const dynamic_matrix_array_t *RinvCholPtr,
-      const input_state_matrix_array_t *PmPtr,
-      const size_array_t *eventsPastTheEndIndecesPtr,
-      const eigen_scalar_array_t *qFinalPtr,
-      const state_vector_array_t *QvFinalPtr,
-      const state_matrix_array_t *QmFinalPtr) {
-
+  void setData(const scalar_t& switchingTimeStart, const scalar_t& switchingTimeFinal, const scalar_array_t* timeStampPtr,
+               const state_matrix_array_t* AmPtr, const state_input_matrix_array_t* BmPtr, const eigen_scalar_array_t* qPtr,
+               const state_vector_array_t* QvPtr, const state_matrix_array_t* QmPtr, const input_vector_array_t* RvPtr,
+               const dynamic_matrix_array_t* RinvCholPtr, const input_state_matrix_array_t* PmPtr,
+               const size_array_t* eventsPastTheEndIndecesPtr, const eigen_scalar_array_t* qFinalPtr,
+               const state_vector_array_t* QvFinalPtr, const state_matrix_array_t* QmFinalPtr) {
     BASE::resetNumFunctionCalls();
 
     switchingTimeStart_ = switchingTimeStart;
     switchingTimeFinal_ = switchingTimeFinal;
 
-    if (normalizeTime_){
+    if (normalizeTime_) {
       scalingFactor_ = switchingTimeFinal - switchingTimeStart;
     } else {
       scalingFactor_ = 1.0;
@@ -236,8 +206,7 @@ class SequentialRiccatiEquationsNormalized final : public ODE_Base<STATE_DIM * (
     eventTimes_.clear();
     eventTimes_.reserve(eventsPastTheEndIndecesPtr->size());
 
-    for (const size_t &pastTheEndIndex : *eventsPastTheEndIndecesPtr)
-      eventTimes_.push_back(timeStampPtr->at(pastTheEndIndex - 1));
+    for (const size_t& pastTheEndIndex : *eventsPastTheEndIndecesPtr) eventTimes_.push_back(timeStampPtr->at(pastTheEndIndex - 1));
 
     qFinalPtr_ = qFinalPtr;
     QvFinalPtr_ = QvFinalPtr;
@@ -279,7 +248,7 @@ class SequentialRiccatiEquationsNormalized final : public ODE_Base<STATE_DIM * (
       AmT_minus_P_Rinv_B_func_.setData(timeStampPtr, &AmT_minus_P_Rinv_B_array_);
       B_RinvChol_func_.setData(timeStampPtr, &B_RinvChol_array_);
       RinvCholT_Rv_func_.setData(timeStampPtr, &RinvCholT_Rv_array_);
-    } else { // if not preComputeRiccatiTerms_
+    } else {  // if not preComputeRiccatiTerms_
       QmFunc_.setData(timeStampPtr, QmPtr);
       QvFunc_.setData(timeStampPtr, QvPtr);
       qFunc_.setData(timeStampPtr, qPtr);
@@ -298,11 +267,7 @@ class SequentialRiccatiEquationsNormalized final : public ODE_Base<STATE_DIM * (
    * @param [in] state: transition state
    * @param [out] mappedState: mapped state after transition
    */
-  void computeJumpMap(
-      const scalar_t &z,
-      const s_vector_t &state,
-      s_vector_t &mappedState) override {
-
+  void computeJumpMap(const scalar_t& z, const s_vector_t& state, s_vector_t& mappedState) override {
     scalar_t time = switchingTimeFinal_ - scalingFactor_ * z;
 
     size_t index = Lookup::findFirstIndexWithinTol(eventTimes_, time);
@@ -320,10 +285,7 @@ class SequentialRiccatiEquationsNormalized final : public ODE_Base<STATE_DIM * (
    * @param [in] allSs: Single vector constructed by concatenating Sm, Sv and s.
    * @param [out] derivatives: d(allSs)/dz.
    */
-  void computeFlowMap(
-      const scalar_t &z,
-      const s_vector_t &allSs,
-      s_vector_t &derivatives) override {
+  void computeFlowMap(const scalar_t& z, const s_vector_t& allSs, s_vector_t& derivatives) override {
     /*note: according to some discussions on stackoverflow, it does not buy computation time if multiplications
      * with symmetric matrices are executed using selfadjointView(). Doing the full multiplication seems to be faster
      * because of vectorization
@@ -374,9 +336,9 @@ class SequentialRiccatiEquationsNormalized final : public ODE_Base<STATE_DIM * (
       PmFunc_.interpolate(t, Pm_, greatestLessTimeStampIndex);
       RvFunc_.interpolate(t, Rv_, greatestLessTimeStampIndex);
 
-      Pm_.noalias() += Bm_.transpose() * Sm_; // ! Pm is changed to avoid an extra temporary
+      Pm_.noalias() += Bm_.transpose() * Sm_;  // ! Pm is changed to avoid an extra temporary
       Lm_.noalias() = RinvChol_.transpose() * Pm_;
-      Rv_.noalias() += Bm_.transpose() * Sv_; // ! Rv is changed to avoid an extra temporary
+      Rv_.noalias() += Bm_.transpose() * Sv_;  // ! Rv is changed to avoid an extra temporary
       Lv_.noalias() = RinvChol_.transpose() * Rv_;
 
       AmT_Sm_.noalias() = Am_.transpose() * Sm_.transpose();
@@ -413,22 +375,22 @@ class SequentialRiccatiEquationsNormalized final : public ODE_Base<STATE_DIM * (
   scalar_t scalingFactor_;
 
   // Interpolation
-  EigenLinearInterpolation <state_matrix_t> QmFunc_;
-  EigenLinearInterpolation <state_vector_t> QvFunc_;
-  EigenLinearInterpolation <eigen_scalar_t> qFunc_;
-  EigenLinearInterpolation <dynamic_matrix_t> RinvChol_Func_;
-  EigenLinearInterpolation <input_state_matrix_t> PmFunc_;
-  EigenLinearInterpolation <input_vector_t> RvFunc_;
-  EigenLinearInterpolation <state_matrix_t> AmFunc_;
-  EigenLinearInterpolation <state_input_matrix_t> BmFunc_;
+  EigenLinearInterpolation<state_matrix_t> QmFunc_;
+  EigenLinearInterpolation<state_vector_t> QvFunc_;
+  EigenLinearInterpolation<eigen_scalar_t> qFunc_;
+  EigenLinearInterpolation<dynamic_matrix_t> RinvChol_Func_;
+  EigenLinearInterpolation<input_state_matrix_t> PmFunc_;
+  EigenLinearInterpolation<input_vector_t> RvFunc_;
+  EigenLinearInterpolation<state_matrix_t> AmFunc_;
+  EigenLinearInterpolation<state_input_matrix_t> BmFunc_;
 
   // Interpolation of precomputation
-  EigenLinearInterpolation <state_matrix_t> Qm_minus_P_Rinv_P_func_;
-  EigenLinearInterpolation <state_vector_t> Qv_minus_P_Rinv_Rv_func_;
-  EigenLinearInterpolation <eigen_scalar_t> q_minus_half_Rv_Rinv_Rv_func_;
-  EigenLinearInterpolation <state_matrix_t> AmT_minus_P_Rinv_B_func_;
-  EigenLinearInterpolation <dynamic_matrix_t> B_RinvChol_func_;
-  EigenLinearInterpolation <dynamic_vector_t> RinvCholT_Rv_func_;
+  EigenLinearInterpolation<state_matrix_t> Qm_minus_P_Rinv_P_func_;
+  EigenLinearInterpolation<state_vector_t> Qv_minus_P_Rinv_Rv_func_;
+  EigenLinearInterpolation<eigen_scalar_t> q_minus_half_Rv_Rinv_Rv_func_;
+  EigenLinearInterpolation<state_matrix_t> AmT_minus_P_Rinv_B_func_;
+  EigenLinearInterpolation<dynamic_matrix_t> B_RinvChol_func_;
+  EigenLinearInterpolation<dynamic_vector_t> RinvCholT_Rv_func_;
 
   // Arrays to store precomputation
   state_matrix_array_t Qm_minus_P_Rinv_P_array_;
@@ -460,11 +422,11 @@ class SequentialRiccatiEquationsNormalized final : public ODE_Base<STATE_DIM * (
   dynamic_vector_t Lv_;
 
   scalar_array_t eventTimes_;
-  const eigen_scalar_array_t *qFinalPtr_;
-  const state_vector_array_t *QvFinalPtr_;
-  const state_matrix_array_t *QmFinalPtr_;
+  const eigen_scalar_array_t* qFinalPtr_;
+  const state_vector_array_t* QvFinalPtr_;
+  const state_matrix_array_t* QmFinalPtr_;
 };
 
-}
+}  // namespace ocs2
 
 #endif /* SEQUENTIALRICCATIEQUATIONSNORMALIZED_OCS2_H_ */

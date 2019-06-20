@@ -123,7 +123,7 @@ class ocs2_doc_filter:
         theFile.write(string)
 
   def logError(self, string):
-    if self.logLevel >= self.logError:
+    if self.logLevel >= self.logErrors:
       with open(self.errorLogFile, 'a') as theFile:
         theFile.write(string)
 

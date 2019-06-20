@@ -45,7 +45,7 @@ namespace ocs2{
  * @tparam INPUT_DIM: Dimension of the control input space.
  */
 template <size_t STATE_DIM, size_t INPUT_DIM>
-class SequentialErrorEquationNormalized : public ODE_Base<STATE_DIM>
+class SequentialErrorEquationNormalized final : public ODE_Base<STATE_DIM>
 {
 public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW

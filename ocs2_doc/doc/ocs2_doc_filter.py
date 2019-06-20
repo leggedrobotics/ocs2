@@ -55,9 +55,13 @@ class ocs2_doc_filter:
             theOutput += line
           lines = theOutput.splitlines()
           for line in lines:
-            print(line)
-            # Our logger does not add extra line breaks so explicitly adding one to make the log more readable.
-            self.log(line + '\n')
+            try:
+              print(line)
+              # Our logger does not add extra line breaks so explicitly adding one to make the log more readable.
+              self.log(line + '\n')
+            except UnicodeEncodeError as e:
+              self.logError("UnicodeEncodeError in file " + filename)
+              self.logError(str(e))
       except IOError as e:
         self.logError('the file ' + filename + ' could not be opened for reading')
 

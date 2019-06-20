@@ -205,8 +205,9 @@ class SequentialRiccatiEquationsNormalized final : public ODE_Base<STATE_DIM*(ST
 
     eventTimes_.clear();
     eventTimes_.reserve(eventsPastTheEndIndecesPtr->size());
-
-    for (const size_t& pastTheEndIndex : *eventsPastTheEndIndecesPtr) eventTimes_.push_back(timeStampPtr->at(pastTheEndIndex - 1));
+    for (const size_t& pastTheEndIndex : *eventsPastTheEndIndecesPtr) {
+      eventTimes_.push_back((*timeStampPtr)[pastTheEndIndex - 1]);
+    }
 
     qFinalPtr_ = qFinalPtr;
     QvFinalPtr_ = QvFinalPtr;

@@ -7,7 +7,9 @@
 
 TEST(QRhelpers, somestuff)
 {
-  // Some matrix
+  // Test How the QR decomposition can be obtained for a matrix with full column rank
+
+  // Some random matrix
   const size_t m = 5;
   const size_t n = 2;
   Eigen::MatrixXd A(5, 2);
@@ -24,7 +26,7 @@ TEST(QRhelpers, somestuff)
   std::cout << "Q: \n" << Q << std::endl;
   std::cout << "Rc: \n" << Rc << std::endl;
 
-  // Fast inverse of Rc
+  // Test if the fast inverse of Rc through the triangular view is equivalent to a full inverse
   Eigen::MatrixXd Rc_inv = Eigen::MatrixXd::Identity(n, n);
   Rc.template triangularView<Eigen::Upper>().solveInPlace(Rc_inv);
 

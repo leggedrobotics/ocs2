@@ -737,7 +737,7 @@ void DDP_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::approximateUnconstrainedLQWo
 
 	// making sure that constrained Qm is PSD
 	if (ddpSettings_.useMakePSD_==true)
-		BASE::makePSD(QmTrajectoryStock_[i][k]);
+		LinearAlgebra::makePSD(QmTrajectoryStock_[i][k]);
 }
 
 /******************************************************************************************************/
@@ -786,7 +786,7 @@ void DDP_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::approximateEventsLQWorker(
 
 			// making sure that Qm remains PSD
 			if (ddpSettings_.useMakePSD_==true)
-				BASE::makePSD(QmFinalStock_[i][ke]);
+				LinearAlgebra::makePSD(QmFinalStock_[i][ke]);
 
 			break;
 		}

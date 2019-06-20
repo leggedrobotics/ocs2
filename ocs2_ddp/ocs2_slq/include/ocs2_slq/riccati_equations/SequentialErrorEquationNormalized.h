@@ -63,14 +63,7 @@ public:
 	/**
 	 * Default constructor.
 	 */
-	SequentialErrorEquationNormalized(
-			const bool& useMakePSD,
-			const scalar_t& addedRiccatiDiagonal)
-
-	: useMakePSD_(useMakePSD)
-	, addedRiccatiDiagonal_(addedRiccatiDiagonal)
-	{}
-
+	SequentialErrorEquationNormalized() = default;
 	/**
 	 * Default destructor.
 	 */
@@ -95,13 +88,6 @@ public:
 
 		GvFunc_.setData(timeStampPtr, GvPtr);
 		GmFunc_.setData(timeStampPtr, GmPtr);
-	}
-
-	/**
-	 * Reset the Error Riccati equation
-	 */
-	void reset() {
-		// TODO(ruben) remove this function and its callers
 	}
 
 	/**
@@ -140,8 +126,6 @@ public:
 
 
 private:
-	bool useMakePSD_;
-	scalar_t addedRiccatiDiagonal_;
 	scalar_t switchingTimeStart_;
 	scalar_t switchingTimeFinal_;
 

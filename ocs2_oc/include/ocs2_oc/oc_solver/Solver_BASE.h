@@ -49,6 +49,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_core/logic/rules/NullLogicRules.h>
 #include <ocs2_core/logic/machine/LogicRulesMachine.h>
 #include <ocs2_core/misc/FindActiveIntervalIndex.h>
+#include <ocs2_core/misc/LinearAlgebra.h>
 
 namespace ocs2 {
 
@@ -447,16 +448,6 @@ public:
 	 * @param [in] input text.
 	 */
 	void printString(const std::string& text);
-
-	/**
-	 * Makes the matrix PSD.
-	 *
-	 * @tparam Derived type.
-	 * @param [out] squareMatrix: The matrix to become PSD.
-	 * @return boolean:
-	 */
-	template <typename Derived>
-	static bool makePSD(Eigen::MatrixBase<Derived>& squareMatrix);
 
 
 private:

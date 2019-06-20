@@ -37,18 +37,14 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_core/integration/SystemEventHandler.h>
 #include <ocs2_core/integration/StateTriggeredEventHandler.h>
 #include <ocs2_core/misc/LTI_Equations.h>
+#include <ocs2_core/misc/LinearAlgebra.h>
 
 #include <ocs2_oc/rollout/StateTriggeredRollout.h>
 
 #include <ocs2_slq/SLQ_Settings.h>
 
 #include <ocs2_slq/riccati_equations/SequentialRiccatiEquationsNormalized.h>
-#include <ocs2_slq/riccati_equations/SequentialErrorEquation.h>
 #include <ocs2_slq/riccati_equations/SequentialErrorEquationNormalized.h>
-#include <ocs2_slq/riccati_equations/SLQ_RiccatiEquationsNormalized.h>
-
-
-#define USE_SEPARATE_RICCATI_SOLVER
 
 namespace ocs2 {
 
@@ -143,12 +139,10 @@ public:
 	typedef typename BASE::logic_rules_machine_t               logic_rules_machine_t;
 	typedef typename BASE::logic_rules_machine_ptr_t           logic_rules_machine_ptr_t;
 
-	typedef SLQ_RiccatiEquationsNormalized<STATE_DIM, INPUT_DIM>		slq_riccati_equations_t;
-//	typedef SequentialRiccatiEquations<STATE_DIM, INPUT_DIM> 			riccati_equations_t;
 	typedef SequentialRiccatiEquationsNormalized<STATE_DIM, INPUT_DIM>	riccati_equations_t;
-//	typedef SequentialErrorEquation<STATE_DIM, INPUT_DIM>			 	error_equation_t;
 	typedef SequentialErrorEquationNormalized<STATE_DIM, INPUT_DIM> 	error_equation_t;
 //	typedef LTI_Equations<STATE_DIM> LTI_Equation_t;
+
 	using hamiltonian_equation_t = LTI_Equations<2*STATE_DIM, STATE_DIM, double>;
 	using hamiltonian_increment_equation_t = LTI_Equations<STATE_DIM, 1, double>;
 
@@ -161,7 +155,6 @@ public:
 	template <size_t OTHER_STATE_DIM, size_t OTHER_INPUT_DIM, class OTHER_LOGIC_RULES_T>
 	friend class SLQ_DataCollector;
 
-// TODO: do not push to remote
 public:
 
 	void rolloutStateTriggeredTrajectory(
@@ -251,29 +244,6 @@ public:
 	 * 								improves the constraints as well as the increment to the feed-forward control input.
 	 */
 	virtual void calculateController() override;
-//
-//	/**
-//	 * Line search on the feedforward parts of the controller. It uses the following approach for line search:
-//	 * The constraint TYPE-1 correction term is directly added through a user defined stepSize (defined in settings_.constraintStepSize_).
-//	 * But the cost minimization term is optimized through a line-search strategy defined in SLQ settings.
-//	 *
-//	 * @param [in] computeISEs: Whether lineSearch needs to calculate ISEs indices for type_1 and type-2 constraints.
-//	 */
-//	virtual void lineSearch(bool computeISEs) = 0;
-//
-//	/**
-//	 * Solves Riccati equations for all the partitions.
-//	 *
-//	 * @param [in] SmFinal: The final Sm for Riccati equation.
-//	 * @param [in] SvFinal: The final Sv for Riccati equation.
-//	 * @param [in] sFinal: The final s for Riccati equation.
-//	 *
-//	 * @return average time step
-//	 */
-//	virtual scalar_t solveSequentialRiccatiEquations(
-//			const state_matrix_t& SmFinal,
-//			const state_vector_t& SvFinal,
-//			const eigen_scalar_t& sFinal) = 0;
 
 	/**
 	 * Gets a reference to the Options structure.
@@ -290,13 +260,6 @@ protected:
 	 * @param [in] numPartitions: number of partitions.
 	 */
 	virtual void setupOptimizer(const size_t& numPartitions);
-//
-//	/**
-//	 * Computes the linearized dynamics for a particular time partition
-//	 *
-//	 * @param [in] partitionIndex: Time partition index
-//	 */
-//	virtual void approximatePartitionLQ(const size_t& partitionIndex) = 0;
 
 	/**
 	 * Computes the controller for a particular time partition
@@ -455,7 +418,7 @@ protected:
 	state_matrix_array2_t       QmConstrainedTrajectoryStock_;
 	state_vector_array2_t       QvConstrainedTrajectoryStock_;
 	input_matrix_array2_t       RmConstrainedTrajectoryStock_;
-	dynamic_matrix_array2_t     RmConstrainedCholTrajectoryStock_;
+	dynamic_matrix_array2_t     RmInvConstrainedCholTrajectoryStock_;
 	input_constraint1_matrix_array2_t DmDagerTrajectoryStock_;
 	input_vector_array2_t       EvProjectedTrajectoryStock_;  // DmDager * Ev
 	input_state_matrix_array2_t CmProjectedTrajectoryStock_;  // DmDager * Cm
@@ -465,9 +428,6 @@ protected:
 	input_vector_array2_t       RvConstrainedTrajectoryStock_;
   	input_matrix_array2_t       RmInverseTrajectoryStock_;
 
-	std::vector<std::shared_ptr<slq_riccati_equations_t>>                             slqRiccatiEquationsPtrStock_;
-	std::vector<std::shared_ptr<SystemEventHandler<slq_riccati_equations_t::S_DIM_>>> slqRiccatiEventPtrStock_;
-	std::vector<std::shared_ptr<IntegratorBase<slq_riccati_equations_t::S_DIM_>>>     slqRiccatiIntegratorPtrStock_;
 	std::vector<std::shared_ptr<riccati_equations_t>>                             riccatiEquationsPtrStock_;
 	std::vector<std::shared_ptr<SystemEventHandler<riccati_equations_t::S_DIM_>>> riccatiEventPtrStock_;
 	std::vector<std::shared_ptr<IntegratorBase<riccati_equations_t::S_DIM_>>>     riccatiIntegratorPtrStock_;

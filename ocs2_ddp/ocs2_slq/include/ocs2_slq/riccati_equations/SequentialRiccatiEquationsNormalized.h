@@ -38,6 +38,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_core/Dimensions.h>
 #include <ocs2_core/integration/ODE_Base.h>
 #include <ocs2_core/misc/LinearInterpolation.h>
+#include <ocs2_core/misc/LinearAlgebra.h>
+#include <ocs2_core/misc/Lookup.h>
 
 namespace ocs2 {
 
@@ -106,8 +108,8 @@ class SequentialRiccatiEquationsNormalized final : public ODE_Base<STATE_DIM * (
       , Qm_(state_matrix_t::Zero())
       , Qv_(state_vector_t::Zero())
       , q_(eigen_scalar_t::Zero())
-      , AmT_minus_P_Rinv_R_Rinv_Bm_(state_matrix_t::Zero())
-      , Am_transposeSm_(state_matrix_t::Zero())
+      , AmT_minus_P_Rinv_Bm_(state_matrix_t::Zero())
+      , AmT_Sm_(state_matrix_t::Zero())
       , Am_(state_matrix_t::Zero())
       , Bm_(state_input_matrix_t::Zero())
       , Rv_(input_vector_t::Zero())
@@ -215,12 +217,12 @@ class SequentialRiccatiEquationsNormalized final : public ODE_Base<STATE_DIM * (
       const state_vector_array_t *QvPtr,
       const state_matrix_array_t *QmPtr,
       const input_vector_array_t *RvPtr,
-      const dynamic_matrix_array_t *RmCholPtr,
+      const dynamic_matrix_array_t *RinvCholPtr,
       const input_state_matrix_array_t *PmPtr,
       const size_array_t *eventsPastTheEndIndecesPtr,
       const eigen_scalar_array_t *qFinalPtr,
       const state_vector_array_t *QvFinalPtr,
-      const state_matrix_array_t *QmFianlPtr) {
+      const state_matrix_array_t *QmFinalPtr) {
 
     BASE::resetNumFunctionCalls();
 
@@ -241,66 +243,54 @@ class SequentialRiccatiEquationsNormalized final : public ODE_Base<STATE_DIM * (
 
     qFinalPtr_ = qFinalPtr;
     QvFinalPtr_ = QvFinalPtr;
-    QmFianlPtr_ = QmFianlPtr;
+    QmFinalPtr_ = QmFinalPtr;
 
     if (preComputeRiccatiTerms_) {
       const size_t N = AmPtr->size();
-      Qm_minus_P_Rinv_R_Rinv_P_array_.resize(N);
-      AmT_minus_P_Rinv_R_Rinv_B_array_.resize(N);
-      B_Rinv_R_Rinv_Bm_LinvT_array_.resize(N);
-      Qv_minus_P_Rinv_R_Rinv_Rv_array_.resize(N);
-      q_minus_half_Rv_Rinv_R_Rinv_Rv_array_.resize(N);
-      B_Rinv_R_Rinv_Linv_Rv_array_.resize(N);
+      Qm_minus_P_Rinv_P_array_.resize(N);
+      AmT_minus_P_Rinv_B_array_.resize(N);
+      B_RinvChol_array_.resize(N);
+      Qv_minus_P_Rinv_Rv_array_.resize(N);
+      q_minus_half_Rv_Rinv_Rv_array_.resize(N);
+      RinvCholT_Rv_array_.resize(N);
 
-      dynamic_matrix_t P_R_Chol, B_R_Chol;
-      dynamic_vector_t R_Chol_Rv;
+      dynamic_matrix_t PmT_RinvChol;
       for (size_t i = 0; i < N; i++) {
         // Temporary terms
-        P_R_Chol.noalias() = (*PmPtr)[i].transpose() * (*RmCholPtr)[i];
-        B_R_Chol.noalias() = (*BmPtr)[i] * (*RmCholPtr)[i];
-        R_Chol_Rv.noalias() = (*RmCholPtr)[i].transpose() * (*RvPtr)[i];
+        PmT_RinvChol.noalias() = (*PmPtr)[i].transpose() * (*RinvCholPtr)[i];
+        B_RinvChol_array_[i].noalias() = (*BmPtr)[i] * (*RinvCholPtr)[i];
+        RinvCholT_Rv_array_[i].noalias() = (*RinvCholPtr)[i].transpose() * (*RvPtr)[i];
 
         // Precomputed terms
-        Qm_minus_P_Rinv_R_Rinv_P_array_[i] = (*QmPtr)[i];
-        Qm_minus_P_Rinv_R_Rinv_P_array_[i].noalias() -= P_R_Chol * P_R_Chol.transpose();
+        Qm_minus_P_Rinv_P_array_[i] = (*QmPtr)[i];
+        Qm_minus_P_Rinv_P_array_[i].noalias() -= PmT_RinvChol * PmT_RinvChol.transpose();
 
-        AmT_minus_P_Rinv_R_Rinv_B_array_[i] = (*AmPtr)[i].transpose();
-        AmT_minus_P_Rinv_R_Rinv_B_array_[i].noalias() -= P_R_Chol * B_R_Chol.transpose();
+        AmT_minus_P_Rinv_B_array_[i] = (*AmPtr)[i].transpose();
+        AmT_minus_P_Rinv_B_array_[i].noalias() -= PmT_RinvChol * B_RinvChol_array_[i].transpose();
 
-        B_Rinv_R_Rinv_Bm_LinvT_array_[i] = B_R_Chol;
+        Qv_minus_P_Rinv_Rv_array_[i] = (*QvPtr)[i];
+        Qv_minus_P_Rinv_Rv_array_[i].noalias() -= PmT_RinvChol * RinvCholT_Rv_array_[i];
 
-        Qv_minus_P_Rinv_R_Rinv_Rv_array_[i] = (*QvPtr)[i];
-        Qv_minus_P_Rinv_R_Rinv_Rv_array_[i].noalias() -= P_R_Chol * R_Chol_Rv;
-
-        q_minus_half_Rv_Rinv_R_Rinv_Rv_array_[i] = (*qPtr)[i];
-        q_minus_half_Rv_Rinv_R_Rinv_Rv_array_[i].noalias() -= 0.5 * R_Chol_Rv.transpose() * R_Chol_Rv;
-
-        B_Rinv_R_Rinv_Linv_Rv_array_[i] = R_Chol_Rv;
+        q_minus_half_Rv_Rinv_Rv_array_[i] = (*qPtr)[i];
+        q_minus_half_Rv_Rinv_Rv_array_[i].noalias() -= 0.5 * RinvCholT_Rv_array_[i].transpose() * RinvCholT_Rv_array_[i];
       }
 
-      Qm_minus_P_Rinv_R_Rinv_P_func_.setData(timeStampPtr, &Qm_minus_P_Rinv_R_Rinv_P_array_);
-      Qv_minus_P_Rinv_R_Rinv_Rv_func_.setData(timeStampPtr, &Qv_minus_P_Rinv_R_Rinv_Rv_array_);
-      q_minus_half_Rv_Rinv_R_Rinv_Rv_func_.setData(timeStampPtr, &q_minus_half_Rv_Rinv_R_Rinv_Rv_array_);
-      AmT_minus_P_Rinv_R_Rinv_B_func_.setData(timeStampPtr, &AmT_minus_P_Rinv_R_Rinv_B_array_);
-      B_Rinv_R_Rinv_B_LinvT_func_.setData(timeStampPtr, &B_Rinv_R_Rinv_Bm_LinvT_array_);
-      B_Rinv_R_Rinv_Linv_Rv_func_.setData(timeStampPtr, &B_Rinv_R_Rinv_Linv_Rv_array_);
+      Qm_minus_P_Rinv_P_func_.setData(timeStampPtr, &Qm_minus_P_Rinv_P_array_);
+      Qv_minus_P_Rinv_Rv_func_.setData(timeStampPtr, &Qv_minus_P_Rinv_Rv_array_);
+      q_minus_half_Rv_Rinv_Rv_func_.setData(timeStampPtr, &q_minus_half_Rv_Rinv_Rv_array_);
+      AmT_minus_P_Rinv_B_func_.setData(timeStampPtr, &AmT_minus_P_Rinv_B_array_);
+      B_RinvChol_func_.setData(timeStampPtr, &B_RinvChol_array_);
+      RinvCholT_Rv_func_.setData(timeStampPtr, &RinvCholT_Rv_array_);
     } else {
       QmFunc_.setData(timeStampPtr, QmPtr);
       QvFunc_.setData(timeStampPtr, QvPtr);
       qFunc_.setData(timeStampPtr, qPtr);
       AmFunc_.setData(timeStampPtr, AmPtr);
       BmFunc_.setData(timeStampPtr, BmPtr);
-      Rm_LinvTFunc_.setData(timeStampPtr, RmCholPtr);
+      RinvChol_Func_.setData(timeStampPtr, RinvCholPtr);
       PmFunc_.setData(timeStampPtr, PmPtr);
       RvFunc_.setData(timeStampPtr, RvPtr);
     }
-  }
-
-  /**
-   * Reset the Riccati equation
-   */
-  void reset() {
-    // TODO (Ruben) remove this function and its callers
   }
 
   /**
@@ -317,13 +307,10 @@ class SequentialRiccatiEquationsNormalized final : public ODE_Base<STATE_DIM * (
 
     scalar_t time = switchingTimeFinal_ - scalingFactor_ * z;
 
-    size_t index = find(eventTimes_, time);
-
-    if (index == eventTimes_.size())
-      throw std::runtime_error("The Riccati state jump time is not defined.");
+    size_t index = Lookup::findFirstIndexWithinTol(eventTimes_, time);
 
     s_vector_t allSsJump;
-    convert2Vector(QmFianlPtr_->at(index), QvFinalPtr_->at(index), qFinalPtr_->at(index), allSsJump);
+    convert2Vector(QmFinalPtr_->at(index), QvFinalPtr_->at(index), qFinalPtr_->at(index), allSsJump);
 
     mappedState = state + allSsJump;
   }
@@ -354,50 +341,50 @@ class SequentialRiccatiEquationsNormalized final : public ODE_Base<STATE_DIM * (
     convert2Matrix(allSs, Sm_, Sv_, s_);
 
     if (useMakePSD_) {
-      bool hasNegativeEigenValue = makePSD(Sm_);
+      bool hasNegativeEigenValue = LinearAlgebra::makePSD(Sm_);
     }
 
     if (preComputeRiccatiTerms_) {
-      const auto greatestLessTimeStampIndex = Qm_minus_P_Rinv_R_Rinv_P_func_.interpolate(t, Qm_);
-      Qv_minus_P_Rinv_R_Rinv_Rv_func_.interpolate(t, Qv_, greatestLessTimeStampIndex);
-      q_minus_half_Rv_Rinv_R_Rinv_Rv_func_.interpolate(t, q_, greatestLessTimeStampIndex);
-      AmT_minus_P_Rinv_R_Rinv_B_func_.interpolate(t, AmT_minus_P_Rinv_R_Rinv_Bm_, greatestLessTimeStampIndex);
-      B_Rinv_R_Rinv_Linv_Rv_func_.interpolate(t, B_Rinv_R_Rinv_Linv_Rv_, greatestLessTimeStampIndex);
-      B_Rinv_R_Rinv_B_LinvT_func_.interpolate(t, B_Rinv_R_Rinv_Bm_LinvT_, greatestLessTimeStampIndex);
+      const auto greatestLessTimeStampIndex = Qm_minus_P_Rinv_P_func_.interpolate(t, Qm_);
+      Qv_minus_P_Rinv_Rv_func_.interpolate(t, Qv_, greatestLessTimeStampIndex);
+      q_minus_half_Rv_Rinv_Rv_func_.interpolate(t, q_, greatestLessTimeStampIndex);
+      AmT_minus_P_Rinv_B_func_.interpolate(t, AmT_minus_P_Rinv_Bm_, greatestLessTimeStampIndex);
+      RinvCholT_Rv_func_.interpolate(t, RinvCholT_Rv_, greatestLessTimeStampIndex);
+      B_RinvChol_func_.interpolate(t, B_RinvChol_, greatestLessTimeStampIndex);
 
       // dSmdt,  Qm_ used instead of temporary
-      Am_transposeSm_.noalias() = AmT_minus_P_Rinv_R_Rinv_Bm_ * Sm_;
-      Qm_ += Am_transposeSm_ + Am_transposeSm_.transpose();
-      Sm_T_B_Rinv_R_Rinv_Bm_LinvT_.noalias() = Sm_.transpose() * B_Rinv_R_Rinv_Bm_LinvT_;
-      Qm_.noalias() -= Sm_T_B_Rinv_R_Rinv_Bm_LinvT_ * Sm_T_B_Rinv_R_Rinv_Bm_LinvT_.transpose();
+      AmT_Sm_.noalias() = AmT_minus_P_Rinv_Bm_ * Sm_;
+      Qm_ += AmT_Sm_ + AmT_Sm_.transpose();
+      SmT_B_RinvChol_.noalias() = Sm_.transpose() * B_RinvChol_;
+      Qm_.noalias() -= SmT_B_RinvChol_ * SmT_B_RinvChol_.transpose();
 
       // dSvdt,  Qv_ used instead of temporary
-      Qv_.noalias() += AmT_minus_P_Rinv_R_Rinv_Bm_ * Sv_;
-      B_Rinv_R_Rinv_Bm_Linv_Sv_.noalias() = B_Rinv_R_Rinv_Bm_LinvT_.transpose() * Sv_;
-      Qv_.noalias() -= Sm_T_B_Rinv_R_Rinv_Bm_LinvT_ * (B_Rinv_R_Rinv_Linv_Rv_ + B_Rinv_R_Rinv_Bm_Linv_Sv_);
+      Qv_.noalias() += AmT_minus_P_Rinv_Bm_ * Sv_;
+      RinvCholT_BmT_Sv_.noalias() = B_RinvChol_.transpose() * Sv_;
+      Qv_.noalias() -= SmT_B_RinvChol_ * (RinvCholT_Rv_ + RinvCholT_BmT_Sv_);
 
       // dsdt,   q_ used instead of temporary
-      q_.noalias() -= B_Rinv_R_Rinv_Bm_Linv_Sv_.transpose() * B_Rinv_R_Rinv_Linv_Rv_;
-      q_.noalias() -= 0.5 * B_Rinv_R_Rinv_Bm_Linv_Sv_.transpose() * B_Rinv_R_Rinv_Bm_Linv_Sv_;
+      q_.noalias() -= RinvCholT_BmT_Sv_.transpose() * RinvCholT_Rv_;
+      q_.noalias() -= 0.5 * RinvCholT_BmT_Sv_.transpose() * RinvCholT_BmT_Sv_;
     } else {
       const auto greatestLessTimeStampIndex = QmFunc_.interpolate(t, Qm_);
       QvFunc_.interpolate(t, Qv_, greatestLessTimeStampIndex);
       qFunc_.interpolate(t, q_, greatestLessTimeStampIndex);
       AmFunc_.interpolate(t, Am_, greatestLessTimeStampIndex);
       BmFunc_.interpolate(t, Bm_, greatestLessTimeStampIndex);
-      Rm_LinvTFunc_.interpolate(t, Rm_LinvT_, greatestLessTimeStampIndex);
+      RinvChol_Func_.interpolate(t, RinvChol_, greatestLessTimeStampIndex);
       PmFunc_.interpolate(t, Pm_, greatestLessTimeStampIndex);
       RvFunc_.interpolate(t, Rv_, greatestLessTimeStampIndex);
 
       Pm_.noalias() += Bm_.transpose() * Sm_; // ! Pm is changed to avoid an extra temporary
-      Lm_.noalias() = Rm_LinvT_.transpose() * Pm_;
+      Lm_.noalias() = RinvChol_.transpose() * Pm_;
       Rv_.noalias() += Bm_.transpose() * Sv_; // ! Rv is changed to avoid an extra temporary
-      Lv_.noalias() = Rm_LinvT_.transpose() * Rv_;
+      Lv_.noalias() = RinvChol_.transpose() * Rv_;
 
-      Am_transposeSm_.noalias() = Am_.transpose() * Sm_.transpose();
+      AmT_Sm_.noalias() = Am_.transpose() * Sm_.transpose();
 
       // dSmdt,  Qm_ used instead of temporary
-      Qm_ += Am_transposeSm_ + Am_transposeSm_.transpose();
+      Qm_ += AmT_Sm_ + AmT_Sm_.transpose();
       Qm_.noalias() -= Lm_.transpose() * Lm_;
 
       // dSvdt,  Qv_ used instead of temporary
@@ -418,67 +405,6 @@ class SequentialRiccatiEquationsNormalized final : public ODE_Base<STATE_DIM * (
     convert2Vector(Qm_, Qv_, q_, derivatives);
   }
 
- protected:
-  /**
-   * Makes the matrix PSD.
-   * @tparam Derived type.
-   * @param [out] squareMatrix: The matrix to become PSD.
-   * @return boolean
-   */
-  template<typename Derived>
-  static bool makePSD(Eigen::MatrixBase<Derived> &squareMatrix) {
-
-    if (squareMatrix.rows() != squareMatrix.cols())
-      throw std::runtime_error("Not a square matrix: makePSD() method is for square matrix.");
-
-    Eigen::SelfAdjointEigenSolver<Derived> eig(squareMatrix, Eigen::EigenvaluesOnly);
-    Eigen::VectorXd lambda = eig.eigenvalues();
-
-    bool hasNegativeEigenValue = false;
-    for (size_t j = 0; j < lambda.size(); j++)
-      if (lambda(j) < 0.0) {
-        hasNegativeEigenValue = true;
-        lambda(j) = 1e-6;
-      }
-
-    if (hasNegativeEigenValue) {
-      eig.compute(squareMatrix, Eigen::ComputeEigenvectors);
-      squareMatrix = eig.eigenvectors() * lambda.asDiagonal() * eig.eigenvectors().inverse();
-    } else {
-      squareMatrix = 0.5 * (squareMatrix + squareMatrix.transpose()).eval();
-    }
-
-    return hasNegativeEigenValue;
-  }
-
-  template<class InputIterator, class T>
-  InputIterator find(InputIterator first, InputIterator last, const T &val) {
-    while (first != last) {
-      if (*first == val) return first;
-      ++first;
-    }
-    return last;
-  }
-
-  /**
-   * finds the index of an element in dataArray which is equal to value (epsilone distance)
-   * @param [in] dataArray: data array
-   * @param [in] value: enquiry value
-   * @return: index
-   */
-  size_t find(const std::vector<double> &dataArray, const double &value) {
-
-    size_t index = dataArray.size();
-
-    for (size_t i = 0; i < dataArray.size(); i++)
-      if (std::abs(dataArray[i] - value) < 1e-5) {
-        index = i;
-        break;
-      }
-
-    return index;
-  }
-
  private:
   bool useMakePSD_;
   scalar_t addedRiccatiDiagonal_;
@@ -488,27 +414,27 @@ class SequentialRiccatiEquationsNormalized final : public ODE_Base<STATE_DIM * (
   bool normalizeTime_;
   bool preComputeRiccatiTerms_;
 
+  EigenLinearInterpolation <state_matrix_t> QmFunc_;
+  EigenLinearInterpolation <state_vector_t> QvFunc_;
+  EigenLinearInterpolation <eigen_scalar_t> qFunc_;
+  EigenLinearInterpolation <dynamic_matrix_t> RinvChol_Func_;
+  EigenLinearInterpolation <input_state_matrix_t> PmFunc_;
+  EigenLinearInterpolation <input_vector_t> RvFunc_;
   EigenLinearInterpolation <state_matrix_t> AmFunc_;
   EigenLinearInterpolation <state_input_matrix_t> BmFunc_;
-  EigenLinearInterpolation <eigen_scalar_t> qFunc_;
-  EigenLinearInterpolation <state_vector_t> QvFunc_;
-  EigenLinearInterpolation <state_matrix_t> QmFunc_;
-  EigenLinearInterpolation <input_vector_t> RvFunc_;
-  EigenLinearInterpolation <dynamic_matrix_t> Rm_LinvTFunc_;
-  EigenLinearInterpolation <input_state_matrix_t> PmFunc_;
 
-  state_matrix_array_t Qm_minus_P_Rinv_R_Rinv_P_array_;
-  state_vector_array_t Qv_minus_P_Rinv_R_Rinv_Rv_array_;
-  eigen_scalar_array_t q_minus_half_Rv_Rinv_R_Rinv_Rv_array_;
-  state_matrix_array_t AmT_minus_P_Rinv_R_Rinv_B_array_;
-  dynamic_matrix_array_t B_Rinv_R_Rinv_Bm_LinvT_array_;
-  dynamic_vector_array_t B_Rinv_R_Rinv_Linv_Rv_array_;
-  EigenLinearInterpolation <state_matrix_t> Qm_minus_P_Rinv_R_Rinv_P_func_;
-  EigenLinearInterpolation <state_vector_t> Qv_minus_P_Rinv_R_Rinv_Rv_func_;
-  EigenLinearInterpolation <eigen_scalar_t> q_minus_half_Rv_Rinv_R_Rinv_Rv_func_;
-  EigenLinearInterpolation <state_matrix_t> AmT_minus_P_Rinv_R_Rinv_B_func_;
-  EigenLinearInterpolation <dynamic_matrix_t> B_Rinv_R_Rinv_B_LinvT_func_;
-  EigenLinearInterpolation <dynamic_vector_t> B_Rinv_R_Rinv_Linv_Rv_func_;
+  state_matrix_array_t Qm_minus_P_Rinv_P_array_;
+  state_vector_array_t Qv_minus_P_Rinv_Rv_array_;
+  eigen_scalar_array_t q_minus_half_Rv_Rinv_Rv_array_;
+  state_matrix_array_t AmT_minus_P_Rinv_B_array_;
+  dynamic_matrix_array_t B_RinvChol_array_;
+  dynamic_vector_array_t RinvCholT_Rv_array_;
+  EigenLinearInterpolation <state_matrix_t> Qm_minus_P_Rinv_P_func_;
+  EigenLinearInterpolation <state_vector_t> Qv_minus_P_Rinv_Rv_func_;
+  EigenLinearInterpolation <eigen_scalar_t> q_minus_half_Rv_Rinv_Rv_func_;
+  EigenLinearInterpolation <state_matrix_t> AmT_minus_P_Rinv_B_func_;
+  EigenLinearInterpolation <dynamic_matrix_t> B_RinvChol_func_;
+  EigenLinearInterpolation <dynamic_vector_t> RinvCholT_Rv_func_;
 
   // members required only in computeFlowMap()
   state_matrix_t Sm_;
@@ -517,16 +443,16 @@ class SequentialRiccatiEquationsNormalized final : public ODE_Base<STATE_DIM * (
   state_matrix_t Qm_;
   state_vector_t Qv_;
   eigen_scalar_t q_;
-  state_matrix_t AmT_minus_P_Rinv_R_Rinv_Bm_;
-  dynamic_matrix_t B_Rinv_R_Rinv_Bm_LinvT_;
-  dynamic_vector_t B_Rinv_R_Rinv_Linv_Rv_;
-  dynamic_matrix_t Sm_T_B_Rinv_R_Rinv_Bm_LinvT_;
-  dynamic_vector_t B_Rinv_R_Rinv_Bm_Linv_Sv_;
-  state_matrix_t Am_transposeSm_;
+  state_matrix_t AmT_minus_P_Rinv_Bm_;
+  dynamic_matrix_t B_RinvChol_;
+  dynamic_vector_t RinvCholT_Rv_;
+  dynamic_matrix_t SmT_B_RinvChol_;
+  dynamic_vector_t RinvCholT_BmT_Sv_;
+  state_matrix_t AmT_Sm_;
   state_matrix_t Am_;
   state_input_matrix_t Bm_;
   input_vector_t Rv_;
-  dynamic_matrix_t Rm_LinvT_;
+  dynamic_matrix_t RinvChol_;
   input_state_matrix_t Pm_;
   dynamic_matrix_t Lm_;
   dynamic_vector_t Lv_;
@@ -534,7 +460,7 @@ class SequentialRiccatiEquationsNormalized final : public ODE_Base<STATE_DIM * (
   scalar_array_t eventTimes_;
   const eigen_scalar_array_t *qFinalPtr_;
   const state_vector_array_t *QvFinalPtr_;
-  const state_matrix_array_t *QmFianlPtr_;
+  const state_matrix_array_t *QmFinalPtr_;
 };
 
 }

@@ -12,10 +12,12 @@ namespace switched_model {
 /******************************************************************************************************/
 template <size_t JOINT_COORD_SIZE, class cpg_t>
 SwitchedModelLogicRulesBase<JOINT_COORD_SIZE,cpg_t>::SwitchedModelLogicRulesBase(
-		const feet_planner_ptr_t& feetPlannerPtr)
+		const feet_planner_ptr_t& feetPlannerPtr,
+		const scalar_t& phaseTransitionStanceTime /*= 0.4*/)
 
 	: BASE()
 	, feetPlannerPtr_(feetPlannerPtr)  // shallow copy: points to the same asset
+	, phaseTransitionStanceTime_(phaseTransitionStanceTime)
 {}
 
 /******************************************************************************************************/
@@ -27,6 +29,7 @@ SwitchedModelLogicRulesBase<JOINT_COORD_SIZE,cpg_t>::SwitchedModelLogicRulesBase
 
 	: BASE(rhs)
 	, feetPlannerPtr_(rhs.feetPlannerPtr_)
+	, phaseTransitionStanceTime_(rhs.phaseTransitionStanceTime_)
 	, contactFlagsStock_(rhs.contactFlagsStock_)
 	, feetReferencePtrStock_(rhs.feetReferencePtrStock_.size())	// shallow copy: points to the same asset
 	, feetReferenceUpdatedStock_(rhs.feetReferenceUpdatedStock_.size(), false)
@@ -45,10 +48,11 @@ SwitchedModelLogicRulesBase<JOINT_COORD_SIZE,cpg_t>&
 		// base class
 		BASE::operator=(std::move(other));
 
-		feetPlannerPtr_ 		= std::move(other.feetPlannerPtr_);
-		contactFlagsStock_ 		= std::move(other.contactFlagsStock_);
-		feetReferencePtrStock_	= std::move(other.feetReferencePtrStock_);
-		feetReferenceUpdatedStock_ 	 = std::move(other.feetReferenceUpdatedStock_);
+		feetPlannerPtr_              = std::move(other.feetPlannerPtr_);
+		phaseTransitionStanceTime_   = std::move(other.phaseTransitionStanceTime_);
+		contactFlagsStock_           = std::move(other.contactFlagsStock_);
+		feetReferencePtrStock_       = std::move(other.feetReferencePtrStock_);
+		feetReferenceUpdatedStock_   = std::move(other.feetReferenceUpdatedStock_);
 		endEffectorStateConstraints_ = std::move(other.endEffectorStateConstraints_);
 	}
 
@@ -67,11 +71,12 @@ SwitchedModelLogicRulesBase<JOINT_COORD_SIZE,cpg_t>&
 		// base class
 		BASE::operator=(other);
 
-		feetPlannerPtr_				= other.feetPlannerPtr_;
-		contactFlagsStock_ 			= other.contactFlagsStock_;
-		feetReferencePtrStock_		= other.feetReferencePtrStock_;
-		feetReferenceUpdatedStock_ 	= other.feetReferenceUpdatedStock_;
-		endEffectorStateConstraints_= other.endEffectorStateConstraints_;
+		feetPlannerPtr_              = other.feetPlannerPtr_;
+		phaseTransitionStanceTime_   = other.phaseTransitionStanceTime_;
+		contactFlagsStock_           = other.contactFlagsStock_;
+		feetReferencePtrStock_       = other.feetReferencePtrStock_;
+		feetReferenceUpdatedStock_   = other.feetReferenceUpdatedStock_;
+		endEffectorStateConstraints_ = other.endEffectorStateConstraints_;
 	}
 
 	return *this;
@@ -205,11 +210,11 @@ void SwitchedModelLogicRulesBase<JOINT_COORD_SIZE,cpg_t>::insertModeSequenceTemp
 	}
 
 	// add an intermediate stance phase
-	scalar_t phaseTransitionStanceTime = 0.4;
+	scalar_t phaseTransitionStanceTime = phaseTransitionStanceTime_;
 	if (BASE::subsystemsSequence_.size()>0 && BASE::subsystemsSequence_.back()==ModeNumber::STANCE)
 		phaseTransitionStanceTime = 0.0;
 
-	if (phaseTransitionStanceTime > 0.0) {
+	if (phaseTransitionStanceTime > 0.001) {
 		BASE::eventTimes_.push_back(startTime);
 		BASE::subsystemsSequence_.push_back(ModeNumber::STANCE);
 	}

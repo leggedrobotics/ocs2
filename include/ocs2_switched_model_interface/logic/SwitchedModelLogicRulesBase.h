@@ -61,8 +61,11 @@ public:
 	 * Constructor
 	 *
 	 * @param [in] feetPlannerPtr: A pointer to the FeetPlanner class.
+	 * @param [in] phaseTransitionStanceTime: The phase transition stance time.
 	 */
-	SwitchedModelLogicRulesBase(const feet_planner_ptr_t& feetPlannerPtr);
+	SwitchedModelLogicRulesBase(
+			const feet_planner_ptr_t& feetPlannerPtr,
+			const scalar_t& phaseTransitionStanceTime = 0.4);
 
 	/**
 	 * Copy constructor
@@ -187,6 +190,8 @@ private:
 	mutable std::mutex feetReferenceUpdateMutex_;
 
 	feet_planner_ptr_t feetPlannerPtr_;
+
+	scalar_t phaseTransitionStanceTime_;
 
 	std::vector<contact_flag_t> contactFlagsStock_;
 	mutable std::vector<feet_cpg_ptr_t> feetReferencePtrStock_;

@@ -109,7 +109,7 @@ public:
 
 	typedef RosMsgConversions<STATE_DIM, INPUT_DIM> ros_msg_conversions_t;
 
-	typedef TaskListenerBase<float>::shared_ptr_array_t task_listener_ptr_array_t;
+	typedef typename TaskListenerBase<scalar_t>::shared_ptr_array_t task_listener_ptr_array_t;
 
 	/**
 	 * Default constructor

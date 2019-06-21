@@ -126,10 +126,10 @@ void MRT_ROS_Dummy_Loop<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::run(
 				else
 					mrtPtr_->spinMRT();
 			}
-			std::cout << "### Message received at " << time << std::endl;
+			std::cout << "<<< Message received at " << time << std::endl;
 		}
 
-		std::cout << "### Message received at " << time << std::endl;
+		std::cout << "### Current time " << time << std::endl;
 
 		// integrate nominal dynamics if available, otherwise fake simulation
 		state_vector_t stateTemp = observation_.state();
@@ -155,7 +155,7 @@ void MRT_ROS_Dummy_Loop<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::run(
 
 		} else if (loopCounter%frequencyRatio==0) {
 			mrtPtr_->publishObservation(observation_);
-			std::cout << "### Observation is published at " << time << std::endl;
+			std::cout << ">>> Observation is published at " << time << std::endl;
 		}
 
 		// Visualization

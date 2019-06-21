@@ -70,7 +70,7 @@ class ocs2_doc_filter:
     # Go through the input file line by line.
 
     numCurlyBracesOpen = 0
-    startPattern = re.compile("\s*namespace\s+ocs2\s*{")
+    startPattern = re.compile("\s*namespace\s+ocs2\s*{") # }
     foundNamespaceStart = False
     foundNamespaceEnd = False
 
@@ -86,6 +86,7 @@ class ocs2_doc_filter:
         numCurlyBracesOpen += line.count('{')
         numCurlyBracesOpen -= line.count('}')
         if(numCurlyBracesOpen ==0):
+          # {
           theOutput += "/*! @} End of Doxygen Groups*/\n"
           foundNamespaceEnd = True
         theOutput += line
@@ -100,12 +101,11 @@ class ocs2_doc_filter:
             if re.search("ocs2_\w+", parentPath) is not None:
               groupName = parentPath
               break
-          #theOutput += "/*!\n *  @addtogroup ocs2_core ocs2_core\n *  @{\n */\n"
           theOutput += "/*!\n *  @addtogroup "
           theOutput += groupName
           theOutput += " "
           theOutput += groupName
-          theOutput += "\n *  @{\n */\n"
+          theOutput += "\n *  @{\n */\n" # }
           numCurlyBracesOpen += line.count('{')
           numCurlyBracesOpen -= line.count('}')
 

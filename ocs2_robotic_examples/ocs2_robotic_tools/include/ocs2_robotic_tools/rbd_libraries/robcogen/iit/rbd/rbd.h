@@ -121,6 +121,7 @@ struct Core
     static inline Part3DConst linearPart(const Vector6D& f) {
         return f.template bottomRows<3>();
     }
+    ///@}
 };
 
 

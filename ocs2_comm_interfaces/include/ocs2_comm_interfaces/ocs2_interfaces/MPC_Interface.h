@@ -54,7 +54,7 @@ class MPC_Interface {
   typedef typename mpc_t::input_vector_array_t input_vector_array_t;
   typedef typename mpc_t::input_vector_array2_t input_vector_array2_t;
   typedef typename mpc_t::controller_t controller_t;
-  typedef typename mpc_t::controller_array_t controller_array_t;
+  typedef typename mpc_t::controller_ptr_array_t controller_ptr_array_t;
   typedef typename mpc_t::input_state_matrix_t input_state_matrix_t;
   typedef typename mpc_t::input_state_matrix_array_t input_state_matrix_array_t;
 
@@ -195,7 +195,7 @@ class MPC_Interface {
   scalar_array_t mpcTimeTrajectoryBuffer_;
   state_vector_array_t mpcStateTrajectoryBuffer_;
   input_vector_array_t mpcInputTrajectoryBuffer_;
-  controller_t mpcControllerBuffer_;
+//  controller_t mpcControllerBuffer_;
   cost_desired_trajectories_t mpcSolverCostDesiredTrajectoriesBuffer_;
   std::atomic<bool> mpcOutputBufferUpdated_;
   bool logicUpdated_;
@@ -207,7 +207,7 @@ class MPC_Interface {
   size_array_t subsystemsSequence_;
   scalar_array_t partitioningTimes_;
 
-  controller_t mpcController_;
+//  controller_t mpcController_;
   scalar_array_t mpcTimeTrajectory_;
   state_vector_array_t mpcStateTrajectory_;
   input_vector_array_t mpcInputTrajectory_;

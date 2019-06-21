@@ -39,7 +39,7 @@ void MPC_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::reset() {
   mpcTimeTrajectoryBuffer_.clear();
   mpcStateTrajectoryBuffer_.clear();
   mpcInputTrajectoryBuffer_.clear();
-  mpcControllerBuffer_.clear();
+//  mpcControllerBuffer_.clear();
   mpcSolverCostDesiredTrajectoriesBuffer_.clear();
 
   // variables for the tracking controller:
@@ -47,14 +47,10 @@ void MPC_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::reset() {
   subsystemsSequence_.clear();
   partitioningTimes_.clear();
 
-  mpcController_.clear();
+//  mpcController_.clear();
   mpcTimeTrajectory_.clear();
   mpcStateTrajectory_.clear();
   mpcInputTrajectory_.clear();
-  mpcLinInterpolateState_.reset();
-  mpcLinInterpolateInput_.reset();
-  mpcLinInterpolateUff_.reset();
-  mpcLinInterpolateK_.reset();
   mpcCostDesiredTrajectories_.clear();
 
   if (mpcPtr_ != nullptr) mpcPtr_->reset();
@@ -125,7 +121,7 @@ void MPC_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULSES_T>::advanceMpc() {
 
 template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
 void MPC_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::fillMpcOutputBuffers() {
-  const controller_array_t* controllersPtr(nullptr);
+  const controller_ptr_array_t* controllersPtr(nullptr);
   const std::vector<scalar_array_t>* timeTrajectoriesPtr(nullptr);
   const state_vector_array2_t* stateTrajectoriesPtr(nullptr);
   const input_vector_array2_t* inputTrajectoriesPtr(nullptr);
@@ -137,7 +133,7 @@ void MPC_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::fillMpcOutputBuffers() 
   ;
 
   // get a pointer to the optimized controller
-  mpcPtr_->getOptimizedControllerPtr(controllersPtr);
+  controllersPtr = mpcPtr_->getOptimizedControllerPtr();
   // get a pointer to the optimized trajectories
   mpcPtr_->getOptimizedTrajectoriesPtr(timeTrajectoriesPtr, stateTrajectoriesPtr, inputTrajectoriesPtr);
 
@@ -171,26 +167,29 @@ void MPC_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::fillMpcOutputBuffers() 
                                        std::end((*inputTrajectoriesPtr)[i]));
     }
   } else {
-    int N = 0;
-    for (int i = 0; i < controllersPtr->size(); i++) {
-      N += (*controllersPtr)[i].time_.size();
-    }
-    mpcControllerBuffer_.clear();
-    mpcControllerBuffer_.time_.reserve(N);
-    mpcControllerBuffer_.k_.reserve(N);
-    mpcControllerBuffer_.deltaUff_.reserve(N);
-    mpcControllerBuffer_.uff_.reserve(N);
 
-    for (int i = 0; i < controllersPtr->size(); i++) {
-      const controller_t& currentController = (*controllersPtr)[i];
-      mpcControllerBuffer_.time_.insert(std::end(mpcControllerBuffer_.time_), std::begin(currentController.time_),
-                                        std::end(currentController.time_));
-      mpcControllerBuffer_.k_.insert(std::end(mpcControllerBuffer_.k_), std::begin(currentController.k_), std::end(currentController.k_));
-      mpcControllerBuffer_.deltaUff_.insert(std::end(mpcControllerBuffer_.deltaUff_), std::begin(currentController.deltaUff_),
-                                            std::end(currentController.deltaUff_));
-      mpcControllerBuffer_.uff_.insert(std::end(mpcControllerBuffer_.uff_), std::begin(currentController.uff_),
-                                       std::end(currentController.uff_));
-    }
+	  // TODO:: concatenate controller to a single controller
+
+//    int N = 0;
+//    for (int i = 0; i < controllersPtr->size(); i++) {
+//      N += (*controllersPtr)[i].time_.size();
+//    }
+//    mpcControllerBuffer_.clear();
+//    mpcControllerBuffer_.time_.reserve(N);
+//    mpcControllerBuffer_.k_.reserve(N);
+//    mpcControllerBuffer_.deltaUff_.reserve(N);
+//    mpcControllerBuffer_.uff_.reserve(N);
+//
+//    for (int i = 0; i < controllersPtr->size(); i++) {
+//      const controller_t& currentController = (*controllersPtr)[i];
+//      mpcControllerBuffer_.time_.insert(std::end(mpcControllerBuffer_.time_), std::begin(currentController.time_),
+//                                        std::end(currentController.time_));
+//      mpcControllerBuffer_.k_.insert(std::end(mpcControllerBuffer_.k_), std::begin(currentController.k_), std::end(currentController.k_));
+//      mpcControllerBuffer_.deltaUff_.insert(std::end(mpcControllerBuffer_.deltaUff_), std::begin(currentController.deltaUff_),
+//                                            std::end(currentController.deltaUff_));
+//      mpcControllerBuffer_.uff_.insert(std::end(mpcControllerBuffer_.uff_), std::begin(currentController.uff_),
+//                                       std::end(currentController.uff_));
+//    }
   }
 
   mpcEventTimesBuffer_ = *eventTimesPtr;
@@ -272,24 +271,19 @@ bool MPC_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::updatePolicy() {
     mpcStateTrajectory_.swap(mpcStateTrajectoryBuffer_);
     mpcInputTrajectory_.swap(mpcInputTrajectoryBuffer_);
 
-    mpcLinInterpolateState_.reset();
-    mpcLinInterpolateState_.setTimeStamp(&mpcTimeTrajectory_);
-    mpcLinInterpolateState_.setData(&mpcStateTrajectory_);
+    mpcLinInterpolateState_.setData(&mpcTimeTrajectory_, &mpcStateTrajectory_);
 
-    mpcLinInterpolateInput_.reset();
-    mpcLinInterpolateInput_.setTimeStamp(&mpcTimeTrajectory_);
-    mpcLinInterpolateInput_.setData(&mpcInputTrajectory_);
+    mpcLinInterpolateInput_.setData(&mpcTimeTrajectory_, &mpcInputTrajectory_);
 
   } else {
-    mpcController_.swap(mpcControllerBuffer_);
-
-    mpcLinInterpolateUff_.reset();
-    mpcLinInterpolateUff_.setTimeStamp(&mpcController_.time_);
-    mpcLinInterpolateUff_.setData(&mpcController_.uff_);
-
-    mpcLinInterpolateK_.reset();
-    mpcLinInterpolateK_.setTimeStamp(&mpcController_.time_);
-    mpcLinInterpolateK_.setData(&mpcController_.k_);
+	  // TODO
+//    mpcController_.swap(mpcControllerBuffer_);
+//
+//    mpcLinInterpolateUff_.reset();
+//    mpcLinInterpolateUff_.setData(&mpcController_.time_, &mpcController_.uff_);
+//
+//    mpcLinInterpolateK_.reset();
+//    mpcLinInterpolateK_.setData(&mpcController_.time_, &mpcController_.k_);
   }
 
   return true;
@@ -309,8 +303,7 @@ void MPC_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::evaluateFeedforwardPoli
     ROS_WARN_STREAM_THROTTLE(2, "The requested time is greater than the received plan: " + std::to_string(time) + ">" +
                                     std::to_string(mpcTimeTrajectory_.back()));
 
-  mpcLinInterpolateState_.interpolate(time, mpcState);
-  int greatestLessTimeStampIndex = mpcLinInterpolateState_.getGreatestLessTimeStampIndex();
+  int greatestLessTimeStampIndex = mpcLinInterpolateState_.interpolate(time, mpcState);
   mpcLinInterpolateInput_.interpolate(time, mpcInput, greatestLessTimeStampIndex);
 
   size_t index = findActiveSubsystemFnc_(time);
@@ -323,20 +316,20 @@ void MPC_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::evaluateFeedforwardPoli
 template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
 void MPC_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::evaluateFeedbackPolicy(const scalar_t& time, input_vector_t& mpcUff,
                                                                                 input_state_matrix_t& mpcGain, size_t& subsystem) {
-  updatePolicy();
-
-  if (useFeedforwardPolicy_ == true) throw std::runtime_error("The MRT is set to receive the feedback policy.");
-
-  if (time > mpcController_.time_.back())
-    ROS_WARN_STREAM_THROTTLE(2, "The requested time is greater than the received plan: " + std::to_string(time) + ">" +
-                                    std::to_string(mpcController_.time_.back()));
-
-  mpcLinInterpolateUff_.interpolate(time, mpcUff);
-  int greatestLessTimeStampIndex = mpcLinInterpolateUff_.getGreatestLessTimeStampIndex();
-  mpcLinInterpolateK_.interpolate(time, mpcGain, greatestLessTimeStampIndex);
-
-  size_t index = findActiveSubsystemFnc_(time);
-  subsystem = logicMachine_.getLogicRulesPtr()->subsystemsSequence().at(index);
+//  updatePolicy();
+//
+//  if (useFeedforwardPolicy_ == true) throw std::runtime_error("The MRT is set to receive the feedback policy.");
+//
+//  if (time > mpcController_.time_.back())
+//    ROS_WARN_STREAM_THROTTLE(2, "The requested time is greater than the received plan: " + std::to_string(time) + ">" +
+//                                    std::to_string(mpcController_.time_.back()));
+//
+//  mpcLinInterpolateUff_.interpolate(time, mpcUff);
+//  int greatestLessTimeStampIndex = mpcLinInterpolateUff_.getGreatestLessTimeStampIndex();
+//  mpcLinInterpolateK_.interpolate(time, mpcGain, greatestLessTimeStampIndex);
+//
+//  size_t index = findActiveSubsystemFnc_(time);
+//  subsystem = logicMachine_.getLogicRulesPtr()->subsystemsSequence().at(index);
 }
 
 template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>

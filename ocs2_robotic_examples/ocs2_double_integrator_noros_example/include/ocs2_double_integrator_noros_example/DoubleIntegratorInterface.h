@@ -104,6 +104,7 @@ class DoubleIntegratorInterface : public RobotInterfaceBase<double_integrator_di
   std::string taskFile_;
   std::string libraryFolder_;
 
+  SLQ_Settings slqSettings_;
   mpc_t::Ptr mpcPtr_;
 
   DoubleIntegratorDynamics::Ptr linearSystemDynamicsPtr_;

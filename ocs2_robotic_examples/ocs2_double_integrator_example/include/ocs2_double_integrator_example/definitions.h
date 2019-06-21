@@ -30,6 +30,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifndef DOUBLE_INTEGRATOR_DEFINITIONS_OCS2_H_
 #define DOUBLE_INTEGRATOR_DEFINITIONS_OCS2_H_
 
+#include <cstddef>
+
 namespace ocs2 {
 namespace double_integrator {
 

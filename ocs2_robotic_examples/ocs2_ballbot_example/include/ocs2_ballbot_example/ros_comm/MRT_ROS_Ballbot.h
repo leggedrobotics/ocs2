@@ -82,11 +82,9 @@ public:
 	 * @param [in] useFeedforwardPolicy: Whether to receive the MPC feedforward (true) or MPC feedback policy (false).
 	 * @param [in] robotName: The robot's name.
 	 */
-	MRT_ROS_Ballbot(
-			const bool& useFeedforwardPolicy = true,
-			const std::string& robotName = "robot")
+	MRT_ROS_Ballbot(const std::string& robotName = "robot")
 
-	: BASE(NullLogicRules(), useFeedforwardPolicy, robotName)
+	: BASE(NullLogicRules(), robotName)
 	{}
 
 	/**

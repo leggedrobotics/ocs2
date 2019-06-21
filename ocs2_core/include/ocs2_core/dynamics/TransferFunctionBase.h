@@ -10,7 +10,7 @@
 
 namespace ocs2 {
 
-    void padeApproximation(double timeDelay, Eigen::VectorXd& numCoefficients, Eigen::VectorXd& denCoefficients, size_t numZeros, size_t numPoles) {
+    inline void padeApproximation(double timeDelay, Eigen::VectorXd& numCoefficients, Eigen::VectorXd& denCoefficients, size_t numZeros, size_t numPoles) {
       numCoefficients.resize(numZeros+1);
       denCoefficients.resize(numPoles+1);
 
@@ -36,7 +36,7 @@ namespace ocs2 {
                          " nPoles= " + std::to_string(numPoles));
     };
 
-    Eigen::VectorXd multiplyPolynomials(const Eigen::VectorXd& p_lhs, const Eigen::VectorXd& p_rhs){
+    inline Eigen::VectorXd multiplyPolynomials(const Eigen::VectorXd& p_lhs, const Eigen::VectorXd& p_rhs){
       Eigen::VectorXd p_result(p_lhs.size()+p_rhs.size()-1);
       p_result.setZero();
       for (int i=0; i<p_lhs.size(); i++){
@@ -55,10 +55,12 @@ namespace ocs2 {
 
         TransferFunctionBase(Eigen::VectorXd numCoefficients,
                              Eigen::VectorXd denCoefficients,
-                             double timedelay=0.0) :
+                             double timedelay=0.0,
+                             bool balance = true) :
             numCoefficients_(numCoefficients),
             denCoefficients_(denCoefficients),
-            timeDelay_(timedelay)
+            timeDelay_(timedelay),
+            balance_(balance)
         {};
 
         void absorbDelay(size_t numZeros, size_t numPoles) {
@@ -80,13 +82,13 @@ namespace ocs2 {
           denCoefficients_ /= scaling;
         }
 
-        void getStateSpace(Eigen::MatrixXd& A, Eigen::MatrixXd& B, Eigen::MatrixXd& C, Eigen::MatrixXd& D){
-          if(numCoefficients_.size()<=denCoefficients_.size()) {
-            std::runtime_error("Transfer function must be proper to convert to a state space model");
+        void getStateSpace(Eigen::MatrixXd& A, Eigen::MatrixXd& B, Eigen::MatrixXd& C, Eigen::MatrixXd& D) {
+          if (numCoefficients_.size() > denCoefficients_.size()) {
+            throw std::runtime_error("Transfer function must be proper to convert to a state space model");
           }
 
           // Absorb delay and normalize
-          if (!delayAbsorbed){ // Default approximation of time delay
+          if (!delayAbsorbed) { // Default approximation of time delay
             this->absorbDelay(1, 1);
           }
           this->normalize();
@@ -107,12 +109,22 @@ namespace ocs2 {
 
           // Create strictly proper transfer function
           D(0) = numExtended(0);
-          numExtended -= denCoefficients_*D(0);
+          numExtended -= denCoefficients_ * D(0);
 
-          if (numStates>0){
-            A << -denCoefficients_.tail(numStates).transpose(), Eigen::MatrixXd::Identity(numStates-1,numStates);
-            B << 1.0, Eigen::VectorXd::Zero(numStates-1);
+          if (numStates > 0) {
+            A << -denCoefficients_.tail(numStates).transpose(), Eigen::MatrixXd::Identity(numStates - 1, numStates);
+            B << 1.0, Eigen::VectorXd::Zero(numStates - 1);
             C << numExtended.tail(numStates).transpose();
+
+            if (balance_){
+              Eigen::MatrixXd T(numStates, numStates);
+              T.setZero();
+              T.diagonal() = denCoefficients_.tail(numStates).cwiseSqrt();
+              T(0, 0) = 1.0;
+              A = T * A.eval() * T.inverse();
+              B = T * B.eval();
+              C = C.eval() * T.inverse();
+            }
           }
         }
 
@@ -121,16 +133,18 @@ namespace ocs2 {
         double timeDelay_;
         double delayTol = 1e-6;
         bool delayAbsorbed = false;
+        bool balance_;
     };
 
-    void tf2ss(Eigen::VectorXd numCoefficients,
+    inline void tf2ss(Eigen::VectorXd numCoefficients,
                Eigen::VectorXd denCoefficients,
                Eigen::MatrixXd& A,
                Eigen::MatrixXd& B,
                Eigen::MatrixXd& C,
                Eigen::MatrixXd& D,
-               double timeDelay=0.0){
-      TransferFunctionBase tf(numCoefficients, denCoefficients, timeDelay);
+               double timeDelay = 0.0,
+               bool balance = true){
+      TransferFunctionBase tf(numCoefficients, denCoefficients, timeDelay, balance);
       tf.getStateSpace(A, B, C, D);
     }
 

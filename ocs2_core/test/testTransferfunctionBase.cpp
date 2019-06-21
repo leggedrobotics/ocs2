@@ -35,7 +35,7 @@ TEST(testTransferFunctionBase, noDelay)
   den.resize(4);
   num << 2.0, 4.0;
   den << 0.2, 3.0, 0.3, 6.0;
-  tf2ss(num, den, A, B, C, D);
+  tf2ss(num, den, A, B, C, D, 0.0, false);
 
   // Matlab
   // h = tf([2.0, 4.0], [0.2, 3.0, 0.3, 6.0])
@@ -64,7 +64,7 @@ TEST(testTransferFunctionBase, withDelay)
   num << 0.01, 2.0;
   den << 0.2, 3.0;
   double delay = 0.25;
-  TransferFunctionBase tf1(num, den, delay);
+  TransferFunctionBase tf1(num, den, delay, false);
   Eigen::MatrixXd A, B, C, D;
   tf1.getStateSpace(A, B, C, D);
 

@@ -88,6 +88,7 @@ public:
 
 	typedef typename DIMENSIONS::controller_t controller_t;
 	typedef typename DIMENSIONS::controller_array_t controller_array_t;
+	typedef typename slq_data_collector_t::linear_controller_array_t linear_controller_array_t;
 	typedef typename DIMENSIONS::lagrange_t lagrange_t;
 	typedef typename DIMENSIONS::lagrange_array_t lagrange_array_t;
 	typedef typename DIMENSIONS::size_array_t size_array_t;
@@ -123,9 +124,9 @@ public:
 	typedef typename DIMENSIONS::constraint1_input_matrix_t constraint1_input_matrix_t;
 	typedef typename DIMENSIONS::constraint1_input_matrix_array_t constraint1_input_matrix_array_t;
 	typedef typename DIMENSIONS::constraint1_input_matrix_array2_t constraint1_input_matrix_array2_t;
-	typedef typename DIMENSIONS::control_constraint1_matrix_t control_constraint1_matrix_t;
-	typedef typename DIMENSIONS::control_constraint1_matrix_array_t control_constraint1_matrix_array_t;
-	typedef typename DIMENSIONS::control_constraint1_matrix_array2_t control_constraint1_matrix_array2_t;
+	typedef typename DIMENSIONS::input_constraint1_matrix_t input_constraint1_matrix_t;
+	typedef typename DIMENSIONS::input_constraint1_matrix_array_t input_constraint1_matrix_array_t;
+	typedef typename DIMENSIONS::input_constraint1_matrix_array2_t input_constraint1_matrix_array2_t;
 	typedef typename DIMENSIONS::constraint2_vector_t       constraint2_vector_t;
 	typedef typename DIMENSIONS::constraint2_vector_array_t constraint2_vector_array_t;
 	typedef typename DIMENSIONS::constraint2_vector_array2_t constraint2_vector_array2_t;
@@ -345,7 +346,7 @@ protected:
 	void propagateRolloutSensitivity(
 			size_t workerIndex,
 			const size_t& eventTimeIndex,
-			const controller_array_t& controllersStock,
+			const linear_controller_array_t& controllersStock,
 			const input_vector_array2_t& LvTrajectoriesStock,
 			const std::vector<scalar_array_t>& sensitivityTimeTrajectoriesStock,
 			const std::vector<size_array_t>& eventsPastTheEndIndecesStock,

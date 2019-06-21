@@ -9,8 +9,7 @@ Makefile
 .idea/
 .cproject
 *~
-*/.settings/*
-*/.idea/*
+*.settings*
 */doc/html/
 Doxyfile
 *.orig

@@ -27,8 +27,8 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  ******************************************************************************/
 
-#include "ocs2_quadrotor_example/QuadrotorInterface.h"
-#include <ros/package.h>
+# include "ocs2_quadrotor_example/QuadrotorInterface.h"
+# include <ros/package.h>
 
 namespace ocs2 {
 namespace quadrotor {
@@ -62,9 +62,9 @@ void QuadrotorInterface::loadSettings(const std::string& taskFile) {
 	loadInitialState(taskFile, initialState_);
 
 	/*
-	 * SLQ-MPC settings
+	 * Solver settings
 	 */
-	slqSettings_.loadSettings(taskFile);
+	ilqrSettings_.loadSettings(taskFile);
 	mpcSettings_.loadSettings(taskFile);
 
 	/*
@@ -130,8 +130,16 @@ void QuadrotorInterface::setupOptimizer(const std::string& taskFile) {
 			quadrotorCostPtr_.get(),
 			quadrotorOperatingPointPtr_.get(),
 			partitioningTimes_,
-			slqSettings_,
+			ilqrSettings_,
 			mpcSettings_));
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+ILQR_Settings& QuadrotorInterface::ilqrSettings() {
+
+	return ilqrSettings_;
 }
 
 /******************************************************************************************************/

@@ -35,6 +35,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <memory>
 #include <vector>
+#include <algorithm>
 
 
 namespace ocs2{
@@ -57,12 +58,9 @@ public:
 	 * Default constructor.
 	 */
 	LinearInterpolation()
-
-	: index_(0),
-	  zeroFunction_(false),
-	  timeStampSize_(0),
-	  timeStampPtr_(NULL),
-	  dataPtr_(NULL)
+	: zeroFunction_(true),
+	  timeStampPtr_(nullptr),
+	  dataPtr_(nullptr)
 	{}
 
 	/**
@@ -73,124 +71,80 @@ public:
 	 */
 	LinearInterpolation(
 			const std::vector<scalar_t>* timeStampPtr,
-			const std::vector<Data_T,Alloc>* dataPtr)
-
-	: index_(0)
-	, zeroFunction_(false)
-	, timeStampSize_(timeStampPtr->size())
-	, timeStampPtr_(timeStampPtr)
-	, dataPtr_(dataPtr)
-	{
-		checkTimeStamp();
-		if (dataPtr_==NULL)  throw std::runtime_error("dataPtr is not initialized.");
-	}
+			const std::vector<Data_T,Alloc>* dataPtr) :
+        zeroFunction_(false),
+        timeStampPtr_(timeStampPtr),
+        dataPtr_(dataPtr)
+	{ }
 
 	/**
 	 * Copy constructor
 	 *
 	 * @param [in] arg: Instance of the other class.
 	 */
-	LinearInterpolation(const LinearInterpolation& arg)
-
-	: index_(arg.index_)
-	, timeStampSize_(arg.timeStampSize_)
-	, zeroFunction_(arg.zeroFunction_)
-	, timeStampPtr_(arg.timeStampPtr_)
-	, dataPtr_(arg.dataPtr_)
-	{}
-
-	/**
-	 * Reset function
-	 */
-	void reset()  {
-
-		index_ = 0;
-		zeroFunction_ = false;
-	}
+	LinearInterpolation(const LinearInterpolation& arg) = default;
 
     /**
-     * Sets the time stamp.
+     * Sets the time stamp and data.
      *
      * @param [in] timeStampPtr: A pointer to time stamp.
-     */
-	void setTimeStamp(const std::vector<scalar_t>* timeStampPtr) {
-
-		reset();
-		timeStampSize_ = timeStampPtr->size();
-		timeStampPtr_ = timeStampPtr;
-		checkTimeStamp();
-	}
-
-    /**
-     * Sets data
-     *
      * @param [in] dataPtr: A pointer to the data.
      */
-	void setData(const std::vector<Data_T,Alloc>* dataPtr) {
+	void setData(const std::vector<scalar_t>* timeStampPtr, const std::vector<Data_T, Alloc>* dataPtr) {
+        if (timeStampPtr == nullptr) throw std::runtime_error("timeStampPtr is nullptr.");
+        if (dataPtr == nullptr) throw std::runtime_error("dataPtr is nullptr.");
 
-		reset();
-		dataPtr_ = dataPtr;
-		if (dataPtr_==NULL)  throw std::runtime_error("dataPtr is not initialized.");
-	}
+        zeroFunction_ = false;
+        timeStampPtr_ = timeStampPtr;
+        dataPtr_ = dataPtr;
+
+        if (timeStampPtr_->empty() || dataPtr_->size() != timeStampPtr_->size()) {
+          throw std::runtime_error("LinearInterpolation.h : Sizes not suitable for interpolation.");
+        }
+    }
 
     /**
      * Sets zero
      */
 	void setZero() {
-
-		reset();
 		zeroFunction_ = true;
 	}
 
     /**
-     * Interpolate function.
+     * Linearly interpolates at the given time. When duplicate values exist the lower range is selected s.t. ( ]
+     * Example: t = [0.0, 1.0, 1.0, 2.0]
+     * when querying tk = 1.0, the range (0.0, 1.0] is selected
      *
      * @param [in]  enquiryTime: The enquiry time for interpolation.
      * @param [out] enquiryData: The value of the trajectory at the requested time.
-     * @param [in]  greatestLessTimeStampIndex (optional): The greatest smaller time stamp index. If provided, the interpolation will skip
+     * @param [in]  index (optional): The greatest smaller time stamp index. If provided, the interpolation will skip
      * the search scheme and readily calculates the output.
      */
-	void interpolate(
+	int interpolate(
 			const scalar_t& enquiryTime,
 			Data_T& enquiryData,
-			int greatestLessTimeStampIndex = -1) {
+			int index = -1) const {
+		const std::vector<scalar_t>& timeStamp = *timeStampPtr_;
+		const std::vector<Data_T, Alloc>& dataArray = *dataPtr_;
 
-		if (zeroFunction_==true)  {
+		if (zeroFunction_) {
 			enquiryData.setZero();
-			return;
+		} else {
+			if (index < 0) { // No index provided -> search for it
+				index = find(timeStamp, enquiryTime);
+			}
+
+			// Check bounds and extrapolate with zero order
+			if ( index >= static_cast<int>(timeStamp.size()-1) ) { // upper bound
+				enquiryData = dataArray.back();
+			} else if (index < 0) { // lower bound, with zero it is still between the first two timepoints
+				enquiryData = dataArray.front();
+			} else { // interpolation
+				scalar_t alpha = (enquiryTime - timeStamp[index + 1]) / (timeStamp[index] - timeStamp[index + 1]);
+				enquiryData = alpha * dataArray[index] + (1 - alpha) * dataArray[index + 1];
+			}
 		}
-
-		if (dataPtr_->size() != timeStampSize_)
-			throw std::runtime_error("LinearInterpolation.h : The size of timeStamp vector is not equal to the size of data vector.");
-
-		if (enquiryTime<=timeStampPtr_->front()) {
-			enquiryData = dataPtr_->front();
-			index_ = 0;
-			return;
-		}
-
-		if (enquiryTime>=timeStampPtr_->back()) {
-			enquiryData = dataPtr_->back();
-			index_ = timeStampSize_-1;
-			return;
-		}
-
-		if (greatestLessTimeStampIndex == -1)
-			index_ = find(enquiryTime);
-		else
-			index_ = greatestLessTimeStampIndex;
-
-		scalar_t alpha = (enquiryTime-timeStampPtr_->at(index_+1)) / (timeStampPtr_->at(index_)-timeStampPtr_->at(index_+1));
-		enquiryData = alpha*dataPtr_->at(index_) + (1-alpha)*dataPtr_->at(index_+1);
-	}
-
-	/**
-	 * Returns the greatest smaller time stamp index found in the last interpolation function call.
-	 * @return The greatest smaller time stamp index.
-	 */
-	int getGreatestLessTimeStampIndex() {
-
-		return index_;
+		return index;
 	}
 
 protected:
@@ -200,48 +154,15 @@ protected:
      * @param [in] enquiryTime: The enquiry time for interpolation.
      * @return The greatest smaller time stamp index.
      */
-	int find(const scalar_t& enquiryTime) {
-
-		int index = -1;
-
-		if (timeStampPtr_->at(index_) > enquiryTime) {
-			for (int i=index_; i>=0; i--)  {
-				index = i;
-				if (timeStampPtr_->at(i) <= enquiryTime)
-					break;
-			}
-		} else {
-			for (int i=index_; i<timeStampSize_; i++) {
-				index = i;
-				if (timeStampPtr_->at(i) > enquiryTime) {
-					index--;
-					break;
-				}
-			}
-		}
-
-		return index;
-	}
-
-    /**
-     * Checks the time stamp
-     */
-	void checkTimeStamp() {
-
-		if (timeStampPtr_==NULL)
-			throw std::runtime_error("timeStampPtr is not initialized.");
-		if (timeStampSize_==0)
-			throw std::runtime_error("LinearInterpolation is not initialized.");
+    static int find(const std::vector<scalar_t>& timeArray, scalar_t enquiryTime) {
+    	//! @remark Idea for improvement: interpolation search mentioned here https://stackoverflow.com/questions/26613111/binary-search-with-hint
+		return static_cast<int>(std::lower_bound(timeArray.begin(), timeArray.end(), enquiryTime) - timeArray.begin() - 1);
 	}
 
 private:
-	int index_;
 	bool zeroFunction_;
-
-	size_t timeStampSize_;
 	const std::vector<scalar_t>* timeStampPtr_;
-	const std::vector<Data_T,Alloc>* dataPtr_;
-
+	const std::vector<Data_T, Alloc>* dataPtr_;
 };
 
 // Specialization for Eigen types

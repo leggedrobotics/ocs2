@@ -22,9 +22,7 @@ TEST(BallbotIntegrationTest, createDummyMRT) {
   typedef mrt_t::scalar_t scalar_t;
   typedef mrt_t::system_observation_t system_observation_t;
 
-  mrt_base_ptr_t mrtPtr(new mrt_t(
-      !ballbotInterface.mpcSettings().useFeedbackPolicy_,
-      "ballbot"));
+  mrt_base_ptr_t mrtPtr(new mrt_t("ballbot"));
 
   // Dummy ballbot
   MRT_ROS_Dummy_Ballbot dummyBallbot(
@@ -35,7 +33,6 @@ TEST(BallbotIntegrationTest, createDummyMRT) {
   // Initialize dummy
   MRT_ROS_Dummy_Ballbot::system_observation_t initObservation;
   ballbotInterface.getInitialState(initObservation.state());
-  dummyBallbot.init(initObservation);
 
   ASSERT_TRUE(true);
 }

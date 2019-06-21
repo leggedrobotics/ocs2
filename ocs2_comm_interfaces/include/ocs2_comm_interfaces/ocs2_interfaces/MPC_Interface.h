@@ -169,6 +169,12 @@ class MPC_Interface {
    */
   void getValueFunctionStateDerivative(scalar_t time, const state_vector_t& state, state_vector_t& Vx);
 
+  const scalar_array_t &getMpcTimeTrajectory();
+
+  const state_vector_array_t &getMpcStateTrajectory();
+
+  const input_vector_array_t &getMpcInputTrajectory();
+
  protected:
   /*
    * Variables

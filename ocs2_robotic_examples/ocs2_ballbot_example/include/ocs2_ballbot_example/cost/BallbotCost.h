@@ -98,7 +98,7 @@ public:
 	void setCurrentStateAndControl(
 			const scalar_t& t,
 			const state_vector_t& x,
-			const input_vector_t& u) {
+			const input_vector_t& u) override {
 
 		dynamic_vector_t xNominal;
 		BASE::xNominalFunc_.interpolate(t, xNominal);

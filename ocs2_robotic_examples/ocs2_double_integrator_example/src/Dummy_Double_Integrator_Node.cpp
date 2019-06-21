@@ -49,25 +49,32 @@ int main(int argc, char **argv)
 	typedef mrt_t::scalar_t scalar_t;
 	typedef mrt_t::system_observation_t system_observation_t;
 
-	mrt_base_ptr_t mrtPtr(new mrt_t(
-			!double_integratorInterface.mpcSettings().useFeedbackPolicy_,
-			"double_integrator"));
+	mrt_base_ptr_t mrtPtr(new mrt_t("double_integrator"));
 
 	// Dummy double_integrator
 	MRT_ROS_Dummy_Linear_System dummyDoubleIntegrator(
 			mrtPtr,
 			double_integratorInterface.mpcSettings().mrtDesiredFrequency_,
-			double_integratorInterface.mpcSettings().mpcDesiredFrequency_);
+			double_integratorInterface.mpcSettings().mpcDesiredFrequency_,
+			double_integratorInterface.getDynamicsPtr().get());
 
 	dummyDoubleIntegrator.launchNodes(argc, argv);
 
-	// Initialize dummy
+	// initialize state
 	MRT_ROS_Dummy_Linear_System::system_observation_t initObservation;
 	double_integratorInterface.getInitialState(initObservation.state());
-	dummyDoubleIntegrator.init(initObservation);
+
+	// initial command
+	MRT_ROS_Dummy_Linear_System::cost_desired_trajectories_t initCostDesiredTrajectories;
+	initCostDesiredTrajectories.desiredTimeTrajectory().resize(1);
+	initCostDesiredTrajectories.desiredStateTrajectory().resize(1);
+	initCostDesiredTrajectories.desiredInputTrajectory().resize(1);
+	initCostDesiredTrajectories.desiredStateTrajectory().front().resize(2);
+	initCostDesiredTrajectories.desiredStateTrajectory().front().head<1>().setZero(); /*targetPoseDisplacement*/
+	initCostDesiredTrajectories.desiredStateTrajectory().front().tail<1>().setZero(); /*targetVelocity*/
 
 	// run dummy
-	dummyDoubleIntegrator.run();
+	dummyDoubleIntegrator.run(initObservation, initCostDesiredTrajectories);
 
 	// Successful exit
 	return 0;

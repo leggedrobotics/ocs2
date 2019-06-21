@@ -61,19 +61,9 @@ public:
 	{}
 
 	/**
-	 * Destructor.
+	 * Default destructor.
 	 */
 	virtual ~MRT_ROS_Dummy_Quadrotor() = default;
-
-	/**
-	 * The initialization of the observation
-	 *
-	 * @param [in] initObservation: The initial observation.
-	 */
-	virtual void init(const system_observation_t& initObservation) override {
-
-		BASE::init(initObservation);
-	}
 
 protected:
 	/**
@@ -89,8 +79,12 @@ protected:
 	 * Visualizes the current observation.
 	 *
 	 * @param [in] observation: The current observation.
+	 * @param [in] costDesiredTrajectories: The commanded target trajectory or point.
 	 */
-	virtual void publishVisualizer(const system_observation_t& observation) override {
+	virtual void publishVisualizer(
+			const system_observation_t& observation,
+			const cost_desired_trajectories_t& costDesiredTrajectories) override {
+
 		static tf::TransformBroadcaster transformBroadcaster;
 		tf::Transform transform;
 		transform.setOrigin(tf::Vector3(observation.state()(0), observation.state()(1), observation.state()(2)));

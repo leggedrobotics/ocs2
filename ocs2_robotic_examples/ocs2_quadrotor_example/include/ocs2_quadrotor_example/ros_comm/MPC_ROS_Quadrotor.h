@@ -54,7 +54,6 @@ public:
 	typedef typename BASE::input_vector_array_t input_vector_array_t;
 	typedef typename BASE::input_vector_array2_t input_vector_array2_t;
 	typedef typename BASE::controller_t controller_t;
-	typedef typename BASE::controller_array_t controller_array_t;
 	typedef typename BASE::input_state_matrix_t input_state_matrix_t;
 	typedef typename BASE::input_state_matrix_array_t input_state_matrix_array_t;
 
@@ -84,31 +83,9 @@ public:
 	: BASE(mpc, robotName) {}
 
 	/**
-	 * Destructor.
+	 * Default destructor.
 	 */
 	virtual ~MPC_ROS_Quadrotor() = default;
-
-	/**
-	 * Provides the initial target trajectories for the cost function.
-	 *
-	 * @param [in] initObservation: The observation after the very fist call of the class or after call to reset().
-	 * @param [out] costDesiredTrajectories: The desired cost trajectories.
-	 */
-	void initGoalState(
-			const system_observation_t &initObservation,
-			cost_desired_trajectories_t &costDesiredTrajectories) final {
-
-		const scalar_t targetReachingDuration = 1.0;
-		const pose_vector_t targetPoseDisplacement = pose_vector_t::Zero();
-		const pose_vector_t targetVelocity = pose_vector_t::Zero();
-
-		// costDesiredTrajectories
-		targetPoseToDesiredTrajectories(
-				initObservation.time(), initObservation.state(),
-				0.0 /*startDelay*/,
-				targetReachingDuration, targetPoseDisplacement, targetVelocity,
-				costDesiredTrajectories);
-	}
 
 	/**
 	 * Adjusts the user-defined target trajectories for the cost based on the current observation.
@@ -121,9 +98,10 @@ public:
 			const system_observation_t& currentObservation,
 			cost_desired_trajectories_t& costDesiredTrajectories) final {
 
-		// targetPoseDisplacement
+		// targetPoseDisplacement (from the Quaternion pose conversion to the Euler angles conversion)
 		pose_vector_t targetPoseDisplacement, targetVelocity;
-		TargetPoseTransformation<scalar_t>::toTargetPoseDisplacement(costDesiredTrajectories.desiredStateTrajectory()[0],
+		TargetPoseTransformation<scalar_t>::toTargetPoseDisplacement(
+				costDesiredTrajectories.desiredStateTrajectory()[0],
 				targetPoseDisplacement, targetVelocity);
 
 		// reversing the order of the position and orientation.
@@ -142,29 +120,11 @@ public:
 		scalar_t targetReachingDuration2 = targetVelocity.norm() / averageAcceleration;
 		scalar_t targetReachingDuration = std::max(targetReachingDuration1, targetReachingDuration2);
 
-		// costDesiredTrajectories
-		targetPoseToDesiredTrajectories(
-				currentObservation.time(), currentObservation.state(),
-				0.0 /*startDelay*/,
-				targetReachingDuration, targetPoseDisplacement, targetVelocity,
-				costDesiredTrajectories);
-	}
-
-private:
-	void targetPoseToDesiredTrajectories(
-			const scalar_t& currentTime,
-			const state_vector_t& currentState,
-			const scalar_t& startDelay,
-			const scalar_t& targetReachingDuration,
-			const pose_vector_t& targetPoseDisplacement,
-			const pose_vector_t& targetVelocity,
-			cost_desired_trajectories_t& costDesiredTrajectories) {
-
 		// Desired time trajectory
 		scalar_array_t& tDesiredTrajectory = costDesiredTrajectories.desiredTimeTrajectory();
 		tDesiredTrajectory.resize(2);
-		tDesiredTrajectory[0] = currentTime + startDelay;
-		tDesiredTrajectory[1] = currentTime + startDelay + targetReachingDuration;
+		tDesiredTrajectory[0] = currentObservation.time();
+		tDesiredTrajectory[1] = currentObservation.time() + targetReachingDuration;
 
 		// Desired state trajectory
 		typename cost_desired_trajectories_t::dynamic_vector_array_t& xDesiredTrajectory =
@@ -172,12 +132,12 @@ private:
 		xDesiredTrajectory.resize(2);
 		xDesiredTrajectory[0].resize(quadrotor::STATE_DIM_);
 		xDesiredTrajectory[0].setZero();
-		xDesiredTrajectory[0].template segment<6>(0) = currentState.template segment<6>(0);
-		xDesiredTrajectory[0].template segment<6>(6) = currentState.template segment<6>(6);
+		xDesiredTrajectory[0].template segment<6>(0) = currentObservation.state().template segment<6>(0);
+		xDesiredTrajectory[0].template segment<6>(6) = currentObservation.state().template segment<6>(6);
 
 		xDesiredTrajectory[1].resize(quadrotor::STATE_DIM_);
 		xDesiredTrajectory[1].setZero();
-		xDesiredTrajectory[1].template segment<6>(0) = currentState. template segment<6>(0) + targetPoseDisplacement;
+		xDesiredTrajectory[1].template segment<6>(0) = currentObservation.state(). template segment<6>(0) + targetPoseDisplacement;
 		xDesiredTrajectory[1].template segment<6>(6) = targetVelocity;
 
 		// Desired input trajectory
@@ -187,6 +147,7 @@ private:
 		uDesiredTrajectory[0] = input_vector_t::Zero();
 		uDesiredTrajectory[1] = input_vector_t::Zero();
 	}
+
 };
 
 } // namespace quadrotor

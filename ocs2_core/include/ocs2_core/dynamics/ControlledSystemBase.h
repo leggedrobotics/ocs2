@@ -37,7 +37,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "ocs2_core/Dimensions.h"
 #include "ocs2_core/integration/ODE_Base.h"
-#include "ocs2_core/misc/LinearInterpolation.h"
+#include "ocs2_core/control/ControllerBase.h"
 #include "ocs2_core/logic/rules/LogicRulesBase.h"
 #include "ocs2_core/logic/rules/NullLogicRules.h"
 #include "ocs2_core/logic/machine/LogicRulesMachine.h"
@@ -73,29 +73,28 @@ public:
 	typedef typename DIMENSIONS::input_vector_array_t input_vector_array_t;
 	typedef typename DIMENSIONS::input_state_matrix_t       input_state_matrix_t;
 	typedef typename DIMENSIONS::input_state_matrix_array_t input_state_matrix_array_t;
-	typedef typename DIMENSIONS::controller_t         controller_t;
 	typedef typename DIMENSIONS::constraint1_vector_t constraint1_vector_t;
 	typedef typename DIMENSIONS::constraint2_vector_t constraint2_vector_t;
 	typedef typename DIMENSIONS::dynamic_vector_t     dynamic_vector_t;
 
+  typedef ControllerBase<STATE_DIM, INPUT_DIM> controller_t;
+
 	/**
-	 * The default constructor.
+	 * Default constructor.
 	 */
 	ControlledSystemBase()
-
 	: BASE()
-	, controllerIsSet_(false)
-	{
-		reset();
-	}
+	, controllerPtr_(nullptr)
+	{}
 
 	/**
 	 * Copy constructor.
 	 */
 	ControlledSystemBase(const ControlledSystemBase& rhs)
-
 	: ControlledSystemBase()
-	{}
+	{
+		setController(rhs.controllerPtr());
+	}
 
 	/**
 	 * Default destructor.
@@ -106,63 +105,16 @@ public:
 	 * Resets the internal classes.
 	 */
 	virtual void reset() {
-
-		linInterpolateK_.reset();
-		linInterpolateUff_.reset();
+		controllerPtr_ = nullptr;
 	}
 
 	/**
-	 * Sets the linear control policy using the controller class.
-	 * The controller class is defined as \f$ u(t,x) = u_{ff}(t) + K(t) * x \f$.
+	 * Sets the control policy using the controller class.
 	 *
-	 * @param [in] controller: The control policy.
+	 * @param [in] controllerPtr: A pointer to the control policy.
 	 */
-	void setController(const controller_t& controller) {
-
-		setController(controller.time_, controller.uff_, controller.k_);
-	}
-
-	/**
-	 * Sets the linear control policy using the feedback and feedforward components.
-	 * The controller class is defined as \f$ u(t,x) = u_{ff}(t) + K(t) * x \f$.
-	 *
-	 * @param [in] controllerTime: Time stamp.
-	 * @param [in] controllerFeedforward: Feedforward term trajectory, \f$ u_{ff} \f$.
-	 * @param [in] controllerFeedback: Feedback term trajectory, \f$ K \f$.
-	 */
-	void setController(
-			const scalar_array_t& controllerTime,
-			const input_vector_array_t& controllerFeedforward,
-			const input_state_matrix_array_t& controllerFeedback) {
-
-		linInterpolateUff_.setTimeStamp(&controllerTime);
-		linInterpolateUff_.setData(&controllerFeedforward);
-
-		linInterpolateK_.setTimeStamp(&controllerTime);
-		linInterpolateK_.setData(&controllerFeedback);
-
-		controllerIsSet_ = true;
-	}
-
-	/**
-	 * Computes input vector.
-	 *
-	 * @param [in] t: Current time.
-	 * @param [in] x: Current state.
-	 * @return Current input.
-	 */
-	input_vector_t computeInput(
-			const scalar_t& t,
-			const state_vector_t& x) {
-
-		input_vector_t uff;
-		linInterpolateUff_.interpolate(t, uff);
-		int greatestLessTimeStampIndex = linInterpolateUff_.getGreatestLessTimeStampIndex();
-
-		input_state_matrix_t k;
-		linInterpolateK_.interpolate(t, k, greatestLessTimeStampIndex);
-
-		return uff + k*x;
+	void setController(controller_t* controllerPtr) {
+		controllerPtr_ = controllerPtr;
 	}
 
 	/**
@@ -178,7 +130,7 @@ public:
 			state_vector_t& dxdt)  {
 
 		BASE::numFunctionCalls_++;
-		input_vector_t u = computeInput(t, x);
+		input_vector_t u = controllerPtr_->computeInput(t, x);
 		computeFlowMap(t, x, u, dxdt);
 	}
 
@@ -248,11 +200,19 @@ public:
 		BASE::computeGuardSurfaces(time, state, guardSurfacesValue);
 	}
 
-protected:
-	bool controllerIsSet_;
+	/**
+	 * Returns the controller pointer.
+	 *
+	 * @return A pointer to controller.
+	 */
+	controller_t* controllerPtr() const {
 
-	EigenLinearInterpolation<input_vector_t> linInterpolateUff_;
-	EigenLinearInterpolation<input_state_matrix_t> linInterpolateK_;
+		return controllerPtr_;
+	}
+
+private:
+  controller_t* controllerPtr_;  //! pointer to controller
+
 };
 
 } // namespace ocs2

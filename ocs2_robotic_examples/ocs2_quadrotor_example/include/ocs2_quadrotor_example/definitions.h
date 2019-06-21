@@ -30,6 +30,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifndef QUADROTOR_DEFINITIONS_OCS2_H_
 #define QUADROTOR_DEFINITIONS_OCS2_H_
 
+#include <cstddef>
+
 namespace ocs2 {
 namespace quadrotor {
 

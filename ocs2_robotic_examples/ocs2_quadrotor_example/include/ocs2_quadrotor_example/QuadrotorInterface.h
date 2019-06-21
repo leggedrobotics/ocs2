@@ -35,7 +35,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_core/misc/loadEigenMatrix.h>
 #include <ocs2_core/constraint/ConstraintBase.h>
 #include <ocs2_core/initialization/SystemOperatingPoint.h>
-#include <ocs2_mpc/MPC_SLQ.h>
+#include <ocs2_mpc/MPC_ILQR.h>
 #include <ocs2_robotic_tools/common/RobotInterfaceBase.h>
 
 // Quadrotor
@@ -59,7 +59,7 @@ public:
 	using QuadrotorConstraint = ConstraintBase<quadrotor::STATE_DIM_, quadrotor::INPUT_DIM_>;
 	using QuadrotorOperatingPoint = SystemOperatingPoint<quadrotor::STATE_DIM_, quadrotor::INPUT_DIM_>;
 
-	typedef MPC_SLQ<quadrotor::STATE_DIM_, quadrotor::INPUT_DIM_> mpc_t;
+	typedef MPC_ILQR<quadrotor::STATE_DIM_, quadrotor::INPUT_DIM_> mpc_t;
 
 	/**
 	 * Constructor
@@ -81,6 +81,13 @@ public:
 	void setupOptimizer(const std::string& taskFile) final;
 
 	/**
+	 * Gets ILQR settings.
+	 *
+	 * @return ILQR settings
+	 */
+	ILQR_Settings& ilqrSettings();
+
+	/**
 	 * Gets a pointer to the internal SLQ-MPC class.
 	 *
 	 * @return Pointer to the internal MPC
@@ -100,6 +107,8 @@ protected:
 	 **************/
 	std::string taskFile_;
 	std::string libraryFolder_;
+
+	ILQR_Settings ilqrSettings_;
 
 	mpc_t::Ptr mpcPtr_;
 

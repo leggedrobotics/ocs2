@@ -112,7 +112,7 @@ public:
 			const scalar_t& initTime,
 			const state_vector_t& initState,
 			const scalar_t& finalTime,
-			const controller_t& controller,
+			controller_t* controller,
 			logic_rules_machine_t& logicRulesMachine,
 			scalar_array_t& timeTrajectory,
 			size_array_t& eventsPastTheEndIndeces,
@@ -122,7 +122,7 @@ public:
 		if (initTime > finalTime)
 			throw std::runtime_error("Initial time should be less-equal to final time.");
 
-		if (controller.empty() == false)
+		if (controller != nullptr)
 			throw std::runtime_error("Incorrect usage of Operating trajectory; A controller is available.");
 
 		const size_t numEvents = logicRulesMachine.getNumEvents(partitionIndex);

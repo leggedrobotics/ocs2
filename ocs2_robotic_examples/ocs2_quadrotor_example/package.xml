@@ -4,7 +4,9 @@
   <version>0.0.0</version>
   <description>The ocs2_quadrotor_example package</description>
 
-  <maintainer email="farbod@todo.todo">farbod</maintainer>
+  <maintainer email="farbod.farshidian@gmail.com">Farbod Farshidian</maintainer>
+  <maintainer email="jcarius@ethz.ch">Jan Carius</maintainer>
+  <maintainer email="rgrandia@ethz.ch">Ruben Grandia</maintainer>
 
   <license>TODO</license>
 
@@ -12,18 +14,12 @@
 
   <build_depend>roslib</build_depend>
   <build_depend>tf</build_depend>
-  <build_depend>ocs2_core</build_depend>
-  <build_depend>ocs2_slq</build_depend>
-  <build_depend>ocs2_ocs2</build_depend>
   <build_depend>ocs2_mpc</build_depend>
   <build_depend>ocs2_comm_interfaces</build_depend>
   <build_depend>ocs2_robotic_tools</build_depend>
 
-  <run_depend>robot_state_publisher</run_depend>
+  <run_depend>roslib</run_depend>
   <run_depend>tf</run_depend>
-  <run_depend>ocs2_core</run_depend>
-  <run_depend>ocs2_slq</run_depend>
-  <run_depend>ocs2_ocs2</run_depend>
   <run_depend>ocs2_mpc</run_depend>
   <run_depend>ocs2_comm_interfaces</run_depend>
   <run_depend>ocs2_robotic_tools</run_depend>

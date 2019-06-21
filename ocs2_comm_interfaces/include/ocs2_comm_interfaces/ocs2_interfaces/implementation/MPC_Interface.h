@@ -2,6 +2,8 @@
 // Created by johannes on 01.04.19.
 //
 
+#include <ocs2_comm_interfaces/ocs2_interfaces/MPC_Interface.h>
+
 namespace ocs2 {
 
 template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
@@ -187,7 +189,7 @@ void MPC_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::fillMpcOutputBuffers() 
                                             std::end(currentController.deltaUff_));
       mpcControllerBuffer_.uff_.insert(std::end(mpcControllerBuffer_.uff_), std::begin(currentController.uff_),
                                        std::end(currentController.uff_));
-    }
+  }
 
   mpcEventTimesBuffer_ = *eventTimesPtr;
   mpcSubsystemsSequenceBuffer_ = *subsystemsSequencePtr;
@@ -227,13 +229,14 @@ void MPC_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::updateModeSequence() {
 
 template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
 bool MPC_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::updatePolicy() {
+
+  std::lock_guard<std::mutex> lock(mpcBufferMutex);
+
   if (mpcOutputBufferUpdated_) {
     mpcOutputBufferUpdated_ = false;
   } else {
     return false;
   }
-
-  std::lock_guard<std::mutex> lock(mpcBufferMutex);
 
   mpcCostDesiredTrajectories_.swap(mpcSolverCostDesiredTrajectoriesBuffer_);
 
@@ -359,6 +362,27 @@ void MPC_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::partitioningTimesUpdate
   partitioningTimes.resize(2);
   partitioningTimes[0] = currentObservation_.time();
   partitioningTimes[1] = std::numeric_limits<scalar_t>::max();
+}
+
+template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
+const typename MPC_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::state_vector_array_t&
+MPC_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::getMpcStateTrajectory() {
+  updatePolicy();
+  return mpcStateTrajectory_;
+}
+
+template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
+const typename MPC_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::input_vector_array_t&
+MPC_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::getMpcInputTrajectory() {
+  updatePolicy();
+  return mpcInputTrajectory_;
+}
+
+template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
+const typename MPC_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::scalar_array_t&
+MPC_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::getMpcTimeTrajectory() {
+  updatePolicy();
+  return mpcTimeTrajectory_;
 }
 
 /******************************************************************************************************/

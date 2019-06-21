@@ -35,6 +35,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <ocs2_core/Dimensions.h>
 #include <ocs2_core/dynamics/ControlledSystemBase.h>
+#include <ocs2_core/control/LinearController.h>
 #include <ocs2_core/misc/LinearInterpolation.h>
 
 namespace ocs2{
@@ -66,6 +67,8 @@ public:
 	typedef typename DIMENSIONS::state_input_matrix_array_t state_input_matrix_array_t;
 	typedef typename DIMENSIONS::input_state_matrix_t       input_state_matrix_t;
 	typedef typename DIMENSIONS::input_state_matrix_array_t input_state_matrix_array_t;
+
+	using linear_controller_t = LinearController<STATE_DIM, INPUT_DIM>;
 
 	/**
 	 * The default constructor.
@@ -99,19 +102,16 @@ public:
 			const input_vector_array_t* sensitivityControllerFeedforwardPtr,
 			const input_state_matrix_array_t* sensitivityControllerFeedbackPtr)  {
 
-		AmFunc_.setTimeStamp(timeTrajectoryPtr);
-		AmFunc_.setData(AmTrajectoryPtr);
+		AmFunc_.setData(timeTrajectoryPtr, AmTrajectoryPtr);
+		BmFunc_.setData(timeTrajectoryPtr, BmTrajectoryPtr);
+		flowMapFunc_.setData(timeTrajectoryPtr, flowMapTrajectoryPtr);
 
-		BmFunc_.setTimeStamp(timeTrajectoryPtr);
-		BmFunc_.setData(BmTrajectoryPtr);
-
-		flowMapFunc_.setTimeStamp(timeTrajectoryPtr);
-		flowMapFunc_.setData(flowMapTrajectoryPtr);
-
-		this->setController(
+		linearController_.setController(
 				*sensitivityControllerTimePtr,
 				*sensitivityControllerFeedforwardPtr,
 				*sensitivityControllerFeedbackPtr);
+
+		this->setController(&linearController_);
 	}
 
 	/**
@@ -119,9 +119,6 @@ public:
 	 */
 	void reset() {
 
-		AmFunc_.reset();
-		BmFunc_.reset();
-		flowMapFunc_.reset();
 	}
 
 	/**
@@ -149,8 +146,7 @@ public:
 			const input_vector_t& nabla_u,
 			state_vector_t& derivative) {
 
-		AmFunc_.interpolate(t, Am_);
-		size_t greatestLessTimeStampIndex = AmFunc_.getGreatestLessTimeStampIndex();
+		auto greatestLessTimeStampIndex = AmFunc_.interpolate(t, Am_);
 		BmFunc_.interpolate(t, Bm_, greatestLessTimeStampIndex);
 
 		if (std::abs(multiplier_) > 1e-9) {
@@ -164,6 +160,7 @@ public:
 
 protected:
 	scalar_t multiplier_ = 0.0;
+	linear_controller_t linearController_;
 
 	state_matrix_t       Am_;
 	state_input_matrix_t Bm_;

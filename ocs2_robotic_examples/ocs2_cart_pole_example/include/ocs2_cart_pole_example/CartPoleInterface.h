@@ -85,6 +85,13 @@ public:
 	void setupOptimizer(const std::string& taskFile) final;
 
 	/**
+	 * Gets SLQ settings.
+	 *
+	 * @return SLQ settings
+	 */
+	SLQ_Settings& slqSettings();
+
+	/**
 	 * Gets a pointer to the internal SLQ-MPC class.
 	 *
 	 * @return Pointer to the internal MPC
@@ -105,6 +112,7 @@ protected:
 	std::string taskFile_;
 	std::string libraryFolder_;
 
+	SLQ_Settings slqSettings_;
 	mpc_t::Ptr mpcPtr_;
 
 	CartPoleSytemDynamics::Ptr cartPoleSystemDynamicsPtr_;

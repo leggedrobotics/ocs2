@@ -34,7 +34,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <ocs2_slq/SLQ.h>
 #include <ocs2_slq/SLQ_MP.h>
-#include <ocs2_slq/test/EXP0.h>
+
+#include <ocs2_oc/test/EXP0.h>
 
 #include "ocs2_ocs2/OCS2Projected.h"
 
@@ -74,7 +75,7 @@ TEST(exp0_ocs2_test, DISABLED_exp0_ocs2_test)
 	slqSettings.displayShortSummary_ = false;
 	slqSettings.displayGradientDescent_ = true;
 	slqSettings.maxNumIterationsSLQ_ = 50;
-	slqSettings.minLearningRateGSLQP_ = 0.01;
+	slqSettings.minLearningRateSLQ_ = 0.01;
 	slqSettings.absTolODE_ = 1e-10;
 	slqSettings.relTolODE_ = 1e-7;
 	slqSettings.maxNumStepsPerSecond_ = 50000;
@@ -147,10 +148,10 @@ TEST(exp0_ocs2_test, DISABLED_exp0_ocs2_test)
 	const double optimumCost = 9.766;
 	const std::vector<double> optimumEventTimes {0.1897};
 
-	ASSERT_NEAR(cost_LQ, optimumCost, 10*slqSettings.minRelCostGSLQP_) <<
+	ASSERT_NEAR(cost_LQ, optimumCost, 10*slqSettings.minRelCostSLQ_) <<
 			"MESSAGE: OCS2 failed in the EXP1 using LQ approach for calculating derivatives!";
 
-	ASSERT_NEAR(cost_BVP, optimumCost, 10*slqSettings.minRelCostGSLQP_) <<
+	ASSERT_NEAR(cost_BVP, optimumCost, 10*slqSettings.minRelCostSLQ_) <<
 			"MESSAGE: OCS2 failed in the EXP1 using BVP approach for calculating derivatives!";
 }
 

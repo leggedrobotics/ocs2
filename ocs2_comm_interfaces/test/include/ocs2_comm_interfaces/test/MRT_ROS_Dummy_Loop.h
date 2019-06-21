@@ -49,19 +49,20 @@ public:
 	typedef ocs2::MRT_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> mrt_t;
 	typedef typename mrt_t::Ptr	mrt_ptr_t;
 
-	typedef typename mrt_t::controller_t       controller_t;
-	typedef typename mrt_t::controller_array_t controller_array_t;
-	typedef typename mrt_t::scalar_t             scalar_t;
-	typedef typename mrt_t::scalar_array_t       scalar_array_t;
-	typedef typename mrt_t::size_array_t         size_array_t;
-	typedef typename mrt_t::state_vector_t       state_vector_t;
-	typedef typename mrt_t::state_vector_array_t state_vector_array_t;
-	typedef typename mrt_t::input_vector_t       input_vector_t;
-	typedef typename mrt_t::input_vector_array_t input_vector_array_t;
+	typedef typename mrt_t::controller_t               controller_t;
+	typedef typename mrt_t::scalar_t                   scalar_t;
+	typedef typename mrt_t::scalar_array_t             scalar_array_t;
+	typedef typename mrt_t::size_array_t               size_array_t;
+	typedef typename mrt_t::state_vector_t             state_vector_t;
+	typedef typename mrt_t::state_vector_array_t       state_vector_array_t;
+	typedef typename mrt_t::input_vector_t             input_vector_t;
+	typedef typename mrt_t::input_vector_array_t       input_vector_array_t;
 	typedef typename mrt_t::input_state_matrix_t       input_state_matrix_t;
 	typedef typename mrt_t::input_state_matrix_array_t input_state_matrix_array_t;
 
 	typedef typename mrt_t::system_observation_t system_observation_t;
+	typedef ControlledSystemBase<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> controlled_system_base_t;
+	typedef typename mrt_t::cost_desired_trajectories_t cost_desired_trajectories_t;
 
 	/**
 	 * Constructor.
@@ -69,13 +70,17 @@ public:
 	 * @param [in] mrtPtr
 	 * @param [in] mrtDesiredFrequency: MRT loop frequency in Hz. This should always set to a positive number.
 	 * @param [in] mpcDesiredFrequency: MPC loop frequency in Hz. If set to a positive number, MPC loop
-	 * will be simulated to run by this frequency. Note that this might not be the MPC's realtime frequency.
-	 * @param [in] robotName: Robot name.
+	 * will be simulated to run by this frequency. Note that this might not be the MPC's real-time frequency.
+	 * @param [in] systemPtr: Optional pointer to the system dynamics. If provided, the dummy will roll out the
+	 * received controller using these dynamics instead of just sending back a planned state.
+	 * @param [in] rolloutSettings settings to use when dummy rolls out the received controller
 	 */
 	MRT_ROS_Dummy_Loop(
 			const mrt_ptr_t& mrtPtr,
 			const scalar_t& mrtDesiredFrequency = 100,
-			const scalar_t& mpcDesiredFrequency = -1);
+			const scalar_t& mpcDesiredFrequency = -1,
+			controlled_system_base_t* systemPtr = nullptr,
+			Rollout_Settings rolloutSettings = Rollout_Settings());
 
 	/**
 	 * Destructor.
@@ -91,16 +96,14 @@ public:
 	void launchNodes(int argc, char* argv[]);
 
 	/**
-	 * The initialization of the observation
+	 * Runs the dummy MRT loop.
 	 *
 	 * @param [in] initObservation: The initial observation.
+	 * @param [in] initCostDesiredTrajectories: The initial desired cost trajectories.
 	 */
-	virtual void init(const system_observation_t& initObservation);
-
-	/**
-	 * Runs the dummy MRT  loop.
-	 */
-	void run();
+	void run(
+			const system_observation_t& initObservation,
+			const cost_desired_trajectories_t& initCostDesiredTrajectories);
 
 protected:
 	/**
@@ -122,9 +125,11 @@ protected:
 	 * Visualizes the current observation.
 	 *
 	 * @param [in] observation: The current observation.
+	 * @param [in] costDesiredTrajectories: The commanded target trajectory or point.
 	 */
-	virtual void publishVisualizer(const system_observation_t& observation) {}
-
+	virtual void publishVisualizer(
+			const system_observation_t& observation,
+			const cost_desired_trajectories_t& costDesiredTrajectories) {}
 
 protected:
 	/*
@@ -133,13 +138,11 @@ protected:
 	mrt_ptr_t mrtPtr_;
 	scalar_t mrtDesiredFrequency_;
 	scalar_t mpcDesiredFrequency_;
+	controlled_system_base_t* systemPtr_;
 
 	bool realtimeLoop_;
-	bool initialized_;
 
 	system_observation_t observation_;
-	system_observation_t initObservation_;
-
 };
 
 } // namespace ocs2

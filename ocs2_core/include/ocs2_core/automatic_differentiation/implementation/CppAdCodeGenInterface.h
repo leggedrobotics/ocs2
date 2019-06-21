@@ -188,11 +188,11 @@ void CppAdCodeGenInterface<DOMAIN_DIM, RANGE_DIM, SCALAR_T, VARIABLE_DIM>::creat
 	if (libraryFolder.empty()==false)
 		CppAD::cg::system::createFolder(libraryFolder);
 
-  if (libraryFolder.empty()==false) {
-    CppAD::cg::system::createFolder(libraryFolder + "/" + modelName + "_sources");
-  } else {
-    CppAD::cg::system::createFolder(modelName + "_sources");
-  }
+	if (libraryFolder.empty()==false) {
+		CppAD::cg::system::createFolder(libraryFolder + "/" + modelName);
+	} else {
+		CppAD::cg::system::createFolder(modelName);
+	}
 
     //***************************************************************************
     //                               the model
@@ -258,15 +258,15 @@ void CppAdCodeGenInterface<DOMAIN_DIM, RANGE_DIM, SCALAR_T, VARIABLE_DIM>::creat
     // save to files (not really required)
     CppAD::cg::SaveFilesModelLibraryProcessor<SCALAR_T> p2(libcgen);
     if (libraryFolder.empty()==false) {
-    	p2.saveSourcesTo(libraryFolder + "/" + modelName + "_sources/cppad_generated");
+    	p2.saveSourcesTo(libraryFolder + "/" + modelName + "/cppad_generated");
     } else {
-    	p2.saveSourcesTo(modelName + "_sources/cppad_generated");
+    	p2.saveSourcesTo(modelName + "/cppad_generated");
     }
     if (cgJIT==true) {
     	// compile source code
     	std::string libraryName;
     	if (libraryFolder.empty()==false)
-    		libraryName = libraryFolder + "/" + modelName + "_sources/cppad_generated/" + modelName + "_lib";
+    		libraryName = libraryFolder + "/" + modelName + "/cppad_generated/" + modelName + "_lib";
     	else
     		libraryName = modelName + "_lib";
     	CppAD::cg::DynamicModelLibraryProcessor<SCALAR_T> p(libcgen, libraryName);
@@ -275,15 +275,17 @@ void CppAdCodeGenInterface<DOMAIN_DIM, RANGE_DIM, SCALAR_T, VARIABLE_DIM>::creat
     				CppAD::cg::system::SystemInfo<>::DYNAMIC_LIB_EXTENSION << std::endl;
     	}
 
-    	// compile and load dynamic library
-    	CppAD::cg::GccCompiler<SCALAR_T> compiler_;
+    	// Add random string to tmp folder to avoid race condition on the temporary objects
+    	int randomFromClock = std::chrono::high_resolution_clock::now().time_since_epoch().count() % 1000;
+    	std::string tmpFolder = std::string("cppadcg_tmp") + std::to_string(randomFromClock) + std::to_string(getpid());
+    	compiler_.setTemporaryFolder(tmpFolder);
 
     	dynamicLib_.reset(p.createDynamicLibrary(compiler_));
     	// get model
     	model_.reset(dynamicLib_->model(modelName));
 
     } else {
-    	// TODO: .......................
+    	// TODO:
     }
 }
 
@@ -299,7 +301,7 @@ bool CppAdCodeGenInterface<DOMAIN_DIM, RANGE_DIM, SCALAR_T, VARIABLE_DIM>::loadM
 	// load dynamic library
 	std::string libraryName;
 	if (libraryFolder.empty()==false)
-		libraryName = libraryFolder + "/" + modelName + "_sources/cppad_generated/" + modelName + "_lib";
+		libraryName = libraryFolder + "/" + modelName + "/cppad_generated/" + modelName + "_lib";
 	else
 		libraryName = modelName + "_lib";
 

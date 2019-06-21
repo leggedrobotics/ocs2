@@ -43,6 +43,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <unsupported/Eigen/MatrixFunctions>
 
 #include <ocs2_core/Dimensions.h>
+#include <ocs2_core/control/ControllerBase.h>
 #include <ocs2_core/cost/CostDesiredTrajectories.h>
 #include <ocs2_core/logic/rules/LogicRulesBase.h>
 #include <ocs2_core/logic/rules/NullLogicRules.h>
@@ -70,32 +71,39 @@ public:
 
 	typedef Dimensions<STATE_DIM, INPUT_DIM> DIMENSIONS;
 
-	typedef typename DIMENSIONS::controller_t                        controller_t;
-	typedef typename DIMENSIONS::controller_array_t                  controller_array_t;
 	typedef typename DIMENSIONS::size_array_t                        size_array_t;
+	typedef typename DIMENSIONS::size_array2_t                       size_array2_t;
 	typedef typename DIMENSIONS::scalar_t                            scalar_t;
 	typedef typename DIMENSIONS::scalar_array_t                      scalar_array_t;
+	typedef typename DIMENSIONS::scalar_array2_t                     scalar_array2_t;
+	typedef typename DIMENSIONS::scalar_array3_t                     scalar_array3_t;
 	typedef typename DIMENSIONS::eigen_scalar_t                      eigen_scalar_t;
 	typedef typename DIMENSIONS::eigen_scalar_array_t                eigen_scalar_array_t;
 	typedef typename DIMENSIONS::eigen_scalar_array2_t               eigen_scalar_array2_t;
 	typedef typename DIMENSIONS::state_vector_t                      state_vector_t;
 	typedef typename DIMENSIONS::state_vector_array_t                state_vector_array_t;
 	typedef typename DIMENSIONS::state_vector_array2_t               state_vector_array2_t;
+	typedef typename DIMENSIONS::state_vector_array3_t               state_vector_array3_t;
 	typedef typename DIMENSIONS::input_vector_t                      input_vector_t;
 	typedef typename DIMENSIONS::input_vector_array_t                input_vector_array_t;
 	typedef typename DIMENSIONS::input_vector_array2_t               input_vector_array2_t;
+	typedef typename DIMENSIONS::input_vector_array3_t               input_vector_array3_t;
 	typedef typename DIMENSIONS::input_state_matrix_t                input_state_matrix_t;
 	typedef typename DIMENSIONS::input_state_matrix_array_t          input_state_matrix_array_t;
 	typedef typename DIMENSIONS::input_state_matrix_array2_t         input_state_matrix_array2_t;
+	typedef typename DIMENSIONS::input_state_matrix_array3_t         input_state_matrix_array3_t;
 	typedef typename DIMENSIONS::state_matrix_t                      state_matrix_t;
 	typedef typename DIMENSIONS::state_matrix_array_t                state_matrix_array_t;
 	typedef typename DIMENSIONS::state_matrix_array2_t               state_matrix_array2_t;
+	typedef typename DIMENSIONS::state_matrix_array3_t               state_matrix_array3_t;
 	typedef typename DIMENSIONS::input_matrix_t                      input_matrix_t;
 	typedef typename DIMENSIONS::input_matrix_array_t                input_matrix_array_t;
 	typedef typename DIMENSIONS::input_matrix_array2_t               input_matrix_array2_t;
+	typedef typename DIMENSIONS::input_matrix_array3_t               input_matrix_array3_t;
 	typedef typename DIMENSIONS::state_input_matrix_t                state_input_matrix_t;
 	typedef typename DIMENSIONS::state_input_matrix_array_t          state_input_matrix_array_t;
 	typedef typename DIMENSIONS::state_input_matrix_array2_t         state_input_matrix_array2_t;
+	typedef typename DIMENSIONS::state_input_matrix_array3_t         state_input_matrix_array3_t;
 	typedef typename DIMENSIONS::constraint1_vector_t                constraint1_vector_t;
 	typedef typename DIMENSIONS::constraint1_vector_array_t          constraint1_vector_array_t;
 	typedef typename DIMENSIONS::constraint1_vector_array2_t         constraint1_vector_array2_t;
@@ -105,9 +113,9 @@ public:
 	typedef typename DIMENSIONS::constraint1_input_matrix_t          constraint1_input_matrix_t;
 	typedef typename DIMENSIONS::constraint1_input_matrix_array_t    constraint1_input_matrix_array_t;
 	typedef typename DIMENSIONS::constraint1_input_matrix_array2_t   constraint1_input_matrix_array2_t;
-	typedef typename DIMENSIONS::control_constraint1_matrix_t        control_constraint1_matrix_t;
-	typedef typename DIMENSIONS::control_constraint1_matrix_array_t  control_constraint1_matrix_array_t;
-	typedef typename DIMENSIONS::control_constraint1_matrix_array2_t control_constraint1_matrix_array2_t;
+	typedef typename DIMENSIONS::input_constraint1_matrix_t          input_constraint1_matrix_t;
+	typedef typename DIMENSIONS::input_constraint1_matrix_array_t    input_constraint1_matrix_array_t;
+	typedef typename DIMENSIONS::input_constraint1_matrix_array2_t   input_constraint1_matrix_array2_t;
 	typedef typename DIMENSIONS::constraint2_vector_t                constraint2_vector_t;
 	typedef typename DIMENSIONS::constraint2_vector_array_t          constraint2_vector_array_t;
 	typedef typename DIMENSIONS::constraint2_vector_array2_t         constraint2_vector_array2_t;
@@ -121,6 +129,9 @@ public:
 
 	typedef LogicRulesMachine<LOGIC_RULES_T>     logic_rules_machine_t;
 	typedef typename logic_rules_machine_t::Ptr	 logic_rules_machine_ptr_t;
+
+	typedef ControllerBase<STATE_DIM, INPUT_DIM> controller_t;
+	typedef std::vector<controller_t*>       controller_ptr_array_t;
 
 	/**
 	 * Default constructor.
@@ -144,7 +155,6 @@ public:
 	 * @param [in] initState: The initial state.
 	 * @param [in] finalTime: The final time.
 	 * @param [in] partitioningTimes: The partitioning times between subsystems.
-	 * @param [in] costDesiredTrajectories: The cost desired trajectories.
 	 */
 	virtual void run(
 			const scalar_t& initTime,
@@ -160,15 +170,18 @@ public:
 	 * @param [in] initState: The initial state.
 	 * @param [in] finalTime: The final time.
 	 * @param [in] partitioningTimes: The time partitioning.
-	 * @param [in] controllersStock: Array of the initial control policies.
-	 * @param [in] costDesiredTrajectories: The cost desired trajectories.
+	 * @param [in] controllersPtrStock: controllersPtrStock: Array of pointers to the initial control policies. If you want to use the control policy
+	 * which was designed by the previous call of the "run" routine, you should pass an empty array.
+	 * In the this case, two scenarios are possible: either the internal controller is already set (such as the MPC case
+	 * where the warm starting option is set true) or the internal controller is empty in which instead of performing
+	 * a rollout the operating trajectories will be used.
 	 */
 	virtual void run(
 			const scalar_t& initTime,
 			const state_vector_t& initState,
 			const scalar_t& finalTime,
 			const scalar_array_t& partitioningTimes,
-			const controller_array_t& controllersStock) = 0;
+			const controller_ptr_array_t& controllersPtrStock) = 0;
 
 	/**
 	 * MPC_BASE activates this if the final time of the MPC will increase by the length of a time partition instead
@@ -338,26 +351,18 @@ public:
 	virtual bool costDesiredTrajectoriesUpdated() const = 0;
 
 	/**
-	 * Returns the optimal array of the control policies.
+	 * Returns an array of pointer to the optimal control policies.
 	 *
-	 * @return controllersStock: The optimal array of the control policies.
+	 * @return An array of pointers to the optimized control policies.
 	 */
-	virtual const controller_array_t& getController() const = 0;
+	virtual const controller_ptr_array_t& getController() const = 0;
 
 	/**
-	 * Gets a pointer to the optimal array of the control policies.
+	 * Gets an array of pointer to the optimal control policies.
 	 *
-	 * @param [out] controllersStockPtr: A pointer to the optimal array of the control policies
+	 * @param [out] controllersStockPtr: An array of pointers to the optimized control policies.
 	 */
-	virtual void getControllerPtr(const controller_array_t*& controllersStockPtr) const = 0;
-
-	/**
-	 * Swaps the output array of the control policies with the nominal one.
-	 * Care should be take since this method modifies the internal variable.
-	 *
-	 * @param [out] controllersStock: A reference to the optimal array of the control policies
-	 */
-	virtual void swapController(controller_array_t& controllersStock) = 0;
+	virtual void getControllerPtr(const controller_ptr_array_t*& controllersPtrStock) const = 0;
 
 	/**
 	 * Returns the nominal time trajectories.
@@ -440,6 +445,16 @@ public:
 	 * @param [in] input text.
 	 */
 	void printString(const std::string& text);
+
+	/**
+	 * Makes the matrix PSD.
+	 *
+	 * @tparam Derived type.
+	 * @param [out] squareMatrix: The matrix to become PSD.
+	 * @return boolean:
+	 */
+	template <typename Derived>
+	static bool makePSD(Eigen::MatrixBase<Derived>& squareMatrix);
 
 
 private:

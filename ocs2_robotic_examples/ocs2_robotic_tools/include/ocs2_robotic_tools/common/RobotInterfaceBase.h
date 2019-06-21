@@ -94,13 +94,6 @@ public:
 	void getInitialState(state_vector_t& initialState) const;
 
 	/**
-	 * Gets SLQ settings.
-	 *
-	 * @return SLQ settings
-	 */
-	SLQ_Settings& slqSettings();
-
-	/**
 	 * Gets MPC settings.
 	 *
 	 * @return MPC settings
@@ -167,7 +160,6 @@ protected:
 	/**************
 	 * Variables
 	 **************/
-	SLQ_Settings slqSettings_;
 	MPC_Settings mpcSettings_;
 
 	state_vector_t initialState_;

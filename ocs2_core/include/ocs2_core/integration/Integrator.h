@@ -44,6 +44,37 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 namespace ocs2 {
 
 /**
+ * @brief The IntegratorType enum
+ * Enum used in selecting a specific integrator.
+ */
+enum class IntegratorType {
+	EULER,
+	MODIFIED_MIDPOINT,
+	RK4,
+	RK5_VARIABLE,
+	ODE45,
+	ADAMS_BASHFORTH,
+	BULIRSCH_STOER,
+	ADAMS_BASHFORTH_MOULTON
+};
+
+std::string to_string(IntegratorType integratorType) {
+
+	switch(integratorType)
+	{
+	case IntegratorType::EULER: return std::string("EULER");
+	case IntegratorType::MODIFIED_MIDPOINT: return std::string("MODIFIED_MIDPOINT");
+	case IntegratorType::RK4: return std::string("RK4");
+	case IntegratorType::RK5_VARIABLE: return std::string("RK5_VARIABLE");
+	case IntegratorType::ODE45: return std::string("ODE45");
+	case IntegratorType::ADAMS_BASHFORTH: return std::string("ADAMS_BASHFORTH");
+	case IntegratorType::BULIRSCH_STOER: return std::string("BULIRSCH_STOER");
+	case IntegratorType::ADAMS_BASHFORTH_MOULTON: return std::string("ADAMS_BASHFORTH_MOULTON");
+	default: return std::to_string((int)integratorType);
+	}
+}
+
+/**
  * Integrator class for autonomous systems.
  *
  * @tparam STATE_DIM: Dimension of the state space.
@@ -126,7 +157,7 @@ public:
 			scalar_t dtInitial = 0.01,
 			scalar_t AbsTol = 1e-6,
 			scalar_t RelTol = 1e-3,
-			size_t maxNumSteps = std::numeric_limits<size_t>::max(),
+			int maxNumSteps = std::numeric_limits<int>::max(),
 			bool concatOutput = false) final;
 
 	/**
@@ -157,7 +188,7 @@ public:
 			scalar_t dtInitial = 0.01,
 			scalar_t AbsTol = 1e-9,
 			scalar_t RelTol = 1e-6,
-			size_t maxNumSteps = std::numeric_limits<size_t>::max(),
+			int maxNumSteps = std::numeric_limits<int>::max(),
 			bool concatOutput = false) final;
 
 private:
@@ -191,7 +222,6 @@ private:
 	 * @param [in] dtInitial: Initial time step.
 	 * @param [in] AbsTol: The absolute tolerance error for ode solver.
 	 * @param [in] RelTol: The relative tolerance error for ode solver.
-	 * @param [in] maxNumSteps: The maximum number of integration points per a second for ode solver.
 	 * @return
 	 */
 	template <typename S>
@@ -216,7 +246,6 @@ private:
 	 * @param [in] dtInitial: Initial time step.
 	 * @param [in] AbsTol: The absolute tolerance error for ode solver.
 	 * @param [in] RelTol: The relative tolerance error for ode solver.
-	 * @param [in] maxNumSteps: The maximum number of integration points per a second for ode solver.
 	 * @return
 	 */
 	template <typename S>

@@ -49,9 +49,7 @@ int main(int argc, char **argv)
 	typedef mrt_t::scalar_t scalar_t;
 	typedef mrt_t::system_observation_t system_observation_t;
 
-	mrt_base_ptr_t mrtPtr(new mrt_t(
-			!ballbotInterface.mpcSettings().useFeedbackPolicy_,
-			"ballbot"));
+	mrt_base_ptr_t mrtPtr(new mrt_t("ballbot"));
 
 	// Dummy ballbot
 	MRT_ROS_Dummy_Ballbot dummyBallbot(
@@ -61,13 +59,21 @@ int main(int argc, char **argv)
 
 	dummyBallbot.launchNodes(argc, argv);
 
-	// Initialize dummy
+	// initial state
 	MRT_ROS_Dummy_Ballbot::system_observation_t initObservation;
 	ballbotInterface.getInitialState(initObservation.state());
-	dummyBallbot.init(initObservation);
+
+	// initial command
+	MRT_ROS_Dummy_Ballbot::cost_desired_trajectories_t initCostDesiredTrajectories;
+	initCostDesiredTrajectories.desiredTimeTrajectory().resize(1);
+	initCostDesiredTrajectories.desiredStateTrajectory().resize(1);
+	initCostDesiredTrajectories.desiredInputTrajectory().resize(1);
+	initCostDesiredTrajectories.desiredStateTrajectory().front().resize(6);
+	initCostDesiredTrajectories.desiredStateTrajectory().front().head<3>().setZero(); /*targetPoseDisplacement*/
+	initCostDesiredTrajectories.desiredStateTrajectory().front().tail<3>().setZero(); /*targetVelocity*/
 
 	// run dummy
-	dummyBallbot.run();
+	dummyBallbot.run(initObservation, initCostDesiredTrajectories);
 
 	// Successful exit
 	return 0;

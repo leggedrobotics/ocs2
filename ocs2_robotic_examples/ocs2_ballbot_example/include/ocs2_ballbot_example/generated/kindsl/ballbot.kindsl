@@ -1,15 +1,15 @@
 Robot Ballbot
 {
 /*
- * A The kinematic chain referring to Ballbot 
- * This model has been checked against the mathematica model.
+ * A The kinematic chain referring to Rezero without the arm
+ * This model has been checked against the mathematica model, and the two models match
 */
 
 RobotBase base0 {
     inertia_properties {
         mass = 0.001
         CoM = (0.0, 0.0, 0.0)
-        Iy=0.0001  Ix=0.0001  Ixy=1.0 Iz=0.0  Ixz=0.0 Iyz=0.0
+        Iy=0.0001  Ix=0.0001  Ixy=0.0 Iz=0.0  Ixz=0.0 Iyz=0.0
     }
     children {
         dummy_ball1 via jball_x
@@ -62,9 +62,9 @@ link dummy_base2 {
 link base {
     id = 5
     inertia_properties {
-        mass = 18.0
-        CoM = (-0.2619, 0.0, 0.0)
-        Ix=2.4319  Iy=2.4390  Iz=2.4390  Ixy=0.0  Ixz=0.0  Iyz=0.0
+        mass = 16.94
+        CoM = (-0.2376, 0.0053, 0.002)
+        Ix=1.1241  Iy=2.7611  Iz=2.7574  Ixy=0.0  Ixz=0.0  Iyz=0.0
     }
     children {}
 }

@@ -40,6 +40,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_slq/SLQ_Settings.h>
 #include <ocs2_mpc/MPC_Settings.h>
 #include <ocs2_core/misc/loadEigenMatrix.h>
+#include <ocs2_core/logic/rules/LogicRulesBase.h>
 
 
 namespace ocs2{
@@ -106,6 +107,19 @@ public:
 	 * @return MPC settings
 	 */
 	MPC_Settings& mpcSettings();
+
+	/**
+	 * @brief getLogicRulesPtr
+	 * @return Pointer to the internal logic rules
+	 */
+	virtual LogicRulesBase* getLogicRulesPtr() { return nullptr; }
+
+	/**
+	 * @brief getMPCPtr
+	 * @todo Change return type to MPCBase* once MPCBase is not templated on logicRules anymore
+	 * @return pointer to internal mpc instance
+	 */
+	virtual void* getMPCPtr() = 0;
 
 	/**
 	 * Setups all optimizers which you require.

@@ -86,7 +86,7 @@ class DoubleIntegratorInterface : public RobotInterfaceBase<double_integrator_di
    *
    * @return Pointer to the internal MPC
    */
-  mpc_t::Ptr& getMPCPtr();
+  void* getMPCPtr() override;
 
   const dim_t::state_vector_t& getXFinal() { return xFinal_; }
 

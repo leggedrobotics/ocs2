@@ -30,7 +30,7 @@ OCS2QuadrupedInterface<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::OCS2QuadrupedInt
 			modelSettings_.liftOffVelocity_,
 			modelSettings_.touchDownVelocity_)	);
 
-	logicRulesPtr_ = logic_rules_ptr_t( new logic_rules_t(feetZPlannerPtr) );
+	logicRulesPtr_ = logic_rules_ptr_t( new logic_rules_t(feetZPlannerPtr, modelSettings_.phaseTransitionStanceTime_) );
 
 	logicRulesPtr_->setMotionConstraints(initSwitchingModes_, initEventTimes_, gapIndicatorPtrs_);
 }
@@ -135,7 +135,6 @@ void OCS2QuadrupedInterface<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::loadSetting
 
 	// load the mode sequence template
 	std::cerr << std::endl;
-	ocs2::ModeSequenceTemplate<double> modeSequenceTemplate;
 	loadModeSequenceTemplate(pathToConfigFile, "defaultModeSequenceTemplate", modeSequenceTemplate_, true);
 	std::cerr << std::endl;
 

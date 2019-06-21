@@ -176,13 +176,35 @@ public:
 	 * @param [in] input: The current input .
 	 */
 	void approximateUnconstrainedLQProblem(
-			const scalar_t& time,
-			const state_vector_t& state,
-			const input_vector_t& input) {
+			const scalar_t &time,
+			const state_vector_t &state,
+			const input_vector_t &input,
+			state_matrix_t &Am,
+			state_input_matrix_t &Bm,
+			size_t &ncEqStateInput,
+			constraint1_vector_t &Ev,
+			constraint1_state_matrix_t &Cm,
+			constraint1_input_matrix_t &Dm,
+			size_t &ncEqStateOnly,
+			constraint2_vector_t &Hv,
+			constraint2_state_matrix_t &Fm,
+			size_t &ncIneq,
+			scalar_array_t &h,
+			state_vector_array_t &dhdx,
+            input_vector_array_t &dhdu,
+            state_matrix_array_t &ddhdxdx,
+			input_matrix_array_t &ddhdudu,
+			input_state_matrix_array_t &ddhdudx,
+			eigen_scalar_t &q,
+			state_vector_t &Qv,
+			state_matrix_t &Qm,
+			input_vector_t &Rv,
+			input_matrix_t &Rm,
+			input_state_matrix_t &Pm) {
 
-		approximateDynamics(time, state, input);
-		approximateConstraints(time, state, input);
-		approximateIntermediateCost(time, state, input);
+		approximateDynamics(time, state, input, Am, Bm);
+		approximateConstraints(time, state, input, ncEqStateInput, Ev, Cm, Dm, ncEqStateOnly, Hv, Fm, ncIneq, h, dhdx, dhdu, ddhdxdx, ddhdudu, ddhdudx);
+		approximateIntermediateCost(time, state, input, q, Qv, Qm, Rv, Rm, Pm);
 	}
 
 	/**
@@ -229,28 +251,29 @@ public:
 	void approximateDynamics(
 			const scalar_t& time,
 			const state_vector_t& state,
-			const input_vector_t& input) {
-
+			const input_vector_t& input,
+			state_matrix_t& Am,
+			state_input_matrix_t& Bm) {
 
 		// set data
 		systemDerivativesPtr_->setCurrentStateAndControl(time, state, input);
 
 		// get results
-		systemDerivativesPtr_->getFlowMapDerivativeState(Am_);
-		systemDerivativesPtr_->getFlowMapDerivativeInput(Bm_);
+		systemDerivativesPtr_->getFlowMapDerivativeState(Am);
+		systemDerivativesPtr_->getFlowMapDerivativeInput(Bm);
 
 		// checking the numerical stability
 		if (checkNumericalCharacteristics_==true){
 			try {
-				if (!Am_.allFinite())
+				if (!Am.allFinite())
 					throw std::runtime_error("Flow map state derivativeState is not finite.");
-				if (!Bm_.allFinite())
+				if (!Bm.allFinite())
 					throw std::runtime_error("Flow map input derivativeState is not finite.");
 
 			} catch(const std::exception& error)  {
 				std::cerr << "what(): " << error.what() << " at time " << time << " [sec]." << std::endl;
-				std::cerr << "Am: \n" << Am_ << std::endl;
-				std::cerr << "Bm: \n" << Bm_ << std::endl;
+				std::cerr << "Am: \n" << Am << std::endl;
+				std::cerr << "Bm: \n" << Bm << std::endl;
 				exit(0);
 			}
 		}
@@ -267,71 +290,85 @@ public:
 	void approximateConstraints(
 			const scalar_t& time,
 			const state_vector_t& state,
-			const input_vector_t& input) {
+			const input_vector_t& input,
+			size_t &ncEqStateInput,
+			constraint1_vector_t &Ev,
+			constraint1_state_matrix_t &Cm,
+			constraint1_input_matrix_t &Dm,
+			size_t &ncEqStateOnly,
+			constraint2_vector_t &Hv,
+			constraint2_state_matrix_t &Fm,
+			size_t &ncIneq,
+			scalar_array_t &h,
+			state_vector_array_t &dhdx,
+            input_vector_array_t &dhdu,
+            state_matrix_array_t &ddhdxdx,
+			input_matrix_array_t &ddhdudu,
+			input_state_matrix_array_t &ddhdudx) {
 
 		// set data
 		systemConstraintsPtr_->setCurrentStateAndControl(time, state, input);
 
 		// constraint type 1
-		ncEqStateInput_ = systemConstraintsPtr_->numStateInputConstraint(time);
-		if (ncEqStateInput_ > INPUT_DIM)
+		ncEqStateInput = systemConstraintsPtr_->numStateInputConstraint(time);
+		if (ncEqStateInput > INPUT_DIM)
 			throw std::runtime_error("Number of active type-1 constraints should be less-equal to the number of input dimension.");
 		// if constraint type 1 is active
-		if (ncEqStateInput_ > 0) {
-			systemConstraintsPtr_->getConstraint1(Ev_);
-			systemConstraintsPtr_->getConstraint1DerivativesState(Cm_);
-			systemConstraintsPtr_->getConstraint1DerivativesControl(Dm_);
+		if (ncEqStateInput > 0) {
+			systemConstraintsPtr_->getConstraint1(Ev);
+			systemConstraintsPtr_->getConstraint1DerivativesState(Cm);
+			systemConstraintsPtr_->getConstraint1DerivativesControl(Dm);
 		}
 
 		// constraint type 2
-		ncEqStateOnly_ = systemConstraintsPtr_->numStateOnlyConstraint(time);
-		if (ncEqStateOnly_ > INPUT_DIM)
+		ncEqStateOnly = systemConstraintsPtr_->numStateOnlyConstraint(time);
+		if (ncEqStateOnly > INPUT_DIM)
 			throw std::runtime_error("Number of active type-2 constraints should be less-equal to the number of input dimension.");
 		// if constraint type 2 is active
-		if (ncEqStateOnly_ > 0) {
-			systemConstraintsPtr_->getConstraint2(Hv_);
-			systemConstraintsPtr_->getConstraint2DerivativesState(Fm_);
+		if (ncEqStateOnly > 0) {
+			systemConstraintsPtr_->getConstraint2(Hv);
+			systemConstraintsPtr_->getConstraint2DerivativesState(Fm);
 		}
 
 		// Inequality constraint
-		ncIneq_ = systemConstraintsPtr_->numInequalityConstraint(time);
-		if (ncIneq_ > 0){
-			systemConstraintsPtr_->getInequalityConstraint(h_);
-			systemConstraintsPtr_->getInequalityConstraintDerivativesState(dhdx_);
-			systemConstraintsPtr_->getInequalityConstraintDerivativesInput(dhdu_);
-			systemConstraintsPtr_->getInequalityConstraintSecondDerivativesState(ddhdxdx_);
-			systemConstraintsPtr_->getInequalityConstraintSecondDerivativesInput(ddhdudu_);
-			systemConstraintsPtr_->getInequalityConstraintDerivativesInputState(ddhdudx_);
+		ncIneq = systemConstraintsPtr_->numInequalityConstraint(time);
+		if (ncIneq > 0){
+			systemConstraintsPtr_->getInequalityConstraint(h);
+			systemConstraintsPtr_->getInequalityConstraintDerivativesState(dhdx);
+			systemConstraintsPtr_->getInequalityConstraintDerivativesInput(dhdu);
+			systemConstraintsPtr_->getInequalityConstraintSecondDerivativesState(ddhdxdx);
+			systemConstraintsPtr_->getInequalityConstraintSecondDerivativesInput(ddhdudu);
+			systemConstraintsPtr_->getInequalityConstraintDerivativesInputState(ddhdudx);
 		}
 
 		if (checkNumericalCharacteristics_==true){
 			try {
-				if (ncEqStateInput_ > 0) {
-					if (!Ev_.head(ncEqStateInput_).allFinite())
+				if (ncEqStateInput > 0) {
+					if (!Ev.head(ncEqStateInput).allFinite())
 						throw std::runtime_error("Input-state constraint is not finite.");
-					if (!Cm_.topRows(ncEqStateInput_).allFinite())
+					if (!Cm.topRows(ncEqStateInput).allFinite())
 						throw std::runtime_error("Input-state constraint derivative w.r.t. state is not finite.");
-					if (!Dm_.topRows(ncEqStateInput_).allFinite())
+					if (!Dm.topRows(ncEqStateInput).allFinite())
 						throw std::runtime_error("Input-state constraint derivative w.r.t. input is not finite.");
-					size_t DmRank = Dm_.topRows(ncEqStateInput_).colPivHouseholderQr().rank();
-					if (DmRank != ncEqStateInput_)
+					size_t DmRank = Dm.topRows(ncEqStateInput).colPivHouseholderQr().rank();
+					if (DmRank != ncEqStateInput)
 						throw std::runtime_error("Input-state constraint derivative w.r.t. input is not full-row rank. It's rank "
-								"is " + std::to_string(DmRank) + " while the expected rank is " + std::to_string(ncEqStateInput_) + ".");
+								"is " + std::to_string(DmRank) + " while the expected rank is " + std::to_string(ncEqStateInput) + ".");
 				}
-				if (ncEqStateOnly_ > 0) {
-					if (!Hv_.head(ncEqStateOnly_).allFinite())
+				if (ncEqStateOnly > 0) {
+					if (!Hv.head(ncEqStateOnly).allFinite())
 						throw std::runtime_error("State-only constraint is not finite.");
-					if (!Fm_.topRows(ncEqStateOnly_).allFinite())
+					if (!Fm.topRows(ncEqStateOnly).allFinite())
 						throw std::runtime_error("State-only constraint derivative w.r.t. state is not finite.");
 				}
 
 			} catch(const std::exception& error)  {
 				std::cerr << "what(): " << error.what() << " at time " << time << " [sec]." << std::endl;
-				std::cerr << "Ev: " << Ev_.head(ncEqStateInput_).transpose() << std::endl;
-				std::cerr << "Cm: \n" << Cm_.topRows(ncEqStateInput_) << std::endl;
-				std::cerr << "Dm: \n" << Dm_.topRows(ncEqStateInput_) << std::endl;
-				std::cerr << "Hv: " << Hv_.head(ncEqStateOnly_).transpose() << std::endl;
-				std::cerr << "Fm: \n" << Fm_.topRows(ncEqStateOnly_) << std::endl;
+				std::cerr << "Ev: " << Ev.head(ncEqStateInput).transpose() << std::endl;
+				std::cerr << "Cm: \n" << Cm.topRows(ncEqStateInput) << std::endl;
+				std::cerr << "Dm: \n" << Dm.topRows(ncEqStateInput) << std::endl;
+				std::cerr << "Hv: " << Hv.head(ncEqStateOnly).transpose() << std::endl;
+				std::cerr << "Fm: \n" << Fm.topRows(ncEqStateOnly) << std::endl;
 				exit(0);
 			}
 		}
@@ -348,91 +385,70 @@ public:
 	void approximateIntermediateCost(
 			const scalar_t& time,
 			const state_vector_t& state,
-			const input_vector_t& input) {
+			const input_vector_t& input,
+			eigen_scalar_t &q,
+			state_vector_t &Qv,
+			state_matrix_t &Qm,
+			input_vector_t &Rv,
+			input_matrix_t &Rm,
+			input_state_matrix_t &Pm) {
 
 
 		// set data
 		costFunctionPtr_->setCurrentStateAndControl(time, state, input);
 
 		// get results
-		costFunctionPtr_->getIntermediateCost(q_(0));
-		costFunctionPtr_->getIntermediateCostDerivativeState(Qv_);
-		costFunctionPtr_->getIntermediateCostSecondDerivativeState(Qm_);
-		costFunctionPtr_->getIntermediateCostDerivativeInput(Rv_);
-		costFunctionPtr_->getIntermediateCostSecondDerivativeInput(Rm_);
-		costFunctionPtr_->getIntermediateCostDerivativeInputState(Pm_);
+		costFunctionPtr_->getIntermediateCost(q(0));
+		costFunctionPtr_->getIntermediateCostDerivativeState(Qv);
+		costFunctionPtr_->getIntermediateCostSecondDerivativeState(Qm);
+		costFunctionPtr_->getIntermediateCostDerivativeInput(Rv);
+		costFunctionPtr_->getIntermediateCostSecondDerivativeInput(Rm);
+		costFunctionPtr_->getIntermediateCostDerivativeInputState(Pm);
 
 		// checking the numerical stability
 		if (checkNumericalCharacteristics_==true){
 			try {
-				if (!q_.allFinite())
+				if (!q.allFinite())
 					throw std::runtime_error("Intermediate cost is is not finite.");
-				if (!Qv_.allFinite())
+				if (!Qv.allFinite())
 					throw std::runtime_error("Intermediate cost first derivative w.r.t. state is is not finite.");
-				if (!Qm_.allFinite())
+				if (!Qm.allFinite())
 					throw std::runtime_error("Intermediate cost second derivative w.r.t. state is is not finite.");
-				if (!Qm_.isApprox(Qm_.transpose()))
+				if (!Qm.isApprox(Qm.transpose()))
 					throw std::runtime_error("Intermediate cost second derivative w.r.t. state is is not self-adjoint.");
-				if (Qm_.eigenvalues().real().minCoeff() < -Eigen::NumTraits<scalar_t>::epsilon())
+				if (Qm.eigenvalues().real().minCoeff() < -Eigen::NumTraits<scalar_t>::epsilon())
 					throw std::runtime_error("Q matrix is not positive semi-definite. It's smallest eigenvalue is " +
-							std::to_string(Qm_.eigenvalues().real().minCoeff()) + ".");
-				if (!Rv_.allFinite())
+							std::to_string(Qm.eigenvalues().real().minCoeff()) + ".");
+				if (!Rv.allFinite())
 					throw std::runtime_error("Intermediate cost first derivative w.r.t. input is is not finite.");
-				if (!Rm_.allFinite())
+				if (!Rm.allFinite())
 					throw std::runtime_error("Intermediate cost second derivative w.r.t. input is is not finite.");
-				if (!Rm_.isApprox(Rm_.transpose()))
+				if (!Rm.isApprox(Rm.transpose()))
 					throw std::runtime_error("Intermediate cost second derivative w.r.t. input is is not self-adjoint.");
-				if (!Pm_.allFinite())
+				if (!Pm.allFinite())
 					throw std::runtime_error("Intermediate cost second derivative w.r.t. input-state is is not finite.");
-				if (Rm_.ldlt().rcond() < Eigen::NumTraits<scalar_t>::epsilon())
+				if (Rm.ldlt().rcond() < Eigen::NumTraits<scalar_t>::epsilon())
 					throw std::runtime_error("R matrix is not invertible. It's reciprocal condition number is " +
-							std::to_string(Rm_.ldlt().rcond()) + ".");
-				if (Rm_.eigenvalues().real().minCoeff() < Eigen::NumTraits<scalar_t>::epsilon())
+							std::to_string(Rm.ldlt().rcond()) + ".");
+				if (Rm.eigenvalues().real().minCoeff() < Eigen::NumTraits<scalar_t>::epsilon())
 					throw std::runtime_error("R matrix is not positive definite. It's smallest eigenvalue is " +
-							std::to_string(Rm_.eigenvalues().real().minCoeff()) + ".");
+							std::to_string(Rm.eigenvalues().real().minCoeff()) + ".");
 			} catch(const std::exception& error)  {
 				std::cerr << "what(): " << error.what() << " at time " << time << " [sec]." << std::endl;
 				std::cerr << "x: " << state.transpose() << std::endl;
 				std::cerr << "u: " << input.transpose() << std::endl;
-				std::cerr << "q: " << q_ << std::endl;
-				std::cerr << "Qv: " << Qv_.transpose() << std::endl;
-				std::cerr << "Qm: \n" << Qm_ << std::endl;
-				std::cerr << "Rv: " << Rv_.transpose() << std::endl;
-				std::cerr << "Rm: \n" << Rm_ << std::endl;
-				std::cerr << "Pm: \n" << Pm_ << std::endl;
+				std::cerr << "q: " << q << std::endl;
+				std::cerr << "Qv: " << Qv.transpose() << std::endl;
+				std::cerr << "Qm: \n" << Qm << std::endl;
+				std::cerr << "Rv: " << Rv.transpose() << std::endl;
+				std::cerr << "Rm: \n" << Rm << std::endl;
+				std::cerr << "Pm: \n" << Pm << std::endl;
 				exit(0);
 			}
 		}
 	}
 
 public:
-	state_matrix_t       Am_;
-	state_input_matrix_t Bm_;
-
-	size_t                     ncEqStateInput_; // Number of the state-input equality constraints
-	constraint1_vector_t       Ev_;
-	constraint1_state_matrix_t Cm_;
-	constraint1_input_matrix_t Dm_;
-
-	size_t                     ncEqStateOnly_;  // Number of the state-only equality constraints
-	constraint2_vector_t       Hv_;
-	constraint2_state_matrix_t Fm_;
-
-	size_t                     ncIneq_;         // Number of inequality constraints
-	scalar_array_t       	   h_;
-	state_vector_array_t       dhdx_;
-	state_matrix_array_t       ddhdxdx_;
-	input_vector_array_t       dhdu_;
-	input_matrix_array_t       ddhdudu_;
-	input_state_matrix_array_t ddhdudx_;
-
-	eigen_scalar_t       q_;
-	state_vector_t       Qv_;
-	state_matrix_t       Qm_;
-	input_vector_t       Rv_;
-	input_matrix_t       Rm_;
-	input_state_matrix_t Pm_;
-
 	size_t                     ncFinalEqStateOnly_;
 	constraint2_vector_t       HvFinal_;
 	constraint2_state_matrix_t FmFinal_;

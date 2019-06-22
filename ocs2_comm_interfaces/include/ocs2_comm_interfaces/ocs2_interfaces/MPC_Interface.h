@@ -2,8 +2,7 @@
 // Created by johannes on 01.04.19.
 //
 
-#ifndef OCS2_MPC_INTERFACE_H
-#define OCS2_MPC_INTERFACE_H
+#pragma once
 
 #include <Eigen/Dense>
 #include <array>
@@ -65,7 +64,6 @@ class MPC_Interface {
 
   typedef LinearInterpolation<state_vector_t, Eigen::aligned_allocator<state_vector_t>> state_linear_interpolation_t;
   typedef LinearInterpolation<input_vector_t, Eigen::aligned_allocator<input_vector_t>> input_linear_interpolation_t;
-  typedef LinearInterpolation<input_state_matrix_t, Eigen::aligned_allocator<input_state_matrix_t>> gain_linear_interpolation_t;
   typedef HybridLogicRulesMachine<LOGIC_RULES_T> logic_machine_t;
 
   /**
@@ -120,8 +118,7 @@ class MPC_Interface {
    * Call this before calling the evaluation methods.
    * @return true if there is a policy to evaluated
    */
-  bool policyReceived() const { return !initialCall_; };
-  ;
+  bool policyReceived() const { return !initialCall_; }
 
   /**
    * Gets a reference to CostDesiredTrajectories for which the current policy is optimized for.
@@ -131,33 +128,20 @@ class MPC_Interface {
   const cost_desired_trajectories_t& mpcCostDesiredTrajectories() const;
 
   /**
-   * Evaluates the latest feedforward policy at the given time. The SLQ-MPC feedforward
-   * policy includes two components. The optimized state and input trajectories. Moreover
+   * Evaluates the latest policy at the given time and state. Moreover
    * it finds the active subsystem at the given time.
    *
    * @param [in] time: The inquiry time.
-   * @param [out] mpcState: The feedforward policy's optimized state.
-   * @param [out] mpcInput: The feedforward policy's optimized input.
-   * @param [out] subsystem: The active subsystem.
+   * @param [in] currentState: The state at which the policy is to be evaluated
+   * @param [out] mpcState: The policy's optimized (nominal) state (dependent on time).
+   * @param [out] mpcInput: The policy's optimized input (dependent on time and currentState).
+   * @param [out] subsystem: The active subsystem (dependent on time).
    */
-  void evaluateFeedforwardPolicy(const scalar_t& time, state_vector_t& mpcState, input_vector_t& mpcInput, size_t& subsystem);
-
-  /**
-   * Evaluates the latest feedback policy at the given time. The SLQ-MPC feedback
-   * policy is defined as an affine time-state dependent function. Moreover it finds
-   * the active subsystem at the given time.
-   *
-   * @param [in] time: The inquiry time.
-   * @param [out] mpcUff: The feedback policy's optimized uff.
-   * @param [out] mpcGain: The feedback policy's optimized gain matrix.
-   * @param [out] subsystem: The active subsystem.
-   */
-  void evaluateFeedbackPolicy(const scalar_t& time, input_vector_t& mpcUff, input_state_matrix_t& mpcGain, size_t& subsystem);
+  void evaluatePolicy(const scalar_t& time, const state_vector_t& currentState,
+                      state_vector_t& mpcState, input_vector_t& mpcInput, size_t& subsystem);
 
   const scalar_array_t &getMpcTimeTrajectory();
-
   const state_vector_array_t &getMpcStateTrajectory();
-
   const input_vector_array_t &getMpcInputTrajectory();
 
  protected:
@@ -195,26 +179,23 @@ class MPC_Interface {
   scalar_array_t mpcTimeTrajectoryBuffer_;
   state_vector_array_t mpcStateTrajectoryBuffer_;
   input_vector_array_t mpcInputTrajectoryBuffer_;
-//  controller_t mpcControllerBuffer_;
+  std::vector<std::unique_ptr<controller_t>> mpcControllersBuffer_;
   cost_desired_trajectories_t mpcSolverCostDesiredTrajectoriesBuffer_;
   std::atomic<bool> mpcOutputBufferUpdated_;
   bool logicUpdated_;
   std::mutex mpcBufferMutex;
 
   // variables for the tracking controller:
-  bool useFeedforwardPolicy_;
   scalar_array_t eventTimes_;
   size_array_t subsystemsSequence_;
   scalar_array_t partitioningTimes_;
 
-//  controller_t mpcController_;
+  std::vector<std::unique_ptr<controller_t>> mpcControllers_;
   scalar_array_t mpcTimeTrajectory_;
   state_vector_array_t mpcStateTrajectory_;
   input_vector_array_t mpcInputTrajectory_;
   state_linear_interpolation_t mpcLinInterpolateState_;
   input_linear_interpolation_t mpcLinInterpolateInput_;
-  input_linear_interpolation_t mpcLinInterpolateUff_;
-  gain_linear_interpolation_t mpcLinInterpolateK_;
   cost_desired_trajectories_t mpcCostDesiredTrajectories_;
 
   logic_machine_t logicMachine_;
@@ -248,4 +229,3 @@ class MPC_Interface {
 }  // namespace ocs2
 
 #include "implementation/MPC_Interface.h"
-#endif  // OCS2_MPC_INTERFACE_H

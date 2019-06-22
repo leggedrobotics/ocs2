@@ -86,7 +86,9 @@ int main(int argc, char** argv) {
         std::lock_guard<std::mutex> lock(timeStateMutex);
         time += trackingIncrement;
         if (mpcInterface.policyReceived()) {
-          mpcInterface.evaluateFeedforwardPolicy(time, optimalState, optimalInput, subsystem);
+          //TODO(johannes) Hacky, we call evaluatePolicy twice to retrieve the optimal state
+          mpcInterface.evaluatePolicy(time, mpc_t::state_vector_t::Zero(), optimalState, optimalInput, subsystem);
+          mpcInterface.evaluatePolicy(time, optimalState, optimalState, optimalInput, subsystem);
           std::cout << std::endl
                     << "time:" << time << "  state:" << optimalState.transpose() << "  input:" << optimalInput.transpose() << std::endl
                     << std::endl;

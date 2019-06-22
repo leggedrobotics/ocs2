@@ -43,14 +43,14 @@ class DoubleIntegratorCost : public QuadraticCostFunction<double_integrator::STA
 public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-	typedef std::shared_ptr<DoubleIntegratorCost> Ptr;
-	typedef std::shared_ptr<const DoubleIntegratorCost> ConstPtr;
+	using Ptr = std::shared_ptr<DoubleIntegratorCost>;
+	using ConstPtr = std::shared_ptr<const DoubleIntegratorCost>;
 
 	typedef QuadraticCostFunction<double_integrator::STATE_DIM_, double_integrator::INPUT_DIM_> BASE;
-	typedef typename BASE::scalar_t scalar_t;
-	typedef typename BASE::state_vector_t state_vector_t;
-	typedef typename BASE::state_matrix_t state_matrix_t;
-	typedef typename BASE::input_vector_t input_vector_t;
+	using scalar_t = typename BASE::scalar_t;
+	using state_vector_t = typename BASE::state_vector_t;
+	using state_matrix_t = typename BASE::state_matrix_t;
+	using input_vector_t = typename BASE::input_vector_t;
 
 	/**
 	 * Constructor for the running and final cost function defined as the following:

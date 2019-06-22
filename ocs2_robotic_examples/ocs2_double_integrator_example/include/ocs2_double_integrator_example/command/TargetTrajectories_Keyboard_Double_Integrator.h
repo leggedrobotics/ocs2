@@ -52,12 +52,12 @@ public:
 		command_dim_ = 2
 	};
 
-	typedef ocs2::TargetTrajectories_Keyboard_Interface<SCALAR_T> BASE;
-	typedef typename BASE::scalar_t scalar_t;
-	typedef typename BASE::scalar_array_t scalar_array_t;
-	typedef typename BASE::dynamic_vector_t dynamic_vector_t;
-	typedef typename BASE::dynamic_vector_array_t dynamic_vector_array_t;
-	typedef typename BASE::cost_desired_trajectories_t cost_desired_trajectories_t;
+	using BASE = ocs2::TargetTrajectories_Keyboard_Interface<SCALAR_T>;
+	using scalar_t = typename BASE::scalar_t;
+	using scalar_array_t = typename BASE::scalar_array_t;
+	using dynamic_vector_t = typename BASE::dynamic_vector_t;
+	using dynamic_vector_array_t = typename BASE::dynamic_vector_array_t;
+	using cost_desired_trajectories_t = typename BASE::cost_desired_trajectories_t;
 
 	/**
 	 * Constructor.

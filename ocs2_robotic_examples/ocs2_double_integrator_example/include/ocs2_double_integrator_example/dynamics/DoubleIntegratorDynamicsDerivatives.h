@@ -41,15 +41,15 @@ class DoubleIntegratorDynamicsDerivatives : public DerivativesBase<double_integr
  public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-	typedef std::shared_ptr<DoubleIntegratorDynamicsDerivatives> Ptr;
-	typedef std::shared_ptr<const DoubleIntegratorDynamicsDerivatives> ConstPtr;
+	using Ptr = std::shared_ptr<DoubleIntegratorDynamicsDerivatives>;
+	using ConstPtr = std::shared_ptr<const DoubleIntegratorDynamicsDerivatives>;
 
-	typedef DerivativesBase<double_integrator::STATE_DIM_, double_integrator::INPUT_DIM_> BASE;
-	typedef typename BASE::scalar_t               scalar_t;
-	typedef typename BASE::state_vector_t         state_vector_t;
-	typedef typename BASE::state_matrix_t         state_matrix_t;
-	typedef typename BASE::input_vector_t         input_vector_t;
-	typedef typename BASE::state_input_matrix_t  	state_input_matrix_t;
+	using BASE = DerivativesBase<double_integrator::STATE_DIM_, double_integrator::INPUT_DIM_>;
+	using scalar_t = typename BASE::scalar_t;
+	using state_vector_t = typename BASE::state_vector_t;
+	using state_matrix_t = typename BASE::state_matrix_t;
+	using input_vector_t = typename BASE::input_vector_t;
+	using state_input_matrix_t = typename BASE::state_input_matrix_t;
 
 	/**
 	 * Constructor

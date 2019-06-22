@@ -24,6 +24,7 @@ class PythonInterface {
   using state_matrix_array_t = typename dim_t::state_matrix_array_t;
   using cost_desired_trajectories_t = typename mpc_t::cost_desired_trajectories_t;
   using cost_t = CostFunctionBase<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>;
+  using dynamic_vector_array_t = typename dim_t::dynamic_vector_array_t;
 
   PythonInterface(bool async = false);
   virtual ~PythonInterface();

@@ -13,10 +13,7 @@ class DoubleIntegratorPyBindings final : public PythonInterface<double_integrato
   using Base = PythonInterface<ocs2::double_integrator::double_integrator_dims::STATE_DIM_,
                                ocs2::double_integrator::double_integrator_dims::INPUT_DIM_>;
 
-  DoubleIntegratorPyBindings(const std::string& taskFileFolder, bool async=false):
-    Base(async) {
-    init(taskFileFolder);
-  }
+  DoubleIntegratorPyBindings(const std::string& taskFileFolder, bool async=false);
 
   void initRobotInterface(const std::string& taskFileFolder) override;
 };

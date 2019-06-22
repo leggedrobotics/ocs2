@@ -97,7 +97,7 @@ SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::SLQ_BASE(
 				std::allocate_shared<riccati_equations_t, riccati_equations_alloc_t>(riccati_equations_alloc_t(),
 						BASE::ddpSettings_.useMakePSD_,
 						BASE::ddpSettings_.addedRiccatiDiagonal_,
-						true,
+						true, /*normalizeTime*/
 						settings_.preComputeRiccatiTerms_) ) );
 
 		typedef Eigen::aligned_allocator<error_equation_t> error_equation_alloc_t;
@@ -342,7 +342,7 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::approximateConstrainedLQWork
 		QmConstrainedTrajectoryStock_[i][k] = BASE::QmTrajectoryStock_[i][k];
 		QvConstrainedTrajectoryStock_[i][k] = BASE::QvTrajectoryStock_[i][k];
 		if (BASE::ddpSettings_.useRiccatiSolver_ == true) {
-            RmInvConstrainedCholTrajectoryStock_[i][k] = RinvChol;
+			RmInvConstrainedCholTrajectoryStock_[i][k] = RinvChol;
 		} else {
 			BmConstrainedTrajectoryStock_[i][k] = BASE::BmTrajectoryStock_[i][k];
 			PmConstrainedTrajectoryStock_[i][k] = BASE::PmTrajectoryStock_[i][k];

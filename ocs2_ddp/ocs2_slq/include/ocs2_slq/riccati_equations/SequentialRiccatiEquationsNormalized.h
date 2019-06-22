@@ -88,29 +88,34 @@ class SequentialRiccatiEquationsNormalized final : public ODE_Base<STATE_DIM*(ST
   /**
    * Constructor.
    */
-  SequentialRiccatiEquationsNormalized(const bool& useMakePSD, const scalar_t& addedRiccatiDiagonal, bool normalizeTime,
-                                       bool preComputeRiccatiTerms = true)
-      : useMakePSD_(useMakePSD),
-        addedRiccatiDiagonal_(addedRiccatiDiagonal),
-        switchingTimeStart_(0.0),
-        switchingTimeFinal_(1.0),
-        scalingFactor_(1.0),
-        normalizeTime_(normalizeTime),
-        preComputeRiccatiTerms_(preComputeRiccatiTerms),
-        Sm_(state_matrix_t::Zero()),
-        Sv_(state_vector_t::Zero()),
-        s_(eigen_scalar_t::Zero()),
-        Qm_(state_matrix_t::Zero()),
-        Qv_(state_vector_t::Zero()),
-        q_(eigen_scalar_t::Zero()),
-        AmT_minus_P_Rinv_Bm_(state_matrix_t::Zero()),
-        AmT_Sm_(state_matrix_t::Zero()),
-        Am_(state_matrix_t::Zero()),
-        Bm_(state_input_matrix_t::Zero()),
-        Rv_(input_vector_t::Zero()),
-        Pm_(input_state_matrix_t::Zero()),
-        Lm_(input_state_matrix_t::Zero()),
-        Lv_(input_vector_t::Zero()) {}
+  SequentialRiccatiEquationsNormalized(
+		  const bool& useMakePSD,
+		  const scalar_t& addedRiccatiDiagonal,
+		  bool normalizeTime,
+		  bool preComputeRiccatiTerms = true)
+
+      : useMakePSD_(useMakePSD)
+      , addedRiccatiDiagonal_(addedRiccatiDiagonal)
+      , switchingTimeStart_(0.0)
+      , switchingTimeFinal_(1.0)
+      , scalingFactor_(1.0)
+      , normalizeTime_(normalizeTime)
+      , preComputeRiccatiTerms_(preComputeRiccatiTerms)
+      , Sm_(state_matrix_t::Zero())
+      , Sv_(state_vector_t::Zero())
+      , s_(eigen_scalar_t::Zero())
+      , Qm_(state_matrix_t::Zero())
+      , Qv_(state_vector_t::Zero())
+      , q_(eigen_scalar_t::Zero())
+      , AmT_minus_P_Rinv_Bm_(state_matrix_t::Zero())
+      , AmT_Sm_(state_matrix_t::Zero())
+      , Am_(state_matrix_t::Zero())
+      , Bm_(state_input_matrix_t::Zero())
+      , Rv_(input_vector_t::Zero())
+      , Pm_(input_state_matrix_t::Zero())
+      , Lm_(input_state_matrix_t::Zero())
+      , Lv_(input_vector_t::Zero())
+	  {}
 
   /**
    * Default destructor.

@@ -4,14 +4,14 @@ Copyright (c) 2017, Farbod Farshidian. All rights reserved.
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
 
-* Redistributions of source code must retain the above copyright notice, this
+ * Redistributions of source code must retain the above copyright notice, this
   list of conditions and the following disclaimer.
 
-* Redistributions in binary form must reproduce the above copyright notice,
+ * Redistributions in binary form must reproduce the above copyright notice,
   this list of conditions and the following disclaimer in the documentation
   and/or other materials provided with the distribution.
 
-* Neither the name of the copyright holder nor the names of its
+ * Neither the name of the copyright holder nor the names of its
   contributors may be used to endorse or promote products derived from
   this software without specific prior written permission.
 
@@ -25,7 +25,7 @@ SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
 CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-******************************************************************************/
+ ******************************************************************************/
 
 #ifndef SEQUENTIALERROREQUATIONNORMALIZED_OCS2_H_
 #define SEQUENTIALERROREQUATIONNORMALIZED_OCS2_H_
@@ -46,87 +46,96 @@ namespace ocs2 {
  */
 template <size_t STATE_DIM, size_t INPUT_DIM>
 class SequentialErrorEquationNormalized final : public ODE_Base<STATE_DIM> {
- public:
-  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+public:
+	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-  typedef ODE_Base<STATE_DIM> BASE;
+	typedef ODE_Base<STATE_DIM> BASE;
 
-  typedef Dimensions<STATE_DIM, INPUT_DIM> DIMENSIONS;
-  typedef typename DIMENSIONS::scalar_t scalar_t;
-  typedef typename DIMENSIONS::scalar_array_t scalar_array_t;
-  typedef typename DIMENSIONS::state_vector_t state_vector_t;
-  typedef typename DIMENSIONS::state_vector_array_t state_vector_array_t;
-  typedef typename DIMENSIONS::state_matrix_t state_matrix_t;
-  typedef typename DIMENSIONS::state_matrix_array_t state_matrix_array_t;
+	typedef Dimensions<STATE_DIM, INPUT_DIM> DIMENSIONS;
+	typedef typename DIMENSIONS::scalar_t scalar_t;
+	typedef typename DIMENSIONS::scalar_array_t scalar_array_t;
+	typedef typename DIMENSIONS::state_vector_t state_vector_t;
+	typedef typename DIMENSIONS::state_vector_array_t state_vector_array_t;
+	typedef typename DIMENSIONS::state_matrix_t state_matrix_t;
+	typedef typename DIMENSIONS::state_matrix_array_t state_matrix_array_t;
 
-  /**
-   * Default constructor.
-   */
-  SequentialErrorEquationNormalized() = default;
-  /**
-   * Default destructor.
-   */
-  ~SequentialErrorEquationNormalized() = default;
+	/**
+	 * Default constructor.
+	 */
+	SequentialErrorEquationNormalized() = default;
 
-  /**
-   * Sets coefficients of the model.
-   *
-   * @param [in] switchingTimeStart: The start time of the subsystem.
-   * @param [in] switchingTimeFinal: The final time of the subsystem.
-   * @param [in] timeStampPtr: A pointer to the time stamp trajectory.
-   * @param [in] GvPtr: A pointer to the trajectory of \f$ G_v(t) \f$ .
-   * @param [in] GmPtr: A pointer to the trajectory of \f$ G_m(t) \f$ .
-   */
-  void setData(const scalar_t& switchingTimeStart, const scalar_t& switchingTimeFinal, scalar_array_t* const timeStampPtr,
-               state_vector_array_t* const GvPtr, state_matrix_array_t* const GmPtr) {
-    BASE::resetNumFunctionCalls();
+	/**
+	 * Default destructor.
+	 */
+	~SequentialErrorEquationNormalized() = default;
 
-    switchingTimeStart_ = switchingTimeStart;
-    switchingTimeFinal_ = switchingTimeFinal;
+	/**
+	 * Sets coefficients of the model.
+	 *
+	 * @param [in] switchingTimeStart: The start time of the subsystem.
+	 * @param [in] switchingTimeFinal: The final time of the subsystem.
+	 * @param [in] timeStampPtr: A pointer to the time stamp trajectory.
+	 * @param [in] GvPtr: A pointer to the trajectory of \f$ G_v(t) \f$ .
+	 * @param [in] GmPtr: A pointer to the trajectory of \f$ G_m(t) \f$ .
+	 */
+	void setData(
+			const scalar_t& switchingTimeStart,
+			const scalar_t& switchingTimeFinal,
+			scalar_array_t* const timeStampPtr,
+			state_vector_array_t* const GvPtr,
+			state_matrix_array_t* const GmPtr) {
 
-    GvFunc_.setData(timeStampPtr, GvPtr);
-    GmFunc_.setData(timeStampPtr, GmPtr);
-  }
+		BASE::resetNumFunctionCalls();
 
-  /**
-   * Error Riccati jump map at switching moments
-   *
-   * @param [in] time: Normalized transition time
-   * @param [in] state: transition state
-   * @param [out] mappedState: mapped state after transition
-   */
-  void computeJumpMap(const scalar_t& z, const state_vector_t& state, state_vector_t& mappedState) override { mappedState = state; }
+		switchingTimeStart_ = switchingTimeStart;
+		switchingTimeFinal_ = switchingTimeFinal;
 
-  /**
-   * Computes derivatives.
-   *
-   * @param [in] z: Normalized time.
-   * @param [in] Sve: Current Sve.
-   * @param [out] derivatives: d(Sve)/dz
-   */
-  void computeFlowMap(const scalar_t& z, const state_vector_t& Sve, state_vector_t& derivatives) {
-    BASE::numFunctionCalls_++;
+		GvFunc_.setData(timeStampPtr, GvPtr);
+		GmFunc_.setData(timeStampPtr, GmPtr);
+	}
 
-    // denormalized time
-    const scalar_t t = switchingTimeFinal_ + (switchingTimeStart_ - switchingTimeFinal_) * z;
+	/**
+	 * Error Riccati jump map at switching moments
+	 *
+	 * @param [in] time: Normalized transition time
+	 * @param [in] state: transition state
+	 * @param [out] mappedState: mapped state after transition
+	 */
+	void computeJumpMap(const scalar_t& z, const state_vector_t& state, state_vector_t& mappedState) override {
 
-    const auto greatestLessTimeStampIndex = GvFunc_.interpolate(t, Gv_);
-    GmFunc_.interpolate(t, Gm_, greatestLessTimeStampIndex);
+		mappedState = state;
+	}
 
-    // Error equation for the equivalent system
-    derivatives = (switchingTimeFinal_ - switchingTimeStart_) * (Gm_.transpose() * Sve + Gv_);
-  }
+	/**
+	 * Computes derivatives.
+	 *
+	 * @param [in] z: Normalized time.
+	 * @param [in] Sve: Current Sve.
+	 * @param [out] derivatives: d(Sve)/dz
+	 */
+	void computeFlowMap(const scalar_t& z, const state_vector_t& Sve, state_vector_t& derivatives) {
+		BASE::numFunctionCalls_++;
 
- private:
-  scalar_t switchingTimeStart_;
-  scalar_t switchingTimeFinal_;
+		// denormalized time
+		const scalar_t t = switchingTimeFinal_ + (switchingTimeStart_ - switchingTimeFinal_) * z;
 
-  LinearInterpolation<state_vector_t, Eigen::aligned_allocator<state_vector_t> > GvFunc_;
-  LinearInterpolation<state_matrix_t, Eigen::aligned_allocator<state_matrix_t> > GmFunc_;
+		const auto greatestLessTimeStampIndex = GvFunc_.interpolate(t, Gv_);
+		GmFunc_.interpolate(t, Gm_, greatestLessTimeStampIndex);
 
-  // members required in computeFlowMap
-  state_vector_t Gv_;
-  state_matrix_t Gm_;
+		// Error equation for the equivalent system
+		derivatives = (switchingTimeFinal_ - switchingTimeStart_) * (Gm_.transpose() * Sve + Gv_);
+	}
+
+private:
+	scalar_t switchingTimeStart_;
+	scalar_t switchingTimeFinal_;
+
+	LinearInterpolation<state_vector_t, Eigen::aligned_allocator<state_vector_t> > GvFunc_;
+	LinearInterpolation<state_matrix_t, Eigen::aligned_allocator<state_matrix_t> > GmFunc_;
+
+	// members required in computeFlowMap
+	state_vector_t Gv_;
+	state_matrix_t Gm_;
 };
 
 }  // namespace ocs2

@@ -198,8 +198,8 @@ public:
 	state_matrix_array2_t                AmConstrainedTrajectoriesStock_;
 	state_matrix_array2_t                QmConstrainedTrajectoriesStock_;
 	state_vector_array2_t                QvConstrainedTrajectoriesStock_;
-    dynamic_matrix_array2_t     		 RmInvConstrainedCholTrajectoryStock_;
-  	input_constraint1_matrix_array2_t    DmDagerTrajectoriesStock_;
+	dynamic_matrix_array2_t              RmInvConstrainedCholTrajectoryStock_;
+	input_constraint1_matrix_array2_t    DmDagerTrajectoriesStock_;
 	input_vector_array2_t                EvProjectedTrajectoriesStock_;  // DmDager * Ev
 	input_state_matrix_array2_t          CmProjectedTrajectoriesStock_;  // DmDager * Cm
 	input_matrix_array2_t                DmProjectedTrajectoriesStock_;  // DmDager * Dm

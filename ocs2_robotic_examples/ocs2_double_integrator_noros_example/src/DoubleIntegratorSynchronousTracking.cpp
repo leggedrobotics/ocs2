@@ -72,7 +72,7 @@ int main(int argc, char** argv) {
   double T = 3;
 
   // run MPC for N iterations
-  int N = int(f_control * T);
+  auto N = static_cast<int>(f_control * T);
   for (int i = 0; i < N; i++) {
     // run MPC
     mpcInterface.advanceMpc();
@@ -82,7 +82,10 @@ int main(int argc, char** argv) {
       mpc_t::state_vector_t optimalState;
       mpc_t::input_vector_t optimalInput;
       size_t subsystem;
-      mpcInterface.evaluateFeedforwardPolicy(time, optimalState, optimalInput, subsystem);
+
+      //TODO(johannes) Hacky, we call evaluatePolicy twice to retrieve the optimal state
+      mpcInterface.evaluatePolicy(time, mpc_t::state_vector_t::Zero(), optimalState, optimalInput, subsystem);
+      mpcInterface.evaluatePolicy(time, optimalState, optimalState, optimalInput, subsystem);
 
       std::cout << std::endl
                 << "time:" << time << "  state:" << optimalState.transpose() << "  input:" << optimalInput.transpose() << std::endl

@@ -5,35 +5,11 @@
 namespace ocs2 {
 
 template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-PythonInterface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::PythonInterface(
-    const std::string& taskFileFolder, bool async)
-    : run_mpc_async_(async), run_mpc_done_(false), run_mpc_requested_(false), shutdown_requested_(false) {
-  initRobotInterface(taskFileFolder);
+PythonInterface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::PythonInterface(bool async)
+    : run_mpc_async_(async), run_mpc_done_(false), run_mpc_requested_(false), shutdown_requested_(false) {}
 
-  auto mpcPtr = dynamic_cast<MPC_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>*>(robotInterface_->getMPCPtr());
-  if(!mpcPtr){
-      throw std::runtime_error("PythonInterface: MPC is of unexpected type.");
-   }
-
-  auto logicPtr = robotInterface_->getLogicRulesPtr();
-  if(logicPtr){
-    mpcInterface_.reset(new mpc_t(mpcPtr, *logicPtr, true));
-  } else {
-    mpcInterface_.reset(new mpc_t(mpcPtr, LOGIC_RULES_T(), true));
-}
-
-
-  dynamics_.reset(robotInterface_->getDynamicsPtr()->clone());
-  dynamicsDerivatives_.reset(robotInterface_->getDynamicsDerivativesPtr()->clone());
-
-  cost_ = robotInterface_->getCostPtr();
-
-  if (run_mpc_async_) {
-    run_mpc_worker_ = std::thread{&PythonInterface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::runMpcAsync, this};
-  }
-}
-
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T> PythonInterface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::~PythonInterface() {
+template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
+PythonInterface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::~PythonInterface() {
   if (run_mpc_async_) {
     std::unique_lock<std::mutex> lk(run_mpc_mutex_);
     shutdown_requested_ = true;
@@ -41,6 +17,30 @@ template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T> PythonInterfa
     run_mpc_cv_.notify_one();
     run_mpc_worker_.join();
     std::cerr << "Successfully joined MPC worker thread" << std::endl;
+  }
+}
+
+template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
+void PythonInterface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::init(const std::string& taskFileFolder){
+  initRobotInterface(taskFileFolder);
+
+  //TODO(jcarius) this static cast may be dangerous. Any way to avoid it?
+  auto mpcPtr = static_cast<MPC_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>*>(robotInterface_->getMPCPtr());
+  auto logicPtr = dynamic_cast<LOGIC_RULES_T*>(robotInterface_->getLogicRulesPtr());
+  if(logicPtr){
+    mpcInterface_.reset(new mpc_t(mpcPtr, *logicPtr, true));
+  } else {
+    mpcInterface_.reset(new mpc_t(mpcPtr, LOGIC_RULES_T(), true));
+  }
+
+  dynamics_.reset(robotInterface_->getDynamicsPtr()->clone());
+  dynamicsDerivatives_.reset(robotInterface_->getDynamicsDerivativesPtr()->clone());
+
+  //TODO(jcarius) this static cast may be dangerous. Any way to avoid it?
+  cost_ = static_cast<cost_t*>(robotInterface_->getCostPtr());
+
+  if (run_mpc_async_) {
+    run_mpc_worker_ = std::thread{&PythonInterface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::runMpcAsync, this};
   }
 }
 

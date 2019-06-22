@@ -96,6 +96,19 @@ target_link_libraries(double_integrator_asynchronous_tracking
   ${catkin_LIBRARIES}
   )
 
+  # DoubleIntegratorPyBindings library
+  add_library(DoubleIntegratorPyBindings
+    src/DoubleIntegratorPyBindings.cpp
+  )
+  add_dependencies(DoubleIntegratorPyBindings
+   double_integrator_noros_interface
+   ${catkin_EXPORTED_TARGETS}
+  )
+  target_link_libraries(DoubleIntegratorPyBindings
+    double_integrator_noros_interface
+    ${catkin_LIBRARIES}
+  )
+
 if(${pybind11_FOUND})
   message(WARNING "python executable originally ${PYTHON_EXECUTABLE} and pybind11PythonVersion ${PYBIND11_PYTHON_VERSION}")
   set(PYTHON_EXECUTABLE_BACKUP ${PYTHON_EXECUTABLE})
@@ -122,14 +135,14 @@ if(${pybind11_FOUND})
   set(PYBIND11_PYTHON_VERSION 3.6 CACHE STRING "")
   message(WARNING "python3 executable ${PYTHON_EXECUTABLE} and pybind11PythonVersion ${PYBIND11_PYTHON_VERSION}")
   pybind11_add_module(DoubleIntegratorPyBindings3 SHARED
-    src/DoubleIntegratorPyBindings.cpp
     src/pyBindModule3.cpp
   )
   add_dependencies(DoubleIntegratorPyBindings3
+    DoubleIntegratorPyBindings
     ${catkin_EXPORTED_TARGETS}
   )
   target_link_libraries(DoubleIntegratorPyBindings3 PRIVATE
-    double_integrator_noros_interface
+    DoubleIntegratorPyBindings
     ${catkin_LIBRARIES}
   )
   # TODO this appears not to be discoverable yet
@@ -186,13 +199,12 @@ target_link_libraries(ocs2_double_integrator_integration_test
   )
 
 catkin_add_gtest(ocs2_double_integrator_pybinding_test
-  src/DoubleIntegratorPyBindings.cpp
   test/DoubleIntegratorPyBindingTest.cpp)
 add_dependencies(ocs2_double_integrator_pybinding_test
-  double_integrator_noros_interface
+  DoubleIntegratorPyBindings
   ${catkin_EXPORTED_TARGETS}
   )
 target_link_libraries(ocs2_double_integrator_pybinding_test
-  double_integrator_noros_interface
+  DoubleIntegratorPyBindings
   ${catkin_LIBRARIES}
   )

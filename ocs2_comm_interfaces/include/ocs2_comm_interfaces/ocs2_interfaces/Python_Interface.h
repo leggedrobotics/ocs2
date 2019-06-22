@@ -23,9 +23,17 @@ class PythonInterface {
   using input_state_matrix_array_t = typename dim_t::input_state_matrix_array_t;
   using state_matrix_array_t = typename dim_t::state_matrix_array_t;
   using cost_desired_trajectories_t = typename mpc_t::cost_desired_trajectories_t;
+  using cost_t = CostFunctionBase<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>;
 
-  PythonInterface(const std::string& taskFileFolder, bool async = false);
+  PythonInterface(bool async = false);
   virtual ~PythonInterface();
+
+  /**
+   * @brief initializes the class. This must happen before any other method is called
+   * @note init is not called in the constructor because it internally calls pure virtual initRobotInterface
+   * @param taskFileFolder path of settings file
+   */
+  void init(const std::string& taskFileFolder);
 
   void setObservation(double t, Eigen::Ref<const state_vector_t> x);
   void setTargetTrajectories(const cost_desired_trajectories_t& targetTrajectories);
@@ -63,7 +71,7 @@ protected:
   std::unique_ptr<ControlledSystemBase<STATE_DIM, INPUT_DIM>> dynamics_;
   std::unique_ptr<DerivativesBase<STATE_DIM, INPUT_DIM>> dynamicsDerivatives_;
 
-  CostFunctionBase<STATE_DIM, INPUT_DIM>* cost_;
+  cost_t* cost_;
 
   // multithreading helper variables
   bool run_mpc_async_;

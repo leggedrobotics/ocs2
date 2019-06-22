@@ -9,10 +9,10 @@
 namespace ocs2 {
 
 template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-MPC_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::MPC_Interface(mpc_t& mpc, const LOGIC_RULES_T& logicRules,
+MPC_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::MPC_Interface(mpc_t* mpc, const LOGIC_RULES_T& logicRules,
                                                                   const bool& useFeedforwardPolicy /*= true*/)
-    : mpcPtr_(&mpc),
-      mpcSettings_(mpc.settings()),
+    : mpcPtr_(mpc),
+      mpcSettings_(mpc->settings()),
       desiredTrajectoriesUpdated_(false),
       modeSequenceUpdated_(false),
       observationUpdated_(false),
@@ -298,13 +298,8 @@ void MPC_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::evaluatePolicy(const sc
   mpcInput = mpcControllers_[index]->computeInput(time, currentState);
 }
 
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
 void MPC_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::getMpcSolution(scalar_array_t& t, state_vector_array_t& x, input_vector_array_t& u, input_state_matrix_array_t& k) {
-  if (!useFeedforwardPolicy_) throw std::runtime_error("The MRT is set to receive the feedforward policy.");
-
   updatePolicy();
   t = mpcTimeTrajectory_;
   u = mpcInputTrajectory_;
@@ -314,8 +309,26 @@ void MPC_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::getMpcSolution(scalar_a
   k.resize(t.size());
   auto kIter = k.begin();
 
+  std::cout << "getMPCSolution getting K:" << std::endl;
+
+  LinearController<STATE_DIM, INPUT_DIM>* linCtrl(nullptr);
+  EigenLinearInterpolation<input_state_matrix_t> linInterpolateK;
+  auto subsystemIndex = std::numeric_limits<size_t>::max();
+  int greatestLessTimeStampIndex = -1;
   for(auto ti : t){
-      mpcLinInterpolateK_.interpolate(ti, *(kIter++));
+      //TODO(jcarius) is index correct here or should we use subsystem?
+      auto newSubsystemIndex = findActiveSubsystemFnc_(ti);
+      if(subsystemIndex != newSubsystemIndex){
+          std::cout << "new index " << newSubsystemIndex << "at time " << ti << std::endl;
+          subsystemIndex = newSubsystemIndex;
+          linCtrl = dynamic_cast<LinearController<STATE_DIM, INPUT_DIM>*>(mpcControllers_[subsystemIndex].get());
+          if(not linCtrl){
+              throw std::runtime_error("getMpcSolution assumes that controllers are of type linear");
+            }
+          linInterpolateK.setData(&(linCtrl->timeStamp_), &(linCtrl->gainArray_));
+          greatestLessTimeStampIndex = -1;
+        }
+      greatestLessTimeStampIndex = linInterpolateK.interpolate(ti, *(kIter++), greatestLessTimeStampIndex = -1);
     }
 }
 

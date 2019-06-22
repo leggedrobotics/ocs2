@@ -72,7 +72,7 @@ class DoubleIntegratorInterface : public RobotInterfaceBase<double_integrator_di
   /**
    * Destructor
    */
-  ~DoubleIntegratorInterface() = default;
+  virtual ~DoubleIntegratorInterface() = default;
 
   /**
    * setup all optimizes.
@@ -86,15 +86,17 @@ class DoubleIntegratorInterface : public RobotInterfaceBase<double_integrator_di
    *
    * @return Pointer to the internal MPC
    */
+  mpc_t::Ptr& getMPCPtrSpecialized() { return mpcPtr_; }
+
   void* getMPCPtr() override;
 
   const dim_t::state_vector_t& getXFinal() { return xFinal_; }
 
-  DoubleIntegratorDynamics::Ptr getDynamicsPtr() { return linearSystemDynamicsPtr_; }
+  DoubleIntegratorDynamics const * getDynamicsPtr() override { return linearSystemDynamicsPtr_.get(); }
 
-  DoubleIntegratorDynamicsDerivatives::Ptr getDynamicsDerivativesPtr() { return linearSystemDynamicsDerivativesPtr_; }
+  DoubleIntegratorDynamicsDerivatives const * getDynamicsDerivativesPtr() override { return linearSystemDynamicsDerivativesPtr_.get(); }
 
-  DoubleIntegratorCost::Ptr getCostPtr() { return linearSystemCostPtr_; }
+  void* getCostPtr() override { return linearSystemCostPtr_.get(); }
 
  protected:
   /**
@@ -102,7 +104,7 @@ class DoubleIntegratorInterface : public RobotInterfaceBase<double_integrator_di
    *
    * @param [in] taskFile: Task's file full path.
    */
-  void loadSettings(const std::string& taskFile);
+  void loadSettings (const std::string& taskFile) override;
 
   /**************
    * Variables

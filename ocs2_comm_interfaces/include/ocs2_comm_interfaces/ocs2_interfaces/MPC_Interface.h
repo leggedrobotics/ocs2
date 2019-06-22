@@ -74,7 +74,7 @@ class MPC_Interface {
    * calculated
    *
    */
-  MPC_Interface(mpc_t& mpc, const LOGIC_RULES_T& logicRules, const bool& useFeedforwardPolicy = true);
+  MPC_Interface(mpc_t* mpc, const LOGIC_RULES_T& logicRules, const bool& useFeedforwardPolicy = true);
 
   /**
    * Destructor.

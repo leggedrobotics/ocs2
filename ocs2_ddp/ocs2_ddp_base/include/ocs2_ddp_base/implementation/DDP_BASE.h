@@ -1326,6 +1326,45 @@ void DDP_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::getValueFuntion (
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
+void DDP_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::getValueFunctionStateDerivative(scalar_t time,
+                                                                                    const state_vector_t& state,
+                                                                                    state_vector_t& Vx) {
+  size_t activeSubsystem = BASE::findActivePartitionIndex(partitioningTimes_, time);
+
+  state_matrix_t Sm;
+  LinearInterpolation<state_matrix_t,Eigen::aligned_allocator<state_matrix_t> > SmFunc(
+          &SsTimeTrajectoryStock_[activeSubsystem], &SmTrajectoryStock_[activeSubsystem]);
+  const auto greatestLessTimeStampIndex = SmFunc.interpolate(time, Sm);
+
+  state_vector_t Sv;
+  LinearInterpolation<state_vector_t,Eigen::aligned_allocator<state_vector_t> > SvFunc(
+          &SsTimeTrajectoryStock_[activeSubsystem], &SvTrajectoryStock_[activeSubsystem]);
+  SvFunc.interpolate(time, Sv, greatestLessTimeStampIndex);
+
+  state_vector_t Sve;
+  LinearInterpolation<state_vector_t,Eigen::aligned_allocator<state_vector_t> > SveFunc(
+          &SsTimeTrajectoryStock_[activeSubsystem], &SveTrajectoryStock_[activeSubsystem]);
+  SveFunc.interpolate(time, Sve, greatestLessTimeStampIndex);
+
+  eigen_scalar_t s;
+  LinearInterpolation<eigen_scalar_t,Eigen::aligned_allocator<eigen_scalar_t> > sFunc(
+          &SsTimeTrajectoryStock_[activeSubsystem], &sTrajectoryStock_[activeSubsystem]);
+  sFunc.interpolate(time, s, greatestLessTimeStampIndex);
+
+  state_vector_t xNominal;
+  LinearInterpolation<state_vector_t,Eigen::aligned_allocator<state_vector_t> > xNominalFunc(
+          &nominalTimeTrajectoriesStock_[activeSubsystem], &nominalStateTrajectoriesStock_[activeSubsystem]);
+  xNominalFunc.interpolate(time, xNominal);
+
+  state_vector_t deltaX = state-xNominal;
+
+  Vx = Sm * deltaX + Sv + Sve;
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
 void DDP_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::useParallelRiccatiSolverFromInitItr(bool flag) {
 
 	useParallelRiccatiSolverFromInitItr_ = flag;

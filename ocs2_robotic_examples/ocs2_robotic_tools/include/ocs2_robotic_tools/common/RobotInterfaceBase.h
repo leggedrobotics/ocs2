@@ -41,6 +41,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_mpc/MPC_Settings.h>
 #include <ocs2_core/misc/loadEigenMatrix.h>
 #include <ocs2_core/logic/rules/LogicRulesBase.h>
+#include <ocs2_core/dynamics/ControlledSystemBase.h>
+#include <ocs2_core/dynamics/DerivativesBase.h>
 
 
 namespace ocs2{
@@ -76,6 +78,9 @@ public:
 	typedef typename DIMENSIONS::input_vector_array_t  input_vector_array_t;
 	typedef typename DIMENSIONS::dynamic_vector_t       dynamic_vector_t;
 	typedef typename DIMENSIONS::dynamic_vector_array_t dynamic_vector_array_t;
+
+	typedef ControlledSystemBase<STATE_DIM, INPUT_DIM>  dynamics_t;
+	typedef DerivativesBase<STATE_DIM, INPUT_DIM>       dynamics_derivatives_t;
 
 	/**
 	 * Constructor
@@ -113,6 +118,25 @@ public:
 	 * @return pointer to internal mpc instance
 	 */
 	virtual void* getMPCPtr() = 0;
+
+	/**
+	 * @brief getDynamicsPtr
+	 * @return a pointer to the interal system dynamics
+	 */
+	virtual dynamics_t const * getDynamicsPtr() = 0;
+
+	/**
+	 * @brief getDynamicsDerivativesPtr
+	 * @return a pointer to the internal system dynamics derivatives
+	 */
+	virtual dynamics_derivatives_t const * getDynamicsDerivativesPtr() = 0;
+
+	/**
+	 * @brief getCostPtr
+	 * @note This cannot be a CostFunctionBase* because of the logic rules template
+	 * @return pointer to internal cost function
+	 */
+	virtual void* getCostPtr() = 0;
 
 	/**
 	 * Setups all optimizers which you require.

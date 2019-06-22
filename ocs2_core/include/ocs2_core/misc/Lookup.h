@@ -8,6 +8,8 @@
 #include <vector>
 #include <complex>
 
+#include "ocs2_core/OCS2NumericTraits.h"
+
 namespace ocs2 {
 namespace Lookup {
 
@@ -17,7 +19,12 @@ namespace Lookup {
  * @param [in] value: enquiry value
  * @return: index
  */
-size_t findFirstIndexWithinTol(const std::vector<double> &dataArray, const double &value, const double eps = 1e-5) {
+template <typename scalar_t = double>
+size_t findFirstIndexWithinTol(
+		const std::vector<scalar_t> &dataArray,
+		const scalar_t &value,
+		const scalar_t eps = OCS2NumericTraits<scalar_t>::week_epsilon()) {
+
   size_t index = dataArray.size();
 
   for (size_t i = 0; i < dataArray.size(); i++){

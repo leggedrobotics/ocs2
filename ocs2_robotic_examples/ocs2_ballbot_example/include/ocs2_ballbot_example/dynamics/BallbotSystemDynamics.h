@@ -62,16 +62,16 @@ class BallbotSystemDynamics : public SystemDynamicsBaseAD<BallbotSystemDynamics,
 public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-	typedef std::shared_ptr<BallbotSystemDynamics> Ptr;
-	typedef std::shared_ptr<const BallbotSystemDynamics> ConstPtr;
+	using Ptr = std::shared_ptr<BallbotSystemDynamics>;
+	using ConstPtr = std::shared_ptr<const BallbotSystemDynamics>;
 
 	typedef ocs2::SystemDynamicsBaseAD<BallbotSystemDynamics, ballbot::STATE_DIM_, ballbot::INPUT_DIM_> BASE;
-	typedef typename BASE::scalar_t scalar_t;
-	typedef typename BASE::state_vector_t state_vector_t;
-	typedef typename BASE::state_matrix_t state_matrix_t;
-	typedef typename BASE::input_vector_t input_vector_t;
+	using scalar_t = typename BASE::scalar_t;
+	using state_vector_t = typename BASE::state_vector_t;
+	using state_matrix_t = typename BASE::state_matrix_t;
+	using input_vector_t = typename BASE::input_vector_t;
 
-    typedef BallbotParameters<scalar_t> ballbot_parameters_t;
+    using ballbot_parameters_t = BallbotParameters<scalar_t>;
 
 	/**
 	 * Constructor.
@@ -141,7 +141,7 @@ public:
 		iit::Ballbot::tpl::JointState<SCALAR_T> qdd;
 		iit::Ballbot::tpl::JointState<SCALAR_T> new_input = S_transposed*input;
 
-		typedef typename iit::rbd::tpl::TraitSelector<SCALAR_T>::Trait trait_t;
+		using trait_t = typename iit::rbd::tpl::TraitSelector<SCALAR_T>::Trait;
 		iit::Ballbot::dyn::tpl::InertiaProperties<trait_t> inertias;
 		iit::Ballbot::tpl::MotionTransforms<trait_t> transforms;
 		iit::Ballbot::dyn::tpl::ForwardDynamics<trait_t> forward_dyn(inertias, transforms);

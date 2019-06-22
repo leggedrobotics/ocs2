@@ -50,17 +50,17 @@ public:
 	typedef MRT_ROS_Interface<ballbot::STATE_DIM_, ballbot::INPUT_DIM_> BASE;
 
 	typedef Dimensions<ballbot::STATE_DIM_, ballbot::INPUT_DIM_> DIMENSIONS;
-	typedef typename DIMENSIONS::controller_t                controller_t;
-	typedef typename DIMENSIONS::controller_array_t          controller_array_t;
-	typedef typename DIMENSIONS::scalar_t                    scalar_t;
-	typedef typename DIMENSIONS::scalar_array_t              scalar_array_t;
-	typedef typename DIMENSIONS::size_array_t                size_array_t;
-	typedef typename DIMENSIONS::state_vector_t              state_vector_t;
-	typedef typename DIMENSIONS::state_vector_array_t        state_vector_array_t;
-	typedef typename DIMENSIONS::input_vector_t              input_vector_t;
-	typedef typename DIMENSIONS::input_vector_array_t        input_vector_array_t;
-	typedef typename DIMENSIONS::input_state_matrix_t        input_state_matrix_t;
-	typedef typename DIMENSIONS::input_state_matrix_array_t  input_state_matrix_array_t;
+	using controller_t = typename DIMENSIONS::controller_t;
+	using controller_array_t = typename DIMENSIONS::controller_array_t;
+	using scalar_t = typename DIMENSIONS::scalar_t;
+	using scalar_array_t = typename DIMENSIONS::scalar_array_t;
+	using size_array_t = typename DIMENSIONS::size_array_t;
+	using state_vector_t = typename DIMENSIONS::state_vector_t;
+	using state_vector_array_t = typename DIMENSIONS::state_vector_array_t;
+	using input_vector_t = typename DIMENSIONS::input_vector_t;
+	using input_vector_array_t = typename DIMENSIONS::input_vector_array_t;
+	using input_state_matrix_t = typename DIMENSIONS::input_state_matrix_t;
+	using input_state_matrix_array_t = typename DIMENSIONS::input_state_matrix_array_t;
 
 	typedef ocs2::SystemObservation<ballbot::STATE_DIM_, ballbot::INPUT_DIM_> system_observation_t;
 

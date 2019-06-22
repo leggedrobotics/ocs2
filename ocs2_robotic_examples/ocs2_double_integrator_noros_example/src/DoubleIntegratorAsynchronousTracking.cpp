@@ -46,7 +46,7 @@ int main(int argc, char** argv) {
   NullLogicRules nullLogicRules;
 
   DoubleIntegratorInterface doubleIntegratorInterface(taskFileFolderName);
-  mpc_t mpcInterface(*doubleIntegratorInterface.getMPCPtr(), nullLogicRules, true);
+  mpc_t mpcInterface(doubleIntegratorInterface.getMPCPtrSpecialized().get(), nullLogicRules, true);
 
   double time = 0;
 

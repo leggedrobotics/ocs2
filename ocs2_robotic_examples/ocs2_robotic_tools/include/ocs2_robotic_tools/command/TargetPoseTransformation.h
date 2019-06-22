@@ -95,8 +95,8 @@ public:
 		POSE_DIM_ = 6,
 	};
 
-	typedef SCALAR_T scalar_t;
-	typedef std::vector<scalar_t> scalar_array_t;
+	using scalar_t = SCALAR_T;
+	using scalar_array_t = std::vector<scalar_t>;
 	typedef Eigen::Matrix<scalar_t, POSE_DIM_, 1> pose_vector_t;
 	typedef Eigen::Matrix<scalar_t, Eigen::Dynamic, 1> dynamic_vector_t;
 

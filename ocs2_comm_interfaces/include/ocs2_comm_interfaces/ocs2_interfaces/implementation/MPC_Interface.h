@@ -319,7 +319,6 @@ void MPC_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::getMpcSolution(scalar_a
       //TODO(jcarius) is index correct here or should we use subsystem?
       auto newSubsystemIndex = findActiveSubsystemFnc_(ti);
       if(subsystemIndex != newSubsystemIndex){
-          std::cout << "new index " << newSubsystemIndex << "at time " << ti << std::endl;
           subsystemIndex = newSubsystemIndex;
           linCtrl = dynamic_cast<LinearController<STATE_DIM, INPUT_DIM>*>(mpcControllers_[subsystemIndex].get());
           if(not linCtrl){

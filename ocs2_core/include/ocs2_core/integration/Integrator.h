@@ -86,11 +86,11 @@ class Integrator : public IntegratorBase<STATE_DIM>
 public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-	typedef IntegratorBase<STATE_DIM> BASE;
-	typedef typename BASE::scalar_t				scalar_t;
-	typedef typename BASE::scalar_array_t 		scalar_array_t;
-	typedef typename BASE::state_vector_t		state_vector_t;
-	typedef typename BASE::state_vector_array_t state_vector_array_t;
+	using BASE = IntegratorBase<STATE_DIM>;
+	using scalar_t = typename BASE::scalar_t;
+	using scalar_array_t = typename BASE::scalar_array_t;
+	using state_vector_t = typename BASE::state_vector_t;
+	using state_vector_array_t = typename BASE::state_vector_array_t;
 
 	/**
 	 * Constructor

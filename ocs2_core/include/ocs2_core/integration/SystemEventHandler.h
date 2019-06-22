@@ -60,14 +60,14 @@ class SystemEventHandler : public EventHandlerBase<STATE_DIM>
 public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-	typedef std::shared_ptr<SystemEventHandler<STATE_DIM>> Ptr;
+	using Ptr = std::shared_ptr<SystemEventHandler<STATE_DIM> >;
 
-	typedef EventHandlerBase<STATE_DIM> BASE;
-	typedef typename BASE::scalar_t				scalar_t;
-	typedef typename BASE::scalar_array_t 		scalar_array_t;
-	typedef typename BASE::state_vector_t		state_vector_t;
-	typedef typename BASE::state_vector_array_t state_vector_array_t;
-	typedef typename BASE::dynamic_vector_t 	dynamic_vector_t;
+	using BASE = EventHandlerBase<STATE_DIM>;
+	using scalar_t = typename BASE::scalar_t;
+	using scalar_array_t = typename BASE::scalar_array_t;
+	using state_vector_t = typename BASE::state_vector_t;
+	using state_vector_array_t = typename BASE::state_vector_array_t;
+	using dynamic_vector_t = typename BASE::dynamic_vector_t;
 
 	/**
 	 * Default constructor

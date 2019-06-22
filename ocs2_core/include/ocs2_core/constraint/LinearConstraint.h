@@ -43,22 +43,22 @@ class LinearConstraint : public ConstraintBase<STATE_DIM, INPUT_DIM, LOGIC_RULES
   typedef std::shared_ptr<const LinearConstraint<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> > ConstPtr;
 
   typedef ConstraintBase<STATE_DIM, INPUT_DIM> BASE;
-  typedef typename BASE::scalar_t scalar_t;
-  typedef typename BASE::scalar_array_t scalar_array_t;
-  typedef typename BASE::state_vector_array_t state_vector_array_t;
-  typedef typename BASE::input_vector_array_t input_vector_array_t;
-  typedef typename BASE::state_matrix_array_t state_matrix_array_t;
-  typedef typename BASE::input_matrix_array_t input_matrix_array_t;
-  typedef typename BASE::input_state_matrix_array_t input_state_matrix_array_t;
-  typedef typename BASE::state_vector_t state_vector_t;
-  typedef typename BASE::input_vector_t input_vector_t;
-  typedef typename BASE::state_matrix_t state_matrix_t;
-  typedef typename BASE::state_input_matrix_t state_input_matrix_t;
-  typedef typename BASE::constraint1_vector_t constraint1_vector_t;
-  typedef typename BASE::constraint2_vector_t constraint2_vector_t;
-  typedef typename BASE::constraint1_state_matrix_t constraint1_state_matrix_t;
-  typedef typename BASE::constraint1_input_matrix_t constraint1_input_matrix_t;
-  typedef typename BASE::constraint2_state_matrix_t constraint2_state_matrix_t;
+  using scalar_t = typename BASE::scalar_t;
+  using scalar_array_t = typename BASE::scalar_array_t;
+  using state_vector_array_t = typename BASE::state_vector_array_t;
+  using input_vector_array_t = typename BASE::input_vector_array_t;
+  using state_matrix_array_t = typename BASE::state_matrix_array_t;
+  using input_matrix_array_t = typename BASE::input_matrix_array_t;
+  using input_state_matrix_array_t = typename BASE::input_state_matrix_array_t;
+  using state_vector_t = typename BASE::state_vector_t;
+  using input_vector_t = typename BASE::input_vector_t;
+  using state_matrix_t = typename BASE::state_matrix_t;
+  using state_input_matrix_t = typename BASE::state_input_matrix_t;
+  using constraint1_vector_t = typename BASE::constraint1_vector_t;
+  using constraint2_vector_t = typename BASE::constraint2_vector_t;
+  using constraint1_state_matrix_t = typename BASE::constraint1_state_matrix_t;
+  using constraint1_input_matrix_t = typename BASE::constraint1_input_matrix_t;
+  using constraint2_state_matrix_t = typename BASE::constraint2_state_matrix_t;
 
   LinearConstraint(
       const size_t &numStateInputConstraint,

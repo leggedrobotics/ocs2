@@ -51,10 +51,10 @@ class CostDesiredTrajectories
 public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-	typedef std::vector<SCALAR_T> scalar_array_t;
+	using scalar_array_t = std::vector<SCALAR_T>;
 	typedef Eigen::Matrix<SCALAR_T, Eigen::Dynamic, 1> dynamic_vector_t;
 	typedef std::vector<dynamic_vector_t, Eigen::aligned_allocator<dynamic_vector_t>> dynamic_vector_array_t;
-	typedef EigenLinearInterpolation<dynamic_vector_t>  dynamic_linear_interpolation_t;
+	using dynamic_linear_interpolation_t = EigenLinearInterpolation<dynamic_vector_t>;
 
 	CostDesiredTrajectories(
 			const scalar_array_t& desiredTimeTrajectory = scalar_array_t(),

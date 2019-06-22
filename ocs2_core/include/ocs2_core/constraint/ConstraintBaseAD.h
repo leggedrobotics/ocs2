@@ -72,16 +72,16 @@ public:
 		MAX_CONSTRAINT_DIM_ = INPUT_DIM
 	};
 
-	typedef typename BASE::scalar_t 					scalar_t;
-	typedef typename BASE::state_vector_t   			state_vector_t;
-	typedef typename BASE::input_vector_t 				input_vector_t;
-	typedef typename BASE::state_matrix_t   			state_matrix_t;
-	typedef typename BASE::state_input_matrix_t 		state_input_matrix_t;
-	typedef typename BASE::constraint1_vector_t 		constraint1_vector_t;
-	typedef typename BASE::constraint2_vector_t 		constraint2_vector_t;
-	typedef typename BASE::constraint1_state_matrix_t   constraint1_state_matrix_t;
-	typedef typename BASE::constraint1_input_matrix_t constraint1_input_matrix_t;
-	typedef typename BASE::constraint2_state_matrix_t   constraint2_state_matrix_t;
+	using scalar_t = typename BASE::scalar_t;
+	using state_vector_t = typename BASE::state_vector_t;
+	using input_vector_t = typename BASE::input_vector_t;
+	using state_matrix_t = typename BASE::state_matrix_t;
+	using state_input_matrix_t = typename BASE::state_input_matrix_t;
+	using constraint1_vector_t = typename BASE::constraint1_vector_t;
+	using constraint2_vector_t = typename BASE::constraint2_vector_t;
+	using constraint1_state_matrix_t = typename BASE::constraint1_state_matrix_t;
+	using constraint1_input_matrix_t = typename BASE::constraint1_input_matrix_t;
+	using constraint2_state_matrix_t = typename BASE::constraint2_state_matrix_t;
 
 	/**
 	 * Default constructor.
@@ -303,13 +303,13 @@ public:
 protected:
 	typedef ocs2::CppAdCodeGenInterface<domain_dim_, MAX_CONSTRAINT_DIM_, scalar_t> ad_interface_t;
 
-	typedef typename ad_interface_t::ad_scalar_t			ad_scalar_t;
-	typedef typename ad_interface_t::ad_dynamic_vector_t	ad_dynamic_vector_t;
-	typedef typename ad_interface_t::ad_funtion_t			ad_funtion_t;
-	typedef typename ad_interface_t::domain_vector_t		domain_vector_t;
-	typedef typename ad_interface_t::domain_matrix_t		domain_matrix_t;
-	typedef typename ad_interface_t::domain_range_matrix_t 	domain_range_matrix_t;
-	typedef typename ad_interface_t::range_domain_matrix_t 	range_domain_matrix_t;
+	using ad_scalar_t = typename ad_interface_t::ad_scalar_t;
+	using ad_dynamic_vector_t = typename ad_interface_t::ad_dynamic_vector_t;
+	using ad_funtion_t = typename ad_interface_t::ad_funtion_t;
+	using domain_vector_t = typename ad_interface_t::domain_vector_t;
+	using domain_matrix_t = typename ad_interface_t::domain_matrix_t;
+	using domain_range_matrix_t = typename ad_interface_t::domain_range_matrix_t;
+	using range_domain_matrix_t = typename ad_interface_t::range_domain_matrix_t;
 
 	/**
 	 * The intermediate cost function specialized with AD type.

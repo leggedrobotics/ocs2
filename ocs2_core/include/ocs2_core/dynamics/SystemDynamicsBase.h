@@ -72,14 +72,14 @@ public:
 	typedef ControlledSystemBase<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> 	DYN_BASE;
 
 	typedef Dimensions<STATE_DIM, INPUT_DIM> DIMENSIONS;
-	typedef typename DIMENSIONS::scalar_t 				scalar_t;
-	typedef typename DIMENSIONS::state_vector_t   		state_vector_t;
-	typedef typename DIMENSIONS::input_vector_t 		input_vector_t;
-	typedef typename DIMENSIONS::state_matrix_t 		state_matrix_t;
-	typedef typename DIMENSIONS::state_input_matrix_t 	state_input_matrix_t;
-	typedef typename DIMENSIONS::dynamic_vector_t		dynamic_vector_t;
-	typedef typename DIMENSIONS::dynamic_state_matrix_t	dynamic_state_matrix_t;
-	typedef typename DIMENSIONS::dynamic_input_matrix_t dynamic_input_matrix_t;
+	using scalar_t = typename DIMENSIONS::scalar_t;
+	using state_vector_t = typename DIMENSIONS::state_vector_t;
+	using input_vector_t = typename DIMENSIONS::input_vector_t;
+	using state_matrix_t = typename DIMENSIONS::state_matrix_t;
+	using state_input_matrix_t = typename DIMENSIONS::state_input_matrix_t;
+	using dynamic_vector_t = typename DIMENSIONS::dynamic_vector_t;
+	using dynamic_state_matrix_t = typename DIMENSIONS::dynamic_state_matrix_t;
+	using dynamic_input_matrix_t = typename DIMENSIONS::dynamic_input_matrix_t;
 
 	/**
 	 * Default constructor

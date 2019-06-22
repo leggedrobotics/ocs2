@@ -79,18 +79,18 @@ public:
 
 
     /** size_t trajectory type. */
-    typedef std::vector<size_t> size_array_t;
+    using size_array_t = std::vector<size_t>;
     /** Array of size_t trajectory type. */
-    typedef std::vector<size_array_t> size_array2_t;
+    using size_array2_t = std::vector<size_array_t>;
 
     /** Scalar type. */
-	typedef double scalar_t;
+	using scalar_t = double;
 	/** Scalar trajectory type. */
-	typedef std::vector<scalar_t> scalar_array_t;
+	using scalar_array_t = std::vector<scalar_t>;
     /** Array of scalar trajectory type. */
-	typedef std::vector<scalar_array_t> scalar_array2_t;
+	using scalar_array2_t = std::vector<scalar_array_t>;
     /** Array of arrays of scalar trajectory type. */
-    typedef std::vector<scalar_array2_t> scalar_array3_t;
+    using scalar_array3_t = std::vector<scalar_array2_t>;
 
 	/** Eigen scalar type. */
 	typedef Eigen::Matrix<scalar_t, 1, 1> eigen_scalar_t;

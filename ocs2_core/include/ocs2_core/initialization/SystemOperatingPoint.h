@@ -52,13 +52,13 @@ public:
 
 	typedef std::shared_ptr<SystemOperatingPoint<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>> Ptr;
 
-	typedef typename Base::scalar_t             scalar_t;
-	typedef typename Base::scalar_array_t       scalar_array_t;
-	typedef typename Base::size_array_t         size_array_t;
-	typedef typename Base::state_vector_t       state_vector_t;
-	typedef typename Base::state_vector_array_t state_vector_array_t;
-	typedef typename Base::input_vector_t       input_vector_t;
-	typedef typename Base::input_vector_array_t input_vector_array_t;
+	using scalar_t = typename Base::scalar_t;
+	using scalar_array_t = typename Base::scalar_array_t;
+	using size_array_t = typename Base::size_array_t;
+	using state_vector_t = typename Base::state_vector_t;
+	using state_vector_array_t = typename Base::state_vector_array_t;
+	using input_vector_t = typename Base::input_vector_t;
+	using input_vector_array_t = typename Base::input_vector_array_t;
 
 	/**
 	 * Default constructor

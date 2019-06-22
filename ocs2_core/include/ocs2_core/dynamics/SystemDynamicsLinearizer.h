@@ -57,11 +57,11 @@ public:
 
 	typedef DerivativesBase<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> Base;
 	typedef ControlledSystemBase<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> controlled_system_base_t;
-	typedef typename Base::scalar_t scalar_t;
-	typedef typename Base::state_vector_t state_vector_t;
-	typedef typename Base::state_matrix_t state_matrix_t;
-	typedef typename Base::input_vector_t input_vector_t;
-	typedef typename Base::state_input_matrix_t state_input_matrix_t;
+	using scalar_t = typename Base::scalar_t;
+	using state_vector_t = typename Base::state_vector_t;
+	using state_matrix_t = typename Base::state_matrix_t;
+	using input_vector_t = typename Base::input_vector_t;
+	using state_input_matrix_t = typename Base::state_input_matrix_t;
 
 	/**
 	 * Constructor

@@ -50,12 +50,12 @@ public:
 	typedef CostFunctionBase<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> BASE;
 
 	typedef Dimensions<STATE_DIM, INPUT_DIM> DIMENSIONS;
-	typedef typename DIMENSIONS::scalar_t scalar_t;
-	typedef typename DIMENSIONS::state_vector_t state_vector_t;
-	typedef typename DIMENSIONS::state_matrix_t state_matrix_t;
-	typedef typename DIMENSIONS::input_vector_t input_vector_t;
-	typedef typename DIMENSIONS::input_matrix_t input_matrix_t;
-	typedef typename DIMENSIONS::input_state_matrix_t input_state_matrix_t;
+	using scalar_t = typename DIMENSIONS::scalar_t;
+	using state_vector_t = typename DIMENSIONS::state_vector_t;
+	using state_matrix_t = typename DIMENSIONS::state_matrix_t;
+	using input_vector_t = typename DIMENSIONS::input_vector_t;
+	using input_matrix_t = typename DIMENSIONS::input_matrix_t;
+	using input_state_matrix_t = typename DIMENSIONS::input_state_matrix_t;
 
 	/**
 	 * Constructor for the running and final cost function defined as the following:

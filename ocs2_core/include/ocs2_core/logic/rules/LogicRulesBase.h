@@ -49,9 +49,9 @@ public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
 	typedef Dimensions<0, 0> DIMENSIONS;
-	typedef typename DIMENSIONS::size_array_t    size_array_t;
-	typedef typename DIMENSIONS::scalar_t        scalar_t;
-	typedef typename DIMENSIONS::scalar_array_t  scalar_array_t;
+	using size_array_t = typename DIMENSIONS::size_array_t;
+	using scalar_t = typename DIMENSIONS::scalar_t;
+	using scalar_array_t = typename DIMENSIONS::scalar_array_t;
 
 	/**
 	 * Default constructor

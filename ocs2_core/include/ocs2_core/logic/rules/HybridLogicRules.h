@@ -86,12 +86,12 @@ class HybridLogicRules : public LogicRulesBase
 public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-	typedef LogicRulesBase BASE;
-	typedef BASE::size_array_t   size_array_t;
-	typedef BASE::scalar_t       scalar_t;
-	typedef BASE::scalar_array_t scalar_array_t;
+	using BASE = LogicRulesBase;
+	using size_array_t = BASE::size_array_t;
+	using scalar_t = BASE::scalar_t;
+	using scalar_array_t = BASE::scalar_array_t;
 
-	typedef ModeSequenceTemplate<scalar_t> logic_template_type;
+	using logic_template_type = ModeSequenceTemplate<scalar_t>;
 
 	/**
 	 * Default constructor

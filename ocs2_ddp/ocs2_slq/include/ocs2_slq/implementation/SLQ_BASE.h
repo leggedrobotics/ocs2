@@ -284,8 +284,7 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::approximateConstrainedLQWork
 					throw std::runtime_error("Intermediate cost second derivative w.r.t. state is is not finite.");
 				if (!BASE::QmTrajectoryStock_[i][k].isApprox(BASE::QmTrajectoryStock_[i][k].transpose()))
 					throw std::runtime_error("Intermediate cost second derivative w.r.t. state is is not self-adjoint.");
-				if (BASE::QmTrajectoryStock_[i][k].eigenvalues().real().minCoeff()
-						< -Eigen::NumTraits<scalar_t>::epsilon())
+				if (BASE::QmTrajectoryStock_[i][k].eigenvalues().real().minCoeff() < -Eigen::NumTraits<scalar_t>::epsilon())
 					throw std::runtime_error("Q matrix is not positive semi-definite. It's smallest eigenvalue is " +
 							std::to_string(BASE::QmTrajectoryStock_[i][k].eigenvalues().real().minCoeff()) + ".");
 				if (!BASE::RvTrajectoryStock_[i][k].allFinite())
@@ -305,8 +304,7 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::approximateConstrainedLQWork
 							std::to_string(BASE::RmTrajectoryStock_[i][k].eigenvalues().real().minCoeff()) + ".");
 			} catch (const std::exception &error) {
 				std::cerr << "After adding inequality constraint penalty" << std::endl;
-				std::cerr << "what(): " << error.what() << " at time " << BASE::nominalTimeTrajectoriesStock_[i][k]
-						  << " [sec]." << std::endl;
+				std::cerr << "what(): " << error.what() << " at time " << BASE::nominalTimeTrajectoriesStock_[i][k] << " [sec]." << std::endl;
 				std::cerr << "x: " << BASE::nominalStateTrajectoriesStock_[i][k].transpose() << std::endl;
 				std::cerr << "u: " << BASE::nominalInputTrajectoriesStock_[i][k].transpose() << std::endl;
 				std::cerr << "q: " << BASE::qTrajectoryStock_[i][k] << std::endl;
@@ -357,7 +355,7 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::approximateConstrainedLQWork
 		if (BASE::ddpSettings_.checkNumericalStability_ == true && nc1 > 0)
 			if (Dm.colPivHouseholderQr().rank() != nc1) {
 				BASE::printString(">>> WARNING: The state-input constraints are rank deficient "
-								  "(at time " + std::to_string(BASE::nominalTimeTrajectoriesStock_[i][k]) + ")!");
+						"(at time " + std::to_string(BASE::nominalTimeTrajectoriesStock_[i][k]) + ")!");
 			}
 
 		// Constraint Projectors are based on the QR decomposition
@@ -384,8 +382,8 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::approximateConstrainedLQWork
 		AmConstrainedTrajectoryStock_[i][k].noalias() -=
 				BASE::BmTrajectoryStock_[i][k] * CmProjectedTrajectoryStock_[i][k];
 
-		state_matrix_t
-				PmTransDmDagerCm = BASE::PmTrajectoryStock_[i][k].transpose() * CmProjectedTrajectoryStock_[i][k];
+		state_matrix_t PmTransDmDagerCm =
+				BASE::PmTrajectoryStock_[i][k].transpose() * CmProjectedTrajectoryStock_[i][k];
 		QmConstrainedTrajectoryStock_[i][k] =
 				BASE::QmTrajectoryStock_[i][k] - PmTransDmDagerCm - PmTransDmDagerCm.transpose();
 		QmConstrainedTrajectoryStock_[i][k].noalias() += Cm.transpose() * RmProjected * Cm;

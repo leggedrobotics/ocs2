@@ -1342,9 +1342,13 @@ void DDP_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::getValueFunctionStateDerivat
   SvFunc.interpolate(time, Sv, greatestLessTimeStampIndex);
 
   state_vector_t Sve;
-  LinearInterpolation<state_vector_t,Eigen::aligned_allocator<state_vector_t> > SveFunc(
-          &SsTimeTrajectoryStock_[activeSubsystem], &SveTrajectoryStock_[activeSubsystem]);
-  SveFunc.interpolate(time, Sve, greatestLessTimeStampIndex);
+  if(SveTrajectoryStock_[activeSubsystem].empty()){
+      Sve.setZero();
+  } else {
+    LinearInterpolation<state_vector_t,Eigen::aligned_allocator<state_vector_t> > SveFunc(
+            &SsTimeTrajectoryStock_[activeSubsystem], &SveTrajectoryStock_[activeSubsystem]);
+    SveFunc.interpolate(time, Sve, greatestLessTimeStampIndex);
+  }
 
   eigen_scalar_t s;
   LinearInterpolation<eigen_scalar_t,Eigen::aligned_allocator<eigen_scalar_t> > sFunc(

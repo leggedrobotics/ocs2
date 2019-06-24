@@ -16,6 +16,10 @@ find_package(Boost REQUIRED COMPONENTS
 
 find_package(Eigen3 3.3 REQUIRED NO_MODULE)
 
+set(PYTHON_EXECUTABLE /usr/bin/python3)
+set(PYBIND11_PYTHON_VERSION 3.6 CACHE STRING "")
+find_package(pybind11 QUIET)
+
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread -fopenmp -std=c++11 -Wfatal-errors -Wl,--no-as-needed")
 
 ###################################
@@ -95,11 +99,43 @@ target_link_libraries(quadrotor_target
         ${Boost_LIBRARIES}
         )
 
+# PyBindings library
+add_library(quadrotorPyBindings
+  src/QuadrotorPyBindings.cpp
+)
+add_dependencies(quadrotorPyBindings
+  quadrotor_interface
+  ${catkin_EXPORTED_TARGETS}
+)
+target_link_libraries(quadrotorPyBindings
+  quadrotor_interface
+  ${catkin_LIBRARIES}
+)
+
+if(${pybind11_FOUND})
+  # build and install for python3.XX
+  pybind11_add_module(QuadrotorPyBindings3 SHARED
+    src/pyBindModule3.cpp
+  )
+  add_dependencies(QuadrotorPyBindings3
+    quadrotorPyBindings
+    ${catkin_EXPORTED_TARGETS}
+  )
+  target_link_libraries(QuadrotorPyBindings3 PRIVATE
+    quadrotorPyBindings
+    ${catkin_LIBRARIES}
+  )
+  set_target_properties(QuadrotorPyBindings3
+    PROPERTIES LIBRARY_OUTPUT_DIRECTORY ${CATKIN_DEVEL_PREFIX}/lib/python3.6/dist-packages/${PROJECT_NAME}
+  )
+  #catkin_python_setup()
+endif()
+
 #############
 ## Install ##
 #############
 
-install(TARGETS quadrotor_interface
+install(TARGETS quadrotor_interface quadrotorPyBindings
         ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
         LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
         RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
@@ -114,3 +150,19 @@ install(TARGETS quadrotor_mpc quadrotor_dummy_test quadrotor_target
 install(DIRECTORY urdf launch config rviz
         DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
         )
+
+#############
+## Testing ##
+#############
+
+catkin_add_gtest(${PROJECT_NAME}_PyBindingsTest
+  test/PyBindingsTest.cpp
+)
+add_dependencies(${PROJECT_NAME}_PyBindingsTest
+  quadrotorPyBindings
+  ${catkin_EXPORTED_TARGETS}
+)
+target_link_libraries(${PROJECT_NAME}_PyBindingsTest
+  quadrotorPyBindings
+  ${catkin_LIBRARIES}
+)

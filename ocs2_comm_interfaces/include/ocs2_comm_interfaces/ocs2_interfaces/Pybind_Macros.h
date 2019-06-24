@@ -52,6 +52,7 @@ using namespace pybind11::literals;
         .def_property_readonly_static("INPUT_DIM", [](pybind11::object) {return static_cast<int>(PY_INTERFACE::dim_t::DIMS::INPUT_DIM_);})\
         .def("setObservation", &PY_INTERFACE::setObservation, "t"_a, "x"_a.noconvert())\
         .def("setTargetTrajectories", &PY_INTERFACE::setTargetTrajectories, "targetTrajectories"_a)\
+        .def("reset", &PY_INTERFACE::reset, "targetTrajectories"_a)\
         .def("advanceMpc", &PY_INTERFACE::advanceMpc)\
         .def("getMpcSolution", &PY_INTERFACE::getMpcSolution, "t"_a.noconvert(), "x"_a.noconvert(), "u"_a.noconvert(), "sigmaX"_a.noconvert())\
         .def("computeFlowMap", &PY_INTERFACE::computeFlowMap, "t"_a, "x"_a.noconvert(), "u"_a.noconvert())\

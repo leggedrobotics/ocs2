@@ -15,7 +15,7 @@ TEST(QuadrotorTest, PyBindings) {
   bindings_t bindings("mpc", false);
 
   auto costDesiredTraj = cost_desired_trajectories_t();
-  bindings.setTargetTrajectories(costDesiredTraj);
+  bindings.reset(costDesiredTraj);
 
   auto state = state_vector_t::Zero();
   bindings.setObservation(0.0, state);
@@ -57,6 +57,10 @@ TEST(QuadrotorTest, PyBindings) {
 
   auto Vx = bindings.getValueFunctionStateDerivative(t_arr[0], x_arr[0]);
   std::cout << "Vx: " << Vx.transpose() << std::endl;
+
+  bindings.reset(costDesiredTraj);
+  bindings.setObservation(0.0, state);
+  bindings.advanceMpc();
 }
 
 int main(int argc, char** argv) {

@@ -101,9 +101,9 @@ void PythonInterface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::getMpcSolution(scalar
   sigmaX.clear();
   sigmaX.reserve(k.size());
   for (const auto& ki : k) {
-    double alpha = 10.0;  // damping of pseudoinverse in case ki is very small
+    double alpha_squared = 100.0;  // damping of pseudoinverse in case ki is very small
     state_input_matrix_t kDagger =
-        ki.transpose() * (ki * ki.transpose() + alpha * input_vector_t::Constant(alpha)).ldlt().solve(input_vector_t::Identity());
+        ki.transpose() * (ki * ki.transpose() + alpha_squared * input_matrix_t::Identity()).ldlt().solve(input_matrix_t::Identity());
     double beta = 0.01;  // fraction of u_max that corresponds to one std.dev.
     input_vector_t uMaxSquared = input_vector_t::Constant(pow(100.0, 2));
     sigmaX.emplace_back(kDagger * beta * uMaxSquared.asDiagonal() * kDagger.transpose());

@@ -18,6 +18,7 @@ class PythonInterface {
   using scalar_array_t = typename dim_t::scalar_array_t;
   using state_vector_array_t = typename dim_t::state_vector_array_t;
   using input_vector_array_t = typename dim_t::input_vector_array_t;
+  using input_matrix_t = typename dim_t::input_matrix_t;
   using state_matrix_t = typename dim_t::state_matrix_t;
   using state_input_matrix_t = typename dim_t::state_input_matrix_t;
   using input_state_matrix_array_t = typename dim_t::input_state_matrix_array_t;

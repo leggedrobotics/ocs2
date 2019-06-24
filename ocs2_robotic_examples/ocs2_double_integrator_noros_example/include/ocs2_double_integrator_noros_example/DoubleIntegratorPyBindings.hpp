@@ -10,8 +10,7 @@ class DoubleIntegratorPyBindings final : public PythonInterface<double_integrato
     double_integrator_dims::INPUT_DIM_>
 {
  public:
-  using Base = PythonInterface<ocs2::double_integrator::double_integrator_dims::STATE_DIM_,
-                               ocs2::double_integrator::double_integrator_dims::INPUT_DIM_>;
+  using Base = PythonInterface<double_integrator_dims::STATE_DIM_, double_integrator_dims::INPUT_DIM_>;
 
   DoubleIntegratorPyBindings(const std::string& taskFileFolder, bool async=false);
 

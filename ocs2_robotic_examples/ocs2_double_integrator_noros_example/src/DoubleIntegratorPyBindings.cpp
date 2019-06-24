@@ -10,7 +10,7 @@ DoubleIntegratorPyBindings::DoubleIntegratorPyBindings(const std::string& taskFi
 
 void DoubleIntegratorPyBindings::initRobotInterface(const std::string& taskFileFolder) {
 
-  robotInterface_.reset(new ocs2::double_integrator::DoubleIntegratorInterface(taskFileFolder));
+  robotInterface_.reset(new DoubleIntegratorInterface(taskFileFolder));
 
 }
 

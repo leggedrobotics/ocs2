@@ -42,11 +42,9 @@ namespace LinearAlgebra {
  * @param [out] squareMatrix: The matrix to become PSD.
  * @return true if the matrix had negative eigen values.
  */
-template<typename Derived>
-bool makePSD(Eigen::MatrixBase<Derived> &squareMatrix) {
-
-  if (squareMatrix.rows() != squareMatrix.cols())
-    throw std::runtime_error("Not a square matrix: makePSD() method is for square matrix.");
+template <typename Derived>
+bool makePSD(Eigen::MatrixBase<Derived>& squareMatrix) {
+  if (squareMatrix.rows() != squareMatrix.cols()) throw std::runtime_error("Not a square matrix: makePSD() method is for square matrix.");
 
   Eigen::SelfAdjointEigenSolver<Derived> eig(squareMatrix, Eigen::EigenvaluesOnly);
   Eigen::VectorXd lambda = eig.eigenvalues();
@@ -68,7 +66,59 @@ bool makePSD(Eigen::MatrixBase<Derived> &squareMatrix) {
   return hasNegativeEigenValue;
 }
 
-} // namespace LinearAlgebra
-} // namespace ocs2
+/**
+ * Compute upper-triangular Cholesky decomposition of inv(A)
+ * A = L * L^T = U^T * U
+ * inv(A) = inv(L^T) * inv(L) = inv(U) * inv(U^T)
+ * inv(L^T) = inv(U)
+ * @tparam Derived type.
+ * @param [in] A: A symmetric square positive definite matrix
+ * @param [out] LinvT: LT_L decomposition of inv(A), upper-triangular
+ */
+template <typename Derived>
+void computeLinvTLinv(const Derived& A, Derived& LinvT) {
+  // L is lower triangular, U is upper triangular --> inv(L^T) = inv(U) is upper triangular
+  Eigen::LLT<Derived> lltOfA(A);
+  LinvT.setIdentity();
+  lltOfA.matrixU().solveInPlace(LinvT);
+}
 
-#endif //OCS2_CTRL_LINEARALGEBRA_H
+/**
+ * Computes constraint projection for linear constraints  C*x + D*u - e = 0,
+ * The input cost matrix R should be already inverted and decomposed such that inv(R) = RinvChol * RinvChol^T
+ * @param [in] D: A full row rank constraint matrix
+ * @param [in] RinvChol: Cholesky decomposition of inv(R)
+ * @param [out] Ddagger: Weighted pseudo inverse of D, Ddagger = inv(R)*D' * inv(D*inv(R)*D')
+ * @param [out] DdaggerT_R_Ddagger_Chol: Cholesky decomposition of DdaggerT_R_Ddagger
+ * @param [out] RinvConstrainedChol: Decomposition of inv(R)^T * (I-Ddagger*D)^T * R * (I-Ddagger*D) * inv(R)
+ */
+template <typename DerivedInputMatrix>
+void computeConstraintProjection(const Eigen::MatrixXd& D, const DerivedInputMatrix& RinvChol, Eigen::MatrixXd& Ddagger,
+                                 Eigen::MatrixXd& DdaggerT_R_Ddagger_Chol, Eigen::MatrixXd& RinvConstrainedChol) {
+  const auto numConstraints = D.rows();
+  const auto numInputs = D.cols();
+
+  // Constraint Projectors are based on the QR decomposition
+  Eigen::HouseholderQR<Eigen::MatrixXd> QRof_RinvCholT_DmT(RinvChol.transpose() * D.transpose());
+  Eigen::MatrixXd QRof_RinvCholT_DmT_Q = QRof_RinvCholT_DmT.householderQ();
+  Eigen::MatrixXd QRof_RinvCholT_DmT_Qu = QRof_RinvCholT_DmT_Q.rightCols(numInputs - numConstraints);
+  Eigen::MatrixXd QRof_RinvCholT_DmT_Qc = QRof_RinvCholT_DmT_Q.leftCols(numConstraints);
+  Eigen::MatrixXd QRof_RinvCholT_DmT_Rc =
+      QRof_RinvCholT_DmT.matrixQR().topLeftCorner(numConstraints, numConstraints).template triangularView<Eigen::Upper>();
+
+  // Computes the inverse of Rc with an efficient in-place forward-backward substitution
+  // Turns out that this is equal to the cholesky decomposition of Ddagger^T * R * Ddagger after simplification
+  DdaggerT_R_Ddagger_Chol.setIdentity(numConstraints, numConstraints);
+  QRof_RinvCholT_DmT_Rc.template triangularView<Eigen::Upper>().solveInPlace(DdaggerT_R_Ddagger_Chol);
+
+  // Compute Weighted Pseudo Inverse, brackets used to compute the smaller, right-side product first
+  Ddagger.noalias() = RinvChol * (QRof_RinvCholT_DmT_Qc * DdaggerT_R_Ddagger_Chol.transpose());
+
+  // Constraint input cost cholesky decomposition
+  RinvConstrainedChol.noalias() = RinvChol * QRof_RinvCholT_DmT_Qu;
+}
+
+}  // namespace LinearAlgebra
+}  // namespace ocs2
+
+#endif  // OCS2_CTRL_LINEARALGEBRA_H

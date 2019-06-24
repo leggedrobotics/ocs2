@@ -319,13 +319,9 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::approximateConstrainedLQWork
 	}
 
 	// Compute R inverse after inequalities are added to the cost
-	// Compute LLT of R = L * L^T = U^T * U
-	// L is lower triangular, U is upper triangular
-	// Rinv = L^(-T) * L^(-1)
-	Eigen::LLT<input_matrix_t> lltOfR(BASE::RmTrajectoryStock_[i][k]);
-	input_matrix_t RinvChol = input_matrix_t::Identity();
-	RinvChol = lltOfR.matrixU().solve(RinvChol);
-
+	// Compute it through the cholesky decomposition as we can reuse the factorization later on
+	input_matrix_t RinvChol;
+	LinearAlgebra::computeLinvTLinv(BASE::RmTrajectoryStock_[i][k], RinvChol);
 	RmInverseTrajectoryStock_[i][k] = RinvChol * RinvChol.transpose();
 
 	// constraint type 1 coefficients
@@ -358,20 +354,9 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::approximateConstrainedLQWork
 						"(at time " + std::to_string(BASE::nominalTimeTrajectoriesStock_[i][k]) + ")!");
 			}
 
-		// Constraint Projectors are based on the QR decomposition
-		Eigen::HouseholderQR<dynamic_matrix_t> QRof_RinvCholT_DmT( RinvChol.transpose() * Dm.transpose() );
-		dynamic_matrix_t QRof_RinvCholT_DmT_Q = QRof_RinvCholT_DmT.householderQ();
-		dynamic_matrix_t QRof_RinvCholT_DmT_Qu = QRof_RinvCholT_DmT_Q.rightCols(INPUT_DIM - nc1);
-		dynamic_matrix_t QRof_RinvCholT_DmT_Qc = QRof_RinvCholT_DmT_Q.leftCols(nc1);
-		dynamic_matrix_t QRof_RinvCholT_DmT_Rc = QRof_RinvCholT_DmT.matrixQR().topLeftCorner(nc1, nc1).template triangularView<Eigen::Upper>();
-
-		// Computes the inverse of Rc with an efficient in-place forward-backward substitution
-		dynamic_matrix_t QRof_RinvCholT_DmT_Rc_inverse = dynamic_matrix_t::Identity(nc1, nc1);
-		QRof_RinvCholT_DmT_Rc.template triangularView<Eigen::Upper>().solveInPlace(QRof_RinvCholT_DmT_Rc_inverse);
-
-		// Compute Weighted Pseudo Inverse
-		dynamic_matrix_t RmProjected = QRof_RinvCholT_DmT_Rc_inverse * QRof_RinvCholT_DmT_Rc_inverse.transpose();
-		dynamic_matrix_t DmDager = RmInverseTrajectoryStock_[i][k] * ( Dm.transpose() * RmProjected );
+		// Constraint projectors are obtained at once
+        dynamic_matrix_t DmDager, DdaggerT_R_Ddagger_Chol, RinvConstrainedChol;
+        ocs2::LinearAlgebra::computeConstraintProjection(Dm, RinvChol, DmDager, DdaggerT_R_Ddagger_Chol, RinvConstrainedChol);
 
 		DmDagerTrajectoryStock_[i][k].leftCols(nc1) = DmDager;
 		EvProjectedTrajectoryStock_[i][k].noalias() = DmDager * BASE::EvTrajectoryStock_[i][k].head(nc1);
@@ -386,14 +371,15 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::approximateConstrainedLQWork
 				BASE::PmTrajectoryStock_[i][k].transpose() * CmProjectedTrajectoryStock_[i][k];
 		QmConstrainedTrajectoryStock_[i][k] =
 				BASE::QmTrajectoryStock_[i][k] - PmTransDmDagerCm - PmTransDmDagerCm.transpose();
-		QmConstrainedTrajectoryStock_[i][k].noalias() += Cm.transpose() * RmProjected * Cm;
+        dynamic_matrix_t Cm_RProjected_Cm_Chol = DdaggerT_R_Ddagger_Chol.transpose() * Cm;
+		QmConstrainedTrajectoryStock_[i][k].noalias() += Cm_RProjected_Cm_Chol.transpose() * Cm_RProjected_Cm_Chol;
 
 		QvConstrainedTrajectoryStock_[i][k] = BASE::QvTrajectoryStock_[i][k];
 		QvConstrainedTrajectoryStock_[i][k].noalias() -=
 				CmProjectedTrajectoryStock_[i][k].transpose() * BASE::RvTrajectoryStock_[i][k];
 
 		if (BASE::ddpSettings_.useRiccatiSolver_ == true) {
-			RmInvConstrainedCholTrajectoryStock_[i][k].noalias() = RinvChol * QRof_RinvCholT_DmT_Qu;
+			RmInvConstrainedCholTrajectoryStock_[i][k] = RinvConstrainedChol;
 		} else {
 			input_matrix_t DmNullSpaceProjection = input_matrix_t::Identity() - DmProjectedTrajectoryStock_[i][k];
 			BmConstrainedTrajectoryStock_[i][k].noalias() = BASE::BmTrajectoryStock_[i][k] * DmNullSpaceProjection;

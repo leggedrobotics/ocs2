@@ -92,18 +92,22 @@ public:
 	 * @param [in] systemDerivatives: The system dynamics derivatives for subsystems of the system.
 	 * @param [in] systemConstraints: The system constraint function and its derivatives for subsystems.
 	 * @param [in] costFunction: The cost function (intermediate and terminal costs) and its derivatives for subsystems.
+	 * @param [in] checkNumericalCharacteristics: check for the expected numerical characteristics of the model (default true)
+	 * @param [in] makePsdWillBePerformedLater: Whether or not the model will be rectified later outside of this class.
 	 */
 	LinearQuadraticApproximator(
 			const derivatives_base_t& systemDerivatives,
 			const constraint_base_t& systemConstraints,
 			const cost_function_base_t& costFunction,
 			const char algorithmName[] = nullptr,
-			bool checkNumericalCharacteristics = true)
+			bool checkNumericalCharacteristics = true,
+			bool makePsdWillBePerformedLater = false)
 	: systemDerivativesPtr_(systemDerivatives.clone())
 	, systemConstraintsPtr_(systemConstraints.clone())
 	, costFunctionPtr_(costFunction.clone())
 	, algorithmName_(algorithmName)
 	, checkNumericalCharacteristics_(checkNumericalCharacteristics)
+	, makePsdWillBePerformedLater_(makePsdWillBePerformedLater)
 	{}
 
 
@@ -414,23 +418,23 @@ public:
 					throw std::runtime_error("Intermediate cost first derivative w.r.t. state is is not finite.");
 				if (!Qm.allFinite())
 					throw std::runtime_error("Intermediate cost second derivative w.r.t. state is is not finite.");
-				if (!Qm.isApprox(Qm.transpose()))
+				if (!makePsdWillBePerformedLater_ && !Qm.isApprox(Qm.transpose()))
 					throw std::runtime_error("Intermediate cost second derivative w.r.t. state is is not self-adjoint.");
-				if (Qm.eigenvalues().real().minCoeff() < -Eigen::NumTraits<scalar_t>::epsilon())
+				if (!makePsdWillBePerformedLater_ && Qm.eigenvalues().real().minCoeff() < -Eigen::NumTraits<scalar_t>::epsilon())
 					throw std::runtime_error("Q matrix is not positive semi-definite. It's smallest eigenvalue is " +
 							std::to_string(Qm.eigenvalues().real().minCoeff()) + ".");
 				if (!Rv.allFinite())
 					throw std::runtime_error("Intermediate cost first derivative w.r.t. input is is not finite.");
 				if (!Rm.allFinite())
 					throw std::runtime_error("Intermediate cost second derivative w.r.t. input is is not finite.");
-				if (!Rm.isApprox(Rm.transpose()))
-					throw std::runtime_error("Intermediate cost second derivative w.r.t. input is is not self-adjoint.");
 				if (!Pm.allFinite())
 					throw std::runtime_error("Intermediate cost second derivative w.r.t. input-state is is not finite.");
-				if (Rm.ldlt().rcond() < Eigen::NumTraits<scalar_t>::epsilon())
+				if (!makePsdWillBePerformedLater_ && !Rm.isApprox(Rm.transpose()))
+					throw std::runtime_error("Intermediate cost second derivative w.r.t. input is is not self-adjoint.");
+				if (!makePsdWillBePerformedLater_ && Rm.ldlt().rcond() < Eigen::NumTraits<scalar_t>::epsilon())
 					throw std::runtime_error("R matrix is not invertible. It's reciprocal condition number is " +
 							std::to_string(Rm.ldlt().rcond()) + ".");
-				if (Rm.eigenvalues().real().minCoeff() < Eigen::NumTraits<scalar_t>::epsilon())
+				if (!makePsdWillBePerformedLater_ && Rm.eigenvalues().real().minCoeff() < Eigen::NumTraits<scalar_t>::epsilon())
 					throw std::runtime_error("R matrix is not positive definite. It's smallest eigenvalue is " +
 							std::to_string(Rm.eigenvalues().real().minCoeff()) + ".");
 			} catch(const std::exception& error)  {
@@ -466,6 +470,7 @@ private:
 
 	const char* algorithmName_;
 	bool checkNumericalCharacteristics_;
+	bool makePsdWillBePerformedLater_;
 };
 
 } // namespace ocs2

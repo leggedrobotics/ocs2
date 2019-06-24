@@ -13,7 +13,7 @@ namespace ocs2 {
  *  Implements the relaxed barrier function for a single inequality constraint \f$ h \geq 0 \f$
  *
  *   \f[
- *   p(h)=\left\{
+ *   p(h)=\left\lbrace
  *               \begin{array}{ll}
  *                 -\mu \ln(h) & if \quad  h > \delta, \\
  *                 -\mu \ln(\delta) + \mu \frac{1}{2} \left( \left( \frac{h-2\delta}{\delta} \right)^2 - 1 \right) & otherwise,

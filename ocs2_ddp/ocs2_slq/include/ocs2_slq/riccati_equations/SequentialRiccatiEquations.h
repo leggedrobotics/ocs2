@@ -129,7 +129,7 @@ public:
 		for(size_t nCols=0; nCols < STATE_DIM; nCols++)
 		{
 			nRows = nCols+1;
-			allSs.template segment(count, nRows) << Eigen::Map<const Eigen::VectorXd>(Sm.data() + nCols*STATE_DIM, nRows);
+			allSs.segment(count, nRows) << Eigen::Map<const Eigen::VectorXd>(Sm.data() + nCols*STATE_DIM, nRows);
 			count += nRows;
 		}
 
@@ -155,8 +155,8 @@ public:
 		for(size_t rows=0; rows < STATE_DIM; rows++)
 		{
 			nCols = rows+1;
-			Sm.template block(rows, 0, 1, nCols)  << Eigen::Map<const Eigen::VectorXd>(allSs.data()+count, nCols).transpose();
-			Sm.template block(0, rows, nCols-1, 1)  << Eigen::Map<const Eigen::VectorXd>(allSs.data()+count, nCols-1); // "nCols-1" because diagonal elements have already been covered
+			Sm.block(rows, 0, 1, nCols)  << Eigen::Map<const Eigen::VectorXd>(allSs.data()+count, nCols).transpose();
+			Sm.block(0, rows, nCols-1, 1)  << Eigen::Map<const Eigen::VectorXd>(allSs.data()+count, nCols-1); // "nCols-1" because diagonal elements have already been covered
 			count += nCols;
 		}
 

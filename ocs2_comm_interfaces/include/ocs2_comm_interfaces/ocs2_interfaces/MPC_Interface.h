@@ -84,7 +84,7 @@ class MPC_Interface {
   /**
    * Resets the class to its instantiate state.
    */
-  virtual void reset();
+  virtual void reset(const cost_desired_trajectories_t& costDesiredTrajectories);
 
   /**
    * Set the new observation to be considered during the next MPC iteration.

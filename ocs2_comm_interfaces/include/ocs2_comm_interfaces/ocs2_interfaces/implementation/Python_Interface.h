@@ -21,6 +21,11 @@ PythonInterface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::~PythonInterface() {
 }
 
 template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
+void PythonInterface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::reset(const cost_desired_trajectories_t& targetTrajectories){
+  mpcInterface_->reset(targetTrajectories);
+}
+
+template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
 void PythonInterface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::init(const std::string& taskFileFolder){
   initRobotInterface(taskFileFolder);
 

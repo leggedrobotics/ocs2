@@ -37,6 +37,8 @@ class PythonInterface {
    */
   void init(const std::string& taskFileFolder);
 
+  void reset(const cost_desired_trajectories_t& targetTrajectories);
+
   void setObservation(double t, Eigen::Ref<const state_vector_t> x);
   void setTargetTrajectories(const cost_desired_trajectories_t& targetTrajectories);
 

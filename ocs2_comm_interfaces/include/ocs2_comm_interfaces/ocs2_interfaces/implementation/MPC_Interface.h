@@ -18,20 +18,20 @@ MPC_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::MPC_Interface(mpc_t* mpc, co
       observationUpdated_(false),
       logicMachine_(logicRules) {
   // reset variables
-  reset();
+  reset(cost_desired_trajectories_t());
 }
 
 template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void MPC_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::reset() {
+void MPC_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::reset(const cost_desired_trajectories_t& costDesiredTrajectories) {
   initialCall_ = true;
   numIterations_ = 0;
-  desiredTrajectoriesUpdated_ = false;
-  observationUpdated_ = false;
+  desiredTrajectoriesUpdated_ = true;
+  observationUpdated_ = true;
   mpcOutputBufferUpdated_ = false;
   logicUpdated_ = false;
 
   // MPC inputs
-  costDesiredTrajectories_.clear();
+  costDesiredTrajectories_ = costDesiredTrajectories;
   currentObservation_ = system_observation_t();
 
   // MPC outputs:

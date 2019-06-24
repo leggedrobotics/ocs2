@@ -59,7 +59,7 @@ public:
 	using QuadrotorConstraint = ConstraintBase<quadrotor::STATE_DIM_, quadrotor::INPUT_DIM_>;
 	using QuadrotorOperatingPoint = SystemOperatingPoint<quadrotor::STATE_DIM_, quadrotor::INPUT_DIM_>;
 
-	typedef MPC_ILQR<quadrotor::STATE_DIM_, quadrotor::INPUT_DIM_> mpc_t;
+	using mpc_t = MPC_ILQR<quadrotor::STATE_DIM_, quadrotor::INPUT_DIM_>;
 
 	/**
 	 * Constructor
@@ -92,7 +92,14 @@ public:
 	 *
 	 * @return Pointer to the internal MPC
 	 */
-	mpc_t::Ptr& getMPCPtr();
+	mpc_t::Ptr& getMPCPtrSpecialized();
+	void* getMPCPtr() override;
+
+	QuadrotorSystemDynamics const * getDynamicsPtr() override { return quadrotorSystemDynamicsPtr_.get(); }
+
+	QuadrotorDynamicsDerivatives const * getDynamicsDerivativesPtr() override { return quadrotorDynamicsDerivativesPtr_.get(); }
+
+	void* getCostPtr() override { return quadrotorCostPtr_.get(); }
 
 protected:
 	/**

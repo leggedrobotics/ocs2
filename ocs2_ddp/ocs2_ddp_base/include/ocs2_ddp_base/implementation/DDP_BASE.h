@@ -84,7 +84,8 @@ DDP_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::DDP_BASE (
 
 		// initialize LQ approximator
 		linearQuadraticApproximatorPtrStock_.emplace_back(new linear_quadratic_approximator_t(
-				*systemDerivativesPtr, *systemConstraintsPtr, *costFunctionPtr, algorithmName_.c_str(), ddpSettings_.checkNumericalStability_) );
+				*systemDerivativesPtr, *systemConstraintsPtr, *costFunctionPtr, algorithmName_.c_str(),
+				ddpSettings_.checkNumericalStability_, ddpSettings_.useMakePSD_) );
 
 		// initialize operating trajectories
 		operatingTrajectoriesPtrStock_.emplace_back( operatingTrajectoriesPtr->clone() );
@@ -697,6 +698,8 @@ void DDP_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::approximateOptimalControlPro
 	heuristicsFunctionsPtrStock_[0]->getTerminalCost(sHeuristics_(0));
 	heuristicsFunctionsPtrStock_[0]->getTerminalCostDerivativeState(SvHeuristics_);
 	heuristicsFunctionsPtrStock_[0]->getTerminalCostSecondDerivativeState(SmHeuristics_);
+	if (ddpSettings_.useMakePSD_==true)
+		BASE::makePSD(SmHeuristics_);
 }
 
 /******************************************************************************************************/

@@ -1513,8 +1513,9 @@ void DDP_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::swapNominalTrajectories (
 		state_vector_array2_t& nominalStateTrajectoriesStock,
 		input_vector_array2_t& nominalInputTrajectoriesStock)  {
 
-	nominalTimeTrajectoriesStock.swap(nominalTimeTrajectoriesStock_);
-	nominalStateTrajectoriesStock.swap(nominalStateTrajectoriesStock_);
+	//! @note swapping in some random nominal trajectories destroys internal state for getValueFunction
+	nominalTimeTrajectoriesStock = nominalTimeTrajectoriesStock_;
+	nominalStateTrajectoriesStock = nominalStateTrajectoriesStock_;
 	nominalInputTrajectoriesStock.swap(nominalInputTrajectoriesStock_);
 }
 

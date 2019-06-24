@@ -10,8 +10,12 @@ TEST(DoubleIntegratorTest, pyBindings) {
   using state_vector_array_t = bindings_t::state_vector_array_t;
   using input_vector_array_t = bindings_t::input_vector_array_t;
   using input_state_matrix_array_t = bindings_t::input_state_matrix_array_t;
+  using cost_desired_trajectories_t = bindings_t::cost_desired_trajectories_t;
 
   bindings_t bindings("mpc", false);
+
+  auto costDesiredTraj = cost_desired_trajectories_t();
+  bindings.setTargetTrajectories(costDesiredTraj);
 
   auto state = state_vector_t::Zero();
   bindings.setObservation(0.0, state);
@@ -50,6 +54,9 @@ TEST(DoubleIntegratorTest, pyBindings) {
   auto dLdu = bindings.getRunningCostDerivativeInput(t_arr[0], x_arr[0], u_arr[0]);
 
   std::cout << "L: " << L << "\ndLdx: " << dLdx.transpose() << "\ndLdu: " << dLdu.transpose() << std::endl;
+
+  auto Vx = bindings.getValueFunctionStateDerivative(t_arr[0], x_arr[0]);
+  std::cout << "Vx: " << Vx.transpose() << std::endl;
 }
 
 int main(int argc, char** argv) {

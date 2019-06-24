@@ -309,8 +309,6 @@ void MPC_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::getMpcSolution(scalar_a
   k.resize(t.size());
   auto kIter = k.begin();
 
-  std::cout << "getMPCSolution getting K:" << std::endl;
-
   LinearController<STATE_DIM, INPUT_DIM>* linCtrl(nullptr);
   EigenLinearInterpolation<input_state_matrix_t> linInterpolateK;
   auto subsystemIndex = std::numeric_limits<size_t>::max();

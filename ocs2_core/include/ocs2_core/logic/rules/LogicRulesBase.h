@@ -138,14 +138,17 @@ public:
 	virtual void display() const {
 
 		std::cerr << std::endl << "Event Times:\n\t {";
-		for (auto& t: eventTimes_)
+		for (auto& t: eventTimes_) {
 			std::cerr << t << ", ";
-		if (!eventTimes_.empty())  std::cerr << "\b\b";
+		}
+		if (!eventTimes_.empty()) {  std::cerr << "\b\b";
+		}
 		std::cerr << "}" << std::endl;
 
 		std::cerr << "Event counters:\n\t {";
-		for (size_t i=0; i<=eventTimes_.size() ;i++)
+		for (size_t i=0; i<=eventTimes_.size() ;i++) {
 			std::cerr << i << ", ";
+		}
 		std::cerr << "\b\b}" << std::endl;
 	}
 

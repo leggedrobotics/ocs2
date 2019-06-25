@@ -150,10 +150,11 @@ public:
 				std::cerr << std::setprecision(dispPrecision) <<
 						desiredStateTrajectory_[i](j) << ",  ";
 			}
-			if (desiredStateTrajectory_[i].size()>0)
+			if (desiredStateTrajectory_[i].size()>0) {
 				std::cerr << "\b\b]" << ",  " << std::endl;
-			else
+			} else {
 				std::cerr << " ]" << ",  " << std::endl;
+			}
 
 			// input
 			std::cerr << "input: [";
@@ -161,10 +162,11 @@ public:
 				std::cerr << std::setprecision(dispPrecision) <<
 						desiredInputTrajectory_[i](j) << ",  ";
 			}
-			if (desiredInputTrajectory_[i].size()>0)
+			if (desiredInputTrajectory_[i].size()>0) {
 				std::cerr << "\b\b]" << std::endl;
-			else
+			} else {
 				std::cerr << " ]" << std::endl;
+			}
 
 		}  // end of i loop
 	}

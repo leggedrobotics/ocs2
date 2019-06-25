@@ -40,8 +40,9 @@ SystemDynamicsBaseAD<Derived, STATE_DIM, INPUT_DIM, logic_rules_template_t, NUM_
 	, modelName_("")
 	, libraryFolder_("")
 {
-	if (dynamicLibraryIsCompiled)
+	if (dynamicLibraryIsCompiled) {
 		setADInterfaces();
+	}
 };
 
 /******************************************************************************************************/
@@ -60,8 +61,9 @@ SystemDynamicsBaseAD<Derived, STATE_DIM, INPUT_DIM, logic_rules_template_t, NUM_
 	, guardSurfacesADInterfacePtr_(rhs.guardSurfacesADInterfacePtr_->clone())
 
 {
-	if (rhs.dynamicLibraryIsCompiled_)
+	if (rhs.dynamicLibraryIsCompiled_) {
 		loadModels(false);
+	}
 }
 
 /******************************************************************************************************/
@@ -113,8 +115,9 @@ void SystemDynamicsBaseAD<Derived, STATE_DIM, INPUT_DIM, logic_rules_template_t,
 		const Eigen::Matrix<SCALAR_T, INPUT_DIM, 1>& input,
 		Eigen::Matrix<SCALAR_T, NUM_MODES, 1>& guardSurfacesValue) {
 
-	if (NUM_MODES != 1)
+	if (NUM_MODES != 1) {
 		throw std::runtime_error("systemGuardSurfaces() method should be implemented by the derived class.");
+	}
 
 	guardSurfacesValue(0) = -1;
 }
@@ -155,8 +158,9 @@ void SystemDynamicsBaseAD<Derived, STATE_DIM, INPUT_DIM, logic_rules_template_t,
 
 	if (dynamicLibraryIsCompiled_) {
 		bool libraryLoaded = loadModels(false);
-		if (!libraryLoaded)
+		if (!libraryLoaded) {
 			throw std::runtime_error("SystemDynamics library is not found!");
+	}
 
 	} else {
 		throw std::runtime_error("SystemDynamics library has not been compiled!");

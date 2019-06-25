@@ -68,8 +68,9 @@ public:
 	, systemPtr_(systemPtr)
 	, eventHandlerPtr_(eventHandlerPtr)
 	{
-		if (eventHandlerPtr_)
+		if (eventHandlerPtr_) {
 			eventHandlerPtr_->setSystem(systemPtr_);
+		}
 	}
 
 	/**

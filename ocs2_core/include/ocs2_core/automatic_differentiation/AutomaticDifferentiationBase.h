@@ -126,12 +126,14 @@ protected:
 		rowsJacobian.clear();
 		colsJacobian.clear();
 
-		for (size_t i=0; i<range_dim_; i++)
-			for (size_t j=0; j<domain_dim_; j++)
+		for (size_t i=0; i<range_dim_; i++) {
+			for (size_t j=0; j<domain_dim_; j++) {
 				if (sparsityPattern(i,j)>0) {
 					rowsJacobian.push_back(i);
 					colsJacobian.push_back(j);
 				}
+			}
+		}
 
 		// Hessian
 		domain_vector_t sparsityPatternSum = sparsityPattern.colwise().maxCoeff().transpose();
@@ -140,11 +142,12 @@ protected:
 		colsHessian.clear();
 
 		for (size_t i=0; i<domain_dim_; i++) {
-			for (size_t j=i; j<domain_dim_; j++)
+			for (size_t j=i; j<domain_dim_; j++) {
 				if (sparsityPatternSum(i)>0 && sparsityPatternSum(j)>0) {
 					rowsHessian.push_back(i);
 					colsHessian.push_back(j);
 				}
+			}
 		}
 
 	}

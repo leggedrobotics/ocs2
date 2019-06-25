@@ -73,8 +73,9 @@ class FeedforwardController final : public ControllerBase<STATE_DIM, INPUT_DIM>
     uffArray_.clear();
     uffArray_.reserve(controllerTime.size());
 
-    if(controllerTime.size() != stateTrajectory.size())
+    if(controllerTime.size() != stateTrajectory.size()) {
       throw std::runtime_error("FeedforwardController Constructor: controllerTime and stateTrajectory sizes mismatch.");
+	}
 
     auto iTime = controllerTime.cbegin();
     auto iState = stateTrajectory.cbegin();

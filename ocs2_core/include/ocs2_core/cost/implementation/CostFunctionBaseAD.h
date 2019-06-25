@@ -40,8 +40,9 @@ CostFunctionBaseAD<Derived, STATE_DIM, INPUT_DIM, LOGIC_RULES_T, LOGIC_VARIABLE_
 	, modelName_("")
 	, libraryFolder_("")
 {
-	if (dynamicLibraryIsCompiled)
+	if (dynamicLibraryIsCompiled) {
 		setADInterfaces();
+	}
 }
 
 /******************************************************************************************************/
@@ -171,8 +172,9 @@ void CostFunctionBaseAD<Derived, STATE_DIM, INPUT_DIM, LOGIC_RULES_T, LOGIC_VARI
 
 	if (dynamicLibraryIsCompiled_) {
 		bool libraryLoaded = loadModels(false);
-		if (!libraryLoaded)
+		if (!libraryLoaded) {
 			throw std::runtime_error("CostFunction library is not found!");
+		}
 
 	} else {
 		throw std::runtime_error("CostFunction library has not been compiled!");
@@ -228,8 +230,9 @@ void CostFunctionBaseAD<Derived, STATE_DIM, INPUT_DIM, LOGIC_RULES_T, LOGIC_VARI
 		const char* algorithmName /*= nullptr*/) {
 
 	if (std::is_same<LOGIC_RULES_T, NullLogicRules>::value) {
-		if (LOGIC_VARIABLE_DIM != 0)
+		if (LOGIC_VARIABLE_DIM != 0) {
 			throw std::runtime_error("LOGIC_VARIABLE_DIM should be zero!");
+		}
 	} else {
 		logicVariables(tapedInput_) = static_cast<Derived *>(this)->template getlogicVariables(
 				logicRulesMachine, partitionIndex, algorithmName);;

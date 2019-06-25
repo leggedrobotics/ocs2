@@ -129,8 +129,9 @@ public:
 	}
 
 	void addCompileFlag(const std::vector<std::string>& cFlags) {
-		for (const std::string& flag : cFlags)
+		for (const std::string& flag : cFlags) {
 			compiler_.addCompileFlags(flag);
+		}
 	}
 
 	void getCompileLibFlags(std::vector<std::string>& cFlags) const {
@@ -142,8 +143,9 @@ public:
 	}
 
 	void addCompileLibFlags(const std::vector<std::string>& cFlags) {
-		for (const std::string& flag : cFlags)
+		for (const std::string& flag : cFlags) {
 			compiler_.addCompileLibFlags(flag);
+		}
 	}
 
 private:

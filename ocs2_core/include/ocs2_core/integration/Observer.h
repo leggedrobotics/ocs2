@@ -97,7 +97,8 @@ public:
 			{
 				std::string msg = "Integration terminated since the maximum number of function calls is reached. ";
 				msg += "State at termination time " + std::to_string(t) + ":\n [";
-				for (size_t i=0; i<x.size()-1; i++)  msg += std::to_string(x(i)) + ", ";
+				for (size_t i=0; i<x.size()-1; i++) {  msg += std::to_string(x(i)) + ", ";
+				}
 				msg += std::to_string(x(x.size()-1)) + "]\n";
 				throw std::runtime_error(msg);
 				break;

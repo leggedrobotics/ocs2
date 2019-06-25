@@ -78,7 +78,7 @@ public:
 	/**
 	 * Default destructor.
 	 */
-	virtual ~SystemOperatingPoint() {}
+	virtual ~SystemOperatingPoint() = default;
 
 	/**
 	 * Initializes the operating trajectories class.
@@ -92,7 +92,7 @@ public:
 	virtual void initializeModel(
 			LogicRulesMachine<LOGIC_RULES_T>& logicRulesMachine,
 			const size_t& partitionIndex,
-			const char* algorithmName=NULL) override {
+			const char* algorithmName=nullptr) override {
 
 		Base::initializeModel(logicRulesMachine, partitionIndex, algorithmName);
 	}

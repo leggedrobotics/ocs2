@@ -116,7 +116,7 @@ abs( const Eigen::MatrixBase< D > &m ) {
 
 
 
-} // end Eigen namespace
+}  // namespace Eigen
 
 
 namespace boost {
@@ -158,9 +158,9 @@ struct vector_space_reduce<Eigen::Matrix<double, STATE_DIM, 1>>
 };
 
 #endif
-}
-}
-}  // end boost::numeric::odeint namespace
+}  // namespace odeint
+}  // namespace numeric
+}  // namespace boost
 
 
 #endif // BOOST_NUMERIC_ODEINT_EXTERNAL_EIGEN_EIGEN_ALGEBRA_HPP_INCLUDED

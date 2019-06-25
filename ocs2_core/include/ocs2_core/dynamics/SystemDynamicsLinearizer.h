@@ -109,7 +109,7 @@ public:
 	virtual void initializeModel(
 			LogicRulesMachine<LOGIC_RULES_T>& logicRulesMachine,
 			const size_t& partitionIndex,
-			const char* algorithmName=NULL) override {
+			const char* algorithmName=nullptr) override {
 
 		Base::initializeModel(logicRulesMachine, partitionIndex, algorithmName);
 		nonlinearSystemPtr_->initializeModel(logicRulesMachine, partitionIndex, algorithmName);
@@ -118,7 +118,7 @@ public:
 	/**
 	 * Default destructor
 	 */
-	virtual ~SystemDynamicsLinearizer(){}
+	virtual ~SystemDynamicsLinearizer()= default;
 
 	/**
 	 * Sets the current time, state, and control inout.

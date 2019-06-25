@@ -71,8 +71,8 @@ public:
 	 * Copy constructor
 	 */
 	LogicRulesBase(const LogicRulesBase& rhs)
-	: eventTimes_(rhs.eventTimes_)
-	{}
+	 
+	= default;
 
 	/**
 	 * Destructor

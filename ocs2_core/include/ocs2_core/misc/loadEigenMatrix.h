@@ -108,7 +108,7 @@ inline void loadEigenMatrix(
 }
 
 
-}  // end of ocs2 namespace
+}  // namespace ocs2
 
 
 #endif /* OCS2_LOADEIGENMATRIX_H_ */

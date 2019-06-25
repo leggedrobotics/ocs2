@@ -221,5 +221,5 @@ void TrajectorySpreadingController<STATE_DIM, INPUT_DIM>::spreadController(
 
 }
 
-}  // ocs2 namespace
+}  // namespace ocs2
 

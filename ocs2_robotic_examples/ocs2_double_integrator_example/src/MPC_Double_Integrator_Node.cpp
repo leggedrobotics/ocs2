@@ -38,7 +38,7 @@ int main(int argc, char **argv)
 {
 	// task file
 	if (argc <= 1) { throw std::runtime_error("No task file specified. Aborting.");
-}
+	}
 	std::string taskFileFolderName = std::string(argv[1]);
 
 	DoubleIntegratorInterface doubleIntegratorInterface(taskFileFolderName);

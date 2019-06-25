@@ -84,7 +84,7 @@ protected:
 		ROS_INFO_STREAM("Waiting for visualization subscriber ...");
 		while(ros::ok() && jointPublisher_.getNumSubscribers() == 0) {
 			ros::Rate(100).sleep();
-}
+		}
 		ROS_INFO_STREAM("Visualization subscriber is connected.");
 	}
 

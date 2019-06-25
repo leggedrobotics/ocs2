@@ -159,7 +159,7 @@ public:
 
 		if (targetPoseDisplacementVelocity.size()<12) {
 			throw std::runtime_error("target command should have at least 12 elements.");
-}
+		}
 
 		auto deg2rad = [](const scalar_t& deg) { return (deg*M_PI/180.0); };
 

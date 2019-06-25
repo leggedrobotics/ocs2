@@ -90,7 +90,7 @@ public:
 	/**
 	 * Destructor
 	 */
-	virtual ~MRT_ROS_Double_Integrator() = default;
+	~MRT_ROS_Double_Integrator() override = default;
 
 	/**
 	 * This method will be called either after the very fist call of the class or after a call to reset().
@@ -98,8 +98,8 @@ public:
 	 *
 	 * @param [in] planObservation: The observation of the policy.
 	 */
-	virtual void initCall(
-			const system_observation_t& planObservation)
+	void initCall(
+			const system_observation_t& planObservation) override
 	{}
 
 private:

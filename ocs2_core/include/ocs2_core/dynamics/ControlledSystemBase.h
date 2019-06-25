@@ -177,7 +177,7 @@ public:
 	 * @param [in] state: transition state
 	 * @param [out] mappedState: mapped state after transition
 	 */
-	virtual void computeJumpMap(
+	void computeJumpMap(
 			const scalar_t& time,
 			const state_vector_t& state,
 			state_vector_t& mappedState) override {
@@ -192,7 +192,7 @@ public:
 	 * @param [in] state: transition state
 	 * @param [out] guardSurfacesValue: An array of guard surfaces values
 	 */
-	virtual void computeGuardSurfaces(
+	void computeGuardSurfaces(
 			const scalar_t& time,
 			const state_vector_t& state,
 			dynamic_vector_t& guardSurfacesValue) override {

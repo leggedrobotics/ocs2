@@ -77,7 +77,7 @@ public:
 	/**
 	* Default destructor
 	*/
-	~TargetTrajectories_Keyboard_Double_Integrator() = default;
+	~TargetTrajectories_Keyboard_Double_Integrator() override = default;
 
 	/**
 	 * From command line loaded command to desired time, state, and input.

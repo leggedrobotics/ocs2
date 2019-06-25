@@ -85,7 +85,7 @@ public:
 	/**
 	 * Resets the class.
 	 */
-	virtual void reset() override {}
+	void reset() override {}
 
 	/**
 	 * Sets the maximum number of integration points per a second for ode solvers.
@@ -103,7 +103,7 @@ public:
 	 * @param [in] time: Current time.
 	 * @return boolean: 
 	 */
-	virtual bool checkEvent(
+	bool checkEvent(
 			const state_vector_t& state,
 			const scalar_t& time) override {
 
@@ -132,7 +132,7 @@ public:
 	 * @param [out] timeTrajectory: The time trajectory which contains the current time as its last element.
 	 * @return boolean: A non-negative unique ID for the active events.
 	 */
-	virtual int handleEvent(
+	int handleEvent(
 			state_vector_array_t& stateTrajectory,
 			scalar_array_t& timeTrajectory) override {
 

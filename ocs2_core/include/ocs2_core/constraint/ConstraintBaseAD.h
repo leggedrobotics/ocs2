@@ -122,7 +122,7 @@ public:
 	 * @param [in] time: time.
 	 * @return number of state-input active equality constraints.
 	 */
-	virtual size_t numStateInputConstraint(const scalar_t& time) override {
+	size_t numStateInputConstraint(const scalar_t& time) override {
 
 		return 0;
 	}
@@ -147,7 +147,7 @@ public:
 	 * @param [in] time: time.
 	 * @return number of state-only active equality constraints.
 	 */
-	virtual size_t numStateOnlyConstraint(const scalar_t& time) override {
+	size_t numStateOnlyConstraint(const scalar_t& time) override {
 
 		return 0;
 	}
@@ -172,7 +172,7 @@ public:
 	 * @param [in] time: time.
 	 * @return number of final state-only active equality constraints.
 	 */
-	virtual size_t numStateOnlyFinalConstraint(const scalar_t& time) override {
+	size_t numStateOnlyFinalConstraint(const scalar_t& time) override {
 
 		return 0;
 	}

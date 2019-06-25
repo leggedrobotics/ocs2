@@ -14,10 +14,10 @@ namespace ocs2 {
     namespace LoopshapingPropertyTree {
         Filter readSISOFilter(const boost::property_tree::ptree& pt, std::string filterName, bool invert = false){
             // Get Sizes
-            size_t numRepeats = pt.get<size_t>(filterName + ".numRepeats");
-            size_t numPoles = pt.get<size_t>(filterName + ".numPoles");
-            size_t numZeros = pt.get<size_t>(filterName + ".numZeros");
-            double DCGain = pt.get<double>(filterName + ".DCGain");
+            auto numRepeats = pt.get<size_t>(filterName + ".numRepeats");
+            auto numPoles = pt.get<size_t>(filterName + ".numPoles");
+            auto numZeros = pt.get<size_t>(filterName + ".numZeros");
+            auto DCGain = pt.get<double>(filterName + ".DCGain");
             size_t numStates = numRepeats*numPoles;
             size_t numInputs = numRepeats;
             size_t numOutputs = numRepeats;
@@ -27,7 +27,7 @@ namespace ocs2 {
             numerator.setZero();
             numerator(0) = 1.0;
             for (size_t z = 0; z<numZeros; z++){
-                double zero = pt.get<double>(filterName + ".zeros." + "(" +std::to_string(z) + ")");
+                auto zero = pt.get<double>(filterName + ".zeros." + "(" +std::to_string(z) + ")");
                 numerator.segment(1, z+1) -= zero*numerator.segment(0, z+1).eval();
             }
 
@@ -35,7 +35,7 @@ namespace ocs2 {
             denominator.setZero();
             denominator(0) = 1.0;
             for (size_t p = 0; p<numPoles; p++){
-                double pole = pt.get<double>(filterName + ".poles." + "(" +std::to_string(p) + ")");
+                auto pole = pt.get<double>(filterName + ".poles." + "(" +std::to_string(p) + ")");
                 denominator.segment(1, p+1) -= pole*denominator.segment(0, p+1).eval();
             }
 
@@ -77,7 +77,7 @@ namespace ocs2 {
         }
 
         Filter readMIMOFilter(const boost::property_tree::ptree& pt, std::string filterName, bool invert = false){
-            size_t numFilters = pt.get<size_t>(filterName + ".numFilters");
+            auto numFilters = pt.get<size_t>(filterName + ".numFilters");
             Eigen::MatrixXd A(0, 0), B(0, 0), C(0, 0), D(0, 0);
             if (numFilters > 0){
                 // Read the sisoFilters

@@ -99,36 +99,36 @@ SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::SLQ_BASE(
 
 	for (size_t i=0; i<BASE::ddpSettings_.nThreads_; i++)  {
 
-		typedef Eigen::aligned_allocator<riccati_equations_t> riccati_equations_alloc_t;
+		using riccati_equations_alloc_t = Eigen::aligned_allocator<riccati_equations_t>;
 		riccatiEquationsPtrStock_.push_back( std::move(
 				std::allocate_shared<riccati_equations_t, riccati_equations_alloc_t>(riccati_equations_alloc_t(),
 						BASE::ddpSettings_.useMakePSD_,
 						BASE::ddpSettings_.addedRiccatiDiagonal_) ) );
 
-		typedef Eigen::aligned_allocator<error_equation_t> error_equation_alloc_t;
+		using error_equation_alloc_t = Eigen::aligned_allocator<error_equation_t>;
 		errorEquationPtrStock_.push_back( std::move(
 				std::allocate_shared<error_equation_t, error_equation_alloc_t>(error_equation_alloc_t(),
 						BASE::ddpSettings_.useMakePSD_,
 						BASE::ddpSettings_.addedRiccatiDiagonal_) ) );
 
-		typedef Eigen::aligned_allocator<slq_riccati_equations_t> slq_riccati_equations_alloc_t;
+		using slq_riccati_equations_alloc_t = Eigen::aligned_allocator<slq_riccati_equations_t>;
 		slqRiccatiEquationsPtrStock_.push_back( std::move(
 				std::allocate_shared<slq_riccati_equations_t, slq_riccati_equations_alloc_t>(slq_riccati_equations_alloc_t(),
 						BASE::ddpSettings_.useMakePSD_,
 						BASE::ddpSettings_.addedRiccatiDiagonal_) ) );
 
-		typedef SystemEventHandler<riccati_equations_t::S_DIM_> riccati_event_handler_t;
-		typedef Eigen::aligned_allocator<riccati_event_handler_t> riccati_event_handler_alloc_t;
+		using riccati_event_handler_t = SystemEventHandler<riccati_equations_t::S_DIM_>;
+		using riccati_event_handler_alloc_t = Eigen::aligned_allocator<riccati_event_handler_t>;
 		riccatiEventPtrStock_.push_back( std::move(
 				std::allocate_shared<riccati_event_handler_t, riccati_event_handler_alloc_t>(riccati_event_handler_alloc_t()) ) );
 
-		typedef SystemEventHandler<STATE_DIM> error_event_handler_t;
-		typedef Eigen::aligned_allocator<error_event_handler_t> error_event_handler_alloc_t;
+		using error_event_handler_t = SystemEventHandler<STATE_DIM>;
+		using error_event_handler_alloc_t = Eigen::aligned_allocator<error_event_handler_t>;
 		errorEventPtrStock_.push_back( std::move(
 				std::allocate_shared<error_event_handler_t, error_event_handler_alloc_t>(error_event_handler_alloc_t()) ) );
 
-		typedef SystemEventHandler<slq_riccati_equations_t::S_DIM_> slqRiccati_event_handler_t;
-		typedef Eigen::aligned_allocator<slqRiccati_event_handler_t> slqRiccati_event_handler_alloc_t;
+		using slqRiccati_event_handler_t = SystemEventHandler<slq_riccati_equations_t::S_DIM_>;
+		using slqRiccati_event_handler_alloc_t = Eigen::aligned_allocator<slqRiccati_event_handler_t>;
 		slqRiccatiEventPtrStock_.push_back( std::move(
 				std::allocate_shared<slqRiccati_event_handler_t, slqRiccati_event_handler_alloc_t>(slqRiccati_event_handler_alloc_t()) ) );
 

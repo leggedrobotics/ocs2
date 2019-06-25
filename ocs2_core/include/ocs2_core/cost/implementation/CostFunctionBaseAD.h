@@ -433,7 +433,7 @@ void CostFunctionBaseAD<Derived, STATE_DIM, INPUT_DIM, LOGIC_RULES_T, LOGIC_VARI
 		const ad_dynamic_vector_t& tapedInput,
 		ad_dynamic_vector_t& costValue) {
 
-	ad_dynamic_vector_t& tapedInputNonConst = const_cast<ad_dynamic_vector_t&>(tapedInput);
+	auto& tapedInputNonConst = const_cast<ad_dynamic_vector_t&>(tapedInput);
 
 	ad_scalar_t& t = timeVariable(tapedInputNonConst);
 	Eigen::Matrix<ad_scalar_t, STATE_DIM, 1> x = stateVariables(tapedInputNonConst);
@@ -458,7 +458,7 @@ void CostFunctionBaseAD<Derived, STATE_DIM, INPUT_DIM, LOGIC_RULES_T, LOGIC_VARI
 		const ad_dynamic_vector_t& tapedInput,
 		ad_dynamic_vector_t& costValue) {
 
-	ad_dynamic_vector_t& tapedInputNonConst = const_cast<ad_dynamic_vector_t&>(tapedInput);
+	auto& tapedInputNonConst = const_cast<ad_dynamic_vector_t&>(tapedInput);
 
 	ad_scalar_t& t = timeVariable(tapedInputNonConst);
 	Eigen::Matrix<ad_scalar_t, STATE_DIM, 1> x = stateVariables(tapedInputNonConst);

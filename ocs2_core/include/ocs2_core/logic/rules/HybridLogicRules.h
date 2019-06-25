@@ -122,7 +122,7 @@ public:
 	/**
 	 * Destructor
 	 */
-	virtual ~HybridLogicRules() = default;
+	~HybridLogicRules() override = default;
 
 	/**
 	 * Move assignment
@@ -137,7 +137,7 @@ public:
 	/**
 	 * Displays event information.
 	 */
-	virtual void display() const override {
+	void display() const override {
 
 		BASE::display();
 
@@ -232,15 +232,15 @@ public:
 	 * @param [in] lowerBoundTime: The smallest time for which the logicRules should be defined.
 	 * @param [in] upperBoundTime: The greatest time for which the logicRules should be defined.
 	 */
-	virtual void rewind(
+	void rewind(
 			const scalar_t& lowerBoundTime,
-			const scalar_t& upperBoundTime) = 0;
+			const scalar_t& upperBoundTime) override = 0;
 
 	/**
 	 * This method can be used to update the internal variables. This method should be called by any
 	 * program that updates the logic rules variables e.g. rewind,
 	 */
-	virtual void update() = 0;
+	void update() override = 0;
 
 
 protected:

@@ -290,7 +290,7 @@ inline void MPC_Settings::loadSettings(const std::string& filename, bool verbose
 		std::cerr <<" #### =============================================================================" << std::endl;
 }
 
-}  // end of ocs2 namespace
+}  // namespace ocs2
 
 
 

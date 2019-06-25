@@ -70,7 +70,7 @@ public:
 	/**
 	 * Destructor
 	 */
-	~NullLogicRules() = default;
+	~NullLogicRules() override = default;
 
 	/**
 	 * Move assignment
@@ -88,7 +88,7 @@ public:
 	 * @param [in] lowerBoundTime: The smallest time for which the logicRules should be defined.
 	 * @param [in] upperBoundTime: The greatest time for which the logicRules should be defined.
 	 */
-	virtual void rewind(
+	void rewind(
 			const scalar_t& lowerBoundTime,
 			const scalar_t& upperBoundTime) final
 	{}

@@ -112,4 +112,4 @@ void RobotInterfaceBase<STATE_DIM, INPUT_DIM>::loadInitialState(
 	loadEigenMatrix(taskFile, "initialState", initialState);
 }
 
-}  // ocs2 namespace
+}  // namespace ocs2

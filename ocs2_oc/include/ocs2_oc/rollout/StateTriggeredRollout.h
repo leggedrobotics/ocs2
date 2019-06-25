@@ -60,23 +60,23 @@ public:
 
 	typedef RolloutBase<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> BASE;
 
-	typedef typename BASE::controller_t         controller_t;
-	typedef typename BASE::size_array_t         size_array_t;
-	typedef typename BASE::scalar_t             scalar_t;
-	typedef typename BASE::scalar_array_t       scalar_array_t;
-	typedef typename BASE::state_vector_t       state_vector_t;
-	typedef typename BASE::state_vector_array_t state_vector_array_t;
-	typedef typename BASE::input_vector_t       input_vector_t;
-	typedef typename BASE::input_vector_array_t input_vector_array_t;
+	using controller_t = typename BASE::controller_t;
+	using size_array_t = typename BASE::size_array_t;
+	using scalar_t = typename BASE::scalar_t;
+	using scalar_array_t = typename BASE::scalar_array_t;
+	using state_vector_t = typename BASE::state_vector_t;
+	using state_vector_array_t = typename BASE::state_vector_array_t;
+	using input_vector_t = typename BASE::input_vector_t;
+	using input_vector_array_t = typename BASE::input_vector_array_t;
 
-	typedef SystemEventHandler<STATE_DIM> event_handler_t;
-	typedef StateTriggeredEventHandler<STATE_DIM> state_triggered_event_handler_t;
+	using event_handler_t = SystemEventHandler<STATE_DIM>;
+	using state_triggered_event_handler_t = StateTriggeredEventHandler<STATE_DIM>;
 	typedef ControlledSystemBase<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> controlled_system_base_t;
 
-	typedef LogicRulesMachine<LOGIC_RULES_T> logic_rules_machine_t;
-	typedef HybridLogicRulesMachine<LOGIC_RULES_T> hybrid_logic_rules_machine_t;
+	using logic_rules_machine_t = LogicRulesMachine<LOGIC_RULES_T>;
+	using hybrid_logic_rules_machine_t = HybridLogicRulesMachine<LOGIC_RULES_T>;
 
-	typedef IntegratorBase<STATE_DIM> ode_base_t;
+	using ode_base_t = IntegratorBase<STATE_DIM>;
 
 	/**
 	 * Constructor.

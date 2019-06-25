@@ -130,13 +130,13 @@ class FeedforwardController final : public ControllerBase<STATE_DIM, INPUT_DIM>
     uffArray_ = controllerFeedforward;
   }
 
-  virtual input_vector_t computeInput(const scalar_t& t, const state_vector_t& x) override {
+  input_vector_t computeInput(const scalar_t& t, const state_vector_t& x) override {
     input_vector_t uff;
     linInterpolateUff_.interpolate(t, uff);
     return uff;
   }
 
-  virtual void flatten(const scalar_array_t& timeArray, const std::vector<float_array_t*>& flatArray2) const override {
+  void flatten(const scalar_array_t& timeArray, const std::vector<float_array_t*>& flatArray2) const override {
     const auto timeSize = timeArray.size();
     const auto dataSize = flatArray2.size();
 
@@ -157,7 +157,7 @@ class FeedforwardController final : public ControllerBase<STATE_DIM, INPUT_DIM>
     flatArray = std::move(float_array_t(uff.data(), uff.data() + INPUT_DIM));
   }
 
-  virtual void unFlatten(const scalar_array_t& timeArray, const std::vector<float_array_t const*>& flatArray2) override {
+  void unFlatten(const scalar_array_t& timeArray, const std::vector<float_array_t const*>& flatArray2) override {
     if(flatArray2[0]->size() != INPUT_DIM){
       throw std::runtime_error("FeedforwardController::unFlatten received array of wrong length.");
     }
@@ -172,16 +172,16 @@ class FeedforwardController final : public ControllerBase<STATE_DIM, INPUT_DIM>
     }
   }
 
-  virtual ControllerType getType() const override {
+  ControllerType getType() const override {
 	  return ControllerType::FEEDFORWARD;
   }
 
-  virtual void clear() override {
+  void clear() override {
     timeStamp_.clear();
     uffArray_.clear();
   }
 
-  virtual void setZero() override {
+  void setZero() override {
     std::fill(uffArray_.begin(), uffArray_.end(), input_vector_t::Zero());
   }
 
@@ -190,7 +190,7 @@ class FeedforwardController final : public ControllerBase<STATE_DIM, INPUT_DIM>
    *
    * @return true if the time container size is 0, false otherwise.
    */
-  virtual bool empty() const override {
+  bool empty() const override {
 	  return timeStamp_.empty();
   }
 

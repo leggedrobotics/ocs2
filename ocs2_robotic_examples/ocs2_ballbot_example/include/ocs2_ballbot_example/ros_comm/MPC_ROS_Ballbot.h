@@ -84,7 +84,7 @@ public:
 	/**
 	 * Destructor.
 	 */
-	~MPC_ROS_Ballbot() = default;
+	~MPC_ROS_Ballbot() override = default;
 
 	/**
 	 * Provides the initial target trajectories for the cost function.

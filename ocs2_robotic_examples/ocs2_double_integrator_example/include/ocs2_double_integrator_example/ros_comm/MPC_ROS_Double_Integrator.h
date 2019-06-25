@@ -81,7 +81,7 @@ public:
 	/**
 	 * Destructor.
 	 */
-	virtual ~MPC_ROS_Linear_System() = default;
+	~MPC_ROS_Linear_System() override = default;
 
 	/**
 	 * Adjusts the user-defined target trajectories for the cost based on the current observation.

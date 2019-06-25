@@ -82,7 +82,7 @@ public:
 	/**
 	* Default destructor
 	*/
-	~TargetTrajectories_Keyboard_Ballbot() = default;
+	~TargetTrajectories_Keyboard_Ballbot() override = default;
 
 	/**
 	 * From command line loaded command to desired time, state, and input.

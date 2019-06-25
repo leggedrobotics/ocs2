@@ -99,7 +99,7 @@ public:
 	 * @param [in] partitionIndex: index of the time partition.
 	 * @param [in] algorithmName: The algorithm that class this class (default not defined).
 	 */
-	virtual void initializeModel(
+	void initializeModel(
 			LogicRulesMachine<LOGIC_RULES_T>& logicRulesMachine,
 			const size_t& partitionIndex,
 			const char* algorithmName=nullptr) override {
@@ -112,7 +112,7 @@ public:
      *
      * @return A raw pointer to the class.
      */
-	virtual QuadraticCostFunction* clone() const override {
+	QuadraticCostFunction* clone() const override {
 
 		return new QuadraticCostFunction<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>(*this);
 	}
@@ -124,7 +124,7 @@ public:
 	 * @param [in] x: Current state vector.
 	 * @param [in] u: Current input vector.
 	 */
-	virtual void setCurrentStateAndControl(
+	void setCurrentStateAndControl(
 			const scalar_t& t,
 			const state_vector_t& x,
 			const input_vector_t& u) override {
@@ -165,7 +165,7 @@ public:
      *
      * @param [out] L: The intermediate cost value.
      */
-	virtual void getIntermediateCost(scalar_t& L) override {
+	void getIntermediateCost(scalar_t& L) override {
 
 		L = 0.5 * xIntermediateDeviation_.dot(Q_ * xIntermediateDeviation_) +
 				0.5 * uIntermediateDeviation_.dot(R_ * uIntermediateDeviation_) +
@@ -177,7 +177,7 @@ public:
      *
      * @param [out] dLdx: First order derivative of the intermediate cost with respect to state vector.
      */
-	virtual void getIntermediateCostDerivativeState(state_vector_t& dLdx) override {
+	void getIntermediateCostDerivativeState(state_vector_t& dLdx) override {
 
 		dLdx =  Q_ * xIntermediateDeviation_ + P_.transpose() * uIntermediateDeviation_;
 	}
@@ -187,7 +187,7 @@ public:
      *
      * @param [out] dLdxx: Second order derivative of the intermediate cost with respect to state vector.
      */
-	virtual void getIntermediateCostSecondDerivativeState(state_matrix_t& dLdxx) override {
+	void getIntermediateCostSecondDerivativeState(state_matrix_t& dLdxx) override {
 
 		dLdxx = Q_;
 	}
@@ -197,7 +197,7 @@ public:
      *
      * @param [out] dLdu: First order derivative of the intermediate cost with respect to input vector.
      */
-	virtual void getIntermediateCostDerivativeInput(input_vector_t& dLdu) override {
+	void getIntermediateCostDerivativeInput(input_vector_t& dLdu) override {
 
 		dLdu = R_ * uIntermediateDeviation_ + P_ * xIntermediateDeviation_;
 	}
@@ -207,7 +207,7 @@ public:
      *
      * @param [out] dLduu: Second order derivative of the intermediate cost with respect to input vector.
      */
-	virtual void getIntermediateCostSecondDerivativeInput(input_matrix_t& dLduu) override {
+	void getIntermediateCostSecondDerivativeInput(input_matrix_t& dLduu) override {
 
 		dLduu = R_;
 	}
@@ -217,7 +217,7 @@ public:
      *
      * @param [out] dLdux: Second order derivative of the intermediate cost with respect to input vector and state.
      */
-	virtual void getIntermediateCostDerivativeInputState(input_state_matrix_t& dLdux) override {
+	void getIntermediateCostDerivativeInputState(input_state_matrix_t& dLdux) override {
 
 		dLdux = P_;
 	}
@@ -227,7 +227,7 @@ public:
      *
      * @param [out] cost: The final cost value.
      */
-	virtual void getTerminalCost(scalar_t& cost) override {
+	void getTerminalCost(scalar_t& cost) override {
 
 		state_vector_t xFinalDeviation = BASE::x_ - xNominalFinal_;
 		cost = 0.5 * xFinalDeviation.dot(QFinal_ * xFinalDeviation);
@@ -238,7 +238,7 @@ public:
      *
      * @param [out] dPhidx: First order final cost derivative with respect to state vector.
      */
-	virtual void getTerminalCostDerivativeState(state_vector_t& dPhidx) override {
+	void getTerminalCostDerivativeState(state_vector_t& dPhidx) override {
 
 		state_vector_t xFinalDeviation = BASE::x_ - xNominalFinal_;
 		dPhidx = QFinal_ * xFinalDeviation;
@@ -249,7 +249,7 @@ public:
      *
      * @param [out] dPhidxx: Second order final cost derivative with respect to state vector.
      */
-	virtual void getTerminalCostSecondDerivativeState(state_matrix_t& dPhidxx) override {
+	void getTerminalCostSecondDerivativeState(state_matrix_t& dPhidxx) override {
 
 		dPhidxx = QFinal_;
 	}

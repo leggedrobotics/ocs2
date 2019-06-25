@@ -94,7 +94,7 @@ public:
 	/**
 	 * Displays switched systems distribution over the time partitions.
 	 */
-	virtual void display() const override;
+	void display() const override;
 
 	/**
 	 * Sets up the LogicMachine. This method should be called before building-up the logic machine.

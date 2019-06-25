@@ -52,7 +52,7 @@ template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
 void SLQ_DataCollector<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::collect(
 		const slq_t* constSlqPtr) {
 
-	slq_t* slqPtr = const_cast<slq_t*>(constSlqPtr);
+	auto* slqPtr = const_cast<slq_t*>(constSlqPtr);
 
 	/*
 	 * Data which should be copied
@@ -191,7 +191,7 @@ void SLQ_DataCollector<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculateFlowMap(
 		const input_vector_array2_t& inputTrajectoriesStock,
 		state_vector_array2_t& flowMapTrajectoriesStock)  {
 
-	slq_t* slqPtr = const_cast<slq_t*>(constSlqPtr);
+	auto* slqPtr = const_cast<slq_t*>(constSlqPtr);
 
 	flowMapTrajectoriesStock.resize(constSlqPtr->numPartitions_);
 
@@ -233,7 +233,7 @@ void SLQ_DataCollector<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculateStateInput
 		constraint1_vector_array3_t& EvDevEventTimesTrajectoriesStockSet,
 		input_vector_array3_t& EvDevEventTimesProjectedTrajectoriesStockSet) {
 
-	slq_t* slqPtr = const_cast<slq_t*>(constSlqPtr);
+	auto* slqPtr = const_cast<slq_t*>(constSlqPtr);
 
 	const size_t numEventTimes = constSlqPtr->getLogicRulesPtr()->getNumEventTimes();
 

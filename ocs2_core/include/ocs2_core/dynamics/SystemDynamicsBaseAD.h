@@ -66,14 +66,14 @@ public:
 
 	typedef SystemDynamicsBase<STATE_DIM, INPUT_DIM, LOGIC_RULES_T, NUM_MODES> BASE;
 
-	typedef typename BASE::scalar_t       			scalar_t;
-	typedef typename BASE::state_vector_t 			state_vector_t;
-	typedef typename BASE::state_matrix_t 			state_matrix_t;
-	typedef typename BASE::input_vector_t  			input_vector_t;
-	typedef typename BASE::state_input_matrix_t 	state_input_matrix_t;
-	typedef typename BASE::dynamic_vector_t			dynamic_vector_t;
-	typedef typename BASE::dynamic_state_matrix_t	dynamic_state_matrix_t;
-	typedef typename BASE::dynamic_input_matrix_t	dynamic_input_matrix_t;
+	using scalar_t = typename BASE::scalar_t;
+	using state_vector_t = typename BASE::state_vector_t;
+	using state_matrix_t = typename BASE::state_matrix_t;
+	using input_vector_t = typename BASE::input_vector_t;
+	using state_input_matrix_t = typename BASE::state_input_matrix_t;
+	using dynamic_vector_t = typename BASE::dynamic_vector_t;
+	using dynamic_state_matrix_t = typename BASE::dynamic_state_matrix_t;
+	using dynamic_input_matrix_t = typename BASE::dynamic_input_matrix_t;
 
 	/**
 	 * Default constructor.
@@ -347,18 +347,18 @@ protected:
 	typedef CppAdCodeGenInterface<domain_dim_, state_dim_, scalar_t> map_ad_interface_t;
 	typedef CppAdCodeGenInterface<domain_dim_, num_modes_, scalar_t> guard_ad_interface_t;
 
-	typedef typename map_ad_interface_t::ad_scalar_t			ad_scalar_t;
-	typedef typename map_ad_interface_t::ad_dynamic_vector_t	ad_dynamic_vector_t;
-	typedef typename map_ad_interface_t::ad_funtion_t			ad_funtion_t;
-	typedef typename map_ad_interface_t::domain_vector_t		ad_domain_vector_t;
-	typedef typename map_ad_interface_t::domain_matrix_t		ad_domain_matrix_t;
+	using ad_scalar_t = typename map_ad_interface_t::ad_scalar_t;
+	using ad_dynamic_vector_t = typename map_ad_interface_t::ad_dynamic_vector_t;
+	using ad_funtion_t = typename map_ad_interface_t::ad_funtion_t;
+	using ad_domain_vector_t = typename map_ad_interface_t::domain_vector_t;
+	using ad_domain_matrix_t = typename map_ad_interface_t::domain_matrix_t;
 
-	typedef typename map_ad_interface_t::range_vector_t 		map_ad_range_vector_t;
-	typedef typename map_ad_interface_t::domain_range_matrix_t 	map_ad_domain_range_matrix_t;
-	typedef typename map_ad_interface_t::range_domain_matrix_t 	map_ad_range_domain_matrix_t;
-	typedef typename guard_ad_interface_t::range_vector_t 		 guard_ad_range_vector_t;
-	typedef typename guard_ad_interface_t::domain_range_matrix_t guard_ad_domain_range_matrix_t;
-	typedef typename guard_ad_interface_t::range_domain_matrix_t guard_ad_range_domain_matrix_t;
+	using map_ad_range_vector_t = typename map_ad_interface_t::range_vector_t;
+	using map_ad_domain_range_matrix_t = typename map_ad_interface_t::domain_range_matrix_t;
+	using map_ad_range_domain_matrix_t = typename map_ad_interface_t::range_domain_matrix_t;
+	using guard_ad_range_vector_t = typename guard_ad_interface_t::range_vector_t;
+	using guard_ad_domain_range_matrix_t = typename guard_ad_interface_t::domain_range_matrix_t;
+	using guard_ad_range_domain_matrix_t = typename guard_ad_interface_t::range_domain_matrix_t;
 
 	/**
 	 * The flow map specialized with AD type.

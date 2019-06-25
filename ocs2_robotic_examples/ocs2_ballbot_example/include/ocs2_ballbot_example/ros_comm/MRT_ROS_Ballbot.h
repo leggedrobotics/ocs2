@@ -90,7 +90,7 @@ public:
 	/**
 	 * Destructor
 	 */
-	virtual ~MRT_ROS_Ballbot() = default;
+	~MRT_ROS_Ballbot() override = default;
 
 	/**
 	 * This method will be called either after the very fist call of the class or after a call to reset().
@@ -98,7 +98,7 @@ public:
 	 *
 	 * @param [in] planObservation: The observation of the policy.
 	 */
-	virtual void initCall(
+	void initCall(
 			const system_observation_t& planObservation) override
 	{}
 

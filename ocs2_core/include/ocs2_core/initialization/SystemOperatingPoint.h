@@ -89,7 +89,7 @@ public:
 	 * @param [in] partitionIndex: index of the time partition.
 	 * @param [in] algorithmName: The algorithm that class this class (default not defined).
 	 */
-	virtual void initializeModel(
+	void initializeModel(
 			LogicRulesMachine<LOGIC_RULES_T>& logicRulesMachine,
 			const size_t& partitionIndex,
 			const char* algorithmName=nullptr) override {
@@ -102,7 +102,7 @@ public:
 	 *
 	 * @return A raw pointer to the class.
 	 */
-	virtual SystemOperatingPoint<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>* clone() const override {
+	SystemOperatingPoint<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>* clone() const override {
 
 		return new SystemOperatingPoint<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>(*this);
 	}
@@ -120,7 +120,7 @@ public:
 	 * @param [in] concatOutput: Whether to concatenate the output to the input trajectories or
 	 * override (default).
 	 */
-	virtual void getSystemOperatingTrajectories(
+	void getSystemOperatingTrajectories(
 			const state_vector_t& initialState,
 			const scalar_t& startTime,
 			const scalar_t& finalTime,

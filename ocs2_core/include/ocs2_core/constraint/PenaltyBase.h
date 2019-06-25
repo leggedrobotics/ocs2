@@ -24,18 +24,18 @@ class PenaltyBase {
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
   typedef Dimensions<STATE_DIM, INPUT_DIM> DIMENSIONS;
-  typedef typename DIMENSIONS::scalar_t scalar_t;
-  typedef typename DIMENSIONS::scalar_array_t scalar_array_t;
-  typedef typename DIMENSIONS::state_vector_t state_vector_t;
-  typedef typename DIMENSIONS::state_vector_array_t state_vector_array_t;
-  typedef typename DIMENSIONS::input_vector_t input_vector_t;
-  typedef typename DIMENSIONS::input_vector_array_t input_vector_array_t;
-  typedef typename DIMENSIONS::state_matrix_t state_matrix_t;
-  typedef typename DIMENSIONS::state_matrix_array_t state_matrix_array_t;
-  typedef typename DIMENSIONS::input_matrix_t input_matrix_t;
-  typedef typename DIMENSIONS::input_matrix_array_t input_matrix_array_t;
-  typedef typename DIMENSIONS::input_state_matrix_t input_state_matrix_t;
-  typedef typename DIMENSIONS::input_state_matrix_array_t input_state_matrix_array_t;
+  using scalar_t = typename DIMENSIONS::scalar_t;
+  using scalar_array_t = typename DIMENSIONS::scalar_array_t;
+  using state_vector_t = typename DIMENSIONS::state_vector_t;
+  using state_vector_array_t = typename DIMENSIONS::state_vector_array_t;
+  using input_vector_t = typename DIMENSIONS::input_vector_t;
+  using input_vector_array_t = typename DIMENSIONS::input_vector_array_t;
+  using state_matrix_t = typename DIMENSIONS::state_matrix_t;
+  using state_matrix_array_t = typename DIMENSIONS::state_matrix_array_t;
+  using input_matrix_t = typename DIMENSIONS::input_matrix_t;
+  using input_matrix_array_t = typename DIMENSIONS::input_matrix_array_t;
+  using input_state_matrix_t = typename DIMENSIONS::input_state_matrix_t;
+  using input_state_matrix_array_t = typename DIMENSIONS::input_state_matrix_array_t;
 
   /**
   * Default constructor

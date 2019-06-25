@@ -126,7 +126,7 @@ class LinearConstraint : public ConstraintBase<STATE_DIM, INPUT_DIM, LOGIC_RULES
    *
    * @return A raw pointer to the class.
    */
-  virtual LinearConstraint<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> *clone() const override {
+  LinearConstraint<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> *clone() const override {
 
     return new LinearConstraint<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>(*this);
   }
@@ -138,7 +138,7 @@ class LinearConstraint : public ConstraintBase<STATE_DIM, INPUT_DIM, LOGIC_RULES
    * @param [in] x: Current state vector
    * @param [in] u: Current input vector
    */
-  virtual void setCurrentStateAndControl(
+  void setCurrentStateAndControl(
       const scalar_t &t,
       const state_vector_t &x,
       const input_vector_t &u) override {
@@ -151,7 +151,7 @@ class LinearConstraint : public ConstraintBase<STATE_DIM, INPUT_DIM, LOGIC_RULES
    *
    * @param [out] g1: The state-input equality constraints value.
    */
-  virtual void getConstraint1(
+  void getConstraint1(
       constraint1_vector_t &g1) override {
 
     g1 = e_ + C_ * BASE::x_ + D_ * BASE::u_;
@@ -163,7 +163,7 @@ class LinearConstraint : public ConstraintBase<STATE_DIM, INPUT_DIM, LOGIC_RULES
    * @param [in] time: time.
    * @return number of state-input active equality constraints.
    */
-  virtual size_t numStateInputConstraint(const scalar_t &time) override {
+  size_t numStateInputConstraint(const scalar_t &time) override {
 
     return numStateInputConstraint_;
   }
@@ -173,7 +173,7 @@ class LinearConstraint : public ConstraintBase<STATE_DIM, INPUT_DIM, LOGIC_RULES
    *
    * @param [out] g2: The state-only equality constraints value.
    */
-  virtual void getConstraint2(
+  void getConstraint2(
       constraint2_vector_t &g2) override {
 
     g2 = h_ + F_ * BASE::x_;
@@ -185,12 +185,12 @@ class LinearConstraint : public ConstraintBase<STATE_DIM, INPUT_DIM, LOGIC_RULES
    * @param [in] time: time.
    * @return number of state-only active equality constraints.
    */
-  virtual size_t numStateOnlyConstraint(const scalar_t &time) override {
+  size_t numStateOnlyConstraint(const scalar_t &time) override {
 
     return numStateOnlyConstraint_;
   }
 
-  virtual void getInequalityConstraint(scalar_array_t &h) override {
+  void getInequalityConstraint(scalar_array_t &h) override {
     h.clear();
     for (size_t i = 0; i < numInequalityConstraint_; i++) {
       h.push_back(h0_[i] + dhdx_[i].transpose() * BASE::x_ + dhdu_[i].transpose() * BASE::u_ + 0.5 * BASE::x_.transpose() * ddhdxdx_[i] * BASE::x_
@@ -198,14 +198,14 @@ class LinearConstraint : public ConstraintBase<STATE_DIM, INPUT_DIM, LOGIC_RULES
     }
   };
 
-  virtual size_t numInequalityConstraint(const scalar_t &time) override { return numInequalityConstraint_; };
+  size_t numInequalityConstraint(const scalar_t &time) override { return numInequalityConstraint_; };
 
   /**
    * Compute the final state-only equality constraints.
    *
    * @param [out] g2Final: The final state-only equality constraints value.
    */
-  virtual void getFinalConstraint2(
+  void getFinalConstraint2(
       constraint2_vector_t &g2Final) override {
 
     g2Final = h_f_ + F_f_ * BASE::x_;
@@ -217,7 +217,7 @@ class LinearConstraint : public ConstraintBase<STATE_DIM, INPUT_DIM, LOGIC_RULES
    * @param [in] time: time.
    * @return number of final state-only active equality constraints.
    */
-  virtual size_t numStateOnlyFinalConstraint(const scalar_t &time) override {
+  size_t numStateOnlyFinalConstraint(const scalar_t &time) override {
 
     return numStateOnlyFinalConstraint_;
   }
@@ -228,7 +228,7 @@ class LinearConstraint : public ConstraintBase<STATE_DIM, INPUT_DIM, LOGIC_RULES
    *
    * @param [out] C: \f$ C(t) \f$ matrix.
    */
-  virtual void getConstraint1DerivativesState(
+  void getConstraint1DerivativesState(
       constraint1_state_matrix_t &C) override {
 
     C = C_;
@@ -240,7 +240,7 @@ class LinearConstraint : public ConstraintBase<STATE_DIM, INPUT_DIM, LOGIC_RULES
    *
    * @param [out] D: \f$ D(t) \f$ matrix.
    */
-  virtual void getConstraint1DerivativesControl(
+  void getConstraint1DerivativesControl(
       constraint1_input_matrix_t &D) override {
 
     D = D_;
@@ -252,31 +252,31 @@ class LinearConstraint : public ConstraintBase<STATE_DIM, INPUT_DIM, LOGIC_RULES
    *
    * @param [out] F: \f$ F(t) \f$ matrix.
    */
-  virtual void getConstraint2DerivativesState(
+  void getConstraint2DerivativesState(
       constraint2_state_matrix_t &F) override {
 
     F = F_;
   }
 
-  virtual void getInequalityConstraintDerivativesState(state_vector_array_t &dhdx) override {
+  void getInequalityConstraintDerivativesState(state_vector_array_t &dhdx) override {
     dhdx.clear();
     for (size_t i = 0; i < numInequalityConstraint_; i++) {
       dhdx.push_back(dhdx_[i] + ddhdxdx_[i] * BASE::x_ + ddhdudx_[i].transpose() * BASE::u_);
     }
   };
-  virtual void getInequalityConstraintDerivativesInput(input_vector_array_t &dhdu) override {
+  void getInequalityConstraintDerivativesInput(input_vector_array_t &dhdu) override {
     dhdu.clear();
     for (size_t i = 0; i < numInequalityConstraint_; i++) {
       dhdu.push_back(dhdu_[i] + ddhdudu_[i] * BASE::u_ + ddhdudx_[i] * BASE::x_);
     }
   };
-  virtual void getInequalityConstraintSecondDerivativesState(state_matrix_array_t &ddhdxdx) override {
+  void getInequalityConstraintSecondDerivativesState(state_matrix_array_t &ddhdxdx) override {
     ddhdxdx = ddhdxdx_;
   };
-  virtual void getInequalityConstraintSecondDerivativesInput(input_matrix_array_t &ddhdudu) override {
+  void getInequalityConstraintSecondDerivativesInput(input_matrix_array_t &ddhdudu) override {
     ddhdudu = ddhdudu_;
   };
-  virtual void getInequalityConstraintDerivativesInputState(input_state_matrix_array_t &ddhdudx) override {
+  void getInequalityConstraintDerivativesInputState(input_state_matrix_array_t &ddhdudx) override {
     ddhdudx = ddhdudx_;
   };
 
@@ -286,7 +286,7 @@ class LinearConstraint : public ConstraintBase<STATE_DIM, INPUT_DIM, LOGIC_RULES
    *
    * @param [out] F_f: \f$ F_f(t) \f$ matrix.
    */
-  virtual void getFinalConstraint2DerivativesState(
+  void getFinalConstraint2DerivativesState(
       constraint2_state_matrix_t &F_f) override {
 
     F_f = F_f_;

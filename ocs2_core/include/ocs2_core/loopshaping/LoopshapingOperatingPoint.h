@@ -51,7 +51,7 @@ public:
 
     virtual ~LoopshapingOperatingPoint() = default;
 
-    virtual void initializeModel(
+    void initializeModel(
         LogicRulesMachine<LOGIC_RULES_T>& logicRulesMachine,
         const size_t& partitionIndex,
         const char* algorithmName=nullptr) override {
@@ -66,11 +66,11 @@ public:
         loopshapingDefinition_(obj.loopshapingDefinition_)
     {}
 
-    virtual LoopshapingOperatingPoint* clone() const override {
+    LoopshapingOperatingPoint* clone() const override {
       return new LoopshapingOperatingPoint(*this);
     }
 
-    virtual void getSystemOperatingTrajectories(
+    void getSystemOperatingTrajectories(
         const state_vector_t& initialState,
         const scalar_t& startTime,
         const scalar_t& finalTime,

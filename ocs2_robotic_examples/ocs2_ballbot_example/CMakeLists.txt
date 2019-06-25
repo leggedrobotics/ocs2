@@ -20,6 +20,10 @@ find_package(Boost REQUIRED COMPONENTS
 
 find_package(Eigen3 3.3 REQUIRED NO_MODULE)
 
+set(PYTHON_EXECUTABLE /usr/bin/python3)
+set(PYBIND11_PYTHON_VERSION 3.6 CACHE STRING "")
+find_package(pybind11 QUIET)
+
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread -fopenmp -std=c++11 -Wfatal-errors -Wl,--no-as-needed")
 
 ###################################
@@ -102,6 +106,38 @@ target_link_libraries(ballbot_target
         ${Boost_LIBRARIES}
         )
 
+# PyBindings library
+add_library(ballbotPyBindings
+  src/BallbotPyBindings.cpp
+)
+add_dependencies(ballbotPyBindings
+  ballbot_interface
+  ${catkin_EXPORTED_TARGETS}
+)
+target_link_libraries(ballbotPyBindings
+  ballbot_interface
+  ${catkin_LIBRARIES}
+)
+
+if(${pybind11_FOUND})
+  # build and install for python3.XX
+  pybind11_add_module(BallbotPyBindings3 SHARED
+    src/pyBindModule3.cpp
+  )
+  add_dependencies(BallbotPyBindings3
+    ballbotPyBindings
+    ${catkin_EXPORTED_TARGETS}
+  )
+  target_link_libraries(BallbotPyBindings3 PRIVATE
+    ballbotPyBindings
+    ${catkin_LIBRARIES}
+  )
+  set_target_properties(BallbotPyBindings3
+    PROPERTIES LIBRARY_OUTPUT_DIRECTORY ${CATKIN_DEVEL_PREFIX}/lib/python3.6/dist-packages/${PROJECT_NAME}
+  )
+  #catkin_python_setup()
+endif()
+
 #############
 ## Install ##
 #############
@@ -134,3 +170,14 @@ target_link_libraries(ballbot_integration_test
         ${catkin_LIBRARIES}
         ${Boost_LIBRARIES}
         )
+
+if(${pybind11_FOUND})
+  catkin_add_gtest(ballbot_pybindings_test
+    test/PyBindingsTest.cpp
+    )
+  target_link_libraries(ballbot_pybindings_test
+    ballbotPyBindings
+    ${catkin_LIBRARIES}
+    ${Boost_LIBRARIES}
+    )
+endif()

@@ -98,7 +98,13 @@ public:
 	 *
 	 * @return Pointer to the internal MPC
 	 */
-	mpc_t::Ptr& getMPCPtr();
+	mpc_t::Ptr& getMPCPtrSpecialized();
+	void* getMPCPtr() override;
+
+	BallbotSystemDynamics const * getDynamicsPtr() override { return ballbotSystemDynamicsPtr_.get(); }
+	BallbotSystemDynamics const * getDynamicsDerivativesPtr() override {return ballbotSystemDynamicsPtr_.get(); }
+
+	void* getCostPtr() override { return ballbotCostPtr_.get(); }
 
 protected:
 	/**

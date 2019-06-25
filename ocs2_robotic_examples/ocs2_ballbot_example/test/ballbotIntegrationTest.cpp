@@ -42,7 +42,7 @@ TEST(BallbotIntegrationTest, createMPC) {
   BallbotInterface ballbotInterface(taskFileFolderName);
 
   // Launch MPC ROS node
-  MPC_ROS_Ballbot mpcNode(*ballbotInterface.getMPCPtr(), "ballbot");
+  MPC_ROS_Ballbot mpcNode(*ballbotInterface.getMPCPtrSpecialized(), "ballbot");
 
   ASSERT_TRUE(true);
 }

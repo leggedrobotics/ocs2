@@ -42,7 +42,7 @@ int main(int argc, char **argv)
 	BallbotInterface ballbotInterface(taskFileFolderName);
 
 	// Launch MPC ROS node
-	MPC_ROS_Ballbot mpcNode(*ballbotInterface.getMPCPtr(), "ballbot");
+	MPC_ROS_Ballbot mpcNode(*ballbotInterface.getMPCPtrSpecialized(), "ballbot");
 	mpcNode.launchNodes(argc, argv);
 
 	// Successful exit

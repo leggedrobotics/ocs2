@@ -100,9 +100,9 @@ public:
 			const state_vector_t& x,
 			const input_vector_t& u) override {
 
-		dynamic_vector_t xNominal;
+		dynamic_vector_t xNominal(static_cast<int>(ballbot::STATE_DIM_));
 		BASE::xNominalFunc_.interpolate(t, xNominal);
-		dynamic_vector_t uNominal;
+		dynamic_vector_t uNominal(static_cast<int>(ballbot::INPUT_DIM_));
 		BASE::uNominalFunc_.interpolate(t, uNominal);
 
 		// set base class

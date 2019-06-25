@@ -699,7 +699,7 @@ void DDP_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::approximateOptimalControlPro
 	heuristicsFunctionsPtrStock_[0]->getTerminalCostDerivativeState(SvHeuristics_);
 	heuristicsFunctionsPtrStock_[0]->getTerminalCostSecondDerivativeState(SmHeuristics_);
 	if (ddpSettings_.useMakePSD_==true)
-		BASE::makePSD(SmHeuristics_);
+		LinearAlgebra::makePSD(SmHeuristics_);
 }
 
 /******************************************************************************************************/

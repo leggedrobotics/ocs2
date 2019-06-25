@@ -62,9 +62,9 @@ public:
 	using input_state_matrix_t = typename DIMENSIONS::input_state_matrix_t;
 	using input_state_matrix_array_t = typename DIMENSIONS::input_state_matrix_array_t;
 
-	using ocs2::SystemObservation<ballbot::STATE_DIM_, ballbot::INPUT_DIM_> system_observation_t;
+	using system_observation_t = ocs2::SystemObservation<ballbot::STATE_DIM_, ballbot::INPUT_DIM_>;
 
-	using ocs2::RosMsgConversions<ballbot::STATE_DIM_, ballbot::INPUT_DIM_> ros_msg_conversions_t;
+	using ros_msg_conversions_t = ocs2::RosMsgConversions<ballbot::STATE_DIM_, ballbot::INPUT_DIM_>;
 
 	using state_linear_interpolation_t = ocs2::LinearInterpolation<state_vector_t, Eigen::aligned_allocator<state_vector_t> >;
 	using input_linear_interpolation_t = ocs2::LinearInterpolation<input_vector_t, Eigen::aligned_allocator<input_vector_t> >;

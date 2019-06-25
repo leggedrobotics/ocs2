@@ -1,6 +1,9 @@
 cmake_minimum_required(VERSION 3.0)
 project(ocs2_double_integrator_example)
 
+# Generate compile_commands.json for clang tools
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+
 find_package(catkin REQUIRED COMPONENTS
         roslib
         ocs2_core
@@ -100,6 +103,22 @@ target_link_libraries(double_integrator_target
         ${catkin_LIBRARIES}
         ${Boost_LIBRARIES}
         )
+
+#########################
+###   CLANG TOOLING   ###
+#########################
+find_package(cmake_clang_tools QUIET)
+if(cmake_clang_tools_FOUND)
+  message(STATUS "Run clang tooling for target " double_integrator_mpc)
+  add_clang_tooling(
+    TARGET double_integrator_mpc
+    SOURCE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/src ${CMAKE_CURRENT_SOURCE_DIR}/include
+    CT_HEADER_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/include
+    CF_QUIET # temporarily set to quiet, because the current amount of warning crashes the buildserver
+    CT_QUIET
+    # CF_FIX # temporarily disabled
+  )
+endif(cmake_clang_tools_FOUND)
 
 #############
 ## Install ##

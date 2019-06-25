@@ -8,6 +8,8 @@ find_package(Boost REQUIRED COMPONENTS
   system
   filesystem 
 )
+# Generate compile_commands.json for clang tools
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 find_package(Eigen3 3.3 REQUIRED NO_MODULE)
 
@@ -39,6 +41,26 @@ include_directories(
   ${Boost_INCLUDE_DIRS}
   ${catkin_INCLUDE_DIRS}
 )
+
+add_executable(${PROJECT_NAME}_lintTarget
+  src/lintTarget.cpp
+)
+
+#########################
+###   CLANG TOOLING   ###
+#########################
+find_package(cmake_clang_tools QUIET)
+if(cmake_clang_tools_FOUND)
+  message(STATUS "Run clang tooling for target " ${PROJECT_NAME}_lintTarget)
+  add_clang_tooling(
+    TARGET ${PROJECT_NAME}_lintTarget
+    SOURCE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/src ${CMAKE_CURRENT_SOURCE_DIR}/include/ocs2_core
+    CT_HEADER_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/include/ocs2_core
+    CF_QUIET # temporarily set to quiet, because the current amount of warning crashes the buildserver
+    CT_QUIET
+    # CF_FIX # temporarily disabled
+  )
+endif(cmake_clang_tools_FOUND)
 
 #############
 ## Install ##

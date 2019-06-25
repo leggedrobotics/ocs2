@@ -961,7 +961,7 @@ protected:
         std::string a0 = print(left);
         std::string a1 = print(right);
 
-        std::string name = printNodeDeclaration(op, "×");
+        std::string name = printNodeDeclaration(op, "x");
 
         printEdges(name, op, std::vector<std::string> {a0, a1});
 

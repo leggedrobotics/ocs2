@@ -155,7 +155,7 @@ ocs2::ControlledSystemBase::computeFlowMap to find the active partition and thus
 \subsection ocs2_doc_example_derivaties Dynamics Derivatives
 
 In this section we will show how to implement the system dynamics. As before, we start with an example of 
-subsystems then we show how to implement the switched system's dynamics derivatives. For the subsystem’s 
+subsystems then we show how to implement the switched system's dynamics derivatives. For the subsystem's 
 derivatives, we have
 
 \code{.cpp}

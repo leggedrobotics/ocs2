@@ -2156,5 +2156,5 @@ void DDP_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::run(
 
 }
 
-}  // ocs2 namespace
+}  // namespace ocs2
 

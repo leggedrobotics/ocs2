@@ -463,6 +463,6 @@ private:
 	const state_matrix_array_t* QmFianlPtr_;
 };
 
-}
+}  // namespace ocs2
 
 #endif /* SEQUENTIALRICCATIEQUATIONSNORMALIZED_OCS2_H_ */

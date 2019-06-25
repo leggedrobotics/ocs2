@@ -470,6 +470,6 @@ private:
 	const state_matrix_array_t* QmFianlPtr_;
 };
 
-}
+}  // namespace ocs2
 
 #endif /* SLQ_RICCATIEQUATIONSNORMALIZED_OCS2_H_ */

@@ -355,6 +355,6 @@ private:
 	state_input_matrix_t Lm_transposeRm_;
 };
 
-}
+}  // namespace ocs2
 
 #endif /* SEQUENTIALRICCATIEQUATIONS_H_ */

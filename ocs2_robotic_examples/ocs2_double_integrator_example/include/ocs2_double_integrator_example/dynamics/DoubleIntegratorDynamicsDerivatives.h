@@ -64,14 +64,14 @@ class DoubleIntegratorDynamicsDerivatives : public DerivativesBase<double_integr
 	/**
 	 * Destructor
 	 */
-	~DoubleIntegratorDynamicsDerivatives() = default;
+	~DoubleIntegratorDynamicsDerivatives() override = default;
 
 	/**
 	 * Returns pointer to the class.
 	 *
 	 * @return A raw pointer to the class.
 	 */
-  virtual DoubleIntegratorDynamicsDerivatives* clone() const { return new DoubleIntegratorDynamicsDerivatives(*this); }
+    DoubleIntegratorDynamicsDerivatives* clone() const override { return new DoubleIntegratorDynamicsDerivatives(*this); }
 
 	/**
 	 * Sets the current time, state, and control input.
@@ -80,7 +80,7 @@ class DoubleIntegratorDynamicsDerivatives : public DerivativesBase<double_integr
 	 * @param [in] x: Current state.
 	 * @param [in] u: Current input.
 	 */
-  virtual void setCurrentStateAndControl(const scalar_t& t, const state_vector_t& x, const input_vector_t& u) {
+   void setCurrentStateAndControl(const scalar_t& t, const state_vector_t& x, const input_vector_t& u) override {
 		// BASE class method
 		BASE::setCurrentStateAndControl(t, x, u);
 	}
@@ -91,7 +91,7 @@ class DoubleIntegratorDynamicsDerivatives : public DerivativesBase<double_integr
 	 *
 	 * @param [out] A: \f$ A(t) \f$ matrix.
 	 */
-  void getFlowMapDerivativeState(state_matrix_t& A) { A = A_; }
+  void getFlowMapDerivativeState(state_matrix_t& A) override { A = A_; }
 
 	/**
 	 * Get the B matrix at a given operating point for the linearized system flow map.
@@ -99,7 +99,7 @@ class DoubleIntegratorDynamicsDerivatives : public DerivativesBase<double_integr
 	 *
 	 * @param [out] B: \f$ B(t) \f$ matrix.
 	 */
-  void getFlowMapDerivativeInput(state_input_matrix_t& B) { B = B_; }
+  void getFlowMapDerivativeInput(state_input_matrix_t& B) override { B = B_; }
 
  private:
 	state_matrix_t A_;

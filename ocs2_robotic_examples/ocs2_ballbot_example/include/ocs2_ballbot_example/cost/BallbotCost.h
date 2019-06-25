@@ -46,7 +46,7 @@ public:
 	using Ptr = std::shared_ptr<BallbotCost>;
 	using ConstPtr = std::shared_ptr<const BallbotCost>;
 
-	typedef ocs2::QuadraticCostFunction<ballbot::STATE_DIM_, ballbot::INPUT_DIM_> BASE;
+	using BASE = ocs2::QuadraticCostFunction<ballbot::STATE_DIM_, ballbot::INPUT_DIM_>;
 	using scalar_t = typename BASE::scalar_t;
 	using state_vector_t = typename BASE::state_vector_t;
 	using state_matrix_t = typename BASE::state_matrix_t;
@@ -76,14 +76,14 @@ public:
 	/**
 	 * Destructor
 	 */
-	~BallbotCost() = default;
+	~BallbotCost() override = default;
 
     /**
      * Returns pointer to the class.
      *
      * @return A raw pointer to the class.
      */
-	BallbotCost* clone() const {
+	BallbotCost* clone() const override {
 
 		return new BallbotCost(*this);
 	}

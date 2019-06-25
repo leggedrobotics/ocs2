@@ -57,14 +57,14 @@ public:
 	static_assert(std::is_base_of<HybridLogicRules, LOGIC_RULES_T>::value,
 			"LOGIC_RULES_T must inherit from HybridLogicRules");
 
-	typedef std::shared_ptr<MPC_OCS2<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>> Ptr;
+	using Ptr = std::shared_ptr<MPC_OCS2<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>>;
 
-	typedef SLQ_DataCollector<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> slq_data_collector_t;
-	typedef GSLQ_FW<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> gslq_t;
+	using slq_data_collector_t = SLQ_DataCollector<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>;
+	using gslq_t = GSLQ_FW<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>;
 
-	typedef MPC_SLQ<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> BASE;
+	using BASE = MPC_SLQ<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>;
 
-	typedef Dimensions<STATE_DIM, INPUT_DIM> DIMENSIONS;
+	using DIMENSIONS = Dimensions<STATE_DIM, INPUT_DIM>;
 	using controller_t = typename DIMENSIONS::controller_t;
 	using controller_array_t = typename DIMENSIONS::controller_array_t;
 	using scalar_t = typename DIMENSIONS::scalar_t;

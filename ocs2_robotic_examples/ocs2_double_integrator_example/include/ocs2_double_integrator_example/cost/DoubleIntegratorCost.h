@@ -70,14 +70,14 @@ public:
 	/**
 	 * Destructor
 	 */
-	~DoubleIntegratorCost() = default;
+	~DoubleIntegratorCost() override = default;
 
     /**
      * Returns pointer to the class.
      *
      * @return A raw pointer to the class.
      */
-	DoubleIntegratorCost* clone() const {
+	DoubleIntegratorCost* clone() const override {
 
 		return new DoubleIntegratorCost(*this);
 	}

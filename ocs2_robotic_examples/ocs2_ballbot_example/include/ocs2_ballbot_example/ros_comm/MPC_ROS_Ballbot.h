@@ -42,7 +42,7 @@ class MPC_ROS_Ballbot : public ocs2::MPC_ROS_Interface<ballbot::STATE_DIM_, ball
 public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-	typedef ocs2::MPC_ROS_Interface<ballbot::STATE_DIM_, ballbot::INPUT_DIM_> BASE;
+	using BASE = ocs2::MPC_ROS_Interface<ballbot::STATE_DIM_, ballbot::INPUT_DIM_>;
 
 	using scalar_t = typename BASE::scalar_t;
 	using scalar_array_t = typename BASE::scalar_array_t;
@@ -60,9 +60,9 @@ public:
 	using cost_desired_trajectories_t = ocs2::CostDesiredTrajectories<scalar_t>;
 
 	using target_pose_transformation_t = TargetPoseTransformation<scalar_t>;
-	typedef ocs2::SystemObservation<ballbot::STATE_DIM_, ballbot::INPUT_DIM_> system_observation_t;
+	using system_observation_t = ocs2::SystemObservation<ballbot::STATE_DIM_, ballbot::INPUT_DIM_>;
 
-	typedef ocs2::RosMsgConversions<ballbot::STATE_DIM_, ballbot::INPUT_DIM_> ros_msg_conversions_t;
+	using ros_msg_conversions_t = ocs2::RosMsgConversions<ballbot::STATE_DIM_, ballbot::INPUT_DIM_>;
 
 	/**
 	 * Default constructor

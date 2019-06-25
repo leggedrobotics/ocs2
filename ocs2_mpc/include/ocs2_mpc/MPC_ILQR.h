@@ -54,9 +54,9 @@ class MPC_ILQR : public MPC_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>
 public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-	typedef MPC_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> BASE;
+	using BASE = MPC_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> ;
 
-	typedef Dimensions<STATE_DIM, INPUT_DIM> DIMENSIONS;
+	using DIMENSIONS = Dimensions<STATE_DIM, INPUT_DIM> ;
 	using scalar_t = typename DIMENSIONS::scalar_t;
 	using scalar_array_t = typename DIMENSIONS::scalar_array_t;
 	using scalar_array2_t = typename DIMENSIONS::scalar_array2_t;
@@ -78,14 +78,14 @@ public:
 	using mode_sequence_template_t = typename BASE::mode_sequence_template_t;
 	using controller_ptr_array_t = typename BASE::controller_ptr_array_t;
 
-	typedef LinearController<STATE_DIM,INPUT_DIM> linear_controller_t;
+	using linear_controller_t = LinearController<STATE_DIM,INPUT_DIM>;
 	using linear_controller_array_t = typename linear_controller_t::array_t;
 
-	typedef ocs2::DDP_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> ddp_base_t;
+    using ddp_base_t = ocs2::DDP_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>;
 
-	typedef ocs2::ILQR_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> ilqr_base_t;
-	typedef ocs2::ILQR_ST<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>   ilqr_t;
-	typedef ocs2::ILQR_MT<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>   ilqr_mp_t;
+	using ilqr_base_t = ocs2::ILQR_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> ;
+  	using ilqr_t = ocs2::ILQR_ST<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>;
+  	using ilqr_mp_t = ocs2::ILQR_MT<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>;
 
 	using logic_rules_machine_t = typename ddp_base_t::logic_rules_machine_t;
 	using controlled_system_base_t = typename ddp_base_t::controlled_system_base_t;

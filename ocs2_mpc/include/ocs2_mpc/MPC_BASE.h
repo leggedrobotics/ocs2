@@ -82,13 +82,13 @@ public:
 	using dynamic_vector_t = typename DIMENSIONS::dynamic_vector_t;
 	using dynamic_vector_array_t = typename DIMENSIONS::dynamic_vector_array_t;
 
-	typedef ControllerBase<STATE_DIM, INPUT_DIM> controller_t;
+	using controller_t = ControllerBase<STATE_DIM, INPUT_DIM>;
 	using controller_ptr_array_t = std::vector<controller_t *>;
 
 	using cost_desired_trajectories_t = CostDesiredTrajectories<scalar_t>;
 	using mode_sequence_template_t = ModeSequenceTemplate<scalar_t>;
 
-	typedef Solver_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> solver_base_t;
+	using solver_base_t = Solver_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> ;
 	using solver_base_ptr_t = typename solver_base_t::Ptr;
 
 	/**

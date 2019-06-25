@@ -60,13 +60,13 @@ class BallbotInterface : public RobotInterfaceBase<ballbot::STATE_DIM_, ballbot:
 public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-	typedef RobotInterfaceBase<ballbot::STATE_DIM_, ballbot::INPUT_DIM_> BASE;
+	using BASE = RobotInterfaceBase<ballbot::STATE_DIM_, ballbot::INPUT_DIM_>;
 
 	using dim_t = Dimensions<ballbot::STATE_DIM_, ballbot::INPUT_DIM_>;
 	using ballbotConstraint_t = ConstraintBase<ballbot::STATE_DIM_, ballbot::INPUT_DIM_>;
 	using ballbotOperatingPoint_t = SystemOperatingPoint<ballbot::STATE_DIM_, ballbot::INPUT_DIM_>;
 
-	typedef ocs2::MPC_SLQ<ballbot::STATE_DIM_, ballbot::INPUT_DIM_> mpc_t;
+	using mpc_t = ocs2::MPC_SLQ<ballbot::STATE_DIM_, ballbot::INPUT_DIM_>;
 
 	/**
 	 * Constructor

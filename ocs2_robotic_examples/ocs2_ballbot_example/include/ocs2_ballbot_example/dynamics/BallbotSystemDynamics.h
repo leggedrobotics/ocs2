@@ -65,7 +65,7 @@ public:
 	using Ptr = std::shared_ptr<BallbotSystemDynamics>;
 	using ConstPtr = std::shared_ptr<const BallbotSystemDynamics>;
 
-	typedef ocs2::SystemDynamicsBaseAD<BallbotSystemDynamics, ballbot::STATE_DIM_, ballbot::INPUT_DIM_> BASE;
+	using BASE = ocs2::SystemDynamicsBaseAD<BallbotSystemDynamics, ballbot::STATE_DIM_, ballbot::INPUT_DIM_>;
 	using scalar_t = typename BASE::scalar_t;
 	using state_vector_t = typename BASE::state_vector_t;
 	using state_matrix_t = typename BASE::state_matrix_t;
@@ -88,7 +88,7 @@ public:
 	/**
 	 * Destructor
 	 */
-	~BallbotSystemDynamics() = default;
+	~BallbotSystemDynamics() override = default;
 
 	/**
 	 * Interface method to the state flow map of the hybrid system. This method should be implemented by the derived class.

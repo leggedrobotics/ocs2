@@ -47,7 +47,7 @@ class MRT_ROS_Dummy_Ballbot : public MRT_ROS_Dummy_Loop<ballbot::STATE_DIM_, bal
 public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-	typedef MRT_ROS_Dummy_Loop<ballbot::STATE_DIM_, ballbot::INPUT_DIM_> BASE;
+	using BASE = MRT_ROS_Dummy_Loop<ballbot::STATE_DIM_, ballbot::INPUT_DIM_>;
     using ballbot_parameters_t = BallbotParameters<scalar_t>;
 
 	/**

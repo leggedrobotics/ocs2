@@ -66,14 +66,14 @@ class DoubleIntegratorDynamics : public ControlledSystemBase<double_integrator::
 	/**
 	 * Destructor
 	 */
-	~DoubleIntegratorDynamics() = default;
+	~DoubleIntegratorDynamics() override = default;
 
 	/**
 	 * Returns pointer to the class.
 	 *
 	 * @return A raw pointer to the class.
 	 */
-  virtual DoubleIntegratorDynamics* clone() const { return new DoubleIntegratorDynamics(*this); }
+   DoubleIntegratorDynamics* clone() const override { return new DoubleIntegratorDynamics(*this); }
 
 	/**
 	 * Computes derivative of the autonomous system dynamics with the given control policy.
@@ -82,7 +82,7 @@ class DoubleIntegratorDynamics : public ControlledSystemBase<double_integrator::
 	 * @param [in] x: Current state.
 	 * @param [out] dxdt: Current state time derivative.
 	 */
-  void computeFlowMap(const scalar_t& time, const state_vector_t& state, const input_vector_t& input, state_vector_t& stateDerivative) {
+  void computeFlowMap(const scalar_t& time, const state_vector_t& state, const input_vector_t& input, state_vector_t& stateDerivative) override {
     stateDerivative = A_ * state + B_ * input;
 	}
 

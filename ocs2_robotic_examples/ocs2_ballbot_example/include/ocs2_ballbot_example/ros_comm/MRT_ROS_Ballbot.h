@@ -47,9 +47,9 @@ class MRT_ROS_Ballbot : public MRT_ROS_Interface<ballbot::STATE_DIM_, ballbot::I
 public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-	typedef MRT_ROS_Interface<ballbot::STATE_DIM_, ballbot::INPUT_DIM_> BASE;
+	using BASE = MRT_ROS_Interface<ballbot::STATE_DIM_, ballbot::INPUT_DIM_> ;
 
-	typedef Dimensions<ballbot::STATE_DIM_, ballbot::INPUT_DIM_> DIMENSIONS;
+	using DIMENSIONS = Dimensions<ballbot::STATE_DIM_, ballbot::INPUT_DIM_>;
 	using controller_t = typename DIMENSIONS::controller_t;
 	using controller_array_t = typename DIMENSIONS::controller_array_t;
 	using scalar_t = typename DIMENSIONS::scalar_t;
@@ -62,13 +62,13 @@ public:
 	using input_state_matrix_t = typename DIMENSIONS::input_state_matrix_t;
 	using input_state_matrix_array_t = typename DIMENSIONS::input_state_matrix_array_t;
 
-	typedef ocs2::SystemObservation<ballbot::STATE_DIM_, ballbot::INPUT_DIM_> system_observation_t;
+	using ocs2::SystemObservation<ballbot::STATE_DIM_, ballbot::INPUT_DIM_> system_observation_t;
 
-	typedef ocs2::RosMsgConversions<ballbot::STATE_DIM_, ballbot::INPUT_DIM_> ros_msg_conversions_t;
+	using ocs2::RosMsgConversions<ballbot::STATE_DIM_, ballbot::INPUT_DIM_> ros_msg_conversions_t;
 
-	typedef ocs2::LinearInterpolation<state_vector_t, Eigen::aligned_allocator<state_vector_t> > state_linear_interpolation_t;
-	typedef ocs2::LinearInterpolation<input_vector_t, Eigen::aligned_allocator<input_vector_t> > input_linear_interpolation_t;
-	typedef ocs2::LinearInterpolation<input_state_matrix_t, Eigen::aligned_allocator<input_state_matrix_t>> gain_linear_interpolation_t;
+	using state_linear_interpolation_t = ocs2::LinearInterpolation<state_vector_t, Eigen::aligned_allocator<state_vector_t> >;
+	using input_linear_interpolation_t = ocs2::LinearInterpolation<input_vector_t, Eigen::aligned_allocator<input_vector_t> >;
+	using gain_linear_interpolation_t = ocs2::LinearInterpolation<input_state_matrix_t, Eigen::aligned_allocator<input_state_matrix_t>>;
 
 	/**
 	 * Default constructor

@@ -31,6 +31,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define TASK_LISTENER_BASE_OCS2_H_
 
 #include <memory>
+#include <Eigen/StdVector>
 #include <vector>
 #include <ros/ros.h>
 
@@ -55,12 +56,12 @@ public:
 	 * Default constructor.
 	 *
 	 */
-	TaskListenerBase();
+	TaskListenerBase() = default;
 
 	/**
 	 * Default destructor.
 	 */
-	virtual ~TaskListenerBase();
+	virtual ~TaskListenerBase() = default;
 
 	/**
 	 * This method should swap the active variables with the buffer variables.

@@ -12,6 +12,7 @@ using namespace pybind11::literals;
       .def(pybind11::init<>())\
       .def("clear", &VTYPE::clear)\
       .def("pop_back", &VTYPE::pop_back)\
+      .def("resize", [](VTYPE& v, size_t i){ v.resize(i); })\
       .def("__getitem__",\
            [](const VTYPE& v, size_t i) {\
              if (i >= v.size()) throw pybind11::index_error();\

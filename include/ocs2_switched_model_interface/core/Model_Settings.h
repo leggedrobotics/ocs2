@@ -25,6 +25,7 @@ public:
 	, swingLegLiftOff_(0.3)
 	, liftOffVelocity_(0.0)
 	, touchDownVelocity_(0.0)
+	, phaseTransitionStanceTime_(0.4)
 	, mpcGoalCommandDelay_(0.5)
 	, strideTime_(0.0)
 	, mpcStrideLength_(0.35)
@@ -50,6 +51,7 @@ public:
 	double swingLegLiftOff_;
 	double liftOffVelocity_;
 	double touchDownVelocity_;
+	double phaseTransitionStanceTime_;
 	double mpcGoalCommandDelay_;
 	double strideTime_;
 	double mpcStrideLength_;
@@ -149,6 +151,14 @@ inline void Model_Settings::loadSettings(const std::string& filename, bool verbo
 	}
 	catch (const std::exception& e){
 		if (verbose)  std::cerr << " #### touchDownVelocity ............ " << touchDownVelocity_ << "\t(default)" << std::endl;
+	}
+
+	try {
+		phaseTransitionStanceTime_ = pt.get<double>("model_settings.phaseTransitionStanceTime");
+		if (verbose)  std::cerr << " #### phaseTransitionStanceTime .... " << phaseTransitionStanceTime_ << std::endl;
+	}
+	catch (const std::exception& e){
+		if (verbose)  std::cerr << " #### phaseTransitionStanceTime .... " << phaseTransitionStanceTime_ << "\t(default)" << std::endl;
 	}
 
 	try {

@@ -295,31 +295,42 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::approximateConstrainedLQWork
 		// checking the numerical stability again
 		if (BASE::ddpSettings_.checkNumericalStability_){
 			try {
-				if (!BASE::qTrajectoryStock_[i][k].allFinite())
+				if (!BASE::qTrajectoryStock_[i][k].allFinite()) {
 					throw std::runtime_error("Intermediate cost is is not finite.");
-				if (!BASE::QvTrajectoryStock_[i][k].allFinite())
+				}
+				if (!BASE::QvTrajectoryStock_[i][k].allFinite()) {
 					throw std::runtime_error("Intermediate cost first derivative w.r.t. state is is not finite.");
-				if (!BASE::QmTrajectoryStock_[i][k].allFinite())
+				}
+				if (!BASE::QmTrajectoryStock_[i][k].allFinite()) {
 					throw std::runtime_error("Intermediate cost second derivative w.r.t. state is is not finite.");
-				if (!BASE::QmTrajectoryStock_[i][k].isApprox(BASE::QmTrajectoryStock_[i][k].transpose()))
+				}
+				if (!BASE::QmTrajectoryStock_[i][k].isApprox(BASE::QmTrajectoryStock_[i][k].transpose())) {
 					throw std::runtime_error("Intermediate cost second derivative w.r.t. state is is not self-adjoint.");
-				if (BASE::QmTrajectoryStock_[i][k].eigenvalues().real().minCoeff() < -Eigen::NumTraits<scalar_t>::epsilon())
+				}
+				if (BASE::QmTrajectoryStock_[i][k].eigenvalues().real().minCoeff() < -Eigen::NumTraits<scalar_t>::epsilon()) {
 					throw std::runtime_error("Q matrix is not positive semi-definite. It's smallest eigenvalue is " +
 											 std::to_string(BASE::QmTrajectoryStock_[i][k].eigenvalues().real().minCoeff()) + ".");
-				if (!BASE::RvTrajectoryStock_[i][k].allFinite())
+				}
+				if (!BASE::RvTrajectoryStock_[i][k].allFinite()) {
 					throw std::runtime_error("Intermediate cost first derivative w.r.t. input is is not finite.");
-				if (!BASE::RmTrajectoryStock_[i][k].allFinite())
+				}
+				if (!BASE::RmTrajectoryStock_[i][k].allFinite()) {
 					throw std::runtime_error("Intermediate cost second derivative w.r.t. input is is not finite.");
-				if (!BASE::RmTrajectoryStock_[i][k].isApprox(BASE::RmTrajectoryStock_[i][k].transpose()))
+				}
+				if (!BASE::RmTrajectoryStock_[i][k].isApprox(BASE::RmTrajectoryStock_[i][k].transpose())) {
 					throw std::runtime_error("Intermediate cost second derivative w.r.t. input is is not self-adjoint.");
-				if (!BASE::PmTrajectoryStock_[i][k].allFinite())
+				}
+				if (!BASE::PmTrajectoryStock_[i][k].allFinite()) {
 					throw std::runtime_error("Intermediate cost second derivative w.r.t. input-state is is not finite.");
-				if (BASE::RmTrajectoryStock_[i][k].ldlt().rcond() < Eigen::NumTraits<scalar_t>::epsilon())
+				}
+				if (BASE::RmTrajectoryStock_[i][k].ldlt().rcond() < Eigen::NumTraits<scalar_t>::epsilon()) {
 					throw std::runtime_error("R matrix is not invertible. It's reciprocal condition number is " +
 											 std::to_string(BASE::RmTrajectoryStock_[i][k].ldlt().rcond()) + ".");
-				if (BASE::RmTrajectoryStock_[i][k].eigenvalues().real().minCoeff() < Eigen::NumTraits<scalar_t>::epsilon())
+				}
+				if (BASE::RmTrajectoryStock_[i][k].eigenvalues().real().minCoeff() < Eigen::NumTraits<scalar_t>::epsilon()) {
 					throw std::runtime_error("R matrix is not positive definite. It's smallest eigenvalue is " +
 											 std::to_string(BASE::RmTrajectoryStock_[i][k].eigenvalues().real().minCoeff()) + ".");
+				}
 			} catch(const std::exception& error)  {
 				std::cerr << "After adding inequality constraint penalty" << std::endl;
 				std::cerr << "what(): " << error.what() << " at time " << BASE::nominalTimeTrajectoriesStock_[i][k] << " [sec]." << std::endl;
@@ -365,11 +376,12 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::approximateConstrainedLQWork
     dynamic_matrix_t Dm = BASE::DmTrajectoryStock_[i][k].topRows(nc1);
 
 		// check numerical stability_
-		if (BASE::ddpSettings_.checkNumericalStability_ && nc1>0)
+		if (BASE::ddpSettings_.checkNumericalStability_ && nc1>0) {
 			if (Dm.colPivHouseholderQr().rank()!=nc1) {
 				BASE::printString(">>> WARNING: The state-input constraints are rank deficient "
 						"(at time " + std::to_string(BASE::nominalTimeTrajectoriesStock_[i][k]) + ")!");
 			}
+		}
 
     dynamic_matrix_t RmInvDmtranspose = RmInverseTrajectoryStock_[i][k]*Dm.transpose();
 		dynamic_matrix_t RmProjected = ( Dm * RmInvDmtranspose ).ldlt().solve(dynamic_matrix_t::Identity(nc1,nc1));
@@ -402,8 +414,9 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::approximateConstrainedLQWork
 	}
 
 	// making sure that constrained Qm is PSD
-	if (BASE::ddpSettings_.useMakePSD_)
+	if (BASE::ddpSettings_.useMakePSD_) {
 		BASE::makePSD(QmConstrainedTrajectoryStock_[i][k]);
+	}
 }
 
 /******************************************************************************************************/
@@ -427,7 +440,8 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculateController() {
 		BASE::nominalControllersStock_[i].deltaBiasArray_.resize(N);
 
 		// if the partition is not active
-		if (N==0)  continue;
+		if (N==0) {  continue;
+		}
 
 		// initialize interpolating function
 		for (size_t j = 0; j<BASE::ddpSettings_.nThreads_; j++) {
@@ -505,10 +519,12 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculateControllerWorker (
 	// checking the numerical stability of the controller parameters
 	if (BASE::ddpSettings_.checkNumericalStability_){
 		try {
-			if (!BASE::nominalControllersStock_[i].gainArray_[k].allFinite())
+			if (!BASE::nominalControllersStock_[i].gainArray_[k].allFinite()) {
 				throw std::runtime_error("Feedback gains are unstable.");
-			if (!BASE::nominalControllersStock_[i].deltaBiasArray_[k].allFinite())
+			}
+			if (!BASE::nominalControllersStock_[i].deltaBiasArray_[k].allFinite()) {
 				throw std::runtime_error("feedForwardControl is unstable.");
+			}
 		}
 		catch(const std::exception& error)  {
 			std::cerr << "what(): " << error.what() << " at time " << BASE::nominalControllersStock_[i].timeStamp_[k] << " [sec]." << std::endl;
@@ -634,21 +650,26 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::solveRiccatiEquationsWorker(
 	}  // end of k loop
 
 	// testing the numerical stability of the Riccati equations
-	if (BASE::ddpSettings_.checkNumericalStability_)
+	if (BASE::ddpSettings_.checkNumericalStability_) {
 		for (int k=NS-1; k>=0; k--) {
 			try {
-				if (!BASE::SmTrajectoryStock_[partitionIndex][k].allFinite())  throw std::runtime_error("Sm is unstable.");
-				if (BASE::SmTrajectoryStock_[partitionIndex][k].eigenvalues().real().minCoeff() < -Eigen::NumTraits<scalar_t>::epsilon())
+				if (!BASE::SmTrajectoryStock_[partitionIndex][k].allFinite()) {  throw std::runtime_error("Sm is unstable.");
+				}
+				if (BASE::SmTrajectoryStock_[partitionIndex][k].eigenvalues().real().minCoeff() < -Eigen::NumTraits<scalar_t>::epsilon()) {
 					throw std::runtime_error("Sm matrix is not positive semi-definite. It's smallest eigenvalue is " +
 											 std::to_string(BASE::SmTrajectoryStock_[partitionIndex][k].eigenvalues().real().minCoeff()) + ".");
-				if (!BASE::SvTrajectoryStock_[partitionIndex][k].allFinite())  throw std::runtime_error("Sv is unstable.");
-				if (!BASE::sTrajectoryStock_[partitionIndex][k].allFinite())   throw std::runtime_error("s is unstable.");
+				}
+				if (!BASE::SvTrajectoryStock_[partitionIndex][k].allFinite()) {  throw std::runtime_error("Sv is unstable.");
+				}
+				if (!BASE::sTrajectoryStock_[partitionIndex][k].allFinite()) {   throw std::runtime_error("s is unstable.");
+				}
 			}
 			catch(const std::exception& error)
 			{
 				std::cerr << "what(): " << error.what() << " at time " << BASE::SsTimeTrajectoryStock_[partitionIndex][k] << " [sec]." << std::endl;
 				for (int kp=k; kp<k+10; kp++)  {
-					if (kp >= NS) continue;
+					if (kp >= NS) { continue;
+					}
 					std::cerr << "Sm[" << BASE::SsTimeTrajectoryStock_[partitionIndex][kp] << "]:\n"<< BASE::SmTrajectoryStock_[partitionIndex][kp].norm() << std::endl;
 					std::cerr << "Sv[" << BASE::SsTimeTrajectoryStock_[partitionIndex][kp] << "]:\t"<< BASE::SvTrajectoryStock_[partitionIndex][kp].transpose().norm() << std::endl;
 					std::cerr << "s[" << BASE::SsTimeTrajectoryStock_[partitionIndex][kp] << "]: \t"<< BASE::sTrajectoryStock_[partitionIndex][kp].transpose().norm() << std::endl;
@@ -656,6 +677,7 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::solveRiccatiEquationsWorker(
 				exit(0);
 			}
 		}
+	}
 }
 
 /******************************************************************************************************/
@@ -761,8 +783,9 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::solveRiccatiEquationsForNomi
 	}  // end of i loop
 
 	// check size
-	if (allSsTrajectory.size() != N)
+	if (allSsTrajectory.size() != N) {
 		throw std::runtime_error("allSsTrajectory size is incorrect.");
+	}
 
 	// denormalizing time and constructing 'Sm', 'Sv', and 's'
 	BASE::SsTimeTrajectoryStock_[partitionIndex] = BASE::nominalTimeTrajectoriesStock_[partitionIndex];
@@ -775,21 +798,26 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::solveRiccatiEquationsForNomi
 	}  // end of k loop
 
 	// testing the numerical stability of the Riccati equations
-	if (BASE::ddpSettings_.checkNumericalStability_)
+	if (BASE::ddpSettings_.checkNumericalStability_) {
 		for (int k=N-1; k>=0; k--) {
 			try {
-				if (!BASE::SmTrajectoryStock_[partitionIndex][k].allFinite())  throw std::runtime_error("Sm is unstable.");
-				if (BASE::SmTrajectoryStock_[partitionIndex][k].eigenvalues().real().minCoeff() < -Eigen::NumTraits<scalar_t>::epsilon())
+				if (!BASE::SmTrajectoryStock_[partitionIndex][k].allFinite()) {  throw std::runtime_error("Sm is unstable.");
+				}
+				if (BASE::SmTrajectoryStock_[partitionIndex][k].eigenvalues().real().minCoeff() < -Eigen::NumTraits<scalar_t>::epsilon()) {
 					throw std::runtime_error("Sm matrix is not positive semi-definite. It's smallest eigenvalue is " +
 											 std::to_string(BASE::SmTrajectoryStock_[partitionIndex][k].eigenvalues().real().minCoeff()) + ".");
-				if (!BASE::SvTrajectoryStock_[partitionIndex][k].allFinite())  throw std::runtime_error("Sv is unstable.");
-				if (!BASE::sTrajectoryStock_[partitionIndex][k].allFinite())   throw std::runtime_error("s is unstable");
+				}
+				if (!BASE::SvTrajectoryStock_[partitionIndex][k].allFinite()) {  throw std::runtime_error("Sv is unstable.");
+				}
+				if (!BASE::sTrajectoryStock_[partitionIndex][k].allFinite()) {   throw std::runtime_error("s is unstable");
+				}
 			}
 			catch(const std::exception& error)
 			{
 				std::cerr << "what(): " << error.what() << " at time " << BASE::SsTimeTrajectoryStock_[partitionIndex][k] << " [sec]." << std::endl;
 				for (int kp=k; kp<k+10; kp++)  {
-					if (kp >= N) continue;
+					if (kp >= N) { continue;
+					}
 					std::cerr << "Sm[" << BASE::SsTimeTrajectoryStock_[partitionIndex][kp] << "]:\n"<< BASE::SmTrajectoryStock_[partitionIndex][kp].norm() << std::endl;
 					std::cerr << "Sv[" << BASE::SsTimeTrajectoryStock_[partitionIndex][kp] << "]:\t"<< BASE::SvTrajectoryStock_[partitionIndex][kp].transpose().norm() << std::endl;
 					std::cerr << "s["  << BASE::SsTimeTrajectoryStock_[partitionIndex][kp] << "]:\t"<< BASE::sTrajectoryStock_[partitionIndex][kp].transpose().norm() << std::endl;
@@ -797,6 +825,7 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::solveRiccatiEquationsForNomi
 				exit(0);
 			}
 		}
+}
 }
 
 
@@ -824,8 +853,9 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::solveErrorRiccatiEquationWor
 	// Skip calculation of the error correction term (Sve) if the constrained simulation is used for forward simulation
 	if (BASE::ddpSettings_.simulationIsConstrained_) {
 		BASE::SveTrajectoryStock_[partitionIndex].resize(NS);
-		for (size_t k=0; k<NS; k++)
+		for (size_t k=0; k<NS; k++) {
 			BASE::SveTrajectoryStock_[partitionIndex][k].setZero();
+		}
 		return;
 	}
 
@@ -907,20 +937,22 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::solveErrorRiccatiEquationWor
 	}  // end of i loop
 
 	// check size
-	if (SveTrajectory.size() != NS)
+	if (SveTrajectory.size() != NS) {
 		throw std::runtime_error("SveTrajectory size is incorrect.");
+	}
 
 	// constructing Sve
 	BASE::SveTrajectoryStock_[partitionIndex].resize(SveTrajectory.size());
 	std::reverse_copy(SveTrajectory.begin(), SveTrajectory.end(), BASE::SveTrajectoryStock_[partitionIndex].begin());
 
 	// Testing the numerical stability
-	if (BASE::ddpSettings_.checkNumericalStability_)
+	if (BASE::ddpSettings_.checkNumericalStability_) {
 		for (size_t k=0; k<NS; k++) {
 
 			// testing the numerical stability of the Riccati error equation
 			try {
-				if (!BASE::SveTrajectoryStock_[partitionIndex][k].allFinite())  throw std::runtime_error("Sve is unstable");
+				if (!BASE::SveTrajectoryStock_[partitionIndex][k].allFinite()) {  throw std::runtime_error("Sve is unstable");
+				}
 			}
 			catch(const std::exception& error) 	{
 				std::cerr << "what(): " << error.what() << " at time " << BASE::SsTimeTrajectoryStock_[partitionIndex][k] << " [sec]." << std::endl;
@@ -937,6 +969,7 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::solveErrorRiccatiEquationWor
 				exit(0);
 			}
 		}  // end of k loop
+	}
 }
 
 /******************************************************************************************************/
@@ -953,10 +986,11 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::solveSlqRiccatiEquationsWork
 
 #ifdef USE_SEPARATE_RICCATI_SOLVER
 
-	if(settings_.useNominalTimeForBackwardPass_)
+	if(settings_.useNominalTimeForBackwardPass_) {
 		solveRiccatiEquationsForNominalTimeWorker(workerIndex, partitionIndex, SmFinal, SvFinal, sFinal);
-	else
+	} else {
 		solveRiccatiEquationsWorker(workerIndex, partitionIndex, SmFinal, SvFinal, sFinal);
+	}
 
 	solveErrorRiccatiEquationWorker(workerIndex, partitionIndex, SveFinal);
 
@@ -1304,24 +1338,29 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::fullRiccatiBackwardSweepWork
 	}
 
 	// testing the numerical stability
-	if (BASE::ddpSettings_.checkNumericalStability_)
+	if (BASE::ddpSettings_.checkNumericalStability_) {
 		for (int k=N-1; k>=0; k--) {
 			// checking the numerical stability of the Riccati equations
 			try {
-				if (!BASE::SmTrajectoryStock_[partitionIndex][k].allFinite())
+				if (!BASE::SmTrajectoryStock_[partitionIndex][k].allFinite()) {
 					throw std::runtime_error("Sm is unstable.");
-				if (!BASE::SvTrajectoryStock_[partitionIndex][k].allFinite())
+				}
+				if (!BASE::SvTrajectoryStock_[partitionIndex][k].allFinite()) {
 					throw std::runtime_error("Sv is unstable.");
-				if (!BASE::SveTrajectoryStock_[partitionIndex][k].allFinite())
+				}
+				if (!BASE::SveTrajectoryStock_[partitionIndex][k].allFinite()) {
 					throw std::runtime_error("Sve is unstable.");
-				if (!BASE::sTrajectoryStock_[partitionIndex][k].allFinite())
+				}
+				if (!BASE::sTrajectoryStock_[partitionIndex][k].allFinite()) {
 					throw std::runtime_error("s is unstable.");
+				}
 			}
 			catch(const std::exception& error) {
 				std::cerr << "what(): " << error.what() << " at time "
 						<< BASE::SsTimeTrajectoryStock_[partitionIndex][k] << " [sec]." << std::endl;
 				for (int kp=k; kp<k+10; kp++)  {
-					if (kp >= N) continue;
+					if (kp >= N) { continue;
+					}
 					std::cerr << "Sm[" << BASE::SsTimeTrajectoryStock_[partitionIndex][kp] << "]:\n"
 							<< BASE::SmTrajectoryStock_[partitionIndex][kp].norm() << std::endl;
 					std::cerr << "Sv[" << BASE::SsTimeTrajectoryStock_[partitionIndex][kp] << "]:\t"
@@ -1336,12 +1375,15 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::fullRiccatiBackwardSweepWork
 
 			// checking the numerical stability of the controller parameters
 			try {
-				if (BASE::nominalControllersStock_[partitionIndex].gainArray_[k].hasNaN())
+				if (BASE::nominalControllersStock_[partitionIndex].gainArray_[k].hasNaN()) {
 					throw std::runtime_error("Feedback gains are unstable.");
-				if (BASE::nominalControllersStock_[partitionIndex].biasArray_[k].hasNaN())
+				}
+				if (BASE::nominalControllersStock_[partitionIndex].biasArray_[k].hasNaN()) {
 					throw std::runtime_error("uff gains are unstable.");
-				if (BASE::nominalControllersStock_[partitionIndex].deltaBiasArray_[k].hasNaN())
+				}
+				if (BASE::nominalControllersStock_[partitionIndex].deltaBiasArray_[k].hasNaN()) {
 					throw std::runtime_error("deltaUff is unstable.");
+				}
 			}
 			catch(const std::exception& error) {
 				std::cerr << "what(): " << error.what() << " at time "
@@ -1349,6 +1391,7 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::fullRiccatiBackwardSweepWork
 				exit(0);
 			}
 		}
+	}
 }
 
 /******************************************************************************************************/

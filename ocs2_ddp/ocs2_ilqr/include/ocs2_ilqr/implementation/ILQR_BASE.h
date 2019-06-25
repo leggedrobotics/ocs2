@@ -120,12 +120,14 @@ void ILQR_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::approximateUnconstrainedLQW
 	BASE::approximateUnconstrainedLQWorker(workerIndex, i, k);
 
 	// making sure that constrained Qm is PSD
-	if (BASE::ddpSettings_.useMakePSD_)
+	if (BASE::ddpSettings_.useMakePSD_) {
 		BASE::makePSD(BASE::QmTrajectoryStock_[i][k]);
+	}
 
 	// TODO: add support for the constrained ILQR
-	if (BASE::nc1TrajectoriesStock_[i][k]!=0 || BASE::nc2TrajectoriesStock_[i][k]!=0 || BASE::ncIneqTrajectoriesStock_[i][k]!=0)
+	if (BASE::nc1TrajectoriesStock_[i][k]!=0 || BASE::nc2TrajectoriesStock_[i][k]!=0 || BASE::ncIneqTrajectoriesStock_[i][k]!=0) {
 		throw std::runtime_error("We currently only support unconstrained ILQR.");
+	}
 }
 
 /******************************************************************************************************/
@@ -182,7 +184,8 @@ void ILQR_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculateController() {
 		BASE::nominalControllersStock_[i].deltaBiasArray_.resize(N);
 
 		// if the partition is not active
-		if (N==0)  continue;
+		if (N==0) {  continue;
+		}
 
 		// current partition update
 		BASE::constraintStepSize_ = BASE::initialControllerDesignStock_[i] ? 0.0 : BASE::ddpSettings_.constraintStepSize_;
@@ -228,10 +231,12 @@ void ILQR_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculateControllerWorker (
 	// checking the numerical stability of the controller parameters
 	if (BASE::ddpSettings_.checkNumericalStability_){
 		try {
-			if (!BASE::nominalControllersStock_[i].gainArray_[k].allFinite())
+			if (!BASE::nominalControllersStock_[i].gainArray_[k].allFinite()) {
 				throw std::runtime_error("Feedback gains are unstable.");
-			if (!BASE::nominalControllersStock_[i].deltaBiasArray_[k].allFinite())
+			}
+			if (!BASE::nominalControllersStock_[i].deltaBiasArray_[k].allFinite()) {
 				throw std::runtime_error("feedForwardControl is unstable.");
+			}
 		}
 		catch(const std::exception& error)  {
 			std::cerr << "what(): " << error.what() << " at time " << BASE::nominalControllersStock_[i].timeStamp_[k] << " [sec]." << std::endl;
@@ -283,7 +288,8 @@ void ILQR_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::solveRiccatiEquationsWorker
 	GvTrajectoryStock_[partitionIndex].resize(N);
 
 	// terminate if the partition is not active
-	if (N==0) return;
+	if (N==0) { return;
+	}
 
 	// switching times
 	size_array_t SsSwitchingTimesIndices;
@@ -351,10 +357,11 @@ void ILQR_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::solveRiccatiEquationsWorker
 				input_state_matrix_t& Gm = GmTrajectoryStock_[partitionIndex][k];
 
 				Hm = Rm + Bm.transpose() * BASE::SmTrajectoryStock_[partitionIndex][k+1] * Bm;
-				if (BASE::ddpSettings_.useMakePSD_)
+				if (BASE::ddpSettings_.useMakePSD_) {
 					BASE::makePSD(Hm);
-				else
+				} else {
 					Hm += BASE::ddpSettings_.addedRiccatiDiagonal_ * input_matrix_t::Identity();
+				}
 				HmInverse = Hm.ldlt().solve(input_matrix_t::Identity());
 				Gm = Pm + Bm.transpose() * BASE::SmTrajectoryStock_[partitionIndex][k+1] * Am;
 				Gv = Rv + Bm.transpose() * BASE::SvTrajectoryStock_[partitionIndex][k+1];
@@ -375,21 +382,26 @@ void ILQR_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::solveRiccatiEquationsWorker
 
 
 	// testing the numerical stability of the Riccati equations
-	if (BASE::ddpSettings_.checkNumericalStability_)
+	if (BASE::ddpSettings_.checkNumericalStability_) {
 		for (int k=N-1; k>=0; k--) {
 			try {
-				if (!BASE::SmTrajectoryStock_[partitionIndex][k].allFinite())  throw std::runtime_error("Sm is unstable.");
-				if (BASE::SmTrajectoryStock_[partitionIndex][k].eigenvalues().real().minCoeff() < -Eigen::NumTraits<scalar_t>::epsilon())
+				if (!BASE::SmTrajectoryStock_[partitionIndex][k].allFinite()) {  throw std::runtime_error("Sm is unstable.");
+					}
+				if (BASE::SmTrajectoryStock_[partitionIndex][k].eigenvalues().real().minCoeff() < -Eigen::NumTraits<scalar_t>::epsilon()) {
 					throw std::runtime_error("Sm matrix is not positive semi-definite. It's smallest eigenvalue is " +
 							std::to_string(BASE::SmTrajectoryStock_[partitionIndex][k].eigenvalues().real().minCoeff()) + ".");
-				if (!BASE::SvTrajectoryStock_[partitionIndex][k].allFinite())  throw std::runtime_error("Sv is unstable.");
-				if (!BASE::sTrajectoryStock_[partitionIndex][k].allFinite())   throw std::runtime_error("s is unstable");
+					}
+				if (!BASE::SvTrajectoryStock_[partitionIndex][k].allFinite()) {  throw std::runtime_error("Sv is unstable.");
+					}
+				if (!BASE::sTrajectoryStock_[partitionIndex][k].allFinite()) {   throw std::runtime_error("s is unstable");
+					}
 			}
 			catch(const std::exception& error)
 			{
 				std::cerr << "what(): " << error.what() << " at time " << BASE::SsTimeTrajectoryStock_[partitionIndex][k] << " [sec]." << std::endl;
 				for (int kp=k; kp<k+10; kp++)  {
-					if (kp >= N) continue;
+					if (kp >= N) { continue;
+					}
 					std::cerr << "Sm[" << BASE::SsTimeTrajectoryStock_[partitionIndex][kp] << "]:\n"<< BASE::SmTrajectoryStock_[partitionIndex][kp].norm() << std::endl;
 					std::cerr << "Sv[" << BASE::SsTimeTrajectoryStock_[partitionIndex][kp] << "]:\t"<< BASE::SvTrajectoryStock_[partitionIndex][kp].transpose().norm() << std::endl;
 					std::cerr << "s["  << BASE::SsTimeTrajectoryStock_[partitionIndex][kp] << "]:\t"<< BASE::sTrajectoryStock_[partitionIndex][kp].transpose().norm() << std::endl;
@@ -397,6 +409,7 @@ void ILQR_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::solveRiccatiEquationsWorker
 				exit(0);
 			}
 		}
+	}
 }
 
 /******************************************************************************************************/

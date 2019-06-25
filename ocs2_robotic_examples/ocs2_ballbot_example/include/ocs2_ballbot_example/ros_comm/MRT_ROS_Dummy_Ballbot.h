@@ -85,8 +85,9 @@ protected:
 		ros::NodeHandle n;
 		visualizationPublisher_ = n.advertise<visualization_msgs::MarkerArray>("ballbot_vis", 10);
 		ROS_INFO_STREAM("Waiting for visualization subscriber ...");
-		while(ros::ok() && visualizationPublisher_.getNumSubscribers() == 0)
+		while(ros::ok() && visualizationPublisher_.getNumSubscribers() == 0) {
 			ros::Rate(100).sleep();
+		}
 		ROS_INFO_STREAM("Visualization subscriber is connected.");
 
 		tfBroadcasterPtr_.reset(new tf::TransformBroadcaster);

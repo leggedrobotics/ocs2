@@ -39,11 +39,12 @@ size_t Solver_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::findActivePartitionInde
 		bool ceilingFunction /*= true*/) {
 
 	int activeSubsystemIndex;
-	if (ceilingFunction)
+	if (ceilingFunction) {
 		activeSubsystemIndex = findActiveIntervalIndex(partitioningTimes, time, 0);
-	else
+	} else {
 		activeSubsystemIndex = findActiveIntervalIndex(partitioningTimes, time, 0,
 				-OCS2NumericTraits<scalar_t>::week_epsilon());
+	}
 
 	if (activeSubsystemIndex < 0) {
 		std::string mesg = "Given time is less than the start time (i.e. givenTime < partitioningTimes.front()): "
@@ -79,18 +80,20 @@ template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
 template <typename Derived>
 bool Solver_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::makePSD(Eigen::MatrixBase<Derived>& squareMatrix) {
 
-	if (squareMatrix.rows() != squareMatrix.cols())
+	if (squareMatrix.rows() != squareMatrix.cols()) {
 		throw std::runtime_error("Not a square matrix: makePSD() method is for square matrix.");
+	}
 
 	Eigen::SelfAdjointEigenSolver<Derived> eig(squareMatrix, Eigen::EigenvaluesOnly);
 	Eigen::VectorXd lambda = eig.eigenvalues();
 
 	bool hasNegativeEigenValue = false;
-	for (size_t j=0; j<lambda.size() ; j++)
+	for (size_t j=0; j<lambda.size() ; j++) {
 		if (lambda(j) < 0.0) {
 			hasNegativeEigenValue = true;
 			lambda(j) = 1e-6;
 		}
+	}
 
 	if (hasNegativeEigenValue) {
 		eig.compute(squareMatrix, Eigen::ComputeEigenvectors);

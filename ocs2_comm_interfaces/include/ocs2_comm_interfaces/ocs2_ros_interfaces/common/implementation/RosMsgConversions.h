@@ -41,12 +41,14 @@ void RosMsgConversions<STATE_DIM, INPUT_DIM>::CreateObservationMsg(
 	observationMsg.time = observation.time();
 
 	observationMsg.state.value.resize(STATE_DIM);
-	for (size_t i=0; i<STATE_DIM; i++)
+	for (size_t i=0; i<STATE_DIM; i++) {
 		observationMsg.state.value[i] = observation.state(i);
+	}
 
 	observationMsg.input.value.resize(INPUT_DIM);
-	for (size_t i=0; i<INPUT_DIM; i++)
+	for (size_t i=0; i<INPUT_DIM; i++) {
 		observationMsg.input.value[i] = observation.input(i);
+	}
 
 	observationMsg.subsystem = observation.subsystem();
 }
@@ -84,14 +86,16 @@ void RosMsgConversions<STATE_DIM, INPUT_DIM>::CreateModeSequenceMsg(
 	// event time sequence
 	modeSequenceMsg.eventTimes.clear();
 	modeSequenceMsg.eventTimes.reserve(eventTimes.size());
-	for (const scalar_t& ti: eventTimes)
+	for (const scalar_t& ti: eventTimes) {
 		modeSequenceMsg.eventTimes.push_back(ti);
+	}
 
 	// subsystem sequence
 	modeSequenceMsg.subsystems.clear();
 	modeSequenceMsg.subsystems.reserve(subsystemsSequence.size());
-	for (const size_t& si: subsystemsSequence)
+	for (const size_t& si: subsystemsSequence) {
 		modeSequenceMsg.subsystems.push_back(si);
+	}
 }
 
 /******************************************************************************************************/
@@ -105,21 +109,24 @@ void RosMsgConversions<STATE_DIM, INPUT_DIM>::ReadModeSequenceMsg(
 		size_array_t& subsystemsSequence) {
 
 	const size_t numSubsystems = modeSequenceMsg.subsystems.size();
-	if (modeSequenceMsg.eventTimes.size() != numSubsystems-1)
+	if (modeSequenceMsg.eventTimes.size() != numSubsystems-1) {
 		throw std::runtime_error("The received message has incompatible "
 				"array sizes for the eventTimes and subsystemsSequence.");
+	}
 
 	// event time sequence
 	eventTimes.clear();
 	eventTimes.reserve(numSubsystems-1);
-	for (const scalar_t& ti: modeSequenceMsg.eventTimes)
+	for (const scalar_t& ti: modeSequenceMsg.eventTimes) {
 		eventTimes.push_back(ti);
+	}
 
 	// subsystem sequence
 	subsystemsSequence.clear();
 	subsystemsSequence.reserve(numSubsystems);
-	for (const size_t& si: modeSequenceMsg.subsystems)
+	for (const size_t& si: modeSequenceMsg.subsystems) {
 		subsystemsSequence.push_back(si);
+	}
 }
 
 /******************************************************************************************************/
@@ -134,14 +141,16 @@ void RosMsgConversions<STATE_DIM, INPUT_DIM>::CreateModeSequenceTemplateMsg(
 	// event time sequence
 	modeSequenceMsg.eventTimes.clear();
 	modeSequenceMsg.eventTimes.reserve(modeSequenceTemplate.templateSwitchingTimes_.size());
-	for (const scalar_t& ti: modeSequenceTemplate.templateSwitchingTimes_)
+	for (const scalar_t& ti: modeSequenceTemplate.templateSwitchingTimes_) {
 		modeSequenceMsg.eventTimes.push_back(ti);
+	}
 
 	// subsystem sequence
 	modeSequenceMsg.subsystems.clear();
 	modeSequenceMsg.subsystems.reserve(modeSequenceTemplate.templateSubsystemsSequence_.size());
-	for (const size_t& si: modeSequenceTemplate.templateSubsystemsSequence_)
+	for (const size_t& si: modeSequenceTemplate.templateSubsystemsSequence_) {
 		modeSequenceMsg.subsystems.push_back(si);
+	}
 }
 
 /******************************************************************************************************/
@@ -154,21 +163,24 @@ void RosMsgConversions<STATE_DIM, INPUT_DIM>::ReadModeSequenceTemplateMsg(
 		mode_sequence_template_t& modeSequenceTemplate) {
 
 	const size_t numSubsystems = modeSequenceMsg.subsystems.size();
-	if (modeSequenceMsg.eventTimes.size() != numSubsystems+1)
+	if (modeSequenceMsg.eventTimes.size() != numSubsystems+1) {
 		throw std::runtime_error("The received message has incompatible "
 				"array sizes for the switchingTimes and subsystemsSequence.");
+	}
 
 	// switching time sequence
 	modeSequenceTemplate.templateSwitchingTimes_.clear();
 	modeSequenceTemplate.templateSwitchingTimes_.reserve(numSubsystems+1);
-	for (const scalar_t& ti: modeSequenceMsg.eventTimes)
+	for (const scalar_t& ti: modeSequenceMsg.eventTimes) {
 		modeSequenceTemplate.templateSwitchingTimes_.push_back(ti);
+	}
 
 	// subsystem sequence
 	modeSequenceTemplate.templateSubsystemsSequence_.clear();
 	modeSequenceTemplate.templateSubsystemsSequence_.reserve(numSubsystems);
-	for (const size_t& si: modeSequenceMsg.subsystems)
+	for (const size_t& si: modeSequenceMsg.subsystems) {
 		modeSequenceTemplate.templateSubsystemsSequence_.push_back(si);
+	}
 }
 
 /******************************************************************************************************/
@@ -218,8 +230,9 @@ void RosMsgConversions<STATE_DIM, INPUT_DIM>::ReadTargetTrajectoriesMsg(
 	dynamic_vector_array_t& desiredInputTrajectory = costDesiredTrajectories.desiredInputTrajectory();
 
 	size_t N = targetTrajectoriesMsg.stateTrajectory.size();
-	if (N==0)
+	if (N==0) {
 		throw std::runtime_error("An empty target trajectories message is received.");
+	}
 
 	// state and time
 	desiredTimeTrajectory.resize(N);

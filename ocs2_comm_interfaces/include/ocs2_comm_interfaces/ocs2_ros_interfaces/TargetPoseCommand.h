@@ -56,8 +56,9 @@ public:
 	: robotName_(robotName)
 	, goalPoseLimit_(goalPoseLimit)
 	{
-		if (goalPoseLimit_.size() != maxCommandSize_)
+		if (goalPoseLimit_.size() != maxCommandSize_) {
 			throw std::runtime_error("The goal pose limit should be of size 6.");
+		}
 	}
 
 	~TargetPoseCommand() = default;
@@ -87,19 +88,22 @@ public:
 			std::getline(std::cin, line);
 			std::istringstream stream(line);
 			scalar_t in;
-			while (stream >> in)
+			while (stream >> in) {
 				commadInput_.push_back(in);
+			}
 
-			if (commadInput_.size() > maxCommandSize_)
+			if (commadInput_.size() > maxCommandSize_) {
 				commadInput_.erase(commadInput_.begin()+maxCommandSize_, commadInput_.end());
+			}
 
 			for (size_t i=0; i<maxCommandSize_; i++) {
 				if (i+1 > commadInput_.size()) {
 					commadInput_.push_back(0.0);
 					continue;
 				}
-				if (std::abs(commadInput_[i]) > goalPoseLimit_[i])
+				if (std::abs(commadInput_[i]) > goalPoseLimit_[i]) {
 					commadInput_[i] = (commadInput_[i] > 0) ? goalPoseLimit_[i] : -goalPoseLimit_[i];
+				}
 			}  // end of i loop
 
 			// creat the message
@@ -121,8 +125,9 @@ public:
 			gaolPublisher_.publish(basePoseMsg);
 
 			std::cout << "The following position displacement is published: [";
-			for (size_t i=0; i<maxCommandSize_; i++)
+			for (size_t i=0; i<maxCommandSize_; i++) {
 				std::cout << commadInput_[i] << ", ";
+			}
 			std::cout << "\b\b]" << std::endl << std::endl;
 
 		}  // enf of while loop

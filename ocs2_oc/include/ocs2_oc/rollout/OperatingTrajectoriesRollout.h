@@ -119,11 +119,13 @@ public:
 			state_vector_array_t& stateTrajectory,
 			input_vector_array_t& inputTrajectory) override {
 
-		if (initTime > finalTime)
+		if (initTime > finalTime) {
 			throw std::runtime_error("Initial time should be less-equal to final time.");
+		}
 
-		if (controller != nullptr)
+		if (controller != nullptr) {
 			throw std::runtime_error("Incorrect usage of Operating trajectory; A controller is available.");
+		}
 
 		const size_t numEvents = logicRulesMachine.getNumEvents(partitionIndex);
 		const size_t numSubsystems = logicRulesMachine.getNumEventCounters(partitionIndex);

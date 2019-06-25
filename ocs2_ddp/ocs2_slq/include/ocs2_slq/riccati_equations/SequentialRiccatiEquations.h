@@ -285,18 +285,20 @@ protected:
 	template <typename Derived>
 	static bool makePSD(Eigen::MatrixBase<Derived>& squareMatrix) {
 
-		if (squareMatrix.rows() != squareMatrix.cols())
+		if (squareMatrix.rows() != squareMatrix.cols()) {
 			throw std::runtime_error("Not a square matrix: makePSD() method is for square matrix.");
+		}
 
 		Eigen::SelfAdjointEigenSolver<Derived> eig(squareMatrix, Eigen::EigenvaluesOnly);
 		Eigen::VectorXd lambda = eig.eigenvalues();
 
 		bool hasNegativeEigenValue = false;
-		for (size_t j=0; j<lambda.size() ; j++)
+		for (size_t j=0; j<lambda.size() ; j++) {
 			if (lambda(j) < 0.0) {
 				hasNegativeEigenValue = true;
 				lambda(j) = 1e-6;
 			}
+		}
 
 		if (hasNegativeEigenValue) {
 			eig.compute(squareMatrix, Eigen::ComputeEigenvectors);

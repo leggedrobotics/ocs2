@@ -126,10 +126,12 @@ void MPC_OCS2<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::runOCS2() {
 		ocs2Synchronization_.wait(ocs2Lock, [&]{return activateOCS2_ || terminateOCS2_;});
 
 		// exit loop
-		if (terminateOCS2_==true) break;
+		if (terminateOCS2_==true) { break;
+		}
 
-		if (BASE::mpcSettings_.debugPrint_)
+		if (BASE::mpcSettings_.debugPrint_) {
 			std::cerr << "### OCS2 started. " << std::endl;
+		}
 
 		subsystemsSequenceOptimized_ = slqDataCollectorPtr_->subsystemsSequence_;
 
@@ -139,8 +141,9 @@ void MPC_OCS2<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::runOCS2() {
 				eventTimesOptimized_,
 				BASE::mpcSettings_.maxTimeStep_);
 
-		if (BASE::mpcSettings_.debugPrint_)
+		if (BASE::mpcSettings_.debugPrint_) {
 			std::cerr << "### OCS2 finished. " << std::endl;
+		}
 
 		activateOCS2_ = false;
 		ocs2Lock.unlock();
@@ -175,8 +178,9 @@ bool MPC_OCS2<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::run(
 		}
 
 		// collect SLQ variables
-		if (BASE::mpcSettings_.debugPrint_)
+		if (BASE::mpcSettings_.debugPrint_) {
 			std::cerr << "### SLQ data collector triggered." << std::endl;
+		}
 		slqDataCollectorPtr_->collect(BASE::slqPtr_.get());
 
 		activateOCS2_ = true;

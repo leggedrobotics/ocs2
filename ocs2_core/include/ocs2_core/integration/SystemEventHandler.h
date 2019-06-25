@@ -109,7 +109,7 @@ public:
 
 		bool terminateFlag = false;
 
-		if (killIntegration_==true) {
+		if (killIntegration_) {
 			terminateFlag = true;
 			eventID_ = sys_event_id::killIntegration;
 		}

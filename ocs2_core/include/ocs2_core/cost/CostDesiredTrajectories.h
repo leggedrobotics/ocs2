@@ -117,7 +117,7 @@ public:
 	void getDesiredStateFunc(
 			dynamic_linear_interpolation_t& desiredStateFunc) const {
 
-		if (desiredStateTrajectory_.empty()==false) {
+		if (!desiredStateTrajectory_.empty()) {
 			desiredStateFunc.setData(&desiredTimeTrajectory_, &desiredStateTrajectory_);
 		} else {
 			desiredStateFunc.setZero();
@@ -127,7 +127,7 @@ public:
 	void getDesiredInputFunc(
 			dynamic_linear_interpolation_t& desiredInputFunc) const {
 
-		if (desiredInputTrajectory_.empty()==false) {
+		if (!desiredInputTrajectory_.empty()) {
 			desiredInputFunc.setData(&desiredTimeTrajectory_, &desiredInputTrajectory_);
 		} else {
 			desiredInputFunc.setZero();

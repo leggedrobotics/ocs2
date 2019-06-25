@@ -39,7 +39,7 @@ size_t Solver_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::findActivePartitionInde
 		bool ceilingFunction /*= true*/) {
 
 	int activeSubsystemIndex;
-	if (ceilingFunction==true)
+	if (ceilingFunction)
 		activeSubsystemIndex = findActiveIntervalIndex(partitioningTimes, time, 0);
 	else
 		activeSubsystemIndex = findActiveIntervalIndex(partitioningTimes, time, 0,

@@ -216,7 +216,7 @@ protected:
 			const state_vector_array_t& stateTrajectory,
 			const input_vector_array_t& inputTrajectory) const {
 
-		if (rolloutSettings_.checkNumericalStability_==false)
+		if (!rolloutSettings_.checkNumericalStability_)
 			return;
 
 		for (size_t i=0; i<timeTrajectory.size(); i++) {

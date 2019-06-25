@@ -267,7 +267,7 @@ public:
 		systemDerivativesPtr_->getFlowMapDerivativeInput(Bm);
 
 		// checking the numerical stability
-		if (checkNumericalCharacteristics_==true){
+		if (checkNumericalCharacteristics_){
 			try {
 				if (!Am.allFinite())
 					throw std::runtime_error("Flow map state derivativeState is not finite.");
@@ -345,7 +345,7 @@ public:
 			systemConstraintsPtr_->getInequalityConstraintDerivativesInputState(ddhdudx);
 		}
 
-		if (checkNumericalCharacteristics_==true){
+		if (checkNumericalCharacteristics_){
 			try {
 				if (ncEqStateInput > 0) {
 					if (!Ev.head(ncEqStateInput).allFinite())
@@ -410,7 +410,7 @@ public:
 		costFunctionPtr_->getIntermediateCostDerivativeInputState(Pm);
 
 		// checking the numerical stability
-		if (checkNumericalCharacteristics_==true){
+		if (checkNumericalCharacteristics_){
 			try {
 				if (!q.allFinite())
 					throw std::runtime_error("Intermediate cost is is not finite.");

@@ -205,7 +205,7 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::approximateOptimalControlPro
 		CmProjectedTrajectoryStock_[i].resize(N);
 		DmProjectedTrajectoryStock_[i].resize(N);
         RmInverseTrajectoryStock_[i].resize(N);
-		if (BASE::ddpSettings_.useRiccatiSolver_==true) {
+		if (BASE::ddpSettings_.useRiccatiSolver_) {
 			RmConstrainedTrajectoryStock_[i].resize(N);
 		} else {
 			BmConstrainedTrajectoryStock_[i].resize(N);
@@ -293,7 +293,7 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::approximateConstrainedLQWork
 		BASE::PmTrajectoryStock_[i][k] += ddpdudx;
 
 		// checking the numerical stability again
-		if (BASE::ddpSettings_.checkNumericalStability_==true){
+		if (BASE::ddpSettings_.checkNumericalStability_){
 			try {
 				if (!BASE::qTrajectoryStock_[i][k].allFinite())
 					throw std::runtime_error("Intermediate cost is is not finite.");
@@ -350,7 +350,7 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::approximateConstrainedLQWork
 		AmConstrainedTrajectoryStock_[i][k] = BASE::AmTrajectoryStock_[i][k];
 		QmConstrainedTrajectoryStock_[i][k] = BASE::QmTrajectoryStock_[i][k];
 		QvConstrainedTrajectoryStock_[i][k] = BASE::QvTrajectoryStock_[i][k];
-		if (BASE::ddpSettings_.useRiccatiSolver_==true) {
+		if (BASE::ddpSettings_.useRiccatiSolver_) {
 			RmConstrainedTrajectoryStock_[i][k] = BASE::RmTrajectoryStock_[i][k];
 		} else {
 			BmConstrainedTrajectoryStock_[i][k] = BASE::BmTrajectoryStock_[i][k];
@@ -365,7 +365,7 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::approximateConstrainedLQWork
     dynamic_matrix_t Dm = BASE::DmTrajectoryStock_[i][k].topRows(nc1);
 
 		// check numerical stability_
-		if (BASE::ddpSettings_.checkNumericalStability_==true && nc1>0)
+		if (BASE::ddpSettings_.checkNumericalStability_ && nc1>0)
 			if (Dm.colPivHouseholderQr().rank()!=nc1) {
 				BASE::printString(">>> WARNING: The state-input constraints are rank deficient "
 						"(at time " + std::to_string(BASE::nominalTimeTrajectoriesStock_[i][k]) + ")!");
@@ -391,7 +391,7 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::approximateConstrainedLQWork
     QvConstrainedTrajectoryStock_[i][k].noalias() -= CmProjectedTrajectoryStock_[i][k].transpose()*BASE::RvTrajectoryStock_[i][k];
 
     input_matrix_t DmNullSpaceProjection = input_matrix_t::Identity() - DmProjectedTrajectoryStock_[i][k];
-    if (BASE::ddpSettings_.useRiccatiSolver_==true) {
+    if (BASE::ddpSettings_.useRiccatiSolver_) {
 			RmConstrainedTrajectoryStock_[i][k].noalias() = DmNullSpaceProjection.transpose() * BASE::RmTrajectoryStock_[i][k] * DmNullSpaceProjection;
 		} else {
 			BmConstrainedTrajectoryStock_[i][k].noalias() = BASE::BmTrajectoryStock_[i][k] * DmNullSpaceProjection;
@@ -402,7 +402,7 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::approximateConstrainedLQWork
 	}
 
 	// making sure that constrained Qm is PSD
-	if (BASE::ddpSettings_.useMakePSD_==true)
+	if (BASE::ddpSettings_.useMakePSD_)
 		BASE::makePSD(QmConstrainedTrajectoryStock_[i][k]);
 }
 
@@ -503,7 +503,7 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculateControllerWorker (
 	BASE::nominalControllersStock_[i].deltaBiasArray_[k] = -DmNullProjection*Lv;
 
 	// checking the numerical stability of the controller parameters
-	if (BASE::ddpSettings_.checkNumericalStability_==true){
+	if (BASE::ddpSettings_.checkNumericalStability_){
 		try {
 			if (!BASE::nominalControllersStock_[i].gainArray_[k].allFinite())
 				throw std::runtime_error("Feedback gains are unstable.");
@@ -822,7 +822,7 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::solveErrorRiccatiEquationWor
 	const scalar_t scalingFactor = scalingStart - scalingFinal;  // this is negative
 
 	// Skip calculation of the error correction term (Sve) if the constrained simulation is used for forward simulation
-	if (BASE::ddpSettings_.simulationIsConstrained_==true) {
+	if (BASE::ddpSettings_.simulationIsConstrained_) {
 		BASE::SveTrajectoryStock_[partitionIndex].resize(NS);
 		for (size_t k=0; k<NS; k++)
 			BASE::SveTrajectoryStock_[partitionIndex][k].setZero();
@@ -915,7 +915,7 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::solveErrorRiccatiEquationWor
 	std::reverse_copy(SveTrajectory.begin(), SveTrajectory.end(), BASE::SveTrajectoryStock_[partitionIndex].begin());
 
 	// Testing the numerical stability
-	if (BASE::ddpSettings_.checkNumericalStability_==true)
+	if (BASE::ddpSettings_.checkNumericalStability_)
 		for (size_t k=0; k<NS; k++) {
 
 			// testing the numerical stability of the Riccati error equation
@@ -953,7 +953,7 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::solveSlqRiccatiEquationsWork
 
 #ifdef USE_SEPARATE_RICCATI_SOLVER
 
-	if(settings_.useNominalTimeForBackwardPass_==true)
+	if(settings_.useNominalTimeForBackwardPass_)
 		solveRiccatiEquationsForNominalTimeWorker(workerIndex, partitionIndex, SmFinal, SvFinal, sFinal);
 	else
 		solveRiccatiEquationsWorker(workerIndex, partitionIndex, SmFinal, SvFinal, sFinal);
@@ -1137,7 +1137,7 @@ Eigen::Matrix<typename SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::scalar_t, 
 		const scalar_t& deltaTime) {
 
 	const bool useExpMethod = false;
-	if (useExpMethod==true) {
+	if (useExpMethod) {
 //
 //		Eigen::HessenbergDecomposition<Eigen::MatrixXd> hessA(DIM1);
 //		hessA.compute(A);
@@ -1248,7 +1248,7 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::fullRiccatiBackwardSweepWork
 
 		deltaT = BASE::nominalTimeTrajectoriesStock_[partitionIndex][k] - BASE::nominalTimeTrajectoriesStock_[partitionIndex][k+1];
 
-		if (eventDetected==true) {
+		if (eventDetected) {
 //			if (BASE::ddpSettings_.useMakePSD_==true)  BASE::makePSD(BASE::QmFinalStock_[partitionIndex][remainingEvents]);
 			BASE::SmTrajectoryStock_[partitionIndex][k] = BASE::SmTrajectoryStock_[partitionIndex][k+1] +
 					BASE::QmFinalStock_[partitionIndex][remainingEvents];
@@ -1273,7 +1273,7 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::fullRiccatiBackwardSweepWork
 		LmFunc_(partitionIndex, k, _Lm);
 		LmConstrainedFunc_(partitionIndex, k, _Lm, _LmConstrained);
 
-		if (eventDetected==true) {
+		if (eventDetected) {
 			BASE::SvTrajectoryStock_[partitionIndex][k]  = BASE::SvTrajectoryStock_[partitionIndex][k+1] + BASE::QvFinalStock_[partitionIndex][remainingEvents];
 			BASE::SveTrajectoryStock_[partitionIndex][k] = BASE::SveTrajectoryStock_[partitionIndex][k+1];
 			BASE::sTrajectoryStock_[partitionIndex][k]   = BASE::sTrajectoryStock_[partitionIndex][k+1] + BASE::qFinalStock_[partitionIndex][remainingEvents];
@@ -1304,7 +1304,7 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::fullRiccatiBackwardSweepWork
 	}
 
 	// testing the numerical stability
-	if (BASE::ddpSettings_.checkNumericalStability_==true)
+	if (BASE::ddpSettings_.checkNumericalStability_)
 		for (int k=N-1; k>=0; k--) {
 			// checking the numerical stability of the Riccati equations
 			try {

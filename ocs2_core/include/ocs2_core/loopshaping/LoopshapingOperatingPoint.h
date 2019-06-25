@@ -79,7 +79,7 @@ public:
         input_vector_array_t& inputTrajectory,
         bool concatOutput = false) override {
 
-      if (concatOutput==false) {
+      if (!concatOutput) {
         timeTrajectory.clear();
         stateTrajectory.clear();
         inputTrajectory.clear();

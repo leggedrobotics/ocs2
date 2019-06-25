@@ -118,7 +118,7 @@ public:
 
 		// SystemEventHandler event
 		systemEventHandlerTriggered_ = BASE::checkEvent(state, time);
-		if (systemEventHandlerTriggered_==true)
+		if (systemEventHandlerTriggered_)
 			return true;
 
 		//** StateTriggered event **//
@@ -150,7 +150,7 @@ public:
 				triggeredEventSurface_ = i;
 			}
 
-		if (eventTriggered==false) {
+		if (!eventTriggered) {
 			guardSurfacesValuesPrevious_ = guardSurfacesValuesCurrent_;
 		}
 
@@ -172,7 +172,7 @@ public:
 			scalar_array_t& timeTrajectory) override {
 
 		// SystemEventHandler event
-		if (systemEventHandlerTriggered_==true)
+		if (systemEventHandlerTriggered_)
 			return BASE::handleEvent(stateTrajectory, timeTrajectory);
 
 		// correcting for the zero crossing

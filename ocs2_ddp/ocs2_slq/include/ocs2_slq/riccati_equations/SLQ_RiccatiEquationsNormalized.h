@@ -309,7 +309,7 @@ public:
 		convert2Matrix(allSs, Sm_, Sv_, s_, Sve_);
 
 		// numerical consideration
-		if(useMakePSD_==true)
+		if(useMakePSD_)
 			bool hasNegativeEigenValue = makePSD(Sm_);
 		else
 			Sm_ += state_matrix_t::Identity()*(addedRiccatiDiagonal_);

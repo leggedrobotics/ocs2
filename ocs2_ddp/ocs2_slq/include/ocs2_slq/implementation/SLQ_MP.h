@@ -502,11 +502,11 @@ void SLQ_MP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::executeLineSearchWorker(size_t
 		scalar_t learningRate = BASE::maxLearningRate_ * std::pow(BASE::ddpSettings_.lineSearchContractionRate_, alphaExp);
 
 		// break condition
-		if (learningRate<BASE::ddpSettings_.minLearningRate_ || alphaBestFound_.load()==true) {
+		if (learningRate<BASE::ddpSettings_.minLearningRate_ || alphaBestFound_.load()) {
 
 			// display
 			if(BASE::ddpSettings_.debugPrintMT_)  {
-				if (alphaBestFound_.load()==true)
+				if (alphaBestFound_.load())
 					BASE::printString("[MT]: [Thread " + std::to_string(threadId)
 						+ "]: Leaving executeLineSearchWorker because best alpha is found OR no improvement for any alpha");
 				else
@@ -533,7 +533,7 @@ void SLQ_MP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::executeLineSearchWorker(size_t
 				lsStateTrajectoriesStock, lsInputTrajectoriesStock);
 
 		// break condition: make sure we do not alter an existing result
-		if (alphaBestFound_.load() == true)  {
+		if (alphaBestFound_.load())  {
 			// display
 			if(BASE::ddpSettings_.debugPrintMT_)
 				BASE::printString("[MT]: [Thread " + std::to_string(threadId)
@@ -547,7 +547,7 @@ void SLQ_MP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::executeLineSearchWorker(size_t
 
 		// Based on the LS policy check whether the best solution should be updated with these results.
 		bool updatePolicy = false;
-		if (BASE::ddpSettings_.lsStepsizeGreedy_==true)  {
+		if (BASE::ddpSettings_.lsStepsizeGreedy_)  {
 
 			/*
 			 * Use stepsize greedy where cost should be better than the last iteration but learning rate
@@ -591,7 +591,7 @@ void SLQ_MP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::executeLineSearchWorker(size_t
 		}
 
 
-		if (updatePolicy == true) {
+		if (updatePolicy) {
 			alphaExpBest_ = alphaExp;
 			BASE::nominalTotalCost_ = lsTotalCost;
 			BASE::learningRateStar_ = learningRate;
@@ -614,12 +614,12 @@ void SLQ_MP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::executeLineSearchWorker(size_t
 		// we now check if all alphas prior to the best have been processed, this also covers the case that there is no better alpha
 		bool allPreviousAlphasProcessed = true;
 		for (size_t i=0; i<alphaExpBest_; i++)
-			if (alphaProcessed_[i]==false) {
+			if (!alphaProcessed_[i]) {
 				allPreviousAlphasProcessed = false;
 				break;
 			}
 
-		if (allPreviousAlphasProcessed==true)  {
+		if (allPreviousAlphasProcessed)  {
 			alphaBestFound_ = true;
 			event_handler_t::ActivateKillIntegration();	// kill all integrators
 			if (BASE::ddpSettings_.displayInfo_) {
@@ -665,7 +665,7 @@ typename SLQ_MP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::scalar_t
 	BASE::sFinalStock_[BASE::finalActivePartition_]   = sFinal;
 
 	// solve it sequentially for the first time when useParallelRiccatiSolverFromInitItr_ is false
-	if(BASE::iteration_==0 && BASE::useParallelRiccatiSolverFromInitItr_==false) {
+	if(BASE::iteration_==0 && !BASE::useParallelRiccatiSolverFromInitItr_) {
 
 		for (int i=BASE::numPartitions_-1; i>=0; i--)  {
 
@@ -692,7 +692,7 @@ typename SLQ_MP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::scalar_t
 			const size_t workerIndex = 0;
 
 			// solve backward pass
-			if (BASE::ddpSettings_.useRiccatiSolver_==true) {
+			if (BASE::ddpSettings_.useRiccatiSolver_) {
 				BASE::solveSlqRiccatiEquationsWorker(workerIndex, i,
 						BASE::SmFinalStock_[i], BASE::SvFinalStock_[i], BASE::sFinalStock_[i], BASE::SveFinalStock_[i]);
 			} else {
@@ -807,7 +807,7 @@ void SLQ_MP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::executeRiccatiSolver(size_t th
 		}
 
 		// solve the backward pass
-		if (BASE::ddpSettings_.useRiccatiSolver_==true) {
+		if (BASE::ddpSettings_.useRiccatiSolver_) {
 			BASE::solveSlqRiccatiEquationsWorker(threadId, i,
 					SmFinal, SvFinal, sFinal, SveFinal);
 		} else {

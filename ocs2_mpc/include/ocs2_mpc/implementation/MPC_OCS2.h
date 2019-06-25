@@ -157,11 +157,11 @@ bool MPC_OCS2<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::run(
 
 	std::unique_lock<std::mutex> slqLock(dataCollectorMutex_, std::defer_lock_t());
 	bool ownership = slqLock.try_lock();
-	if (ownership==true && BASE::initRun_==false) {
+	if (ownership && BASE::initRun_==false) {
 
 		bool rewaindTookPlace = currentTime>0.1 && BASE::slqPtr_->getRewindCounter() != slqDataCollectorPtr_->rewindCounter_;
 		bool modeSequenceUpdated = subsystemsSequenceOptimized_ != BASE::slqPtr_->getLogicRulesPtr()->subsystemsSequence();
-		if (rewaindTookPlace==false && modeSequenceUpdated==false) {
+		if (!rewaindTookPlace && !modeSequenceUpdated) {
 
 			// adjust the SLQ internal controller using trajectory spreading approach
 			if (BASE::slqPtr_->getLogicRulesPtr()->eventTimes().empty()==false) {

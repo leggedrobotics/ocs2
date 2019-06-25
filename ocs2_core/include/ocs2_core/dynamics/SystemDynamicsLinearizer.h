@@ -131,7 +131,7 @@ public:
 
 		Base::setCurrentStateAndControl(t, x, u);
 
-		if (doubleSidedDerivative_==false)
+		if (!doubleSidedDerivative_)
 			nonlinearSystemPtr_->computeFlowMap(Base::t_, Base::x_, Base::u_, f_);
 	}
 

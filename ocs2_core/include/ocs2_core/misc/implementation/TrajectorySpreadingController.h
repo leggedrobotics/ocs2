@@ -51,7 +51,7 @@ void TrajectorySpreadingController<STATE_DIM, INPUT_DIM>::findsIndicesEventTimes
 		for (; p<controllersStock.size(); p++) {
 
 			// skip if the controller is empty
-			if (controllersStock[p].empty() == true)
+			if (controllersStock[p].empty())
 				continue;
 
 			// if not the first event, use the index of the previous event in order to be more efficient.
@@ -112,12 +112,12 @@ void TrajectorySpreadingController<STATE_DIM, INPUT_DIM>::adjustController(
 
 	initActivePartition_ = 0;
 	for (; initActivePartition_<controllersStock.size(); initActivePartition_++)
-		if (controllersStock[initActivePartition_].empty()==false)
+		if (!controllersStock[initActivePartition_].empty())
 			break;
 
 	finalActivePartition_ = controllersStock.size()-1;
 	for (; finalActivePartition_>=0; finalActivePartition_--)
-		if (controllersStock[finalActivePartition_].empty()==false)
+		if (!controllersStock[finalActivePartition_].empty())
 			break;
 
 	// Finds the indices of the new event times
@@ -185,7 +185,7 @@ void TrajectorySpreadingController<STATE_DIM, INPUT_DIM>::spreadController(
 	index_t finalIndex;
 	input_vector_t uffSpread;
 	input_state_matrix_t kSpread;
-	if (smallerEqualIndexFunc(eventTimeIndex, controlerEventTimeIndex) == true) {
+	if (smallerEqualIndexFunc(eventTimeIndex, controlerEventTimeIndex)) {
 		startIndex = eventTimeIndex;
 		finalIndex = controlerEventTimeIndex;
 

@@ -138,7 +138,7 @@ public:
 	virtual void initializeModel(
 			LogicRulesMachine<LOGIC_RULES_T>& logicRulesMachine,
 			const size_t& partitionIndex,
-			const char* algorithmName=NULL)
+			const char* algorithmName=nullptr)
 	{
 		// initialize subsystem i dynamics derivatives
 		systemDerivativesPtr_->initializeModel(logicRulesMachine, partitionIndex, "algorithmName");

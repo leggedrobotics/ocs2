@@ -91,7 +91,7 @@ public:
 	 */
 	RolloutBase(
 			const Rollout_Settings& rolloutSettings = Rollout_Settings(),
-			const char* algorithmName = NULL)
+			const char* algorithmName = nullptr)
 
 	: rolloutSettings_(rolloutSettings)
 	, algorithmName_(algorithmName)

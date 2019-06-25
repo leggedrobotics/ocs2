@@ -79,7 +79,7 @@ public:
 	OperatingTrajectoriesRollout(
 			const operating_trajectories_t& operatingTrajectories,
 			const Rollout_Settings& rolloutSettings = Rollout_Settings(),
-			const char* algorithmName = NULL)
+			const char* algorithmName = nullptr)
 
 	: BASE(rolloutSettings, algorithmName)
 	, operatingTrajectoriesPtr_(operatingTrajectories.clone())

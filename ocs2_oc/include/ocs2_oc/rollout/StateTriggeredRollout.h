@@ -88,7 +88,7 @@ public:
 	StateTriggeredRollout(
 			const controlled_system_base_t& systemDynamics,
 			const Rollout_Settings& rolloutSettings = Rollout_Settings(),
-			const char* algorithmName = NULL)
+			const char* algorithmName = nullptr)
 
 	: BASE(rolloutSettings, algorithmName)
 	, systemDynamicsPtr_(systemDynamics.clone())

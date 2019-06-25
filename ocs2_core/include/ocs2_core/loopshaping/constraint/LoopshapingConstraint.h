@@ -77,7 +77,7 @@ class LoopshapingConstraint : public ConstraintBase<
   void initializeModel(
       LogicRulesMachine<LOGIC_RULES_T> &logicRulesMachine,
       const size_t &partitionIndex,
-      const char *algorithmName = NULL) override {
+      const char *algorithmName = nullptr) override {
     BASE::initializeModel(logicRulesMachine, partitionIndex, algorithmName);
     if (systemConstraint_) {
       systemConstraint_->initializeModel(logicRulesMachine, partitionIndex, algorithmName);
@@ -300,7 +300,7 @@ class LoopshapingConstraint : public ConstraintBase<
                                                   constraint1_input_matrix_t &D) {};
 
 };
-} // namespace ocs2;
+}  // namespace ocs2
 
 #include "ocs2_core/loopshaping/constraint/LoopshapingConstraintEliminatePattern.h"
 #include "ocs2_core/loopshaping/constraint/LoopshapingConstraintInputPattern.h"

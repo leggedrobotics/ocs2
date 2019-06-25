@@ -155,7 +155,7 @@ class PenaltyBase {
   */
   virtual scalar_t getPenaltyFunctionSecondDerivative(scalar_t h) const = 0;
 };
-}
+}  // namespace ocs2
 
 #include "implementation/PenaltyBase.h"
 

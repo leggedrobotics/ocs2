@@ -78,6 +78,6 @@ class LoopshapingDynamicsDerivativeOutputPattern final : public LoopshapingDynam
     H.block(SYSTEM_STATE_DIM, 0, FILTER_STATE_DIM, SYSTEM_INPUT_DIM).setZero();
   };
 };
-}
+}  // namespace ocs2
 
 #endif //OCS2_LOOPSHAPINGDYNAMICSDERIVATIVEOUTPUTPATTERN_H

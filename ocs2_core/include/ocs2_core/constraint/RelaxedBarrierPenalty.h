@@ -62,6 +62,6 @@ class RelaxedBarrierPenalty final : public PenaltyBase<STATE_DIM, INPUT_DIM> {
     };
   };
 };
-}
+}  // namespace ocs2
 
 #endif // RELAXEDBARRIERPENALTY_OCS2_H

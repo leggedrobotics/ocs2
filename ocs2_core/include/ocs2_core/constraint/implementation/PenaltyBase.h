@@ -109,4 +109,4 @@ namespace ocs2 {
         }
     };
 
-}
+}  // namespace ocs2

@@ -137,7 +137,7 @@ namespace ocs2 {
                 }
             }
         }
-    }
+    }  // namespace LoopshapingPropertyTree
 } // namespace ocs2
 
 #endif //OCS2_LOOPSHAPINGPROPERTYTREE_H

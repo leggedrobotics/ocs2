@@ -178,6 +178,6 @@ class LoopshapingConstraintEliminatePattern final: public LoopshapingConstraint<
   };
 
 };
-}; // ocs2
+}  // namespace ocs2
 
 #endif //OCS2_LOOPSHAPINGCONSTRAINTELIMINATEPATTERN_H

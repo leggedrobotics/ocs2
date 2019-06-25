@@ -323,7 +323,7 @@ public:
 	void initializeModel(
 			LogicRulesMachine<LOGIC_RULES_T>& logicRulesMachine,
 			const size_t& partitionIndex,
-			const char* algorithmName=NULL) final {}
+			const char* algorithmName=nullptr) final {}
 
 
 	void getCompileFlags(std::vector<std::string>& cFlags) {

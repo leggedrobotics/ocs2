@@ -203,9 +203,6 @@ public:
 	input_vector_array2_t                EvProjectedTrajectoriesStock_;  // DmDager * Ev
 	input_state_matrix_array2_t          CmProjectedTrajectoriesStock_;  // DmDager * Cm
 	input_matrix_array2_t                DmProjectedTrajectoriesStock_;  // DmDager * Dm
-	state_input_matrix_array2_t          BmConstrainedTrajectoriesStock_;
-	input_state_matrix_array2_t          PmConstrainedTrajectoriesStock_;
-	input_vector_array2_t                RvConstrainedTrajectoriesStock_;
 
 	// terminal cost which is interpreted as the Heuristic function
 	eigen_scalar_t sHeuristics_;

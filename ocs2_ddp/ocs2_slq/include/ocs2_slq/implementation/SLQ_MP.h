@@ -724,15 +724,7 @@ typename SLQ_MP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::scalar_t
 			const size_t workerIndex = 0;
 
 			// solve backward pass
-			if (BASE::ddpSettings_.useRiccatiSolver_) {
-				BASE::solveSlqRiccatiEquationsWorker(workerIndex, i,
-						BASE::SmFinalStock_[i], BASE::SvFinalStock_[i], BASE::sFinalStock_[i], BASE::SveFinalStock_[i]);
-			} else {
-				scalar_t constraintStepSize = BASE::initialControllerDesignStock_[i] ? 0.0 : BASE::ddpSettings_.constraintStepSize_;
-				BASE::fullRiccatiBackwardSweepWorker(workerIndex, i,
-						BASE::SmFinalStock_[i], BASE::SvFinalStock_[i], BASE::SveFinalStock_[i], BASE::sFinalStock_[i],
-						constraintStepSize);
-			}
+			BASE::solveSlqRiccatiEquationsWorker(workerIndex, i, BASE::SmFinalStock_[i], BASE::SvFinalStock_[i], BASE::sFinalStock_[i], BASE::SveFinalStock_[i]);
 
 			// set the final value for next Riccati equation
 			if (i>BASE::initActivePartition_) {
@@ -843,15 +835,7 @@ void SLQ_MP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::executeRiccatiSolver(size_t th
 		}
 
 		// solve the backward pass
-		if (BASE::ddpSettings_.useRiccatiSolver_) {
-			BASE::solveSlqRiccatiEquationsWorker(threadId, i,
-					SmFinal, SvFinal, sFinal, SveFinal);
-		} else {
-			scalar_t constraintStepSize = BASE::initialControllerDesignStock_[i] ? 0.0 : BASE::ddpSettings_.constraintStepSize_;
-			BASE::fullRiccatiBackwardSweepWorker(threadId, i,
-					SmFinal, SvFinal, SveFinal, sFinal,
-					constraintStepSize);
-		}
+		BASE::solveSlqRiccatiEquationsWorker(threadId, i, SmFinal, SvFinal, sFinal, SveFinal);
 
 		// lock data
 		std::unique_lock<std::mutex> dataWriteLock(riccatiSolverDataMutex_);

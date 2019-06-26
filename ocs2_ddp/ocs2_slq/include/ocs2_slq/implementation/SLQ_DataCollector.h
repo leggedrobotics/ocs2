@@ -145,9 +145,6 @@ void SLQ_DataCollector<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::collect(
 	EvProjectedTrajectoriesStock_.swap(slqPtr->EvProjectedTrajectoryStock_);
 	CmProjectedTrajectoriesStock_.swap(slqPtr->CmProjectedTrajectoryStock_);
 	DmProjectedTrajectoriesStock_.swap(slqPtr->DmProjectedTrajectoryStock_);
-	BmConstrainedTrajectoriesStock_.swap(slqPtr->BmConstrainedTrajectoryStock_);
-	PmConstrainedTrajectoriesStock_.swap(slqPtr->PmConstrainedTrajectoryStock_);
-	RvConstrainedTrajectoriesStock_.swap(slqPtr->RvConstrainedTrajectoryStock_);
 
 	// terminal cost which is interpreted as the Heuristic function
 	sHeuristics_.swap(slqPtr->sHeuristics_);
@@ -364,9 +361,6 @@ void SLQ_DataCollector<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::resizeDataContainer
 	EvProjectedTrajectoriesStock_.resize(numPartitions);
 	CmProjectedTrajectoriesStock_.resize(numPartitions);
 	DmProjectedTrajectoriesStock_.resize(numPartitions);
-	BmConstrainedTrajectoriesStock_.resize(numPartitions);
-	PmConstrainedTrajectoriesStock_.resize(numPartitions);
-	RvConstrainedTrajectoriesStock_.resize(numPartitions);
 
 	// Riccati coefficients
 	SsTimeTrajectoriesStock_.resize(numPartitions);

@@ -27,8 +27,12 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#ifndef SLQ_BASE_OCS2_H_
-#define SLQ_BASE_OCS2_H_
+/*
+ *  !! Copy of SLQ_BASE with the unfinished Hamiltonian implementation for the backward pass !!
+ */
+
+#ifndef SLQ_BASE_HAMILTONIAN_OCS2_H_
+#define SLQ_BASE_HAMILTONIAN_OCS2_H_
 
 #include <ocs2_ddp_base/DDP_BASE.h>
 
@@ -36,6 +40,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_core/integration/Integrator.h>
 #include <ocs2_core/integration/SystemEventHandler.h>
 #include <ocs2_core/integration/StateTriggeredEventHandler.h>
+#include <ocs2_core/misc/LTI_Equations.h>
 #include <ocs2_core/misc/LinearAlgebra.h>
 
 #include <ocs2_oc/rollout/StateTriggeredRollout.h>
@@ -137,6 +142,9 @@ public:
 	using cost_desired_trajectories_t = typename BASE::cost_desired_trajectories_t;
 	using logic_rules_machine_t = typename BASE::logic_rules_machine_t;
 	using logic_rules_machine_ptr_t = typename BASE::logic_rules_machine_ptr_t;
+
+  	using hamiltonian_equation_t = LTI_Equations<2*STATE_DIM, STATE_DIM, double>;
+  	using hamiltonian_increment_equation_t = LTI_Equations<STATE_DIM, 1, double>;
 
 	using riccati_equations_t = SequentialRiccatiEquationsNormalized<STATE_DIM, INPUT_DIM>;
   	using error_equation_t = SequentialErrorEquationNormalized<STATE_DIM, INPUT_DIM>;
@@ -364,6 +372,44 @@ protected:
 			const eigen_scalar_t& sFinal,
 			const state_vector_t& SveFinal);
 
+	/**
+	 * Full Backward Sweep method uses exponential method instead of ODE to solve Riccati equations.
+	 *
+	 * @param [in] workerIndex: Working agent index.
+	 * @param [in] partitionIndex: The requested partition index to solve Riccati equations.
+	 * @param [in] SmFinal: The final Sm for the Riccati equation.
+	 * @param [in] SvFinal: The final Sv for the Riccati equation.
+	 * @param [in] SveFinal: The final Sve for the Riccati equation.
+	 * @param [in] sFinal: The final s for the Riccati equation.
+	 * @param [in] constraintStepSize: type-1 constraint step-size
+	 */
+	void fullRiccatiBackwardSweepWorker(
+			size_t workerIndex,
+			const size_t& partitionIndex,
+			const state_matrix_t& SmFinal, const state_vector_t& SvFinal,
+			const state_vector_t& SveFinal, const eigen_scalar_t& sFinal,
+			const scalar_t& constraintStepSize);
+
+
+	template<int DIM1, int DIM2=1>
+	Eigen::Matrix<scalar_t, DIM1, DIM2> solveLTI(
+			const std::shared_ptr<IntegratorBase<DIM1*DIM2>>& firstOrderOdeIntegrator,
+			const Eigen::Matrix<scalar_t, DIM1, DIM2>& x0,
+			const scalar_t& deltaTime);
+
+	Eigen::Matrix<scalar_t, 2*STATE_DIM, STATE_DIM> integrateHamiltonian(
+			size_t workerIndex,
+			const Eigen::Matrix<scalar_t, 2*STATE_DIM, 2*STATE_DIM>& Hm,
+			const Eigen::Matrix<scalar_t, 2*STATE_DIM, STATE_DIM>& x0,
+			const scalar_t& deltaTime);
+
+	Eigen::Matrix<scalar_t, STATE_DIM, 1> integrateIncrement(
+			size_t workerIndex,
+			const Eigen::Matrix<scalar_t, STATE_DIM, STATE_DIM>& Gm,
+			const Eigen::Matrix<scalar_t, STATE_DIM, 1>& Gv,
+			const Eigen::Matrix<scalar_t, STATE_DIM, 1>& x0,
+			const scalar_t& deltaTime);
+
 	/****************
 	 *** Variables **
 	 ****************/
@@ -379,6 +425,9 @@ protected:
 	input_vector_array2_t       EvProjectedTrajectoryStock_;  // DmDager * Ev
 	input_state_matrix_array2_t CmProjectedTrajectoryStock_;  // DmDager * Cm
 	input_matrix_array2_t       DmProjectedTrajectoryStock_;  // DmDager * Dm
+	state_input_matrix_array2_t BmConstrainedTrajectoryStock_;
+	input_state_matrix_array2_t PmConstrainedTrajectoryStock_;
+	input_vector_array2_t       RvConstrainedTrajectoryStock_;
   	input_matrix_array2_t       RmInverseTrajectoryStock_;
 
 	std::vector<std::shared_ptr<riccati_equations_t>>                             riccatiEquationsPtrStock_;
@@ -387,6 +436,11 @@ protected:
 	std::vector<std::shared_ptr<error_equation_t>>              errorEquationPtrStock_;
 	std::vector<std::shared_ptr<SystemEventHandler<STATE_DIM>>> errorEventPtrStock_;
 	std::vector<std::shared_ptr<IntegratorBase<STATE_DIM>>>     errorIntegratorPtrStock_;
+
+	std::vector<std::shared_ptr<hamiltonian_equation_t>> hamiltonianEquationPtrStock_;
+	std::vector<std::shared_ptr<IntegratorBase<hamiltonian_equation_t::LTI_DIM_>>> hamiltonianIntegratorPtrStock_;
+	std::vector<std::shared_ptr<hamiltonian_increment_equation_t>> hamiltonianIncrementEquationPtrStock_;
+	std::vector<std::shared_ptr<IntegratorBase<hamiltonian_increment_equation_t::LTI_DIM_>>> hamiltonianIncrementIntegratorPtrStock_;
 
 	// functions for controller and lagrange multiplier
 	std::vector<EigenLinearInterpolation<state_input_matrix_t>> BmFunc_;
@@ -399,10 +453,43 @@ protected:
 
 	// function for Riccati error equation
 	std::vector<EigenLinearInterpolation<state_matrix_t>> SmFuncs_;
+
+	// Functions for solving Backward pass through Mobius scheme
+	void LmFunc_ (const size_t& partitionIndex, const size_t& timeIndex, input_state_matrix_t& Lm) {
+		Lm = -RmInverseTrajectoryStock_[partitionIndex][timeIndex] * ( BASE::PmTrajectoryStock_[partitionIndex][timeIndex] +
+				BASE::BmTrajectoryStock_[partitionIndex][timeIndex].transpose()*BASE::SmTrajectoryStock_[partitionIndex][timeIndex] );
+	};
+	//
+	void LmConstrainedFunc_ (const size_t& partitionIndex, const size_t& timeIndex, const input_state_matrix_t& Lm, input_state_matrix_t& LmConstrained) {
+		LmConstrained = (input_matrix_t::Identity()-DmProjectedTrajectoryStock_[partitionIndex][timeIndex]) * Lm;
+	};
+	//
+	void LvConstrainedFunc_ (const size_t& partitionIndex, const size_t& timeIndex, input_vector_t& LvConstrained) {
+		LvConstrained  = -RmInverseTrajectoryStock_[partitionIndex][timeIndex] * ( RvConstrainedTrajectoryStock_[partitionIndex][timeIndex] +
+				BmConstrainedTrajectoryStock_[partitionIndex][timeIndex].transpose()*BASE::SvTrajectoryStock_[partitionIndex][timeIndex]);
+	};
+	//
+	void LveConstrainedFunc_ (const size_t& partitionIndex, const size_t& timeIndex, input_vector_t& LveConstrained) {
+		LveConstrained = -RmInverseTrajectoryStock_[partitionIndex][timeIndex] *
+				BmConstrainedTrajectoryStock_[partitionIndex][timeIndex].transpose() * BASE::SveTrajectoryStock_[partitionIndex][timeIndex];
+	};
+	//
+	void ControllerFunc_ (const size_t& partitionIndex, const size_t& timeIndex, const scalar_t& constraintStepSize,
+			const input_state_matrix_t& LmConstrained, const input_vector_t& LvConstrained, const input_vector_t& LveConstrained) {
+		// k
+		BASE::nominalControllersStock_[partitionIndex].gainArray_[timeIndex] = LmConstrained - CmProjectedTrajectoryStock_[partitionIndex][timeIndex];
+		// uff
+		BASE::nominalControllersStock_[partitionIndex].biasArray_[timeIndex] = BASE::nominalInputTrajectoriesStock_[partitionIndex][timeIndex] -
+				BASE::nominalControllersStock_[partitionIndex].gainArray_[timeIndex] * BASE::nominalStateTrajectoriesStock_[partitionIndex][timeIndex] +
+				constraintStepSize * (LveConstrained - EvProjectedTrajectoryStock_[partitionIndex][timeIndex]);
+		// deltaUff
+		BASE::nominalControllersStock_[partitionIndex].deltaBiasArray_[timeIndex] = LvConstrained;
+	};
+
 };
 
 } // namespace ocs2
 
-#include "implementation/SLQ_BASE.h"
+#include "implementation/SLQ_BASE_Hamiltonian.h"
 
-#endif /* SLQ_BASE_OCS2_H_ */
+#endif /* SLQ_BASE_HAMILTONIAN_OCS2_H_ */

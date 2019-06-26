@@ -90,7 +90,7 @@ void RobotInterfaceBase<STATE_DIM, INPUT_DIM>::loadMpcTimeHorizon(
 	timeHorizon   = pt.get<scalar_t>("mpcTimeHorizon.timehorizon");
 	numPartitions = pt.get<size_t>("mpcTimeHorizon.numPartitions");
 
-	if (verbose == true) {
+	if (verbose) {
 		std::cerr<<"Time Horizon Settings: " << std::endl;
 		std::cerr<<"=====================================" << std::endl;
 		std::cerr<<"Time Horizon .................. " << timeHorizon << std::endl;

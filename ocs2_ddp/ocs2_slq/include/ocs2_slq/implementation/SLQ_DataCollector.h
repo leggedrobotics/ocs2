@@ -68,7 +68,7 @@ void SLQ_DataCollector<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::collect(
 
 	// data resizing
 	bool numPartitionsChanged = numPartitions_ != slqPtr->numPartitions_;
-	if (numPartitionsChanged==true)
+	if (numPartitionsChanged)
 		resizeDataContainer(slqPtr->numPartitions_);
 
 	numPartitions_     = slqPtr->numPartitions_;

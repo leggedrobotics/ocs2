@@ -40,7 +40,7 @@ CostFunctionBaseAD<Derived, STATE_DIM, INPUT_DIM, LOGIC_RULES_T, LOGIC_VARIABLE_
 	, modelName_("")
 	, libraryFolder_("")
 {
-	if (dynamicLibraryIsCompiled==true)
+	if (dynamicLibraryIsCompiled)
 		setADInterfaces();
 }
 
@@ -59,7 +59,7 @@ CostFunctionBaseAD<Derived, STATE_DIM, INPUT_DIM, LOGIC_RULES_T, LOGIC_VARIABLE_
 	, terminalADInterfacePtr_(rhs.terminalADInterfacePtr_->clone())
 
 {
-	if (rhs.dynamicLibraryIsCompiled_==true) {
+	if (static_cast<bool>(rhs.dynamicLibraryIsCompiled_)) {
 		setADInterfaces();
 		loadModels(false);
 	} else {
@@ -169,9 +169,9 @@ void CostFunctionBaseAD<Derived, STATE_DIM, INPUT_DIM, LOGIC_RULES_T, LOGIC_VARI
 	modelName_ = modelName;
 	libraryFolder_ = libraryFolder;
 
-	if (dynamicLibraryIsCompiled_==true) {
+	if (dynamicLibraryIsCompiled_) {
 		bool libraryLoaded = loadModels(false);
-		if (libraryLoaded==false)
+		if (!libraryLoaded)
 			throw std::runtime_error("CostFunction library is not found!");
 
 	} else {

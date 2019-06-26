@@ -40,7 +40,7 @@ ConstraintBaseAD<Derived, STATE_DIM, INPUT_DIM, logic_rules_template_t>::Constra
 	, modelName_("")
 	, libraryFolder_("")
 {
-	if (dynamicLibraryIsCompiled==true)
+	if (dynamicLibraryIsCompiled)
 		setADInterfaces();
 };
 
@@ -60,7 +60,7 @@ ConstraintBaseAD<Derived, STATE_DIM, INPUT_DIM, logic_rules_template_t>::Constra
 	, stateOnlyFinalADInterfacePtr_(rhs.stateOnlyFinalADInterfacePtr_->clone())
 
 {
-	if (rhs.dynamicLibraryIsCompiled_==true)
+	if (static_cast<bool>(rhs.dynamicLibraryIsCompiled_))
 		loadModels(false);
 }
 
@@ -99,9 +99,9 @@ void ConstraintBaseAD<Derived, STATE_DIM, INPUT_DIM, logic_rules_template_t>::lo
 	modelName_ = modelName;
 	libraryFolder_ = libraryFolder;
 
-	if (dynamicLibraryIsCompiled_==true) {
+	if (dynamicLibraryIsCompiled_) {
 		bool libraryLoaded = loadModels(false);
-		if (libraryLoaded==false)
+		if (!libraryLoaded)
 			throw std::runtime_error("Constraint library is not found!");
 
 	} else {

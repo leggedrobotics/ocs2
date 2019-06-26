@@ -137,7 +137,7 @@ bool MPC_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::resetMpcCallback(
 		ocs2_comm_interfaces::reset::Request  &req,
 		ocs2_comm_interfaces::reset::Response &res) {
 
-	if (req.reset == true) {
+	if (static_cast<bool>(req.reset)) {
 
 		cost_desired_trajectories_t initCostDesiredTrajectories;
 		RosMsgConversions<STATE_DIM, INPUT_DIM>::ReadTargetTrajectoriesMsg(req.targetTrajectories,

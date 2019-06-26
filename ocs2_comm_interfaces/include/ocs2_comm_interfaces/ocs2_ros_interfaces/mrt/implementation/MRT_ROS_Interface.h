@@ -230,7 +230,7 @@ void MRT_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::mpcPolicyCallback(
 	std::lock_guard<std::mutex> lk(policyMutexBuffer_);
 
 	// if the policy is not updated
-	if (msg->controllerIsUpdated==false) {
+	if (!static_cast<bool>(msg->controllerIsUpdated)) {
 		mpcInitObservationBuffer_ = system_observation_t();
 		mpcCostDesiredTrajectoriesBuffer_.clear();
 		policyUpdatedBuffer_ = false;

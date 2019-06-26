@@ -216,7 +216,7 @@ typename SLQ<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::scalar_t
 			continue;
 		}
 
-		if (BASE::ddpSettings_.useRiccatiSolver_==true) {
+		if (BASE::ddpSettings_.useRiccatiSolver_) {
 			BASE::solveSlqRiccatiEquationsWorker(workerIndex, i,
 					BASE::SmFinalStock_[i], BASE::SvFinalStock_[i], BASE::sFinalStock_[i], BASE::SveFinalStock_[i]);
 		} else {

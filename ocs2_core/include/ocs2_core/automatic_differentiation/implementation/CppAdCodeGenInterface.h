@@ -185,10 +185,10 @@ void CppAdCodeGenInterface<DOMAIN_DIM, RANGE_DIM, SCALAR_T, VARIABLE_DIM>::creat
     //***************************************************************************
     //                               create folder
     //***************************************************************************
-	if (libraryFolder.empty()==false)
+	if (!libraryFolder.empty())
 		CppAD::cg::system::createFolder(libraryFolder);
 
-	if (libraryFolder.empty()==false) {
+	if (!libraryFolder.empty()) {
 		CppAD::cg::system::createFolder(libraryFolder + "/" + modelName);
 	} else {
 		CppAD::cg::system::createFolder(modelName);
@@ -235,7 +235,7 @@ void CppAdCodeGenInterface<DOMAIN_DIM, RANGE_DIM, SCALAR_T, VARIABLE_DIM>::creat
     // set the options
     cgen.setCreateForwardZero(computeForwardModel_);
 
-    if (modelFullDerivatives_==true) {
+    if (modelFullDerivatives_) {
     	cgen.setCreateJacobian(computeJacobianModel_);
 
     } else {
@@ -244,7 +244,7 @@ void CppAdCodeGenInterface<DOMAIN_DIM, RANGE_DIM, SCALAR_T, VARIABLE_DIM>::creat
     	cgen.setRelatedDependents(relatedDependent_);
     }
 
-    if (modelFullDerivatives_==true) {
+    if (modelFullDerivatives_) {
     	cgen.setCreateHessian(computeHessianModel_);
 
     } else {
@@ -257,15 +257,15 @@ void CppAdCodeGenInterface<DOMAIN_DIM, RANGE_DIM, SCALAR_T, VARIABLE_DIM>::creat
 
     // save to files (not really required)
     CppAD::cg::SaveFilesModelLibraryProcessor<SCALAR_T> p2(libcgen);
-    if (libraryFolder.empty()==false) {
+    if (!libraryFolder.empty()) {
     	p2.saveSourcesTo(libraryFolder + "/" + modelName + "/cppad_generated");
     } else {
     	p2.saveSourcesTo(modelName + "/cppad_generated");
     }
-    if (cgJIT==true) {
+    if (cgJIT) {
     	// compile source code
     	std::string libraryName;
-    	if (libraryFolder.empty()==false)
+    	if (!libraryFolder.empty())
     		libraryName = libraryFolder + "/" + modelName + "/cppad_generated/" + modelName + "_lib";
     	else
     		libraryName = modelName + "_lib";
@@ -300,7 +300,7 @@ bool CppAdCodeGenInterface<DOMAIN_DIM, RANGE_DIM, SCALAR_T, VARIABLE_DIM>::loadM
 
 	// load dynamic library
 	std::string libraryName;
-	if (libraryFolder.empty()==false)
+	if (!libraryFolder.empty())
 		libraryName = libraryFolder + "/" + modelName + "/cppad_generated/" + modelName + "_lib";
 	else
 		libraryName = modelName + "_lib";
@@ -362,7 +362,7 @@ bool CppAdCodeGenInterface<DOMAIN_DIM, RANGE_DIM, SCALAR_T, VARIABLE_DIM>::getJa
 	jacobian.resize(BASE::domain_dim_, BASE::range_dim_);
 	dynamic_vector_map_t jacobianDynamic(jacobian.data(), BASE::domain_dim_*BASE::range_dim_);
 
-	if (modelFullDerivatives_==true) {
+	if (modelFullDerivatives_) {
 		if(model_->isJacobianAvailable()) {
 			model_->Jacobian(xDynamic, jacobianDynamic);
 			return true;
@@ -392,7 +392,7 @@ bool CppAdCodeGenInterface<DOMAIN_DIM, RANGE_DIM, SCALAR_T, VARIABLE_DIM>::getHe
 
 	hessian.resize(BASE::variable_dim_, BASE::variable_dim_);
 
-	if (modelFullDerivatives_==true) {
+	if (modelFullDerivatives_) {
 		if (model_->isHessianAvailable()) {
 
 			dynamic_vector_map_t xDynamic(const_cast<SCALAR_T*>(x.data()), BASE::domain_dim_);

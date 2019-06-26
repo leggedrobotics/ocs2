@@ -84,7 +84,7 @@ MPC_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::MPC_BASE(
 	if (partitioningTimes.size() < 2)
 		throw std::runtime_error("There should be at least one time partition.");
 
-	if (mpcSettings.recedingHorizon_==true) {
+	if (mpcSettings.recedingHorizon_) {
 		numPartitions_ = 3*initnumPartitions_;
 		partitioningTimes_.clear();
 

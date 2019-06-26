@@ -168,13 +168,13 @@ bool LogicRulesMachine<LOGIC_RULES_T>::updateLogicRules(
 		const scalar_array_t& partitioningTimes) {
 
 	// if logic rules is modified update the logic
-	if (newLogicRulesInBuffer_ == true) {
+	if (newLogicRulesInBuffer_) {
 		logicRules_ = std::move(logicRulesBuffer_);
 		newLogicRulesInBuffer_ = false;
 	}
 
 	// if partitioningTimes is updated
-	if (logicRulesModified_==true || partitioningTimes_!=partitioningTimes) {
+	if (logicRulesModified_ || partitioningTimes_!=partitioningTimes) {
 
 		if (partitioningTimes.size()<2)
 			throw std::runtime_error("Time partitioning vector should include at least the start and final time.");
@@ -187,7 +187,7 @@ bool LogicRulesMachine<LOGIC_RULES_T>::updateLogicRules(
 	}
 
 	// return true if logic rule was updated no the partition or any other conditions
-	if (logicRulesModified_ == true) {
+	if (logicRulesModified_) {
 		logicRulesModified_ = false;
 		return true;
 	} else {
@@ -245,7 +245,7 @@ void LogicRulesMachine<LOGIC_RULES_T>::findEventsDistribution(
 	}
 	else // there are 4 cases: no event, all events are before or after the current time interval or the time Partitions are in between two event times.
 	{
-		if (allEventTimes.empty()==true) {
+		if (allEventTimes.empty()) {
 			currActiveSubsystemIndex = 0;
 
 		} else {

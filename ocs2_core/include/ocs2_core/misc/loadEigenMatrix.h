@@ -102,7 +102,7 @@ inline void loadEigenMatrix(
 			matrix(i,j) = scaling * aij;
 		}
 
-	if (failed==true)  {
+	if (failed)  {
 		std::cerr << "WARNING: Failed to load matrix type: " + matrixName + "!" << std::endl;
 	}
 }

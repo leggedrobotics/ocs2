@@ -40,7 +40,7 @@ SystemDynamicsBaseAD<Derived, STATE_DIM, INPUT_DIM, logic_rules_template_t, NUM_
 	, modelName_("")
 	, libraryFolder_("")
 {
-	if (dynamicLibraryIsCompiled==true)
+	if (dynamicLibraryIsCompiled)
 		setADInterfaces();
 };
 
@@ -60,7 +60,7 @@ SystemDynamicsBaseAD<Derived, STATE_DIM, INPUT_DIM, logic_rules_template_t, NUM_
 	, guardSurfacesADInterfacePtr_(rhs.guardSurfacesADInterfacePtr_->clone())
 
 {
-	if (rhs.dynamicLibraryIsCompiled_==true)
+	if (rhs.dynamicLibraryIsCompiled_)
 		loadModels(false);
 }
 
@@ -153,9 +153,9 @@ void SystemDynamicsBaseAD<Derived, STATE_DIM, INPUT_DIM, logic_rules_template_t,
 	modelName_ = modelName;
 	libraryFolder_ = libraryFolder;
 
-	if (dynamicLibraryIsCompiled_==true) {
+	if (dynamicLibraryIsCompiled_) {
 		bool libraryLoaded = loadModels(false);
-		if (libraryLoaded==false)
+		if (!libraryLoaded)
 			throw std::runtime_error("SystemDynamics library is not found!");
 
 	} else {

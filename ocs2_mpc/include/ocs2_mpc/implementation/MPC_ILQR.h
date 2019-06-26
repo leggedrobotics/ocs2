@@ -65,7 +65,7 @@ MPC_ILQR<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::MPC_ILQR(
 
 {
 	// ILQR
-	if (ilqrSettings.ddpSettings_.useMultiThreading_==true) {
+	if (ilqrSettings.ddpSettings_.useMultiThreading_) {
 		ilqrPtr_.reset( new ilqr_mp_t(
 				systemDynamicsPtr, systemDerivativesPtr, systemConstraintsPtr, costFunctionPtr, operatingTrajectoriesPtr,
 				ilqrSettings, logicRulesPtr, heuristicsFunctionPtr) );
@@ -82,7 +82,7 @@ MPC_ILQR<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::MPC_ILQR(
 	if (modeSequenceTemplatePtr) {
 		ilqrPtr_->getLogicRulesPtr()->setModeSequenceTemplate(*modeSequenceTemplatePtr);
 
-		if (mpcSettings.recedingHorizon_==true) {
+		if (mpcSettings.recedingHorizon_) {
 			const scalar_t timeHorizon = BASE::initPartitioningTimes_.back() - BASE::initPartitioningTimes_.front();
 			ilqrPtr_->getLogicRulesPtr()->insertInternalModeSequenceTemplate(timeHorizon, 2.0*timeHorizon);
 		}

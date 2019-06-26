@@ -491,25 +491,6 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::solveRiccatiEquationsWorker(
 		const state_vector_t& SvFinal,
 		const eigen_scalar_t& sFinal)  {
 
-	// set data for Riccati equations
-	riccatiEquationsPtrStock_[workerIndex]->resetNumFunctionCalls();
-	riccatiEquationsPtrStock_[workerIndex]->setData(
-			BASE::partitioningTimes_[partitionIndex],
-			BASE::partitioningTimes_[partitionIndex+1],
-			&BASE::nominalTimeTrajectoriesStock_[partitionIndex],
-			&AmConstrainedTrajectoryStock_[partitionIndex],
-			&BASE::BmTrajectoryStock_[partitionIndex],
-			&BASE::qTrajectoryStock_[partitionIndex],
-			&QvConstrainedTrajectoryStock_[partitionIndex],
-			&QmConstrainedTrajectoryStock_[partitionIndex],
-			&BASE::RvTrajectoryStock_[partitionIndex],
-			&RmInvConstrainedCholTrajectoryStock_[partitionIndex],
-			&BASE::PmTrajectoryStock_[partitionIndex],
-			&BASE::nominalEventsPastTheEndIndecesStock_[partitionIndex],
-			&BASE::qFinalStock_[partitionIndex],
-			&BASE::QvFinalStock_[partitionIndex],
-			&BASE::QmFinalStock_[partitionIndex]);
-
 	const size_t N  = BASE::nominalTimeTrajectoriesStock_[partitionIndex].size();
 	const size_t NE = BASE::nominalEventsPastTheEndIndecesStock_[partitionIndex].size();
 
@@ -595,35 +576,6 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::solveRiccatiEquationsWorker(
 		BASE::SsTimeTrajectoryStock_[partitionIndex][k] = scalingFactor*BASE::SsNormalizedTimeTrajectoryStock_[partitionIndex][NS-1-k] + scalingFinal;
 	}  // end of k loop
 
-	// testing the numerical stability of the Riccati equations
-	if (BASE::ddpSettings_.checkNumericalStability_) {
-		for (int k=NS-1; k>=0; k--) {
-			try {
-				if (!BASE::SmTrajectoryStock_[partitionIndex][k].allFinite()) {  throw std::runtime_error("Sm is unstable.");
-				}
-				if (BASE::SmTrajectoryStock_[partitionIndex][k].eigenvalues().real().minCoeff() < -Eigen::NumTraits<scalar_t>::epsilon()) {
-					throw std::runtime_error("Sm matrix is not positive semi-definite. It's smallest eigenvalue is " +
-											 std::to_string(BASE::SmTrajectoryStock_[partitionIndex][k].eigenvalues().real().minCoeff()) + ".");
-				}
-				if (!BASE::SvTrajectoryStock_[partitionIndex][k].allFinite()) {  throw std::runtime_error("Sv is unstable.");
-				}
-				if (!BASE::sTrajectoryStock_[partitionIndex][k].allFinite()) {   throw std::runtime_error("s is unstable.");
-				}
-			}
-			catch(const std::exception& error)
-			{
-				std::cerr << "what(): " << error.what() << " at time " << BASE::SsTimeTrajectoryStock_[partitionIndex][k] << " [sec]." << std::endl;
-				for (int kp=k; kp<k+10; kp++)  {
-					if (kp >= NS) { continue;
-					}
-					std::cerr << "Sm[" << BASE::SsTimeTrajectoryStock_[partitionIndex][kp] << "]:\n"<< BASE::SmTrajectoryStock_[partitionIndex][kp].norm() << std::endl;
-					std::cerr << "Sv[" << BASE::SsTimeTrajectoryStock_[partitionIndex][kp] << "]:\t"<< BASE::SvTrajectoryStock_[partitionIndex][kp].transpose().norm() << std::endl;
-					std::cerr << "s[" << BASE::SsTimeTrajectoryStock_[partitionIndex][kp] << "]: \t"<< BASE::sTrajectoryStock_[partitionIndex][kp].transpose().norm() << std::endl;
-				}
-				exit(0);
-			}
-		}
-	}
 }
 
 /******************************************************************************************************/
@@ -636,25 +588,6 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::solveRiccatiEquationsForNomi
 		const state_matrix_t& SmFinal,
 		const state_vector_t& SvFinal,
 		const eigen_scalar_t& sFinal)  {
-
-	// set data for Riccati equations
-	riccatiEquationsPtrStock_[workerIndex]->resetNumFunctionCalls();
-	riccatiEquationsPtrStock_[workerIndex]->setData(
-			BASE::partitioningTimes_[partitionIndex],
-			BASE::partitioningTimes_[partitionIndex+1],
-			&BASE::nominalTimeTrajectoriesStock_[partitionIndex],
-			&AmConstrainedTrajectoryStock_[partitionIndex],
-			&BASE::BmTrajectoryStock_[partitionIndex],
-			&BASE::qTrajectoryStock_[partitionIndex],
-			&QvConstrainedTrajectoryStock_[partitionIndex],
-			&QmConstrainedTrajectoryStock_[partitionIndex],
-			&BASE::RvTrajectoryStock_[partitionIndex],
-			&RmInvConstrainedCholTrajectoryStock_[partitionIndex],
-			&BASE::PmTrajectoryStock_[partitionIndex],
-			&BASE::nominalEventsPastTheEndIndecesStock_[partitionIndex],
-			&BASE::qFinalStock_[partitionIndex],
-			&BASE::QvFinalStock_[partitionIndex],
-			&BASE::QmFinalStock_[partitionIndex]);
 
 	const size_t N  = BASE::nominalTimeTrajectoriesStock_[partitionIndex].size();
 	const size_t NE = BASE::nominalEventsPastTheEndIndecesStock_[partitionIndex].size();
@@ -740,36 +673,6 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::solveRiccatiEquationsForNomi
 		riccati_equations_t::convert2Matrix(allSsTrajectory[N-1-k],
 				BASE::SmTrajectoryStock_[partitionIndex][k], BASE::SvTrajectoryStock_[partitionIndex][k], BASE::sTrajectoryStock_[partitionIndex][k]);
 	}  // end of k loop
-
-	// testing the numerical stability of the Riccati equations
-	if (BASE::ddpSettings_.checkNumericalStability_) {
-		for (int k=N-1; k>=0; k--) {
-			try {
-				if (!BASE::SmTrajectoryStock_[partitionIndex][k].allFinite()) {  throw std::runtime_error("Sm is unstable.");
-				}
-				if (BASE::SmTrajectoryStock_[partitionIndex][k].eigenvalues().real().minCoeff() < -Eigen::NumTraits<scalar_t>::epsilon()) {
-					throw std::runtime_error("Sm matrix is not positive semi-definite. It's smallest eigenvalue is " +
-											 std::to_string(BASE::SmTrajectoryStock_[partitionIndex][k].eigenvalues().real().minCoeff()) + ".");
-				}
-				if (!BASE::SvTrajectoryStock_[partitionIndex][k].allFinite()) {  throw std::runtime_error("Sv is unstable.");
-				}
-				if (!BASE::sTrajectoryStock_[partitionIndex][k].allFinite()) {   throw std::runtime_error("s is unstable");
-				}
-			}
-			catch(const std::exception& error)
-			{
-				std::cerr << "what(): " << error.what() << " at time " << BASE::SsTimeTrajectoryStock_[partitionIndex][k] << " [sec]." << std::endl;
-				for (int kp=k; kp<k+10; kp++)  {
-					if (kp >= N) { continue;
-					}
-					std::cerr << "Sm[" << BASE::SsTimeTrajectoryStock_[partitionIndex][kp] << "]:\n"<< BASE::SmTrajectoryStock_[partitionIndex][kp].norm() << std::endl;
-					std::cerr << "Sv[" << BASE::SsTimeTrajectoryStock_[partitionIndex][kp] << "]:\t"<< BASE::SvTrajectoryStock_[partitionIndex][kp].transpose().norm() << std::endl;
-					std::cerr << "s["  << BASE::SsTimeTrajectoryStock_[partitionIndex][kp] << "]:\t"<< BASE::sTrajectoryStock_[partitionIndex][kp].transpose().norm() << std::endl;
-				}
-				exit(0);
-			}
-		}
-	}
 }
 
 
@@ -928,10 +831,60 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::solveSlqRiccatiEquationsWork
 		const eigen_scalar_t& sFinal,
 		const state_vector_t& SveFinal)  {
 
+    // set data for Riccati equations
+    riccatiEquationsPtrStock_[workerIndex]->resetNumFunctionCalls();
+    riccatiEquationsPtrStock_[workerIndex]->setData(
+        BASE::partitioningTimes_[partitionIndex],
+        BASE::partitioningTimes_[partitionIndex+1],
+        &BASE::nominalTimeTrajectoriesStock_[partitionIndex],
+        &AmConstrainedTrajectoryStock_[partitionIndex],
+        &BASE::BmTrajectoryStock_[partitionIndex],
+        &BASE::qTrajectoryStock_[partitionIndex],
+        &QvConstrainedTrajectoryStock_[partitionIndex],
+        &QmConstrainedTrajectoryStock_[partitionIndex],
+        &BASE::RvTrajectoryStock_[partitionIndex],
+        &RmInvConstrainedCholTrajectoryStock_[partitionIndex],
+        &BASE::PmTrajectoryStock_[partitionIndex],
+        &BASE::nominalEventsPastTheEndIndecesStock_[partitionIndex],
+        &BASE::qFinalStock_[partitionIndex],
+        &BASE::QvFinalStock_[partitionIndex],
+        &BASE::QmFinalStock_[partitionIndex]);
+
 	if(settings_.useNominalTimeForBackwardPass_) {
 		solveRiccatiEquationsForNominalTimeWorker(workerIndex, partitionIndex, SmFinal, SvFinal, sFinal);
 	} else {
 		solveRiccatiEquationsWorker(workerIndex, partitionIndex, SmFinal, SvFinal, sFinal);
+	}
+
+	// testing the numerical stability of the Riccati equations
+	int N = BASE::SsTimeTrajectoryStock_[partitionIndex].size();
+	if (BASE::ddpSettings_.checkNumericalStability_) {
+		for (int k=N-1; k>=0; k--) {
+			try {
+				if (!BASE::SmTrajectoryStock_[partitionIndex][k].allFinite()) {  throw std::runtime_error("Sm is unstable.");
+				}
+				if (BASE::SmTrajectoryStock_[partitionIndex][k].eigenvalues().real().minCoeff() < -Eigen::NumTraits<scalar_t>::epsilon()) {
+					throw std::runtime_error("Sm matrix is not positive semi-definite. It's smallest eigenvalue is " +
+							std::to_string(BASE::SmTrajectoryStock_[partitionIndex][k].eigenvalues().real().minCoeff()) + ".");
+				}
+				if (!BASE::SvTrajectoryStock_[partitionIndex][k].allFinite()) {  throw std::runtime_error("Sv is unstable.");
+				}
+				if (!BASE::sTrajectoryStock_[partitionIndex][k].allFinite()) {   throw std::runtime_error("s is unstable");
+				}
+			}
+			catch(const std::exception& error)
+			{
+				std::cerr << "what(): " << error.what() << " at time " << BASE::SsTimeTrajectoryStock_[partitionIndex][k] << " [sec]." << std::endl;
+				for (int kp=k; kp<k+10; kp++)  {
+					if (kp >= N) { continue;
+					}
+					std::cerr << "Sm[" << BASE::SsTimeTrajectoryStock_[partitionIndex][kp] << "]:\n"<< BASE::SmTrajectoryStock_[partitionIndex][kp].norm() << std::endl;
+					std::cerr << "Sv[" << BASE::SsTimeTrajectoryStock_[partitionIndex][kp] << "]:\t"<< BASE::SvTrajectoryStock_[partitionIndex][kp].transpose().norm() << std::endl;
+					std::cerr << "s["  << BASE::SsTimeTrajectoryStock_[partitionIndex][kp] << "]:\t"<< BASE::sTrajectoryStock_[partitionIndex][kp].transpose().norm() << std::endl;
+				}
+				exit(0);
+			}
+		}
 	}
 
 	solveErrorRiccatiEquationWorker(workerIndex, partitionIndex, SveFinal);

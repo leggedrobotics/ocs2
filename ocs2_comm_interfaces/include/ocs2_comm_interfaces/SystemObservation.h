@@ -102,12 +102,14 @@ public:
 		std::cerr << "\t time:      " << time_ << std::endl;
 		std::cerr << "\t subsystem: " << subsystem_ << std::endl;
 		std::cerr << "\t state:    [";
-		for (int i=0; i<state_.size()-1; i++)
+		for (int i=0; i<state_.size()-1; i++) {
 			std::cerr << state_(i) << ", ";
+		}
 		std::cerr << state_(state_.size()-1) << "]" << std::endl;
 		std::cerr << "\t input:    [";
-		for (int i=0; i<input_.size()-1; i++)
+		for (int i=0; i<input_.size()-1; i++) {
 			std::cerr << input_(i) << ", ";
+		}
 		std::cerr << input_(input_.size()-1) << "]" << std::endl;
 	}
 

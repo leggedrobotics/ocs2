@@ -120,10 +120,12 @@ void HybridLogicRulesMachine<logic_rules_template_t>::initLogicMachine(
 		const size_t& partitionIndex) {
 
 	if (BASE::eventCountersStock_[partitionIndex].empty()) {
-		if (partitionIndex==0)
+		if (partitionIndex==0) {
 			throw std::runtime_error("ocs2::setupLogicMachine function should have been called before.");
-		if (BASE::eventCountersStock_[partitionIndex-1].empty())
+		}
+		if (BASE::eventCountersStock_[partitionIndex-1].empty()) {
 			throw std::runtime_error("ocs2::initLogicMachine function should have been called for the previous partition first.");
+		}
 
 		BASE::eventCountersStock_[partitionIndex].push_back(BASE::getLogicRulesPtr()->subsystemsSequence().size()-1);
 	}
@@ -167,7 +169,8 @@ void HybridLogicRulesMachine<logic_rules_template_t>::display() const {
 		for (auto& i : eventCounters) {
 			std::cerr << BASE::getLogicRulesPtr()->subsystemsSequence()[i] << ", ";
 		}
-		if (!eventCounters.empty())  std::cerr << "\b\b";
+		if (!eventCounters.empty()) {  std::cerr << "\b\b";
+		}
 		std::cerr << "},  ";
 	}
 	std::cerr << std::endl;

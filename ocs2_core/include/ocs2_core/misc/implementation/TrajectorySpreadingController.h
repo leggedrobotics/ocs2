@@ -51,14 +51,16 @@ void TrajectorySpreadingController<STATE_DIM, INPUT_DIM>::findsIndicesEventTimes
 		for (; p<controllersStock.size(); p++) {
 
 			// skip if the controller is empty
-			if (controllersStock[p].empty())
+			if (controllersStock[p].empty()) {
 				continue;
+			}
 
 			// if not the first event, use the index of the previous event in order to be more efficient.
 			// subjected to that they are in the same partition
 			typename scalar_array_t::const_iterator beginItr = controllersStock[p].timeStamp_.begin();
-			if (j>0 && eventsIndices[j-1].first==p)
+			if (j>0 && eventsIndices[j-1].first==p) {
 				beginItr += eventsIndices[j-1].second;
+			}
 
 			auto lower = std::lower_bound(beginItr, controllersStock[p].timeStamp_.end(), te);
 
@@ -74,8 +76,9 @@ void TrajectorySpreadingController<STATE_DIM, INPUT_DIM>::findsIndicesEventTimes
 
 	// no event at the final time
 	for (index_t& ind: eventsIndices) {
-		if (ind == index_t(finalActivePartition_, controllersStock[finalActivePartition_].size()-1))
+		if (ind == index_t(finalActivePartition_, controllersStock[finalActivePartition_].size()-1)) {
 			ind = index_t(-1,-1);
+		}
 	}
 }
 
@@ -87,17 +90,20 @@ bool TrajectorySpreadingController<STATE_DIM, INPUT_DIM>::smallerEqualIndexFunc(
 		const index_t& a,
 		const index_t& b) const {
 
-	if (a.first < b.first)
+	if (a.first < b.first) {
 		return true;
+	}
 
-	if (a.first > b.first)
+	if (a.first > b.first) {
 		return false;
+	}
 
 	if (a.first == b.first) {
-		if (a.second <= b.second)
+		if (a.second <= b.second) {
 			return true;
-		else
+		} else {
 			return false;
+		}
 	}
 }
 
@@ -111,14 +117,18 @@ void TrajectorySpreadingController<STATE_DIM, INPUT_DIM>::adjustController(
 		controller_array_t& controllersStock) {
 
 	initActivePartition_ = 0;
-	for (; initActivePartition_<controllersStock.size(); initActivePartition_++)
-		if (!controllersStock[initActivePartition_].empty())
+	for (; initActivePartition_<controllersStock.size(); initActivePartition_++) {
+		if (!controllersStock[initActivePartition_].empty()) {
 			break;
+		}
+	}
 
 	finalActivePartition_ = controllersStock.size()-1;
-	for (; finalActivePartition_>=0; finalActivePartition_--)
-		if (!controllersStock[finalActivePartition_].empty())
+	for (; finalActivePartition_>=0; finalActivePartition_--) {
+		if (!controllersStock[finalActivePartition_].empty()) {
 			break;
+		}
+	}
 
 	// Finds the indices of the new event times
 	findsIndicesEventTimes(eventTimes, controllersStock,

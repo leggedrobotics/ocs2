@@ -85,8 +85,9 @@ public:
 	 * Default constructor
 	 */
 	SystemDynamicsBase() {
-		if (NUM_MODES==0)
+		if (NUM_MODES==0) {
 			throw std::runtime_error("The system should have at least one mode.");
+		}
 	}
 
 	/**

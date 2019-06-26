@@ -131,8 +131,9 @@ public:
 
 		Base::setCurrentStateAndControl(t, x, u);
 
-		if (!doubleSidedDerivative_)
+		if (!doubleSidedDerivative_) {
 			nonlinearSystemPtr_->computeFlowMap(Base::t_, Base::x_, Base::u_, f_);
+		}
 	}
 
 	/**
@@ -168,8 +169,9 @@ public:
 					A.template topRightCorner<STATE_DIM/2, STATE_DIM/2>().setIdentity();
 					A.template block<STATE_DIM/2,1>(STATE_DIM/2,i) = (fPlusPerturbed.template tail<STATE_DIM/2>() - fMinusPerturbed.template tail<STATE_DIM/2>()) / (2.0*h);
 				}
-				else
+				else {
 					A.col(i) = (fPlusPerturbed - fMinusPerturbed) / (2.0*h);
+				}
 			}
 			else  {
 				if(isSecondOrderSystem_)  {
@@ -177,8 +179,9 @@ public:
 					A.template topRightCorner<STATE_DIM/2, STATE_DIM/2>().setIdentity();
 					A.template block<STATE_DIM/2,1>(STATE_DIM/2,i) = (fPlusPerturbed.template tail<STATE_DIM/2>() - f_.template tail<STATE_DIM/2>()) / h;
 				}
-				else
+				else {
 					A.col(i) = (fPlusPerturbed - f_) / h;
+				}
 			}
 		}  // end of i loop
 
@@ -235,8 +238,9 @@ public:
 					tempB.template topRows<STATE_DIM/2>().setZero();
 					tempB.template block<STATE_DIM/2,1>(STATE_DIM/2,i) = (fPlusPerturbed.template tail<STATE_DIM/2>() - f_.template tail<STATE_DIM/2>()) / h;
 				}
-				else
+				else {
 					tempB.col(i) = (fPlusPerturbed - f_) / h;
+				}
 			}
 		}  // end of i loop
 

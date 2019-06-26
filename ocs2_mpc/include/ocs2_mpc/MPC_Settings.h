@@ -144,150 +144,187 @@ inline void MPC_Settings::loadSettings(const std::string& filename, bool verbose
 
 	try	{
 		runtimeMaxNumIterations_ = pt.get<size_t>("mpc.runtimeMaxNumIterations");
-		if (verbose)  std::cerr << " #### Option loader : option 'runtimeMaxNumIterations' .... " << runtimeMaxNumIterations_ << std::endl;
+		if (verbose) {  std::cerr << " #### Option loader : option 'runtimeMaxNumIterations' .... " << runtimeMaxNumIterations_ << std::endl;
+		}
 	}
 	catch (const std::exception& e){
-		if (verbose)  std::cerr << " #### Option loader : option 'runtimeMaxNumIterations' .... " << runtimeMaxNumIterations_ << " (default)" << std::endl;
+		if (verbose) {  std::cerr << " #### Option loader : option 'runtimeMaxNumIterations' .... " << runtimeMaxNumIterations_ << " (default)" << std::endl;
+		}
 	}
 
 	try	{
 		initMaxNumIterations_ = pt.get<size_t>("mpc.initMaxNumIterations");
-		if (verbose)  std::cerr << " #### Option loader : option 'initMaxNumIterations' ....... " << initMaxNumIterations_ << std::endl;
+		if (verbose) {  std::cerr << " #### Option loader : option 'initMaxNumIterations' ....... " << initMaxNumIterations_ << std::endl;
+		}
 	}
 	catch (const std::exception& e){
-		if (verbose)  std::cerr << " #### Option loader : option 'initMaxNumIterations' ....... " << initMaxNumIterations_ << " (default)" << std::endl;
+		if (verbose) {  std::cerr << " #### Option loader : option 'initMaxNumIterations' ....... " << initMaxNumIterations_ << " (default)" << std::endl;
+		}
 	}
 
 	try	{
 		runtimeMaxLearningRate_ = pt.get<double>("mpc.runtimeMaxLearningRate");
-		if (verbose)  std::cerr << " #### Option loader : option 'runtimeMaxLearningRate' ..... " << runtimeMaxLearningRate_ << std::endl;
+		if (verbose) {  std::cerr << " #### Option loader : option 'runtimeMaxLearningRate' ..... " << runtimeMaxLearningRate_ << std::endl;
+		}
 	}
 	catch (const std::exception& e){
-		if (verbose)  std::cerr << " #### Option loader : option 'runtimeMaxLearningRate' ..... " << runtimeMaxLearningRate_ << " (default)" << std::endl;
+		if (verbose) {  std::cerr << " #### Option loader : option 'runtimeMaxLearningRate' ..... " << runtimeMaxLearningRate_ << " (default)" << std::endl;
+}
 	}
 
 	try	{
 		runtimeMinLearningRate_ = pt.get<double>("mpc.runtimeMinLearningRate");
-		if (verbose)  std::cerr << " #### Option loader : option 'runtimeMinLearningRate' ..... " << runtimeMinLearningRate_ << std::endl;
+		if (verbose) {  std::cerr << " #### Option loader : option 'runtimeMinLearningRate' ..... " << runtimeMinLearningRate_ << std::endl;
+		}
 	}
 	catch (const std::exception& e){
-		if (verbose)  std::cerr << " #### Option loader : option 'runtimeMinLearningRate' ..... " << runtimeMinLearningRate_ << " (default)" << std::endl;
+		if (verbose) {  std::cerr << " #### Option loader : option 'runtimeMinLearningRate' ..... " << runtimeMinLearningRate_ << " (default)" << std::endl;
+		}
 	}
 
 	try	{
 		initMaxLearningRate_ = pt.get<double>("mpc.initMaxLearningRate");
-		if (verbose)  std::cerr << " #### Option loader : option 'initMaxLearningRate' ........ " << initMaxLearningRate_ << std::endl;
+		if (verbose) {  std::cerr << " #### Option loader : option 'initMaxLearningRate' ........ " << initMaxLearningRate_ << std::endl;
+		}
 	}
 	catch (const std::exception& e){
-		if (verbose)  std::cerr << " #### Option loader : option 'initMaxLearningRate' ........ " << initMaxLearningRate_ << " (default)" << std::endl;
+		if (verbose) {  std::cerr << " #### Option loader : option 'initMaxLearningRate' ........ " << initMaxLearningRate_ << " (default)" << std::endl;
+		}
 	}
 
 	try	{
 		initMinLearningRate_ = pt.get<double>("mpc.initMinLearningRate");
-		if (verbose)  std::cerr << " #### Option loader : option 'initMinLearningRate' ........ " << initMinLearningRate_ << std::endl;
+		if (verbose) {  std::cerr << " #### Option loader : option 'initMinLearningRate' ........ " << initMinLearningRate_ << std::endl;
+		}
 	}
 	catch (const std::exception& e){
-		if (verbose)  std::cerr << " #### Option loader : option 'initMinLearningRate' ........ " << initMinLearningRate_ << " (default)" << std::endl;
+		if (verbose) {  std::cerr << " #### Option loader : option 'initMinLearningRate' ........ " << initMinLearningRate_ << " (default)" << std::endl;
+		}
 	}
 
 	try	{
 		debugPrint_ = pt.get<bool>("mpc.debugPrint");
-		if (verbose)  std::cerr << " #### Option loader : option 'debugPrint' ................. " << debugPrint_ << std::endl;
+		if (verbose) {  std::cerr << " #### Option loader : option 'debugPrint' ................. " << debugPrint_ << std::endl;
+		}
 	}
 	catch (const std::exception& e){
-		if (verbose)  std::cerr << " #### Option loader : option 'debugPrint' ................. " << debugPrint_ << " (default)" << std::endl;
+		if (verbose) {  std::cerr << " #### Option loader : option 'debugPrint' ................. " << debugPrint_ << " (default)" << std::endl;
+		}
 	}
 
 	try	{
 		coldStart_ = pt.get<bool>("mpc.coldStart");
-		if (verbose)  std::cerr << " #### Option loader : option 'coldStart' .................. " << coldStart_ << std::endl;
+		if (verbose) {  std::cerr << " #### Option loader : option 'coldStart' .................. " << coldStart_ << std::endl;
+		}
 	}
 	catch (const std::exception& e){
-		if (verbose)  std::cerr << " #### Option loader : option 'coldStart' .................. " << coldStart_ << " (default)" << std::endl;
+		if (verbose) {  std::cerr << " #### Option loader : option 'coldStart' .................. " << coldStart_ << " (default)" << std::endl;
+		}
 	}
 
 	try	{
 		recedingHorizon_ = pt.get<bool>("mpc.recedingHorizon");
-		if (verbose)  std::cerr << " #### Option loader : option 'recedingHorizon' ............ " << recedingHorizon_ << std::endl;
+		if (verbose) {  std::cerr << " #### Option loader : option 'recedingHorizon' ............ " << recedingHorizon_ << std::endl;
+		}
 	}
 	catch (const std::exception& e){
-		if (verbose)  std::cerr << " #### Option loader : option 'recedingHorizon' ............ " << recedingHorizon_ << " (default)" << std::endl;
+		if (verbose) {  std::cerr << " #### Option loader : option 'recedingHorizon' ............ " << recedingHorizon_ << " (default)" << std::endl;
+		}
 	}
 
 	try	{
 		blockwiseMovingHorizon_ = pt.get<bool>("mpc.blockwiseMovingHorizon");
-		if (verbose)  std::cerr << " #### Option loader : option 'blockwiseMovingHorizon' ..... " << blockwiseMovingHorizon_ << std::endl;
+		if (verbose) {  std::cerr << " #### Option loader : option 'blockwiseMovingHorizon' ..... " << blockwiseMovingHorizon_ << std::endl;
+		}
 	}
 	catch (const std::exception& e){
-		if (verbose)  std::cerr << " #### Option loader : option 'blockwiseMovingHorizon' ..... " << blockwiseMovingHorizon_ << " (default)" << std::endl;
+		if (verbose) {  std::cerr << " #### Option loader : option 'blockwiseMovingHorizon' ..... " << blockwiseMovingHorizon_ << " (default)" << std::endl;
+		}
 	}
 
 	try	{
 		forwardSimulationTime_ = pt.get<int>("mpc.forwardSimulationTime");
-		if (verbose)  std::cerr << " #### Option loader : option 'forwardSimulationTime' ...... " << forwardSimulationTime_ << std::endl;
+		if (verbose) {  std::cerr << " #### Option loader : option 'forwardSimulationTime' ...... " << forwardSimulationTime_ << std::endl;
+		}
 	}
 	catch (const std::exception& e){
-		if (verbose)  std::cerr << " #### Option loader : option 'forwardSimulationTime' ...... " << forwardSimulationTime_ << " (default)" << std::endl;
+		if (verbose) {  std::cerr << " #### Option loader : option 'forwardSimulationTime' ...... " << forwardSimulationTime_ << " (default)" << std::endl;
+		}
 	}
 
 	try	{
 		useFeedbackPolicy_ = pt.get<bool>("mpc.useFeedbackPolicy");
-		if (verbose)  std::cerr << " #### Option loader : option 'useFeedbackPolicy' .......... " << useFeedbackPolicy_ << std::endl;
+		if (verbose) {  std::cerr << " #### Option loader : option 'useFeedbackPolicy' .......... " << useFeedbackPolicy_ << std::endl;
+		}
 	}
 	catch (const std::exception& e){
-		if (verbose)  std::cerr << " #### Option loader : option 'useFeedbackPolicy' .......... " << useFeedbackPolicy_ << " (default)" << std::endl;
+		if (verbose) {  std::cerr << " #### Option loader : option 'useFeedbackPolicy' .......... " << useFeedbackPolicy_ << " (default)" << std::endl;
+		}
 	}
 
 	try	{
 		useParallelRiccatiSolver_ = pt.get<bool>("mpc.useParallelRiccatiSolver");
-		if (verbose)  std::cerr << " #### Option loader : option 'useParallelRiccatiSolver' ... " << useParallelRiccatiSolver_ << std::endl;
+		if (verbose) {  std::cerr << " #### Option loader : option 'useParallelRiccatiSolver' ... " << useParallelRiccatiSolver_ << std::endl;
+		}
 	}
 	catch (const std::exception& e){
-		if (verbose)  std::cerr << " #### Option loader : option 'useParallelRiccatiSolver' ... " << useParallelRiccatiSolver_ << " (default)" << std::endl;
+		if (verbose) {  std::cerr << " #### Option loader : option 'useParallelRiccatiSolver' ... " << useParallelRiccatiSolver_ << " (default)" << std::endl;
+		}
 	}
 
 	try	{
 		rosMsgTimeWindow_ = pt.get<double>("mpc.rosMsgTimeWindow");
-		if (verbose)  std::cerr << " #### Option loader : option 'rosMsgTimeWindow' ........... " << rosMsgTimeWindow_ << std::endl;
+		if (verbose) {  std::cerr << " #### Option loader : option 'rosMsgTimeWindow' ........... " << rosMsgTimeWindow_ << std::endl;
+		}
 	}
 	catch (const std::exception& e){
-		if (verbose)  std::cerr << " #### Option loader : option 'rosMsgTimeWindow' ........... " << rosMsgTimeWindow_ << " (default)" << std::endl;
+		if (verbose) {  std::cerr << " #### Option loader : option 'rosMsgTimeWindow' ........... " << rosMsgTimeWindow_ << " (default)" << std::endl;
+		}
 	}
 
 	try	{
 		adaptiveRosMsgTimeWindow_ = pt.get<bool>("mpc.adaptiveRosMsgTimeWindow");
-		if (verbose)  std::cerr << " #### Option loader : option 'adaptiveRosMsgTimeWindow' ... " << adaptiveRosMsgTimeWindow_ << std::endl;
+		if (verbose) {  std::cerr << " #### Option loader : option 'adaptiveRosMsgTimeWindow' ... " << adaptiveRosMsgTimeWindow_ << std::endl;
+		}
 	}
 	catch (const std::exception& e){
-		if (verbose)  std::cerr << " #### Option loader : option 'adaptiveRosMsgTimeWindow' ... " << adaptiveRosMsgTimeWindow_ << " (default)" << std::endl;
+		if (verbose) {  std::cerr << " #### Option loader : option 'adaptiveRosMsgTimeWindow' ... " << adaptiveRosMsgTimeWindow_ << " (default)" << std::endl;
+		}
 	}
 
 	try	{
 		mpcDesiredFrequency_ = pt.get<double>("mpc.mpcDesiredFrequency");
-		if (verbose)  std::cerr << " #### Option loader : option 'mpcDesiredFrequency' ........ " << mpcDesiredFrequency_ << std::endl;
+		if (verbose) {  std::cerr << " #### Option loader : option 'mpcDesiredFrequency' ........ " << mpcDesiredFrequency_ << std::endl;
+		}
 	}
 	catch (const std::exception& e){
-		if (verbose)  std::cerr << " #### Option loader : option 'mpcDesiredFrequency' ........ " << mpcDesiredFrequency_ << " (default)" << std::endl;
+		if (verbose) {  std::cerr << " #### Option loader : option 'mpcDesiredFrequency' ........ " << mpcDesiredFrequency_ << " (default)" << std::endl;
+		}
 	}
 
 	try	{
 		mrtDesiredFrequency_ = pt.get<double>("mpc.mrtDesiredFrequency");
-		if (verbose)  std::cerr << " #### Option loader : option 'mrtDesiredFrequency' ........ " << mrtDesiredFrequency_ << std::endl;
+		if (verbose) {  std::cerr << " #### Option loader : option 'mrtDesiredFrequency' ........ " << mrtDesiredFrequency_ << std::endl;
+		}
 	}
 	catch (const std::exception& e){
-		if (verbose)  std::cerr << " #### Option loader : option 'mrtDesiredFrequency' ........ " << mrtDesiredFrequency_ << " (default)" << std::endl;
+		if (verbose) {  std::cerr << " #### Option loader : option 'mrtDesiredFrequency' ........ " << mrtDesiredFrequency_ << " (default)" << std::endl;
+		}
 	}
 
 	try	{
 		maxTimeStep_ = pt.get<double>("mpc.maxTimeStep");
-		if (verbose)  std::cerr << " #### Option loader : option 'maxTimeStep' ................ " << maxTimeStep_ << std::endl;
+		if (verbose) {  std::cerr << " #### Option loader : option 'maxTimeStep' ................ " << maxTimeStep_ << std::endl;
+		}
 	}
 	catch (const std::exception& e){
-		if (verbose)  std::cerr << " #### Option loader : option 'maxTimeStep' ................ " << maxTimeStep_ << " (default)" << std::endl;
+		if (verbose) {  std::cerr << " #### Option loader : option 'maxTimeStep' ................ " << maxTimeStep_ << " (default)" << std::endl;
+		}
 	}
 
-	if(verbose)
+	if(verbose) {
 		std::cerr <<" #### =============================================================================" << std::endl;
+	}
 }
 
 }  // namespace ocs2

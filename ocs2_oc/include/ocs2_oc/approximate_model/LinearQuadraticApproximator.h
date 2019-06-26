@@ -229,9 +229,10 @@ public:
 		// Final state-only equality constraint
 		ncFinalEqStateOnly_ = systemConstraintsPtr_->numStateOnlyFinalConstraint(time);
 
-		if (ncFinalEqStateOnly_ > INPUT_DIM)
+		if (ncFinalEqStateOnly_ > INPUT_DIM) {
 			throw std::runtime_error("Number of active final type-2 constraints should be "
 					"less-equal to the number of input dimension.");
+		}
 
 		// if final constraint type 2 is active
 		if (ncFinalEqStateOnly_ > 0) {
@@ -269,10 +270,12 @@ public:
 		// checking the numerical stability
 		if (checkNumericalCharacteristics_){
 			try {
-				if (!Am.allFinite())
+				if (!Am.allFinite()) {
 					throw std::runtime_error("Flow map state derivativeState is not finite.");
-				if (!Bm.allFinite())
+				}
+				if (!Bm.allFinite()) {
 					throw std::runtime_error("Flow map input derivativeState is not finite.");
+				}
 
 			} catch(const std::exception& error)  {
 				std::cerr << "what(): " << error.what() << " at time " << time << " [sec]." << std::endl;
@@ -315,8 +318,9 @@ public:
 
 		// constraint type 1
 		ncEqStateInput = systemConstraintsPtr_->numStateInputConstraint(time);
-		if (ncEqStateInput > INPUT_DIM)
+		if (ncEqStateInput > INPUT_DIM) {
 			throw std::runtime_error("Number of active type-1 constraints should be less-equal to the number of input dimension.");
+		}
 		// if constraint type 1 is active
 		if (ncEqStateInput > 0) {
 			systemConstraintsPtr_->getConstraint1(Ev);
@@ -326,8 +330,9 @@ public:
 
 		// constraint type 2
 		ncEqStateOnly = systemConstraintsPtr_->numStateOnlyConstraint(time);
-		if (ncEqStateOnly > INPUT_DIM)
+		if (ncEqStateOnly > INPUT_DIM) {
 			throw std::runtime_error("Number of active type-2 constraints should be less-equal to the number of input dimension.");
+		}
 		// if constraint type 2 is active
 		if (ncEqStateOnly > 0) {
 			systemConstraintsPtr_->getConstraint2(Hv);
@@ -348,22 +353,28 @@ public:
 		if (checkNumericalCharacteristics_){
 			try {
 				if (ncEqStateInput > 0) {
-					if (!Ev.head(ncEqStateInput).allFinite())
+					if (!Ev.head(ncEqStateInput).allFinite()) {
 						throw std::runtime_error("Input-state constraint is not finite.");
-					if (!Cm.topRows(ncEqStateInput).allFinite())
+					}
+					if (!Cm.topRows(ncEqStateInput).allFinite()) {
 						throw std::runtime_error("Input-state constraint derivative w.r.t. state is not finite.");
-					if (!Dm.topRows(ncEqStateInput).allFinite())
+					}
+					if (!Dm.topRows(ncEqStateInput).allFinite()) {
 						throw std::runtime_error("Input-state constraint derivative w.r.t. input is not finite.");
+					}
 					size_t DmRank = Dm.topRows(ncEqStateInput).colPivHouseholderQr().rank();
-					if (DmRank != ncEqStateInput)
+					if (DmRank != ncEqStateInput) {
 						throw std::runtime_error("Input-state constraint derivative w.r.t. input is not full-row rank. It's rank "
 								"is " + std::to_string(DmRank) + " while the expected rank is " + std::to_string(ncEqStateInput) + ".");
+					}
 				}
 				if (ncEqStateOnly > 0) {
-					if (!Hv.head(ncEqStateOnly).allFinite())
+					if (!Hv.head(ncEqStateOnly).allFinite()) {
 						throw std::runtime_error("State-only constraint is not finite.");
-					if (!Fm.topRows(ncEqStateOnly).allFinite())
+					}
+					if (!Fm.topRows(ncEqStateOnly).allFinite()) {
 						throw std::runtime_error("State-only constraint derivative w.r.t. state is not finite.");
+					}
 				}
 
 			} catch(const std::exception& error)  {
@@ -412,31 +423,42 @@ public:
 		// checking the numerical stability
 		if (checkNumericalCharacteristics_){
 			try {
-				if (!q.allFinite())
+				if (!q.allFinite()) {
 					throw std::runtime_error("Intermediate cost is is not finite.");
-				if (!Qv.allFinite())
+				}
+				if (!Qv.allFinite()) {
 					throw std::runtime_error("Intermediate cost first derivative w.r.t. state is is not finite.");
-				if (!Qm.allFinite())
+				}
+				if (!Qm.allFinite()) {
 					throw std::runtime_error("Intermediate cost second derivative w.r.t. state is is not finite.");
-				if (!makePsdWillBePerformedLater_ && !Qm.isApprox(Qm.transpose()))
+				}
+				if (!makePsdWillBePerformedLater_ && !Qm.isApprox(Qm.transpose())) {
 					throw std::runtime_error("Intermediate cost second derivative w.r.t. state is is not self-adjoint.");
-				if (!makePsdWillBePerformedLater_ && Qm.eigenvalues().real().minCoeff() < -Eigen::NumTraits<scalar_t>::epsilon())
+				}
+				if (!makePsdWillBePerformedLater_ && Qm.eigenvalues().real().minCoeff() < -Eigen::NumTraits<scalar_t>::epsilon()) {
 					throw std::runtime_error("Q matrix is not positive semi-definite. It's smallest eigenvalue is " +
 							std::to_string(Qm.eigenvalues().real().minCoeff()) + ".");
-				if (!Rv.allFinite())
+				}
+				if (!Rv.allFinite()) {
 					throw std::runtime_error("Intermediate cost first derivative w.r.t. input is is not finite.");
-				if (!Rm.allFinite())
+				}
+				if (!Rm.allFinite()) {
 					throw std::runtime_error("Intermediate cost second derivative w.r.t. input is is not finite.");
-				if (!Pm.allFinite())
+				}
+				if (!Pm.allFinite()) {
 					throw std::runtime_error("Intermediate cost second derivative w.r.t. input-state is is not finite.");
-				if (!makePsdWillBePerformedLater_ && !Rm.isApprox(Rm.transpose()))
+				}
+				if (!makePsdWillBePerformedLater_ && !Rm.isApprox(Rm.transpose())) {
 					throw std::runtime_error("Intermediate cost second derivative w.r.t. input is is not self-adjoint.");
-				if (!makePsdWillBePerformedLater_ && Rm.ldlt().rcond() < Eigen::NumTraits<scalar_t>::epsilon())
+				}
+				if (!makePsdWillBePerformedLater_ && Rm.ldlt().rcond() < Eigen::NumTraits<scalar_t>::epsilon()) {
 					throw std::runtime_error("R matrix is not invertible. It's reciprocal condition number is " +
 							std::to_string(Rm.ldlt().rcond()) + ".");
-				if (!makePsdWillBePerformedLater_ && Rm.eigenvalues().real().minCoeff() < Eigen::NumTraits<scalar_t>::epsilon())
+				}
+				if (!makePsdWillBePerformedLater_ && Rm.eigenvalues().real().minCoeff() < Eigen::NumTraits<scalar_t>::epsilon()) {
 					throw std::runtime_error("R matrix is not positive definite. It's smallest eigenvalue is " +
 							std::to_string(Rm.eigenvalues().real().minCoeff()) + ".");
+				}
 			} catch(const std::exception& error)  {
 				std::cerr << "what(): " << error.what() << " at time " << time << " [sec]." << std::endl;
 				std::cerr << "x: " << state.transpose() << std::endl;

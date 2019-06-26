@@ -246,8 +246,9 @@ public:
 		eventTimes_.clear();
 		eventTimes_.reserve(eventsPastTheEndIndecesPtr->size());
 
-		for (const size_t& pastTheEndIndex : *eventsPastTheEndIndecesPtr)
+		for (const size_t& pastTheEndIndex : *eventsPastTheEndIndecesPtr) {
 			eventTimes_.push_back( timeStampPtr->at(pastTheEndIndex-1) );
+		}
 
 		qFinalPtr_  = qFinalPtr;
 		QvFinalPtr_ = QvFinalPtr;
@@ -277,8 +278,9 @@ public:
 
 		size_t index = find(eventTimes_, time);
 
-		if (index == eventTimes_.size())
+		if (index == eventTimes_.size()) {
 			throw std::runtime_error("The Riccati state jump time is not defined.");
+		}
 
 		s_vector_t allSsJump;
 		convert2Vector(QmFianlPtr_->at(index), QvFinalPtr_->at(index), qFinalPtr_->at(index), allSsJump);
@@ -364,17 +366,19 @@ protected:
 	template <typename Derived>
 	static bool makePSD(Eigen::MatrixBase<Derived>& squareMatrix) {
 
-		if (squareMatrix.rows() != squareMatrix.cols())  throw std::runtime_error("Not a square matrix: makePSD() method is for square matrix.");
+		if (squareMatrix.rows() != squareMatrix.cols()) {  throw std::runtime_error("Not a square matrix: makePSD() method is for square matrix.");
+		}
 
 		Eigen::SelfAdjointEigenSolver<Derived> eig(squareMatrix, Eigen::EigenvaluesOnly);
 		Eigen::VectorXd lambda = eig.eigenvalues();
 
 		bool hasNegativeEigenValue = false;
-		for (size_t j=0; j<lambda.size() ; j++)
+		for (size_t j=0; j<lambda.size() ; j++) {
 			if (lambda(j) < 0.0) {
 				hasNegativeEigenValue = true;
 				lambda(j) = 1e-6;
 			}
+		}
 
 		if (hasNegativeEigenValue) {
 			eig.compute(squareMatrix, Eigen::ComputeEigenvectors);
@@ -390,7 +394,8 @@ protected:
 	InputIterator find (InputIterator first, InputIterator last, const T& val)
 	{
 	  while (first!=last) {
-	    if (*first==val) return first;
+	    if (*first==val) { return first;
+		}
 	    ++first;
 	  }
 	  return last;
@@ -406,11 +411,12 @@ protected:
 
 		size_t index = dataArray.size();
 
-		for (size_t i=0; i<dataArray.size(); i++)
+		for (size_t i=0; i<dataArray.size(); i++) {
 			if (std::abs(dataArray[i]-value)<1e-5) {
 				index = i;
 				break;
 			}
+		}
 
 		return index;
 	}

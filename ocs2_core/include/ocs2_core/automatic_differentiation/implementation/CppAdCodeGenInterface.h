@@ -41,13 +41,15 @@ CppAdCodeGenInterface<DOMAIN_DIM, RANGE_DIM, SCALAR_T, VARIABLE_DIM>::CppAdCodeG
 {
 //	CppadParallelSetting::initParallel(2 + 1);
 
-	if (BASE::domain_dim_<0)
+	if (BASE::domain_dim_<0) {
 		throw std::runtime_error("Use the overloaded method which takes the domain and range dimensions "
 				"since the domain dimension is not defined by the template.");
+	}
 
-	if (BASE::range_dim_<0)
+	if (BASE::range_dim_<0) {
 		throw std::runtime_error("Use the overloaded method which takes the domain and range dimensions "
 				"since the range dimension is not defined by the template.");
+	}
 }
 
 /******************************************************************************************************/
@@ -84,7 +86,8 @@ CppAdCodeGenInterface<DOMAIN_DIM, RANGE_DIM, SCALAR_T, VARIABLE_DIM>::CppAdCodeG
     size_t zeroCount = 0;
     for (size_t i=0; i<domainDim; i++) {
     	// zero count
-    	if (sparsityPatternSum(i)<1e-3)  ++zeroCount;
+    	if (sparsityPatternSum(i)<1e-3) {  ++zeroCount;
+}
     	zeroCountHessian_[i] = zeroCount;
     }
 }
@@ -148,13 +151,15 @@ void CppAdCodeGenInterface<DOMAIN_DIM, RANGE_DIM, SCALAR_T, VARIABLE_DIM>::creat
 		const bool verbose /* = true */,
 		bool cgJIT /*= true*/) {
 
-	if (BASE::domain_dim_<0)
+	if (BASE::domain_dim_<0) {
 		throw std::runtime_error("Use the overloaded method which takes the domain and range dimensions "
 				"since the domain dimension is not defined by the template.");
+}
 
-	if (BASE::range_dim_<0)
+	if (BASE::range_dim_<0) {
 		throw std::runtime_error("Use the overloaded method which takes the domain and range dimensions "
 				"since the range dimension is not defined by the template.");
+}
 
 	createModels(DOMAIN_DIM, RANGE_DIM, modelName, libraryFolder, verbose, cgJIT);
 }
@@ -174,19 +179,22 @@ void CppAdCodeGenInterface<DOMAIN_DIM, RANGE_DIM, SCALAR_T, VARIABLE_DIM>::creat
   BASE::domain_dim_ = domainDim;
 	BASE::range_dim_  = rangeDim;
 
-	if (BASE::domain_dim_<0)
+	if (BASE::domain_dim_<0) {
 		throw std::runtime_error("Use the overloaded method which takes the domain and range dimensions "
 				"since the domain dimension is not defined by the template.");
+}
 
-	if (BASE::range_dim_<0)
+	if (BASE::range_dim_<0) {
 		throw std::runtime_error("Use the overloaded method which takes the domain and range dimensions "
 				"since the range dimension is not defined by the template.");
+}
 
     //***************************************************************************
     //                               create folder
     //***************************************************************************
-	if (!libraryFolder.empty())
+	if (!libraryFolder.empty()) {
 		CppAD::cg::system::createFolder(libraryFolder);
+}
 
 	if (!libraryFolder.empty()) {
 		CppAD::cg::system::createFolder(libraryFolder + "/" + modelName);
@@ -218,13 +226,16 @@ void CppAdCodeGenInterface<DOMAIN_DIM, RANGE_DIM, SCALAR_T, VARIABLE_DIM>::creat
     		rowsJacobian_, colsJacobian_,
     		rowsHessian_, colsHessian_);
 
-    if (VARIABLE_DIM != DOMAIN_DIM)
-    	if (zeroCountHessian_.back()+VARIABLE_DIM != DOMAIN_DIM)
+    if (VARIABLE_DIM != DOMAIN_DIM) {
+    	if (zeroCountHessian_.back()+VARIABLE_DIM != DOMAIN_DIM) {
     		throw std::runtime_error("VARIABLE_DIM is incorrect. It should be either " + std::to_string(DOMAIN_DIM) +
     				" or " + std::to_string(DOMAIN_DIM-zeroCountHessian_.back()) + ".");
+}
+}
 
-    if (verbose) std::cerr << "Sparsity pattern of " << modelName <<
+    if (verbose) { std::cerr << "Sparsity pattern of " << modelName <<
     		" model: \n" << sparsityPattern_ << std::endl;
+}
     //*************************************************************************
     //                      Create the dynamic library
     //                 (generates and compiles source code)
@@ -265,10 +276,11 @@ void CppAdCodeGenInterface<DOMAIN_DIM, RANGE_DIM, SCALAR_T, VARIABLE_DIM>::creat
     if (cgJIT) {
     	// compile source code
     	std::string libraryName;
-    	if (!libraryFolder.empty())
+    	if (!libraryFolder.empty()) {
     		libraryName = libraryFolder + "/" + modelName + "/cppad_generated/" + modelName + "_lib";
-    	else
+    	} else {
     		libraryName = modelName + "_lib";
+}
     	CppAD::cg::DynamicModelLibraryProcessor<SCALAR_T> p(libcgen, libraryName);
     	if (verbose) {
     		std::cerr << "Compiled Shared Library: " << p.getLibraryName() +
@@ -300,10 +312,11 @@ bool CppAdCodeGenInterface<DOMAIN_DIM, RANGE_DIM, SCALAR_T, VARIABLE_DIM>::loadM
 
 	// load dynamic library
 	std::string libraryName;
-	if (!libraryFolder.empty())
+	if (!libraryFolder.empty()) {
 		libraryName = libraryFolder + "/" + modelName + "/cppad_generated/" + modelName + "_lib";
-	else
+	} else {
 		libraryName = modelName + "_lib";
+}
 
 	dynamicLib_.reset( new CppAD::cg::LinuxDynamicLib<SCALAR_T>(
 			libraryName + CppAD::cg::system::SystemInfo<>::DYNAMIC_LIB_EXTENSION) );

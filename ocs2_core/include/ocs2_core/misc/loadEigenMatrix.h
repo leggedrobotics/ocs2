@@ -90,7 +90,7 @@ inline void loadEigenMatrix(
 
 	scalar_t aij;
 	bool failed = false;
-	for (size_t i=0; i<rows; i++)
+	for (size_t i=0; i<rows; i++) {
 		for (size_t j=0; j<cols; j++)  {
 			try	{
 				aij = pt.get<scalar_t>(matrixName + "." + "(" +std::to_string(i) + "," + std::to_string(j) + ")");
@@ -101,6 +101,7 @@ inline void loadEigenMatrix(
 			}
 			matrix(i,j) = scaling * aij;
 		}
+	}
 
 	if (failed)  {
 		std::cerr << "WARNING: Failed to load matrix type: " + matrixName + "!" << std::endl;

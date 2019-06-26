@@ -97,8 +97,9 @@ void Integrator<STATE_DIM, Stepper>::integrate(
 
 	state_vector_t internalStartState = initialState;
 
-	if (BASE::eventHandlerPtr_ && maxNumSteps<std::numeric_limits<int>::max())
+	if (BASE::eventHandlerPtr_ && maxNumSteps<std::numeric_limits<int>::max()) {
 		BASE::eventHandlerPtr_->setMaxNumSteps(maxNumSteps);
+	}
 
 	// reset the trajectories
 	if (!concatOutput) {
@@ -129,12 +130,14 @@ void Integrator<STATE_DIM, Stepper>::integrate(
 
 	state_vector_t internalStartState = initialState;
 
-	if (BASE::eventHandlerPtr_ && maxNumSteps<std::numeric_limits<int>::max())
+	if (BASE::eventHandlerPtr_ && maxNumSteps<std::numeric_limits<int>::max()) {
 		BASE::eventHandlerPtr_->setMaxNumSteps(maxNumSteps);
+	}
 
 #if (BOOST_VERSION / 100000 == 1 && BOOST_VERSION / 100 % 1000 > 60)
-	if (!maxStepCheckerPtr_ || !concatOutput)
+	if (!maxStepCheckerPtr_ || !concatOutput) {
 		maxStepCheckerPtr_.reset(new boost::numeric::odeint::max_step_checker(maxNumSteps));
+	}
 #endif
 
 	// reset the trajectories

@@ -40,8 +40,9 @@ ConstraintBaseAD<Derived, STATE_DIM, INPUT_DIM, logic_rules_template_t>::Constra
 	, modelName_("")
 	, libraryFolder_("")
 {
-	if (dynamicLibraryIsCompiled)
+	if (dynamicLibraryIsCompiled) {
 		setADInterfaces();
+	}
 };
 
 /******************************************************************************************************/
@@ -60,8 +61,9 @@ ConstraintBaseAD<Derived, STATE_DIM, INPUT_DIM, logic_rules_template_t>::Constra
 	, stateOnlyFinalADInterfacePtr_(rhs.stateOnlyFinalADInterfacePtr_->clone())
 
 {
-	if (static_cast<bool>(rhs.dynamicLibraryIsCompiled_))
+	if (static_cast<bool>(rhs.dynamicLibraryIsCompiled_)) {
 		loadModels(false);
+	}
 }
 
 /******************************************************************************************************/
@@ -101,8 +103,9 @@ void ConstraintBaseAD<Derived, STATE_DIM, INPUT_DIM, logic_rules_template_t>::lo
 
 	if (dynamicLibraryIsCompiled_) {
 		bool libraryLoaded = loadModels(false);
-		if (!libraryLoaded)
+		if (!libraryLoaded) {
 			throw std::runtime_error("Constraint library is not found!");
+		}
 
 	} else {
 		throw std::runtime_error("Constraint library has not been compiled!");
@@ -231,8 +234,9 @@ void ConstraintBaseAD<Derived, STATE_DIM, INPUT_DIM, logic_rules_template_t>::st
 	g1.resize(MAX_CONSTRAINT_DIM_);
 	static_cast<Derived *>(this)->template stateInputConstraint<ad_scalar_t>(t, x, u, g1);
 
-	if (g1.size()>MAX_CONSTRAINT_DIM_)
+	if (g1.size()>MAX_CONSTRAINT_DIM_) {
 		throw std::runtime_error("The max number of constraints is exceeded!");
+	}
 
 	g1.conservativeResize(MAX_CONSTRAINT_DIM_);
 }
@@ -251,8 +255,9 @@ void ConstraintBaseAD<Derived, STATE_DIM, INPUT_DIM, logic_rules_template_t>::st
 	g2.resize(MAX_CONSTRAINT_DIM_);
 	static_cast<Derived *>(this)->template stateOnlyConstraint<ad_scalar_t>(t, x, g2);
 
-	if (g2.size()>MAX_CONSTRAINT_DIM_)
+	if (g2.size()>MAX_CONSTRAINT_DIM_) {
 		throw std::runtime_error("The max number of constraints is exceeded!");
+	}
 
 	g2.conservativeResize(MAX_CONSTRAINT_DIM_);
 }
@@ -271,8 +276,9 @@ void ConstraintBaseAD<Derived, STATE_DIM, INPUT_DIM, logic_rules_template_t>::st
 	g2Final.resize(MAX_CONSTRAINT_DIM_);
 	static_cast<Derived *>(this)->template stateOnlyFinalConstraint<ad_scalar_t>(t, x, g2Final);
 
-	if (g2Final.size()>MAX_CONSTRAINT_DIM_)
+	if (g2Final.size()>MAX_CONSTRAINT_DIM_) {
 		throw std::runtime_error("The max number of constraints is exceeded!");
+	}
 
 	g2Final.conservativeResize(MAX_CONSTRAINT_DIM_);
 }

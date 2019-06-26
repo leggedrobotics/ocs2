@@ -69,8 +69,9 @@ void RobotInterfaceBase<STATE_DIM, INPUT_DIM>::definePartitioningTimes(
 
 	partitioningTimes.resize(numPartitions+1);
 	partitioningTimes[0] = 0.0;
-	for (size_t i=0; i<numPartitions; i++)
+	for (size_t i=0; i<numPartitions; i++) {
 		partitioningTimes[i+1] = partitioningTimes[i] + timeHorizon/numPartitions;
+	}
 	partitioningTimes[numPartitions] = timeHorizon;
 }
 

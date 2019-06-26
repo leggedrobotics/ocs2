@@ -124,8 +124,9 @@ std::function<size_t(typename LogicRulesMachine<LOGIC_RULES_T>::scalar_t)>
 	return [&eventCounters, &switchingTimes, guessedIndex](scalar_t time) mutable {
 		int index = findActiveIntervalIndex(switchingTimes, time, guessedIndex);
 
-		if (index < 0 || index >= eventCounters.size())
+		if (index < 0 || index >= eventCounters.size()) {
 			throw std::runtime_error("The enquiry time" + std::to_string(time) + "refers to an out-of-range subsystem.");
+		}
 
 		guessedIndex = index;
 
@@ -176,8 +177,9 @@ bool LogicRulesMachine<LOGIC_RULES_T>::updateLogicRules(
 	// if partitioningTimes is updated
 	if (logicRulesModified_ || partitioningTimes_!=partitioningTimes) {
 
-		if (partitioningTimes.size()<2)
+		if (partitioningTimes.size()<2) {
 			throw std::runtime_error("Time partitioning vector should include at least the start and final time.");
+		}
 
 		numPartitions_ = partitioningTimes.size()-1;
 		partitioningTimes_ = partitioningTimes;
@@ -220,12 +222,14 @@ void LogicRulesMachine<LOGIC_RULES_T>::findEventsDistribution(
 
 		int index = findActiveIntervalIndex(partitioningTimes, ti, lastIndex);
 
-		if (index < 0 || index==numPartitions_)  continue;
+		if (index < 0 || index==numPartitions_) {  continue;
+		}
 
 		// At the very first active index
 		if (firstActiveSwitchinTimeIndex==-1)  {
 			// if switch happens at the startTime ignore it
-			if (ti < partitioningTimes.front() + OCS2NumericTraits<scalar_t>::limit_epsilon())  continue;
+			if (ti < partitioningTimes.front() + OCS2NumericTraits<scalar_t>::limit_epsilon()) {  continue;
+			}
 
 			// save the very first active index
 			firstActiveSwitchinTimeIndex = i;
@@ -249,13 +253,11 @@ void LogicRulesMachine<LOGIC_RULES_T>::findEventsDistribution(
 			currActiveSubsystemIndex = 0;
 
 		} else {
-			if (allEventTimes.back() < partitioningTimes.front()+OCS2NumericTraits<scalar_t>::limit_epsilon())
+			if (allEventTimes.back() < partitioningTimes.front()+OCS2NumericTraits<scalar_t>::limit_epsilon()) {
 				currActiveSubsystemIndex = numSubsystems-1;
-
-			else if (allEventTimes.front() >= partitioningTimes.back())
+			} else if (allEventTimes.front() >= partitioningTimes.back()) {
 				currActiveSubsystemIndex = 0;
-
-			else { // last case
+			} else { // last case
 				currActiveSubsystemIndex = findActiveIntervalIndex(allEventTimes, partitioningTimes.front(), 0) + 1;
 			}
 		}
@@ -300,13 +302,15 @@ void LogicRulesMachine<LOGIC_RULES_T>::findEventsDistribution(
 		// add the partition's start time
 		switchingTimes.push_back(partitioningTimes_[i]);
 		// add the intermediate switching times
-		for (const scalar_t& t: eventTimesStock_[i])
+		for (const scalar_t& t: eventTimesStock_[i]) {
 			switchingTimes.push_back(t);
+		}
 		// only add the partition's final time if there is no intermediate switching time at the end
-		if (switchingTimes.size() == numSubsystems)
+		if (switchingTimes.size() == numSubsystems) {
 			switchingTimes.push_back(partitioningTimes_[i+1]);
-		else
+		} else {
 			switchingTimes[numSubsystems] = partitioningTimes_[i+1];
+		}
 	}  // end of i loop
 
 }
@@ -340,7 +344,8 @@ void LogicRulesMachine<LOGIC_RULES_T>::display() const {
 		for (const auto& ti : switchingTimes) {
 			std::cerr << ti << ", ";
 		}
-		if (!switchingTimes.empty())  std::cerr << "\b\b";
+		if (!switchingTimes.empty()) {  std::cerr << "\b\b";
+		}
 		std::cerr << "},  ";
 	}
 	std::cerr << std::endl;
@@ -354,7 +359,8 @@ void LogicRulesMachine<LOGIC_RULES_T>::display() const {
 		for (const auto& ti : events) {
 			std::cerr << ti << ", ";
 		}
-		if (!events.empty())  std::cerr << "\b\b";
+		if (!events.empty()) {  std::cerr << "\b\b";
+		}
 		std::cerr << "},  ";
 	}
 	std::cerr << std::endl;
@@ -368,7 +374,8 @@ void LogicRulesMachine<LOGIC_RULES_T>::display() const {
 		for (const auto& i : eventCounters) {
 			std::cerr << i << ", ";
 		}
-		if (!eventCounters.empty())  std::cerr << "\b\b";
+		if (!eventCounters.empty()) {  std::cerr << "\b\b";
+		}
 		std::cerr << "},  ";
 	}
 	std::cerr << std::endl;

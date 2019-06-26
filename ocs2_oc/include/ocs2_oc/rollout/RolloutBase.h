@@ -174,8 +174,9 @@ public:
 		std::cerr << "Total number of events: " << eventsPastTheEndIndeces.size() << std::endl;
 		if (!eventsPastTheEndIndeces.empty()) {
 			std::cerr << "Event times: ";
-			for (size_t ind : eventsPastTheEndIndeces)
+			for (size_t ind : eventsPastTheEndIndeces) {
 				std::cerr << timeTrajectory[ind] << ", ";
+			}
 			std::cerr << std::endl;
 		}
 		std::cerr << std::endl;
@@ -216,15 +217,18 @@ protected:
 			const state_vector_array_t& stateTrajectory,
 			const input_vector_array_t& inputTrajectory) const {
 
-		if (!rolloutSettings_.checkNumericalStability_)
+		if (!rolloutSettings_.checkNumericalStability_) {
 			return;
+		}
 
 		for (size_t i=0; i<timeTrajectory.size(); i++) {
 			try {
-				if (!stateTrajectory[i].allFinite())
+				if (!stateTrajectory[i].allFinite()) {
 					throw std::runtime_error("Rollout: state is not finite");
-				if (!inputTrajectory[i].allFinite())
+				}
+				if (!inputTrajectory[i].allFinite()) {
 					throw std::runtime_error("Rollout: input is not finite");
+				}
 			} catch(const std::exception& error) {
 
 				std::cerr << "what(): " << error.what() << " at time " + std::to_string(timeTrajectory[i]) + " [sec]." << std::endl;

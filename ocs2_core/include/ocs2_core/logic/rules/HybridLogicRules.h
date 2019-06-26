@@ -64,15 +64,19 @@ struct ModeSequenceTemplate
 	void display() const {
 
 		std::cerr << std::endl << "Template switching times:\n\t {";
-		for (auto& s: templateSwitchingTimes_)
+		for (auto& s: templateSwitchingTimes_) {
 			std::cerr << s << ", ";
-		if (!templateSwitchingTimes_.empty())  std::cerr << "\b\b";
+		}
+		if (!templateSwitchingTimes_.empty()) {  std::cerr << "\b\b";
+		}
 		std::cerr << "}" << std::endl;
 
 		std::cerr << "Template subsystem sequence:\n\t {";
-		for (auto& s: templateSubsystemsSequence_)
+		for (auto& s: templateSubsystemsSequence_) {
 			std::cerr << s << ", ";
-		if (!templateSubsystemsSequence_.empty())  std::cerr << "\b\b";
+		}
+		if (!templateSubsystemsSequence_.empty()) {  std::cerr << "\b\b";
+		}
 		std::cerr << "}" << std::endl;
 	}
 };
@@ -142,9 +146,11 @@ public:
 		BASE::display();
 
 		std::cerr << "Subsystem sequence:\n\t {";
-		for (auto& s: subsystemsSequence_)
+		for (auto& s: subsystemsSequence_) {
 			std::cerr << s << ", ";
-		if (!subsystemsSequence_.empty())  std::cerr << "\b\b";
+		}
+		if (!subsystemsSequence_.empty()) {  std::cerr << "\b\b";
+		}
 		std::cerr << "}" << std::endl;
 	}
 
@@ -160,8 +166,9 @@ public:
 			const size_array_t& subsystemsSequence,
 			const scalar_array_t& eventTimes) {
 
-		if (subsystemsSequence.size() != eventTimes.size()+1)
+		if (subsystemsSequence.size() != eventTimes.size()+1) {
 			throw std::runtime_error("The number of subsystems should be 1 plus the number of the event times.");
+		}
 
 		BASE::eventTimes_ = eventTimes;
 		subsystemsSequence_ = subsystemsSequence;

@@ -91,8 +91,12 @@ public:
      * @param [in] dataPtr: A pointer to the data.
      */
 	void setData(const std::vector<scalar_t>* timeStampPtr, const std::vector<Data_T, Alloc>* dataPtr) {
-        if (timeStampPtr == nullptr) throw std::runtime_error("timeStampPtr is nullptr.");
-        if (dataPtr == nullptr) throw std::runtime_error("dataPtr is nullptr.");
+        if (timeStampPtr == nullptr) { 
+			throw std::runtime_error("timeStampPtr is nullptr.");
+		}
+        if (dataPtr == nullptr) {
+        	throw std::runtime_error("dataPtr is nullptr.");
+		}
 
         zeroFunction_ = false;
         timeStampPtr_ = timeStampPtr;

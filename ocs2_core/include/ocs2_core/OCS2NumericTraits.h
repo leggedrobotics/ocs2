@@ -55,6 +55,6 @@ public:
 	static inline T week_epsilon() { return 1e-9; }
 };
 
-} // end of ocs2 namespace
+}  // namespace ocs2
 
 #endif /* OCS2NUMERICTRAITS_OCS2_H_ */

@@ -56,18 +56,18 @@ public:
 
 	typedef RolloutBase<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> BASE;
 
-	typedef typename BASE::controller_t         controller_t;
-	typedef typename BASE::size_array_t         size_array_t;
-	typedef typename BASE::scalar_t             scalar_t;
-	typedef typename BASE::scalar_array_t       scalar_array_t;
-	typedef typename BASE::state_vector_t       state_vector_t;
-	typedef typename BASE::state_vector_array_t state_vector_array_t;
-	typedef typename BASE::input_vector_t       input_vector_t;
-	typedef typename BASE::input_vector_array_t input_vector_array_t;
+	using controller_t = typename BASE::controller_t;
+	using size_array_t = typename BASE::size_array_t;
+	using scalar_t = typename BASE::scalar_t;
+	using scalar_array_t = typename BASE::scalar_array_t;
+	using state_vector_t = typename BASE::state_vector_t;
+	using state_vector_array_t = typename BASE::state_vector_array_t;
+	using input_vector_t = typename BASE::input_vector_t;
+	using input_vector_array_t = typename BASE::input_vector_array_t;
 
 	typedef SystemOperatingTrajectoriesBase<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> operating_trajectories_t;
 
-	typedef LogicRulesMachine<LOGIC_RULES_T> logic_rules_machine_t;
+	using logic_rules_machine_t = LogicRulesMachine<LOGIC_RULES_T>;
 
 	/**
 	 * Constructor.
@@ -79,7 +79,7 @@ public:
 	OperatingTrajectoriesRollout(
 			const operating_trajectories_t& operatingTrajectories,
 			const Rollout_Settings& rolloutSettings = Rollout_Settings(),
-			const char* algorithmName = NULL)
+			const char* algorithmName = nullptr)
 
 	: BASE(rolloutSettings, algorithmName)
 	, operatingTrajectoriesPtr_(operatingTrajectories.clone())

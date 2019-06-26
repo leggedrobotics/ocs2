@@ -78,7 +78,7 @@ inline void loadEigenMatrix(
 		const std::string& matrixName,
 		Eigen::MatrixBase<Derived>& matrix)  {
 
-	typedef typename Eigen::MatrixBase<Derived>::Scalar scalar_t;
+	using scalar_t = typename Eigen::MatrixBase<Derived>::Scalar;
 
 	size_t rows = matrix.rows();
 	size_t cols = matrix.cols();
@@ -108,7 +108,7 @@ inline void loadEigenMatrix(
 }
 
 
-}  // end of ocs2 namespace
+}  // namespace ocs2
 
 
 #endif /* OCS2_LOADEIGENMATRIX_H_ */

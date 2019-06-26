@@ -108,7 +108,7 @@ class LinearController final : public ControllerBase<STATE_DIM, INPUT_DIM> {
     gainArray_ = controllerGain;
   }
 
-  virtual input_vector_t computeInput(const scalar_t& t, const state_vector_t& x) override {
+  input_vector_t computeInput(const scalar_t& t, const state_vector_t& x) override {
     input_vector_t uff;
     const auto greatestLessTimeStampIndex = linInterpolateBias_.interpolate(t, uff);
 
@@ -118,7 +118,7 @@ class LinearController final : public ControllerBase<STATE_DIM, INPUT_DIM> {
     return uff + k * x;
   }
 
-  virtual void flatten(const scalar_array_t& timeArray, const std::vector<float_array_t*>& flatArray2) const override {
+  void flatten(const scalar_array_t& timeArray, const std::vector<float_array_t*>& flatArray2) const override {
     const auto timeSize = timeArray.size();
     const auto dataSize = flatArray2.size();
 
@@ -149,7 +149,7 @@ class LinearController final : public ControllerBase<STATE_DIM, INPUT_DIM> {
     }
   }
 
-  virtual void unFlatten(const scalar_array_t& timeArray, const std::vector<float_array_t const*>& flatArray2) override {
+  void unFlatten(const scalar_array_t& timeArray, const std::vector<float_array_t const*>& flatArray2) override {
     if(flatArray2[0]->size() != INPUT_DIM + INPUT_DIM * STATE_DIM){
       throw std::runtime_error("LinearController::unFlatten received array of wrong length.");
     }
@@ -172,27 +172,27 @@ class LinearController final : public ControllerBase<STATE_DIM, INPUT_DIM> {
     }
   }
 
-  virtual ControllerType getType() const override {
+  ControllerType getType() const override {
 	  return ControllerType::LINEAR;
   }
 
-  virtual void clear() override {
+  void clear() override {
     timeStamp_.clear();
     biasArray_.clear();
     gainArray_.clear();
   }
 
-  virtual void setZero() override {
+  void setZero() override {
     std::fill(biasArray_.begin(), biasArray_.end(), input_vector_t::Zero());
     std::fill(deltaBiasArray_.begin(), deltaBiasArray_.end(), input_vector_t::Zero());
     std::fill(gainArray_.begin(), gainArray_.end(), input_state_matrix_t::Zero());
   }
 
-  virtual bool empty() const override {
+  bool empty() const override {
 	  return timeStamp_.empty();
   }
 
-  virtual void display() const override {
+  void display() const override {
 
 	  for (size_t k=0; k<timeStamp_.size(); k++) {
 		  std::cerr << "k: " << k << std::endl;

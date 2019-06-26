@@ -52,7 +52,7 @@ class LinearInterpolation
 public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-	typedef double scalar_t;
+	using scalar_t = double;
 
 	/**
 	 * Default constructor.

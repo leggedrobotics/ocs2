@@ -66,7 +66,7 @@ public:
 	/**
 	 * Destructor.
 	 */
-	virtual ~MRT_ROS_Dummy_Linear_System() = default;
+	~MRT_ROS_Dummy_Linear_System() override = default;
 
 protected:
 	/**
@@ -75,7 +75,7 @@ protected:
 	 * @param [in] argc: command line number of inputs.
 	 * @param [in] argv: command line inputs' value.
 	 */
-	virtual void launchVisualizerNode(
+	void launchVisualizerNode(
 			int argc, char* argv[]) override {
 
 		ros::init(argc, argv, "double_integrator_visualization_node");
@@ -93,7 +93,7 @@ protected:
 	 * @param [in] observation: The current observation.
 	 * @param [in] costDesiredTrajectories: The commanded target trajectory or point.
 	 */
-	virtual void publishVisualizer(
+	void publishVisualizer(
 			const system_observation_t& observation,
 			const cost_desired_trajectories_t& costDesiredTrajectories) override {
 

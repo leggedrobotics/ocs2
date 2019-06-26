@@ -62,20 +62,20 @@ public:
 	typedef std::shared_ptr<ControlledSystemBase<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> > Ptr;
 	typedef std::shared_ptr<const ControlledSystemBase<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> > ConstPtr;
 
-	typedef ODE_Base<STATE_DIM> BASE;
+	using BASE = ODE_Base<STATE_DIM>;
 
 	typedef Dimensions<STATE_DIM, INPUT_DIM> DIMENSIONS;
-	typedef typename DIMENSIONS::scalar_t       scalar_t;
-	typedef typename DIMENSIONS::scalar_array_t scalar_array_t;
-	typedef typename DIMENSIONS::state_vector_t       state_vector_t;
-	typedef typename DIMENSIONS::state_vector_array_t state_vector_array_t;
-	typedef typename DIMENSIONS::input_vector_t       input_vector_t;
-	typedef typename DIMENSIONS::input_vector_array_t input_vector_array_t;
-	typedef typename DIMENSIONS::input_state_matrix_t       input_state_matrix_t;
-	typedef typename DIMENSIONS::input_state_matrix_array_t input_state_matrix_array_t;
-	typedef typename DIMENSIONS::constraint1_vector_t constraint1_vector_t;
-	typedef typename DIMENSIONS::constraint2_vector_t constraint2_vector_t;
-	typedef typename DIMENSIONS::dynamic_vector_t     dynamic_vector_t;
+	using scalar_t = typename DIMENSIONS::scalar_t;
+	using scalar_array_t = typename DIMENSIONS::scalar_array_t;
+	using state_vector_t = typename DIMENSIONS::state_vector_t;
+	using state_vector_array_t = typename DIMENSIONS::state_vector_array_t;
+	using input_vector_t = typename DIMENSIONS::input_vector_t;
+	using input_vector_array_t = typename DIMENSIONS::input_vector_array_t;
+	using input_state_matrix_t = typename DIMENSIONS::input_state_matrix_t;
+	using input_state_matrix_array_t = typename DIMENSIONS::input_state_matrix_array_t;
+	using constraint1_vector_t = typename DIMENSIONS::constraint1_vector_t;
+	using constraint2_vector_t = typename DIMENSIONS::constraint2_vector_t;
+	using dynamic_vector_t = typename DIMENSIONS::dynamic_vector_t;
 
   typedef ControllerBase<STATE_DIM, INPUT_DIM> controller_t;
 
@@ -146,7 +146,7 @@ public:
 	virtual void initializeModel(
 			LogicRulesMachine<LOGIC_RULES_T>& logicRulesMachine,
 			const size_t& partitionIndex,
-			const char* algorithmName=NULL)
+			const char* algorithmName=nullptr)
 	{}
 
 	/**
@@ -177,7 +177,7 @@ public:
 	 * @param [in] state: transition state
 	 * @param [out] mappedState: mapped state after transition
 	 */
-	virtual void computeJumpMap(
+	void computeJumpMap(
 			const scalar_t& time,
 			const state_vector_t& state,
 			state_vector_t& mappedState) override {
@@ -192,7 +192,7 @@ public:
 	 * @param [in] state: transition state
 	 * @param [out] guardSurfacesValue: An array of guard surfaces values
 	 */
-	virtual void computeGuardSurfaces(
+	void computeGuardSurfaces(
 			const scalar_t& time,
 			const state_vector_t& state,
 			dynamic_vector_t& guardSurfacesValue) override {

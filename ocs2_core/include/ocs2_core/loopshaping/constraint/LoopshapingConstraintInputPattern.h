@@ -177,6 +177,6 @@ class LoopshapingConstraintInputPattern final: public LoopshapingConstraint<FULL
     D.block(numSystemStateInputConstraints, SYSTEM_INPUT_DIM, SYSTEM_INPUT_DIM, FILTER_INPUT_DIM) = s_filter.getD();
   };
 };
-}; // ocs2
+}  // namespace ocs2
 
 #endif //OCS2_LOOPSHAPINGCONSTRAINTINPUTPATTERN_H

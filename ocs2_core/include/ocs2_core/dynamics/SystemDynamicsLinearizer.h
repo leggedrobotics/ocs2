@@ -57,11 +57,11 @@ public:
 
 	typedef DerivativesBase<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> Base;
 	typedef ControlledSystemBase<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> controlled_system_base_t;
-	typedef typename Base::scalar_t scalar_t;
-	typedef typename Base::state_vector_t state_vector_t;
-	typedef typename Base::state_matrix_t state_matrix_t;
-	typedef typename Base::input_vector_t input_vector_t;
-	typedef typename Base::state_input_matrix_t state_input_matrix_t;
+	using scalar_t = typename Base::scalar_t;
+	using state_vector_t = typename Base::state_vector_t;
+	using state_matrix_t = typename Base::state_matrix_t;
+	using input_vector_t = typename Base::input_vector_t;
+	using state_input_matrix_t = typename Base::state_input_matrix_t;
 
 	/**
 	 * Constructor
@@ -106,10 +106,10 @@ public:
 	 * @param [in] partitionIndex: index of the time partition.
 	 * @param [in] algorithmName: The algorithm that class this class (default not defined).
 	 */
-	virtual void initializeModel(
+	void initializeModel(
 			LogicRulesMachine<LOGIC_RULES_T>& logicRulesMachine,
 			const size_t& partitionIndex,
-			const char* algorithmName=NULL) override {
+			const char* algorithmName=nullptr) override {
 
 		Base::initializeModel(logicRulesMachine, partitionIndex, algorithmName);
 		nonlinearSystemPtr_->initializeModel(logicRulesMachine, partitionIndex, algorithmName);
@@ -118,7 +118,7 @@ public:
 	/**
 	 * Default destructor
 	 */
-	virtual ~SystemDynamicsLinearizer(){}
+	virtual ~SystemDynamicsLinearizer()= default;
 
 	/**
 	 * Sets the current time, state, and control inout.
@@ -127,7 +127,7 @@ public:
 	 * @param [in] x: Current state.
 	 * @param [in] u: Current input.
 	 */
-	virtual void setCurrentStateAndControl(const scalar_t& t, const state_vector_t& x, const input_vector_t& u) override  {
+	void setCurrentStateAndControl(const scalar_t& t, const state_vector_t& x, const input_vector_t& u) override  {
 
 		Base::setCurrentStateAndControl(t, x, u);
 
@@ -141,7 +141,7 @@ public:
 	 *
 	 * @param [out] A: \f$ A(t) \f$ matrix.
 	 */
-	virtual void getDerivativeState(state_matrix_t& A) override {
+	void getDerivativeState(state_matrix_t& A) override {
 
 		for (size_t i=0; i<STATE_DIM; i++)  {
 
@@ -190,7 +190,7 @@ public:
 	 *
 	 * @param [out] B: \f$ B(t) \f$ matrix.
 	 */
-	virtual void getDerivativesControl(state_input_matrix_t& B) override  {
+	void getDerivativesControl(state_input_matrix_t& B) override  {
 
 		Eigen::Matrix<double, STATE_DIM, INPUT_DIM> tempB;
 
@@ -248,7 +248,7 @@ public:
 	 *
 	 * @return A raw pointer to the class.
 	 */
-	virtual SystemDynamicsLinearizer<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>* clone() const override {
+	SystemDynamicsLinearizer<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>* clone() const override {
 		return new SystemDynamicsLinearizer<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>(*this);
 	}
 

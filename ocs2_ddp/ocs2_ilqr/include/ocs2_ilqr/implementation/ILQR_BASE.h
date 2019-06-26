@@ -434,5 +434,5 @@ void ILQR_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::setupOptimizer(const size_t
 	RmInverseDtimeTrajectoryStock_.resize(numPartitions);
 }
 
-}  // ocs2 namespace
+}  // namespace ocs2
 

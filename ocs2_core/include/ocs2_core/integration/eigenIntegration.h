@@ -116,7 +116,7 @@ abs( const Eigen::MatrixBase< D > &m ) {
 
 
 
-} // end Eigen namespace
+}  // namespace Eigen
 
 
 namespace boost {
@@ -131,7 +131,7 @@ struct vector_space_norm_inf<Eigen::Matrix<double, S1, S2, O, M1, M2>>
 {
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-	typedef double result_type;
+	using result_type = double;
 	result_type operator()(const Eigen::Matrix<double, S1, S2, O, M1, M2> &m) const
     {
         return m.template lpNorm<Eigen::Infinity>();
@@ -158,9 +158,9 @@ struct vector_space_reduce<Eigen::Matrix<double, STATE_DIM, 1>>
 };
 
 #endif
-}
-}
-}  // end boost::numeric::odeint namespace
+}  // namespace odeint
+}  // namespace numeric
+}  // namespace boost
 
 
 #endif // BOOST_NUMERIC_ODEINT_EXTERNAL_EIGEN_EIGEN_ALGEBRA_HPP_INCLUDED

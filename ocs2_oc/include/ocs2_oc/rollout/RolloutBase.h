@@ -71,15 +71,15 @@ public:
 
 	typedef Dimensions<STATE_DIM, INPUT_DIM> DIMENSIONS;
 
-	typedef typename DIMENSIONS::size_array_t         size_array_t;
-	typedef typename DIMENSIONS::scalar_t             scalar_t;
-	typedef typename DIMENSIONS::scalar_array_t       scalar_array_t;
-	typedef typename DIMENSIONS::state_vector_t       state_vector_t;
-	typedef typename DIMENSIONS::state_vector_array_t state_vector_array_t;
-	typedef typename DIMENSIONS::input_vector_t       input_vector_t;
-	typedef typename DIMENSIONS::input_vector_array_t input_vector_array_t;
+	using size_array_t = typename DIMENSIONS::size_array_t;
+	using scalar_t = typename DIMENSIONS::scalar_t;
+	using scalar_array_t = typename DIMENSIONS::scalar_array_t;
+	using state_vector_t = typename DIMENSIONS::state_vector_t;
+	using state_vector_array_t = typename DIMENSIONS::state_vector_array_t;
+	using input_vector_t = typename DIMENSIONS::input_vector_t;
+	using input_vector_array_t = typename DIMENSIONS::input_vector_array_t;
 
-	typedef LogicRulesMachine<LOGIC_RULES_T> logic_rules_machine_t;
+	using logic_rules_machine_t = LogicRulesMachine<LOGIC_RULES_T>;
 
 	typedef ControllerBase<STATE_DIM, INPUT_DIM> controller_t;
 
@@ -91,7 +91,7 @@ public:
 	 */
 	RolloutBase(
 			const Rollout_Settings& rolloutSettings = Rollout_Settings(),
-			const char* algorithmName = NULL)
+			const char* algorithmName = nullptr)
 
 	: rolloutSettings_(rolloutSettings)
 	, algorithmName_(algorithmName)

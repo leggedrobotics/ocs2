@@ -43,20 +43,20 @@ public:
 
 	typedef MPC_ROS_Interface<double_integrator::STATE_DIM_, double_integrator::INPUT_DIM_> BASE;
 
-	typedef typename BASE::scalar_t scalar_t;
-	typedef typename BASE::scalar_array_t scalar_array_t;
-	typedef typename BASE::size_array_t size_array_t;
-	typedef typename BASE::state_vector_t state_vector_t;
-	typedef typename BASE::state_vector_array_t state_vector_array_t;
-	typedef typename BASE::state_vector_array2_t state_vector_array2_t;
-	typedef typename BASE::input_vector_t input_vector_t;
-	typedef typename BASE::input_vector_array_t input_vector_array_t;
-	typedef typename BASE::input_vector_array2_t input_vector_array2_t;
-	typedef typename BASE::controller_t controller_t;
-	typedef typename BASE::input_state_matrix_t input_state_matrix_t;
-	typedef typename BASE::input_state_matrix_array_t input_state_matrix_array_t;
+	using scalar_t = typename BASE::scalar_t;
+	using scalar_array_t = typename BASE::scalar_array_t;
+	using size_array_t = typename BASE::size_array_t;
+	using state_vector_t = typename BASE::state_vector_t;
+	using state_vector_array_t = typename BASE::state_vector_array_t;
+	using state_vector_array2_t = typename BASE::state_vector_array2_t;
+	using input_vector_t = typename BASE::input_vector_t;
+	using input_vector_array_t = typename BASE::input_vector_array_t;
+	using input_vector_array2_t = typename BASE::input_vector_array2_t;
+	using controller_t = typename BASE::controller_t;
+	using input_state_matrix_t = typename BASE::input_state_matrix_t;
+	using input_state_matrix_array_t = typename BASE::input_state_matrix_array_t;
 
-	typedef CostDesiredTrajectories<scalar_t> cost_desired_trajectories_t;
+	using cost_desired_trajectories_t = CostDesiredTrajectories<scalar_t>;
 
 	typedef SystemObservation<double_integrator::STATE_DIM_, double_integrator::INPUT_DIM_> system_observation_t;
 
@@ -81,7 +81,7 @@ public:
 	/**
 	 * Destructor.
 	 */
-	virtual ~MPC_ROS_Linear_System() = default;
+	~MPC_ROS_Linear_System() override = default;
 
 	/**
 	 * Adjusts the user-defined target trajectories for the cost based on the current observation.

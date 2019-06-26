@@ -224,7 +224,7 @@ void ConstraintBaseAD<Derived, STATE_DIM, INPUT_DIM, logic_rules_template_t>::st
 		const ad_dynamic_vector_t& tapedInput,
 		ad_dynamic_vector_t& g1) {
 
-	ad_scalar_t& t = const_cast<ad_scalar_t&>(tapedInput(0));
+	auto& t = const_cast<ad_scalar_t&>(tapedInput(0));
 	Eigen::Matrix<ad_scalar_t, STATE_DIM, 1> x = tapedInput.segment(1, STATE_DIM);
 	Eigen::Matrix<ad_scalar_t, INPUT_DIM, 1> u = tapedInput.segment(1+STATE_DIM, INPUT_DIM);
 
@@ -245,7 +245,7 @@ void ConstraintBaseAD<Derived, STATE_DIM, INPUT_DIM, logic_rules_template_t>::st
 		const ad_dynamic_vector_t& tapedInput,
 		ad_dynamic_vector_t& g2) {
 
-	ad_scalar_t& t = const_cast<ad_scalar_t&>(tapedInput(0));
+	auto& t = const_cast<ad_scalar_t&>(tapedInput(0));
 	Eigen::Matrix<ad_scalar_t, STATE_DIM, 1> x = tapedInput.segment(1, STATE_DIM);
 
 	g2.resize(MAX_CONSTRAINT_DIM_);
@@ -265,7 +265,7 @@ void ConstraintBaseAD<Derived, STATE_DIM, INPUT_DIM, logic_rules_template_t>::st
 		const ad_dynamic_vector_t& tapedInput,
 		ad_dynamic_vector_t& g2Final) {
 
-	ad_scalar_t& t = const_cast<ad_scalar_t&>(tapedInput(0));
+	auto& t = const_cast<ad_scalar_t&>(tapedInput(0));
 	Eigen::Matrix<ad_scalar_t, STATE_DIM, 1> x = tapedInput.segment(1, STATE_DIM);
 
 	g2Final.resize(MAX_CONSTRAINT_DIM_);

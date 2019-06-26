@@ -77,175 +77,174 @@ public:
 		BULIRSCH_STOER = 3
 	};
 
-
     /** size_t trajectory type. */
-    typedef std::vector<size_t> size_array_t;
+    using size_array_t = std::vector<size_t>;
     /** Array of size_t trajectory type. */
-    typedef std::vector<size_array_t> size_array2_t;
+    using size_array2_t = std::vector<size_array_t>;
 
     /** Scalar type. */
-	typedef double scalar_t;
+	using scalar_t = double;
 	/** Scalar trajectory type. */
-	typedef std::vector<scalar_t> scalar_array_t;
+	using scalar_array_t = std::vector<scalar_t>;
     /** Array of scalar trajectory type. */
-	typedef std::vector<scalar_array_t> scalar_array2_t;
+	using scalar_array2_t = std::vector<scalar_array_t>;
     /** Array of arrays of scalar trajectory type. */
-    typedef std::vector<scalar_array2_t> scalar_array3_t;
+    using scalar_array3_t = std::vector<scalar_array2_t>;
 
 	/** Eigen scalar type. */
-	typedef Eigen::Matrix<scalar_t, 1, 1> eigen_scalar_t;
+	using eigen_scalar_t = Eigen::Matrix<scalar_t, 1, 1> ;
 	/** Eigen scalar trajectory type. */
-	typedef std::vector<eigen_scalar_t, Eigen::aligned_allocator<eigen_scalar_t> > eigen_scalar_array_t;
+	using eigen_scalar_array_t = std::vector<eigen_scalar_t, Eigen::aligned_allocator<eigen_scalar_t> >;
 	/** Array of eigen scalar trajectory type. */
-	typedef std::vector<eigen_scalar_array_t, Eigen::aligned_allocator<eigen_scalar_array_t> > eigen_scalar_array2_t;
+	using eigen_scalar_array2_t = std::vector<eigen_scalar_array_t, Eigen::aligned_allocator<eigen_scalar_array_t> >;
 
 	/** Fixed-size state vector type with size \f$ n_x \f$ . */
-	typedef Eigen::Matrix<scalar_t, STATE_DIM, 1> state_vector_t;
+	using state_vector_t = Eigen::Matrix<scalar_t, STATE_DIM, 1>;
 	/** State vector trajectory type. */
-	typedef std::vector<state_vector_t, Eigen::aligned_allocator<state_vector_t> > state_vector_array_t;
+	using state_vector_array_t = std::vector<state_vector_t, Eigen::aligned_allocator<state_vector_t> >;
 	/** Array of state vector trajectory type. */
-	typedef std::vector<state_vector_array_t, Eigen::aligned_allocator<state_vector_array_t> > state_vector_array2_t;
+	using state_vector_array2_t = std::vector<state_vector_array_t, Eigen::aligned_allocator<state_vector_array_t> >;
     /** Array of arrays of state vector trajectory type. */
-    typedef std::vector<state_vector_array2_t, Eigen::aligned_allocator<state_vector_array2_t> > state_vector_array3_t;
+    using state_vector_array3_t = std::vector<state_vector_array2_t, Eigen::aligned_allocator<state_vector_array2_t> >;
 
 	/** Fixed-size state matrix type with size \f$ n_x * n_x \f$ . */
-	typedef Eigen::Matrix<scalar_t, STATE_DIM, STATE_DIM> state_matrix_t;
+	using state_matrix_t = Eigen::Matrix<scalar_t, STATE_DIM, STATE_DIM>;
 	/** State matrix trajectory type. */
-	typedef std::vector<state_matrix_t, Eigen::aligned_allocator<state_matrix_t> > state_matrix_array_t;
+	using state_matrix_array_t = std::vector<state_matrix_t, Eigen::aligned_allocator<state_matrix_t> >;
 	/** Array of state matrix trajectory type. */
-	typedef std::vector<state_matrix_array_t, Eigen::aligned_allocator<state_matrix_array_t> > state_matrix_array2_t;
+	using state_matrix_array2_t = std::vector<state_matrix_array_t, Eigen::aligned_allocator<state_matrix_array_t> >;
     /** Array of arrays of state matrix trajectory type. */
-    typedef std::vector<state_matrix_array2_t, Eigen::aligned_allocator<state_matrix_array2_t> > state_matrix_array3_t;
+    using state_matrix_array3_t = std::vector<state_matrix_array2_t, Eigen::aligned_allocator<state_matrix_array2_t> >;
 
 	/** Fixed-size state-input matrix type with size \f$ n_x * n_u \f$ . */
-	typedef Eigen::Matrix<scalar_t, STATE_DIM, INPUT_DIM> state_input_matrix_t;
+	using state_input_matrix_t = Eigen::Matrix<scalar_t, STATE_DIM, INPUT_DIM>;
 	/** State-input matrix trajectory type. */
-	typedef std::vector<state_input_matrix_t, Eigen::aligned_allocator<state_input_matrix_t> > state_input_matrix_array_t;
+	using state_input_matrix_array_t = std::vector<state_input_matrix_t, Eigen::aligned_allocator<state_input_matrix_t> >;
 	/** Array of state-input matrix trajectory type. */
-	typedef std::vector<state_input_matrix_array_t, Eigen::aligned_allocator<state_input_matrix_array_t> > state_input_matrix_array2_t;
+	using state_input_matrix_array2_t = std::vector<state_input_matrix_array_t, Eigen::aligned_allocator<state_input_matrix_array_t> >;
     /** Array of arrays of state-input matrix trajectory type. */
-    typedef std::vector<state_input_matrix_array2_t, Eigen::aligned_allocator<state_input_matrix_array2_t> > state_input_matrix_array3_t;
+    using state_input_matrix_array3_t = std::vector<state_input_matrix_array2_t, Eigen::aligned_allocator<state_input_matrix_array2_t> >;
 
 	/** Fixed-size input_state matrix type with size \f$ n_u * n_x \f$ . */
-	typedef Eigen::Matrix<scalar_t, INPUT_DIM, STATE_DIM> input_state_matrix_t;
+	using input_state_matrix_t = Eigen::Matrix<scalar_t, INPUT_DIM, STATE_DIM>;
 	/** Input_state matrix trajectory type. */
-	typedef std::vector<input_state_matrix_t, Eigen::aligned_allocator<input_state_matrix_t> > input_state_matrix_array_t;
+	using input_state_matrix_array_t = std::vector<input_state_matrix_t, Eigen::aligned_allocator<input_state_matrix_t> >;
 	/** Array of input_state matrix trajectory type. */
-	typedef std::vector<input_state_matrix_array_t, Eigen::aligned_allocator<input_state_matrix_array_t> > input_state_matrix_array2_t;
+	using input_state_matrix_array2_t = std::vector<input_state_matrix_array_t, Eigen::aligned_allocator<input_state_matrix_array_t> >;
     /** Array of arrays of input_state matrix trajectory type. */
-    typedef std::vector<input_state_matrix_array2_t, Eigen::aligned_allocator<input_state_matrix_array2_t> > input_state_matrix_array3_t;
+    using input_state_matrix_array3_t = std::vector<input_state_matrix_array2_t, Eigen::aligned_allocator<input_state_matrix_array2_t> >;
 
 	/** Fixed-size control input vector type with size \f$ n_u \f$ . */
-	typedef Eigen::Matrix<scalar_t, INPUT_DIM, 1> input_vector_t;
+	using input_vector_t = Eigen::Matrix<scalar_t, INPUT_DIM, 1>;
 	/** Control input vector trajectory type. */
-	typedef std::vector<input_vector_t, Eigen::aligned_allocator<input_vector_t> > input_vector_array_t;
+	using input_vector_array_t = std::vector<input_vector_t, Eigen::aligned_allocator<input_vector_t> >;
 	/** Array of control input vector trajectory type. */
-	typedef std::vector<input_vector_array_t, Eigen::aligned_allocator<input_vector_array_t> > input_vector_array2_t;
+	using input_vector_array2_t = std::vector<input_vector_array_t, Eigen::aligned_allocator<input_vector_array_t> >;
     /** Array of arrays of control input vector trajectory type. */
-    typedef std::vector<input_vector_array2_t, Eigen::aligned_allocator<input_vector_array2_t> > input_vector_array3_t;
+    using input_vector_array3_t = std::vector<input_vector_array2_t, Eigen::aligned_allocator<input_vector_array2_t> >;
 
 	/** Fixed-size control input matrix type with size \f$ n_u \f$ . */
-	typedef Eigen::Matrix<scalar_t, INPUT_DIM, INPUT_DIM> input_matrix_t;
+	using input_matrix_t = Eigen::Matrix<scalar_t, INPUT_DIM, INPUT_DIM>;
 	/** Control input matrix trajectory type. */
-	typedef std::vector<input_matrix_t, Eigen::aligned_allocator<input_matrix_t> > input_matrix_array_t;
+	using input_matrix_array_t = std::vector<input_matrix_t, Eigen::aligned_allocator<input_matrix_t> >;
 	/** Array of control input matrix trajectory type. */
-	typedef std::vector<input_matrix_array_t, Eigen::aligned_allocator<input_matrix_array_t> > input_matrix_array2_t;
+	using input_matrix_array2_t = std::vector<input_matrix_array_t, Eigen::aligned_allocator<input_matrix_array_t> >;
     /** Array of arrays of control input matrix trajectory type. */
-    typedef std::vector<input_matrix_array2_t, Eigen::aligned_allocator<input_matrix_array2_t> > input_matrix_array3_t;
+    using input_matrix_array3_t = std::vector<input_matrix_array2_t, Eigen::aligned_allocator<input_matrix_array2_t> >;
 
 	/** Dynamic-size vector type. */
-	typedef Eigen::Matrix<scalar_t, Eigen::Dynamic, 1> dynamic_vector_t;
+	using dynamic_vector_t = Eigen::Matrix<scalar_t, Eigen::Dynamic, 1>;
 	/** Dynamic vector's trajectory type. */
-	typedef std::vector<dynamic_vector_t, Eigen::aligned_allocator<dynamic_vector_t> > dynamic_vector_array_t;
+	using dynamic_vector_array_t = std::vector<dynamic_vector_t, Eigen::aligned_allocator<dynamic_vector_t> >;
 	/** Array of dynamic vector's trajectory type. */
-	typedef std::vector<dynamic_vector_array_t, Eigen::aligned_allocator<dynamic_vector_array_t> > dynamic_vector_array2_t;
+	using dynamic_vector_array2_t = std::vector<dynamic_vector_array_t, Eigen::aligned_allocator<dynamic_vector_array_t> >;
 
 	/** Dynamic-size matrix type. */
-	typedef Eigen::Matrix<scalar_t, Eigen::Dynamic, Eigen::Dynamic> dynamic_matrix_t;
+	using dynamic_matrix_t = Eigen::Matrix<scalar_t, Eigen::Dynamic, Eigen::Dynamic>;
 	/** Dynamic matrix's trajectory type. */
-	typedef std::vector<dynamic_matrix_t, Eigen::aligned_allocator<dynamic_matrix_t> > dynamic_matrix_array_t;
+	using dynamic_matrix_array_t = std::vector<dynamic_matrix_t, Eigen::aligned_allocator<dynamic_matrix_t> >;
 	/** Array of dynamic matrix's trajectory type. */
-	typedef std::vector<dynamic_matrix_array_t, Eigen::aligned_allocator<dynamic_matrix_array_t> > dynamic_matrix_array2_t;
+	using dynamic_matrix_array2_t = std::vector<dynamic_matrix_array_t, Eigen::aligned_allocator<dynamic_matrix_array_t> >;
 
 	/** Dynamic-size by n_x matrix type. */
-	typedef Eigen::Matrix<scalar_t, Eigen::Dynamic, STATE_DIM> dynamic_state_matrix_t;
+	using dynamic_state_matrix_t = Eigen::Matrix<scalar_t, Eigen::Dynamic, STATE_DIM>;
 	/** Dynamic-state matrix trajectory type. */
-	typedef std::vector<dynamic_state_matrix_t, Eigen::aligned_allocator<dynamic_state_matrix_t> > dynamic_state_matrix_array_t;
+	using dynamic_state_matrix_array_t = std::vector<dynamic_state_matrix_t, Eigen::aligned_allocator<dynamic_state_matrix_t> >;
 	/** Array of dynamic-state matrix trajectory type. */
-	typedef std::vector<dynamic_state_matrix_array_t, Eigen::aligned_allocator<dynamic_state_matrix_array_t> > dynamic_state_matrix_array2_t;
+	using dynamic_state_matrix_array2_t = std::vector<dynamic_state_matrix_array_t, Eigen::aligned_allocator<dynamic_state_matrix_array_t> >;
 
 	/** n_x by dynamic-size matrix type. */
-	typedef Eigen::Matrix<scalar_t, STATE_DIM, Eigen::Dynamic> state_dynamic_matrix_t;
+	using state_dynamic_matrix_t = Eigen::Matrix<scalar_t, STATE_DIM, Eigen::Dynamic>;
 	/** state_dynamic matrix trajectory type. */
-	typedef std::vector<state_dynamic_matrix_t, Eigen::aligned_allocator<state_dynamic_matrix_t> > state_dynamic_matrix_array_t;
+	using state_dynamic_matrix_array_t = std::vector<state_dynamic_matrix_t, Eigen::aligned_allocator<state_dynamic_matrix_t> >;
 	/** Array of state_dynamic matrix trajectory type. */
-	typedef std::vector<state_dynamic_matrix_array_t, Eigen::aligned_allocator<state_dynamic_matrix_array_t> > state_dynamic_matrix_array2_t;
+	using state_dynamic_matrix_array2_t = std::vector<state_dynamic_matrix_array_t, Eigen::aligned_allocator<state_dynamic_matrix_array_t> >;
 
 	/** Dynamic-size by n_u matrix type. */
-	typedef Eigen::Matrix<scalar_t, Eigen::Dynamic, INPUT_DIM> dynamic_input_matrix_t;
+	using dynamic_input_matrix_t = Eigen::Matrix<scalar_t, Eigen::Dynamic, INPUT_DIM>;
 	/** Dynamic-input matrix trajectory type. */
-	typedef std::vector<dynamic_input_matrix_t, Eigen::aligned_allocator<dynamic_input_matrix_t> > dynamic_input_matrix_array_t;
+	using dynamic_input_matrix_array_t = std::vector<dynamic_input_matrix_t, Eigen::aligned_allocator<dynamic_input_matrix_t> >;
 	/** Array of dynamic-input matrix trajectory type. */
-	typedef std::vector<dynamic_input_matrix_array_t, Eigen::aligned_allocator<dynamic_input_matrix_array_t> > dynamic_input_matrix_array2_t;
+	using dynamic_input_matrix_array2_t = std::vector<dynamic_input_matrix_array_t, Eigen::aligned_allocator<dynamic_input_matrix_array_t> >;
 
 	/** n_u by dynamic-size matrix type. */
-	typedef Eigen::Matrix<scalar_t, Eigen::Dynamic, INPUT_DIM> input_dynamic_matrix_t;
+	using input_dynamic_matrix_t = Eigen::Matrix<scalar_t, Eigen::Dynamic, INPUT_DIM>;
 	/** input_dynamic matrix trajectory type. */
-	typedef std::vector<input_dynamic_matrix_t, Eigen::aligned_allocator<input_dynamic_matrix_t> > input_dynamic_matrix_array_t;
+	using input_dynamic_matrix_array_t = std::vector<input_dynamic_matrix_t, Eigen::aligned_allocator<input_dynamic_matrix_t> >;
 	/** Array of input_dynamic matrix trajectory type. */
-	typedef std::vector<input_dynamic_matrix_array_t, Eigen::aligned_allocator<input_dynamic_matrix_array_t> > input_dynamic_matrix_array2_t;
+	using input_dynamic_matrix_array2_t = std::vector<input_dynamic_matrix_array_t, Eigen::aligned_allocator<input_dynamic_matrix_array_t> >;
 
 	/** Fixed-size vector type with size \f$ n_x^2 \f$ . */
-    typedef Eigen::Matrix<scalar_t, STATE_DIM*STATE_DIM , 1 > state_matrix_vectorized_t;
+    using state_matrix_vectorized_t = Eigen::Matrix<scalar_t, STATE_DIM*STATE_DIM , 1 >;
 
     /** Fixed-size vector of state-input constraints (i.e. type-1 constraint) with size \f$ {n_c}_1 \f$ . */
-    typedef Eigen::Matrix<scalar_t, MAX_CONSTRAINT1_DIM_, 1> constraint1_vector_t;
+    using constraint1_vector_t = Eigen::Matrix<scalar_t, MAX_CONSTRAINT1_DIM_, 1>;
     /** Type-1 constraint (state-input constraint) vector trajectory type. */
-    typedef std::vector<constraint1_vector_t, Eigen::aligned_allocator<constraint1_vector_t> > constraint1_vector_array_t;
+    using constraint1_vector_array_t = std::vector<constraint1_vector_t, Eigen::aligned_allocator<constraint1_vector_t> >;
     /** Array of type-1 constraint (state-input constraint) vector trajectory type. */
-    typedef std::vector<constraint1_vector_array_t, Eigen::aligned_allocator<constraint1_vector_array_t> > constraint1_vector_array2_t;
+    using constraint1_vector_array2_t = std::vector<constraint1_vector_array_t, Eigen::aligned_allocator<constraint1_vector_array_t> >;
 
     /** Fixed-size Matrix of state-input constraints (i.e. type-1 constraint) with size \f$ {n_c}_1 * {n_c}_1 \f$ . */
-    typedef Eigen::Matrix<scalar_t, MAX_CONSTRAINT1_DIM_, 1> constraint1_matrix_t;
+    using constraint1_matrix_t = Eigen::Matrix<scalar_t, MAX_CONSTRAINT1_DIM_, 1>;
     /** Type-1 constraint (state-input constraint) matrix trajectory type. */
-    typedef std::vector<constraint1_matrix_t, Eigen::aligned_allocator<constraint1_matrix_t> > constraint1_matrix_array_t;
+    using constraint1_matrix_array_t = std::vector<constraint1_matrix_t, Eigen::aligned_allocator<constraint1_matrix_t> >;
     /** Array of type-1 constraint (state-input constraint) matrix trajectory type. */
-    typedef std::vector<constraint1_matrix_array_t, Eigen::aligned_allocator<constraint1_matrix_array_t> > constraint1_matrix_array2_t;
+    using constraint1_matrix_array2_t = std::vector<constraint1_matrix_array_t, Eigen::aligned_allocator<constraint1_matrix_array_t> >;
 
     /** Fixed-size type-1 constraint by state matrix type with size \f$ {n_c}_1 * n_x \f$ . */
-    typedef Eigen::Matrix<scalar_t, MAX_CONSTRAINT1_DIM_, STATE_DIM> constraint1_state_matrix_t;
+    using constraint1_state_matrix_t = Eigen::Matrix<scalar_t, MAX_CONSTRAINT1_DIM_, STATE_DIM>;
     /** Constraint1_state matrix trajectory type. */
-    typedef std::vector<constraint1_state_matrix_t, Eigen::aligned_allocator<constraint1_state_matrix_t> > constraint1_state_matrix_array_t;
+    using constraint1_state_matrix_array_t = std::vector<constraint1_state_matrix_t, Eigen::aligned_allocator<constraint1_state_matrix_t> >;
     /** Array of constraint1_state matrix trajectory type. */
-    typedef std::vector<constraint1_state_matrix_array_t, Eigen::aligned_allocator<constraint1_state_matrix_array_t> > constraint1_state_matrix_array2_t;
+    using constraint1_state_matrix_array2_t = std::vector<constraint1_state_matrix_array_t, Eigen::aligned_allocator<constraint1_state_matrix_array_t> >;
 
     /** Fixed-size type-1 constraint by control input matrix type with size \f$ {n_c}_1 * n_u \f$ . */
-    typedef Eigen::Matrix<scalar_t, MAX_CONSTRAINT1_DIM_, INPUT_DIM> constraint1_input_matrix_t;
+    using constraint1_input_matrix_t = Eigen::Matrix<scalar_t, MAX_CONSTRAINT1_DIM_, INPUT_DIM>;
     /** constraint1_input matrix trajectory type. */
-    typedef std::vector<constraint1_input_matrix_t, Eigen::aligned_allocator<constraint1_input_matrix_t> > constraint1_input_matrix_array_t;
+    using constraint1_input_matrix_array_t = std::vector<constraint1_input_matrix_t, Eigen::aligned_allocator<constraint1_input_matrix_t> >;
     /** Array of constraint1_input matrix trajectory type. */
-    typedef std::vector<constraint1_input_matrix_array_t, Eigen::aligned_allocator<constraint1_input_matrix_array_t> > constraint1_input_matrix_array2_t;
+    using constraint1_input_matrix_array2_t = std::vector<constraint1_input_matrix_array_t, Eigen::aligned_allocator<constraint1_input_matrix_array_t> >;
 
     /** Fixed-size control input by type-1 constraint type with size \f$ n_u * {n_c}_1 \f$ . */
-    typedef Eigen::Matrix<scalar_t, INPUT_DIM, MAX_CONSTRAINT1_DIM_> input_constraint1_matrix_t;
+    using input_constraint1_matrix_t = Eigen::Matrix<scalar_t, INPUT_DIM, MAX_CONSTRAINT1_DIM_>;
     /** Input-constraint1 matrix trajectory type. */
-    typedef std::vector<input_constraint1_matrix_t, Eigen::aligned_allocator<input_constraint1_matrix_t> > input_constraint1_matrix_array_t;
+    using input_constraint1_matrix_array_t = std::vector<input_constraint1_matrix_t, Eigen::aligned_allocator<input_constraint1_matrix_t> >;
     /** Array of Input-constraint1 matrix trajectory type. */
-    typedef std::vector<input_constraint1_matrix_array_t, Eigen::aligned_allocator<input_constraint1_matrix_array_t> > input_constraint1_matrix_array2_t;
+    using input_constraint1_matrix_array2_t = std::vector<input_constraint1_matrix_array_t, Eigen::aligned_allocator<input_constraint1_matrix_array_t> >;
 
     /** Fixed-size vector of state-only constraints (i.e. type-2 constraint) with size \f$ {n_c}_2 \f$ . */
-    typedef Eigen::Matrix<scalar_t, MAX_CONSTRAINT2_DIM_, 1> constraint2_vector_t;
+    using constraint2_vector_t = Eigen::Matrix<scalar_t, MAX_CONSTRAINT2_DIM_, 1>;
     /** Type-2 constraint (state-only constraint) vector trajectory type. */
-    typedef std::vector<constraint2_vector_t, Eigen::aligned_allocator<constraint2_vector_t> > constraint2_vector_array_t;
+    using constraint2_vector_array_t = std::vector<constraint2_vector_t, Eigen::aligned_allocator<constraint2_vector_t> >;
     /** Array of type-2 constraint (state-only constraint) vector trajectory type. */
-    typedef std::vector<constraint2_vector_array_t, Eigen::aligned_allocator<constraint2_vector_array_t> > constraint2_vector_array2_t;
+    using constraint2_vector_array2_t = std::vector<constraint2_vector_array_t, Eigen::aligned_allocator<constraint2_vector_array_t> >;
 
     /** Fixed-size type-2 constraint by state matrix type with size \f$ {n_c}_2 * n_x \f$ . */
-    typedef Eigen::Matrix<scalar_t, MAX_CONSTRAINT2_DIM_, STATE_DIM> constraint2_state_matrix_t;
+    using constraint2_state_matrix_t = Eigen::Matrix<scalar_t, MAX_CONSTRAINT2_DIM_, STATE_DIM>;
     /** Constraint2_state matrix trajectory type. */
-    typedef std::vector<constraint2_state_matrix_t, Eigen::aligned_allocator<constraint2_state_matrix_t> > constraint2_state_matrix_array_t;
+    using constraint2_state_matrix_array_t = std::vector<constraint2_state_matrix_t, Eigen::aligned_allocator<constraint2_state_matrix_t> >;
     /** Array of constraint2_state matrix trajectory type. */
-    typedef std::vector<constraint2_state_matrix_array_t, Eigen::aligned_allocator<constraint2_state_matrix_array_t> > constraint2_state_matrix_array2_t;
+    using constraint2_state_matrix_array2_t = std::vector<constraint2_state_matrix_array_t, Eigen::aligned_allocator<constraint2_state_matrix_array_t> >;
 
 	/**
 	 * Affine function class in the form \f$ u_{ff}(t) + K(t) x \f$ where \f$ u_{ff} \f$ is a vector of size \f$ d_1 \f$ and
@@ -262,18 +261,18 @@ public:
 	template <int DIM1, int DIM2=1>
 	using linearFunction_array2_t = std::vector<linearFunction_array_t<DIM1,DIM2>, Eigen::aligned_allocator<linearFunction_array_t<DIM1,DIM2>> >;
 
+	// TODO: Why do these still exist? Should use the linear controller classes
 	/** Linear control policy in the form \f$ u_{ff}(t) + K(t) \f$. */
-	typedef LinearFunction_t<INPUT_DIM,1>		controller_t;
+	using controller_t = LinearFunction_t<INPUT_DIM,1>;
 	/** Array of linear control policy. */
-	typedef linearFunction_array_t<INPUT_DIM,1> controller_array_t;
+	using controller_array_t = linearFunction_array_t<INPUT_DIM,1> ;
 	/** 2D array of linear control policy. */
-	typedef linearFunction_array2_t<INPUT_DIM,1> controller_array2_t;
+	using controller_array2_t = linearFunction_array2_t<INPUT_DIM,1> ;
 
 	/** Linear function for lagrange multiplier */
-	typedef LinearFunction_t<MAX_CONSTRAINT1_DIM_,1> lagrange_t;
+	using lagrange_t = LinearFunction_t<MAX_CONSTRAINT1_DIM_,1>;
 	/** Array of lagrange multiplier */
-	typedef linearFunction_array_t<MAX_CONSTRAINT1_DIM_,1> lagrange_array_t;
-
+	using lagrange_array_t = linearFunction_array_t<MAX_CONSTRAINT1_DIM_,1>;
 };
 
 } // namespace ocs2

@@ -55,10 +55,11 @@ DDP_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::DDP_BASE (
 	, rewindCounter_(0)
 	, iteration_(0)
 {
-	if (logicRulesPtr != nullptr)
+	if (logicRulesPtr != nullptr) {
 		logicRulesMachinePtr_ = logic_rules_machine_ptr_t( new logic_rules_machine_t(*logicRulesPtr) );
-	else
+	} else {
 		logicRulesMachinePtr_ = logic_rules_machine_ptr_t( new logic_rules_machine_t(LOGIC_RULES_T()) );
+	}
 
 	// Dynamics, Constraints, derivatives, and cost
 	linearQuadraticApproximatorPtrStock_.clear();
@@ -91,10 +92,11 @@ DDP_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::DDP_BASE (
 		operatingTrajectoriesPtrStock_.emplace_back( operatingTrajectoriesPtr->clone() );
 
 		// initialize heuristics functions
-		if (heuristicsFunctionPtr != nullptr)
+		if (heuristicsFunctionPtr != nullptr) {
 			heuristicsFunctionsPtrStock_.emplace_back( heuristicsFunctionPtr->clone() );
-		else // use the cost function if no heuristics function is defined
+		} else { // use the cost function if no heuristics function is defined
 			heuristicsFunctionsPtrStock_.emplace_back( costFunctionPtr->clone() );
+		}
 
 		// initialize penalty functions
 		penaltyPtrStock_.emplace_back(
@@ -183,8 +185,9 @@ DDP_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::rolloutTrajectory(
 
 	size_t numPartitions = partitioningTimes.size()-1;
 
-	if (controllersStock.size() != numPartitions)
+	if (controllersStock.size() != numPartitions) {
 		throw std::runtime_error("controllersStock has less controllers then the number of subsystems");
+	}
 
 	timeTrajectoriesStock.resize(numPartitions);
 	eventsPastTheEndIndecesStock.resize(numPartitions);
@@ -218,13 +221,15 @@ DDP_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::rolloutTrajectory(
 		// the first rollout of the partition. However for the very first run of the algorithm,
 		// it will still use operating trajectories if an initial controller is not provided.
 		linear_controller_t * controllerPtrTemp = &controllersStock[i];
-		if (blockwiseMovingHorizon_==false)
-			if (controllerPtrTemp->empty()==true && i>0 && controllersStock[i-1].empty()==false)
+		if (blockwiseMovingHorizon_==false) {
+			if (controllerPtrTemp->empty() && i>0 && !controllersStock[i-1].empty()) {
 				controllerPtrTemp = &controllersStock[i-1];
+			}
+		}
 
 		// call rollout worker for the partition 'i' on the thread 'threadId'
 		state_vector_t x0Temp;
-		if (controllerPtrTemp->empty()==false) {
+		if (!controllerPtrTemp->empty()) {
 			x0Temp = dynamicsForwardRolloutPtrStock_[threadId]->run(
 					i, t0, x0, tf, controllerPtrTemp, *logicRulesMachinePtr_,
 					timeTrajectoriesStock[i], eventsPastTheEndIndecesStock[i],
@@ -237,12 +242,13 @@ DDP_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::rolloutTrajectory(
 					stateTrajectoriesStock[i], inputTrajectoriesStock[i]);
 		}
 		// if there was an event time at the end of the previous partition
-		if (initActivePartition<i && eventsPastTheEndIndecesStock[i-1].size()>0)
+		if (initActivePartition<i && eventsPastTheEndIndecesStock[i-1].size()>0) {
 			if(eventsPastTheEndIndecesStock[i-1].back()==stateTrajectoriesStock[i-1].size()) {
 				timeTrajectoriesStock[i-1].push_back(t0);
 				stateTrajectoriesStock[i-1].push_back(x0);
 				inputTrajectoriesStock[i-1].push_back(inputTrajectoriesStock[i].front());
 			}
+		}
 
 		// reset the initial time and state
 		t0 = timeTrajectoriesStock[i].back();
@@ -254,20 +260,23 @@ DDP_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::rolloutTrajectory(
 	}  // end of i loop
 
 	// if there is an active event at the finalTime, we remove it.
-	if (eventsPastTheEndIndecesStock[finalActivePartition].size()>0)
+	if (eventsPastTheEndIndecesStock[finalActivePartition].size()>0) {
 		if(eventsPastTheEndIndecesStock[finalActivePartition].back()==stateTrajectoriesStock[finalActivePartition].size()) {
 			eventsPastTheEndIndecesStock[finalActivePartition].pop_back();
 		}
+	}
 
-	if (x0 != x0)
+	if (x0 != x0) {
 		throw std::runtime_error("System became unstable during the rollout.");
+	}
 
 	// debug print
-	if (ddpSettings_.debugPrintRollout_ == true)
+	if (ddpSettings_.debugPrintRollout_) {
 		for (size_t i=0; i<numPartitions; i++)  {
 			rollout_base_t::display(i, timeTrajectoriesStock[i], eventsPastTheEndIndecesStock[i],
 					stateTrajectoriesStock[i], inputTrajectoriesStock[i]);
 		}
+	}
 
 	// average time step
 	return (finalTime-initTime)/(scalar_t)numSteps;
@@ -290,8 +299,9 @@ void DDP_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::rolloutFinalState (
 
 	size_t numPartitions = partitioningTimes.size()-1;
 
-	if (controllersStock.size() != numPartitions)
+	if (controllersStock.size() != numPartitions) {
 		throw std::runtime_error("controllersStock has less controllers then the number of subsystems");
+	}
 
 	scalar_array_t 			timeTrajectory;
 	size_array_t 			eventsPastTheEndIndeces;
@@ -317,12 +327,14 @@ void DDP_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::rolloutFinalState (
 		// the first rollout of the partition. However for the very first run of the algorithm,
 		// it will still use operating trajectories if an initial controller is not provided.
 		const controller_t* controllerPtrTemp = &controllersStock[i];
-		if (blockwiseMovingHorizon_==false)
-			if (controllerPtrTemp->empty()==true && i>0 && controllersStock[i-1].empty()==false)
+		if (blockwiseMovingHorizon_) {
+			if (controllerPtrTemp->empty() && i>0 && !controllersStock[i-1].empty()) {
 				controllerPtrTemp = &controllersStock[i-1];
+			}
+		}
 
 		// call rollout worker for the partition 'i' on the thread 'threadId'
-		if (controllerPtrTemp->empty()==false) {
+		if (!controllerPtrTemp->empty()) {
 			x0 = dynamicsForwardRolloutPtrStock_[threadId]->run(
 					i, t0, x0, tf, *controllerPtrTemp, *logicRulesMachinePtr_,
 					timeTrajectory, eventsPastTheEndIndeces,
@@ -340,8 +352,9 @@ void DDP_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::rolloutFinalState (
 		t0 = timeTrajectory.back();
 	}
 
-	if (x0 != x0)
+	if (x0 != x0) {
 		throw std::runtime_error("System became unstable during the rollout.");
+	}
 
 	// final state and input
 	finalState = stateTrajectory.back();
@@ -373,8 +386,9 @@ void DDP_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculateConstraintsWorker(
 	size_t N = timeTrajectory.size();
 
 	// initialize subsystem i constraint
-	if (N>0)
+	if (N>0) {
 		systemConstraints.initializeModel(*logicRulesMachinePtr_, partitionIndex, algorithmName_.c_str());
+	}
 
 	// constraint type 1 computations which consists of number of active constraints at each time point
 	// and the value of the constraint (if the rollout is constrained the value is always zero otherwise
@@ -408,14 +422,16 @@ void DDP_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculateConstraintsWorker(
 		// constraint 1 type
 		nc1Trajectory[k] = systemConstraints.numStateInputConstraint(timeTrajectory[k]);
 		systemConstraints.getConstraint1(EvTrajectory[k]);
-		if (nc1Trajectory[k] > INPUT_DIM)
+		if (nc1Trajectory[k] > INPUT_DIM) {
 			throw std::runtime_error("Number of active type-1 constraints should be less-equal to the number of input dimension.");
+		}
 
 		// constraint type 2
 		nc2Trajectory[k] = systemConstraints.numStateOnlyConstraint(timeTrajectory[k]);
 		systemConstraints.getConstraint2(HvTrajectory[k]);
-		if (nc2Trajectory[k] > INPUT_DIM)
+		if (nc2Trajectory[k] > INPUT_DIM) {
 			throw std::runtime_error("Number of active type-2 constraints should be less-equal to the number of input dimension.");
+		}
 
 		// inequality constraints
 		ncIneqTrajectory[k] = systemConstraints.numInequalityConstraint(timeTrajectory[k]);
@@ -429,8 +445,9 @@ void DDP_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculateConstraintsWorker(
 			constraint2_vector_t HvFinal;
 			nc2Final = systemConstraints.numStateOnlyFinalConstraint(timeTrajectory[k]);
 			systemConstraints.getFinalConstraint2(HvFinal);
-			if (nc2Final > INPUT_DIM)
+			if (nc2Final > INPUT_DIM) {
 				throw std::runtime_error("Number of active type-2 constraints at final time should be less-equal to the number of input dimension.");
+			}
 
 			nc2Finals.push_back(std::move( nc2Final ));
 			HvFinals.push_back(std::move( HvFinal ));
@@ -517,8 +534,9 @@ void DDP_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculateCostWorker(
 	scalar_t currIntermediateCost = 0.0;
 	for (size_t k=0; k<timeTrajectory.size(); k++) {
 
-		if (k>0)
+		if (k>0) {
 			prevIntermediateCost = currIntermediateCost;
+		}
 
 		// feed state and control to cost function
 		costFunction.setCurrentStateAndControl(
@@ -526,8 +544,9 @@ void DDP_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculateCostWorker(
 		// getIntermediateCost intermediate cost for next time step
 		costFunction.getIntermediateCost(currIntermediateCost);
 
-		if (k>0)
+		if (k>0) {
 			totalCost += 0.5*(prevIntermediateCost+currIntermediateCost)*(timeTrajectory[k]-timeTrajectory[k-1]);
+		}
 
 		// terminal cost at switching times
 		if (eventsPastTheEndItr!=eventsPastTheEndIndeces.end() && k+1==*eventsPastTheEndItr) {
@@ -611,13 +630,14 @@ void DDP_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculateRolloutCost(
 	totalCost += inequalityConstraintPenalty;
 
 	// final constraint type 2
-	if (ddpSettings_.noStateConstraints_==false)
+	if (!ddpSettings_.noStateConstraints_) {
 		for (size_t i=0; i<numPartitions_; i++) {
 			for (size_t k=0; k<nc2FinalStock[i].size(); k++) {
 				const size_t& nc2Final = nc2FinalStock[i][k];
 				totalCost += 0.5 * stateConstraintPenalty * HvFinalStock[i][k].head(nc2Final).squaredNorm();
 			}  // end of k loop
 		}  // end of i loop
+	}
 }
 
 /******************************************************************************************************/
@@ -698,8 +718,9 @@ void DDP_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::approximateOptimalControlPro
 	heuristicsFunctionsPtrStock_[0]->getTerminalCost(sHeuristics_(0));
 	heuristicsFunctionsPtrStock_[0]->getTerminalCostDerivativeState(SvHeuristics_);
 	heuristicsFunctionsPtrStock_[0]->getTerminalCostSecondDerivativeState(SmHeuristics_);
-	if (ddpSettings_.useMakePSD_==true)
+	if (ddpSettings_.useMakePSD_) {
 		LinearAlgebra::makePSD(SmHeuristics_);
+	}
 }
 
 /******************************************************************************************************/
@@ -739,8 +760,9 @@ void DDP_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::approximateUnconstrainedLQWo
 			PmTrajectoryStock_[i][k]);
 
 	// making sure that constrained Qm is PSD
-	if (ddpSettings_.useMakePSD_==true)
+	if (ddpSettings_.useMakePSD_) {
 		LinearAlgebra::makePSD(QmTrajectoryStock_[i][k]);
+	}
 }
 
 /******************************************************************************************************/
@@ -788,8 +810,9 @@ void DDP_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::approximateEventsLQWorker(
 			}
 
 			// making sure that Qm remains PSD
-			if (ddpSettings_.useMakePSD_==true)
+			if (ddpSettings_.useMakePSD_) {
 				LinearAlgebra::makePSD(QmFinalStock_[i][ke]);
+			}
 
 			break;
 		}
@@ -823,7 +846,7 @@ void DDP_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::lineSearchBase(bool computeI
 			nominalTimeTrajectoriesStock_, nominalEventsPastTheEndIndecesStock_,
 			nominalStateTrajectoriesStock_, nominalInputTrajectoriesStock_);
 
-	if (computeISEs==true) {
+	if (computeISEs) {
 		// calculate constraint
 		calculateRolloutConstraints(nominalTimeTrajectoriesStock_, nominalEventsPastTheEndIndecesStock_,
 				nominalStateTrajectoriesStock_, nominalInputTrajectoriesStock_,
@@ -868,11 +891,12 @@ void DDP_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::lineSearchBase(bool computeI
 		" \t inequality ISE: " << nominalInequalityConstraintISE_ << std::endl;
 		std::cerr << "\t final constraint type-2:  ";
 		size_t itr = 0;
-		for(size_t i=initActivePartition_; i<=finalActivePartition_; i++)
+		for(size_t i=initActivePartition_; i<=finalActivePartition_; i++) {
 			for (size_t k=0; k<nc2FinalStock_[i].size(); k++) {
 				std::cerr << "[" << itr  << "]: " << HvFinalStock_[i][k].head(nc2FinalStock_[i][k]).transpose() << ",  ";
 				itr++;
 			}
+		}
 		std::cerr << std::endl;
 		std::cerr << "\t forward pass average time step: " << avgTimeStepFP_*1e+3 << " [ms]." << std::endl;
 	}
@@ -896,9 +920,11 @@ void DDP_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::lineSearchWorker(
 		input_vector_array2_t& lsInputTrajectoriesStock)  {
 
 	// modifying uff by local increments
-	for (size_t i=0; i<numPartitions_; i++)
-		for (size_t k=0; k<lsControllersStock[i].timeStamp_.size(); k++)
+	for (size_t i=0; i<numPartitions_; i++) {
+		for (size_t k=0; k<lsControllersStock[i].timeStamp_.size(); k++) {
 			lsControllersStock[i].biasArray_[k] += learningRate * lsControllersStock[i].deltaBiasArray_[k];
+		}
+	}
 
 	try {
 
@@ -920,7 +946,7 @@ void DDP_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::lineSearchWorker(
 		constraint2_vector_array2_t	lsHvFinalStock(numPartitions_);
 
 
-		if (lsComputeISEs_==true) {
+		if (lsComputeISEs_) {
 			// calculate rollout constraints
 			calculateRolloutConstraints(lsTimeTrajectoriesStock, lsEventsPastTheEndIndecesStock,
 					lsStateTrajectoriesStock, lsInputTrajectoriesStock,
@@ -970,9 +996,11 @@ void DDP_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::lineSearchWorker(
 			finalConstraintDisplay += "\t final constraint type-2:   ";
 			for(size_t i=0; i<numPartitions_; i++) {
 				finalConstraintDisplay += "[" + std::to_string(i) + "]: ";
-				for (size_t j=0; j<lsNc2FinalStock[i].size(); j++)
-					for (size_t m=0; m<lsNc2FinalStock[i][j]; m++)
+				for (size_t j=0; j<lsNc2FinalStock[i].size(); j++) {
+					for (size_t m=0; m<lsNc2FinalStock[i][j]; m++) {
 						finalConstraintDisplay += std::to_string(lsHvFinalStock[i][j](m)) + ", ";
+					}
+				}
 				finalConstraintDisplay += "  ";
 			} // end of i loop
 			finalConstraintDisplay += "\n\t forward pass average time step: " + std::to_string(avgTimeStepFP*1e+3) + " [ms].";
@@ -981,9 +1009,10 @@ void DDP_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::lineSearchWorker(
 
 	} catch(const std::exception& error) {
 		lsTotalCost  = std::numeric_limits<scalar_t>::max();
-		if(ddpSettings_.displayInfo_)
+		if(ddpSettings_.displayInfo_) {
 			BASE::printString("\t [Thread" + std::to_string(workerIndex) + "] rollout with learningRate " +
 					std::to_string(learningRate) + " is terminated: " + error.what());
+		}
 	}
 }
 
@@ -1006,8 +1035,9 @@ void DDP_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculateMeritFunction(
 	// add the L2 penalty for constraint violation
 	calculateConstraintISE(timeTrajectoriesStock, nc1TrajectoriesStock, EvTrajectoryStock, constraintISE);
 	double pho = 1.0;
-	if (ddpSettings_.maxNumIterations_>1)
+	if (ddpSettings_.maxNumIterations_>1) {
 		pho = (iteration_-1)/(ddpSettings_.maxNumIterations_-1) * ddpSettings_.meritFunctionRho_;
+	}
 
 	meritFunctionValue += 0.5*pho*constraintISE;
 
@@ -1022,10 +1052,11 @@ void DDP_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculateMeritFunction(
 		nextIntermediateMerit = 0.0;
 		for (size_t k=0; k+1<timeTrajectoriesStock[i].size(); k++)
 		{
-			if (k==0)
+			if (k==0) {
 				currentIntermediateMerit = EvTrajectoryStock[i][k].head(nc1TrajectoriesStock[i][k]).transpose() * lagrangeTrajectoriesStock[i][k];
-			else
+			} else {
 				currentIntermediateMerit = nextIntermediateMerit;
+			}
 
 			nextIntermediateMerit = EvTrajectoryStock[i][k+1].head(nc1TrajectoriesStock[i][k+1]).transpose() * lagrangeTrajectoriesStock[i][k+1];
 
@@ -1061,20 +1092,23 @@ DDP_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculateConstraintISE(
 
 			if (k==0) {
 				const size_t& nc1 = nc1TrajectoriesStock[i][0];
-				if (nc1>0)
+				if (nc1>0) {
 					currentSquaredNormError = EvTrajectoriesStock[i][0].head(nc1).squaredNorm();
-				else
+				} else {
 					currentSquaredNormError = 0.0;
-			} else
+				}
+			} else {
 				currentSquaredNormError = nextSquaredNormError;
+			}
 
 			maxConstraintNorm = ((maxConstraintNorm<currentSquaredNormError)? currentSquaredNormError: maxConstraintNorm);
 
 			const size_t& nc1 = nc1TrajectoriesStock[i][k+1];
-			if (nc1>0)
+			if (nc1>0) {
 				nextSquaredNormError = EvTrajectoriesStock[i][k+1].head(nc1).squaredNorm();
-			else
+			} else {
 				nextSquaredNormError = 0.0;
+			}
 
 			constraintISE += 0.5 * (currentSquaredNormError+nextSquaredNormError) * (timeTrajectoriesStock[i][k+1]-timeTrajectoriesStock[i][k]);
 
@@ -1154,17 +1188,20 @@ void DDP_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::truncateConterller(
 		linear_controller_array_t& deletedcontrollersStock) {
 
 	deletedcontrollersStock.resize(numPartitions_);
-	for (size_t i=0; i<numPartitions_; i++)
+	for (size_t i=0; i<numPartitions_; i++) {
 		deletedcontrollersStock[i].clear();
+	}
 
 	// finding the active subsystem index at initTime_
 	initActivePartition = BASE::findActivePartitionIndex(partitioningTimes, initTime);
 
 	// saving the deleting part and clearing controllersStock
-	for (size_t i=0; i<initActivePartition; i++)
+	for (size_t i=0; i<initActivePartition; i++) {
 		deletedcontrollersStock[i].swap(controllersStock[i]);
+	}
 
-	if (controllersStock[initActivePartition].empty()==true)  return;
+	if (controllersStock[initActivePartition].empty()) {  return;
+	}
 
 	// interpolating uff
 	LinearInterpolation<input_vector_t,Eigen::aligned_allocator<input_vector_t> > uffFunc;
@@ -1265,11 +1302,12 @@ void DDP_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::printRolloutInfo()  {
 	std::cerr << "inequality ISE:            " << nominalInequalityConstraintISE_ << std::endl;
 	std::cerr << "final constraint type-2: 	 ";
 	size_t itr = 0;
-	for(size_t i=initActivePartition_; i<=finalActivePartition_; i++)
+	for(size_t i=initActivePartition_; i<=finalActivePartition_; i++) {
 		for (size_t k=0; k<nc2FinalStock_[i].size(); k++) {
 			std::cerr << "[" << itr  << "]: " << HvFinalStock_[i][k].head(nc2FinalStock_[i][k]).transpose() << ",  ";
 			itr++;
 		}
+	}
 	std::cerr << std::endl;
 	std::cerr << "forward pass average time step:  " << avgTimeStepFP_*1e+3 << " [ms]." << std::endl;
 	std::cerr << "backward pass average time step: " << avgTimeStepBP_*1e+3 << " [ms]." << std::endl;
@@ -1627,16 +1665,18 @@ template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
 void DDP_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::rewindOptimizer(const size_t& firstIndex) {
 
 	// No rewind is needed
-	if (firstIndex==0)  return;
+	if (firstIndex==0) {  return;
+	}
 
 	// increment rewindCounter_
 	rewindCounter_ += firstIndex;
 
-	if (firstIndex > numPartitions_)
+	if (firstIndex > numPartitions_) {
 		throw std::runtime_error("Index for rewinding is greater than the current size.");
+	}
 
 	const size_t preservedLength = numPartitions_ - firstIndex;
-	for (size_t i=0; i<numPartitions_; i++)
+	for (size_t i=0; i<numPartitions_; i++) {
 		if (i<preservedLength) {
 			nominalControllersStock_[i].swap(nominalControllersStock_[firstIndex+i]);
 			SmFinalStock_[i]  = SmFinalStock_[firstIndex+i];
@@ -1652,6 +1692,7 @@ void DDP_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::rewindOptimizer(const size_t
 			sFinalStock_[i].setZero();
 			xFinalStock_[i].setZero();
 		}
+	}
 
 	updateNominalControllerPtrStock();
 }
@@ -1671,8 +1712,9 @@ const unsigned long long int& DDP_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::get
 template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
 void DDP_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::setupOptimizer(const size_t& numPartitions) {
 
-	if (numPartitions==0)
+	if (numPartitions==0) {
 		throw std::runtime_error("Number of partitions cannot be zero!");
+	}
 
 	/*
 	 * nominal trajectories
@@ -1777,17 +1819,18 @@ void DDP_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::runInit() {
 	approximateOptimalControlProblem();
 
 	// to check convergence of the main loop, we need to compute the total cost and ISEs
-	bool computePerformanceIndex = ddpSettings_.displayInfo_==true || ddpSettings_.maxNumIterations_>1;
-	if (computePerformanceIndex==true) {
+	bool computePerformanceIndex = ddpSettings_.displayInfo_ || ddpSettings_.maxNumIterations_>1;
+	if (computePerformanceIndex) {
 		// calculate rollout constraint type-1 ISE
 		nominalConstraint1MaxNorm_ = calculateConstraintISE(nominalTimeTrajectoriesStock_, nc1TrajectoriesStock_, EvTrajectoryStock_,
 				nominalConstraint1ISE_);
 		// calculate rollout constraint type-2 ISE
-		if (ddpSettings_.noStateConstraints_==false)
+		if (!ddpSettings_.noStateConstraints_) {
 			nominalConstraint2MaxNorm_ = calculateConstraintISE(nominalTimeTrajectoriesStock_, nc2TrajectoriesStock_, HvTrajectoryStock_,
 					nominalConstraint2ISE_);
-		else
+		} else {
 			nominalConstraint2ISE_ = nominalConstraint2MaxNorm_ = 0.0;
+		}
 		// calculate rollout cost
 		calculateRolloutCost(nominalTimeTrajectoriesStock_, nominalEventsPastTheEndIndecesStock_,
 				nominalStateTrajectoriesStock_, nominalInputTrajectoriesStock_,
@@ -1809,10 +1852,11 @@ void DDP_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::runInit() {
 	// solve Riccati equations
 	avgTimeStepBP_ = solveSequentialRiccatiEquations(SmHeuristics_, SvHeuristics_, sHeuristics_);
 	// calculate controller
-	if (ddpSettings_.useRiccatiSolver_==true)
+	if (ddpSettings_.useRiccatiSolver_) {
 		calculateController();
-	else
+	} else {
 		throw std::runtime_error("useRiccatiSolver=false is not valid.");
+	}
 
 #ifdef BENCHMARK
 	BENCHMARK_end_ = std::chrono::steady_clock::now();
@@ -1822,8 +1866,9 @@ void DDP_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::runInit() {
 #endif
 
 	// display
-	if (ddpSettings_.displayInfo_)
+	if (ddpSettings_.displayInfo_) {
 		printRolloutInfo();
+	}
 }
 
 /******************************************************************************************************/
@@ -1840,7 +1885,7 @@ void DDP_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::runIteration() {
 	BENCHMARK_start_ = std::chrono::steady_clock::now();
 #endif
 
-	bool computeISEs = ddpSettings_.displayInfo_==true || ddpSettings_.noStateConstraints_==false;
+	bool computeISEs = ddpSettings_.displayInfo_ || !ddpSettings_.noStateConstraints_;
 
 	// finding the optimal learningRate
 	maxLearningRate_ = ddpSettings_.maxLearningRate_;
@@ -1858,16 +1903,17 @@ void DDP_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::runIteration() {
 	approximateOptimalControlProblem();
 
 	// to check convergence of the main loop, we need to compute ISEs
-	if (computeISEs==false) {
+	if (!computeISEs) {
 		// calculate constraint type-1 ISE and maximum norm
 		nominalConstraint1MaxNorm_ = calculateConstraintISE(nominalTimeTrajectoriesStock_, nc1TrajectoriesStock_, EvTrajectoryStock_,
 				nominalConstraint1ISE_);
 		// calculates type-2 constraint ISE and maximum norm
-		if (ddpSettings_.noStateConstraints_==false)
+		if (!ddpSettings_.noStateConstraints_) {
 		nominalConstraint2MaxNorm_ = calculateConstraintISE(nominalTimeTrajectoriesStock_, nc2TrajectoriesStock_, HvTrajectoryStock_,
 				nominalConstraint2ISE_);
-		else
+		} else {
 			nominalConstraint2ISE_ = nominalConstraint2MaxNorm_ = 0.0;
+		}
 	}
 
 #ifdef BENCHMARK
@@ -1881,10 +1927,11 @@ void DDP_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::runIteration() {
 	// solve Riccati equations
 	avgTimeStepBP_ = solveSequentialRiccatiEquations(SmHeuristics_, SvHeuristics_, sHeuristics_);
 	// calculate controller
-	if (ddpSettings_.useRiccatiSolver_==true)
+	if (ddpSettings_.useRiccatiSolver_) {
 		calculateController();
-	else
+	} else {
 		throw std::runtime_error("useRiccatiSolver=false is not valid.");
+	}
 
 #ifdef BENCHMARK
 	BENCHMARK_end_ = std::chrono::steady_clock::now();
@@ -1894,8 +1941,9 @@ void DDP_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::runIteration() {
 #endif
 
 	// display
-	if (ddpSettings_.displayInfo_)
+	if (ddpSettings_.displayInfo_) {
 		printRolloutInfo();
+	}
 }
 
 /******************************************************************************************************/
@@ -1961,14 +2009,17 @@ void DDP_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::run(
 	}
 
 	// infeasible learning rate adjustment scheme
-	if (ddpSettings_.maxLearningRate_ < ddpSettings_.minLearningRate_-OCS2NumericTraits<scalar_t>::limit_epsilon())
+	if (ddpSettings_.maxLearningRate_ < ddpSettings_.minLearningRate_-OCS2NumericTraits<scalar_t>::limit_epsilon()) {
 		throw std::runtime_error("The maximum learning rate is smaller than the minimum learning rate.");
+	}
 
-	if (partitioningTimes.empty())
+	if (partitioningTimes.empty()) {
 		throw std::runtime_error("There should be at least one time partition.");
+	}
 
-	if (!initState.allFinite())
+	if (!initState.allFinite()) {
 		throw std::runtime_error("DDP: initial state is not finite (time: " + std::to_string(initTime) + " [sec]).");
+	}
 
 	// update numPartitions_ if it has been changed
 	if (numPartitions_+1 != partitioningTimes.size()) {
@@ -1984,9 +2035,10 @@ void DDP_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::run(
 	// In the later case 2 scenarios are possible: either the internal controller is already set (such as the MPC case
 	// where the warm starting option is set true) or the internal controller is empty in which instead of performing
 	// a rollout the operating trajectories will be used.
-	if (controllersPtrStock.empty()==false) {
-		if (controllersPtrStock.size() != numPartitions_)
+	if (!controllersPtrStock.empty()) {
+		if (controllersPtrStock.size() != numPartitions_) {
 			throw std::runtime_error("controllersPtrStock has less controllers than the number of partitions.");
+		}
 
         nominalControllersStock_.clear();
         nominalControllersStock_.reserve(numPartitions_);
@@ -2000,12 +2052,13 @@ void DDP_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::run(
             nominalControllersStock_.emplace_back(*linearCtrlPtr);
         }
 	} else {
-		if (nominalControllersStock_.size() != numPartitions_)
+		if (nominalControllersStock_.size() != numPartitions_) {
 			throw std::runtime_error("The internal controller is not compatible with the number of partitions.");
+		}
 	}
 
 	// set desired trajectories of cost if it is updated
-	if (costDesiredTrajectoriesUpdated_ == true) {
+	if (costDesiredTrajectoriesUpdated_) {
 		costDesiredTrajectoriesUpdated_ = false;
 		costDesiredTrajectories_.swap(costDesiredTrajectoriesBuffer_);
 	}
@@ -2044,19 +2097,22 @@ void DDP_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::run(
 	}
 
 	// display
-	if (ddpSettings_.displayInfo_)
+	if (ddpSettings_.displayInfo_) {
 		std::cerr << "\n#### Iteration " << iteration_ << " (Dynamics might have been violated)" << std::endl;
+	}
 
 	// if a controller is not set for a partition
-	for (size_t i=0; i<numPartitions_; i++)
+	for (size_t i=0; i<numPartitions_; i++) {
 		initialControllerDesignStock_[i] = nominalControllersStock_[i].empty() ? true : false;
+	}
 
 	// run DDP initializer and update the member variables
 	runInit();
 
 	// after iteration zero always allow feedforward policy update
-	for (size_t i=0; i<numPartitions_; i++)
+	for (size_t i=0; i<numPartitions_; i++) {
 		initialControllerDesignStock_[i] = false;
+	}
 
 	iterationCost_.push_back( (Eigen::VectorXd(1) << nominalTotalCost_).finished() );
 	iterationISE1_.push_back( (Eigen::VectorXd(1) << nominalConstraint1ISE_).finished() );
@@ -2071,7 +2127,7 @@ void DDP_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::run(
 	bool isOptimizationConverged = false;
 
 	// DDP main loop
-	while (iteration_+1<ddpSettings_.maxNumIterations_ && isOptimizationConverged==false)  {
+	while (iteration_+1<ddpSettings_.maxNumIterations_ && !isOptimizationConverged)  {
 
 		// increment iteration counter
 		iteration_++;
@@ -2080,7 +2136,8 @@ void DDP_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::run(
 		scalar_t constraint1ISECashed = nominalConstraint1ISE_;
 
 		// display
-		if (ddpSettings_.displayInfo_)  std::cerr << "\n#### Iteration " << iteration_ << std::endl;
+		if (ddpSettings_.displayInfo_) {  std::cerr << "\n#### Iteration " << iteration_ << std::endl;
+		}
 
 		// run the an iteration of the DDP algorithm and update the member variables
 		runIteration();
@@ -2095,20 +2152,21 @@ void DDP_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::run(
 		isConstraint1Satisfied  = nominalConstraint1ISE_<=ddpSettings_.minAbsConstraint1ISE_ || relConstraint1ISE<=ddpSettings_.minRelConstraint1ISE_;
 		isLearningRateStarZero  = learningRateStar_==0 && !isInitInternalControllerEmpty;
 		isCostFunctionConverged = relCost<=ddpSettings_.minRelCost_ || isLearningRateStarZero;
-		isOptimizationConverged = isCostFunctionConverged==true && isConstraint1Satisfied==true;
+		isOptimizationConverged = isCostFunctionConverged && isConstraint1Satisfied;
 		isInitInternalControllerEmpty = false;
 
 	}  // end of while loop
 
-	if (ddpSettings_.displayInfo_)  std::cerr << "\n#### Final rollout" << std::endl;
+	if (ddpSettings_.displayInfo_) {  std::cerr << "\n#### Final rollout" << std::endl;
+	}
 
 #ifdef BENCHMARK
 	BENCHMARK_nIterationsFP_++;
 	BENCHMARK_start_ = std::chrono::steady_clock::now();
 #endif
 
-	bool computeISEs = ddpSettings_.noStateConstraints_==false ||
-			ddpSettings_.displayInfo_==true || ddpSettings_.displayShortSummary_==true;
+	bool computeISEs = !ddpSettings_.noStateConstraints_ ||
+			ddpSettings_.displayInfo_ || ddpSettings_.displayShortSummary_;
 
 	// finding the final optimal learningRate and getting the optimal trajectories and controller
 	maxLearningRate_ = ddpSettings_.maxLearningRate_;
@@ -2138,16 +2196,18 @@ void DDP_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::run(
 
 		printRolloutInfo();
 
-		if (isOptimizationConverged==true) {
-			if (isLearningRateStarZero==true)
+		if (isOptimizationConverged) {
+			if (isLearningRateStarZero) {
 				std::cerr << algorithmName_ + " successfully terminates as learningRate reduced to zero." << std::endl;
-			else
+			} else {
 				std::cerr << algorithmName_ + " successfully terminates as cost relative change (relCost=" << relCost <<") reached to the minimum value." << std::endl;
+			}
 
-			if (nominalConstraint1ISE_<=ddpSettings_.minAbsConstraint1ISE_)
+			if (nominalConstraint1ISE_<=ddpSettings_.minAbsConstraint1ISE_) {
 				std::cerr << "Type-1 constraint absolute ISE (absConstraint1ISE=" << nominalConstraint1ISE_ << ") reached to the minimum value." << std::endl;
-			else
+			} else {
 				std::cerr << "Type-1 constraint relative ISE (relConstraint1ISE=" << relConstraint1ISE << ") reached to the minimum value." << std::endl;
+			}
 		} else {
 			std::cerr << "Maximum number of iterations has reached." << std::endl;
 		}
@@ -2156,5 +2216,5 @@ void DDP_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::run(
 
 }
 
-}  // ocs2 namespace
+}  // namespace ocs2
 

@@ -65,7 +65,7 @@ MPC_ILQR<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::MPC_ILQR(
 
 {
 	// ILQR
-	if (ilqrSettings.ddpSettings_.useMultiThreading_==true) {
+	if (ilqrSettings.ddpSettings_.useMultiThreading_) {
 		ilqrPtr_.reset( new ilqr_mp_t(
 				systemDynamicsPtr, systemDerivativesPtr, systemConstraintsPtr, costFunctionPtr, operatingTrajectoriesPtr,
 				ilqrSettings, logicRulesPtr, heuristicsFunctionPtr) );
@@ -82,7 +82,7 @@ MPC_ILQR<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::MPC_ILQR(
 	if (modeSequenceTemplatePtr) {
 		ilqrPtr_->getLogicRulesPtr()->setModeSequenceTemplate(*modeSequenceTemplatePtr);
 
-		if (mpcSettings.recedingHorizon_==true) {
+		if (mpcSettings.recedingHorizon_) {
 			const scalar_t timeHorizon = BASE::initPartitioningTimes_.back() - BASE::initPartitioningTimes_.front();
 			ilqrPtr_->getLogicRulesPtr()->insertInternalModeSequenceTemplate(timeHorizon, 2.0*timeHorizon);
 		}
@@ -146,10 +146,11 @@ void MPC_ILQR<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculateController(
 
 	// use parallel Riccati solver at each call of realtime-iteration ILQR
 	if (BASE::initRun_==false) {
-		if (BASE::mpcSettings_.useParallelRiccatiSolver_==true && BASE::mpcSettings_.recedingHorizon_==true)
+		if (BASE::mpcSettings_.useParallelRiccatiSolver_==true && BASE::mpcSettings_.recedingHorizon_==true) {
 			ilqrPtr_->useParallelRiccatiSolverFromInitItr(true);
-		else
+		} else {
 			ilqrPtr_->useParallelRiccatiSolverFromInitItr(false);
+		}
 	} else {
 		ilqrPtr_->useParallelRiccatiSolverFromInitItr(false);
 	}
@@ -159,8 +160,9 @@ void MPC_ILQR<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculateController(
 	//*****************************************************************************************
 	if (BASE::mpcSettings_.coldStart_==true || BASE::initRun_==true) {
 
-		if (BASE::mpcSettings_.debugPrint_)
+		if (BASE::mpcSettings_.debugPrint_) {
 			std::cerr << "### Using cold initialization." << std::endl;
+		}
 
 		ilqrPtr_->run(initTime, initState, finalTime, BASE::partitioningTimes_);
 

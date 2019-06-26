@@ -39,11 +39,12 @@ size_t Solver_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::findActivePartitionInde
 		bool ceilingFunction /*= true*/) {
 
 	int activeSubsystemIndex;
-	if (ceilingFunction==true)
+	if (ceilingFunction) {
 		activeSubsystemIndex = findActiveIntervalIndex(partitioningTimes, time, 0);
-	else
+	} else {
 		activeSubsystemIndex = findActiveIntervalIndex(partitioningTimes, time, 0,
 				-OCS2NumericTraits<scalar_t>::week_epsilon());
+	}
 
 	if (activeSubsystemIndex < 0) {
 		std::string mesg = "Given time is less than the start time (i.e. givenTime < partitioningTimes.front()): "

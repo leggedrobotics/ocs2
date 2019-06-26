@@ -53,7 +53,7 @@ class LoopshapingCost : public CostFunctionBase<FULL_STATE_DIM, FULL_INPUT_DIM, 
   void initializeModel(
       LogicRulesMachine<LOGIC_RULES_T> &logicRulesMachine,
       const size_t &partitionIndex,
-      const char *algorithmName = NULL) override {
+      const char *algorithmName = nullptr) override {
     BASE::initializeModel(logicRulesMachine, partitionIndex, algorithmName);
     systemCost_->initializeModel(logicRulesMachine, partitionIndex, algorithmName);
     costApproximationValid_ = false;

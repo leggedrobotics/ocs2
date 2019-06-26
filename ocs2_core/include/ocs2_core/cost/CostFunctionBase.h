@@ -62,27 +62,27 @@ public:
 		input_dim_ = INPUT_DIM
 	};
 
-	typedef LOGIC_RULES_T logic_rules_t;
+	using logic_rules_t = LOGIC_RULES_T;
 
 	typedef std::shared_ptr<CostFunctionBase<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> > Ptr;
 	typedef std::shared_ptr<const CostFunctionBase<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> > ConstPtr;
 
 	typedef Dimensions<STATE_DIM, INPUT_DIM> DIMENSIONS;
 
-	typedef typename DIMENSIONS::scalar_t                scalar_t;
-	typedef typename DIMENSIONS::scalar_array_t          scalar_array_t;
-	typedef typename DIMENSIONS::state_vector_t          state_vector_t;
-	typedef typename DIMENSIONS::state_vector_array_t    state_vector_array_t;
-	typedef typename DIMENSIONS::state_matrix_t          state_matrix_t;
-	typedef typename DIMENSIONS::input_vector_t          input_vector_t;
-	typedef typename DIMENSIONS::input_vector_array_t    input_vector_array_t;
-	typedef typename DIMENSIONS::input_matrix_t          input_matrix_t;
-	typedef typename DIMENSIONS::input_state_matrix_t    input_state_matrix_t;
-	typedef typename DIMENSIONS::state_input_matrix_t    state_input_matrix_t;
-	typedef typename DIMENSIONS::dynamic_vector_t        dynamic_vector_t;
-	typedef typename DIMENSIONS::dynamic_vector_array_t  dynamic_vector_array_t;
+	using scalar_t = typename DIMENSIONS::scalar_t;
+	using scalar_array_t = typename DIMENSIONS::scalar_array_t;
+	using state_vector_t = typename DIMENSIONS::state_vector_t;
+	using state_vector_array_t = typename DIMENSIONS::state_vector_array_t;
+	using state_matrix_t = typename DIMENSIONS::state_matrix_t;
+	using input_vector_t = typename DIMENSIONS::input_vector_t;
+	using input_vector_array_t = typename DIMENSIONS::input_vector_array_t;
+	using input_matrix_t = typename DIMENSIONS::input_matrix_t;
+	using input_state_matrix_t = typename DIMENSIONS::input_state_matrix_t;
+	using state_input_matrix_t = typename DIMENSIONS::state_input_matrix_t;
+	using dynamic_vector_t = typename DIMENSIONS::dynamic_vector_t;
+	using dynamic_vector_array_t = typename DIMENSIONS::dynamic_vector_array_t;
 
-	typedef CostDesiredTrajectories<scalar_t> cost_desired_trajectories_t;
+	using cost_desired_trajectories_t = CostDesiredTrajectories<scalar_t>;
 
 	/**
 	 * Default constructor

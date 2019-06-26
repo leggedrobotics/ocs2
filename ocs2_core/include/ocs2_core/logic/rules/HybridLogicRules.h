@@ -64,15 +64,19 @@ struct ModeSequenceTemplate
 	void display() const {
 
 		std::cerr << std::endl << "Template switching times:\n\t {";
-		for (auto& s: templateSwitchingTimes_)
+		for (auto& s: templateSwitchingTimes_) {
 			std::cerr << s << ", ";
-		if (!templateSwitchingTimes_.empty())  std::cerr << "\b\b";
+		}
+		if (!templateSwitchingTimes_.empty()) {  std::cerr << "\b\b";
+		}
 		std::cerr << "}" << std::endl;
 
 		std::cerr << "Template subsystem sequence:\n\t {";
-		for (auto& s: templateSubsystemsSequence_)
+		for (auto& s: templateSubsystemsSequence_) {
 			std::cerr << s << ", ";
-		if (!templateSubsystemsSequence_.empty())  std::cerr << "\b\b";
+		}
+		if (!templateSubsystemsSequence_.empty()) {  std::cerr << "\b\b";
+		}
 		std::cerr << "}" << std::endl;
 	}
 };
@@ -86,12 +90,12 @@ class HybridLogicRules : public LogicRulesBase
 public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-	typedef LogicRulesBase BASE;
-	typedef BASE::size_array_t   size_array_t;
-	typedef BASE::scalar_t       scalar_t;
-	typedef BASE::scalar_array_t scalar_array_t;
+	using BASE = LogicRulesBase;
+	using size_array_t = BASE::size_array_t;
+	using scalar_t = BASE::scalar_t;
+	using scalar_array_t = BASE::scalar_array_t;
 
-	typedef ModeSequenceTemplate<scalar_t> logic_template_type;
+	using logic_template_type = ModeSequenceTemplate<scalar_t>;
 
 	/**
 	 * Default constructor
@@ -122,7 +126,7 @@ public:
 	/**
 	 * Destructor
 	 */
-	virtual ~HybridLogicRules() = default;
+	~HybridLogicRules() override = default;
 
 	/**
 	 * Move assignment
@@ -137,14 +141,16 @@ public:
 	/**
 	 * Displays event information.
 	 */
-	virtual void display() const override {
+	void display() const override {
 
 		BASE::display();
 
 		std::cerr << "Subsystem sequence:\n\t {";
-		for (auto& s: subsystemsSequence_)
+		for (auto& s: subsystemsSequence_) {
 			std::cerr << s << ", ";
-		if (!subsystemsSequence_.empty())  std::cerr << "\b\b";
+		}
+		if (!subsystemsSequence_.empty()) {  std::cerr << "\b\b";
+		}
 		std::cerr << "}" << std::endl;
 	}
 
@@ -160,8 +166,9 @@ public:
 			const size_array_t& subsystemsSequence,
 			const scalar_array_t& eventTimes) {
 
-		if (subsystemsSequence.size() != eventTimes.size()+1)
+		if (subsystemsSequence.size() != eventTimes.size()+1) {
 			throw std::runtime_error("The number of subsystems should be 1 plus the number of the event times.");
+		}
 
 		BASE::eventTimes_ = eventTimes;
 		subsystemsSequence_ = subsystemsSequence;
@@ -232,15 +239,15 @@ public:
 	 * @param [in] lowerBoundTime: The smallest time for which the logicRules should be defined.
 	 * @param [in] upperBoundTime: The greatest time for which the logicRules should be defined.
 	 */
-	virtual void rewind(
+	void rewind(
 			const scalar_t& lowerBoundTime,
-			const scalar_t& upperBoundTime) = 0;
+			const scalar_t& upperBoundTime) override = 0;
 
 	/**
 	 * This method can be used to update the internal variables. This method should be called by any
 	 * program that updates the logic rules variables e.g. rewind,
 	 */
-	virtual void update() = 0;
+	void update() override = 0;
 
 
 protected:

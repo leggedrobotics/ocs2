@@ -40,14 +40,14 @@ class StateTriggeredEventHandler : public SystemEventHandler<STATE_DIM>
 public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-	typedef std::shared_ptr<StateTriggeredEventHandler<STATE_DIM>> Ptr;
+	using Ptr = std::shared_ptr<StateTriggeredEventHandler<STATE_DIM> >;
 
-	typedef SystemEventHandler<STATE_DIM> BASE;
-	typedef typename BASE::scalar_t				scalar_t;
-	typedef typename BASE::scalar_array_t 		scalar_array_t;
-	typedef typename BASE::state_vector_t		state_vector_t;
-	typedef typename BASE::state_vector_array_t state_vector_array_t;
-	typedef typename BASE::dynamic_vector_t 	dynamic_vector_t;
+	using BASE = SystemEventHandler<STATE_DIM>;
+	using scalar_t = typename BASE::scalar_t;
+	using scalar_array_t = typename BASE::scalar_array_t;
+	using state_vector_t = typename BASE::state_vector_t;
+	using state_vector_array_t = typename BASE::state_vector_array_t;
+	using dynamic_vector_t = typename BASE::dynamic_vector_t;
 
 	/**
 	 * Default constructor
@@ -66,7 +66,7 @@ public:
 	/**
 	 * Resets the class.
 	 */
-	virtual void reset() override {
+	void reset() override {
 
 		BASE::reset();
 		setEventTimesGuard();
@@ -84,9 +84,10 @@ public:
 			const scalar_t& lastEventTriggeredTime = std::numeric_limits<scalar_t>::lowest(),
 			const dynamic_vector_t& lastGuardSurfacesValues = dynamic_vector_t::Zero(0)) {
 
-		if (lastEventTriggeredTime > std::numeric_limits<scalar_t>::lowest() && lastGuardSurfacesValues.size()==0)
+		if (lastEventTriggeredTime > std::numeric_limits<scalar_t>::lowest() && lastGuardSurfacesValues.size()==0) {
 			throw std::runtime_error("Since the time of the last event is provided, "
 					"the value of the guard functions at that time should also be provided.");
+		}
 
 		minEventTimeDifference_ = minEventTimeDifference;
 		lastEventTriggeredTime_ = lastEventTriggeredTime;
@@ -110,7 +111,7 @@ public:
 	 * @param [in] time: Current time.
 	 * @return boolean:
 	 */
-	virtual bool checkEvent(
+	bool checkEvent(
 			const state_vector_t& state,
 			const scalar_t& time) override {
 
@@ -118,8 +119,9 @@ public:
 
 		// SystemEventHandler event
 		systemEventHandlerTriggered_ = BASE::checkEvent(state, time);
-		if (systemEventHandlerTriggered_==true)
+		if (systemEventHandlerTriggered_) {
 			return true;
+		}
 
 		//** StateTriggered event **//
 
@@ -144,13 +146,14 @@ public:
 //				"\t-->\t" << guardSurfacesValuesCurrent_(i) << std::endl;
 
 		bool eventTriggered = false;
-		for (size_t i=0; i<guardSurfacesValuesPrevious_.size(); i++)
+		for (size_t i=0; i<guardSurfacesValuesPrevious_.size(); i++) {
 			if (guardSurfacesValuesCurrent_[i]<=0 && guardSurfacesValuesPrevious_(i)>0) {
 				eventTriggered = true;
 				triggeredEventSurface_ = i;
 			}
+		}
 
-		if (eventTriggered==false) {
+		if (!eventTriggered) {
 			guardSurfacesValuesPrevious_ = guardSurfacesValuesCurrent_;
 		}
 
@@ -167,13 +170,14 @@ public:
 	 * @param [out] timeTrajectory: The time trajectory which contains the current time as its last element.
 	 * @retune boolean: A non-negative unique ID for the active events.
 	 */
-	virtual int handleEvent(
+	int handleEvent(
 			state_vector_array_t& stateTrajectory,
 			scalar_array_t& timeTrajectory) override {
 
 		// SystemEventHandler event
-		if (systemEventHandlerTriggered_==true)
+		if (systemEventHandlerTriggered_) {
 			return BASE::handleEvent(stateTrajectory, timeTrajectory);
+		}
 
 		// correcting for the zero crossing
 		size_t lastIndex;
@@ -221,7 +225,7 @@ public:
 		} else {
 			lastIndex = timeTrajectory.size()-1;
 
-			if (timeTrajectory[timeTrajectory.size()-2]-lastEventTriggeredTime_ < minEventTimeDifference_)
+			if (timeTrajectory[timeTrajectory.size()-2]-lastEventTriggeredTime_ < minEventTimeDifference_) {
 				for (int i=timeTrajectory.size()-2; i>=0; i--) {
 					BASE::systemPtr_->computeGuardSurfaces(timeTrajectory[i], stateTrajectory[i], guardSurfacesValuesPrevious_);
 					if (guardSurfacesValuesPrevious_[triggeredEventSurface_]>0) {
@@ -231,6 +235,7 @@ public:
 						lastIndex = i;
 					}
 				}
+			}
 
 			const scalar_t& t1 = timeTrajectory[lastIndex-1];
 			const scalar_t& t2 = timeTrajectory[lastIndex];

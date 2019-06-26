@@ -64,18 +64,18 @@ public:
 	typedef std::shared_ptr<const CostFunctionBaseAD<Derived, STATE_DIM, INPUT_DIM, LOGIC_RULES_T, LOGIC_VARIABLE_DIM, STATE_DESIRED_DIM, INPUT_DESIRED_DIM> > ConstPtr;
 
 	typedef CostFunctionBase<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> BASE;
-	typedef typename BASE::scalar_t                scalar_t;
-	typedef typename BASE::scalar_array_t          scalar_array_t;
-	typedef typename BASE::state_vector_t          state_vector_t;
-	typedef typename BASE::state_vector_array_t    state_vector_array_t;
-	typedef typename BASE::state_matrix_t          state_matrix_t;
-	typedef typename BASE::input_vector_t          input_vector_t;
-	typedef typename BASE::input_vector_array_t    input_vector_array_t;
-	typedef typename BASE::input_matrix_t          input_matrix_t;
-	typedef typename BASE::input_state_matrix_t    input_state_matrix_t;
-	typedef typename BASE::state_input_matrix_t    state_input_matrix_t;
-	typedef typename BASE::dynamic_vector_t        dynamic_vector_t;
-	typedef typename BASE::dynamic_vector_array_t  dynamic_vector_array_t;
+	using scalar_t = typename BASE::scalar_t;
+	using scalar_array_t = typename BASE::scalar_array_t;
+	using state_vector_t = typename BASE::state_vector_t;
+	using state_vector_array_t = typename BASE::state_vector_array_t;
+	using state_matrix_t = typename BASE::state_matrix_t;
+	using input_vector_t = typename BASE::input_vector_t;
+	using input_vector_array_t = typename BASE::input_vector_array_t;
+	using input_matrix_t = typename BASE::input_matrix_t;
+	using input_state_matrix_t = typename BASE::input_state_matrix_t;
+	using state_input_matrix_t = typename BASE::state_input_matrix_t;
+	using dynamic_vector_t = typename BASE::dynamic_vector_t;
+	using dynamic_vector_array_t = typename BASE::dynamic_vector_array_t;
 
 	typedef Eigen::Matrix<scalar_t, logic_variable_dim_, 1> logic_variable_t;
   	typedef Eigen::Matrix<scalar_t, state_desired_dim_, 1> state_desired_vector_t;
@@ -320,15 +320,15 @@ public:
 protected:
 	typedef CppAdCodeGenInterface<domain_dim_, 1, scalar_t, variable_dim_> ad_interface_t;
 
-	typedef typename ad_interface_t::ad_scalar_t            ad_scalar_t;
-	typedef typename ad_interface_t::ad_dynamic_vector_t    ad_dynamic_vector_t;
-	typedef typename ad_interface_t::ad_funtion_t           ad_funtion_t;
-	typedef typename ad_interface_t::domain_vector_t        domain_vector_t;
-	typedef typename ad_interface_t::domain_matrix_t        domain_matrix_t;
-	typedef typename ad_interface_t::variable_vector_t      variable_vector_t;
-	typedef typename ad_interface_t::variable_matrix_t      variable_matrix_t;
-	typedef typename ad_interface_t::domain_range_matrix_t  domain_range_matrix_t;
-	typedef typename ad_interface_t::range_domain_matrix_t  range_domain_matrix_t;
+	using ad_scalar_t = typename ad_interface_t::ad_scalar_t;
+	using ad_dynamic_vector_t = typename ad_interface_t::ad_dynamic_vector_t;
+	using ad_funtion_t = typename ad_interface_t::ad_funtion_t;
+	using domain_vector_t = typename ad_interface_t::domain_vector_t;
+	using domain_matrix_t = typename ad_interface_t::domain_matrix_t;
+	using variable_vector_t = typename ad_interface_t::variable_vector_t;
+	using variable_matrix_t = typename ad_interface_t::variable_matrix_t;
+	using domain_range_matrix_t = typename ad_interface_t::domain_range_matrix_t;
+	using range_domain_matrix_t = typename ad_interface_t::range_domain_matrix_t;
 
 	/**
 	 * The intermediate cost function specialized with AD type.

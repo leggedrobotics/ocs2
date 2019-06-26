@@ -42,8 +42,9 @@ TargetTrajectories_Keyboard_Interface<SCALAR_T>::TargetTrajectories_Keyboard_Int
 	, targetCommandSize_(targetCommandSize)
 	, targetCommandLimits_(targetCommandLimits)
 {
-	if (targetCommandLimits.size()!=targetCommandSize)
+	if (targetCommandLimits.size()!=targetCommandSize) {
 		throw std::runtime_error("Target command limits are not set properly");
+	}
 }
 
 /******************************************************************************************************/
@@ -90,13 +91,15 @@ void TargetTrajectories_Keyboard_Interface<SCALAR_T>::getKeyboardCommand(
 
 		// limits
 		for (size_t i=0; i<targetCommandSize_; i++) {
-			if (std::abs(targetCommand_[i]) > targetCommandLimits_[i])
+			if (std::abs(targetCommand_[i]) > targetCommandLimits_[i]) {
 				targetCommand_[i] = std::copysign(targetCommandLimits_[i], targetCommand_[i]);
+			}
 		}  // end of i loop
 
 		std::cout << "The following command is published: [";
-		for (size_t i=0; i<targetCommandSize_; i++)
+		for (size_t i=0; i<targetCommandSize_; i++) {
 			std::cout << std::setprecision(4) << targetCommand_[i] << ", ";
+		}
 		std::cout << "\b\b]" << std::endl << std::endl;
 
 		// user defined modification of the command-line
@@ -138,22 +141,25 @@ typename TargetTrajectories_Keyboard_Interface<SCALAR_T>::scalar_array_t
 		}
 		rate.sleep();
 	}
-	if (thr.joinable())
+	if (thr.joinable()) {
 		thr.join();
+	}
 
 	std::istringstream stream(line);
 	scalar_t in;
-	while (stream >> in)
+	while (stream >> in) {
 		targetCommand.push_back(in);
+	}
 
 	// if the size is greater than targetCommandSize_
 	const size_t n = targetCommand.size();
-	if (n > targetCommandSize_)
+	if (n > targetCommandSize_) {
 		targetCommand.erase(targetCommand.begin()+targetCommandSize_, targetCommand.end());
-	else
+	} else {
 		for (size_t i=n; i<targetCommandSize_; i++) {
 			targetCommand.push_back(0.0);
 		}  // end of i loop
+	}
 
 	return targetCommand;
 }

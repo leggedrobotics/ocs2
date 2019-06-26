@@ -40,8 +40,9 @@ ConstraintBaseAD<Derived, STATE_DIM, INPUT_DIM, logic_rules_template_t>::Constra
 	, modelName_("")
 	, libraryFolder_("")
 {
-	if (dynamicLibraryIsCompiled==true)
+	if (dynamicLibraryIsCompiled) {
 		setADInterfaces();
+	}
 };
 
 /******************************************************************************************************/
@@ -60,8 +61,9 @@ ConstraintBaseAD<Derived, STATE_DIM, INPUT_DIM, logic_rules_template_t>::Constra
 	, stateOnlyFinalADInterfacePtr_(rhs.stateOnlyFinalADInterfacePtr_->clone())
 
 {
-	if (rhs.dynamicLibraryIsCompiled_==true)
+	if (static_cast<bool>(rhs.dynamicLibraryIsCompiled_)) {
 		loadModels(false);
+	}
 }
 
 /******************************************************************************************************/
@@ -99,10 +101,11 @@ void ConstraintBaseAD<Derived, STATE_DIM, INPUT_DIM, logic_rules_template_t>::lo
 	modelName_ = modelName;
 	libraryFolder_ = libraryFolder;
 
-	if (dynamicLibraryIsCompiled_==true) {
+	if (dynamicLibraryIsCompiled_) {
 		bool libraryLoaded = loadModels(false);
-		if (libraryLoaded==false)
+		if (!libraryLoaded) {
 			throw std::runtime_error("Constraint library is not found!");
+		}
 
 	} else {
 		throw std::runtime_error("Constraint library has not been compiled!");
@@ -224,15 +227,16 @@ void ConstraintBaseAD<Derived, STATE_DIM, INPUT_DIM, logic_rules_template_t>::st
 		const ad_dynamic_vector_t& tapedInput,
 		ad_dynamic_vector_t& g1) {
 
-	ad_scalar_t& t = const_cast<ad_scalar_t&>(tapedInput(0));
+	auto& t = const_cast<ad_scalar_t&>(tapedInput(0));
 	Eigen::Matrix<ad_scalar_t, STATE_DIM, 1> x = tapedInput.segment(1, STATE_DIM);
 	Eigen::Matrix<ad_scalar_t, INPUT_DIM, 1> u = tapedInput.segment(1+STATE_DIM, INPUT_DIM);
 
 	g1.resize(MAX_CONSTRAINT_DIM_);
 	static_cast<Derived *>(this)->template stateInputConstraint<ad_scalar_t>(t, x, u, g1);
 
-	if (g1.size()>MAX_CONSTRAINT_DIM_)
+	if (g1.size()>MAX_CONSTRAINT_DIM_) {
 		throw std::runtime_error("The max number of constraints is exceeded!");
+	}
 
 	g1.conservativeResize(MAX_CONSTRAINT_DIM_);
 }
@@ -245,14 +249,15 @@ void ConstraintBaseAD<Derived, STATE_DIM, INPUT_DIM, logic_rules_template_t>::st
 		const ad_dynamic_vector_t& tapedInput,
 		ad_dynamic_vector_t& g2) {
 
-	ad_scalar_t& t = const_cast<ad_scalar_t&>(tapedInput(0));
+	auto& t = const_cast<ad_scalar_t&>(tapedInput(0));
 	Eigen::Matrix<ad_scalar_t, STATE_DIM, 1> x = tapedInput.segment(1, STATE_DIM);
 
 	g2.resize(MAX_CONSTRAINT_DIM_);
 	static_cast<Derived *>(this)->template stateOnlyConstraint<ad_scalar_t>(t, x, g2);
 
-	if (g2.size()>MAX_CONSTRAINT_DIM_)
+	if (g2.size()>MAX_CONSTRAINT_DIM_) {
 		throw std::runtime_error("The max number of constraints is exceeded!");
+	}
 
 	g2.conservativeResize(MAX_CONSTRAINT_DIM_);
 }
@@ -265,14 +270,15 @@ void ConstraintBaseAD<Derived, STATE_DIM, INPUT_DIM, logic_rules_template_t>::st
 		const ad_dynamic_vector_t& tapedInput,
 		ad_dynamic_vector_t& g2Final) {
 
-	ad_scalar_t& t = const_cast<ad_scalar_t&>(tapedInput(0));
+	auto& t = const_cast<ad_scalar_t&>(tapedInput(0));
 	Eigen::Matrix<ad_scalar_t, STATE_DIM, 1> x = tapedInput.segment(1, STATE_DIM);
 
 	g2Final.resize(MAX_CONSTRAINT_DIM_);
 	static_cast<Derived *>(this)->template stateOnlyFinalConstraint<ad_scalar_t>(t, x, g2Final);
 
-	if (g2Final.size()>MAX_CONSTRAINT_DIM_)
+	if (g2Final.size()>MAX_CONSTRAINT_DIM_) {
 		throw std::runtime_error("The max number of constraints is exceeded!");
+	}
 
 	g2Final.conservativeResize(MAX_CONSTRAINT_DIM_);
 }

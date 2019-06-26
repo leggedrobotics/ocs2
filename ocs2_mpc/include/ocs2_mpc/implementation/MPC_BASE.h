@@ -81,10 +81,11 @@ MPC_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::MPC_BASE(
 	, solverPtr_(nullptr)
 
 {
-	if (partitioningTimes.size() < 2)
+	if (partitioningTimes.size() < 2) {
 		throw std::runtime_error("There should be at least one time partition.");
+	}
 
-	if (mpcSettings.recedingHorizon_==true) {
+	if (mpcSettings.recedingHorizon_) {
 		numPartitions_ = 3*initnumPartitions_;
 		partitioningTimes_.clear();
 
@@ -157,8 +158,9 @@ void MPC_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::rewind() {
 	// Rewind the solver's internal logicRules. It is not necessary to call the
 	// LogicRulesMachine::updateLogicRules() method, since the partitioningTimes_
 	// is updated as well the update method will be called automatically.
-	if (solverPtr_->getLogicRulesPtr())
+	if (solverPtr_->getLogicRulesPtr()) {
 		solverPtr_->getLogicRulesPtr()->rewind(partitioningTimes_.front(), partitioningTimes_.back());
+	}
 //	if (solverPtr_->getLogicRulesMachinePtr())
 //		solverPtr_->getLogicRulesMachinePtr()->logicRulesUpdated();
 }
@@ -192,8 +194,9 @@ void MPC_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::adjustmentTimeHorizon(
 		finalTime = partitioningTimes[finalActivePartitionIndex];
 		finalActivePartitionIndex--;
 	} else {
-		if (mpcSettings_.blockwiseMovingHorizon_==true)
+		if (mpcSettings_.blockwiseMovingHorizon_==true) {
 			finalTime = partitioningTimes[finalActivePartitionIndex+1];
+	}
 	}
 }
 
@@ -208,8 +211,9 @@ bool MPC_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::run(
 	// check if the current time exceeds the solver final limit
 	if (currentTime>=getFinalTime() && mpcSettings_.recedingHorizon_==true) {
 
-		if (initRun_==true)
+		if (initRun_==true) {
 			throw std::runtime_error("The initial time is greater than the planning time in the first run.");
+		}
 
 		std::cerr << std::endl << "#####################################################";
 		std::cerr << std::endl << "#####################################################";
@@ -237,9 +241,9 @@ bool MPC_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::run(
 	 ******************************************************************************************/
 	scalar_t initTime = currentTime;
 	scalar_t finalTime;
-	if (mpcSettings_.recedingHorizon_==true)
+	if (mpcSettings_.recedingHorizon_==true) {
 		finalTime = currentTime + getTimeHorizon();
-	else {
+	} else {
 		size_t N = currentTime / getFinalTime();
 		finalTime = (N+1) * getFinalTime();
 	}
@@ -253,8 +257,9 @@ bool MPC_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::run(
 	* rewind the optimizer
 	******************************************************************************************/
 	if (finalTime>partitioningTimes_.back() /*&& BASE::mpcSettings_.recedingHorizon_==true*/) {
-		if (mpcSettings_.debugPrint_)
+		if (mpcSettings_.debugPrint_) {
 			std::cerr << "### MPC is rewinded at time " << currentTime << " [s]." << std::endl;
+	}
 
 		rewind();
 	}
@@ -329,10 +334,11 @@ template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
 typename MPC_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::scalar_t
 	MPC_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::getFinalTime() const {
 
-	if (mpcSettings_.recedingHorizon_ == true)
+	if (mpcSettings_.recedingHorizon_ == true) {
 		return lastControlDesignTime_ + getTimeHorizon();
-	else
+	} else {
 		return initPartitioningTimes_.back();
+	}
 }
 
 
@@ -343,10 +349,11 @@ template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
 typename MPC_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::scalar_t
 	MPC_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::getTimeHorizon() const {
 
-	if (mpcSettings_.recedingHorizon_ == true)
+	if (mpcSettings_.recedingHorizon_ == true) {
 		return initPartitioningTimes_.back() - initPartitioningTimes_.front();
-	else
+	} else {
 		return initPartitioningTimes_.back() - lastControlDesignTime_;
+	}
 }
 
 /******************************************************************************************************/
@@ -357,8 +364,9 @@ void MPC_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::getPartitioningTimes(
 		scalar_array_t& partitioningTimes) const {
 
 	partitioningTimes.resize(finalActivePartitionIndex_+2);
-	for (size_t i=0; i<=finalActivePartitionIndex_+1; i++ )
+	for (size_t i=0; i<=finalActivePartitionIndex_+1; i++ ) {
 		partitioningTimes[i] = partitioningTimes_[i];
+	}
 }
 
 /******************************************************************************************************/

@@ -147,6 +147,6 @@ class LoopshapingConstraintOutputPattern final: public LoopshapingConstraint<FUL
  private:
 
 };
-}; // ocs2
+}  // namespace ocs2
 
 #endif //OCS2_LOOPSHAPINGCONSTRAINTOUTPUTPATTERN_H

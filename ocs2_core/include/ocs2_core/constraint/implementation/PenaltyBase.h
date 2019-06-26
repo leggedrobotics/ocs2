@@ -23,8 +23,9 @@ namespace ocs2 {
                                                                           const state_vector_array_t &dhdx,
                                                                           state_vector_t &penaltyDerivativeState) const {
         const size_t numInequalityConstraints = h.size();
-        if (numInequalityConstraints != dhdx.size())
+        if (numInequalityConstraints != dhdx.size()) {
         	throw std::runtime_error("The inequality constraint should have the same size as it derivative.");
+		}
 
     	penaltyDerivativeState.setZero();
         for (size_t i = 0; i < numInequalityConstraints; i++) {
@@ -37,8 +38,9 @@ namespace ocs2 {
                                                                           const input_vector_array_t &dhdu,
                                                                           input_vector_t &penaltyDerivativeInput) const {
         const size_t numInequalityConstraints = h.size();
-        if (numInequalityConstraints != dhdu.size())
+        if (numInequalityConstraints != dhdu.size()) {
         	throw std::runtime_error("The inequality constraint should have the same size as it derivative.");
+		}
 
         penaltyDerivativeInput.setZero();
         for (size_t i = 0; i < numInequalityConstraints; i++) {
@@ -52,8 +54,9 @@ namespace ocs2 {
                                                                                 const state_matrix_array_t &ddhdxdx,
                                                                                 state_matrix_t &penaltySecondDerivativeState) const {
     	const size_t numInequalityConstraints = h.size();
-    	if (numInequalityConstraints != dhdx.size() || numInequalityConstraints != ddhdxdx.size())
+    	if (numInequalityConstraints != dhdx.size() || numInequalityConstraints != ddhdxdx.size()) {
     		throw std::runtime_error("The inequality constraint should have the same size as it derivative.");
+		}
 
         penaltySecondDerivativeState.setZero();
         for (size_t i = 0; i < numInequalityConstraints; i++) {
@@ -69,8 +72,9 @@ namespace ocs2 {
                                                                                 const input_matrix_array_t &ddhdudu,
                                                                                 input_matrix_t &penaltySecondDerivativeInput) const {
     	const size_t numInequalityConstraints = h.size();
-    	if (numInequalityConstraints != dhdu.size() || numInequalityConstraints != ddhdudu.size())
+    	if (numInequalityConstraints != dhdu.size() || numInequalityConstraints != ddhdudu.size()) {
     		throw std::runtime_error("The inequality constraint should have the same size as it derivative.");
+		}
 
     	penaltySecondDerivativeInput.setZero();
     	for (size_t i = 0; i < numInequalityConstraints; i++) {
@@ -87,8 +91,9 @@ namespace ocs2 {
                                                                                const input_state_matrix_array_t &ddhdudx,
                                                                                input_state_matrix_t &penaltyDerivativeInputState) const {
     	const size_t numInequalityConstraints = h.size();
-    	if (numInequalityConstraints != dhdx.size() || numInequalityConstraints != dhdu.size())
+    	if (numInequalityConstraints != dhdx.size() || numInequalityConstraints != dhdu.size()) {
     		throw std::runtime_error("The inequality constraint should have the same size as it derivative.");
+		}
 
         penaltyDerivativeInputState.setZero();
         for (size_t i = 0; i < numInequalityConstraints; i++) {
@@ -109,4 +114,4 @@ namespace ocs2 {
         }
     };
 
-}
+}  // namespace ocs2

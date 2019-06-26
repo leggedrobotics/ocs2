@@ -61,12 +61,12 @@ public:
 	static_assert(std::is_base_of<LogicRulesBase, LOGIC_RULES_T>::value,
 			"LOGIC_RULES_T must inherit from LogicRulesBase");
 
-	typedef std::shared_ptr<LogicRulesMachine<LOGIC_RULES_T>> Ptr;
+	using Ptr = std::shared_ptr<LogicRulesMachine<LOGIC_RULES_T> >;
 
 	typedef Dimensions<0, 0> DIMENSIONS;
-	typedef DIMENSIONS::size_array_t   size_array_t;
-	typedef DIMENSIONS::scalar_t       scalar_t;
-	typedef DIMENSIONS::scalar_array_t scalar_array_t;
+	using size_array_t = DIMENSIONS::size_array_t;
+	using scalar_t = DIMENSIONS::scalar_t;
+	using scalar_array_t = DIMENSIONS::scalar_array_t;
 
 	/**
 	 * Default constructor.

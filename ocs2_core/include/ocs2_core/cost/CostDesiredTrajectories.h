@@ -51,10 +51,10 @@ class CostDesiredTrajectories
 public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-	typedef std::vector<SCALAR_T> scalar_array_t;
+	using scalar_array_t = std::vector<SCALAR_T>;
 	typedef Eigen::Matrix<SCALAR_T, Eigen::Dynamic, 1> dynamic_vector_t;
 	typedef std::vector<dynamic_vector_t, Eigen::aligned_allocator<dynamic_vector_t>> dynamic_vector_array_t;
-	typedef EigenLinearInterpolation<dynamic_vector_t>  dynamic_linear_interpolation_t;
+	using dynamic_linear_interpolation_t = EigenLinearInterpolation<dynamic_vector_t>;
 
 	CostDesiredTrajectories(
 			const scalar_array_t& desiredTimeTrajectory = scalar_array_t(),
@@ -117,7 +117,7 @@ public:
 	void getDesiredStateFunc(
 			dynamic_linear_interpolation_t& desiredStateFunc) const {
 
-		if (desiredStateTrajectory_.empty()==false) {
+		if (!desiredStateTrajectory_.empty()) {
 			desiredStateFunc.setData(&desiredTimeTrajectory_, &desiredStateTrajectory_);
 		} else {
 			desiredStateFunc.setZero();
@@ -127,7 +127,7 @@ public:
 	void getDesiredInputFunc(
 			dynamic_linear_interpolation_t& desiredInputFunc) const {
 
-		if (desiredInputTrajectory_.empty()==false) {
+		if (!desiredInputTrajectory_.empty()) {
 			desiredInputFunc.setData(&desiredTimeTrajectory_, &desiredInputTrajectory_);
 		} else {
 			desiredInputFunc.setZero();
@@ -150,10 +150,11 @@ public:
 				std::cerr << std::setprecision(dispPrecision) <<
 						desiredStateTrajectory_[i](j) << ",  ";
 			}
-			if (desiredStateTrajectory_[i].size()>0)
+			if (desiredStateTrajectory_[i].size()>0) {
 				std::cerr << "\b\b]" << ",  " << std::endl;
-			else
+			} else {
 				std::cerr << " ]" << ",  " << std::endl;
+			}
 
 			// input
 			std::cerr << "input: [";
@@ -161,10 +162,11 @@ public:
 				std::cerr << std::setprecision(dispPrecision) <<
 						desiredInputTrajectory_[i](j) << ",  ";
 			}
-			if (desiredInputTrajectory_[i].size()>0)
+			if (desiredInputTrajectory_[i].size()>0) {
 				std::cerr << "\b\b]" << std::endl;
-			else
+			} else {
 				std::cerr << " ]" << std::endl;
+			}
 
 		}  // end of i loop
 	}

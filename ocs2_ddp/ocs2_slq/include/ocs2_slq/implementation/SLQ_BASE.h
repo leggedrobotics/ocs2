@@ -457,7 +457,8 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculateControllerWorker (
 	input_matrix_t DmNullProjection = input_matrix_t::Identity()-DmProjected;
 
 	// Feedback gains K
-	BASE::nominalControllersStock_[i].gainArray_[k]   = -DmNullProjection * Lm - CmProjected;
+	BASE::nominalControllersStock_[i].gainArray_[k] = -CmProjected;
+    BASE::nominalControllersStock_[i].gainArray_[k].noalias() -= DmNullProjection * Lm;
 
 	// Bias input
 	BASE::nominalControllersStock_[i].biasArray_[k] = nominalInput - BASE::nominalControllersStock_[i].gainArray_[k]*nominalState

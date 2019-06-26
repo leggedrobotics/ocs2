@@ -310,19 +310,16 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::approximateConstrainedLQWork
 		EvProjectedTrajectoryStock_[i][k].setZero();
 		CmProjectedTrajectoryStock_[i][k].setZero();
 		DmProjectedTrajectoryStock_[i][k].setZero();
-
 		AmConstrainedTrajectoryStock_[i][k] = BASE::AmTrajectoryStock_[i][k];
 		QmConstrainedTrajectoryStock_[i][k] = BASE::QmTrajectoryStock_[i][k];
 		QvConstrainedTrajectoryStock_[i][k] = BASE::QvTrajectoryStock_[i][k];
-
 		RmInvConstrainedCholTrajectoryStock_[i][k] = RinvChol;
-
 	} else {
 		dynamic_matrix_t Cm = BASE::CmTrajectoryStock_[i][k].topRows(nc1);
 		dynamic_matrix_t Dm = BASE::DmTrajectoryStock_[i][k].topRows(nc1);
 
 		// check numerical stability_
-		if (BASE::ddpSettings_.checkNumericalStability_ && nc1 > 0) {
+		if (BASE::ddpSettings_.checkNumericalStability_) {
 			if (Dm.colPivHouseholderQr().rank() != nc1) {
 				BASE::printString(">>> WARNING: The state-input constraints are rank deficient "
 						"(at time " + std::to_string(BASE::nominalTimeTrajectoriesStock_[i][k]) + ")!");
@@ -330,18 +327,21 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::approximateConstrainedLQWork
 		}
 
 		// Constraint projectors are obtained at once
-        dynamic_matrix_t DmDager, DdaggerT_R_Ddagger_Chol, RinvConstrainedChol;
-        ocs2::LinearAlgebra::computeConstraintProjection(Dm, RinvChol, DmDager, DdaggerT_R_Ddagger_Chol, RinvConstrainedChol);
+        dynamic_matrix_t DmDager, DdaggerT_R_Ddagger_Chol;
+        ocs2::LinearAlgebra::computeConstraintProjection(Dm, RinvChol, DmDager, DdaggerT_R_Ddagger_Chol, RmInvConstrainedCholTrajectoryStock_[i][k]);
 
+        // Projected Constraints
 		DmDagerTrajectoryStock_[i][k].leftCols(nc1) = DmDager;
 		EvProjectedTrajectoryStock_[i][k].noalias() = DmDager * BASE::EvTrajectoryStock_[i][k].head(nc1);
 		CmProjectedTrajectoryStock_[i][k].noalias() = DmDager * Cm;
 		DmProjectedTrajectoryStock_[i][k].noalias() = DmDager * Dm;
 
+		// Am constrained
 		AmConstrainedTrajectoryStock_[i][k] = BASE::AmTrajectoryStock_[i][k];
 		AmConstrainedTrajectoryStock_[i][k].noalias() -=
 				BASE::BmTrajectoryStock_[i][k] * CmProjectedTrajectoryStock_[i][k];
 
+		// Qm constrained
 		state_matrix_t PmTransDmDagerCm =
 				BASE::PmTrajectoryStock_[i][k].transpose() * CmProjectedTrajectoryStock_[i][k];
 		QmConstrainedTrajectoryStock_[i][k] =
@@ -349,11 +349,10 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::approximateConstrainedLQWork
         dynamic_matrix_t Cm_RProjected_Cm_Chol = DdaggerT_R_Ddagger_Chol.transpose() * Cm;
 		QmConstrainedTrajectoryStock_[i][k].noalias() += Cm_RProjected_Cm_Chol.transpose() * Cm_RProjected_Cm_Chol;
 
+		// Qv constrained
 		QvConstrainedTrajectoryStock_[i][k] = BASE::QvTrajectoryStock_[i][k];
 		QvConstrainedTrajectoryStock_[i][k].noalias() -=
 				CmProjectedTrajectoryStock_[i][k].transpose() * BASE::RvTrajectoryStock_[i][k];
-
-		RmInvConstrainedCholTrajectoryStock_[i][k] = RinvConstrainedChol;
 	}
 
 	// making sure that constrained Qm is PSD
@@ -438,7 +437,6 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculateControllerWorker (
 	// interpolate
 	const auto greatestLessTimeStampIndex = BASE::nominalStateFunc_[workerIndex].interpolate(time, nominalState);
 	BASE::nominalInputFunc_[workerIndex].interpolate(time, nominalInput, greatestLessTimeStampIndex);
-
 	BmFunc_[workerIndex].interpolate(time, Bm, greatestLessTimeStampIndex);
 	PmFunc_[workerIndex].interpolate(time, Pm, greatestLessTimeStampIndex);
 	RvFunc_[workerIndex].interpolate(time, Rv, greatestLessTimeStampIndex);
@@ -447,12 +445,21 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculateControllerWorker (
 	CmProjectedFunc_[workerIndex].interpolate(time, CmProjected, greatestLessTimeStampIndex);
 	DmProjectedFunc_[workerIndex].interpolate(time, DmProjected, greatestLessTimeStampIndex);
 
-	input_state_matrix_t Lm  = RmInverse * (Pm + Bm.transpose()*BASE::SmTrajectoryStock_[i][k]);
-	input_vector_t     Lv  = RmInverse * (Rv + Bm.transpose()*BASE::SvTrajectoryStock_[i][k]);
-	input_vector_t     Lve = RmInverse * (Bm.transpose()*BASE::SveTrajectoryStock_[i][k]);
+	// Lm
+	Pm.noalias() += Bm.transpose()*BASE::SmTrajectoryStock_[i][k]; // Avoid temporary in the product
+	input_state_matrix_t Lm  = RmInverse * Pm;
+
+	// Lv, Lve
+	Rv.noalias() += Bm.transpose()*BASE::SvTrajectoryStock_[i][k];
+	input_vector_t Lv  = RmInverse * Rv;
+	input_vector_t Lve = RmInverse * (Bm.transpose()*BASE::SveTrajectoryStock_[i][k]);
 
 	input_matrix_t DmNullProjection = input_matrix_t::Identity()-DmProjected;
+
+	// Feedback gains K
 	BASE::nominalControllersStock_[i].gainArray_[k]   = -DmNullProjection * Lm - CmProjected;
+
+	// Bias input
 	BASE::nominalControllersStock_[i].biasArray_[k] = nominalInput - BASE::nominalControllersStock_[i].gainArray_[k]*nominalState
 			- BASE::constraintStepSize_ * (DmNullProjection*Lve + EvProjected);
 	BASE::nominalControllersStock_[i].deltaBiasArray_[k] = -DmNullProjection*Lv;

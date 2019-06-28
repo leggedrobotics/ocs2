@@ -15,6 +15,7 @@
 #include <Eigen/Dense>
 
 #include <ocs2_core/constraint/ConstraintBase.h>
+#include <ocs2_core/constraint/ConstraintCollection.h>
 
 #include "ocs2_switched_model_interface/core/ComModelBase.h"
 #include "ocs2_switched_model_interface/core/KinematicsModelBase.h"
@@ -22,6 +23,7 @@
 #include "ocs2_switched_model_interface/core/SwitchedModel.h"
 #include "ocs2_switched_model_interface/logic/SwitchedModelLogicRulesBase.h"
 #include "ocs2_switched_model_interface/state_constraint/EndEffectorConstraintBase.h"
+#include "ocs2_switched_model_interface/constraint/FrictionConeConstraint.h"
 
 namespace switched_model {
 
@@ -80,6 +82,10 @@ public:
 	typedef typename SwitchedModel<JOINT_COORD_SIZE>::base_coordinate_t   base_coordinate_t;
 	typedef typename SwitchedModel<JOINT_COORD_SIZE>::joint_coordinate_t  joint_coordinate_t;
 
+	using ConstraintCollection_t = ocs2::ConstraintCollection<STATE_DIM, INPUT_DIM>;
+	using QuadraticConstraintApproximation_t = ocs2::QuadraticConstraintApproximation<STATE_DIM, INPUT_DIM>;
+	using ConstraintTerm_t = ocs2::ConstraintTerm<STATE_DIM, INPUT_DIM>;
+	using FrictionConeConstraint_t = FrictionConeConstraint<STATE_DIM, INPUT_DIM>;
 
 	ComKinoConstraintBase(
 			const kinematic_model_t& kinematicModel,
@@ -91,7 +97,9 @@ public:
 	, comModelPtr_(comModel.clone())
 	, o_gravityVector_(0.0, 0.0, -options.gravitationalAcceleration_)
 	, options_(options)
-	{}
+	{
+		InitializeConstraintTerms();
+	}
 
 	/**
 	 * copy constructor of ComKinoConstraintBase
@@ -103,7 +111,19 @@ public:
 	, comModelPtr_(rhs.comModelPtr_->clone())
 	, o_gravityVector_(rhs.o_gravityVector_)
 	, options_(rhs.options_)
-	{}
+	{
+		InitializeConstraintTerms();
+	}
+
+	/**
+	 * Initialize Constraint Terms
+	 */
+	void InitializeConstraintTerms() {
+		constraintCollection_.add(std::unique_ptr<ConstraintTerm_t>(new FrictionConeConstraint_t(options_.frictionCoefficient_, 25.0, 0)), "LF_FrictionCone");
+		constraintCollection_.add(std::unique_ptr<ConstraintTerm_t>(new FrictionConeConstraint_t(options_.frictionCoefficient_, 25.0, 1)), "RF_FrictionCone");
+		constraintCollection_.add(std::unique_ptr<ConstraintTerm_t>(new FrictionConeConstraint_t(options_.frictionCoefficient_, 25.0, 2)), "LH_FrictionCone");
+		constraintCollection_.add(std::unique_ptr<ConstraintTerm_t>(new FrictionConeConstraint_t(options_.frictionCoefficient_, 25.0, 3)), "RH_FrictionCone");
+	}
 
 	virtual ~ComKinoConstraintBase() = default;
 
@@ -290,6 +310,9 @@ public:
 
 
 private:
+  	ConstraintCollection_t constraintCollection_;
+  	QuadraticConstraintApproximation_t quadraticInequalityConstraintApproximation_;
+
 	typename kinematic_model_t::Ptr kinematicModelPtr_;
 	typename com_model_t::Ptr comModelPtr_;
 	Eigen::Vector3d o_gravityVector_;

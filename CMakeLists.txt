@@ -17,6 +17,10 @@ find_package(Boost REQUIRED COMPONENTS
   filesystem
 )
 
+set(PYTHON_EXECUTABLE /usr/bin/python3)
+set(PYBIND11_PYTHON_VERSION 3.6 CACHE STRING "")
+find_package(pybind11 QUIET)
+
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread -fopenmp -std=c++11 -Wfatal-errors -ffast-math -fPIC")
 
 ###################################
@@ -171,6 +175,38 @@ target_link_libraries(dummy_mrt_node
 )
 
 
+# PyBindings library
+add_library(anymalPyBindings
+  src/AnymalPyBindings.cpp
+)
+add_dependencies(anymalPyBindings
+  ocs2_anymal_interface
+  ${catkin_EXPORTED_TARGETS}
+)
+target_link_libraries(anymalPyBindings
+  ocs2_anymal_interface
+  ${catkin_LIBRARIES}
+)
+
+if(${pybind11_FOUND})
+  # build and install for python3.XX
+  pybind11_add_module(AnymalPyBindings3 SHARED
+    src/pyBindModule3.cpp
+  )
+  add_dependencies(AnymalPyBindings3
+    anymalPyBindings
+    ${catkin_EXPORTED_TARGETS}
+  )
+  target_link_libraries(AnymalPyBindings3 PRIVATE
+    anymalPyBindings
+    ${catkin_LIBRARIES}
+  )
+  set_target_properties(AnymalPyBindings3
+    PROPERTIES LIBRARY_OUTPUT_DIRECTORY ${CATKIN_DEVEL_PREFIX}/lib/python3.6/dist-packages/${PROJECT_NAME}
+  )
+  #catkin_python_setup()
+endif()
+
 #############
 ## Install ##
 #############
@@ -212,3 +248,14 @@ install(DIRECTORY config launch
 
 ## Add folders to be run by python nosetests
 # catkin_add_nosetests(test)
+
+if(${pybind11_FOUND})
+  catkin_add_gtest(anymal_pybindings_test
+    test/PyBindingsTest.cpp
+    )
+  target_link_libraries(anymal_pybindings_test
+    anymalPyBindings
+    ${catkin_LIBRARIES}
+    ${Boost_LIBRARIES}
+    )
+endif()

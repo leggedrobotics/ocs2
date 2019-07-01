@@ -61,12 +61,34 @@ defaultModeSequenceTemplate
 {
   templateSubsystemsSequence
   {
-    [0]  STANCE
+    [0]  RF_LH
+    [1]  LF_RH
+    [2]  RF_LH
+    [3]  LF_RH
+    [4]  RF_LH
+    [5]  LF_RH
+    [6]  RF_LH
+    [7]  LF_RH
+    [8]  RF_LH
+    [9]  LF_RH
+    [10]  RF_LH
+    [11]  LF_RH
   }
   templateSwitchingTimes
   {
     [0]  0.0
-    [1]  0.5
+    [1]  0.35
+    [2]  0.7
+    [3]  1.05
+    [4]  1.4
+    [5]  1.75
+    [6]  2.1
+    [7]  2.45
+    [8]  2.8
+    [9]  3.15
+    [10]  3.5
+    [11]  3.85
+    [12]  4.2
   }
 }
 
@@ -139,14 +161,14 @@ slq
 mpc
 {
   runtimeMaxNumIterations         1
-  initMaxNumIterations            1
-	
+  initMaxNumIterations            10
+
   runtimeMinLearningRate          1e-2
   runtimeMaxLearningRate          1.0
   initMinLearningRate             1e-2
   initMaxLearningRate             1.0
 
-  debugPrint                      0
+  debugPrint                      1
   coldStart                       0
   recedingHorizon                 1	; use receding horizon MPC
 

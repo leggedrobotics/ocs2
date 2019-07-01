@@ -35,6 +35,7 @@ public:
 	typedef AnymalComKinoConstraint     		constraint_t;
 	typedef AnymalCost		             		cost_funtion_t;
 	typedef AnymalComKinoOperatingPoints	 	operating_point_t;
+	using mpc_slq_t =   ocs2::MPC_SLQ<BASE::state_dim_, BASE::input_dim_, BASE::logic_rules_t>;
 
 	OCS2AnymalInterface(const std::string& pathToConfigFolder);
 
@@ -62,6 +63,11 @@ public:
   	controlled_system_base_ptr_t getSystemDynamicsPtr() override {
 	  	return controlled_system_base_ptr_t(new system_dynamics_t(modelSettings_));
   	}
+
+        system_dynamics_t const * getDynamicsPtr() override {return dynamicsPtr_.get(); }
+        system_dynamics_derivative_t const * getDynamicsDerivativesPtr() override {return dynamicsDerivativesPtr_.get(); }
+
+        cost_funtion_t* getCostPtr() override {return costFunctionPtr_.get(); }
 
 protected:
 	// dynamics

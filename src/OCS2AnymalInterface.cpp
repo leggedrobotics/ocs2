@@ -65,7 +65,7 @@ void OCS2AnymalInterface::setupOptimizer(
 
 	// MPC
 	if (modelSettings_.gaitOptimization_ == false) {
-		mpcPtr = mpc_ptr_t( new mpc_t(dynamicsPtr_.get(), dynamicsDerivativesPtr_.get(), constraintsPtr_.get(),
+		mpcPtr = mpc_ptr_t( new mpc_slq_t(dynamicsPtr_.get(), dynamicsDerivativesPtr_.get(), constraintsPtr_.get(),
 				costFunctionPtr_.get(), operatingPointsPtr_.get(),
 				partitioningTimes_,
 				slqSettings_, mpcSettings_, logicRulesPtr.get(), modeSequenceTemplatePtr));

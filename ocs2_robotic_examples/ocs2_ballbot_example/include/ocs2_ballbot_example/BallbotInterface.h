@@ -67,6 +67,7 @@ public:
 	using ballbotOperatingPoint_t = SystemOperatingPoint<ballbot::STATE_DIM_, ballbot::INPUT_DIM_>;
 
 	using mpc_t = ocs2::MPC_SLQ<ballbot::STATE_DIM_, ballbot::INPUT_DIM_>;
+	using mpc_base_t = mpc_t::BASE;
 
 	/**
 	 * Constructor
@@ -99,12 +100,12 @@ public:
 	 * @return Pointer to the internal MPC
 	 */
 	mpc_t::Ptr& getMPCPtrSpecialized();
-	void* getMPCPtr() override;
+	mpc_base_t* getMPCPtr() override;
 
 	BallbotSystemDynamics const * getDynamicsPtr() override { return ballbotSystemDynamicsPtr_.get(); }
 	BallbotSystemDynamics const * getDynamicsDerivativesPtr() override {return ballbotSystemDynamicsPtr_.get(); }
 
-	void* getCostPtr() override { return ballbotCostPtr_.get(); }
+	BallbotCost* getCostPtr() override { return ballbotCostPtr_.get(); }
 
 protected:
 	/**

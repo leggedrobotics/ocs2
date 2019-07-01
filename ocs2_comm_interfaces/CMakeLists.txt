@@ -20,6 +20,9 @@ find_package(Boost REQUIRED COMPONENTS
   filesystem
 )
 
+# Generate compile_commands.json for clang tools
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread -fopenmp -std=c++11 -Wfatal-errors -Wl,--no-as-needed")
 
 ###################################
@@ -99,6 +102,31 @@ target_link_libraries(test_custom_callback_queue
         ${catkin_LIBRARIES}
         )
 
+add_executable(${PROJECT_NAME}_lintTarget
+        src/lintTarget.cpp
+        )
+add_dependencies(${PROJECT_NAME}_lintTarget
+        ${catkin_EXPORTED_TARGETS}
+        )
+target_link_libraries(${PROJECT_NAME}_lintTarget
+        ${catkin_LIBRARIES}
+        )
+
+#########################
+###   CLANG TOOLING   ###
+#########################
+find_package(cmake_clang_tools QUIET)
+if(cmake_clang_tools_FOUND)
+    message(STATUS "Run clang tooling for target " ${PROJECT_NAME}_lintTarget)
+    add_clang_tooling(
+            TARGET ${PROJECT_NAME}_lintTarget
+            SOURCE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/src ${CMAKE_CURRENT_SOURCE_DIR}/include
+            CT_HEADER_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/include
+            CF_QUIET # temporarily set to quiet, because the current amount of warning crashes the buildserver
+            CT_QUIET
+            # CF_FIX # temporarily disabled
+    )
+endif(cmake_clang_tools_FOUND)
 
 #############
 ## Install ##

@@ -126,10 +126,12 @@ void MPC_OCS2<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::runOCS2() {
 		ocs2Synchronization_.wait(ocs2Lock, [&]{return activateOCS2_ || terminateOCS2_;});
 
 		// exit loop
-		if (terminateOCS2_==true) break;
+		if (terminateOCS2_==true) { break;
+		}
 
-		if (BASE::mpcSettings_.debugPrint_)
+		if (BASE::mpcSettings_.debugPrint_) {
 			std::cerr << "### OCS2 started. " << std::endl;
+		}
 
 		subsystemsSequenceOptimized_ = slqDataCollectorPtr_->subsystemsSequence_;
 
@@ -139,8 +141,9 @@ void MPC_OCS2<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::runOCS2() {
 				eventTimesOptimized_,
 				BASE::mpcSettings_.maxTimeStep_);
 
-		if (BASE::mpcSettings_.debugPrint_)
+		if (BASE::mpcSettings_.debugPrint_) {
 			std::cerr << "### OCS2 finished. " << std::endl;
+		}
 
 		activateOCS2_ = false;
 		ocs2Lock.unlock();
@@ -157,11 +160,11 @@ bool MPC_OCS2<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::run(
 
 	std::unique_lock<std::mutex> slqLock(dataCollectorMutex_, std::defer_lock_t());
 	bool ownership = slqLock.try_lock();
-	if (ownership==true && BASE::initRun_==false) {
+	if (ownership && BASE::initRun_==false) {
 
 		bool rewaindTookPlace = currentTime>0.1 && BASE::slqPtr_->getRewindCounter() != slqDataCollectorPtr_->rewindCounter_;
 		bool modeSequenceUpdated = subsystemsSequenceOptimized_ != BASE::slqPtr_->getLogicRulesPtr()->subsystemsSequence();
-		if (rewaindTookPlace==false && modeSequenceUpdated==false) {
+		if (!rewaindTookPlace && !modeSequenceUpdated) {
 
 			// adjust the SLQ internal controller using trajectory spreading approach
 			if (BASE::slqPtr_->getLogicRulesPtr()->eventTimes().empty()==false) {
@@ -175,8 +178,9 @@ bool MPC_OCS2<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::run(
 		}
 
 		// collect SLQ variables
-		if (BASE::mpcSettings_.debugPrint_)
+		if (BASE::mpcSettings_.debugPrint_) {
 			std::cerr << "### SLQ data collector triggered." << std::endl;
+		}
 		slqDataCollectorPtr_->collect(BASE::slqPtr_.get());
 
 		activateOCS2_ = true;

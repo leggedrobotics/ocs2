@@ -49,9 +49,9 @@ public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
 	typedef Dimensions<0, 0> DIMENSIONS;
-	typedef typename DIMENSIONS::size_array_t    size_array_t;
-	typedef typename DIMENSIONS::scalar_t        scalar_t;
-	typedef typename DIMENSIONS::scalar_array_t  scalar_array_t;
+	using size_array_t = typename DIMENSIONS::size_array_t;
+	using scalar_t = typename DIMENSIONS::scalar_t;
+	using scalar_array_t = typename DIMENSIONS::scalar_array_t;
 
 	/**
 	 * Default constructor
@@ -71,8 +71,8 @@ public:
 	 * Copy constructor
 	 */
 	LogicRulesBase(const LogicRulesBase& rhs)
-	: eventTimes_(rhs.eventTimes_)
-	{}
+	 
+	= default;
 
 	/**
 	 * Destructor
@@ -138,14 +138,17 @@ public:
 	virtual void display() const {
 
 		std::cerr << std::endl << "Event Times:\n\t {";
-		for (auto& t: eventTimes_)
+		for (auto& t: eventTimes_) {
 			std::cerr << t << ", ";
-		if (!eventTimes_.empty())  std::cerr << "\b\b";
+		}
+		if (!eventTimes_.empty()) {  std::cerr << "\b\b";
+		}
 		std::cerr << "}" << std::endl;
 
 		std::cerr << "Event counters:\n\t {";
-		for (size_t i=0; i<=eventTimes_.size() ;i++)
+		for (size_t i=0; i<=eventTimes_.size() ;i++) {
 			std::cerr << i << ", ";
+		}
 		std::cerr << "\b\b}" << std::endl;
 	}
 

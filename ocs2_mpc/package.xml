@@ -25,6 +25,7 @@
 
   <buildtool_depend>catkin</buildtool_depend>
   <build_depend>cmake_modules</build_depend>
+  <build_depend>cmake_clang_tools</build_depend>
 
   <depend>ocs2_core</depend>
   <depend>ocs2_slq</depend>

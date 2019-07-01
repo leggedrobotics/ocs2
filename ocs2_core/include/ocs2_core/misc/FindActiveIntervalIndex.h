@@ -70,12 +70,14 @@ int findActiveIntervalIndex(
 
 	const int numTimeIntervals = timeIntervals.size()-1;
 
-	if (numTimeIntervals < 1)
+	if (numTimeIntervals < 1) {
 		throw std::runtime_error("The time interval array should have at least 2 elements.");
+	}
 
-	if (guessedIndex<0 || guessedIndex>numTimeIntervals-1)
+	if (guessedIndex<0 || guessedIndex>numTimeIntervals-1) {
 		throw std::runtime_error("The guessed index (i.e. " + std::to_string(guessedIndex) +
 				") is out of range ( [0, " + std::to_string(numTimeIntervals-1) + "].");
+	}
 
 	int index = -1;
 
@@ -99,14 +101,18 @@ int findActiveIntervalIndex(
 	}
 
 	// initial time case for epsilon > 0
-	if (index==-1 && epsilon > 0)
-		if(enquiryTime >= timeIntervals.front()-epsilon)
+	if (index==-1 && epsilon > 0) {
+		if(enquiryTime >= timeIntervals.front()-epsilon) {
 			index = 0;
+	}
+}
 
 	// final time case for epsilon < 0
-	if (index==numTimeIntervals && epsilon < 0)
-		if(enquiryTime <= timeIntervals.back()-epsilon)
+	if (index==numTimeIntervals && epsilon < 0) {
+		if(enquiryTime <= timeIntervals.back()-epsilon) {
 			index = numTimeIntervals-1;
+	}
+}
 
 	return index;
 }

@@ -54,8 +54,8 @@ class Observer
 public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-	typedef double scalar_t;
-	typedef std::vector<scalar_t> scalar_array_t;
+	using scalar_t = double;
+	using scalar_array_t = std::vector<scalar_t>;
 	typedef Eigen::Matrix<scalar_t,STATE_DIM,1> state_vector_t;
 	typedef std::vector<state_vector_t, Eigen::aligned_allocator<state_vector_t>> state_vector_array_t;
 
@@ -97,7 +97,8 @@ public:
 			{
 				std::string msg = "Integration terminated since the maximum number of function calls is reached. ";
 				msg += "State at termination time " + std::to_string(t) + ":\n [";
-				for (size_t i=0; i<x.size()-1; i++)  msg += std::to_string(x(i)) + ", ";
+				for (size_t i=0; i<x.size()-1; i++) {  msg += std::to_string(x(i)) + ", ";
+				}
 				msg += std::to_string(x(x.size()-1)) + "]\n";
 				throw std::runtime_error(msg);
 				break;

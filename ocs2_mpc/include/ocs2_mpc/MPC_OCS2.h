@@ -57,39 +57,39 @@ public:
 	static_assert(std::is_base_of<HybridLogicRules, LOGIC_RULES_T>::value,
 			"LOGIC_RULES_T must inherit from HybridLogicRules");
 
-	typedef std::shared_ptr<MPC_OCS2<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>> Ptr;
+	using Ptr = std::shared_ptr<MPC_OCS2<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>>;
 
-	typedef SLQ_DataCollector<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> slq_data_collector_t;
-	typedef GSLQ_FW<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> gslq_t;
+	using slq_data_collector_t = SLQ_DataCollector<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>;
+	using gslq_t = GSLQ_FW<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>;
 
-	typedef MPC_SLQ<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> BASE;
+	using BASE = MPC_SLQ<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>;
 
-	typedef Dimensions<STATE_DIM, INPUT_DIM> DIMENSIONS;
-	typedef typename DIMENSIONS::controller_t		controller_t;
-	typedef typename DIMENSIONS::controller_array_t	controller_array_t;
-	typedef typename DIMENSIONS::scalar_t		scalar_t;
-	typedef typename DIMENSIONS::scalar_array_t	scalar_array_t;
-	typedef typename DIMENSIONS::size_array_t	size_array_t;
-	typedef typename DIMENSIONS::state_vector_t 		state_vector_t;
-	typedef typename DIMENSIONS::state_vector_array_t	state_vector_array_t;
-	typedef typename DIMENSIONS::state_vector_array2_t 	state_vector_array2_t;
-	typedef typename DIMENSIONS::input_vector_t 		 input_vector_t;
-	typedef typename DIMENSIONS::input_vector_array_t  input_vector_array_t;
-	typedef typename DIMENSIONS::input_vector_array2_t input_vector_array2_t;
-	typedef typename DIMENSIONS::input_state_matrix_t 	   input_state_matrix_t;
-	typedef typename DIMENSIONS::input_state_matrix_array_t  input_state_matrix_array_t;
-	typedef typename DIMENSIONS::input_state_matrix_array2_t input_state_matrix_array2_t;
-	typedef typename DIMENSIONS::dynamic_vector_t       dynamic_vector_t;
-	typedef typename DIMENSIONS::dynamic_vector_array_t dynamic_vector_array_t;
+	using DIMENSIONS = Dimensions<STATE_DIM, INPUT_DIM>;
+	using controller_t = typename DIMENSIONS::controller_t;
+	using controller_array_t = typename DIMENSIONS::controller_array_t;
+	using scalar_t = typename DIMENSIONS::scalar_t;
+	using scalar_array_t = typename DIMENSIONS::scalar_array_t;
+	using size_array_t = typename DIMENSIONS::size_array_t;
+	using state_vector_t = typename DIMENSIONS::state_vector_t;
+	using state_vector_array_t = typename DIMENSIONS::state_vector_array_t;
+	using state_vector_array2_t = typename DIMENSIONS::state_vector_array2_t;
+	using input_vector_t = typename DIMENSIONS::input_vector_t;
+	using input_vector_array_t = typename DIMENSIONS::input_vector_array_t;
+	using input_vector_array2_t = typename DIMENSIONS::input_vector_array2_t;
+	using input_state_matrix_t = typename DIMENSIONS::input_state_matrix_t;
+	using input_state_matrix_array_t = typename DIMENSIONS::input_state_matrix_array_t;
+	using input_state_matrix_array2_t = typename DIMENSIONS::input_state_matrix_array2_t;
+	using dynamic_vector_t = typename DIMENSIONS::dynamic_vector_t;
+	using dynamic_vector_array_t = typename DIMENSIONS::dynamic_vector_array_t;
 
-	typedef typename BASE::mode_sequence_template_t      mode_sequence_template_t;
-	typedef typename BASE::logic_rules_machine_t         logic_rules_machine_t;
-	typedef typename BASE::controlled_system_base_t	     controlled_system_base_t;
-	typedef typename BASE::event_handler_t               event_handler_t;
-	typedef typename BASE::derivatives_base_t            derivatives_base_t;
-	typedef typename BASE::constraint_base_t             constraint_base_t;
-	typedef typename BASE::cost_function_base_t          cost_function_base_t;
-	typedef typename BASE::operating_trajectories_base_t operating_trajectories_base_t;
+	using mode_sequence_template_t = typename BASE::mode_sequence_template_t;
+	using logic_rules_machine_t = typename BASE::logic_rules_machine_t;
+	using controlled_system_base_t = typename BASE::controlled_system_base_t;
+	using event_handler_t = typename BASE::event_handler_t;
+	using derivatives_base_t = typename BASE::derivatives_base_t;
+	using constraint_base_t = typename BASE::constraint_base_t;
+	using cost_function_base_t = typename BASE::cost_function_base_t;
+	using operating_trajectories_base_t = typename BASE::operating_trajectories_base_t;
 
 	/**
 	 * Default constructor.
@@ -132,7 +132,7 @@ public:
 	/**
 	 * Resets the class to its state after construction.
 	 */
-	virtual void reset() override;
+	void reset() override;
 
 //	/**
 //	 * Gets the OCS2 settings structure.

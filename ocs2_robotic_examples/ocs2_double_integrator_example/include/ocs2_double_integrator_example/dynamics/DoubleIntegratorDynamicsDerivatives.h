@@ -41,15 +41,15 @@ class DoubleIntegratorDynamicsDerivatives : public DerivativesBase<double_integr
  public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-	typedef std::shared_ptr<DoubleIntegratorDynamicsDerivatives> Ptr;
-	typedef std::shared_ptr<const DoubleIntegratorDynamicsDerivatives> ConstPtr;
+	using Ptr = std::shared_ptr<DoubleIntegratorDynamicsDerivatives>;
+	using ConstPtr = std::shared_ptr<const DoubleIntegratorDynamicsDerivatives>;
 
-	typedef DerivativesBase<double_integrator::STATE_DIM_, double_integrator::INPUT_DIM_> BASE;
-	typedef typename BASE::scalar_t               scalar_t;
-	typedef typename BASE::state_vector_t         state_vector_t;
-	typedef typename BASE::state_matrix_t         state_matrix_t;
-	typedef typename BASE::input_vector_t         input_vector_t;
-	typedef typename BASE::state_input_matrix_t  	state_input_matrix_t;
+	using BASE = DerivativesBase<double_integrator::STATE_DIM_, double_integrator::INPUT_DIM_>;
+	using scalar_t = typename BASE::scalar_t;
+	using state_vector_t = typename BASE::state_vector_t;
+	using state_matrix_t = typename BASE::state_matrix_t;
+	using input_vector_t = typename BASE::input_vector_t;
+	using state_input_matrix_t = typename BASE::state_input_matrix_t;
 
 	/**
 	 * Constructor
@@ -64,14 +64,14 @@ class DoubleIntegratorDynamicsDerivatives : public DerivativesBase<double_integr
 	/**
 	 * Destructor
 	 */
-	~DoubleIntegratorDynamicsDerivatives() = default;
+	~DoubleIntegratorDynamicsDerivatives() override = default;
 
 	/**
 	 * Returns pointer to the class.
 	 *
 	 * @return A raw pointer to the class.
 	 */
-  virtual DoubleIntegratorDynamicsDerivatives* clone() const { return new DoubleIntegratorDynamicsDerivatives(*this); }
+    DoubleIntegratorDynamicsDerivatives* clone() const override { return new DoubleIntegratorDynamicsDerivatives(*this); }
 
 	/**
 	 * Sets the current time, state, and control input.
@@ -80,7 +80,7 @@ class DoubleIntegratorDynamicsDerivatives : public DerivativesBase<double_integr
 	 * @param [in] x: Current state.
 	 * @param [in] u: Current input.
 	 */
-  virtual void setCurrentStateAndControl(const scalar_t& t, const state_vector_t& x, const input_vector_t& u) {
+   void setCurrentStateAndControl(const scalar_t& t, const state_vector_t& x, const input_vector_t& u) override {
 		// BASE class method
 		BASE::setCurrentStateAndControl(t, x, u);
 	}
@@ -91,7 +91,7 @@ class DoubleIntegratorDynamicsDerivatives : public DerivativesBase<double_integr
 	 *
 	 * @param [out] A: \f$ A(t) \f$ matrix.
 	 */
-  void getFlowMapDerivativeState(state_matrix_t& A) { A = A_; }
+  void getFlowMapDerivativeState(state_matrix_t& A) override { A = A_; }
 
 	/**
 	 * Get the B matrix at a given operating point for the linearized system flow map.
@@ -99,7 +99,7 @@ class DoubleIntegratorDynamicsDerivatives : public DerivativesBase<double_integr
 	 *
 	 * @param [out] B: \f$ B(t) \f$ matrix.
 	 */
-  void getFlowMapDerivativeInput(state_input_matrix_t& B) { B = B_; }
+  void getFlowMapDerivativeInput(state_input_matrix_t& B) override { B = B_; }
 
  private:
 	state_matrix_t A_;

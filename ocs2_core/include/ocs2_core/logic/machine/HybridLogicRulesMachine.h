@@ -50,10 +50,10 @@ public:
 	static_assert(std::is_base_of<HybridLogicRules, LOGIC_RULES_T>::value,
 			"LOGIC_RULES_T must inherit from HybridLogicRules");
 
-	typedef LogicRulesMachine<LOGIC_RULES_T> BASE;
-	typedef typename BASE::scalar_t        scalar_t;
-	typedef typename BASE::scalar_array_t  scalar_array_t;
-	typedef typename BASE::size_array_t    size_array_t;
+	using BASE = LogicRulesMachine<LOGIC_RULES_T>;
+	using scalar_t = typename BASE::scalar_t;
+	using scalar_array_t = typename BASE::scalar_array_t;
+	using size_array_t = typename BASE::size_array_t;
 
 	/**
 	 * Default constructor
@@ -94,7 +94,7 @@ public:
 	/**
 	 * Displays switched systems distribution over the time partitions.
 	 */
-	virtual void display() const override;
+	void display() const override;
 
 	/**
 	 * Sets up the LogicMachine. This method should be called before building-up the logic machine.

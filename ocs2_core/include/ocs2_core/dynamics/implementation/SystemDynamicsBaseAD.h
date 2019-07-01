@@ -40,8 +40,9 @@ SystemDynamicsBaseAD<Derived, STATE_DIM, INPUT_DIM, logic_rules_template_t, NUM_
 	, modelName_("")
 	, libraryFolder_("")
 {
-	if (dynamicLibraryIsCompiled==true)
+	if (dynamicLibraryIsCompiled) {
 		setADInterfaces();
+	}
 };
 
 /******************************************************************************************************/
@@ -60,8 +61,9 @@ SystemDynamicsBaseAD<Derived, STATE_DIM, INPUT_DIM, logic_rules_template_t, NUM_
 	, guardSurfacesADInterfacePtr_(rhs.guardSurfacesADInterfacePtr_->clone())
 
 {
-	if (rhs.dynamicLibraryIsCompiled_==true)
+	if (rhs.dynamicLibraryIsCompiled_) {
 		loadModels(false);
+	}
 }
 
 /******************************************************************************************************/
@@ -113,8 +115,9 @@ void SystemDynamicsBaseAD<Derived, STATE_DIM, INPUT_DIM, logic_rules_template_t,
 		const Eigen::Matrix<SCALAR_T, INPUT_DIM, 1>& input,
 		Eigen::Matrix<SCALAR_T, NUM_MODES, 1>& guardSurfacesValue) {
 
-	if (NUM_MODES != 1)
+	if (NUM_MODES != 1) {
 		throw std::runtime_error("systemGuardSurfaces() method should be implemented by the derived class.");
+	}
 
 	guardSurfacesValue(0) = -1;
 }
@@ -153,10 +156,11 @@ void SystemDynamicsBaseAD<Derived, STATE_DIM, INPUT_DIM, logic_rules_template_t,
 	modelName_ = modelName;
 	libraryFolder_ = libraryFolder;
 
-	if (dynamicLibraryIsCompiled_==true) {
+	if (dynamicLibraryIsCompiled_) {
 		bool libraryLoaded = loadModels(false);
-		if (libraryLoaded==false)
+		if (!libraryLoaded) {
 			throw std::runtime_error("SystemDynamics library is not found!");
+	}
 
 	} else {
 		throw std::runtime_error("SystemDynamics library has not been compiled!");
@@ -347,7 +351,7 @@ void SystemDynamicsBaseAD<Derived, STATE_DIM, INPUT_DIM, logic_rules_template_t,
 		const ad_dynamic_vector_t& tapedInput,
 		ad_dynamic_vector_t& f) {
 
-	ad_scalar_t& t = const_cast<ad_scalar_t&>(tapedInput(0));
+	auto& t = const_cast<ad_scalar_t&>(tapedInput(0));
 	Eigen::Matrix<ad_scalar_t, STATE_DIM, 1> x = tapedInput.segment(1, STATE_DIM);
 	Eigen::Matrix<ad_scalar_t, INPUT_DIM, 1> u = tapedInput.segment(1+STATE_DIM, INPUT_DIM);
 
@@ -364,7 +368,7 @@ void SystemDynamicsBaseAD<Derived, STATE_DIM, INPUT_DIM, logic_rules_template_t,
 		const ad_dynamic_vector_t& tapedInput,
 		ad_dynamic_vector_t& g) {
 
-	ad_scalar_t& t = const_cast<ad_scalar_t&>(tapedInput(0));
+	auto& t = const_cast<ad_scalar_t&>(tapedInput(0));
 	Eigen::Matrix<ad_scalar_t, STATE_DIM, 1> x = tapedInput.segment(1, STATE_DIM);
 	Eigen::Matrix<ad_scalar_t, INPUT_DIM, 1> u = tapedInput.segment(1+STATE_DIM, INPUT_DIM);
 
@@ -381,7 +385,7 @@ void SystemDynamicsBaseAD<Derived, STATE_DIM, INPUT_DIM, logic_rules_template_t,
 		const ad_dynamic_vector_t& tapedInput,
 		ad_dynamic_vector_t& gamma) {
 
-	ad_scalar_t& t = const_cast<ad_scalar_t&>(tapedInput(0));
+	auto& t = const_cast<ad_scalar_t&>(tapedInput(0));
 	Eigen::Matrix<ad_scalar_t, STATE_DIM, 1> x = tapedInput.segment(1, STATE_DIM);
 	Eigen::Matrix<ad_scalar_t, INPUT_DIM, 1> u = tapedInput.segment(1+STATE_DIM, INPUT_DIM);
 

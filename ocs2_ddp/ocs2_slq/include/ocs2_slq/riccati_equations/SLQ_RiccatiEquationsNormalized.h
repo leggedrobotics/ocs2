@@ -57,26 +57,26 @@ public:
 		S_DIM_ = (STATE_DIM*(STATE_DIM+1))/2 + 2*STATE_DIM + 1
 	};
 
-	typedef ODE_Base<S_DIM_> BASE;
+	using BASE = ODE_Base<S_DIM_>;
 
 	typedef Dimensions<STATE_DIM, INPUT_DIM> DIMENSIONS;
-	typedef typename DIMENSIONS::scalar_t 		scalar_t;
-	typedef typename DIMENSIONS::scalar_array_t scalar_array_t;
-	typedef typename DIMENSIONS::size_array_t 	size_array_t;
-	typedef typename DIMENSIONS::eigen_scalar_t       eigen_scalar_t;
-	typedef typename DIMENSIONS::eigen_scalar_array_t eigen_scalar_array_t;
-	typedef typename DIMENSIONS::state_vector_t 	  state_vector_t;
-	typedef typename DIMENSIONS::state_vector_array_t state_vector_array_t;
-	typedef typename DIMENSIONS::input_vector_t 		input_vector_t;
-	typedef typename DIMENSIONS::input_vector_array_t input_vector_array_t;
-	typedef typename DIMENSIONS::input_state_matrix_t 	  input_state_matrix_t;
-	typedef typename DIMENSIONS::input_state_matrix_array_t input_state_matrix_array_t;
-	typedef typename DIMENSIONS::state_matrix_t 	  state_matrix_t;
-	typedef typename DIMENSIONS::state_matrix_array_t state_matrix_array_t;
-	typedef typename DIMENSIONS::input_matrix_t 		input_matrix_t;
-	typedef typename DIMENSIONS::input_matrix_array_t input_matrix_array_t;
-	typedef typename DIMENSIONS::state_input_matrix_t 		 state_input_matrix_t;
-	typedef typename DIMENSIONS::state_input_matrix_array_t state_input_matrix_array_t;
+	using scalar_t = typename DIMENSIONS::scalar_t;
+	using scalar_array_t = typename DIMENSIONS::scalar_array_t;
+	using size_array_t = typename DIMENSIONS::size_array_t;
+	using eigen_scalar_t = typename DIMENSIONS::eigen_scalar_t;
+	using eigen_scalar_array_t = typename DIMENSIONS::eigen_scalar_array_t;
+	using state_vector_t = typename DIMENSIONS::state_vector_t;
+	using state_vector_array_t = typename DIMENSIONS::state_vector_array_t;
+	using input_vector_t = typename DIMENSIONS::input_vector_t;
+	using input_vector_array_t = typename DIMENSIONS::input_vector_array_t;
+	using input_state_matrix_t = typename DIMENSIONS::input_state_matrix_t;
+	using input_state_matrix_array_t = typename DIMENSIONS::input_state_matrix_array_t;
+	using state_matrix_t = typename DIMENSIONS::state_matrix_t;
+	using state_matrix_array_t = typename DIMENSIONS::state_matrix_array_t;
+	using input_matrix_t = typename DIMENSIONS::input_matrix_t;
+	using input_matrix_array_t = typename DIMENSIONS::input_matrix_array_t;
+	using state_input_matrix_t = typename DIMENSIONS::state_input_matrix_t;
+	using state_input_matrix_array_t = typename DIMENSIONS::state_input_matrix_array_t;
 
 	typedef Eigen::Matrix<scalar_t,S_DIM_,1> s_vector_t;
 	typedef std::vector<s_vector_t, Eigen::aligned_allocator<s_vector_t> > s_vector_array_t;
@@ -254,8 +254,9 @@ public:
 		eventTime_.clear();
 		eventTime_.reserve(eventsPastTheEndIndecesPtr->size());
 
-		for (const size_t& pastTheEndIndex : *eventsPastTheEndIndecesPtr)
+		for (const size_t& pastTheEndIndex : *eventsPastTheEndIndecesPtr) {
 			eventTime_.push_back( timeStampPtr->at(pastTheEndIndex-1) );
+		}
 
 		qFinalPtr_  = qFinalPtr;
 		QvFinalPtr_ = QvFinalPtr;
@@ -282,8 +283,9 @@ public:
 
 		size_t index = find(eventTime_, time);
 
-		if (index == eventTime_.size())
+		if (index == eventTime_.size()) {
 			throw std::runtime_error("The Riccati state jump time is not defined.");
+		}
 
 		s_vector_t allSsJump;
 		convert2Vector(QmFianlPtr_->at(index), QvFinalPtr_->at(index), qFinalPtr_->at(index), state_vector_t::Zero(),
@@ -309,10 +311,11 @@ public:
 		convert2Matrix(allSs, Sm_, Sv_, s_, Sve_);
 
 		// numerical consideration
-		if(useMakePSD_==true)
+		if(useMakePSD_) {
 			bool hasNegativeEigenValue = makePSD(Sm_);
-		else
+		} else {
 			Sm_ += state_matrix_t::Identity()*(addedRiccatiDiagonal_);
+		}
 
 		auto greatestLessTimeStampIndex = AmFunc_.interpolate(t, Am_);
 		BmFunc_.interpolate(t, Bm_, greatestLessTimeStampIndex);
@@ -361,18 +364,20 @@ protected:
 	template <typename Derived>
 	static bool makePSD(Eigen::MatrixBase<Derived>& squareMatrix) {
 
-		if (squareMatrix.rows() != squareMatrix.cols())
+		if (squareMatrix.rows() != squareMatrix.cols()) {
 			throw std::runtime_error("Not a square matrix: makePSD() method is for square matrix.");
+		}
 
 		Eigen::SelfAdjointEigenSolver<Derived> eig(squareMatrix, Eigen::EigenvaluesOnly);
 		Eigen::VectorXd lambda = eig.eigenvalues();
 
 		bool hasNegativeEigenValue = false;
-		for (size_t j=0; j<lambda.size() ; j++)
+		for (size_t j=0; j<lambda.size() ; j++) {
 			if (lambda(j) < 0.0) {
 				hasNegativeEigenValue = true;
 				lambda(j) = 1e-6;
 			}
+		}
 
 		if (hasNegativeEigenValue) {
 			eig.compute(squareMatrix, Eigen::ComputeEigenvectors);
@@ -388,7 +393,8 @@ protected:
 	InputIterator find (InputIterator first, InputIterator last, const T& val)
 	{
 	  while (first!=last) {
-	    if (*first==val) return first;
+	    if (*first==val) { return first;
+		}
 	    ++first;
 	  }
 	  return last;
@@ -404,11 +410,12 @@ protected:
 
 		size_t index = dataArray.size();
 
-		for (size_t i=0; i<dataArray.size(); i++)
+		for (size_t i=0; i<dataArray.size(); i++) {
 			if (std::abs(dataArray[i]-value)<1e-5) {
 				index = i;
 				break;
 			}
+		}
 
 		return index;
 	}
@@ -470,6 +477,6 @@ private:
 	const state_matrix_array_t* QmFianlPtr_;
 };
 
-}
+}  // namespace ocs2
 
 #endif /* SLQ_RICCATIEQUATIONSNORMALIZED_OCS2_H_ */

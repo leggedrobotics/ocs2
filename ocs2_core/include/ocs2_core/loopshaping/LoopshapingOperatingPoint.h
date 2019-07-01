@@ -49,12 +49,12 @@ public:
     {}
 
 
-    virtual ~LoopshapingOperatingPoint() {}
+    virtual ~LoopshapingOperatingPoint() = default;
 
-    virtual void initializeModel(
+    void initializeModel(
         LogicRulesMachine<LOGIC_RULES_T>& logicRulesMachine,
         const size_t& partitionIndex,
-        const char* algorithmName=NULL) override {
+        const char* algorithmName=nullptr) override {
 
       BASE::initializeModel(logicRulesMachine, partitionIndex, algorithmName);
       systembase_->initializeModel(logicRulesMachine, partitionIndex, algorithmName);
@@ -66,11 +66,11 @@ public:
         loopshapingDefinition_(obj.loopshapingDefinition_)
     {}
 
-    virtual LoopshapingOperatingPoint* clone() const override {
+    LoopshapingOperatingPoint* clone() const override {
       return new LoopshapingOperatingPoint(*this);
     }
 
-    virtual void getSystemOperatingTrajectories(
+    void getSystemOperatingTrajectories(
         const state_vector_t& initialState,
         const scalar_t& startTime,
         const scalar_t& finalTime,
@@ -79,7 +79,7 @@ public:
         input_vector_array_t& inputTrajectory,
         bool concatOutput = false) override {
 
-      if (concatOutput==false) {
+      if (!concatOutput) {
         timeTrajectory.clear();
         stateTrajectory.clear();
         inputTrajectory.clear();

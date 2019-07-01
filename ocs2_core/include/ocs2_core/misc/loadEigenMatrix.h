@@ -78,7 +78,7 @@ inline void loadEigenMatrix(
 		const std::string& matrixName,
 		Eigen::MatrixBase<Derived>& matrix)  {
 
-	typedef typename Eigen::MatrixBase<Derived>::Scalar scalar_t;
+	using scalar_t = typename Eigen::MatrixBase<Derived>::Scalar;
 
 	size_t rows = matrix.rows();
 	size_t cols = matrix.cols();
@@ -90,7 +90,7 @@ inline void loadEigenMatrix(
 
 	scalar_t aij;
 	bool failed = false;
-	for (size_t i=0; i<rows; i++)
+	for (size_t i=0; i<rows; i++) {
 		for (size_t j=0; j<cols; j++)  {
 			try	{
 				aij = pt.get<scalar_t>(matrixName + "." + "(" +std::to_string(i) + "," + std::to_string(j) + ")");
@@ -101,14 +101,15 @@ inline void loadEigenMatrix(
 			}
 			matrix(i,j) = scaling * aij;
 		}
+	}
 
-	if (failed==true)  {
+	if (failed)  {
 		std::cerr << "WARNING: Failed to load matrix type: " + matrixName + "!" << std::endl;
 	}
 }
 
 
-}  // end of ocs2 namespace
+}  // namespace ocs2
 
 
 #endif /* OCS2_LOADEIGENMATRIX_H_ */

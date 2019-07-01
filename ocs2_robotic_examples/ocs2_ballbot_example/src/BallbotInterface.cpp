@@ -77,7 +77,7 @@ void BallbotInterface::loadSettings(const std::string& taskFile) {
 
 	ballbotSystemDynamicsPtr_.reset(new BallbotSystemDynamics(libraryFilesAreGenerated_));
 
-	if (libraryFilesAreGenerated_ == true){
+	if (libraryFilesAreGenerated_){
 		ballbotSystemDynamicsPtr_->loadModels("ballbot_dynamics", libraryFolder_);
 	}else{
 		ballbotSystemDynamicsPtr_->createModels("ballbot_dynamics", libraryFolder_);

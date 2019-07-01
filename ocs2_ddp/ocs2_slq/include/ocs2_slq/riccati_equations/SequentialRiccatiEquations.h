@@ -57,23 +57,23 @@ public:
 
 	typedef Eigen::Matrix<double,S_DIM_,1> s_vector_t;
 	typedef Dimensions<STATE_DIM, INPUT_DIM> DIMENSIONS;
-	typedef typename DIMENSIONS::controller_t controller_t;
-	typedef typename DIMENSIONS::scalar_t 		scalar_t;
-	typedef typename DIMENSIONS::scalar_array_t scalar_array_t;
-	typedef typename DIMENSIONS::eigen_scalar_t       eigen_scalar_t;
-	typedef typename DIMENSIONS::eigen_scalar_array_t eigen_scalar_array_t;
-	typedef typename DIMENSIONS::state_vector_t 	  state_vector_t;
-	typedef typename DIMENSIONS::state_vector_array_t state_vector_array_t;
-	typedef typename DIMENSIONS::input_vector_t 		input_vector_t;
-	typedef typename DIMENSIONS::input_vector_array_t input_vector_array_t;
-	typedef typename DIMENSIONS::input_state_matrix_t 	  input_state_matrix_t;
-	typedef typename DIMENSIONS::input_state_matrix_array_t input_state_matrix_array_t;
-	typedef typename DIMENSIONS::state_matrix_t 	  state_matrix_t;
-	typedef typename DIMENSIONS::state_matrix_array_t state_matrix_array_t;
-	typedef typename DIMENSIONS::input_matrix_t 		input_matrix_t;
-	typedef typename DIMENSIONS::input_matrix_array_t input_matrix_array_t;
-	typedef typename DIMENSIONS::state_input_matrix_t 		 state_input_matrix_t;
-	typedef typename DIMENSIONS::state_input_matrix_array_t state_input_matrix_array_t;
+	using controller_t = typename DIMENSIONS::controller_t;
+	using scalar_t = typename DIMENSIONS::scalar_t;
+	using scalar_array_t = typename DIMENSIONS::scalar_array_t;
+	using eigen_scalar_t = typename DIMENSIONS::eigen_scalar_t;
+	using eigen_scalar_array_t = typename DIMENSIONS::eigen_scalar_array_t;
+	using state_vector_t = typename DIMENSIONS::state_vector_t;
+	using state_vector_array_t = typename DIMENSIONS::state_vector_array_t;
+	using input_vector_t = typename DIMENSIONS::input_vector_t;
+	using input_vector_array_t = typename DIMENSIONS::input_vector_array_t;
+	using input_state_matrix_t = typename DIMENSIONS::input_state_matrix_t;
+	using input_state_matrix_array_t = typename DIMENSIONS::input_state_matrix_array_t;
+	using state_matrix_t = typename DIMENSIONS::state_matrix_t;
+	using state_matrix_array_t = typename DIMENSIONS::state_matrix_array_t;
+	using input_matrix_t = typename DIMENSIONS::input_matrix_t;
+	using input_matrix_array_t = typename DIMENSIONS::input_matrix_array_t;
+	using state_input_matrix_t = typename DIMENSIONS::state_input_matrix_t;
+	using state_input_matrix_array_t = typename DIMENSIONS::state_input_matrix_array_t;
 
 	/**
 	 * Default constructor.
@@ -129,7 +129,7 @@ public:
 		for(size_t nCols=0; nCols < STATE_DIM; nCols++)
 		{
 			nRows = nCols+1;
-			allSs.template segment(count, nRows) << Eigen::Map<const Eigen::VectorXd>(Sm.data() + nCols*STATE_DIM, nRows);
+			allSs.segment(count, nRows) << Eigen::Map<const Eigen::VectorXd>(Sm.data() + nCols*STATE_DIM, nRows);
 			count += nRows;
 		}
 
@@ -155,8 +155,8 @@ public:
 		for(size_t rows=0; rows < STATE_DIM; rows++)
 		{
 			nCols = rows+1;
-			Sm.template block(rows, 0, 1, nCols)  << Eigen::Map<const Eigen::VectorXd>(allSs.data()+count, nCols).transpose();
-			Sm.template block(0, rows, nCols-1, 1)  << Eigen::Map<const Eigen::VectorXd>(allSs.data()+count, nCols-1); // "nCols-1" because diagonal elements have already been covered
+			Sm.block(rows, 0, 1, nCols)  << Eigen::Map<const Eigen::VectorXd>(allSs.data()+count, nCols).transpose();
+			Sm.block(0, rows, nCols-1, 1)  << Eigen::Map<const Eigen::VectorXd>(allSs.data()+count, nCols-1); // "nCols-1" because diagonal elements have already been covered
 			count += nCols;
 		}
 
@@ -285,18 +285,20 @@ protected:
 	template <typename Derived>
 	static bool makePSD(Eigen::MatrixBase<Derived>& squareMatrix) {
 
-		if (squareMatrix.rows() != squareMatrix.cols())
+		if (squareMatrix.rows() != squareMatrix.cols()) {
 			throw std::runtime_error("Not a square matrix: makePSD() method is for square matrix.");
+		}
 
 		Eigen::SelfAdjointEigenSolver<Derived> eig(squareMatrix, Eigen::EigenvaluesOnly);
 		Eigen::VectorXd lambda = eig.eigenvalues();
 
 		bool hasNegativeEigenValue = false;
-		for (size_t j=0; j<lambda.size() ; j++)
+		for (size_t j=0; j<lambda.size() ; j++) {
 			if (lambda(j) < 0.0) {
 				hasNegativeEigenValue = true;
 				lambda(j) = 1e-6;
 			}
+		}
 
 		if (hasNegativeEigenValue) {
 			eig.compute(squareMatrix, Eigen::ComputeEigenvectors);
@@ -355,6 +357,6 @@ private:
 	state_input_matrix_t Lm_transposeRm_;
 };
 
-}
+}  // namespace ocs2
 
 #endif /* SEQUENTIALRICCATIEQUATIONS_H_ */

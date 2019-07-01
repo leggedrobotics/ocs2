@@ -78,8 +78,9 @@ void MPC_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::set(
 	resetRequestedEver_ = false;
 
 	// correcting rosMsgTimeWindow
-	if (mpcSettings_.recedingHorizon_==false)
+	if (mpcSettings_.recedingHorizon_==false) {
 		mpcSettings_.rosMsgTimeWindow_ = 1e+6;
+	}
 
 	// reset
 	numIterations_ = 0;
@@ -125,8 +126,9 @@ void MPC_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::reset(
 
 	terminateThread_ = false;
 	readyToPublish_  = false;
-	if (mpcPtr_ != nullptr)
+	if (mpcPtr_ != nullptr) {
 		mpcPtr_->reset();
+	}
 }
 
 /******************************************************************************************************/
@@ -137,7 +139,7 @@ bool MPC_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::resetMpcCallback(
 		ocs2_comm_interfaces::reset::Request  &req,
 		ocs2_comm_interfaces::reset::Response &res) {
 
-	if (req.reset == true) {
+	if (static_cast<bool>(req.reset)) {
 
 		cost_desired_trajectories_t initCostDesiredTrajectories;
 		RosMsgConversions<STATE_DIM, INPUT_DIM>::ReadTargetTrajectoriesMsg(req.targetTrajectories,
@@ -203,10 +205,11 @@ void MPC_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::publishPolicy(
 			mpcPolicyMsg_.modeSequence);
 
 	ControllerType controllerType;
-	if(mpcSettings_.useFeedbackPolicy_==true)
+	if(mpcSettings_.useFeedbackPolicy_==true) {
 		controllerType = controllerStockPtr->front()->getType();
-	else
+	} else {
 		controllerType = ControllerType::FEEDFORWARD;
+	}
 
 	// translate controllerType enum into message enum
 	switch(controllerType){
@@ -227,8 +230,9 @@ void MPC_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::publishPolicy(
 	// maximum length of the message
 	size_t numPartitions = timeTrajectoriesStockPtr->size();
 	size_t totalN = 0;
-	for (size_t i=0; i<numPartitions; i++)
+	for (size_t i=0; i<numPartitions; i++) {
 		totalN += timeTrajectoriesStockPtr->at(i).size();
+	}
 
 	mpcPolicyMsg_.timeTrajectory.clear();
 	mpcPolicyMsg_.timeTrajectory.reserve(totalN);
@@ -243,8 +247,9 @@ void MPC_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::publishPolicy(
 	// The message truncation time
 	const scalar_t t0 = currentObservation.time() + currentDelay_*1e-3;
 	const scalar_t tf = currentObservation.time() + mpcSettings_.rosMsgTimeWindow_*1e-3;
-	if (tf < t0+2.0*meanDelay_*1e-3)
+	if (tf < t0+2.0*meanDelay_*1e-3) {
 		std::cerr << "WARNING: Message publishing time-horizon is shorter than the MPC delay!" << std::endl;
+	}
 
 	for (size_t i=0; i<numPartitions; i++)  { // loop through partitions
 
@@ -253,9 +258,12 @@ void MPC_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::publishPolicy(
 		const input_vector_array_t& inputTrajectory = (*inputTrajectoriesStockPtr)[i];
 
 		size_t N = timeTrajectory.size();
-		if (N == 0)  continue;
-		if (timeTrajectory.back()  < t0)  continue;
-		if (timeTrajectory.front() > tf)  continue;
+		if (N == 0) {  continue;
+		}
+		if (timeTrajectory.back()  < t0) {  continue;
+		}
+		if (timeTrajectory.front() > tf) {  continue;
+		}
 
 		controller_t* ctrlToBeSent = (*controllerStockPtr)[i];
 		std::unique_ptr<FeedforwardController<STATE_DIM, INPUT_DIM>> ffwCtrl;
@@ -270,12 +278,15 @@ void MPC_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::publishPolicy(
 		scalar_array_t timeTrajectoryTruncated;
 		for (size_t k=0; k<N; k++) { // loop through time in partition i
 			// continue if elapsed time is smaller than computation time delay
-			if (k<N-1 && timeTrajectory[k+1]<t0)  continue;
+			if (k<N-1 && timeTrajectory[k+1]<t0) {  continue;
+			}
 			// break if the time exceed rosMsgTimeWindow
-			if (k>0 && timeTrajectory[k-1]>tf)  break;
+			if (k>0 && timeTrajectory[k-1]>tf) {  break;
+			}
 
-			for (size_t j=0; j<STATE_DIM; j++)
+			for (size_t j=0; j<STATE_DIM; j++) {
 				mpcState.value[j] = stateTrajectory[k](j);
+			}
 
 			mpcPolicyMsg_.timeTrajectory.push_back(timeTrajectory[k]);
 			mpcPolicyMsg_.stateTrajectory.push_back(mpcState);
@@ -310,7 +321,8 @@ void MPC_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::publisherWorkerThre
 
 		msgReady_.wait(lk, [&]{ return (readyToPublish_ || terminateThread_); });
 
-		if (terminateThread_==true)  break;
+		if (terminateThread_==true) {  break;
+		}
 
 		mpcPolicyMsgBuffer_ = std::move(mpcPolicyMsg_);
 
@@ -342,8 +354,9 @@ void MPC_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::mpcObservationCallb
 	system_observation_t currentObservation;
 	ros_msg_conversions_t::ReadObservationMsg(*msg, currentObservation);
 
-	if (mpcSettings_.adaptiveRosMsgTimeWindow_==true || mpcSettings_.debugPrint_)
+	if (mpcSettings_.adaptiveRosMsgTimeWindow_==true || mpcSettings_.debugPrint_) {
 		startTimePoint_ = std::chrono::steady_clock::now();
+	}
 
 	// number of iterations
 	numIterations_++;
@@ -396,8 +409,9 @@ void MPC_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::mpcObservationCallb
 	}
 
 	// update task listeners
-	for (auto& taskListener: taskListenerArray_)
+	for (auto& taskListener: taskListenerArray_) {
 		taskListener->update();
+	}
 
 	// run SLQ-MPC
 	bool controllerIsUpdated = mpcPtr_->run(
@@ -434,10 +448,11 @@ void MPC_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::mpcObservationCallb
 	}
 
 	// measure the delay for sending ROS messages
-	if(mpcSettings_.adaptiveRosMsgTimeWindow_==true)
+	if(mpcSettings_.adaptiveRosMsgTimeWindow_==true) {
 		currentDelay_ = std::min(currentDelay_, meanDelay_*0.9);
-	else
+	} else {
 		currentDelay_ = 0.0;
+	}
 
 	// display
 	if(mpcSettings_.debugPrint_){
@@ -462,8 +477,9 @@ void MPC_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::mpcObservationCallb
 #endif
 
 	// set the initialCall flag to false
-	if (initialCall_==true)
+	if (initialCall_==true) {
 		initialCall_ = false;
+	}
 }
 
 /******************************************************************************************************/
@@ -507,8 +523,9 @@ void MPC_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::shutdownNode() {
 
 	msgReady_.notify_all();
 
-	if (publisherWorker_.joinable())
+	if (publisherWorker_.joinable()) {
 		publisherWorker_.join();
+	}
 
 	ROS_INFO_STREAM("All workers are shut down.");
 #endif
@@ -613,8 +630,9 @@ void MPC_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::launchNodes(int arg
 			&MPC_ROS_Interface::resetMpcCallback, this);
 
 	// subscribe task listeners
-	for (auto& taskListener: taskListenerArray_)
+	for (auto& taskListener: taskListenerArray_) {
 		taskListener->subscribe(*nodeHandlerPtr_);
+	}
 
 	// display
 #ifdef PUBLISH_THREAD

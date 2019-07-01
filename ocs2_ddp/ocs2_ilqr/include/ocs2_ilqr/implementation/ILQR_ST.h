@@ -101,11 +101,13 @@ void ILQR_ST<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::lineSearch(bool computeISEs) 
 	// if no line search
 	if (BASE::ddpSettings_.maxLearningRate_ < OCS2NumericTraits<scalar_t>::limit_epsilon()) {
 		// clear the feedforward increments
-		for (size_t i=0; i<BASE::numPartitions_; i++)
+		for (size_t i=0; i<BASE::numPartitions_; i++) {
 			BASE::nominalControllersStock_[i].deltaBiasArray_.clear();
+		}
 		// display
-		if (BASE::ddpSettings_.displayInfo_)
+		if (BASE::ddpSettings_.displayInfo_) {
 			std::cerr << "The chosen learningRate is: " << BASE::learningRateStar_ << std::endl;
+		}
 
 		return;
 	}
@@ -135,10 +137,11 @@ void ILQR_ST<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::lineSearch(bool computeISEs) 
 				lsStateTrajectoriesStock, lsInputTrajectoriesStock);
 
 		// break condition 1: it exits with largest learningRate that its cost is smaller than nominal cost.
-		if (lsTotalCost < BASE::nominalTotalCost_*(1-1e-3*learningRate))
+		if (lsTotalCost < BASE::nominalTotalCost_*(1-1e-3*learningRate)) {
 			break;  // exit while loop
-		else
+		} else {
 			learningRate = BASE::ddpSettings_.lineSearchContractionRate_*learningRate;
+		}
 
 	}  // end of while
 
@@ -158,16 +161,19 @@ void ILQR_ST<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::lineSearch(bool computeISEs) 
 		BASE::nominalStateTrajectoriesStock_.swap(lsStateTrajectoriesStock);
 		BASE::nominalInputTrajectoriesStock_.swap(lsInputTrajectoriesStock);
 
-	} else // since the open loop input is not change, the nominal trajectories will be unchanged
+	} else { // since the open loop input is not change, the nominal trajectories will be unchanged
 		BASE::learningRateStar_ = 0.0;
+	}
 
 	// clear the feedforward increments
-	for (size_t i=0; i<BASE::numPartitions_; i++)
+	for (size_t i=0; i<BASE::numPartitions_; i++) {
 		BASE::nominalControllersStock_[i].deltaBiasArray_.clear();
+	}
 
 	// display
-	if (BASE::ddpSettings_.displayInfo_)
+	if (BASE::ddpSettings_.displayInfo_) {
 		std::cerr << "The chosen learningRate is: " << BASE::learningRateStar_ << std::endl;
+	}
 }
 
 
@@ -225,8 +231,9 @@ typename ILQR_ST<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::scalar_t
 
 	// total number of call
 	size_t numSteps = 0;
-	for (size_t i=BASE::initActivePartition_; i<=BASE::finalActivePartition_; i++)
+	for (size_t i=BASE::initActivePartition_; i<=BASE::finalActivePartition_; i++) {
 		numSteps += BASE::SsTimeTrajectoryStock_[i].size();
+	}
 
 	// average time step
 	return (BASE::finalTime_-BASE::initTime_)/(scalar_t)numSteps;

@@ -51,13 +51,7 @@ model_settings
   gaitOptimization              0
 }
 
-switchingModes
-{
-  [0]  STANCE
-  [1]  STANCE
-}
-
-defaultModeSequenceTemplate
+initialModeSequenceTemplate
 {
   templateSubsystemsSequence
   {
@@ -89,6 +83,19 @@ defaultModeSequenceTemplate
     [10]  3.5
     [11]  3.85
     [12]  4.2
+  }
+}
+
+defaultModeSequenceTemplate
+{
+  templateSubsystemsSequence
+  {
+    [0]  STANCE
+  }
+  templateSwitchingTimes
+  {
+    [0]  0.0
+    [1]  1.0
   }
 }
 

@@ -97,34 +97,33 @@ void OCS2QuadrupedInterface<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::loadSetting
 	xFinal_ = initialState_;
 	xFinal_.template head<6>() += comFinalPose;
 
-	// load the switchingModes
+
+	// load the mode sequence template
 	std::cerr << std::endl;
-	loadModes(pathToConfigFile, "switchingModes", initSwitchingModes_, true);
+	loadModeSequenceTemplate(pathToConfigFile, "initialModeSequenceTemplate", initialModeSequenceTemplate_, false);
+	std::cerr << std::endl;
+	if (initialModeSequenceTemplate_.templateSubsystemsSequence_.size()==0)
+		throw std::runtime_error("initialModeSequenceTemplate.templateSubsystemsSequence should have at least one entry.");
+	if (initialModeSequenceTemplate_.templateSwitchingTimes_.size()!=initialModeSequenceTemplate_.templateSubsystemsSequence_.size()+1)
+		throw std::runtime_error("initialModeSequenceTemplate.templateSwitchingTimes size should be 1 + size_of(initialModeSequenceTemplate.templateSubsystemsSequence).");
+
+	initSwitchingModes_ = initialModeSequenceTemplate_.templateSubsystemsSequence_;
+	initSwitchingModes_.push_back(string2ModeNumber("STANCE"));
 	initNumSubsystems_ = initSwitchingModes_.size();
+
+	auto& templateSwitchingTimes = initialModeSequenceTemplate_.templateSwitchingTimes_;
+	initEventTimes_ = scalar_array_t(templateSwitchingTimes.begin()+1, templateSwitchingTimes.end());
+
+	// stanceLeg sequence
+	initStanceLegSequene_.resize(initNumSubsystems_);
+	for (size_t i=0; i<initNumSubsystems_; i++)
+		initStanceLegSequene_[i] = modeNumber2StanceLeg(initSwitchingModes_[i]);
+
 	// display
 	std::cerr << "Initial Switching Modes: {";
 	for (const auto& switchingMode: initSwitchingModes_)
 		std::cerr << switchingMode << ", ";
 	std::cerr << "\b\b}" << std::endl;
-
-	// stanceLeg sequence
-	initStanceLegSequene_.resize(initNumSubsystems_);
-	for (size_t i=0; i<initNumSubsystems_; i++)  initStanceLegSequene_[i] = modeNumber2StanceLeg(initSwitchingModes_[i]);
-
-	// Initial switching times
-	size_t NumNonFlyingSubSystems=0;
-	for (size_t i=0; i<initNumSubsystems_; i++)
-		if (initSwitchingModes_[i] != FLY)
-			NumNonFlyingSubSystems++;
-	initEventTimes_.resize(initNumSubsystems_);
-	initEventTimes_.front() = initTime_;
-	for (size_t i=0; i<initNumSubsystems_-1; i++)
-		if (initSwitchingModes_[i] != FLY)
-			initEventTimes_[i+1] = initEventTimes_[i] + (finalTime_-initTime_)/NumNonFlyingSubSystems;
-		else
-			initEventTimes_[i+1] = initEventTimes_[i] + 0.2;
-	initEventTimes_.erase(initEventTimes_.begin());
-	// display
 	std::cerr << "Initial Event Times:     {";
 	for (const auto& switchingtime: initEventTimes_)
 		std::cerr << switchingtime << ", ";
@@ -133,9 +132,10 @@ void OCS2QuadrupedInterface<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::loadSetting
 	else
 		std::cerr << "}" << std::endl;
 
+
 	// load the mode sequence template
 	std::cerr << std::endl;
-	loadModeSequenceTemplate(pathToConfigFile, "defaultModeSequenceTemplate", modeSequenceTemplate_, true);
+	loadModeSequenceTemplate(pathToConfigFile, "defaultModeSequenceTemplate", defaultModeSequenceTemplate_, true);
 	std::cerr << std::endl;
 
 	// Gap Indicators

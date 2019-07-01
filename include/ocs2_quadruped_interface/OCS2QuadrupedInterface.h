@@ -537,7 +537,8 @@ protected:
 	size_array_t   switchingModes_;
 	std::vector<contact_flag_t> stanceLegSequene_;
 
-	mode_sequence_template_t modeSequenceTemplate_;
+	mode_sequence_template_t initialModeSequenceTemplate_;
+	mode_sequence_template_t defaultModeSequenceTemplate_;
 
 	scalar_t costFunction_;
 	scalar_t constriantISE1_;

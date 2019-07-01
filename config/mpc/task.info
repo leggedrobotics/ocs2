@@ -51,10 +51,17 @@ model_settings
   gaitOptimization              0
 }
 
-switchingModes
+initialModeSequenceTemplate
 {
-  [0]  STANCE
-  [1]  STANCE
+  templateSubsystemsSequence
+  {
+    [0]  STANCE
+  }
+  templateSwitchingTimes
+  {
+    [0]  0.0
+    [1]  1.0
+  }
 }
 
 defaultModeSequenceTemplate
@@ -66,7 +73,7 @@ defaultModeSequenceTemplate
   templateSwitchingTimes
   {
     [0]  0.0
-    [1]  0.5
+    [1]  1.0
   }
 }
 
@@ -146,7 +153,7 @@ mpc
   initMinLearningRate             1e-2
   initMaxLearningRate             1.0
 
-  debugPrint                      0
+  debugPrint                      1
   coldStart                       0
   recedingHorizon                 1	; use receding horizon MPC
 

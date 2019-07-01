@@ -16,7 +16,7 @@ OCS2AnymalInterface::OCS2AnymalInterface(const std::string& pathToConfigFolder)
 : BASE(AnymalKinematics(), AnymalCom(), pathToConfigFolder)
 {
 	// set up optimizers
-	setupOptimizer(logicRulesPtr_, &modeSequenceTemplate_, slqPtr_, mpcPtr_);
+	setupOptimizer(logicRulesPtr_, &defaultModeSequenceTemplate_, slqPtr_, mpcPtr_);
 }
 
 /******************************************************************************************************/

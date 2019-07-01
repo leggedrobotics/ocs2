@@ -157,7 +157,7 @@ public:
 	 *
 	 * @param [in] initCostDesiredTrajectories: The initial desired cost trajectories.
 	 */
-	void resetMpcNode(const cost_desired_trajectories_t& initCostDesiredTrajectories);
+	virtual void resetMpcNode(const cost_desired_trajectories_t& initCostDesiredTrajectories);
 
 	/**
 	 * This method will be called either after the very fist call of the class or after a call to reset().
@@ -216,7 +216,7 @@ public:
 	 * @param [out] mpcInput: the new control input of MPC.
 	 * @param [out] subsystem: the active subsystem.
 	 */
-	void rolloutPolicy(
+	virtual void rolloutPolicy(
 			const scalar_t& currentTime,
 			const state_vector_t& currentState,
 			const scalar_t& timeStep,

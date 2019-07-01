@@ -24,6 +24,9 @@ set(PYTHON_EXECUTABLE /usr/bin/python3)
 set(PYBIND11_PYTHON_VERSION 3.6 CACHE STRING "")
 find_package(pybind11 QUIET)
 
+list(APPEND CMAKE_PREFIX_PATH "/home/jcarius/pytorch/torch")
+find_package(Torch QUIET)
+
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread -fopenmp -std=c++11 -Wfatal-errors -Wl,--no-as-needed")
 
 ###################################
@@ -56,6 +59,7 @@ include_directories(
         ${EIGEN3_INCLUDE_DIRS}
         ${Boost_INCLUDE_DIRS}
         ${catkin_INCLUDE_DIRS}
+        ${TORCH_INCLUDE_DIRS}
 )
 
 # Ballbot interface library
@@ -138,6 +142,24 @@ if(${pybind11_FOUND})
   #catkin_python_setup()
 endif()
 
+if (${Torch_FOUND})
+  message(WARNING "compiling network interface")
+    add_executable(ballbot_mrt_network_interface
+      src/MRT_Network_Interface.cpp
+      )
+    add_dependencies(ballbot_mrt_network_interface
+      ${catkin_EXPORTED_TARGETS}
+      )
+    target_link_libraries(ballbot_mrt_network_interface
+      ballbot_interface
+      ${catkin_LIBRARIES}
+      ${TORCH_LIBRARIES}
+      )
+  else()
+    message(WARNING "torch not found")
+
+endif()
+
 #############
 ## Install ##
 #############
@@ -171,13 +193,23 @@ target_link_libraries(ballbot_integration_test
         ${Boost_LIBRARIES}
         )
 
-if(${pybind11_FOUND})
-  catkin_add_gtest(ballbot_pybindings_test
-    test/PyBindingsTest.cpp
-    )
-  target_link_libraries(ballbot_pybindings_test
-    ballbotPyBindings
-    ${catkin_LIBRARIES}
-    ${Boost_LIBRARIES}
-    )
+catkin_add_gtest(ballbot_pybindings_test
+  test/PyBindingsTest.cpp
+  )
+target_link_libraries(ballbot_pybindings_test
+  ballbotPyBindings
+  ${catkin_LIBRARIES}
+  ${Boost_LIBRARIES}
+  )
+
+if (${Torch_FOUND})
+  catkin_add_gtest(ballbot_network_interface_test
+    test/MRTNetworkInterfaceTest.cpp)
+  add_dependencies(ballbot_network_interface_test
+    ${catkin_EXPORTED_TARGETS})
+#  target_link_libraries(ballbot_network_interface_test
+#    ballbot_interface
+#    ballbot_mrt_network_interface
+#    ${catkin_LIBRARIES}
+#    ${Boost_LIBRARIES})
 endif()

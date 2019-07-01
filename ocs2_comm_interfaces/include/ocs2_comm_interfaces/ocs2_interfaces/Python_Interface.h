@@ -69,11 +69,11 @@ protected:
 
   // Member variables
  protected:
-  std::unique_ptr<RobotInterfaceBase<STATE_DIM, INPUT_DIM>> robotInterface_;
+  std::unique_ptr<RobotInterfaceBase<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>> robotInterface_;
   std::unique_ptr<mpc_t> mpcInterface_;
 
-  std::unique_ptr<ControlledSystemBase<STATE_DIM, INPUT_DIM>> dynamics_;
-  std::unique_ptr<DerivativesBase<STATE_DIM, INPUT_DIM>> dynamicsDerivatives_;
+  std::unique_ptr<ControlledSystemBase<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>> dynamics_;
+  std::unique_ptr<DerivativesBase<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>> dynamicsDerivatives_;
 
   cost_t* cost_;
 

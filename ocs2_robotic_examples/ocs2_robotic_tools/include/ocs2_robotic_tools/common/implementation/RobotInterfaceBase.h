@@ -33,8 +33,8 @@ namespace ocs2
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM>
-void RobotInterfaceBase<STATE_DIM, INPUT_DIM>::getInitialState(
+template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
+void RobotInterfaceBase<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::getInitialState(
 		state_vector_t& initialState) const {
 
 	initialState = initialState_;
@@ -43,8 +43,8 @@ void RobotInterfaceBase<STATE_DIM, INPUT_DIM>::getInitialState(
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM>
-MPC_Settings& RobotInterfaceBase<STATE_DIM, INPUT_DIM>::mpcSettings() {
+template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
+MPC_Settings& RobotInterfaceBase<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::mpcSettings() {
 
 	return mpcSettings_;
 }
@@ -52,8 +52,8 @@ MPC_Settings& RobotInterfaceBase<STATE_DIM, INPUT_DIM>::mpcSettings() {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM>
-void RobotInterfaceBase<STATE_DIM, INPUT_DIM>::definePartitioningTimes(
+template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
+void RobotInterfaceBase<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::definePartitioningTimes(
 		const std::string& taskFile,
 		scalar_t& timeHorizon,
 		size_t& numPartitions,
@@ -78,8 +78,8 @@ void RobotInterfaceBase<STATE_DIM, INPUT_DIM>::definePartitioningTimes(
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM>
-void RobotInterfaceBase<STATE_DIM, INPUT_DIM>::loadMpcTimeHorizon(
+template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
+void RobotInterfaceBase<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::loadMpcTimeHorizon(
 		const std::string& taskFile,
 		scalar_t& timeHorizon,
 		size_t& numPartitions,
@@ -102,8 +102,8 @@ void RobotInterfaceBase<STATE_DIM, INPUT_DIM>::loadMpcTimeHorizon(
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM>
-void RobotInterfaceBase<STATE_DIM, INPUT_DIM>::loadInitialState(
+template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
+void RobotInterfaceBase<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::loadInitialState(
 		const std::string& taskFile,
 		state_vector_t& initialState) const {
 

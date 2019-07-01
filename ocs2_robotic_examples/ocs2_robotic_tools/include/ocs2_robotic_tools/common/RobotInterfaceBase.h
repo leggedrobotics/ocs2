@@ -43,7 +43,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_core/logic/rules/LogicRulesBase.h>
 #include <ocs2_core/dynamics/ControlledSystemBase.h>
 #include <ocs2_core/dynamics/DerivativesBase.h>
-
+#include <ocs2_core/cost/CostFunctionBase.h>
+#include <ocs2_mpc/MPC_BASE.h>
 
 namespace ocs2{
 
@@ -53,7 +54,7 @@ namespace ocs2{
  * @tparam STATE_DIM: Dimension of the state space.
  * @tparam INPUT_DIM: Dimension of the control input space.
  */
-template <size_t STATE_DIM, size_t INPUT_DIM>
+template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T = NullLogicRules>
 class RobotInterfaceBase
 {
 public:
@@ -79,8 +80,10 @@ public:
 	using dynamic_vector_t = typename DIMENSIONS::dynamic_vector_t;
 	using dynamic_vector_array_t = typename DIMENSIONS::dynamic_vector_array_t;
 
-	typedef ControlledSystemBase<STATE_DIM, INPUT_DIM>  dynamics_t;
-	typedef DerivativesBase<STATE_DIM, INPUT_DIM>       dynamics_derivatives_t;
+	typedef ControlledSystemBase<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>  dynamics_t;
+	typedef DerivativesBase<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>       dynamics_derivatives_t;
+	using cost_t = CostFunctionBase<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>;
+	using mpc_t = MPC_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>;
 
 	/**
 	 * Constructor
@@ -117,7 +120,7 @@ public:
 	 * @todo Change return type to MPCBase* once MPCBase is not templated on logicRules anymore
 	 * @return pointer to internal mpc instance
 	 */
-	virtual void* getMPCPtr() = 0;
+	virtual mpc_t* getMPCPtr() = 0;
 
 	/**
 	 * @brief getDynamicsPtr
@@ -136,7 +139,7 @@ public:
 	 * @note This cannot be a CostFunctionBase* because of the logic rules template
 	 * @return pointer to internal cost function
 	 */
-	virtual void* getCostPtr() = 0;
+	virtual cost_t* getCostPtr() = 0;
 
 	/**
 	 * Setups all optimizers which you require.

@@ -419,6 +419,8 @@ public:
 	                                             const state_vector_t& state,
 	                                             state_vector_t& Vx) = 0;
 
+	virtual void getLinearFeedbackGain(scalar_t time, input_state_matrix_t& K) = 0;
+
 	/**
 	 * Rewinds optimizer internal variables.
 	 *

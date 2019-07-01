@@ -39,6 +39,7 @@ void PythonInterface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::init(const std::strin
   }
 
   dynamics_.reset(robotInterface_->getDynamicsPtr()->clone());
+  // dynamics_->initializeModel
   dynamicsDerivatives_.reset(robotInterface_->getDynamicsDerivativesPtr()->clone());
 
   //TODO(jcarius) this static cast may be dangerous. Any way to avoid it?
@@ -100,13 +101,16 @@ void PythonInterface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::getMpcSolution(scalar
   }
 
   // TODO(jcarius): should we interpolate here to expose constant time steps?!
-  input_state_matrix_array_t k;
-  mpcInterface_->getMpcSolution(t, x, u, k);
+  t = mpcInterface_->getMpcTimeTrajectory();
+  x = mpcInterface_->getMpcStateTrajectory();
+  u = mpcInterface_->getMpcInputTrajectory();
 
   sigmaX.clear();
-  sigmaX.reserve(k.size());
-  for (const auto& ki : k) {
+  sigmaX.reserve(t.size());
+  for (const auto& ti : t) {
     double alpha_squared = 0.1;  // damping of pseudoinverse in case ki is very small
+    input_state_matrix_t ki;
+    mpcInterface_->getLinearFeedbackGain(ti, ki);
     state_input_matrix_t kDagger =
         ki.transpose() * (ki * ki.transpose() + alpha_squared * input_matrix_t::Identity()).ldlt().solve(input_matrix_t::Identity());
 //    std::cerr << std::setprecision(std::numeric_limits<long double>::digits10 + 1) << std::endl;

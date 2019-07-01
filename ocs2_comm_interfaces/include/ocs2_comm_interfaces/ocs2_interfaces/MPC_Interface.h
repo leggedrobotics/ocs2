@@ -141,19 +141,18 @@ class MPC_Interface {
                       state_vector_t& mpcState, input_vector_t& mpcInput, size_t& subsystem);
 
   /**
-   * @brief Extract the nominal time, state, and input trajectories
-   * @param [out] t time array
-   * @param [out] x state array
-   * @param [out] u input array
-   */
-  void getMpcSolution(scalar_array_t& t, state_vector_array_t& x, input_vector_array_t& u, input_state_matrix_array_t& k);
-
-  /**
    * @brief Calculates the state derivative of the value function
    * @param [in] time the query time
    * @param [out] Vx partial derivative of the value function at requested time at nominal state
    */
   void getValueFunctionStateDerivative(scalar_t time, const state_vector_t& state, state_vector_t& Vx);
+
+  /**
+   * @brief getLinearFeedbackGain retrieves K matrix from solver
+   * @param[in] time
+   * @param[out] K
+   */
+  void getLinearFeedbackGain(scalar_t time, input_state_matrix_t& K);
 
   const scalar_array_t &getMpcTimeTrajectory();
   const state_vector_array_t &getMpcStateTrajectory();

@@ -21,6 +21,7 @@ class PythonInterface {
   using input_matrix_t = typename dim_t::input_matrix_t;
   using state_matrix_t = typename dim_t::state_matrix_t;
   using state_input_matrix_t = typename dim_t::state_input_matrix_t;
+  using input_state_matrix_t = typename dim_t::input_state_matrix_t;
   using input_state_matrix_array_t = typename dim_t::input_state_matrix_array_t;
   using state_matrix_array_t = typename dim_t::state_matrix_array_t;
   using cost_desired_trajectories_t = typename mpc_t::cost_desired_trajectories_t;

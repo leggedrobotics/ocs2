@@ -299,37 +299,6 @@ void MPC_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::evaluatePolicy(const sc
 }
 
 template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void MPC_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::getMpcSolution(scalar_array_t& t, state_vector_array_t& x, input_vector_array_t& u, input_state_matrix_array_t& k) {
-  updatePolicy();
-  t = mpcTimeTrajectory_;
-  u = mpcInputTrajectory_;
-  x = mpcStateTrajectory_;
-
-  k.clear();
-  k.resize(t.size());
-  auto kIter = k.begin();
-
-  LinearController<STATE_DIM, INPUT_DIM>* linCtrl(nullptr);
-  EigenLinearInterpolation<input_state_matrix_t> linInterpolateK;
-  auto subsystemIndex = std::numeric_limits<size_t>::max();
-  int greatestLessTimeStampIndex = -1;
-  for(auto ti : t){
-      //TODO(jcarius) is index correct here or should we use subsystem?
-      auto newSubsystemIndex = findActiveSubsystemFnc_(ti);
-      if(subsystemIndex != newSubsystemIndex){
-          subsystemIndex = newSubsystemIndex;
-          linCtrl = dynamic_cast<LinearController<STATE_DIM, INPUT_DIM>*>(mpcControllers_[subsystemIndex].get());
-          if(not linCtrl){
-              throw std::runtime_error("getMpcSolution assumes that controllers are of type linear");
-            }
-          linInterpolateK.setData(&(linCtrl->timeStamp_), &(linCtrl->gainArray_));
-          greatestLessTimeStampIndex = -1;
-        }
-      greatestLessTimeStampIndex = linInterpolateK.interpolate(ti, *(kIter++), greatestLessTimeStampIndex = -1);
-    }
-}
-
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
 void MPC_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::partitioningTimesUpdate(scalar_array_t& partitioningTimes) const {
   // TODO: Is this correct?
   partitioningTimes.resize(2);
@@ -364,6 +333,11 @@ MPC_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::getMpcTimeTrajectory() {
 template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
 void MPC_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::getValueFunctionStateDerivative(scalar_t time, const state_vector_t& state, state_vector_t& Vx){
   mpcPtr_->getSolverPtr()->getValueFunctionStateDerivative(time, state, Vx);
+}
+
+template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
+void MPC_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::getLinearFeedbackGain(scalar_t time, input_state_matrix_t& K){
+  mpcPtr_->getSolverPtr()->getLinearFeedbackGain(time, K);
 }
 
 }  // namespace ocs2

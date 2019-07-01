@@ -1410,6 +1410,19 @@ void DDP_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::getValueFunctionStateDerivat
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
+void DDP_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::getLinearFeedbackGain(scalar_t time, input_state_matrix_t& K) {
+  size_t activeSubsystem = BASE::findActivePartitionIndex(partitioningTimes_, time);
+
+
+  EigenLinearInterpolation<input_state_matrix_t> kFunc(&nominalControllersStock_[activeSubsystem].timeStamp_,
+                                                       &nominalControllersStock_[activeSubsystem].gainArray_);
+  kFunc.interpolate(time, K);
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
 void DDP_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::useParallelRiccatiSolverFromInitItr(bool flag) {
 
 	useParallelRiccatiSolverFromInitItr_ = flag;

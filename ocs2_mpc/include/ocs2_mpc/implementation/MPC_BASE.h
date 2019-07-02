@@ -91,9 +91,9 @@ MPC_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::MPC_BASE(
 
 		const scalar_t timeHorizon = initPartitioningTimes_.back() - initPartitioningTimes_.front();
 
-		for (size_t j=0; j<3; j++) {
-			for (size_t i=0; i<initnumPartitions_; i++) {
-				partitioningTimes_.push_back( ((int)j-1)*timeHorizon + initPartitioningTimes_[i] );
+		for (int j=0; j<3; j++) {
+			for (int i=0; i<initnumPartitions_; i++) {
+				partitioningTimes_.push_back( (j-1)*timeHorizon + initPartitioningTimes_[i] );
 			} // end of i loop
 		} // end of j loop
 		partitioningTimes_.push_back(initPartitioningTimes_[initnumPartitions_] + timeHorizon);
@@ -159,7 +159,9 @@ void MPC_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::rewind() {
 	// LogicRulesMachine::updateLogicRules() method, since the partitioningTimes_
 	// is updated as well the update method will be called automatically.
 	if (solverPtr_->getLogicRulesPtr()) {
-		solverPtr_->getLogicRulesPtr()->rewind(partitioningTimes_.front(), partitioningTimes_.back());
+		const scalar_array_t& eventTimes = solverPtr_->getLogicRulesPtr()->eventTimes();
+		if (eventTimes.size() > 0 && eventTimes.back() <= partitioningTimes_.back())
+			solverPtr_->getLogicRulesPtr()->rewind(partitioningTimes_.front(), partitioningTimes_.back());
 	}
 //	if (solverPtr_->getLogicRulesMachinePtr())
 //		solverPtr_->getLogicRulesMachinePtr()->logicRulesUpdated();
@@ -209,23 +211,24 @@ bool MPC_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::run(
 		const state_vector_t& currentState)  {
 
 	// check if the current time exceeds the solver final limit
-	if (currentTime>=getFinalTime() && mpcSettings_.recedingHorizon_==true) {
+	if (!initRun_ && currentTime>=getFinalTime() && mpcSettings_.recedingHorizon_) {
 
-		if (initRun_==true){
-		  for (int i=0; i<partitioningTimes_.size(); i++){
-		    partitioningTimes_[i] += currentTime;
-		  }
+		std::cerr << std::endl << "#####################################################";
+		std::cerr << std::endl << "#####################################################";
+		std::cerr << std::endl << "#####################################################" << std::endl;
+		std::cerr << "### MPC is called at time:  " << currentTime << " [s]." << std::endl;
+		std::cerr << "WARNING: The MPC time-horizon is smaller than the MPC starting time." << std::endl;
+		std::cerr << "currentTime: " << currentTime << "\t Controller finalTime: " << getFinalTime() << std::endl;
+
+		return false;
+	}
+
+	// adjusting the partitioning times based on the initial time
+	if (initRun_){
+		const scalar_t detaTime = currentTime - partitioningTimes_[initnumPartitions_];
+		for (int i=0; i<partitioningTimes_.size(); i++){
+			partitioningTimes_[i] += detaTime;
 		}
-		else {
-      std::cerr << std::endl << "#####################################################";
-      std::cerr << std::endl << "#####################################################";
-      std::cerr << std::endl << "#####################################################" << std::endl;
-      std::cerr << "### MPC is called at time:  " << currentTime << " [s]." << std::endl;
-      std::cerr << "WARNING: The MPC time-horizon is smaller than the MPC starting time." << std::endl;
-      std::cerr << "currentTime: " << currentTime << "\t Controller finalTime: " << getFinalTime() << std::endl;
-
-      return false;
-    }
 	}
 
 	// display
@@ -263,7 +266,6 @@ bool MPC_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::run(
 		if (mpcSettings_.debugPrint_) {
 			std::cerr << "### MPC is rewinded at time " << currentTime << " [s]." << std::endl;
 	}
-
 		rewind();
 	}
 

@@ -225,7 +225,7 @@ template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
 typename PythonInterface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::dynamic_vector_t
 PythonInterface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::getStateInputConstraintLagrangian(double t, Eigen::Ref<const state_vector_t> x) {
   dynamic_vector_t nu;
-  mpcInterface_->getStateInputConstraintLagrangian(t, x, nu);
+  mpcInterface_->calculateStateInputConstraintLagrangian(t, x, nu);
   return nu;
 }
 

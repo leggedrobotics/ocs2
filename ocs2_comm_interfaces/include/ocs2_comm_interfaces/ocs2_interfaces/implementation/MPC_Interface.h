@@ -340,4 +340,12 @@ void MPC_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::getLinearFeedbackGain(s
   mpcPtr_->getSolverPtr()->getLinearFeedbackGain(time, K);
 }
 
+template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
+void MPC_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculateStateInputConstraintLagrangian(
+            const scalar_t& time,
+            const state_vector_t& state,
+    dynamic_vector_t& nu) const {
+  mpcPtr_->getSolverPtr()->calculateStateInputConstraintLagrangian(time, state, nu);
+}
+
 }  // namespace ocs2

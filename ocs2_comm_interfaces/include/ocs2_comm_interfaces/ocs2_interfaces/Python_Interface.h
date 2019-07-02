@@ -26,7 +26,9 @@ class PythonInterface {
   using state_matrix_array_t = typename dim_t::state_matrix_array_t;
   using cost_desired_trajectories_t = typename mpc_t::cost_desired_trajectories_t;
   using cost_t = CostFunctionBase<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>;
+  using dynamic_vector_t = typename dim_t::dynamic_vector_t;
   using dynamic_vector_array_t = typename dim_t::dynamic_vector_array_t;
+  using dynamic_matrix_t = typename dim_t::dynamic_matrix_t;
 
   PythonInterface(bool async = false);
   virtual ~PythonInterface();
@@ -59,6 +61,10 @@ class PythonInterface {
 
   state_vector_t getValueFunctionStateDerivative(double t, Eigen::Ref<const state_vector_t> x);
 
+  dynamic_vector_t getStateInputConstraint(double t, Eigen::Ref<const state_vector_t> x, Eigen::Ref<const input_vector_t> u);
+  dynamic_matrix_t getStateInputConstraintDerivativeControl(double t, Eigen::Ref<const state_vector_t> x, Eigen::Ref<const input_vector_t> u);
+  dynamic_vector_t getStateInputConstraintLagrangian(double t, Eigen::Ref<const state_vector_t> x);
+
 protected:
 
   /**
@@ -75,6 +81,8 @@ protected:
 
   std::unique_ptr<ControlledSystemBase<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>> dynamics_;
   std::unique_ptr<DerivativesBase<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>> dynamicsDerivatives_;
+
+  std::unique_ptr<ConstraintBase<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>> constraints_;
 
   cost_t* cost_;
   cost_desired_trajectories_t targetTrajectories_;

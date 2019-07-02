@@ -31,8 +31,7 @@ template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
 void PythonInterface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::init(const std::string& taskFileFolder){
   initRobotInterface(taskFileFolder);
 
-  //TODO(jcarius) this static cast may be dangerous. Any way to avoid it?
-  auto mpcPtr = static_cast<MPC_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>*>(robotInterface_->getMPCPtr());
+  auto mpcPtr = robotInterface_->getMPCPtr();
   auto logicPtr = dynamic_cast<LOGIC_RULES_T*>(robotInterface_->getLogicRulesPtr());
   if(logicPtr){
     mpcInterface_.reset(new mpc_t(mpcPtr, *logicPtr, true));
@@ -43,8 +42,9 @@ void PythonInterface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::init(const std::strin
   dynamics_.reset(robotInterface_->getDynamicsPtr()->clone());
   dynamicsDerivatives_.reset(robotInterface_->getDynamicsDerivativesPtr()->clone());
 
-  //TODO(jcarius) this static cast may be dangerous. Any way to avoid it?
-  cost_ = static_cast<cost_t*>(robotInterface_->getCostPtr());
+  cost_ = robotInterface_->getCostPtr();
+
+  constraints_.reset(robotInterface_->getConstraintPtr()->clone());
 
   if (run_mpc_async_) {
     run_mpc_worker_ = std::thread{&PythonInterface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::runMpcAsync, this};
@@ -74,8 +74,6 @@ void PythonInterface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::advanceMpc() {
   } else {
     mpcInterface_->advanceMpc();
   }
-
-
 }
 
 template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
@@ -117,6 +115,7 @@ void PythonInterface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::getMpcSolution(scalar
         dynamics_->initializeModel(mpcInterface_->getLogicMachine(), 0);
         dynamicsDerivatives_->initializeModel(mpcInterface_->getLogicMachine(), 0);
         cost_->initializeModel(mpcInterface_->getLogicMachine(), 0);
+        constraints_->initializeModel(mpcInterface_->getLogicMachine(), 0);
 //    };
 
   sigmaX.clear();
@@ -202,6 +201,32 @@ PythonInterface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::getValueFunctionStateDeriv
   state_vector_t dVdx;
   mpcInterface_->getValueFunctionStateDerivative(t, x, dVdx);
   return dVdx;
+}
+
+template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
+typename PythonInterface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::dynamic_vector_t
+PythonInterface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::getStateInputConstraint(double t, Eigen::Ref<const state_vector_t> x, Eigen::Ref<const input_vector_t> u){
+  constraints_->setCurrentStateAndControl(t, x, u);
+  input_vector_t e;
+  constraints_->getConstraint1(e);
+  return e.head(constraints_->numStateInputConstraint(t));
+}
+
+template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
+typename PythonInterface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::dynamic_matrix_t
+PythonInterface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::getStateInputConstraintDerivativeControl(double t, Eigen::Ref<const state_vector_t> x, Eigen::Ref<const input_vector_t> u){
+  constraints_->setCurrentStateAndControl(t, x, u);
+  input_matrix_t D;
+  constraints_->getConstraint1DerivativesControl(D);
+  return D.topRows(constraints_->numStateInputConstraint(t));
+}
+
+template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
+typename PythonInterface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::dynamic_vector_t
+PythonInterface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::getStateInputConstraintLagrangian(double t, Eigen::Ref<const state_vector_t> x) {
+  dynamic_vector_t nu;
+  mpcInterface_->getStateInputConstraintLagrangian(t, x, nu);
+  return nu;
 }
 
 }  // namespace ocs2

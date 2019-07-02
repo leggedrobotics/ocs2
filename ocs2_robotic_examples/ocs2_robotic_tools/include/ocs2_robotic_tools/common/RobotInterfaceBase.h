@@ -44,6 +44,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_core/dynamics/ControlledSystemBase.h>
 #include <ocs2_core/dynamics/DerivativesBase.h>
 #include <ocs2_core/cost/CostFunctionBase.h>
+#include <ocs2_core/constraint/ConstraintBase.h>
 #include <ocs2_mpc/MPC_BASE.h>
 
 namespace ocs2{
@@ -83,6 +84,7 @@ public:
 	typedef ControlledSystemBase<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>  dynamics_t;
 	typedef DerivativesBase<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>       dynamics_derivatives_t;
 	using cost_t = CostFunctionBase<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>;
+	using constraint_t = ConstraintBase<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>;
 	using mpc_t = MPC_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>;
 
 	/**
@@ -117,7 +119,6 @@ public:
 
 	/**
 	 * @brief getMPCPtr
-	 * @todo Change return type to MPCBase* once MPCBase is not templated on logicRules anymore
 	 * @return pointer to internal mpc instance
 	 */
 	virtual mpc_t* getMPCPtr() = 0;
@@ -136,10 +137,15 @@ public:
 
 	/**
 	 * @brief getCostPtr
-	 * @note This cannot be a CostFunctionBase* because of the logic rules template
 	 * @return pointer to internal cost function
 	 */
 	virtual cost_t* getCostPtr() = 0;
+
+	/**
+	 * @brief getConstraintPtr
+	 * @return pointer to internal constraint object
+	 */
+	virtual constraint_t* getConstraintPtr() { return nullptr; }
 
 	/**
 	 * Setups all optimizers which you require.

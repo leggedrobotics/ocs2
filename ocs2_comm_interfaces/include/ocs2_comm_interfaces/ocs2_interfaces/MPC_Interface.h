@@ -56,6 +56,7 @@ class MPC_Interface {
   typedef typename mpc_t::controller_ptr_array_t controller_ptr_array_t;
   typedef typename mpc_t::input_state_matrix_t input_state_matrix_t;
   typedef typename mpc_t::input_state_matrix_array_t input_state_matrix_array_t;
+  typedef typename mpc_t::dynamic_vector_t dynamic_vector_t;
 
   typedef typename mpc_t::cost_desired_trajectories_t cost_desired_trajectories_t;
   typedef typename mpc_t::mode_sequence_template_t mode_sequence_template_t;
@@ -153,6 +154,12 @@ class MPC_Interface {
    * @param[out] K
    */
   void getLinearFeedbackGain(scalar_t time, input_state_matrix_t& K);
+
+
+  void calculateStateInputConstraintLagrangian(
+              const scalar_t& time,
+              const state_vector_t& state,
+              dynamic_vector_t& nu) const;
 
   const scalar_array_t &getMpcTimeTrajectory();
   const state_vector_array_t &getMpcStateTrajectory();

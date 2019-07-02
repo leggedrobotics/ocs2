@@ -42,7 +42,7 @@ TEST(Anymal, PyBindings) {
   costDesiredTraj.desiredStateTrajectory()[0] = initState;
 
   bindings.reset(costDesiredTraj);
-  initState(3) = 0.5; // x position
+  //initState(3) = 0.5; // x position
   bindings.setObservation(0.0, initState);
   bindings.advanceMpc();
 
@@ -57,14 +57,14 @@ TEST(Anymal, PyBindings) {
   EXPECT_EQ(t_arr.size(), u_arr.size());
   EXPECT_EQ(t_arr.size(), sigmaX_arr.size());
 
-  std::cout << "t\t\tx\t\tu" << std::endl;
+  std::cout << "t\t\tx(3)\tx(14)" << std::endl;
   for (size_t i = 0; i < t_arr.size(); i++) {
     std::cout << std::setprecision(4);
-    std::cout << t_arr[i] << "\t\t" << x_arr[i].transpose() << "\t\t" << u_arr[i].transpose() << std::endl;
+    std::cout << t_arr[i] << "\t\t" << x_arr[i](3) << "\t" << x_arr[i](14) << std::endl;
   }
 
   double t = 0.0;
-  for (int i = 0; i < 10; i++) {
+  for (int i = 0; i < 201; i++) {
     bindings.setObservation(t, initState);
     bindings.advanceMpc();
     bindings.getMpcSolution(t_arr, x_arr, u_arr, sigmaX_arr);
@@ -90,6 +90,8 @@ TEST(Anymal, PyBindings) {
 
   auto Vx = bindings.getValueFunctionStateDerivative(t_arr[0], x_arr[0]);
   std::cout << "Vx: " << Vx.transpose() << std::endl;
+
+//  auto e = bindings.getStateInputConstraint(t_arr[0], x_arr[0], u_arr[0]);
 
   bindings.reset(costDesiredTraj);
   bindings.setObservation(0.0, initState);

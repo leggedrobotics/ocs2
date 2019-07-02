@@ -69,6 +69,8 @@ public:
 
         cost_funtion_t* getCostPtr() override {return costFunctionPtr_.get(); }
 
+        virtual constraint_t* getConstraintPtr() override {return constraintsPtr_.get(); }
+
 protected:
 	// dynamics
 	std::unique_ptr<system_dynamics_t> 				dynamicsPtr_;

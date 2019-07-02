@@ -91,7 +91,14 @@ TEST(Anymal, PyBindings) {
   auto Vx = bindings.getValueFunctionStateDerivative(t_arr[0], x_arr[0]);
   std::cout << "Vx: " << Vx.transpose() << std::endl;
 
-//  auto e = bindings.getStateInputConstraint(t_arr[0], x_arr[0], u_arr[0]);
+  auto e = bindings.getStateInputConstraint(t_arr[0], x_arr[0], u_arr[0]);
+  std::cout << "e: " << e.transpose() << std::endl;
+
+  auto D = bindings.getStateInputConstraintDerivativeControl(t_arr[0], x_arr[0], u_arr[0]);
+  std::cout << "D:\n" << D << std::endl;
+
+  auto nu = bindings.getStateInputConstraintLagrangian(t_arr[0], x_arr[0]);
+  std::cout <<"nu " << nu.transpose() << std::endl;
 
   bindings.reset(costDesiredTraj);
   bindings.setObservation(0.0, initState);

@@ -423,6 +423,68 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::approximateConstrainedLQWork
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
+void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculateStateInputConstraintLagrangian(
+		const scalar_t& time,
+		const state_vector_t& state,
+		dynamic_vector_t& nu) const {
+
+	size_t activeSubsystem = BASE::findActivePartitionIndex(BASE::partitioningTimes_, time);
+
+	state_vector_t xNominal;
+	EigenLinearInterpolation<state_vector_t> xNominalFunc(
+			&BASE::nominalTimeTrajectoriesStock_[activeSubsystem], &BASE::nominalStateTrajectoriesStock_[activeSubsystem]);
+	const auto greatestLessTimeStampIndex = xNominalFunc.interpolate(time, xNominal);
+
+	state_input_matrix_t Bm;
+	EigenLinearInterpolation<state_input_matrix_t> BmFunc(
+			&BASE::nominalTimeTrajectoriesStock_[activeSubsystem], &BASE::BmTrajectoryStock_[activeSubsystem]);
+	BmFunc.interpolate(time, Bm, greatestLessTimeStampIndex);
+
+	input_state_matrix_t Pm;
+	EigenLinearInterpolation<input_state_matrix_t> PmFunc(
+			&BASE::nominalTimeTrajectoriesStock_[activeSubsystem], &BASE::PmTrajectoryStock_[activeSubsystem]);
+	PmFunc.interpolate(time, Pm, greatestLessTimeStampIndex);
+
+	input_vector_t Rv;
+	EigenLinearInterpolation<input_vector_t> RvFunc(
+			&BASE::nominalTimeTrajectoriesStock_[activeSubsystem], &BASE::RvTrajectoryStock_[activeSubsystem]);
+	RvFunc.interpolate(time, Rv, greatestLessTimeStampIndex);
+
+	input_matrix_t Rm;
+	EigenLinearInterpolation<input_matrix_t> RmFunc(
+			&BASE::nominalTimeTrajectoriesStock_[activeSubsystem], &BASE::RmTrajectoryStock_[activeSubsystem]);
+	RmFunc.interpolate(time, Rm, greatestLessTimeStampIndex);
+
+	input_vector_t EvProjected;
+	EigenLinearInterpolation<input_vector_t> EvProjectedFunc(
+			&BASE::nominalTimeTrajectoriesStock_[activeSubsystem], &EvProjectedTrajectoryStock_[activeSubsystem]);
+	EvProjectedFunc.interpolate(time, EvProjected, greatestLessTimeStampIndex);
+
+	input_state_matrix_t CmProjected;
+	EigenLinearInterpolation<input_state_matrix_t> CmProjectedFunc(
+			&BASE::nominalTimeTrajectoriesStock_[activeSubsystem], &CmProjectedTrajectoryStock_[activeSubsystem]);
+	CmProjectedFunc.interpolate(time, CmProjected, greatestLessTimeStampIndex);
+
+	input_constraint1_matrix_t DmDager;
+	EigenLinearInterpolation<input_constraint1_matrix_t> DmDagerFunc(
+			&BASE::nominalTimeTrajectoriesStock_[activeSubsystem], &DmDagerTrajectoryStock_[activeSubsystem]);
+	DmDagerFunc.interpolate(time, DmDager, greatestLessTimeStampIndex);
+
+	state_vector_t costate;
+	BASE::getValueFunctionStateDerivative(time, state, costate);
+
+	const size_t nc1 = BASE::nc1TrajectoriesStock_[activeSubsystem][greatestLessTimeStampIndex];
+	state_vector_t deltaX = state - xNominal;
+	dynamic_input_matrix_t DmDagerTransRm = DmDager.leftCols(nc1).transpose() * Rm;
+
+	nu = DmDagerTransRm * (CmProjected*deltaX+EvProjected) -
+			DmDager.leftCols(nc1).transpose() * (Pm*deltaX + Bm.transpose()*costate+Rv);
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
 void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculateController() {
 
 	for (size_t i=0; i<BASE::numPartitions_; i++)  {

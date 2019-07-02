@@ -124,6 +124,7 @@ public:
 	using constraint2_state_matrix_array2_t = typename DIMENSIONS::constraint2_state_matrix_array2_t;
 	using dynamic_vector_t = typename DIMENSIONS::dynamic_vector_t;
 	using dynamic_vector_array_t = typename DIMENSIONS::dynamic_vector_array_t;
+	using dynamic_input_matrix_t = typename DIMENSIONS::dynamic_input_matrix_t;
 
 	using cost_desired_trajectories_t = CostDesiredTrajectories<scalar_t>;
 
@@ -411,15 +412,50 @@ public:
 			input_vector_array2_t& nominalInputTrajectoriesStock) = 0;
 
 	/**
-	 * @brief Calculates the state derivative of the value function
-	 * @param [in] time the query time
-	 * @param [out] Vx partial derivative of the value function at requested time at nominal state
+	 * Calculates the value function at the given time and state.
+	 *
+	 * @param [in] time: The inquiry time
+	 * @param [in] state: The inquiry state.
+	 * @param [out] valueFuntion: value function at the inquiry time and state.
 	 */
-	virtual void getValueFunctionStateDerivative(scalar_t time,
-	                                             const state_vector_t& state,
-	                                             state_vector_t& Vx) = 0;
+	virtual void getValueFuntion(
+			const scalar_t& time,
+			const state_vector_t& state,
+			scalar_t& valueFuntion) const = 0;
 
-	virtual void getLinearFeedbackGain(scalar_t time, input_state_matrix_t& K) = 0;
+	/**
+	 * Calculates the value function state derivative at the given time and state.
+	 *
+	 * @param [in] time: The inquiry time
+	 * @param [in] state: The inquiry state.
+	 * @param [out] Vx: value function at the inquiry time and state.
+	 */
+	virtual void getValueFunctionStateDerivative(
+			const scalar_t& time,
+			const state_vector_t& state,
+			state_vector_t& Vx) const = 0;
+
+	/**
+	 * Calculates the Lagrange multiplier of the state-input equality constraints at the given time and state.
+	 *
+	 * @param [in] time: The inquiry time
+	 * @param [in] state: The inquiry state.
+	 * @param [out] nu: The Lagrange multiplier of the state-input equality constraints.
+	 */
+	virtual void calculateStateInputConstraintLagrangian(
+			const scalar_t& time,
+			const state_vector_t& state,
+			dynamic_vector_t& nu) const = 0;
+
+	/**
+	 * Calculates the linear feedback gain at the given time.
+	 *
+	 * @param [in] time: The inquiry time
+	 * @param [out] k: value function at the inquiry time and state.
+	 */
+	virtual void getLinearFeedbackGain(
+			const scalar_t& time,
+			input_state_matrix_t& K) const = 0;
 
 	/**
 	 * Rewinds optimizer internal variables.

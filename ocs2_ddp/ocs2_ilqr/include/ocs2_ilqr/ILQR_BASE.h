@@ -107,6 +107,7 @@ public:
 	using constraint2_state_matrix_array2_t = typename BASE::constraint2_state_matrix_array2_t;
 	using dynamic_vector_t = typename BASE::dynamic_vector_t;
 	using dynamic_vector_array_t = typename BASE::dynamic_vector_array_t;
+	using dynamic_input_matrix_t = typename BASE::dynamic_input_matrix_t;
 
 	using controller_ptr_array_t = typename BASE::controller_ptr_array_t;
 	using linear_controller_t = typename BASE::linear_controller_t;
@@ -195,6 +196,18 @@ public:
 	 * 		- quadratized final cost
 	 */
 	void approximateOptimalControlProblem() override;
+
+	/**
+	 * Calculates the Lagrange multiplier of the state-input equality constraints at the given time and state.
+	 *
+	 * @param [in] time: The inquiry time
+	 * @param [in] state: The inquiry state.
+	 * @param [out] nu: The Lagrange multiplier of the state-input equality constraints.
+	 */
+	virtual void calculateStateInputConstraintLagrangian(
+			const scalar_t& time,
+			const state_vector_t& state,
+			dynamic_vector_t& nu) const override;
 
 	/**
 	 * Calculates the controller. This method uses the following variables:

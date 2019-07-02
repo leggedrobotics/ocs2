@@ -147,6 +147,7 @@ public:
 	using constraint2_state_matrix_array2_t = typename BASE::constraint2_state_matrix_array2_t;
 	using dynamic_vector_t = typename BASE::dynamic_vector_t;
 	using dynamic_vector_array_t = typename BASE::dynamic_vector_array_t;
+	using dynamic_input_matrix_t = typename BASE::dynamic_input_matrix_t;
 
 	using controller_ptr_array_t = typename BASE::controller_ptr_array_t;
 	typedef LinearController<STATE_DIM,INPUT_DIM>  linear_controller_t;
@@ -426,13 +427,29 @@ public:
 	virtual void getValueFuntion(
 			const scalar_t& time,
 			const state_vector_t& state,
-			scalar_t& valueFuntion);
+			scalar_t& valueFuntion) const override;
 
-	virtual void getValueFunctionStateDerivative(scalar_t time,
-	                                             const state_vector_t& state,
-	                                             state_vector_t& Vx) override;
+	/**
+	 * Calculates the value function state derivative at the given time and state.
+	 *
+	 * @param [in] time: The inquiry time
+	 * @param [in] state: The inquiry state.
+	 * @param [out] Vx: value function at the inquiry time and state.
+	 */
+	virtual void getValueFunctionStateDerivative(
+			const scalar_t& time,
+			const state_vector_t& state,
+			state_vector_t& Vx) const override;
 
-	virtual void getLinearFeedbackGain(scalar_t time, input_state_matrix_t& K) override;
+	/**
+	 * Calculates the linear feedback gain at the given time.
+	 *
+	 * @param [in] time: The inquiry time
+	 * @param [out] k: value function at the inquiry time and state.
+	 */
+	virtual void getLinearFeedbackGain(
+			const scalar_t& time,
+			input_state_matrix_t& K) const override;
 
 	/**
 	 * Upon activation in the multi-thread DDP class (DDP_MT), the parallelization of the backward pass takes

@@ -75,12 +75,7 @@ void PythonInterface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::advanceMpc() {
     mpcInterface_->advanceMpc();
   }
 
-  // set the correct logic rules once and hope they never change
-//  static auto dummy = [this](){
-        dynamics_->initializeModel(mpcInterface_->getLogicMachine(), 0);
-        dynamicsDerivatives_->initializeModel(mpcInterface_->getLogicMachine(), 0);
-        cost_->initializeModel(mpcInterface_->getLogicMachine(), 0);
-//    };
+
 }
 
 template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
@@ -114,6 +109,15 @@ void PythonInterface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::getMpcSolution(scalar
   t = mpcInterface_->getMpcTimeTrajectory();
   x = mpcInterface_->getMpcStateTrajectory();
   u = mpcInterface_->getMpcInputTrajectory();
+
+  // set the correct logic rules once and hope they never change
+//  static auto dummy = [this](){
+        std::cerr << "logicMachine display after advanceMpc " << std::endl;
+        mpcInterface_->getLogicMachine().display();
+        dynamics_->initializeModel(mpcInterface_->getLogicMachine(), 0);
+        dynamicsDerivatives_->initializeModel(mpcInterface_->getLogicMachine(), 0);
+        cost_->initializeModel(mpcInterface_->getLogicMachine(), 0);
+//    };
 
   sigmaX.clear();
   sigmaX.reserve(t.size());

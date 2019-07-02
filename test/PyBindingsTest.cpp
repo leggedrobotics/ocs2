@@ -17,7 +17,7 @@ TEST(Anymal, PyBindings) {
 
   state_vector_t initState = state_vector_t::Zero();
   initState(5) = 0.495;  // base z
-  initState(12) = -0.1;   // LF_HAA
+  initState(12) = -0.1;  // LF_HAA
   initState(13) = 0.7;
   initState(14) = -1.0;
   initState(15) = 0.1;
@@ -42,7 +42,7 @@ TEST(Anymal, PyBindings) {
   costDesiredTraj.desiredStateTrajectory()[0] = initState;
 
   bindings.reset(costDesiredTraj);
-  //initState(3) = 0.5; // x position
+  // initState(3) = 0.5; // x position
   bindings.setObservation(0.0, initState);
   bindings.advanceMpc();
 
@@ -64,7 +64,7 @@ TEST(Anymal, PyBindings) {
   }
 
   double t = 0.0;
-  for (int i = 0; i < 201; i++) {
+  for (int i = 0; i < 301; i++) {
     bindings.setObservation(t, initState);
     bindings.advanceMpc();
     bindings.getMpcSolution(t_arr, x_arr, u_arr, sigmaX_arr);
@@ -98,7 +98,17 @@ TEST(Anymal, PyBindings) {
   std::cout << "D:\n" << D << std::endl;
 
   auto nu = bindings.getStateInputConstraintLagrangian(t_arr[0], x_arr[0]);
-  std::cout <<"nu " << nu.transpose() << std::endl;
+  std::cout << "nu " << nu.transpose() << std::endl;
+
+  bindings.reset(costDesiredTraj);
+
+  t = 0.0;
+  for (int i = 0; i < 301; i++) {
+    bindings.setObservation(t, initState);
+    bindings.advanceMpc();
+    bindings.getMpcSolution(t_arr, x_arr, u_arr, sigmaX_arr);
+    t += 0.01;
+  }
 
   bindings.reset(costDesiredTraj);
   bindings.setObservation(0.0, initState);

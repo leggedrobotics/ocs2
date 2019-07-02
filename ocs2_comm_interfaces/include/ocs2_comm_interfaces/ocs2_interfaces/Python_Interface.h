@@ -77,6 +77,7 @@ protected:
   std::unique_ptr<DerivativesBase<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>> dynamicsDerivatives_;
 
   cost_t* cost_;
+  cost_desired_trajectories_t targetTrajectories_;
 
   // multithreading helper variables
   bool run_mpc_async_;

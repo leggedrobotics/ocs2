@@ -302,7 +302,7 @@ template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
 void MPC_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::partitioningTimesUpdate(scalar_array_t& partitioningTimes) const {
   // TODO: Is this correct?
   partitioningTimes.resize(2);
-  partitioningTimes[0] = currentObservation_.time();
+  partitioningTimes[0] = std::numeric_limits<scalar_t>::lowest();
   partitioningTimes[1] = std::numeric_limits<scalar_t>::max();
 }
 

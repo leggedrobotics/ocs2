@@ -22,7 +22,9 @@ PythonInterface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::~PythonInterface() {
 
 template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
 void PythonInterface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::reset(const cost_desired_trajectories_t& targetTrajectories){
+  targetTrajectories_ = targetTrajectories;
   mpcInterface_->reset(targetTrajectories);
+  cost_->setCostDesiredTrajectories(targetTrajectories_);
 }
 
 template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
@@ -39,7 +41,6 @@ void PythonInterface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::init(const std::strin
   }
 
   dynamics_.reset(robotInterface_->getDynamicsPtr()->clone());
-  // dynamics_->initializeModel
   dynamicsDerivatives_.reset(robotInterface_->getDynamicsDerivativesPtr()->clone());
 
   //TODO(jcarius) this static cast may be dangerous. Any way to avoid it?
@@ -60,6 +61,8 @@ void PythonInterface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::setObservation(double
 
 template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
 void PythonInterface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::setTargetTrajectories(const cost_desired_trajectories_t& targetTrajectories) {
+  targetTrajectories_ = targetTrajectories;
+  cost_->setCostDesiredTrajectories(targetTrajectories_);
   mpcInterface_->setTargetTrajectories(targetTrajectories);
 }
 
@@ -71,6 +74,8 @@ void PythonInterface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::advanceMpc() {
   } else {
     mpcInterface_->advanceMpc();
   }
+
+
 }
 
 template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
@@ -104,6 +109,15 @@ void PythonInterface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::getMpcSolution(scalar
   t = mpcInterface_->getMpcTimeTrajectory();
   x = mpcInterface_->getMpcStateTrajectory();
   u = mpcInterface_->getMpcInputTrajectory();
+
+  // set the correct logic rules once and hope they never change
+//  static auto dummy = [this](){
+        std::cerr << "logicMachine display after advanceMpc " << std::endl;
+        mpcInterface_->getLogicMachine().display();
+        dynamics_->initializeModel(mpcInterface_->getLogicMachine(), 0);
+        dynamicsDerivatives_->initializeModel(mpcInterface_->getLogicMachine(), 0);
+        cost_->initializeModel(mpcInterface_->getLogicMachine(), 0);
+//    };
 
   sigmaX.clear();
   sigmaX.reserve(t.size());

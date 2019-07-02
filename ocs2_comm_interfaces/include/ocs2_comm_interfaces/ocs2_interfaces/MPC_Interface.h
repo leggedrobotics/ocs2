@@ -158,6 +158,8 @@ class MPC_Interface {
   const state_vector_array_t &getMpcStateTrajectory();
   const input_vector_array_t &getMpcInputTrajectory();
 
+  logic_machine_t& getLogicMachine() {return logicMachine_;}
+
  protected:
   /*
    * Variables

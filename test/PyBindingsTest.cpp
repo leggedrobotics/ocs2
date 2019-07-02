@@ -42,6 +42,7 @@ TEST(Anymal, PyBindings) {
   costDesiredTraj.desiredStateTrajectory()[0] = initState;
 
   bindings.reset(costDesiredTraj);
+  initState(3) = 0.5; // x position
   bindings.setObservation(0.0, initState);
   bindings.advanceMpc();
 

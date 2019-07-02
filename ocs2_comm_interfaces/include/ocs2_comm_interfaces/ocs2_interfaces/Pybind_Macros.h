@@ -64,5 +64,8 @@ using namespace pybind11::literals;
         .def("getRunningCost", &PY_INTERFACE::getRunningCost, "t"_a, "x"_a.noconvert(), "u"_a.noconvert())\
         .def("getRunningCostDerivativeState", &PY_INTERFACE::getRunningCostDerivativeState, "t"_a, "x"_a.noconvert(), "u"_a.noconvert())\
         .def("getRunningCostDerivativeInput", &PY_INTERFACE::getRunningCostDerivativeInput, "t"_a, "x"_a.noconvert(), "u"_a.noconvert())\
-        .def("getValueFunctionStateDerivative", &PY_INTERFACE::getValueFunctionStateDerivative, "t"_a, "x"_a.noconvert());\
+        .def("getValueFunctionStateDerivative", &PY_INTERFACE::getValueFunctionStateDerivative, "t"_a, "x"_a.noconvert())\
+        .def("getStateInputConstraint", &PY_INTERFACE::getStateInputConstraint, "t"_a, "x"_a.noconvert(), "u"_a.noconvert())\
+        .def("getStateInputConstraintDerivativeControl", &PY_INTERFACE::getStateInputConstraintDerivativeControl, "t"_a, "x"_a.noconvert(), "u"_a.noconvert())\
+        .def("getStateInputConstraintLagrangian", &PY_INTERFACE::getStateInputConstraintLagrangian, "t"_a, "x"_a.noconvert());\
     }

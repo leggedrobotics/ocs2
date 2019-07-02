@@ -433,7 +433,7 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculateStateInputConstrain
 	state_vector_t xNominal;
 	EigenLinearInterpolation<state_vector_t> xNominalFunc(
 			&BASE::nominalTimeTrajectoriesStock_[activeSubsystem], &BASE::nominalStateTrajectoriesStock_[activeSubsystem]);
-	const auto greatestLessTimeStampIndex = xNominalFunc.interpolate(time, xNominal);
+	auto greatestLessTimeStampIndex = xNominalFunc.interpolate(time, xNominal);
 
 	state_input_matrix_t Bm;
 	EigenLinearInterpolation<state_input_matrix_t> BmFunc(
@@ -472,6 +472,10 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculateStateInputConstrain
 
 	state_vector_t costate;
 	BASE::getValueFunctionStateDerivative(time, state, costate);
+
+	if(greatestLessTimeStampIndex < 0){
+		greatestLessTimeStampIndex = 0;
+	}
 
 	const size_t nc1 = BASE::nc1TrajectoriesStock_[activeSubsystem][greatestLessTimeStampIndex];
 	state_vector_t deltaX = state - xNominal;

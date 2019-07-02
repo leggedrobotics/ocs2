@@ -135,6 +135,7 @@ public:
 			enquiryData.setZero();
 		} else {
 			if (index < 0) { // No index provided -> search for it
+				//! @todo @badcode -1 can also be used as a hint and could even be our return value
 				index = find(timeStamp, enquiryTime);
 			}
 

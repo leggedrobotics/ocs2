@@ -110,8 +110,6 @@ void PythonInterface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::getMpcSolution(scalar
 
   // set the correct logic rules once and hope they never change
 //  static auto dummy = [this](){
-        std::cerr << "logicMachine display after advanceMpc " << std::endl;
-        mpcInterface_->getLogicMachine().display();
         dynamics_->initializeModel(mpcInterface_->getLogicMachine(), 0);
         dynamicsDerivatives_->initializeModel(mpcInterface_->getLogicMachine(), 0);
         cost_->initializeModel(mpcInterface_->getLogicMachine(), 0);

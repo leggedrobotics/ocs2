@@ -471,7 +471,7 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculateStateInputConstrain
 	DmDagerFunc.interpolate(time, DmDager, greatestLessTimeStampIndex);
 
 	state_vector_t costate;
-	BASE::getValueFunctionStateDerivative(time, state, costate);
+	BASE::getValueFunctionStateDerivative(time, xNominal, costate);
 
 	if(greatestLessTimeStampIndex < 0){
 		greatestLessTimeStampIndex = 0;
@@ -479,6 +479,7 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculateStateInputConstrain
 
 	const size_t nc1 = BASE::nc1TrajectoriesStock_[activeSubsystem][greatestLessTimeStampIndex];
 	state_vector_t deltaX = state - xNominal;
+	deltaX.setZero();
 	dynamic_input_matrix_t DmDagerTransRm = DmDager.leftCols(nc1).transpose() * Rm;
 
 	nu = DmDagerTransRm * (CmProjected*deltaX+EvProjected) -

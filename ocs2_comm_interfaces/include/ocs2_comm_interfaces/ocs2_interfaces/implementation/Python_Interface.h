@@ -1,6 +1,7 @@
 #pragma once
 
 #include <ocs2_comm_interfaces/ocs2_interfaces/Python_Interface.h>
+#include <Eigen/SVD>
 
 namespace ocs2 {
 
@@ -122,10 +123,20 @@ void PythonInterface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::getMpcSolution(scalar
     double alpha_squared = 0.1;  // damping of pseudoinverse in case ki is very small
     input_state_matrix_t ki;
     mpcInterface_->getLinearFeedbackGain(ti, ki);
-    state_input_matrix_t kDagger =
-        ki.transpose() * (ki * ki.transpose() + alpha_squared * input_matrix_t::Identity()).ldlt().solve(input_matrix_t::Identity());
+//    state_input_matrix_t kDagger =
+//        ki.transpose() * (ki * ki.transpose() + alpha_squared * input_matrix_t::Identity()).ldlt().solve(input_matrix_t::Identity());
+
 //    std::cerr << std::setprecision(std::numeric_limits<long double>::digits10 + 1) << std::endl;
+
+    Eigen::JacobiSVD<input_state_matrix_t> ki_svd(ki, Eigen::ComputeThinU | Eigen::ComputeThinV);
+    auto sv = ki_svd.singularValues();
+    Eigen::VectorXd svInv = (sv.array().abs() > 1e-2).select(sv.array().inverse(), 0.0);
+    state_input_matrix_t kDagger = ki_svd.matrixV() * svInv.asDiagonal() * ki_svd.matrixU().adjoint();
+//    std::cerr << "kDaggerNew\n" << kDaggerNew << std::endl;
+
 //    std::cerr << "pyInterfaceCpp: k =\n" << ki << "\nkDagger\n" << kDagger << std::endl;
+//    std::cerr << "pyInterface k =\n" << ki << std::endl;
+
 //    double beta = 0.01;  // fraction of u_max that corresponds to one std.dev.
 //    input_vector_t uMaxSquared = input_vector_t::Constant(pow(100.0, 2));
     sigmaX.emplace_back(kDagger * kDagger.transpose());

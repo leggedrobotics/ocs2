@@ -57,78 +57,78 @@ SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::SLQ_BASE(
 		, settings_(settings)
 {
 	// State triggered
-	state_dynamicsForwardRolloutPtrStock_.resize(settings_.ddpSettings_.nThreads_);
-	for (size_t i=0; i<settings_.ddpSettings_.nThreads_; i++) {
+	state_dynamicsForwardRolloutPtrStock_.resize(BASE::ddpSettings_.nThreads_);
+	for (size_t i=0; i<BASE::ddpSettings_.nThreads_; i++) {
 
 		state_dynamicsForwardRolloutPtrStock_[i].reset( new state_triggered_rollout_t(
-				*systemDynamicsPtr, settings_.rolloutSettings_, "SLQ") );
+				*systemDynamicsPtr, BASE::rolloutSettings_, "SLQ") );
 
 	} // end of i loop
 
 
 	// for controller design
-	BmFunc_.resize(settings_.ddpSettings_.nThreads_);
-	PmFunc_.resize(settings_.ddpSettings_.nThreads_);
-	RmInverseFunc_.resize(settings_.ddpSettings_.nThreads_);
-	RvFunc_.resize(settings_.ddpSettings_.nThreads_);
-	EvProjectedFunc_.resize(settings_.ddpSettings_.nThreads_);
-	CmProjectedFunc_.resize(settings_.ddpSettings_.nThreads_);
-	DmProjectedFunc_.resize(settings_.ddpSettings_.nThreads_);
+	BmFunc_.resize(BASE::ddpSettings_.nThreads_);
+	PmFunc_.resize(BASE::ddpSettings_.nThreads_);
+	RmInverseFunc_.resize(BASE::ddpSettings_.nThreads_);
+	RvFunc_.resize(BASE::ddpSettings_.nThreads_);
+	EvProjectedFunc_.resize(BASE::ddpSettings_.nThreads_);
+	CmProjectedFunc_.resize(BASE::ddpSettings_.nThreads_);
+	DmProjectedFunc_.resize(BASE::ddpSettings_.nThreads_);
 
 	// Riccati Solver
-	SmFuncs_.resize(settings_.ddpSettings_.nThreads_);
+	SmFuncs_.resize(BASE::ddpSettings_.nThreads_);
 	riccatiEquationsPtrStock_.clear();
-	riccatiEquationsPtrStock_.reserve(settings_.ddpSettings_.nThreads_);
+	riccatiEquationsPtrStock_.reserve(BASE::ddpSettings_.nThreads_);
 	errorEquationPtrStock_.clear();
-	errorEquationPtrStock_.reserve(settings_.ddpSettings_.nThreads_);
+	errorEquationPtrStock_.reserve(BASE::ddpSettings_.nThreads_);
 	riccatiEventPtrStock_.clear();
-	riccatiEventPtrStock_.reserve(settings_.ddpSettings_.nThreads_);
+	riccatiEventPtrStock_.reserve(BASE::ddpSettings_.nThreads_);
 	errorEventPtrStock_.clear();
-	errorEventPtrStock_.reserve(settings_.ddpSettings_.nThreads_);
+	errorEventPtrStock_.reserve(BASE::ddpSettings_.nThreads_);
 	riccatiIntegratorPtrStock_.clear();
-	riccatiIntegratorPtrStock_.reserve(settings_.ddpSettings_.nThreads_);
+	riccatiIntegratorPtrStock_.reserve(BASE::ddpSettings_.nThreads_);
 	errorIntegratorPtrStock_.clear();
-	errorIntegratorPtrStock_.reserve(settings_.ddpSettings_.nThreads_);
+	errorIntegratorPtrStock_.reserve(BASE::ddpSettings_.nThreads_);
 
 	slqRiccatiEquationsPtrStock_.clear();
-	slqRiccatiEquationsPtrStock_.reserve(settings_.ddpSettings_.nThreads_);
+	slqRiccatiEquationsPtrStock_.reserve(BASE::ddpSettings_.nThreads_);
 	slqRiccatiEventPtrStock_.clear();
-	slqRiccatiEventPtrStock_.reserve(settings_.ddpSettings_.nThreads_);
+	slqRiccatiEventPtrStock_.reserve(BASE::ddpSettings_.nThreads_);
 	slqRiccatiIntegratorPtrStock_.clear();
-	slqRiccatiIntegratorPtrStock_.reserve(settings_.ddpSettings_.nThreads_);
+	slqRiccatiIntegratorPtrStock_.reserve(BASE::ddpSettings_.nThreads_);
 
-	for (size_t i=0; i<settings_.ddpSettings_.nThreads_; i++)  {
+	for (size_t i=0; i<BASE::ddpSettings_.nThreads_; i++)  {
 
-		typedef Eigen::aligned_allocator<riccati_equations_t> riccati_equations_alloc_t;
+		using riccati_equations_alloc_t = Eigen::aligned_allocator<riccati_equations_t>;
 		riccatiEquationsPtrStock_.push_back( std::move(
 				std::allocate_shared<riccati_equations_t, riccati_equations_alloc_t>(riccati_equations_alloc_t(),
-						settings_.ddpSettings_.useMakePSD_,
-						settings_.ddpSettings_.addedRiccatiDiagonal_) ) );
+						BASE::ddpSettings_.useMakePSD_,
+						BASE::ddpSettings_.addedRiccatiDiagonal_) ) );
 
-		typedef Eigen::aligned_allocator<error_equation_t> error_equation_alloc_t;
+		using error_equation_alloc_t = Eigen::aligned_allocator<error_equation_t>;
 		errorEquationPtrStock_.push_back( std::move(
 				std::allocate_shared<error_equation_t, error_equation_alloc_t>(error_equation_alloc_t(),
-						settings_.ddpSettings_.useMakePSD_,
-						settings_.ddpSettings_.addedRiccatiDiagonal_) ) );
+						BASE::ddpSettings_.useMakePSD_,
+						BASE::ddpSettings_.addedRiccatiDiagonal_) ) );
 
-		typedef Eigen::aligned_allocator<slq_riccati_equations_t> slq_riccati_equations_alloc_t;
+		using slq_riccati_equations_alloc_t = Eigen::aligned_allocator<slq_riccati_equations_t>;
 		slqRiccatiEquationsPtrStock_.push_back( std::move(
 				std::allocate_shared<slq_riccati_equations_t, slq_riccati_equations_alloc_t>(slq_riccati_equations_alloc_t(),
-						settings_.ddpSettings_.useMakePSD_,
-						settings_.ddpSettings_.addedRiccatiDiagonal_) ) );
+						BASE::ddpSettings_.useMakePSD_,
+						BASE::ddpSettings_.addedRiccatiDiagonal_) ) );
 
-		typedef SystemEventHandler<riccati_equations_t::S_DIM_> riccati_event_handler_t;
-		typedef Eigen::aligned_allocator<riccati_event_handler_t> riccati_event_handler_alloc_t;
+		using riccati_event_handler_t = SystemEventHandler<riccati_equations_t::S_DIM_>;
+		using riccati_event_handler_alloc_t = Eigen::aligned_allocator<riccati_event_handler_t>;
 		riccatiEventPtrStock_.push_back( std::move(
 				std::allocate_shared<riccati_event_handler_t, riccati_event_handler_alloc_t>(riccati_event_handler_alloc_t()) ) );
 
-		typedef SystemEventHandler<STATE_DIM> error_event_handler_t;
-		typedef Eigen::aligned_allocator<error_event_handler_t> error_event_handler_alloc_t;
+		using error_event_handler_t = SystemEventHandler<STATE_DIM>;
+		using error_event_handler_alloc_t = Eigen::aligned_allocator<error_event_handler_t>;
 		errorEventPtrStock_.push_back( std::move(
 				std::allocate_shared<error_event_handler_t, error_event_handler_alloc_t>(error_event_handler_alloc_t()) ) );
 
-		typedef SystemEventHandler<slq_riccati_equations_t::S_DIM_> slqRiccati_event_handler_t;
-		typedef Eigen::aligned_allocator<slqRiccati_event_handler_t> slqRiccati_event_handler_alloc_t;
+		using slqRiccati_event_handler_t = SystemEventHandler<slq_riccati_equations_t::S_DIM_>;
+		using slqRiccati_event_handler_alloc_t = Eigen::aligned_allocator<slqRiccati_event_handler_t>;
 		slqRiccatiEventPtrStock_.push_back( std::move(
 				std::allocate_shared<slqRiccati_event_handler_t, slqRiccati_event_handler_alloc_t>(slqRiccati_event_handler_alloc_t()) ) );
 
@@ -164,16 +164,16 @@ SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::SLQ_BASE(
 	}  // end of i loop
 
 	hamiltonianEquationPtrStock_.clear();
-	hamiltonianEquationPtrStock_.reserve(settings_.ddpSettings_.nThreads_);
+	hamiltonianEquationPtrStock_.reserve(BASE::ddpSettings_.nThreads_);
 	hamiltonianIntegratorPtrStock_.clear();
-	hamiltonianIntegratorPtrStock_.reserve(settings_.ddpSettings_.nThreads_);
+	hamiltonianIntegratorPtrStock_.reserve(BASE::ddpSettings_.nThreads_);
 
 	hamiltonianIncrementEquationPtrStock_.clear();
-	hamiltonianIncrementEquationPtrStock_.reserve(settings_.ddpSettings_.nThreads_);
+	hamiltonianIncrementEquationPtrStock_.reserve(BASE::ddpSettings_.nThreads_);
 	hamiltonianIncrementIntegratorPtrStock_.clear();
-	hamiltonianIncrementIntegratorPtrStock_.reserve(settings_.ddpSettings_.nThreads_);
+	hamiltonianIncrementIntegratorPtrStock_.reserve(BASE::ddpSettings_.nThreads_);
 
-	for (size_t i=0; i<settings_.ddpSettings_.nThreads_; i++)  {
+	for (size_t i=0; i<BASE::ddpSettings_.nThreads_; i++)  {
 		hamiltonianEquationPtrStock_.emplace_back(
 				new hamiltonian_equation_t());
 		hamiltonianIntegratorPtrStock_.emplace_back(
@@ -204,7 +204,8 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::approximateOptimalControlPro
 		EvProjectedTrajectoryStock_[i].resize(N);
 		CmProjectedTrajectoryStock_[i].resize(N);
 		DmProjectedTrajectoryStock_[i].resize(N);
-		if (settings_.ddpSettings_.useRiccatiSolver_==true) {
+        RmInverseTrajectoryStock_[i].resize(N);
+		if (BASE::ddpSettings_.useRiccatiSolver_) {
 			RmConstrainedTrajectoryStock_[i].resize(N);
 		} else {
 			BmConstrainedTrajectoryStock_[i].resize(N);
@@ -229,8 +230,8 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::approximateLQWorker(
 	// unconstrained LQ problem
 	BASE::approximateUnconstrainedLQWorker(workerIndex, partitionIndex, timeIndex);
 
-	const scalar_t stateConstraintPenalty = settings_.ddpSettings_.stateConstraintPenaltyCoeff_ *
-				pow(settings_.ddpSettings_.stateConstraintPenaltyBase_, BASE::iteration_);
+	const scalar_t stateConstraintPenalty = BASE::ddpSettings_.stateConstraintPenaltyCoeff_ *
+				pow(BASE::ddpSettings_.stateConstraintPenaltyBase_, BASE::iteration_);
 
 	// modify the unconstrained LQ coefficients to constrained ones
 	approximateConstrainedLQWorker(workerIndex, partitionIndex, timeIndex, stateConstraintPenalty);
@@ -292,33 +293,44 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::approximateConstrainedLQWork
 		BASE::PmTrajectoryStock_[i][k] += ddpdudx;
 
 		// checking the numerical stability again
-		if (settings_.ddpSettings_.checkNumericalStability_==true){
+		if (BASE::ddpSettings_.checkNumericalStability_){
 			try {
-				if (!BASE::qTrajectoryStock_[i][k].allFinite())
+				if (!BASE::qTrajectoryStock_[i][k].allFinite()) {
 					throw std::runtime_error("Intermediate cost is is not finite.");
-				if (!BASE::QvTrajectoryStock_[i][k].allFinite())
+				}
+				if (!BASE::QvTrajectoryStock_[i][k].allFinite()) {
 					throw std::runtime_error("Intermediate cost first derivative w.r.t. state is is not finite.");
-				if (!BASE::QmTrajectoryStock_[i][k].allFinite())
+				}
+				if (!BASE::QmTrajectoryStock_[i][k].allFinite()) {
 					throw std::runtime_error("Intermediate cost second derivative w.r.t. state is is not finite.");
-				if (!BASE::QmTrajectoryStock_[i][k].isApprox(BASE::QmTrajectoryStock_[i][k].transpose()))
+				}
+				if (!BASE::QmTrajectoryStock_[i][k].isApprox(BASE::QmTrajectoryStock_[i][k].transpose())) {
 					throw std::runtime_error("Intermediate cost second derivative w.r.t. state is is not self-adjoint.");
-				if (BASE::QmTrajectoryStock_[i][k].eigenvalues().real().minCoeff() < -Eigen::NumTraits<scalar_t>::epsilon())
+				}
+				if (BASE::QmTrajectoryStock_[i][k].eigenvalues().real().minCoeff() < -Eigen::NumTraits<scalar_t>::epsilon()) {
 					throw std::runtime_error("Q matrix is not positive semi-definite. It's smallest eigenvalue is " +
 											 std::to_string(BASE::QmTrajectoryStock_[i][k].eigenvalues().real().minCoeff()) + ".");
-				if (!BASE::RvTrajectoryStock_[i][k].allFinite())
+				}
+				if (!BASE::RvTrajectoryStock_[i][k].allFinite()) {
 					throw std::runtime_error("Intermediate cost first derivative w.r.t. input is is not finite.");
-				if (!BASE::RmTrajectoryStock_[i][k].allFinite())
+				}
+				if (!BASE::RmTrajectoryStock_[i][k].allFinite()) {
 					throw std::runtime_error("Intermediate cost second derivative w.r.t. input is is not finite.");
-				if (!BASE::RmTrajectoryStock_[i][k].isApprox(BASE::RmTrajectoryStock_[i][k].transpose()))
+				}
+				if (!BASE::RmTrajectoryStock_[i][k].isApprox(BASE::RmTrajectoryStock_[i][k].transpose())) {
 					throw std::runtime_error("Intermediate cost second derivative w.r.t. input is is not self-adjoint.");
-				if (!BASE::PmTrajectoryStock_[i][k].allFinite())
+				}
+				if (!BASE::PmTrajectoryStock_[i][k].allFinite()) {
 					throw std::runtime_error("Intermediate cost second derivative w.r.t. input-state is is not finite.");
-				if (BASE::RmTrajectoryStock_[i][k].ldlt().rcond() < Eigen::NumTraits<scalar_t>::epsilon())
+				}
+				if (BASE::RmTrajectoryStock_[i][k].ldlt().rcond() < Eigen::NumTraits<scalar_t>::epsilon()) {
 					throw std::runtime_error("R matrix is not invertible. It's reciprocal condition number is " +
 											 std::to_string(BASE::RmTrajectoryStock_[i][k].ldlt().rcond()) + ".");
-				if (BASE::RmTrajectoryStock_[i][k].eigenvalues().real().minCoeff() < Eigen::NumTraits<scalar_t>::epsilon())
+				}
+				if (BASE::RmTrajectoryStock_[i][k].eigenvalues().real().minCoeff() < Eigen::NumTraits<scalar_t>::epsilon()) {
 					throw std::runtime_error("R matrix is not positive definite. It's smallest eigenvalue is " +
 											 std::to_string(BASE::RmTrajectoryStock_[i][k].eigenvalues().real().minCoeff()) + ".");
+				}
 			} catch(const std::exception& error)  {
 				std::cerr << "After adding inequality constraint penalty" << std::endl;
 				std::cerr << "what(): " << error.what() << " at time " << BASE::nominalTimeTrajectoriesStock_[i][k] << " [sec]." << std::endl;
@@ -335,6 +347,9 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::approximateConstrainedLQWork
 		}
 	}
 
+	// Compute R inverse after inequalities are added to the cost
+    RmInverseTrajectoryStock_[i][k] = BASE::RmTrajectoryStock_[i][k].ldlt().solve(input_matrix_t::Identity());
+
 	// constraint type 1 coefficients
 	const size_t& nc1 = BASE::nc1TrajectoriesStock_[i][k];
 	if (nc1 == 0) {
@@ -346,7 +361,7 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::approximateConstrainedLQWork
 		AmConstrainedTrajectoryStock_[i][k] = BASE::AmTrajectoryStock_[i][k];
 		QmConstrainedTrajectoryStock_[i][k] = BASE::QmTrajectoryStock_[i][k];
 		QvConstrainedTrajectoryStock_[i][k] = BASE::QvTrajectoryStock_[i][k];
-		if (settings_.ddpSettings_.useRiccatiSolver_==true) {
+		if (BASE::ddpSettings_.useRiccatiSolver_) {
 			RmConstrainedTrajectoryStock_[i][k] = BASE::RmTrajectoryStock_[i][k];
 		} else {
 			BmConstrainedTrajectoryStock_[i][k] = BASE::BmTrajectoryStock_[i][k];
@@ -361,13 +376,14 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::approximateConstrainedLQWork
     dynamic_matrix_t Dm = BASE::DmTrajectoryStock_[i][k].topRows(nc1);
 
 		// check numerical stability_
-		if (settings_.ddpSettings_.checkNumericalStability_==true && nc1>0)
+		if (BASE::ddpSettings_.checkNumericalStability_ && nc1>0) {
 			if (Dm.colPivHouseholderQr().rank()!=nc1) {
 				BASE::printString(">>> WARNING: The state-input constraints are rank deficient "
 						"(at time " + std::to_string(BASE::nominalTimeTrajectoriesStock_[i][k]) + ")!");
 			}
+		}
 
-    dynamic_matrix_t RmInvDmtranspose = BASE::RmInverseTrajectoryStock_[i][k]*Dm.transpose();
+    dynamic_matrix_t RmInvDmtranspose = RmInverseTrajectoryStock_[i][k]*Dm.transpose();
 		dynamic_matrix_t RmProjected = ( Dm * RmInvDmtranspose ).ldlt().solve(dynamic_matrix_t::Identity(nc1,nc1));
 		dynamic_matrix_t DmDager = RmInvDmtranspose * RmProjected;
 
@@ -387,7 +403,7 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::approximateConstrainedLQWork
     QvConstrainedTrajectoryStock_[i][k].noalias() -= CmProjectedTrajectoryStock_[i][k].transpose()*BASE::RvTrajectoryStock_[i][k];
 
     input_matrix_t DmNullSpaceProjection = input_matrix_t::Identity() - DmProjectedTrajectoryStock_[i][k];
-    if (settings_.ddpSettings_.useRiccatiSolver_==true) {
+    if (BASE::ddpSettings_.useRiccatiSolver_) {
 			RmConstrainedTrajectoryStock_[i][k].noalias() = DmNullSpaceProjection.transpose() * BASE::RmTrajectoryStock_[i][k] * DmNullSpaceProjection;
 		} else {
 			BmConstrainedTrajectoryStock_[i][k].noalias() = BASE::BmTrajectoryStock_[i][k] * DmNullSpaceProjection;
@@ -398,8 +414,9 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::approximateConstrainedLQWork
 	}
 
 	// making sure that constrained Qm is PSD
-	if (settings_.ddpSettings_.useMakePSD_==true)
+	if (BASE::ddpSettings_.useMakePSD_) {
 		BASE::makePSD(QmConstrainedTrajectoryStock_[i][k]);
+	}
 }
 
 /******************************************************************************************************/
@@ -423,16 +440,17 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculateController() {
 		BASE::nominalControllersStock_[i].deltaBiasArray_.resize(N);
 
 		// if the partition is not active
-		if (N==0)  continue;
+		if (N==0) {  continue;
+		}
 
 		// initialize interpolating function
-		for (size_t j = 0; j<settings_.ddpSettings_.nThreads_; j++) {
+		for (size_t j = 0; j<BASE::ddpSettings_.nThreads_; j++) {
 			// functions for controller
 			BASE::nominalStateFunc_[j].setData(&(BASE::nominalTimeTrajectoriesStock_[i]), &(BASE::nominalStateTrajectoriesStock_[i]) );
 			BASE::nominalInputFunc_[j].setData(&(BASE::nominalTimeTrajectoriesStock_[i]), &(BASE::nominalInputTrajectoriesStock_[i]) );
 			BmFunc_[j].setData(&(BASE::nominalTimeTrajectoriesStock_[i]), &(BASE::BmTrajectoryStock_[i]) );
 			PmFunc_[j].setData(&(BASE::nominalTimeTrajectoriesStock_[i]), &(BASE::PmTrajectoryStock_[i]) );
-			RmInverseFunc_[j].setData(&(BASE::nominalTimeTrajectoriesStock_[i]), &(BASE::RmInverseTrajectoryStock_[i]) );
+			RmInverseFunc_[j].setData(&(BASE::nominalTimeTrajectoriesStock_[i]), &(RmInverseTrajectoryStock_[i]) );
 			RvFunc_[j].setData( &(BASE::nominalTimeTrajectoriesStock_[i]), &(BASE::RvTrajectoryStock_[i]) );
 			EvProjectedFunc_[j].setData(&(BASE::nominalTimeTrajectoriesStock_[i]), &(EvProjectedTrajectoryStock_[i]) );
 			CmProjectedFunc_[j].setData(&(BASE::nominalTimeTrajectoriesStock_[i]), &(CmProjectedTrajectoryStock_[i]) );
@@ -440,7 +458,7 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculateController() {
 		}  // end of j loop
 
 		// current partition update
-		BASE::constraintStepSize_ = BASE::initialControllerDesignStock_[i] ? 0.0 : settings_.ddpSettings_.constraintStepSize_;
+		BASE::constraintStepSize_ = BASE::initialControllerDesignStock_[i] ? 0.0 : BASE::ddpSettings_.constraintStepSize_;
 
 		/*
 		 * perform the calculatePartitionController for partition i
@@ -499,12 +517,14 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculateControllerWorker (
 	BASE::nominalControllersStock_[i].deltaBiasArray_[k] = -DmNullProjection*Lv;
 
 	// checking the numerical stability of the controller parameters
-	if (settings_.ddpSettings_.checkNumericalStability_==true){
+	if (BASE::ddpSettings_.checkNumericalStability_){
 		try {
-			if (!BASE::nominalControllersStock_[i].gainArray_[k].allFinite())
+			if (!BASE::nominalControllersStock_[i].gainArray_[k].allFinite()) {
 				throw std::runtime_error("Feedback gains are unstable.");
-			if (!BASE::nominalControllersStock_[i].deltaBiasArray_[k].allFinite())
+			}
+			if (!BASE::nominalControllersStock_[i].deltaBiasArray_[k].allFinite()) {
 				throw std::runtime_error("feedForwardControl is unstable.");
+			}
 		}
 		catch(const std::exception& error)  {
 			std::cerr << "what(): " << error.what() << " at time " << BASE::nominalControllersStock_[i].timeStamp_[k] << " [sec]." << std::endl;
@@ -536,7 +556,7 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::solveRiccatiEquationsWorker(
 			&QvConstrainedTrajectoryStock_[partitionIndex],
 			&QmConstrainedTrajectoryStock_[partitionIndex],
 			&BASE::RvTrajectoryStock_[partitionIndex],
-			&BASE::RmInverseTrajectoryStock_[partitionIndex],
+			&RmInverseTrajectoryStock_[partitionIndex],
 			&RmConstrainedTrajectoryStock_[partitionIndex],
 			&BASE::PmTrajectoryStock_[partitionIndex],
 			&BASE::nominalEventsPastTheEndIndecesStock_[partitionIndex],
@@ -562,7 +582,7 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::solveRiccatiEquationsWorker(
 	}
 
 	// max number of steps of integration
-	size_t maxNumSteps = settings_.ddpSettings_.maxNumStepsPerSecond_ * std::max(1.0, finalNormalizedTime-startNormalizedTime);
+	size_t maxNumSteps = BASE::ddpSettings_.maxNumStepsPerSecond_ * std::max(1.0, finalNormalizedTime-startNormalizedTime);
 
 	// clear output containers
 	BASE::SsNormalizedTimeTrajectoryStock_[partitionIndex].clear();
@@ -598,9 +618,9 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::solveRiccatiEquationsWorker(
 			riccatiIntegratorPtrStock_[workerIndex]->integrate(
 					allSsFinal, beginTime, endTime,
 					allSsTrajectory, BASE::SsNormalizedTimeTrajectoryStock_[partitionIndex],
-					settings_.ddpSettings_.minTimeStep_,
-					settings_.ddpSettings_.absTolODE_,
-					settings_.ddpSettings_.relTolODE_,
+					BASE::ddpSettings_.minTimeStep_,
+					BASE::ddpSettings_.absTolODE_,
+					BASE::ddpSettings_.relTolODE_,
 					maxNumSteps,
 					true);
 		} else {
@@ -630,21 +650,26 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::solveRiccatiEquationsWorker(
 	}  // end of k loop
 
 	// testing the numerical stability of the Riccati equations
-	if (settings_.ddpSettings_.checkNumericalStability_)
+	if (BASE::ddpSettings_.checkNumericalStability_) {
 		for (int k=NS-1; k>=0; k--) {
 			try {
-				if (!BASE::SmTrajectoryStock_[partitionIndex][k].allFinite())  throw std::runtime_error("Sm is unstable.");
-				if (BASE::SmTrajectoryStock_[partitionIndex][k].eigenvalues().real().minCoeff() < -Eigen::NumTraits<scalar_t>::epsilon())
+				if (!BASE::SmTrajectoryStock_[partitionIndex][k].allFinite()) {  throw std::runtime_error("Sm is unstable.");
+				}
+				if (BASE::SmTrajectoryStock_[partitionIndex][k].eigenvalues().real().minCoeff() < -Eigen::NumTraits<scalar_t>::epsilon()) {
 					throw std::runtime_error("Sm matrix is not positive semi-definite. It's smallest eigenvalue is " +
 											 std::to_string(BASE::SmTrajectoryStock_[partitionIndex][k].eigenvalues().real().minCoeff()) + ".");
-				if (!BASE::SvTrajectoryStock_[partitionIndex][k].allFinite())  throw std::runtime_error("Sv is unstable.");
-				if (!BASE::sTrajectoryStock_[partitionIndex][k].allFinite())   throw std::runtime_error("s is unstable.");
+				}
+				if (!BASE::SvTrajectoryStock_[partitionIndex][k].allFinite()) {  throw std::runtime_error("Sv is unstable.");
+				}
+				if (!BASE::sTrajectoryStock_[partitionIndex][k].allFinite()) {   throw std::runtime_error("s is unstable.");
+				}
 			}
 			catch(const std::exception& error)
 			{
 				std::cerr << "what(): " << error.what() << " at time " << BASE::SsTimeTrajectoryStock_[partitionIndex][k] << " [sec]." << std::endl;
 				for (int kp=k; kp<k+10; kp++)  {
-					if (kp >= NS) continue;
+					if (kp >= NS) { continue;
+					}
 					std::cerr << "Sm[" << BASE::SsTimeTrajectoryStock_[partitionIndex][kp] << "]:\n"<< BASE::SmTrajectoryStock_[partitionIndex][kp].norm() << std::endl;
 					std::cerr << "Sv[" << BASE::SsTimeTrajectoryStock_[partitionIndex][kp] << "]:\t"<< BASE::SvTrajectoryStock_[partitionIndex][kp].transpose().norm() << std::endl;
 					std::cerr << "s[" << BASE::SsTimeTrajectoryStock_[partitionIndex][kp] << "]: \t"<< BASE::sTrajectoryStock_[partitionIndex][kp].transpose().norm() << std::endl;
@@ -652,6 +677,7 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::solveRiccatiEquationsWorker(
 				exit(0);
 			}
 		}
+	}
 }
 
 /******************************************************************************************************/
@@ -678,7 +704,7 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::solveRiccatiEquationsForNomi
 			&QvConstrainedTrajectoryStock_[partitionIndex],
 			&QmConstrainedTrajectoryStock_[partitionIndex],
 			&BASE::RvTrajectoryStock_[partitionIndex],
-			&BASE::RmInverseTrajectoryStock_[partitionIndex],
+			&RmInverseTrajectoryStock_[partitionIndex],
 			&RmConstrainedTrajectoryStock_[partitionIndex],
 			&BASE::PmTrajectoryStock_[partitionIndex],
 			&BASE::nominalEventsPastTheEndIndecesStock_[partitionIndex],
@@ -708,7 +734,7 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::solveRiccatiEquationsForNomi
 	}
 
 	// max number of steps of integration
-	const size_t maxNumSteps = settings_.ddpSettings_.maxNumStepsPerSecond_ *
+	const size_t maxNumSteps = BASE::ddpSettings_.maxNumStepsPerSecond_ *
 			std::max(1.0, BASE::SsNormalizedTimeTrajectoryStock_[partitionIndex].back()-BASE::SsNormalizedTimeTrajectoryStock_[partitionIndex].front());
 
 	// output containers resizing
@@ -741,9 +767,9 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::solveRiccatiEquationsForNomi
 			riccatiIntegratorPtrStock_[workerIndex]->integrate(
 					allSsFinal, beginTimeItr, endTimeItr,
 					allSsTrajectory,
-					settings_.ddpSettings_.minTimeStep_,
-					settings_.ddpSettings_.absTolODE_,
-					settings_.ddpSettings_.relTolODE_,
+					BASE::ddpSettings_.minTimeStep_,
+					BASE::ddpSettings_.absTolODE_,
+					BASE::ddpSettings_.relTolODE_,
 					maxNumSteps,
 					true);
 		} else {
@@ -757,8 +783,9 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::solveRiccatiEquationsForNomi
 	}  // end of i loop
 
 	// check size
-	if (allSsTrajectory.size() != N)
+	if (allSsTrajectory.size() != N) {
 		throw std::runtime_error("allSsTrajectory size is incorrect.");
+	}
 
 	// denormalizing time and constructing 'Sm', 'Sv', and 's'
 	BASE::SsTimeTrajectoryStock_[partitionIndex] = BASE::nominalTimeTrajectoriesStock_[partitionIndex];
@@ -771,21 +798,26 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::solveRiccatiEquationsForNomi
 	}  // end of k loop
 
 	// testing the numerical stability of the Riccati equations
-	if (settings_.ddpSettings_.checkNumericalStability_)
+	if (BASE::ddpSettings_.checkNumericalStability_) {
 		for (int k=N-1; k>=0; k--) {
 			try {
-				if (!BASE::SmTrajectoryStock_[partitionIndex][k].allFinite())  throw std::runtime_error("Sm is unstable.");
-				if (BASE::SmTrajectoryStock_[partitionIndex][k].eigenvalues().real().minCoeff() < -Eigen::NumTraits<scalar_t>::epsilon())
+				if (!BASE::SmTrajectoryStock_[partitionIndex][k].allFinite()) {  throw std::runtime_error("Sm is unstable.");
+				}
+				if (BASE::SmTrajectoryStock_[partitionIndex][k].eigenvalues().real().minCoeff() < -Eigen::NumTraits<scalar_t>::epsilon()) {
 					throw std::runtime_error("Sm matrix is not positive semi-definite. It's smallest eigenvalue is " +
 											 std::to_string(BASE::SmTrajectoryStock_[partitionIndex][k].eigenvalues().real().minCoeff()) + ".");
-				if (!BASE::SvTrajectoryStock_[partitionIndex][k].allFinite())  throw std::runtime_error("Sv is unstable.");
-				if (!BASE::sTrajectoryStock_[partitionIndex][k].allFinite())   throw std::runtime_error("s is unstable");
+				}
+				if (!BASE::SvTrajectoryStock_[partitionIndex][k].allFinite()) {  throw std::runtime_error("Sv is unstable.");
+				}
+				if (!BASE::sTrajectoryStock_[partitionIndex][k].allFinite()) {   throw std::runtime_error("s is unstable");
+				}
 			}
 			catch(const std::exception& error)
 			{
 				std::cerr << "what(): " << error.what() << " at time " << BASE::SsTimeTrajectoryStock_[partitionIndex][k] << " [sec]." << std::endl;
 				for (int kp=k; kp<k+10; kp++)  {
-					if (kp >= N) continue;
+					if (kp >= N) { continue;
+					}
 					std::cerr << "Sm[" << BASE::SsTimeTrajectoryStock_[partitionIndex][kp] << "]:\n"<< BASE::SmTrajectoryStock_[partitionIndex][kp].norm() << std::endl;
 					std::cerr << "Sv[" << BASE::SsTimeTrajectoryStock_[partitionIndex][kp] << "]:\t"<< BASE::SvTrajectoryStock_[partitionIndex][kp].transpose().norm() << std::endl;
 					std::cerr << "s["  << BASE::SsTimeTrajectoryStock_[partitionIndex][kp] << "]:\t"<< BASE::sTrajectoryStock_[partitionIndex][kp].transpose().norm() << std::endl;
@@ -793,6 +825,7 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::solveRiccatiEquationsForNomi
 				exit(0);
 			}
 		}
+}
 }
 
 
@@ -818,10 +851,11 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::solveErrorRiccatiEquationWor
 	const scalar_t scalingFactor = scalingStart - scalingFinal;  // this is negative
 
 	// Skip calculation of the error correction term (Sve) if the constrained simulation is used for forward simulation
-	if (settings_.ddpSettings_.simulationIsConstrained_==true) {
+	if (BASE::ddpSettings_.simulationIsConstrained_) {
 		BASE::SveTrajectoryStock_[partitionIndex].resize(NS);
-		for (size_t k=0; k<NS; k++)
+		for (size_t k=0; k<NS; k++) {
 			BASE::SveTrajectoryStock_[partitionIndex][k].setZero();
+		}
 		return;
 	}
 
@@ -838,10 +872,11 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::solveErrorRiccatiEquationWor
 		// Sm
 		SmFuncs_[workerIndex].interpolate(BASE::nominalTimeTrajectoriesStock_[partitionIndex][k], Sm);
 		// Lm
-		Lm = BASE::RmInverseTrajectoryStock_[partitionIndex][k]*(BASE::PmTrajectoryStock_[partitionIndex][k]+BASE::BmTrajectoryStock_[partitionIndex][k].transpose()*Sm);
+		Lm = RmInverseTrajectoryStock_[partitionIndex][k]*(BASE::PmTrajectoryStock_[partitionIndex][k]+BASE::BmTrajectoryStock_[partitionIndex][k].transpose()*Sm);
 
 		GmTrajectory[k] = AmConstrainedTrajectoryStock_[partitionIndex][k] -
-				BASE::BmTrajectoryStock_[partitionIndex][k]*BASE::RmInverseTrajectoryStock_[partitionIndex][k]*RmConstrainedTrajectoryStock_[partitionIndex][k]*Lm;
+				BASE::BmTrajectoryStock_[partitionIndex][k]*
+				RmInverseTrajectoryStock_[partitionIndex][k]*RmConstrainedTrajectoryStock_[partitionIndex][k]*Lm;
 
 		GvTrajectory[k] = (CmProjectedTrajectoryStock_[partitionIndex][k]-Lm).transpose()*
 				BASE::RmTrajectoryStock_[partitionIndex][k]*EvProjectedTrajectoryStock_[partitionIndex][k];
@@ -854,7 +889,7 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::solveErrorRiccatiEquationWor
 			&BASE::nominalTimeTrajectoriesStock_[partitionIndex], &GvTrajectory, &GmTrajectory);
 
 	// max number of steps of integration
-	const size_t maxNumSteps = settings_.ddpSettings_.maxNumStepsPerSecond_
+	const size_t maxNumSteps = BASE::ddpSettings_.maxNumStepsPerSecond_
 			* std::max(1.0, BASE::SsNormalizedTimeTrajectoryStock_[partitionIndex].back()-BASE::SsNormalizedTimeTrajectoryStock_[partitionIndex].front());
 
 	// clear output
@@ -886,9 +921,9 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::solveErrorRiccatiEquationWor
 			errorIntegratorPtrStock_[workerIndex]->integrate(
 					SveFinalInternal, beginTimeItr, endTimeItr,
 					SveTrajectory,
-					settings_.ddpSettings_.minTimeStep_,
-					settings_.ddpSettings_.absTolODE_,
-					settings_.ddpSettings_.relTolODE_,
+					BASE::ddpSettings_.minTimeStep_,
+					BASE::ddpSettings_.absTolODE_,
+					BASE::ddpSettings_.relTolODE_,
 					maxNumSteps,
 					true);
 		} else {
@@ -902,20 +937,22 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::solveErrorRiccatiEquationWor
 	}  // end of i loop
 
 	// check size
-	if (SveTrajectory.size() != NS)
+	if (SveTrajectory.size() != NS) {
 		throw std::runtime_error("SveTrajectory size is incorrect.");
+	}
 
 	// constructing Sve
 	BASE::SveTrajectoryStock_[partitionIndex].resize(SveTrajectory.size());
 	std::reverse_copy(SveTrajectory.begin(), SveTrajectory.end(), BASE::SveTrajectoryStock_[partitionIndex].begin());
 
 	// Testing the numerical stability
-	if (settings_.ddpSettings_.checkNumericalStability_==true)
+	if (BASE::ddpSettings_.checkNumericalStability_) {
 		for (size_t k=0; k<NS; k++) {
 
 			// testing the numerical stability of the Riccati error equation
 			try {
-				if (!BASE::SveTrajectoryStock_[partitionIndex][k].allFinite())  throw std::runtime_error("Sve is unstable");
+				if (!BASE::SveTrajectoryStock_[partitionIndex][k].allFinite()) {  throw std::runtime_error("Sve is unstable");
+				}
 			}
 			catch(const std::exception& error) 	{
 				std::cerr << "what(): " << error.what() << " at time " << BASE::SsTimeTrajectoryStock_[partitionIndex][k] << " [sec]." << std::endl;
@@ -932,6 +969,7 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::solveErrorRiccatiEquationWor
 				exit(0);
 			}
 		}  // end of k loop
+	}
 }
 
 /******************************************************************************************************/
@@ -948,10 +986,11 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::solveSlqRiccatiEquationsWork
 
 #ifdef USE_SEPARATE_RICCATI_SOLVER
 
-	if(settings_.useNominalTimeForBackwardPass_==true)
+	if(settings_.useNominalTimeForBackwardPass_) {
 		solveRiccatiEquationsForNominalTimeWorker(workerIndex, partitionIndex, SmFinal, SvFinal, sFinal);
-	else
+	} else {
 		solveRiccatiEquationsWorker(workerIndex, partitionIndex, SmFinal, SvFinal, sFinal);
+	}
 
 	solveErrorRiccatiEquationWorker(workerIndex, partitionIndex, SveFinal);
 
@@ -964,7 +1003,7 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::solveSlqRiccatiEquationsWork
 			&BASE::nominalTimeTrajectoriesStock_[partitionIndex],
 			&AmConstrainedTrajectoryStock_[partitionIndex], &BASE::BmTrajectoryStock_[partitionIndex],
 			&BASE::qTrajectoryStock_[partitionIndex], &QvConstrainedTrajectoryStock_[partitionIndex], &QmConstrainedTrajectoryStock_[partitionIndex],
-			&BASE::RvTrajectoryStock_[partitionIndex], &BASE::RmInverseTrajectoryStock_[partitionIndex], &RmConstrainedTrajectoryStock_[partitionIndex],
+			&BASE::RvTrajectoryStock_[partitionIndex], &RmInverseTrajectoryStock_[partitionIndex], &RmConstrainedTrajectoryStock_[partitionIndex],
 			&BASE::PmTrajectoryStock_[partitionIndex],
 			&EvProjectedTrajectoryStock_[partitionIndex], &CmProjectedTrajectoryStock_[partitionIndex],
 			&BASE::nominalEventsPastTheEndIndecesStock_[partitionIndex],
@@ -988,7 +1027,7 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::solveSlqRiccatiEquationsWork
 	}
 
 	// max number of steps of integration
-	size_t maxNumSteps = settings_.ddpSettings_.maxNumStepsPerSecond_ * std::max(1.0, finalNormalizedTime-startNormalizedTime);
+	size_t maxNumSteps = BASE::ddpSettings_.maxNumStepsPerSecond_ * std::max(1.0, finalNormalizedTime-startNormalizedTime);
 
 	// clear output containers
 	BASE::SsNormalizedTimeTrajectoryStock_[partitionIndex].clear();
@@ -1024,9 +1063,9 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::solveSlqRiccatiEquationsWork
 			slqRiccatiIntegratorPtrStock_[workerIndex]->integrate(
 					allSsFinal, beginTime, endTime,
 					allSsTrajectory, BASE::SsNormalizedTimeTrajectoryStock_[partitionIndex],
-					settings_.ddpSettings_.minTimeStep_,
-					settings_.ddpSettings_.absTolODE_,
-					settings_.ddpSettings_.relTolODE_,
+					BASE::ddpSettings_.minTimeStep_,
+					BASE::ddpSettings_.absTolODE_,
+					BASE::ddpSettings_.relTolODE_,
 					maxNumSteps,
 					true);
 		} else {
@@ -1056,7 +1095,7 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::solveSlqRiccatiEquationsWork
 	}  // end of k loop
 
 	// testing the numerical stability of the Riccati equations
-	if (settings_.ddpSettings_.checkNumericalStability_)
+	if (BASE::ddpSettings_.checkNumericalStability_)
 		for (int k=NS-1; k>=0; k--) {
 			try {
 				if (!BASE::SmTrajectoryStock_[partitionIndex][k].allFinite())   throw std::runtime_error("Sm is unstable.");
@@ -1103,7 +1142,7 @@ Eigen::Matrix<typename SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::scalar_t, 
 #if DIM2==1
 	firstOrderOdeIntegrator.integrate(x0, timeTrajectory.begin(), timeTrajectory.end(),
 			stateTrajectory,
-			settings_.ddpSettings_.minTimeStep_, settings_.ddpSettings_.absTolODE_, settings_.ddpSettings_.relTolODE_);
+			BASE::ddpSettings_.minTimeStep_, BASE::ddpSettings_.absTolODE_, BASE::ddpSettings_.relTolODE_);
 
 	return stateTrajectory.back();
 #else
@@ -1111,7 +1150,7 @@ Eigen::Matrix<typename SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::scalar_t, 
 	lti_equation_t::convert2Vector(x0, x0Vectorized);
 	firstOrderOdeIntegratorPtr->integrate(x0Vectorized, timeTrajectory.begin(), timeTrajectory.end(),
 			stateTrajectory,
-			settings_.ddpSettings_.minTimeStep_, settings_.ddpSettings_.absTolODE_, settings_.ddpSettings_.relTolODE_);
+			BASE::ddpSettings_.minTimeStep_, BASE::ddpSettings_.absTolODE_, BASE::ddpSettings_.relTolODE_);
 
 	Eigen::Matrix<scalar_t, DIM1, DIM2> xf;
 	lti_equation_t::convert2Matrix(stateTrajectory.back(), xf);
@@ -1132,7 +1171,7 @@ Eigen::Matrix<typename SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::scalar_t, 
 		const scalar_t& deltaTime) {
 
 	const bool useExpMethod = false;
-	if (useExpMethod==true) {
+	if (useExpMethod) {
 //
 //		Eigen::HessenbergDecomposition<Eigen::MatrixXd> hessA(DIM1);
 //		hessA.compute(A);
@@ -1243,21 +1282,21 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::fullRiccatiBackwardSweepWork
 
 		deltaT = BASE::nominalTimeTrajectoriesStock_[partitionIndex][k] - BASE::nominalTimeTrajectoriesStock_[partitionIndex][k+1];
 
-		if (eventDetected==true) {
-//			if (settings_.ddpSettings_.useMakePSD_==true)  BASE::makePSD(BASE::QmFinalStock_[partitionIndex][remainingEvents]);
+		if (eventDetected) {
+//			if (BASE::ddpSettings_.useMakePSD_==true)  BASE::makePSD(BASE::QmFinalStock_[partitionIndex][remainingEvents]);
 			BASE::SmTrajectoryStock_[partitionIndex][k] = BASE::SmTrajectoryStock_[partitionIndex][k+1] +
 					BASE::QmFinalStock_[partitionIndex][remainingEvents];
 
 		} else {
-//			if (settings_.ddpSettings_.useMakePSD_==true)  BASE::makePSD(QmConstrainedTrajectoryStock_[partitionIndex][k]);
+//			if (BASE::ddpSettings_.useMakePSD_==true)  BASE::makePSD(QmConstrainedTrajectoryStock_[partitionIndex][k]);
 			_H.template topLeftCorner<STATE_DIM,STATE_DIM>() = AmConstrainedTrajectoryStock_[partitionIndex][k] -
-					BmConstrainedTrajectoryStock_[partitionIndex][k]*BASE::RmInverseTrajectoryStock_[partitionIndex][k]*PmConstrainedTrajectoryStock_[partitionIndex][k];
+					BmConstrainedTrajectoryStock_[partitionIndex][k]*RmInverseTrajectoryStock_[partitionIndex][k]*PmConstrainedTrajectoryStock_[partitionIndex][k];
 			_H.template topRightCorner<STATE_DIM,STATE_DIM>() =
 					0.5 * BmConstrainedTrajectoryStock_[partitionIndex][k] *
-					BASE::RmInverseTrajectoryStock_[partitionIndex][k] * BmConstrainedTrajectoryStock_[partitionIndex][k].transpose();
+					RmInverseTrajectoryStock_[partitionIndex][k] * BmConstrainedTrajectoryStock_[partitionIndex][k].transpose();
 			_H.template bottomLeftCorner<STATE_DIM,STATE_DIM>() =
 					2.0 * (QmConstrainedTrajectoryStock_[partitionIndex][k] -
-					PmConstrainedTrajectoryStock_[partitionIndex][k].transpose()*BASE::RmInverseTrajectoryStock_[partitionIndex][k]*PmConstrainedTrajectoryStock_[partitionIndex][k]);
+					PmConstrainedTrajectoryStock_[partitionIndex][k].transpose()*RmInverseTrajectoryStock_[partitionIndex][k]*PmConstrainedTrajectoryStock_[partitionIndex][k]);
 			_H.template bottomRightCorner<STATE_DIM,STATE_DIM>() = -_H.template topLeftCorner<STATE_DIM,STATE_DIM>().transpose();
 
 			_X_H_0.template bottomRows<STATE_DIM>() = -2.0*BASE::SmTrajectoryStock_[partitionIndex][k+1];
@@ -1268,7 +1307,7 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::fullRiccatiBackwardSweepWork
 		LmFunc_(partitionIndex, k, _Lm);
 		LmConstrainedFunc_(partitionIndex, k, _Lm, _LmConstrained);
 
-		if (eventDetected==true) {
+		if (eventDetected) {
 			BASE::SvTrajectoryStock_[partitionIndex][k]  = BASE::SvTrajectoryStock_[partitionIndex][k+1] + BASE::QvFinalStock_[partitionIndex][remainingEvents];
 			BASE::SveTrajectoryStock_[partitionIndex][k] = BASE::SveTrajectoryStock_[partitionIndex][k+1];
 			BASE::sTrajectoryStock_[partitionIndex][k]   = BASE::sTrajectoryStock_[partitionIndex][k+1] + BASE::qFinalStock_[partitionIndex][remainingEvents];
@@ -1299,24 +1338,29 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::fullRiccatiBackwardSweepWork
 	}
 
 	// testing the numerical stability
-	if (settings_.ddpSettings_.checkNumericalStability_==true)
+	if (BASE::ddpSettings_.checkNumericalStability_) {
 		for (int k=N-1; k>=0; k--) {
 			// checking the numerical stability of the Riccati equations
 			try {
-				if (!BASE::SmTrajectoryStock_[partitionIndex][k].allFinite())
+				if (!BASE::SmTrajectoryStock_[partitionIndex][k].allFinite()) {
 					throw std::runtime_error("Sm is unstable.");
-				if (!BASE::SvTrajectoryStock_[partitionIndex][k].allFinite())
+				}
+				if (!BASE::SvTrajectoryStock_[partitionIndex][k].allFinite()) {
 					throw std::runtime_error("Sv is unstable.");
-				if (!BASE::SveTrajectoryStock_[partitionIndex][k].allFinite())
+				}
+				if (!BASE::SveTrajectoryStock_[partitionIndex][k].allFinite()) {
 					throw std::runtime_error("Sve is unstable.");
-				if (!BASE::sTrajectoryStock_[partitionIndex][k].allFinite())
+				}
+				if (!BASE::sTrajectoryStock_[partitionIndex][k].allFinite()) {
 					throw std::runtime_error("s is unstable.");
+				}
 			}
 			catch(const std::exception& error) {
 				std::cerr << "what(): " << error.what() << " at time "
 						<< BASE::SsTimeTrajectoryStock_[partitionIndex][k] << " [sec]." << std::endl;
 				for (int kp=k; kp<k+10; kp++)  {
-					if (kp >= N) continue;
+					if (kp >= N) { continue;
+					}
 					std::cerr << "Sm[" << BASE::SsTimeTrajectoryStock_[partitionIndex][kp] << "]:\n"
 							<< BASE::SmTrajectoryStock_[partitionIndex][kp].norm() << std::endl;
 					std::cerr << "Sv[" << BASE::SsTimeTrajectoryStock_[partitionIndex][kp] << "]:\t"
@@ -1331,12 +1375,15 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::fullRiccatiBackwardSweepWork
 
 			// checking the numerical stability of the controller parameters
 			try {
-				if (BASE::nominalControllersStock_[partitionIndex].gainArray_[k].hasNaN())
+				if (BASE::nominalControllersStock_[partitionIndex].gainArray_[k].hasNaN()) {
 					throw std::runtime_error("Feedback gains are unstable.");
-				if (BASE::nominalControllersStock_[partitionIndex].biasArray_[k].hasNaN())
+				}
+				if (BASE::nominalControllersStock_[partitionIndex].biasArray_[k].hasNaN()) {
 					throw std::runtime_error("uff gains are unstable.");
-				if (BASE::nominalControllersStock_[partitionIndex].deltaBiasArray_[k].hasNaN())
+				}
+				if (BASE::nominalControllersStock_[partitionIndex].deltaBiasArray_[k].hasNaN()) {
 					throw std::runtime_error("deltaUff is unstable.");
+				}
 			}
 			catch(const std::exception& error) {
 				std::cerr << "what(): " << error.what() << " at time "
@@ -1344,6 +1391,7 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::fullRiccatiBackwardSweepWork
 				exit(0);
 			}
 		}
+	}
 }
 
 /******************************************************************************************************/
@@ -1375,7 +1423,8 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::setupOptimizer(const size_t&
 	BmConstrainedTrajectoryStock_.resize(numPartitions);
 	PmConstrainedTrajectoryStock_.resize(numPartitions);
 	RvConstrainedTrajectoryStock_.resize(numPartitions);
+    RmInverseTrajectoryStock_.resize(numPartitions);
 }
 
-}  // ocs2 namespace
+}  // namespace ocs2
 

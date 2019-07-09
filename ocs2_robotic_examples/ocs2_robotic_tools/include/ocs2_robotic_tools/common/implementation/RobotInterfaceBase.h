@@ -69,8 +69,9 @@ void RobotInterfaceBase<STATE_DIM, INPUT_DIM>::definePartitioningTimes(
 
 	partitioningTimes.resize(numPartitions+1);
 	partitioningTimes[0] = 0.0;
-	for (size_t i=0; i<numPartitions; i++)
+	for (size_t i=0; i<numPartitions; i++) {
 		partitioningTimes[i+1] = partitioningTimes[i] + timeHorizon/numPartitions;
+	}
 	partitioningTimes[numPartitions] = timeHorizon;
 }
 
@@ -90,7 +91,7 @@ void RobotInterfaceBase<STATE_DIM, INPUT_DIM>::loadMpcTimeHorizon(
 	timeHorizon   = pt.get<scalar_t>("mpcTimeHorizon.timehorizon");
 	numPartitions = pt.get<size_t>("mpcTimeHorizon.numPartitions");
 
-	if (verbose == true) {
+	if (verbose) {
 		std::cerr<<"Time Horizon Settings: " << std::endl;
 		std::cerr<<"=====================================" << std::endl;
 		std::cerr<<"Time Horizon .................. " << timeHorizon << std::endl;
@@ -112,4 +113,4 @@ void RobotInterfaceBase<STATE_DIM, INPUT_DIM>::loadInitialState(
 	loadEigenMatrix(taskFile, "initialState", initialState);
 }
 
-}  // ocs2 namespace
+}  // namespace ocs2

@@ -139,62 +139,77 @@ inline void Rollout_Settings::loadSettings(const std::string& filename, const st
 
 	try	{
 		absTolODE_ = pt.get<double>(fieldName + ".AbsTolODE");
-		if (verbose)  std::cerr << " #### Option loader : option 'AbsTolODE' ........................... " << absTolODE_ << std::endl;
+		if (verbose) {  std::cerr << " #### Option loader : option 'AbsTolODE' ........................... " << absTolODE_ << std::endl;
+		}
 	}
 	catch (const std::exception& e){
-		if (verbose)  std::cerr << " #### Option loader : option 'AbsTolODE' ........................... " << absTolODE_ << "   \t(default)" << std::endl;
+		if (verbose) {  std::cerr << " #### Option loader : option 'AbsTolODE' ........................... " << absTolODE_ << "   \t(default)" << std::endl;
+		}
 	}
 
 	try	{
 		relTolODE_ = pt.get<double>(fieldName + ".RelTolODE");
-		if (verbose)  std::cerr << " #### Option loader : option 'RelTolODE' ........................... " << relTolODE_ << std::endl;
+		if (verbose) {  std::cerr << " #### Option loader : option 'RelTolODE' ........................... " << relTolODE_ << std::endl;
+		}
 	}
 	catch (const std::exception& e){
-		if (verbose)  std::cerr << " #### Option loader : option 'RelTolODE' ........................... " << relTolODE_ << "   \t(default)" << std::endl;
+		if (verbose) {  std::cerr << " #### Option loader : option 'RelTolODE' ........................... " << relTolODE_ << "   \t(default)" << std::endl;
+		}
 	}
 
 	try	{
 		maxNumStepsPerSecond_ = pt.get<double>(fieldName + ".maxNumStepsPerSecond");
-		if (verbose)  std::cerr << " #### Option loader : option 'maxNumStepsPerSecond' ................ " << maxNumStepsPerSecond_ << std::endl;
+		if (verbose) {  std::cerr << " #### Option loader : option 'maxNumStepsPerSecond' ................ " << maxNumStepsPerSecond_ << std::endl;
+		}
 	}
 	catch (const std::exception& e){
-		if (verbose)  std::cerr << " #### Option loader : option 'maxNumStepsPerSecond' ................ " << maxNumStepsPerSecond_ << "   \t(default)" << std::endl;
+		if (verbose) {  std::cerr << " #### Option loader : option 'maxNumStepsPerSecond' ................ " << maxNumStepsPerSecond_ << "   \t(default)" << std::endl;
+		}
 	}
 
 	try	{
 		minTimeStep_ = pt.get<double>(fieldName + ".minTimeStep");
-		if (verbose)  std::cerr << " #### Option loader : option 'minTimeStep' ......................... " << minTimeStep_ << std::endl;
+		if (verbose) {  std::cerr << " #### Option loader : option 'minTimeStep' ......................... " << minTimeStep_ << std::endl;
+		}
 	}
 	catch (const std::exception& e){
-		if (verbose)  std::cerr << " #### Option loader : option 'minTimeStep' ......................... " << minTimeStep_ << "   \t(default)" << std::endl;
+		if (verbose) {  std::cerr << " #### Option loader : option 'minTimeStep' ......................... " << minTimeStep_ << "   \t(default)" << std::endl;
+		}
 	}
 
 	try	{
 		integratorType_ = static_cast<IntegratorType>(pt.get<int>(fieldName + ".integratorType"));
-		if (verbose)  std::cerr << " #### Option loader : option 'integratorType' ...................... " << ocs2::to_string(integratorType_) << std::endl;
+		if (verbose) {  std::cerr << " #### Option loader : option 'integratorType' ...................... " << ocs2::to_string(integratorType_) << std::endl;
+		}
 	}
 	catch (const std::exception& e){
-		if (verbose)  std::cerr << " #### Option loader : option 'integratorType' ...................... " << ocs2::to_string(integratorType_) << "   \t(default)" << std::endl;
+		if (verbose) {  std::cerr << " #### Option loader : option 'integratorType' ...................... " << ocs2::to_string(integratorType_) << "   \t(default)" << std::endl;
+		}
 	}
 
 	try	{
 		checkNumericalStability_ = pt.get<bool>(fieldName + ".checkNumericalStability");
-		if (verbose)  std::cerr << " #### Option loader : option 'checkNumericalStability' ............. " << checkNumericalStability_ << std::endl;
+		if (verbose) {  std::cerr << " #### Option loader : option 'checkNumericalStability' ............. " << checkNumericalStability_ << std::endl;
+		}
 	}
 	catch (const std::exception& e){
-		if (verbose)  std::cerr << " #### Option loader : option 'checkNumericalStability' ............. " << checkNumericalStability_ << "   \t(default)" << std::endl;
+		if (verbose) {  std::cerr << " #### Option loader : option 'checkNumericalStability' ............. " << checkNumericalStability_ << "   \t(default)" << std::endl;
+		}
 	}
 
 	try	{
 		reconstructInputTrajectory_ = pt.get<bool>(fieldName + ".reconstructInputTrajectory");
-		if (verbose)  std::cerr << " #### Option loader : option 'reconstructInputTrajectory' .......... " << reconstructInputTrajectory_ << std::endl;
+		if (verbose) {  std::cerr << " #### Option loader : option 'reconstructInputTrajectory' .......... " << reconstructInputTrajectory_ << std::endl;
+		}
 	}
 	catch (const std::exception& e){
-		if (verbose)  std::cerr << " #### Option loader : option 'reconstructInputTrajectory' .......... " << reconstructInputTrajectory_ << "   \t(default)" << std::endl;
+		if (verbose) {  std::cerr << " #### Option loader : option 'reconstructInputTrajectory' .......... " << reconstructInputTrajectory_ << "   \t(default)" << std::endl;
+		}
 	}
 
-	if(verbose)
+	if(verbose) {
 		std::cerr <<" #### =============================================================================" << std::endl;
+	}
 }
 
 } // namespace ocs2

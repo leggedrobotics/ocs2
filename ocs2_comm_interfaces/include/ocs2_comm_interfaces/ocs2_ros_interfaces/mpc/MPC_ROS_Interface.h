@@ -63,6 +63,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "ocs2_comm_interfaces/SystemObservation.h"
 #include "ocs2_comm_interfaces/ocs2_ros_interfaces/common/RosMsgConversions.h"
+#include "ocs2_comm_interfaces/ocs2_ros_interfaces/task_listener/TaskListenerBase.h"
 
 //#define PUBLISH_DUMMY
 #define PUBLISH_THREAD
@@ -108,6 +109,8 @@ public:
 
 	typedef RosMsgConversions<STATE_DIM, INPUT_DIM> ros_msg_conversions_t;
 
+	typedef typename TaskListenerBase<scalar_t>::shared_ptr_array_t task_listener_ptr_array_t;
+
 	/**
 	 * Default constructor
 	 */
@@ -118,10 +121,12 @@ public:
 	 *
 	 * @param [in] mpc: The MPC object to be interfaced.
 	 * @param [in] robotName: The robot's name.
+	 * @param [in] taskListenerArray: An array of the shared_ptr to task listeners.
 	 */
 	MPC_ROS_Interface(
 			mpc_t& mpc,
-			const std::string& robotName = "robot");
+			const std::string& robotName = "robot",
+			const task_listener_ptr_array_t& taskListenerArray = task_listener_ptr_array_t());
 
 	/**
 	 * Destructor.
@@ -138,9 +143,11 @@ public:
 			const std::string& robotName = "robot");
 
 	/**
-	 * Resets the class to its instantiate state.
+	 * Resets the class to its instantiation state.
+	 *
+	 * @param [in] initCostDesiredTrajectories: The initial desired cost trajectories.
 	 */
-	virtual void reset();
+	virtual void reset(const cost_desired_trajectories_t& initCostDesiredTrajectories);
 
 	/**
 	 * Shutdowns the ROS node.
@@ -187,16 +194,6 @@ public:
 	 */
 	virtual void initCall(
 			const system_observation_t& initObservation) {}
-
-	/**
-	 * Provides the initial target trajectories for the cost function.
-	 *
-	 * @param [in] initObservation: The observation after the very fist call of the class or after call to reset().
-	 * @param [out] costDesiredTrajectories: The desired cost trajectories.
-	 */
-	virtual void initGoalState(
-			const system_observation_t& initObservation,
-			cost_desired_trajectories_t& costDesiredTrajectories) = 0;
 
 	/**
 	 * Provides the initial mode sequence for time-triggered hybrid systems.
@@ -313,6 +310,8 @@ protected:
 
 	std::string robotName_;
 
+	task_listener_ptr_array_t taskListenerArray_;
+
 	std::shared_ptr<ros::NodeHandle> nodeHandlerPtr_;
 
 	// Publishers and subscribers
@@ -323,14 +322,11 @@ protected:
 	::ros::Publisher     dummyPublisher_;
 	::ros::ServiceServer mpcResetServiceServer_;
 
-	// MPC reset flags
-	std::atomic<bool> resetRequested_;
-
 	// ROS messages
 	ocs2_comm_interfaces::mpc_flattened_controller mpcPolicyMsg_;
 	ocs2_comm_interfaces::mpc_flattened_controller mpcPolicyMsgBuffer_;
 
-	// Multi-threading for publishers
+	// multi-threading for publishers
 	bool terminateThread_;
 	bool readyToPublish_;
 	std::thread publisherWorker_;
@@ -345,13 +341,16 @@ protected:
 	std::chrono::time_point<std::chrono::steady_clock> startTimePoint_;
 	std::chrono::time_point<std::chrono::steady_clock> finalTimePoint_;
 
-	bool initialCall_;
-
 	std::atomic<bool> desiredTrajectoriesUpdated_;
 	std::atomic<bool> modeSequenceUpdated_;
 	cost_desired_trajectories_t costDesiredTrajectories_;
 	cost_desired_trajectories_t defaultCostDesiredTrajectories_;
 	mode_sequence_template_t modeSequenceTemplate_;
+
+	// MPC reset
+	bool initialCall_;
+	std::mutex resetMutex_;
+	std::atomic<bool> resetRequestedEver_;
 };
 
 } // namespace ocs2

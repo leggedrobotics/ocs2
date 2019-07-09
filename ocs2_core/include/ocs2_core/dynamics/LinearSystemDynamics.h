@@ -44,11 +44,11 @@ public:
 	typedef std::shared_ptr<const LinearSystemDynamics<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> > ConstPtr;
 
 	typedef SystemDynamicsBase<STATE_DIM, INPUT_DIM> BASE;
-	typedef typename BASE::scalar_t             scalar_t;
-	typedef typename BASE::state_vector_t       state_vector_t;
-	typedef typename BASE::state_matrix_t       state_matrix_t;
-	typedef typename BASE::input_vector_t       input_vector_t;
-	typedef typename BASE::state_input_matrix_t	state_input_matrix_t;
+	using scalar_t = typename BASE::scalar_t;
+	using state_vector_t = typename BASE::state_vector_t;
+	using state_matrix_t = typename BASE::state_matrix_t;
+	using input_vector_t = typename BASE::input_vector_t;
+	using state_input_matrix_t = typename BASE::state_input_matrix_t;
 
 	LinearSystemDynamics(
 			const state_matrix_t& A,
@@ -68,7 +68,7 @@ public:
 	 *
 	 * @return A raw pointer to the class.
 	 */
-	virtual LinearSystemDynamics<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>* clone() const override {
+	LinearSystemDynamics<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>* clone() const override {
 
 		return new LinearSystemDynamics<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>(*this);
 	}
@@ -81,7 +81,7 @@ public:
 	 * @param [in] u: input vector
 	 * @param [out] dxdt: state vector time derivative.
 	 */
-	virtual void computeFlowMap(
+	void computeFlowMap(
 			const scalar_t& t,
 			const state_vector_t& x,
 			const input_vector_t& u,
@@ -97,7 +97,7 @@ public:
 	 * @param [in] x: state vector.
 	 * @param [out] xp: jumped state.
 	 */
-	virtual void computeJumpMap(
+	void computeJumpMap(
 			const scalar_t& t,
 			const state_vector_t& x,
 			state_vector_t& xp)  override {
@@ -112,7 +112,7 @@ public:
 	 * @param [in] x: Current state vector
 	 * @param [in] u: Current input vector
 	 */
-	virtual void setCurrentStateAndControl(
+	void setCurrentStateAndControl(
 			const scalar_t& t,
 			const state_vector_t& x,
 			const input_vector_t& u) override {
@@ -146,7 +146,7 @@ public:
 	 *
 	 * @param [out] A: \f$ A(t) \f$ matrix.
 	 */
-	virtual void getFlowMapDerivativeState(state_matrix_t& A) override {
+	void getFlowMapDerivativeState(state_matrix_t& A) override {
 
 		A = A_;
 	}
@@ -157,7 +157,7 @@ public:
 	 *
 	 * @param [out] B: \f$ B(t) \f$ matrix.
 	 */
-	virtual void getFlowMapDerivativeInput(state_input_matrix_t& B) override {
+	void getFlowMapDerivativeInput(state_input_matrix_t& B) override {
 
 		B = B_;
 	}
@@ -168,7 +168,7 @@ public:
 	 *
 	 * @param [out] G: \f$ G \f$ matrix.
 	 */
-	virtual void getJumpMapDerivativeState(state_matrix_t& G) override {
+	void getJumpMapDerivativeState(state_matrix_t& G) override {
 
 		G = G_;
 	}
@@ -179,7 +179,7 @@ public:
 	 *
 	 * @param [out] H: \f$ H \f$ matrix.
 	 */
-	virtual void getJumpMapDerivativeInput(state_input_matrix_t& H) override {
+	void getJumpMapDerivativeInput(state_input_matrix_t& H) override {
 
 		H = H_;
 	}

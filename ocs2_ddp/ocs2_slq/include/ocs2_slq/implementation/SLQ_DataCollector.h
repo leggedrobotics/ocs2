@@ -52,7 +52,7 @@ template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
 void SLQ_DataCollector<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::collect(
 		const slq_t* constSlqPtr) {
 
-	slq_t* slqPtr = const_cast<slq_t*>(constSlqPtr);
+	auto* slqPtr = const_cast<slq_t*>(constSlqPtr);
 
 	/*
 	 * Data which should be copied
@@ -68,8 +68,9 @@ void SLQ_DataCollector<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::collect(
 
 	// data resizing
 	bool numPartitionsChanged = numPartitions_ != slqPtr->numPartitions_;
-	if (numPartitionsChanged==true)
+	if (numPartitionsChanged) {
 		resizeDataContainer(slqPtr->numPartitions_);
+	}
 
 	numPartitions_     = slqPtr->numPartitions_;
 	partitioningTimes_ = slqPtr->partitioningTimes_;
@@ -191,7 +192,7 @@ void SLQ_DataCollector<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculateFlowMap(
 		const input_vector_array2_t& inputTrajectoriesStock,
 		state_vector_array2_t& flowMapTrajectoriesStock)  {
 
-	slq_t* slqPtr = const_cast<slq_t*>(constSlqPtr);
+	auto* slqPtr = const_cast<slq_t*>(constSlqPtr);
 
 	flowMapTrajectoriesStock.resize(constSlqPtr->numPartitions_);
 
@@ -233,7 +234,7 @@ void SLQ_DataCollector<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculateStateInput
 		constraint1_vector_array3_t& EvDevEventTimesTrajectoriesStockSet,
 		input_vector_array3_t& EvDevEventTimesProjectedTrajectoriesStockSet) {
 
-	slq_t* slqPtr = const_cast<slq_t*>(constSlqPtr);
+	auto* slqPtr = const_cast<slq_t*>(constSlqPtr);
 
 	const size_t numEventTimes = constSlqPtr->getLogicRulesPtr()->getNumEventTimes();
 
@@ -272,8 +273,9 @@ void SLQ_DataCollector<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculateStateInput
 
 			// if derivatives where available
 			if (g1DevArray.size()>0) {
-				if (g1DevArray.size() != numEventTimes)
+				if (g1DevArray.size() != numEventTimes) {
 					throw std::runtime_error("Incorrect array dimension for constraint1 derivatives w.r.t. event times.");
+				}
 
 				for (size_t j=0; j<numEventTimes; j++) {
 					EvDevEventTimesTrajectoriesStockSet[j][i][k].swap(g1DevArray[j]);
@@ -298,8 +300,9 @@ template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
 void SLQ_DataCollector<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::resizeDataContainer(
 		const size_t& numPartitions) {
 
-	if (numPartitions==0)
+	if (numPartitions==0) {
 		throw std::runtime_error("The number of Partitions cannot be zero!");
+	}
 
 	/*
 	 * Data which should be copied

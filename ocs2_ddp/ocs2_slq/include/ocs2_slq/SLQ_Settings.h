@@ -158,110 +158,137 @@ inline void SLQ_Settings::loadSettings(const std::string& filename, const std::s
 
 	try	{
 		warmStartGSLQ_ = pt.get<bool>(fieldName + ".warmStartGSLQ");
-		if (verbose)  std::cerr << " #### Option loader : option 'warmStartGSLQ' ....................... " << warmStartGSLQ_ << std::endl;
+		if (verbose) {  std::cerr << " #### Option loader : option 'warmStartGSLQ' ....................... " << warmStartGSLQ_ << std::endl;
+		}
 	}
 	catch (const std::exception& e){
-		if (verbose)  std::cerr << " #### Option loader : option 'warmStartGSLQ' ....................... " << warmStartGSLQ_ << "   \t(default)" << std::endl;
+		if (verbose) {  std::cerr << " #### Option loader : option 'warmStartGSLQ' ....................... " << warmStartGSLQ_ << "   \t(default)" << std::endl;
+		}
 	}
 
 	try	{
 		useLQForDerivatives_ = pt.get<bool>(fieldName + ".useLQForDerivatives");
-		if (verbose)  std::cerr << " #### Option loader : option 'useLQForDerivatives' ................. " << useLQForDerivatives_ << std::endl;
+		if (verbose) {  std::cerr << " #### Option loader : option 'useLQForDerivatives' ................. " << useLQForDerivatives_ << std::endl;
+		}
 	}
 	catch (const std::exception& e){
-		if (verbose)  std::cerr << " #### Option loader : option 'useLQForDerivatives' ................. " << useLQForDerivatives_ << "   \t(default)" << std::endl;
+		if (verbose) {  std::cerr << " #### Option loader : option 'useLQForDerivatives' ................. " << useLQForDerivatives_ << "   \t(default)" << std::endl;
+		}
 	}
 
 	try	{
 		displayGradientDescent_ = pt.get<bool>(fieldName + ".displayGradientDescent");
-		if (verbose)  std::cerr << " #### Option loader : option 'displayGradientDescent' .............. " << displayGradientDescent_ << std::endl;
+		if (verbose) {  std::cerr << " #### Option loader : option 'displayGradientDescent' .............. " << displayGradientDescent_ << std::endl;
+		}
 	}
 	catch (const std::exception& e){
-		if (verbose)  std::cerr << " #### Option loader : option 'displayGradientDescent' .............. " << displayGradientDescent_ << "   \t(default)" << std::endl;
+		if (verbose) {  std::cerr << " #### Option loader : option 'displayGradientDescent' .............. " << displayGradientDescent_ << "   \t(default)" << std::endl;
+		}
 	}
 
 	try	{
 		tolGradientDescent_ = pt.get<double>(fieldName + ".tolGradientDescent");
-		if (verbose)  std::cerr << " #### Option loader : option 'tolGradientDescent' .................. " << tolGradientDescent_ << std::endl;
+		if (verbose) {  std::cerr << " #### Option loader : option 'tolGradientDescent' .................. " << tolGradientDescent_ << std::endl;
+		}
 	}
 	catch (const std::exception& e){
-		if (verbose)  std::cerr << " #### Option loader : option 'tolGradientDescent' .................. " << tolGradientDescent_ << "   \t(default)" << std::endl;
+		if (verbose) {  std::cerr << " #### Option loader : option 'tolGradientDescent' .................. " << tolGradientDescent_ << "   \t(default)" << std::endl;
+		}
 	}
 
 	try	{
 		acceptableTolGradientDescent_ = pt.get<double>(fieldName + ".acceptableTolGradientDescent");
-		if (verbose)  std::cerr << " #### Option loader : option 'acceptableTolGradientDescent' ........ " << acceptableTolGradientDescent_ << std::endl;
+		if (verbose) {  std::cerr << " #### Option loader : option 'acceptableTolGradientDescent' ........ " << acceptableTolGradientDescent_ << std::endl;
+		}
 	}
 	catch (const std::exception& e){
-		if (verbose)  std::cerr << " #### Option loader : option 'acceptableTolGradientDescent' ........ " << acceptableTolGradientDescent_ << "   \t(default)" << std::endl;
+		if (verbose) {  std::cerr << " #### Option loader : option 'acceptableTolGradientDescent' ........ " << acceptableTolGradientDescent_ << "   \t(default)" << std::endl;
+		}
 	}
 
 	try	{
 		maxIterationGradientDescent_ = pt.get<int>(fieldName + ".maxIterationGradientDescent");
-		if (verbose)  std::cerr << " #### Option loader : option 'maxIterationGradientDescent' ......... " << maxIterationGradientDescent_ << std::endl;
+		if (verbose) {  std::cerr << " #### Option loader : option 'maxIterationGradientDescent' ......... " << maxIterationGradientDescent_ << std::endl;
+		}
 	}
 	catch (const std::exception& e){
-		if (verbose)  std::cerr << " #### Option loader : option 'maxIterationGradientDescent' ......... " << maxIterationGradientDescent_ << "   \t(default)" << std::endl;
+		if (verbose) {  std::cerr << " #### Option loader : option 'maxIterationGradientDescent' ......... " << maxIterationGradientDescent_ << "   \t(default)" << std::endl;
+		}
 	}
 
 	try	{
 		minLearningRateNLP_ = pt.get<double>(fieldName + ".minLearningRateNLP");
-		if (verbose)  std::cerr << " #### Option loader : option 'minLearningRateNLP' .................. " << minLearningRateNLP_ << std::endl;
+		if (verbose) {  std::cerr << " #### Option loader : option 'minLearningRateNLP' .................. " << minLearningRateNLP_ << std::endl;
+		}
 	}
 	catch (const std::exception& e){
-		if (verbose)  std::cerr << " #### Option loader : option 'minLearningRateNLP' .................. " << minLearningRateNLP_ << "   \t(default)" << std::endl;
+		if (verbose) {  std::cerr << " #### Option loader : option 'minLearningRateNLP' .................. " << minLearningRateNLP_ << "   \t(default)" << std::endl;
+		}
 	}
 
 	try	{
 		maxLearningRateNLP_ = pt.get<double>(fieldName + ".maxLearningRateNLP");
-		if (verbose)  std::cerr << " #### Option loader : option 'maxLearningRateNLP' .................. " << maxLearningRateNLP_ << std::endl;
+		if (verbose) {  std::cerr << " #### Option loader : option 'maxLearningRateNLP' .................. " << maxLearningRateNLP_ << std::endl;
+		}
 	}
 	catch (const std::exception& e){
-		if (verbose)  std::cerr << " #### Option loader : option 'maxLearningRateNLP' .................. " << maxLearningRateNLP_ << "   \t(default)" << std::endl;
+		if (verbose) {  std::cerr << " #### Option loader : option 'maxLearningRateNLP' .................. " << maxLearningRateNLP_ << "   \t(default)" << std::endl;
+		}
 	}
 
 	try	{
 		useAscendingLineSearchNLP_ = pt.get<bool>(fieldName + ".useAscendingLineSearchNLP");
-		if (verbose)  std::cerr << " #### Option loader : option 'useAscendingLineSearchNLP' ........... " << useAscendingLineSearchNLP_ << std::endl;
+		if (verbose) {  std::cerr << " #### Option loader : option 'useAscendingLineSearchNLP' ........... " << useAscendingLineSearchNLP_ << std::endl;
+		}
 	}
 	catch (const std::exception& e){
-		if (verbose)  std::cerr << " #### Option loader : option 'useAscendingLineSearchNLP' ........... " << useAscendingLineSearchNLP_ << "   \t(default)" << std::endl;
+		if (verbose) {  std::cerr << " #### Option loader : option 'useAscendingLineSearchNLP' ........... " << useAscendingLineSearchNLP_ << "   \t(default)" << std::endl;
+		}
 	}
 
 	try	{
 		minEventTimeDifference_ = pt.get<double>(fieldName + ".minEventTimeDifference");
-		if (verbose)  std::cerr << " #### Option loader : option 'minEventTimeDifference' .............. " << minEventTimeDifference_ << std::endl;
+		if (verbose) {  std::cerr << " #### Option loader : option 'minEventTimeDifference' .............. " << minEventTimeDifference_ << std::endl;
+		}
 	}
 	catch (const std::exception& e){
-		if (verbose)  std::cerr << " #### Option loader : option 'minEventTimeDifference' .............. " << minEventTimeDifference_ << "   \t(default)" << std::endl;
+		if (verbose) {  std::cerr << " #### Option loader : option 'minEventTimeDifference' .............. " << minEventTimeDifference_ << "   \t(default)" << std::endl;
+		}
 	}
 
 	try	{
 		useNominalTimeForBackwardPass_ = pt.get<bool>(fieldName + ".useNominalTimeForBackwardPass");
-		if (verbose)  std::cerr << " #### Option loader : option 'useNominalTimeForBackwardPass' ....... " << useNominalTimeForBackwardPass_ << std::endl;
+		if (verbose) {  std::cerr << " #### Option loader : option 'useNominalTimeForBackwardPass' ....... " << useNominalTimeForBackwardPass_ << std::endl;
+		}
 	}
 	catch (const std::exception& e){
-		if (verbose)  std::cerr << " #### Option loader : option 'useNominalTimeForBackwardPass' ....... " << useNominalTimeForBackwardPass_ << "   \t(default)" << std::endl;
+		if (verbose) {  std::cerr << " #### Option loader : option 'useNominalTimeForBackwardPass' ....... " << useNominalTimeForBackwardPass_ << "   \t(default)" << std::endl;
+		}
 	}
 
 	try	{
 		RiccatiIntegratorType_ = pt.get<size_t>(fieldName + ".RiccatiIntegratorType");
-		if (verbose)  std::cerr << " #### Option loader : option 'RiccatiIntegratorType' ............... " << RiccatiIntegratorType_ << std::endl;
+		if (verbose) {  std::cerr << " #### Option loader : option 'RiccatiIntegratorType' ............... " << RiccatiIntegratorType_ << std::endl;
+		}
 	}
 	catch (const std::exception& e){
-		if (verbose)  std::cerr << " #### Option loader : option 'RiccatiIntegratorType' ............... " << RiccatiIntegratorType_ << "   \t(default)" << std::endl;
+		if (verbose) {  std::cerr << " #### Option loader : option 'RiccatiIntegratorType' ............... " << RiccatiIntegratorType_ << "   \t(default)" << std::endl;
+		}
 	}
 
 	try	{
 		adams_integrator_dt_ = pt.get<double>(fieldName + ".adams_integrator_dt");
-		if (verbose)  std::cerr << " #### Option loader : option 'adams_integrator_dt' ................. " << adams_integrator_dt_ << std::endl;
+		if (verbose) {  std::cerr << " #### Option loader : option 'adams_integrator_dt' ................. " << adams_integrator_dt_ << std::endl;
+		}
 	}
 	catch (const std::exception& e){
-		if (verbose)  std::cerr << " #### Option loader : option 'adams_integrator_dt' ................. " << adams_integrator_dt_ << "   \t(default)" << std::endl;
+		if (verbose) {  std::cerr << " #### Option loader : option 'adams_integrator_dt' ................. " << adams_integrator_dt_ << "   \t(default)" << std::endl;
+		}
 	}
 
-	if(verbose)
+	if(verbose) {
 		std::cerr <<" #### =============================================================================" << std::endl;
+	}
 }
 
 } // namespace ocs2

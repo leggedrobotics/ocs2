@@ -138,12 +138,16 @@ void MRT_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::partitioningTimesUp
 /******************************************************************************************************/
 /******************************************************************************************************/
 template<size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void MRT_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::resetMpcNode() {
+void MRT_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::resetMpcNode(
+		const cost_desired_trajectories_t& initCostDesiredTrajectories) {
 
   policyReceivedEver_ = false;
 
   ocs2_comm_interfaces::reset resetSrv;
   resetSrv.request.reset = true;
+
+  RosMsgConversions<STATE_DIM, INPUT_DIM>::CreateTargetTrajectoriesMsg(
+		  initCostDesiredTrajectories, resetSrv.request.targetTrajectories);
 
   if (mpcResetServiceClient_.waitForExistence()) {
     mpcResetServiceClient_.call(resetSrv);
@@ -200,7 +204,8 @@ void MRT_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::publisherWorkerThre
 
     msgReady_.wait(lk, [&] { return (readyToPublish_ || terminateThread_); });
 
-    if (terminateThread_ == true) break;
+    if (terminateThread_ == true) { break;
+	}
 
     mpcObservationMsgBuffer_ = std::move(mpcObservationMsg_);
 
@@ -221,12 +226,12 @@ template<size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
 void MRT_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::mpcPolicyCallback(
     const ocs2_comm_interfaces::mpc_flattened_controller::ConstPtr &msg) {
 
-//	std::cout << "\t Plan is recieved at time: " << msg->initObservation.time << std::endl;
+//	std::cout << "\t Plan is received at time: " << msg->initObservation.time << std::endl;
 
 	std::lock_guard<std::mutex> lk(policyMutexBuffer_);
 
 	// if the policy is not updated
-	if (msg->controllerIsUpdated==false) {
+	if (!static_cast<bool>(msg->controllerIsUpdated)) {
 		mpcInitObservationBuffer_ = system_observation_t();
 		mpcCostDesiredTrajectoriesBuffer_.clear();
 		policyUpdatedBuffer_ = false;
@@ -291,8 +296,9 @@ void MRT_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::mpcPolicyCallback(
 	}
 
 	// check data size
-	if(msg->data.size() != N)
+	if(msg->data.size() != N) {
 		throw std::runtime_error("Data has the wrong length");
+	}
 
 	std::vector<std::vector<float> const *> controllerDataPtrArray(N, nullptr);
 	for(int i=0; i<N; i++){
@@ -439,9 +445,10 @@ void MRT_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::evaluatePolicy(
 		input_vector_t& mpcInput,
 		size_t& subsystem) {
 
-	if (currentTime > mpcTimeTrajectory_.back())
+	if (currentTime > mpcTimeTrajectory_.back()) {
 		ROS_WARN_STREAM("The requested currentTime is greater than the received plan: "
 				+ std::to_string(currentTime) + ">" + std::to_string(mpcTimeTrajectory_.back()));
+	}
 
 	mpcInput = mpcControllerPtr_->computeInput(currentTime, currentState);
 	mpcLinInterpolateState_.interpolate(currentTime, mpcState);
@@ -462,12 +469,14 @@ void MRT_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::rolloutPolicy(
 		input_vector_t& mpcInput,
 		size_t& subsystem) {
 
-	if (currentTime > mpcTimeTrajectory_.back())
+	if (currentTime > mpcTimeTrajectory_.back()) {
 		ROS_WARN_STREAM("The requested currentTime is greater than the received plan: "
 				+ std::to_string(currentTime) + ">" + std::to_string(mpcTimeTrajectory_.back()));
+	}
 
-	if (!rolloutPtr_)
+	if (!rolloutPtr_) {
 		throw std::runtime_error("MRT_ROS_interface: rolloutPtr is not initialized, call initRollout first.");
+	}
 
 	const size_t activePartitionIndex = 0; // there is only one partition.
 	scalar_t finalTime = currentTime + timeStep;
@@ -506,8 +515,9 @@ void MRT_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::shutdownNodes() {
 
   msgReady_.notify_all();
 
-  if (publisherWorker_.joinable())
+  if (publisherWorker_.joinable()) {
     publisherWorker_.join();
+	}
 
   ROS_INFO_STREAM("All workers are shut down.");
 #endif

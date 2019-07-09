@@ -16,5 +16,4 @@ mode_sequence           modeSequence           # Optimal/Predefined MPC mode seq
 
 bool                    controllerIsUpdated
 
-
 controller_data[]       data                   # the actual payload from flatten method: one vector of data per time step

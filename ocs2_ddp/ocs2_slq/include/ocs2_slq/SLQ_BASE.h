@@ -68,79 +68,79 @@ public:
 
 	typedef DDP_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> BASE;
 
-	typedef typename BASE::DIMENSIONS                          DIMENSIONS;
-	typedef typename BASE::controller_t                        controller_t;
-	typedef typename BASE::size_array_t                        size_array_t;
-	typedef typename BASE::size_array2_t                       size_array2_t;
-	typedef typename BASE::scalar_t                            scalar_t;
-	typedef typename BASE::scalar_array_t                      scalar_array_t;
-	typedef typename BASE::scalar_array2_t                     scalar_array2_t;
-	typedef typename BASE::scalar_array3_t                     scalar_array3_t;
-	typedef typename BASE::eigen_scalar_t                      eigen_scalar_t;
-	typedef typename BASE::eigen_scalar_array_t                eigen_scalar_array_t;
-	typedef typename BASE::eigen_scalar_array2_t               eigen_scalar_array2_t;
-	typedef typename BASE::state_vector_t                      state_vector_t;
-	typedef typename BASE::state_vector_array_t                state_vector_array_t;
-	typedef typename BASE::state_vector_array2_t               state_vector_array2_t;
-	typedef typename BASE::state_vector_array3_t               state_vector_array3_t;
-	typedef typename BASE::input_vector_t                      input_vector_t;
-	typedef typename BASE::input_vector_array_t                input_vector_array_t;
-	typedef typename BASE::input_vector_array2_t               input_vector_array2_t;
-	typedef typename BASE::input_vector_array3_t               input_vector_array3_t;
-	typedef typename BASE::input_state_matrix_t                input_state_matrix_t;
-	typedef typename BASE::input_state_matrix_array_t          input_state_matrix_array_t;
-	typedef typename BASE::input_state_matrix_array2_t         input_state_matrix_array2_t;
-	typedef typename BASE::input_state_matrix_array3_t         input_state_matrix_array3_t;
-	typedef typename BASE::state_matrix_t                      state_matrix_t;
-	typedef typename BASE::state_matrix_array_t                state_matrix_array_t;
-	typedef typename BASE::state_matrix_array2_t               state_matrix_array2_t;
-	typedef typename BASE::state_matrix_array3_t               state_matrix_array3_t;
-	typedef typename BASE::input_matrix_t                      input_matrix_t;
-	typedef typename BASE::input_matrix_array_t                input_matrix_array_t;
-	typedef typename BASE::input_matrix_array2_t               input_matrix_array2_t;
-	typedef typename BASE::input_matrix_array3_t               input_matrix_array3_t;
-	typedef typename BASE::state_input_matrix_t                state_input_matrix_t;
-	typedef typename BASE::state_input_matrix_array_t          state_input_matrix_array_t;
-	typedef typename BASE::state_input_matrix_array2_t         state_input_matrix_array2_t;
-	typedef typename BASE::state_input_matrix_array3_t         state_input_matrix_array3_t;
-	typedef typename BASE::constraint1_vector_t                constraint1_vector_t;
-	typedef typename BASE::constraint1_vector_array_t          constraint1_vector_array_t;
-	typedef typename BASE::constraint1_vector_array2_t         constraint1_vector_array2_t;
-	typedef typename BASE::constraint1_state_matrix_t          constraint1_state_matrix_t;
-	typedef typename BASE::constraint1_state_matrix_array_t    constraint1_state_matrix_array_t;
-	typedef typename BASE::constraint1_state_matrix_array2_t   constraint1_state_matrix_array2_t;
-	typedef typename BASE::constraint1_input_matrix_t          constraint1_input_matrix_t;
-	typedef typename BASE::constraint1_input_matrix_array_t    constraint1_input_matrix_array_t;
-	typedef typename BASE::constraint1_input_matrix_array2_t   constraint1_input_matrix_array2_t;
-	typedef typename BASE::input_constraint1_matrix_t          input_constraint1_matrix_t;
-	typedef typename BASE::input_constraint1_matrix_array_t    input_constraint1_matrix_array_t;
-	typedef typename BASE::input_constraint1_matrix_array2_t   input_constraint1_matrix_array2_t;
-	typedef typename BASE::constraint2_vector_t                constraint2_vector_t;
-	typedef typename BASE::constraint2_vector_array_t          constraint2_vector_array_t;
-	typedef typename BASE::constraint2_vector_array2_t         constraint2_vector_array2_t;
-	typedef typename BASE::constraint2_state_matrix_t          constraint2_state_matrix_t;
-	typedef typename BASE::constraint2_state_matrix_array_t    constraint2_state_matrix_array_t;
-	typedef typename BASE::constraint2_state_matrix_array2_t   constraint2_state_matrix_array2_t;
-	typedef typename BASE::dynamic_vector_t                    dynamic_vector_t;
-	typedef typename BASE::dynamic_vector_array_t              dynamic_vector_array_t;
+	using DIMENSIONS = typename BASE::DIMENSIONS;
+	using controller_t = typename BASE::controller_t;
+	using size_array_t = typename BASE::size_array_t;
+	using size_array2_t = typename BASE::size_array2_t;
+	using scalar_t = typename BASE::scalar_t;
+	using scalar_array_t = typename BASE::scalar_array_t;
+	using scalar_array2_t = typename BASE::scalar_array2_t;
+	using scalar_array3_t = typename BASE::scalar_array3_t;
+	using eigen_scalar_t = typename BASE::eigen_scalar_t;
+	using eigen_scalar_array_t = typename BASE::eigen_scalar_array_t;
+	using eigen_scalar_array2_t = typename BASE::eigen_scalar_array2_t;
+	using state_vector_t = typename BASE::state_vector_t;
+	using state_vector_array_t = typename BASE::state_vector_array_t;
+	using state_vector_array2_t = typename BASE::state_vector_array2_t;
+	using state_vector_array3_t = typename BASE::state_vector_array3_t;
+	using input_vector_t = typename BASE::input_vector_t;
+	using input_vector_array_t = typename BASE::input_vector_array_t;
+	using input_vector_array2_t = typename BASE::input_vector_array2_t;
+	using input_vector_array3_t = typename BASE::input_vector_array3_t;
+	using input_state_matrix_t = typename BASE::input_state_matrix_t;
+	using input_state_matrix_array_t = typename BASE::input_state_matrix_array_t;
+	using input_state_matrix_array2_t = typename BASE::input_state_matrix_array2_t;
+	using input_state_matrix_array3_t = typename BASE::input_state_matrix_array3_t;
+	using state_matrix_t = typename BASE::state_matrix_t;
+	using state_matrix_array_t = typename BASE::state_matrix_array_t;
+	using state_matrix_array2_t = typename BASE::state_matrix_array2_t;
+	using state_matrix_array3_t = typename BASE::state_matrix_array3_t;
+	using input_matrix_t = typename BASE::input_matrix_t;
+	using input_matrix_array_t = typename BASE::input_matrix_array_t;
+	using input_matrix_array2_t = typename BASE::input_matrix_array2_t;
+	using input_matrix_array3_t = typename BASE::input_matrix_array3_t;
+	using state_input_matrix_t = typename BASE::state_input_matrix_t;
+	using state_input_matrix_array_t = typename BASE::state_input_matrix_array_t;
+	using state_input_matrix_array2_t = typename BASE::state_input_matrix_array2_t;
+	using state_input_matrix_array3_t = typename BASE::state_input_matrix_array3_t;
+	using constraint1_vector_t = typename BASE::constraint1_vector_t;
+	using constraint1_vector_array_t = typename BASE::constraint1_vector_array_t;
+	using constraint1_vector_array2_t = typename BASE::constraint1_vector_array2_t;
+	using constraint1_state_matrix_t = typename BASE::constraint1_state_matrix_t;
+	using constraint1_state_matrix_array_t = typename BASE::constraint1_state_matrix_array_t;
+	using constraint1_state_matrix_array2_t = typename BASE::constraint1_state_matrix_array2_t;
+	using constraint1_input_matrix_t = typename BASE::constraint1_input_matrix_t;
+	using constraint1_input_matrix_array_t = typename BASE::constraint1_input_matrix_array_t;
+	using constraint1_input_matrix_array2_t = typename BASE::constraint1_input_matrix_array2_t;
+	using input_constraint1_matrix_t = typename BASE::input_constraint1_matrix_t;
+	using input_constraint1_matrix_array_t = typename BASE::input_constraint1_matrix_array_t;
+	using input_constraint1_matrix_array2_t = typename BASE::input_constraint1_matrix_array2_t;
+	using constraint2_vector_t = typename BASE::constraint2_vector_t;
+	using constraint2_vector_array_t = typename BASE::constraint2_vector_array_t;
+	using constraint2_vector_array2_t = typename BASE::constraint2_vector_array2_t;
+	using constraint2_state_matrix_t = typename BASE::constraint2_state_matrix_t;
+	using constraint2_state_matrix_array_t = typename BASE::constraint2_state_matrix_array_t;
+	using constraint2_state_matrix_array2_t = typename BASE::constraint2_state_matrix_array2_t;
+	using dynamic_vector_t = typename BASE::dynamic_vector_t;
+	using dynamic_vector_array_t = typename BASE::dynamic_vector_array_t;
 
-	typedef typename BASE::controller_ptr_array_t              controller_ptr_array_t;
-	typedef typename BASE::linear_controller_t                 linear_controller_t;
-	typedef typename BASE::linear_controller_array_t           linear_controller_array_t;
-	typedef typename BASE::event_handler_t                     event_handler_t;
-	typedef typename BASE::controlled_system_base_t            controlled_system_base_t;
-	typedef typename BASE::derivatives_base_t                  derivatives_base_t;
-	typedef typename BASE::constraint_base_t                   constraint_base_t;
-	typedef typename BASE::cost_function_base_t                cost_function_base_t;
-	typedef typename BASE::operating_trajectories_base_t       operating_trajectories_base_t;
-	typedef typename BASE::penalty_base_t                      penalty_base_t;
-	typedef typename BASE::rollout_base_t                      rollout_base_t;
-	typedef typename BASE::time_triggered_rollout_t            time_triggered_rollout_t;
-	typedef typename BASE::linear_quadratic_approximator_t     linear_quadratic_approximator_t;
-	typedef typename BASE::operating_trajectorie_rollout_t     operating_trajectorie_rollout_t;
-	typedef typename BASE::cost_desired_trajectories_t         cost_desired_trajectories_t;
-	typedef typename BASE::logic_rules_machine_t               logic_rules_machine_t;
-	typedef typename BASE::logic_rules_machine_ptr_t           logic_rules_machine_ptr_t;
+	using controller_ptr_array_t = typename BASE::controller_ptr_array_t;
+	using linear_controller_t = typename BASE::linear_controller_t;
+	using linear_controller_array_t = typename BASE::linear_controller_array_t;
+	using event_handler_t = typename BASE::event_handler_t;
+	using controlled_system_base_t = typename BASE::controlled_system_base_t;
+	using derivatives_base_t = typename BASE::derivatives_base_t;
+	using constraint_base_t = typename BASE::constraint_base_t;
+	using cost_function_base_t = typename BASE::cost_function_base_t;
+	using operating_trajectories_base_t = typename BASE::operating_trajectories_base_t;
+	using penalty_base_t = typename BASE::penalty_base_t;
+	using rollout_base_t = typename BASE::rollout_base_t;
+	using time_triggered_rollout_t = typename BASE::time_triggered_rollout_t;
+	using linear_quadratic_approximator_t = typename BASE::linear_quadratic_approximator_t;
+	using operating_trajectorie_rollout_t = typename BASE::operating_trajectorie_rollout_t;
+	using cost_desired_trajectories_t = typename BASE::cost_desired_trajectories_t;
+	using logic_rules_machine_t = typename BASE::logic_rules_machine_t;
+	using logic_rules_machine_ptr_t = typename BASE::logic_rules_machine_ptr_t;
 
 	typedef SLQ_RiccatiEquationsNormalized<STATE_DIM, INPUT_DIM>		slq_riccati_equations_t;
 //	typedef SequentialRiccatiEquations<STATE_DIM, INPUT_DIM> 			riccati_equations_t;
@@ -238,7 +238,7 @@ public:
 	 * 		- quadratized final cost
 	 *
 	 */
-	virtual void approximateOptimalControlProblem() override;
+	void approximateOptimalControlProblem() override;
 
 	/**
 	 * Calculates the controller. This method uses the following variables:
@@ -249,7 +249,7 @@ public:
 	 * - nominalControllersStock_: the controller that stabilizes the system around the new nominal trajectory and
 	 * 								improves the constraints as well as the increment to the feed-forward control input.
 	 */
-	virtual void calculateController() override;
+	void calculateController() override;
 //
 //	/**
 //	 * Line search on the feedforward parts of the controller. It uses the following approach for line search:
@@ -311,7 +311,7 @@ protected:
 	 * @param [in] partitionIndex: Time partition index.
 	 * @param [in] timeIndex: Time index in the partition.
 	 */
-	virtual void approximateLQWorker(
+	void approximateLQWorker(
 			size_t workerIndex,
 			const size_t& partitionIndex,
 			const size_t& timeIndex) override;
@@ -337,7 +337,7 @@ protected:
 	 * @param [in] partitionIndex: Time partition index
 	 * @param [in] timeIndex: Time index in the partition
 	 */
-	virtual void calculateControllerWorker(
+	void calculateControllerWorker(
 			size_t workerIndex,
 			const size_t& partitionIndex,
 			const size_t& timeIndex) override;
@@ -461,6 +461,7 @@ protected:
 	state_input_matrix_array2_t BmConstrainedTrajectoryStock_;
 	input_state_matrix_array2_t PmConstrainedTrajectoryStock_;
 	input_vector_array2_t       RvConstrainedTrajectoryStock_;
+  	input_matrix_array2_t       RmInverseTrajectoryStock_;
 
 	std::vector<std::shared_ptr<slq_riccati_equations_t>>                             slqRiccatiEquationsPtrStock_;
 	std::vector<std::shared_ptr<SystemEventHandler<slq_riccati_equations_t::S_DIM_>>> slqRiccatiEventPtrStock_;
@@ -491,7 +492,7 @@ protected:
 
 	// Functions for solving Backward pass through Mobius scheme
 	void LmFunc_ (const size_t& partitionIndex, const size_t& timeIndex, input_state_matrix_t& Lm) {
-		Lm = -BASE::RmInverseTrajectoryStock_[partitionIndex][timeIndex] * ( BASE::PmTrajectoryStock_[partitionIndex][timeIndex] +
+		Lm = -RmInverseTrajectoryStock_[partitionIndex][timeIndex] * ( BASE::PmTrajectoryStock_[partitionIndex][timeIndex] +
 				BASE::BmTrajectoryStock_[partitionIndex][timeIndex].transpose()*BASE::SmTrajectoryStock_[partitionIndex][timeIndex] );
 	};
 	//
@@ -500,12 +501,12 @@ protected:
 	};
 	//
 	void LvConstrainedFunc_ (const size_t& partitionIndex, const size_t& timeIndex, input_vector_t& LvConstrained) {
-		LvConstrained  = -BASE::RmInverseTrajectoryStock_[partitionIndex][timeIndex] * ( RvConstrainedTrajectoryStock_[partitionIndex][timeIndex] +
+		LvConstrained  = -RmInverseTrajectoryStock_[partitionIndex][timeIndex] * ( RvConstrainedTrajectoryStock_[partitionIndex][timeIndex] +
 				BmConstrainedTrajectoryStock_[partitionIndex][timeIndex].transpose()*BASE::SvTrajectoryStock_[partitionIndex][timeIndex]);
 	};
 	//
 	void LveConstrainedFunc_ (const size_t& partitionIndex, const size_t& timeIndex, input_vector_t& LveConstrained) {
-		LveConstrained = -BASE::RmInverseTrajectoryStock_[partitionIndex][timeIndex] *
+		LveConstrained = -RmInverseTrajectoryStock_[partitionIndex][timeIndex] *
 				BmConstrainedTrajectoryStock_[partitionIndex][timeIndex].transpose() * BASE::SveTrajectoryStock_[partitionIndex][timeIndex];
 	};
 	//

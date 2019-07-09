@@ -45,21 +45,21 @@ public:
 
 	typedef AutomaticDifferentiationBase<DOMAIN_DIM, RANGE_DIM, SCALAR_T, VARIABLE_DIM> BASE;
 
-	typedef typename BASE::domain_vector_t       domain_vector_t;
-	typedef typename BASE::domain_matrix_t       domain_matrix_t;
-	typedef typename BASE::range_vector_t        range_vector_t;
-	typedef typename BASE::range_matrix_t        range_matrix_t;
-	typedef typename BASE::variable_vector_t     variable_vector_t;
-	typedef typename BASE::variable_matrix_t     variable_matrix_t;
-	typedef typename BASE::range_domain_matrix_t range_domain_matrix_t;
-	typedef typename BASE::domain_range_matrix_t domain_range_matrix_t;
+	using domain_vector_t = typename BASE::domain_vector_t;
+	using domain_matrix_t = typename BASE::domain_matrix_t;
+	using range_vector_t = typename BASE::range_vector_t;
+	using range_matrix_t = typename BASE::range_matrix_t;
+	using variable_vector_t = typename BASE::variable_vector_t;
+	using variable_matrix_t = typename BASE::variable_matrix_t;
+	using range_domain_matrix_t = typename BASE::range_domain_matrix_t;
+	using domain_range_matrix_t = typename BASE::domain_range_matrix_t;
 
-	typedef CppAD::cg::CG<SCALAR_T> ad_base_t;
-    typedef CppAD::AD<ad_base_t>    ad_scalar_t;
-    typedef CppAD::ADFun<ad_base_t> ad_fun_t;
+	using ad_base_t = CppAD::cg::CG<SCALAR_T>;
+    using ad_scalar_t = CppAD::AD<ad_base_t>;
+    using ad_fun_t = CppAD::ADFun<ad_base_t>;
 
     typedef Eigen::Matrix<ad_scalar_t, Eigen::Dynamic, 1> ad_dynamic_vector_t;
-    typedef std::function<void(const ad_dynamic_vector_t&, ad_dynamic_vector_t&)> ad_funtion_t;
+    using ad_funtion_t = std::function<void (const ad_dynamic_vector_t &, ad_dynamic_vector_t &)>;
 
 	CppAdCodeGenInterface(
 			const ad_funtion_t& adFunction,
@@ -129,8 +129,9 @@ public:
 	}
 
 	void addCompileFlag(const std::vector<std::string>& cFlags) {
-		for (const std::string& flag : cFlags)
+		for (const std::string& flag : cFlags) {
 			compiler_.addCompileFlags(flag);
+		}
 	}
 
 	void getCompileLibFlags(std::vector<std::string>& cFlags) const {
@@ -142,13 +143,14 @@ public:
 	}
 
 	void addCompileLibFlags(const std::vector<std::string>& cFlags) {
-		for (const std::string& flag : cFlags)
+		for (const std::string& flag : cFlags) {
 			compiler_.addCompileLibFlags(flag);
+		}
 	}
 
 private:
 	typedef Eigen::Matrix<SCALAR_T, 1, Eigen::Dynamic> 	dynamic_vector_t;
-	typedef Eigen::Map<dynamic_vector_t> 				dynamic_vector_map_t;
+	using dynamic_vector_map_t = Eigen::Map<dynamic_vector_t>;
 
 	ad_funtion_t adFunction_;
 

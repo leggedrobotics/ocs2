@@ -106,8 +106,9 @@ inline void ILQR_Settings::loadSettings(const std::string& filename, const std::
 		std::cerr <<" #### =============================================================================" << std::endl;
 	}
 
-	if(verbose)
+	if(verbose) {
 		std::cerr <<" #### =============================================================================" << std::endl;
+	}
 }
 
 } // namespace ocs2

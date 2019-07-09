@@ -38,16 +38,17 @@ using namespace double_integrator;
 int main(int argc, char **argv)
 {
 	// task file
-	if (argc <= 1) throw std::runtime_error("No task file specified. Aborting.");
+	if (argc <= 1) { throw std::runtime_error("No task file specified. Aborting.");
+	}
 	std::string taskFileFolderName = std::string(argv[1]);
 
 	// double_integratorInterface
 	DoubleIntegratorInterface double_integratorInterface(taskFileFolderName);
 
-	typedef MRT_ROS_Double_Integrator mrt_t;
-	typedef mrt_t::BASE::Ptr mrt_base_ptr_t;
-	typedef mrt_t::scalar_t scalar_t;
-	typedef mrt_t::system_observation_t system_observation_t;
+	using mrt_t = MRT_ROS_Double_Integrator;
+	using mrt_base_ptr_t = mrt_t::BASE::Ptr;
+	using scalar_t = mrt_t::scalar_t;
+	using system_observation_t = mrt_t::system_observation_t;
 
 	mrt_base_ptr_t mrtPtr(new mrt_t("double_integrator"));
 
@@ -60,13 +61,21 @@ int main(int argc, char **argv)
 
 	dummyDoubleIntegrator.launchNodes(argc, argv);
 
-	// Initialize dummy
+	// initialize state
 	MRT_ROS_Dummy_Linear_System::system_observation_t initObservation;
 	double_integratorInterface.getInitialState(initObservation.state());
-	dummyDoubleIntegrator.init(initObservation);
+
+	// initial command
+	MRT_ROS_Dummy_Linear_System::cost_desired_trajectories_t initCostDesiredTrajectories;
+	initCostDesiredTrajectories.desiredTimeTrajectory().resize(1);
+	initCostDesiredTrajectories.desiredStateTrajectory().resize(1);
+	initCostDesiredTrajectories.desiredInputTrajectory().resize(1);
+	initCostDesiredTrajectories.desiredStateTrajectory().front().resize(2);
+	initCostDesiredTrajectories.desiredStateTrajectory().front().head<1>().setZero(); /*targetPoseDisplacement*/
+	initCostDesiredTrajectories.desiredStateTrajectory().front().tail<1>().setZero(); /*targetVelocity*/
 
 	// run dummy
-	dummyDoubleIntegrator.run();
+	dummyDoubleIntegrator.run(initObservation, initCostDesiredTrajectories);
 
 	// Successful exit
 	return 0;

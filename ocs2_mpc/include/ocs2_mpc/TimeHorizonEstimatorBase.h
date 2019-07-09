@@ -44,12 +44,12 @@ class TimeHorizonEstimatorBase {
 public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-	typedef std::shared_ptr<TimeHorizonEstimatorBase<STATE_DIM> > Ptr;
+	using Ptr = std::shared_ptr<TimeHorizonEstimatorBase<STATE_DIM> >;
 
 	TimeHorizonEstimatorBase() :
 		currentTimeHorizon_(1000) {}
 
-	virtual ~TimeHorizonEstimatorBase() {}
+	virtual ~TimeHorizonEstimatorBase() = default;
 
 	/**
 	 * Updates the time horizon
@@ -69,7 +69,7 @@ protected:
 };
 
 
-}
+}  // namespace ocs2
 
 
 #endif /* TIMEHORIZONESTIMATORBASE_H_ */

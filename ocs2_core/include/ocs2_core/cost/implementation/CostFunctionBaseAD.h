@@ -40,8 +40,9 @@ CostFunctionBaseAD<Derived, STATE_DIM, INPUT_DIM, LOGIC_RULES_T, LOGIC_VARIABLE_
 	, modelName_("")
 	, libraryFolder_("")
 {
-	if (dynamicLibraryIsCompiled==true)
+	if (dynamicLibraryIsCompiled) {
 		setADInterfaces();
+	}
 }
 
 /******************************************************************************************************/
@@ -59,7 +60,7 @@ CostFunctionBaseAD<Derived, STATE_DIM, INPUT_DIM, LOGIC_RULES_T, LOGIC_VARIABLE_
 	, terminalADInterfacePtr_(rhs.terminalADInterfacePtr_->clone())
 
 {
-	if (rhs.dynamicLibraryIsCompiled_==true) {
+	if (static_cast<bool>(rhs.dynamicLibraryIsCompiled_)) {
 		setADInterfaces();
 		loadModels(false);
 	} else {
@@ -169,10 +170,11 @@ void CostFunctionBaseAD<Derived, STATE_DIM, INPUT_DIM, LOGIC_RULES_T, LOGIC_VARI
 	modelName_ = modelName;
 	libraryFolder_ = libraryFolder;
 
-	if (dynamicLibraryIsCompiled_==true) {
+	if (dynamicLibraryIsCompiled_) {
 		bool libraryLoaded = loadModels(false);
-		if (libraryLoaded==false)
+		if (!libraryLoaded) {
 			throw std::runtime_error("CostFunction library is not found!");
+		}
 
 	} else {
 		throw std::runtime_error("CostFunction library has not been compiled!");
@@ -228,8 +230,9 @@ void CostFunctionBaseAD<Derived, STATE_DIM, INPUT_DIM, LOGIC_RULES_T, LOGIC_VARI
 		const char* algorithmName /*= nullptr*/) {
 
 	if (std::is_same<LOGIC_RULES_T, NullLogicRules>::value) {
-		if (LOGIC_VARIABLE_DIM != 0)
+		if (LOGIC_VARIABLE_DIM != 0) {
 			throw std::runtime_error("LOGIC_VARIABLE_DIM should be zero!");
+		}
 	} else {
 		logicVariables(tapedInput_) = static_cast<Derived *>(this)->template getlogicVariables(
 				logicRulesMachine, partitionIndex, algorithmName);;
@@ -433,7 +436,7 @@ void CostFunctionBaseAD<Derived, STATE_DIM, INPUT_DIM, LOGIC_RULES_T, LOGIC_VARI
 		const ad_dynamic_vector_t& tapedInput,
 		ad_dynamic_vector_t& costValue) {
 
-	ad_dynamic_vector_t& tapedInputNonConst = const_cast<ad_dynamic_vector_t&>(tapedInput);
+	auto& tapedInputNonConst = const_cast<ad_dynamic_vector_t&>(tapedInput);
 
 	ad_scalar_t& t = timeVariable(tapedInputNonConst);
 	Eigen::Matrix<ad_scalar_t, STATE_DIM, 1> x = stateVariables(tapedInputNonConst);
@@ -458,7 +461,7 @@ void CostFunctionBaseAD<Derived, STATE_DIM, INPUT_DIM, LOGIC_RULES_T, LOGIC_VARI
 		const ad_dynamic_vector_t& tapedInput,
 		ad_dynamic_vector_t& costValue) {
 
-	ad_dynamic_vector_t& tapedInputNonConst = const_cast<ad_dynamic_vector_t&>(tapedInput);
+	auto& tapedInputNonConst = const_cast<ad_dynamic_vector_t&>(tapedInput);
 
 	ad_scalar_t& t = timeVariable(tapedInputNonConst);
 	Eigen::Matrix<ad_scalar_t, STATE_DIM, 1> x = stateVariables(tapedInputNonConst);

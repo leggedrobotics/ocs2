@@ -1,7 +1,7 @@
 /* CPYHDR { */
 /*
  * This file is part of the 'iit-rbd' library.
- * Copyright © 2015 2016 2017, Marco Frigerio (marco.frigerio@iit.it)
+ * Copyright (c) 2015 2016 2017, Marco Frigerio (marco.frigerio@iit.it)
  *
  * See the LICENSE file for more information.
  */
@@ -296,7 +296,7 @@ void transformInertia(
  *
  * These functions perform the coordinate transform of a spatial articulated
  * inertia, in the special case of a mass-less handle (see chapter 7 of the RBDA
- * book, §7.2.2, equation 7.23)
+ * book, 7.2.2, equation 7.23)
  *
  * Two specialized functions are available for the two cases of revolute and
  * prismatic joint (which connects the subtree with the mass-less handle), since
@@ -571,7 +571,7 @@ void ctransform_Ia_prismatic(
  *
  * These functions calculate the spatial articulated inertia of a subtree, in
  * the special case of a mass-less handle (see chapter 7 of the RBDA
- * book, §7.2.2, equation 7.23)
+ * book, 7.2.2, equation 7.23)
  *
  * Two specialized functions are available for the two cases of revolute and
  * prismatic joint (which connects the subtree with the mass-less handle), since

@@ -35,24 +35,16 @@ namespace ocs2{
 template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
 MPC_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::MPC_ROS_Interface(
 		mpc_t& mpc,
-		const std::string& robotName /*= "robot"*/)
+		const std::string& robotName /*= "robot"*/,
+		const task_listener_ptr_array_t& taskListenerArray /*= task_listener_ptr_array_t()*/)
 	: mpcPtr_(&mpc)
 	, mpcSettings_(mpc.settings())
 	, robotName_(robotName)
+	, taskListenerArray_(taskListenerArray)
 	, desiredTrajectoriesUpdated_(false)
 	, modeSequenceUpdated_(false)
 {
-	// correcting rosMsgTimeWindow
-	if (mpcSettings_.recedingHorizon_==false)
-		mpcSettings_.rosMsgTimeWindow_ = 1e+6;
-
-	// reset variables
-	reset();
-
-	// Start thread for publishing
-#ifdef PUBLISH_THREAD
-	publisherWorker_ = std::thread(&MPC_ROS_Interface::publisherWorkerThread, this);
-#endif
+	set(mpc, robotName);
 }
 
 /******************************************************************************************************/
@@ -76,13 +68,25 @@ void MPC_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::set(
 	mpcSettings_ = mpc.settings();
 	robotName_ = robotName;
 
-	// correcting rosMsgTimeWindow
-	if (mpcSettings_.recedingHorizon_==false)
-		mpcSettings_.rosMsgTimeWindow_ = 1e+6;
+	desiredTrajectoriesUpdated_ = false;
+	modeSequenceUpdated_ = false;
 
-	// reset variables
-	reset();
-	resetRequested_ = false;
+	terminateThread_ = false;
+	readyToPublish_  = false;
+
+	initialCall_ = false;
+	resetRequestedEver_ = false;
+
+	// correcting rosMsgTimeWindow
+	if (mpcSettings_.recedingHorizon_==false) {
+		mpcSettings_.rosMsgTimeWindow_ = 1e+6;
+	}
+
+	// reset
+	numIterations_ = 0;
+	maxDelay_ = -1e+6;
+	meanDelay_ = 0.0;
+	currentDelay_ = 0.0;
 
 	// Start thread for publishing
 #ifdef PUBLISH_THREAD
@@ -104,19 +108,27 @@ void MPC_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::sigintHandler(int s
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void MPC_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::reset() {
+void MPC_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::reset(
+		const cost_desired_trajectories_t& initCostDesiredTrajectories) {
+
+	std::lock_guard<std::mutex> resetLock(resetMutex_);
 
 	initialCall_ = true;
-	numIterations_ = 0;
+	resetRequestedEver_ = true;
 
+	costDesiredTrajectories_ = initCostDesiredTrajectories;
+	desiredTrajectoriesUpdated_ = true;
+
+	numIterations_ = 0;
 	maxDelay_ = -1e+6;
 	meanDelay_ = 0.0;
 	currentDelay_ = 0.0;
 
 	terminateThread_ = false;
 	readyToPublish_  = false;
-	if (mpcPtr_ != nullptr)
+	if (mpcPtr_ != nullptr) {
 		mpcPtr_->reset();
+	}
 }
 
 /******************************************************************************************************/
@@ -127,11 +139,14 @@ bool MPC_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::resetMpcCallback(
 		ocs2_comm_interfaces::reset::Request  &req,
 		ocs2_comm_interfaces::reset::Response &res) {
 
-	if (req.reset == true) {
-		// this set initialCall_ to true which invokes MPC reset at the next observation message
-		resetRequested_ = true;
-		reset();
-		resetRequested_ = false;
+	if (static_cast<bool>(req.reset)) {
+
+		cost_desired_trajectories_t initCostDesiredTrajectories;
+		RosMsgConversions<STATE_DIM, INPUT_DIM>::ReadTargetTrajectoriesMsg(req.targetTrajectories,
+				initCostDesiredTrajectories);
+		reset(initCostDesiredTrajectories);
+
+		res.done = true;
 
 		std::cerr << std::endl
 				<< "\n#####################################################"
@@ -190,10 +205,11 @@ void MPC_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::publishPolicy(
 			mpcPolicyMsg_.modeSequence);
 
 	ControllerType controllerType;
-	if(mpcSettings_.useFeedbackPolicy_==true)
+	if(mpcSettings_.useFeedbackPolicy_==true) {
 		controllerType = controllerStockPtr->front()->getType();
-	else
+	} else {
 		controllerType = ControllerType::FEEDFORWARD;
+	}
 
 	// translate controllerType enum into message enum
 	switch(controllerType){
@@ -214,8 +230,9 @@ void MPC_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::publishPolicy(
 	// maximum length of the message
 	size_t numPartitions = timeTrajectoriesStockPtr->size();
 	size_t totalN = 0;
-	for (size_t i=0; i<numPartitions; i++)
+	for (size_t i=0; i<numPartitions; i++) {
 		totalN += timeTrajectoriesStockPtr->at(i).size();
+	}
 
 	mpcPolicyMsg_.timeTrajectory.clear();
 	mpcPolicyMsg_.timeTrajectory.reserve(totalN);
@@ -230,8 +247,9 @@ void MPC_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::publishPolicy(
 	// The message truncation time
 	const scalar_t t0 = currentObservation.time() + currentDelay_*1e-3;
 	const scalar_t tf = currentObservation.time() + mpcSettings_.rosMsgTimeWindow_*1e-3;
-	if (tf < t0+2.0*meanDelay_*1e-3)
-		std::cout << "WARNING: Message publishing time-horizon is shorter than the MPC delay!" << std::endl;
+	if (tf < t0+2.0*meanDelay_*1e-3) {
+		std::cerr << "WARNING: Message publishing time-horizon is shorter than the MPC delay!" << std::endl;
+	}
 
 	for (size_t i=0; i<numPartitions; i++)  { // loop through partitions
 
@@ -240,9 +258,12 @@ void MPC_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::publishPolicy(
 		const input_vector_array_t& inputTrajectory = (*inputTrajectoriesStockPtr)[i];
 
 		size_t N = timeTrajectory.size();
-		if (N == 0)  continue;
-		if (timeTrajectory.back()  < t0)  continue;
-		if (timeTrajectory.front() > tf)  continue;
+		if (N == 0) {  continue;
+		}
+		if (timeTrajectory.back()  < t0) {  continue;
+		}
+		if (timeTrajectory.front() > tf) {  continue;
+		}
 
 		controller_t* ctrlToBeSent = (*controllerStockPtr)[i];
 		std::unique_ptr<FeedforwardController<STATE_DIM, INPUT_DIM>> ffwCtrl;
@@ -257,12 +278,15 @@ void MPC_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::publishPolicy(
 		scalar_array_t timeTrajectoryTruncated;
 		for (size_t k=0; k<N; k++) { // loop through time in partition i
 			// continue if elapsed time is smaller than computation time delay
-			if (k<N-1 && timeTrajectory[k+1]<t0)  continue;
+			if (k<N-1 && timeTrajectory[k+1]<t0) {  continue;
+			}
 			// break if the time exceed rosMsgTimeWindow
-			if (k>0 && timeTrajectory[k-1]>tf)  break;
+			if (k>0 && timeTrajectory[k-1]>tf) {  break;
+			}
 
-			for (size_t j=0; j<STATE_DIM; j++)
+			for (size_t j=0; j<STATE_DIM; j++) {
 				mpcState.value[j] = stateTrajectory[k](j);
+			}
 
 			mpcPolicyMsg_.timeTrajectory.push_back(timeTrajectory[k]);
 			mpcPolicyMsg_.stateTrajectory.push_back(mpcState);
@@ -297,7 +321,8 @@ void MPC_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::publisherWorkerThre
 
 		msgReady_.wait(lk, [&]{ return (readyToPublish_ || terminateThread_); });
 
-		if (terminateThread_==true)  break;
+		if (terminateThread_==true) {  break;
+		}
 
 		mpcPolicyMsgBuffer_ = std::move(mpcPolicyMsg_);
 
@@ -318,40 +343,27 @@ template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
 void MPC_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::mpcObservationCallback(
 		const ocs2_comm_interfaces::mpc_observation::ConstPtr& msg) {
 
-	// resetting is requested
-	if(resetRequested_ == true)
+	std::lock_guard<std::mutex> resetLock(resetMutex_);
+
+	if (resetRequestedEver_.load() == false) {
+		ROS_WARN_STREAM("MPC should be reset first. Either call MPC_ROS_Interface::reset() or use the reset service.");
 		return;
+	}
 
 	// current time, state, input, and subsystem
 	system_observation_t currentObservation;
 	ros_msg_conversions_t::ReadObservationMsg(*msg, currentObservation);
 
-	if (mpcSettings_.adaptiveRosMsgTimeWindow_==true || mpcSettings_.debugPrint_)
+	if (mpcSettings_.adaptiveRosMsgTimeWindow_==true || mpcSettings_.debugPrint_) {
 		startTimePoint_ = std::chrono::steady_clock::now();
+	}
 
 	// number of iterations
 	numIterations_++;
 
 	if (initialCall_==true) {
-		// reset the MPC solver since it is the beginning of the task
-		mpcPtr_->reset();
-
 		// after each reset, perform user defined operation if specialized
 		initCall(currentObservation);
-
-		//** set the goal **//
-		// default initial goal
-		initGoalState(currentObservation, defaultCostDesiredTrajectories_);
-
-		// display
-		if (mpcSettings_.debugPrint_) {
-			std::cerr << "### The target position is updated at time "
-					  << std::setprecision(4) << currentObservation.time() << " as " << std::endl;
-			defaultCostDesiredTrajectories_.display();
-		}
-
-		// set CostDesiredTrajectories
-		mpcPtr_->swapCostDesiredTrajectories(defaultCostDesiredTrajectories_);
 	}
 
 	// update the mode sequence
@@ -396,6 +408,11 @@ void MPC_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::mpcObservationCallb
 		return;
 	}
 
+	// update task listeners
+	for (auto& taskListener: taskListenerArray_) {
+		taskListener->update();
+	}
+
 	// run SLQ-MPC
 	bool controllerIsUpdated = mpcPtr_->run(
 			currentObservation.time(),
@@ -431,10 +448,11 @@ void MPC_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::mpcObservationCallb
 	}
 
 	// measure the delay for sending ROS messages
-	if(mpcSettings_.adaptiveRosMsgTimeWindow_==true)
+	if(mpcSettings_.adaptiveRosMsgTimeWindow_==true) {
 		currentDelay_ = std::min(currentDelay_, meanDelay_*0.9);
-	else
+	} else {
 		currentDelay_ = 0.0;
+	}
 
 	// display
 	if(mpcSettings_.debugPrint_){
@@ -459,8 +477,9 @@ void MPC_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::mpcObservationCallb
 #endif
 
 	// set the initialCall flag to false
-	if (initialCall_==true)
+	if (initialCall_==true) {
 		initialCall_ = false;
+	}
 }
 
 /******************************************************************************************************/
@@ -504,8 +523,9 @@ void MPC_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::shutdownNode() {
 
 	msgReady_.notify_all();
 
-	if (publisherWorker_.joinable())
+	if (publisherWorker_.joinable()) {
 		publisherWorker_.join();
+	}
 
 	ROS_INFO_STREAM("All workers are shut down.");
 #endif
@@ -574,9 +594,6 @@ void MPC_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::spin() {
 template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
 void MPC_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::launchNodes(int argc, char* argv[]) {
 
-	// reset counters and variables
-	reset();
-
 	// initialize node
 	initializeNode(argc, argv);
 
@@ -602,8 +619,8 @@ void MPC_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::launchNodes(int arg
 			::ros::TransportHints().udp());
 
 	// SLQ-MPC publisher
-		mpcPolicyPublisher_ = nodeHandlerPtr_->advertise<ocs2_comm_interfaces::mpc_flattened_controller>(
-				robotName_+"_mpc_policy", 1, true);
+	mpcPolicyPublisher_ = nodeHandlerPtr_->advertise<ocs2_comm_interfaces::mpc_flattened_controller>(
+			robotName_+"_mpc_policy", 1, true);
 
 	// dummy publisher
 	dummyPublisher_ = nodeHandlerPtr_->advertise<ocs2_comm_interfaces::dummy>("ping", 1, true);
@@ -611,6 +628,11 @@ void MPC_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::launchNodes(int arg
 	// MPC reset service server
 	mpcResetServiceServer_ = nodeHandlerPtr_->advertiseService(robotName_+"_mpc_reset",
 			&MPC_ROS_Interface::resetMpcCallback, this);
+
+	// subscribe task listeners
+	for (auto& taskListener: taskListenerArray_) {
+		taskListener->subscribe(*nodeHandlerPtr_);
+	}
 
 	// display
 #ifdef PUBLISH_THREAD

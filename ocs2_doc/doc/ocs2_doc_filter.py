@@ -55,9 +55,13 @@ class ocs2_doc_filter:
             theOutput += line
           lines = theOutput.splitlines()
           for line in lines:
-            print(line)
-            # Our logger does not add extra line breaks so explicitly adding one to make the log more readable.
-            self.log(line + '\n')
+            try:
+              print(line)
+              # Our logger does not add extra line breaks so explicitly adding one to make the log more readable.
+              self.log(line + '\n')
+            except UnicodeEncodeError as e:
+              self.logError("UnicodeEncodeError in file " + filename)
+              self.logError(str(e))
       except IOError as e:
         self.logError('the file ' + filename + ' could not be opened for reading')
 
@@ -66,7 +70,7 @@ class ocs2_doc_filter:
     # Go through the input file line by line.
 
     numCurlyBracesOpen = 0
-    startPattern = re.compile("\s*namespace\s+ocs2\s*{")
+    startPattern = re.compile("\s*namespace\s+ocs2\s*{") # }
     foundNamespaceStart = False
     foundNamespaceEnd = False
 
@@ -82,6 +86,7 @@ class ocs2_doc_filter:
         numCurlyBracesOpen += line.count('{')
         numCurlyBracesOpen -= line.count('}')
         if(numCurlyBracesOpen ==0):
+          # {
           theOutput += "/*! @} End of Doxygen Groups*/\n"
           foundNamespaceEnd = True
         theOutput += line
@@ -96,12 +101,11 @@ class ocs2_doc_filter:
             if re.search("ocs2_\w+", parentPath) is not None:
               groupName = parentPath
               break
-          #theOutput += "/*!\n *  @addtogroup ocs2_core ocs2_core\n *  @{\n */\n"
           theOutput += "/*!\n *  @addtogroup "
           theOutput += groupName
           theOutput += " "
           theOutput += groupName
-          theOutput += "\n *  @{\n */\n"
+          theOutput += "\n *  @{\n */\n" # }
           numCurlyBracesOpen += line.count('{')
           numCurlyBracesOpen -= line.count('}')
 
@@ -119,7 +123,7 @@ class ocs2_doc_filter:
         theFile.write(string)
 
   def logError(self, string):
-    if self.logLevel >= self.logError:
+    if self.logLevel >= self.logErrors:
       with open(self.errorLogFile, 'a') as theFile:
         theFile.write(string)
 

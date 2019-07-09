@@ -1,7 +1,7 @@
 /* CPYHDR { */
 /*
  * This file is part of the 'iit-rbd' library.
- * Copyright © 2015 2016 2017, Marco Frigerio (marco.frigerio@iit.it)
+ * Copyright (c) 2015 2016 2017, Marco Frigerio (marco.frigerio@iit.it)
  *
  * See the LICENSE file for more information.
  */

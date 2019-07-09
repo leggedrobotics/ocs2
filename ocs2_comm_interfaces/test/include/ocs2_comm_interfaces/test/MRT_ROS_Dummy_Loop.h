@@ -96,16 +96,14 @@ public:
 	void launchNodes(int argc, char* argv[]);
 
 	/**
-	 * The initialization of the observation
+	 * Runs the dummy MRT loop.
 	 *
 	 * @param [in] initObservation: The initial observation.
+	 * @param [in] initCostDesiredTrajectories: The initial desired cost trajectories.
 	 */
-	virtual void init(const system_observation_t& initObservation);
-
-	/**
-	 * Runs the dummy MRT  loop.
-	 */
-	void run();
+	void run(
+			const system_observation_t& initObservation,
+			const cost_desired_trajectories_t& initCostDesiredTrajectories);
 
 protected:
 	/**
@@ -143,11 +141,8 @@ protected:
 	controlled_system_base_t* systemPtr_;
 
 	bool realtimeLoop_;
-	bool initialized_;
 
 	system_observation_t observation_;
-	system_observation_t initObservation_;
-
 };
 
 } // namespace ocs2

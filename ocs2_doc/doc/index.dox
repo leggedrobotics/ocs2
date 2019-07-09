@@ -2,7 +2,7 @@
 @mainpage Overview
 
 \section ocs2_doc_home OCS2
-This is a C++ library for an efficient continuous-time optimal control implementation.
+This is a C++ library for an efficient continuous and discrete time optimal control implementation.
 It includes methods for solving optimal control for continuous time problem with exogenous
 signal for switching in between predefine modes. The toolbox is capable of solving constrained problems.
 
@@ -77,9 +77,16 @@ switching times based on a Riccati approach to solve the two-point Boundary Valu
 [Frank-Wolfe Module](\ref ocs2_frank_wolfe_page) provides the followings features:
 - An implementation of the Frank-Wolfe algorithm \cite jaggi13 which is an iterative first-order gradient descent algorithm.
 
+[Robotic Examples](\ref ocs2_frank_wolfe_page) provides the followings tools and examples:
+- Robotic tools
+- Ballbot
+- Double integrator
+- Quadrotor
+- Cart Pole
+
 \section ocs2_doc_source_code Source Code
 
-The source code is available at <a href="https://bitbucket.org/leggedrobotics/ocs2_dev">Bitbucket</a>
+The source code is available at <a href="https://bitbucket.org/leggedrobotics/ocs2/">Bitbucket</a>
 
 \section cs2_doc_how_to_use How to use the OCS2 Toolbox
 
@@ -94,13 +101,20 @@ For any questions, issues or other troubleshooting please either
 \section ocs2_doc_ack Acknowledgement
 
  \subsection ocs2_doc_lead Lead and Maintanance:
- - Farbod Farshidian, farbod (dot) farshidian (at) gmail (dot) com
+ - Farbod Farshidian
+ 
+ \subsection ocs2_doc_lead Main Developers and Maintanance:
+ - Farbod Farshidian
+ - Jan Carius
+ - Ruben Grandia
 
 \subsection ocs2_doc_contributors Contributors:
  - Farbod Farshidian
+ - Jan Carius
+ - Ruben Grandia
+ - David Hoeller
  - Asutosh Satapathy
  - Markus Giftthaler
- - David Hoeller
 
 \section ocs2_doc_licence Licence Information
 

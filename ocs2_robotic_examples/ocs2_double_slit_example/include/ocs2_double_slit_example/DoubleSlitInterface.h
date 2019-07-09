@@ -17,6 +17,7 @@
 // Double Slit
 #include "ocs2_double_slit_example/DoubleSlitDynamics.h"
 #include "ocs2_double_slit_example/definitions.h"
+#include "ocs2_double_slit_example/DoubleSlitBarrierCost.h"
 
 namespace ocs2 {
 namespace double_slit {
@@ -96,7 +97,7 @@ class DoubleSlitInterface final : public RobotInterfaceBase<double_slit::STATE_D
 
   DoubleSlitDynamics::Ptr linearSystemDynamicsPtr_;
 
-  std::unique_ptr<PathIntegralCostFunction<dim_t::STATE_DIM_, dim_t::INPUT_DIM_>> costPtr_;
+  std::unique_ptr<DoubleSlitBarrierCost> costPtr_;
   DoubleSlitConstraint::Ptr linearSystemConstraintPtr_;
   DoubleSlitOperatingPoint::Ptr linearSystemOperatingPointPtr_;
 

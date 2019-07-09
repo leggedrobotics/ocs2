@@ -1,8 +1,6 @@
 #pragma once
 
 #include <ocs2_mpc/MPC_BASE.h>
-
-#include <ocs2_core/cost/PathIntegralCostFunction.h>
 #include <ocs2_oc/pi_solver/PiSolver.hpp>
 #include <ocs2_oc/pi_solver/PI_Settings.h>
 

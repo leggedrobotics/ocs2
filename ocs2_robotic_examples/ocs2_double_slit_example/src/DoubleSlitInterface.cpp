@@ -47,7 +47,7 @@ void DoubleSlitInterface::loadSettings(const std::string& taskFile) {
   input_vector_t uNominal;
   uNominal.setZero();
 
-  costPtr_.reset(new PathIntegralCostFunction<dim_t::STATE_DIM_, dim_t::INPUT_DIM_>(R_, uNominal, V, r, Phi));
+  costPtr_.reset(new DoubleSlitBarrierCost(R_, uNominal, V, r, Phi));
 
   /*
    * Constraints

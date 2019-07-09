@@ -3,11 +3,11 @@
 #include <ocs2_core/constraint/ConstraintBase.h>
 #include <ocs2_core/control/LinearController.h>
 #include <ocs2_core/control/PiController.h>
-#include <ocs2_core/cost/PathIntegralCostFunction.h>
 #include <ocs2_core/dynamics/ControlledSystemBase.h>
 #include <ocs2_oc/oc_solver/Solver_BASE.h>
 #include <ocs2_oc/pi_solver/PI_Settings.h>
 #include <ocs2_oc/rollout/TimeTriggeredRollout.h>
+#include <ocs2_core/cost/CostFunctionBase.h>
 
 #include <Eigen/Cholesky>
 #include <random>
@@ -49,7 +49,7 @@ class PiSolver final : public Solver_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> {
 
   using controller_ptr_array_t = typename Base::controller_ptr_array_t;
   using controlled_system_base_t = ControlledSystemBase<STATE_DIM, INPUT_DIM, logic_rules_t>;
-  using cost_function_t = PathIntegralCostFunction<STATE_DIM, INPUT_DIM, logic_rules_t>;
+  using cost_function_t = CostFunctionBase<STATE_DIM, INPUT_DIM, logic_rules_t>;
   using rollout_t = TimeTriggeredRollout<STATE_DIM, INPUT_DIM, logic_rules_t>;
   using constraint_t = ConstraintBase<STATE_DIM, INPUT_DIM, logic_rules_t>;
   using pi_controller_t = PiController<STATE_DIM, INPUT_DIM, logic_rules_t>;

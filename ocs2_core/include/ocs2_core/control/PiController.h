@@ -4,7 +4,7 @@
 
 #include <random>
 
-#include <ocs2_core/cost/PathIntegralCostFunction.h>
+#include <ocs2_core/cost/CostFunctionBase.h>
 #include "ocs2_core/constraint/ConstraintBase.h"
 #include "ocs2_core/dynamics/ControlledSystemBase.h"
 #include "ocs2_core/misc/LinearInterpolation.h"
@@ -41,7 +41,7 @@ class PiController final : public ControllerBase<STATE_DIM, INPUT_DIM> {
 
   using logic_rules_t = LOGIC_RULES_T;
   using constraint_t = ConstraintBase<STATE_DIM, INPUT_DIM, logic_rules_t>;
-  using cost_function_t = PathIntegralCostFunction<STATE_DIM, INPUT_DIM, logic_rules_t>;
+  using cost_function_t = CostFunctionBase<STATE_DIM, INPUT_DIM, logic_rules_t>;
 
   struct PiControllerEvaluationData {
     scalar_t t_;        //! time of evaluation

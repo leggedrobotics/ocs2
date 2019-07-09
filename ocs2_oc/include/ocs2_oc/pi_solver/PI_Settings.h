@@ -5,6 +5,8 @@
 #include <iostream>
 #include <string>
 
+#include <ocs2_oc/rollout/Rollout_Settings.h>
+
 namespace ocs2 {
 
 /**
@@ -16,7 +18,7 @@ class PI_Settings {
    * @brief PI_Settings constructor with default values
    */
   PI_Settings(double rollout_dt = 1e-3, double gamma = 0.1, size_t numSamples = 100, bool debugPrint = false)
-      : rollout_dt_(rollout_dt), gamma_(gamma), numSamples_(numSamples), debugPrint_(debugPrint) {}
+      : gamma_(gamma), numSamples_(numSamples), debugPrint_(debugPrint) {}
 
   /**
    * @brief loadSettings reads the settings from a config file
@@ -26,30 +28,23 @@ class PI_Settings {
    */
   void loadSettings(const std::string& filename, const std::string& fieldName = "pathIntegral", bool verbose = true);
 
-  double rollout_dt_;  //! time step for dynamics integration
   double gamma_;       //! temperature/level of noise
   size_t numSamples_;  //! how many trajectories to sample
   bool debugPrint_;    //! verbose printing output for debugging
+
+  Rollout_Settings rolloutSettings_; //! settings for rollouts used in PI solver
 };
 
 void PI_Settings::loadSettings(const std::string& filename, const std::string& fieldName, bool verbose) {
+
+  rolloutSettings_.loadSettings(filename, fieldName+".rollout_settings", verbose);
+
   boost::property_tree::ptree pt;
   boost::property_tree::read_info(filename, pt);
 
   if (verbose) {
     std::cerr << "\n #### Path Integral Settings:\n"
               << " #### =============================================================================" << std::endl;
-  }
-
-  try {
-    rollout_dt_ = pt.get<double>(fieldName + ".rollout_dt");
-    if (verbose) {
-      std::cerr << " #### Option loader : option 'rollout_dt' ....................... " << rollout_dt_ << std::endl;
-    }
-  } catch (const boost::property_tree::ptree_bad_path&) {
-    if (verbose) {
-      std::cerr << " #### Option loader : option 'rollout_dt' ....................... " << rollout_dt_ << "\t(default)" << std::endl;
-    }
   }
 
   try {

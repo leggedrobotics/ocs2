@@ -7,10 +7,17 @@ systemParameters
 
 pathIntegral
 {
-  rollout_dt 1; time step
   gamma 0.1 ; temperature/level of noise
   numSamples 100 ; how many trajectories to sample
-  debugPrint 1
+  debugPrint 0
+
+  rollout_settings
+  {
+    minTimeStep 1; will be used as time step in PI
+    integratorType 0; must be Euler (0) for PI to function
+    checkNumericalStability 0
+    reconstructInputTrajectory false; must be false for PI to function
+  }
 }
 
 mpcTimeHorizon

@@ -69,9 +69,9 @@ class PiSolver final : public Solver_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> {
         systemDynamics_(systemDynamicsPtr),
         costFunction_(std::move(costFunction)),
         constraint_(constraint),
-        controller_(&constraint_, costFunction_.get(), settings_.rollout_dt_, settings_.gamma_),  //!@warn need to use member var
+        controller_(&constraint_, costFunction_.get(), settings_.rolloutSettings_.minTimeStep_, settings_.gamma_),  //!@warn need to use member var
         numIterations_(0),
-        rollout_(*systemDynamicsPtr, Rollout_Settings(1e-9, 1e-6, 5000, settings_.rollout_dt_, IntegratorType::EULER, false, false)) {
+        rollout_(*systemDynamicsPtr, settings_.rolloutSettings_) {
     // TODO(jcarius) how to ensure that we are given a control affine system?
     // TODO(jcarius) how to ensure that we are given a suitable cost function?
     // TODO(jcarius) how to ensure that the constraint is input-affine and full row-rank D?
@@ -107,7 +107,7 @@ class PiSolver final : public Solver_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> {
     }
     costFunction_->setCostDesiredTrajectories(costDesiredTrajectories_);
 
-    const auto numSteps = static_cast<size_t>(std::round((finalTime - initTime) / settings_.rollout_dt_)) + 1;
+    const auto numSteps = static_cast<size_t>(std::round((finalTime - initTime) / settings_.rolloutSettings_.minTimeStep_)) + 1;
 
     // setup containers to store rollout data
     state_vector_array2_t state_vector_array2(settings_.numSamples_, state_vector_array_t(numSteps));      // vector of vectors of states
@@ -242,7 +242,7 @@ class PiSolver final : public Solver_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> {
     nominalTimeTrajectoriesStock_.clear();
     nominalTimeTrajectoriesStock_.push_back(scalar_array_t(numSteps));
     std::generate(nominalTimeTrajectoriesStock_[0].begin(), nominalTimeTrajectoriesStock_[0].end(), [tt = initTime, this]() mutable {
-      tt += settings_.rollout_dt_;
+      tt += settings_.rolloutSettings_.minTimeStep_;
       return tt;
     });
 
@@ -275,7 +275,7 @@ class PiSolver final : public Solver_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> {
 
     // controller for ROS transmission
     nominalControllersStock_.clear();
-    nominalControllersStock_.push_back(pi_controller_t(&constraint_, costFunction_.get(), settings_.rollout_dt_, 0.0));
+    nominalControllersStock_.push_back(pi_controller_t(&constraint_, costFunction_.get(), settings_.rolloutSettings_.minTimeStep_, 0.0));
     nominalControllersStock_.back().setFeedforwardInputAndState(nominalTimeTrajectoriesStock_[0], nominalStateTrajectoriesStock_[0],
                                                                 nominalInputTrajectoriesStock_[0]);
     updateNominalControllerPtrStock();
@@ -396,7 +396,7 @@ class PiSolver final : public Solver_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> {
     for (int sample = 0; sample < J.size(); sample++) {
       std::cout << "+++ Sample # " << sample << " +++ \ntime\tcost-to-go\tstateTransposed" << std::endl;
       for (int n = 0; n < J[sample].size(); n++) {
-        std::cout << initTime + n * settings_.rollout_dt_ << "\t" << J[sample][n] << "\t" << state_vector_array2[sample][n].transpose()
+        std::cout << initTime + n * settings_.rolloutSettings_.minTimeStep_ << "\t" << J[sample][n] << "\t" << state_vector_array2[sample][n].transpose()
                   << std::endl;
       }
     }

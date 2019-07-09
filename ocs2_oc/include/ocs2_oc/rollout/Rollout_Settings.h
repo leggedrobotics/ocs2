@@ -64,7 +64,7 @@ public:
 	 * @param [in] minTimeStep: Minimum time step of the rollout.
 	 * @param [in] integratorType: Rollout integration scheme type.
 	 * @param [in] checkNumericalStability: Whether to check that the rollout is numerically stable.
-	 * @param [in] reconstructInputTrajectory: Whether to run controller again after integration to contstruct input trajectory
+	 * @param [in] reconstructInputTrajectory: Whether to run controller again after integration to construct input trajectory
 	 */
 	Rollout_Settings(
 			double absTolODE,
@@ -170,7 +170,7 @@ inline void Rollout_Settings::loadSettings(const std::string& filename, const st
 	}
 
 	try	{
-		integratorType_ = (IntegratorType)pt.get<int>(fieldName + ".integratorType");
+		integratorType_ = static_cast<IntegratorType>(pt.get<int>(fieldName + ".integratorType"));
 		if (verbose)  std::cerr << " #### Option loader : option 'integratorType' ...................... " << ocs2::to_string(integratorType_) << std::endl;
 	}
 	catch (const std::exception& e){

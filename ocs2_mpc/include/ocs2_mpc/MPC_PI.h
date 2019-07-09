@@ -25,7 +25,7 @@ class MPC_PI : public MPC_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> {
   typedef typename BASE::controller_ptr_array_t controller_ptr_array_t;
 
   typedef Solver_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> solver_base_t;
-  typedef PiSolver<STATE_DIM, INPUT_DIM> solver_t;
+  typedef PiSolver<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> solver_t;
   typedef typename solver_t::controlled_system_base_t dynamics_t;
   typedef typename solver_t::cost_function_t cost_t;
   typedef typename solver_t::constraint_t constraint_t;

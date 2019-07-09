@@ -80,7 +80,7 @@ class PiSolver final : public Solver_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> {
     // see Euler-Maruyama method (https://infoscience.epfl.ch/record/143450/files/sde_tutorial.pdf)
 
     auto seed = static_cast<unsigned int>(time(nullptr));
-    std::cout << "Setting random seed to controller: " << seed << std::endl;
+    std::cerr << "Setting random seed to controller: " << seed << std::endl;
     controller_.setRandomSeed(seed);
   }
 
@@ -99,7 +99,7 @@ class PiSolver final : public Solver_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> {
   virtual void run(const scalar_t& initTime, const state_vector_t& initState, const scalar_t& finalTime,
                    const scalar_array_t& partitioningTimes) override {
     numIterations_++;
-    std::cout << "mpc init state: " << initState.transpose() << std::endl;
+    std::cerr << "mpc init state: " << initState.transpose() << std::endl;
 
     if (costDesiredTrajectoriesUpdated_) {
       costDesiredTrajectoriesUpdated_ = false;
@@ -211,7 +211,7 @@ class PiSolver final : public Solver_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> {
       }
 
       if (minJ_currStep == std::numeric_limits<scalar_t>::max()) {
-        std::cout << "cost-to-go in timestep  " << n << " is infinite for all samples." << std::endl;
+        std::cerr << "cost-to-go in timestep  " << n << " is infinite for all samples." << std::endl;
         if (numIterations_ - 1) {
           return;
         } else {
@@ -224,7 +224,7 @@ class PiSolver final : public Solver_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> {
       });
 
       //      if(psiDistorted[n] / numSamples_ < 0.01){
-      //          std::cout << "Warning: Less than ~1% of samples are significant in step " << n << std::endl;
+      //          std::cerr << "Warning: Less than ~1% of samples are significant in step " << n << std::endl;
       //        }
 
       // u_opt
@@ -249,7 +249,7 @@ class PiSolver final : public Solver_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> {
     // input trajectory
     nominalInputTrajectoriesStock_.clear();
     nominalInputTrajectoriesStock_.push_back(u_opt);
-    std::cout << "setting u_opt[0] = " << nominalInputTrajectoriesStock_[0][0] << std::endl;
+    std::cerr << "setting u_opt[0] = " << nominalInputTrajectoriesStock_[0][0] << std::endl;
 
     // state trajectory: perform rollout without noise but with input trajectory
     typename rollout_t::state_vector_array_t stateTrajectoryDummy(nominalTimeTrajectoriesStock_[0].size(),
@@ -285,7 +285,7 @@ class PiSolver final : public Solver_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> {
       printIterationDebug(initTime, state_vector_array2, J);
 
       for (size_t sample = 0; sample < settings_.numSamples_; sample++) {
-        std::cout << "sample " << sample << " initNoise " << noiseInputVector_array2[sample][0].transpose() << " init cost-to-go "
+        std::cerr << "sample " << sample << " initNoise " << noiseInputVector_array2[sample][0].transpose() << " init cost-to-go "
                   << J[sample][0] << std::endl;
       }
     }
@@ -298,7 +298,7 @@ class PiSolver final : public Solver_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> {
 
   virtual void blockwiseMovingHorizon(bool flag) override {
     if (flag) {
-      std::cout << "[PiSolver] BlockwiseMovingHorizon enabled." << std::endl;
+      std::cerr << "[PiSolver] BlockwiseMovingHorizon enabled." << std::endl;
     }
   }
 
@@ -394,9 +394,9 @@ class PiSolver final : public Solver_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> {
     }
 
     for (int sample = 0; sample < J.size(); sample++) {
-      std::cout << "+++ Sample # " << sample << " +++ \ntime\tcost-to-go\tstateTransposed" << std::endl;
+      std::cerr << "+++ Sample # " << sample << " +++ \ntime\tcost-to-go\tstateTransposed" << std::endl;
       for (int n = 0; n < J[sample].size(); n++) {
-        std::cout << initTime + n * settings_.rolloutSettings_.minTimeStep_ << "\t" << J[sample][n] << "\t" << state_vector_array2[sample][n].transpose()
+        std::cerr << initTime + n * settings_.rolloutSettings_.minTimeStep_ << "\t" << J[sample][n] << "\t" << state_vector_array2[sample][n].transpose()
                   << std::endl;
       }
     }

@@ -1,6 +1,9 @@
 cmake_minimum_required(VERSION 3.0)
 project(ocs2_double_slit_example)
 
+# Generate compile_commands.json for clang tools
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+
 find_package(catkin REQUIRED COMPONENTS
         roslib
         ocs2_core
@@ -90,6 +93,21 @@ target_link_libraries(double_slit_dummy_test
         ${catkin_LIBRARIES}
         )
 
+#########################
+###   CLANG TOOLING   ###
+#########################
+find_package(cmake_clang_tools QUIET)
+if(cmake_clang_tools_FOUND)
+  message(STATUS "Run clang tooling for target double_slit_pi")
+  add_clang_tooling(
+    TARGET double_slit_pi
+    SOURCE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/src ${CMAKE_CURRENT_SOURCE_DIR}/include
+    CT_HEADER_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/include
+    CF_QUIET
+    # CT_QUIET
+    # CF_FIX
+  )
+endif(cmake_clang_tools_FOUND)
 
 #############
 ## Install ##

@@ -1,7 +1,6 @@
 #pragma once
 
 // C++
-#include <stdlib.h>
 #include <iostream>
 #include <string>
 
@@ -22,36 +21,31 @@
 namespace ocs2 {
 namespace double_slit {
 
-class DoubleSlitInterface final : public RobotInterfaceBase<double_slit::STATE_DIM_, double_slit::INPUT_DIM_> {
+class DoubleSlitInterface final : public RobotInterfaceBase<DoubleSlit::STATE_DIM_, DoubleSlit::INPUT_DIM_> {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-  using dim_t = ocs2::Dimensions<double_slit::STATE_DIM_, double_slit::INPUT_DIM_>;
+  using dim_t = ocs2::Dimensions<DoubleSlit::STATE_DIM_, DoubleSlit::INPUT_DIM_>;
   using scalar_t = double;
 
   using DoubleSlitConstraint = ocs2::ConstraintBase<dim_t::STATE_DIM_, dim_t::INPUT_DIM_>;
   using DoubleSlitOperatingPoint = ocs2::SystemOperatingPoint<dim_t::STATE_DIM_, dim_t::INPUT_DIM_>;
 
-  typedef ocs2::MPC_SLQ<dim_t::STATE_DIM_, dim_t::INPUT_DIM_> mpc_t;
-  typedef ocs2::MPC_PI<dim_t::STATE_DIM_, dim_t::INPUT_DIM_> pi_mpc_t;
+  using mpc_t = ocs2::MPC_SLQ<dim_t::STATE_DIM_, dim_t::INPUT_DIM_> ;
+  using pi_mpc_t = ocs2::MPC_PI<dim_t::STATE_DIM_, dim_t::INPUT_DIM_> ;
 
   /**
    * Constructor
    * @param [in] taskFileFolderName: The name of the folder containing task file
    */
-  DoubleSlitInterface(const std::string& taskFileFolderName);
+  explicit DoubleSlitInterface(const std::string& taskFileFolderName);
 
   /**
    * Destructor
    */
   ~DoubleSlitInterface() = default;
 
-  /**
-   * setup all optimizes.
-   *
-   * @param [in] taskFile: Task's file full path.
-   */
-  void setupOptimizer(const std::string& taskFile);
+  void setupOptimizer(const std::string& taskFile) override;
 
   /**
    * Gets a pointer to the internal SLQ-MPC class.
@@ -80,12 +74,7 @@ class DoubleSlitInterface final : public RobotInterfaceBase<double_slit::STATE_D
    */
   scalar_t doubleSlitPotentialWall(dim_t::state_vector_t x, scalar_t t) const;
 
-  /**
-   * Loads the settings from the path file.
-   *
-   * @param [in] taskFile: Task's file full path.
-   */
-  void loadSettings(const std::string& taskFile);
+  void loadSettings(const std::string& taskFile) override;
 
   /**************
    * Variables
@@ -102,9 +91,9 @@ class DoubleSlitInterface final : public RobotInterfaceBase<double_slit::STATE_D
   DoubleSlitOperatingPoint::Ptr linearSystemOperatingPointPtr_;
 
   // cost parameters
-  dim_t::state_matrix_t Q_;
-  dim_t::input_matrix_t R_;
-  dim_t::state_matrix_t QFinal_;
+  dim_t::state_matrix_t qM_;
+  dim_t::input_matrix_t rM_;
+  dim_t::state_matrix_t qMFinal_;
   dim_t::state_vector_t xNominal_;
   dim_t::input_vector_t uNominal_;
   scalar_t barrierLowerEnd_;

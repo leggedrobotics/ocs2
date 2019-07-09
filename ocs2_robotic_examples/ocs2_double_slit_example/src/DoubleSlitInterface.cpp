@@ -30,24 +30,24 @@ void DoubleSlitInterface::loadSettings(const std::string& taskFile) {
   loadScalar(taskFile, "systemParameters.barrierTimePosition", barrierTimePos_);
   loadScalar(taskFile, "systemParameters.barrierLowerEnd", barrierLowerEnd_);
   loadScalar(taskFile, "systemParameters.barrierUpperEnd", barrierUpperEnd_);
-  loadEigenMatrix(taskFile, "Q", Q_);
-  loadEigenMatrix(taskFile, "R", R_);
-  loadEigenMatrix(taskFile, "Q_final", QFinal_);
+  loadEigenMatrix(taskFile, "Q", qM_);
+  loadEigenMatrix(taskFile, "R", rM_);
+  loadEigenMatrix(taskFile, "Q_final", qMFinal_);
   xNominal_ = dim_t::state_vector_t::Zero();
   uNominal_ = dim_t::input_vector_t::Zero();
 
-  std::cerr << "Q:  \n" << Q_ << std::endl;
-  std::cerr << "R:  \n" << R_ << std::endl;
-  std::cerr << "Q_final:\n" << QFinal_ << std::endl;
+  std::cerr << "Q:  \n" << qM_ << std::endl;
+  std::cerr << "R:  \n" << rM_ << std::endl;
+  std::cerr << "Q_final:\n" << qMFinal_ << std::endl;
   std::cerr << "x_init:   " << initialState_.transpose() << std::endl;
 
-  auto V = [this](const state_vector_t& x, double t) { return x.dot(this->Q_ * x) + doubleSlitPotentialWall(x, t); };
+  auto V = [this](const state_vector_t& x, double t) { return x.dot(this->qM_ * x) + doubleSlitPotentialWall(x, t); };
   auto r = [](const state_vector_t&, double) { return input_vector_t::Zero(); };
-  auto Phi = [this](const state_vector_t& x) { return x.dot(this->QFinal_ * x); };
+  auto Phi = [this](const state_vector_t& x) { return x.dot(this->qMFinal_ * x); };
   input_vector_t uNominal;
   uNominal.setZero();
 
-  costPtr_.reset(new DoubleSlitBarrierCost(R_, uNominal, V, r, Phi));
+  costPtr_.reset(new DoubleSlitBarrierCost(rM_, uNominal, V, r, Phi));
 
   /*
    * Constraints

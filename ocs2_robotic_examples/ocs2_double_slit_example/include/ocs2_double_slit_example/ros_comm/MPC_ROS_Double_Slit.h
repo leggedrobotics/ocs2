@@ -7,35 +7,33 @@
 namespace ocs2 {
 namespace double_slit {
 
-class MPC_ROS_Linear_System : public MPC_ROS_Interface<double_slit::STATE_DIM_, double_slit::INPUT_DIM_> {
+class MpcRosDoubleSlit : public MPC_ROS_Interface<double_slit::STATE_DIM_, double_slit::INPUT_DIM_> {
 public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-	typedef MPC_ROS_Interface<double_slit::STATE_DIM_, double_slit::INPUT_DIM_> BASE;
+	using BASE =  MPC_ROS_Interface<double_slit::STATE_DIM_, double_slit::INPUT_DIM_> ;
 
-	typedef typename BASE::scalar_t scalar_t;
-	typedef typename BASE::scalar_array_t scalar_array_t;
-	typedef typename BASE::size_array_t size_array_t;
-	typedef typename BASE::state_vector_t state_vector_t;
-	typedef typename BASE::state_vector_array_t state_vector_array_t;
-	typedef typename BASE::state_vector_array2_t state_vector_array2_t;
-	typedef typename BASE::input_vector_t input_vector_t;
-	typedef typename BASE::input_vector_array_t input_vector_array_t;
-	typedef typename BASE::input_vector_array2_t input_vector_array2_t;
-	typedef typename BASE::controller_t controller_t;
-	typedef typename BASE::input_state_matrix_t input_state_matrix_t;
-	typedef typename BASE::input_state_matrix_array_t input_state_matrix_array_t;
+	using scalar_t = typename BASE::scalar_t ;
+	using scalar_array_t = typename BASE::scalar_array_t ;
+	using size_array_t = typename BASE::size_array_t ;
+	using state_vector_t = typename BASE::state_vector_t ;
+	using state_vector_array_t = typename BASE::state_vector_array_t ;
+	using state_vector_array2_t = typename BASE::state_vector_array2_t ;
+	using input_vector_t = typename BASE::input_vector_t ;
+	using input_vector_array_t = typename BASE::input_vector_array_t ;
+	using input_vector_array2_t = typename BASE::input_vector_array2_t ;
+	using controller_t = typename BASE::controller_t ;
+	using input_state_matrix_t = typename BASE::input_state_matrix_t ;
+	using input_state_matrix_array_t = typename BASE::input_state_matrix_array_t ;
 
-	typedef CostDesiredTrajectories<scalar_t> cost_desired_trajectories_t;
-
-	typedef SystemObservation<double_slit::STATE_DIM_, double_slit::INPUT_DIM_> system_observation_t;
-
-	typedef RosMsgConversions<double_slit::STATE_DIM_, double_slit::INPUT_DIM_> ros_msg_conversions_t;
+	using cost_desired_trajectories_t = CostDesiredTrajectories<scalar_t> ;
+	using system_observation_t = SystemObservation<double_slit::STATE_DIM_, double_slit::INPUT_DIM_> ;
+	using ros_msg_conversions_t = RosMsgConversions<double_slit::STATE_DIM_, double_slit::INPUT_DIM_> ;
 
 	/**
 	 * Default constructor
 	 */
-	MPC_ROS_Linear_System() = default;
+	MpcRosDoubleSlit() = default;
 
 	/**
 	 * Constructor.
@@ -43,7 +41,7 @@ public:
 	 * @param [in] mpc: The MPC object to be interfaced.
 	 * @param [in] robotName: The robot's name.
 	 */
-	MPC_ROS_Linear_System(
+	explicit MpcRosDoubleSlit(
 			mpc_t &mpc,
 			const std::string &nodeName = "robot_mpc")
 	: BASE(mpc, nodeName) {}
@@ -51,7 +49,7 @@ public:
 	/**
 	 * Destructor.
 	 */
-	virtual ~MPC_ROS_Linear_System() = default;
+	~MpcRosDoubleSlit() override = default;
 
 	/**
 	 * Provides the initial target trajectories for the cost function.
@@ -88,4 +86,3 @@ private:
 
 } // namespace double_slit
 } // namespace ocs2
-

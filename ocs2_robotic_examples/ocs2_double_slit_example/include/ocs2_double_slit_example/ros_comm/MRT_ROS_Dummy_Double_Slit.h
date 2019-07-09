@@ -10,11 +10,11 @@
 namespace ocs2 {
 namespace double_slit {
 
-class MRT_ROS_Dummy_Linear_System : public MRT_ROS_Dummy_Loop<double_slit::STATE_DIM_, double_slit::INPUT_DIM_> {
+class MrtRosDummyDoubleSlit final : public MRT_ROS_Dummy_Loop<double_slit::STATE_DIM_, double_slit::INPUT_DIM_> {
 public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-	typedef MRT_ROS_Dummy_Loop<double_slit::STATE_DIM_, double_slit::INPUT_DIM_> BASE;
+	using BASE =  MRT_ROS_Dummy_Loop<double_slit::STATE_DIM_, double_slit::INPUT_DIM_> ;
 
 	/**
 	 * Constructor.
@@ -24,7 +24,7 @@ public:
 	 * @param [in] mpcDesiredFrequency: MPC loop frequency in Hz. If set to a positive number, MPC loop
 	 * will be simulated to run by this frequency. Note that this might not be the MPC's realtime frequency.
 	 */
-	MRT_ROS_Dummy_Linear_System(
+	MrtRosDummyDoubleSlit(
 			const mrt_ptr_t& mrtPtr,
 			const scalar_t& mrtDesiredFrequency,
 			const scalar_t& mpcDesiredFrequency,
@@ -36,7 +36,7 @@ public:
 	/**
 	 * Destructor.
 	 */
-	virtual ~MRT_ROS_Dummy_Linear_System() = default;
+	~MrtRosDummyDoubleSlit() override = default;
 
 protected:
 	/**
@@ -45,15 +45,15 @@ protected:
 	 * @param [in] argc: command line number of inputs.
 	 * @param [in] argv: command line inputs' value.
 	 */
-	virtual void launchVisualizerNode(
+	void launchVisualizerNode(
 			int argc, char* argv[]) override {
 
 		ros::init(argc, argv, "double_slit_visualization_node");
 		ros::NodeHandle n;
 		jointPublisher_ = n.advertise<sensor_msgs::JointState>("joint_states", 1);
 		ROS_INFO_STREAM("Waiting for visualization subscriber ...");
-		while(ros::ok() && jointPublisher_.getNumSubscribers() == 0)
-			ros::Rate(100).sleep();
+		while(ros::ok() && jointPublisher_.getNumSubscribers() == 0){
+			ros::Rate(100).sleep();}
 		ROS_INFO_STREAM("Visualization subscriber is connected.");
 	}
 
@@ -63,7 +63,7 @@ protected:
 	 * @param [in] observation: The current observation.
 	 * @param [in] costDesiredTrajectories: The commanded target trajectory or point.
 	 */
-	virtual void publishVisualizer(
+	void publishVisualizer(
 			const system_observation_t& observation,
 			const cost_desired_trajectories_t& costDesiredTrajectories) override {
 

@@ -1,57 +1,49 @@
 #include "ocs2_double_slit_example/DoubleSlitInterface.h"
+#include "ocs2_double_slit_example/definitions.h"
 #include "ocs2_double_slit_example/ros_comm/MRT_ROS_Double_Slit.h"
 #include "ocs2_double_slit_example/ros_comm/MRT_ROS_Dummy_Double_Slit.h"
-#include "ocs2_double_slit_example/definitions.h"
 
-
-
-int main(int argc, char* argv[])
-{
-
+int main(int argc, char* argv[]) {
   using DoubleSlitInterface = ocs2::double_slit::DoubleSlitInterface;
   using MrtRosDummyDoubleSlit = ocs2::double_slit::MrtRosDummyDoubleSlit;
-  using  mrt_t = ocs2::double_slit::MrtRosDoubleSlit ;
+  using mrt_t = ocs2::double_slit::MrtRosDoubleSlit;
 
+  // task file
+  if (argc <= 1) {
+    throw std::runtime_error("No task file specified. Aborting.");
+  }
+  std::string taskFileFolderName = std::string(argv[1]);
 
-	// task file
-	if (argc <= 1) {throw  std::runtime_error("No task file specified. Aborting.");}
-	std::string taskFileFolderName = std::string(argv[1]);
+  // double_slitInterface
+  DoubleSlitInterface double_slitInterface(taskFileFolderName);
+  double rollout_dt;
+  ocs2::loadScalar(double_slitInterface.taskFile_, "pathIntegral.rollout_settings.minTimeStep", rollout_dt);
 
-	// double_slitInterface
-	DoubleSlitInterface double_slitInterface(taskFileFolderName);
-	double rollout_dt;
-	ocs2::loadScalar(double_slitInterface.taskFile_, "pathIntegral.rollout_settings.minTimeStep", rollout_dt);
+  using mrt_base_ptr_t = mrt_t::BASE::Ptr;
+  using scalar_t = mrt_t::scalar_t;
+  using system_observation_t = mrt_t::system_observation_t;
 
+  mrt_base_ptr_t mrtPtr(new mrt_t("double_slit"));
 
-	using mrt_base_ptr_t =  mrt_t::BASE::Ptr ;
-	using scalar_t =  mrt_t::scalar_t ;
-	using system_observation_t =  mrt_t::system_observation_t ;
+  // Dummy double_slit
+  MrtRosDummyDoubleSlit dummyDoubleSlit(mrtPtr, double_slitInterface.mpcSettings().mrtDesiredFrequency_,
+                                        double_slitInterface.mpcSettings().mpcDesiredFrequency_,
+                                        double_slitInterface.getDynamicsPtr().get(),
+                                        ocs2::Rollout_Settings(1e-9, 1e-6, 5000, rollout_dt, ocs2::IntegratorType::EULER, false, true));
 
-	mrt_base_ptr_t mrtPtr(new mrt_t("double_slit"));
+  dummyDoubleSlit.launchNodes(argc, argv);
 
-	// Dummy double_slit
-	MrtRosDummyDoubleSlit dummyDoubleSlit(
-			mrtPtr,
-			double_slitInterface.mpcSettings().mrtDesiredFrequency_,
-			double_slitInterface.mpcSettings().mpcDesiredFrequency_,
-			double_slitInterface.getDynamicsPtr().get(),
-			ocs2::Rollout_Settings(1e-9, 1e-6, 5000, rollout_dt, ocs2::IntegratorType::EULER, false, true));
+  // Run dummy
+  MrtRosDummyDoubleSlit::system_observation_t initObservation;
+  double_slitInterface.getInitialState(initObservation.state());
 
-	dummyDoubleSlit.launchNodes(argc, argv);
+  MrtRosDummyDoubleSlit::cost_desired_trajectories_t initCostDesiredTraj;
+  initCostDesiredTraj.desiredTimeTrajectory().push_back(0.0);
+  initCostDesiredTraj.desiredInputTrajectory().push_back(DoubleSlitInterface::input_vector_t::Zero());
+  initCostDesiredTraj.desiredStateTrajectory().push_back(DoubleSlitInterface::state_vector_t::Zero());
 
-	// Run dummy
-	MrtRosDummyDoubleSlit::system_observation_t initObservation;
-	double_slitInterface.getInitialState(initObservation.state());
+  dummyDoubleSlit.run(initObservation, initCostDesiredTraj);
 
-	MrtRosDummyDoubleSlit::cost_desired_trajectories_t initCostDesiredTraj;
-	initCostDesiredTraj.desiredTimeTrajectory().push_back(0.0);
-	initCostDesiredTraj.desiredInputTrajectory().push_back(DoubleSlitInterface::input_vector_t::Zero());
-	initCostDesiredTraj.desiredStateTrajectory().push_back(DoubleSlitInterface::state_vector_t::Zero());
-
-	dummyDoubleSlit.run(initObservation, initCostDesiredTraj);
-
-	// Successful exit
-	return 0;
+  // Successful exit
+  return 0;
 }
-
-

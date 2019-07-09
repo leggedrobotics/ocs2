@@ -5,7 +5,8 @@
 namespace ocs2 {
 namespace double_slit {
 
-DoubleSlitInterface::DoubleSlitInterface(const std::string& taskFileFolderName) {
+DoubleSlitInterface::DoubleSlitInterface(const std::string& taskFileFolderName)
+    : barrierLowerEnd_(-0.5), barrierUpperEnd_(0.5), barrierTimePos_(50.0) {
   taskFile_ = ros::package::getPath("ocs2_double_slit_example") + "/config/" + taskFileFolderName + "/task.info";
   std::cout << "Loading task file: " << taskFile_ << std::endl;
 

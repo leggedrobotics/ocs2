@@ -103,9 +103,7 @@ if(cmake_clang_tools_FOUND)
     TARGET double_slit_pi
     SOURCE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/src ${CMAKE_CURRENT_SOURCE_DIR}/include
     CT_HEADER_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/include
-    CF_QUIET
-    # CT_QUIET
-    # CF_FIX
+    CF_FIX
   )
 endif(cmake_clang_tools_FOUND)
 

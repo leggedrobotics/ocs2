@@ -14,9 +14,9 @@
 #include <ocs2_robotic_tools/common/RobotInterfaceBase.h>
 
 // Double Slit
+#include "ocs2_double_slit_example/DoubleSlitBarrierCost.h"
 #include "ocs2_double_slit_example/DoubleSlitDynamics.h"
 #include "ocs2_double_slit_example/definitions.h"
-#include "ocs2_double_slit_example/DoubleSlitBarrierCost.h"
 
 namespace ocs2 {
 namespace double_slit {
@@ -31,8 +31,8 @@ class DoubleSlitInterface final : public RobotInterfaceBase<DoubleSlit::STATE_DI
   using DoubleSlitConstraint = ocs2::ConstraintBase<dim_t::STATE_DIM_, dim_t::INPUT_DIM_>;
   using DoubleSlitOperatingPoint = ocs2::SystemOperatingPoint<dim_t::STATE_DIM_, dim_t::INPUT_DIM_>;
 
-  using mpc_t = ocs2::MPC_SLQ<dim_t::STATE_DIM_, dim_t::INPUT_DIM_> ;
-  using pi_mpc_t = ocs2::MPC_PI<dim_t::STATE_DIM_, dim_t::INPUT_DIM_> ;
+  using mpc_t = ocs2::MPC_SLQ<dim_t::STATE_DIM_, dim_t::INPUT_DIM_>;
+  using pi_mpc_t = ocs2::MPC_PI<dim_t::STATE_DIM_, dim_t::INPUT_DIM_>;
 
   /**
    * Constructor

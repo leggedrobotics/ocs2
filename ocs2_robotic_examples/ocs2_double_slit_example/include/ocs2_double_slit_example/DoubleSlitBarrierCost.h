@@ -15,19 +15,19 @@ class DoubleSlitBarrierCost final : public CostFunctionBase<DoubleSlit::STATE_DI
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-  using BASE = CostFunctionBase<DoubleSlit::STATE_DIM_, DoubleSlit::STATE_DIM_, NullLogicRules> ;
+  using BASE = CostFunctionBase<DoubleSlit::STATE_DIM_, DoubleSlit::STATE_DIM_, NullLogicRules>;
 
-  using DIMENSIONS = Dimensions<DoubleSlit::STATE_DIM_, DoubleSlit::STATE_DIM_> ;
-  using scalar_t = typename DIMENSIONS::scalar_t ;
-  using state_vector_t = typename DIMENSIONS::state_vector_t ;
-  using state_matrix_t = typename DIMENSIONS::state_matrix_t ;
-  using input_vector_t = typename DIMENSIONS::input_vector_t ;
-  using input_matrix_t = typename DIMENSIONS::input_matrix_t ;
-  using input_state_matrix_t = typename DIMENSIONS::input_state_matrix_t ;
+  using DIMENSIONS = Dimensions<DoubleSlit::STATE_DIM_, DoubleSlit::STATE_DIM_>;
+  using scalar_t = typename DIMENSIONS::scalar_t;
+  using state_vector_t = typename DIMENSIONS::state_vector_t;
+  using state_matrix_t = typename DIMENSIONS::state_matrix_t;
+  using input_vector_t = typename DIMENSIONS::input_vector_t;
+  using input_matrix_t = typename DIMENSIONS::input_matrix_t;
+  using input_state_matrix_t = typename DIMENSIONS::input_state_matrix_t;
 
-  using potential_fct_t = std::function<scalar_t(const state_vector_t&, scalar_t)> ;
-  using final_cost_fct_t =  std::function<scalar_t(const state_vector_t&)> ;
-  using r_fct_t = std::function<input_vector_t(const state_vector_t&, scalar_t)> ;
+  using potential_fct_t = std::function<scalar_t(const state_vector_t&, scalar_t)>;
+  using final_cost_fct_t = std::function<scalar_t(const state_vector_t&)>;
+  using r_fct_t = std::function<input_vector_t(const state_vector_t&, scalar_t)>;
 
   /**
    * Constructor for the running and final cost function defined as the following:
@@ -38,9 +38,12 @@ class DoubleSlitBarrierCost final : public CostFunctionBase<DoubleSlit::STATE_DI
    * @param [in] V: \f$ V(x,t) \f$
    * @param [in] r: \f$ r(x,t) \f$
    */
-  DoubleSlitBarrierCost(input_matrix_t R, input_vector_t uNominalIntermediate, potential_fct_t V, r_fct_t r,
-                        final_cost_fct_t Phi)
-      : rM_(std::move(R)), uNominalIntermediate_(std::move(uNominalIntermediate)), v_(std::move(V)), r_(std::move(r)), phi_(std::move(Phi)) {}
+  DoubleSlitBarrierCost(input_matrix_t R, input_vector_t uNominalIntermediate, potential_fct_t V, r_fct_t r, final_cost_fct_t Phi)
+      : rM_(std::move(R)),
+        uNominalIntermediate_(std::move(uNominalIntermediate)),
+        v_(std::move(V)),
+        r_(std::move(r)),
+        phi_(std::move(Phi)) {}
 
   /**
    * Destructor

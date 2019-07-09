@@ -38,16 +38,6 @@ public:
 	 */
 	virtual ~MRT_ROS_Dummy_Linear_System() = default;
 
-	/**
-	 * The initialization of the observation
-	 *
-	 * @param [in] initObservation: The initial observation.
-	 */
-	virtual void init(const system_observation_t& initObservation) override {
-
-		BASE::init(initObservation);
-	}
-
 protected:
 	/**
 	 * Launches the visualization node

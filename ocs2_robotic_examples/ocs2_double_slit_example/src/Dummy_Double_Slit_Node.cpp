@@ -34,13 +34,16 @@ int main(int argc, char **argv)
 
 	dummyDoubleSlit.launchNodes(argc, argv);
 
-	// Initialize dummy
+	// Run dummy
 	MRT_ROS_Dummy_Linear_System::system_observation_t initObservation;
 	double_slitInterface.getInitialState(initObservation.state());
-	dummyDoubleSlit.init(initObservation);
 
-	// run dummy
-	dummyDoubleSlit.run();
+	MRT_ROS_Dummy_Linear_System::cost_desired_trajectories_t initCostDesiredTraj;
+	initCostDesiredTraj.desiredTimeTrajectory().push_back(0.0);
+	initCostDesiredTraj.desiredInputTrajectory().push_back(DoubleSlitInterface::input_vector_t::Zero());
+	initCostDesiredTraj.desiredStateTrajectory().push_back(DoubleSlitInterface::state_vector_t::Zero());
+
+	dummyDoubleSlit.run(initObservation, initCostDesiredTraj);
 
 	// Successful exit
 	return 0;

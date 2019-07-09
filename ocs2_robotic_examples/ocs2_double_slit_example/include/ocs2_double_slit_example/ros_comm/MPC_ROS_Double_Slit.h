@@ -80,31 +80,7 @@ public:
 	 */
 	void adjustTargetTrajectories(
 			const system_observation_t& currentObservation,
-			cost_desired_trajectories_t& costDesiredTrajectories) final {
-
-		// Received command
-		const scalar_t targetPoseDisplacement = costDesiredTrajectories.desiredStateTrajectory().front()(0);
-		const scalar_t targetVelocity = costDesiredTrajectories.desiredStateTrajectory().front()(1);
-
-		// Desired time trajectory
-		scalar_array_t& tDesiredTrajectory = costDesiredTrajectories.desiredTimeTrajectory();
-		tDesiredTrajectory.resize(1);
-		tDesiredTrajectory[0] = currentObservation.time();
-
-		// Desired state trajectory
-		typename cost_desired_trajectories_t::dynamic_vector_array_t& xDesiredTrajectory =
-				costDesiredTrajectories.desiredStateTrajectory();
-		xDesiredTrajectory.resize(1);
-		xDesiredTrajectory[0] = currentObservation.state();
-		xDesiredTrajectory[0](0) += targetPoseDisplacement;
-		xDesiredTrajectory[0](1) = targetVelocity;
-
-		// Desired input trajectory
-		typename cost_desired_trajectories_t::dynamic_vector_array_t& uDesiredTrajectory =
-				costDesiredTrajectories.desiredInputTrajectory();
-		uDesiredTrajectory.resize(1);
-		uDesiredTrajectory[0] = input_vector_t::Zero();
-	}
+			cost_desired_trajectories_t& costDesiredTrajectories) final {}
 
 private:
 

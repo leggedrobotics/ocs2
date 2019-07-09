@@ -69,7 +69,7 @@ class DoubleSlitInterface final : public RobotInterfaceBase<double_slit::STATE_D
    * Gets a pointer to the internal PI-MPC class
    * @return Pointer to PI MPC
    */
-  pi_mpc_t* getPiPtr() { return piPtr_.get(); }
+  pi_mpc_t* getPiMpcPtr() { return piMpcPtr_.get(); }
 
   /**
    * @brief doubleSlitPotentialWall models the potential wall of our problem
@@ -92,7 +92,7 @@ class DoubleSlitInterface final : public RobotInterfaceBase<double_slit::STATE_D
   std::string taskFile_;
 
   mpc_t::Ptr mpcPtr_;
-  std::unique_ptr<pi_mpc_t> piPtr_;
+  std::unique_ptr<pi_mpc_t> piMpcPtr_;
 
   DoubleSlitDynamics::Ptr linearSystemDynamicsPtr_;
 

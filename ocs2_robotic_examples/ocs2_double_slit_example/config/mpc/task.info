@@ -1,6 +1,5 @@
 systemParameters
 {
-    rollout_dt 1;
     barrierTimePosition 50 ; time steps to barrier
     barrierLowerEnd -0.6;
     barrierUpperEnd  0.6;
@@ -8,8 +7,10 @@ systemParameters
 
 pathIntegral
 {
+  rollout_dt 1; time step
   gamma 0.1 ; temperature/level of noise
   numSamples 100 ; how many trajectories to sample
+  debugPrint 1
 }
 
 mpcTimeHorizon

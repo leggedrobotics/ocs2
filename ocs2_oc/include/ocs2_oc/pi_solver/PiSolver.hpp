@@ -6,6 +6,7 @@
 #include <ocs2_core/cost/PathIntegralCostFunction.h>
 #include <ocs2_core/dynamics/ControlledSystemBase.h>
 #include <ocs2_oc/oc_solver/Solver_BASE.h>
+#include <ocs2_oc/pi_solver/PI_Settings.h>
 #include <ocs2_oc/rollout/TimeTriggeredRollout.h>
 
 #include <Eigen/Cholesky>
@@ -63,16 +64,14 @@ class PiSolver final : public Solver_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> {
    * @param numSamples How many
    */
   PiSolver(const typename controlled_system_base_t::Ptr systemDynamicsPtr, std::unique_ptr<cost_function_t> costFunction,
-           const constraint_t constraint, scalar_t rollout_dt, scalar_t noiseScaling, size_t numSamples)
-      : systemDynamics_(systemDynamicsPtr),
+           const constraint_t constraint, PI_Settings piSettings)
+      : settings_(std::move(piSettings)),
+        systemDynamics_(systemDynamicsPtr),
         costFunction_(std::move(costFunction)),
         constraint_(constraint),
-        controller_(&constraint_, costFunction_.get(), rollout_dt, noiseScaling),  //!@warn need to use member var
+        controller_(&constraint_, costFunction_.get(), settings_.rollout_dt_, settings_.gamma_),  //!@warn need to use member var
         numIterations_(0),
-        rollout_(*systemDynamicsPtr, Rollout_Settings(1e-9, 1e-6, 5000, rollout_dt, IntegratorType::EULER, false, false)),
-        rollout_dt_(rollout_dt),
-        gamma_(noiseScaling),
-        numSamples_(numSamples) {
+        rollout_(*systemDynamicsPtr, Rollout_Settings(1e-9, 1e-6, 5000, settings_.rollout_dt_, IntegratorType::EULER, false, false)) {
     // TODO(jcarius) how to ensure that we are given a control affine system?
     // TODO(jcarius) how to ensure that we are given a suitable cost function?
     // TODO(jcarius) how to ensure that the constraint is input-affine and full row-rank D?
@@ -108,12 +107,12 @@ class PiSolver final : public Solver_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> {
     }
     costFunction_->setCostDesiredTrajectories(costDesiredTrajectories_);
 
-    const auto numSteps = static_cast<size_t>(std::round((finalTime - initTime) / rollout_dt_)) + 1;
+    const auto numSteps = static_cast<size_t>(std::round((finalTime - initTime) / settings_.rollout_dt_)) + 1;
 
     // setup containers to store rollout data
-    state_vector_array2_t state_vector_array2(numSamples_, state_vector_array_t(numSteps));      // vector of vectors of states
-    input_vector_array2_t noiseInputVector_array2(numSamples_, input_vector_array_t(numSteps));  // vector of vectors of inputs
-    scalar_array2_t costVtilde(numSamples_, scalar_array_t(numSteps, 0.0));                      // vector of vectors of costs
+    state_vector_array2_t state_vector_array2(settings_.numSamples_, state_vector_array_t(numSteps));      // vector of vectors of states
+    input_vector_array2_t noiseInputVector_array2(settings_.numSamples_, input_vector_array_t(numSteps));  // vector of vectors of inputs
+    scalar_array2_t costVtilde(settings_.numSamples_, scalar_array_t(numSteps, 0.0));                      // vector of vectors of costs
 
     controller_.cacheResults_ = true;
     controller_.cacheData_.reserve(numSteps + 2);  // TODO(jcarius) check if this is the size at the end
@@ -123,7 +122,7 @@ class PiSolver final : public Solver_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> {
     // -------------------------------------------------------------------------
 
     // a sample is a single stochastic rollout from initTime to finalTime
-    for (size_t sample = 0; sample < numSamples_; sample++) {
+    for (size_t sample = 0; sample < settings_.numSamples_; sample++) {
       controller_.cacheData_.clear();
 
       typename rollout_t::state_vector_array_t stateTrajectory;
@@ -171,14 +170,14 @@ class PiSolver final : public Solver_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> {
     // backward pass
     // collect cost to go and calculate psi and input across all samples
     // -------------------------------------------------------------------------
-    scalar_array2_t J(numSamples_, scalar_array_t(numSteps, 0.0));  // value of J (cost-to-go) for each sample and each time step
+    scalar_array2_t J(settings_.numSamples_, scalar_array_t(numSteps, 0.0));  // value of J (cost-to-go) for each sample and each time step
     scalar_array_t psiDistorted(numSteps, 0.0);  // value of Psi for each time step, averaged over samples (distortion = scaling of exp
-                                                 // argument for numerics, no division by numSamples_)
+                                                 // argument for numerics, no division by numSamples)
     input_vector_array_t u_opt(numSteps, input_vector_t::Zero());  // value of optimal input across time steps, averaged over samples
 
     // initialize J for each sample and find max across samples
     scalar_t minJ_currStep = std::numeric_limits<scalar_t>::max();
-    for (size_t sample = 0; sample < numSamples_; sample++) {
+    for (size_t sample = 0; sample < settings_.numSamples_; sample++) {
       J[sample][numSteps - 1] = costVtilde[sample][numSteps - 1];
 
       if (J[sample][numSteps - 1] < minJ_currStep) {
@@ -189,12 +188,13 @@ class PiSolver final : public Solver_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> {
     // initialize psi
     psiDistorted[numSteps - 1] =
         std::accumulate(J.begin(), J.end(), scalar_t(0.0), [this, numSteps, minJ_currStep](scalar_t a, const scalar_array_t& Ji) {
-          return std::move(a) + std::exp(-(Ji[numSteps - 1] - minJ_currStep) / gamma_);
+          return std::move(a) + std::exp(-(Ji[numSteps - 1] - minJ_currStep) / settings_.gamma_);
         });
 
     // initialize u for each sample
-    for (size_t sample = 0; sample < numSamples_; sample++) {
-      u_opt[numSteps - 1] += noiseInputVector_array2[sample][numSteps - 1] * std::exp(-(J[sample][numSteps - 1] - minJ_currStep) / gamma_);
+    for (size_t sample = 0; sample < settings_.numSamples_; sample++) {
+      u_opt[numSteps - 1] +=
+          noiseInputVector_array2[sample][numSteps - 1] * std::exp(-(J[sample][numSteps - 1] - minJ_currStep) / settings_.gamma_);
     }
     u_opt[numSteps - 1] /= psiDistorted[numSteps - 1];
 
@@ -202,7 +202,7 @@ class PiSolver final : public Solver_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> {
     for (int n = numSteps - 2; n >= 0; n--) {
       // calculate cost-to-go for this step for each sample
       scalar_t minJ_currStep = std::numeric_limits<scalar_t>::max();
-      for (size_t sample = 0; sample < numSamples_; sample++) {
+      for (size_t sample = 0; sample < settings_.numSamples_; sample++) {
         J[sample][n] = J[sample][n + 1] + costVtilde[sample][n];
 
         if (J[sample][n] < minJ_currStep) {
@@ -220,7 +220,7 @@ class PiSolver final : public Solver_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> {
       }
 
       psiDistorted[n] = std::accumulate(J.begin(), J.end(), scalar_t(0.0), [this, n, minJ_currStep](scalar_t a, const scalar_array_t& Ji) {
-        return std::move(a) + std::exp(-(Ji[n] - minJ_currStep) / gamma_);
+        return std::move(a) + std::exp(-(Ji[n] - minJ_currStep) / settings_.gamma_);
       });
 
       //      if(psiDistorted[n] / numSamples_ < 0.01){
@@ -228,8 +228,8 @@ class PiSolver final : public Solver_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> {
       //        }
 
       // u_opt
-      for (size_t sample = 0; sample < numSamples_; sample++) {
-        u_opt[n] += noiseInputVector_array2[sample][n] * std::exp(-(J[sample][n] - minJ_currStep) / gamma_);
+      for (size_t sample = 0; sample < settings_.numSamples_; sample++) {
+        u_opt[n] += noiseInputVector_array2[sample][n] * std::exp(-(J[sample][n] - minJ_currStep) / settings_.gamma_);
       }
       u_opt[n] /= psiDistorted[n];
     }
@@ -242,7 +242,7 @@ class PiSolver final : public Solver_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> {
     nominalTimeTrajectoriesStock_.clear();
     nominalTimeTrajectoriesStock_.push_back(scalar_array_t(numSteps));
     std::generate(nominalTimeTrajectoriesStock_[0].begin(), nominalTimeTrajectoriesStock_[0].end(), [tt = initTime, this]() mutable {
-      tt += rollout_dt_;
+      tt += settings_.rollout_dt_;
       return tt;
     });
 
@@ -271,23 +271,24 @@ class PiSolver final : public Solver_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> {
 
     // reset local controller
     controller_.setZero();
-    controller_.gamma_ = gamma_;
+    controller_.gamma_ = settings_.gamma_;
 
     // controller for ROS transmission
     nominalControllersStock_.clear();
-    nominalControllersStock_.push_back(pi_controller_t(&constraint_, costFunction_.get(), rollout_dt_, 0.0));
+    nominalControllersStock_.push_back(pi_controller_t(&constraint_, costFunction_.get(), settings_.rollout_dt_, 0.0));
     nominalControllersStock_.back().setFeedforwardInputAndState(nominalTimeTrajectoriesStock_[0], nominalStateTrajectoriesStock_[0],
                                                                 nominalInputTrajectoriesStock_[0]);
     updateNominalControllerPtrStock();
 
     // debug printing
-    //    printIterationDebug(initTime, state_vector_array2, J);
+    if (settings_.debugPrint_) {
+      printIterationDebug(initTime, state_vector_array2, J);
 
-    //    for (size_t sample = 0; sample < numSamples_; sample++) {
-    //      std::cout << "sample " << sample << " initNoise " << noiseInputVector_array2[sample][0].transpose()
-    //                << " init cost-to-go " << J[sample][0] << std::endl;
-
-    //      }
+      for (size_t sample = 0; sample < settings_.numSamples_; sample++) {
+        std::cout << "sample " << sample << " initNoise " << noiseInputVector_array2[sample][0].transpose() << " init cost-to-go "
+                  << J[sample][0] << std::endl;
+      }
+    }
   }
 
   virtual void run(const scalar_t& initTime, const state_vector_t& initState, const scalar_t& finalTime,
@@ -395,7 +396,8 @@ class PiSolver final : public Solver_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> {
     for (int sample = 0; sample < J.size(); sample++) {
       std::cout << "+++ Sample # " << sample << " +++ \ntime\tcost-to-go\tstateTransposed" << std::endl;
       for (int n = 0; n < J[sample].size(); n++) {
-        std::cout << initTime + n * rollout_dt_ << "\t" << J[sample][n] << "\t" << state_vector_array2[sample][n].transpose() << std::endl;
+        std::cout << initTime + n * settings_.rollout_dt_ << "\t" << J[sample][n] << "\t" << state_vector_array2[sample][n].transpose()
+                  << std::endl;
       }
     }
   }
@@ -413,6 +415,8 @@ class PiSolver final : public Solver_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> {
   }
 
  protected:
+  PI_Settings settings_;  //! path integral settings
+
   typename controlled_system_base_t::Ptr systemDynamics_;
 
   std::unique_ptr<cost_function_t> costFunction_;  //! cost function owned by solver
@@ -423,9 +427,6 @@ class PiSolver final : public Solver_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> {
   size_t numIterations_;
 
   rollout_t rollout_;
-  scalar_t rollout_dt_;  //! time step size of Euler integration rollout
-  scalar_t gamma_;       //! scaling of noise (~temperature, noise level)
-  size_t numSamples_;    //! number of samples to obtain each iteration
 
   logic_rules_t logicRules_;
 

@@ -4,6 +4,7 @@
 
 #include <ocs2_core/cost/PathIntegralCostFunction.h>
 #include <ocs2_oc/pi_solver/PiSolver.hpp>
+#include <ocs2_oc/pi_solver/PI_Settings.h>
 
 namespace ocs2 {
 
@@ -30,10 +31,10 @@ class MPC_PI : public MPC_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> {
   typedef typename solver_t::cost_function_t cost_t;
   typedef typename solver_t::constraint_t constraint_t;
 
-  MPC_PI(typename dynamics_t::Ptr dynamics, std::unique_ptr<cost_t> cost, const constraint_t constraint, scalar_t rollout_dt,
-         scalar_t noiseScaling, size_t numSamples, const scalar_array_t& partitioningTimes, const MPC_Settings& settings)
-      : BASE(partitioningTimes, settings) {
-    piSolverPtr_.reset(new solver_t(dynamics, std::move(cost), constraint, rollout_dt, noiseScaling, numSamples));
+  MPC_PI(typename dynamics_t::Ptr dynamics, std::unique_ptr<cost_t> cost, const constraint_t constraint, const scalar_array_t& partitioningTimes,
+         const MPC_Settings& mpcSettings, PI_Settings piSettings)
+      : BASE(partitioningTimes, mpcSettings) {
+    piSolverPtr_.reset(new solver_t(dynamics, std::move(cost), constraint, std::move(piSettings)));
     BASE::setBaseSolverPtr(piSolverPtr_.get());
   }
 

@@ -1,4 +1,5 @@
 #include "ocs2_double_slit_example/DoubleSlitInterface.h"
+#include <ocs2_oc/pi_solver/PI_Settings.h>
 #include <ros/package.h>
 
 namespace ocs2 {
@@ -41,7 +42,7 @@ void DoubleSlitInterface::loadSettings(const std::string& taskFile) {
   std::cerr << "x_init:   " << initialState_.transpose() << std::endl;
 
   auto V = [this](const state_vector_t& x, double t) { return x.dot(this->Q_ * x) + doubleSlitPotentialWall(x, t); };
-  auto r = [](const state_vector_t& x, double t) { return input_vector_t::Zero(); };
+  auto r = [](const state_vector_t&, double) { return input_vector_t::Zero(); };
   auto Phi = [this](const state_vector_t& x) { return x.dot(this->QFinal_ * x); };
   input_vector_t uNominal;
   uNominal.setZero();
@@ -68,15 +69,11 @@ void DoubleSlitInterface::loadSettings(const std::string& taskFile) {
 void DoubleSlitInterface::setupOptimizer(const std::string& taskFile) {
   mpcSettings_.loadSettings(taskFile);
 
-  scalar_t rollout_dt;
-  loadScalar(taskFile, "systemParameters.rollout_dt", rollout_dt);
-  scalar_t gamma;
-  loadScalar(taskFile, "pathIntegral.gamma", gamma);
-  size_t numSamples;
-  loadScalar(taskFile, "pathIntegral.numSamples", numSamples);
+  PI_Settings piSettings;
+  piSettings.loadSettings(taskFile);
 
-  piPtr_.reset(new pi_mpc_t(linearSystemDynamicsPtr_, std::move(costPtr_), *linearSystemConstraintPtr_, rollout_dt, gamma, numSamples,
-                            partitioningTimes_, mpcSettings_));
+  piMpcPtr_.reset(new pi_mpc_t(linearSystemDynamicsPtr_, std::move(costPtr_), *linearSystemConstraintPtr_, partitioningTimes_, mpcSettings_,
+                               std::move(piSettings)));
 }
 
 DoubleSlitInterface::scalar_t DoubleSlitInterface::doubleSlitPotentialWall(dim_t::state_vector_t x, scalar_t t) const {

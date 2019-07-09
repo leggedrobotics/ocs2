@@ -16,7 +16,7 @@ int main(int argc, char** argv) {
   ocs2::double_slit::DoubleSlitInterface doubleSlitInterface(argv[1]);
 
   // MPC ROS Node
-  ocs2::double_slit::MPC_ROS_Linear_System mpcNode(*(doubleSlitInterface.getPiPtr()), "double_slit");
+  ocs2::double_slit::MPC_ROS_Linear_System mpcNode(*(doubleSlitInterface.getPiMpcPtr()), "double_slit");
   mpcNode.launchNodes(argc, argv);
 
   // Successful exit

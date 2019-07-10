@@ -219,31 +219,35 @@ public:
 		QmFinalPtr_ = QmFinalPtr;
 
 		if (preComputeRiccatiTerms_) {
-			// Resize all arrays that will store the precomputation
+			// Initialize all arrays that will store the precomputation
 			const size_t N = AmPtr->size();
-			Qm_minus_P_Rinv_P_array_.resize(N);
-			AmT_minus_P_Rinv_B_array_.resize(N);
-			B_RinvChol_array_.resize(N);
-			Qv_minus_P_Rinv_Rv_array_.resize(N);
-			q_minus_half_Rv_Rinv_Rv_array_.resize(N);
-			RinvCholT_Rv_array_.resize(N);
+			B_RinvChol_array_.clear();
+			B_RinvChol_array_.reserve(N);
+			RinvCholT_Rv_array_.clear();
+			RinvCholT_Rv_array_.reserve(N);
+			AmT_minus_P_Rinv_B_array_.clear();
+			AmT_minus_P_Rinv_B_array_.reserve(N);
+
+			// These terms are initialized by copying the cost function terms and substracting the rest inside the loop below
+			Qm_minus_P_Rinv_P_array_ = *QmPtr;
+			Qv_minus_P_Rinv_Rv_array_ = *QvPtr;
+			q_minus_half_Rv_Rinv_Rv_array_ = *qPtr;
 
 			// Precompute all terms for all interpolation nodes
 			dynamic_matrix_t PmT_RinvChol;
 			for (size_t i = 0; i < N; i++) {
-				Qm_minus_P_Rinv_P_array_[i] = (*QmPtr)[i];
-				PmT_RinvChol.noalias() = (*PmPtr)[i].transpose() * (*RinvCholPtr)[i];
-				Qm_minus_P_Rinv_P_array_[i].noalias() -= PmT_RinvChol * PmT_RinvChol.transpose();
+				// Emplace back on first touch of the array in this loop
+				B_RinvChol_array_.emplace_back((*BmPtr)[i] * (*RinvCholPtr)[i]);
+				RinvCholT_Rv_array_.emplace_back((*RinvCholPtr)[i].transpose() * (*RvPtr)[i]);
+				AmT_minus_P_Rinv_B_array_.emplace_back((*AmPtr)[i].transpose());
 
-				AmT_minus_P_Rinv_B_array_[i] = (*AmPtr)[i].transpose();
-				B_RinvChol_array_[i].noalias() = (*BmPtr)[i] * (*RinvCholPtr)[i];
+				// Modify AmT_minus_P_Rinv_B_array_ in place + store temporary computation
+				PmT_RinvChol.noalias() = (*PmPtr)[i].transpose() * (*RinvCholPtr)[i];
 				AmT_minus_P_Rinv_B_array_[i].noalias() -= PmT_RinvChol * B_RinvChol_array_[i].transpose();
 
-				Qv_minus_P_Rinv_Rv_array_[i] = (*QvPtr)[i];
-				RinvCholT_Rv_array_[i].noalias() = (*RinvCholPtr)[i].transpose() * (*RvPtr)[i];
+				// Modify the constraints in place
+				Qm_minus_P_Rinv_P_array_[i].noalias() -= PmT_RinvChol * PmT_RinvChol.transpose();
 				Qv_minus_P_Rinv_Rv_array_[i].noalias() -= PmT_RinvChol * RinvCholT_Rv_array_[i];
-
-				q_minus_half_Rv_Rinv_Rv_array_[i] = (*qPtr)[i];
 				q_minus_half_Rv_Rinv_Rv_array_[i].noalias() -= 0.5 * RinvCholT_Rv_array_[i].transpose() * RinvCholT_Rv_array_[i];
 			}
 

@@ -1,10 +1,10 @@
 #include <ocs2_oc/pi_solver/PiSolver.hpp>
 
-#include <ocs2_mpc/MPC_PI.h>
-#include <ocs2_double_integrator_example/dynamics/DoubleIntegratorDynamics.h>
 #include <ocs2_double_integrator_example/cost/DoubleIntegratorCost.h>
-#include <ocs2_mpc/MPC_Settings.h>
+#include <ocs2_double_integrator_example/dynamics/DoubleIntegratorDynamics.h>
 #include <ocs2_double_integrator_example/ros_comm/MPC_ROS_Double_Integrator.h>
+#include <ocs2_mpc/MPC_PI.h>
+#include <ocs2_mpc/MPC_Settings.h>
 #include <ocs2_oc/pi_solver/PI_Settings.h>
 
 #include <ros/package.h>
@@ -13,10 +13,12 @@
 
 int main(int argc, char** argv) {
   // task file
-  if (argc <= 1) {throw std::runtime_error("No task file specified. Aborting."); }
+  if (argc <= 1) {
+    throw std::runtime_error("No task file specified. Aborting.");
+  }
 
   std::string taskFile =
-      ros::package::getPath("ocs2_robotic_examples") + "/config/double_integrator/" + std::string(argv[1]) + "/task.info";
+      ros::package::getPath("ocs2_double_integrator_example") + "/config/" + std::string(argv[1]) + "/task.info";
 
   using dynamics_t = ocs2::double_integrator::DoubleIntegratorDynamics;
   constexpr auto STATE_DIM = dynamics_t::DIMENSIONS::STATE_DIM_;
@@ -46,11 +48,11 @@ int main(int argc, char** argv) {
   dynamics_t::DIMENSIONS::input_vector_t uNominal;
   uNominal.setZero();
 
-  std::cerr << "Q:  \n" << Q << std::endl;
-  std::cerr << "R:  \n" << R << std::endl;
-  std::cerr << "Q_final:\n" << QFinal << std::endl;
-  std::cerr << "x_init:   " << xInitial.transpose() << std::endl;
-  std::cerr << "x_final:  " << xFinal.transpose() << std::endl;
+  std::cerr << "Path Integral: Cost function parameters\n"
+            << "Q:\n"
+            << Q << "\nR:\n"
+            << R << "\nQ_final:\n"
+            << QFinal << "\nx_init:   " << xInitial.transpose() << "\nx_final:  " << xFinal.transpose() << std::endl;
 
   using cost_t = ocs2::double_integrator::DoubleIntegratorCost;
   std::unique_ptr<cost_t> cost(new cost_t(Q, R, QFinal));

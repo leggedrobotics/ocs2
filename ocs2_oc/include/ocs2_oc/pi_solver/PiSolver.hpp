@@ -380,7 +380,7 @@ class PiSolver final : public Solver_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> {
     throw std::runtime_error("not implemented.");
   }
 
-  virtual void rewindOptimizer(const size_t& firstIndex) override { throw std::runtime_error("not implemented."); }
+  virtual void rewindOptimizer(const size_t& firstIndex) override {}
 
   virtual const unsigned long long int& getRewindCounter() const override { throw std::runtime_error("not implemented."); }
 

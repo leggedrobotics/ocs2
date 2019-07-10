@@ -6,7 +6,7 @@
       <include file="$(find ocs2_double_integrator_example)/launch/visualize.launch"/>
     </group>
 
-    <node pkg="ocs2_double_integrator_example" type="double_integrator_mpc" name="double_integrator_pi"
+    <node pkg="ocs2_double_integrator_example" type="double_integrator_pi" name="double_integrator_pi"
           output="screen" args="$(arg task_name)" launch-prefix="gnome-terminal -- gdb -ex run --args"/>
 
     <node pkg="ocs2_double_integrator_example" type="double_integrator_dummy_test" name="double_integrator_dummy_test"

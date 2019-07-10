@@ -123,6 +123,6 @@ install(DIRECTORY include/${PROJECT_NAME}/
 install(TARGETS double_slit_pi double_slit_dummy_test
         RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})
 
-install(DIRECTORY urdf launch config rviz
+install(DIRECTORY config launch
         DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
         )

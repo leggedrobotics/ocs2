@@ -1,18 +1,19 @@
 #include <ocs2_oc/pi_solver/PiSolver.hpp>
 
-#include <ocs2_core/cost/PathIntegralCostFunction.h>
 #include <ocs2_mpc/MPC_PI.h>
 #include <ocs2_double_integrator_example/dynamics/DoubleIntegratorDynamics.h>
-//#include <ocs2_double_integrator_example/dynamics/DoubleIntegratorInterface.h>
+#include <ocs2_double_integrator_example/cost/DoubleIntegratorCost.h>
 #include <ocs2_mpc/MPC_Settings.h>
 #include <ocs2_double_integrator_example/ros_comm/MPC_ROS_Double_Integrator.h>
+#include <ocs2_oc/pi_solver/PI_Settings.h>
+
 #include <ros/package.h>
 
 #include <ocs2_core/misc/loadEigenMatrix.h>
 
 int main(int argc, char** argv) {
   // task file
-  if (argc <= 1) throw std::runtime_error("No task file specified. Aborting.");
+  if (argc <= 1) {throw std::runtime_error("No task file specified. Aborting."); }
 
   std::string taskFile =
       ros::package::getPath("ocs2_robotic_examples") + "/config/double_integrator/" + std::string(argv[1]) + "/task.info";
@@ -51,14 +52,10 @@ int main(int argc, char** argv) {
   std::cerr << "x_init:   " << xInitial.transpose() << std::endl;
   std::cerr << "x_final:  " << xFinal.transpose() << std::endl;
 
-  auto V = [Q](const dynamics_t::DIMENSIONS::state_vector_t& x) { return x.dot(Q * x); };
-  auto r = [](const dynamics_t::DIMENSIONS::state_vector_t& x) { return dynamics_t::DIMENSIONS::input_vector_t::Zero(); };
-  auto Phi = [QFinal](const dynamics_t::DIMENSIONS::state_vector_t& x) { return x.dot(QFinal * x); };
+  using cost_t = ocs2::double_integrator::DoubleIntegratorCost;
+  std::unique_ptr<cost_t> cost(new cost_t(Q, R, QFinal));
 
-  using cost_t = ocs2::PathIntegralCostFunction<STATE_DIM, INPUT_DIM>;
-  std::unique_ptr<cost_t> cost(new cost_t(R, uNominal, V, r, Phi));
-
-  // cost desired trajectories (NOT used at the moment)
+  // cost desired trajectories
   const dynamics_t::scalar_t initTime(0.0);
   dynamics_t::scalar_t finalTime;
   ocs2::loadScalar(taskFile, "mpcTimeHorizon.timehorizon", finalTime);
@@ -74,13 +71,16 @@ int main(int argc, char** argv) {
   // constraint
   solver_t::constraint_t constraint;
 
-  constexpr double rollout_dt = 0.01;
+  // partitioning times
+  dynamics_t::DIMENSIONS::scalar_array_t partitioningTimes{0.0, 1.0};
 
   // MPC ROS Node
   // ocs2::double_integrator::DoubleIntegratorInterface doubleIntegratorInterface(argv[1]);
   ocs2::MPC_Settings mpcSettings;
   mpcSettings.loadSettings(taskFile);
-  ocs2::MPC_PI<STATE_DIM, INPUT_DIM> mpc_pi(dynamics, std::move(cost), constraint, rollout_dt, mpcSettings);
+  ocs2::PI_Settings piSettings;
+  piSettings.loadSettings(taskFile);
+  ocs2::MPC_PI<STATE_DIM, INPUT_DIM> mpc_pi(dynamics, std::move(cost), constraint, partitioningTimes, mpcSettings, piSettings);
   mpc_pi.setCostDesiredTrajectories(costDesiredTraj);
   ocs2::double_integrator::MPC_ROS_Linear_System mpcNode(mpc_pi, "double_integrator");
 

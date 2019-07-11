@@ -90,6 +90,7 @@ public:
 	: BASE(rolloutSettings, algorithmName)
 	, systemDynamicsPtr_(systemDynamics.clone())
 	, systemEventHandlersPtr_(new event_handler_t)
+	, reconstructInputTrajectory_(rolloutSettings.reconstructInputTrajectory_)
 	{
 		switch (rolloutSettings.integratorType_) {
 		case (IntegratorType::EULER): {
@@ -238,11 +239,13 @@ public:
 					maxNumSteps,
 					true);
 
-			// compute control input trajectory and concatenate to inputTrajectory
-			for ( ; k_u<timeTrajectory.size(); k_u++) {
-				inputTrajectory.emplace_back( systemDynamicsPtr_->controllerPtr()->computeInput(
-						timeTrajectory[k_u], stateTrajectory[k_u]) );
-			} // end of k loop
+			if(reconstructInputTrajectory_) {
+				// compute control input trajectory and concatenate to inputTrajectory
+				for ( ; k_u<timeTrajectory.size(); k_u++) {
+					inputTrajectory.emplace_back( systemDynamicsPtr_->controllerPtr()->computeInput(
+							timeTrajectory[k_u], stateTrajectory[k_u]) );
+				} // end of k loop
+			}
 
 			if (i<finalItr) {
 				eventsPastTheEndIndeces.push_back( stateTrajectory.size() );
@@ -281,6 +284,8 @@ private:
 	std::shared_ptr<event_handler_t> systemEventHandlersPtr_;
 
 	std::unique_ptr<ode_base_t> dynamicsIntegratorsPtr_;
+
+	bool reconstructInputTrajectory_;
 
 };
 

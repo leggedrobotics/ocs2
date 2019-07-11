@@ -56,6 +56,7 @@ class PiSolver final : public Solver_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> {
 
   /**
    * @brief Constructor with all options
+   *
    * @param systemDynamicsPtr: System dynamics
    * @param costFunction: The cost function to optimize
    * @param constraint: Any constraints for the dynamical system

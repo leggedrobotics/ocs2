@@ -43,6 +43,10 @@ class PiController final : public ControllerBase<STATE_DIM, INPUT_DIM> {
   using constraint_t = ConstraintBase<STATE_DIM, INPUT_DIM, logic_rules_t>;
   using cost_function_t = CostFunctionBase<STATE_DIM, INPUT_DIM, logic_rules_t>;
 
+  /**
+   * @brief PiControllerEvaluationData struct is used to cache data.
+   * It will be extracted from the PI solver to avoid re-computing some quantities.
+   */
   struct PiControllerEvaluationData {
     scalar_t t_;        //! time of evaluation
     state_vector_t x_;  //! state
@@ -62,7 +66,7 @@ class PiController final : public ControllerBase<STATE_DIM, INPUT_DIM> {
    * @param[in] constraints Pointer to constraint function. Assumes persistence as long as controller survives
    * @param[in] consts Pointer to cost function. Assumes persistence as long as controller survives
    * @param[in] rollout_dt Time step to use in rollout
-   * @param[in] noiseScaling The level of noise
+   * @param[in] noiseScaling The level of noise (temperature)
    */
   PiController(constraint_t* constraints, cost_function_t* costs, const scalar_t rollout_dt, const scalar_t noiseScaling)
       : constraints_(constraints),

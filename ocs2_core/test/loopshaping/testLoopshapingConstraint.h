@@ -154,7 +154,7 @@ class TestFixtureLoopShapingConstraint : public ::testing::Test {
                                                         ddhdudx));
 
     // Create Loopshaping constraint
-    testLoopshapingConstraint = TestLoopshapingConstraint::Create(*testSystemConstraint, loopshapingDefinition_);
+    testLoopshapingConstraint = TestLoopshapingConstraint::create(*testSystemConstraint, loopshapingDefinition_);
   };
 
   std::shared_ptr<LoopshapingDefinition> loopshapingDefinition_;

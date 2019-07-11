@@ -80,7 +80,7 @@ class TestFixtureLoopShapingCost : public ::testing::Test {
     testSystemCost.reset(new TestSystemCost(Q, R, x_sys_, u_sys_, Q_final, x_sys_, P));
 
     // Create Loopshaping costs
-    testLoopshapingCost = TestLoopshapingCost::Create(*testSystemCost, loopshapingDefinition_);
+    testLoopshapingCost = TestLoopshapingCost::create(*testSystemCost, loopshapingDefinition_);
   };
 
   std::shared_ptr<LoopshapingDefinition> loopshapingDefinition_;

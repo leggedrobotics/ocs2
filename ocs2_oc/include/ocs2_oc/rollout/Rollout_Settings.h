@@ -49,13 +49,6 @@ public:
 	typedef Dimensions<0,0>::RICCATI_INTEGRATOR_TYPE RICCATI_INTEGRATOR_TYPE;
 
 	/**
-	 * Default constructor.
-	 */
-	Rollout_Settings()
-	: Rollout_Settings(1e-9, 1e-6, 5000, 1e-3, IntegratorType::ODE45, false, true)
-	{}
-
-	/**
 	 * Constructor with all settings as arguments.
 	 *
 	 * @param [in] absTolODE: Absolute tolerance of the rollout.
@@ -67,13 +60,13 @@ public:
 	 * @param [in] reconstructInputTrajectory: Whether to run controller again after integration to construct input trajectory
 	 */
 	Rollout_Settings(
-			double absTolODE,
-			double relTolODE,
-			size_t maxNumStepsPerSecond,
-			double minTimeStep,
-			IntegratorType integratorType,
-			bool checkNumericalStability,
-	        bool reconstructInputTrajectory)
+			double absTolODE = 1e-9,
+			double relTolODE = 1e-6,
+			size_t maxNumStepsPerSecond = 5000,
+			double minTimeStep = 1e-3,
+			IntegratorType integratorType = IntegratorType::ODE45,
+			bool checkNumericalStability = false,
+	        bool reconstructInputTrajectory = true)
 	: absTolODE_(absTolODE)
 	, relTolODE_(relTolODE)
 	, maxNumStepsPerSecond_(maxNumStepsPerSecond)

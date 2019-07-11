@@ -49,13 +49,6 @@ public:
 	typedef Dimensions<0,0>::RICCATI_INTEGRATOR_TYPE RICCATI_INTEGRATOR_TYPE;
 
 	/**
-	 * Default constructor.
-	 */
-	Rollout_Settings()
-	: Rollout_Settings(1e-9, 1e-6, 5000, 1e-3, IntegratorType::ODE45, false)
-	{}
-
-	/**
 	 * Constructor with all settings as arguments.
 	 *
 	 * @param [in] absTolODE: Absolute tolerance of the rollout.
@@ -64,20 +57,23 @@ public:
 	 * @param [in] minTimeStep: Minimum time step of the rollout.
 	 * @param [in] integratorType: Rollout integration scheme type.
 	 * @param [in] checkNumericalStability: Whether to check that the rollout is numerically stable.
+	 * @param [in] reconstructInputTrajectory: Whether to run controller again after integration to construct input trajectory
 	 */
 	Rollout_Settings(
-			double absTolODE,
-			double relTolODE,
-			size_t maxNumStepsPerSecond,
-			double minTimeStep,
-			IntegratorType integratorType,
-			bool checkNumericalStability)
+			double absTolODE = 1e-9,
+			double relTolODE = 1e-6,
+			size_t maxNumStepsPerSecond = 5000,
+			double minTimeStep = 1e-3,
+			IntegratorType integratorType = IntegratorType::ODE45,
+			bool checkNumericalStability = false,
+	        bool reconstructInputTrajectory = true)
 	: absTolODE_(absTolODE)
 	, relTolODE_(relTolODE)
 	, maxNumStepsPerSecond_(maxNumStepsPerSecond)
 	, minTimeStep_(minTimeStep)
 	, integratorType_(integratorType)
 	, checkNumericalStability_(checkNumericalStability)
+	, reconstructInputTrajectory_(reconstructInputTrajectory)
 	{}
 
 	/**
@@ -118,6 +114,8 @@ public:
 	IntegratorType integratorType_;
 	/** Whether to check that the rollout is numerically stable */
 	bool checkNumericalStability_;
+	/** Whether to run controller again after integration to contstruct input trajectory */
+	bool reconstructInputTrajectory_;
 
 }; // end of Rollout_Settings class
 
@@ -173,7 +171,7 @@ inline void Rollout_Settings::loadSettings(const std::string& filename, const st
 	}
 
 	try	{
-		integratorType_ = (IntegratorType)pt.get<int>(fieldName + ".integratorType");
+		integratorType_ = static_cast<IntegratorType>(pt.get<int>(fieldName + ".integratorType"));
 		if (verbose) {  std::cerr << " #### Option loader : option 'integratorType' ...................... " << ocs2::to_string(integratorType_) << std::endl;
 		}
 	}
@@ -189,6 +187,16 @@ inline void Rollout_Settings::loadSettings(const std::string& filename, const st
 	}
 	catch (const std::exception& e){
 		if (verbose) {  std::cerr << " #### Option loader : option 'checkNumericalStability' ............. " << checkNumericalStability_ << "   \t(default)" << std::endl;
+		}
+	}
+
+	try	{
+		reconstructInputTrajectory_ = pt.get<bool>(fieldName + ".reconstructInputTrajectory");
+		if (verbose) {  std::cerr << " #### Option loader : option 'reconstructInputTrajectory' .......... " << reconstructInputTrajectory_ << std::endl;
+		}
+	}
+	catch (const std::exception& e){
+		if (verbose) {  std::cerr << " #### Option loader : option 'reconstructInputTrajectory' .......... " << reconstructInputTrajectory_ << "   \t(default)" << std::endl;
 		}
 	}
 

@@ -70,7 +70,7 @@ std::string to_string(IntegratorType integratorType) {
 	case IntegratorType::ADAMS_BASHFORTH: return std::string("ADAMS_BASHFORTH");
 	case IntegratorType::BULIRSCH_STOER: return std::string("BULIRSCH_STOER");
 	case IntegratorType::ADAMS_BASHFORTH_MOULTON: return std::string("ADAMS_BASHFORTH_MOULTON");
-	default: return std::to_string((int)integratorType);
+	default: return std::to_string(static_cast<int>(integratorType));
 	}
 }
 
@@ -98,7 +98,7 @@ public:
 	 * @param [in] system: The system dynamics.
 	 * @param [in] eventHandler: The integration event function.
 	 */
-	Integrator(
+	explicit Integrator(
 			const std::shared_ptr<ODE_Base<STATE_DIM> >& systemPtr,
 			const std::shared_ptr<SystemEventHandler<STATE_DIM> >& eventHandlerPtr = nullptr);
 

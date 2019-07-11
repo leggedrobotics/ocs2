@@ -47,15 +47,14 @@ class QuadraticCostFunction : public CostFunctionBase< STATE_DIM, INPUT_DIM, LOG
 public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-	typedef CostFunctionBase<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> BASE;
+	using BASE = CostFunctionBase<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> ;
 
-	typedef Dimensions<STATE_DIM, INPUT_DIM> DIMENSIONS;
-	using scalar_t = typename DIMENSIONS::scalar_t;
-	using state_vector_t = typename DIMENSIONS::state_vector_t;
-	using state_matrix_t = typename DIMENSIONS::state_matrix_t;
-	using input_vector_t = typename DIMENSIONS::input_vector_t;
-	using input_matrix_t = typename DIMENSIONS::input_matrix_t;
-	using input_state_matrix_t = typename DIMENSIONS::input_state_matrix_t;
+	using typename BASE::scalar_t;
+	using typename BASE::state_vector_t;
+	using typename BASE::state_matrix_t;
+	using typename BASE::input_vector_t;
+	using typename BASE::input_matrix_t;
+	using typename BASE::input_state_matrix_t;
 
 	/**
 	 * Constructor for the running and final cost function defined as the following:

@@ -62,7 +62,7 @@ class LoopshapingDynamicsDerivative : public DerivativesBase<FULL_STATE_DIM, FUL
     jumpMapApproximationValid_ = false;
   }
 
-  static std::unique_ptr<LoopshapingDynamicsDerivative> Create(const SYSTEM_DERIVATIVE &controlledSystem,
+  static std::unique_ptr<LoopshapingDynamicsDerivative> create(const SYSTEM_DERIVATIVE &controlledSystem,
                                                                std::shared_ptr<LoopshapingDefinition> loopshapingDefinition);
 
   void setCurrentStateAndControl(
@@ -193,7 +193,7 @@ std::unique_ptr<LoopshapingDynamicsDerivative<FULL_STATE_DIM,
                                                                                             SYSTEM_INPUT_DIM,
                                                                                             FILTER_STATE_DIM,
                                                                                             FILTER_INPUT_DIM,
-                                                                                            LOGIC_RULES_T>::Create(
+                                                                                            LOGIC_RULES_T>::create(
     const SYSTEM_DERIVATIVE &controlledSystem,
     std::shared_ptr<LoopshapingDefinition> loopshapingDefinition) {
     switch (loopshapingDefinition->getType()) {

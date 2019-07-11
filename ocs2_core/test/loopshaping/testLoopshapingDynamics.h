@@ -49,7 +49,7 @@ class TestFixtureLoopShapingDynamics : public ::testing::Test {
 
     // Load loopshaping definition
     const std::string settingsFile = getAbsolutePathToConfigurationFile(CONFIG::fileName);
-    loopshapingDefinition_ = LoopshapingPropertyTree::load(settingsFile);
+    loopshapingDefinition_ = loopshaping_property_tree::load(settingsFile);
 
     // Create system dynamics
     system_state_matrix_t A, G;

@@ -55,18 +55,18 @@ class SystemDynamicsLinearizer : public DerivativesBase<STATE_DIM, INPUT_DIM, LO
 public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-	typedef DerivativesBase<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> Base;
-	typedef ControlledSystemBase<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> controlled_system_base_t;
-	using scalar_t = typename Base::scalar_t;
-	using state_vector_t = typename Base::state_vector_t;
-	using state_matrix_t = typename Base::state_matrix_t;
-	using input_vector_t = typename Base::input_vector_t;
-	using state_input_matrix_t = typename Base::state_input_matrix_t;
+  	using controlled_system_base_t = ControlledSystemBase<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>;
+  	using Base = DerivativesBase<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>;
+	using typename Base::scalar_t;
+	using typename Base::state_vector_t;
+	using typename Base::state_matrix_t;
+	using typename Base::input_vector_t;
+	using typename Base::state_input_matrix_t;
 
 	/**
 	 * Constructor
 	 */
-	SystemDynamicsLinearizer(const std::shared_ptr<controlled_system_base_t>& nonlinearSystemPtr_,
+	explicit SystemDynamicsLinearizer(const std::shared_ptr<controlled_system_base_t>& nonlinearSystemPtr_,
 			bool doubleSidedDerivative=true, bool isSecondOrderSystem=false)
 	: nonlinearSystemPtr_(nonlinearSystemPtr_),
 	  doubleSidedDerivative_(doubleSidedDerivative),

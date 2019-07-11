@@ -2009,7 +2009,7 @@ void DDP_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::run(
 	}
 
 	// infeasible learning rate adjustment scheme
-	if (ddpSettings_.maxLearningRate_ < ddpSettings_.minLearningRate_-OCS2NumericTraits<scalar_t>::limit_epsilon()) {
+	if (ddpSettings_.maxLearningRate_ < ddpSettings_.minLearningRate_- OCS2NumericTraits<scalar_t>::limitEpsilon()) {
 		throw std::runtime_error("The maximum learning rate is smaller than the minimum learning rate.");
 	}
 

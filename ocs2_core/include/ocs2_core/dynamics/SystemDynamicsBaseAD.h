@@ -61,26 +61,26 @@ public:
 		domain_dim_	= 1 + state_dim_ + input_dim_,
 	};
 
-	typedef std::shared_ptr<SystemDynamicsBaseAD<Derived, STATE_DIM, INPUT_DIM, LOGIC_RULES_T, NUM_MODES> > Ptr;
-	typedef std::shared_ptr<const SystemDynamicsBaseAD<Derived, STATE_DIM, INPUT_DIM, LOGIC_RULES_T, NUM_MODES> > ConstPtr;
+	using Ptr = std::shared_ptr<SystemDynamicsBaseAD<Derived, STATE_DIM, INPUT_DIM, LOGIC_RULES_T, NUM_MODES> >;
+	using ConstPtr = std::shared_ptr<const SystemDynamicsBaseAD<Derived, STATE_DIM, INPUT_DIM, LOGIC_RULES_T, NUM_MODES> >;
 
-	typedef SystemDynamicsBase<STATE_DIM, INPUT_DIM, LOGIC_RULES_T, NUM_MODES> BASE;
+	using BASE = SystemDynamicsBase<STATE_DIM, INPUT_DIM, LOGIC_RULES_T, NUM_MODES>;
 
-	using scalar_t = typename BASE::scalar_t;
-	using state_vector_t = typename BASE::state_vector_t;
-	using state_matrix_t = typename BASE::state_matrix_t;
-	using input_vector_t = typename BASE::input_vector_t;
-	using state_input_matrix_t = typename BASE::state_input_matrix_t;
-	using dynamic_vector_t = typename BASE::dynamic_vector_t;
-	using dynamic_state_matrix_t = typename BASE::dynamic_state_matrix_t;
-	using dynamic_input_matrix_t = typename BASE::dynamic_input_matrix_t;
+	using typename BASE::scalar_t;
+	using typename BASE::state_vector_t;
+	using typename BASE::state_matrix_t;
+	using typename BASE::input_vector_t;
+	using typename BASE::state_input_matrix_t;
+	using typename BASE::dynamic_vector_t;
+	using typename BASE::dynamic_state_matrix_t;
+	using typename BASE::dynamic_input_matrix_t;
 
 	/**
 	 * Default constructor.
 	 *
 	 * @param [in] dynamicLibraryIsCompiled: Whether a library is already complied.
 	 */
-	SystemDynamicsBaseAD(const bool& dynamicLibraryIsCompiled = false);
+	explicit SystemDynamicsBaseAD(const bool& dynamicLibraryIsCompiled = false);
 
 	/**
 	 * Copy constructor

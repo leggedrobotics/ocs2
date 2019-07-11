@@ -46,7 +46,7 @@ namespace ocs2{
 class Rollout_Settings {
 
 public:
-	typedef Dimensions<0,0>::RICCATI_INTEGRATOR_TYPE RICCATI_INTEGRATOR_TYPE;
+	typedef Dimensions<0,0>::RiccatiIntegratorType RICCATI_INTEGRATOR_TYPE;
 
 	/**
 	 * Default constructor.

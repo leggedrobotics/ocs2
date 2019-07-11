@@ -41,12 +41,12 @@ CppAdCodeGenInterface<DOMAIN_DIM, RANGE_DIM, SCALAR_T, VARIABLE_DIM>::CppAdCodeG
 {
 //	CppadParallelSetting::initParallel(2 + 1);
 
-	if (BASE::domain_dim_<0) {
+	if (BASE::domainDim_<0) {
 		throw std::runtime_error("Use the overloaded method which takes the domain and range dimensions "
 				"since the domain dimension is not defined by the template.");
 	}
 
-	if (BASE::range_dim_<0) {
+	if (BASE::rangeDim_<0) {
 		throw std::runtime_error("Use the overloaded method which takes the domain and range dimensions "
 				"since the range dimension is not defined by the template.");
 	}
@@ -99,7 +99,7 @@ template <int DOMAIN_DIM, int RANGE_DIM, typename SCALAR_T, int VARIABLE_DIM>
 CppAdCodeGenInterface<DOMAIN_DIM, RANGE_DIM, SCALAR_T, VARIABLE_DIM>::CppAdCodeGenInterface(
 		const CppAdCodeGenInterface& rhs)
 
-    : CppAdCodeGenInterface(rhs.domain_dim_, rhs.range_dim_, rhs.variable_dim_, rhs.adFunction_, rhs.sparsityPattern_)
+    : CppAdCodeGenInterface(rhs.domainDim_, rhs.rangeDim_, rhs.variableDim_, rhs.adFunction_, rhs.sparsityPattern_)
 {}
 
 /******************************************************************************************************/
@@ -151,12 +151,12 @@ void CppAdCodeGenInterface<DOMAIN_DIM, RANGE_DIM, SCALAR_T, VARIABLE_DIM>::creat
 		const bool verbose /* = true */,
 		bool cgJIT /*= true*/) {
 
-	if (BASE::domain_dim_<0) {
+	if (BASE::domainDim_<0) {
 		throw std::runtime_error("Use the overloaded method which takes the domain and range dimensions "
 				"since the domain dimension is not defined by the template.");
 }
 
-	if (BASE::range_dim_<0) {
+	if (BASE::rangeDim_<0) {
 		throw std::runtime_error("Use the overloaded method which takes the domain and range dimensions "
 				"since the range dimension is not defined by the template.");
 }
@@ -176,15 +176,15 @@ void CppAdCodeGenInterface<DOMAIN_DIM, RANGE_DIM, SCALAR_T, VARIABLE_DIM>::creat
 		bool verbose /* = true */,
 		bool cgJIT /*= true*/) {
 
-  BASE::domain_dim_ = domainDim;
-	BASE::range_dim_  = rangeDim;
+  BASE::domainDim_ = domainDim;
+	BASE::rangeDim_  = rangeDim;
 
-	if (BASE::domain_dim_<0) {
+	if (BASE::domainDim_<0) {
 		throw std::runtime_error("Use the overloaded method which takes the domain and range dimensions "
 				"since the domain dimension is not defined by the template.");
 }
 
-	if (BASE::range_dim_<0) {
+	if (BASE::rangeDim_<0) {
 		throw std::runtime_error("Use the overloaded method which takes the domain and range dimensions "
 				"since the range dimension is not defined by the template.");
 }
@@ -206,11 +206,11 @@ void CppAdCodeGenInterface<DOMAIN_DIM, RANGE_DIM, SCALAR_T, VARIABLE_DIM>::creat
     //                               the model
     //***************************************************************************
     // set and declare independent variables and start tape recording
-	ad_dynamic_vector_t x(BASE::domain_dim_);
+	ad_dynamic_vector_t x(BASE::domainDim_);
     x.setZero();
     CppAD::Independent(x);
     // dependent variable vector
-    ad_dynamic_vector_t y(BASE::range_dim_);
+    ad_dynamic_vector_t y(BASE::rangeDim_);
     // the model equation
     adFunction_(x, y);
     // create f: x -> y and stop tape recording
@@ -348,9 +348,9 @@ bool CppAdCodeGenInterface<DOMAIN_DIM, RANGE_DIM, SCALAR_T, VARIABLE_DIM>::getFu
 		const domain_vector_t& x,
 		range_vector_t& funcValue) {
 
-	dynamic_vector_map_t xDynamic(const_cast<SCALAR_T*>(x.data()), BASE::domain_dim_);
-	funcValue.resize(BASE::range_dim_);
-	dynamic_vector_map_t funcValueDynamic(funcValue.data(), BASE::range_dim_);
+	dynamic_vector_map_t xDynamic(const_cast<SCALAR_T*>(x.data()), BASE::domainDim_);
+	funcValue.resize(BASE::rangeDim_);
+	dynamic_vector_map_t funcValueDynamic(funcValue.data(), BASE::rangeDim_);
 
 	if (model_->isForwardZeroAvailable()) {
 
@@ -371,9 +371,9 @@ bool CppAdCodeGenInterface<DOMAIN_DIM, RANGE_DIM, SCALAR_T, VARIABLE_DIM>::getJa
 		const domain_vector_t& x,
 		domain_range_matrix_t& jacobian) {
 
-	dynamic_vector_map_t xDynamic(const_cast<SCALAR_T*>(x.data()), BASE::domain_dim_);
-	jacobian.resize(BASE::domain_dim_, BASE::range_dim_);
-	dynamic_vector_map_t jacobianDynamic(jacobian.data(), BASE::domain_dim_*BASE::range_dim_);
+	dynamic_vector_map_t xDynamic(const_cast<SCALAR_T*>(x.data()), BASE::domainDim_);
+	jacobian.resize(BASE::domainDim_, BASE::rangeDim_);
+	dynamic_vector_map_t jacobianDynamic(jacobian.data(), BASE::domainDim_*BASE::rangeDim_);
 
 	if (modelFullDerivatives_) {
 		if(model_->isJacobianAvailable()) {
@@ -400,16 +400,16 @@ bool CppAdCodeGenInterface<DOMAIN_DIM, RANGE_DIM, SCALAR_T, VARIABLE_DIM>::getHe
 		variable_matrix_t& hessian,
 		size_t outputIndex /*=0*/) {
 
-	hessianWeight_ = std::vector<SCALAR_T>(BASE::range_dim_, 0.0);
+	hessianWeight_ = std::vector<SCALAR_T>(BASE::rangeDim_, 0.0);
 	hessianWeight_[outputIndex] = 1.0;
 
-	hessian.resize(BASE::variable_dim_, BASE::variable_dim_);
+	hessian.resize(BASE::variableDim_, BASE::variableDim_);
 
 	if (modelFullDerivatives_) {
 		if (model_->isHessianAvailable()) {
 
-			dynamic_vector_map_t xDynamic(const_cast<SCALAR_T*>(x.data()), BASE::domain_dim_);
-			dynamic_vector_map_t weightDynamic(hessianWeight_.data(), BASE::range_dim_);
+			dynamic_vector_map_t xDynamic(const_cast<SCALAR_T*>(x.data()), BASE::domainDim_);
+			dynamic_vector_map_t weightDynamic(hessianWeight_.data(), BASE::rangeDim_);
 			dynamic_vector_map_t hessianDynamic(hessian.data(), hessian.size());
 
 			model_->Hessian(xDynamic, weightDynamic, hessianDynamic);
@@ -425,14 +425,14 @@ bool CppAdCodeGenInterface<DOMAIN_DIM, RANGE_DIM, SCALAR_T, VARIABLE_DIM>::getHe
 //					hessianDynamic.data(), hessianDynamic.size());
 //			hessian.template triangularView<Eigen::StrictlyUpper>() = hessian.template triangularView<Eigen::StrictlyLower>().transpose();
 
-			std::vector<SCALAR_T> xVec(const_cast<SCALAR_T*>(x.data()), const_cast<SCALAR_T*>(x.data())+BASE::domain_dim_);
+			std::vector<SCALAR_T> xVec(const_cast<SCALAR_T*>(x.data()), const_cast<SCALAR_T*>(x.data())+BASE::domainDim_);
 			std::vector<SCALAR_T> hessianVec;
 
 			std::vector<size_t> row;
 			std::vector<size_t> col;
 			model_->SparseHessian(
-					const_cast<SCALAR_T*>(x.data()), BASE::domain_dim_,
-					hessianWeight_.data(), BASE::range_dim_,
+					const_cast<SCALAR_T*>(x.data()), BASE::domainDim_,
+					hessianWeight_.data(), BASE::rangeDim_,
 					hessianVec, row, col);
 
 			hessian.setZero();

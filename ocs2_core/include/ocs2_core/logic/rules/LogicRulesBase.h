@@ -48,7 +48,7 @@ class LogicRulesBase
 public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-	typedef Dimensions<0, 0> DIMENSIONS;
+	using DIMENSIONS = Dimensions<0, 0> ;
 	using size_array_t = typename DIMENSIONS::size_array_t;
 	using scalar_t = typename DIMENSIONS::scalar_t;
 	using scalar_array_t = typename DIMENSIONS::scalar_array_t;
@@ -63,16 +63,14 @@ public:
 	/**
 	 * Constructor
 	 */
-	LogicRulesBase(const scalar_array_t& eventTimes)
+	explicit LogicRulesBase(const scalar_array_t& eventTimes)
 	: eventTimes_(eventTimes)
 	{}
 
 	/**
 	 * Copy constructor
 	 */
-	LogicRulesBase(const LogicRulesBase& rhs)
-	 
-	= default;
+	LogicRulesBase(const LogicRulesBase& rhs) = default;
 
 	/**
 	 * Destructor

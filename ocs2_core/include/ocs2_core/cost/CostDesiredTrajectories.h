@@ -52,11 +52,11 @@ public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
 	using scalar_array_t = std::vector<SCALAR_T>;
-	typedef Eigen::Matrix<SCALAR_T, Eigen::Dynamic, 1> dynamic_vector_t;
-	typedef std::vector<dynamic_vector_t, Eigen::aligned_allocator<dynamic_vector_t>> dynamic_vector_array_t;
+	using dynamic_vector_t = Eigen::Matrix<SCALAR_T, Eigen::Dynamic, 1> ;
+	using dynamic_vector_array_t = std::vector<dynamic_vector_t, Eigen::aligned_allocator<dynamic_vector_t>>;
 	using dynamic_linear_interpolation_t = EigenLinearInterpolation<dynamic_vector_t>;
 
-	CostDesiredTrajectories(
+	explicit CostDesiredTrajectories(
 			const scalar_array_t& desiredTimeTrajectory = scalar_array_t(),
 			const dynamic_vector_array_t& desiredStateTrajectory = dynamic_vector_array_t(),
 			const dynamic_vector_array_t& desiredInputTrajectory = dynamic_vector_array_t())
@@ -65,7 +65,7 @@ public:
 	, desiredInputTrajectory_(desiredInputTrajectory)
 	{}
 
-	CostDesiredTrajectories(const size_t& trajectorySize)
+	explicit CostDesiredTrajectories(const size_t& trajectorySize)
 	: desiredTimeTrajectory_(trajectorySize)
 	, desiredStateTrajectory_(trajectorySize)
 	, desiredInputTrajectory_(trajectorySize)

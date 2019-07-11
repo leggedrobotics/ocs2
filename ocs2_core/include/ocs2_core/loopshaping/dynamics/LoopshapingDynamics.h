@@ -54,7 +54,7 @@ namespace ocs2 {
           controlledSystem_->initializeModel(logicRulesMachine, partitionIndex, algorithmName);
         }
 
-        static std::unique_ptr<LoopshapingDynamics> Create(const SYSTEM& controlledSystem, std::shared_ptr<LoopshapingDefinition> loopshapingDefinition);
+        static std::unique_ptr<LoopshapingDynamics> create(const SYSTEM& controlledSystem, std::shared_ptr<LoopshapingDefinition> loopshapingDefinition);
 
         void computeFlowMap(
             const scalar_t& time,
@@ -145,7 +145,7 @@ std::unique_ptr<LoopshapingDynamics<FULL_STATE_DIM,
                                                                         SYSTEM_INPUT_DIM,
                                                                         FILTER_STATE_DIM,
                                                                         FILTER_INPUT_DIM,
-                                                                        LOGIC_RULES_T>::Create(
+                                                                        LOGIC_RULES_T>::create(
     const SYSTEM &controlledSystem,
     std::shared_ptr<LoopshapingDefinition> loopshapingDefinition) {
     switch (loopshapingDefinition->getType()) {

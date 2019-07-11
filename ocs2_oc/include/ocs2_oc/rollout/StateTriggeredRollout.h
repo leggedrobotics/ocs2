@@ -193,7 +193,7 @@ public:
 //		scalar_t t0 = initTime;
 //		state_vector_t x0 = initState;
 //
-//		while (t0 < finalTime-OCS2NumericTraits<scalar_t>::week_epsilon()) {
+//		while (t0 < finalTime-OCS2NumericTraits<scalar_t>::weakEpsilon()) {
 //
 //			try {
 //				// integrate controlled system

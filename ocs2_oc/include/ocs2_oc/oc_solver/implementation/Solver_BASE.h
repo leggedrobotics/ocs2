@@ -43,7 +43,7 @@ size_t Solver_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::findActivePartitionInde
 		activeSubsystemIndex = findActiveIntervalIndex(partitioningTimes, time, 0);
 	} else {
 		activeSubsystemIndex = findActiveIntervalIndex(partitioningTimes, time, 0,
-				-OCS2NumericTraits<scalar_t>::week_epsilon());
+				-OCS2NumericTraits<scalar_t>::weakEpsilon());
 	}
 
 	if (activeSubsystemIndex < 0) {

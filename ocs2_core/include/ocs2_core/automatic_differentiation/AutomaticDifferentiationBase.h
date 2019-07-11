@@ -42,33 +42,33 @@ class AutomaticDifferentiationBase
 public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-	typedef Eigen::Matrix<SCALAR_T, DOMAIN_DIM, 1>              domain_vector_t;
-	typedef Eigen::Matrix<SCALAR_T, DOMAIN_DIM, DOMAIN_DIM>     domain_matrix_t;
-	typedef Eigen::Matrix<SCALAR_T, RANGE_DIM, 1>               range_vector_t;
-	typedef Eigen::Matrix<SCALAR_T, RANGE_DIM, RANGE_DIM>       range_matrix_t;
-	typedef Eigen::Matrix<SCALAR_T, VARIABLE_DIM, 1>            variable_vector_t;
-	typedef Eigen::Matrix<SCALAR_T, VARIABLE_DIM, VARIABLE_DIM> variable_matrix_t;
-	typedef Eigen::Matrix<SCALAR_T, RANGE_DIM, DOMAIN_DIM>      range_domain_matrix_t;
-	typedef Eigen::Matrix<SCALAR_T, DOMAIN_DIM, RANGE_DIM>      domain_range_matrix_t;
+	using domain_vector_t = Eigen::Matrix<SCALAR_T, DOMAIN_DIM, 1>;
+	using domain_matrix_t = Eigen::Matrix<SCALAR_T, DOMAIN_DIM, DOMAIN_DIM>;
+	using range_vector_t = Eigen::Matrix<SCALAR_T, RANGE_DIM, 1>;
+	using range_matrix_t = Eigen::Matrix<SCALAR_T, RANGE_DIM, RANGE_DIM>;
+	using variable_vector_t = Eigen::Matrix<SCALAR_T, VARIABLE_DIM, 1>;
+	using variable_matrix_t = Eigen::Matrix<SCALAR_T, VARIABLE_DIM, VARIABLE_DIM>;
+	using range_domain_matrix_t = Eigen::Matrix<SCALAR_T, RANGE_DIM, DOMAIN_DIM>;
+	using domain_range_matrix_t = Eigen::Matrix<SCALAR_T, DOMAIN_DIM, RANGE_DIM>;
 
-	AutomaticDifferentiationBase(
+	explicit AutomaticDifferentiationBase(
 			int domainDim = DOMAIN_DIM,
 			int rangeDim = RANGE_DIM,
 			int variableDim = VARIABLE_DIM)
 
-	: domain_dim_(domainDim)
-	, range_dim_(rangeDim)
-	, variable_dim_(variableDim)
+	: domainDim_(domainDim)
+	, rangeDim_(rangeDim)
+	, variableDim_(variableDim)
 	{}
 
 	virtual ~AutomaticDifferentiationBase() = default;
 
 	inline size_t domain() {
-		return domain_dim_;
+		return domainDim_;
 	}
 
 	inline size_t range() {
-		return range_dim_;
+		return rangeDim_;
 	}
 
 	virtual void computeForwardModel(bool computeForwardModel) = 0;
@@ -126,8 +126,8 @@ protected:
 		rowsJacobian.clear();
 		colsJacobian.clear();
 
-		for (size_t i=0; i<range_dim_; i++) {
-			for (size_t j=0; j<domain_dim_; j++) {
+		for (size_t i=0; i<rangeDim_; i++) {
+			for (size_t j=0; j<domainDim_; j++) {
 				if (sparsityPattern(i,j)>0) {
 					rowsJacobian.push_back(i);
 					colsJacobian.push_back(j);
@@ -141,8 +141,8 @@ protected:
 		rowsHessian.clear();
 		colsHessian.clear();
 
-		for (size_t i=0; i<domain_dim_; i++) {
-			for (size_t j=i; j<domain_dim_; j++) {
+		for (size_t i=0; i<domainDim_; i++) {
+			for (size_t j=i; j<domainDim_; j++) {
 				if (sparsityPatternSum(i)>0 && sparsityPatternSum(j)>0) {
 					rowsHessian.push_back(i);
 					colsHessian.push_back(j);
@@ -155,9 +155,9 @@ protected:
 	/*************
 	 * Variables
 	 *************/
-	int domain_dim_;
-	int range_dim_;
-	int variable_dim_;
+	int domainDim_;
+	int rangeDim_;
+	int variableDim_;
 
 };
 

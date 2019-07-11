@@ -60,7 +60,7 @@ class LoopshapingCost : public CostFunctionBase<FULL_STATE_DIM, FULL_INPUT_DIM, 
     costEvaluationValid_ = false;
   }
 
-  static std::unique_ptr<LoopshapingCost> Create(const SYSTEMCOST &systemCost,
+  static std::unique_ptr<LoopshapingCost> create(const SYSTEMCOST &systemCost,
                                                  std::shared_ptr<LoopshapingDefinition> loopshapingDefinition);
 
   void setCurrentStateAndControl(
@@ -102,7 +102,7 @@ class LoopshapingCost : public CostFunctionBase<FULL_STATE_DIM, FULL_INPUT_DIM, 
 
   void getIntermediateCost(scalar_t &L) override {
     computeCost();
-    const auto &gamma = loopshapingDefinition_->gamma;
+    const auto &gamma = loopshapingDefinition_->gamma_;
     L = gamma * c_filter_ + (1.0 - gamma) * c_system_;
   };
 
@@ -237,7 +237,7 @@ LoopshapingCost<FULL_STATE_DIM,
                 SYSTEM_INPUT_DIM,
                 FILTER_STATE_DIM,
                 FILTER_INPUT_DIM,
-                LOGIC_RULES_T>::Create(const SYSTEMCOST &systemCost,
+                LOGIC_RULES_T>::create(const SYSTEMCOST &systemCost,
                                        std::shared_ptr<
                                                LoopshapingDefinition> loopshapingDefinition) {
     switch (loopshapingDefinition->getType()) {

@@ -42,8 +42,8 @@
 #include <ocs2_core/integration/Integrator.h>
 #include <ocs2_core/integration/IntegratorBase.h>
 #include <ocs2_core/integration/Observer.h>
-#include <ocs2_core/integration/ODE_Base.h>
-#include <ocs2_core/integration/ODE_func.h>
+#include <ocs2_core/integration/OdeBase.h>
+#include <ocs2_core/integration/OdeFunc.h>
 #include <ocs2_core/integration/StateTriggeredEventHandler.h>
 #include <ocs2_core/integration/steppers.h>
 #include <ocs2_core/integration/SystemEventHandler.h>

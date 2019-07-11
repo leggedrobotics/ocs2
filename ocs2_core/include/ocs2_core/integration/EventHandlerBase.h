@@ -53,7 +53,7 @@ public:
 
 	using Ptr = std::shared_ptr<EventHandlerBase<STATE_DIM> >;
 
-	typedef Dimensions<STATE_DIM, 0> DIMENSIONS;
+	using DIMENSIONS = Dimensions<STATE_DIM, 0>;
 	using scalar_t = typename DIMENSIONS::scalar_t;
 	using scalar_array_t = typename DIMENSIONS::scalar_array_t;
 	using state_vector_t = typename DIMENSIONS::state_vector_t;

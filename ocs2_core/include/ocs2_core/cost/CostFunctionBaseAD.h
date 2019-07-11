@@ -86,7 +86,7 @@ public:
 	 *
 	 * @param [in] dynamicLibraryIsCompiled: Whether a library is already complied.
 	 */
-	CostFunctionBaseAD(const bool& dynamicLibraryIsCompiled = false);
+	explicit CostFunctionBaseAD(const bool& dynamicLibraryIsCompiled = false);
 
 	/**
 	 * Copy constructor

@@ -32,7 +32,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <limits>
 
-#include "ocs2_core/integration/ODE_Base.h"
+#include "ocs2_core/integration/OdeBase.h"
 #include "ocs2_core/integration/Observer.h"
 #include "ocs2_core/integration/SystemEventHandler.h"
 
@@ -60,8 +60,8 @@ public:
 	 * @param [in] system: The system dynamics.
 	 * @param [in] eventHandler: The integration event function.
 	 */
-	IntegratorBase(
-			const std::shared_ptr<ODE_Base<STATE_DIM>>& systemPtr,
+	explicit IntegratorBase(
+			const std::shared_ptr<OdeBase<STATE_DIM>>& systemPtr,
 			const std::shared_ptr<SystemEventHandler<STATE_DIM>>& eventHandlerPtr = nullptr)
 
 	: observer_(eventHandlerPtr)
@@ -83,7 +83,7 @@ public:
 	 *
 	 * @return A reference to the system dynamics.
 	 */
-	ODE_Base<STATE_DIM>& getSystem() {
+	OdeBase<STATE_DIM>& getSystem() {
 
 		return *systemPtr_;
 	}
@@ -93,7 +93,7 @@ public:
 	 *
 	 * @return A constant reference to the system dynamics.
 	 */
-	const ODE_Base<STATE_DIM>& getSystem() const {
+	const OdeBase<STATE_DIM>& getSystem() const {
 
 		return *systemPtr_;
 	}
@@ -246,7 +246,7 @@ protected:
 	/**
 	 * System dynamics used by integrator.
 	 */
-	std::shared_ptr<ODE_Base<STATE_DIM> > systemPtr_;
+	std::shared_ptr<OdeBase<STATE_DIM> > systemPtr_;
 
 	/**
 	 * Event handler used by integrator.

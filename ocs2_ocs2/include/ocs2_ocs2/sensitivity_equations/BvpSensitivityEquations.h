@@ -35,7 +35,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <Eigen/Dense>
 
 #include <ocs2_core/Dimensions.h>
-#include <ocs2_core/integration/ODE_Base.h>
+#include <ocs2_core/integration/OdeBase.h>
 #include <ocs2_core/misc/LinearInterpolation.h>
 
 namespace ocs2{
@@ -47,12 +47,12 @@ namespace ocs2{
  * @tparam INPUT_DIM: Dimension of the control input space.
  */
 template <size_t STATE_DIM, size_t INPUT_DIM>
-class BvpSensitivityEquations : public ODE_Base<STATE_DIM>
+class BvpSensitivityEquations : public OdeBase<STATE_DIM>
 {
 public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-	typedef ODE_Base<STATE_DIM> BASE;
+	typedef OdeBase<STATE_DIM> BASE;
 
 	typedef Dimensions<STATE_DIM, INPUT_DIM> DIMENSIONS;
 	typedef typename DIMENSIONS::scalar_t       scalar_t;

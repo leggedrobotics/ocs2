@@ -31,7 +31,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define OCS2_LTI_EQUATIONS_H_
 
 #include <vector>
-#include "ocs2_core/integration/ODE_Base.h"
+#include "ocs2_core/integration/OdeBase.h"
 
 namespace ocs2{
 
@@ -44,7 +44,7 @@ namespace ocs2{
  * @tparam SCALAR_T: data type
  */
 template <int DIM1, int DIM2=1, typename SCALAR_T=double>
-class LTI_Equations : public ODE_Base<DIM1*DIM2>
+class LTI_Equations : public OdeBase<DIM1*DIM2>
 {
 public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW

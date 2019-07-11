@@ -344,8 +344,8 @@ public:
 
 
 protected:
-	typedef CppAdCodeGenInterface<domain_dim_, state_dim_, scalar_t> map_ad_interface_t;
-	typedef CppAdCodeGenInterface<domain_dim_, num_modes_, scalar_t> guard_ad_interface_t;
+	using map_ad_interface_t = CppAdCodeGenInterface<domain_dim_, state_dim_, scalar_t>;
+	using guard_ad_interface_t = CppAdCodeGenInterface<domain_dim_, num_modes_, scalar_t>;
 
 	using ad_scalar_t = typename map_ad_interface_t::ad_scalar_t;
 	using ad_dynamic_vector_t = typename map_ad_interface_t::ad_dynamic_vector_t;

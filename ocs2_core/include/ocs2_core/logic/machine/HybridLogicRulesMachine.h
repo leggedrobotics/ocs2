@@ -67,7 +67,7 @@ public:
 	 *
 	 * @param logicRules: The logic rules class.
 	 */
-	HybridLogicRulesMachine(const LOGIC_RULES_T& logicRules)
+	explicit HybridLogicRulesMachine(const LOGIC_RULES_T& logicRules)
 	: BASE(logicRules)
 	{}
 
@@ -124,10 +124,10 @@ public:
 	 * @param [in] eventTime: The time of the new event.
 	 * @param [in] subsystemID: The triggered subsystem
 	 */
-	void push_back(
-			const size_t& partitionIndex,
-			const scalar_t& eventTime,
-			const size_t& subsystemID);
+	void pushBack(
+			const size_t &partitionIndex,
+			const scalar_t &eventTime,
+			const size_t &subsystemID);
 
 protected:
 

@@ -6,7 +6,7 @@
 #define OCS2_LOOPSHAPINGFILTERDYNAMICS_H
 
 #include <ocs2_core/loopshaping/LoopshapingDefinition.h>
-#include <ocs2_core/integration/ODE_func.h>
+#include <ocs2_core/integration/OdeFunc.h>
 #include "ocs2_core/integration/Integrator.h"
 
 namespace ocs2 {
@@ -29,7 +29,7 @@ class LoopshapingFilterDynamics {
 
   LoopshapingFilterDynamics(std::shared_ptr<LoopshapingDefinition> loopshapingDefinition) :
       loopshapingDefinition_(std::move(loopshapingDefinition)),
-      ode_fun_(new ODE_func<FILTER_STATE_DIM>(std::bind(&LoopshapingFilterDynamics::computeFlowMap,
+      ode_fun_(new OdeFunc<FILTER_STATE_DIM>(std::bind(&LoopshapingFilterDynamics::computeFlowMap,
                                                         this,
                                                         std::placeholders::_1,
                                                         std::placeholders::_2,
@@ -79,7 +79,7 @@ class LoopshapingFilterDynamics {
  private:
   std::shared_ptr<LoopshapingDefinition> loopshapingDefinition_;
   filter_state_vector_t filter_state_;
-  std::shared_ptr<ODE_func<FILTER_STATE_DIM> > ode_fun_;
+  std::shared_ptr<OdeFunc<FILTER_STATE_DIM> > ode_fun_;
   ODE45<FILTER_STATE_DIM> integrator_;
 
 };

@@ -33,7 +33,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <Eigen/Dense>
 
 #include <ocs2_core/Dimensions.h>
-#include <ocs2_core/integration/ODE_Base.h>
+#include <ocs2_core/integration/OdeBase.h>
 #include <ocs2_core/misc/LinearInterpolation.h>
 
 namespace ocs2{
@@ -45,12 +45,12 @@ namespace ocs2{
  * @tparam INPUT_DIM: Dimension of the control input space.
  */
 template <size_t STATE_DIM, size_t INPUT_DIM>
-class SequentialErrorEquationNormalized : public ODE_Base<STATE_DIM>
+class SequentialErrorEquationNormalized : public OdeBase<STATE_DIM>
 {
 public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-	using BASE = ODE_Base<STATE_DIM>;
+	using BASE = OdeBase<STATE_DIM>;
 
 	typedef Dimensions<STATE_DIM, INPUT_DIM> DIMENSIONS;
 	using scalar_t = typename DIMENSIONS::scalar_t;

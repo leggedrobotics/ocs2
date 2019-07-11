@@ -33,7 +33,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <Eigen/Core>
 
 #include <ocs2_core/Dimensions.h>
-#include <ocs2_core/integration/ODE_Base.h>
+#include <ocs2_core/integration/OdeBase.h>
 #include <ocs2_core/misc/LinearInterpolation.h>
 
 namespace ocs2{
@@ -45,7 +45,7 @@ namespace ocs2{
  * @tparam INPUT_DIM: Dimension of the control input space.
  */
 template <size_t STATE_DIM, size_t INPUT_DIM>
-class SequentialRiccatiEquations : public ODE_Base<STATE_DIM*(STATE_DIM+1)/2+STATE_DIM+1>
+class SequentialRiccatiEquations : public OdeBase<STATE_DIM*(STATE_DIM+1)/2+STATE_DIM+1>
 {
 public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
@@ -193,7 +193,7 @@ public:
 			const input_vector_array_t* RvPtr, const input_matrix_array_t* RmInversePtr, const input_matrix_array_t* RmPtr,
 			const input_state_matrix_array_t* PmPtr)  {
 
-		ODE_Base<STATE_DIM*(STATE_DIM+1)/2+STATE_DIM+1>::numFunctionCalls_ = 0;
+		OdeBase<STATE_DIM*(STATE_DIM+1)/2+STATE_DIM+1>::numFunctionCalls_ = 0;
 
 		alpha_ = learningRate;
 
@@ -222,7 +222,7 @@ public:
 	 */
 	void computeFlowMap(const scalar_t& z, const s_vector_t& allSs, s_vector_t& derivatives) {
 
-		ODE_Base<STATE_DIM*(STATE_DIM+1)/2+STATE_DIM+1>::numFunctionCalls_++;
+		OdeBase<STATE_DIM*(STATE_DIM+1)/2+STATE_DIM+1>::numFunctionCalls_++;
 
 		// denormalized time
 		scalar_t t = switchingTimeFinal_ - t;

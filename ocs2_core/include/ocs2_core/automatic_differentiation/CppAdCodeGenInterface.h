@@ -43,8 +43,7 @@ class CppAdCodeGenInterface : public AutomaticDifferentiationBase<DOMAIN_DIM, RA
 public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-	typedef AutomaticDifferentiationBase<DOMAIN_DIM, RANGE_DIM, SCALAR_T, VARIABLE_DIM> BASE;
-
+	using BASE = AutomaticDifferentiationBase<DOMAIN_DIM, RANGE_DIM, SCALAR_T, VARIABLE_DIM>;
 	using typename BASE::domain_vector_t;
 	using typename BASE::domain_matrix_t;
 	using typename BASE::range_vector_t;
@@ -150,7 +149,7 @@ public:
 	}
 
 private:
-	typedef Eigen::Matrix<SCALAR_T, 1, Eigen::Dynamic> 	dynamic_vector_t;
+	using dynamic_vector_t = Eigen::Matrix<SCALAR_T, 1, Eigen::Dynamic>;
 	using dynamic_vector_map_t = Eigen::Map<dynamic_vector_t>;
 
 	ad_funtion_t adFunction_;

@@ -58,7 +58,7 @@ enum class IntegratorType {
 	ADAMS_BASHFORTH_MOULTON
 };
 
-std::string to_string(IntegratorType integratorType) {
+std::string toString(IntegratorType integratorType) {
 
 	switch(integratorType)
 	{
@@ -99,7 +99,7 @@ public:
 	 * @param [in] eventHandler: The integration event function.
 	 */
 	explicit Integrator(
-			const std::shared_ptr<ODE_Base<STATE_DIM> >& systemPtr,
+			const std::shared_ptr<OdeBase<STATE_DIM> >& systemPtr,
 			const std::shared_ptr<SystemEventHandler<STATE_DIM> >& eventHandlerPtr = nullptr);
 
 	/**

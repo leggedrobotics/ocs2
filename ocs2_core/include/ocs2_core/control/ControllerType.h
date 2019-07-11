@@ -9,7 +9,8 @@ namespace ocs2 {
 enum class ControllerType{
   UNKNOWN,
   FEEDFORWARD,
-  LINEAR
+  LINEAR,
+  PATH_INTEGRAL
 };
 
 }  // namespace ocs2

@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.0)
-project(ocs2_double_integrator_example)
+project(ocs2_double_slit_example)
 
 # Generate compile_commands.json for clang tools
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
@@ -55,66 +55,42 @@ include_directories(
         ${catkin_INCLUDE_DIRS}
 )
 
-# double integrator interface library
-add_library(double_integrator_interface
-        src/DoubleIntegratorInterface.cpp
+add_library(double_slit_interface
+        src/DoubleSlitInterface.cpp
         )
-add_dependencies(double_integrator_interface
+add_dependencies(double_slit_interface
         ${catkin_EXPORTED_TARGETS}
         )
-target_link_libraries(double_integrator_interface
+target_link_libraries(double_slit_interface
         ${catkin_LIBRARIES}
         ${Boost_LIBRARIES}
         dl
         )
 
-# Mpc node
-add_executable(double_integrator_mpc
-        src/MPC_Double_Integrator_Node.cpp
-        )
-add_dependencies(double_integrator_mpc
-        ${catkin_EXPORTED_TARGETS}
-        )
-target_link_libraries(double_integrator_mpc
-        double_integrator_interface
-        ${catkin_LIBRARIES}
-        )
-
-add_executable(double_integrator_pi
-  # src/double_integrator/DoubleIntegratorInterface.cpp
-  src/PI_Double_Integrator.cpp
+add_executable(double_slit_pi
+  src/PI_Double_Slit.cpp
 )
-add_dependencies(double_integrator_pi
+add_dependencies(double_slit_pi
+  double_slit_interface
   ${catkin_EXPORTED_TARGETS}
 )
-target_link_libraries(double_integrator_pi
+target_link_libraries(double_slit_pi
+  double_slit_interface
   ${catkin_LIBRARIES}
   ${Boost_LIBRARIES}
   dl
 )
 
 # Dummy node
-add_executable(double_integrator_dummy_test
-        src/Dummy_Double_Integrator_Node.cpp
+add_executable(double_slit_dummy_test
+        src/Dummy_Double_Slit_Node.cpp
         )
-add_dependencies(double_integrator_dummy_test
+add_dependencies(double_slit_dummy_test
         ${catkin_EXPORTED_TARGETS}
         )
-target_link_libraries(double_integrator_dummy_test
-        double_integrator_interface
+target_link_libraries(double_slit_dummy_test
+        double_slit_interface
         ${catkin_LIBRARIES}
-        )
-
-# Target node
-add_executable(double_integrator_target
-        src/DoubleIntegratorTargetPoseCommand.cpp
-        )
-add_dependencies(double_integrator_target
-        ${catkin_EXPORTED_TARGETS}
-        )
-target_link_libraries(double_integrator_target
-        ${catkin_LIBRARIES}
-        ${Boost_LIBRARIES}
         )
 
 #########################
@@ -122,13 +98,12 @@ target_link_libraries(double_integrator_target
 #########################
 find_package(cmake_clang_tools QUIET)
 if(cmake_clang_tools_FOUND)
-  message(STATUS "Run clang tooling for target " double_integrator_mpc)
+  message(STATUS "Run clang tooling for target double_slit_pi")
   add_clang_tooling(
-    TARGET double_integrator_mpc
+    TARGET double_slit_pi
     SOURCE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/src ${CMAKE_CURRENT_SOURCE_DIR}/include
     CT_HEADER_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/include
-    CF_QUIET # temporarily set to quiet, because the current amount of warning crashes the buildserver
-    # CF_FIX # temporarily disabled
+    CF_FIX
   )
 endif(cmake_clang_tools_FOUND)
 
@@ -136,7 +111,7 @@ endif(cmake_clang_tools_FOUND)
 ## Install ##
 #############
 
-install(TARGETS double_integrator_interface
+install(TARGETS double_slit_interface
         ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
         LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
         RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
@@ -145,9 +120,9 @@ install(TARGETS double_integrator_interface
 install(DIRECTORY include/${PROJECT_NAME}/
         DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION})
 
-install(TARGETS double_integrator_mpc double_integrator_dummy_test double_integrator_target
+install(TARGETS double_slit_pi double_slit_dummy_test
         RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})
 
-install(DIRECTORY urdf launch config rviz
+install(DIRECTORY config launch
         DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
         )

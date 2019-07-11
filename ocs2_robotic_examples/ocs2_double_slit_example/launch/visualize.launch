@@ -1,0 +1,7 @@
+<launch>
+
+  <arg name="rqt_config" default="/joint_states/position[0]"/>
+
+  <node pkg="rqt_plot" type="rqt_plot" name="double_slit_visualizer" args="$(arg rqt_config)" output="screen"/>
+
+</launch>

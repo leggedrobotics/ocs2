@@ -36,6 +36,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <Eigen/Dense>
 #include <vector>
 
+#include "OdeBase.h"
 #include "ocs2_core/Dimensions.h"
 
 namespace ocs2{
@@ -78,7 +79,7 @@ public:
 	 *
 	 * @param systemPtr: shared pointer to the integrator's system dynamics.
 	 */
-	void setSystem(const std::shared_ptr<Ode_Base<STATE_DIM>>& systemPtr) {
+	void setSystem(const std::shared_ptr<OdeBase<STATE_DIM>>& systemPtr) {
 
 		systemPtr_ = systemPtr;
 	}
@@ -117,7 +118,7 @@ protected:
 	/**
 	 * System dynamics used by integrator.
 	 */
-	std::shared_ptr<ODE_Base<STATE_DIM>> systemPtr_;
+	std::shared_ptr<OdeBase<STATE_DIM>> systemPtr_;
 
 };
 

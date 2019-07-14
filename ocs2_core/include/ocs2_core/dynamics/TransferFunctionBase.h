@@ -64,7 +64,7 @@ namespace ocs2 {
         {};
 
         void absorbDelay(size_t numZeros, size_t numPoles) {
-          if (timeDelay_>delayTol) {
+          if (timeDelay_>delayTol_) {
             // Approximate delay
             Eigen::VectorXd padeNum, padeDen;
             ocs2::padeApproximation(timeDelay_, padeNum, padeDen, numZeros, numPoles);
@@ -73,7 +73,7 @@ namespace ocs2 {
             numCoefficients_ = multiplyPolynomials(numCoefficients_, padeNum);
             denCoefficients_ = multiplyPolynomials(denCoefficients_, padeDen);
           }
-          delayAbsorbed = true;
+          delayAbsorbed_ = true;
           };
 
         void normalize() {
@@ -88,7 +88,7 @@ namespace ocs2 {
           }
 
           // Absorb delay and normalize
-          if (!delayAbsorbed) { // Default approximation of time delay
+          if (!delayAbsorbed_) { // Default approximation of time delay
             this->absorbDelay(1, 1);
           }
           this->normalize();
@@ -131,8 +131,8 @@ namespace ocs2 {
     private:
         Eigen::VectorXd numCoefficients_, denCoefficients_;
         double timeDelay_;
-        double delayTol = 1e-6;
-        bool delayAbsorbed = false;
+        double delayTol_ = 1e-6;
+        bool delayAbsorbed_ = false;
         bool balance_;
     };
 

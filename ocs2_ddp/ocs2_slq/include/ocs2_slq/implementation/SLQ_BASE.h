@@ -114,7 +114,7 @@ SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::SLQ_BASE(
 
 		switch(settings_.RiccatiIntegratorType_) {
 
-		case DIMENSIONS::RICCATI_INTEGRATOR_TYPE::ODE45 : {
+		case DIMENSIONS::RiccatiIntegratorType::ODE45 : {
 			riccatiIntegratorPtrStock_.emplace_back(
 					new ODE45<riccati_equations_t::S_DIM_>(riccatiEquationsPtrStock_.back(), riccatiEventPtrStock_.back()) );
 			errorIntegratorPtrStock_.emplace_back(
@@ -122,11 +122,11 @@ SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::SLQ_BASE(
 			break;
 		}
 		/*note: this case is not yet working. It would most likely work if we had an adaptive time adams-bashforth integrator */
-		case DIMENSIONS::RICCATI_INTEGRATOR_TYPE::ADAMS_BASHFORTH : {
+		case DIMENSIONS::RiccatiIntegratorType::ADAMS_BASHFORTH : {
 			throw std::runtime_error("This ADAMS_BASHFORTH is not implemented for Riccati Integrator.");
 			break;
 		}
-		case DIMENSIONS::RICCATI_INTEGRATOR_TYPE::BULIRSCH_STOER : {
+		case DIMENSIONS::RiccatiIntegratorType::BULIRSCH_STOER : {
 			riccatiIntegratorPtrStock_.emplace_back(
 					new IntegratorBulirschStoer<riccati_equations_t::S_DIM_>(riccatiEquationsPtrStock_.back(), riccatiEventPtrStock_.back()) );
 			errorIntegratorPtrStock_.emplace_back(

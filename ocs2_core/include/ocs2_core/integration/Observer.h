@@ -36,7 +36,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <vector>
 
 #include "ocs2_core/integration/SystemEventHandler.h"
-#include "ocs2_core/integration/ODE_Base.h"
+#include "ocs2_core/integration/OdeBase.h"
 
 
 namespace ocs2{
@@ -56,17 +56,18 @@ public:
 
 	using scalar_t = double;
 	using scalar_array_t = std::vector<scalar_t>;
-	typedef Eigen::Matrix<scalar_t,STATE_DIM,1> state_vector_t;
-	typedef std::vector<state_vector_t, Eigen::aligned_allocator<state_vector_t>> state_vector_array_t;
+	using state_vector_t = Eigen::Matrix<scalar_t,STATE_DIM,1>;
+    using state_vector_array_t = std::vector<state_vector_t, Eigen::aligned_allocator<state_vector_t>>;
 
     /**
      * Constructor
      * @param [in] eventHandler
      */
-	Observer(const std::shared_ptr<SystemEventHandler<STATE_DIM> >& eventHandlerPtr = nullptr)
+	explicit Observer(const std::shared_ptr<SystemEventHandler<STATE_DIM> >& eventHandlerPtr = nullptr)
 
-	: observeWrap([this](const state_vector_t& x, const scalar_t& t){ this->observe(x,t); }),
-	  eventHandlerPtr_(eventHandlerPtr)
+	: observeWrap_([this](const state_vector_t& x, const scalar_t& t){ this->observe(x,t); }),
+	  eventHandlerPtr_(eventHandlerPtr),
+	  timeTrajectoryPtr_(nullptr)
 	{}
 
     /**
@@ -115,7 +116,7 @@ public:
 	/**
 	 * Lambda to pass to odeint (odeint takes copies of the observer so we can't pass the class
 	 */
-	std::function<void (const state_vector_t& x, const scalar_t& t)> observeWrap;
+	std::function<void (const state_vector_t& x, const scalar_t& t)> observeWrap_;
 
 	/**
 	 * Set state trajectory pointer to observer.

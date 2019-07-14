@@ -34,7 +34,7 @@ namespace ocs2 {
 /******************************************************************************************************/
 template <int STATE_DIM, class Stepper>
 Integrator<STATE_DIM, Stepper>::Integrator(
-		const std::shared_ptr<ODE_Base<STATE_DIM> >& systemPtr,
+		const std::shared_ptr<OdeBase<STATE_DIM> >& systemPtr,
 		const std::shared_ptr<SystemEventHandler<STATE_DIM> >& eventHandlerPtr /*= nullptr*/)
 
 	: BASE(systemPtr, eventHandlerPtr)
@@ -76,7 +76,7 @@ void Integrator<STATE_DIM, Stepper>::integrate(
 	initialize(initialStateInternal_init_temp, startTime_temp, dt);
 
 	boost::numeric::odeint::integrate_const(stepper_, systemFunction_,
-			initialStateInternal, startTime, finalTime+0.1*dt, dt, BASE::observer_.observeWrap);
+			initialStateInternal, startTime, finalTime+0.1*dt, dt, BASE::observer_.observeWrap_);
 }
 
 /******************************************************************************************************/
@@ -200,7 +200,7 @@ typename std::enable_if<std::is_same<S, runge_kutta_dopri5_t<STATE_DIM>>::value,
 			startTime,
 			finalTime,
 			dtInitial,
-			BASE::observer_.observeWrap);
+			BASE::observer_.observeWrap_);
 }
 
 /******************************************************************************************************/
@@ -224,7 +224,7 @@ typename std::enable_if<!std::is_same<S, runge_kutta_dopri5_t<STATE_DIM>>::value
 			startTime,
 			finalTime,
 			dtInitial,
-			BASE::observer_.observeWrap);
+			BASE::observer_.observeWrap_);
 }
 
 /******************************************************************************************************/
@@ -248,7 +248,7 @@ typename std::enable_if<std::is_same<S, runge_kutta_dopri5_t<STATE_DIM>>::value,
 			beginTimeItr,
 			endTimeItr,
 			dtInitial,
-			BASE::observer_.observeWrap,
+			BASE::observer_.observeWrap_,
 			*maxStepCheckerPtr_);
 
 #else
@@ -285,7 +285,7 @@ typename std::enable_if<!std::is_same<S, runge_kutta_dopri5_t<STATE_DIM>>::value
 			beginTimeItr,
 			endTimeItr,
 			dtInitial,
-			BASE::observer_.observeWrap,
+			BASE::observer_.observeWrap_,
 			*maxStepCheckerPtr_);
 
 #else

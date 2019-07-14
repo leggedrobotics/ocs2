@@ -60,35 +60,33 @@ public:
 		domain_dim_   = variable_dim_ + state_desired_dim_ + input_desired_dim_ + logic_variable_dim_,
 	};
 
-	typedef std::shared_ptr<CostFunctionBaseAD<Derived, STATE_DIM, INPUT_DIM, LOGIC_RULES_T, LOGIC_VARIABLE_DIM, STATE_DESIRED_DIM, INPUT_DESIRED_DIM> > Ptr;
-	typedef std::shared_ptr<const CostFunctionBaseAD<Derived, STATE_DIM, INPUT_DIM, LOGIC_RULES_T, LOGIC_VARIABLE_DIM, STATE_DESIRED_DIM, INPUT_DESIRED_DIM> > ConstPtr;
+	using Ptr = std::shared_ptr<CostFunctionBaseAD<Derived, STATE_DIM, INPUT_DIM, LOGIC_RULES_T, LOGIC_VARIABLE_DIM, STATE_DESIRED_DIM, INPUT_DESIRED_DIM> >;
+	using ConstPtr = std::shared_ptr<const CostFunctionBaseAD<Derived, STATE_DIM, INPUT_DIM, LOGIC_RULES_T, LOGIC_VARIABLE_DIM, STATE_DESIRED_DIM, INPUT_DESIRED_DIM> >;
 
-	typedef CostFunctionBase<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> BASE;
-	using scalar_t = typename BASE::scalar_t;
-	using scalar_array_t = typename BASE::scalar_array_t;
-	using state_vector_t = typename BASE::state_vector_t;
-	using state_vector_array_t = typename BASE::state_vector_array_t;
-	using state_matrix_t = typename BASE::state_matrix_t;
-	using input_vector_t = typename BASE::input_vector_t;
-	using input_vector_array_t = typename BASE::input_vector_array_t;
-	using input_matrix_t = typename BASE::input_matrix_t;
-	using input_state_matrix_t = typename BASE::input_state_matrix_t;
-	using state_input_matrix_t = typename BASE::state_input_matrix_t;
-	using dynamic_vector_t = typename BASE::dynamic_vector_t;
-	using dynamic_vector_array_t = typename BASE::dynamic_vector_array_t;
+	using BASE = CostFunctionBase<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>;
+	using typename BASE::scalar_t;
+	using typename BASE::scalar_array_t;
+	using typename BASE::state_vector_t;
+	using typename BASE::state_vector_array_t;
+	using typename BASE::state_matrix_t;
+	using typename BASE::input_vector_t;
+	using typename BASE::input_vector_array_t;
+	using typename BASE::input_matrix_t;
+	using typename BASE::input_state_matrix_t;
+	using typename BASE::state_input_matrix_t;
+	using typename BASE::dynamic_vector_t;
+	using typename BASE::dynamic_vector_array_t;
 
-	typedef Eigen::Matrix<scalar_t, logic_variable_dim_, 1> logic_variable_t;
-  	typedef Eigen::Matrix<scalar_t, state_desired_dim_, 1> state_desired_vector_t;
-  	typedef Eigen::Matrix<scalar_t, input_desired_dim_, 1> input_desired_vector_t;
-
-
+	using logic_variable_t = Eigen::Matrix<scalar_t, logic_variable_dim_, 1>;
+  	using state_desired_vector_t = Eigen::Matrix<scalar_t, state_desired_dim_, 1>;
+  	using input_desired_vector_t = Eigen::Matrix<scalar_t, input_desired_dim_, 1>;
 
   /**
 	 * Default constructor
 	 *
 	 * @param [in] dynamicLibraryIsCompiled: Whether a library is already complied.
 	 */
-	CostFunctionBaseAD(const bool& dynamicLibraryIsCompiled = false);
+	explicit CostFunctionBaseAD(const bool& dynamicLibraryIsCompiled = false);
 
 	/**
 	 * Copy constructor
@@ -318,8 +316,7 @@ public:
 	virtual BASE* clone() const final;
 
 protected:
-	typedef CppAdCodeGenInterface<domain_dim_, 1, scalar_t, variable_dim_> ad_interface_t;
-
+    using ad_interface_t = CppAdCodeGenInterface<domain_dim_, 1, scalar_t, variable_dim_>;
 	using ad_scalar_t = typename ad_interface_t::ad_scalar_t;
 	using ad_dynamic_vector_t = typename ad_interface_t::ad_dynamic_vector_t;
 	using ad_funtion_t = typename ad_interface_t::ad_funtion_t;

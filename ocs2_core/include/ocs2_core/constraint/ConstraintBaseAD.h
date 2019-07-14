@@ -62,33 +62,33 @@ public:
 		domain_dim_	= 1 + state_dim_ + input_dim_,
 	};
 
-	typedef std::shared_ptr<ConstraintBaseAD<Derived, STATE_DIM, INPUT_DIM, LOGIC_RULES_T> > Ptr;
-	typedef std::shared_ptr<const ConstraintBaseAD<Derived, STATE_DIM, INPUT_DIM, LOGIC_RULES_T> > ConstPtr;
+	using Ptr = std::shared_ptr<ConstraintBaseAD<Derived, STATE_DIM, INPUT_DIM, LOGIC_RULES_T> >;
+	using ConstPtr = std::shared_ptr<const ConstraintBaseAD<Derived, STATE_DIM, INPUT_DIM, LOGIC_RULES_T> >;
 
-	typedef ConstraintBase<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> BASE;
+	using BASE = ConstraintBase<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>;
 
 	enum
 	{
 		MAX_CONSTRAINT_DIM_ = INPUT_DIM
 	};
 
-	using scalar_t = typename BASE::scalar_t;
-	using state_vector_t = typename BASE::state_vector_t;
-	using input_vector_t = typename BASE::input_vector_t;
-	using state_matrix_t = typename BASE::state_matrix_t;
-	using state_input_matrix_t = typename BASE::state_input_matrix_t;
-	using constraint1_vector_t = typename BASE::constraint1_vector_t;
-	using constraint2_vector_t = typename BASE::constraint2_vector_t;
-	using constraint1_state_matrix_t = typename BASE::constraint1_state_matrix_t;
-	using constraint1_input_matrix_t = typename BASE::constraint1_input_matrix_t;
-	using constraint2_state_matrix_t = typename BASE::constraint2_state_matrix_t;
+	using typename BASE::scalar_t;
+	using typename BASE::state_vector_t;
+	using typename BASE::input_vector_t;
+	using typename BASE::state_matrix_t;
+	using typename BASE::state_input_matrix_t;
+	using typename BASE::constraint1_vector_t;
+	using typename BASE::constraint2_vector_t;
+	using typename BASE::constraint1_state_matrix_t;
+	using typename BASE::constraint1_input_matrix_t;
+	using typename BASE::constraint2_state_matrix_t;
 
 	/**
 	 * Default constructor.
 	 *
 	 * @param [in] dynamicLibraryIsCompiled: Whether a library is already complied.
 	 */
-	ConstraintBaseAD(const bool& dynamicLibraryIsCompiled = false);
+	explicit ConstraintBaseAD(const bool& dynamicLibraryIsCompiled = false);
 
 	/**
 	 * Copy constructor
@@ -301,8 +301,7 @@ public:
 
 
 protected:
-	typedef ocs2::CppAdCodeGenInterface<domain_dim_, MAX_CONSTRAINT_DIM_, scalar_t> ad_interface_t;
-
+  	using ad_interface_t = ocs2::CppAdCodeGenInterface<domain_dim_, MAX_CONSTRAINT_DIM_, scalar_t> ;
 	using ad_scalar_t = typename ad_interface_t::ad_scalar_t;
 	using ad_dynamic_vector_t = typename ad_interface_t::ad_dynamic_vector_t;
 	using ad_funtion_t = typename ad_interface_t::ad_funtion_t;

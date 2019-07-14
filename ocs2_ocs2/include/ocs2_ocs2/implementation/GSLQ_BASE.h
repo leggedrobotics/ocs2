@@ -81,7 +81,7 @@ GSLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::GSLQ_BASE(
 
 		switch(settings_.RiccatiIntegratorType_) {
 
-		case DIMENSIONS::RICCATI_INTEGRATOR_TYPE::ODE45 : {
+		case DIMENSIONS::RiccatiIntegratorType::ODE45 : {
 			bvpSensitivityIntegratorsPtrStock_.emplace_back (
 					new ODE45<STATE_DIM>(bvpSensitivityEquationsPtrStock_.back()) );
 
@@ -98,11 +98,11 @@ GSLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::GSLQ_BASE(
 			break;
 		}
 		/* note: this case is not yet working. It would most likely work if we had an adaptive time adams-bashforth integrator */
-		case DIMENSIONS::RICCATI_INTEGRATOR_TYPE::ADAMS_BASHFORTH : {
+		case DIMENSIONS::RiccatiIntegratorType::ADAMS_BASHFORTH : {
 			throw std::runtime_error("This ADAMS_BASHFORTH is not implemented for Riccati Integrator.");
 			break;
 		}
-		case DIMENSIONS::RICCATI_INTEGRATOR_TYPE::BULIRSCH_STOER : {
+		case DIMENSIONS::RiccatiIntegratorType::BULIRSCH_STOER : {
 			bvpSensitivityIntegratorsPtrStock_.emplace_back (
 					new IntegratorBulirschStoer<STATE_DIM>(bvpSensitivityEquationsPtrStock_.back()) );
 
@@ -439,7 +439,7 @@ size_t GSLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::findActiveSubsystemIndex(
 		activeSubsystemIndex = findActiveIntervalIndex(partitioningTimes, time, 0);
 	else
 		activeSubsystemIndex = findActiveIntervalIndex(partitioningTimes, time, 0,
-				-OCS2NumericTraits<scalar_t>::week_epsilon());
+				-OCS2NumericTraits<scalar_t>::weakEpsilon());
 
 	return (size_t)activeSubsystemIndex;
 }
@@ -458,7 +458,7 @@ size_t GSLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::findActivePartitionIndex(
 		activeSubsystemIndex = findActiveIntervalIndex(partitioningTimes, time, 0);
 	else
 		activeSubsystemIndex = findActiveIntervalIndex(partitioningTimes, time, 0,
-				-OCS2NumericTraits<scalar_t>::week_epsilon());
+				-OCS2NumericTraits<scalar_t>::weakEpsilon());
 
 	if (activeSubsystemIndex < 0) {
 		std::string mesg = "Given time is less than the start time (i.e. givenTime < partitioningTimes.front()): "

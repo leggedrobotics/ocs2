@@ -48,17 +48,16 @@ class SystemOperatingPoint : public SystemOperatingTrajectoriesBase<STATE_DIM, I
 public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-	typedef SystemOperatingTrajectoriesBase<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> Base;
+	using Ptr = std::shared_ptr<SystemOperatingPoint<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>>;
 
-	typedef std::shared_ptr<SystemOperatingPoint<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>> Ptr;
-
-	using scalar_t = typename Base::scalar_t;
-	using scalar_array_t = typename Base::scalar_array_t;
-	using size_array_t = typename Base::size_array_t;
-	using state_vector_t = typename Base::state_vector_t;
-	using state_vector_array_t = typename Base::state_vector_array_t;
-	using input_vector_t = typename Base::input_vector_t;
-	using input_vector_array_t = typename Base::input_vector_array_t;
+	using Base = SystemOperatingTrajectoriesBase<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>;
+	using typename Base::scalar_t;
+	using typename Base::scalar_array_t;
+	using typename Base::size_array_t;
+	using typename Base::state_vector_t;
+	using typename Base::state_vector_array_t;
+	using typename Base::input_vector_t;
+	using typename Base::input_vector_array_t;
 
 	/**
 	 * Default constructor

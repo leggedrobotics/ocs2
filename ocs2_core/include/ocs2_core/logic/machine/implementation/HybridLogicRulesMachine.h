@@ -135,10 +135,10 @@ void HybridLogicRulesMachine<logic_rules_template_t>::initLogicMachine(
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <class logic_rules_template_t>
-void HybridLogicRulesMachine<logic_rules_template_t>::push_back(
-		const size_t& partitionIndex,
-		const scalar_t& eventTime,
-		const size_t& subsystemID) {
+void HybridLogicRulesMachine<logic_rules_template_t>::pushBack(
+    const size_t &partitionIndex,
+    const scalar_t &eventTime,
+    const size_t &subsystemID) {
 
 	BASE::getLogicRulesPtr()->eventTimes().push_back(eventTime);
 	BASE::getLogicRulesPtr()->subsystemsSequence().push_back(subsystemID);

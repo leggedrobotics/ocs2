@@ -59,10 +59,10 @@ public:
 	static_assert(std::is_base_of<LogicRulesBase, LOGIC_RULES_T>::value,
 			"LOGIC_RULES_T must inherit from LogicRulesBase");
 
-	typedef std::shared_ptr<DerivativesBase<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> > Ptr;
-	typedef std::shared_ptr<const DerivativesBase<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> > ConstPtr;
+	using Ptr = std::shared_ptr<DerivativesBase<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> >;
+	using ConstPtr =  std::shared_ptr<const DerivativesBase<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> >;
 
-	typedef Dimensions<STATE_DIM, INPUT_DIM> DIMENSIONS;
+	using DIMENSIONS = Dimensions<STATE_DIM, INPUT_DIM>;
 	using scalar_t = typename DIMENSIONS::scalar_t;
 	using state_vector_t = typename DIMENSIONS::state_vector_t;
 	using input_vector_t = typename DIMENSIONS::input_vector_t;

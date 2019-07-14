@@ -94,7 +94,7 @@ void SLQ_MP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::lineSearch(bool computeISEs) {
 	BASE::initLScontrollersStock_ = BASE::nominalControllersStock_;  // this will serve to init the workers
 
 	// if no line search
-	if (BASE::ddpSettings_.maxLearningRate_ < OCS2NumericTraits<scalar_t>::limit_epsilon()) {
+	if (BASE::ddpSettings_.maxLearningRate_ < OCS2NumericTraits<scalar_t>::limitEpsilon()) {
 		// clear the feedforward increments
 		for (size_t i=0; i<BASE::numPartitions_; i++) {
 			BASE::nominalControllersStock_[i].deltaBiasArray_.clear();
@@ -142,7 +142,7 @@ void SLQ_MP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::lineSearch(bool computeISEs) {
 	workerTask_ = IDLE;
 
 	// revitalize all integrator
-	event_handler_t::DeactivateKillIntegration();
+	event_handler_t::deactivateKillIntegration();
 
 	// clear the feedforward increments
 	for (size_t i=0; i<BASE::numPartitions_; i++) {
@@ -167,7 +167,7 @@ void SLQ_MP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::launchWorkerThreads()
 	workerThreads_.clear();
 	for (size_t i=0; i<BASE::ddpSettings_.nThreads_; i++) {
 		workerThreads_.push_back(std::thread(&SLQ_MP::threadWork, this, i));
-		SetThreadPriority(BASE::ddpSettings_.threadPriority_, workerThreads_[i]);
+      setThreadPriority(BASE::ddpSettings_.threadPriority_, workerThreads_[i]);
 	}
 }
 
@@ -651,7 +651,7 @@ void SLQ_MP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::executeLineSearchWorker(size_t
 
 		if (allPreviousAlphasProcessed)  {
 			alphaBestFound_ = true;
-			event_handler_t::ActivateKillIntegration();	// kill all integrators
+			event_handler_t::activateKillIntegration();	// kill all integrators
 			if (BASE::ddpSettings_.displayInfo_) {
 				BASE::printString("\t LS: terminate other rollouts with different alphas. alpha_best found or terminating without improvement.");
 			}

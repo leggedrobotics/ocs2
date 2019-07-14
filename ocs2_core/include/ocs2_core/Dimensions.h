@@ -67,7 +67,7 @@ public:
 	/**
 	 * Riccati integrator type.
 	 */
-	enum RICCATI_INTEGRATOR_TYPE
+	enum RiccatiIntegratorType
 	{
 		/** ode45 type. */
 		ODE45 = 1,
@@ -261,7 +261,7 @@ public:
 	template <int DIM1, int DIM2=1>
 	using linearFunction_array2_t = std::vector<linearFunction_array_t<DIM1,DIM2>, Eigen::aligned_allocator<linearFunction_array_t<DIM1,DIM2>> >;
 
-	// TODO: Why do these still exist? Should use the linear controller classes
+	// TODO(unknown): Why do these still exist? Should use the linear controller classes
 	/** Linear control policy in the form \f$ u_{ff}(t) + K(t) \f$. */
 	using controller_t = LinearFunction_t<INPUT_DIM,1>;
 	/** Array of linear control policy. */

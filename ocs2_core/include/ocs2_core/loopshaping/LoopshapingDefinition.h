@@ -25,12 +25,12 @@ namespace ocs2 {
     public:
         EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-        double gamma;
+        double gamma_;
 
-        LoopshapingDefinition(LoopshapingType loopshapingType, const Filter& filter, double gamma_in = 0.9) :
+        LoopshapingDefinition(LoopshapingType loopshapingType, Filter filter, double gamma = 0.9) :
         loopshapingType_(loopshapingType),
-        filter_(filter),
-        gamma(gamma_in) {}
+        filter_(std::move(filter)),
+        gamma_(gamma) {}
 
         LoopshapingType getType() const {return loopshapingType_;};
         const Filter& getInputFilter() const {return filter_;};

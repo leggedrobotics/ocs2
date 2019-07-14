@@ -43,22 +43,22 @@ class CppAdCodeGenInterface : public AutomaticDifferentiationBase<DOMAIN_DIM, RA
 public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-	typedef AutomaticDifferentiationBase<DOMAIN_DIM, RANGE_DIM, SCALAR_T, VARIABLE_DIM> BASE;
-
-	using domain_vector_t = typename BASE::domain_vector_t;
-	using domain_matrix_t = typename BASE::domain_matrix_t;
-	using range_vector_t = typename BASE::range_vector_t;
-	using range_matrix_t = typename BASE::range_matrix_t;
-	using variable_vector_t = typename BASE::variable_vector_t;
-	using variable_matrix_t = typename BASE::variable_matrix_t;
-	using range_domain_matrix_t = typename BASE::range_domain_matrix_t;
-	using domain_range_matrix_t = typename BASE::domain_range_matrix_t;
+	using BASE = AutomaticDifferentiationBase<DOMAIN_DIM, RANGE_DIM, SCALAR_T, VARIABLE_DIM>;
+	using typename BASE::domain_vector_t;
+	using typename BASE::domain_matrix_t;
+	using typename BASE::range_vector_t;
+	using typename BASE::range_matrix_t;
+	using typename BASE::variable_vector_t;
+	using typename BASE::variable_matrix_t;
+	using typename BASE::range_domain_matrix_t;
+	using typename BASE::domain_range_matrix_t;
 
 	using ad_base_t = CppAD::cg::CG<SCALAR_T>;
     using ad_scalar_t = CppAD::AD<ad_base_t>;
     using ad_fun_t = CppAD::ADFun<ad_base_t>;
 
-    typedef Eigen::Matrix<ad_scalar_t, Eigen::Dynamic, 1> ad_dynamic_vector_t;
+    using ad_dynamic_vector_t = Eigen::Matrix<ad_scalar_t, Eigen::Dynamic, 1>;
+
     using ad_funtion_t = std::function<void (const ad_dynamic_vector_t &, ad_dynamic_vector_t &)>;
 
 	CppAdCodeGenInterface(
@@ -149,7 +149,7 @@ public:
 	}
 
 private:
-	typedef Eigen::Matrix<SCALAR_T, 1, Eigen::Dynamic> 	dynamic_vector_t;
+	using dynamic_vector_t = Eigen::Matrix<SCALAR_T, 1, Eigen::Dynamic>;
 	using dynamic_vector_map_t = Eigen::Map<dynamic_vector_t>;
 
 	ad_funtion_t adFunction_;

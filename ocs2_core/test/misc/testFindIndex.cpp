@@ -171,7 +171,7 @@ TEST(testFindIndex, testFindIndex_floor)
 		index = std::min(index, (int)timeIntervals.size()-2);
 
 		index = findActiveIntervalIndex(timeIntervals, testTimes[i], index,
-				-OCS2NumericTraits<double>::week_epsilon());
+				-OCS2NumericTraits<double>::weakEpsilon());
 
 		std::cout << "time: " << testTimes[i] << " \t activeIntervalIndex: "
 				<< index << " \t correct solution is: " << activeIntervalIndeces[i] << std::endl;
@@ -187,7 +187,7 @@ TEST(testFindIndex, testFindIndex_floor)
 		index = std::min(index, (int)timeIntervals.size()-2);
 
 		index = findActiveIntervalIndex(timeIntervals, testTimes[i], index,
-				-OCS2NumericTraits<double>::week_epsilon());
+				-OCS2NumericTraits<double>::weakEpsilon());
 
 		std::cout << "time: " << testTimes[i] << " \t activeIntervalIndex: "
 				<< index << " \t correct solution is: " << activeIntervalIndeces[i] << std::endl;

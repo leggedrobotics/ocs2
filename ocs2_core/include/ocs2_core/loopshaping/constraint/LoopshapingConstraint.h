@@ -69,10 +69,10 @@ class LoopshapingConstraint : public ConstraintBase<
     }
   }
 
-  static std::unique_ptr<LoopshapingConstraint> Create(const SYSTEM_CONSTRAINT &systemConstraint,
+  static std::unique_ptr<LoopshapingConstraint> create(const SYSTEM_CONSTRAINT &systemConstraint,
                                                        std::shared_ptr<LoopshapingDefinition> loopshapingDefinition);
 
-  static std::unique_ptr<LoopshapingConstraint> Create(std::shared_ptr<LoopshapingDefinition> loopshapingDefinition);
+  static std::unique_ptr<LoopshapingConstraint> create(std::shared_ptr<LoopshapingDefinition> loopshapingDefinition);
 
   void initializeModel(
       LogicRulesMachine<LOGIC_RULES_T> &logicRulesMachine,
@@ -235,7 +235,7 @@ class LoopshapingConstraint : public ConstraintBase<
       systemStateInputConstraintApproximationValid_(false),
       systemInequalityConstraintApproximationValid_(false) {  };
 
-  LoopshapingConstraint(std::shared_ptr<LoopshapingDefinition> loopshapingDefinition) :
+  explicit LoopshapingConstraint(std::shared_ptr<LoopshapingDefinition> loopshapingDefinition) :
       BASE(),
       systemConstraint_(nullptr),
       loopshapingDefinition_(std::move(loopshapingDefinition)),
@@ -325,7 +325,7 @@ LoopshapingConstraint<FULL_STATE_DIM,
                       SYSTEM_INPUT_DIM,
                       FILTER_STATE_DIM,
                       FILTER_INPUT_DIM,
-                      LOGIC_RULES_T>::Create(std::shared_ptr<
+                      LOGIC_RULES_T>::create(std::shared_ptr<
     LoopshapingDefinition> loopshapingDefinition) {
     switch (loopshapingDefinition->getType()) {
         case LoopshapingType::outputpattern :
@@ -378,7 +378,7 @@ LoopshapingConstraint<FULL_STATE_DIM,
                       SYSTEM_INPUT_DIM,
                       FILTER_STATE_DIM,
                       FILTER_INPUT_DIM,
-                      LOGIC_RULES_T>::Create(const SYSTEM_CONSTRAINT &systemConstraint,
+                      LOGIC_RULES_T>::create(const SYSTEM_CONSTRAINT &systemConstraint,
                                              std::shared_ptr<
                                                  LoopshapingDefinition> loopshapingDefinition) {
     switch (loopshapingDefinition->getType()) {

@@ -51,14 +51,14 @@ class LoopshapingCostInputPattern final : public LoopshapingCost<FULL_STATE_DIM,
 
   void getIntermediateCostDerivativeState(state_vector_t &dLdx) override {
     this->computeApproximation();
-    const auto &gamma = loopshapingDefinition_->gamma;
+    const auto &gamma = loopshapingDefinition_->gamma_;
     dLdx.segment(0, SYSTEM_STATE_DIM) = gamma * q_filter_ + (1.0 - gamma) * q_system_;
     dLdx.segment(SYSTEM_STATE_DIM, FILTER_STATE_DIM).setZero();
   };
 
   void getIntermediateCostSecondDerivativeState(state_matrix_t &dLdxx) override {
     this->computeApproximation();
-    auto &gamma = loopshapingDefinition_->gamma;
+    auto &gamma = loopshapingDefinition_->gamma_;
     dLdxx.block(0, 0, SYSTEM_STATE_DIM, SYSTEM_STATE_DIM) = gamma * Q_filter_ + (1.0 - gamma) * Q_system_;
     dLdxx.block(0, SYSTEM_STATE_DIM, SYSTEM_STATE_DIM, FILTER_STATE_DIM).setZero();
     dLdxx.block(SYSTEM_STATE_DIM, 0, FILTER_STATE_DIM, SYSTEM_STATE_DIM).setZero();
@@ -67,14 +67,14 @@ class LoopshapingCostInputPattern final : public LoopshapingCost<FULL_STATE_DIM,
 
   void getIntermediateCostDerivativeInput(input_vector_t &dLdu) override {
     this->computeApproximation();
-    const auto &gamma = loopshapingDefinition_->gamma;
+    const auto &gamma = loopshapingDefinition_->gamma_;
     dLdu.segment(0, SYSTEM_INPUT_DIM) = (1.0 - gamma) * r_system_;
     dLdu.segment(SYSTEM_INPUT_DIM, FILTER_INPUT_DIM) = gamma * r_filter_;
   };
 
   void getIntermediateCostSecondDerivativeInput(input_matrix_t &dLduu) override {
     this->computeApproximation();
-    const auto &gamma = loopshapingDefinition_->gamma;
+    const auto &gamma = loopshapingDefinition_->gamma_;
     dLduu.block(0, 0, SYSTEM_INPUT_DIM, SYSTEM_INPUT_DIM) = (1.0 - gamma) * R_system_;
     dLduu.block(0, SYSTEM_INPUT_DIM, SYSTEM_INPUT_DIM, FILTER_INPUT_DIM).setZero();
     dLduu.block(SYSTEM_INPUT_DIM, 0, FILTER_INPUT_DIM, SYSTEM_INPUT_DIM).setZero();
@@ -83,7 +83,7 @@ class LoopshapingCostInputPattern final : public LoopshapingCost<FULL_STATE_DIM,
 
   void getIntermediateCostDerivativeInputState(input_state_matrix_t &dLdux) override {
     this->computeApproximation();
-    const auto &gamma = loopshapingDefinition_->gamma;
+    const auto &gamma = loopshapingDefinition_->gamma_;
     dLdux.block(0, 0, SYSTEM_INPUT_DIM, SYSTEM_STATE_DIM) = (1.0 - gamma) * P_system_;
     dLdux.block(0, SYSTEM_STATE_DIM, SYSTEM_INPUT_DIM, FILTER_STATE_DIM).setZero();
     dLdux.block(SYSTEM_INPUT_DIM, 0, FILTER_INPUT_DIM, SYSTEM_STATE_DIM) = gamma * P_filter_;

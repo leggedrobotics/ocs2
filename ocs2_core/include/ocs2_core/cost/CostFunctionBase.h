@@ -64,11 +64,10 @@ public:
 
 	using logic_rules_t = LOGIC_RULES_T;
 
-	typedef std::shared_ptr<CostFunctionBase<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> > Ptr;
-	typedef std::shared_ptr<const CostFunctionBase<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> > ConstPtr;
+    using Ptr =  std::shared_ptr<CostFunctionBase<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> >;
+	using ConstPtr = std::shared_ptr<const CostFunctionBase<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> >;
 
-	typedef Dimensions<STATE_DIM, INPUT_DIM> DIMENSIONS;
-
+	using DIMENSIONS = Dimensions<STATE_DIM, INPUT_DIM>;
 	using scalar_t = typename DIMENSIONS::scalar_t;
 	using scalar_array_t = typename DIMENSIONS::scalar_array_t;
 	using state_vector_t = typename DIMENSIONS::state_vector_t;

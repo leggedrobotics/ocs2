@@ -29,7 +29,7 @@ class RelaxedBarrierPenalty final : public PenaltyBase<STATE_DIM, INPUT_DIM> {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-  typedef typename PenaltyBase<STATE_DIM, INPUT_DIM>::scalar_t scalar_t;
+  using scalar_t = typename PenaltyBase<STATE_DIM, INPUT_DIM>::scalar_t;
 
   RelaxedBarrierPenalty(scalar_t mu, scalar_t delta) : mu_(mu), delta_(delta) {};
   virtual ~RelaxedBarrierPenalty() = default;

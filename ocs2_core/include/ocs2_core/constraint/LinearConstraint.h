@@ -39,26 +39,26 @@ class LinearConstraint : public ConstraintBase<STATE_DIM, INPUT_DIM, LOGIC_RULES
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-  typedef std::shared_ptr<LinearConstraint<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> > Ptr;
-  typedef std::shared_ptr<const LinearConstraint<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> > ConstPtr;
+  using Ptr = std::shared_ptr<LinearConstraint<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> >;
+  using ConstPtr = std::shared_ptr<const LinearConstraint<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> >;
 
-  typedef ConstraintBase<STATE_DIM, INPUT_DIM> BASE;
-  using scalar_t = typename BASE::scalar_t;
-  using scalar_array_t = typename BASE::scalar_array_t;
-  using state_vector_array_t = typename BASE::state_vector_array_t;
-  using input_vector_array_t = typename BASE::input_vector_array_t;
-  using state_matrix_array_t = typename BASE::state_matrix_array_t;
-  using input_matrix_array_t = typename BASE::input_matrix_array_t;
-  using input_state_matrix_array_t = typename BASE::input_state_matrix_array_t;
-  using state_vector_t = typename BASE::state_vector_t;
-  using input_vector_t = typename BASE::input_vector_t;
-  using state_matrix_t = typename BASE::state_matrix_t;
-  using state_input_matrix_t = typename BASE::state_input_matrix_t;
-  using constraint1_vector_t = typename BASE::constraint1_vector_t;
-  using constraint2_vector_t = typename BASE::constraint2_vector_t;
-  using constraint1_state_matrix_t = typename BASE::constraint1_state_matrix_t;
-  using constraint1_input_matrix_t = typename BASE::constraint1_input_matrix_t;
-  using constraint2_state_matrix_t = typename BASE::constraint2_state_matrix_t;
+  using BASE = ConstraintBase<STATE_DIM, INPUT_DIM>;
+  using typename BASE::scalar_t;
+  using typename BASE::scalar_array_t;
+  using typename BASE::state_vector_array_t;
+  using typename BASE::input_vector_array_t;
+  using typename BASE::state_matrix_array_t;
+  using typename BASE::input_matrix_array_t;
+  using typename BASE::input_state_matrix_array_t;
+  using typename BASE::state_vector_t;
+  using typename BASE::input_vector_t;
+  using typename BASE::state_matrix_t;
+  using typename BASE::state_input_matrix_t;
+  using typename BASE::constraint1_vector_t;
+  using typename BASE::constraint2_vector_t;
+  using typename BASE::constraint1_state_matrix_t;
+  using typename BASE::constraint1_input_matrix_t;
+  using typename BASE::constraint2_state_matrix_t;
 
   LinearConstraint(
       const size_t &numStateInputConstraint,

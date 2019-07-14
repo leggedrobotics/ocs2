@@ -83,8 +83,19 @@ MPC_SLQ<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::MPC_SLQ(
 		slqPtr_->getLogicRulesPtr()->setModeSequenceTemplate(*modeSequenceTemplatePtr);
 
 		if (mpcSettings.recedingHorizon_) {
+
+			const scalar_array_t& eventTimes = slqPtr_->getLogicRulesPtr()->eventTimes();
 			const scalar_t timeHorizon = BASE::initPartitioningTimes_.back() - BASE::initPartitioningTimes_.front();
-			slqPtr_->getLogicRulesPtr()->insertInternalModeSequenceTemplate(timeHorizon, 2.0*timeHorizon);
+			const scalar_t finalTime = BASE::initPartitioningTimes_.back() + timeHorizon;
+
+			if (eventTimes.size()==0) {
+				const scalar_t startTime = BASE::initPartitioningTimes_.front();
+				slqPtr_->getLogicRulesPtr()->insertInternalModeSequenceTemplate(startTime, finalTime);
+
+			} else if (eventTimes.back() <= finalTime) {
+				const scalar_t startTime = eventTimes.back();
+				slqPtr_->getLogicRulesPtr()->insertInternalModeSequenceTemplate(startTime, finalTime);
+			}
 		}
 	}
 }

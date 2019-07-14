@@ -78,7 +78,7 @@ public:
 	 *
 	 * @param systemPtr: shared pointer to the integrator's system dynamics.
 	 */
-	void setSystem(const std::shared_ptr<ODE_Base<STATE_DIM>>& systemPtr) {
+	void setSystem(const std::shared_ptr<Ode_Base<STATE_DIM>>& systemPtr) {
 
 		systemPtr_ = systemPtr;
 	}

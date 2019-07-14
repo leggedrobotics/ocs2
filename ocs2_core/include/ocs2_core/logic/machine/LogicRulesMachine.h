@@ -86,7 +86,7 @@ public:
 	 *
 	 * @param logicRules: The logic rules class.
 	 */
-	LogicRulesMachine(const LOGIC_RULES_T& logicRules)
+	explicit LogicRulesMachine(const LOGIC_RULES_T& logicRules)
 	: logicRules_(logicRules)
 	, logicRulesBuffer_(logicRules)
 	, logicRulesModified_(false)

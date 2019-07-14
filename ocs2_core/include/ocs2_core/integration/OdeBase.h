@@ -68,7 +68,7 @@ public:
      * Default copy constructor
      */
 	OdeBase(const OdeBase& rhs)
-	: OdeBase()
+	: OdeBase(), numFunctionCalls_(0)
 	{}
 
 	/**

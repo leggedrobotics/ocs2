@@ -47,8 +47,8 @@ void ComKinoDynamicsBase<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM, LOGIC_RULES_T>:
 		const input_vector_t& u,
 		state_vector_t& dxdt)   {
 
-	size_t index = findActiveSubsystemFnc_(t);
-	logicRulesPtr_->getContactFlags(index, stanceLegs_);
+//	size_t index = findActiveSubsystemFnc_(t);
+//	logicRulesPtr_->getContactFlags(index, stanceLegs_);
 
 	// set data for CoM class
 	comDynamics_.setData(stanceLegs_, x.template tail<12>(), u.template tail<12>());

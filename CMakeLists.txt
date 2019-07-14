@@ -20,6 +20,7 @@ catkin_package(
 		${EIGEN_INCLUDE_DIRS}
 	LIBRARIES
 		${PROJECT_NAME}
+		ConvexPlanarPolytope3d
 	CATKIN_DEPENDS 
 	    ocs2_core 
 	    roscpp
@@ -49,11 +50,35 @@ target_link_libraries(${PROJECT_NAME}
   ${catkin_LIBRARIES}
 )
 
+# Declare a C++ library
+add_library(ConvexPlanarPolytope3d
+		src/ground/ConvexPlanarPolytope3d.cpp
+		)
+
+add_dependencies(ConvexPlanarPolytope3d
+		${${PROJECT_NAME}_EXPORTED_TARGETS}
+		${catkin_EXPORTED_TARGETS}
+		)
+
+target_link_libraries(ConvexPlanarPolytope3d
+		${catkin_LIBRARIES}
+		)
+
+## Declare a C++ library
+#add_executable(testConstraints
+#		src/testConstraints.cpp
+#		)
+#
+#target_link_libraries(testConstraints
+#		dl
+#		)
+
+
 #############
 ## Install ##
 #############
 
-install(TARGETS ${PROJECT_NAME}
+install(TARGETS ${PROJECT_NAME} ConvexPlanarPolytope3d
 		ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
 		LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
 		RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}

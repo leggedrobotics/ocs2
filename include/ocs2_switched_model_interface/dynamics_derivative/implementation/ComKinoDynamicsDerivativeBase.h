@@ -50,8 +50,8 @@ void ComKinoDynamicsDerivativeBase<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM, LOGIC
 
 	Base::setCurrentStateAndControl(t, x, u);
 
-	size_t index = findActiveSubsystemFnc_(t);
-	logicRulesPtr_->getContactFlags(index, stanceLegs_);
+//	size_t index = findActiveSubsystemFnc_(t);
+//	logicRulesPtr_->getContactFlags(index, stanceLegs_);
 
 	// HyQ's joints
 	qJoints_  = x.template tail<12>();

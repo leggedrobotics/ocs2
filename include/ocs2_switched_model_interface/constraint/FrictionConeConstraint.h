@@ -30,6 +30,10 @@ class FrictionConeConstraint final : public ocs2::ConstraintTerm<STATE_DIM, INPU
         regularization_(regularization),
         legNumber_(legNumber) {}
 
+  FrictionConeConstraint* clone() const override {
+      return new FrictionConeConstraint(*this);
+  }
+
   size_t getNumConstraints(scalar_t time) const override { return 1; };
 
   scalar_array_t getValue(scalar_t time, const state_vector_t& state, const input_vector_t& input) const override {

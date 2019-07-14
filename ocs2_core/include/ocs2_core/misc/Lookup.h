@@ -23,7 +23,7 @@ template <typename scalar_t = double>
 size_t findFirstIndexWithinTol(
 		const std::vector<scalar_t> &dataArray,
 		const scalar_t &value,
-		const scalar_t eps = OCS2NumericTraits<scalar_t>::week_epsilon()) {
+		const scalar_t eps = OCS2NumericTraits<scalar_t>::weakEpsilon()) {
 
   size_t index = dataArray.size();
 

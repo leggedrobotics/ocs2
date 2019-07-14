@@ -141,7 +141,7 @@ public:
 	/**
 	 * Adaptive time integration based on start time and final time. This method can solve ODEs with time-dependent events,
 	 * if eventsTime is not empty. In this case the output time-trajectory contains two identical values at the moments
-	 * of event triggers. This method uses ODE_Base::computeJumpMap() method for state transition at events.
+	 * of event triggers. This method uses OdeBase::computeJumpMap() method for state transition at events.
 	 *
 	 * @param [in] initialState: Initial state.
 	 * @param [in] startTime: Initial time.
@@ -172,7 +172,7 @@ public:
 	 * Output integration based on a given time trajectory. This method can solve ODEs with time-dependent events.
 	 * In this case, user should pass past-the-end indices of events on the input time trajectory. Moreover, this
 	 * method assumes that there are two identical time values in the input time-trajectory at the moments of event
-	 * triggers. This method uses ODE_Base::computeJumpMap() method for state transition at events.
+	 * triggers. This method uses OdeBase::computeJumpMap() method for state transition at events.
 	 *
 	 * @param [in] initialState: Initial state.
 	 * @param [in] beginTimeItr: The iterator to the beginning of the time stamp trajectory.

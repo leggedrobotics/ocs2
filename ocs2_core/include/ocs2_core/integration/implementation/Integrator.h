@@ -34,7 +34,7 @@ namespace ocs2 {
 /******************************************************************************************************/
 template <int STATE_DIM, class Stepper>
 Integrator<STATE_DIM, Stepper>::Integrator(
-		const std::shared_ptr<ODE_Base<STATE_DIM> >& systemPtr,
+		const std::shared_ptr<OdeBase<STATE_DIM> >& systemPtr,
 		const std::shared_ptr<SystemEventHandler<STATE_DIM> >& eventHandlerPtr /*= nullptr*/)
 
 	: BASE(systemPtr, eventHandlerPtr)

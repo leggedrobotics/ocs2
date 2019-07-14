@@ -235,7 +235,8 @@ void MRT_ROS_Quadruped<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::updateFeetTrajec
 
 	const size_t numPhaseSequence = subsystemsSequence.size();
 	size_t initActiveSubsystem  = BASE::findActiveSubsystemFnc_(touchdownTimeStock.front());
-	size_t finalActiveSubsystem = BASE::findActiveSubsystemFnc_(touchdownTimeStock.back()-ocs2::OCS2NumericTraits<scalar_t>::week_epsilon());
+	size_t finalActiveSubsystem = BASE::findActiveSubsystemFnc_(touchdownTimeStock.back()- ocs2::OCS2NumericTraits<
+      scalar_t>::weakEpsilon());
 
 	// XY plan
 	feetXPlanPtrStock_.resize(numPhaseSequence);

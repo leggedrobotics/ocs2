@@ -40,15 +40,15 @@ class LinearSystemDynamics : public SystemDynamicsBase<STATE_DIM, INPUT_DIM, LOG
 public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-	typedef std::shared_ptr<LinearSystemDynamics<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> > Ptr;
-	typedef std::shared_ptr<const LinearSystemDynamics<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> > ConstPtr;
+	using Ptr = std::shared_ptr<LinearSystemDynamics<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> >;
+	using ConstPtr = std::shared_ptr<const LinearSystemDynamics<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> >;
 
-	typedef SystemDynamicsBase<STATE_DIM, INPUT_DIM> BASE;
-	using scalar_t = typename BASE::scalar_t;
-	using state_vector_t = typename BASE::state_vector_t;
-	using state_matrix_t = typename BASE::state_matrix_t;
-	using input_vector_t = typename BASE::input_vector_t;
-	using state_input_matrix_t = typename BASE::state_input_matrix_t;
+	using BASE = SystemDynamicsBase<STATE_DIM, INPUT_DIM>;
+	using typename BASE::scalar_t;
+	using typename BASE::state_vector_t;
+	using typename BASE::state_matrix_t;
+	using typename BASE::input_vector_t;
+	using typename BASE::state_input_matrix_t;
 
 	LinearSystemDynamics(
 			const state_matrix_t& A,

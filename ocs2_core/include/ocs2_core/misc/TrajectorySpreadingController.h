@@ -67,7 +67,7 @@ public:
 	using controller_t = LinearController<STATE_DIM, INPUT_DIM>;
 	using controller_array_t = typename controller_t::array_t;
 
-	typedef std::pair<int,int> index_t;  // (partition, index)
+	using index_t = std::pair<int,int>;  // (partition, index)
 
 	/**
 	 * Constructor

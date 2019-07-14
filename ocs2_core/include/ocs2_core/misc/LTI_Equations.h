@@ -53,10 +53,10 @@ public:
 		LTI_DIM_ = DIM1*DIM2
 	};
 
-	typedef Eigen::Matrix<SCALAR_T, DIM1, DIM2> state_t;
-	typedef Eigen::Matrix<SCALAR_T, LTI_DIM_, 1> vectorized_state_t;
-	typedef std::vector<state_t, Eigen::aligned_allocator<state_t>> state_array_t;
-	typedef std::vector<vectorized_state_t, Eigen::aligned_allocator<vectorized_state_t>> vectorized_state_array_t;
+	using state_t = Eigen::Matrix<SCALAR_T, DIM1, DIM2>;
+	using vectorized_state_t = Eigen::Matrix<SCALAR_T, LTI_DIM_, 1>;
+	using state_array_t = std::vector<state_t, Eigen::aligned_allocator<state_t>>;
+	using vectorized_state_array_t = std::vector<vectorized_state_t, Eigen::aligned_allocator<vectorized_state_t>>;
 
 	LTI_Equations() = default;
 

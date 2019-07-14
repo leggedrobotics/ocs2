@@ -316,8 +316,7 @@ public:
 	virtual BASE* clone() const final;
 
 protected:
-	typedef CppAdCodeGenInterface<domain_dim_, 1, scalar_t, variable_dim_> ad_interface_t;
-
+    using ad_interface_t = CppAdCodeGenInterface<domain_dim_, 1, scalar_t, variable_dim_>;
 	using ad_scalar_t = typename ad_interface_t::ad_scalar_t;
 	using ad_dynamic_vector_t = typename ad_interface_t::ad_dynamic_vector_t;
 	using ad_funtion_t = typename ad_interface_t::ad_funtion_t;

@@ -172,11 +172,11 @@ inline void Rollout_Settings::loadSettings(const std::string& filename, const st
 
 	try	{
 		integratorType_ = static_cast<IntegratorType>(pt.get<int>(fieldName + ".integratorType"));
-		if (verbose) {  std::cerr << " #### Option loader : option 'integratorType' ...................... " << ocs2::to_string(integratorType_) << std::endl;
+		if (verbose) {  std::cerr << " #### Option loader : option 'integratorType' ...................... " << ocs2::toString(integratorType_) << std::endl;
 		}
 	}
 	catch (const std::exception& e){
-		if (verbose) {  std::cerr << " #### Option loader : option 'integratorType' ...................... " << ocs2::to_string(integratorType_) << "   \t(default)" << std::endl;
+		if (verbose) {  std::cerr << " #### Option loader : option 'integratorType' ...................... " << ocs2::toString(integratorType_) << "   \t(default)" << std::endl;
 		}
 	}
 

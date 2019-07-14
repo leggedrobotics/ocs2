@@ -77,7 +77,7 @@ public:
 	using constraint2_vector_t = typename DIMENSIONS::constraint2_vector_t;
 	using dynamic_vector_t = typename DIMENSIONS::dynamic_vector_t;
 
-  typedef ControllerBase<STATE_DIM, INPUT_DIM> controller_t;
+  	using controller_t = ControllerBase<STATE_DIM, INPUT_DIM> ;
 
 	/**
 	 * Default constructor.

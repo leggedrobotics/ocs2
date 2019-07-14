@@ -57,10 +57,10 @@ public:
 	static_assert(std::is_base_of<LogicRulesBase, LOGIC_RULES_T>::value,
 			"LOGIC_RULES_T must inherit from LogicRulesBase");
 
-	typedef std::shared_ptr<SystemOperatingTrajectoriesBase<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> > Ptr;
-	typedef std::shared_ptr<const SystemOperatingTrajectoriesBase<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> > ConstPtr;
+	using Ptr = std::shared_ptr<SystemOperatingTrajectoriesBase<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> >;
+	using ConstPtr = std::shared_ptr<const SystemOperatingTrajectoriesBase<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> >;
+	using DIMENSIONS = Dimensions<STATE_DIM, INPUT_DIM>;
 
-	typedef Dimensions<STATE_DIM, INPUT_DIM> DIMENSIONS;
 	using scalar_t = typename DIMENSIONS::scalar_t;
 	using scalar_array_t = typename DIMENSIONS::scalar_array_t;
 	using size_array_t = typename DIMENSIONS::size_array_t;

@@ -63,7 +63,7 @@ public:
 
 	using Ptr = std::shared_ptr<LogicRulesMachine<LOGIC_RULES_T> >;
 
-	typedef Dimensions<0, 0> DIMENSIONS;
+	using DIMENSIONS = Dimensions<0, 0>;
 	using size_array_t = DIMENSIONS::size_array_t;
 	using scalar_t = DIMENSIONS::scalar_t;
 	using scalar_array_t = DIMENSIONS::scalar_array_t;
@@ -86,7 +86,7 @@ public:
 	 *
 	 * @param logicRules: The logic rules class.
 	 */
-	LogicRulesMachine(const LOGIC_RULES_T& logicRules)
+	explicit LogicRulesMachine(const LOGIC_RULES_T& logicRules)
 	: logicRules_(logicRules)
 	, logicRulesBuffer_(logicRules)
 	, logicRulesModified_(false)

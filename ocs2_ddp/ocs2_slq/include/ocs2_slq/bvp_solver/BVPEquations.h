@@ -34,7 +34,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <Eigen/Dense>
 #include <Eigen/StdVector>
 
-#include <ocs2_core/integration/ODE_Base.h>
+#include <ocs2_core/integration/OdeBase.h>
 #include <ocs2_core/misc/LinearInterpolation.h>
 
 namespace ocs2{
@@ -46,7 +46,7 @@ namespace ocs2{
  * @tparam INPUT_DIM: Dimension of the control input space.
  */
 template <size_t STATE_DIM, size_t INPUT_DIM>
-class BVPEquations : public ODE_Base<STATE_DIM*STATE_DIM+STATE_DIM>
+class BVPEquations : public OdeBase<STATE_DIM*STATE_DIM+STATE_DIM>
 {
 public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW

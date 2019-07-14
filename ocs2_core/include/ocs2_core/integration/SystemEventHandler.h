@@ -63,11 +63,11 @@ public:
 	using Ptr = std::shared_ptr<SystemEventHandler<STATE_DIM> >;
 
 	using BASE = EventHandlerBase<STATE_DIM>;
-	using scalar_t = typename BASE::scalar_t;
-	using scalar_array_t = typename BASE::scalar_array_t;
-	using state_vector_t = typename BASE::state_vector_t;
-	using state_vector_array_t = typename BASE::state_vector_array_t;
-	using dynamic_vector_t = typename BASE::dynamic_vector_t;
+	using typename BASE::scalar_t;
+	using typename BASE::scalar_array_t;
+	using typename BASE::state_vector_t;
+	using typename BASE::state_vector_array_t;
+	using typename BASE::dynamic_vector_t;
 
 	/**
 	 * Default constructor
@@ -142,7 +142,7 @@ public:
 	/**
 	 * Activate KillIntegrationEvent.
 	 */
-	static void ActivateKillIntegration() {
+	static void activateKillIntegration() {
 
 		killIntegration_ = true;
 	}
@@ -150,7 +150,7 @@ public:
 	/**
 	 * Deactivate KillIntegrationEvent.
 	 */
-	static void DeactivateKillIntegration() {
+	static void deactivateKillIntegration() {
 
 		killIntegration_ = false;
 	}

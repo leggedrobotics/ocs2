@@ -32,7 +32,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <limits>
 
-#include "ocs2_core/integration/ODE_Base.h"
+#include "ocs2_core/integration/OdeBase.h"
 #include "ocs2_core/integration/Observer.h"
 #include "ocs2_core/integration/SystemEventHandler.h"
 
@@ -52,16 +52,16 @@ public:
 
 	using scalar_t = double;
 	using scalar_array_t = std::vector<scalar_t>;
-	typedef Eigen::Matrix<scalar_t,STATE_DIM,1> state_vector_t;
-	typedef std::vector<state_vector_t, Eigen::aligned_allocator<state_vector_t>> state_vector_array_t;
+	using state_vector_t = Eigen::Matrix<scalar_t,STATE_DIM,1>;
+	using state_vector_array_t = std::vector<state_vector_t, Eigen::aligned_allocator<state_vector_t>>;
 
 	/**
 	 * Constructor
 	 * @param [in] system: The system dynamics.
 	 * @param [in] eventHandler: The integration event function.
 	 */
-	IntegratorBase(
-			const std::shared_ptr<ODE_Base<STATE_DIM>>& systemPtr,
+	explicit IntegratorBase(
+			const std::shared_ptr<OdeBase<STATE_DIM>>& systemPtr,
 			const std::shared_ptr<SystemEventHandler<STATE_DIM>>& eventHandlerPtr = nullptr)
 
 	: observer_(eventHandlerPtr)
@@ -83,7 +83,7 @@ public:
 	 *
 	 * @return A reference to the system dynamics.
 	 */
-	ODE_Base<STATE_DIM>& getSystem() {
+	OdeBase<STATE_DIM>& getSystem() {
 
 		return *systemPtr_;
 	}
@@ -93,7 +93,7 @@ public:
 	 *
 	 * @return A constant reference to the system dynamics.
 	 */
-	const ODE_Base<STATE_DIM>& getSystem() const {
+	const OdeBase<STATE_DIM>& getSystem() const {
 
 		return *systemPtr_;
 	}
@@ -141,7 +141,7 @@ public:
 	/**
 	 * Adaptive time integration based on start time and final time. This method can solve ODEs with time-dependent events,
 	 * if eventsTime is not empty. In this case the output time-trajectory contains two identical values at the moments
-	 * of event triggers. This method uses ODE_Base::computeJumpMap() method for state transition at events.
+	 * of event triggers. This method uses OdeBase::computeJumpMap() method for state transition at events.
 	 *
 	 * @param [in] initialState: Initial state.
 	 * @param [in] startTime: Initial time.
@@ -172,7 +172,7 @@ public:
 	 * Output integration based on a given time trajectory. This method can solve ODEs with time-dependent events.
 	 * In this case, user should pass past-the-end indices of events on the input time trajectory. Moreover, this
 	 * method assumes that there are two identical time values in the input time-trajectory at the moments of event
-	 * triggers. This method uses ODE_Base::computeJumpMap() method for state transition at events.
+	 * triggers. This method uses OdeBase::computeJumpMap() method for state transition at events.
 	 *
 	 * @param [in] initialState: Initial state.
 	 * @param [in] beginTimeItr: The iterator to the beginning of the time stamp trajectory.
@@ -210,7 +210,7 @@ protected:
 
 		observer_.setStateTrajectory(stateTrajectoryPtr);
 
-		if (timeTrajectoryPtr) {
+		if (timeTrajectoryPtr != nullptr) {
 			observer_.setTimeTrajectory(timeTrajectoryPtr);
 		} else {
 			tempTimeTrajectory_.resize(stateTrajectoryPtr->size());
@@ -246,7 +246,7 @@ protected:
 	/**
 	 * System dynamics used by integrator.
 	 */
-	std::shared_ptr<ODE_Base<STATE_DIM> > systemPtr_;
+	std::shared_ptr<OdeBase<STATE_DIM> > systemPtr_;
 
 	/**
 	 * Event handler used by integrator.

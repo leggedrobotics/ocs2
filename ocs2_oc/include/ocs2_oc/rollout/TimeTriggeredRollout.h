@@ -226,7 +226,7 @@ public:
 			endTime   = i==finalItr ? finalTime : switchingTimes[i+1];
 
 			// in order to correctly detect the next subsystem (right limit)
-			beginTime += 10*OCS2NumericTraits<scalar_t>::week_epsilon();
+			beginTime += 10* OCS2NumericTraits<scalar_t>::weakEpsilon();
 
 			// integrate controlled system
 			dynamicsIntegratorsPtr_->integrate(
@@ -260,7 +260,7 @@ public:
 		// Note: we don't push the state because the input is not yet defined since the next control
 		// policy is available)
 		bool eventAtFinalTime = numEvents>finalItr &&
-				logicRulesMachine.getEventTimes(partitionIndex)[finalItr]<finalTime+OCS2NumericTraits<scalar_t>::limit_epsilon();
+				logicRulesMachine.getEventTimes(partitionIndex)[finalItr]<finalTime+ OCS2NumericTraits<scalar_t>::limitEpsilon();
 
 		// terminal state and event
 		state_vector_t terminalState;

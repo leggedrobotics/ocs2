@@ -80,7 +80,7 @@ class TestFixtureLoopShapingConstraint : public ::testing::Test {
 
   void SetUp() override {
     const std::string settingsFile = getAbsolutePathToConfigurationFile(CONFIG::fileName);
-    loopshapingDefinition_ = LoopshapingPropertyTree::load(settingsFile);
+    loopshapingDefinition_ = loopshaping_property_tree::load(settingsFile);
 
     // Set up state and input
     t = 0.5;
@@ -154,7 +154,7 @@ class TestFixtureLoopShapingConstraint : public ::testing::Test {
                                                         ddhdudx));
 
     // Create Loopshaping constraint
-    testLoopshapingConstraint = TestLoopshapingConstraint::Create(*testSystemConstraint, loopshapingDefinition_);
+    testLoopshapingConstraint = TestLoopshapingConstraint::create(*testSystemConstraint, loopshapingDefinition_);
   };
 
   std::shared_ptr<LoopshapingDefinition> loopshapingDefinition_;

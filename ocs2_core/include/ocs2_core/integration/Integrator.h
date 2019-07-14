@@ -41,6 +41,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ocs2_core/integration/IntegratorBase.h"
 #include "ocs2_core/integration/steppers.h"
 
+
 namespace ocs2 {
 
 /**
@@ -58,7 +59,7 @@ enum class IntegratorType {
 	ADAMS_BASHFORTH_MOULTON
 };
 
-std::string to_string(IntegratorType integratorType) {
+std::string toString(IntegratorType integratorType) {
 
 	switch(integratorType)
 	{
@@ -70,7 +71,7 @@ std::string to_string(IntegratorType integratorType) {
 	case IntegratorType::ADAMS_BASHFORTH: return std::string("ADAMS_BASHFORTH");
 	case IntegratorType::BULIRSCH_STOER: return std::string("BULIRSCH_STOER");
 	case IntegratorType::ADAMS_BASHFORTH_MOULTON: return std::string("ADAMS_BASHFORTH_MOULTON");
-	default: return std::to_string((int)integratorType);
+	default: return std::to_string(static_cast<int>(integratorType));
 	}
 }
 
@@ -98,8 +99,8 @@ public:
 	 * @param [in] system: The system dynamics.
 	 * @param [in] eventHandler: The integration event function.
 	 */
-	Integrator(
-			const std::shared_ptr<ODE_Base<STATE_DIM> >& systemPtr,
+	explicit Integrator(
+			const std::shared_ptr<OdeBase<STATE_DIM> >& systemPtr,
 			const std::shared_ptr<SystemEventHandler<STATE_DIM> >& eventHandlerPtr = nullptr);
 
 	/**
@@ -132,7 +133,7 @@ public:
 	 * Adaptive time integration based on start time and final time. This method can
 	 * solve ODEs with time-dependent events, if eventsTime is not empty. In this case
 	 * the output time-trajectory contains two identical values at the moments
-	 * of event triggers. This method uses ODE_Base::computeJumpMap() method for
+	 * of event triggers. This method uses OdeBase::computeJumpMap() method for
 	 * state transition at events.
 	 *
 	 * @param [in] initialState: Initial state.
@@ -165,7 +166,7 @@ public:
 	 * with time-dependent events. In this case, user should pass past-the-end indices
 	 * of events on the input time trajectory. Moreover, this method assumes that there
 	 * are two identical time values in the input time-trajectory at the moments of event
-	 * triggers. This method uses ODE_Base::computeJumpMap() method for state
+	 * triggers. This method uses OdeBase::computeJumpMap() method for state
 	 * transition at events.
 	 *
 	 * @param [in] initialState: Initial state.

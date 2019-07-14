@@ -41,9 +41,9 @@ namespace ocs2{
  * @param priority: The priority of the thread from 0 (lowest) to 99 (highest)
  * @param thread: A reference to the tread.
  */
-inline void SetThreadPriority(const int priority, std::thread& thread) {
+inline void setThreadPriority(const int priority, std::thread &thread) {
 
-	sched_param sched;
+	sched_param sched{};
 	sched.sched_priority = priority;
 
 	if(priority != 0) {

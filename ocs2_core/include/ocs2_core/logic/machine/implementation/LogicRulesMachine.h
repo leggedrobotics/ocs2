@@ -228,7 +228,7 @@ void LogicRulesMachine<LOGIC_RULES_T>::findEventsDistribution(
 		// At the very first active index
 		if (firstActiveSwitchinTimeIndex==-1)  {
 			// if switch happens at the startTime ignore it
-			if (ti < partitioningTimes.front() + OCS2NumericTraits<scalar_t>::limit_epsilon()) {  continue;
+			if (ti < partitioningTimes.front() + OCS2NumericTraits<scalar_t>::limitEpsilon()) {  continue;
 			}
 
 			// save the very first active index
@@ -253,7 +253,7 @@ void LogicRulesMachine<LOGIC_RULES_T>::findEventsDistribution(
 			currActiveSubsystemIndex = 0;
 
 		} else {
-			if (allEventTimes.back() < partitioningTimes.front()+OCS2NumericTraits<scalar_t>::limit_epsilon()) {
+			if (allEventTimes.back() < partitioningTimes.front()+ OCS2NumericTraits<scalar_t>::limitEpsilon()) {
 				currActiveSubsystemIndex = numSubsystems-1;
 			} else if (allEventTimes.front() >= partitioningTimes.back()) {
 				currActiveSubsystemIndex = 0;
@@ -280,7 +280,7 @@ void LogicRulesMachine<LOGIC_RULES_T>::findEventsDistribution(
 			// since a switch happened the next switched system should be pushed to this partitions switched systems list
 			// unless the switch happened at the end of the time partition
 			currActiveSubsystemIndex++;
-			if (partitioningTimes[i+1] - eventTimesStock[i].back() > OCS2NumericTraits<scalar_t>::limit_epsilon()) {
+			if (partitioningTimes[i+1] - eventTimesStock[i].back() > OCS2NumericTraits<scalar_t>::limitEpsilon()) {
 				eventCountersStock[i].push_back(currActiveSubsystemIndex);
 			}
 

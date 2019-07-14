@@ -40,19 +40,19 @@ class OCS2NumericTraits
 public:
 
 	/**
-	 * If a floating number v is in limit_epsilon vicinity of w, then we assume that v approaches to w.
+	 * If a floating number v is in limit epsilon vicinity of w, then we assume that v approaches to w.
 	 * This limit_epsilon value should be greater week_epsilon value.
 	 *
 	 * @return limit epsilon value.
 	 */
-	static inline T limit_epsilon() { return 1e-6; }
+	static inline T limitEpsilon() { return T(1e-6); }
 
 	/**
 	 * Defines the precision during comparison.
 	 *
-	 * @return week epsilon value
+	 * @return weak epsilon value
 	 */
-	static inline T week_epsilon() { return 1e-9; }
+	static inline T weakEpsilon() { return T(1e-9); }
 };
 
 }  // namespace ocs2

@@ -6,18 +6,18 @@
 #define OCS2_ODE_FUNC_H
 
 #include <functional>
-#include "ODE_Base.h"
+#include "OdeBase.h"
 
 namespace ocs2 {
 
 template <int STATE_DIM>
-class ODE_func final : public ODE_Base<STATE_DIM> {
+class OdeFunc final : public OdeBase<STATE_DIM> {
  public:
-  using BASE = ODE_Base<STATE_DIM>;
+  using BASE = OdeBase<STATE_DIM>;
   using typename BASE::scalar_t;
   using typename BASE::state_vector_t;
 
-  ODE_func(std::function<void(const scalar_t &t,
+  explicit OdeFunc(std::function<void(const scalar_t &t,
                               const state_vector_t &x,
                               state_vector_t &dxdt)> flowMap) : flowMap_(std::move(flowMap)) {};
 

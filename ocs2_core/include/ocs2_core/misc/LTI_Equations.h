@@ -31,7 +31,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define OCS2_LTI_EQUATIONS_H_
 
 #include <vector>
-#include "ocs2_core/integration/ODE_Base.h"
+#include "ocs2_core/integration/OdeBase.h"
 
 namespace ocs2{
 
@@ -44,7 +44,7 @@ namespace ocs2{
  * @tparam SCALAR_T: data type
  */
 template <int DIM1, int DIM2=1, typename SCALAR_T=double>
-class LTI_Equations : public ODE_Base<DIM1*DIM2>
+class LTI_Equations : public OdeBase<DIM1*DIM2>
 {
 public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
@@ -53,10 +53,10 @@ public:
 		LTI_DIM_ = DIM1*DIM2
 	};
 
-	typedef Eigen::Matrix<SCALAR_T, DIM1, DIM2> state_t;
-	typedef Eigen::Matrix<SCALAR_T, LTI_DIM_, 1> vectorized_state_t;
-	typedef std::vector<state_t, Eigen::aligned_allocator<state_t>> state_array_t;
-	typedef std::vector<vectorized_state_t, Eigen::aligned_allocator<vectorized_state_t>> vectorized_state_array_t;
+	using state_t = Eigen::Matrix<SCALAR_T, DIM1, DIM2>;
+	using vectorized_state_t = Eigen::Matrix<SCALAR_T, LTI_DIM_, 1>;
+	using state_array_t = std::vector<state_t, Eigen::aligned_allocator<state_t>>;
+	using vectorized_state_array_t = std::vector<vectorized_state_t, Eigen::aligned_allocator<vectorized_state_t>>;
 
 	LTI_Equations() = default;
 

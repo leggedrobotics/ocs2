@@ -36,6 +36,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <Eigen/Dense>
 #include <vector>
 
+#include "OdeBase.h"
 #include "ocs2_core/Dimensions.h"
 
 namespace ocs2{
@@ -53,7 +54,7 @@ public:
 
 	using Ptr = std::shared_ptr<EventHandlerBase<STATE_DIM> >;
 
-	typedef Dimensions<STATE_DIM, 0> DIMENSIONS;
+	using DIMENSIONS = Dimensions<STATE_DIM, 0>;
 	using scalar_t = typename DIMENSIONS::scalar_t;
 	using scalar_array_t = typename DIMENSIONS::scalar_array_t;
 	using state_vector_t = typename DIMENSIONS::state_vector_t;
@@ -78,7 +79,7 @@ public:
 	 *
 	 * @param systemPtr: shared pointer to the integrator's system dynamics.
 	 */
-	void setSystem(const std::shared_ptr<ODE_Base<STATE_DIM>>& systemPtr) {
+	void setSystem(const std::shared_ptr<OdeBase<STATE_DIM>>& systemPtr) {
 
 		systemPtr_ = systemPtr;
 	}
@@ -117,7 +118,7 @@ protected:
 	/**
 	 * System dynamics used by integrator.
 	 */
-	std::shared_ptr<ODE_Base<STATE_DIM>> systemPtr_;
+	std::shared_ptr<OdeBase<STATE_DIM>> systemPtr_;
 
 };
 

@@ -36,7 +36,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <Eigen/Dense>
 
 #include "ocs2_core/Dimensions.h"
-#include "ocs2_core/integration/ODE_Base.h"
+#include "ocs2_core/integration/OdeBase.h"
 #include "ocs2_core/control/ControllerBase.h"
 #include "ocs2_core/logic/rules/LogicRulesBase.h"
 #include "ocs2_core/logic/rules/NullLogicRules.h"
@@ -52,19 +52,19 @@ namespace ocs2{
  * @tparam LOGIC_RULES_T: Logic Rules type (default NullLogicRules).
  */
 template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T=NullLogicRules>
-class ControlledSystemBase : public ODE_Base<STATE_DIM>
+class ControlledSystemBase : public OdeBase<STATE_DIM>
 {
 public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 	static_assert(std::is_base_of<LogicRulesBase, LOGIC_RULES_T>::value,
 			"LOGIC_RULES_T must inherit from LogicRulesBase");
 
-	typedef std::shared_ptr<ControlledSystemBase<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> > Ptr;
-	typedef std::shared_ptr<const ControlledSystemBase<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> > ConstPtr;
+	using Ptr = std::shared_ptr<ControlledSystemBase<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> >;
+	using ConstPtr = std::shared_ptr<const ControlledSystemBase<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> >;
 
-	using BASE = ODE_Base<STATE_DIM>;
+	using BASE = OdeBase<STATE_DIM>;
 
-	typedef Dimensions<STATE_DIM, INPUT_DIM> DIMENSIONS;
+	using DIMENSIONS = Dimensions<STATE_DIM, INPUT_DIM>;
 	using scalar_t = typename DIMENSIONS::scalar_t;
 	using scalar_array_t = typename DIMENSIONS::scalar_array_t;
 	using state_vector_t = typename DIMENSIONS::state_vector_t;
@@ -77,7 +77,7 @@ public:
 	using constraint2_vector_t = typename DIMENSIONS::constraint2_vector_t;
 	using dynamic_vector_t = typename DIMENSIONS::dynamic_vector_t;
 
-  typedef ControllerBase<STATE_DIM, INPUT_DIM> controller_t;
+  	using controller_t = ControllerBase<STATE_DIM, INPUT_DIM> ;
 
 	/**
 	 * Default constructor.

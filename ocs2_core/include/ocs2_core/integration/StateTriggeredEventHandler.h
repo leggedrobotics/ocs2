@@ -53,7 +53,7 @@ public:
 	 * Default constructor
 	 */
 	StateTriggeredEventHandler()
-	: BASE()
+	: BASE(), systemEventHandlerTriggered_(false), triggeredEventSurface_(0)
 	{
 		reset();
 	}

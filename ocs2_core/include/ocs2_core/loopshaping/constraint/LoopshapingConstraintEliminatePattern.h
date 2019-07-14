@@ -60,7 +60,7 @@ class LoopshapingConstraintEliminatePattern final: public LoopshapingConstraint<
   using typename BASE::filter_state_vector_t;
   using typename BASE::filter_input_vector_t;
 
-  LoopshapingConstraintEliminatePattern( std::shared_ptr<LoopshapingDefinition> loopshapingDefinition) : BASE(std::move(loopshapingDefinition)) {};
+  explicit LoopshapingConstraintEliminatePattern( std::shared_ptr<LoopshapingDefinition> loopshapingDefinition) : BASE(std::move(loopshapingDefinition)) {};
 
   LoopshapingConstraintEliminatePattern(const SYSTEM_CONSTRAINT &systemConstraint,
                                      std::shared_ptr<LoopshapingDefinition> loopshapingDefinition) : BASE(systemConstraint, std::move(loopshapingDefinition)) {};

@@ -35,7 +35,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <Eigen/Dense>
 
 #include <ocs2_core/Dimensions.h>
-#include <ocs2_core/integration/ODE_Base.h>
+#include <ocs2_core/integration/OdeBase.h>
 #include <ocs2_core/misc/LinearInterpolation.h>
 
 namespace ocs2{
@@ -47,7 +47,7 @@ namespace ocs2{
  * @tparam INPUT_DIM: Dimension of the control input space.
  */
 template <size_t STATE_DIM, size_t INPUT_DIM>
-class SLQ_RiccatiEquationsNormalized : public ODE_Base<(STATE_DIM*(STATE_DIM+1))/2 + 2*STATE_DIM + 1>
+class SLQ_RiccatiEquationsNormalized : public OdeBase<(STATE_DIM*(STATE_DIM+1))/2 + 2*STATE_DIM + 1>
 {
 public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
@@ -57,7 +57,7 @@ public:
 		S_DIM_ = (STATE_DIM*(STATE_DIM+1))/2 + 2*STATE_DIM + 1
 	};
 
-	using BASE = ODE_Base<S_DIM_>;
+	using BASE = OdeBase<S_DIM_>;
 
 	typedef Dimensions<STATE_DIM, INPUT_DIM> DIMENSIONS;
 	using scalar_t = typename DIMENSIONS::scalar_t;

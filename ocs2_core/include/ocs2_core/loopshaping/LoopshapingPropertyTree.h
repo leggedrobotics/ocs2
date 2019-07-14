@@ -11,7 +11,7 @@
 #include "LoopshapingFilter.h"
 
 namespace ocs2 {
-    namespace LoopshapingPropertyTree {
+    namespace loopshaping_property_tree {
         Filter readSISOFilter(const boost::property_tree::ptree& pt, std::string filterName, bool invert = false){
             // Get Sizes
             auto numRepeats = pt.get<size_t>(filterName + ".numRepeats");
@@ -117,8 +117,8 @@ namespace ocs2 {
             // Read from settings File
             boost::property_tree::ptree pt;
             boost::property_tree::read_info(settingsFile, pt);
-            Filter r_filter = LoopshapingPropertyTree::readMIMOFilter(pt, "r_filter");
-            Filter s_filter = LoopshapingPropertyTree::readMIMOFilter(pt, "s_inv_filter", true);
+            Filter r_filter = loopshaping_property_tree::readMIMOFilter(pt, "r_filter");
+            Filter s_filter = loopshaping_property_tree::readMIMOFilter(pt, "s_inv_filter", true);
             auto gamma = pt.get<double>("gamma");
 
             if (r_filter.getNumOutputs() > 0 && s_filter.getNumOutputs() > 0) {
@@ -137,7 +137,7 @@ namespace ocs2 {
                 }
             }
         }
-    }  // namespace LoopshapingPropertyTree
+    }  // namespace loopshaping_property_tree
 } // namespace ocs2
 
 #endif //OCS2_LOOPSHAPINGPROPERTYTREE_H

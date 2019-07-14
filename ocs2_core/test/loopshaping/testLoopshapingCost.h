@@ -50,7 +50,7 @@ class TestFixtureLoopShapingCost : public ::testing::Test {
 
   void SetUp() override {
     const std::string settingsFile = getAbsolutePathToConfigurationFile(CONFIG::fileName);
-    loopshapingDefinition_ = LoopshapingPropertyTree::load(settingsFile);
+    loopshapingDefinition_ = loopshaping_property_tree::load(settingsFile);
 
     // Set up state and input
     t = 0.5;
@@ -80,7 +80,7 @@ class TestFixtureLoopShapingCost : public ::testing::Test {
     testSystemCost.reset(new TestSystemCost(Q, R, x_sys_, u_sys_, Q_final, x_sys_, P));
 
     // Create Loopshaping costs
-    testLoopshapingCost = TestLoopshapingCost::Create(*testSystemCost, loopshapingDefinition_);
+    testLoopshapingCost = TestLoopshapingCost::create(*testSystemCost, loopshapingDefinition_);
   };
 
   std::shared_ptr<LoopshapingDefinition> loopshapingDefinition_;

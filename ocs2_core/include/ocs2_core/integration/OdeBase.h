@@ -42,12 +42,12 @@ namespace ocs2{
  * @tparam STATE_DIM: Dimension of the state space.
  */
 template <int STATE_DIM>
-class ODE_Base
+class OdeBase
 {
 public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-	typedef Dimensions<STATE_DIM, 0> DIMENSIONS;
+	using DIMENSIONS = Dimensions<STATE_DIM, 0>;
 	using scalar_t = typename DIMENSIONS::scalar_t;
 	using state_vector_t = typename DIMENSIONS::state_vector_t;
 	using dynamic_vector_t = typename DIMENSIONS::dynamic_vector_t;
@@ -55,20 +55,20 @@ public:
     /**
      * Default constructor
      */
-	ODE_Base()
+	OdeBase()
 	: numFunctionCalls_(0)
 	{}
 
 	/**
 	 * Default destructor
 	 */
-	virtual ~ODE_Base() = default;
+	virtual ~OdeBase() = default;
 
     /**
      * Default copy constructor
      */
-	ODE_Base(const ODE_Base& rhs)
-	: ODE_Base()
+	OdeBase(const OdeBase& rhs)
+	: numFunctionCalls_(0)
 	{}
 
 	/**

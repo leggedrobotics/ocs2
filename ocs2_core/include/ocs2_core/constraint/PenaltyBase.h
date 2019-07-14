@@ -23,7 +23,7 @@ class PenaltyBase {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-  typedef Dimensions<STATE_DIM, INPUT_DIM> DIMENSIONS;
+  using DIMENSIONS = Dimensions<STATE_DIM, INPUT_DIM>;
   using scalar_t = typename DIMENSIONS::scalar_t;
   using scalar_array_t = typename DIMENSIONS::scalar_array_t;
   using state_vector_t = typename DIMENSIONS::state_vector_t;

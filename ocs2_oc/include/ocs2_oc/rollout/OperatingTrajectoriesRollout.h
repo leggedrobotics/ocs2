@@ -179,7 +179,7 @@ public:
 		// Note: we don't push the state because the input is not yet defined since the next control
 		// policy is available)
 		bool eventAtFinalTime = numEvents>finalItr &&
-				logicRulesMachine.getEventTimes(partitionIndex)[finalItr]<finalTime+OCS2NumericTraits<scalar_t>::limit_epsilon();
+				logicRulesMachine.getEventTimes(partitionIndex)[finalItr]<finalTime+ OCS2NumericTraits<scalar_t>::limitEpsilon();
 
 		if (eventAtFinalTime) {
 			eventsPastTheEndIndeces.push_back( stateTrajectory.size() );

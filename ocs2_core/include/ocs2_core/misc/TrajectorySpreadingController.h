@@ -52,7 +52,7 @@ public:
 		input_dim_ = INPUT_DIM
 	};
 
-	typedef Dimensions<STATE_DIM, INPUT_DIM> DIMENSIONS;
+	using DIMENSIONS = Dimensions<STATE_DIM, INPUT_DIM>;
 	using scalar_t = typename DIMENSIONS::scalar_t;
 	using scalar_array_t = typename DIMENSIONS::scalar_array_t;
 	using state_vector_t = typename DIMENSIONS::state_vector_t;
@@ -65,9 +65,9 @@ public:
 	using state_input_matrix_t = typename DIMENSIONS::state_input_matrix_t;
 
 	using controller_t = LinearController<STATE_DIM, INPUT_DIM>;
-	using controller_array_t =  typename controller_t::array_t;
+	using controller_array_t = typename controller_t::array_t;
 
-	typedef std::pair<int,int> index_t;  // (partition, index)
+	using index_t = std::pair<int,int>;  // (partition, index)
 
 	/**
 	 * Constructor

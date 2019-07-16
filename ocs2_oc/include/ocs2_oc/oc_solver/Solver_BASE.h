@@ -127,7 +127,7 @@ public:
 
 	using cost_desired_trajectories_t = CostDesiredTrajectories<scalar_t>;
 
-	using logic_rules_machine_t = LogicRulesMachine<LOGIC_RULES_T>;
+	using logic_rules_machine_t = LogicRulesMachine;
 	using logic_rules_machine_ptr_t = typename logic_rules_machine_t::Ptr;
 
 	typedef ControllerBase<STATE_DIM, INPUT_DIM> controller_t;
@@ -273,7 +273,7 @@ public:
 	 *
 	 * @return a constant pointer to the logic rules.
 	 */
-	virtual const LOGIC_RULES_T* getLogicRulesPtr() const {
+	virtual const LogicRulesBase* getLogicRulesPtr() const {
 
 		return nullptr;
 	}
@@ -283,7 +283,7 @@ public:
 	 *
 	 * @return a pointer to the logic rules.
 	 */
-	virtual LOGIC_RULES_T* getLogicRulesPtr() {
+	virtual LogicRulesBase* getLogicRulesPtr() {
 
 		return nullptr;
 	}
@@ -293,7 +293,7 @@ public:
 	 *
 	 * @param logicRules: This class will be passed to all of the dynamics and derivatives classes through initializeModel() routine.
 	 */
-	virtual void setLogicRules(const LOGIC_RULES_T& logicRules) {}
+	virtual void setLogicRules(std::shared_ptr<LogicRulesBase> logicRules) {}
 
 	/**
 	 * Gets the cost function desired trajectories.

@@ -71,7 +71,7 @@ private:
  * @return
  */
 bool checkSolution(
-		const LogicRulesMachine<TestLogicRules>& logicRulesMachine,
+		const LogicRulesMachine& logicRulesMachine,
 		const std::vector<std::vector<double>>& eventTimesStockResult,
 		const std::vector<std::vector<size_t>>& switchedSystemIDsStockResult) {
 
@@ -97,8 +97,8 @@ bool checkSolution(
 
 TEST(testLogicRulesMachine, LogicRulesMachine)
 {
-	TestLogicRules logicRules;
-	LogicRulesMachine<TestLogicRules> logicRulesMachine(logicRules);
+	std::shared_ptr<TestLogicRules> logicRules(new TestLogicRules());
+	LogicRulesMachine logicRulesMachine(logicRules);
 
 	std::vector<double> partitioningTimes{0,1,2,3};
 
@@ -113,7 +113,7 @@ TEST(testLogicRulesMachine, LogicRulesMachine)
 
 	// No switch
 	logicRulesEventTimes = std::vector<double>{};
-	logicRules.set(logicRulesEventTimes);
+	logicRules->set(logicRulesEventTimes);
 	logicRulesMachine.setLogicRules(logicRules);
 	logicRulesMachine.updateLogicRules(partitioningTimes);
 
@@ -135,7 +135,7 @@ TEST(testLogicRulesMachine, LogicRulesMachine)
 
 	// switches at the end of partitions
 	logicRulesEventTimes = std::vector<double>{0, 1, 2, 3};
-	logicRules.set(logicRulesEventTimes);
+	logicRules->set(logicRulesEventTimes);
 	logicRulesMachine.setLogicRules(logicRules);
 	logicRulesMachine.updateLogicRules(partitioningTimes);
 
@@ -157,7 +157,7 @@ TEST(testLogicRulesMachine, LogicRulesMachine)
 
 	// swiches after time interval
 	logicRulesEventTimes = std::vector<double>{3, 4, 5, 6};
-	logicRules.set(logicRulesEventTimes);
+	logicRules->set(logicRulesEventTimes);
 	logicRulesMachine.setLogicRules(logicRules);
 	logicRulesMachine.updateLogicRules(partitioningTimes);
 
@@ -179,7 +179,7 @@ TEST(testLogicRulesMachine, LogicRulesMachine)
 
 	// switches before time interval
 	logicRulesEventTimes = std::vector<double>{-3, -2, -1, 0};
-	logicRules.set(logicRulesEventTimes);
+	logicRules->set(logicRulesEventTimes);
 	logicRulesMachine.setLogicRules(logicRules);
 	logicRulesMachine.updateLogicRules(partitioningTimes);
 
@@ -201,7 +201,7 @@ TEST(testLogicRulesMachine, LogicRulesMachine)
 
 	// switches in the middle
 	logicRulesEventTimes = std::vector<double>{0, 0.5, 1.5, 2.5};
-	logicRules.set(logicRulesEventTimes);
+	logicRules->set(logicRulesEventTimes);
 	logicRulesMachine.setLogicRules(logicRules);
 	logicRulesMachine.updateLogicRules(partitioningTimes);
 
@@ -223,7 +223,7 @@ TEST(testLogicRulesMachine, LogicRulesMachine)
 
 	// no switch in middle partition
 	logicRulesEventTimes = std::vector<double>{0.5, 2.5};
-	logicRules.set(logicRulesEventTimes);
+	logicRules->set(logicRulesEventTimes);
 	logicRulesMachine.setLogicRules(logicRules);
 	logicRulesMachine.updateLogicRules(partitioningTimes);
 
@@ -246,13 +246,13 @@ TEST(testLogicRulesMachine, LogicRulesMachine)
 
 TEST(testLogicRulesMachine, shortPartition)
 {
-	TestLogicRules logicRules;
-	LogicRulesMachine<TestLogicRules> logicRulesMachine(logicRules);
+	std::shared_ptr<TestLogicRules> logicRules(new TestLogicRules());
+	LogicRulesMachine logicRulesMachine(logicRules);
 
 	std::vector<double> partitioningTimes;
 
 	std::vector<double> logicRulesEventTimes{0.5, 2.5};
-	logicRules.set(logicRulesEventTimes);
+	logicRules->set(logicRulesEventTimes);
 	logicRulesMachine.setLogicRules(logicRules);
 
 	std::cerr << std::endl;

@@ -167,7 +167,7 @@ public:
 
 	using cost_desired_trajectories_t = typename BASE::cost_desired_trajectories_t;
 
-	using logic_rules_machine_t = LogicRulesMachine<LOGIC_RULES_T>;
+	using logic_rules_machine_t = LogicRulesMachine;
 	using logic_rules_machine_ptr_t = typename logic_rules_machine_t::Ptr;
 
 	/**
@@ -196,7 +196,7 @@ public:
 			  const operating_trajectories_base_t* operatingTrajectoriesPtr,
 			  const DDP_Settings& ddpSettings,
 			  const Rollout_Settings& rolloutSettings,
-			  const LOGIC_RULES_T* logicRulesPtr,
+			  std::shared_ptr<LogicRulesBase> logicRulesPtr,
 			  const cost_function_base_t* heuristicsFunctionPtr,
 			  const char* algorithmName);
 
@@ -585,21 +585,21 @@ public:
 	 *
 	 * @param logicRules: This class will be passed to all of the dynamics and derivatives classes through initializeModel() routine.
 	 */
-	void setLogicRules(const LOGIC_RULES_T& logicRules) override;
+	void setLogicRules(std::shared_ptr<LogicRulesBase> logicRules) override;
 
 	/**
 	 * Returns a constant pointer to the logic rules.
 	 *
 	 * @return a constant pointer to the logic rules.
 	 */
-	const LOGIC_RULES_T* getLogicRulesPtr() const override;
+	const LogicRulesBase* getLogicRulesPtr() const override;
 
 	/**
 	 * Returns a pointer to the logic rules.
 	 *
 	 * @return a pointer to the logic rules.
 	 */
-	LOGIC_RULES_T* getLogicRulesPtr() override;
+	LogicRulesBase* getLogicRulesPtr() override;
 
 	/**
 	 * Gets the cost function desired trajectories.

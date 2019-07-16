@@ -71,7 +71,7 @@ public:
 	using event_handler_t = SystemEventHandler<STATE_DIM>;
 	typedef ControlledSystemBase<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> controlled_system_base_t;
 
-	using logic_rules_machine_t = LogicRulesMachine<LOGIC_RULES_T>;
+	using logic_rules_machine_t = LogicRulesMachine;
 
 	using ode_base_t = IntegratorBase<STATE_DIM>;
 

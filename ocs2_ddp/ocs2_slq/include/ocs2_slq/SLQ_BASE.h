@@ -199,7 +199,7 @@ public:
 			  const cost_function_base_t* costFunctionPtr,
 			  const operating_trajectories_base_t* operatingTrajectoriesPtr,
 			  const SLQ_Settings& settings = SLQ_Settings(),
-			  const LOGIC_RULES_T* logicRulesPtr = nullptr,
+			  std::shared_ptr<LogicRulesBase> logicRulesPtr = nullptr,
 			  const cost_function_base_t* heuristicsFunctionPtr = nullptr);
 
 	/**

@@ -137,15 +137,16 @@ public:
 
 	typedef ControlledSystemBase<2,1,EXP0_LogicRules> Base;
 
-	EXP0_System()
-	: activeSubsystem_(0),
-	  subsystemDynamicsPtr_(2)
+	explicit EXP0_System(std::shared_ptr<const EXP0_LogicRules> logicRulesPtr) :
+	logicRulesPtr_(std::move(logicRulesPtr)),
+	activeSubsystem_(0),
+	subsystemDynamicsPtr_(2)
 	{
 		subsystemDynamicsPtr_[0] = std::allocate_shared<EXP0_Sys1, Eigen::aligned_allocator<EXP0_Sys1>>( Eigen::aligned_allocator<EXP0_Sys1>() );
 		subsystemDynamicsPtr_[1] = std::allocate_shared<EXP0_Sys2, Eigen::aligned_allocator<EXP0_Sys2>>( Eigen::aligned_allocator<EXP0_Sys2>() );
 	}
 
-	~EXP0_System() = default;
+	~EXP0_System() override = default;
 
 	EXP0_System(const EXP0_System& other)
 	: activeSubsystem_(other.activeSubsystem_),
@@ -153,16 +154,7 @@ public:
 	{
 		subsystemDynamicsPtr_[0] = Base::Ptr(other.subsystemDynamicsPtr_[0]->clone());
 		subsystemDynamicsPtr_[1] = Base::Ptr(other.subsystemDynamicsPtr_[1]->clone());
-	}
-
-	void initializeModel(
-			LogicRulesMachine<EXP0_LogicRules>& logicRulesMachine,
-			const size_t& partitionIndex,
-			const char* algorithmName=NULL) final {
-
-		Base::initializeModel(logicRulesMachine, partitionIndex, algorithmName);
-
-		findActiveSubsystemFnc_ = std::move( logicRulesMachine.getHandleToFindActiveEventCounter(partitionIndex) );
+		logicRulesPtr_ = other.logicRulesPtr_;
 	}
 
 	EXP0_System* clone() const final {
@@ -172,15 +164,14 @@ public:
 	void computeFlowMap(const scalar_t& t, const state_vector_t& x, const input_vector_t& u,
 			state_vector_t& dxdt) final {
 
-		activeSubsystem_ = findActiveSubsystemFnc_(t);
-
+		activeSubsystem_ = logicRulesPtr_->getEventTimeCount(t);
 		subsystemDynamicsPtr_[activeSubsystem_]->computeFlowMap(t, x, u, dxdt);
 	}
 
 public:
 	int activeSubsystem_;
-	std::function<size_t(scalar_t)> findActiveSubsystemFnc_;
 	std::vector<Base::Ptr> subsystemDynamicsPtr_;
+	std::shared_ptr<const EXP0_LogicRules> logicRulesPtr_;
 };
 
 /******************************************************************************************************/
@@ -233,9 +224,10 @@ public:
 
 	typedef DerivativesBase<2,1,EXP0_LogicRules> Base;
 
-	EXP0_SystemDerivative()
-	: activeSubsystem_(0),
-	  subsystemDerivativesPtr_(2)
+	explicit EXP0_SystemDerivative(std::shared_ptr<const EXP0_LogicRules> logicRulesPtr) :
+			logicRulesPtr_(std::move(logicRulesPtr)),
+			activeSubsystem_(0),
+			subsystemDerivativesPtr_(2)
 	{
 		subsystemDerivativesPtr_[0] = std::allocate_shared<EXP0_SysDerivative1, Eigen::aligned_allocator<EXP0_SysDerivative1>>(
 				Eigen::aligned_allocator<EXP0_SysDerivative1>() );
@@ -251,18 +243,9 @@ public:
 	{
 		subsystemDerivativesPtr_[0] = Base::Ptr(other.subsystemDerivativesPtr_[0]->clone());
 		subsystemDerivativesPtr_[1] = Base::Ptr(other.subsystemDerivativesPtr_[1]->clone());
+		logicRulesPtr_ = other.logicRulesPtr_;
 	}
 
-
-	void initializeModel(
-			LogicRulesMachine<EXP0_LogicRules>& logicRulesMachine,
-			const size_t& partitionIndex,
-			const char* algorithmName=NULL) final {
-
-		Base::initializeModel(logicRulesMachine, partitionIndex, algorithmName);
-
-		findActiveSubsystemFnc_ = std::move( logicRulesMachine.getHandleToFindActiveEventCounter(partitionIndex) );
-	}
 
 	EXP0_SystemDerivative* clone() const final {
 		return new EXP0_SystemDerivative(*this);
@@ -271,7 +254,7 @@ public:
 	void setCurrentStateAndControl(const scalar_t& t, const state_vector_t& x, const input_vector_t& u) final {
 
 		Base::setCurrentStateAndControl(t, x, u);
-		activeSubsystem_ = findActiveSubsystemFnc_(t);
+		activeSubsystem_ = logicRulesPtr_->getEventTimeCount(t);
 		subsystemDerivativesPtr_[activeSubsystem_]->setCurrentStateAndControl(t, x, u);
 	}
 
@@ -285,7 +268,7 @@ public:
 
 public:
 	int activeSubsystem_;
-	std::function<size_t(scalar_t)> findActiveSubsystemFnc_;
+  	std::shared_ptr<const EXP0_LogicRules> logicRulesPtr_;
 	std::vector<Base::Ptr> subsystemDerivativesPtr_;
 
 };
@@ -366,9 +349,10 @@ public:
 
 	typedef CostFunctionBase<2,1,EXP0_LogicRules> Base;
 
-	EXP0_CostFunction()
-	: activeSubsystem_(0),
-	  subsystemCostsPtr_(2)
+	explicit EXP0_CostFunction(std::shared_ptr<const EXP0_LogicRules> logicRulesPtr) :
+        logicRulesPtr_(std::move(logicRulesPtr)),
+	    activeSubsystem_(0),
+	    subsystemCostsPtr_(2)
 	{
 		subsystemCostsPtr_[0] = std::allocate_shared<EXP0_CostFunction1, Eigen::aligned_allocator<EXP0_CostFunction1>>(
 				Eigen::aligned_allocator<EXP0_CostFunction1>() );
@@ -384,16 +368,7 @@ public:
 	{
 		subsystemCostsPtr_[0] = Base::Ptr(other.subsystemCostsPtr_[0]->clone());
 		subsystemCostsPtr_[1] = Base::Ptr(other.subsystemCostsPtr_[1]->clone());
-	}
-
-	void initializeModel(
-			LogicRulesMachine<EXP0_LogicRules>& logicRulesMachine,
-			const size_t& partitionIndex,
-			const char* algorithmName=NULL) final {
-
-		Base::initializeModel(logicRulesMachine, partitionIndex, algorithmName);
-
-		findActiveSubsystemFnc_ = std::move( logicRulesMachine.getHandleToFindActiveEventCounter(partitionIndex) );
+        logicRulesPtr_ = other.logicRulesPtr_;
 	}
 
 	EXP0_CostFunction* clone() const final {
@@ -403,7 +378,7 @@ public:
 	void setCurrentStateAndControl(const scalar_t& t, const state_vector_t& x, const input_vector_t& u) final {
 
 		Base::setCurrentStateAndControl(t, x, u);
-		activeSubsystem_ = findActiveSubsystemFnc_(t);
+		activeSubsystem_ = logicRulesPtr_->getEventTimeCount(t);
 		subsystemCostsPtr_[activeSubsystem_]->setCurrentStateAndControl(t, x, u);
 	}
 
@@ -440,7 +415,7 @@ public:
 
 public:
 	int activeSubsystem_;
-	std::function<size_t(scalar_t)> findActiveSubsystemFnc_;
+    std::shared_ptr<const EXP0_LogicRules> logicRulesPtr_;
 	std::vector<std::shared_ptr<CostFunctionBase<2,1,EXP0_LogicRules> > > subsystemCostsPtr_;
 
 };

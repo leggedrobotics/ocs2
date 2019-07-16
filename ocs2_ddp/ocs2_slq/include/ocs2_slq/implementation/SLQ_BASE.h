@@ -41,7 +41,7 @@ SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::SLQ_BASE(
 		const cost_function_base_t* costFunctionPtr,
 		const operating_trajectories_base_t* operatingTrajectoriesPtr,
 		const SLQ_Settings& settings /*= SLQ_Settings()*/,
-		const LOGIC_RULES_T* logicRulesPtr /*= nullptr*/,
+		std::shared_ptr<LogicRulesBase> logicRulesPtr /*= nullptr*/,
 		const cost_function_base_t* heuristicsFunctionPtr /* = nullptr*/)
 
 		: BASE(systemDynamicsPtr,
@@ -51,7 +51,7 @@ SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::SLQ_BASE(
 				operatingTrajectoriesPtr,
 				settings.ddpSettings_,
 				settings.rolloutSettings_,
-				logicRulesPtr,
+				std::move(logicRulesPtr),
 				heuristicsFunctionPtr,
 				"SLQ")
 		, settings_(settings)

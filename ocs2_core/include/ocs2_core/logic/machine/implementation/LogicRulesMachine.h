@@ -32,20 +32,18 @@ namespace ocs2 {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <class LOGIC_RULES_T>
-void LogicRulesMachine<LOGIC_RULES_T>::setLogicRules(const LOGIC_RULES_T& logicRules) {
+void LogicRulesMachine::setLogicRules(std::shared_ptr<LogicRulesBase> logicRules) {
 
 	logicRulesUpdated();
 	newLogicRulesInBuffer_ = true;
 
-	logicRulesBuffer_ = logicRules;
+	logicRulesBuffer_ = std::move(logicRules);
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <class LOGIC_RULES_T>
-void LogicRulesMachine<LOGIC_RULES_T>::logicRulesUpdated() {
+void LogicRulesMachine::logicRulesUpdated() {
 
 	logicRulesModified_ = true;
 }
@@ -53,27 +51,23 @@ void LogicRulesMachine<LOGIC_RULES_T>::logicRulesUpdated() {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <class LOGIC_RULES_T>
-LOGIC_RULES_T* LogicRulesMachine<LOGIC_RULES_T>::getLogicRulesPtr() {
+LogicRulesBase* LogicRulesMachine::getLogicRulesPtr() {
 
-	return &logicRules_;
+	return logicRules_.get();
+}
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+const LogicRulesBase* LogicRulesMachine::getLogicRulesPtr() const {
+
+	return logicRules_.get();
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <class LOGIC_RULES_T>
-const LOGIC_RULES_T* LogicRulesMachine<LOGIC_RULES_T>::getLogicRulesPtr() const {
-
-	return &logicRules_;
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-template <class LOGIC_RULES_T>
-const typename LogicRulesMachine<LOGIC_RULES_T>::scalar_array_t&
-	LogicRulesMachine<LOGIC_RULES_T>::getEventTimes(size_t index) const {
+const typename LogicRulesMachine::scalar_array_t&
+	LogicRulesMachine::getEventTimes(size_t index) const {
 
 	return eventTimesStock_[index];
 }
@@ -81,9 +75,8 @@ const typename LogicRulesMachine<LOGIC_RULES_T>::scalar_array_t&
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <class LOGIC_RULES_T>
-const typename LogicRulesMachine<LOGIC_RULES_T>::size_array_t&
-	LogicRulesMachine<LOGIC_RULES_T>::getEventCounters(size_t index) const {
+const typename LogicRulesMachine::size_array_t&
+	LogicRulesMachine::getEventCounters(size_t index) const {
 
 	return eventCountersStock_[index];
 }
@@ -91,9 +84,8 @@ const typename LogicRulesMachine<LOGIC_RULES_T>::size_array_t&
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <class LOGIC_RULES_T>
-const typename LogicRulesMachine<LOGIC_RULES_T>::scalar_array_t&
-	LogicRulesMachine<LOGIC_RULES_T>::getSwitchingTimes(size_t index) const {
+const typename LogicRulesMachine::scalar_array_t&
+	LogicRulesMachine::getSwitchingTimes(size_t index) const {
 
 	return switchingTimesStock_[index];
 }
@@ -101,9 +93,8 @@ const typename LogicRulesMachine<LOGIC_RULES_T>::scalar_array_t&
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <class LOGIC_RULES_T>
-const typename LogicRulesMachine<LOGIC_RULES_T>::scalar_array_t&
-	LogicRulesMachine<LOGIC_RULES_T>::getPartitioningTimes() const {
+const typename LogicRulesMachine::scalar_array_t&
+	LogicRulesMachine::getPartitioningTimes() const {
 
 	return partitioningTimes_;
 }
@@ -111,9 +102,8 @@ const typename LogicRulesMachine<LOGIC_RULES_T>::scalar_array_t&
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <class LOGIC_RULES_T>
-std::function<size_t(typename LogicRulesMachine<LOGIC_RULES_T>::scalar_t)>
-	LogicRulesMachine<LOGIC_RULES_T>::getHandleToFindActiveEventCounter(
+std::function<size_t(typename LogicRulesMachine::scalar_t)>
+	LogicRulesMachine::getHandleToFindActiveEventCounter(
 		size_t partitionIndex) const {
 
 	const size_array_t& eventCounters = eventCountersStock_[partitionIndex];
@@ -137,17 +127,14 @@ std::function<size_t(typename LogicRulesMachine<LOGIC_RULES_T>::scalar_t)>
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <class LOGIC_RULES_T>
-size_t LogicRulesMachine<LOGIC_RULES_T>::getNumEventCounters(size_t partitionIndex) const {
+size_t LogicRulesMachine::getNumEventCounters(size_t partitionIndex) const {
 
 	return eventCountersStock_[partitionIndex].size();
 }
-
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <class LOGIC_RULES_T>
-size_t LogicRulesMachine<LOGIC_RULES_T>::getNumEvents(size_t partitionIndex) const  {
+size_t LogicRulesMachine::getNumEvents(size_t partitionIndex) const  {
 
 	return eventTimesStock_[partitionIndex].size();
 }
@@ -155,8 +142,7 @@ size_t LogicRulesMachine<LOGIC_RULES_T>::getNumEvents(size_t partitionIndex) con
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <class LOGIC_RULES_T>
-const size_t& LogicRulesMachine<LOGIC_RULES_T>::getNumPartitions() const  {
+const size_t& LogicRulesMachine::getNumPartitions() const  {
 
 	return numPartitions_;
 }
@@ -164,8 +150,7 @@ const size_t& LogicRulesMachine<LOGIC_RULES_T>::getNumPartitions() const  {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <class LOGIC_RULES_T>
-bool LogicRulesMachine<LOGIC_RULES_T>::updateLogicRules(
+bool LogicRulesMachine::updateLogicRules(
 		const scalar_array_t& partitioningTimes) {
 
 	// if logic rules is modified update the logic
@@ -200,8 +185,7 @@ bool LogicRulesMachine<LOGIC_RULES_T>::updateLogicRules(
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <class LOGIC_RULES_T>
-void LogicRulesMachine<LOGIC_RULES_T>::findEventsDistribution(
+void LogicRulesMachine::findEventsDistribution(
 		const scalar_array_t& partitioningTimes,
 		std::vector<scalar_array_t>& eventTimesStock,
 		std::vector<scalar_array_t>& switchingTimesStock,
@@ -318,10 +302,9 @@ void LogicRulesMachine<LOGIC_RULES_T>::findEventsDistribution(
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <class LOGIC_RULES_T>
-void LogicRulesMachine<LOGIC_RULES_T>::display() const {
+void LogicRulesMachine::display() const {
 
-	this->getLogicRulesPtr()->display();
+	logicRules_->display();
 
 	size_t itr;
 

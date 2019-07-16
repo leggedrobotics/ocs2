@@ -67,7 +67,7 @@ public:
 
 	typedef SystemOperatingTrajectoriesBase<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> operating_trajectories_t;
 
-	using logic_rules_machine_t = LogicRulesMachine<LOGIC_RULES_T>;
+	using logic_rules_machine_t = LogicRulesMachine;
 
 	/**
 	 * Constructor.

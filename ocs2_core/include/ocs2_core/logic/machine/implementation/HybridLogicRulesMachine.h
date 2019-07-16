@@ -32,8 +32,8 @@ namespace ocs2{
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <class logic_rules_template_t>
-void HybridLogicRulesMachine<logic_rules_template_t>::setupLogicMachine(
+
+void HybridLogicRulesMachine::setupLogicMachine(
 		const scalar_array_t& partitioningTimes,
 		const scalar_t& initTime,
 		const size_t& initActivePartition,
@@ -43,25 +43,25 @@ void HybridLogicRulesMachine<logic_rules_template_t>::setupLogicMachine(
 	//****************** LogicRule *****************//
 	//**********************************************//
 	// delete the future event information
-	size_t index = std::lower_bound(BASE::getLogicRulesPtr()->eventTimes().begin(), BASE::getLogicRulesPtr()->eventTimes().end(), initTime) -
-					BASE::getLogicRulesPtr()->eventTimes().begin();
-	BASE::getLogicRulesPtr()->eventTimes().erase(
-			BASE::getLogicRulesPtr()->eventTimes().begin()+index, BASE::getLogicRulesPtr()->eventTimes().end());
-	BASE::getLogicRulesPtr()->subsystemsSequence().erase(
-			BASE::getLogicRulesPtr()->subsystemsSequence().begin()+index+1, BASE::getLogicRulesPtr()->subsystemsSequence().end());
+	size_t index = std::lower_bound(hybridLogicRules_->eventTimes().begin(), hybridLogicRules_->eventTimes().end(), initTime) -
+					hybridLogicRules_->eventTimes().begin();
+	hybridLogicRules_->eventTimes().erase(
+			hybridLogicRules_->eventTimes().begin()+index, hybridLogicRules_->eventTimes().end());
+	hybridLogicRules_->subsystemsSequence().erase(
+			hybridLogicRules_->subsystemsSequence().begin()+index+1, hybridLogicRules_->subsystemsSequence().end());
 
 	// if the current subsystem is not the same as expected.
-	if (BASE::getLogicRulesPtr()->subsystemsSequence().empty()) {
-		BASE::getLogicRulesPtr()->subsystemsSequence().push_back(initSubsystemID);
+	if (hybridLogicRules_->subsystemsSequence().empty()) {
+		hybridLogicRules_->subsystemsSequence().push_back(initSubsystemID);
 
-	} else if (BASE::getLogicRulesPtr()->subsystemsSequence().back()!=initSubsystemID) {
-		BASE::getLogicRulesPtr()->eventTimes().push_back(initTime);
-		BASE::getLogicRulesPtr()->subsystemsSequence().push_back(initSubsystemID);
+	} else if (hybridLogicRules_->subsystemsSequence().back()!=initSubsystemID) {
+		hybridLogicRules_->eventTimes().push_back(initTime);
+		hybridLogicRules_->subsystemsSequence().push_back(initSubsystemID);
 	}
 	// update logic rules
-	BASE::getLogicRulesPtr()->update();
+	hybridLogicRules_->update();
 
-	size_t initEventCounter = BASE::getLogicRulesPtr()->subsystemsSequence().size()-1;
+	size_t initEventCounter = hybridLogicRules_->subsystemsSequence().size()-1;
 
 	//**********************************************//
 	//**************** LogicMachine ****************//
@@ -115,8 +115,8 @@ void HybridLogicRulesMachine<logic_rules_template_t>::setupLogicMachine(
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <class logic_rules_template_t>
-void HybridLogicRulesMachine<logic_rules_template_t>::initLogicMachine(
+
+void HybridLogicRulesMachine::initLogicMachine(
 		const size_t& partitionIndex) {
 
 	if (BASE::eventCountersStock_[partitionIndex].empty()) {
@@ -127,26 +127,26 @@ void HybridLogicRulesMachine<logic_rules_template_t>::initLogicMachine(
 			throw std::runtime_error("ocs2::initLogicMachine function should have been called for the previous partition first.");
 		}
 
-		BASE::eventCountersStock_[partitionIndex].push_back(BASE::getLogicRulesPtr()->subsystemsSequence().size()-1);
+		BASE::eventCountersStock_[partitionIndex].push_back(hybridLogicRules_->subsystemsSequence().size()-1);
 	}
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <class logic_rules_template_t>
-void HybridLogicRulesMachine<logic_rules_template_t>::pushBack(
+
+void HybridLogicRulesMachine::pushBack(
     const size_t &partitionIndex,
     const scalar_t &eventTime,
     const size_t &subsystemID) {
 
-	BASE::getLogicRulesPtr()->eventTimes().push_back(eventTime);
-	BASE::getLogicRulesPtr()->subsystemsSequence().push_back(subsystemID);
-	BASE::getLogicRulesPtr()->update();
+	hybridLogicRules_->eventTimes().push_back(eventTime);
+	hybridLogicRules_->subsystemsSequence().push_back(subsystemID);
+	hybridLogicRules_->update();
 
 	BASE::eventTimesStock_[partitionIndex].push_back(eventTime);
 
-	BASE::eventCountersStock_[partitionIndex].push_back(BASE::getLogicRulesPtr()->subsystemsSequence().size()-1);
+	BASE::eventCountersStock_[partitionIndex].push_back(hybridLogicRules_->subsystemsSequence().size()-1);
 
 	BASE::switchingTimesStock_[partitionIndex].push_back(BASE::switchingTimesStock_[partitionIndex].back());
 	*(BASE::switchingTimesStock_[partitionIndex].end()-2) = eventTime;
@@ -155,8 +155,8 @@ void HybridLogicRulesMachine<logic_rules_template_t>::pushBack(
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <class logic_rules_template_t>
-void HybridLogicRulesMachine<logic_rules_template_t>::display() const {
+
+void HybridLogicRulesMachine::display() const {
 
 	BASE::display();
 
@@ -167,7 +167,7 @@ void HybridLogicRulesMachine<logic_rules_template_t>::display() const {
 		itr++;
 
 		for (auto& i : eventCounters) {
-			std::cerr << BASE::getLogicRulesPtr()->subsystemsSequence()[i] << ", ";
+			std::cerr << hybridLogicRules_->subsystemsSequence()[i] << ", ";
 		}
 		if (!eventCounters.empty()) {  std::cerr << "\b\b";
 		}

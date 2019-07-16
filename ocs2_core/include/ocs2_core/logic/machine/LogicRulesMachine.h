@@ -49,19 +49,13 @@ namespace ocs2{
  * The logic rules machine class.
  * Note that if logic rules are modified through get methods (e.g. getLogicRulesPtr),
  * user should call logicRulesUpdated(); otherwise the changes may not become effective.
- *
- * @tparam LOGIC_RULES_T: logical rule type.
  */
-template <class LOGIC_RULES_T>
 class LogicRulesMachine
 {
 public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-	static_assert(std::is_base_of<LogicRulesBase, LOGIC_RULES_T>::value,
-			"LOGIC_RULES_T must inherit from LogicRulesBase");
-
-	using Ptr = std::shared_ptr<LogicRulesMachine<LOGIC_RULES_T> >;
+	using Ptr = std::shared_ptr<LogicRulesMachine>;
 
 	using DIMENSIONS = Dimensions<0, 0>;
 	using size_array_t = DIMENSIONS::size_array_t;
@@ -86,9 +80,8 @@ public:
 	 *
 	 * @param logicRules: The logic rules class.
 	 */
-	explicit LogicRulesMachine(const LOGIC_RULES_T& logicRules)
-	: logicRules_(logicRules)
-	, logicRulesBuffer_(logicRules)
+	explicit LogicRulesMachine(std::shared_ptr<LogicRulesBase> logicRules)
+	: logicRules_(std::move(logicRules))
 	, logicRulesModified_(false)
 	, newLogicRulesInBuffer_(false)
 	, numPartitions_(1)
@@ -120,10 +113,10 @@ public:
 
 	/**
 	 * Sets a new logic rules class.
-	 *
+	 * This overwrite the previous logic rules on the next updateLogicRules call
 	 * @param [in] logicRules: The new logic rules class
 	 */
-	void setLogicRules(const LOGIC_RULES_T& logicRules);
+	void setLogicRules(std::shared_ptr<LogicRulesBase> logicRules);
 
 	/**
 	 * This causes that logicMachine updates itself in the next call of the SLQ::run().
@@ -136,14 +129,14 @@ public:
 	 *
 	 * @return pointer to active logic rules class
 	 */
-	LOGIC_RULES_T* getLogicRulesPtr();
+	LogicRulesBase* getLogicRulesPtr();
 
 	/**
 	 * Get the pointer to the active logic rules class
 	 *
 	 * @return pointer to active logic rules class
 	 */
-	const LOGIC_RULES_T* getLogicRulesPtr() const;
+	const LogicRulesBase* getLogicRulesPtr() const;
 
 	/**
 	 * Gets the event times associated to the partition number index.
@@ -235,8 +228,8 @@ public:
 
 
 protected:
-	LOGIC_RULES_T logicRules_;
-	LOGIC_RULES_T logicRulesBuffer_;
+  	std::shared_ptr<LogicRulesBase> logicRules_;
+	std::shared_ptr<LogicRulesBase> logicRulesBuffer_;
 	std::atomic<bool> logicRulesModified_;
 	std::atomic<bool> newLogicRulesInBuffer_;
 

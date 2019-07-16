@@ -79,7 +79,7 @@ public:
 	using input_vector_t = typename DIMENSIONS::input_vector_t;
 	using input_vector_array_t = typename DIMENSIONS::input_vector_array_t;
 
-	using logic_rules_machine_t = LogicRulesMachine<LOGIC_RULES_T>;
+	using logic_rules_machine_t = LogicRulesMachine;
 
 	typedef ControllerBase<STATE_DIM, INPUT_DIM> controller_t;
 

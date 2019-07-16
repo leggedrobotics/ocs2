@@ -40,20 +40,16 @@ namespace ocs2{
 /**
  * This class allows to construct the Logic Rules Machine on fly. This class is employed in the State-Triggered SLQ forward pass.
  *
- * @tparam LOGIC_RULES_T: Logic Rules type.
  */
-template <class LOGIC_RULES_T>
-class HybridLogicRulesMachine : public LogicRulesMachine<LOGIC_RULES_T>
+class HybridLogicRulesMachine : public LogicRulesMachine
 {
 public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-	static_assert(std::is_base_of<HybridLogicRules, LOGIC_RULES_T>::value,
-			"LOGIC_RULES_T must inherit from HybridLogicRules");
 
-	using BASE = LogicRulesMachine<LOGIC_RULES_T>;
-	using scalar_t = typename BASE::scalar_t;
-	using scalar_array_t = typename BASE::scalar_array_t;
-	using size_array_t = typename BASE::size_array_t;
+	using BASE = LogicRulesMachine;
+	using typename BASE::scalar_t;
+	using typename BASE::scalar_array_t;
+	using typename BASE::size_array_t;
 
 	/**
 	 * Default constructor
@@ -67,8 +63,9 @@ public:
 	 *
 	 * @param logicRules: The logic rules class.
 	 */
-	explicit HybridLogicRulesMachine(const LOGIC_RULES_T& logicRules)
-	: BASE(logicRules)
+	explicit HybridLogicRulesMachine(std::shared_ptr<HybridLogicRules> logicRules)
+	: BASE(logicRules),
+	  hybridLogicRules_(logicRules)
 	{}
 
 	/**
@@ -130,6 +127,7 @@ public:
 			const size_t &subsystemID);
 
 protected:
+  	std::shared_ptr<HybridLogicRules> hybridLogicRules_;
 
 };
 

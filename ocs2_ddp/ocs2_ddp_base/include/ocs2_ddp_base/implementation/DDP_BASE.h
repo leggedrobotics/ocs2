@@ -42,7 +42,7 @@ DDP_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::DDP_BASE (
 		const operating_trajectories_base_t* operatingTrajectoriesPtr,
 		const DDP_Settings& ddpSettings,
 		const Rollout_Settings& rolloutSettings,
-		const LOGIC_RULES_T* logicRulesPtr,
+		std::shared_ptr<LogicRulesBase> logicRulesPtr,
 		const cost_function_base_t* heuristicsFunctionPtr,
 		const char* algorithmName)
 	: BASE()
@@ -56,9 +56,10 @@ DDP_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::DDP_BASE (
 	, iteration_(0)
 {
 	if (logicRulesPtr != nullptr) {
-		logicRulesMachinePtr_ = logic_rules_machine_ptr_t( new logic_rules_machine_t(*logicRulesPtr) );
+		logicRulesMachinePtr_ = logic_rules_machine_ptr_t( new logic_rules_machine_t(std::move(logicRulesPtr)) );
 	} else {
-		logicRulesMachinePtr_ = logic_rules_machine_ptr_t( new logic_rules_machine_t(LOGIC_RULES_T()) );
+		std::shared_ptr<NullLogicRules> nullLogicRules(new NullLogicRules());
+		logicRulesMachinePtr_ = logic_rules_machine_ptr_t( new logic_rules_machine_t(nullLogicRules) );
 	}
 
 	// Dynamics, Constraints, derivatives, and cost
@@ -1552,16 +1553,16 @@ const typename DDP_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::logic_rules_machin
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void DDP_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::setLogicRules(const LOGIC_RULES_T& logicRules) {
+void DDP_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::setLogicRules(std::shared_ptr<LogicRulesBase> logicRules) {
 
-	logicRulesMachinePtr_->setLogicRules(logicRules);
+	logicRulesMachinePtr_->setLogicRules(std::move(logicRules));
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-const LOGIC_RULES_T* DDP_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::getLogicRulesPtr() const {
+const LogicRulesBase* DDP_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::getLogicRulesPtr() const {
 
 	return logicRulesMachinePtr_->getLogicRulesPtr();
 }
@@ -1570,7 +1571,7 @@ const LOGIC_RULES_T* DDP_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::getLogicRule
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-LOGIC_RULES_T* DDP_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::getLogicRulesPtr() {
+LogicRulesBase* DDP_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::getLogicRulesPtr() {
 
 	return logicRulesMachinePtr_->getLogicRulesPtr();
 }

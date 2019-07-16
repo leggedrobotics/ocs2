@@ -73,8 +73,8 @@ public:
 	using state_triggered_event_handler_t = StateTriggeredEventHandler<STATE_DIM>;
 	typedef ControlledSystemBase<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> controlled_system_base_t;
 
-	using logic_rules_machine_t = LogicRulesMachine<LOGIC_RULES_T>;
-	using hybrid_logic_rules_machine_t = HybridLogicRulesMachine<LOGIC_RULES_T>;
+	using logic_rules_machine_t = LogicRulesMachine;
+	using hybrid_logic_rules_machine_t = HybridLogicRulesMachine;
 
 	using ode_base_t = IntegratorBase<STATE_DIM>;
 

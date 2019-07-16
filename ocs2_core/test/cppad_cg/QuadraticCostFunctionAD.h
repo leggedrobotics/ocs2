@@ -162,10 +162,7 @@ public:
 	 * @param [in] algorithmName: The algorithm that class this class (default not defined).
 	 * @return The the logic variables.
 	 */
-	logic_variable_t getlogicVariables(
-			LogicRulesMachine<LOGIC_RULES_T>& logicRulesMachine,
-			const size_t& partitionIndex,
-			const char* algorithmName = nullptr) {
+	logic_variable_t getlogicVariables(scalar_t time) {
 
 		return logic_variable_t::Zero();
 	}

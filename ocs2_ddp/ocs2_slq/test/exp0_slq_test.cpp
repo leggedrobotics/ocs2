@@ -45,27 +45,7 @@ enum {
 };
 
 TEST(exp0_slq_test, exp0_slq_test) {
-  // system dynamics
-  EXP0_System systemDynamics;
 
-  // system derivatives
-  EXP0_SystemDerivative systemDerivative;
-
-  // system constraints
-  EXP0_SystemConstraint systemConstraint;
-
-  // system cost functions
-  EXP0_CostFunction systemCostFunction;
-
-  // system operatingTrajectories
-  Eigen::Matrix<double, 2, 1> stateOperatingPoint = Eigen::Matrix<double, 2, 1>::Zero();
-  Eigen::Matrix<double, 1, 1> inputOperatingPoint = Eigen::Matrix<double, 1, 1>::Zero();
-  EXP0_SystemOperatingTrajectories operatingTrajectories(stateOperatingPoint, inputOperatingPoint);
-
-
-  /******************************************************************************************************/
-  /******************************************************************************************************/
-  /******************************************************************************************************/
   SLQ_Settings slqSettings;
   slqSettings.ddpSettings_.displayInfo_ = true;
   slqSettings.ddpSettings_.displayShortSummary_ = true;
@@ -85,7 +65,7 @@ TEST(exp0_slq_test, exp0_slq_test) {
 
   // switching times
   std::vector<double> switchingTimes{0.1897};
-  EXP0_LogicRules logicRules(switchingTimes);
+  std::shared_ptr<EXP0_LogicRules> logicRules(new EXP0_LogicRules(switchingTimes));
 
   double startTime = 0.0;
   double finalTime = 2.0;
@@ -101,17 +81,40 @@ TEST(exp0_slq_test, exp0_slq_test) {
   /******************************************************************************************************/
   /******************************************************************************************************/
   /******************************************************************************************************/
+
+  // system dynamics
+  EXP0_System systemDynamics(logicRules);
+
+  // system derivatives
+  EXP0_SystemDerivative systemDerivative(logicRules);
+
+  // system constraints
+  EXP0_SystemConstraint systemConstraint;
+
+  // system cost functions
+  EXP0_CostFunction systemCostFunction(logicRules);
+
+  // system operatingTrajectories
+  Eigen::Matrix<double, 2, 1> stateOperatingPoint = Eigen::Matrix<double, 2, 1>::Zero();
+  Eigen::Matrix<double, 1, 1> inputOperatingPoint = Eigen::Matrix<double, 1, 1>::Zero();
+  EXP0_SystemOperatingTrajectories operatingTrajectories(stateOperatingPoint, inputOperatingPoint);
+
+
+  /******************************************************************************************************/
+  /******************************************************************************************************/
+  /******************************************************************************************************/
+
   // SLQ - single-thread version
   SLQ<STATE_DIM, INPUT_DIM, EXP0_LogicRules> slqST(
       &systemDynamics, &systemDerivative,
       &systemConstraint, &systemCostFunction,
-      &operatingTrajectories, slqSettings, &logicRules);
+      &operatingTrajectories, slqSettings, logicRules);
 
   // SLQ - multi-thread version
 //  SLQ_MP<STATE_DIM, INPUT_DIM, EXP0_LogicRules> slqMT(
 //		  &systemDynamics, &systemDerivative,
 //		  &systemConstraint, &systemCostFunction,
-//		  &operatingTrajectories, slqSettings, &logicRules);
+//		  &operatingTrajectories, slqSettings, logicRules);
 
   // run single core SLQ
   if (slqSettings.ddpSettings_.displayInfo_ || slqSettings.ddpSettings_.displayShortSummary_)

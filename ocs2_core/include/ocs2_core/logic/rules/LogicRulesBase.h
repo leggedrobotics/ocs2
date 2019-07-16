@@ -35,6 +35,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <Eigen/StdVector>
 #include <Eigen/Dense>
 #include <vector>
+#include <algorithm>
 
 #include "ocs2_core/Dimensions.h"
 
@@ -129,6 +130,24 @@ public:
 
 		return eventTimes_.size();
 	}
+
+	/**
+	 *  Finds the event count based on the query time and eventTimes
+	 *  Events are counted as follows:
+	 *  		------ | ----- | ---  ... ---    | -----
+	 *				   t0     t1              t(n-1)
+	 *  count     0        1      2   ...  (n-1)   n
+	 *
+	 *  If time equal equal to a switch time is requested, the lower limit is taken
+	 *
+	 *  @param [in] time
+	 *  @return count of the event the input time belongs to
+	 */
+	 size_t getEventTimeCount(scalar_t time) const {
+	   // TODO (Ruben): Add a unit test for this function. Currently it seems we don't need a max, min to protect for out of bounds
+      auto firstLargerValueIterator = std::lower_bound(eventTimes_.begin(), eventTimes_.end(), time);
+      return static_cast<size_t>(firstLargerValueIterator - eventTimes_.begin());
+	 };
 
 	/**
 	 * Displays event information.

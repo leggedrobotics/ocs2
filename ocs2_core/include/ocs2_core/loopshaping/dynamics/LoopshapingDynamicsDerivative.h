@@ -52,16 +52,6 @@ class LoopshapingDynamicsDerivative : public DerivativesBase<FULL_STATE_DIM, FUL
       systemApproximationValid_(false),
       jumpMapApproximationValid_(false) {}
 
-  void initializeModel(
-      LogicRulesMachine<LOGIC_RULES_T> &logicRulesMachine,
-      const size_t &partitionIndex,
-      const char *algorithmName = nullptr) override {
-    BASE::initializeModel(logicRulesMachine, partitionIndex, algorithmName);
-    systemDerivative_->initializeModel(logicRulesMachine, partitionIndex, algorithmName);
-    systemApproximationValid_ = false;
-    jumpMapApproximationValid_ = false;
-  }
-
   static std::unique_ptr<LoopshapingDynamicsDerivative> create(const SYSTEM_DERIVATIVE &controlledSystem,
                                                                std::shared_ptr<LoopshapingDefinition> loopshapingDefinition);
 

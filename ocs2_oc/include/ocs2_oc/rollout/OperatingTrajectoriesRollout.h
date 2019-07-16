@@ -146,12 +146,6 @@ public:
 		eventsPastTheEndIndeces.clear();
 		eventsPastTheEndIndeces.reserve(2*numSubsystems);
 
-		// initialize operatingTrajectories
-		operatingTrajectoriesPtr_->initializeModel(
-				logicRulesMachine,
-				partitionIndex,
-				BASE::algorithmName());
-
 		state_vector_t beginState = initState;
 		scalar_t beginTime, endTime;
 		for (size_t i=beginItr; i<=finalItr; i++) {

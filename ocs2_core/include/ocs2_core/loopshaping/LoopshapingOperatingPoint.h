@@ -51,15 +51,6 @@ public:
 
     virtual ~LoopshapingOperatingPoint() = default;
 
-    void initializeModel(
-        LogicRulesMachine<LOGIC_RULES_T>& logicRulesMachine,
-        const size_t& partitionIndex,
-        const char* algorithmName=nullptr) override {
-
-      BASE::initializeModel(logicRulesMachine, partitionIndex, algorithmName);
-      systembase_->initializeModel(logicRulesMachine, partitionIndex, algorithmName);
-    }
-
     LoopshapingOperatingPoint(const LoopshapingOperatingPoint& obj) :
         BASE(),
         systembase_(obj.systembase_->clone()),

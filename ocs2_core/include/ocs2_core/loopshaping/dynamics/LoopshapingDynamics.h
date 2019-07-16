@@ -45,15 +45,6 @@ namespace ocs2 {
             loopshapingDefinition_(obj.loopshapingDefinition_)
         {}
 
-        void initializeModel(
-            LogicRulesMachine<LOGIC_RULES_T>& logicRulesMachine,
-            const size_t& partitionIndex,
-            const char* algorithmName=nullptr) override
-        {
-          BASE::initializeModel(logicRulesMachine, partitionIndex, algorithmName);
-          controlledSystem_->initializeModel(logicRulesMachine, partitionIndex, algorithmName);
-        }
-
         static std::unique_ptr<LoopshapingDynamics> create(const SYSTEM& controlledSystem, std::shared_ptr<LoopshapingDefinition> loopshapingDefinition);
 
         void computeFlowMap(

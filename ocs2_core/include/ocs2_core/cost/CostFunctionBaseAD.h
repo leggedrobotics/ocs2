@@ -164,10 +164,7 @@ public:
 	 * @param [in] algorithmName: The algorithm that class this class (default not defined).
 	 * @return The the logic variables.
 	 */
-	logic_variable_t getlogicVariables(
-			LogicRulesMachine<LOGIC_RULES_T>& logicRulesMachine,
-			const size_t& partitionIndex,
-			const char* algorithmName = nullptr);
+	logic_variable_t getlogicVariables(scalar_t time);
 
 	/**
 	 * Sets the current time, state, and control input.
@@ -181,19 +178,6 @@ public:
 			const scalar_t& t,
 			const state_vector_t& x,
 			const input_vector_t& u) final;
-
-	/**
-	 * Initializes the cost function. If LOGIC_RULES_T is not of type NullLogicRules, this
-	 * method will call user-defined getlogicVariables().
-	 *
-	 * @param [in] logicRulesMachine: A class which contains and parse the logic rules.
-	 * @param [in] partitionIndex: index of the time partition.
-	 * @param [in] algorithmName: The algorithm that class this class (default not defined).
-	 */
-	void initializeModel(
-			LogicRulesMachine<LOGIC_RULES_T>& logicRulesMachine,
-			const size_t& partitionIndex,
-			const char* algorithmName = nullptr) final;
 
 	/**
 	 * creates the forward model, the Jacobian model, and the Hessian model.

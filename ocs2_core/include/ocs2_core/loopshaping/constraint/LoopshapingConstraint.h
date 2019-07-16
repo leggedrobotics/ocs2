@@ -74,18 +74,6 @@ class LoopshapingConstraint : public ConstraintBase<
 
   static std::unique_ptr<LoopshapingConstraint> create(std::shared_ptr<LoopshapingDefinition> loopshapingDefinition);
 
-  void initializeModel(
-      LogicRulesMachine<LOGIC_RULES_T> &logicRulesMachine,
-      const size_t &partitionIndex,
-      const char *algorithmName = nullptr) override {
-    BASE::initializeModel(logicRulesMachine, partitionIndex, algorithmName);
-    if (systemConstraint_) {
-      systemConstraint_->initializeModel(logicRulesMachine, partitionIndex, algorithmName);
-    };
-    systemStateInputConstraintApproximationValid_ = false;
-    systemInequalityConstraintApproximationValid_ = false;
-  }
-
   void setCurrentStateAndControl(
       const scalar_t &t,
       const state_vector_t &x,

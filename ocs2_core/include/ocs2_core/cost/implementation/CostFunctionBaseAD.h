@@ -137,10 +137,7 @@ CostFunctionBaseAD<Derived, STATE_DIM, INPUT_DIM, LOGIC_RULES_T, LOGIC_VARIABLE_
 /******************************************************************************************************/
 template <class Derived, size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T, size_t LOGIC_VARIABLE_DIM, size_t STATE_DESIRED_DIM, size_t INPUT_DESIRED_DIM>
 typename CostFunctionBaseAD<Derived, STATE_DIM, INPUT_DIM, LOGIC_RULES_T, LOGIC_VARIABLE_DIM, STATE_DESIRED_DIM, INPUT_DESIRED_DIM>::logic_variable_t
-CostFunctionBaseAD<Derived, STATE_DIM, INPUT_DIM, LOGIC_RULES_T, LOGIC_VARIABLE_DIM, STATE_DESIRED_DIM, INPUT_DESIRED_DIM>::getlogicVariables(
-		LogicRulesMachine<LOGIC_RULES_T>& logicRulesMachine,
-		const size_t& partitionIndex,
-		const char* algorithmName /*= nullptr*/) {
+CostFunctionBaseAD<Derived, STATE_DIM, INPUT_DIM, LOGIC_RULES_T, LOGIC_VARIABLE_DIM, STATE_DESIRED_DIM, INPUT_DESIRED_DIM>::getlogicVariables(scalar_t time) {
 
 	throw std::runtime_error("getlogicVariables() method should be implemented by the derived class.");
 }
@@ -215,28 +212,10 @@ void CostFunctionBaseAD<Derived, STATE_DIM, INPUT_DIM, LOGIC_RULES_T, LOGIC_VARI
 	inputVariables(tapedInput_) = u;
 	desiredStateVariables(tapedInput_) = static_cast<Derived *>(this)->template getDesiredState(t);
 	desiredInputVariables(tapedInput_) = static_cast<Derived *>(this)->template getDesiredInput(t);
+	logicVariables(tapedInput_) = static_cast<Derived *>(this)->template getlogicVariables(t);
 
 	intermediateADInterfacePtr_->getJacobian(tapedInput_, intermediateJacobian_);
 	intermediateADInterfacePtr_->getHessian(tapedInput_, intermediateHessian_, 0);
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-template <class Derived, size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T, size_t LOGIC_VARIABLE_DIM, size_t STATE_DESIRED_DIM, size_t INPUT_DESIRED_DIM>
-void CostFunctionBaseAD<Derived, STATE_DIM, INPUT_DIM, LOGIC_RULES_T, LOGIC_VARIABLE_DIM, STATE_DESIRED_DIM, INPUT_DESIRED_DIM>::initializeModel(
-		LogicRulesMachine<LOGIC_RULES_T>& logicRulesMachine,
-		const size_t& partitionIndex,
-		const char* algorithmName /*= nullptr*/) {
-
-	if (std::is_same<LOGIC_RULES_T, NullLogicRules>::value) {
-		if (LOGIC_VARIABLE_DIM != 0) {
-			throw std::runtime_error("LOGIC_VARIABLE_DIM should be zero!");
-		}
-	} else {
-		logicVariables(tapedInput_) = static_cast<Derived *>(this)->template getlogicVariables(
-				logicRulesMachine, partitionIndex, algorithmName);;
-	}
 }
 
 /******************************************************************************************************/

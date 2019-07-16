@@ -385,11 +385,6 @@ void DDP_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculateConstraintsWorker(
 
 	size_t N = timeTrajectory.size();
 
-	// initialize subsystem i constraint
-	if (N>0) {
-		systemConstraints.initializeModel(*logicRulesMachinePtr_, partitionIndex, algorithmName_.c_str());
-	}
-
 	// constraint type 1 computations which consists of number of active constraints at each time point
 	// and the value of the constraint (if the rollout is constrained the value is always zero otherwise
 	// it is nonzero)
@@ -521,8 +516,6 @@ void DDP_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculateCostWorker(
 
 	cost_function_base_t& costFunction = linearQuadraticApproximatorPtrStock_[workerIndex]->costFunction();
 
-	// initialize subsystem i cost
-	costFunction.initializeModel(*logicRulesMachinePtr_, partitionIndex, algorithmName_.c_str());
 	// set desired trajectories
 	costFunction.setCostDesiredTrajectories(costDesiredTrajectories_);
 
@@ -584,8 +577,6 @@ void DDP_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculateRolloutCost(
 	}  // end of i loop
 
 	// calculate the Heuristics function at the final time
-	// initialize
-	heuristicsFunctionsPtrStock_[threadId]->initializeModel(*logicRulesMachinePtr_, finalActivePartition_, algorithmName_.c_str());
 	// set desired trajectories
 	heuristicsFunctionsPtrStock_[threadId]->setCostDesiredTrajectories(costDesiredTrajectories_);
 	// set state-input
@@ -696,8 +687,6 @@ void DDP_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::approximateOptimalControlPro
 
 		if (N > 0) {
 			for(size_t j=0; j<ddpSettings_.nThreads_; j++) {
-				// initializes the model
-				linearQuadraticApproximatorPtrStock_[j]->initializeModel(*logicRulesMachinePtr_, i, algorithmName_.c_str());
 				// set desired trajectories
 				linearQuadraticApproximatorPtrStock_[j]->costFunction().setCostDesiredTrajectories(costDesiredTrajectories_);
 			}  // end of j loop
@@ -709,7 +698,6 @@ void DDP_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::approximateOptimalControlPro
 	}  // end of i loop
 
 	// calculate the Heuristics function at the final time
-	heuristicsFunctionsPtrStock_[0]->initializeModel(*logicRulesMachinePtr_, finalActivePartition_, algorithmName_.c_str());
 	heuristicsFunctionsPtrStock_[0]->setCostDesiredTrajectories(costDesiredTrajectories_);
 	heuristicsFunctionsPtrStock_[0]->setCurrentStateAndControl(
 			nominalTimeTrajectoriesStock_[finalActivePartition_].back(),

@@ -130,21 +130,6 @@ public:
      */
 	virtual CostFunctionBase<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>* clone() const = 0;
 
-	/**
-	 * Initializes the cost function.
-	 *
-	 * @param [in] logicRulesMachine: A class which contains and parse the logic rules e.g
-	 * method findActiveSubsystemHandle returns a Lambda expression which can be used to
-	 * find the ID of the current active subsystem.
-	 * @param [in] partitionIndex: index of the time partition.
-	 * @param [in] algorithmName: The algorithm that class this class (default not defined).
-	 */
-	virtual void initializeModel(
-			LogicRulesMachine<LOGIC_RULES_T>& logicRulesMachine,
-			const size_t& partitionIndex,
-			const char* algorithmName = nullptr)
-	{}
-
     /**
      * Sets the current time, state, and control input
      *

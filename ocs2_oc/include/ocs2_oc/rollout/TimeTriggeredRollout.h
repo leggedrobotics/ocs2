@@ -211,12 +211,6 @@ public:
 		// Reset the event class
 		systemEventHandlersPtr_->reset();
 
-		// initialize subsystem
-		systemDynamicsPtr_->initializeModel(
-				logicRulesMachine,
-				partitionIndex,
-				BASE::algorithmName());
-
 		state_vector_t beginState = initState;
 		scalar_t beginTime, endTime;
 		size_t k_u = 0;  // control input iterator

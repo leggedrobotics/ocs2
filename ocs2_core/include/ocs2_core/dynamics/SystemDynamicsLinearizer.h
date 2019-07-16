@@ -98,24 +98,6 @@ public:
 	}
 
 	/**
-	 * Initializes the system dynamics linearizer.
-	 *
-	 * @param [in] logicRulesMachine: A class which contains and parse the logic rules e.g
-	 * method findActiveSubsystemHandle returns a Lambda expression which can be used to
-	 * find the ID of the current active subsystem.
-	 * @param [in] partitionIndex: index of the time partition.
-	 * @param [in] algorithmName: The algorithm that class this class (default not defined).
-	 */
-	void initializeModel(
-			LogicRulesMachine<LOGIC_RULES_T>& logicRulesMachine,
-			const size_t& partitionIndex,
-			const char* algorithmName=nullptr) override {
-
-		Base::initializeModel(logicRulesMachine, partitionIndex, algorithmName);
-		nonlinearSystemPtr_->initializeModel(logicRulesMachine, partitionIndex, algorithmName);
-	}
-
-	/**
 	 * Default destructor
 	 */
 	virtual ~SystemDynamicsLinearizer()= default;

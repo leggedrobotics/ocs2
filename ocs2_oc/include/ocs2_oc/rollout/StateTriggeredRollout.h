@@ -167,8 +167,6 @@ public:
 //			systemDynamicsPtr_->setController(controller);
 //			// reset function calls counter
 //			systemDynamicsPtr_->resetNumFunctionCalls();
-//			// initialize subsystem
-//			systemDynamicsPtr_->initializeModel(hybridLlogicRulesMachine, partitionIndex, "SLQ");
 //			// Set event times control parameters
 //			if (eventTimes.empty()==true)
 //				systemEventHandlersPtr_->setEventTimesGuard(

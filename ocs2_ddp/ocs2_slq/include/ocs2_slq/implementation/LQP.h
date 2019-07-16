@@ -53,8 +53,6 @@ void LQP<STATE_DIM, INPUT_DIM, NUM_Subsystems>::rollout(const state_vector_t& in
 		timeTrajectoriesStock[i].clear();
 		stateTrajectoriesStock[i].clear();
 
-		// initialize subsystem i
-		subsystemDynamicsPtrStock_[i]->initializeModel(systemStockIndexes_, switchingTimes_, x0, i, "LQP");
 		// set controller for subsystem i
 		subsystemDynamicsPtrStock_[i]->setController(controllersStock[i]);
 		// simulate subsystem i
@@ -126,13 +124,11 @@ void LQP<STATE_DIM, INPUT_DIM, NUM_Subsystems>::approximateOptimalControlProblem
 
 	for (int i=0; i<NUM_Subsystems; i++) {
 
-		subsystemDerivativesPtrStock_[i]->initializeModel(systemStockIndexes_, switchingTimes_, stateOperatingPointsStock_.at(i), i, "LQP");
 		subsystemDerivativesPtrStock_[i]->setCurrentStateAndControl(0.0, stateOperatingPointsStock_.at(i), inputOperatingPointsStock_.at(i));
 		subsystemDerivativesPtrStock_[i]->flowMapStateDerivative(AmStock_.at(i));
 		subsystemDerivativesPtrStock_[i]->flowMapInputDerivative(BmStock_.at(i));
 
 		if (runAsInitializer_==true) {
-			subsystemDynamicsPtrStock_[i]->initializeModel(systemStockIndexes_, switchingTimes_, stateOperatingPointsStock_.at(i), i, "LQP");
 			subsystemDynamicsPtrStock_[i]->computeFlowMap(switchingTimes_.at(i), stateOperatingPointsStock_.at(i),
 					inputOperatingPointsStock_.at(i), GvStock_.at(i));
 		} else {

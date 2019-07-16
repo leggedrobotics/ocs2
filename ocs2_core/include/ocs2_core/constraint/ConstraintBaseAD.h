@@ -285,21 +285,6 @@ public:
 	 */
 	virtual BASE* clone() const final;
 
-	/**
-	 * Initialization of the system Constraints cannot be override.
-	 *
-	 * @param [in] logicRulesMachine: A class which contains and parse the logic rules e.g
-	 * method findActiveSubsystemHandle returns a Lambda expression which can be used to
-	 * find the ID of the current active subsystem.
-	 * @param [in] partitionIndex: index of the time partition.
-	 * @param [in] algorithmName: The algorithm that class this class (default not defined).
-	 */
-	void initializeModel(
-			LogicRulesMachine<LOGIC_RULES_T>& logicRulesMachine,
-			const size_t& partitionIndex,
-			const char* algorithmName = nullptr) final {}
-
-
 protected:
   	using ad_interface_t = ocs2::CppAdCodeGenInterface<domain_dim_, MAX_CONSTRAINT_DIM_, scalar_t> ;
 	using ad_scalar_t = typename ad_interface_t::ad_scalar_t;

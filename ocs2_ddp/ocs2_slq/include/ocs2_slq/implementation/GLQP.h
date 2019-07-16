@@ -155,9 +155,6 @@ void GLQP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::findOperatingPointsWorker(
 	inputOperatingPoints.reserve(maxNumSteps);
 	eventsPastTheEndIndeces.resize(eventTimes.size());
 
-	// initialize operatingTrajectories
-	operatingTrajectoriesPtrStock_[workerIndex]->initializeModel(logicRulesMachine_, partitionIndex, "LQ");
-
 	state_vector_t beginState = initState;
 	scalar_t beginTime, endTime;
 	size_t k_u = 0;
@@ -264,8 +261,6 @@ void GLQP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::findOperatingPoints(
 //		timeTrajectoriesStock[i].clear();
 //		stateTrajectoriesStock[i].clear();
 //
-//		// initialize subsystem i
-//		systemDynamicsPtrStock_[i]->initializeModel(logicRulesMachine_, i, "LQ");
 //		// set controller for subsystem i
 //		systemDynamicsPtrStock_[i]->setController(controllersStock[i]);
 //		// simulate subsystem i
@@ -357,10 +352,6 @@ void GLQP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::approximateOptimalControlProblem
 		if (N > 0) {
 
 			for(size_t j=0; j<settings_.nThreads_; j++) {
-				// initialize subsystem i dynamics derivatives
-				systemDerivativesPtrStock_[j]->initializeModel(logicRulesMachine_, i, "LQ");
-				// initialize subsystem i cost
-				costFunctionsPtrStock_[j]->initializeModel(logicRulesMachine_, i, "LQ");
 				// set desired trajectories
 				costFunctionsPtrStock_[j]->setCostNominalTrajectoriesPtr(desiredTimeTrajectoryPtrStock_[i],
 						desiredStateTrajectoryPtrStock_[i], desiredInputTrajectoryPtrStock_[i]);
@@ -375,7 +366,6 @@ void GLQP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::approximateOptimalControlProblem
 	}  // end of i loop
 
 	// calculate the Heuristics function at the final time
-	heuristicsFunctionsPtrStock_[0]->initializeModel(logicRulesMachine_, finalActivePartition_, "LQ");
 	heuristicsFunctionsPtrStock_[0]->setCurrentStateAndControl(
 			timeOperatingPointsStock_[finalActivePartition_].back(),
 			stateOperatingPointsStock_[finalActivePartition_].back(),

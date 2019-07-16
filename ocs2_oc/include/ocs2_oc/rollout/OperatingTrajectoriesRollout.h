@@ -153,6 +153,9 @@ public:
 			beginTime = i==beginItr ? initTime  : switchingTimes[i];
 			endTime   = i==finalItr ? finalTime : switchingTimes[i+1];
 
+            // in order to correctly detect the next subsystem (right limit)
+            beginTime += 10* OCS2NumericTraits<scalar_t>::weakEpsilon();
+
 			// get operating trajectories
 			operatingTrajectoriesPtr_->getSystemOperatingTrajectories(
 					beginState, beginTime, endTime,

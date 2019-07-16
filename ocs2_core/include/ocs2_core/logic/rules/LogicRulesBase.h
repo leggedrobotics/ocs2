@@ -145,6 +145,7 @@ public:
 	 */
 	 size_t getEventTimeCount(scalar_t time) const {
 	   // TODO (Ruben): Add a unit test for this function. Currently it seems we don't need a max, min to protect for out of bounds
+	   // Previously, the partition index was used to assign before or after the event time count in case the + epsilon was forgotten.
       auto firstLargerValueIterator = std::lower_bound(eventTimes_.begin(), eventTimes_.end(), time);
       return static_cast<size_t>(firstLargerValueIterator - eventTimes_.begin());
 	 };

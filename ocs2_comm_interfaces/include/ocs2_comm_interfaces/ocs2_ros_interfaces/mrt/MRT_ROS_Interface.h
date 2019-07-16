@@ -51,7 +51,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_core/Dimensions.h>
 #include <ocs2_core/dynamics/ControlledSystemBase.h>
 #include <ocs2_core/cost/CostDesiredTrajectories.h>
-#include <ocs2_core/logic/machine/LogicRulesMachine.h>
+#include <ocs2_core/logic/machine/HybridLogicRulesMachine.h>
 #include <ocs2_core/logic/rules/NullLogicRules.h>
 #include <ocs2_core/misc/LinearInterpolation.h>
 #include <ocs2_core/misc/FindActiveIntervalIndex.h>
@@ -107,7 +107,7 @@ public:
 
 	typedef RosMsgConversions<STATE_DIM, INPUT_DIM> ros_msg_conversions_t;
 
-	typedef LogicRulesMachine<LOGIC_RULES_T> logic_machine_t;
+	typedef HybridLogicRulesMachine<LOGIC_RULES_T> logic_machine_t;
 	typedef typename logic_machine_t::Ptr          logic_machine_ptr_t;
 
   	typedef typename std::unique_ptr<RolloutBase<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>> rollout_base_ptr_t;

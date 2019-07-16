@@ -103,13 +103,13 @@ class ComKinoConstraintBase : public ocs2::ConstraintBase<12 + JOINT_COORD_SIZE,
         inequalityConstraintCollection_(rhs.inequalityConstraintCollection_),
         equalityStateInputConstraintCollection_(rhs.equalityStateInputConstraintCollection_),
         eePosConSettings_(rhs.eePosConSettings_),
-        eeVelConSettings_(rhs.eeVelConSettings_) {}
+        eeVelConSettings_(rhs.eeVelConSettings_),
+        polytopes(rhs.polytopes){}
 
   /**
    * Initialize Constraint Terms
    */
   void InitializeConstraintTerms() {
-    ConvexPlanarPolytope3dArray polytopes;
     // LF
     Eigen::Vector3d offset;
     offset << 0.2, 0.2, 0.0;
@@ -138,8 +138,6 @@ class ComKinoConstraintBase : public ocs2::ConstraintBase<12 + JOINT_COORD_SIZE,
 
     for (int i = 0; i < NUM_CONTACT_POINTS_; i++) {
       auto footName = feetNames[i];
-
-      eePosConSettings_[i].Ab = 1000.0 * switched_model::toHalfSpaces(polytopes[i]);
 
       // Friction cone constraint
       auto frictionCone = std::unique_ptr<ConstraintTerm_t>(new FrictionConeConstraint_t(options_.frictionCoefficient_, 25.0, i));
@@ -212,6 +210,7 @@ class ComKinoConstraintBase : public ocs2::ConstraintBase<12 + JOINT_COORD_SIZE,
 
   std::array<EndEffectorVelocityConstraintSettings, 4> eeVelConSettings_;
   std::array<EndEffectorPositionConstraintSettings, 4> eePosConSettings_;
+  ConvexPlanarPolytope3dArray polytopes;
 
   LinearConstraintApproximationAsMatrices_t linearStateInputConstraintApproximation_;
   QuadraticConstraintApproximation_t quadraticInequalityConstraintApproximation_;
@@ -228,6 +227,8 @@ class ComKinoConstraintBase : public ocs2::ConstraintBase<12 + JOINT_COORD_SIZE,
   std::array<const foot_cpg_t*, NUM_CONTACT_POINTS_> zDirectionRefsPtr_;
 
   std::string algorithmName_;
+
+
 };
 
 }  // end of namespace switched_model

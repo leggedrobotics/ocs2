@@ -15,9 +15,9 @@ namespace switched_model {
 
 struct EndEffectorVelocityConstraintSettings {
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-  // Constraints are  Prj * (v_world - v_world_des);
-  Eigen::Vector3d desiredWorldEndEffectorVelocity = Eigen::Vector3d::Zero();
-  Eigen::MatrixXd projection = Eigen::Matrix3d::Identity(); // Can be of different row dimention to select subspace in world
+  // Constraints are  A * v_world + b
+  Eigen::MatrixXd A;
+  Eigen::VectorXd b;
 };
 
 template <size_t STATE_DIM, size_t INPUT_DIM>
@@ -30,6 +30,7 @@ class EndEffectorVelocityConstraint final : public ocs2::ConstraintTerm<STATE_DI
   using typename BASE::input_state_matrix_t;
   using typename BASE::input_vector_t;
   using typename BASE::LinearApproximation_t;
+  using typename BASE::QuadraticApproximation_t;
   using typename BASE::scalar_array_t;
   using typename BASE::scalar_t;
   using typename BASE::state_matrix_t;
@@ -55,6 +56,7 @@ class EndEffectorVelocityConstraint final : public ocs2::ConstraintTerm<STATE_DI
   using range_domain_matrix_t = typename ad_interface_t::range_domain_matrix_t;
   using range_state_matrix_t = Eigen::Matrix<double, range_dim_, STATE_DIM>;
   using range_input_matrix_t = Eigen::Matrix<double, range_dim_, INPUT_DIM>;
+  using domain_matrix_array_t = std::vector<domain_matrix_t, Eigen::aligned_allocator<domain_matrix_t>>;
 
  public:
   using ad_com_model_t = ComModelBase<12, ad_scalar_t>;
@@ -82,7 +84,7 @@ class EndEffectorVelocityConstraint final : public ocs2::ConstraintTerm<STATE_DI
 
   void configure(const EndEffectorVelocityConstraintSettings& settings) { settings_ = settings; };
 
-  size_t getNumConstraints(scalar_t time) const override { return settings_.projection.rows(); };
+  size_t getNumConstraints(scalar_t time) const override { return settings_.A.rows(); };
 
   scalar_array_t getValue(scalar_t time, const state_vector_t& state, const input_vector_t& input) const override {
     // Assemble input
@@ -93,12 +95,10 @@ class EndEffectorVelocityConstraint final : public ocs2::ConstraintTerm<STATE_DI
     range_vector_t eeVelocityWorld;
     cppAdCodeGenClass_->getFunctionValue(tapedInput, eeVelocityWorld);
 
-    range_vector_t velocityErrorWorld = eeVelocityWorld - settings_.desiredWorldEndEffectorVelocity;
-
     // Change to std::vector
     scalar_array_t constraintValue;
-    for (int i = 0; i < settings_.projection.rows(); i++) {
-      constraintValue.emplace_back( settings_.projection.row(i) * velocityErrorWorld );
+    for (int i = 0; i < settings_.A.rows(); i++) {
+      constraintValue.emplace_back( settings_.A.row(i) * eeVelocityWorld + settings_.b[i] );
     }
     return constraintValue;
   };
@@ -120,11 +120,44 @@ class EndEffectorVelocityConstraint final : public ocs2::ConstraintTerm<STATE_DI
     // Convert to output format
     LinearApproximation_t linearApproximation;
     linearApproximation.constraintValues = getValue(time, state, input);
-    for (int i = 0; i < settings_.projection.rows(); i++) {
-      linearApproximation.derivativeState.emplace_back( settings_.projection.row(i) * drange_dx );
-      linearApproximation.derivativeInput.emplace_back( settings_.projection.row(i) * drange_du );
+    for (int i = 0; i < settings_.A.rows(); i++) {
+      linearApproximation.derivativeState.emplace_back( settings_.A.row(i) * drange_dx );
+      linearApproximation.derivativeInput.emplace_back( settings_.A.row(i) * drange_du );
     }
     return linearApproximation;
+  }
+
+  QuadraticApproximation_t getQuadraticApproximation(scalar_t time, const state_vector_t& state,
+                                                     const input_vector_t& input) const override {
+    // Assemble input
+    domain_vector_t tapedInput;
+    tapedInput << time, state, input;
+
+    domain_matrix_array_t stateInputHessians(3);
+    for (int i = 0; i < 3; i++) {
+      cppAdCodeGenClass_->getHessian(tapedInput, stateInputHessians[i], i);
+    }
+
+    // Compute hessians for all constraints: For the i-th constraint, sum over entries in A times corresponding Hessian
+    domain_matrix_array_t stateInputWeightedHessians;
+    for (int i = 0; i < settings_.A.rows(); i++) {
+      stateInputWeightedHessians.emplace_back(settings_.A(i, 0) * stateInputHessians[0] +
+          settings_.A(i, 1) * stateInputHessians[1] +
+          settings_.A(i, 2) * stateInputHessians[2]);
+    }
+
+    // Convert to output format
+    QuadraticApproximation_t quadraticApproximation;
+    auto linearApproximation = getLinearApproximation(time, state, input);
+    quadraticApproximation.constraintValues = std::move(linearApproximation.constraintValues);
+    quadraticApproximation.derivativeState = std::move(linearApproximation.derivativeState);
+    quadraticApproximation.derivativeInput = std::move(linearApproximation.derivativeInput);
+    for (int i = 0; i < settings_.A.rows(); i++) {
+      quadraticApproximation.secondDerivativesState.emplace_back(stateInputWeightedHessians[i].block(1, 1, STATE_DIM, STATE_DIM));
+      quadraticApproximation.secondDerivativesInput.emplace_back(stateInputWeightedHessians[i].block(1 + STATE_DIM, 1 + STATE_DIM, INPUT_DIM, INPUT_DIM));
+      quadraticApproximation.derivativesInputState.emplace_back(stateInputWeightedHessians[i].block(1 + STATE_DIM, 1, INPUT_DIM, STATE_DIM));
+    }
+    return quadraticApproximation;
   }
 
  private:
@@ -189,6 +222,7 @@ class EndEffectorVelocityConstraint final : public ocs2::ConstraintTerm<STATE_DI
     cppAdCodeGenClass_.reset(new ad_interface_t(adfunc_, sparsityPattern));
     cppAdCodeGenClass_->computeForwardModel(true);
     cppAdCodeGenClass_->computeJacobianModel(true);
+    cppAdCodeGenClass_->computeHessianModel(true);
     cppAdCodeGenClass_->createModels(libName_, "");
   }
 

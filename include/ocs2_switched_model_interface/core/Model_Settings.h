@@ -21,6 +21,8 @@ public:
 	, contactForceWeight_(0.1)
 	, zDirectionPositionWeight_(5.0)
 	, zDirectionVelocityWeight_(0.5)
+	, zDirectionEqualityConstraint_(true)
+	, terrainInequality_(false)
 	, copWeight_(0.0)
 	, swingLegLiftOff_(0.3)
 	, liftOffVelocity_(0.0)
@@ -47,6 +49,8 @@ public:
 	double contactForceWeight_;
 	double zDirectionPositionWeight_;
 	double zDirectionVelocityWeight_;
+	bool   zDirectionEqualityConstraint_;
+	bool   terrainInequality_;
 	double copWeight_;
 	double swingLegLiftOff_;
 	double liftOffVelocity_;
@@ -119,6 +123,22 @@ inline void Model_Settings::loadSettings(const std::string& filename, bool verbo
 	}
 	catch (const std::exception& e){
 		if (verbose)  std::cerr << " #### zDirectionVelocityWeight ..... " << zDirectionVelocityWeight_ << "\t(default)" << std::endl;
+	}
+
+	try {
+		zDirectionEqualityConstraint_ = pt.get<bool>("model_settings.zDirectionEqualityConstraint");
+		if (verbose)  std::cerr << " #### zDirectionEqualityConstraint . " << zDirectionEqualityConstraint_  << std::endl;
+	}
+	catch (const std::exception& e){
+		if (verbose)  std::cerr << " #### zDirectionEqualityConstraint . " << zDirectionEqualityConstraint_  << "\t(default)" << std::endl;
+	}
+
+	try {
+		terrainInequality_ = pt.get<bool>("model_settings.terrainInequality");
+		if (verbose)  std::cerr << " #### terrainInequality ............ " << terrainInequality_  << std::endl;
+	}
+	catch (const std::exception& e){
+		if (verbose)  std::cerr << " #### terrainInequality ............ " << terrainInequality_  << "\t(default)" << std::endl;
 	}
 
 	try {

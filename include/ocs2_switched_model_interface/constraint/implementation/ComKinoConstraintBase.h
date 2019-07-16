@@ -25,7 +25,7 @@ void ComKinoConstraintBase<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM, LOGIC_RULES_T
                                                                                                    const char* algorithmName /*=NULL*/) {
   Base::initializeModel(logicRulesMachine, partitionIndex, algorithmName);
 
-  findActiveSubsystemFnc_ = std::move(logicRulesMachine.getHandleToFindActiveEventCounter(partitionIndex));
+  findActiveSubsystemFnc_ = logicRulesMachine.getHandleToFindActiveEventCounter(partitionIndex);
 
   logicRulesPtr_ = logicRulesMachine.getLogicRulesPtr();
 
@@ -49,47 +49,67 @@ void ComKinoConstraintBase<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM, LOGIC_RULES_T
   auto activeSubsystem = findActiveSubsystemFnc_(t);
   logicRulesPtr_->getMotionPhaseLogics(activeSubsystem, stanceLegs_, zDirectionRefsPtr_);
 
-  // Active friction cone constraint for stanceLegs
-  inequalityConstraintCollection_.modifyConstraint("LF_FrictionCone")->setActivity(stanceLegs_[0]);
-  inequalityConstraintCollection_.modifyConstraint("RF_FrictionCone")->setActivity(stanceLegs_[1]);
-  inequalityConstraintCollection_.modifyConstraint("LH_FrictionCone")->setActivity(stanceLegs_[2]);
-  inequalityConstraintCollection_.modifyConstraint("RH_FrictionCone")->setActivity(stanceLegs_[3]);
+  for (int i = 0; i < NUM_CONTACT_POINTS_; i++) {
+    auto footName = feetNames[i];
 
-  // Active foot placement for stance legs
-  inequalityConstraintCollection_.modifyConstraint("LF_EEPos")->setActivity(stanceLegs_[0]);
-  inequalityConstraintCollection_.modifyConstraint("RF_EEPos")->setActivity(stanceLegs_[1]);
-  inequalityConstraintCollection_.modifyConstraint("LH_EEPos")->setActivity(stanceLegs_[2]);
-  inequalityConstraintCollection_.modifyConstraint("RH_EEPos")->setActivity(stanceLegs_[3]);
-  inequalityConstraintCollection_.template modifyConstraint<EndEffectorPositionConstraint_t>("LF_EEPos")->configure(eePosConSettings_[0]);
-  inequalityConstraintCollection_.template modifyConstraint<EndEffectorPositionConstraint_t>("RF_EEPos")->configure(eePosConSettings_[1]);
-  inequalityConstraintCollection_.template modifyConstraint<EndEffectorPositionConstraint_t>("LH_EEPos")->configure(eePosConSettings_[2]);
-  inequalityConstraintCollection_.template modifyConstraint<EndEffectorPositionConstraint_t>("RH_EEPos")->configure(eePosConSettings_[3]);
+    // Active friction cone constraint for stanceLegs
+    inequalityConstraintCollection_.modifyConstraint(footName + "_FrictionCone")->setActivity(stanceLegs_[i]);
 
-  // Zero forces active for swing legs
-  equalityStateInputConstraintCollection_.modifyConstraint("LF_ZeroForce")->setActivity(!stanceLegs_[0]);
-  equalityStateInputConstraintCollection_.modifyConstraint("RF_ZeroForce")->setActivity(!stanceLegs_[1]);
-  equalityStateInputConstraintCollection_.modifyConstraint("LH_ZeroForce")->setActivity(!stanceLegs_[2]);
-  equalityStateInputConstraintCollection_.modifyConstraint("RH_ZeroForce")->setActivity(!stanceLegs_[3]);
+    // Active foot placement for stance legs
+    auto EEPosConstraint = inequalityConstraintCollection_.template modifyConstraint<EndEffectorPositionConstraint_t>(footName + "_EEPos");
 
-  // Velocity constraint is based on the phase, constraint is always active
-  for (int i = 0; i < 4; i++) {
-    if (stanceLegs_[i]) {  // in stance: All velocity equal to zero
-      eeVelConSettings_[i].desiredWorldEndEffectorVelocity.setZero();
-      eeVelConSettings_[i].projection = Eigen::Matrix3d::Identity();
-    } else {  // in swing: z-velocity is provided
-      eeVelConSettings_[i].desiredWorldEndEffectorVelocity[2] = zDirectionRefsPtr_[i]->calculateVelocity(Base::t_);
-      eeVelConSettings_[i].projection.resize(1, 3);
-      eeVelConSettings_[i].projection << 0, 0, 1;
+    double constraintScale = options_.zDirectionPositionWeight_;
+    if (options_.zDirectionEqualityConstraint_) {
+      EEPosConstraint->setActivity(stanceLegs_[i]);
+      eePosConSettings_[i].Ab = constraintScale * switched_model::toHalfSpaces(polytopes[i]);
+      EEPosConstraint->configure(eePosConSettings_[i]);
+    } else {
+        EEPosConstraint->setActivity(true);
+        // Add z direction to inequalities during both stance and swing phase
+        if (stanceLegs_[i]) {
+          if (options_.terrainInequality_) {
+            Eigen::MatrixXd planarPolytopes = constraintScale * switched_model::toHalfSpaces(polytopes[i]);
+            eePosConSettings_[i].Ab.resize(planarPolytopes.rows() + 2, planarPolytopes.cols());
+            eePosConSettings_[i].Ab << planarPolytopes,
+                0.0, 0.0, constraintScale, 0.0,
+                0.0, 0.0, -constraintScale, 0.0;
+          } else {
+            eePosConSettings_[i].Ab = constraintScale * switched_model::toHalfSpaces(polytopes[i]);
+          }
+        } else {
+          // Swing height control
+          eePosConSettings_[i].Ab.resize(2, 4);
+          eePosConSettings_[i].Ab <<
+          0.0, 0.0, constraintScale, -options_.zDirectionVelocityWeight_ * constraintScale * zDirectionRefsPtr_[i]->calculatePosition(Base::t_),
+          0.0, 0.0, -constraintScale, 1.0/options_.zDirectionVelocityWeight_ * constraintScale * zDirectionRefsPtr_[i]->calculatePosition(Base::t_);
+        }
+        EEPosConstraint->configure(eePosConSettings_[i]);
     }
+
+
+    // Zero forces active for swing legs
+    equalityStateInputConstraintCollection_.modifyConstraint(footName + "_ZeroForce")->setActivity(!stanceLegs_[i]);
+
+    // Velocity constraint
+    if (stanceLegs_[i]) {  // in stance: All velocity equal to zero
+      eeVelConSettings_[i].b = Eigen::Vector3d::Zero();
+      eeVelConSettings_[i].A = Eigen::Matrix3d::Identity();
+    } else {  // in swing: z-velocity is provided
+      eeVelConSettings_[i].b.resize(1);
+      eeVelConSettings_[i].A.resize(1, 3);
+      eeVelConSettings_[i].b << -zDirectionRefsPtr_[i]->calculateVelocity(Base::t_);
+      eeVelConSettings_[i].A << 0, 0, 1;
+    }
+    auto EEVelConstraint = equalityStateInputConstraintCollection_.template modifyConstraint<EndEffectorVelocityConstraint_t>(footName + "_EEVel");
+    EEVelConstraint->configure(eeVelConSettings_[i]);
+
+    if (options_.zDirectionEqualityConstraint_) {
+      EEVelConstraint->setActivity(true);
+    } else {
+      EEVelConstraint->setActivity(stanceLegs_[i]);
+    }
+
   }
-  equalityStateInputConstraintCollection_.template modifyConstraint<EndEffectorVelocityConstraint_t>("LF_EEVel")
-      ->configure(eeVelConSettings_[0]);
-  equalityStateInputConstraintCollection_.template modifyConstraint<EndEffectorVelocityConstraint_t>("RF_EEVel")
-      ->configure(eeVelConSettings_[1]);
-  equalityStateInputConstraintCollection_.template modifyConstraint<EndEffectorVelocityConstraint_t>("LH_EEVel")
-      ->configure(eeVelConSettings_[2]);
-  equalityStateInputConstraintCollection_.template modifyConstraint<EndEffectorVelocityConstraint_t>("RH_EEVel")
-      ->configure(eeVelConSettings_[3]);
 }
 
 /******************************************************************************************************/

@@ -48,14 +48,14 @@ class EXP2_LogicRules : public HybridLogicRules
 public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-	typedef LogicRulesBase BASE;
+	typedef HybridLogicRules BASE;
 
 	EXP2_LogicRules() = default;
 
 	~EXP2_LogicRules() = default;
 
-	EXP2_LogicRules(const scalar_array_t& eventTimes)
-	: BASE(eventTimes)
+	EXP2_LogicRules(scalar_array_t switchingTimes, size_array_t subsystemsSequence)
+			: BASE(std::move(switchingTimes), std::move(subsystemsSequence))
 	{}
 
 	void rewind(const scalar_t& lowerBoundTime,
@@ -64,6 +64,12 @@ public:
 
 	void update() override
 	{}
+
+ protected:
+  void insertModeSequenceTemplate(
+		  const logic_template_type& modeSequenceTemplate,
+		  const scalar_t& startTime,
+		  const scalar_t& finalTime) override {};
 
 private:
 
@@ -317,7 +323,7 @@ private:
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-class EXP2_constraint1 : public ConstraintBase<2, 2, EXP2_LogicRules>
+class EXP2_constraint1 : public ConstraintBase<2, 2>
 {
 public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
@@ -349,7 +355,7 @@ public:
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-class EXP2_constraint2 : public ConstraintBase<2, 2, EXP2_LogicRules>
+class EXP2_constraint2 : public ConstraintBase<2, 2>
 {
 public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
@@ -418,7 +424,7 @@ class EXP2_constraint final : public ConstraintBase<2, 2>
 public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-	typedef ConstraintBase<2, 2, EXP2_LogicRules> Base;
+	typedef ConstraintBase<2, 2> Base;
 
 	explicit EXP2_constraint(std::shared_ptr<const EXP2_LogicRules> logicRulesPtr) :
         logicRulesPtr_(std::move(logicRulesPtr)),

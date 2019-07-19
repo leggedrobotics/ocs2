@@ -33,7 +33,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 using namespace ocs2;
 
-class TestLogicRules : public LogicRulesBase
+class TestLogicRules : public HybridLogicRules
 {
 public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
@@ -58,6 +58,11 @@ public:
 			const scalar_t& upperBoundTime) override
 	{}
 
+ protected:
+   void insertModeSequenceTemplate(
+		  const logic_template_type& modeSequenceTemplate,
+		  const scalar_t& startTime,
+		  const scalar_t& finalTime) override {};
 
 private:
 

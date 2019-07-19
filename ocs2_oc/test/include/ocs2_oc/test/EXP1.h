@@ -51,14 +51,14 @@ class EXP1_LogicRules : public HybridLogicRules
 public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-	typedef LogicRulesBase BASE;
+	typedef HybridLogicRules BASE;
 
 	EXP1_LogicRules() = default;
 
 	~EXP1_LogicRules() = default;
 
-	EXP1_LogicRules(const scalar_array_t& eventTimes)
-	: BASE(eventTimes)
+	EXP1_LogicRules(scalar_array_t switchingTimes, size_array_t subsystemsSequence)
+			: BASE(std::move(switchingTimes), std::move(subsystemsSequence))
 	{}
 
 	void rewind(const scalar_t& lowerBoundTime,
@@ -67,6 +67,12 @@ public:
 
 	void update() final
 	{}
+
+ protected:
+  void insertModeSequenceTemplate(
+		  const logic_template_type& modeSequenceTemplate,
+		  const scalar_t& startTime,
+		  const scalar_t& finalTime) override {};
 
 private:
 

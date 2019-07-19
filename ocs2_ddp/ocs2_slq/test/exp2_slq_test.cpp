@@ -65,7 +65,8 @@ TEST(exp2_slq_test, DISABLED_Exp2_slq_test)
 
 	// switching times
 	std::vector<double> eventTimes {0.2, 1.2};
-	std::shared_ptr<EXP2_LogicRules> logicRules(new EXP2_LogicRules(eventTimes));
+	std::vector<size_t> subsystemsSequence{0, 1, 2};
+	std::shared_ptr<EXP2_LogicRules> logicRules(new EXP2_LogicRules(eventTimes, subsystemsSequence));
 
 	double startTime = 0.0;
 	double finalTime = 3.0;
@@ -106,7 +107,7 @@ TEST(exp2_slq_test, DISABLED_Exp2_slq_test)
 	/******************************************************************************************************/
 
 	// SLQ - single core version
-	SLQ<STATE_DIM, INPUT_DIM, EXP2_LogicRules> slq(
+	SLQ<STATE_DIM, INPUT_DIM> slq(
 			&systemDynamics, &systemDerivative,
 			&systemConstraint, &systemCostFunction,
 			&operatingTrajectories, slqSettings, logicRules);
@@ -120,7 +121,7 @@ TEST(exp2_slq_test, DISABLED_Exp2_slq_test)
 	/******************************************************************************************************/
 	/******************************************************************************************************/
 	// get controller
-	SLQ_BASE<STATE_DIM, INPUT_DIM, EXP2_LogicRules>::controller_ptr_array_t controllersPtrStock = slq.getController();
+	SLQ_BASE<STATE_DIM, INPUT_DIM>::controller_ptr_array_t controllersPtrStock = slq.getController();
 
 	// get performance indices
 	double totalCost, totalCost_mp;

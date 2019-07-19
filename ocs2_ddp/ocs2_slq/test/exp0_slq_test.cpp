@@ -65,7 +65,8 @@ TEST(exp0_slq_test, exp0_slq_test) {
 
   // switching times
   std::vector<double> switchingTimes{0.1897};
-  std::shared_ptr<EXP0_LogicRules> logicRules(new EXP0_LogicRules(switchingTimes));
+  std::vector<size_t> subsystemsSequence{0, 1};
+  std::shared_ptr<EXP0_LogicRules> logicRules(new EXP0_LogicRules(switchingTimes, subsystemsSequence));
 
   double startTime = 0.0;
   double finalTime = 2.0;
@@ -105,7 +106,7 @@ TEST(exp0_slq_test, exp0_slq_test) {
   /******************************************************************************************************/
 
   // SLQ - single-thread version
-  SLQ<STATE_DIM, INPUT_DIM, EXP0_LogicRules> slqST(
+  SLQ<STATE_DIM, INPUT_DIM> slqST(
       &systemDynamics, &systemDerivative,
       &systemConstraint, &systemCostFunction,
       &operatingTrajectories, slqSettings, logicRules);
@@ -130,8 +131,8 @@ TEST(exp0_slq_test, exp0_slq_test) {
   /******************************************************************************************************/
   /******************************************************************************************************/
   // get controller
-  SLQ_BASE<STATE_DIM, INPUT_DIM, EXP0_LogicRules>::controller_ptr_array_t controllersPtrStockST = slqST.getController();
-//  SLQ_BASE<STATE_DIM, INPUT_DIM, EXP0_LogicRules>::controller_ptr_array_t controllersPtrStockMT = slqMT.getController();
+  SLQ_BASE<STATE_DIM, INPUT_DIM>::controller_ptr_array_t controllersPtrStockST = slqST.getController();
+//  SLQ_BASE<STATE_DIM, INPUT_DIM>::controller_ptr_array_t controllersPtrStockMT = slqMT.getController();
 
   // get performance indices
   double totalCostST, totalCostMT;

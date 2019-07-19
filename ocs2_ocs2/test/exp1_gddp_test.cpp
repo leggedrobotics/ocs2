@@ -35,122 +35,146 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_slq/SLQ.h>
 #include <ocs2_slq/SLQ_MP.h>
 
-#include <ocs2_oc/test/EXP0.h>
+#include <ocs2_oc/test/EXP1.h>
 
-#include <ocs2_ocs2/GSLQ_BASE.h>
+#include <ocs2_ocs2/GDDP.h>
 
 using namespace ocs2;
 
-enum
-{
+enum {
 	STATE_DIM = 2,
 	INPUT_DIM = 1
 };
 
-TEST(exp0_gslq_test, DISABLED_optimum_gradient_test)
+TEST(exp1_gddp_test, optimum_gradient_test)
 {
 
 	// system dynamics
-	EXP0_System systemDynamics;
+	EXP1_System systemDynamics;
 
 	// system derivatives
-	EXP0_SystemDerivative systemDerivative;
+	EXP1_SystemDerivative systemDerivative;
 
 	// system constraints
-	EXP0_SystemConstraint systemConstraint;
+	EXP1_SystemConstraint systemConstraint;
 
 	// system cost functions
-	EXP0_CostFunction systemCostFunction;
+	EXP1_CostFunction systemCostFunction;
 
 	// system operatingTrajectories
 	Eigen::Matrix<double,STATE_DIM,1> stateOperatingPoint = Eigen::Matrix<double,STATE_DIM,1>::Zero();
 	Eigen::Matrix<double,INPUT_DIM,1> inputOperatingPoint = Eigen::Matrix<double,INPUT_DIM,1>::Zero();
-	EXP0_SystemOperatingTrajectories operatingTrajectories(stateOperatingPoint, inputOperatingPoint);
+	EXP1_SystemOperatingTrajectories operatingTrajectories(stateOperatingPoint, inputOperatingPoint);
 
 
 	/******************************************************************************************************/
 	/******************************************************************************************************/
 	/******************************************************************************************************/
 	SLQ_Settings slqSettings;
-	slqSettings.displayInfo_ = false;
-	slqSettings.displayShortSummary_ = false;
-	slqSettings.absTolODE_ = 1e-10;
-	slqSettings.relTolODE_ = 1e-7;
-	slqSettings.maxNumStepsPerSecond_ = 10000;
-	slqSettings.nThreads_ = 3;
-	slqSettings.maxNumIterationsSLQ_ = 30;
-	slqSettings.lsStepsizeGreedy_ = true;
-	slqSettings.noStateConstraints_ = true;
-	slqSettings.minRelCostSLQ_ = 5e-4;
+	slqSettings.useNominalTimeForBackwardPass_ = true;
+	slqSettings.ddpSettings_.displayInfo_ = false;
+	slqSettings.ddpSettings_.displayShortSummary_ = true;
+	slqSettings.ddpSettings_.maxNumIterations_ = 30;
+	slqSettings.ddpSettings_.nThreads_ = 3;
+	slqSettings.ddpSettings_.maxNumIterations_ = 30;
+	slqSettings.ddpSettings_.lsStepsizeGreedy_ = true;
+	slqSettings.ddpSettings_.noStateConstraints_ = true;
+	slqSettings.ddpSettings_.checkNumericalStability_ = false;
+	slqSettings.ddpSettings_.absTolODE_ = 1e-10;
+	slqSettings.ddpSettings_.relTolODE_ = 1e-7;
+	slqSettings.ddpSettings_.maxNumStepsPerSecond_ = 10000;
+	slqSettings.rolloutSettings_.absTolODE_ = 1e-10;
+	slqSettings.rolloutSettings_.relTolODE_ = 1e-7;
+	slqSettings.rolloutSettings_.maxNumStepsPerSecond_ = 10000;
 
-	// switching times
-	std::vector<double> optimumEventTimes {0.1897};
-	EXP0_LogicRules logicRules(optimumEventTimes);
+	GDDP_Settings gddpSettings;
+	gddpSettings.displayInfo_ = true;
+	gddpSettings.displayShortSummary_ = true;
+	gddpSettings.checkNumericalStability_ = false;
+	gddpSettings.nThreads_ = 3;
+	gddpSettings.useLQForDerivatives_ = false;
+	gddpSettings.absTolODE_ = 1e-10;
+	gddpSettings.relTolODE_ = 1e-7;
+	gddpSettings.maxNumStepsPerSecond_ = 10000;
+
+	// event times
+	std::vector<double> optimumEventTimes {0.2262, 1.0176};
+	EXP1_LogicRules logicRules(optimumEventTimes);
 
 	double startTime = 0.0;
-	double finalTime = 2.0;
+	double finalTime = 3.0;
 
 	// partitioning times
 	std::vector<double> partitioningTimes;
 	partitioningTimes.push_back(startTime);
-	partitioningTimes.push_back(optimumEventTimes[0]);
+	partitioningTimes.push_back(1.0);
+	partitioningTimes.push_back(2.0);
 	partitioningTimes.push_back(finalTime);
 
-	Eigen::Vector2d initState(0.0, 2.0);
+	Eigen::Vector2d initState(2.0, 3.0);
 
 	/******************************************************************************************************/
 	/******************************************************************************************************/
 	/******************************************************************************************************/
-	// SLQ - single core version
-	SLQ<STATE_DIM, INPUT_DIM, EXP0_LogicRules> slq(
+	// SLQ - single tread version
+	SLQ<STATE_DIM, INPUT_DIM, EXP1_LogicRules> slqST(
 			&systemDynamics, &systemDerivative,
 			&systemConstraint, &systemCostFunction,
 			&operatingTrajectories, slqSettings, &logicRules);
 	// SLQ data collector
-	SLQ_DataCollector<STATE_DIM, INPUT_DIM, EXP0_LogicRules> slqDataCollector;
-	// GSLQ
-	GSLQ_BASE<STATE_DIM, INPUT_DIM, EXP0_LogicRules> gslq(slqSettings);
+	SLQ_DataCollector<STATE_DIM, INPUT_DIM, EXP1_LogicRules> slqDataCollector(
+			&systemDynamics, &systemDerivative,
+			&systemConstraint, &systemCostFunction);
+	// GDDP
+	GDDP<STATE_DIM, INPUT_DIM, EXP1_LogicRules> gddp(gddpSettings);
 
-	// run GSLQ using LQ
-	slq.settings().useLQForDerivatives_ = true;
-	gslq.settings().useLQForDerivatives_ = true;
-	slq.run(startTime, initState, finalTime, partitioningTimes);
-	slqDataCollector.collect(&slq);
-	gslq.run(optimumEventTimes, &slqDataCollector);
-	// cost derivative
-	Eigen::Matrix<double,1,1> costFunctionDerivative_LQ;
-	gslq.getCostFuntionDerivative(costFunctionDerivative_LQ);
-
-	// run GSLQ using BVP
-	slq.settings().useLQForDerivatives_ = false;
-	gslq.settings().useLQForDerivatives_ = false;
-	slq.reset();
-	slq.run(startTime, initState, finalTime, partitioningTimes);
-	slqDataCollector.collect(&slq);
-	gslq.run(optimumEventTimes, &slqDataCollector);
-	// cost derivative
-	Eigen::Matrix<double,1,1> costFunctionDerivative_BVP;
-	gslq.getCostFuntionDerivative(costFunctionDerivative_BVP);
+	// run SLQ
+	slqST.run(startTime, initState, finalTime, partitioningTimes);
+	slqDataCollector.collect(&slqST);
 
 	// cost
 	double costFunction, constraint1ISE, constraint2ISE;
-	slq.getPerformanceIndeces(costFunction, constraint1ISE, constraint2ISE);
+	slqST.getPerformanceIndeces(costFunction, constraint1ISE, constraint2ISE);
+
+	// run GDDP using LQ
+	gddp.settings().useLQForDerivatives_ = true;
+	gddp.run(optimumEventTimes, &slqDataCollector);
+	// cost derivative
+	Eigen::Matrix<double,1,1> costFunctionDerivative_LQ;
+	gddp.getCostFuntionDerivative(costFunctionDerivative_LQ);
+
+	// run GDDP using BVP
+	gddp.settings().useLQForDerivatives_ = false;
+	gddp.run(optimumEventTimes, &slqDataCollector);
+	// cost derivative
+	Eigen::Matrix<double,1,1> costFunctionDerivative_BVP;
+	gddp.getCostFuntionDerivative(costFunctionDerivative_BVP);
 
 	/******************************************************************************************************/
 	/******************************************************************************************************/
 	/******************************************************************************************************/
-	std::cerr << "### Optimum event times are: [" << optimumEventTimes[0] << "]\n";
+	std::cerr << "### Optimum event times are: [" << optimumEventTimes[0] << ", ";
+	for (size_t i=1; i<optimumEventTimes.size()-1; i++)
+		std::cerr << optimumEventTimes[i] << ", ";
+	std::cerr << optimumEventTimes.back() << "]\n";
 
 	std::cerr << "### Optimum cost is: " << costFunction << "\n";
 
-	std::cerr << "### Optimum cost derivative LQ method:  [" << costFunctionDerivative_LQ(0) << "]\n";
-	std::cerr << "### Optimum cost derivative BVP method: [" << costFunctionDerivative_BVP(0) << "]\n";
+	std::cerr << "### Optimum cost derivative LQ method:  [" << costFunctionDerivative_LQ(0) << ", ";
+	for (size_t i=1; i<costFunctionDerivative_LQ.size()-1; i++)
+		std::cerr << costFunctionDerivative_LQ(i) << ", ";
+	std::cerr << costFunctionDerivative_LQ.tail<1>()(0) << "]\n";
 
-	ASSERT_LT(costFunctionDerivative_LQ.norm()/fabs(costFunction), 10*slqSettings.minRelCostSLQ_) <<
-			"MESSAGE: GSLQ failed in the EXP0's cost derivative LQ test!";
+	std::cerr << "### Optimum cost derivative BVP method: [" << costFunctionDerivative_BVP(0) << ", ";
+	for (size_t i=1; i<costFunctionDerivative_BVP.size()-1; i++)
+		std::cerr << costFunctionDerivative_BVP(i) << ", ";
+	std::cerr << costFunctionDerivative_BVP.tail<1>()(0) << "]\n";
 
-	ASSERT_LT(costFunctionDerivative_BVP.norm()/fabs(costFunction), 10*slqSettings.minRelCostSLQ_) <<
-			"MESSAGE: GSLQ failed in the EXP0's cost derivative BVP test!";
+	ASSERT_LT(costFunctionDerivative_LQ.norm()/fabs(costFunction), 50*slqSettings.ddpSettings_.minRelCost_ /*0.05*/) <<
+			"MESSAGE: GDDP failed in the EXP1's cost derivative LQ test!";
+
+	ASSERT_LT(costFunctionDerivative_BVP.norm()/fabs(costFunction), 50*slqSettings.ddpSettings_.minRelCost_ /*0.05*/) <<
+			"MESSAGE: GDDP failed in the EXP1's cost derivative BVP test!";
 }
 
 

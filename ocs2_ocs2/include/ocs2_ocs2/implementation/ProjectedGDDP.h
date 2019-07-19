@@ -34,12 +34,10 @@ namespace ocs2 {
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
 ProjectedGDDP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::ProjectedGDDP(
-		const SLQ_Settings& settings /*= SLQ_Settings()*/)
-	: BASE(settings)
-{
-	// create a LP object
-//	lpPtr_ = glp_create_prob();
-}
+		const GDDP_Settings& gddpSettings /*= GDDP_Settings()*/)
+	: BASE(gddpSettings)
+	, lpPtr_(glp_create_prob(), glp_delete_prob)
+{}
 
 /******************************************************************************************************/
 /******************************************************************************************************/
@@ -80,8 +78,8 @@ void ProjectedGDDP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::eventTimesConstraint(
 template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
 void ProjectedGDDP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::setupGLPK() {
 
-	// create the solver
-	lpPtr_.reset(glp_create_prob());
+	// erase the solver
+	glp_erase_prob(lpPtr_.get());
 
 	// name
 	glp_set_prob_name(lpPtr_.get(), "FrankWolfe");
@@ -166,7 +164,7 @@ void ProjectedGDDP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::frankWolfeProblem(
 	// set LP options
 	glp_smcp lpOptions;
 	glp_init_smcp(&lpOptions);
-	if (BASE::settings_.displayGradientDescent_ == false)
+	if (BASE::gddpSettings_.displayGradientDescent_ == false)
 		lpOptions.msg_lev = GLP_MSG_ERR;
 
 	// solve LP

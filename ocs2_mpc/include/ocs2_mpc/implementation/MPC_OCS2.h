@@ -36,6 +36,7 @@ template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
 MPC_OCS2<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::MPC_OCS2()
 
 	: BASE()
+	, gddpPtr_(new gddp_t())
 	, workerOCS2(&MPC_OCS2::runOCS2, this)
 	, activateOCS2_(false)
 	, terminateOCS2_(false)

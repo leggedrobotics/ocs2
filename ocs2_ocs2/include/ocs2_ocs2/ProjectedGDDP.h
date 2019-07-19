@@ -73,12 +73,12 @@ public:
      *
      * @param [in] settings: Structure containing the settings for the SLQ algorithm.
      */
-    ProjectedGDDP(const SLQ_Settings& settings = SLQ_Settings());
+    ProjectedGDDP(const GDDP_Settings& gddpSettings = GDDP_Settings());
 
 	/**
 	 * Default destructor.
 	 */
-	virtual ~ProjectedGDDP() = default;
+	~ProjectedGDDP() = default;
 
 	/**
 	 * Runs the GSLQ to compute the gradient of the cost function w.r.t. the event times.
@@ -140,8 +140,7 @@ protected:
 	/***********
 	 * Variables
 	 **********/
-	std::unique_ptr<glp_prob> lpPtr_;
-
+	std::unique_ptr<glp_prob, void(*)(glp_prob*)> lpPtr_;
 };
 
 } // namespace ocs2

@@ -96,7 +96,7 @@ public:
 	 * @param [in] fieldName: Field name which contains the configuration data (the default is slq).
 	 * @param [in] verbose: Flag to determine whether to print out the loaded settings or not (the default is true).
 	 */
-	void loadSettings(const std::string& filename, const std::string& fieldName = "slq", bool verbose = true);
+	void loadSettings(const std::string& filename, const std::string& fieldName = "gddp", bool verbose = true);
 
 public:
 	/****************

@@ -76,7 +76,7 @@ void ProjectedGDDP<STATE_DIM, INPUT_DIM>::eventTimesConstraint(
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
-void ProjectedGDDP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::setupGLPK() {
+void ProjectedGDDP<STATE_DIM, INPUT_DIM>::setupGLPK() {
 
 	// erase the solver
 	glp_erase_prob(lpPtr_.get());

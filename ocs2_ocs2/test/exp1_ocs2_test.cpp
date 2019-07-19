@@ -49,18 +49,22 @@ enum
 
 TEST(exp1_gslq_test, DISABLED_exp1_gslq_test)
 {
+	// initial event times
+	std::vector<double> initEventTimes {1.0, 2.0};
+	std::vector<size_t> subsystemsSequence{0, 1, 2};
+	std::shared_ptr<EXP1_LogicRules> logicRules(new EXP1_LogicRules(initEventTimes, subsystemsSequence));
 
 	// system dynamics
-	EXP1_System systemDynamics;
+	EXP1_System systemDynamics(logicRules);
 
 	// system derivatives
-	EXP1_SystemDerivative systemDerivative;
+	EXP1_SystemDerivative systemDerivative(logicRules);
 
 	// system constraints
 	EXP1_SystemConstraint systemConstraint;
 
 	// system cost functions
-	EXP1_CostFunction systemCostFunction;
+	EXP1_CostFunction systemCostFunction(logicRules);
 
 	// system operatingTrajectories
 	Eigen::Matrix<double,STATE_DIM,1> stateOperatingPoint = Eigen::Matrix<double,STATE_DIM,1>::Zero();
@@ -88,10 +92,6 @@ TEST(exp1_gslq_test, DISABLED_exp1_gslq_test)
 	slqSettings.acceptableTolGradientDescent_ = 0.001;
 	slqSettings.useAscendingLineSearchNLP_ = false;
 
-	// initial event times
-	std::vector<double> initEventTimes {1.0, 2.0};
-	EXP1_LogicRules logicRules(initEventTimes);
-
 	double startTime = 0.0;
 	double finalTime = 3.0;
 
@@ -108,10 +108,10 @@ TEST(exp1_gslq_test, DISABLED_exp1_gslq_test)
 	/******************************************************************************************************/
 	/******************************************************************************************************/
 	// OCS2
-	OCS2Projected<STATE_DIM, INPUT_DIM, EXP1_LogicRules> ocs2(
+	OCS2Projected<STATE_DIM, INPUT_DIM> ocs2(
 			&systemDynamics, &systemDerivative,
 			&systemConstraint, &systemCostFunction,
-			&operatingTrajectories, slqSettings, &logicRules);
+			&operatingTrajectories, slqSettings, logicRules);
 
 	// run ocs2 using LQ
 	ocs2.slqSettings().useLQForDerivatives_ = true;

@@ -48,18 +48,22 @@ enum {
 
 TEST(exp1_gddp_test, optimum_gradient_test)
 {
+	// event times
+	std::vector<double> optimumEventTimes {0.2262, 1.0176};
+	std::vector<size_t> subsystemsSequence{0, 1, 2};
+	std::shared_ptr<EXP1_LogicRules> logicRules(new EXP1_LogicRules(optimumEventTimes, subsystemsSequence));
 
 	// system dynamics
-	EXP1_System systemDynamics;
+	EXP1_System systemDynamics(logicRules);
 
 	// system derivatives
-	EXP1_SystemDerivative systemDerivative;
+	EXP1_SystemDerivative systemDerivative(logicRules);
 
 	// system constraints
 	EXP1_SystemConstraint systemConstraint;
 
 	// system cost functions
-	EXP1_CostFunction systemCostFunction;
+	EXP1_CostFunction systemCostFunction(logicRules);
 
 	// system operatingTrajectories
 	Eigen::Matrix<double,STATE_DIM,1> stateOperatingPoint = Eigen::Matrix<double,STATE_DIM,1>::Zero();
@@ -97,10 +101,6 @@ TEST(exp1_gddp_test, optimum_gradient_test)
 	gddpSettings.relTolODE_ = 1e-7;
 	gddpSettings.maxNumStepsPerSecond_ = 10000;
 
-	// event times
-	std::vector<double> optimumEventTimes {0.2262, 1.0176};
-	EXP1_LogicRules logicRules(optimumEventTimes);
-
 	double startTime = 0.0;
 	double finalTime = 3.0;
 
@@ -117,16 +117,16 @@ TEST(exp1_gddp_test, optimum_gradient_test)
 	/******************************************************************************************************/
 	/******************************************************************************************************/
 	// SLQ - single tread version
-	SLQ<STATE_DIM, INPUT_DIM, EXP1_LogicRules> slqST(
+	SLQ<STATE_DIM, INPUT_DIM> slqST(
 			&systemDynamics, &systemDerivative,
 			&systemConstraint, &systemCostFunction,
-			&operatingTrajectories, slqSettings, &logicRules);
+			&operatingTrajectories, slqSettings, logicRules);
 	// SLQ data collector
-	SLQ_DataCollector<STATE_DIM, INPUT_DIM, EXP1_LogicRules> slqDataCollector(
+	SLQ_DataCollector<STATE_DIM, INPUT_DIM> slqDataCollector(
 			&systemDynamics, &systemDerivative,
 			&systemConstraint, &systemCostFunction);
 	// GDDP
-	GDDP<STATE_DIM, INPUT_DIM, EXP1_LogicRules> gddp(gddpSettings);
+	GDDP<STATE_DIM, INPUT_DIM> gddp(gddpSettings);
 
 	// run SLQ
 	slqST.run(startTime, initState, finalTime, partitioningTimes);

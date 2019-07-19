@@ -56,11 +56,6 @@ public:
 	using Ptr = std::shared_ptr<MPC_OCS2<STATE_DIM, INPUT_DIM>>;
 
 	using slq_data_collector_t = SLQ_DataCollector<STATE_DIM, INPUT_DIM>;
-	using gslq_t = GSLQ_FW<STATE_DIM, INPUT_DIM>;
-
-	using Ptr = std::shared_ptr<MPC_OCS2<STATE_DIM, INPUT_DIM>>;
-
-	using slq_data_collector_t = SLQ_DataCollector<STATE_DIM, INPUT_DIM>;
 	using gddp_t = ProjectedGDDP<STATE_DIM, INPUT_DIM>;
 
 	using BASE = MPC_SLQ<STATE_DIM, INPUT_DIM>;

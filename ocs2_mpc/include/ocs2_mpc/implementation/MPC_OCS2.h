@@ -53,6 +53,7 @@ MPC_OCS2<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::MPC_OCS2(
 		const operating_trajectories_base_t* operatingTrajectoriesPtr,
 		const scalar_array_t& partitioningTimes,
 		const SLQ_Settings& slqSettings /*= SLQ_Settings()*/,
+		const GDDP_Settings& gddpSettings /*= GDDP_Settings()*/,
 		const MPC_Settings& mpcSettings /*= MPC_Settings()*/,
 		const LOGIC_RULES_T* logicRulesPtr /*= nullptr*/,
 		const mode_sequence_template_t* modeSequenceTemplatePtr /*= nullptr*/,
@@ -69,7 +70,7 @@ MPC_OCS2<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::MPC_OCS2(
 		   logicRulesPtr,
 		   modeSequenceTemplatePtr,
 		   heuristicsFunctionPtr)
-	, gslqPtr_(new gslq_t(slqSettings))
+	, gddpPtr_(new gddp_t(gddpSettings))
 	, workerOCS2(&MPC_OCS2::runOCS2, this)
 	, activateOCS2_(false)
 	, terminateOCS2_(false)
@@ -135,7 +136,7 @@ void MPC_OCS2<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::runOCS2() {
 
 		subsystemsSequenceOptimized_ = slqDataCollectorPtr_->subsystemsSequence_;
 
-		gslqPtr_->run(
+		gddpPtr_->run(
 				slqDataCollectorPtr_->eventTimes_,
 				slqDataCollectorPtr_.get(),
 				eventTimesOptimized_,

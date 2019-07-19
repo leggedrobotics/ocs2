@@ -27,8 +27,8 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#ifndef GSLQ_BASE_OCS2_H_
-#define GSLQ_BASE_OCS2_H_
+#ifndef GDDP_OCS2_H_
+#define GDDP_OCS2_H_
 
 #include <array>
 #include <mutex>
@@ -51,7 +51,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <ocs2_slq/SLQ_DataCollector.h>
 
-#include "ocs2_ocs2/EventTimeIndexer.h"
+#include "ocs2_ocs2/GDDP_Settings.h"
 #include "ocs2_ocs2/sensitivity_equations/SensitivitySequentialRiccatiEquations.h"
 #include "ocs2_ocs2/sensitivity_equations/BvpSensitivityEquations.h"
 #include "ocs2_ocs2/sensitivity_equations/BvpSensitivityErrorEquations.h"
@@ -60,80 +60,78 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 namespace ocs2 {
 
 /**
- * GSLQ_BASE class for computing gradient of the cost function w.r.t. event times.
+ * GDDP class for computing gradient of the cost function w.r.t. event times.
  *
  * @tparam STATE_DIM: Dimension of the state space.
  * @tparam INPUT_DIM: Dimension of the control input space.
  */
 template <size_t STATE_DIM, size_t INPUT_DIM>
-class GSLQ_BASE
+class GDDP
 {
 public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-
-
-	typedef std::shared_ptr<GSLQ_BASE<STATE_DIM, INPUT_DIM>> Ptr;
+	typedef std::shared_ptr<GDDP<STATE_DIM, INPUT_DIM>> Ptr;
 
 	typedef SLQ_DataCollector<STATE_DIM, INPUT_DIM> slq_data_collector_t;
 
 	typedef BvpSensitivityEquations<STATE_DIM, INPUT_DIM>      bvp_sensitivity_equations_t;
 	typedef BvpSensitivityErrorEquations<STATE_DIM, INPUT_DIM> bvp_sensitivity_error_equations_t;
-	typedef RolloutSensitivityEquations<STATE_DIM, INPUT_DIM> rollout_sensitivity_equations_t;
+	typedef RolloutSensitivityEquations<STATE_DIM, INPUT_DIM>  rollout_sensitivity_equations_t;
 	typedef SensitivitySequentialRiccatiEquations<STATE_DIM, INPUT_DIM> riccati_sensitivity_equations_t;
 
 	typedef Dimensions<STATE_DIM, INPUT_DIM> DIMENSIONS;
 
-	typedef typename DIMENSIONS::controller_t controller_t;
-	typedef typename DIMENSIONS::controller_array_t controller_array_t;
-	typedef typename slq_data_collector_t::linear_controller_array_t linear_controller_array_t;
-	typedef typename DIMENSIONS::lagrange_t lagrange_t;
-	typedef typename DIMENSIONS::lagrange_array_t lagrange_array_t;
-	typedef typename DIMENSIONS::size_array_t size_array_t;
-	typedef typename DIMENSIONS::scalar_t scalar_t;
-	typedef typename DIMENSIONS::scalar_array_t scalar_array_t;
-	typedef typename DIMENSIONS::eigen_scalar_t eigen_scalar_t;
-	typedef typename DIMENSIONS::eigen_scalar_array_t eigen_scalar_array_t;
-	typedef typename DIMENSIONS::eigen_scalar_array2_t eigen_scalar_array2_t;
-	typedef typename DIMENSIONS::state_vector_t state_vector_t;
-	typedef typename DIMENSIONS::state_vector_array_t state_vector_array_t;
-	typedef typename DIMENSIONS::state_vector_array2_t state_vector_array2_t;
-	typedef typename DIMENSIONS::input_vector_t input_vector_t;
-	typedef typename DIMENSIONS::input_vector_array_t input_vector_array_t;
-	typedef typename DIMENSIONS::input_vector_array2_t input_vector_array2_t;
-	typedef typename DIMENSIONS::input_state_matrix_t input_state_matrix_t;
-	typedef typename DIMENSIONS::input_state_matrix_array_t input_state_matrix_array_t;
-	typedef typename DIMENSIONS::input_state_matrix_array2_t input_state_matrix_array2_t;
-	typedef typename DIMENSIONS::state_matrix_t state_matrix_t;
-	typedef typename DIMENSIONS::state_matrix_array_t state_matrix_array_t;
-	typedef typename DIMENSIONS::state_matrix_array2_t state_matrix_array2_t;
-	typedef typename DIMENSIONS::input_matrix_t input_matrix_t;
-	typedef typename DIMENSIONS::input_matrix_array_t input_matrix_array_t;
-	typedef typename DIMENSIONS::input_matrix_array2_t input_matrix_array2_t;
-	typedef typename DIMENSIONS::state_input_matrix_t state_input_matrix_t;
-	typedef typename DIMENSIONS::state_input_matrix_array_t state_input_matrix_array_t;
-	typedef typename DIMENSIONS::state_input_matrix_array2_t state_input_matrix_array2_t;
-	typedef typename DIMENSIONS::constraint1_vector_t constraint1_vector_t;
-	typedef typename DIMENSIONS::constraint1_vector_array_t constraint1_vector_array_t;
-	typedef typename DIMENSIONS::constraint1_vector_array2_t constraint1_vector_array2_t;
-	typedef typename DIMENSIONS::constraint1_state_matrix_t constraint1_state_matrix_t;
-	typedef typename DIMENSIONS::constraint1_state_matrix_array_t constraint1_state_matrix_array_t;
-	typedef typename DIMENSIONS::constraint1_state_matrix_array2_t constraint1_state_matrix_array2_t;
-	typedef typename DIMENSIONS::constraint1_input_matrix_t constraint1_input_matrix_t;
-	typedef typename DIMENSIONS::constraint1_input_matrix_array_t constraint1_input_matrix_array_t;
-	typedef typename DIMENSIONS::constraint1_input_matrix_array2_t constraint1_input_matrix_array2_t;
-	typedef typename DIMENSIONS::input_constraint1_matrix_t input_constraint1_matrix_t;
-	typedef typename DIMENSIONS::input_constraint1_matrix_array_t input_constraint1_matrix_array_t;
-	typedef typename DIMENSIONS::input_constraint1_matrix_array2_t input_constraint1_matrix_array2_t;
-	typedef typename DIMENSIONS::constraint2_vector_t       constraint2_vector_t;
-	typedef typename DIMENSIONS::constraint2_vector_array_t constraint2_vector_array_t;
-	typedef typename DIMENSIONS::constraint2_vector_array2_t constraint2_vector_array2_t;
-	typedef typename DIMENSIONS::constraint2_state_matrix_t       constraint2_state_matrix_t;
-	typedef typename DIMENSIONS::constraint2_state_matrix_array_t constraint2_state_matrix_array_t;
-	typedef typename DIMENSIONS::constraint2_state_matrix_array2_t constraint2_state_matrix_array2_t;
-	typedef typename DIMENSIONS::dynamic_vector_t dynamic_vector_t;
-	typedef typename DIMENSIONS::dynamic_matrix_t dynamic_matrix_t;
-	typedef typename DIMENSIONS::dynamic_input_matrix_t dynamic_input_matrix_t;
+	using controller_t = typename DIMENSIONS::controller_t;
+	using controller_array_t = typename DIMENSIONS::controller_array_t;
+	using linear_controller_array_t = typename slq_data_collector_t::linear_controller_array_t;
+	using lagrange_t = typename DIMENSIONS::lagrange_t;
+	using lagrange_array_t = typename DIMENSIONS::lagrange_array_t;
+	using size_array_t = typename DIMENSIONS::size_array_t;
+	using scalar_t = typename DIMENSIONS::scalar_t;
+	using scalar_array_t = typename DIMENSIONS::scalar_array_t;
+	using eigen_scalar_t = typename DIMENSIONS::eigen_scalar_t;
+	using eigen_scalar_array_t = typename DIMENSIONS::eigen_scalar_array_t;
+	using eigen_scalar_array2_t = typename DIMENSIONS::eigen_scalar_array2_t;
+	using state_vector_t = typename DIMENSIONS::state_vector_t;
+	using state_vector_array_t = typename DIMENSIONS::state_vector_array_t;
+	using state_vector_array2_t = typename DIMENSIONS::state_vector_array2_t;
+	using input_vector_t = typename DIMENSIONS::input_vector_t;
+	using input_vector_array_t = typename DIMENSIONS::input_vector_array_t;
+	using input_vector_array2_t = typename DIMENSIONS::input_vector_array2_t;
+	using input_state_matrix_t = typename DIMENSIONS::input_state_matrix_t;
+	using input_state_matrix_array_t = typename DIMENSIONS::input_state_matrix_array_t;
+	using input_state_matrix_array2_t = typename DIMENSIONS::input_state_matrix_array2_t;
+	using state_matrix_t = typename DIMENSIONS::state_matrix_t;
+	using state_matrix_array_t = typename DIMENSIONS::state_matrix_array_t;
+	using state_matrix_array2_t = typename DIMENSIONS::state_matrix_array2_t;
+	using input_matrix_t = typename DIMENSIONS::input_matrix_t;
+	using input_matrix_array_t = typename DIMENSIONS::input_matrix_array_t;
+	using input_matrix_array2_t = typename DIMENSIONS::input_matrix_array2_t;
+	using state_input_matrix_t = typename DIMENSIONS::state_input_matrix_t;
+	using state_input_matrix_array_t = typename DIMENSIONS::state_input_matrix_array_t;
+	using state_input_matrix_array2_t = typename DIMENSIONS::state_input_matrix_array2_t;
+	using constraint1_vector_t = typename DIMENSIONS::constraint1_vector_t;
+	using constraint1_vector_array_t = typename DIMENSIONS::constraint1_vector_array_t;
+	using constraint1_vector_array2_t = typename DIMENSIONS::constraint1_vector_array2_t;
+	using constraint1_state_matrix_t = typename DIMENSIONS::constraint1_state_matrix_t;
+	using constraint1_state_matrix_array_t = typename DIMENSIONS::constraint1_state_matrix_array_t;
+	using constraint1_state_matrix_array2_t = typename DIMENSIONS::constraint1_state_matrix_array2_t;
+	using constraint1_input_matrix_t = typename DIMENSIONS::constraint1_input_matrix_t;
+	using constraint1_input_matrix_array_t = typename DIMENSIONS::constraint1_input_matrix_array_t;
+	using constraint1_input_matrix_array2_t = typename DIMENSIONS::constraint1_input_matrix_array2_t;
+	using input_constraint1_matrix_t = typename DIMENSIONS::input_constraint1_matrix_t;
+	using input_constraint1_matrix_array_t = typename DIMENSIONS::input_constraint1_matrix_array_t;
+	using input_constraint1_matrix_array2_t = typename DIMENSIONS::input_constraint1_matrix_array2_t;
+	using constraint2_vector_t = typename DIMENSIONS::constraint2_vector_t;
+	using constraint2_vector_array_t = typename DIMENSIONS::constraint2_vector_array_t;
+	using constraint2_vector_array2_t = typename DIMENSIONS::constraint2_vector_array2_t;
+	using constraint2_state_matrix_t = typename DIMENSIONS::constraint2_state_matrix_t;
+	using constraint2_state_matrix_array_t = typename DIMENSIONS::constraint2_state_matrix_array_t;
+	using constraint2_state_matrix_array2_t = typename DIMENSIONS::constraint2_state_matrix_array2_t;
+	using dynamic_vector_t = typename DIMENSIONS::dynamic_vector_t;
+	using dynamic_matrix_t = typename DIMENSIONS::dynamic_matrix_t;
+	using dynamic_input_matrix_t = typename DIMENSIONS::dynamic_input_matrix_t;
 
     typedef std::vector<eigen_scalar_array2_t, Eigen::aligned_allocator<eigen_scalar_array2_t>> eigen_scalar_array3_t;
     typedef std::vector<state_vector_array2_t, Eigen::aligned_allocator<state_vector_array2_t>> state_vector_array3_t;
@@ -146,14 +144,14 @@ public:
     /**
      * Constructor.
      *
-     * @param [in] settings: Structure containing the settings for the SLQ algorithm.
+     * @param [in] settings: Structure containing the settings for the GDDP algorithm.
      */
-    GSLQ_BASE(const SLQ_Settings& settings = SLQ_Settings());
+    GDDP(const GDDP_Settings& gddpSettings = GDDP_Settings());
 
 	/**
-	 * Destructor.
+	 * Default destructor.
 	 */
-	virtual ~GSLQ_BASE() = default;
+	virtual ~GDDP() = default;
 
     /**
      * Gets the calculated rollout's sensitivity to an event time.
@@ -163,7 +161,7 @@ public:
      * @param [out] sensitivityStateTrajectoriesStock: state trajectory sensitivity to the switching times.
      * @param [out] sensitivityInputTrajectoriesStock: control input trajectory sensitivity to the switching times.
      */
-	void getRolloutSensitivity2SwitchingTime(
+	void getRolloutSensitivity2EventTime(
 			const size_t& eventTimeIndex,
 			std::vector<scalar_array_t>& sensitivityTimeTrajectoriesStock,
 			state_matrix_array2_t& sensitivityStateTrajectoriesStock,
@@ -174,7 +172,7 @@ public:
 	 *
 	 * @return a reference to the Options structure.
 	 */
-	SLQ_Settings& settings();
+	GDDP_Settings& settings();
 
     /**
      * Calculates the cost function's derivatives w.r.t. event times.
@@ -219,11 +217,6 @@ protected:
 	 * @param [in] numPartitions: number of partitions.
 	 */
 	virtual void setupOptimizer(const size_t& numPartitions);
-
-	/**
-	 * Computes the required data which are not computed in the SLQ.
-	 */
-	void computeMissingSlqData();
 
 	/**
 	 * Computes the costate over the given rollout.
@@ -292,7 +285,7 @@ protected:
 	 *
 	 * @param [in] partitioningTimes: a sorted event times sequence.
 	 * @param [in] time: inquiry time.
-	 * @param [in] ceilingFunction: Use the ceiling function settings ().
+	 * @param [in] ceilingFunction: Use the ceiling function.
 	 * @return Active subsystem index.
 	 */
 	size_t findActiveSubsystemIndex(
@@ -307,7 +300,7 @@ protected:
 	 *
 	 * @param [in] partitioningTimes: a sorted time sequence.
 	 * @param [in] time: Enquiry time.
-	 * @param [in] ceilingFunction: Use the ceiling function settings ().
+	 * @param [in] ceilingFunction: Use the ceiling function.
 	 * @return Active subsystem index.
 	 */
 	size_t findActivePartitionIndex(
@@ -362,7 +355,7 @@ protected:
 	 * @param [out] nablaqFinalStock: Sensitivity of the final cost's zero order variation.
 	 * @param [out] nablaQvFinalStock: Sensitivity of the final cost's first order state variation.
 	 */
-	void approximateNominalLQPSensitivity2SwitchingTime(
+	void approximateNominalLQPSensitivity2EventTime(
 			const state_vector_array2_t& sensitivityStateTrajectoriesStock,
 			const input_vector_array2_t& sensitivityInputTrajectoriesStock,
 			eigen_scalar_array2_t& nablaqTrajectoriesStock,
@@ -378,7 +371,7 @@ protected:
 	 * @param [out] nablasHeuristics: Sensitivity of the Heuristics zero order variation.
 	 * @param [out] nablaSvHeuristics: Sensitivity of the Heuristics first order state variation.
 	 */
-	void approximateNominalHeuristicsSensitivity2SwitchingTime(
+	void approximateNominalHeuristicsSensitivity2EventTime(
 			const state_vector_t& sensitivityFinalState,
 			eigen_scalar_t& nablasHeuristics,
 			state_vector_t& nablaSvHeuristics) const;
@@ -493,9 +486,9 @@ protected:
 	/***********
 	 * Variables
 	 **********/
-	std::shared_ptr<HybridLogicRules> logicRulesPtr_;
+	GDDP_Settings gddpSettings_;
 
-	SLQ_Settings settings_;
+	std::shared_ptr<HybridLogicRules> logicRulesPtr_;
 
 	size_t numPartitions_ = 0;
 	size_t numSubsystems_ = 1;
@@ -564,6 +557,6 @@ protected:
 
 } // namespace ocs2
 
-#include "implementation/GSLQ_BASE.h"
+#include "implementation/GDDP.h"
 
-#endif /* GSLQ_BASE_OCS2_H_ */
+#endif /* GDDP_OCS2_H_ */

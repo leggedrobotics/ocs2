@@ -33,31 +33,31 @@ namespace ocs2 {
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
-GSLQ_BASE<STATE_DIM, INPUT_DIM>::GSLQ_BASE(
-		const SLQ_Settings& settings /*= SLQ_Settings())*/)
-	: settings_(settings)
+GDDP<STATE_DIM, INPUT_DIM>::GDDP(
+		const GDDP_Settings& gddpSettings /*= GDDP_Settings()*/)
+	: gddpSettings_(gddpSettings)
 {
 	bvpSensitivityEquationsPtrStock_.clear();
-	bvpSensitivityEquationsPtrStock_.reserve(settings_.ddpSettings_.nThreads_);
+	bvpSensitivityEquationsPtrStock_.reserve(gddpSettings_.nThreads_);
 	bvpSensitivityIntegratorsPtrStock_.clear();
-	bvpSensitivityIntegratorsPtrStock_.reserve(settings_.ddpSettings_.nThreads_);
+	bvpSensitivityIntegratorsPtrStock_.reserve(gddpSettings_.nThreads_);
 
 	bvpSensitivityErrorEquationsPtrStock_.clear();
-	bvpSensitivityErrorEquationsPtrStock_.reserve(settings_.ddpSettings_.nThreads_);
+	bvpSensitivityErrorEquationsPtrStock_.reserve(gddpSettings_.nThreads_);
 	bvpSensitivityErrorIntegratorsPtrStock_.clear();
-	bvpSensitivityErrorIntegratorsPtrStock_.reserve(settings_.ddpSettings_.nThreads_);
+	bvpSensitivityErrorIntegratorsPtrStock_.reserve(gddpSettings_.nThreads_);
 
 	rolloutSensitivityEquationsPtrStock_.clear();
-	rolloutSensitivityEquationsPtrStock_.reserve(settings_.ddpSettings_.nThreads_);
+	rolloutSensitivityEquationsPtrStock_.reserve(gddpSettings_.nThreads_);
 	rolloutSensitivityIntegratorsPtrStock_.clear();
-	rolloutSensitivityIntegratorsPtrStock_.reserve(settings_.ddpSettings_.nThreads_);
+	rolloutSensitivityIntegratorsPtrStock_.reserve(gddpSettings_.nThreads_);
 
 	riccatiSensitivityEquationsPtrStock_.clear();
-	riccatiSensitivityEquationsPtrStock_.reserve(settings_.ddpSettings_.nThreads_);
+	riccatiSensitivityEquationsPtrStock_.reserve(gddpSettings_.nThreads_);
 	riccatiSensitivityIntegratorsPtrStock_.clear();
-	riccatiSensitivityIntegratorsPtrStock_.reserve(settings_.ddpSettings_.nThreads_);
+	riccatiSensitivityIntegratorsPtrStock_.reserve(gddpSettings_.nThreads_);
 
-	for (size_t i=0; i<settings_.ddpSettings_.nThreads_; i++)  {
+	for (size_t i=0; i<gddpSettings_.nThreads_; i++)  {
 
 		typedef Eigen::aligned_allocator<bvp_sensitivity_equations_t> bvp_sensitivity_equations_alloc_t;
 		bvpSensitivityEquationsPtrStock_.push_back( std::move(
@@ -79,7 +79,7 @@ GSLQ_BASE<STATE_DIM, INPUT_DIM>::GSLQ_BASE(
 				std::allocate_shared<riccati_sensitivity_equations_t, riccati_sensitivity_equations_alloc_t>(
 						riccati_sensitivity_equations_alloc_t()) ) );
 
-		switch(settings_.RiccatiIntegratorType_) {
+		switch(gddpSettings_.RiccatiIntegratorType_) {
 
 		case DIMENSIONS::RiccatiIntegratorType::ODE45 : {
 			bvpSensitivityIntegratorsPtrStock_.emplace_back (
@@ -125,46 +125,29 @@ GSLQ_BASE<STATE_DIM, INPUT_DIM>::GSLQ_BASE(
 	}  // end of i loop
 
 	// calculateBVPSensitivityControllerForward & calculateLQSensitivityControllerForward
-	BmFuncStock_.resize(settings_.ddpSettings_.nThreads_);
-	RmInverseFuncStock_.resize(settings_.ddpSettings_.nThreads_);
-	DmProjectedFuncStock_.resize(settings_.ddpSettings_.nThreads_);
-	EvDevEventTimesProjectedFuncStock_.resize(settings_.ddpSettings_.nThreads_);
-	nablaRvFuncStock_.resize(settings_.ddpSettings_.nThreads_);
+	BmFuncStock_.resize(gddpSettings_.nThreads_);
+	RmInverseFuncStock_.resize(gddpSettings_.nThreads_);
+	DmProjectedFuncStock_.resize(gddpSettings_.nThreads_);
+	EvDevEventTimesProjectedFuncStock_.resize(gddpSettings_.nThreads_);
+	nablaRvFuncStock_.resize(gddpSettings_.nThreads_);
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
-void GSLQ_BASE<STATE_DIM, INPUT_DIM>::setupOptimizer(
+void GDDP<STATE_DIM, INPUT_DIM>::setupOptimizer(
 		const size_t& numPartitions) {
 
 	if (numPartitions==0)
-		throw std::runtime_error("The number of Partitions cannot be zero!");
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM>
-void GSLQ_BASE<STATE_DIM, INPUT_DIM>::computeMissingSlqData() {
-
-	const scalar_t learningRate = 0.0;
-
-	// calculate costate
-	calculateRolloutCostate(dcPtr_->nominalTimeTrajectoriesStock_,
-			nominalCostateTrajectoriesStock_);
-
-	// calculate Lagrangian
-	calculateNominalRolloutLagrangeMultiplier(dcPtr_->nominalTimeTrajectoriesStock_,
-			nominalLagrangianTrajectoriesStock_);
+		throw std::runtime_error("The number of partitions cannot be zero!");
 }
 
 /*****************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
-void GSLQ_BASE<STATE_DIM, INPUT_DIM>::calculateRolloutCostate(
+void GDDP<STATE_DIM, INPUT_DIM>::calculateRolloutCostate(
 		const std::vector<scalar_array_t>& timeTrajectoriesStock,
 		const state_vector_array2_t& stateTrajectoriesStock,
 		state_vector_array2_t& costateTrajectoriesStock,
@@ -213,7 +196,7 @@ void GSLQ_BASE<STATE_DIM, INPUT_DIM>::calculateRolloutCostate(
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
-void GSLQ_BASE<STATE_DIM, INPUT_DIM>::calculateRolloutCostate(
+void GDDP<STATE_DIM, INPUT_DIM>::calculateRolloutCostate(
 		const std::vector<scalar_array_t>& timeTrajectoriesStock,
 		state_vector_array2_t& costateTrajectoriesStock)  {
 
@@ -251,19 +234,19 @@ void GSLQ_BASE<STATE_DIM, INPUT_DIM>::calculateRolloutCostate(
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
-void GSLQ_BASE<STATE_DIM, INPUT_DIM>::calculateInputConstraintLagrangian(
+void GDDP<STATE_DIM, INPUT_DIM>::calculateInputConstraintLagrangian(
 		lagrange_array_t& lagrangeMultiplierFunctionsStock,
 		scalar_t learningRate /*= 0.0*/) {
 
 	// functions for controller and Lagrange multiplier
-	LinearInterpolation<state_vector_t,Eigen::aligned_allocator<state_vector_t>> xFunc;
-	LinearInterpolation<state_input_matrix_t,Eigen::aligned_allocator<state_input_matrix_t>> BmFunc;
-	LinearInterpolation<input_state_matrix_t,Eigen::aligned_allocator<input_state_matrix_t>> PmFunc;
-	LinearInterpolation<input_vector_t,Eigen::aligned_allocator<input_vector_t>> RvFunc;
-	LinearInterpolation<input_matrix_t,Eigen::aligned_allocator<input_matrix_t>> RmFunc;
-	LinearInterpolation<input_vector_t,Eigen::aligned_allocator<input_vector_t>> EvProjectedFunc;
-	LinearInterpolation<input_state_matrix_t,Eigen::aligned_allocator<input_state_matrix_t>> CmProjectedFunc;
-	LinearInterpolation<input_constraint1_matrix_t,Eigen::aligned_allocator<input_constraint1_matrix_t>> DmDagerFunc;
+	EigenLinearInterpolation<state_vector_t> xFunc;
+	EigenLinearInterpolation<state_input_matrix_t> BmFunc;
+	EigenLinearInterpolation<input_state_matrix_t> PmFunc;
+	EigenLinearInterpolation<input_vector_t> RvFunc;
+	EigenLinearInterpolation<input_matrix_t> RmFunc;
+	EigenLinearInterpolation<input_vector_t> EvProjectedFunc;
+	EigenLinearInterpolation<input_state_matrix_t> CmProjectedFunc;
+	EigenLinearInterpolation<input_constraint1_matrix_t> DmDagerFunc;
 
 	lagrangeMultiplierFunctionsStock.resize(numPartitions_);
 
@@ -343,14 +326,14 @@ void GSLQ_BASE<STATE_DIM, INPUT_DIM>::calculateInputConstraintLagrangian(
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
-void GSLQ_BASE<STATE_DIM, INPUT_DIM>::calculateRolloutLagrangeMultiplier(
+void GDDP<STATE_DIM, INPUT_DIM>::calculateRolloutLagrangeMultiplier(
 		const std::vector<scalar_array_t>& timeTrajectoriesStock,
 		const state_vector_array2_t& stateTrajectoriesStock,
 		const lagrange_array_t& lagrangeMultiplierFunctionsStock,
 		constraint1_vector_array2_t& lagrangeTrajectoriesStock)  {
 
-	LinearInterpolation<constraint1_vector_t, Eigen::aligned_allocator<constraint1_vector_t> > vffFunc;
-	LinearInterpolation<constraint1_state_matrix_t, Eigen::aligned_allocator<constraint1_state_matrix_t> > vfbFunc;
+	EigenLinearInterpolation<constraint1_vector_t> vffFunc;
+	EigenLinearInterpolation<constraint1_state_matrix_t> vfbFunc;
 
 	lagrangeTrajectoriesStock.resize(numPartitions_);
 
@@ -385,7 +368,7 @@ void GSLQ_BASE<STATE_DIM, INPUT_DIM>::calculateRolloutLagrangeMultiplier(
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
-void GSLQ_BASE<STATE_DIM, INPUT_DIM>::calculateNominalRolloutLagrangeMultiplier(
+void GDDP<STATE_DIM, INPUT_DIM>::calculateNominalRolloutLagrangeMultiplier(
 		const std::vector<scalar_array_t>& timeTrajectoriesStock,
 		constraint1_vector_array2_t& lagrangeTrajectoriesStock)  {
 
@@ -423,7 +406,7 @@ void GSLQ_BASE<STATE_DIM, INPUT_DIM>::calculateNominalRolloutLagrangeMultiplier(
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
-size_t GSLQ_BASE<STATE_DIM, INPUT_DIM>::findActiveSubsystemIndex(
+size_t GDDP<STATE_DIM, INPUT_DIM>::findActiveSubsystemIndex(
 		const scalar_array_t& eventTimes,
 		const scalar_t& time,
 		bool ceilingFunction /*= true*/) const {
@@ -448,7 +431,7 @@ size_t GSLQ_BASE<STATE_DIM, INPUT_DIM>::findActiveSubsystemIndex(
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
-size_t GSLQ_BASE<STATE_DIM, INPUT_DIM>::findActivePartitionIndex(
+size_t GDDP<STATE_DIM, INPUT_DIM>::findActivePartitionIndex(
 		const scalar_array_t& partitioningTimes,
 		const scalar_t& time,
 		bool ceilingFunction /*= true*/) const {
@@ -479,7 +462,7 @@ size_t GSLQ_BASE<STATE_DIM, INPUT_DIM>::findActivePartitionIndex(
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
-void GSLQ_BASE<STATE_DIM, INPUT_DIM>::computeEquivalentSystemMultiplier(
+void GDDP<STATE_DIM, INPUT_DIM>::computeEquivalentSystemMultiplier(
 		const size_t& eventTimeIndex,
 		const size_t& activeSubsystem,
 		scalar_t& multiplier) const {
@@ -520,7 +503,7 @@ void GSLQ_BASE<STATE_DIM, INPUT_DIM>::computeEquivalentSystemMultiplier(
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
-void GSLQ_BASE<STATE_DIM, INPUT_DIM>::getRolloutSensitivity2SwitchingTime(
+void GDDP<STATE_DIM, INPUT_DIM>::getRolloutSensitivity2EventTime(
 		const size_t& eventTimeIndex,
 		std::vector<scalar_array_t>& sensitivityTimeTrajectoriesStock,
 		state_matrix_array2_t& sensitivityStateTrajectoriesStock,
@@ -538,9 +521,9 @@ void GSLQ_BASE<STATE_DIM, INPUT_DIM>::getRolloutSensitivity2SwitchingTime(
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
-SLQ_Settings& GSLQ_BASE<STATE_DIM, INPUT_DIM>::settings() {
+GDDP_Settings& GDDP<STATE_DIM, INPUT_DIM>::settings() {
 
-	return settings_;
+	return gddpSettings_;
 }
 
 /******************************************************************************************************/
@@ -548,7 +531,7 @@ SLQ_Settings& GSLQ_BASE<STATE_DIM, INPUT_DIM>::settings() {
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
 template <typename Derived>
-void GSLQ_BASE<STATE_DIM, INPUT_DIM>::getCostFuntionDerivative(
+void GDDP<STATE_DIM, INPUT_DIM>::getCostFuntionDerivative(
 		Eigen::MatrixBase<Derived> const& costFunctionDerivative) const {
 
 	// refer to Eigen documentation under the topic "Writing Functions Taking Eigen Types as Parameters"
@@ -559,8 +542,8 @@ void GSLQ_BASE<STATE_DIM, INPUT_DIM>::getCostFuntionDerivative(
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
-const typename GSLQ_BASE<STATE_DIM, INPUT_DIM>::scalar_array_t&
-	GSLQ_BASE<STATE_DIM, INPUT_DIM>::eventTimes() const {
+const typename GDDP<STATE_DIM, INPUT_DIM>::scalar_array_t&
+	GDDP<STATE_DIM, INPUT_DIM>::eventTimes() const {
 
 	return eventTimes_;
 }
@@ -569,7 +552,7 @@ const typename GSLQ_BASE<STATE_DIM, INPUT_DIM>::scalar_array_t&
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
-void GSLQ_BASE<STATE_DIM, INPUT_DIM>::propagateRolloutSensitivity(
+void GDDP<STATE_DIM, INPUT_DIM>::propagateRolloutSensitivity(
 		size_t workerIndex,
 		const size_t& eventTimeIndex,
 		const linear_controller_array_t& controllersStock,
@@ -611,7 +594,7 @@ void GSLQ_BASE<STATE_DIM, INPUT_DIM>::propagateRolloutSensitivity(
 				&LvTrajectoriesStock[i], &controllersStock[i].gainArray_);
 
 		// max number of steps of integration
-		const size_t maxNumSteps = settings_.ddpSettings_.maxNumStepsPerSecond_ *
+		const size_t maxNumSteps = gddpSettings_.maxNumStepsPerSecond_ *
 				std::max(1.0, sensitivityTimeTrajectoriesStock[i].back()-sensitivityTimeTrajectoriesStock[i].front());
 
 		// resizing
@@ -647,9 +630,9 @@ void GSLQ_BASE<STATE_DIM, INPUT_DIM>::propagateRolloutSensitivity(
 				rolloutSensitivityIntegratorsPtrStock_[workerIndex]->integrate(
 						nabla_xInit, beginTimeItr, endTimeItr,
 						sensitivityStateTrajectoriesStock[i],
-						settings_.ddpSettings_.minTimeStep_,
-						settings_.ddpSettings_.absTolODE_,
-						settings_.ddpSettings_.relTolODE_,
+						gddpSettings_.minTimeStep_,
+						gddpSettings_.absTolODE_,
+						gddpSettings_.relTolODE_,
 						maxNumSteps, true);
 
 				// compute input sensitivity
@@ -677,7 +660,7 @@ void GSLQ_BASE<STATE_DIM, INPUT_DIM>::propagateRolloutSensitivity(
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
-void GSLQ_BASE<STATE_DIM, INPUT_DIM>::approximateNominalLQPSensitivity2SwitchingTime(
+void GDDP<STATE_DIM, INPUT_DIM>::approximateNominalLQPSensitivity2EventTime(
 		const state_vector_array2_t& sensitivityStateTrajectoriesStock,
 		const input_vector_array2_t& sensitivityInputTrajectoriesStock,
 		eigen_scalar_array2_t& nablaqTrajectoriesStock,
@@ -752,7 +735,7 @@ void GSLQ_BASE<STATE_DIM, INPUT_DIM>::approximateNominalLQPSensitivity2Switching
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
-void GSLQ_BASE<STATE_DIM, INPUT_DIM>::approximateNominalHeuristicsSensitivity2SwitchingTime(
+void GDDP<STATE_DIM, INPUT_DIM>::approximateNominalHeuristicsSensitivity2EventTime(
 		const state_vector_t& sensitivityFinalState,
 		eigen_scalar_t& nablasHeuristics,
 		state_vector_t& nablaSvHeuristics) const {
@@ -765,7 +748,7 @@ void GSLQ_BASE<STATE_DIM, INPUT_DIM>::approximateNominalHeuristicsSensitivity2Sw
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
-void GSLQ_BASE<STATE_DIM, INPUT_DIM>::solveSensitivityRiccatiEquations(
+void GDDP<STATE_DIM, INPUT_DIM>::solveSensitivityRiccatiEquations(
 		size_t workerIndex,
 		const size_t& eventTimeIndex,
 		const scalar_t& learningRate,
@@ -834,7 +817,7 @@ void GSLQ_BASE<STATE_DIM, INPUT_DIM>::solveSensitivityRiccatiEquations(
 				&nablaRvTrajectoriesStockSet_[eventTimeIndex][i]);
 
 		// max number of steps of integration
-		const size_t maxNumSteps = settings_.ddpSettings_.maxNumStepsPerSecond_ *
+		const size_t maxNumSteps = gddpSettings_.maxNumStepsPerSecond_ *
 				std::max(1.0, dcPtr_->SsNormalizedTimeTrajectoriesStock_[i].back()-dcPtr_->SsNormalizedTimeTrajectoriesStock_[i].front());
 
 		// output containers resizing
@@ -875,9 +858,9 @@ void GSLQ_BASE<STATE_DIM, INPUT_DIM>::solveSensitivityRiccatiEquations(
 				riccatiSensitivityIntegratorsPtrStock_[workerIndex]->integrate(
 						SsFinal, beginTimeItr, endTimeItr,
 						allSsTrajectory,
-						settings_.ddpSettings_.minTimeStep_,
-						settings_.ddpSettings_.absTolODE_,
-						settings_.ddpSettings_.relTolODE_,
+						gddpSettings_.minTimeStep_,
+						gddpSettings_.absTolODE_,
+						gddpSettings_.relTolODE_,
 						maxNumSteps, true);
 
 			} else {
@@ -923,7 +906,7 @@ void GSLQ_BASE<STATE_DIM, INPUT_DIM>::solveSensitivityRiccatiEquations(
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
-void GSLQ_BASE<STATE_DIM, INPUT_DIM>::solveSensitivityBVP(
+void GDDP<STATE_DIM, INPUT_DIM>::solveSensitivityBVP(
 		size_t workerIndex,
 		const size_t& eventTimeIndex,
 		const state_vector_t& MvFinal,
@@ -996,7 +979,7 @@ void GSLQ_BASE<STATE_DIM, INPUT_DIM>::solveSensitivityBVP(
 		const size_t NE = dcPtr_->SsNormalizedEventsPastTheEndIndecesStock_[i].size();
 
 		// max number of steps of integration
-		const size_t maxNumSteps = settings_.ddpSettings_.maxNumStepsPerSecond_ *
+		const size_t maxNumSteps = gddpSettings_.maxNumStepsPerSecond_ *
 				std::max(1.0, dcPtr_->SsNormalizedTimeTrajectoriesStock_[i].back()-dcPtr_->SsNormalizedTimeTrajectoriesStock_[i].front());
 
 		// output containers resizing
@@ -1039,21 +1022,21 @@ void GSLQ_BASE<STATE_DIM, INPUT_DIM>::solveSensitivityBVP(
 				bvpSensitivityIntegratorsPtrStock_[workerIndex]->integrate(
 						MvFinalInternal, beginTimeItr, endTimeItr,
 						rMvTrajectory,
-						settings_.ddpSettings_.minTimeStep_,
-						settings_.ddpSettings_.absTolODE_,
-						settings_.ddpSettings_.relTolODE_,
+						gddpSettings_.minTimeStep_,
+						gddpSettings_.absTolODE_,
+						gddpSettings_.relTolODE_,
 						maxNumSteps,
 						true);
+
 				// solve Riccati equations for Mve
 				bvpSensitivityErrorIntegratorsPtrStock_[workerIndex]->integrate(
 						MveFinalInternal, beginTimeItr, endTimeItr,
 						rMveTrajectory,
-						settings_.ddpSettings_.minTimeStep_,
-						settings_.ddpSettings_.absTolODE_,
-						settings_.ddpSettings_.relTolODE_,
+						gddpSettings_.minTimeStep_,
+						gddpSettings_.absTolODE_,
+						gddpSettings_.relTolODE_,
 						maxNumSteps,
 						true);
-
 
 			} else {
 				rMvTrajectory.push_back(MvFinalInternal);
@@ -1086,7 +1069,7 @@ void GSLQ_BASE<STATE_DIM, INPUT_DIM>::solveSensitivityBVP(
 		std::reverse_copy(rMveTrajectory.begin(), rMveTrajectory.end(), MveTrajectoriesStock[i].begin());
 
 		// testing the numerical stability of the Riccati equations
-		if (settings_.ddpSettings_.checkNumericalStability_)
+		if (gddpSettings_.checkNumericalStability_)
 			for (int k=NS-1; k>=0; k--) {
 				try {
 					if (!MvTrajectoriesStock[i][k].allFinite()) throw std::runtime_error("Mv is unstable.");
@@ -1112,7 +1095,7 @@ void GSLQ_BASE<STATE_DIM, INPUT_DIM>::solveSensitivityBVP(
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
-void GSLQ_BASE<STATE_DIM, INPUT_DIM>::calculateLQSensitivityControllerForward(
+void GDDP<STATE_DIM, INPUT_DIM>::calculateLQSensitivityControllerForward(
 		size_t workerIndex,
 		const size_t& eventTimeIndex,
 		const std::vector<scalar_array_t>& timeTrajectoriesStock,
@@ -1166,7 +1149,7 @@ void GSLQ_BASE<STATE_DIM, INPUT_DIM>::calculateLQSensitivityControllerForward(
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
-void GSLQ_BASE<STATE_DIM, INPUT_DIM>::calculateBVPSensitivityControllerForward(
+void GDDP<STATE_DIM, INPUT_DIM>::calculateBVPSensitivityControllerForward(
 		size_t workerIndex,
 		const size_t& eventTimeIndex,
 		const std::vector<scalar_array_t>& timeTrajectoriesStock,
@@ -1223,7 +1206,7 @@ void GSLQ_BASE<STATE_DIM, INPUT_DIM>::calculateBVPSensitivityControllerForward(
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
-void GSLQ_BASE<STATE_DIM, INPUT_DIM>::getValueFuntionDerivative(
+void GDDP<STATE_DIM, INPUT_DIM>::getValueFuntionDerivative(
 		const size_t& eventTimeIndex,
 		const scalar_t& time,
 		const state_vector_t& state,
@@ -1268,7 +1251,7 @@ void GSLQ_BASE<STATE_DIM, INPUT_DIM>::getValueFuntionDerivative(
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
-void GSLQ_BASE<STATE_DIM, INPUT_DIM>::calculateCostDerivative(
+void GDDP<STATE_DIM, INPUT_DIM>::calculateCostDerivative(
 		size_t workerIndex,
 		const size_t& eventTimeIndex,
 		const state_vector_array2_t& sensitivityStateTrajectoriesStock,
@@ -1338,7 +1321,7 @@ void GSLQ_BASE<STATE_DIM, INPUT_DIM>::calculateCostDerivative(
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
-void GSLQ_BASE<STATE_DIM, INPUT_DIM>::runLQBasedMethod()  {
+void GDDP<STATE_DIM, INPUT_DIM>::runLQBasedMethod()  {
 
 	const size_t maxNumIteration = 3;
 
@@ -1386,14 +1369,14 @@ void GSLQ_BASE<STATE_DIM, INPUT_DIM>::runLQBasedMethod()  {
 						sensitivityInputTrajectoriesStockSet_[index]);
 
 				// approximate the nominal LQ sensitivity to switching times
-				approximateNominalLQPSensitivity2SwitchingTime(
+				approximateNominalLQPSensitivity2EventTime(
 						sensitivityStateTrajectoriesStockSet_[index], sensitivityInputTrajectoriesStockSet_[index],
 						nablaqTrajectoriesStockSet_[index],
 						nablaQvTrajectoriesStockSet_[index], nablaRvTrajectoriesStockSet_[index],
 						nablaqFinalStockSet_[index], nablaQvFinalStockSet_[index]);
 
 				// approximate Heuristics
-				approximateNominalHeuristicsSensitivity2SwitchingTime(
+				approximateNominalHeuristicsSensitivity2EventTime(
 						sensitivityStateTrajectoriesStockSet_[index][dcPtr_->finalActivePartition_].back(),
 						nablasHeuristics_[index], nablaSvHeuristics_[index]);
 
@@ -1412,7 +1395,7 @@ void GSLQ_BASE<STATE_DIM, INPUT_DIM>::runLQBasedMethod()  {
 						dcPtr_->SsTimeTrajectoriesStock_, nablaSvTrajectoriesStockSet_[index],
 						nablaLvTrajectoriesStockSet_[index]);
 
-				// calculate the value function derivatives w.r.t. switchingTimes
+				// calculate the value function derivatives w.r.t. event times
 				getValueFuntionDerivative(index, dcPtr_->initTime_, dcPtr_->initState_,
 						nominalCostFuntionDerivative_(index));
 
@@ -1440,10 +1423,15 @@ void GSLQ_BASE<STATE_DIM, INPUT_DIM>::runLQBasedMethod()  {
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
-void GSLQ_BASE<STATE_DIM, INPUT_DIM>::runSweepingBVPMethod()  {
+void GDDP<STATE_DIM, INPUT_DIM>::runSweepingBVPMethod()  {
 
-	// compute missing data from SLQ run
-	computeMissingSlqData();
+	// calculate costate
+	calculateRolloutCostate(dcPtr_->nominalTimeTrajectoriesStock_,
+			nominalCostateTrajectoriesStock_);
+
+	// calculate Lagrangian
+	calculateNominalRolloutLagrangeMultiplier(dcPtr_->nominalTimeTrajectoriesStock_,
+			nominalLagrangianTrajectoriesStock_);
 
 	// resizing
 	MvTrajectoriesStockSet_.resize(numEventTimes_);
@@ -1483,7 +1471,7 @@ void GSLQ_BASE<STATE_DIM, INPUT_DIM>::runSweepingBVPMethod()  {
 					sensitivityStateTrajectoriesStockSet_[index],
 					sensitivityInputTrajectoriesStockSet_[index]);
 
-			// calculate the cost function derivatives w.r.t. switchingTimes
+			// calculate the cost function derivatives w.r.t. event times
 			calculateCostDerivative(workerIndex, index,
 					sensitivityStateTrajectoriesStockSet_[index],
 					sensitivityInputTrajectoriesStockSet_[index],
@@ -1505,7 +1493,7 @@ void GSLQ_BASE<STATE_DIM, INPUT_DIM>::runSweepingBVPMethod()  {
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
-void GSLQ_BASE<STATE_DIM, INPUT_DIM>::run(
+void GDDP<STATE_DIM, INPUT_DIM>::run(
 		const scalar_array_t& eventTimes,
 		const slq_data_collector_t* dcPtr)  {
 
@@ -1528,11 +1516,11 @@ void GSLQ_BASE<STATE_DIM, INPUT_DIM>::run(
 	activeEventTimeEndIndex_   = findActiveSubsystemIndex(eventTimes_, dcPtr_->finalTime_);
 
 	// display
-	if (settings_.ddpSettings_.displayInfo_)
+	if (gddpSettings_.displayInfo_)
 		std::cerr << "\n#### Calculating cost function sensitivity ..." << std::endl;
 
 	// use the LQ-based method or Sweeping-BVP method
-	if (settings_.useLQForDerivatives_==true) {
+	if (gddpSettings_.useLQForDerivatives_==true) {
 		runLQBasedMethod();
 	} else {
 		runSweepingBVPMethod();

@@ -41,6 +41,7 @@ OCS2Projected<STATE_DIM, INPUT_DIM>::OCS2Projected(
 		const cost_function_base_t* costFunctionPtr,
 		const operating_trajectories_base_t* operatingTrajectoriesPtr,
 		const SLQ_Settings& slqSettings /*= SLQ_Settings()*/,
+		const GDDP_Settings& gddpSettings /*= GDDP_Settings()*/,
 		std::shared_ptr<HybridLogicRules> logicRulesPtr /*= nullptr*/,
 		const cost_function_base_t* heuristicsFunctionPtr /*= nullptr*/)
 
@@ -57,8 +58,8 @@ OCS2Projected<STATE_DIM, INPUT_DIM>::OCS2Projected(
 	BASE::nlpSettings().useAscendingLineSearchNLP_ = slqSettings_.useAscendingLineSearchNLP_;
 	BASE::adjustOptions();
 
-	// GSLQ
-	gslqSolverPtr_.reset(new gslq_t(slqSettings));
+	// GDDP
+	gddpSolverPtr_.reset(new gddp_t(gddpSettings));
 
 	// SLQ data collector
 	slqDataCollectorPtr_.reset(new slq_data_collector_t());
@@ -224,12 +225,12 @@ bool OCS2Projected<STATE_DIM, INPUT_DIM>::calculateGradient(
 	slqDataCollectorPtr_->collect(slqSolverPtrs_[id].get());
 
 	// run GSLQ
-	gslqSolverPtr_->run(
+	gddpSolverPtr_->run(
 			scalar_array_t(parameters.data(), parameters.data()+parameters.size()),
 			slqDataCollectorPtr_.get());
 
 	// get gradient
-	gslqSolverPtr_->getCostFuntionDerivative(costFuntionDerivative_);
+	gddpSolverPtr_->getCostFuntionDerivative(costFuntionDerivative_);
 	gradient = costFuntionDerivative_;
 
 	return true;
@@ -404,7 +405,7 @@ void OCS2Projected<STATE_DIM, INPUT_DIM>::run(
 		setupOptimizer(numPartitions_);
 	}
 
-	gslqSolverPtr_->settings() = slqSettings_;
+	gddpSolverPtr_->settings() = slqSettings_;
 
 	// for each SLQ solver
 	for (size_t i=0; i<slqSolverPtrs_.size(); i++) {

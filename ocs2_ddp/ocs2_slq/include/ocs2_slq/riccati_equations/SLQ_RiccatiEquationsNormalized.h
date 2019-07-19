@@ -427,18 +427,18 @@ private:
 	scalar_t switchingTimeFinal_;
 	scalar_t scalingFactor_;
 
-	LinearInterpolation<state_matrix_t,Eigen::aligned_allocator<state_matrix_t> > AmFunc_;
-	LinearInterpolation<state_input_matrix_t,Eigen::aligned_allocator<state_input_matrix_t> > BmFunc_;
+	EigenLinearInterpolation<state_matrix_t> AmFunc_;
+	EigenLinearInterpolation<state_input_matrix_t> BmFunc_;
 
-	LinearInterpolation<eigen_scalar_t,Eigen::aligned_allocator<eigen_scalar_t> > qFunc_;
-	LinearInterpolation<state_vector_t,Eigen::aligned_allocator<state_vector_t> > QvFunc_;
-	LinearInterpolation<state_matrix_t,Eigen::aligned_allocator<state_matrix_t> > QmFunc_;
-	LinearInterpolation<input_vector_t,Eigen::aligned_allocator<input_vector_t> > RvFunc_;
-	LinearInterpolation<input_matrix_t,Eigen::aligned_allocator<input_matrix_t> > RmInverseFunc_;
-	LinearInterpolation<input_matrix_t,Eigen::aligned_allocator<input_matrix_t> > RmFunc_;
-	LinearInterpolation<input_state_matrix_t,Eigen::aligned_allocator<input_state_matrix_t> > PmFunc_;
-	LinearInterpolation<input_vector_t,Eigen::aligned_allocator<input_vector_t> > 		  EvFunc_;
-	LinearInterpolation<input_state_matrix_t,Eigen::aligned_allocator<input_state_matrix_t> > CmFunc_;
+	EigenLinearInterpolation<eigen_scalar_t> qFunc_;
+	EigenLinearInterpolation<state_vector_t> QvFunc_;
+	EigenLinearInterpolation<state_matrix_t> QmFunc_;
+	EigenLinearInterpolation<input_vector_t> RvFunc_;
+	EigenLinearInterpolation<input_matrix_t> RmInverseFunc_;
+	EigenLinearInterpolation<input_matrix_t> RmFunc_;
+	EigenLinearInterpolation<input_state_matrix_t> PmFunc_;
+	EigenLinearInterpolation<input_vector_t> EvFunc_;
+	EigenLinearInterpolation<input_state_matrix_t> CmFunc_;
 
 	// members required only in computeFlowMap()
 	state_matrix_t Sm_;

@@ -55,18 +55,18 @@ public:
 	typedef ControlledSystemBase<STATE_DIM, INPUT_DIM> BASE;
 
 	typedef Dimensions<STATE_DIM, INPUT_DIM> DIMENSIONS;
-	typedef typename DIMENSIONS::scalar_t       scalar_t;
-	typedef typename DIMENSIONS::scalar_array_t scalar_array_t;
-	typedef typename DIMENSIONS::state_vector_t       state_vector_t;
-	typedef typename DIMENSIONS::state_vector_array_t state_vector_array_t;
-	typedef typename DIMENSIONS::input_vector_t       input_vector_t;
-	typedef typename DIMENSIONS::input_vector_array_t input_vector_array_t;
-	typedef typename DIMENSIONS::state_matrix_t       state_matrix_t;
-	typedef typename DIMENSIONS::state_matrix_array_t state_matrix_array_t;
-	typedef typename DIMENSIONS::state_input_matrix_t       state_input_matrix_t;
-	typedef typename DIMENSIONS::state_input_matrix_array_t state_input_matrix_array_t;
-	typedef typename DIMENSIONS::input_state_matrix_t       input_state_matrix_t;
-	typedef typename DIMENSIONS::input_state_matrix_array_t input_state_matrix_array_t;
+	using scalar_t = typename DIMENSIONS::scalar_t;
+	using scalar_array_t = typename DIMENSIONS::scalar_array_t;
+	using state_vector_t = typename DIMENSIONS::state_vector_t;
+	using state_vector_array_t = typename DIMENSIONS::state_vector_array_t;
+	using input_vector_t = typename DIMENSIONS::input_vector_t;
+	using input_vector_array_t = typename DIMENSIONS::input_vector_array_t;
+	using state_matrix_t = typename DIMENSIONS::state_matrix_t;
+	using state_matrix_array_t = typename DIMENSIONS::state_matrix_array_t;
+	using state_input_matrix_t = typename DIMENSIONS::state_input_matrix_t;
+	using state_input_matrix_array_t = typename DIMENSIONS::state_input_matrix_array_t;
+	using input_state_matrix_t = typename DIMENSIONS::input_state_matrix_t;
+	using input_state_matrix_array_t = typename DIMENSIONS::input_state_matrix_array_t;
 
 	using linear_controller_t = LinearController<STATE_DIM, INPUT_DIM>;
 
@@ -166,9 +166,9 @@ protected:
 	state_input_matrix_t Bm_;
 	state_vector_t       flowMap_;
 
-	LinearInterpolation<state_matrix_t,Eigen::aligned_allocator<state_matrix_t> >             AmFunc_;
-	LinearInterpolation<state_input_matrix_t,Eigen::aligned_allocator<state_input_matrix_t> > BmFunc_;
-	LinearInterpolation<state_vector_t,Eigen::aligned_allocator<state_vector_t> >             flowMapFunc_;
+	EigenLinearInterpolation<state_matrix_t> AmFunc_;
+	EigenLinearInterpolation<state_input_matrix_t> BmFunc_;
+	EigenLinearInterpolation<state_vector_t> flowMapFunc_;
 };
 
 } // namespace ocs2

@@ -27,8 +27,8 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#ifndef GSLQ_FW_OCS2_H_
-#define GSLQ_FW_OCS2_H_
+#ifndef PROJECTED_DDP_OCS2_H_
+#define PROJECTED_DDP_OCS2_H_
 
 #include <array>
 #include <memory>
@@ -42,46 +42,40 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_slq/SLQ.h>
 #include <ocs2_slq/SLQ_MP.h>
 
-#include "ocs2_ocs2/GSLQ_BASE.h"
+#include "ocs2_ocs2/GDDP.h"
 
 namespace ocs2 {
 
 template <size_t STATE_DIM, size_t INPUT_DIM>
-class GSLQ_FW : public GSLQ_BASE<STATE_DIM, INPUT_DIM>
+class ProjectedGDDP : public GDDP<STATE_DIM, INPUT_DIM>
 {
 public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
+	typedef GDDP<STATE_DIM, INPUT_DIM> BASE;
 
-
-	typedef std::shared_ptr<GSLQ_FW<STATE_DIM, INPUT_DIM>> Ptr;
-
-	typedef GSLQ_BASE<STATE_DIM, INPUT_DIM> BASE;
-
-	typedef typename BASE::slq_data_collector_t slq_data_collector_t;
-
-	typedef typename BASE::scalar_t       scalar_t;
-	typedef typename BASE::scalar_array_t scalar_array_t;
-	typedef typename BASE::dynamic_vector_t dynamic_vector_t;
-	typedef typename BASE::dynamic_matrix_t dynamic_matrix_t;
-
-    typedef typename BASE::eigen_scalar_array3_t eigen_scalar_array3_t;
-    typedef typename BASE::state_vector_array3_t state_vector_array3_t;
-    typedef typename BASE::input_vector_array3_t input_vector_array3_t;
-    typedef typename BASE::state_matrix_array3_t state_matrix_array3_t;
-    typedef typename BASE::input_matrix_array3_t input_matrix_array3_t;
+	using typename BASE::scalar_t;
+	using typename BASE::scalar_array_t;
+	using typename BASE::dynamic_vector_t;
+	using typename BASE::dynamic_matrix_t;
+    using typename BASE::eigen_scalar_array3_t;
+    using typename BASE::state_vector_array3_t;
+    using typename BASE::input_vector_array3_t;
+    using typename BASE::state_matrix_array3_t;
+    using typename BASE::input_matrix_array3_t;
+	using typename BASE::slq_data_collector_t;
 
 	/**
      * Constructor.
      *
      * @param [in] settings: Structure containing the settings for the SLQ algorithm.
      */
-    GSLQ_FW(const SLQ_Settings& settings = SLQ_Settings());
+    ProjectedGDDP(const GDDP_Settings& gddpSettings = GDDP_Settings());
 
 	/**
-	 * Destructor.
+	 * Default destructor.
 	 */
-	virtual ~GSLQ_FW();
+	~ProjectedGDDP() = default;
 
 	/**
 	 * Runs the GSLQ to compute the gradient of the cost function w.r.t. the event times.
@@ -124,6 +118,11 @@ protected:
 
 	/**
 	 *
+	 */
+	void setupGLPK();
+
+	/**
+	 *
 	 * @param Cm
 	 * @param Dv
 	 */
@@ -138,11 +137,11 @@ protected:
 	/***********
 	 * Variables
 	 **********/
-	glp_prob* lpPtr_;
+	std::unique_ptr<glp_prob, void(*)(glp_prob*)> lpPtr_;
 };
 
 } // namespace ocs2
 
-#include "implementation/GSLQ_FW.h"
+#include "implementation/ProjectedGDDP.h"
 
-#endif /* GSLQ_FW_OCS2_H_ */
+#endif /* PROJECTED_DDP_OCS2_H_ */

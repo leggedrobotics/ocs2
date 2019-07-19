@@ -35,7 +35,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <condition_variable>
 
 #include <ocs2_slq/SLQ_DataCollector.h>
-#include <ocs2_ocs2/GSLQ_FW.h>
+#include <ocs2_ocs2/ProjectedGDDP.h>
 
 #include "ocs2_mpc/MPC_SLQ.h"
 
@@ -57,6 +57,11 @@ public:
 
 	using slq_data_collector_t = SLQ_DataCollector<STATE_DIM, INPUT_DIM>;
 	using gslq_t = GSLQ_FW<STATE_DIM, INPUT_DIM>;
+
+	using Ptr = std::shared_ptr<MPC_OCS2<STATE_DIM, INPUT_DIM>>;
+
+	using slq_data_collector_t = SLQ_DataCollector<STATE_DIM, INPUT_DIM>;
+	using gddp_t = ProjectedGDDP<STATE_DIM, INPUT_DIM>;
 
 	using BASE = MPC_SLQ<STATE_DIM, INPUT_DIM>;
 
@@ -103,6 +108,7 @@ public:
 	 * @param [in] partitioningTimes: This will be used as the initial time partitioning. As the MPC progresses the internal
 	 * partitioningTimes will be shifted in time automatically.
 	 * @param [in] slqSettings: Structure containing the settings for the SLQ algorithm.
+	 * @param [in] gddpSettings: Structure containing the settings for the GDDP algorithm.
 	 * @param [in] mpcSettings: Structure containing the settings for the MPC algorithm.
 	 * @param [in] logicRulesPtr: The logic rules used for implementing mixed logical dynamical systems.
 	 * @param [in] heuristicsFunctionPtr: Heuristic function used in the infinite time optimal control formulation. If it is not
@@ -115,6 +121,7 @@ public:
 			const operating_trajectories_base_t* operatingTrajectoriesPtr,
 			const scalar_array_t& partitioningTimes,
 			const SLQ_Settings& slqSettings = SLQ_Settings(),
+			const GDDP_Settings& gddpSettings = GDDP_Settings(),
 			const MPC_Settings& mpcSettings = MPC_Settings(),
 			std::shared_ptr<HybridLogicRules> logicRulesPtr = nullptr,
 			const mode_sequence_template_t* modeSequenceTemplatePtr = nullptr,
@@ -156,7 +163,7 @@ protected:
 	void runOCS2();
 
 private:
-	typename gslq_t::Ptr gslqPtr_;
+	std::unique_ptr<gddp_t> gddpPtr_;
 
 	std::thread workerOCS2;
 

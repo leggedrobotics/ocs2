@@ -41,7 +41,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ocs2_core/Dimensions.h"
 #include "ocs2_core/OCS2NumericTraits.h"
 #include "ocs2_core/misc/FindActiveIntervalIndex.h"
-#include "ocs2_core/logic/rules/LogicRulesBase.h"
+#include "ocs2_core/logic/rules/HybridLogicRules.h"
 
 namespace ocs2{
 
@@ -80,7 +80,7 @@ public:
 	 *
 	 * @param logicRules: The logic rules class.
 	 */
-	explicit LogicRulesMachine(std::shared_ptr<LogicRulesBase> logicRules)
+	explicit LogicRulesMachine(std::shared_ptr<HybridLogicRules> logicRules)
 	: logicRules_(std::move(logicRules))
 	, logicRulesModified_(false)
 	, newLogicRulesInBuffer_(false)
@@ -116,7 +116,7 @@ public:
 	 * This overwrite the previous logic rules on the next updateLogicRules call
 	 * @param [in] logicRules: The new logic rules class
 	 */
-	void setLogicRules(std::shared_ptr<LogicRulesBase> logicRules);
+	void setLogicRules(std::shared_ptr<HybridLogicRules> logicRules);
 
 	/**
 	 * This causes that logicMachine updates itself in the next call of the SLQ::run().
@@ -129,14 +129,14 @@ public:
 	 *
 	 * @return pointer to active logic rules class
 	 */
-	LogicRulesBase* getLogicRulesPtr();
+	virtual HybridLogicRules* getLogicRulesPtr();
 
 	/**
 	 * Get the pointer to the active logic rules class
 	 *
 	 * @return pointer to active logic rules class
 	 */
-	const LogicRulesBase* getLogicRulesPtr() const;
+	virtual const HybridLogicRules* getLogicRulesPtr() const;
 
 	/**
 	 * Gets the event times associated to the partition number index.
@@ -228,8 +228,8 @@ public:
 
 
 protected:
-  	std::shared_ptr<LogicRulesBase> logicRules_;
-	std::shared_ptr<LogicRulesBase> logicRulesBuffer_;
+  	std::shared_ptr<HybridLogicRules> logicRules_;
+	std::shared_ptr<HybridLogicRules> logicRulesBuffer_;
 	std::atomic<bool> logicRulesModified_;
 	std::atomic<bool> newLogicRulesInBuffer_;
 

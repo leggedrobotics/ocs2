@@ -75,17 +75,16 @@ namespace ocs2 {
  *
  * @tparam STATE_DIM: Dimension of the state space.
  * @tparam INPUT_DIM: Dimension of the control input space.
- * @tparam LOGIC_RULES_T: Logic Rules type (default NullLogicRules).
  */
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T=NullLogicRules>
+template <size_t STATE_DIM, size_t INPUT_DIM>
 class MPC_ROS_Interface
 {
 public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-	typedef std::shared_ptr<MPC_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>> Ptr;
+	typedef std::shared_ptr<MPC_ROS_Interface<STATE_DIM, INPUT_DIM>> Ptr;
 
-	typedef MPC_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> mpc_t;
+	typedef MPC_BASE<STATE_DIM, INPUT_DIM> mpc_t;
 
 	typedef typename mpc_t::scalar_t                   scalar_t;
 	typedef typename mpc_t::scalar_array_t             scalar_array_t;

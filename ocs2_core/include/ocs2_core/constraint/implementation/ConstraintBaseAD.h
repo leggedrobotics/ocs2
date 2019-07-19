@@ -32,8 +32,8 @@ namespace ocs2{
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <class Derived, size_t STATE_DIM, size_t INPUT_DIM, class logic_rules_template_t>
-ConstraintBaseAD<Derived, STATE_DIM, INPUT_DIM, logic_rules_template_t>::ConstraintBaseAD(
+template <class Derived, size_t STATE_DIM, size_t INPUT_DIM>
+ConstraintBaseAD<Derived, STATE_DIM, INPUT_DIM>::ConstraintBaseAD(
 		const bool& dynamicLibraryIsCompiled /*= false*/)
 	: BASE()
 	, dynamicLibraryIsCompiled_(dynamicLibraryIsCompiled)
@@ -48,8 +48,8 @@ ConstraintBaseAD<Derived, STATE_DIM, INPUT_DIM, logic_rules_template_t>::Constra
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <class Derived, size_t STATE_DIM, size_t INPUT_DIM, class logic_rules_template_t>
-ConstraintBaseAD<Derived, STATE_DIM, INPUT_DIM, logic_rules_template_t>::ConstraintBaseAD(
+template <class Derived, size_t STATE_DIM, size_t INPUT_DIM>
+ConstraintBaseAD<Derived, STATE_DIM, INPUT_DIM>::ConstraintBaseAD(
 		const ConstraintBaseAD& rhs)
 
 	: BASE(rhs)
@@ -69,9 +69,9 @@ ConstraintBaseAD<Derived, STATE_DIM, INPUT_DIM, logic_rules_template_t>::Constra
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <class Derived, size_t STATE_DIM, size_t INPUT_DIM, class logic_rules_template_t>
-typename ConstraintBaseAD<Derived, STATE_DIM, INPUT_DIM, logic_rules_template_t>::BASE*
-	ConstraintBaseAD<Derived, STATE_DIM, INPUT_DIM, logic_rules_template_t>::clone() const {
+template <class Derived, size_t STATE_DIM, size_t INPUT_DIM>
+typename ConstraintBaseAD<Derived, STATE_DIM, INPUT_DIM>::BASE*
+	ConstraintBaseAD<Derived, STATE_DIM, INPUT_DIM>::clone() const {
 
 		return new Derived(static_cast<Derived const&>(*this));
 }
@@ -79,8 +79,8 @@ typename ConstraintBaseAD<Derived, STATE_DIM, INPUT_DIM, logic_rules_template_t>
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <class Derived, size_t STATE_DIM, size_t INPUT_DIM, class logic_rules_template_t>
-void ConstraintBaseAD<Derived, STATE_DIM, INPUT_DIM, logic_rules_template_t>::createModels(
+template <class Derived, size_t STATE_DIM, size_t INPUT_DIM>
+void ConstraintBaseAD<Derived, STATE_DIM, INPUT_DIM>::createModels(
 		const std::string& modelName,
 		const std::string& libraryFolder) {
 
@@ -93,8 +93,8 @@ void ConstraintBaseAD<Derived, STATE_DIM, INPUT_DIM, logic_rules_template_t>::cr
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <class Derived, size_t STATE_DIM, size_t INPUT_DIM, class logic_rules_template_t>
-void ConstraintBaseAD<Derived, STATE_DIM, INPUT_DIM, logic_rules_template_t>::loadModels(
+template <class Derived, size_t STATE_DIM, size_t INPUT_DIM>
+void ConstraintBaseAD<Derived, STATE_DIM, INPUT_DIM>::loadModels(
 		const std::string& modelName,
 		const std::string& libraryFolder) {
 
@@ -115,8 +115,8 @@ void ConstraintBaseAD<Derived, STATE_DIM, INPUT_DIM, logic_rules_template_t>::lo
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <class Derived, size_t STATE_DIM, size_t INPUT_DIM, class logic_rules_template_t>
-const bool& ConstraintBaseAD<Derived, STATE_DIM, INPUT_DIM, logic_rules_template_t>::isDynamicLibraryCompiled() const {
+template <class Derived, size_t STATE_DIM, size_t INPUT_DIM>
+const bool& ConstraintBaseAD<Derived, STATE_DIM, INPUT_DIM>::isDynamicLibraryCompiled() const {
 
 	return dynamicLibraryIsCompiled_;
 }
@@ -124,8 +124,8 @@ const bool& ConstraintBaseAD<Derived, STATE_DIM, INPUT_DIM, logic_rules_template
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <class Derived, size_t STATE_DIM, size_t INPUT_DIM, class logic_rules_template_t>
-std::string ConstraintBaseAD<Derived, STATE_DIM, INPUT_DIM, logic_rules_template_t>::getModelName() const {
+template <class Derived, size_t STATE_DIM, size_t INPUT_DIM>
+std::string ConstraintBaseAD<Derived, STATE_DIM, INPUT_DIM>::getModelName() const {
 
 	return modelName_;
 }
@@ -133,8 +133,8 @@ std::string ConstraintBaseAD<Derived, STATE_DIM, INPUT_DIM, logic_rules_template
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <class Derived, size_t STATE_DIM, size_t INPUT_DIM, class logic_rules_template_t>
-void ConstraintBaseAD<Derived, STATE_DIM, INPUT_DIM, logic_rules_template_t>::setCurrentStateAndControl(
+template <class Derived, size_t STATE_DIM, size_t INPUT_DIM>
+void ConstraintBaseAD<Derived, STATE_DIM, INPUT_DIM>::setCurrentStateAndControl(
 		const scalar_t& t,
 		const state_vector_t& x,
 		const input_vector_t& u) {
@@ -152,8 +152,8 @@ void ConstraintBaseAD<Derived, STATE_DIM, INPUT_DIM, logic_rules_template_t>::se
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <class Derived, size_t STATE_DIM, size_t INPUT_DIM, class logic_rules_template_t>
-void ConstraintBaseAD<Derived, STATE_DIM, INPUT_DIM, logic_rules_template_t>::getConstraint1(
+template <class Derived, size_t STATE_DIM, size_t INPUT_DIM>
+void ConstraintBaseAD<Derived, STATE_DIM, INPUT_DIM>::getConstraint1(
 		constraint1_vector_t& e) {
 
 	stateInputADInterfacePtr_->getFunctionValue(tapedInput_, e);
@@ -162,8 +162,8 @@ void ConstraintBaseAD<Derived, STATE_DIM, INPUT_DIM, logic_rules_template_t>::ge
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <class Derived, size_t STATE_DIM, size_t INPUT_DIM, class logic_rules_template_t>
-void ConstraintBaseAD<Derived, STATE_DIM, INPUT_DIM, logic_rules_template_t>::getConstraint2(
+template <class Derived, size_t STATE_DIM, size_t INPUT_DIM>
+void ConstraintBaseAD<Derived, STATE_DIM, INPUT_DIM>::getConstraint2(
 		constraint2_vector_t& h) {
 
 	stateOnlyADInterfacePtr_->getFunctionValue(tapedInput_, h);
@@ -172,8 +172,8 @@ void ConstraintBaseAD<Derived, STATE_DIM, INPUT_DIM, logic_rules_template_t>::ge
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <class Derived, size_t STATE_DIM, size_t INPUT_DIM, class logic_rules_template_t>
-void ConstraintBaseAD<Derived, STATE_DIM, INPUT_DIM, logic_rules_template_t>::getFinalConstraint2(
+template <class Derived, size_t STATE_DIM, size_t INPUT_DIM>
+void ConstraintBaseAD<Derived, STATE_DIM, INPUT_DIM>::getFinalConstraint2(
 		constraint2_vector_t& h_f) {
 
 	stateOnlyFinalADInterfacePtr_->getFunctionValue(tapedInput_, h_f);
@@ -182,8 +182,8 @@ void ConstraintBaseAD<Derived, STATE_DIM, INPUT_DIM, logic_rules_template_t>::ge
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <class Derived, size_t STATE_DIM, size_t INPUT_DIM, class logic_rules_template_t>
-void ConstraintBaseAD<Derived, STATE_DIM, INPUT_DIM, logic_rules_template_t>::getConstraint1DerivativesState(
+template <class Derived, size_t STATE_DIM, size_t INPUT_DIM>
+void ConstraintBaseAD<Derived, STATE_DIM, INPUT_DIM>::getConstraint1DerivativesState(
 		constraint1_state_matrix_t& C) {
 
 	C = stateInputJacobian_.template block<state_dim_, MAX_CONSTRAINT_DIM_>(1, 0).transpose();
@@ -192,8 +192,8 @@ void ConstraintBaseAD<Derived, STATE_DIM, INPUT_DIM, logic_rules_template_t>::ge
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <class Derived, size_t STATE_DIM, size_t INPUT_DIM, class logic_rules_template_t>
-void ConstraintBaseAD<Derived, STATE_DIM, INPUT_DIM, logic_rules_template_t>::getConstraint1DerivativesControl(
+template <class Derived, size_t STATE_DIM, size_t INPUT_DIM>
+void ConstraintBaseAD<Derived, STATE_DIM, INPUT_DIM>::getConstraint1DerivativesControl(
 		constraint1_input_matrix_t& D) {
 
 	D = stateInputJacobian_.template block<input_dim_, MAX_CONSTRAINT_DIM_>(1 + state_dim_, 0).transpose();
@@ -202,8 +202,8 @@ void ConstraintBaseAD<Derived, STATE_DIM, INPUT_DIM, logic_rules_template_t>::ge
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <class Derived, size_t STATE_DIM, size_t INPUT_DIM, class logic_rules_template_t>
-void ConstraintBaseAD<Derived, STATE_DIM, INPUT_DIM, logic_rules_template_t>::getConstraint2DerivativesState(
+template <class Derived, size_t STATE_DIM, size_t INPUT_DIM>
+void ConstraintBaseAD<Derived, STATE_DIM, INPUT_DIM>::getConstraint2DerivativesState(
 		constraint2_state_matrix_t& F) {
 
 	F = stateOnlyJacobian_.template block<state_dim_, MAX_CONSTRAINT_DIM_>(1, 0).transpose();
@@ -212,8 +212,8 @@ void ConstraintBaseAD<Derived, STATE_DIM, INPUT_DIM, logic_rules_template_t>::ge
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <class Derived, size_t STATE_DIM, size_t INPUT_DIM, class logic_rules_template_t>
-void ConstraintBaseAD<Derived, STATE_DIM, INPUT_DIM, logic_rules_template_t>::getFinalConstraint2DerivativesState(
+template <class Derived, size_t STATE_DIM, size_t INPUT_DIM>
+void ConstraintBaseAD<Derived, STATE_DIM, INPUT_DIM>::getFinalConstraint2DerivativesState(
 		constraint2_state_matrix_t& F_f) {
 
 	F_f = stateOnlyFinalJacobian_.template block<state_dim_, MAX_CONSTRAINT_DIM_>(1, 0).transpose();
@@ -222,8 +222,8 @@ void ConstraintBaseAD<Derived, STATE_DIM, INPUT_DIM, logic_rules_template_t>::ge
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <class Derived, size_t STATE_DIM, size_t INPUT_DIM, class logic_rules_template_t>
-void ConstraintBaseAD<Derived, STATE_DIM, INPUT_DIM, logic_rules_template_t>::stateInputConstraintAD(
+template <class Derived, size_t STATE_DIM, size_t INPUT_DIM>
+void ConstraintBaseAD<Derived, STATE_DIM, INPUT_DIM>::stateInputConstraintAD(
 		const ad_dynamic_vector_t& tapedInput,
 		ad_dynamic_vector_t& g1) {
 
@@ -244,8 +244,8 @@ void ConstraintBaseAD<Derived, STATE_DIM, INPUT_DIM, logic_rules_template_t>::st
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <class Derived, size_t STATE_DIM, size_t INPUT_DIM, class logic_rules_template_t>
-void ConstraintBaseAD<Derived, STATE_DIM, INPUT_DIM, logic_rules_template_t>::stateOnlyConstraintAD(
+template <class Derived, size_t STATE_DIM, size_t INPUT_DIM>
+void ConstraintBaseAD<Derived, STATE_DIM, INPUT_DIM>::stateOnlyConstraintAD(
 		const ad_dynamic_vector_t& tapedInput,
 		ad_dynamic_vector_t& g2) {
 
@@ -265,8 +265,8 @@ void ConstraintBaseAD<Derived, STATE_DIM, INPUT_DIM, logic_rules_template_t>::st
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <class Derived, size_t STATE_DIM, size_t INPUT_DIM, class logic_rules_template_t>
-void ConstraintBaseAD<Derived, STATE_DIM, INPUT_DIM, logic_rules_template_t>::stateOnlyConstraintFinalAD(
+template <class Derived, size_t STATE_DIM, size_t INPUT_DIM>
+void ConstraintBaseAD<Derived, STATE_DIM, INPUT_DIM>::stateOnlyConstraintFinalAD(
 		const ad_dynamic_vector_t& tapedInput,
 		ad_dynamic_vector_t& g2Final) {
 
@@ -286,8 +286,8 @@ void ConstraintBaseAD<Derived, STATE_DIM, INPUT_DIM, logic_rules_template_t>::st
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <class Derived, size_t STATE_DIM, size_t INPUT_DIM, class logic_rules_template_t>
-void ConstraintBaseAD<Derived, STATE_DIM, INPUT_DIM, logic_rules_template_t>::setADInterfaces() {
+template <class Derived, size_t STATE_DIM, size_t INPUT_DIM>
+void ConstraintBaseAD<Derived, STATE_DIM, INPUT_DIM>::setADInterfaces() {
 
 	stateInputConstraintAD_ = [this](
 			const ad_dynamic_vector_t& x,
@@ -343,8 +343,8 @@ void ConstraintBaseAD<Derived, STATE_DIM, INPUT_DIM, logic_rules_template_t>::se
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <class Derived, size_t STATE_DIM, size_t INPUT_DIM, class logic_rules_template_t>
-void ConstraintBaseAD<Derived, STATE_DIM, INPUT_DIM, logic_rules_template_t>::createModels(
+template <class Derived, size_t STATE_DIM, size_t INPUT_DIM>
+void ConstraintBaseAD<Derived, STATE_DIM, INPUT_DIM>::createModels(
 		bool verbose) {
 
 	// sets all the required CppAdCodeGenInterfaces
@@ -360,8 +360,8 @@ void ConstraintBaseAD<Derived, STATE_DIM, INPUT_DIM, logic_rules_template_t>::cr
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <class Derived, size_t STATE_DIM, size_t INPUT_DIM, class logic_rules_template_t>
-bool ConstraintBaseAD<Derived, STATE_DIM, INPUT_DIM, logic_rules_template_t>::loadModels(
+template <class Derived, size_t STATE_DIM, size_t INPUT_DIM>
+bool ConstraintBaseAD<Derived, STATE_DIM, INPUT_DIM>::loadModels(
 		bool verbose) {
 
 	bool stateInputLoaded = stateInputADInterfacePtr_->loadModels(modelName_+"_stateInput", libraryFolder_, verbose);

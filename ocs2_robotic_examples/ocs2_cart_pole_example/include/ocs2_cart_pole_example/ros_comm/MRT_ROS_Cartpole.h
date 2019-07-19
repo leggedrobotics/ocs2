@@ -42,15 +42,14 @@ namespace cartpole {
  * @tparam cartpole::STATE_DIM_: Dimension of the state space.
  * @tparam cartpole::INPUT_DIM_: Dimension of the control input space.
  */
-
-class MRT_ROS_Cartpole : public MRT_ROS_Interface<cartpole::STATE_DIM_, cartpole::INPUT_DIM_, NullLogicRules>
+class MRT_ROS_Cartpole : public MRT_ROS_Interface<cartpole::STATE_DIM_, cartpole::INPUT_DIM_>
 {
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-  typedef MRT_ROS_Interface<cartpole::STATE_DIM_, cartpole::INPUT_DIM_, NullLogicRules> BASE;
+  typedef MRT_ROS_Interface<cartpole::STATE_DIM_, cartpole::INPUT_DIM_> BASE;
 
-  typedef std::shared_ptr<MRT_ROS_Interface<cartpole::STATE_DIM_, cartpole::INPUT_DIM_, NullLogicRules>> Ptr;
+  typedef std::shared_ptr<MRT_ROS_Interface<cartpole::STATE_DIM_, cartpole::INPUT_DIM_>> Ptr;
 
   typedef Dimensions<cartpole::STATE_DIM_, cartpole::INPUT_DIM_> DIMENSIONS;
   typedef typename DIMENSIONS::controller_t				controller_t;
@@ -68,7 +67,7 @@ public:
 
   typedef RosMsgConversions<cartpole::STATE_DIM_, cartpole::INPUT_DIM_> ros_msg_conversions_t;
 
-  typedef HybridLogicRulesMachine<NullLogicRules> logic_machine_t;
+  typedef LogicRulesMachine                       logic_machine_t;
   typedef typename logic_machine_t::Ptr           logic_machine_ptr_t;
 
   typedef LinearInterpolation<state_vector_t, Eigen::aligned_allocator<state_vector_t> > state_linear_interpolation_t;
@@ -89,7 +88,7 @@ public:
    */
   MRT_ROS_Cartpole(const std::string& nodeName = "robot_mpc")
 
-  : BASE(NullLogicRules(), nodeName)
+  : BASE(nodeName)
   {}
 
   /**

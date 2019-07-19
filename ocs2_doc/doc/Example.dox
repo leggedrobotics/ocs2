@@ -61,7 +61,7 @@ in one system using logic rules. Bellow is an example on how to implement a simp
 dynamics (here is one of the subsystems)
 
 \code{.cpp}
-class EXP1_Sys1 : public ControlledSystemBase<2,1,EXP1_LogicRules>
+class EXP1_Sys1 : public ControlledSystemBase<2,1>
 {
 public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
@@ -87,12 +87,12 @@ system which has these systems as its subsystem. Note that if our system was a n
 system there was no need for the following class.
 
  \code{.cpp}
-class EXP1_System : public ControlledSystemBase<2,1,EXP1_LogicRules>
+class EXP1_System : public ControlledSystemBase<2,1>
 {
 public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-	typedef ControlledSystemBase<2,1,EXP1_LogicRules> Base;
+	typedef ControlledSystemBase<2,1> Base;
 
 	EXP1_System()
 	: activeSubsystem_(0),
@@ -159,7 +159,7 @@ subsystems then we show how to implement the switched system's dynamics derivati
 derivatives, we have
 
 \code{.cpp}
-class EXP1_SysDerivative1 : public DerivativesBase<2,1,EXP1_LogicRules>
+class EXP1_SysDerivative1 : public DerivativesBase<2,1>
 {
 public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
@@ -186,12 +186,12 @@ public:
 Then, for the derivatives of the switched system, we will have
 
 \code{.cpp}
-class EXP1_SystemDerivative : public DerivativesBase<2,1,EXP1_LogicRules>
+class EXP1_SystemDerivative : public DerivativesBase<2,1>
 {
 public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-	typedef DerivativesBase<2,1,EXP1_LogicRules> Base;
+	typedef DerivativesBase<2,1> Base;
 
 	EXP1_SystemDerivative()
 	: activeSubsystem_(0),
@@ -259,7 +259,7 @@ since it is similar to \ref ocs2_doc_example_dynamics.
 Since this example is an unconstrained system, we can use the default implementation directly. 
 
 \code{.cpp}
-using EXP1_SystemConstraint = ConstraintBase<2,1,EXP1_LogicRules>;
+using EXP1_SystemConstraint = ConstraintBase<2,1>;
 \endcode
 
 \subsection ocs2_doc_example_cost Cost Function
@@ -273,7 +273,7 @@ them here. For more detailed, you can check the implementation
 For this example, we use operation point default implementation
 
 \code{.cpp}
-using EXP1_SystemOperatingTrajectories = SystemOperatingPoint<2,1,EXP1_LogicRules>;
+using EXP1_SystemOperatingTrajectories = SystemOperatingPoint<2,1>;
 \endcode
 
 \section ocs2_doc_example_solver Optimal Solvers

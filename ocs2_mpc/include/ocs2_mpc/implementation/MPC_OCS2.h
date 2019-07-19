@@ -32,8 +32,8 @@ namespace ocs2 {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-MPC_OCS2<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::MPC_OCS2()
+template <size_t STATE_DIM, size_t INPUT_DIM>
+MPC_OCS2<STATE_DIM, INPUT_DIM>::MPC_OCS2()
 
 	: BASE()
 	, workerOCS2(&MPC_OCS2::runOCS2, this)
@@ -44,8 +44,8 @@ MPC_OCS2<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::MPC_OCS2()
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-MPC_OCS2<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::MPC_OCS2(
+template <size_t STATE_DIM, size_t INPUT_DIM>
+MPC_OCS2<STATE_DIM, INPUT_DIM>::MPC_OCS2(
 		const controlled_system_base_t* systemDynamicsPtr,
 		const derivatives_base_t* systemDerivativesPtr,
 		const constraint_base_t* systemConstraintsPtr,
@@ -54,7 +54,7 @@ MPC_OCS2<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::MPC_OCS2(
 		const scalar_array_t& partitioningTimes,
 		const SLQ_Settings& slqSettings /*= SLQ_Settings()*/,
 		const MPC_Settings& mpcSettings /*= MPC_Settings()*/,
-		const LOGIC_RULES_T* logicRulesPtr /*= nullptr*/,
+		std::shared_ptr<HybridLogicRules> logicRulesPtr /*= nullptr*/,
 		const mode_sequence_template_t* modeSequenceTemplatePtr /*= nullptr*/,
 		const cost_function_base_t* heuristicsFunctionPtr /*= nullptr*/)
 
@@ -84,8 +84,8 @@ MPC_OCS2<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::MPC_OCS2(
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-MPC_OCS2<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::~MPC_OCS2() {
+template <size_t STATE_DIM, size_t INPUT_DIM>
+MPC_OCS2<STATE_DIM, INPUT_DIM>::~MPC_OCS2() {
 
 	terminateOCS2_ = true;
 	ocs2Synchronization_.notify_all();
@@ -95,8 +95,8 @@ MPC_OCS2<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::~MPC_OCS2() {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void MPC_OCS2<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::reset() {
+template <size_t STATE_DIM, size_t INPUT_DIM>
+void MPC_OCS2<STATE_DIM, INPUT_DIM>::reset() {
 
 	BASE::reset();
 
@@ -108,8 +108,8 @@ void MPC_OCS2<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::reset() {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void MPC_OCS2<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::rewind() {
+template <size_t STATE_DIM, size_t INPUT_DIM>
+void MPC_OCS2<STATE_DIM, INPUT_DIM>::rewind() {
 
 	BASE::rewind();
 }
@@ -117,8 +117,8 @@ void MPC_OCS2<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::rewind() {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void MPC_OCS2<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::runOCS2() {
+template <size_t STATE_DIM, size_t INPUT_DIM>
+void MPC_OCS2<STATE_DIM, INPUT_DIM>::runOCS2() {
 
 	while (terminateOCS2_==false) {
 
@@ -153,8 +153,8 @@ void MPC_OCS2<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::runOCS2() {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-bool MPC_OCS2<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::run(
+template <size_t STATE_DIM, size_t INPUT_DIM>
+bool MPC_OCS2<STATE_DIM, INPUT_DIM>::run(
 		const scalar_t& currentTime,
 		const state_vector_t& currentState)  {
 

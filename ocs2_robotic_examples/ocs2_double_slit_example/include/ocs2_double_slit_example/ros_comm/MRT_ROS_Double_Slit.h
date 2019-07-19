@@ -46,13 +46,11 @@ class MrtRosDoubleSlit : public MRT_ROS_Interface<double_slit::STATE_DIM_, doubl
   /**
    * Constructor
    *
-   * @param [in] logicRules: A logic rule class of derived from the hybrid logicRules base.
-   * @param [in] useFeedforwardPolicy: Whether to receive the MPC feedforward (true) or MPC feedback policy (false).
    * @param [in] robotName: The robot's name.
    */
   explicit MrtRosDoubleSlit(const std::string& robotName = "robot_mpc")
 
-      : BASE(NullLogicRules(), robotName) {}
+      : BASE(robotName) {}
 
   /**
    * Destructor

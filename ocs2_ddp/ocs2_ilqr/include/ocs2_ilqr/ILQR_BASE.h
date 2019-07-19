@@ -42,15 +42,14 @@ namespace ocs2 {
  *
  * @tparam STATE_DIM: Dimension of the state space.
  * @tparam INPUT_DIM: Dimension of the control input space.
- * @tparam LOGIC_RULES_T: Logic Rules type (default NullLogicRules).
  */
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T=NullLogicRules>
-class ILQR_BASE : public DDP_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>
+template <size_t STATE_DIM, size_t INPUT_DIM>
+class ILQR_BASE : public DDP_BASE<STATE_DIM, INPUT_DIM>
 {
 public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-	typedef DDP_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> BASE;
+	typedef DDP_BASE<STATE_DIM, INPUT_DIM> BASE;
 
 	using DIMENSIONS = typename BASE::DIMENSIONS;
 	using controller_t = typename BASE::controller_t;
@@ -129,7 +128,7 @@ public:
 //	/**
 //	 * class for collecting ILQR data
 //	 */
-//	template <size_t OTHER_STATE_DIM, size_t OTHER_INPUT_DIM, class OTHER_LOGIC_RULES_T>
+//	template <size_t OTHER_STATE_DIM, size_t OTHER_INPUT_DIM>
 //	friend class SLQ_DataCollector;
 
 	/**
@@ -156,7 +155,7 @@ public:
 			  const cost_function_base_t* costFunctionPtr,
 			  const operating_trajectories_base_t* operatingTrajectoriesPtr,
 			  const ILQR_Settings& settings = ILQR_Settings(),
-			  const LOGIC_RULES_T* logicRulesPtr = nullptr,
+			  std::shared_ptr<HybridLogicRules> logicRulesPtr = nullptr,
 			  const cost_function_base_t* heuristicsFunctionPtr = nullptr);
 
 	/**

@@ -32,9 +32,9 @@ namespace ocs2
 
 /******************************************************************************************************/
 /******************************************************************************************************/
-/******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-DDP_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::DDP_BASE (
+/***************************************************************************************************** */
+template <size_t STATE_DIM, size_t INPUT_DIM>
+DDP_BASE<STATE_DIM, INPUT_DIM>::DDP_BASE (
 		const controlled_system_base_t* systemDynamicsPtr,
 		const derivatives_base_t* systemDerivativesPtr,
 		const constraint_base_t* systemConstraintsPtr,
@@ -42,7 +42,7 @@ DDP_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::DDP_BASE (
 		const operating_trajectories_base_t* operatingTrajectoriesPtr,
 		const DDP_Settings& ddpSettings,
 		const Rollout_Settings& rolloutSettings,
-		std::shared_ptr<LogicRulesBase> logicRulesPtr,
+		std::shared_ptr<HybridLogicRules> logicRulesPtr,
 		const cost_function_base_t* heuristicsFunctionPtr,
 		const char* algorithmName)
 	: BASE()
@@ -114,9 +114,9 @@ DDP_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::DDP_BASE (
 
 /******************************************************************************************************/
 /******************************************************************************************************/
-/******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-DDP_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::~DDP_BASE()  {
+/***************************************************************************************************** */
+template <size_t STATE_DIM, size_t INPUT_DIM>
+DDP_BASE<STATE_DIM, INPUT_DIM>::~DDP_BASE()  {
 
 #ifdef BENCHMARK
 	auto BENCHMARK_total = BENCHMARK_tAvgFP_ + BENCHMARK_tAvgBP_ + BENCHMARK_tAvgLQ_;
@@ -135,9 +135,9 @@ DDP_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::~DDP_BASE()  {
 
 /******************************************************************************************************/
 /******************************************************************************************************/
-/******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void DDP_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::reset() {
+/***************************************************************************************************** */
+template <size_t STATE_DIM, size_t INPUT_DIM>
+void DDP_BASE<STATE_DIM, INPUT_DIM>::reset() {
 
 	iteration_ = 0;
 	rewindCounter_ = 0;
@@ -169,10 +169,10 @@ void DDP_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::reset() {
 
 /******************************************************************************************************/
 /******************************************************************************************************/
-/******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-typename DDP_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::scalar_t
-DDP_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::rolloutTrajectory(
+/***************************************************************************************************** */
+template <size_t STATE_DIM, size_t INPUT_DIM>
+typename DDP_BASE<STATE_DIM, INPUT_DIM>::scalar_t
+DDP_BASE<STATE_DIM, INPUT_DIM>::rolloutTrajectory(
 		const scalar_t& initTime,
 		const state_vector_t& initState,
 		const scalar_t& finalTime,
@@ -285,9 +285,9 @@ DDP_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::rolloutTrajectory(
 
 /******************************************************************************************************/
 /******************************************************************************************************/
-/******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void DDP_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::rolloutFinalState (
+/***************************************************************************************************** */
+template <size_t STATE_DIM, size_t INPUT_DIM>
+void DDP_BASE<STATE_DIM, INPUT_DIM>::rolloutFinalState (
 		const scalar_t& initTime,
 		const state_vector_t& initState,
 		const scalar_t& finalTime,
@@ -364,9 +364,9 @@ void DDP_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::rolloutFinalState (
 
 /******************************************************************************************************/
 /******************************************************************************************************/
-/******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void DDP_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculateConstraintsWorker(
+/***************************************************************************************************** */
+template <size_t STATE_DIM, size_t INPUT_DIM>
+void DDP_BASE<STATE_DIM, INPUT_DIM>::calculateConstraintsWorker(
 		size_t workerIndex,
 		const size_t& partitionIndex,
 		const scalar_array_t& timeTrajectory,
@@ -455,9 +455,9 @@ void DDP_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculateConstraintsWorker(
 
 /******************************************************************************************************/
 /******************************************************************************************************/
-/******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void DDP_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculateRolloutConstraints(
+/***************************************************************************************************** */
+template <size_t STATE_DIM, size_t INPUT_DIM>
+void DDP_BASE<STATE_DIM, INPUT_DIM>::calculateRolloutConstraints(
 		const scalar_array2_t& timeTrajectoriesStock,
 		const size_array2_t& eventsPastTheEndIndecesStock,
 		const state_vector_array2_t& stateTrajectoriesStock,
@@ -504,9 +504,9 @@ void DDP_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculateRolloutConstraints(
 
 /******************************************************************************************************/
 /******************************************************************************************************/
-/******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void DDP_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculateCostWorker(
+/***************************************************************************************************** */
+template <size_t STATE_DIM, size_t INPUT_DIM>
+void DDP_BASE<STATE_DIM, INPUT_DIM>::calculateCostWorker(
 		size_t workerIndex,
 		const size_t& partitionIndex,
 		const scalar_array_t& timeTrajectory,
@@ -556,9 +556,9 @@ void DDP_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculateCostWorker(
 
 /******************************************************************************************************/
 /******************************************************************************************************/
-/******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void DDP_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculateRolloutCost(
+/***************************************************************************************************** */
+template <size_t STATE_DIM, size_t INPUT_DIM>
+void DDP_BASE<STATE_DIM, INPUT_DIM>::calculateRolloutCost(
 		const scalar_array2_t& timeTrajectoriesStock,
 		const size_array2_t& eventsPastTheEndIndecesStock,
 		const state_vector_array2_t& stateTrajectoriesStock,
@@ -593,9 +593,9 @@ void DDP_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculateRolloutCost(
 
 /******************************************************************************************************/
 /******************************************************************************************************/
-/******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void DDP_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculateRolloutCost(
+/***************************************************************************************************** */
+template <size_t STATE_DIM, size_t INPUT_DIM>
+void DDP_BASE<STATE_DIM, INPUT_DIM>::calculateRolloutCost(
 		const scalar_array2_t& timeTrajectoriesStock,
 		const size_array2_t& eventsPastTheEndIndecesStock,
 		const state_vector_array2_t& stateTrajectoriesStock,
@@ -634,9 +634,9 @@ void DDP_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculateRolloutCost(
 
 /******************************************************************************************************/
 /******************************************************************************************************/
-/******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void DDP_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::approximateOptimalControlProblem()  {
+/***************************************************************************************************** */
+template <size_t STATE_DIM, size_t INPUT_DIM>
+void DDP_BASE<STATE_DIM, INPUT_DIM>::approximateOptimalControlProblem()  {
 
 	for (size_t i=0; i<numPartitions_; i++) {
 
@@ -714,9 +714,9 @@ void DDP_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::approximateOptimalControlPro
 
 /******************************************************************************************************/
 /******************************************************************************************************/
-/******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void DDP_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::approximateUnconstrainedLQWorker(
+/***************************************************************************************************** */
+template <size_t STATE_DIM, size_t INPUT_DIM>
+void DDP_BASE<STATE_DIM, INPUT_DIM>::approximateUnconstrainedLQWorker(
 		size_t workerIndex,
 		const size_t& i,
 		const size_t& k) {
@@ -756,9 +756,9 @@ void DDP_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::approximateUnconstrainedLQWo
 
 /******************************************************************************************************/
 /******************************************************************************************************/
-/******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void DDP_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::approximateEventsLQWorker(
+/***************************************************************************************************** */
+template <size_t STATE_DIM, size_t INPUT_DIM>
+void DDP_BASE<STATE_DIM, INPUT_DIM>::approximateEventsLQWorker(
 		size_t workerIndex,
 		const size_t& i,
 		const size_t& k,
@@ -810,9 +810,9 @@ void DDP_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::approximateEventsLQWorker(
 
 /******************************************************************************************************/
 /******************************************************************************************************/
-/******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void DDP_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::lineSearchBase(bool computeISEs) {
+/***************************************************************************************************** */
+template <size_t STATE_DIM, size_t INPUT_DIM>
+void DDP_BASE<STATE_DIM, INPUT_DIM>::lineSearchBase(bool computeISEs) {
 
 	// display
 	if (ddpSettings_.displayInfo_) {
@@ -893,9 +893,9 @@ void DDP_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::lineSearchBase(bool computeI
 
 /******************************************************************************************************/
 /******************************************************************************************************/
-/******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void DDP_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::lineSearchWorker(
+/***************************************************************************************************** */
+template <size_t STATE_DIM, size_t INPUT_DIM>
+void DDP_BASE<STATE_DIM, INPUT_DIM>::lineSearchWorker(
 		size_t workerIndex,
 		scalar_t learningRate,
 		scalar_t& lsTotalCost,
@@ -1007,9 +1007,9 @@ void DDP_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::lineSearchWorker(
 
 /******************************************************************************************************/
 /******************************************************************************************************/
-/******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void DDP_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculateMeritFunction(
+/***************************************************************************************************** */
+template <size_t STATE_DIM, size_t INPUT_DIM>
+void DDP_BASE<STATE_DIM, INPUT_DIM>::calculateMeritFunction(
 		const scalar_array2_t& timeTrajectoriesStock,
 		const size_array2_t& nc1TrajectoriesStock,
 		const constraint1_vector_array2_t& EvTrajectoryStock,
@@ -1057,10 +1057,10 @@ void DDP_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculateMeritFunction(
 
 /******************************************************************************************************/
 /******************************************************************************************************/
-/******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-typename DDP_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::scalar_t
-DDP_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculateConstraintISE(
+/***************************************************************************************************** */
+template <size_t STATE_DIM, size_t INPUT_DIM>
+typename DDP_BASE<STATE_DIM, INPUT_DIM>::scalar_t
+DDP_BASE<STATE_DIM, INPUT_DIM>::calculateConstraintISE(
 		const scalar_array2_t& timeTrajectoriesStock,
 		const std::vector<std::vector<size_t>>& nc1TrajectoriesStock,
 		const constraint1_vector_array2_t& EvTrajectoriesStock,
@@ -1109,10 +1109,10 @@ DDP_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculateConstraintISE(
 
 /******************************************************************************************************/
 /******************************************************************************************************/
-/******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-typename DDP_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::scalar_t
-DDP_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculateInequalityConstraintPenalty (
+/***************************************************************************************************** */
+template <size_t STATE_DIM, size_t INPUT_DIM>
+typename DDP_BASE<STATE_DIM, INPUT_DIM>::scalar_t
+DDP_BASE<STATE_DIM, INPUT_DIM>::calculateInequalityConstraintPenalty (
 		const scalar_array2_t &timeTrajectoriesStock,
 		const size_array2_t &ncIneqTrajectoriesStock,
 		const scalar_array3_t &hTrajectoriesStock,
@@ -1167,9 +1167,9 @@ DDP_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculateInequalityConstraintPena
 
 /******************************************************************************************************/
 /******************************************************************************************************/
-/******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void DDP_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::truncateConterller(
+/***************************************************************************************************** */
+template <size_t STATE_DIM, size_t INPUT_DIM>
+void DDP_BASE<STATE_DIM, INPUT_DIM>::truncateConterller(
 		const scalar_array_t& partitioningTimes,
 		const double& initTime,
 		linear_controller_array_t& controllersStock,
@@ -1234,9 +1234,9 @@ void DDP_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::truncateConterller(
 
 /******************************************************************************************************/
 /******************************************************************************************************/
-/******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void DDP_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculateControllerUpdateMaxNorm(
+/***************************************************************************************************** */
+template <size_t STATE_DIM, size_t INPUT_DIM>
+void DDP_BASE<STATE_DIM, INPUT_DIM>::calculateControllerUpdateMaxNorm(
 		scalar_t& maxDeltaUffNorm,
 		scalar_t& maxDeltaUeeNorm) {
 
@@ -1264,9 +1264,9 @@ void DDP_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculateControllerUpdateMax
 
 /******************************************************************************************************/
 /******************************************************************************************************/
-/******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void DDP_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::updateNominalControllerPtrStock() {
+/***************************************************************************************************** */
+template <size_t STATE_DIM, size_t INPUT_DIM>
+void DDP_BASE<STATE_DIM, INPUT_DIM>::updateNominalControllerPtrStock() {
 
     nominalControllerPtrStock_.clear();
     nominalControllerPtrStock_.reserve(nominalControllersStock_.size());
@@ -1278,9 +1278,9 @@ void DDP_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::updateNominalControllerPtrSt
 
 /******************************************************************************************************/
 /******************************************************************************************************/
-/******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void DDP_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::printRolloutInfo()  {
+/***************************************************************************************************** */
+template <size_t STATE_DIM, size_t INPUT_DIM>
+void DDP_BASE<STATE_DIM, INPUT_DIM>::printRolloutInfo()  {
 
 	std::cerr << "optimization cost:         " << nominalTotalCost_ << std::endl;
 	std::cerr << "constraint type-1 ISE:     " << nominalConstraint1ISE_ << std::endl;
@@ -1304,9 +1304,9 @@ void DDP_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::printRolloutInfo()  {
 
 /******************************************************************************************************/
 /******************************************************************************************************/
-/******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void DDP_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::adjustController(
+/***************************************************************************************************** */
+template <size_t STATE_DIM, size_t INPUT_DIM>
+void DDP_BASE<STATE_DIM, INPUT_DIM>::adjustController(
 		const scalar_array_t& newEventTimes,
 		const scalar_array_t& controllerEventTimes) {
 
@@ -1320,9 +1320,9 @@ void DDP_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::adjustController(
 
 /******************************************************************************************************/
 /******************************************************************************************************/
-/******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void DDP_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::getValueFuntion (
+/***************************************************************************************************** */
+template <size_t STATE_DIM, size_t INPUT_DIM>
+void DDP_BASE<STATE_DIM, INPUT_DIM>::getValueFuntion (
 		const scalar_t& time, const state_vector_t& state, scalar_t& valueFuntion)  {
 
 	size_t activeSubsystem = BASE::findActivePartitionIndex(partitioningTimes_, time);
@@ -1354,27 +1354,27 @@ void DDP_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::getValueFuntion (
 
 /******************************************************************************************************/
 /******************************************************************************************************/
-/******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void DDP_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::useParallelRiccatiSolverFromInitItr(bool flag) {
+/***************************************************************************************************** */
+template <size_t STATE_DIM, size_t INPUT_DIM>
+void DDP_BASE<STATE_DIM, INPUT_DIM>::useParallelRiccatiSolverFromInitItr(bool flag) {
 
 	useParallelRiccatiSolverFromInitItr_ = flag;
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
-/******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void DDP_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::blockwiseMovingHorizon(bool flag) {
+/***************************************************************************************************** */
+template <size_t STATE_DIM, size_t INPUT_DIM>
+void DDP_BASE<STATE_DIM, INPUT_DIM>::blockwiseMovingHorizon(bool flag) {
 
 	blockwiseMovingHorizon_ = flag;
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
-/******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void DDP_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::getPerformanceIndeces(
+/***************************************************************************************************** */
+template <size_t STATE_DIM, size_t INPUT_DIM>
+void DDP_BASE<STATE_DIM, INPUT_DIM>::getPerformanceIndeces(
 		scalar_t& costFunction,
 		scalar_t& constraint1ISE,
 		scalar_t& constraint2ISE) const {
@@ -1386,18 +1386,18 @@ void DDP_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::getPerformanceIndeces(
 
 /******************************************************************************************************/
 /******************************************************************************************************/
-/******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-size_t DDP_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::getNumIterations() const {
+/***************************************************************************************************** */
+template <size_t STATE_DIM, size_t INPUT_DIM>
+size_t DDP_BASE<STATE_DIM, INPUT_DIM>::getNumIterations() const {
 
 	return iteration_;
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
-/******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void DDP_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::getIterationsLog(
+/***************************************************************************************************** */
+template <size_t STATE_DIM, size_t INPUT_DIM>
+void DDP_BASE<STATE_DIM, INPUT_DIM>::getIterationsLog(
 		eigen_scalar_array_t& iterationCost,
 		eigen_scalar_array_t& iterationISE1,
 		eigen_scalar_array_t& iterationISE2) const {
@@ -1409,9 +1409,9 @@ void DDP_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::getIterationsLog(
 
 /******************************************************************************************************/
 /******************************************************************************************************/
-/******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void DDP_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::getIterationsLogPtr(
+/***************************************************************************************************** */
+template <size_t STATE_DIM, size_t INPUT_DIM>
+void DDP_BASE<STATE_DIM, INPUT_DIM>::getIterationsLogPtr(
 		const eigen_scalar_array_t*& iterationCostPtr,
 		const eigen_scalar_array_t*& iterationISE1Ptr,
 		const eigen_scalar_array_t*& iterationISE2Ptr) const {
@@ -1423,18 +1423,18 @@ void DDP_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::getIterationsLogPtr(
 
 /******************************************************************************************************/
 /******************************************************************************************************/
-/******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-DDP_Settings& DDP_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::ddpSettings() {
+/***************************************************************************************************** */
+template <size_t STATE_DIM, size_t INPUT_DIM>
+DDP_Settings& DDP_BASE<STATE_DIM, INPUT_DIM>::ddpSettings() {
 	return ddpSettings_;
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
-/******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-const typename DDP_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::controller_ptr_array_t&
-DDP_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::getController() const {
+/***************************************************************************************************** */
+template <size_t STATE_DIM, size_t INPUT_DIM>
+const typename DDP_BASE<STATE_DIM, INPUT_DIM>::controller_ptr_array_t&
+DDP_BASE<STATE_DIM, INPUT_DIM>::getController() const {
 
     //updateNominalControllerPtrStock(); // cannot be done in const member
 	return nominalControllerPtrStock_;
@@ -1442,9 +1442,9 @@ DDP_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::getController() const {
 
 /******************************************************************************************************/
 /******************************************************************************************************/
-/******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void DDP_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::getControllerPtr(
+/***************************************************************************************************** */
+template <size_t STATE_DIM, size_t INPUT_DIM>
+void DDP_BASE<STATE_DIM, INPUT_DIM>::getControllerPtr(
 		const controller_ptr_array_t*& controllersPtrStock) const {
 
     //updateNominalControllerPtrStock(); // cannot be done in const member
@@ -1453,39 +1453,39 @@ void DDP_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::getControllerPtr(
 
 /******************************************************************************************************/
 /******************************************************************************************************/
-/******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-const typename DDP_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::scalar_array2_t&
-	DDP_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::getNominalTimeTrajectories () const {
+/***************************************************************************************************** */
+template <size_t STATE_DIM, size_t INPUT_DIM>
+const typename DDP_BASE<STATE_DIM, INPUT_DIM>::scalar_array2_t&
+	DDP_BASE<STATE_DIM, INPUT_DIM>::getNominalTimeTrajectories () const {
 
 	return nominalTimeTrajectoriesStock_;
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
-/******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-const typename DDP_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::state_vector_array2_t&
-	DDP_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::getNominalStateTrajectories () const {
+/***************************************************************************************************** */
+template <size_t STATE_DIM, size_t INPUT_DIM>
+const typename DDP_BASE<STATE_DIM, INPUT_DIM>::state_vector_array2_t&
+	DDP_BASE<STATE_DIM, INPUT_DIM>::getNominalStateTrajectories () const {
 
 	return nominalStateTrajectoriesStock_;
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
-/******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-const typename DDP_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::input_vector_array2_t&
-	DDP_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::getNominalInputTrajectories () const  {
+/***************************************************************************************************** */
+template <size_t STATE_DIM, size_t INPUT_DIM>
+const typename DDP_BASE<STATE_DIM, INPUT_DIM>::input_vector_array2_t&
+	DDP_BASE<STATE_DIM, INPUT_DIM>::getNominalInputTrajectories () const  {
 
 	return nominalInputTrajectoriesStock_;
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
-/******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void DDP_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::getNominalTrajectoriesPtr(
+/***************************************************************************************************** */
+template <size_t STATE_DIM, size_t INPUT_DIM>
+void DDP_BASE<STATE_DIM, INPUT_DIM>::getNominalTrajectoriesPtr(
 		const scalar_array2_t*& nominalTimeTrajectoriesStockPtr,
 		const state_vector_array2_t*& nominalStateTrajectoriesStockPtr,
 		const input_vector_array2_t*& nominalInputTrajectoriesStockPtr) const  {
@@ -1497,9 +1497,9 @@ void DDP_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::getNominalTrajectoriesPtr(
 
 /******************************************************************************************************/
 /******************************************************************************************************/
-/******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void DDP_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::swapNominalTrajectories (
+/***************************************************************************************************** */
+template <size_t STATE_DIM, size_t INPUT_DIM>
+void DDP_BASE<STATE_DIM, INPUT_DIM>::swapNominalTrajectories (
 		scalar_array2_t& nominalTimeTrajectoriesStock,
 		state_vector_array2_t& nominalStateTrajectoriesStock,
 		input_vector_array2_t& nominalInputTrajectoriesStock)  {
@@ -1511,76 +1511,76 @@ void DDP_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::swapNominalTrajectories (
 
 /******************************************************************************************************/
 /******************************************************************************************************/
-/******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-const typename DDP_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::scalar_t&
-	DDP_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::getFinalTime() const {
+/***************************************************************************************************** */
+template <size_t STATE_DIM, size_t INPUT_DIM>
+const typename DDP_BASE<STATE_DIM, INPUT_DIM>::scalar_t&
+	DDP_BASE<STATE_DIM, INPUT_DIM>::getFinalTime() const {
 
 	return finalTime_;
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
-/******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-const typename DDP_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::scalar_array_t&
-	DDP_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::getPartitioningTimes() const {
+/***************************************************************************************************** */
+template <size_t STATE_DIM, size_t INPUT_DIM>
+const typename DDP_BASE<STATE_DIM, INPUT_DIM>::scalar_array_t&
+	DDP_BASE<STATE_DIM, INPUT_DIM>::getPartitioningTimes() const {
 
 	return partitioningTimes_;
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
-/******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-typename DDP_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::logic_rules_machine_t*
-	DDP_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::getLogicRulesMachinePtr() {
+/***************************************************************************************************** */
+template <size_t STATE_DIM, size_t INPUT_DIM>
+typename DDP_BASE<STATE_DIM, INPUT_DIM>::logic_rules_machine_t*
+	DDP_BASE<STATE_DIM, INPUT_DIM>::getLogicRulesMachinePtr() {
 
 	return logicRulesMachinePtr_.get();
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
-/******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-const typename DDP_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::logic_rules_machine_t*
-	DDP_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::getLogicRulesMachinePtr() const {
+/***************************************************************************************************** */
+template <size_t STATE_DIM, size_t INPUT_DIM>
+const typename DDP_BASE<STATE_DIM, INPUT_DIM>::logic_rules_machine_t*
+	DDP_BASE<STATE_DIM, INPUT_DIM>::getLogicRulesMachinePtr() const {
 
 	return logicRulesMachinePtr_.get();
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
-/******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void DDP_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::setLogicRules(std::shared_ptr<LogicRulesBase> logicRules) {
+/***************************************************************************************************** */
+template <size_t STATE_DIM, size_t INPUT_DIM>
+void DDP_BASE<STATE_DIM, INPUT_DIM>::setLogicRules(std::shared_ptr<HybridLogicRules> logicRules) {
 
 	logicRulesMachinePtr_->setLogicRules(std::move(logicRules));
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
-/******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-const LogicRulesBase* DDP_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::getLogicRulesPtr() const {
+/***************************************************************************************************** */
+template <size_t STATE_DIM, size_t INPUT_DIM>
+const HybridLogicRules* DDP_BASE<STATE_DIM, INPUT_DIM>::getLogicRulesPtr() const {
 
 	return logicRulesMachinePtr_->getLogicRulesPtr();
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
-/******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-LogicRulesBase* DDP_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::getLogicRulesPtr() {
+/***************************************************************************************************** */
+template <size_t STATE_DIM, size_t INPUT_DIM>
+HybridLogicRules* DDP_BASE<STATE_DIM, INPUT_DIM>::getLogicRulesPtr() {
 
 	return logicRulesMachinePtr_->getLogicRulesPtr();
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
-/******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void DDP_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::getCostDesiredTrajectoriesPtr(
+/***************************************************************************************************** */
+template <size_t STATE_DIM, size_t INPUT_DIM>
+void DDP_BASE<STATE_DIM, INPUT_DIM>::getCostDesiredTrajectoriesPtr(
 		const cost_desired_trajectories_t*& costDesiredTrajectoriesPtr) const {
 
 	costDesiredTrajectoriesPtr = &costDesiredTrajectories_;
@@ -1588,9 +1588,9 @@ void DDP_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::getCostDesiredTrajectoriesPt
 
 /******************************************************************************************************/
 /******************************************************************************************************/
-/******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void DDP_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::setCostDesiredTrajectories(
+/***************************************************************************************************** */
+template <size_t STATE_DIM, size_t INPUT_DIM>
+void DDP_BASE<STATE_DIM, INPUT_DIM>::setCostDesiredTrajectories(
 		const cost_desired_trajectories_t& costDesiredTrajectories) {
 
 	costDesiredTrajectoriesUpdated_ = true;
@@ -1599,9 +1599,9 @@ void DDP_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::setCostDesiredTrajectories(
 
 /******************************************************************************************************/
 /******************************************************************************************************/
-/******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void DDP_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::setCostDesiredTrajectories(
+/***************************************************************************************************** */
+template <size_t STATE_DIM, size_t INPUT_DIM>
+void DDP_BASE<STATE_DIM, INPUT_DIM>::setCostDesiredTrajectories(
 		const scalar_array_t& desiredTimeTrajectory,
 		const dynamic_vector_array_t& desiredStateTrajectory,
 		const dynamic_vector_array_t& desiredInputTrajectory) {
@@ -1614,9 +1614,9 @@ void DDP_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::setCostDesiredTrajectories(
 
 /******************************************************************************************************/
 /******************************************************************************************************/
-/******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void DDP_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::swapCostDesiredTrajectories(
+/***************************************************************************************************** */
+template <size_t STATE_DIM, size_t INPUT_DIM>
+void DDP_BASE<STATE_DIM, INPUT_DIM>::swapCostDesiredTrajectories(
 		cost_desired_trajectories_t& costDesiredTrajectories) {
 
 	costDesiredTrajectoriesUpdated_ = true;
@@ -1625,9 +1625,9 @@ void DDP_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::swapCostDesiredTrajectories(
 
 /******************************************************************************************************/
 /******************************************************************************************************/
-/******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void DDP_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::swapCostDesiredTrajectories(
+/***************************************************************************************************** */
+template <size_t STATE_DIM, size_t INPUT_DIM>
+void DDP_BASE<STATE_DIM, INPUT_DIM>::swapCostDesiredTrajectories(
 		scalar_array_t& desiredTimeTrajectory,
 		dynamic_vector_array_t& desiredStateTrajectory,
 		dynamic_vector_array_t& desiredInputTrajectory) {
@@ -1640,18 +1640,18 @@ void DDP_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::swapCostDesiredTrajectories(
 
 /******************************************************************************************************/
 /******************************************************************************************************/
-/******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-bool DDP_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::costDesiredTrajectoriesUpdated() const {
+/***************************************************************************************************** */
+template <size_t STATE_DIM, size_t INPUT_DIM>
+bool DDP_BASE<STATE_DIM, INPUT_DIM>::costDesiredTrajectoriesUpdated() const {
 
 	return costDesiredTrajectoriesUpdated_;
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
-/******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void DDP_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::rewindOptimizer(const size_t& firstIndex) {
+/***************************************************************************************************** */
+template <size_t STATE_DIM, size_t INPUT_DIM>
+void DDP_BASE<STATE_DIM, INPUT_DIM>::rewindOptimizer(const size_t& firstIndex) {
 
 	// No rewind is needed
 	if (firstIndex==0) {  return;
@@ -1688,18 +1688,18 @@ void DDP_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::rewindOptimizer(const size_t
 
 /******************************************************************************************************/
 /******************************************************************************************************/
-/******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-const unsigned long long int& DDP_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::getRewindCounter() const {
+/***************************************************************************************************** */
+template <size_t STATE_DIM, size_t INPUT_DIM>
+const unsigned long long int& DDP_BASE<STATE_DIM, INPUT_DIM>::getRewindCounter() const {
 
 	return rewindCounter_;
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
-/******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void DDP_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::setupOptimizer(const size_t& numPartitions) {
+/***************************************************************************************************** */
+template <size_t STATE_DIM, size_t INPUT_DIM>
+void DDP_BASE<STATE_DIM, INPUT_DIM>::setupOptimizer(const size_t& numPartitions) {
 
 	if (numPartitions==0) {
 		throw std::runtime_error("Number of partitions cannot be zero!");
@@ -1778,9 +1778,9 @@ void DDP_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::setupOptimizer(const size_t&
 
 /******************************************************************************************************/
 /******************************************************************************************************/
-/******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void DDP_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::runInit() {
+/***************************************************************************************************** */
+template <size_t STATE_DIM, size_t INPUT_DIM>
+void DDP_BASE<STATE_DIM, INPUT_DIM>::runInit() {
 
 #ifdef BENCHMARK
 	// Benchmarking
@@ -1862,9 +1862,9 @@ void DDP_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::runInit() {
 
 /******************************************************************************************************/
 /******************************************************************************************************/
-/******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void DDP_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::runIteration() {
+/***************************************************************************************************** */
+template <size_t STATE_DIM, size_t INPUT_DIM>
+void DDP_BASE<STATE_DIM, INPUT_DIM>::runIteration() {
 
 #ifdef BENCHMARK
 	// Benchmarking
@@ -1937,9 +1937,9 @@ void DDP_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::runIteration() {
 
 /******************************************************************************************************/
 /******************************************************************************************************/
-/******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void DDP_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::runExit()  {
+/***************************************************************************************************** */
+template <size_t STATE_DIM, size_t INPUT_DIM>
+void DDP_BASE<STATE_DIM, INPUT_DIM>::runExit()  {
 
 //	// add the deleted parts of the controller
 //	for (size_t i=0; i<initActivePartition_; i++)
@@ -1959,9 +1959,9 @@ void DDP_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::runExit()  {
 
 /******************************************************************************************************/
 /******************************************************************************************************/
-/******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void DDP_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::run(
+/***************************************************************************************************** */
+template <size_t STATE_DIM, size_t INPUT_DIM>
+void DDP_BASE<STATE_DIM, INPUT_DIM>::run(
 		const scalar_t& initTime,
 		const state_vector_t& initState,
 		const scalar_t& finalTime,
@@ -1981,9 +1981,9 @@ void DDP_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::run(
 
 /******************************************************************************************************/
 /******************************************************************************************************/
-/******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void DDP_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::run(
+/***************************************************************************************************** */
+template <size_t STATE_DIM, size_t INPUT_DIM>
+void DDP_BASE<STATE_DIM, INPUT_DIM>::run(
 		const scalar_t& initTime,
 		const state_vector_t& initState,
 		const scalar_t& finalTime,
@@ -2052,7 +2052,7 @@ void DDP_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::run(
 		costDesiredTrajectories_.swap(costDesiredTrajectoriesBuffer_);
 	}
 
-	// update the LOGIC_RULES in the beginning of the run routine
+	// update the logic rules in the beginning of the run routine
 	bool logicRulesModified = logicRulesMachinePtr_->updateLogicRules(partitioningTimes_);
 
 	// display

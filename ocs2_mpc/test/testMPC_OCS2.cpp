@@ -9,7 +9,7 @@
 using namespace ocs2;
 
 TEST(MPC_OCS2, MPC_OCS2_default_construction){
-  MPC_OCS2<1, 1, NullLogicRules> MPC_OCS2;
+  MPC_OCS2<1, 1> MPC_OCS2;
 }
 
 int main(int argc, char** argv)

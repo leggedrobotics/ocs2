@@ -14,15 +14,14 @@
 namespace ocs2 {
 template<size_t FULL_STATE_DIM, size_t FULL_INPUT_DIM,
     size_t SYSTEM_STATE_DIM, size_t SYSTEM_INPUT_DIM,
-    size_t FILTER_STATE_DIM, size_t FILTER_INPUT_DIM,
-    class LOGIC_RULES_T=NullLogicRules>
-class LoopshapingDynamicsDerivative : public DerivativesBase<FULL_STATE_DIM, FULL_INPUT_DIM, LOGIC_RULES_T> {
+    size_t FILTER_STATE_DIM, size_t FILTER_INPUT_DIM>
+class LoopshapingDynamicsDerivative : public DerivativesBase<FULL_STATE_DIM, FULL_INPUT_DIM> {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
   using Ptr = std::shared_ptr<LoopshapingDynamicsDerivative>;
 
-  using BASE = DerivativesBase<FULL_STATE_DIM, FULL_INPUT_DIM, LOGIC_RULES_T>;
+  using BASE = DerivativesBase<FULL_STATE_DIM, FULL_INPUT_DIM>;
   using typename BASE::scalar_t;
   using typename BASE::state_vector_t;
   using typename BASE::input_vector_t;
@@ -32,7 +31,7 @@ class LoopshapingDynamicsDerivative : public DerivativesBase<FULL_STATE_DIM, FUL
   using typename BASE::dynamic_state_matrix_t;
   using typename BASE::dynamic_input_matrix_t;
 
-  using SYSTEM_DERIVATIVE = DerivativesBase<SYSTEM_STATE_DIM, SYSTEM_INPUT_DIM, LOGIC_RULES_T>;
+  using SYSTEM_DERIVATIVE = DerivativesBase<SYSTEM_STATE_DIM, SYSTEM_INPUT_DIM>;
   using system_state_vector_t = typename SYSTEM_DERIVATIVE::state_vector_t;
   using system_input_vector_t = typename SYSTEM_DERIVATIVE::input_vector_t;
   using system_state_matrix_t = typename SYSTEM_DERIVATIVE::state_matrix_t;
@@ -169,54 +168,48 @@ class LoopshapingDynamicsDerivative : public DerivativesBase<FULL_STATE_DIM, FUL
 namespace ocs2 {
 template<size_t FULL_STATE_DIM, size_t FULL_INPUT_DIM,
     size_t SYSTEM_STATE_DIM, size_t SYSTEM_INPUT_DIM,
-    size_t FILTER_STATE_DIM, size_t FILTER_INPUT_DIM,
-    class LOGIC_RULES_T>
+    size_t FILTER_STATE_DIM, size_t FILTER_INPUT_DIM>
 std::unique_ptr<LoopshapingDynamicsDerivative<FULL_STATE_DIM,
-                                              FULL_INPUT_DIM,
-                                              SYSTEM_STATE_DIM,
-                                              SYSTEM_INPUT_DIM,
-                                              FILTER_STATE_DIM,
-                                              FILTER_INPUT_DIM,
-                                              LOGIC_RULES_T>> LoopshapingDynamicsDerivative<FULL_STATE_DIM,
-                                                                                            FULL_INPUT_DIM,
-                                                                                            SYSTEM_STATE_DIM,
-                                                                                            SYSTEM_INPUT_DIM,
-                                                                                            FILTER_STATE_DIM,
-                                                                                            FILTER_INPUT_DIM,
-                                                                                            LOGIC_RULES_T>::create(
+                                                                                             FULL_INPUT_DIM,
+                                                                                             SYSTEM_STATE_DIM,
+                                                                                             SYSTEM_INPUT_DIM,
+                                                                                             FILTER_STATE_DIM,
+                                                                                             FILTER_INPUT_DIM>> LoopshapingDynamicsDerivative<FULL_STATE_DIM,
+                                                                                             FULL_INPUT_DIM,
+                                                                                             SYSTEM_STATE_DIM,
+                                                                                             SYSTEM_INPUT_DIM,
+                                                                                             FILTER_STATE_DIM,
+                                                                                             FILTER_INPUT_DIM>::create(
     const SYSTEM_DERIVATIVE &controlledSystem,
     std::shared_ptr<LoopshapingDefinition> loopshapingDefinition) {
     switch (loopshapingDefinition->getType()) {
         case LoopshapingType::outputpattern :
             return std::unique_ptr<LoopshapingDynamicsDerivative>(new LoopshapingDynamicsDerivativeOutputPattern<FULL_STATE_DIM,
-                    FULL_INPUT_DIM,
-                    SYSTEM_STATE_DIM,
-                    SYSTEM_INPUT_DIM,
-                    FILTER_STATE_DIM,
-                    FILTER_INPUT_DIM,
-                    LOGIC_RULES_T>(
+                                                                                             FULL_INPUT_DIM,
+                                                                                             SYSTEM_STATE_DIM,
+                                                                                             SYSTEM_INPUT_DIM,
+                                                                                             FILTER_STATE_DIM,
+                                                                                             FILTER_INPUT_DIM>(
                     controlledSystem,
                     std::move(
                             loopshapingDefinition)));
         case LoopshapingType::inputpattern :
             return std::unique_ptr<LoopshapingDynamicsDerivative>(new LoopshapingDynamicsDerivativeInputPattern<FULL_STATE_DIM,
-                    FULL_INPUT_DIM,
-                    SYSTEM_STATE_DIM,
-                    SYSTEM_INPUT_DIM,
-                    FILTER_STATE_DIM,
-                    FILTER_INPUT_DIM,
-                    LOGIC_RULES_T>(
+                                                                                             FULL_INPUT_DIM,
+                                                                                             SYSTEM_STATE_DIM,
+                                                                                             SYSTEM_INPUT_DIM,
+                                                                                             FILTER_STATE_DIM,
+                                                                                             FILTER_INPUT_DIM>(
                     controlledSystem,
                     std::move(
                             loopshapingDefinition)));
         case LoopshapingType::eliminatepattern :
             return std::unique_ptr<LoopshapingDynamicsDerivative>(new LoopshapingDynamicsDerivativeEliminatePattern<FULL_STATE_DIM,
-                    FULL_INPUT_DIM,
-                    SYSTEM_STATE_DIM,
-                    SYSTEM_INPUT_DIM,
-                    FILTER_STATE_DIM,
-                    FILTER_INPUT_DIM,
-                    LOGIC_RULES_T>(
+                                                                                             FULL_INPUT_DIM,
+                                                                                             SYSTEM_STATE_DIM,
+                                                                                             SYSTEM_INPUT_DIM,
+                                                                                             FILTER_STATE_DIM,
+                                                                                             FILTER_INPUT_DIM>(
                     controlledSystem,
                     std::move(
                             loopshapingDefinition)));

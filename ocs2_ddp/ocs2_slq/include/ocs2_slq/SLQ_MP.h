@@ -45,15 +45,14 @@ namespace ocs2{
  *
  * @tparam STATE_DIM: Dimension of the state space.
  * @tparam INPUT_DIM: Dimension of the control input space.
- * @tparam LOGIC_RULES_T: Logic Rules type (default NullLogicRules).
- */
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T=NullLogicRules>
-class SLQ_MP : public SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>
+  */
+template <size_t STATE_DIM, size_t INPUT_DIM>
+class SLQ_MP : public SLQ_BASE<STATE_DIM, INPUT_DIM>
 {
 public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-	typedef SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> BASE;
+	typedef SLQ_BASE<STATE_DIM, INPUT_DIM> BASE;
 
 	using DIMENSIONS = typename BASE::DIMENSIONS;
 
@@ -155,7 +154,7 @@ public:
 			const cost_function_base_t* costFunctionPtr,
 			const operating_trajectories_base_t* operatingTrajectoriesPtr,
 			const SLQ_Settings& settings = SLQ_Settings(),
-			std::shared_ptr<LogicRulesBase> logicRulesPtr = nullptr,
+			std::shared_ptr<HybridLogicRules> logicRulesPtr = nullptr,
 			const cost_function_base_t* heuristicsFunctionPtr = nullptr);
 
 	/**

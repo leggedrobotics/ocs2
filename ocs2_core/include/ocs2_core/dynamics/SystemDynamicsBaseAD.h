@@ -45,10 +45,9 @@ namespace ocs2{
  * @tparam Derived: Derived class type.
  * @tparam STATE_DIM: Dimension of the state space.
  * @tparam INPUT_DIM: Dimension of the control input space.
- * @tparam LOGIC_RULES_T: Logic Rules type (default NullLogicRules).
  */
-template <class Derived, size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T=NullLogicRules, size_t NUM_MODES=1>
-class SystemDynamicsBaseAD : public SystemDynamicsBase<STATE_DIM, INPUT_DIM, LOGIC_RULES_T, NUM_MODES>
+template <class Derived, size_t STATE_DIM, size_t INPUT_DIM, size_t NUM_MODES=1>
+class SystemDynamicsBaseAD : public SystemDynamicsBase<STATE_DIM, INPUT_DIM, NUM_MODES>
 {
 public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
@@ -61,10 +60,10 @@ public:
 		domain_dim_	= 1 + state_dim_ + input_dim_,
 	};
 
-	using Ptr = std::shared_ptr<SystemDynamicsBaseAD<Derived, STATE_DIM, INPUT_DIM, LOGIC_RULES_T, NUM_MODES> >;
-	using ConstPtr = std::shared_ptr<const SystemDynamicsBaseAD<Derived, STATE_DIM, INPUT_DIM, LOGIC_RULES_T, NUM_MODES> >;
+	using Ptr = std::shared_ptr<SystemDynamicsBaseAD<Derived, STATE_DIM, INPUT_DIM, NUM_MODES> >;
+	using ConstPtr = std::shared_ptr<const SystemDynamicsBaseAD<Derived, STATE_DIM, INPUT_DIM, NUM_MODES> >;
 
-	using BASE = SystemDynamicsBase<STATE_DIM, INPUT_DIM, LOGIC_RULES_T, NUM_MODES>;
+	using BASE = SystemDynamicsBase<STATE_DIM, INPUT_DIM, NUM_MODES>;
 
 	using typename BASE::scalar_t;
 	using typename BASE::state_vector_t;

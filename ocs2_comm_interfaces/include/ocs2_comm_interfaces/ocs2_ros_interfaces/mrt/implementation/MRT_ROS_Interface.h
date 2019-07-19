@@ -32,19 +32,22 @@ namespace ocs2 {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template<size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-MRT_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::MRT_ROS_Interface(
-    const LOGIC_RULES_T &logicRules,
-    const std::string &robotName /*= "robot"*/) {
+template <size_t STATE_DIM, size_t INPUT_DIM>
+MRT_ROS_Interface<STATE_DIM, INPUT_DIM>::MRT_ROS_Interface(
+		std::string robotName /*= "robot"*/,
+		std::shared_ptr<HybridLogicRules> logicRules /*= nullptr*/) {
 
-	set(logicRules, robotName);
+	if (!logicRules) {
+		logicRules = std::shared_ptr<NullLogicRules>(new NullLogicRules());
+	}
+	set( std::move(robotName), std::move(logicRules));
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template<size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-MRT_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::~MRT_ROS_Interface() {
+template <size_t STATE_DIM, size_t INPUT_DIM>
+MRT_ROS_Interface<STATE_DIM, INPUT_DIM>::~MRT_ROS_Interface() {
 
 	shutdownNodes();
 }
@@ -52,14 +55,14 @@ MRT_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::~MRT_ROS_Interface() {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template<size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void MRT_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::set(
-    const LOGIC_RULES_T &logicRules,
-    const std::string &robotName /*= "robot"*/) {
+template <size_t STATE_DIM, size_t INPUT_DIM>
+void MRT_ROS_Interface<STATE_DIM, INPUT_DIM>::set(
+    std::string robotName,
+	std::shared_ptr<HybridLogicRules> logicRules) {
 
-	logicMachinePtr_ = logic_machine_ptr_t(new logic_machine_t(logicRules));
+	logicMachinePtr_ = logic_machine_ptr_t(new logic_machine_t(std::move(logicRules)));
 
-	robotName_ = robotName;
+	robotName_ = std::move(robotName);
 
 	// reset variables
 	reset();
@@ -73,8 +76,8 @@ void MRT_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::set(
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template<size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void MRT_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::sigintHandler(int sig) {
+template <size_t STATE_DIM, size_t INPUT_DIM>
+void MRT_ROS_Interface<STATE_DIM, INPUT_DIM>::sigintHandler(int sig) {
 
 	ROS_INFO_STREAM("Shutting MRT node.");
 	::ros::shutdown();
@@ -83,8 +86,8 @@ void MRT_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::sigintHandler(int s
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template<size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void MRT_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::reset() {
+template <size_t STATE_DIM, size_t INPUT_DIM>
+void MRT_ROS_Interface<STATE_DIM, INPUT_DIM>::reset() {
 
 	std::lock(policyMutexBuffer_, policyMutex_);
 	std::lock_guard<std::mutex> lkUpdate(policyMutexBuffer_, std::adopt_lock);
@@ -114,8 +117,8 @@ void MRT_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::reset() {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template<size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-size_t MRT_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::messageHashValue(
+template <size_t STATE_DIM, size_t INPUT_DIM>
+size_t MRT_ROS_Interface<STATE_DIM, INPUT_DIM>::messageHashValue(
     const system_observation_t &observation) const {
 
   return (observation.time() * 1.0e+6);
@@ -124,8 +127,8 @@ size_t MRT_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::messageHashValue(
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template<size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void MRT_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::partitioningTimesUpdate(
+template <size_t STATE_DIM, size_t INPUT_DIM>
+void MRT_ROS_Interface<STATE_DIM, INPUT_DIM>::partitioningTimesUpdate(
     const scalar_t &time,
     scalar_array_t &partitioningTimes) const {
 
@@ -137,8 +140,8 @@ void MRT_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::partitioningTimesUp
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template<size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void MRT_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::resetMpcNode(
+template <size_t STATE_DIM, size_t INPUT_DIM>
+void MRT_ROS_Interface<STATE_DIM, INPUT_DIM>::resetMpcNode(
 		const cost_desired_trajectories_t& initCostDesiredTrajectories) {
 
   policyReceivedEver_ = false;
@@ -160,8 +163,8 @@ void MRT_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::resetMpcNode(
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template<size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void MRT_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::publishDummy() {
+template <size_t STATE_DIM, size_t INPUT_DIM>
+void MRT_ROS_Interface<STATE_DIM, INPUT_DIM>::publishDummy() {
 
   ocs2_comm_interfaces::dummy msg;
   msg.ping = 1;
@@ -171,8 +174,8 @@ void MRT_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::publishDummy() {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template<size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void MRT_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::publishObservation(
+template <size_t STATE_DIM, size_t INPUT_DIM>
+void MRT_ROS_Interface<STATE_DIM, INPUT_DIM>::publishObservation(
 		const system_observation_t &currentObservation) {
 
 #ifdef PUBLISH_THREAD
@@ -195,8 +198,8 @@ void MRT_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::publishObservation(
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template<size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void MRT_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::publisherWorkerThread() {
+template <size_t STATE_DIM, size_t INPUT_DIM>
+void MRT_ROS_Interface<STATE_DIM, INPUT_DIM>::publisherWorkerThread() {
 
   while (terminateThread_==false) {
 
@@ -222,8 +225,8 @@ void MRT_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::publisherWorkerThre
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template<size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void MRT_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::mpcPolicyCallback(
+template <size_t STATE_DIM, size_t INPUT_DIM>
+void MRT_ROS_Interface<STATE_DIM, INPUT_DIM>::mpcPolicyCallback(
     const ocs2_comm_interfaces::mpc_flattened_controller::ConstPtr &msg) {
 
 //	std::cout << "\t Plan is received at time: " << msg->initObservation.time << std::endl;
@@ -329,8 +332,8 @@ void MRT_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::mpcPolicyCallback(
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template<size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-bool MRT_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::updatePolicy() {
+template <size_t STATE_DIM, size_t INPUT_DIM>
+bool MRT_ROS_Interface<STATE_DIM, INPUT_DIM>::updatePolicy() {
 
 	std::lock(policyMutexBuffer_, policyMutex_);
 	std::lock_guard<std::mutex> lkUpdate(policyMutexBuffer_, std::adopt_lock);
@@ -396,8 +399,8 @@ bool MRT_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::updatePolicy() {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template<size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-bool MRT_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::mpcIsTerminated() const {
+template <size_t STATE_DIM, size_t INPUT_DIM>
+bool MRT_ROS_Interface<STATE_DIM, INPUT_DIM>::mpcIsTerminated() const {
 
 	std::lock_guard<std::mutex> lk(policyMutex_);
 	return !policyUpdated_;
@@ -406,8 +409,8 @@ bool MRT_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::mpcIsTerminated() c
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template<size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-bool MRT_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::initialPolicyReceived() const {
+template <size_t STATE_DIM, size_t INPUT_DIM>
+bool MRT_ROS_Interface<STATE_DIM, INPUT_DIM>::initialPolicyReceived() const {
 
 	return policyReceivedEver_.load();
 }
@@ -415,9 +418,9 @@ bool MRT_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::initialPolicyReceiv
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template<size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-const typename MRT_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::cost_desired_trajectories_t &
-MRT_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::mpcCostDesiredTrajectories() const {
+template <size_t STATE_DIM, size_t INPUT_DIM>
+const typename MRT_ROS_Interface<STATE_DIM, INPUT_DIM>::cost_desired_trajectories_t &
+MRT_ROS_Interface<STATE_DIM, INPUT_DIM>::mpcCostDesiredTrajectories() const {
 
 	std::lock_guard<std::mutex> lk(policyMutex_);
 	return mpcCostDesiredTrajectories_;
@@ -426,8 +429,8 @@ MRT_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::mpcCostDesiredTrajectori
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template<size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void MRT_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::initRollout(
+template <size_t STATE_DIM, size_t INPUT_DIM>
+void MRT_ROS_Interface<STATE_DIM, INPUT_DIM>::initRollout(
 		const controlled_system_base_t &controlSystemBase,
 		const Rollout_Settings &rolloutSettings) {
 
@@ -437,8 +440,8 @@ void MRT_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::initRollout(
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template<size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void MRT_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::evaluatePolicy(
+template <size_t STATE_DIM, size_t INPUT_DIM>
+void MRT_ROS_Interface<STATE_DIM, INPUT_DIM>::evaluatePolicy(
 		const scalar_t& currentTime,
 		const state_vector_t& currentState,
 		state_vector_t& mpcState,
@@ -460,8 +463,8 @@ void MRT_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::evaluatePolicy(
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template<size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void MRT_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::rolloutPolicy(
+template <size_t STATE_DIM, size_t INPUT_DIM>
+void MRT_ROS_Interface<STATE_DIM, INPUT_DIM>::rolloutPolicy(
 		const scalar_t& currentTime,
 		const state_vector_t& currentState,
 		const scalar_t& timeStep,
@@ -503,8 +506,8 @@ void MRT_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::rolloutPolicy(
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template<size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void MRT_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::shutdownNodes() {
+template <size_t STATE_DIM, size_t INPUT_DIM>
+void MRT_ROS_Interface<STATE_DIM, INPUT_DIM>::shutdownNodes() {
 
 #ifdef PUBLISH_THREAD
   ROS_INFO_STREAM("Shutting down workers ...");
@@ -534,8 +537,8 @@ void MRT_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::shutdownNodes() {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template<size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-::ros::NodeHandlePtr &MRT_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::nodeHandle() {
+template <size_t STATE_DIM, size_t INPUT_DIM>
+::ros::NodeHandlePtr &MRT_ROS_Interface<STATE_DIM, INPUT_DIM>::nodeHandle() {
 
   return mrtRosNodeHandlePtr_;
 }
@@ -543,8 +546,8 @@ template<size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template<size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void MRT_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::spinMRT() {
+template <size_t STATE_DIM, size_t INPUT_DIM>
+void MRT_ROS_Interface<STATE_DIM, INPUT_DIM>::spinMRT() {
 
 	mrtCallbackQueue_.callOne();
 };
@@ -552,8 +555,8 @@ void MRT_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::spinMRT() {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template<size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void MRT_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::launchNodes(int argc, char *argv[]) {
+template <size_t STATE_DIM, size_t INPUT_DIM>
+void MRT_ROS_Interface<STATE_DIM, INPUT_DIM>::launchNodes(int argc, char *argv[]) {
 
 	reset();
 

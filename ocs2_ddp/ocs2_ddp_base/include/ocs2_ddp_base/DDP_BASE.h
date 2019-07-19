@@ -80,17 +80,13 @@ namespace ocs2 {
  *
  * @tparam STATE_DIM: Dimension of the state space.
  * @tparam INPUT_DIM: Dimension of the control input space.
- * @tparam LOGIC_RULES_T: Logic Rules type (default NullLogicRules).
- */
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T=NullLogicRules>
-class DDP_BASE : public Solver_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>
+  */
+template <size_t STATE_DIM, size_t INPUT_DIM>
+class DDP_BASE : public Solver_BASE<STATE_DIM, INPUT_DIM>
 {
 public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-	static_assert(std::is_base_of<LogicRulesBase, LOGIC_RULES_T>::value,
-			"LOGIC_RULES_T must inherit from LogicRulesBase");
-
-	typedef Solver_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> BASE;
+	typedef Solver_BASE<STATE_DIM, INPUT_DIM> BASE;
 
 	using DIMENSIONS = typename BASE::DIMENSIONS;
 	using controller_t = typename BASE::controller_t;
@@ -153,17 +149,17 @@ public:
 	using linear_controller_array_t = typename linear_controller_t::array_t;
 
 	using event_handler_t = SystemEventHandler<STATE_DIM>;
-	typedef ControlledSystemBase<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> controlled_system_base_t;
-	typedef DerivativesBase<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>      derivatives_base_t;
-	typedef ConstraintBase<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>       constraint_base_t;
-	typedef CostFunctionBase<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>     cost_function_base_t;
-	typedef SystemOperatingTrajectoriesBase<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> operating_trajectories_base_t;
+	typedef ControlledSystemBase<STATE_DIM, INPUT_DIM> controlled_system_base_t;
+	typedef DerivativesBase<STATE_DIM, INPUT_DIM>      derivatives_base_t;
+	typedef ConstraintBase<STATE_DIM, INPUT_DIM>       constraint_base_t;
+	typedef CostFunctionBase<STATE_DIM, INPUT_DIM>     cost_function_base_t;
+	typedef SystemOperatingTrajectoriesBase<STATE_DIM, INPUT_DIM> operating_trajectories_base_t;
 	typedef PenaltyBase<STATE_DIM, INPUT_DIM> penalty_base_t;
 
-	typedef RolloutBase<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> rollout_base_t;
-	typedef TimeTriggeredRollout<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> time_triggered_rollout_t;
-	typedef LinearQuadraticApproximator<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> linear_quadratic_approximator_t;
-	typedef OperatingTrajectoriesRollout<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> operating_trajectorie_rollout_t;
+	typedef RolloutBase<STATE_DIM, INPUT_DIM> rollout_base_t;
+	typedef TimeTriggeredRollout<STATE_DIM, INPUT_DIM> time_triggered_rollout_t;
+	typedef LinearQuadraticApproximator<STATE_DIM, INPUT_DIM> linear_quadratic_approximator_t;
+	typedef OperatingTrajectoriesRollout<STATE_DIM, INPUT_DIM> operating_trajectorie_rollout_t;
 
 	using cost_desired_trajectories_t = typename BASE::cost_desired_trajectories_t;
 
@@ -196,7 +192,7 @@ public:
 			  const operating_trajectories_base_t* operatingTrajectoriesPtr,
 			  const DDP_Settings& ddpSettings,
 			  const Rollout_Settings& rolloutSettings,
-			  std::shared_ptr<LogicRulesBase> logicRulesPtr,
+			  std::shared_ptr<HybridLogicRules> logicRulesPtr,
 			  const cost_function_base_t* heuristicsFunctionPtr,
 			  const char* algorithmName);
 
@@ -583,23 +579,23 @@ public:
 	/**
 	 * Sets logic rules.
 	 *
-	 * @param logicRules: This class will be passed to all of the dynamics and derivatives classes through initializeModel() routine.
+	 * @param logicRules
 	 */
-	void setLogicRules(std::shared_ptr<LogicRulesBase> logicRules) override;
+	void setLogicRules(std::shared_ptr<HybridLogicRules> logicRules) override;
 
 	/**
 	 * Returns a constant pointer to the logic rules.
 	 *
 	 * @return a constant pointer to the logic rules.
 	 */
-	const LogicRulesBase* getLogicRulesPtr() const override;
+	const HybridLogicRules* getLogicRulesPtr() const override;
 
 	/**
 	 * Returns a pointer to the logic rules.
 	 *
 	 * @return a pointer to the logic rules.
 	 */
-	LogicRulesBase* getLogicRulesPtr() override;
+	HybridLogicRules* getLogicRulesPtr() override;
 
 	/**
 	 * Gets the cost function desired trajectories.

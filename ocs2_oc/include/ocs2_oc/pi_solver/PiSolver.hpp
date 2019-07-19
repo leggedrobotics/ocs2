@@ -21,38 +21,36 @@ namespace ocs2 {
  * https://github.com/usc-clmc/usc-clmc-ros-pkg/blob/master/policy_learning/policy_improvement/src/policy_improvement.cpp
  * https://github.com/cbfinn/gps/blob/master/python/gps/algorithm/traj_opt/traj_opt_pi2.py
  */
-template <size_t STATE_DIM, size_t INPUT_DIM, typename LOGIC_RULES_T = NullLogicRules>
-class PiSolver final : public Solver_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> {
+template <size_t STATE_DIM, size_t INPUT_DIM>
+class PiSolver final : public Solver_BASE<STATE_DIM, INPUT_DIM> {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-  using Base = Solver_BASE<STATE_DIM, INPUT_DIM, NullLogicRules>;
-  using logic_rules_t = LOGIC_RULES_T;
+  using Base = Solver_BASE<STATE_DIM, INPUT_DIM>;
+  using typename Base::scalar_t;
+  using typename Base::scalar_array_t;
+  using typename Base::state_vector_t;
+  using typename Base::input_vector_t;
+  using typename Base::state_matrix_t;
+  using typename Base::input_matrix_t;
+  using typename Base::input_state_matrix_t;
+  using typename Base::input_state_matrix_array_t;
+  using typename Base::state_input_matrix_t;
+  using typename Base::eigen_scalar_array_t;
+  using typename Base::cost_desired_trajectories_t;
+  using typename Base::dynamic_vector_array_t;
+  using typename Base::state_vector_array_t;
+  using typename Base::state_vector_array2_t;
+  using typename Base::input_vector_array_t;
+  using typename Base::input_vector_array2_t;
+  using typename Base::controller_ptr_array_t;
 
-  using scalar_t = typename Base::scalar_t;
-  using scalar_array_t = typename Base::scalar_array_t;
   using scalar_array2_t = std::vector<scalar_array_t>;
-  using state_vector_t = typename Base::state_vector_t;
-  using input_vector_t = typename Base::input_vector_t;
-  using state_matrix_t = typename Base::state_matrix_t;
-  using input_matrix_t = typename Base::input_matrix_t;
-  using input_state_matrix_t = typename Base::input_state_matrix_t;
-  using input_state_matrix_array_t = typename Base::input_state_matrix_array_t;
-  using state_input_matrix_t = typename Base::state_input_matrix_t;
-  using eigen_scalar_array_t = typename Base::eigen_scalar_array_t;
-  using cost_desired_trajectories_t = typename Base::cost_desired_trajectories_t;
-  using dynamic_vector_array_t = typename Base::dynamic_vector_array_t;
-  using state_vector_array_t = typename Base::state_vector_array_t;
-  using state_vector_array2_t = typename Base::state_vector_array2_t;
-  using input_vector_array_t = typename Base::input_vector_array_t;
-  using input_vector_array2_t = typename Base::input_vector_array2_t;
-
-  using controller_ptr_array_t = typename Base::controller_ptr_array_t;
-  using controlled_system_base_t = ControlledSystemBase<STATE_DIM, INPUT_DIM, logic_rules_t>;
-  using cost_function_t = CostFunctionBase<STATE_DIM, INPUT_DIM, logic_rules_t>;
-  using rollout_t = TimeTriggeredRollout<STATE_DIM, INPUT_DIM, logic_rules_t>;
-  using constraint_t = ConstraintBase<STATE_DIM, INPUT_DIM, logic_rules_t>;
-  using pi_controller_t = PiController<STATE_DIM, INPUT_DIM, logic_rules_t>;
+  using controlled_system_base_t = ControlledSystemBase<STATE_DIM, INPUT_DIM>;
+  using cost_function_t = CostFunctionBase<STATE_DIM, INPUT_DIM>;
+  using rollout_t = TimeTriggeredRollout<STATE_DIM, INPUT_DIM>;
+  using constraint_t = ConstraintBase<STATE_DIM, INPUT_DIM>;
+  using pi_controller_t = PiController<STATE_DIM, INPUT_DIM>;
 
   /**
    * @brief Constructor with all options
@@ -385,9 +383,9 @@ class PiSolver final : public Solver_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> {
 
   virtual const unsigned long long int& getRewindCounter() const override { throw std::runtime_error("not implemented."); }
 
-  virtual const logic_rules_t* getLogicRulesPtr() const override { return &logicRules_; }
-
-  virtual logic_rules_t* getLogicRulesPtr() override { return &logicRules_; }
+//  virtual const HybridLogicRules* getLogicRulesPtr() const override { return &logicRules_; }
+//
+//  virtual HybridLogicRules* getLogicRulesPtr() override { return &logicRules_; }
 
   void printIterationDebug(scalar_t initTime, const state_vector_array2_t& state_vector_array2, const scalar_array2_t& J) {
     if (state_vector_array2.size() != J.size()) {
@@ -429,7 +427,8 @@ class PiSolver final : public Solver_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> {
 
   rollout_t rollout_;
 
-  logic_rules_t logicRules_;
+  // TODO(Ruben) : Ask Jan what he wanted to do with these logicRules, they seem unused.
+//  HybridLogicRules logicRules_;
 
   cost_desired_trajectories_t costDesiredTrajectories_;  // TODO(jcarius) should this be in the base class?
   cost_desired_trajectories_t costDesiredTrajectoriesBuffer_;

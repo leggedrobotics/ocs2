@@ -47,18 +47,16 @@ namespace ocs2{
  *
  * @tparam STATE_DIM: Dimension of the state space.
  * @tparam INPUT_DIM: Dimension of the control input space.
- * @tparam LOGIC_RULES_T: Logic Rules type (default NullLogicRules).
  */
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T=NullLogicRules>
+template <size_t STATE_DIM, size_t INPUT_DIM>
 class SystemOperatingTrajectoriesBase
 {
 public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-	static_assert(std::is_base_of<LogicRulesBase, LOGIC_RULES_T>::value,
-			"LOGIC_RULES_T must inherit from LogicRulesBase");
 
-	using Ptr = std::shared_ptr<SystemOperatingTrajectoriesBase<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> >;
-	using ConstPtr = std::shared_ptr<const SystemOperatingTrajectoriesBase<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> >;
+
+	using Ptr = std::shared_ptr<SystemOperatingTrajectoriesBase<STATE_DIM, INPUT_DIM> >;
+	using ConstPtr = std::shared_ptr<const SystemOperatingTrajectoriesBase<STATE_DIM, INPUT_DIM> >;
 	using DIMENSIONS = Dimensions<STATE_DIM, INPUT_DIM>;
 
 	using scalar_t = typename DIMENSIONS::scalar_t;
@@ -84,7 +82,7 @@ public:
 	 *
 	 * @return A raw pointer to the class.
 	 */
-	virtual SystemOperatingTrajectoriesBase<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>* clone() const = 0;
+	virtual SystemOperatingTrajectoriesBase<STATE_DIM, INPUT_DIM>* clone() const = 0;
 
 	/**
 	 * Gets the Operating Trajectories of the system in time interval [startTime, finalTime] where there is

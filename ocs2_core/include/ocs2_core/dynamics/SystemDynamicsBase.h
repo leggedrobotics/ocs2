@@ -48,12 +48,11 @@ namespace ocs2{
  *
  * @tparam STATE_DIM: Dimension of the state space.
  * @tparam INPUT_DIM: Dimension of the control input space.
- * @tparam LOGIC_RULES_T: Logic Rules type (default NullLogicRules).
  */
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T=NullLogicRules, size_t NUM_MODES=1>
+template <size_t STATE_DIM, size_t INPUT_DIM, size_t NUM_MODES=1>
 class SystemDynamicsBase
-		: public DerivativesBase<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>
-		, public ControlledSystemBase<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>
+		: public DerivativesBase<STATE_DIM, INPUT_DIM>
+		, public ControlledSystemBase<STATE_DIM, INPUT_DIM>
 {
 public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
@@ -65,11 +64,11 @@ public:
 		input_dim_ 	= INPUT_DIM,
 	};
 
-	using Ptr = std::shared_ptr<SystemDynamicsBase<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> >;
-	using ConstPtr = std::shared_ptr<const SystemDynamicsBase<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> >;
+	using Ptr = std::shared_ptr<SystemDynamicsBase<STATE_DIM, INPUT_DIM> >;
+	using ConstPtr = std::shared_ptr<const SystemDynamicsBase<STATE_DIM, INPUT_DIM> >;
 
-	using DEV_BASE = DerivativesBase<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> 	;
-	using DYN_BASE = ControlledSystemBase<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> ;
+	using DEV_BASE = DerivativesBase<STATE_DIM, INPUT_DIM> 	;
+	using DYN_BASE = ControlledSystemBase<STATE_DIM, INPUT_DIM> ;
 
 	using DIMENSIONS = Dimensions<STATE_DIM, INPUT_DIM>;
 	using scalar_t = typename DIMENSIONS::scalar_t;
@@ -105,7 +104,7 @@ public:
      *
      * @return A raw pointer to the class.
      */
-	virtual SystemDynamicsBase<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>* clone() const = 0;
+	virtual SystemDynamicsBase<STATE_DIM, INPUT_DIM>* clone() const = 0;
 
 	/**
 	 * Interface method to the state flow map of the hybrid system.

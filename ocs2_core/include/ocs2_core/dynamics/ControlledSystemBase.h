@@ -49,18 +49,16 @@ namespace ocs2{
  *
  * @tparam STATE_DIM: Dimension of the state space.
  * @tparam INPUT_DIM: Dimension of the control input space.
- * @tparam LOGIC_RULES_T: Logic Rules type (default NullLogicRules).
- */
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T=NullLogicRules>
+  */
+template <size_t STATE_DIM, size_t INPUT_DIM>
 class ControlledSystemBase : public OdeBase<STATE_DIM>
 {
 public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-	static_assert(std::is_base_of<LogicRulesBase, LOGIC_RULES_T>::value,
-			"LOGIC_RULES_T must inherit from LogicRulesBase");
 
-	using Ptr = std::shared_ptr<ControlledSystemBase<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> >;
-	using ConstPtr = std::shared_ptr<const ControlledSystemBase<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> >;
+
+	using Ptr = std::shared_ptr<ControlledSystemBase<STATE_DIM, INPUT_DIM> >;
+	using ConstPtr = std::shared_ptr<const ControlledSystemBase<STATE_DIM, INPUT_DIM> >;
 
 	using BASE = OdeBase<STATE_DIM>;
 
@@ -139,7 +137,7 @@ public:
 	 *
 	 * @return A raw pointer to the class.
 	 */
-	virtual ControlledSystemBase<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>* clone() const = 0;
+	virtual ControlledSystemBase<STATE_DIM, INPUT_DIM>* clone() const = 0;
 
 	/**
 	 * Computes derivative of the autonomous system dynamics.

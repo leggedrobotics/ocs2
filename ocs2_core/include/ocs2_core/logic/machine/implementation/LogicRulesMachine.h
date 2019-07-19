@@ -32,7 +32,7 @@ namespace ocs2 {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void LogicRulesMachine::setLogicRules(std::shared_ptr<LogicRulesBase> logicRules) {
+void LogicRulesMachine::setLogicRules(std::shared_ptr<HybridLogicRules> logicRules) {
 
 	logicRulesUpdated();
 	newLogicRulesInBuffer_ = true;
@@ -51,14 +51,14 @@ void LogicRulesMachine::logicRulesUpdated() {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-LogicRulesBase* LogicRulesMachine::getLogicRulesPtr() {
+HybridLogicRules* LogicRulesMachine::getLogicRulesPtr() {
 
 	return logicRules_.get();
 }
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-const LogicRulesBase* LogicRulesMachine::getLogicRulesPtr() const {
+const HybridLogicRules* LogicRulesMachine::getLogicRulesPtr() const {
 
 	return logicRules_.get();
 }

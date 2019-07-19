@@ -42,17 +42,16 @@ namespace ocs2 {
  *
  * @tparam STATE_DIM: Dimension of the state space.
  * @tparam INPUT_DIM: Dimension of the control input space.
- * @tparam LOGIC_RULES_T: Logic Rules type (default NullLogicRules).
- */
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
+  */
+template <size_t STATE_DIM, size_t INPUT_DIM>
 class SLQ_DataCollector
 {
 public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-	typedef SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> slq_t;
+	typedef SLQ_BASE<STATE_DIM, INPUT_DIM> slq_t;
 
-	typedef std::shared_ptr<SLQ_DataCollector<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>> Ptr;
+	typedef std::shared_ptr<SLQ_DataCollector<STATE_DIM, INPUT_DIM>> Ptr;
 
 	using linear_controller_array_t = typename slq_t::linear_controller_array_t;
 	using size_array_t = typename slq_t::size_array_t;

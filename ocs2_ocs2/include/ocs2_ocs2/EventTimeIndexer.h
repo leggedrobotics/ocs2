@@ -71,11 +71,9 @@ public:
 	/**
 	 * Sets the class.
 	 *
-	 * @tparam LOGIC_RULES_T: Logical rule type.
 	 * @param [in] logicRulesMachine: Instance of the LogicRulesMachine.
 	 */
-	template <class LOGIC_RULES_T>
-	void set(const LogicRulesMachine<LOGIC_RULES_T>& logicRulesMachine);
+	void set(const LogicRulesMachine& logicRulesMachine);
 
 	/**
 	 * Gets the total number of events.

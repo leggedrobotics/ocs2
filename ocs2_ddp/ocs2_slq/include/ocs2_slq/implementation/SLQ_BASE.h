@@ -32,16 +32,16 @@ namespace ocs2
 
 /******************************************************************************************************/
 /******************************************************************************************************/
-/******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::SLQ_BASE(
+/***************************************************************************************************** */
+template <size_t STATE_DIM, size_t INPUT_DIM>
+SLQ_BASE<STATE_DIM, INPUT_DIM>::SLQ_BASE(
 		const controlled_system_base_t* systemDynamicsPtr,
 		const derivatives_base_t* systemDerivativesPtr,
 		const constraint_base_t* systemConstraintsPtr,
 		const cost_function_base_t* costFunctionPtr,
 		const operating_trajectories_base_t* operatingTrajectoriesPtr,
 		const SLQ_Settings& settings /*= SLQ_Settings()*/,
-		std::shared_ptr<LogicRulesBase> logicRulesPtr /*= nullptr*/,
+		std::shared_ptr<HybridLogicRules> logicRulesPtr /*= nullptr*/,
 		const cost_function_base_t* heuristicsFunctionPtr /* = nullptr*/)
 
 		: BASE(systemDynamicsPtr,
@@ -189,9 +189,9 @@ SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::SLQ_BASE(
 
 /******************************************************************************************************/
 /******************************************************************************************************/
-/******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::approximateOptimalControlProblem()  {
+/***************************************************************************************************** */
+template <size_t STATE_DIM, size_t INPUT_DIM>
+void SLQ_BASE<STATE_DIM, INPUT_DIM>::approximateOptimalControlProblem()  {
 
 	for (size_t i=0; i<BASE::numPartitions_; i++) {
 		size_t N = BASE::nominalTimeTrajectoriesStock_[i].size();
@@ -220,9 +220,9 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::approximateOptimalControlPro
 
 /******************************************************************************************************/
 /******************************************************************************************************/
-/******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::approximateLQWorker(
+/***************************************************************************************************** */
+template <size_t STATE_DIM, size_t INPUT_DIM>
+void SLQ_BASE<STATE_DIM, INPUT_DIM>::approximateLQWorker(
 		size_t workerIndex,
 		const size_t& partitionIndex,
 		const size_t& timeIndex)  {
@@ -242,9 +242,9 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::approximateLQWorker(
 
 /******************************************************************************************************/
 /******************************************************************************************************/
-/******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::approximateConstrainedLQWorker(
+/***************************************************************************************************** */
+template <size_t STATE_DIM, size_t INPUT_DIM>
+void SLQ_BASE<STATE_DIM, INPUT_DIM>::approximateConstrainedLQWorker(
 			size_t workerIndex,
 			const size_t& i,
 			const size_t& k,
@@ -421,9 +421,9 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::approximateConstrainedLQWork
 
 /******************************************************************************************************/
 /******************************************************************************************************/
-/******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculateController() {
+/***************************************************************************************************** */
+template <size_t STATE_DIM, size_t INPUT_DIM>
+void SLQ_BASE<STATE_DIM, INPUT_DIM>::calculateController() {
 
 	for (size_t i=0; i<BASE::numPartitions_; i++)  {
 
@@ -470,9 +470,9 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculateController() {
 
 /******************************************************************************************************/
 /******************************************************************************************************/
-/******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculateControllerWorker (
+/***************************************************************************************************** */
+template <size_t STATE_DIM, size_t INPUT_DIM>
+void SLQ_BASE<STATE_DIM, INPUT_DIM>::calculateControllerWorker (
 		size_t workerIndex,
 		const size_t& partitionIndex,
 		const size_t& timeIndex)  {
@@ -534,9 +534,9 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculateControllerWorker (
 
 /******************************************************************************************************/
 /******************************************************************************************************/
-/******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::solveRiccatiEquationsWorker(
+/***************************************************************************************************** */
+template <size_t STATE_DIM, size_t INPUT_DIM>
+void SLQ_BASE<STATE_DIM, INPUT_DIM>::solveRiccatiEquationsWorker(
 		size_t workerIndex,
 		const size_t& partitionIndex,
 		const state_matrix_t& SmFinal,
@@ -682,9 +682,9 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::solveRiccatiEquationsWorker(
 
 /******************************************************************************************************/
 /******************************************************************************************************/
-/******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::solveRiccatiEquationsForNominalTimeWorker(
+/***************************************************************************************************** */
+template <size_t STATE_DIM, size_t INPUT_DIM>
+void SLQ_BASE<STATE_DIM, INPUT_DIM>::solveRiccatiEquationsForNominalTimeWorker(
 		size_t workerIndex,
 		const size_t& partitionIndex,
 		const state_matrix_t& SmFinal,
@@ -831,9 +831,9 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::solveRiccatiEquationsForNomi
 
 /******************************************************************************************************/
 /******************************************************************************************************/
-/******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::solveErrorRiccatiEquationWorker(
+/***************************************************************************************************** */
+template <size_t STATE_DIM, size_t INPUT_DIM>
+void SLQ_BASE<STATE_DIM, INPUT_DIM>::solveErrorRiccatiEquationWorker(
 		size_t workerIndex,
 		const size_t& partitionIndex,
 		const state_vector_t& SveFinal)  {
@@ -974,9 +974,9 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::solveErrorRiccatiEquationWor
 
 /******************************************************************************************************/
 /******************************************************************************************************/
-/******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::solveSlqRiccatiEquationsWorker(
+/***************************************************************************************************** */
+template <size_t STATE_DIM, size_t INPUT_DIM>
+void SLQ_BASE<STATE_DIM, INPUT_DIM>::solveSlqRiccatiEquationsWorker(
 		size_t workerIndex,
 		const size_t& partitionIndex,
 		const state_matrix_t& SmFinal,
@@ -1121,11 +1121,11 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::solveSlqRiccatiEquationsWork
 
 /******************************************************************************************************/
 /******************************************************************************************************/
-/******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
+/***************************************************************************************************** */
+template <size_t STATE_DIM, size_t INPUT_DIM>
 template<int DIM1, int DIM2>
-Eigen::Matrix<typename SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::scalar_t, DIM1, DIM2>
-	SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::solveLTI(
+Eigen::Matrix<typename SLQ_BASE<STATE_DIM, INPUT_DIM>::scalar_t, DIM1, DIM2>
+	SLQ_BASE<STATE_DIM, INPUT_DIM>::solveLTI(
 		const std::shared_ptr<IntegratorBase<DIM1*DIM2>>& firstOrderOdeIntegratorPtr,
 		const Eigen::Matrix<scalar_t, DIM1, DIM2>& x0,
 		const scalar_t& deltaTime) {
@@ -1161,10 +1161,10 @@ Eigen::Matrix<typename SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::scalar_t, 
 
 /******************************************************************************************************/
 /******************************************************************************************************/
-/******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-Eigen::Matrix<typename SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::scalar_t, 2*STATE_DIM, STATE_DIM>
-	SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::integrateHamiltonian(
+/***************************************************************************************************** */
+template <size_t STATE_DIM, size_t INPUT_DIM>
+Eigen::Matrix<typename SLQ_BASE<STATE_DIM, INPUT_DIM>::scalar_t, 2*STATE_DIM, STATE_DIM>
+	SLQ_BASE<STATE_DIM, INPUT_DIM>::integrateHamiltonian(
 		size_t workerIndex,
 		const Eigen::Matrix<scalar_t, 2*STATE_DIM, 2*STATE_DIM>& Hm,
 		const Eigen::Matrix<scalar_t, 2*STATE_DIM, STATE_DIM>& x0,
@@ -1203,10 +1203,10 @@ Eigen::Matrix<typename SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::scalar_t, 
 
 /******************************************************************************************************/
 /******************************************************************************************************/
-/******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-Eigen::Matrix<typename SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::scalar_t, STATE_DIM, 1>
-	SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::integrateIncrement(
+/***************************************************************************************************** */
+template <size_t STATE_DIM, size_t INPUT_DIM>
+Eigen::Matrix<typename SLQ_BASE<STATE_DIM, INPUT_DIM>::scalar_t, STATE_DIM, 1>
+	SLQ_BASE<STATE_DIM, INPUT_DIM>::integrateIncrement(
 		size_t workerIndex,
 		const Eigen::Matrix<scalar_t, STATE_DIM, STATE_DIM>& Gm,
 		const Eigen::Matrix<scalar_t, STATE_DIM, 1>& Gv,
@@ -1221,9 +1221,9 @@ Eigen::Matrix<typename SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::scalar_t, 
 
 /******************************************************************************************************/
 /******************************************************************************************************/
-/******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::fullRiccatiBackwardSweepWorker(
+/***************************************************************************************************** */
+template <size_t STATE_DIM, size_t INPUT_DIM>
+void SLQ_BASE<STATE_DIM, INPUT_DIM>::fullRiccatiBackwardSweepWorker(
 		size_t workerIndex,
 		const size_t& partitionIndex,
 		const state_matrix_t& SmFinal, const state_vector_t& SvFinal,
@@ -1396,18 +1396,18 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::fullRiccatiBackwardSweepWork
 
 /******************************************************************************************************/
 /******************************************************************************************************/
-/******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-SLQ_Settings& SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::settings() {
+/***************************************************************************************************** */
+template <size_t STATE_DIM, size_t INPUT_DIM>
+SLQ_Settings& SLQ_BASE<STATE_DIM, INPUT_DIM>::settings() {
 
 	return settings_;
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
-/******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::setupOptimizer(const size_t& numPartitions) {
+/***************************************************************************************************** */
+template <size_t STATE_DIM, size_t INPUT_DIM>
+void SLQ_BASE<STATE_DIM, INPUT_DIM>::setupOptimizer(const size_t& numPartitions) {
 
 	BASE::setupOptimizer(numPartitions);
 

@@ -32,15 +32,15 @@ namespace ocs2{
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-ILQR_ST<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::ILQR_ST(
+template <size_t STATE_DIM, size_t INPUT_DIM>
+ILQR_ST<STATE_DIM, INPUT_DIM>::ILQR_ST(
 		const controlled_system_base_t* systemDynamicsPtr,
 		const derivatives_base_t* systemDerivativesPtr,
 		const constraint_base_t* systemConstraintsPtr,
 		const cost_function_base_t* costFunctionPtr,
 		const operating_trajectories_base_t* operatingTrajectoriesPtr,
 		const ILQR_Settings& settings /*= ILQR_Settings()*/,
-		const LOGIC_RULES_T* logicRulesPtr /*= nullptr*/,
+		std::shared_ptr<HybridLogicRules> logicRulesPtr /*= nullptr*/,
 		const cost_function_base_t* heuristicsFunctionPtr /*= nullptr*/)
 
 	: BASE(systemDynamicsPtr, systemDerivativesPtr, systemConstraintsPtr, costFunctionPtr, operatingTrajectoriesPtr,
@@ -50,8 +50,8 @@ ILQR_ST<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::ILQR_ST(
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void ILQR_ST<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::approximatePartitionLQ(const size_t& partitionIndex)  {
+template <size_t STATE_DIM, size_t INPUT_DIM>
+void ILQR_ST<STATE_DIM, INPUT_DIM>::approximatePartitionLQ(const size_t& partitionIndex)  {
 
 	const size_t threadId = 0;
 	size_t N = BASE::nominalTimeTrajectoriesStock_[partitionIndex].size();
@@ -67,8 +67,8 @@ void ILQR_ST<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::approximatePartitionLQ(const 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void ILQR_ST<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculatePartitionController(const size_t& partitionIndex)  {
+template <size_t STATE_DIM, size_t INPUT_DIM>
+void ILQR_ST<STATE_DIM, INPUT_DIM>::calculatePartitionController(const size_t& partitionIndex)  {
 
 	const size_t threadId = 0;
 	size_t N = BASE::SsTimeTrajectoryStock_[partitionIndex].size();
@@ -86,8 +86,8 @@ void ILQR_ST<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculatePartitionController(
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void ILQR_ST<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::lineSearch(bool computeISEs)  {
+template <size_t STATE_DIM, size_t INPUT_DIM>
+void ILQR_ST<STATE_DIM, INPUT_DIM>::lineSearch(bool computeISEs)  {
 
 	// perform one rollout while the input correction for the type-1 constraint is considered.
 	BASE::lineSearchBase(computeISEs);
@@ -180,9 +180,9 @@ void ILQR_ST<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::lineSearch(bool computeISEs) 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-typename ILQR_ST<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::scalar_t
-	ILQR_ST<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::solveSequentialRiccatiEquations(
+template <size_t STATE_DIM, size_t INPUT_DIM>
+typename ILQR_ST<STATE_DIM, INPUT_DIM>::scalar_t
+	ILQR_ST<STATE_DIM, INPUT_DIM>::solveSequentialRiccatiEquations(
 		const state_matrix_t& SmFinal,
 		const state_vector_t& SvFinal,
 		const eigen_scalar_t& sFinal)  {
@@ -243,8 +243,8 @@ typename ILQR_ST<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::scalar_t
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void ILQR_ST<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::runInit() {
+template <size_t STATE_DIM, size_t INPUT_DIM>
+void ILQR_ST<STATE_DIM, INPUT_DIM>::runInit() {
 
 	// run BASE routine
 	BASE::runInit();
@@ -253,8 +253,8 @@ void ILQR_ST<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::runInit() {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void ILQR_ST<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::runIteration()  {
+template <size_t STATE_DIM, size_t INPUT_DIM>
+void ILQR_ST<STATE_DIM, INPUT_DIM>::runIteration()  {
 
 	// run BASE routine
 	BASE::runIteration();
@@ -263,8 +263,8 @@ void ILQR_ST<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::runIteration()  {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void ILQR_ST<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::runExit()  {
+template <size_t STATE_DIM, size_t INPUT_DIM>
+void ILQR_ST<STATE_DIM, INPUT_DIM>::runExit()  {
 
 	// run BASE routine
 	BASE::runExit();

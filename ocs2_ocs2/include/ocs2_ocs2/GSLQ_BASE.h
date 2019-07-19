@@ -64,20 +64,18 @@ namespace ocs2 {
  *
  * @tparam STATE_DIM: Dimension of the state space.
  * @tparam INPUT_DIM: Dimension of the control input space.
- * @tparam LOGIC_RULES_T: Logic Rules type (default NullLogicRules).
  */
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T=NullLogicRules>
+template <size_t STATE_DIM, size_t INPUT_DIM>
 class GSLQ_BASE
 {
 public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-	static_assert(std::is_base_of<LogicRulesBase, LOGIC_RULES_T>::value,
-			"LOGIC_RULES_T must inherit from LogicRulesBase");
 
-	typedef std::shared_ptr<GSLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>> Ptr;
 
-	typedef SLQ_DataCollector<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> slq_data_collector_t;
+	typedef std::shared_ptr<GSLQ_BASE<STATE_DIM, INPUT_DIM>> Ptr;
+
+	typedef SLQ_DataCollector<STATE_DIM, INPUT_DIM> slq_data_collector_t;
 
 	typedef BvpSensitivityEquations<STATE_DIM, INPUT_DIM>      bvp_sensitivity_equations_t;
 	typedef BvpSensitivityErrorEquations<STATE_DIM, INPUT_DIM> bvp_sensitivity_error_equations_t;
@@ -495,7 +493,7 @@ protected:
 	/***********
 	 * Variables
 	 **********/
-	std::shared_ptr<LOGIC_RULES_T> logicRulesPtr_;
+	std::shared_ptr<HybridLogicRules> logicRulesPtr_;
 
 	SLQ_Settings settings_;
 

@@ -33,7 +33,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <cmath>
 #include <limits>
 
-#include <ocs2_core/logic/rules/LogicRulesBase.h>
+#include <ocs2_core/logic/rules/HybridLogicRules.h>
 #include <ocs2_core/dynamics/ControlledSystemBase.h>
 #include <ocs2_core/dynamics/DerivativesBase.h>
 #include <ocs2_core/constraint/ConstraintBase.h>
@@ -47,7 +47,7 @@ namespace ocs2{
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-class EXP0_LogicRules : public LogicRulesBase
+class EXP0_LogicRules : public HybridLogicRules
 {
 public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
@@ -76,7 +76,7 @@ private:
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-class EXP0_Sys1 : public ControlledSystemBase<2,1,EXP0_LogicRules>
+class EXP0_Sys1 : public ControlledSystemBase<2,1>
 {
 public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
@@ -103,7 +103,7 @@ public:
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-class EXP0_Sys2 : public ControlledSystemBase<2,1,EXP0_LogicRules>
+class EXP0_Sys2 : public ControlledSystemBase<2,1>
 {
 public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
@@ -130,12 +130,12 @@ public:
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-class EXP0_System : public ControlledSystemBase<2,1,EXP0_LogicRules>
+class EXP0_System : public ControlledSystemBase<2,1>
 {
 public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-	typedef ControlledSystemBase<2,1,EXP0_LogicRules> Base;
+	typedef ControlledSystemBase<2,1> Base;
 
 	explicit EXP0_System(std::shared_ptr<const EXP0_LogicRules> logicRulesPtr) :
 	logicRulesPtr_(std::move(logicRulesPtr)),
@@ -177,7 +177,7 @@ public:
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-class EXP0_SysDerivative1 : public DerivativesBase<2,1,EXP0_LogicRules>
+class EXP0_SysDerivative1 : public DerivativesBase<2,1>
 {
 public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
@@ -197,7 +197,7 @@ public:
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-class EXP0_SysDerivative2 : public DerivativesBase<2,1,EXP0_LogicRules>
+class EXP0_SysDerivative2 : public DerivativesBase<2,1>
 {
 public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
@@ -217,12 +217,12 @@ public:
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-class EXP0_SystemDerivative : public DerivativesBase<2,1,EXP0_LogicRules>
+class EXP0_SystemDerivative : public DerivativesBase<2,1>
 {
 public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-	typedef DerivativesBase<2,1,EXP0_LogicRules> Base;
+	typedef DerivativesBase<2,1> Base;
 
 	explicit EXP0_SystemDerivative(std::shared_ptr<const EXP0_LogicRules> logicRulesPtr) :
 			logicRulesPtr_(std::move(logicRulesPtr)),
@@ -276,12 +276,12 @@ public:
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-using EXP0_SystemConstraint = ConstraintBase<2,1,EXP0_LogicRules>;
+using EXP0_SystemConstraint = ConstraintBase<2,1>;
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-class EXP0_CostFunction1 : public CostFunctionBase<2,1,EXP0_LogicRules>
+class EXP0_CostFunction1 : public CostFunctionBase<2,1>
 {
 public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
@@ -312,7 +312,7 @@ public:
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-class EXP0_CostFunction2 : public CostFunctionBase<2,1,EXP0_LogicRules>
+class EXP0_CostFunction2 : public CostFunctionBase<2,1>
 {
 public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
@@ -342,12 +342,12 @@ public:
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-class EXP0_CostFunction : public CostFunctionBase<2,1,EXP0_LogicRules>
+class EXP0_CostFunction : public CostFunctionBase<2,1>
 {
 public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-	typedef CostFunctionBase<2,1,EXP0_LogicRules> Base;
+	typedef CostFunctionBase<2,1> Base;
 
 	explicit EXP0_CostFunction(std::shared_ptr<const EXP0_LogicRules> logicRulesPtr) :
         logicRulesPtr_(std::move(logicRulesPtr)),
@@ -416,14 +416,14 @@ public:
 public:
 	int activeSubsystem_;
     std::shared_ptr<const EXP0_LogicRules> logicRulesPtr_;
-	std::vector<std::shared_ptr<CostFunctionBase<2,1,EXP0_LogicRules> > > subsystemCostsPtr_;
+	std::vector<std::shared_ptr<CostFunctionBase<2,1> > > subsystemCostsPtr_;
 
 };
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-using EXP0_SystemOperatingTrajectories = SystemOperatingPoint<2,1,EXP0_LogicRules>;
+using EXP0_SystemOperatingTrajectories = SystemOperatingPoint<2,1>;
 
 } // namespace ocs2
 

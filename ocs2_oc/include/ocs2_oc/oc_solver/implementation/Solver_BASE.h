@@ -31,9 +31,9 @@ namespace ocs2 {
 
 /******************************************************************************************************/
 /******************************************************************************************************/
-/******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-size_t Solver_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::findActivePartitionIndex(
+/***************************************************************************************************** */
+template <size_t STATE_DIM, size_t INPUT_DIM>
+size_t Solver_BASE<STATE_DIM, INPUT_DIM>::findActivePartitionIndex(
 		const scalar_array_t& partitioningTimes,
 		const scalar_t& time,
 		bool ceilingFunction /*= true*/) {
@@ -63,9 +63,9 @@ size_t Solver_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::findActivePartitionInde
 
 /******************************************************************************************************/
 /******************************************************************************************************/
-/******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void Solver_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::printString(const std::string& text) {
+/***************************************************************************************************** */
+template <size_t STATE_DIM, size_t INPUT_DIM>
+void Solver_BASE<STATE_DIM, INPUT_DIM>::printString(const std::string& text) {
 
 	std::lock_guard<std::mutex> outputDisplayGuard(outputDisplayGuardMutex_);
 	std::cerr << text << std::endl;
@@ -75,10 +75,10 @@ void Solver_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::printString(const std::st
 
 /******************************************************************************************************/
 /******************************************************************************************************/
-/******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
+/***************************************************************************************************** */
+template <size_t STATE_DIM, size_t INPUT_DIM>
 template <typename Derived>
-bool Solver_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::makePSD(Eigen::MatrixBase<Derived>& squareMatrix) {
+bool Solver_BASE<STATE_DIM, INPUT_DIM>::makePSD(Eigen::MatrixBase<Derived>& squareMatrix) {
 
 	if (squareMatrix.rows() != squareMatrix.cols()) {
 		throw std::runtime_error("Not a square matrix: makePSD() method is for square matrix.");

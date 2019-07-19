@@ -34,14 +34,14 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 namespace ocs2{
 
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T=NullLogicRules>
-class LinearSystemDynamics : public SystemDynamicsBase<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>
+template <size_t STATE_DIM, size_t INPUT_DIM>
+class LinearSystemDynamics : public SystemDynamicsBase<STATE_DIM, INPUT_DIM>
 {
 public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-	using Ptr = std::shared_ptr<LinearSystemDynamics<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> >;
-	using ConstPtr = std::shared_ptr<const LinearSystemDynamics<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> >;
+	using Ptr = std::shared_ptr<LinearSystemDynamics<STATE_DIM, INPUT_DIM> >;
+	using ConstPtr = std::shared_ptr<const LinearSystemDynamics<STATE_DIM, INPUT_DIM> >;
 
 	using BASE = SystemDynamicsBase<STATE_DIM, INPUT_DIM>;
 	using typename BASE::scalar_t;
@@ -68,9 +68,9 @@ public:
 	 *
 	 * @return A raw pointer to the class.
 	 */
-	LinearSystemDynamics<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>* clone() const override {
+	LinearSystemDynamics<STATE_DIM, INPUT_DIM>* clone() const override {
 
-		return new LinearSystemDynamics<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>(*this);
+		return new LinearSystemDynamics<STATE_DIM, INPUT_DIM>(*this);
 	}
 
 	/**

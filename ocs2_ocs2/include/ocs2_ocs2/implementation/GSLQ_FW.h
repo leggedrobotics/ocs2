@@ -32,8 +32,8 @@ namespace ocs2 {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-GSLQ_FW<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::GSLQ_FW(
+template <size_t STATE_DIM, size_t INPUT_DIM>
+GSLQ_FW<STATE_DIM, INPUT_DIM>::GSLQ_FW(
 		const SLQ_Settings& settings /*= SLQ_Settings()*/)
 	: BASE(settings)
 {
@@ -44,8 +44,8 @@ GSLQ_FW<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::GSLQ_FW(
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-GSLQ_FW<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::~GSLQ_FW() {
+template <size_t STATE_DIM, size_t INPUT_DIM>
+GSLQ_FW<STATE_DIM, INPUT_DIM>::~GSLQ_FW() {
 
 //	glp_delete_prob(lpPtr_);
 }
@@ -53,8 +53,8 @@ GSLQ_FW<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::~GSLQ_FW() {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void GSLQ_FW<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::eventTimesConstraint(
+template <size_t STATE_DIM, size_t INPUT_DIM>
+void GSLQ_FW<STATE_DIM, INPUT_DIM>::eventTimesConstraint(
 		const scalar_array_t& eventTimes,
 		const size_t& activeEventTimeBeginIndex,
 		const size_t& activeEventTimeEndIndex,
@@ -86,8 +86,8 @@ void GSLQ_FW<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::eventTimesConstraint(
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void GSLQ_FW<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::setupLP(
+template <size_t STATE_DIM, size_t INPUT_DIM>
+void GSLQ_FW<STATE_DIM, INPUT_DIM>::setupLP(
 		const scalar_array_t& eventTimes,
 		const dynamic_vector_t& gradient,
 		const size_t& activeEventTimeBeginIndex,
@@ -149,8 +149,8 @@ void GSLQ_FW<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::setupLP(
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void GSLQ_FW<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::frankWolfeProblem(
+template <size_t STATE_DIM, size_t INPUT_DIM>
+void GSLQ_FW<STATE_DIM, INPUT_DIM>::frankWolfeProblem(
 		const dynamic_vector_t& gradient,
 		scalar_array_t& eventTimesOptimized) {
 
@@ -181,8 +181,8 @@ void GSLQ_FW<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::frankWolfeProblem(
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void GSLQ_FW<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::run(
+template <size_t STATE_DIM, size_t INPUT_DIM>
+void GSLQ_FW<STATE_DIM, INPUT_DIM>::run(
 		scalar_array_t eventTimes,
 		const slq_data_collector_t* dcPtr,
 		scalar_array_t& eventTimesOptimized,

@@ -32,8 +32,8 @@ namespace ocs2 {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-GSLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::GSLQ_BASE(
+template <size_t STATE_DIM, size_t INPUT_DIM>
+GSLQ_BASE<STATE_DIM, INPUT_DIM>::GSLQ_BASE(
 		const SLQ_Settings& settings /*= SLQ_Settings())*/)
 	: settings_(settings)
 {
@@ -135,8 +135,8 @@ GSLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::GSLQ_BASE(
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void GSLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::setupOptimizer(
+template <size_t STATE_DIM, size_t INPUT_DIM>
+void GSLQ_BASE<STATE_DIM, INPUT_DIM>::setupOptimizer(
 		const size_t& numPartitions) {
 
 	if (numPartitions==0)
@@ -146,8 +146,8 @@ void GSLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::setupOptimizer(
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void GSLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::computeMissingSlqData() {
+template <size_t STATE_DIM, size_t INPUT_DIM>
+void GSLQ_BASE<STATE_DIM, INPUT_DIM>::computeMissingSlqData() {
 
 	const scalar_t learningRate = 0.0;
 
@@ -163,8 +163,8 @@ void GSLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::computeMissingSlqData() {
 /*****************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void GSLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculateRolloutCostate(
+template <size_t STATE_DIM, size_t INPUT_DIM>
+void GSLQ_BASE<STATE_DIM, INPUT_DIM>::calculateRolloutCostate(
 		const std::vector<scalar_array_t>& timeTrajectoriesStock,
 		const state_vector_array2_t& stateTrajectoriesStock,
 		state_vector_array2_t& costateTrajectoriesStock,
@@ -212,8 +212,8 @@ void GSLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculateRolloutCostate(
 /*****************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void GSLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculateRolloutCostate(
+template <size_t STATE_DIM, size_t INPUT_DIM>
+void GSLQ_BASE<STATE_DIM, INPUT_DIM>::calculateRolloutCostate(
 		const std::vector<scalar_array_t>& timeTrajectoriesStock,
 		state_vector_array2_t& costateTrajectoriesStock)  {
 
@@ -250,8 +250,8 @@ void GSLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculateRolloutCostate(
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void GSLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculateInputConstraintLagrangian(
+template <size_t STATE_DIM, size_t INPUT_DIM>
+void GSLQ_BASE<STATE_DIM, INPUT_DIM>::calculateInputConstraintLagrangian(
 		lagrange_array_t& lagrangeMultiplierFunctionsStock,
 		scalar_t learningRate /*= 0.0*/) {
 
@@ -342,8 +342,8 @@ void GSLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculateInputConstraintLag
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void GSLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculateRolloutLagrangeMultiplier(
+template <size_t STATE_DIM, size_t INPUT_DIM>
+void GSLQ_BASE<STATE_DIM, INPUT_DIM>::calculateRolloutLagrangeMultiplier(
 		const std::vector<scalar_array_t>& timeTrajectoriesStock,
 		const state_vector_array2_t& stateTrajectoriesStock,
 		const lagrange_array_t& lagrangeMultiplierFunctionsStock,
@@ -384,8 +384,8 @@ void GSLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculateRolloutLagrangeMul
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void GSLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculateNominalRolloutLagrangeMultiplier(
+template <size_t STATE_DIM, size_t INPUT_DIM>
+void GSLQ_BASE<STATE_DIM, INPUT_DIM>::calculateNominalRolloutLagrangeMultiplier(
 		const std::vector<scalar_array_t>& timeTrajectoriesStock,
 		constraint1_vector_array2_t& lagrangeTrajectoriesStock)  {
 
@@ -422,8 +422,8 @@ void GSLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculateNominalRolloutLagr
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-size_t GSLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::findActiveSubsystemIndex(
+template <size_t STATE_DIM, size_t INPUT_DIM>
+size_t GSLQ_BASE<STATE_DIM, INPUT_DIM>::findActiveSubsystemIndex(
 		const scalar_array_t& eventTimes,
 		const scalar_t& time,
 		bool ceilingFunction /*= true*/) const {
@@ -447,8 +447,8 @@ size_t GSLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::findActiveSubsystemIndex(
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-size_t GSLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::findActivePartitionIndex(
+template <size_t STATE_DIM, size_t INPUT_DIM>
+size_t GSLQ_BASE<STATE_DIM, INPUT_DIM>::findActivePartitionIndex(
 		const scalar_array_t& partitioningTimes,
 		const scalar_t& time,
 		bool ceilingFunction /*= true*/) const {
@@ -478,8 +478,8 @@ size_t GSLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::findActivePartitionIndex(
 /*****************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void GSLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::computeEquivalentSystemMultiplier(
+template <size_t STATE_DIM, size_t INPUT_DIM>
+void GSLQ_BASE<STATE_DIM, INPUT_DIM>::computeEquivalentSystemMultiplier(
 		const size_t& eventTimeIndex,
 		const size_t& activeSubsystem,
 		scalar_t& multiplier) const {
@@ -519,8 +519,8 @@ void GSLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::computeEquivalentSystemMult
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void GSLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::getRolloutSensitivity2SwitchingTime(
+template <size_t STATE_DIM, size_t INPUT_DIM>
+void GSLQ_BASE<STATE_DIM, INPUT_DIM>::getRolloutSensitivity2SwitchingTime(
 		const size_t& eventTimeIndex,
 		std::vector<scalar_array_t>& sensitivityTimeTrajectoriesStock,
 		state_matrix_array2_t& sensitivityStateTrajectoriesStock,
@@ -537,8 +537,8 @@ void GSLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::getRolloutSensitivity2Switc
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-SLQ_Settings& GSLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::settings() {
+template <size_t STATE_DIM, size_t INPUT_DIM>
+SLQ_Settings& GSLQ_BASE<STATE_DIM, INPUT_DIM>::settings() {
 
 	return settings_;
 }
@@ -546,9 +546,9 @@ SLQ_Settings& GSLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::settings() {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
+template <size_t STATE_DIM, size_t INPUT_DIM>
 template <typename Derived>
-void GSLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::getCostFuntionDerivative(
+void GSLQ_BASE<STATE_DIM, INPUT_DIM>::getCostFuntionDerivative(
 		Eigen::MatrixBase<Derived> const& costFunctionDerivative) const {
 
 	// refer to Eigen documentation under the topic "Writing Functions Taking Eigen Types as Parameters"
@@ -558,9 +558,9 @@ void GSLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::getCostFuntionDerivative(
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-const typename GSLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::scalar_array_t&
-	GSLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::eventTimes() const {
+template <size_t STATE_DIM, size_t INPUT_DIM>
+const typename GSLQ_BASE<STATE_DIM, INPUT_DIM>::scalar_array_t&
+	GSLQ_BASE<STATE_DIM, INPUT_DIM>::eventTimes() const {
 
 	return eventTimes_;
 }
@@ -568,8 +568,8 @@ const typename GSLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::scalar_array_t&
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void GSLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::propagateRolloutSensitivity(
+template <size_t STATE_DIM, size_t INPUT_DIM>
+void GSLQ_BASE<STATE_DIM, INPUT_DIM>::propagateRolloutSensitivity(
 		size_t workerIndex,
 		const size_t& eventTimeIndex,
 		const linear_controller_array_t& controllersStock,
@@ -676,8 +676,8 @@ void GSLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::propagateRolloutSensitivity
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void GSLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::approximateNominalLQPSensitivity2SwitchingTime(
+template <size_t STATE_DIM, size_t INPUT_DIM>
+void GSLQ_BASE<STATE_DIM, INPUT_DIM>::approximateNominalLQPSensitivity2SwitchingTime(
 		const state_vector_array2_t& sensitivityStateTrajectoriesStock,
 		const input_vector_array2_t& sensitivityInputTrajectoriesStock,
 		eigen_scalar_array2_t& nablaqTrajectoriesStock,
@@ -751,8 +751,8 @@ void GSLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::approximateNominalLQPSensit
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void GSLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::approximateNominalHeuristicsSensitivity2SwitchingTime(
+template <size_t STATE_DIM, size_t INPUT_DIM>
+void GSLQ_BASE<STATE_DIM, INPUT_DIM>::approximateNominalHeuristicsSensitivity2SwitchingTime(
 		const state_vector_t& sensitivityFinalState,
 		eigen_scalar_t& nablasHeuristics,
 		state_vector_t& nablaSvHeuristics) const {
@@ -764,8 +764,8 @@ void GSLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::approximateNominalHeuristic
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void GSLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::solveSensitivityRiccatiEquations(
+template <size_t STATE_DIM, size_t INPUT_DIM>
+void GSLQ_BASE<STATE_DIM, INPUT_DIM>::solveSensitivityRiccatiEquations(
 		size_t workerIndex,
 		const size_t& eventTimeIndex,
 		const scalar_t& learningRate,
@@ -922,8 +922,8 @@ void GSLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::solveSensitivityRiccatiEqua
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void GSLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::solveSensitivityBVP(
+template <size_t STATE_DIM, size_t INPUT_DIM>
+void GSLQ_BASE<STATE_DIM, INPUT_DIM>::solveSensitivityBVP(
 		size_t workerIndex,
 		const size_t& eventTimeIndex,
 		const state_vector_t& MvFinal,
@@ -1111,8 +1111,8 @@ void GSLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::solveSensitivityBVP(
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void GSLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculateLQSensitivityControllerForward(
+template <size_t STATE_DIM, size_t INPUT_DIM>
+void GSLQ_BASE<STATE_DIM, INPUT_DIM>::calculateLQSensitivityControllerForward(
 		size_t workerIndex,
 		const size_t& eventTimeIndex,
 		const std::vector<scalar_array_t>& timeTrajectoriesStock,
@@ -1165,8 +1165,8 @@ void GSLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculateLQSensitivityContr
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void GSLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculateBVPSensitivityControllerForward(
+template <size_t STATE_DIM, size_t INPUT_DIM>
+void GSLQ_BASE<STATE_DIM, INPUT_DIM>::calculateBVPSensitivityControllerForward(
 		size_t workerIndex,
 		const size_t& eventTimeIndex,
 		const std::vector<scalar_array_t>& timeTrajectoriesStock,
@@ -1222,8 +1222,8 @@ void GSLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculateBVPSensitivityCont
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void GSLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::getValueFuntionDerivative(
+template <size_t STATE_DIM, size_t INPUT_DIM>
+void GSLQ_BASE<STATE_DIM, INPUT_DIM>::getValueFuntionDerivative(
 		const size_t& eventTimeIndex,
 		const scalar_t& time,
 		const state_vector_t& state,
@@ -1267,8 +1267,8 @@ void GSLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::getValueFuntionDerivative(
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void GSLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculateCostDerivative(
+template <size_t STATE_DIM, size_t INPUT_DIM>
+void GSLQ_BASE<STATE_DIM, INPUT_DIM>::calculateCostDerivative(
 		size_t workerIndex,
 		const size_t& eventTimeIndex,
 		const state_vector_array2_t& sensitivityStateTrajectoriesStock,
@@ -1337,8 +1337,8 @@ void GSLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculateCostDerivative(
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void GSLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::runLQBasedMethod()  {
+template <size_t STATE_DIM, size_t INPUT_DIM>
+void GSLQ_BASE<STATE_DIM, INPUT_DIM>::runLQBasedMethod()  {
 
 	const size_t maxNumIteration = 3;
 
@@ -1439,8 +1439,8 @@ void GSLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::runLQBasedMethod()  {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void GSLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::runSweepingBVPMethod()  {
+template <size_t STATE_DIM, size_t INPUT_DIM>
+void GSLQ_BASE<STATE_DIM, INPUT_DIM>::runSweepingBVPMethod()  {
 
 	// compute missing data from SLQ run
 	computeMissingSlqData();
@@ -1504,8 +1504,8 @@ void GSLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::runSweepingBVPMethod()  {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void GSLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::run(
+template <size_t STATE_DIM, size_t INPUT_DIM>
+void GSLQ_BASE<STATE_DIM, INPUT_DIM>::run(
 		const scalar_array_t& eventTimes,
 		const slq_data_collector_t* dcPtr)  {
 

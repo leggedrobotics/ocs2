@@ -44,7 +44,7 @@ namespace ocs2{
  *
  * @tparam STATE_DIM: Dimension of the state space.
  * @tparam INPUT_DIM: Dimension of the control input space.
- */
+  */
 template <size_t STATE_DIM, size_t INPUT_DIM>
 class BVPEquations : public OdeBase<STATE_DIM*STATE_DIM+STATE_DIM>
 {

@@ -17,7 +17,7 @@ namespace ocs2 {
  * @tparam STATE_DIM: Dimension of the state space.
  * @tparam INPUT_DIM: Dimension of the control input space.
  */
-template <size_t STATE_DIM, size_t INPUT_DIM, typename LOGIC_RULES_T = NullLogicRules>
+template <size_t STATE_DIM, size_t INPUT_DIM>
 class PiController final : public ControllerBase<STATE_DIM, INPUT_DIM> {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
@@ -39,9 +39,8 @@ class PiController final : public ControllerBase<STATE_DIM, INPUT_DIM> {
   using constraint1_input_matrix_t = typename Base::dimensions_t::constraint1_input_matrix_t;
   using input_constraint1_matrix_t = typename Base::dimensions_t::input_constraint1_matrix_t;
 
-  using logic_rules_t = LOGIC_RULES_T;
-  using constraint_t = ConstraintBase<STATE_DIM, INPUT_DIM, logic_rules_t>;
-  using cost_function_t = CostFunctionBase<STATE_DIM, INPUT_DIM, logic_rules_t>;
+  using constraint_t = ConstraintBase<STATE_DIM, INPUT_DIM>;
+  using cost_function_t = CostFunctionBase<STATE_DIM, INPUT_DIM>;
 
   /**
    * @brief PiControllerEvaluationData struct is used to cache data.

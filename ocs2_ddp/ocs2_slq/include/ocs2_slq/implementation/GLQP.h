@@ -32,14 +32,14 @@ namespace ocs2{
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-GLQP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::GLQP(
+template <size_t STATE_DIM, size_t INPUT_DIM>
+GLQP<STATE_DIM, INPUT_DIM>::GLQP(
 		const controlled_system_base_t* systemDynamicsPtr,
 		const derivatives_base_t* systemDerivativesPtr,
 		const cost_function_base_t* costFunctionPtr,
 		const operating_trajectories_base_t* operatingTrajectoriesPtr,
 		const SLQ_Settings& settings /*= SLQ_Settings()*/,
-		const LOGIC_RULES_T& logicRules /*= LOGIC_RULES_T()*/,
+		std::shared_ptr<HybridLogicRules> logicRules /*= nullptr*/,
 		const cost_function_base_t* heuristicsFunctionPtr /*= nullptr*/)
 
 		: settings_(settings),
@@ -130,8 +130,8 @@ GLQP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::GLQP(
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void GLQP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::findOperatingPointsWorker(
+template <size_t STATE_DIM, size_t INPUT_DIM>
+void GLQP<STATE_DIM, INPUT_DIM>::findOperatingPointsWorker(
 		size_t workerIndex,
 		const size_t& partitionIndex,
 		const scalar_t& initTime,
@@ -184,8 +184,8 @@ void GLQP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::findOperatingPointsWorker(
 }
 
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void GLQP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::findOperatingPoints(
+template <size_t STATE_DIM, size_t INPUT_DIM>
+void GLQP<STATE_DIM, INPUT_DIM>::findOperatingPoints(
 		const scalar_t& initTime,
 		const state_vector_t& initState,
 		const scalar_t& finalTime,
@@ -241,8 +241,8 @@ void GLQP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::findOperatingPoints(
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-//template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-//void GLQP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::rollout(const state_vector_t& initState,
+//template <size_t STATE_DIM, size_t INPUT_DIM>
+//void GLQP<STATE_DIM, INPUT_DIM>::rollout(const state_vector_t& initState,
 //		const controller_array_t& controllersStock,
 //		std::vector<scalar_array_t>& timeTrajectoriesStock,
 //		state_vector_array2_t& stateTrajectoriesStock,
@@ -282,8 +282,8 @@ void GLQP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::findOperatingPoints(
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-//template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-//void GLQP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::rolloutCost(const std::vector<scalar_array_t>& timeTrajectoriesStock,
+//template <size_t STATE_DIM, size_t INPUT_DIM>
+//void GLQP<STATE_DIM, INPUT_DIM>::rolloutCost(const std::vector<scalar_array_t>& timeTrajectoriesStock,
 //		const state_vector_array2_t& stateTrajectoriesStock,
 //		const input_vector_array2_t& inputTrajectoriesStock,
 //		scalar_t& totalCost)  {
@@ -324,8 +324,8 @@ void GLQP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::findOperatingPoints(
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void GLQP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::approximateOptimalControlProblem()  {
+template <size_t STATE_DIM, size_t INPUT_DIM>
+void GLQP<STATE_DIM, INPUT_DIM>::approximateOptimalControlProblem()  {
 
 	for (size_t i=0; i<numPartitions_; i++) {
 
@@ -379,8 +379,8 @@ void GLQP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::approximateOptimalControlProblem
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void GLQP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::approximatePartitionLQ(const size_t& partitionIndex)  {
+template <size_t STATE_DIM, size_t INPUT_DIM>
+void GLQP<STATE_DIM, INPUT_DIM>::approximatePartitionLQ(const size_t& partitionIndex)  {
 
 	const size_t threadId = 0;
 	size_t N = timeOperatingPointsStock_[partitionIndex].size();
@@ -396,8 +396,8 @@ void GLQP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::approximatePartitionLQ(const siz
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void GLQP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::approximateLQWorker(
+template <size_t STATE_DIM, size_t INPUT_DIM>
+void GLQP<STATE_DIM, INPUT_DIM>::approximateLQWorker(
 		size_t workerIndex,
 		const size_t& partitionIndex,
 		const size_t& timeIndex) {
@@ -485,8 +485,8 @@ void GLQP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::approximateLQWorker(
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-//template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-//void GLQP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculateController(const scalar_t& learningRate, controller_array_t& controllersStock) {
+//template <size_t STATE_DIM, size_t INPUT_DIM>
+//void GLQP<STATE_DIM, INPUT_DIM>::calculateController(const scalar_t& learningRate, controller_array_t& controllersStock) {
 //
 //	for (int i=0; i<numPartitions_; i++) {
 //
@@ -516,8 +516,8 @@ void GLQP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::approximateLQWorker(
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-//template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-//void GLQP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::transformeLocalValueFuntion2Global() {
+//template <size_t STATE_DIM, size_t INPUT_DIM>
+//void GLQP<STATE_DIM, INPUT_DIM>::transformeLocalValueFuntion2Global() {
 //
 //	for (int i=0; i<numPartitions_; i++)
 //		for (int k=0; k<SsTimeTrajectoryStock_[i].size(); k++) {
@@ -531,8 +531,8 @@ void GLQP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::approximateLQWorker(
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-size_t GLQP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::findActiveSubsystemIndex(
+template <size_t STATE_DIM, size_t INPUT_DIM>
+size_t GLQP<STATE_DIM, INPUT_DIM>::findActiveSubsystemIndex(
 		const scalar_array_t& partitioningTimes,
 		const double& time) {
 
@@ -556,9 +556,9 @@ size_t GLQP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::findActiveSubsystemIndex(
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
+template <size_t STATE_DIM, size_t INPUT_DIM>
 template <typename Derived>
-bool GLQP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::makePSD(Eigen::MatrixBase<Derived>& squareMatrix) {
+bool GLQP<STATE_DIM, INPUT_DIM>::makePSD(Eigen::MatrixBase<Derived>& squareMatrix) {
 
 	if (squareMatrix.rows() != squareMatrix.cols())  throw std::runtime_error("Not a square matrix: makePSD() method is for square matrix.");
 
@@ -584,16 +584,16 @@ bool GLQP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::makePSD(Eigen::MatrixBase<Derive
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void GLQP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::getController(controller_array_t& controllersStock) {
+template <size_t STATE_DIM, size_t INPUT_DIM>
+void GLQP<STATE_DIM, INPUT_DIM>::getController(controller_array_t& controllersStock) {
 	controllersStock = controllersStock_;
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-//template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-//void GLQP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::getValueFuntion(const scalar_t& time, const state_vector_t& state, scalar_t& valueFuntion)  {
+//template <size_t STATE_DIM, size_t INPUT_DIM>
+//void GLQP<STATE_DIM, INPUT_DIM>::getValueFuntion(const scalar_t& time, const state_vector_t& state, scalar_t& valueFuntion)  {
 //
 //	int activeSubsystem = -1;
 //	for (int i=0; i<numPartitions_; i++)  {
@@ -619,8 +619,8 @@ void GLQP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::getController(controller_array_t
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-//template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-//void GLQP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::solveRiccatiEquations()  {
+//template <size_t STATE_DIM, size_t INPUT_DIM>
+//void GLQP<STATE_DIM, INPUT_DIM>::solveRiccatiEquations()  {
 //
 //	SsTimeTrajectoryStock_.resize(numPartitions_);
 //	sTrajectoryStock_.resize(numPartitions_);
@@ -694,8 +694,8 @@ void GLQP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::getController(controller_array_t
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void GLQP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::solveRiccatiEquationsWorker(
+template <size_t STATE_DIM, size_t INPUT_DIM>
+void GLQP<STATE_DIM, INPUT_DIM>::solveRiccatiEquationsWorker(
 		size_t workerIndex,
 		const size_t& partitionIndex,
 		const state_matrix_t& SmFinal,
@@ -806,8 +806,8 @@ void GLQP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::solveRiccatiEquationsWorker(
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void GLQP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::solveRiccatiEquations(
+template <size_t STATE_DIM, size_t INPUT_DIM>
+void GLQP<STATE_DIM, INPUT_DIM>::solveRiccatiEquations(
 		const state_matrix_t& SmFinal,
 		const state_vector_t& SvFinal,
 		const eigen_scalar_t& sFinal)  {
@@ -851,8 +851,8 @@ void GLQP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::solveRiccatiEquations(
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void GLQP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::setupOptimizer(const size_t& numPartitions) {
+template <size_t STATE_DIM, size_t INPUT_DIM>
+void GLQP<STATE_DIM, INPUT_DIM>::setupOptimizer(const size_t& numPartitions) {
 
 	if (numPartitions==0)
 		throw std::runtime_error("Number of Partitionings cannot be zero!");
@@ -908,8 +908,8 @@ void GLQP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::setupOptimizer(const size_t& num
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void GLQP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::run(
+template <size_t STATE_DIM, size_t INPUT_DIM>
+void GLQP<STATE_DIM, INPUT_DIM>::run(
 		const scalar_t& initTime,
 		const state_vector_t& initState,
 		const scalar_t& finalTime,
@@ -956,7 +956,7 @@ void GLQP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::run(
 		std::fill(desiredInputTrajectoryPtrStock_.begin(), desiredInputTrajectoryPtrStock_.end(), nullptr);
 	}
 
-	// update the LOGIC_RULES in the begining of the run routine and adjust the nominal controllerStock based on an user-defined function
+	// update the logic rules in the begining of the run routine and adjust the nominal controllerStock based on an user-defined function
 	logicRulesMachine_.updateLogicRules(partitioningTimes_, controllersStock_);
 
 	std::cout << "LQ display: " << std::endl;

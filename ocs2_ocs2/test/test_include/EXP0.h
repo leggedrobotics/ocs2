@@ -82,7 +82,7 @@ private:
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-class EXP0_Sys1 : public ControlledSystemBase<2,1,EXP0_LogicRules>
+class EXP0_Sys1 : public ControlledSystemBase<2,1>
 {
 public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
@@ -107,7 +107,7 @@ public:
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-class EXP0_Sys2 : public ControlledSystemBase<2,1,EXP0_LogicRules>
+class EXP0_Sys2 : public ControlledSystemBase<2,1>
 {
 public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
@@ -132,12 +132,12 @@ public:
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-class EXP0_System : public ControlledSystemBase<2,1,EXP0_LogicRules>
+class EXP0_System : public ControlledSystemBase<2,1>
 {
 public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-	typedef ControlledSystemBase<2,1,EXP0_LogicRules> Base;
+	typedef ControlledSystemBase<2,1> Base;
 
 	EXP0_System()
 	: activeSubsystem_(0),
@@ -188,7 +188,7 @@ public:
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-class EXP0_SysDerivative1 : public DerivativesBase<2,1,EXP0_LogicRules>
+class EXP0_SysDerivative1 : public DerivativesBase<2,1>
 {
 public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
@@ -208,7 +208,7 @@ public:
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-class EXP0_SysDerivative2 : public DerivativesBase<2,1,EXP0_LogicRules>
+class EXP0_SysDerivative2 : public DerivativesBase<2,1>
 {
 public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
@@ -228,12 +228,12 @@ public:
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-class EXP0_SystemDerivative : public DerivativesBase<2,1,EXP0_LogicRules>
+class EXP0_SystemDerivative : public DerivativesBase<2,1>
 {
 public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-	typedef DerivativesBase<2,1,EXP0_LogicRules> Base;
+	typedef DerivativesBase<2,1> Base;
 
 	EXP0_SystemDerivative()
 	: activeSubsystem_(0),
@@ -295,12 +295,12 @@ public:
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-using EXP0_SystemConstraint = ConstraintBase<2,1,EXP0_LogicRules>;
+using EXP0_SystemConstraint = ConstraintBase<2,1>;
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-class EXP0_CostFunction1 : public CostFunctionBase<2,1,EXP0_LogicRules>
+class EXP0_CostFunction1 : public CostFunctionBase<2,1>
 {
 public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
@@ -331,7 +331,7 @@ public:
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-class EXP0_CostFunction2 : public CostFunctionBase<2,1,EXP0_LogicRules>
+class EXP0_CostFunction2 : public CostFunctionBase<2,1>
 {
 public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
@@ -361,12 +361,12 @@ public:
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-class EXP0_CostFunction : public CostFunctionBase<2,1,EXP0_LogicRules>
+class EXP0_CostFunction : public CostFunctionBase<2,1>
 {
 public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-	typedef CostFunctionBase<2,1,EXP0_LogicRules> Base;
+	typedef CostFunctionBase<2,1> Base;
 
 	EXP0_CostFunction()
 	: activeSubsystem_(0),
@@ -443,14 +443,14 @@ public:
 public:
 	int activeSubsystem_;
 	std::function<size_t(scalar_t)> findActiveSubsystemFnc_;
-	std::vector<std::shared_ptr<CostFunctionBase<2,1,EXP0_LogicRules> > > subsystemCostsPtr_;
+	std::vector<std::shared_ptr<CostFunctionBase<2,1> > > subsystemCostsPtr_;
 
 };
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-using EXP0_SystemOperatingTrajectories = SystemOperatingPoint<2,1,EXP0_LogicRules>;
+using EXP0_SystemOperatingTrajectories = SystemOperatingPoint<2,1>;
 
 } // namespace ocs2
 

@@ -43,18 +43,16 @@ namespace ocs2 {
  *
  * @tparam STATE_DIM: Dimension of the state space.
  * @tparam INPUT_DIM: Dimension of the control input space.
- * @tparam LOGIC_RULES_T: Logic Rules type (default NullLogicRules).
  */
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T=NullLogicRules>
-class OperatingTrajectoriesRollout : public RolloutBase<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>
+template <size_t STATE_DIM, size_t INPUT_DIM>
+class OperatingTrajectoriesRollout : public RolloutBase<STATE_DIM, INPUT_DIM>
 {
 public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-	static_assert(std::is_base_of<LogicRulesBase, LOGIC_RULES_T>::value,
-			"LOGIC_RULES_T must inherit from LogicRulesBase");
 
-	typedef RolloutBase<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> BASE;
+
+	typedef RolloutBase<STATE_DIM, INPUT_DIM> BASE;
 
 	using controller_t = typename BASE::controller_t;
 	using size_array_t = typename BASE::size_array_t;
@@ -65,7 +63,7 @@ public:
 	using input_vector_t = typename BASE::input_vector_t;
 	using input_vector_array_t = typename BASE::input_vector_array_t;
 
-	typedef SystemOperatingTrajectoriesBase<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> operating_trajectories_t;
+	typedef SystemOperatingTrajectoriesBase<STATE_DIM, INPUT_DIM> operating_trajectories_t;
 
 	using logic_rules_machine_t = LogicRulesMachine;
 

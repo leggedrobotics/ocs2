@@ -46,11 +46,11 @@ int main(int argc, char **argv)
 	DoubleIntegratorInterface double_integratorInterface(taskFileFolderName);
 
 	using mrt_t = MRT_ROS_Double_Integrator;
-	using mrt_base_ptr_t = mrt_t::BASE::Ptr;
+	using mrt_ptr_t = mrt_t::Ptr;
 	using scalar_t = mrt_t::scalar_t;
 	using system_observation_t = mrt_t::system_observation_t;
 
-	mrt_base_ptr_t mrtPtr(new mrt_t("double_integrator"));
+	mrt_ptr_t mrtPtr(new mrt_t("double_integrator"));
 
 	// Dummy double_integrator
 	MRT_ROS_Dummy_Linear_System dummyDoubleIntegrator(

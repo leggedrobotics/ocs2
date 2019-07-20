@@ -38,17 +38,17 @@ class TestLogicRules : public HybridLogicRules
 public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-	typedef LogicRulesBase BASE;
-	typedef BASE::scalar_t       scalar_t;
-	typedef BASE::scalar_array_t scalar_array_t;
-	typedef BASE::size_array_t   size_array_t;
+	using BASE = HybridLogicRules;
+	using BASE::scalar_t;
+	using BASE::scalar_array_t;
+	using BASE::size_array_t;
 
 	TestLogicRules() = default;
 
 	virtual ~TestLogicRules() = default;
 
 	void set(const scalar_array_t& eventTimes) {
-		BASE::eventTimes_ = eventTimes;
+		eventTimes_ = eventTimes;
 	}
 
 	void update() override

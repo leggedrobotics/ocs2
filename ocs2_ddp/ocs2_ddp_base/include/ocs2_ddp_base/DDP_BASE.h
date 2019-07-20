@@ -56,7 +56,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_core/misc/FindActiveIntervalIndex.h>
 #include <ocs2_core/misc/TrajectorySpreadingController.h>
 
-#include <ocs2_core/logic/rules/LogicRulesBase.h>
 #include <ocs2_core/logic/rules/NullLogicRules.h>
 #include <ocs2_core/logic/machine/LogicRulesMachine.h>
 #include <ocs2_core/logic/machine/HybridLogicRulesMachine.h>

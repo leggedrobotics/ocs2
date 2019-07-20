@@ -577,7 +577,7 @@ void MRT_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::launchNodes(int arg
 			robotName_ + "_mpc_policy",
 			1,
 			&MRT_ROS_Interface::mpcPolicyCallback,
-			this, ::ros::TransportHints().udp());
+			this);
 
 	// dummy publisher
 	dummyPublisher_ = mrtRosNodeHandlePtr_->advertise<ocs2_comm_interfaces::dummy>("ping", 1, true);

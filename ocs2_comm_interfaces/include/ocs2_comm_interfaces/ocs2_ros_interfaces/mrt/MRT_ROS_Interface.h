@@ -106,7 +106,7 @@ public:
 
 	typedef RosMsgConversions<STATE_DIM, INPUT_DIM> ros_msg_conversions_t;
 
-	typedef LogicRulesMachine 				       logic_machine_t;
+	typedef HybridLogicRulesMachine 				       logic_machine_t;
 	typedef typename logic_machine_t::Ptr          logic_machine_ptr_t;
 
   	typedef typename std::unique_ptr<RolloutBase<STATE_DIM, INPUT_DIM>> rollout_base_ptr_t;

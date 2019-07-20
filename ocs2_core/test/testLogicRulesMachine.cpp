@@ -27,7 +27,7 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#include <ocs2_core/logic/machine/LogicRulesMachine.h>
+#include <ocs2_core/logic/machine/HybridLogicRulesMachine.h>
 
 #include <gtest/gtest.h>
 
@@ -76,7 +76,7 @@ private:
  * @return
  */
 bool checkSolution(
-		const LogicRulesMachine& logicRulesMachine,
+		const HybridLogicRulesMachine& logicRulesMachine,
 		const std::vector<std::vector<double>>& eventTimesStockResult,
 		const std::vector<std::vector<size_t>>& switchedSystemIDsStockResult) {
 
@@ -103,7 +103,7 @@ bool checkSolution(
 TEST(testLogicRulesMachine, LogicRulesMachine)
 {
 	std::shared_ptr<TestLogicRules> logicRules(new TestLogicRules());
-	LogicRulesMachine logicRulesMachine(logicRules);
+	HybridLogicRulesMachine logicRulesMachine(logicRules);
 
 	std::vector<double> partitioningTimes{0,1,2,3};
 
@@ -252,7 +252,7 @@ TEST(testLogicRulesMachine, LogicRulesMachine)
 TEST(testLogicRulesMachine, shortPartition)
 {
 	std::shared_ptr<TestLogicRules> logicRules(new TestLogicRules());
-	LogicRulesMachine logicRulesMachine(logicRules);
+	HybridLogicRulesMachine logicRulesMachine(logicRules);
 
 	std::vector<double> partitioningTimes;
 

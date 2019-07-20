@@ -57,7 +57,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_core/misc/TrajectorySpreadingController.h>
 
 #include <ocs2_core/logic/rules/NullLogicRules.h>
-#include <ocs2_core/logic/machine/LogicRulesMachine.h>
+#include <ocs2_core/logic/machine/HybridLogicRulesMachine.h>
 #include <ocs2_core/logic/machine/HybridLogicRulesMachine.h>
 
 #include <ocs2_oc/oc_solver/Solver_BASE.h>
@@ -162,7 +162,7 @@ public:
 
 	using cost_desired_trajectories_t = typename BASE::cost_desired_trajectories_t;
 
-	using logic_rules_machine_t = LogicRulesMachine;
+	using logic_rules_machine_t = HybridLogicRulesMachine;
 	using logic_rules_machine_ptr_t = typename logic_rules_machine_t::Ptr;
 
 	/**

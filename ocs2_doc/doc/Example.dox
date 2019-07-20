@@ -119,7 +119,7 @@ public:
 	}
 
 	void initializeModel(
-			LogicRulesMachine<2, 1, EXP1_LogicRules>& logicRulesMachine,
+			HybridLogicRulesMachine<2, 1, EXP1_LogicRules>& logicRulesMachine,
 			const size_t& partitionIndex,
 			const char* algorithmName=NULL) override {
 
@@ -147,7 +147,7 @@ We now explain each method of this class. The class overrides the clone method u
 which is also overridden in order to ensure deep copying. In order to detect the active subsystem, 
 we use the initialization method. This method gets a reference to the logic machine which is a wrapper 
 for the logic rule provided to the optimizer by use. The logic machine provides us with number of useful 
-functionalities such as ocs2::LogicRulesMachine::getHandleToFindActiveEventCounter. This method returns 
+functionalities such as ocs2::HybridLogicRulesMachine::getHandleToFindActiveEventCounter. This method returns
 a functional which can be used to find the active subsystem. Later this functional is used in 
 ocs2::ControlledSystemBase::computeFlowMap to find the active partition and thus calling the correct subsystem. 
 
@@ -215,7 +215,7 @@ public:
 
 
 	void initializeModel(
-			LogicRulesMachine<2, 1, EXP1_LogicRules>& logicRulesMachine,
+			HybridLogicRulesMachine<2, 1, EXP1_LogicRules>& logicRulesMachine,
 			const size_t& partitionIndex,
 			const char* algorithmName=NULL) override {
 

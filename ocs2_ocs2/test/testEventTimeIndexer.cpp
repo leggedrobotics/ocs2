@@ -72,7 +72,7 @@ private:
 TEST(testEventTimeIndexer, test_0)
 {
 	std::shared_ptr<TestLogicRules> logicRules(new TestLogicRules());
-	LogicRulesMachine logicRulesMachine(logicRules);
+	HybridLogicRulesMachine logicRulesMachine(logicRules);
 
 	// Times
 	std::vector<double> partitioningTimes{0.5,1.5,2.5};
@@ -132,7 +132,7 @@ TEST(testEventTimeIndexer, test_0)
 TEST(testEventTimeIndexer, test_1)
 {
 	std::shared_ptr<TestLogicRules> logicRules(new TestLogicRules());
-	LogicRulesMachine logicRulesMachine(logicRules);
+	HybridLogicRulesMachine logicRulesMachine(logicRules);
 
 	// Times
 	std::vector<double> partitioningTimes{1, 2, 3};
@@ -189,7 +189,7 @@ TEST(testEventTimeIndexer, test_1)
 TEST(testEventTimeIndexer, test_2)
 {
 	std::shared_ptr<TestLogicRules> logicRules(new TestLogicRules());
-	LogicRulesMachine logicRulesMachine(logicRules);
+	HybridLogicRulesMachine logicRulesMachine(logicRules);
 
 	// Times
 	std::vector<double> partitioningTimes{1, 2, 3, 4, 5};
@@ -237,7 +237,7 @@ TEST(testEventTimeIndexer, test_2)
 TEST(testEventTimeIndexer, test_3)
 {
 	std::shared_ptr<TestLogicRules> logicRules(new TestLogicRules());
-	LogicRulesMachine logicRulesMachine(logicRules);
+	HybridLogicRulesMachine logicRulesMachine(logicRules);
 
 	// Times
 	std::vector<double> partitioningTimes{1, 2.5, 3, 5};

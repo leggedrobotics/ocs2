@@ -46,7 +46,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_core/control/ControllerBase.h>
 #include <ocs2_core/cost/CostDesiredTrajectories.h>
 #include <ocs2_core/logic/rules/NullLogicRules.h>
-#include <ocs2_core/logic/machine/LogicRulesMachine.h>
+#include <ocs2_core/logic/machine/HybridLogicRulesMachine.h>
 #include <ocs2_core/misc/FindActiveIntervalIndex.h>
 
 namespace ocs2 {
@@ -123,7 +123,7 @@ public:
 
 	using cost_desired_trajectories_t = CostDesiredTrajectories<scalar_t>;
 
-	using logic_rules_machine_t = LogicRulesMachine;
+	using logic_rules_machine_t = HybridLogicRulesMachine;
 	using logic_rules_machine_ptr_t = typename logic_rules_machine_t::Ptr;
 
 	typedef ControllerBase<STATE_DIM, INPUT_DIM> controller_t;

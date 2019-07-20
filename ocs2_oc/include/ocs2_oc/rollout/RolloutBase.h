@@ -43,7 +43,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_core/OCS2NumericTraits.h>
 #include <ocs2_core/misc/FindActiveIntervalIndex.h>
 #include <ocs2_core/logic/rules/NullLogicRules.h>
-#include <ocs2_core/logic/machine/LogicRulesMachine.h>
+#include <ocs2_core/logic/machine/HybridLogicRulesMachine.h>
 #include <ocs2_core/control/ControllerBase.h>
 
 #include "Rollout_Settings.h"
@@ -76,7 +76,7 @@ public:
 	using input_vector_t = typename DIMENSIONS::input_vector_t;
 	using input_vector_array_t = typename DIMENSIONS::input_vector_array_t;
 
-	using logic_rules_machine_t = LogicRulesMachine;
+	using logic_rules_machine_t = HybridLogicRulesMachine;
 
 	typedef ControllerBase<STATE_DIM, INPUT_DIM> controller_t;
 

@@ -40,7 +40,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ocs2_core/control/ControllerBase.h"
 #include "ocs2_core/logic/rules/HybridLogicRules.h"
 #include "ocs2_core/logic/rules/NullLogicRules.h"
-#include "ocs2_core/logic/machine/LogicRulesMachine.h"
+#include "ocs2_core/logic/machine/HybridLogicRulesMachine.h"
 
 namespace ocs2{
 

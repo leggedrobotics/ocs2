@@ -34,7 +34,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <utility>
 #include <algorithm>
 
-#include <ocs2_core/logic/machine/LogicRulesMachine.h>
+#include <ocs2_core/logic/machine/HybridLogicRulesMachine.h>
 
 namespace ocs2{
 
@@ -73,7 +73,7 @@ public:
 	 *
 	 * @param [in] logicRulesMachine: Instance of the LogicRulesMachine.
 	 */
-	void set(const LogicRulesMachine& logicRulesMachine);
+	void set(const HybridLogicRulesMachine& logicRulesMachine);
 
 	/**
 	 * Gets the total number of events.

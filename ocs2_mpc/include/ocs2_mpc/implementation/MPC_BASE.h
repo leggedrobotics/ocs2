@@ -156,7 +156,7 @@ void MPC_BASE<STATE_DIM, INPUT_DIM>::rewind() {
 	solverPtr_->rewindOptimizer(initnumPartitions_);
 
 	// Rewind the solver's internal logicRules. It is not necessary to call the
-	// LogicRulesMachine::updateLogicRules() method, since the partitioningTimes_
+	// HybridLogicRulesMachine::updateLogicRules() method, since the partitioningTimes_
 	// is updated as well the update method will be called automatically.
 	if (solverPtr_->getLogicRulesPtr()) {
 		const scalar_array_t& eventTimes = solverPtr_->getLogicRulesPtr()->eventTimes();

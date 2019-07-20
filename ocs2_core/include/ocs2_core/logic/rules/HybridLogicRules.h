@@ -30,6 +30,9 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifndef HYBRIDLOGICRULES_OCS2_H_
 #define HYBRIDLOGICRULES_OCS2_H_
 
+#include <iostream>
+#include <vector>
+#include <ocs2_core/Dimensions.h>
 
 namespace ocs2 {
 

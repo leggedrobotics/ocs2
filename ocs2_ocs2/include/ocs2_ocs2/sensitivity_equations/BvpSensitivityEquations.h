@@ -55,24 +55,24 @@ public:
 	typedef OdeBase<STATE_DIM> BASE;
 
 	typedef Dimensions<STATE_DIM, INPUT_DIM> DIMENSIONS;
-	typedef typename DIMENSIONS::scalar_t       scalar_t;
-	typedef typename DIMENSIONS::scalar_array_t scalar_array_t;
-	typedef typename DIMENSIONS::state_vector_t       state_vector_t;
-	typedef typename DIMENSIONS::state_vector_array_t state_vector_array_t;
-	typedef typename DIMENSIONS::input_vector_t       input_vector_t;
-	typedef typename DIMENSIONS::input_vector_array_t input_vector_array_t;
-	typedef typename DIMENSIONS::input_state_matrix_t       input_state_matrix_t;
-	typedef typename DIMENSIONS::input_state_matrix_array_t input_state_matrix_array_t;
-	typedef typename DIMENSIONS::state_matrix_t       state_matrix_t;
-	typedef typename DIMENSIONS::state_matrix_array_t state_matrix_array_t;
-	typedef typename DIMENSIONS::input_matrix_t       input_matrix_t;
-	typedef typename DIMENSIONS::input_matrix_array_t input_matrix_array_t;
-	typedef typename DIMENSIONS::state_input_matrix_t 		state_input_matrix_t;
-	typedef typename DIMENSIONS::state_input_matrix_array_t state_input_matrix_array_t;
-	typedef typename DIMENSIONS::constraint1_vector_t       constraint1_vector_t;
-	typedef typename DIMENSIONS::constraint1_vector_array_t constraint1_vector_array_t;
-	typedef typename DIMENSIONS::constraint1_state_matrix_t       constraint1_state_matrix_t;
-	typedef typename DIMENSIONS::constraint1_state_matrix_array_t constraint1_state_matrix_array_t;
+	using scalar_t = typename DIMENSIONS::scalar_t;
+	using scalar_array_t = typename DIMENSIONS::scalar_array_t;
+	using state_vector_t = typename DIMENSIONS::state_vector_t;
+	using state_vector_array_t = typename DIMENSIONS::state_vector_array_t;
+	using input_vector_t = typename DIMENSIONS::input_vector_t;
+	using input_vector_array_t = typename DIMENSIONS::input_vector_array_t;
+	using input_state_matrix_t = typename DIMENSIONS::input_state_matrix_t;
+	using input_state_matrix_array_t = typename DIMENSIONS::input_state_matrix_array_t ;
+	using state_matrix_t = typename DIMENSIONS::state_matrix_t;
+	using state_matrix_array_t = typename DIMENSIONS::state_matrix_array_t;
+	using input_matrix_t = typename DIMENSIONS::input_matrix_t;
+	using input_matrix_array_t = typename DIMENSIONS::input_matrix_array_t;
+	using state_input_matrix_t = typename DIMENSIONS::state_input_matrix_t;
+	using state_input_matrix_array_t = typename DIMENSIONS::state_input_matrix_array_t;
+	using constraint1_vector_t = typename DIMENSIONS::constraint1_vector_t;
+	using constraint1_vector_array_t = typename DIMENSIONS::constraint1_vector_array_t;
+	using constraint1_state_matrix_t = typename DIMENSIONS::constraint1_state_matrix_t;
+	using constraint1_state_matrix_array_t = typename DIMENSIONS::constraint1_state_matrix_array_t;
 
 	/**
 	 * Constructor.
@@ -129,8 +129,8 @@ public:
 		flowMapFunc_.setData(timeStampPtr, flowMapPtr);
 		costateFunc_.setData(timeStampPtr, costatePtr);
 		lagrangianFunc_.setData(timeStampPtr, lagrangianPtr);
-		KmConstrainedFunc_.setData(timeStampPtr, KmConstrainedPtr);
-		SmFunc_.setData(timeStampPtr, SmPtr);
+		KmConstrainedFunc_.setData(controllerTimeStampPtr, KmConstrainedPtr);
+		SmFunc_.setData(controllerTimeStampPtr, SmPtr);
 	}
 
 	/**
@@ -197,17 +197,17 @@ private:
 
 	scalar_t multiplier_ = 0.0;
 
-	LinearInterpolation<state_matrix_t,Eigen::aligned_allocator<state_matrix_t>> AmFunc_;
-	LinearInterpolation<state_input_matrix_t,Eigen::aligned_allocator<state_input_matrix_t>> BmFunc_;
-	LinearInterpolation<constraint1_state_matrix_t,Eigen::aligned_allocator<constraint1_state_matrix_t>> CmFunc_;
-	LinearInterpolation<state_matrix_t,Eigen::aligned_allocator<state_matrix_t>> AmConstrainedFunc_;
-	LinearInterpolation<input_state_matrix_t,Eigen::aligned_allocator<input_state_matrix_t>> CmProjectedFunc_;
-	LinearInterpolation<state_vector_t,Eigen::aligned_allocator<state_vector_t>> QvFunc_;
-	LinearInterpolation<state_vector_t,Eigen::aligned_allocator<state_vector_t>> flowMapFunc_;
-	LinearInterpolation<state_vector_t,Eigen::aligned_allocator<state_vector_t>> costateFunc_;
-	LinearInterpolation<constraint1_vector_t,Eigen::aligned_allocator<constraint1_vector_t>> lagrangianFunc_;
-	LinearInterpolation<input_state_matrix_t,Eigen::aligned_allocator<input_state_matrix_t>> KmConstrainedFunc_;
-	LinearInterpolation<state_matrix_t,Eigen::aligned_allocator<state_matrix_t>> SmFunc_;
+	EigenLinearInterpolation<state_matrix_t> AmFunc_;
+	EigenLinearInterpolation<state_input_matrix_t> BmFunc_;
+	EigenLinearInterpolation<constraint1_state_matrix_t> CmFunc_;
+	EigenLinearInterpolation<state_matrix_t> AmConstrainedFunc_;
+	EigenLinearInterpolation<input_state_matrix_t> CmProjectedFunc_;
+	EigenLinearInterpolation<state_vector_t> QvFunc_;
+	EigenLinearInterpolation<state_vector_t> flowMapFunc_;
+	EigenLinearInterpolation<state_vector_t> costateFunc_;
+	EigenLinearInterpolation<constraint1_vector_t> lagrangianFunc_;
+	EigenLinearInterpolation<input_state_matrix_t> KmConstrainedFunc_;
+	EigenLinearInterpolation<state_matrix_t> SmFunc_;
 
 	state_matrix_t Am_;
 	state_input_matrix_t Bm_;

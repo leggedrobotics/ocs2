@@ -385,6 +385,16 @@ inline void DDP_Settings::loadSettings(const std::string& filename, const std::s
 	}
 
 	try	{
+		minTimeStep_ = pt.get<double>(fieldName + ".minTimeStep");
+		if (verbose) {  std::cerr << " #### Option loader : option 'minTimeStep' ......................... " << minTimeStep_ << std::endl;
+		}
+	}
+	catch (const std::exception& e){
+		if (verbose) {  std::cerr << " #### Option loader : option 'minTimeStep' ......................... " << minTimeStep_ << "   \t(default)" << std::endl;
+		}
+	}
+
+	try	{
 		simulationIsConstrained_ = pt.get<bool>(fieldName + ".simulationIsConstrained");
 		if (verbose) {  std::cerr << " #### Option loader : option 'simulationIsConstrained' ............. " << simulationIsConstrained_ << std::endl;
 		}
@@ -421,16 +431,6 @@ inline void DDP_Settings::loadSettings(const std::string& filename, const std::s
 	}
 	catch (const std::exception& e){
 		if (verbose) {  std::cerr << " #### Option loader : option 'addedRiccatiDiagonal' ................ " << addedRiccatiDiagonal_ << "   \t(default)" << std::endl;
-		}
-	}
-
-	try	{
-		minTimeStep_ = pt.get<double>(fieldName + ".minTimeStep");
-		if (verbose) {  std::cerr << " #### Option loader : option 'minTimeStep' ......................... " << minTimeStep_ << std::endl;
-		}
-	}
-	catch (const std::exception& e){
-		if (verbose) {  std::cerr << " #### Option loader : option 'minTimeStep' ......................... " << minTimeStep_ << "   \t(default)" << std::endl;
 		}
 	}
 

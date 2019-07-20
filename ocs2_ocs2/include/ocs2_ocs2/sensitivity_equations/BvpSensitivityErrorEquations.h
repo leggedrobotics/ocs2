@@ -129,7 +129,7 @@ public:
 		RmInverseFunc_.setData(timeStampPtr, RmInversePtr);
 		RinvChol_Func_.setData(timeStampPtr, RinvCholPtr);
 		EvDevProjectedFunc_.setData(timeStampPtr, EvDevProjectedPtr);
-		SmFunc_.setData(timeStampPtr, SmPtr);
+		SmFunc_.setData(SmTimeStampPtr, SmPtr);
 	}
 
 	/**

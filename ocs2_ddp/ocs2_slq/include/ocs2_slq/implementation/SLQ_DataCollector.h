@@ -78,7 +78,7 @@ void SLQ_DataCollector<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::collect(
 	rewindCounter_ = slqPtr->rewindCounter_;
 
 	eventTimes_         = slqPtr->getLogicRulesPtr()->eventTimes();
-	subsystemsSequence_ = slqPtr->getLogicRulesPtr()->subsystemsSequence();
+//	subsystemsSequence_ = slqPtr->getLogicRulesPtr()->subsystemsSequence();
 
 	// optimized controller
 	optimizedControllersStock_ = slqPtr->nominalControllersStock_;

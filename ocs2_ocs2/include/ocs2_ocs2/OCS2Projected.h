@@ -41,7 +41,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_slq/SLQ.h>
 #include <ocs2_slq/SLQ_MP.h>
 
-#include "ocs2_ocs2/GSLQ_BASE.h"
+#include "ocs2_ocs2/GDDP.h"
 
 namespace ocs2{
 
@@ -68,11 +68,10 @@ public:
 	typedef SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>  slq_base_t;
 	typedef SLQ<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>       slq_t;
 	typedef SLQ_MP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>    slq_mp_t;
-	typedef GSLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> gslq_t;
+	typedef GDDP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> gddp_t;
 	typedef typename slq_base_t::Ptr slq_base_ptr_t;
 	typedef typename slq_t::Ptr      slq_ptr_t;
 	typedef typename slq_mp_t::Ptr   slq_mp_ptr_t;
-	typedef typename gslq_t::Ptr     gslq_ptr_t;
 
 	typedef SLQ_DataCollector<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> slq_data_collector_t;
 	typedef typename slq_data_collector_t::Ptr slq_data_collector_ptr_t;
@@ -124,6 +123,7 @@ public:
 			const cost_function_base_t* costFunctionPtr,
 			const operating_trajectories_base_t* operatingTrajectoriesPtr,
 			const SLQ_Settings& slqSettings = SLQ_Settings(),
+			const GDDP_Settings& gddpSettings = GDDP_Settings(),
 			const LOGIC_RULES_T* logicRulesPtr = nullptr,
 			const cost_function_base_t* heuristicsFunctionPtr = nullptr);
 
@@ -315,7 +315,7 @@ private:
 	std::vector<dynamic_vector_t> parameterBag_;
 	controller_array2_t controllersStockBag_;
 
-	gslq_ptr_t gslqSolverPtr_;
+	std::unique_ptr<gddp_t> gddpSolverPtr_;
 	slq_data_collector_ptr_t slqDataCollectorPtr_;
 	std::vector<slq_base_ptr_t> slqSolverPtrs_;
 

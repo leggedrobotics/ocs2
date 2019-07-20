@@ -58,8 +58,8 @@ public:
 
 	~EXP0_LogicRules() = default;
 
-	EXP0_LogicRules(const scalar_array_t& switchingTimes)
-	: BASE(switchingTimes)
+	EXP0_LogicRules(const scalar_array_t& eventTimes)
+	: BASE(eventTimes)
 	{}
 
 	void rewind(const scalar_t& lowerBoundTime,

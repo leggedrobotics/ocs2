@@ -130,8 +130,8 @@ private:
 	scalar_t switchingTimeStart_;
 	scalar_t switchingTimeFinal_;
 
-	LinearInterpolation<state_vector_t, Eigen::aligned_allocator<state_vector_t> > GvFunc_;
-	LinearInterpolation<state_matrix_t, Eigen::aligned_allocator<state_matrix_t> > GmFunc_;
+	EigenLinearInterpolation<state_vector_t> GvFunc_;
+	EigenLinearInterpolation<state_matrix_t> GmFunc_;
 
 	// members required in computeFlowMap
 	state_vector_t Gv_;

@@ -12,17 +12,16 @@
 namespace ocs2 {
     template<size_t FULL_STATE_DIM, size_t FULL_INPUT_DIM,
         size_t SYSTEM_STATE_DIM, size_t SYSTEM_INPUT_DIM,
-        size_t FILTER_STATE_DIM, size_t FILTER_INPUT_DIM,
-        class LOGIC_RULES_T=NullLogicRules>
+        size_t FILTER_STATE_DIM, size_t FILTER_INPUT_DIM>
 class LoopshapingOperatingPoint final :
-    public SystemOperatingTrajectoriesBase<FULL_STATE_DIM, FULL_INPUT_DIM, LOGIC_RULES_T>
+    public SystemOperatingTrajectoriesBase<FULL_STATE_DIM, FULL_INPUT_DIM>
 {
 public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
     using Ptr = std::shared_ptr<LoopshapingOperatingPoint> ;
 
-    using BASE = SystemOperatingTrajectoriesBase<FULL_STATE_DIM, FULL_INPUT_DIM, LOGIC_RULES_T>;
+    using BASE = SystemOperatingTrajectoriesBase<FULL_STATE_DIM, FULL_INPUT_DIM>;
     using typename BASE::scalar_t;
     using typename BASE::scalar_array_t;
     using typename BASE::size_array_t;
@@ -31,7 +30,7 @@ public:
     using typename BASE::input_vector_t;
     using typename BASE::input_vector_array_t;
 
-    using SYSTEMBASE = SystemOperatingTrajectoriesBase<SYSTEM_STATE_DIM, SYSTEM_INPUT_DIM, LOGIC_RULES_T>;
+    using SYSTEMBASE = SystemOperatingTrajectoriesBase<SYSTEM_STATE_DIM, SYSTEM_INPUT_DIM>;
     using system_state_vector_t = typename SYSTEMBASE::state_vector_t;
     using system_state_vector_array_t = typename SYSTEMBASE::state_vector_array_t;
     using system_input_vector_t = typename SYSTEMBASE::input_vector_t;
@@ -50,15 +49,6 @@ public:
 
 
     virtual ~LoopshapingOperatingPoint() = default;
-
-    void initializeModel(
-        LogicRulesMachine<LOGIC_RULES_T>& logicRulesMachine,
-        const size_t& partitionIndex,
-        const char* algorithmName=nullptr) override {
-
-      BASE::initializeModel(logicRulesMachine, partitionIndex, algorithmName);
-      systembase_->initializeModel(logicRulesMachine, partitionIndex, algorithmName);
-    }
 
     LoopshapingOperatingPoint(const LoopshapingOperatingPoint& obj) :
         BASE(),

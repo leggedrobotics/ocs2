@@ -46,11 +46,11 @@ int main(int argc, char **argv)
 	BallbotInterface ballbotInterface(taskFileFolderName);
 
 	using mrt_t = MRT_ROS_Ballbot;
-	using mrt_base_ptr_t = mrt_t::BASE::Ptr;
+	using mrt_ptr_t = mrt_t::Ptr;
 	using scalar_t = mrt_t::scalar_t;
 	using system_observation_t = mrt_t::system_observation_t;
 
-	mrt_base_ptr_t mrtPtr(new mrt_t("ballbot"));
+	mrt_ptr_t mrtPtr(new mrt_t("ballbot"));
 
 	// Dummy ballbot
 	MRT_ROS_Dummy_Ballbot dummyBallbot(

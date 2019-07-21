@@ -33,15 +33,15 @@ namespace ocs2
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-ILQR_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::ILQR_BASE(
+template <size_t STATE_DIM, size_t INPUT_DIM>
+ILQR_BASE<STATE_DIM, INPUT_DIM>::ILQR_BASE(
 		const controlled_system_base_t* systemDynamicsPtr,
 		const derivatives_base_t* systemDerivativesPtr,
 		const constraint_base_t* systemConstraintsPtr,
 		const cost_function_base_t* costFunctionPtr,
 		const operating_trajectories_base_t* operatingTrajectoriesPtr,
 		const ILQR_Settings& settings /*= ILQR_Settings()*/,
-		const LOGIC_RULES_T* logicRulesPtr /*= nullptr*/,
+		std::shared_ptr<HybridLogicRules> logicRulesPtr /*= nullptr*/,
 		const cost_function_base_t* heuristicsFunctionPtr /* = nullptr*/)
 
 		: BASE(systemDynamicsPtr,
@@ -60,8 +60,8 @@ ILQR_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::ILQR_BASE(
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void ILQR_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::approximateOptimalControlProblem()  {
+template <size_t STATE_DIM, size_t INPUT_DIM>
+void ILQR_BASE<STATE_DIM, INPUT_DIM>::approximateOptimalControlProblem()  {
 
 	for (size_t i=0; i<BASE::numPartitions_; i++) {
 		size_t N = BASE::nominalTimeTrajectoriesStock_[i].size();
@@ -86,8 +86,8 @@ void ILQR_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::approximateOptimalControlPr
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void ILQR_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::approximateLQWorker(
+template <size_t STATE_DIM, size_t INPUT_DIM>
+void ILQR_BASE<STATE_DIM, INPUT_DIM>::approximateLQWorker(
 		size_t workerIndex,
 		const size_t& partitionIndex,
 		const size_t& timeIndex)  {
@@ -111,8 +111,8 @@ void ILQR_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::approximateLQWorker(
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void ILQR_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::approximateUnconstrainedLQWorker(
+template <size_t STATE_DIM, size_t INPUT_DIM>
+void ILQR_BASE<STATE_DIM, INPUT_DIM>::approximateUnconstrainedLQWorker(
 		size_t workerIndex,
 		const size_t& i,
 		const size_t& k) {
@@ -133,8 +133,8 @@ void ILQR_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::approximateUnconstrainedLQW
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void ILQR_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::discreteLQWorker(
+template <size_t STATE_DIM, size_t INPUT_DIM>
+void ILQR_BASE<STATE_DIM, INPUT_DIM>::discreteLQWorker(
 			size_t workerIndex,
 			const size_t& i,
 			const size_t& k) {
@@ -166,8 +166,8 @@ void ILQR_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::discreteLQWorker(
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void ILQR_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculateController() {
+template <size_t STATE_DIM, size_t INPUT_DIM>
+void ILQR_BASE<STATE_DIM, INPUT_DIM>::calculateController() {
 
 	for (size_t i=0; i<BASE::numPartitions_; i++)  {
 
@@ -208,8 +208,8 @@ void ILQR_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculateController() {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void ILQR_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculateControllerWorker (
+template <size_t STATE_DIM, size_t INPUT_DIM>
+void ILQR_BASE<STATE_DIM, INPUT_DIM>::calculateControllerWorker (
 		size_t workerIndex,
 		const size_t& partitionIndex,
 		const size_t& timeIndex)  {
@@ -247,8 +247,8 @@ void ILQR_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculateControllerWorker (
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void ILQR_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::solveRiccatiEquationsWorker(
+template <size_t STATE_DIM, size_t INPUT_DIM>
+void ILQR_BASE<STATE_DIM, INPUT_DIM>::solveRiccatiEquationsWorker(
 		size_t workerIndex,
 		const size_t& partitionIndex,
 		const state_matrix_t& SmFinal,
@@ -415,8 +415,8 @@ void ILQR_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::solveRiccatiEquationsWorker
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-ILQR_Settings& ILQR_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::settings() {
+template <size_t STATE_DIM, size_t INPUT_DIM>
+ILQR_Settings& ILQR_BASE<STATE_DIM, INPUT_DIM>::settings() {
 
 	return settings_;
 }
@@ -424,8 +424,8 @@ ILQR_Settings& ILQR_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::settings() {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void ILQR_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::setupOptimizer(const size_t& numPartitions) {
+template <size_t STATE_DIM, size_t INPUT_DIM>
+void ILQR_BASE<STATE_DIM, INPUT_DIM>::setupOptimizer(const size_t& numPartitions) {
 
 	BASE::setupOptimizer(numPartitions);
 

@@ -11,11 +11,11 @@ namespace double_slit {
 /**
  * Cost Function for the double slit
  */
-class DoubleSlitBarrierCost final : public CostFunctionBase<DoubleSlit::STATE_DIM_, DoubleSlit::STATE_DIM_, NullLogicRules> {
+class DoubleSlitBarrierCost final : public CostFunctionBase<DoubleSlit::STATE_DIM_, DoubleSlit::STATE_DIM_> {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-  using BASE = CostFunctionBase<DoubleSlit::STATE_DIM_, DoubleSlit::STATE_DIM_, NullLogicRules>;
+  using BASE = CostFunctionBase<DoubleSlit::STATE_DIM_, DoubleSlit::STATE_DIM_>;
 
   using DIMENSIONS = Dimensions<DoubleSlit::STATE_DIM_, DoubleSlit::STATE_DIM_>;
   using scalar_t = typename DIMENSIONS::scalar_t;

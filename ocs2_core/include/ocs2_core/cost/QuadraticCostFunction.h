@@ -39,15 +39,14 @@ namespace ocs2{
  *
  * @tparam STATE_DIM: Dimension of the state space.
  * @tparam INPUT_DIM: Dimension of the control input space.
- * @tparam LOGIC_RULES_T: Logic Rules type (default NullLogicRules).
- */
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T=NullLogicRules>
-class QuadraticCostFunction : public CostFunctionBase< STATE_DIM, INPUT_DIM, LOGIC_RULES_T>
+  */
+template <size_t STATE_DIM, size_t INPUT_DIM>
+class QuadraticCostFunction : public CostFunctionBase< STATE_DIM, INPUT_DIM>
 {
 public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-	using BASE = CostFunctionBase<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> ;
+	using BASE = CostFunctionBase<STATE_DIM, INPUT_DIM> ;
 
 	using typename BASE::scalar_t;
 	using typename BASE::state_vector_t;
@@ -89,23 +88,6 @@ public:
 	 */
 	virtual ~QuadraticCostFunction() = default;
 
-	/**
-	 * Initializes the quadratic cost function.
-	 *
-	 * @param [in] logicRulesMachine: A class which contains and parse the logic rules e.g
-	 * method findActiveSubsystemHandle returns a Lambda expression which can be used to
-	 * find the ID of the current active subsystem.
-	 * @param [in] partitionIndex: index of the time partition.
-	 * @param [in] algorithmName: The algorithm that class this class (default not defined).
-	 */
-	void initializeModel(
-			LogicRulesMachine<LOGIC_RULES_T>& logicRulesMachine,
-			const size_t& partitionIndex,
-			const char* algorithmName=nullptr) override {
-
-		BASE::initializeModel(logicRulesMachine, partitionIndex, algorithmName);
-	}
-
     /**
      * Returns pointer to the class.
      *
@@ -113,7 +95,7 @@ public:
      */
 	QuadraticCostFunction* clone() const override {
 
-		return new QuadraticCostFunction<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>(*this);
+		return new QuadraticCostFunction<STATE_DIM, INPUT_DIM>(*this);
 	}
 
 	/**

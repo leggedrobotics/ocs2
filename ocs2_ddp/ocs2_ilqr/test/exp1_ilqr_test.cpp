@@ -47,28 +47,6 @@ enum
 
 TEST(exp1_ilqr_test, exp1_ilqr_test)
 {
-
-	// system dynamics
-	EXP1_System systemDynamics;
-
-	// system derivatives
-	EXP1_SystemDerivative systemDerivative;
-
-	// system constraints
-	EXP1_SystemConstraint systemConstraint;
-
-	// system cost functions
-	EXP1_CostFunction systemCostFunction;
-
-	// system operatingTrajectories
-	Eigen::Matrix<double,STATE_DIM,1> stateOperatingPoint = Eigen::Matrix<double,STATE_DIM,1>::Zero();
-	Eigen::Matrix<double,INPUT_DIM,1> inputOperatingPoint = Eigen::Matrix<double,INPUT_DIM,1>::Zero();
-	EXP1_SystemOperatingTrajectories operatingTrajectories(stateOperatingPoint, inputOperatingPoint);
-
-
-	/******************************************************************************************************/
-	/******************************************************************************************************/
-	/******************************************************************************************************/
 	ILQR_Settings ilqrSettings;
 	ilqrSettings.ddpSettings_.displayInfo_ = false;
 	ilqrSettings.ddpSettings_.displayShortSummary_ = true;
@@ -90,7 +68,8 @@ TEST(exp1_ilqr_test, exp1_ilqr_test)
 
 	// switching times
 	std::vector<double> switchingTimes {0.2262, 1.0176};
-	EXP1_LogicRules logicRules(switchingTimes);
+	std::vector<size_t> subsystemsSequence{0, 1, 2};
+	std::shared_ptr<EXP1_LogicRules> logicRules(new EXP1_LogicRules(switchingTimes, subsystemsSequence));
 
 	double startTime = 0.0;
 	double finalTime = 3.0;
@@ -108,17 +87,39 @@ TEST(exp1_ilqr_test, exp1_ilqr_test)
 	/******************************************************************************************************/
 	/******************************************************************************************************/
 	/******************************************************************************************************/
+
+	// system dynamics
+	EXP1_System systemDynamics(logicRules);
+
+	// system derivatives
+	EXP1_SystemDerivative systemDerivative(logicRules);
+
+	// system constraints
+	EXP1_SystemConstraint systemConstraint;
+
+	// system cost functions
+	EXP1_CostFunction systemCostFunction(logicRules);
+
+	// system operatingTrajectories
+	Eigen::Matrix<double,STATE_DIM,1> stateOperatingPoint = Eigen::Matrix<double,STATE_DIM,1>::Zero();
+	Eigen::Matrix<double,INPUT_DIM,1> inputOperatingPoint = Eigen::Matrix<double,INPUT_DIM,1>::Zero();
+	EXP1_SystemOperatingTrajectories operatingTrajectories(stateOperatingPoint, inputOperatingPoint);
+
+
+	/******************************************************************************************************/
+	/******************************************************************************************************/
+	/******************************************************************************************************/
 	// ILQR - single-threaded version
-	ILQR_ST<STATE_DIM, INPUT_DIM, EXP1_LogicRules> ilqrST(
+	ILQR_ST<STATE_DIM, INPUT_DIM> ilqrST(
 			&systemDynamics, &systemDerivative,
 			&systemConstraint, &systemCostFunction,
-			&operatingTrajectories, ilqrSettings, &logicRules);
+			&operatingTrajectories, ilqrSettings, logicRules);
 
 	// ILQR - multi-threaded version
-//	ILQR_MT<STATE_DIM, INPUT_DIM, EXP1_LogicRules> ilqrMT(
+//	ILQR_MT<STATE_DIM, INPUT_DIM> ilqrMT(
 //			&systemDynamics, &systemDerivative,
 //			&systemConstraint, &systemCostFunction,
-//			&operatingTrajectories, ilqrSettings, &logicRules);
+//			&operatingTrajectories, ilqrSettings, logicRules);
 
 	// run single_threaded core ILQR
 	if (ilqrSettings.ddpSettings_.displayInfo_ || ilqrSettings.ddpSettings_.displayShortSummary_)
@@ -134,8 +135,8 @@ TEST(exp1_ilqr_test, exp1_ilqr_test)
 	/******************************************************************************************************/
 	/******************************************************************************************************/
 	// get controller
-	ILQR_BASE<STATE_DIM, INPUT_DIM, EXP1_LogicRules>::controller_ptr_array_t controllersStockST = ilqrST.getController();
-//	ILQR_BASE<STATE_DIM, INPUT_DIM, EXP1_LogicRules>::controller_ptr_array_t controllersStockMT = ilqrMT.getController();
+	ILQR_BASE<STATE_DIM, INPUT_DIM>::controller_ptr_array_t controllersStockST = ilqrST.getController();
+//	ILQR_BASE<STATE_DIM, INPUT_DIM>::controller_ptr_array_t controllersStockMT = ilqrMT.getController();
 
 	// get performance indices
 	double totalCost_st, totalCost_mt;

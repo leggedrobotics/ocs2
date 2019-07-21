@@ -32,15 +32,15 @@ namespace ocs2{
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-ILQR_MT<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::ILQR_MT (
+template <size_t STATE_DIM, size_t INPUT_DIM>
+ILQR_MT<STATE_DIM, INPUT_DIM>::ILQR_MT (
 		const controlled_system_base_t* systemDynamicsPtr,
 		const derivatives_base_t* systemDerivativesPtr,
 		const constraint_base_t* systemConstraintsPtr,
 		const cost_function_base_t* costFunctionPtr,
 		const operating_trajectories_base_t* operatingTrajectoriesPtr,
 		const ILQR_Settings& settings /*= ILQR_Settings()*/,
-		const LOGIC_RULES_T* logicRulesPtr /*= nullptr*/,
+		std::shared_ptr<HybridLogicRules> logicRulesPtr /*= nullptr*/,
 		const cost_function_base_t* heuristicsFunctionPtr /*= nullptr*/)
 
 	: BASE(systemDynamicsPtr, systemDerivativesPtr, systemConstraintsPtr, costFunctionPtr, operatingTrajectoriesPtr,
@@ -57,8 +57,8 @@ ILQR_MT<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::ILQR_MT (
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-ILQR_MT<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::~ILQR_MT()  {
+template <size_t STATE_DIM, size_t INPUT_DIM>
+ILQR_MT<STATE_DIM, INPUT_DIM>::~ILQR_MT()  {
 
 	workersActive_ = false;
 	workerTask_ = SHUTDOWN;
@@ -82,8 +82,8 @@ ILQR_MT<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::~ILQR_MT()  {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void ILQR_MT<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::lineSearch(bool computeISEs) {
+template <size_t STATE_DIM, size_t INPUT_DIM>
+void ILQR_MT<STATE_DIM, INPUT_DIM>::lineSearch(bool computeISEs) {
 
 	// perform one rollout while the input correction for the type-1 constraint is considered.
 	BASE::lineSearchBase(computeISEs);
@@ -158,8 +158,8 @@ void ILQR_MT<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::lineSearch(bool computeISEs) 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void ILQR_MT<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::launchWorkerThreads()
+template <size_t STATE_DIM, size_t INPUT_DIM>
+void ILQR_MT<STATE_DIM, INPUT_DIM>::launchWorkerThreads()
 {
 	workersActive_ = true;
 	workerTask_ = IDLE;
@@ -174,8 +174,8 @@ void ILQR_MT<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::launchWorkerThreads()
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void ILQR_MT<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::threadWork(size_t threadId)
+template <size_t STATE_DIM, size_t INPUT_DIM>
+void ILQR_MT<STATE_DIM, INPUT_DIM>::threadWork(size_t threadId)
 {
 	if(BASE::ddpSettings_.debugPrintMT_) {
 		BASE::printString("[MT]: [Thread " + std::to_string(threadId) + "]: launched");
@@ -291,8 +291,8 @@ void ILQR_MT<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::threadWork(size_t threadId)
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void ILQR_MT<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::approximatePartitionLQ(const size_t& partitionIndex)  {
+template <size_t STATE_DIM, size_t INPUT_DIM>
+void ILQR_MT<STATE_DIM, INPUT_DIM>::approximatePartitionLQ(const size_t& partitionIndex)  {
 
 	subsystemProcessed_ = partitionIndex;
 
@@ -340,8 +340,8 @@ void ILQR_MT<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::approximatePartitionLQ(const 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void ILQR_MT<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::executeApproximatePartitionLQWorker(
+template <size_t STATE_DIM, size_t INPUT_DIM>
+void ILQR_MT<STATE_DIM, INPUT_DIM>::executeApproximatePartitionLQWorker(
 		size_t threadId,
 		const size_t& partitionIndex) {
 
@@ -398,8 +398,8 @@ void ILQR_MT<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::executeApproximatePartitionLQ
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void ILQR_MT<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculatePartitionController(const size_t& partitionIndex) {
+template <size_t STATE_DIM, size_t INPUT_DIM>
+void ILQR_MT<STATE_DIM, INPUT_DIM>::calculatePartitionController(const size_t& partitionIndex) {
 
 	subsystemProcessed_ = partitionIndex;
 
@@ -449,8 +449,8 @@ void ILQR_MT<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculatePartitionController(
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void ILQR_MT<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::executeCalculatePartitionController(
+template <size_t STATE_DIM, size_t INPUT_DIM>
+void ILQR_MT<STATE_DIM, INPUT_DIM>::executeCalculatePartitionController(
 		size_t threadId,
 		const size_t& partitionIndex)  {
 
@@ -505,8 +505,8 @@ void ILQR_MT<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::executeCalculatePartitionCont
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void ILQR_MT<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::executeLineSearchWorker(size_t threadId)
+template <size_t STATE_DIM, size_t INPUT_DIM>
+void ILQR_MT<STATE_DIM, INPUT_DIM>::executeLineSearchWorker(size_t threadId)
 {
 	if(BASE::ddpSettings_.debugPrintMT_) {
 		BASE::printString("[MT]: [Thread " + std::to_string(threadId) + "]: Starting executeLineSearchWorker. ");
@@ -683,9 +683,9 @@ void ILQR_MT<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::executeLineSearchWorker(size_
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-typename ILQR_MT<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::scalar_t
-	ILQR_MT<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::solveSequentialRiccatiEquations(
+template <size_t STATE_DIM, size_t INPUT_DIM>
+typename ILQR_MT<STATE_DIM, INPUT_DIM>::scalar_t
+	ILQR_MT<STATE_DIM, INPUT_DIM>::solveSequentialRiccatiEquations(
 		const state_matrix_t& SmFinal,
 		const state_vector_t& SvFinal,
 		const eigen_scalar_t& sFinal){
@@ -782,8 +782,8 @@ typename ILQR_MT<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::scalar_t
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void ILQR_MT<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::executeRiccatiSolver(size_t threadId) {
+template <size_t STATE_DIM, size_t INPUT_DIM>
+void ILQR_MT<STATE_DIM, INPUT_DIM>::executeRiccatiSolver(size_t threadId) {
 
 	for (int i = endingIndicesRiccatiWorker_[threadId]; i>=startingIndicesRiccatiWorker_[threadId]; i--) {
 
@@ -868,8 +868,8 @@ void ILQR_MT<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::executeRiccatiSolver(size_t t
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void ILQR_MT<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::distributeWork(){
+template <size_t STATE_DIM, size_t INPUT_DIM>
+void ILQR_MT<STATE_DIM, INPUT_DIM>::distributeWork(){
 
 	const int N = BASE::ddpSettings_.nThreads_;
 	startingIndicesRiccatiWorker_.resize(N);
@@ -915,8 +915,8 @@ void ILQR_MT<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::distributeWork(){
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void ILQR_MT<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::runInit() {
+template <size_t STATE_DIM, size_t INPUT_DIM>
+void ILQR_MT<STATE_DIM, INPUT_DIM>::runInit() {
 
 	// disable Eigen multi-threading
 	Eigen::setNbThreads(1);
@@ -934,8 +934,8 @@ void ILQR_MT<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::runInit() {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void ILQR_MT<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::runIteration() {
+template <size_t STATE_DIM, size_t INPUT_DIM>
+void ILQR_MT<STATE_DIM, INPUT_DIM>::runIteration() {
 
 	// disable Eigen multi-threading
 	Eigen::setNbThreads(1);
@@ -950,8 +950,8 @@ void ILQR_MT<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::runIteration() {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void ILQR_MT<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::runExit() {
+template <size_t STATE_DIM, size_t INPUT_DIM>
+void ILQR_MT<STATE_DIM, INPUT_DIM>::runExit() {
 
 	// disable Eigen multi-threading
 	Eigen::setNbThreads(1);

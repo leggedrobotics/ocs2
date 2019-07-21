@@ -8,29 +8,27 @@
 #include "ocs2_core/Dimensions.h"
 #include "ocs2_core/dynamics/ControlledSystemBase.h"
 #include "ocs2_core/logic/rules/NullLogicRules.h"
-#include "ocs2_core/logic/machine/LogicRulesMachine.h"
+#include "ocs2_core/logic/machine/HybridLogicRulesMachine.h"
 #include "ocs2_core/loopshaping/LoopshapingDefinition.h"
 
 namespace ocs2 {
     template<size_t FULL_STATE_DIM, size_t FULL_INPUT_DIM,
         size_t SYSTEM_STATE_DIM, size_t SYSTEM_INPUT_DIM,
-        size_t FILTER_STATE_DIM, size_t FILTER_INPUT_DIM,
-        class LOGIC_RULES_T=NullLogicRules>
-    class LoopshapingDynamics : public
-                                ControlledSystemBase<FULL_STATE_DIM, FULL_INPUT_DIM, LOGIC_RULES_T>
+        size_t FILTER_STATE_DIM, size_t FILTER_INPUT_DIM>
+    class LoopshapingDynamics : public ControlledSystemBase<FULL_STATE_DIM, FULL_INPUT_DIM>
     {
     public:
       EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
       using Ptr = std::shared_ptr<LoopshapingDynamics>;
 
-      using BASE = ControlledSystemBase<FULL_STATE_DIM, FULL_INPUT_DIM, LOGIC_RULES_T>;
+      using BASE = ControlledSystemBase<FULL_STATE_DIM, FULL_INPUT_DIM>;
       using typename BASE::scalar_t;
       using typename BASE::state_vector_t;
       using typename BASE::input_vector_t;
       using typename BASE::dynamic_vector_t;
 
-      using SYSTEM = ocs2::ControlledSystemBase<SYSTEM_STATE_DIM, SYSTEM_INPUT_DIM, LOGIC_RULES_T>;
+      using SYSTEM = ocs2::ControlledSystemBase<SYSTEM_STATE_DIM, SYSTEM_INPUT_DIM>;
       using system_state_vector_t = typename SYSTEM::state_vector_t;
       using system_input_vector_t = typename SYSTEM::input_vector_t;
 
@@ -44,15 +42,6 @@ namespace ocs2 {
           controlledSystem_(obj.controlledSystem_->clone()),
             loopshapingDefinition_(obj.loopshapingDefinition_)
         {}
-
-        void initializeModel(
-            LogicRulesMachine<LOGIC_RULES_T>& logicRulesMachine,
-            const size_t& partitionIndex,
-            const char* algorithmName=nullptr) override
-        {
-          BASE::initializeModel(logicRulesMachine, partitionIndex, algorithmName);
-          controlledSystem_->initializeModel(logicRulesMachine, partitionIndex, algorithmName);
-        }
 
         static std::unique_ptr<LoopshapingDynamics> create(const SYSTEM& controlledSystem, std::shared_ptr<LoopshapingDefinition> loopshapingDefinition);
 
@@ -131,52 +120,46 @@ namespace ocs2 {
 namespace ocs2 {
 template<size_t FULL_STATE_DIM, size_t FULL_INPUT_DIM,
     size_t SYSTEM_STATE_DIM, size_t SYSTEM_INPUT_DIM,
-    size_t FILTER_STATE_DIM, size_t FILTER_INPUT_DIM,
-    class LOGIC_RULES_T>
+    size_t FILTER_STATE_DIM, size_t FILTER_INPUT_DIM>
 std::unique_ptr<LoopshapingDynamics<FULL_STATE_DIM,
-                                    FULL_INPUT_DIM,
-                                    SYSTEM_STATE_DIM,
-                                    SYSTEM_INPUT_DIM,
-                                    FILTER_STATE_DIM,
-                                    FILTER_INPUT_DIM,
-                                    LOGIC_RULES_T>> LoopshapingDynamics<FULL_STATE_DIM,
-                                                                        FULL_INPUT_DIM,
-                                                                        SYSTEM_STATE_DIM,
-                                                                        SYSTEM_INPUT_DIM,
-                                                                        FILTER_STATE_DIM,
-                                                                        FILTER_INPUT_DIM,
-                                                                        LOGIC_RULES_T>::create(
+                                                                                             FULL_INPUT_DIM,
+                                                                                             SYSTEM_STATE_DIM,
+                                                                                             SYSTEM_INPUT_DIM,
+                                                                                             FILTER_STATE_DIM,
+                                                                                             FILTER_INPUT_DIM>> LoopshapingDynamics<FULL_STATE_DIM,
+                                                                                             FULL_INPUT_DIM,
+                                                                                             SYSTEM_STATE_DIM,
+                                                                                             SYSTEM_INPUT_DIM,
+                                                                                             FILTER_STATE_DIM,
+                                                                                             FILTER_INPUT_DIM>::create(
     const SYSTEM &controlledSystem,
     std::shared_ptr<LoopshapingDefinition> loopshapingDefinition) {
     switch (loopshapingDefinition->getType()) {
         case LoopshapingType::outputpattern :
             return std::unique_ptr<LoopshapingDynamics>(new LoopshapingDynamicsOutputPattern<FULL_STATE_DIM,
-                    FULL_INPUT_DIM,
-                    SYSTEM_STATE_DIM,
-                    SYSTEM_INPUT_DIM,
-                    FILTER_STATE_DIM,
-                    FILTER_INPUT_DIM,
-                    LOGIC_RULES_T>(controlledSystem,
+                                                                                             FULL_INPUT_DIM,
+                                                                                             SYSTEM_STATE_DIM,
+                                                                                             SYSTEM_INPUT_DIM,
+                                                                                             FILTER_STATE_DIM,
+                                                                                             FILTER_INPUT_DIM>(controlledSystem,
                                    std::move(
                                            loopshapingDefinition)));
         case LoopshapingType::inputpattern :
             return std::unique_ptr<LoopshapingDynamics>(new LoopshapingDynamicsInputPattern<FULL_STATE_DIM,
-                    FULL_INPUT_DIM,
-                    SYSTEM_STATE_DIM,
-                    SYSTEM_INPUT_DIM,
-                    FILTER_STATE_DIM,
-                    FILTER_INPUT_DIM,
-                    LOGIC_RULES_T>(controlledSystem,
+                                                                                             FULL_INPUT_DIM,
+                                                                                             SYSTEM_STATE_DIM,
+                                                                                             SYSTEM_INPUT_DIM,
+                                                                                             FILTER_STATE_DIM,
+                                                                                             FILTER_INPUT_DIM>(controlledSystem,
                                    std::move(
                                            loopshapingDefinition)));
         case LoopshapingType::eliminatepattern :
             return std::unique_ptr<LoopshapingDynamics>(new LoopshapingDynamicsEliminatePattern<FULL_STATE_DIM,
-                    FULL_INPUT_DIM,
-                    SYSTEM_STATE_DIM,
-                    SYSTEM_INPUT_DIM,
-                    FILTER_STATE_DIM,
-                    FILTER_INPUT_DIM,
-                    LOGIC_RULES_T>(controlledSystem,
+                                                                                             FULL_INPUT_DIM,
+                                                                                             SYSTEM_STATE_DIM,
+                                                                                             SYSTEM_INPUT_DIM,
+                                                                                             FILTER_STATE_DIM,
+                                                                                             FILTER_INPUT_DIM>(controlledSystem,
                                    std::move(
                                            loopshapingDefinition)));
     }

@@ -46,16 +46,13 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 namespace ocs2 {
 
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T=NullLogicRules>
-class ProjectedGDDP : public GDDP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>
+template <size_t STATE_DIM, size_t INPUT_DIM>
+class ProjectedGDDP : public GDDP<STATE_DIM, INPUT_DIM>
 {
 public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-	static_assert(std::is_base_of<LogicRulesBase, LOGIC_RULES_T>::value,
-			"LOGIC_RULES_T must inherit from LogicRulesBase");
-
-	typedef GDDP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> BASE;
+	typedef GDDP<STATE_DIM, INPUT_DIM> BASE;
 
 	using typename BASE::scalar_t;
 	using typename BASE::scalar_array_t;

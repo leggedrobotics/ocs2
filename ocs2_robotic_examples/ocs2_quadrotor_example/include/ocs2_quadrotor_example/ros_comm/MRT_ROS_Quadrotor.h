@@ -84,7 +84,7 @@ public:
 	 */
 	MRT_ROS_Quadrotor(const std::string& robotName = "robot")
 
-	: BASE(NullLogicRules(), robotName)
+	: BASE(robotName)
 	{}
 
 	/**

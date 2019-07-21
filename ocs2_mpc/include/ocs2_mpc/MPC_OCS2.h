@@ -46,23 +46,19 @@ namespace ocs2 {
  *
  * @tparam STATE_DIM: Dimension of the state space.
  * @tparam INPUT_DIM: Dimension of the control input space.
- * @tparam LOGIC_RULES_T: Logic Rules type.
  */
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-class MPC_OCS2 : public MPC_SLQ<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>
+template <size_t STATE_DIM, size_t INPUT_DIM>
+class MPC_OCS2 : public MPC_SLQ<STATE_DIM, INPUT_DIM>
 {
 public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-	static_assert(std::is_base_of<HybridLogicRules, LOGIC_RULES_T>::value,
-			"LOGIC_RULES_T must inherit from HybridLogicRules");
+	using Ptr = std::shared_ptr<MPC_OCS2<STATE_DIM, INPUT_DIM>>;
 
-	using Ptr = std::shared_ptr<MPC_OCS2<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>>;
+	using slq_data_collector_t = SLQ_DataCollector<STATE_DIM, INPUT_DIM>;
+	using gddp_t = ProjectedGDDP<STATE_DIM, INPUT_DIM>;
 
-	using slq_data_collector_t = SLQ_DataCollector<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>;
-	using gddp_t = ProjectedGDDP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>;
-
-	using BASE = MPC_SLQ<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>;
+	using BASE = MPC_SLQ<STATE_DIM, INPUT_DIM>;
 
 	using DIMENSIONS = Dimensions<STATE_DIM, INPUT_DIM>;
 	using controller_t = typename DIMENSIONS::controller_t;
@@ -122,7 +118,7 @@ public:
 			const SLQ_Settings& slqSettings = SLQ_Settings(),
 			const GDDP_Settings& gddpSettings = GDDP_Settings(),
 			const MPC_Settings& mpcSettings = MPC_Settings(),
-			const LOGIC_RULES_T* logicRulesPtr = nullptr,
+			std::shared_ptr<HybridLogicRules> logicRulesPtr = nullptr,
 			const mode_sequence_template_t* modeSequenceTemplatePtr = nullptr,
 			const cost_function_base_t* heuristicsFunctionPtr = nullptr);
 

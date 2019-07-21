@@ -34,9 +34,9 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <cstring>
 
 #include "ocs2_core/Dimensions.h"
-#include "ocs2_core/logic/rules/LogicRulesBase.h"
+#include "ocs2_core/logic/rules/HybridLogicRules.h"
 #include "ocs2_core/logic/rules/NullLogicRules.h"
-#include "ocs2_core/logic/machine/LogicRulesMachine.h"
+#include "ocs2_core/logic/machine/HybridLogicRulesMachine.h"
 
 namespace ocs2 {
 
@@ -60,18 +60,15 @@ namespace ocs2 {
  *
  * @tparam STATE_DIM: Dimension of the state space.
  * @tparam INPUT_DIM: Dimension of the control input space.
- * @tparam LOGIC_RULES_T: Logic Rules type (default NullLogicRules).
  */
-template<size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T=NullLogicRules>
+template<size_t STATE_DIM, size_t INPUT_DIM>
 class ConstraintBase
 {
 public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-	static_assert(std::is_base_of<LogicRulesBase, LOGIC_RULES_T>::value,
-			"LOGIC_RULES_T must inherit from LogicRulesBase");
 
-	using Ptr = std::shared_ptr<ConstraintBase<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> >;
-	using ConstPtr = std::shared_ptr<const ConstraintBase<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> >;
+	using Ptr = std::shared_ptr<ConstraintBase<STATE_DIM, INPUT_DIM> >;
+	using ConstPtr = std::shared_ptr<const ConstraintBase<STATE_DIM, INPUT_DIM> >;
 
 	using DIMENSIONS = Dimensions<STATE_DIM, INPUT_DIM>;
 	using scalar_t = typename DIMENSIONS::scalar_t;
@@ -128,28 +125,13 @@ public:
 	}
 
 	/**
-	 * Initializes the system constraints.
-	 *
-	 * @param [in] logicRulesMachine: A class which contains and parse the logic rules e.g
-	 * method findActiveSubsystemHandle returns a Lambda expression which can be used to
-	 * find the ID of the current active subsystem.
-	 * @param [in] partitionIndex: index of the time partition.
-	 * @param [in] algorithmName: The algorithm that class this class (default not defined).
-	 */
-	virtual void initializeModel(
-			LogicRulesMachine<LOGIC_RULES_T>& logicRulesMachine,
-			const size_t& partitionIndex,
-			const char* algorithmName = nullptr)
-	{}
-
-	/**
 	 * Clones the class.
 	 *
 	 * @return A raw pointer to the class.
 	 */
-	virtual ConstraintBase<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>* clone() const {
+	virtual ConstraintBase<STATE_DIM, INPUT_DIM>* clone() const {
 
-		return new ConstraintBase<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>(*this);
+		return new ConstraintBase<STATE_DIM, INPUT_DIM>(*this);
 	}
 
 	/**

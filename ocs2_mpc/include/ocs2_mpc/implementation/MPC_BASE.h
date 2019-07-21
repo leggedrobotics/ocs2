@@ -34,8 +34,8 @@ using namespace std::chrono;
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-MPC_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::MPC_BASE()
+template <size_t STATE_DIM, size_t INPUT_DIM>
+MPC_BASE<STATE_DIM, INPUT_DIM>::MPC_BASE()
 
 	: initRun_(true)
 	, logicRulesTemplateUpdated_(false)
@@ -58,8 +58,8 @@ MPC_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::MPC_BASE()
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-MPC_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::MPC_BASE(
+template <size_t STATE_DIM, size_t INPUT_DIM>
+MPC_BASE<STATE_DIM, INPUT_DIM>::MPC_BASE(
 		const scalar_array_t& partitioningTimes,
 		const MPC_Settings &mpcSettings /*= MPC_Settings()*/)
 
@@ -107,8 +107,8 @@ MPC_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::MPC_BASE(
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void MPC_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::reset() {
+template <size_t STATE_DIM, size_t INPUT_DIM>
+void MPC_BASE<STATE_DIM, INPUT_DIM>::reset() {
 
 	initRun_ = true;
 	measuredRuntimeMS_ = std::chrono::milliseconds(0);
@@ -126,8 +126,8 @@ void MPC_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::reset() {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void MPC_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::setBaseSolverPtr(solver_base_t* solverPtr) {
+template <size_t STATE_DIM, size_t INPUT_DIM>
+void MPC_BASE<STATE_DIM, INPUT_DIM>::setBaseSolverPtr(solver_base_t* solverPtr) {
 
 	solverPtr_ = solverPtr;
 
@@ -139,8 +139,8 @@ void MPC_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::setBaseSolverPtr(solver_base
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void MPC_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::rewind() {
+template <size_t STATE_DIM, size_t INPUT_DIM>
+void MPC_BASE<STATE_DIM, INPUT_DIM>::rewind() {
 
 	for (size_t i=0; i<2*initnumPartitions_; i++) {
 		partitioningTimes_[i] = partitioningTimes_[i+initnumPartitions_];
@@ -156,7 +156,7 @@ void MPC_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::rewind() {
 	solverPtr_->rewindOptimizer(initnumPartitions_);
 
 	// Rewind the solver's internal logicRules. It is not necessary to call the
-	// LogicRulesMachine::updateLogicRules() method, since the partitioningTimes_
+	// HybridLogicRulesMachine::updateLogicRules() method, since the partitioningTimes_
 	// is updated as well the update method will be called automatically.
 	if (solverPtr_->getLogicRulesPtr()) {
 		const scalar_array_t& eventTimes = solverPtr_->getLogicRulesPtr()->eventTimes();
@@ -170,8 +170,8 @@ void MPC_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::rewind() {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void MPC_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::adjustmentTimeHorizon(
+template <size_t STATE_DIM, size_t INPUT_DIM>
+void MPC_BASE<STATE_DIM, INPUT_DIM>::adjustmentTimeHorizon(
 		const scalar_array_t& partitioningTimes,
 		scalar_t& initTime,
 		scalar_t& finalTime,
@@ -205,8 +205,8 @@ void MPC_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::adjustmentTimeHorizon(
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-bool MPC_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::run(
+template <size_t STATE_DIM, size_t INPUT_DIM>
+bool MPC_BASE<STATE_DIM, INPUT_DIM>::run(
 		const scalar_t& currentTime,
 		const state_vector_t& currentState)  {
 
@@ -328,9 +328,9 @@ bool MPC_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::run(
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-typename MPC_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::scalar_t
-	MPC_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::getStartTime() const {
+template <size_t STATE_DIM, size_t INPUT_DIM>
+typename MPC_BASE<STATE_DIM, INPUT_DIM>::scalar_t
+	MPC_BASE<STATE_DIM, INPUT_DIM>::getStartTime() const {
 
 	return lastControlDesignTime_;
 }
@@ -338,9 +338,9 @@ typename MPC_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::scalar_t
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-typename MPC_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::scalar_t
-	MPC_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::getFinalTime() const {
+template <size_t STATE_DIM, size_t INPUT_DIM>
+typename MPC_BASE<STATE_DIM, INPUT_DIM>::scalar_t
+	MPC_BASE<STATE_DIM, INPUT_DIM>::getFinalTime() const {
 
 	if (mpcSettings_.recedingHorizon_ == true) {
 		return lastControlDesignTime_ + getTimeHorizon();
@@ -353,9 +353,9 @@ typename MPC_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::scalar_t
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-typename MPC_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::scalar_t
-	MPC_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::getTimeHorizon() const {
+template <size_t STATE_DIM, size_t INPUT_DIM>
+typename MPC_BASE<STATE_DIM, INPUT_DIM>::scalar_t
+	MPC_BASE<STATE_DIM, INPUT_DIM>::getTimeHorizon() const {
 
 	if (mpcSettings_.recedingHorizon_ == true) {
 		return initPartitioningTimes_.back() - initPartitioningTimes_.front();
@@ -367,8 +367,8 @@ typename MPC_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::scalar_t
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void MPC_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::getPartitioningTimes(
+template <size_t STATE_DIM, size_t INPUT_DIM>
+void MPC_BASE<STATE_DIM, INPUT_DIM>::getPartitioningTimes(
 		scalar_array_t& partitioningTimes) const {
 
 	partitioningTimes.resize(finalActivePartitionIndex_+2);
@@ -380,18 +380,18 @@ void MPC_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::getPartitioningTimes(
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void MPC_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::setLogicRules(
-		const LOGIC_RULES_T& logicRules) {
+template <size_t STATE_DIM, size_t INPUT_DIM>
+void MPC_BASE<STATE_DIM, INPUT_DIM>::setLogicRules(
+		std::shared_ptr<HybridLogicRules> logicRules) {
 
-	solverPtr_->setLogicRules(logicRules);
+	solverPtr_->setLogicRules(std::move(logicRules));
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-const LOGIC_RULES_T* MPC_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::getLogicRulesPtr() const {
+template <size_t STATE_DIM, size_t INPUT_DIM>
+const HybridLogicRules* MPC_BASE<STATE_DIM, INPUT_DIM>::getLogicRulesPtr() const {
 
 	auto result  = solverPtr_->getLogicRulesPtr();
 	if(!result){
@@ -403,8 +403,8 @@ const LOGIC_RULES_T* MPC_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::getLogicRule
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void MPC_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::setNewLogicRulesTemplate(
+template <size_t STATE_DIM, size_t INPUT_DIM>
+void MPC_BASE<STATE_DIM, INPUT_DIM>::setNewLogicRulesTemplate(
 		const mode_sequence_template_t& newLogicRulesTemplate) {
 
 	logicRulesTemplateUpdated_ = true;
@@ -414,8 +414,8 @@ void MPC_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::setNewLogicRulesTemplate(
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void MPC_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::getCostDesiredTrajectoriesPtr(
+template <size_t STATE_DIM, size_t INPUT_DIM>
+void MPC_BASE<STATE_DIM, INPUT_DIM>::getCostDesiredTrajectoriesPtr(
 		const cost_desired_trajectories_t*& costDesiredTrajectoriesPtr) const {
 
 	solverPtr_->getCostDesiredTrajectoriesPtr(costDesiredTrajectoriesPtr);
@@ -424,8 +424,8 @@ void MPC_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::getCostDesiredTrajectoriesPt
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void MPC_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::setCostDesiredTrajectories(
+template <size_t STATE_DIM, size_t INPUT_DIM>
+void MPC_BASE<STATE_DIM, INPUT_DIM>::setCostDesiredTrajectories(
 		const cost_desired_trajectories_t& costDesiredTrajectories) {
 
 	solverPtr_->setCostDesiredTrajectories(costDesiredTrajectories);
@@ -434,8 +434,8 @@ void MPC_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::setCostDesiredTrajectories(
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void MPC_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::setCostDesiredTrajectories(
+template <size_t STATE_DIM, size_t INPUT_DIM>
+void MPC_BASE<STATE_DIM, INPUT_DIM>::setCostDesiredTrajectories(
 		const scalar_array_t& desiredTimeTrajectory,
 		const dynamic_vector_array_t& desiredStateTrajectory,
 		const dynamic_vector_array_t& desiredInputTrajectory) {
@@ -447,8 +447,8 @@ void MPC_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::setCostDesiredTrajectories(
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void MPC_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::swapCostDesiredTrajectories(
+template <size_t STATE_DIM, size_t INPUT_DIM>
+void MPC_BASE<STATE_DIM, INPUT_DIM>::swapCostDesiredTrajectories(
 		cost_desired_trajectories_t& costDesiredTrajectories) {
 
 	solverPtr_->swapCostDesiredTrajectories(costDesiredTrajectories);
@@ -457,8 +457,8 @@ void MPC_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::swapCostDesiredTrajectories(
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void MPC_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::swapCostDesiredTrajectories(
+template <size_t STATE_DIM, size_t INPUT_DIM>
+void MPC_BASE<STATE_DIM, INPUT_DIM>::swapCostDesiredTrajectories(
 		scalar_array_t& desiredTimeTrajectory,
 		dynamic_vector_array_t& desiredStateTrajectory,
 		dynamic_vector_array_t& desiredInputTrajectory) {
@@ -470,9 +470,9 @@ void MPC_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::swapCostDesiredTrajectories(
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-typename MPC_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::controller_ptr_array_t const *
-MPC_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::getOptimizedControllerPtr() const {
+template <size_t STATE_DIM, size_t INPUT_DIM>
+typename MPC_BASE<STATE_DIM, INPUT_DIM>::controller_ptr_array_t const *
+MPC_BASE<STATE_DIM, INPUT_DIM>::getOptimizedControllerPtr() const {
 
 	return optimizedControllersStockPtr_;
 }
@@ -480,8 +480,8 @@ MPC_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::getOptimizedControllerPtr() const
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void MPC_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::getOptimizedTrajectoriesPtr(
+template <size_t STATE_DIM, size_t INPUT_DIM>
+void MPC_BASE<STATE_DIM, INPUT_DIM>::getOptimizedTrajectoriesPtr(
 		const scalar_array2_t*& optimizedTimeTrajectoriesStockPtr,
 		const state_vector_array2_t*& optimizedStateTrajectoriesStockPtr,
 		const input_vector_array2_t*& optimizedInputTrajectoriesStockPtr) const {
@@ -494,8 +494,8 @@ void MPC_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::getOptimizedTrajectoriesPtr(
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-MPC_Settings& MPC_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::settings() {
+template <size_t STATE_DIM, size_t INPUT_DIM>
+MPC_Settings& MPC_BASE<STATE_DIM, INPUT_DIM>::settings() {
 
 	return mpcSettings_;
 }

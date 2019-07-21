@@ -41,10 +41,9 @@ namespace ocs2{
  * @tparam Derived: Derived class type.
  * @tparam STATE_DIM: Dimension of the state space.
  * @tparam INPUT_DIM: Dimension of the control input space.
- * @tparam LOGIC_RULES_T: Logic Rules type (default NullLogicRules).
  */
-template <class Derived, size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T=NullLogicRules, size_t LOGIC_VARIABLE_DIM=0, size_t STATE_DESIRED_DIM=STATE_DIM, size_t INPUT_DESIRED_DIM=INPUT_DIM>
-class CostFunctionBaseAD : public CostFunctionBase<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>
+template <class Derived, size_t STATE_DIM, size_t INPUT_DIM, size_t LOGIC_VARIABLE_DIM=0, size_t STATE_DESIRED_DIM=STATE_DIM, size_t INPUT_DESIRED_DIM=INPUT_DIM>
+class CostFunctionBaseAD : public CostFunctionBase<STATE_DIM, INPUT_DIM>
 {
 public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
@@ -60,10 +59,10 @@ public:
 		domain_dim_   = variable_dim_ + state_desired_dim_ + input_desired_dim_ + logic_variable_dim_,
 	};
 
-	using Ptr = std::shared_ptr<CostFunctionBaseAD<Derived, STATE_DIM, INPUT_DIM, LOGIC_RULES_T, LOGIC_VARIABLE_DIM, STATE_DESIRED_DIM, INPUT_DESIRED_DIM> >;
-	using ConstPtr = std::shared_ptr<const CostFunctionBaseAD<Derived, STATE_DIM, INPUT_DIM, LOGIC_RULES_T, LOGIC_VARIABLE_DIM, STATE_DESIRED_DIM, INPUT_DESIRED_DIM> >;
+	using Ptr = std::shared_ptr<CostFunctionBaseAD<Derived, STATE_DIM, INPUT_DIM, LOGIC_VARIABLE_DIM, STATE_DESIRED_DIM, INPUT_DESIRED_DIM> >;
+	using ConstPtr = std::shared_ptr<const CostFunctionBaseAD<Derived, STATE_DIM, INPUT_DIM, LOGIC_VARIABLE_DIM, STATE_DESIRED_DIM, INPUT_DESIRED_DIM> >;
 
-	using BASE = CostFunctionBase<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>;
+	using BASE = CostFunctionBase<STATE_DIM, INPUT_DIM>;
 	using typename BASE::scalar_t;
 	using typename BASE::scalar_array_t;
 	using typename BASE::state_vector_t;
@@ -164,10 +163,7 @@ public:
 	 * @param [in] algorithmName: The algorithm that class this class (default not defined).
 	 * @return The the logic variables.
 	 */
-	logic_variable_t getlogicVariables(
-			LogicRulesMachine<LOGIC_RULES_T>& logicRulesMachine,
-			const size_t& partitionIndex,
-			const char* algorithmName = nullptr);
+	logic_variable_t getlogicVariables(scalar_t time);
 
 	/**
 	 * Sets the current time, state, and control input.
@@ -181,19 +177,6 @@ public:
 			const scalar_t& t,
 			const state_vector_t& x,
 			const input_vector_t& u) final;
-
-	/**
-	 * Initializes the cost function. If LOGIC_RULES_T is not of type NullLogicRules, this
-	 * method will call user-defined getlogicVariables().
-	 *
-	 * @param [in] logicRulesMachine: A class which contains and parse the logic rules.
-	 * @param [in] partitionIndex: index of the time partition.
-	 * @param [in] algorithmName: The algorithm that class this class (default not defined).
-	 */
-	void initializeModel(
-			LogicRulesMachine<LOGIC_RULES_T>& logicRulesMachine,
-			const size_t& partitionIndex,
-			const char* algorithmName = nullptr) final;
 
 	/**
 	 * creates the forward model, the Jacobian model, and the Hessian model.

@@ -32,8 +32,8 @@ namespace ocs2{
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <class Derived, size_t STATE_DIM, size_t INPUT_DIM, class logic_rules_template_t, size_t NUM_MODES>
-SystemDynamicsBaseAD<Derived, STATE_DIM, INPUT_DIM, logic_rules_template_t, NUM_MODES>::SystemDynamicsBaseAD(
+template <class Derived, size_t STATE_DIM, size_t INPUT_DIM, size_t NUM_MODES>
+SystemDynamicsBaseAD<Derived, STATE_DIM, INPUT_DIM, NUM_MODES>::SystemDynamicsBaseAD(
 		const bool& dynamicLibraryIsCompiled /*= false*/)
 	: BASE()
 	, dynamicLibraryIsCompiled_(dynamicLibraryIsCompiled)
@@ -48,8 +48,8 @@ SystemDynamicsBaseAD<Derived, STATE_DIM, INPUT_DIM, logic_rules_template_t, NUM_
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <class Derived, size_t STATE_DIM, size_t INPUT_DIM, class logic_rules_template_t, size_t NUM_MODES>
-SystemDynamicsBaseAD<Derived, STATE_DIM, INPUT_DIM, logic_rules_template_t, NUM_MODES>::SystemDynamicsBaseAD(
+template <class Derived, size_t STATE_DIM, size_t INPUT_DIM, size_t NUM_MODES>
+SystemDynamicsBaseAD<Derived, STATE_DIM, INPUT_DIM, NUM_MODES>::SystemDynamicsBaseAD(
 		const SystemDynamicsBaseAD& rhs)
 
 	: BASE(rhs)
@@ -69,9 +69,9 @@ SystemDynamicsBaseAD<Derived, STATE_DIM, INPUT_DIM, logic_rules_template_t, NUM_
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <class Derived, size_t STATE_DIM, size_t INPUT_DIM, class logic_rules_template_t, size_t NUM_MODES>
-typename SystemDynamicsBaseAD<Derived, STATE_DIM, INPUT_DIM, logic_rules_template_t, NUM_MODES>::BASE*
-	SystemDynamicsBaseAD<Derived, STATE_DIM, INPUT_DIM, logic_rules_template_t, NUM_MODES>::clone() const {
+template <class Derived, size_t STATE_DIM, size_t INPUT_DIM, size_t NUM_MODES>
+typename SystemDynamicsBaseAD<Derived, STATE_DIM, INPUT_DIM, NUM_MODES>::BASE*
+	SystemDynamicsBaseAD<Derived, STATE_DIM, INPUT_DIM, NUM_MODES>::clone() const {
 
 		return new Derived(static_cast<Derived const&>(*this));
 }
@@ -79,9 +79,9 @@ typename SystemDynamicsBaseAD<Derived, STATE_DIM, INPUT_DIM, logic_rules_templat
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <class Derived, size_t STATE_DIM, size_t INPUT_DIM, class logic_rules_template_t, size_t NUM_MODES>
+template <class Derived, size_t STATE_DIM, size_t INPUT_DIM, size_t NUM_MODES>
 template <typename SCALAR_T>
-void SystemDynamicsBaseAD<Derived, STATE_DIM, INPUT_DIM, logic_rules_template_t, NUM_MODES>::systemFlowMap(
+void SystemDynamicsBaseAD<Derived, STATE_DIM, INPUT_DIM, NUM_MODES>::systemFlowMap(
 		const SCALAR_T& time,
 		const Eigen::Matrix<SCALAR_T, STATE_DIM, 1>& state,
 		const Eigen::Matrix<SCALAR_T, INPUT_DIM, 1>& input,
@@ -93,9 +93,9 @@ void SystemDynamicsBaseAD<Derived, STATE_DIM, INPUT_DIM, logic_rules_template_t,
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <class Derived, size_t STATE_DIM, size_t INPUT_DIM, class logic_rules_template_t, size_t NUM_MODES>
+template <class Derived, size_t STATE_DIM, size_t INPUT_DIM, size_t NUM_MODES>
 template <typename SCALAR_T>
-void SystemDynamicsBaseAD<Derived, STATE_DIM, INPUT_DIM, logic_rules_template_t, NUM_MODES>::systemJumpMap(
+void SystemDynamicsBaseAD<Derived, STATE_DIM, INPUT_DIM, NUM_MODES>::systemJumpMap(
 		const SCALAR_T& time,
 		const Eigen::Matrix<SCALAR_T, STATE_DIM, 1>& state,
 		const Eigen::Matrix<SCALAR_T, INPUT_DIM, 1>& input,
@@ -107,9 +107,9 @@ void SystemDynamicsBaseAD<Derived, STATE_DIM, INPUT_DIM, logic_rules_template_t,
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <class Derived, size_t STATE_DIM, size_t INPUT_DIM, class logic_rules_template_t, size_t NUM_MODES>
+template <class Derived, size_t STATE_DIM, size_t INPUT_DIM, size_t NUM_MODES>
 template <typename SCALAR_T>
-void SystemDynamicsBaseAD<Derived, STATE_DIM, INPUT_DIM, logic_rules_template_t, NUM_MODES>::systemGuardSurfaces(
+void SystemDynamicsBaseAD<Derived, STATE_DIM, INPUT_DIM, NUM_MODES>::systemGuardSurfaces(
 		const SCALAR_T& time,
 		const Eigen::Matrix<SCALAR_T, STATE_DIM, 1>& state,
 		const Eigen::Matrix<SCALAR_T, INPUT_DIM, 1>& input,
@@ -125,8 +125,8 @@ void SystemDynamicsBaseAD<Derived, STATE_DIM, INPUT_DIM, logic_rules_template_t,
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <class Derived, size_t STATE_DIM, size_t INPUT_DIM, class logic_rules_template_t, size_t NUM_MODES>
-size_t SystemDynamicsBaseAD<Derived, STATE_DIM, INPUT_DIM, logic_rules_template_t, NUM_MODES>::getNumModes() const {
+template <class Derived, size_t STATE_DIM, size_t INPUT_DIM, size_t NUM_MODES>
+size_t SystemDynamicsBaseAD<Derived, STATE_DIM, INPUT_DIM, NUM_MODES>::getNumModes() const {
 
 	return NUM_MODES;
 }
@@ -134,8 +134,8 @@ size_t SystemDynamicsBaseAD<Derived, STATE_DIM, INPUT_DIM, logic_rules_template_
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <class Derived, size_t STATE_DIM, size_t INPUT_DIM, class logic_rules_template_t, size_t NUM_MODES>
-void SystemDynamicsBaseAD<Derived, STATE_DIM, INPUT_DIM, logic_rules_template_t, NUM_MODES>::createModels(
+template <class Derived, size_t STATE_DIM, size_t INPUT_DIM, size_t NUM_MODES>
+void SystemDynamicsBaseAD<Derived, STATE_DIM, INPUT_DIM, NUM_MODES>::createModels(
 		const std::string& modelName,
 		const std::string& libraryFolder) {
 
@@ -148,8 +148,8 @@ void SystemDynamicsBaseAD<Derived, STATE_DIM, INPUT_DIM, logic_rules_template_t,
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <class Derived, size_t STATE_DIM, size_t INPUT_DIM, class logic_rules_template_t, size_t NUM_MODES>
-void SystemDynamicsBaseAD<Derived, STATE_DIM, INPUT_DIM, logic_rules_template_t, NUM_MODES>::loadModels(
+template <class Derived, size_t STATE_DIM, size_t INPUT_DIM, size_t NUM_MODES>
+void SystemDynamicsBaseAD<Derived, STATE_DIM, INPUT_DIM, NUM_MODES>::loadModels(
 		const std::string& modelName,
 		const std::string& libraryFolder) {
 
@@ -170,8 +170,8 @@ void SystemDynamicsBaseAD<Derived, STATE_DIM, INPUT_DIM, logic_rules_template_t,
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <class Derived, size_t STATE_DIM, size_t INPUT_DIM, class logic_rules_template_t, size_t NUM_MODES>
-const bool& SystemDynamicsBaseAD<Derived, STATE_DIM, INPUT_DIM, logic_rules_template_t, NUM_MODES>::isDynamicLibraryCompiled() const {
+template <class Derived, size_t STATE_DIM, size_t INPUT_DIM, size_t NUM_MODES>
+const bool& SystemDynamicsBaseAD<Derived, STATE_DIM, INPUT_DIM, NUM_MODES>::isDynamicLibraryCompiled() const {
 
 	return dynamicLibraryIsCompiled_;
 }
@@ -179,8 +179,8 @@ const bool& SystemDynamicsBaseAD<Derived, STATE_DIM, INPUT_DIM, logic_rules_temp
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <class Derived, size_t STATE_DIM, size_t INPUT_DIM, class logic_rules_template_t, size_t NUM_MODES>
-std::string SystemDynamicsBaseAD<Derived, STATE_DIM, INPUT_DIM, logic_rules_template_t, NUM_MODES>::getModelName() const {
+template <class Derived, size_t STATE_DIM, size_t INPUT_DIM, size_t NUM_MODES>
+std::string SystemDynamicsBaseAD<Derived, STATE_DIM, INPUT_DIM, NUM_MODES>::getModelName() const {
 
 	return modelName_;
 }
@@ -188,8 +188,8 @@ std::string SystemDynamicsBaseAD<Derived, STATE_DIM, INPUT_DIM, logic_rules_temp
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <class Derived, size_t STATE_DIM, size_t INPUT_DIM, class logic_rules_template_t, size_t NUM_MODES>
-void SystemDynamicsBaseAD<Derived, STATE_DIM, INPUT_DIM, logic_rules_template_t, NUM_MODES>::computeFlowMap(
+template <class Derived, size_t STATE_DIM, size_t INPUT_DIM, size_t NUM_MODES>
+void SystemDynamicsBaseAD<Derived, STATE_DIM, INPUT_DIM, NUM_MODES>::computeFlowMap(
 		const scalar_t& time,
 		const state_vector_t& state,
 		const input_vector_t& input,
@@ -204,8 +204,8 @@ void SystemDynamicsBaseAD<Derived, STATE_DIM, INPUT_DIM, logic_rules_template_t,
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <class Derived, size_t STATE_DIM, size_t INPUT_DIM, class logic_rules_template_t, size_t NUM_MODES>
-void SystemDynamicsBaseAD<Derived, STATE_DIM, INPUT_DIM, logic_rules_template_t, NUM_MODES>::computeJumpMap(
+template <class Derived, size_t STATE_DIM, size_t INPUT_DIM, size_t NUM_MODES>
+void SystemDynamicsBaseAD<Derived, STATE_DIM, INPUT_DIM, NUM_MODES>::computeJumpMap(
 		const scalar_t& time,
 		const state_vector_t& state,
 		state_vector_t& jumpedState) {
@@ -219,8 +219,8 @@ void SystemDynamicsBaseAD<Derived, STATE_DIM, INPUT_DIM, logic_rules_template_t,
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <class Derived, size_t STATE_DIM, size_t INPUT_DIM, class logic_rules_template_t, size_t NUM_MODES>
-void SystemDynamicsBaseAD<Derived, STATE_DIM, INPUT_DIM, logic_rules_template_t, NUM_MODES>::computeGuardSurfaces(
+template <class Derived, size_t STATE_DIM, size_t INPUT_DIM, size_t NUM_MODES>
+void SystemDynamicsBaseAD<Derived, STATE_DIM, INPUT_DIM, NUM_MODES>::computeGuardSurfaces(
 		const scalar_t& time,
 		const state_vector_t& state,
 		dynamic_vector_t& guardSurfacesValue) {
@@ -236,8 +236,8 @@ void SystemDynamicsBaseAD<Derived, STATE_DIM, INPUT_DIM, logic_rules_template_t,
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <class Derived, size_t STATE_DIM, size_t INPUT_DIM, class logic_rules_template_t, size_t NUM_MODES>
-void SystemDynamicsBaseAD<Derived, STATE_DIM, INPUT_DIM, logic_rules_template_t, NUM_MODES>::setCurrentStateAndControl(
+template <class Derived, size_t STATE_DIM, size_t INPUT_DIM, size_t NUM_MODES>
+void SystemDynamicsBaseAD<Derived, STATE_DIM, INPUT_DIM, NUM_MODES>::setCurrentStateAndControl(
 		const scalar_t& time,
 		const state_vector_t& state,
 		const input_vector_t& input) {
@@ -256,8 +256,8 @@ void SystemDynamicsBaseAD<Derived, STATE_DIM, INPUT_DIM, logic_rules_template_t,
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <class Derived, size_t STATE_DIM, size_t INPUT_DIM, class logic_rules_template_t, size_t NUM_MODES>
-void SystemDynamicsBaseAD<Derived, STATE_DIM, INPUT_DIM, logic_rules_template_t, NUM_MODES>::getFlowMapDerivativeTime(
+template <class Derived, size_t STATE_DIM, size_t INPUT_DIM, size_t NUM_MODES>
+void SystemDynamicsBaseAD<Derived, STATE_DIM, INPUT_DIM, NUM_MODES>::getFlowMapDerivativeTime(
 		state_vector_t& df) {
 
 	df = flowJacobian_.template block<1, state_dim_>(0, 0).transpose();
@@ -266,8 +266,8 @@ void SystemDynamicsBaseAD<Derived, STATE_DIM, INPUT_DIM, logic_rules_template_t,
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <class Derived, size_t STATE_DIM, size_t INPUT_DIM, class logic_rules_template_t, size_t NUM_MODES>
-void SystemDynamicsBaseAD<Derived, STATE_DIM, INPUT_DIM, logic_rules_template_t, NUM_MODES>::getFlowMapDerivativeState(
+template <class Derived, size_t STATE_DIM, size_t INPUT_DIM, size_t NUM_MODES>
+void SystemDynamicsBaseAD<Derived, STATE_DIM, INPUT_DIM, NUM_MODES>::getFlowMapDerivativeState(
 		state_matrix_t& A) {
 
 	A = flowJacobian_.template block<state_dim_, state_dim_>(1, 0).transpose();
@@ -276,8 +276,8 @@ void SystemDynamicsBaseAD<Derived, STATE_DIM, INPUT_DIM, logic_rules_template_t,
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <class Derived, size_t STATE_DIM, size_t INPUT_DIM, class logic_rules_template_t, size_t NUM_MODES>
-void SystemDynamicsBaseAD<Derived, STATE_DIM, INPUT_DIM, logic_rules_template_t, NUM_MODES>::getFlowMapDerivativeInput(
+template <class Derived, size_t STATE_DIM, size_t INPUT_DIM, size_t NUM_MODES>
+void SystemDynamicsBaseAD<Derived, STATE_DIM, INPUT_DIM, NUM_MODES>::getFlowMapDerivativeInput(
 		state_input_matrix_t& B) {
 
 	B = flowJacobian_.template block<input_dim_, state_dim_>(1 + state_dim_, 0).transpose();
@@ -286,8 +286,8 @@ void SystemDynamicsBaseAD<Derived, STATE_DIM, INPUT_DIM, logic_rules_template_t,
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <class Derived, size_t STATE_DIM, size_t INPUT_DIM, class logic_rules_template_t, size_t NUM_MODES>
-void SystemDynamicsBaseAD<Derived, STATE_DIM, INPUT_DIM, logic_rules_template_t, NUM_MODES>::getJumpMapDerivativeTime(
+template <class Derived, size_t STATE_DIM, size_t INPUT_DIM, size_t NUM_MODES>
+void SystemDynamicsBaseAD<Derived, STATE_DIM, INPUT_DIM, NUM_MODES>::getJumpMapDerivativeTime(
 		state_vector_t& dg) {
 
 	dg = jumpJacobian_.template block<1, state_dim_>(0, 0).transpose();
@@ -296,8 +296,8 @@ void SystemDynamicsBaseAD<Derived, STATE_DIM, INPUT_DIM, logic_rules_template_t,
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <class Derived, size_t STATE_DIM, size_t INPUT_DIM, class logic_rules_template_t, size_t NUM_MODES>
-void SystemDynamicsBaseAD<Derived, STATE_DIM, INPUT_DIM, logic_rules_template_t, NUM_MODES>::getJumpMapDerivativeState(
+template <class Derived, size_t STATE_DIM, size_t INPUT_DIM, size_t NUM_MODES>
+void SystemDynamicsBaseAD<Derived, STATE_DIM, INPUT_DIM, NUM_MODES>::getJumpMapDerivativeState(
 		state_matrix_t& G) {
 
 	G = jumpJacobian_.template block<state_dim_, state_dim_>(1, 0).transpose();
@@ -306,8 +306,8 @@ void SystemDynamicsBaseAD<Derived, STATE_DIM, INPUT_DIM, logic_rules_template_t,
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <class Derived, size_t STATE_DIM, size_t INPUT_DIM, class logic_rules_template_t, size_t NUM_MODES>
-void SystemDynamicsBaseAD<Derived, STATE_DIM, INPUT_DIM, logic_rules_template_t, NUM_MODES>::getJumpMapDerivativeInput(
+template <class Derived, size_t STATE_DIM, size_t INPUT_DIM, size_t NUM_MODES>
+void SystemDynamicsBaseAD<Derived, STATE_DIM, INPUT_DIM, NUM_MODES>::getJumpMapDerivativeInput(
 		state_input_matrix_t& H) {
 
 	H = jumpJacobian_.template block<input_dim_, state_dim_>(1 + state_dim_, 0).transpose();
@@ -316,8 +316,8 @@ void SystemDynamicsBaseAD<Derived, STATE_DIM, INPUT_DIM, logic_rules_template_t,
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <class Derived, size_t STATE_DIM, size_t INPUT_DIM, class logic_rules_template_t, size_t NUM_MODES>
-void SystemDynamicsBaseAD<Derived, STATE_DIM, INPUT_DIM, logic_rules_template_t, NUM_MODES>::getGuardSurfacesDerivativeTime(
+template <class Derived, size_t STATE_DIM, size_t INPUT_DIM, size_t NUM_MODES>
+void SystemDynamicsBaseAD<Derived, STATE_DIM, INPUT_DIM, NUM_MODES>::getGuardSurfacesDerivativeTime(
 		dynamic_vector_t& D_t_gamma) {
 
 	D_t_gamma = guardJacobian_.template block<1, num_modes_>(0, 0).transpose();
@@ -326,8 +326,8 @@ void SystemDynamicsBaseAD<Derived, STATE_DIM, INPUT_DIM, logic_rules_template_t,
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <class Derived, size_t STATE_DIM, size_t INPUT_DIM, class logic_rules_template_t, size_t NUM_MODES>
-void SystemDynamicsBaseAD<Derived, STATE_DIM, INPUT_DIM, logic_rules_template_t, NUM_MODES>::getGuardSurfacesDerivativeState(
+template <class Derived, size_t STATE_DIM, size_t INPUT_DIM, size_t NUM_MODES>
+void SystemDynamicsBaseAD<Derived, STATE_DIM, INPUT_DIM, NUM_MODES>::getGuardSurfacesDerivativeState(
 		dynamic_state_matrix_t& D_x_gamma) {
 
 	D_x_gamma = guardJacobian_.template block<state_dim_, num_modes_>(1, 0).transpose();
@@ -336,8 +336,8 @@ void SystemDynamicsBaseAD<Derived, STATE_DIM, INPUT_DIM, logic_rules_template_t,
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <class Derived, size_t STATE_DIM, size_t INPUT_DIM, class logic_rules_template_t, size_t NUM_MODES>
-void SystemDynamicsBaseAD<Derived, STATE_DIM, INPUT_DIM, logic_rules_template_t, NUM_MODES>::getGuardSurfacesDerivativeInput(
+template <class Derived, size_t STATE_DIM, size_t INPUT_DIM, size_t NUM_MODES>
+void SystemDynamicsBaseAD<Derived, STATE_DIM, INPUT_DIM, NUM_MODES>::getGuardSurfacesDerivativeInput(
 		dynamic_input_matrix_t& D_u_gamma) {
 
 	D_u_gamma = guardJacobian_.template block<input_dim_, num_modes_>(1 + state_dim_, 0).transpose();
@@ -346,8 +346,8 @@ void SystemDynamicsBaseAD<Derived, STATE_DIM, INPUT_DIM, logic_rules_template_t,
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <class Derived, size_t STATE_DIM, size_t INPUT_DIM, class logic_rules_template_t, size_t NUM_MODES>
-void SystemDynamicsBaseAD<Derived, STATE_DIM, INPUT_DIM, logic_rules_template_t, NUM_MODES>::systemFlowMapAD(
+template <class Derived, size_t STATE_DIM, size_t INPUT_DIM, size_t NUM_MODES>
+void SystemDynamicsBaseAD<Derived, STATE_DIM, INPUT_DIM, NUM_MODES>::systemFlowMapAD(
 		const ad_dynamic_vector_t& tapedInput,
 		ad_dynamic_vector_t& f) {
 
@@ -363,8 +363,8 @@ void SystemDynamicsBaseAD<Derived, STATE_DIM, INPUT_DIM, logic_rules_template_t,
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <class Derived, size_t STATE_DIM, size_t INPUT_DIM, class logic_rules_template_t, size_t NUM_MODES>
-void SystemDynamicsBaseAD<Derived, STATE_DIM, INPUT_DIM, logic_rules_template_t, NUM_MODES>::systemJumpMapAD(
+template <class Derived, size_t STATE_DIM, size_t INPUT_DIM, size_t NUM_MODES>
+void SystemDynamicsBaseAD<Derived, STATE_DIM, INPUT_DIM, NUM_MODES>::systemJumpMapAD(
 		const ad_dynamic_vector_t& tapedInput,
 		ad_dynamic_vector_t& g) {
 
@@ -380,8 +380,8 @@ void SystemDynamicsBaseAD<Derived, STATE_DIM, INPUT_DIM, logic_rules_template_t,
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <class Derived, size_t STATE_DIM, size_t INPUT_DIM, class logic_rules_template_t, size_t NUM_MODES>
-void SystemDynamicsBaseAD<Derived, STATE_DIM, INPUT_DIM, logic_rules_template_t, NUM_MODES>::systemGuardSurfacesAD(
+template <class Derived, size_t STATE_DIM, size_t INPUT_DIM, size_t NUM_MODES>
+void SystemDynamicsBaseAD<Derived, STATE_DIM, INPUT_DIM, NUM_MODES>::systemGuardSurfacesAD(
 		const ad_dynamic_vector_t& tapedInput,
 		ad_dynamic_vector_t& gamma) {
 
@@ -397,8 +397,8 @@ void SystemDynamicsBaseAD<Derived, STATE_DIM, INPUT_DIM, logic_rules_template_t,
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <class Derived, size_t STATE_DIM, size_t INPUT_DIM, class logic_rules_template_t, size_t NUM_MODES>
-void SystemDynamicsBaseAD<Derived, STATE_DIM, INPUT_DIM, logic_rules_template_t, NUM_MODES>::setADInterfaces() {
+template <class Derived, size_t STATE_DIM, size_t INPUT_DIM, size_t NUM_MODES>
+void SystemDynamicsBaseAD<Derived, STATE_DIM, INPUT_DIM, NUM_MODES>::setADInterfaces() {
 
 	systemFlowMapAD_ = [this](
 			const ad_dynamic_vector_t& x,
@@ -449,8 +449,8 @@ void SystemDynamicsBaseAD<Derived, STATE_DIM, INPUT_DIM, logic_rules_template_t,
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <class Derived, size_t STATE_DIM, size_t INPUT_DIM, class logic_rules_template_t, size_t NUM_MODES>
-void SystemDynamicsBaseAD<Derived, STATE_DIM, INPUT_DIM, logic_rules_template_t, NUM_MODES>::createModels(
+template <class Derived, size_t STATE_DIM, size_t INPUT_DIM, size_t NUM_MODES>
+void SystemDynamicsBaseAD<Derived, STATE_DIM, INPUT_DIM, NUM_MODES>::createModels(
 		bool verbose) {
 
 	// sets all the required CppAdCodeGenInterfaces
@@ -466,8 +466,8 @@ void SystemDynamicsBaseAD<Derived, STATE_DIM, INPUT_DIM, logic_rules_template_t,
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <class Derived, size_t STATE_DIM, size_t INPUT_DIM, class logic_rules_template_t, size_t NUM_MODES>
-bool SystemDynamicsBaseAD<Derived, STATE_DIM, INPUT_DIM, logic_rules_template_t, NUM_MODES>::loadModels(
+template <class Derived, size_t STATE_DIM, size_t INPUT_DIM, size_t NUM_MODES>
+bool SystemDynamicsBaseAD<Derived, STATE_DIM, INPUT_DIM, NUM_MODES>::loadModels(
 		bool verbose) {
 
 	bool flowMapLoaded = flowMapADInterfacePtr_->loadModels(modelName_+"_flow_map", libraryFolder_, verbose);

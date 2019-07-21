@@ -32,8 +32,8 @@ namespace ocs2 {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-MPC_ILQR<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::MPC_ILQR()
+template <size_t STATE_DIM, size_t INPUT_DIM>
+MPC_ILQR<STATE_DIM, INPUT_DIM>::MPC_ILQR()
 
 	: BASE()
 	, optimizedTimeTrajectoriesStock_(0)
@@ -44,8 +44,8 @@ MPC_ILQR<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::MPC_ILQR()
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-MPC_ILQR<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::MPC_ILQR(
+template <size_t STATE_DIM, size_t INPUT_DIM>
+MPC_ILQR<STATE_DIM, INPUT_DIM>::MPC_ILQR(
 		const controlled_system_base_t* systemDynamicsPtr,
 		const derivatives_base_t* systemDerivativesPtr,
 		const constraint_base_t* systemConstraintsPtr,
@@ -54,7 +54,7 @@ MPC_ILQR<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::MPC_ILQR(
 		const scalar_array_t& partitioningTimes,
 		const ILQR_Settings& ilqrSettings /* = ILQR_Settings()*/,
 		const MPC_Settings& mpcSettings /* = MPC_Settings()*/,
-		const LOGIC_RULES_T* logicRulesPtr /* = nullptr*/,
+		std::shared_ptr<HybridLogicRules> logicRulesPtr /* = nullptr*/,
 		const mode_sequence_template_t* modeSequenceTemplatePtr /* = nullptr*/,
 		const cost_function_base_t* heuristicsFunctionPtr /*= nullptr*/)
 
@@ -92,8 +92,8 @@ MPC_ILQR<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::MPC_ILQR(
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-ILQR_Settings& MPC_ILQR<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::ilqrSettings() {
+template <size_t STATE_DIM, size_t INPUT_DIM>
+ILQR_Settings& MPC_ILQR<STATE_DIM, INPUT_DIM>::ilqrSettings() {
 
 	return ilqrPtr_->settings();
 }
@@ -101,9 +101,9 @@ ILQR_Settings& MPC_ILQR<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::ilqrSettings() {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-typename MPC_ILQR<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::ilqr_base_t*
-MPC_ILQR<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::getSolverPtr() {
+template <size_t STATE_DIM, size_t INPUT_DIM>
+typename MPC_ILQR<STATE_DIM, INPUT_DIM>::ilqr_base_t*
+MPC_ILQR<STATE_DIM, INPUT_DIM>::getSolverPtr() {
 
 	return ilqrPtr_.get();
 }
@@ -111,8 +111,8 @@ MPC_ILQR<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::getSolverPtr() {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void MPC_ILQR<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculateController(
+template <size_t STATE_DIM, size_t INPUT_DIM>
+void MPC_ILQR<STATE_DIM, INPUT_DIM>::calculateController(
 		const scalar_t& initTime,
 		const state_vector_t& initState,
 		const scalar_t& finalTime,

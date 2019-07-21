@@ -40,7 +40,7 @@ namespace ocs2 {
 namespace cartpole {
 
 class CartPoleSytemDynamics
-		: public SystemDynamicsBaseAD<CartPoleSytemDynamics, cartpole::STATE_DIM_, cartpole::INPUT_DIM_, NullLogicRules, 1>
+		: public SystemDynamicsBaseAD<CartPoleSytemDynamics, cartpole::STATE_DIM_, cartpole::INPUT_DIM_, 1>
 {
 public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
@@ -48,7 +48,7 @@ public:
 	typedef std::shared_ptr<CartPoleSytemDynamics> Ptr;
 	typedef std::shared_ptr<const CartPoleSytemDynamics> ConstPtr;
 
-	typedef SystemDynamicsBaseAD<CartPoleSytemDynamics, cartpole::STATE_DIM_, cartpole::INPUT_DIM_, NullLogicRules, 1> BASE;
+	typedef SystemDynamicsBaseAD<CartPoleSytemDynamics, cartpole::STATE_DIM_, cartpole::INPUT_DIM_, 1> BASE;
 	typedef typename BASE::scalar_t scalar_t;
 	typedef typename BASE::state_vector_t state_vector_t;
 	typedef typename BASE::state_matrix_t state_matrix_t;

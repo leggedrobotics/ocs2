@@ -31,9 +31,9 @@ namespace ocs2 {
 
 /******************************************************************************************************/
 /******************************************************************************************************/
-/******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-SLQ_DataCollector<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::SLQ_DataCollector(
+/***************************************************************************************************** */
+template <size_t STATE_DIM, size_t INPUT_DIM>
+SLQ_DataCollector<STATE_DIM, INPUT_DIM>::SLQ_DataCollector(
 		const controlled_system_base_t* systemDynamicsPtr,
 		const derivatives_base_t* systemDerivativesPtr,
 		const constraint_base_t* systemConstraintsPtr,
@@ -47,9 +47,9 @@ SLQ_DataCollector<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::SLQ_DataCollector(
 
 /******************************************************************************************************/
 /******************************************************************************************************/
-/******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void SLQ_DataCollector<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::collect(
+/***************************************************************************************************** */
+template <size_t STATE_DIM, size_t INPUT_DIM>
+void SLQ_DataCollector<STATE_DIM, INPUT_DIM>::collect(
 		const slq_t* constSlqPtr) {
 
 	auto* slqPtr = const_cast<slq_t*>(constSlqPtr);
@@ -180,9 +180,9 @@ void SLQ_DataCollector<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::collect(
 
 /******************************************************************************************************/
 /******************************************************************************************************/
-/******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void SLQ_DataCollector<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculateFlowMap(
+/***************************************************************************************************** */
+template <size_t STATE_DIM, size_t INPUT_DIM>
+void SLQ_DataCollector<STATE_DIM, INPUT_DIM>::calculateFlowMap(
 		const slq_t* constSlqPtr,
 		const std::vector<scalar_array_t>& timeTrajectoriesStock,
 		const state_vector_array2_t& stateTrajectoriesStock,
@@ -206,8 +206,6 @@ void SLQ_DataCollector<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculateFlowMap(
 
 		// set controller
 		systemDynamicsPtr_->setController(&(slqPtr->nominalControllersStock_[i]));
-		// initialize subsystem
-		systemDynamicsPtr_->initializeModel(*(slqPtr->getLogicRulesMachinePtr()), i, "SLQ");
 
 		for (size_t k=0; k<N; k++) {
 			systemDynamicsPtr_->computeFlowMap(
@@ -221,9 +219,9 @@ void SLQ_DataCollector<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculateFlowMap(
 
 /******************************************************************************************************/
 /******************************************************************************************************/
-/******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void SLQ_DataCollector<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculateStateInputConstraintsSensitivity(
+/***************************************************************************************************** */
+template <size_t STATE_DIM, size_t INPUT_DIM>
+void SLQ_DataCollector<STATE_DIM, INPUT_DIM>::calculateStateInputConstraintsSensitivity(
 		const slq_t* constSlqPtr,
 		const std::vector<scalar_array_t>& timeTrajectoriesStock,
 		const state_vector_array2_t& stateTrajectoriesStock,
@@ -253,10 +251,6 @@ void SLQ_DataCollector<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculateStateInput
 	}
 
 	for (size_t i=0; i<constSlqPtr->numPartitions_; i++) {
-
-		// initialize constraint model
-		systemConstraintsPtr_->initializeModel(*(slqPtr->getLogicRulesMachinePtr()), i, "SLQ");
-
 		for (size_t k=0; k<timeTrajectoriesStock[i].size(); k++) {
 			// set
 			systemConstraintsPtr_->setCurrentStateAndControl(
@@ -285,16 +279,15 @@ void SLQ_DataCollector<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculateStateInput
 					EvDevEventTimesProjectedTrajectoriesStockSet[j][i][k].setZero();
 				} // end of j loop
 			}
-
 		}  // end of k loop
 	}  // end of i loop
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
-/******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void SLQ_DataCollector<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::resizeDataContainer(
+/***************************************************************************************************** */
+template <size_t STATE_DIM, size_t INPUT_DIM>
+void SLQ_DataCollector<STATE_DIM, INPUT_DIM>::resizeDataContainer(
 		const size_t& numPartitions) {
 
 	if (numPartitions==0) {

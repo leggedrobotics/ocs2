@@ -43,7 +43,7 @@ namespace ocs2 {
  *
  * @tparam STATE_DIM: Dimension of the state space.
  * @tparam INPUT_DIM: Dimension of the control input space.
- */
+  */
 template <size_t STATE_DIM, size_t INPUT_DIM>
 class SequentialErrorEquationNormalized final : public OdeBase<STATE_DIM> {
 public:

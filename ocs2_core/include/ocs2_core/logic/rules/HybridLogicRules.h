@@ -30,9 +30,9 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifndef HYBRIDLOGICRULES_OCS2_H_
 #define HYBRIDLOGICRULES_OCS2_H_
 
+#include <ocs2_core/Dimensions.h>
 #include <iostream>
 #include <vector>
-#include <ocs2_core/Dimensions.h>
 
 namespace ocs2 {
 
@@ -103,9 +103,8 @@ class HybridLogicRules {
   /**
    * Constructor
    */
-  HybridLogicRules(scalar_array_t eventTimes, size_array_t subsystemsSequence) {
-    setModeSequence(std::move(subsystemsSequence), std::move(eventTimes));
-  }
+  HybridLogicRules(scalar_array_t eventTimes, size_array_t subsystemsSequence)
+      : subsystemsSequence_(std::move(subsystemsSequence)), eventTimes_(std::move(eventTimes)) {}
 
   /**
    * Copy constructor
@@ -167,7 +166,7 @@ class HybridLogicRules {
    * @param [in] subsystemsSequence: The sequence of the triggered subsystems.
    * @param [in] eventTimes: The sequence of the times in which mode transition took place.
    */
-  virtual void setModeSequence(size_array_t subsystemsSequence, scalar_array_t eventTimes) {
+  void setModeSequence(size_array_t subsystemsSequence, scalar_array_t eventTimes) {
     if (subsystemsSequence.size() != eventTimes.size() + 1) {
       throw std::runtime_error("The number of subsystems should be 1 plus the number of the event times.");
     }
@@ -222,10 +221,10 @@ class HybridLogicRules {
   scalar_array_t& eventTimes() { return eventTimes_; }
 
   /**
-  * Retrieves the number of the event times.
-  *
-  * @return number of event times.
-  */
+   * Retrieves the number of the event times.
+   *
+   * @return number of event times.
+   */
   size_t getNumEventTimes() const { return eventTimes_.size(); }
 
   /**
@@ -274,7 +273,6 @@ class HybridLogicRules {
   };
 
  protected:
-
   /**
    * Used in the SLQ-MPC method to insert a new user defined logic in the given time period.
    * Note: use the update method to at the end to update your derived class variables

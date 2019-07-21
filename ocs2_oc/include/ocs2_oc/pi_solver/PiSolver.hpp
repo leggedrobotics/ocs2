@@ -242,9 +242,8 @@ class PiSolver final : public Solver_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> {
     // time trajectory
     nominalTimeTrajectoriesStock_.clear();
     nominalTimeTrajectoriesStock_.push_back(scalar_array_t(numSteps));
-    std::generate(nominalTimeTrajectoriesStock_[0].begin(), nominalTimeTrajectoriesStock_[0].end(), [tt = initTime, this]() mutable {
-      tt += settings_.rolloutSettings_.minTimeStep_;
-      return tt;
+    std::generate(nominalTimeTrajectoriesStock_[0].begin(), nominalTimeTrajectoriesStock_[0].end(), [n = 0, initTime, this]() mutable {
+      return initTime + (n++) * settings_.rolloutSettings_.minTimeStep_;
     });
 
     // input trajectory

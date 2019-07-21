@@ -83,7 +83,7 @@ void RobotInterfaceBase<STATE_DIM, INPUT_DIM>::loadMpcTimeHorizon(
 		const std::string& taskFile,
 		scalar_t& timeHorizon,
 		size_t& numPartitions,
-		bool verbose /*= false*/) const {
+		bool verbose /*= false*/) {
 
 	boost::property_tree::ptree pt;
 	boost::property_tree::read_info(taskFile, pt);
@@ -105,7 +105,7 @@ void RobotInterfaceBase<STATE_DIM, INPUT_DIM>::loadMpcTimeHorizon(
 template <size_t STATE_DIM, size_t INPUT_DIM>
 void RobotInterfaceBase<STATE_DIM, INPUT_DIM>::loadInitialState(
 		const std::string& taskFile,
-		state_vector_t& initialState) const {
+		state_vector_t& initialState) {
 
 	boost::property_tree::ptree pt;
 	boost::property_tree::read_info(taskFile, pt);

@@ -529,7 +529,7 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::solveRiccatiEquationsWorker(
 	SsNormalizedSwitchingTimes.reserve(NE+2);
 	SsNormalizedSwitchingTimes.push_back(startNormalizedTime);
 	for (int k=NE-1; k>=0; k--) {
-		size_t index = BASE::nominalEventsPastTheEndIndecesStock_[partitionIndex][k] - 1; // - 1 to refer to the index before the switching time.
+		size_t index = BASE::nominalEventsPastTheEndIndecesStock_[partitionIndex][k];
 		scalar_t si = BASE::nominalTimeTrajectoriesStock_[partitionIndex][index];
 		SsNormalizedSwitchingTimes.push_back( (si-scalingFinal) / scalingFactor );
 	}
@@ -628,7 +628,7 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::solveRiccatiEquationsForNomi
 	SsNormalizedSwitchingTimesIndices.reserve(NE+2);
 	SsNormalizedSwitchingTimesIndices.push_back( 0 );
 	for (int k=NE-1; k>=0; k--) {
-		size_t index = BASE::nominalEventsPastTheEndIndecesStock_[partitionIndex][k] - 1; // - 1 to refer to index before event time
+		size_t index = BASE::nominalEventsPastTheEndIndecesStock_[partitionIndex][k];
 		SsNormalizedSwitchingTimesIndices.push_back( N-index );
 	}
 	SsNormalizedSwitchingTimesIndices.push_back( N );

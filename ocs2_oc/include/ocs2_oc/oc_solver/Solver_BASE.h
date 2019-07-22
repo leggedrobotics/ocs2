@@ -162,15 +162,19 @@ class Solver_BASE {
    * @param [in] initState: The initial state.
    * @param [in] finalTime: The final time.
    * @param [in] partitioningTimes: The time partitioning.
-   * @param [in] controllersPtrStock: controllersPtrStock: Array of pointers to the initial control policies. If you want to use the control
+   * @param [in] controllersPtrStock: Array of pointers to the initial control policies. If you want to use the control
    * policy which was designed by the previous call of the "run" routine, you should pass an empty array. In the this case, two scenarios
    * are possible: either the internal controller is already set (such as the MPC case where the warm starting option is set true) or the
    * internal controller is empty in which instead of performing a rollout the operating trajectories will be used.
    */
-  virtual void run(scalar_t initTime, const state_vector_t& initState, scalar_t finalTime, const scalar_array_t& partitioningTimes,
-                   const controller_ptr_array_t& controllersPtrStock) = 0;
+	virtual void run(
+			const scalar_t& initTime,
+			const state_vector_t& initState,
+			const scalar_t& finalTime,
+			const scalar_array_t& partitioningTimes,
+			const controller_ptr_array_t& controllersPtrStock) = 0;
 
-  /**
+	/**
    * MPC_BASE activates this if the final time of the MPC will increase by the length of a time partition instead
    * of commonly used scheme where the final time is gradually increased.
    *

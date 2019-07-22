@@ -29,9 +29,8 @@ namespace switched_model {
 
 template <size_t JOINT_COORD_SIZE,
 		size_t STATE_DIM=12+JOINT_COORD_SIZE,
-		size_t INPUT_DIM=12+JOINT_COORD_SIZE,
-		class LOGIC_RULES_T=SwitchedModelPlannerLogicRules<JOINT_COORD_SIZE, double>>
-class SwitchedModelCostBase : public ocs2::QuadraticCostFunction<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>
+		size_t INPUT_DIM=12+JOINT_COORD_SIZE>
+class SwitchedModelCostBase : public ocs2::QuadraticCostFunction<STATE_DIM, INPUT_DIM>
 {
 public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
@@ -43,10 +42,9 @@ public:
 		NUM_CONTACT_POINTS_ = SwitchedModel<JOINT_COORD_SIZE>::NUM_CONTACT_POINTS
 	};
 
-	typedef LOGIC_RULES_T logic_rules_t;
-	typedef ocs2::LogicRulesMachine<logic_rules_t> logic_rules_machine_t;
+	typedef SwitchedModelPlannerLogicRules<JOINT_COORD_SIZE, double> logic_rules_t;
 
-	typedef ocs2::QuadraticCostFunction<STATE_DIM, INPUT_DIM, logic_rules_t> BASE;
+	typedef ocs2::QuadraticCostFunction<STATE_DIM, INPUT_DIM> BASE;
 
 	typedef ComModelBase<JOINT_COORD_SIZE> com_model_t;
 	typedef KinematicsModelBase<JOINT_COORD_SIZE> kinematic_model_t;
@@ -75,6 +73,7 @@ public:
 	SwitchedModelCostBase(
 			const kinematic_model_t& kinematicModel,
 			const com_model_t& comModel,
+			std::shared_ptr<const logic_rules_t> logicRulesPtr,
 			const state_matrix_t& Q,
 			const input_matrix_t& R,
 			const state_matrix_t& QFinal,
@@ -93,27 +92,13 @@ public:
 	/**
 	 * Destructor
 	 */
-	virtual ~SwitchedModelCostBase() = default;
+	 ~SwitchedModelCostBase() override = default;
 
 	/**
 	 * clone SwitchedModelCostBase class.
 	 */
-	virtual SwitchedModelCostBase<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM, LOGIC_RULES_T>* clone() const override;
-
-	/**
-	 * Initializes the system dynamics. This method should always be called at the very first call of the model.
-	 *
-	 * @param [in] logicRulesMachine: A class which contains and parse the logic rules e.g
-	 * method findActiveSubsystemHandle returns a Lambda expression which can be used to
-	 * find the ID of the current active subsystem.
-	 * @param [in] partitionIndex: index of the time partition.
-	 * @param [in] algorithmName: The algorithm that class this class (default not defined).
-	 */
-	virtual void initializeModel(
-			logic_rules_machine_t& logicRulesMachine,
-			const size_t& partitionIndex,
-			const char* algorithmName=NULL) override;
-
+	 SwitchedModelCostBase<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>* clone() const override;
+	
 	/**
 	 * Set the current state and contact force input
 	 *
@@ -121,7 +106,7 @@ public:
 	 * @param x: current switched state vector (centroidal dynamics plus joints' angles)
 	 * @param u: current switched input vector (contact forces plus joints' velocities)
 	 */
-	virtual void setCurrentStateAndControl(
+	 void setCurrentStateAndControl(
 			const scalar_t& t,
 			const state_vector_t& x,
 			const input_vector_t& u) override;
@@ -131,74 +116,65 @@ public:
      *
      * @param [out] L: The cost value.
      */
-	virtual void getIntermediateCost(scalar_t& L) override;
+	 void getIntermediateCost(scalar_t& L) override;
 
     /**
      * Gets the state derivative.
      *
      * @param [out] dLdx: First order cost derivative with respect to state vector.
      */
-	virtual void getIntermediateCostDerivativeState(state_vector_t& dLdx) override;
+	 void getIntermediateCostDerivativeState(state_vector_t& dLdx) override;
 
     /**
      * Gets state second order derivative.
      *
      * @param [out] dLdxx: Second order cost derivative with respect to state vector.
      */
-	virtual void getIntermediateCostSecondDerivativeState(state_matrix_t& dLdxx) override;
+	 void getIntermediateCostSecondDerivativeState(state_matrix_t& dLdxx) override;
 
     /**
      * Gets control input derivative.
      *
      * @param [out] dLdu: First order cost derivative with respect to input vector.
      */
-	virtual void getIntermediateCostDerivativeInput(input_vector_t& dLdu) override;
+	 void getIntermediateCostDerivativeInput(input_vector_t& dLdu) override;
 
     /**
      * Gets control input second derivative.
      *
      * @param [out] dLduu: Second order cost derivative with respect to input vector.
      */
-	virtual void getIntermediateCostSecondDerivativeInput(input_matrix_t& dLduu) override;
+	 void getIntermediateCostSecondDerivativeInput(input_matrix_t& dLduu) override;
 
     /**
      * Gets the state, control input derivative.
      *
      * @param [out] dLdux: Second order cost derivative with respect to state and input vector.
      */
-	virtual void getIntermediateCostDerivativeInputState(input_state_matrix_t& dLdux) override;
+	 void getIntermediateCostDerivativeInputState(input_state_matrix_t& dLdux) override;
 
     /**
      * Gets the terminal cost.
      *
      * @param [out] Phi: The final cost value
      */
-	virtual void getTerminalCost(scalar_t& Phi) override;
+	 void getTerminalCost(scalar_t& Phi) override;
 
     /**
      * Gets the terminal cost state derivative.
      *
      * @param [out] dPhidx: First order final cost derivative with respect to state vector.
      */
-	virtual void getTerminalCostDerivativeState(state_vector_t& dPhidx) override;
+	 void getTerminalCostDerivativeState(state_vector_t& dPhidx) override;
 
     /**
      * Gets the terminal cost state second derivative
      *
      * @param [out] dPhidxx: Second order final cost derivative with respect to state vector.
      */
-	virtual void getTerminalCostSecondDerivativeState(state_matrix_t& dPhidxx) override;
+	 void getTerminalCostSecondDerivativeState(state_matrix_t& dPhidxx) override;
 
 protected:
-	/**
-	 * Sets the time period.
-	 *
-	 * @param [in] timeStart: The start time of the period.
-	 * @param [in] timeFinal: The final time of the period.
-	 */
-	void setTimePeriod(
-			const scalar_t& timeStart,
-			const scalar_t& timeFinal);
 
 	/**
 	 *
@@ -244,7 +220,7 @@ private:
 	typename kinematic_model_t::Ptr kinematicModelPtr_;
 	typename com_model_t::Ptr comModelPtr_;
 
-	logic_rules_t* logicRulesPtr_;
+	std::shared_ptr<const logic_rules_t> logicRulesPtr_;
 
 	std::function<size_t(scalar_t)> findActiveSubsystemFnc_;
 
@@ -277,13 +253,6 @@ private:
 	Eigen::Matrix<scalar_t,12,12> hessJoints_copCost_;
 	Eigen::Matrix<scalar_t,12,12> hessLambda_copCost_;
 	Eigen::Matrix<scalar_t,12,12> devLambdaJoints_copCost_;
-
-	std::string algorithmName_;
-
-	scalar_t timeStart_;
-	scalar_t timeFinal_;
-	scalar_t timeSD_;
-	scalar_t timeMean_;
 };
 
 } //end of namespace switched_model

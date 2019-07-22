@@ -29,10 +29,9 @@ namespace switched_model {
 
 template <size_t JOINT_COORD_SIZE,
     size_t STATE_DIM=12+JOINT_COORD_SIZE,
-    size_t INPUT_DIM=12+JOINT_COORD_SIZE,
-    class LOGIC_RULES_T=SwitchedModelPlannerLogicRules<JOINT_COORD_SIZE, double>>
+    size_t INPUT_DIM=12+JOINT_COORD_SIZE>
 class ComKinoDynamicsBase : public
-ocs2::ControlledSystemBase<12+JOINT_COORD_SIZE, 12+JOINT_COORD_SIZE, LOGIC_RULES_T>
+ocs2::ControlledSystemBase<12+JOINT_COORD_SIZE, 12+JOINT_COORD_SIZE>
 {
 public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
@@ -43,11 +42,8 @@ public:
 		INPUT_DIM_ = INPUT_DIM,
 		NUM_CONTACT_POINTS_ = SwitchedModel<JOINT_COORD_SIZE>::NUM_CONTACT_POINTS
 	};
-
-	typedef LOGIC_RULES_T logic_rules_t;
-	typedef ocs2::LogicRulesMachine<logic_rules_t> logic_rules_machine_t;
-
-	typedef ocs2::ControlledSystemBase<STATE_DIM, INPUT_DIM, logic_rules_t> Base;
+	
+	typedef ocs2::ControlledSystemBase<STATE_DIM, INPUT_DIM> Base;
 
 	typedef ComModelBase<JOINT_COORD_SIZE> com_model_t;
 	typedef KinematicsModelBase<JOINT_COORD_SIZE> kinematic_model_t;
@@ -78,13 +74,7 @@ public:
 	  comModelPtr_(comModel.clone()),
 	  o_gravityVector_(0.0, 0.0, -options.gravitationalAcceleration_),
 	  options_(options),
-	  comDynamics_(kinematicModel, comModel,
-								 options.gravitationalAcceleration_,
-								 options.constrainedIntegration_,
-								 options.enforceFrictionConeConstraint_,
-								 options.frictionCoefficient_,
-								 options.enforceTorqueConstraint_,
-								 options.torqueLimit_),
+	  comDynamics_(kinematicModel, comModel, options.gravitationalAcceleration_),
 	  groundProfilePtr_(groundProfilePtr)
 	{}
 
@@ -102,25 +92,13 @@ public:
 	  groundProfilePtr_(rhs.groundProfilePtr_)
 	{}
 
-	virtual ~ComKinoDynamicsBase() = default;
+	~ComKinoDynamicsBase() = default;
 
 	/**
-	 * clone ComKinoDynamicsBase class.
+	 * clone ComKinoDynamicsBase class
 	 */
-	virtual ComKinoDynamicsBase<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM, LOGIC_RULES_T>* clone() const  override;
-
-	/**
-	 * Initializes the system dynamics. This method should always be called at the very first call of the model.
-	 *
-	 * @param [in] logicRulesMachine: A class which contains and parse the logic rules e.g
-	 * method findActiveSubsystemHandle returns a Lambda expression which can be used to
-	 * find the ID of the current active subsystem.
-	 * @param [in] partitionIndex: index of the time partition.
-	 * @param [in] algorithmName: The algorithm that class this class (default not defined).
-	 */
-	virtual void initializeModel(logic_rules_machine_t& logicRulesMachine,
-			const size_t& partitionIndex, const char* algorithmName=NULL) override;
-
+	ComKinoDynamicsBase<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>* clone() const  override;
+	
 	/**
 	 * Calculates the extended state time evolution based on the current extended state and control input.
 	 *
@@ -142,20 +120,10 @@ public:
 	 * 		+ hyQ's joints' angel time derivatives (12-state)
 	 *
 	 */
-	virtual void computeFlowMap(const scalar_t& t,
+	void computeFlowMap(const scalar_t& t,
 			const state_vector_t& x,
 			const input_vector_t& u,
 			state_vector_t& dxdt) final;
-
-	/**
-	 * set the stance legs
-	 */
-	void setStanceLegs (const contact_flag_t& stanceLegs);
-
-	/**
-	 * get the stance legs
-	 */
-	void getStanceLegs (contact_flag_t& stanceLegs) const;
 
 	/**
 	 * State map at the transition time
@@ -164,7 +132,7 @@ public:
 	 * @param [in] state: transition state
 	 * @param [out] mappedState: mapped state after transition
 	 */
-	virtual void computeJumpMap(
+	void computeJumpMap(
 			const scalar_t& time,
 			const state_vector_t& state,
 			state_vector_t& mappedState) final {
@@ -178,7 +146,7 @@ public:
 	 * @param [in] x: transition state
 	 * @param [out] guardSurfacesValue: An array of guard surfaces values
 	 */
-	virtual void computeGuardSurfaces(
+	void computeGuardSurfaces(
 			const scalar_t& t,
 			const state_vector_t& x,
 			dynamic_vector_t& guardSurfacesValue) final;
@@ -193,17 +161,9 @@ private:
 
 	ComDynamicsBase<JOINT_COORD_SIZE> comDynamics_;
 
-	logic_rules_t* logicRulesPtr_;
-
-	std::function<size_t(scalar_t)> findActiveSubsystemFnc_;
-
-	contact_flag_t stanceLegs_;
-
 	vector3d_t com_base2CoM_;
 	Eigen::Matrix<scalar_t,6,12> b_comJacobain_;
 	std::array<vector3d_t,NUM_CONTACT_POINTS_> com_base2StanceFeet_;
-
-	std::string algorithmName_;
 
 	ground_profile_ptr_t groundProfilePtr_;
 };

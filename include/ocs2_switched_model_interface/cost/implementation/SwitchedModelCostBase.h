@@ -10,10 +10,11 @@ namespace switched_model {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-SwitchedModelCostBase<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::SwitchedModelCostBase(
+template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM>
+SwitchedModelCostBase<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::SwitchedModelCostBase(
 		const kinematic_model_t& kinematicModel,
 		const com_model_t& comModel,
+		std::shared_ptr<const logic_rules_t> logicRulesPtr,
 		const state_matrix_t& Q,
 		const input_matrix_t& R,
 		const state_matrix_t& QFinal,
@@ -27,6 +28,7 @@ SwitchedModelCostBase<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::Sw
 	: BASE(Q, R, state_vector_t::Zero(), input_vector_t::Zero(), QFinal, xNominalFinal)
 	, kinematicModelPtr_(kinematicModel.clone())
 	, comModelPtr_(comModel.clone())
+	, logicRulesPtr_(std::move(logicRulesPtr))
 	, copWeightMax_(copWeightMax)
 	, QIntermediateGoal_(QIntermediateGoal)
 	, xIntermediateGoal_(xIntermediateGoal)
@@ -36,11 +38,11 @@ SwitchedModelCostBase<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::Sw
 	, tp_(tp)
 	, dtSquared_(0.0)
 	, copEstimatorPtr_(new cop_estimator_t(kinematicModel, comModel))
-	, timeStart_(0.0)
-	, timeFinal_(1.0)
-	, timeSD_(0.17)
-	, timeMean_(0.5)
 {
+	if (!logicRulesPtr_) {
+		throw std::runtime_error("[SwitchedModelCostBase] logicRules cannot be a nullptr");
+	}
+
 	const size_t numMotionPhases = std::pow(2, (int)NUM_CONTACT_POINTS_);
 
 	for (size_t i=0; i<numMotionPhases; i++) {
@@ -53,13 +55,14 @@ SwitchedModelCostBase<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::Sw
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-SwitchedModelCostBase<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::SwitchedModelCostBase(
+template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM>
+SwitchedModelCostBase<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::SwitchedModelCostBase(
 		const SwitchedModelCostBase& rhs)
 
 	: BASE(rhs)
 	, kinematicModelPtr_(rhs.kinematicModelPtr_->clone())
 	, comModelPtr_(rhs.comModelPtr_->clone())
+	, logicRulesPtr_(rhs.logicRulesPtr_)
 	, R_Bank_(rhs.R_Bank_)
 	, copWeightMax_(rhs.copWeightMax_)
 	, QIntermediateGoal_(rhs.QIntermediateGoal_)
@@ -70,73 +73,29 @@ SwitchedModelCostBase<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::Sw
 	, tp_(rhs.tp_)
 	, dtSquared_(rhs.dtSquared_)
 	, copEstimatorPtr_(new cop_estimator_t(*rhs.kinematicModelPtr_, *rhs.comModelPtr_))
-	, timeStart_(rhs.timeStart_)
-	, timeFinal_(rhs.timeFinal_)
-	, timeSD_(rhs.timeSD_)
-	, timeMean_(rhs.timeMean_)
 {}
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-SwitchedModelCostBase<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM, LOGIC_RULES_T>*
-	SwitchedModelCostBase<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::clone() const {
+template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM>
+SwitchedModelCostBase<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>*
+	SwitchedModelCostBase<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::clone() const {
 
-	return new SwitchedModelCostBase<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM, LOGIC_RULES_T>(*this);
+	return new SwitchedModelCostBase<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>(*this);
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void SwitchedModelCostBase<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::initializeModel(
-		logic_rules_machine_t& logicRulesMachine,
-		const size_t& partitionIndex,
-		const char* algorithmName/*=NULL*/) {
-
-	BASE::initializeModel(logicRulesMachine, partitionIndex, algorithmName);
-
-	findActiveSubsystemFnc_ = std::move( logicRulesMachine.getHandleToFindActiveEventCounter(partitionIndex) );
-
-	logicRulesPtr_ = logicRulesMachine.getLogicRulesPtr();
-
-	// set the start and final time for cost function
-	const scalar_array_t& partitioningTimes= logicRulesMachine.getPartitioningTimes();
-	setTimePeriod(partitioningTimes[partitionIndex], partitioningTimes[partitionIndex+1]);
-
-	if (algorithmName!=NULL)
-		algorithmName_.assign(algorithmName);
-	else
-		algorithmName_.clear();
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void SwitchedModelCostBase<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::setTimePeriod(
-		const scalar_t& timeStart,
-		const scalar_t& timeFinal) {
-
-	timeStart_ = timeStart;
-	timeFinal_ = timeFinal;
-
-	timeSD_ = (timeFinal-timeStart) / 6.0;
-	timeMean_ = (timeFinal+timeStart) / 2.0;
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void SwitchedModelCostBase<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::setCurrentStateAndControl(
+template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM>
+void SwitchedModelCostBase<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::setCurrentStateAndControl(
 		const scalar_t& t,
 		const state_vector_t& x,
 		const input_vector_t& u) {
 
 	// active subsystem
-	size_t index = findActiveSubsystemFnc_(t);
+	size_t index = logicRulesPtr_->getEventTimeCount(t);
 	logicRulesPtr_->getContactFlags(index, stanceLegs_);
 
 	// R matrix
@@ -157,7 +116,7 @@ void SwitchedModelCostBase<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM, LOGIC_RULES_T
 	/* CoP constraint */
 	if (copWeightMax_ > std::numeric_limits<scalar_t>::epsilon())  {
 
-		copWeight_ = copWeightMax_ * std::exp( -0.5 * std::pow((t-timeMean_)/timeSD_, 2) );
+		copWeight_ = copWeightMax_;
 
 		copErrorCostFunc(x.template segment<12>(12), u.template head<12>(),
 				copCost_, devJoints_copCost_, devLambda_copCost_,
@@ -176,8 +135,8 @@ void SwitchedModelCostBase<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM, LOGIC_RULES_T
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void SwitchedModelCostBase<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::getIntermediateCost(
+template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM>
+void SwitchedModelCostBase<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::getIntermediateCost(
 		scalar_t& L)  {
 
 	BASE::getIntermediateCost(L);
@@ -191,8 +150,8 @@ void SwitchedModelCostBase<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM, LOGIC_RULES_T
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void SwitchedModelCostBase<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::getIntermediateCostDerivativeState(
+template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM>
+void SwitchedModelCostBase<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::getIntermediateCostDerivativeState(
 		state_vector_t& dLdx)  {
 
 	BASE::getIntermediateCostDerivativeState(dLdx);
@@ -207,8 +166,8 @@ void SwitchedModelCostBase<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM, LOGIC_RULES_T
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void SwitchedModelCostBase<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::getIntermediateCostSecondDerivativeState(
+template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM>
+void SwitchedModelCostBase<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::getIntermediateCostSecondDerivativeState(
 		state_matrix_t& dLdxx)  {
 
 	BASE::getIntermediateCostSecondDerivativeState(dLdxx);
@@ -221,8 +180,8 @@ void SwitchedModelCostBase<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM, LOGIC_RULES_T
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void SwitchedModelCostBase<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::getIntermediateCostDerivativeInput(
+template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM>
+void SwitchedModelCostBase<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::getIntermediateCostDerivativeInput(
 		input_vector_t& dLdu)  {
 
 	BASE::getIntermediateCostDerivativeInput(dLdu);
@@ -233,8 +192,8 @@ void SwitchedModelCostBase<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM, LOGIC_RULES_T
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void SwitchedModelCostBase<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::getIntermediateCostSecondDerivativeInput(
+template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM>
+void SwitchedModelCostBase<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::getIntermediateCostSecondDerivativeInput(
 		input_matrix_t& dLduu)  {
 
 	BASE::getIntermediateCostSecondDerivativeInput(dLduu);
@@ -245,8 +204,8 @@ void SwitchedModelCostBase<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM, LOGIC_RULES_T
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void SwitchedModelCostBase<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::getIntermediateCostDerivativeInputState(
+template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM>
+void SwitchedModelCostBase<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::getIntermediateCostDerivativeInputState(
 		input_state_matrix_t& dLdux)  {
 
 	BASE::getIntermediateCostDerivativeInputState(dLdux);
@@ -257,8 +216,8 @@ void SwitchedModelCostBase<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM, LOGIC_RULES_T
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void SwitchedModelCostBase<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::getTerminalCost(
+template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM>
+void SwitchedModelCostBase<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::getTerminalCost(
 		scalar_t& Phi) {
 
 	BASE::getTerminalCost(Phi);
@@ -267,8 +226,8 @@ void SwitchedModelCostBase<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM, LOGIC_RULES_T
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void SwitchedModelCostBase<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::getTerminalCostDerivativeState(
+template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM>
+void SwitchedModelCostBase<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::getTerminalCostDerivativeState(
 		state_vector_t& dPhidx) {
 
 	BASE::getTerminalCostDerivativeState(dPhidx);
@@ -277,8 +236,8 @@ void SwitchedModelCostBase<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM, LOGIC_RULES_T
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void SwitchedModelCostBase<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::getTerminalCostSecondDerivativeState(
+template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM>
+void SwitchedModelCostBase<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::getTerminalCostSecondDerivativeState(
 		state_matrix_t& dPhidxx)  {
 
 	BASE::getTerminalCostSecondDerivativeState(dPhidxx);
@@ -287,9 +246,9 @@ void SwitchedModelCostBase<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM, LOGIC_RULES_T
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-typename SwitchedModelCostBase<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::input_matrix_t
-	SwitchedModelCostBase<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::correctedInputCost(
+template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM>
+typename SwitchedModelCostBase<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::input_matrix_t
+	SwitchedModelCostBase<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::correctedInputCost(
 			const contact_flag_t& stanceLeg,
 			const input_matrix_t& R) {
 
@@ -320,8 +279,8 @@ typename SwitchedModelCostBase<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM, LOGIC_RUL
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void SwitchedModelCostBase<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::copErrorCostFunc(
+template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM>
+void SwitchedModelCostBase<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::copErrorCostFunc(
 		const joint_coordinate_t& qJoints,
 		const joint_coordinate_t& lambda,
 		double& copCost,
@@ -351,8 +310,8 @@ void SwitchedModelCostBase<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM, LOGIC_RULES_T
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-double SwitchedModelCostBase<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::GaussianFunc (
+template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM>
+double SwitchedModelCostBase<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::GaussianFunc (
 		const scalar_t& mu,
 		const scalar_t& sigma,
 		const scalar_t& x) {

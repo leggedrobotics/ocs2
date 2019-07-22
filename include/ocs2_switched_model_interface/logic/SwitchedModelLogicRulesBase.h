@@ -142,7 +142,7 @@ public:
 	 *
 	 * @return feet planner class.
 	 */
-	feet_planner_t& getFeetPlanner();
+	const feet_planner_t& getFeetPlanner() const;
 
 	/**
 	 * This method can be used to update the internal variables. This method will be called by any

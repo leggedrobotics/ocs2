@@ -21,26 +21,9 @@ ComDynamicsDerivativeBase<JOINT_COORD_SIZE>* ComDynamicsDerivativeBase<JOINT_COO
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t JOINT_COORD_SIZE>
-void ComDynamicsDerivativeBase<JOINT_COORD_SIZE>::initializeModel(logic_rules_machine_t& logicRulesMachine,
-		const size_t& partitionIndex, const char* algorithmName/*=NULL*/) {
-
-	Base::initializeModel(logicRulesMachine, partitionIndex, algorithmName);
-
-	if (algorithmName!=NULL)
-		algorithmName_.assign(algorithmName);
-	else
-		algorithmName_.clear();
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-template <size_t JOINT_COORD_SIZE>
-void ComDynamicsDerivativeBase<JOINT_COORD_SIZE>::setData(const std::array<bool,4>& stanceLegs,
-		const joint_coordinate_t& qJoints,
+void ComDynamicsDerivativeBase<JOINT_COORD_SIZE>::setData(const joint_coordinate_t& qJoints,
 		const joint_coordinate_t& dqJoints)  {
 
-	stanceLegs_ = stanceLegs;
 	qJoints_  = qJoints;
 	dqJoints_ = dqJoints;
 }
@@ -97,7 +80,9 @@ void ComDynamicsDerivativeBase<JOINT_COORD_SIZE>::setCurrentStateAndControl(cons
 			+ com_base2CoM_.cross(dq_base_.template head<3>());
 
 	// jacobina of angular velocities to Euler angle derivatives transformation
-	jacobianOfAngularVelocityMapping_ = JacobianOfAngularVelocityMapping(x.head<3>(), dq_base_.template head<3>()).transpose();
+	Eigen::Matrix<scalar_t, 3, 1> eulerAngles = x.head<3>();
+	Eigen::Matrix<scalar_t, 3, 1> angularVelocity = dq_base_.template head<3>();
+	jacobianOfAngularVelocityMapping_ = ocs2::JacobianOfAngularVelocityMapping(eulerAngles, angularVelocity).transpose();
 
 	// CoM Jacobin time derivative in the Base frame
 //	const double h = sqrt(Eigen::NumTraits<double>::epsilon());
@@ -185,14 +170,6 @@ void ComDynamicsDerivativeBase<JOINT_COORD_SIZE>::getFlowMapDerivativeInput(stat
 	B.topRows<6>().setZero();;
 
 	for (size_t i=0; i<4; i++)  {
-
-		// for swing legs set the corresponding block to zero
-		if (stanceLegs_[i]==false && constrainedIntegration_==true) {
-			// third and fourth three rows and ith three columns
-			B.block<6,3>(6,i*3).setZero();
-			continue;
-		}
-
 		// third three rows and ith three columns
 		B.block<3,3>(6,3*i) = CrossProductMatrix(com_com2StanceFeet_[i]);
 
@@ -223,9 +200,6 @@ void ComDynamicsDerivativeBase<JOINT_COORD_SIZE>::getApproximateDerivativesJoint
 	partrialF_q.template block<3,12>(9,0).setZero();
 
 	for (size_t i=0; i<4; i++)  {
-		// skip the followings if it is a swing leg
-		if (stanceLegs_[i]==false && constrainedIntegration_==true)  continue;
-
 		// Com to foot displacement Jacobian
 		Eigen::Matrix<double,3,12> b_com2FootJacobain = b_feetJacobains_[i].template bottomRows<3>()-b_comJacobain_.template bottomRows<3>();
 
@@ -278,70 +252,6 @@ void ComDynamicsDerivativeBase<JOINT_COORD_SIZE>::getApproximateDerivativesJoint
 
 	// fourth three rows
 	partrialF_dq.template block<3,12>(9,0).setZero();
-}
-
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-/*
- * to map local angular velocity \omega_W expressed in body coordinates, to changes in Euler Angles expressed in an inertial frame q_I
- * we have to map them via \dot{q}_I = H \omega_W, where H is the matrix defined in kindr getMappingFromLocalAngularVelocityToDiff.
- * You can see the kindr cheat sheet to figure out how to build this matrix. The following code computes the Jacobian of \dot{q}_I
- * with respect to \q_I and \omega_W. Thus the lower part of the Jacobian is H and the upper part is dH/dq_I \omega_W. We include
- * both parts for more efficient computation. The following code is computed using auto-diff.
- * @param eulerAnglesXyz
- * @param angularVelocity
- * @return
- */
-template <size_t JOINT_COORD_SIZE>
-Eigen::Matrix<double,6,3> ComDynamicsDerivativeBase<JOINT_COORD_SIZE>::JacobianOfAngularVelocityMapping(
-		const Eigen::Vector3d& eulerAnglesXyz, const Eigen::Vector3d& angularVelocity) {
-
-	using namespace std;
-
-	Eigen::Matrix<double,6,1> xAD;
-	xAD << eulerAnglesXyz, angularVelocity;
-	const double* x = xAD.data();
-
-	std::array<double,10> v;
-
-	Eigen::Matrix<double,6,3> jac;
-	double* y = jac.data();
-
-	y[9] = sin(x[2]);
-	y[10] = cos(x[2]);
-	v[0] = cos(x[1]);
-	v[1] = 1 / v[0];
-	y[3] = v[1] * y[10];
-	v[2] = sin(x[1]);
-	y[1] = 0 - (0 - (0 - x[4] * y[9] + x[3] * y[10]) * 1 / v[0] * v[1]) * v[2];
-	v[3] = sin(x[2]);
-	v[4] = 0 - v[1];
-	y[4] = v[4] * y[9];
-	v[5] = y[10];
-	y[2] = 0 - x[3] * v[1] * v[3] + x[4] * v[4] * v[5];
-	y[8] = 0 - x[4] * v[3] + x[3] * v[5];
-	v[6] = v[1] * y[9];
-	v[7] = v[4] * y[10];
-	v[8] = v[2];
-	y[15] = v[7] * v[8];
-	y[16] = v[6] * v[8];
-	v[9] = x[4] * v[8];
-	v[8] = x[3] * v[8];
-	y[13] = (x[4] * v[6] + x[3] * v[7]) * v[0] - (0 - (v[9] * y[9] - v[8] * y[10]) * 1 / v[0] * v[1]) * v[2];
-	y[14] = 0 - v[8] * v[4] * v[3] + v[9] * v[1] * v[5];
-	// dependent variables without operations
-	y[0] = 0;
-	y[5] = 0;
-	y[6] = 0;
-	y[7] = 0;
-	y[11] = 0;
-	y[12] = 0;
-	y[17] = 1;
-
-
-	return jac;
 }
 
 

@@ -19,11 +19,12 @@
 #include "ocs2_switched_model_interface/core/KinematicsModelBase.h"
 #include "ocs2_switched_model_interface/core/SwitchedModel.h"
 #include "ocs2_switched_model_interface/misc/SphericalCoordinate.h"
+#include "ocs2_robotic_tools/common/AngularVelocityMapping.h"
 
 namespace switched_model {
 
 template <size_t JOINT_COORD_SIZE>
-class ComDynamicsDerivativeBase : public ocs2::DerivativesBase<12,12, ocs2::NullLogicRules>
+class ComDynamicsDerivativeBase : public ocs2::DerivativesBase<12,12>
 {
 public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
@@ -34,22 +35,18 @@ public:
 		INPUT_DIM = 12
 	};
 
-	typedef ocs2::NullLogicRules logic_rules_t;
-	typedef ocs2::LogicRulesMachine<logic_rules_t> logic_rules_machine_t;
+	using Base = ocs2::DerivativesBase<12,12>;
 
-	typedef ocs2::DerivativesBase<12,12, logic_rules_t> Base;
+	using com_model_t = ComModelBase<JOINT_COORD_SIZE>;
+	using kinematic_model_t = KinematicsModelBase<JOINT_COORD_SIZE>;
 
-	typedef ComModelBase<JOINT_COORD_SIZE> com_model_t;
-	typedef KinematicsModelBase<JOINT_COORD_SIZE> kinematic_model_t;
-
-	typedef typename SwitchedModel<JOINT_COORD_SIZE>::base_coordinate_t  base_coordinate_t;
-	typedef typename SwitchedModel<JOINT_COORD_SIZE>::joint_coordinate_t joint_coordinate_t;
-	typedef Eigen::Matrix<double,6,JOINT_COORD_SIZE> base_jacobian_matrix_t;
-	typedef Eigen::Matrix<double,JOINT_COORD_SIZE,JOINT_COORD_SIZE> state_joint_matrix_t;
+	using base_coordinate_t = typename SwitchedModel<JOINT_COORD_SIZE>::base_coordinate_t;
+	using joint_coordinate_t = typename SwitchedModel<JOINT_COORD_SIZE>::joint_coordinate_t;
+	using base_jacobian_matrix_t = Eigen::Matrix<double,6,JOINT_COORD_SIZE>;
+	using state_joint_matrix_t = Eigen::Matrix<double,JOINT_COORD_SIZE,JOINT_COORD_SIZE>;
 
 	ComDynamicsDerivativeBase(const kinematic_model_t& kinematicModel, const com_model_t& comModel,
 			const double& gravitationalAcceleration=9.81, const bool& constrainedIntegration=true)
-
 	: Base(),
 	  kinematicModelPtr_(kinematicModel.clone()),
 	  comModelPtr_(comModel.clone()),
@@ -59,7 +56,7 @@ public:
 		if (gravitationalAcceleration<0)  throw std::runtime_error("Gravitational acceleration should be a positive value.");
 	}
 
-	virtual ~ComDynamicsDerivativeBase() {}
+	~ComDynamicsDerivativeBase() override {}
 
 	/**
 	 * copy constructor
@@ -76,44 +73,28 @@ public:
 	/**
 	 * clone this class.
 	 */
-	virtual ComDynamicsDerivativeBase<JOINT_COORD_SIZE>* clone() const override;
+	ComDynamicsDerivativeBase<JOINT_COORD_SIZE>* clone() const override;
 
-	/**
-	 * Initializes the system dynamics. This method should always be called at the very first call of the model.
-	 *
-	 * @param [in] logicRulesMachine: A class which contains and parse the logic rules e.g
-	 * method findActiveSubsystemHandle returns a Lambda expression which can be used to
-	 * find the ID of the current active subsystem.
-	 * @param [in] partitionIndex: index of the time partition.
-	 * @param [in] algorithmName: The algorithm that class this class (default not defined).
-	 */
-	virtual void initializeModel(logic_rules_machine_t& logicRulesMachine,
-			const size_t& partitionIndex, const char* algorithmName=NULL) override;
 
 	/**
 	 * Set state and input.
 	 */
-	virtual void setCurrentStateAndControl(
-			const scalar_t& t,
-			const state_vector_t& x,
-			const input_vector_t& u) override;
+	void setCurrentStateAndControl(const scalar_t& t, const state_vector_t& x, const input_vector_t& u) override;
 
 	/**
 	 * set the current state and contact force input
 	 */
-	void setData(const std::array<bool,4>& stanceLegs,
-			const joint_coordinate_t& qJoints,
-			const joint_coordinate_t& dqJoints);
+	void setData(const joint_coordinate_t& qJoints,	const joint_coordinate_t& dqJoints);
 
 	/**
 	 * calculate and retrieve the A matrix
 	 */
-	virtual void getFlowMapDerivativeState(state_matrix_t& A)  final;
+	void getFlowMapDerivativeState(state_matrix_t& A) final override;
 
 	/**
 	 * calculate and retrieve the B matrix
 	 */
-	virtual void getFlowMapDerivativeInput(state_input_matrix_t& B)  final;
+	void getFlowMapDerivativeInput(state_input_matrix_t& B) final override;
 
 	/**
 	 * calculate and retrieve the approximate derivatives w.r.t. joints
@@ -124,20 +105,6 @@ public:
 	 * calculate and retrieve the approximate derivatives w.r.t. joints' velocities
 	 */
 	void getApproximateDerivativesJointVelocity(state_joint_matrix_t& partrialF_dq);
-
-	/**
-	 * to map local angular velocity \omega_W expressed in body coordinates, to changes in Euler Angles expressed in an inertial frame q_I
-	 * we have to map them via \dot{q}_I = H \omega_W, where H is the matrix defined in kindr getMappingFromLocalAngularVelocityToDiff.
-	 * You can see the kindr cheat sheet to figure out how to build this matrix. The following code computes the Jacobian of \dot{q}_I
-	 * with respect to \q_I and \omega_W. Thus the lower part of the Jacobian is H and the upper part is dH/dq_I \omega_W. We include
-	 * both parts for more efficient computation. The following code is computed using auto-diff.
-	 *
-	 * @param eulerAnglesXyz
-	 * @param angularVelocity
-	 * @return
-	 */
-	static Eigen::Matrix<double,6,3> JacobianOfAngularVelocityMapping(const Eigen::Vector3d& eulerAnglesXyz,
-			const Eigen::Vector3d& angularVelocity);
 
 	/**
 	 * user interface for CoM dynamics: get Base to CoM vector in CoM frame.
@@ -191,8 +158,6 @@ private:
 
 	bool constrainedIntegration_;
 
-	std::array<bool,4> stanceLegs_;
-
 	base_coordinate_t  q_base_;
 	base_coordinate_t  dq_base_; // local angular and linear velocity of Base
 	joint_coordinate_t qJoints_;
@@ -216,8 +181,6 @@ private:
 	Eigen::Matrix<double, 6, 6> dMdt_;
 	Eigen::Matrix<double, 6, 6> MInverse_;
 	std::array<Eigen::Matrix<double,6,6>, 12> partialM_;
-
-	std::string algorithmName_;
 };
 
 } // end of namespace switched_model

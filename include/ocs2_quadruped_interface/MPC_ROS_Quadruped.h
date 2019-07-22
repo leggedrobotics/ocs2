@@ -16,7 +16,7 @@
 namespace switched_model {
 
 template <size_t JOINT_COORD_SIZE, size_t STATE_DIM=12+JOINT_COORD_SIZE, size_t INPUT_DIM=12+JOINT_COORD_SIZE>
-class MPC_ROS_Quadruped : public ocs2::MPC_ROS_Interface<STATE_DIM, INPUT_DIM, typename OCS2QuadrupedInterface<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::logic_rules_t>
+class MPC_ROS_Quadruped : public ocs2::MPC_ROS_Interface<STATE_DIM, INPUT_DIM>
 {
 public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
@@ -37,7 +37,7 @@ public:
 		rbd_state_dim_ = quadruped_interface_t::rbd_state_dim_
 	};
 
-	typedef ocs2::MPC_ROS_Interface<STATE_DIM, INPUT_DIM, typename quadruped_interface_t::logic_rules_t> BASE;
+	typedef ocs2::MPC_ROS_Interface<STATE_DIM, INPUT_DIM> BASE;
 	typedef typename BASE::system_observation_t 	system_observation_t;
 	typedef typename BASE::scalar_t					scalar_t;
 	typedef typename BASE::scalar_array_t			scalar_array_t;

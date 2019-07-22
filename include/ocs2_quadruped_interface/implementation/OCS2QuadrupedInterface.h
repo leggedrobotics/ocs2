@@ -166,10 +166,10 @@ ocs2::SLQ_Settings& OCS2QuadrupedInterface<JOINT_COORD_SIZE, STATE_DIM, INPUT_DI
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM>
-typename OCS2QuadrupedInterface<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::logic_rules_t&
-OCS2QuadrupedInterface<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::getLogicRules() {
+const std::shared_ptr<typename OCS2QuadrupedInterface<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::logic_rules_t>&
+OCS2QuadrupedInterface<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::getLogicRules() const {
 
-	return *logicRulesPtr_;
+	return logicRulesPtr_;
 }
 
 /******************************************************************************************************/
@@ -618,9 +618,9 @@ void OCS2QuadrupedInterface<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::runSLQ(
 			inputTrajectoriesStockPtr_);
 
 	// get gait sequence (should be copied since it might be overridden in the next iteration)
-	eventTimes_ = slqPtr_->getLogicRulesPtr()->eventTimes();
-	subsystemsSequence_ = slqPtr_->getLogicRulesPtr()->subsystemsSequence();
-	contactFlagsSequence_ = slqPtr_->getLogicRulesPtr()->getContactFlagsSequence();
+	eventTimes_ = logicRulesPtr_->eventTimes();
+	subsystemsSequence_ = logicRulesPtr_->subsystemsSequence();
+	contactFlagsSequence_ = logicRulesPtr_->getContactFlagsSequence();
 
 	//	concatenate();
 }
@@ -648,9 +648,8 @@ bool OCS2QuadrupedInterface<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::runMPC(
 			inputTrajectoriesStockPtr_);
 
 	// get gait sequence (should be copied since it might be overridden in the next iteration)
-	eventTimes_ = mpcPtr_->getLogicRulesPtr()->eventTimes();
-
-	subsystemsSequence_ = mpcPtr_->getLogicRulesPtr()->subsystemsSequence();
+	eventTimes_ = logicRulesPtr_->eventTimes();
+	subsystemsSequence_ = logicRulesPtr_->subsystemsSequence();
 	//	contactFlagsSequence_ = mpcPtr_->getLogicRulesPtr()->getContactFlagsSequence();
 
 	return controllerIsUpdated;

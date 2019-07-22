@@ -112,11 +112,11 @@ public:
 
 	typedef ocs2::ModeSequenceTemplate<scalar_t> mode_sequence_template_t;
 
-	typedef ocs2::SLQ_BASE<STATE_DIM, INPUT_DIM, logic_rules_t>	slq_base_t;
-	typedef ocs2::SLQ<STATE_DIM, INPUT_DIM, logic_rules_t>  	slq_t;
-	typedef ocs2::SLQ_MP<STATE_DIM, INPUT_DIM, logic_rules_t>  	slq_mp_t;
+	typedef ocs2::SLQ_BASE<STATE_DIM, INPUT_DIM>	slq_base_t;
+	typedef ocs2::SLQ<STATE_DIM, INPUT_DIM>  	slq_t;
+	typedef ocs2::SLQ_MP<STATE_DIM, INPUT_DIM>  	slq_mp_t;
 //	typedef ocs2::OCS2Projected<STATE_DIM, INPUT_DIM> 			ocs2_t;
-	typedef ocs2::MPC_SLQ<STATE_DIM, INPUT_DIM, logic_rules_t>	mpc_t;
+	typedef ocs2::MPC_SLQ<STATE_DIM, INPUT_DIM>	mpc_t;
 
 	typedef typename slq_base_t::Ptr 	slq_base_ptr_t;
 	typedef typename slq_t::Ptr  		slq_ptr_t;
@@ -128,7 +128,7 @@ public:
 	typedef typename slq_base_t::controller_ptr_array_t controller_ptr_array_t;
 	typedef std::vector<linear_controller_t*>           linear_controller_ptr_array_t;
 
-  	typedef ocs2::ControlledSystemBase<STATE_DIM, INPUT_DIM, logic_rules_t> controlled_system_base_t;
+  	typedef ocs2::ControlledSystemBase<STATE_DIM, INPUT_DIM> controlled_system_base_t;
   	typedef typename controlled_system_base_t::Ptr controlled_system_base_ptr_t;
 
 	/**
@@ -217,7 +217,7 @@ public:
 	 *
 	 * @return const reference to the internal logicRules.
 	 */
-	logic_rules_t& getLogicRules();
+	const std::shared_ptr<logic_rules_t>& getLogicRules() const;
 
 	/**
 	 * Updates the logicMachine.

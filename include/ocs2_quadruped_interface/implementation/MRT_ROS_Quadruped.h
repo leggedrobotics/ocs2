@@ -15,41 +15,15 @@ MRT_ROS_Quadruped<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::MRT_ROS_Quadruped(
 		const quadruped_interface_ptr_t& ocs2QuadrupedInterfacePtr,
 		const std::string& robotName /*robot*/)
 
-		: BASE()
+		: BASE(std::move(robotName), logic_rules_ptr_t(new logic_rules_t(*ocs2QuadrupedInterfacePtr->getLogicRules()))) // take a copy of the logic rules to make sure we don't share it with the MPC node
 		, ocs2QuadrupedInterfacePtr_(ocs2QuadrupedInterfacePtr)
 		, modelSettings_(ocs2QuadrupedInterfacePtr->modelSettings())
 {
-	// feet z-direction planner
-	feet_z_planner_ptr_t feetZDirectionPlannerPtr(new feet_z_planner_t(
-			modelSettings_.swingLegLiftOff_,
-			1.0 /*swingTimeScale*/,
-			modelSettings_.liftOffVelocity_,
-			modelSettings_.touchDownVelocity_));
-
-	// logic rule
-	logic_rules_ptr_t logicRulesPtr(new logic_rules_t(feetZDirectionPlannerPtr));
-
 	// set up the rollout
-	if (ocs2QuadrupedInterfacePtr->mpcSettings().useFeedbackPolicy_){
+	if (ocs2QuadrupedInterfacePtr->mpcSettings().useFeedbackPolicy_) {
       BASE::initRollout(*(ocs2QuadrupedInterfacePtr_->getSystemDynamicsPtr()),
                         ocs2QuadrupedInterfacePtr_->slqSettings().rolloutSettings_);
     }
-
-	// set Base
-	BASE::set(*logicRulesPtr, robotName);
-
-	// reset
-	reset();
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM>
-void MRT_ROS_Quadruped<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::reset() {
-
-	BASE::reset();
-	prev_o_feetVelocityRef_.fill(vector_3d_t::Zero());
 }
 
 /******************************************************************************************************/

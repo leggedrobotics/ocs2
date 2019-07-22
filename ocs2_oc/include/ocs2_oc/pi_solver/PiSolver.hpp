@@ -52,16 +52,14 @@ class PiSolver final : public Solver_BASE<STATE_DIM, INPUT_DIM> {
   using constraint_t = ConstraintBase<STATE_DIM, INPUT_DIM>;
   using pi_controller_t = PiController<STATE_DIM, INPUT_DIM>;
 
-  // TODO(jcarius) : fix the documentation
   /**
    * @brief Constructor with all options
    *
    * @param systemDynamicsPtr: System dynamics
    * @param costFunction: The cost function to optimize
    * @param constraint: Any constraints for the dynamical system
-   * @param rollout_dt: The time step of the rollouts
-   * @param noiseScaling The level of noise (the temperature)
-   * @param numSamples How many
+   * @param piSettings: Settings related to PI algorithm
+   * @param logicRules: Optional pointer to logic rules
    */
   PiSolver(const typename controlled_system_base_t::Ptr systemDynamicsPtr, std::unique_ptr<cost_function_t> costFunction,
            const constraint_t constraint, PI_Settings piSettings, std::shared_ptr<HybridLogicRules> logicRules = nullptr)
@@ -241,9 +239,8 @@ class PiSolver final : public Solver_BASE<STATE_DIM, INPUT_DIM> {
     // time trajectory
     nominalTimeTrajectoriesStock_.clear();
     nominalTimeTrajectoriesStock_.push_back(scalar_array_t(numSteps));
-    std::generate(nominalTimeTrajectoriesStock_[0].begin(), nominalTimeTrajectoriesStock_[0].end(), [tt = initTime, this]() mutable {
-      tt += settings_.rolloutSettings_.minTimeStep_;
-      return tt;
+    std::generate(nominalTimeTrajectoriesStock_[0].begin(), nominalTimeTrajectoriesStock_[0].end(), [n = 0, initTime, this]() mutable {
+      return initTime + (n++) * settings_.rolloutSettings_.minTimeStep_;
     });
 
     // input trajectory
@@ -367,7 +364,6 @@ class PiSolver final : public Solver_BASE<STATE_DIM, INPUT_DIM> {
   virtual void getNominalTrajectoriesPtr(const std::vector<scalar_array_t>*& nominalTimeTrajectoriesStockPtr,
                                          const state_vector_array2_t*& nominalStateTrajectoriesStockPtr,
                                          const input_vector_array2_t*& nominalInputTrajectoriesStockPtr) const override {
-    // TODO(jcarius) passing out raw pointers to member variables (!!)
     nominalTimeTrajectoriesStockPtr = &nominalTimeTrajectoriesStock_;
     nominalStateTrajectoriesStockPtr = &nominalStateTrajectoriesStock_;
     nominalInputTrajectoriesStockPtr = &nominalInputTrajectoriesStock_;

@@ -122,7 +122,7 @@ public:
 	 * @param [in] robotName: The robot's name.
 	 * @param [in] taskListenerArray: An array of the shared_ptr to task listeners.
 	 */
-	MPC_ROS_Interface(
+	explicit MPC_ROS_Interface(
 			mpc_t& mpc,
 			const std::string& robotName = "robot",
 			const task_listener_ptr_array_t& taskListenerArray = task_listener_ptr_array_t());

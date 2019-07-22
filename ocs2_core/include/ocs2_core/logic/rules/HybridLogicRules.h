@@ -193,6 +193,13 @@ class HybridLogicRules {
   size_array_t& subsystemsSequence() { return subsystemsSequence_; }
 
   /**
+   * Retrieves the number of the subsystems.
+   *
+   * @return number of subsystems.
+   */
+  size_t getNumSubsystems() const { return subsystemsSequence_.size(); }
+
+  /**
    * Set the model sequence template.
    *
    * @param [in] modeSequenceTemplate: A data type which includes all necessary information for modifying the logicRules.
@@ -284,10 +291,11 @@ class HybridLogicRules {
   virtual void insertModeSequenceTemplate(const logic_template_type& modeSequenceTemplate, const scalar_t& startTime,
                                           const scalar_t& finalTime) = 0;
 
+  // Subsystems and eventTimes contain the currently valid modesequence
   size_array_t subsystemsSequence_;
   scalar_array_t eventTimes_;
-  logic_template_type modeSequenceTemplate_;  // TODO(Ruben) : This struct basically contains eventTimes and subsystems. Use that instead of
-                                              // having them as separate members
+  // This mode sequence template provides a template to extend the modesequence into the future.
+  logic_template_type modeSequenceTemplate_;
 };
 
 }  // namespace ocs2

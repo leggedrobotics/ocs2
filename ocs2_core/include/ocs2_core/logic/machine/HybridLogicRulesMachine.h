@@ -246,6 +246,5 @@ public:
 
 } // namespace ocs2
 
-#include "ocs2_core/logic/machine/implementation/HybridLogicRulesMachine.h"
 
 #endif /* LOGICRULESMACHINE_OCS2_H_ */

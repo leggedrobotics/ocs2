@@ -26,6 +26,9 @@ catkin_package(
     include
     include/external
     ${EIGEN3_INCLUDE_DIRS}
+  LIBRARIES
+    ocs2_core_logic
+
   DEPENDS 
     Boost
 )
@@ -42,6 +45,14 @@ include_directories(
   ${catkin_INCLUDE_DIRS}
 )
 
+# Declare a C++ library
+add_library(ocs2_core_logic
+        src/logic/machine/HybridLogicRulesMachine.cpp
+        )
+target_link_libraries(ocs2_core_logic
+        ${catkin_LIBRARIES}
+        )
+
 add_executable(${PROJECT_NAME}_lintTarget
   src/lintTarget.cpp
 )
@@ -53,7 +64,7 @@ find_package(cmake_clang_tools QUIET)
 if(cmake_clang_tools_FOUND)
   message(STATUS "Run clang tooling for target " ${PROJECT_NAME}_lintTarget)
   add_clang_tooling(
-    TARGET ${PROJECT_NAME}_lintTarget
+    TARGET ${PROJECT_NAME}_lintTarget ocs2_core_logic
     SOURCE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/src ${CMAKE_CURRENT_SOURCE_DIR}/include/ocs2_core
     CT_HEADER_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/include/ocs2_core
     CF_QUIET # temporarily set to quiet, because the current amount of warning crashes the buildserver
@@ -64,6 +75,14 @@ endif(cmake_clang_tools_FOUND)
 #############
 ## Install ##
 #############
+
+install(TARGETS
+          ocs2_core_logic
+        ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+        LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+        RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+        )
+
 
 install(DIRECTORY include/${PROJECT_NAME}/
         DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION})
@@ -108,6 +127,7 @@ catkin_add_gtest(logic_rules_machin_unittest
   test/testLogicRulesMachine.cpp
 )
 target_link_libraries(logic_rules_machin_unittest
+  ocs2_core_logic
   ${catkin_LIBRARIES}
   ${Boost_LIBRARIES}
 )

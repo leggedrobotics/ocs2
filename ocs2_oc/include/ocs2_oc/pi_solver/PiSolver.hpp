@@ -65,7 +65,7 @@ class PiSolver final : public Solver_BASE<STATE_DIM, INPUT_DIM> {
    */
   PiSolver(const typename controlled_system_base_t::Ptr systemDynamicsPtr, std::unique_ptr<cost_function_t> costFunction,
            const constraint_t constraint, PI_Settings piSettings, std::shared_ptr<HybridLogicRules> logicRules = nullptr)
-      : Base(std::move(logicRules),
+      : Base(std::move(logicRules)),
         settings_(std::move(piSettings)),
         systemDynamics_(systemDynamicsPtr),
         costFunction_(std::move(costFunction)),
@@ -132,7 +132,7 @@ class PiSolver final : public Solver_BASE<STATE_DIM, INPUT_DIM> {
         // braces to guard against usage of temporary rollout quantities
         typename rollout_t::size_array_t eventsPastTheEndIndeces;
         typename rollout_t::input_vector_array_t inputTrajectory;
-        rollout_.run(0, initTime, initState, finalTime, &controller_, *Base::logicRulesMachinePtr(), timeTrajectory, eventsPastTheEndIndeces,
+        rollout_.run(0, initTime, initState, finalTime, &controller_, *Base::getLogicRulesMachinePtr(), timeTrajectory, eventsPastTheEndIndeces,
                      stateTrajectory, inputTrajectory);
       }
 
@@ -262,7 +262,7 @@ class PiSolver final : public Solver_BASE<STATE_DIM, INPUT_DIM> {
     typename rollout_t::size_array_t eventsPastTheEndIndecesNominal;
     typename rollout_t::state_vector_array_t stateTrajectoryNominal;
     typename rollout_t::input_vector_array_t inputTrajectoryNominal;
-    rollout_.run(0, initTime, initState, finalTime, &controller_, *Base::getlogicRulesMachinePtr(), timeTrajectoryNominal, eventsPastTheEndIndecesNominal,
+    rollout_.run(0, initTime, initState, finalTime, &controller_, *Base::getLogicRulesMachinePtr(), timeTrajectoryNominal, eventsPastTheEndIndecesNominal,
                  stateTrajectoryNominal, inputTrajectoryNominal);
 
     nominalStateTrajectoriesStock_.clear();

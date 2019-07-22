@@ -5,7 +5,7 @@
 #include <ocs2_switched_model_interface/foot_planner/cpg/SplineCPG.h>
 #include <ocs2_switched_model_interface/foot_planner/FeetZDirectionPlanner.h>
 #include <ocs2_switched_model_interface/state_constraint/EndEffectorConstraintBase.h>
-#include <ocs2_core/logic/machine/LogicRulesMachine.h>
+#include <ocs2_core/logic/machine/HybridLogicRulesMachine.h>
 #include <ocs2_anymal_switched_model/constraint/AnymalComKinoConstraint.h>
 #include <ocs2_core/constraint/RelaxedBarrierPenalty.h>
 
@@ -27,9 +27,6 @@ int main( int argc, char* argv[] )
     typedef anymal::AnymalComKinoConstraint::logic_rules_t 	    logic_rules_t;
     typedef typename logic_rules_t::Ptr                         logic_rules_ptr_t;
     typedef logic_rules_t::size_array_t                         size_array_t;
-    typedef ocs2::LogicRulesMachine<logic_rules_t>              logic_rules_machine_t;
-    typedef typename logic_rules_machine_t::Ptr	                logic_rules_machine_ptr_t;
-
 
     // logic rule
     feet_z_planner_ptr_t feetZPlannerPtr( new feet_z_planner_t(0.3,
@@ -41,9 +38,8 @@ int main( int argc, char* argv[] )
     scalar_array_t initEventTimes_ = {0.5, 0.75};
     std::vector<switched_model::EndEffectorConstraintBase::ConstPtr> gapIndicatorPtrs_;
     logicRulesPtr_->setMotionConstraints(initSwitchingModes_, initEventTimes_, gapIndicatorPtrs_);
-    logic_rules_machine_ptr_t logicRulesMachinePtr_ = logic_rules_machine_ptr_t( new logic_rules_machine_t(*logicRulesPtr_) );
 
-    anymal::AnymalComKinoConstraint comKinoConstraint;
+    anymal::AnymalComKinoConstraint comKinoConstraint(logicRulesPtr_);
     ocs2::RelaxedBarrierPenalty<24, 24> relaxedBarrierPenalty(0.1, 5.0);
 
     contact_flag_t stanceLegs = {true, false, true, false};
@@ -62,7 +58,6 @@ int main( int argc, char* argv[] )
 
     scalar_t t = 0.6;
 
-    comKinoConstraint.initializeModel(*logicRulesMachinePtr_, 0, "SLQ");
     comKinoConstraint.setCurrentStateAndControl(t, x, u);
     comKinoConstraint.setStanceLegs(stanceLegs);
 

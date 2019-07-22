@@ -19,9 +19,12 @@ class AnymalCost : public switched_model::SwitchedModelCostBase<12>
 public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-	typedef SwitchedModelCostBase<12> Base;
+	using Base = SwitchedModelCostBase<12>;
+  	using logic_rules_t = switched_model::SwitchedModelPlannerLogicRules<12, double>;
 
-	AnymalCost(const state_matrix_t& Q,
+	AnymalCost(
+			std::shared_ptr<const logic_rules_t> logicRulesPtr,
+			const state_matrix_t& Q,
 			const input_matrix_t& R,
 			const state_matrix_t& QFinal,
 			const state_vector_t& xFinal,

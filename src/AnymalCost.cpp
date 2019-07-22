@@ -9,7 +9,9 @@
 
 namespace anymal {
 
-AnymalCost::AnymalCost(const state_matrix_t& Q,
+AnymalCost::AnymalCost(
+		std::shared_ptr<const logic_rules_t> logicRulesPtr,
+		const state_matrix_t& Q,
 		const input_matrix_t& R,
 		const state_matrix_t& QFinal,
 		const state_vector_t& xFinal,
@@ -19,7 +21,7 @@ AnymalCost::AnymalCost(const state_matrix_t& Q,
 		const scalar_t& sigma /*=1*/,
 		const scalar_t& tp /*=0*/)
 
-	: Base(AnymalKinematics(), AnymalCom(),
+	: Base(AnymalKinematics(), AnymalCom(), std::move(logicRulesPtr),
 		Q, R, QFinal, xFinal, copWeightMax, QIntermediate, xNominalIntermediate, sigma, tp)
 {}
 

@@ -9,9 +9,9 @@
 
 namespace anymal {
 
-AnymalComKinoConstraint::AnymalComKinoConstraint(const switched_model::Model_Settings& options)
+AnymalComKinoConstraint::AnymalComKinoConstraint(std::shared_ptr<const logic_rules_t> logicRulesPtr, const switched_model::Model_Settings& options)
 
-: Base(AnymalKinematics(), AnymalCom(), options)
+: Base(AnymalKinematics(), AnymalCom(), std::move(logicRulesPtr), options)
 {}
 
 AnymalComKinoConstraint::AnymalComKinoConstraint(const AnymalComKinoConstraint& rhs)

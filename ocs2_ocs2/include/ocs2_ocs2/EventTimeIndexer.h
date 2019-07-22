@@ -34,7 +34,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <utility>
 #include <algorithm>
 
-#include <ocs2_core/logic/machine/LogicRulesMachine.h>
+#include <ocs2_core/logic/machine/HybridLogicRulesMachine.h>
 
 namespace ocs2{
 
@@ -71,11 +71,9 @@ public:
 	/**
 	 * Sets the class.
 	 *
-	 * @tparam LOGIC_RULES_T: Logical rule type.
 	 * @param [in] logicRulesMachine: Instance of the LogicRulesMachine.
 	 */
-	template <class LOGIC_RULES_T>
-	void set(const LogicRulesMachine<LOGIC_RULES_T>& logicRulesMachine);
+	void set(const HybridLogicRulesMachine& logicRulesMachine);
 
 	/**
 	 * Gets the total number of events.

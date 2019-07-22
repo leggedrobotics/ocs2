@@ -51,7 +51,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_core/Dimensions.h>
 #include <ocs2_core/dynamics/ControlledSystemBase.h>
 #include <ocs2_core/cost/CostDesiredTrajectories.h>
-#include <ocs2_core/logic/machine/LogicRulesMachine.h>
+#include <ocs2_core/logic/machine/HybridLogicRulesMachine.h>
 #include <ocs2_core/logic/rules/NullLogicRules.h>
 #include <ocs2_core/misc/LinearInterpolation.h>
 #include <ocs2_core/misc/FindActiveIntervalIndex.h>
@@ -80,15 +80,14 @@ namespace ocs2 {
  *
  * @tparam STATE_DIM: Dimension of the state space.
  * @tparam INPUT_DIM: Dimension of the control input space.
- * @tparam LOGIC_RULES_T: Logic Rules type (default NullLogicRules).
  */
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T=NullLogicRules>
+template <size_t STATE_DIM, size_t INPUT_DIM>
 class MRT_ROS_Interface
 {
 public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-	typedef std::shared_ptr<MRT_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>> Ptr;
+	typedef std::shared_ptr<MRT_ROS_Interface<STATE_DIM, INPUT_DIM>> Ptr;
 
 	typedef Dimensions<STATE_DIM, INPUT_DIM> DIMENSIONS;
 	typedef typename DIMENSIONS::scalar_t       scalar_t;
@@ -107,31 +106,24 @@ public:
 
 	typedef RosMsgConversions<STATE_DIM, INPUT_DIM> ros_msg_conversions_t;
 
-	typedef LogicRulesMachine<LOGIC_RULES_T> logic_machine_t;
+	typedef HybridLogicRulesMachine 				       logic_machine_t;
 	typedef typename logic_machine_t::Ptr          logic_machine_ptr_t;
 
-  	typedef typename std::unique_ptr<RolloutBase<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>> rollout_base_ptr_t;
-  	typedef TimeTriggeredRollout<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> time_triggered_rollout_t;
-	typedef ControlledSystemBase<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> controlled_system_base_t;
+  	typedef typename std::unique_ptr<RolloutBase<STATE_DIM, INPUT_DIM>> rollout_base_ptr_t;
+  	typedef TimeTriggeredRollout<STATE_DIM, INPUT_DIM> time_triggered_rollout_t;
+	typedef ControlledSystemBase<STATE_DIM, INPUT_DIM> controlled_system_base_t;
 
 	typedef LinearInterpolation<state_vector_t, Eigen::aligned_allocator<state_vector_t> > state_linear_interpolation_t;
 
 	typedef ControllerBase<STATE_DIM,INPUT_DIM> controller_t;
 
 	/**
-	 * Default constructor
-	 */
-	MRT_ROS_Interface() = default;
-
-	/**
 	 * Constructor
 	 *
-	 * @param [in] logicRules: A logic rule class of derived from the hybrid logicRules base.
 	 * @param [in] robotName: The robot's name.
+	 * @param [in] logicRules: A logic rule class of derived from the hybrid logicRules base.
 	 */
-	MRT_ROS_Interface(
-			const LOGIC_RULES_T& logicRules,
-			const std::string& robotName = "robot");
+	explicit MRT_ROS_Interface(std::string robotName = "robot", std::shared_ptr<HybridLogicRules> logicRules = nullptr);
 
 	/**
 	 * Destructor
@@ -141,16 +133,15 @@ public:
 	/**
 	 * Sets the class as its constructor.
 	 *
-	 * @param [in] logicRules: A logic rule class of derived from the hybrid logicRules base.
 	 * @param [in] robotName: The robot's name.
+	 * @param [in] logicRules: A logic rule class of derived from the hybrid logicRules base.
 	 */
-	void set(const LOGIC_RULES_T& logicRules,
-			const std::string& robotName = "robot");
+	void set(std::string robotName, std::shared_ptr<HybridLogicRules> logicRules);
 
 	/**
 	 * Resets the class to its instantiate state.
 	 */
-	virtual void reset();
+	void reset();
 
 	/**
 	 * Request the MPC node to reset. This method is a blocking method.

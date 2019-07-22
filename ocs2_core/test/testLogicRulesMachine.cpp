@@ -27,28 +27,28 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#include <ocs2_core/logic/machine/LogicRulesMachine.h>
+#include <ocs2_core/logic/machine/HybridLogicRulesMachine.h>
 
 #include <gtest/gtest.h>
 
 using namespace ocs2;
 
-class TestLogicRules : public LogicRulesBase
+class TestLogicRules : public HybridLogicRules
 {
 public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-	typedef LogicRulesBase BASE;
-	typedef BASE::scalar_t       scalar_t;
-	typedef BASE::scalar_array_t scalar_array_t;
-	typedef BASE::size_array_t   size_array_t;
+	using BASE = HybridLogicRules;
+	using BASE::scalar_t;
+	using BASE::scalar_array_t;
+	using BASE::size_array_t;
 
 	TestLogicRules() = default;
 
 	virtual ~TestLogicRules() = default;
 
 	void set(const scalar_array_t& eventTimes) {
-		BASE::eventTimes_ = eventTimes;
+		eventTimes_ = eventTimes;
 	}
 
 	void update() override
@@ -58,6 +58,11 @@ public:
 			const scalar_t& upperBoundTime) override
 	{}
 
+ protected:
+   void insertModeSequenceTemplate(
+		  const logic_template_type& modeSequenceTemplate,
+		  const scalar_t& startTime,
+		  const scalar_t& finalTime) override {};
 
 private:
 
@@ -71,7 +76,7 @@ private:
  * @return
  */
 bool checkSolution(
-		const LogicRulesMachine<TestLogicRules>& logicRulesMachine,
+		const HybridLogicRulesMachine& logicRulesMachine,
 		const std::vector<std::vector<double>>& eventTimesStockResult,
 		const std::vector<std::vector<size_t>>& switchedSystemIDsStockResult) {
 
@@ -97,8 +102,8 @@ bool checkSolution(
 
 TEST(testLogicRulesMachine, LogicRulesMachine)
 {
-	TestLogicRules logicRules;
-	LogicRulesMachine<TestLogicRules> logicRulesMachine(logicRules);
+	std::shared_ptr<TestLogicRules> logicRules(new TestLogicRules());
+	HybridLogicRulesMachine logicRulesMachine(logicRules);
 
 	std::vector<double> partitioningTimes{0,1,2,3};
 
@@ -113,7 +118,7 @@ TEST(testLogicRulesMachine, LogicRulesMachine)
 
 	// No switch
 	logicRulesEventTimes = std::vector<double>{};
-	logicRules.set(logicRulesEventTimes);
+	logicRules->set(logicRulesEventTimes);
 	logicRulesMachine.setLogicRules(logicRules);
 	logicRulesMachine.updateLogicRules(partitioningTimes);
 
@@ -135,7 +140,7 @@ TEST(testLogicRulesMachine, LogicRulesMachine)
 
 	// switches at the end of partitions
 	logicRulesEventTimes = std::vector<double>{0, 1, 2, 3};
-	logicRules.set(logicRulesEventTimes);
+	logicRules->set(logicRulesEventTimes);
 	logicRulesMachine.setLogicRules(logicRules);
 	logicRulesMachine.updateLogicRules(partitioningTimes);
 
@@ -157,7 +162,7 @@ TEST(testLogicRulesMachine, LogicRulesMachine)
 
 	// swiches after time interval
 	logicRulesEventTimes = std::vector<double>{3, 4, 5, 6};
-	logicRules.set(logicRulesEventTimes);
+	logicRules->set(logicRulesEventTimes);
 	logicRulesMachine.setLogicRules(logicRules);
 	logicRulesMachine.updateLogicRules(partitioningTimes);
 
@@ -179,7 +184,7 @@ TEST(testLogicRulesMachine, LogicRulesMachine)
 
 	// switches before time interval
 	logicRulesEventTimes = std::vector<double>{-3, -2, -1, 0};
-	logicRules.set(logicRulesEventTimes);
+	logicRules->set(logicRulesEventTimes);
 	logicRulesMachine.setLogicRules(logicRules);
 	logicRulesMachine.updateLogicRules(partitioningTimes);
 
@@ -201,7 +206,7 @@ TEST(testLogicRulesMachine, LogicRulesMachine)
 
 	// switches in the middle
 	logicRulesEventTimes = std::vector<double>{0, 0.5, 1.5, 2.5};
-	logicRules.set(logicRulesEventTimes);
+	logicRules->set(logicRulesEventTimes);
 	logicRulesMachine.setLogicRules(logicRules);
 	logicRulesMachine.updateLogicRules(partitioningTimes);
 
@@ -223,7 +228,7 @@ TEST(testLogicRulesMachine, LogicRulesMachine)
 
 	// no switch in middle partition
 	logicRulesEventTimes = std::vector<double>{0.5, 2.5};
-	logicRules.set(logicRulesEventTimes);
+	logicRules->set(logicRulesEventTimes);
 	logicRulesMachine.setLogicRules(logicRules);
 	logicRulesMachine.updateLogicRules(partitioningTimes);
 
@@ -246,13 +251,13 @@ TEST(testLogicRulesMachine, LogicRulesMachine)
 
 TEST(testLogicRulesMachine, shortPartition)
 {
-	TestLogicRules logicRules;
-	LogicRulesMachine<TestLogicRules> logicRulesMachine(logicRules);
+	std::shared_ptr<TestLogicRules> logicRules(new TestLogicRules());
+	HybridLogicRulesMachine logicRulesMachine(logicRules);
 
 	std::vector<double> partitioningTimes;
 
 	std::vector<double> logicRulesEventTimes{0.5, 2.5};
-	logicRules.set(logicRulesEventTimes);
+	logicRules->set(logicRulesEventTimes);
 	logicRulesMachine.setLogicRules(logicRules);
 
 	std::cerr << std::endl;

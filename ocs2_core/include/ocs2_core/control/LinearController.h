@@ -9,7 +9,7 @@ namespace ocs2 {
 /**
  * LinearController implements a time and state dependent controller of the
  * form u[x,t] = k[t] * x + uff[t]
- */
+  */
 template <size_t STATE_DIM, size_t INPUT_DIM>
 class LinearController final : public ControllerBase<STATE_DIM, INPUT_DIM> {
  public:

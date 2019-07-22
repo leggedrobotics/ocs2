@@ -48,28 +48,6 @@ enum
 // This test have problem. It does not converge properly.
 TEST(exp2_slq_test, DISABLED_Exp2_slq_test)
 {
-
-	// system dynamics
-	EXP2_System systemDynamics;
-
-	// system derivatives
-	EXP2_SystemDerivative systemDerivative;
-
-	// system constraints
-	EXP2_constraint systemConstraint;
-
-	// system cost functions
-	EXP2_CostFunction systemCostFunction;
-
-	// system operatingTrajectories
-	Eigen::Matrix<double,STATE_DIM,1> stateOperatingPoint = Eigen::Matrix<double,STATE_DIM,1>::Zero();
-	Eigen::Matrix<double,INPUT_DIM,1> inputOperatingPoint = Eigen::Matrix<double,INPUT_DIM,1>::Zero();
-	EXP2_SystemOperatingTrajectories operatingTrajectories(stateOperatingPoint, inputOperatingPoint);
-
-
-	/******************************************************************************************************/
-	/******************************************************************************************************/
-	/******************************************************************************************************/
 	SLQ_Settings slqSettings;
 	slqSettings.useNominalTimeForBackwardPass_ = false;
 	slqSettings.ddpSettings_.displayInfo_ = true;
@@ -87,7 +65,8 @@ TEST(exp2_slq_test, DISABLED_Exp2_slq_test)
 
 	// switching times
 	std::vector<double> eventTimes {0.2, 1.2};
-	EXP2_LogicRules logicRules(eventTimes);
+	std::vector<size_t> subsystemsSequence{0, 1, 2};
+	std::shared_ptr<EXP2_LogicRules> logicRules(new EXP2_LogicRules(eventTimes, subsystemsSequence));
 
 	double startTime = 0.0;
 	double finalTime = 3.0;
@@ -104,11 +83,34 @@ TEST(exp2_slq_test, DISABLED_Exp2_slq_test)
 	/******************************************************************************************************/
 	/******************************************************************************************************/
 	/******************************************************************************************************/
+
+	// system dynamics
+	EXP2_System systemDynamics(logicRules);
+
+	// system derivatives
+	EXP2_SystemDerivative systemDerivative(logicRules);
+
+	// system constraints
+	EXP2_constraint systemConstraint(logicRules);
+
+	// system cost functions
+	EXP2_CostFunction systemCostFunction(logicRules);
+
+	// system operatingTrajectories
+	Eigen::Matrix<double,STATE_DIM,1> stateOperatingPoint = Eigen::Matrix<double,STATE_DIM,1>::Zero();
+	Eigen::Matrix<double,INPUT_DIM,1> inputOperatingPoint = Eigen::Matrix<double,INPUT_DIM,1>::Zero();
+	EXP2_SystemOperatingTrajectories operatingTrajectories(stateOperatingPoint, inputOperatingPoint);
+
+
+	/******************************************************************************************************/
+	/******************************************************************************************************/
+	/******************************************************************************************************/
+
 	// SLQ - single core version
-	SLQ<STATE_DIM, INPUT_DIM, EXP2_LogicRules> slq(
+	SLQ<STATE_DIM, INPUT_DIM> slq(
 			&systemDynamics, &systemDerivative,
 			&systemConstraint, &systemCostFunction,
-			&operatingTrajectories, slqSettings, &logicRules);
+			&operatingTrajectories, slqSettings, logicRules);
 
 	// run single core SLQ
 	if (slqSettings.ddpSettings_.displayInfo_ || slqSettings.ddpSettings_.displayShortSummary_)
@@ -119,7 +121,7 @@ TEST(exp2_slq_test, DISABLED_Exp2_slq_test)
 	/******************************************************************************************************/
 	/******************************************************************************************************/
 	// get controller
-	SLQ_BASE<STATE_DIM, INPUT_DIM, EXP2_LogicRules>::controller_ptr_array_t controllersPtrStock = slq.getController();
+	SLQ_BASE<STATE_DIM, INPUT_DIM>::controller_ptr_array_t controllersPtrStock = slq.getController();
 
 	// get performance indices
 	double totalCost, totalCost_mp;

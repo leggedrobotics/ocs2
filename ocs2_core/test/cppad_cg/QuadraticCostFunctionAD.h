@@ -34,19 +34,19 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 namespace ocs2 {
 
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T=NullLogicRules, size_t LOGIC_VARIABLE_DIM=0>
+template <size_t STATE_DIM, size_t INPUT_DIM, size_t LOGIC_VARIABLE_DIM=0>
 class QuadraticCostFunctionAD : public
-CostFunctionBaseAD<QuadraticCostFunctionAD<STATE_DIM, INPUT_DIM, LOGIC_RULES_T, LOGIC_VARIABLE_DIM>, STATE_DIM, INPUT_DIM, LOGIC_RULES_T, LOGIC_VARIABLE_DIM>
+CostFunctionBaseAD<QuadraticCostFunctionAD<STATE_DIM, INPUT_DIM, LOGIC_VARIABLE_DIM>, STATE_DIM, INPUT_DIM, LOGIC_VARIABLE_DIM>
 {
 public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-	typedef std::shared_ptr<QuadraticCostFunctionAD<STATE_DIM, INPUT_DIM, LOGIC_RULES_T, LOGIC_VARIABLE_DIM> > Ptr;
-	typedef std::shared_ptr<const QuadraticCostFunctionAD<STATE_DIM, INPUT_DIM, LOGIC_RULES_T, LOGIC_VARIABLE_DIM> > ConstPtr;
+	typedef std::shared_ptr<QuadraticCostFunctionAD<STATE_DIM, INPUT_DIM, LOGIC_VARIABLE_DIM> > Ptr;
+	typedef std::shared_ptr<const QuadraticCostFunctionAD<STATE_DIM, INPUT_DIM, LOGIC_VARIABLE_DIM> > ConstPtr;
 
 	typedef CostFunctionBaseAD<
-			QuadraticCostFunctionAD<STATE_DIM, INPUT_DIM, LOGIC_RULES_T, LOGIC_VARIABLE_DIM>,
-			STATE_DIM, INPUT_DIM, LOGIC_RULES_T, LOGIC_VARIABLE_DIM> BASE;
+			QuadraticCostFunctionAD<STATE_DIM, INPUT_DIM, LOGIC_VARIABLE_DIM>,
+			STATE_DIM, INPUT_DIM, LOGIC_VARIABLE_DIM> BASE;
 	typedef typename BASE::scalar_t             scalar_t;
 	typedef typename BASE::scalar_array_t       scalar_array_t;
 	typedef typename BASE::state_vector_t       state_vector_t;
@@ -162,10 +162,7 @@ public:
 	 * @param [in] algorithmName: The algorithm that class this class (default not defined).
 	 * @return The the logic variables.
 	 */
-	logic_variable_t getlogicVariables(
-			LogicRulesMachine<LOGIC_RULES_T>& logicRulesMachine,
-			const size_t& partitionIndex,
-			const char* algorithmName = nullptr) {
+	logic_variable_t getlogicVariables(scalar_t time) {
 
 		return logic_variable_t::Zero();
 	}

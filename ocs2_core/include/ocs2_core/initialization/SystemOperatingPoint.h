@@ -40,17 +40,16 @@ namespace ocs2{
  *
  * @tparam STATE_DIM: Dimension of the state space.
  * @tparam INPUT_DIM: Dimension of the control input space.
- * @tparam LOGIC_RULES_T: Logic Rules type (default NullLogicRules).
  */
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T=NullLogicRules>
-class SystemOperatingPoint : public SystemOperatingTrajectoriesBase<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>
+template <size_t STATE_DIM, size_t INPUT_DIM>
+class SystemOperatingPoint : public SystemOperatingTrajectoriesBase<STATE_DIM, INPUT_DIM>
 {
 public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-	using Ptr = std::shared_ptr<SystemOperatingPoint<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>>;
+	using Ptr = std::shared_ptr<SystemOperatingPoint<STATE_DIM, INPUT_DIM>>;
 
-	using Base = SystemOperatingTrajectoriesBase<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>;
+	using Base = SystemOperatingTrajectoriesBase<STATE_DIM, INPUT_DIM>;
 	using typename Base::scalar_t;
 	using typename Base::scalar_array_t;
 	using typename Base::size_array_t;
@@ -80,30 +79,13 @@ public:
 	virtual ~SystemOperatingPoint() = default;
 
 	/**
-	 * Initializes the operating trajectories class.
-	 *
-	 * @param [in] logicRulesMachine: A class which contains and parse the logic rules e.g
-	 * method findActiveSubsystemHandle returns a Lambda expression which can be used to
-	 * find the ID of the current active subsystem.
-	 * @param [in] partitionIndex: index of the time partition.
-	 * @param [in] algorithmName: The algorithm that class this class (default not defined).
-	 */
-	void initializeModel(
-			LogicRulesMachine<LOGIC_RULES_T>& logicRulesMachine,
-			const size_t& partitionIndex,
-			const char* algorithmName=nullptr) override {
-
-		Base::initializeModel(logicRulesMachine, partitionIndex, algorithmName);
-	}
-
-	/**
 	 * Returns pointer to the class.
 	 *
 	 * @return A raw pointer to the class.
 	 */
-	SystemOperatingPoint<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>* clone() const override {
+	SystemOperatingPoint<STATE_DIM, INPUT_DIM>* clone() const override {
 
-		return new SystemOperatingPoint<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>(*this);
+		return new SystemOperatingPoint<STATE_DIM, INPUT_DIM>(*this);
 	}
 
 	/**

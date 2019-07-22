@@ -47,28 +47,6 @@ enum
 
 TEST(exp1_slq_test, Exp1_slq_test)
 {
-
-	// system dynamics
-	EXP1_System systemDynamics;
-
-	// system derivatives
-	EXP1_SystemDerivative systemDerivative;
-
-	// system constraints
-	EXP1_SystemConstraint systemConstraint;
-
-	// system cost functions
-	EXP1_CostFunction systemCostFunction;
-
-	// system operatingTrajectories
-	Eigen::Matrix<double,STATE_DIM,1> stateOperatingPoint = Eigen::Matrix<double,STATE_DIM,1>::Zero();
-	Eigen::Matrix<double,INPUT_DIM,1> inputOperatingPoint = Eigen::Matrix<double,INPUT_DIM,1>::Zero();
-	EXP1_SystemOperatingTrajectories operatingTrajectories(stateOperatingPoint, inputOperatingPoint);
-
-
-	/******************************************************************************************************/
-	/******************************************************************************************************/
-	/******************************************************************************************************/
 	SLQ_Settings slqSettings;
 	slqSettings.useNominalTimeForBackwardPass_ = true;
 	slqSettings.ddpSettings_.displayInfo_ = false;
@@ -88,7 +66,8 @@ TEST(exp1_slq_test, Exp1_slq_test)
 
 	// switching times
 	std::vector<double> eventTimes {0.2262, 1.0176};
-	EXP1_LogicRules logicRules(eventTimes);
+	std::vector<size_t> subsystemsSequence{0, 1, 2};
+	std::shared_ptr<EXP1_LogicRules> logicRules(new EXP1_LogicRules(eventTimes, subsystemsSequence));
 
 	double startTime = 0.0;
 	double finalTime = 3.0;
@@ -106,17 +85,41 @@ TEST(exp1_slq_test, Exp1_slq_test)
 	/******************************************************************************************************/
 	/******************************************************************************************************/
 	/******************************************************************************************************/
-	// SLQ - single-treaded version
-	SLQ<STATE_DIM, INPUT_DIM, EXP1_LogicRules> slqST(
+
+
+	// system dynamics
+	EXP1_System systemDynamics(logicRules);
+
+	// system derivatives
+	EXP1_SystemDerivative systemDerivative(logicRules);
+
+	// system constraints
+	EXP1_SystemConstraint systemConstraint;
+
+	// system cost functions
+	EXP1_CostFunction systemCostFunction(logicRules);
+
+	// system operatingTrajectories
+	Eigen::Matrix<double,STATE_DIM,1> stateOperatingPoint = Eigen::Matrix<double,STATE_DIM,1>::Zero();
+	Eigen::Matrix<double,INPUT_DIM,1> inputOperatingPoint = Eigen::Matrix<double,INPUT_DIM,1>::Zero();
+	EXP1_SystemOperatingTrajectories operatingTrajectories(stateOperatingPoint, inputOperatingPoint);
+
+
+	/******************************************************************************************************/
+	/******************************************************************************************************/
+	/******************************************************************************************************/
+
+	// SLQ - single core version
+	SLQ<STATE_DIM, INPUT_DIM> slqST(
 			&systemDynamics, &systemDerivative,
 			&systemConstraint, &systemCostFunction,
-			&operatingTrajectories, slqSettings, &logicRules);
+			&operatingTrajectories, slqSettings, logicRules);
 
 	// SLQ - multi-threaded version
 //	SLQ_MP<STATE_DIM, INPUT_DIM, EXP1_LogicRules> slqMT(
 //			&systemDynamics, &systemDerivative,
 //			&systemConstraint, &systemCostFunction,
-//			&operatingTrajectories, slqSettings, &logicRules);
+//			&operatingTrajectories, slqSettings, logicRules);
 
 	// run single-threaded SLQ
 	if (slqSettings.ddpSettings_.displayInfo_ || slqSettings.ddpSettings_.displayShortSummary_)
@@ -132,8 +135,8 @@ TEST(exp1_slq_test, Exp1_slq_test)
 	/******************************************************************************************************/
 	/******************************************************************************************************/
 	// get controller
-	SLQ_BASE<STATE_DIM, INPUT_DIM, EXP1_LogicRules>::controller_ptr_array_t controllersPtrStockST = slqST.getController();
-//	SLQ_BASE<STATE_DIM, INPUT_DIM, EXP1_LogicRules>::controller_ptr_array_t controllersPtrStockMT = slqMT.getController();
+	SLQ_BASE<STATE_DIM, INPUT_DIM>::controller_ptr_array_t controllersPtrStockST = slqST.getController();
+//	SLQ_BASE<STATE_DIM, INPUT_DIM>::controller_ptr_array_t controllersPtrStockMT = slqMT.getController();
 
 	// get performance indices
 	double totalCostST, totalCostMT;

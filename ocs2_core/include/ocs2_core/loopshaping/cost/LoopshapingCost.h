@@ -14,16 +14,15 @@ namespace ocs2 {
 
 template<size_t FULL_STATE_DIM, size_t FULL_INPUT_DIM,
     size_t SYSTEM_STATE_DIM, size_t SYSTEM_INPUT_DIM,
-    size_t FILTER_STATE_DIM, size_t FILTER_INPUT_DIM,
-    class LOGIC_RULES_T=NullLogicRules>
-class LoopshapingCost : public CostFunctionBase<FULL_STATE_DIM, FULL_INPUT_DIM, LOGIC_RULES_T> {
+    size_t FILTER_STATE_DIM, size_t FILTER_INPUT_DIM>
+class LoopshapingCost : public CostFunctionBase<FULL_STATE_DIM, FULL_INPUT_DIM> {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
   using Ptr = std::shared_ptr<LoopshapingCost>;
   using ConstPtr = std::shared_ptr<const LoopshapingCost>;
 
-  using BASE = CostFunctionBase<FULL_STATE_DIM, FULL_INPUT_DIM, LOGIC_RULES_T>;
+  using BASE = CostFunctionBase<FULL_STATE_DIM, FULL_INPUT_DIM>;
   using typename BASE::cost_desired_trajectories_t;
   using typename BASE::scalar_t;
   using typename BASE::state_vector_t;
@@ -33,7 +32,7 @@ class LoopshapingCost : public CostFunctionBase<FULL_STATE_DIM, FULL_INPUT_DIM, 
   using typename BASE::input_matrix_t;
   using typename BASE::input_state_matrix_t;
 
-  using SYSTEMCOST = CostFunctionBase<SYSTEM_STATE_DIM, SYSTEM_INPUT_DIM, LOGIC_RULES_T>;
+  using SYSTEMCOST = CostFunctionBase<SYSTEM_STATE_DIM, SYSTEM_INPUT_DIM>;
   using system_state_vector_t = typename SYSTEMCOST::state_vector_t;
   using system_input_vector_t = typename SYSTEMCOST::input_vector_t;
   using system_state_matrix_t = typename SYSTEMCOST::state_matrix_t;
@@ -48,17 +47,9 @@ class LoopshapingCost : public CostFunctionBase<FULL_STATE_DIM, FULL_INPUT_DIM, 
   LoopshapingCost(const LoopshapingCost &obj) :
       BASE(),
       systemCost_(obj.systemCost_->clone()),
-      loopshapingDefinition_(obj.loopshapingDefinition_) {}
-
-  void initializeModel(
-      LogicRulesMachine<LOGIC_RULES_T> &logicRulesMachine,
-      const size_t &partitionIndex,
-      const char *algorithmName = nullptr) override {
-    BASE::initializeModel(logicRulesMachine, partitionIndex, algorithmName);
-    systemCost_->initializeModel(logicRulesMachine, partitionIndex, algorithmName);
-    costApproximationValid_ = false;
-    costEvaluationValid_ = false;
-  }
+      loopshapingDefinition_(obj.loopshapingDefinition_),
+       costApproximationValid_(false),
+        costEvaluationValid_(false) {}
 
   static std::unique_ptr<LoopshapingCost> create(const SYSTEMCOST &systemCost,
                                                  std::shared_ptr<LoopshapingDefinition> loopshapingDefinition);
@@ -222,53 +213,47 @@ class LoopshapingCost : public CostFunctionBase<FULL_STATE_DIM, FULL_INPUT_DIM, 
 namespace ocs2 {
 template<size_t FULL_STATE_DIM, size_t FULL_INPUT_DIM,
     size_t SYSTEM_STATE_DIM, size_t SYSTEM_INPUT_DIM,
-    size_t FILTER_STATE_DIM, size_t FILTER_INPUT_DIM,
-    class LOGIC_RULES_T>
+    size_t FILTER_STATE_DIM, size_t FILTER_INPUT_DIM>
 std::unique_ptr<LoopshapingCost<FULL_STATE_DIM,
-                                FULL_INPUT_DIM,
-                                SYSTEM_STATE_DIM,
-                                SYSTEM_INPUT_DIM,
-                                FILTER_STATE_DIM,
-                                FILTER_INPUT_DIM,
-                                LOGIC_RULES_T>>
+                                                                                             FULL_INPUT_DIM,
+                                                                                             SYSTEM_STATE_DIM,
+                                                                                             SYSTEM_INPUT_DIM,
+                                                                                             FILTER_STATE_DIM,
+                                                                                             FILTER_INPUT_DIM>>
 LoopshapingCost<FULL_STATE_DIM,
-                FULL_INPUT_DIM,
-                SYSTEM_STATE_DIM,
-                SYSTEM_INPUT_DIM,
-                FILTER_STATE_DIM,
-                FILTER_INPUT_DIM,
-                LOGIC_RULES_T>::create(const SYSTEMCOST &systemCost,
+                                                                                             FULL_INPUT_DIM,
+                                                                                             SYSTEM_STATE_DIM,
+                                                                                             SYSTEM_INPUT_DIM,
+                                                                                             FILTER_STATE_DIM,
+                                                                                             FILTER_INPUT_DIM>::create(const SYSTEMCOST &systemCost,
                                        std::shared_ptr<
                                                LoopshapingDefinition> loopshapingDefinition) {
     switch (loopshapingDefinition->getType()) {
         case LoopshapingType::outputpattern :
             return std::unique_ptr<LoopshapingCost>(
                     new LoopshapingCostOutputPattern<FULL_STATE_DIM,
-                            FULL_INPUT_DIM,
-                            SYSTEM_STATE_DIM,
-                            SYSTEM_INPUT_DIM,
-                            FILTER_STATE_DIM,
-                            FILTER_INPUT_DIM,
-                            LOGIC_RULES_T>(systemCost,
+                                                                                             FULL_INPUT_DIM,
+                                                                                             SYSTEM_STATE_DIM,
+                                                                                             SYSTEM_INPUT_DIM,
+                                                                                             FILTER_STATE_DIM,
+                                                                                             FILTER_INPUT_DIM>(systemCost,
                                            std::move(loopshapingDefinition)));
         case LoopshapingType::inputpattern :
             return std::unique_ptr<LoopshapingCost>(new LoopshapingCostInputPattern<FULL_STATE_DIM,
-                    FULL_INPUT_DIM,
-                    SYSTEM_STATE_DIM,
-                    SYSTEM_INPUT_DIM,
-                    FILTER_STATE_DIM,
-                    FILTER_INPUT_DIM,
-                    LOGIC_RULES_T>(systemCost,
+                                                                                             FULL_INPUT_DIM,
+                                                                                             SYSTEM_STATE_DIM,
+                                                                                             SYSTEM_INPUT_DIM,
+                                                                                             FILTER_STATE_DIM,
+                                                                                             FILTER_INPUT_DIM>(systemCost,
                                    std::move(
                                            loopshapingDefinition)));
         case LoopshapingType::eliminatepattern :
             return std::unique_ptr<LoopshapingCost>(new LoopshapingCostEliminatePattern<FULL_STATE_DIM,
-                    FULL_INPUT_DIM,
-                    SYSTEM_STATE_DIM,
-                    SYSTEM_INPUT_DIM,
-                    FILTER_STATE_DIM,
-                    FILTER_INPUT_DIM,
-                    LOGIC_RULES_T>(systemCost,
+                                                                                             FULL_INPUT_DIM,
+                                                                                             SYSTEM_STATE_DIM,
+                                                                                             SYSTEM_INPUT_DIM,
+                                                                                             FILTER_STATE_DIM,
+                                                                                             FILTER_INPUT_DIM>(systemCost,
                                    std::move(
                                            loopshapingDefinition)));
     }

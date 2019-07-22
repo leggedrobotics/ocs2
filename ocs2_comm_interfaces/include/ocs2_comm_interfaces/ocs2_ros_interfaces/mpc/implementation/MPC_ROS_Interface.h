@@ -32,8 +32,8 @@ namespace ocs2{
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-MPC_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::MPC_ROS_Interface(
+template <size_t STATE_DIM, size_t INPUT_DIM>
+MPC_ROS_Interface<STATE_DIM, INPUT_DIM>::MPC_ROS_Interface(
 		mpc_t& mpc,
 		const std::string& robotName /*= "robot"*/,
 		const task_listener_ptr_array_t& taskListenerArray /*= task_listener_ptr_array_t()*/)
@@ -50,8 +50,8 @@ MPC_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::MPC_ROS_Interface(
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-MPC_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::~MPC_ROS_Interface() {
+template <size_t STATE_DIM, size_t INPUT_DIM>
+MPC_ROS_Interface<STATE_DIM, INPUT_DIM>::~MPC_ROS_Interface() {
 
 	shutdownNode();
 }
@@ -59,8 +59,8 @@ MPC_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::~MPC_ROS_Interface() {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void MPC_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::set(
+template <size_t STATE_DIM, size_t INPUT_DIM>
+void MPC_ROS_Interface<STATE_DIM, INPUT_DIM>::set(
 		mpc_t& mpc,
 		const std::string& robotName /*= "robot"*/) {
 
@@ -97,8 +97,8 @@ void MPC_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::set(
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void MPC_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::sigintHandler(int sig)  {
+template <size_t STATE_DIM, size_t INPUT_DIM>
+void MPC_ROS_Interface<STATE_DIM, INPUT_DIM>::sigintHandler(int sig)  {
 
 	ROS_INFO_STREAM("Shutting MPC node.");
 	::ros::shutdown();
@@ -107,8 +107,8 @@ void MPC_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::sigintHandler(int s
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void MPC_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::reset(
+template <size_t STATE_DIM, size_t INPUT_DIM>
+void MPC_ROS_Interface<STATE_DIM, INPUT_DIM>::reset(
 		const cost_desired_trajectories_t& initCostDesiredTrajectories) {
 
 	std::lock_guard<std::mutex> resetLock(resetMutex_);
@@ -134,8 +134,8 @@ void MPC_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::reset(
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-bool MPC_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::resetMpcCallback(
+template <size_t STATE_DIM, size_t INPUT_DIM>
+bool MPC_ROS_Interface<STATE_DIM, INPUT_DIM>::resetMpcCallback(
 		ocs2_comm_interfaces::reset::Request  &req,
 		ocs2_comm_interfaces::reset::Response &res) {
 
@@ -166,8 +166,8 @@ bool MPC_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::resetMpcCallback(
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void MPC_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::publishDummy() {
+template <size_t STATE_DIM, size_t INPUT_DIM>
+void MPC_ROS_Interface<STATE_DIM, INPUT_DIM>::publishDummy() {
 
 	ocs2_comm_interfaces::dummy msg;
 	msg.ping = 1;
@@ -177,8 +177,8 @@ void MPC_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::publishDummy() {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void MPC_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::publishPolicy(
+template <size_t STATE_DIM, size_t INPUT_DIM>
+void MPC_ROS_Interface<STATE_DIM, INPUT_DIM>::publishPolicy(
 		const system_observation_t& currentObservation,
 		const bool& controllerIsUpdated,
 		const cost_desired_trajectories_t*& costDesiredTrajectoriesPtr,
@@ -312,8 +312,8 @@ void MPC_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::publishPolicy(
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void MPC_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::publisherWorkerThread() {
+template <size_t STATE_DIM, size_t INPUT_DIM>
+void MPC_ROS_Interface<STATE_DIM, INPUT_DIM>::publisherWorkerThread() {
 
 	while(terminateThread_==false) {
 
@@ -339,8 +339,8 @@ void MPC_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::publisherWorkerThre
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void MPC_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::mpcObservationCallback(
+template <size_t STATE_DIM, size_t INPUT_DIM>
+void MPC_ROS_Interface<STATE_DIM, INPUT_DIM>::mpcObservationCallback(
 		const ocs2_comm_interfaces::mpc_observation::ConstPtr& msg) {
 
 	std::lock_guard<std::mutex> resetLock(resetMutex_);
@@ -485,8 +485,8 @@ void MPC_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::mpcObservationCallb
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void MPC_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::mpcTargetTrajectoriesCallback(
+template <size_t STATE_DIM, size_t INPUT_DIM>
+void MPC_ROS_Interface<STATE_DIM, INPUT_DIM>::mpcTargetTrajectoriesCallback(
 		const ocs2_comm_interfaces::mpc_target_trajectories::ConstPtr& msg) {
 
 	if (desiredTrajectoriesUpdated_==false) {
@@ -498,8 +498,8 @@ void MPC_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::mpcTargetTrajectori
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void MPC_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::mpcModeSequenceCallback(
+template <size_t STATE_DIM, size_t INPUT_DIM>
+void MPC_ROS_Interface<STATE_DIM, INPUT_DIM>::mpcModeSequenceCallback(
 		const ocs2_comm_interfaces::mode_sequence::ConstPtr& msg) {
 
 	if (modeSequenceUpdated_==false) {
@@ -511,8 +511,8 @@ void MPC_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::mpcModeSequenceCall
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void MPC_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::shutdownNode() {
+template <size_t STATE_DIM, size_t INPUT_DIM>
+void MPC_ROS_Interface<STATE_DIM, INPUT_DIM>::shutdownNode() {
 
 #ifdef PUBLISH_THREAD
 	ROS_INFO_STREAM("Shutting down workers ...");
@@ -538,8 +538,8 @@ void MPC_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::shutdownNode() {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void MPC_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::initializeNode(int argc, char* argv[]) {
+template <size_t STATE_DIM, size_t INPUT_DIM>
+void MPC_ROS_Interface<STATE_DIM, INPUT_DIM>::initializeNode(int argc, char* argv[]) {
 
 	if (!nodeHandlerPtr_) {
 		// display
@@ -557,8 +557,8 @@ void MPC_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::initializeNode(int 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-std::shared_ptr<ros::NodeHandle>& MPC_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::nodeHandlePtr() {
+template <size_t STATE_DIM, size_t INPUT_DIM>
+std::shared_ptr<ros::NodeHandle>& MPC_ROS_Interface<STATE_DIM, INPUT_DIM>::nodeHandlePtr() {
 
 	return nodeHandlerPtr_;
 }
@@ -566,8 +566,8 @@ std::shared_ptr<ros::NodeHandle>& MPC_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void MPC_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::spin() {
+template <size_t STATE_DIM, size_t INPUT_DIM>
+void MPC_ROS_Interface<STATE_DIM, INPUT_DIM>::spin() {
 
 	ROS_INFO_STREAM("Start spinning now ...");
 
@@ -591,8 +591,8 @@ void MPC_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::spin() {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void MPC_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::launchNodes(int argc, char* argv[]) {
+template <size_t STATE_DIM, size_t INPUT_DIM>
+void MPC_ROS_Interface<STATE_DIM, INPUT_DIM>::launchNodes(int argc, char* argv[]) {
 
 	// initialize node
 	initializeNode(argc, argv);

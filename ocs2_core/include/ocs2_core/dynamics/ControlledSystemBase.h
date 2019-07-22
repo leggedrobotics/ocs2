@@ -38,9 +38,9 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ocs2_core/Dimensions.h"
 #include "ocs2_core/integration/OdeBase.h"
 #include "ocs2_core/control/ControllerBase.h"
-#include "ocs2_core/logic/rules/LogicRulesBase.h"
+#include "ocs2_core/logic/rules/HybridLogicRules.h"
 #include "ocs2_core/logic/rules/NullLogicRules.h"
-#include "ocs2_core/logic/machine/LogicRulesMachine.h"
+#include "ocs2_core/logic/machine/HybridLogicRulesMachine.h"
 
 namespace ocs2{
 
@@ -49,18 +49,16 @@ namespace ocs2{
  *
  * @tparam STATE_DIM: Dimension of the state space.
  * @tparam INPUT_DIM: Dimension of the control input space.
- * @tparam LOGIC_RULES_T: Logic Rules type (default NullLogicRules).
- */
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T=NullLogicRules>
+  */
+template <size_t STATE_DIM, size_t INPUT_DIM>
 class ControlledSystemBase : public OdeBase<STATE_DIM>
 {
 public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-	static_assert(std::is_base_of<LogicRulesBase, LOGIC_RULES_T>::value,
-			"LOGIC_RULES_T must inherit from LogicRulesBase");
 
-	using Ptr = std::shared_ptr<ControlledSystemBase<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> >;
-	using ConstPtr = std::shared_ptr<const ControlledSystemBase<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> >;
+
+	using Ptr = std::shared_ptr<ControlledSystemBase<STATE_DIM, INPUT_DIM> >;
+	using ConstPtr = std::shared_ptr<const ControlledSystemBase<STATE_DIM, INPUT_DIM> >;
 
 	using BASE = OdeBase<STATE_DIM>;
 
@@ -135,26 +133,11 @@ public:
 	}
 
 	/**
-	 * Initializes the system dynamics.
-	 *
-	 * @param [in] logicRulesMachine: A class which contains and parse the logic rules e.g
-	 * method findActiveSubsystemHandle returns a Lambda expression which can be used to
-	 * find the ID of the current active subsystem.
-	 * @param [in] partitionIndex: index of the time partition.
-	 * @param [in] algorithmName: The algorithm that class this class (default not defined).
-	 */
-	virtual void initializeModel(
-			LogicRulesMachine<LOGIC_RULES_T>& logicRulesMachine,
-			const size_t& partitionIndex,
-			const char* algorithmName=nullptr)
-	{}
-
-	/**
 	 * Returns pointer to the class.
 	 *
 	 * @return A raw pointer to the class.
 	 */
-	virtual ControlledSystemBase<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>* clone() const = 0;
+	virtual ControlledSystemBase<STATE_DIM, INPUT_DIM>* clone() const = 0;
 
 	/**
 	 * Computes derivative of the autonomous system dynamics.

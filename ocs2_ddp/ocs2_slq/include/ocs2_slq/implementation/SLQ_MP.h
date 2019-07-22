@@ -31,20 +31,20 @@ namespace ocs2{
 
 /******************************************************************************************************/
 /******************************************************************************************************/
-/******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-SLQ_MP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::SLQ_MP (
+/***************************************************************************************************** */
+template <size_t STATE_DIM, size_t INPUT_DIM>
+SLQ_MP<STATE_DIM, INPUT_DIM>::SLQ_MP (
 		const controlled_system_base_t* systemDynamicsPtr,
 		const derivatives_base_t* systemDerivativesPtr,
 		const constraint_base_t* systemConstraintsPtr,
 		const cost_function_base_t* costFunctionPtr,
 		const operating_trajectories_base_t* operatingTrajectoriesPtr,
 		const SLQ_Settings& settings /*= SLQ_Settings()*/,
-		const LOGIC_RULES_T* logicRulesPtr /*= nullptr*/,
+		std::shared_ptr<HybridLogicRules> logicRulesPtr /*= nullptr*/,
 		const cost_function_base_t* heuristicsFunctionPtr /*= nullptr*/)
 
 	: BASE(systemDynamicsPtr, systemDerivativesPtr, systemConstraintsPtr, costFunctionPtr, operatingTrajectoriesPtr,
-			settings, logicRulesPtr, heuristicsFunctionPtr)
+			settings, std::move(logicRulesPtr), heuristicsFunctionPtr)
 	, workerTask_(IDLE)
 	, subsystemProcessed_(0)
 {
@@ -56,9 +56,9 @@ SLQ_MP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::SLQ_MP (
 
 /******************************************************************************************************/
 /******************************************************************************************************/
-/******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-SLQ_MP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::~SLQ_MP()  {
+/***************************************************************************************************** */
+template <size_t STATE_DIM, size_t INPUT_DIM>
+SLQ_MP<STATE_DIM, INPUT_DIM>::~SLQ_MP()  {
 
 	workersActive_ = false;
 	workerTask_ = SHUTDOWN;
@@ -81,9 +81,9 @@ SLQ_MP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::~SLQ_MP()  {
 
 /******************************************************************************************************/
 /******************************************************************************************************/
-/******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void SLQ_MP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::lineSearch(bool computeISEs) {
+/***************************************************************************************************** */
+template <size_t STATE_DIM, size_t INPUT_DIM>
+void SLQ_MP<STATE_DIM, INPUT_DIM>::lineSearch(bool computeISEs) {
 
 	// perform one rollout while the input correction for the type-1 constraint is considered.
 	BASE::lineSearchBase(computeISEs);
@@ -157,9 +157,9 @@ void SLQ_MP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::lineSearch(bool computeISEs) {
 
 /******************************************************************************************************/
 /******************************************************************************************************/
-/******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void SLQ_MP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::launchWorkerThreads()
+/***************************************************************************************************** */
+template <size_t STATE_DIM, size_t INPUT_DIM>
+void SLQ_MP<STATE_DIM, INPUT_DIM>::launchWorkerThreads()
 {
 	workersActive_ = true;
 	workerTask_ = IDLE;
@@ -173,9 +173,9 @@ void SLQ_MP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::launchWorkerThreads()
 
 /******************************************************************************************************/
 /******************************************************************************************************/
-/******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void SLQ_MP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::threadWork(size_t threadId)
+/***************************************************************************************************** */
+template <size_t STATE_DIM, size_t INPUT_DIM>
+void SLQ_MP<STATE_DIM, INPUT_DIM>::threadWork(size_t threadId)
 {
 	if(BASE::ddpSettings_.debugPrintMT_) {
 		BASE::printString("[MT]: [Thread " + std::to_string(threadId) + "]: launched");
@@ -290,9 +290,9 @@ void SLQ_MP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::threadWork(size_t threadId)
 
 /******************************************************************************************************/
 /******************************************************************************************************/
-/******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void SLQ_MP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::approximatePartitionLQ(const size_t& partitionIndex)  {
+/***************************************************************************************************** */
+template <size_t STATE_DIM, size_t INPUT_DIM>
+void SLQ_MP<STATE_DIM, INPUT_DIM>::approximatePartitionLQ(const size_t& partitionIndex)  {
 
 	subsystemProcessed_ = partitionIndex;
 
@@ -339,9 +339,9 @@ void SLQ_MP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::approximatePartitionLQ(const s
 
 /******************************************************************************************************/
 /******************************************************************************************************/
-/******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void SLQ_MP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::executeApproximatePartitionLQWorker(
+/***************************************************************************************************** */
+template <size_t STATE_DIM, size_t INPUT_DIM>
+void SLQ_MP<STATE_DIM, INPUT_DIM>::executeApproximatePartitionLQWorker(
 		size_t threadId,
 		const size_t& partitionIndex) {
 
@@ -397,9 +397,9 @@ void SLQ_MP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::executeApproximatePartitionLQW
 
 /******************************************************************************************************/
 /******************************************************************************************************/
-/******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void SLQ_MP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculatePartitionController(const size_t& partitionIndex) {
+/***************************************************************************************************** */
+template <size_t STATE_DIM, size_t INPUT_DIM>
+void SLQ_MP<STATE_DIM, INPUT_DIM>::calculatePartitionController(const size_t& partitionIndex) {
 
 	subsystemProcessed_ = partitionIndex;
 
@@ -448,9 +448,9 @@ void SLQ_MP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculatePartitionController(c
 
 /******************************************************************************************************/
 /******************************************************************************************************/
-/******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void SLQ_MP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::executeCalculatePartitionController(
+/***************************************************************************************************** */
+template <size_t STATE_DIM, size_t INPUT_DIM>
+void SLQ_MP<STATE_DIM, INPUT_DIM>::executeCalculatePartitionController(
 		size_t threadId,
 		const size_t& partitionIndex)  {
 
@@ -504,9 +504,9 @@ void SLQ_MP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::executeCalculatePartitionContr
 
 /******************************************************************************************************/
 /******************************************************************************************************/
-/******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void SLQ_MP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::executeLineSearchWorker(size_t threadId)
+/***************************************************************************************************** */
+template <size_t STATE_DIM, size_t INPUT_DIM>
+void SLQ_MP<STATE_DIM, INPUT_DIM>::executeLineSearchWorker(size_t threadId)
 {
 	if(BASE::ddpSettings_.debugPrintMT_) {
 		BASE::printString("[MT]: [Thread " + std::to_string(threadId) + "]: Starting executeLineSearchWorker. ");
@@ -681,10 +681,10 @@ void SLQ_MP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::executeLineSearchWorker(size_t
 
 /******************************************************************************************************/
 /******************************************************************************************************/
-/******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-typename SLQ_MP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::scalar_t
-	SLQ_MP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::solveSequentialRiccatiEquations(
+/***************************************************************************************************** */
+template <size_t STATE_DIM, size_t INPUT_DIM>
+typename SLQ_MP<STATE_DIM, INPUT_DIM>::scalar_t
+	SLQ_MP<STATE_DIM, INPUT_DIM>::solveSequentialRiccatiEquations(
 		const state_matrix_t& SmFinal,
 		const state_vector_t& SvFinal,
 		const eigen_scalar_t& sFinal){
@@ -787,9 +787,9 @@ typename SLQ_MP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::scalar_t
 
 /******************************************************************************************************/
 /******************************************************************************************************/
-/******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void SLQ_MP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::executeRiccatiSolver(size_t threadId) {
+/***************************************************************************************************** */
+template <size_t STATE_DIM, size_t INPUT_DIM>
+void SLQ_MP<STATE_DIM, INPUT_DIM>::executeRiccatiSolver(size_t threadId) {
 
 	for (int i = endingIndicesRiccatiWorker_[threadId]; i>=startingIndicesRiccatiWorker_[threadId]; i--) {
 
@@ -880,9 +880,9 @@ void SLQ_MP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::executeRiccatiSolver(size_t th
 
 /******************************************************************************************************/
 /******************************************************************************************************/
-/******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void SLQ_MP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::distributeWork(){
+/***************************************************************************************************** */
+template <size_t STATE_DIM, size_t INPUT_DIM>
+void SLQ_MP<STATE_DIM, INPUT_DIM>::distributeWork(){
 
 	const int N = BASE::ddpSettings_.nThreads_;
 	startingIndicesRiccatiWorker_.resize(N);
@@ -927,9 +927,9 @@ void SLQ_MP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::distributeWork(){
 
 /******************************************************************************************************/
 /******************************************************************************************************/
-/******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void SLQ_MP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::runInit() {
+/***************************************************************************************************** */
+template <size_t STATE_DIM, size_t INPUT_DIM>
+void SLQ_MP<STATE_DIM, INPUT_DIM>::runInit() {
 
 	// disable Eigen multi-threading
 	Eigen::setNbThreads(1);
@@ -946,9 +946,9 @@ void SLQ_MP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::runInit() {
 
 /******************************************************************************************************/
 /******************************************************************************************************/
-/******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void SLQ_MP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::runIteration() {
+/***************************************************************************************************** */
+template <size_t STATE_DIM, size_t INPUT_DIM>
+void SLQ_MP<STATE_DIM, INPUT_DIM>::runIteration() {
 
 	// disable Eigen multi-threading
 	Eigen::setNbThreads(1);
@@ -962,9 +962,9 @@ void SLQ_MP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::runIteration() {
 
 /******************************************************************************************************/
 /******************************************************************************************************/
-/******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void SLQ_MP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::runExit() {
+/***************************************************************************************************** */
+template <size_t STATE_DIM, size_t INPUT_DIM>
+void SLQ_MP<STATE_DIM, INPUT_DIM>::runExit() {
 
 	// disable Eigen multi-threading
 	Eigen::setNbThreads(1);

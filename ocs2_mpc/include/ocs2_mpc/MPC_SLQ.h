@@ -46,15 +46,14 @@ namespace ocs2{
  *
  * @tparam STATE_DIM: Dimension of the state space.
  * @tparam INPUT_DIM: Dimension of the control input space.
- * @tparam LOGIC_RULES_T: Logic Rules type (default NullLogicRules).
  */
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T=NullLogicRules>
-class MPC_SLQ : public MPC_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>
+template <size_t STATE_DIM, size_t INPUT_DIM>
+class MPC_SLQ : public MPC_BASE<STATE_DIM, INPUT_DIM>
 {
 public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-	using BASE = MPC_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>;
+	using BASE = MPC_BASE<STATE_DIM, INPUT_DIM>;
 
 	using DIMENSIONS = Dimensions<STATE_DIM, INPUT_DIM>;
 	using scalar_t = typename DIMENSIONS::scalar_t;
@@ -81,11 +80,11 @@ public:
 	using linear_controller_t = LinearController<STATE_DIM,INPUT_DIM>;
 	using linear_controller_array_t = typename linear_controller_t::array_t;
 
-	using ddp_base_t = ocs2::DDP_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>;
+	using ddp_base_t = ocs2::DDP_BASE<STATE_DIM, INPUT_DIM>;
 
-	using slq_base_t = ocs2::SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>;
-	using slq_t = ocs2::SLQ<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>;
-	using slq_mp_t = ocs2::SLQ_MP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>;
+	using slq_base_t = ocs2::SLQ_BASE<STATE_DIM, INPUT_DIM>;
+	using slq_t = ocs2::SLQ<STATE_DIM, INPUT_DIM>;
+	using slq_mp_t = ocs2::SLQ_MP<STATE_DIM, INPUT_DIM>;
 
 	using logic_rules_machine_t = typename ddp_base_t::logic_rules_machine_t;
 	using controlled_system_base_t = typename ddp_base_t::controlled_system_base_t;
@@ -124,7 +123,7 @@ public:
 			const scalar_array_t& partitioningTimes,
 			const SLQ_Settings& slqSettings = SLQ_Settings(),
 			const MPC_Settings& mpcSettings = MPC_Settings(),
-			const LOGIC_RULES_T* logicRulesPtr = nullptr,
+			std::shared_ptr<HybridLogicRules> logicRulesPtr = nullptr,
 			const mode_sequence_template_t* modeSequenceTemplatePtr = nullptr,
 			const cost_function_base_t* heuristicsFunctionPtr = nullptr);
 

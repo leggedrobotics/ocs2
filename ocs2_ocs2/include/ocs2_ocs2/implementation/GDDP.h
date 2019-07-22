@@ -32,8 +32,8 @@ namespace ocs2 {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-GDDP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::GDDP(
+template <size_t STATE_DIM, size_t INPUT_DIM>
+GDDP<STATE_DIM, INPUT_DIM>::GDDP(
 		const GDDP_Settings& gddpSettings /*= GDDP_Settings()*/)
 	: gddpSettings_(gddpSettings)
 {
@@ -135,8 +135,8 @@ GDDP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::GDDP(
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void GDDP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::setupOptimizer(
+template <size_t STATE_DIM, size_t INPUT_DIM>
+void GDDP<STATE_DIM, INPUT_DIM>::setupOptimizer(
 		const size_t& numPartitions) {
 
 	if (numPartitions==0)
@@ -146,8 +146,8 @@ void GDDP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::setupOptimizer(
 /*****************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void GDDP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculateRolloutCostate(
+template <size_t STATE_DIM, size_t INPUT_DIM>
+void GDDP<STATE_DIM, INPUT_DIM>::calculateRolloutCostate(
 		const std::vector<scalar_array_t>& timeTrajectoriesStock,
 		const state_vector_array2_t& stateTrajectoriesStock,
 		state_vector_array2_t& costateTrajectoriesStock,
@@ -195,8 +195,8 @@ void GDDP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculateRolloutCostate(
 /*****************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void GDDP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculateRolloutCostate(
+template <size_t STATE_DIM, size_t INPUT_DIM>
+void GDDP<STATE_DIM, INPUT_DIM>::calculateRolloutCostate(
 		const std::vector<scalar_array_t>& timeTrajectoriesStock,
 		state_vector_array2_t& costateTrajectoriesStock)  {
 
@@ -233,8 +233,8 @@ void GDDP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculateRolloutCostate(
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void GDDP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculateInputConstraintLagrangian(
+template <size_t STATE_DIM, size_t INPUT_DIM>
+void GDDP<STATE_DIM, INPUT_DIM>::calculateInputConstraintLagrangian(
 		lagrange_array_t& lagrangeMultiplierFunctionsStock,
 		scalar_t learningRate /*= 0.0*/) {
 
@@ -325,8 +325,8 @@ void GDDP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculateInputConstraintLagrangi
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void GDDP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculateRolloutLagrangeMultiplier(
+template <size_t STATE_DIM, size_t INPUT_DIM>
+void GDDP<STATE_DIM, INPUT_DIM>::calculateRolloutLagrangeMultiplier(
 		const std::vector<scalar_array_t>& timeTrajectoriesStock,
 		const state_vector_array2_t& stateTrajectoriesStock,
 		const lagrange_array_t& lagrangeMultiplierFunctionsStock,
@@ -367,8 +367,8 @@ void GDDP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculateRolloutLagrangeMultipli
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void GDDP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculateNominalRolloutLagrangeMultiplier(
+template <size_t STATE_DIM, size_t INPUT_DIM>
+void GDDP<STATE_DIM, INPUT_DIM>::calculateNominalRolloutLagrangeMultiplier(
 		const std::vector<scalar_array_t>& timeTrajectoriesStock,
 		constraint1_vector_array2_t& lagrangeTrajectoriesStock)  {
 
@@ -405,8 +405,8 @@ void GDDP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculateNominalRolloutLagrangeM
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-size_t GDDP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::findActiveSubsystemIndex(
+template <size_t STATE_DIM, size_t INPUT_DIM>
+size_t GDDP<STATE_DIM, INPUT_DIM>::findActiveSubsystemIndex(
 		const scalar_array_t& eventTimes,
 		const scalar_t& time,
 		bool ceilingFunction /*= true*/) const {
@@ -430,8 +430,8 @@ size_t GDDP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::findActiveSubsystemIndex(
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-size_t GDDP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::findActivePartitionIndex(
+template <size_t STATE_DIM, size_t INPUT_DIM>
+size_t GDDP<STATE_DIM, INPUT_DIM>::findActivePartitionIndex(
 		const scalar_array_t& partitioningTimes,
 		const scalar_t& time,
 		bool ceilingFunction /*= true*/) const {
@@ -461,8 +461,8 @@ size_t GDDP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::findActivePartitionIndex(
 /*****************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void GDDP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::computeEquivalentSystemMultiplier(
+template <size_t STATE_DIM, size_t INPUT_DIM>
+void GDDP<STATE_DIM, INPUT_DIM>::computeEquivalentSystemMultiplier(
 		const size_t& eventTimeIndex,
 		const size_t& activeSubsystem,
 		scalar_t& multiplier) const {
@@ -502,8 +502,8 @@ void GDDP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::computeEquivalentSystemMultiplie
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void GDDP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::getRolloutSensitivity2EventTime(
+template <size_t STATE_DIM, size_t INPUT_DIM>
+void GDDP<STATE_DIM, INPUT_DIM>::getRolloutSensitivity2EventTime(
 		const size_t& eventTimeIndex,
 		std::vector<scalar_array_t>& sensitivityTimeTrajectoriesStock,
 		state_matrix_array2_t& sensitivityStateTrajectoriesStock,
@@ -520,8 +520,8 @@ void GDDP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::getRolloutSensitivity2EventTime(
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-GDDP_Settings& GDDP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::settings() {
+template <size_t STATE_DIM, size_t INPUT_DIM>
+GDDP_Settings& GDDP<STATE_DIM, INPUT_DIM>::settings() {
 
 	return gddpSettings_;
 }
@@ -529,9 +529,9 @@ GDDP_Settings& GDDP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::settings() {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
+template <size_t STATE_DIM, size_t INPUT_DIM>
 template <typename Derived>
-void GDDP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::getCostFuntionDerivative(
+void GDDP<STATE_DIM, INPUT_DIM>::getCostFuntionDerivative(
 		Eigen::MatrixBase<Derived> const& costFunctionDerivative) const {
 
 	// refer to Eigen documentation under the topic "Writing Functions Taking Eigen Types as Parameters"
@@ -541,9 +541,9 @@ void GDDP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::getCostFuntionDerivative(
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-const typename GDDP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::scalar_array_t&
-	GDDP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::eventTimes() const {
+template <size_t STATE_DIM, size_t INPUT_DIM>
+const typename GDDP<STATE_DIM, INPUT_DIM>::scalar_array_t&
+	GDDP<STATE_DIM, INPUT_DIM>::eventTimes() const {
 
 	return eventTimes_;
 }
@@ -551,8 +551,8 @@ const typename GDDP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::scalar_array_t&
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void GDDP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::propagateRolloutSensitivity(
+template <size_t STATE_DIM, size_t INPUT_DIM>
+void GDDP<STATE_DIM, INPUT_DIM>::propagateRolloutSensitivity(
 		size_t workerIndex,
 		const size_t& eventTimeIndex,
 		const linear_controller_array_t& controllersStock,
@@ -659,8 +659,8 @@ void GDDP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::propagateRolloutSensitivity(
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void GDDP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::approximateNominalLQPSensitivity2EventTime(
+template <size_t STATE_DIM, size_t INPUT_DIM>
+void GDDP<STATE_DIM, INPUT_DIM>::approximateNominalLQPSensitivity2EventTime(
 		const state_vector_array2_t& sensitivityStateTrajectoriesStock,
 		const input_vector_array2_t& sensitivityInputTrajectoriesStock,
 		eigen_scalar_array2_t& nablaqTrajectoriesStock,
@@ -734,8 +734,8 @@ void GDDP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::approximateNominalLQPSensitivity
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void GDDP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::approximateNominalHeuristicsSensitivity2EventTime(
+template <size_t STATE_DIM, size_t INPUT_DIM>
+void GDDP<STATE_DIM, INPUT_DIM>::approximateNominalHeuristicsSensitivity2EventTime(
 		const state_vector_t& sensitivityFinalState,
 		eigen_scalar_t& nablasHeuristics,
 		state_vector_t& nablaSvHeuristics) const {
@@ -747,8 +747,8 @@ void GDDP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::approximateNominalHeuristicsSens
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void GDDP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::solveSensitivityRiccatiEquations(
+template <size_t STATE_DIM, size_t INPUT_DIM>
+void GDDP<STATE_DIM, INPUT_DIM>::solveSensitivityRiccatiEquations(
 		size_t workerIndex,
 		const size_t& eventTimeIndex,
 		const scalar_t& learningRate,
@@ -905,8 +905,8 @@ void GDDP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::solveSensitivityRiccatiEquations
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void GDDP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::solveSensitivityBVP(
+template <size_t STATE_DIM, size_t INPUT_DIM>
+void GDDP<STATE_DIM, INPUT_DIM>::solveSensitivityBVP(
 		size_t workerIndex,
 		const size_t& eventTimeIndex,
 		const state_vector_t& MvFinal,
@@ -1094,8 +1094,8 @@ void GDDP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::solveSensitivityBVP(
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void GDDP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculateLQSensitivityControllerForward(
+template <size_t STATE_DIM, size_t INPUT_DIM>
+void GDDP<STATE_DIM, INPUT_DIM>::calculateLQSensitivityControllerForward(
 		size_t workerIndex,
 		const size_t& eventTimeIndex,
 		const std::vector<scalar_array_t>& timeTrajectoriesStock,
@@ -1148,8 +1148,8 @@ void GDDP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculateLQSensitivityController
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void GDDP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculateBVPSensitivityControllerForward(
+template <size_t STATE_DIM, size_t INPUT_DIM>
+void GDDP<STATE_DIM, INPUT_DIM>::calculateBVPSensitivityControllerForward(
 		size_t workerIndex,
 		const size_t& eventTimeIndex,
 		const std::vector<scalar_array_t>& timeTrajectoriesStock,
@@ -1205,8 +1205,8 @@ void GDDP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculateBVPSensitivityControlle
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void GDDP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::getValueFuntionDerivative(
+template <size_t STATE_DIM, size_t INPUT_DIM>
+void GDDP<STATE_DIM, INPUT_DIM>::getValueFuntionDerivative(
 		const size_t& eventTimeIndex,
 		const scalar_t& time,
 		const state_vector_t& state,
@@ -1250,8 +1250,8 @@ void GDDP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::getValueFuntionDerivative(
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void GDDP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculateCostDerivative(
+template <size_t STATE_DIM, size_t INPUT_DIM>
+void GDDP<STATE_DIM, INPUT_DIM>::calculateCostDerivative(
 		size_t workerIndex,
 		const size_t& eventTimeIndex,
 		const state_vector_array2_t& sensitivityStateTrajectoriesStock,
@@ -1320,8 +1320,8 @@ void GDDP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculateCostDerivative(
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void GDDP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::runLQBasedMethod()  {
+template <size_t STATE_DIM, size_t INPUT_DIM>
+void GDDP<STATE_DIM, INPUT_DIM>::runLQBasedMethod()  {
 
 	const size_t maxNumIteration = 3;
 
@@ -1422,8 +1422,8 @@ void GDDP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::runLQBasedMethod()  {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void GDDP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::runSweepingBVPMethod()  {
+template <size_t STATE_DIM, size_t INPUT_DIM>
+void GDDP<STATE_DIM, INPUT_DIM>::runSweepingBVPMethod()  {
 
 	// calculate costate
 	calculateRolloutCostate(dcPtr_->nominalTimeTrajectoriesStock_,
@@ -1492,8 +1492,8 @@ void GDDP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::runSweepingBVPMethod()  {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void GDDP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::run(
+template <size_t STATE_DIM, size_t INPUT_DIM>
+void GDDP<STATE_DIM, INPUT_DIM>::run(
 		const scalar_array_t& eventTimes,
 		const slq_data_collector_t* dcPtr)  {
 

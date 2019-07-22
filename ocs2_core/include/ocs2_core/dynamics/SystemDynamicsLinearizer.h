@@ -47,16 +47,15 @@ namespace ocs2{
  *
  * @tparam STATE_DIM: Dimension of the state space.
  * @tparam INPUT_DIM: Dimension of the control input space.
- * @tparam LOGIC_RULES_T: Logic Rules type (default NullLogicRules).
  */
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T=NullLogicRules>
-class SystemDynamicsLinearizer : public DerivativesBase<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>
+template <size_t STATE_DIM, size_t INPUT_DIM>
+class SystemDynamicsLinearizer : public DerivativesBase<STATE_DIM, INPUT_DIM>
 {
 public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-  	using controlled_system_base_t = ControlledSystemBase<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>;
-  	using Base = DerivativesBase<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>;
+  	using controlled_system_base_t = ControlledSystemBase<STATE_DIM, INPUT_DIM>;
+  	using Base = DerivativesBase<STATE_DIM, INPUT_DIM>;
 	using typename Base::scalar_t;
 	using typename Base::state_vector_t;
 	using typename Base::state_matrix_t;
@@ -95,24 +94,6 @@ public:
 		nonlinearSystemPtr_ = typename controlled_system_base_t::Ptr(other.nonlinearSystemPtr_->clone());
 		doubleSidedDerivative_ = other.doubleSidedDerivative_;
 		isSecondOrderSystem_ = other.isSecondOrderSystem_;
-	}
-
-	/**
-	 * Initializes the system dynamics linearizer.
-	 *
-	 * @param [in] logicRulesMachine: A class which contains and parse the logic rules e.g
-	 * method findActiveSubsystemHandle returns a Lambda expression which can be used to
-	 * find the ID of the current active subsystem.
-	 * @param [in] partitionIndex: index of the time partition.
-	 * @param [in] algorithmName: The algorithm that class this class (default not defined).
-	 */
-	void initializeModel(
-			LogicRulesMachine<LOGIC_RULES_T>& logicRulesMachine,
-			const size_t& partitionIndex,
-			const char* algorithmName=nullptr) override {
-
-		Base::initializeModel(logicRulesMachine, partitionIndex, algorithmName);
-		nonlinearSystemPtr_->initializeModel(logicRulesMachine, partitionIndex, algorithmName);
 	}
 
 	/**
@@ -252,8 +233,8 @@ public:
 	 *
 	 * @return A raw pointer to the class.
 	 */
-	SystemDynamicsLinearizer<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>* clone() const override {
-		return new SystemDynamicsLinearizer<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>(*this);
+	SystemDynamicsLinearizer<STATE_DIM, INPUT_DIM>* clone() const override {
+		return new SystemDynamicsLinearizer<STATE_DIM, INPUT_DIM>(*this);
 	}
 
 

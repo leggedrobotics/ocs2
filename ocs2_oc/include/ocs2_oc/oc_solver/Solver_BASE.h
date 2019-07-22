@@ -45,9 +45,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_core/Dimensions.h>
 #include <ocs2_core/control/ControllerBase.h>
 #include <ocs2_core/cost/CostDesiredTrajectories.h>
-#include <ocs2_core/logic/rules/LogicRulesBase.h>
 #include <ocs2_core/logic/rules/NullLogicRules.h>
-#include <ocs2_core/logic/machine/LogicRulesMachine.h>
+#include <ocs2_core/logic/machine/HybridLogicRulesMachine.h>
 #include <ocs2_core/misc/FindActiveIntervalIndex.h>
 
 namespace ocs2 {
@@ -57,17 +56,14 @@ namespace ocs2 {
  *
  * @tparam STATE_DIM: Dimension of the state space.
  * @tparam INPUT_DIM: Dimension of the control input space.
- * @tparam LOGIC_RULES_T: Logic Rules type (default NullLogicRules).
- */
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T=NullLogicRules>
+  */
+template <size_t STATE_DIM, size_t INPUT_DIM>
 class Solver_BASE
 {
 public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-	static_assert(std::is_base_of<LogicRulesBase, LOGIC_RULES_T>::value,
-			"LOGIC_RULES_T must inherit from LogicRulesBase");
 
-	typedef std::shared_ptr<Solver_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>> Ptr;
+	typedef std::shared_ptr<Solver_BASE<STATE_DIM, INPUT_DIM>> Ptr;
 
 	typedef Dimensions<STATE_DIM, INPUT_DIM> DIMENSIONS;
 
@@ -127,16 +123,13 @@ public:
 
 	using cost_desired_trajectories_t = CostDesiredTrajectories<scalar_t>;
 
-	using logic_rules_machine_t = LogicRulesMachine<LOGIC_RULES_T>;
+	using logic_rules_machine_t = HybridLogicRulesMachine;
 	using logic_rules_machine_ptr_t = typename logic_rules_machine_t::Ptr;
 
 	typedef ControllerBase<STATE_DIM, INPUT_DIM> controller_t;
 	using controller_ptr_array_t = std::vector<controller_t *>;
 
-	/**
-	 * Default constructor.
-	 */
-	Solver_BASE() = default;
+	explicit Solver_BASE(std::shared_ptr<HybridLogicRules> logicRulesPtr = nullptr);
 
 	/**
 	 * Default destructor.
@@ -253,47 +246,35 @@ public:
 	 *
 	 * @return a pointer to LogicRulesMachine
 	 */
-	virtual logic_rules_machine_t* getLogicRulesMachinePtr() {
-
-		return nullptr;
-	}
+	logic_rules_machine_t* getLogicRulesMachinePtr() { return logicRulesMachinePtr_.get(); }
 
 	/**
 	 * Returns a pointer to the LogicRulesMachine
 	 *
 	 * @return a pointer to LogicRulesMachine
 	 */
-	virtual const logic_rules_machine_t* getLogicRulesMachinePtr() const {
-
-		return nullptr;
-	}
+	const logic_rules_machine_t* getLogicRulesMachinePtr() const { return logicRulesMachinePtr_.get(); }
 
 	/**
 	 * Returns a constant pointer to the logic rules.
 	 *
 	 * @return a constant pointer to the logic rules.
 	 */
-	virtual const LOGIC_RULES_T* getLogicRulesPtr() const {
-
-		return nullptr;
-	}
+	const HybridLogicRules* getLogicRulesPtr() const { return logicRulesMachinePtr_->getLogicRulesPtr(); }
 
 	/**
 	 * Returns a pointer to the logic rules.
 	 *
 	 * @return a pointer to the logic rules.
 	 */
-	virtual LOGIC_RULES_T* getLogicRulesPtr() {
-
-		return nullptr;
-	}
+	HybridLogicRules* getLogicRulesPtr() { return logicRulesMachinePtr_->getLogicRulesPtr(); }
 
 	/**
 	 * Sets logic rules.
 	 *
-	 * @param logicRules: This class will be passed to all of the dynamics and derivatives classes through initializeModel() routine.
+	 * @param logicRules
 	 */
-	virtual void setLogicRules(const LOGIC_RULES_T& logicRules) {}
+	virtual void setLogicRules(std::shared_ptr<HybridLogicRules> logicRules) { logicRulesMachinePtr_->setLogicRules(std::move(logicRules)); }
 
 	/**
 	 * Gets the cost function desired trajectories.
@@ -456,9 +437,9 @@ public:
 	template <typename Derived>
 	static bool makePSD(Eigen::MatrixBase<Derived>& squareMatrix);
 
-
-private:
-	std::mutex outputDisplayGuardMutex_;
+ private:
+  std::mutex outputDisplayGuardMutex_;
+  logic_rules_machine_ptr_t logicRulesMachinePtr_;
 
 };
 

@@ -64,8 +64,8 @@ namespace ocs2{
 template <typename scalar_t, typename alloc_t = std::allocator<scalar_t> >
 int findActiveIntervalIndex(
 		const std::vector<scalar_t, alloc_t>& timeIntervals,
-		const scalar_t& enquiryTime,
-		const int& guessedIndex,
+		scalar_t enquiryTime,
+		int guessedIndex,
 		scalar_t epsilon = OCS2NumericTraits<scalar_t>::weakEpsilon()) {
 
 	const int numTimeIntervals = timeIntervals.size()-1;

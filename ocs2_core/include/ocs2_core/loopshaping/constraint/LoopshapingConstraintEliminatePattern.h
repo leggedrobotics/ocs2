@@ -13,17 +13,16 @@
 namespace ocs2 {
 template<size_t FULL_STATE_DIM, size_t FULL_INPUT_DIM,
     size_t SYSTEM_STATE_DIM, size_t SYSTEM_INPUT_DIM,
-    size_t FILTER_STATE_DIM, size_t FILTER_INPUT_DIM,
-    class LOGIC_RULES_T=NullLogicRules>
+    size_t FILTER_STATE_DIM, size_t FILTER_INPUT_DIM>
 class LoopshapingConstraintEliminatePattern final: public LoopshapingConstraint<FULL_STATE_DIM, FULL_INPUT_DIM,
-                                                                                              SYSTEM_STATE_DIM, SYSTEM_INPUT_DIM,
-                                                                                              FILTER_STATE_DIM, FILTER_INPUT_DIM, LOGIC_RULES_T> {
+                                             SYSTEM_STATE_DIM, SYSTEM_INPUT_DIM,
+                                             FILTER_STATE_DIM, FILTER_INPUT_DIM> {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
   using BASE = LoopshapingConstraint<FULL_STATE_DIM, FULL_INPUT_DIM,
-                                     SYSTEM_STATE_DIM, SYSTEM_INPUT_DIM,
-                                     FILTER_STATE_DIM, FILTER_INPUT_DIM, LOGIC_RULES_T>;
+                                             SYSTEM_STATE_DIM, SYSTEM_INPUT_DIM,
+                                             FILTER_STATE_DIM, FILTER_INPUT_DIM>;
 
   using typename BASE::scalar_t;
   using typename BASE::state_vector_t;

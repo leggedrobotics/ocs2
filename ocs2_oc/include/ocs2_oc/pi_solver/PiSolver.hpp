@@ -52,6 +52,7 @@ class PiSolver final : public Solver_BASE<STATE_DIM, INPUT_DIM> {
   using constraint_t = ConstraintBase<STATE_DIM, INPUT_DIM>;
   using pi_controller_t = PiController<STATE_DIM, INPUT_DIM>;
 
+  // TODO(jcarius) : fix the documentation
   /**
    * @brief Constructor with all options
    *
@@ -63,8 +64,9 @@ class PiSolver final : public Solver_BASE<STATE_DIM, INPUT_DIM> {
    * @param numSamples How many
    */
   PiSolver(const typename controlled_system_base_t::Ptr systemDynamicsPtr, std::unique_ptr<cost_function_t> costFunction,
-           const constraint_t constraint, PI_Settings piSettings)
-      : settings_(std::move(piSettings)),
+           const constraint_t constraint, PI_Settings piSettings, std::shared_ptr<HybridLogicRules> logicRules = nullptr)
+      : Base(std::move(logicRules),
+        settings_(std::move(piSettings)),
         systemDynamics_(systemDynamicsPtr),
         costFunction_(std::move(costFunction)),
         constraint_(constraint),
@@ -128,10 +130,9 @@ class PiSolver final : public Solver_BASE<STATE_DIM, INPUT_DIM> {
       typename rollout_t::scalar_array_t timeTrajectory;
       {
         // braces to guard against usage of temporary rollout quantities
-        typename rollout_t::logic_rules_machine_t logicRulesMachine;
         typename rollout_t::size_array_t eventsPastTheEndIndeces;
         typename rollout_t::input_vector_array_t inputTrajectory;
-        rollout_.run(0, initTime, initState, finalTime, &controller_, logicRulesMachine, timeTrajectory, eventsPastTheEndIndeces,
+        rollout_.run(0, initTime, initState, finalTime, &controller_, *Base::logicRulesMachinePtr(), timeTrajectory, eventsPastTheEndIndeces,
                      stateTrajectory, inputTrajectory);
       }
 
@@ -257,12 +258,11 @@ class PiSolver final : public Solver_BASE<STATE_DIM, INPUT_DIM> {
     controller_.setFeedforwardInputAndState(nominalTimeTrajectoriesStock_[0], stateTrajectoryDummy, nominalInputTrajectoriesStock_[0]);
     controller_.cacheResults_ = false;
 
-    typename rollout_t::logic_rules_machine_t logicRulesMachine;
     typename rollout_t::scalar_array_t timeTrajectoryNominal;
     typename rollout_t::size_array_t eventsPastTheEndIndecesNominal;
     typename rollout_t::state_vector_array_t stateTrajectoryNominal;
     typename rollout_t::input_vector_array_t inputTrajectoryNominal;
-    rollout_.run(0, initTime, initState, finalTime, &controller_, logicRulesMachine, timeTrajectoryNominal, eventsPastTheEndIndecesNominal,
+    rollout_.run(0, initTime, initState, finalTime, &controller_, *Base::getlogicRulesMachinePtr(), timeTrajectoryNominal, eventsPastTheEndIndecesNominal,
                  stateTrajectoryNominal, inputTrajectoryNominal);
 
     nominalStateTrajectoriesStock_.clear();
@@ -383,10 +383,6 @@ class PiSolver final : public Solver_BASE<STATE_DIM, INPUT_DIM> {
 
   virtual const unsigned long long int& getRewindCounter() const override { throw std::runtime_error("not implemented."); }
 
-//  virtual const HybridLogicRules* getLogicRulesPtr() const override { return &logicRules_; }
-//
-//  virtual HybridLogicRules* getLogicRulesPtr() override { return &logicRules_; }
-
   void printIterationDebug(scalar_t initTime, const state_vector_array2_t& state_vector_array2, const scalar_array2_t& J) {
     if (state_vector_array2.size() != J.size()) {
       throw std::runtime_error("printIterationDebug: Number of samples do not match");
@@ -426,9 +422,6 @@ class PiSolver final : public Solver_BASE<STATE_DIM, INPUT_DIM> {
   size_t numIterations_;
 
   rollout_t rollout_;
-
-  // TODO(Ruben) : Ask Jan what he wanted to do with these logicRules, they seem unused.
-//  HybridLogicRules logicRules_;
 
   cost_desired_trajectories_t costDesiredTrajectories_;  // TODO(jcarius) should this be in the base class?
   cost_desired_trajectories_t costDesiredTrajectoriesBuffer_;

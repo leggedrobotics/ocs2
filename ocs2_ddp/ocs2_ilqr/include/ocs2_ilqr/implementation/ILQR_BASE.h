@@ -51,9 +51,9 @@ ILQR_BASE<STATE_DIM, INPUT_DIM>::ILQR_BASE(
 				operatingTrajectoriesPtr,
 				settings.ddpSettings_,
 				settings.rolloutSettings_,
-				logicRulesPtr,
 				heuristicsFunctionPtr,
-				"ILQR")
+				"ILQR",
+			   logicRulesPtr)
 		, settings_(settings)
 {}
 

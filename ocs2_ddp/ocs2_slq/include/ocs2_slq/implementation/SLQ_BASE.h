@@ -51,9 +51,9 @@ SLQ_BASE<STATE_DIM, INPUT_DIM>::SLQ_BASE(
 				operatingTrajectoriesPtr,
 				settings.ddpSettings_,
 				settings.rolloutSettings_,
-				std::move(logicRulesPtr),
 				heuristicsFunctionPtr,
-				"SLQ")
+				"SLQ",
+			   std::move(logicRulesPtr))
 		, settings_(settings)
 {
 	// State triggered

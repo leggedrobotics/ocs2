@@ -42,10 +42,10 @@ DDP_BASE<STATE_DIM, INPUT_DIM>::DDP_BASE (
 		const operating_trajectories_base_t* operatingTrajectoriesPtr,
 		const DDP_Settings& ddpSettings,
 		const Rollout_Settings& rolloutSettings,
-		std::shared_ptr<HybridLogicRules> logicRulesPtr,
 		const cost_function_base_t* heuristicsFunctionPtr,
-		const char* algorithmName)
-	: BASE()
+		const char* algorithmName,
+		std::shared_ptr<HybridLogicRules> logicRulesPtr)
+: BASE(std::move(logicRulesPtr))
 	, ddpSettings_(ddpSettings)
 	, rolloutSettings_(rolloutSettings)
 	, algorithmName_(algorithmName)
@@ -55,12 +55,7 @@ DDP_BASE<STATE_DIM, INPUT_DIM>::DDP_BASE (
 	, rewindCounter_(0)
 	, iteration_(0)
 {
-	if (logicRulesPtr != nullptr) {
-		logicRulesMachinePtr_ = logic_rules_machine_ptr_t( new logic_rules_machine_t(std::move(logicRulesPtr)) );
-	} else {
-		std::shared_ptr<NullLogicRules> nullLogicRules(new NullLogicRules());
-		logicRulesMachinePtr_ = logic_rules_machine_ptr_t( new logic_rules_machine_t(nullLogicRules) );
-	}
+
 
 	// Dynamics, Constraints, derivatives, and cost
 	linearQuadraticApproximatorPtrStock_.clear();
@@ -232,13 +227,13 @@ DDP_BASE<STATE_DIM, INPUT_DIM>::rolloutTrajectory(
 		state_vector_t x0Temp;
 		if (!controllerPtrTemp->empty()) {
 			x0Temp = dynamicsForwardRolloutPtrStock_[threadId]->run(
-					i, t0, x0, tf, controllerPtrTemp, *logicRulesMachinePtr_,
+					i, t0, x0, tf, controllerPtrTemp, *BASE::getLogicRulesMachinePtr(),
 					timeTrajectoriesStock[i], eventsPastTheEndIndecesStock[i],
 					stateTrajectoriesStock[i], inputTrajectoriesStock[i]);
 
 		} else {
 			x0Temp = operatingTrajectoriesRolloutPtrStock_[threadId]->run(
-					i, t0, x0, tf, nullptr, *logicRulesMachinePtr_,
+					i, t0, x0, tf, nullptr, *BASE::getLogicRulesMachinePtr(),
 					timeTrajectoriesStock[i], eventsPastTheEndIndecesStock[i],
 					stateTrajectoriesStock[i], inputTrajectoriesStock[i]);
 		}
@@ -337,13 +332,13 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::rolloutFinalState (
 		// call rollout worker for the partition 'i' on the thread 'threadId'
 		if (!controllerPtrTemp->empty()) {
 			x0 = dynamicsForwardRolloutPtrStock_[threadId]->run(
-					i, t0, x0, tf, *controllerPtrTemp, *logicRulesMachinePtr_,
+					i, t0, x0, tf, *controllerPtrTemp, *BASE::getLogicRulesMachinePtr(),
 					timeTrajectory, eventsPastTheEndIndeces,
 					stateTrajectory, inputTrajectory);
 
 		} else {
 			x0 = operatingTrajectoriesRolloutPtrStock_[threadId]->run(
-					i, t0, x0, tf, *controllerPtrTemp, *logicRulesMachinePtr_,
+					i, t0, x0, tf, *controllerPtrTemp, *BASE::getLogicRulesMachinePtr(),
 					timeTrajectory, eventsPastTheEndIndeces,
 					stateTrajectory, inputTrajectory);
 		}
@@ -1533,53 +1528,6 @@ const typename DDP_BASE<STATE_DIM, INPUT_DIM>::scalar_array_t&
 /******************************************************************************************************/
 /***************************************************************************************************** */
 template <size_t STATE_DIM, size_t INPUT_DIM>
-typename DDP_BASE<STATE_DIM, INPUT_DIM>::logic_rules_machine_t*
-	DDP_BASE<STATE_DIM, INPUT_DIM>::getLogicRulesMachinePtr() {
-
-	return logicRulesMachinePtr_.get();
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/***************************************************************************************************** */
-template <size_t STATE_DIM, size_t INPUT_DIM>
-const typename DDP_BASE<STATE_DIM, INPUT_DIM>::logic_rules_machine_t*
-	DDP_BASE<STATE_DIM, INPUT_DIM>::getLogicRulesMachinePtr() const {
-
-	return logicRulesMachinePtr_.get();
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/***************************************************************************************************** */
-template <size_t STATE_DIM, size_t INPUT_DIM>
-void DDP_BASE<STATE_DIM, INPUT_DIM>::setLogicRules(std::shared_ptr<HybridLogicRules> logicRules) {
-
-	logicRulesMachinePtr_->setLogicRules(std::move(logicRules));
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/***************************************************************************************************** */
-template <size_t STATE_DIM, size_t INPUT_DIM>
-const HybridLogicRules* DDP_BASE<STATE_DIM, INPUT_DIM>::getLogicRulesPtr() const {
-
-	return logicRulesMachinePtr_->getLogicRulesPtr();
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/***************************************************************************************************** */
-template <size_t STATE_DIM, size_t INPUT_DIM>
-HybridLogicRules* DDP_BASE<STATE_DIM, INPUT_DIM>::getLogicRulesPtr() {
-
-	return logicRulesMachinePtr_->getLogicRulesPtr();
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/***************************************************************************************************** */
-template <size_t STATE_DIM, size_t INPUT_DIM>
 void DDP_BASE<STATE_DIM, INPUT_DIM>::getCostDesiredTrajectoriesPtr(
 		const cost_desired_trajectories_t*& costDesiredTrajectoriesPtr) const {
 
@@ -2053,13 +2001,13 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::run(
 	}
 
 	// update the logic rules in the beginning of the run routine
-	bool logicRulesModified = logicRulesMachinePtr_->updateLogicRules(partitioningTimes_);
+	bool logicRulesModified = BASE::getLogicRulesMachinePtr()->updateLogicRules(partitioningTimes_);
 
 	// display
 	if (ddpSettings_.displayInfo_) {
 		std::cerr << std::endl << "Rewind Counter: " << rewindCounter_ << std::endl;
 		std::cerr << algorithmName_ + " solver starts from initial time " << initTime << " to final time " << finalTime << ".";
-		logicRulesMachinePtr_->display();
+		BASE::getLogicRulesMachinePtr()->display();
 		std::cerr << std::endl;
 	}
 

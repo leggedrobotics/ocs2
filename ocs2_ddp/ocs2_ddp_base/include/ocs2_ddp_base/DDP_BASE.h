@@ -194,9 +194,9 @@ public:
 			  const operating_trajectories_base_t* operatingTrajectoriesPtr,
 			  const DDP_Settings& ddpSettings,
 			  const Rollout_Settings& rolloutSettings,
-			  std::shared_ptr<HybridLogicRules> logicRulesPtr,
 			  const cost_function_base_t* heuristicsFunctionPtr,
-			  const char* algorithmName);
+			  const char* algorithmName,
+			  std::shared_ptr<HybridLogicRules> logicRulesPtr = nullptr);
 
 	/**
 	 * Destructor.
@@ -563,41 +563,6 @@ public:
 	 * @return finalTime
 	 */
 	const scalar_array_t& getPartitioningTimes() const override;
-
-	/**
-	 * Returns a pointer to the LogicRulesMachine
-	 *
-	 * @return a pointer to LogicRulesMachine
-	 */
-	logic_rules_machine_t* getLogicRulesMachinePtr() override;
-
-	/**
-	 * Returns a pointer to the LogicRulesMachine.
-	 *
-	 * @return a pointer to LogicRulesMachine
-	 */
-	const logic_rules_machine_t* getLogicRulesMachinePtr() const override;
-
-	/**
-	 * Sets logic rules.
-	 *
-	 * @param logicRules
-	 */
-	void setLogicRules(std::shared_ptr<HybridLogicRules> logicRules) override;
-
-	/**
-	 * Returns a constant pointer to the logic rules.
-	 *
-	 * @return a constant pointer to the logic rules.
-	 */
-	const HybridLogicRules* getLogicRulesPtr() const override;
-
-	/**
-	 * Returns a pointer to the logic rules.
-	 *
-	 * @return a pointer to the logic rules.
-	 */
-	HybridLogicRules* getLogicRulesPtr() override;
 
 	/**
 	 * Gets the cost function desired trajectories.
@@ -981,8 +946,6 @@ protected:
 	Rollout_Settings rolloutSettings_;
 
 	std::string algorithmName_;
-
-	logic_rules_machine_ptr_t logicRulesMachinePtr_;
 
 	cost_desired_trajectories_t costDesiredTrajectories_;
 	cost_desired_trajectories_t costDesiredTrajectoriesBuffer_;

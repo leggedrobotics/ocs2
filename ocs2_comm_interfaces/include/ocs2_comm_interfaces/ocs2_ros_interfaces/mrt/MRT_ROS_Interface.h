@@ -118,17 +118,12 @@ public:
 	typedef ControllerBase<STATE_DIM,INPUT_DIM> controller_t;
 
 	/**
-	 * Default constructor
-	 */
-	MRT_ROS_Interface() = default;
-
-	/**
 	 * Constructor
 	 *
 	 * @param [in] robotName: The robot's name.
 	 * @param [in] logicRules: A logic rule class of derived from the hybrid logicRules base.
 	 */
-	MRT_ROS_Interface(std::string robotName = "robot", std::shared_ptr<HybridLogicRules> logicRules = nullptr);
+	explicit MRT_ROS_Interface(std::string robotName = "robot", std::shared_ptr<HybridLogicRules> logicRules = nullptr);
 
 	/**
 	 * Destructor
@@ -146,7 +141,7 @@ public:
 	/**
 	 * Resets the class to its instantiate state.
 	 */
-	virtual void reset();
+	void reset();
 
 	/**
 	 * Request the MPC node to reset. This method is a blocking method.

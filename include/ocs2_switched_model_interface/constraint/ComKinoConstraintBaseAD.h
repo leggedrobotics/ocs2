@@ -31,17 +31,15 @@
 
 namespace switched_model {
 
-template <size_t JOINT_COORD_SIZE, size_t STATE_DIM = 12 + JOINT_COORD_SIZE, size_t INPUT_DIM = 12 + JOINT_COORD_SIZE,
-          class LOGIC_RULES_T = SwitchedModelPlannerLogicRules<JOINT_COORD_SIZE, double>>
-class ComKinoConstraintBaseAD : public ocs2::ConstraintBase<12 + JOINT_COORD_SIZE, 12 + JOINT_COORD_SIZE, LOGIC_RULES_T> {
+template <size_t JOINT_COORD_SIZE, size_t STATE_DIM = 12 + JOINT_COORD_SIZE, size_t INPUT_DIM = 12 + JOINT_COORD_SIZE>
+class ComKinoConstraintBaseAD : public ocs2::ConstraintBase<12 + JOINT_COORD_SIZE, 12 + JOINT_COORD_SIZE> {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
   enum { STATE_DIM_ = STATE_DIM, INPUT_DIM_ = INPUT_DIM, NUM_CONTACT_POINTS_ = SwitchedModel<JOINT_COORD_SIZE>::NUM_CONTACT_POINTS };
 
-  typedef LOGIC_RULES_T logic_rules_t;
+  typedef SwitchedModelPlannerLogicRules<JOINT_COORD_SIZE, double> logic_rules_t;
   typedef typename logic_rules_t::foot_cpg_t foot_cpg_t;
-  typedef ocs2::LogicRulesMachine<logic_rules_t> logic_rules_machine_t;
 
   using ad_base_t = CppAD::cg::CG<double>;
   using ad_scalar_t = CppAD::AD<ad_base_t>;
@@ -50,7 +48,7 @@ class ComKinoConstraintBaseAD : public ocs2::ConstraintBase<12 + JOINT_COORD_SIZ
   using kinematic_model_t = KinematicsModelBase<JOINT_COORD_SIZE>;
   using ad_kinematic_model_t = KinematicsModelBase<JOINT_COORD_SIZE, ad_scalar_t>;
 
-  using Base = ocs2::ConstraintBase<STATE_DIM, INPUT_DIM, logic_rules_t>;
+  using Base = ocs2::ConstraintBase<STATE_DIM, INPUT_DIM>;
   using typename Base::constraint1_input_matrix_t;
   using typename Base::constraint1_state_matrix_t;
   using typename Base::constraint1_vector_array_t;
@@ -90,8 +88,11 @@ class ComKinoConstraintBaseAD : public ocs2::ConstraintBase<12 + JOINT_COORD_SIZ
   const std::array<std::string, 4> feetNames{"LF", "RF", "LH", "RH"};
 
   ComKinoConstraintBaseAD(const kinematic_model_t& kinematicModel, const ad_kinematic_model_t& adKinematicModel, const com_model_t& comModel,
-                        const ad_com_model_t& adComModel, const Model_Settings& options = Model_Settings())
-      : Base(), adKinematicModelPtr_(adKinematicModel.clone()), adComModelPtr_(adComModel.clone()), options_(options) {
+                        const ad_com_model_t& adComModel, std::shared_ptr<const logic_rules_t> logicRulesPtr, const Model_Settings& options = Model_Settings())
+      : Base(), adKinematicModelPtr_(adKinematicModel.clone()), adComModelPtr_(adComModel.clone()), logicRulesPtr_(std::move(logicRulesPtr), options_(options) {
+    if (!logicRulesPtr_) {
+      throw std::runtime_error("[ComKinoConstraintBaseAD] logicRules cannot be a nullptr");
+    }
     InitializeConstraintTerms();
   }
 
@@ -99,6 +100,7 @@ class ComKinoConstraintBaseAD : public ocs2::ConstraintBase<12 + JOINT_COORD_SIZ
       : Base(rhs),
         adKinematicModelPtr_(rhs.adKinematicModelPtr_->clone()),
         adComModelPtr_(rhs.adComModelPtr_->clone()),
+        logicRulesPtr_(rhs.logicRulesPtr_),
         options_(rhs.options_),
         inequalityConstraintCollection_(rhs.inequalityConstraintCollection_),
         equalityStateInputConstraintCollection_(rhs.equalityStateInputConstraintCollection_),
@@ -165,9 +167,7 @@ class ComKinoConstraintBaseAD : public ocs2::ConstraintBase<12 + JOINT_COORD_SIZ
 
   ~ComKinoConstraintBase() override = default;
 
-  ComKinoConstraintBase<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM, LOGIC_RULES_T>* clone() const override;
-
-  void initializeModel(logic_rules_machine_t& logicRulesMachine, const size_t& partitionIndex, const char* algorithmName = NULL) override;
+  ComKinoConstraintBase<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>* clone() const override;
 
   void setCurrentStateAndControl(const scalar_t& t, const state_vector_t& x, const input_vector_t& u) override;
 
@@ -219,7 +219,7 @@ class ComKinoConstraintBaseAD : public ocs2::ConstraintBase<12 + JOINT_COORD_SIZ
   typename ad_com_model_t::Ptr adComModelPtr_;
   Model_Settings options_;
 
-  logic_rules_t* logicRulesPtr_;
+  std::shared_ptr<const logic_rules_t> logicRulesPtr_;
   std::function<size_t(scalar_t)> findActiveSubsystemFnc_;
   contact_flag_t stanceLegs_;
   size_t numEventTimes_;

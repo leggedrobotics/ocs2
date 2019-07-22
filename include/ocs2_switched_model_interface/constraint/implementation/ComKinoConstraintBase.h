@@ -5,308 +5,665 @@
  *      Author: farbod
  */
 
+
 namespace switched_model {
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-ComKinoConstraintBase<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM, LOGIC_RULES_T>*
-ComKinoConstraintBase<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::clone() const {
-  return new ComKinoConstraintBase<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM, LOGIC_RULES_T>(*this);
+template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM>
+ComKinoConstraintBase<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>*
+	ComKinoConstraintBase<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::clone() const {
+
+	return new ComKinoConstraintBase<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>(*this);
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void ComKinoConstraintBase<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::initializeModel(logic_rules_machine_t& logicRulesMachine,
-                                                                                                   const size_t& partitionIndex,
-                                                                                                   const char* algorithmName /*=NULL*/) {
-  Base::initializeModel(logicRulesMachine, partitionIndex, algorithmName);
+template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM>
+void ComKinoConstraintBase<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::setCurrentStateAndControl(
+		const scalar_t& t,
+		const state_vector_t& x,
+		const input_vector_t& u) {
 
-  findActiveSubsystemFnc_ = logicRulesMachine.getHandleToFindActiveEventCounter(partitionIndex);
+	Base::setCurrentStateAndControl(t, x, u);
 
-  logicRulesPtr_ = logicRulesMachine.getLogicRulesPtr();
+	numEventTimes_ = logicRulesPtr_->getNumEventTimes();
+	endEffectorStateConstraintsPtr_ = logicRulesPtr_->getEndEffectorStateConstraintsPtr();
 
-  numEventTimes_ = logicRulesMachine.getLogicRulesPtr()->getNumEventTimes();
+	activeSubsystem_ = logicRulesPtr_->getEventTimeCount(t);
+	logicRulesPtr_->getMotionPhaseLogics(activeSubsystem_, stanceLegs_, zDirectionRefsPtr_);
 
-  if (algorithmName != NULL)
-    algorithmName_.assign(algorithmName);
-  else
-    algorithmName_.clear();
+	// if it is not the last subsystem (numSubsystems = numEventTimes_+1)
+	if (activeSubsystem_ < numEventTimes_)
+		logicRulesPtr_->getContactFlags(activeSubsystem_+1, nextPhaseStanceLegs_);
+	else
+		nextPhaseStanceLegs_.fill(true);
+
+	// the indices of the event times on which a leg started and finished swinging.
+	logicRulesPtr_->getFeetPlanner().getStartTimesIndices(startTimesIndices_);
+	logicRulesPtr_->getFeetPlanner().getFinalTimesIndices(finalTimesIndices_);
+
+	// joints
+	qJoints_  = x.template tail<12>();
+	// joints' velocities
+	dqJoints_ = u.template tail<12>();
+
+	// Rotation matrix from Base frame (or the coincided frame world frame) to Origin frame (global world).
+	o_R_b_ = RotationMatrixBasetoOrigin(x.template head<3>());
+
+	// base to CoM displacement in the CoM frame
+	com_base2CoM_ = comModelPtr_->comPositionBaseFrame(qJoints_);
+
+	// Inertia matrix in the CoM frame and its derivatives
+	M_ = comModelPtr_->comInertia(qJoints_);
+	Eigen::Matrix3d rotationMInverse = M_.topLeftCorner<3,3>().inverse();
+	MInverse_ << rotationMInverse, Eigen::Matrix3d::Zero(),
+			Eigen::Matrix3d::Zero(), Eigen::Matrix3d::Identity()/M_(5,5);
+
+	if (useInertiaMatrixDerivate())
+		dMdt_ = comModelPtr_->comInertiaDerivative(qJoints_, dqJoints_);
+	else
+		dMdt_.setZero();
+
+	// CoM Jacobian in the Base frame
+	b_comJacobain_ = MInverse_ * comModelPtr_->comMomentumJacobian(qJoints_);
+	// Time derivative of CoM Jacobian in the Base frame
+	if (useInertiaMatrixDerivate())
+		b_comJacobainTimeDerivative_ = MInverse_*comModelPtr_->comMomentumJacobianDerivative(qJoints_, dqJoints_) - MInverse_*dMdt_*b_comJacobain_;
+	else
+		b_comJacobainTimeDerivative_.setZero();
+
+	// base coordinate
+	basePose_.template head<3>() = x.template segment<3>(0);
+	basePose_.template tail<3>() = x.template segment<3>(3) - o_R_b_ * com_base2CoM_;
+
+	// local angular and linear velocity of Base
+	baseLocalVelocities_ = x.template segment<6>(6) - b_comJacobain_ * dqJoints_;
+	baseLocalVelocities_.template head<3>() = x.template segment<3>(6) - b_comJacobain_.template topRows<3>()*dqJoints_;
+	baseLocalVelocities_.template tail<3>() = x.template segment<3>(9) - b_comJacobain_.template bottomRows<3>()*dqJoints_
+			+ com_base2CoM_.cross(baseLocalVelocities_.template head<3>());
+
+	// update kinematic model
+	kinematicModelPtr_->update(basePose_, qJoints_);
+
+	for (size_t i=0; i<NUM_CONTACT_POINTS_; i++)  {
+
+		// base to stance feet displacement in the CoM frame
+		kinematicModelPtr_->footPositionBaseFrame(i, com_base2StanceFeet_[i]);
+		com_com2StanceFeet_[i] = com_base2StanceFeet_[i]-com_base2CoM_;
+
+		// foot position in the Origin frame
+		kinematicModelPtr_->footPositionOriginFrame(i, o_origin2StanceFeet_[i]);
+
+		// feet Jacobain's in the Base frame
+		kinematicModelPtr_->footJacobainBaseFrame(i, b_feetJacobains_[i]);
+
+	}  // end of i loop
+
+
+	// feet Jacobian time derivative in the Base frame
+	const double h = sqrt(Eigen::NumTraits<double>::epsilon());
+	joint_coordinate_t qJointsPlus = qJoints_ + dqJoints_*h;
+	kinematicModelPtr_->update(basePose_, qJointsPlus);
+	for (size_t i=0; i<NUM_CONTACT_POINTS_; i++) {
+		base_jacobian_matrix_t b_footJacobainPlus;
+		kinematicModelPtr_->footJacobainBaseFrame(i, b_footJacobainPlus);
+		b_feetJacobainsTimeDerivative_[i].setZero();
+		b_feetJacobainsTimeDerivative_[i].template block<6,3>(0,3*i) = (b_footJacobainPlus.template block<6,3>(0,3*i)-b_feetJacobains_[i].template block<6,3>(0,3*i))/h;
+	}  // end of i loop
+
+	// if GapIndicator is provided
+	if (endEffectorStateConstraintsPtr_ && endEffectorStateConstraintsPtr_->empty()==false) {
+		for (size_t i = 0; i < NUM_CONTACT_POINTS_; i++) {
+			// check for the gaps
+			feetConstraintIsActive_[i] = false;
+
+			if (stanceLegs_[i] == false && nextPhaseStanceLegs_[i] == true) {
+
+				feetConstraintValues_[i] = 0;
+				feetConstraintJacobains_[i].setZero();
+				for (const auto &eeConstraintPtr_ : *endEffectorStateConstraintsPtr_) {
+
+					if (eeConstraintPtr_->isActive(o_origin2StanceFeet_[i]) == false)
+						continue;
+
+					scalar_t constraintValue = eeConstraintPtr_->constraintValue(o_origin2StanceFeet_[i]);
+					if (constraintValue > std::numeric_limits<scalar_t>::epsilon()) {
+						feetConstraintIsActive_[i] = true;
+						feetConstraintValues_[i] = constraintValue;
+						feetConstraintJacobains_[i] = eeConstraintPtr_->constraintDerivative(o_origin2StanceFeet_[i]);
+						break;
+					}  // end of if
+				}  // end of j loop
+
+			}  // end of if
+		}  // end of i loop
+	} else {
+		for (size_t i = 0; i < NUM_CONTACT_POINTS_; i++) {
+			feetConstraintIsActive_[i] = false;
+		}
+	}
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void ComKinoConstraintBase<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::setCurrentStateAndControl(const scalar_t& t,
-                                                                                                             const state_vector_t& x,
-                                                                                                             const input_vector_t& u) {
-  Base::setCurrentStateAndControl(t, x, u);
+template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM>
+void ComKinoConstraintBase<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::getConstraint1(
+		constraint1_vector_t& g1) {
 
-  auto activeSubsystem = findActiveSubsystemFnc_(t);
-  logicRulesPtr_->getMotionPhaseLogics(activeSubsystem, stanceLegs_, zDirectionRefsPtr_);
+	size_t nextFreeIndex = 0;
+	for (size_t i=0; i<NUM_CONTACT_POINTS_; i++) {
 
-  for (int i = 0; i < NUM_CONTACT_POINTS_; i++) {
-    auto footName = feetNames[i];
+		// the contact force at swing leg is zero
+		if (stanceLegs_[i]==false) {
+			g1.template segment<3>(nextFreeIndex) = options_.contactForceWeight_*Base::u_.template segment<3>(3*i);
+			nextFreeIndex += 3;
 
-    // Active friction cone constraint for stanceLegs
-    inequalityConstraintCollection_.modifyConstraint(footName + "_FrictionCone")->setActivity(stanceLegs_[i]);
+		} else {
 
-    // Active foot placement for stance legs
-    auto EEPosConstraint = inequalityConstraintCollection_.template modifyConstraint<EndEffectorPositionConstraint_t>(footName + "_EEPos");
+			// stance foot velocity in the World frame
+			g1.template segment<3>(nextFreeIndex) = b_feetJacobains_[i].template bottomRows<3>()*dqJoints_ + baseLocalVelocities_.template tail<3>()
+								+ baseLocalVelocities_.template head<3>().cross(com_base2StanceFeet_[i]);
 
-    double constraintScale = options_.zDirectionPositionWeight_;
-    if (options_.zDirectionEqualityConstraint_) {
-      EEPosConstraint->setActivity(stanceLegs_[i]);
-      eePosConSettings_[i].Ab = constraintScale * switched_model::toHalfSpaces(polytopes[i]);
-      EEPosConstraint->configure(eePosConSettings_[i]);
-    } else {
-        EEPosConstraint->setActivity(true);
-        // Add z direction to inequalities during both stance and swing phase
-        if (stanceLegs_[i]) {
-          if (options_.terrainInequality_) {
-            Eigen::MatrixXd planarPolytopes = constraintScale * switched_model::toHalfSpaces(polytopes[i]);
-            eePosConSettings_[i].Ab.resize(planarPolytopes.rows() + 2, planarPolytopes.cols());
-            eePosConSettings_[i].Ab << planarPolytopes,
-                0.0, 0.0, constraintScale, 0.0,
-                0.0, 0.0, -constraintScale, 0.0;
-          } else {
-            eePosConSettings_[i].Ab = constraintScale * switched_model::toHalfSpaces(polytopes[i]);
-          }
-        } else {
-          // Swing height control
-          eePosConSettings_[i].Ab.resize(2, 4);
-          eePosConSettings_[i].Ab <<
-          0.0, 0.0, constraintScale, -options_.zDirectionVelocityWeight_ * constraintScale * zDirectionRefsPtr_[i]->calculatePosition(Base::t_),
-          0.0, 0.0, -constraintScale, 1.0/options_.zDirectionVelocityWeight_ * constraintScale * zDirectionRefsPtr_[i]->calculatePosition(Base::t_);
-        }
-        EEPosConstraint->configure(eePosConSettings_[i]);
-    }
+			nextFreeIndex += 3;
+		}
 
+	}  // end of i loop
 
-    // Zero forces active for swing legs
-    equalityStateInputConstraintCollection_.modifyConstraint(footName + "_ZeroForce")->setActivity(!stanceLegs_[i]);
+	// add the swing legs z direction constraints, if its CPG is provided
+	for (size_t i=0; i<NUM_CONTACT_POINTS_; i++) {
+		if (stanceLegs_[i]==false && zDirectionRefsPtr_[i]!=nullptr) {
 
-    // Velocity constraint
-    if (stanceLegs_[i]) {  // in stance: All velocity equal to zero
-      eeVelConSettings_[i].b = Eigen::Vector3d::Zero();
-      eeVelConSettings_[i].A = Eigen::Matrix3d::Identity();
-    } else {  // in swing: z-velocity is provided
-      eeVelConSettings_[i].b.resize(1);
-      eeVelConSettings_[i].A.resize(1, 3);
-      eeVelConSettings_[i].b << -zDirectionRefsPtr_[i]->calculateVelocity(Base::t_);
-      eeVelConSettings_[i].A << 0, 0, 1;
-    }
-    auto EEVelConstraint = equalityStateInputConstraintCollection_.template modifyConstraint<EndEffectorVelocityConstraint_t>(footName + "_EEVel");
-    EEVelConstraint->configure(eeVelConSettings_[i]);
+			// stance foot velocity in the Origin frame
+			Eigen::Vector3d o_footVelocity = o_R_b_ * ( b_feetJacobains_[i].template bottomRows<3>()*dqJoints_ + baseLocalVelocities_.template tail<3>()
+					+ baseLocalVelocities_.template head<3>().cross(com_base2StanceFeet_[i]) );
 
-    if (options_.zDirectionEqualityConstraint_) {
-      EEVelConstraint->setActivity(true);
-    } else {
-      EEVelConstraint->setActivity(stanceLegs_[i]);
-    }
-
-  }
+			g1(nextFreeIndex) = options_.zDirectionVelocityWeight_ *
+					(o_footVelocity(2) - zDirectionRefsPtr_[i]->calculateVelocity(Base::t_));
+			nextFreeIndex++;
+		}
+	}  // end of i loop
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void ComKinoConstraintBase<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::getConstraint1(constraint1_vector_t& g1) {
-  size_t numConstraints = numStateInputConstraint(Base::t_);
-  g1.segment(0, numConstraints) = equalityStateInputConstraintCollection_.getConstraints().getValueAsVector(Base::t_, Base::x_, Base::u_);
+template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM>
+size_t ComKinoConstraintBase<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::numStateInputConstraint(
+		const scalar_t& time) {
+
+	size_t numConstraint1 = 12;
+
+	// add the swing legs z direction constraints, if its CPG is provided
+	for (size_t i=0; i<NUM_CONTACT_POINTS_; i++) {
+		if (stanceLegs_[i]==false && zDirectionRefsPtr_[i]!=nullptr) {
+			numConstraint1++;
+		}
+	}  // end of i loop
+
+	return numConstraint1;
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-size_t ComKinoConstraintBase<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::numStateInputConstraint(const scalar_t& time) {
-  return equalityStateInputConstraintCollection_.getConstraints().getNumConstraints(time);
+template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM>
+void ComKinoConstraintBase<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::getConstraint2(
+		constraint2_vector_t& g2) {
+
+	size_t numConstraint2 = 0;
+	if (options_.zDirectionPositionWeight_<std::numeric_limits<double>::epsilon())  return;
+
+	for (size_t i=0; i<NUM_CONTACT_POINTS_; i++)
+		if (stanceLegs_[i]==false && zDirectionRefsPtr_[i]!=nullptr) {
+
+			g2(numConstraint2) = options_.zDirectionPositionWeight_ *
+					( o_origin2StanceFeet_[i](2)-zDirectionRefsPtr_[i]->calculatePosition(Base::t_) );
+			numConstraint2++;
+		}  // end of if loop
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void ComKinoConstraintBase<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::getConstraint2(constraint2_vector_t& g2) {}
+template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM>
+size_t ComKinoConstraintBase<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::numStateOnlyConstraint(
+		const scalar_t& time) {
+
+	size_t numConstraint2 = 0;
+	if (options_.zDirectionPositionWeight_<std::numeric_limits<double>::epsilon())
+		return numConstraint2;
+
+	for (size_t i=0; i<NUM_CONTACT_POINTS_; i++)
+		if (stanceLegs_[i]==false && zDirectionRefsPtr_[i]!=nullptr) {
+			numConstraint2++;
+		}  // end of if loop
+
+	return numConstraint2;
+}
+
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-size_t ComKinoConstraintBase<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::numStateOnlyConstraint(const scalar_t& time) {
-  return 0;
+template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM>
+void ComKinoConstraintBase<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::getInequalityConstraint(scalar_array_t& h) {
+	h.clear();
+	const scalar_t &mu = options_.frictionCoefficient_;
+	for (size_t i=0; i<NUM_CONTACT_POINTS_; i++){
+		if (stanceLegs_[i]){
+			const scalar_t Fx = Base::u_(3 * i + 0);
+			const scalar_t Fy = Base::u_(3 * i + 1);
+			const scalar_t Fz = Base::u_(3 * i + 2);
+			h.push_back( Fz*sqrt(mu*mu) - sqrt(Fx*Fx+Fy*Fy+25.0) );
+		}
+	}
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void ComKinoConstraintBase<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::getInequalityConstraint(scalar_array_t& h) {
-  h = inequalityConstraintCollection_.getConstraints().getValue(Base::t_, Base::x_, Base::u_);
+template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM>
+size_t ComKinoConstraintBase<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::numInequalityConstraint(
+		const scalar_t &time) {
+
+	size_t numInequalities = 0;
+	for (size_t i=0; i<NUM_CONTACT_POINTS_; i++){
+		if (stanceLegs_[i]){
+			numInequalities++;
+		}
+	}
+	return numInequalities;
+}
+
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM>
+void ComKinoConstraintBase<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::getFinalConstraint2(
+		constraint2_vector_t& g2Final) {
+
+	size_t numFinalConstraint2 = 0;
+
+	for (size_t i=0; i<NUM_CONTACT_POINTS_; i++)
+		if (feetConstraintIsActive_[i]==true)  {
+
+			g2Final(numFinalConstraint2) = feetConstraintValues_[i];
+			numFinalConstraint2++;
+		}
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-size_t ComKinoConstraintBase<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::numInequalityConstraint(const scalar_t& time) {
-  return inequalityConstraintCollection_.getConstraints().getNumConstraints(time);
+template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM>
+size_t ComKinoConstraintBase<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::numStateOnlyFinalConstraint(
+		const scalar_t& time) {
+
+	size_t numFinalConstraint2 = 0;
+
+	for (size_t i=0; i<NUM_CONTACT_POINTS_; i++)
+		if (feetConstraintIsActive_[i]==true)  {
+			numFinalConstraint2++;
+		}
+
+	return numFinalConstraint2;
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void ComKinoConstraintBase<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::getFinalConstraint2(constraint2_vector_t& g2Final) {}
+template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM>
+void ComKinoConstraintBase<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::getConstraint1DerivativesState(
+		constraint1_state_matrix_t& C) {
 
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-size_t ComKinoConstraintBase<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::numStateOnlyFinalConstraint(const scalar_t& time) {
-  return 0;
+
+	// C matrix
+	/*			o_theta_b	o_x_com		com_w_com	com_v_com	qJoints
+	 * 		|	C00			C01			C02			C03			C04		|
+	 * 		|	C10			C11			C12			C13			C14		|
+	 * 	C =	|	C20			C21			C22			C23			C24		|
+	 * 		|	C30			C31			C32			C33			C34		|
+	 * 		|	0			0			0			0			dJz/dt	|
+	 */
+
+	size_t nextFreeIndex = 0;
+	for (size_t i=0; i<NUM_CONTACT_POINTS_; i++) {
+
+		// for a swing leg
+		if (stanceLegs_[i]==false) {
+			C.template block<3,24>(nextFreeIndex,0).setZero();
+			nextFreeIndex += 3;
+			continue;
+		}
+
+		// Ci0
+		C.template block<3,3>(nextFreeIndex,0).setZero();
+
+		// Ci1
+		C.template block<3,3>(nextFreeIndex,3).setZero();
+
+		// Ci2
+		C.template block<3,3>(nextFreeIndex,6) = -CrossProductMatrix(com_com2StanceFeet_[i]);
+
+		// Ci3
+		C.template block<3,3>(nextFreeIndex,9).setIdentity();
+
+		// Ci4
+		C.template block<3,12>(nextFreeIndex,12) = CrossProductMatrix(baseLocalVelocities_.template head<3>()) * (
+						b_feetJacobains_[i].template bottomRows<3>()-b_comJacobain_.template bottomRows<3>())
+						+ b_feetJacobainsTimeDerivative_[i].template bottomRows<3>()-b_comJacobainTimeDerivative_.template bottomRows<3>()
+						+ CrossProductMatrix(com_com2StanceFeet_[i]) * b_comJacobainTimeDerivative_.template topRows<3>();
+
+		nextFreeIndex += 3;
+	}
+
+	// for the swing legs z direction constraints, if its CPG is provided
+	for (size_t i=0; i<NUM_CONTACT_POINTS_; i++)
+		if (stanceLegs_[i]==false && zDirectionRefsPtr_[i]!=nullptr) {
+			Eigen::Matrix<double,3,24> partial_x;
+
+			// Ci0
+			Eigen::Vector3d o_footVelocity = o_R_b_ * ( b_feetJacobains_[i].template bottomRows<3>()*dqJoints_ + baseLocalVelocities_.template tail<3>()
+					+ baseLocalVelocities_.template head<3>().cross(com_base2StanceFeet_[i]) );
+			partial_x.template block<3,3>(0,0) = -CrossProductMatrix(o_footVelocity);
+
+			// Ci1
+			partial_x.template block<3,3>(0,3).setZero();
+
+			// Ci2
+			partial_x.template block<3,3>(0,6) = -o_R_b_ * CrossProductMatrix(com_com2StanceFeet_[i]);
+
+			// Ci3
+			partial_x.template block<3,3>(0,9) = o_R_b_;
+
+			// Ci4
+			partial_x.template block<3,12>(0,12) = o_R_b_ * ( CrossProductMatrix(baseLocalVelocities_.template head<3>()) * (
+					b_feetJacobains_[i].template bottomRows<3>()-b_comJacobain_.template bottomRows<3>())
+					+ b_feetJacobainsTimeDerivative_[i].template bottomRows<3>()-b_comJacobainTimeDerivative_.template bottomRows<3>()
+					+ CrossProductMatrix(com_com2StanceFeet_[i]) * b_comJacobainTimeDerivative_.template topRows<3>() );
+
+			C.template block<1,24>(nextFreeIndex,0) = options_.zDirectionVelocityWeight_*partial_x.template bottomRows<1>();
+			nextFreeIndex++;
+		}
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void ComKinoConstraintBase<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::getConstraint1DerivativesState(
-    constraint1_state_matrix_t& C) {
-	// TODO(Ruben) : We know this is the first call to any of the derivatives. Solve properly later
-  linearStateInputConstraintApproximation_ =
-      equalityStateInputConstraintCollection_.getConstraints().getLinearApproximationAsMatrices(Base::t_, Base::x_, Base::u_);
-  size_t numConstraints = numStateInputConstraint(Base::t_);
-  C.block(0, 0, numConstraints, STATE_DIM) = linearStateInputConstraintApproximation_.derivativeState;
+template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM>
+void ComKinoConstraintBase<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::getConstraint1DerivativesControl(
+		constraint1_input_matrix_t& D) {
+
+	// D matrix
+	/*			lambda		dqJoints
+	 * 		|	D00			D01		|
+	 * 		|	D10			D11		|
+	 * D = 	|	D20			D21		|
+	 * 		|	D30			D31		|
+	 * 		|	0			Jz		|
+	 */
+
+	size_t nextFreeIndex = 0;
+	for (size_t i=0; i<NUM_CONTACT_POINTS_; i++) {
+
+		// for swing leg
+		if (stanceLegs_[i]==false) {
+			D.template block<3,24>(nextFreeIndex,0).setZero();
+			D.template block<3,3>(nextFreeIndex,nextFreeIndex) = options_.contactForceWeight_*Eigen::Matrix3d::Identity();
+			nextFreeIndex += 3;
+			continue;
+		}
+
+		// Di0
+		D.template block<3,12>(nextFreeIndex,0).setZero();
+
+		// Di1
+		D.template block<3,12>(nextFreeIndex,12) = b_feetJacobains_[i].template bottomRows<3>() - b_comJacobain_.template bottomRows<3>() +
+				CrossProductMatrix(com_com2StanceFeet_[i])*b_comJacobain_.template topRows<3>();
+
+		nextFreeIndex += 3;
+	}  // end of i loop
+
+
+	// for the swing legs z direction constraints, if its CPG is provided
+	for (size_t i=0; i<NUM_CONTACT_POINTS_; i++)
+		if (stanceLegs_[i]==false && zDirectionRefsPtr_[i]!=nullptr) {
+			Eigen::Matrix<double,3,12> partial_dq = o_R_b_ * ( b_feetJacobains_[i].template bottomRows<3>() - b_comJacobain_.template bottomRows<3>() +
+					CrossProductMatrix(com_com2StanceFeet_[i])*b_comJacobain_.template topRows<3>() );
+			D.template block<1,12>(nextFreeIndex,0).setZero();
+			D.template block<1,12>(nextFreeIndex,12) = options_.zDirectionVelocityWeight_*partial_dq.template bottomRows<1>();
+			nextFreeIndex++;
+		}
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void ComKinoConstraintBase<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::getConstraint1DerivativesControl(
-    constraint1_input_matrix_t& D) {
-  size_t numConstraints = numStateInputConstraint(Base::t_);
-  D.block(0, 0, numConstraints, INPUT_DIM) = linearStateInputConstraintApproximation_.derivativeInput;
+template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM>
+void ComKinoConstraintBase<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::getConstraint1DerivativesEventTimes(
+		constraint1_vector_array_t& g1DevArray) {
+
+	// set all to zero
+	g1DevArray.resize(numEventTimes_);
+	for (constraint1_vector_t& g1Dev : g1DevArray)
+		g1Dev.setZero();
+
+	size_t nextFreeIndex = 0;
+	for (size_t j=0; j<NUM_CONTACT_POINTS_; j++) {
+		// the contact force at swing leg is zero
+		if (stanceLegs_[j]==false) {
+			nextFreeIndex += 3;
+		} else {
+			// stance foot velocity in the World frame
+			nextFreeIndex += 3;
+		}
+	} // end of j loop
+
+	// add the swing legs z direction constraints derivative, if its CPG is provided
+	for (size_t j=0; j<NUM_CONTACT_POINTS_; j++) {
+		if (stanceLegs_[j]==false && zDirectionRefsPtr_[j]!=nullptr) {
+			const int& startTimesIndex = startTimesIndices_[j][activeSubsystem_];
+			g1DevArray[startTimesIndex](nextFreeIndex) = -options_.zDirectionVelocityWeight_ *
+					zDirectionRefsPtr_[j]->calculateStartTimeDerivative(Base::t_);
+			const int& finalTimesIndex = finalTimesIndices_[j][activeSubsystem_];
+			g1DevArray[finalTimesIndex](nextFreeIndex) = -options_.zDirectionVelocityWeight_ *
+					zDirectionRefsPtr_[j]->calculateFinalTimeDerivative(Base::t_);
+			nextFreeIndex++;
+		}
+	} // end of j loop
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void ComKinoConstraintBase<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::getConstraint1DerivativesEventTimes(
-    constraint1_vector_array_t& g1DevArray) {
-  // set all to zero
-  g1DevArray.resize(numEventTimes_);
-  for (constraint1_vector_t& g1Dev : g1DevArray) g1Dev.setZero();
+template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM>
+void ComKinoConstraintBase<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::getConstraint2DerivativesState(
+		constraint2_state_matrix_t& F)  {
 
-  //	size_t nextFreeIndex = 0;
-  //	for (size_t j=0; j<NUM_CONTACT_POINTS_; j++) {
-  //		// the contact force at swing leg is zero
-  //		if (stanceLegs_[j]==false) {
-  //			nextFreeIndex += 3;
-  //		} else {
-  //			// stance foot velocity in the World frame
-  //			nextFreeIndex += 3;
-  //		}
-  //	} // end of j loop
-  //
-  //	// add the swing legs z direction constraints derivative, if its CPG is provided
-  //	for (size_t j=0; j<NUM_CONTACT_POINTS_; j++) {
-  //		if (stanceLegs_[j]==false && zDirectionRefsPtr_[j]!=nullptr) {
-  //			const int& startTimesIndex = startTimesIndices_[j][activeSubsystem_];
-  //			g1DevArray[startTimesIndex](nextFreeIndex) = -options_.zDirectionVelocityWeight_ *
-  //					zDirectionRefsPtr_[j]->calculateStartTimeDerivative(Base::t_);
-  //			const int& finalTimesIndex = finalTimesIndices_[j][activeSubsystem_];
-  //			g1DevArray[finalTimesIndex](nextFreeIndex) = -options_.zDirectionVelocityWeight_ *
-  //					zDirectionRefsPtr_[j]->calculateFinalTimeDerivative(Base::t_);
-  //			nextFreeIndex++;
-  //		}
-  //	} // end of j loop
+	size_t numConstraint2 = 0;
+	if (options_.zDirectionPositionWeight_<std::numeric_limits<double>::epsilon())  return;
+
+	for (size_t i=0; i<NUM_CONTACT_POINTS_; i++)
+		if (stanceLegs_[i]==false && zDirectionRefsPtr_[i]!=nullptr) {
+			// foot jacobian in the Origin frame
+			Eigen::Matrix<double, 3, 18> o_footJacobian;
+			o_footJacobian.block<3,3>(0,0)  = -CrossProductMatrix(o_R_b_*com_com2StanceFeet_[i]);
+			o_footJacobian.block<3,3>(0,3)  = Eigen::Matrix3d::Identity();
+			o_footJacobian.block<3,12>(0,6) = o_R_b_ * (b_feetJacobains_[i].template bottomRows<3>()-b_comJacobain_.template bottomRows<3>());
+
+			F.template block<1,6>(numConstraint2,0)   = options_.zDirectionPositionWeight_ * o_footJacobian.block<1,6>(2,0);
+			F.template block<1,6>(numConstraint2,6)   = Eigen::Matrix<double,1,6>::Zero();
+			F.template block<1,12>(numConstraint2,12) = options_.zDirectionPositionWeight_ * o_footJacobian.block<1,12>(2,6);
+			numConstraint2++;
+		}
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void ComKinoConstraintBase<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::getConstraint2DerivativesState(
-    constraint2_state_matrix_t& F) {}
+template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM>
+void ComKinoConstraintBase<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::getInequalityConstraintDerivativesState(state_vector_array_t &dhdx) {
+
+	dhdx.clear();
+	for (size_t i=0; i<NUM_CONTACT_POINTS_; i++){
+		if (stanceLegs_[i]){
+			// Friction cone constraint is independent of state
+			dhdx.emplace_back(state_vector_t::Zero());
+		}
+	}
+}
+
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void ComKinoConstraintBase<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::getInequalityConstraintDerivativesState(
-    state_vector_array_t& dhdx) {
-  // TODO(Ruben) : We know this is the first call to any of the derivatives. Solve properly later
-  quadraticInequalityConstraintApproximation_ =
-      inequalityConstraintCollection_.getConstraints().getQuadraticApproximation(Base::t_, Base::x_, Base::u_);
-  dhdx = quadraticInequalityConstraintApproximation_.derivativeState;
+template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM>
+void ComKinoConstraintBase<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::getInequalityConstraintDerivativesInput(
+		switched_model::ComKinoConstraintBase<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::input_vector_array_t &dhdu) {
+
+	dhdu.clear();
+	input_vector_t frictionConeDerivative;
+	const scalar_t &mu = options_.frictionCoefficient_;
+	for (size_t i=0; i<NUM_CONTACT_POINTS_; i++){
+		if (stanceLegs_[i]){
+			frictionConeDerivative.setZero();
+			const scalar_t Fx = Base::u_(3 * i + 0);
+			const scalar_t Fy = Base::u_(3 * i + 1);
+			const scalar_t Fz = Base::u_(3 * i + 2);
+			const scalar_t F_norm = sqrt(Fx*Fx+Fy*Fy+25.0);
+			frictionConeDerivative(3 * i + 0) = -Fx / F_norm;
+			frictionConeDerivative(3 * i + 1) = -Fy / F_norm;
+			frictionConeDerivative(3 * i + 2) = sqrt(mu*mu);
+
+			dhdu.push_back( frictionConeDerivative );
+		}
+	}
+}
+
+
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM>
+void ComKinoConstraintBase<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::getInequalityConstraintSecondDerivativesState(
+		switched_model::ComKinoConstraintBase<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::state_matrix_array_t &ddhdxdx) {
+
+	ddhdxdx.clear();
+	for (size_t i=0; i<NUM_CONTACT_POINTS_; i++){
+		if (stanceLegs_[i]){
+			//  Friction cone constraint independent of state
+			ddhdxdx.emplace_back(state_matrix_t::Zero());
+		}
+	}
+}
+
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM>
+void ComKinoConstraintBase<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::getInequalityConstraintSecondDerivativesInput(
+		switched_model::ComKinoConstraintBase<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::input_matrix_array_t &ddhdudu) {
+
+	ddhdudu.clear();
+	input_matrix_t frictionConeHessian;
+	const scalar_t &mu = options_.frictionCoefficient_;
+	for (size_t i=0; i<NUM_CONTACT_POINTS_; i++){
+		if (stanceLegs_[i]){
+			//  d2/dudu ( sqrt(mu*mu + 1)*Fz >= sqrt(Fx*Fx + Fy*Fy + Fz*Fz) )
+			frictionConeHessian.setZero();
+			const scalar_t Fx = Base::u_(3 * i + 0);
+			const scalar_t Fy = Base::u_(3 * i + 1);
+			const scalar_t Fz = Base::u_(3 * i + 2);
+			const scalar_t F_norm2 = Fx*Fx+Fy*Fy+ 25.0;
+
+			const scalar_t F_norm32 = pow(F_norm2, 1.5);
+			frictionConeHessian(3 * i + 0, 3 * i + 0) = -(Fy*Fy  + 25.0) / F_norm32;
+			frictionConeHessian(3 * i + 0, 3 * i + 1) = Fx * Fy / F_norm32;
+			frictionConeHessian(3 * i + 0, 3 * i + 2) = 0.0;
+			frictionConeHessian(3 * i + 1, 3 * i + 0) = Fx * Fy / F_norm32;
+			frictionConeHessian(3 * i + 1, 3 * i + 1) = -(Fx*Fx + 25.0) / F_norm32;
+			frictionConeHessian(3 * i + 1, 3 * i + 2) = 0.0;
+			frictionConeHessian(3 * i + 2, 3 * i + 0) = 0.0;
+			frictionConeHessian(3 * i + 2, 3 * i + 1) = 0.0;
+			frictionConeHessian(3 * i + 2, 3 * i + 2) = 0.0;
+
+			ddhdudu.push_back( frictionConeHessian );
+		}
+	}
+}
+
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM>
+void ComKinoConstraintBase<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::getInequalityConstraintDerivativesInputState(
+		switched_model::ComKinoConstraintBase<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::input_state_matrix_array_t &ddhdudx) {
+
+	ddhdudx.clear();
+	for (size_t i=0; i<NUM_CONTACT_POINTS_; i++){
+		if (stanceLegs_[i]){
+			//  Friction cone constraint independent of state
+			ddhdudx.emplace_back(input_state_matrix_t::Zero());
+		}
+	}
+}
+
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM>
+void ComKinoConstraintBase<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::getFinalConstraint2DerivativesState(
+		constraint2_state_matrix_t& F)  {
+
+	size_t numConstraint2 = 0;
+
+	for (size_t i=0; i<NUM_CONTACT_POINTS_; i++)
+		if (feetConstraintIsActive_[i]==true)  {
+			// foot jacobian in the Origin frame
+			Eigen::Matrix<double, 3, 18> o_footJacobian;
+			o_footJacobian.block<3,3>(0,0)  = -CrossProductMatrix(o_R_b_*com_com2StanceFeet_[i]);
+			o_footJacobian.block<3,3>(0,3)  = Eigen::Matrix3d::Identity();
+			o_footJacobian.block<3,12>(0,6) = o_R_b_ * (b_feetJacobains_[i].template bottomRows<3>()-b_comJacobain_.template bottomRows<3>());
+
+			// gap jacobian
+			Eigen::Matrix<double, 1, 18> o_gapJacobian = feetConstraintJacobains_[i].transpose() * o_footJacobian;
+
+			F.template block<1,6>(numConstraint2,0)   = o_gapJacobian.block<1,6>(0,0);
+			F.template block<1,6>(numConstraint2,6)   = Eigen::Matrix<double,1,6>::Zero();
+			F.template block<1,12>(numConstraint2,12) = o_gapJacobian.block<1,12>(0,6);
+
+			numConstraint2++;
+		}
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void ComKinoConstraintBase<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::getInequalityConstraintDerivativesInput(
-    switched_model::ComKinoConstraintBase<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::input_vector_array_t& dhdu) {
-  dhdu = quadraticInequalityConstraintApproximation_.derivativeInput;
+template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM>
+void ComKinoConstraintBase<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::setStanceLegs(
+		const contact_flag_t& stanceLegs)  {
+
+	stanceLegs_ = stanceLegs;
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void ComKinoConstraintBase<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::getInequalityConstraintSecondDerivativesState(
-    switched_model::ComKinoConstraintBase<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::state_matrix_array_t& ddhdxdx) {
-  ddhdxdx = quadraticInequalityConstraintApproximation_.secondDerivativesState;
+template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM>
+void ComKinoConstraintBase<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::getStanceLegs(
+		contact_flag_t& stanceLegs)  {
+
+	stanceLegs = stanceLegs_;
 }
 
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void ComKinoConstraintBase<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::getInequalityConstraintSecondDerivativesInput(
-    switched_model::ComKinoConstraintBase<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::input_matrix_array_t& ddhdudu) {
-  ddhdudu = quadraticInequalityConstraintApproximation_.secondDerivativesInput;
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void ComKinoConstraintBase<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::getInequalityConstraintDerivativesInputState(
-    switched_model::ComKinoConstraintBase<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::input_state_matrix_array_t& ddhdudx) {
-  ddhdudx = quadraticInequalityConstraintApproximation_.derivativesInputState;
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void ComKinoConstraintBase<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::getFinalConstraint2DerivativesState(
-    constraint2_state_matrix_t& F) {}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void ComKinoConstraintBase<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::setStanceLegs(const contact_flag_t& stanceLegs) {
-  stanceLegs_ = stanceLegs;
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void ComKinoConstraintBase<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::getStanceLegs(contact_flag_t& stanceLegs) {
-  stanceLegs = stanceLegs_;
-}
 
 }  // end of namespace switched_model

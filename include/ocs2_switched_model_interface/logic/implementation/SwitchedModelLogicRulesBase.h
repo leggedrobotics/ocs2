@@ -104,11 +104,12 @@ void SwitchedModelLogicRulesBase<JOINT_COORD_SIZE,cpg_t>::setMotionConstraints(
 template <size_t JOINT_COORD_SIZE, class cpg_t>
 void SwitchedModelLogicRulesBase<JOINT_COORD_SIZE,cpg_t>::update() {
 
-	const size_t numSubsystems = BASE::subsystemsSequence_.size();
+	const size_t numSubsystems = this->getNumSubsystems();
 
 	contactFlagsStock_.resize(numSubsystems);
-	for (size_t i=0; i<numSubsystems; i++)
-		contactFlagsStock_[i] = modeNumber2StanceLeg(BASE::subsystemsSequence_[i]);
+	for (size_t i=0; i<numSubsystems; i++) {
+		contactFlagsStock_[i] = modeNumber2StanceLeg(subsystemsSequence()[i]);
+	}
 
 	feetReferencePtrStock_.resize(numSubsystems);
 	feetReferenceUpdatedStock_.resize(numSubsystems);
@@ -161,7 +162,7 @@ void SwitchedModelLogicRulesBase<JOINT_COORD_SIZE,cpg_t>::getMotionPhaseLogics(
 		std::lock_guard<std::mutex> lock(feetReferenceUpdateMutex_);	// avoids racing
 
 		if (feetReferenceUpdatedStock_[index] == false) {
-			feetPlannerPtr_->planSingleMode(index, BASE::subsystemsSequence_, BASE::eventTimes_, feetReferencePtrStock_[index]);
+			feetPlannerPtr_->planSingleMode(index, subsystemsSequence(), eventTimes(), feetReferencePtrStock_[index]);
 			feetReferenceUpdatedStock_[index] = true;
 		}
 	}
@@ -184,8 +185,8 @@ const std::vector<EndEffectorConstraintBase::ConstPtr>*
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t JOINT_COORD_SIZE, class cpg_t>
-typename SwitchedModelLogicRulesBase<JOINT_COORD_SIZE,cpg_t>::feet_planner_t&
-	SwitchedModelLogicRulesBase<JOINT_COORD_SIZE,cpg_t>::getFeetPlanner() {
+const typename SwitchedModelLogicRulesBase<JOINT_COORD_SIZE,cpg_t>::feet_planner_t&
+	SwitchedModelLogicRulesBase<JOINT_COORD_SIZE,cpg_t>::getFeetPlanner() const {
 
 	return *feetPlannerPtr_;
 }
@@ -201,22 +202,22 @@ void SwitchedModelLogicRulesBase<JOINT_COORD_SIZE,cpg_t>::insertModeSequenceTemp
 
 	// find the index on which the new gait should be added
 	const size_t index =
-			std::lower_bound(BASE::eventTimes_.begin(), BASE::eventTimes_.end(), startTime) - BASE::eventTimes_.begin();
+			std::lower_bound(eventTimes().begin(), eventTimes().end(), startTime) - eventTimes().begin();
 
 	// delete the old logic from the index
-	if (index < BASE::eventTimes_.size()) {
-		BASE::eventTimes_.erase(BASE::eventTimes_.begin()+index, BASE::eventTimes_.end());
-		BASE::subsystemsSequence_.erase(BASE::subsystemsSequence_.begin()+index+1, BASE::subsystemsSequence_.end());
+	if (index < eventTimes().size()) {
+		eventTimes().erase(eventTimes().begin()+index, eventTimes().end());
+		subsystemsSequence().erase(subsystemsSequence().begin()+index+1, subsystemsSequence().end());
 	}
 
 	// add an intermediate stance phase
 	scalar_t phaseTransitionStanceTime = phaseTransitionStanceTime_;
-	if (BASE::subsystemsSequence_.size()>0 && BASE::subsystemsSequence_.back()==ModeNumber::STANCE)
+	if (subsystemsSequence().size()>0 && subsystemsSequence().back()==ModeNumber::STANCE)
 		phaseTransitionStanceTime = 0.0;
 
 	if (phaseTransitionStanceTime > 0.001) {
-		BASE::eventTimes_.push_back(startTime);
-		BASE::subsystemsSequence_.push_back(ModeNumber::STANCE);
+		eventTimes().push_back(startTime);
+		subsystemsSequence().push_back(ModeNumber::STANCE);
 	}
 
 	// tile the mode sequence template from startTime+phaseTransitionStanceTime to finalTime.
@@ -235,23 +236,23 @@ void SwitchedModelLogicRulesBase<JOINT_COORD_SIZE,cpg_t>::rewind(
 		const scalar_t& upperBoundTime) {
 
 	const size_t index =
-			std::lower_bound(BASE::eventTimes_.begin(), BASE::eventTimes_.end(), lowerBoundTime) - BASE::eventTimes_.begin();
+			std::lower_bound(eventTimes().begin(), eventTimes().end(), lowerBoundTime) - eventTimes().begin();
 
 	if (index > 0) {
 		// delete the old logic from index and set the default start phase to stance
-		BASE::eventTimes_.erase(BASE::eventTimes_.begin(), BASE::eventTimes_.begin()+index-1);  // keep the one before the last to make it stance
-		BASE::subsystemsSequence_.erase(BASE::subsystemsSequence_.begin(), BASE::subsystemsSequence_.begin()+index-1);
+		eventTimes().erase(eventTimes().begin(), eventTimes().begin()+index-1);  // keep the one before the last to make it stance
+		subsystemsSequence().erase(subsystemsSequence().begin(), subsystemsSequence().begin()+index-1);
 
 		// set the default initial phase
-		BASE::subsystemsSequence_.front() = ModeNumber::STANCE;
+		subsystemsSequence().front() = ModeNumber::STANCE;
 	}
 
 	// tiling start time
-	scalar_t tilingStartTime = BASE::eventTimes_.back();
+	scalar_t tilingStartTime = eventTimes().back();
 
 	// delete the last default stance phase
-	BASE::eventTimes_.erase(BASE::eventTimes_.end()-1, BASE::eventTimes_.end());
-	BASE::subsystemsSequence_.erase(BASE::subsystemsSequence_.end()-1, BASE::subsystemsSequence_.end());
+	eventTimes().erase(eventTimes().end()-1, eventTimes().end());
+	subsystemsSequence().erase(subsystemsSequence().end()-1, subsystemsSequence().end());
 
 	// tile the template logic
 	tileModeSequenceTemplate(modeSequenceTemplate(), tilingStartTime, upperBoundTime);
@@ -281,26 +282,26 @@ void SwitchedModelLogicRulesBase<JOINT_COORD_SIZE,cpg_t>::tileModeSequenceTempla
 				"the number of the template switching times minus 1.");
 	}
 
-	if (startTime <= BASE::eventTimes_.back())
+	if (startTime <= eventTimes().back())
 		throw std::runtime_error("The initial time for template-tiling is not greater than the last event time.");
 
 	// add a initial time
-	BASE::eventTimes_.push_back(startTime);
+	eventTimes().push_back(startTime);
 
 	// concatenate from index
-	while (BASE::eventTimes_.back() < finalTime) {
+	while (eventTimes().back() < finalTime) {
 
 		for (size_t i=0; i<modeSequenceTemplate.templateSubsystemsSequence_.size(); i++) {
 
-			BASE::subsystemsSequence_.push_back(modeSequenceTemplate.templateSubsystemsSequence_[i]);
+			subsystemsSequence().push_back(modeSequenceTemplate.templateSubsystemsSequence_[i]);
 			scalar_t deltaTime = modeSequenceTemplate.templateSwitchingTimes_[i+1] - modeSequenceTemplate.templateSwitchingTimes_[i];
-			BASE::eventTimes_.push_back(BASE::eventTimes_.back()+deltaTime);
+			eventTimes().push_back(eventTimes().back()+deltaTime);
 		}  // end of i loop
 
 	}  // end of while loop
 
 	// default final phase
-	BASE::subsystemsSequence_.push_back(ModeNumber::STANCE);
+	subsystemsSequence().push_back(ModeNumber::STANCE);
 }
 
 

@@ -20,10 +20,9 @@
 
 namespace switched_model {
 
-template <size_t JOINT_COORD_SIZE, size_t STATE_DIM=12+JOINT_COORD_SIZE, size_t INPUT_DIM=12+JOINT_COORD_SIZE,
-    class LOGIC_RULES_T=SwitchedModelPlannerLogicRules<JOINT_COORD_SIZE, double>>
+template <size_t JOINT_COORD_SIZE, size_t STATE_DIM=12+JOINT_COORD_SIZE, size_t INPUT_DIM=12+JOINT_COORD_SIZE>
 class ComKinoOperatingPointsBase : public
-ocs2::SystemOperatingPoint<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>
+ocs2::SystemOperatingPoint<STATE_DIM, INPUT_DIM>
 {
 public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
@@ -33,28 +32,24 @@ public:
 		NUM_CONTACT_POINTS_ = SwitchedModel<JOINT_COORD_SIZE>::NUM_CONTACT_POINTS
 	};
 
-	typedef LOGIC_RULES_T logic_rules_t;
-	typedef ocs2::LogicRulesMachine<logic_rules_t> logic_rules_machine_t;
+	using Base = ocs2::SystemOperatingPoint<STATE_DIM, INPUT_DIM>;
+	using typename Base::scalar_t;
+	using typename Base::scalar_array_t;
+	using typename Base::state_vector_t;
+	using typename Base::state_vector_array_t;
+	using typename Base::input_vector_t;
+	using typename Base::input_vector_array_t;
 
-	typedef ocs2::SystemOperatingPoint<STATE_DIM, INPUT_DIM, logic_rules_t> Base;
+	using com_model_t = ComModelBase<JOINT_COORD_SIZE>;
+	using kinematic_model_t = KinematicsModelBase<JOINT_COORD_SIZE>;
+	using logic_rules_t = SwitchedModelPlannerLogicRules<JOINT_COORD_SIZE, double>;
+	using contact_flag_t = typename SwitchedModel<JOINT_COORD_SIZE>::contact_flag_t;
+	using base_coordinate_t = typename SwitchedModel<JOINT_COORD_SIZE>::base_coordinate_t;
+	using joint_coordinate_t = typename SwitchedModel<JOINT_COORD_SIZE>::joint_coordinate_t;
+	using generalized_coordinate_t = typename SwitchedModel<JOINT_COORD_SIZE>::generalized_coordinate_t;
 
-	typedef ComModelBase<JOINT_COORD_SIZE> com_model_t;
-	typedef KinematicsModelBase<JOINT_COORD_SIZE> kinematic_model_t;
-
-	typedef typename SwitchedModel<JOINT_COORD_SIZE>::contact_flag_t 			contact_flag_t;
-	typedef typename SwitchedModel<JOINT_COORD_SIZE>::base_coordinate_t 		base_coordinate_t;
-	typedef typename SwitchedModel<JOINT_COORD_SIZE>::joint_coordinate_t 		joint_coordinate_t;
-	typedef typename SwitchedModel<JOINT_COORD_SIZE>::generalized_coordinate_t 	generalized_coordinate_t;
-
-	typedef typename Base::scalar_t 			scalar_t;
-	typedef typename Base::scalar_array_t 		scalar_array_t;
-	typedef typename Base::state_vector_t 		state_vector_t;
-	typedef typename Base::state_vector_array_t state_vector_array_t;
-	typedef typename Base::input_vector_t 		input_vector_t;
-	typedef typename Base::input_vector_array_t input_vector_array_t;
-
-	typedef Eigen::Matrix<scalar_t,3,1> vector3d_t;
-	typedef Eigen::Matrix<scalar_t,3,3> matrix3d_t;
+	using vector3d_t = Eigen::Matrix<scalar_t,3,1>;
+	using matrix3d_t =  Eigen::Matrix<scalar_t,3,3>;
 
 	/**
 	 * Default constructor
@@ -62,16 +57,22 @@ public:
 	ComKinoOperatingPointsBase(
 			const kinematic_model_t& kinematicModel,
 			const com_model_t& comModel,
+			std::shared_ptr<const logic_rules_t> logicRulesPtr,
 			const Model_Settings& options = Model_Settings(),
 			const generalized_coordinate_t& defaultConfiguration = generalized_coordinate_t::Zero)
 	: Base()
 	, kinematicModelPtr_(kinematicModel.clone())
 	, comModelPtr_(comModel.clone())
+	, logicRulesPtr_(std::move(logicRulesPtr))
 	, o_gravityVector_(0.0, 0.0, -options.gravitationalAcceleration_)
 	, options_(options)
 	, weightCompensationForces_(kinematicModel, comModel)
 	{
-		computeOperatingPoints(defaultConfiguration, possibleStanceLegs_, allStateOperatingPoints_, allInputOperatingPoints_);
+	  if (!logicRulesPtr_) {
+	    throw std::runtime_error("[ComKinoOperatingPointsBase] logicRules cannot be a nullptr");
+	  }
+
+	  computeOperatingPoints(defaultConfiguration, possibleStanceLegs_, allStateOperatingPoints_, allInputOperatingPoints_);
 	}
 
 	/**
@@ -81,6 +82,7 @@ public:
 	: Base(rhs)
 	, kinematicModelPtr_(rhs.kinematicModelPtr_->clone())
 	, comModelPtr_(rhs.comModelPtr_->clone())
+	, logicRulesPtr_(rhs.logicRulesPtr_)
 	, o_gravityVector_(rhs.o_gravityVector_)
 	, options_(rhs.options_)
 	, weightCompensationForces_(rhs.weightCompensationForces_)
@@ -95,25 +97,11 @@ public:
 	virtual ~ComKinoOperatingPointsBase() = default;
 
 	/**
-	 * Initializes the operating trajectories class.
-	 *
-	 * @param [in] logicRulesMachine: A class which contains and parse the logic rules e.g
-	 * method findActiveSubsystemHandle returns a Lambda expression which can be used to
-	 * find the ID of the current active subsystem.
-	 * @param [in] partitionIndex: index of the time partition.
-	 * @param [in] algorithmName: The algorithm that class this class (default not defined).
-	 */
-	virtual void initializeModel(
-			logic_rules_machine_t& logicRulesMachine,
-			const size_t& partitionIndex,
-			const char* algorithmName=NULL) override;
-
-	/**
 	 * Returns pointer to the class.
 	 *
 	 * @return A raw pointer to the class.
 	 */
-	virtual ComKinoOperatingPointsBase<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM, LOGIC_RULES_T>* clone() const override;
+	virtual ComKinoOperatingPointsBase<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>* clone() const override;
 
 	/**
 	 * Gets the Operating points for the system in time interval [startTime, finalTime] where there is
@@ -174,13 +162,9 @@ private:
 	state_vector_array_t allStateOperatingPoints_;
 	input_vector_array_t allInputOperatingPoints_;
 
-	logic_rules_t* logicRulesPtr_;
-
-	std::function<size_t(scalar_t)> findActiveSubsystemFnc_;
+	std::shared_ptr<const logic_rules_t> logicRulesPtr_;
 
 	contact_flag_t stanceLegs_;
-
-	std::string algorithmName_;
 };
 
 } // end of namespace switched_model

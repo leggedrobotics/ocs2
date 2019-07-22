@@ -10,17 +10,13 @@
 
 #include <Eigen/Dense>
 #include <array>
-#include <iostream>
 #include <memory>
+#include <iostream>
 #include <string>
+#include <Eigen/Dense>
 
 #include <ocs2_core/constraint/ConstraintBase.h>
-#include <ocs2_core/constraint/ConstraintCollection.h>
 
-#include "ocs2_switched_model_interface/constraint/EndEffectorPositionConstraint.h"
-#include "ocs2_switched_model_interface/constraint/EndEffectorVelocityContraint.h"
-#include "ocs2_switched_model_interface/constraint/FrictionConeConstraint.h"
-#include "ocs2_switched_model_interface/constraint/ZeroForceConstraint.h"
 #include "ocs2_switched_model_interface/core/ComModelBase.h"
 #include "ocs2_switched_model_interface/core/KinematicsModelBase.h"
 #include "ocs2_switched_model_interface/core/Model_Settings.h"
@@ -31,207 +27,308 @@
 
 namespace switched_model {
 
-template <size_t JOINT_COORD_SIZE, size_t STATE_DIM = 12 + JOINT_COORD_SIZE, size_t INPUT_DIM = 12 + JOINT_COORD_SIZE,
-          class LOGIC_RULES_T = SwitchedModelPlannerLogicRules<JOINT_COORD_SIZE, double>>
-class ComKinoConstraintBase : public ocs2::ConstraintBase<12 + JOINT_COORD_SIZE, 12 + JOINT_COORD_SIZE, LOGIC_RULES_T> {
- public:
-  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+template <size_t JOINT_COORD_SIZE,
+		size_t STATE_DIM=12+JOINT_COORD_SIZE,
+		size_t INPUT_DIM=12+JOINT_COORD_SIZE>
+class ComKinoConstraintBase : public ocs2::ConstraintBase<12+JOINT_COORD_SIZE, 12+JOINT_COORD_SIZE>
+{
+public:
+	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-  enum { STATE_DIM_ = STATE_DIM, INPUT_DIM_ = INPUT_DIM, NUM_CONTACT_POINTS_ = SwitchedModel<JOINT_COORD_SIZE>::NUM_CONTACT_POINTS };
+	enum
+	{
+		STATE_DIM_ = STATE_DIM,
+		INPUT_DIM_ = INPUT_DIM,
+		NUM_CONTACT_POINTS_ = SwitchedModel<JOINT_COORD_SIZE>::NUM_CONTACT_POINTS
+	};
 
-  typedef LOGIC_RULES_T logic_rules_t;
-  typedef typename logic_rules_t::foot_cpg_t foot_cpg_t;
-  typedef ocs2::LogicRulesMachine<logic_rules_t> logic_rules_machine_t;
+	typedef SwitchedModelPlannerLogicRules<JOINT_COORD_SIZE, double> logic_rules_t;
+	typedef typename logic_rules_t::foot_cpg_t            foot_cpg_t;
+	typedef typename logic_rules_t::feet_cpg_ptr_t        feet_cpg_ptr_t;
+	typedef typename logic_rules_t::feet_cpg_const_ptr_t  feet_cpg_const_ptr_t;
 
-  using ad_base_t = CppAD::cg::CG<double>;
-  using ad_scalar_t = CppAD::AD<ad_base_t>;
-  using com_model_t = ComModelBase<JOINT_COORD_SIZE>;
-  using ad_com_model_t = ComModelBase<JOINT_COORD_SIZE, ad_scalar_t>;
-  using kinematic_model_t = KinematicsModelBase<JOINT_COORD_SIZE>;
-  using ad_kinematic_model_t = KinematicsModelBase<JOINT_COORD_SIZE, ad_scalar_t>;
+	typedef ocs2::ConstraintBase<STATE_DIM, INPUT_DIM> Base;
 
-  using Base = ocs2::ConstraintBase<STATE_DIM, INPUT_DIM, logic_rules_t>;
-  using typename Base::constraint1_input_matrix_t;
-  using typename Base::constraint1_state_matrix_t;
-  using typename Base::constraint1_vector_array_t;
-  using typename Base::constraint1_vector_t;
-  using typename Base::constraint2_state_matrix_t;
-  using typename Base::constraint2_vector_array_t;
-  using typename Base::constraint2_vector_t;
-  using typename Base::input_matrix_array_t;
-  using typename Base::input_matrix_t;
-  using typename Base::input_state_matrix_array_t;
-  using typename Base::input_state_matrix_t;
-  using typename Base::input_vector_array_t;
-  using typename Base::input_vector_t;
-  using typename Base::scalar_array_t;
-  using typename Base::scalar_t;
-  using typename Base::state_input_matrix_t;
-  using typename Base::state_matrix_array_t;
-  using typename Base::state_matrix_t;
-  using typename Base::state_vector_array_t;
-  using typename Base::state_vector_t;
+	typedef ComModelBase<JOINT_COORD_SIZE> com_model_t;
+	typedef KinematicsModelBase<JOINT_COORD_SIZE> kinematic_model_t;
 
-  using contact_flag_t = typename SwitchedModel<JOINT_COORD_SIZE>::contact_flag_t;
-  using base_coordinate_t = typename SwitchedModel<JOINT_COORD_SIZE>::base_coordinate_t;
-  using joint_coordinate_t = typename SwitchedModel<JOINT_COORD_SIZE>::joint_coordinate_t;
-
-  using ConstraintCollection_t = ocs2::ConstraintCollection<STATE_DIM, INPUT_DIM>;
-  using LinearConstraintApproximationAsMatrices_t = ocs2::LinearConstraintApproximationAsMatrices<STATE_DIM, INPUT_DIM>;
-  using QuadraticConstraintApproximation_t = ocs2::QuadraticConstraintApproximation<STATE_DIM, INPUT_DIM>;
-  using ConstraintTerm_t = ocs2::ConstraintTerm<STATE_DIM, INPUT_DIM>;
-  using FrictionConeConstraint_t = FrictionConeConstraint<STATE_DIM, INPUT_DIM>;
-  using EndEffectorVelocityConstraint_t = EndEffectorVelocityConstraint<STATE_DIM, INPUT_DIM>;
-  using EndEffectorPositionConstraint_t = EndEffectorPositionConstraint<STATE_DIM, INPUT_DIM>;
-  using ZeroForceConstraint_t = ZeroForceConstraint<STATE_DIM, INPUT_DIM>;
-
-  // Enumeration and naming
-  enum class FeetEnum { LF, RF, LH, RH };
-  const std::array<std::string, 4> feetNames{"LF", "RF", "LH", "RH"};
-
-  ComKinoConstraintBase(const kinematic_model_t& kinematicModel, const ad_kinematic_model_t& adKinematicModel, const com_model_t& comModel,
-                        const ad_com_model_t& adComModel, const Model_Settings& options = Model_Settings())
-      : Base(), adKinematicModelPtr_(adKinematicModel.clone()), adComModelPtr_(adComModel.clone()), options_(options) {
-    InitializeConstraintTerms();
-  }
-
-  ComKinoConstraintBase(const ComKinoConstraintBase& rhs)
-      : Base(rhs),
-        adKinematicModelPtr_(rhs.adKinematicModelPtr_->clone()),
-        adComModelPtr_(rhs.adComModelPtr_->clone()),
-        options_(rhs.options_),
-        inequalityConstraintCollection_(rhs.inequalityConstraintCollection_),
-        equalityStateInputConstraintCollection_(rhs.equalityStateInputConstraintCollection_),
-        eePosConSettings_(rhs.eePosConSettings_),
-        eeVelConSettings_(rhs.eeVelConSettings_),
-        polytopes(rhs.polytopes){}
-
-  /**
-   * Initialize Constraint Terms
-   */
-  void InitializeConstraintTerms() {
-    // LF
-    Eigen::Vector3d offset;
-    offset << 0.2, 0.2, 0.0;
-    polytopes.emplace_back(switched_model::ConvexPlanarPolytope3d{
-        (Eigen::Vector3d() << -0.0, -0.141, 0.0).finished() + offset, (Eigen::Vector3d() << 0.141, 0.0, 0.0).finished() + offset,
-        (Eigen::Vector3d() << 0.0, 0.141, 0.0).finished() + offset, (Eigen::Vector3d() << -0.141, 0.0, 0.0).finished() + offset});
-
-    // RF
-    offset << 0.35, -0.25, 0.0;
-    polytopes.emplace_back(switched_model::ConvexPlanarPolytope3d{(Eigen::Vector3d() << -0.1, -0.1, 0.0).finished() + offset,
-                                                                  (Eigen::Vector3d() << 0.1, -0.1, 0.0).finished() + offset,
-                                                                  (Eigen::Vector3d() << 0.0, 0.1, 0.0).finished() + offset});
-
-    // LH
-    offset << -0.3, 0.2, 0.0;
-    polytopes.emplace_back(switched_model::ConvexPlanarPolytope3d{
-        (Eigen::Vector3d() << -0.1, -0.1, 0.0).finished() + offset, (Eigen::Vector3d() << 0.1, -0.1, 0.0).finished() + offset,
-        (Eigen::Vector3d() << 0.1, 0.1, 0.0).finished() + offset, (Eigen::Vector3d() << -0.1, 0.1, 0.0).finished() + offset});
-
-    // RH
-    offset << -0.2, -0.15, 0.0;
-    polytopes.emplace_back(switched_model::ConvexPlanarPolytope3d{
-        (Eigen::Vector3d() << -0.1, -0.1, 0.0).finished() + offset, (Eigen::Vector3d() << 0.1, -0.1, 0.0).finished() + offset,
-        (Eigen::Vector3d() << 0.167, 0.067, 0.0).finished() + offset, (Eigen::Vector3d() << 0.0, 0.167, 0.0).finished() + offset,
-        (Eigen::Vector3d() << -0.167, 0.067, 0.0).finished() + offset});
-
-    for (int i = 0; i < NUM_CONTACT_POINTS_; i++) {
-      auto footName = feetNames[i];
-
-      // Friction cone constraint
-      auto frictionCone = std::unique_ptr<ConstraintTerm_t>(new FrictionConeConstraint_t(options_.frictionCoefficient_, 25.0, i));
-
-      // EE position
-      auto endEffectorConstraint = std::unique_ptr<ConstraintTerm_t>(
-          new EndEffectorPositionConstraint_t(i, eePosConSettings_[i], *adComModelPtr_.get(), *adKinematicModelPtr_.get()));
-
-      // EE force
-      auto zeroForceConstraint = std::unique_ptr<ConstraintTerm_t>(new ZeroForceConstraint_t(i));
-
-      // Velocity Constraint
-      auto endEffectorVelocityConstraint = std::unique_ptr<ConstraintTerm_t>(
-          new EndEffectorVelocityConstraint_t(i, eeVelConSettings_[i], *adComModelPtr_.get(), *adKinematicModelPtr_.get()));
-
-      // Inequalities
-      inequalityConstraintCollection_.add(std::move(frictionCone), footName + "_FrictionCone");
-      inequalityConstraintCollection_.add(std::move(endEffectorConstraint), footName + "_EEPos");
-
-      // State input equalities
-      equalityStateInputConstraintCollection_.add(std::move(zeroForceConstraint), footName + "_ZeroForce");
-      equalityStateInputConstraintCollection_.add(std::move(endEffectorVelocityConstraint), footName + "_EEVel");
-    }
-  }
-
-  ~ComKinoConstraintBase() override = default;
-
-  ComKinoConstraintBase<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM, LOGIC_RULES_T>* clone() const override;
-
-  void initializeModel(logic_rules_machine_t& logicRulesMachine, const size_t& partitionIndex, const char* algorithmName = NULL) override;
-
-  void setCurrentStateAndControl(const scalar_t& t, const state_vector_t& x, const input_vector_t& u) override;
-
-  size_t numStateInputConstraint(const scalar_t& time) override;
-  void getConstraint1(constraint1_vector_t& e) override;
-
-  size_t numStateOnlyConstraint(const scalar_t& time) override;
-  void getConstraint2(constraint2_vector_t& h) override;
-  void getConstraint2DerivativesState(constraint2_state_matrix_t& F) override;
-
-  size_t numStateOnlyFinalConstraint(const scalar_t& time) override;
-  void getFinalConstraint2(constraint2_vector_t& h_f) override;
-  void getFinalConstraint2DerivativesState(constraint2_state_matrix_t& F_final) override;
-
-  void getConstraint1DerivativesState(constraint1_state_matrix_t& C) override;
-  void getConstraint1DerivativesControl(constraint1_input_matrix_t& D) override;
-  void getConstraint1DerivativesEventTimes(constraint1_vector_array_t& g1DevArray) override;
-
-  size_t numInequalityConstraint(const scalar_t& time) override;
-  void getInequalityConstraint(scalar_array_t& h) override;
-  void getInequalityConstraintDerivativesState(state_vector_array_t& dhdx) override;
-  void getInequalityConstraintDerivativesInput(input_vector_array_t& dhdu) override;
-  void getInequalityConstraintSecondDerivativesState(state_matrix_array_t& ddhdxdx) override;
-  void getInequalityConstraintSecondDerivativesInput(input_matrix_array_t& ddhdudu) override;
-  void getInequalityConstraintDerivativesInputState(input_state_matrix_array_t& ddhdudx) override;
-
-  /**
-   * set the stance legs
-   */
-  void setStanceLegs(const contact_flag_t& stanceLegs);
-
-  /**
-   * get the model's stance leg
-   */
-  void getStanceLegs(contact_flag_t& stanceLegs);
-
- private:
-  ConstraintCollection_t inequalityConstraintCollection_;
-  ConstraintCollection_t equalityStateInputConstraintCollection_;
-
-  std::array<EndEffectorVelocityConstraintSettings, 4> eeVelConSettings_;
-  std::array<EndEffectorPositionConstraintSettings, 4> eePosConSettings_;
-  ConvexPlanarPolytope3dArray polytopes;
-
-  LinearConstraintApproximationAsMatrices_t linearStateInputConstraintApproximation_;
-  QuadraticConstraintApproximation_t quadraticInequalityConstraintApproximation_;
-
-  typename ad_kinematic_model_t::Ptr adKinematicModelPtr_;
-  typename ad_com_model_t::Ptr adComModelPtr_;
-  Model_Settings options_;
-
-  logic_rules_t* logicRulesPtr_;
-  std::function<size_t(scalar_t)> findActiveSubsystemFnc_;
-  contact_flag_t stanceLegs_;
-  size_t numEventTimes_;
-
-  std::array<const foot_cpg_t*, NUM_CONTACT_POINTS_> zDirectionRefsPtr_;
-
-  std::string algorithmName_;
+	typedef std::vector<int>                           int_array_t;
+	typedef typename Base::scalar_t                    scalar_t;
+	typedef typename Base::scalar_array_t              scalar_array_t;
+	typedef typename Base::state_vector_t              state_vector_t;
+	typedef typename Base::state_vector_array_t        state_vector_array_t;
+	typedef typename Base::input_vector_t              input_vector_t;
+	typedef typename Base::input_vector_array_t        input_vector_array_t;
+	typedef typename Base::state_matrix_t              state_matrix_t;
+	typedef typename Base::state_matrix_array_t        state_matrix_array_t;
+	typedef typename Base::input_matrix_t              input_matrix_t;
+	typedef typename Base::input_matrix_array_t        input_matrix_array_t;
+	typedef typename Base::state_input_matrix_t        state_input_matrix_t;
+	typedef typename Base::input_state_matrix_t        input_state_matrix_t;
+	typedef typename Base::input_state_matrix_array_t  input_state_matrix_array_t;
+	typedef typename Base::constraint1_vector_t        constraint1_vector_t;
+	typedef typename Base::constraint1_vector_array_t  constraint1_vector_array_t;
+	typedef typename Base::constraint1_state_matrix_t  constraint1_state_matrix_t;
+	typedef typename Base::constraint1_input_matrix_t  constraint1_input_matrix_t;
+	typedef typename Base::constraint2_vector_t        constraint2_vector_t;
+	typedef typename Base::constraint2_vector_array_t  constraint2_vector_array_t;
+	typedef typename Base::constraint2_state_matrix_t  constraint2_state_matrix_t;
 
 
+	typedef Eigen::Matrix<double,6,JOINT_COORD_SIZE>                      base_jacobian_matrix_t;
+	typedef typename SwitchedModel<JOINT_COORD_SIZE>::contact_flag_t      contact_flag_t;
+	typedef typename SwitchedModel<JOINT_COORD_SIZE>::base_coordinate_t   base_coordinate_t;
+	typedef typename SwitchedModel<JOINT_COORD_SIZE>::joint_coordinate_t  joint_coordinate_t;
+
+
+	ComKinoConstraintBase(
+			const kinematic_model_t& kinematicModel,
+			const com_model_t& comModel,
+			std::shared_ptr<const logic_rules_t> logicRulesPtr,
+			const Model_Settings& options = Model_Settings())
+
+	: Base()
+	, kinematicModelPtr_(kinematicModel.clone())
+	, comModelPtr_(comModel.clone())
+	, logicRulesPtr_(std::move(logicRulesPtr))
+	, options_(options)
+	{
+		if (!logicRulesPtr_) {
+			throw std::runtime_error("[ComKinoConstraintBase] logicRules cannot be a nullptr");
+		}
+	}
+
+	/**
+	 * copy constructor of ComKinoConstraintBase
+	 */
+	ComKinoConstraintBase(const ComKinoConstraintBase& rhs)
+
+	: Base(rhs)
+	, kinematicModelPtr_(rhs.kinematicModelPtr_->clone())
+	, comModelPtr_(rhs.comModelPtr_->clone())
+	, logicRulesPtr_(rhs.logicRulesPtr_)
+	, options_(rhs.options_)
+	{}
+
+	~ComKinoConstraintBase() override = default;
+
+	/**
+	 * clone ComKinoConstraintBase class.
+	 */
+	ComKinoConstraintBase<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>* clone() const override;
+	
+	/**
+	 * Set the current state and contact force input
+	 *
+	 * @param t: current time
+	 * @param x: current switched state vector (centroidal dynamics plus joints' angles)
+	 * @param u: current switched input vector (contact forces plus joints' velocities)
+	 */
+	void setCurrentStateAndControl(const scalar_t& t, const state_vector_t& x, const input_vector_t& u) override;
+
+	/**
+	 * Computes the state-input equality constraints.
+	 *
+	 * @param [out] e: The state-input equality constraints value.
+	 */
+	void getConstraint1(constraint1_vector_t& e) override;
+
+	/**
+	 * Get the number of state-input active equality constraints.
+	 *
+	 * @param [in] time: time.
+	 * @return number of state-input active equality constraints.
+	 */
+	size_t numStateInputConstraint(const scalar_t& time) override;
+
+	/**
+	 * get the state-only equality constraints.
+	 *
+	 * @param [out] h: The state-only equality constraints value.
+	 */
+	void getConstraint2(constraint2_vector_t& h) override;
+
+	/**
+	 * Get the number of state-only active equality constraints.
+	 *
+	 * @param [in] time: time.
+	 * @return number of state-only active equality constraints.
+	 */
+	size_t numStateOnlyConstraint(const scalar_t& time) override;
+
+	/**
+ 	* Gets the inequality constraints.
+ 	*
+ 	*  h_i(x, u, t) >= 0
+ 	*
+ 	* @param [out] h: The inequality constraints value.
+ 	*/
+	void getInequalityConstraint(scalar_array_t& h) override;
+
+	/**
+	 * Get the number of inequality constraints.
+	 *
+	 * @param [in] time: time.
+	 * @return number of inequality constraints.
+	 */
+	size_t numInequalityConstraint(const scalar_t& time) override;
+
+	/**
+	 * Compute the final state-only equality constraints.
+	 *
+	 * @param [out] h_f: The final state-only equality constraints value.
+	 */
+	void getFinalConstraint2(constraint2_vector_t& h_f) override;
+
+	/**
+	 * Get the number of final state-only active equality constraints.
+	 *
+	 * @param [in] time: time.
+	 * @return number of final state-only active equality constraints.
+	 */
+	size_t numStateOnlyFinalConstraint(const scalar_t& time) override;
+
+	/**
+	 * calculate and retrieve the C matrix (i.e. the state derivative of the state-input constraints w.r.t. state vector).
+	 * Note that only nc1 top rows are valid where nc1 is the number of active state-input constraints at the current time.
+	 *
+	 * @param C: a nc1-by-nx matrix
+	 */
+	void getConstraint1DerivativesState(constraint1_state_matrix_t& C) override;
+
+	/**
+	 * calculate and retrieve the D matrix (i.e. the state derivative of the state-input constraints w.r.t. input vector).
+	 * Note that only nc1 top rows are valid where nc1 is the number of active state-input constraints at the current time.
+	 *
+	 * @param D: a nc1-by-nu matrix
+	 */
+	void getConstraint1DerivativesControl(constraint1_input_matrix_t& D) override;
+
+	/**
+	 * calculate and retrieve the the derivative of the state-input constraints w.r.t. event times.
+	 * g1DevArray[i] is a vector of dimension MAX_CONSTRAINT1_DIM_ which is the partial derivative of
+	 * state-input equality constraints with respect to i'th event time.
+	 *
+	 * @param [out] g1DevArray: an array of nc1-by-1 vector.
+	 */
+	void getConstraint1DerivativesEventTimes(constraint1_vector_array_t& g1DevArray) override;
+
+	/**
+	 * The dhdx matrix at a given operating point for the linearized inequality constraints,
+	 * \f$ 0.5 * \delta x ddhdxdx_i(t) \delta x + \delta u ddhdudx_i(t) \delta x + 0.5 * \delta u ddhdudu_i(t) \delta x
+	 *    + dhdx_i(t) \delta x + dhdu_i(t) \delta u + e(t) >= 0 \f$.
+	 * @param [out] dhdx: \f$ dhdx(t) \f$ matrix.
+	 */
+	void getInequalityConstraintDerivativesState(state_vector_array_t& dhdx) override;
+
+	/**
+	 * The dhdu matrix at a given operating point for the linearized inequality constraints,
+	 * \f$ 0.5 * \delta x ddhdxdx_i(t) \delta x + \delta u ddhdudx_i(t) \delta x + 0.5 * \delta u ddhdudu_i(t) \delta x
+	 *    + dhdx_i(t) \delta x + dhdu_i(t) \delta u + e(t) >= 0 \f$.
+	 * @param [out] dhdu: \f$ dhdu(t) \f$ matrix.
+	 */
+	void getInequalityConstraintDerivativesInput(input_vector_array_t& dhdu) override;
+
+	/**
+	 * The ddhdxdx matrices at a given operating point for the linearized inequality constraints,
+	 * \f$ 0.5 * \delta x ddhdxdx_i(t) \delta x + \delta u ddhdudx_i(t) \delta x + 0.5 * \delta u ddhdudu_i(t) \delta x
+	 *    + dhdx_i(t) \delta x + dhdu_i(t) \delta u + e(t) >= 0 \f$.
+	 * @param [out] ddhdxdx: \f$ ddhdxdx(t) \f$ matrix.
+	 */
+	void getInequalityConstraintSecondDerivativesState(state_matrix_array_t& ddhdxdx) override;
+
+	/**
+	 * The ddhdudu matrices at a given operating point for the linearized inequality constraints,
+	 * \f$ 0.5 * \delta x ddhdxdx_i(t) \delta x + \delta u ddhdudx_i(t) \delta x + 0.5 * \delta u ddhdudu_i(t) \delta x
+	 *    + dhdx_i(t) \delta x + dhdu_i(t) \delta u + e(t) >= 0 \f$.
+	 * @param [out] ddhudu: \f$ ddhdudu(t) \f$ matrix.
+	 */
+	void getInequalityConstraintSecondDerivativesInput(input_matrix_array_t& ddhdudu) override;
+
+	/**
+	 * The ddhdudu matrices at a given operating point for the linearized inequality constraints,
+	 * \f$ 0.5 * \delta x ddhdxdx_i(t) \delta x + \delta u ddhdudx_i(t) \delta x + 0.5 * \delta u ddhdudu_i(t) \delta x
+	 *    + dhdx_i(t) \delta x + dhdu_i(t) \delta u + e(t) >= 0 \f$.
+	 * @param [out] ddhudu: \f$ ddhdudu(t) \f$ matrix.
+	 */
+	void getInequalityConstraintDerivativesInputState(input_state_matrix_array_t& ddhdudx) override;
+
+	/**
+	 * calculate and retrieve the F matrix (i.e. the state derivative of the state-only constraints w.r.t. state vector).
+	 * Note that only nc2 top rows are valid where nc2 is the number of active state-only constraints at the current time.
+	 *
+	 * @param F: a nc2-by-nx matrix
+	 */
+	void getConstraint2DerivativesState(constraint2_state_matrix_t& F) override;
+
+	/**
+	 * * calculate and retrieve the F matrix (i.e. the state derivative of the final state-only constraints w.r.t. state vector).
+	 * Note that only nc2Final top rows are valid where nc2Final is the number of active final state-only constraints at the current time.
+	 *
+	 * @param F_final: a nc2Final-by-nx matrix
+	 */
+	void getFinalConstraint2DerivativesState(constraint2_state_matrix_t& F_final) override;
+
+	/**
+	 * set the stance legs
+	 */
+	void setStanceLegs (const contact_flag_t& stanceLegs);
+
+	/**
+	 * get the model's stance leg
+	 */
+	void getStanceLegs (contact_flag_t& stanceLegs);
+
+
+private:
+	typename kinematic_model_t::Ptr kinematicModelPtr_;
+	typename com_model_t::Ptr comModelPtr_;
+	Model_Settings options_;
+
+	std::shared_ptr<const logic_rules_t> logicRulesPtr_;
+
+	size_t numEventTimes_;
+
+	const std::vector<EndEffectorConstraintBase::ConstPtr>* endEffectorStateConstraintsPtr_;
+
+	size_t         activeSubsystem_;
+	contact_flag_t stanceLegs_;
+	contact_flag_t nextPhaseStanceLegs_;
+
+	std::array<const foot_cpg_t*, NUM_CONTACT_POINTS_> zDirectionRefsPtr_;
+
+	std::array<int_array_t,NUM_CONTACT_POINTS_> startTimesIndices_;
+	std::array<int_array_t,NUM_CONTACT_POINTS_> finalTimesIndices_;
+
+	joint_coordinate_t qJoints_;
+	joint_coordinate_t dqJoints_;
+	base_coordinate_t basePose_;
+	base_coordinate_t baseLocalVelocities_;
+
+	Eigen::Matrix3d o_R_b_;
+
+	Eigen::Vector3d com_base2CoM_;
+	base_jacobian_matrix_t b_comJacobain_;
+	base_jacobian_matrix_t b_comJacobainTimeDerivative_;
+
+	std::array<Eigen::Vector3d,NUM_CONTACT_POINTS_> com_com2StanceFeet_;
+	std::array<Eigen::Vector3d,NUM_CONTACT_POINTS_> com_base2StanceFeet_;
+	std::array<Eigen::Vector3d,NUM_CONTACT_POINTS_> o_origin2StanceFeet_;
+
+	std::array<bool,NUM_CONTACT_POINTS_> feetConstraintIsActive_;
+	std::array<scalar_t,NUM_CONTACT_POINTS_> feetConstraintValues_;
+	std::array<Eigen::Vector3d,NUM_CONTACT_POINTS_> feetConstraintJacobains_;
+
+	std::array<base_jacobian_matrix_t,NUM_CONTACT_POINTS_> b_feetJacobains_;
+	std::array<base_jacobian_matrix_t,NUM_CONTACT_POINTS_> b_feetJacobainsTimeDerivative_;
+
+	// Inertia matrix
+	Eigen::Matrix<double, 6, 6> M_;
+	Eigen::Matrix<double, 6, 6> dMdt_;
+	Eigen::Matrix<double, 6, 6> MInverse_;
 };
 
-}  // end of namespace switched_model
+} // end of namespace switched_model
 
 #include "implementation/ComKinoConstraintBase.h"
 

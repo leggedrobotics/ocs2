@@ -25,7 +25,8 @@ public:
 
 	typedef OCS2AnymalInterface ocs2_anymal_interface_t;
 
-	MPC_ROS_Anymal(const std::string& pathToConfigFolder);
+	MPC_ROS_Anymal(const std::string& pathToConfigFolder) : BASE(ocs2_anymal_interface_t::Ptr( new ocs2_anymal_interface_t(pathToConfigFolder) ), "anymal")
+	{}
 
 	~MPC_ROS_Anymal() = default;
 

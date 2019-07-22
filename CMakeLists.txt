@@ -35,9 +35,7 @@ catkin_package(
   
   LIBRARIES 
     ocs2_anymal_interface
-    mpc_ros_anymal
-    mrt_ros_anymal
-    
+
   CATKIN_DEPENDS
     ocs2_anymal_switched_model
     ocs2_quadruped_interface
@@ -71,32 +69,6 @@ target_link_libraries(ocs2_anymal_interface
   ${catkin_LIBRARIES}
 )
 #set_property(TARGET ocs2_anymal_interface PROPERTY POSITION_INDEPENDENT_CODE ON)
-
-add_library(mpc_ros_anymal
-  src/MPC_ROS_Anymal.cpp
-)
-add_dependencies(mpc_ros_anymal
-  ocs2_anymal_interface
-  ${${PROJECT_NAME}_EXPORTED_TARGETS}
-  ${catkin_EXPORTED_TARGETS}
-)
-target_link_libraries(mpc_ros_anymal
-  ocs2_anymal_interface
-  ${catkin_LIBRARIES}
-)
-
-add_library(mrt_ros_anymal
-  src/MRT_ROS_Anymal.cpp
-)
-add_dependencies(mrt_ros_anymal
-  ocs2_anymal_interface
-  ${${PROJECT_NAME}_EXPORTED_TARGETS}
-  ${catkin_EXPORTED_TARGETS}
-)
-target_link_libraries(mrt_ros_anymal
-  ocs2_anymal_interface
-  ${catkin_LIBRARIES}
-)
 
 # Declare a C++ Executable
 add_executable(target_command_node
@@ -148,12 +120,12 @@ add_executable(anymal_mpc_node
   src/AnymalMPC.cpp
 )
 add_dependencies(anymal_mpc_node
-  mpc_ros_anymal
+  ocs2_anymal_interface
   ${${PROJECT_NAME}_EXPORTED_TARGETS}
   ${catkin_EXPORTED_TARGETS}
 )
 target_link_libraries(anymal_mpc_node
-  mpc_ros_anymal
+  ocs2_anymal_interface
   ${catkin_LIBRARIES}
 )
 
@@ -177,8 +149,6 @@ target_link_libraries(dummy_mrt_node
 
 install(TARGETS
             ocs2_anymal_interface
-            mpc_ros_anymal
-            mrt_ros_anymal
         ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
         LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
         RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}

@@ -25,7 +25,9 @@ public:
 
 	typedef OCS2AnymalInterface ocs2_anymal_interface_t;
 
-	MRT_ROS_Anymal(const std::string& pathToConfigFolder);
+	MRT_ROS_Anymal(const std::string& pathToConfigFolder) : BASE(ocs2_anymal_interface_t::Ptr( new ocs2_anymal_interface_t(pathToConfigFolder) ), "anymal")
+	{}
+  ;
 
 	~MRT_ROS_Anymal() = default;
 

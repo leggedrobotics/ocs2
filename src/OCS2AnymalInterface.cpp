@@ -29,7 +29,7 @@ void OCS2AnymalInterface::designWeightCompensatingInput(
 	static AnymalWeightCompensationForces::vector_3d_t gravity(0.0, 0.0, -modelSettings_.gravitationalAcceleration_);
 
 	AnymalWeightCompensationForces::vector_3d_array_t weightCompensatingForces;
-	weightCompensationForces_.computeCartesianForces(gravity, contact_flag_t{1,1,1,1}/*stanceLegSequene_*/, switchedState.tail<12>(),
+	weightCompensationForces_.computeCartesianForces(gravity, contact_flag_t{true, true, true, true}/*stanceLegSequene_*/, switchedState.tail<12>(),
 			weightCompensatingForces);
 
 	for (size_t j=0; j<4; j++)
@@ -48,35 +48,36 @@ void OCS2AnymalInterface::setupOptimizer(
 
 	dynamicsPtr_            = std::unique_ptr<system_dynamics_t>( new system_dynamics_t(modelSettings_) );
 	dynamicsDerivativesPtr_ = std::unique_ptr<system_dynamics_derivative_t>( new system_dynamics_derivative_t(modelSettings_) );
-	constraintsPtr_  = std::unique_ptr<constraint_t>( new constraint_t(modelSettings_) );
-	costFunctionPtr_ = std::unique_ptr<cost_funtion_t>( new cost_funtion_t(Q_, R_, QFinal_, xFinal_, modelSettings_.copWeight_) );
+	constraintsPtr_  = std::unique_ptr<constraint_t>( new constraint_t(logicRulesPtr, modelSettings_) );
+	costFunctionPtr_ = std::unique_ptr<cost_funtion_t>( new cost_funtion_t(logicRulesPtr, Q_, R_, QFinal_, xFinal_, modelSettings_.copWeight_) );
 
 	generalized_coordinate_t defaultCoordinate = initRbdState_.template head<18>();
-	operatingPointsPtr_ = std::unique_ptr<operating_point_t>( new operating_point_t(modelSettings_, defaultCoordinate) );
+	operatingPointsPtr_ = std::unique_ptr<operating_point_t>( new operating_point_t(logicRulesPtr, modelSettings_, defaultCoordinate) );
 
 	// SLQ
-	if (slqSettings_.ddpSettings_.useMultiThreading_==true) {
+	if (slqSettings_.ddpSettings_.useMultiThreading_) {
 		slqPtr = slq_base_ptr_t(new slq_mp_t(dynamicsPtr_.get(), dynamicsDerivativesPtr_.get(), constraintsPtr_.get(),
-				costFunctionPtr_.get(), operatingPointsPtr_.get(), slqSettings_, logicRulesPtr.get()) );
+				costFunctionPtr_.get(), operatingPointsPtr_.get(), slqSettings_, logicRulesPtr) );
 	} else {
 		slqPtr = slq_base_ptr_t(new slq_t(dynamicsPtr_.get(), dynamicsDerivativesPtr_.get(), constraintsPtr_.get(),
-				costFunctionPtr_.get(), operatingPointsPtr_.get(), slqSettings_, logicRulesPtr.get()) );
+				costFunctionPtr_.get(), operatingPointsPtr_.get(), slqSettings_, logicRulesPtr) );
 	}
 
 	// MPC
-	if (modelSettings_.gaitOptimization_ == false) {
+	if (!modelSettings_.gaitOptimization_) {
 		mpcPtr = mpc_ptr_t( new mpc_t(dynamicsPtr_.get(), dynamicsDerivativesPtr_.get(), constraintsPtr_.get(),
 				costFunctionPtr_.get(), operatingPointsPtr_.get(),
 				partitioningTimes_,
-				slqSettings_, mpcSettings_, logicRulesPtr.get(), modeSequenceTemplatePtr));
+				slqSettings_, mpcSettings_, logicRulesPtr, modeSequenceTemplatePtr));
 
 	} else {
-		typedef ocs2::MPC_OCS2<BASE::state_dim_, BASE::input_dim_, BASE::logic_rules_t>	mpc_ocs2_t;
-
-		mpcPtr = mpc_ptr_t( new mpc_ocs2_t(dynamicsPtr_.get(), dynamicsDerivativesPtr_.get(), constraintsPtr_.get(),
-				costFunctionPtr_.get(), operatingPointsPtr_.get(),
-				partitioningTimes_,
-				slqSettings_, mpcSettings_, logicRulesPtr.get(), modeSequenceTemplatePtr));
+		throw std::runtime_error("mpc_ocs2 not configured");
+//		typedef ocs2::MPC_OCS2<BASE::state_dim_, BASE::input_dim_>	mpc_ocs2_t;
+//
+//		mpcPtr = mpc_ptr_t( new mpc_ocs2_t(dynamicsPtr_.get(), dynamicsDerivativesPtr_.get(), constraintsPtr_.get(),
+//				costFunctionPtr_.get(), operatingPointsPtr_.get(),
+//				partitioningTimes_,
+//				slqSettings_, mpcSettings_, logicRulesPtr, modeSequenceTemplatePtr));
 	}
 
 }

@@ -129,10 +129,7 @@ public:
 	typedef ControllerBase<STATE_DIM, INPUT_DIM> controller_t;
 	using controller_ptr_array_t = std::vector<controller_t *>;
 
-	/**
-	 * Default constructor.
-	 */
-	Solver_BASE() = default;
+	explicit Solver_BASE(std::shared_ptr<HybridLogicRules> logicRulesPtr = nullptr);
 
 	/**
 	 * Default destructor.
@@ -249,47 +246,35 @@ public:
 	 *
 	 * @return a pointer to LogicRulesMachine
 	 */
-	virtual logic_rules_machine_t* getLogicRulesMachinePtr() {
-
-		return nullptr;
-	}
+	logic_rules_machine_t* getLogicRulesMachinePtr() { return logicRulesMachinePtr_.get(); }
 
 	/**
 	 * Returns a pointer to the LogicRulesMachine
 	 *
 	 * @return a pointer to LogicRulesMachine
 	 */
-	virtual const logic_rules_machine_t* getLogicRulesMachinePtr() const {
-
-		return nullptr;
-	}
+	const logic_rules_machine_t* getLogicRulesMachinePtr() const { return logicRulesMachinePtr_.get(); }
 
 	/**
 	 * Returns a constant pointer to the logic rules.
 	 *
 	 * @return a constant pointer to the logic rules.
 	 */
-	virtual const HybridLogicRules* getLogicRulesPtr() const {
-
-		return nullptr;
-	}
+	const HybridLogicRules* getLogicRulesPtr() const { return logicRulesMachinePtr_->getLogicRulesPtr(); }
 
 	/**
 	 * Returns a pointer to the logic rules.
 	 *
 	 * @return a pointer to the logic rules.
 	 */
-	virtual HybridLogicRules* getLogicRulesPtr() {
-
-		return nullptr;
-	}
+	HybridLogicRules* getLogicRulesPtr() { return logicRulesMachinePtr_->getLogicRulesPtr(); }
 
 	/**
 	 * Sets logic rules.
 	 *
 	 * @param logicRules
 	 */
-	virtual void setLogicRules(std::shared_ptr<HybridLogicRules> logicRules) {}
+	virtual void setLogicRules(std::shared_ptr<HybridLogicRules> logicRules) { logicRulesMachinePtr_->setLogicRules(std::move(logicRules)); }
 
 	/**
 	 * Gets the cost function desired trajectories.
@@ -452,9 +437,9 @@ public:
 	template <typename Derived>
 	static bool makePSD(Eigen::MatrixBase<Derived>& squareMatrix);
 
-
-private:
-	std::mutex outputDisplayGuardMutex_;
+ private:
+  std::mutex outputDisplayGuardMutex_;
+  logic_rules_machine_ptr_t logicRulesMachinePtr_;
 
 };
 

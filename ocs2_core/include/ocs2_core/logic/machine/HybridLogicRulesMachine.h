@@ -129,14 +129,14 @@ public:
 	 *
 	 * @return pointer to active logic rules class
 	 */
-	virtual HybridLogicRules* getLogicRulesPtr();
+	HybridLogicRules* getLogicRulesPtr();
 
 	/**
 	 * Get the pointer to the active logic rules class
 	 *
 	 * @return pointer to active logic rules class
 	 */
-	virtual const HybridLogicRules* getLogicRulesPtr() const;
+	const HybridLogicRules* getLogicRulesPtr() const;
 
 	/**
 	 * Gets the event times associated to the partition number index.

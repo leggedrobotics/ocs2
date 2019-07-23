@@ -1,8 +1,8 @@
 #pragma once
 
 #include <ocs2_mpc/MPC_BASE.h>
-#include <ocs2_oc/pi_solver/PiSolver.hpp>
 #include <ocs2_oc/pi_solver/PI_Settings.h>
+#include <ocs2_oc/pi_solver/PiSolver.hpp>
 
 namespace ocs2 {
 
@@ -29,8 +29,8 @@ class MPC_PI : public MPC_BASE<STATE_DIM, INPUT_DIM> {
   typedef typename solver_t::cost_function_t cost_t;
   typedef typename solver_t::constraint_t constraint_t;
 
-  MPC_PI(typename dynamics_t::Ptr dynamics, std::unique_ptr<cost_t> cost, const constraint_t constraint, const scalar_array_t& partitioningTimes,
-         const MPC_Settings& mpcSettings, PI_Settings piSettings)
+  MPC_PI(typename dynamics_t::Ptr dynamics, std::unique_ptr<cost_t> cost, const constraint_t constraint,
+         const scalar_array_t& partitioningTimes, const MPC_Settings& mpcSettings, PI_Settings piSettings)
       : BASE(partitioningTimes, mpcSettings) {
     piSolverPtr_.reset(new solver_t(dynamics, std::move(cost), constraint, std::move(piSettings)));
     BASE::setBaseSolverPtr(piSolverPtr_.get());

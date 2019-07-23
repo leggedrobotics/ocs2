@@ -30,16 +30,15 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifndef OCS2_OBSERVER_H_
 #define OCS2_OBSERVER_H_
 
-#include <string>
-#include <Eigen/StdVector>
 #include <Eigen/Dense>
+#include <Eigen/StdVector>
+#include <string>
 #include <vector>
 
-#include "ocs2_core/integration/SystemEventHandler.h"
 #include "ocs2_core/integration/OdeBase.h"
+#include "ocs2_core/integration/SystemEventHandler.h"
 
-
-namespace ocs2{
+namespace ocs2 {
 
 template <int STATE_DIM>
 class IntegratorBase;
@@ -49,102 +48,86 @@ class IntegratorBase;
  * @tparam STATE_DIM
  */
 template <int STATE_DIM>
-class Observer
-{
-public:
-	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+class Observer {
+ public:
+  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-	using scalar_t = double;
-	using scalar_array_t = std::vector<scalar_t>;
-	using state_vector_t = Eigen::Matrix<scalar_t,STATE_DIM,1>;
-    using state_vector_array_t = std::vector<state_vector_t, Eigen::aligned_allocator<state_vector_t>>;
+  using scalar_t = double;
+  using scalar_array_t = std::vector<scalar_t>;
+  using state_vector_t = Eigen::Matrix<scalar_t, STATE_DIM, 1>;
+  using state_vector_array_t = std::vector<state_vector_t, Eigen::aligned_allocator<state_vector_t>>;
 
-    /**
-     * Constructor
-     * @param [in] eventHandler
-     */
-	explicit Observer(const std::shared_ptr<SystemEventHandler<STATE_DIM> >& eventHandlerPtr = nullptr)
+  /**
+   * Constructor
+   * @param [in] eventHandler
+   */
+  explicit Observer(const std::shared_ptr<SystemEventHandler<STATE_DIM>>& eventHandlerPtr = nullptr)
 
-	: observeWrap_([this](const state_vector_t& x, const scalar_t& t){ this->observe(x,t); }),
-	  eventHandlerPtr_(eventHandlerPtr),
-	  timeTrajectoryPtr_(nullptr)
-	{}
+      : observeWrap_([this](const state_vector_t& x, const scalar_t& t) { this->observe(x, t); }),
+        eventHandlerPtr_(eventHandlerPtr),
+        timeTrajectoryPtr_(nullptr) {}
 
-    /**
-     * Observe function to retrieve the variable of interest.
-     * @param [in] x: Current state.
-     * @param [in] t: Current time.
-     */
-	void observe(const state_vector_t& x, const scalar_t& t) {
+  /**
+   * Observe function to retrieve the variable of interest.
+   * @param [in] x: Current state.
+   * @param [in] t: Current time.
+   */
+  void observe(const state_vector_t& x, const scalar_t& t) {
+    // Store data
+    stateTrajectoryPtr_->push_back(x);
+    timeTrajectoryPtr_->push_back(t);
 
-		// Store data
-		stateTrajectoryPtr_->push_back(x);
-		timeTrajectoryPtr_->push_back(t);
+    // Check events
+    if (eventHandlerPtr_ && eventHandlerPtr_->checkEvent(x, t)) {
+      // Act on the event
+      int eventID = eventHandlerPtr_->handleEvent(*stateTrajectoryPtr_, *timeTrajectoryPtr_);
 
-		// Check events
-		if (eventHandlerPtr_ && eventHandlerPtr_->checkEvent(x, t)) {
+      switch (eventID) {
+        case sys_event_id::killIntegration: {
+          throw std::runtime_error("Integration terminated due to an external signal triggered by a program.");
+          break;
+        }
+        case sys_event_id::maxCall: {
+          std::string msg = "Integration terminated since the maximum number of function calls is reached. ";
+          msg += "State at termination time " + std::to_string(t) + ":\n [";
+          for (size_t i = 0; i < x.size() - 1; i++) {
+            msg += std::to_string(x(i)) + ", ";
+          }
+          msg += std::to_string(x(x.size() - 1)) + "]\n";
+          throw std::runtime_error(msg);
+          break;
+        }
+        default: { throw static_cast<size_t>(eventID); }
+      }
+    }
+  }
 
-			// Act on the event
-			int eventID = eventHandlerPtr_->handleEvent(*stateTrajectoryPtr_, *timeTrajectoryPtr_);
+  /**
+   * Lambda to pass to odeint (odeint takes copies of the observer so we can't pass the class
+   */
+  std::function<void(const state_vector_t& x, const scalar_t& t)> observeWrap_;
 
-			switch(eventID) {
+  /**
+   * Set state trajectory pointer to observer.
+   *
+   * @param stateTrajectoryPtr
+   */
+  void setStateTrajectory(state_vector_array_t* stateTrajectoryPtr) { stateTrajectoryPtr_ = stateTrajectoryPtr; }
 
-			case sys_event_id::killIntegration:
-			{
-				throw std::runtime_error("Integration terminated due to an external signal triggered by a program.");
-				break;
-			}
-			case sys_event_id::maxCall:
-			{
-				std::string msg = "Integration terminated since the maximum number of function calls is reached. ";
-				msg += "State at termination time " + std::to_string(t) + ":\n [";
-				for (size_t i=0; i<x.size()-1; i++) {  msg += std::to_string(x(i)) + ", ";
-				}
-				msg += std::to_string(x(x.size()-1)) + "]\n";
-				throw std::runtime_error(msg);
-				break;
-			}
-			default:
-			{
-				throw static_cast<size_t>(eventID);
-			}
-			}
-		}
+  /**
+   * Set time trajectory pointer to observer.
+   *
+   * @param timeTrajectoryPtr
+   */
+  void setTimeTrajectory(scalar_array_t* timeTrajectoryPtr) { timeTrajectoryPtr_ = timeTrajectoryPtr; }
 
-	}
+ private:
+  std::shared_ptr<SystemEventHandler<STATE_DIM>> eventHandlerPtr_;
 
-	/**
-	 * Lambda to pass to odeint (odeint takes copies of the observer so we can't pass the class
-	 */
-	std::function<void (const state_vector_t& x, const scalar_t& t)> observeWrap_;
-
-	/**
-	 * Set state trajectory pointer to observer.
-	 *
-	 * @param stateTrajectoryPtr
-	 */
-	void setStateTrajectory(state_vector_array_t* stateTrajectoryPtr) {
-		stateTrajectoryPtr_ = stateTrajectoryPtr;
-	}
-
-	/**
-	 * Set time trajectory pointer to observer.
-	 *
-	 * @param timeTrajectoryPtr
-	 */
-	void setTimeTrajectory(scalar_array_t* timeTrajectoryPtr) {
-		timeTrajectoryPtr_ = timeTrajectoryPtr;
-	}
-
-
-private:
-	std::shared_ptr<SystemEventHandler<STATE_DIM> > eventHandlerPtr_;
-
-	scalar_array_t* timeTrajectoryPtr_;
-	state_vector_array_t* stateTrajectoryPtr_;
+  scalar_array_t* timeTrajectoryPtr_;
+  state_vector_array_t* stateTrajectoryPtr_;
 };
 
-
-} // namespace ocs2
+}  // namespace ocs2
 
 #endif /* OCS2OBSERVER_H_ */

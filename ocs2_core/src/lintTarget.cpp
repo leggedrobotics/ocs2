@@ -45,11 +45,10 @@
 #include <ocs2_core/integration/OdeBase.h>
 #include <ocs2_core/integration/OdeFunc.h>
 #include <ocs2_core/integration/StateTriggeredEventHandler.h>
-#include <ocs2_core/integration/steppers.h>
 #include <ocs2_core/integration/SystemEventHandler.h>
+#include <ocs2_core/integration/steppers.h>
 
 // Logic
-#include <ocs2_core/logic/machine/HybridLogicRulesMachine.h>
 #include <ocs2_core/logic/machine/HybridLogicRulesMachine.h>
 #include <ocs2_core/logic/rules/HybridLogicRules.h>
 #include <ocs2_core/logic/rules/NullLogicRules.h>
@@ -59,12 +58,12 @@
 
 // Misc
 #include <ocs2_core/misc/FindActiveIntervalIndex.h>
+#include <ocs2_core/misc/LTI_Equations.h>
 #include <ocs2_core/misc/LinearFunction.h>
 #include <ocs2_core/misc/LinearInterpolation.h>
-#include <ocs2_core/misc/loadEigenMatrix.h>
-#include <ocs2_core/misc/LTI_Equations.h>
 #include <ocs2_core/misc/SetThreadPriority.h>
 #include <ocs2_core/misc/TrajectorySpreadingController.h>
+#include <ocs2_core/misc/loadEigenMatrix.h>
 
 // dummy target for clang toolchain
 int main() { return 0; }

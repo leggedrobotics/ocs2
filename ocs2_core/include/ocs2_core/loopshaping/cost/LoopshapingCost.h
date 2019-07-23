@@ -12,9 +12,8 @@
 
 namespace ocs2 {
 
-template<size_t FULL_STATE_DIM, size_t FULL_INPUT_DIM,
-    size_t SYSTEM_STATE_DIM, size_t SYSTEM_INPUT_DIM,
-    size_t FILTER_STATE_DIM, size_t FILTER_INPUT_DIM>
+template <size_t FULL_STATE_DIM, size_t FULL_INPUT_DIM, size_t SYSTEM_STATE_DIM, size_t SYSTEM_INPUT_DIM, size_t FILTER_STATE_DIM,
+          size_t FILTER_INPUT_DIM>
 class LoopshapingCost : public CostFunctionBase<FULL_STATE_DIM, FULL_INPUT_DIM> {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
@@ -24,13 +23,13 @@ class LoopshapingCost : public CostFunctionBase<FULL_STATE_DIM, FULL_INPUT_DIM> 
 
   using BASE = CostFunctionBase<FULL_STATE_DIM, FULL_INPUT_DIM>;
   using typename BASE::cost_desired_trajectories_t;
-  using typename BASE::scalar_t;
-  using typename BASE::state_vector_t;
-  using typename BASE::input_vector_t;
   using typename BASE::dynamic_vector_t;
-  using typename BASE::state_matrix_t;
   using typename BASE::input_matrix_t;
   using typename BASE::input_state_matrix_t;
+  using typename BASE::input_vector_t;
+  using typename BASE::scalar_t;
+  using typename BASE::state_matrix_t;
+  using typename BASE::state_vector_t;
 
   using SYSTEMCOST = CostFunctionBase<SYSTEM_STATE_DIM, SYSTEM_INPUT_DIM>;
   using system_state_vector_t = typename SYSTEMCOST::state_vector_t;
@@ -44,20 +43,17 @@ class LoopshapingCost : public CostFunctionBase<FULL_STATE_DIM, FULL_INPUT_DIM> 
 
   ~LoopshapingCost() override = default;
 
-  LoopshapingCost(const LoopshapingCost &obj) :
-      BASE(),
-      systemCost_(obj.systemCost_->clone()),
-      loopshapingDefinition_(obj.loopshapingDefinition_),
-       costApproximationValid_(false),
+  LoopshapingCost(const LoopshapingCost& obj)
+      : BASE(),
+        systemCost_(obj.systemCost_->clone()),
+        loopshapingDefinition_(obj.loopshapingDefinition_),
+        costApproximationValid_(false),
         costEvaluationValid_(false) {}
 
-  static std::unique_ptr<LoopshapingCost> create(const SYSTEMCOST &systemCost,
+  static std::unique_ptr<LoopshapingCost> create(const SYSTEMCOST& systemCost,
                                                  std::shared_ptr<LoopshapingDefinition> loopshapingDefinition);
 
-  void setCurrentStateAndControl(
-      const scalar_t &t,
-      const state_vector_t &x,
-      const input_vector_t &u) override {
+  void setCurrentStateAndControl(const scalar_t& t, const state_vector_t& x, const input_vector_t& u) override {
     costApproximationValid_ = false;
     costEvaluationValid_ = false;
 
@@ -70,7 +66,7 @@ class LoopshapingCost : public CostFunctionBase<FULL_STATE_DIM, FULL_INPUT_DIM> 
     BASE::setCurrentStateAndControl(t, x, u);
   }
 
-  void setCostDesiredTrajectories(const cost_desired_trajectories_t &costDesiredTrajectories) override {
+  void setCostDesiredTrajectories(const cost_desired_trajectories_t& costDesiredTrajectories) override {
     costDesiredTrajectories.getDesiredStateFunc(xNominalFunc_);
     costDesiredTrajectories.getDesiredInputFunc(uNominalFunc_);
 
@@ -78,10 +74,10 @@ class LoopshapingCost : public CostFunctionBase<FULL_STATE_DIM, FULL_INPUT_DIM> 
     size_t reference_length = costDesiredTrajectories.desiredTimeTrajectory().size();
     systemCostDesiredTrajectories_ = cost_desired_trajectories_t(reference_length);
     systemCostDesiredTrajectories_.desiredTimeTrajectory() = costDesiredTrajectories.desiredTimeTrajectory();
-    auto &systemStateTrajectory = systemCostDesiredTrajectories_.desiredStateTrajectory();
-    auto &systemInputTrajectory = systemCostDesiredTrajectories_.desiredInputTrajectory();
-    auto &stateTrajectory = costDesiredTrajectories.desiredStateTrajectory();
-    auto &inputTrajectory = costDesiredTrajectories.desiredInputTrajectory();
+    auto& systemStateTrajectory = systemCostDesiredTrajectories_.desiredStateTrajectory();
+    auto& systemInputTrajectory = systemCostDesiredTrajectories_.desiredInputTrajectory();
+    auto& stateTrajectory = costDesiredTrajectories.desiredStateTrajectory();
+    auto& inputTrajectory = costDesiredTrajectories.desiredInputTrajectory();
     for (int k = 0; k < reference_length; k++) {
       // For now assume that cost DesiredTrajectory is specified w.r.t original system x, u
       systemStateTrajectory[k] = stateTrajectory[k].segment(0, SYSTEM_STATE_DIM);
@@ -91,26 +87,26 @@ class LoopshapingCost : public CostFunctionBase<FULL_STATE_DIM, FULL_INPUT_DIM> 
     systemCost_->setCostDesiredTrajectories(systemCostDesiredTrajectories_);
   }
 
-  void getIntermediateCost(scalar_t &L) override {
+  void getIntermediateCost(scalar_t& L) override {
     computeCost();
-    const auto &gamma = loopshapingDefinition_->gamma_;
+    const auto& gamma = loopshapingDefinition_->gamma_;
     L = gamma * c_filter_ + (1.0 - gamma) * c_system_;
   };
 
-  void getIntermediateCostDerivativeTime(scalar_t &dLdt) override {
+  void getIntermediateCostDerivativeTime(scalar_t& dLdt) override {
     computeApproximation();
     // TODO
     dLdt = 0;
   }
 
-  void getTerminalCost(scalar_t &Phi) override {
+  void getTerminalCost(scalar_t& Phi) override {
     systemCost_->setCurrentStateAndControl(t_, x_system_, u_system_);
     systemCost_->getTerminalCost(Phi);
   };
 
-  void getTerminalCostDerivativeTime(scalar_t &dPhidt) override { dPhidt = 0; }
+  void getTerminalCostDerivativeTime(scalar_t& dPhidt) override { dPhidt = 0; }
 
-  void getTerminalCostDerivativeState(state_vector_t &dPhidx) override {
+  void getTerminalCostDerivativeState(state_vector_t& dPhidx) override {
     system_state_vector_t dPhidx_system;
     systemCost_->setCurrentStateAndControl(t_, x_system_, u_system_);
     systemCost_->getTerminalCostDerivativeState(dPhidx_system);
@@ -118,7 +114,7 @@ class LoopshapingCost : public CostFunctionBase<FULL_STATE_DIM, FULL_INPUT_DIM> 
     dPhidx.segment(SYSTEM_STATE_DIM, FILTER_STATE_DIM).setZero();
   };
 
-  void getTerminalCostSecondDerivativeState(state_matrix_t &dPhidxx) override {
+  void getTerminalCostSecondDerivativeState(state_matrix_t& dPhidxx) override {
     system_state_matrix_t dPhidxx_system;
     systemCost_->setCurrentStateAndControl(t_, x_system_, u_system_);
     systemCost_->getTerminalCostSecondDerivativeState(dPhidxx_system);
@@ -127,19 +123,15 @@ class LoopshapingCost : public CostFunctionBase<FULL_STATE_DIM, FULL_INPUT_DIM> 
   };
 
  protected:
-  LoopshapingCost(const SYSTEMCOST &systemCost,
-                  std::shared_ptr<LoopshapingDefinition> loopshapingDefinition)
-      : BASE(),
-        systemCost_(systemCost.clone()),
-        loopshapingDefinition_(std::move(loopshapingDefinition)) {
-  }
+  LoopshapingCost(const SYSTEMCOST& systemCost, std::shared_ptr<LoopshapingDefinition> loopshapingDefinition)
+      : BASE(), systemCost_(systemCost.clone()), loopshapingDefinition_(std::move(loopshapingDefinition)) {}
 
   std::shared_ptr<LoopshapingDefinition> loopshapingDefinition_;
 
   cost_desired_trajectories_t systemCostDesiredTrajectories_;
   using BASE::costDesiredTrajectoriesPtr_;
-  using BASE::xNominalFunc_;
   using BASE::uNominalFunc_;
+  using BASE::xNominalFunc_;
 
   scalar_t t_;
   filter_state_vector_t x_filter_;
@@ -202,7 +194,7 @@ class LoopshapingCost : public CostFunctionBase<FULL_STATE_DIM, FULL_INPUT_DIM> 
   bool costApproximationValid_;
   bool costEvaluationValid_;
 };
-}; // namespace ocs2
+};  // namespace ocs2
 
 // include derived implementations to be dispatched by the factory method
 #include "LoopshapingCostEliminatePattern.h"
@@ -211,55 +203,26 @@ class LoopshapingCost : public CostFunctionBase<FULL_STATE_DIM, FULL_INPUT_DIM> 
 
 // Implement factory method
 namespace ocs2 {
-template<size_t FULL_STATE_DIM, size_t FULL_INPUT_DIM,
-    size_t SYSTEM_STATE_DIM, size_t SYSTEM_INPUT_DIM,
-    size_t FILTER_STATE_DIM, size_t FILTER_INPUT_DIM>
-std::unique_ptr<LoopshapingCost<FULL_STATE_DIM,
-                                                                                             FULL_INPUT_DIM,
-                                                                                             SYSTEM_STATE_DIM,
-                                                                                             SYSTEM_INPUT_DIM,
-                                                                                             FILTER_STATE_DIM,
-                                                                                             FILTER_INPUT_DIM>>
-LoopshapingCost<FULL_STATE_DIM,
-                                                                                             FULL_INPUT_DIM,
-                                                                                             SYSTEM_STATE_DIM,
-                                                                                             SYSTEM_INPUT_DIM,
-                                                                                             FILTER_STATE_DIM,
-                                                                                             FILTER_INPUT_DIM>::create(const SYSTEMCOST &systemCost,
-                                       std::shared_ptr<
-                                               LoopshapingDefinition> loopshapingDefinition) {
-    switch (loopshapingDefinition->getType()) {
-        case LoopshapingType::outputpattern :
-            return std::unique_ptr<LoopshapingCost>(
-                    new LoopshapingCostOutputPattern<FULL_STATE_DIM,
-                                                                                             FULL_INPUT_DIM,
-                                                                                             SYSTEM_STATE_DIM,
-                                                                                             SYSTEM_INPUT_DIM,
-                                                                                             FILTER_STATE_DIM,
-                                                                                             FILTER_INPUT_DIM>(systemCost,
-                                           std::move(loopshapingDefinition)));
-        case LoopshapingType::inputpattern :
-            return std::unique_ptr<LoopshapingCost>(new LoopshapingCostInputPattern<FULL_STATE_DIM,
-                                                                                             FULL_INPUT_DIM,
-                                                                                             SYSTEM_STATE_DIM,
-                                                                                             SYSTEM_INPUT_DIM,
-                                                                                             FILTER_STATE_DIM,
-                                                                                             FILTER_INPUT_DIM>(systemCost,
-                                   std::move(
-                                           loopshapingDefinition)));
-        case LoopshapingType::eliminatepattern :
-            return std::unique_ptr<LoopshapingCost>(new LoopshapingCostEliminatePattern<FULL_STATE_DIM,
-                                                                                             FULL_INPUT_DIM,
-                                                                                             SYSTEM_STATE_DIM,
-                                                                                             SYSTEM_INPUT_DIM,
-                                                                                             FILTER_STATE_DIM,
-                                                                                             FILTER_INPUT_DIM>(systemCost,
-                                   std::move(
-                                           loopshapingDefinition)));
-    }
+template <size_t FULL_STATE_DIM, size_t FULL_INPUT_DIM, size_t SYSTEM_STATE_DIM, size_t SYSTEM_INPUT_DIM, size_t FILTER_STATE_DIM,
+          size_t FILTER_INPUT_DIM>
+std::unique_ptr<LoopshapingCost<FULL_STATE_DIM, FULL_INPUT_DIM, SYSTEM_STATE_DIM, SYSTEM_INPUT_DIM, FILTER_STATE_DIM, FILTER_INPUT_DIM>>
+LoopshapingCost<FULL_STATE_DIM, FULL_INPUT_DIM, SYSTEM_STATE_DIM, SYSTEM_INPUT_DIM, FILTER_STATE_DIM, FILTER_INPUT_DIM>::create(
+    const SYSTEMCOST& systemCost, std::shared_ptr<LoopshapingDefinition> loopshapingDefinition) {
+  switch (loopshapingDefinition->getType()) {
+    case LoopshapingType::outputpattern:
+      return std::unique_ptr<LoopshapingCost>(
+          new LoopshapingCostOutputPattern<FULL_STATE_DIM, FULL_INPUT_DIM, SYSTEM_STATE_DIM, SYSTEM_INPUT_DIM, FILTER_STATE_DIM,
+                                           FILTER_INPUT_DIM>(systemCost, std::move(loopshapingDefinition)));
+    case LoopshapingType::inputpattern:
+      return std::unique_ptr<LoopshapingCost>(
+          new LoopshapingCostInputPattern<FULL_STATE_DIM, FULL_INPUT_DIM, SYSTEM_STATE_DIM, SYSTEM_INPUT_DIM, FILTER_STATE_DIM,
+                                          FILTER_INPUT_DIM>(systemCost, std::move(loopshapingDefinition)));
+    case LoopshapingType::eliminatepattern:
+      return std::unique_ptr<LoopshapingCost>(
+          new LoopshapingCostEliminatePattern<FULL_STATE_DIM, FULL_INPUT_DIM, SYSTEM_STATE_DIM, SYSTEM_INPUT_DIM, FILTER_STATE_DIM,
+                                              FILTER_INPUT_DIM>(systemCost, std::move(loopshapingDefinition)));
+  }
 }
-} // namespace ocs2
+}  // namespace ocs2
 
-
-
-#endif //OCS2_LOOPSHAPINGCOST_H
+#endif  // OCS2_LOOPSHAPINGCOST_H

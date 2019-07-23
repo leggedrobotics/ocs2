@@ -67,8 +67,8 @@ if(cmake_clang_tools_FOUND)
     TARGET ${PROJECT_NAME}_lintTarget ocs2_core_logic
     SOURCE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/src ${CMAKE_CURRENT_SOURCE_DIR}/include/ocs2_core
     CT_HEADER_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/include/ocs2_core
-    CF_QUIET # temporarily set to quiet, because the current amount of warning crashes the buildserver
-    # CF_FIX # temporarily disabled
+    CF_FIX
+    CF_ERROR
   )
 endif(cmake_clang_tools_FOUND)
 

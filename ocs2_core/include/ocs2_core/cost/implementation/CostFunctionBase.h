@@ -27,30 +27,25 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-namespace ocs2{
+namespace ocs2 {
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /***************************************************************************************************** */
 template <size_t STATE_DIM, size_t INPUT_DIM>
-void CostFunctionBase<STATE_DIM, INPUT_DIM>::setCostDesiredTrajectories(
-		const cost_desired_trajectories_t& costDesiredTrajectories) {
+void CostFunctionBase<STATE_DIM, INPUT_DIM>::setCostDesiredTrajectories(const cost_desired_trajectories_t& costDesiredTrajectories) {
+  costDesiredTrajectoriesPtr_ = &costDesiredTrajectories;
 
-	costDesiredTrajectoriesPtr_ = &costDesiredTrajectories;
-
-	costDesiredTrajectories.getDesiredStateFunc(xNominalFunc_);
-	costDesiredTrajectories.getDesiredInputFunc(uNominalFunc_);
+  costDesiredTrajectories.getDesiredStateFunc(xNominalFunc_);
+  costDesiredTrajectories.getDesiredInputFunc(uNominalFunc_);
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /***************************************************************************************************** */
 template <size_t STATE_DIM, size_t INPUT_DIM>
-void CostFunctionBase<STATE_DIM, INPUT_DIM>::getCostDesiredTrajectories(
-		cost_desired_trajectories_t& costDesiredTrajectories) const {
-
-	costDesiredTrajectories = *costDesiredTrajectoriesPtr_;
+void CostFunctionBase<STATE_DIM, INPUT_DIM>::getCostDesiredTrajectories(cost_desired_trajectories_t& costDesiredTrajectories) const {
+  costDesiredTrajectories = *costDesiredTrajectoriesPtr_;
 }
 
-
-} // namespace ocs2
+}  // namespace ocs2

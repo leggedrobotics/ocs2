@@ -32,224 +32,186 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "ocs2_core/cost/CostFunctionBase.h"
 
-namespace ocs2{
+namespace ocs2 {
 
 /**
  * Quadratic Cost Function.
  *
  * @tparam STATE_DIM: Dimension of the state space.
  * @tparam INPUT_DIM: Dimension of the control input space.
-  */
+ */
 template <size_t STATE_DIM, size_t INPUT_DIM>
-class QuadraticCostFunction : public CostFunctionBase< STATE_DIM, INPUT_DIM>
-{
-public:
-	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+class QuadraticCostFunction : public CostFunctionBase<STATE_DIM, INPUT_DIM> {
+ public:
+  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-	using BASE = CostFunctionBase<STATE_DIM, INPUT_DIM> ;
+  using BASE = CostFunctionBase<STATE_DIM, INPUT_DIM>;
 
-	using typename BASE::scalar_t;
-	using typename BASE::state_vector_t;
-	using typename BASE::state_matrix_t;
-	using typename BASE::input_vector_t;
-	using typename BASE::input_matrix_t;
-	using typename BASE::input_state_matrix_t;
+  using typename BASE::input_matrix_t;
+  using typename BASE::input_state_matrix_t;
+  using typename BASE::input_vector_t;
+  using typename BASE::scalar_t;
+  using typename BASE::state_matrix_t;
+  using typename BASE::state_vector_t;
 
-	/**
-	 * Constructor for the running and final cost function defined as the following:
-	 * - \f$ L = 0.5(x-x_{n})' Q (x-x_{n}) + 0.5(u-u_{n})' R (u-u_{n}) + (u-u_{n})' P (x-x_{n}) \f$
-	 * - \f$ \Phi = 0.5(x-x_{f})' Q_{f} (x-x_{f}) \f$.
-	 * @param [in] Q: \f$ Q \f$
-	 * @param [in] R: \f$ R \f$
-	 * @param [in] xNominalIntermediate: \f$ x_{n}\f$
-	 * @param [in] uNominalIntermediate: \f$ u_{n}\f$
-	 * @param [in] xNominalFinal: \f$ x_{f}\f$
-	 * @param [in] QFinal: \f$ Q_{f}\f$
-	 */
-	QuadraticCostFunction(
-			const state_matrix_t& Q,
-			const input_matrix_t& R,
-			const state_vector_t& xNominalIntermediate,
-			const input_vector_t& uNominalIntermediate,
-			const state_matrix_t& QFinal,
-			const state_vector_t& xNominalFinal,
-			const input_state_matrix_t& P = input_state_matrix_t::Zero())
-	: Q_(Q)
-	, R_(R)
-	, P_(P)
-	, QFinal_(QFinal)
-	, xNominalIntermediate_(xNominalIntermediate)
-	, uNominalIntermediate_(uNominalIntermediate)
-	, xNominalFinal_(xNominalFinal)
-	{}
+  /**
+   * Constructor for the running and final cost function defined as the following:
+   * - \f$ L = 0.5(x-x_{n})' Q (x-x_{n}) + 0.5(u-u_{n})' R (u-u_{n}) + (u-u_{n})' P (x-x_{n}) \f$
+   * - \f$ \Phi = 0.5(x-x_{f})' Q_{f} (x-x_{f}) \f$.
+   * @param [in] Q: \f$ Q \f$
+   * @param [in] R: \f$ R \f$
+   * @param [in] xNominalIntermediate: \f$ x_{n}\f$
+   * @param [in] uNominalIntermediate: \f$ u_{n}\f$
+   * @param [in] xNominalFinal: \f$ x_{f}\f$
+   * @param [in] QFinal: \f$ Q_{f}\f$
+   */
+  QuadraticCostFunction(const state_matrix_t& Q, const input_matrix_t& R, const state_vector_t& xNominalIntermediate,
+                        const input_vector_t& uNominalIntermediate, const state_matrix_t& QFinal, const state_vector_t& xNominalFinal,
+                        const input_state_matrix_t& P = input_state_matrix_t::Zero())
+      : Q_(Q),
+        R_(R),
+        P_(P),
+        QFinal_(QFinal),
+        xNominalIntermediate_(xNominalIntermediate),
+        uNominalIntermediate_(uNominalIntermediate),
+        xNominalFinal_(xNominalFinal) {}
 
-	/**
-	 * Destructor
-	 */
-	virtual ~QuadraticCostFunction() = default;
+  /**
+   * Destructor
+   */
+  virtual ~QuadraticCostFunction() = default;
 
-    /**
-     * Returns pointer to the class.
-     *
-     * @return A raw pointer to the class.
-     */
-	QuadraticCostFunction* clone() const override {
+  /**
+   * Returns pointer to the class.
+   *
+   * @return A raw pointer to the class.
+   */
+  QuadraticCostFunction* clone() const override { return new QuadraticCostFunction<STATE_DIM, INPUT_DIM>(*this); }
 
-		return new QuadraticCostFunction<STATE_DIM, INPUT_DIM>(*this);
-	}
+  /**
+   * Sets the current time, state, and control input.
+   *
+   * @param [in] t: Current time.
+   * @param [in] x: Current state vector.
+   * @param [in] u: Current input vector.
+   */
+  void setCurrentStateAndControl(const scalar_t& t, const state_vector_t& x, const input_vector_t& u) override {
+    setCurrentStateAndControl(t, x, u, xNominalIntermediate_, uNominalIntermediate_, xNominalFinal_);
+  }
 
-	/**
-	 * Sets the current time, state, and control input.
-	 *
-	 * @param [in] t: Current time.
-	 * @param [in] x: Current state vector.
-	 * @param [in] u: Current input vector.
-	 */
-	void setCurrentStateAndControl(
-			const scalar_t& t,
-			const state_vector_t& x,
-			const input_vector_t& u) override {
+  /**
+   * Sets the current time, state, control input, and desired state and input.
+   *
+   * @param [in] t: Current time.
+   * @param [in] x: Current state vector.
+   * @param [in] u: Current input vector.
+   * @param [in] xNominalIntermediate: Intermediate desired state vector.
+   * @param [in] uNominalIntermediate: Intermediate desired input vector.
+   * @param [in] xNominalFinal: Final desired state vector.
+   */
+  virtual void setCurrentStateAndControl(const scalar_t& t, const state_vector_t& x, const input_vector_t& u,
+                                         const state_vector_t& xNominalIntermediate, const input_vector_t& uNominalIntermediate,
+                                         const state_vector_t& xNominalFinal) {
+    BASE::setCurrentStateAndControl(t, x, u);
 
-		setCurrentStateAndControl(t, x, u,
-				xNominalIntermediate_, uNominalIntermediate_, xNominalFinal_);
-	}
+    xNominalIntermediate_ = xNominalIntermediate;
+    uNominalIntermediate_ = uNominalIntermediate;
+    xNominalFinal_ = xNominalFinal;
+    xIntermediateDeviation_ = x - xNominalIntermediate;
+    uIntermediateDeviation_ = u - uNominalIntermediate;
+  }
 
-	/**
-	 * Sets the current time, state, control input, and desired state and input.
-	 *
-	 * @param [in] t: Current time.
-	 * @param [in] x: Current state vector.
-	 * @param [in] u: Current input vector.
-	 * @param [in] xNominalIntermediate: Intermediate desired state vector.
-	 * @param [in] uNominalIntermediate: Intermediate desired input vector.
-	 * @param [in] xNominalFinal: Final desired state vector.
-	 */
-	virtual void setCurrentStateAndControl(
-			const scalar_t& t,
-			const state_vector_t& x,
-			const input_vector_t& u,
-			const state_vector_t& xNominalIntermediate,
-			const input_vector_t& uNominalIntermediate,
-			const state_vector_t& xNominalFinal) {
+  /**
+   * Get the intermediate cost.
+   *
+   * @param [out] L: The intermediate cost value.
+   */
+  void getIntermediateCost(scalar_t& L) override {
+    L = 0.5 * xIntermediateDeviation_.dot(Q_ * xIntermediateDeviation_) + 0.5 * uIntermediateDeviation_.dot(R_ * uIntermediateDeviation_) +
+        uIntermediateDeviation_.dot(P_ * xIntermediateDeviation_);
+  }
 
-		BASE::setCurrentStateAndControl(t, x, u);
+  /**
+   * Get the state derivative of the intermediate cost.
+   *
+   * @param [out] dLdx: First order derivative of the intermediate cost with respect to state vector.
+   */
+  void getIntermediateCostDerivativeState(state_vector_t& dLdx) override {
+    dLdx = Q_ * xIntermediateDeviation_ + P_.transpose() * uIntermediateDeviation_;
+  }
 
-		xNominalIntermediate_ = xNominalIntermediate;
-		uNominalIntermediate_ = uNominalIntermediate;
-		xNominalFinal_ = xNominalFinal;
-		xIntermediateDeviation_ = x - xNominalIntermediate;
-		uIntermediateDeviation_ = u - uNominalIntermediate;
-	}
+  /**
+   * Get state second order derivative of the intermediate cost.
+   *
+   * @param [out] dLdxx: Second order derivative of the intermediate cost with respect to state vector.
+   */
+  void getIntermediateCostSecondDerivativeState(state_matrix_t& dLdxx) override { dLdxx = Q_; }
 
-    /**
-     * Get the intermediate cost.
-     *
-     * @param [out] L: The intermediate cost value.
-     */
-	void getIntermediateCost(scalar_t& L) override {
+  /**
+   * Get control input derivative of the intermediate cost.
+   *
+   * @param [out] dLdu: First order derivative of the intermediate cost with respect to input vector.
+   */
+  void getIntermediateCostDerivativeInput(input_vector_t& dLdu) override {
+    dLdu = R_ * uIntermediateDeviation_ + P_ * xIntermediateDeviation_;
+  }
 
-		L = 0.5 * xIntermediateDeviation_.dot(Q_ * xIntermediateDeviation_) +
-				0.5 * uIntermediateDeviation_.dot(R_ * uIntermediateDeviation_) +
-				uIntermediateDeviation_.dot(P_ * xIntermediateDeviation_);
-	}
+  /**
+   * Get control input second derivative of the intermediate cost.
+   *
+   * @param [out] dLduu: Second order derivative of the intermediate cost with respect to input vector.
+   */
+  void getIntermediateCostSecondDerivativeInput(input_matrix_t& dLduu) override { dLduu = R_; }
 
-    /**
-     * Get the state derivative of the intermediate cost.
-     *
-     * @param [out] dLdx: First order derivative of the intermediate cost with respect to state vector.
-     */
-	void getIntermediateCostDerivativeState(state_vector_t& dLdx) override {
+  /**
+   * Get the input-state derivative of the intermediate cost.
+   *
+   * @param [out] dLdux: Second order derivative of the intermediate cost with respect to input vector and state.
+   */
+  void getIntermediateCostDerivativeInputState(input_state_matrix_t& dLdux) override { dLdux = P_; }
 
-		dLdx =  Q_ * xIntermediateDeviation_ + P_.transpose() * uIntermediateDeviation_;
-	}
+  /**
+   * Get the terminal cost.
+   *
+   * @param [out] cost: The final cost value.
+   */
+  void getTerminalCost(scalar_t& cost) override {
+    state_vector_t xFinalDeviation = BASE::x_ - xNominalFinal_;
+    cost = 0.5 * xFinalDeviation.dot(QFinal_ * xFinalDeviation);
+  }
 
-    /**
-     * Get state second order derivative of the intermediate cost.
-     *
-     * @param [out] dLdxx: Second order derivative of the intermediate cost with respect to state vector.
-     */
-	void getIntermediateCostSecondDerivativeState(state_matrix_t& dLdxx) override {
+  /**
+   * Get the terminal cost state derivative.
+   *
+   * @param [out] dPhidx: First order final cost derivative with respect to state vector.
+   */
+  void getTerminalCostDerivativeState(state_vector_t& dPhidx) override {
+    state_vector_t xFinalDeviation = BASE::x_ - xNominalFinal_;
+    dPhidx = QFinal_ * xFinalDeviation;
+  }
 
-		dLdxx = Q_;
-	}
+  /**
+   * Get the terminal cost state second derivative
+   *
+   * @param [out] dPhidxx: Second order final cost derivative with respect to state vector.
+   */
+  void getTerminalCostSecondDerivativeState(state_matrix_t& dPhidxx) override { dPhidxx = QFinal_; }
 
-    /**
-     * Get control input derivative of the intermediate cost.
-     *
-     * @param [out] dLdu: First order derivative of the intermediate cost with respect to input vector.
-     */
-	void getIntermediateCostDerivativeInput(input_vector_t& dLdu) override {
+ protected:
+  state_matrix_t Q_;
+  input_matrix_t R_;
+  input_state_matrix_t P_;
+  state_matrix_t QFinal_;
 
-		dLdu = R_ * uIntermediateDeviation_ + P_ * xIntermediateDeviation_;
-	}
+  state_vector_t xNominalIntermediate_;
+  input_vector_t uNominalIntermediate_;
 
-    /**
-     * Get control input second derivative of the intermediate cost.
-     *
-     * @param [out] dLduu: Second order derivative of the intermediate cost with respect to input vector.
-     */
-	void getIntermediateCostSecondDerivativeInput(input_matrix_t& dLduu) override {
+  state_vector_t xIntermediateDeviation_;
+  input_vector_t uIntermediateDeviation_;
 
-		dLduu = R_;
-	}
-
-    /**
-     * Get the input-state derivative of the intermediate cost.
-     *
-     * @param [out] dLdux: Second order derivative of the intermediate cost with respect to input vector and state.
-     */
-	void getIntermediateCostDerivativeInputState(input_state_matrix_t& dLdux) override {
-
-		dLdux = P_;
-	}
-
-    /**
-     * Get the terminal cost.
-     *
-     * @param [out] cost: The final cost value.
-     */
-	void getTerminalCost(scalar_t& cost) override {
-
-		state_vector_t xFinalDeviation = BASE::x_ - xNominalFinal_;
-		cost = 0.5 * xFinalDeviation.dot(QFinal_ * xFinalDeviation);
-	}
-
-    /**
-     * Get the terminal cost state derivative.
-     *
-     * @param [out] dPhidx: First order final cost derivative with respect to state vector.
-     */
-	void getTerminalCostDerivativeState(state_vector_t& dPhidx) override {
-
-		state_vector_t xFinalDeviation = BASE::x_ - xNominalFinal_;
-		dPhidx = QFinal_ * xFinalDeviation;
-	}
-
-    /**
-     * Get the terminal cost state second derivative
-     *
-     * @param [out] dPhidxx: Second order final cost derivative with respect to state vector.
-     */
-	void getTerminalCostSecondDerivativeState(state_matrix_t& dPhidxx) override {
-
-		dPhidxx = QFinal_;
-	}
-
-protected:
-	state_matrix_t Q_;
-	input_matrix_t R_;
-	input_state_matrix_t P_;
-	state_matrix_t QFinal_;
-
-	state_vector_t xNominalIntermediate_;
-	input_vector_t uNominalIntermediate_;
-
-	state_vector_t xIntermediateDeviation_;
-	input_vector_t uIntermediateDeviation_;
-
-	state_vector_t xNominalFinal_;
+  state_vector_t xNominalFinal_;
 };
 
-} // namespace ocs2
+}  // namespace ocs2
 
 #endif /* QUADRATICCOSTFUNCTION_OCS2_H_ */

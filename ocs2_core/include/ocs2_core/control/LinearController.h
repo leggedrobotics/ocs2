@@ -110,10 +110,10 @@ class LinearController final : public ControllerBase<STATE_DIM, INPUT_DIM> {
 
   input_vector_t computeInput(const scalar_t& t, const state_vector_t& x) override {
     input_vector_t uff;
-    const auto greatestLessTimeStampIndex = linInterpolateBias_.interpolate(t, uff);
+    const auto indexAlpha = linInterpolateBias_.interpolate(t, uff);
 
     input_state_matrix_t k;
-    linInterpolateGain_.interpolate(t, k, greatestLessTimeStampIndex);
+    linInterpolateGain_.interpolate(indexAlpha,  k);
 
     return uff + k * x;
   }
@@ -136,10 +136,10 @@ class LinearController final : public ControllerBase<STATE_DIM, INPUT_DIM> {
     flatArray.resize(INPUT_DIM + INPUT_DIM * STATE_DIM);
 
     input_vector_t uff;
-    const auto greatestLessTimeStampIndex = linInterpolateBias_.interpolate(time, uff);
+    const auto indexAlpha = linInterpolateBias_.interpolate(time, uff);
 
     input_state_matrix_t k;
-    linInterpolateGain_.interpolate(time, k, greatestLessTimeStampIndex);
+    linInterpolateGain_.interpolate(indexAlpha, k);
 
     for (int i = 0; i < INPUT_DIM; i++) {  // i loops through input dim
       flatArray[i * (STATE_DIM + 1) + 0] = static_cast<float>(uff(i));

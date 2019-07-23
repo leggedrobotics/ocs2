@@ -209,18 +209,17 @@ public:
 		else
 			Mm_ += state_state_matrix_t::Identity()*(addedRiccatiDiagonal_);
 
-		AmFunc_.interpolate(t, Am_);
-		size_t greatestLessTimeStampIndex = AmFunc_.getGreatestLessTimeStampIndex();
-		OmFunc_.interpolate(t, Om_, greatestLessTimeStampIndex);
-		BmFunc_.interpolate(t, Bm_, greatestLessTimeStampIndex);
-		GvFunc_.interpolate(t, Gv_, greatestLessTimeStampIndex);
+		const auto indexAlpha = AmFunc_.interpolate(t, Am_);
+		OmFunc_.interpolate(indexAlpha,  Om_);
+		BmFunc_.interpolate(indexAlpha,  Bm_);
+		GvFunc_.interpolate(indexAlpha,  Gv_);
 
-		QvFunc_.interpolate(t, Qv_, greatestLessTimeStampIndex);
-		QmFunc_.interpolate(t, Qm_, greatestLessTimeStampIndex);
-		PmFunc_.interpolate(t, Pm_, greatestLessTimeStampIndex);
-		RvFunc_.interpolate(t, Rv_, greatestLessTimeStampIndex);
-		RmFunc_.interpolate(t, Rm_, greatestLessTimeStampIndex);
-		RmInverseFunc_.interpolate(t, RmInverse_, greatestLessTimeStampIndex);
+		QvFunc_.interpolate(indexAlpha,  Qv_);
+		QmFunc_.interpolate(indexAlpha,  Qm_);
+		PmFunc_.interpolate(indexAlpha,  Pm_);
+		RvFunc_.interpolate(indexAlpha,  Rv_);
+		RmFunc_.interpolate(indexAlpha,  Rm_);
+		RmInverseFunc_.interpolate(indexAlpha,  RmInverse_);
 
 		// Uv = -Lv_ - Km_*x
 		Lv_ = RmInverse_*(Rv_+Bm_.transpose()*Sv_);

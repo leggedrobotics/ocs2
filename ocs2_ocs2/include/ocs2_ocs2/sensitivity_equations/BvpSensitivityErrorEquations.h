@@ -155,14 +155,14 @@ public:
 		// denormalized time
 		const scalar_t t = switchingTimeFinal_ - scalingFactor_*z;
 
-		auto greatestLessTimeStampIndex = BmFunc_.interpolate(t, Bm_);
-		AmConstrainedFunc_.interpolate(t, AmConstrained_, greatestLessTimeStampIndex);
-		CmProjectedFunc_.interpolate(t, CmProjected_, greatestLessTimeStampIndex);
-		PmFunc_.interpolate(t, Pm_, greatestLessTimeStampIndex);
-		RmFunc_.interpolate(t, Rm_, greatestLessTimeStampIndex);
-		RmInverseFunc_.interpolate(t, RmInverse_, greatestLessTimeStampIndex);
-		RinvChol_Func_.interpolate(t, RinvChol_, greatestLessTimeStampIndex);
-		EvDevProjectedFunc_.interpolate(t, EvDevProjected_, greatestLessTimeStampIndex);
+		auto indexAlpha = BmFunc_.interpolate(t, Bm_);
+		AmConstrainedFunc_.interpolate(indexAlpha,  AmConstrained_);
+		CmProjectedFunc_.interpolate(indexAlpha,  CmProjected_);
+		PmFunc_.interpolate(indexAlpha,  Pm_);
+		RmFunc_.interpolate(indexAlpha,  Rm_);
+		RmInverseFunc_.interpolate(indexAlpha,  RmInverse_);
+		RinvChol_Func_.interpolate(indexAlpha,  RinvChol_);
+		EvDevProjectedFunc_.interpolate(indexAlpha,  EvDevProjected_);
 
 		SmFunc_.interpolate(t, Sm_);
 

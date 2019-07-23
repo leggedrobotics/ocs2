@@ -124,52 +124,31 @@ public:
      * @param [in]  index (optional): The greatest smaller time stamp index. If provided, the interpolation will skip
      * the search scheme and readily calculates the output.
      */
-	int interpolate(
+    std::pair<int, double> interpolate(
 			const scalar_t& enquiryTime,
-			Data_T& enquiryData,
-			int index = -1) const {
+			Data_T& enquiryData) const {
 		const std::vector<scalar_t>& timeStamp = *timeStampPtr_;
 		const std::vector<Data_T, Alloc>& dataArray = *dataPtr_;
 
-		if (zeroFunction_) {
-			enquiryData.setZero();
+		if (!zeroFunction_) {
+          auto indexAlpha = getIndexAlpha(timeStamp, enquiryTime);
+          interpolate(indexAlpha, enquiryData);
+          return indexAlpha;
 		} else {
-			if (index < 0) { // No index provided -> search for it
-				index = find(timeStamp, enquiryTime);
-			}
-
-			// Check bounds and extrapolate with zero order
-			if ( index >= static_cast<int>(timeStamp.size()-1) ) { // upper bound
-				enquiryData = dataArray.back();
-			} else if (index < 0) { // lower bound, with zero it is still between the first two timepoints
-				enquiryData = dataArray.front();
-			} else { // interpolation
-				scalar_t alpha = (enquiryTime - timeStamp[index + 1]) / (timeStamp[index] - timeStamp[index + 1]);
-				enquiryData = alpha * dataArray[index] + (1 - alpha) * dataArray[index + 1];
-			}
-		}
-		return index;
-	}
-
-	std::pair<int, double> getIndexAlpha(scalar_t enquiryTime) const {
-		const auto& timeStamp = *timeStampPtr_;
-		int index = find(timeStamp, enquiryTime);
-		auto lastInterval = static_cast<int>(timeStamp.size()-1);
-		if ( index >= lastInterval ) { // upper bound
-			return {lastInterval - 1, 0.0};
-		} else if (index < 0) { // lower bound, with zero it is still between the first two timepoints
-			return {0, 1.0};
-		} else { // interpolation
-			scalar_t alpha = (enquiryTime - timeStamp[index + 1]) / (timeStamp[index] - timeStamp[index + 1]);
-			return {index, alpha};
+          enquiryData.setZero();
+		  return {0, 0.0};
 		}
 	}
 
-	inline void interpolateIndexAlpha(std::pair<int, double> indexAlpha, Data_T& enquiryData) const {
-		int index = indexAlpha.first;
-		scalar_t alpha = indexAlpha.second;
-		const auto& dataArray = *dataPtr_;
-		enquiryData = alpha * dataArray[index] + (1 - alpha) * dataArray[index + 1];
+	void interpolate(std::pair<int, double> indexAlpha, Data_T& enquiryData) const {
+      if (!zeroFunction_){
+        int index = indexAlpha.first;
+        scalar_t alpha = indexAlpha.second;
+        const auto& dataArray = *dataPtr_;
+        enquiryData = alpha * dataArray[index] + (1 - alpha) * dataArray[index + 1];
+      } else {
+        enquiryData.setZero();
+      }
 	}
 
 protected:
@@ -183,6 +162,27 @@ protected:
     	//! @remark Idea for improvement: interpolation search mentioned here https://stackoverflow.com/questions/26613111/binary-search-with-hint
 		return static_cast<int>(std::lower_bound(timeArray.begin(), timeArray.end(), enquiryTime) - timeArray.begin() - 1);
 	}
+
+    /**
+    * Get the interval index and interpolation coefficient alpha.
+    * Alpha = 1 at the start of the interval and alpha = 0 at the end.
+    *
+    * @param [in] timeArray: interpolation time array.
+    * @param [in] enquiryTime: The enquiry time for interpolation.
+    * @return std::pair<int, double> : {index, alpha}
+    */
+	static std::pair<int, double> getIndexAlpha(const std::vector<scalar_t>& timeArray, scalar_t enquiryTime) {
+      int index = find(timeArray, enquiryTime);
+      auto lastInterval = static_cast<int>(timeArray.size()-1);
+      if ( index >= lastInterval ) { // upper bound
+        return {lastInterval - 1, 0.0};
+      } else if (index < 0) { // lower bound, with zero it is still between the first two timepoints
+        return {0, 1.0};
+      } else { // interpolation
+        scalar_t alpha = (enquiryTime - timeArray[index + 1]) / (timeArray[index] - timeArray[index + 1]);
+        return {index, alpha};
+      }
+    }
 
 private:
 	bool zeroFunction_;

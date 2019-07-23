@@ -1191,13 +1191,14 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::truncateConterller(
 	LinearInterpolation<input_vector_t,Eigen::aligned_allocator<input_vector_t> > uffFunc;
 	uffFunc.setData(&controllersStock[initActivePartition].timeStamp_, &controllersStock[initActivePartition].biasArray_);
 	input_vector_t uffInit;
-	const auto greatestLessTimeStampIndex = uffFunc.interpolate(initTime, uffInit);
+	const auto indexAlpha = uffFunc.interpolate(initTime, uffInit);
+	auto greatestLessTimeStampIndex = indexAlpha.first;
 
 	// interpolating k
 	LinearInterpolation<input_state_matrix_t,Eigen::aligned_allocator<input_state_matrix_t> > kFunc;
 	kFunc.setData(&controllersStock[initActivePartition].timeStamp_, &controllersStock[initActivePartition].gainArray_);
 	input_state_matrix_t kInit;
-	kFunc.interpolate(initTime, kInit, greatestLessTimeStampIndex);
+	kFunc.interpolate(indexAlpha, kInit);
 
 	// deleting the controller in the active subsystem for the subsystems before initTime
 	if (greatestLessTimeStampIndex>0) {
@@ -1247,9 +1248,9 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::calculateControllerUpdateMaxNorm(
 			maxDeltaUffNorm = std::max(maxDeltaUffNorm, nominalControllersStock_[i].deltaBiasArray_[k].norm());
 
 			state_vector_t nominalState;
-			const auto greatestLessTimeStampIndex = nominalStateFunc_[0].interpolate(nominalControllersStock_[i].timeStamp_[k], nominalState);
+			const auto indexAlpha = nominalStateFunc_[0].interpolate(nominalControllersStock_[i].timeStamp_[k], nominalState);
 			input_vector_t nominalInput;
-			nominalInputFunc_[0].interpolate(nominalControllersStock_[i].timeStamp_[k], nominalInput, greatestLessTimeStampIndex);
+			nominalInputFunc_[0].interpolate(indexAlpha, nominalInput);
 			input_vector_t deltaUee = nominalInput - nominalControllersStock_[i].gainArray_[k]*nominalState - nominalControllersStock_[i].biasArray_[k];
 			maxDeltaUeeNorm = std::max(maxDeltaUeeNorm, deltaUee.norm());
 
@@ -1325,17 +1326,17 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::getValueFuntion (
 	state_matrix_t Sm;
 	LinearInterpolation<state_matrix_t,Eigen::aligned_allocator<state_matrix_t> > SmFunc(
 			&SsTimeTrajectoryStock_[activeSubsystem], &SmTrajectoryStock_[activeSubsystem]);
-	const auto greatestLessTimeStampIndex = SmFunc.interpolate(time, Sm);
+	const auto indexAlpha = SmFunc.interpolate(time, Sm);
 
 	state_vector_t Sv;
 	LinearInterpolation<state_vector_t,Eigen::aligned_allocator<state_vector_t> > SvFunc(
 			&SsTimeTrajectoryStock_[activeSubsystem], &SvTrajectoryStock_[activeSubsystem]);
-	SvFunc.interpolate(time, Sv, greatestLessTimeStampIndex);
+	SvFunc.interpolate(indexAlpha, Sv);
 
 	eigen_scalar_t s;
 	LinearInterpolation<eigen_scalar_t,Eigen::aligned_allocator<eigen_scalar_t> > sFunc(
 			&SsTimeTrajectoryStock_[activeSubsystem], &sTrajectoryStock_[activeSubsystem]);
-	sFunc.interpolate(time, s, greatestLessTimeStampIndex);
+	sFunc.interpolate(indexAlpha, s);
 
 	state_vector_t xNominal;
 	LinearInterpolation<state_vector_t,Eigen::aligned_allocator<state_vector_t> > xNominalFunc(

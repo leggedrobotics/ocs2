@@ -435,15 +435,15 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM>::calculateControllerWorker (
 	input_matrix_t DmProjected;
 
 	// interpolate
-	const auto greatestLessTimeStampIndex = BASE::nominalStateFunc_[workerIndex].interpolate(time, nominalState);
-	BASE::nominalInputFunc_[workerIndex].interpolate(time, nominalInput, greatestLessTimeStampIndex);
-	BmFunc_[workerIndex].interpolate(time, Bm, greatestLessTimeStampIndex);
-	PmFunc_[workerIndex].interpolate(time, Pm, greatestLessTimeStampIndex);
-	RvFunc_[workerIndex].interpolate(time, Rv, greatestLessTimeStampIndex);
-	RmInverseFunc_[workerIndex].interpolate(time, RmInverse, greatestLessTimeStampIndex);
-	EvProjectedFunc_[workerIndex].interpolate(time, EvProjected, greatestLessTimeStampIndex);
-	CmProjectedFunc_[workerIndex].interpolate(time, CmProjected, greatestLessTimeStampIndex);
-	DmProjectedFunc_[workerIndex].interpolate(time, DmProjected, greatestLessTimeStampIndex);
+	const auto indexAlpha = BASE::nominalStateFunc_[workerIndex].interpolate(time, nominalState);
+	BASE::nominalInputFunc_[workerIndex].interpolate(indexAlpha, nominalInput);
+	BmFunc_[workerIndex].interpolate(indexAlpha, Bm);
+	PmFunc_[workerIndex].interpolate(indexAlpha, Pm);
+	RvFunc_[workerIndex].interpolate(indexAlpha, Rv);
+	RmInverseFunc_[workerIndex].interpolate(indexAlpha, RmInverse);
+	EvProjectedFunc_[workerIndex].interpolate(indexAlpha, EvProjected);
+	CmProjectedFunc_[workerIndex].interpolate(indexAlpha, CmProjected);
+	DmProjectedFunc_[workerIndex].interpolate(indexAlpha, DmProjected);
 
 	// Lm
 	Pm.noalias() += Bm.transpose()*BASE::SmTrajectoryStock_[i][k]; // Avoid temporary in the product

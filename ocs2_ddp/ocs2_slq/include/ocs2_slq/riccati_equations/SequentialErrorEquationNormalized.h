@@ -119,8 +119,8 @@ public:
 		// denormalized time
 		const scalar_t t = switchingTimeFinal_ + (switchingTimeStart_ - switchingTimeFinal_) * z;
 
-		const auto greatestLessTimeStampIndex = GvFunc_.interpolate(t, Gv_);
-		GmFunc_.interpolate(t, Gm_, greatestLessTimeStampIndex);
+		const auto indexAlpha = GvFunc_.interpolate(t, Gv_);
+		GmFunc_.interpolate(indexAlpha,  Gm_);
 
 		// Error equation for the equivalent system
 		derivatives = (switchingTimeFinal_ - switchingTimeStart_) * (Gm_.transpose() * Sve + Gv_);

@@ -167,19 +167,19 @@ public:
 		// denormalized time
 		const scalar_t t = switchingTimeFinal_ - scalingFactor_*z;
 
-		auto greatestLessTimeStampIndex = AmFunc_.interpolate(t, Am_);
-		BmFunc_.interpolate(t, Bm_, greatestLessTimeStampIndex);
-		CmFunc_.interpolate(t, Cm_, greatestLessTimeStampIndex);
-		AmConstrainedFunc_.interpolate(t, AmConstrained_, greatestLessTimeStampIndex);
-		CmProjectedFunc_.interpolate(t, CmProjected_, greatestLessTimeStampIndex);
-		QvFunc_.interpolate(t, Qv_, greatestLessTimeStampIndex);
+		auto indexAlpha = AmFunc_.interpolate(t, Am_);
+		BmFunc_.interpolate(indexAlpha,  Bm_);
+		CmFunc_.interpolate(indexAlpha,  Cm_);
+		AmConstrainedFunc_.interpolate(indexAlpha,  AmConstrained_);
+		CmProjectedFunc_.interpolate(indexAlpha,  CmProjected_);
+		QvFunc_.interpolate(indexAlpha,  Qv_);
 
-		flowMapFunc_.interpolate(t, flowMap_, greatestLessTimeStampIndex);
-		costateFunc_.interpolate(t, costate_, greatestLessTimeStampIndex);
-		lagrangianFunc_.interpolate(t, lagrangian_, greatestLessTimeStampIndex);
+		flowMapFunc_.interpolate(indexAlpha,  flowMap_);
+		costateFunc_.interpolate(indexAlpha,  costate_);
+		lagrangianFunc_.interpolate(indexAlpha,  lagrangian_);
 
-		greatestLessTimeStampIndex = KmConstrainedFunc_.interpolate(t, KmConstrained_);
-		SmFunc_.interpolate(t, Sm_, greatestLessTimeStampIndex);
+		indexAlpha = KmConstrainedFunc_.interpolate(t, KmConstrained_);
+		SmFunc_.interpolate(indexAlpha,  Sm_);
 
 		// here we have used RmConstrained = (I-DmConstrained).transpose() * Rm
 		// and Km = -(I-DmConstrained) \tilde{L} - CmProjected_

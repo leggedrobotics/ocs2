@@ -35,51 +35,9 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_core/Dimensions.h>
 #include <ocs2_core/misc/Lookup.h>
 
+#include "ocs2_core/logic/rules/ModeSequenceTemplate.h"
+
 namespace ocs2 {
-
-/**
- * Mode sequence template.
- *
- */
-template <typename scalar_t = double>
-struct ModeSequenceTemplate {
-  ModeSequenceTemplate() : templateSwitchingTimes_(0), templateSubsystemsSequence_(0) {}
-
-  /**
-   * Defined as [t_0=0, t_1, .., t_n, t_(n+1)=T], where T is the overall duration
-   * of the template logic. t_1 to t_n are the event moments.
-   */
-  std::vector<scalar_t> templateSwitchingTimes_;
-
-  /**
-   * Defined as [sys_0, sys_n], are the switching systems IDs. Here sys_i is
-   * active in period [t_i, t_(i+1)]
-   */
-  std::vector<size_t> templateSubsystemsSequence_;
-
-  /**
-   * Displays template information.
-   */
-  void display() const {
-    std::cerr << std::endl << "Template switching times:\n\t {";
-    for (auto& s : templateSwitchingTimes_) {
-      std::cerr << s << ", ";
-    }
-    if (!templateSwitchingTimes_.empty()) {
-      std::cerr << "\b\b";
-    }
-    std::cerr << "}" << std::endl;
-
-    std::cerr << "Template subsystem sequence:\n\t {";
-    for (auto& s : templateSubsystemsSequence_) {
-      std::cerr << s << ", ";
-    }
-    if (!templateSubsystemsSequence_.empty()) {
-      std::cerr << "\b\b";
-    }
-    std::cerr << "}" << std::endl;
-  }
-};
 
 /**
  * Hybrid logic rules base class

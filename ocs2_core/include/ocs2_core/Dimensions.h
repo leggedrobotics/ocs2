@@ -95,6 +95,8 @@ class Dimensions {
   using eigen_scalar_array_t = std::vector<eigen_scalar_t, Eigen::aligned_allocator<eigen_scalar_t>>;
   /** Array of eigen scalar trajectory type. */
   using eigen_scalar_array2_t = std::vector<eigen_scalar_array_t, Eigen::aligned_allocator<eigen_scalar_array_t>>;
+  /** Array of arrays of eigen scalar trajectory type. */
+  using eigen_scalar_array3_t = std::vector<eigen_scalar_array2_t, Eigen::aligned_allocator<eigen_scalar_array2_t> >;
 
   /** Fixed-size state vector type with size \f$ n_x \f$ . */
   using state_vector_t = Eigen::Matrix<scalar_t, STATE_DIM, 1>;

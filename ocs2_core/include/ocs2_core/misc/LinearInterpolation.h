@@ -151,6 +151,27 @@ public:
 		return index;
 	}
 
+	std::pair<int, double> getIndexAlpha(scalar_t enquiryTime) const {
+		const auto& timeStamp = *timeStampPtr_;
+		int index = find(timeStamp, enquiryTime);
+		auto lastInterval = static_cast<int>(timeStamp.size()-1);
+		if ( index >= lastInterval ) { // upper bound
+			return {lastInterval - 1, 0.0};
+		} else if (index < 0) { // lower bound, with zero it is still between the first two timepoints
+			return {0, 1.0};
+		} else { // interpolation
+			scalar_t alpha = (enquiryTime - timeStamp[index + 1]) / (timeStamp[index] - timeStamp[index + 1]);
+			return {index, alpha};
+		}
+	}
+
+	inline void interpolateIndexAlpha(std::pair<int, double> indexAlpha, Data_T& enquiryData) const {
+		int index = indexAlpha.first;
+		scalar_t alpha = indexAlpha.second;
+		const auto& dataArray = *dataPtr_;
+		enquiryData = alpha * dataArray[index] + (1 - alpha) * dataArray[index + 1];
+	}
+
 protected:
     /**
      * Finds the index of the greatest smaller time stamp index for the enquiry time.

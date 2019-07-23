@@ -792,32 +792,6 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM>::solveErrorRiccatiEquationWorker(
 	// constructing Sve
 	BASE::SveTrajectoryStock_[partitionIndex].resize(SveTrajectory.size());
 	std::reverse_copy(SveTrajectory.begin(), SveTrajectory.end(), BASE::SveTrajectoryStock_[partitionIndex].begin());
-
-	// Testing the numerical stability
-	if (BASE::ddpSettings_.checkNumericalStability_) {
-		for (size_t k=0; k<NS; k++) {
-
-			// testing the numerical stability of the Riccati error equation
-			try {
-				if (!BASE::SveTrajectoryStock_[partitionIndex][k].allFinite()) {  throw std::runtime_error("Sve is unstable");
-				}
-			}
-			catch(const std::exception& error) 	{
-				std::cerr << "what(): " << error.what() << " at time " << BASE::SsTimeTrajectoryStock_[partitionIndex][k] << " [sec]." << std::endl;
-				for (int kp=k; kp<NS; kp++){
-					std::cerr << "Sve[" << BASE::SsTimeTrajectoryStock_[partitionIndex][kp] <<
-							"]:\t"<< BASE::SveTrajectoryStock_[partitionIndex][kp].transpose().norm() << std::endl;
-				}
-				for(int kp = 0; kp+1<BASE::nominalTimeTrajectoriesStock_[partitionIndex].size(); kp++){
-					std::cerr << "Gm[" << BASE::SsTimeTrajectoryStock_[partitionIndex][kp] <<
-							"]:\t"<< GmTrajectory[kp].transpose().norm() << std::endl;
-					std::cerr << "Gv[" << BASE::SsTimeTrajectoryStock_[partitionIndex][kp] <<
-							"]:\t"<< GvTrajectory[kp].transpose().norm() << std::endl;
-				}
-				exit(0);
-			}
-		}  // end of k loop
-	}
 }
 
 /******************************************************************************************************/
@@ -851,26 +825,36 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM>::solveSlqRiccatiEquationsWorker(
         &BASE::QvFinalStock_[partitionIndex],
         &BASE::QmFinalStock_[partitionIndex]);
 
+    // solve Sm, Sv, s
 	if(settings_.useNominalTimeForBackwardPass_) {
 		solveRiccatiEquationsForNominalTimeWorker(workerIndex, partitionIndex, SmFinal, SvFinal, sFinal);
 	} else {
 		solveRiccatiEquationsWorker(workerIndex, partitionIndex, SmFinal, SvFinal, sFinal);
 	}
 
+	// Solve Sve
+	solveErrorRiccatiEquationWorker(workerIndex, partitionIndex, SveFinal);
+
 	// testing the numerical stability of the Riccati equations
 	int N = BASE::SsTimeTrajectoryStock_[partitionIndex].size();
 	if (BASE::ddpSettings_.checkNumericalStability_) {
 		for (int k=N-1; k>=0; k--) {
 			try {
-				if (!BASE::SmTrajectoryStock_[partitionIndex][k].allFinite()) {  throw std::runtime_error("Sm is unstable.");
+				if (!BASE::SmTrajectoryStock_[partitionIndex][k].allFinite()) {
+					throw std::runtime_error("Sm is unstable.");
 				}
 				if (BASE::SmTrajectoryStock_[partitionIndex][k].eigenvalues().real().minCoeff() < -Eigen::NumTraits<scalar_t>::epsilon()) {
 					throw std::runtime_error("Sm matrix is not positive semi-definite. It's smallest eigenvalue is " +
 							std::to_string(BASE::SmTrajectoryStock_[partitionIndex][k].eigenvalues().real().minCoeff()) + ".");
 				}
-				if (!BASE::SvTrajectoryStock_[partitionIndex][k].allFinite()) {  throw std::runtime_error("Sv is unstable.");
+				if (!BASE::SvTrajectoryStock_[partitionIndex][k].allFinite()) {
+					throw std::runtime_error("Sv is unstable.");
 				}
-				if (!BASE::sTrajectoryStock_[partitionIndex][k].allFinite()) {   throw std::runtime_error("s is unstable");
+				if (!BASE::SveTrajectoryStock_[partitionIndex][k].allFinite()) {
+					throw std::runtime_error("Sve is unstable");
+				}
+				if (!BASE::sTrajectoryStock_[partitionIndex][k].allFinite()) {
+					throw std::runtime_error("s is unstable");
 				}
 			}
 			catch(const std::exception& error)
@@ -879,16 +863,15 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM>::solveSlqRiccatiEquationsWorker(
 				for (int kp=k; kp<k+10; kp++)  {
 					if (kp >= N) { continue;
 					}
-					std::cerr << "Sm[" << BASE::SsTimeTrajectoryStock_[partitionIndex][kp] << "]:\n"<< BASE::SmTrajectoryStock_[partitionIndex][kp].norm() << std::endl;
-					std::cerr << "Sv[" << BASE::SsTimeTrajectoryStock_[partitionIndex][kp] << "]:\t"<< BASE::SvTrajectoryStock_[partitionIndex][kp].transpose().norm() << std::endl;
-					std::cerr << "s["  << BASE::SsTimeTrajectoryStock_[partitionIndex][kp] << "]:\t"<< BASE::sTrajectoryStock_[partitionIndex][kp].transpose().norm() << std::endl;
+					std::cerr << "Sm[" << BASE::SsTimeTrajectoryStock_[partitionIndex][kp] << "]: \t"<< BASE::SmTrajectoryStock_[partitionIndex][kp].norm() << std::endl;
+					std::cerr << "Sv[" << BASE::SsTimeTrajectoryStock_[partitionIndex][kp] << "]: \t"<< BASE::SvTrajectoryStock_[partitionIndex][kp].transpose().norm() << std::endl;
+					std::cerr << "Sve[" << BASE::SsTimeTrajectoryStock_[partitionIndex][kp] << "]:\t"<< BASE::SveTrajectoryStock_[partitionIndex][kp].transpose().norm() << std::endl;
+					std::cerr << "s[" << BASE::SsTimeTrajectoryStock_[partitionIndex][kp] << "]:  \t"<< BASE::sTrajectoryStock_[partitionIndex][kp].transpose().norm() << std::endl;
 				}
 				exit(0);
 			}
 		}
 	}
-
-	solveErrorRiccatiEquationWorker(workerIndex, partitionIndex, SveFinal);
 }
 
 /******************************************************************************************************/

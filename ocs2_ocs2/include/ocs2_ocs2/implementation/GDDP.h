@@ -175,12 +175,11 @@ void GDDP<STATE_DIM, INPUT_DIM>::calculateRolloutCostate(
 			const scalar_t& t = timeTrajectoriesStock[i][k];
 
 			state_matrix_t Sm;
-			SmFunc_.interpolate(t, Sm);
-			size_t greatestLessTimeStampIndex = SmFunc_.getGreatestLessTimeStampIndex();
+			const auto indexAlpha = SmFunc_.interpolate(t, Sm);
 			state_vector_t Sv;
-			SvFunc_.interpolate(t, Sv, greatestLessTimeStampIndex);
+			SvFunc_.interpolate(indexAlpha,  Sv);
 			state_vector_t Sve;
-			SveFunc_.interpolate(t, Sve, greatestLessTimeStampIndex);
+			SveFunc_.interpolate(indexAlpha,  Sve);
 
 			state_vector_t nominalState;
 			nominalStateFunc_.interpolate(t, nominalState);
@@ -220,9 +219,9 @@ void GDDP<STATE_DIM, INPUT_DIM>::calculateRolloutCostate(
 			const scalar_t& t = timeTrajectoriesStock[i][k];
 
 			state_vector_t Sv;
-			auto greatestLessTimeStampIndex = SvFunc_.interpolate(t, Sv);
+			auto indexAlpha = SvFunc_.interpolate(t, Sv);
 			state_vector_t Sve;
-			SveFunc_.interpolate(t, Sve, greatestLessTimeStampIndex);
+			SveFunc_.interpolate(indexAlpha,  Sve);
 
 			costateTrajectoriesStock[i][k] = Sve + Sv;
 
@@ -279,22 +278,23 @@ void GDDP<STATE_DIM, INPUT_DIM>::calculateInputConstraintLagrangian(
 			const scalar_t& time = dcPtr_->SsTimeTrajectoriesStock_[i][k];
 
 			state_vector_t nominalState;
-			auto greatestLessTimeStampIndex = xFunc.interpolate(time, nominalState);
+			const auto indexAlpha = xFunc.interpolate(time, nominalState);
 			state_input_matrix_t Bm;
-			BmFunc.interpolate(time, Bm, greatestLessTimeStampIndex);
+			BmFunc.interpolate(indexAlpha, Bm);
 			input_state_matrix_t Pm;
-			PmFunc.interpolate(time, Pm, greatestLessTimeStampIndex);
+			PmFunc.interpolate(indexAlpha, Pm);
 			input_vector_t Rv;
-			RvFunc.interpolate(time, Rv, greatestLessTimeStampIndex);
+			RvFunc.interpolate(indexAlpha, Rv);
 			input_vector_t EvProjected;
-			EvProjectedFunc.interpolate(time, EvProjected, greatestLessTimeStampIndex);
+			EvProjectedFunc.interpolate(indexAlpha, EvProjected);
 			input_state_matrix_t CmProjected;
-			CmProjectedFunc.interpolate(time, CmProjected, greatestLessTimeStampIndex);
+			CmProjectedFunc.interpolate(indexAlpha, CmProjected);
 			input_matrix_t Rm;
-			RmFunc.interpolate(time, Rm, greatestLessTimeStampIndex);
+			RmFunc.interpolate(indexAlpha, Rm);
 			input_constraint1_matrix_t DmDager;
-			DmDagerFunc.interpolate(time, DmDager, greatestLessTimeStampIndex);
+			DmDagerFunc.interpolate(indexAlpha, DmDager);
 
+			const auto greatestLessTimeStampIndex = indexAlpha.first;
 			const size_t& nc1 = dcPtr_->nc1TrajectoriesStock_[i][greatestLessTimeStampIndex];
 
 			const state_matrix_t& Sm  = dcPtr_->SmTrajectoriesStock_[i][k];
@@ -353,10 +353,10 @@ void GDDP<STATE_DIM, INPUT_DIM>::calculateRolloutLagrangeMultiplier(
 		for (size_t k=0; k<N; k++) {
 
 			constraint1_vector_t vff;
-			auto greatestLessTimeIndex = vffFunc.interpolate(timeTrajectoriesStock[i][k], vff);
+			const auto indexAlpha = vffFunc.interpolate(timeTrajectoriesStock[i][k], vff);
 
 			constraint1_state_matrix_t vfb;
-			vfbFunc.interpolate(timeTrajectoriesStock[i][k], vfb, greatestLessTimeIndex);
+			vfbFunc.interpolate(indexAlpha, vfb);
 
 			lagrangeTrajectoriesStock[i][k] = vff + vfb*stateTrajectoriesStock[i][k];
 
@@ -1132,13 +1132,13 @@ void GDDP<STATE_DIM, INPUT_DIM>::calculateLQSensitivityControllerForward(
 
 			// Bm
 			state_input_matrix_t Bm;
-			auto greatestLessTimeStampIndex = BmFuncStock_[workerIndex].interpolate(t, Bm);
+			auto indexAlpha = BmFuncStock_[workerIndex].interpolate(t, Bm);
 			// RmInverse
 			input_matrix_t RmInverse;
-			RmInverseFuncStock_[workerIndex].interpolate(t, RmInverse, greatestLessTimeStampIndex);
+			RmInverseFuncStock_[workerIndex].interpolate(indexAlpha,  RmInverse);
 			// nablaRv
 			input_vector_t nablaRv;
-			nablaRvFuncStock_[workerIndex].interpolate(t, nablaRv, greatestLessTimeStampIndex);
+			nablaRvFuncStock_[workerIndex].interpolate(indexAlpha,  nablaRv);
 
 			nablaLvTrajectoriesStock[i][k] = -RmInverse * (nablaRv + Bm.transpose()*nablaSvTrajectoriesStock[i][k]);
 		}  // end of k loop
@@ -1184,16 +1184,16 @@ void GDDP<STATE_DIM, INPUT_DIM>::calculateBVPSensitivityControllerForward(
 			const scalar_t& t = timeTrajectoriesStock[i][k];
 			// Bm
 			state_input_matrix_t Bm;
-			auto greatestLessTimeStampIndex = BmFuncStock_[workerIndex].interpolate(t, Bm);
+			auto indexAlpha = BmFuncStock_[workerIndex].interpolate(t, Bm);
 			// RmInverse
 			input_matrix_t RmInverse;
-			RmInverseFuncStock_[workerIndex].interpolate(t, RmInverse, greatestLessTimeStampIndex);
+			RmInverseFuncStock_[workerIndex].interpolate(indexAlpha,  RmInverse);
 			// DmProjected
 			input_matrix_t DmProjected;
-			DmProjectedFuncStock_[workerIndex].interpolate(t, DmProjected, greatestLessTimeStampIndex);
+			DmProjectedFuncStock_[workerIndex].interpolate(indexAlpha,  DmProjected);
 			// EvDevEventTimesProjected
 			input_vector_t EvDevEventTimeProjected;
-			EvDevEventTimesProjectedFuncStock_[workerIndex].interpolate(t, EvDevEventTimeProjected, greatestLessTimeStampIndex);
+			EvDevEventTimesProjectedFuncStock_[workerIndex].interpolate(indexAlpha,  EvDevEventTimeProjected);
 
 			LvTrajectoriesStock[i][k] =
 					-(input_matrix_t::Identity()-DmProjected) * RmInverse * Bm.transpose() * (
@@ -1226,21 +1226,20 @@ void GDDP<STATE_DIM, INPUT_DIM>::getValueFuntionDerivative(
 	state_vector_t deltsState;
 	eigen_scalar_t nablas;
 	state_vector_t nablaSv;
-	state_matrix_t nablaSm;
-	int greatestLessTimeStampIndex = 0;
+	state_matrix_t nablaSm;;
 
 	nominalStateFunc.setData(&dcPtr_->nominalTimeTrajectoriesStock_[activePartition], &dcPtr_->nominalStateTrajectoriesStock_[activePartition]);
 	nominalStateFunc.interpolate(time, nominalState);
 	deltsState = state - nominalState;
 
 	nablasFunc.setData(&dcPtr_->SsTimeTrajectoriesStock_[activePartition], &nablasTrajectoriesStockSet_[eventTimeIndex][activePartition]);
-	greatestLessTimeStampIndex = nablasFunc.interpolate(time, nablas);
+	const auto indexAlpha = nablasFunc.interpolate(time, nablas);
 
 	nablaSvFunc.setData(&dcPtr_->SsTimeTrajectoriesStock_[activePartition], &nablaSvTrajectoriesStockSet_[eventTimeIndex][activePartition]);
-	nablaSvFunc.interpolate(time, nablaSv, greatestLessTimeStampIndex);
+	nablaSvFunc.interpolate(indexAlpha, nablaSv);
 
 	nablaSmFunc.setData(&dcPtr_->SsTimeTrajectoriesStock_[activePartition], &nablaSmTrajectoriesStockSet_[eventTimeIndex][activePartition]);
-	nablaSmFunc.interpolate(time, nablaSm, greatestLessTimeStampIndex);
+	nablaSmFunc.interpolate(indexAlpha, nablaSm);
 
 	valueFunctionDerivative = nablas(0) +
 			deltsState.dot(nablaSv) + 0.5*deltsState.dot(nablaSm*deltsState);

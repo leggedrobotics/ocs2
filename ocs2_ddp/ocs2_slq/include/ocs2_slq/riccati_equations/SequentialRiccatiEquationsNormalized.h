@@ -316,12 +316,12 @@ public:
 		}
 
 		if (preComputeRiccatiTerms_) {
-			const auto greatestLessTimeStampIndex = Qm_minus_P_Rinv_P_func_.interpolate(t, Qm_);
-			Qv_minus_P_Rinv_Rv_func_.interpolate(t, Qv_, greatestLessTimeStampIndex);
-			q_minus_half_Rv_Rinv_Rv_func_.interpolate(t, q_, greatestLessTimeStampIndex);
-			AmT_minus_P_Rinv_B_func_.interpolate(t, AmT_minus_P_Rinv_Bm_, greatestLessTimeStampIndex);
-			RinvCholT_Rv_func_.interpolate(t, RinvCholT_Rv_, greatestLessTimeStampIndex);
-			B_RinvChol_func_.interpolate(t, B_RinvChol_, greatestLessTimeStampIndex);
+            const auto indexAlpha = Qm_minus_P_Rinv_P_func_.interpolate(t, Qm_);
+			Qv_minus_P_Rinv_Rv_func_.interpolate(indexAlpha, Qv_);
+			q_minus_half_Rv_Rinv_Rv_func_.interpolate(indexAlpha, q_);
+			AmT_minus_P_Rinv_B_func_.interpolate(indexAlpha, AmT_minus_P_Rinv_Bm_);
+			RinvCholT_Rv_func_.interpolate(indexAlpha, RinvCholT_Rv_);
+			B_RinvChol_func_.interpolate(indexAlpha, B_RinvChol_);
 
 			// dSmdt,  Qm_ used instead of temporary
 			AmT_Sm_.noalias() = AmT_minus_P_Rinv_Bm_ * Sm_;
@@ -338,14 +338,14 @@ public:
 			q_.noalias() -= RinvCholT_BmT_Sv_.transpose() * RinvCholT_Rv_;
 			q_.noalias() -= 0.5 * RinvCholT_BmT_Sv_.transpose() * RinvCholT_BmT_Sv_;
 		} else {
-			const auto greatestLessTimeStampIndex = QmFunc_.interpolate(t, Qm_);
-			QvFunc_.interpolate(t, Qv_, greatestLessTimeStampIndex);
-			qFunc_.interpolate(t, q_, greatestLessTimeStampIndex);
-			AmFunc_.interpolate(t, Am_, greatestLessTimeStampIndex);
-			BmFunc_.interpolate(t, Bm_, greatestLessTimeStampIndex);
-			RinvChol_Func_.interpolate(t, RinvChol_, greatestLessTimeStampIndex);
-			PmFunc_.interpolate(t, Pm_, greatestLessTimeStampIndex);
-			RvFunc_.interpolate(t, Rv_, greatestLessTimeStampIndex);
+            const auto indexAlpha = QmFunc_.interpolate(t, Qm_);
+			QvFunc_.interpolate(indexAlpha, Qv_);
+			qFunc_.interpolate(indexAlpha, q_);
+			AmFunc_.interpolate(indexAlpha, Am_);
+			BmFunc_.interpolate(indexAlpha, Bm_);
+			RinvChol_Func_.interpolate(indexAlpha, RinvChol_);
+			PmFunc_.interpolate(indexAlpha, Pm_);
+			RvFunc_.interpolate(indexAlpha, Rv_);
 
 			Pm_.noalias() += Bm_.transpose() * Sm_;  // ! Pm is changed to avoid an extra temporary
 			Lm_.noalias() = RinvChol_.transpose() * Pm_;

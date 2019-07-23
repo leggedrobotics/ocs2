@@ -14,7 +14,7 @@ TEST(testLinearInterpolation, testInterpolation) {
   std::vector<double> t = {0.0, 1.0, 2.0, 3.0, 3.0, 4.0};
   std::vector<Data_T, Eigen::aligned_allocator<Data_T>> v;
   for (auto& t_k : t) {
-    v.push_back(t_k * Data_T::Ones());
+    v.emplace_back(t_k * Data_T::Ones());
   }
 
   // Create interpolator
@@ -28,16 +28,17 @@ TEST(testLinearInterpolation, testInterpolation) {
   // Test function
   auto test_interpolation = [&interpolator](double time, int index, double value){
     Data_T v_t;
-    auto foundindex = interpolator.interpolate(time, v_t);
-    std::cout << "time: " << time << " index: " << foundindex << " v: " << v_t.transpose() << std::endl;
-    ASSERT_EQ(foundindex, index);
+    auto indexAlpha = interpolator.interpolate(time, v_t);
+    auto foundIndex = indexAlpha.first;
+    std::cout << "time: " << time << " index: " << foundIndex << " v: " << v_t.transpose() << std::endl;
+    ASSERT_EQ(foundIndex, index);
     ASSERT_DOUBLE_EQ(v_t(0), value);
   };
 
   // Before start
-  test_interpolation(-1.0, -1, 0.0);
+  test_interpolation(-1.0, 0, 0.0);
   // At start
-  test_interpolation(t[0], -1, t[0]);
+  test_interpolation(t[0], 0, t[0]);
   // First interval
   test_interpolation(0.5*t[0] + 0.5 *t[1], 0, 0.5*t[0] + 0.5 *t[1]);
   // Boundary to second interval
@@ -47,7 +48,7 @@ TEST(testLinearInterpolation, testInterpolation) {
   // At End
   test_interpolation( t[5], 4, t[5]);
   // Beyond end
-  test_interpolation( t[5] + 1.0, 5, t[5]);
+  test_interpolation( t[5] + 1.0, 4, t[5]);
 }
 
 

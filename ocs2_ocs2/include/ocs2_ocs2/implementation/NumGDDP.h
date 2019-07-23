@@ -106,7 +106,7 @@ void NumGDDP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::setSolverEventTime(
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void NumGDDP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::run1(
+void NumGDDP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::run(
 		const scalar_t& initTime,
 		const state_vector_t& initState,
 		const scalar_t& finalTime,

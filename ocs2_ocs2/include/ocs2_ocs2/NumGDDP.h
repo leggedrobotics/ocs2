@@ -43,12 +43,12 @@ namespace ocs2 {
  * @tparam LOGIC_RULES_T: Logic Rules type (default NullLogicRules).
  */
 template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T=NullLogicRules>
-class NumGDDP : public SLQ<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>
+class NumGDDP : public SLQ<STATE_DIM, INPUT_DIM>
 {
 public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-	typedef SLQ<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> BASE;
+	typedef SLQ<STATE_DIM, INPUT_DIM> BASE;
 
 	using typename BASE::scalar_t;
 	using typename BASE::scalar_array_t;
@@ -106,7 +106,7 @@ public:
 	 * @param [in] partitioningTimes: The partitioning times between subsystems.
      * @param [in] eventTimes: The event times vector.
      */
-	void run1(
+	void run(
 			const scalar_t& initTime,
 			const state_vector_t& initState,
 			const scalar_t& finalTime,
@@ -114,7 +114,11 @@ public:
 			const scalar_array_t& eventTimes);
 
 protected:
-
+	/**
+	 * Sets the event times to the solver.
+	 *
+	 * @param [in] eventTimes: The event times vector.
+	 */
 	void setSolverEventTime(const scalar_array_t& eventTimes);
 
 	/**

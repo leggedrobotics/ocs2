@@ -59,25 +59,10 @@ GDDP<STATE_DIM, INPUT_DIM>::GDDP(
 
 	for (size_t i=0; i<gddpSettings_.nThreads_; i++)  {
 
-		typedef Eigen::aligned_allocator<bvp_sensitivity_equations_t> bvp_sensitivity_equations_alloc_t;
-		bvpSensitivityEquationsPtrStock_.push_back( std::move(
-				std::allocate_shared<bvp_sensitivity_equations_t, bvp_sensitivity_equations_alloc_t>(
-						bvp_sensitivity_equations_alloc_t()) ) );
-
-		typedef Eigen::aligned_allocator<bvp_sensitivity_error_equations_t> bvp_sensitivity_error_equations_alloc_t;
-		bvpSensitivityErrorEquationsPtrStock_.push_back( std::move(
-				std::allocate_shared<bvp_sensitivity_error_equations_t, bvp_sensitivity_error_equations_alloc_t>(
-						bvp_sensitivity_error_equations_alloc_t()) ) );
-
-		typedef Eigen::aligned_allocator<rollout_sensitivity_equations_t> rollout_sensitivity_equations_alloc_t;
-		rolloutSensitivityEquationsPtrStock_.push_back( std::move(
-				std::allocate_shared<rollout_sensitivity_equations_t, rollout_sensitivity_equations_alloc_t>(
-						rollout_sensitivity_equations_alloc_t()) ) );
-
-		typedef Eigen::aligned_allocator<riccati_sensitivity_equations_t> riccati_sensitivity_equations_alloc_t;
-		riccatiSensitivityEquationsPtrStock_.push_back( std::move(
-				std::allocate_shared<riccati_sensitivity_equations_t, riccati_sensitivity_equations_alloc_t>(
-						riccati_sensitivity_equations_alloc_t()) ) );
+		bvpSensitivityEquationsPtrStock_.emplace_back(new bvp_sensitivity_equations_t);
+		bvpSensitivityErrorEquationsPtrStock_.emplace_back(new bvp_sensitivity_error_equations_t);
+		rolloutSensitivityEquationsPtrStock_.emplace_back(new rollout_sensitivity_equations_t);
+		riccatiSensitivityEquationsPtrStock_.emplace_back(new riccati_sensitivity_equations_t);
 
 		switch(gddpSettings_.RiccatiIntegratorType_) {
 
@@ -419,9 +404,9 @@ size_t GDDP<STATE_DIM, INPUT_DIM>::findActiveSubsystemIndex(
 
 	int activeSubsystemIndex;
 	if (ceilingFunction==true)
-		activeSubsystemIndex = findActiveIntervalIndex(partitioningTimes, time, 0);
+		activeSubsystemIndex = Lookup::findActiveIntervalIndex(partitioningTimes, time, 0);
 	else
-		activeSubsystemIndex = findActiveIntervalIndex(partitioningTimes, time, 0,
+		activeSubsystemIndex = Lookup::findActiveIntervalIndex(partitioningTimes, time, 0,
 				-OCS2NumericTraits<scalar_t>::weakEpsilon());
 
 	return (size_t)activeSubsystemIndex;
@@ -438,9 +423,9 @@ size_t GDDP<STATE_DIM, INPUT_DIM>::findActivePartitionIndex(
 
 	int activeSubsystemIndex;
 	if (ceilingFunction==true)
-		activeSubsystemIndex = findActiveIntervalIndex(partitioningTimes, time, 0);
+		activeSubsystemIndex = Lookup::findActiveIntervalIndex(partitioningTimes, time, 0);
 	else
-		activeSubsystemIndex = findActiveIntervalIndex(partitioningTimes, time, 0,
+		activeSubsystemIndex = Lookup::findActiveIntervalIndex(partitioningTimes, time, 0,
 				-OCS2NumericTraits<scalar_t>::weakEpsilon());
 
 	if (activeSubsystemIndex < 0) {
@@ -780,7 +765,7 @@ void GDDP<STATE_DIM, INPUT_DIM>::solveSensitivityRiccatiEquations(
 	// output containers which is reverse
 	s_vector_array_t allSsTrajectory;
 
-	for (int i=numSubsystems_-1; i>=0; i--) {
+	for (int i=numEventTimes_; i>=0; i--) {
 
 		// skip inactive partitions
 		if (i<dcPtr_->initActivePartition_ || i>dcPtr_->finalActivePartition_) {
@@ -1108,7 +1093,7 @@ void GDDP<STATE_DIM, INPUT_DIM>::calculateLQSensitivityControllerForward(
 	// resizing
 	nablaLvTrajectoriesStock.resize(numPartitions_);
 
-	for (size_t i=0; i<numSubsystems_; i++) {
+	for (size_t i=0; i<numEventTimes_ + 1; i++) {
 
 		// skip inactive partitions
 		if (i<dcPtr_->initActivePartition_ || i>dcPtr_->finalActivePartition_) {
@@ -1322,8 +1307,6 @@ void GDDP<STATE_DIM, INPUT_DIM>::calculateCostDerivative(
 template <size_t STATE_DIM, size_t INPUT_DIM>
 void GDDP<STATE_DIM, INPUT_DIM>::runLQBasedMethod()  {
 
-	const size_t maxNumIteration = 3;
-
 	// resizing
 	nablaLvTrajectoriesStockSet_.resize(numEventTimes_);
 	sensitivityStateTrajectoriesStockSet_.resize(numEventTimes_);
@@ -1341,7 +1324,7 @@ void GDDP<STATE_DIM, INPUT_DIM>::runLQBasedMethod()  {
 	nominalCostFuntionDerivative_.resize(numEventTimes_);
 
 	size_t iteration = 0;
-	while (iteration++ < maxNumIteration) {
+	while (iteration++ < gddpSettings_.maxNumIterationForLQ_) {
 
 		// for each active event time
 		for (size_t index=0; index<numEventTimes_; index++) {
@@ -1499,7 +1482,6 @@ void GDDP<STATE_DIM, INPUT_DIM>::run(
 	// event time an number of event and subsystems
 	eventTimes_ = eventTimes;
 	numEventTimes_ = eventTimes_.size();
-	numSubsystems_ = numEventTimes_ + 1;
 
 	// data collector pointer
 	dcPtr_ = dcPtr;

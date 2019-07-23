@@ -45,7 +45,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_core/Dimensions.h>
 #include <ocs2_core/logic/rules/NullLogicRules.h>
 #include <ocs2_core/integration/Integrator.h>
-#include <ocs2_core/misc/FindActiveIntervalIndex.h>
+#include <ocs2_core/misc/Lookup.h>
 #include <ocs2_core/misc/LinearInterpolation.h>
 
 #include <ocs2_slq/SLQ_DataCollector.h>
@@ -70,17 +70,14 @@ class GDDP
 public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-	typedef std::shared_ptr<GDDP<STATE_DIM, INPUT_DIM>> Ptr;
+	using slq_data_collector_t = SLQ_DataCollector<STATE_DIM, INPUT_DIM>;
 
-	typedef SLQ_DataCollector<STATE_DIM, INPUT_DIM> slq_data_collector_t;
+	using bvp_sensitivity_equations_t = BvpSensitivityEquations<STATE_DIM, INPUT_DIM>;
+	using bvp_sensitivity_error_equations_t = BvpSensitivityErrorEquations<STATE_DIM, INPUT_DIM>;
+	using rollout_sensitivity_equations_t = RolloutSensitivityEquations<STATE_DIM, INPUT_DIM>;
+	using riccati_sensitivity_equations_t = SensitivitySequentialRiccatiEquations<STATE_DIM, INPUT_DIM>;
 
-	typedef BvpSensitivityEquations<STATE_DIM, INPUT_DIM>      bvp_sensitivity_equations_t;
-	typedef BvpSensitivityErrorEquations<STATE_DIM, INPUT_DIM> bvp_sensitivity_error_equations_t;
-	typedef RolloutSensitivityEquations<STATE_DIM, INPUT_DIM>  rollout_sensitivity_equations_t;
-	typedef SensitivitySequentialRiccatiEquations<STATE_DIM, INPUT_DIM> riccati_sensitivity_equations_t;
-
-	typedef Dimensions<STATE_DIM, INPUT_DIM> DIMENSIONS;
-
+	using DIMENSIONS = Dimensions<STATE_DIM, INPUT_DIM>;
 	using controller_t = typename DIMENSIONS::controller_t;
 	using controller_array_t = typename DIMENSIONS::controller_array_t;
 	using linear_controller_array_t = typename slq_data_collector_t::linear_controller_array_t;
@@ -92,21 +89,26 @@ public:
 	using eigen_scalar_t = typename DIMENSIONS::eigen_scalar_t;
 	using eigen_scalar_array_t = typename DIMENSIONS::eigen_scalar_array_t;
 	using eigen_scalar_array2_t = typename DIMENSIONS::eigen_scalar_array2_t;
+	using eigen_scalar_array3_t = typename DIMENSIONS::eigen_scalar_array3_t;
 	using state_vector_t = typename DIMENSIONS::state_vector_t;
 	using state_vector_array_t = typename DIMENSIONS::state_vector_array_t;
 	using state_vector_array2_t = typename DIMENSIONS::state_vector_array2_t;
+	using state_vector_array3_t = typename DIMENSIONS::state_vector_array3_t;
 	using input_vector_t = typename DIMENSIONS::input_vector_t;
 	using input_vector_array_t = typename DIMENSIONS::input_vector_array_t;
 	using input_vector_array2_t = typename DIMENSIONS::input_vector_array2_t;
+	using input_vector_array3_t = typename DIMENSIONS::input_vector_array3_t;
 	using input_state_matrix_t = typename DIMENSIONS::input_state_matrix_t;
 	using input_state_matrix_array_t = typename DIMENSIONS::input_state_matrix_array_t;
 	using input_state_matrix_array2_t = typename DIMENSIONS::input_state_matrix_array2_t;
 	using state_matrix_t = typename DIMENSIONS::state_matrix_t;
 	using state_matrix_array_t = typename DIMENSIONS::state_matrix_array_t;
 	using state_matrix_array2_t = typename DIMENSIONS::state_matrix_array2_t;
+	using state_matrix_array3_t = typename DIMENSIONS::state_matrix_array3_t;
 	using input_matrix_t = typename DIMENSIONS::input_matrix_t;
 	using input_matrix_array_t = typename DIMENSIONS::input_matrix_array_t;
 	using input_matrix_array2_t = typename DIMENSIONS::input_matrix_array2_t;
+	using input_matrix_array3_t = typename DIMENSIONS::input_matrix_array3_t;
 	using state_input_matrix_t = typename DIMENSIONS::state_input_matrix_t;
 	using state_input_matrix_array_t = typename DIMENSIONS::state_input_matrix_array_t;
 	using state_input_matrix_array2_t = typename DIMENSIONS::state_input_matrix_array2_t;
@@ -131,14 +133,6 @@ public:
 	using dynamic_vector_t = typename DIMENSIONS::dynamic_vector_t;
 	using dynamic_matrix_t = typename DIMENSIONS::dynamic_matrix_t;
 	using dynamic_input_matrix_t = typename DIMENSIONS::dynamic_input_matrix_t;
-
-    typedef std::vector<eigen_scalar_array2_t, Eigen::aligned_allocator<eigen_scalar_array2_t>> eigen_scalar_array3_t;
-    typedef std::vector<state_vector_array2_t, Eigen::aligned_allocator<state_vector_array2_t>> state_vector_array3_t;
-    typedef std::vector<input_vector_array2_t, Eigen::aligned_allocator<input_vector_array2_t>> input_vector_array3_t;
-    typedef std::vector<state_matrix_array2_t, Eigen::aligned_allocator<state_matrix_array2_t>> state_matrix_array3_t;
-    typedef std::vector<input_matrix_array2_t, Eigen::aligned_allocator<input_matrix_array2_t>> input_matrix_array3_t;
-	typedef std::vector<constraint1_vector_array2_t, Eigen::aligned_allocator<constraint1_vector_array2_t>> constraint1_vector_array3_t;
-	typedef std::vector<constraint2_vector_array2_t, Eigen::aligned_allocator<constraint2_vector_array2_t>> constraint2_vector_array3_t;
 
     /**
      * Constructor.
@@ -487,10 +481,7 @@ protected:
 	 **********/
 	GDDP_Settings gddpSettings_;
 
-	std::shared_ptr<HybridLogicRules> logicRulesPtr_;
-
 	size_t numPartitions_ = 0;
-	size_t numSubsystems_ = 1;
 	size_t numEventTimes_ = 0;
 
 	size_t activeEventTimeBeginIndex_;
@@ -510,13 +501,13 @@ protected:
 	constraint1_vector_array2_t nominalLagrangianTrajectoriesStock_;
 
 	std::vector<std::shared_ptr<bvp_sensitivity_equations_t>>        bvpSensitivityEquationsPtrStock_;
-	std::vector<std::shared_ptr<IntegratorBase<STATE_DIM>>>          bvpSensitivityIntegratorsPtrStock_;
+	std::vector<std::unique_ptr<IntegratorBase<STATE_DIM>>>          bvpSensitivityIntegratorsPtrStock_;
 	std::vector<std::shared_ptr<bvp_sensitivity_error_equations_t>>  bvpSensitivityErrorEquationsPtrStock_;
-	std::vector<std::shared_ptr<IntegratorBase<STATE_DIM>>>          bvpSensitivityErrorIntegratorsPtrStock_;
+	std::vector<std::unique_ptr<IntegratorBase<STATE_DIM>>>          bvpSensitivityErrorIntegratorsPtrStock_;
 	std::vector<std::shared_ptr<rollout_sensitivity_equations_t>>    rolloutSensitivityEquationsPtrStock_;
-	std::vector<std::shared_ptr<IntegratorBase<STATE_DIM>>>          rolloutSensitivityIntegratorsPtrStock_;
+	std::vector<std::unique_ptr<IntegratorBase<STATE_DIM>>>          rolloutSensitivityIntegratorsPtrStock_;
 	std::vector<std::shared_ptr<riccati_sensitivity_equations_t>>    riccatiSensitivityEquationsPtrStock_;
-	std::vector<std::shared_ptr<IntegratorBase<riccati_sensitivity_equations_t::S_DIM_>>> riccatiSensitivityIntegratorsPtrStock_;
+	std::vector<std::unique_ptr<IntegratorBase<riccati_sensitivity_equations_t::S_DIM_>>> riccatiSensitivityIntegratorsPtrStock_;
 	//
 	eigen_scalar_array3_t nablaqTrajectoriesStockSet_;
 	state_vector_array3_t nablaQvTrajectoriesStockSet_;
@@ -551,7 +542,6 @@ protected:
 	EigenLinearInterpolation<state_vector_t> SvFunc_;
 	EigenLinearInterpolation<state_vector_t> SveFunc_;
 	EigenLinearInterpolation<state_vector_t> nominalStateFunc_;
-
 };
 
 } // namespace ocs2

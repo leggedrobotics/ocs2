@@ -57,6 +57,7 @@ public:
 	, checkNumericalStability_(true)
 	, warmStart_(false)
 	, useLQForDerivatives_(false)
+	, maxNumIterationForLQ_(3)
 	, displayGradientDescent_(false)
 	, tolGradientDescent_(1e-2)
 	, acceptableTolGradientDescent_(1e-1)
@@ -115,6 +116,8 @@ public:
 	bool warmStart_;
 	/** This value determines to use LQ-based method or sweeping method for calculating cost gradients w.r.t. switching times. */
 	bool useLQForDerivatives_;
+	/** Maximum number of iterations for LQ-based method  */
+	size_t maxNumIterationForLQ_;
 
 	/** This value determines to display the log output of GGDDP. */
 	bool displayGradientDescent_;
@@ -212,6 +215,16 @@ inline void GDDP_Settings::loadSettings(const std::string& filename, const std::
 	}
 	catch (const std::exception& e){
 		if (verbose) {  std::cerr << " #### Option loader : option 'useLQForDerivatives' ................. " << useLQForDerivatives_ << "   \t(default)" << std::endl;
+		}
+	}
+
+	try	{
+		maxNumIterationForLQ_ = pt.get<size_t>(fieldName + ".maxNumIterationForLQ");
+		if (verbose) {  std::cerr << " #### Option loader : option 'maxNumIterationForLQ' ................ " << maxNumIterationForLQ_ << std::endl;
+		}
+	}
+	catch (const std::exception& e){
+		if (verbose) {  std::cerr << " #### Option loader : option 'maxNumIterationForLQ' ................ " << maxNumIterationForLQ_ << "   \t(default)" << std::endl;
 		}
 	}
 

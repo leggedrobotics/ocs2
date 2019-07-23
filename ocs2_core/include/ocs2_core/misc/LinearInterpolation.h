@@ -110,7 +110,7 @@ class LinearInterpolation {
    * @param [out] enquiryData: The value of the trajectory at the requested time.
    * @return {index, alpha}: The greatest smaller time stamp index and the interpolation coefficient [1, 0]
    */
-  std::pair<int, scalar_t> interpolate(const scalar_t& enquiryTime, Data_T& enquiryData) const {
+  inline std::pair<int, scalar_t> interpolate(const scalar_t& enquiryTime, Data_T& enquiryData) const {
     if (!zeroFunction_) {
       const auto indexAlpha = getIndexAlpha(*timeStampPtr_, enquiryTime);
       interpolate(indexAlpha, enquiryData);
@@ -127,7 +127,7 @@ class LinearInterpolation {
    * @param [in] indexAlpha : index and interpolation coefficient (alpha) pair
    * @param [out] enquiryData : result of the interpolation
    */
-  void interpolate(std::pair<int, scalar_t> indexAlpha, Data_T& enquiryData) const {
+  inline void interpolate(std::pair<int, scalar_t> indexAlpha, Data_T& enquiryData) const {
     if (!zeroFunction_) {
       int index = indexAlpha.first;
       scalar_t alpha = indexAlpha.second;
@@ -144,7 +144,7 @@ class LinearInterpolation {
    * @param [in] enquiryTime: The enquiry time for interpolation.
    * @return The greatest smaller time stamp index.
    */
-  static int find(const std::vector<scalar_t>& timeArray, scalar_t enquiryTime) {
+  inline static int find(const std::vector<scalar_t>& timeArray, scalar_t enquiryTime) {
     //! @remark Idea for improvement: interpolation search mentioned here
     //! https://stackoverflow.com/questions/26613111/binary-search-with-hint
     return static_cast<int>(std::lower_bound(timeArray.begin(), timeArray.end(), enquiryTime) - timeArray.begin() - 1);
@@ -158,7 +158,7 @@ class LinearInterpolation {
    * @param [in] enquiryTime: The enquiry time for interpolation.
    * @return std::pair<int, double> : {index, alpha}
    */
-  static std::pair<int, double> getIndexAlpha(const std::vector<scalar_t>& timeArray, scalar_t enquiryTime) {
+  inline static std::pair<int, double> getIndexAlpha(const std::vector<scalar_t>& timeArray, scalar_t enquiryTime) {
     int index = find(timeArray, enquiryTime);
     auto lastInterval = static_cast<int>(timeArray.size() - 1);
     if (index >= 0) {

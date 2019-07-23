@@ -190,7 +190,7 @@ target_link_libraries(test_loopshapingFilterDynamics
   ${Boost_LIBRARIES}
   ${catkin_LIBRARIES}
   -lstdc++fs
-)
+  )
 
 catkin_add_gtest(test_LinearAlgebra
   test/misc/testLinearAlgebra.cpp
@@ -198,4 +198,11 @@ catkin_add_gtest(test_LinearAlgebra
 target_link_libraries(test_LinearAlgebra
   ${Boost_LIBRARIES}
   ${catkin_LIBRARIES}
-)
+  )
+
+catkin_add_gtest(derivative_checker_unittest
+        test/testSystemDynamicsLinearizer.cpp
+        )
+target_link_libraries(derivative_checker_unittest
+        ${catkin_LIBRARIES}
+        )

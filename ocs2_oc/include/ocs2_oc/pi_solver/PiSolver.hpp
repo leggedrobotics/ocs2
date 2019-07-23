@@ -3,11 +3,11 @@
 #include <ocs2_core/constraint/ConstraintBase.h>
 #include <ocs2_core/control/LinearController.h>
 #include <ocs2_core/control/PiController.h>
+#include <ocs2_core/cost/CostFunctionBase.h>
 #include <ocs2_core/dynamics/ControlledSystemBase.h>
 #include <ocs2_oc/oc_solver/Solver_BASE.h>
 #include <ocs2_oc/pi_solver/PI_Settings.h>
 #include <ocs2_oc/rollout/TimeTriggeredRollout.h>
-#include <ocs2_core/cost/CostFunctionBase.h>
 
 #include <Eigen/Cholesky>
 #include <random>
@@ -27,23 +27,23 @@ class PiSolver final : public Solver_BASE<STATE_DIM, INPUT_DIM> {
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
   using Base = Solver_BASE<STATE_DIM, INPUT_DIM>;
-  using typename Base::scalar_t;
-  using typename Base::scalar_array_t;
-  using typename Base::state_vector_t;
-  using typename Base::input_vector_t;
-  using typename Base::state_matrix_t;
-  using typename Base::input_matrix_t;
-  using typename Base::input_state_matrix_t;
-  using typename Base::input_state_matrix_array_t;
-  using typename Base::state_input_matrix_t;
-  using typename Base::eigen_scalar_array_t;
+  using typename Base::controller_ptr_array_t;
   using typename Base::cost_desired_trajectories_t;
   using typename Base::dynamic_vector_array_t;
-  using typename Base::state_vector_array_t;
-  using typename Base::state_vector_array2_t;
-  using typename Base::input_vector_array_t;
+  using typename Base::eigen_scalar_array_t;
+  using typename Base::input_matrix_t;
+  using typename Base::input_state_matrix_array_t;
+  using typename Base::input_state_matrix_t;
   using typename Base::input_vector_array2_t;
-  using typename Base::controller_ptr_array_t;
+  using typename Base::input_vector_array_t;
+  using typename Base::input_vector_t;
+  using typename Base::scalar_array_t;
+  using typename Base::scalar_t;
+  using typename Base::state_input_matrix_t;
+  using typename Base::state_matrix_t;
+  using typename Base::state_vector_array2_t;
+  using typename Base::state_vector_array_t;
+  using typename Base::state_vector_t;
 
   using scalar_array2_t = std::vector<scalar_array_t>;
   using controlled_system_base_t = ControlledSystemBase<STATE_DIM, INPUT_DIM>;
@@ -68,7 +68,8 @@ class PiSolver final : public Solver_BASE<STATE_DIM, INPUT_DIM> {
         systemDynamics_(systemDynamicsPtr),
         costFunction_(std::move(costFunction)),
         constraint_(constraint),
-        controller_(&constraint_, costFunction_.get(), settings_.rolloutSettings_.minTimeStep_, settings_.gamma_),  //!@warn need to use member var
+        controller_(&constraint_, costFunction_.get(), settings_.rolloutSettings_.minTimeStep_,
+                    settings_.gamma_),  //!@warn need to use member var
         numIterations_(0),
         rollout_(*systemDynamicsPtr, settings_.rolloutSettings_) {
     // TODO(jcarius) how to ensure that we are given a control affine system?
@@ -130,8 +131,8 @@ class PiSolver final : public Solver_BASE<STATE_DIM, INPUT_DIM> {
         // braces to guard against usage of temporary rollout quantities
         typename rollout_t::size_array_t eventsPastTheEndIndeces;
         typename rollout_t::input_vector_array_t inputTrajectory;
-        rollout_.run(0, initTime, initState, finalTime, &controller_, *Base::getLogicRulesMachinePtr(), timeTrajectory, eventsPastTheEndIndeces,
-                     stateTrajectory, inputTrajectory);
+        rollout_.run(0, initTime, initState, finalTime, &controller_, *Base::getLogicRulesMachinePtr(), timeTrajectory,
+                     eventsPastTheEndIndeces, stateTrajectory, inputTrajectory);
       }
 
       if (controller_.cacheData_.size() != numSteps - 1) {
@@ -239,9 +240,8 @@ class PiSolver final : public Solver_BASE<STATE_DIM, INPUT_DIM> {
     // time trajectory
     nominalTimeTrajectoriesStock_.clear();
     nominalTimeTrajectoriesStock_.push_back(scalar_array_t(numSteps));
-    std::generate(nominalTimeTrajectoriesStock_[0].begin(), nominalTimeTrajectoriesStock_[0].end(), [n = 0, initTime, this]() mutable {
-      return initTime + (n++) * settings_.rolloutSettings_.minTimeStep_;
-    });
+    std::generate(nominalTimeTrajectoriesStock_[0].begin(), nominalTimeTrajectoriesStock_[0].end(),
+                  [n = 0, initTime, this]() mutable { return initTime + (n++) * settings_.rolloutSettings_.minTimeStep_; });
 
     // input trajectory
     nominalInputTrajectoriesStock_.clear();
@@ -259,8 +259,8 @@ class PiSolver final : public Solver_BASE<STATE_DIM, INPUT_DIM> {
     typename rollout_t::size_array_t eventsPastTheEndIndecesNominal;
     typename rollout_t::state_vector_array_t stateTrajectoryNominal;
     typename rollout_t::input_vector_array_t inputTrajectoryNominal;
-    rollout_.run(0, initTime, initState, finalTime, &controller_, *Base::getLogicRulesMachinePtr(), timeTrajectoryNominal, eventsPastTheEndIndecesNominal,
-                 stateTrajectoryNominal, inputTrajectoryNominal);
+    rollout_.run(0, initTime, initState, finalTime, &controller_, *Base::getLogicRulesMachinePtr(), timeTrajectoryNominal,
+                 eventsPastTheEndIndecesNominal, stateTrajectoryNominal, inputTrajectoryNominal);
 
     nominalStateTrajectoriesStock_.clear();
     nominalStateTrajectoriesStock_.push_back(stateTrajectoryNominal);
@@ -387,8 +387,8 @@ class PiSolver final : public Solver_BASE<STATE_DIM, INPUT_DIM> {
     for (int sample = 0; sample < J.size(); sample++) {
       std::cerr << "+++ Sample # " << sample << " +++ \ntime\tcost-to-go\tstateTransposed" << std::endl;
       for (int n = 0; n < J[sample].size(); n++) {
-        std::cerr << initTime + n * settings_.rolloutSettings_.minTimeStep_ << "\t" << J[sample][n] << "\t" << state_vector_array2[sample][n].transpose()
-                  << std::endl;
+        std::cerr << initTime + n * settings_.rolloutSettings_.minTimeStep_ << "\t" << J[sample][n] << "\t"
+                  << state_vector_array2[sample][n].transpose() << std::endl;
       }
     }
   }

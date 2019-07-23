@@ -575,12 +575,11 @@ void MRT_ROS_Interface<STATE_DIM, INPUT_DIM>::launchNodes(int argc, char *argv[]
 			robotName_ + "_mpc_observation", 1);
 
 	// SLQ-MPC subscriber
-
 	mpcPolicySubscriber_ = mrtRosNodeHandlePtr_->subscribe(
 			robotName_ + "_mpc_policy",
 			1,
 			&MRT_ROS_Interface::mpcPolicyCallback,
-			this);
+			this, ::ros::TransportHints().tcpNoDelay());
 
 	// dummy publisher
 	dummyPublisher_ = mrtRosNodeHandlePtr_->advertise<ocs2_comm_interfaces::dummy>("ping", 1, true);

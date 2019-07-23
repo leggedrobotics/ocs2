@@ -36,6 +36,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <ocs2_core/integration/OdeBase.h>
 #include <ocs2_core/misc/LinearInterpolation.h>
+#include <ocs2_core/misc/LinearAlgebra.h>
 
 namespace ocs2{
 
@@ -204,7 +205,7 @@ public:
 
 		// numerical consideration
 		if (useMakePSD_==true)
-			bool hasNegativeEigenValue = makePSD(Mm_);
+			LinearAlgebra::makePSD(Mm_);
 		else
 			Mm_ += state_state_matrix_t::Identity()*(addedRiccatiDiagonal_);
 
@@ -236,35 +237,7 @@ public:
 		convert2Vector(dMmdz_, dSvdz_, derivatives);
 	}
 
-	/**
-	 * Makes the matrix PSD.
-	 * @tparam Derived type.
-	 * @param [out] squareMatrix: The matrix to become PSD.
-	 * @return boolean
-	 */
-	template <typename Derived>
-	static bool makePSD(Eigen::MatrixBase<Derived>& squareMatrix) {
 
-		if (squareMatrix.rows() != squareMatrix.cols())
-			throw std::runtime_error("Not a square matrix: makePSD() method is for square matrix.");
-
-		Eigen::SelfAdjointEigenSolver<Derived> eig(squareMatrix);
-		Eigen::VectorXd lambda = eig.eigenvalues();
-
-		bool hasNegativeEigenValue = false;
-		for (size_t j=0; j<lambda.size() ; j++)
-			if (lambda(j) < 0.0) {
-				hasNegativeEigenValue = true;
-				lambda(j) = 1e-6;
-			}
-
-		if (hasNegativeEigenValue)
-			squareMatrix = eig.eigenvectors() * lambda.asDiagonal() * eig.eigenvectors().inverse();
-		else
-			squareMatrix = 0.5*(squareMatrix+squareMatrix.transpose()).eval();
-
-		return hasNegativeEigenValue;
-	}
 
 private:
 	bool useMakePSD_;

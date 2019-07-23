@@ -703,7 +703,7 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::approximateOptimalControlProblem()  {
 	heuristicsFunctionsPtrStock_[0]->getTerminalCostDerivativeState(SvHeuristics_);
 	heuristicsFunctionsPtrStock_[0]->getTerminalCostSecondDerivativeState(SmHeuristics_);
 	if (ddpSettings_.useMakePSD_) {
-		BASE::makePSD(SmHeuristics_);
+		LinearAlgebra::makePSD(SmHeuristics_);
 	}
 }
 
@@ -745,7 +745,7 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::approximateUnconstrainedLQWorker(
 
 	// making sure that constrained Qm is PSD
 	if (ddpSettings_.useMakePSD_) {
-		BASE::makePSD(QmTrajectoryStock_[i][k]);
+		LinearAlgebra::makePSD(QmTrajectoryStock_[i][k]);
 	}
 }
 
@@ -795,7 +795,7 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::approximateEventsLQWorker(
 
 			// making sure that Qm remains PSD
 			if (ddpSettings_.useMakePSD_) {
-				BASE::makePSD(QmFinalStock_[i][ke]);
+				LinearAlgebra::makePSD(QmFinalStock_[i][ke]);
 			}
 
 			break;
@@ -1174,7 +1174,7 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::truncateConterller(
 	deletedcontrollersStock.resize(numPartitions_);
 	for (size_t i=0; i<numPartitions_; i++) {
 		deletedcontrollersStock[i].clear();
-}
+	}
 
 	// finding the active subsystem index at initTime_
 	initActivePartition = BASE::findActivePartitionIndex(partitioningTimes, initTime);

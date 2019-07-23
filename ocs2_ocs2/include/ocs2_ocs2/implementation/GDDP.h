@@ -970,7 +970,7 @@ void GDDP<STATE_DIM, INPUT_DIM>::solveSensitivityBVP(
 				&dcPtr_->PmTrajectoriesStock_[i],
 				&dcPtr_->RmTrajectoriesStock_[i],
 				&dcPtr_->RmInverseTrajectoriesStock_[i],
-				&dcPtr_->RmConstrainedTrajectoriesStock_[i],
+				&dcPtr_->RmInvConstrainedCholTrajectoryStock_[i],
 				&dcPtr_->EvDevEventTimesProjectedTrajectoriesStockSet_[eventTimeIndex][i],
 				&dcPtr_->SsTimeTrajectoriesStock_[i],
 				&dcPtr_->SmTrajectoriesStock_[i]);

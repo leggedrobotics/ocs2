@@ -48,6 +48,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_core/logic/rules/NullLogicRules.h>
 #include <ocs2_core/logic/machine/HybridLogicRulesMachine.h>
 #include <ocs2_core/misc/FindActiveIntervalIndex.h>
+#include <ocs2_core/misc/LinearAlgebra.h>
 
 namespace ocs2 {
 
@@ -119,7 +120,9 @@ public:
 	using constraint2_state_matrix_array_t = typename DIMENSIONS::constraint2_state_matrix_array_t;
 	using constraint2_state_matrix_array2_t = typename DIMENSIONS::constraint2_state_matrix_array2_t;
 	using dynamic_vector_t = typename DIMENSIONS::dynamic_vector_t;
+	using dynamic_matrix_t = typename DIMENSIONS::dynamic_matrix_t;
 	using dynamic_vector_array_t = typename DIMENSIONS::dynamic_vector_array_t;
+	using dynamic_matrix_array2_t = typename DIMENSIONS::dynamic_matrix_array2_t;
 
 	using cost_desired_trajectories_t = CostDesiredTrajectories<scalar_t>;
 
@@ -427,19 +430,9 @@ public:
 	 */
 	void printString(const std::string& text);
 
-	/**
-	 * Makes the matrix PSD.
-	 *
-	 * @tparam Derived type.
-	 * @param [out] squareMatrix: The matrix to become PSD.
-	 * @return boolean:
-	 */
-	template <typename Derived>
-	static bool makePSD(Eigen::MatrixBase<Derived>& squareMatrix);
-
- private:
-  std::mutex outputDisplayGuardMutex_;
-  logic_rules_machine_ptr_t logicRulesMachinePtr_;
+private:
+	std::mutex outputDisplayGuardMutex_;
+	logic_rules_machine_ptr_t logicRulesMachinePtr_;
 
 };
 

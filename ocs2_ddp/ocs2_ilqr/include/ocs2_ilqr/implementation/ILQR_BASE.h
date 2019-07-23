@@ -121,7 +121,7 @@ void ILQR_BASE<STATE_DIM, INPUT_DIM>::approximateUnconstrainedLQWorker(
 
 	// making sure that constrained Qm is PSD
 	if (BASE::ddpSettings_.useMakePSD_) {
-		BASE::makePSD(BASE::QmTrajectoryStock_[i][k]);
+		LinearAlgebra::makePSD(BASE::QmTrajectoryStock_[i][k]);
 	}
 
 	// TODO: add support for the constrained ILQR
@@ -358,7 +358,7 @@ void ILQR_BASE<STATE_DIM, INPUT_DIM>::solveRiccatiEquationsWorker(
 
 				Hm = Rm + Bm.transpose() * BASE::SmTrajectoryStock_[partitionIndex][k+1] * Bm;
 				if (BASE::ddpSettings_.useMakePSD_) {
-					BASE::makePSD(Hm);
+					LinearAlgebra::makePSD(Hm);
 				} else {
 					Hm += BASE::ddpSettings_.addedRiccatiDiagonal_ * input_matrix_t::Identity();
 				}

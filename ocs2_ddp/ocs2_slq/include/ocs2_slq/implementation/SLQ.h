@@ -222,15 +222,7 @@ typename SLQ<STATE_DIM, INPUT_DIM>::scalar_t
 			continue;
 		}
 
-		if (BASE::ddpSettings_.useRiccatiSolver_) {
-			BASE::solveSlqRiccatiEquationsWorker(workerIndex, i,
-					BASE::SmFinalStock_[i], BASE::SvFinalStock_[i], BASE::sFinalStock_[i], BASE::SveFinalStock_[i]);
-		} else {
-			scalar_t constraintStepSize = BASE::initialControllerDesignStock_[i] ? 0.0 : BASE::ddpSettings_.constraintStepSize_;
-			BASE::fullRiccatiBackwardSweepWorker(workerIndex, i,
-					BASE::SmFinalStock_[i], BASE::SvFinalStock_[i], BASE::SveFinalStock_[i], BASE::sFinalStock_[i],
-					constraintStepSize);
-		}
+		BASE::solveSlqRiccatiEquationsWorker(workerIndex, i, BASE::SmFinalStock_[i], BASE::SvFinalStock_[i], BASE::sFinalStock_[i], BASE::SveFinalStock_[i]);
 
 		// set the final value for next Riccati equation
 		if (i>BASE::initActivePartition_) {

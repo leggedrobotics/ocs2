@@ -55,6 +55,7 @@ public:
 	 */
 	SLQ_Settings()
 	: useNominalTimeForBackwardPass_(false)
+	, preComputeRiccatiTerms_(true)
 	, RiccatiIntegratorType_(RICCATI_INTEGRATOR_TYPE::ODE45)
 	, adams_integrator_dt_(0.001)
 
@@ -92,6 +93,8 @@ public:
 
 	/** If true, SLQ solves the backward path over the nominal time trajectory. */
 	bool useNominalTimeForBackwardPass_;
+	/** If true, terms of the Riccati equation will be precomputed before interpolation in the flowmap */
+	bool preComputeRiccatiTerms_;
 	/** Riccati integrator type. */
 	size_t RiccatiIntegratorType_;
 	/** Adams integrator's time step. */
@@ -128,6 +131,14 @@ inline void SLQ_Settings::loadSettings(const std::string& filename, const std::s
 	catch (const std::exception& e){
 		if (verbose) {  std::cerr << " #### Option loader : option 'useNominalTimeForBackwardPass' ....... " << useNominalTimeForBackwardPass_ << "   \t(default)" << std::endl;
 		}
+	}
+
+	try	{
+		preComputeRiccatiTerms_ = pt.get<bool>(fieldName + ".preComputeRiccatiTerms");
+		if (verbose)  std::cerr << " #### Option loader : option 'preComputeRiccatiTerms' .............. " << preComputeRiccatiTerms_ << std::endl;
+	}
+	catch (const std::exception& e){
+		if (verbose)  std::cerr << " #### Option loader : option 'preComputeRiccatiTerms' .............. " << preComputeRiccatiTerms_ << "   \t(default)" << std::endl;
 	}
 
 	try	{

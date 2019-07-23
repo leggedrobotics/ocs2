@@ -101,7 +101,7 @@ install(DIRECTORY include/external/
 ## $ catkin_test_results ../../../build/ocs2_core
 
 catkin_add_gtest(integration_unittest
-  test/IntegrationTest.cpp
+  test/integration/IntegrationTest.cpp
 )
 target_link_libraries(integration_unittest
   ${catkin_LIBRARIES}
@@ -109,7 +109,7 @@ target_link_libraries(integration_unittest
 )
 
 catkin_add_gtest(findIndex_unittest
-  test/testFindIndex.cpp
+  test/misc/testFindIndex.cpp
 )
 target_link_libraries(findIndex_unittest
   ${catkin_LIBRARIES}
@@ -117,14 +117,14 @@ target_link_libraries(findIndex_unittest
 )
 
 catkin_add_gtest(interpolation_unittest
-        test/testInterpolation.cpp
-        )
+  test/misc/testInterpolation.cpp
+)
 target_link_libraries(interpolation_unittest
-        ${catkin_LIBRARIES}
-        )
+  ${catkin_LIBRARIES}
+)
 
 catkin_add_gtest(logic_rules_machin_unittest
-  test/testLogicRulesMachine.cpp
+  test/logic/testLogicRulesMachine.cpp
 )
 target_link_libraries(logic_rules_machin_unittest
   ocs2_core_logic
@@ -133,7 +133,7 @@ target_link_libraries(logic_rules_machin_unittest
 )
 
 catkin_add_gtest(cppadcg_unittest
-  test/testCppADCG.cpp
+  test/cppad_cg/testCppADCG.cpp
 )
 target_link_libraries(cppadcg_unittest
   ${Boost_LIBRARIES}
@@ -141,53 +141,61 @@ target_link_libraries(cppadcg_unittest
 )
 
 catkin_add_gtest(test_transferfunctionbase
-  test/testTransferfunctionBase.cpp
+  test/dynamics/testTransferfunctionBase.cpp
 )
 target_link_libraries(test_transferfunctionbase
   ${catkin_LIBRARIES}
 )
 
 catkin_add_gtest(test_loopshapingDefinition
-        test/loopshaping/testLoopshapingDefinition.cpp
-        )
+  test/loopshaping/testLoopshapingDefinition.cpp
+)
 target_link_libraries(test_loopshapingDefinition
-        ${Boost_LIBRARIES}
-        ${catkin_LIBRARIES}
-        -lstdc++fs
-        )
+   ${Boost_LIBRARIES}
+   ${catkin_LIBRARIES}
+   -lstdc++fs
+)
 
 catkin_add_gtest(test_loopshapingDynamics
-        test/loopshaping/testLoopshapingDynamics.cpp
-        )
+  test/loopshaping/testLoopshapingDynamics.cpp
+)
 target_link_libraries(test_loopshapingDynamics
-        ${Boost_LIBRARIES}
-        ${catkin_LIBRARIES}
-        -lstdc++fs
-        )
+  ${Boost_LIBRARIES}
+  ${catkin_LIBRARIES}
+  -lstdc++fs
+)
 
 catkin_add_gtest(test_loopshapingCost
-        test/loopshaping/testLoopshapingCost.cpp
-        )
+  test/loopshaping/testLoopshapingCost.cpp
+)
 target_link_libraries(test_loopshapingCost
-        ${Boost_LIBRARIES}
-        ${catkin_LIBRARIES}
-        -lstdc++fs
-        )
+  ${Boost_LIBRARIES}
+  ${catkin_LIBRARIES}
+  -lstdc++fs
+)
 
 catkin_add_gtest(test_loopshapingConstraint
-        test/loopshaping/testLoopshapingConstraint.cpp
-        )
+  test/loopshaping/testLoopshapingConstraint.cpp
+)
 target_link_libraries(test_loopshapingConstraint
-        ${Boost_LIBRARIES}
-        ${catkin_LIBRARIES}
-        -lstdc++fs
-        )
+  ${Boost_LIBRARIES}
+  ${catkin_LIBRARIES}
+  -lstdc++fs
+)
 
 catkin_add_gtest(test_loopshapingFilterDynamics
-        test/loopshaping/testLoopshapingFilterDynamics.cpp
-        )
+  test/loopshaping/testLoopshapingFilterDynamics.cpp
+)
 target_link_libraries(test_loopshapingFilterDynamics
-        ${Boost_LIBRARIES}
-        ${catkin_LIBRARIES}
-        -lstdc++fs
-        )
+  ${Boost_LIBRARIES}
+  ${catkin_LIBRARIES}
+  -lstdc++fs
+)
+
+catkin_add_gtest(test_LinearAlgebra
+  test/misc/testLinearAlgebra.cpp
+)
+target_link_libraries(test_LinearAlgebra
+  ${Boost_LIBRARIES}
+  ${catkin_LIBRARIES}
+)

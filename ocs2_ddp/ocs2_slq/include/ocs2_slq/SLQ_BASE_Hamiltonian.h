@@ -27,8 +27,12 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#ifndef SLQ_BASE_OCS2_H_
-#define SLQ_BASE_OCS2_H_
+/*
+ *  !! Copy of SLQ_BASE with the unfinished Hamiltonian implementation for the backward pass !!
+ */
+
+#ifndef SLQ_BASE_HAMILTONIAN_OCS2_H_
+#define SLQ_BASE_HAMILTONIAN_OCS2_H_
 
 #include <ocs2_ddp_base/DDP_BASE.h>
 
@@ -36,6 +40,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_core/integration/Integrator.h>
 #include <ocs2_core/integration/SystemEventHandler.h>
 #include <ocs2_core/integration/StateTriggeredEventHandler.h>
+#include <ocs2_core/misc/LTI_Equations.h>
 #include <ocs2_core/misc/LinearAlgebra.h>
 
 #include <ocs2_oc/rollout/StateTriggeredRollout.h>
@@ -52,101 +57,105 @@ namespace ocs2 {
  *
  * @tparam STATE_DIM: Dimension of the state space.
  * @tparam INPUT_DIM: Dimension of the control input space.
-  */
-template <size_t STATE_DIM, size_t INPUT_DIM>
-class SLQ_BASE : public DDP_BASE<STATE_DIM, INPUT_DIM>
+ * @tparam LOGIC_RULES_T: Logic Rules type (default NullLogicRules).
+ */
+template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T=NullLogicRules>
+class SLQ_BASE : public DDP_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>
 {
 public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-	using BASE = DDP_BASE<STATE_DIM, INPUT_DIM>;
+	typedef DDP_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> BASE;
 
 	using DIMENSIONS = typename BASE::DIMENSIONS;
-	using typename BASE::controller_t;
-	using typename BASE::size_array_t;
-	using typename BASE::size_array2_t;
-	using typename BASE::scalar_t;
-	using typename BASE::scalar_array_t;
-	using typename BASE::scalar_array2_t;
-	using typename BASE::scalar_array3_t;
-	using typename BASE::eigen_scalar_t;
-	using typename BASE::eigen_scalar_array_t;
-	using typename BASE::eigen_scalar_array2_t;
-	using typename BASE::state_vector_t;
-	using typename BASE::state_vector_array_t;
-	using typename BASE::state_vector_array2_t;
-	using typename BASE::state_vector_array3_t;
-	using typename BASE::input_vector_t;
-	using typename BASE::input_vector_array_t;
-	using typename BASE::input_vector_array2_t;
-	using typename BASE::input_vector_array3_t;
-	using typename BASE::input_state_matrix_t;
-	using typename BASE::input_state_matrix_array_t;
-	using typename BASE::input_state_matrix_array2_t;
-	using typename BASE::input_state_matrix_array3_t;
-	using typename BASE::state_matrix_t;
-	using typename BASE::state_matrix_array_t;
-	using typename BASE::state_matrix_array2_t;
-	using typename BASE::state_matrix_array3_t;
-	using typename BASE::input_matrix_t;
-	using typename BASE::input_matrix_array_t;
-	using typename BASE::input_matrix_array2_t;
-	using typename BASE::input_matrix_array3_t;
-	using typename BASE::state_input_matrix_t;
-	using typename BASE::state_input_matrix_array_t;
-	using typename BASE::state_input_matrix_array2_t;
-	using typename BASE::state_input_matrix_array3_t;
-	using typename BASE::constraint1_vector_t;
-	using typename BASE::constraint1_vector_array_t;
-	using typename BASE::constraint1_vector_array2_t;
-	using typename BASE::constraint1_state_matrix_t;
-	using typename BASE::constraint1_state_matrix_array_t;
-	using typename BASE::constraint1_state_matrix_array2_t;
-	using typename BASE::constraint1_input_matrix_t;
-	using typename BASE::constraint1_input_matrix_array_t;
-	using typename BASE::constraint1_input_matrix_array2_t;
-	using typename BASE::input_constraint1_matrix_t;
-	using typename BASE::input_constraint1_matrix_array_t;
-	using typename BASE::input_constraint1_matrix_array2_t;
-	using typename BASE::constraint2_vector_t;
-	using typename BASE::constraint2_vector_array_t;
-	using typename BASE::constraint2_vector_array2_t;
-	using typename BASE::constraint2_state_matrix_t;
-	using typename BASE::constraint2_state_matrix_array_t;
-	using typename BASE::constraint2_state_matrix_array2_t;
-	using typename BASE::dynamic_vector_t;
-	using typename BASE::dynamic_matrix_t;
-	using typename BASE::dynamic_vector_array_t;
-	using typename BASE::dynamic_matrix_array2_t;
+	using controller_t = typename BASE::controller_t;
+	using size_array_t = typename BASE::size_array_t;
+	using size_array2_t = typename BASE::size_array2_t;
+	using scalar_t = typename BASE::scalar_t;
+	using scalar_array_t = typename BASE::scalar_array_t;
+	using scalar_array2_t = typename BASE::scalar_array2_t;
+	using scalar_array3_t = typename BASE::scalar_array3_t;
+	using eigen_scalar_t = typename BASE::eigen_scalar_t;
+	using eigen_scalar_array_t = typename BASE::eigen_scalar_array_t;
+	using eigen_scalar_array2_t = typename BASE::eigen_scalar_array2_t;
+	using state_vector_t = typename BASE::state_vector_t;
+	using state_vector_array_t = typename BASE::state_vector_array_t;
+	using state_vector_array2_t = typename BASE::state_vector_array2_t;
+	using state_vector_array3_t = typename BASE::state_vector_array3_t;
+	using input_vector_t = typename BASE::input_vector_t;
+	using input_vector_array_t = typename BASE::input_vector_array_t;
+	using input_vector_array2_t = typename BASE::input_vector_array2_t;
+	using input_vector_array3_t = typename BASE::input_vector_array3_t;
+	using input_state_matrix_t = typename BASE::input_state_matrix_t;
+	using input_state_matrix_array_t = typename BASE::input_state_matrix_array_t;
+	using input_state_matrix_array2_t = typename BASE::input_state_matrix_array2_t;
+	using input_state_matrix_array3_t = typename BASE::input_state_matrix_array3_t;
+	using state_matrix_t = typename BASE::state_matrix_t;
+	using state_matrix_array_t = typename BASE::state_matrix_array_t;
+	using state_matrix_array2_t = typename BASE::state_matrix_array2_t;
+	using state_matrix_array3_t = typename BASE::state_matrix_array3_t;
+	using input_matrix_t = typename BASE::input_matrix_t;
+	using input_matrix_array_t = typename BASE::input_matrix_array_t;
+	using input_matrix_array2_t = typename BASE::input_matrix_array2_t;
+	using input_matrix_array3_t = typename BASE::input_matrix_array3_t;
+	using state_input_matrix_t = typename BASE::state_input_matrix_t;
+	using state_input_matrix_array_t = typename BASE::state_input_matrix_array_t;
+	using state_input_matrix_array2_t = typename BASE::state_input_matrix_array2_t;
+	using state_input_matrix_array3_t = typename BASE::state_input_matrix_array3_t;
+	using constraint1_vector_t = typename BASE::constraint1_vector_t;
+	using constraint1_vector_array_t = typename BASE::constraint1_vector_array_t;
+	using constraint1_vector_array2_t = typename BASE::constraint1_vector_array2_t;
+	using constraint1_state_matrix_t = typename BASE::constraint1_state_matrix_t;
+	using constraint1_state_matrix_array_t = typename BASE::constraint1_state_matrix_array_t;
+	using constraint1_state_matrix_array2_t = typename BASE::constraint1_state_matrix_array2_t;
+	using constraint1_input_matrix_t = typename BASE::constraint1_input_matrix_t;
+	using constraint1_input_matrix_array_t = typename BASE::constraint1_input_matrix_array_t;
+	using constraint1_input_matrix_array2_t = typename BASE::constraint1_input_matrix_array2_t;
+	using input_constraint1_matrix_t = typename BASE::input_constraint1_matrix_t;
+	using input_constraint1_matrix_array_t = typename BASE::input_constraint1_matrix_array_t;
+	using input_constraint1_matrix_array2_t = typename BASE::input_constraint1_matrix_array2_t;
+	using constraint2_vector_t = typename BASE::constraint2_vector_t;
+	using constraint2_vector_array_t = typename BASE::constraint2_vector_array_t;
+	using constraint2_vector_array2_t = typename BASE::constraint2_vector_array2_t;
+	using constraint2_state_matrix_t = typename BASE::constraint2_state_matrix_t;
+	using constraint2_state_matrix_array_t = typename BASE::constraint2_state_matrix_array_t;
+	using constraint2_state_matrix_array2_t = typename BASE::constraint2_state_matrix_array2_t;
+	using dynamic_vector_t = typename BASE::dynamic_vector_t;
+	using dynamic_matrix_t = typename BASE::dynamic_matrix_t;
+	using dynamic_vector_array_t = typename BASE::dynamic_vector_array_t;
+	using dynamic_matrix_array2_t = typename BASE::dynamic_matrix_array2_t;
 
-	using typename BASE::controller_ptr_array_t;
-	using typename BASE::linear_controller_t;
-	using typename BASE::linear_controller_array_t;
-	using typename BASE::event_handler_t;
-	using typename BASE::controlled_system_base_t;
-	using typename BASE::derivatives_base_t;
-	using typename BASE::constraint_base_t;
-	using typename BASE::cost_function_base_t;
-	using typename BASE::operating_trajectories_base_t;
-	using typename BASE::penalty_base_t;
-	using typename BASE::rollout_base_t;
-	using typename BASE::time_triggered_rollout_t;
-	using typename BASE::linear_quadratic_approximator_t;
-	using typename BASE::operating_trajectorie_rollout_t;
-	using typename BASE::cost_desired_trajectories_t;
-	using typename BASE::logic_rules_machine_t;
-	using typename BASE::logic_rules_machine_ptr_t;
+	using controller_ptr_array_t = typename BASE::controller_ptr_array_t;
+	using linear_controller_t = typename BASE::linear_controller_t;
+	using linear_controller_array_t = typename BASE::linear_controller_array_t;
+	using event_handler_t = typename BASE::event_handler_t;
+	using controlled_system_base_t = typename BASE::controlled_system_base_t;
+	using derivatives_base_t = typename BASE::derivatives_base_t;
+	using constraint_base_t = typename BASE::constraint_base_t;
+	using cost_function_base_t = typename BASE::cost_function_base_t;
+	using operating_trajectories_base_t = typename BASE::operating_trajectories_base_t;
+	using penalty_base_t = typename BASE::penalty_base_t;
+	using rollout_base_t = typename BASE::rollout_base_t;
+	using time_triggered_rollout_t = typename BASE::time_triggered_rollout_t;
+	using linear_quadratic_approximator_t = typename BASE::linear_quadratic_approximator_t;
+	using operating_trajectorie_rollout_t = typename BASE::operating_trajectorie_rollout_t;
+	using cost_desired_trajectories_t = typename BASE::cost_desired_trajectories_t;
+	using logic_rules_machine_t = typename BASE::logic_rules_machine_t;
+	using logic_rules_machine_ptr_t = typename BASE::logic_rules_machine_ptr_t;
+
+  	using hamiltonian_equation_t = LTI_Equations<2*STATE_DIM, STATE_DIM, double>;
+  	using hamiltonian_increment_equation_t = LTI_Equations<STATE_DIM, 1, double>;
 
 	using riccati_equations_t = SequentialRiccatiEquationsNormalized<STATE_DIM, INPUT_DIM>;
   	using error_equation_t = SequentialErrorEquationNormalized<STATE_DIM, INPUT_DIM>;
 
-	using state_triggered_rollout_t = StateTriggeredRollout<STATE_DIM, INPUT_DIM>;
+	typedef StateTriggeredRollout<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> state_triggered_rollout_t;
 
 
 	/**
 	 * class for collecting SLQ data
 	 */
-	template <size_t OTHER_STATE_DIM, size_t OTHER_INPUT_DIM>
+	template <size_t OTHER_STATE_DIM, size_t OTHER_INPUT_DIM, class OTHER_LOGIC_RULES_T>
 	friend class SLQ_DataCollector;
 
 public:
@@ -187,7 +196,7 @@ public:
 			  const cost_function_base_t* costFunctionPtr,
 			  const operating_trajectories_base_t* operatingTrajectoriesPtr,
 			  const SLQ_Settings& settings = SLQ_Settings(),
-			  std::shared_ptr<HybridLogicRules> logicRulesPtr = nullptr,
+			  const LOGIC_RULES_T* logicRulesPtr = nullptr,
 			  const cost_function_base_t* heuristicsFunctionPtr = nullptr);
 
 	/**
@@ -363,6 +372,44 @@ protected:
 			const eigen_scalar_t& sFinal,
 			const state_vector_t& SveFinal);
 
+	/**
+	 * Full Backward Sweep method uses exponential method instead of ODE to solve Riccati equations.
+	 *
+	 * @param [in] workerIndex: Working agent index.
+	 * @param [in] partitionIndex: The requested partition index to solve Riccati equations.
+	 * @param [in] SmFinal: The final Sm for the Riccati equation.
+	 * @param [in] SvFinal: The final Sv for the Riccati equation.
+	 * @param [in] SveFinal: The final Sve for the Riccati equation.
+	 * @param [in] sFinal: The final s for the Riccati equation.
+	 * @param [in] constraintStepSize: type-1 constraint step-size
+	 */
+	void fullRiccatiBackwardSweepWorker(
+			size_t workerIndex,
+			const size_t& partitionIndex,
+			const state_matrix_t& SmFinal, const state_vector_t& SvFinal,
+			const state_vector_t& SveFinal, const eigen_scalar_t& sFinal,
+			const scalar_t& constraintStepSize);
+
+
+	template<int DIM1, int DIM2=1>
+	Eigen::Matrix<scalar_t, DIM1, DIM2> solveLTI(
+			const std::shared_ptr<IntegratorBase<DIM1*DIM2>>& firstOrderOdeIntegrator,
+			const Eigen::Matrix<scalar_t, DIM1, DIM2>& x0,
+			const scalar_t& deltaTime);
+
+	Eigen::Matrix<scalar_t, 2*STATE_DIM, STATE_DIM> integrateHamiltonian(
+			size_t workerIndex,
+			const Eigen::Matrix<scalar_t, 2*STATE_DIM, 2*STATE_DIM>& Hm,
+			const Eigen::Matrix<scalar_t, 2*STATE_DIM, STATE_DIM>& x0,
+			const scalar_t& deltaTime);
+
+	Eigen::Matrix<scalar_t, STATE_DIM, 1> integrateIncrement(
+			size_t workerIndex,
+			const Eigen::Matrix<scalar_t, STATE_DIM, STATE_DIM>& Gm,
+			const Eigen::Matrix<scalar_t, STATE_DIM, 1>& Gv,
+			const Eigen::Matrix<scalar_t, STATE_DIM, 1>& x0,
+			const scalar_t& deltaTime);
+
 	/****************
 	 *** Variables **
 	 ****************/
@@ -378,6 +425,9 @@ protected:
 	input_vector_array2_t       EvProjectedTrajectoryStock_;  // DmDager * Ev
 	input_state_matrix_array2_t CmProjectedTrajectoryStock_;  // DmDager * Cm
 	input_matrix_array2_t       DmProjectedTrajectoryStock_;  // DmDager * Dm
+	state_input_matrix_array2_t BmConstrainedTrajectoryStock_;
+	input_state_matrix_array2_t PmConstrainedTrajectoryStock_;
+	input_vector_array2_t       RvConstrainedTrajectoryStock_;
   	input_matrix_array2_t       RmInverseTrajectoryStock_;
 
 	std::vector<std::shared_ptr<riccati_equations_t>>                             riccatiEquationsPtrStock_;
@@ -386,6 +436,11 @@ protected:
 	std::vector<std::shared_ptr<error_equation_t>>              errorEquationPtrStock_;
 	std::vector<std::shared_ptr<SystemEventHandler<STATE_DIM>>> errorEventPtrStock_;
 	std::vector<std::shared_ptr<IntegratorBase<STATE_DIM>>>     errorIntegratorPtrStock_;
+
+	std::vector<std::shared_ptr<hamiltonian_equation_t>> hamiltonianEquationPtrStock_;
+	std::vector<std::shared_ptr<IntegratorBase<hamiltonian_equation_t::LTI_DIM_>>> hamiltonianIntegratorPtrStock_;
+	std::vector<std::shared_ptr<hamiltonian_increment_equation_t>> hamiltonianIncrementEquationPtrStock_;
+	std::vector<std::shared_ptr<IntegratorBase<hamiltonian_increment_equation_t::LTI_DIM_>>> hamiltonianIncrementIntegratorPtrStock_;
 
 	// functions for controller and lagrange multiplier
 	std::vector<EigenLinearInterpolation<state_input_matrix_t>> BmFunc_;
@@ -398,10 +453,43 @@ protected:
 
 	// function for Riccati error equation
 	std::vector<EigenLinearInterpolation<state_matrix_t>> SmFuncs_;
+
+	// Functions for solving Backward pass through Mobius scheme
+	void LmFunc_ (const size_t& partitionIndex, const size_t& timeIndex, input_state_matrix_t& Lm) {
+		Lm = -RmInverseTrajectoryStock_[partitionIndex][timeIndex] * ( BASE::PmTrajectoryStock_[partitionIndex][timeIndex] +
+				BASE::BmTrajectoryStock_[partitionIndex][timeIndex].transpose()*BASE::SmTrajectoryStock_[partitionIndex][timeIndex] );
+	};
+	//
+	void LmConstrainedFunc_ (const size_t& partitionIndex, const size_t& timeIndex, const input_state_matrix_t& Lm, input_state_matrix_t& LmConstrained) {
+		LmConstrained = (input_matrix_t::Identity()-DmProjectedTrajectoryStock_[partitionIndex][timeIndex]) * Lm;
+	};
+	//
+	void LvConstrainedFunc_ (const size_t& partitionIndex, const size_t& timeIndex, input_vector_t& LvConstrained) {
+		LvConstrained  = -RmInverseTrajectoryStock_[partitionIndex][timeIndex] * ( RvConstrainedTrajectoryStock_[partitionIndex][timeIndex] +
+				BmConstrainedTrajectoryStock_[partitionIndex][timeIndex].transpose()*BASE::SvTrajectoryStock_[partitionIndex][timeIndex]);
+	};
+	//
+	void LveConstrainedFunc_ (const size_t& partitionIndex, const size_t& timeIndex, input_vector_t& LveConstrained) {
+		LveConstrained = -RmInverseTrajectoryStock_[partitionIndex][timeIndex] *
+				BmConstrainedTrajectoryStock_[partitionIndex][timeIndex].transpose() * BASE::SveTrajectoryStock_[partitionIndex][timeIndex];
+	};
+	//
+	void ControllerFunc_ (const size_t& partitionIndex, const size_t& timeIndex, const scalar_t& constraintStepSize,
+			const input_state_matrix_t& LmConstrained, const input_vector_t& LvConstrained, const input_vector_t& LveConstrained) {
+		// k
+		BASE::nominalControllersStock_[partitionIndex].gainArray_[timeIndex] = LmConstrained - CmProjectedTrajectoryStock_[partitionIndex][timeIndex];
+		// uff
+		BASE::nominalControllersStock_[partitionIndex].biasArray_[timeIndex] = BASE::nominalInputTrajectoriesStock_[partitionIndex][timeIndex] -
+				BASE::nominalControllersStock_[partitionIndex].gainArray_[timeIndex] * BASE::nominalStateTrajectoriesStock_[partitionIndex][timeIndex] +
+				constraintStepSize * (LveConstrained - EvProjectedTrajectoryStock_[partitionIndex][timeIndex]);
+		// deltaUff
+		BASE::nominalControllersStock_[partitionIndex].deltaBiasArray_[timeIndex] = LvConstrained;
+	};
+
 };
 
 } // namespace ocs2
 
-#include "implementation/SLQ_BASE.h"
+#include "implementation/SLQ_BASE_Hamiltonian.h"
 
-#endif /* SLQ_BASE_OCS2_H_ */
+#endif /* SLQ_BASE_HAMILTONIAN_OCS2_H_ */

@@ -55,6 +55,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_core/misc/LinearInterpolation.h>
 #include <ocs2_core/misc/FindActiveIntervalIndex.h>
 #include <ocs2_core/misc/TrajectorySpreadingController.h>
+#include <ocs2_core/misc/LinearAlgebra.h>
 
 #include <ocs2_core/logic/rules/NullLogicRules.h>
 #include <ocs2_core/logic/machine/HybridLogicRulesMachine.h>
@@ -141,7 +142,9 @@ public:
 	using constraint2_state_matrix_array_t = typename BASE::constraint2_state_matrix_array_t;
 	using constraint2_state_matrix_array2_t = typename BASE::constraint2_state_matrix_array2_t;
 	using dynamic_vector_t = typename BASE::dynamic_vector_t;
+	using dynamic_matrix_t = typename BASE::dynamic_matrix_t;
 	using dynamic_vector_array_t = typename BASE::dynamic_vector_array_t;
+	using dynamic_matrix_array2_t = typename BASE::dynamic_matrix_array2_t;
 
 	using controller_ptr_array_t = typename BASE::controller_ptr_array_t;
 	typedef LinearController<STATE_DIM,INPUT_DIM>  linear_controller_t;

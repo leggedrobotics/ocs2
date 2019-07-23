@@ -79,38 +79,4 @@ void Solver_BASE<STATE_DIM, INPUT_DIM>::printString(const std::string& text) {
 	std::cerr << text << std::endl;
 }
 
-
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/***************************************************************************************************** */
-template <size_t STATE_DIM, size_t INPUT_DIM>
-template <typename Derived>
-bool Solver_BASE<STATE_DIM, INPUT_DIM>::makePSD(Eigen::MatrixBase<Derived>& squareMatrix) {
-
-	if (squareMatrix.rows() != squareMatrix.cols()) {
-		throw std::runtime_error("Not a square matrix: makePSD() method is for square matrix.");
-	}
-
-	Eigen::SelfAdjointEigenSolver<Derived> eig(squareMatrix, Eigen::EigenvaluesOnly);
-	Eigen::VectorXd lambda = eig.eigenvalues();
-
-	bool hasNegativeEigenValue = false;
-	for (size_t j=0; j<lambda.size() ; j++) {
-		if (lambda(j) < 0.0) {
-			hasNegativeEigenValue = true;
-			lambda(j) = 1e-6;
-		}
-	}
-
-	if (hasNegativeEigenValue) {
-		eig.compute(squareMatrix, Eigen::ComputeEigenvectors);
-		squareMatrix = eig.eigenvectors() * lambda.asDiagonal() * eig.eigenvectors().inverse();
-	} else {
-		squareMatrix = 0.5*(squareMatrix+squareMatrix.transpose()).eval();
-	}
-
-	return hasNegativeEigenValue;
-}
-
-}  // namespace ocs2
+}  // ocs2 namespace

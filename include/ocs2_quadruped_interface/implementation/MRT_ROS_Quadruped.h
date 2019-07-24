@@ -15,10 +15,16 @@ MRT_ROS_Quadruped<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::MRT_ROS_Quadruped(
 		const quadruped_interface_ptr_t& ocs2QuadrupedInterfacePtr,
 		const std::string& robotName /*robot*/)
 
-		: BASE(std::move(robotName), logic_rules_ptr_t(new logic_rules_t(*ocs2QuadrupedInterfacePtr->getLogicRules()))) // take a copy of the logic rules to make sure we don't share it with the MPC node
+		: BASE()
 		, ocs2QuadrupedInterfacePtr_(ocs2QuadrupedInterfacePtr)
 		, modelSettings_(ocs2QuadrupedInterfacePtr->modelSettings())
 {
+	// take a copy of the logic rules to make sure we don't share it with the MPC node
+	logic_rules_mrt_.reset(new logic_rules_t(*ocs2QuadrupedInterfacePtr->getLogicRules()));
+
+	// share logic rules with the Base
+	BASE::set(robotName, logic_rules_mrt_);
+
 	// set up the rollout
 	if (ocs2QuadrupedInterfacePtr->mpcSettings().useFeedbackPolicy_) {
       BASE::initRollout(*(ocs2QuadrupedInterfacePtr_->getSystemDynamicsPtr()),
@@ -314,9 +320,8 @@ void MRT_ROS_Quadruped<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::evaluatePolicy(
 	input_vector_t inputRef;
 	size_t subsystem;
 	BASE::evaluatePolicy(time, state, stateRef, inputRef, subsystem);
-	const size_t index = BASE::findActiveSubsystemFnc_(time);
-
-	BASE::logicMachinePtr_->getLogicRulesPtr()->getMotionPhaseLogics(index, stanceLegs, feetZPlanPtr_);
+	const auto index = logic_rules_mrt_->getEventTimeCount(time);
+	logic_rules_mrt_->getMotionPhaseLogics(index, stanceLegs, feetZPlanPtr_);
 
 	// computes swing phase progress
 	computeSwingPhaseProgress(index, stanceLegs, time, swingPhaseProgress_);
@@ -387,9 +392,8 @@ void MRT_ROS_Quadruped<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::rolloutPolicy(
 	input_vector_t inputRef;
 	size_t subsystem;
 	BASE::evaluatePolicy(time, state, stateRef, inputRef, subsystem);
-	const size_t index = BASE::findActiveSubsystemFnc_(time);
-
-	BASE::logicMachinePtr_->getLogicRulesPtr()->getMotionPhaseLogics(index, stanceLegs, feetZPlanPtr_);
+	const auto index = logic_rules_mrt_->getEventTimeCount(time);
+	logic_rules_mrt_->getMotionPhaseLogics(index, stanceLegs, feetZPlanPtr_);
 
 	// computes swing phase progress
 	computeSwingPhaseProgress(index, stanceLegs, time, swingPhaseProgress_);
@@ -539,13 +543,13 @@ void MRT_ROS_Quadruped<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::computeSwingPhas
 
 	typedef std::vector<int> int_array_t;
 
-	const scalar_array_t& eventTimes = BASE::logicMachinePtr_->getLogicRulesPtr()->eventTimes();
+	const scalar_array_t& eventTimes = logic_rules_mrt_->eventTimes();
 
 	std::array<int_array_t,4> startTimesIndices;
-	BASE::logicMachinePtr_->getLogicRulesPtr()->getFeetPlanner().getStartTimesIndices(startTimesIndices);
+	logic_rules_mrt_->getFeetPlanner().getStartTimesIndices(startTimesIndices);
 
 	std::array<int_array_t,4> finalTimesIndices;
-	BASE::logicMachinePtr_->getLogicRulesPtr()->getFeetPlanner().getFinalTimesIndices(finalTimesIndices);
+	logic_rules_mrt_->getFeetPlanner().getFinalTimesIndices(finalTimesIndices);
 
 	// for each leg
 	for (size_t j=0; j<4; j++) {

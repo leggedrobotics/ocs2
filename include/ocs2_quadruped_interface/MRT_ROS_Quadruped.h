@@ -66,7 +66,7 @@ public:
 	typedef typename cubic_spline_t::Ptr	cubic_spline_ptr_t;
 
 	typedef typename quadruped_interface_t::logic_rules_t 	logic_rules_t;
-	typedef typename logic_rules_t::Ptr						logic_rules_ptr_t;
+	typedef typename logic_rules_t::Ptr 					logic_rules_ptr_t;
 
 	typedef Eigen::Matrix<scalar_t,3,1>	vector_3d_t;
 	typedef std::array<vector_3d_t,4>	vector_3d_array_t;
@@ -293,6 +293,7 @@ private:
 	 * Variables
 	 */
 	quadruped_interface_ptr_t ocs2QuadrupedInterfacePtr_;
+  	logic_rules_ptr_t logic_rules_mrt_;
 
 	Model_Settings modelSettings_;
 

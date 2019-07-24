@@ -89,14 +89,14 @@ class ComKinoConstraintBaseAD : public ocs2::ConstraintBase<12 + JOINT_COORD_SIZ
 
   ComKinoConstraintBaseAD(const kinematic_model_t& kinematicModel, const ad_kinematic_model_t& adKinematicModel, const com_model_t& comModel,
                         const ad_com_model_t& adComModel, std::shared_ptr<const logic_rules_t> logicRulesPtr, const Model_Settings& options = Model_Settings())
-      : Base(), adKinematicModelPtr_(adKinematicModel.clone()), adComModelPtr_(adComModel.clone()), logicRulesPtr_(std::move(logicRulesPtr), options_(options) {
+      : Base(), adKinematicModelPtr_(adKinematicModel.clone()), adComModelPtr_(adComModel.clone()), logicRulesPtr_(std::move(logicRulesPtr)), options_(options) {
     if (!logicRulesPtr_) {
       throw std::runtime_error("[ComKinoConstraintBaseAD] logicRules cannot be a nullptr");
     }
     InitializeConstraintTerms();
   }
 
-  ComKinoConstraintBase(const ComKinoConstraintBase& rhs)
+  ComKinoConstraintBaseAD(const ComKinoConstraintBaseAD& rhs)
       : Base(rhs),
         adKinematicModelPtr_(rhs.adKinematicModelPtr_->clone()),
         adComModelPtr_(rhs.adComModelPtr_->clone()),
@@ -146,14 +146,14 @@ class ComKinoConstraintBaseAD : public ocs2::ConstraintBase<12 + JOINT_COORD_SIZ
 
       // EE position
       auto endEffectorConstraint = std::unique_ptr<ConstraintTerm_t>(
-          new EndEffectorPositionConstraint_t(i, eePosConSettings_[i], *adComModelPtr_.get(), *adKinematicModelPtr_.get()));
+          new EndEffectorPositionConstraint_t(i, eePosConSettings_[i], *adComModelPtr_.get(), *adKinematicModelPtr_.get(), options_.generateModels_));
 
       // EE force
       auto zeroForceConstraint = std::unique_ptr<ConstraintTerm_t>(new ZeroForceConstraint_t(i));
 
       // Velocity Constraint
       auto endEffectorVelocityConstraint = std::unique_ptr<ConstraintTerm_t>(
-          new EndEffectorVelocityConstraint_t(i, eeVelConSettings_[i], *adComModelPtr_.get(), *adKinematicModelPtr_.get()));
+          new EndEffectorVelocityConstraint_t(i, eeVelConSettings_[i], *adComModelPtr_.get(), *adKinematicModelPtr_.get(), options_.generateModels_));
 
       // Inequalities
       inequalityConstraintCollection_.add(std::move(frictionCone), footName + "_FrictionCone");
@@ -165,9 +165,9 @@ class ComKinoConstraintBaseAD : public ocs2::ConstraintBase<12 + JOINT_COORD_SIZ
     }
   }
 
-  ~ComKinoConstraintBase() override = default;
+  ~ComKinoConstraintBaseAD() override = default;
 
-  ComKinoConstraintBase<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>* clone() const override;
+  ComKinoConstraintBaseAD<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>* clone() const override;
 
   void setCurrentStateAndControl(const scalar_t& t, const state_vector_t& x, const input_vector_t& u) override;
 
@@ -220,14 +220,10 @@ class ComKinoConstraintBaseAD : public ocs2::ConstraintBase<12 + JOINT_COORD_SIZ
   Model_Settings options_;
 
   std::shared_ptr<const logic_rules_t> logicRulesPtr_;
-  std::function<size_t(scalar_t)> findActiveSubsystemFnc_;
   contact_flag_t stanceLegs_;
   size_t numEventTimes_;
 
   std::array<const foot_cpg_t*, NUM_CONTACT_POINTS_> zDirectionRefsPtr_;
-
-  std::string algorithmName_;
-
 
 };
 

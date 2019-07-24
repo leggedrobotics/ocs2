@@ -24,10 +24,9 @@ void ComKinoConstraintBaseAD<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::setCurrent
                                                                                                              const state_vector_t& x,
                                                                                                              const input_vector_t& u) {
   Base::setCurrentStateAndControl(t, x, u);
-
   numEventTimes_ = logicRulesPtr_->getNumEventTimes();
-  activeSubsystem_ = logicRulesPtr_->getEventTimeCount(t);
-  logicRulesPtr_->getMotionPhaseLogics(activeSubsystem_, stanceLegs_, zDirectionRefsPtr_)
+  auto activeSubsystem = logicRulesPtr_->getEventTimeCount(t);
+  logicRulesPtr_->getMotionPhaseLogics(activeSubsystem, stanceLegs_, zDirectionRefsPtr_);
 
   for (int i = 0; i < NUM_CONTACT_POINTS_; i++) {
     auto footName = feetNames[i];
@@ -35,60 +34,55 @@ void ComKinoConstraintBaseAD<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::setCurrent
     // Active friction cone constraint for stanceLegs
     inequalityConstraintCollection_.modifyConstraint(footName + "_FrictionCone")->setActivity(stanceLegs_[i]);
 
-    // Active foot placement for stance legs
-    auto EEPosConstraint = inequalityConstraintCollection_.template modifyConstraint<EndEffectorPositionConstraint_t>(footName + "_EEPos");
-
-    double constraintScale = options_.zDirectionPositionWeight_;
-    if (options_.zDirectionEqualityConstraint_) {
-      EEPosConstraint->setActivity(stanceLegs_[i]);
-      eePosConSettings_[i].Ab = constraintScale * switched_model::toHalfSpaces(polytopes[i]);
-      EEPosConstraint->configure(eePosConSettings_[i]);
-    } else {
-        EEPosConstraint->setActivity(true);
-        // Add z direction to inequalities during both stance and swing phase
-        if (stanceLegs_[i]) {
-          if (options_.terrainInequality_) {
-            Eigen::MatrixXd planarPolytopes = constraintScale * switched_model::toHalfSpaces(polytopes[i]);
-            eePosConSettings_[i].Ab.resize(planarPolytopes.rows() + 2, planarPolytopes.cols());
-            eePosConSettings_[i].Ab << planarPolytopes,
-                0.0, 0.0, constraintScale, 0.0,
-                0.0, 0.0, -constraintScale, 0.0;
-          } else {
-            eePosConSettings_[i].Ab = constraintScale * switched_model::toHalfSpaces(polytopes[i]);
-          }
-        } else {
-          // Swing height control
-          eePosConSettings_[i].Ab.resize(2, 4);
-          eePosConSettings_[i].Ab <<
-          0.0, 0.0, constraintScale, -options_.zDirectionVelocityWeight_ * constraintScale * zDirectionRefsPtr_[i]->calculatePosition(Base::t_),
-          0.0, 0.0, -constraintScale, 1.0/options_.zDirectionVelocityWeight_ * constraintScale * zDirectionRefsPtr_[i]->calculatePosition(Base::t_);
-        }
-        EEPosConstraint->configure(eePosConSettings_[i]);
-    }
-
-
     // Zero forces active for swing legs
     equalityStateInputConstraintCollection_.modifyConstraint(footName + "_ZeroForce")->setActivity(!stanceLegs_[i]);
 
-    // Velocity constraint
-    if (stanceLegs_[i]) {  // in stance: All velocity equal to zero
-      eeVelConSettings_[i].b = Eigen::Vector3d::Zero();
-      eeVelConSettings_[i].A = Eigen::Matrix3d::Identity();
-    } else {  // in swing: z-velocity is provided
-      eeVelConSettings_[i].b.resize(1);
-      eeVelConSettings_[i].A.resize(1, 3);
-      eeVelConSettings_[i].b << -zDirectionRefsPtr_[i]->calculateVelocity(Base::t_);
-      eeVelConSettings_[i].A << 0, 0, 1;
-    }
+    // Active foot placement for stance legs
+    auto EEPosConstraint = inequalityConstraintCollection_.template modifyConstraint<EndEffectorPositionConstraint_t>(footName + "_EEPos");
     auto EEVelConstraint = equalityStateInputConstraintCollection_.template modifyConstraint<EndEffectorVelocityConstraint_t>(footName + "_EEVel");
-    EEVelConstraint->configure(eeVelConSettings_[i]);
 
+    double constraintScale = options_.zDirectionPositionWeight_;
     if (options_.zDirectionEqualityConstraint_) {
-      EEVelConstraint->setActivity(true);
-    } else {
-      EEVelConstraint->setActivity(stanceLegs_[i]);
-    }
+      // No position constraints
+      EEPosConstraint->setActivity(false);
 
+      // Velocity constraint
+      EEVelConstraint->setActivity(true);
+      if (stanceLegs_[i]) {  // in stance: All velocity equal to zero
+        eeVelConSettings_[i].b = Eigen::Vector3d::Zero();
+        eeVelConSettings_[i].A = Eigen::Matrix3d::Identity();
+      } else {  // in swing: z-velocity is provided
+        eeVelConSettings_[i].b.resize(1);
+        eeVelConSettings_[i].A.resize(1, 3);
+        eeVelConSettings_[i].b << -zDirectionRefsPtr_[i]->calculateVelocity(Base::t_);
+        eeVelConSettings_[i].A << 0, 0, 1;
+      }
+      EEVelConstraint->configure(eeVelConSettings_[i]);
+    } else {
+      // Position constraints in both stance and swing
+      EEPosConstraint->setActivity(true);
+      if (stanceLegs_[i]) {
+        Eigen::MatrixXd planarPolytopes = constraintScale * switched_model::toHalfSpaces(polytopes[i]);
+        eePosConSettings_[i].Ab.resize(planarPolytopes.rows() + 2, planarPolytopes.cols());
+        eePosConSettings_[i].Ab << planarPolytopes,
+            0.0, 0.0, constraintScale, 0.0,
+            0.0, 0.0, -constraintScale, 0.0;
+      } else {
+        // Swing height control
+        eePosConSettings_[i].Ab.resize(1, 4);
+        eePosConSettings_[i].Ab <<
+                                0.0, 0.0, constraintScale, -constraintScale * zDirectionRefsPtr_[i]->calculatePosition(Base::t_);
+      }
+      EEPosConstraint->configure(eePosConSettings_[i]);
+
+      // Velocity only in stance
+      EEVelConstraint->setActivity(stanceLegs_[i]);
+      if (stanceLegs_[i]) {  // in stance: All velocity equal to zero
+        eeVelConSettings_[i].b = Eigen::Vector3d::Zero();
+        eeVelConSettings_[i].A = Eigen::Matrix3d::Identity();
+        EEVelConstraint->configure(eeVelConSettings_[i]);
+      }
+    }
   }
 }
 
@@ -163,7 +157,7 @@ void ComKinoConstraintBaseAD<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::getConstra
   linearStateInputConstraintApproximation_ =
       equalityStateInputConstraintCollection_.getConstraints().getLinearApproximationAsMatrices(Base::t_, Base::x_, Base::u_);
   size_t numConstraints = numStateInputConstraint(Base::t_);
-  C.block(0, 0, numConstraints, STATE_DIM) = linearStateInputConstraintApproximation_.derivativeState;
+  C.block(0, 0, numConstraints, STATE_DIM) = linearStateInputConstraintApproximation_.derivativeState.block(0, 0, numConstraints, STATE_DIM);
 }
 
 /******************************************************************************************************/
@@ -173,7 +167,7 @@ template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM>
 void ComKinoConstraintBaseAD<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::getConstraint1DerivativesControl(
     constraint1_input_matrix_t& D) {
   size_t numConstraints = numStateInputConstraint(Base::t_);
-  D.block(0, 0, numConstraints, INPUT_DIM) = linearStateInputConstraintApproximation_.derivativeInput;
+  D.block(0, 0, numConstraints, INPUT_DIM) = linearStateInputConstraintApproximation_.derivativeInput.block(0, 0, numConstraints, INPUT_DIM);
 }
 
 /******************************************************************************************************/
@@ -227,7 +221,7 @@ void ComKinoConstraintBaseAD<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::getInequal
   // TODO(Ruben) : We know this is the first call to any of the derivatives. Solve properly later
   quadraticInequalityConstraintApproximation_ =
       inequalityConstraintCollection_.getConstraints().getQuadraticApproximation(Base::t_, Base::x_, Base::u_);
-  dhdx = quadraticInequalityConstraintApproximation_.derivativeState;
+  dhdx = std::move(quadraticInequalityConstraintApproximation_.derivativeState);
 }
 
 /******************************************************************************************************/
@@ -236,7 +230,7 @@ void ComKinoConstraintBaseAD<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::getInequal
 template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM>
 void ComKinoConstraintBaseAD<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::getInequalityConstraintDerivativesInput(
     switched_model::ComKinoConstraintBaseAD<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::input_vector_array_t& dhdu) {
-  dhdu = quadraticInequalityConstraintApproximation_.derivativeInput;
+  dhdu = std::move(quadraticInequalityConstraintApproximation_.derivativeInput);
 }
 
 /******************************************************************************************************/
@@ -245,7 +239,7 @@ void ComKinoConstraintBaseAD<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::getInequal
 template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM>
 void ComKinoConstraintBaseAD<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::getInequalityConstraintSecondDerivativesState(
     switched_model::ComKinoConstraintBaseAD<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::state_matrix_array_t& ddhdxdx) {
-  ddhdxdx = quadraticInequalityConstraintApproximation_.secondDerivativesState;
+  ddhdxdx = std::move(quadraticInequalityConstraintApproximation_.secondDerivativesState);
 }
 
 /******************************************************************************************************/
@@ -254,7 +248,7 @@ void ComKinoConstraintBaseAD<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::getInequal
 template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM>
 void ComKinoConstraintBaseAD<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::getInequalityConstraintSecondDerivativesInput(
     switched_model::ComKinoConstraintBaseAD<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::input_matrix_array_t& ddhdudu) {
-  ddhdudu = quadraticInequalityConstraintApproximation_.secondDerivativesInput;
+  ddhdudu = std::move(quadraticInequalityConstraintApproximation_.secondDerivativesInput);
 }
 
 /******************************************************************************************************/
@@ -263,7 +257,7 @@ void ComKinoConstraintBaseAD<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::getInequal
 template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM>
 void ComKinoConstraintBaseAD<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::getInequalityConstraintDerivativesInputState(
     switched_model::ComKinoConstraintBaseAD<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::input_state_matrix_array_t& ddhdudx) {
-  ddhdudx = quadraticInequalityConstraintApproximation_.derivativesInputState;
+  ddhdudx = std::move(quadraticInequalityConstraintApproximation_.derivativesInputState);
 }
 
 /******************************************************************************************************/

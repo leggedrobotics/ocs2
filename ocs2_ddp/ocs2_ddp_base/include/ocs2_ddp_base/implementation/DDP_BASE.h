@@ -102,12 +102,12 @@ DDP_BASE<STATE_DIM, INPUT_DIM>::~DDP_BASE() {
   if (BENCHMARK_total > 0 && (ddpSettings_.displayInfo_ || ddpSettings_.displayShortSummary_)) {
     std::cerr << std::endl << "#####################################################" << std::endl;
     std::cerr << "Benchmarking over " << BENCHMARK_nIterationsBP_ << " samples." << std::endl;
-    std::cerr << "Average time for Forward Pass:      " << BENCHMARK_tAvgFP_ << " [ms] \t(" << BENCHMARK_tAvgFP_ / BENCHMARK_total * 100
-              << "%)" << std::endl;
-    std::cerr << "Average time for Backward Pass:     " << BENCHMARK_tAvgBP_ << " [ms] \t(" << BENCHMARK_tAvgBP_ / BENCHMARK_total * 100
-              << "%)" << std::endl;
-    std::cerr << "Average time for LQ Approximation:  " << BENCHMARK_tAvgLQ_ << " [ms] \t(" << BENCHMARK_tAvgLQ_ / BENCHMARK_total * 100
-              << "%)" << std::endl;
+    std::cerr << "Average time for Forward Pass:      " << BENCHMARK_tAvgFP_ / 1000.0 << " [ms] \t("
+              << BENCHMARK_tAvgFP_ / BENCHMARK_total * 100 << "%)" << std::endl;
+    std::cerr << "Average time for Backward Pass:     " << BENCHMARK_tAvgBP_ / 1000.0 << " [ms] \t("
+              << BENCHMARK_tAvgBP_ / BENCHMARK_total * 100 << "%)" << std::endl;
+    std::cerr << "Average time for LQ Approximation:  " << BENCHMARK_tAvgLQ_ / 1000.0 << " [ms] \t("
+              << BENCHMARK_tAvgLQ_ / BENCHMARK_total * 100 << "%)" << std::endl;
   }
 #endif
 }
@@ -1504,7 +1504,7 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::runInit() {
   BENCHMARK_end_ = std::chrono::steady_clock::now();
   auto BENCHMARK_diff_ = BENCHMARK_end_ - BENCHMARK_start_;
   BENCHMARK_tAvgFP_ = ((1.0 - 1.0 / BENCHMARK_nIterationsFP_) * BENCHMARK_tAvgFP_) +
-                      (1.0 / BENCHMARK_nIterationsFP_) * std::chrono::duration_cast<std::chrono::milliseconds>(BENCHMARK_diff_).count();
+                      (1.0 / BENCHMARK_nIterationsFP_) * std::chrono::duration_cast<std::chrono::microseconds>(BENCHMARK_diff_).count();
   BENCHMARK_start_ = std::chrono::steady_clock::now();
 #endif
 
@@ -1537,7 +1537,7 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::runInit() {
   BENCHMARK_end_ = std::chrono::steady_clock::now();
   BENCHMARK_diff_ = BENCHMARK_end_ - BENCHMARK_start_;
   BENCHMARK_tAvgLQ_ = ((1.0 - 1.0 / BENCHMARK_nIterationsLQ_) * BENCHMARK_tAvgLQ_) +
-                      (1.0 / BENCHMARK_nIterationsLQ_) * std::chrono::duration_cast<std::chrono::milliseconds>(BENCHMARK_diff_).count();
+                      (1.0 / BENCHMARK_nIterationsLQ_) * std::chrono::duration_cast<std::chrono::microseconds>(BENCHMARK_diff_).count();
   BENCHMARK_start_ = std::chrono::steady_clock::now();
 #endif
 
@@ -1554,7 +1554,7 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::runInit() {
   BENCHMARK_end_ = std::chrono::steady_clock::now();
   BENCHMARK_diff_ = BENCHMARK_end_ - BENCHMARK_start_;
   BENCHMARK_tAvgBP_ = ((1.0 - 1.0 / BENCHMARK_nIterationsBP_) * BENCHMARK_tAvgBP_) +
-                      (1.0 / BENCHMARK_nIterationsBP_) * std::chrono::duration_cast<std::chrono::milliseconds>(BENCHMARK_diff_).count();
+                      (1.0 / BENCHMARK_nIterationsBP_) * std::chrono::duration_cast<std::chrono::microseconds>(BENCHMARK_diff_).count();
 #endif
 
   // display
@@ -1586,7 +1586,7 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::runIteration() {
   BENCHMARK_end_ = std::chrono::steady_clock::now();
   BENCHMARK_diff_ = BENCHMARK_end_ - BENCHMARK_start_;
   BENCHMARK_tAvgFP_ = ((1.0 - 1.0 / BENCHMARK_nIterationsFP_) * BENCHMARK_tAvgFP_) +
-                      (1.0 / BENCHMARK_nIterationsFP_) * std::chrono::duration_cast<std::chrono::milliseconds>(BENCHMARK_diff_).count();
+                      (1.0 / BENCHMARK_nIterationsFP_) * std::chrono::duration_cast<std::chrono::microseconds>(BENCHMARK_diff_).count();
   BENCHMARK_start_ = std::chrono::steady_clock::now();
 #endif
 
@@ -1611,7 +1611,7 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::runIteration() {
   BENCHMARK_end_ = std::chrono::steady_clock::now();
   BENCHMARK_diff_ = BENCHMARK_end_ - BENCHMARK_start_;
   BENCHMARK_tAvgLQ_ = ((1.0 - 1.0 / BENCHMARK_nIterationsLQ_) * BENCHMARK_tAvgLQ_) +
-                      (1.0 / BENCHMARK_nIterationsLQ_) * std::chrono::duration_cast<std::chrono::milliseconds>(BENCHMARK_diff_).count();
+                      (1.0 / BENCHMARK_nIterationsLQ_) * std::chrono::duration_cast<std::chrono::microseconds>(BENCHMARK_diff_).count();
   BENCHMARK_start_ = std::chrono::steady_clock::now();
 #endif
 
@@ -1628,7 +1628,7 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::runIteration() {
   BENCHMARK_end_ = std::chrono::steady_clock::now();
   BENCHMARK_diff_ = BENCHMARK_end_ - BENCHMARK_start_;
   BENCHMARK_tAvgBP_ = ((1.0 - 1.0 / BENCHMARK_nIterationsBP_) * BENCHMARK_tAvgBP_) +
-                      (1.0 / BENCHMARK_nIterationsBP_) * std::chrono::duration_cast<std::chrono::milliseconds>(BENCHMARK_diff_).count();
+                      (1.0 / BENCHMARK_nIterationsBP_) * std::chrono::duration_cast<std::chrono::microseconds>(BENCHMARK_diff_).count();
 #endif
 
   // display
@@ -1857,7 +1857,7 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::run(const scalar_t& initTime, const state_v
   BENCHMARK_end_ = std::chrono::steady_clock::now();
   BENCHMARK_diff_ = BENCHMARK_end_ - BENCHMARK_start_;
   BENCHMARK_tAvgFP_ = ((1.0 - 1.0 / BENCHMARK_nIterationsFP_) * BENCHMARK_tAvgFP_) +
-                      (1.0 / BENCHMARK_nIterationsFP_) * std::chrono::duration_cast<std::chrono::milliseconds>(BENCHMARK_diff_).count();
+                      (1.0 / BENCHMARK_nIterationsFP_) * std::chrono::duration_cast<std::chrono::microseconds>(BENCHMARK_diff_).count();
 #endif
 
   updateNominalControllerPtrStock();

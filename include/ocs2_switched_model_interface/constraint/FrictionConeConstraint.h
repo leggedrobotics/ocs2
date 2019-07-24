@@ -99,6 +99,7 @@ class FrictionConeConstraint final : public ocs2::ConstraintTerm<STATE_DIM, INPU
       ddhdudu(3 * legNumber_ + 2, 3 * legNumber_ + 0) = 0.0;
       ddhdudu(3 * legNumber_ + 2, 3 * legNumber_ + 1) = 0.0;
       ddhdudu(3 * legNumber_ + 2, 3 * legNumber_ + 2) = 0.0;
+      return ddhdudu;
   }
 
   double frictionCoefficient_;

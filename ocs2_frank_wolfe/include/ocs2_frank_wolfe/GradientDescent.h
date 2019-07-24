@@ -303,8 +303,8 @@ private:
 	glp_prob* lpPtr_;
 };
 
-}  // end of nlp namespace
-}  // end of ocs2 namespace
+}  // namespace nlp
+}  // namespace ocs2
 
 #include "implementation/GradientDescent.h"
 

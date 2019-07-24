@@ -34,15 +34,10 @@ namespace ocs2 {
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
 MPC_ROS_Interface<STATE_DIM, INPUT_DIM>::MPC_ROS_Interface(
-    mpc_t& mpc, const std::string& robotName /*= "robot"*/,
+    mpc_t* mpcPtr, const std::string& robotName /*= "robot"*/,
     const task_listener_ptr_array_t& taskListenerArray /*= task_listener_ptr_array_t()*/)
-    : mpcPtr_(&mpc),
-      mpcSettings_(mpc.settings()),
-      robotName_(robotName),
-      taskListenerArray_(taskListenerArray),
-      desiredTrajectoriesUpdated_(false),
-      modeSequenceUpdated_(false) {
-  set(mpc, robotName);
+    : taskListenerArray_(taskListenerArray) {
+  set(mpcPtr, robotName);
 }
 
 /******************************************************************************************************/
@@ -57,9 +52,14 @@ MPC_ROS_Interface<STATE_DIM, INPUT_DIM>::~MPC_ROS_Interface() {
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
-void MPC_ROS_Interface<STATE_DIM, INPUT_DIM>::set(mpc_t& mpc, const std::string& robotName /*= "robot"*/) {
-  mpcPtr_ = &mpc;
-  mpcSettings_ = mpc.settings();
+void MPC_ROS_Interface<STATE_DIM, INPUT_DIM>::set(mpc_t* mpcPtr, const std::string& robotName /*= "robot"*/) {
+
+  if (!mpcPtr) {
+    throw std::runtime_error("MPC pointer should be provided.");
+  }
+
+  mpcPtr_ = mpcPtr;
+  mpcSettings_ = mpcPtr->settings();
   robotName_ = robotName;
 
   desiredTrajectoriesUpdated_ = false;

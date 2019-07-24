@@ -117,11 +117,11 @@ class MPC_ROS_Interface {
   /**
    * Constructor.
    *
-   * @param [in] mpc: The MPC object to be interfaced.
+   * @param [in] mpcPtr: The MPC pointer to be interfaced.
    * @param [in] robotName: The robot's name.
    * @param [in] taskListenerArray: An array of the shared_ptr to task listeners.
    */
-  explicit MPC_ROS_Interface(mpc_t& mpc, const std::string& robotName = "robot",
+  explicit MPC_ROS_Interface(mpc_t* mpcPtr, const std::string& robotName = "robot",
                              const task_listener_ptr_array_t& taskListenerArray = task_listener_ptr_array_t());
 
   /**
@@ -132,10 +132,10 @@ class MPC_ROS_Interface {
   /**
    * Sets the class as its constructor.
    *
-   * @param [in] mpcPtr: The MPC object to be interfaced.
+   * @param [in] mpcPtr: The MPC pointer to be interfaced.
    * @param [in] robotName: The robot's name.
    */
-  void set(mpc_t& mpc, const std::string& robotName = "robot");
+  void set(mpc_t* mpcPtr, const std::string& robotName = "robot");
 
   /**
    * Resets the class to its instantiation state.

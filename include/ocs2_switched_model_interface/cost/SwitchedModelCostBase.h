@@ -245,6 +245,8 @@ private:
 
 	state_vector_t xIntermediateDeviation_;
 	input_vector_t uIntermediateDeviation_;
+  	Eigen::VectorXd xNominal_;
+  	Eigen::VectorXd uNominal_;
 
 	typename cop_estimator_t::Ptr copEstimatorPtr_;
 
@@ -254,7 +256,7 @@ private:
 	Eigen::Matrix<scalar_t,12,12> hessLambda_copCost_;
 	Eigen::Matrix<scalar_t,12,12> devLambdaJoints_copCost_;
 
-  	dynamic_vector_t inputFromContactFlags(contact_flag_t contactFlags);
+  	void inputFromContactFlags(contact_flag_t contactFlags, dynamic_vector_t& inputs);
 };
 
 } //end of namespace switched_model

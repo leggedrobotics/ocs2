@@ -93,13 +93,12 @@ void SwitchedModelCostBase<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::setCurrentSt
 	// R matrix
 //	BASE::R_ = R_Bank_[stanceLegs_];
 
-	dynamic_vector_t xNominal;
-	BASE::xNominalFunc_.interpolate(t, xNominal);
-	dynamic_vector_t uNominal = inputFromContactFlags(stanceLegs_);
+	BASE::xNominalFunc_.interpolate(t, xNominal_);
+	inputFromContactFlags(stanceLegs_, uNominal_);
 //	BASE::uNominalFunc_.interpolate(t, uNominal);
 
 	// set base class
-	BASE::setCurrentStateAndControl(t, x, u, xNominal, uNominal, xNominal);
+	BASE::setCurrentStateAndControl(t, x, u, xNominal_, uNominal_, xNominal_);
 
 	// intermediate goal
 	xIntermediateDeviationGoal_ = x - xIntermediateGoal_;
@@ -327,10 +326,10 @@ double SwitchedModelCostBase<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::GaussianFu
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-typename SwitchedModelCostBase<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::dynamic_vector_t SwitchedModelCostBase<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::inputFromContactFlags(contact_flag_t contactFlags) {
+template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM>
+void SwitchedModelCostBase<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::inputFromContactFlags(contact_flag_t contactFlags, dynamic_vector_t& inputs) {
   // Distribute total mass equally over active stance legs.
-  dynamic_vector_t inputs(INPUT_DIM);
+  inputs.resize(INPUT_DIM);
   inputs.setZero();
 
   const scalar_t totalMass = comModelPtr_->totalMass() * 9.81;
@@ -349,7 +348,6 @@ typename SwitchedModelCostBase<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM, LOGIC_RUL
     }
   }
 
-  return inputs;
 }
 
 

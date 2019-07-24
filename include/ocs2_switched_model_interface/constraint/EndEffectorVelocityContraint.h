@@ -63,9 +63,14 @@ class EndEffectorVelocityConstraint final : public ocs2::ConstraintTerm<STATE_DI
   using ad_kinematic_model_t = KinematicsModelBase<12, ad_scalar_t>;
 
   explicit EndEffectorVelocityConstraint(int legNumber, EndEffectorVelocityConstraintSettings settings, ad_com_model_t& adComModel,
-                                         ad_kinematic_model_t& adKinematicsModel)
+                                         ad_kinematic_model_t& adKinematicsModel, bool generateModels)
       : BASE(ocs2::ConstraintOrder::Linear), legNumber_(legNumber), settings_(std::move(settings)), libName_("EEVelocityConstraint_" + std::to_string(legNumber_)) {
-    generateAdModel(adComModel, adKinematicsModel);
+    setAdInterface(adComModel, adKinematicsModel);
+    if (generateModels){
+      cppAdCodeGenClass_->createModels(libName_, "");
+    } else {
+      cppAdCodeGenClass_->loadModels(libName_);
+    };
   }
 
   EndEffectorVelocityConstraint(const EndEffectorVelocityConstraint&rhs) :
@@ -205,7 +210,7 @@ class EndEffectorVelocityConstraint final : public ocs2::ConstraintTerm<STATE_DI
     o_footVelocity = o_R_b_ * com_footVelocity;
   }
 
-  void generateAdModel(ad_com_model_t& adComModel, ad_kinematic_model_t& adKinematicsModel) {
+  void setAdInterface(ad_com_model_t& adComModel, ad_kinematic_model_t& adKinematicsModel) {
     // Function to differentiate
     ad_funtion_t adfunc_ = [this, &adComModel, &adKinematicsModel](const ad_dynamic_vector_t& x, ad_dynamic_vector_t& y) {
       this->adFootVelocity(adComModel, adKinematicsModel, x, y);
@@ -223,7 +228,6 @@ class EndEffectorVelocityConstraint final : public ocs2::ConstraintTerm<STATE_DI
     cppAdCodeGenClass_->computeForwardModel(true);
     cppAdCodeGenClass_->computeJacobianModel(true);
     cppAdCodeGenClass_->computeHessianModel(true);
-    cppAdCodeGenClass_->createModels(libName_, "");
   }
 
   int legNumber_;

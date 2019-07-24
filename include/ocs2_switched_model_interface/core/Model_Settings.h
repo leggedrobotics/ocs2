@@ -26,6 +26,7 @@ public:
 	, copWeight_(0.0)
 	, swingLegLiftOff_(0.3)
 	, liftOffVelocity_(0.0)
+	, generateModels_(true)
 	, touchDownVelocity_(0.0)
 	, phaseTransitionStanceTime_(0.4)
 	, mpcGoalCommandDelay_(0.5)
@@ -54,6 +55,7 @@ public:
 	double copWeight_;
 	double swingLegLiftOff_;
 	double liftOffVelocity_;
+	bool generateModels_;
 	double touchDownVelocity_;
 	double phaseTransitionStanceTime_;
 	double mpcGoalCommandDelay_;
@@ -72,7 +74,6 @@ public:
 	double eps_ = 0.01;
 	double eta_ = 10.0;
 
-
 	virtual void loadSettings(const std::string& filename, bool verbose = true);
 };
 
@@ -83,6 +84,14 @@ inline void Model_Settings::loadSettings(const std::string& filename, bool verbo
 
 	if (verbose)  std::cerr << "\n #### Robot Model Settings:" << std::endl;
 	if (verbose)  std::cerr << " #### ==================================================" << std::endl;
+
+	try {
+		generateModels_ = pt.get<bool>("model_settings.generateModels");
+		if (verbose)  std::cerr << " #### generateModels ............... " << generateModels_  << std::endl;
+	}
+	catch (const std::exception& e){
+		if (verbose)  std::cerr << " #### generateModels ............... " << generateModels_  << "\t(default)" << std::endl;
+	}
 
 	try {
 		constrainedIntegration_ = pt.get<bool>("model_settings.constrainedIntegration");

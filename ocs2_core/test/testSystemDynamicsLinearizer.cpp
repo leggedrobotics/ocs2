@@ -5,9 +5,6 @@
  *      Author: oharley
  */
 
-//TODO(oharley) use the correct systems (to be defined)
-//TODO(oharley) experiment with the tolerances
-//TODO(oharley) adhere to code conventions
 
 #include "include/testSystemDynamicsLinearizer.h"
 #include "../ocs2_core/dynamics/SystemDynamicsLinearizer.h"
@@ -23,37 +20,65 @@ protected:
   void SetUp() override {
     //std::srand((unsigned int) time(0)); //Seed randomly
     std::srand((unsigned int) 0xABCDEF); //Seed repeatably
+
+    /****************************
+    *  The systems under test  *
+    ****************************/
+    
     EXP0_System linSys;
-    auto linSys_ptr = std::make_shared<EXP0_System>();
-    linDeriv0.reset(new EXP0_SystemDerivative(linSys_ptr));
+    EXP0_SystemDerivative linDeriv0;
+    EXP1_SystemDerivative linDeriv1; // purposefully Incorrect derivative for Linear sys
+    linSys_ptr = std::make_shared<EXP0_System>();
+    linDeriv0_ptr = std::make_shared<EXP0_SystemDerivative>();
+    linDeriv1_ptr = std::make_shared<EXP1_SystemDerivative>();
 
-    // Incorrect-derivative system, reuse EX0_system but with incorrect deriv
-    linDeriv1.reset(new EXP1_SystemDerivative(linSys_ptr));
-
-    // Nonlinear system
     EXP2_System nonLinSys;
-    auto nonLinSys_ptr = std::make_shared<EXP2_System>();
-    nonLinDeriv.reset(new EXP2_SystemDerivative(nonLinSys_ptr));
+    EXP2_SystemDerivative nonLinDerivUnstable; //! Nonlinear system, linearised at \theta = 0
+    EXP3_SystemDerivative nonLinDeriv;
+    nonLinSys_ptr = std::make_shared<EXP2_System>();
+    // auto nonLinDeriv_ptr = std::make_shared<EXP2_SystemDerivative>();
+    // auto nonLinDerivUnstable_ptr = std::make_shared<EXP3_SystemDerivative>();
 
-    // Nonlinear system, unstable
-    nonLinDerivUnstable.reset(new EXP3_SystemDerivative(nonLinSys_ptr));
+    linDeriv0_ptr.reset(new EXP0_SystemDerivative());
+    linDeriv1_ptr.reset(new EXP1_SystemDerivative());
+
+    nonLinDeriv_ptr.reset(new EXP3_SystemDerivative());
+    nonLinDerivUnstable_ptr.reset(new EXP2_SystemDerivative());
+
+    /**********************************
+    *  The FiniteDifference Checker  *
+    **********************************/
+
+    //the dimensions here are <2,1> for all systems but we leave it more general
+    linearizer = new SystemDynamicsLinearizer<EXP0_System::DIMENSIONS::DIMS::STATE_DIM_, EXP0_System::DIMENSIONS::DIMS::INPUT_DIM_>(linSys_ptr, linDeriv0_ptr);
+
   }
 
-  double tolerance_=1e-5;
+
+  using  scalar_t = EXP0_System::scalar_t;
+  scalar_t tolerance_=1e-5;
 
   // Correct Linear sys
   EXP0_System linSys;
-  std::unique_ptr<EXP0_SystemDerivative> linDeriv0;
-
-  // Incorrect derivative for Linear sys
-  std::unique_ptr<EXP1_SystemDerivative> linDeriv1;
+  EXP0_SystemDerivative linDeriv0;
+  EXP1_SystemDerivative linDeriv1; // purposefully Incorrect derivative for Linear sys
+  //Ptrs
+  std::shared_ptr<EXP0_System> linSys_ptr;
+  std::shared_ptr<EXP0_SystemDerivative> linDeriv0_ptr;
+  std::shared_ptr<EXP1_SystemDerivative> linDeriv1_ptr;
 
   // Nonlinear system
   EXP2_System nonLinSys;
-  std::unique_ptr<EXP2_SystemDerivative> nonLinDeriv;
+  EXP2_SystemDerivative nonLinDerivUnstable; // linearised at \theta = 0, unstable
+  EXP3_SystemDerivative nonLinDeriv; // linearised at \theta = \pi, stable
+  //Ptrs
+  std::shared_ptr<EXP2_System> nonLinSys_ptr;
+  std::shared_ptr<EXP2_SystemDerivative> nonLinDerivUnstable_ptr;
+  std::shared_ptr<EXP3_SystemDerivative> nonLinDeriv_ptr;
 
-  // Nonlinear system, linearised at \theta = \pi
-  std::unique_ptr<EXP3_SystemDerivative> nonLinDerivUnstable;
+  // Checker
+  SystemDynamicsLinearizer<EXP0_System::DIMENSIONS::DIMS::STATE_DIM_, EXP0_System::DIMENSIONS::DIMS::INPUT_DIM_>* linearizer = nullptr;
+
 
 };
 
@@ -63,7 +88,9 @@ TEST_F(SystemDynamicsLinearizerTest, testToleranceAndReturnTrue)
   auto input = EXP0_System::input_vector_t::Zero().eval();
   EXP0_SystemDerivative::state_matrix_t A_error;
   EXP0_SystemDerivative::state_input_matrix_t B_error;
-  bool ret = linDeriv0->derivativeChecker(0, state, input, A_error, B_error, tolerance_);
+
+  linearizer->setSystems(linSys_ptr, linDeriv0_ptr);
+  bool ret = linearizer->derivativeChecker(0, state, input, A_error, B_error, tolerance_);
   auto numeric_error = std::fmax(A_error.template lpNorm<Eigen::Infinity>(), B_error.template lpNorm<Eigen::Infinity>());
   ASSERT_TRUE((numeric_error <= tolerance_) && (ret)) <<
                                                       "If the error is within the tolerance the checker should return true." <<
@@ -81,7 +108,9 @@ TEST_F(SystemDynamicsLinearizerTest, testIncorrectLinearSystem)
   auto input = EXP0_System::input_vector_t::Random().eval();
   EXP1_SystemDerivative::state_matrix_t A_error;
   EXP1_SystemDerivative::state_input_matrix_t B_error;
-  bool ret = linDeriv1->derivativeChecker(0, state, input, A_error, B_error, tolerance_);
+
+  linearizer->setSystems(linSys_ptr, linDeriv1_ptr);
+  bool ret = linearizer->derivativeChecker(0, state, input, A_error, B_error, tolerance_);
   auto numeric_error = std::fmax(A_error.template lpNorm<Eigen::Infinity>(), B_error.template lpNorm<Eigen::Infinity>());
   ASSERT_TRUE((numeric_error > tolerance_) && (!ret)) <<
                            "If the error is within the tolerance the checker should return true." <<
@@ -93,45 +122,50 @@ TEST_F(SystemDynamicsLinearizerTest, testIncorrectLinearSystem)
 /**
  * Pendulum system: EXP2_System
  */
-TEST_F(SystemDynamicsLinearizerTest, testPendulum)
+TEST_F(SystemDynamicsLinearizerTest, testPendulumUnstable)
 {
-  const size_t divisions = 30;
-  const double maxDeg = 180.0;
-  constexpr double toRads = M_PI / 180.0;
+  const size_t divisions = 1000;
+  const scalar_t maxDeg = 180.0;
+  constexpr scalar_t toRads = M_PI / 180.0;
 
-  auto temp = Eigen::Vector2d(2);
-  temp << 0, 1;
-  Eigen::Matrix<double, 2, divisions> testStates;
-  testStates.row(0).setZero();
-  testStates.row(1).setLinSpaced(0, maxDeg);
-  testStates.row(1) *= toRads;
+  Eigen::Matrix<scalar_t, 2, divisions> testStates;
+  testStates.row(0).setLinSpaced(0, maxDeg); // initial starting points between upright and down
+  testStates.row(0) *= toRads;
+  testStates.row(1).setZero(); // Zero initial starting velocity
   testStates.eval();
   auto input = EXP2_System::input_vector_t::Random().eval();
+  EXP2_SystemDerivative::state_matrix_t A_error;
+  EXP2_SystemDerivative::state_input_matrix_t B_error;
+
+  linearizer->setSystems(nonLinSys_ptr, nonLinDerivUnstable_ptr);
 
   for (auto i=0; i<divisions; ++i){
-    EXP2_SystemDerivative::state_matrix_t A_error;
-    EXP2_SystemDerivative::state_input_matrix_t B_error;
-    bool ret = nonLinDeriv->derivativeChecker(0, testStates.col(i), input, A_error, B_error, tolerance_);
+    A_error.setZero();
+    B_error.setZero();
+    bool ret = linearizer->derivativeChecker(0, testStates.col(i), input, A_error, B_error, tolerance_);
     auto numeric_error = std::fmax(A_error.template lpNorm<Eigen::Infinity>(), B_error.template lpNorm<Eigen::Infinity>());
     ASSERT_TRUE(((numeric_error <= tolerance_) && ret) || ((numeric_error > tolerance_ ) && !ret))
                 << "If the error is within the tolerance the checker should return true."
                 << " tolerance: " << tolerance_ << " error: " << numeric_error
                 << " returned: " << ret;
 
-    if (testStates(1,i) < M_PI_2 *0.5) {
+    //The 3*tolerance_ is chosen to make the tests pass, we wouldn't expect it to be much more for this simple system
+    if (testStates(0,i) < std::sqrt(tolerance_)) {
       EXPECT_TRUE(ret)
               << "We expect the system to not have diverged too much yet\n"
-                  << "index: " << i
-              << " state: " << testStates.col(i)
-              << " sin(theta): " << std::sin(testStates(1,i)) << "\n"
-                  << "A_error: " << A_error ;
+              << "index: " << i << "\n"
+              << "state: " << testStates.col(i) << "\n"
+              << "theta rad:" << testStates(0,i) << " deg: " << testStates(0,i) * 180.0 / M_PI << "\n"
+              << "sin(theta): " << std::sin(testStates(0,i)) << "\n"
+              << "A_error: " << A_error ;
     }
     else {
       EXPECT_FALSE(ret)
-          << "We expect the system to have diverged!\n"
-              << "index: " << i
-          << " sin(theta): " << std::sin(testStates(1,i))
-          << " state: " << testStates.col(i) << "\n"
+              << "We expect the system to have diverged!\n"
+              << "index: " << i << "\n"
+              << "theta rad:" << testStates(0,i) << " deg: " << testStates(0,i) * 180.0 / M_PI << "\n"
+              << " sin(theta): " << std::sin(testStates(0,i))  << "\n"
+              << " state: " << testStates.col(i) << "\n"
               << "A_error: " << A_error;
     }
   }
@@ -140,49 +174,54 @@ TEST_F(SystemDynamicsLinearizerTest, testPendulum)
 /**
  * Pendulum system: EXP3_System
  */
-TEST_F(SystemDynamicsLinearizerTest, testPendulumUnstable)
+TEST_F(SystemDynamicsLinearizerTest, testPendulum)
 {
-  const size_t divisions = 30;
-  const double maxDeg = 180.0;
-  constexpr double toRads = M_PI / 180.0;
+  const size_t divisions = 1000;
+  const scalar_t maxDeg = 180.0;
+  constexpr scalar_t toRads = M_PI / 180.0;
 
-  auto temp = Eigen::Vector2d(2);
-  temp << 0, 1;
-  Eigen::Matrix<double, 2, divisions> testStates;
-  testStates.row(0).setZero();
-  testStates.row(1).setLinSpaced(0, maxDeg);
-  testStates.row(1) *= toRads;
+  Eigen::Matrix<scalar_t, 2, divisions> testStates;
+  testStates.row(0).setLinSpaced(0, maxDeg); // initial starting points between upright and down
+  testStates.row(0) *= toRads;
+  testStates.row(1).setZero(); // Zero initial starting velocity
   testStates.eval();
   auto input = EXP2_System::input_vector_t::Random().eval();
+  EXP3_SystemDerivative::state_matrix_t A_error;
+  EXP3_SystemDerivative::state_input_matrix_t B_error;
+
+  linearizer->setSystems(nonLinSys_ptr, nonLinDeriv_ptr);
 
   for (auto i=0; i<divisions; ++i){
-    EXP3_SystemDerivative::state_matrix_t A_error;
-    EXP3_SystemDerivative::state_input_matrix_t B_error;
-    bool ret = nonLinDeriv->derivativeChecker(0, testStates.col(i), input, A_error, B_error, tolerance_);
+    A_error.setZero();
+    B_error.setZero();
+    bool ret = linearizer->derivativeChecker(0, testStates.col(i), input, A_error, B_error, tolerance_);
     auto numeric_error = std::fmax(A_error.template lpNorm<Eigen::Infinity>(), B_error.template lpNorm<Eigen::Infinity>());
     ASSERT_TRUE(((numeric_error <= tolerance_) && ret) || ((numeric_error > tolerance_ ) && !ret))
                 << "If the error is within the tolerance the checker should return true."
                 << " tolerance: " << tolerance_ << " error: " << numeric_error
                 << " returned: " << ret;
 
-    if (testStates(1,i) > M_PI * 0.7) {
+    if (testStates(0,i) > M_PI - std::sqrt(tolerance_)) {
       EXPECT_TRUE(ret)
               << "We expect the system to not have diverged too much yet\n"
-              << "index: " << i
-              << " state: " << testStates.col(i)
-              << " sin(theta): " << std::sin(testStates(1,i)) << "\n"
+              << "index: " << i << "\n"
+              << "theta rad:" << testStates(0,i) << " deg: " << testStates(0,i) * 180.0 / M_PI << "\n"
+              << " sin(theta): " << std::sin(testStates(0,i)) << "\n"
+              << "state: " << testStates.col(i) << "\n"
               << "A_error: " << A_error ;
     }
     else {
       EXPECT_FALSE(ret)
               << "We expect the system to have diverged!\n"
-                  << "index: " << i
-              << " sin(theta): " << std::sin(testStates(1,i))
+              << "index: " << i
+              << "theta rad:" << testStates(0,i) << " deg: " << testStates(0,i) * 180.0 / M_PI << "\n"
+              << " sin(theta): " << std::sin(testStates(0,i))
               << " state: " << testStates.col(i) << "\n"
               << "A_error: " << A_error;
     }
   }
 }
+
 
 int main(int argc, char** argv)
 {

@@ -47,28 +47,28 @@ namespace ocs2 {
    *
    * @tparam STATE_DIM: Dimension of the state space.
    * @tparam INPUT_DIM: Dimension of the control input space.
-   * @tparam LOGIC_RULES_T: Logic Rules type (default NullLogicRules).
    */
   template <size_t STATE_DIM, size_t INPUT_DIM>
-    class SystemDynamicsLinearizer : public DerivativesBase<STATE_DIM, INPUT_DIM>
+    class SystemDynamicsLinearizer
   {
     public:
       EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-
-      typedef DerivativesBase<STATE_DIM, INPUT_DIM> Base;
+      typedef DerivativesBase<STATE_DIM, INPUT_DIM> derivatives_system_base_t;
       typedef ControlledSystemBase<STATE_DIM, INPUT_DIM> controlled_system_base_t;
-      using scalar_t = typename Base::scalar_t;
-      using state_vector_t = typename Base::state_vector_t;
-      using state_matrix_t = typename Base::state_matrix_t;
-      using input_vector_t = typename Base::input_vector_t;
-      using state_input_matrix_t = typename Base::state_input_matrix_t;
+      using scalar_t = typename derivatives_system_base_t::scalar_t;
+      using state_vector_t = typename derivatives_system_base_t::state_vector_t;
+      using state_matrix_t = typename derivatives_system_base_t::state_matrix_t;
+      using input_vector_t = typename derivatives_system_base_t::input_vector_t;
+      using state_input_matrix_t = typename derivatives_system_base_t::state_input_matrix_t;
 
       /**
        * Constructor
        */
       SystemDynamicsLinearizer(const std::shared_ptr<controlled_system_base_t>& nonlinearSystemPtr_,
+	  const std::shared_ptr<derivatives_system_base_t>& derivativesSystemPtr_,
 	  bool doubleSidedDerivative=true, bool isSecondOrderSystem=false)
 	: nonlinearSystemPtr_(nonlinearSystemPtr_),
+	derivativesSystemPtr_(derivativesSystemPtr_),
 	doubleSidedDerivative_(doubleSidedDerivative),
 	isSecondOrderSystem_(isSecondOrderSystem)
     {}
@@ -78,12 +78,14 @@ namespace ocs2 {
        *
        * @param [in] other: Instance of the other class.
        */
-      SystemDynamicsLinearizer(const SystemDynamicsLinearizer& other)
-
-	: nonlinearSystemPtr_(other.nonlinearSystemPtr_->clone()),
-	doubleSidedDerivative_(other.doubleSidedDerivative_),
-	isSecondOrderSystem_(other.isSecondOrderSystem_)
-	{}
+      SystemDynamicsLinearizer(const SystemDynamicsLinearizer& other) = default;
+        //
+	// :
+	// nonlinearSystemPtr_(other.nonlinearSystemPtr_),
+	// derivativesSystemPtr_(other.derivativesSystemPtr_),
+	// doubleSidedDerivative_(other.doubleSidedDerivative_),
+	// isSecondOrderSystem_(other.isSecondOrderSystem_)
+	// {}
 
       /**
        * operator=
@@ -91,10 +93,12 @@ namespace ocs2 {
        * @param [in] other: Instance of the other class.
        * @return SystemDynamicsLinearizer&:
        */
-      SystemDynamicsLinearizer& operator=(const SystemDynamicsLinearizer&other)  {
-	nonlinearSystemPtr_ = typename controlled_system_base_t::Ptr(other.nonlinearSystemPtr_->clone());
-	doubleSidedDerivative_ = other.doubleSidedDerivative_;
-	isSecondOrderSystem_ = other.isSecondOrderSystem_;
+      SystemDynamicsLinearizer& operator=(const SystemDynamicsLinearizer&other) // = default;
+      {
+        nonlinearSystemPtr_ = other.nonlinearSystemPtr_;
+        derivativesSystemPtr_ = other.derivativesSystemPtr_;
+        doubleSidedDerivative_ = other.doubleSidedDerivative_;
+        isSecondOrderSystem_ = other.isSecondOrderSystem_;
       }
 
 
@@ -103,21 +107,21 @@ namespace ocs2 {
        */
       virtual ~SystemDynamicsLinearizer()= default;
 
-      /**
-       * Sets the current time, state, and control inout.
-       *
-       * @param [in] t: Current time.
-       * @param [in] x: Current state.
-       * @param [in] u: Current input.
-       */
-      void setCurrentStateAndControl(const scalar_t& t, const state_vector_t& x, const input_vector_t& u) override  {
-
-	Base::setCurrentStateAndControl(t, x, u);
-
-	if (!doubleSidedDerivative_) {
-	  nonlinearSystemPtr_->computeFlowMap(Base::t_, Base::x_, Base::u_, f_);
-	}
+      void setControlSystem( const std::shared_ptr<controlled_system_base_t>& nonlinearSystemPtr)
+      {
+	nonlinearSystemPtr_=nonlinearSystemPtr;
       }
+
+      void setDerivativesSystem(const std::shared_ptr<derivatives_system_base_t>& derivativesSystemPtr)
+      {
+	derivativesSystemPtr_=derivativesSystemPtr;
+      }
+
+      void setSystems(  const std::shared_ptr<controlled_system_base_t>& nonlinearSystemPtr, const std::shared_ptr<derivatives_system_base_t>& derivativesSystemPtr ){
+	setControlSystem(nonlinearSystemPtr);
+	setDerivativesSystem(derivativesSystemPtr);
+      }
+
 
       /**
        * The A matrix at a given operating point for the linearized system,
@@ -125,27 +129,27 @@ namespace ocs2 {
        *
        * @param [out] A: \f$ A(t) \f$ matrix.
        */
-      void getDerivativesState(state_matrix_t& A) {
+      void getDerivativesState(state_matrix_t& A, const scalar_t &t, const state_vector_t &x, const input_vector_t &u) {
 
 	for (size_t i=0; i<STATE_DIM; i++)  {
 
 	  // inspired from http://en.wikipedia.org/wiki/Numerical_differentiation#Practical_considerations_using_floating_point_arithmetic
-	  double h = eps_ * std::max(fabs(Base::x_(i)), 1.0);
+	  scalar_t h = eps_ * std::max(fabs(x(i)), 1.0);
 
-	  state_vector_t xPlusPerturbed = Base::x_;
+	  state_vector_t xPlusPerturbed = x;
 	  xPlusPerturbed(i) += h;
 
 	  // get evaluation of f(x,u)
 	  state_vector_t fPlusPerturbed;
-	  nonlinearSystemPtr_->computeFlowMap(Base::t_, xPlusPerturbed, Base::u_, fPlusPerturbed);
+	  nonlinearSystemPtr_->computeFlowMap(t, xPlusPerturbed, u, fPlusPerturbed);
 
 	  if (doubleSidedDerivative_)  {
 
-	    state_vector_t xMinusPerturbed = Base::x_;
+	    state_vector_t xMinusPerturbed = x;
 	    xMinusPerturbed(i) -= h;
 
 	    state_vector_t fMinusPerturbed;
-	    nonlinearSystemPtr_->computeFlowMap(Base::t_, xMinusPerturbed, Base::u_, fMinusPerturbed);
+	    nonlinearSystemPtr_->computeFlowMap(t, xMinusPerturbed, u, fMinusPerturbed);
 
 	    if(isSecondOrderSystem_)  {
 	      A.template topLeftCorner<STATE_DIM/2, STATE_DIM/2>().setZero();
@@ -176,7 +180,7 @@ namespace ocs2 {
        *
        * @param [out] B: \f$ B(t) \f$ matrix.
        */
-      void getDerivativesControl(state_input_matrix_t& B) {
+      void getDerivativesControl(state_input_matrix_t& B, const scalar_t &t, const state_vector_t &x, const input_vector_t &u) {
 
 	Eigen::Matrix<double, STATE_DIM, INPUT_DIM> tempB;
 
@@ -184,23 +188,23 @@ namespace ocs2 {
 
 	  //			std::cin.get();
 
-	  // inspired from http://en.wikipedia.org/wiki/Numerical_differentiation#Practical_considerations_using_floating_point_arithmetic
-	  double h = eps_ * std::max(fabs(Base::u_(i)), 1.0);
+	  // inspired from http://en.wikipedia.org/wiki/Numerical_differentiation#Practical_considerations_using_floating_pointarithmetic
+	  double h = eps_ * std::max(fabs(u(i)), 1.0);
 
-	  input_vector_t uPlusPerturbed = Base::u_;
+	  input_vector_t uPlusPerturbed = u;
 	  uPlusPerturbed(i) += h;
 
 	  // get evaluation of f(x,u)
 	  state_vector_t fPlusPerturbed;
-	  nonlinearSystemPtr_->computeFlowMap(Base::t_, Base::x_, uPlusPerturbed, fPlusPerturbed);
+	  nonlinearSystemPtr_->computeFlowMap(t, x, uPlusPerturbed, fPlusPerturbed);
 
 	  if (doubleSidedDerivative_)  {
 
-	    input_vector_t uMinusPerturbed = Base::u_;
+	    input_vector_t uMinusPerturbed = u;
 	    uMinusPerturbed(i) -= h;
 
 	    state_vector_t fMinusPerturbed;
-	    nonlinearSystemPtr_->computeFlowMap(Base::t_, Base::x_, uMinusPerturbed, fMinusPerturbed);
+	    nonlinearSystemPtr_->computeFlowMap(t, x, uMinusPerturbed, fMinusPerturbed);
 
 	    if(isSecondOrderSystem_)  {
 	      tempB.template topRows<STATE_DIM/2>().setZero();
@@ -227,14 +231,12 @@ namespace ocs2 {
 	  }
 	}  // end of i loop
 
-	//B = nonlinearSystemPtr_->computeOutputStateDerivative(Base::t_, Base::x_, Base::u_) * tempB;
+	//B = nonlinearSystemPtr_->computeOutputStateDerivative(t, x, u) * tempB;
 	B = tempB;
       }
 
       /**
        * Checks if the linearized dynamics using a finite difference method fall within the tolerance.
-       *
-       * \note Each call will be at a different randomly perturbed state and control
        *
        * @param[in] controlledSystemBase
        * @param[in] derivativesBase
@@ -246,14 +248,17 @@ namespace ocs2 {
        */
       bool derivativeChecker(scalar_t t, const state_vector_t &x, const input_vector_t &u, state_matrix_t &A_error, state_input_matrix_t &B_error, scalar_t tolerance)
       {
-	this->setCurrentStateAndControl(t, x, u);
+        derivativesSystemPtr_->setCurrentStateAndControl(t, x, u);
+
 	state_matrix_t A;
 	state_input_matrix_t B;
-	this->getFlowMapDerivativeState(A);
-	this->getFlowMapDerivativeInput(B);
-	this->getDerivativesState(A_error);
+	derivativesSystemPtr_->getFlowMapDerivativeState(A);
+	derivativesSystemPtr_->getFlowMapDerivativeInput(B);
+
+	// Finite Difference Methods
+	getDerivativesState(A_error, t, x, u);
 	A_error -= A;
-	this->getDerivativesControl(B_error);
+	getDerivativesControl(B_error, t, x, u);
 	B_error -= B;
 	//A_error.cwiseAbs();
 	//B_error.cwiseAbs();
@@ -272,8 +277,8 @@ namespace ocs2 {
 
 
     private:
-      const double eps_= sqrt(Eigen::NumTraits<double>::epsilon());
-
+      const scalar_t eps_= sqrt(Eigen::NumTraits<scalar_t>::epsilon());
+      typename derivatives_system_base_t::Ptr derivativesSystemPtr_;
       typename controlled_system_base_t::Ptr nonlinearSystemPtr_;
       bool doubleSidedDerivative_;
       bool isSecondOrderSystem_;

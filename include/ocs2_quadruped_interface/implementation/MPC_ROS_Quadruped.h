@@ -91,9 +91,9 @@ void MPC_ROS_Quadruped<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::adjustTargetTraj
 
 			// state
 			costDesiredTrajectories.desiredStateTrajectory().at(i).conservativeResize(STATE_DIM);
-			// base z from initialization
-			costDesiredTrajectories.desiredStateTrajectory().at(i).template segment<1>(5) =
-					defaultConfiguration_. template segment<1>(5);
+			// Add default base z from initialization
+			costDesiredTrajectories.desiredStateTrajectory().at(i).template segment<1>(5)
+			        += defaultConfiguration_.template segment<1>(5);
 			// joint angle from initialization
 			costDesiredTrajectories.desiredStateTrajectory().at(i).template segment<12>(12) =
 					defaultConfiguration_.template segment<12>(6);

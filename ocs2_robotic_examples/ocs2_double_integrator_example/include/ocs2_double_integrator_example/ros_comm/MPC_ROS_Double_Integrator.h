@@ -76,7 +76,7 @@ public:
 	MPC_ROS_Linear_System(
 			mpc_t &mpc,
 			const std::string &nodeName = "robot_mpc")
-	: BASE(mpc, nodeName) {}
+	: BASE(&mpc, nodeName) {}
 
 	/**
 	 * Destructor.

@@ -208,6 +208,11 @@ class MRT_ROS_Interface {
   void shutdownNodes();
 
   /**
+   * Shut down publisher
+   */
+  void shutdownPublisher();
+
+  /**
    * spin the MRT callback queue
    */
   void spinMRT();

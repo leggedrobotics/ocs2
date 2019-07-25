@@ -63,6 +63,10 @@ void MRT_ROS_Interface<STATE_DIM, INPUT_DIM>::set(std::string robotName, std::sh
 
   // Start thread for publishing
 #ifdef PUBLISH_THREAD
+  // Close old thread if it is already running
+  shutdownPublisher();
+  reset();
+
   publisherWorker_ = std::thread(&MRT_ROS_Interface::publisherWorkerThread, this);
 #endif
 }
@@ -462,15 +466,7 @@ void MRT_ROS_Interface<STATE_DIM, INPUT_DIM>::shutdownNodes() {
 #ifdef PUBLISH_THREAD
   ROS_INFO_STREAM("Shutting down workers ...");
 
-  std::unique_lock<std::mutex> lk(publisherMutex_);
-  terminateThread_ = true;
-  lk.unlock();
-
-  msgReady_.notify_all();
-
-  if (publisherWorker_.joinable()) {
-    publisherWorker_.join();
-  }
+  shutdownPublisher();
 
   ROS_INFO_STREAM("All workers are shut down.");
 #endif
@@ -482,6 +478,22 @@ void MRT_ROS_Interface<STATE_DIM, INPUT_DIM>::shutdownNodes() {
   // shutdown publishers
   dummyPublisher_.shutdown();
   mpcObservationPublisher_.shutdown();
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+template <size_t STATE_DIM, size_t INPUT_DIM>
+void MRT_ROS_Interface<STATE_DIM, INPUT_DIM>::shutdownPublisher() {
+  std::unique_lock<std::mutex> lk(publisherMutex_);
+  terminateThread_ = true;
+  lk.unlock();
+
+  msgReady_.notify_all();
+
+  if (publisherWorker_.joinable()) {
+    publisherWorker_.join();
+  }
 }
 
 /******************************************************************************************************/

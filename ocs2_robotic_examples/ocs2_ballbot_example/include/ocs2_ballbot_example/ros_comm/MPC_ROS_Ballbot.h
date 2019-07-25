@@ -78,7 +78,7 @@ public:
 	MPC_ROS_Ballbot(
 			mpc_t &mpc,
 			const std::string &robotName = "robot")
-	: BASE(mpc, robotName)
+	: BASE(&mpc, robotName)
 	{}
 
 	/**

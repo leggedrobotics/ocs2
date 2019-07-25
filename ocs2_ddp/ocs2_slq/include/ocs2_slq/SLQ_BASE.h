@@ -147,12 +147,6 @@ class SLQ_BASE : public DDP_BASE<STATE_DIM, INPUT_DIM> {
   friend class SLQ_DataCollector;
 
  public:
-  void rolloutStateTriggeredTrajectory(const scalar_t& initTime, const state_vector_t& initState, const scalar_t& finalTime,
-                                       const scalar_array_t& partitioningTimes, const linear_controller_array_t& controllersStock,
-                                       scalar_array2_t& timeTrajectoriesStock, size_array2_t& eventsPastTheEndIndecesStock,
-                                       state_vector_array2_t& stateTrajectoriesStock, input_vector_array2_t& inputTrajectoriesStock,
-                                       size_t threadId = 0);
-
   /**
    * Default constructor.
    */

@@ -51,6 +51,40 @@ TEST(testLinearInterpolation, testInterpolation) {
   test_interpolation( t[5] + 1.0, 4, t[5]);
 }
 
+TEST(testLinearInterpolation, testSizeOneTime) {
+  using Data_T = Eigen::Matrix<double, 2,1>;
+
+  // Create data
+  std::vector<double> t = {1.0};
+  std::vector<Data_T, Eigen::aligned_allocator<Data_T>> v;
+  for (auto& t_k : t) {
+    v.emplace_back(t_k * Data_T::Ones());
+  }
+
+  // Create interpolator
+  ocs2::EigenLinearInterpolation<Data_T> interpolator(&t, &v);
+
+  std::cout << "TEST DATA" << std::endl;
+  for (int k=0; k<t.size(); k++){
+    std::cout << "time: " << t[k] << " v: " << v[k].transpose() << std::endl;
+  }
+
+  // Test function
+  auto test_interpolation = [&interpolator](double time, int index, double value){
+    Data_T v_t;
+    auto indexAlpha = interpolator.interpolate(time, v_t);
+    auto foundIndex = indexAlpha.first;
+    std::cout << "time: " << time << " index: " << foundIndex << " v: " << v_t.transpose() << std::endl;
+    ASSERT_EQ(foundIndex, index);
+    ASSERT_DOUBLE_EQ(v_t(0), value);
+  };
+
+  // Before time
+  test_interpolation(-1.0, 0, 1.0);
+  // Beyond time
+  test_interpolation( 2.0, 0, 1.0);
+}
+
 
 
 int main(int argc, char** argv)

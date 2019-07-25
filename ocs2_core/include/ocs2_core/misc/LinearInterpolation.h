@@ -55,7 +55,9 @@ class LinearInterpolation {
   /**
    * Default constructor.
    */
-  LinearInterpolation() : zeroFunction_(true), timeStampPtr_(nullptr), dataPtr_(nullptr) {}
+  LinearInterpolation() : constantFunction_(true), timeStampPtr_(nullptr), dataPtr_(nullptr) {
+    constantData.setZero();
+  }
 
   /**
    * Constructor
@@ -64,7 +66,9 @@ class LinearInterpolation {
    * @param [in] dataPtr: A pointer to the data.
    */
   LinearInterpolation(const std::vector<scalar_t>* timeStampPtr, const std::vector<Data_T, Alloc>* dataPtr)
-      : zeroFunction_(false), timeStampPtr_(timeStampPtr), dataPtr_(dataPtr) {}
+  {
+    setData(timeStampPtr, dataPtr);
+  }
 
   /**
    * Copy constructor
@@ -87,19 +91,30 @@ class LinearInterpolation {
       throw std::runtime_error("dataPtr is nullptr.");
     }
 
-    zeroFunction_ = false;
-    timeStampPtr_ = timeStampPtr;
-    dataPtr_ = dataPtr;
-
-    if (timeStampPtr_->empty() || dataPtr_->size() != timeStampPtr_->size()) {
+    if (timeStampPtr->empty() || dataPtr->size() != timeStampPtr->size()) {
       throw std::runtime_error("LinearInterpolation.h : Sizes not suitable for interpolation.");
+    }
+
+    timeStampPtr_ = timeStampPtr;
+
+    if (timeStampPtr->size() > 1) {
+      constantFunction_ = false;
+      dataPtr_ = dataPtr;
+    } else if (timeStampPtr->size() == 1) {
+      constantFunction_ = true;
+      dataPtr_ = nullptr;
+      constantData = dataPtr->front();
     }
   }
 
   /**
    * Sets zero
    */
-  void setZero() { zeroFunction_ = true; }
+  void setZero() {
+    constantFunction_ = true;
+    dataPtr_ = nullptr;
+    constantData.setZero();
+  }
 
   /**
    * Linearly interpolates at the given time. When duplicate values exist the lower range is selected s.t. ( ]
@@ -111,12 +126,12 @@ class LinearInterpolation {
    * @return {index, alpha}: The greatest smaller time stamp index and the interpolation coefficient [1, 0]
    */
   inline std::pair<int, scalar_t> interpolate(const scalar_t& enquiryTime, Data_T& enquiryData) const {
-    if (!zeroFunction_) {
+    if (!constantFunction_) {
       const auto indexAlpha = getIndexAlpha(*timeStampPtr_, enquiryTime);
       interpolate(indexAlpha, enquiryData);
       return indexAlpha;
     } else {
-      enquiryData.setZero();
+      enquiryData = constantData;
       return {0, scalar_t(0.0)};
     }
   }
@@ -128,12 +143,12 @@ class LinearInterpolation {
    * @param [out] enquiryData : result of the interpolation
    */
   inline void interpolate(std::pair<int, scalar_t> indexAlpha, Data_T& enquiryData) const {
-    if (!zeroFunction_) {
+    if (!constantFunction_) {
       int index = indexAlpha.first;
       scalar_t alpha = indexAlpha.second;
       enquiryData = alpha * (*dataPtr_)[index] + (scalar_t(1.0) - alpha) * (*dataPtr_)[index + 1];
     } else {
-      enquiryData.setZero();
+      enquiryData = constantData;
     }
   }
 
@@ -168,7 +183,8 @@ class LinearInterpolation {
         return {index, alpha};
       } else {
         // upper bound : index >= lastInterval
-        return {lastInterval - 1, 0.0};
+        // Catch corner case of having timeArray.size() = 1 with max
+        return {std::max(lastInterval - 1, 0), 0.0};
       }
     } else {
       // lower bound : index < 0
@@ -177,9 +193,10 @@ class LinearInterpolation {
   }
 
  private:
-  bool zeroFunction_;
   const std::vector<scalar_t>* timeStampPtr_;
   const std::vector<Data_T, Alloc>* dataPtr_;
+  bool constantFunction_;
+  Data_T constantData;
 };
 
 // Specialization for Eigen types

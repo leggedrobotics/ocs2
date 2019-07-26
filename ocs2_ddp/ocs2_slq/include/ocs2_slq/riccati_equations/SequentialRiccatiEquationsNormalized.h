@@ -109,9 +109,7 @@ class SequentialRiccatiEquationsNormalized final : public OdeBase<STATE_DIM*(STA
         Am_(state_matrix_t::Zero()),
         Bm_(state_input_matrix_t::Zero()),
         Rv_(input_vector_t::Zero()),
-        Pm_(input_state_matrix_t::Zero()),
-        Lm_(input_state_matrix_t::Zero()),
-        Lv_(input_vector_t::Zero()) {}
+        Pm_(input_state_matrix_t::Zero()) {}
 
   /**
    * Default destructor.
@@ -327,12 +325,11 @@ class SequentialRiccatiEquationsNormalized final : public OdeBase<STATE_DIM*(STA
 
       // dSvdt,  Qv_ used instead of temporary
       Qv_.noalias() += AmT_minus_P_Rinv_Bm_ * Sv_;
-      RinvCholT_BmT_Sv_.noalias() = B_RinvChol_.transpose() * Sv_;
-      Qv_.noalias() -= SmT_B_RinvChol_ * (RinvCholT_Rv_ + RinvCholT_BmT_Sv_);
+      RinvCholT_Rv_.noalias() += B_RinvChol_.transpose() * Sv_;
+      Qv_.noalias() -= SmT_B_RinvChol_ * RinvCholT_Rv_;
 
       // dsdt,   q_ used instead of temporary
-      q_.noalias() -= RinvCholT_BmT_Sv_.transpose() * RinvCholT_Rv_;
-      q_.noalias() -= 0.5 * RinvCholT_BmT_Sv_.transpose() * RinvCholT_BmT_Sv_;
+      q_.noalias() -= 0.5 * RinvCholT_Rv_.transpose() * RinvCholT_Rv_;
     } else {
       const auto indexAlpha = QmFunc_.interpolate(t, Qm_);
       QvFunc_.interpolate(indexAlpha, Qv_);
@@ -344,22 +341,22 @@ class SequentialRiccatiEquationsNormalized final : public OdeBase<STATE_DIM*(STA
       RvFunc_.interpolate(indexAlpha, Rv_);
 
       Pm_.noalias() += Bm_.transpose() * Sm_;  // ! Pm is changed to avoid an extra temporary
-      Lm_.noalias() = RinvChol_.transpose() * Pm_;
+      SmT_B_RinvChol_.noalias() = RinvChol_.transpose() * Pm_;
       Rv_.noalias() += Bm_.transpose() * Sv_;  // ! Rv is changed to avoid an extra temporary
-      Lv_.noalias() = RinvChol_.transpose() * Rv_;
+      RinvCholT_Rv_.noalias() = RinvChol_.transpose() * Rv_;
 
       AmT_Sm_.noalias() = Am_.transpose() * Sm_.transpose();
 
       // dSmdt,  Qm_ used instead of temporary
       Qm_ += AmT_Sm_ + AmT_Sm_.transpose();
-      Qm_.noalias() -= Lm_.transpose() * Lm_;
+      Qm_.noalias() -= SmT_B_RinvChol_.transpose() * SmT_B_RinvChol_;
 
       // dSvdt,  Qv_ used instead of temporary
       Qv_.noalias() += Am_.transpose() * Sv_;
-      Qv_.noalias() -= Lm_.transpose() * Lv_;
+      Qv_.noalias() -= SmT_B_RinvChol_.transpose() * RinvCholT_Rv_;
 
       // dsdt,   q_ used instead of temporary
-      q_.noalias() -= 0.5 * Lv_.transpose() * Lv_;
+      q_.noalias() -= 0.5 * RinvCholT_Rv_.transpose() * RinvCholT_Rv_;
     }
 
     if (!useMakePSD_) {
@@ -418,15 +415,12 @@ class SequentialRiccatiEquationsNormalized final : public OdeBase<STATE_DIM*(STA
   dynamic_matrix_t B_RinvChol_;
   dynamic_vector_t RinvCholT_Rv_;
   dynamic_matrix_t SmT_B_RinvChol_;
-  dynamic_vector_t RinvCholT_BmT_Sv_;
   state_matrix_t AmT_Sm_;
   state_matrix_t Am_;
   state_input_matrix_t Bm_;
   input_vector_t Rv_;
   dynamic_matrix_t RinvChol_;
   input_state_matrix_t Pm_;
-  dynamic_matrix_t Lm_;
-  dynamic_vector_t Lv_;
 
   scalar_array_t eventTimes_;
   const eigen_scalar_array_t* qFinalPtr_;

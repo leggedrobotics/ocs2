@@ -100,9 +100,7 @@ void computeConstraintProjection(const Eigen::MatrixXd& D, const DerivedInputMat
 
   // Constraint Projectors are based on the QR decomposition
   Eigen::HouseholderQR<Eigen::MatrixXd> QRof_RinvCholT_DmT(RinvChol.transpose() * D.transpose());
-  Eigen::MatrixXd QRof_RinvCholT_DmT_Q = QRof_RinvCholT_DmT.householderQ();
-  Eigen::MatrixXd QRof_RinvCholT_DmT_Qu = QRof_RinvCholT_DmT_Q.rightCols(numInputs - numConstraints);
-  Eigen::MatrixXd QRof_RinvCholT_DmT_Qc = QRof_RinvCholT_DmT_Q.leftCols(numConstraints);
+
   Eigen::MatrixXd QRof_RinvCholT_DmT_Rc =
       QRof_RinvCholT_DmT.matrixQR().topLeftCorner(numConstraints, numConstraints).template triangularView<Eigen::Upper>();
 
@@ -110,6 +108,11 @@ void computeConstraintProjection(const Eigen::MatrixXd& D, const DerivedInputMat
   // Turns out that this is equal to the cholesky decomposition of Ddagger^T * R * Ddagger after simplification
   DdaggerT_R_Ddagger_Chol.setIdentity(numConstraints, numConstraints);
   QRof_RinvCholT_DmT_Rc.template triangularView<Eigen::Upper>().solveInPlace(DdaggerT_R_Ddagger_Chol);
+
+  DerivedInputMatrix QRof_RinvCholT_DmT_Q = QRof_RinvCholT_DmT.householderQ();
+  // Auto take reference to the column view here without making a temporary
+  auto QRof_RinvCholT_DmT_Qc = QRof_RinvCholT_DmT_Q.leftCols(numConstraints);
+  auto QRof_RinvCholT_DmT_Qu = QRof_RinvCholT_DmT_Q.rightCols(numInputs - numConstraints);
 
   // Compute Weighted Pseudo Inverse, brackets used to compute the smaller, right-side product first
   Ddagger.noalias() = RinvChol * (QRof_RinvCholT_DmT_Qc * DdaggerT_R_Ddagger_Chol.transpose());

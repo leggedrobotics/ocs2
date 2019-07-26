@@ -263,7 +263,7 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM>::approximateConstrainedLQWorker(size_t worke
   // Compute it through the cholesky decomposition as we can reuse the factorization later on
   input_matrix_t RinvChol;
   LinearAlgebra::computeLinvTLinv(BASE::RmTrajectoryStock_[i][k], RinvChol);
-  RmInverseTrajectoryStock_[i][k] = RinvChol * RinvChol.transpose();
+  RmInverseTrajectoryStock_[i][k].noalias() = RinvChol * RinvChol.transpose();
 
   // constraint type 1 coefficients
   const size_t& nc1 = BASE::nc1TrajectoriesStock_[i][k];

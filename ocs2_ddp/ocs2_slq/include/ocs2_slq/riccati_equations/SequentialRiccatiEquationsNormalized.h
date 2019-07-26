@@ -327,12 +327,12 @@ class SequentialRiccatiEquationsNormalized final : public OdeBase<STATE_DIM*(STA
 
       // dSvdt,  Qv_ used instead of temporary
       Qv_.noalias() += AmT_minus_P_Rinv_Bm_ * Sv_;
-      RinvCholT_BmT_Sv_.noalias() = B_RinvChol_.transpose() * Sv_;
-      Qv_.noalias() -= SmT_B_RinvChol_ * (RinvCholT_Rv_ + RinvCholT_BmT_Sv_);
+      RinvCholT_Rv_.noalias() += B_RinvChol_.transpose() * Sv_;
+      Qv_.noalias() -= SmT_B_RinvChol_ * RinvCholT_Rv_;
 
       // dsdt,   q_ used instead of temporary
-      q_.noalias() -= RinvCholT_BmT_Sv_.transpose() * RinvCholT_Rv_;
-      q_.noalias() -= 0.5 * RinvCholT_BmT_Sv_.transpose() * RinvCholT_BmT_Sv_;
+      q_.noalias() -= 0.5 * RinvCholT_Rv_.transpose() * RinvCholT_Rv_;
+
     } else {
       const auto indexAlpha = QmFunc_.interpolate(t, Qm_);
       QvFunc_.interpolate(indexAlpha, Qv_);
@@ -418,7 +418,6 @@ class SequentialRiccatiEquationsNormalized final : public OdeBase<STATE_DIM*(STA
   dynamic_matrix_t B_RinvChol_;
   dynamic_vector_t RinvCholT_Rv_;
   dynamic_matrix_t SmT_B_RinvChol_;
-  dynamic_vector_t RinvCholT_BmT_Sv_;
   state_matrix_t AmT_Sm_;
   state_matrix_t Am_;
   state_input_matrix_t Bm_;

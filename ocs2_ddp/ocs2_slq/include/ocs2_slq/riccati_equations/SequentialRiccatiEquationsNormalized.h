@@ -330,7 +330,6 @@ class SequentialRiccatiEquationsNormalized final : public OdeBase<STATE_DIM*(STA
 
       // dsdt,   q_ used instead of temporary
       q_.noalias() -= 0.5 * RinvCholT_Rv_.transpose() * RinvCholT_Rv_;
-
     } else {
       const auto indexAlpha = QmFunc_.interpolate(t, Qm_);
       QvFunc_.interpolate(indexAlpha, Qv_);

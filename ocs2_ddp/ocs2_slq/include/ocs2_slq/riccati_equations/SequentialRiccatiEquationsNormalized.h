@@ -109,9 +109,7 @@ class SequentialRiccatiEquationsNormalized final : public OdeBase<STATE_DIM*(STA
         Am_(state_matrix_t::Zero()),
         Bm_(state_input_matrix_t::Zero()),
         Rv_(input_vector_t::Zero()),
-        Pm_(input_state_matrix_t::Zero()),
-        Lm_(input_state_matrix_t::Zero()),
-        Lv_(input_vector_t::Zero()) {}
+        Pm_(input_state_matrix_t::Zero()) {}
 
   /**
    * Default destructor.

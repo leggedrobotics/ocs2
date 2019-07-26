@@ -73,12 +73,12 @@ iit::Ballbot::tpl::MotionTransforms<TRAIT>::Type_fr_dummy_ball1_X_fr_base0::Type
     (*this)(0,4) = 0;
     (*this)(0,5) = 0;
     (*this)(1,0) = 0;
-    (*this)(1,1) = 1;
+    (*this)(1,1) = 1.0;
     (*this)(1,2) = 0;
     (*this)(1,3) = 0;
     (*this)(1,4) = 0;
     (*this)(1,5) = 0;
-    (*this)(2,0) = 1;
+    (*this)(2,0) = 1.0;
     (*this)(2,1) = 0;
     (*this)(2,2) = 0;
     (*this)(2,3) = 0;
@@ -89,13 +89,13 @@ iit::Ballbot::tpl::MotionTransforms<TRAIT>::Type_fr_dummy_ball1_X_fr_base0::Type
     (*this)(3,3) = 0;
     (*this)(3,4) = 0;
     (*this)(3,5) = - 1;
-    (*this)(4,0) = 0;
+    (*this)(4,0) = - 0.125;
     (*this)(4,1) = 0;
     (*this)(4,3) = 0;
     (*this)(4,4) = 1;
     (*this)(4,5) = 0;
     (*this)(5,0) = 0;
-    (*this)(5,1) = 0;
+    (*this)(5,1) = 0.125;
     (*this)(5,2) = 0;
     (*this)(5,3) = 1;
     (*this)(5,4) = 0;
@@ -131,15 +131,15 @@ iit::Ballbot::tpl::MotionTransforms<TRAIT>::Type_fr_base0_X_fr_dummy_ball1::Type
     (*this)(2,4) = 0;
     (*this)(2,5) = 0;
     (*this)(3,0) = 0;
-    (*this)(3,1) = 0;
+    (*this)(3,1) = - 0.125;
     (*this)(3,2) = 0;
     (*this)(3,3) = 0;
     (*this)(3,4) = 0;
-    (*this)(3,5) = 1;
+    (*this)(3,5) = 1.0;
     (*this)(4,1) = 0;
-    (*this)(4,2) = 0;
+    (*this)(4,2) = 0.125;
     (*this)(4,3) = 0;
-    (*this)(4,4) = 1;
+    (*this)(4,4) = 1.0;
     (*this)(4,5) = 0;
     (*this)(5,0) = 0;
     (*this)(5,2) = 0;
@@ -265,8 +265,12 @@ iit::Ballbot::tpl::MotionTransforms<TRAIT>::Type_fr_dummy_base1_X_fr_ball::Type_
     (*this)(2,4) = 0;
     (*this)(2,5) = 0;
     (*this)(3,0) = 0;
+    (*this)(3,1) = 0;
+    (*this)(3,2) = 0;
     (*this)(3,3) = 0;
     (*this)(4,0) = 0;
+    (*this)(4,1) = 0;
+    (*this)(4,2) = 0;
     (*this)(4,3) = 0;
     (*this)(5,0) = 0;
     (*this)(5,1) = 0;
@@ -287,12 +291,8 @@ const typename iit::Ballbot::tpl::MotionTransforms<TRAIT>::Type_fr_dummy_base1_X
     (*this)(0,2) =  c_q_jbase_z_;
     (*this)(1,1) =  c_q_jbase_z_;
     (*this)(1,2) = - s_q_jbase_z_;
-    (*this)(3,1) = ( 0.125 *  c_q_jbase_z_);
-    (*this)(3,2) = (- 0.125 *  s_q_jbase_z_);
     (*this)(3,4) =  s_q_jbase_z_;
     (*this)(3,5) =  c_q_jbase_z_;
-    (*this)(4,1) = (- 0.125 *  s_q_jbase_z_);
-    (*this)(4,2) = (- 0.125 *  c_q_jbase_z_);
     (*this)(4,4) =  c_q_jbase_z_;
     (*this)(4,5) = - s_q_jbase_z_;
     return *this;
@@ -320,8 +320,12 @@ iit::Ballbot::tpl::MotionTransforms<TRAIT>::Type_fr_ball_X_fr_dummy_base1::Type_
     (*this)(3,3) = 0;
     (*this)(3,4) = 0;
     (*this)(3,5) = - 1;
+    (*this)(4,0) = 0;
+    (*this)(4,1) = 0;
     (*this)(4,2) = 0;
     (*this)(4,5) = 0;
+    (*this)(5,0) = 0;
+    (*this)(5,1) = 0;
     (*this)(5,2) = 0;
     (*this)(5,5) = 0;
 }
@@ -337,12 +341,8 @@ const typename iit::Ballbot::tpl::MotionTransforms<TRAIT>::Type_fr_ball_X_fr_dum
     (*this)(1,1) =  c_q_jbase_z_;
     (*this)(2,0) =  c_q_jbase_z_;
     (*this)(2,1) = - s_q_jbase_z_;
-    (*this)(4,0) = ( 0.125 *  c_q_jbase_z_);
-    (*this)(4,1) = (- 0.125 *  s_q_jbase_z_);
     (*this)(4,3) =  s_q_jbase_z_;
     (*this)(4,4) =  c_q_jbase_z_;
-    (*this)(5,0) = (- 0.125 *  s_q_jbase_z_);
-    (*this)(5,1) = (- 0.125 *  c_q_jbase_z_);
     (*this)(5,3) =  c_q_jbase_z_;
     (*this)(5,4) = - s_q_jbase_z_;
     return *this;
@@ -559,13 +559,13 @@ iit::Ballbot::tpl::ForceTransforms<TRAIT>::Type_fr_dummy_ball1_X_fr_base0::Type_
     (*this)(1,0) = 0;
     (*this)(1,1) = 1;
     (*this)(1,2) = 0;
-    (*this)(1,3) = 0;
+    (*this)(1,3) = - 0.125;
     (*this)(1,4) = 0;
     (*this)(2,0) = 1;
     (*this)(2,1) = 0;
     (*this)(2,2) = 0;
     (*this)(2,3) = 0;
-    (*this)(2,4) = 0;
+    (*this)(2,4) = 0.125;
     (*this)(2,5) = 0;
     (*this)(3,0) = 0;
     (*this)(3,1) = 0;
@@ -577,12 +577,12 @@ iit::Ballbot::tpl::ForceTransforms<TRAIT>::Type_fr_dummy_ball1_X_fr_base0::Type_
     (*this)(4,1) = 0;
     (*this)(4,2) = 0;
     (*this)(4,3) = 0;
-    (*this)(4,4) = 1;
+    (*this)(4,4) = 1.0;
     (*this)(4,5) = 0;
     (*this)(5,0) = 0;
     (*this)(5,1) = 0;
     (*this)(5,2) = 0;
-    (*this)(5,3) = 1;
+    (*this)(5,3) = 1.0;
     (*this)(5,4) = 0;
     (*this)(5,5) = 0;
 }
@@ -599,15 +599,15 @@ iit::Ballbot::tpl::ForceTransforms<TRAIT>::Type_fr_base0_X_fr_dummy_ball1::Type_
 {
     (*this)(0,0) = 0;
     (*this)(0,1) = 0;
-    (*this)(0,2) = 1;
+    (*this)(0,2) = 1.0;
     (*this)(0,3) = 0;
-    (*this)(0,4) = 0;
+    (*this)(0,4) = - 0.125;
     (*this)(0,5) = 0;
     (*this)(1,0) = 0;
-    (*this)(1,1) = 1;
+    (*this)(1,1) = 1.0;
     (*this)(1,2) = 0;
     (*this)(1,4) = 0;
-    (*this)(1,5) = 0;
+    (*this)(1,5) = 0.125;
     (*this)(2,0) = - 1;
     (*this)(2,1) = 0;
     (*this)(2,2) = 0;
@@ -737,8 +737,12 @@ iit::Ballbot::tpl::ForceTransforms<TRAIT>::Type_fr_dummy_base1_X_fr_ball::Type_f
 {
     (*this)(0,0) = 0;
     (*this)(0,3) = 0;
+    (*this)(0,4) = 0;
+    (*this)(0,5) = 0;
     (*this)(1,0) = 0;
     (*this)(1,3) = 0;
+    (*this)(1,4) = 0;
+    (*this)(1,5) = 0;
     (*this)(2,0) = - 1;
     (*this)(2,1) = 0;
     (*this)(2,2) = 0;
@@ -770,12 +774,8 @@ const typename iit::Ballbot::tpl::ForceTransforms<TRAIT>::Type_fr_dummy_base1_X_
     
     (*this)(0,1) =  s_q_jbase_z_;
     (*this)(0,2) =  c_q_jbase_z_;
-    (*this)(0,4) = ( 0.125 *  c_q_jbase_z_);
-    (*this)(0,5) = (- 0.125 *  s_q_jbase_z_);
     (*this)(1,1) =  c_q_jbase_z_;
     (*this)(1,2) = - s_q_jbase_z_;
-    (*this)(1,4) = (- 0.125 *  s_q_jbase_z_);
-    (*this)(1,5) = (- 0.125 *  c_q_jbase_z_);
     (*this)(3,4) =  s_q_jbase_z_;
     (*this)(3,5) =  c_q_jbase_z_;
     (*this)(4,4) =  c_q_jbase_z_;
@@ -792,8 +792,12 @@ iit::Ballbot::tpl::ForceTransforms<TRAIT>::Type_fr_ball_X_fr_dummy_base1::Type_f
     (*this)(0,4) = 0;
     (*this)(0,5) = 0;
     (*this)(1,2) = 0;
+    (*this)(1,3) = 0;
+    (*this)(1,4) = 0;
     (*this)(1,5) = 0;
     (*this)(2,2) = 0;
+    (*this)(2,3) = 0;
+    (*this)(2,4) = 0;
     (*this)(2,5) = 0;
     (*this)(3,0) = 0;
     (*this)(3,1) = 0;
@@ -820,12 +824,8 @@ const typename iit::Ballbot::tpl::ForceTransforms<TRAIT>::Type_fr_ball_X_fr_dumm
     
     (*this)(1,0) =  s_q_jbase_z_;
     (*this)(1,1) =  c_q_jbase_z_;
-    (*this)(1,3) = ( 0.125 *  c_q_jbase_z_);
-    (*this)(1,4) = (- 0.125 *  s_q_jbase_z_);
     (*this)(2,0) =  c_q_jbase_z_;
     (*this)(2,1) = - s_q_jbase_z_;
-    (*this)(2,3) = (- 0.125 *  s_q_jbase_z_);
-    (*this)(2,4) = (- 0.125 *  c_q_jbase_z_);
     (*this)(4,3) =  s_q_jbase_z_;
     (*this)(4,4) =  c_q_jbase_z_;
     (*this)(5,3) =  c_q_jbase_z_;
@@ -1039,7 +1039,7 @@ iit::Ballbot::tpl::HomogeneousTransforms<TRAIT>::Type_fr_dummy_ball1_X_fr_base0:
     (*this)(0,0) = 0;
     (*this)(0,1) = 0;
     (*this)(0,2) = - 1;
-    (*this)(0,3) = 0;
+    (*this)(0,3) = 0.125;
     (*this)(1,0) = 0;
     (*this)(1,1) = 1;
     (*this)(1,2) = 0;
@@ -1050,7 +1050,7 @@ iit::Ballbot::tpl::HomogeneousTransforms<TRAIT>::Type_fr_dummy_ball1_X_fr_base0:
     (*this)(3,0) = 0;
     (*this)(3,1) = 0;
     (*this)(3,2) = 0;
-    (*this)(3,3) = 1;
+    (*this)(3,3) = 1.0;
 }
 template <typename TRAIT>
 const typename iit::Ballbot::tpl::HomogeneousTransforms<TRAIT>::Type_fr_dummy_ball1_X_fr_base0& iit::Ballbot::tpl::HomogeneousTransforms<TRAIT>::Type_fr_dummy_ball1_X_fr_base0::update(const JState& q) {
@@ -1069,10 +1069,10 @@ iit::Ballbot::tpl::HomogeneousTransforms<TRAIT>::Type_fr_base0_X_fr_dummy_ball1:
     (*this)(1,1) = 1;
     (*this)(1,2) = 0;
     (*this)(1,3) = 0;
-    (*this)(2,0) = - 1;
+    (*this)(2,0) = - 1.0;
     (*this)(2,1) = 0;
     (*this)(2,2) = 0;
-    (*this)(2,3) = 0;
+    (*this)(2,3) = 0.125;
     (*this)(3,0) = 0;
     (*this)(3,1) = 0;
     (*this)(3,2) = 0;
@@ -1147,11 +1147,11 @@ iit::Ballbot::tpl::HomogeneousTransforms<TRAIT>::Type_fr_dummy_base1_X_fr_ball::
     (*this)(2,0) = - 1;
     (*this)(2,1) = 0;
     (*this)(2,2) = 0;
-    (*this)(2,3) = - 0.125;
+    (*this)(2,3) = 0;
     (*this)(3,0) = 0;
     (*this)(3,1) = 0;
     (*this)(3,2) = 0;
-    (*this)(3,3) = 1.0;
+    (*this)(3,3) = 1;
 }
 template <typename TRAIT>
 const typename iit::Ballbot::tpl::HomogeneousTransforms<TRAIT>::Type_fr_dummy_base1_X_fr_ball& iit::Ballbot::tpl::HomogeneousTransforms<TRAIT>::Type_fr_dummy_base1_X_fr_ball::update(const JState& q) {
@@ -1172,8 +1172,8 @@ iit::Ballbot::tpl::HomogeneousTransforms<TRAIT>::Type_fr_ball_X_fr_dummy_base1::
 {
     (*this)(0,0) = 0;
     (*this)(0,1) = 0;
-    (*this)(0,2) = - 1.0;
-    (*this)(0,3) = - 0.125;
+    (*this)(0,2) = - 1;
+    (*this)(0,3) = 0;
     (*this)(1,2) = 0;
     (*this)(1,3) = 0;
     (*this)(2,2) = 0;

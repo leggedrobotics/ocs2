@@ -3,8 +3,8 @@
 
 #include <Eigen/Dense>
 #include <iit/rbd/TransformsBase.h>
-#include <iit/rbd/traits/DoubleTrait.h>
 #include "declarations.h"
+#include <iit/rbd/traits/DoubleTrait.h>
 #include "kinematics_parameters.h"
 
 namespace iit {

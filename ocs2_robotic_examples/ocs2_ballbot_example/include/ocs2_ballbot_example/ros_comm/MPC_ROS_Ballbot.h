@@ -120,23 +120,26 @@ public:
 			cost_desired_trajectories_t& costDesiredTrajectories) final {
 
 		// Received command
-		const Eigen::Matrix<scalar_t, 3, 1> targetPoseDisplacement =
-				costDesiredTrajectories.desiredStateTrajectory().front().head<3>();
+		const Eigen::Matrix<scalar_t, 2, 1> targetPosition =
+				costDesiredTrajectories.desiredStateTrajectory().front().head<2>();
+		double targetYawDisplacement = costDesiredTrajectories.desiredStateTrajectory().front()(2);
 		const Eigen::Matrix<scalar_t, 3, 1> targetVelocity =
 				costDesiredTrajectories.desiredStateTrajectory().front().tail<3>();
 
 		// Target reaching duration
-		const scalar_t averageSpeed = 2.0;
-		scalar_t targetReachingDuration1 = targetPoseDisplacement.norm() / averageSpeed;
-		const scalar_t averageAcceleration = 10.0;
-		scalar_t targetReachingDuration2 = targetVelocity.norm() / averageAcceleration;
-		scalar_t targetReachingDuration = std::max(targetReachingDuration1, targetReachingDuration2);
+//		const scalar_t averageSpeed = 2.0;
+//		scalar_t targetReachingDuration1 = targetPoseDisplacement.norm() / averageSpeed;
+//		const scalar_t averageAcceleration = 10.0;
+//		scalar_t targetReachingDuration2 = targetVelocity.norm() / averageAcceleration;
+//		scalar_t targetReachingDuration = std::max(targetReachingDuration1, targetReachingDuration2);
+
 
 		// Desired time trajectory
 		scalar_array_t& tDesiredTrajectory = costDesiredTrajectories.desiredTimeTrajectory();
 		tDesiredTrajectory.resize(2);
 		tDesiredTrajectory[0] = currentObservation.time();
-		tDesiredTrajectory[1] = currentObservation.time() + targetReachingDuration;
+//        tDesiredTrajectory[1] = currentObservation.time() + targetReachingDuration;
+		tDesiredTrajectory[1] = currentObservation.time() + 0.0025;
 
 		// Desired state trajectory
 		typename cost_desired_trajectories_t::dynamic_vector_array_t& xDesiredTrajectory =
@@ -144,7 +147,9 @@ public:
 		xDesiredTrajectory.resize(2);
 		xDesiredTrajectory[0] = currentObservation.state();
 		xDesiredTrajectory[1] = currentObservation.state();
-		xDesiredTrajectory[1].head<3>() += targetPoseDisplacement;
+//		xDesiredTrajectory[1].head<3>() += targetPoseDisplacement;
+        xDesiredTrajectory[1].head<2>() = targetPosition;
+        xDesiredTrajectory[1](2) += targetYawDisplacement;
 		xDesiredTrajectory[1].tail<5>() << targetVelocity, 0.0, 0.0;
 
 		// Desired input trajectory

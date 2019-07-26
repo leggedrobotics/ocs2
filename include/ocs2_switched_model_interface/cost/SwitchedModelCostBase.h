@@ -8,11 +8,12 @@
 #ifndef SWITCHEDMODELCOSTBASE_H_
 #define SWITCHEDMODELCOSTBASE_H_
 
+#include <Eigen/Dense>
+#include <Eigen/StdVector>
+
 #include <array>
 #include <memory>
 #include <iostream>
-#include <Eigen/StdVector>
-#include <Eigen/Dense>
 #include <vector>
 #include <map>
 

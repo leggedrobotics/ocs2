@@ -5,10 +5,11 @@
 #ifndef OCS2_CTRL_CONVEXPLANARPOLYTOPE3D_H
 #define OCS2_CTRL_CONVEXPLANARPOLYTOPE3D_H
 
-#include <geometry_msgs/PolygonStamped.h>
-#include <ros/ros.h>
 #include <Eigen/Dense>
 #include <Eigen/StdVector>
+
+#include <geometry_msgs/PolygonStamped.h>
+#include <ros/ros.h>
 
 namespace switched_model {
 

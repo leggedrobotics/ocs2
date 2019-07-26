@@ -35,7 +35,8 @@ class LoopshapingDynamicsInputPattern final
   void filterFlowmap(const filter_state_vector_t& x_filter, const filter_input_vector_t& u_filter, const system_input_vector_t& u_system,
                      filter_state_vector_t& filterStateDerivative) override {
     const auto& s_filter = loopshapingDefinition_->getInputFilter();
-    filterStateDerivative = s_filter.getA() * x_filter + s_filter.getB() * u_filter;
+    filterStateDerivative.noalias() = s_filter.getA() * x_filter;
+    filterStateDerivative.noalias() += s_filter.getB() * u_filter;
   }
 };
 }  // namespace ocs2

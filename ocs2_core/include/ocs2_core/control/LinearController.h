@@ -104,7 +104,8 @@ class LinearController final : public ControllerBase<STATE_DIM, INPUT_DIM> {
     input_state_matrix_t k;
     linInterpolateGain_.interpolate(indexAlpha, k);
 
-    return uff + k * x;
+    uff.noalias() += k * x;
+    return uff;
   }
 
   void flatten(const scalar_array_t& timeArray, const std::vector<float_array_t*>& flatArray2) const override {

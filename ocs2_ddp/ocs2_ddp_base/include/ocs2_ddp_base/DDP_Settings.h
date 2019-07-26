@@ -375,7 +375,7 @@ inline void DDP_Settings::loadSettings(const std::string& filename, const std::s
 	}
 
 	try	{
-		maxNumStepsPerSecond_ = pt.get<double>(fieldName + ".maxNumStepsPerSecond");
+		maxNumStepsPerSecond_ = pt.get<size_t>(fieldName + ".maxNumStepsPerSecond");
 		if (verbose) {  std::cerr << " #### Option loader : option 'maxNumStepsPerSecond' ................ " << maxNumStepsPerSecond_ << std::endl;
 		}
 	}

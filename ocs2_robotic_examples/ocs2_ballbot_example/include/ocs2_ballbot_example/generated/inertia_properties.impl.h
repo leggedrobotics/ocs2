@@ -49,16 +49,16 @@ iit::Ballbot::dyn::tpl::InertiaProperties<TRAIT>::InertiaProperties()
                 Scalar(0.0),
                 Scalar(0.0)) );
 
-    com_base = iit::rbd::Vector3d(-0.1956,0.0053,0.002).cast<Scalar>();
+    com_base = iit::rbd::Vector3d(-0.23,0.0033,0.003).cast<Scalar>();
     tensor_base.fill(
         Scalar(16.944),
         com_base,
         rbd::Utils::buildInertiaTensor(
-                Scalar(0.1672),
-                Scalar(2.452),
-                Scalar(2.4487),
-                Scalar(-0.0176),
-                Scalar(-0.0066),
+                Scalar(0.2003),
+                Scalar(2.7002),
+                Scalar(2.6965),
+                Scalar(-0.0129),
+                Scalar(-0.0117),
                 Scalar(2.0E-4)) );
 
 }

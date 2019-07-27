@@ -199,3 +199,7 @@ target_link_libraries(test_LinearAlgebra
   ${Boost_LIBRARIES}
   ${catkin_LIBRARIES}
 )
+
+catkin_add_gtest(test_lookup
+        test/misc/testLookup.cpp
+)

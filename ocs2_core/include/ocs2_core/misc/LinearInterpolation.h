@@ -37,6 +37,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <memory>
 #include <vector>
 
+#include <ocs2_core/misc/Lookup.h>
+
 namespace ocs2 {
 
 /**
@@ -160,19 +162,7 @@ class LinearInterpolation {
     }
   }
 
- protected:
-  /**
-   * Finds the index of the greatest smaller time stamp index for the enquiry time.
-   *
-   * @param [in] enquiryTime: The enquiry time for interpolation.
-   * @return The greatest smaller time stamp index.
-   */
-  inline static int find(const std::vector<scalar_t>& timeArray, scalar_t enquiryTime) {
-    //! @remark Idea for improvement: interpolation search mentioned here
-    //! https://stackoverflow.com/questions/26613111/binary-search-with-hint
-    return static_cast<int>(std::lower_bound(timeArray.begin(), timeArray.end(), enquiryTime) - timeArray.begin() - 1);
-  }
-
+ private:
   /**
    * Get the interval index and interpolation coefficient alpha.
    * Alpha = 1 at the start of the interval and alpha = 0 at the end.
@@ -182,7 +172,7 @@ class LinearInterpolation {
    * @return std::pair<int, double> : {index, alpha}
    */
   static std::pair<int, double> getIndexAlpha(const std::vector<scalar_t>& timeArray, scalar_t enquiryTime) {
-    int index = find(timeArray, enquiryTime);
+    int index = Lookup::findIntervalInTimeArray(timeArray, enquiryTime);
     auto lastInterval = static_cast<int>(timeArray.size() - 1);
     if (index >= 0) {
       if (index < lastInterval) {
@@ -200,7 +190,6 @@ class LinearInterpolation {
     }
   }
 
- private:
   const std::vector<scalar_t>* timeStampPtr_;
   const std::vector<Data_T, Alloc>* dataPtr_;
 };

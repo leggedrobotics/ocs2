@@ -35,7 +35,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_core/dynamics/DerivativesBase.h>
 #include <ocs2_core/constraint/ConstraintBase.h>
 #include <ocs2_core/cost/CostFunctionBase.h>
-#include <ocs2_core/misc/FindActiveIntervalIndex.h>
 #include <ocs2_core/initialization/SystemOperatingPoint.h>
 
 namespace ocs2 {

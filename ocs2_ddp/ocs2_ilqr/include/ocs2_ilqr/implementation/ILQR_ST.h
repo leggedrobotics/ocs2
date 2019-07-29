@@ -113,7 +113,7 @@ void ILQR_ST<STATE_DIM, INPUT_DIM>::lineSearch(bool computeISEs) {
   state_vector_array2_t lsStateTrajectoriesStock(BASE::numPartitions_);
   input_vector_array2_t lsInputTrajectoriesStock(BASE::numPartitions_);
 
-  while (learningRate + OCS2NumericTraits<scalar_t>::limitEpsilon() >= BASE::ddpSettings_.minLearningRate_) {
+  while (Numerics::almost_ge(learningRate, BASE::ddpSettings_.minLearningRate_)) {
     // do a line search
     lsControllersStock = BASE::initLScontrollersStock_;
     BASE::lineSearchWorker(workerIndex, learningRate, lsTotalCost, lsConstraint1ISE, lsConstraint1MaxNorm, lsConstraint2ISE,

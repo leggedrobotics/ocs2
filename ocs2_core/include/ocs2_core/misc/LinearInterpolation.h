@@ -60,7 +60,7 @@ class LinearInterpolation {
   /**
    * Default constructor.
    */
-  LinearInterpolation() : timeStampPtr_(nullptr), dataPtr_(nullptr) { }
+  LinearInterpolation() : timeStampPtr_(nullptr), dataPtr_(nullptr) {}
 
   /**
    * Constructor
@@ -68,8 +68,7 @@ class LinearInterpolation {
    * @param [in] timeStampPtr: A pointer to time stamp.
    * @param [in] dataPtr: A pointer to the data.
    */
-  LinearInterpolation(const std::vector<scalar_t>* timeStampPtr, const std::vector<Data_T, Alloc>* dataPtr)
-  {
+  LinearInterpolation(const std::vector<scalar_t>* timeStampPtr, const std::vector<Data_T, Alloc>* dataPtr) {
     setData(timeStampPtr, dataPtr);
   }
 

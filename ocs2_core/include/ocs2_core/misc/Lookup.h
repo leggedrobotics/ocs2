@@ -39,7 +39,6 @@ size_t findFirstIndexWithinTol(const std::vector<scalar_t>& dataArray, scalar_t 
   throw std::runtime_error(msg.str());
 }
 
-
 /**
  *  Find index into a sorted time Array
  *
@@ -60,7 +59,7 @@ size_t findFirstIndexWithinTol(const std::vector<scalar_t>& dataArray, scalar_t 
  * @return index between [0, size(timeArray)]
  */
 template <typename scalar_t = double>
-int findIndexInTimeArray(const std::vector<scalar_t>& timeArray,  scalar_t time) {
+int findIndexInTimeArray(const std::vector<scalar_t>& timeArray, scalar_t time) {
   auto firstLargerValueIterator = std::lower_bound(timeArray.begin(), timeArray.end(), time);
   return static_cast<int>(firstLargerValueIterator - timeArray.begin());
 };
@@ -81,8 +80,8 @@ int findIndexInTimeArray(const std::vector<scalar_t>& timeArray,  scalar_t time)
  * @return interval between [-1, size(timeArray)-1]
  */
 template <typename scalar_t = double>
-int findIntervalInTimeArray(const std::vector<scalar_t>& timeArray,  scalar_t time) {
-  if (!timeArray.empty()){
+int findIntervalInTimeArray(const std::vector<scalar_t>& timeArray, scalar_t time) {
+  if (!timeArray.empty()) {
     return findIndexInTimeArray(timeArray, time) - 1;
   } else {
     return 0;
@@ -97,10 +96,10 @@ int findIntervalInTimeArray(const std::vector<scalar_t>& timeArray,  scalar_t ti
  *  @return partition between [-1, size(timeArray)-1]
  */
 template <typename scalar_t = double>
-int findPartitionInTimeArray(const std::vector<scalar_t>& timeArray,  scalar_t time) {
+int findPartitionInTimeArray(const std::vector<scalar_t>& timeArray, scalar_t time) {
   if (!timeArray.empty() && time != timeArray.front()) {
     return findIntervalInTimeArray(timeArray, time);
-  } else { // t = t0
+  } else {  // t = t0
     return 0;
   }
 };
@@ -113,7 +112,7 @@ int findPartitionInTimeArray(const std::vector<scalar_t>& timeArray,  scalar_t t
  * @return partition between [0, size(timeArray)-2]
  */
 template <typename scalar_t = double>
-int findActivePartitionInTimeArray(const std::vector<scalar_t>& timeArray,  scalar_t time) {
+int findActivePartitionInTimeArray(const std::vector<scalar_t>& timeArray, scalar_t time) {
   auto partition = findPartitionInTimeArray(timeArray, time);
 
   if (timeArray.empty()) {
@@ -122,20 +121,19 @@ int findActivePartitionInTimeArray(const std::vector<scalar_t>& timeArray,  scal
   }
 
   if (partition < 0) {
-    std::string mesg = "[findActivePartitionInTimeArray] Given time is less than the start time (i.e. givenTime < timeArray.front()): " + std::to_string(time) +
-        " < " + std::to_string(timeArray.front());
+    std::string mesg = "[findActivePartitionInTimeArray] Given time is less than the start time (i.e. givenTime < timeArray.front()): " +
+                       std::to_string(time) + " < " + std::to_string(timeArray.front());
     throw std::runtime_error(mesg);
   }
 
   if (partition >= timeArray.size() - 1) {
     std::string mesg = "[findActivePartitionInTimeArray] Given time is greater than the final time (i.e. timeArray.back() < givenTime): " +
-        std::to_string(timeArray.back()) + " < " + std::to_string(time);
+                       std::to_string(timeArray.back()) + " < " + std::to_string(time);
     throw std::runtime_error(mesg);
   }
 
   return partition;
 };
-
 
 }  // namespace Lookup
 }  // namespace ocs2

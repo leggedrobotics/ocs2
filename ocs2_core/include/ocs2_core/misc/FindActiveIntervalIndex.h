@@ -38,7 +38,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 namespace ocs2 {
 
-//TODO(all) : stop using these functions and use those in lookup.h instead
+// TODO(all) : stop using these functions and use those in lookup.h instead
 
 /**
  * This function finds the interval in the input timeIntervals vector to which the input time belongs

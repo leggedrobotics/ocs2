@@ -105,3 +105,7 @@ target_link_libraries(exp2_slq_test
   ${Boost_LIBRARIES}
 )
 
+catkin_add_gtest(testRiccatiEquations
+        test/testRiccatiEquations.cpp
+        )
+

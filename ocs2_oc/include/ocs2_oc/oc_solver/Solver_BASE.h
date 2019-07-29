@@ -49,6 +49,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_core/logic/rules/NullLogicRules.h>
 #include <ocs2_core/misc/FindActiveIntervalIndex.h>
 #include <ocs2_core/misc/LinearAlgebra.h>
+#include <ocs2_core/misc/Numerics.h>
 
 namespace ocs2 {
 

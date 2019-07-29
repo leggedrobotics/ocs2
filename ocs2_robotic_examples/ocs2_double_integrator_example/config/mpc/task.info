@@ -116,8 +116,8 @@ mpc
 pathIntegral
 {
   gamma 0.01 ; temperature/level of noise
-  numSamples 100 ; how many trajectories to sample
-  debugPrint 0
+  numSamples 1000 ; how many trajectories to sample
+  debugPrint 2 ; verbosity level
 
   rollout_settings
   {

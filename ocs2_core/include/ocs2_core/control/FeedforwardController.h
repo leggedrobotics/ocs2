@@ -220,6 +220,13 @@ class FeedforwardController final : public ControllerBase<STATE_DIM, INPUT_DIM>
 	  return timeStamp_.size();
   }
 
+  void display() const override {
+    for (int i=0;i<timeStamp_.size();i++) {
+        std::cerr << "t\t" << timeStamp_[i] << "\tu\t" << uffArray_[i].transpose() << "\n";
+      }
+    std::cerr << std::endl;
+  }
+
  public:
   scalar_array_t timeStamp_;
   input_vector_array_t uffArray_;

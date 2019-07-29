@@ -151,7 +151,6 @@ class PiController final : public ControllerBase<STATE_DIM, INPUT_DIM> {
     input_vector_t policyInput;
     if (samplingPolicy_) {
       policyInput = (input_matrix_t::Identity() - Dtilde) * samplingPolicy_->computeInput(t, x) - Ddagger * c;
-      //! @TODO Compute contribution from likelihood ratio
     } else {
       policyInput = defaultInput;
     }
@@ -165,7 +164,7 @@ class PiController final : public ControllerBase<STATE_DIM, INPUT_DIM> {
       costs_->getIntermediateCost(V);  // must have set zero input before
       scalar_t stageCost = 0.5 * policyInput.dot(R * policyInput) + r.dot(policyInput) + V;
       if (samplingPolicy_) {
-        stageCost += (policyInput - defaultInput).dot(R * noiseInput);
+         stageCost += (policyInput - defaultInput).dot(R * noiseInput);
       }
 
       cacheData_.emplace_back(PiControllerEvaluationData());
@@ -209,6 +208,16 @@ class PiController final : public ControllerBase<STATE_DIM, INPUT_DIM> {
   virtual bool empty() const override { return samplingPolicy_ == nullptr; }
 
   void setRandomSeed(unsigned int seed) { generator_.seed(seed); }
+
+  void display() const override {
+    if(samplingPolicy_){
+      std::cerr << "Sampling policy:" << std::endl;
+      samplingPolicy_->display();
+      }else{
+        std::cerr << "Sampling policy empty." << std::endl;
+      }
+
+  }
 
  public:
   scalar_t gamma_;     //! scaling of noise

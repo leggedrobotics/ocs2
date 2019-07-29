@@ -4,7 +4,10 @@
 
 #include <gtest/gtest.h>
 #include <ocs2_core/misc/LinearAlgebra.h>
-#include "randomMatrices.h"
+#include "ocs2_core/misc/randomMatrices.h"
+
+using namespace ocs2;
+using namespace LinearAlgebra;
 
 TEST(LLTofInverse, checkAgainstFullInverse)
 {
@@ -16,7 +19,7 @@ TEST(LLTofInverse, checkAgainstFullInverse)
   Matrix_t A = generateSPDmatrix<Matrix_t>();
   Matrix_t LinvT;
 
-  ocs2::LinearAlgebra::computeLinvTLinv(A, LinvT);
+  computeLinvTLinv(A, LinvT);
 
   Matrix_t Ainv = A.inverse();
   Matrix_t Ainv_constructed = LinvT * LinvT.transpose();
@@ -39,12 +42,12 @@ TEST(constraintProjection, checkAgainstFullComputations)
 
   // Inverse of R
   Matrix_t RinvChol;
-  ocs2::LinearAlgebra::computeLinvTLinv(R, RinvChol);
+  computeLinvTLinv(R, RinvChol);
   Matrix_t Rinv = RinvChol * RinvChol.transpose();
 
   // Compute constraint projection terms, this is what we are testing in this unit test
   Eigen::MatrixXd Ddagger, DdaggerT_R_Ddagger_Chol, RinvConstrainedChol;
-  ocs2::LinearAlgebra::computeConstraintProjection(D, RinvChol, Ddagger, DdaggerT_R_Ddagger_Chol, RinvConstrainedChol);
+  computeConstraintProjection(D, RinvChol, Ddagger, DdaggerT_R_Ddagger_Chol, RinvConstrainedChol);
 
   // Reconstruct full matrices to compare
   Eigen::MatrixXd RinvConstrained = RinvConstrainedChol * RinvConstrainedChol.transpose();

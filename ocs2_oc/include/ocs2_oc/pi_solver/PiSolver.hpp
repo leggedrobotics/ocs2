@@ -179,21 +179,21 @@ class PiSolver final : public Solver_BASE<STATE_DIM, INPUT_DIM> {
       if (J[sample][numSteps - 1] < minJ_currStep) {
         minJ_currStep = J[sample][numSteps - 1];
       }
-      if (std::isfinite(J[sample][numSteps - 1]) && J[sample][numSteps - 1] > maxJ_currStep ){
-          maxJ_currStep = J[sample][numSteps - 1];
-        }
+      if (std::isfinite(J[sample][numSteps - 1]) && J[sample][numSteps - 1] > maxJ_currStep) {
+        maxJ_currStep = J[sample][numSteps - 1];
+      }
     }
 
     // initialize psi
-    psiDistorted[numSteps - 1] =
-        std::accumulate(J.begin(), J.end(), scalar_t(0.0), [this, numSteps, minJ_currStep, maxJ_currStep](scalar_t a, const scalar_array_t& Ji) {
+    psiDistorted[numSteps - 1] = std::accumulate(
+        J.begin(), J.end(), scalar_t(0.0), [this, numSteps, minJ_currStep, maxJ_currStep](scalar_t a, const scalar_array_t& Ji) {
           return std::move(a) + std::exp(-(Ji[numSteps - 1] - minJ_currStep) / (maxJ_currStep - minJ_currStep) / settings_.gamma_);
         });
 
     // initialize u for each sample
     for (size_t sample = 0; sample < settings_.numSamples_; sample++) {
-      u_opt[numSteps - 1] +=
-          noisyInputVector_array2[sample][numSteps - 1] * std::exp(-(J[sample][numSteps - 1] - minJ_currStep) / (maxJ_currStep - minJ_currStep) / settings_.gamma_);
+      u_opt[numSteps - 1] += noisyInputVector_array2[sample][numSteps - 1] *
+                             std::exp(-(J[sample][numSteps - 1] - minJ_currStep) / (maxJ_currStep - minJ_currStep) / settings_.gamma_);
     }
     u_opt[numSteps - 1] /= psiDistorted[numSteps - 1];
 
@@ -201,16 +201,16 @@ class PiSolver final : public Solver_BASE<STATE_DIM, INPUT_DIM> {
     for (int n = numSteps - 2; n >= 0; n--) {
       // calculate cost-to-go for this step for each sample
       scalar_t minJ_currStep = std::numeric_limits<scalar_t>::max();
-       scalar_t maxJ_currStep = 0;
+      scalar_t maxJ_currStep = 0;
       for (size_t sample = 0; sample < settings_.numSamples_; sample++) {
         J[sample][n] = J[sample][n + 1] + stageCost[sample][n];
 
         if (J[sample][n] < minJ_currStep) {
           minJ_currStep = J[sample][n];
         }
-        if (std::isfinite(J[sample][n]) && J[sample][n] > maxJ_currStep ){
-            maxJ_currStep = J[sample][n];
-          }
+        if (std::isfinite(J[sample][n]) && J[sample][n] > maxJ_currStep) {
+          maxJ_currStep = J[sample][n];
+        }
       }
 
       if (minJ_currStep == std::numeric_limits<scalar_t>::max()) {
@@ -222,9 +222,10 @@ class PiSolver final : public Solver_BASE<STATE_DIM, INPUT_DIM> {
         }
       }
 
-      psiDistorted[n] = std::accumulate(J.begin(), J.end(), scalar_t(0.0), [this, n, minJ_currStep, maxJ_currStep](scalar_t a, const scalar_array_t& Ji) {
-        return std::move(a) + std::exp(-(Ji[n] - minJ_currStep) / (maxJ_currStep - minJ_currStep) / settings_.gamma_);
-      });
+      psiDistorted[n] =
+          std::accumulate(J.begin(), J.end(), scalar_t(0.0), [this, n, minJ_currStep, maxJ_currStep](scalar_t a, const scalar_array_t& Ji) {
+            return std::move(a) + std::exp(-(Ji[n] - minJ_currStep) / (maxJ_currStep - minJ_currStep) / settings_.gamma_);
+          });
 
       if (psiDistorted[n] / settings_.numSamples_ < 0.01) {
         std::cerr << "Warning: Less than ~1% of samples are significant in step " << n << std::endl;
@@ -232,7 +233,8 @@ class PiSolver final : public Solver_BASE<STATE_DIM, INPUT_DIM> {
 
       // u_opt
       for (size_t sample = 0; sample < settings_.numSamples_; sample++) {
-        u_opt[n] += noisyInputVector_array2[sample][n] * std::exp(-(J[sample][n] - minJ_currStep) / (maxJ_currStep - minJ_currStep) / settings_.gamma_);
+        u_opt[n] += noisyInputVector_array2[sample][n] *
+                    std::exp(-(J[sample][n] - minJ_currStep) / (maxJ_currStep - minJ_currStep) / settings_.gamma_);
       }
       u_opt[n] /= psiDistorted[n];
     }

@@ -87,9 +87,7 @@ class PiController final : public ControllerBase<STATE_DIM, INPUT_DIM> {
     samplingPolicy_.reset(other.samplingPolicy_->clone());
   }
 
-  PiController<STATE_DIM, INPUT_DIM> * clone() override {
-    return new PiController<STATE_DIM, INPUT_DIM>(*this);
-  }
+  PiController<STATE_DIM, INPUT_DIM>* clone() override { return new PiController<STATE_DIM, INPUT_DIM>(*this); }
 
   /**
    * Default destructor.
@@ -163,7 +161,7 @@ class PiController final : public ControllerBase<STATE_DIM, INPUT_DIM> {
       costs_->getIntermediateCost(V);  // must have set zero input before
       scalar_t stageCost = 0.5 * policyInput.dot(R * policyInput) + r.dot(policyInput) + V;
       if (samplingPolicy_) {
-         stageCost += (policyInput - defaultInput).dot(R * noiseInput);
+        stageCost += (policyInput - defaultInput).dot(R * noiseInput);
       }
 
       cacheData_.emplace_back(PiControllerEvaluationData());
@@ -209,13 +207,12 @@ class PiController final : public ControllerBase<STATE_DIM, INPUT_DIM> {
   void setRandomSeed(unsigned int seed) { generator_.seed(seed); }
 
   void display() const override {
-    if(samplingPolicy_){
+    if (samplingPolicy_) {
       std::cerr << "Sampling policy:" << std::endl;
       samplingPolicy_->display();
-      }else{
-        std::cerr << "Sampling policy empty." << std::endl;
-      }
-
+    } else {
+      std::cerr << "Sampling policy empty." << std::endl;
+    }
   }
 
  public:

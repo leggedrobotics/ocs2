@@ -32,12 +32,11 @@ class PI_Settings {
   size_t numSamples_;  //! how many trajectories to sample
   int debugPrint_;     //! verbose printing output for debugging
 
-  Rollout_Settings rolloutSettings_; //! settings for rollouts used in PI solver
+  Rollout_Settings rolloutSettings_;  //! settings for rollouts used in PI solver
 };
 
 void PI_Settings::loadSettings(const std::string& filename, const std::string& fieldName, bool verbose) {
-
-  rolloutSettings_.loadSettings(filename, fieldName+".rollout_settings", verbose);
+  rolloutSettings_.loadSettings(filename, fieldName + ".rollout_settings", verbose);
 
   boost::property_tree::ptree pt;
   boost::property_tree::read_info(filename, pt);

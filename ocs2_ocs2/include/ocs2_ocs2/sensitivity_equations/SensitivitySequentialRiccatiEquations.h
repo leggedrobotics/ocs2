@@ -44,7 +44,7 @@ namespace ocs2{
  *
  * @tparam STATE_DIM: Dimension of the state space.
  * @tparam INPUT_DIM: Dimension of the control input space.
- */
+  */
 template <size_t STATE_DIM, size_t INPUT_DIM>
 class SensitivitySequentialRiccatiEquations : public OdeBase<STATE_DIM*(STATE_DIM+1)/2+STATE_DIM+1>
 {
@@ -258,21 +258,21 @@ public:
 
 		convert2Matrix(allSs, nabla_Sm_, nabla_Sv_, nabla_s_);
 
-		auto greatestLessTimeStampIndex = SvFunc_.interpolate(t, Sv_);
-		SmFunc_.interpolate(t, Sm_, greatestLessTimeStampIndex);
+		auto indexAlpha = SvFunc_.interpolate(t, Sv_);
+		SmFunc_.interpolate(indexAlpha,  Sm_);
 
-		greatestLessTimeStampIndex = AmFunc_.interpolate(t, Am_);
-		BmFunc_.interpolate(t, Bm_, greatestLessTimeStampIndex);
+		indexAlpha = AmFunc_.interpolate(t, Am_);
+		BmFunc_.interpolate(indexAlpha,  Bm_);
 		qFunc_.interpolate(t, q_);
-		QvFunc_.interpolate(t, Qv_, greatestLessTimeStampIndex);
-		QmFunc_.interpolate(t, Qm_, greatestLessTimeStampIndex);
-		RvFunc_.interpolate(t, Rv_, greatestLessTimeStampIndex);
-		RmInverseFunc_.interpolate(t, invRm_, greatestLessTimeStampIndex);
-		RmFunc_.interpolate(t, Rm_, greatestLessTimeStampIndex);
-		PmFunc_.interpolate(t, Pm_, greatestLessTimeStampIndex);
-		nabla_qFunc_.interpolate(t, nabla_q_, greatestLessTimeStampIndex);
-		nabla_QvFunc_.interpolate(t, nabla_Qv_, greatestLessTimeStampIndex);
-		nabla_RvFunc_.interpolate(t, nabla_Rv_, greatestLessTimeStampIndex);
+		QvFunc_.interpolate(indexAlpha,  Qv_);
+		QmFunc_.interpolate(indexAlpha,  Qm_);
+		RvFunc_.interpolate(indexAlpha,  Rv_);
+		RmInverseFunc_.interpolate(indexAlpha,  invRm_);
+		RmFunc_.interpolate(indexAlpha,  Rm_);
+		PmFunc_.interpolate(indexAlpha,  Pm_);
+		nabla_qFunc_.interpolate(indexAlpha,  nabla_q_);
+		nabla_QvFunc_.interpolate(indexAlpha,  nabla_Qv_);
+		nabla_RvFunc_.interpolate(indexAlpha,  nabla_Rv_);
 
 		Lv_ = invRm_ * (Rv_ + Bm_.transpose()*Sv_);
 		Lm_ = invRm_ * (Pm_ + Bm_.transpose()*Sm_);

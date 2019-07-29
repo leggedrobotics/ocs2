@@ -41,7 +41,7 @@ class MpcRosDoubleSlit : public MPC_ROS_Interface<double_slit::STATE_DIM_, doubl
    * @param [in] mpc: The MPC object to be interfaced.
    * @param [in] robotName: The robot's name.
    */
-  explicit MpcRosDoubleSlit(mpc_t& mpc, const std::string& nodeName = "robot_mpc") : BASE(mpc, nodeName) {}
+  explicit MpcRosDoubleSlit(mpc_t& mpc, const std::string& nodeName = "robot_mpc") : BASE(&mpc, nodeName) {}
 
   /**
    * Destructor.

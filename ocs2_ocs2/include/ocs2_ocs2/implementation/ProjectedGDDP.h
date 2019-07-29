@@ -32,8 +32,8 @@ namespace ocs2 {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-ProjectedGDDP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::ProjectedGDDP(
+template <size_t STATE_DIM, size_t INPUT_DIM>
+ProjectedGDDP<STATE_DIM, INPUT_DIM>::ProjectedGDDP(
 		const GDDP_Settings& gddpSettings /*= GDDP_Settings()*/)
 	: BASE(gddpSettings)
 	, lpPtr_(glp_create_prob(), glp_delete_prob)
@@ -42,8 +42,8 @@ ProjectedGDDP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::ProjectedGDDP(
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void ProjectedGDDP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::eventTimesConstraint(
+template <size_t STATE_DIM, size_t INPUT_DIM>
+void ProjectedGDDP<STATE_DIM, INPUT_DIM>::eventTimesConstraint(
 		const scalar_array_t& eventTimes,
 		const size_t& activeEventTimeBeginIndex,
 		const size_t& activeEventTimeEndIndex,
@@ -75,8 +75,8 @@ void ProjectedGDDP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::eventTimesConstraint(
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void ProjectedGDDP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::setupGLPK() {
+template <size_t STATE_DIM, size_t INPUT_DIM>
+void ProjectedGDDP<STATE_DIM, INPUT_DIM>::setupGLPK() {
 
 	// erase the solver
 	glp_erase_prob(lpPtr_.get());
@@ -91,8 +91,8 @@ void ProjectedGDDP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::setupGLPK() {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void ProjectedGDDP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::setupLP(
+template <size_t STATE_DIM, size_t INPUT_DIM>
+void ProjectedGDDP<STATE_DIM, INPUT_DIM>::setupLP(
 		const scalar_array_t& eventTimes,
 		const dynamic_vector_t& gradient,
 		const size_t& activeEventTimeBeginIndex,
@@ -149,8 +149,8 @@ void ProjectedGDDP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::setupLP(
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void ProjectedGDDP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::frankWolfeProblem(
+template <size_t STATE_DIM, size_t INPUT_DIM>
+void ProjectedGDDP<STATE_DIM, INPUT_DIM>::frankWolfeProblem(
 		const dynamic_vector_t& gradient,
 		scalar_array_t& eventTimesOptimized) {
 
@@ -179,8 +179,8 @@ void ProjectedGDDP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::frankWolfeProblem(
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void ProjectedGDDP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::run(
+template <size_t STATE_DIM, size_t INPUT_DIM>
+void ProjectedGDDP<STATE_DIM, INPUT_DIM>::run(
 		scalar_array_t eventTimes,
 		const slq_data_collector_t* dcPtr,
 		scalar_array_t& eventTimesOptimized,

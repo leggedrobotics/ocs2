@@ -1,19 +1,19 @@
 #pragma once
 
 #include <ocs2_mpc/MPC_BASE.h>
-#include <ocs2_oc/pi_solver/PiSolver.hpp>
 #include <ocs2_oc/pi_solver/PI_Settings.h>
+#include <ocs2_oc/pi_solver/PiSolver.hpp>
 
 namespace ocs2 {
 
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T = NullLogicRules>
-class MPC_PI : public MPC_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> {
+template <size_t STATE_DIM, size_t INPUT_DIM>
+class MPC_PI : public MPC_BASE<STATE_DIM, INPUT_DIM> {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-  typedef std::shared_ptr<MPC_PI<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>> Ptr;
+  typedef std::shared_ptr<MPC_PI<STATE_DIM, INPUT_DIM>> Ptr;
 
-  typedef MPC_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> BASE;
+  typedef MPC_BASE<STATE_DIM, INPUT_DIM> BASE;
   typedef Dimensions<STATE_DIM, INPUT_DIM> DIMENSIONS;
 
   typedef typename DIMENSIONS::scalar_t scalar_t;
@@ -23,14 +23,14 @@ class MPC_PI : public MPC_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> {
   typedef typename DIMENSIONS::input_vector_array2_t input_vector_array2_t;
   typedef typename BASE::controller_ptr_array_t controller_ptr_array_t;
 
-  typedef Solver_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> solver_base_t;
-  typedef PiSolver<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> solver_t;
+  typedef Solver_BASE<STATE_DIM, INPUT_DIM> solver_base_t;
+  typedef PiSolver<STATE_DIM, INPUT_DIM> solver_t;
   typedef typename solver_t::controlled_system_base_t dynamics_t;
   typedef typename solver_t::cost_function_t cost_t;
   typedef typename solver_t::constraint_t constraint_t;
 
-  MPC_PI(typename dynamics_t::Ptr dynamics, std::unique_ptr<cost_t> cost, const constraint_t constraint, const scalar_array_t& partitioningTimes,
-         const MPC_Settings& mpcSettings, PI_Settings piSettings)
+  MPC_PI(typename dynamics_t::Ptr dynamics, std::unique_ptr<cost_t> cost, const constraint_t constraint,
+         const scalar_array_t& partitioningTimes, const MPC_Settings& mpcSettings, PI_Settings piSettings)
       : BASE(partitioningTimes, mpcSettings) {
     piSolverPtr_.reset(new solver_t(dynamics, std::move(cost), constraint, std::move(piSettings)));
     BASE::setBaseSolverPtr(piSolverPtr_.get());

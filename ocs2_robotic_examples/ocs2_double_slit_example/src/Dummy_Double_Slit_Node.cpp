@@ -19,11 +19,11 @@ int main(int argc, char* argv[]) {
   double rollout_dt;
   ocs2::loadScalar(double_slitInterface.taskFile_, "pathIntegral.rollout_settings.minTimeStep", rollout_dt);
 
-  using mrt_base_ptr_t = mrt_t::BASE::Ptr;
+  using mrt_ptr_t = mrt_t::Ptr;
   using scalar_t = mrt_t::scalar_t;
   using system_observation_t = mrt_t::system_observation_t;
 
-  mrt_base_ptr_t mrtPtr(new mrt_t("double_slit"));
+  mrt_ptr_t mrtPtr(new mrt_t("double_slit"));
 
   // Dummy double_slit
   MrtRosDummyDoubleSlit dummyDoubleSlit(mrtPtr, double_slitInterface.mpcSettings().mrtDesiredFrequency_,

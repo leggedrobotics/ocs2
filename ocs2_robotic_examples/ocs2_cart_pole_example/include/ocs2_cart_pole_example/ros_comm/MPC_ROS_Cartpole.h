@@ -36,12 +36,12 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 namespace ocs2 {
 namespace cartpole {
 
-class MPC_ROS_Cartpole : public MPC_ROS_Interface<cartpole::STATE_DIM_, cartpole::INPUT_DIM_, NullLogicRules>
+class MPC_ROS_Cartpole : public MPC_ROS_Interface<cartpole::STATE_DIM_, cartpole::INPUT_DIM_>
 {
 public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-	typedef MPC_ROS_Interface<cartpole::STATE_DIM_, cartpole::INPUT_DIM_, NullLogicRules> BASE;
+	typedef MPC_ROS_Interface<cartpole::STATE_DIM_, cartpole::INPUT_DIM_> BASE;
 
 	typedef typename mpc_t::scalar_t scalar_t;
 	typedef typename mpc_t::scalar_array_t scalar_array_t;
@@ -76,7 +76,7 @@ public:
 	MPC_ROS_Cartpole(
 			mpc_t &mpc,
 			const std::string &nodeName = "robot_mpc")
-	: BASE(mpc, nodeName) {}
+	: BASE(&mpc, nodeName) {}
 
 	/**
 	 * Default destructor.

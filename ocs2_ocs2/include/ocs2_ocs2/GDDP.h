@@ -43,7 +43,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <Eigen/Dense>
 
 #include <ocs2_core/Dimensions.h>
-#include <ocs2_core/logic/rules/LogicRulesBase.h>
 #include <ocs2_core/logic/rules/NullLogicRules.h>
 #include <ocs2_core/integration/Integrator.h>
 #include <ocs2_core/misc/FindActiveIntervalIndex.h>
@@ -64,20 +63,16 @@ namespace ocs2 {
  *
  * @tparam STATE_DIM: Dimension of the state space.
  * @tparam INPUT_DIM: Dimension of the control input space.
- * @tparam LOGIC_RULES_T: Logic Rules type (default NullLogicRules).
  */
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T=NullLogicRules>
+template <size_t STATE_DIM, size_t INPUT_DIM>
 class GDDP
 {
 public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-	static_assert(std::is_base_of<LogicRulesBase, LOGIC_RULES_T>::value,
-			"LOGIC_RULES_T must inherit from LogicRulesBase");
+	typedef std::shared_ptr<GDDP<STATE_DIM, INPUT_DIM>> Ptr;
 
-	typedef std::shared_ptr<GDDP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>> Ptr;
-
-	typedef SLQ_DataCollector<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> slq_data_collector_t;
+	typedef SLQ_DataCollector<STATE_DIM, INPUT_DIM> slq_data_collector_t;
 
 	typedef BvpSensitivityEquations<STATE_DIM, INPUT_DIM>      bvp_sensitivity_equations_t;
 	typedef BvpSensitivityErrorEquations<STATE_DIM, INPUT_DIM> bvp_sensitivity_error_equations_t;
@@ -492,7 +487,7 @@ protected:
 	 **********/
 	GDDP_Settings gddpSettings_;
 
-	std::shared_ptr<LOGIC_RULES_T> logicRulesPtr_;
+	std::shared_ptr<HybridLogicRules> logicRulesPtr_;
 
 	size_t numPartitions_ = 0;
 	size_t numSubsystems_ = 1;

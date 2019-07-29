@@ -34,17 +34,17 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 namespace ocs2 {
 
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T=NullLogicRules>
+template <size_t STATE_DIM, size_t INPUT_DIM>
 class LinearConstraintAD : public
-ConstraintBaseAD<LinearConstraintAD<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>, STATE_DIM, INPUT_DIM, LOGIC_RULES_T>
+ConstraintBaseAD<LinearConstraintAD<STATE_DIM, INPUT_DIM>, STATE_DIM, INPUT_DIM>
 {
 public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-	typedef std::shared_ptr<LinearConstraintAD<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> > Ptr;
-	typedef std::shared_ptr<const LinearConstraintAD<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> > ConstPtr;
+	typedef std::shared_ptr<LinearConstraintAD<STATE_DIM, INPUT_DIM> > Ptr;
+	typedef std::shared_ptr<const LinearConstraintAD<STATE_DIM, INPUT_DIM> > ConstPtr;
 
-	typedef ConstraintBaseAD<LinearConstraintAD<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>, STATE_DIM, INPUT_DIM> BASE;
+	typedef ConstraintBaseAD<LinearConstraintAD<STATE_DIM, INPUT_DIM>, STATE_DIM, INPUT_DIM> BASE;
 	typedef typename BASE::scalar_t             scalar_t;
 	typedef typename BASE::state_vector_t       state_vector_t;
 	typedef typename BASE::input_vector_t       input_vector_t;

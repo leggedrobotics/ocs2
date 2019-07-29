@@ -14,8 +14,7 @@ namespace ocs2 {
  * @tparam INPUT_DIM: Dimension of the control input space.
  */
 template <size_t STATE_DIM, size_t INPUT_DIM>
-class FeedforwardController final : public ControllerBase<STATE_DIM, INPUT_DIM>
-{
+class FeedforwardController final : public ControllerBase<STATE_DIM, INPUT_DIM> {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
@@ -38,10 +37,7 @@ class FeedforwardController final : public ControllerBase<STATE_DIM, INPUT_DIM>
   /**
    * @brief Default constructor leaves object uninitialized
    */
-  FeedforwardController()
-  : Base()
-  , linInterpolateUff_(&timeStamp_, &uffArray_)
-  {}
+  FeedforwardController() : Base(), linInterpolateUff_(&timeStamp_, &uffArray_) {}
 
   /**
    * @brief Constructor initializes all required members of the controller.
@@ -49,11 +45,7 @@ class FeedforwardController final : public ControllerBase<STATE_DIM, INPUT_DIM>
    * @param [in] controllerTime: Time stamp array of the controller
    * @param [in] controllerFeedforward: The feedforward control input array.
    */
-  FeedforwardController(
-		  const scalar_array_t& controllerTime,
-		  const input_vector_array_t& controllerFeedforward)
-  : FeedforwardController()
-  {
+  FeedforwardController(const scalar_array_t& controllerTime, const input_vector_array_t& controllerFeedforward) : FeedforwardController() {
     setController(controllerTime, controllerFeedforward);
   }
 
@@ -63,24 +55,20 @@ class FeedforwardController final : public ControllerBase<STATE_DIM, INPUT_DIM>
    * @param [in] stateTrajectory the states for the rollout
    * @param [in] controller the controller to extract the feedforward controls from during a rollout
    */
-  FeedforwardController(
-		  const scalar_array_t& controllerTime,
-		  const state_vector_array_t& stateTrajectory,
-		  Base* controller)
-  : FeedforwardController()
-  {
+  FeedforwardController(const scalar_array_t& controllerTime, const state_vector_array_t& stateTrajectory, Base* controller)
+      : FeedforwardController() {
     timeStamp_ = controllerTime;
     uffArray_.clear();
     uffArray_.reserve(controllerTime.size());
 
-    if(controllerTime.size() != stateTrajectory.size()) {
+    if (controllerTime.size() != stateTrajectory.size()) {
       throw std::runtime_error("FeedforwardController Constructor: controllerTime and stateTrajectory sizes mismatch.");
-	}
+    }
 
     auto iTime = controllerTime.cbegin();
     auto iState = stateTrajectory.cbegin();
 
-    for(; iTime != controllerTime.end() and iState != stateTrajectory.end(); ++iTime, ++iState){
+    for (; iTime != controllerTime.end() and iState != stateTrajectory.end(); ++iTime, ++iState) {
       uffArray_.emplace_back(controller->computeInput(*iTime, *iState));
     }
   }
@@ -89,9 +77,7 @@ class FeedforwardController final : public ControllerBase<STATE_DIM, INPUT_DIM>
    * @brief Copy constructor
    * @param other FeedforwardController object to copy from
    */
-  FeedforwardController(const FeedforwardController& other)
-  : FeedforwardController(other.timeStamp_, other.uffArray_)
-  {}
+  FeedforwardController(const FeedforwardController& other) : FeedforwardController(other.timeStamp_, other.uffArray_) {}
 
   /**
    * @brief Move constructor -- not implemented for now
@@ -141,14 +127,14 @@ class FeedforwardController final : public ControllerBase<STATE_DIM, INPUT_DIM>
     const auto timeSize = timeArray.size();
     const auto dataSize = flatArray2.size();
 
-    if(timeSize != dataSize){
-        throw std::runtime_error("timeSize (" + std::to_string(timeSize) + ") and dataSize ("
-        		+ std::to_string(dataSize) + ") must be equal in flatten method.");
-      }
+    if (timeSize != dataSize) {
+      throw std::runtime_error("timeSize (" + std::to_string(timeSize) + ") and dataSize (" + std::to_string(dataSize) +
+                               ") must be equal in flatten method.");
+    }
 
     for (size_t i = 0; i < timeSize; i++) {
-        flattenSingle(timeArray[i], *(flatArray2[i]));
-      }
+      flattenSingle(timeArray[i], *(flatArray2[i]));
+    }
   }
 
   void flattenSingle(scalar_t time, float_array_t& flatArray) const {
@@ -159,7 +145,7 @@ class FeedforwardController final : public ControllerBase<STATE_DIM, INPUT_DIM>
   }
 
   void unFlatten(const scalar_array_t& timeArray, const std::vector<float_array_t const*>& flatArray2) override {
-    if(flatArray2[0]->size() != INPUT_DIM){
+    if (flatArray2[0]->size() != INPUT_DIM) {
       throw std::runtime_error("FeedforwardController::unFlatten received array of wrong length.");
     }
 
@@ -173,27 +159,21 @@ class FeedforwardController final : public ControllerBase<STATE_DIM, INPUT_DIM>
     }
   }
 
-  ControllerType getType() const override {
-	  return ControllerType::FEEDFORWARD;
-  }
+  ControllerType getType() const override { return ControllerType::FEEDFORWARD; }
 
   void clear() override {
     timeStamp_.clear();
     uffArray_.clear();
   }
 
-  void setZero() override {
-    std::fill(uffArray_.begin(), uffArray_.end(), input_vector_t::Zero());
-  }
+  void setZero() override { std::fill(uffArray_.begin(), uffArray_.end(), input_vector_t::Zero()); }
 
   /**
    * Returns whether the class is empty (i.e. whether its size is 0).
    *
    * @return true if the time container size is 0, false otherwise.
    */
-  bool empty() const override {
-	  return timeStamp_.empty();
-  }
+  bool empty() const override { return timeStamp_.empty(); }
 
   /**
    * @brief Swap data with other object.
@@ -216,9 +196,7 @@ class FeedforwardController final : public ControllerBase<STATE_DIM, INPUT_DIM>
    *
    * @return the size of the controller.
    */
-  size_t size() const {
-	  return timeStamp_.size();
-  }
+  size_t size() const { return timeStamp_.size(); }
 
   void display() const override {
     for (int i=0;i<timeStamp_.size();i++) {

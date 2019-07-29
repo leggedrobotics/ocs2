@@ -30,95 +30,84 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifndef NULLLOGICRULES_OCS2_H_
 #define NULLLOGICRULES_OCS2_H_
 
-#include <memory>
-#include <Eigen/StdVector>
 #include <Eigen/Dense>
+#include <Eigen/StdVector>
+#include <memory>
 #include <vector>
 
 #include "ocs2_core/Dimensions.h"
 #include "ocs2_core/logic/rules/HybridLogicRules.h"
 
-namespace ocs2{
+namespace ocs2 {
 
 /**
  * Null logic rules class.
  */
-class NullLogicRules : public HybridLogicRules
-{
-public:
-	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+class NullLogicRules : public HybridLogicRules {
+ public:
+  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-	using BASE = HybridLogicRules;
+  using BASE = HybridLogicRules;
 
-	using size_array_t = BASE::size_array_t;
-	using scalar_t = BASE::scalar_t;
-	using scalar_array_t = BASE::scalar_array_t;
-	using logic_template_type = BASE::logic_template_type;
+  using size_array_t = BASE::size_array_t;
+  using scalar_t = BASE::scalar_t;
+  using scalar_array_t = BASE::scalar_array_t;
+  using logic_template_type = BASE::logic_template_type;
 
-	/**
-	 * Constructor
-	 */
-	NullLogicRules()
-	: BASE()
-	{}
+  /**
+   * Constructor
+   */
+  NullLogicRules() : BASE() {}
 
-	/**
-	 * Copy constructor
-	 */
-	NullLogicRules(const NullLogicRules& rhs) = default;
+  /**
+   * Copy constructor
+   */
+  NullLogicRules(const NullLogicRules& rhs) = default;
 
-	/**
-	 * Destructor
-	 */
-	~NullLogicRules() override = default;
+  /**
+   * Destructor
+   */
+  ~NullLogicRules() override = default;
 
-	/**
-	 * Move assignment
-	 */
-	NullLogicRules& operator=(NullLogicRules&& other) = default;
+  /**
+   * Move assignment
+   */
+  NullLogicRules& operator=(NullLogicRules&& other) = default;
 
-	/**
-	 * Assignment
-	 */
-	NullLogicRules& operator=(const NullLogicRules& other) = default;
+  /**
+   * Assignment
+   */
+  NullLogicRules& operator=(const NullLogicRules& other) = default;
 
-	/**
-	 * Rewinds the class. This method is only called in the MPC class.
-	 *
-	 * @param [in] lowerBoundTime: The smallest time for which the logicRules should be defined.
-	 * @param [in] upperBoundTime: The greatest time for which the logicRules should be defined.
-	 */
-	void rewind(
-			const scalar_t& lowerBoundTime,
-			const scalar_t& upperBoundTime) final
-	{}
+  /**
+   * Rewinds the class. This method is only called in the MPC class.
+   *
+   * @param [in] lowerBoundTime: The smallest time for which the logicRules should be defined.
+   * @param [in] upperBoundTime: The greatest time for which the logicRules should be defined.
+   */
+  void rewind(const scalar_t& lowerBoundTime, const scalar_t& upperBoundTime) final {}
 
-	/**
-	 * This method can be used to update the internal variables. This method will be called by any
-	 * program that tries to update the logic rules variables.
-	 */
-	void update() final
-	{}
+  /**
+   * This method can be used to update the internal variables. This method will be called by any
+   * program that tries to update the logic rules variables.
+   */
+  void update() final {}
 
-protected:
-	/**
-	 * Used in the SLQ-MPC method to insert a new user defined logic in the given time period.
-	 * Note: use the update method to at the end to update your derived class variables
-	 *
-	 * @param [in] modeSequenceTemplate: A data type which includes all necessary information for modifying the logicRules.
-	 * @param [in] startTime: The initial time from which the new logicRules template should be augmented.
-	 * @param [in] finalTime: The final time to which the new logicRules template should be augmented.
-	 */
-	void insertModeSequenceTemplate(
-			const logic_template_type& modeSequenceTemplate,
-			const scalar_t& startTime,
-			const scalar_t& finalTime) final
-	{}
+ protected:
+  /**
+   * Used in the SLQ-MPC method to insert a new user defined logic in the given time period.
+   * Note: use the update method to at the end to update your derived class variables
+   *
+   * @param [in] modeSequenceTemplate: A data type which includes all necessary information for modifying the logicRules.
+   * @param [in] startTime: The initial time from which the new logicRules template should be augmented.
+   * @param [in] finalTime: The final time to which the new logicRules template should be augmented.
+   */
+  void insertModeSequenceTemplate(const logic_template_type& modeSequenceTemplate, const scalar_t& startTime,
+                                  const scalar_t& finalTime) final {}
 
-private:
-
+ private:
 };
 
-} // namespace ocs2
+}  // namespace ocs2
 
 #endif /* NULLLOGICRULES_OCS2_H_ */

@@ -45,7 +45,7 @@ namespace ocs2{
  *
  * @tparam STATE_DIM: Dimension of the state space.
  * @tparam INPUT_DIM: Dimension of the control input space.
- */
+  */
 template <size_t STATE_DIM, size_t INPUT_DIM>
 class RolloutSensitivityEquations : public ControlledSystemBase<STATE_DIM, INPUT_DIM>
 {
@@ -146,11 +146,11 @@ public:
 			const input_vector_t& nabla_u,
 			state_vector_t& derivative) {
 
-		auto greatestLessTimeStampIndex = AmFunc_.interpolate(t, Am_);
-		BmFunc_.interpolate(t, Bm_, greatestLessTimeStampIndex);
+		auto indexAlpha = AmFunc_.interpolate(t, Am_);
+		BmFunc_.interpolate(indexAlpha,  Bm_);
 
 		if (std::abs(multiplier_) > 1e-9) {
-			flowMapFunc_.interpolate(t, flowMap_, greatestLessTimeStampIndex);
+			flowMapFunc_.interpolate(indexAlpha,  flowMap_);
 			derivative = Am_*nabla_x + Bm_*nabla_u + multiplier_*flowMap_;
 		} else {
 			derivative = Am_*nabla_x + Bm_*nabla_u;

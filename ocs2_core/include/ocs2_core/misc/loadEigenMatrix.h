@@ -30,16 +30,17 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifndef OCS2_LOADEIGENMATRIX_H_
 #define OCS2_LOADEIGENMATRIX_H_
 
-#include <iostream>
 #include <Eigen/Dense>
+#include <iostream>
 
-#include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/info_parser.hpp>
+#include <boost/property_tree/ptree.hpp>
 
 namespace ocs2 {
 
 /**
- * An auxiliary function which loads a scalar value from a file. The file uses property tree data structure with INFO format (refer to www.goo.gl/fV3yWA).
+ * An auxiliary function which loads a scalar value from a file. The file uses property tree data structure with INFO format (refer to
+ * www.goo.gl/fV3yWA).
  *
  * @param [in] filename: File name which contains the configuration data.
  * @param [in] scalarName: The key name assigned to the scalar in the config file.
@@ -54,7 +55,8 @@ inline void loadScalar(const std::string& filename, const std::string& scalarNam
 }
 
 /**
- * An auxiliary function which loads an Eigen matrix from a file. The file uses property tree data structure with INFO format (refer to www.goo.gl/fV3yWA).
+ * An auxiliary function which loads an Eigen matrix from a file. The file uses property tree data structure with INFO format (refer to
+ * www.goo.gl/fV3yWA).
  *
  * It has the following format:	<br>
  * matrixName	<br>
@@ -73,43 +75,36 @@ inline void loadScalar(const std::string& filename, const std::string& scalarNam
  * @param [out] matrix: The loaded matrix.
  */
 template <typename Derived>
-inline void loadEigenMatrix(
-		const std::string& filename,
-		const std::string& matrixName,
-		Eigen::MatrixBase<Derived>& matrix)  {
+inline void loadEigenMatrix(const std::string& filename, const std::string& matrixName, Eigen::MatrixBase<Derived>& matrix) {
+  using scalar_t = typename Eigen::MatrixBase<Derived>::Scalar;
 
-	using scalar_t = typename Eigen::MatrixBase<Derived>::Scalar;
+  size_t rows = matrix.rows();
+  size_t cols = matrix.cols();
 
-	size_t rows = matrix.rows();
-	size_t cols = matrix.cols();
+  boost::property_tree::ptree pt;
+  boost::property_tree::read_info(filename, pt);
 
-	boost::property_tree::ptree pt;
-	boost::property_tree::read_info(filename, pt);
+  double scaling = pt.get<double>(matrixName + ".scaling", 1);
 
-	double scaling = pt.get<double>(matrixName + ".scaling", 1);
+  scalar_t aij;
+  bool failed = false;
+  for (size_t i = 0; i < rows; i++) {
+    for (size_t j = 0; j < cols; j++) {
+      try {
+        aij = pt.get<scalar_t>(matrixName + "." + "(" + std::to_string(i) + "," + std::to_string(j) + ")");
+      } catch (const std::exception& e) {
+        aij = 0;
+        failed = true;
+      }
+      matrix(i, j) = scaling * aij;
+    }
+  }
 
-	scalar_t aij;
-	bool failed = false;
-	for (size_t i=0; i<rows; i++) {
-		for (size_t j=0; j<cols; j++)  {
-			try	{
-				aij = pt.get<scalar_t>(matrixName + "." + "(" +std::to_string(i) + "," + std::to_string(j) + ")");
-			}
-			catch (const std::exception& e){
-				aij = 0;
-				failed = true;
-			}
-			matrix(i,j) = scaling * aij;
-		}
-	}
-
-	if (failed)  {
-		std::cerr << "WARNING: Failed to load matrix type: " + matrixName + "!" << std::endl;
-	}
+  if (failed) {
+    std::cerr << "WARNING: Failed to load matrix type: " + matrixName + "!" << std::endl;
+  }
 }
 
-
 }  // namespace ocs2
-
 
 #endif /* OCS2_LOADEIGENMATRIX_H_ */

@@ -22,13 +22,12 @@ namespace ocs2 {
  * https://github.com/usc-clmc/usc-clmc-ros-pkg/blob/master/policy_learning/policy_improvement/src/policy_improvement.cpp
  * https://github.com/cbfinn/gps/blob/master/python/gps/algorithm/traj_opt/traj_opt_pi2.py
  */
-template <size_t STATE_DIM, size_t INPUT_DIM, typename LOGIC_RULES_T = NullLogicRules>
-class PiSolver final : public Solver_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> {
+template <size_t STATE_DIM, size_t INPUT_DIM>
+class PiSolver final : public Solver_BASE<STATE_DIM, INPUT_DIM> {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-  using Base = Solver_BASE<STATE_DIM, INPUT_DIM, NullLogicRules>;
-  using logic_rules_t = LOGIC_RULES_T;
+  using Base = Solver_BASE<STATE_DIM, INPUT_DIM>;
 
   using typename Base::scalar_array_t;
   using typename Base::scalar_t;
@@ -49,11 +48,11 @@ class PiSolver final : public Solver_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> {
   using typename Base::state_vector_array_t;
   using typename Base::state_vector_t;
 
-  using controlled_system_base_t = ControlledSystemBase<STATE_DIM, INPUT_DIM, logic_rules_t>;
-  using cost_function_t = CostFunctionBase<STATE_DIM, INPUT_DIM, logic_rules_t>;
-  using rollout_t = TimeTriggeredRollout<STATE_DIM, INPUT_DIM, logic_rules_t>;
-  using constraint_t = ConstraintBase<STATE_DIM, INPUT_DIM, logic_rules_t>;
-  using pi_controller_t = PiController<STATE_DIM, INPUT_DIM, logic_rules_t>;
+  using controlled_system_base_t = ControlledSystemBase<STATE_DIM, INPUT_DIM>;
+  using cost_function_t = CostFunctionBase<STATE_DIM, INPUT_DIM>;
+  using rollout_t = TimeTriggeredRollout<STATE_DIM, INPUT_DIM>;
+  using constraint_t = ConstraintBase<STATE_DIM, INPUT_DIM>;
+  using pi_controller_t = PiController<STATE_DIM, INPUT_DIM>;
 
   /**
    * @brief Constructor with all options
@@ -61,13 +60,13 @@ class PiSolver final : public Solver_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> {
    * @param systemDynamicsPtr: System dynamics
    * @param costFunction: The cost function to optimize
    * @param constraint: Any constraints for the dynamical system
-   * @param rollout_dt: The time step of the rollouts
-   * @param noiseScaling The level of noise (the temperature)
-   * @param numSamples How many
+   * @param piSettings: Settings related to PI algorithm
+   * @param logicRules: Optional pointer to logic rules
    */
   PiSolver(const typename controlled_system_base_t::Ptr systemDynamicsPtr, std::unique_ptr<cost_function_t> costFunction,
-           const constraint_t constraint, PI_Settings piSettings)
-      : settings_(std::move(piSettings)),
+           const constraint_t constraint, PI_Settings piSettings, std::shared_ptr<HybridLogicRules> logicRules = nullptr)
+      : Base(std::move(logicRules)),
+        settings_(std::move(piSettings)),
         systemDynamics_(systemDynamicsPtr),
         costFunction_(std::move(costFunction)),
         constraint_(constraint),
@@ -131,11 +130,10 @@ class PiSolver final : public Solver_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> {
       typename rollout_t::scalar_array_t timeTrajectory;
       {
         // braces to guard against usage of temporary rollout quantities
-        typename rollout_t::logic_rules_machine_t logicRulesMachine;
         typename rollout_t::size_array_t eventsPastTheEndIndeces;
         typename rollout_t::input_vector_array_t inputTrajectory;
-        rollout_.run(0, initTime, initState, finalTime, &controller_, logicRulesMachine, timeTrajectory, eventsPastTheEndIndeces,
-                     stateTrajectory, inputTrajectory);
+        rollout_.run(0, initTime, initState, finalTime, &controller_, *Base::getLogicRulesMachinePtr(), timeTrajectory,
+                     eventsPastTheEndIndeces, stateTrajectory, inputTrajectory);
       }
 
       if (controller_.cacheData_.size() != numSteps - 1) {
@@ -261,13 +259,12 @@ class PiSolver final : public Solver_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> {
     controller_.gamma_ = 0.0;
     controller_.cacheResults_ = false;
 
-    typename rollout_t::logic_rules_machine_t logicRulesMachine;
     typename rollout_t::scalar_array_t timeTrajectoryNominal;
     typename rollout_t::size_array_t eventsPastTheEndIndecesNominal;
     typename rollout_t::state_vector_array_t stateTrajectoryNominal;
     typename rollout_t::input_vector_array_t inputTrajectoryNominal;
-    rollout_.run(0, initTime, initState, finalTime, &controller_, logicRulesMachine, timeTrajectoryNominal, eventsPastTheEndIndecesNominal,
-                 stateTrajectoryNominal, inputTrajectoryNominal);
+    rollout_.run(0, initTime, initState, finalTime, &controller_, *Base::getLogicRulesMachinePtr(), timeTrajectoryNominal,
+                 eventsPastTheEndIndecesNominal, stateTrajectoryNominal, inputTrajectoryNominal);
 
     nominalStateTrajectoriesStock_.clear();
     nominalStateTrajectoriesStock_.push_back(stateTrajectoryNominal);
@@ -388,7 +385,6 @@ class PiSolver final : public Solver_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> {
   virtual void getNominalTrajectoriesPtr(const std::vector<scalar_array_t>*& nominalTimeTrajectoriesStockPtr,
                                          const state_vector_array2_t*& nominalStateTrajectoriesStockPtr,
                                          const input_vector_array2_t*& nominalInputTrajectoriesStockPtr) const override {
-    // TODO(jcarius) passing out raw pointers to member variables (!!)
     nominalTimeTrajectoriesStockPtr = &nominalTimeTrajectoriesStock_;
     nominalStateTrajectoriesStockPtr = &nominalStateTrajectoriesStock_;
     nominalInputTrajectoriesStockPtr = &nominalInputTrajectoriesStock_;
@@ -403,10 +399,6 @@ class PiSolver final : public Solver_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> {
   virtual void rewindOptimizer(const size_t& firstIndex) override {}
 
   virtual const unsigned long long int& getRewindCounter() const override { throw std::runtime_error("not implemented."); }
-
-  virtual const logic_rules_t* getLogicRulesPtr() const override { return &logicRules_; }
-
-  virtual logic_rules_t* getLogicRulesPtr() override { return &logicRules_; }
 
   void printIterationDebug(scalar_t initTime, const state_vector_array2_t& state_vector_array2,
                            const input_vector_array2_t& input_vector_array2, const scalar_array2_t& J) {
@@ -465,8 +457,6 @@ class PiSolver final : public Solver_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> {
   size_t numIterations_;
 
   rollout_t rollout_;
-
-  logic_rules_t logicRules_;
 
   cost_desired_trajectories_t costDesiredTrajectories_;  // TODO(jcarius) should this be in the base class?
   cost_desired_trajectories_t costDesiredTrajectoriesBuffer_;

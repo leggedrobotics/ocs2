@@ -80,7 +80,7 @@ public:
 	MPC_ROS_Quadrotor(
 			mpc_t &mpc,
 			const std::string &robotName = "robot")
-	: BASE(mpc, robotName) {}
+	: BASE(&mpc, robotName) {}
 
 	/**
 	 * Default destructor.

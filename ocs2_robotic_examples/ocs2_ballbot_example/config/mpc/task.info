@@ -118,7 +118,7 @@ mpc
 ballbot_interface
 {
 	libraryFilesAreGenerated       0    ; put this flag to 1 if dynamic libraries are already generated
-	useCostAD                      1    ;
+	useCostAD                      0    ;
 }
 
 ; initial state
@@ -142,17 +142,17 @@ Q
 {
     scaling 1e+0
 
-   (0,0) 0.0	; px
-   (1,1) 0.0	; py
-   (2,2) 50.0	; thetaz
+   (0,0) 5.0	; px
+   (1,1) 5.0	; py
+   (2,2) 600.0	; thetaz
    (3,3) 0.0	; thetay
    (4,4) 0.0  ; thetax
    
-   (5,5) 25.0 ; px_dot
-   (6,6) 25.0 ; py_dot
-   (7,7) 10.0 ; thetaz_dot
-   (8,8) 10.0 ; thetay_dot
-   (9,9) 10.0 ; thetax_dot
+   (5,5) 30.0 ; px_dot
+   (6,6) 30.0 ; py_dot
+   (7,7) 20.0 ; thetaz_dot
+   (8,8) 20.0 ; thetay_dot
+   (9,9) 20.0 ; thetax_dot
 }
 
 ; control weight matrix
@@ -160,9 +160,9 @@ R
 {
    scaling 1e+0
 
-   (0,0)  1.7  ; torque wheel1
-   (1,1)  1.7  ; torque wheel2
-   (2,2)  1.7  ; torque wheel3
+   (0,0)  2.0  ; torque wheel1
+   (1,1)  2.0  ; torque wheel2
+   (2,2)  2.0  ; torque wheel3
 }
 
 ; final state weight matrix

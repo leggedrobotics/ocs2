@@ -56,70 +56,74 @@ BallbotInterface::BallbotInterface(const std::string& taskFileFolderName)
 /******************************************************************************************************/
 void BallbotInterface::loadSettings(const std::string& taskFile) {
 
-	/*
-	 * Default initial condition
-	 */
-	loadInitialState(taskFile, initialState_);
+    /*
+    * Default initial condition
+    */
+    loadInitialState(taskFile, initialState_);
 
-	/*
-	 * SLQ-MPC settings
-	 */
-	slqSettings_.loadSettings(taskFile);
-	mpcSettings_.loadSettings(taskFile);
+    /*
+    * SLQ-MPC settings
+    */
+    slqSettings_.loadSettings(taskFile);
+    mpcSettings_.loadSettings(taskFile);
 
-	/*
-	 * Dynamics
-	 */
-	// load the flag to generate library files from taskFile
-	boost::property_tree::ptree pt;
-	boost::property_tree::read_info(taskFile_, pt);
-	libraryFilesAreGenerated_ = pt.get<bool>("ballbot_interface.libraryFilesAreGenerated");
+    /*
+    * Dynamics
+    */
+    // load the flag to generate library files from taskFile
+    boost::property_tree::ptree pt;
+    boost::property_tree::read_info(taskFile_, pt);
+    libraryFilesAreGenerated_ = pt.get<bool>("ballbot_interface.libraryFilesAreGenerated");
+    useCostAD_ = pt.get<bool>("ballbot_interface.useCostAD");
 
-	ballbotSystemDynamicsPtr_.reset(new BallbotSystemDynamics(libraryFilesAreGenerated_));
+    ballbotSystemDynamicsPtr_.reset(new BallbotSystemDynamics(libraryFilesAreGenerated_));
 
-	if (libraryFilesAreGenerated_){
-		ballbotSystemDynamicsPtr_->loadModels("ballbot_dynamics", libraryFolder_);
-	}else{
-		ballbotSystemDynamicsPtr_->createModels("ballbot_dynamics", libraryFolder_);
-	}
+    if (libraryFilesAreGenerated_){
+        ballbotSystemDynamicsPtr_->loadModels("ballbot_dynamics", libraryFolder_);
+    }else{
+        ballbotSystemDynamicsPtr_->createModels("ballbot_dynamics", libraryFolder_);
+    }
 
-	/*
-	 * Cost function
-	 */
-	ocs2::loadEigenMatrix(taskFile, "Q", Q_);
-	ocs2::loadEigenMatrix(taskFile, "R", R_);
-	ocs2::loadEigenMatrix(taskFile, "Q_final", QFinal_);
-	ocs2::loadEigenMatrix(taskFile, "x_final", xFinal_);
-//	xNominal_ = dim_t::state_vector_t::Zero();
-	xNominal_ = xFinal_;
-	uNominal_ = dim_t::input_vector_t::Zero();
+    /*
+    * Cost function
+    */
+    ocs2::loadEigenMatrix(taskFile, "Q", Q_);
+    ocs2::loadEigenMatrix(taskFile, "R", R_);
+    ocs2::loadEigenMatrix(taskFile, "Q_final", QFinal_);
+    ocs2::loadEigenMatrix(taskFile, "x_final", xFinal_);
+    xNominal_ = xFinal_;
+    uNominal_ = dim_t::input_vector_t::Zero();
 
-	std::cerr << "Q:  \n" << Q_ << std::endl;
-	std::cerr << "R:  \n" << R_ << std::endl;
-	std::cerr << "Q_final:\n" << QFinal_ << std::endl;
-	std::cerr << "x_init:   " << initialState_.transpose() << std::endl;
-	std::cerr << "x_final:  " << xFinal_.transpose() << std::endl;
+    std::cerr << "Q:  \n" << Q_ << std::endl;
+    std::cerr << "R:  \n" << R_ << std::endl;
+    std::cerr << "Q_final:\n" << QFinal_ << std::endl;
+    std::cerr << "x_init:   " << initialState_.transpose() << std::endl;
+    std::cerr << "x_final:  " << xFinal_.transpose() << std::endl;
 
-	ballbotCostPtr_.reset(new BallbotCost(Q_, R_, xNominal_, uNominal_, QFinal_, xFinal_));
+    if (useCostAD_){
+        ballbotCostADPtr_.reset(new BallbotCostAD(Q_, R_, xNominal_, uNominal_, QFinal_, xFinal_, false));
+        ballbotCostADPtr_->createModels("ballbot_cost", libraryFolder_);
 
-	/*
-	 * Constraints
-	 */
-	ballbotConstraintPtr_.reset(new ballbotConstraint_t);
+    }else{
+        ballbotCostPtr_.reset(new BallbotCost(Q_, R_, xNominal_, uNominal_, QFinal_, xFinal_));
+    }
 
-	/*
-	 * Initialization
-	 */
-//	cartPoleOperatingPointPtr_.reset(new CartPoleOperatingPoint(dim_t::state_vector_t::Zero(), dim_t::input_vector_t::Zero()));
-	ballbotOperatingPointPtr_.reset(new ballbotOperatingPoint_t(
-			initialState_, dim_t::input_vector_t::Zero()));
+    /*
+    * Constraints
+    */
+    ballbotConstraintPtr_.reset(new ballbotConstraint_t);
 
-	/*
-	 * Time partitioning which defines the time horizon and the number of data partitioning
-	 */
-	scalar_t timeHorizon;
-	definePartitioningTimes(taskFile, timeHorizon,
-			numPartitions_, partitioningTimes_, true);
+    /*
+    * Initialization
+    */
+    ballbotOperatingPointPtr_.reset(new ballbotOperatingPoint_t(
+            initialState_, dim_t::input_vector_t::Zero()));
+
+    /*
+    * Time partitioning which defines the time horizon and the number of data partitioning
+    */
+    scalar_t timeHorizon;
+    definePartitioningTimes(taskFile, timeHorizon,numPartitions_, partitioningTimes_, true);
 }
 
 /******************************************************************************************************/
@@ -127,15 +131,30 @@ void BallbotInterface::loadSettings(const std::string& taskFile) {
 /******************************************************************************************************/
 void BallbotInterface::setupOptimizer(const std::string& taskFile) {
 
-	mpcPtr_.reset(new mpc_t(
-			ballbotSystemDynamicsPtr_.get(),
-			ballbotSystemDynamicsPtr_.get(),
-			ballbotConstraintPtr_.get(),
-			ballbotCostPtr_.get(),
-			ballbotOperatingPointPtr_.get(),
-			partitioningTimes_,
-			slqSettings_,
-			mpcSettings_));
+    if (useCostAD_){
+
+        mpcPtr_.reset(new mpc_t(
+                ballbotSystemDynamicsPtr_.get(),
+                ballbotSystemDynamicsPtr_.get(),
+                ballbotConstraintPtr_.get(),
+                ballbotCostADPtr_.get(),
+                ballbotOperatingPointPtr_.get(),
+                partitioningTimes_,
+                slqSettings_,
+                mpcSettings_));
+
+    }else{
+        mpcPtr_.reset(new mpc_t(
+                ballbotSystemDynamicsPtr_.get(),
+                ballbotSystemDynamicsPtr_.get(),
+                ballbotConstraintPtr_.get(),
+                ballbotCostPtr_.get(),
+                ballbotOperatingPointPtr_.get(),
+                partitioningTimes_,
+                slqSettings_,
+                mpcSettings_));
+    }
+
 }
 
 /******************************************************************************************************/

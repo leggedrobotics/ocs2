@@ -145,14 +145,12 @@ public:
 		typename cost_desired_trajectories_t::dynamic_vector_array_t& xDesiredTrajectory =
 				costDesiredTrajectories.desiredStateTrajectory();
 		xDesiredTrajectory.resize(2);
-		// xDesiredTrajectory[0].head<3>() = currentObservation.state().head<3>();
-		// xDesiredTrajectory[0].segment<3>(3).setZero();
-		xDesiredTrajectory[0] = currentObservation.state();
-		xDesiredTrajectory[1] = currentObservation.state();
-//		xDesiredTrajectory[1].head<3>() += targetPoseDisplacement;
-        xDesiredTrajectory[1].head<2>() = targetPosition;
-        xDesiredTrajectory[1](2) = 0.0;
-		xDesiredTrajectory[1].tail<5>() << targetVelocity, 0.0, 0.0;
+        // xDesiredTrajectory[0].head<3>() = currentObservation.state().head<3>();
+        // xDesiredTrajectory[0].segment<3>(3).setZero();
+        xDesiredTrajectory[0] = currentObservation.state();
+        xDesiredTrajectory[1] = state_vector_t::Zero();
+        xDesiredTrajectory[1].head<5>() << targetPosition(0), targetPosition(1), 0.0, 0.0, 0.0;
+        xDesiredTrajectory[1].segment<5>(5) << targetVelocity(0), targetVelocity(1), 0.0, 0.0, 0.0;
 
 		// Desired input trajectory
 		typename cost_desired_trajectories_t::dynamic_vector_array_t& uDesiredTrajectory =

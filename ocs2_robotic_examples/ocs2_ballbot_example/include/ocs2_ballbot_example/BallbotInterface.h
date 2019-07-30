@@ -40,6 +40,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_core/misc/loadEigenMatrix.h>
 #include <ocs2_core/constraint/ConstraintBase.h>
 #include <ocs2_core/initialization/SystemOperatingPoint.h>
+#include <ocs2_core/cost/CostFunctionBase.h>
 #include <ocs2_mpc/MPC_SLQ.h>
 #include <ocs2_robotic_tools/common/RobotInterfaceBase.h>
 
@@ -47,6 +48,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ocs2_ballbot_example/definitions.h"
 #include "ocs2_ballbot_example/dynamics/BallbotSystemDynamics.h"
 #include "ocs2_ballbot_example/cost/BallbotCost.h"
+#include "ocs2_ballbot_example/cost/BallbotCostAD.h"
 
 namespace ocs2 {
 namespace ballbot {
@@ -65,6 +67,7 @@ public:
 	using dim_t = Dimensions<ballbot::STATE_DIM_, ballbot::INPUT_DIM_>;
 	using ballbotConstraint_t = ConstraintBase<ballbot::STATE_DIM_, ballbot::INPUT_DIM_>;
 	using ballbotOperatingPoint_t = SystemOperatingPoint<ballbot::STATE_DIM_, ballbot::INPUT_DIM_>;
+	using ballbotCost_t = CostFunctionBase < ballbot::STATE_DIM_, ballbot::INPUT_DIM_>;
 
 	using mpc_t = ocs2::MPC_SLQ<ballbot::STATE_DIM_, ballbot::INPUT_DIM_>;
 
@@ -119,6 +122,7 @@ protected:
 
 	BallbotSystemDynamics::Ptr ballbotSystemDynamicsPtr_;
 	BallbotCost::Ptr ballbotCostPtr_;
+	BallbotCostAD::Ptr ballbotCostADPtr_;
 	ballbotConstraint_t::Ptr ballbotConstraintPtr_;
 	ballbotOperatingPoint_t::Ptr ballbotOperatingPointPtr_;
 
@@ -135,6 +139,8 @@ protected:
 
 	// flag to generate dynamic files
 	bool libraryFilesAreGenerated_ = false;
+	// flag to use the AD cost function
+	bool useCostAD_ = false;
 };
 
 } // namespace ballbot

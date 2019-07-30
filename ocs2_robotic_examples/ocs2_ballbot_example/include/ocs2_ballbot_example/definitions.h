@@ -39,6 +39,7 @@ enum ballbot : size_t
 {
 	STATE_DIM_ = 10,
 	INPUT_DIM_ = 3,
+	JOINTS_DOF_NUM_ = 5
 };
 
 } // namespace ballbot

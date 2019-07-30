@@ -8,7 +8,7 @@ RobotBase base0 {
     inertia_properties {
         mass = 0.001
         CoM = (0.0, 0.0, 0.0)
-        Iy=0.0001  Ix=0.0001  Ixy=0.0 Iz=0.0  Ixz=0.0 Iyz=0.0
+        Iy=0.0001  Ix=0.0001  Ixy=0.0 Iz=0.0001  Ixz=0.0 Iyz=0.0
     }
     children {
         dummy_ball1 via jball_x
@@ -19,7 +19,7 @@ link dummy_ball1 {
     id = 1
     inertia_properties {
         mass = 0.001
-        CoM = (0.0, .0, .0)
+        CoM = (0.0, 0.0, 0.0)
         Ix=0.0001 Iy=0.0001  Iz=0.0001  Ixy=0.0  Ixz=0.0  Iyz=0.0
     }
     children {
@@ -66,6 +66,12 @@ link base {
         Ix=0.2003  Iy=2.7002  Iz=2.6965 Ixy=-0.0129  Ixz=-0.0117  Iyz=0.0002
     }
     children {}
+    frames {
+		fr_control {
+			translation = (-0.275, 0.0, 0.0)
+			rotation = (0.0, -PI/2.0, 0.0)
+		}
+	}
 }
 
 p_joint jball_x {

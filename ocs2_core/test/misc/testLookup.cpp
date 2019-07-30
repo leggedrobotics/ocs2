@@ -6,7 +6,7 @@
 #include <ocs2_core/misc/Lookup.h>
 
 using namespace ocs2;
-using namespace Lookup;
+using namespace lookup;
 
 TEST(testLookup, findIndexInTimeArray)
 {

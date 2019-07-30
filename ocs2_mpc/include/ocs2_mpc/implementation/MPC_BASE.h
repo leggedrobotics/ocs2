@@ -169,7 +169,7 @@ template <size_t STATE_DIM, size_t INPUT_DIM>
 void MPC_BASE<STATE_DIM, INPUT_DIM>::adjustmentTimeHorizon(const scalar_array_t& partitioningTimes, scalar_t& initTime, scalar_t& finalTime,
                                                            size_t& initActivePartitionIndex, size_t& finalActivePartitionIndex) const {
   // current active subsystem
-  initActivePartitionIndex = solver_base_t::findActivePartitionIndex(partitioningTimes, initTime);
+  initActivePartitionIndex = lookup::findActivePartitionInTimeArray(partitioningTimes, initTime);
 
   if (initTime > partitioningTimes[initActivePartitionIndex + 1] - 4e-3) {
     initTime = partitioningTimes[initActivePartitionIndex + 1] + 1e-5;
@@ -177,7 +177,7 @@ void MPC_BASE<STATE_DIM, INPUT_DIM>::adjustmentTimeHorizon(const scalar_array_t&
   }
 
   // final active subsystem
-  finalActivePartitionIndex = solver_base_t::findActivePartitionIndex(partitioningTimes, finalTime);
+  finalActivePartitionIndex = lookup::findActivePartitionInTimeArray(partitioningTimes, finalTime);
 
   // if it is at the very beginning of the partition (4e-3) reduce the final time to
   // last partition final time otherwise set to the final time of the current partition

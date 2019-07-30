@@ -173,7 +173,7 @@ class LinearInterpolation {
    * @return std::pair<int, double> : {index, alpha}
    */
   static std::pair<int, double> getIndexAlpha(const std::vector<scalar_t>& timeArray, scalar_t enquiryTime) {
-    int index = Lookup::findIntervalInTimeArray(timeArray, enquiryTime);
+    int index = lookup::findIntervalInTimeArray(timeArray, enquiryTime);
     auto lastInterval = static_cast<int>(timeArray.size() - 1);
     if (index >= 0) {
       if (index < lastInterval) {

@@ -385,18 +385,6 @@ class Solver_BASE {
   virtual const unsigned long long int& getRewindCounter() const = 0;
 
   /**
-   * Finds the interval of partitioningTimes to which the input time belongs to it.
-   * time is in interval i if: partitioningTimes[i] < t <= partitioningTimes[i+1]
-   * Exception: if time=partitioningTimes[0] then time is interval 0
-   *
-   * @param [in] partitioningTimes: a sorted time sequence.
-   * @param [in] time: Enquiry time.
-   * @param [in] ceilingFunction: Use the ceiling function settings ().
-   * @return Active subsystem index.
-   */
-  static size_t findActivePartitionIndex(const scalar_array_t& partitioningTimes, const scalar_t& time, bool ceilingFunction = true);
-
-  /**
    * Prints to output.
    *
    * @param [in] input text.

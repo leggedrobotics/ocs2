@@ -28,6 +28,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
 #include "ocs2_core/logic/machine/HybridLogicRulesMachine.h"
+#include "ocs2_core/misc/Lookup.h"
 
 namespace ocs2 {
 
@@ -90,16 +91,12 @@ std::function<size_t(typename HybridLogicRulesMachine::scalar_t)> HybridLogicRul
   const scalar_array_t& switchingTimes = switchingTimesStock_[partitionIndex];
 
   // return Lambda expression
-  int guessedIndex = 0;
-  return [&eventCounters, &switchingTimes, guessedIndex](scalar_t time) mutable {
-    int index = findActiveIntervalIndex(switchingTimes, time, guessedIndex);
+  return [&eventCounters, &switchingTimes](scalar_t time) mutable {
+    int index = lookup::findPartitionInTimeArray(switchingTimes, time);
 
     if (index < 0 || index >= eventCounters.size()) {
       throw std::runtime_error("The enquiry time" + std::to_string(time) + "refers to an out-of-range subsystem.");
     }
-
-    guessedIndex = index;
-
     return eventCounters[index];
   };
 }
@@ -161,13 +158,12 @@ void HybridLogicRulesMachine::findEventsDistribution(const scalar_array_t& parti
   /*
    * Finding the distribution of the event's indices over partitions.
    */
-  int lastIndex = 0;
   int firstActiveSwitchinTimeIndex = -1;
   std::vector<size_array_t> eventIndecesStock(numPartitions_, size_array_t(0));
   for (size_t i = 0; i < allEventTimes.size(); i++) {
     const scalar_t& ti = allEventTimes[i];
 
-    int index = findActiveIntervalIndex(partitioningTimes, ti, lastIndex);
+    int index = lookup::findPartitionInTimeArray(partitioningTimes, ti);
 
     if (index < 0 || index == numPartitions_) {
       continue;
@@ -185,7 +181,6 @@ void HybridLogicRulesMachine::findEventsDistribution(const scalar_array_t& parti
     }
 
     eventIndecesStock[index].push_back(i);
-    lastIndex = index;
   }  // end of i loop
 
   /*
@@ -207,7 +202,7 @@ void HybridLogicRulesMachine::findEventsDistribution(const scalar_array_t& parti
       } else if (allEventTimes.front() >= partitioningTimes.back()) {
         currActiveSubsystemIndex = 0;
       } else {  // last case
-        currActiveSubsystemIndex = findActiveIntervalIndex(allEventTimes, partitioningTimes.front(), 0) + 1;
+        currActiveSubsystemIndex = lookup::findPartitionInTimeArray(allEventTimes, partitioningTimes.front()) + 1;
       }
     }
   }

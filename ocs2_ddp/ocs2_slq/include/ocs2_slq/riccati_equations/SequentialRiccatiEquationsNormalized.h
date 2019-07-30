@@ -274,7 +274,7 @@ class SequentialRiccatiEquationsNormalized final : public OdeBase<STATE_DIM*(STA
     scalar_t time = switchingTimeFinal_ - scalingFactor_ * z;
 
     // epsilon is set to include times past event times which have been artificially increased in the rollout
-    size_t index = Lookup::findFirstIndexWithinTol(eventTimes_, time, 1e-5);
+    size_t index = lookup::findFirstIndexWithinTol(eventTimes_, time, 1e-5);
 
     s_vector_t allSsJump;
     convert2Vector((*QmFinalPtr_)[index], (*QvFinalPtr_)[index], (*qFinalPtr_)[index], allSsJump);

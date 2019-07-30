@@ -11,7 +11,7 @@
 #include "ocs2_core/OCS2NumericTraits.h"
 
 namespace ocs2 {
-namespace Lookup {
+namespace lookup {
 
 /**
  * finds the index of an element in a sorted dataArray which is equal to value (epsilon distance)
@@ -43,8 +43,8 @@ size_t findFirstIndexWithinTol(const std::vector<scalar_t>& dataArray, scalar_t 
  *  Find index into a sorted time Array
  *
  *  Indices are counted as follows:
- *  		------ | ----- | ---  ... ---    | -----
- *				   t0     t1              t(n-1)
+ *          ------ | ----- | ---  ... ---    | -----
+ *                t0     t1              t(n-1)
  *  Index     0        1      2   ...  (n-1)    n
  *
  *  Corner cases:
@@ -62,14 +62,14 @@ template <typename scalar_t = double>
 int findIndexInTimeArray(const std::vector<scalar_t>& timeArray, scalar_t time) {
   auto firstLargerValueIterator = std::lower_bound(timeArray.begin(), timeArray.end(), time);
   return static_cast<int>(firstLargerValueIterator - timeArray.begin());
-};
+}
 
 /**
  *  Find interval into a sorted time Array
  *
  *  Intervals are counted as follows:
- *  		------ | ----- | ---  ... ---    | -----
- *				   t0     t1              t(n-1)
+ *           ------ | ----- | ---  ... ---    | -----
+ *                 t0     t1              t(n-1)
  *  Interval  -1       0      1   ...  (n-2)    (n-1)
  *
  *  Corner cases are handled as in findIndexInTimeArray
@@ -86,7 +86,7 @@ int findIntervalInTimeArray(const std::vector<scalar_t>& timeArray, scalar_t tim
   } else {
     return 0;
   }
-};
+}
 
 /**
  *  Same as findIntervalInTimeArray except for 1 rule:
@@ -102,7 +102,7 @@ int findPartitionInTimeArray(const std::vector<scalar_t>& timeArray, scalar_t ti
   } else {  // t = t0
     return 0;
   }
-};
+}
 
 /**
  * Wraps findPartitionInTimeArray with bound check
@@ -133,9 +133,9 @@ int findActivePartitionInTimeArray(const std::vector<scalar_t>& timeArray, scala
   }
 
   return partition;
-};
+}
 
-}  // namespace Lookup
+}  // namespace lookup
 }  // namespace ocs2
 
 #endif  // OCS2_CTRL_LOOKUP_H

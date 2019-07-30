@@ -53,7 +53,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_core/dynamics/ControlledSystemBase.h>
 #include <ocs2_core/logic/machine/HybridLogicRulesMachine.h>
 #include <ocs2_core/logic/rules/NullLogicRules.h>
-#include <ocs2_core/misc/FindActiveIntervalIndex.h>
 #include <ocs2_core/misc/LinearInterpolation.h>
 
 #include <ocs2_core/control/ControllerBase.h>

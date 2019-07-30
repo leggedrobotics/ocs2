@@ -164,9 +164,9 @@ typename DDP_BASE<STATE_DIM, INPUT_DIM>::scalar_t DDP_BASE<STATE_DIM, INPUT_DIM>
   inputTrajectoriesStock.resize(numPartitions);
 
   // finding the active subsystem index at initTime
-  size_t initActivePartition = BASE::findActivePartitionIndex(partitioningTimes, initTime);
+  size_t initActivePartition = lookup::findBoundedActiveIntervalInTimeArray(partitioningTimes, initTime);
   // finding the active subsystem index at initTime
-  size_t finalActivePartition = BASE::findActivePartitionIndex(partitioningTimes, finalTime);
+  size_t finalActivePartition = lookup::findBoundedActiveIntervalInTimeArray(partitioningTimes, finalTime);
 
   scalar_t t0 = initTime;
   state_vector_t x0 = initState;
@@ -268,8 +268,8 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::rolloutFinalState(const scalar_t& initTime,
   input_vector_t inputTrajectory;
 
   // finding the active subsystem index at initTime and final time
-  size_t initActivePartition = BASE::findActivePartitionIndex(partitioningTimes, initTime);
-  finalActivePartition = BASE::findActivePartitionIndex(partitioningTimes, finalTime);
+  size_t initActivePartition = lookup::findBoundedActiveIntervalInTimeArray(partitioningTimes, initTime);
+  finalActivePartition = lookup::findBoundedActiveIntervalInTimeArray(partitioningTimes, finalTime);
 
   scalar_t t0 = initTime, tf;
   state_vector_t x0 = initState;
@@ -989,7 +989,7 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::truncateConterller(const scalar_array_t& pa
   }
 
   // finding the active subsystem index at initTime_
-  initActivePartition = BASE::findActivePartitionIndex(partitioningTimes, initTime);
+  initActivePartition = lookup::findBoundedActiveIntervalInTimeArray(partitioningTimes, initTime);
 
   // saving the deleting part and clearing controllersStock
   for (size_t i = 0; i < initActivePartition; i++) {
@@ -1120,7 +1120,7 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::adjustController(const scalar_array_t& newE
 /***************************************************************************************************** */
 template <size_t STATE_DIM, size_t INPUT_DIM>
 void DDP_BASE<STATE_DIM, INPUT_DIM>::getValueFuntion(const scalar_t& time, const state_vector_t& state, scalar_t& valueFuntion) {
-  size_t activeSubsystem = BASE::findActivePartitionIndex(partitioningTimes_, time);
+  size_t activeSubsystem = lookup::findBoundedActiveIntervalInTimeArray(partitioningTimes_, time);
 
   state_matrix_t Sm;
   LinearInterpolation<state_matrix_t, Eigen::aligned_allocator<state_matrix_t>> SmFunc(&SsTimeTrajectoryStock_[activeSubsystem],
@@ -1768,7 +1768,7 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::run(const scalar_t& initTime, const state_v
   truncateConterller(partitioningTimes_, initTime_, nominalControllersStock_, initActivePartition_, deletedcontrollersStock_);
 
   // the final active partition index.
-  finalActivePartition_ = BASE::findActivePartitionIndex(partitioningTimes_, finalTime_);
+  finalActivePartition_ = lookup::findBoundedActiveIntervalInTimeArray(partitioningTimes_, finalTime_);
 
   // check if after the truncation the internal controller is empty
   bool isInitInternalControllerEmpty = false;

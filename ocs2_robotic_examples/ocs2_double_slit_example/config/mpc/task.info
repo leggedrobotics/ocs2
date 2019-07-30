@@ -8,8 +8,8 @@ systemParameters
 pathIntegral
 {
   gamma 0.1 ; temperature/level of noise
-  numSamples 100 ; how many trajectories to sample
-  debugPrint 0
+  numSamples 500 ; how many trajectories to sample
+  debugPrint 1
 
   rollout_settings
   {

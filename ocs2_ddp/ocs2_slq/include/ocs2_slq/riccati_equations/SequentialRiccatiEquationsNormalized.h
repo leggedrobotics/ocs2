@@ -242,7 +242,6 @@ class SequentialRiccatiEquationsNormalized final : public OdeBase<STATE_DIM*(STA
         // Modify the constraints in place
         Qm_minus_P_Rinv_P_array_[i].noalias() -= PmT_RinvChol * PmT_RinvChol.transpose();
         Qv_minus_P_Rinv_Rv_array_[i].noalias() -= PmT_RinvChol * RinvCholT_Rv_array_[i];
-        q_minus_half_Rv_Rinv_Rv_array_[i].noalias() -= 0.5 * RinvCholT_Rv_array_[i].transpose() * RinvCholT_Rv_array_[i];
       }
 
       // Set the data to the interpolator (array pointer would be the same, but time pointer might change)

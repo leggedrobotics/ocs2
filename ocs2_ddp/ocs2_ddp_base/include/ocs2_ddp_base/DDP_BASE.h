@@ -318,8 +318,7 @@ class DDP_BASE : public Solver_BASE<STATE_DIM, INPUT_DIM> {
    *
    * The method modifies:
    * - nominalControllersStock_: the controller that stabilizes the system around the new nominal trajectory and
-   * 								improves the constraints as well as the increment to the feed-forward control
-   * input.
+   * 					improves the constraints as well as the increment to the feed-forward control input.
    */
   virtual void calculateController() = 0;
 

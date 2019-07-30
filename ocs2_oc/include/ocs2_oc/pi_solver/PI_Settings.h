@@ -17,7 +17,7 @@ class PI_Settings {
   /**
    * @brief PI_Settings constructor with default values
    */
-  PI_Settings(double rollout_dt = 1e-3, double gamma = 0.1, size_t numSamples = 100, bool debugPrint = false)
+  PI_Settings(double rollout_dt = 1e-3, double gamma = 0.1, size_t numSamples = 100, int debugPrint = 0)
       : gamma_(gamma), numSamples_(numSamples), debugPrint_(debugPrint) {}
 
   /**
@@ -30,7 +30,7 @@ class PI_Settings {
 
   double gamma_;       //! temperature/level of noise
   size_t numSamples_;  //! how many trajectories to sample
-  bool debugPrint_;    //! verbose printing output for debugging
+  int debugPrint_;     //! verbose printing output for debugging
 
   Rollout_Settings rolloutSettings_;  //! settings for rollouts used in PI solver
 };
@@ -69,7 +69,7 @@ void PI_Settings::loadSettings(const std::string& filename, const std::string& f
   }
 
   try {
-    debugPrint_ = pt.get<bool>(fieldName + ".debugPrint");
+    debugPrint_ = pt.get<int>(fieldName + ".debugPrint");
     if (verbose) {
       std::cerr << " #### Option loader : option 'debugPrint' ....................... " << debugPrint_ << std::endl;
     }

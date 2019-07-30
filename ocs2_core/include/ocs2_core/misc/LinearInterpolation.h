@@ -88,7 +88,9 @@ class LinearInterpolation {
   void setData(const std::vector<scalar_t>* timeStampPtr, const std::vector<Data_T, Alloc>* dataPtr) {
     if (timeStampPtr != nullptr && dataPtr != nullptr) {
       if (dataPtr->size() != timeStampPtr->size()) {
-        throw std::runtime_error("LinearInterpolation.h : Sizes not suitable for interpolation.");
+        std::string errorMsg = "LinearInterpolation.h: sizes are not suitable for interpolation. TimeStamp has size " +
+                               std::to_string(dataPtr->size()) + " but Data has size " + std::to_string(timeStampPtr->size()) + ".";
+        throw std::runtime_error(errorMsg);
       }
     }
     timeStampPtr_ = timeStampPtr;

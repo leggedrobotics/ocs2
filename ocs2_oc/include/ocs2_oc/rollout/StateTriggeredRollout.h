@@ -198,8 +198,8 @@ class StateTriggeredRollout : public RolloutBase<STATE_DIM, INPUT_DIM> {
     //				eventTimes.push_back(timeTrajectory.back());
     //				subsystemID.push_back(eventID);
     //
-    //				static_cast<hybrid_logic_rules_machine_t>(hybridLlogicRulesMachine).push_back(partitionIndex, timeTrajectory.back(),
-    //eventID);
+    //				static_cast<hybrid_logic_rules_machine_t>(hybridLlogicRulesMachine).push_back(partitionIndex,
+    // timeTrajectory.back(), eventID);
     ////				static_cast<hybrid_logic_rules_machine_t>(hybridLlogicRulesMachine).display();
     //			}
     //

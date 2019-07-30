@@ -21,15 +21,13 @@ namespace Numerics {
  * @param [in] y: a floating-point number.
  * @return bool: true if x=y.
  */
-template<class T>
-typename std::enable_if<!std::numeric_limits<T>::is_integer, bool>::type
-    almost_eq(const T& x, const T& y) {
-
-    // the machine epsilon has to be scaled to the magnitude of the values used
-    // and multiplied by the desired precision in ULPs (units in the last place)
-    return std::abs(x-y) <= std::numeric_limits<T>::epsilon() * std::abs(x+y)
-        // unless the result is subnormal
-        || std::abs(x-y) < std::numeric_limits<T>::min();
+template <class T>
+typename std::enable_if<!std::numeric_limits<T>::is_integer, bool>::type almost_eq(const T& x, const T& y) {
+  // the machine epsilon has to be scaled to the magnitude of the values used
+  // and multiplied by the desired precision in ULPs (units in the last place)
+  return std::abs(x - y) <= std::numeric_limits<T>::epsilon() * std::abs(x + y)
+         // unless the result is subnormal
+         || std::abs(x - y) < std::numeric_limits<T>::min();
 }
 
 /**
@@ -40,11 +38,9 @@ typename std::enable_if<!std::numeric_limits<T>::is_integer, bool>::type
  * @param [in] y: a floating-point number.
  * @return bool: true if x<=y.
  */
-template<class T>
-typename std::enable_if<!std::numeric_limits<T>::is_integer, bool>::type
-    almost_le(const T& x, const T& y) {
-
-    return x < y || almost_eq(x, y);
+template <class T>
+typename std::enable_if<!std::numeric_limits<T>::is_integer, bool>::type almost_le(const T& x, const T& y) {
+  return x < y || almost_eq(x, y);
 }
 
 /**
@@ -55,11 +51,9 @@ typename std::enable_if<!std::numeric_limits<T>::is_integer, bool>::type
  * @param [in] y: a floating-point number.
  * @return bool: true if x>=y.
  */
-template<class T>
-typename std::enable_if<!std::numeric_limits<T>::is_integer, bool>::type
-    almost_ge(const T& x, const T& y) {
-
-    return x > y || almost_eq(x, y);
+template <class T>
+typename std::enable_if<!std::numeric_limits<T>::is_integer, bool>::type almost_ge(const T& x, const T& y) {
+  return x > y || almost_eq(x, y);
 }
 
 }  // namespace Numerics

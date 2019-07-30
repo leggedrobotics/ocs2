@@ -187,9 +187,7 @@ class FeedforwardController final : public ControllerBase<STATE_DIM, INPUT_DIM> 
     swap(uffArray_, other.uffArray_);
   }
 
-  FeedforwardController<STATE_DIM, INPUT_DIM> * clone() override {
-    return new FeedforwardController<STATE_DIM, INPUT_DIM>(*this);
-  }
+  FeedforwardController<STATE_DIM, INPUT_DIM>* clone() override { return new FeedforwardController<STATE_DIM, INPUT_DIM>(*this); }
 
   /**
    * Returns the size of the controller (in particular the time stamp).
@@ -199,9 +197,9 @@ class FeedforwardController final : public ControllerBase<STATE_DIM, INPUT_DIM> 
   size_t size() const { return timeStamp_.size(); }
 
   void display() const override {
-    for (int i=0;i<timeStamp_.size();i++) {
-        std::cerr << "t\t" << timeStamp_[i] << "\tu\t" << uffArray_[i].transpose() << "\n";
-      }
+    for (int i = 0; i < timeStamp_.size(); i++) {
+      std::cerr << "t\t" << timeStamp_[i] << "\tu\t" << uffArray_[i].transpose() << "\n";
+    }
     std::cerr << std::endl;
   }
 

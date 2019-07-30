@@ -273,7 +273,7 @@ class HybridLogicRules {
    *  @param [in] time
    *  @return count of the event the input time belongs to
    */
-  size_t getEventTimeCount(scalar_t time) const { return Lookup::findIndexInTimeArray(eventTimes_, time); };
+  size_t getEventTimeCount(scalar_t time) const { return lookup::findIndexInTimeArray(eventTimes_, time); };
 
  protected:
   /**

@@ -91,8 +91,8 @@ std::function<size_t(typename HybridLogicRulesMachine::scalar_t)> HybridLogicRul
   const scalar_array_t& switchingTimes = switchingTimesStock_[partitionIndex];
 
   // return Lambda expression
-  return [&eventCounters, &switchingTimes](scalar_t time) mutable {
-    int index = lookup::findPartitionInTimeArray(switchingTimes, time);
+  return [&eventCounters, &switchingTimes](scalar_t time) {
+    int index = lookup::findActiveIntervalInTimeArray(switchingTimes, time);
 
     if (index < 0 || index >= eventCounters.size()) {
       throw std::runtime_error("The enquiry time" + std::to_string(time) + "refers to an out-of-range subsystem.");
@@ -163,7 +163,7 @@ void HybridLogicRulesMachine::findEventsDistribution(const scalar_array_t& parti
   for (size_t i = 0; i < allEventTimes.size(); i++) {
     const scalar_t& ti = allEventTimes[i];
 
-    int index = lookup::findPartitionInTimeArray(partitioningTimes, ti);
+    int index = lookup::findActiveIntervalInTimeArray(partitioningTimes, ti);
 
     if (index < 0 || index == numPartitions_) {
       continue;
@@ -202,7 +202,7 @@ void HybridLogicRulesMachine::findEventsDistribution(const scalar_array_t& parti
       } else if (allEventTimes.front() >= partitioningTimes.back()) {
         currActiveSubsystemIndex = 0;
       } else {  // last case
-        currActiveSubsystemIndex = lookup::findPartitionInTimeArray(allEventTimes, partitioningTimes.front()) + 1;
+        currActiveSubsystemIndex = lookup::findActiveIntervalInTimeArray(allEventTimes, partitioningTimes.front()) + 1;
       }
     }
   }

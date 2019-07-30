@@ -70,66 +70,66 @@ TEST(testLookup, findIntervalInTimeArray)
   ASSERT_EQ(findIntervalInTimeArray(timeArrayEmpty,  1.0), 0);
 }
 
-TEST(testLookup, findPartitionInTimeArray)
+TEST(testLookup, findActiveIntervalInTimeArray)
 {
   // Normal case
   std::vector<double> timeArray{-1.0, 2.0, 3.0};
-  ASSERT_EQ(findPartitionInTimeArray(timeArray, -2.0), -1);
-  ASSERT_EQ(findPartitionInTimeArray(timeArray, -1.0), 0);
-  ASSERT_EQ(findPartitionInTimeArray(timeArray, 0.0), 0);
-  ASSERT_EQ(findPartitionInTimeArray(timeArray, 2.0), 0);
-  ASSERT_EQ(findPartitionInTimeArray(timeArray, 2.5), 1);
-  ASSERT_EQ(findPartitionInTimeArray(timeArray, 3.0), 1);
-  ASSERT_EQ(findPartitionInTimeArray(timeArray,  4.0), 2);
+  ASSERT_EQ(findActiveIntervalInTimeArray(timeArray, -2.0), -1);
+  ASSERT_EQ(findActiveIntervalInTimeArray(timeArray, -1.0), 0);
+  ASSERT_EQ(findActiveIntervalInTimeArray(timeArray, 0.0), 0);
+  ASSERT_EQ(findActiveIntervalInTimeArray(timeArray, 2.0), 0);
+  ASSERT_EQ(findActiveIntervalInTimeArray(timeArray, 2.5), 1);
+  ASSERT_EQ(findActiveIntervalInTimeArray(timeArray, 3.0), 1);
+  ASSERT_EQ(findActiveIntervalInTimeArray(timeArray,  4.0), 2);
 
   // With repetitions
   std::vector<double> timeArrayRepeated{-1.0, 2.0, 2.0, 2.0, 3.0};
-  ASSERT_EQ(findPartitionInTimeArray(timeArrayRepeated, 1.9), 0);
-  ASSERT_EQ(findPartitionInTimeArray(timeArrayRepeated, 2.0), 0);
-  ASSERT_EQ(findPartitionInTimeArray(timeArrayRepeated, 2.1), 3);
+  ASSERT_EQ(findActiveIntervalInTimeArray(timeArrayRepeated, 1.9), 0);
+  ASSERT_EQ(findActiveIntervalInTimeArray(timeArrayRepeated, 2.0), 0);
+  ASSERT_EQ(findActiveIntervalInTimeArray(timeArrayRepeated, 2.1), 3);
 
   // Single Time
   std::vector<double> timeArraySingle{1.0};
-  ASSERT_EQ(findPartitionInTimeArray(timeArraySingle, 0.0), -1);
-  ASSERT_EQ(findPartitionInTimeArray(timeArraySingle, 1.0), 0);
-  ASSERT_EQ(findPartitionInTimeArray(timeArraySingle, 2.0), 0);
+  ASSERT_EQ(findActiveIntervalInTimeArray(timeArraySingle, 0.0), -1);
+  ASSERT_EQ(findActiveIntervalInTimeArray(timeArraySingle, 1.0), 0);
+  ASSERT_EQ(findActiveIntervalInTimeArray(timeArraySingle, 2.0), 0);
 
   // empty time
   std::vector<double> timeArrayEmpty;
-  ASSERT_EQ(findPartitionInTimeArray(timeArrayEmpty, -1.0), 0);
-  ASSERT_EQ(findPartitionInTimeArray(timeArrayEmpty,  0.0), 0);
-  ASSERT_EQ(findPartitionInTimeArray(timeArrayEmpty,  1.0), 0);
+  ASSERT_EQ(findActiveIntervalInTimeArray(timeArrayEmpty, -1.0), 0);
+  ASSERT_EQ(findActiveIntervalInTimeArray(timeArrayEmpty,  0.0), 0);
+  ASSERT_EQ(findActiveIntervalInTimeArray(timeArrayEmpty,  1.0), 0);
 }
 
-TEST(testLookup, findActivePartitionInTimeArray)
+TEST(testLookup, findBoundedActiveIntervalInTimeArray)
 {
   // Normal case
   std::vector<double> timeArray{-1.0, 2.0, 3.0};
-  ASSERT_ANY_THROW(findActivePartitionInTimeArray(timeArray, -2.0)); // throws on -1
-  ASSERT_EQ(findActivePartitionInTimeArray(timeArray, -1.0), 0);
-  ASSERT_EQ(findActivePartitionInTimeArray(timeArray, 0.0), 0);
-  ASSERT_EQ(findActivePartitionInTimeArray(timeArray, 2.0), 0);
-  ASSERT_EQ(findActivePartitionInTimeArray(timeArray, 2.5), 1);
-  ASSERT_EQ(findActivePartitionInTimeArray(timeArray, 3.0), 1);
-  ASSERT_ANY_THROW(findActivePartitionInTimeArray(timeArray,  4.0)); // throws on 2
+  ASSERT_ANY_THROW(findBoundedActiveIntervalInTimeArray(timeArray, -2.0)); // throws on -1
+  ASSERT_EQ(findBoundedActiveIntervalInTimeArray(timeArray, -1.0), 0);
+  ASSERT_EQ(findBoundedActiveIntervalInTimeArray(timeArray, 0.0), 0);
+  ASSERT_EQ(findBoundedActiveIntervalInTimeArray(timeArray, 2.0), 0);
+  ASSERT_EQ(findBoundedActiveIntervalInTimeArray(timeArray, 2.5), 1);
+  ASSERT_EQ(findBoundedActiveIntervalInTimeArray(timeArray, 3.0), 1);
+  ASSERT_ANY_THROW(findBoundedActiveIntervalInTimeArray(timeArray,  4.0)); // throws on 2
 
   // With repetitions
   std::vector<double> timeArrayRepeated{-1.0, 2.0, 2.0, 2.0, 3.0};
-  ASSERT_EQ(findActivePartitionInTimeArray(timeArrayRepeated, 1.9), 0);
-  ASSERT_EQ(findActivePartitionInTimeArray(timeArrayRepeated, 2.0), 0);
-  ASSERT_EQ(findActivePartitionInTimeArray(timeArrayRepeated, 2.1), 3);
+  ASSERT_EQ(findBoundedActiveIntervalInTimeArray(timeArrayRepeated, 1.9), 0);
+  ASSERT_EQ(findBoundedActiveIntervalInTimeArray(timeArrayRepeated, 2.0), 0);
+  ASSERT_EQ(findBoundedActiveIntervalInTimeArray(timeArrayRepeated, 2.1), 3);
 
   // Single Time -> always throws
   std::vector<double> timeArraySingle{1.0};
-  ASSERT_ANY_THROW(findActivePartitionInTimeArray(timeArraySingle, 0.0));
-  ASSERT_ANY_THROW(findActivePartitionInTimeArray(timeArraySingle, 1.0));
-  ASSERT_ANY_THROW(findActivePartitionInTimeArray(timeArraySingle, 2.0));
+  ASSERT_ANY_THROW(findBoundedActiveIntervalInTimeArray(timeArraySingle, 0.0));
+  ASSERT_ANY_THROW(findBoundedActiveIntervalInTimeArray(timeArraySingle, 1.0));
+  ASSERT_ANY_THROW(findBoundedActiveIntervalInTimeArray(timeArraySingle, 2.0));
 
   // empty time -> always throws
   std::vector<double> timeArrayEmpty;
-  ASSERT_ANY_THROW(findActivePartitionInTimeArray(timeArrayEmpty, -1.0));
-  ASSERT_ANY_THROW(findActivePartitionInTimeArray(timeArrayEmpty,  0.0));
-  ASSERT_ANY_THROW(findActivePartitionInTimeArray(timeArrayEmpty,  1.0));
+  ASSERT_ANY_THROW(findBoundedActiveIntervalInTimeArray(timeArrayEmpty, -1.0));
+  ASSERT_ANY_THROW(findBoundedActiveIntervalInTimeArray(timeArrayEmpty,  0.0));
+  ASSERT_ANY_THROW(findBoundedActiveIntervalInTimeArray(timeArrayEmpty,  1.0));
 }
 
 

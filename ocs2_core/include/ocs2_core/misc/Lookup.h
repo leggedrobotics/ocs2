@@ -96,7 +96,7 @@ int findIntervalInTimeArray(const std::vector<scalar_t>& timeArray, scalar_t tim
  *  @return partition between [-1, size(timeArray)-1]
  */
 template <typename scalar_t = double>
-int findPartitionInTimeArray(const std::vector<scalar_t>& timeArray, scalar_t time) {
+int findActiveIntervalInTimeArray(const std::vector<scalar_t>& timeArray, scalar_t time) {
   if (!timeArray.empty() && time != timeArray.front()) {
     return findIntervalInTimeArray(timeArray, time);
   } else {  // t = t0
@@ -105,30 +105,32 @@ int findPartitionInTimeArray(const std::vector<scalar_t>& timeArray, scalar_t ti
 }
 
 /**
- * Wraps findPartitionInTimeArray with bound check
+ * Wraps findActiveIntervalInTimeArray with bound check
  * throws an error if time before of after the end is selected.
  * Also throws on timeArrays that are empty or with 1 element only.
  *
  * @return partition between [0, size(timeArray)-2]
  */
 template <typename scalar_t = double>
-int findActivePartitionInTimeArray(const std::vector<scalar_t>& timeArray, scalar_t time) {
-  auto partition = findPartitionInTimeArray(timeArray, time);
+int findBoundedActiveIntervalInTimeArray(const std::vector<scalar_t>& timeArray, scalar_t time) {
+  auto partition = findActiveIntervalInTimeArray(timeArray, time);
 
   if (timeArray.empty()) {
-    std::string mesg = "[findActivePartitionInTimeArray] Time array is empty";
+    std::string mesg = "[findBoundedActiveIntervalInTimeArray] Time array is empty";
     throw std::runtime_error(mesg);
   }
 
   if (partition < 0) {
-    std::string mesg = "[findActivePartitionInTimeArray] Given time is less than the start time (i.e. givenTime < timeArray.front()): " +
-                       std::to_string(time) + " < " + std::to_string(timeArray.front());
+    std::string mesg =
+        "[findBoundedActiveIntervalInTimeArray] Given time is less than the start time (i.e. givenTime < timeArray.front()): " +
+        std::to_string(time) + " < " + std::to_string(timeArray.front());
     throw std::runtime_error(mesg);
   }
 
   if (partition >= timeArray.size() - 1) {
-    std::string mesg = "[findActivePartitionInTimeArray] Given time is greater than the final time (i.e. timeArray.back() < givenTime): " +
-                       std::to_string(timeArray.back()) + " < " + std::to_string(time);
+    std::string mesg =
+        "[findBoundedActiveIntervalInTimeArray] Given time is greater than the final time (i.e. timeArray.back() < givenTime): " +
+        std::to_string(timeArray.back()) + " < " + std::to_string(time);
     throw std::runtime_error(mesg);
   }
 

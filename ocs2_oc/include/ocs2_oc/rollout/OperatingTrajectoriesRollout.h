@@ -115,9 +115,9 @@ class OperatingTrajectoriesRollout : public RolloutBase<STATE_DIM, INPUT_DIM> {
     const scalar_array_t& switchingTimes = logicRulesMachine.getSwitchingTimes(partitionIndex);
 
     // index of the first subsystem
-    size_t beginItr = lookup::findPartitionInTimeArray(switchingTimes, initTime);
+    size_t beginItr = lookup::findActiveIntervalInTimeArray(switchingTimes, initTime);
     // index of the last subsystem
-    size_t finalItr = lookup::findPartitionInTimeArray(switchingTimes, finalTime);
+    size_t finalItr = lookup::findActiveIntervalInTimeArray(switchingTimes, finalTime);
 
     // clearing the output trajectories
     timeTrajectory.clear();

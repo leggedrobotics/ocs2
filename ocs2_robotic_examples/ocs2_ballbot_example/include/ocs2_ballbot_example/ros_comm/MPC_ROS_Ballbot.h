@@ -122,7 +122,7 @@ public:
 		// Received command
 		const Eigen::Matrix<scalar_t, 2, 1> targetPosition =
 				costDesiredTrajectories.desiredStateTrajectory().front().head<2>();
-		double targetYawDisplacement = costDesiredTrajectories.desiredStateTrajectory().front()(2);
+		const scalar_t targetYaw = costDesiredTrajectories.desiredStateTrajectory().front()(2);
 		const Eigen::Matrix<scalar_t, 3, 1> targetVelocity =
 				costDesiredTrajectories.desiredStateTrajectory().front().tail<3>();
 
@@ -149,8 +149,8 @@ public:
         // xDesiredTrajectory[0].segment<3>(3).setZero();
         xDesiredTrajectory[0] = currentObservation.state();
         xDesiredTrajectory[1] = state_vector_t::Zero();
-        xDesiredTrajectory[1].head<5>() << targetPosition(0), targetPosition(1), 0.0, 0.0, 0.0;
-        xDesiredTrajectory[1].segment<5>(5) << targetVelocity(0), targetVelocity(1), 0.0, 0.0, 0.0;
+        xDesiredTrajectory[1].head<5>() << targetPosition(0), targetPosition(1), targetYaw, 0.0, 0.0;
+        xDesiredTrajectory[1].segment<5>(5) << targetVelocity(0), targetVelocity(1), targetVelocity(2), 0.0, 0.0;
 
 		// Desired input trajectory
 		typename cost_desired_trajectories_t::dynamic_vector_array_t& uDesiredTrajectory =

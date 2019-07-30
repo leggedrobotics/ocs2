@@ -32,24 +32,17 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <ocs2_ddp_base/DDP_BASE.h>
 
-
 #include <ocs2_core/integration/Integrator.h>
-#include <ocs2_core/integration/SystemEventHandler.h>
 #include <ocs2_core/integration/StateTriggeredEventHandler.h>
-#include <ocs2_core/misc/LTI_Equations.h>
+#include <ocs2_core/integration/SystemEventHandler.h>
+#include <ocs2_core/misc/LinearAlgebra.h>
 
 #include <ocs2_oc/rollout/StateTriggeredRollout.h>
 
 #include <ocs2_slq/SLQ_Settings.h>
 
-#include <ocs2_slq/riccati_equations/SequentialRiccatiEquations.h>
-#include <ocs2_slq/riccati_equations/SequentialRiccatiEquationsNormalized.h>
-#include <ocs2_slq/riccati_equations/SequentialErrorEquation.h>
 #include <ocs2_slq/riccati_equations/SequentialErrorEquationNormalized.h>
-#include <ocs2_slq/riccati_equations/SLQ_RiccatiEquationsNormalized.h>
-
-
-#define USE_SEPARATE_RICCATI_SOLVER
+#include <ocs2_slq/riccati_equations/SequentialRiccatiEquationsNormalized.h>
 
 namespace ocs2 {
 
@@ -58,473 +51,309 @@ namespace ocs2 {
  *
  * @tparam STATE_DIM: Dimension of the state space.
  * @tparam INPUT_DIM: Dimension of the control input space.
- * @tparam LOGIC_RULES_T: Logic Rules type (default NullLogicRules).
  */
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T=NullLogicRules>
-class SLQ_BASE : public DDP_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>
-{
-public:
-	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+template <size_t STATE_DIM, size_t INPUT_DIM>
+class SLQ_BASE : public DDP_BASE<STATE_DIM, INPUT_DIM> {
+ public:
+  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-	typedef DDP_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> BASE;
+  using BASE = DDP_BASE<STATE_DIM, INPUT_DIM>;
 
-	typedef typename BASE::DIMENSIONS                          DIMENSIONS;
-	typedef typename BASE::controller_t                        controller_t;
-	typedef typename BASE::size_array_t                        size_array_t;
-	typedef typename BASE::size_array2_t                       size_array2_t;
-	typedef typename BASE::scalar_t                            scalar_t;
-	typedef typename BASE::scalar_array_t                      scalar_array_t;
-	typedef typename BASE::scalar_array2_t                     scalar_array2_t;
-	typedef typename BASE::scalar_array3_t                     scalar_array3_t;
-	typedef typename BASE::eigen_scalar_t                      eigen_scalar_t;
-	typedef typename BASE::eigen_scalar_array_t                eigen_scalar_array_t;
-	typedef typename BASE::eigen_scalar_array2_t               eigen_scalar_array2_t;
-	typedef typename BASE::state_vector_t                      state_vector_t;
-	typedef typename BASE::state_vector_array_t                state_vector_array_t;
-	typedef typename BASE::state_vector_array2_t               state_vector_array2_t;
-	typedef typename BASE::state_vector_array3_t               state_vector_array3_t;
-	typedef typename BASE::input_vector_t                      input_vector_t;
-	typedef typename BASE::input_vector_array_t                input_vector_array_t;
-	typedef typename BASE::input_vector_array2_t               input_vector_array2_t;
-	typedef typename BASE::input_vector_array3_t               input_vector_array3_t;
-	typedef typename BASE::input_state_matrix_t                input_state_matrix_t;
-	typedef typename BASE::input_state_matrix_array_t          input_state_matrix_array_t;
-	typedef typename BASE::input_state_matrix_array2_t         input_state_matrix_array2_t;
-	typedef typename BASE::input_state_matrix_array3_t         input_state_matrix_array3_t;
-	typedef typename BASE::state_matrix_t                      state_matrix_t;
-	typedef typename BASE::state_matrix_array_t                state_matrix_array_t;
-	typedef typename BASE::state_matrix_array2_t               state_matrix_array2_t;
-	typedef typename BASE::state_matrix_array3_t               state_matrix_array3_t;
-	typedef typename BASE::input_matrix_t                      input_matrix_t;
-	typedef typename BASE::input_matrix_array_t                input_matrix_array_t;
-	typedef typename BASE::input_matrix_array2_t               input_matrix_array2_t;
-	typedef typename BASE::input_matrix_array3_t               input_matrix_array3_t;
-	typedef typename BASE::state_input_matrix_t                state_input_matrix_t;
-	typedef typename BASE::state_input_matrix_array_t          state_input_matrix_array_t;
-	typedef typename BASE::state_input_matrix_array2_t         state_input_matrix_array2_t;
-	typedef typename BASE::state_input_matrix_array3_t         state_input_matrix_array3_t;
-	typedef typename BASE::constraint1_vector_t                constraint1_vector_t;
-	typedef typename BASE::constraint1_vector_array_t          constraint1_vector_array_t;
-	typedef typename BASE::constraint1_vector_array2_t         constraint1_vector_array2_t;
-	typedef typename BASE::constraint1_state_matrix_t          constraint1_state_matrix_t;
-	typedef typename BASE::constraint1_state_matrix_array_t    constraint1_state_matrix_array_t;
-	typedef typename BASE::constraint1_state_matrix_array2_t   constraint1_state_matrix_array2_t;
-	typedef typename BASE::constraint1_input_matrix_t          constraint1_input_matrix_t;
-	typedef typename BASE::constraint1_input_matrix_array_t    constraint1_input_matrix_array_t;
-	typedef typename BASE::constraint1_input_matrix_array2_t   constraint1_input_matrix_array2_t;
-	typedef typename BASE::input_constraint1_matrix_t          input_constraint1_matrix_t;
-	typedef typename BASE::input_constraint1_matrix_array_t    input_constraint1_matrix_array_t;
-	typedef typename BASE::input_constraint1_matrix_array2_t   input_constraint1_matrix_array2_t;
-	typedef typename BASE::constraint2_vector_t                constraint2_vector_t;
-	typedef typename BASE::constraint2_vector_array_t          constraint2_vector_array_t;
-	typedef typename BASE::constraint2_vector_array2_t         constraint2_vector_array2_t;
-	typedef typename BASE::constraint2_state_matrix_t          constraint2_state_matrix_t;
-	typedef typename BASE::constraint2_state_matrix_array_t    constraint2_state_matrix_array_t;
-	typedef typename BASE::constraint2_state_matrix_array2_t   constraint2_state_matrix_array2_t;
-	typedef typename BASE::dynamic_vector_t                    dynamic_vector_t;
-	typedef typename BASE::dynamic_vector_array_t              dynamic_vector_array_t;
+  using DIMENSIONS = typename BASE::DIMENSIONS;
+  using typename BASE::constraint1_input_matrix_array2_t;
+  using typename BASE::constraint1_input_matrix_array_t;
+  using typename BASE::constraint1_input_matrix_t;
+  using typename BASE::constraint1_state_matrix_array2_t;
+  using typename BASE::constraint1_state_matrix_array_t;
+  using typename BASE::constraint1_state_matrix_t;
+  using typename BASE::constraint1_vector_array2_t;
+  using typename BASE::constraint1_vector_array_t;
+  using typename BASE::constraint1_vector_t;
+  using typename BASE::constraint2_state_matrix_array2_t;
+  using typename BASE::constraint2_state_matrix_array_t;
+  using typename BASE::constraint2_state_matrix_t;
+  using typename BASE::constraint2_vector_array2_t;
+  using typename BASE::constraint2_vector_array_t;
+  using typename BASE::constraint2_vector_t;
+  using typename BASE::controller_t;
+  using typename BASE::dynamic_matrix_array2_t;
+  using typename BASE::dynamic_matrix_t;
+  using typename BASE::dynamic_vector_array_t;
+  using typename BASE::dynamic_vector_t;
+  using typename BASE::eigen_scalar_array2_t;
+  using typename BASE::eigen_scalar_array_t;
+  using typename BASE::eigen_scalar_t;
+  using typename BASE::input_constraint1_matrix_array2_t;
+  using typename BASE::input_constraint1_matrix_array_t;
+  using typename BASE::input_constraint1_matrix_t;
+  using typename BASE::input_matrix_array2_t;
+  using typename BASE::input_matrix_array3_t;
+  using typename BASE::input_matrix_array_t;
+  using typename BASE::input_matrix_t;
+  using typename BASE::input_state_matrix_array2_t;
+  using typename BASE::input_state_matrix_array3_t;
+  using typename BASE::input_state_matrix_array_t;
+  using typename BASE::input_state_matrix_t;
+  using typename BASE::input_vector_array2_t;
+  using typename BASE::input_vector_array3_t;
+  using typename BASE::input_vector_array_t;
+  using typename BASE::input_vector_t;
+  using typename BASE::scalar_array2_t;
+  using typename BASE::scalar_array3_t;
+  using typename BASE::scalar_array_t;
+  using typename BASE::scalar_t;
+  using typename BASE::size_array2_t;
+  using typename BASE::size_array_t;
+  using typename BASE::state_input_matrix_array2_t;
+  using typename BASE::state_input_matrix_array3_t;
+  using typename BASE::state_input_matrix_array_t;
+  using typename BASE::state_input_matrix_t;
+  using typename BASE::state_matrix_array2_t;
+  using typename BASE::state_matrix_array3_t;
+  using typename BASE::state_matrix_array_t;
+  using typename BASE::state_matrix_t;
+  using typename BASE::state_vector_array2_t;
+  using typename BASE::state_vector_array3_t;
+  using typename BASE::state_vector_array_t;
+  using typename BASE::state_vector_t;
 
-	typedef typename BASE::controller_ptr_array_t              controller_ptr_array_t;
-	typedef typename BASE::linear_controller_t                 linear_controller_t;
-	typedef typename BASE::linear_controller_array_t           linear_controller_array_t;
-	typedef typename BASE::event_handler_t                     event_handler_t;
-	typedef typename BASE::controlled_system_base_t            controlled_system_base_t;
-	typedef typename BASE::derivatives_base_t                  derivatives_base_t;
-	typedef typename BASE::constraint_base_t                   constraint_base_t;
-	typedef typename BASE::cost_function_base_t                cost_function_base_t;
-	typedef typename BASE::operating_trajectories_base_t       operating_trajectories_base_t;
-	typedef typename BASE::penalty_base_t                      penalty_base_t;
-	typedef typename BASE::rollout_base_t                      rollout_base_t;
-	typedef typename BASE::time_triggered_rollout_t            time_triggered_rollout_t;
-	typedef typename BASE::linear_quadratic_approximator_t     linear_quadratic_approximator_t;
-	typedef typename BASE::operating_trajectorie_rollout_t     operating_trajectorie_rollout_t;
-	typedef typename BASE::cost_desired_trajectories_t         cost_desired_trajectories_t;
-	typedef typename BASE::logic_rules_machine_t               logic_rules_machine_t;
-	typedef typename BASE::logic_rules_machine_ptr_t           logic_rules_machine_ptr_t;
+  using typename BASE::constraint_base_t;
+  using typename BASE::controlled_system_base_t;
+  using typename BASE::controller_ptr_array_t;
+  using typename BASE::cost_desired_trajectories_t;
+  using typename BASE::cost_function_base_t;
+  using typename BASE::derivatives_base_t;
+  using typename BASE::event_handler_t;
+  using typename BASE::linear_controller_array_t;
+  using typename BASE::linear_controller_t;
+  using typename BASE::linear_quadratic_approximator_t;
+  using typename BASE::logic_rules_machine_ptr_t;
+  using typename BASE::logic_rules_machine_t;
+  using typename BASE::operating_trajectorie_rollout_t;
+  using typename BASE::operating_trajectories_base_t;
+  using typename BASE::penalty_base_t;
+  using typename BASE::rollout_base_t;
+  using typename BASE::time_triggered_rollout_t;
 
-	typedef SLQ_RiccatiEquationsNormalized<STATE_DIM, INPUT_DIM>		slq_riccati_equations_t;
-//	typedef SequentialRiccatiEquations<STATE_DIM, INPUT_DIM> 			riccati_equations_t;
-	typedef SequentialRiccatiEquationsNormalized<STATE_DIM, INPUT_DIM>	riccati_equations_t;
-//	typedef SequentialErrorEquation<STATE_DIM, INPUT_DIM>			 	error_equation_t;
-	typedef SequentialErrorEquationNormalized<STATE_DIM, INPUT_DIM> 	error_equation_t;
-//	typedef LTI_Equations<STATE_DIM> LTI_Equation_t;
-	using hamiltonian_equation_t = LTI_Equations<2*STATE_DIM, STATE_DIM, double>;
-	using hamiltonian_increment_equation_t = LTI_Equations<STATE_DIM, 1, double>;
+  using riccati_equations_t = SequentialRiccatiEquationsNormalized<STATE_DIM, INPUT_DIM>;
+  using error_equation_t = SequentialErrorEquationNormalized<STATE_DIM, INPUT_DIM>;
 
-	typedef StateTriggeredRollout<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> state_triggered_rollout_t;
+  using state_triggered_rollout_t = StateTriggeredRollout<STATE_DIM, INPUT_DIM>;
 
+  /**
+   * class for collecting SLQ data
+   */
+  template <size_t OTHER_STATE_DIM, size_t OTHER_INPUT_DIM>
+  friend class SLQ_DataCollector;
 
-	/**
-	 * class for collecting SLQ data
-	 */
-	template <size_t OTHER_STATE_DIM, size_t OTHER_INPUT_DIM, class OTHER_LOGIC_RULES_T>
-	friend class SLQ_DataCollector;
+ public:
+  /**
+   * Default constructor.
+   */
+  SLQ_BASE() = default;
 
-// TODO: do not push to remote
-public:
+  /**
+   * Constructor
+   *
+   * @param [in] systemDynamicsPtr: The system dynamics which possibly includes some subsystems.
+   * @param [in] systemDerivativesPtr: The system dynamics derivatives for subsystems of the system.
+   * @param [in] systemConstraintsPtr: The system constraint function and its derivatives for subsystems.
+   * @param [in] costFunctionPtr: The cost function (intermediate and terminal costs) and its derivatives for subsystems.
+   * @param [in] operatingTrajectoriesPtr: The operating trajectories of system which will be used for initialization of SLQ.
+   * @param [in] settings: Structure containing the settings for the SLQ algorithm.
+   * @param [in] logicRulesPtr: The logic rules used for implementing mixed-logic dynamical systems.
+   * @param [in] heuristicsFunctionPtr: Heuristic function used in the infinite time optimal control formulation. If it is not
+   * defined, we will use the terminal cost function defined in costFunctionPtr.
+   */
+  SLQ_BASE(const controlled_system_base_t* systemDynamicsPtr, const derivatives_base_t* systemDerivativesPtr,
+           const constraint_base_t* systemConstraintsPtr, const cost_function_base_t* costFunctionPtr,
+           const operating_trajectories_base_t* operatingTrajectoriesPtr, const SLQ_Settings& settings = SLQ_Settings(),
+           std::shared_ptr<HybridLogicRules> logicRulesPtr = nullptr, const cost_function_base_t* heuristicsFunctionPtr = nullptr);
 
-	void rolloutStateTriggeredTrajectory(
-			const scalar_t& initTime,
-			const state_vector_t& initState,
-			const scalar_t& finalTime,
-			const scalar_array_t& partitioningTimes,
-			const linear_controller_array_t& controllersStock,
-			scalar_array2_t& timeTrajectoriesStock,
-			size_array2_t& eventsPastTheEndIndecesStock,
-			state_vector_array2_t& stateTrajectoriesStock,
-			input_vector_array2_t& inputTrajectoriesStock,
-			size_t threadId = 0);
+  /**
+   * Default destructor.
+   */
+  virtual ~SLQ_BASE() = default;
 
-	/**
-	 * Default constructor.
-	 */
-	SLQ_BASE() = default;
+  /**
+   * Approximates the nonlinear problem as a linear-quadratic problem around the nominal
+   * state and control trajectories. This method updates the following variables:
+   * 	- linearized system model and constraints
+   * 	- \f$ dxdt = A_m(t)x + B_m(t)u \f$.
+   * 	- s.t. \f$ C_m(t)x + D_m(t)u + E_v(t) = 0 \f$ \\
+   * 	-      \f$ F_m(t)x + H_v(t) = 0 \f$ .
+   * 	- AmTrajectoryStock_: \f$ A_m\f$  matrix.
+   * 	- BmTrajectoryStock_: \f$ B_m\f$  matrix.
+   * 	- CmTrajectoryStock_: \f$ C_m\f$ matrix.
+   * 	- DmTrajectoryStock_: \f$ D_m\f$ matrix.
+   * 	- EvTrajectoryStock_: \f$ E_v\f$ vector.
+   * 	- FmTrajectoryStock_: \f$ F_m\f$ vector.
+   * 	- HvTrajectoryStock_: \f$ H_v\f$ vector.
+   *
+   * 	- quadratized intermediate cost function
+   * 	- intermediate cost: \f$ q(t) + 0.5 xQ_m(t)x + x'Q_v(t) + u'P_m(t)x + 0.5u'R_m(t)u + u'R_v(t) \f$
+   * 	- qTrajectoryStock_:  \f$ q\f$
+   * 	- QvTrajectoryStock_: \f$ Q_v\f$ vector.
+   * 	- QmTrajectoryStock_:\f$  Q_m\f$ matrix.
+   * 	- PmTrajectoryStock_: \f$ P_m\f$ matrix.
+   * 	- RvTrajectoryStock_: \f$ R_v\f$ vector.
+   * 	- RmTrajectoryStock_: \f$ R_m\f$ matrix.
+   * 	- RmInverseTrajectoryStock_: inverse of \f$ R_m\f$ matrix.
+   *
+   * 	- as well as the constrained coefficients of
+   * 		- linearized system model
+   * 		- quadratized intermediate cost function
+   * 		- quadratized final cost
+   *
+   */
+  void approximateOptimalControlProblem() override;
 
-	/**
-	 * Constructor
-	 *
-	 * @param [in] systemDynamicsPtr: The system dynamics which possibly includes some subsystems.
-	 * @param [in] systemDerivativesPtr: The system dynamics derivatives for subsystems of the system.
-	 * @param [in] systemConstraintsPtr: The system constraint function and its derivatives for subsystems.
-	 * @param [in] costFunctionPtr: The cost function (intermediate and terminal costs) and its derivatives for subsystems.
-	 * @param [in] operatingTrajectoriesPtr: The operating trajectories of system which will be used for initialization of SLQ.
-	 * @param [in] settings: Structure containing the settings for the SLQ algorithm.
-	 * @param [in] logicRulesPtr: The logic rules used for implementing mixed-logic dynamical systems.
-	 * @param [in] heuristicsFunctionPtr: Heuristic function used in the infinite time optimal control formulation. If it is not
-	 * defined, we will use the terminal cost function defined in costFunctionPtr.
-	 */
-	SLQ_BASE (const controlled_system_base_t* systemDynamicsPtr,
-			  const derivatives_base_t* systemDerivativesPtr,
-			  const constraint_base_t* systemConstraintsPtr,
-			  const cost_function_base_t* costFunctionPtr,
-			  const operating_trajectories_base_t* operatingTrajectoriesPtr,
-			  const SLQ_Settings& settings = SLQ_Settings(),
-			  const LOGIC_RULES_T* logicRulesPtr = nullptr,
-			  const cost_function_base_t* heuristicsFunctionPtr = nullptr);
+  /**
+   * Calculates the controller. This method uses the following variables:
+   * - constrained, linearized model
+   * - constrained, quadratized cost
+   *
+   * The method modifies:
+   * - nominalControllersStock_: the controller that stabilizes the system around the new nominal trajectory and
+   * 				improves the constraints as well as the increment to the feed-forward control input.
+   */
+  void calculateController() override;
 
-	/**
-	 * Default destructor.
-	 */
-	virtual ~SLQ_BASE() = default;
+  /**
+   * Gets a reference to the Options structure.
+   *
+   * @return a reference to the Options structure.
+   */
+  SLQ_Settings& settings();
 
-	/**
-	 * Approximates the nonlinear problem as a linear-quadratic problem around the nominal
-	 * state and control trajectories. This method updates the following variables:
-	 * 	- linearized system model and constraints
-	 * 	- \f$ dxdt = A_m(t)x + B_m(t)u \f$.
-	 * 	- s.t. \f$ C_m(t)x + D_m(t)u + E_v(t) = 0 \f$ \\
-	 * 	-      \f$ F_m(t)x + H_v(t) = 0 \f$ .
-	 * 	- AmTrajectoryStock_: \f$ A_m\f$  matrix.
-	 * 	- BmTrajectoryStock_: \f$ B_m\f$  matrix.
-	 * 	- CmTrajectoryStock_: \f$ C_m\f$ matrix.
-	 * 	- DmTrajectoryStock_: \f$ D_m\f$ matrix.
-	 * 	- EvTrajectoryStock_: \f$ E_v\f$ vector.
-	 * 	- FmTrajectoryStock_: \f$ F_m\f$ vector.
-	 * 	- HvTrajectoryStock_: \f$ H_v\f$ vector.
-	 *
-	 * 	- quadratized intermediate cost function
-	 * 	- intermediate cost: \f$ q(t) + 0.5 xQ_m(t)x + x'Q_v(t) + u'P_m(t)x + 0.5u'R_m(t)u + u'R_v(t) \f$
-	 * 	- qTrajectoryStock_:  \f$ q\f$
-	 * 	- QvTrajectoryStock_: \f$ Q_v\f$ vector.
-	 * 	- QmTrajectoryStock_:\f$  Q_m\f$ matrix.
-	 * 	- PmTrajectoryStock_: \f$ P_m\f$ matrix.
-	 * 	- RvTrajectoryStock_: \f$ R_v\f$ vector.
-	 * 	- RmTrajectoryStock_: \f$ R_m\f$ matrix.
-	 * 	- RmInverseTrajectoryStock_: inverse of \f$ R_m\f$ matrix.
-	 *
-	 * 	- as well as the constrained coefficients of
-	 * 		- linearized system model
-	 * 		- quadratized intermediate cost function
-	 * 		- quadratized final cost
-	 *
-	 */
-	virtual void approximateOptimalControlProblem() override;
+ protected:
+  /**
+   * Sets up optimizer for different number of partitions.
+   *
+   * @param [in] numPartitions: number of partitions.
+   */
+  virtual void setupOptimizer(const size_t& numPartitions);
 
-	/**
-	 * Calculates the controller. This method uses the following variables:
-	 * - constrained, linearized model
-	 * - constrained, quadratized cost
-	 *
-	 * The method modifies:
-	 * - nominalControllersStock_: the controller that stabilizes the system around the new nominal trajectory and
-	 * 								improves the constraints as well as the increment to the feed-forward control input.
-	 */
-	virtual void calculateController() override;
-//
-//	/**
-//	 * Line search on the feedforward parts of the controller. It uses the following approach for line search:
-//	 * The constraint TYPE-1 correction term is directly added through a user defined stepSize (defined in settings_.constraintStepSize_).
-//	 * But the cost minimization term is optimized through a line-search strategy defined in SLQ settings.
-//	 *
-//	 * @param [in] computeISEs: Whether lineSearch needs to calculate ISEs indices for type_1 and type-2 constraints.
-//	 */
-//	virtual void lineSearch(bool computeISEs) = 0;
-//
-//	/**
-//	 * Solves Riccati equations for all the partitions.
-//	 *
-//	 * @param [in] SmFinal: The final Sm for Riccati equation.
-//	 * @param [in] SvFinal: The final Sv for Riccati equation.
-//	 * @param [in] sFinal: The final s for Riccati equation.
-//	 *
-//	 * @return average time step
-//	 */
-//	virtual scalar_t solveSequentialRiccatiEquations(
-//			const state_matrix_t& SmFinal,
-//			const state_vector_t& SvFinal,
-//			const eigen_scalar_t& sFinal) = 0;
+  /**
+   * Computes the controller for a particular time partition
+   *
+   * @param partitionIndex: Time partition index
+   */
+  virtual void calculatePartitionController(const size_t& partitionIndex) = 0;
 
-	/**
-	 * Gets a reference to the Options structure.
-	 *
-	 * @return a reference to the Options structure.
-	 */
-	SLQ_Settings& settings();
+  /**
+   * Calculates an LQ approximate of the optimal control problem at a given partition and a node.
+   *
+   * @param [in] workerIndex: Working agent index.
+   * @param [in] partitionIndex: Time partition index.
+   * @param [in] timeIndex: Time index in the partition.
+   */
+  void approximateLQWorker(size_t workerIndex, const size_t& partitionIndex, const size_t& timeIndex) override;
 
+  /**
+   * Modify the unconstrained LQ coefficients to constrained ones.
+   *
+   * @param [in] workerIndex: Working agent index.
+   * @param [in] i: Time partition index.
+   * @param [in] k: Time index in the partition.
+   * @param [in] stateConstraintPenalty: State-only constraint penalty.
+   */
+  virtual void approximateConstrainedLQWorker(size_t workerIndex, const size_t& i, const size_t& k, const scalar_t& stateConstraintPenalty);
 
-protected:
-	/**
-	 * Sets up optimizer for different number of partitions.
-	 *
-	 * @param [in] numPartitions: number of partitions.
-	 */
-	virtual void setupOptimizer(const size_t& numPartitions);
-//
-//	/**
-//	 * Computes the linearized dynamics for a particular time partition
-//	 *
-//	 * @param [in] partitionIndex: Time partition index
-//	 */
-//	virtual void approximatePartitionLQ(const size_t& partitionIndex) = 0;
+  /**
+   * Calculates controller at a given partition and a node.
+   *
+   * @param [in] workerIndex: Working agent index.
+   * @param [in] partitionIndex: Time partition index
+   * @param [in] timeIndex: Time index in the partition
+   */
+  void calculateControllerWorker(size_t workerIndex, const size_t& partitionIndex, const size_t& timeIndex) override;
 
-	/**
-	 * Computes the controller for a particular time partition
-	 *
-	 * @param partitionIndex: Time partition index
-	 */
-	virtual void calculatePartitionController(const size_t& partitionIndex) = 0;
+  /**
+   * Solves a set of Riccati equations for the partition in the given index.
+   *
+   * @param [in] workerIndex: Working agent index.
+   * @param [in] partitionIndex: The requested partition index to solve Riccati equations.
+   * @param [in] SmFinal: The final Sm for Riccati equation.
+   * @param [in] SvFinal: The final Sv for Riccati equation.
+   * @param [in] sFinal: The final s for Riccati equation.
+   */
+  void solveRiccatiEquationsWorker(size_t workerIndex, const size_t& partitionIndex, const state_matrix_t& SmFinal,
+                                   const state_vector_t& SvFinal, const eigen_scalar_t& sFinal);
 
-	/**
-	 * Calculates an LQ approximate of the optimal control problem at a given partition and a node.
-	 *
-	 * @param [in] workerIndex: Working agent index.
-	 * @param [in] partitionIndex: Time partition index.
-	 * @param [in] timeIndex: Time index in the partition.
-	 */
-	virtual void approximateLQWorker(
-			size_t workerIndex,
-			const size_t& partitionIndex,
-			const size_t& timeIndex) override;
+  /**
+   * Solves a set of Riccati equations for the partition in the given index for nominal time trajectory stamp.
+   *
+   * @param [in] workerIndex: Working agent index.
+   * @param [in] partitionIndex: The requested partition index to solve Riccati equations.
+   * @param [in] nominalTimeTrajectory: The input array of the time trajectories.
+   * @param [in] SmFinal: The final Sm for the current Riccati equation.
+   * @param [in] SvFinal: The final Sv for the current Riccati equation.
+   * @param [in] sFinal: The final s for the current Riccati equation.
+   */
+  void solveRiccatiEquationsForNominalTimeWorker(size_t workerIndex, const size_t& partitionIndex, const state_matrix_t& SmFinal,
+                                                 const state_vector_t& SvFinal, const eigen_scalar_t& sFinal);
 
-	/**
-	 * Modify the unconstrained LQ coefficients to constrained ones.
-	 *
-	 * @param [in] workerIndex: Working agent index.
-	 * @param [in] i: Time partition index.
-	 * @param [in] k: Time index in the partition.
-	 * @param [in] stateConstraintPenalty: State-only constraint penalty.
-	 */
-	virtual void approximateConstrainedLQWorker(
-			size_t workerIndex,
-			const size_t& i,
-			const size_t& k,
-			const scalar_t& stateConstraintPenalty);
+  /**
+   * Type_1 constraints error correction compensation which solves a set of error Riccati equations for the partition in the given index.
+   *
+   * @param [in] workerIndex: Working agent index.
+   * @param [in] partitionIndex: The requested partition index to solve Riccati equations.
+   * @param [in] SveFinal: The final Sve for the current Riccati equation.
+   */
+  void solveErrorRiccatiEquationWorker(size_t workerIndex, const size_t& partitionIndex, const state_vector_t& SveFinal);
 
-	/**
-	 * Calculates controller at a given partition and a node.
-	 *
-	 * @param [in] workerIndex: Working agent index.
-	 * @param [in] partitionIndex: Time partition index
-	 * @param [in] timeIndex: Time index in the partition
-	 */
-	virtual void calculateControllerWorker(
-			size_t workerIndex,
-			const size_t& partitionIndex,
-			const size_t& timeIndex) override;
+  /**
+   * Solves a set of Riccati equations and type_1 constraints error correction compensation for the partition in the given index.
+   *
+   * @param [in] workerIndex: Working agent index.
+   * @param [in] partitionIndex: The requested partition index to solve Riccati equations.
+   * @param [in] SmFinal: The final Sm for Riccati equation.
+   * @param [in] SvFinal: The final Sv for Riccati equation.
+   * @param [in] sFinal: The final s for Riccati equation.
+   * @param [in] SveFinal: The final Sve for the current Riccati equation.
+   */
+  void solveSlqRiccatiEquationsWorker(size_t workerIndex, const size_t& partitionIndex, const state_matrix_t& SmFinal,
+                                      const state_vector_t& SvFinal, const eigen_scalar_t& sFinal, const state_vector_t& SveFinal);
 
-	/**
-	 * Solves a set of Riccati equations for the partition in the given index.
-	 *
-	 * @param [in] workerIndex: Working agent index.
-	 * @param [in] partitionIndex: The requested partition index to solve Riccati equations.
-	 * @param [in] SmFinal: The final Sm for Riccati equation.
-	 * @param [in] SvFinal: The final Sv for Riccati equation.
-	 * @param [in] sFinal: The final s for Riccati equation.
-	 */
-	void solveRiccatiEquationsWorker(
-			size_t workerIndex,
-			const size_t& partitionIndex,
-			const state_matrix_t& SmFinal,
-			const state_vector_t& SvFinal,
-			const eigen_scalar_t& sFinal);
+  /****************
+   *** Variables **
+   ****************/
+  SLQ_Settings settings_;
 
-	/**
-	 * Solves a set of Riccati equations for the partition in the given index for nominal time trajectory stamp.
-	 *
-	 * @param [in] workerIndex: Working agent index.
-	 * @param [in] partitionIndex: The requested partition index to solve Riccati equations.
-	 * @param [in] nominalTimeTrajectory: The input array of the time trajectories.
-	 * @param [in] SmFinal: The final Sm for the current Riccati equation.
-	 * @param [in] SvFinal: The final Sv for the current Riccati equation.
-	 * @param [in] sFinal: The final s for the current Riccati equation.
-	 */
-	void solveRiccatiEquationsForNominalTimeWorker(
-			size_t workerIndex,
-			const size_t& partitionIndex,
-			const state_matrix_t& SmFinal,
-			const state_vector_t& SvFinal,
-			const eigen_scalar_t& sFinal);
+  std::vector<typename rollout_base_t::Ptr> state_dynamicsForwardRolloutPtrStock_;
 
-	/**
-	 * Type_1 constraints error correction compensation which solves a set of error Riccati equations for the partition in the given index.
-	 *
-	 * @param [in] workerIndex: Working agent index.
-	 * @param [in] partitionIndex: The requested partition index to solve Riccati equations.
-	 * @param [in] SveFinal: The final Sve for the current Riccati equation.
-	 */
-	void solveErrorRiccatiEquationWorker(
-			size_t workerIndex,
-			const size_t& partitionIndex,
-			const state_vector_t& SveFinal);
+  state_matrix_array2_t AmConstrainedTrajectoryStock_;
+  state_matrix_array2_t QmConstrainedTrajectoryStock_;
+  state_vector_array2_t QvConstrainedTrajectoryStock_;
+  dynamic_matrix_array2_t RmInvConstrainedCholTrajectoryStock_;
+  input_constraint1_matrix_array2_t DmDagerTrajectoryStock_;
+  input_vector_array2_t EvProjectedTrajectoryStock_;        // DmDager * Ev
+  input_state_matrix_array2_t CmProjectedTrajectoryStock_;  // DmDager * Cm
+  input_matrix_array2_t DmProjectedTrajectoryStock_;        // DmDager * Dm
+  input_matrix_array2_t RmInverseTrajectoryStock_;
 
-	/**
-	 * Solves a set of Riccati equations and type_1 constraints error correction compensation for the partition in the given index.
-	 *
-	 * @param [in] workerIndex: Working agent index.
-	 * @param [in] partitionIndex: The requested partition index to solve Riccati equations.
-	 * @param [in] SmFinal: The final Sm for Riccati equation.
-	 * @param [in] SvFinal: The final Sv for Riccati equation.
-	 * @param [in] sFinal: The final s for Riccati equation.
-	 * @param [in] SveFinal: The final Sve for the current Riccati equation.
-	 */
-	void solveSlqRiccatiEquationsWorker(
-			size_t workerIndex,
-			const size_t& partitionIndex,
-			const state_matrix_t& SmFinal,
-			const state_vector_t& SvFinal,
-			const eigen_scalar_t& sFinal,
-			const state_vector_t& SveFinal);
+  std::vector<std::shared_ptr<riccati_equations_t>> riccatiEquationsPtrStock_;
+  std::vector<std::shared_ptr<SystemEventHandler<riccati_equations_t::S_DIM_>>> riccatiEventPtrStock_;
+  std::vector<std::shared_ptr<IntegratorBase<riccati_equations_t::S_DIM_>>> riccatiIntegratorPtrStock_;
+  std::vector<std::shared_ptr<error_equation_t>> errorEquationPtrStock_;
+  std::vector<std::shared_ptr<SystemEventHandler<STATE_DIM>>> errorEventPtrStock_;
+  std::vector<std::shared_ptr<IntegratorBase<STATE_DIM>>> errorIntegratorPtrStock_;
 
-	/**
-	 * Full Backward Sweep method uses exponential method instead of ODE to solve Riccati equations.
-	 *
-	 * @param [in] workerIndex: Working agent index.
-	 * @param [in] partitionIndex: The requested partition index to solve Riccati equations.
-	 * @param [in] SmFinal: The final Sm for the Riccati equation.
-	 * @param [in] SvFinal: The final Sv for the Riccati equation.
-	 * @param [in] SveFinal: The final Sve for the Riccati equation.
-	 * @param [in] sFinal: The final s for the Riccati equation.
-	 * @param [in] constraintStepSize: type-1 constraint step-size
-	 */
-	void fullRiccatiBackwardSweepWorker(
-			size_t workerIndex,
-			const size_t& partitionIndex,
-			const state_matrix_t& SmFinal, const state_vector_t& SvFinal,
-			const state_vector_t& SveFinal, const eigen_scalar_t& sFinal,
-			const scalar_t& constraintStepSize);
+  // functions for controller and lagrange multiplier
+  std::vector<EigenLinearInterpolation<state_input_matrix_t>> BmFunc_;
+  std::vector<EigenLinearInterpolation<input_state_matrix_t>> PmFunc_;
+  std::vector<EigenLinearInterpolation<input_matrix_t>> RmInverseFunc_;
+  std::vector<EigenLinearInterpolation<input_vector_t>> RvFunc_;
+  std::vector<EigenLinearInterpolation<input_vector_t>> EvProjectedFunc_;
+  std::vector<EigenLinearInterpolation<input_state_matrix_t>> CmProjectedFunc_;
+  std::vector<EigenLinearInterpolation<input_matrix_t>> DmProjectedFunc_;
 
-
-	template<int DIM1, int DIM2=1>
-	Eigen::Matrix<scalar_t, DIM1, DIM2> solveLTI(
-			const std::shared_ptr<IntegratorBase<DIM1*DIM2>>& firstOrderOdeIntegrator,
-			const Eigen::Matrix<scalar_t, DIM1, DIM2>& x0,
-			const scalar_t& deltaTime);
-
-	Eigen::Matrix<scalar_t, 2*STATE_DIM, STATE_DIM> integrateHamiltonian(
-			size_t workerIndex,
-			const Eigen::Matrix<scalar_t, 2*STATE_DIM, 2*STATE_DIM>& Hm,
-			const Eigen::Matrix<scalar_t, 2*STATE_DIM, STATE_DIM>& x0,
-			const scalar_t& deltaTime);
-
-	Eigen::Matrix<scalar_t, STATE_DIM, 1> integrateIncrement(
-			size_t workerIndex,
-			const Eigen::Matrix<scalar_t, STATE_DIM, STATE_DIM>& Gm,
-			const Eigen::Matrix<scalar_t, STATE_DIM, 1>& Gv,
-			const Eigen::Matrix<scalar_t, STATE_DIM, 1>& x0,
-			const scalar_t& deltaTime);
-
-	/****************
-	 *** Variables **
-	 ****************/
-	SLQ_Settings settings_;
-
-	std::vector<typename rollout_base_t::Ptr> state_dynamicsForwardRolloutPtrStock_;
-
-	state_matrix_array2_t       AmConstrainedTrajectoryStock_;
-	state_matrix_array2_t       QmConstrainedTrajectoryStock_;
-	state_vector_array2_t       QvConstrainedTrajectoryStock_;
-	input_matrix_array2_t       RmConstrainedTrajectoryStock_;
-	input_constraint1_matrix_array2_t DmDagerTrajectoryStock_;
-	input_vector_array2_t       EvProjectedTrajectoryStock_;  // DmDager * Ev
-	input_state_matrix_array2_t CmProjectedTrajectoryStock_;  // DmDager * Cm
-	input_matrix_array2_t       DmProjectedTrajectoryStock_;  // DmDager * Dm
-	state_input_matrix_array2_t BmConstrainedTrajectoryStock_;
-	input_state_matrix_array2_t PmConstrainedTrajectoryStock_;
-	input_vector_array2_t       RvConstrainedTrajectoryStock_;
-  	input_matrix_array2_t       RmInverseTrajectoryStock_;
-
-	std::vector<std::shared_ptr<slq_riccati_equations_t>>                             slqRiccatiEquationsPtrStock_;
-	std::vector<std::shared_ptr<SystemEventHandler<slq_riccati_equations_t::S_DIM_>>> slqRiccatiEventPtrStock_;
-	std::vector<std::shared_ptr<IntegratorBase<slq_riccati_equations_t::S_DIM_>>>     slqRiccatiIntegratorPtrStock_;
-	std::vector<std::shared_ptr<riccati_equations_t>>                             riccatiEquationsPtrStock_;
-	std::vector<std::shared_ptr<SystemEventHandler<riccati_equations_t::S_DIM_>>> riccatiEventPtrStock_;
-	std::vector<std::shared_ptr<IntegratorBase<riccati_equations_t::S_DIM_>>>     riccatiIntegratorPtrStock_;
-	std::vector<std::shared_ptr<error_equation_t>>              errorEquationPtrStock_;
-	std::vector<std::shared_ptr<SystemEventHandler<STATE_DIM>>> errorEventPtrStock_;
-	std::vector<std::shared_ptr<IntegratorBase<STATE_DIM>>>     errorIntegratorPtrStock_;
-
-	std::vector<std::shared_ptr<hamiltonian_equation_t>> hamiltonianEquationPtrStock_;
-	std::vector<std::shared_ptr<IntegratorBase<hamiltonian_equation_t::LTI_DIM_>>> hamiltonianIntegratorPtrStock_;
-	std::vector<std::shared_ptr<hamiltonian_increment_equation_t>> hamiltonianIncrementEquationPtrStock_;
-	std::vector<std::shared_ptr<IntegratorBase<hamiltonian_increment_equation_t::LTI_DIM_>>> hamiltonianIncrementIntegratorPtrStock_;
-
-	// functions for controller and lagrange multiplier
-	std::vector<EigenLinearInterpolation<state_input_matrix_t>> BmFunc_;
-	std::vector<EigenLinearInterpolation<input_state_matrix_t>> PmFunc_;
-	std::vector<EigenLinearInterpolation<input_matrix_t>>       RmInverseFunc_;
-	std::vector<EigenLinearInterpolation<input_vector_t>>       RvFunc_;
-	std::vector<EigenLinearInterpolation<input_vector_t>>       EvProjectedFunc_;
-	std::vector<EigenLinearInterpolation<input_state_matrix_t>> CmProjectedFunc_;
-	std::vector<EigenLinearInterpolation<input_matrix_t>>       DmProjectedFunc_;
-
-	// function for Riccati error equation
-	std::vector<EigenLinearInterpolation<state_matrix_t>> SmFuncs_;
-
-	// Functions for solving Backward pass through Mobius scheme
-	void LmFunc_ (const size_t& partitionIndex, const size_t& timeIndex, input_state_matrix_t& Lm) {
-		Lm = -RmInverseTrajectoryStock_[partitionIndex][timeIndex] * ( BASE::PmTrajectoryStock_[partitionIndex][timeIndex] +
-				BASE::BmTrajectoryStock_[partitionIndex][timeIndex].transpose()*BASE::SmTrajectoryStock_[partitionIndex][timeIndex] );
-	};
-	//
-	void LmConstrainedFunc_ (const size_t& partitionIndex, const size_t& timeIndex, const input_state_matrix_t& Lm, input_state_matrix_t& LmConstrained) {
-		LmConstrained = (input_matrix_t::Identity()-DmProjectedTrajectoryStock_[partitionIndex][timeIndex]) * Lm;
-	};
-	//
-	void LvConstrainedFunc_ (const size_t& partitionIndex, const size_t& timeIndex, input_vector_t& LvConstrained) {
-		LvConstrained  = -RmInverseTrajectoryStock_[partitionIndex][timeIndex] * ( RvConstrainedTrajectoryStock_[partitionIndex][timeIndex] +
-				BmConstrainedTrajectoryStock_[partitionIndex][timeIndex].transpose()*BASE::SvTrajectoryStock_[partitionIndex][timeIndex]);
-	};
-	//
-	void LveConstrainedFunc_ (const size_t& partitionIndex, const size_t& timeIndex, input_vector_t& LveConstrained) {
-		LveConstrained = -RmInverseTrajectoryStock_[partitionIndex][timeIndex] *
-				BmConstrainedTrajectoryStock_[partitionIndex][timeIndex].transpose() * BASE::SveTrajectoryStock_[partitionIndex][timeIndex];
-	};
-	//
-	void ControllerFunc_ (const size_t& partitionIndex, const size_t& timeIndex, const scalar_t& constraintStepSize,
-			const input_state_matrix_t& LmConstrained, const input_vector_t& LvConstrained, const input_vector_t& LveConstrained) {
-		// k
-		BASE::nominalControllersStock_[partitionIndex].gainArray_[timeIndex] = LmConstrained - CmProjectedTrajectoryStock_[partitionIndex][timeIndex];
-		// uff
-		BASE::nominalControllersStock_[partitionIndex].biasArray_[timeIndex] = BASE::nominalInputTrajectoriesStock_[partitionIndex][timeIndex] -
-				BASE::nominalControllersStock_[partitionIndex].gainArray_[timeIndex] * BASE::nominalStateTrajectoriesStock_[partitionIndex][timeIndex] +
-				constraintStepSize * (LveConstrained - EvProjectedTrajectoryStock_[partitionIndex][timeIndex]);
-		// deltaUff
-		BASE::nominalControllersStock_[partitionIndex].deltaBiasArray_[timeIndex] = LvConstrained;
-	};
-
+  // function for Riccati error equation
+  std::vector<EigenLinearInterpolation<state_matrix_t>> SmFuncs_;
 };
 
-} // namespace ocs2
+}  // namespace ocs2
 
 #include "implementation/SLQ_BASE.h"
 

@@ -1,6 +1,9 @@
 cmake_minimum_required(VERSION 3.0)
 project(ocs2_double_integrator_example)
 
+# Generate compile_commands.json for clang tools
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+
 find_package(catkin REQUIRED COMPONENTS
         roslib
         ocs2_core
@@ -19,7 +22,7 @@ find_package(Boost REQUIRED COMPONENTS
 find_package(Eigen3 3.3 REQUIRED NO_MODULE)
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread -fopenmp -Wfatal-errors -Wl,--no-as-needed")
-set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 ###################################
@@ -77,6 +80,19 @@ target_link_libraries(double_integrator_mpc
         ${catkin_LIBRARIES}
         )
 
+add_executable(double_integrator_pi
+  # src/double_integrator/DoubleIntegratorInterface.cpp
+  src/PI_Double_Integrator.cpp
+)
+add_dependencies(double_integrator_pi
+  ${catkin_EXPORTED_TARGETS}
+)
+target_link_libraries(double_integrator_pi
+  ${catkin_LIBRARIES}
+  ${Boost_LIBRARIES}
+  dl
+)
+
 # Dummy node
 add_executable(double_integrator_dummy_test
         src/Dummy_Double_Integrator_Node.cpp
@@ -100,6 +116,21 @@ target_link_libraries(double_integrator_target
         ${catkin_LIBRARIES}
         ${Boost_LIBRARIES}
         )
+
+#########################
+###   CLANG TOOLING   ###
+#########################
+find_package(cmake_clang_tools QUIET)
+if(cmake_clang_tools_FOUND)
+  message(STATUS "Run clang tooling for target " double_integrator_mpc)
+  add_clang_tooling(
+    TARGET double_integrator_mpc
+    SOURCE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/src ${CMAKE_CURRENT_SOURCE_DIR}/include
+    CT_HEADER_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/include
+    CF_QUIET # temporarily set to quiet, because the current amount of warning crashes the buildserver
+    # CF_FIX # temporarily disabled
+  )
+endif(cmake_clang_tools_FOUND)
 
 #############
 ## Install ##

@@ -27,20 +27,22 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
+#include <ocs2_core/logic/rules/HybridLogicRules.h>
 namespace ocs2{
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-OCS2Projected<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::OCS2Projected(
+template <size_t STATE_DIM, size_t INPUT_DIM>
+OCS2Projected<STATE_DIM, INPUT_DIM>::OCS2Projected(
 		const controlled_system_base_t* systemDynamicsPtr,
 		const derivatives_base_t* systemDerivativesPtr,
 		const constraint_base_t* systemConstraintsPtr,
 		const cost_function_base_t* costFunctionPtr,
 		const operating_trajectories_base_t* operatingTrajectoriesPtr,
 		const SLQ_Settings& slqSettings /*= SLQ_Settings()*/,
-		const LOGIC_RULES_T* logicRulesPtr /*= nullptr*/,
+		const GDDP_Settings& gddpSettings /*= GDDP_Settings()*/,
+		std::shared_ptr<HybridLogicRules> logicRulesPtr /*= nullptr*/,
 		const cost_function_base_t* heuristicsFunctionPtr /*= nullptr*/)
 
 	: slqSettings_(slqSettings)
@@ -56,8 +58,8 @@ OCS2Projected<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::OCS2Projected(
 	BASE::nlpSettings().useAscendingLineSearchNLP_ = slqSettings_.useAscendingLineSearchNLP_;
 	BASE::adjustOptions();
 
-	// GSLQ
-	gslqSolverPtr_.reset(new gslq_t(slqSettings));
+	// GDDP
+	gddpSolverPtr_.reset(new gddp_t(gddpSettings));
 
 	// SLQ data collector
 	slqDataCollectorPtr_.reset(new slq_data_collector_t());
@@ -82,8 +84,8 @@ OCS2Projected<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::OCS2Projected(
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void OCS2Projected<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::getCostFunction(
+template <size_t STATE_DIM, size_t INPUT_DIM>
+void OCS2Projected<STATE_DIM, INPUT_DIM>::getCostFunction(
 		scalar_t& costFunction) const  {
 
 	costFunction = optimizedTotalCost_;
@@ -92,8 +94,8 @@ void OCS2Projected<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::getCostFunction(
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void OCS2Projected<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::getCostFunctionDerivative(
+template <size_t STATE_DIM, size_t INPUT_DIM>
+void OCS2Projected<STATE_DIM, INPUT_DIM>::getCostFunctionDerivative(
 		dynamic_vector_t& costFuntionDerivative) const {
 
 	costFuntionDerivative = costFuntionDerivative_;
@@ -102,8 +104,8 @@ void OCS2Projected<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::getCostFunctionDerivati
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void OCS2Projected<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::getEventTimes(
+template <size_t STATE_DIM, size_t INPUT_DIM>
+void OCS2Projected<STATE_DIM, INPUT_DIM>::getEventTimes(
 		scalar_array_t& eventTimes) const {
 
 	eventTimes = optimizedEventTimes_;
@@ -112,8 +114,8 @@ void OCS2Projected<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::getEventTimes(
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void OCS2Projected<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::getController(
+template <size_t STATE_DIM, size_t INPUT_DIM>
+void OCS2Projected<STATE_DIM, INPUT_DIM>::getController(
 		controller_array_t& optimizedControllersStock)  const  {
 
 	optimizedControllersStock = optimizedControllersStock_;
@@ -122,8 +124,8 @@ void OCS2Projected<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::getController(
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void OCS2Projected<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::getNominalTrajectories(
+template <size_t STATE_DIM, size_t INPUT_DIM>
+void OCS2Projected<STATE_DIM, INPUT_DIM>::getNominalTrajectories(
 		std::vector<scalar_array_t>& optimizedTimeTrajectoriesStock,
 		state_vector_array2_t& optimizedStateTrajectoriesStock,
 		input_vector_array2_t& optimizedInputTrajectoriesStock) const {
@@ -136,8 +138,8 @@ void OCS2Projected<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::getNominalTrajectories(
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void OCS2Projected<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::getSLQIterationsLog(
+template <size_t STATE_DIM, size_t INPUT_DIM>
+void OCS2Projected<STATE_DIM, INPUT_DIM>::getSLQIterationsLog(
 		eigen_scalar_array_t& slqIterationCost,
 		eigen_scalar_array_t& slqIterationISE1,
 		eigen_scalar_array_t& slqIterationISE2) const {
@@ -150,8 +152,8 @@ void OCS2Projected<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::getSLQIterationsLog(
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void OCS2Projected<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::getOCS2IterationsLog(
+template <size_t STATE_DIM, size_t INPUT_DIM>
+void OCS2Projected<STATE_DIM, INPUT_DIM>::getOCS2IterationsLog(
 		eigen_scalar_array_t& iterationCost) const {
 
 	iterationCost = iterationCost_;
@@ -160,8 +162,8 @@ void OCS2Projected<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::getOCS2IterationsLog(
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-SLQ_Settings& OCS2Projected<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::slqSettings() {
+template <size_t STATE_DIM, size_t INPUT_DIM>
+SLQ_Settings& OCS2Projected<STATE_DIM, INPUT_DIM>::slqSettings() {
 
 	return slqSettings_;
 }
@@ -169,8 +171,8 @@ SLQ_Settings& OCS2Projected<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::slqSettings() 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-size_t OCS2Projected<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::findNearestController(
+template <size_t STATE_DIM, size_t INPUT_DIM>
+size_t OCS2Projected<STATE_DIM, INPUT_DIM>::findNearestController(
 		const dynamic_vector_t& enquiryParameter) const {
 
 	if (parameterBag_.size()==0)
@@ -190,8 +192,8 @@ size_t OCS2Projected<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::findNearestController
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void OCS2Projected<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculateLinearEqualityConstraint(
+template <size_t STATE_DIM, size_t INPUT_DIM>
+void OCS2Projected<STATE_DIM, INPUT_DIM>::calculateLinearEqualityConstraint(
 		dynamic_matrix_t& Am,
 		dynamic_vector_t& Bv) {
 
@@ -213,8 +215,8 @@ void OCS2Projected<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculateLinearEquality
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-bool OCS2Projected<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculateGradient(
+template <size_t STATE_DIM, size_t INPUT_DIM>
+bool OCS2Projected<STATE_DIM, INPUT_DIM>::calculateGradient(
 		const size_t& id,
 		const dynamic_vector_t& parameters,
 		dynamic_vector_t& gradient) {
@@ -223,12 +225,12 @@ bool OCS2Projected<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculateGradient(
 	slqDataCollectorPtr_->collect(slqSolverPtrs_[id].get());
 
 	// run GSLQ
-	gslqSolverPtr_->run(
+	gddpSolverPtr_->run(
 			scalar_array_t(parameters.data(), parameters.data()+parameters.size()),
 			slqDataCollectorPtr_.get());
 
 	// get gradient
-	gslqSolverPtr_->getCostFuntionDerivative(costFuntionDerivative_);
+	gddpSolverPtr_->getCostFuntionDerivative(costFuntionDerivative_);
 	gradient = costFuntionDerivative_;
 
 	return true;
@@ -237,8 +239,8 @@ bool OCS2Projected<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculateGradient(
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-bool OCS2Projected<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculateCost(
+template <size_t STATE_DIM, size_t INPUT_DIM>
+bool OCS2Projected<STATE_DIM, INPUT_DIM>::calculateCost(
 		const size_t& id,
 		const dynamic_vector_t& parameters,
 		scalar_t& cost) {
@@ -249,7 +251,8 @@ bool OCS2Projected<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculateCost(
 		eventTimes[j] = parameters(j);
 
 	// TODO
-	LOGIC_RULES_T logicRules(eventTimes);
+	std::share_ptr<HybridLogicRules> logicRules(new HybridLogicRules());
+	logicRules->setEventTimes(eventTimes);
 	slqSolverPtrs_[id]->setLogicRules(logicRules);
 
 	// cold or warm start
@@ -314,8 +317,8 @@ bool OCS2Projected<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculateCost(
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void OCS2Projected<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::saveToBag(
+template <size_t STATE_DIM, size_t INPUT_DIM>
+void OCS2Projected<STATE_DIM, INPUT_DIM>::saveToBag(
 		size_t id,
 		const dynamic_vector_t& parameters)  {
 
@@ -337,8 +340,8 @@ void OCS2Projected<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::saveToBag(
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void OCS2Projected<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::getSolution(size_t idStar)  {
+template <size_t STATE_DIM, size_t INPUT_DIM>
+void OCS2Projected<STATE_DIM, INPUT_DIM>::getSolution(size_t idStar)  {
 
 	optimizedEventTimes_ = slqSolverPtrs_[idStar]->getLogicRulesPtr()->eventTimes();
 	optimizedControllersStock_ = slqSolverPtrs_[idStar]->getController();
@@ -354,8 +357,8 @@ void OCS2Projected<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::getSolution(size_t idSt
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void OCS2Projected<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::rewindOptimizer(
+template <size_t STATE_DIM, size_t INPUT_DIM>
+void OCS2Projected<STATE_DIM, INPUT_DIM>::rewindOptimizer(
 		const size_t& firstIndex, bool initRun/*=false*/) {
 
 	// rewind SLQ solvers
@@ -366,8 +369,8 @@ void OCS2Projected<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::rewindOptimizer(
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void OCS2Projected<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::setupOptimizer(
+template <size_t STATE_DIM, size_t INPUT_DIM>
+void OCS2Projected<STATE_DIM, INPUT_DIM>::setupOptimizer(
 		const size_t& numPartitions) {
 
 	if (numPartitions==0)
@@ -377,8 +380,8 @@ void OCS2Projected<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::setupOptimizer(
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void OCS2Projected<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::run(
+template <size_t STATE_DIM, size_t INPUT_DIM>
+void OCS2Projected<STATE_DIM, INPUT_DIM>::run(
 		const scalar_t& initTime,
 		const state_vector_t& initState,
 		const scalar_t& finalTime,
@@ -402,7 +405,7 @@ void OCS2Projected<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::run(
 		setupOptimizer(numPartitions_);
 	}
 
-	gslqSolverPtr_->settings() = slqSettings_;
+	gddpSolverPtr_->settings() = slqSettings_;
 
 	// for each SLQ solver
 	for (size_t i=0; i<slqSolverPtrs_.size(); i++) {

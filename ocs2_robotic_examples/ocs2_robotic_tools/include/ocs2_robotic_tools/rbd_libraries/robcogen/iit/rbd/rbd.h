@@ -1,7 +1,7 @@
 /* CPYHDR { */
 /*
  * This file is part of the 'iit-rbd' library.
- * Copyright © 2015 2016 2017, Marco Frigerio (marco.frigerio@iit.it)
+ * Copyright (c) 2015 2016 2017, Marco Frigerio (marco.frigerio@iit.it)
  *
  * See the LICENSE file for more information.
  */
@@ -81,7 +81,7 @@ struct Core
     ///@}
 
     /**
-     * \name 6D vectors "à la Featherstone"
+     * \name 6D vectors "a la Featherstone"
      * Types of vectors used in dynamics computations.
      */
     ///@{
@@ -121,6 +121,7 @@ struct Core
     static inline Part3DConst linearPart(const Vector6D& f) {
         return f.template bottomRows<3>();
     }
+    ///@}
 };
 
 

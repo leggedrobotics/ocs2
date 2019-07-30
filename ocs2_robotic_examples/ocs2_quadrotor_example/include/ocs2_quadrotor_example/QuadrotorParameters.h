@@ -62,7 +62,7 @@ public:
 		boost::property_tree::ptree pt;
 		boost::property_tree::read_info(filename, pt);
 
-		if (verbose) std::cerr << "\n #### Cart-pole Parameters:" << std::endl;
+		if (verbose) std::cerr << "\n #### Quadrotor Parameters:" << std::endl;
 		if (verbose) std::cerr << " #### =========================================" << std::endl;
 
 		try {

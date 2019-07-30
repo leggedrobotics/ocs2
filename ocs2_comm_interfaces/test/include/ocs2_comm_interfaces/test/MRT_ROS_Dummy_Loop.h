@@ -40,13 +40,13 @@ namespace ocs2 {
  * @tparam STATE_DIM: Dimension of the state space.
  * @tparam INPUT_DIM: Dimension of the control input space.
  */
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T=NullLogicRules>
+template <size_t STATE_DIM, size_t INPUT_DIM>
 class MRT_ROS_Dummy_Loop
 {
 public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-	typedef ocs2::MRT_ROS_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> mrt_t;
+	typedef ocs2::MRT_ROS_Interface<STATE_DIM, INPUT_DIM> mrt_t;
 	typedef typename mrt_t::Ptr	mrt_ptr_t;
 
 	typedef typename mrt_t::controller_t               controller_t;
@@ -61,7 +61,7 @@ public:
 	typedef typename mrt_t::input_state_matrix_array_t input_state_matrix_array_t;
 
 	typedef typename mrt_t::system_observation_t system_observation_t;
-	typedef ControlledSystemBase<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> controlled_system_base_t;
+	typedef ControlledSystemBase<STATE_DIM, INPUT_DIM> controlled_system_base_t;
 	typedef typename mrt_t::cost_desired_trajectories_t cost_desired_trajectories_t;
 
 	/**

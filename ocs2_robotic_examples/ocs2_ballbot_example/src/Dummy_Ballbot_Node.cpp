@@ -38,18 +38,19 @@ using namespace ballbot;
 int main(int argc, char **argv)
 {
 	// task file
-	if (argc <= 1) throw std::runtime_error("No task file specified. Aborting.");
+	if (argc <= 1) { throw std::runtime_error("No task file specified. Aborting.");
+	}
 	std::string taskFileFolderName = std::string(argv[1]);
 
 	// ballbotInterface
 	BallbotInterface ballbotInterface(taskFileFolderName);
 
-	typedef MRT_ROS_Ballbot mrt_t;
-	typedef mrt_t::BASE::Ptr mrt_base_ptr_t;
-	typedef mrt_t::scalar_t scalar_t;
-	typedef mrt_t::system_observation_t system_observation_t;
+	using mrt_t = MRT_ROS_Ballbot;
+	using mrt_ptr_t = mrt_t::Ptr;
+	using scalar_t = mrt_t::scalar_t;
+	using system_observation_t = mrt_t::system_observation_t;
 
-	mrt_base_ptr_t mrtPtr(new mrt_t("ballbot"));
+	mrt_ptr_t mrtPtr(new mrt_t("ballbot"));
 
 	// Dummy ballbot
 	MRT_ROS_Dummy_Ballbot dummyBallbot(

@@ -33,11 +33,11 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ocs2_core/Dimensions.h"
 #include "ocs2_core/dynamics/ControlledSystemBase.h"
 #include "ocs2_core/dynamics/DerivativesBase.h"
-#include "ocs2_core/logic/rules/LogicRulesBase.h"
+#include "ocs2_core/logic/machine/HybridLogicRulesMachine.h"
+#include "ocs2_core/logic/rules/HybridLogicRules.h"
 #include "ocs2_core/logic/rules/NullLogicRules.h"
-#include "ocs2_core/logic/machine/LogicRulesMachine.h"
 
-namespace ocs2{
+namespace ocs2 {
 
 /**
  * The system dynamics interface.
@@ -48,237 +48,176 @@ namespace ocs2{
  *
  * @tparam STATE_DIM: Dimension of the state space.
  * @tparam INPUT_DIM: Dimension of the control input space.
- * @tparam LOGIC_RULES_T: Logic Rules type (default NullLogicRules).
  */
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T=NullLogicRules, size_t NUM_MODES=1>
-class SystemDynamicsBase
-		: public DerivativesBase<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>
-		, public ControlledSystemBase<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>
-{
-public:
-	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+template <size_t STATE_DIM, size_t INPUT_DIM, size_t NUM_MODES = 1>
+class SystemDynamicsBase : public DerivativesBase<STATE_DIM, INPUT_DIM>, public ControlledSystemBase<STATE_DIM, INPUT_DIM> {
+ public:
+  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-	enum
-	{
-		num_modes_	= NUM_MODES,
-		state_dim_ 	= STATE_DIM,
-		input_dim_ 	= INPUT_DIM,
-	};
+  enum {
+    num_modes_ = NUM_MODES,
+    state_dim_ = STATE_DIM,
+    input_dim_ = INPUT_DIM,
+  };
 
-	typedef std::shared_ptr<SystemDynamicsBase<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> > Ptr;
-	typedef std::shared_ptr<const SystemDynamicsBase<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> > ConstPtr;
+  using Ptr = std::shared_ptr<SystemDynamicsBase<STATE_DIM, INPUT_DIM> >;
+  using ConstPtr = std::shared_ptr<const SystemDynamicsBase<STATE_DIM, INPUT_DIM> >;
 
-	typedef DerivativesBase<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> 		DEV_BASE;
-	typedef ControlledSystemBase<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> 	DYN_BASE;
+  using DEV_BASE = DerivativesBase<STATE_DIM, INPUT_DIM>;
+  using DYN_BASE = ControlledSystemBase<STATE_DIM, INPUT_DIM>;
 
-	typedef Dimensions<STATE_DIM, INPUT_DIM> DIMENSIONS;
-	typedef typename DIMENSIONS::scalar_t 				scalar_t;
-	typedef typename DIMENSIONS::state_vector_t   		state_vector_t;
-	typedef typename DIMENSIONS::input_vector_t 		input_vector_t;
-	typedef typename DIMENSIONS::state_matrix_t 		state_matrix_t;
-	typedef typename DIMENSIONS::state_input_matrix_t 	state_input_matrix_t;
-	typedef typename DIMENSIONS::dynamic_vector_t		dynamic_vector_t;
-	typedef typename DIMENSIONS::dynamic_state_matrix_t	dynamic_state_matrix_t;
-	typedef typename DIMENSIONS::dynamic_input_matrix_t dynamic_input_matrix_t;
+  using DIMENSIONS = Dimensions<STATE_DIM, INPUT_DIM>;
+  using scalar_t = typename DIMENSIONS::scalar_t;
+  using state_vector_t = typename DIMENSIONS::state_vector_t;
+  using input_vector_t = typename DIMENSIONS::input_vector_t;
+  using state_matrix_t = typename DIMENSIONS::state_matrix_t;
+  using state_input_matrix_t = typename DIMENSIONS::state_input_matrix_t;
+  using dynamic_vector_t = typename DIMENSIONS::dynamic_vector_t;
+  using dynamic_state_matrix_t = typename DIMENSIONS::dynamic_state_matrix_t;
+  using dynamic_input_matrix_t = typename DIMENSIONS::dynamic_input_matrix_t;
 
-	/**
-	 * Default constructor
-	 */
-	SystemDynamicsBase() {
-		if (NUM_MODES==0)
-			throw std::runtime_error("The system should have at least one mode.");
-	}
+  /**
+   * Default constructor
+   */
+  SystemDynamicsBase() {
+    if (NUM_MODES == 0) {
+      throw std::runtime_error("The system should have at least one mode.");
+    }
+  }
 
-	/**
-	 * Copy constructor
-	 */
-	SystemDynamicsBase(const SystemDynamicsBase& rhs) = default;
+  /**
+   * Copy constructor
+   */
+  SystemDynamicsBase(const SystemDynamicsBase& rhs) = default;
 
-	/**
-	 * Default destructor
-	 */
-	virtual ~SystemDynamicsBase() = default;
+  /**
+   * Default destructor
+   */
+  virtual ~SystemDynamicsBase() = default;
 
-	/**
-	 * Initializes the system dynamics derivatives.
-	 *
-	 * @param [in] logicRulesMachine: A class which contains and parse the logic rules e.g
-	 * method findActiveSubsystemHandle returns a Lambda expression which can be used to
-	 * find the ID of the current active subsystem.
-	 * @param [in] partitionIndex: index of the time partition.
-	 * @param [in] algorithmName: The algorithm that class this class (default not defined).
-	 */
-	virtual void initializeModel(
-			LogicRulesMachine<LOGIC_RULES_T>& logicRulesMachine,
-			const size_t& partitionIndex,
-			const char* algorithmName=NULL)
-	{}
+  /**
+   * Returns pointer to the class.
+   *
+   * @return A raw pointer to the class.
+   */
+  virtual SystemDynamicsBase<STATE_DIM, INPUT_DIM>* clone() const = 0;
 
-    /**
-     * Returns pointer to the class.
-     *
-     * @return A raw pointer to the class.
-     */
-	virtual SystemDynamicsBase<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>* clone() const = 0;
+  /**
+   * Interface method to the state flow map of the hybrid system.
+   *
+   * @param [in] time: time.
+   * @param [in] state: state vector.
+   * @param [in] input: input vector
+   * @param [out] stateDerivative: state vector time derivative.
+   */
+  virtual void computeFlowMap(const scalar_t& time, const state_vector_t& state, const input_vector_t& input,
+                              state_vector_t& stateDerivative) = 0;
 
-	/**
-	 * Interface method to the state flow map of the hybrid system.
-	 *
-	 * @param [in] time: time.
-	 * @param [in] state: state vector.
-	 * @param [in] input: input vector
-	 * @param [out] stateDerivative: state vector time derivative.
-	 */
-	virtual void computeFlowMap(
-			const scalar_t& time,
-			const state_vector_t& state,
-			const input_vector_t& input,
-			state_vector_t& stateDerivative) = 0;
+  /**
+   * Interface method to the state jump map of the hybrid system.
+   *
+   * @param [in] time: time.
+   * @param [in] state: state vector.
+   * @param [out] jumpedState: jumped state.
+   */
+  virtual void computeJumpMap(const scalar_t& time, const state_vector_t& state, state_vector_t& jumpedState) {
+    DYN_BASE::computeJumpMap(time, state, jumpedState);
+  }
 
-	/**
-	 * Interface method to the state jump map of the hybrid system.
-	 *
-	 * @param [in] time: time.
-	 * @param [in] state: state vector.
-	 * @param [out] jumpedState: jumped state.
-	 */
-	virtual void computeJumpMap(
-			const scalar_t& time,
-			const state_vector_t& state,
-			state_vector_t& jumpedState)  {
+  /**
+   * Interface method to the guard surfaces.
+   *
+   * @param [in] time: transition time
+   * @param [in] state: transition state
+   * @param [out] guardSurfacesValue: A vector of guard surfaces values
+   */
+  virtual void computeGuardSurfaces(const scalar_t& time, const state_vector_t& state, dynamic_vector_t& guardSurfacesValue) {
+    DYN_BASE::computeGuardSurfaces(time, state, guardSurfacesValue);
+  }
 
-		DYN_BASE::computeJumpMap(time, state, jumpedState);
-	}
+  /**
+   * Sets the current time, state, and control input.
+   *
+   * @param [in] time: time
+   * @param [in] state: state vector
+   * @param [in] input: input vector
+   */
+  virtual void setCurrentStateAndControl(const scalar_t& time, const state_vector_t& state, const input_vector_t& input) {
+    DEV_BASE::setCurrentStateAndControl(time, state, input);
+  }
 
-	/**
-	 * Interface method to the guard surfaces.
-	 *
-	 * @param [in] time: transition time
-	 * @param [in] state: transition state
-	 * @param [out] guardSurfacesValue: A vector of guard surfaces values
-	 */
-	virtual void computeGuardSurfaces(
-			const scalar_t& time,
-			const state_vector_t& state,
-			dynamic_vector_t& guardSurfacesValue) {
+  /**
+   * Partial time derivative of the system flow map.
+   * \f$ \frac{\partial f}{\partial t}  \f$.
+   *
+   * @param [out] df: \f$ \frac{\partial f}{\partial t} \f$ matrix.
+   */
+  virtual void getFlowMapDerivativeTime(state_vector_t& df) { DEV_BASE::getFlowMapDerivativeTime(df); }
 
-		DYN_BASE::computeGuardSurfaces(time, state, guardSurfacesValue);
-	}
+  /**
+   * The A matrix at a given operating point for the linearized system flow map.
+   * \f$ dx/dt = A(t) \delta x + B(t) \delta u \f$.
+   *
+   * @param [out] A: \f$ A(t) \f$ matrix.
+   */
+  virtual void getFlowMapDerivativeState(state_matrix_t& A) = 0;
 
+  /**
+   * The B matrix at a given operating point for the linearized system flow map.
+   * \f$ dx/dt = A(t) \delta x + B(t) \delta u \f$.
+   *
+   * @param [out] B: \f$ B(t) \f$ matrix.
+   */
+  virtual void getFlowMapDerivativeInput(state_input_matrix_t& B) = 0;
 
-    /**
-     * Sets the current time, state, and control input.
-     *
-     * @param [in] time: time
-     * @param [in] state: state vector
-     * @param [in] input: input vector
-     */
-	virtual void setCurrentStateAndControl(
-			const scalar_t& time,
-			const state_vector_t& state,
-			const input_vector_t& input) {
+  /**
+   * Partial time derivative of the system jump map.
+   * \f$ \frac{\partial g}{\partial t}  \f$.
+   *
+   * @param [out] dg: \f$ \frac{\partial g}{\partial t} \f$ matrix.
+   */
+  virtual void getJumpMapDerivativeTime(state_vector_t& dg) { DEV_BASE::getJumpMapDerivativeTime(dg); }
 
-		DEV_BASE::setCurrentStateAndControl(time, state, input);
-	}
+  /**
+   * The G matrix at a given operating point for the linearized system jump map.
+   * \f$ x^+ = G \delta x + H \delta u \f$.
+   *
+   * @param [out] G: \f$ G \f$ matrix.
+   */
+  virtual void getJumpMapDerivativeState(state_matrix_t& G) { DEV_BASE::getJumpMapDerivativeState(G); }
 
+  /**
+   * The H matrix at a given operating point for the linearized system jump map.
+   * \f$ x^+ = G \delta x + H \delta u \f$.
+   *
+   * @param [out] H: \f$ H \f$ matrix.
+   */
+  virtual void getJumpMapDerivativeInput(state_input_matrix_t& H) { DEV_BASE::getJumpMapDerivativeInput(H); }
 
-	/**
-	 * Partial time derivative of the system flow map.
-	 * \f$ \frac{\partial f}{\partial t}  \f$.
-	 *
-	 * @param [out] df: \f$ \frac{\partial f}{\partial t} \f$ matrix.
-	 */
-	virtual void getFlowMapDerivativeTime(state_vector_t& df) {
+  /**
+   * Get at a given operating point the derivative of the guard surfaces w.r.t. input vector.
+   *
+   * @param [out] D_t_gamma: Derivative of the guard surfaces w.r.t. time.
+   */
+  virtual void getGuardSurfacesDerivativeTime(dynamic_vector_t& D_t_gamma) { DEV_BASE::getGuardSurfacesDerivativeTime(D_t_gamma); }
 
-		DEV_BASE::getFlowMapDerivativeTime(df);
-	}
+  /**
+   * Get at a given operating point the derivative of the guard surfaces w.r.t. input vector.
+   *
+   * @param [out] D_x_gamma: Derivative of the guard surfaces w.r.t. state vector.
+   */
+  virtual void getGuardSurfacesDerivativeState(dynamic_state_matrix_t& D_x_gamma) { DEV_BASE::getGuardSurfacesDerivativeState(D_x_gamma); }
 
-	/**
-	 * The A matrix at a given operating point for the linearized system flow map.
-	 * \f$ dx/dt = A(t) \delta x + B(t) \delta u \f$.
-	 *
-	 * @param [out] A: \f$ A(t) \f$ matrix.
-	 */
-	virtual void getFlowMapDerivativeState(state_matrix_t& A) = 0;
+  /**
+   * Get at a given operating point the derivative of the guard surfaces w.r.t. input vector.
+   *
+   * @param [out] D_u_gamma: Derivative of the guard surfaces w.r.t. input vector.
+   */
+  virtual void getGuardSurfacesDerivativeInput(dynamic_input_matrix_t& D_u_gamma) { DEV_BASE::getGuardSurfacesDerivativeInput(D_u_gamma); }
 
-	/**
-	 * The B matrix at a given operating point for the linearized system flow map.
-	 * \f$ dx/dt = A(t) \delta x + B(t) \delta u \f$.
-	 *
-	 * @param [out] B: \f$ B(t) \f$ matrix.
-	 */
-	virtual void getFlowMapDerivativeInput(state_input_matrix_t& B) = 0;
-
-
-	/**
-	 * Partial time derivative of the system jump map.
-	 * \f$ \frac{\partial g}{\partial t}  \f$.
-	 *
-	 * @param [out] dg: \f$ \frac{\partial g}{\partial t} \f$ matrix.
-	 */
-	virtual void getJumpMapDerivativeTime(state_vector_t& dg) {
-
-		DEV_BASE::getJumpMapDerivativeTime(dg);
-	}
-
-	/**
-	 * The G matrix at a given operating point for the linearized system jump map.
-	 * \f$ x^+ = G \delta x + H \delta u \f$.
-	 *
-	 * @param [out] G: \f$ G \f$ matrix.
-	 */
-	virtual void getJumpMapDerivativeState(state_matrix_t& G) {
-
-		DEV_BASE::getJumpMapDerivativeState(G);
-	}
-
-	/**
-	 * The H matrix at a given operating point for the linearized system jump map.
-	 * \f$ x^+ = G \delta x + H \delta u \f$.
-	 *
-	 * @param [out] H: \f$ H \f$ matrix.
-	 */
-	virtual void getJumpMapDerivativeInput(state_input_matrix_t& H) {
-
-		DEV_BASE::getJumpMapDerivativeInput(H);
-	}
-
-
-	/**
-	 * Get at a given operating point the derivative of the guard surfaces w.r.t. input vector.
-	 *
-	 * @param [out] D_t_gamma: Derivative of the guard surfaces w.r.t. time.
-	 */
-	virtual void getGuardSurfacesDerivativeTime(dynamic_vector_t& D_t_gamma) {
-
-		DEV_BASE::getGuardSurfacesDerivativeTime(D_t_gamma);
-	}
-
-	/**
-	 * Get at a given operating point the derivative of the guard surfaces w.r.t. input vector.
-	 *
-	 * @param [out] D_x_gamma: Derivative of the guard surfaces w.r.t. state vector.
-	 */
-	virtual void getGuardSurfacesDerivativeState(dynamic_state_matrix_t& D_x_gamma) {
-
-		DEV_BASE::getGuardSurfacesDerivativeState(D_x_gamma);
-	}
-
-	/**
-	 * Get at a given operating point the derivative of the guard surfaces w.r.t. input vector.
-	 *
-	 * @param [out] D_u_gamma: Derivative of the guard surfaces w.r.t. input vector.
-	 */
-	virtual void getGuardSurfacesDerivativeInput(dynamic_input_matrix_t& D_u_gamma) {
-
-		DEV_BASE::getGuardSurfacesDerivativeInput(D_u_gamma);
-	}
-
-protected:
-
+ protected:
 };
 
-} // namespace ocs2
-
+}  // namespace ocs2
 
 #endif /* SYSTEMDYNAMICSBASE_OCS2_H_ */

@@ -32,7 +32,7 @@ namespace ocs2
 
 /******************************************************************************************************/
 /******************************************************************************************************/
-/******************************************************************************************************/
+/***************************************************************************************************** */
 template <size_t STATE_DIM, size_t INPUT_DIM>
 void RobotInterfaceBase<STATE_DIM, INPUT_DIM>::getInitialState(
 		state_vector_t& initialState) const {
@@ -42,7 +42,7 @@ void RobotInterfaceBase<STATE_DIM, INPUT_DIM>::getInitialState(
 
 /******************************************************************************************************/
 /******************************************************************************************************/
-/******************************************************************************************************/
+/***************************************************************************************************** */
 template <size_t STATE_DIM, size_t INPUT_DIM>
 MPC_Settings& RobotInterfaceBase<STATE_DIM, INPUT_DIM>::mpcSettings() {
 
@@ -51,7 +51,7 @@ MPC_Settings& RobotInterfaceBase<STATE_DIM, INPUT_DIM>::mpcSettings() {
 
 /******************************************************************************************************/
 /******************************************************************************************************/
-/******************************************************************************************************/
+/***************************************************************************************************** */
 template <size_t STATE_DIM, size_t INPUT_DIM>
 void RobotInterfaceBase<STATE_DIM, INPUT_DIM>::definePartitioningTimes(
 		const std::string& taskFile,
@@ -69,20 +69,21 @@ void RobotInterfaceBase<STATE_DIM, INPUT_DIM>::definePartitioningTimes(
 
 	partitioningTimes.resize(numPartitions+1);
 	partitioningTimes[0] = 0.0;
-	for (size_t i=0; i<numPartitions; i++)
+	for (size_t i=0; i<numPartitions; i++) {
 		partitioningTimes[i+1] = partitioningTimes[i] + timeHorizon/numPartitions;
+	}
 	partitioningTimes[numPartitions] = timeHorizon;
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
-/******************************************************************************************************/
+/***************************************************************************************************** */
 template <size_t STATE_DIM, size_t INPUT_DIM>
 void RobotInterfaceBase<STATE_DIM, INPUT_DIM>::loadMpcTimeHorizon(
 		const std::string& taskFile,
 		scalar_t& timeHorizon,
 		size_t& numPartitions,
-		bool verbose /*= false*/) const {
+		bool verbose /*= false*/) {
 
 	boost::property_tree::ptree pt;
 	boost::property_tree::read_info(taskFile, pt);
@@ -90,7 +91,7 @@ void RobotInterfaceBase<STATE_DIM, INPUT_DIM>::loadMpcTimeHorizon(
 	timeHorizon   = pt.get<scalar_t>("mpcTimeHorizon.timehorizon");
 	numPartitions = pt.get<size_t>("mpcTimeHorizon.numPartitions");
 
-	if (verbose == true) {
+	if (verbose) {
 		std::cerr<<"Time Horizon Settings: " << std::endl;
 		std::cerr<<"=====================================" << std::endl;
 		std::cerr<<"Time Horizon .................. " << timeHorizon << std::endl;
@@ -100,11 +101,11 @@ void RobotInterfaceBase<STATE_DIM, INPUT_DIM>::loadMpcTimeHorizon(
 
 /******************************************************************************************************/
 /******************************************************************************************************/
-/******************************************************************************************************/
+/***************************************************************************************************** */
 template <size_t STATE_DIM, size_t INPUT_DIM>
 void RobotInterfaceBase<STATE_DIM, INPUT_DIM>::loadInitialState(
 		const std::string& taskFile,
-		state_vector_t& initialState) const {
+		state_vector_t& initialState) {
 
 	boost::property_tree::ptree pt;
 	boost::property_tree::read_info(taskFile, pt);
@@ -112,4 +113,4 @@ void RobotInterfaceBase<STATE_DIM, INPUT_DIM>::loadInitialState(
 	loadEigenMatrix(taskFile, "initialState", initialState);
 }
 
-}  // ocs2 namespace
+}  // namespace ocs2

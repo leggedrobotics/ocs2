@@ -30,13 +30,13 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifndef FINDACTIVEINTERVALINDEX_OCS2_H_
 #define FINDACTIVEINTERVALINDEX_OCS2_H_
 
-#include <string>
 #include <stdexcept>
+#include <string>
 #include <vector>
 
 #include "ocs2_core/OCS2NumericTraits.h"
 
-namespace ocs2{
+namespace ocs2 {
 
 /**
  * This function finds the interval in the input timeIntervals vector to which the input time belongs
@@ -62,55 +62,56 @@ namespace ocs2{
  * the timeIntervals vector.
  */
 template <typename scalar_t, typename alloc_t = std::allocator<scalar_t> >
-int findActiveIntervalIndex(
-		const std::vector<scalar_t, alloc_t>& timeIntervals,
-		const scalar_t& enquiryTime,
-		const int& guessedIndex,
-		scalar_t epsilon = OCS2NumericTraits<scalar_t>::week_epsilon()) {
+int findActiveIntervalIndex(const std::vector<scalar_t, alloc_t>& timeIntervals, scalar_t enquiryTime, int guessedIndex,
+                            scalar_t epsilon = OCS2NumericTraits<scalar_t>::weakEpsilon()) {
+  const int numTimeIntervals = timeIntervals.size() - 1;
 
-	const int numTimeIntervals = timeIntervals.size()-1;
+  if (numTimeIntervals < 1) {
+    throw std::runtime_error("The time interval array should have at least 2 elements.");
+  }
 
-	if (numTimeIntervals < 1)
-		throw std::runtime_error("The time interval array should have at least 2 elements.");
+  if (guessedIndex < 0 || guessedIndex > numTimeIntervals - 1) {
+    throw std::runtime_error("The guessed index (i.e. " + std::to_string(guessedIndex) + ") is out of range ( [0, " +
+                             std::to_string(numTimeIntervals - 1) + "].");
+  }
 
-	if (guessedIndex<0 || guessedIndex>numTimeIntervals-1)
-		throw std::runtime_error("The guessed index (i.e. " + std::to_string(guessedIndex) +
-				") is out of range ( [0, " + std::to_string(numTimeIntervals-1) + "].");
+  int index = -1;
 
-	int index = -1;
+  scalar_t timeMinus = enquiryTime - epsilon;
 
-	scalar_t timeMinus = enquiryTime - epsilon;
+  if (timeMinus < timeIntervals[guessedIndex]) {
+    for (int i = guessedIndex; i >= 0; i--) {
+      if (timeIntervals[i] <= timeMinus) {
+        index = i;
+        break;
+      }
+    }
+  } else {
+    for (int i = guessedIndex; i <= numTimeIntervals; i++) {
+      index = i;
+      if (timeMinus < timeIntervals[i]) {
+        index--;
+        break;
+      }
+    }
+  }
 
-	if (timeMinus < timeIntervals[guessedIndex]) {
-		for (int i=guessedIndex; i>=0; i--)  {
-			if (timeIntervals[i] <= timeMinus) {
-				index = i;
-				break;
-			}
-		}
-	} else {
-		for (int i=guessedIndex; i<=numTimeIntervals; i++) {
-			index = i;
-			if (timeMinus < timeIntervals[i]) {
-				index--;
-				break;
-			}
-		}
-	}
+  // initial time case for epsilon > 0
+  if (index == -1 && epsilon > 0) {
+    if (enquiryTime >= timeIntervals.front() - epsilon) {
+      index = 0;
+    }
+  }
 
-	// initial time case for epsilon > 0
-	if (index==-1 && epsilon > 0)
-		if(enquiryTime >= timeIntervals.front()-epsilon)
-			index = 0;
+  // final time case for epsilon < 0
+  if (index == numTimeIntervals && epsilon < 0) {
+    if (enquiryTime <= timeIntervals.back() - epsilon) {
+      index = numTimeIntervals - 1;
+    }
+  }
 
-	// final time case for epsilon < 0
-	if (index==numTimeIntervals && epsilon < 0)
-		if(enquiryTime <= timeIntervals.back()-epsilon)
-			index = numTimeIntervals-1;
-
-	return index;
+  return index;
 }
-
 
 /**
  * This function finds the interval in the input timeIntervals vector to which the input time belongs
@@ -136,20 +137,17 @@ int findActiveIntervalIndex(
  * the timeIntervals vector.
  */
 template <typename scalar_t, typename alloc_t = std::allocator<scalar_t> >
-int findActiveIntervalIndex(
-		const std::vector<scalar_t, alloc_t>& timeIntervals,
-		const scalar_t& enquiryTime,
-		scalar_t epsilon = OCS2NumericTraits<scalar_t>::week_epsilon()) {
+int findActiveIntervalIndex(const std::vector<scalar_t, alloc_t>& timeIntervals, const scalar_t& enquiryTime,
+                            scalar_t epsilon = OCS2NumericTraits<scalar_t>::weakEpsilon()) {
+  static int guessedIndex_ = 0;
 
-	static int guessedIndex_ = 0;
+  int index = findActiveIntervalIndex(timeIntervals, enquiryTime, guessedIndex_, epsilon);
 
-	int index = findActiveIntervalIndex(timeIntervals, enquiryTime, guessedIndex_, epsilon);
+  guessedIndex_ = std::max(index, 0);
 
-	guessedIndex_ = std::max(index,0);
-
-	return index;
+  return index;
 }
 
-} // namespace ocs2
+}  // namespace ocs2
 
 #endif /* FINDACTIVEINTERVALINDEX_OCS2_H_ */

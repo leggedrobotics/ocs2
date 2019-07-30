@@ -27,37 +27,30 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-namespace ocs2{
+namespace ocs2 {
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <typename SCALAR_T>
-ModeSequence_ROS_Interface<SCALAR_T>::ModeSequence_ROS_Interface(
-			const std::string& robotName /*= "robot"*/)
-	: robotName_(robotName)
-{}
+ModeSequence_ROS_Interface<SCALAR_T>::ModeSequence_ROS_Interface(const std::string& robotName /*= "robot"*/) : robotName_(robotName) {}
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <typename SCALAR_T>
 ModeSequence_ROS_Interface<SCALAR_T>::~ModeSequence_ROS_Interface() {
-
-	shutdownNodes();
+  shutdownNodes();
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <typename SCALAR_T>
-void ModeSequence_ROS_Interface<SCALAR_T>::publishModeSequenceTemplate(
-		const mode_sequence_template_t& modeSequenceTemplate) {
+void ModeSequence_ROS_Interface<SCALAR_T>::publishModeSequenceTemplate(const mode_sequence_template_t& modeSequenceTemplate) {
+  RosMsgConversions<0, 0>::CreateModeSequenceTemplateMsg(modeSequenceTemplate, modeSequenceTemplateMsg_);
 
-	RosMsgConversions<0, 0>::CreateModeSequenceTemplateMsg(modeSequenceTemplate,
-			modeSequenceTemplateMsg_);
-
-	mpcModeSequencePublisher_.publish(modeSequenceTemplateMsg_);
+  mpcModeSequencePublisher_.publish(modeSequenceTemplateMsg_);
 }
 
 /******************************************************************************************************/
@@ -65,8 +58,7 @@ void ModeSequence_ROS_Interface<SCALAR_T>::publishModeSequenceTemplate(
 /******************************************************************************************************/
 template <typename SCALAR_T>
 void ModeSequence_ROS_Interface<SCALAR_T>::shutdownNodes() {
-
-	mpcModeSequencePublisher_.shutdown();
+  mpcModeSequencePublisher_.shutdown();
 }
 
 /******************************************************************************************************/
@@ -74,26 +66,22 @@ void ModeSequence_ROS_Interface<SCALAR_T>::shutdownNodes() {
 /******************************************************************************************************/
 template <typename SCALAR_T>
 void ModeSequence_ROS_Interface<SCALAR_T>::launchNodes(int argc, char* argv[]) {
+  // reset counters and variables
+  reset();
 
-	// reset counters and variables
-	reset();
+  // display
+  ROS_INFO_STREAM("ModeSequence node is setting up ...");
 
-	// display
-	ROS_INFO_STREAM("ModeSequence node is setting up ...");
+  // setup ROS
+  ::ros::init(argc, argv, robotName_ + "_mpc_mode_sequence");
+  ::ros::NodeHandle nodeHandler;
 
-	// setup ROS
-	::ros::init(argc, argv, robotName_+"_mpc_mode_sequence");
-	::ros::NodeHandle nodeHandler;
+  mpcModeSequencePublisher_ = nodeHandler.advertise<ocs2_comm_interfaces::mode_sequence>(robotName_ + "_mpc_mode_sequence", 1, true);
 
-	mpcModeSequencePublisher_ = nodeHandler.advertise<ocs2_comm_interfaces::mode_sequence>(
-			robotName_ + "_mpc_mode_sequence", 1, true);
+  ros::spinOnce();
 
-	ros::spinOnce();
-
-	// display
-	ROS_INFO_STREAM(robotName_ + " mode sequence command node is ready.");
+  // display
+  ROS_INFO_STREAM(robotName_ + " mode sequence command node is ready.");
 }
 
-} // namespace ocs2
-
-
+}  // namespace ocs2

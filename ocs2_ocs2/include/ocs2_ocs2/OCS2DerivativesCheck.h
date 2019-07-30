@@ -93,7 +93,7 @@ public:
 	  				stateOperatingPoints, inputOperatingPoints, systemStockIndex, Options_t(), MP_Options_t())
 	{}
 
-	virtual ~OCS2DerivativesCheck() {}
+	~OCS2DerivativesCheck() = default;
 
     /**
      * Checks!

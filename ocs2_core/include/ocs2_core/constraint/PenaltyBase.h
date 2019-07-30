@@ -18,33 +18,33 @@ namespace ocs2 {
  *   The scalar penalty function \f$ p() \f$ and its derivatives are to be implemented in the derived class.
  *   This base class implements the chain rule from the inequality constraint and the implemented penalty function.
  */
-template<size_t STATE_DIM, size_t INPUT_DIM>
+template <size_t STATE_DIM, size_t INPUT_DIM>
 class PenaltyBase {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-  typedef Dimensions<STATE_DIM, INPUT_DIM> DIMENSIONS;
-  typedef typename DIMENSIONS::scalar_t scalar_t;
-  typedef typename DIMENSIONS::scalar_array_t scalar_array_t;
-  typedef typename DIMENSIONS::state_vector_t state_vector_t;
-  typedef typename DIMENSIONS::state_vector_array_t state_vector_array_t;
-  typedef typename DIMENSIONS::input_vector_t input_vector_t;
-  typedef typename DIMENSIONS::input_vector_array_t input_vector_array_t;
-  typedef typename DIMENSIONS::state_matrix_t state_matrix_t;
-  typedef typename DIMENSIONS::state_matrix_array_t state_matrix_array_t;
-  typedef typename DIMENSIONS::input_matrix_t input_matrix_t;
-  typedef typename DIMENSIONS::input_matrix_array_t input_matrix_array_t;
-  typedef typename DIMENSIONS::input_state_matrix_t input_state_matrix_t;
-  typedef typename DIMENSIONS::input_state_matrix_array_t input_state_matrix_array_t;
+  using DIMENSIONS = Dimensions<STATE_DIM, INPUT_DIM>;
+  using scalar_t = typename DIMENSIONS::scalar_t;
+  using scalar_array_t = typename DIMENSIONS::scalar_array_t;
+  using state_vector_t = typename DIMENSIONS::state_vector_t;
+  using state_vector_array_t = typename DIMENSIONS::state_vector_array_t;
+  using input_vector_t = typename DIMENSIONS::input_vector_t;
+  using input_vector_array_t = typename DIMENSIONS::input_vector_array_t;
+  using state_matrix_t = typename DIMENSIONS::state_matrix_t;
+  using state_matrix_array_t = typename DIMENSIONS::state_matrix_array_t;
+  using input_matrix_t = typename DIMENSIONS::input_matrix_t;
+  using input_matrix_array_t = typename DIMENSIONS::input_matrix_array_t;
+  using input_state_matrix_t = typename DIMENSIONS::input_state_matrix_t;
+  using input_state_matrix_array_t = typename DIMENSIONS::input_state_matrix_array_t;
 
   /**
-  * Default constructor
-  */
+   * Default constructor
+   */
   PenaltyBase() = default;
 
   /**
-  * Default destructor
-  */
+   * Default destructor
+   */
   virtual ~PenaltyBase() = default;
 
   /**
@@ -53,8 +53,7 @@ class PenaltyBase {
    * @param [in] h: Vector of inequality constraint values
    * @param [out] penalty: The penalty cost.
    */
-  void getPenaltyCost(const scalar_array_t &h,
-		  scalar_t &penalty) const;
+  void getPenaltyCost(const scalar_array_t& h, scalar_t& penalty) const;
 
   /**
    * Get the derivative of the penalty cost.
@@ -64,8 +63,8 @@ class PenaltyBase {
    * @param [in] dhdx: Vector of inequality constraint derivatives with respect to state.
    * @param [out] penaltyDerivativeState: Derivative of the penalty cost with respect to state.
    */
-  void getPenaltyCostDerivativeState(const scalar_array_t &h, const state_vector_array_t &dhdx,
-                                     state_vector_t &penaltyDerivativeState) const;
+  void getPenaltyCostDerivativeState(const scalar_array_t& h, const state_vector_array_t& dhdx,
+                                     state_vector_t& penaltyDerivativeState) const;
 
   /**
    * Get the derivative of the penalty cost.
@@ -75,9 +74,8 @@ class PenaltyBase {
    * @param [in] dhdu: Vector of inequality constraint derivatives with respect to input vector.
    * @param [out] penaltyDerivativeInput: Derivative of the penalty cost with respect to input vector.
    */
-  void getPenaltyCostDerivativeInput(const scalar_array_t &h,
-                                     const input_vector_array_t &dhdu,
-                                     input_vector_t &penaltyDerivativeInput) const;
+  void getPenaltyCostDerivativeInput(const scalar_array_t& h, const input_vector_array_t& dhdu,
+                                     input_vector_t& penaltyDerivativeInput) const;
 
   /**
    * Second derivative of penalty cost.
@@ -87,38 +85,32 @@ class PenaltyBase {
    * @param [in] ddhdxdx: Vector of inequality constraint second derivatives with respect to state.
    * @param [out] penaltySecondDerivativeState: Second derivative of the penalty cost with respect to state.
    */
-  void getPenaltyCostSecondDerivativeState(const scalar_array_t &h,
-                                           const state_vector_array_t &dhdx,
-                                           const state_matrix_array_t &ddhdxdx,
-                                           state_matrix_t &penaltySecondDerivativeState) const;
+  void getPenaltyCostSecondDerivativeState(const scalar_array_t& h, const state_vector_array_t& dhdx, const state_matrix_array_t& ddhdxdx,
+                                           state_matrix_t& penaltySecondDerivativeState) const;
 
   /**
-  * Second derivative of penalty cost.
-  *
-  * @param [in] h: Vector of inequality constraint values.
-  * @param [in] dhdu: Vector of inequality constraint derivatives with respect to input.
-  * @param [in] ddhdudu: Vector of inequality constraint second derivatives with respect to input.
-  * @param [out] penaltySecondDerivativeInput: Second derivative of the penalty cost with respect to input.
-  */
-  void getPenaltyCostSecondDerivativeInput(const scalar_array_t &h,
-                                           const input_vector_array_t &dhdu,
-                                           const input_matrix_array_t &ddhdudu,
-                                           input_matrix_t &penaltySecondDerivativeInput) const;
+   * Second derivative of penalty cost.
+   *
+   * @param [in] h: Vector of inequality constraint values.
+   * @param [in] dhdu: Vector of inequality constraint derivatives with respect to input.
+   * @param [in] ddhdudu: Vector of inequality constraint second derivatives with respect to input.
+   * @param [out] penaltySecondDerivativeInput: Second derivative of the penalty cost with respect to input.
+   */
+  void getPenaltyCostSecondDerivativeInput(const scalar_array_t& h, const input_vector_array_t& dhdu, const input_matrix_array_t& ddhdudu,
+                                           input_matrix_t& penaltySecondDerivativeInput) const;
 
   /**
-  * Second derivative of penalty cost.
-  *
-  * @param [in] h: Vector of inequality constraint values.
-  * @param [in] dhdx: Vector of inequality constraint derivatives with respect to state.
-  * @param [in] dhdu: Vector of inequality constraint derivatives with respect to input.
-  * @param [in] ddhdudx: Vector of inequality constraint derivatives with respect to input and state.
-  * @param [out] penaltyDerivativeInputState: Derivative of the penalty cost with respect to input and state.
-  */
-  void getPenaltyCostDerivativeInputState(const scalar_array_t &h,
-                                          const state_vector_array_t &dhdx,
-                                          const input_vector_array_t &dhdu,
-                                          const input_state_matrix_array_t &ddhdudx,
-                                          input_state_matrix_t &penaltyDerivativeInputState) const;
+   * Second derivative of penalty cost.
+   *
+   * @param [in] h: Vector of inequality constraint values.
+   * @param [in] dhdx: Vector of inequality constraint derivatives with respect to state.
+   * @param [in] dhdu: Vector of inequality constraint derivatives with respect to input.
+   * @param [in] ddhdudx: Vector of inequality constraint derivatives with respect to input and state.
+   * @param [out] penaltyDerivativeInputState: Derivative of the penalty cost with respect to input and state.
+   */
+  void getPenaltyCostDerivativeInputState(const scalar_array_t& h, const state_vector_array_t& dhdx, const input_vector_array_t& dhdu,
+                                          const input_state_matrix_array_t& ddhdudx,
+                                          input_state_matrix_t& penaltyDerivativeInputState) const;
 
   /**
    * Computes the sum of squared constraint violation.
@@ -126,11 +118,9 @@ class PenaltyBase {
    * @param [in] h: Vector of inequality constraint values.
    * @param [out] squaredViolation: sum of squared constraint violation.
    */
-  void getConstraintViolationSquaredNorm(const scalar_array_t &h,
-		  scalar_t &squaredViolation) const;
+  void getConstraintViolationSquaredNorm(const scalar_array_t& h, scalar_t& squaredViolation) const;
 
  private:
-
   /**
    * Compute the penalty value at a certain constraint value.
    *
@@ -140,23 +130,23 @@ class PenaltyBase {
   virtual scalar_t getPenaltyFunctionValue(scalar_t h) const = 0;
 
   /**
-  * Compute the penalty derivative at a certain constraint value.
-  *
-  * @param [in] h: Constraint value.
-  * @return penalty derivative with respect to constraint value.
-  */
+   * Compute the penalty derivative at a certain constraint value.
+   *
+   * @param [in] h: Constraint value.
+   * @return penalty derivative with respect to constraint value.
+   */
   virtual scalar_t getPenaltyFunctionDerivative(scalar_t h) const = 0;
 
   /**
-  * Compute the penalty second derivative at a certain constraint value.
-  *
-  * @param [in] h: Constraint value.
-  * @return penalty second derivative with respect to constraint value.
-  */
+   * Compute the penalty second derivative at a certain constraint value.
+   *
+   * @param [in] h: Constraint value.
+   * @return penalty second derivative with respect to constraint value.
+   */
   virtual scalar_t getPenaltyFunctionSecondDerivative(scalar_t h) const = 0;
 };
-}
+}  // namespace ocs2
 
 #include "implementation/PenaltyBase.h"
 
-#endif //PENALTYBASE_OCS2_H
+#endif  // PENALTYBASE_OCS2_H

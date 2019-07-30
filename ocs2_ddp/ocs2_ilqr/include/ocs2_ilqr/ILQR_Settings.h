@@ -30,86 +30,83 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifndef ILQR_SETTINGS_OCS2_H_
 #define ILQR_SETTINGS_OCS2_H_
 
-#include <string>
-#include <iostream>
-#include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/info_parser.hpp>
+#include <boost/property_tree/ptree.hpp>
+#include <iostream>
+#include <string>
 
-#include <ocs2_oc/rollout/Rollout_Settings.h>
 #include <ocs2_ddp_base/DDP_Settings.h>
+#include <ocs2_oc/rollout/Rollout_Settings.h>
 
-namespace ocs2{
+namespace ocs2 {
 
 /**
  * This structure contains the settings for the ILQR algorithm.
  */
 class ILQR_Settings {
+ public:
+  /**
+   * Default constructor.
+   */
+  ILQR_Settings()
+      : ddpSettings_(),
+        rolloutSettings_()
 
-public:
+  {}
 
-	/**
-	 * Default constructor.
-	 */
-	ILQR_Settings()
-	: ddpSettings_()
-	, rolloutSettings_()
+  /**
+   * This function loads the "ILQR_Settings" variables from a config file. This file contains the settings for the SQL and OCS2 algorithms.
+   * Here, we use the INFO format which was created specifically for the property tree library (refer to www.goo.gl/fV3yWA).
+   *
+   * It has the following format:	<br>
+   * ILQR	<br>
+   * {	<br>
+   *   maxIterationILQR        value		<br>
+   *   minLearningRateILQR     value		<br>
+   *   maxLearningRateILQR     value		<br>
+   *   minRelCostILQR          value		<br>
+   *   (and so on for the other fields)	<br>
+   * }	<br>
+   *
+   * If a value for a specific field is not defined it will set to the default value defined in "ILQR_Settings".
+   *
+   * @param [in] filename: File name which contains the configuration data.
+   * @param [in] fieldName: Field name which contains the configuration data (the default is ilqr).
+   * @param [in] verbose: Flag to determine whether to print out the loaded settings or not (The default is true).
+   */
+  void loadSettings(const std::string& filename, const std::string& fieldName = "ilqr", bool verbose = true);
 
-	{}
+ public:
+  /****************
+   *** Variables **
+   ****************/
 
-	/**
-	 * This function loads the "ILQR_Settings" variables from a config file. This file contains the settings for the SQL and OCS2 algorithms.
-	 * Here, we use the INFO format which was created specifically for the property tree library (refer to www.goo.gl/fV3yWA).
-	 *
-	 * It has the following format:	<br>
-	 * ILQR	<br>
-	 * {	<br>
-	 *   maxIterationILQR        value		<br>
-	 *   minLearningRateILQR     value		<br>
-	 *   maxLearningRateILQR     value		<br>
-	 *   minRelCostILQR          value		<br>
-	 *   (and so on for the other fields)	<br>
-	 * }	<br>
-	 *
-	 * If a value for a specific field is not defined it will set to the default value defined in "ILQR_Settings".
-	 *
-	 * @param [in] filename: File name which contains the configuration data.
-	 * @param [in] fieldName: Field name which contains the configuration data (the default is ilqr).
-	 * @param [in] verbose: Flag to determine whether to print out the loaded settings or not (The default is true).
-	 */
-	void loadSettings(const std::string& filename, const std::string& fieldName = "ilqr", bool verbose = true);
+  /** This structure contains the settings for DDP algorithms. */
+  DDP_Settings ddpSettings_;
 
-public:
-	/****************
-	 *** Variables **
-	 ****************/
+  /** This structure contains the settings for forward rollout algorithms. */
+  Rollout_Settings rolloutSettings_;
 
-	/** This structure contains the settings for DDP algorithms. */
-	DDP_Settings ddpSettings_;
-
-	/** This structure contains the settings for forward rollout algorithms. */
-	Rollout_Settings rolloutSettings_;
-
-}; // end of ILQR_Settings class
-
+};  // end of ILQR_Settings class
 
 inline void ILQR_Settings::loadSettings(const std::string& filename, const std::string& fieldName /*= ilqr*/, bool verbose /*= true*/) {
+  boost::property_tree::ptree pt;
+  boost::property_tree::read_info(filename, pt);
 
-	boost::property_tree::ptree pt;
-	boost::property_tree::read_info(filename, pt);
+  ddpSettings_.loadSettings(filename, fieldName + ".ddp", verbose);
 
-	ddpSettings_.loadSettings(filename, fieldName+".ddp", verbose);
+  rolloutSettings_.loadSettings(filename, fieldName + ".rollout", verbose);
 
-	rolloutSettings_.loadSettings(filename, fieldName+".rollout", verbose);
+  if (verbose) {
+    std::cerr << std::endl << " #### ILQR Settings: " << std::endl;
+    std::cerr << " #### =============================================================================" << std::endl;
+  }
 
-	if(verbose){
-		std::cerr << std::endl << " #### ILQR Settings: " << std::endl;
-		std::cerr <<" #### =============================================================================" << std::endl;
-	}
-
-	if(verbose)
-		std::cerr <<" #### =============================================================================" << std::endl;
+  if (verbose) {
+    std::cerr << " #### =============================================================================" << std::endl;
+  }
 }
 
-} // namespace ocs2
+}  // namespace ocs2
 
 #endif /* ILQR_SETTINGS_OCS2_H_ */

@@ -6,69 +6,64 @@
 #define OCS2_LOOPSHAPINGCONSTRAINTINPUTPATTERN_H
 
 namespace ocs2 {
-template<size_t FULL_STATE_DIM, size_t FULL_INPUT_DIM,
-    size_t SYSTEM_STATE_DIM, size_t SYSTEM_INPUT_DIM,
-    size_t FILTER_STATE_DIM, size_t FILTER_INPUT_DIM,
-    class LOGIC_RULES_T=NullLogicRules>
-class LoopshapingConstraintInputPattern final: public LoopshapingConstraint<FULL_STATE_DIM, FULL_INPUT_DIM,
-                                                                                              SYSTEM_STATE_DIM, SYSTEM_INPUT_DIM,
-                                                                                              FILTER_STATE_DIM, FILTER_INPUT_DIM, LOGIC_RULES_T> {
+template <size_t FULL_STATE_DIM, size_t FULL_INPUT_DIM, size_t SYSTEM_STATE_DIM, size_t SYSTEM_INPUT_DIM, size_t FILTER_STATE_DIM,
+          size_t FILTER_INPUT_DIM>
+class LoopshapingConstraintInputPattern final
+    : public LoopshapingConstraint<FULL_STATE_DIM, FULL_INPUT_DIM, SYSTEM_STATE_DIM, SYSTEM_INPUT_DIM, FILTER_STATE_DIM, FILTER_INPUT_DIM> {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-  using BASE = LoopshapingConstraint<FULL_STATE_DIM, FULL_INPUT_DIM,
-                                     SYSTEM_STATE_DIM, SYSTEM_INPUT_DIM,
-                                     FILTER_STATE_DIM, FILTER_INPUT_DIM, LOGIC_RULES_T>;
+  using BASE =
+      LoopshapingConstraint<FULL_STATE_DIM, FULL_INPUT_DIM, SYSTEM_STATE_DIM, SYSTEM_INPUT_DIM, FILTER_STATE_DIM, FILTER_INPUT_DIM>;
 
-  using typename BASE::scalar_t;
-  using typename BASE::state_vector_t;
-  using typename BASE::input_vector_t;
-  using typename BASE::state_matrix_t;
-  using typename BASE::input_matrix_t;
-  using typename BASE::input_state_matrix_t;
+  using typename BASE::constraint1_input_matrix_t;
+  using typename BASE::constraint1_state_matrix_t;
   using typename BASE::constraint1_vector_t;
   using typename BASE::constraint2_vector_t;
-  using typename BASE::constraint1_state_matrix_t;
-  using typename BASE::constraint1_input_matrix_t;
-  using typename BASE::scalar_array_t;
-  using typename BASE::state_vector_array_t;
-  using typename BASE::input_vector_array_t;
-  using typename BASE::state_matrix_array_t;
   using typename BASE::input_matrix_array_t;
+  using typename BASE::input_matrix_t;
   using typename BASE::input_state_matrix_array_t;
+  using typename BASE::input_state_matrix_t;
+  using typename BASE::input_vector_array_t;
+  using typename BASE::input_vector_t;
+  using typename BASE::scalar_array_t;
+  using typename BASE::scalar_t;
+  using typename BASE::state_matrix_array_t;
+  using typename BASE::state_matrix_t;
+  using typename BASE::state_vector_array_t;
+  using typename BASE::state_vector_t;
 
   using typename BASE::SYSTEM_CONSTRAINT;
-  using typename BASE::system_state_vector_t;
-  using typename BASE::system_input_vector_t;
+  using typename BASE::system_constraint1_input_matrix_t;
+  using typename BASE::system_constraint1_state_matrix_t;
+  using typename BASE::system_constraint2_state_matrix_t;
   using typename BASE::system_contraint1_vector_t;
   using typename BASE::system_contraint2_vector_t;
-  using typename BASE::system_constraint1_state_matrix_t;
-  using typename BASE::system_constraint1_input_matrix_t;
-  using typename BASE::system_constraint2_state_matrix_t;
-  using typename BASE::system_scalar_array_t;
-  using typename BASE::system_state_vector_array_t;
-  using typename BASE::system_input_vector_array_t;
-  using typename BASE::system_state_matrix_array_t;
   using typename BASE::system_input_matrix_array_t;
   using typename BASE::system_input_state_matrix_array_t;
+  using typename BASE::system_input_vector_array_t;
+  using typename BASE::system_input_vector_t;
+  using typename BASE::system_scalar_array_t;
+  using typename BASE::system_state_matrix_array_t;
+  using typename BASE::system_state_vector_array_t;
+  using typename BASE::system_state_vector_t;
 
-  using typename BASE::filter_state_vector_t;
   using typename BASE::filter_input_vector_t;
+  using typename BASE::filter_state_vector_t;
 
-  LoopshapingConstraintInputPattern( std::shared_ptr<LoopshapingDefinition> loopshapingDefinition) : BASE(std::move(loopshapingDefinition)) {};
+  explicit LoopshapingConstraintInputPattern(std::shared_ptr<LoopshapingDefinition> loopshapingDefinition)
+      : BASE(std::move(loopshapingDefinition)){};
 
-  LoopshapingConstraintInputPattern(const SYSTEM_CONSTRAINT &systemConstraint,
-                                    std::shared_ptr<LoopshapingDefinition> loopshapingDefinition) : BASE(systemConstraint, std::move(loopshapingDefinition)) {};
+  LoopshapingConstraintInputPattern(const SYSTEM_CONSTRAINT& systemConstraint, std::shared_ptr<LoopshapingDefinition> loopshapingDefinition)
+      : BASE(systemConstraint, std::move(loopshapingDefinition)){};
 
   virtual ~LoopshapingConstraintInputPattern() = default;
 
-  LoopshapingConstraintInputPattern(const LoopshapingConstraintInputPattern &obj) = default;
+  LoopshapingConstraintInputPattern(const LoopshapingConstraintInputPattern& obj) = default;
 
-  LoopshapingConstraintInputPattern* clone() const override {
-    return new LoopshapingConstraintInputPattern(*this);
-  };
+  LoopshapingConstraintInputPattern* clone() const override { return new LoopshapingConstraintInputPattern(*this); };
 
-  void getInequalityConstraintDerivativesState(state_vector_array_t &dhdx) override {
+  void getInequalityConstraintDerivativesState(state_vector_array_t& dhdx) override {
     this->computeSystemInequalityConstraintDerivatives();
     dhdx.clear();
     if (systemConstraint_) {
@@ -80,7 +75,7 @@ class LoopshapingConstraintInputPattern final: public LoopshapingConstraint<FULL
     }
   };
 
-  void getInequalityConstraintDerivativesInput(input_vector_array_t &dhdu) override {
+  void getInequalityConstraintDerivativesInput(input_vector_array_t& dhdu) override {
     this->computeSystemInequalityConstraintDerivatives();
     dhdu.clear();
     if (systemConstraint_) {
@@ -92,7 +87,7 @@ class LoopshapingConstraintInputPattern final: public LoopshapingConstraint<FULL
     }
   };
 
-  void getInequalityConstraintSecondDerivativesState(state_matrix_array_t &ddhdxdx) override {
+  void getInequalityConstraintSecondDerivativesState(state_matrix_array_t& ddhdxdx) override {
     this->computeSystemInequalityConstraintDerivatives();
     ddhdxdx.clear();
     if (systemConstraint_) {
@@ -106,7 +101,7 @@ class LoopshapingConstraintInputPattern final: public LoopshapingConstraint<FULL
     }
   };
 
-  void getInequalityConstraintSecondDerivativesInput(input_matrix_array_t &ddhdudu) override {
+  void getInequalityConstraintSecondDerivativesInput(input_matrix_array_t& ddhdudu) override {
     this->computeSystemInequalityConstraintDerivatives();
     ddhdudu.clear();
     if (systemConstraint_) {
@@ -120,7 +115,7 @@ class LoopshapingConstraintInputPattern final: public LoopshapingConstraint<FULL
     }
   };
 
-  void getInequalityConstraintDerivativesInputState(input_state_matrix_array_t &ddhdudx) override {
+  void getInequalityConstraintDerivativesInputState(input_state_matrix_array_t& ddhdudx) override {
     this->computeSystemInequalityConstraintDerivatives();
     ddhdudx.clear();
     if (systemConstraint_) {
@@ -135,48 +130,46 @@ class LoopshapingConstraintInputPattern final: public LoopshapingConstraint<FULL
   };
 
  protected:
-  using BASE::systemConstraint_;
   using BASE::loopshapingDefinition_;
+  using BASE::systemConstraint_;
 
   using BASE::t_;
-  using BASE::x_filter_;
   using BASE::u_filter_;
-  using BASE::x_system_;
   using BASE::u_system_;
+  using BASE::x_filter_;
+  using BASE::x_system_;
 
-  using BASE::system_dhdx;
-  using BASE::system_dhdu;
-  using BASE::system_ddhdxdx;
   using BASE::system_ddhdudu;
   using BASE::system_ddhdudx;
+  using BASE::system_ddhdxdx;
+  using BASE::system_dhdu;
+  using BASE::system_dhdx;
 
  private:
   size_t addNumStateInputConstraint(size_t numSystemStateInputConstraints) override {
     return numSystemStateInputConstraints + SYSTEM_INPUT_DIM;
   };
 
-  void appendConstraint1(size_t numSystemStateInputConstraints, constraint1_vector_t &e) override {
-    const auto &s_filter = loopshapingDefinition_->getInputFilter();
+  void appendConstraint1(size_t numSystemStateInputConstraints, constraint1_vector_t& e) override {
+    const auto& s_filter = loopshapingDefinition_->getInputFilter();
 
     e.template segment(numSystemStateInputConstraints, SYSTEM_INPUT_DIM) =
-        s_filter.getC() * x_filter_
-            + s_filter.getD() * u_filter_
-            - u_system_;
+        s_filter.getC() * x_filter_ + s_filter.getD() * u_filter_ - u_system_;
   };
 
-  void appendConstraint1DerivativeState(size_t numSystemStateInputConstraints, constraint1_state_matrix_t &C) override {
-    const auto &s_filter = loopshapingDefinition_->getInputFilter();
+  void appendConstraint1DerivativeState(size_t numSystemStateInputConstraints, constraint1_state_matrix_t& C) override {
+    const auto& s_filter = loopshapingDefinition_->getInputFilter();
     C.block(numSystemStateInputConstraints, 0, SYSTEM_INPUT_DIM, SYSTEM_STATE_DIM).setZero();
     C.block(numSystemStateInputConstraints, SYSTEM_STATE_DIM, SYSTEM_INPUT_DIM, FILTER_STATE_DIM) = s_filter.getC();
   };
 
-  void appendConstraint1DerivativeControl(size_t numSystemStateInputConstraints, constraint1_input_matrix_t &D) override {
-    const auto &s_filter = loopshapingDefinition_->getInputFilter();
+  void appendConstraint1DerivativeControl(size_t numSystemStateInputConstraints, constraint1_input_matrix_t& D) override {
+    const auto& s_filter = loopshapingDefinition_->getInputFilter();
     D.block(numSystemStateInputConstraints, 0, SYSTEM_INPUT_DIM, SYSTEM_INPUT_DIM) =
         -Eigen::Matrix<scalar_t, SYSTEM_INPUT_DIM, SYSTEM_INPUT_DIM>::Identity();
     D.block(numSystemStateInputConstraints, SYSTEM_INPUT_DIM, SYSTEM_INPUT_DIM, FILTER_INPUT_DIM) = s_filter.getD();
   };
 };
-}; // ocs2
+}  // namespace ocs2
 
-#endif //OCS2_LOOPSHAPINGCONSTRAINTINPUTPATTERN_H
+#endif  // OCS2_LOOPSHAPINGCONSTRAINTINPUTPATTERN_H

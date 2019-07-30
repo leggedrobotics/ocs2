@@ -30,8 +30,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifndef TIMEHORIZONESTIMATORBASE_H_
 #define TIMEHORIZONESTIMATORBASE_H_
 
-#include <memory>
 #include <Eigen/Dense>
+#include <memory>
 
 namespace ocs2 {
 
@@ -39,37 +39,33 @@ namespace ocs2 {
  *
  * @tparam STATE_DIM
  */
-template<size_t STATE_DIM>
+template <size_t STATE_DIM>
 class TimeHorizonEstimatorBase {
-public:
-	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+ public:
+  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-	typedef std::shared_ptr<TimeHorizonEstimatorBase<STATE_DIM> > Ptr;
+  using Ptr = std::shared_ptr<TimeHorizonEstimatorBase<STATE_DIM> >;
 
-	TimeHorizonEstimatorBase() :
-		currentTimeHorizon_(1000) {}
+  TimeHorizonEstimatorBase() : currentTimeHorizon_(1000) {}
 
-	virtual ~TimeHorizonEstimatorBase() {}
+  virtual ~TimeHorizonEstimatorBase() = default;
 
-	/**
-	 * Updates the time horizon
-	 * @param [in] currentInitialState
-	 */
-	virtual void updateTimeHorizon(
-			const Eigen::Matrix<double, STATE_DIM, 1> &currentInitialState) { currentTimeHorizon_ = 0.0; };
+  /**
+   * Updates the time horizon
+   * @param [in] currentInitialState
+   */
+  virtual void updateTimeHorizon(const Eigen::Matrix<double, STATE_DIM, 1>& currentInitialState) { currentTimeHorizon_ = 0.0; };
 
-	/**
-	 * Gets time horizon
-	 * @return double
-	 */
-	const double getTimeHorizon() const { return currentTimeHorizon_; }
+  /**
+   * Gets time horizon
+   * @return double
+   */
+  const double getTimeHorizon() const { return currentTimeHorizon_; }
 
-protected:
-	double currentTimeHorizon_;
+ protected:
+  double currentTimeHorizon_;
 };
 
-
-}
-
+}  // namespace ocs2
 
 #endif /* TIMEHORIZONESTIMATORBASE_H_ */

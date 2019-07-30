@@ -32,241 +32,220 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "ocs2_core/integration/SystemEventHandler.h"
 
-namespace ocs2{
+namespace ocs2 {
 
 template <int STATE_DIM>
-class StateTriggeredEventHandler : public SystemEventHandler<STATE_DIM>
-{
-public:
-	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+class StateTriggeredEventHandler : public SystemEventHandler<STATE_DIM> {
+ public:
+  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-	typedef std::shared_ptr<StateTriggeredEventHandler<STATE_DIM>> Ptr;
+  using Ptr = std::shared_ptr<StateTriggeredEventHandler<STATE_DIM> >;
 
-	typedef SystemEventHandler<STATE_DIM> BASE;
-	typedef typename BASE::scalar_t				scalar_t;
-	typedef typename BASE::scalar_array_t 		scalar_array_t;
-	typedef typename BASE::state_vector_t		state_vector_t;
-	typedef typename BASE::state_vector_array_t state_vector_array_t;
-	typedef typename BASE::dynamic_vector_t 	dynamic_vector_t;
+  using BASE = SystemEventHandler<STATE_DIM>;
+  using scalar_t = typename BASE::scalar_t;
+  using scalar_array_t = typename BASE::scalar_array_t;
+  using state_vector_t = typename BASE::state_vector_t;
+  using state_vector_array_t = typename BASE::state_vector_array_t;
+  using dynamic_vector_t = typename BASE::dynamic_vector_t;
 
-	/**
-	 * Default constructor
-	 */
-	StateTriggeredEventHandler()
-	: BASE()
-	{
-		reset();
-	}
+  /**
+   * Default constructor
+   */
+  StateTriggeredEventHandler() : BASE(), systemEventHandlerTriggered_(false), triggeredEventSurface_(0) { reset(); }
 
-	/**
-	 * Default destructor
-	 */
-	virtual ~StateTriggeredEventHandler() = default;
+  /**
+   * Default destructor
+   */
+  virtual ~StateTriggeredEventHandler() = default;
 
-	/**
-	 * Resets the class.
-	 */
-	virtual void reset() override {
+  /**
+   * Resets the class.
+   */
+  void reset() override {
+    BASE::reset();
+    setEventTimesGuard();
+  }
 
-		BASE::reset();
-		setEventTimesGuard();
-	}
+  /**
+   * Sets parameters to control event times detection.
+   *
+   * @param [in] minEventTimeDifference: Minimum accepted time difference between two consecutive events.
+   * @param [in] lastEventTriggeredTime: Last Time that an event is triggered.
+   * @param [in] lastGuardSurfacesValues: The value of the guard functions at lastEventTriggeredTime.
+   */
+  virtual void setEventTimesGuard(const scalar_t& minEventTimeDifference = 1e-2,
+                                  const scalar_t& lastEventTriggeredTime = std::numeric_limits<scalar_t>::lowest(),
+                                  const dynamic_vector_t& lastGuardSurfacesValues = dynamic_vector_t::Zero(0)) {
+    if (lastEventTriggeredTime > std::numeric_limits<scalar_t>::lowest() && lastGuardSurfacesValues.size() == 0) {
+      throw std::runtime_error(
+          "Since the time of the last event is provided, "
+          "the value of the guard functions at that time should also be provided.");
+    }
 
-	/**
-	 * Sets parameters to control event times detection.
-	 *
-	 * @param [in] minEventTimeDifference: Minimum accepted time difference between two consecutive events.
-	 * @param [in] lastEventTriggeredTime: Last Time that an event is triggered.
-	 * @param [in] lastGuardSurfacesValues: The value of the guard functions at lastEventTriggeredTime.
-	 */
-	virtual void setEventTimesGuard(
-			const scalar_t& minEventTimeDifference = 1e-2,
-			const scalar_t& lastEventTriggeredTime = std::numeric_limits<scalar_t>::lowest(),
-			const dynamic_vector_t& lastGuardSurfacesValues = dynamic_vector_t::Zero(0)) {
+    minEventTimeDifference_ = minEventTimeDifference;
+    lastEventTriggeredTime_ = lastEventTriggeredTime;
+    guardSurfacesValuesPrevious_ = lastGuardSurfacesValues;
+  }
 
-		if (lastEventTriggeredTime > std::numeric_limits<scalar_t>::lowest() && lastGuardSurfacesValues.size()==0)
-			throw std::runtime_error("Since the time of the last event is provided, "
-					"the value of the guard functions at that time should also be provided.");
+  /**
+   * Gets the value of the guard surfaces.
+   *
+   * @return The value of the guard surfaces.
+   */
+  const dynamic_vector_t& getGuardSurfacesValues() const { return guardSurfacesValuesPrevious_; }
 
-		minEventTimeDifference_ = minEventTimeDifference;
-		lastEventTriggeredTime_ = lastEventTriggeredTime;
-		guardSurfacesValuesPrevious_ = lastGuardSurfacesValues;
-	}
+  /**
+   * Checks if an event is activated.
+   *
+   * @param [in] state: Current state vector.
+   * @param [in] time: Current time.
+   * @return boolean:
+   */
+  bool checkEvent(const state_vector_t& state, const scalar_t& time) override {
+    //		std::cout << std::endl << "time: " << time << std::endl;
 
-	/**
-	 * Gets the value of the guard surfaces.
-	 *
-	 * @return The value of the guard surfaces.
-	 */
-	const dynamic_vector_t& getGuardSurfacesValues() const {
+    // SystemEventHandler event
+    systemEventHandlerTriggered_ = BASE::checkEvent(state, time);
+    if (systemEventHandlerTriggered_) {
+      return true;
+    }
 
-		return guardSurfacesValuesPrevious_;
-	}
+    //** StateTriggered event **//
 
-	/**
-	 * Checks if an event is activated.
-	 *
-	 * @param [in] state: Current state vector.
-	 * @param [in] time: Current time.
-	 * @return boolean:
-	 */
-	virtual bool checkEvent(
-			const state_vector_t& state,
-			const scalar_t& time) override {
+    // No event will happen if one is recently hanned
+    if (time - lastEventTriggeredTime_ < minEventTimeDifference_) {
+      //			std::cout << "Event Handeling is NOT active." << std::endl;
+      return false;
+    } else {
+      //			std::cout << "Event Handeling is active." << std::endl;
+    }
 
-//		std::cout << std::endl << "time: " << time << std::endl;
+    BASE::systemPtr_->computeGuardSurfaces(time, state, guardSurfacesValuesCurrent_);
 
-		// SystemEventHandler event
-		systemEventHandlerTriggered_ = BASE::checkEvent(state, time);
-		if (systemEventHandlerTriggered_==true)
-			return true;
+    //		std::cout << "guardSurfacesValue: ";
+    //		for (size_t i=0; i<guardSurfacesValuesCurrent_.size(); i++)
+    //			if (guardSurfacesValuesCurrent_(i)<0.6)
+    //				std::cout << ",   [" << i << "]: " << guardSurfacesValuesCurrent_(i);
+    //		std::cout << "\n";
+    //
+    //		for (size_t i=0; i<guardSurfacesValuesPrevious_.size(); i++)
+    //			std::cout << "[" << i << "]:\t" << guardSurfacesValuesPrevious_(i) <<
+    //				"\t-->\t" << guardSurfacesValuesCurrent_(i) << std::endl;
 
-		//** StateTriggered event **//
+    bool eventTriggered = false;
+    for (size_t i = 0; i < guardSurfacesValuesPrevious_.size(); i++) {
+      if (guardSurfacesValuesCurrent_[i] <= 0 && guardSurfacesValuesPrevious_(i) > 0) {
+        eventTriggered = true;
+        triggeredEventSurface_ = i;
+      }
+    }
 
-		// No event will happen if one is recently hanned
-		if (time-lastEventTriggeredTime_ < minEventTimeDifference_) {
-//			std::cout << "Event Handeling is NOT active." << std::endl;
-			return false;
-		} else {
-//			std::cout << "Event Handeling is active." << std::endl;
-		}
+    if (!eventTriggered) {
+      guardSurfacesValuesPrevious_ = guardSurfacesValuesCurrent_;
+    }
 
-		BASE::systemPtr_->computeGuardSurfaces(time, state, guardSurfacesValuesCurrent_);
+    return eventTriggered;
+  }
 
-//		std::cout << "guardSurfacesValue: ";
-//		for (size_t i=0; i<guardSurfacesValuesCurrent_.size(); i++)
-//			if (guardSurfacesValuesCurrent_(i)<0.6)
-//				std::cout << ",   [" << i << "]: " << guardSurfacesValuesCurrent_(i);
-//		std::cout << "\n";
-//
-//		for (size_t i=0; i<guardSurfacesValuesPrevious_.size(); i++)
-//			std::cout << "[" << i << "]:\t" << guardSurfacesValuesPrevious_(i) <<
-//				"\t-->\t" << guardSurfacesValuesCurrent_(i) << std::endl;
+  /**
+   * The operation should be performed if an event is activated. The method gets references to the time and state
+   * trajectories. The current time and state are the last elements of their respective container.
+   * The method should also return a "Non-Negative" ID which indicates the a unique ID for the active events.
+   * Note that will the negative return values are reserved to handle internal events for the program.
+   *
+   * @param [out] stateTrajectory: The state trajectory which contains the current state vector as its last element.
+   * @param [out] timeTrajectory: The time trajectory which contains the current time as its last element.
+   * @retune boolean: A non-negative unique ID for the active events.
+   */
+  int handleEvent(state_vector_array_t& stateTrajectory, scalar_array_t& timeTrajectory) override {
+    // SystemEventHandler event
+    if (systemEventHandlerTriggered_) {
+      return BASE::handleEvent(stateTrajectory, timeTrajectory);
+    }
 
-		bool eventTriggered = false;
-		for (size_t i=0; i<guardSurfacesValuesPrevious_.size(); i++)
-			if (guardSurfacesValuesCurrent_[i]<=0 && guardSurfacesValuesPrevious_(i)>0) {
-				eventTriggered = true;
-				triggeredEventSurface_ = i;
-			}
+    // correcting for the zero crossing
+    size_t lastIndex;
+    scalar_t zeroCrossingTime;
+    state_vector_t zeroCrossingState;
+    computeZeroCrossing(stateTrajectory, timeTrajectory, lastIndex, zeroCrossingState, zeroCrossingTime);
 
-		if (eventTriggered==false) {
-			guardSurfacesValuesPrevious_ = guardSurfacesValuesCurrent_;
-		}
+    if (lastIndex > 0) {
+      timeTrajectory[lastIndex] = zeroCrossingTime;
+      timeTrajectory.erase(timeTrajectory.begin() + lastIndex + 1, timeTrajectory.end());
 
-		return eventTriggered;
-	}
+      stateTrajectory[lastIndex] = zeroCrossingState;
+      stateTrajectory.erase(stateTrajectory.begin() + lastIndex + 1, stateTrajectory.end());
+    }
 
-	/**
-	 * The operation should be performed if an event is activated. The method gets references to the time and state
-	 * trajectories. The current time and state are the last elements of their respective container.
-	 * The method should also return a "Non-Negative" ID which indicates the a unique ID for the active events.
-	 * Note that will the negative return values are reserved to handle internal events for the program.
-	 *
-	 * @param [out] stateTrajectory: The state trajectory which contains the current state vector as its last element.
-	 * @param [out] timeTrajectory: The time trajectory which contains the current time as its last element.
-	 * @retune boolean: A non-negative unique ID for the active events.
-	 */
-	virtual int handleEvent(
-			state_vector_array_t& stateTrajectory,
-			scalar_array_t& timeTrajectory) override {
+    lastEventTriggeredTime_ = timeTrajectory[lastIndex];
+    guardSurfacesValuesPrevious_.swap(guardSurfacesValuesCurrent_);
 
-		// SystemEventHandler event
-		if (systemEventHandlerTriggered_==true)
-			return BASE::handleEvent(stateTrajectory, timeTrajectory);
+    // StateTriggered event
+    return triggeredEventSurface_;
+  }
 
-		// correcting for the zero crossing
-		size_t lastIndex;
-		scalar_t zeroCrossingTime;
-		state_vector_t zeroCrossingState;
-		computeZeroCrossing(stateTrajectory, timeTrajectory,
-				lastIndex, zeroCrossingState, zeroCrossingTime);
+  /**
+   * Computes the zero crossing.
+   *
+   * @param [in] stateTrajectory: The state trajectory which contains the current state vector as its last element.
+   * @param [in] timeTrajectory: The time trajectory which contains the current time as its last element.
+   * @param [out] lastIndex: The first index after crossing.
+   * @param [out] zeroCrossingState: State at zero crossing.
+   * @param [out] zeroCrossingTime: Time of the zero crossing.
+   */
+  void computeZeroCrossing(const state_vector_array_t& stateTrajectory, const scalar_array_t& timeTrajectory, size_t& lastIndex,
+                           state_vector_t& zeroCrossingState, scalar_t& zeroCrossingTime) {
+    if (timeTrajectory.size() == 1) {
+      lastIndex = 0;
+      zeroCrossingTime = timeTrajectory.front();
+      zeroCrossingState = stateTrajectory.front();
 
-		if (lastIndex>0) {
-			timeTrajectory[lastIndex]  = zeroCrossingTime;
-			timeTrajectory.erase(timeTrajectory.begin()+lastIndex+1, timeTrajectory.end());
+    } else {
+      lastIndex = timeTrajectory.size() - 1;
 
-			stateTrajectory[lastIndex] = zeroCrossingState;
-			stateTrajectory.erase(stateTrajectory.begin()+lastIndex+1, stateTrajectory.end());
-		}
+      if (timeTrajectory[timeTrajectory.size() - 2] - lastEventTriggeredTime_ < minEventTimeDifference_) {
+        for (int i = timeTrajectory.size() - 2; i >= 0; i--) {
+          BASE::systemPtr_->computeGuardSurfaces(timeTrajectory[i], stateTrajectory[i], guardSurfacesValuesPrevious_);
+          if (guardSurfacesValuesPrevious_[triggeredEventSurface_] > 0) {
+            break;
+          } else {
+            guardSurfacesValuesCurrent_.swap(guardSurfacesValuesPrevious_);
+            lastIndex = i;
+          }
+        }
+      }
 
-		lastEventTriggeredTime_ = timeTrajectory[lastIndex];
-		guardSurfacesValuesPrevious_.swap(guardSurfacesValuesCurrent_);
+      const scalar_t& t1 = timeTrajectory[lastIndex - 1];
+      const scalar_t& t2 = timeTrajectory[lastIndex];
+      const state_vector_t& x1 = stateTrajectory[lastIndex - 1];
+      const state_vector_t& x2 = stateTrajectory[lastIndex];
+      const scalar_t& v1 = guardSurfacesValuesPrevious_[triggeredEventSurface_];
+      const scalar_t& v2 = guardSurfacesValuesCurrent_[triggeredEventSurface_];
+      scalar_t delta_v = v1 - v2;
 
-		// StateTriggered event
-		return triggeredEventSurface_;
-	}
+      zeroCrossingTime = v1 / delta_v * t2 - v2 / delta_v * t1;
+      zeroCrossingState = v1 / delta_v * x2 - v2 / delta_v * x1;
+    }
 
-	/**
-	 * Computes the zero crossing.
-	 *
-	 * @param [in] stateTrajectory: The state trajectory which contains the current state vector as its last element.
-	 * @param [in] timeTrajectory: The time trajectory which contains the current time as its last element.
-	 * @param [out] lastIndex: The first index after crossing.
-	 * @param [out] zeroCrossingState: State at zero crossing.
-	 * @param [out] zeroCrossingTime: Time of the zero crossing.
-	 */
-	void computeZeroCrossing(
-			const state_vector_array_t& stateTrajectory,
-			const scalar_array_t& timeTrajectory,
-			size_t& lastIndex,
-			state_vector_t& zeroCrossingState,
-			scalar_t& zeroCrossingTime) {
+    dynamic_vector_t zeroCrossingGuardSurfacesValues;
+    BASE::systemPtr_->computeGuardSurfaces(zeroCrossingTime, zeroCrossingState, zeroCrossingGuardSurfacesValues);
+    //		std::cout << "\t zero-crossing time: " << zeroCrossingTime << std::endl;
+    //		std::cout << "\t zero-crossing value[" << triggeredEventSurface_ << "]: " <<
+    //				zeroCrossingGuardSurfacesValues[triggeredEventSurface_] << std::endl;
+  }
 
-		if (timeTrajectory.size()==1) {
-			lastIndex = 0;
-			zeroCrossingTime = timeTrajectory.front();
-			zeroCrossingState = stateTrajectory.front();
+ protected:
+  bool systemEventHandlerTriggered_;
 
-		} else {
-			lastIndex = timeTrajectory.size()-1;
+  size_t triggeredEventSurface_;
 
-			if (timeTrajectory[timeTrajectory.size()-2]-lastEventTriggeredTime_ < minEventTimeDifference_)
-				for (int i=timeTrajectory.size()-2; i>=0; i--) {
-					BASE::systemPtr_->computeGuardSurfaces(timeTrajectory[i], stateTrajectory[i], guardSurfacesValuesPrevious_);
-					if (guardSurfacesValuesPrevious_[triggeredEventSurface_]>0) {
-						break;
-					} else {
-						guardSurfacesValuesCurrent_.swap(guardSurfacesValuesPrevious_);
-						lastIndex = i;
-					}
-				}
+  dynamic_vector_t guardSurfacesValuesCurrent_;
+  dynamic_vector_t guardSurfacesValuesPrevious_;  // memory
 
-			const scalar_t& t1 = timeTrajectory[lastIndex-1];
-			const scalar_t& t2 = timeTrajectory[lastIndex];
-			const state_vector_t& x1 = stateTrajectory[lastIndex-1];
-			const state_vector_t& x2 = stateTrajectory[lastIndex];
-			const scalar_t& v1 = guardSurfacesValuesPrevious_[triggeredEventSurface_];
-			const scalar_t& v2 = guardSurfacesValuesCurrent_[triggeredEventSurface_];
-			scalar_t delta_v = v1 - v2;
-
-			zeroCrossingTime  = v1/delta_v*t2 - v2/delta_v*t1;
-			zeroCrossingState = v1/delta_v*x2 - v2/delta_v*x1;
-		}
-
-		dynamic_vector_t zeroCrossingGuardSurfacesValues;
-		BASE::systemPtr_->computeGuardSurfaces(zeroCrossingTime, zeroCrossingState, zeroCrossingGuardSurfacesValues);
-//		std::cout << "\t zero-crossing time: " << zeroCrossingTime << std::endl;
-//		std::cout << "\t zero-crossing value[" << triggeredEventSurface_ << "]: " <<
-//				zeroCrossingGuardSurfacesValues[triggeredEventSurface_] << std::endl;
-	}
-
-
-protected:
-	bool systemEventHandlerTriggered_;
-
-	size_t triggeredEventSurface_;
-
-	dynamic_vector_t guardSurfacesValuesCurrent_;
-	dynamic_vector_t guardSurfacesValuesPrevious_;	// memory
-
-	scalar_t minEventTimeDifference_;
-	scalar_t lastEventTriggeredTime_;	// memory
-
+  scalar_t minEventTimeDifference_;
+  scalar_t lastEventTriggeredTime_;  // memory
 };
 
-
-} // namespace ocs2
-
+}  // namespace ocs2
 
 #endif /* STATETRIGGEREDEVENTHANDLER_OCS2_H_ */

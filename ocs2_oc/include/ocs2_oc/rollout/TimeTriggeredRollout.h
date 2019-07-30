@@ -164,7 +164,6 @@ class TimeTriggeredRollout : public RolloutBase<STATE_DIM, INPUT_DIM> {
     }
 
     const size_t numEvents = logicRulesMachine.getNumEvents(partitionIndex);
-    const size_t numSubsystems = logicRulesMachine.getNumEventCounters(partitionIndex);
     const scalar_array_t& switchingTimes = logicRulesMachine.getSwitchingTimes(partitionIndex);
 
     // max number of steps for integration

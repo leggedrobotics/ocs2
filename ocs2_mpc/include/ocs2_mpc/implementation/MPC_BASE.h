@@ -197,15 +197,13 @@ void MPC_BASE<STATE_DIM, INPUT_DIM>::adjustmentTimeHorizon(const scalar_array_t&
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
 bool MPC_BASE<STATE_DIM, INPUT_DIM>::run(const scalar_t& currentTime, const state_vector_t& currentState) {
- 	// check if the current time exceeds the solver final limit
-	if (currentTime>=getFinalTime() && mpcSettings_.recedingHorizon_) {
-
-		if (initRun_==true){
-		  for (int i=0; i<partitioningTimes_.size(); i++){
-		    partitioningTimes_[i] += currentTime;
-		  }
-		}
-		else {
+  // check if the current time exceeds the solver final limit
+  if (currentTime >= getFinalTime() && mpcSettings_.recedingHorizon_) {
+    if (initRun_ == true) {
+      for (int i = 0; i < partitioningTimes_.size(); i++) {
+        partitioningTimes_[i] += currentTime;
+      }
+    } else {
       std::cerr << std::endl << "#####################################################";
       std::cerr << std::endl << "#####################################################";
       std::cerr << std::endl << "#####################################################" << std::endl;
@@ -215,7 +213,7 @@ bool MPC_BASE<STATE_DIM, INPUT_DIM>::run(const scalar_t& currentTime, const stat
 
       return false;
     }
-	}
+  }
 
   // display
   if (mpcSettings_.debugPrint_) {

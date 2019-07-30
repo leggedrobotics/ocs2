@@ -32,16 +32,15 @@ namespace ocs2 {
  * Please refer to ocs2_double_integrator_noros_example for a minimal example
  * @tparam STATE_DIM
  * @tparam INPUT_DIM
- * @tparam LOGIC_RULES_T
  */
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T = NullLogicRules>
+template <size_t STATE_DIM, size_t INPUT_DIM>
 class MPC_Interface {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-  typedef std::shared_ptr<MPC_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>> Ptr;
+  typedef std::shared_ptr<MPC_Interface<STATE_DIM, INPUT_DIM>> Ptr;
 
-  typedef MPC_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> mpc_t;
+  typedef MPC_BASE<STATE_DIM, INPUT_DIM> mpc_t;
 
   typedef typename mpc_t::scalar_t scalar_t;
   typedef typename mpc_t::scalar_array_t scalar_array_t;
@@ -64,7 +63,6 @@ class MPC_Interface {
 
   typedef LinearInterpolation<state_vector_t, Eigen::aligned_allocator<state_vector_t>> state_linear_interpolation_t;
   typedef LinearInterpolation<input_vector_t, Eigen::aligned_allocator<input_vector_t>> input_linear_interpolation_t;
-  typedef HybridLogicRulesMachine<LOGIC_RULES_T> logic_machine_t;
 
   /**
    * Constructor
@@ -74,7 +72,7 @@ class MPC_Interface {
    * calculated
    *
    */
-  MPC_Interface(mpc_t& mpc, const LOGIC_RULES_T& logicRules, const bool& useFeedforwardPolicy = true);
+  MPC_Interface(mpc_t& mpc, std::shared_ptr<HybridLogicRules> logicRules, const bool& useFeedforwardPolicy = true);
 
   /**
    * Destructor.
@@ -137,12 +135,12 @@ class MPC_Interface {
    * @param [out] mpcInput: The policy's optimized input (dependent on time and currentState).
    * @param [out] subsystem: The active subsystem (dependent on time).
    */
-  void evaluatePolicy(const scalar_t& time, const state_vector_t& currentState,
-                      state_vector_t& mpcState, input_vector_t& mpcInput, size_t& subsystem);
+  void evaluatePolicy(const scalar_t& time, const state_vector_t& currentState, state_vector_t& mpcState, input_vector_t& mpcInput,
+                      size_t& subsystem);
 
-  const scalar_array_t &getMpcTimeTrajectory();
-  const state_vector_array_t &getMpcStateTrajectory();
-  const input_vector_array_t &getMpcInputTrajectory();
+  const scalar_array_t& getMpcTimeTrajectory();
+  const state_vector_array_t& getMpcStateTrajectory();
+  const input_vector_array_t& getMpcInputTrajectory();
 
  protected:
   /*
@@ -198,7 +196,7 @@ class MPC_Interface {
   input_linear_interpolation_t mpcLinInterpolateInput_;
   cost_desired_trajectories_t mpcCostDesiredTrajectories_;
 
-  logic_machine_t logicMachine_;
+  HybridLogicRulesMachine logicMachine_;
   std::function<size_t(scalar_t)> findActiveSubsystemFnc_;
 
  protected:

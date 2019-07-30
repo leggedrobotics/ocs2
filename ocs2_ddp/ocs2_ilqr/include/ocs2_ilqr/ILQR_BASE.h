@@ -196,8 +196,7 @@ class ILQR_BASE : public DDP_BASE<STATE_DIM, INPUT_DIM> {
    *
    * The method modifies:
    * - nominalControllersStock_: the controller that stabilizes the system around the new nominal trajectory and
-   * 								improves the constraints as well as the increment to the feed-forward control
-   * input.
+   * 						improves the constraints as well as the increment to the feed-forward control input.
    */
   void calculateController();
 

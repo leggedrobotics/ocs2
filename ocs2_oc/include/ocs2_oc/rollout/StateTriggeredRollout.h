@@ -199,7 +199,7 @@ class StateTriggeredRollout : public RolloutBase<STATE_DIM, INPUT_DIM> {
     //				subsystemID.push_back(eventID);
     //
     //				static_cast<hybrid_logic_rules_machine_t>(hybridLlogicRulesMachine).push_back(partitionIndex,
-    //timeTrajectory.back(), eventID);
+    // timeTrajectory.back(), eventID);
     ////				static_cast<hybrid_logic_rules_machine_t>(hybridLlogicRulesMachine).display();
     //			}
     //

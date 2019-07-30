@@ -946,7 +946,7 @@ SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::integrateHamiltonian(size_t worke
     //
     //		Eigen::Matrix<double, DIM1, DIM2> xf = hessA.matrixQ()
     //							* (hessA.matrixH()*deltaTime + Eigen::MatrixXd::Identity(DIM1,
-    //DIM1)*1e-3*deltaTime).exp()
+    // DIM1)*1e-3*deltaTime).exp()
     //							* hessA.matrixQ().transpose() * x0;
 
     //		Eigen::EigenSolver<Eigen::MatrixXd> esA(DIM1);
@@ -1042,7 +1042,7 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::fullRiccatiBackwardSweepWork
 
     if (eventDetected) {
       //			if (BASE::ddpSettings_.useMakePSD_==true)
-      //BASE::makePSD(BASE::QmFinalStock_[partitionIndex][remainingEvents]);
+      // BASE::makePSD(BASE::QmFinalStock_[partitionIndex][remainingEvents]);
       BASE::SmTrajectoryStock_[partitionIndex][k] =
           BASE::SmTrajectoryStock_[partitionIndex][k + 1] + BASE::QmFinalStock_[partitionIndex][remainingEvents];
 

@@ -63,7 +63,7 @@ public:
 	 * Constructor.
 	 *
 	 * @param robotName: The robot's name.
-	 * @param goalPoseLimit: Limits for the input command. It has size 12 with following entries.
+	 * @param goalPoseLimit: Limits for the input command. It has size 2 with following entries.
 	 *
 	 * goalPoseLimit(0): X
 	 * goalPoseLimit(1): V_X
@@ -98,7 +98,7 @@ public:
 		// state
 		desiredState = Eigen::Map<const dynamic_vector_t>(commadLineTarget.data(), command_dim_);
 		// input
-		desiredInput = dynamic_vector_t::Zero(0);
+		desiredInput = dynamic_vector_t::Zero(1);
 	}
 
 private:

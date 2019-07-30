@@ -825,7 +825,8 @@ class DDP_BASE : public Solver_BASE<STATE_DIM, INPUT_DIM> {
 
   cost_desired_trajectories_t costDesiredTrajectories_;
   cost_desired_trajectories_t costDesiredTrajectoriesBuffer_;
-  bool costDesiredTrajectoriesUpdated_;
+  std::atomic_bool costDesiredTrajectoriesUpdated_;
+  std::mutex costDesiredTrajectoriesBufferMutex_;
 
   unsigned long long int rewindCounter_;
 

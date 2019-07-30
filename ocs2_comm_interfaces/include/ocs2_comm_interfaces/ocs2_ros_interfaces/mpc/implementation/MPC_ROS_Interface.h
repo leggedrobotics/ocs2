@@ -61,9 +61,6 @@ void MPC_ROS_Interface<STATE_DIM, INPUT_DIM>::set(mpc_t* mpcPtr, const std::stri
   mpcSettings_ = mpcPtr->settings();
   robotName_ = robotName;
 
-  desiredTrajectoriesUpdated_ = false;
-  modeSequenceUpdated_ = false;
-
   terminateThread_ = false;
   readyToPublish_ = false;
 
@@ -103,11 +100,14 @@ template <size_t STATE_DIM, size_t INPUT_DIM>
 void MPC_ROS_Interface<STATE_DIM, INPUT_DIM>::reset(const cost_desired_trajectories_t& initCostDesiredTrajectories) {
   std::lock_guard<std::mutex> resetLock(resetMutex_);
 
+  if (mpcPtr_ != nullptr) {
+    mpcPtr_->reset();
+  }
+
   initialCall_ = true;
   resetRequestedEver_ = true;
 
-  costDesiredTrajectories_ = initCostDesiredTrajectories;
-  desiredTrajectoriesUpdated_ = true;
+  mpcPtr_->getSolverPtr()->setCostDesiredTrajectories(initCostDesiredTrajectories);
 
   numIterations_ = 0;
   maxDelay_ = -1e+6;
@@ -116,9 +116,6 @@ void MPC_ROS_Interface<STATE_DIM, INPUT_DIM>::reset(const cost_desired_trajector
 
   terminateThread_ = false;
   readyToPublish_ = false;
-  if (mpcPtr_ != nullptr) {
-    mpcPtr_->reset();
-  }
 }
 
 /******************************************************************************************************/
@@ -340,48 +337,9 @@ void MPC_ROS_Interface<STATE_DIM, INPUT_DIM>::mpcObservationCallback(const ocs2_
   // number of iterations
   numIterations_++;
 
-  if (initialCall_ == true) {
+  if (initialCall_) {
     // after each reset, perform user defined operation if specialized
     initCall(currentObservation);
-  }
-
-  // update the mode sequence
-  if (modeSequenceUpdated_ == true) {
-    // display
-    std::cerr << "### The mode sequence is updated at time " << std::setprecision(4) << currentObservation.time() << " as " << std::endl;
-    modeSequenceTemplate_.display();
-
-    // user defined modification of the modeSequenceTemplate at the moment of setting
-    adjustModeSequence(currentObservation, modeSequenceTemplate_);
-
-    // set CostDesiredTrajectories
-    mpcPtr_->setNewLogicRulesTemplate(modeSequenceTemplate_);
-
-    modeSequenceUpdated_ = false;
-
-  } else if (mpcSettings_.recedingHorizon_ == false) {
-    return;
-  }
-
-  // update the desired trajectories
-  if (desiredTrajectoriesUpdated_ == true) {
-    // user defined modification of the CostDesiredTrajectories at the moment of setting
-    adjustTargetTrajectories(currentObservation, costDesiredTrajectories_);
-
-    // display
-    if (mpcSettings_.debugPrint_) {
-      std::cerr << "### The target position is updated at time " << std::setprecision(4) << currentObservation.time() << " as "
-                << std::endl;
-      costDesiredTrajectories_.display();
-    }
-
-    // set CostDesiredTrajectories
-    mpcPtr_->swapCostDesiredTrajectories(costDesiredTrajectories_);
-
-    desiredTrajectoriesUpdated_ = false;
-
-  } else if (mpcSettings_.recedingHorizon_ == false) {
-    return;
   }
 
   // update task listeners
@@ -457,10 +415,19 @@ void MPC_ROS_Interface<STATE_DIM, INPUT_DIM>::mpcObservationCallback(const ocs2_
 template <size_t STATE_DIM, size_t INPUT_DIM>
 void MPC_ROS_Interface<STATE_DIM, INPUT_DIM>::mpcTargetTrajectoriesCallback(
     const ocs2_comm_interfaces::mpc_target_trajectories::ConstPtr& msg) {
-  if (desiredTrajectoriesUpdated_ == false) {
-    RosMsgConversions<STATE_DIM, INPUT_DIM>::ReadTargetTrajectoriesMsg(*msg, costDesiredTrajectories_);
-    desiredTrajectoriesUpdated_ = true;
+  if (!mpcSettings_.recedingHorizon_) {
+    throw std::runtime_error("Target trajectories can only be updated in receding horizon mode.");
   }
+
+  cost_desired_trajectories_t costDesiredTrajectories;
+  RosMsgConversions<STATE_DIM, INPUT_DIM>::ReadTargetTrajectoriesMsg(*msg, costDesiredTrajectories);
+
+  if (mpcSettings_.debugPrint_) {
+    std::cerr << "### The target position is updated to " << std::endl;
+    costDesiredTrajectories.display();
+  }
+
+  mpcPtr_->getSolverPtr()->swapCostDesiredTrajectories(costDesiredTrajectories);
 }
 
 /******************************************************************************************************/
@@ -468,10 +435,9 @@ void MPC_ROS_Interface<STATE_DIM, INPUT_DIM>::mpcTargetTrajectoriesCallback(
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
 void MPC_ROS_Interface<STATE_DIM, INPUT_DIM>::mpcModeSequenceCallback(const ocs2_comm_interfaces::mode_sequence::ConstPtr& msg) {
-  if (modeSequenceUpdated_ == false) {
-    RosMsgConversions<STATE_DIM, INPUT_DIM>::ReadModeSequenceTemplateMsg(*msg, modeSequenceTemplate_);
-    modeSequenceUpdated_ = true;
-  }
+  mode_sequence_template_t modeSequenceTemplate;
+  RosMsgConversions<STATE_DIM, INPUT_DIM>::ReadModeSequenceTemplateMsg(*msg, modeSequenceTemplate);
+  mpcPtr_->setNewLogicRulesTemplate(modeSequenceTemplate);
 }
 
 /******************************************************************************************************/

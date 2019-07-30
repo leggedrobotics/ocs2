@@ -128,8 +128,11 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::reset() {
   useParallelRiccatiSolverFromInitItr_ = false;
 
   costDesiredTrajectories_.clear();
-  costDesiredTrajectoriesBuffer_.clear();
-  costDesiredTrajectoriesUpdated_ = false;
+  {
+    std::lock_guard<std::mutex> lock(costDesiredTrajectoriesBufferMutex_);
+    costDesiredTrajectoriesBuffer_.clear();
+    costDesiredTrajectoriesUpdated_ = false;
+  }
 
   for (size_t i = 0; i < numPartitions_; i++) {
     // very important :)
@@ -1308,6 +1311,7 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::getCostDesiredTrajectoriesPtr(const cost_de
 /***************************************************************************************************** */
 template <size_t STATE_DIM, size_t INPUT_DIM>
 void DDP_BASE<STATE_DIM, INPUT_DIM>::setCostDesiredTrajectories(const cost_desired_trajectories_t& costDesiredTrajectories) {
+  std::lock_guard<std::mutex> lock(costDesiredTrajectoriesBufferMutex_);
   costDesiredTrajectoriesUpdated_ = true;
   costDesiredTrajectoriesBuffer_ = costDesiredTrajectories;
 }
@@ -1319,6 +1323,7 @@ template <size_t STATE_DIM, size_t INPUT_DIM>
 void DDP_BASE<STATE_DIM, INPUT_DIM>::setCostDesiredTrajectories(const scalar_array_t& desiredTimeTrajectory,
                                                                 const dynamic_vector_array_t& desiredStateTrajectory,
                                                                 const dynamic_vector_array_t& desiredInputTrajectory) {
+  std::lock_guard<std::mutex> lock(costDesiredTrajectoriesBufferMutex_);
   costDesiredTrajectoriesUpdated_ = true;
   costDesiredTrajectoriesBuffer_.desiredTimeTrajectory() = desiredTimeTrajectory;
   costDesiredTrajectoriesBuffer_.desiredStateTrajectory() = desiredStateTrajectory;
@@ -1330,6 +1335,7 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::setCostDesiredTrajectories(const scalar_arr
 /***************************************************************************************************** */
 template <size_t STATE_DIM, size_t INPUT_DIM>
 void DDP_BASE<STATE_DIM, INPUT_DIM>::swapCostDesiredTrajectories(cost_desired_trajectories_t& costDesiredTrajectories) {
+  std::lock_guard<std::mutex> lock(costDesiredTrajectoriesBufferMutex_);
   costDesiredTrajectoriesUpdated_ = true;
   costDesiredTrajectoriesBuffer_.swap(costDesiredTrajectories);
 }
@@ -1341,6 +1347,7 @@ template <size_t STATE_DIM, size_t INPUT_DIM>
 void DDP_BASE<STATE_DIM, INPUT_DIM>::swapCostDesiredTrajectories(scalar_array_t& desiredTimeTrajectory,
                                                                  dynamic_vector_array_t& desiredStateTrajectory,
                                                                  dynamic_vector_array_t& desiredInputTrajectory) {
+  std::lock_guard<std::mutex> lock(costDesiredTrajectoriesBufferMutex_);
   costDesiredTrajectoriesUpdated_ = true;
   costDesiredTrajectoriesBuffer_.desiredTimeTrajectory().swap(desiredTimeTrajectory);
   costDesiredTrajectoriesBuffer_.desiredStateTrajectory().swap(desiredStateTrajectory);
@@ -1740,6 +1747,7 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::run(const scalar_t& initTime, const state_v
 
   // set desired trajectories of cost if it is updated
   if (costDesiredTrajectoriesUpdated_) {
+    std::lock_guard<std::mutex> lock(costDesiredTrajectoriesBufferMutex_);
     costDesiredTrajectoriesUpdated_ = false;
     costDesiredTrajectories_.swap(costDesiredTrajectoriesBuffer_);
   }

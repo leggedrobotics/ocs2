@@ -34,9 +34,9 @@ using namespace ballbot;
 
 int main( int argc, char* argv[] )
 {
-	TargetTrajectories_Keyboard_Ballbot<double> targetPoseCommand("ballbot");
+	TargetTrajectories_Keyboard_Ballbot<double> targetPoseCommand(argc, argv, "ballbot");
 
-	targetPoseCommand.launchNodes(argc, argv);
+	targetPoseCommand.launchNodes();
 
 	const std::string commadMsg = "Enter XY displacement and Yaw for the robot, separated by spaces";
 	targetPoseCommand.getKeyboardCommand(commadMsg);

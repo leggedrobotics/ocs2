@@ -28,10 +28,9 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  ******************************************************************************/
 
 #include "ocs2_ballbot_example/BallbotInterface.h"
-#include "ocs2_ballbot_example/ros_comm/MPC_ROS_Ballbot.h"
+#include <ocs2_comm_interfaces/ocs2_ros_interfaces/mpc/MPC_ROS_Interface.h>
 
 using namespace ocs2;
-using namespace ballbot;
 
 int main(int argc, char **argv)
 {
@@ -40,10 +39,10 @@ int main(int argc, char **argv)
 }
 	std::string taskFileFolderName = std::string(argv[1]);
 
-	BallbotInterface ballbotInterface(taskFileFolderName);
+	ballbot::BallbotInterface ballbotInterface(taskFileFolderName);
 
 	// Launch MPC ROS node
-	MPC_ROS_Ballbot mpcNode(*ballbotInterface.getMPCPtr(), "ballbot");
+	MPC_ROS_Interface<ballbot::STATE_DIM_, ballbot::INPUT_DIM_> mpcNode(ballbotInterface.getMPCPtr().get(), "ballbot");
 	mpcNode.launchNodes(argc, argv);
 
 	// Successful exit

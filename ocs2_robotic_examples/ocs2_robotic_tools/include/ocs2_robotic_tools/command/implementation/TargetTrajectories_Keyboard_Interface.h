@@ -35,10 +35,11 @@ namespace ocs2{
 /******************************************************************************************************/
 template <typename SCALAR_T>
 TargetTrajectories_Keyboard_Interface<SCALAR_T>::TargetTrajectories_Keyboard_Interface(
-		const std::string& robotName /*= "robot"*/,
+		int argc, char* argv[],
+    const std::string& robotName /*= "robot"*/,
 		const size_t targetCommandSize /*= 0*/,
 		const scalar_array_t& targetCommandLimits /*= scalar_array_t()*/)
-	: BASE(robotName)
+	: BASE(argc, argv, robotName)
 	, targetCommandSize_(targetCommandSize)
 	, targetCommandLimits_(targetCommandLimits)
 {
@@ -76,6 +77,21 @@ void TargetTrajectories_Keyboard_Interface<SCALAR_T>::toCostDesiredTimeStateInpu
 	desiredInput = dynamic_vector_t::Zero(0);
 }
 
+template <typename SCALAR_T>
+void TargetTrajectories_Keyboard_Interface<SCALAR_T>::toCostDesiredTrajectories(
+    const scalar_array_t& commadLineTarget,
+    cost_desired_trajectories_t& costDesiredTrajectories){
+
+  if(costDesiredTrajectories.empty()){
+      costDesiredTrajectories = cost_desired_trajectories_t(1);
+    }
+
+  toCostDesiredTimeStateInput(commadLineTarget,
+          costDesiredTrajectories.desiredTimeTrajectory()[0],
+          costDesiredTrajectories.desiredStateTrajectory()[0],
+          costDesiredTrajectories.desiredInputTrajectory()[0]);
+}
+
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
@@ -104,10 +120,7 @@ void TargetTrajectories_Keyboard_Interface<SCALAR_T>::getKeyboardCommand(
 
 		// user defined modification of the command-line
 		cost_desired_trajectories_t costDesiredTrajectories(1);
-		toCostDesiredTimeStateInput(targetCommand_,
-				costDesiredTrajectories.desiredTimeTrajectory()[0],
-				costDesiredTrajectories.desiredStateTrajectory()[0],
-				costDesiredTrajectories.desiredInputTrajectory()[0]);
+		toCostDesiredTrajectories(targetCommand_, costDesiredTrajectories);
 
 		// publish cost desired trajectories
 		BASE::publishTargetTrajectories(costDesiredTrajectories);

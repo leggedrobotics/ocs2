@@ -69,9 +69,10 @@ public:
 	 * goalPoseLimit(1): V_X
 	 */
 	TargetTrajectories_Keyboard_Double_Integrator(
+	    int argc, char* argv[],
 				const std::string& robotName = "robot",
 				const scalar_array_t& goalPoseLimit = scalar_array_t{10.0, 10.0})
-	: BASE(robotName, command_dim_, goalPoseLimit)
+	: BASE(argc, argv, robotName, command_dim_, goalPoseLimit)
 	{}
 
 	/**

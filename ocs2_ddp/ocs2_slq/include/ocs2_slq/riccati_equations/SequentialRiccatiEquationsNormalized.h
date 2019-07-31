@@ -88,9 +88,7 @@ class SequentialRiccatiEquationsNormalized final : public OdeBase<STATE_DIM*(STA
   /**
    * Constructor.
    */
-  SequentialRiccatiEquationsNormalized(const bool& useMakePSD, const scalar_t& addedRiccatiDiagonal, bool normalizeTime,
-                                       bool preComputeRiccatiTerms = true)
-
+  SequentialRiccatiEquationsNormalized(const bool& useMakePSD, const scalar_t& addedRiccatiDiagonal, bool preComputeRiccatiTerms = true)
       : useMakePSD_(useMakePSD),
         addedRiccatiDiagonal_(addedRiccatiDiagonal),
         preComputeRiccatiTerms_(preComputeRiccatiTerms),
@@ -167,9 +165,6 @@ class SequentialRiccatiEquationsNormalized final : public OdeBase<STATE_DIM*(STA
   /**
    * Sets coefficients of the model.
    *
-   * @param [in] learningRate: The learning rate.
-   * @param [in] switchingTimeStart: The start time of the subsystem.
-   * @param [in] switchingTimeFinal: The final time of the subsystem.
    * @param [in] timeStampPtr: A pointer to the time stamp trajectory.
    * @param [in] AmPtr: A pointer to the trajectory of \f$ A_m(t) \f$ .
    * @param [in] BmPtr: A pointer to the trajectory of \f$ B_m(t) \f$ .
@@ -181,10 +176,9 @@ class SequentialRiccatiEquationsNormalized final : public OdeBase<STATE_DIM*(STA
    * @param [in] RmPtr: A pointer to the trajectory of \f$ R_m(t) \f$ .
    * @param [in] PmPtr: A pointer to the trajectory of \f$ P_m(t) \f$ .
    */
-  void setData(const scalar_t& switchingTimeStart, const scalar_t& switchingTimeFinal, const scalar_array_t* timeStampPtr,
-               const state_matrix_array_t* AmPtr, const state_input_matrix_array_t* BmPtr, const eigen_scalar_array_t* qPtr,
-               const state_vector_array_t* QvPtr, const state_matrix_array_t* QmPtr, const input_vector_array_t* RvPtr,
-               const dynamic_matrix_array_t* RinvCholPtr, const input_state_matrix_array_t* PmPtr,
+  void setData(const scalar_array_t* timeStampPtr, const state_matrix_array_t* AmPtr, const state_input_matrix_array_t* BmPtr,
+               const eigen_scalar_array_t* qPtr, const state_vector_array_t* QvPtr, const state_matrix_array_t* QmPtr,
+               const input_vector_array_t* RvPtr, const dynamic_matrix_array_t* RinvCholPtr, const input_state_matrix_array_t* PmPtr,
                const size_array_t* eventsPastTheEndIndecesPtr, const eigen_scalar_array_t* qFinalPtr,
                const state_vector_array_t* QvFinalPtr, const state_matrix_array_t* QmFinalPtr) {
     BASE::resetNumFunctionCalls();

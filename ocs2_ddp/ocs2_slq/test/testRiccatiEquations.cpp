@@ -16,12 +16,11 @@ TEST(testRiccatiEquations, compareImplementations) {
 
   bool makePSD = false;
   double addedRiccatiDiagonal = 1e-5;
-  bool normalizeTime = true;
 
   SequentialRiccatiEquationsNormalized<STATE_DIM, INPUT_DIM>
-      riccatiEquationPrecompute(makePSD, addedRiccatiDiagonal, normalizeTime, true);
+      riccatiEquationPrecompute(makePSD, addedRiccatiDiagonal, true);
   SequentialRiccatiEquationsNormalized<STATE_DIM, INPUT_DIM>
-      riccatiEquationNoPrecompute(makePSD, addedRiccatiDiagonal, normalizeTime, false);
+      riccatiEquationNoPrecompute(makePSD, addedRiccatiDiagonal, false);
 
   using state_matrix_t = SequentialRiccatiEquationsNormalized<STATE_DIM, INPUT_DIM>::state_matrix_t;
   using input_matrix_t = SequentialRiccatiEquationsNormalized<STATE_DIM, INPUT_DIM>::input_matrix_t;
@@ -44,8 +43,6 @@ TEST(testRiccatiEquations, compareImplementations) {
   input_matrix_t RinvChol_;
   LinearAlgebra::computeLinvTLinv(R, RinvChol_);
 
-  SequentialRiccatiEquationsNormalized<STATE_DIM, INPUT_DIM>::scalar_t switchingTimeStart = 0.0;
-  SequentialRiccatiEquationsNormalized<STATE_DIM, INPUT_DIM>::scalar_t switchingTimeFinal = 1.0;
   SequentialRiccatiEquationsNormalized<STATE_DIM, INPUT_DIM>::scalar_array_t timeStamp{0.0, 1.0};
   SequentialRiccatiEquationsNormalized<STATE_DIM, INPUT_DIM>::state_matrix_array_t Am{A, A};
   SequentialRiccatiEquationsNormalized<STATE_DIM, INPUT_DIM>::state_input_matrix_array_t Bm{B, B};
@@ -60,10 +57,10 @@ TEST(testRiccatiEquations, compareImplementations) {
   SequentialRiccatiEquationsNormalized<STATE_DIM, INPUT_DIM>::state_vector_array_t QvFinal;
   SequentialRiccatiEquationsNormalized<STATE_DIM, INPUT_DIM>::state_matrix_array_t QmFinal;
 
-  riccatiEquationPrecompute.setData(switchingTimeStart, switchingTimeFinal, &timeStamp,
+  riccatiEquationPrecompute.setData(&timeStamp,
                                     &Am, &Bm, &q, &Qv, &Qm, &Rv, &RinvChol, &Pm,
                                     &eventsPastTheEndIndeces, &qFinal, &QvFinal, &QmFinal);
-  riccatiEquationNoPrecompute.setData(switchingTimeStart, switchingTimeFinal, &timeStamp,
+  riccatiEquationNoPrecompute.setData(&timeStamp,
                                       &Am, &Bm, &q, &Qv, &Qm, &Rv, &RinvChol, &Pm,
                                       &eventsPastTheEndIndeces, &qFinal, &QvFinal, &QmFinal);
 

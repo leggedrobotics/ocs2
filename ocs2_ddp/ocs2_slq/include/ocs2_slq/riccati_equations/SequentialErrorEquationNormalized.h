@@ -78,8 +78,7 @@ class SequentialErrorEquationNormalized final : public OdeBase<STATE_DIM> {
    * @param [in] GvPtr: A pointer to the trajectory of \f$ G_v(t) \f$ .
    * @param [in] GmPtr: A pointer to the trajectory of \f$ G_m(t) \f$ .
    */
-  void setData(const scalar_t& switchingTimeStart, const scalar_t& switchingTimeFinal, scalar_array_t* const timeStampPtr,
-               state_vector_array_t* const GvPtr, state_matrix_array_t* const GmPtr) {
+  void setData(const scalar_array_t* const timeStampPtr, const state_vector_array_t* const GvPtr, const state_matrix_array_t* const GmPtr) {
     BASE::resetNumFunctionCalls();
 
     GvFunc_.setData(timeStampPtr, GvPtr);
@@ -108,10 +107,10 @@ class SequentialErrorEquationNormalized final : public OdeBase<STATE_DIM> {
     // normal time
     const scalar_t t = -z;
 
-    const auto indexAlpha = GvFunc_.interpolate(t, derivatives);
-    GmFunc_.interpolate(indexAlpha, Gm_);
+    const auto indexAlpha = GmFunc_.interpolate(t, Gm_);
 
-    // Error equation for the equivalent system
+    // derivatives = Gv + Gm*Sve
+    GvFunc_.interpolate(indexAlpha, derivatives);
     derivatives.noalias() += Gm_.transpose() * Sve;
   }
 

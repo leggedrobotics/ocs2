@@ -282,19 +282,6 @@ class SLQ_BASE : public DDP_BASE<STATE_DIM, INPUT_DIM> {
                                    const state_vector_t& SvFinal, const eigen_scalar_t& sFinal);
 
   /**
-   * Solves a set of Riccati equations for the partition in the given index for nominal time trajectory stamp.
-   *
-   * @param [in] workerIndex: Working agent index.
-   * @param [in] partitionIndex: The requested partition index to solve Riccati equations.
-   * @param [in] nominalTimeTrajectory: The input array of the time trajectories.
-   * @param [in] SmFinal: The final Sm for the current Riccati equation.
-   * @param [in] SvFinal: The final Sv for the current Riccati equation.
-   * @param [in] sFinal: The final s for the current Riccati equation.
-   */
-  void solveRiccatiEquationsForNominalTimeWorker(size_t workerIndex, const size_t& partitionIndex, const state_matrix_t& SmFinal,
-                                                 const state_vector_t& SvFinal, const eigen_scalar_t& sFinal);
-
-  /**
    * Type_1 constraints error correction compensation which solves a set of error Riccati equations for the partition in the given index.
    *
    * @param [in] workerIndex: Working agent index.

@@ -34,9 +34,9 @@ using namespace quadrotor;
 
 int main( int argc, char* argv[] )
 {
-	TargetTrajectories_Keyboard_Quadrotor<double> targetPoseCommand("quadrotor");
+	TargetTrajectories_Keyboard_Quadrotor<double> targetPoseCommand(argc, argv, "quadrotor");
 
-	targetPoseCommand.launchNodes(argc, argv);
+	targetPoseCommand.launchNodes();
 
 	const std::string commadMsg = "Enter XYZ displacement and RollPitchYaw for the robot, separated by spaces";
 	targetPoseCommand.getKeyboardCommand(commadMsg);

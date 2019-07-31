@@ -6,11 +6,12 @@
 #include <ocs2_mpc/MPC_Settings.h>
 #include <ocs2_robotic_tools/common/RobotInterfaceBase.h>
 #include <ocs2_oc/pi_solver/PiSolver.hpp>
+#include <ocs2_comm_interfaces/ocs2_ros_interfaces/mpc/MPC_ROS_Interface.h>
 
 #include <ocs2_quadrotor_example/cost/QuadrotorCost.h>
 #include <ocs2_quadrotor_example/definitions.h>
 #include <ocs2_quadrotor_example/dynamics/QuadrotorSystemDynamics.h>
-#include <ocs2_quadrotor_example/ros_comm/MPC_ROS_Quadrotor.h>
+
 
 #include <ocs2_core/misc/loadEigenMatrix.h>
 #include <ros/package.h>
@@ -87,8 +88,8 @@ int main(int argc, char* argv[]) {
   desiredInputArray[0].setZero(ocs2::quadrotor::STATE_DIM_);
   desiredInputArray[1].setZero(ocs2::quadrotor::INPUT_DIM_);
   cost_desired_trajectories_t costDesiredTraj(desiredTimeArray, desiredStateArray, desiredInputArray);
-  mpc_pi.setCostDesiredTrajectories(costDesiredTraj);
-  ocs2::quadrotor::MPC_ROS_Quadrotor mpcNode(mpc_pi, "quadrotor");
+  mpc_pi.getSolverPtr()->setCostDesiredTrajectories(costDesiredTraj);
+  ocs2::MPC_ROS_Interface<ocs2::quadrotor::STATE_DIM_, ocs2::quadrotor::INPUT_DIM_> mpcNode(&mpc_pi, "quadrotor");
 
   mpcNode.launchNodes(argc, argv);
 

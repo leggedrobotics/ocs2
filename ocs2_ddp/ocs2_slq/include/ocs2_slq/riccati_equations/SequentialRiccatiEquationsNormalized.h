@@ -93,8 +93,6 @@ class SequentialRiccatiEquationsNormalized final : public OdeBase<STATE_DIM*(STA
 
       : useMakePSD_(useMakePSD),
         addedRiccatiDiagonal_(addedRiccatiDiagonal),
-        switchingTimeStart_(0.0),
-        switchingTimeFinal_(1.0),
         preComputeRiccatiTerms_(preComputeRiccatiTerms),
         Sm_(state_matrix_t::Zero()),
         Sv_(state_vector_t::Zero()),
@@ -191,9 +189,6 @@ class SequentialRiccatiEquationsNormalized final : public OdeBase<STATE_DIM*(STA
                const state_vector_array_t* QvFinalPtr, const state_matrix_array_t* QmFinalPtr) {
     BASE::resetNumFunctionCalls();
 
-    switchingTimeStart_ = switchingTimeStart;
-    switchingTimeFinal_ = switchingTimeFinal;
-
     eventTimes_.clear();
     eventTimes_.reserve(eventsPastTheEndIndecesPtr->size());
     for (const size_t& pastTheEndIndex : *eventsPastTheEndIndecesPtr) {
@@ -263,7 +258,7 @@ class SequentialRiccatiEquationsNormalized final : public OdeBase<STATE_DIM*(STA
    * @param [out] mappedState: mapped state after transition
    */
   void computeJumpMap(const scalar_t& z, const s_vector_t& state, s_vector_t& mappedState) override {
-    scalar_t time = switchingTimeFinal_ - z;
+    scalar_t time = -z;
 
     // epsilon is set to include times past event times which have been artificially increased in the rollout
     size_t index = lookup::findFirstIndexWithinTol(eventTimes_, time, 1e-5);
@@ -292,7 +287,7 @@ class SequentialRiccatiEquationsNormalized final : public OdeBase<STATE_DIM*(STA
     BASE::numFunctionCalls_++;
 
     // denormalized time
-    const scalar_t t = switchingTimeFinal_ -  z;
+    const scalar_t t = -z;
 
     convert2Matrix(allSs, Sm_, Sv_, s_);
 
@@ -361,8 +356,6 @@ class SequentialRiccatiEquationsNormalized final : public OdeBase<STATE_DIM*(STA
   bool useMakePSD_;
   bool preComputeRiccatiTerms_;
   scalar_t addedRiccatiDiagonal_;
-  scalar_t switchingTimeStart_;
-  scalar_t switchingTimeFinal_;
 
   // Interpolation
   EigenLinearInterpolation<state_matrix_t> QmFunc_;

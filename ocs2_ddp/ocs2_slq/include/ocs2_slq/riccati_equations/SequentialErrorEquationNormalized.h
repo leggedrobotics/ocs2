@@ -82,9 +82,6 @@ class SequentialErrorEquationNormalized final : public OdeBase<STATE_DIM> {
                state_vector_array_t* const GvPtr, state_matrix_array_t* const GmPtr) {
     BASE::resetNumFunctionCalls();
 
-    switchingTimeStart_ = switchingTimeStart;
-    switchingTimeFinal_ = switchingTimeFinal;
-
     GvFunc_.setData(timeStampPtr, GvPtr);
     GmFunc_.setData(timeStampPtr, GmPtr);
   }
@@ -108,8 +105,8 @@ class SequentialErrorEquationNormalized final : public OdeBase<STATE_DIM> {
   void computeFlowMap(const scalar_t& z, const state_vector_t& Sve, state_vector_t& derivatives) {
     BASE::numFunctionCalls_++;
 
-    // denormalized time
-    const scalar_t t = switchingTimeFinal_ -  z;
+    // normal time
+    const scalar_t t = -z;
 
     const auto indexAlpha = GvFunc_.interpolate(t, derivatives);
     GmFunc_.interpolate(indexAlpha, Gm_);
@@ -119,9 +116,6 @@ class SequentialErrorEquationNormalized final : public OdeBase<STATE_DIM> {
   }
 
  private:
-  scalar_t switchingTimeStart_;
-  scalar_t switchingTimeFinal_;
-
   EigenLinearInterpolation<state_vector_t> GvFunc_;
   EigenLinearInterpolation<state_matrix_t> GmFunc_;
 

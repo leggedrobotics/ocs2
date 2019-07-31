@@ -446,12 +446,12 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM>::solveRiccatiEquationsWorker(size_t workerIn
   const size_t N = BASE::nominalTimeTrajectoriesStock_[partitionIndex].size();
   const size_t NE = BASE::nominalEventsPastTheEndIndecesStock_[partitionIndex].size();
 
-  const scalar_t scalingStart = BASE::partitioningTimes_[partitionIndex];
-  const scalar_t scalingFinal = BASE::partitioningTimes_[partitionIndex + 1];
+  const scalar_t partitionStartTime = std::max(BASE::initTime_, BASE::partitioningTimes_[partitionIndex]);
+  const scalar_t partitionEndTime = std::min(BASE::finalTime_, BASE::partitioningTimes_[partitionIndex + 1]);
 
   // max number of steps of integration
   const auto maxNumSteps =
-      static_cast<size_t>(BASE::ddpSettings_.maxNumStepsPerSecond_ * (BASE::finalTime_ - BASE::initTime_));
+      static_cast<size_t>(BASE::ddpSettings_.maxNumStepsPerSecond_ * (partitionEndTime - partitionStartTime));
 
   // Output container
   typename riccati_equations_t::s_vector_array_t allSsTrajectory(0);
@@ -465,15 +465,7 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM>::solveRiccatiEquationsWorker(size_t workerIn
     // normalized time
     BASE::SsNormalizedTimeTrajectoryStock_[partitionIndex].resize(N);
     for (size_t k = 0; k < N; k++) {
-      BASE::SsNormalizedTimeTrajectoryStock_[partitionIndex][N - 1 - k] =
-          (scalingFinal - BASE::nominalTimeTrajectoriesStock_[partitionIndex][k]);
-    }
-
-    // normalized event past the index
-    BASE::SsNormalizedEventsPastTheEndIndecesStock_[partitionIndex].resize(NE);
-    for (size_t k = 0; k < NE; k++) {
-      BASE::SsNormalizedEventsPastTheEndIndecesStock_[partitionIndex][NE - 1 - k] =
-          N - BASE::nominalEventsPastTheEndIndecesStock_[partitionIndex][k];
+      BASE::SsNormalizedTimeTrajectoryStock_[partitionIndex][N - 1 - k] = -BASE::nominalTimeTrajectoriesStock_[partitionIndex][k];
     }
 
     // normalized switching times
@@ -507,38 +499,33 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM>::solveRiccatiEquationsWorker(size_t workerIn
 
     }  // end of i loop
 
+    // normalized event past the index
+    BASE::SsNormalizedEventsPastTheEndIndecesStock_[partitionIndex].resize(NE);
+    for (size_t k = 0; k < NE; k++) {
+      BASE::SsNormalizedEventsPastTheEndIndecesStock_[partitionIndex][NE - 1 - k] =
+          N - BASE::nominalEventsPastTheEndIndecesStock_[partitionIndex][k];
+    }
+
     // check size
     if (allSsTrajectory.size() != N) {
       throw std::runtime_error("allSsTrajectory size is incorrect.");
     }
   } else {
-
-    // Normalized start and final time and index for Riccati equation
-    scalar_t finalNormalizedTime = scalingFinal - scalingStart;
-    if (partitionIndex == BASE::initActivePartition_) {
-      finalNormalizedTime = (scalingFinal - BASE::initTime_);
+    // normalized switching times
+    scalar_array_t SsNormalizedSwitchingTimes;
+    SsNormalizedSwitchingTimes.reserve(NE + 2);
+    SsNormalizedSwitchingTimes.push_back(-partitionEndTime);
+    for (int k = NE - 1; k >= 0; k--) {
+      size_t index = BASE::nominalEventsPastTheEndIndecesStock_[partitionIndex][k];
+      SsNormalizedSwitchingTimes.push_back(-BASE::nominalTimeTrajectoriesStock_[partitionIndex][index]);
     }
-    scalar_t startNormalizedTime = 0.0;
-    if (partitionIndex == BASE::finalActivePartition_) {
-      startNormalizedTime = (scalingFinal -BASE::finalTime_);
-    }
+    SsNormalizedSwitchingTimes.push_back(-partitionStartTime);
 
     // clear output containers
     BASE::SsNormalizedTimeTrajectoryStock_[partitionIndex].clear();
     BASE::SsNormalizedTimeTrajectoryStock_[partitionIndex].reserve(maxNumSteps);
     BASE::SsNormalizedEventsPastTheEndIndecesStock_[partitionIndex].clear();
     BASE::SsNormalizedEventsPastTheEndIndecesStock_[partitionIndex].reserve(NE);
-
-    // normalized switching times
-    scalar_array_t SsNormalizedSwitchingTimes;
-    SsNormalizedSwitchingTimes.reserve(NE + 2);
-    SsNormalizedSwitchingTimes.push_back(startNormalizedTime);
-    for (int k = NE - 1; k >= 0; k--) {
-      size_t index = BASE::nominalEventsPastTheEndIndecesStock_[partitionIndex][k];
-      scalar_t si = BASE::nominalTimeTrajectoriesStock_[partitionIndex][index];
-      SsNormalizedSwitchingTimes.push_back(scalingFinal - si);
-    }
-    SsNormalizedSwitchingTimes.push_back(finalNormalizedTime);
 
     // integrating the Riccati equations
     for (size_t i = 0; i <= NE; i++) {
@@ -570,8 +557,7 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM>::solveRiccatiEquationsWorker(size_t workerIn
   BASE::SvTrajectoryStock_[partitionIndex].resize(outputN);
   BASE::sTrajectoryStock_[partitionIndex].resize(outputN);
   for (size_t k = 0; k < outputN; k++) {
-    BASE::SsTimeTrajectoryStock_[partitionIndex][k] =
-        scalingFinal - BASE::SsNormalizedTimeTrajectoryStock_[partitionIndex][outputN - 1 - k];
+    BASE::SsTimeTrajectoryStock_[partitionIndex][k] = -BASE::SsNormalizedTimeTrajectoryStock_[partitionIndex][outputN - 1 - k];
     riccati_equations_t::convert2Matrix(allSsTrajectory[outputN - 1 - k], BASE::SmTrajectoryStock_[partitionIndex][k],
                                         BASE::SvTrajectoryStock_[partitionIndex][k], BASE::sTrajectoryStock_[partitionIndex][k]);
   }  // end of k loop

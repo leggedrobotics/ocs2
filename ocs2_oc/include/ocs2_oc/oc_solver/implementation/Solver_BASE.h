@@ -41,34 +41,6 @@ Solver_BASE<STATE_DIM, INPUT_DIM>::Solver_BASE(std::shared_ptr<HybridLogicRules>
 /******************************************************************************************************/
 /***************************************************************************************************** */
 template <size_t STATE_DIM, size_t INPUT_DIM>
-size_t Solver_BASE<STATE_DIM, INPUT_DIM>::findActivePartitionIndex(const scalar_array_t& partitioningTimes, const scalar_t& time,
-                                                                   bool ceilingFunction /*= true*/) {
-  int activeSubsystemIndex;
-  if (ceilingFunction) {
-    activeSubsystemIndex = findActiveIntervalIndex(partitioningTimes, time, 0);
-  } else {
-    activeSubsystemIndex = findActiveIntervalIndex(partitioningTimes, time, 0, -OCS2NumericTraits<scalar_t>::weakEpsilon());
-  }
-
-  if (activeSubsystemIndex < 0) {
-    std::string mesg = "Given time is less than the start time (i.e. givenTime < partitioningTimes.front()): " + std::to_string(time) +
-                       " < " + std::to_string(partitioningTimes.front());
-    throw std::runtime_error(mesg);
-  }
-
-  if (activeSubsystemIndex == partitioningTimes.size() - 1) {
-    std::string mesg = "Given time is greater than the final time (i.e. partitioningTimes.back() < givenTime): " +
-                       std::to_string(partitioningTimes.back()) + " < " + std::to_string(time);
-    throw std::runtime_error(mesg);
-  }
-
-  return (size_t)activeSubsystemIndex;
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/***************************************************************************************************** */
-template <size_t STATE_DIM, size_t INPUT_DIM>
 void Solver_BASE<STATE_DIM, INPUT_DIM>::printString(const std::string& text) {
   std::lock_guard<std::mutex> outputDisplayGuard(outputDisplayGuardMutex_);
   std::cerr << text << std::endl;

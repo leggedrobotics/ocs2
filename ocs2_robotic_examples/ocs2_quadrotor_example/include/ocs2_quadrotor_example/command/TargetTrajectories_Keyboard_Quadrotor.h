@@ -105,8 +105,7 @@ public:
 	  latestObservation_ = msg;
 	}
 
-	void toCostDesiredTrajectories(const scalar_array_t& commadLineTarget,
-				       cost_desired_trajectories_t& costDesiredTrajectories) final {
+	cost_desired_trajectories_t toCostDesiredTrajectories(const scalar_array_t& commadLineTarget) final {
 	  SystemObservation<quadrotor::STATE_DIM_, quadrotor::INPUT_DIM_> observation;
 	  ::ros::spinOnce();
 	  {
@@ -154,6 +153,8 @@ public:
 	  scalar_t targetReachingDuration2 = targetVelocity.norm() / averageAcceleration;
 	  scalar_t targetReachingDuration = std::max(targetReachingDuration1, targetReachingDuration2);
 
+
+	  cost_desired_trajectories_t costDesiredTrajectories(2);
 	  // Desired time trajectory
 	  scalar_array_t& tDesiredTrajectory = costDesiredTrajectories.desiredTimeTrajectory();
 	  tDesiredTrajectory.resize(2);
@@ -177,6 +178,7 @@ public:
 	  costDesiredTrajectories.desiredInputTrajectory()[0] = dynamic_vector_t::Zero(quadrotor::INPUT_DIM_);
 	  costDesiredTrajectories.desiredInputTrajectory()[1] = dynamic_vector_t::Zero(quadrotor::INPUT_DIM_);
 
+	  return costDesiredTrajectories;
 	}
 
 private:

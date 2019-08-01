@@ -368,47 +368,15 @@ class DDP_BASE : public Solver_BASE<STATE_DIM, INPUT_DIM> {
    */
   void useParallelRiccatiSolverFromInitItr(bool flag);
 
-  /**
-   * DDP-MPC activates this if the final time of the MPC will increase by the length of a time partition instead
-   * of commonly used scheme where the final time is gradually increased.
-   *
-   * @param [in] flag: If set true, the final time of the MPC will increase by the length of a time partition.
-   */
   void blockwiseMovingHorizon(bool flag) override;
 
-  /**
-   * Gets the cost function and ISEs of the type-1 and type-2 constraints at the initial time.
-   *
-   * @param [out] costFunction: cost function value
-   * @param [out] constraint1ISE: type-1 constraint ISE.
-   * @param [out] constraint1ISE: type-2 constraint ISE.
-   */
   void getPerformanceIndeces(scalar_t& costFunction, scalar_t& constraint1ISE, scalar_t& constraint2ISE) const override;
 
-  /**
-   * Gets number of iterations.
-   *
-   * @return Number of iterations.
-   */
   size_t getNumIterations() const override;
 
-  /**
-   * Gets iterations Log of DDP.
-   *
-   * @param [out] iterationCost: Each iteration's cost.
-   * @param [out] iterationISE1: Each iteration's type-1 constraints ISE.
-   * @param [out] iterationISE2: Each iteration's type-2 constraints ISE.
-   */
   void getIterationsLog(eigen_scalar_array_t& iterationCost, eigen_scalar_array_t& iterationISE1,
                         eigen_scalar_array_t& iterationISE2) const override;
 
-  /**
-   * Gets Iterations Log of DDP
-   *
-   * @param [out] iterationCostPtr: A pointer to each iteration's cost.
-   * @param [out] iterationISE1Ptr: A pointer to each iteration's type-1 constraints ISE.
-   * @param [out] iterationISE2Ptr: A pointer to each iteration's type-2 constraints ISE.
-   */
   void getIterationsLogPtr(const eigen_scalar_array_t*& iterationCostPtr, const eigen_scalar_array_t*& iterationISE1Ptr,
                            const eigen_scalar_array_t*& iterationISE2Ptr) const override;
 
@@ -417,137 +385,31 @@ class DDP_BASE : public Solver_BASE<STATE_DIM, INPUT_DIM> {
    */
   DDP_Settings& ddpSettings();
 
-  /**
-   * Returns an array of pointer to the optimal control policies.
-   *
-   * @return An array of pointers to the optimized control policies.
-   */
   const controller_ptr_array_t& getController() const override;
 
-  /**
-   * Gets an array of pointer to the optimal control policies.
-   *
-   * @param [out] controllersPtrStock: An array of pointers to the optimized control policies.
-   */
   void getControllerPtr(const controller_ptr_array_t*& controllersPtrStock) const override;
 
-  /**
-   * Returns the nominal time trajectories.
-   *
-   * @return nominalTimeTrajectoriesStock: Array of trajectories containing the output time trajectory stamp.
-   */
   const scalar_array2_t& getNominalTimeTrajectories() const override;
 
-  /**
-   * Returns the nominal state trajectories.
-   *
-   * @return nominalStateTrajectoriesStock: Array of trajectories containing the output state trajectory.
-   */
   const state_vector_array2_t& getNominalStateTrajectories() const override;
 
-  /**
-   * Returns the nominal input trajectories.
-   *
-   * @return nominalInputTrajectoriesStock: Array of trajectories containing the output control input trajectory.
-   */
   const input_vector_array2_t& getNominalInputTrajectories() const override;
 
-  /**
-   * Gets a pointer to the nominal time, state, and input trajectories.
-   *
-   * @param [out] nominalTimeTrajectoriesStockPtr: A pointer to an array of trajectories containing the output time trajectory stamp.
-   * @param [out] nominalStateTrajectoriesStockPtr: A pointer to an array of trajectories containing the output state trajectory.
-   * @param [out] nominalInputTrajectoriesStockPtr: A pointer to an array of trajectories containing the output control input trajectory.
-   */
   void getNominalTrajectoriesPtr(const scalar_array2_t*& nominalTimeTrajectoriesStockPtr,
                                  const state_vector_array2_t*& nominalStateTrajectoriesStockPtr,
                                  const input_vector_array2_t*& nominalInputTrajectoriesStockPtr) const override;
 
-  /**
-   * Swaps the the outputs with the nominal trajectories.
-   * Care should be take since this method modifies the internal variable.
-   *
-   * @param [out] nominalTimeTrajectoriesStock: Array of trajectories containing the output time trajectory stamp.
-   * @param [out] nominalStateTrajectoriesStock: Array of trajectories containing the output state trajectory.
-   * @param [out] nominalInputTrajectoriesStock: Array of trajectories containing the output control input trajectory.
-   */
   void swapNominalTrajectories(scalar_array2_t& nominalTimeTrajectoriesStock, state_vector_array2_t& nominalStateTrajectoriesStock,
                                input_vector_array2_t& nominalInputTrajectoriesStock) override;
 
-  /**
-   * Returns the final time of optimization
-   *
-   * @return finalTime
-   */
   const scalar_t& getFinalTime() const override;
 
-  /**
-   * Returns final time of optimization
-   *
-   * @return finalTime
-   */
   const scalar_array_t& getPartitioningTimes() const override;
 
-  /**
-   * Gets the cost function desired trajectories.
-   *
-   * @param [out] costDesiredTrajectories: A pointer to the cost function desired trajectories
-   */
   void getCostDesiredTrajectoriesPtr(const cost_desired_trajectories_t*& costDesiredTrajectoriesPtr) const override;
 
-  /**
-   * Sets the cost function desired trajectories.
-   *
-   * @param [in] costDesiredTrajectories: The cost function desired trajectories
-   */
-  void setCostDesiredTrajectories(const cost_desired_trajectories_t& costDesiredTrajectories) override;
-
-  /**
-   * Sets the cost function desired trajectories.
-   *
-   * @param [in] desiredTimeTrajectory: The desired time trajectory for cost.
-   * @param [in] desiredStateTrajectory: The desired state trajectory for cost.
-   * @param [in] desiredInputTrajectory: The desired input trajectory for cost.
-   */
-  void setCostDesiredTrajectories(const scalar_array_t& desiredTimeTrajectory, const dynamic_vector_array_t& desiredStateTrajectory,
-                                  const dynamic_vector_array_t& desiredInputTrajectory) override;
-
-  /**
-   * Swaps the cost function desired trajectories.
-   *
-   * @param [in] costDesiredTrajectories: The cost function desired trajectories
-   */
-  void swapCostDesiredTrajectories(cost_desired_trajectories_t& costDesiredTrajectories) override;
-
-  /**
-   * Swaps the cost function desired trajectories.
-   *
-   * @param [in] desiredTimeTrajectory: The desired time trajectory for cost.
-   * @param [in] desiredStateTrajectory: The desired state trajectory for cost.
-   * @param [in] desiredInputTrajectory: The desired input trajectory for cost.
-   */
-  void swapCostDesiredTrajectories(scalar_array_t& desiredTimeTrajectory, dynamic_vector_array_t& desiredStateTrajectory,
-                                   dynamic_vector_array_t& desiredInputTrajectory) override;
-
-  /**
-   * Whether the cost function desired trajectories is updated.
-   *
-   * @return true if it is updated.
-   */
-  bool costDesiredTrajectoriesUpdated() const override;
-
-  /**
-   * Rewinds optimizer internal variables.
-   *
-   * @param [in] firstIndex: The index which we want to rewind to.
-   */
   void rewindOptimizer(const size_t& firstIndex) override;
 
-  /**
-   * Get rewind counter.
-   *
-   * @return Number of partition rewinds since construction of the class.
-   */
   const unsigned long long int& getRewindCounter() const override;
 
   /**
@@ -805,9 +667,6 @@ class DDP_BASE : public Solver_BASE<STATE_DIM, INPUT_DIM> {
   std::string algorithmName_;
 
   cost_desired_trajectories_t costDesiredTrajectories_;
-  cost_desired_trajectories_t costDesiredTrajectoriesBuffer_;
-  std::atomic_bool costDesiredTrajectoriesUpdated_;
-  std::mutex costDesiredTrajectoriesBufferMutex_;
 
   unsigned long long int rewindCounter_;
 

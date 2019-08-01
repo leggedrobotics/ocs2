@@ -50,8 +50,8 @@ void MRT_BASE<STATE_DIM, INPUT_DIM>::initRollout(const ControlledSystemBase<STAT
 }
 
 template <size_t STATE_DIM, size_t INPUT_DIM>
-void MRT_BASE<STATE_DIM, INPUT_DIM>::evaluatePolicy(const scalar_t& currentTime, const state_vector_t& currentState,
-                                                    state_vector_t& mpcState, input_vector_t& mpcInput, size_t& subsystem) {
+void MRT_BASE<STATE_DIM, INPUT_DIM>::evaluatePolicy(scalar_t currentTime, const state_vector_t& currentState, state_vector_t& mpcState,
+                                                    input_vector_t& mpcInput, size_t& subsystem) {
   if (currentTime > mpcTimeTrajectory_.back()) {
     ROS_WARN_STREAM("The requested currentTime is greater than the received plan: " + std::to_string(currentTime) + ">" +
                     std::to_string(mpcTimeTrajectory_.back()));
@@ -65,9 +65,8 @@ void MRT_BASE<STATE_DIM, INPUT_DIM>::evaluatePolicy(const scalar_t& currentTime,
 }
 
 template <size_t STATE_DIM, size_t INPUT_DIM>
-void MRT_BASE<STATE_DIM, INPUT_DIM>::rolloutPolicy(const scalar_t& currentTime, const state_vector_t& currentState,
-                                                   const scalar_t& timeStep, state_vector_t& mpcState, input_vector_t& mpcInput,
-                                                   size_t& subsystem) {
+void MRT_BASE<STATE_DIM, INPUT_DIM>::rolloutPolicy(scalar_t currentTime, const state_vector_t& currentState, const scalar_t& timeStep,
+                                                   state_vector_t& mpcState, input_vector_t& mpcInput, size_t& subsystem) {
   if (currentTime > mpcTimeTrajectory_.back()) {
     ROS_WARN_STREAM("The requested currentTime is greater than the received plan: " + std::to_string(currentTime) + ">" +
                     std::to_string(mpcTimeTrajectory_.back()));
@@ -153,7 +152,7 @@ bool MRT_BASE<STATE_DIM, INPUT_DIM>::updatePolicy() {
 }
 
 template <size_t STATE_DIM, size_t INPUT_DIM>
-void MRT_BASE<STATE_DIM, INPUT_DIM>::partitioningTimesUpdate(const scalar_t time, scalar_array_t& partitioningTimes) const {
+void MRT_BASE<STATE_DIM, INPUT_DIM>::partitioningTimesUpdate(scalar_t time, scalar_array_t& partitioningTimes) const {
   partitioningTimes.resize(2);
   partitioningTimes[0] = (policyReceivedEver_) ? initPlanObservation_.time() : time;
   partitioningTimes[1] = std::numeric_limits<scalar_t>::max();

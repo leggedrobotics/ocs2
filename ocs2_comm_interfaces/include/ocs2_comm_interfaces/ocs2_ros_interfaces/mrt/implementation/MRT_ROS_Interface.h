@@ -40,15 +40,15 @@ namespace ocs2 {
 template <size_t STATE_DIM, size_t INPUT_DIM>
 MRT_ROS_Interface<STATE_DIM, INPUT_DIM>::MRT_ROS_Interface(std::string robotName /*= "robot"*/,
                                                            std::shared_ptr<HybridLogicRules> logicRules /*= nullptr*/)
-    : Base(logicRules) {
+    : Base(std::move(logicRules)) {
   robotName_ = std::move(robotName);
 
   // Start thread for publishing
 #ifdef PUBLISH_THREAD
   // Close old thread if it is already running
   shutdownPublisher();
-  reset();
-
+  terminateThread_ = false;
+  readyToPublish_ = false;
   publisherWorker_ = std::thread(&MRT_ROS_Interface::publisherWorkerThread, this);
 #endif
 }
@@ -68,17 +68,6 @@ template <size_t STATE_DIM, size_t INPUT_DIM>
 void MRT_ROS_Interface<STATE_DIM, INPUT_DIM>::sigintHandler(int sig) {
   ROS_INFO_STREAM("Shutting MRT node.");
   ::ros::shutdown();
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM>
-void MRT_ROS_Interface<STATE_DIM, INPUT_DIM>::reset() {
-  Base::reset();
-  std::lock_guard<std::mutex> lkUpdate(this->policyBufferMutex_);
-  terminateThread_ = false;
-  readyToPublish_ = false;
 }
 
 /******************************************************************************************************/
@@ -305,7 +294,7 @@ void MRT_ROS_Interface<STATE_DIM, INPUT_DIM>::spinMRT() {
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
 void MRT_ROS_Interface<STATE_DIM, INPUT_DIM>::launchNodes(int argc, char* argv[]) {
-  reset();
+  this->reset();
 
   // display
   ROS_INFO_STREAM("MRT node is setting up ...");

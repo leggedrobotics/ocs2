@@ -55,7 +55,7 @@ class MRT_BASE {
   /**
    * Resets the class to its instantiated state.
    */
-  virtual void reset();
+  void reset();
 
   /**
    * Request the MPC node to reset. This method is a blocking method.
@@ -102,7 +102,7 @@ class MRT_BASE {
    * @param [out] mpcInput: the optimized control input.
    * @param [out] subsystem: the active subsystem.
    */
-  void evaluatePolicy(const scalar_t& currentTime, const state_vector_t& currentState, state_vector_t& mpcState, input_vector_t& mpcInput,
+  void evaluatePolicy(scalar_t currentTime, const state_vector_t& currentState, state_vector_t& mpcState, input_vector_t& mpcInput,
                       size_t& subsystem);
 
   /**
@@ -115,7 +115,7 @@ class MRT_BASE {
    * @param [out] mpcInput: the new control input of MPC.
    * @param [out] subsystem: the active subsystem.
    */
-  void rolloutPolicy(const scalar_t& currentTime, const state_vector_t& currentState, const scalar_t& timeStep, state_vector_t& mpcState,
+  void rolloutPolicy(scalar_t currentTime, const state_vector_t& currentState, const scalar_t& timeStep, state_vector_t& mpcState,
                      input_vector_t& mpcInput, size_t& subsystem);
 
   /**
@@ -126,13 +126,6 @@ class MRT_BASE {
    * @return True if the policy is updated.
    */
   bool updatePolicy();
-
-  /**
-   * @brief Determine if MPC has been terminated due to an exception.
-   *
-   * @return true if MPC failed.
-   */
-  bool mpcIsTerminated() const { return !policyUpdated_; }
 
  protected:
   /**
@@ -181,17 +174,17 @@ class MRT_BASE {
    * @param [in] time: The current time.
    * @param [out] partitioningTimes: Partitioning time.
    */
-  void partitioningTimesUpdate(const scalar_t time, scalar_array_t& partitioningTimes) const;
+  void partitioningTimesUpdate(scalar_t time, scalar_array_t& partitioningTimes) const;
 
  protected:
   // flags on state of the class
   std::atomic_bool policyReceivedEver_;
-  bool newPolicyInBuffer_;
+  bool newPolicyInBuffer_;  //! Whether a new policy is waiting to be swapped in
 
   // variables related to the MPC output
-  bool logicUpdated_;  //! Whether the logic rules have changed (from MPC)
-  std::atomic_bool policyUpdated_;
-  bool policyUpdatedBuffer_;
+  bool logicUpdated_;               //! Whether the logic rules have changed (from MPC)
+  std::atomic_bool policyUpdated_;  //! Whether the policy was updated by MPC (i.e., MPC succeeded)
+  bool policyUpdatedBuffer_;        //! Whether the policy in buffer was upated by MPC (i.e., MPC succeeded)
   std::unique_ptr<controller_t> mpcController_;
   std::unique_ptr<controller_t> mpcControllerBuffer_;
   scalar_array_t mpcTimeTrajectory_;

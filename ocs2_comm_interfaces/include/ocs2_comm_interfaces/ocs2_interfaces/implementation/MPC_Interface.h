@@ -9,29 +9,26 @@
 namespace ocs2 {
 
 template <size_t STATE_DIM, size_t INPUT_DIM>
-MPC_Interface<STATE_DIM, INPUT_DIM>::MPC_Interface(mpc_t& mpc, std::shared_ptr<HybridLogicRules> logicRules,
-                                                   const bool& useFeedforwardPolicy /*= true*/)
-    : mpcPtr_(&mpc),
-      mpcSettings_(mpc.settings()),
-      desiredTrajectoriesUpdated_(false),
-      modeSequenceUpdated_(false),
-      observationUpdated_(false),
-      logicMachine_(logicRules) {
+MPC_Interface<STATE_DIM, INPUT_DIM>::MPC_Interface(mpc_t& mpc, std::shared_ptr<HybridLogicRules> logicRules)
+    : mpcPtr_(&mpc), mpcSettings_(mpc.settings()), observationUpdated_(false) {
   // reset variables
   reset();
+
+  if (!logicRules) {
+    logicRules.reset(new NullLogicRules());
+  }
+  logicMachine_.reset(new HybridLogicRulesMachine(std::move(logicRules)));
 }
 
 template <size_t STATE_DIM, size_t INPUT_DIM>
 void MPC_Interface<STATE_DIM, INPUT_DIM>::reset() {
   initialCall_ = true;
   numIterations_ = 0;
-  desiredTrajectoriesUpdated_ = false;
   observationUpdated_ = false;
   mpcOutputBufferUpdated_ = false;
   logicUpdated_ = false;
 
   // MPC inputs
-  costDesiredTrajectories_.clear();
   currentObservation_ = system_observation_t();
 
   // MPC outputs:
@@ -59,9 +56,11 @@ void MPC_Interface<STATE_DIM, INPUT_DIM>::reset() {
 
 template <size_t STATE_DIM, size_t INPUT_DIM>
 void MPC_Interface<STATE_DIM, INPUT_DIM>::setTargetTrajectories(const cost_desired_trajectories_t& targetTrajectories) {
-  std::lock_guard<std::mutex> lock(desiredTrajectoryMutex_);
-  costDesiredTrajectories_ = targetTrajectories;
-  desiredTrajectoriesUpdated_ = true;
+  if (mpcSettings_.debugPrint_) {
+    std::cerr << "### The target position is updated to" << std::endl;
+    targetTrajectories.display();
+  }
+  mpcPtr_->getSolverPtr()->setCostDesiredTrajectories(targetTrajectories);
 }
 
 template <size_t STATE_DIM, size_t INPUT_DIM>
@@ -73,9 +72,7 @@ void MPC_Interface<STATE_DIM, INPUT_DIM>::setCurrentObservation(const system_obs
 
 template <size_t STATE_DIM, size_t INPUT_DIM>
 void MPC_Interface<STATE_DIM, INPUT_DIM>::setModeSequence(const mode_sequence_template_t& modeSequenceTemplate) {
-  std::lock_guard<std::mutex> lock(modeSequenceMutex_);
-  modeSequenceTemplate_ = modeSequenceTemplate;
-  modeSequenceUpdated_ = true;
+  mpcPtr_->setNewLogicRulesTemplate(modeSequenceTemplate);
 }
 
 template <size_t STATE_DIM, size_t INPUT_DIM>
@@ -88,9 +85,6 @@ void MPC_Interface<STATE_DIM, INPUT_DIM>::advanceMpc() {
     // reset the MPC solver since it is the beginning of the task
     mpcPtr_->reset();
   }
-
-  updateModeSequence();
-  updateDesiredTrajectory();
 
   {
     std::lock_guard<std::mutex> lock(observationMutex_);
@@ -196,36 +190,6 @@ void MPC_Interface<STATE_DIM, INPUT_DIM>::fillMpcOutputBuffers() {
 }
 
 template <size_t STATE_DIM, size_t INPUT_DIM>
-void MPC_Interface<STATE_DIM, INPUT_DIM>::updateDesiredTrajectory() {
-  if (desiredTrajectoriesUpdated_ == true) {
-    std::lock_guard<std::mutex> lock(desiredTrajectoryMutex_);
-    // display
-    if (mpcSettings_.debugPrint_) {
-      std::cerr << "### The target position is updated at time " << std::setprecision(4) << currentObservation_.time() << " as "
-                << std::endl;
-      costDesiredTrajectories_.display();
-    }
-    // set CostDesiredTrajectories
-    mpcPtr_->swapCostDesiredTrajectories(costDesiredTrajectories_);
-    desiredTrajectoriesUpdated_ = false;
-  }
-}
-
-template <size_t STATE_DIM, size_t INPUT_DIM>
-void MPC_Interface<STATE_DIM, INPUT_DIM>::updateModeSequence() {
-  if (modeSequenceUpdated_ == true) {
-    std::lock_guard<std::mutex> lock(modeSequenceMutex_);
-
-    std::cerr << "### The mode sequence is updated at time " << std::setprecision(4) << currentObservation_.time() << " as " << std::endl;
-    modeSequenceTemplate_.display();
-
-    mpcPtr_->setNewLogicRulesTemplate(modeSequenceTemplate_);
-
-    modeSequenceUpdated_ = false;
-  }
-}
-
-template <size_t STATE_DIM, size_t INPUT_DIM>
 bool MPC_Interface<STATE_DIM, INPUT_DIM>::updatePolicy() {
   std::lock_guard<std::mutex> lock(mpcBufferMutex);
 
@@ -249,15 +213,15 @@ bool MPC_Interface<STATE_DIM, INPUT_DIM>::updatePolicy() {
 
   if (logicUpdated_ == true) {
     // set mode sequence
-    logicMachine_.getLogicRulesPtr()->setModeSequence(subsystemsSequence_, eventTimes_);
+    logicMachine_->getLogicRulesPtr()->setModeSequence(subsystemsSequence_, eventTimes_);
     // Tell logicMachine that logicRules are modified
-    logicMachine_.logicRulesUpdated();
+    logicMachine_->logicRulesUpdated();
     // update logicMachine
-    logicMachine_.updateLogicRules(partitioningTimes_);
+    logicMachine_->updateLogicRules(partitioningTimes_);
 
     // function for finding active subsystem
     const size_t partitionIndex = 0;  // we assume only one partition
-    findActiveSubsystemFnc_ = std::move(logicMachine_.getHandleToFindActiveEventCounter(partitionIndex));
+    findActiveSubsystemFnc_ = std::move(logicMachine_->getHandleToFindActiveEventCounter(partitionIndex));
 
     logicUpdated_ = false;
   }
@@ -286,7 +250,7 @@ void MPC_Interface<STATE_DIM, INPUT_DIM>::evaluatePolicy(const scalar_t& time, c
   mpcLinInterpolateState_.interpolate(time, mpcState);
 
   size_t index = findActiveSubsystemFnc_(time);
-  subsystem = logicMachine_.getLogicRulesPtr()->subsystemsSequence().at(index);
+  subsystem = logicMachine_->getLogicRulesPtr()->subsystemsSequence().at(index);
 
   // TODO(jcarius) is index correct here or should we use subsystem?
   mpcInput = mpcControllers_[index]->computeInput(time, currentState);

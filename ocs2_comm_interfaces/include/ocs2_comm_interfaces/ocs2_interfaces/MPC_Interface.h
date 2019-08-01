@@ -1,7 +1,3 @@
-//
-// Created by johannes on 01.04.19.
-//
-
 #pragma once
 
 #include <Eigen/Dense>
@@ -28,7 +24,7 @@
 namespace ocs2 {
 
 /**
- * A lean ROS independent interface to OCS2. In incorporate  the functionality of the MPC and the MRT (trajectory tracking) modules.
+ * A lean ROS independent interface to OCS2. In incorporates the functionality of the MPC and the MRT (trajectory tracking) modules.
  * Please refer to ocs2_double_integrator_noros_example for a minimal example
  * @tparam STATE_DIM
  * @tparam INPUT_DIM
@@ -66,13 +62,10 @@ class MPC_Interface {
 
   /**
    * Constructor
-   * @param mpc the mpc object
+   * @param[in] mpc the underlying MPC class to be used
    * @param logicRules
-   * @param useFeedforwardPolicy if true (default) the feed-forward optimal controls are calculated. If false, the affine feedback laws are
-   * calculated
-   *
    */
-  MPC_Interface(mpc_t& mpc, std::shared_ptr<HybridLogicRules> logicRules, const bool& useFeedforwardPolicy = true);
+  MPC_Interface(mpc_t& mpc, std::shared_ptr<HybridLogicRules> logicRules = nullptr);
 
   /**
    * Destructor.
@@ -143,9 +136,6 @@ class MPC_Interface {
   const input_vector_array_t& getMpcInputTrajectory();
 
  protected:
-  /*
-   * Variables
-   */
   mpc_t* mpcPtr_;
   MPC_Settings mpcSettings_;
 
@@ -161,14 +151,8 @@ class MPC_Interface {
 
   std::mutex observationMutex_;
   std::atomic<bool> observationUpdated_;
-  std::mutex desiredTrajectoryMutex_;
-  std::atomic<bool> desiredTrajectoriesUpdated_;
-  std::mutex modeSequenceMutex_;
-  std::atomic<bool> modeSequenceUpdated_;
 
   // MPC inputs
-  cost_desired_trajectories_t costDesiredTrajectories_;
-  mode_sequence_template_t modeSequenceTemplate_;
   system_observation_t currentObservation_;
 
   // MPC outputs:
@@ -196,7 +180,7 @@ class MPC_Interface {
   input_linear_interpolation_t mpcLinInterpolateInput_;
   cost_desired_trajectories_t mpcCostDesiredTrajectories_;
 
-  HybridLogicRulesMachine logicMachine_;
+  std::unique_ptr<HybridLogicRulesMachine> logicMachine_;
   std::function<size_t(scalar_t)> findActiveSubsystemFnc_;
 
  protected:
@@ -217,10 +201,10 @@ class MPC_Interface {
    */
   void partitioningTimesUpdate(scalar_array_t& partitioningTimes) const;
 
-  void updateModeSequence();
-
-  void updateDesiredTrajectory();
-
+  /**
+   * @brief fillMpcOutputBuffers updates the *Buffer variables from the MPC object.
+   * This method is automatically called by advanceMpc()
+   */
   void fillMpcOutputBuffers();
 };
 

@@ -30,7 +30,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <unistd.h>
 #include <thread>
 #include "ocs2_comm_interfaces/ocs2_interfaces/MPC_Interface.h"
-#include "ocs2_core/logic/rules/NullLogicRules.h"
 #include "ocs2_double_integrator_noros_example/DoubleIntegratorInterface.h"
 
 using namespace ocs2;
@@ -43,10 +42,8 @@ int main(int argc, char** argv) {
   if (argc <= 1) throw std::runtime_error("No task file specified. Aborting.");
   std::string taskFileFolderName = std::string(argv[1]);
 
-  auto nullLogicRules = std::make_shared<NullLogicRules>();
-
   DoubleIntegratorInterface doubleIntegratorInterface(taskFileFolderName);
-  mpc_t mpcInterface(*doubleIntegratorInterface.getMPCPtr(), nullLogicRules, true);
+  mpc_t mpcInterface(*doubleIntegratorInterface.getMPCPtr());
 
   double time = 0;
 

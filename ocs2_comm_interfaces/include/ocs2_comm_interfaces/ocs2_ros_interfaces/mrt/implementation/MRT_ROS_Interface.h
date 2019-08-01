@@ -36,7 +36,7 @@ template <size_t STATE_DIM, size_t INPUT_DIM>
 MRT_ROS_Interface<STATE_DIM, INPUT_DIM>::MRT_ROS_Interface(std::string robotName /*= "robot"*/,
                                                            std::shared_ptr<HybridLogicRules> logicRules /*= nullptr*/) {
   if (!logicRules) {
-    logicRules = std::shared_ptr<NullLogicRules>(new NullLogicRules());
+    logicRules.reset(new NullLogicRules());
   }
   set(std::move(robotName), std::move(logicRules));
 }
@@ -54,7 +54,7 @@ MRT_ROS_Interface<STATE_DIM, INPUT_DIM>::~MRT_ROS_Interface() {
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
 void MRT_ROS_Interface<STATE_DIM, INPUT_DIM>::set(std::string robotName, std::shared_ptr<HybridLogicRules> logicRules) {
-  logicMachinePtr_ = logic_machine_ptr_t(new logic_machine_t(std::move(logicRules)));
+  logicMachinePtr_.reset(new logic_machine_t(std::move(logicRules)));
 
   robotName_ = std::move(robotName);
 

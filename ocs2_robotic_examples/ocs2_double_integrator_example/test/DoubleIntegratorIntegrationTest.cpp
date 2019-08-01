@@ -4,19 +4,17 @@
 #include <gtest/gtest.h>
 #include <cmath>
 #include "ocs2_comm_interfaces/ocs2_interfaces/MPC_Interface.h"
-#include "ocs2_core/logic/rules/NullLogicRules.h"
-#include "ocs2_double_integrator_noros_example/DoubleIntegratorInterface.h"
+#include "ocs2_double_integrator_example/DoubleIntegratorInterface.h"
 
 using namespace ocs2;
 using namespace double_integrator;
-using dim_t = ocs2::Dimensions<double_integrator_dims::STATE_DIM_, double_integrator_dims::INPUT_DIM_>;
+using dim_t = ocs2::Dimensions<STATE_DIM_, INPUT_DIM_>;
 typedef MPC_Interface<dim_t::STATE_DIM_, dim_t::INPUT_DIM_> mpc_t;
 
 TEST(DoubleIntegratorIntegrationTest, synchronousTracking) {
   std::string taskFileFolderName = "mpc";
   DoubleIntegratorInterface doubleIntegratorInterface(taskFileFolderName);
-  NullLogicRules nullLogicRules;
-  mpc_t mpcInterface(*doubleIntegratorInterface.getMPCPtr(), nullLogicRules, true);
+  mpc_t mpcInterface(*doubleIntegratorInterface.getMPCPtr());
 
   double time = 0;
 
@@ -54,7 +52,9 @@ TEST(DoubleIntegratorIntegrationTest, synchronousTracking) {
       mpc_t::state_vector_t optimalState;
       mpc_t::input_vector_t optimalInput;
       size_t subsystem;
-      mpcInterface.evaluateFeedforwardPolicy(time, optimalState, optimalInput, subsystem);
+      //TODO(johannes) Hacky, we call evaluatePolicy twice to retrieve the optimal state
+      mpcInterface.evaluatePolicy(time, mpc_t::state_vector_t::Zero(), optimalState, optimalInput, subsystem);
+      mpcInterface.evaluatePolicy(time, optimalState, optimalState, optimalInput, subsystem);
       // use optimal state for the next observation:
       observation.state() = optimalState;
       observation.time() = time;
@@ -72,10 +72,8 @@ TEST(DoubleIntegratorIntegrationTest, asynchronousTracking) {
   // task file
   std::string taskFileFolderName = "mpc";
 
-  NullLogicRules nullLogicRules;
-
   DoubleIntegratorInterface doubleIntegratorInterface(taskFileFolderName);
-  mpc_t mpcInterface(*doubleIntegratorInterface.getMPCPtr(), nullLogicRules, true);
+  mpc_t mpcInterface(*doubleIntegratorInterface.getMPCPtr());
 
   double time = 0;
 
@@ -115,7 +113,9 @@ TEST(DoubleIntegratorIntegrationTest, asynchronousTracking) {
         std::lock_guard<std::mutex> lock(timeStateMutex);
         time += trackingIncrement;
         if (mpcInterface.policyReceived()) {
-          mpcInterface.evaluateFeedforwardPolicy(time, optimalState, optimalInput, subsystem);
+            //TODO(johannes) Hacky, we call evaluatePolicy twice to retrieve the optimal state
+            mpcInterface.evaluatePolicy(time, mpc_t::state_vector_t::Zero(), optimalState, optimalInput, subsystem);
+            mpcInterface.evaluatePolicy(time, optimalState, optimalState, optimalInput, subsystem);
         }
         if (std::abs(time - 1) < 0.005) {
           ASSERT_NEAR(optimalState[0], goalState[0], 5e-2);

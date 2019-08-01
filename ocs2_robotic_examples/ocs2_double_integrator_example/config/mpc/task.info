@@ -1,9 +1,3 @@
-; system parameters
-systemParameters
-{
-    mass 1.0
-}
-
 ; Time Horizon
 mpcTimeHorizon
 {

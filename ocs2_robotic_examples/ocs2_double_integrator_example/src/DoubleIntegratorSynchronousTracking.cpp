@@ -28,11 +28,11 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  ******************************************************************************/
 
 #include "ocs2_comm_interfaces/ocs2_interfaces/MPC_Interface.h"
-#include "ocs2_double_integrator_noros_example/DoubleIntegratorInterface.h"
+#include "ocs2_double_integrator_example/DoubleIntegratorInterface.h"
 
 using namespace ocs2;
 using namespace double_integrator;
-using dim_t = ocs2::Dimensions<double_integrator_dims::STATE_DIM_, double_integrator_dims::INPUT_DIM_>;
+using dim_t = ocs2::Dimensions<STATE_DIM_, INPUT_DIM_>;
 typedef MPC_Interface<dim_t::STATE_DIM_, dim_t::INPUT_DIM_> mpc_t;
 
 int main(int argc, char** argv) {

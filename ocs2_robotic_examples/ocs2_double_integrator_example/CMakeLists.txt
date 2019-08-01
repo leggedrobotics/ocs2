@@ -117,6 +117,29 @@ target_link_libraries(double_integrator_target
         ${Boost_LIBRARIES}
         )
 
+# ROS-Independent nodes
+add_executable(double_integrator_synchronous_tracking
+  src/DoubleIntegratorSynchronousTracking.cpp
+)
+add_dependencies(double_integrator_synchronous_tracking
+        ${catkin_EXPORTED_TARGETS}
+)
+target_link_libraries(double_integrator_synchronous_tracking
+        double_integrator_interface
+        ${catkin_LIBRARIES}
+)
+
+add_executable(double_integrator_asynchronous_tracking
+  src/DoubleIntegratorAsynchronousTracking.cpp
+  )
+add_dependencies(double_integrator_asynchronous_tracking
+  ${catkin_EXPORTED_TARGETS}
+  )
+target_link_libraries(double_integrator_asynchronous_tracking
+  double_integrator_interface
+  ${catkin_LIBRARIES}
+  )
+
 #########################
 ###   CLANG TOOLING   ###
 #########################
@@ -145,9 +168,28 @@ install(TARGETS double_integrator_interface
 install(DIRECTORY include/${PROJECT_NAME}/
         DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION})
 
-install(TARGETS double_integrator_mpc double_integrator_dummy_test double_integrator_target
+install(TARGETS double_integrator_mpc
+                double_integrator_dummy_test
+                double_integrator_target
+                double_integrator_synchronous_tracking
+                double_integrator_asynchronous_tracking
         RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})
 
 install(DIRECTORY urdf launch config rviz
         DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
         )
+
+#############
+## Testing ##
+#############
+
+catkin_add_gtest(ocs2_double_integrator_integration_test
+  test/DoubleIntegratorIntegrationTest.cpp
+  )
+add_dependencies(ocs2_double_integrator_integration_test
+  ${catkin_EXPORTED_TARGETS}
+  )
+target_link_libraries(ocs2_double_integrator_integration_test
+  double_integrator_interface
+  ${catkin_LIBRARIES}
+  )

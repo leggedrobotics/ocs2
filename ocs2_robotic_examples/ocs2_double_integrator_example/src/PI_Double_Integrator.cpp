@@ -26,9 +26,11 @@ int main(int argc, char** argv) {
   using solver_t = ocs2::PiSolver<STATE_DIM, INPUT_DIM>;
 
   // Dynamics
-  dynamics_t::scalar_t mass;
-  ocs2::loadScalar(taskFile, "systemParameters.mass", mass);
-  dynamics_t::Ptr dynamics(new dynamics_t(mass));
+  dynamics_t::DIMENSIONS::state_matrix_t A;
+  A << 0.0, 1.0, 0.0, 0.0;
+  dynamics_t::DIMENSIONS::state_input_matrix_t B;
+  B << 0.0, 1.0;
+  dynamics_t::Ptr dynamics(new dynamics_t(A, B));
 
   // Initial state
   dynamics_t::DIMENSIONS::state_vector_t xInitial;

@@ -58,6 +58,7 @@ int main(int argc, char** argv) {
   costDesiredTrajectories.desiredStateTrajectory().push_back(initialState);
   costDesiredTrajectories.desiredStateTrajectory().push_back(goalState);
   mpc_t::input_vector_t desiredInput;
+  desiredInput.setZero();
   costDesiredTrajectories.desiredInputTrajectory().push_back(desiredInput);
   costDesiredTrajectories.desiredInputTrajectory().push_back(desiredInput);
   mpcInterface.setTargetTrajectories(costDesiredTrajectories);

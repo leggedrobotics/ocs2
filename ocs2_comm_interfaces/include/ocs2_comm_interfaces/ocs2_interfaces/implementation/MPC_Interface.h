@@ -22,7 +22,6 @@ MPC_Interface<STATE_DIM, INPUT_DIM>::MPC_Interface(mpc_t& mpc, std::shared_ptr<H
 
 template <size_t STATE_DIM, size_t INPUT_DIM>
 void MPC_Interface<STATE_DIM, INPUT_DIM>::reset() {
-  initialCall_ = true;
   numIterations_ = 0;
   observationUpdated_ = false;
   mpcOutputBufferUpdated_ = false;
@@ -79,13 +78,6 @@ template <size_t STATE_DIM, size_t INPUT_DIM>
 void MPC_Interface<STATE_DIM, INPUT_DIM>::advanceMpc() {
   if (mpcSettings_.debugPrint_) startTimePoint_ = std::chrono::steady_clock::now();
 
-  numIterations_++;
-
-  if (initialCall_ == true) {
-    // reset the MPC solver since it is the beginning of the task
-    mpcPtr_->reset();
-  }
-
   {
     std::lock_guard<std::mutex> lock(observationMutex_);
     // run MPC
@@ -95,6 +87,8 @@ void MPC_Interface<STATE_DIM, INPUT_DIM>::advanceMpc() {
   }
 
   fillMpcOutputBuffers();
+  // Incrementing numIterations must happen after fillMpcOutputBuffers
+  numIterations_++;
 
   // measure the delay
   if (mpcSettings_.debugPrint_) {
@@ -110,7 +104,8 @@ void MPC_Interface<STATE_DIM, INPUT_DIM>::advanceMpc() {
     std::cerr << "### Average duration of MPC optimization is: " << meanDelay_ << " [ms]." << std::endl;
     std::cerr << "### Maximum duration of MPC optimization is: " << maxDelay_ << " [ms]." << std::endl;
   }
-  if (initialCall_ == true) initialCall_ = false;
+
+
 }
 
 template <size_t STATE_DIM, size_t INPUT_DIM>
@@ -243,9 +238,10 @@ void MPC_Interface<STATE_DIM, INPUT_DIM>::evaluatePolicy(const scalar_t& time, c
                                                          input_vector_t& mpcInput, size_t& subsystem) {
   updatePolicy();
 
-  if (time > mpcTimeTrajectory_.back())
+  if (time > mpcTimeTrajectory_.back()) {
     ROS_WARN_STREAM_THROTTLE(2, "The requested time is greater than the received plan: " + std::to_string(time) + ">" +
                                     std::to_string(mpcTimeTrajectory_.back()));
+  }
 
   mpcLinInterpolateState_.interpolate(time, mpcState);
 

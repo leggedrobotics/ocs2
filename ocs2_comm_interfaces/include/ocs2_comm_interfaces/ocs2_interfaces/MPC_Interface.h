@@ -109,7 +109,7 @@ class MPC_Interface {
    * Call this before calling the evaluation methods.
    * @return true if there is a policy to evaluated
    */
-  bool policyReceived() const { return !initialCall_; }
+  bool policyReceived() const { return numIterations_ > 0; }
 
   /**
    * Gets a reference to CostDesiredTrajectories for which the current policy is optimized for.
@@ -146,8 +146,6 @@ class MPC_Interface {
 
   std::chrono::time_point<std::chrono::steady_clock> startTimePoint_;
   std::chrono::time_point<std::chrono::steady_clock> finalTimePoint_;
-
-  bool initialCall_ = false;
 
   std::mutex observationMutex_;
   std::atomic<bool> observationUpdated_;

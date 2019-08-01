@@ -169,7 +169,7 @@ template <size_t STATE_DIM, size_t INPUT_DIM>
 void MPC_BASE<STATE_DIM, INPUT_DIM>::adjustmentTimeHorizon(const scalar_array_t& partitioningTimes, scalar_t& initTime, scalar_t& finalTime,
                                                            size_t& initActivePartitionIndex, size_t& finalActivePartitionIndex) const {
   // current active subsystem
-  initActivePartitionIndex = solver_base_t::findActivePartitionIndex(partitioningTimes, initTime);
+  initActivePartitionIndex = lookup::findBoundedActiveIntervalInTimeArray(partitioningTimes, initTime);
 
   if (initTime > partitioningTimes[initActivePartitionIndex + 1] - 4e-3) {
     initTime = partitioningTimes[initActivePartitionIndex + 1] + 1e-5;
@@ -177,7 +177,7 @@ void MPC_BASE<STATE_DIM, INPUT_DIM>::adjustmentTimeHorizon(const scalar_array_t&
   }
 
   // final active subsystem
-  finalActivePartitionIndex = solver_base_t::findActivePartitionIndex(partitioningTimes, finalTime);
+  finalActivePartitionIndex = lookup::findBoundedActiveIntervalInTimeArray(partitioningTimes, finalTime);
 
   // if it is at the very beginning of the partition (4e-3) reduce the final time to
   // last partition final time otherwise set to the final time of the current partition
@@ -275,6 +275,7 @@ bool MPC_BASE<STATE_DIM, INPUT_DIM>::run(const scalar_t& currentTime, const stat
     if (!solverPtr_->getLogicRulesPtr()) {
       throw std::runtime_error("MPC Base: solverPtr_->getLogicRulesPtr() must not be nullptr.");
     }
+    std::lock_guard<std::mutex> lock(newLogicRulesTemplateMutex_);
     solverPtr_->getLogicRulesPtr()->setModeSequenceTemplate(newLogicRulesTemplate_);
     solverPtr_->getLogicRulesPtr()->insertInternalModeSequenceTemplate(finalTime, partitioningTimes_.back());
     solverPtr_->getLogicRulesMachinePtr()->logicRulesUpdated();
@@ -349,14 +350,6 @@ void MPC_BASE<STATE_DIM, INPUT_DIM>::getPartitioningTimes(scalar_array_t& partit
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
-void MPC_BASE<STATE_DIM, INPUT_DIM>::setLogicRules(std::shared_ptr<HybridLogicRules> logicRules) {
-  solverPtr_->setLogicRules(std::move(logicRules));
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM>
 const HybridLogicRules* MPC_BASE<STATE_DIM, INPUT_DIM>::getLogicRulesPtr() const {
   auto result = solverPtr_->getLogicRulesPtr();
   if (!result) {
@@ -370,8 +363,14 @@ const HybridLogicRules* MPC_BASE<STATE_DIM, INPUT_DIM>::getLogicRulesPtr() const
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
 void MPC_BASE<STATE_DIM, INPUT_DIM>::setNewLogicRulesTemplate(const mode_sequence_template_t& newLogicRulesTemplate) {
+  if (!mpcSettings_.recedingHorizon_) {
+    throw std::runtime_error("Mode sequence can only be updated in receding horizon mode.");
+  }
+  std::lock_guard<std::mutex> lock(newLogicRulesTemplateMutex_);
   logicRulesTemplateUpdated_ = true;
   newLogicRulesTemplate_ = newLogicRulesTemplate;
+  std::cerr << "### The mode sequence is updated to " << std::endl;
+  newLogicRulesTemplate.display();
 }
 
 /******************************************************************************************************/
@@ -380,42 +379,6 @@ void MPC_BASE<STATE_DIM, INPUT_DIM>::setNewLogicRulesTemplate(const mode_sequenc
 template <size_t STATE_DIM, size_t INPUT_DIM>
 void MPC_BASE<STATE_DIM, INPUT_DIM>::getCostDesiredTrajectoriesPtr(const cost_desired_trajectories_t*& costDesiredTrajectoriesPtr) const {
   solverPtr_->getCostDesiredTrajectoriesPtr(costDesiredTrajectoriesPtr);
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM>
-void MPC_BASE<STATE_DIM, INPUT_DIM>::setCostDesiredTrajectories(const cost_desired_trajectories_t& costDesiredTrajectories) {
-  solverPtr_->setCostDesiredTrajectories(costDesiredTrajectories);
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM>
-void MPC_BASE<STATE_DIM, INPUT_DIM>::setCostDesiredTrajectories(const scalar_array_t& desiredTimeTrajectory,
-                                                                const dynamic_vector_array_t& desiredStateTrajectory,
-                                                                const dynamic_vector_array_t& desiredInputTrajectory) {
-  solverPtr_->setCostDesiredTrajectories(desiredTimeTrajectory, desiredStateTrajectory, desiredInputTrajectory);
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM>
-void MPC_BASE<STATE_DIM, INPUT_DIM>::swapCostDesiredTrajectories(cost_desired_trajectories_t& costDesiredTrajectories) {
-  solverPtr_->swapCostDesiredTrajectories(costDesiredTrajectories);
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM>
-void MPC_BASE<STATE_DIM, INPUT_DIM>::swapCostDesiredTrajectories(scalar_array_t& desiredTimeTrajectory,
-                                                                 dynamic_vector_array_t& desiredStateTrajectory,
-                                                                 dynamic_vector_array_t& desiredInputTrajectory) {
-  solverPtr_->swapCostDesiredTrajectories(desiredTimeTrajectory, desiredStateTrajectory, desiredInputTrajectory);
 }
 
 /******************************************************************************************************/

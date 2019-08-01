@@ -33,8 +33,12 @@ namespace ocs2 {
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <typename SCALAR_T>
-TargetTrajectories_ROS_Interface<SCALAR_T>::TargetTrajectories_ROS_Interface(const std::string& robotName /*= "robot"*/)
-    : robotName_(robotName) {}
+TargetTrajectories_ROS_Interface<SCALAR_T>::TargetTrajectories_ROS_Interface(int argc, char* argv[],
+                                                                             const std::string& robotName /*= "robot"*/)
+    : robotName_(robotName) {
+  ::ros::init(argc, argv, robotName_ + "_mpc_target");
+  nodeHandle_.reset(new ::ros::NodeHandle);
+}
 
 /******************************************************************************************************/
 /******************************************************************************************************/
@@ -66,19 +70,15 @@ void TargetTrajectories_ROS_Interface<SCALAR_T>::shutdownNodes() {
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <typename SCALAR_T>
-void TargetTrajectories_ROS_Interface<SCALAR_T>::launchNodes(int argc, char* argv[]) {
+void TargetTrajectories_ROS_Interface<SCALAR_T>::launchNodes() {
   // reset counters and variables
   reset();
 
   // display
   ROS_INFO_STREAM("TargetTrajectories node is setting up ...");
 
-  // setup ROS
-  ::ros::init(argc, argv, robotName_ + "_mpc_target");
-  ::ros::NodeHandle nodeHandler;
-
   mpcTargetTrajectoriesPublisher_ =
-      nodeHandler.advertise<ocs2_comm_interfaces::mpc_target_trajectories>(robotName_ + "_mpc_target", 1, false);
+      nodeHandle_->advertise<ocs2_comm_interfaces::mpc_target_trajectories>(robotName_ + "_mpc_target", 1, false);
 
   ros::spinOnce();
 

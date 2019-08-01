@@ -128,8 +128,11 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::reset() {
   useParallelRiccatiSolverFromInitItr_ = false;
 
   costDesiredTrajectories_.clear();
-  costDesiredTrajectoriesBuffer_.clear();
-  costDesiredTrajectoriesUpdated_ = false;
+  {
+    std::lock_guard<std::mutex> lock(costDesiredTrajectoriesBufferMutex_);
+    costDesiredTrajectoriesBuffer_.clear();
+    costDesiredTrajectoriesUpdated_ = false;
+  }
 
   for (size_t i = 0; i < numPartitions_; i++) {
     // very important :)
@@ -164,9 +167,9 @@ typename DDP_BASE<STATE_DIM, INPUT_DIM>::scalar_t DDP_BASE<STATE_DIM, INPUT_DIM>
   inputTrajectoriesStock.resize(numPartitions);
 
   // finding the active subsystem index at initTime
-  size_t initActivePartition = BASE::findActivePartitionIndex(partitioningTimes, initTime);
+  size_t initActivePartition = lookup::findBoundedActiveIntervalInTimeArray(partitioningTimes, initTime);
   // finding the active subsystem index at initTime
-  size_t finalActivePartition = BASE::findActivePartitionIndex(partitioningTimes, finalTime);
+  size_t finalActivePartition = lookup::findBoundedActiveIntervalInTimeArray(partitioningTimes, finalTime);
 
   scalar_t t0 = initTime;
   state_vector_t x0 = initState;
@@ -268,8 +271,8 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::rolloutFinalState(const scalar_t& initTime,
   input_vector_t inputTrajectory;
 
   // finding the active subsystem index at initTime and final time
-  size_t initActivePartition = BASE::findActivePartitionIndex(partitioningTimes, initTime);
-  finalActivePartition = BASE::findActivePartitionIndex(partitioningTimes, finalTime);
+  size_t initActivePartition = lookup::findBoundedActiveIntervalInTimeArray(partitioningTimes, initTime);
+  finalActivePartition = lookup::findBoundedActiveIntervalInTimeArray(partitioningTimes, finalTime);
 
   scalar_t t0 = initTime, tf;
   state_vector_t x0 = initState;
@@ -989,7 +992,7 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::truncateConterller(const scalar_array_t& pa
   }
 
   // finding the active subsystem index at initTime_
-  initActivePartition = BASE::findActivePartitionIndex(partitioningTimes, initTime);
+  initActivePartition = lookup::findBoundedActiveIntervalInTimeArray(partitioningTimes, initTime);
 
   // saving the deleting part and clearing controllersStock
   for (size_t i = 0; i < initActivePartition; i++) {
@@ -1120,7 +1123,7 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::adjustController(const scalar_array_t& newE
 /***************************************************************************************************** */
 template <size_t STATE_DIM, size_t INPUT_DIM>
 void DDP_BASE<STATE_DIM, INPUT_DIM>::getValueFuntion(const scalar_t& time, const state_vector_t& state, scalar_t& valueFuntion) {
-  size_t activeSubsystem = BASE::findActivePartitionIndex(partitioningTimes_, time);
+  size_t activeSubsystem = lookup::findBoundedActiveIntervalInTimeArray(partitioningTimes_, time);
 
   state_matrix_t Sm;
   LinearInterpolation<state_matrix_t, Eigen::aligned_allocator<state_matrix_t>> SmFunc(&SsTimeTrajectoryStock_[activeSubsystem],
@@ -1308,6 +1311,7 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::getCostDesiredTrajectoriesPtr(const cost_de
 /***************************************************************************************************** */
 template <size_t STATE_DIM, size_t INPUT_DIM>
 void DDP_BASE<STATE_DIM, INPUT_DIM>::setCostDesiredTrajectories(const cost_desired_trajectories_t& costDesiredTrajectories) {
+  std::lock_guard<std::mutex> lock(costDesiredTrajectoriesBufferMutex_);
   costDesiredTrajectoriesUpdated_ = true;
   costDesiredTrajectoriesBuffer_ = costDesiredTrajectories;
 }
@@ -1319,6 +1323,7 @@ template <size_t STATE_DIM, size_t INPUT_DIM>
 void DDP_BASE<STATE_DIM, INPUT_DIM>::setCostDesiredTrajectories(const scalar_array_t& desiredTimeTrajectory,
                                                                 const dynamic_vector_array_t& desiredStateTrajectory,
                                                                 const dynamic_vector_array_t& desiredInputTrajectory) {
+  std::lock_guard<std::mutex> lock(costDesiredTrajectoriesBufferMutex_);
   costDesiredTrajectoriesUpdated_ = true;
   costDesiredTrajectoriesBuffer_.desiredTimeTrajectory() = desiredTimeTrajectory;
   costDesiredTrajectoriesBuffer_.desiredStateTrajectory() = desiredStateTrajectory;
@@ -1330,6 +1335,7 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::setCostDesiredTrajectories(const scalar_arr
 /***************************************************************************************************** */
 template <size_t STATE_DIM, size_t INPUT_DIM>
 void DDP_BASE<STATE_DIM, INPUT_DIM>::swapCostDesiredTrajectories(cost_desired_trajectories_t& costDesiredTrajectories) {
+  std::lock_guard<std::mutex> lock(costDesiredTrajectoriesBufferMutex_);
   costDesiredTrajectoriesUpdated_ = true;
   costDesiredTrajectoriesBuffer_.swap(costDesiredTrajectories);
 }
@@ -1341,6 +1347,7 @@ template <size_t STATE_DIM, size_t INPUT_DIM>
 void DDP_BASE<STATE_DIM, INPUT_DIM>::swapCostDesiredTrajectories(scalar_array_t& desiredTimeTrajectory,
                                                                  dynamic_vector_array_t& desiredStateTrajectory,
                                                                  dynamic_vector_array_t& desiredInputTrajectory) {
+  std::lock_guard<std::mutex> lock(costDesiredTrajectoriesBufferMutex_);
   costDesiredTrajectoriesUpdated_ = true;
   costDesiredTrajectoriesBuffer_.desiredTimeTrajectory().swap(desiredTimeTrajectory);
   costDesiredTrajectoriesBuffer_.desiredStateTrajectory().swap(desiredStateTrajectory);
@@ -1740,6 +1747,7 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::run(const scalar_t& initTime, const state_v
 
   // set desired trajectories of cost if it is updated
   if (costDesiredTrajectoriesUpdated_) {
+    std::lock_guard<std::mutex> lock(costDesiredTrajectoriesBufferMutex_);
     costDesiredTrajectoriesUpdated_ = false;
     costDesiredTrajectories_.swap(costDesiredTrajectoriesBuffer_);
   }
@@ -1768,7 +1776,7 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::run(const scalar_t& initTime, const state_v
   truncateConterller(partitioningTimes_, initTime_, nominalControllersStock_, initActivePartition_, deletedcontrollersStock_);
 
   // the final active partition index.
-  finalActivePartition_ = BASE::findActivePartitionIndex(partitioningTimes_, finalTime_);
+  finalActivePartition_ = lookup::findBoundedActiveIntervalInTimeArray(partitioningTimes_, finalTime_);
 
   // check if after the truncation the internal controller is empty
   bool isInitInternalControllerEmpty = false;

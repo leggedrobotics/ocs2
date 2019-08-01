@@ -30,20 +30,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifndef DDP_BASE_OCS2_H_
 #define DDP_BASE_OCS2_H_
 
-#include <Eigen/Dense>
-#include <Eigen/StdVector>
-#include <algorithm>
-#include <array>
-#include <chrono>
-#include <cstddef>
-#include <mutex>
-#include <numeric>
-#include <type_traits>
-#include <unsupported/Eigen/MatrixFunctions>
-#include <vector>
-
-#include <ocs2_core/Dimensions.h>
-
 #include <ocs2_core/constraint/ConstraintBase.h>
 #include <ocs2_core/constraint/RelaxedBarrierPenalty.h>
 #include <ocs2_core/control/LinearController.h>
@@ -52,13 +38,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_core/dynamics/ControlledSystemBase.h>
 #include <ocs2_core/dynamics/DerivativesBase.h>
 #include <ocs2_core/initialization/SystemOperatingTrajectoriesBase.h>
-#include <ocs2_core/misc/FindActiveIntervalIndex.h>
-#include <ocs2_core/misc/LinearAlgebra.h>
 #include <ocs2_core/misc/LinearInterpolation.h>
 #include <ocs2_core/misc/TrajectorySpreadingController.h>
-
-#include <ocs2_core/logic/machine/HybridLogicRulesMachine.h>
-#include <ocs2_core/logic/rules/NullLogicRules.h>
 
 #include <ocs2_oc/approximate_model/LinearQuadraticApproximator.h>
 #include <ocs2_oc/oc_solver/Solver_BASE.h>
@@ -825,7 +806,8 @@ class DDP_BASE : public Solver_BASE<STATE_DIM, INPUT_DIM> {
 
   cost_desired_trajectories_t costDesiredTrajectories_;
   cost_desired_trajectories_t costDesiredTrajectoriesBuffer_;
-  bool costDesiredTrajectoriesUpdated_;
+  std::atomic_bool costDesiredTrajectoriesUpdated_;
+  std::mutex costDesiredTrajectoriesBufferMutex_;
 
   unsigned long long int rewindCounter_;
 

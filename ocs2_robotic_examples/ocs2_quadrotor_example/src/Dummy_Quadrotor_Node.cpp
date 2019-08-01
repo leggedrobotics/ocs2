@@ -67,12 +67,9 @@ int main(int argc, char **argv)
 
 	// initial command
 	MRT_ROS_Dummy_Quadrotor::cost_desired_trajectories_t initCostDesiredTrajectories;
-	initCostDesiredTrajectories.desiredTimeTrajectory().resize(1);
-	initCostDesiredTrajectories.desiredStateTrajectory().resize(1);
-	initCostDesiredTrajectories.desiredInputTrajectory().resize(1);
-	MRT_ROS_Dummy_Quadrotor::scalar_array_t targetPoseDisplacementVelocity(12, 0.0);
-	TargetPoseTransformation<MRT_ROS_Dummy_Quadrotor::scalar_t>::toCostDesiredState(
-			targetPoseDisplacementVelocity, initCostDesiredTrajectories.desiredStateTrajectory().front());
+	initCostDesiredTrajectories.desiredTimeTrajectory().push_back(initObservation.time());
+	initCostDesiredTrajectories.desiredStateTrajectory().push_back(initObservation.state());
+	initCostDesiredTrajectories.desiredInputTrajectory().push_back(initObservation.input());
 
 	// run dummy
 	dummyQuadrotor.run(initObservation, initCostDesiredTrajectories);

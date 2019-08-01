@@ -34,9 +34,8 @@ using namespace double_integrator;
 
 int main( int argc, char* argv[] )
 {
-	TargetTrajectories_Keyboard_Double_Integrator<double> targetPoseCommand("double_integrator");
-
-	targetPoseCommand.launchNodes(argc, argv);
+	TargetTrajectories_Keyboard_Double_Integrator<double> targetPoseCommand(argc, argv, "double_integrator");
+	targetPoseCommand.launchNodes();
 
 	const std::string commadMsg = "Enter displacement and velocity for the double-integrator, separated by spaces";
 	targetPoseCommand.getKeyboardCommand(commadMsg);

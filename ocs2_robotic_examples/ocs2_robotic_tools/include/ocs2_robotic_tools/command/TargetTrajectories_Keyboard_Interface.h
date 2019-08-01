@@ -63,13 +63,18 @@ public:
 	/**
 	 * Constructor
 	 *
+	 * @param [in] argc: Number of command line arguments
+	 * @param [in] argv: Command line arguments
+	 * @param [in] targetCommandSize: command expected length
 	 * @param [in] robotName: robot's name.
 	 * @param [in] targetCommandSize: command expected length
 	 * @param [in] targetCommandLimits: The limits of the loaded command from
 	 * command-line (for safety purposes).
 	 */
 	TargetTrajectories_Keyboard_Interface(
-			const std::string& robotName = "robot",
+			int argc,
+			char* argv[],
+	    const std::string& robotName = "robot",
 			const size_t targetCommandSize = 0,
 			const scalar_array_t& targetCommandLimits = scalar_array_t());
 
@@ -100,6 +105,16 @@ public:
 			scalar_t& desiredTime,
 			dynamic_vector_t& desiredState,
 			dynamic_vector_t& desiredInput);
+
+	/**
+	 * @brief Turns command line values into a costDesiredTrajectories object
+	 * @note Default implementation calls toCostDesiredTimeStateInput
+	 * @param[in] commadLineTarget
+	 * @param[out] costDesiredTrajectories
+	 */
+	virtual void toCostDesiredTrajectories(
+	    const scalar_array_t& commadLineTarget,
+	    cost_desired_trajectories_t& costDesiredTrajectories);
 
 	/**
 	 * Gets command line input. If the input command is shorter than the expected command

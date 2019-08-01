@@ -164,16 +164,15 @@ class TimeTriggeredRollout : public RolloutBase<STATE_DIM, INPUT_DIM> {
     }
 
     const size_t numEvents = logicRulesMachine.getNumEvents(partitionIndex);
-    const size_t numSubsystems = logicRulesMachine.getNumEventCounters(partitionIndex);
     const scalar_array_t& switchingTimes = logicRulesMachine.getSwitchingTimes(partitionIndex);
 
     // max number of steps for integration
     const size_t maxNumSteps = BASE::settings().maxNumStepsPerSecond_ * std::max(1.0, finalTime - initTime);
 
     // index of the first subsystem
-    size_t beginItr = findActiveIntervalIndex(switchingTimes, initTime, 0);
+    size_t beginItr = lookup::findActiveIntervalInTimeArray(switchingTimes, initTime);
     // index of the last subsystem
-    size_t finalItr = findActiveIntervalIndex(switchingTimes, finalTime, numSubsystems - 1);
+    size_t finalItr = lookup::findActiveIntervalInTimeArray(switchingTimes, finalTime);
 
     // clearing the output trajectories
     timeTrajectory.clear();

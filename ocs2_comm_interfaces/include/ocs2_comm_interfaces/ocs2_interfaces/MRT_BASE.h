@@ -125,7 +125,7 @@ class MRT_BASE {
    *
    * @return True if the policy is updated.
    */
-  bool updatePolicy();
+  virtual bool updatePolicy();
 
  protected:
   /**

@@ -49,7 +49,7 @@ TEST(DoubleIntegratorIntegrationTest, synchronousTracking) {
     mpcInterface.advanceMpc();
     time += 1.0 / f_control;
 
-    if (mpcInterface.policyReceived()) {
+    if (mpcInterface.initialPolicyReceived()) {
       mpc_t::state_vector_t optimalState;
       mpc_t::input_vector_t optimalInput;
       size_t subsystem;
@@ -111,7 +111,7 @@ TEST(DoubleIntegratorIntegrationTest, asynchronousTracking) {
       {
         std::lock_guard<std::mutex> lock(timeStateMutex);
         time += trackingIncrement;
-        if (mpcInterface.policyReceived()) {
+        if (mpcInterface.initialPolicyReceived()) {
           mpcInterface.evaluatePolicy(time, mpc_t::state_vector_t::Zero(), optimalState, optimalInput, subsystem);
         }
         if (std::abs(time - T) < 0.005) {

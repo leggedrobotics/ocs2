@@ -117,29 +117,6 @@ target_link_libraries(double_integrator_target
         ${Boost_LIBRARIES}
         )
 
-# ROS-Independent nodes
-add_executable(double_integrator_synchronous_tracking
-  src/DoubleIntegratorSynchronousTracking.cpp
-)
-add_dependencies(double_integrator_synchronous_tracking
-        ${catkin_EXPORTED_TARGETS}
-)
-target_link_libraries(double_integrator_synchronous_tracking
-        double_integrator_interface
-        ${catkin_LIBRARIES}
-)
-
-add_executable(double_integrator_asynchronous_tracking
-  src/DoubleIntegratorAsynchronousTracking.cpp
-  )
-add_dependencies(double_integrator_asynchronous_tracking
-  ${catkin_EXPORTED_TARGETS}
-  )
-target_link_libraries(double_integrator_asynchronous_tracking
-  double_integrator_interface
-  ${catkin_LIBRARIES}
-  )
-
 #########################
 ###   CLANG TOOLING   ###
 #########################
@@ -153,8 +130,6 @@ if(cmake_clang_tools_FOUND)
         double_integrator_pi
         double_integrator_dummy_test
         double_integrator_target
-        double_integrator_synchronous_tracking
-        double_integrator_asynchronous_tracking
     SOURCE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/src ${CMAKE_CURRENT_SOURCE_DIR}/include ${CMAKE_CURRENT_SOURCE_DIR}/test
     CT_HEADER_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/include
     CF_WERROR
@@ -177,8 +152,6 @@ install(DIRECTORY include/${PROJECT_NAME}/
 install(TARGETS double_integrator_mpc
                 double_integrator_dummy_test
                 double_integrator_target
-                double_integrator_synchronous_tracking
-                double_integrator_asynchronous_tracking
         RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})
 
 install(DIRECTORY urdf launch config rviz
@@ -189,13 +162,13 @@ install(DIRECTORY urdf launch config rviz
 ## Testing ##
 #############
 
-catkin_add_gtest(ocs2_double_integrator_integration_test
-  test/DoubleIntegratorIntegrationTest.cpp
+catkin_add_gtest(ocs2_double_integrator_no_ros_integration_test
+  test/DoubleIntegratorNoRosIntegrationTest.cpp
   )
-add_dependencies(ocs2_double_integrator_integration_test
+add_dependencies(ocs2_double_integrator_no_ros_integration_test
   ${catkin_EXPORTED_TARGETS}
   )
-target_link_libraries(ocs2_double_integrator_integration_test
+target_link_libraries(ocs2_double_integrator_no_ros_integration_test
   double_integrator_interface
   ${catkin_LIBRARIES}
   )

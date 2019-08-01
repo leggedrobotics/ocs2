@@ -104,8 +104,6 @@ class MRT_ROS_Interface : public MRT_BASE<STATE_DIM, INPUT_DIM> {
    */
   virtual ~MRT_ROS_Interface();
 
-  void reset() override;
-
   void resetMpcNode(const cost_desired_trajectories_t& initCostDesiredTrajectories) override;
 
   /**

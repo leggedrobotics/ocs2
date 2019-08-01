@@ -51,4 +51,22 @@ Eigen::MatrixXd toHalfSpaces(const ConvexPlanarPolytope3d& polytope) {
   return Ab;
 }
 
+ConvexPlanarPolytope3d createSquare(double scale, Eigen::Vector3d offset) {
+  ConvexPlanarPolytope3d square;
+  square.reserve(4);
+  Eigen::Vector3d point20{-scale, -scale, 0.0};
+  Eigen::Vector3d point21{scale, -scale, 0.0};
+  Eigen::Vector3d point22{scale, scale, 0.0};
+  Eigen::Vector3d point23{-scale, scale, 0.0};
+  point20 += offset;
+  point21 += offset;
+  point22 += offset;
+  point23 += offset;
+  square.push_back(point20);
+  square.push_back(point21);
+  square.push_back(point22);
+  square.push_back(point23);
+  return square;
+}
+
 }  // namespace switched_model

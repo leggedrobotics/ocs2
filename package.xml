@@ -11,6 +11,7 @@
   <buildtool_depend>catkin</buildtool_depend>
 
   <depend>ocs2_core</depend>
+  <depend>ocs2_mpc</depend>
   <depend>roscpp</depend>
 
 </package>

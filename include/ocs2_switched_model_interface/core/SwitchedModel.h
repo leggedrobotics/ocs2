@@ -41,6 +41,7 @@ public:
 	typedef Eigen::Matrix<SCALAR_T, JOINT_COORDINATE_SIZE,1>       joint_coordinate_t;
 	typedef Eigen::Matrix<SCALAR_T, BASE_COORDINATE_SIZE,1>        base_coordinate_t;
 
+  	enum class FeetEnum { LF, RF, LH, RH };
 };
 
 /**

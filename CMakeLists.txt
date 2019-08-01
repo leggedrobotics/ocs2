@@ -3,6 +3,7 @@ project(ocs2_switched_model_interface)
 
 find_package(catkin REQUIRED
 	ocs2_core
+	ocs2_mpc
 	roscpp
 )
 
@@ -20,9 +21,10 @@ catkin_package(
 		${EIGEN_INCLUDE_DIRS}
 	LIBRARIES
 		${PROJECT_NAME}
-		ConvexPlanarPolytope3d
+		TerrainModel
 	CATKIN_DEPENDS 
-	    ocs2_core 
+	    ocs2_core
+		ocs2_mpc
 	    roscpp
 #	DEPENDS
 )
@@ -51,16 +53,24 @@ target_link_libraries(${PROJECT_NAME}
 )
 
 # Declare a C++ library
-add_library(ConvexPlanarPolytope3d
+add_library(TerrainModel
 		src/ground/ConvexPlanarPolytope3d.cpp
+		src/ground/TerrainModel.cpp
 		)
 
-add_dependencies(ConvexPlanarPolytope3d
+add_dependencies(TerrainModel
 		${${PROJECT_NAME}_EXPORTED_TARGETS}
 		${catkin_EXPORTED_TARGETS}
 		)
 
-target_link_libraries(ConvexPlanarPolytope3d
+target_link_libraries(TerrainModel
+		${catkin_LIBRARIES}
+		)
+
+add_executable(TerrainVisualizationNode
+		src/TerrainVisualizationNode.cpp)
+target_link_libraries(TerrainVisualizationNode
+		TerrainModel
 		${catkin_LIBRARIES}
 		)
 
@@ -78,7 +88,7 @@ target_link_libraries(ConvexPlanarPolytope3d
 ## Install ##
 #############
 
-install(TARGETS ${PROJECT_NAME} ConvexPlanarPolytope3d
+install(TARGETS ${PROJECT_NAME} TerrainModel
 		ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
 		LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
 		RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
@@ -86,6 +96,19 @@ install(TARGETS ${PROJECT_NAME} ConvexPlanarPolytope3d
 
 install(DIRECTORY include/${PROJECT_NAME}/
 		DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION})
+
+#############
+## Testing ##
+#############
+
+# Build unit tests
+catkin_add_gtest(testTerrainModel
+		test/ground/testTerrainModel.cpp
+		)
+target_link_libraries(testTerrainModel
+		TerrainModel
+		${catkin_LIBRARIES}
+		)
 
 ###########################
 ## doxygen documentation ##

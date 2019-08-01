@@ -54,6 +54,8 @@ Eigen::Matrix<double, 4, 1> getSingleHalveSpace(const Eigen::Vector3d& p0, const
  */
 Eigen::MatrixXd toHalfSpaces(const ConvexPlanarPolytope3d& polytope);
 
+ConvexPlanarPolytope3d createSquare(double scale, Eigen::Vector3d offset);
+
 }  // namespace switched_model
 
 #endif  // OCS2_CTRL_CONVEXPLANARPOLYTOPE3D_H

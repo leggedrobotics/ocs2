@@ -26,7 +26,7 @@
 #include "ocs2_switched_model_interface/core/KinematicsModelBase.h"
 #include "ocs2_switched_model_interface/core/Model_Settings.h"
 #include "ocs2_switched_model_interface/core/SwitchedModel.h"
-#include "ocs2_switched_model_interface/ground/ConvexPlanarPolytope3d.h"
+#include "ocs2_switched_model_interface/ground/TerrainModel.h"
 #include "ocs2_switched_model_interface/logic/SwitchedModelLogicRulesBase.h"
 #include "ocs2_switched_model_interface/state_constraint/EndEffectorConstraintBase.h"
 
@@ -89,8 +89,9 @@ class ComKinoConstraintBaseAD : public ocs2::ConstraintBase<12 + JOINT_COORD_SIZ
   const std::array<std::string, 4> feetNames{"LF", "RF", "LH", "RH"};
 
   ComKinoConstraintBaseAD(const kinematic_model_t& kinematicModel, const ad_kinematic_model_t& adKinematicModel, const com_model_t& comModel,
-                        const ad_com_model_t& adComModel, std::shared_ptr<const logic_rules_t> logicRulesPtr, const Model_Settings& options = Model_Settings())
-      : Base(), adKinematicModelPtr_(adKinematicModel.clone()), adComModelPtr_(adComModel.clone()), logicRulesPtr_(std::move(logicRulesPtr)), options_(options) {
+                        const ad_com_model_t& adComModel, std::shared_ptr<const logic_rules_t> logicRulesPtr, std::shared_ptr<const TerrainModel> terrainModel = nullptr,
+                        const Model_Settings& options = Model_Settings())
+      : Base(), adKinematicModelPtr_(adKinematicModel.clone()), adComModelPtr_(adComModel.clone()), logicRulesPtr_(std::move(logicRulesPtr)), terrainModel_(std::move(terrainModel)), options_(options) {
     if (!logicRulesPtr_) {
       throw std::runtime_error("[ComKinoConstraintBaseAD] logicRules cannot be a nullptr");
     }
@@ -107,63 +108,12 @@ class ComKinoConstraintBaseAD : public ocs2::ConstraintBase<12 + JOINT_COORD_SIZ
         equalityStateInputConstraintCollection_(rhs.equalityStateInputConstraintCollection_),
         eePosConSettings_(rhs.eePosConSettings_),
         eeVelConSettings_(rhs.eeVelConSettings_),
-        polytopes(rhs.polytopes){}
+        terrainModel_(rhs.terrainModel_){}
 
   /**
    * Initialize Constraint Terms
    */
   void InitializeConstraintTerms() {
-//    // LF
-//    switched_model::ConvexPlanarPolytope3d polytope0;
-//    {
-//    Eigen::Vector3d offset0;
-//    offset0 << 0.2, 0.2, 0.0;
-//    polytope0.resize(4);
-//    Eigen::Vector3d point00; point00 << -0.0, -0.141, 0.0; point00 += offset0; polytope0.push_back(point00);
-//    Eigen::Vector3d point01; point01 <<  0.141, 0.0, 0.0;  point01 += offset0; polytope0.push_back(point01);
-//    Eigen::Vector3d point02; point02 <<  0.0, 0.141, 0.0;  point02 += offset0; polytope0.push_back(point02);
-//    Eigen::Vector3d point03; point03 << -0.141, 0.0, 0.0;  point03 += offset0; polytope0.push_back(point03);
-//    }
-//
-//    // RH
-//    switched_model::ConvexPlanarPolytope3d polytope1;
-//    {
-//    Eigen::Vector3d offset1{0.35, -0.25, 0.0};
-//    polytope1.resize(3);
-//    Eigen::Vector3d point10 {-0.1, -0.1, 0.0}; point10 += offset1; polytope1.push_back(point10);
-//    Eigen::Vector3d point11 { 0.1, -0.1, 0.0};  point11 += offset1; polytope1.push_back(point11);
-//    Eigen::Vector3d point12 {  0.0, 0.1, 0.0};  point12 += offset1; polytope1.push_back(point12);
-//    }
-//
-//    // LH
-//    switched_model::ConvexPlanarPolytope3d polytope2;
-//    {
-//    Eigen::Vector3d offset2 {-0.3, 0.2, 0.0};
-//    offset2 << ;
-//    polytope2.resize(4);
-//    Eigen::Vector3d point20{ -0.1, -0.1, 0.0};  point20 += offset2; polytope2.push_back(point20);
-//    Eigen::Vector3d point21{ 0.1, -0.1, 0.0};  point21 += offset2; polytope2.push_back(point21);
-//    Eigen::Vector3d point22{ 0.1, 0.1, 0.0}; point22 += offset2; polytope2.push_back(point22);
-//    Eigen::Vector3d point23{ -0.1, 0.1, 0.0};  point23 += offset2; polytope2.push_back(point23);
-//    }
-//
-//    // LH
-//    switched_model::ConvexPlanarPolytope3d polytope3;
-//    {
-//      Eigen::Vector3d offset3 {-0.2, -0.15, 0.0};
-//      polytope2.resize(5);
-//      Eigen::Vector3d point30{-0.1, -0.1, 0.0}; point30 += offset3; polytope3.push_back(point30);
-//      Eigen::Vector3d point31{0.1, -0.1, 0.0}; point31 += offset3; polytope3.push_back(point31);
-//      Eigen::Vector3d point32{0.167, 0.067, 0.0}; point32 += offset3; polytope3.push_back(point32);
-//      Eigen::Vector3d point33{0.0, 0.167, 0.0}; point33 += offset3; polytope3.push_back(point33);
-//      Eigen::Vector3d point34{-0.167, 0.067, 0.0}; point34 += offset3; polytope3.push_back(point34);
-//    }
-//
-//    polytopes.reserve(4);
-//    polytopes.push_back(polytope0);
-//    polytopes.push_back(polytope1);
-//    polytopes.push_back(polytope2);
-//    polytopes.push_back(polytope3);
 
     for (int i = 0; i < NUM_CONTACT_POINTS_; i++) {
       auto footName = feetNames[i];
@@ -237,6 +187,7 @@ class ComKinoConstraintBaseAD : public ocs2::ConstraintBase<12 + JOINT_COORD_SIZ
 
   std::array<EndEffectorVelocityConstraintSettings, 4> eeVelConSettings_;
   std::array<EndEffectorPositionConstraintSettings, 4> eePosConSettings_;
+  std::shared_ptr<const TerrainModel> terrainModel_;
   ConvexPlanarPolytope3dArray polytopes;
 
   LinearConstraintApproximationAsMatrices_t linearStateInputConstraintApproximation_;

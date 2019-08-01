@@ -59,12 +59,17 @@ void ComKinoConstraintBaseAD<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::setCurrent
       }
       EEVelConstraint->configure(eeVelConSettings_[i]);
     } else {
+      GaitSequence gaitSequence;
+      gaitSequence.time = logicRulesPtr_->eventTimes();
+      gaitSequence.contactFlags = logicRulesPtr_->getContactFlagsSequence();
+
       // Position constraints in both stance and swing
       EEPosConstraint->setActivity(true);
       if (stanceLegs_[i]) {
-        Eigen::MatrixXd planarPolytopes = constraintScale * switched_model::toHalfSpaces(polytopes[i]);
-        eePosConSettings_[i].Ab.resize(planarPolytopes.rows() + 2, planarPolytopes.cols());
-        eePosConSettings_[i].Ab << planarPolytopes,
+        auto terrainConstraint = terrainModel_->getTerrainConstraints(t, i);
+        eePosConSettings_[i].Ab.resize(terrainConstraint.rows() + 2, terrainConstraint.cols());
+        eePosConSettings_[i].Ab <<
+            constraintScale*terrainConstraint,
             0.0, 0.0, constraintScale, 0.0,
             0.0, 0.0, -constraintScale, 0.0;
       } else {

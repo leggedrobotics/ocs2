@@ -27,6 +27,11 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
+#include <ocs2_comm_interfaces/ocs2_ros_interfaces/mrt/MRT_ROS_Interface.h>
+
+#include <ocs2_core/control/FeedforwardController.h>
+#include <ocs2_core/control/LinearController.h>
+
 namespace ocs2 {
 
 /******************************************************************************************************/
@@ -34,32 +39,9 @@ namespace ocs2 {
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
 MRT_ROS_Interface<STATE_DIM, INPUT_DIM>::MRT_ROS_Interface(std::string robotName /*= "robot"*/,
-                                                           std::shared_ptr<HybridLogicRules> logicRules /*= nullptr*/) {
-  if (!logicRules) {
-    logicRules.reset(new NullLogicRules());
-  }
-  set(std::move(robotName), std::move(logicRules));
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM>
-MRT_ROS_Interface<STATE_DIM, INPUT_DIM>::~MRT_ROS_Interface() {
-  shutdownNodes();
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM>
-void MRT_ROS_Interface<STATE_DIM, INPUT_DIM>::set(std::string robotName, std::shared_ptr<HybridLogicRules> logicRules) {
-  logicMachinePtr_.reset(new logic_machine_t(std::move(logicRules)));
-
+                                                           std::shared_ptr<HybridLogicRules> logicRules /*= nullptr*/)
+    : Base(logicRules) {
   robotName_ = std::move(robotName);
-
-  // reset variables
-  reset();
 
   // Start thread for publishing
 #ifdef PUBLISH_THREAD
@@ -69,6 +51,14 @@ void MRT_ROS_Interface<STATE_DIM, INPUT_DIM>::set(std::string robotName, std::sh
 
   publisherWorker_ = std::thread(&MRT_ROS_Interface::publisherWorkerThread, this);
 #endif
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+template <size_t STATE_DIM, size_t INPUT_DIM>
+MRT_ROS_Interface<STATE_DIM, INPUT_DIM>::~MRT_ROS_Interface() {
+  shutdownNodes();
 }
 
 /******************************************************************************************************/
@@ -85,47 +75,10 @@ void MRT_ROS_Interface<STATE_DIM, INPUT_DIM>::sigintHandler(int sig) {
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
 void MRT_ROS_Interface<STATE_DIM, INPUT_DIM>::reset() {
-  std::lock(policyMutexBuffer_, policyMutex_);
-  std::lock_guard<std::mutex> lkUpdate(policyMutexBuffer_, std::adopt_lock);
-  std::lock_guard<std::mutex> lkRead(policyMutex_, std::adopt_lock);
-
-  messageHash_ = std::numeric_limits<size_t>::max();
-  messageHashBuffer_ = 0;
-
-  logicUpdated_ = false;
-  policyUpdated_ = false;
-  policyUpdatedBuffer_ = false;
-  policyReceivedEver_ = false;
-
+  Base::reset();
+  std::lock_guard<std::mutex> lkUpdate(this->policyBufferMutex_);
   terminateThread_ = false;
   readyToPublish_ = false;
-
-  mpcLinInterpolateState_.setZero();
-
-  eventTimes_.clear();
-  eventTimesBuffer_.clear();
-  subsystemsSequence_.clear();
-  subsystemsSequenceBuffer_.clear();
-  partitioningTimesUpdate(0.0, partitioningTimes_);
-  partitioningTimesUpdate(0.0, partitioningTimesBuffer_);
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM>
-size_t MRT_ROS_Interface<STATE_DIM, INPUT_DIM>::messageHashValue(const system_observation_t& observation) const {
-  return (observation.time() * 1.0e+6);
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM>
-void MRT_ROS_Interface<STATE_DIM, INPUT_DIM>::partitioningTimesUpdate(const scalar_t& time, scalar_array_t& partitioningTimes) const {
-  partitioningTimes.resize(2);
-  partitioningTimes[0] = (policyReceivedEver_.load() == true) ? initPlanObservation_.time() : time;
-  partitioningTimes[1] = std::numeric_limits<scalar_t>::max();
 }
 
 /******************************************************************************************************/
@@ -133,14 +86,14 @@ void MRT_ROS_Interface<STATE_DIM, INPUT_DIM>::partitioningTimesUpdate(const scal
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
 void MRT_ROS_Interface<STATE_DIM, INPUT_DIM>::resetMpcNode(const cost_desired_trajectories_t& initCostDesiredTrajectories) {
-  policyReceivedEver_ = false;
+  this->policyReceivedEver_ = false;
 
   ocs2_comm_interfaces::reset resetSrv;
   resetSrv.request.reset = true;
 
   RosMsgConversions<STATE_DIM, INPUT_DIM>::CreateTargetTrajectoriesMsg(initCostDesiredTrajectories, resetSrv.request.targetTrajectories);
 
-  if (mpcResetServiceClient_.waitForExistence()) {
+  if (mpcResetServiceClient_.waitForExistence(ros::Duration(5.0))) {
     mpcResetServiceClient_.call(resetSrv);
     ROS_INFO_STREAM("MPC node is reset.");
   } else {
@@ -185,12 +138,12 @@ void MRT_ROS_Interface<STATE_DIM, INPUT_DIM>::publishObservation(const system_ob
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
 void MRT_ROS_Interface<STATE_DIM, INPUT_DIM>::publisherWorkerThread() {
-  while (terminateThread_ == false) {
+  while (!terminateThread_) {
     std::unique_lock<std::mutex> lk(publisherMutex_);
 
     msgReady_.wait(lk, [&] { return (readyToPublish_ || terminateThread_); });
 
-    if (terminateThread_ == true) {
+    if (terminateThread_) {
       break;
     }
 
@@ -201,7 +154,6 @@ void MRT_ROS_Interface<STATE_DIM, INPUT_DIM>::publisherWorkerThread() {
     lk.unlock();
     msgReady_.notify_one();
 
-    // publish the message
     mpcObservationPublisher_.publish(mpcObservationMsgBuffer_);
   }
 }
@@ -213,62 +165,55 @@ template <size_t STATE_DIM, size_t INPUT_DIM>
 void MRT_ROS_Interface<STATE_DIM, INPUT_DIM>::mpcPolicyCallback(const ocs2_comm_interfaces::mpc_flattened_controller::ConstPtr& msg) {
   //	std::cout << "\t Plan is received at time: " << msg->initObservation.time << std::endl;
 
-  std::lock_guard<std::mutex> lk(policyMutexBuffer_);
+  std::lock_guard<std::mutex> lk(this->policyBufferMutex_);
 
-  // if the policy is not updated
+  // if mpc did not update the policy
   if (!static_cast<bool>(msg->controllerIsUpdated)) {
-    mpcInitObservationBuffer_ = system_observation_t();
-    mpcCostDesiredTrajectoriesBuffer_.clear();
-    policyUpdatedBuffer_ = false;
-    eventTimesBuffer_.clear();
-    subsystemsSequenceBuffer_.clear();
-    mpcTimeTrajectoryBuffer_.clear();
-    mpcStateTrajectoryBuffer_.clear();
-    mpcControllerBufferPtr_.reset(nullptr);
+    this->mpcInitObservationBuffer_ = system_observation_t();
+    this->mpcCostDesiredTrajectoriesBuffer_.clear();
+    this->policyUpdatedBuffer_ = false;
+    this->eventTimesBuffer_.clear();
+    this->subsystemsSequenceBuffer_.clear();
+    this->mpcTimeTrajectoryBuffer_.clear();
+    this->mpcStateTrajectoryBuffer_.clear();
+    this->mpcControllerBuffer_.reset(nullptr);
 
-    // It is important that the buffer message's hash get updated at the very last
-    // since it will signal the updatePolicy method to swap buffer.
-    // Although data is protected from racing however it will cause unnecessary delay
-    messageHashBuffer_ = messageHashValue(mpcInitObservationBuffer_);
+    this->newPolicyInBuffer_ = true;
 
     return;
   }
 
-  ros_msg_conversions_t::ReadObservationMsg(msg->initObservation, mpcInitObservationBuffer_);
+  ros_msg_conversions_t::ReadObservationMsg(msg->initObservation, this->mpcInitObservationBuffer_);
+  ros_msg_conversions_t::ReadTargetTrajectoriesMsg(msg->planTargetTrajectories, this->mpcCostDesiredTrajectoriesBuffer_);
+  ros_msg_conversions_t::ReadModeSequenceMsg(msg->modeSequence, this->eventTimesBuffer_, this->subsystemsSequenceBuffer_);
 
-  ros_msg_conversions_t::ReadTargetTrajectoriesMsg(msg->planTargetTrajectories, mpcCostDesiredTrajectoriesBuffer_);
+  this->policyUpdatedBuffer_ = msg->controllerIsUpdated;
 
-  policyUpdatedBuffer_ = msg->controllerIsUpdated;
-
-  ros_msg_conversions_t::ReadModeSequenceMsg(msg->modeSequence, eventTimesBuffer_, subsystemsSequenceBuffer_);
-
-  const scalar_t partitionInitMargin = 1e-1;
-  partitioningTimesUpdate(mpcInitObservationBuffer_.time() - partitionInitMargin, partitioningTimesBuffer_);
+  const scalar_t partitionInitMargin = 1e-1;  //! @badcode Is this necessary?
+  this->partitioningTimesUpdate(this->mpcInitObservationBuffer_.time() - partitionInitMargin, this->partitioningTimesBuffer_);
 
   const size_t N = msg->timeTrajectory.size();
-  mpcTimeTrajectoryBuffer_.clear();
-  mpcTimeTrajectoryBuffer_.reserve(N);
-  mpcStateTrajectoryBuffer_.clear();
-  mpcStateTrajectoryBuffer_.reserve(N);
+  this->mpcTimeTrajectoryBuffer_.clear();
+  this->mpcTimeTrajectoryBuffer_.reserve(N);
+  this->mpcStateTrajectoryBuffer_.clear();
+  this->mpcStateTrajectoryBuffer_.reserve(N);
 
   for (size_t i = 0; i < N; i++) {
-    // time
-    mpcTimeTrajectoryBuffer_.push_back(msg->timeTrajectory[i]);
-    // state
-    mpcStateTrajectoryBuffer_.push_back(
+    this->mpcTimeTrajectoryBuffer_.push_back(msg->timeTrajectory[i]);
+    this->mpcStateTrajectoryBuffer_.push_back(
         Eigen::Map<const Eigen::Matrix<float, STATE_DIM, 1>>(msg->stateTrajectory[i].value.data(), STATE_DIM).template cast<scalar_t>());
   }  // end of i loop
 
-  // instantiate the correct control
+  // instantiate the correct controller
   switch (msg->controllerType) {
     case ocs2_comm_interfaces::mpc_flattened_controller::CONTROLLER_FEEDFORWARD: {
       using controller_t = FeedforwardController<STATE_DIM, INPUT_DIM>;
-      mpcControllerBufferPtr_.reset(new controller_t());
+      this->mpcControllerBuffer_.reset(new controller_t());
       break;
     }
     case ocs2_comm_interfaces::mpc_flattened_controller::CONTROLLER_LINEAR: {
       using controller_t = LinearController<STATE_DIM, INPUT_DIM>;
-      mpcControllerBufferPtr_.reset(new controller_t());
+      this->mpcControllerBuffer_.reset(new controller_t());
       break;
     }
     default:
@@ -286,176 +231,19 @@ void MRT_ROS_Interface<STATE_DIM, INPUT_DIM>::mpcPolicyCallback(const ocs2_comm_
   }
 
   // load the message data into controller
-  mpcControllerBufferPtr_->unFlatten(mpcTimeTrajectoryBuffer_, controllerDataPtrArray);
+  this->mpcControllerBuffer_->unFlatten(this->mpcTimeTrajectoryBuffer_, controllerDataPtrArray);
 
   // customized adjustment
-  modifyBufferPolicy(mpcInitObservationBuffer_, *mpcControllerBufferPtr_, mpcTimeTrajectoryBuffer_, mpcStateTrajectoryBuffer_,
-                     eventTimesBuffer_, subsystemsSequenceBuffer_);
+  this->modifyBufferPolicy(this->mpcInitObservationBuffer_, *this->mpcControllerBuffer_, this->mpcTimeTrajectoryBuffer_,
+                           this->mpcStateTrajectoryBuffer_, this->eventTimesBuffer_, this->subsystemsSequenceBuffer_);
 
-  if (policyReceivedEver_.load() == false && policyUpdatedBuffer_ == true) {
-    policyReceivedEver_ = true;
-    initPlanObservation_ = mpcInitObservationBuffer_;
-    initCall(initPlanObservation_);
+  if (!this->policyReceivedEver_ && this->policyUpdatedBuffer_) {
+    this->policyReceivedEver_ = true;
+    this->initPlanObservation_ = this->mpcInitObservationBuffer_;
+    this->initCall(this->initPlanObservation_);
   }
 
-  // It is important that the buffer message's hash get updated at the very last
-  // since it will signal the updatePolicy method to swap buffer.
-  // Although data is protected from racing however it will cause unnecessary delay
-  messageHashBuffer_ = messageHashValue(mpcInitObservationBuffer_);
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM>
-bool MRT_ROS_Interface<STATE_DIM, INPUT_DIM>::updatePolicy() {
-  std::lock(policyMutexBuffer_, policyMutex_);
-  std::lock_guard<std::mutex> lkUpdate(policyMutexBuffer_, std::adopt_lock);
-  std::lock_guard<std::mutex> lkRead(policyMutex_, std::adopt_lock);
-
-  if (messageHash_ == messageHashBuffer_ || policyUpdatedBuffer_ == false) {
-    return false;
-  }
-
-  // should not be swapped
-  messageHash_ = messageHashBuffer_;
-
-  mpcInitObservation_.swap(mpcInitObservationBuffer_);
-
-  mpcCostDesiredTrajectories_.swap(mpcCostDesiredTrajectoriesBuffer_);
-
-  policyUpdated_ = policyUpdatedBuffer_;
-
-  // check whether logic rules needs to be updated
-  logicUpdated_ = false;
-  if (subsystemsSequence_ != subsystemsSequenceBuffer_) {
-    subsystemsSequence_.swap(subsystemsSequenceBuffer_);
-    logicUpdated_ = true;
-  }
-  if (eventTimes_ != eventTimesBuffer_) {
-    eventTimes_.swap(eventTimesBuffer_);
-    logicUpdated_ = true;
-  }
-  if (partitioningTimes_ != partitioningTimesBuffer_) {
-    partitioningTimes_.swap(partitioningTimesBuffer_);
-    logicUpdated_ = true;
-  }
-
-  // update logic rules
-  if (logicUpdated_ == true) {
-    // set mode sequence
-    logicMachinePtr_->getLogicRulesPtr()->setModeSequence(subsystemsSequence_, eventTimes_);
-    // Tell logicMachine that logicRules are modified
-    logicMachinePtr_->logicRulesUpdated();
-    // update logicMachine
-    logicMachinePtr_->updateLogicRules(partitioningTimes_);
-
-    // function for finding active subsystem
-    const size_t partitionIndex = 0;  // we assume only one partition
-    findActiveSubsystemFnc_ = std::move(logicMachinePtr_->getHandleToFindActiveEventCounter(partitionIndex));
-  }
-
-  mpcTimeTrajectory_.swap(mpcTimeTrajectoryBuffer_);
-  mpcStateTrajectory_.swap(mpcStateTrajectoryBuffer_);
-  mpcLinInterpolateState_.setData(&mpcTimeTrajectory_, &mpcStateTrajectory_);
-
-  mpcControllerPtr_.swap(mpcControllerBufferPtr_);
-
-  modifyPolicy(logicUpdated_, *mpcControllerPtr_, mpcTimeTrajectory_, mpcStateTrajectory_, eventTimes_, subsystemsSequence_);
-
-  return true;
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM>
-bool MRT_ROS_Interface<STATE_DIM, INPUT_DIM>::mpcIsTerminated() const {
-  std::lock_guard<std::mutex> lk(policyMutex_);
-  return !policyUpdated_;
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM>
-bool MRT_ROS_Interface<STATE_DIM, INPUT_DIM>::initialPolicyReceived() const {
-  return policyReceivedEver_.load();
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM>
-const typename MRT_ROS_Interface<STATE_DIM, INPUT_DIM>::cost_desired_trajectories_t&
-MRT_ROS_Interface<STATE_DIM, INPUT_DIM>::mpcCostDesiredTrajectories() const {
-  std::lock_guard<std::mutex> lk(policyMutex_);
-  return mpcCostDesiredTrajectories_;
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM>
-void MRT_ROS_Interface<STATE_DIM, INPUT_DIM>::initRollout(const controlled_system_base_t& controlSystemBase,
-                                                          const Rollout_Settings& rolloutSettings) {
-  rolloutPtr_.reset(new time_triggered_rollout_t(controlSystemBase, rolloutSettings, "mrt"));
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM>
-void MRT_ROS_Interface<STATE_DIM, INPUT_DIM>::evaluatePolicy(const scalar_t& currentTime, const state_vector_t& currentState,
-                                                             state_vector_t& mpcState, input_vector_t& mpcInput, size_t& subsystem) {
-  if (currentTime > mpcTimeTrajectory_.back()) {
-    ROS_WARN_STREAM("The requested currentTime is greater than the received plan: " + std::to_string(currentTime) + ">" +
-                    std::to_string(mpcTimeTrajectory_.back()));
-  }
-
-  mpcInput = mpcControllerPtr_->computeInput(currentTime, currentState);
-  mpcLinInterpolateState_.interpolate(currentTime, mpcState);
-
-  size_t index = findActiveSubsystemFnc_(currentTime);
-  subsystem = logicMachinePtr_->getLogicRulesPtr()->subsystemsSequence().at(index);
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM>
-void MRT_ROS_Interface<STATE_DIM, INPUT_DIM>::rolloutPolicy(const scalar_t& currentTime, const state_vector_t& currentState,
-                                                            const scalar_t& timeStep, state_vector_t& mpcState, input_vector_t& mpcInput,
-                                                            size_t& subsystem) {
-  if (currentTime > mpcTimeTrajectory_.back()) {
-    ROS_WARN_STREAM("The requested currentTime is greater than the received plan: " + std::to_string(currentTime) + ">" +
-                    std::to_string(mpcTimeTrajectory_.back()));
-  }
-
-  if (!rolloutPtr_) {
-    throw std::runtime_error("MRT_ROS_interface: rolloutPtr is not initialized, call initRollout first.");
-  }
-
-  const size_t activePartitionIndex = 0;  // there is only one partition.
-  scalar_t finalTime = currentTime + timeStep;
-  scalar_array_t timeTrajectory;
-  size_array_t eventsPastTheEndIndeces;
-  state_vector_array_t stateTrajectory;
-  input_vector_array_t inputTrajectory;
-
-  // perform a rollout
-  if (policyUpdated_ == true) {
-    rolloutPtr_->run(activePartitionIndex, currentTime, currentState, finalTime, mpcControllerPtr_.get(), *logicMachinePtr_, timeTrajectory,
-                     eventsPastTheEndIndeces, stateTrajectory, inputTrajectory);
-  } else {
-    throw std::runtime_error("MRT_ROS_interface: policy should be updated before rollout.");
-  }
-
-  mpcState = stateTrajectory.back();
-  mpcInput = inputTrajectory.back();
-
-  size_t index = findActiveSubsystemFnc_(finalTime);
-  subsystem = logicMachinePtr_->getLogicRulesPtr()->subsystemsSequence().at(index);
+  this->newPolicyInBuffer_ = true;
 }
 
 /******************************************************************************************************/

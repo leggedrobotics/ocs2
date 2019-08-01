@@ -41,83 +41,73 @@ namespace ocs2 {
 namespace double_integrator {
 
 class MRT_ROS_Dummy_Linear_System : public MRT_ROS_Dummy_Loop<double_integrator::STATE_DIM_, double_integrator::INPUT_DIM_> {
-public:
-	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+ public:
+  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-	typedef MRT_ROS_Dummy_Loop<double_integrator::STATE_DIM_, double_integrator::INPUT_DIM_> BASE;
+  typedef MRT_ROS_Dummy_Loop<double_integrator::STATE_DIM_, double_integrator::INPUT_DIM_> BASE;
 
-	/**
-	 * Constructor.
-	 *
-	 * @param [in] mrtPtr
-	 * @param [in] mrtDesiredFrequency: MRT loop frequency in Hz. This should always set to a positive number.
-	 * @param [in] mpcDesiredFrequency: MPC loop frequency in Hz. If set to a positive number, MPC loop
-	 * will be simulated to run by this frequency. Note that this might not be the MPC's realtime frequency.
-	 */
-	MRT_ROS_Dummy_Linear_System(
-			const mrt_ptr_t& mrtPtr,
-			const scalar_t& mrtDesiredFrequency,
-			const scalar_t& mpcDesiredFrequency,
-			controlled_system_base_t* system = nullptr,
-			Rollout_Settings rolloutSettings = Rollout_Settings())
-	: BASE(mrtPtr, mrtDesiredFrequency, mpcDesiredFrequency, system, rolloutSettings)
-	{}
+  /**
+   * Constructor.
+   *
+   * @param [in] mrtPtr
+   * @param [in] mrtDesiredFrequency: MRT loop frequency in Hz. This should always set to a positive number.
+   * @param [in] mpcDesiredFrequency: MPC loop frequency in Hz. If set to a positive number, MPC loop
+   * will be simulated to run by this frequency. Note that this might not be the MPC's realtime frequency.
+   */
+  MRT_ROS_Dummy_Linear_System(const mrt_ptr_t& mrtPtr, const scalar_t& mrtDesiredFrequency, const scalar_t& mpcDesiredFrequency,
+                              controlled_system_base_t* system = nullptr, Rollout_Settings rolloutSettings = Rollout_Settings())
+      : BASE(mrtPtr, mrtDesiredFrequency, mpcDesiredFrequency, system, rolloutSettings) {}
 
-	/**
-	 * Destructor.
-	 */
-	~MRT_ROS_Dummy_Linear_System() override = default;
+  /**
+   * Destructor.
+   */
+  ~MRT_ROS_Dummy_Linear_System() override = default;
 
-protected:
-	/**
-	 * Launches the visualization node
-	 *
-	 * @param [in] argc: command line number of inputs.
-	 * @param [in] argv: command line inputs' value.
-	 */
-	void launchVisualizerNode(
-			int argc, char* argv[]) override {
+ protected:
+  /**
+   * Launches the visualization node
+   *
+   * @param [in] argc: command line number of inputs.
+   * @param [in] argv: command line inputs' value.
+   */
+  void launchVisualizerNode(int argc, char* argv[]) override {
+    ros::init(argc, argv, "double_integrator_visualization_node");
+    ros::NodeHandle n;
+    jointPublisher_ = n.advertise<sensor_msgs::JointState>("joint_states", 1);
+    ROS_INFO_STREAM("Waiting for visualization subscriber ...");
+    while (ros::ok() && jointPublisher_.getNumSubscribers() == 0) {
+      ros::Rate(100).sleep();
+    }
+    ROS_INFO_STREAM("Visualization subscriber is connected.");
+  }
 
-		ros::init(argc, argv, "double_integrator_visualization_node");
-		ros::NodeHandle n;
-		jointPublisher_ = n.advertise<sensor_msgs::JointState>("joint_states", 1);
-		ROS_INFO_STREAM("Waiting for visualization subscriber ...");
-		while(ros::ok() && jointPublisher_.getNumSubscribers() == 0) {
-			ros::Rate(100).sleep();
-		}
-		ROS_INFO_STREAM("Visualization subscriber is connected.");
-	}
+  /**
+   * Visualizes the current observation.
+   *
+   * @param [in] observation: The current observation.
+   * @param [in] costDesiredTrajectories: The commanded target trajectory or point.
+   */
+  void publishVisualizer(const system_observation_t& observation, const cost_desired_trajectories_t& costDesiredTrajectories) override {
+    sensor_msgs::JointState joint_state;
+    joint_state.header.stamp = ros::Time::now();
+    joint_state.name.resize(2);
+    joint_state.position.resize(2);
+    joint_state.name[0] = "slider_to_cart";
+    joint_state.position[0] = observation.state()(0);
+    joint_state.name[1] = "slider_to_target";
+    joint_state.position[1] = costDesiredTrajectories.desiredStateTrajectory()[0](0);
 
-	/**
-	 * Visualizes the current observation.
-	 *
-	 * @param [in] observation: The current observation.
-	 * @param [in] costDesiredTrajectories: The commanded target trajectory or point.
-	 */
-	void publishVisualizer(
-			const system_observation_t& observation,
-			const cost_desired_trajectories_t& costDesiredTrajectories) override {
+    jointPublisher_.publish(joint_state);
+    //		std::cout << "Target " << costDesiredTrajectories.desiredStateTrajectory()[0](0) << std::endl;
+    //		std::cout << "State  " << observation.state()[0] << " , " << observation.state()[1] << std::endl;
+    //		std::cout << "Input  " << observation.input()[0] << std::endl;
+  }
 
-		sensor_msgs::JointState joint_state;
-		joint_state.header.stamp = ros::Time::now();
-		joint_state.name.resize(2);
-		joint_state.position.resize(2);
-		joint_state.name[0] ="slider_to_cart";
-		joint_state.position[0] = observation.state()(0);
-		joint_state.name[1] ="slider_to_target";
-		joint_state.position[1] = costDesiredTrajectories.desiredStateTrajectory()[0](0);
-
-		jointPublisher_.publish(joint_state);
-//		std::cout << "Target " << costDesiredTrajectories.desiredStateTrajectory()[0](0) << std::endl;
-//		std::cout << "State  " << observation.state()[0] << " , " << observation.state()[1] << std::endl;
-//		std::cout << "Input  " << observation.input()[0] << std::endl;
-	}
-
-private:
-	ros::Publisher jointPublisher_;
+ private:
+  ros::Publisher jointPublisher_;
 };
 
-} // namespace double_integrator
-} // namespace ocs2
+}  // namespace double_integrator
+}  // namespace ocs2
 
 #endif /* MRT_ROS_DUMMY_DOUBLE_INTEGRATOR_OCS2_H_ */

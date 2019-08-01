@@ -33,7 +33,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 using namespace ocs2;
 using namespace double_integrator;
 using dim_t = ocs2::Dimensions<STATE_DIM_, INPUT_DIM_>;
-typedef MPC_Interface<dim_t::STATE_DIM_, dim_t::INPUT_DIM_> mpc_t;
+using mpc_t = MPC_Interface<dim_t::STATE_DIM_, dim_t::INPUT_DIM_>;
 
 int main(int argc, char** argv) {
   // task file
@@ -80,7 +80,7 @@ int main(int argc, char** argv) {
       mpc_t::input_vector_t optimalInput;
       size_t subsystem;
 
-      //TODO(johannes) Hacky, we call evaluatePolicy twice to retrieve the optimal state
+      // TODO(johannes) Hacky, we call evaluatePolicy twice to retrieve the optimal state
       mpcInterface.evaluatePolicy(time, mpc_t::state_vector_t::Zero(), optimalState, optimalInput, subsystem);
       mpcInterface.evaluatePolicy(time, optimalState, optimalState, optimalInput, subsystem);
 

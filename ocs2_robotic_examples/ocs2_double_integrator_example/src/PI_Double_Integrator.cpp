@@ -1,8 +1,8 @@
 #include <ocs2_oc/pi_solver/PiSolver.hpp>
 
+#include <ocs2_comm_interfaces/ocs2_ros_interfaces/mpc/MPC_ROS_Interface.h>
 #include <ocs2_double_integrator_example/cost/DoubleIntegratorCost.h>
 #include <ocs2_double_integrator_example/dynamics/DoubleIntegratorDynamics.h>
-#include <ocs2_comm_interfaces/ocs2_ros_interfaces/mpc/MPC_ROS_Interface.h>
 #include <ocs2_mpc/MPC_PI.h>
 #include <ocs2_mpc/MPC_Settings.h>
 #include <ocs2_oc/pi_solver/PI_Settings.h>
@@ -17,8 +17,7 @@ int main(int argc, char** argv) {
     throw std::runtime_error("No task file specified. Aborting.");
   }
 
-  std::string taskFile =
-      ros::package::getPath("ocs2_double_integrator_example") + "/config/" + std::string(argv[1]) + "/task.info";
+  std::string taskFile = ros::package::getPath("ocs2_double_integrator_example") + "/config/" + std::string(argv[1]) + "/task.info";
 
   using dynamics_t = ocs2::double_integrator::DoubleIntegratorDynamics;
   constexpr auto STATE_DIM = dynamics_t::DIMENSIONS::STATE_DIM_;

@@ -78,6 +78,12 @@ class MRT_BASE {
   bool initialPolicyReceived() const { return policyReceivedEver_; }
 
   /**
+   * @brief setCurrentObservation notifies MPC of a new state
+   * @param observation: the current measurement to send to the MPC
+   */
+  virtual void setCurrentObservation(const SystemObservation<STATE_DIM, INPUT_DIM>& observation) = 0;
+
+  /**
    * Gets a reference to CostDesiredTrajectories for which the current policy is optimized for.
    * @warning access to the returned reference is not threadsafe. Read access and calls to updatePolicy() must be synced by the user.
    *

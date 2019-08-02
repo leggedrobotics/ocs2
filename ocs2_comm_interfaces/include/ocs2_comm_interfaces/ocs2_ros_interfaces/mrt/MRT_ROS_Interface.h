@@ -135,13 +135,7 @@ class MRT_ROS_Interface : public MRT_BASE<STATE_DIM, INPUT_DIM> {
    */
   ::ros::NodeHandlePtr& nodeHandle();
 
-  /**
-   * Publishes the current observation on a separate thread
-   * without blocking the main thread.
-   *
-   * @param [in] currentObservation: The current observation.
-   */
-  void publishObservation(const system_observation_t& currentObservation);
+  void setCurrentObservation(const system_observation_t& currentObservation) override;
 
  protected:
   /**

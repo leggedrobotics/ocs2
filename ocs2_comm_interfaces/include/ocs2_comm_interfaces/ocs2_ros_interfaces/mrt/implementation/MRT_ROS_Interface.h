@@ -104,7 +104,7 @@ void MRT_ROS_Interface<STATE_DIM, INPUT_DIM>::publishDummy() {
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
-void MRT_ROS_Interface<STATE_DIM, INPUT_DIM>::publishObservation(const system_observation_t& currentObservation) {
+void MRT_ROS_Interface<STATE_DIM, INPUT_DIM>::setCurrentObservation(const system_observation_t& currentObservation) {
 #ifdef PUBLISH_THREAD
   std::unique_lock<std::mutex> lk(publisherMutex_);
 #endif

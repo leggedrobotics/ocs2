@@ -406,8 +406,6 @@ class DDP_BASE : public Solver_BASE<STATE_DIM, INPUT_DIM> {
 
   const scalar_array_t& getPartitioningTimes() const override;
 
-  void getCostDesiredTrajectoriesPtr(const cost_desired_trajectories_t*& costDesiredTrajectoriesPtr) const override;
-
   void rewindOptimizer(const size_t& firstIndex) override;
 
   const unsigned long long int& getRewindCounter() const override;
@@ -665,8 +663,6 @@ class DDP_BASE : public Solver_BASE<STATE_DIM, INPUT_DIM> {
   Rollout_Settings rolloutSettings_;
 
   std::string algorithmName_;
-
-  cost_desired_trajectories_t costDesiredTrajectories_;
 
   unsigned long long int rewindCounter_;
 

@@ -77,6 +77,23 @@ void Solver_BASE<STATE_DIM, INPUT_DIM>::swapCostDesiredTrajectories(scalar_array
 }
 
 template <size_t STATE_DIM, size_t INPUT_DIM>
+void Solver_BASE<STATE_DIM, INPUT_DIM>::getCostDesiredTrajectoriesPtr(
+    const cost_desired_trajectories_t*& costDesiredTrajectoriesPtr) const {
+  costDesiredTrajectoriesPtr = &costDesiredTrajectories_;
+}
+
+template <size_t STATE_DIM, size_t INPUT_DIM>
+bool Solver_BASE<STATE_DIM, INPUT_DIM>::updateCostDesiredTrajectories() {
+  if (costDesiredTrajectoriesUpdated_) {
+    std::lock_guard<std::mutex> lock(costDesiredTrajectoriesBufferMutex_);
+    costDesiredTrajectoriesUpdated_ = false;
+    costDesiredTrajectories_.swap(costDesiredTrajectoriesBuffer_);
+    return true;
+  }
+  return false;
+}
+
+template <size_t STATE_DIM, size_t INPUT_DIM>
 bool Solver_BASE<STATE_DIM, INPUT_DIM>::costDesiredTrajectoriesUpdated() const {
   return costDesiredTrajectoriesUpdated_;
 }

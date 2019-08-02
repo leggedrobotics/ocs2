@@ -65,17 +65,15 @@ class MRT_BASE {
   virtual void resetMpcNode(const CostDesiredTrajectories<scalar_t>& initCostDesiredTrajectories) = 0;
 
   /**
-   * This method will be called either after the very fist call of the class or after a call to reset().
-   * Users can use this function for any sort of initialization that they may need in the first call.
-   *
-   * @param [in] planObservation: The observation of the policy.
-   */
-  virtual void initCall(const SystemObservation<STATE_DIM, INPUT_DIM>& planObservation) {}
-
-  /**
    * Whether the initial MPC policy has been already received.
    */
   bool initialPolicyReceived() const { return policyReceivedEver_; }
+
+  /**
+   * @brief setCurrentObservation notifies MPC of a new state
+   * @param observation: the current measurement to send to the MPC
+   */
+  virtual void setCurrentObservation(const SystemObservation<STATE_DIM, INPUT_DIM>& observation) = 0;
 
   /**
    * Gets a reference to CostDesiredTrajectories for which the current policy is optimized for.

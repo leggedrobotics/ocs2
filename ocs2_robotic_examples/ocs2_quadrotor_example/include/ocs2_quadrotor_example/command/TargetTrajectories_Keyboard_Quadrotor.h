@@ -30,8 +30,11 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifndef TARGETTRAJECTORIES_KEYBOARD_QUADROTOR_OCS2_H_
 #define TARGETTRAJECTORIES_KEYBOARD_QUADROTOR_OCS2_H_
 
+#include <mutex>
 #include <ocs2_robotic_tools/command/TargetTrajectories_Keyboard_Interface.h>
 #include <ocs2_robotic_tools/command/TargetPoseTransformation.h>
+#include <ocs2_quadrotor_example/definitions.h>
+#include <ros/subscriber.h>
 
 namespace ocs2 {
 namespace quadrotor {
@@ -82,52 +85,107 @@ public:
 	 * goalPoseLimit(11): \omega_Z
 	 */
 	TargetTrajectories_Keyboard_Quadrotor(
+				int argc,
+				char* argv[],
 				const std::string& robotName = "robot",
 				const scalar_array_t& goalPoseLimit =
 						scalar_array_t{10.0, 10.0, 10.0, 90.0, 90.0, 360.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0})
-	: BASE(robotName, command_dim_, goalPoseLimit)
-	{}
+	: BASE(argc, argv, robotName, command_dim_, goalPoseLimit)
+	{
+	  observationSubscriber_ = this->nodeHandle_->subscribe("/" + robotName + "_mpc_observation", 1, &TargetTrajectories_Keyboard_Quadrotor::observationCallback, this);
+	}
 
 	/**
 	* Default destructor
 	*/
 	~TargetTrajectories_Keyboard_Quadrotor() = default;
 
-	/**
-	 * From command line loaded command to desired time, state, and input.
-	 *
-	 * @param [out] commadLineTarget: The loaded command target.
-	 * @param [in] desiredTime: Desired time to be published.
-	 * @param [in] desiredState: Desired state to be published.
-	 * @param [in] desiredInput: Desired input to be published.
-	 */
-	void toCostDesiredTimeStateInput(
-			const scalar_array_t& commadLineTarget,
-			scalar_t& desiredTime,
-			dynamic_vector_t& desiredState,
-			dynamic_vector_t& desiredInput) final {
+	void observationCallback(const ocs2_comm_interfaces::mpc_observation::ConstPtr& msg){
+	  std::lock_guard<std::mutex> lock(latestObservationMutex_);
+	  latestObservation_ = msg;
+	}
 
-		// reversing the order of the position and orientation.
-		scalar_array_t commadLineTargetOrdeCorrected(command_dim_);
-		for (size_t j=0; j<3; j++) {
-			// pose
-			commadLineTargetOrdeCorrected[j] = commadLineTarget[3+j];
-			commadLineTargetOrdeCorrected[3+j] = commadLineTarget[j];
-			// velocities
-			commadLineTargetOrdeCorrected[6+j] = commadLineTarget[9+j];
-			commadLineTargetOrdeCorrected[9+j] = commadLineTarget[6+j];
-		}
+	cost_desired_trajectories_t toCostDesiredTrajectories(const scalar_array_t& commadLineTarget) final {
+	  SystemObservation<quadrotor::STATE_DIM_, quadrotor::INPUT_DIM_> observation;
+	  ::ros::spinOnce();
+	  {
+	    std::lock_guard<std::mutex> lock(latestObservationMutex_);
+	    RosMsgConversions<quadrotor::STATE_DIM_, quadrotor::INPUT_DIM_>::ReadObservationMsg(*latestObservation_, observation);
+	  }
 
-		// time
-		desiredTime = 0.0;
-		// state
-		TargetPoseTransformation<scalar_t>::toCostDesiredState(
-				commadLineTargetOrdeCorrected, desiredState);
-		// input
-		desiredInput = dynamic_vector_t::Zero(0);
+	  // reversing the order of the position and orientation.
+	  scalar_array_t commadLineTargetOrderCorrected(command_dim_);
+	  for (size_t j=0; j<3; j++) {
+		  // pose
+		  commadLineTargetOrderCorrected[j] = commadLineTarget[3+j];
+		  commadLineTargetOrderCorrected[3+j] = commadLineTarget[j];
+		  // velocities
+		  commadLineTargetOrderCorrected[6+j] = commadLineTarget[9+j];
+		  commadLineTargetOrderCorrected[9+j] = commadLineTarget[6+j];
+	  }
+
+	  // relative state target
+	  dynamic_vector_t desiredStateRelative;
+	  TargetPoseTransformation<scalar_t>::toCostDesiredState(
+			  commadLineTargetOrderCorrected, desiredStateRelative);
+
+	  // target transformation
+	  typename TargetPoseTransformation<scalar_t>::pose_vector_t targetPoseDisplacement, targetVelocity;
+	  TargetPoseTransformation<scalar_t>::toTargetPoseDisplacement(
+					  desiredStateRelative,
+					  targetPoseDisplacement, targetVelocity);
+
+	  // reversing the order of the position and orientation.
+	  {
+	    Eigen::Matrix<scalar_t, 3, 1> temp;
+	    temp = targetPoseDisplacement.template head<3>();
+	    targetPoseDisplacement.template head<3>() = targetPoseDisplacement.template tail<3>();
+	    targetPoseDisplacement.template tail<3>() = temp;
+	    temp = targetVelocity.template head<3>();
+	    targetVelocity.template head<3>() = targetVelocity.template tail<3>();
+	    targetVelocity.template tail<3>() = temp;
+	  }
+
+	  // targetReachingDuration
+	  const scalar_t averageSpeed = 2.0;
+	  scalar_t targetReachingDuration1 = targetPoseDisplacement.norm() / averageSpeed;
+	  const scalar_t averageAcceleration = 10.0;
+	  scalar_t targetReachingDuration2 = targetVelocity.norm() / averageAcceleration;
+	  scalar_t targetReachingDuration = std::max(targetReachingDuration1, targetReachingDuration2);
+
+
+	  cost_desired_trajectories_t costDesiredTrajectories(2);
+	  // Desired time trajectory
+	  scalar_array_t& tDesiredTrajectory = costDesiredTrajectories.desiredTimeTrajectory();
+	  tDesiredTrajectory.resize(2);
+	  tDesiredTrajectory[0] = observation.time();
+	  tDesiredTrajectory[1] = observation.time() + targetReachingDuration;
+
+	  // Desired state trajectory
+	  auto& xDesiredTrajectory = costDesiredTrajectories.desiredStateTrajectory();
+	  xDesiredTrajectory.resize(2);
+	  xDesiredTrajectory[0].setZero(quadrotor::STATE_DIM_);
+	  xDesiredTrajectory[0].template segment<6>(0) = observation.state().template segment<6>(0);
+	  xDesiredTrajectory[0].template segment<6>(6) = observation.state().template segment<6>(6);
+
+	  xDesiredTrajectory[1].resize(quadrotor::STATE_DIM_);
+	  xDesiredTrajectory[1].setZero();
+	  xDesiredTrajectory[1].template segment<6>(0) = observation.state(). template segment<6>(0) + targetPoseDisplacement;
+	  xDesiredTrajectory[1].template segment<6>(6) = targetVelocity;
+
+	  // Desired input trajectory
+	  costDesiredTrajectories.desiredInputTrajectory().resize(2);
+	  costDesiredTrajectories.desiredInputTrajectory()[0] = dynamic_vector_t::Zero(quadrotor::INPUT_DIM_);
+	  costDesiredTrajectories.desiredInputTrajectory()[1] = dynamic_vector_t::Zero(quadrotor::INPUT_DIM_);
+
+	  return costDesiredTrajectories;
 	}
 
 private:
+  ros::Subscriber observationSubscriber_;
+
+  std::mutex latestObservationMutex_;
+  ocs2_comm_interfaces::mpc_observation::ConstPtr latestObservation_;
 
 };
 

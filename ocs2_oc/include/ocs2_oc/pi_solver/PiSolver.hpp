@@ -89,8 +89,8 @@ class PiSolver final : public Solver_BASE<STATE_DIM, INPUT_DIM> {
   ~PiSolver() override = default;
 
   virtual void reset() override {
-    costDesiredTrajectories_.clear();
-    costDesiredTrajectoriesBuffer_.clear();
+    this->costDesiredTrajectories_.clear();
+    this->costDesiredTrajectoriesBuffer_.clear();
     nominalTimeTrajectoriesStock_.clear();
     nominalStateTrajectoriesStock_.clear();
     nominalInputTrajectoriesStock_.clear();
@@ -102,11 +102,8 @@ class PiSolver final : public Solver_BASE<STATE_DIM, INPUT_DIM> {
                    const scalar_array_t& partitioningTimes) override {
     numIterations_++;
 
-    if (costDesiredTrajectoriesUpdated_) {
-      costDesiredTrajectoriesUpdated_ = false;
-      costDesiredTrajectories_.swap(costDesiredTrajectoriesBuffer_);
-    }
-    costFunction_->setCostDesiredTrajectories(costDesiredTrajectories_);
+    this->updateCostDesiredTrajectories();
+    costFunction_->setCostDesiredTrajectories(this->costDesiredTrajectories_);
 
     const auto numSteps = static_cast<size_t>(std::round((finalTime - initTime) / settings_.rolloutSettings_.minTimeStep_)) + 1;
 
@@ -346,32 +343,6 @@ class PiSolver final : public Solver_BASE<STATE_DIM, INPUT_DIM> {
    */
   virtual const scalar_array_t& getPartitioningTimes() const override { throw std::runtime_error("not implemented."); }
 
-  virtual void getCostDesiredTrajectoriesPtr(const cost_desired_trajectories_t*& costDesiredTrajectoriesPtr) const override {
-    costDesiredTrajectoriesPtr = &costDesiredTrajectories_;
-  }
-
-  virtual void setCostDesiredTrajectories(const cost_desired_trajectories_t& costDesiredTrajectories) override {
-    costDesiredTrajectoriesBuffer_ = costDesiredTrajectories;
-    costDesiredTrajectoriesUpdated_ = true;
-  }
-
-  virtual void setCostDesiredTrajectories(const scalar_array_t& desiredTimeTrajectory, const dynamic_vector_array_t& desiredStateTrajectory,
-                                          const dynamic_vector_array_t& desiredInputTrajectory) override {
-    throw std::runtime_error("not implemented.");
-  }
-
-  virtual void swapCostDesiredTrajectories(cost_desired_trajectories_t& costDesiredTrajectories) override {
-    costDesiredTrajectoriesBuffer_.swap(costDesiredTrajectories);
-    costDesiredTrajectoriesUpdated_ = true;
-  }
-
-  virtual void swapCostDesiredTrajectories(scalar_array_t& desiredTimeTrajectory, dynamic_vector_array_t& desiredStateTrajectory,
-                                           dynamic_vector_array_t& desiredInputTrajectory) override {
-    throw std::runtime_error("not implemented.");
-  }
-
-  virtual bool costDesiredTrajectoriesUpdated() const override { throw std::runtime_error("not implemented."); }
-
   virtual const controller_ptr_array_t& getController() const override { return nominalControllersPtrStock_; }
 
   virtual void getControllerPtr(const controller_ptr_array_t*& controllersStockPtr) const override {
@@ -459,10 +430,6 @@ class PiSolver final : public Solver_BASE<STATE_DIM, INPUT_DIM> {
   size_t numIterations_;
 
   rollout_t rollout_;
-
-  cost_desired_trajectories_t costDesiredTrajectories_;  // TODO(jcarius) should this be in the base class?
-  cost_desired_trajectories_t costDesiredTrajectoriesBuffer_;
-  std::atomic_bool costDesiredTrajectoriesUpdated_;
 
   std::vector<scalar_array_t> nominalTimeTrajectoriesStock_;
   state_vector_array2_t nominalStateTrajectoriesStock_;

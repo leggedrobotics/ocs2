@@ -68,11 +68,14 @@ int main(int argc, char **argv)
 	// initial command
 	MRT_ROS_Dummy_Linear_System::cost_desired_trajectories_t initCostDesiredTrajectories;
 	initCostDesiredTrajectories.desiredTimeTrajectory().resize(1);
+
 	initCostDesiredTrajectories.desiredStateTrajectory().resize(1);
-	initCostDesiredTrajectories.desiredInputTrajectory().resize(1);
-	initCostDesiredTrajectories.desiredStateTrajectory().front().resize(2);
+	initCostDesiredTrajectories.desiredStateTrajectory().front().resize(STATE_DIM_);
 	initCostDesiredTrajectories.desiredStateTrajectory().front().head<1>().setZero(); /*targetPoseDisplacement*/
 	initCostDesiredTrajectories.desiredStateTrajectory().front().tail<1>().setZero(); /*targetVelocity*/
+
+	initCostDesiredTrajectories.desiredInputTrajectory().resize(1);
+	initCostDesiredTrajectories.desiredInputTrajectory().front().setZero(INPUT_DIM_);
 
 	// run dummy
 	dummyDoubleIntegrator.run(initObservation, initCostDesiredTrajectories);

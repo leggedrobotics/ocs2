@@ -30,8 +30,15 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifndef TARGETTRAJECTORIES_KEYBOARD_BALLBOT_OCS2_H_
 #define TARGETTRAJECTORIES_KEYBOARD_BALLBOT_OCS2_H_
 
-#include <ocs2_robotic_tools/command/TargetTrajectories_Keyboard_Interface.h>
+#include <ocs2_ballbot_example/definitions.h>
+#include <ocs2_comm_interfaces/SystemObservation.h>
+#include <ocs2_comm_interfaces/mpc_observation.h>
+#include <ocs2_comm_interfaces/ocs2_ros_interfaces/common/RosMsgConversions.h>
 #include <ocs2_robotic_tools/command/TargetPoseTransformation.h>
+#include <ocs2_robotic_tools/command/TargetTrajectories_Keyboard_Interface.h>
+#include <mutex>
+
+#include <ros/subscriber.h>
 
 namespace ocs2 {
 namespace ballbot {
@@ -42,79 +49,103 @@ namespace ballbot {
  * @tparam SCALAR_T: scalar type.
  */
 template <typename SCALAR_T>
-class TargetTrajectories_Keyboard_Ballbot : public TargetTrajectories_Keyboard_Interface<SCALAR_T>
-{
-public:
-	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+class TargetTrajectories_Keyboard_Ballbot : public TargetTrajectories_Keyboard_Interface<SCALAR_T> {
+ public:
+  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-	enum
-	{
-		command_dim_ = 6
-	};
+  enum { command_dim_ = 6 };
 
-	using BASE = TargetTrajectories_Keyboard_Interface<SCALAR_T>;
-	using scalar_t = typename BASE::scalar_t;
-	using scalar_array_t = typename BASE::scalar_array_t;
-	using dynamic_vector_t = typename BASE::dynamic_vector_t;
-	using dynamic_vector_array_t = typename BASE::dynamic_vector_array_t;
-	using cost_desired_trajectories_t = typename BASE::cost_desired_trajectories_t;
+  using BASE = TargetTrajectories_Keyboard_Interface<SCALAR_T>;
+  using typename BASE::cost_desired_trajectories_t;
+  using typename BASE::dynamic_vector_array_t;
+  using typename BASE::dynamic_vector_t;
+  using typename BASE::scalar_array_t;
+  using typename BASE::scalar_t;
 
-	/**
-	 * Constructor.
-	 *
-	 * @param robotName: The robot's name.
-	 * @param goalPoseLimit: Limits for the input command. It has size 12 with following entries.
-	 *
-	 * goalPoseLimit(0): X
-	 * goalPoseLimit(1): Y
-	 * goalPoseLimit(2): Yaw
-	 *
-	 * goalPoseLimit(3): v_X
-	 * goalPoseLimit(4): v_Y
-	 * goalPoseLimit(5): \omega_Z
-	 */
-	TargetTrajectories_Keyboard_Ballbot(
-				const std::string& robotName = "robot",
-				const scalar_array_t& goalPoseLimit = scalar_array_t{2.0, 2.0, 360.0, 2.0, 2.0, 2.0})
-	: BASE(robotName, command_dim_, goalPoseLimit)
-	{}
+  /**
+   * Constructor.
+   *
+   * @param robotName: The robot's name.
+   * @param goalPoseLimit: Limits for the input command. It has size 12 with following entries.
+   *
+   * goalPoseLimit(0): X
+   * goalPoseLimit(1): Y
+   * goalPoseLimit(2): Yaw
+   *
+   * goalPoseLimit(3): v_X
+   * goalPoseLimit(4): v_Y
+   * goalPoseLimit(5): \omega_Z
+   */
+  TargetTrajectories_Keyboard_Ballbot(int argc, char* argv[], const std::string& robotName = "robot",
+                                      const scalar_array_t& goalPoseLimit = scalar_array_t{2.0, 2.0, 360.0, 2.0, 2.0, 2.0})
+      : BASE(argc, argv, robotName, command_dim_, goalPoseLimit) {
+    observationSubscriber_ = this->nodeHandle_->subscribe("/" + robotName + "_mpc_observation", 1,
+                                                          &TargetTrajectories_Keyboard_Ballbot::observationCallback, this);
+  }
 
-	/**
-	* Default destructor
-	*/
-	~TargetTrajectories_Keyboard_Ballbot() override = default;
+  /**
+   * Default destructor
+   */
+  ~TargetTrajectories_Keyboard_Ballbot() override = default;
 
-	/**
-	 * From command line loaded command to desired time, state, and input.
-	 *
-	 * @param [out] commadLineTarget: The loaded command target.
-	 * @param [in] desiredTime: Desired time to be published.
-	 * @param [in] desiredState: Desired state to be published.
-	 * @param [in] desiredInput: Desired input to be published.
-	 */
-	void toCostDesiredTimeStateInput(
-			const scalar_array_t& commadLineTarget,
-			scalar_t& desiredTime,
-			dynamic_vector_t& desiredState,
-			dynamic_vector_t& desiredInput) final {
+  cost_desired_trajectories_t toCostDesiredTrajectories(const scalar_array_t& commadLineTarget) final {
+    auto deg2rad = [](const scalar_t& deg) { return (deg * M_PI / 180.0); };
 
-		auto deg2rad = [](const scalar_t& deg) { return (deg*M_PI/180.0); };
+    SystemObservation<ballbot::STATE_DIM_, ballbot::INPUT_DIM_> observation;
+    ::ros::spinOnce();
+    {
+      std::lock_guard<std::mutex> lock(latestObservationMutex_);
+      RosMsgConversions<ballbot::STATE_DIM_, ballbot::INPUT_DIM_>::ReadObservationMsg(*latestObservation_, observation);
+    }
 
-		// time
-		desiredTime = 0.0;
-		// state
-		desiredState = Eigen::Map<const dynamic_vector_t>(commadLineTarget.data(), command_dim_);
-		desiredState(2) = deg2rad(commadLineTarget[2]);
-		// input
-		desiredInput = dynamic_vector_t::Zero(0);
-	}
+    // desired state from command line (position is relative, velocity absolute)
+    dynamic_vector_t relativeState = Eigen::Map<const dynamic_vector_t>(commadLineTarget.data(), command_dim_);
+    relativeState(2) = deg2rad(commadLineTarget[2]);
 
-private:
+    // Target reaching duration
+    const scalar_t averageSpeed = 2.0;
+    scalar_t targetReachingDuration1 = relativeState.template head<3>().norm() / averageSpeed;
+    const scalar_t averageAcceleration = 10.0;
+    scalar_t targetReachingDuration2 = relativeState.template tail<3>().norm() / averageAcceleration;
+    scalar_t targetReachingDuration = std::max(targetReachingDuration1, targetReachingDuration2);
 
+    // Desired time trajectory
+    cost_desired_trajectories_t costDesiredTrajectories(2);
+    scalar_array_t& tDesiredTrajectory = costDesiredTrajectories.desiredTimeTrajectory();
+    tDesiredTrajectory.resize(2);
+    tDesiredTrajectory[0] = observation.time();
+    tDesiredTrajectory[1] = observation.time() + targetReachingDuration;
+
+    // Desired state trajectory
+    typename cost_desired_trajectories_t::dynamic_vector_array_t& xDesiredTrajectory = costDesiredTrajectories.desiredStateTrajectory();
+    xDesiredTrajectory.resize(2);
+    xDesiredTrajectory[0] = observation.state();
+    xDesiredTrajectory[1] = observation.state();
+    xDesiredTrajectory[1].template head<3>() += relativeState.template head<3>();
+    xDesiredTrajectory[1].template tail<5>() << relativeState.template tail<3>(), 0.0, 0.0;
+
+    // Desired input trajectory
+    typename cost_desired_trajectories_t::dynamic_vector_array_t& uDesiredTrajectory = costDesiredTrajectories.desiredInputTrajectory();
+    uDesiredTrajectory.resize(2);
+    uDesiredTrajectory[0].setZero(3);
+    uDesiredTrajectory[1].setZero(3);
+
+    return costDesiredTrajectories;
+  }
+
+  void observationCallback(const ocs2_comm_interfaces::mpc_observation::ConstPtr& msg) {
+    std::lock_guard<std::mutex> lock(latestObservationMutex_);
+    latestObservation_ = msg;
+  }
+
+ private:
+  ros::Subscriber observationSubscriber_;
+
+  std::mutex latestObservationMutex_;
+  ocs2_comm_interfaces::mpc_observation::ConstPtr latestObservation_;
 };
 
-} // namespace ballbot
-} // namespace ocs2
+}  // namespace ballbot
+}  // namespace ocs2
 
 #endif /* TARGETTRAJECTORIES_KEYBOARD_BALLBOT_OCS2_H_ */
-

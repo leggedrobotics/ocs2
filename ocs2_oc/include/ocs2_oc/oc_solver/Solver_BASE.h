@@ -195,7 +195,7 @@ class Solver_BASE {
   virtual size_t getNumIterations() const = 0;
 
   /**
-   * Gets iterations Log of SLQ.
+   * Gets iterations Log of the solver.
    *
    * @param [out] iterationCost: Each iteration's cost.
    * @param [out] iterationISE1: Each iteration's type-1 constraints ISE.
@@ -205,7 +205,7 @@ class Solver_BASE {
                                 eigen_scalar_array_t& iterationISE2) const = 0;
 
   /**
-   * Gets Iterations Log of SLQ
+   * Gets Iterations Log of solver
    *
    * @param [out] iterationCostPtr: A pointer to each iteration's cost.
    * @param [out] iterationISE1Ptr: A pointer to each iteration's type-1 constraints ISE.
@@ -222,9 +222,9 @@ class Solver_BASE {
   virtual scalar_t getFinalTime() const = 0;
 
   /**
-   * Returns the final time of optimization.
+   * Returns the partitioning times
    *
-   * @return finalTime
+   * @return partitioning times
    */
   virtual const scalar_array_t& getPartitioningTimes() const = 0;
 
@@ -268,14 +268,14 @@ class Solver_BASE {
    *
    * @param [out] costDesiredTrajectories: A pointer to the cost function desired trajectories
    */
-  virtual void getCostDesiredTrajectoriesPtr(const cost_desired_trajectories_t*& costDesiredTrajectoriesPtr) const = 0;
+  void getCostDesiredTrajectoriesPtr(const cost_desired_trajectories_t*& costDesiredTrajectoriesPtr) const;
 
   /**
    * Sets the cost function desired trajectories.
    *
    * @param [in] costDesiredTrajectories: The cost function desired trajectories
    */
-  virtual void setCostDesiredTrajectories(const cost_desired_trajectories_t& costDesiredTrajectories) = 0;
+  void setCostDesiredTrajectories(const cost_desired_trajectories_t& costDesiredTrajectories);
 
   /**
    * Sets the cost function desired trajectories.
@@ -284,15 +284,15 @@ class Solver_BASE {
    * @param [in] desiredStateTrajectory: The desired state trajectory for cost.
    * @param [in] desiredInputTrajectory: The desired input trajectory for cost.
    */
-  virtual void setCostDesiredTrajectories(const scalar_array_t& desiredTimeTrajectory, const dynamic_vector_array_t& desiredStateTrajectory,
-                                          const dynamic_vector_array_t& desiredInputTrajectory) = 0;
+  void setCostDesiredTrajectories(const scalar_array_t& desiredTimeTrajectory, const dynamic_vector_array_t& desiredStateTrajectory,
+                                  const dynamic_vector_array_t& desiredInputTrajectory);
 
   /**
    * Swaps the cost function desired trajectories.
    *
    * @param [in] costDesiredTrajectories: The cost function desired trajectories
    */
-  virtual void swapCostDesiredTrajectories(cost_desired_trajectories_t& costDesiredTrajectories) = 0;
+  void swapCostDesiredTrajectories(cost_desired_trajectories_t& costDesiredTrajectories);
 
   /**
    * Swaps the cost function desired trajectories.
@@ -301,15 +301,15 @@ class Solver_BASE {
    * @param [in] desiredStateTrajectory: The desired state trajectory for cost.
    * @param [in] desiredInputTrajectory: The desired input trajectory for cost.
    */
-  virtual void swapCostDesiredTrajectories(scalar_array_t& desiredTimeTrajectory, dynamic_vector_array_t& desiredStateTrajectory,
-                                           dynamic_vector_array_t& desiredInputTrajectory) = 0;
+  void swapCostDesiredTrajectories(scalar_array_t& desiredTimeTrajectory, dynamic_vector_array_t& desiredStateTrajectory,
+                                   dynamic_vector_array_t& desiredInputTrajectory);
 
   /**
    * Whether the cost function desired trajectories is updated.
    *
    * @return true if it is updated.
    */
-  virtual bool costDesiredTrajectoriesUpdated() const = 0;
+  bool costDesiredTrajectoriesUpdated() const;
 
   /**
    * Returns an array of pointer to the optimal control policies.
@@ -370,6 +370,12 @@ class Solver_BASE {
                                        input_vector_array2_t& nominalInputTrajectoriesStock) = 0;
 
   /**
+   * @brief updateCostDesiredTrajectories: Swap buffered costDesiredTrajectories to the in-use ones.
+   * @return true if updated (i.e., something new was swapped in), false otherwise
+   */
+  bool updateCostDesiredTrajectories();
+
+  /**
    * Rewinds optimizer internal variables.
    *
    * @param [in] firstIndex: The index which we want to rewind to.
@@ -389,6 +395,12 @@ class Solver_BASE {
    * @param [in] input text.
    */
   void printString(const std::string& text);
+
+ protected:
+  cost_desired_trajectories_t costDesiredTrajectoriesBuffer_;
+  cost_desired_trajectories_t costDesiredTrajectories_;
+  std::atomic_bool costDesiredTrajectoriesUpdated_;
+  std::mutex costDesiredTrajectoriesBufferMutex_;
 
  private:
   std::mutex outputDisplayGuardMutex_;

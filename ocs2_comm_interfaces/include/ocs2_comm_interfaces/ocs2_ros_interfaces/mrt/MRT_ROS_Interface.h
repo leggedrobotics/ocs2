@@ -107,6 +107,14 @@ class MRT_ROS_Interface : public MRT_BASE<STATE_DIM, INPUT_DIM> {
   void resetMpcNode(const cost_desired_trajectories_t& initCostDesiredTrajectories) override;
 
   /**
+   * This method will be called either after the very fist call of the class or after a call to reset().
+   * Users can use this function for any sort of initialization that they may need in the first call.
+   *
+   * @param [in] planObservation: The observation of the policy.
+   */
+  virtual void initCall(const SystemObservation<STATE_DIM, INPUT_DIM>& planObservation) {}
+
+  /**
    * Shut down the ROS nodes.
    */
   void shutdownNodes();

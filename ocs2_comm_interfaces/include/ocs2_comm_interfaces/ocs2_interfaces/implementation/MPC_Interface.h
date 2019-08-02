@@ -1,14 +1,12 @@
 
 #include <ocs2_comm_interfaces/ocs2_interfaces/MPC_Interface.h>
-
 #include <ocs2_core/control/FeedforwardController.h>
-#include <ocs2_core/control/LinearController.h>
 
 namespace ocs2 {
 
 template <size_t STATE_DIM, size_t INPUT_DIM>
-MPC_Interface<STATE_DIM, INPUT_DIM>::MPC_Interface(mpc_t& mpc, std::shared_ptr<HybridLogicRules> logicRules)
-    : Base(logicRules), mpcPtr_(&mpc), mpcSettings_(mpc.settings()), numMpcIterations_(0) {}
+MPC_Interface<STATE_DIM, INPUT_DIM>::MPC_Interface(mpc_t* mpc, std::shared_ptr<HybridLogicRules> logicRules)
+    : Base(std::move(logicRules)), mpcPtr_(std::move(mpc)), numMpcIterations_(0) {}
 
 template <size_t STATE_DIM, size_t INPUT_DIM>
 void MPC_Interface<STATE_DIM, INPUT_DIM>::resetMpcNode(const cost_desired_trajectories_t& initCostDesiredTrajectories) {
@@ -19,7 +17,7 @@ void MPC_Interface<STATE_DIM, INPUT_DIM>::resetMpcNode(const cost_desired_trajec
 
 template <size_t STATE_DIM, size_t INPUT_DIM>
 void MPC_Interface<STATE_DIM, INPUT_DIM>::setTargetTrajectories(const cost_desired_trajectories_t& targetTrajectories) {
-  if (mpcSettings_.debugPrint_) {
+  if (mpcPtr_->settings().debugPrint_) {
     std::cerr << "### The target position is updated to" << std::endl;
     targetTrajectories.display();
   }
@@ -40,21 +38,24 @@ void MPC_Interface<STATE_DIM, INPUT_DIM>::setModeSequence(const mode_sequence_te
 template <size_t STATE_DIM, size_t INPUT_DIM>
 void MPC_Interface<STATE_DIM, INPUT_DIM>::advanceMpc() {
   std::chrono::time_point<std::chrono::steady_clock> startTime, finishTime;
-  if (mpcSettings_.debugPrint_) {
+  if (mpcPtr_->settings().debugPrint_) {
     startTime = std::chrono::steady_clock::now();
   }
 
+  system_observation_t mpcInitObservation;
   {
     std::lock_guard<std::mutex> lock(observationMutex_);
-    mpcPtr_->run(currentObservation_.time(), currentObservation_.state());
+    mpcInitObservation = currentObservation_;
   }
 
-  fillMpcOutputBuffers();
+  mpcPtr_->run(mpcInitObservation.time(), mpcInitObservation.state());
+  fillMpcOutputBuffers(std::move(mpcInitObservation));
+
   // Incrementing numIterations must happen after fillMpcOutputBuffers
   numMpcIterations_++;
 
   // measure the delay
-  if (mpcSettings_.debugPrint_) {
+  if (mpcPtr_->settings().debugPrint_) {
     finishTime = std::chrono::steady_clock::now();
     auto currentDelay = std::chrono::duration<scalar_t, std::milli>(finishTime - startTime).count();
     meanDelay_ += (currentDelay - meanDelay_) / numMpcIterations_;
@@ -67,7 +68,7 @@ void MPC_Interface<STATE_DIM, INPUT_DIM>::advanceMpc() {
 }
 
 template <size_t STATE_DIM, size_t INPUT_DIM>
-void MPC_Interface<STATE_DIM, INPUT_DIM>::fillMpcOutputBuffers() {
+void MPC_Interface<STATE_DIM, INPUT_DIM>::fillMpcOutputBuffers(system_observation_t mpcInitObservation) {
   const controller_ptr_array_t* controllerPtrs(nullptr);
   const std::vector<scalar_array_t>* timeTrajectoriesPtr(nullptr);
   const state_vector_array2_t* stateTrajectoriesPtr(nullptr);
@@ -84,14 +85,11 @@ void MPC_Interface<STATE_DIM, INPUT_DIM>::fillMpcOutputBuffers() {
   subsystemsSequencePtr = &mpcPtr_->getLogicRulesPtr()->subsystemsSequence();
 
   // update buffers, i.e., copy MPC results into our buffers
-  std::lock(observationMutex_, this->policyBufferMutex_);
-  std::lock_guard<std::mutex> policyBufferLock(this->policyBufferMutex_, std::adopt_lock);
-  {
-    std::lock_guard<std::mutex> observationLock(observationMutex_, std::adopt_lock);
-    this->mpcInitObservationBuffer_ = currentObservation_;
-  }
+  std::lock_guard<std::mutex> policyBufferLock(this->policyBufferMutex_);
 
   this->policyUpdatedBuffer_ = true;
+
+  this->mpcInitObservationBuffer_ = std::move(mpcInitObservation);
 
   int N = 0;
   for (int i = 0; i < timeTrajectoriesPtr->size(); i++) {
@@ -112,7 +110,7 @@ void MPC_Interface<STATE_DIM, INPUT_DIM>::fillMpcOutputBuffers() {
                                      std::end((*inputTrajectoriesPtr)[i]));
   }
 
-  if (mpcSettings_.useFeedbackPolicy_) {
+  if (mpcPtr_->settings().useFeedbackPolicy_) {
     // concatenate controller stock into a single controller
     this->mpcControllerBuffer_.reset();
     for (auto controllerPtr : *controllerPtrs) {

@@ -26,7 +26,7 @@ namespace ocs2 {
  * @tparam INPUT_DIM
  */
 template <size_t STATE_DIM, size_t INPUT_DIM>
-class MPC_Interface : public MRT_BASE<STATE_DIM, INPUT_DIM> {
+class MPC_Interface final : public MRT_BASE<STATE_DIM, INPUT_DIM> {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
@@ -63,7 +63,7 @@ class MPC_Interface : public MRT_BASE<STATE_DIM, INPUT_DIM> {
    * @param[in] mpc the underlying MPC class to be used
    * @param[in] logicRules (optional)
    */
-  MPC_Interface(mpc_t& mpc, std::shared_ptr<HybridLogicRules> logicRules = nullptr);
+  MPC_Interface(mpc_t* mpc, std::shared_ptr<HybridLogicRules> logicRules = nullptr);
 
   /**
    * Destructor.
@@ -72,12 +72,7 @@ class MPC_Interface : public MRT_BASE<STATE_DIM, INPUT_DIM> {
 
   void resetMpcNode(const cost_desired_trajectories_t& initCostDesiredTrajectories) override;
 
-  /**
-   * Set the new observation to be considered during the next MPC iteration.
-   * It is safe to set a new value while the MPC optimization is running
-   * @param [in] currentObservation the new observation
-   */
-  void setCurrentObservation(const system_observation_t& currentObservation);
+  void setCurrentObservation(const system_observation_t& currentObservation) override;
 
   /**
    * Set new target trajectories to be tracked.
@@ -124,12 +119,12 @@ class MPC_Interface : public MRT_BASE<STATE_DIM, INPUT_DIM> {
   /**
    * @brief fillMpcOutputBuffers updates the *Buffer variables from the MPC object.
    * This method is automatically called by advanceMpc()
+   * @param[in] mpcInitObservation the observation used to run the mpc
    */
-  void fillMpcOutputBuffers();
+  void fillMpcOutputBuffers(system_observation_t mpcInitObservation);
 
  protected:
   mpc_t* mpcPtr_;
-  MPC_Settings mpcSettings_;
 
   size_t numMpcIterations_;
   scalar_t maxDelay_ = 0;

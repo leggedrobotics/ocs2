@@ -279,7 +279,7 @@ void SLQ_MP<STATE_DIM, INPUT_DIM>::threadWork(size_t threadId) {
 /******************************************************************************************************/
 /***************************************************************************************************** */
 template <size_t STATE_DIM, size_t INPUT_DIM>
-void SLQ_MP<STATE_DIM, INPUT_DIM>::approximatePartitionLQ(const size_t& partitionIndex) {
+void SLQ_MP<STATE_DIM, INPUT_DIM>::approximatePartitionLQ(size_t partitionIndex) {
   subsystemProcessed_ = partitionIndex;
 
   size_t N = BASE::nominalTimeTrajectoriesStock_[partitionIndex].size();
@@ -327,7 +327,7 @@ void SLQ_MP<STATE_DIM, INPUT_DIM>::approximatePartitionLQ(const size_t& partitio
 /******************************************************************************************************/
 /***************************************************************************************************** */
 template <size_t STATE_DIM, size_t INPUT_DIM>
-void SLQ_MP<STATE_DIM, INPUT_DIM>::executeApproximatePartitionLQWorker(size_t threadId, const size_t& partitionIndex) {
+void SLQ_MP<STATE_DIM, INPUT_DIM>::executeApproximatePartitionLQWorker(size_t threadId, size_t partitionIndex) {
   size_t kCompleted_local = 0;
   int N = BASE::nominalTimeTrajectoriesStock_[partitionIndex].size();
   int k = -1;  // to make use that the while loop runs at least once
@@ -379,7 +379,7 @@ void SLQ_MP<STATE_DIM, INPUT_DIM>::executeApproximatePartitionLQWorker(size_t th
 /******************************************************************************************************/
 /***************************************************************************************************** */
 template <size_t STATE_DIM, size_t INPUT_DIM>
-void SLQ_MP<STATE_DIM, INPUT_DIM>::calculatePartitionController(const size_t& partitionIndex) {
+void SLQ_MP<STATE_DIM, INPUT_DIM>::calculatePartitionController(size_t partitionIndex) {
   subsystemProcessed_ = partitionIndex;
 
   size_t N = BASE::SsTimeTrajectoryStock_[partitionIndex].size();
@@ -425,7 +425,7 @@ void SLQ_MP<STATE_DIM, INPUT_DIM>::calculatePartitionController(const size_t& pa
 /******************************************************************************************************/
 /***************************************************************************************************** */
 template <size_t STATE_DIM, size_t INPUT_DIM>
-void SLQ_MP<STATE_DIM, INPUT_DIM>::executeCalculatePartitionController(size_t threadId, const size_t& partitionIndex) {
+void SLQ_MP<STATE_DIM, INPUT_DIM>::executeCalculatePartitionController(size_t threadId, size_t partitionIndex) {
   size_t kCompleted_local = 0;
   int N = BASE::SsTimeTrajectoryStock_[partitionIndex].size();
   int k = -1;  // to make use that the while loop runs at least once

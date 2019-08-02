@@ -146,7 +146,7 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM>::approximateOptimalControlProblem() {
 /******************************************************************************************************/
 /***************************************************************************************************** */
 template <size_t STATE_DIM, size_t INPUT_DIM>
-void SLQ_BASE<STATE_DIM, INPUT_DIM>::approximateLQWorker(size_t workerIndex, const size_t& partitionIndex, const size_t& timeIndex) {
+void SLQ_BASE<STATE_DIM, INPUT_DIM>::approximateLQWorker(size_t workerIndex, size_t partitionIndex, size_t timeIndex) {
   // unconstrained LQ problem
   BASE::approximateUnconstrainedLQWorker(workerIndex, partitionIndex, timeIndex);
 
@@ -164,10 +164,10 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM>::approximateLQWorker(size_t workerIndex, con
 /******************************************************************************************************/
 /***************************************************************************************************** */
 template <size_t STATE_DIM, size_t INPUT_DIM>
-void SLQ_BASE<STATE_DIM, INPUT_DIM>::approximateConstrainedLQWorker(size_t workerIndex, const size_t& i, const size_t& k,
-                                                                    const scalar_t& stateConstraintPenalty) {
+void SLQ_BASE<STATE_DIM, INPUT_DIM>::approximateConstrainedLQWorker(size_t workerIndex, size_t i, size_t k,
+                                                                    scalar_t stateConstraintPenalty) {
   // constraint type 2 coefficients
-  const size_t& nc2 = BASE::nc2TrajectoriesStock_[i][k];
+  const size_t nc2 = BASE::nc2TrajectoriesStock_[i][k];
   if (nc2 > 0) {
     BASE::qTrajectoryStock_[i][k] +=
         0.5 * stateConstraintPenalty * BASE::HvTrajectoryStock_[i][k].head(nc2).transpose() * BASE::HvTrajectoryStock_[i][k].head(nc2);
@@ -266,7 +266,7 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM>::approximateConstrainedLQWorker(size_t worke
   RmInverseTrajectoryStock_[i][k].noalias() = RinvChol * RinvChol.transpose();
 
   // constraint type 1 coefficients
-  const size_t& nc1 = BASE::nc1TrajectoriesStock_[i][k];
+  const size_t nc1 = BASE::nc1TrajectoriesStock_[i][k];
   if (nc1 == 0) {
     DmDagerTrajectoryStock_[i][k].setZero();
     EvProjectedTrajectoryStock_[i][k].setZero();
@@ -374,10 +374,10 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM>::calculateController() {
 /******************************************************************************************************/
 /***************************************************************************************************** */
 template <size_t STATE_DIM, size_t INPUT_DIM>
-void SLQ_BASE<STATE_DIM, INPUT_DIM>::calculateControllerWorker(size_t workerIndex, const size_t& partitionIndex, const size_t& timeIndex) {
-  const size_t& i = partitionIndex;
-  const size_t& k = timeIndex;
-  const scalar_t& time = BASE::SsTimeTrajectoryStock_[i][k];
+void SLQ_BASE<STATE_DIM, INPUT_DIM>::calculateControllerWorker(size_t workerIndex, size_t partitionIndex, size_t timeIndex) {
+  const size_t i = partitionIndex;
+  const size_t k = timeIndex;
+  const scalar_t time = BASE::SsTimeTrajectoryStock_[i][k];
 
   // local variables
   state_vector_t nominalState;
@@ -440,9 +440,8 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM>::calculateControllerWorker(size_t workerInde
 /******************************************************************************************************/
 /***************************************************************************************************** */
 template <size_t STATE_DIM, size_t INPUT_DIM>
-void SLQ_BASE<STATE_DIM, INPUT_DIM>::solveRiccatiEquationsWorker(size_t workerIndex, const size_t& partitionIndex,
-                                                                 const state_matrix_t& SmFinal, const state_vector_t& SvFinal,
-                                                                 const eigen_scalar_t& sFinal) {
+void SLQ_BASE<STATE_DIM, INPUT_DIM>::solveRiccatiEquationsWorker(size_t workerIndex, size_t partitionIndex, const state_matrix_t& SmFinal,
+                                                                 const state_vector_t& SvFinal, const eigen_scalar_t& sFinal) {
   /*
    *  The riccati equations are solved backwards in time
    *  the SsNormalized time is therefore filles with negative time in the reverse order, for example:
@@ -495,13 +494,13 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM>::solveRiccatiEquationsWorker(size_t workerIn
     // Creates integration values at time points defined in the nominalTimeTrajectory
     // Times are therefore defined before integration in SsNormalizedTime
 
-    // normalized time
+    // Normalize time
     SsNormalizedTime.resize(nominalTimeSize);
     for (size_t k = 0; k < nominalTimeSize; k++) {
       SsNormalizedTime[nominalTimeSize - 1 - k] = -nominalTimeTrajectory[k];
     }
 
-    // normalized switching times, start and end of the partition are added at the beginning and end
+    // Normalized switching time indices, start and end of the partition are added at the beginning and end
     size_array_t SsNormalizedSwitchingTimesIndices;
     SsNormalizedSwitchingTimesIndices.reserve(numEvents + 2);
     SsNormalizedSwitchingTimesIndices.push_back(0);
@@ -544,6 +543,7 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM>::solveRiccatiEquationsWorker(size_t workerIn
     SsNormalizedTime.clear();
     SsNormalizedTime.reserve(maxNumSteps);
 
+    // Extract switching times from eventIndices and normalize them
     scalar_array_t SsNormalizedSwitchingTimes;
     SsNormalizedSwitchingTimes.reserve(numEvents + 2);
     SsNormalizedSwitchingTimes.push_back(-nominalTimeTrajectory.back());
@@ -592,7 +592,7 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM>::solveRiccatiEquationsWorker(size_t workerIn
 /******************************************************************************************************/
 /***************************************************************************************************** */
 template <size_t STATE_DIM, size_t INPUT_DIM>
-void SLQ_BASE<STATE_DIM, INPUT_DIM>::solveErrorRiccatiEquationWorker(size_t workerIndex, const size_t& partitionIndex,
+void SLQ_BASE<STATE_DIM, INPUT_DIM>::solveErrorRiccatiEquationWorker(size_t workerIndex, size_t partitionIndex,
                                                                      const state_vector_t& SveFinal) {
   // Const partition containers
   const auto& nominalTimeTrajectory = BASE::nominalTimeTrajectoriesStock_[partitionIndex];
@@ -710,7 +710,7 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM>::solveErrorRiccatiEquationWorker(size_t work
 /******************************************************************************************************/
 /***************************************************************************************************** */
 template <size_t STATE_DIM, size_t INPUT_DIM>
-void SLQ_BASE<STATE_DIM, INPUT_DIM>::solveSlqRiccatiEquationsWorker(size_t workerIndex, const size_t& partitionIndex,
+void SLQ_BASE<STATE_DIM, INPUT_DIM>::solveSlqRiccatiEquationsWorker(size_t workerIndex, size_t partitionIndex,
                                                                     const state_matrix_t& SmFinal, const state_vector_t& SvFinal,
                                                                     const eigen_scalar_t& sFinal, const state_vector_t& SveFinal) {
   // solve Sm, Sv, s
@@ -773,7 +773,7 @@ SLQ_Settings& SLQ_BASE<STATE_DIM, INPUT_DIM>::settings() {
 /******************************************************************************************************/
 /***************************************************************************************************** */
 template <size_t STATE_DIM, size_t INPUT_DIM>
-void SLQ_BASE<STATE_DIM, INPUT_DIM>::setupOptimizer(const size_t& numPartitions) {
+void SLQ_BASE<STATE_DIM, INPUT_DIM>::setupOptimizer(size_t numPartitions) {
   BASE::setupOptimizer(numPartitions);
 
   // constraint type 1 coefficients

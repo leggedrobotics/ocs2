@@ -98,7 +98,7 @@ class PiSolver final : public Solver_BASE<STATE_DIM, INPUT_DIM> {
     numIterations_ = 0;
   }
 
-  virtual void run(const scalar_t& initTime, const state_vector_t& initState, const scalar_t& finalTime,
+  virtual void run(scalar_t initTime, const state_vector_t& initState, scalar_t finalTime,
                    const scalar_array_t& partitioningTimes) override {
     numIterations_++;
 
@@ -310,8 +310,8 @@ class PiSolver final : public Solver_BASE<STATE_DIM, INPUT_DIM> {
     }
   }
 
-  virtual void run(const scalar_t& initTime, const state_vector_t& initState, const scalar_t& finalTime,
-                   const scalar_array_t& partitioningTimes, const controller_ptr_array_t& controllersStock) override {
+  virtual void run(scalar_t initTime, const state_vector_t& initState, scalar_t finalTime, const scalar_array_t& partitioningTimes,
+                   const controller_ptr_array_t& controllersStock) override {
     throw std::runtime_error("not implemented.");
   }
 
@@ -337,7 +337,7 @@ class PiSolver final : public Solver_BASE<STATE_DIM, INPUT_DIM> {
     throw std::runtime_error("not implemented.");
   }
 
-  virtual const scalar_t& getFinalTime() const override { throw std::runtime_error("not implemented."); }
+  virtual scalar_t getFinalTime() const override { throw std::runtime_error("not implemented."); }
 
   /**
    * Returns the final time of optimization.
@@ -398,7 +398,7 @@ class PiSolver final : public Solver_BASE<STATE_DIM, INPUT_DIM> {
     throw std::runtime_error("not implemented.");
   }
 
-  virtual void rewindOptimizer(const size_t& firstIndex) override {}
+  virtual void rewindOptimizer(size_t firstIndex) override {}
 
   virtual const unsigned long long int& getRewindCounter() const override { throw std::runtime_error("not implemented."); }
 

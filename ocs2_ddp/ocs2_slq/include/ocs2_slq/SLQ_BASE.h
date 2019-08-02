@@ -232,14 +232,14 @@ class SLQ_BASE : public DDP_BASE<STATE_DIM, INPUT_DIM> {
    *
    * @param [in] numPartitions: number of partitions.
    */
-  virtual void setupOptimizer(const size_t& numPartitions);
+  virtual void setupOptimizer(size_t numPartitions);
 
   /**
    * Computes the controller for a particular time partition
    *
    * @param partitionIndex: Time partition index
    */
-  virtual void calculatePartitionController(const size_t& partitionIndex) = 0;
+  virtual void calculatePartitionController(size_t partitionIndex) = 0;
 
   /**
    * Calculates an LQ approximate of the optimal control problem at a given partition and a node.
@@ -248,7 +248,7 @@ class SLQ_BASE : public DDP_BASE<STATE_DIM, INPUT_DIM> {
    * @param [in] partitionIndex: Time partition index.
    * @param [in] timeIndex: Time index in the partition.
    */
-  void approximateLQWorker(size_t workerIndex, const size_t& partitionIndex, const size_t& timeIndex) override;
+  void approximateLQWorker(size_t workerIndex, size_t partitionIndex, size_t timeIndex) override;
 
   /**
    * Modify the unconstrained LQ coefficients to constrained ones.
@@ -258,7 +258,7 @@ class SLQ_BASE : public DDP_BASE<STATE_DIM, INPUT_DIM> {
    * @param [in] k: Time index in the partition.
    * @param [in] stateConstraintPenalty: State-only constraint penalty.
    */
-  virtual void approximateConstrainedLQWorker(size_t workerIndex, const size_t& i, const size_t& k, const scalar_t& stateConstraintPenalty);
+  virtual void approximateConstrainedLQWorker(size_t workerIndex, size_t i, size_t k, scalar_t stateConstraintPenalty);
 
   /**
    * Calculates controller at a given partition and a node.
@@ -267,7 +267,7 @@ class SLQ_BASE : public DDP_BASE<STATE_DIM, INPUT_DIM> {
    * @param [in] partitionIndex: Time partition index
    * @param [in] timeIndex: Time index in the partition
    */
-  void calculateControllerWorker(size_t workerIndex, const size_t& partitionIndex, const size_t& timeIndex) override;
+  void calculateControllerWorker(size_t workerIndex, size_t partitionIndex, size_t timeIndex) override;
 
   /**
    * Solves a set of Riccati equations for the partition in the given index.
@@ -278,8 +278,8 @@ class SLQ_BASE : public DDP_BASE<STATE_DIM, INPUT_DIM> {
    * @param [in] SvFinal: The final Sv for Riccati equation.
    * @param [in] sFinal: The final s for Riccati equation.
    */
-  void solveRiccatiEquationsWorker(size_t workerIndex, const size_t& partitionIndex, const state_matrix_t& SmFinal,
-                                   const state_vector_t& SvFinal, const eigen_scalar_t& sFinal);
+  void solveRiccatiEquationsWorker(size_t workerIndex, size_t partitionIndex, const state_matrix_t& SmFinal, const state_vector_t& SvFinal,
+                                   const eigen_scalar_t& sFinal);
 
   /**
    * Type_1 constraints error correction compensation which solves a set of error Riccati equations for the partition in the given index.
@@ -288,7 +288,7 @@ class SLQ_BASE : public DDP_BASE<STATE_DIM, INPUT_DIM> {
    * @param [in] partitionIndex: The requested partition index to solve Riccati equations.
    * @param [in] SveFinal: The final Sve for the current Riccati equation.
    */
-  void solveErrorRiccatiEquationWorker(size_t workerIndex, const size_t& partitionIndex, const state_vector_t& SveFinal);
+  void solveErrorRiccatiEquationWorker(size_t workerIndex, size_t partitionIndex, const state_vector_t& SveFinal);
 
   /**
    * Solves a set of Riccati equations and type_1 constraints error correction compensation for the partition in the given index.
@@ -300,7 +300,7 @@ class SLQ_BASE : public DDP_BASE<STATE_DIM, INPUT_DIM> {
    * @param [in] sFinal: The final s for Riccati equation.
    * @param [in] SveFinal: The final Sve for the current Riccati equation.
    */
-  void solveSlqRiccatiEquationsWorker(size_t workerIndex, const size_t& partitionIndex, const state_matrix_t& SmFinal,
+  void solveSlqRiccatiEquationsWorker(size_t workerIndex, size_t partitionIndex, const state_matrix_t& SmFinal,
                                       const state_vector_t& SvFinal, const eigen_scalar_t& sFinal, const state_vector_t& SveFinal);
 
   /****************

@@ -47,7 +47,7 @@ ILQR_ST<STATE_DIM, INPUT_DIM>::ILQR_ST(const controlled_system_base_t* systemDyn
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
-void ILQR_ST<STATE_DIM, INPUT_DIM>::approximatePartitionLQ(const size_t& partitionIndex) {
+void ILQR_ST<STATE_DIM, INPUT_DIM>::approximatePartitionLQ(size_t partitionIndex) {
   const size_t threadId = 0;
   size_t N = BASE::nominalTimeTrajectoriesStock_[partitionIndex].size();
 
@@ -63,7 +63,7 @@ void ILQR_ST<STATE_DIM, INPUT_DIM>::approximatePartitionLQ(const size_t& partiti
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
-void ILQR_ST<STATE_DIM, INPUT_DIM>::calculatePartitionController(const size_t& partitionIndex) {
+void ILQR_ST<STATE_DIM, INPUT_DIM>::calculatePartitionController(size_t partitionIndex) {
   const size_t threadId = 0;
   size_t N = BASE::SsTimeTrajectoryStock_[partitionIndex].size();
 

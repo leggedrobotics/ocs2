@@ -74,7 +74,7 @@ void ILQR_BASE<STATE_DIM, INPUT_DIM>::approximateOptimalControlProblem() {
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
-void ILQR_BASE<STATE_DIM, INPUT_DIM>::approximateLQWorker(size_t workerIndex, const size_t& partitionIndex, const size_t& timeIndex) {
+void ILQR_BASE<STATE_DIM, INPUT_DIM>::approximateLQWorker(size_t workerIndex, size_t partitionIndex, size_t timeIndex) {
   // unconstrained LQ problem
   approximateUnconstrainedLQWorker(workerIndex, partitionIndex, timeIndex);
 
@@ -95,7 +95,7 @@ void ILQR_BASE<STATE_DIM, INPUT_DIM>::approximateLQWorker(size_t workerIndex, co
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
-void ILQR_BASE<STATE_DIM, INPUT_DIM>::approximateUnconstrainedLQWorker(size_t workerIndex, const size_t& i, const size_t& k) {
+void ILQR_BASE<STATE_DIM, INPUT_DIM>::approximateUnconstrainedLQWorker(size_t workerIndex, size_t i, size_t k) {
   BASE::approximateUnconstrainedLQWorker(workerIndex, i, k);
 
   // making sure that constrained Qm is PSD
@@ -113,7 +113,7 @@ void ILQR_BASE<STATE_DIM, INPUT_DIM>::approximateUnconstrainedLQWorker(size_t wo
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
-void ILQR_BASE<STATE_DIM, INPUT_DIM>::discreteLQWorker(size_t workerIndex, const size_t& i, const size_t& k) {
+void ILQR_BASE<STATE_DIM, INPUT_DIM>::discreteLQWorker(size_t workerIndex, size_t i, size_t k) {
   // time step
   scalar_t dt = 0.0;
   if (k + 1 < BASE::nominalTimeTrajectoriesStock_[i].size()) {
@@ -183,9 +183,9 @@ void ILQR_BASE<STATE_DIM, INPUT_DIM>::calculateController() {
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
-void ILQR_BASE<STATE_DIM, INPUT_DIM>::calculateControllerWorker(size_t workerIndex, const size_t& partitionIndex, const size_t& timeIndex) {
-  const size_t& i = partitionIndex;
-  const size_t& k = timeIndex;
+void ILQR_BASE<STATE_DIM, INPUT_DIM>::calculateControllerWorker(size_t workerIndex, size_t partitionIndex, size_t timeIndex) {
+  size_t i = partitionIndex;
+  size_t k = timeIndex;
 
   const state_vector_t& nominalState = BASE::nominalStateTrajectoriesStock_[i][k];
   const input_vector_t& nominalInput = BASE::nominalInputTrajectoriesStock_[i][k];
@@ -217,9 +217,8 @@ void ILQR_BASE<STATE_DIM, INPUT_DIM>::calculateControllerWorker(size_t workerInd
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
-void ILQR_BASE<STATE_DIM, INPUT_DIM>::solveRiccatiEquationsWorker(size_t workerIndex, const size_t& partitionIndex,
-                                                                  const state_matrix_t& SmFinal, const state_vector_t& SvFinal,
-                                                                  const eigen_scalar_t& sFinal) {
+void ILQR_BASE<STATE_DIM, INPUT_DIM>::solveRiccatiEquationsWorker(size_t workerIndex, size_t partitionIndex, const state_matrix_t& SmFinal,
+                                                                  const state_vector_t& SvFinal, const eigen_scalar_t& sFinal) {
   const size_t N = BASE::nominalTimeTrajectoriesStock_[partitionIndex].size();
   const size_t NE = BASE::nominalEventsPastTheEndIndecesStock_[partitionIndex].size();
 
@@ -262,7 +261,7 @@ void ILQR_BASE<STATE_DIM, INPUT_DIM>::solveRiccatiEquationsWorker(size_t workerI
   SsSwitchingTimesIndices.reserve(NE + 2);
   SsSwitchingTimesIndices.push_back(0);
   for (size_t k = 0; k < NE; k++) {
-    const size_t& index = BASE::nominalEventsPastTheEndIndecesStock_[partitionIndex][k];
+    size_t index = BASE::nominalEventsPastTheEndIndecesStock_[partitionIndex][k];
     SsSwitchingTimesIndices.push_back(index);
   }
   SsSwitchingTimesIndices.push_back(N);
@@ -395,7 +394,7 @@ ILQR_Settings& ILQR_BASE<STATE_DIM, INPUT_DIM>::settings() {
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
-void ILQR_BASE<STATE_DIM, INPUT_DIM>::setupOptimizer(const size_t& numPartitions) {
+void ILQR_BASE<STATE_DIM, INPUT_DIM>::setupOptimizer(size_t numPartitions) {
   BASE::setupOptimizer(numPartitions);
 
   HmTrajectoryStock_.resize(numPartitions);

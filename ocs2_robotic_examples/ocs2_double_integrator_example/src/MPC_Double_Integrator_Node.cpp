@@ -28,8 +28,10 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  ******************************************************************************/
 
 
+#include <ocs2_comm_interfaces/ocs2_ros_interfaces/mpc/MPC_ROS_Interface.h>
+
 #include "ocs2_double_integrator_example/DoubleIntegratorInterface.h"
-#include "ocs2_double_integrator_example/ros_comm/MPC_ROS_Double_Integrator.h"
+#include "ocs2_double_integrator_example/definitions.h"
 
 using namespace ocs2;
 using namespace double_integrator;
@@ -44,11 +46,10 @@ int main(int argc, char **argv)
 	DoubleIntegratorInterface doubleIntegratorInterface(taskFileFolderName);
 
 	// Launch MPC ROS node
-	MPC_ROS_Linear_System mpcNode(*doubleIntegratorInterface.getMPCPtr(), "double_integrator");
+	MPC_ROS_Interface<ocs2::double_integrator::STATE_DIM_, ocs2::double_integrator::INPUT_DIM_>
+	 mpcNode(doubleIntegratorInterface.getMPCPtr().get(), "double_integrator");
 	mpcNode.launchNodes(argc, argv);
 
 	// Successful exit
 	return 0;
 }
-
-/* EOF */

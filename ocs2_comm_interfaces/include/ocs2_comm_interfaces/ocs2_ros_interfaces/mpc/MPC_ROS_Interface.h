@@ -196,23 +196,6 @@ class MPC_ROS_Interface {
    */
   virtual void initModeSequence(const system_observation_t& initObservation) {}
 
-  /**
-   * Adjusts the user-defined target trajectories for the cost based on the current observation.
-   *
-   * @param [in] currentObservation: The current observation.
-   * @param costDesiredTrajectories: The received user-defined target trajectories which can be modified based on the current observation.
-   */
-  virtual void adjustTargetTrajectories(const system_observation_t& currentObservation,
-                                        cost_desired_trajectories_t& costDesiredTrajectories) {}
-
-  /**
-   * Adjusts the user-defined mode sequence for time-triggered hybrid systems based on the current observation.
-   *
-   * @param [in] currentObservation: The current observation.
-   * @param newLogicRulesTemplate: New logicRules template which can be modified based on the current observation.
-   */
-  virtual void adjustModeSequence(const system_observation_t& currentObservation, mode_sequence_template_t& newLogicRulesTemplate) {}
-
  protected:
   /**
    * Signal handler
@@ -319,12 +302,6 @@ class MPC_ROS_Interface {
 
   std::chrono::time_point<std::chrono::steady_clock> startTimePoint_;
   std::chrono::time_point<std::chrono::steady_clock> finalTimePoint_;
-
-  std::atomic<bool> desiredTrajectoriesUpdated_;
-  std::atomic<bool> modeSequenceUpdated_;
-  cost_desired_trajectories_t costDesiredTrajectories_;
-  cost_desired_trajectories_t defaultCostDesiredTrajectories_;
-  mode_sequence_template_t modeSequenceTemplate_;
 
   // MPC reset
   bool initialCall_;

@@ -42,9 +42,6 @@ DDP_BASE<STATE_DIM, INPUT_DIM>::DDP_BASE(const controlled_system_base_t* systemD
       ddpSettings_(ddpSettings),
       rolloutSettings_(rolloutSettings),
       algorithmName_(algorithmName),
-      costDesiredTrajectories_(),
-      costDesiredTrajectoriesBuffer_(),
-      costDesiredTrajectoriesUpdated_(false),
       rewindCounter_(0),
       iteration_(0) {
   // Dynamics, Constraints, derivatives, and cost
@@ -127,9 +124,12 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::reset() {
   blockwiseMovingHorizon_ = false;
   useParallelRiccatiSolverFromInitItr_ = false;
 
-  costDesiredTrajectories_.clear();
-  costDesiredTrajectoriesBuffer_.clear();
-  costDesiredTrajectoriesUpdated_ = false;
+  this->costDesiredTrajectories_.clear();
+  {
+    std::lock_guard<std::mutex> lock(this->costDesiredTrajectoriesBufferMutex_);
+    this->costDesiredTrajectoriesBuffer_.clear();
+    this->costDesiredTrajectoriesUpdated_ = false;
+  }
 
   for (size_t i = 0; i < numPartitions_; i++) {
     // very important :)
@@ -439,7 +439,7 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::calculateCostWorker(size_t workerIndex, con
   cost_function_base_t& costFunction = linearQuadraticApproximatorPtrStock_[workerIndex]->costFunction();
 
   // set desired trajectories
-  costFunction.setCostDesiredTrajectories(costDesiredTrajectories_);
+  costFunction.setCostDesiredTrajectories(this->costDesiredTrajectories_);
 
   totalCost = 0.0;
   auto eventsPastTheEndItr = eventsPastTheEndIndeces.begin();
@@ -493,7 +493,7 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::calculateRolloutCost(const scalar_array2_t&
 
   // calculate the Heuristics function at the final time
   // set desired trajectories
-  heuristicsFunctionsPtrStock_[threadId]->setCostDesiredTrajectories(costDesiredTrajectories_);
+  heuristicsFunctionsPtrStock_[threadId]->setCostDesiredTrajectories(this->costDesiredTrajectories_);
   // set state-input
   heuristicsFunctionsPtrStock_[threadId]->setCurrentStateAndControl(timeTrajectoriesStock[finalActivePartition_].back(),
                                                                     stateTrajectoriesStock[finalActivePartition_].back(),
@@ -591,7 +591,7 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::approximateOptimalControlProblem() {
     if (N > 0) {
       for (size_t j = 0; j < ddpSettings_.nThreads_; j++) {
         // set desired trajectories
-        linearQuadraticApproximatorPtrStock_[j]->costFunction().setCostDesiredTrajectories(costDesiredTrajectories_);
+        linearQuadraticApproximatorPtrStock_[j]->costFunction().setCostDesiredTrajectories(this->costDesiredTrajectories_);
       }  // end of j loop
 
       // perform the approximateSubsystemLQ for partition i
@@ -601,7 +601,7 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::approximateOptimalControlProblem() {
   }  // end of i loop
 
   // calculate the Heuristics function at the final time
-  heuristicsFunctionsPtrStock_[0]->setCostDesiredTrajectories(costDesiredTrajectories_);
+  heuristicsFunctionsPtrStock_[0]->setCostDesiredTrajectories(this->costDesiredTrajectories_);
   heuristicsFunctionsPtrStock_[0]->setCurrentStateAndControl(nominalTimeTrajectoriesStock_[finalActivePartition_].back(),
                                                              nominalStateTrajectoriesStock_[finalActivePartition_].back(),
                                                              nominalInputTrajectoriesStock_[finalActivePartition_].back());
@@ -1299,66 +1299,6 @@ const typename DDP_BASE<STATE_DIM, INPUT_DIM>::scalar_array_t& DDP_BASE<STATE_DI
 /******************************************************************************************************/
 /***************************************************************************************************** */
 template <size_t STATE_DIM, size_t INPUT_DIM>
-void DDP_BASE<STATE_DIM, INPUT_DIM>::getCostDesiredTrajectoriesPtr(const cost_desired_trajectories_t*& costDesiredTrajectoriesPtr) const {
-  costDesiredTrajectoriesPtr = &costDesiredTrajectories_;
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/***************************************************************************************************** */
-template <size_t STATE_DIM, size_t INPUT_DIM>
-void DDP_BASE<STATE_DIM, INPUT_DIM>::setCostDesiredTrajectories(const cost_desired_trajectories_t& costDesiredTrajectories) {
-  costDesiredTrajectoriesUpdated_ = true;
-  costDesiredTrajectoriesBuffer_ = costDesiredTrajectories;
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/***************************************************************************************************** */
-template <size_t STATE_DIM, size_t INPUT_DIM>
-void DDP_BASE<STATE_DIM, INPUT_DIM>::setCostDesiredTrajectories(const scalar_array_t& desiredTimeTrajectory,
-                                                                const dynamic_vector_array_t& desiredStateTrajectory,
-                                                                const dynamic_vector_array_t& desiredInputTrajectory) {
-  costDesiredTrajectoriesUpdated_ = true;
-  costDesiredTrajectoriesBuffer_.desiredTimeTrajectory() = desiredTimeTrajectory;
-  costDesiredTrajectoriesBuffer_.desiredStateTrajectory() = desiredStateTrajectory;
-  costDesiredTrajectoriesBuffer_.desiredInputTrajectory() = desiredInputTrajectory;
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/***************************************************************************************************** */
-template <size_t STATE_DIM, size_t INPUT_DIM>
-void DDP_BASE<STATE_DIM, INPUT_DIM>::swapCostDesiredTrajectories(cost_desired_trajectories_t& costDesiredTrajectories) {
-  costDesiredTrajectoriesUpdated_ = true;
-  costDesiredTrajectoriesBuffer_.swap(costDesiredTrajectories);
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/***************************************************************************************************** */
-template <size_t STATE_DIM, size_t INPUT_DIM>
-void DDP_BASE<STATE_DIM, INPUT_DIM>::swapCostDesiredTrajectories(scalar_array_t& desiredTimeTrajectory,
-                                                                 dynamic_vector_array_t& desiredStateTrajectory,
-                                                                 dynamic_vector_array_t& desiredInputTrajectory) {
-  costDesiredTrajectoriesUpdated_ = true;
-  costDesiredTrajectoriesBuffer_.desiredTimeTrajectory().swap(desiredTimeTrajectory);
-  costDesiredTrajectoriesBuffer_.desiredStateTrajectory().swap(desiredStateTrajectory);
-  costDesiredTrajectoriesBuffer_.desiredInputTrajectory().swap(desiredInputTrajectory);
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/***************************************************************************************************** */
-template <size_t STATE_DIM, size_t INPUT_DIM>
-bool DDP_BASE<STATE_DIM, INPUT_DIM>::costDesiredTrajectoriesUpdated() const {
-  return costDesiredTrajectoriesUpdated_;
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/***************************************************************************************************** */
-template <size_t STATE_DIM, size_t INPUT_DIM>
 void DDP_BASE<STATE_DIM, INPUT_DIM>::rewindOptimizer(const size_t& firstIndex) {
   // No rewind is needed
   if (firstIndex == 0) {
@@ -1738,11 +1678,7 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::run(const scalar_t& initTime, const state_v
     }
   }
 
-  // set desired trajectories of cost if it is updated
-  if (costDesiredTrajectoriesUpdated_) {
-    costDesiredTrajectoriesUpdated_ = false;
-    costDesiredTrajectories_.swap(costDesiredTrajectoriesBuffer_);
-  }
+  this->updateCostDesiredTrajectories();
 
   // update the logic rules in the beginning of the run routine
   bool logicRulesModified = BASE::getLogicRulesMachinePtr()->updateLogicRules(partitioningTimes_);

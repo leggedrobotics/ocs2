@@ -64,9 +64,11 @@ class TargetTrajectories_ROS_Interface {
   /**
    * Constructor.
    *
+   * @param [in] argc: Commandline number of arguments
+   * @param [in] argv: Command line arguments
    * @param [in] robotName: The robot's name.
    */
-  TargetTrajectories_ROS_Interface(const std::string& robotName = "robot");
+  TargetTrajectories_ROS_Interface(int argc, char* argv[], const std::string& robotName = "robot");
 
   /**
    * Destructor.
@@ -86,11 +88,8 @@ class TargetTrajectories_ROS_Interface {
   /**
    * This is the main routine which launches the publisher node for MPC's
    * desired trajectories.
-   *
-   * @param [in] argc: Command line number of arguments.
-   * @param [in] argv: Command line vector of arguments.
    */
-  void launchNodes(int argc, char* argv[]);
+  void launchNodes();
 
   /**
    * Publishes the target trajectories.
@@ -101,6 +100,8 @@ class TargetTrajectories_ROS_Interface {
 
  protected:
   std::string robotName_;
+
+  std::shared_ptr<::ros::NodeHandle> nodeHandle_;
 
   // Publisher
   ::ros::Publisher mpcTargetTrajectoriesPublisher_;

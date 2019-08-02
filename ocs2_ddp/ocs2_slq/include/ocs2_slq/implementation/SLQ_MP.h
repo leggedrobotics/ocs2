@@ -106,9 +106,10 @@ void SLQ_MP<STATE_DIM, INPUT_DIM>::lineSearch(bool computeISEs) {
   alphaBestFound_ = false;
   lsWorkerCompleted_ = 0;
 
-  auto maxNumOfLineSearches = static_cast<size_t>(log(BASE::ddpSettings_.minLearningRate_ / BASE::ddpSettings_.maxLearningRate_) /
-                                                  log(BASE::ddpSettings_.lineSearchContractionRate_)) +
-                              1;
+  auto maxNumOfLineSearches = static_cast<size_t>(std::log(BASE::ddpSettings_.minLearningRate_ / BASE::ddpSettings_.maxLearningRate_) /
+                                                      std::log(BASE::ddpSettings_.lineSearchContractionRate_) +
+                                                  1);
+
   alphaExpMax_ = maxNumOfLineSearches;
   alphaExpBest_ = maxNumOfLineSearches;
   alphaProcessed_ = std::vector<bool>(maxNumOfLineSearches, false);
@@ -653,7 +654,7 @@ typename SLQ_MP<STATE_DIM, INPUT_DIM>::scalar_t SLQ_MP<STATE_DIM, INPUT_DIM>::so
   // solve it sequentially for the first time when useParallelRiccatiSolverFromInitItr_ is false
   if (BASE::iteration_ == 0 && !BASE::useParallelRiccatiSolverFromInitItr_) {
     for (int i = BASE::numPartitions_ - 1; i >= 0; i--) {
-      if (i < (signed)BASE::initActivePartition_ || i > (signed)BASE::finalActivePartition_) {
+      if (i < BASE::initActivePartition_ || i > BASE::finalActivePartition_) {
         BASE::SsTimeTrajectoryStock_[i].clear();
         BASE::SsNormalizedTimeTrajectoryStock_[i].clear();
         BASE::SsNormalizedEventsPastTheEndIndecesStock_[i].clear();
@@ -725,7 +726,7 @@ typename SLQ_MP<STATE_DIM, INPUT_DIM>::scalar_t SLQ_MP<STATE_DIM, INPUT_DIM>::so
   }
 
   // average time step
-  return (BASE::finalTime_ - BASE::initTime_) / (scalar_t)numSteps;
+  return (BASE::finalTime_ - BASE::initTime_) / numSteps;
 }
 
 /******************************************************************************************************/
@@ -739,7 +740,7 @@ void SLQ_MP<STATE_DIM, INPUT_DIM>::executeRiccatiSolver(size_t threadId) {
     }
 
     // for inactive subsystems
-    if (i < (signed)BASE::initActivePartition_ || i > (signed)BASE::finalActivePartition_) {
+    if (i < BASE::initActivePartition_ || i > BASE::finalActivePartition_) {
       BASE::SsTimeTrajectoryStock_[i].clear();
       BASE::SmTrajectoryStock_[i].clear();
       BASE::SvTrajectoryStock_[i].clear();

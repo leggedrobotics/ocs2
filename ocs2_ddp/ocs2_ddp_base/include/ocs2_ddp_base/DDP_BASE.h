@@ -125,21 +125,21 @@ class DDP_BASE : public Solver_BASE<STATE_DIM, INPUT_DIM> {
   using dynamic_matrix_array2_t = typename BASE::dynamic_matrix_array2_t;
 
   using controller_ptr_array_t = typename BASE::controller_ptr_array_t;
-  typedef LinearController<STATE_DIM, INPUT_DIM> linear_controller_t;
+  using linear_controller_t = LinearController<STATE_DIM, INPUT_DIM>;
   using linear_controller_array_t = typename linear_controller_t::array_t;
 
   using event_handler_t = SystemEventHandler<STATE_DIM>;
-  typedef ControlledSystemBase<STATE_DIM, INPUT_DIM> controlled_system_base_t;
-  typedef DerivativesBase<STATE_DIM, INPUT_DIM> derivatives_base_t;
-  typedef ConstraintBase<STATE_DIM, INPUT_DIM> constraint_base_t;
-  typedef CostFunctionBase<STATE_DIM, INPUT_DIM> cost_function_base_t;
-  typedef SystemOperatingTrajectoriesBase<STATE_DIM, INPUT_DIM> operating_trajectories_base_t;
-  typedef PenaltyBase<STATE_DIM, INPUT_DIM> penalty_base_t;
+  using controlled_system_base_t = ControlledSystemBase<STATE_DIM, INPUT_DIM>;
+  using derivatives_base_t = DerivativesBase<STATE_DIM, INPUT_DIM>;
+  using constraint_base_t = ConstraintBase<STATE_DIM, INPUT_DIM>;
+  using cost_function_base_t = CostFunctionBase<STATE_DIM, INPUT_DIM>;
+  using operating_trajectories_base_t = SystemOperatingTrajectoriesBase<STATE_DIM, INPUT_DIM>;
+  using penalty_base_t = PenaltyBase<STATE_DIM, INPUT_DIM>;
 
-  typedef RolloutBase<STATE_DIM, INPUT_DIM> rollout_base_t;
-  typedef TimeTriggeredRollout<STATE_DIM, INPUT_DIM> time_triggered_rollout_t;
-  typedef LinearQuadraticApproximator<STATE_DIM, INPUT_DIM> linear_quadratic_approximator_t;
-  typedef OperatingTrajectoriesRollout<STATE_DIM, INPUT_DIM> operating_trajectorie_rollout_t;
+  using rollout_base_t = RolloutBase<STATE_DIM, INPUT_DIM>;
+  using time_triggered_rollout_t = TimeTriggeredRollout<STATE_DIM, INPUT_DIM>;
+  using linear_quadratic_approximator_t = LinearQuadraticApproximator<STATE_DIM, INPUT_DIM>;
+  using operating_trajectorie_rollout_t = OperatingTrajectoriesRollout<STATE_DIM, INPUT_DIM>;
 
   using cost_desired_trajectories_t = typename BASE::cost_desired_trajectories_t;
 
@@ -220,7 +220,7 @@ class DDP_BASE : public Solver_BASE<STATE_DIM, INPUT_DIM> {
    */
   void rolloutFinalState(scalar_t initTime, const state_vector_t& initState, scalar_t finalTime, const scalar_array_t& partitioningTimes,
                          const linear_controller_array_t& controllersStock, state_vector_t& finalState, input_vector_t& finalInput,
-                         size_t& finalActiveSubsystemIndex, size_t threadId = 0);
+                         size_t& finalActivePartition, size_t threadId = 0);
 
   /**
    * Calculates a rollout constraints. It uses the given rollout trajectories and calculate the constraints.
@@ -633,11 +633,11 @@ class DDP_BASE : public Solver_BASE<STATE_DIM, INPUT_DIM> {
    * @param [in] partitioningTimes: Switching times.
    * @param [in] initTime: Initial time.
    * @param [out] controllersStock: Truncated array of the control policies.
-   * @param [out] initActiveSubsystemIndex: Initial active subsystems.
+   * @param [out] initActivePartition: Initial active subsystems.
    * @param [out] deletedcontrollersStock: The deleted part of the control policies.
    */
-  void truncateConterller(const scalar_array_t& partitioningTimes, const double& initTime, linear_controller_array_t& controllersStock,
-                          size_t& initActiveSubsystemIndex, linear_controller_array_t& deletedcontrollersStock);
+  void truncateController(const scalar_array_t& partitioningTimes, double initTime, linear_controller_array_t& controllersStock,
+                          size_t& initActivePartition, linear_controller_array_t& deletedcontrollersStock);
 
   /**
    * Calculates max feedforward update norm and max type-1 error update norm.

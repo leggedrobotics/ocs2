@@ -189,7 +189,7 @@ typename DDP_BASE<STATE_DIM, INPUT_DIM>::scalar_t DDP_BASE<STATE_DIM, INPUT_DIM>
     // the first rollout of the partition. However for the very first run of the algorithm,
     // it will still use operating trajectories if an initial controller is not provided.
     linear_controller_t* controllerPtrTemp = &controllersStock[i];
-    if (blockwiseMovingHorizon_ == false) {
+    if (!blockwiseMovingHorizon_) {
       if (controllerPtrTemp->empty() && i > 0 && !controllersStock[i - 1].empty()) {
         controllerPtrTemp = &controllersStock[i - 1];
       }
@@ -531,7 +531,7 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::calculateRolloutCost(const scalar_array2_t&
   if (!ddpSettings_.noStateConstraints_) {
     for (size_t i = 0; i < numPartitions_; i++) {
       for (size_t k = 0; k < nc2FinalStock[i].size(); k++) {
-        size_t nc2Final = nc2FinalStock[i][k];
+        auto nc2Final = nc2FinalStock[i][k];
         totalCost += 0.5 * stateConstraintPenalty * HvFinalStock[i][k].head(nc2Final).squaredNorm();
       }  // end of k loop
     }    // end of i loop
@@ -545,7 +545,7 @@ template <size_t STATE_DIM, size_t INPUT_DIM>
 void DDP_BASE<STATE_DIM, INPUT_DIM>::approximateOptimalControlProblem() {
   for (size_t i = 0; i < numPartitions_; i++) {
     // number of the intermediate LQ variables
-    size_t N = nominalTimeTrajectoriesStock_[i].size();
+    auto N = nominalTimeTrajectoriesStock_[i].size();
 
     // system dynamics
     AmTrajectoryStock_[i].resize(N);
@@ -980,7 +980,7 @@ typename DDP_BASE<STATE_DIM, INPUT_DIM>::scalar_t DDP_BASE<STATE_DIM, INPUT_DIM>
 /******************************************************************************************************/
 /***************************************************************************************************** */
 template <size_t STATE_DIM, size_t INPUT_DIM>
-void DDP_BASE<STATE_DIM, INPUT_DIM>::truncateConterller(const scalar_array_t& partitioningTimes, const double& initTime,
+void DDP_BASE<STATE_DIM, INPUT_DIM>::truncateController(const scalar_array_t& partitioningTimes, double initTime,
                                                         linear_controller_array_t& controllersStock, size_t& initActivePartition,
                                                         linear_controller_array_t& deletedcontrollersStock) {
   deletedcontrollersStock.resize(numPartitions_);
@@ -1701,7 +1701,7 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::run(scalar_t initTime, const state_vector_t
   iterationISE2_.clear();
 
   // finding the initial active partition index and truncating the controller
-  truncateConterller(partitioningTimes_, initTime_, nominalControllersStock_, initActivePartition_, deletedcontrollersStock_);
+  truncateController(partitioningTimes_, initTime_, nominalControllersStock_, initActivePartition_, deletedcontrollersStock_);
 
   // the final active partition index.
   finalActivePartition_ = lookup::findBoundedActiveIntervalInTimeArray(partitioningTimes_, finalTime_);

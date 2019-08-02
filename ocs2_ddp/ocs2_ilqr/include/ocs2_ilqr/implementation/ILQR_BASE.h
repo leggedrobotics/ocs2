@@ -149,7 +149,7 @@ void ILQR_BASE<STATE_DIM, INPUT_DIM>::calculateController() {
       continue;
     }
 
-    const size_t N = BASE::SsTimeTrajectoryStock_[i].size();
+    const auto N = BASE::SsTimeTrajectoryStock_[i].size();
 
     BASE::nominalControllersStock_[i].timeStamp_ = BASE::SsTimeTrajectoryStock_[i];
     BASE::nominalControllersStock_[i].gainArray_.resize(N);
@@ -184,8 +184,8 @@ void ILQR_BASE<STATE_DIM, INPUT_DIM>::calculateController() {
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
 void ILQR_BASE<STATE_DIM, INPUT_DIM>::calculateControllerWorker(size_t workerIndex, size_t partitionIndex, size_t timeIndex) {
-  size_t i = partitionIndex;
-  size_t k = timeIndex;
+  auto i = partitionIndex;
+  auto k = timeIndex;
 
   const state_vector_t& nominalState = BASE::nominalStateTrajectoriesStock_[i][k];
   const input_vector_t& nominalInput = BASE::nominalInputTrajectoriesStock_[i][k];
@@ -261,7 +261,7 @@ void ILQR_BASE<STATE_DIM, INPUT_DIM>::solveRiccatiEquationsWorker(size_t workerI
   SsSwitchingTimesIndices.reserve(NE + 2);
   SsSwitchingTimesIndices.push_back(0);
   for (size_t k = 0; k < NE; k++) {
-    size_t index = BASE::nominalEventsPastTheEndIndecesStock_[partitionIndex][k];
+    auto index = BASE::nominalEventsPastTheEndIndecesStock_[partitionIndex][k];
     SsSwitchingTimesIndices.push_back(index);
   }
   SsSwitchingTimesIndices.push_back(N);
@@ -274,12 +274,9 @@ void ILQR_BASE<STATE_DIM, INPUT_DIM>::solveRiccatiEquationsWorker(size_t workerI
   /*
    * solving the Riccati equations
    */
-  int beginTimeItr;
-  int endTimeItr;
-
   for (int i = NE; i >= 0; i--) {
-    beginTimeItr = SsSwitchingTimesIndices[i];    // similar to std::begin()
-    endTimeItr = SsSwitchingTimesIndices[i + 1];  // similar to std::end()
+    auto beginTimeItr = SsSwitchingTimesIndices[i];    // similar to std::begin()
+    auto endTimeItr = SsSwitchingTimesIndices[i + 1];  // similar to std::end()
 
     /*
      * solution at final time of an interval (uses the continuous-time formulation)

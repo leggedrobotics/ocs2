@@ -167,7 +167,7 @@ template <size_t STATE_DIM, size_t INPUT_DIM>
 void SLQ_BASE<STATE_DIM, INPUT_DIM>::approximateConstrainedLQWorker(size_t workerIndex, size_t i, size_t k,
                                                                     scalar_t stateConstraintPenalty) {
   // constraint type 2 coefficients
-  const size_t nc2 = BASE::nc2TrajectoriesStock_[i][k];
+  const auto nc2 = BASE::nc2TrajectoriesStock_[i][k];
   if (nc2 > 0) {
     BASE::qTrajectoryStock_[i][k] +=
         0.5 * stateConstraintPenalty * BASE::HvTrajectoryStock_[i][k].head(nc2).transpose() * BASE::HvTrajectoryStock_[i][k].head(nc2);
@@ -266,7 +266,7 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM>::approximateConstrainedLQWorker(size_t worke
   RmInverseTrajectoryStock_[i][k].noalias() = RinvChol * RinvChol.transpose();
 
   // constraint type 1 coefficients
-  const size_t nc1 = BASE::nc1TrajectoriesStock_[i][k];
+  const auto nc1 = BASE::nc1TrajectoriesStock_[i][k];
   if (nc1 == 0) {
     DmDagerTrajectoryStock_[i][k].setZero();
     EvProjectedTrajectoryStock_[i][k].setZero();
@@ -375,9 +375,9 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM>::calculateController() {
 /***************************************************************************************************** */
 template <size_t STATE_DIM, size_t INPUT_DIM>
 void SLQ_BASE<STATE_DIM, INPUT_DIM>::calculateControllerWorker(size_t workerIndex, size_t partitionIndex, size_t timeIndex) {
-  const size_t i = partitionIndex;
-  const size_t k = timeIndex;
-  const scalar_t time = BASE::SsTimeTrajectoryStock_[i][k];
+  const auto i = partitionIndex;
+  const auto k = timeIndex;
+  const auto time = BASE::SsTimeTrajectoryStock_[i][k];
 
   // local variables
   state_vector_t nominalState;

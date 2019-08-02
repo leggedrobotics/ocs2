@@ -78,7 +78,7 @@ class SequentialErrorEquationNormalized final : public OdeBase<STATE_DIM> {
    * @param [in] GvPtr: A pointer to the trajectory of \f$ G_v(t) \f$ .
    * @param [in] GmPtr: A pointer to the trajectory of \f$ G_m(t) \f$ .
    */
-  void setData(const scalar_array_t* const timeStampPtr, const state_vector_array_t* const GvPtr, const state_matrix_array_t* const GmPtr) {
+  void setData(const scalar_array_t* timeStampPtr, const state_vector_array_t* GvPtr, const state_matrix_array_t* GmPtr) {
     BASE::resetNumFunctionCalls();
 
     GvFunc_.setData(timeStampPtr, GvPtr);

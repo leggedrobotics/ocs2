@@ -121,9 +121,9 @@ class RolloutBase {
    * @param [out] inputTrajectory: The control input trajectory.
    * @return The final state (state jump is considered if it took place)
    */
-  virtual state_vector_t run(const size_t& partitionIndex, const scalar_t& initTime, const state_vector_t& initState,
-                             const scalar_t& finalTime, controller_t* controller, logic_rules_machine_t& logicRulesMachine,
-                             scalar_array_t& timeTrajectory, size_array_t& eventsPastTheEndIndeces, state_vector_array_t& stateTrajectory,
+  virtual state_vector_t run(size_t partitionIndex, scalar_t initTime, const state_vector_t& initState, scalar_t finalTime,
+                             controller_t* controller, logic_rules_machine_t& logicRulesMachine, scalar_array_t& timeTrajectory,
+                             size_array_t& eventsPastTheEndIndeces, state_vector_array_t& stateTrajectory,
                              input_vector_array_t& inputTrajectory) = 0;
 
   /**

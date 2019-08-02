@@ -187,7 +187,7 @@ class SLQ_MP : public SLQ_BASE<STATE_DIM, INPUT_DIM> {
    *
    * @param [in] partitionIndex: Time partition index
    */
-  void approximatePartitionLQ(const size_t& partitionIndex) override;
+  void approximatePartitionLQ(size_t partitionIndex) override;
 
   /**
    * Finds the next node's uncompleted LQ approximation and executes approximateLQWorker.
@@ -195,14 +195,14 @@ class SLQ_MP : public SLQ_BASE<STATE_DIM, INPUT_DIM> {
    * @param [in] threadId: Thread ID
    * @param [in] partitionIndex: Time partition index
    */
-  void executeApproximatePartitionLQWorker(size_t threadId, const size_t& partitionIndex);
+  void executeApproximatePartitionLQWorker(size_t threadId, size_t partitionIndex);
 
   /**
    * Computes the controller for a particular time partition
    *
    * @param partitionIndex: Time partition index
    */
-  void calculatePartitionController(const size_t& partitionIndex) override;
+  void calculatePartitionController(size_t partitionIndex) override;
 
   /**
    * Finds the next node's uncompleted CALCULATE_CONTROLLER task and executes calculateControllerWorker.
@@ -210,7 +210,7 @@ class SLQ_MP : public SLQ_BASE<STATE_DIM, INPUT_DIM> {
    * @param [in] threadId: Thread ID
    * @param [in] partitionIndex: Time partition index
    */
-  void executeCalculatePartitionController(size_t threadId, const size_t& partitionIndex);
+  void executeCalculatePartitionController(size_t threadId, size_t partitionIndex);
 
   /**
    * Launches worker threads
@@ -250,7 +250,7 @@ class SLQ_MP : public SLQ_BASE<STATE_DIM, INPUT_DIM> {
    * @param [in] subsystemId
    * @return size_t:
    */
-  size_t generateUniqueProcessID(const size_t& iterateNo, const int workerState, const int subsystemId) {
+  size_t generateUniqueProcessID(size_t iterateNo, int workerState, int subsystemId) {
     return (10e9 * (workerState + 1) + 10e6 * (subsystemId + 1) + iterateNo + 1);
   }
 

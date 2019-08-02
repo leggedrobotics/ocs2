@@ -174,14 +174,14 @@ class SLQ : public SLQ_BASE<STATE_DIM, INPUT_DIM> {
    * Computes the linearized dynamics for a particular time partition
    * @param [in] sysIndex
    */
-  void approximatePartitionLQ(const size_t& partitionIndex) override;
+  void approximatePartitionLQ(size_t partitionIndex) override;
 
   /**
    * Computes the controller for a particular time partition
    *
    * @param partitionIndex: Time partition index
    */
-  void calculatePartitionController(const size_t& partitionIndex) override;
+  void calculatePartitionController(size_t partitionIndex) override;
 
  private:
  public:

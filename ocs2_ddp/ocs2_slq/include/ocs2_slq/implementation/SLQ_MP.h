@@ -106,9 +106,9 @@ void SLQ_MP<STATE_DIM, INPUT_DIM>::lineSearch(bool computeISEs) {
   alphaBestFound_ = false;
   lsWorkerCompleted_ = 0;
 
-  size_t maxNumOfLineSearches = (int)(log(BASE::ddpSettings_.minLearningRate_ / BASE::ddpSettings_.maxLearningRate_) /
-                                      log(BASE::ddpSettings_.lineSearchContractionRate_)) +
-                                1;
+  auto maxNumOfLineSearches = static_cast<size_t>(log(BASE::ddpSettings_.minLearningRate_ / BASE::ddpSettings_.maxLearningRate_) /
+                                                  log(BASE::ddpSettings_.lineSearchContractionRate_)) +
+                              1;
   alphaExpMax_ = maxNumOfLineSearches;
   alphaExpBest_ = maxNumOfLineSearches;
   alphaProcessed_ = std::vector<bool>(maxNumOfLineSearches, false);
@@ -186,9 +186,9 @@ void SLQ_MP<STATE_DIM, INPUT_DIM>::threadWork(size_t threadId) {
 
     // display
     if (BASE::ddpSettings_.debugPrintMT_) {
-      BASE::printString("[MT]: [Thread " + std::to_string(threadId) + "]: previous procId: " + std::to_string(uniqueProcessID) +
-                        ", current procId: " +
-                        std::to_string(generateUniqueProcessID(iteration_local, (int)workerTask_local, (int)subsystemProcessed_local)));
+      BASE::printString(
+          "[MT]: [Thread " + std::to_string(threadId) + "]: previous procId: " + std::to_string(uniqueProcessID) +
+          ", current procId: " + std::to_string(generateUniqueProcessID(iteration_local, workerTask_local, subsystemProcessed_local)));
     }
 
     /* We want to put the worker to sleep if
@@ -196,7 +196,7 @@ void SLQ_MP<STATE_DIM, INPUT_DIM>::threadWork(size_t threadId) {
      * - or we are finished both workerTask_ is not yet reset, thus the process ID is still the same
      * */
     if (workerTask_local == IDLE ||
-        uniqueProcessID == generateUniqueProcessID(iteration_local, (int)workerTask_local, (int)subsystemProcessed_local)) {
+        uniqueProcessID == generateUniqueProcessID(iteration_local, workerTask_local, subsystemProcessed_local)) {
       if (BASE::ddpSettings_.debugPrintMT_) {
         BASE::printString("[MT]: [Thread " + std::to_string(threadId) + "]: going to sleep !");
       }
@@ -204,7 +204,7 @@ void SLQ_MP<STATE_DIM, INPUT_DIM>::threadWork(size_t threadId) {
       // sleep until the state is not IDLE any more and we have a different process ID than before
       std::unique_lock<std::mutex> waitLock(workerWakeUpMutex_);
       while (workerTask_ == IDLE ||
-             (uniqueProcessID == generateUniqueProcessID(BASE::iteration_, (int)workerTask_.load(), (int)subsystemProcessed_.load()))) {
+             (uniqueProcessID == generateUniqueProcessID(BASE::iteration_, workerTask_.load(), subsystemProcessed_.load()))) {
         workerWakeUpCondition_.wait(waitLock);
       }
       waitLock.unlock();

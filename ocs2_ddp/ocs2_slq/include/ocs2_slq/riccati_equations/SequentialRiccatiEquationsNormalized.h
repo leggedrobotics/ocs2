@@ -59,7 +59,7 @@ class SequentialRiccatiEquationsNormalized final : public OdeBase<STATE_DIM*(STA
 
   using BASE = OdeBase<S_DIM_>;
 
-  typedef Dimensions<STATE_DIM, INPUT_DIM> DIMENSIONS;
+  using DIMENSIONS = Dimensions<STATE_DIM, INPUT_DIM>;
   using scalar_t = typename DIMENSIONS::scalar_t;
   using scalar_array_t = typename DIMENSIONS::scalar_array_t;
   using size_array_t = typename DIMENSIONS::size_array_t;
@@ -82,8 +82,8 @@ class SequentialRiccatiEquationsNormalized final : public OdeBase<STATE_DIM*(STA
   using dynamic_matrix_array_t = typename DIMENSIONS::dynamic_matrix_array_t;
   using dynamic_vector_array_t = typename DIMENSIONS::dynamic_vector_array_t;
 
-  typedef Eigen::Matrix<scalar_t, S_DIM_, 1> s_vector_t;
-  typedef std::vector<s_vector_t, Eigen::aligned_allocator<s_vector_t> > s_vector_array_t;
+  using s_vector_t = Eigen::Matrix<scalar_t, S_DIM_, 1>;
+  using s_vector_array_t = std::vector<s_vector_t, Eigen::aligned_allocator<s_vector_t> >;
 
   /**
    * Constructor.

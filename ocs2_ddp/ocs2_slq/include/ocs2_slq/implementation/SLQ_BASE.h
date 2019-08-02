@@ -440,15 +440,90 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM>::calculateControllerWorker(size_t workerInde
 /******************************************************************************************************/
 /***************************************************************************************************** */
 template <size_t STATE_DIM, size_t INPUT_DIM>
+void SLQ_BASE<STATE_DIM, INPUT_DIM>::solveSlqRiccatiEquationsWorker(size_t workerIndex, size_t partitionIndex,
+                                                                    const state_matrix_t& SmFinal, const state_vector_t& SvFinal,
+                                                                    const eigen_scalar_t& sFinal, const state_vector_t& SveFinal) {
+  // solve Sm, Sv, s
+  solveRiccatiEquationsWorker(workerIndex, partitionIndex, SmFinal, SvFinal, sFinal);
+
+  // Solve Sve
+  solveErrorRiccatiEquationWorker(workerIndex, partitionIndex, SveFinal);
+
+  // testing the numerical stability of the Riccati equations
+  int N = BASE::SsTimeTrajectoryStock_[partitionIndex].size();
+  if (BASE::ddpSettings_.checkNumericalStability_) {
+    for (int k = N - 1; k >= 0; k--) {
+      try {
+        if (!BASE::SmTrajectoryStock_[partitionIndex][k].allFinite()) {
+          throw std::runtime_error("Sm is unstable.");
+        }
+        if (BASE::SmTrajectoryStock_[partitionIndex][k].eigenvalues().real().minCoeff() < -Eigen::NumTraits<scalar_t>::epsilon()) {
+          throw std::runtime_error("Sm matrix is not positive semi-definite. It's smallest eigenvalue is " +
+                                   std::to_string(BASE::SmTrajectoryStock_[partitionIndex][k].eigenvalues().real().minCoeff()) + ".");
+        }
+        if (!BASE::SvTrajectoryStock_[partitionIndex][k].allFinite()) {
+          throw std::runtime_error("Sv is unstable.");
+        }
+        if (!BASE::SveTrajectoryStock_[partitionIndex][k].allFinite()) {
+          throw std::runtime_error("Sve is unstable");
+        }
+        if (!BASE::sTrajectoryStock_[partitionIndex][k].allFinite()) {
+          throw std::runtime_error("s is unstable");
+        }
+      } catch (const std::exception& error) {
+        std::cerr << "what(): " << error.what() << " at time " << BASE::SsTimeTrajectoryStock_[partitionIndex][k] << " [sec]." << std::endl;
+        for (int kp = k; kp < k + 10; kp++) {
+          if (kp >= N) {
+            continue;
+          }
+          std::cerr << "Sm[" << BASE::SsTimeTrajectoryStock_[partitionIndex][kp] << "]: \t"
+                    << BASE::SmTrajectoryStock_[partitionIndex][kp].norm() << std::endl;
+          std::cerr << "Sv[" << BASE::SsTimeTrajectoryStock_[partitionIndex][kp] << "]: \t"
+                    << BASE::SvTrajectoryStock_[partitionIndex][kp].transpose().norm() << std::endl;
+          std::cerr << "Sve[" << BASE::SsTimeTrajectoryStock_[partitionIndex][kp] << "]:\t"
+                    << BASE::SveTrajectoryStock_[partitionIndex][kp].transpose().norm() << std::endl;
+          std::cerr << "s[" << BASE::SsTimeTrajectoryStock_[partitionIndex][kp] << "]:  \t"
+                    << BASE::sTrajectoryStock_[partitionIndex][kp].transpose().norm() << std::endl;
+        }
+        exit(0);
+      }
+    }
+  }
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/***************************************************************************************************** */
+template <size_t STATE_DIM, size_t INPUT_DIM>
+SLQ_Settings& SLQ_BASE<STATE_DIM, INPUT_DIM>::settings() {
+  return settings_;
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/***************************************************************************************************** */
+template <size_t STATE_DIM, size_t INPUT_DIM>
+void SLQ_BASE<STATE_DIM, INPUT_DIM>::setupOptimizer(size_t numPartitions) {
+  BASE::setupOptimizer(numPartitions);
+
+  // constraint type 1 coefficients
+  DmDagerTrajectoryStock_.resize(numPartitions);
+  AmConstrainedTrajectoryStock_.resize(numPartitions);
+  QmConstrainedTrajectoryStock_.resize(numPartitions);
+  QvConstrainedTrajectoryStock_.resize(numPartitions);
+  EvProjectedTrajectoryStock_.resize(numPartitions);
+  CmProjectedTrajectoryStock_.resize(numPartitions);
+  DmProjectedTrajectoryStock_.resize(numPartitions);
+  RmInvConstrainedCholTrajectoryStock_.resize(numPartitions);
+  RmInverseTrajectoryStock_.resize(numPartitions);
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/***************************************************************************************************** */
+template <size_t STATE_DIM, size_t INPUT_DIM>
 void SLQ_BASE<STATE_DIM, INPUT_DIM>::solveRiccatiEquationsWorker(size_t workerIndex, size_t partitionIndex, const state_matrix_t& SmFinal,
                                                                  const state_vector_t& SvFinal, const eigen_scalar_t& sFinal) {
-  /*
-   *  The riccati equations are solved backwards in time
-   *  the SsNormalized time is therefore filles with negative time in the reverse order, for example:
-   *  nominalTime = [0.0, 1.0, 2.0, ..., 10.0]
-   *  SsNormalized = [10.0, ..., 2.0, 1.0, 0.0]
-   */
-
   // set data for Riccati equations
   riccatiEquationsPtrStock_[workerIndex]->resetNumFunctionCalls();
   riccatiEquationsPtrStock_[workerIndex]->setData(
@@ -471,112 +546,36 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM>::solveRiccatiEquationsWorker(size_t workerIn
   auto& SvTrajectory = BASE::SvTrajectoryStock_[partitionIndex];
   auto& sTrajectory = BASE::sTrajectoryStock_[partitionIndex];
 
-  const size_t nominalTimeSize = nominalTimeTrajectory.size();
-  const size_t numEvents = nominalEventsPastTheEndIndices.size();
-
-  // Clear containers
-  SsNormalizedEventsPastTheEndIndices.clear();
-  SsNormalizedEventsPastTheEndIndices.reserve(numEvents);
-
-  // max number of steps of integration
-  const auto maxNumSteps =
-      static_cast<size_t>(BASE::ddpSettings_.maxNumStepsPerSecond_ * (nominalTimeTrajectory.back() - nominalTimeTrajectory.front()));
-
-  // Output container
-  typename riccati_equations_t::s_vector_array_t allSsTrajectory(0);
-  allSsTrajectory.reserve(maxNumSteps);
-
-  // final value for the last Riccati equations plus final cost
-  typename riccati_equations_t::s_vector_t allSsFinal;
+  // Convert final value of value function in vector format
+  s_vector_t allSsFinal;
   riccati_equations_t::convert2Vector(SmFinal, SvFinal, sFinal, allSsFinal);
 
+  // Clear output containers
+  SsNormalizedTime.clear();
+  SsNormalizedEventsPastTheEndIndices.clear();
+  s_vector_array_t allSsTrajectory;
+
+  /*
+   *  The riccati equations are solved backwards in time
+   *  the SsNormalized time is therefore filled with negative time in the reverse order, for example:
+   *  nominalTime = [0.0, 1.0, 2.0, ..., 10.0]
+   *  SsNormalized = [-10.0, ..., -2.0, -1.0, -0.0]
+   *
+   *  Depending on settings_.useNominalTimeForBackwardPass_:
+   *  if true: the integration will produce the same time nodes set in nominalTime (=resulting from the forward pass),
+   *  if false: the SsNormalized time is a result of adaptive integration.
+   */
   if (settings_.useNominalTimeForBackwardPass_) {
-    // Creates integration values at time points defined in the nominalTimeTrajectory
-    // Times are therefore defined before integration in SsNormalizedTime
-
-    // Normalize time
-    SsNormalizedTime.resize(nominalTimeSize);
-    for (size_t k = 0; k < nominalTimeSize; k++) {
-      SsNormalizedTime[nominalTimeSize - 1 - k] = -nominalTimeTrajectory[k];
-    }
-
-    // Normalized switching time indices, start and end of the partition are added at the beginning and end
-    size_array_t SsNormalizedSwitchingTimesIndices;
-    SsNormalizedSwitchingTimesIndices.reserve(numEvents + 2);
-    SsNormalizedSwitchingTimesIndices.push_back(0);
-    for (int k = static_cast<int>(numEvents) - 1; k >= 0; k--) {
-      size_t index = nominalEventsPastTheEndIndices[k];
-      SsNormalizedSwitchingTimesIndices.push_back(nominalTimeSize - index);
-    }
-    SsNormalizedSwitchingTimesIndices.push_back(nominalTimeSize);
-
-    // integrating the Riccati equations
-    typename scalar_array_t::const_iterator beginTimeItr, endTimeItr;
-    for (size_t i = 0; i <= numEvents; i++) {
-      beginTimeItr = SsNormalizedTime.begin() + SsNormalizedSwitchingTimesIndices[i];
-      endTimeItr = SsNormalizedTime.begin() + SsNormalizedSwitchingTimesIndices[i + 1];
-
-      // solve Riccati equations if interval length is not zero (no event time at final time)
-      if (*beginTimeItr < *(endTimeItr - 1)) {
-        riccatiIntegratorPtrStock_[workerIndex]->integrate(allSsFinal, beginTimeItr, endTimeItr, allSsTrajectory,
-                                                           BASE::ddpSettings_.minTimeStep_, BASE::ddpSettings_.absTolODE_,
-                                                           BASE::ddpSettings_.relTolODE_, maxNumSteps, true);
-      } else {
-        allSsTrajectory.push_back(allSsFinal);
-      }
-
-      if (i < numEvents) {
-        SsNormalizedEventsPastTheEndIndices.push_back(allSsTrajectory.size());
-        riccatiEquationsPtrStock_[workerIndex]->computeJumpMap(*endTimeItr, allSsTrajectory.back(), allSsFinal);
-      }
-    }  // end of i loop
-
-    // check size
-    if (allSsTrajectory.size() != nominalTimeSize) {
-      throw std::runtime_error("allSsTrajectory size is incorrect.");
-    }
+    integrateRiccatiEquationNominalTime(*riccatiIntegratorPtrStock_[workerIndex], *riccatiEquationsPtrStock_[workerIndex],
+                                        nominalTimeTrajectory, nominalEventsPastTheEndIndices, std::move(allSsFinal), SsNormalizedTime,
+                                        SsNormalizedEventsPastTheEndIndices, allSsTrajectory);
   } else {
-    // Creates values according to the adaptive integration scheme
-    // Time steps are recorded in SsNormalizedTime
-
-    // clear output containers
-    SsNormalizedTime.clear();
-    SsNormalizedTime.reserve(maxNumSteps);
-
-    // Extract switching times from eventIndices and normalize them
-    scalar_array_t SsNormalizedSwitchingTimes;
-    SsNormalizedSwitchingTimes.reserve(numEvents + 2);
-    SsNormalizedSwitchingTimes.push_back(-nominalTimeTrajectory.back());
-    for (int k = static_cast<int>(numEvents) - 1; k >= 0; k--) {
-      size_t index = nominalEventsPastTheEndIndices[k];
-      SsNormalizedSwitchingTimes.push_back(-nominalTimeTrajectory[index]);
-    }
-    SsNormalizedSwitchingTimes.push_back(-nominalTimeTrajectory.front());
-
-    // integrating the Riccati equations
-    for (size_t i = 0; i <= numEvents; i++) {
-      scalar_t beginTime = SsNormalizedSwitchingTimes[i];
-      scalar_t endTime = SsNormalizedSwitchingTimes[i + 1];
-
-      // solve Riccati equations if interval length is not zero (no event time at final time)
-      if (beginTime < endTime) {
-        riccatiIntegratorPtrStock_[workerIndex]->integrate(allSsFinal, beginTime, endTime, allSsTrajectory, SsNormalizedTime,
-                                                           BASE::ddpSettings_.minTimeStep_, BASE::ddpSettings_.absTolODE_,
-                                                           BASE::ddpSettings_.relTolODE_, maxNumSteps, true);
-      } else {
-        SsNormalizedTime.push_back(endTime);
-        allSsTrajectory.push_back(allSsFinal);
-      }
-
-      // if not the last interval which definitely does not have any event at
-      // its final time (there is no even at the beginning of partition)
-      if (i < numEvents) {
-        SsNormalizedEventsPastTheEndIndices.push_back(allSsTrajectory.size());
-        riccatiEquationsPtrStock_[workerIndex]->computeJumpMap(endTime, allSsTrajectory.back(), allSsFinal);
-      }
-    }  // end of i loop
+    integrateRiccatiEquationAdaptiveTime(*riccatiIntegratorPtrStock_[workerIndex], *riccatiEquationsPtrStock_[workerIndex],
+                                         nominalTimeTrajectory, nominalEventsPastTheEndIndices, std::move(allSsFinal), SsNormalizedTime,
+                                         SsNormalizedEventsPastTheEndIndices, allSsTrajectory);
   }
 
+  // De-normalize time and convert value function to matrix format
   size_t outputN = SsNormalizedTime.size();
   SsTimeTrajectory.resize(outputN);
   SmTrajectory.resize(outputN);
@@ -586,6 +585,113 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM>::solveRiccatiEquationsWorker(size_t workerIn
     SsTimeTrajectory[k] = -SsNormalizedTime[outputN - 1 - k];
     riccati_equations_t::convert2Matrix(allSsTrajectory[outputN - 1 - k], SmTrajectory[k], SvTrajectory[k], sTrajectory[k]);
   }  // end of k loop
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/***************************************************************************************************** */
+template <size_t STATE_DIM, size_t INPUT_DIM>
+void SLQ_BASE<STATE_DIM, INPUT_DIM>::integrateRiccatiEquationNominalTime(
+    IntegratorBase<riccati_equations_t::S_DIM_>& riccatiIntegrator, riccati_equations_t& riccatiEquation,
+    const scalar_array_t& nominalTimeTrajectory, const size_array_t& nominalEventsPastTheEndIndices, s_vector_t allSsFinal,
+    scalar_array_t& SsNormalizedTime, size_array_t& SsNormalizedEventsPastTheEndIndices, s_vector_array_t& allSsTrajectory) {
+  // Extract sizes
+  const size_t nominalTimeSize = nominalTimeTrajectory.size();
+  const size_t numEvents = nominalEventsPastTheEndIndices.size();
+  auto partitionDuration = nominalTimeTrajectory.back() - nominalTimeTrajectory.front();
+  const auto maxNumSteps = static_cast<size_t>(BASE::ddpSettings_.maxNumStepsPerSecond_ * partitionDuration);
+
+  // Normalize time
+  SsNormalizedTime.resize(nominalTimeSize);
+  for (size_t k = 0; k < nominalTimeSize; k++) {
+    SsNormalizedTime[nominalTimeSize - 1 - k] = -nominalTimeTrajectory[k];
+  }
+
+  // Normalized switching time indices, start and end of the partition are added at the beginning and end
+  size_array_t SsNormalizedSwitchingTimesIndices;
+  SsNormalizedSwitchingTimesIndices.reserve(numEvents + 2);
+  SsNormalizedSwitchingTimesIndices.push_back(0);
+  for (int k = static_cast<int>(numEvents) - 1; k >= 0; k--) {
+    size_t index = nominalEventsPastTheEndIndices[k];
+    SsNormalizedSwitchingTimesIndices.push_back(nominalTimeSize - index);
+  }
+  SsNormalizedSwitchingTimesIndices.push_back(nominalTimeSize);
+
+  // integrating the Riccati equations
+  SsNormalizedEventsPastTheEndIndices.reserve(numEvents);
+  allSsTrajectory.reserve(maxNumSteps);
+  for (size_t i = 0; i <= numEvents; i++) {
+    typename scalar_array_t::const_iterator beginTimeItr = SsNormalizedTime.begin() + SsNormalizedSwitchingTimesIndices[i];
+    typename scalar_array_t::const_iterator endTimeItr = SsNormalizedTime.begin() + SsNormalizedSwitchingTimesIndices[i + 1];
+
+    // solve Riccati equations if interval length is not zero (no event time at final time)
+    if (*beginTimeItr < *(endTimeItr - 1)) {
+      riccatiIntegrator.integrate(allSsFinal, beginTimeItr, endTimeItr, allSsTrajectory, BASE::ddpSettings_.minTimeStep_,
+                                  BASE::ddpSettings_.absTolODE_, BASE::ddpSettings_.relTolODE_, maxNumSteps, true);
+    } else {
+      allSsTrajectory.push_back(allSsFinal);
+    }
+
+    if (i < numEvents) {
+      SsNormalizedEventsPastTheEndIndices.push_back(allSsTrajectory.size());
+      riccatiEquation.computeJumpMap(*endTimeItr, allSsTrajectory.back(), allSsFinal);
+    }
+  }  // end of i loop
+
+  // check size
+  if (allSsTrajectory.size() != nominalTimeSize) {
+    throw std::runtime_error("allSsTrajectory size is incorrect.");
+  }
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/***************************************************************************************************** */
+template <size_t STATE_DIM, size_t INPUT_DIM>
+void SLQ_BASE<STATE_DIM, INPUT_DIM>::integrateRiccatiEquationAdaptiveTime(
+    IntegratorBase<riccati_equations_t::S_DIM_>& riccatiIntegrator, riccati_equations_t& riccatiEquation,
+    const scalar_array_t& nominalTimeTrajectory, const size_array_t& nominalEventsPastTheEndIndices, s_vector_t allSsFinal,
+    scalar_array_t& SsNormalizedTime, size_array_t& SsNormalizedEventsPastTheEndIndices, s_vector_array_t& allSsTrajectory) {
+  // Extract sizes
+  const size_t nominalTimeSize = nominalTimeTrajectory.size();
+  const size_t numEvents = nominalEventsPastTheEndIndices.size();
+  auto partitionDuration = nominalTimeTrajectory.back() - nominalTimeTrajectory.front();
+  const auto maxNumSteps = static_cast<size_t>(BASE::ddpSettings_.maxNumStepsPerSecond_ * partitionDuration);
+
+  // Extract switching times from eventIndices and normalize them
+  scalar_array_t SsNormalizedSwitchingTimes;
+  SsNormalizedSwitchingTimes.reserve(numEvents + 2);
+  SsNormalizedSwitchingTimes.push_back(-nominalTimeTrajectory.back());
+  for (int k = static_cast<int>(numEvents) - 1; k >= 0; k--) {
+    size_t index = nominalEventsPastTheEndIndices[k];
+    SsNormalizedSwitchingTimes.push_back(-nominalTimeTrajectory[index]);
+  }
+  SsNormalizedSwitchingTimes.push_back(-nominalTimeTrajectory.front());
+
+  // integrating the Riccati equations
+  SsNormalizedTime.reserve(maxNumSteps);
+  SsNormalizedEventsPastTheEndIndices.reserve(numEvents);
+  allSsTrajectory.reserve(maxNumSteps);
+  for (size_t i = 0; i <= numEvents; i++) {
+    scalar_t beginTime = SsNormalizedSwitchingTimes[i];
+    scalar_t endTime = SsNormalizedSwitchingTimes[i + 1];
+
+    // solve Riccati equations if interval length is not zero (no event time at final time)
+    if (beginTime < endTime) {
+      riccatiIntegrator.integrate(allSsFinal, beginTime, endTime, allSsTrajectory, SsNormalizedTime, BASE::ddpSettings_.minTimeStep_,
+                                  BASE::ddpSettings_.absTolODE_, BASE::ddpSettings_.relTolODE_, maxNumSteps, true);
+    } else {
+      SsNormalizedTime.push_back(endTime);
+      allSsTrajectory.push_back(allSsFinal);
+    }
+
+    // if not the last interval which definitely does not have any event at
+    // its final time (there is no even at the beginning of partition)
+    if (i < numEvents) {
+      SsNormalizedEventsPastTheEndIndices.push_back(allSsTrajectory.size());
+      riccatiEquation.computeJumpMap(endTime, allSsTrajectory.back(), allSsFinal);
+    }
+  }  // end of i loop
 }
 
 /******************************************************************************************************/
@@ -704,88 +810,6 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM>::solveErrorRiccatiEquationWorker(size_t work
 
   // Reverse Sve to match normal time direction
   std::reverse(SveTrajectory.begin(), SveTrajectory.end());
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/***************************************************************************************************** */
-template <size_t STATE_DIM, size_t INPUT_DIM>
-void SLQ_BASE<STATE_DIM, INPUT_DIM>::solveSlqRiccatiEquationsWorker(size_t workerIndex, size_t partitionIndex,
-                                                                    const state_matrix_t& SmFinal, const state_vector_t& SvFinal,
-                                                                    const eigen_scalar_t& sFinal, const state_vector_t& SveFinal) {
-  // solve Sm, Sv, s
-  solveRiccatiEquationsWorker(workerIndex, partitionIndex, SmFinal, SvFinal, sFinal);
-
-  // Solve Sve
-  solveErrorRiccatiEquationWorker(workerIndex, partitionIndex, SveFinal);
-
-  // testing the numerical stability of the Riccati equations
-  int N = BASE::SsTimeTrajectoryStock_[partitionIndex].size();
-  if (BASE::ddpSettings_.checkNumericalStability_) {
-    for (int k = N - 1; k >= 0; k--) {
-      try {
-        if (!BASE::SmTrajectoryStock_[partitionIndex][k].allFinite()) {
-          throw std::runtime_error("Sm is unstable.");
-        }
-        if (BASE::SmTrajectoryStock_[partitionIndex][k].eigenvalues().real().minCoeff() < -Eigen::NumTraits<scalar_t>::epsilon()) {
-          throw std::runtime_error("Sm matrix is not positive semi-definite. It's smallest eigenvalue is " +
-                                   std::to_string(BASE::SmTrajectoryStock_[partitionIndex][k].eigenvalues().real().minCoeff()) + ".");
-        }
-        if (!BASE::SvTrajectoryStock_[partitionIndex][k].allFinite()) {
-          throw std::runtime_error("Sv is unstable.");
-        }
-        if (!BASE::SveTrajectoryStock_[partitionIndex][k].allFinite()) {
-          throw std::runtime_error("Sve is unstable");
-        }
-        if (!BASE::sTrajectoryStock_[partitionIndex][k].allFinite()) {
-          throw std::runtime_error("s is unstable");
-        }
-      } catch (const std::exception& error) {
-        std::cerr << "what(): " << error.what() << " at time " << BASE::SsTimeTrajectoryStock_[partitionIndex][k] << " [sec]." << std::endl;
-        for (int kp = k; kp < k + 10; kp++) {
-          if (kp >= N) {
-            continue;
-          }
-          std::cerr << "Sm[" << BASE::SsTimeTrajectoryStock_[partitionIndex][kp] << "]: \t"
-                    << BASE::SmTrajectoryStock_[partitionIndex][kp].norm() << std::endl;
-          std::cerr << "Sv[" << BASE::SsTimeTrajectoryStock_[partitionIndex][kp] << "]: \t"
-                    << BASE::SvTrajectoryStock_[partitionIndex][kp].transpose().norm() << std::endl;
-          std::cerr << "Sve[" << BASE::SsTimeTrajectoryStock_[partitionIndex][kp] << "]:\t"
-                    << BASE::SveTrajectoryStock_[partitionIndex][kp].transpose().norm() << std::endl;
-          std::cerr << "s[" << BASE::SsTimeTrajectoryStock_[partitionIndex][kp] << "]:  \t"
-                    << BASE::sTrajectoryStock_[partitionIndex][kp].transpose().norm() << std::endl;
-        }
-        exit(0);
-      }
-    }
-  }
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/***************************************************************************************************** */
-template <size_t STATE_DIM, size_t INPUT_DIM>
-SLQ_Settings& SLQ_BASE<STATE_DIM, INPUT_DIM>::settings() {
-  return settings_;
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/***************************************************************************************************** */
-template <size_t STATE_DIM, size_t INPUT_DIM>
-void SLQ_BASE<STATE_DIM, INPUT_DIM>::setupOptimizer(size_t numPartitions) {
-  BASE::setupOptimizer(numPartitions);
-
-  // constraint type 1 coefficients
-  DmDagerTrajectoryStock_.resize(numPartitions);
-  AmConstrainedTrajectoryStock_.resize(numPartitions);
-  QmConstrainedTrajectoryStock_.resize(numPartitions);
-  QvConstrainedTrajectoryStock_.resize(numPartitions);
-  EvProjectedTrajectoryStock_.resize(numPartitions);
-  CmProjectedTrajectoryStock_.resize(numPartitions);
-  DmProjectedTrajectoryStock_.resize(numPartitions);
-  RmInvConstrainedCholTrajectoryStock_.resize(numPartitions);
-  RmInverseTrajectoryStock_.resize(numPartitions);
 }
 
 }  // namespace ocs2

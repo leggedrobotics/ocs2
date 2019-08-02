@@ -137,6 +137,8 @@ class SLQ_BASE : public DDP_BASE<STATE_DIM, INPUT_DIM> {
 
   using riccati_equations_t = SequentialRiccatiEquationsNormalized<STATE_DIM, INPUT_DIM>;
   using error_equation_t = SequentialErrorEquationNormalized<STATE_DIM, INPUT_DIM>;
+  using s_vector_t = typename riccati_equations_t::s_vector_t;
+  using s_vector_array_t = typename riccati_equations_t::s_vector_array_t;
 
   using state_triggered_rollout_t = StateTriggeredRollout<STATE_DIM, INPUT_DIM>;
 
@@ -270,27 +272,6 @@ class SLQ_BASE : public DDP_BASE<STATE_DIM, INPUT_DIM> {
   void calculateControllerWorker(size_t workerIndex, size_t partitionIndex, size_t timeIndex) override;
 
   /**
-   * Solves a set of Riccati equations for the partition in the given index.
-   *
-   * @param [in] workerIndex: Working agent index.
-   * @param [in] partitionIndex: The requested partition index to solve Riccati equations.
-   * @param [in] SmFinal: The final Sm for Riccati equation.
-   * @param [in] SvFinal: The final Sv for Riccati equation.
-   * @param [in] sFinal: The final s for Riccati equation.
-   */
-  void solveRiccatiEquationsWorker(size_t workerIndex, size_t partitionIndex, const state_matrix_t& SmFinal, const state_vector_t& SvFinal,
-                                   const eigen_scalar_t& sFinal);
-
-  /**
-   * Type_1 constraints error correction compensation which solves a set of error Riccati equations for the partition in the given index.
-   *
-   * @param [in] workerIndex: Working agent index.
-   * @param [in] partitionIndex: The requested partition index to solve Riccati equations.
-   * @param [in] SveFinal: The final Sve for the current Riccati equation.
-   */
-  void solveErrorRiccatiEquationWorker(size_t workerIndex, size_t partitionIndex, const state_vector_t& SveFinal);
-
-  /**
    * Solves a set of Riccati equations and type_1 constraints error correction compensation for the partition in the given index.
    *
    * @param [in] workerIndex: Working agent index.
@@ -338,6 +319,64 @@ class SLQ_BASE : public DDP_BASE<STATE_DIM, INPUT_DIM> {
 
   // function for Riccati error equation
   std::vector<EigenLinearInterpolation<state_matrix_t>> SmFuncs_;
+
+ private:
+  /**
+   * Solves a set of Riccati equations for the partition in the given index.
+   *
+   * @param [in] workerIndex: Working agent index.
+   * @param [in] partitionIndex: The requested partition index to solve Riccati equations.
+   * @param [in] SmFinal: The final Sm for Riccati equation.
+   * @param [in] SvFinal: The final Sv for Riccati equation.
+   * @param [in] sFinal: The final s for Riccati equation.
+   */
+  void solveRiccatiEquationsWorker(size_t workerIndex, size_t partitionIndex, const state_matrix_t& SmFinal, const state_vector_t& SvFinal,
+                                   const eigen_scalar_t& sFinal);
+
+  /**
+   * Type_1 constraints error correction compensation which solves a set of error Riccati equations for the partition in the given index.
+   *
+   * @param [in] workerIndex: Working agent index.
+   * @param [in] partitionIndex: The requested partition index to solve Riccati equations.
+   * @param [in] SveFinal: The final Sve for the current Riccati equation.
+   */
+  void solveErrorRiccatiEquationWorker(size_t workerIndex, size_t partitionIndex, const state_vector_t& SveFinal);
+
+  /**
+   * Integrates the riccati equation and generates the value function at the times set in nominal Time Trajectory.
+   *
+   * @param riccatiIntegrator [in] : Riccati integrator object
+   * @param riccatiEquation [in] : Riccati equation object
+   * @param nominalTimeTrajectory [in] : time trajectory produced in the forward rollout.
+   * @param nominalEventsPastTheEndIndices [in] : Indices into nominalTimeTrajectory to point to times right after event times
+   * @param allSsFinal [in] : Final value of the value function.
+   * @param SsNormalizedTime [out] : Time trajectory of the value function.
+   * @param SsNormalizedEventsPastTheEndIndices [out] : Indices into SsNormalizedTime to point to times right after event times
+   * @param allSsTrajectory [out] : Value function in vector format.
+   */
+  void integrateRiccatiEquationNominalTime(IntegratorBase<riccati_equations_t::S_DIM_>& riccatiIntegrator,
+                                           riccati_equations_t& riccatiEquation, const scalar_array_t& nominalTimeTrajectory,
+                                           const size_array_t& nominalEventsPastTheEndIndices, s_vector_t allSsFinal,
+                                           scalar_array_t& SsNormalizedTime, size_array_t& SsNormalizedEventsPastTheEndIndices,
+                                           s_vector_array_t& allSsTrajectory);
+
+  /**
+   * Integrates the riccati equation and freely selects the time nodes for the value function.
+   *
+   * @param riccatiIntegrator [in] : Riccati integrator object
+   * @param riccatiEquation [in] : Riccati equation object
+   * @param nominalTimeTrajectory [in] : time trajectory produced in the forward rollout.
+   * @param nominalEventsPastTheEndIndices [in] : Indices into nominalTimeTrajectory to point to times right after event times
+   * @param allSsFinal [in] : Final value of the value function.
+   * @param SsNormalizedTime [out] : Time trajectory of the value function.
+   * @param SsNormalizedEventsPastTheEndIndices [out] : Indices into SsNormalizedTime to point to times right after event times
+   * @param allSsTrajectory [out] : Value function in vector format.
+   */
+  void integrateRiccatiEquationAdaptiveTime(IntegratorBase<riccati_equations_t::S_DIM_>& riccatiIntegrator,
+                                            riccati_equations_t& riccatiEquation, const scalar_array_t& nominalTimeTrajectory,
+                                            const size_array_t& nominalEventsPastTheEndIndices, s_vector_t allSsFinal,
+                                            scalar_array_t& SsNormalizedTime, size_array_t& SsNormalizedEventsPastTheEndIndices,
+                                            s_vector_array_t& allSsTrajectory);
 };
 
 }  // namespace ocs2

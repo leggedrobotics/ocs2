@@ -199,7 +199,7 @@ template <size_t STATE_DIM, size_t INPUT_DIM>
 bool MPC_BASE<STATE_DIM, INPUT_DIM>::run(const scalar_t& currentTime, const state_vector_t& currentState) {
   // check if the current time exceeds the solver final limit
   if (currentTime >= getFinalTime() && mpcSettings_.recedingHorizon_) {
-    if (initRun_ == true) {
+    if (initRun_) {
       for (int i = 0; i < partitioningTimes_.size(); i++) {
         partitioningTimes_[i] += currentTime;
       }

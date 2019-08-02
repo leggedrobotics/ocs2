@@ -145,7 +145,7 @@ class MRT_BASE {
    * @param eventTimes: The event times of the policy.
    * @param subsystemsSequence: The subsystems sequence of the policy.
    */
-  virtual void modifyPolicy(bool& logicUpdated, controller_t& mpcController, scalar_array_t& mpcTimeTrajectory,
+  virtual void modifyPolicy(bool logicUpdated, controller_t& mpcController, scalar_array_t& mpcTimeTrajectory,
                             state_vector_array_t& mpcStateTrajectory, scalar_array_t& eventTimes, size_array_t& subsystemsSequence) {}
 
   /**
@@ -182,7 +182,6 @@ class MRT_BASE {
   bool newPolicyInBuffer_;  //! Whether a new policy is waiting to be swapped in
 
   // variables related to the MPC output
-  bool logicUpdated_;               //! Whether the logic rules have changed (from MPC)
   std::atomic_bool policyUpdated_;  //! Whether the policy was updated by MPC (i.e., MPC succeeded)
   bool policyUpdatedBuffer_;        //! Whether the policy in buffer was upated by MPC (i.e., MPC succeeded)
   std::unique_ptr<controller_t> mpcController_;

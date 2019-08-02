@@ -254,7 +254,7 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM>::approximateConstrainedLQWorker(size_t worke
         std::cerr << "Rv: " << BASE::RvTrajectoryStock_[i][k].transpose() << std::endl;
         std::cerr << "Rm: \n" << BASE::RmTrajectoryStock_[i][k] << std::endl;
         std::cerr << "Pm: \n" << BASE::PmTrajectoryStock_[i][k] << std::endl;
-        exit(0);
+        throw;
       }
     }
   }
@@ -786,7 +786,7 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM>::solveSlqRiccatiEquationsWorker(size_t worke
           std::cerr << "s[" << BASE::SsTimeTrajectoryStock_[partitionIndex][kp] << "]:  \t"
                     << BASE::sTrajectoryStock_[partitionIndex][kp].transpose().norm() << std::endl;
         }
-        exit(0);
+        throw;
       }
     }
   }

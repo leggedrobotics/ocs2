@@ -95,7 +95,7 @@ std::function<size_t(typename HybridLogicRulesMachine::scalar_t)> HybridLogicRul
     int index = lookup::findActiveIntervalInTimeArray(switchingTimes, time);
 
     if (index < 0 || index >= eventCounters.size()) {
-      throw std::runtime_error("The enquiry time" + std::to_string(time) + "refers to an out-of-range subsystem.");
+      throw std::runtime_error("The enquiry time " + std::to_string(time) + " refers to an out-of-range subsystem.");
     }
     return eventCounters[index];
   };

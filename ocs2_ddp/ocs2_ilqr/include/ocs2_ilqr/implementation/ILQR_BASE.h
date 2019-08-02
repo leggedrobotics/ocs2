@@ -377,7 +377,7 @@ void ILQR_BASE<STATE_DIM, INPUT_DIM>::solveRiccatiEquationsWorker(size_t workerI
           std::cerr << "s[" << BASE::SsTimeTrajectoryStock_[partitionIndex][kp] << "]:\t"
                     << BASE::sTrajectoryStock_[partitionIndex][kp].transpose().norm() << std::endl;
         }
-        exit(0);
+        throw;
       }
     }
   }

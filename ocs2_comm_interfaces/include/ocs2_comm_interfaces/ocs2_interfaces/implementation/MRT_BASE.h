@@ -22,7 +22,6 @@ void MRT_BASE<STATE_DIM, INPUT_DIM>::reset() {
   policyReceivedEver_ = false;
   newPolicyInBuffer_ = false;
 
-  logicUpdated_ = false;
   policyUpdated_ = false;
   policyUpdatedBuffer_ = false;
 
@@ -118,22 +117,22 @@ bool MRT_BASE<STATE_DIM, INPUT_DIM>::updatePolicy() {
   mpcController_.swap(mpcControllerBuffer_);
 
   // check whether logic rules needs to be updated
-  logicUpdated_ = false;
+  bool logicUpdated = false;
   if (subsystemsSequence_ != subsystemsSequenceBuffer_) {
     subsystemsSequence_.swap(subsystemsSequenceBuffer_);
-    logicUpdated_ = true;
+    logicUpdated = true;
   }
   if (eventTimes_ != eventTimesBuffer_) {
     eventTimes_.swap(eventTimesBuffer_);
-    logicUpdated_ = true;
+    logicUpdated = true;
   }
   if (partitioningTimes_ != partitioningTimesBuffer_) {
     partitioningTimes_.swap(partitioningTimesBuffer_);
-    logicUpdated_ = true;
+    logicUpdated = true;
   }
 
   // update logic rules
-  if (logicUpdated_) {
+  if (logicUpdated) {
     // set mode sequence
     logicMachinePtr_->getLogicRulesPtr()->setModeSequence(subsystemsSequence_, eventTimes_);
     // Tell logicMachine that logicRules are modified
@@ -146,7 +145,7 @@ bool MRT_BASE<STATE_DIM, INPUT_DIM>::updatePolicy() {
     findActiveSubsystemFnc_ = std::move(logicMachinePtr_->getHandleToFindActiveEventCounter(partitionIndex));
   }
 
-  modifyPolicy(logicUpdated_, *mpcController_, mpcTimeTrajectory_, mpcStateTrajectory_, eventTimes_, subsystemsSequence_);
+  modifyPolicy(logicUpdated, *mpcController_, mpcTimeTrajectory_, mpcStateTrajectory_, eventTimes_, subsystemsSequence_);
 
   return true;
 }

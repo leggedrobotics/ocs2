@@ -84,7 +84,14 @@ void MPC_Interface<STATE_DIM, INPUT_DIM>::fillMpcOutputBuffers() {
   subsystemsSequencePtr = &mpcPtr_->getLogicRulesPtr()->subsystemsSequence();
 
   // update buffers, i.e., copy MPC results into our buffers
-  std::lock_guard<std::mutex> lock(this->policyBufferMutex_);
+  std::lock(observationMutex_, this->policyBufferMutex_);
+  std::lock_guard<std::mutex> policyBufferLock(this->policyBufferMutex_, std::adopt_lock);
+  {
+    std::lock_guard<std::mutex> observationLock(observationMutex_, std::adopt_lock);
+    this->mpcInitObservationBuffer_ = currentObservation_;
+  }
+
+  this->policyUpdatedBuffer_ = true;
 
   int N = 0;
   for (int i = 0; i < timeTrajectoriesPtr->size(); i++) {
@@ -105,36 +112,35 @@ void MPC_Interface<STATE_DIM, INPUT_DIM>::fillMpcOutputBuffers() {
                                      std::end((*inputTrajectoriesPtr)[i]));
   }
 
-  // FIXME(jcarius) concatenate controllers into a single controller
-  // TODO(johannes) we might want to instantiate a feedforward controller if requested in the settings (see mrt ros interface)
-  this->mpcControllerBuffer_.clear();
-  this->mpcControllerBuffer_.reserve(controllerPtrs->size());
-  for (auto controllerPtr : *controllerPtrs) {
-    if (controllerPtr->empty()) {
-      continue;
-    }
-    switch (controllerPtr->getType()) {
-      case ControllerType::FEEDFORWARD: {
-        using ctrl_t = FeedforwardController<STATE_DIM, INPUT_DIM>;
-        this->mpcControllerBuffer_.emplace_back(std::unique_ptr<controller_t>(new ctrl_t(*static_cast<ctrl_t*>(controllerPtr))));
-        break;
+  if (mpcSettings_.useFeedbackPolicy_) {
+    // concatenate controller stock into a single controller
+    this->mpcControllerBuffer_.reset();
+    for (auto controllerPtr : *controllerPtrs) {
+      if (controllerPtr->empty()) {
+        continue;  // some time partitions may be unused
       }
-      case ControllerType::LINEAR: {
-        using ctrl_t = LinearController<STATE_DIM, INPUT_DIM>;
-        this->mpcControllerBuffer_.emplace_back(std::unique_ptr<controller_t>(new ctrl_t(*static_cast<ctrl_t*>(controllerPtr))));
-        break;
-      }
-      default: {
-        ROS_WARN("MPC_Interface::fillMpcOutputBuffers: No controller copied into buffer.");
-        this->mpcControllerBuffer_.push_back(nullptr);
+
+      if (this->mpcControllerBuffer_) {
+        this->mpcControllerBuffer_->concatenate(controllerPtr);
+      } else {
+        this->mpcControllerBuffer_.reset(controllerPtr->clone());
       }
     }
+  } else {
+    this->mpcControllerBuffer_.reset(
+        new FeedforwardController<STATE_DIM, INPUT_DIM>(this->mpcTimeTrajectoryBuffer_, mpcInputTrajectoryBuffer_));
   }
 
   this->eventTimesBuffer_ = *eventTimesPtr;
+  this->partitioningTimesUpdate(this->mpcInitObservationBuffer_.time(), this->partitioningTimesBuffer_);
   this->subsystemsSequenceBuffer_ = *subsystemsSequencePtr;
   this->mpcCostDesiredTrajectoriesBuffer_ = *solverCostDesiredTrajectoriesPtr;
 
+  // allow user to modify the buffer
+  this->modifyBufferPolicy(this->mpcInitObservationBuffer_, *this->mpcControllerBuffer_, this->mpcTimeTrajectoryBuffer_,
+                           this->mpcStateTrajectoryBuffer_, this->eventTimesBuffer_, this->subsystemsSequenceBuffer_);
+
+  // Flags to be set last:
   this->newPolicyInBuffer_ = true;
   this->policyReceivedEver_ = true;
 }

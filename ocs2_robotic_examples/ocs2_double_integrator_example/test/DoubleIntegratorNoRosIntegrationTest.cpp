@@ -54,6 +54,7 @@ TEST(DoubleIntegratorIntegrationTest, synchronousTracking) {
       mpc_t::input_vector_t optimalInput;
       size_t subsystem;
 
+      mpcInterface.updatePolicy();
       mpcInterface.evaluatePolicy(time, mpc_t::state_vector_t::Zero(), optimalState, optimalInput, subsystem);
 
       // use optimal state for the next observation:
@@ -112,6 +113,7 @@ TEST(DoubleIntegratorIntegrationTest, asynchronousTracking) {
         std::lock_guard<std::mutex> lock(timeStateMutex);
         time += trackingIncrement;
         if (mpcInterface.initialPolicyReceived()) {
+          mpcInterface.updatePolicy();
           mpcInterface.evaluatePolicy(time, mpc_t::state_vector_t::Zero(), optimalState, optimalInput, subsystem);
         }
         if (std::abs(time - T) < 0.005) {
@@ -124,20 +126,24 @@ TEST(DoubleIntegratorIntegrationTest, asynchronousTracking) {
 
   std::thread trackerThread(tracker);
 
-  // run MPC for N iterations
-  int N = int(f_mpc * T);
-  for (int i = 0; i < N; i++) {
-    {
-      std::lock_guard<std::mutex> lock(timeStateMutex);
-      // use optimal state for the next observation:
-      observation.state() = optimalState;
-      observation.time() = time;
+  try {
+    // run MPC for N iterations
+    int N = int(f_mpc * T);
+    for (int i = 0; i < N; i++) {
+      {
+        std::lock_guard<std::mutex> lock(timeStateMutex);
+        // use optimal state for the next observation:
+        observation.state() = optimalState;
+        observation.time() = time;
+      }
+      mpcInterface.setCurrentObservation(observation);
+      mpcInterface.advanceMpc();
+
+      usleep(uint(mpcIncrement * 1e6));
     }
-
-    mpcInterface.setCurrentObservation(observation);
-    mpcInterface.advanceMpc();
-
-    usleep(uint(mpcIncrement * 1e6));
+  } catch (const std::exception& e) {
+    std::cerr << "EXCEPTION " << e.what() << std::endl;
+    EXPECT_TRUE(false);
   }
   trackerRunning = false;
   trackerThread.join();

@@ -6,10 +6,10 @@
  */
 
 
+#include <Eigen/Dense>
 #include "include/testSystemDynamicsLinearizer.h"
 #include "../ocs2_core/dynamics/SystemDynamicsLinearizer.h"
-#include <Eigen/Dense>
-//#include "../ocs2_core/misc/DerivativeChecker.h"
+#include "../ocs2_core/automatic_differentiation/FiniteDifferenceMethods.h"
 
 #include <gtest/gtest.h>
 
@@ -42,15 +42,15 @@ protected:
     linDeriv0_ptr.reset(new EXP0_SystemDerivative());
     linDeriv1_ptr.reset(new EXP1_SystemDerivative());
 
-    nonLinDeriv_ptr.reset(new EXP3_SystemDerivative());
     nonLinDerivUnstable_ptr.reset(new EXP2_SystemDerivative());
+    nonLinDeriv_ptr.reset(new EXP3_SystemDerivative());
 
     /**********************************
     *  The FiniteDifference Checker  *
     **********************************/
 
     //the dimensions here are <2,1> for all systems but we leave it more general
-    linearizer = new SystemDynamicsLinearizer<EXP0_System::DIMENSIONS::DIMS::STATE_DIM_, EXP0_System::DIMENSIONS::DIMS::INPUT_DIM_>(linSys_ptr, linDeriv0_ptr);
+    // linearizer = new SystemDynamicsLinearizer<EXP2_System::DIMENSIONS::DIMS::STATE_DIM_, EXP2_System::DIMENSIONS::DIMS::INPUT_DIM_>(linSys_ptr);
 
   }
 
@@ -76,12 +76,11 @@ protected:
   std::shared_ptr<EXP2_SystemDerivative> nonLinDerivUnstable_ptr;
   std::shared_ptr<EXP3_SystemDerivative> nonLinDeriv_ptr;
 
-  // Checker
-  SystemDynamicsLinearizer<EXP0_System::DIMENSIONS::DIMS::STATE_DIM_, EXP0_System::DIMENSIONS::DIMS::INPUT_DIM_>* linearizer = nullptr;
-
-
 };
 
+/**
+ * Uses EXP0_System 
+ */
 TEST_F(SystemDynamicsLinearizerTest, testToleranceAndReturnTrue)
 {
   auto state = EXP0_System::state_vector_t::Zero().eval();
@@ -89,8 +88,9 @@ TEST_F(SystemDynamicsLinearizerTest, testToleranceAndReturnTrue)
   EXP0_SystemDerivative::state_matrix_t A_error;
   EXP0_SystemDerivative::state_input_matrix_t B_error;
 
-  linearizer->setSystems(linSys_ptr, linDeriv0_ptr);
-  bool ret = linearizer->derivativeChecker(0, state, input, A_error, B_error, tolerance_);
+  bool ret = FiniteDifferenceMethods<EXP0_System>::derivativeChecker(linSys_ptr,
+      linDeriv0_ptr, 0, state, input, A_error, B_error, tolerance_*tolerance_, tolerance_, true, false);
+  
   auto numeric_error = std::fmax(A_error.template lpNorm<Eigen::Infinity>(), B_error.template lpNorm<Eigen::Infinity>());
   ASSERT_TRUE((numeric_error <= tolerance_) && (ret)) <<
                                                       "If the error is within the tolerance the checker should return true." <<
@@ -109,8 +109,8 @@ TEST_F(SystemDynamicsLinearizerTest, testIncorrectLinearSystem)
   EXP1_SystemDerivative::state_matrix_t A_error;
   EXP1_SystemDerivative::state_input_matrix_t B_error;
 
-  linearizer->setSystems(linSys_ptr, linDeriv1_ptr);
-  bool ret = linearizer->derivativeChecker(0, state, input, A_error, B_error, tolerance_);
+  bool ret = FiniteDifferenceMethods<EXP0_System>::derivativeChecker(linSys_ptr,
+      linDeriv1_ptr, 0, state, input, A_error, B_error, tolerance_*tolerance_, tolerance_, true, false);
   auto numeric_error = std::fmax(A_error.template lpNorm<Eigen::Infinity>(), B_error.template lpNorm<Eigen::Infinity>());
   ASSERT_TRUE((numeric_error > tolerance_) && (!ret)) <<
                            "If the error is within the tolerance the checker should return true." <<
@@ -137,12 +137,12 @@ TEST_F(SystemDynamicsLinearizerTest, testPendulumUnstable)
   EXP2_SystemDerivative::state_matrix_t A_error;
   EXP2_SystemDerivative::state_input_matrix_t B_error;
 
-  linearizer->setSystems(nonLinSys_ptr, nonLinDerivUnstable_ptr);
+  auto checker = FiniteDifferenceMethods<EXP2_System>(tolerance_*tolerance_, tolerance_, nonLinSys_ptr);
 
   for (auto i=0; i<divisions; ++i){
     A_error.setZero();
     B_error.setZero();
-    bool ret = linearizer->derivativeChecker(0, testStates.col(i), input, A_error, B_error, tolerance_);
+    bool ret = checker.derivativeChecker(nonLinDerivUnstable_ptr, 0, testStates.col(i), input, A_error, B_error);
     auto numeric_error = std::fmax(A_error.template lpNorm<Eigen::Infinity>(), B_error.template lpNorm<Eigen::Infinity>());
     ASSERT_TRUE(((numeric_error <= tolerance_) && ret) || ((numeric_error > tolerance_ ) && !ret))
                 << "If the error is within the tolerance the checker should return true."
@@ -188,13 +188,14 @@ TEST_F(SystemDynamicsLinearizerTest, testPendulum)
   auto input = EXP2_System::input_vector_t::Random().eval();
   EXP3_SystemDerivative::state_matrix_t A_error;
   EXP3_SystemDerivative::state_input_matrix_t B_error;
+  auto checker = FiniteDifferenceMethods<EXP2_System>(tolerance_*tolerance_, tolerance_, nonLinSys_ptr);
 
-  linearizer->setSystems(nonLinSys_ptr, nonLinDeriv_ptr);
+  // linearizer->setSystems(nonLinSys_ptr, nonLinDeriv_ptr);
 
   for (auto i=0; i<divisions; ++i){
     A_error.setZero();
     B_error.setZero();
-    bool ret = linearizer->derivativeChecker(0, testStates.col(i), input, A_error, B_error, tolerance_);
+    bool ret = checker.derivativeChecker(nonLinDeriv_ptr, 0, testStates.col(i), input, A_error, B_error);
     auto numeric_error = std::fmax(A_error.template lpNorm<Eigen::Infinity>(), B_error.template lpNorm<Eigen::Infinity>());
     ASSERT_TRUE(((numeric_error <= tolerance_) && ret) || ((numeric_error > tolerance_ ) && !ret))
                 << "If the error is within the tolerance the checker should return true."

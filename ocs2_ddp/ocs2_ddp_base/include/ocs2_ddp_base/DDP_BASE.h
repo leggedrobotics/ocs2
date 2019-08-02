@@ -125,21 +125,21 @@ class DDP_BASE : public Solver_BASE<STATE_DIM, INPUT_DIM> {
   using dynamic_matrix_array2_t = typename BASE::dynamic_matrix_array2_t;
 
   using controller_ptr_array_t = typename BASE::controller_ptr_array_t;
-  typedef LinearController<STATE_DIM, INPUT_DIM> linear_controller_t;
+  using linear_controller_t = LinearController<STATE_DIM, INPUT_DIM>;
   using linear_controller_array_t = typename linear_controller_t::array_t;
 
   using event_handler_t = SystemEventHandler<STATE_DIM>;
-  typedef ControlledSystemBase<STATE_DIM, INPUT_DIM> controlled_system_base_t;
-  typedef DerivativesBase<STATE_DIM, INPUT_DIM> derivatives_base_t;
-  typedef ConstraintBase<STATE_DIM, INPUT_DIM> constraint_base_t;
-  typedef CostFunctionBase<STATE_DIM, INPUT_DIM> cost_function_base_t;
-  typedef SystemOperatingTrajectoriesBase<STATE_DIM, INPUT_DIM> operating_trajectories_base_t;
-  typedef PenaltyBase<STATE_DIM, INPUT_DIM> penalty_base_t;
+  using controlled_system_base_t = ControlledSystemBase<STATE_DIM, INPUT_DIM>;
+  using derivatives_base_t = DerivativesBase<STATE_DIM, INPUT_DIM>;
+  using constraint_base_t = ConstraintBase<STATE_DIM, INPUT_DIM>;
+  using cost_function_base_t = CostFunctionBase<STATE_DIM, INPUT_DIM>;
+  using operating_trajectories_base_t = SystemOperatingTrajectoriesBase<STATE_DIM, INPUT_DIM>;
+  using penalty_base_t = PenaltyBase<STATE_DIM, INPUT_DIM>;
 
-  typedef RolloutBase<STATE_DIM, INPUT_DIM> rollout_base_t;
-  typedef TimeTriggeredRollout<STATE_DIM, INPUT_DIM> time_triggered_rollout_t;
-  typedef LinearQuadraticApproximator<STATE_DIM, INPUT_DIM> linear_quadratic_approximator_t;
-  typedef OperatingTrajectoriesRollout<STATE_DIM, INPUT_DIM> operating_trajectorie_rollout_t;
+  using rollout_base_t = RolloutBase<STATE_DIM, INPUT_DIM>;
+  using time_triggered_rollout_t = TimeTriggeredRollout<STATE_DIM, INPUT_DIM>;
+  using linear_quadratic_approximator_t = LinearQuadraticApproximator<STATE_DIM, INPUT_DIM>;
+  using operating_trajectorie_rollout_t = OperatingTrajectoriesRollout<STATE_DIM, INPUT_DIM>;
 
   using cost_desired_trajectories_t = typename BASE::cost_desired_trajectories_t;
 
@@ -198,7 +198,7 @@ class DDP_BASE : public Solver_BASE<STATE_DIM, INPUT_DIM> {
    *
    * @return average time step.
    */
-  scalar_t rolloutTrajectory(const scalar_t& initTime, const state_vector_t& initState, const scalar_t& finalTime,
+  scalar_t rolloutTrajectory(scalar_t initTime, const state_vector_t& initState, scalar_t finalTime,
                              const scalar_array_t& partitioningTimes, linear_controller_array_t& controllersStock,
                              scalar_array2_t& timeTrajectoriesStock, size_array2_t& eventsPastTheEndIndecesStock,
                              state_vector_array2_t& stateTrajectoriesStock, input_vector_array2_t& inputTrajectoriesStock,
@@ -218,9 +218,9 @@ class DDP_BASE : public Solver_BASE<STATE_DIM, INPUT_DIM> {
    * @param [out] finalActiveSubsystemIndex: The final active subsystem.
    * @param [in] threadId: Working thread (default is 0).
    */
-  void rolloutFinalState(const scalar_t& initTime, const state_vector_t& initState, const scalar_t& finalTime,
-                         const scalar_array_t& partitioningTimes, const linear_controller_array_t& controllersStock,
-                         state_vector_t& finalState, input_vector_t& finalInput, size_t& finalActiveSubsystemIndex, size_t threadId = 0);
+  void rolloutFinalState(scalar_t initTime, const state_vector_t& initState, scalar_t finalTime, const scalar_array_t& partitioningTimes,
+                         const linear_controller_array_t& controllersStock, state_vector_t& finalState, input_vector_t& finalInput,
+                         size_t& finalActivePartition, size_t threadId = 0);
 
   /**
    * Calculates a rollout constraints. It uses the given rollout trajectories and calculate the constraints.
@@ -276,7 +276,7 @@ class DDP_BASE : public Solver_BASE<STATE_DIM, INPUT_DIM> {
    */
   void calculateRolloutCost(const scalar_array2_t& timeTrajectoriesStock, const size_array2_t& eventsPastTheEndIndecesStock,
                             const state_vector_array2_t& stateTrajectoriesStock, const input_vector_array2_t& inputTrajectoriesStock,
-                            const scalar_t& constraint2ISE, const scalar_t& inequalityConstraintPenalty, const size_array2_t& nc2FinalStock,
+                            scalar_t constraint2ISE, scalar_t inequalityConstraintPenalty, const size_array2_t& nc2FinalStock,
                             const constraint2_vector_array2_t& HvFinalStock, scalar_t& totalCost, size_t threadId = 0);
 
   /**
@@ -358,7 +358,7 @@ class DDP_BASE : public Solver_BASE<STATE_DIM, INPUT_DIM> {
    * @param [in] state: The inquiry state.
    * @param [out] valueFuntion: value function at the inquiry time and state.
    */
-  virtual void getValueFuntion(const scalar_t& time, const state_vector_t& state, scalar_t& valueFuntion);
+  virtual void getValueFuntion(scalar_t time, const state_vector_t& state, scalar_t& valueFuntion);
 
   /**
    * Upon activation in the multi-thread DDP class (DDP_MT), the parallelization of the backward pass takes
@@ -402,11 +402,11 @@ class DDP_BASE : public Solver_BASE<STATE_DIM, INPUT_DIM> {
   void swapNominalTrajectories(scalar_array2_t& nominalTimeTrajectoriesStock, state_vector_array2_t& nominalStateTrajectoriesStock,
                                input_vector_array2_t& nominalInputTrajectoriesStock) override;
 
-  const scalar_t& getFinalTime() const override;
+  scalar_t getFinalTime() const override;
 
   const scalar_array_t& getPartitioningTimes() const override;
 
-  void rewindOptimizer(const size_t& firstIndex) override;
+  void rewindOptimizer(size_t firstIndex) override;
 
   const unsigned long long int& getRewindCounter() const override;
 
@@ -437,8 +437,7 @@ class DDP_BASE : public Solver_BASE<STATE_DIM, INPUT_DIM> {
    * @param [in] finalTime: The final time.
    * @param [in] partitioningTimes: The partitioning times between subsystems.
    */
-  void run(const scalar_t& initTime, const state_vector_t& initState, const scalar_t& finalTime,
-           const scalar_array_t& partitioningTimes) override;
+  void run(scalar_t initTime, const state_vector_t& initState, scalar_t finalTime, const scalar_array_t& partitioningTimes) override;
 
   /**
    * The main routine of DDP which runs DDP for a given initial state, initial time, and final time. In order
@@ -456,7 +455,7 @@ class DDP_BASE : public Solver_BASE<STATE_DIM, INPUT_DIM> {
    * where the warm starting option is set true) or the internal controller is empty in which instead of performing
    * a rollout the operating trajectories will be used.
    */
-  void run(const scalar_t& initTime, const state_vector_t& initState, const scalar_t& finalTime, const scalar_array_t& partitioningTimes,
+  void run(scalar_t initTime, const state_vector_t& initState, scalar_t finalTime, const scalar_array_t& partitioningTimes,
            const controller_ptr_array_t& controllersPtrStock) override;
 
  protected:
@@ -465,21 +464,21 @@ class DDP_BASE : public Solver_BASE<STATE_DIM, INPUT_DIM> {
    *
    * @param [in] numPartitions: number of partitions.
    */
-  virtual void setupOptimizer(const size_t& numPartitions);
+  virtual void setupOptimizer(size_t numPartitions);
 
   /**
    * Computes the linearized dynamics for a particular time partition
    *
    * @param [in] partitionIndex: Time partition index
    */
-  virtual void approximatePartitionLQ(const size_t& partitionIndex) = 0;
+  virtual void approximatePartitionLQ(size_t partitionIndex) = 0;
 
   /**
    * Computes the controller for a particular time partition
    *
    * @param partitionIndex: Time partition index
    */
-  virtual void calculatePartitionController(const size_t& partitionIndex) = 0;
+  virtual void calculatePartitionController(size_t partitionIndex) = 0;
 
   /**
    * Calculates an LQ approximate of the optimal control problem at a given partition and a node.
@@ -488,7 +487,7 @@ class DDP_BASE : public Solver_BASE<STATE_DIM, INPUT_DIM> {
    * @param [in] partitionIndex: Time partition index.
    * @param [in] timeIndex: Time index in the partition.
    */
-  virtual void approximateLQWorker(size_t workerIndex, const size_t& partitionIndex, const size_t& timeIndex) = 0;
+  virtual void approximateLQWorker(size_t workerIndex, size_t partitionIndex, size_t timeIndex) = 0;
 
   /**
    * Calculates the constraint trajectories over the given trajectories.
@@ -506,7 +505,7 @@ class DDP_BASE : public Solver_BASE<STATE_DIM, INPUT_DIM> {
    * @param [out] nc2Finals: Number of active final type-2 constraints.
    * @param [out] HvFinals: Final type-2 constraints.
    */
-  virtual void calculateConstraintsWorker(size_t workerIndex, const size_t& partitionIndex, const scalar_array_t& timeTrajectory,
+  virtual void calculateConstraintsWorker(size_t workerIndex, size_t partitionIndex, const scalar_array_t& timeTrajectory,
                                           const size_array_t& eventsPastTheEndIndeces, const state_vector_array_t& stateTrajectory,
                                           const input_vector_array_t& inputTrajectory, size_array_t& nc1Trajectory,
                                           constraint1_vector_array_t& EvTrajectory, size_array_t& nc2Trajectory,
@@ -524,7 +523,7 @@ class DDP_BASE : public Solver_BASE<STATE_DIM, INPUT_DIM> {
    * @param [in] inputTrajectory: The control input trajectory.
    * @param [out] totalCost: The total cost.
    */
-  virtual void calculateCostWorker(size_t workerIndex, const size_t& partitionIndex, const scalar_array_t& timeTrajectory,
+  virtual void calculateCostWorker(size_t workerIndex, size_t partitionIndex, const scalar_array_t& timeTrajectory,
                                    const size_array_t& eventsPastTheEndIndeces, const state_vector_array_t& stateTrajectory,
                                    const input_vector_array_t& inputTrajectory, scalar_t& totalCost);
 
@@ -535,7 +534,7 @@ class DDP_BASE : public Solver_BASE<STATE_DIM, INPUT_DIM> {
    * @param [in] i: Time partition index.
    * @param [in] k: Time index in the partition.
    */
-  virtual void approximateUnconstrainedLQWorker(size_t workerIndex, const size_t& i, const size_t& k);
+  virtual void approximateUnconstrainedLQWorker(size_t workerIndex, size_t i, size_t k);
 
   /**
    * Calculates an LQ approximate of the event times process.
@@ -545,7 +544,7 @@ class DDP_BASE : public Solver_BASE<STATE_DIM, INPUT_DIM> {
    * @param [in] k: Time index in the partition.
    * @param [in] stateConstraintPenalty: State-only constraint penalty.
    */
-  virtual void approximateEventsLQWorker(size_t workerIndex, const size_t& i, const size_t& k, const scalar_t& stateConstraintPenalty);
+  virtual void approximateEventsLQWorker(size_t workerIndex, size_t i, size_t k, scalar_t stateConstraintPenalty);
 
   /**
    * Calculates controller at a given partition and a node.
@@ -554,7 +553,7 @@ class DDP_BASE : public Solver_BASE<STATE_DIM, INPUT_DIM> {
    * @param [in] partitionIndex: Time partition index
    * @param [in] timeIndex: Time index in the partition
    */
-  virtual void calculateControllerWorker(size_t workerIndex, const size_t& partitionIndex, const size_t& timeIndex) = 0;
+  virtual void calculateControllerWorker(size_t workerIndex, size_t partitionIndex, size_t timeIndex) = 0;
 
   /**
    * Performs one rollout while the input correction for the type-1 constraint is considered.
@@ -601,7 +600,7 @@ class DDP_BASE : public Solver_BASE<STATE_DIM, INPUT_DIM> {
    */
   void calculateMeritFunction(const scalar_array2_t& timeTrajectoriesStock, const size_array2_t& nc1TrajectoriesStock,
                               const constraint1_vector_array2_t& EvTrajectoryStock,
-                              const std::vector<std::vector<Eigen::VectorXd>>& lagrangeTrajectoriesStock, const scalar_t& totalCost,
+                              const std::vector<std::vector<Eigen::VectorXd>>& lagrangeTrajectoriesStock, scalar_t totalCost,
                               scalar_t& meritFunctionValue, scalar_t& constraintISE);
 
   /**
@@ -634,11 +633,11 @@ class DDP_BASE : public Solver_BASE<STATE_DIM, INPUT_DIM> {
    * @param [in] partitioningTimes: Switching times.
    * @param [in] initTime: Initial time.
    * @param [out] controllersStock: Truncated array of the control policies.
-   * @param [out] initActiveSubsystemIndex: Initial active subsystems.
+   * @param [out] initActivePartition: Initial active subsystems.
    * @param [out] deletedcontrollersStock: The deleted part of the control policies.
    */
-  void truncateConterller(const scalar_array_t& partitioningTimes, const double& initTime, linear_controller_array_t& controllersStock,
-                          size_t& initActiveSubsystemIndex, linear_controller_array_t& deletedcontrollersStock);
+  void truncateController(const scalar_array_t& partitioningTimes, double initTime, linear_controller_array_t& controllersStock,
+                          size_t& initActivePartition, linear_controller_array_t& deletedcontrollersStock);
 
   /**
    * Calculates max feedforward update norm and max type-1 error update norm.

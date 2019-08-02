@@ -51,7 +51,7 @@ class SequentialErrorEquationNormalized final : public OdeBase<STATE_DIM> {
 
   using BASE = OdeBase<STATE_DIM>;
 
-  typedef Dimensions<STATE_DIM, INPUT_DIM> DIMENSIONS;
+  using DIMENSIONS = Dimensions<STATE_DIM, INPUT_DIM>;
   using scalar_t = typename DIMENSIONS::scalar_t;
   using scalar_array_t = typename DIMENSIONS::scalar_array_t;
   using state_vector_t = typename DIMENSIONS::state_vector_t;
@@ -78,12 +78,8 @@ class SequentialErrorEquationNormalized final : public OdeBase<STATE_DIM> {
    * @param [in] GvPtr: A pointer to the trajectory of \f$ G_v(t) \f$ .
    * @param [in] GmPtr: A pointer to the trajectory of \f$ G_m(t) \f$ .
    */
-  void setData(const scalar_t& switchingTimeStart, const scalar_t& switchingTimeFinal, scalar_array_t* const timeStampPtr,
-               state_vector_array_t* const GvPtr, state_matrix_array_t* const GmPtr) {
+  void setData(const scalar_array_t* timeStampPtr, const state_vector_array_t* GvPtr, const state_matrix_array_t* GmPtr) {
     BASE::resetNumFunctionCalls();
-
-    switchingTimeStart_ = switchingTimeStart;
-    switchingTimeFinal_ = switchingTimeFinal;
 
     GvFunc_.setData(timeStampPtr, GvPtr);
     GmFunc_.setData(timeStampPtr, GmPtr);
@@ -108,25 +104,21 @@ class SequentialErrorEquationNormalized final : public OdeBase<STATE_DIM> {
   void computeFlowMap(const scalar_t& z, const state_vector_t& Sve, state_vector_t& derivatives) {
     BASE::numFunctionCalls_++;
 
-    // denormalized time
-    const scalar_t t = switchingTimeFinal_ + (switchingTimeStart_ - switchingTimeFinal_) * z;
+    // normal time
+    const scalar_t t = -z;
 
-    const auto indexAlpha = GvFunc_.interpolate(t, Gv_);
-    GmFunc_.interpolate(indexAlpha, Gm_);
+    const auto indexAlpha = GmFunc_.interpolate(t, Gm_);
 
-    // Error equation for the equivalent system
-    derivatives = (switchingTimeFinal_ - switchingTimeStart_) * (Gm_.transpose() * Sve + Gv_);
+    // derivatives = Gv + Gm*Sve
+    GvFunc_.interpolate(indexAlpha, derivatives);
+    derivatives.noalias() += Gm_.transpose() * Sve;
   }
 
  private:
-  scalar_t switchingTimeStart_;
-  scalar_t switchingTimeFinal_;
-
   EigenLinearInterpolation<state_vector_t> GvFunc_;
   EigenLinearInterpolation<state_matrix_t> GmFunc_;
 
   // members required in computeFlowMap
-  state_vector_t Gv_;
   state_matrix_t Gm_;
 };
 

@@ -53,7 +53,7 @@ SLQ<STATE_DIM, INPUT_DIM>::~SLQ() = default;
 /******************************************************************************************************/
 /***************************************************************************************************** */
 template <size_t STATE_DIM, size_t INPUT_DIM>
-void SLQ<STATE_DIM, INPUT_DIM>::approximatePartitionLQ(const size_t& partitionIndex) {
+void SLQ<STATE_DIM, INPUT_DIM>::approximatePartitionLQ(size_t partitionIndex) {
   const size_t threadId = 0;
   size_t N = BASE::nominalTimeTrajectoriesStock_[partitionIndex].size();
 
@@ -69,7 +69,7 @@ void SLQ<STATE_DIM, INPUT_DIM>::approximatePartitionLQ(const size_t& partitionIn
 /******************************************************************************************************/
 /***************************************************************************************************** */
 template <size_t STATE_DIM, size_t INPUT_DIM>
-void SLQ<STATE_DIM, INPUT_DIM>::calculatePartitionController(const size_t& partitionIndex) {
+void SLQ<STATE_DIM, INPUT_DIM>::calculatePartitionController(size_t partitionIndex) {
   const size_t threadId = 0;
   size_t N = BASE::SsTimeTrajectoryStock_[partitionIndex].size();
 

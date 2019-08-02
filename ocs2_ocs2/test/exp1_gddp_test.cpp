@@ -46,7 +46,7 @@ enum {
 	INPUT_DIM = 1
 };
 
-TEST(exp1_gddp_test, optimum_gradient_test)
+TEST(exp1_gddp_test, DISABLED_optimum_gradient_test)
 {
 	// event times
 	std::vector<double> optimumEventTimes {0.2262, 1.0176};

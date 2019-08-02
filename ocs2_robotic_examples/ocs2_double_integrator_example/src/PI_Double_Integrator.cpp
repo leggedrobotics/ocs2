@@ -2,7 +2,7 @@
 
 #include <ocs2_double_integrator_example/cost/DoubleIntegratorCost.h>
 #include <ocs2_double_integrator_example/dynamics/DoubleIntegratorDynamics.h>
-#include <ocs2_double_integrator_example/ros_comm/MPC_ROS_Double_Integrator.h>
+#include <ocs2_comm_interfaces/ocs2_ros_interfaces/mpc/MPC_ROS_Interface.h>
 #include <ocs2_mpc/MPC_PI.h>
 #include <ocs2_mpc/MPC_Settings.h>
 #include <ocs2_oc/pi_solver/PI_Settings.h>
@@ -83,8 +83,8 @@ int main(int argc, char** argv) {
   ocs2::PI_Settings piSettings;
   piSettings.loadSettings(taskFile);
   ocs2::MPC_PI<STATE_DIM, INPUT_DIM> mpc_pi(dynamics, std::move(cost), constraint, partitioningTimes, mpcSettings, piSettings);
-  mpc_pi.setCostDesiredTrajectories(costDesiredTraj);
-  ocs2::double_integrator::MPC_ROS_Linear_System mpcNode(mpc_pi, "double_integrator");
+  mpc_pi.getSolverPtr()->setCostDesiredTrajectories(costDesiredTraj);
+  ocs2::MPC_ROS_Interface<STATE_DIM, INPUT_DIM> mpcNode(&mpc_pi, "double_integrator");
 
   mpcNode.launchNodes(argc, argv);
 

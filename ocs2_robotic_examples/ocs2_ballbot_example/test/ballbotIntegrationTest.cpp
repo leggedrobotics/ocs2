@@ -6,9 +6,9 @@
 
 #include "ocs2_ballbot_example/BallbotInterface.h"
 #include "ocs2_ballbot_example/definitions.h"
-#include "ocs2_ballbot_example/ros_comm/MPC_ROS_Ballbot.h"
 #include "ocs2_ballbot_example/ros_comm/MRT_ROS_Ballbot.h"
 #include "ocs2_ballbot_example/ros_comm/MRT_ROS_Dummy_Ballbot.h"
+#include "ocs2_comm_interfaces/ocs2_ros_interfaces/mpc/MPC_ROS_Interface.h"
 
 using namespace ocs2;
 using namespace ballbot;
@@ -42,7 +42,7 @@ TEST(BallbotIntegrationTest, createMPC) {
   BallbotInterface ballbotInterface(taskFileFolderName);
 
   // Launch MPC ROS node
-  MPC_ROS_Ballbot mpcNode(*ballbotInterface.getMPCPtr(), "ballbot");
+  MPC_ROS_Interface<STATE_DIM_, INPUT_DIM_> mpcNode(ballbotInterface.getMPCPtr().get(), "ballbot");
 
   ASSERT_TRUE(true);
 }

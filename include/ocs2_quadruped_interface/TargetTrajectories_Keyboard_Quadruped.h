@@ -215,7 +215,7 @@ public:
  private:
 
   scalar_t estimeTimeToTarget(scalar_t dyaw, scalar_t dx, scalar_t dy) const {
-	  scalar_t rotationTime = dyaw / targetRotationVelocity_;
+	  scalar_t rotationTime = std::abs(dyaw) / targetRotationVelocity_;
 	  scalar_t displacement = std::sqrt(dx*dx + dy*dy);
 	  scalar_t displacementTime = displacement / targetDisplacementVelocity_;
 

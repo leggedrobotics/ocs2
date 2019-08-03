@@ -26,12 +26,10 @@ int main( int argc, char* argv[] )
 	/******************************************************************************************************/
 	if ( argc <= 1) throw std::runtime_error("No task file specified. Aborting.");
 	std::string taskFolder = ros::package::getPath("ocs2_anymal_interface") + "/config/" + std::string(argv[1]);
-	std::string taskFile = ros::package::getPath("ocs2_anymal_interface") + "/config/" + std::string(argv[1]) + "/task.info";
+	std::string taskFile = taskFolder + "/task.info";
 	std::cerr << "Loading task file: " << taskFile << std::endl;
 
 	ocs2_robot_interface_t::Ptr optimizationInterfacePtr( new ocs2_robot_interface_t(taskFolder) );
-	ocs2_robot_interface_t::rbd_state_vector_t initRbdState;
-	optimizationInterfacePtr->getLoadedInitialState(initRbdState);
 
 	MRT_ROS_Dummy_Quadruped<12> dummySimulator(
 			optimizationInterfacePtr,
@@ -42,6 +40,8 @@ int main( int argc, char* argv[] )
 	dummySimulator.launchNodes(argc, argv);
 
 	// initial state
+	ocs2_robot_interface_t::rbd_state_vector_t initRbdState;
+	optimizationInterfacePtr->getLoadedInitialState(initRbdState);
 	MRT_ROS_Dummy_Quadruped<12>::system_observation_t initObservation;
 	initObservation.time()  = 0.0;
 	optimizationInterfacePtr->computeSwitchedModelState(initRbdState, initObservation.state());
@@ -50,16 +50,22 @@ int main( int argc, char* argv[] )
 
 	// initial command
 	MRT_ROS_Dummy_Quadruped<12>::cost_desired_trajectories_t initCostDesiredTrajectories;
-	initCostDesiredTrajectories.desiredTimeTrajectory().resize(1);
-	initCostDesiredTrajectories.desiredStateTrajectory().resize(1);
-	initCostDesiredTrajectories.desiredInputTrajectory().resize(1);
-	MRT_ROS_Dummy_Quadruped<12>::scalar_array_t targetPoseDisplacementVelocity(12, 0.0);
-	ocs2::TargetPoseTransformation<MRT_ROS_Dummy_Quadruped<12>::scalar_t>::toCostDesiredState(
-			targetPoseDisplacementVelocity, initCostDesiredTrajectories.desiredStateTrajectory().front());
+
+	// time
+	auto& timeTrajectory = initCostDesiredTrajectories.desiredTimeTrajectory();
+	timeTrajectory.resize(1);
+	timeTrajectory[0] = 0.0;
+
+	// State
+	auto& stateTrajectory = initCostDesiredTrajectories.desiredStateTrajectory();
+	stateTrajectory.resize(1);
+	stateTrajectory[0] = initObservation.state();
+
+	// Input
+	auto& inputTrajectory = initCostDesiredTrajectories.desiredInputTrajectory();
+	inputTrajectory.resize(1);
+	inputTrajectory[0] = initObservation.input();
 
 	// run dummy
 	dummySimulator.run(initObservation, initCostDesiredTrajectories);
-
-//	xpp_msgs::RobotStateCartesian point;
-
 }

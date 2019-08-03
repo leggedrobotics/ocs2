@@ -15,7 +15,7 @@ MRT_ROS_Quadruped<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::MRT_ROS_Quadruped(
 		const quadruped_interface_ptr_t& ocs2QuadrupedInterfacePtr,
 		const std::string& robotName /*robot*/)
 
-		: BASE()
+		: BASE(robotName)
 		, ocs2QuadrupedInterfacePtr_(ocs2QuadrupedInterfacePtr)
 		, modelSettings_(ocs2QuadrupedInterfacePtr->modelSettings())
 {
@@ -23,7 +23,7 @@ MRT_ROS_Quadruped<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::MRT_ROS_Quadruped(
 	logic_rules_mrt_.reset(new logic_rules_t(*ocs2QuadrupedInterfacePtr->getLogicRules()));
 
 	// share logic rules with the Base
-	BASE::set(robotName, logic_rules_mrt_);
+	BASE::setLogicRules(logic_rules_mrt_);
 
 	// set up the rollout
 	if (ocs2QuadrupedInterfacePtr->mpcSettings().useFeedbackPolicy_) {
@@ -158,7 +158,7 @@ void MRT_ROS_Quadruped<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::modifyPolicy(
 		return;
 
 	// display
-	if (BASE::logicUpdated_==true && ocs2QuadrupedInterfacePtr_->mpcSettings().debugPrint_==true) {
+	if (logicUpdated && ocs2QuadrupedInterfacePtr_->mpcSettings().debugPrint_) {
 
 		std::cerr << "touchdownTimeStock: {";
 		for (const auto& t: touchdownTimeStockBuffer_)
@@ -182,7 +182,7 @@ void MRT_ROS_Quadruped<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::modifyPolicy(
 	}
 
 	// for feet trajectory filtering
-	if (ocs2QuadrupedInterfacePtr_->modelSettings().useFeetTrajectoryFiltering_ == true)
+	if (ocs2QuadrupedInterfacePtr_->modelSettings().useFeetTrajectoryFiltering_)
 		updateFeetTrajectories(eventTimes, subsystemsSequence,
 				touchdownTimeStockBuffer_, touchdownStateStockBuffer_, touchdownInputStockBuffer_);
 }
@@ -602,7 +602,7 @@ bool MRT_ROS_Quadruped<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::updateNodes(
 	currentObservation.subsystem() = switched_model::stanceLeg2ModeNumber(contactFlag);
 
 	// publish the current observation
-	BASE::publishObservation(currentObservation);
+	BASE::setCurrentObservation(currentObservation);
 
 	// check for a new controller update from the MPC node
 	bool policyUpdated = BASE::updatePolicy();

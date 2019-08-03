@@ -80,6 +80,9 @@ MRT_BASE<STATE_DIM, INPUT_DIM>::mpcCostDesiredTrajectories() const {
   return mpcCostDesiredTrajectories_;
 }
 
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
 void MRT_BASE<STATE_DIM, INPUT_DIM>::initRollout(const ControlledSystemBase<STATE_DIM, INPUT_DIM>& controlSystemBase,
                                                  const Rollout_Settings& rolloutSettings) {
@@ -90,11 +93,20 @@ void MRT_BASE<STATE_DIM, INPUT_DIM>::initRollout(const ControlledSystemBase<STAT
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
+void MRT_BASE<STATE_DIM, INPUT_DIM>::initRollout(std::unique_ptr<RolloutBase<STATE_DIM, INPUT_DIM>> rolloutPtr) {
+  rolloutPtr_ = std::move(rolloutPtr);
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+template <size_t STATE_DIM, size_t INPUT_DIM>
 void MRT_BASE<STATE_DIM, INPUT_DIM>::evaluatePolicy(scalar_t currentTime, const state_vector_t& currentState, state_vector_t& mpcState,
                                                     input_vector_t& mpcInput, size_t& subsystem) {
   if (currentTime > mpcTimeTrajectory_.back()) {
     std::cerr << "The requested currentTime is greater than the received plan: " + std::to_string(currentTime) + ">" +
-                    std::to_string(mpcTimeTrajectory_.back()) << std::endl;
+                     std::to_string(mpcTimeTrajectory_.back())
+              << std::endl;
   }
 
   mpcInput = mpcController_->computeInput(currentTime, currentState);
@@ -111,8 +123,9 @@ template <size_t STATE_DIM, size_t INPUT_DIM>
 void MRT_BASE<STATE_DIM, INPUT_DIM>::rolloutPolicy(scalar_t currentTime, const state_vector_t& currentState, const scalar_t& timeStep,
                                                    state_vector_t& mpcState, input_vector_t& mpcInput, size_t& subsystem) {
   if (currentTime > mpcTimeTrajectory_.back()) {
-	  std::cerr << "The requested currentTime is greater than the received plan: " + std::to_string(currentTime) + ">" +
-                    std::to_string(mpcTimeTrajectory_.back()) << std::endl;
+    std::cerr << "The requested currentTime is greater than the received plan: " + std::to_string(currentTime) + ">" +
+                     std::to_string(mpcTimeTrajectory_.back())
+              << std::endl;
   }
 
   if (!rolloutPtr_) {

@@ -34,28 +34,22 @@ namespace ocs2 {
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
 MRT_ROS_Dummy_Loop<STATE_DIM, INPUT_DIM>::MRT_ROS_Dummy_Loop(
-		const mrt_ptr_t& mrtPtr,
-		const scalar_t& mrtDesiredFrequency /*= 100*/,
-		const scalar_t& mpcDesiredFrequency /*= -1*/,
-		controlled_system_base_t* systemPtr /* = nullptr*/,
-		Rollout_Settings rolloutSettings /*= Rollout_Settings()*/)
+		mrt_ptr_t mrtPtr,
+		scalar_t mrtDesiredFrequency /*= 100*/,
+		scalar_t mpcDesiredFrequency /*= -1*/)
 
-	: mrtPtr_(mrtPtr)
-	, mrtDesiredFrequency_(mrtDesiredFrequency)
-	, mpcDesiredFrequency_(mpcDesiredFrequency)
-	, systemPtr_(systemPtr)
-	, realtimeLoop_(mpcDesiredFrequency<=0) // true if mpcDesiredFrequency is not set or it is negative
+	: mrtPtr_(std::move(mrtPtr))
+	, mrtDesiredFrequency_(std::move(mrtDesiredFrequency))
+	, mpcDesiredFrequency_(std::move(mpcDesiredFrequency))
 {
+	realtimeLoop_ = (mrtDesiredFrequency_<=0);
+
 	if (mrtDesiredFrequency_<0)
 		throw std::runtime_error("MRT loop frequency should be a positive number.");
 
 	if (mpcDesiredFrequency_>0)
 		ROS_WARN_STREAM("MPC loop is not realtime! "
 				"For realtime setting, set mpcDesiredFrequency to any negative number.");
-
-	if (systemPtr_){
-		mrtPtr_->initRollout(*systemPtr_, rolloutSettings);
-	}
 }
 
 /******************************************************************************************************/
@@ -133,7 +127,7 @@ void MRT_ROS_Dummy_Loop<STATE_DIM, INPUT_DIM>::run(
 
 		// integrate nominal dynamics if available, otherwise fake simulation
 		state_vector_t stateTemp = observation_.state();
-		if(systemPtr_){
+		if(mrtPtr_->rolloutSet()){
 			mrtPtr_->rolloutPolicy(time, stateTemp, timeStep,
 					observation_.state(), observation_.input(), observation_.subsystem());
 		} else {

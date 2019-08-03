@@ -87,6 +87,18 @@ target_link_libraries(cartpole_dummy_test
         ${catkin_LIBRARIES}
         )
 
+# Dummy node with simulator rollout
+add_executable(cartpole_dummy_simulator
+        src/Dummy_Cartpole_Simulator_Node.cpp
+        )
+add_dependencies(cartpole_dummy_simulator
+        ${catkin_EXPORTED_TARGETS}
+        )
+target_link_libraries(cartpole_dummy_simulator
+        cartpole_interface
+        ${catkin_LIBRARIES}
+        )
+
 #############
 ## Install ##
 #############

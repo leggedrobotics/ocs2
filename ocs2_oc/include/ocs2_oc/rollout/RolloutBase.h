@@ -82,9 +82,9 @@ class RolloutBase {
    * @param [in] rolloutSettings: The rollout settings.
    * @param [in] algorithmName: The algorithm that calls this class (default not defined).
    */
-  RolloutBase(const Rollout_Settings& rolloutSettings = Rollout_Settings(), const char* algorithmName = nullptr)
+  RolloutBase(Rollout_Settings rolloutSettings = Rollout_Settings(), const char* algorithmName = nullptr)
 
-      : rolloutSettings_(rolloutSettings), algorithmName_(algorithmName) {}
+      : rolloutSettings_(std::move(rolloutSettings)), algorithmName_(algorithmName) {}
 
   /**
    * Default destructor.

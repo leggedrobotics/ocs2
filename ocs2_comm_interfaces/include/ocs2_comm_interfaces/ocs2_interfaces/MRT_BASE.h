@@ -92,6 +92,12 @@ class MRT_BASE {
   void initRollout(const ControlledSystemBase<STATE_DIM, INPUT_DIM>& controlledSystemBase, const Rollout_Settings& rolloutSettings);
 
   /**
+   * @brief Initializes rollout class to roll out a feedback policy
+   * @param rolloutPtr: The rollout object to be used
+   */
+  void initRollout(std::unique_ptr<RolloutBase<STATE_DIM, INPUT_DIM>> rolloutPtr);
+
+  /**
    * @brief Evaluates the controller
    *
    * @param [in] currentTime: the query time.
@@ -124,6 +130,12 @@ class MRT_BASE {
    * @return True if the policy is updated.
    */
   bool updatePolicy();
+
+  /**
+   * @brief rolloutSet: Whether or not the internal rollout object has been set
+   * @return True if a rollout object is available.
+   */
+  bool rolloutSet() const { return rolloutPtr_.get(); }
 
  protected:
   /**

@@ -30,9 +30,8 @@ public:
 	, touchDownVelocity_(0.0)
 	, phaseTransitionStanceTime_(0.4)
 	, mpcGoalCommandDelay_(0.5)
-	, strideTime_(0.0)
-	, mpcStrideLength_(0.35)
-	, numPhasesInfullGaitCycle_(4)
+	, targetDisplacementVelocity_(0.5)
+	, targetRotationVelocity_(0.3)
 	, useFeetTrajectoryFiltering_(true)
 	, feetFilterFrequency_(50.0)
 	, torqueMixingFactor_(0.0)
@@ -59,9 +58,8 @@ public:
 	double touchDownVelocity_;
 	double phaseTransitionStanceTime_;
 	double mpcGoalCommandDelay_;
-	double strideTime_;
-	double mpcStrideLength_;
-	size_t numPhasesInfullGaitCycle_;
+	double targetDisplacementVelocity_;
+	double targetRotationVelocity_;
 	bool useFeetTrajectoryFiltering_;
 	double feetFilterFrequency_;
 	double torqueMixingFactor_;
@@ -199,27 +197,19 @@ inline void Model_Settings::loadSettings(const std::string& filename, bool verbo
 	}
 
 	try {
-		strideTime_ = pt.get<double>("model_settings.strideTime");
-		if (verbose)  std::cerr << " #### strideTime ................... " << strideTime_ << std::endl;
+		targetDisplacementVelocity_ = pt.get<double>("model_settings.targetDisplacementVelocity");
+		if (verbose)  std::cerr << " #### targetDisplacementVelocity ... " << targetDisplacementVelocity_ << std::endl;
 	}
 	catch (const std::exception& e){
-		if (verbose)  std::cerr << " #### strideTime ................... " << strideTime_ << "\t(default)" << std::endl;
+		if (verbose)  std::cerr << " #### targetDisplacementVelocity ... " << targetDisplacementVelocity_ << "\t(default)" << std::endl;
 	}
 
 	try {
-		mpcStrideLength_ = pt.get<double>("model_settings.mpcStrideLength");
-		if (verbose)  std::cerr << " #### mpcStrideLength .............. " << mpcStrideLength_ << std::endl;
+		targetRotationVelocity_ = pt.get<double>("model_settings.targetRotationVelocity");
+		if (verbose)  std::cerr << " #### targetRotationVelocity ....... " << targetRotationVelocity_ << std::endl;
 	}
 	catch (const std::exception& e){
-		if (verbose)  std::cerr << " #### mpcStrideLength .............. " << mpcStrideLength_ << "\t(default)" << std::endl;
-	}
-
-	try {
-		numPhasesInfullGaitCycle_ = pt.get<size_t>("model_settings.numPhasesInfullGaitCycle");
-		if (verbose)  std::cerr << " #### numPhasesInfullGaitCycle ..... " << numPhasesInfullGaitCycle_ << std::endl;
-	}
-	catch (const std::exception& e){
-		if (verbose)  std::cerr << " #### numPhasesInfullGaitCycle ..... " << numPhasesInfullGaitCycle_ << "\t(default)" << std::endl;
+		if (verbose)  std::cerr << " #### targetRotationVelocity ....... " << targetRotationVelocity_ << "\t(default)" << std::endl;
 	}
 
 	try {

@@ -125,6 +125,8 @@ class MRT_BASE {
    */
   bool updatePolicy();
 
+  void setLogicRules(std::shared_ptr<HybridLogicRules> logicRules);
+
  protected:
   /**
    * The updatePolicy() method will call this method which allows the user to

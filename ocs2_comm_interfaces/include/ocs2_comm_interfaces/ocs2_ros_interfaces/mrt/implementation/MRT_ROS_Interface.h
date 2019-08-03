@@ -82,12 +82,12 @@ void MRT_ROS_Interface<STATE_DIM, INPUT_DIM>::resetMpcNode(const cost_desired_tr
 
   RosMsgConversions<STATE_DIM, INPUT_DIM>::CreateTargetTrajectoriesMsg(initCostDesiredTrajectories, resetSrv.request.targetTrajectories);
 
-  if (mpcResetServiceClient_.waitForExistence(ros::Duration(5.0))) {
-    mpcResetServiceClient_.call(resetSrv);
-    ROS_INFO_STREAM("MPC node is reset.");
-  } else {
-    ROS_ERROR_STREAM("Failed to call service to reset MPC.");
+  while (!mpcResetServiceClient_.waitForExistence(ros::Duration(5.0))) {
+    ROS_ERROR_STREAM("Failed to call service to reset MPC, retrying...");
   }
+
+  mpcResetServiceClient_.call(resetSrv);
+  ROS_INFO_STREAM("MPC node is reset.");
 }
 
 /******************************************************************************************************/

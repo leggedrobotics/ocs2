@@ -62,7 +62,9 @@ class TerrainModel final : public ocs2::MpcSynchronizedModule<double> {
    * @param leg
    * @return polytopeID
    */
-  int findPolytopeForSwingLeg(double startTimeOfStancePhase, double endTimeOfStancePhase, const Eigen::Vector3d footPosition, const Eigen::Vector3d footVelocity, int leg);
+  int findPolytopeForCurrentSwingLeg(double startTimeOfStancePhase, double endTimeOfStancePhase, int leg);
+
+  int findPolytopeForCurrentStanceLeg(double startTimeOfStancePhase, double endTimeOfStancePhase, int leg);
 
   /**
    * Return the polytope closes to the nominal stance position.
@@ -83,7 +85,7 @@ class TerrainModel final : public ocs2::MpcSynchronizedModule<double> {
 
   BaseTrajectory baseTrajectory_;
   ocs2::EigenLinearInterpolation<BaseCoordinates> baseInterpolation_;
-  std::vector<Eigen::Vector3d> footPositions_, footVelocities_;
+//  std::vector<Eigen::Vector3d> footPositions_, footVelocities_;
 
   std::shared_ptr<const GaitSequence> gaitSequence_;
 

@@ -64,15 +64,21 @@ void ComKinoConstraintBaseAD<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::setCurrent
       gaitSequence.contactFlags = logicRulesPtr_->getContactFlagsSequence();
 
       // Position constraints in both stance and swing
-      EEPosConstraint->setActivity(true);
+
       if (stanceLegs_[i]) {
         auto terrainConstraint = terrainModel_->getTerrainConstraints(t, i);
-        eePosConSettings_[i].Ab.resize(terrainConstraint.rows() + 2, terrainConstraint.cols());
-        eePosConSettings_[i].Ab <<
-            constraintScale*terrainConstraint,
-            0.0, 0.0, constraintScale, 0.0,
-            0.0, 0.0, -constraintScale, 0.0;
+        if (terrainConstraint.rows() > 0) {
+          EEPosConstraint->setActivity(true);
+          eePosConSettings_[i].Ab.resize(terrainConstraint.rows() + 2, terrainConstraint.cols());
+          eePosConSettings_[i].Ab <<
+                                  constraintScale*terrainConstraint,
+                                  0.0, 0.0, constraintScale, 0.0,
+                                  0.0, 0.0, -constraintScale, 0.0;
+        } else {
+          EEPosConstraint->setActivity(false);
+        }
       } else {
+        EEPosConstraint->setActivity(true);
         // Swing height control
         eePosConSettings_[i].Ab.resize(1, 4);
         eePosConSettings_[i].Ab <<

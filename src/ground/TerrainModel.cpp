@@ -53,8 +53,8 @@ void TerrainModel::update(double initTime,
 
   baseInterpolation_.setData(&baseTrajectory_.time, &baseTrajectory_.data);
 
-  //TODO(ruben): fill
-  footPositions_, footVelocities_
+//  //TODO(ruben): fill
+//  footPositions_, footVelocities_
 
   assignPolytopes();
   display();
@@ -116,15 +116,16 @@ void TerrainModel::loadTestTerrain() {
 
     ConvexPlanarPolytope3dArray polytopes;
     polytopes.reserve(4);
-    polytopes.push_back(createSquare(0.2, Eigen::Vector3d{0.25, 0.25, 0.0}));
-    polytopes.push_back(createSquare(0.2, Eigen::Vector3d{0.25, -0.25, 0.0}));
-    polytopes.push_back(createSquare(0.2, Eigen::Vector3d{-0.25, 0.25, 0.0}));
-    polytopes.push_back(createSquare(0.2, Eigen::Vector3d{-0.25, -0.25, 0.0}));
+    double squareSize = 0.15;
+    polytopes.push_back(createSquare(squareSize, Eigen::Vector3d{0.25, 0.25, 0.0}));
+    polytopes.push_back(createSquare(squareSize, Eigen::Vector3d{0.25, -0.25, 0.0}));
+    polytopes.push_back(createSquare(squareSize, Eigen::Vector3d{-0.25, 0.25, 0.0}));
+    polytopes.push_back(createSquare(squareSize, Eigen::Vector3d{-0.25, -0.25, 0.0}));
 
-    polytopes.push_back(createSquare(0.2, Eigen::Vector3d{0.75, 0.0, 0.0}));
-    polytopes.push_back(createSquare(0.2, Eigen::Vector3d{-0.75, 0.0, 0.0}));
-    polytopes.push_back(createSquare(0.2, Eigen::Vector3d{0., 0.75, 0.0}));
-    polytopes.push_back(createSquare(0.2, Eigen::Vector3d{0.0, -0.75, 0.0}));
+    polytopes.push_back(createSquare(squareSize, Eigen::Vector3d{0.75, 0.0, 0.0}));
+    polytopes.push_back(createSquare(squareSize, Eigen::Vector3d{-0.75, 0.0, 0.0}));
+    polytopes.push_back(createSquare(squareSize, Eigen::Vector3d{0., 0.75, 0.0}));
+    polytopes.push_back(createSquare(squareSize, Eigen::Vector3d{0.0, -0.75, 0.0}));
 
     setPolytopes(std::move(polytopes));
 }
@@ -169,10 +170,9 @@ void TerrainModel::assignPolytopes() {
     auto &eventTimes = gaitSequenceTranspose.time[leg];
     auto &contactStates = gaitSequenceTranspose.contactFlags[leg];
     auto &assignedPolytopes = polytopeIDSequencePerLeg_[leg];
-    auto &footPosition = footPositions_[leg];
-    auto &footVelocity = footVelocities_[leg];
-    assignedPolytopes.time.clear();
-    assignedPolytopes.data.clear();
+    PolytopeIDsequence newPolytopeSequence;
+//    auto &footPosition = footPositions_[leg];
+//    auto &footVelocity = footVelocities_[leg];
 
     auto firstMotionPhase = ocs2::lookup::findIndexInTimeArray(eventTimes, initTime_);  // [0, size(eventTimes)]
     auto lastMotionPhase = ocs2::lookup::findIndexInTimeArray(eventTimes, finalTime_);  // [0, size(eventTimes)]
@@ -181,22 +181,23 @@ void TerrainModel::assignPolytopes() {
     auto motionPhase = firstMotionPhase;
     if (contactStates[motionPhase]) {
       // Start in stance: Assign the polytope it is already standing on
-      assignedPolytopes.data.push_back(findPolytopeForStanceLeg(footPosition));
+      auto endOfStancePhaseTime = (motionPhase < eventTimes.size()) ? eventTimes[motionPhase] : finalTime_;
+      newPolytopeSequence.data.push_back(findPolytopeForCurrentStanceLeg(initTime_, endOfStancePhaseTime, leg));
     } else {
-      assignedPolytopes.data.push_back(-1);
+      newPolytopeSequence.data.push_back(-1);
     }
 
     // Second Phase
     motionPhase++;
     if (motionPhase <= lastMotionPhase) {
       auto transitionTime = eventTimes[motionPhase-1]; // event time that started this  phase
-      assignedPolytopes.time.push_back(transitionTime);
+      newPolytopeSequence.time.push_back(transitionTime);
       if (contactStates[motionPhase]) {
         // Started in swing, find a suitable polytope for the first stance phase
         auto endOfStancePhaseTime = (motionPhase < eventTimes.size()) ? eventTimes[motionPhase] : finalTime_; // Assume contact phase ends at final time if no other event time available
-        assignedPolytopes.data.push_back(findPolytopeForSwingLeg(transitionTime, endOfStancePhaseTime, footPosition, footVelocity, leg));
+        newPolytopeSequence.data.push_back(findPolytopeForCurrentSwingLeg(transitionTime, endOfStancePhaseTime, leg));
       } else {
-        assignedPolytopes.data.push_back(-1);
+        newPolytopeSequence.data.push_back(-1);
       }
     }
 
@@ -204,17 +205,103 @@ void TerrainModel::assignPolytopes() {
     motionPhase++;
     while (motionPhase <= lastMotionPhase) {
       auto transitionTime = eventTimes[motionPhase-1]; // event time that started this  phase
-      assignedPolytopes.time.push_back(transitionTime);
+      newPolytopeSequence.time.push_back(transitionTime);
       if (contactStates[motionPhase]) {
         // Stance phases after the first or second motion phase use nominal leg positions to select polytopes
         auto endOfStancePhaseTime = (motionPhase < eventTimes.size()) ? eventTimes[motionPhase] : finalTime_; // Assume contact phase ends at final time if no other event time available
-        assignedPolytopes.data.push_back(findPolytopeForNominalStancePhase(transitionTime, endOfStancePhaseTime, leg));
+        newPolytopeSequence.data.push_back(findPolytopeForNominalStancePhase(transitionTime, endOfStancePhaseTime, leg));
       } else {
-        assignedPolytopes.data.push_back(-1);
+        newPolytopeSequence.data.push_back(-1);
       }
       motionPhase++;
     }
+
+    // Overwrite old selection
+    assignedPolytopes = std::move(newPolytopeSequence);
   }
+}
+
+int TerrainModel::findPolytopeForStanceLeg(const Eigen::Vector3d footPosition) {
+  Eigen::Vector4d footPositionHomogeneous;
+  footPositionHomogeneous << footPosition, 1;
+
+  // Linearly traverse polytopes and find closest one.
+  int selectedPolytope = 0;
+  double distance = 1e12;
+  for (int i = 0; i<terrainPolytopes_.size(); i++){
+    auto constraints = toHalfSpaces(terrainPolytopes_[i]);
+    double maxViolation = (constraints * footPositionHomogeneous).array().maxCoeff();
+    if (maxViolation < distance) {
+      selectedPolytope = i;
+      distance = maxViolation;
+    }
+  }
+
+  return selectedPolytope;
+}
+
+int TerrainModel::findPolytopeForCurrentSwingLeg(double startTimeOfStancePhase, double endTimeOfStancePhase, int leg) {
+  auto& oldPolytopeSequence = polytopeIDSequencePerLeg_[leg];
+  auto motionPhase = ocs2::lookup::findIndexInTimeArray(oldPolytopeSequence.time, startTimeOfStancePhase);
+
+  if (motionPhase+1 < oldPolytopeSequence.data.size()){
+    // Previously selected polytope
+      return oldPolytopeSequence.data[motionPhase+1];
+  } else {
+      return findPolytopeForNominalStancePhase(startTimeOfStancePhase, endTimeOfStancePhase, leg);
+  }
+}
+
+int TerrainModel::findPolytopeForCurrentStanceLeg(double startTimeOfStancePhase, double endTimeOfStancePhase, int leg) {
+  auto& oldPolytopeSequence = polytopeIDSequencePerLeg_[leg];
+  auto motionPhase = ocs2::lookup::findIndexInTimeArray(oldPolytopeSequence.time, startTimeOfStancePhase);
+
+  if (motionPhase < oldPolytopeSequence.data.size()){
+    // Previously selected polytope
+    return oldPolytopeSequence.data[motionPhase];
+  } else { // no need to find new one for current stance leg
+    return -1;
+  }
+}
+
+int TerrainModel::findPolytopeForNominalStancePhase(double startTimeOfStancePhase,
+                                                    double endTimeOfStancePhase,
+                                                    int leg) {
+  double middleTime = 0.5 * (startTimeOfStancePhase + endTimeOfStancePhase);
+  Eigen::Vector3d footPosition = getNominalStanceFootPositionInWorld(middleTime, leg);
+  return findPolytopeForStanceLeg(footPosition);
+}
+
+Eigen::Vector3d TerrainModel::getNominalStanceFootPositionInWorld(double time, int leg) {
+  BaseCoordinates baseCoordinates;
+  baseInterpolation_.interpolate(time, baseCoordinates);
+  Eigen::Vector3d baseOrientation = baseCoordinates.segment(0, 3);
+  Eigen::Vector3d basePosition = baseCoordinates.segment(3, 3);
+  Eigen::Matrix3d rotationBaseToOrigin = RotationMatrixBasetoOrigin(baseOrientation);
+
+  Eigen::Vector3d footOffset;
+  double dx = 0.3;
+  double dy = 0.2;
+  double dz = -0.42;
+  switch (leg) {
+    case 0 :
+      footOffset << dx, dy, dz;
+      break;
+    case 1 :
+      footOffset << dx, -dy, dz;
+      break;
+    case 2 :
+      footOffset << -dx, dy, dz;
+      break;
+    case 3 :
+      footOffset << -dx, -dy, dz;
+      break;
+    default:
+      throw std::runtime_error("[findClosestPolytope] Invalid leg number");
+  }
+
+  Eigen::Vector3d footPosition = basePosition + rotationBaseToOrigin * footOffset;
+  return footPosition;
 }
 
 //void TerrainModel::assignPolytopes() {

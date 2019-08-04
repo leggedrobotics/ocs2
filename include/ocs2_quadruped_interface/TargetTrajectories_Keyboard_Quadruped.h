@@ -11,7 +11,7 @@
 #include <iomanip>
 
 #include <ocs2_robotic_tools/command/TargetTrajectories_Keyboard_Interface.h>
-#include <ocs2_robotic_tools/command/TargetPoseTransformation.h>
+#include <mutex>
 
 namespace switched_model {
 
@@ -20,7 +20,7 @@ namespace switched_model {
  *
  * @tparam SCALAR_T: scalar type.
  */
-template <typename SCALAR_T>
+template <typename SCALAR_T, size_t STATE_DIM, size_t INPUT_DIM>
 class TargetTrajectories_Keyboard_Quadruped : public ocs2::TargetTrajectories_Keyboard_Interface<SCALAR_T>
 {
 public:
@@ -37,12 +37,13 @@ public:
 			VELOCITY
 	};
 
-	typedef ocs2::TargetTrajectories_Keyboard_Interface<SCALAR_T> BASE;
-	typedef typename BASE::scalar_t scalar_t;
-	typedef typename BASE::scalar_array_t scalar_array_t;
-	typedef typename BASE::dynamic_vector_t dynamic_vector_t;
-	typedef typename BASE::dynamic_vector_array_t dynamic_vector_array_t;
-	typedef typename BASE::cost_desired_trajectories_t cost_desired_trajectories_t;
+	using BASE = ocs2::TargetTrajectories_Keyboard_Interface<SCALAR_T>;
+	using typename BASE::scalar_t;
+	using typename BASE::scalar_array_t;
+	using typename BASE::dynamic_vector_t;
+	using typename BASE::dynamic_vector_array_t;
+	using typename BASE::cost_desired_trajectories_t;
+	using joint_coordinates_t = Eigen::Matrix<SCALAR_T, 12, 1>;
 
 	/**
 	 * Constructor.
@@ -68,12 +69,25 @@ public:
 	 * goalPoseLimit(11): \omega_Z
 	 */
 	TargetTrajectories_Keyboard_Quadruped(
-				const std::string& robotName = "robot",
+				int argc, char* argv[],
+				const std::string& robotName,
+				scalar_t initZHeight,
+				joint_coordinates_t defaultJointCoordinates,
+				scalar_t targetDisplacementVelocity,
+				scalar_t targetRotationVelocity,
 				const scalar_array_t& goalPoseLimit =
-						scalar_array_t{2.0, 1.0, 0.3, 45.0, 45.0, 360.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0},
+				scalar_array_t{2.0, 1.0, 0.3, 45.0, 45.0, 360.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0},
 				const COMMAND_MODE command_mode = COMMAND_MODE::POSITION)
-	: BASE(robotName, command_dim_, goalPoseLimit), command_mode_(command_mode)
-	{}
+	: BASE(argc, argv, robotName, command_dim_, goalPoseLimit),
+	command_mode_(command_mode),
+	initZHeight_(initZHeight),
+	defaultJointCoordinates_(defaultJointCoordinates),
+    targetDisplacementVelocity_(targetDisplacementVelocity),
+    targetRotationVelocity_(targetRotationVelocity)
+	{
+		observationSubscriber_ = this->nodeHandle_->subscribe("/" + robotName + "_mpc_observation", 1,
+															  &TargetTrajectories_Keyboard_Quadruped::observationCallback, this);
+	}
 
 	/**
 	* Default destructor
@@ -94,43 +108,131 @@ public:
 			dynamic_vector_t& desiredState,
 			dynamic_vector_t& desiredInput) final {
 
-		scalar_array_t commadLineTargetOrdeCorrected(command_dim_);
+		auto deg2rad = [](scalar_t deg) { return (deg * M_PI / 180.0); };
+
+		desiredState.resize(command_dim_);
 		if (command_mode_ == COMMAND_MODE::POSITION) {
 			// reversing the order of the position and orientation.
 			for (size_t j = 0; j < 3; j++) {
 				// pose
-				commadLineTargetOrdeCorrected[j] = commadLineTarget[3 + j];
-				commadLineTargetOrdeCorrected[3 + j] = commadLineTarget[j];
+				desiredState[j] = deg2rad(commadLineTarget[3 + j]);
+				desiredState[3 + j] = commadLineTarget[j];
 				// velocities
-				commadLineTargetOrdeCorrected[6 + j] = commadLineTarget[9 + j];
-				commadLineTargetOrdeCorrected[9 + j] = commadLineTarget[6 + j];
+				desiredState[6 + j] = commadLineTarget[9 + j];
+				desiredState[9 + j] = commadLineTarget[6 + j];
 			}
 		} else if (command_mode_ == COMMAND_MODE::VELOCITY) {
 			// reversing the order of the position and orientation.
 			// velocity before position and orientation
 			for (size_t j = 0; j < 3; j++) {
 				// velocities
-				commadLineTargetOrdeCorrected[6 + j] = commadLineTarget[3 + j];
-				commadLineTargetOrdeCorrected[9 + j] = commadLineTarget[j];
+				desiredState[6 + j] = commadLineTarget[3 + j];
+				desiredState[9 + j] = commadLineTarget[j];
 				// pose
-				commadLineTargetOrdeCorrected[j] = commadLineTarget[9 + j];
-				commadLineTargetOrdeCorrected[3 + j] = commadLineTarget[6 + j];
+				desiredState[j] = deg2rad(commadLineTarget[9 + j]);
+				desiredState[3 + j] = commadLineTarget[6 + j];
 			}
 		} else {
 			std::runtime_error("Unknown command mode for target!");
 		}
 
 		// time
-		desiredTime = -1.0;
-		// state
-		ocs2::TargetPoseTransformation<scalar_t>::toCostDesiredState(
-				commadLineTargetOrdeCorrected, desiredState);
+		desiredTime = estimeTimeToTarget(desiredState[2], desiredState[3], desiredState[4]);
 		// input
-		desiredInput = dynamic_vector_t::Zero(0);
+        // TODO(Ruben)
+		desiredInput = dynamic_vector_t::Zero(INPUT_DIM);
+        desiredInput[2+0] = 80.0;
+        desiredInput[2+3] = 80.0;
+        desiredInput[2+6] = 80.0;
+        desiredInput[2+9] = 80.0;
 	}
 
-private:
-		COMMAND_MODE command_mode_;
+  cost_desired_trajectories_t toCostDesiredTrajectories(const scalar_array_t& commadLineTarget) final {
+
+
+	  ocs2::SystemObservation<STATE_DIM, INPUT_DIM> observation;
+	  ::ros::spinOnce();
+	  {
+		  std::lock_guard<std::mutex> lock(latestObservationMutex_);
+		  ocs2::RosMsgConversions<STATE_DIM, INPUT_DIM>::ReadObservationMsg(*latestObservation_, observation);
+	  }
+
+	  // Convert commandline target to base desired
+	  scalar_t desiredTime;
+	  dynamic_vector_t desiredBaseState;
+	  dynamic_vector_t desiredInput;
+	  toCostDesiredTimeStateInput(commadLineTarget, desiredTime, desiredBaseState, desiredInput);
+
+	  // Trajectory to publish
+	  cost_desired_trajectories_t costDesiredTrajectories(2);
+
+	  // Desired time trajectory
+	  scalar_array_t& tDesiredTrajectory = costDesiredTrajectories.desiredTimeTrajectory();
+	  tDesiredTrajectory.resize(2);
+	  tDesiredTrajectory[0] = observation.time();
+	  tDesiredTrajectory[1] = observation.time() + desiredTime;
+
+	  // Desired state trajectory
+	  typename cost_desired_trajectories_t::dynamic_vector_array_t& xDesiredTrajectory =
+			  costDesiredTrajectories.desiredStateTrajectory();
+	  xDesiredTrajectory.resize(2);
+	  xDesiredTrajectory[0].resize(STATE_DIM);
+	  xDesiredTrajectory[0].setZero();
+	  xDesiredTrajectory[0].segment(0, 12) = observation.state().segment(0, 12);
+	  xDesiredTrajectory[0].segment(12, 12) = defaultJointCoordinates_;
+
+	  xDesiredTrajectory[1].resize(STATE_DIM);
+	  xDesiredTrajectory[1].setZero();
+	  // Roll and pitch are absolute
+	  xDesiredTrajectory[1].segment(0, 2) = desiredBaseState.segment(0, 2);
+	  // Yaw relative to current
+	  xDesiredTrajectory[1][2] = observation.state()[2] + desiredBaseState[2];
+	  // base x, y relative to current state
+	  xDesiredTrajectory[1].segment(3, 2) = observation.state().segment(3, 2) + desiredBaseState.segment(3, 2);
+	  // base z relative to initialization
+	  xDesiredTrajectory[1][5] = initZHeight_ + desiredBaseState[5];
+	  // target velocities
+	  xDesiredTrajectory[1].segment(6, 6) = desiredBaseState.segment(6, 6);
+	  // joint angle from initialization
+	  xDesiredTrajectory[1].segment(12, 12) = defaultJointCoordinates_;
+
+	  // Desired input trajectory
+	  typename cost_desired_trajectories_t::dynamic_vector_array_t& uDesiredTrajectory =
+			  costDesiredTrajectories.desiredInputTrajectory();
+	  uDesiredTrajectory.resize(2);
+	  uDesiredTrajectory[0] = desiredInput;
+	  uDesiredTrajectory[1] = desiredInput;
+
+	  return costDesiredTrajectories;
+  }
+
+  void observationCallback(const ocs2_comm_interfaces::mpc_observation::ConstPtr& msg) {
+	  std::lock_guard<std::mutex> lock(latestObservationMutex_);
+	  latestObservation_ = msg;
+  }
+
+
+ private:
+
+  scalar_t estimeTimeToTarget(scalar_t dyaw, scalar_t dx, scalar_t dy) const {
+	  scalar_t rotationTime = std::abs(dyaw) / targetRotationVelocity_;
+	  scalar_t displacement = std::sqrt(dx*dx + dy*dy);
+	  scalar_t displacementTime = displacement / targetDisplacementVelocity_;
+
+	  return std::max(rotationTime, displacementTime);
+	}
+
+  COMMAND_MODE command_mode_;
+
+  ros::Subscriber observationSubscriber_;
+
+  std::mutex latestObservationMutex_;
+  ocs2_comm_interfaces::mpc_observation::ConstPtr latestObservation_;
+  scalar_t initZHeight_;
+  joint_coordinates_t defaultJointCoordinates_;
+
+  scalar_t targetDisplacementVelocity_;
+  scalar_t targetRotationVelocity_;
 };
 
 } // end of namespace switched_model

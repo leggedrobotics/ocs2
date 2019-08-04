@@ -448,19 +448,6 @@ public:
 	 */
 	static void loadVisualizationSettings(const std::string& filename, scalar_t& slowdown, scalar_t& vizTime);
 
-
-	double strideTime() {
-		return modelSettings_.strideTime_;
-	}
-
-	double strideLength() {
-		return modelSettings_.mpcStrideLength_;
-	}
-
-	size_t numPhasesInfullGaitCycle() {
-		return modelSettings_.numPhasesInfullGaitCycle_;
-	}
-
 	/**
 	 * Gets SLQ settings.
 	 *

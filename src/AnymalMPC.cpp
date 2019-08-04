@@ -13,6 +13,7 @@
 #include <ros/package.h>
 
 #include "ocs2_anymal_interface/MPC_ROS_Anymal.h"
+#include "ocs2_anymal_interface/OCS2AnymalInterface.h"
 
 int main( int argc, char* argv[] )
 {
@@ -24,11 +25,14 @@ int main( int argc, char* argv[] )
 
 	// task file
 	if ( argc <= 1) throw std::runtime_error("No task file specified. Aborting.");
-	std::string taskFile = ros::package::getPath("ocs2_anymal_interface") + "/config/" + std::string(argv[1]);
-	std::cerr << "Loading task file: " << taskFile << std::endl;
+	std::string taskFolder = ros::package::getPath("ocs2_anymal_interface") + "/config/" + std::string(argv[1]);
+	std::cerr << "Loading task file: " << taskFolder << std::endl;
+
+	// Set up interface
+	anymal::OCS2AnymalInterface anymalInterface(taskFolder);
 
 	// launch MPC nodes
-	anymal::MPC_ROS_Anymal ocs2AnymalMPC(taskFile);
+	anymal::MPC_ROS_Anymal ocs2AnymalMPC(anymalInterface.getMPCPtr().get(), "anymal");
 	ocs2AnymalMPC.launchNodes(argc, argv);
 }
 

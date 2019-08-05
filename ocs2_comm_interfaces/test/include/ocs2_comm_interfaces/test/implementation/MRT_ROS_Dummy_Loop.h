@@ -119,7 +119,7 @@ void MRT_ROS_Dummy_Loop<STATE_DIM, INPUT_DIM>::run(
 			policyUpdated = mrtPtr_->updatePolicy();
 
 		} else if (loopCounter%frequencyRatio==0) {
-			while(::ros::ok()) {
+			while(::ros::ok() && ::ros::master::check()) {
 				policyUpdated = mrtPtr_->updatePolicy();
 				if (policyUpdated==true)
 					break;

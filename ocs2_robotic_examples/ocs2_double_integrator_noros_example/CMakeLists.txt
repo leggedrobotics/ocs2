@@ -18,9 +18,12 @@ find_package(Boost REQUIRED COMPONENTS
 
 find_package(Eigen3 3.3 REQUIRED NO_MODULE)
 
-# TODO hacky, fix this
-set(PYTHON_EXECUTABLE /usr/bin/python3)
-set(PYBIND11_PYTHON_VERSION 3.6 CACHE STRING "")
+# Pybind11
+option(USE_PYBIND_PYTHON_3 "Use python3-compatible python bindings"  ON)
+if(USE_PYBIND_PYTHON_3)
+  set(PYTHON_EXECUTABLE /usr/bin/python3)
+  set(PYBIND11_PYTHON_VERSION 3.6 CACHE STRING "")
+endif(USE_PYBIND_PYTHON_3)
 find_package(pybind11 QUIET)
 message(WARNING "pybind libraries: ${pybind11_LIBRARIES}")
 message(WARNING "PYTHON_MODULE_PREFIX ${PYTHON_MODULE_PREFIX}")
@@ -96,62 +99,34 @@ target_link_libraries(double_integrator_asynchronous_tracking
   ${catkin_LIBRARIES}
   )
 
-  # DoubleIntegratorPyBindings library
-  add_library(DoubleIntegratorPyBindings
+# Build python bindings if possible
+if(${pybind11_FOUND})
+  message(WARNING "python executable originally ${PYTHON_EXECUTABLE} and pybind11PythonVersion ${PYBIND11_PYTHON_VERSION}")
+
+  pybind11_add_module(DoubleIntegratorPyBindings SHARED
     src/DoubleIntegratorPyBindings.cpp
+    src/pyBindModule.cpp
   )
   add_dependencies(DoubleIntegratorPyBindings
-   double_integrator_noros_interface
-   ${catkin_EXPORTED_TARGETS}
+    double_integrator_noros_interface
+    ${catkin_EXPORTED_TARGETS}
   )
-  target_link_libraries(DoubleIntegratorPyBindings
+  target_link_libraries(DoubleIntegratorPyBindings PRIVATE
     double_integrator_noros_interface
     ${catkin_LIBRARIES}
   )
 
-if(${pybind11_FOUND})
-  message(WARNING "python executable originally ${PYTHON_EXECUTABLE} and pybind11PythonVersion ${PYBIND11_PYTHON_VERSION}")
-  set(PYTHON_EXECUTABLE_BACKUP ${PYTHON_EXECUTABLE})
+  if(USE_PYBIND_PYTHON_3)
+    # unfortunately this appears not to be discoverable yet because the sourcing process assumes python2.7
+    set_target_properties(DoubleIntegratorPyBindings
+      PROPERTIES LIBRARY_OUTPUT_DIRECTORY ${CATKIN_DEVEL_PREFIX}/lib/python3.6/dist-packages/${PROJECT_NAME}
+    )
+  else(USE_PYBIND_PYTHON_3)
+    set_target_properties(DoubleIntegratorPyBindings
+        PROPERTIES LIBRARY_OUTPUT_DIRECTORY ${CATKIN_DEVEL_PREFIX}/${CATKIN_PACKAGE_PYTHON_DESTINATION}
+    )
+  endif(USE_PYBIND_PYTHON_3)
 
-#  # build and install for python2.XX
-#  set(PYTHON_EXECUTABLE /usr/bin/python2)
-#  message(WARNING "python2 executable ${PYTHON_EXECUTABLE} and pybind11PythonVersion ${PYBIND11_PYTHON_VERSION}")
-#  pybind11_add_module(DoubleIntegratorPyBindings2 SHARED
-#    src/DoubleIntegratorPyBindings.cpp
-#    src/pyBindModule2.cpp
-#  )
-#  add_dependencies(DoubleIntegratorPyBindings2
-#    ${catkin_EXPORTED_TARGETS}
-#  )
-#  target_link_libraries(DoubleIntegratorPyBindings2 PRIVATE
-#    double_integrator_noros_interface
-#    ${catkin_LIBRARIES}
-#  )
-#  set_target_properties(DoubleIntegratorPyBindings2
-#    PROPERTIES LIBRARY_OUTPUT_DIRECTORY ${CATKIN_DEVEL_PREFIX}/${CATKIN_PACKAGE_PYTHON_DESTINATION})
-
-  # build and install for python3.XX
-  set(PYTHON_EXECUTABLE /usr/bin/python3)
-  set(PYBIND11_PYTHON_VERSION 3.6 CACHE STRING "")
-  message(WARNING "python3 executable ${PYTHON_EXECUTABLE} and pybind11PythonVersion ${PYBIND11_PYTHON_VERSION}")
-  pybind11_add_module(DoubleIntegratorPyBindings3 SHARED
-    src/pyBindModule3.cpp
-  )
-  add_dependencies(DoubleIntegratorPyBindings3
-    DoubleIntegratorPyBindings
-    ${catkin_EXPORTED_TARGETS}
-  )
-  target_link_libraries(DoubleIntegratorPyBindings3 PRIVATE
-    DoubleIntegratorPyBindings
-    ${catkin_LIBRARIES}
-  )
-  # TODO this appears not to be discoverable yet
-  set_target_properties(DoubleIntegratorPyBindings3
-    PROPERTIES LIBRARY_OUTPUT_DIRECTORY ${CATKIN_DEVEL_PREFIX}/lib/python3.6/dist-packages/${PROJECT_NAME})
-
-  # reset python version and finish setup
-  set(PYTHON_EXECUTABLE ${PYTHON_EXECUTABLE_BACKUP})
-  message(WARNING "python executable restored ${PYTHON_EXECUTABLE} and pybind11PythonVersion ${PYBIND11_PYTHON_VERSION}")
   catkin_python_setup()
 endif()
 
@@ -177,7 +152,7 @@ install(DIRECTORY config
 
 if(${pybind11_FOUND})
   # TODO handle python2/3 case properly
-  install(TARGETS DoubleIntegratorPyBindings3
+  install(TARGETS DoubleIntegratorPyBindings
           ARCHIVE DESTINATION ${CATKIN_PACKAGE_PYTHON_DESTINATION}
           LIBRARY DESTINATION ${CATKIN_PACKAGE_PYTHON_DESTINATION}
           )

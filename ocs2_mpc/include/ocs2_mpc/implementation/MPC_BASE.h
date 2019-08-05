@@ -198,20 +198,22 @@ void MPC_BASE<STATE_DIM, INPUT_DIM>::adjustmentTimeHorizon(const scalar_array_t&
 template <size_t STATE_DIM, size_t INPUT_DIM>
 bool MPC_BASE<STATE_DIM, INPUT_DIM>::run(const scalar_t& currentTime, const state_vector_t& currentState) {
   // check if the current time exceeds the solver final limit
-  if (currentTime >= getFinalTime() && mpcSettings_.recedingHorizon_) {
-    if (initRun_) {
-      for (int i = 0; i < partitioningTimes_.size(); i++) {
-        partitioningTimes_[i] += currentTime;
-      }
-    } else {
-      std::cerr << std::endl << "#####################################################";
-      std::cerr << std::endl << "#####################################################";
-      std::cerr << std::endl << "#####################################################" << std::endl;
-      std::cerr << "### MPC is called at time:  " << currentTime << " [s]." << std::endl;
-      std::cerr << "WARNING: The MPC time-horizon is smaller than the MPC starting time." << std::endl;
-      std::cerr << "currentTime: " << currentTime << "\t Controller finalTime: " << getFinalTime() << std::endl;
+  if (!initRun_ && currentTime >= getFinalTime() && mpcSettings_.recedingHorizon_) {
+    std::cerr << std::endl << "#####################################################";
+    std::cerr << std::endl << "#####################################################";
+    std::cerr << std::endl << "#####################################################" << std::endl;
+    std::cerr << "### MPC is called at time:  " << currentTime << " [s]." << std::endl;
+    std::cerr << "WARNING: The MPC time-horizon is smaller than the MPC starting time." << std::endl;
+    std::cerr << "currentTime: " << currentTime << "\t Controller finalTime: " << getFinalTime() << std::endl;
 
-      return false;
+    return false;
+  }
+
+  // adjusting the partitioning times based on the initial time
+  if (initRun_) {
+    const scalar_t detaTime = currentTime - partitioningTimes_[initnumPartitions_];
+    for (int i = 0; i < partitioningTimes_.size(); i++) {
+      partitioningTimes_[i] += detaTime;
     }
   }
 

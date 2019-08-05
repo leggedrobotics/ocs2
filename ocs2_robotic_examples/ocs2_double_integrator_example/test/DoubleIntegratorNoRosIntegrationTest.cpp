@@ -16,7 +16,7 @@ TEST(DoubleIntegratorIntegrationTest, synchronousTracking) {
   DoubleIntegratorInterface doubleIntegratorInterface(taskFileFolderName);
   mpc_t mpcInterface(doubleIntegratorInterface.getMPCPtr().get());
 
-  double time = 0;
+  double time = 1234.5;  // start from a random time
 
   // initialize observation:
   mpc_t::system_observation_t observation;
@@ -74,7 +74,7 @@ TEST(DoubleIntegratorIntegrationTest, asynchronousTracking) {
   DoubleIntegratorInterface doubleIntegratorInterface(taskFileFolderName);
   mpc_t mpcInterface(doubleIntegratorInterface.getMPCPtr().get());
 
-  double time = 0;
+  double time = 1234.5;  // start from a random time
 
   mpc_t::state_vector_t initialState;
   doubleIntegratorInterface.getInitialState(initialState);

@@ -54,7 +54,7 @@ class DoubleIntegratorDynamicsDerivatives : public DerivativesBase<double_integr
    * Constructor
    *
    * @param [in] A: \f$ A(t) \f$ matrix.
-   * @param [in] A: \f$ B(t) \f$ matrix.
+   * @param [in] B: \f$ B(t) \f$ matrix.
    */
   DoubleIntegratorDynamicsDerivatives(state_matrix_t A, state_input_matrix_t B) : A_(std::move(A)), B_(std::move(B)) {}
 

@@ -56,7 +56,7 @@ class DoubleIntegratorDynamics : public ControlledSystemBase<double_integrator::
    * Constructor
    *
    * @param [in] A: \f$ A(t) \f$ matrix.
-   * @param [in] A: \f$ B(t) \f$ matrix.
+   * @param [in] B: \f$ B(t) \f$ matrix.
    */
   DoubleIntegratorDynamics(const state_matrix_t& A, const state_input_matrix_t& B) : A_(std::move(A)), B_(std::move(B)) {}
 

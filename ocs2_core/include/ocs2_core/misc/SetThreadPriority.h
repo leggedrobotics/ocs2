@@ -30,10 +30,10 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifndef SETTHREADPRIORITY_OCS2_H_
 #define SETTHREADPRIORITY_OCS2_H_
 
-#include <thread>
 #include <pthread.h>
+#include <thread>
 
-namespace ocs2{
+namespace ocs2 {
 
 /**
  * Sets the priority of the input thread.
@@ -41,21 +41,19 @@ namespace ocs2{
  * @param priority: The priority of the thread from 0 (lowest) to 99 (highest)
  * @param thread: A reference to the tread.
  */
-inline void SetThreadPriority(const int priority, std::thread& thread) {
+inline void setThreadPriority(const int priority, std::thread& thread) {
+  sched_param sched{};
+  sched.sched_priority = priority;
 
-	sched_param sched;
-	sched.sched_priority = priority;
-
-	if(priority != 0) {
-		if (pthread_setschedparam(thread.native_handle(), SCHED_FIFO, &sched) != 0) {
-			std::cerr << "WARNING: Failed to set threads priority (one possible reason could be "
-					"that the user and the group permissions are not set properly.)" << std::endl;
-		}
-	}
-
+  if (priority != 0) {
+    if (pthread_setschedparam(thread.native_handle(), SCHED_FIFO, &sched) != 0) {
+      std::cerr << "WARNING: Failed to set threads priority (one possible reason could be "
+                   "that the user and the group permissions are not set properly.)"
+                << std::endl;
+    }
+  }
 }
 
-} // namespace ocs2
-
+}  // namespace ocs2
 
 #endif /* SETTHREADPRIORITY_OCS2_H_ */

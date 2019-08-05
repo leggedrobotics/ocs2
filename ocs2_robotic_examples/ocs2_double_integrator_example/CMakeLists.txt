@@ -22,7 +22,7 @@ find_package(Boost REQUIRED COMPONENTS
 find_package(Eigen3 3.3 REQUIRED NO_MODULE)
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread -fopenmp -Wfatal-errors -Wl,--no-as-needed")
-set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 ###################################
@@ -80,6 +80,19 @@ target_link_libraries(double_integrator_mpc
         ${catkin_LIBRARIES}
         )
 
+add_executable(double_integrator_pi
+  # src/double_integrator/DoubleIntegratorInterface.cpp
+  src/PI_Double_Integrator.cpp
+)
+add_dependencies(double_integrator_pi
+  ${catkin_EXPORTED_TARGETS}
+)
+target_link_libraries(double_integrator_pi
+  ${catkin_LIBRARIES}
+  ${Boost_LIBRARIES}
+  dl
+)
+
 # Dummy node
 add_executable(double_integrator_dummy_test
         src/Dummy_Double_Integrator_Node.cpp
@@ -111,12 +124,15 @@ find_package(cmake_clang_tools QUIET)
 if(cmake_clang_tools_FOUND)
   message(STATUS "Run clang tooling for target " double_integrator_mpc)
   add_clang_tooling(
-    TARGET double_integrator_mpc
-    SOURCE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/src ${CMAKE_CURRENT_SOURCE_DIR}/include
+    TARGETS
+        double_integrator_interface
+        double_integrator_mpc
+        double_integrator_pi
+        double_integrator_dummy_test
+        double_integrator_target
+    SOURCE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/src ${CMAKE_CURRENT_SOURCE_DIR}/include ${CMAKE_CURRENT_SOURCE_DIR}/test
     CT_HEADER_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/include
-    CF_QUIET # temporarily set to quiet, because the current amount of warning crashes the buildserver
-    CT_QUIET
-    # CF_FIX # temporarily disabled
+    CF_WERROR
   )
 endif(cmake_clang_tools_FOUND)
 
@@ -133,9 +149,26 @@ install(TARGETS double_integrator_interface
 install(DIRECTORY include/${PROJECT_NAME}/
         DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION})
 
-install(TARGETS double_integrator_mpc double_integrator_dummy_test double_integrator_target
+install(TARGETS double_integrator_mpc
+                double_integrator_dummy_test
+                double_integrator_target
         RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})
 
 install(DIRECTORY urdf launch config rviz
         DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
         )
+
+#############
+## Testing ##
+#############
+
+catkin_add_gtest(ocs2_double_integrator_no_ros_integration_test
+  test/DoubleIntegratorNoRosIntegrationTest.cpp
+  )
+add_dependencies(ocs2_double_integrator_no_ros_integration_test
+  ${catkin_EXPORTED_TARGETS}
+  )
+target_link_libraries(ocs2_double_integrator_no_ros_integration_test
+  double_integrator_interface
+  ${catkin_LIBRARIES}
+  )

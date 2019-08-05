@@ -27,117 +27,115 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#ifndef DOUBLE_INTEGRATOR_INTERFACE_OCS2_H_
-#define DOUBLE_INTEGRATOR_INTERFACE_OCS2_H_
+#pragma once
 
 // C++
-#include <string>
-#include <iostream>
 #include <stdlib.h>
+#include <iostream>
+#include <string>
 
 // OCS2
 #include <ocs2_core/Dimensions.h>
-#include <ocs2_core/misc/loadEigenMatrix.h>
 #include <ocs2_core/constraint/ConstraintBase.h>
 #include <ocs2_core/initialization/SystemOperatingPoint.h>
+#include <ocs2_core/misc/loadEigenMatrix.h>
 #include <ocs2_mpc/MPC_SLQ.h>
 #include <ocs2_robotic_tools/common/RobotInterfaceBase.h>
 
 // Double Integrator
+#include "ocs2_double_integrator_example/cost/DoubleIntegratorCost.h"
 #include "ocs2_double_integrator_example/definitions.h"
 #include "ocs2_double_integrator_example/dynamics/DoubleIntegratorDynamics.h"
 #include "ocs2_double_integrator_example/dynamics/DoubleIntegratorDynamicsDerivatives.h"
-#include "ocs2_double_integrator_example/cost/DoubleIntegratorCost.h"
 
 namespace ocs2 {
 namespace double_integrator {
 
-class DoubleIntegratorInterface : public RobotInterfaceBase<double_integrator::STATE_DIM_, double_integrator::INPUT_DIM_>
-{
-public:
-	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+class DoubleIntegratorInterface : public RobotInterfaceBase<double_integrator::STATE_DIM_, double_integrator::INPUT_DIM_> {
+ public:
+  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-	using dim_t = ocs2::Dimensions<double_integrator::STATE_DIM_, double_integrator::INPUT_DIM_>;
+  using dim_t = ocs2::Dimensions<double_integrator::STATE_DIM_, double_integrator::INPUT_DIM_>;
 
-	using DoubleIntegratorConstraint = ocs2::ConstraintBase<dim_t::STATE_DIM_, dim_t::INPUT_DIM_>;
-	using DoubleIntegratorOperatingPoint = ocs2::SystemOperatingPoint<dim_t::STATE_DIM_, dim_t::INPUT_DIM_>;
+  using DoubleIntegratorConstraint = ocs2::ConstraintBase<dim_t::STATE_DIM_, dim_t::INPUT_DIM_>;
+  using DoubleIntegratorOperatingPoint = ocs2::SystemOperatingPoint<dim_t::STATE_DIM_, dim_t::INPUT_DIM_>;
 
-	typedef ocs2::MPC_SLQ<dim_t::STATE_DIM_, dim_t::INPUT_DIM_> mpc_t;
+  using mpc_t = ocs2::MPC_SLQ<dim_t::STATE_DIM_, dim_t::INPUT_DIM_>;
 
-	/**
-	 * Constructor
-	 * @param [in] taskFileFolderName: The name of the folder containing task file
-	 */
-	DoubleIntegratorInterface(const std::string& taskFileFolderName);
+  /**
+   * Constructor
+   * @param [in] taskFileFolderName: The name of the folder containing task file
+   */
+  DoubleIntegratorInterface(const std::string& taskFileFolderName);
 
-	/**
-	 * Destructor
-	 */
-	~DoubleIntegratorInterface() = default;
+  /**
+   * Destructor
+   */
+  ~DoubleIntegratorInterface() = default;
 
-	/**
-	 * setup all optimizes.
-	 *
-	 * @param [in] taskFile: Task's file full path.
-	 */
-	void setupOptimizer(const std::string& taskFile) final;
+  /**
+   * setup all optimizes.
+   *
+   * @param [in] taskFile: Task's file full path.
+   */
+  void setupOptimizer(const std::string& taskFile) final;
 
-	/**
-	 * Gets SLQ settings.
-	 *
-	 * @return SLQ settings
-	 */
-	SLQ_Settings& slqSettings();
+  /**
+   * Gets SLQ settings.
+   *
+   * @return SLQ settings
+   */
+  SLQ_Settings& slqSettings();
 
-	/**
-	 * Gets a pointer to the internal SLQ-MPC class.
-	 *
-	 * @return Pointer to the internal MPC
-	 */
-	mpc_t::Ptr& getMPCPtr();
+  /**
+   * Gets a pointer to the internal SLQ-MPC class.
+   *
+   * @return Pointer to the internal MPC
+   */
+  mpc_t::Ptr& getMPCPtr();
 
-	/**
-	 * Gets a pointer to the internal system dynamics
-	 * @return pointer to system dynamics
-	 */
-	DoubleIntegratorDynamics::Ptr getDynamicsPtr(){ return linearSystemDynamicsPtr_;}
+  const dim_t::state_vector_t& getXFinal() { return xFinal_; }
 
-protected:
-	/**
-	 * Loads the settings from the path file.
-	 *
-	 * @param [in] taskFile: Task's file full path.
-	 */
-	void loadSettings(const std::string& taskFile) override;
+  DoubleIntegratorDynamics const * getDynamicsPtr() override { return linearSystemDynamicsPtr_.get(); }
 
-	/**************
-	 * Variables
-	 **************/
-	std::string taskFile_;
-	std::string libraryFolder_;
+  DoubleIntegratorDynamicsDerivatives const * getDynamicsDerivativesPtr() override { return linearSystemDynamicsDerivativesPtr_.get(); }
 
-	SLQ_Settings slqSettings_;
-	mpc_t::Ptr mpcPtr_;
+  DoubleIntegratorCost const * getCostPtr() override { return linearSystemCostPtr_.get(); }
 
-	DoubleIntegratorDynamics::Ptr linearSystemDynamicsPtr_;
-	DoubleIntegratorDynamicsDerivatives::Ptr linearSystemDynamicsDerivativesPtr_;
-	DoubleIntegratorCost::Ptr linearSystemCostPtr_;
-	DoubleIntegratorConstraint::Ptr linearSystemConstraintPtr_;
-	DoubleIntegratorOperatingPoint::Ptr linearSystemOperatingPointPtr_;
+ protected:
+  /**
+   * Loads the settings from the path file.
+   *
+   * @param [in] taskFile: Task's file full path.
+   */
+  void loadSettings(const std::string& taskFile) override;
 
-	// cost parameters
-	dim_t::state_matrix_t Q_;
-	dim_t::input_matrix_t R_;
-	dim_t::state_matrix_t QFinal_;
-	dim_t::state_vector_t xFinal_;
-	dim_t::state_vector_t xNominal_;
-	dim_t::input_vector_t uNominal_;
+  /**************
+   * Variables
+   **************/
+  std::string taskFile_;
+  std::string libraryFolder_;
 
-	size_t numPartitions_ = 0;
-	dim_t::scalar_array_t partitioningTimes_;
+  SLQ_Settings slqSettings_;
+  mpc_t::Ptr mpcPtr_;
+
+  DoubleIntegratorDynamics::Ptr linearSystemDynamicsPtr_;
+  DoubleIntegratorDynamicsDerivatives::Ptr linearSystemDynamicsDerivativesPtr_;
+  DoubleIntegratorCost::Ptr linearSystemCostPtr_;
+  DoubleIntegratorConstraint::Ptr linearSystemConstraintPtr_;
+  DoubleIntegratorOperatingPoint::Ptr linearSystemOperatingPointPtr_;
+
+  // cost parameters
+  dim_t::state_matrix_t Q_;
+  dim_t::input_matrix_t R_;
+  dim_t::state_matrix_t QFinal_;
+  dim_t::state_vector_t xFinal_;
+  dim_t::state_vector_t xNominal_;
+  dim_t::input_vector_t uNominal_;
+
+  size_t numPartitions_ = 0;
+  dim_t::scalar_array_t partitioningTimes_;
 };
 
-} // namespace double_integrator
-} // namespace ocs2
-
-#endif /* DOUBLE_INTEGRATOR_INTERFACE_OCS2_H_ */
+}  // namespace double_integrator
+}  // namespace ocs2

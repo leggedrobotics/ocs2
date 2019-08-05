@@ -30,9 +30,9 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifndef TRAJECTORY_SPREADING_CONTROLLER_OCS2_H_
 #define TRAJECTORY_SPREADING_CONTROLLER_OCS2_H_
 
-#include <utility>
-#include <iostream>
 #include <algorithm>
+#include <iostream>
+#include <utility>
 
 #include "ocs2_core/Dimensions.h"
 #include "ocs2_core/OCS2NumericTraits.h"
@@ -41,104 +41,89 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 namespace ocs2 {
 
 template <size_t STATE_DIM, size_t INPUT_DIM>
-class TrajectorySpreadingController
-{
-public:
-	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+class TrajectorySpreadingController {
+ public:
+  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-	enum
-	{
-		state_dim_ = STATE_DIM,
-		input_dim_ = INPUT_DIM
-	};
+  enum { state_dim_ = STATE_DIM, input_dim_ = INPUT_DIM };
 
-	typedef Dimensions<STATE_DIM, INPUT_DIM> DIMENSIONS;
-	using scalar_t = typename DIMENSIONS::scalar_t;
-	using scalar_array_t = typename DIMENSIONS::scalar_array_t;
-	using state_vector_t = typename DIMENSIONS::state_vector_t;
-	using state_vector_array_t = typename DIMENSIONS::state_vector_array_t;
-	using state_matrix_t = typename DIMENSIONS::state_matrix_t;
-	using input_vector_t = typename DIMENSIONS::input_vector_t;
-	using input_vector_array_t = typename DIMENSIONS::input_vector_array_t;
-	using input_matrix_t = typename DIMENSIONS::input_matrix_t;
-	using input_state_matrix_t = typename DIMENSIONS::input_state_matrix_t;
-	using state_input_matrix_t = typename DIMENSIONS::state_input_matrix_t;
+  using DIMENSIONS = Dimensions<STATE_DIM, INPUT_DIM>;
+  using scalar_t = typename DIMENSIONS::scalar_t;
+  using scalar_array_t = typename DIMENSIONS::scalar_array_t;
+  using state_vector_t = typename DIMENSIONS::state_vector_t;
+  using state_vector_array_t = typename DIMENSIONS::state_vector_array_t;
+  using state_matrix_t = typename DIMENSIONS::state_matrix_t;
+  using input_vector_t = typename DIMENSIONS::input_vector_t;
+  using input_vector_array_t = typename DIMENSIONS::input_vector_array_t;
+  using input_matrix_t = typename DIMENSIONS::input_matrix_t;
+  using input_state_matrix_t = typename DIMENSIONS::input_state_matrix_t;
+  using state_input_matrix_t = typename DIMENSIONS::state_input_matrix_t;
 
-	using controller_t = LinearController<STATE_DIM, INPUT_DIM>;
-	using controller_array_t =  typename controller_t::array_t;
+  using controller_t = LinearController<STATE_DIM, INPUT_DIM>;
+  using controller_array_t = typename controller_t::array_t;
 
-	typedef std::pair<int,int> index_t;  // (partition, index)
+  using index_t = std::pair<int, int>;  // (partition, index)
 
-	/**
-	 * Constructor
-	 */
-	TrajectorySpreadingController() = default;
+  /**
+   * Constructor
+   */
+  TrajectorySpreadingController() = default;
 
-	/**
-	 * Destructor
-	 */
-	~TrajectorySpreadingController() = default;
+  /**
+   * Destructor
+   */
+  ~TrajectorySpreadingController() = default;
 
-	/**
-	 * Adjust the controller based on the last changes in the logic rules.
-	 *
-	 * @param [in] eventTimes: The new event times.
-	 * @param [in] controllerEventTimes: The control policy stock's event times.
-	 * @param controllerStock: The controller stock which will be modified.
-	 */
-	void adjustController(
-			const scalar_array_t& eventTimes,
-			const scalar_array_t& controllerEventTimes,
-			controller_array_t& controllersStock);
+  /**
+   * Adjust the controller based on the last changes in the logic rules.
+   *
+   * @param [in] eventTimes: The new event times.
+   * @param [in] controllerEventTimes: The control policy stock's event times.
+   * @param controllerStock: The controller stock which will be modified.
+   */
+  void adjustController(const scalar_array_t& eventTimes, const scalar_array_t& controllerEventTimes, controller_array_t& controllersStock);
 
-protected:
-	/**
-	 * Finds the indices of a event times vector.
-	 *
-	 * @param eventTimes: Event time vector.
-	 * @param controllersStock: Control policy.
-	 * @param eventsIndices: event time indices over the control policy time stamp.
-	 */
-	void findsIndicesEventTimes(
-			const scalar_array_t& eventTimes,
-			const controller_array_t& controllersStock,
-			std::vector<index_t>& eventsIndices) const;
+ protected:
+  /**
+   * Finds the indices of a event times vector.
+   *
+   * @param eventTimes: Event time vector.
+   * @param controllersStock: Control policy.
+   * @param eventsIndices: event time indices over the control policy time stamp.
+   */
+  void findsIndicesEventTimes(const scalar_array_t& eventTimes, const controller_array_t& controllersStock,
+                              std::vector<index_t>& eventsIndices) const;
 
-	/**
-	 * Returns true if a <= b
-	 *
-	 * @param a
-	 * @param b
-	 * @return
-	 */
-	bool smallerEqualIndexFunc(
-			const index_t& a,
-			const index_t& b) const;
+  /**
+   * Returns true if a <= b
+   *
+   * @param a
+   * @param b
+   * @return
+   */
+  bool smallerEqualIndexFunc(const index_t& a, const index_t& b) const;
 
-	/**
-	 *
-	 * @param eventTime
-	 * @param eventTimeIndex
-	 * @param ControlerEventTimeIndex
-	 * @param controllersStock
-	 */
-	void spreadController(
-			const scalar_t& eventTime,
-			const index_t& eventTimeIndex,
-			const index_t& controlerEventTimeIndex,
-			controller_array_t& controllersStock) const;
+  /**
+   *
+   * @param eventTime
+   * @param eventTimeIndex
+   * @param ControlerEventTimeIndex
+   * @param controllersStock
+   */
+  void spreadController(const scalar_t& eventTime, const index_t& eventTimeIndex, const index_t& controlerEventTimeIndex,
+                        controller_array_t& controllersStock) const;
 
-	/***********
-	 * Variables
-	 ***********/
-	int initActivePartition_  = 0;
-	int finalActivePartition_ = 0;
+  /***********
+   * Variables
+   ***********/
+  int initActivePartition_ = 0;
+  int finalActivePartition_ = 0;
 
-	std::vector<index_t> eventsIndices_;
-	std::vector<index_t> controllerEventsIndices_;
+  std::vector<index_t> eventsIndices_;
+  std::vector<index_t> controllerEventsIndices_;
 };
 
-} // namespace ocs2
+}  // namespace ocs2
 
 #include "implementation/TrajectorySpreadingController.h"
 

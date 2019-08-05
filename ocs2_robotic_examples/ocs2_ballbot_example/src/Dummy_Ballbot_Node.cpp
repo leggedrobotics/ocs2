@@ -46,11 +46,11 @@ int main(int argc, char **argv)
 	BallbotInterface ballbotInterface(taskFileFolderName);
 
 	using mrt_t = MRT_ROS_Ballbot;
-	using mrt_base_ptr_t = mrt_t::BASE::Ptr;
+	using mrt_ptr_t = mrt_t::Ptr;
 	using scalar_t = mrt_t::scalar_t;
 	using system_observation_t = mrt_t::system_observation_t;
 
-	mrt_base_ptr_t mrtPtr(new mrt_t("ballbot"));
+	mrt_ptr_t mrtPtr(new mrt_t("ballbot"));
 
 	// Dummy ballbot
 	MRT_ROS_Dummy_Ballbot dummyBallbot(
@@ -66,12 +66,9 @@ int main(int argc, char **argv)
 
 	// initial command
 	MRT_ROS_Dummy_Ballbot::cost_desired_trajectories_t initCostDesiredTrajectories;
-	initCostDesiredTrajectories.desiredTimeTrajectory().resize(1);
-	initCostDesiredTrajectories.desiredStateTrajectory().resize(1);
-	initCostDesiredTrajectories.desiredInputTrajectory().resize(1);
-	initCostDesiredTrajectories.desiredStateTrajectory().front().resize(6);
-	initCostDesiredTrajectories.desiredStateTrajectory().front().head<3>().setZero(); /*targetPoseDisplacement*/
-	initCostDesiredTrajectories.desiredStateTrajectory().front().tail<3>().setZero(); /*targetVelocity*/
+	initCostDesiredTrajectories.desiredTimeTrajectory().push_back(initObservation.time());
+	initCostDesiredTrajectories.desiredStateTrajectory().push_back(initObservation.state());
+	initCostDesiredTrajectories.desiredInputTrajectory().push_back(initObservation.input());
 
 	// run dummy
 	dummyBallbot.run(initObservation, initCostDesiredTrajectories);

@@ -27,8 +27,7 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  ******************************************************************************/
 
-#ifndef DOUBLE_INTEGRATOR_DYNAMICS_OCS2_H_
-#define DOUBLE_INTEGRATOR_DYNAMICS_OCS2_H_
+#pragma once
 
 #include <ocs2_core/dynamics/ControlledSystemBase.h>
 
@@ -39,59 +38,44 @@ namespace double_integrator {
 
 class DoubleIntegratorDynamics : public ControlledSystemBase<double_integrator::STATE_DIM_, double_integrator::INPUT_DIM_> {
  public:
-	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-	using Ptr = std::shared_ptr<DoubleIntegratorDynamics>;
-	using ConstPtr = std::shared_ptr<const DoubleIntegratorDynamics>;
+  using Ptr = std::shared_ptr<DoubleIntegratorDynamics>;
+  using ConstPtr = std::shared_ptr<const DoubleIntegratorDynamics>;
 
-	using BASE = ControlledSystemBase<double_integrator::STATE_DIM_, double_integrator::INPUT_DIM_>;
-	using scalar_t = typename BASE::scalar_t;
-	using state_vector_t = typename BASE::state_vector_t;
-	using input_vector_t = typename BASE::input_vector_t;
+  using BASE = ControlledSystemBase<double_integrator::STATE_DIM_, double_integrator::INPUT_DIM_>;
+  using scalar_t = typename BASE::scalar_t;
+  using state_vector_t = typename BASE::state_vector_t;
+  using input_vector_t = typename BASE::input_vector_t;
 
-	using DIMENSIONS = Dimensions<double_integrator::STATE_DIM_, double_integrator::INPUT_DIM_>;
-	using state_matrix_t = typename DIMENSIONS::state_matrix_t;
-	using state_input_matrix_t = typename DIMENSIONS::state_input_matrix_t;
+  using DIMENSIONS = Dimensions<double_integrator::STATE_DIM_, double_integrator::INPUT_DIM_>;
+  using state_matrix_t = typename DIMENSIONS::state_matrix_t;
+  using state_input_matrix_t = typename DIMENSIONS::state_input_matrix_t;
 
-	/**
-	 * Constructor
-	 *
-   * @param [in] mass: the inertia of the particle
-	 */
-  DoubleIntegratorDynamics(double mass) {
-    A_ << 0.0, 1.0, 0.0, 0.0;
-    B_ << 0.0, 1.0 / mass;
+  /**
+   * Constructor
+   *
+   * @param [in] A: \f$ A(t) \f$ matrix.
+   * @param [in] B: \f$ B(t) \f$ matrix.
+   */
+  DoubleIntegratorDynamics(const state_matrix_t& A, const state_input_matrix_t& B) : A_(std::move(A)), B_(std::move(B)) {}
+
+  /**
+   * Destructor
+   */
+  ~DoubleIntegratorDynamics() override = default;
+
+  DoubleIntegratorDynamics* clone() const override { return new DoubleIntegratorDynamics(*this); }
+
+  void computeFlowMap(const scalar_t& time, const state_vector_t& state, const input_vector_t& input,
+                      state_vector_t& stateDerivative) override {
+    stateDerivative = A_ * state + B_ * input;
   }
 
-	/**
-	 * Destructor
-	 */
-	~DoubleIntegratorDynamics() override = default;
-
-	/**
-	 * Returns pointer to the class.
-	 *
-	 * @return A raw pointer to the class.
-	 */
-   DoubleIntegratorDynamics* clone() const override { return new DoubleIntegratorDynamics(*this); }
-
-	/**
-	 * Computes derivative of the autonomous system dynamics with the given control policy.
-	 *
-	 * @param [in] t: Current time.
-	 * @param [in] x: Current state.
-	 * @param [out] dxdt: Current state time derivative.
-	 */
-  void computeFlowMap(const scalar_t& time, const state_vector_t& state, const input_vector_t& input, state_vector_t& stateDerivative) override {
-    stateDerivative = A_ * state + B_ * input;
-	}
-
  private:
-	state_matrix_t A_;
-	state_input_matrix_t B_;
+  state_matrix_t A_;
+  state_input_matrix_t B_;
 };
 
-} // namespace double_integrator
+}  // namespace double_integrator
 }  // namespace ocs2
-
-#endif /* DOUBLE_INTEGRATOR_DYNAMICS_OCS2_H_ */

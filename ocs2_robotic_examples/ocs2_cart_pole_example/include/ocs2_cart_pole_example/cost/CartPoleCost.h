@@ -39,7 +39,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 namespace ocs2 {
 namespace cartpole {
 
-class CartPoleCost final : public QuadraticCostFunction<cartpole::STATE_DIM_, cartpole::INPUT_DIM_, NullLogicRules>
+class CartPoleCost final : public QuadraticCostFunction<cartpole::STATE_DIM_, cartpole::INPUT_DIM_>
 {
 public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
@@ -47,7 +47,7 @@ public:
 	typedef std::shared_ptr<CartPoleCost> Ptr;
 	typedef std::shared_ptr<const CartPoleCost> ConstPtr;
 
-	typedef QuadraticCostFunction<cartpole::STATE_DIM_, cartpole::INPUT_DIM_, NullLogicRules> BASE;
+	typedef QuadraticCostFunction<cartpole::STATE_DIM_, cartpole::INPUT_DIM_> BASE;
 	typedef typename BASE::scalar_t scalar_t;
 	typedef typename BASE::state_vector_t state_vector_t;
 	typedef typename BASE::state_matrix_t state_matrix_t;

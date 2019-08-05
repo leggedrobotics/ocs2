@@ -30,185 +30,169 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifndef ILQR_ST_OCS2_H_
 #define ILQR_ST_OCS2_H_
 
-
 #include "ocs2_ilqr/ILQR_BASE.h"
 
-
-namespace ocs2{
+namespace ocs2 {
 
 /**
  * This class implements Single-Threaded ILQR (ILQR_ST) algorithm.
  *
  * @tparam STATE_DIM: Dimension of the state space.
  * @tparam INPUT_DIM: Dimension of the control input space.
- * @tparam LOGIC_RULES_T: Logic Rules type (default NullLogicRules).
  */
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T=NullLogicRules>
-class ILQR_ST : public ILQR_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>
-{
-public:
-	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+template <size_t STATE_DIM, size_t INPUT_DIM>
+class ILQR_ST : public ILQR_BASE<STATE_DIM, INPUT_DIM> {
+ public:
+  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-	typedef ILQR_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> BASE;
+  typedef ILQR_BASE<STATE_DIM, INPUT_DIM> BASE;
 
-	using DIMENSIONS = typename BASE::DIMENSIONS;
+  using DIMENSIONS = typename BASE::DIMENSIONS;
 
-	using lagrange_t = typename DIMENSIONS::template LinearFunction_t<Eigen::Dynamic>;
-	using controller_t = typename DIMENSIONS::controller_t;
-	using controller_array_t = typename DIMENSIONS::controller_array_t;
-	using size_array_t = typename DIMENSIONS::size_array_t;
-	using size_array2_t = typename DIMENSIONS::size_array2_t;
-	using scalar_t = typename DIMENSIONS::scalar_t;
-	using scalar_array_t = typename DIMENSIONS::scalar_array_t;
-	using scalar_array2_t = typename DIMENSIONS::scalar_array2_t;
-	using eigen_scalar_t = typename DIMENSIONS::eigen_scalar_t;
-	using eigen_scalar_array_t = typename DIMENSIONS::eigen_scalar_array_t;
-	using eigen_scalar_array2_t = typename DIMENSIONS::eigen_scalar_array2_t;
-	using state_vector_t = typename DIMENSIONS::state_vector_t;
-	using state_vector_array_t = typename DIMENSIONS::state_vector_array_t;
-	using state_vector_array2_t = typename DIMENSIONS::state_vector_array2_t;
-	using input_vector_t = typename DIMENSIONS::input_vector_t;
-	using input_vector_array_t = typename DIMENSIONS::input_vector_array_t;
-	using input_vector_array2_t = typename DIMENSIONS::input_vector_array2_t;
-	using input_state_matrix_t = typename DIMENSIONS::input_state_matrix_t;
-	using input_state_matrix_array_t = typename DIMENSIONS::input_state_matrix_array_t;
-	using input_state_matrix_array2_t = typename DIMENSIONS::input_state_matrix_array2_t;
-	using state_matrix_t = typename DIMENSIONS::state_matrix_t;
-	using state_matrix_array_t = typename DIMENSIONS::state_matrix_array_t;
-	using state_matrix_array2_t = typename DIMENSIONS::state_matrix_array2_t;
-	using input_matrix_t = typename DIMENSIONS::input_matrix_t;
-	using input_matrix_array_t = typename DIMENSIONS::input_matrix_array_t;
-	using input_matrix_array2_t = typename DIMENSIONS::input_matrix_array2_t;
-	using state_input_matrix_t = typename DIMENSIONS::state_input_matrix_t;
-	using state_input_matrix_array_t = typename DIMENSIONS::state_input_matrix_array_t;
-	using state_input_matrix_array2_t = typename DIMENSIONS::state_input_matrix_array2_t;
-	using constraint1_vector_t = typename DIMENSIONS::constraint1_vector_t;
-	using constraint1_vector_array_t = typename DIMENSIONS::constraint1_vector_array_t;
-	using constraint1_vector_array2_t = typename DIMENSIONS::constraint1_vector_array2_t;
-	using constraint1_state_matrix_t = typename DIMENSIONS::constraint1_state_matrix_t;
-	using constraint1_state_matrix_array_t = typename DIMENSIONS::constraint1_state_matrix_array_t;
-	using constraint1_state_matrix_array2_t = typename DIMENSIONS::constraint1_state_matrix_array2_t;
-	using constraint1_input_matrix_t = typename DIMENSIONS::constraint1_input_matrix_t;
-	using constraint1_input_matrix_array_t = typename DIMENSIONS::constraint1_input_matrix_array_t;
-	using constraint1_input_matrix_array2_t = typename DIMENSIONS::constraint1_input_matrix_array2_t;
-	using input_constraint1_matrix_t = typename DIMENSIONS::input_constraint1_matrix_t;
-	using input_constraint1_matrix_array_t = typename DIMENSIONS::input_constraint1_matrix_array_t;
-	using input_constraint1_matrix_array2_t = typename DIMENSIONS::input_constraint1_matrix_array2_t;
-	using constraint2_vector_t = typename DIMENSIONS::constraint2_vector_t;
-	using constraint2_vector_array_t = typename DIMENSIONS::constraint2_vector_array_t;
-	using constraint2_vector_array2_t = typename DIMENSIONS::constraint2_vector_array2_t;
-	using constraint2_state_matrix_t = typename DIMENSIONS::constraint2_state_matrix_t;
-	using constraint2_state_matrix_array_t = typename DIMENSIONS::constraint2_state_matrix_array_t;
-	using constraint2_state_matrix_array2_t = typename DIMENSIONS::constraint2_state_matrix_array2_t;
+  using lagrange_t = typename DIMENSIONS::template LinearFunction_t<Eigen::Dynamic>;
+  using controller_t = typename DIMENSIONS::controller_t;
+  using controller_array_t = typename DIMENSIONS::controller_array_t;
+  using size_array_t = typename DIMENSIONS::size_array_t;
+  using size_array2_t = typename DIMENSIONS::size_array2_t;
+  using scalar_t = typename DIMENSIONS::scalar_t;
+  using scalar_array_t = typename DIMENSIONS::scalar_array_t;
+  using scalar_array2_t = typename DIMENSIONS::scalar_array2_t;
+  using eigen_scalar_t = typename DIMENSIONS::eigen_scalar_t;
+  using eigen_scalar_array_t = typename DIMENSIONS::eigen_scalar_array_t;
+  using eigen_scalar_array2_t = typename DIMENSIONS::eigen_scalar_array2_t;
+  using state_vector_t = typename DIMENSIONS::state_vector_t;
+  using state_vector_array_t = typename DIMENSIONS::state_vector_array_t;
+  using state_vector_array2_t = typename DIMENSIONS::state_vector_array2_t;
+  using input_vector_t = typename DIMENSIONS::input_vector_t;
+  using input_vector_array_t = typename DIMENSIONS::input_vector_array_t;
+  using input_vector_array2_t = typename DIMENSIONS::input_vector_array2_t;
+  using input_state_matrix_t = typename DIMENSIONS::input_state_matrix_t;
+  using input_state_matrix_array_t = typename DIMENSIONS::input_state_matrix_array_t;
+  using input_state_matrix_array2_t = typename DIMENSIONS::input_state_matrix_array2_t;
+  using state_matrix_t = typename DIMENSIONS::state_matrix_t;
+  using state_matrix_array_t = typename DIMENSIONS::state_matrix_array_t;
+  using state_matrix_array2_t = typename DIMENSIONS::state_matrix_array2_t;
+  using input_matrix_t = typename DIMENSIONS::input_matrix_t;
+  using input_matrix_array_t = typename DIMENSIONS::input_matrix_array_t;
+  using input_matrix_array2_t = typename DIMENSIONS::input_matrix_array2_t;
+  using state_input_matrix_t = typename DIMENSIONS::state_input_matrix_t;
+  using state_input_matrix_array_t = typename DIMENSIONS::state_input_matrix_array_t;
+  using state_input_matrix_array2_t = typename DIMENSIONS::state_input_matrix_array2_t;
+  using constraint1_vector_t = typename DIMENSIONS::constraint1_vector_t;
+  using constraint1_vector_array_t = typename DIMENSIONS::constraint1_vector_array_t;
+  using constraint1_vector_array2_t = typename DIMENSIONS::constraint1_vector_array2_t;
+  using constraint1_state_matrix_t = typename DIMENSIONS::constraint1_state_matrix_t;
+  using constraint1_state_matrix_array_t = typename DIMENSIONS::constraint1_state_matrix_array_t;
+  using constraint1_state_matrix_array2_t = typename DIMENSIONS::constraint1_state_matrix_array2_t;
+  using constraint1_input_matrix_t = typename DIMENSIONS::constraint1_input_matrix_t;
+  using constraint1_input_matrix_array_t = typename DIMENSIONS::constraint1_input_matrix_array_t;
+  using constraint1_input_matrix_array2_t = typename DIMENSIONS::constraint1_input_matrix_array2_t;
+  using input_constraint1_matrix_t = typename DIMENSIONS::input_constraint1_matrix_t;
+  using input_constraint1_matrix_array_t = typename DIMENSIONS::input_constraint1_matrix_array_t;
+  using input_constraint1_matrix_array2_t = typename DIMENSIONS::input_constraint1_matrix_array2_t;
+  using constraint2_vector_t = typename DIMENSIONS::constraint2_vector_t;
+  using constraint2_vector_array_t = typename DIMENSIONS::constraint2_vector_array_t;
+  using constraint2_vector_array2_t = typename DIMENSIONS::constraint2_vector_array2_t;
+  using constraint2_state_matrix_t = typename DIMENSIONS::constraint2_state_matrix_t;
+  using constraint2_state_matrix_array_t = typename DIMENSIONS::constraint2_state_matrix_array_t;
+  using constraint2_state_matrix_array2_t = typename DIMENSIONS::constraint2_state_matrix_array2_t;
 
-    using linear_controller_t = typename BASE::linear_controller_t;
-    using linear_controller_array_t = typename BASE::linear_controller_array_t;
+  using linear_controller_t = typename BASE::linear_controller_t;
+  using linear_controller_array_t = typename BASE::linear_controller_array_t;
 
-	using controlled_system_base_t = typename BASE::controlled_system_base_t;
-	using event_handler_t = typename BASE::event_handler_t;
-	using derivatives_base_t = typename BASE::derivatives_base_t;
-	using constraint_base_t = typename BASE::constraint_base_t;
-	using cost_function_base_t = typename BASE::cost_function_base_t;
-	using operating_trajectories_base_t = typename BASE::operating_trajectories_base_t;
+  using controlled_system_base_t = typename BASE::controlled_system_base_t;
+  using event_handler_t = typename BASE::event_handler_t;
+  using derivatives_base_t = typename BASE::derivatives_base_t;
+  using constraint_base_t = typename BASE::constraint_base_t;
+  using cost_function_base_t = typename BASE::cost_function_base_t;
+  using operating_trajectories_base_t = typename BASE::operating_trajectories_base_t;
 
-	/**
-	 * Default constructor.
-	 */
-	ILQR_ST()
-	: BASE()
-	{}
+  /**
+   * Default constructor.
+   */
+  ILQR_ST() : BASE() {}
 
-	/**
-	 * Constructor
-	 *
-	 * @param [in] systemDynamicsPtr: The system dynamics which possibly includes some subsystems.
-	 * @param [in] systemDerivativesPtr: The system dynamics derivatives for subsystems of the system.
-	 * @param [in] systemConstraintsPtr: The system constraint function and its derivatives for subsystems.
-	 * @param [in] costFunctionPtr: The cost function (intermediate and terminal costs) and its derivatives for subsystems.
-	 * @param [in] operatingTrajectoriesPtr: The operating trajectories of system which will be used for initialization of ILQR.
-	 * @param [in] settings: Structure containing the settings for the ILQR algorithm.
-	 * @param [in] logicRulesPtr: The logic rules used for implementing mixed logical dynamical systems.
-	 * @param [in] heuristicsFunctionPtr: Heuristic function used in the infinite time optimal control formulation. If it is not
-	 * defined, we will use the terminal cost function defined in costFunctionPtr.
-	 */
-	ILQR_ST(const controlled_system_base_t* systemDynamicsPtr,
-		const derivatives_base_t* systemDerivativesPtr,
-		const constraint_base_t* systemConstraintsPtr,
-		const cost_function_base_t* costFunctionPtr,
-		const operating_trajectories_base_t* operatingTrajectoriesPtr,
-		const ILQR_Settings& settings = ILQR_Settings(),
-		const LOGIC_RULES_T* logicRulesPtr = nullptr,
-		const cost_function_base_t* heuristicsFunctionPtr = nullptr);
+  /**
+   * Constructor
+   *
+   * @param [in] systemDynamicsPtr: The system dynamics which possibly includes some subsystems.
+   * @param [in] systemDerivativesPtr: The system dynamics derivatives for subsystems of the system.
+   * @param [in] systemConstraintsPtr: The system constraint function and its derivatives for subsystems.
+   * @param [in] costFunctionPtr: The cost function (intermediate and terminal costs) and its derivatives for subsystems.
+   * @param [in] operatingTrajectoriesPtr: The operating trajectories of system which will be used for initialization of ILQR.
+   * @param [in] settings: Structure containing the settings for the ILQR algorithm.
+   * @param [in] logicRulesPtr: The logic rules used for implementing mixed logical dynamical systems.
+   * @param [in] heuristicsFunctionPtr: Heuristic function used in the infinite time optimal control formulation. If it is not
+   * defined, we will use the terminal cost function defined in costFunctionPtr.
+   */
+  ILQR_ST(const controlled_system_base_t* systemDynamicsPtr, const derivatives_base_t* systemDerivativesPtr,
+          const constraint_base_t* systemConstraintsPtr, const cost_function_base_t* costFunctionPtr,
+          const operating_trajectories_base_t* operatingTrajectoriesPtr, const ILQR_Settings& settings = ILQR_Settings(),
+          std::shared_ptr<HybridLogicRules> logicRulesPtr = nullptr, const cost_function_base_t* heuristicsFunctionPtr = nullptr);
 
-	/**
-	 * Default destructor.
-	 */
-	~ILQR_ST() = default;
+  /**
+   * Default destructor.
+   */
+  ~ILQR_ST() = default;
 
-	/**
-	 * Line search on the feedforwrd parts of the controller. It uses the following approach for line search:
-	 * The constraint TYPE-1 correction term is directly added through a user defined stepSize (defined in settings_.constraintStepSize_).
-	 * But the cost minimization term is optimized through a line-search strategy defined in ILQR settings.
-	 *
-	 * @param [in] computeISEs: Whether lineSearch needs to calculate ISEs indeces for type_1 and type-2 constraints.
-	 */
-	void lineSearch(bool computeISEs) final;
+  /**
+   * Line search on the feedforwrd parts of the controller. It uses the following approach for line search:
+   * The constraint TYPE-1 correction term is directly added through a user defined stepSize (defined in settings_.constraintStepSize_).
+   * But the cost minimization term is optimized through a line-search strategy defined in ILQR settings.
+   *
+   * @param [in] computeISEs: Whether lineSearch needs to calculate ISEs indeces for type_1 and type-2 constraints.
+   */
+  void lineSearch(bool computeISEs) final;
 
-	/**
-	 * Solves Riccati equations for all the partitions.
-	 *
-	 * @param [in] SmFinal: The final Sm for Riccati equation.
-	 * @param [in] SvFinal: The final Sv for Riccati equation.
-	 * @param [in] sFinal: The final s for Riccati equation.
-	 *
-	 * @return average time step
-	 */
-	scalar_t solveSequentialRiccatiEquations(
-			const state_matrix_t& SmFinal,
-			const state_vector_t& SvFinal,
-			const eigen_scalar_t& sFinal) final;
+  /**
+   * Solves Riccati equations for all the partitions.
+   *
+   * @param [in] SmFinal: The final Sm for Riccati equation.
+   * @param [in] SvFinal: The final Sv for Riccati equation.
+   * @param [in] sFinal: The final s for Riccati equation.
+   *
+   * @return average time step
+   */
+  scalar_t solveSequentialRiccatiEquations(const state_matrix_t& SmFinal, const state_vector_t& SvFinal,
+                                           const eigen_scalar_t& sFinal) final;
 
-	/**
-	 * Runs the initialization method for single thread ILQR.
-	 */
-	void runInit() final;
+  /**
+   * Runs the initialization method for single thread ILQR.
+   */
+  void runInit() final;
 
-	/**
-	 * Runs a single iteration of single thread ILQR.
-	 */
-	void runIteration() final;
+  /**
+   * Runs a single iteration of single thread ILQR.
+   */
+  void runIteration() final;
 
-	/**
-	 * Runs the exit method single thread ILQR.
-	 */
-	void runExit() final;
+  /**
+   * Runs the exit method single thread ILQR.
+   */
+  void runExit() final;
 
-protected:
-	/**
-	 * Computes the linearized dynamics for a particular time partition
-	 * @param [in] sysIndex
-	 */
-	void approximatePartitionLQ(const size_t& partitionIndex) final;
+ protected:
+  /**
+   * Computes the linearized dynamics for a particular time partition
+   * @param [in] sysIndex
+   */
+  void approximatePartitionLQ(size_t partitionIndex) final;
 
-	/**
-	 * Computes the controller for a particular time partition
-	 *
-	 * @param partitionIndex: Time partition index
-	 */
-	void calculatePartitionController(const size_t& partitionIndex) final;
+  /**
+   * Computes the controller for a particular time partition
+   *
+   * @param partitionIndex: Time partition index
+   */
+  void calculatePartitionController(size_t partitionIndex) final;
 
-
-private:
-
-
-//public:
-//	template <size_t GSLQP_STATE_DIM, size_t GSLQP_INPUT_DIM>
-//	friend class GSLQP;
+ private:
+  // public:
+  //	template <size_t GSLQP_STATE_DIM, size_t GSLQP_INPUT_DIM>
+  //	friend class GSLQP;
 };
 
-} // namespace ocs2
+}  // namespace ocs2
 
 #include "implementation/ILQR_ST.h"
-
 
 #endif /* ILQR_ST_OCS2_H_ */

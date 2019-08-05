@@ -42,7 +42,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "ocs2_comm_interfaces/ocs2_ros_interfaces/common/RosMsgConversions.h"
 
-namespace ocs2{
+namespace ocs2 {
 
 /**
  * This class implements TargetTrajectories communication interface using ROS.
@@ -50,69 +50,67 @@ namespace ocs2{
  * @tparam SCALAR_T: scalar type.
  */
 template <typename SCALAR_T>
-class TargetTrajectories_ROS_Interface
-{
-public:
-	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+class TargetTrajectories_ROS_Interface {
+ public:
+  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-	typedef SCALAR_T scalar_t;
+  typedef SCALAR_T scalar_t;
 
-	typedef CostDesiredTrajectories<scalar_t> cost_desired_trajectories_t;
-	typedef typename cost_desired_trajectories_t::scalar_array_t scalar_array_t;
-	typedef typename cost_desired_trajectories_t::dynamic_vector_t dynamic_vector_t;
-	typedef typename cost_desired_trajectories_t::dynamic_vector_array_t dynamic_vector_array_t;
+  typedef CostDesiredTrajectories<scalar_t> cost_desired_trajectories_t;
+  typedef typename cost_desired_trajectories_t::scalar_array_t scalar_array_t;
+  typedef typename cost_desired_trajectories_t::dynamic_vector_t dynamic_vector_t;
+  typedef typename cost_desired_trajectories_t::dynamic_vector_array_t dynamic_vector_array_t;
 
-	/**
-	 * Constructor.
-	 *
-	 * @param [in] robotName: The robot's name.
-	 */
-	TargetTrajectories_ROS_Interface(
-			const std::string& robotName = "robot");
+  /**
+   * Constructor.
+   *
+   * @param [in] argc: Commandline number of arguments
+   * @param [in] argv: Command line arguments
+   * @param [in] robotName: The robot's name.
+   */
+  TargetTrajectories_ROS_Interface(int argc, char* argv[], const std::string& robotName = "robot");
 
-	/**
-	 * Destructor.
-	 */
-	virtual ~TargetTrajectories_ROS_Interface();
+  /**
+   * Destructor.
+   */
+  virtual ~TargetTrajectories_ROS_Interface();
 
-	/**
-	 * Resets the class to its instantiate state.
-	 */
-	virtual void reset() {}
+  /**
+   * Resets the class to its instantiate state.
+   */
+  virtual void reset() {}
 
-	/**
-	 * ShutdownNodes publisher nodes.
-	 */
-	void shutdownNodes();
+  /**
+   * ShutdownNodes publisher nodes.
+   */
+  void shutdownNodes();
 
-	/**
-	 * This is the main routine which launches the publisher node for MPC's
-	 * desired trajectories.
-	 *
-	 * @param [in] argc: Command line number of arguments.
-	 * @param [in] argv: Command line vector of arguments.
-	 */
-	void launchNodes(int argc, char* argv[]);
+  /**
+   * This is the main routine which launches the publisher node for MPC's
+   * desired trajectories.
+   */
+  void launchNodes();
 
-	/**
-	 * Publishes the target trajectories.
-	 *
-	 * @param [in] costDesiredTrajectories: The target trajectories.
-	 */
-	void publishTargetTrajectories(
-			const cost_desired_trajectories_t& costDesiredTrajectories);
+  /**
+   * Publishes the target trajectories.
+   *
+   * @param [in] costDesiredTrajectories: The target trajectories.
+   */
+  void publishTargetTrajectories(const cost_desired_trajectories_t& costDesiredTrajectories);
 
-protected:
-	std::string robotName_;
+ protected:
+  std::string robotName_;
 
-	// Publisher
-	::ros::Publisher mpcTargetTrajectoriesPublisher_;
+  std::shared_ptr<::ros::NodeHandle> nodeHandle_;
 
-	// ROS messages
-	ocs2_comm_interfaces::mpc_target_trajectories mpcTargetTrajectoriesMsg_;
+  // Publisher
+  ::ros::Publisher mpcTargetTrajectoriesPublisher_;
+
+  // ROS messages
+  ocs2_comm_interfaces::mpc_target_trajectories mpcTargetTrajectoriesMsg_;
 };
 
-} // namespace ocs2
+}  // namespace ocs2
 
 #include "implementation/TargetTrajectories_ROS_Interface.h"
 

@@ -30,10 +30,10 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifndef SYSTEMDYNAMICSBASEAD_OCS2_H_
 #define SYSTEMDYNAMICSBASEAD_OCS2_H_
 
-#include "ocs2_core/dynamics/SystemDynamicsBase.h"
 #include <ocs2_core/automatic_differentiation/CppAdCodeGenInterface.h>
+#include "ocs2_core/dynamics/SystemDynamicsBase.h"
 
-namespace ocs2{
+namespace ocs2 {
 
 /**
  * The system dynamics Base with Algorithmic Differentiation (i.e. Auto Differentiation).
@@ -45,396 +45,344 @@ namespace ocs2{
  * @tparam Derived: Derived class type.
  * @tparam STATE_DIM: Dimension of the state space.
  * @tparam INPUT_DIM: Dimension of the control input space.
- * @tparam LOGIC_RULES_T: Logic Rules type (default NullLogicRules).
  */
-template <class Derived, size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T=NullLogicRules, size_t NUM_MODES=1>
-class SystemDynamicsBaseAD : public SystemDynamicsBase<STATE_DIM, INPUT_DIM, LOGIC_RULES_T, NUM_MODES>
-{
-public:
-	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+template <class Derived, size_t STATE_DIM, size_t INPUT_DIM, size_t NUM_MODES = 1>
+class SystemDynamicsBaseAD : public SystemDynamicsBase<STATE_DIM, INPUT_DIM, NUM_MODES> {
+ public:
+  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-	enum
-	{
-		num_modes_	= NUM_MODES,
-		state_dim_ 	= STATE_DIM,
-		input_dim_ 	= INPUT_DIM,
-		domain_dim_	= 1 + state_dim_ + input_dim_,
-	};
+  enum {
+    num_modes_ = NUM_MODES,
+    state_dim_ = STATE_DIM,
+    input_dim_ = INPUT_DIM,
+    domain_dim_ = 1 + state_dim_ + input_dim_,
+  };
 
-	typedef std::shared_ptr<SystemDynamicsBaseAD<Derived, STATE_DIM, INPUT_DIM, LOGIC_RULES_T, NUM_MODES> > Ptr;
-	typedef std::shared_ptr<const SystemDynamicsBaseAD<Derived, STATE_DIM, INPUT_DIM, LOGIC_RULES_T, NUM_MODES> > ConstPtr;
+  using Ptr = std::shared_ptr<SystemDynamicsBaseAD<Derived, STATE_DIM, INPUT_DIM, NUM_MODES> >;
+  using ConstPtr = std::shared_ptr<const SystemDynamicsBaseAD<Derived, STATE_DIM, INPUT_DIM, NUM_MODES> >;
 
-	typedef SystemDynamicsBase<STATE_DIM, INPUT_DIM, LOGIC_RULES_T, NUM_MODES> BASE;
+  using BASE = SystemDynamicsBase<STATE_DIM, INPUT_DIM, NUM_MODES>;
 
-	using scalar_t = typename BASE::scalar_t;
-	using state_vector_t = typename BASE::state_vector_t;
-	using state_matrix_t = typename BASE::state_matrix_t;
-	using input_vector_t = typename BASE::input_vector_t;
-	using state_input_matrix_t = typename BASE::state_input_matrix_t;
-	using dynamic_vector_t = typename BASE::dynamic_vector_t;
-	using dynamic_state_matrix_t = typename BASE::dynamic_state_matrix_t;
-	using dynamic_input_matrix_t = typename BASE::dynamic_input_matrix_t;
+  using typename BASE::dynamic_input_matrix_t;
+  using typename BASE::dynamic_state_matrix_t;
+  using typename BASE::dynamic_vector_t;
+  using typename BASE::input_vector_t;
+  using typename BASE::scalar_t;
+  using typename BASE::state_input_matrix_t;
+  using typename BASE::state_matrix_t;
+  using typename BASE::state_vector_t;
 
-	/**
-	 * Default constructor.
-	 *
-	 * @param [in] dynamicLibraryIsCompiled: Whether a library is already complied.
-	 */
-	SystemDynamicsBaseAD(const bool& dynamicLibraryIsCompiled = false);
+  /**
+   * Default constructor.
+   *
+   * @param [in] dynamicLibraryIsCompiled: Whether a library is already complied.
+   */
+  explicit SystemDynamicsBaseAD(const bool& dynamicLibraryIsCompiled = false);
 
-	/**
-	 * Copy constructor
-	 */
-	SystemDynamicsBaseAD(const SystemDynamicsBaseAD& rhs);
+  /**
+   * Copy constructor
+   */
+  SystemDynamicsBaseAD(const SystemDynamicsBaseAD& rhs);
 
-	/**
-	 * Default destructor
-	 */
-	virtual ~SystemDynamicsBaseAD() = default;
+  /**
+   * Default destructor
+   */
+  virtual ~SystemDynamicsBaseAD() = default;
 
-	/**
-	 * Interface method to the state flow map of the hybrid system. This method should be implemented by the derived class.
-	 *
-	 * @tparam scalar type. All the floating point operations should be with this type.
-	 * @param [in] time: time.
-	 * @param [in] state: state vector.
-	 * @param [in] input: input vector.
-	 * @param [out] stateDerivative: state vector time derivative.
-	 */
-	template <typename SCALAR_T>
-	void systemFlowMap(
-			const SCALAR_T& time,
-			const Eigen::Matrix<SCALAR_T, STATE_DIM, 1>& state,
-			const Eigen::Matrix<SCALAR_T, INPUT_DIM, 1>& input,
-			Eigen::Matrix<SCALAR_T, STATE_DIM, 1>& stateDerivative);
+  /**
+   * Interface method to the state flow map of the hybrid system. This method should be implemented by the derived class.
+   *
+   * @tparam scalar type. All the floating point operations should be with this type.
+   * @param [in] time: time.
+   * @param [in] state: state vector.
+   * @param [in] input: input vector.
+   * @param [out] stateDerivative: state vector time derivative.
+   */
+  template <typename SCALAR_T>
+  void systemFlowMap(const SCALAR_T& time, const Eigen::Matrix<SCALAR_T, STATE_DIM, 1>& state,
+                     const Eigen::Matrix<SCALAR_T, INPUT_DIM, 1>& input, Eigen::Matrix<SCALAR_T, STATE_DIM, 1>& stateDerivative);
 
-	/**
-	 * Interface method to the state jump map of the hybrid system. This method should be implemented by the derived class.
-	 *
-	 * @tparam scalar type. All the floating point operations should be with this type.
-	 * @param [in] time: time.
-	 * @param [in] state: state vector.
-	 * @param [in] input: input vector.
-	 * @param [out] jumpedState: jumped state.
-	 */
-	template <typename SCALAR_T>
-	void systemJumpMap(
-			const SCALAR_T& time,
-			const Eigen::Matrix<SCALAR_T, STATE_DIM, 1>& state,
-			const Eigen::Matrix<SCALAR_T, INPUT_DIM, 1>& input,
-			Eigen::Matrix<SCALAR_T, STATE_DIM, 1>& jumpedState);
+  /**
+   * Interface method to the state jump map of the hybrid system. This method should be implemented by the derived class.
+   *
+   * @tparam scalar type. All the floating point operations should be with this type.
+   * @param [in] time: time.
+   * @param [in] state: state vector.
+   * @param [in] input: input vector.
+   * @param [out] jumpedState: jumped state.
+   */
+  template <typename SCALAR_T>
+  void systemJumpMap(const SCALAR_T& time, const Eigen::Matrix<SCALAR_T, STATE_DIM, 1>& state,
+                     const Eigen::Matrix<SCALAR_T, INPUT_DIM, 1>& input, Eigen::Matrix<SCALAR_T, STATE_DIM, 1>& jumpedState);
 
-	/**
-	 * Interface method to the guard surfaces. This method should be implemented by the derived class.
-	 * If there is no guard surfaces return a vector of size 1 with value -1 (or any other negative number).
-	 *
-	 * @tparam scalar type. All the floating point operations should be with this type.
-	 * @param [in] time: time.
-	 * @param [in] state: state.
-	 * @param [in] input: input vector
-	 * @param [out] guardSurfacesValue: A vector of guard surfaces values
-	 */
-	template <typename SCALAR_T>
-	void systemGuardSurfaces(
-			const SCALAR_T& time,
-			const Eigen::Matrix<SCALAR_T, STATE_DIM, 1>& state,
-			const Eigen::Matrix<SCALAR_T, INPUT_DIM, 1>& input,
-			Eigen::Matrix<SCALAR_T, NUM_MODES, 1>& guardSurfacesValue);
+  /**
+   * Interface method to the guard surfaces. This method should be implemented by the derived class.
+   * If there is no guard surfaces return a vector of size 1 with value -1 (or any other negative number).
+   *
+   * @tparam scalar type. All the floating point operations should be with this type.
+   * @param [in] time: time.
+   * @param [in] state: state.
+   * @param [in] input: input vector
+   * @param [out] guardSurfacesValue: A vector of guard surfaces values
+   */
+  template <typename SCALAR_T>
+  void systemGuardSurfaces(const SCALAR_T& time, const Eigen::Matrix<SCALAR_T, STATE_DIM, 1>& state,
+                           const Eigen::Matrix<SCALAR_T, INPUT_DIM, 1>& input, Eigen::Matrix<SCALAR_T, NUM_MODES, 1>& guardSurfacesValue);
 
-	/**
-	 * Gets the number of the modes in the hybrid system.
-	 * The minimum is one.
-	 *
-	 * @return Number of the modes in the hybrid system.
-	 */
-	size_t getNumModes() const;
+  /**
+   * Gets the number of the modes in the hybrid system.
+   * The minimum is one.
+   *
+   * @return Number of the modes in the hybrid system.
+   */
+  size_t getNumModes() const;
 
-	/**
-	 * creates the forward model, the Jacobian model, and the Hessian model.
-	 *
-	 * @param modelName
-	 * @param libraryFolder
-	 * @param verbose
-	 */
-	void createModels(
-			const std::string& modelName,
-			const std::string& libraryFolder);
+  /**
+   * creates the forward model, the Jacobian model, and the Hessian model.
+   *
+   * @param modelName
+   * @param libraryFolder
+   * @param verbose
+   */
+  void createModels(const std::string& modelName, const std::string& libraryFolder);
 
-	/**
-	 * Loads the forward model, the Jacobian model, and the Hessian model.
-	 *
-	 * @param modelName
-	 * @param libraryFolder
-	 * @param verbose
-	 */
-	void loadModels(
-			const std::string& modelName,
-			const std::string& libraryFolder);
+  /**
+   * Loads the forward model, the Jacobian model, and the Hessian model.
+   *
+   * @param modelName
+   * @param libraryFolder
+   * @param verbose
+   */
+  void loadModels(const std::string& modelName, const std::string& libraryFolder);
 
-	/**
-	 * Whether or not the dynamic library is compiled.
-	 *
-	 * @return true if the dynamic library is compiled
-	 */
-	const bool& isDynamicLibraryCompiled() const;
+  /**
+   * Whether or not the dynamic library is compiled.
+   *
+   * @return true if the dynamic library is compiled
+   */
+  const bool& isDynamicLibraryCompiled() const;
 
-	/**
-	 * Gets model name.
-	 *
-	 * @return model name
-	 */
-	std::string getModelName() const;
+  /**
+   * Gets model name.
+   *
+   * @return model name
+   */
+  std::string getModelName() const;
 
-	/**
-	 * Interface method to the state flow map of the hybrid system.
-	 *
-	 * @param [in] time: time.
-	 * @param [in] state: state vector.
-	 * @param [in] input: input vector
-	 * @param [out] stateDerivative: state vector time derivative.
-	 */
-	virtual void computeFlowMap(
-			const scalar_t& time,
-			const state_vector_t& state,
-			const input_vector_t& input,
-			state_vector_t& stateDerivative) final;
+  /**
+   * Interface method to the state flow map of the hybrid system.
+   *
+   * @param [in] time: time.
+   * @param [in] state: state vector.
+   * @param [in] input: input vector
+   * @param [out] stateDerivative: state vector time derivative.
+   */
+  virtual void computeFlowMap(const scalar_t& time, const state_vector_t& state, const input_vector_t& input,
+                              state_vector_t& stateDerivative) final;
 
-	/**
-	 * Interface method to the state jump map of the hybrid system.
-	 *
-	 * @param [in] time: time.
-	 * @param [in] state: state vector.
-	 * @param [out] jumpedState: jumped state.
-	 */
-	virtual void computeJumpMap(
-			const scalar_t& time,
-			const state_vector_t& state,
-			state_vector_t& jumpedState) final;
+  /**
+   * Interface method to the state jump map of the hybrid system.
+   *
+   * @param [in] time: time.
+   * @param [in] state: state vector.
+   * @param [out] jumpedState: jumped state.
+   */
+  virtual void computeJumpMap(const scalar_t& time, const state_vector_t& state, state_vector_t& jumpedState) final;
 
-	/**
-	 * Interface method to the guard surfaces.
-	 *
-	 * @param [in] time: transition time
-	 * @param [in] state: transition state
-	 * @param [out] guardSurfacesValue: A vector of guard surfaces values
-	 */
-	virtual void computeGuardSurfaces(
-			const scalar_t& time,
-			const state_vector_t& state,
-			dynamic_vector_t& guardSurfacesValue) final;
+  /**
+   * Interface method to the guard surfaces.
+   *
+   * @param [in] time: transition time
+   * @param [in] state: transition state
+   * @param [out] guardSurfacesValue: A vector of guard surfaces values
+   */
+  virtual void computeGuardSurfaces(const scalar_t& time, const state_vector_t& state, dynamic_vector_t& guardSurfacesValue) final;
 
-    /**
-     * Sets the current time, state, and control input.
-     *
-     * @param [in] time: Current time
-     * @param [in] state: Current state vector
-     * @param [in] input: Current input vector
-     */
-	virtual void setCurrentStateAndControl(
-			const scalar_t& time,
-			const state_vector_t& state,
-			const input_vector_t& input) final;
+  /**
+   * Sets the current time, state, and control input.
+   *
+   * @param [in] time: Current time
+   * @param [in] state: Current state vector
+   * @param [in] input: Current input vector
+   */
+  virtual void setCurrentStateAndControl(const scalar_t& time, const state_vector_t& state, const input_vector_t& input) final;
 
-	/**
-	 * Partial time derivative of the system flow map.
-	 * \f$ \frac{\partial f}{\partial t}  \f$.
-	 *
-	 * @param [out] df: \f$ \frac{\partial f}{\partial t} \f$ matrix.
-	 */
-	virtual void getFlowMapDerivativeTime(state_vector_t& df) final;
+  /**
+   * Partial time derivative of the system flow map.
+   * \f$ \frac{\partial f}{\partial t}  \f$.
+   *
+   * @param [out] df: \f$ \frac{\partial f}{\partial t} \f$ matrix.
+   */
+  virtual void getFlowMapDerivativeTime(state_vector_t& df) final;
 
-	/**
-	 * The A matrix at a given operating point for the linearized system flow map.
-	 * \f$ dx/dt = A(t) \delta x + B(t) \delta u \f$.
-	 *
-	 * @param [out] A: \f$ A(t) \f$ matrix.
-	 */
-	virtual void getFlowMapDerivativeState(state_matrix_t& A) final;
+  /**
+   * The A matrix at a given operating point for the linearized system flow map.
+   * \f$ dx/dt = A(t) \delta x + B(t) \delta u \f$.
+   *
+   * @param [out] A: \f$ A(t) \f$ matrix.
+   */
+  virtual void getFlowMapDerivativeState(state_matrix_t& A) final;
 
-	/**
-	 * The B matrix at a given operating point for the linearized system flow map.
-	 * \f$ dx/dt = A(t) \delta x + B(t) \delta u \f$.
-	 *
-	 * @param [out] B: \f$ B(t) \f$ matrix.
-	 */
-	virtual void getFlowMapDerivativeInput(state_input_matrix_t& B) final;
+  /**
+   * The B matrix at a given operating point for the linearized system flow map.
+   * \f$ dx/dt = A(t) \delta x + B(t) \delta u \f$.
+   *
+   * @param [out] B: \f$ B(t) \f$ matrix.
+   */
+  virtual void getFlowMapDerivativeInput(state_input_matrix_t& B) final;
 
-	/**
-	 * Partial time derivative of the system jump map.
-	 * \f$ \frac{\partial g}{\partial t}  \f$.
-	 *
-	 * @param [out] dg: \f$ \frac{\partial g}{\partial t} \f$ matrix.
-	 */
-	virtual void getJumpMapDerivativeTime(state_vector_t& dg) final;
+  /**
+   * Partial time derivative of the system jump map.
+   * \f$ \frac{\partial g}{\partial t}  \f$.
+   *
+   * @param [out] dg: \f$ \frac{\partial g}{\partial t} \f$ matrix.
+   */
+  virtual void getJumpMapDerivativeTime(state_vector_t& dg) final;
 
-	/**
-	 * The G matrix at a given operating point for the linearized system jump map.
-	 * \f$ x^+ = G \delta x + H \delta u \f$.
-	 *
-	 * @param [out] G: \f$ G \f$ matrix.
-	 */
-	virtual void getJumpMapDerivativeState(state_matrix_t& G) final;
+  /**
+   * The G matrix at a given operating point for the linearized system jump map.
+   * \f$ x^+ = G \delta x + H \delta u \f$.
+   *
+   * @param [out] G: \f$ G \f$ matrix.
+   */
+  virtual void getJumpMapDerivativeState(state_matrix_t& G) final;
 
-	/**
-	 * The H matrix at a given operating point for the linearized system jump map.
-	 * \f$ x^+ = G \delta x + H \delta u \f$.
-	 *
-	 * @param [out] H: \f$ H \f$ matrix.
-	 */
-	virtual void getJumpMapDerivativeInput(state_input_matrix_t& H) final;
+  /**
+   * The H matrix at a given operating point for the linearized system jump map.
+   * \f$ x^+ = G \delta x + H \delta u \f$.
+   *
+   * @param [out] H: \f$ H \f$ matrix.
+   */
+  virtual void getJumpMapDerivativeInput(state_input_matrix_t& H) final;
 
-	/**
-	 * Get at a given operating point the derivative of the guard surfaces w.r.t. input vector.
-	 *
-	 * @param [out] D_t_gamma: Derivative of the guard surfaces w.r.t. time.
-	 */
-	virtual void getGuardSurfacesDerivativeTime(dynamic_vector_t& D_t_gamma) final;
+  /**
+   * Get at a given operating point the derivative of the guard surfaces w.r.t. input vector.
+   *
+   * @param [out] D_t_gamma: Derivative of the guard surfaces w.r.t. time.
+   */
+  virtual void getGuardSurfacesDerivativeTime(dynamic_vector_t& D_t_gamma) final;
 
-	/**
-	 * Get at a given operating point the derivative of the guard surfaces w.r.t. input vector.
-	 *
-	 * @param [out] D_x_gamma: Derivative of the guard surfaces w.r.t. state vector.
-	 */
-	virtual void getGuardSurfacesDerivativeState(dynamic_state_matrix_t& D_x_gamma) final;
+  /**
+   * Get at a given operating point the derivative of the guard surfaces w.r.t. input vector.
+   *
+   * @param [out] D_x_gamma: Derivative of the guard surfaces w.r.t. state vector.
+   */
+  virtual void getGuardSurfacesDerivativeState(dynamic_state_matrix_t& D_x_gamma) final;
 
-	/**
-	 * Get at a given operating point the derivative of the guard surfaces w.r.t. input vector.
-	 *
-	 * @param [out] D_u_gamma: Derivative of the guard surfaces w.r.t. input vector.
-	 */
-	virtual void getGuardSurfacesDerivativeInput(dynamic_input_matrix_t& D_u_gamma) final;
+  /**
+   * Get at a given operating point the derivative of the guard surfaces w.r.t. input vector.
+   *
+   * @param [out] D_u_gamma: Derivative of the guard surfaces w.r.t. input vector.
+   */
+  virtual void getGuardSurfacesDerivativeInput(dynamic_input_matrix_t& D_u_gamma) final;
 
-    /**
-     * Returns pointer to the base class.
-     *
-     * @return A raw pointer to the class.
-     */
-	virtual BASE* clone() const final;
+  /**
+   * Returns pointer to the base class.
+   *
+   * @return A raw pointer to the class.
+   */
+  virtual BASE* clone() const final;
 
-	/**
-	 * Initialization of the system dynamics derivatives cannot be override anymore.
-	 *
-	 * @param [in] logicRulesMachine: A class which contains and parse the logic rules e.g
-	 * method findActiveSubsystemHandle returns a Lambda expression which can be used to
-	 * find the ID of the current active subsystem.
-	 * @param [in] partitionIndex: index of the time partition.
-	 * @param [in] algorithmName: The algorithm that class this class (default not defined).
-	 */
-	void initializeModel(
-			LogicRulesMachine<LOGIC_RULES_T>& logicRulesMachine,
-			const size_t& partitionIndex,
-			const char* algorithmName=nullptr) final {}
+  void getCompileFlags(std::vector<std::string>& cFlags) { flowMapADInterfacePtr_->getCompileFlags(cFlags); }
 
+  void setCompileFlags(const std::vector<std::string>& cFlags) {
+    flowMapADInterfacePtr_->setCompileFlags(cFlags);
+    jumpMapADInterfacePtr_->setCompileFlags(cFlags);
+    guardSurfacesADInterfacePtr_->setCompileFlags(cFlags);
+  }
 
-	void getCompileFlags(std::vector<std::string>& cFlags) {
-		flowMapADInterfacePtr_->getCompileFlags(cFlags);
-	}
+  void addCompileFlag(const std::vector<std::string>& cFlags) {
+    flowMapADInterfacePtr_->addCompileFlags(cFlags);
+    jumpMapADInterfacePtr_->addCompileFlags(cFlags);
+    guardSurfacesADInterfacePtr_->addCompileFlags(cFlags);
+  }
 
-	void setCompileFlags(const std::vector<std::string>& cFlags) {
-		flowMapADInterfacePtr_->setCompileFlags(cFlags);
-		jumpMapADInterfacePtr_->setCompileFlags(cFlags);
-		guardSurfacesADInterfacePtr_->setCompileFlags(cFlags);
-	}
+ protected:
+  using map_ad_interface_t = CppAdCodeGenInterface<domain_dim_, state_dim_, scalar_t>;
+  using guard_ad_interface_t = CppAdCodeGenInterface<domain_dim_, num_modes_, scalar_t>;
 
-	void addCompileFlag(const std::vector<std::string>& cFlags) {
-		flowMapADInterfacePtr_->addCompileFlags(cFlags);
-		jumpMapADInterfacePtr_->addCompileFlags(cFlags);
-		guardSurfacesADInterfacePtr_->addCompileFlags(cFlags);
-	}
+  using ad_scalar_t = typename map_ad_interface_t::ad_scalar_t;
+  using ad_dynamic_vector_t = typename map_ad_interface_t::ad_dynamic_vector_t;
+  using ad_funtion_t = typename map_ad_interface_t::ad_funtion_t;
+  using ad_domain_vector_t = typename map_ad_interface_t::domain_vector_t;
+  using ad_domain_matrix_t = typename map_ad_interface_t::domain_matrix_t;
 
+  using map_ad_range_vector_t = typename map_ad_interface_t::range_vector_t;
+  using map_ad_domain_range_matrix_t = typename map_ad_interface_t::domain_range_matrix_t;
+  using map_ad_range_domain_matrix_t = typename map_ad_interface_t::range_domain_matrix_t;
+  using guard_ad_range_vector_t = typename guard_ad_interface_t::range_vector_t;
+  using guard_ad_domain_range_matrix_t = typename guard_ad_interface_t::domain_range_matrix_t;
+  using guard_ad_range_domain_matrix_t = typename guard_ad_interface_t::range_domain_matrix_t;
 
-protected:
-	typedef CppAdCodeGenInterface<domain_dim_, state_dim_, scalar_t> map_ad_interface_t;
-	typedef CppAdCodeGenInterface<domain_dim_, num_modes_, scalar_t> guard_ad_interface_t;
+  /**
+   * The flow map specialized with AD type.
+   *
+   * @param [in] tapedInput: concatenated input vector
+   * @param [out] f: The flow map value
+   */
+  void systemFlowMapAD(const ad_dynamic_vector_t& tapedInput, ad_dynamic_vector_t& f);
 
-	using ad_scalar_t = typename map_ad_interface_t::ad_scalar_t;
-	using ad_dynamic_vector_t = typename map_ad_interface_t::ad_dynamic_vector_t;
-	using ad_funtion_t = typename map_ad_interface_t::ad_funtion_t;
-	using ad_domain_vector_t = typename map_ad_interface_t::domain_vector_t;
-	using ad_domain_matrix_t = typename map_ad_interface_t::domain_matrix_t;
+  /**
+   * The jump map specialized with AD type.
+   *
+   * @param [in] tapedInput: concatenated input vector
+   * @param [out] g: The jump map value
+   */
+  void systemJumpMapAD(const ad_dynamic_vector_t& tapedInput, ad_dynamic_vector_t& g);
 
-	using map_ad_range_vector_t = typename map_ad_interface_t::range_vector_t;
-	using map_ad_domain_range_matrix_t = typename map_ad_interface_t::domain_range_matrix_t;
-	using map_ad_range_domain_matrix_t = typename map_ad_interface_t::range_domain_matrix_t;
-	using guard_ad_range_vector_t = typename guard_ad_interface_t::range_vector_t;
-	using guard_ad_domain_range_matrix_t = typename guard_ad_interface_t::domain_range_matrix_t;
-	using guard_ad_range_domain_matrix_t = typename guard_ad_interface_t::range_domain_matrix_t;
+  /**
+   * The guard surfaces specialized with AD type.
+   *
+   * @param [in] tapedInput: concatenated input vector
+   * @param [out] gamma: The guard surfaces value
+   */
+  void systemGuardSurfacesAD(const ad_dynamic_vector_t& tapedInput, ad_dynamic_vector_t& gamma);
 
-	/**
-	 * The flow map specialized with AD type.
-	 *
-	 * @param [in] tapedInput: concatenated input vector
-	 * @param [out] f: The flow map value
-	 */
-	void systemFlowMapAD(
-			const ad_dynamic_vector_t& tapedInput,
-			ad_dynamic_vector_t& f);
+  /**
+   * Sets all the required CppAdCodeGenInterfaces
+   */
+  void setADInterfaces();
 
-	/**
-	 * The jump map specialized with AD type.
-	 *
-	 * @param [in] tapedInput: concatenated input vector
-	 * @param [out] g: The jump map value
-	 */
-	void systemJumpMapAD(
-			const ad_dynamic_vector_t& tapedInput,
-			ad_dynamic_vector_t& g);
+  /**
+   * Create the forward model, the Jacobian model, and the Hessian model.
+   *
+   * @param [in] verbose: display information.
+   */
+  void createModels(bool verbose);
 
-	/**
-	 * The guard surfaces specialized with AD type.
-	 *
-	 * @param [in] tapedInput: concatenated input vector
-	 * @param [out] gamma: The guard surfaces value
-	 */
-	void systemGuardSurfacesAD(
-			const ad_dynamic_vector_t& tapedInput,
-			ad_dynamic_vector_t& gamma);
+  /**
+   * Loads the forward model, the Jacobian model, and the Hessian model.
+   *
+   * @param [in] verbose: display information
+   * @return true if it successfully loads the library.
+   */
+  bool loadModels(bool verbose);
 
-	/**
-	 * Sets all the required CppAdCodeGenInterfaces
-	 */
-	void setADInterfaces();
+ private:
+  bool dynamicLibraryIsCompiled_;
+  std::string modelName_;
+  std::string libraryFolder_;
 
-	/**
-	 * Create the forward model, the Jacobian model, and the Hessian model.
-	 *
-	 * @param [in] verbose: display information.
-	 */
-	void createModels(bool verbose);
+  ad_funtion_t systemFlowMapAD_;
+  ad_funtion_t systemJumpMapAD_;
+  ad_funtion_t guardSurfacesJumpMapAD_;
 
-	/**
-	 * Loads the forward model, the Jacobian model, and the Hessian model.
-	 *
-	 * @param [in] verbose: display information
-	 * @return true if it successfully loads the library.
-	 */
-	bool loadModels(bool verbose);
+  map_ad_range_domain_matrix_t flowSparsityPattern_;
+  map_ad_range_domain_matrix_t jumpSparsityPattern_;
+  guard_ad_range_domain_matrix_t guardSparsityPattern_;
 
-private:
-	bool dynamicLibraryIsCompiled_;
-	std::string modelName_;
-	std::string libraryFolder_;
+  std::unique_ptr<map_ad_interface_t> flowMapADInterfacePtr_;
+  std::unique_ptr<map_ad_interface_t> jumpMapADInterfacePtr_;
+  std::unique_ptr<guard_ad_interface_t> guardSurfacesADInterfacePtr_;
 
-	ad_funtion_t systemFlowMapAD_;
-	ad_funtion_t systemJumpMapAD_;
-	ad_funtion_t guardSurfacesJumpMapAD_;
+  ad_domain_vector_t tapedInput_;
 
-	map_ad_range_domain_matrix_t flowSparsityPattern_;
-	map_ad_range_domain_matrix_t jumpSparsityPattern_;
-	guard_ad_range_domain_matrix_t guardSparsityPattern_;
-
-	std::unique_ptr<map_ad_interface_t> flowMapADInterfacePtr_;
-	std::unique_ptr<map_ad_interface_t> jumpMapADInterfacePtr_;
-	std::unique_ptr<guard_ad_interface_t> guardSurfacesADInterfacePtr_;
-
-	ad_domain_vector_t 		tapedInput_;
-
-	map_ad_domain_range_matrix_t flowJacobian_;
-	map_ad_domain_range_matrix_t jumpJacobian_;
-	guard_ad_domain_range_matrix_t guardJacobian_;
+  map_ad_domain_range_matrix_t flowJacobian_;
+  map_ad_domain_range_matrix_t jumpJacobian_;
+  guard_ad_domain_range_matrix_t guardJacobian_;
 };
 
-} // namespace ocs2
+}  // namespace ocs2
 
 #include "implementation/SystemDynamicsBaseAD.h"
 

@@ -1,10 +1,10 @@
 #pragma once
 
-#include <string>
-#include <iostream>
-#include <memory>
 #include <Eigen/Dense>
 #include <Eigen/StdVector>
+#include <iostream>
+#include <memory>
+#include <string>
 #include <vector>
 
 #include "ocs2_core/Dimensions.h"
@@ -19,8 +19,7 @@ namespace ocs2 {
  * @tparam INPUT_DIM: Dimension of the control input space.
  */
 template <size_t STATE_DIM, size_t INPUT_DIM>
-class ControllerBase
-{
+class ControllerBase {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
@@ -65,6 +64,14 @@ class ControllerBase
   virtual void unFlatten(const scalar_array_t& timeArray, const std::vector<float_array_t const*>& flatArray2) = 0;
 
   /**
+   * @brief Merges this controller with another controller that comes active later in time
+   * This method is typically used to merge controllers from multiple time partitions.
+   * @note Only controllers of the same type can be merged
+   * @param[in] nextController: The control law to be appended
+   */
+  virtual void concatenate(const ControllerBase* nextController) = 0;
+
+  /**
    * @brief Prints the type of controller
    * @return ControllerType: what type of controller this is
    */
@@ -89,11 +96,16 @@ class ControllerBase
   virtual bool empty() const = 0;
 
   /**
+   * @brief Create a deep copy of the object.
+   * @warning Cloning implies that the caller takes ownership and deletes the created object.
+   * @return Pointer to a new instance.
+   */
+  virtual ControllerBase* clone() { throw std::runtime_error("Not implemented"); }
+
+  /**
    * Displays controller's data.
    */
-  virtual void display() const
-  {}
-
+  virtual void display() const {}
 };
 
 }  // namespace ocs2

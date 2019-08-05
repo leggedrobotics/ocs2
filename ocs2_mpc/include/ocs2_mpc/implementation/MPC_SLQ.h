@@ -32,175 +32,151 @@ namespace ocs2 {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-MPC_SLQ<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::MPC_SLQ()
+template <size_t STATE_DIM, size_t INPUT_DIM>
+MPC_SLQ<STATE_DIM, INPUT_DIM>::MPC_SLQ()
 
-	: BASE()
-	, optimizedTimeTrajectoriesStock_(0)
-	, optimizedStateTrajectoriesStock_(0)
-	, optimizedInputTrajectoriesStock_(0)
-{}
+    : BASE(), optimizedTimeTrajectoriesStock_(0), optimizedStateTrajectoriesStock_(0), optimizedInputTrajectoriesStock_(0) {}
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-MPC_SLQ<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::MPC_SLQ(
-		const controlled_system_base_t* systemDynamicsPtr,
-		const derivatives_base_t* systemDerivativesPtr,
-		const constraint_base_t* systemConstraintsPtr,
-		const cost_function_base_t* costFunctionPtr,
-		const operating_trajectories_base_t* operatingTrajectoriesPtr,
-		const scalar_array_t& partitioningTimes,
-		const SLQ_Settings& slqSettings /* = SLQ_Settings()*/,
-		const MPC_Settings& mpcSettings /* = MPC_Settings()*/,
-		const LOGIC_RULES_T* logicRulesPtr /* = nullptr*/,
-		const mode_sequence_template_t* modeSequenceTemplatePtr /* = nullptr*/,
-		const cost_function_base_t* heuristicsFunctionPtr /*= nullptr*/)
+template <size_t STATE_DIM, size_t INPUT_DIM>
+MPC_SLQ<STATE_DIM, INPUT_DIM>::MPC_SLQ(const controlled_system_base_t* systemDynamicsPtr, const derivatives_base_t* systemDerivativesPtr,
+                                       const constraint_base_t* systemConstraintsPtr, const cost_function_base_t* costFunctionPtr,
+                                       const operating_trajectories_base_t* operatingTrajectoriesPtr,
+                                       const scalar_array_t& partitioningTimes, const SLQ_Settings& slqSettings /* = SLQ_Settings()*/,
+                                       const MPC_Settings& mpcSettings /* = MPC_Settings()*/,
+                                       std::shared_ptr<HybridLogicRules> logicRulesPtr /* = nullptr*/,
+                                       const mode_sequence_template_t* modeSequenceTemplatePtr /* = nullptr*/,
+                                       const cost_function_base_t* heuristicsFunctionPtr /*= nullptr*/)
 
-	: BASE(partitioningTimes, mpcSettings)
-	, optimizedTimeTrajectoriesStock_(0)
-	, optimizedStateTrajectoriesStock_(0)
-	, optimizedInputTrajectoriesStock_(0)
+    : BASE(partitioningTimes, mpcSettings),
+      optimizedTimeTrajectoriesStock_(0),
+      optimizedStateTrajectoriesStock_(0),
+      optimizedInputTrajectoriesStock_(0)
 
 {
-	// SLQ
-	if (slqSettings.ddpSettings_.useMultiThreading_) {
-		slqPtr_.reset( new slq_mp_t(
-				systemDynamicsPtr, systemDerivativesPtr, systemConstraintsPtr, costFunctionPtr, operatingTrajectoriesPtr,
-				slqSettings, logicRulesPtr, heuristicsFunctionPtr) );
-	} else {
-		slqPtr_.reset( new slq_t(
-				systemDynamicsPtr, systemDerivativesPtr, systemConstraintsPtr, costFunctionPtr, operatingTrajectoriesPtr,
-				slqSettings, logicRulesPtr, heuristicsFunctionPtr) );
-	}
+  // SLQ
+  if (slqSettings.ddpSettings_.useMultiThreading_) {
+    slqPtr_.reset(new slq_mp_t(systemDynamicsPtr, systemDerivativesPtr, systemConstraintsPtr, costFunctionPtr, operatingTrajectoriesPtr,
+                               slqSettings, logicRulesPtr, heuristicsFunctionPtr));
+  } else {
+    slqPtr_.reset(new slq_t(systemDynamicsPtr, systemDerivativesPtr, systemConstraintsPtr, costFunctionPtr, operatingTrajectoriesPtr,
+                            slqSettings, logicRulesPtr, heuristicsFunctionPtr));
+  }
 
-	// set base solver's pointer
-	BASE::setBaseSolverPtr(slqPtr_.get());
+  // set base solver's pointer
+  BASE::setBaseSolverPtr(slqPtr_.get());
 
-	// set mode sequence template
-	if (modeSequenceTemplatePtr) {
-		slqPtr_->getLogicRulesPtr()->setModeSequenceTemplate(*modeSequenceTemplatePtr);
+  // set mode sequence template
+  if (modeSequenceTemplatePtr) {
+    slqPtr_->getLogicRulesPtr()->setModeSequenceTemplate(*modeSequenceTemplatePtr);
 
-		if (mpcSettings.recedingHorizon_) {
+    if (mpcSettings.recedingHorizon_) {
+      const scalar_array_t& eventTimes = slqPtr_->getLogicRulesPtr()->eventTimes();
+      const scalar_t timeHorizon = BASE::initPartitioningTimes_.back() - BASE::initPartitioningTimes_.front();
+      const scalar_t finalTime = BASE::initPartitioningTimes_.back() + timeHorizon;
 
-			const scalar_array_t& eventTimes = slqPtr_->getLogicRulesPtr()->eventTimes();
-			const scalar_t timeHorizon = BASE::initPartitioningTimes_.back() - BASE::initPartitioningTimes_.front();
-			const scalar_t finalTime = BASE::initPartitioningTimes_.back() + timeHorizon;
+      if (eventTimes.size() == 0) {
+        const scalar_t startTime = BASE::initPartitioningTimes_.front();
+        slqPtr_->getLogicRulesPtr()->insertInternalModeSequenceTemplate(startTime, finalTime);
 
-			if (eventTimes.size()==0) {
-				const scalar_t startTime = BASE::initPartitioningTimes_.front();
-				slqPtr_->getLogicRulesPtr()->insertInternalModeSequenceTemplate(startTime, finalTime);
-
-			} else if (eventTimes.back() <= finalTime) {
-				const scalar_t startTime = eventTimes.back();
-				slqPtr_->getLogicRulesPtr()->insertInternalModeSequenceTemplate(startTime, finalTime);
-			}
-		}
-	}
+      } else if (eventTimes.back() <= finalTime) {
+        const scalar_t startTime = eventTimes.back();
+        slqPtr_->getLogicRulesPtr()->insertInternalModeSequenceTemplate(startTime, finalTime);
+      }
+    }
+  }
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-SLQ_Settings& MPC_SLQ<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::slqSettings() {
-
-	return slqPtr_->settings();
+template <size_t STATE_DIM, size_t INPUT_DIM>
+SLQ_Settings& MPC_SLQ<STATE_DIM, INPUT_DIM>::slqSettings() {
+  return slqPtr_->settings();
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-typename MPC_SLQ<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::slq_base_t*
-MPC_SLQ<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::getSolverPtr() {
-
-	return slqPtr_.get();
+template <size_t STATE_DIM, size_t INPUT_DIM>
+typename MPC_SLQ<STATE_DIM, INPUT_DIM>::slq_base_t* MPC_SLQ<STATE_DIM, INPUT_DIM>::getSolverPtr() {
+  return slqPtr_.get();
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void MPC_SLQ<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculateController(
-		const scalar_t& initTime,
-		const state_vector_t& initState,
-		const scalar_t& finalTime,
-		const scalar_array2_t*& timeTrajectoriesStockPtr,
-		const state_vector_array2_t*& stateTrajectoriesStockPtr,
-		const input_vector_array2_t*& inputTrajectoriesStockPtr,
-		const controller_ptr_array_t*& controllerStockPtr)  {
+template <size_t STATE_DIM, size_t INPUT_DIM>
+void MPC_SLQ<STATE_DIM, INPUT_DIM>::calculateController(const scalar_t& initTime, const state_vector_t& initState,
+                                                        const scalar_t& finalTime, const scalar_array2_t*& timeTrajectoriesStockPtr,
+                                                        const state_vector_array2_t*& stateTrajectoriesStockPtr,
+                                                        const input_vector_array2_t*& inputTrajectoriesStockPtr,
+                                                        const controller_ptr_array_t*& controllerStockPtr) {
+  //*****************************************************************************************
+  // cost goal check
+  //*****************************************************************************************
+  if (BASE::initRun_ == true && slqPtr_->costDesiredTrajectoriesUpdated() == false) {
+    std::cerr << "### WARNING: The initial desired trajectories are not set. "
+                 "This may cause undefined behavior. Use the MPC_SLQ::setCostDesiredTrajectories() "
+                 "method to provide appropriate goal trajectories."
+              << std::endl;
+  }
 
-	//*****************************************************************************************
-	// cost goal check
-	//*****************************************************************************************
-	if (BASE::initRun_==true && slqPtr_->costDesiredTrajectoriesUpdated()==false) {
-		std::cerr << "### WARNING: The initial desired trajectories are not set. "
-				"This may cause undefined behavior. Use the MPC_SLQ::setCostDesiredTrajectories() "
-				"method to provide appropriate goal trajectories." << std::endl;
-	}
+  //*****************************************************************************************
+  // updating real-time iteration settings
+  //*****************************************************************************************
+  // number of iterations
+  if (BASE::initRun_ == true /*|| slqPtr_->getController().at(BASE::finalActivePartitionIndex_).empty()==true*/) {
+    slqPtr_->ddpSettings().maxNumIterations_ = BASE::mpcSettings_.initMaxNumIterations_;
+    slqPtr_->ddpSettings().maxLearningRate_ = BASE::mpcSettings_.initMaxLearningRate_;
+    slqPtr_->ddpSettings().minLearningRate_ = BASE::mpcSettings_.initMinLearningRate_;
+  } else {
+    slqPtr_->ddpSettings().maxNumIterations_ = BASE::mpcSettings_.runtimeMaxNumIterations_;
+    slqPtr_->ddpSettings().maxLearningRate_ = BASE::mpcSettings_.runtimeMaxLearningRate_;
+    slqPtr_->ddpSettings().minLearningRate_ = BASE::mpcSettings_.runtimeMinLearningRate_;
+  }
 
-	//*****************************************************************************************
-	// updating real-time iteration settings
-	//*****************************************************************************************
-	// number of iterations
-	if (BASE::initRun_==true /*|| slqPtr_->getController().at(BASE::finalActivePartitionIndex_).empty()==true*/) {
-		slqPtr_->ddpSettings().maxNumIterations_  = BASE::mpcSettings_.initMaxNumIterations_;
-		slqPtr_->ddpSettings().maxLearningRate_ = BASE::mpcSettings_.initMaxLearningRate_;
-		slqPtr_->ddpSettings().minLearningRate_ = BASE::mpcSettings_.initMinLearningRate_;
-	} else {
-		slqPtr_->ddpSettings().maxNumIterations_  = BASE::mpcSettings_.runtimeMaxNumIterations_;
-		slqPtr_->ddpSettings().maxLearningRate_ = BASE::mpcSettings_.runtimeMaxLearningRate_;
-		slqPtr_->ddpSettings().minLearningRate_ = BASE::mpcSettings_.runtimeMinLearningRate_;
-	}
+  // use parallel Riccati solver at each call of realtime-iteration SLQ
+  if (BASE::initRun_ == false) {
+    if (BASE::mpcSettings_.useParallelRiccatiSolver_ == true && BASE::mpcSettings_.recedingHorizon_ == true) {
+      slqPtr_->useParallelRiccatiSolverFromInitItr(true);
+    } else {
+      slqPtr_->useParallelRiccatiSolverFromInitItr(false);
+    }
+  } else {
+    slqPtr_->useParallelRiccatiSolverFromInitItr(false);
+  }
 
-	// use parallel Riccati solver at each call of realtime-iteration SLQ
-	if (BASE::initRun_==false) {
-		if (BASE::mpcSettings_.useParallelRiccatiSolver_==true && BASE::mpcSettings_.recedingHorizon_==true) {
-			slqPtr_->useParallelRiccatiSolverFromInitItr(true);
-		} else {
-			slqPtr_->useParallelRiccatiSolverFromInitItr(false);
-		}
-	} else {
-		slqPtr_->useParallelRiccatiSolverFromInitItr(false);
-	}
+  //*****************************************************************************************
+  // calculate controller
+  //*****************************************************************************************
+  if (BASE::mpcSettings_.coldStart_ == true || BASE::initRun_ == true) {
+    if (BASE::mpcSettings_.debugPrint_) {
+      std::cerr << "### Using cold initialization." << std::endl;
+    }
 
-	//*****************************************************************************************
-	// calculate controller
-	//*****************************************************************************************
-	if (BASE::mpcSettings_.coldStart_==true || BASE::initRun_==true) {
+    slqPtr_->run(initTime, initState, finalTime, BASE::partitioningTimes_);
 
-		if (BASE::mpcSettings_.debugPrint_) {
-			std::cerr << "### Using cold initialization." << std::endl;
-		}
+  } else {
+    slqPtr_->run(initTime, initState, finalTime, BASE::partitioningTimes_, typename slq_base_t::controller_ptr_array_t());
+  }
 
-		slqPtr_->run(initTime, initState, finalTime, BASE::partitioningTimes_);
+  //*****************************************************************************************
+  // Get optimized outputs
+  //*****************************************************************************************
+  // swap the optimized trajectories
+  optimizedTimeTrajectoriesStock_.clear();
+  optimizedStateTrajectoriesStock_.clear();
+  optimizedInputTrajectoriesStock_.clear();
+  slqPtr_->swapNominalTrajectories(optimizedTimeTrajectoriesStock_, optimizedStateTrajectoriesStock_, optimizedInputTrajectoriesStock_);
+  timeTrajectoriesStockPtr = &optimizedTimeTrajectoriesStock_;
+  stateTrajectoriesStockPtr = &optimizedStateTrajectoriesStock_;
+  inputTrajectoriesStockPtr = &optimizedInputTrajectoriesStock_;
 
-	} else {
-		slqPtr_->run(initTime, initState, finalTime, BASE::partitioningTimes_,
-				typename slq_base_t::controller_ptr_array_t());
-	}
-
-	//*****************************************************************************************
-	// Get optimized outputs
-	//*****************************************************************************************
-	// swap the optimized trajectories
-	optimizedTimeTrajectoriesStock_.clear();
-	optimizedStateTrajectoriesStock_.clear();
-	optimizedInputTrajectoriesStock_.clear();
-	slqPtr_->swapNominalTrajectories(
-			optimizedTimeTrajectoriesStock_,
-			optimizedStateTrajectoriesStock_,
-			optimizedInputTrajectoriesStock_);
-	timeTrajectoriesStockPtr  = &optimizedTimeTrajectoriesStock_;
-	stateTrajectoriesStockPtr = &optimizedStateTrajectoriesStock_;
-	inputTrajectoriesStockPtr = &optimizedInputTrajectoriesStock_;
-
-	// get the optimal controller
-	slqPtr_->getControllerPtr(controllerStockPtr);
-
+  // get the optimal controller
+  slqPtr_->getControllerPtr(controllerStockPtr);
 }
 
-} // namespace ocs2
-
+}  // namespace ocs2

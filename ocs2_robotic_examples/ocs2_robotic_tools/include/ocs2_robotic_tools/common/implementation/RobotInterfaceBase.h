@@ -32,9 +32,9 @@ namespace ocs2
 
 /******************************************************************************************************/
 /******************************************************************************************************/
-/******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void RobotInterfaceBase<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::getInitialState(
+/***************************************************************************************************** */
+template <size_t STATE_DIM, size_t INPUT_DIM>
+void RobotInterfaceBase<STATE_DIM, INPUT_DIM>::getInitialState(
 		state_vector_t& initialState) const {
 
 	initialState = initialState_;
@@ -42,18 +42,18 @@ void RobotInterfaceBase<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::getInitialState(
 
 /******************************************************************************************************/
 /******************************************************************************************************/
-/******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-MPC_Settings& RobotInterfaceBase<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::mpcSettings() {
+/***************************************************************************************************** */
+template <size_t STATE_DIM, size_t INPUT_DIM>
+MPC_Settings& RobotInterfaceBase<STATE_DIM, INPUT_DIM>::mpcSettings() {
 
 	return mpcSettings_;
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
-/******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void RobotInterfaceBase<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::definePartitioningTimes(
+/***************************************************************************************************** */
+template <size_t STATE_DIM, size_t INPUT_DIM>
+void RobotInterfaceBase<STATE_DIM, INPUT_DIM>::definePartitioningTimes(
 		const std::string& taskFile,
 		scalar_t& timeHorizon,
 		size_t& numPartitions,
@@ -77,13 +77,13 @@ void RobotInterfaceBase<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::definePartitioning
 
 /******************************************************************************************************/
 /******************************************************************************************************/
-/******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void RobotInterfaceBase<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::loadMpcTimeHorizon(
+/***************************************************************************************************** */
+template <size_t STATE_DIM, size_t INPUT_DIM>
+void RobotInterfaceBase<STATE_DIM, INPUT_DIM>::loadMpcTimeHorizon(
 		const std::string& taskFile,
 		scalar_t& timeHorizon,
 		size_t& numPartitions,
-		bool verbose /*= false*/) const {
+		bool verbose /*= false*/) {
 
 	boost::property_tree::ptree pt;
 	boost::property_tree::read_info(taskFile, pt);
@@ -101,11 +101,11 @@ void RobotInterfaceBase<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::loadMpcTimeHorizon
 
 /******************************************************************************************************/
 /******************************************************************************************************/
-/******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void RobotInterfaceBase<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::loadInitialState(
+/***************************************************************************************************** */
+template <size_t STATE_DIM, size_t INPUT_DIM>
+void RobotInterfaceBase<STATE_DIM, INPUT_DIM>::loadInitialState(
 		const std::string& taskFile,
-		state_vector_t& initialState) const {
+		state_vector_t& initialState) {
 
 	boost::property_tree::ptree pt;
 	boost::property_tree::read_info(taskFile, pt);

@@ -35,7 +35,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <Eigen/Dense>
 
 #include <ocs2_core/Dimensions.h>
-#include <ocs2_core/integration/ODE_Base.h>
+#include <ocs2_core/integration/OdeBase.h>
 #include <ocs2_core/misc/LinearInterpolation.h>
 
 namespace ocs2{
@@ -45,34 +45,34 @@ namespace ocs2{
  *
  * @tparam STATE_DIM: Dimension of the state space.
  * @tparam INPUT_DIM: Dimension of the control input space.
- */
+  */
 template <size_t STATE_DIM, size_t INPUT_DIM>
-class BvpSensitivityEquations : public ODE_Base<STATE_DIM>
+class BvpSensitivityEquations : public OdeBase<STATE_DIM>
 {
 public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-	typedef ODE_Base<STATE_DIM> BASE;
+	typedef OdeBase<STATE_DIM> BASE;
 
 	typedef Dimensions<STATE_DIM, INPUT_DIM> DIMENSIONS;
-	typedef typename DIMENSIONS::scalar_t       scalar_t;
-	typedef typename DIMENSIONS::scalar_array_t scalar_array_t;
-	typedef typename DIMENSIONS::state_vector_t       state_vector_t;
-	typedef typename DIMENSIONS::state_vector_array_t state_vector_array_t;
-	typedef typename DIMENSIONS::input_vector_t       input_vector_t;
-	typedef typename DIMENSIONS::input_vector_array_t input_vector_array_t;
-	typedef typename DIMENSIONS::input_state_matrix_t       input_state_matrix_t;
-	typedef typename DIMENSIONS::input_state_matrix_array_t input_state_matrix_array_t;
-	typedef typename DIMENSIONS::state_matrix_t       state_matrix_t;
-	typedef typename DIMENSIONS::state_matrix_array_t state_matrix_array_t;
-	typedef typename DIMENSIONS::input_matrix_t       input_matrix_t;
-	typedef typename DIMENSIONS::input_matrix_array_t input_matrix_array_t;
-	typedef typename DIMENSIONS::state_input_matrix_t 		state_input_matrix_t;
-	typedef typename DIMENSIONS::state_input_matrix_array_t state_input_matrix_array_t;
-	typedef typename DIMENSIONS::constraint1_vector_t       constraint1_vector_t;
-	typedef typename DIMENSIONS::constraint1_vector_array_t constraint1_vector_array_t;
-	typedef typename DIMENSIONS::constraint1_state_matrix_t       constraint1_state_matrix_t;
-	typedef typename DIMENSIONS::constraint1_state_matrix_array_t constraint1_state_matrix_array_t;
+	using scalar_t = typename DIMENSIONS::scalar_t;
+	using scalar_array_t = typename DIMENSIONS::scalar_array_t;
+	using state_vector_t = typename DIMENSIONS::state_vector_t;
+	using state_vector_array_t = typename DIMENSIONS::state_vector_array_t;
+	using input_vector_t = typename DIMENSIONS::input_vector_t;
+	using input_vector_array_t = typename DIMENSIONS::input_vector_array_t;
+	using input_state_matrix_t = typename DIMENSIONS::input_state_matrix_t;
+	using input_state_matrix_array_t = typename DIMENSIONS::input_state_matrix_array_t ;
+	using state_matrix_t = typename DIMENSIONS::state_matrix_t;
+	using state_matrix_array_t = typename DIMENSIONS::state_matrix_array_t;
+	using input_matrix_t = typename DIMENSIONS::input_matrix_t;
+	using input_matrix_array_t = typename DIMENSIONS::input_matrix_array_t;
+	using state_input_matrix_t = typename DIMENSIONS::state_input_matrix_t;
+	using state_input_matrix_array_t = typename DIMENSIONS::state_input_matrix_array_t;
+	using constraint1_vector_t = typename DIMENSIONS::constraint1_vector_t;
+	using constraint1_vector_array_t = typename DIMENSIONS::constraint1_vector_array_t;
+	using constraint1_state_matrix_t = typename DIMENSIONS::constraint1_state_matrix_t;
+	using constraint1_state_matrix_array_t = typename DIMENSIONS::constraint1_state_matrix_array_t;
 
 	/**
 	 * Constructor.
@@ -129,8 +129,8 @@ public:
 		flowMapFunc_.setData(timeStampPtr, flowMapPtr);
 		costateFunc_.setData(timeStampPtr, costatePtr);
 		lagrangianFunc_.setData(timeStampPtr, lagrangianPtr);
-		KmConstrainedFunc_.setData(timeStampPtr, KmConstrainedPtr);
-		SmFunc_.setData(timeStampPtr, SmPtr);
+		KmConstrainedFunc_.setData(controllerTimeStampPtr, KmConstrainedPtr);
+		SmFunc_.setData(controllerTimeStampPtr, SmPtr);
 	}
 
 	/**
@@ -167,19 +167,19 @@ public:
 		// denormalized time
 		const scalar_t t = switchingTimeFinal_ - scalingFactor_*z;
 
-		auto greatestLessTimeStampIndex = AmFunc_.interpolate(t, Am_);
-		BmFunc_.interpolate(t, Bm_, greatestLessTimeStampIndex);
-		CmFunc_.interpolate(t, Cm_, greatestLessTimeStampIndex);
-		AmConstrainedFunc_.interpolate(t, AmConstrained_, greatestLessTimeStampIndex);
-		CmProjectedFunc_.interpolate(t, CmProjected_, greatestLessTimeStampIndex);
-		QvFunc_.interpolate(t, Qv_, greatestLessTimeStampIndex);
+		auto indexAlpha = AmFunc_.interpolate(t, Am_);
+		BmFunc_.interpolate(indexAlpha,  Bm_);
+		CmFunc_.interpolate(indexAlpha,  Cm_);
+		AmConstrainedFunc_.interpolate(indexAlpha,  AmConstrained_);
+		CmProjectedFunc_.interpolate(indexAlpha,  CmProjected_);
+		QvFunc_.interpolate(indexAlpha,  Qv_);
 
-		flowMapFunc_.interpolate(t, flowMap_, greatestLessTimeStampIndex);
-		costateFunc_.interpolate(t, costate_, greatestLessTimeStampIndex);
-		lagrangianFunc_.interpolate(t, lagrangian_, greatestLessTimeStampIndex);
+		flowMapFunc_.interpolate(indexAlpha,  flowMap_);
+		costateFunc_.interpolate(indexAlpha,  costate_);
+		lagrangianFunc_.interpolate(indexAlpha,  lagrangian_);
 
-		greatestLessTimeStampIndex = KmConstrainedFunc_.interpolate(t, KmConstrained_);
-		SmFunc_.interpolate(t, Sm_, greatestLessTimeStampIndex);
+		indexAlpha = KmConstrainedFunc_.interpolate(t, KmConstrained_);
+		SmFunc_.interpolate(indexAlpha,  Sm_);
 
 		// here we have used RmConstrained = (I-DmConstrained).transpose() * Rm
 		// and Km = -(I-DmConstrained) \tilde{L} - CmProjected_
@@ -197,17 +197,17 @@ private:
 
 	scalar_t multiplier_ = 0.0;
 
-	LinearInterpolation<state_matrix_t,Eigen::aligned_allocator<state_matrix_t>> AmFunc_;
-	LinearInterpolation<state_input_matrix_t,Eigen::aligned_allocator<state_input_matrix_t>> BmFunc_;
-	LinearInterpolation<constraint1_state_matrix_t,Eigen::aligned_allocator<constraint1_state_matrix_t>> CmFunc_;
-	LinearInterpolation<state_matrix_t,Eigen::aligned_allocator<state_matrix_t>> AmConstrainedFunc_;
-	LinearInterpolation<input_state_matrix_t,Eigen::aligned_allocator<input_state_matrix_t>> CmProjectedFunc_;
-	LinearInterpolation<state_vector_t,Eigen::aligned_allocator<state_vector_t>> QvFunc_;
-	LinearInterpolation<state_vector_t,Eigen::aligned_allocator<state_vector_t>> flowMapFunc_;
-	LinearInterpolation<state_vector_t,Eigen::aligned_allocator<state_vector_t>> costateFunc_;
-	LinearInterpolation<constraint1_vector_t,Eigen::aligned_allocator<constraint1_vector_t>> lagrangianFunc_;
-	LinearInterpolation<input_state_matrix_t,Eigen::aligned_allocator<input_state_matrix_t>> KmConstrainedFunc_;
-	LinearInterpolation<state_matrix_t,Eigen::aligned_allocator<state_matrix_t>> SmFunc_;
+	EigenLinearInterpolation<state_matrix_t> AmFunc_;
+	EigenLinearInterpolation<state_input_matrix_t> BmFunc_;
+	EigenLinearInterpolation<constraint1_state_matrix_t> CmFunc_;
+	EigenLinearInterpolation<state_matrix_t> AmConstrainedFunc_;
+	EigenLinearInterpolation<input_state_matrix_t> CmProjectedFunc_;
+	EigenLinearInterpolation<state_vector_t> QvFunc_;
+	EigenLinearInterpolation<state_vector_t> flowMapFunc_;
+	EigenLinearInterpolation<state_vector_t> costateFunc_;
+	EigenLinearInterpolation<constraint1_vector_t> lagrangianFunc_;
+	EigenLinearInterpolation<input_state_matrix_t> KmConstrainedFunc_;
+	EigenLinearInterpolation<state_matrix_t> SmFunc_;
 
 	state_matrix_t Am_;
 	state_input_matrix_t Bm_;

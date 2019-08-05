@@ -41,7 +41,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_slq/SLQ.h>
 #include <ocs2_slq/SLQ_MP.h>
 
-#include "ocs2_ocs2/GSLQ_BASE.h"
+#include "ocs2_ocs2/GDDP.h"
 
 namespace ocs2{
 
@@ -50,31 +50,28 @@ namespace ocs2{
  *
  * @tparam STATE_DIM: Dimension of the state space.
  * @tparam INPUT_DIM: Dimension of the control input space.
- * @tparam LOGIC_RULES_T: Logic Rules type (default NullLogicRules).
  */
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T=NullLogicRules>
+template <size_t STATE_DIM, size_t INPUT_DIM>
 class OCS2Projected : private nlp::GradientDescent<double>
 {
 public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-	static_assert(std::is_base_of<LogicRulesBase, LOGIC_RULES_T>::value,
-			"LOGIC_RULES_T must inherit from LogicRulesBase");
 
-	typedef std::shared_ptr<OCS2Projected<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>> Ptr;
+
+	typedef std::shared_ptr<OCS2Projected<STATE_DIM, INPUT_DIM>> Ptr;
 
 	typedef nlp::GradientDescent<double> BASE;
 
-	typedef SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>  slq_base_t;
-	typedef SLQ<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>       slq_t;
-	typedef SLQ_MP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>    slq_mp_t;
-	typedef GSLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> gslq_t;
+	typedef SLQ_BASE<STATE_DIM, INPUT_DIM>  slq_base_t;
+	typedef SLQ<STATE_DIM, INPUT_DIM>       slq_t;
+	typedef SLQ_MP<STATE_DIM, INPUT_DIM>    slq_mp_t;
+	typedef GDDP<STATE_DIM, INPUT_DIM> gddp_t;
 	typedef typename slq_base_t::Ptr slq_base_ptr_t;
 	typedef typename slq_t::Ptr      slq_ptr_t;
 	typedef typename slq_mp_t::Ptr   slq_mp_ptr_t;
-	typedef typename gslq_t::Ptr     gslq_ptr_t;
 
-	typedef SLQ_DataCollector<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> slq_data_collector_t;
+	typedef SLQ_DataCollector<STATE_DIM, INPUT_DIM> slq_data_collector_t;
 	typedef typename slq_data_collector_t::Ptr slq_data_collector_ptr_t;
 
 	typedef typename slq_base_t::controlled_system_base_t      controlled_system_base_t;
@@ -124,7 +121,8 @@ public:
 			const cost_function_base_t* costFunctionPtr,
 			const operating_trajectories_base_t* operatingTrajectoriesPtr,
 			const SLQ_Settings& slqSettings = SLQ_Settings(),
-			const LOGIC_RULES_T* logicRulesPtr = nullptr,
+			const GDDP_Settings& gddpSettings = GDDP_Settings(),
+			std::shared_ptr<HybridLogicRules> logicRulesPtr = nullptr,
 			const cost_function_base_t* heuristicsFunctionPtr = nullptr);
 
 	/**
@@ -315,7 +313,7 @@ private:
 	std::vector<dynamic_vector_t> parameterBag_;
 	controller_array2_t controllersStockBag_;
 
-	gslq_ptr_t gslqSolverPtr_;
+	std::unique_ptr<gddp_t> gddpSolverPtr_;
 	slq_data_collector_ptr_t slqDataCollectorPtr_;
 	std::vector<slq_base_ptr_t> slqSolverPtrs_;
 

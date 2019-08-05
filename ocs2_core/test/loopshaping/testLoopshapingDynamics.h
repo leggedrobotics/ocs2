@@ -49,7 +49,7 @@ class TestFixtureLoopShapingDynamics : public ::testing::Test {
 
     // Load loopshaping definition
     const std::string settingsFile = getAbsolutePathToConfigurationFile(CONFIG::fileName);
-    loopshapingDefinition_ = LoopshapingPropertyTree::load(settingsFile);
+    loopshapingDefinition_ = loopshaping_property_tree::load(settingsFile);
 
     // Create system dynamics
     system_state_matrix_t A, G;
@@ -61,10 +61,10 @@ class TestFixtureLoopShapingDynamics : public ::testing::Test {
     testSystem.reset(new TestSystem(A, B, G, H));
 
     // Create Loopshaping Dynamics
-    testLoopshapingDynamics = TestLoopshapingDynamics::Create(*testSystem, loopshapingDefinition_);
+    testLoopshapingDynamics = TestLoopshapingDynamics::create(*testSystem, loopshapingDefinition_);
 
     // Create Loopshaping Derivatives
-    testLoopshapingDynamicsDerivative = TestLoopshapingDynamicsDerivative::Create(*testSystem, loopshapingDefinition_);
+    testLoopshapingDynamicsDerivative = TestLoopshapingDynamicsDerivative::create(*testSystem, loopshapingDefinition_);
 
     // Set up state and input
     t = 0.5;

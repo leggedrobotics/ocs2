@@ -45,12 +45,12 @@ int main(int argc, char **argv)
 	CartPoleInterface cartPoleInterface(taskFileFolderName);
 
 	typedef MRT_ROS_Cartpole mrt_t;
-	typedef mrt_t::BASE::Ptr mrt_base_ptr_t;
+	typedef mrt_t::Ptr mrt_ptr_t;
 	typedef mrt_t::scalar_t scalar_t;
 	typedef mrt_t::system_observation_t system_observation_t;
 	typedef Dimensions<4, 1> dim_t;
 
-	mrt_base_ptr_t mrtPtr(new mrt_t("cartpole"));
+	mrt_ptr_t mrtPtr(new mrt_t("cartpole"));
 
 	// Dummy cartpole
 	const double mrtLoopFrequency = 100;

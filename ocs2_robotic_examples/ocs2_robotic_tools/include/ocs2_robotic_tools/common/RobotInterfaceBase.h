@@ -54,8 +54,8 @@ namespace ocs2{
  *
  * @tparam STATE_DIM: Dimension of the state space.
  * @tparam INPUT_DIM: Dimension of the control input space.
- */
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T = NullLogicRules>
+  */
+template <size_t STATE_DIM, size_t INPUT_DIM>
 class RobotInterfaceBase
 {
 public:
@@ -161,7 +161,6 @@ public:
 	 */
 	virtual void loadSettings(const std::string& taskFile) = 0;
 
-protected:
 	/**
 	 * Defines the time partitioning based on the task file values:
 	 * "mpcTimeHorizon.timehorizon" and "mpcTimeHorizon.numPartitions".
@@ -173,7 +172,7 @@ protected:
 	 * @param [out] partitioningTimes: The time partitioning.
 	 * @param [in] verbose: Whether to print out the loaded variables.
 	 */
-	void definePartitioningTimes(
+	static void definePartitioningTimes(
 			const std::string& taskFile,
 			scalar_t& timeHorizon,
 			size_t& numPartitions,
@@ -186,9 +185,9 @@ protected:
 	 * @param [in] taskFile: Task's file full path.
 	 * @param [out] initialState: Initial state.
 	 */
-	void loadInitialState(
+	static void loadInitialState(
 			const std::string& taskFile,
-			state_vector_t& initialState) const;
+			state_vector_t& initialState);
 
 	/**
 	 * Loads MPC time horizon and the number of data partitioning from the task file.
@@ -198,12 +197,14 @@ protected:
 	 * @param [out] numPartitions: The number of data partitioning.
 	 * @param [in] verbose: Whether to print out the loaded variables.
 	 */
-	void loadMpcTimeHorizon(
+	static void loadMpcTimeHorizon(
 			const std::string& taskFile,
 			scalar_t& timeHorizon,
 			size_t& numPartitions,
-			bool verbose = false) const;
+			bool verbose = false);
 
+
+protected:
 	/**************
 	 * Variables
 	 **************/

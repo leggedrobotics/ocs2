@@ -27,37 +27,35 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-namespace ocs2{
+namespace ocs2 {
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <typename SCALAR_T>
-TargetTrajectories_ROS_Interface<SCALAR_T>::TargetTrajectories_ROS_Interface(
-			const std::string& robotName /*= "robot"*/)
-	: robotName_(robotName)
-{}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-template <typename SCALAR_T>
-TargetTrajectories_ROS_Interface<SCALAR_T>::~TargetTrajectories_ROS_Interface() {
-
-	shutdownNodes();
+TargetTrajectories_ROS_Interface<SCALAR_T>::TargetTrajectories_ROS_Interface(int argc, char* argv[],
+                                                                             const std::string& robotName /*= "robot"*/)
+    : robotName_(robotName) {
+  ::ros::init(argc, argv, robotName_ + "_mpc_target");
+  nodeHandle_.reset(new ::ros::NodeHandle);
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <typename SCALAR_T>
-void TargetTrajectories_ROS_Interface<SCALAR_T>::publishTargetTrajectories(
-		const cost_desired_trajectories_t& costDesiredTrajectories) {
+TargetTrajectories_ROS_Interface<SCALAR_T>::~TargetTrajectories_ROS_Interface() {
+  shutdownNodes();
+}
 
-	RosMsgConversions<0, 0>::CreateTargetTrajectoriesMsg(costDesiredTrajectories,
-			mpcTargetTrajectoriesMsg_);
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+template <typename SCALAR_T>
+void TargetTrajectories_ROS_Interface<SCALAR_T>::publishTargetTrajectories(const cost_desired_trajectories_t& costDesiredTrajectories) {
+  RosMsgConversions<0, 0>::CreateTargetTrajectoriesMsg(costDesiredTrajectories, mpcTargetTrajectoriesMsg_);
 
-	mpcTargetTrajectoriesPublisher_.publish(mpcTargetTrajectoriesMsg_);
+  mpcTargetTrajectoriesPublisher_.publish(mpcTargetTrajectoriesMsg_);
 }
 
 /******************************************************************************************************/
@@ -65,33 +63,27 @@ void TargetTrajectories_ROS_Interface<SCALAR_T>::publishTargetTrajectories(
 /******************************************************************************************************/
 template <typename SCALAR_T>
 void TargetTrajectories_ROS_Interface<SCALAR_T>::shutdownNodes() {
-
-	mpcTargetTrajectoriesPublisher_.shutdown();
+  mpcTargetTrajectoriesPublisher_.shutdown();
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <typename SCALAR_T>
-void TargetTrajectories_ROS_Interface<SCALAR_T>::launchNodes(int argc, char* argv[]) {
+void TargetTrajectories_ROS_Interface<SCALAR_T>::launchNodes() {
+  // reset counters and variables
+  reset();
 
-	// reset counters and variables
-	reset();
+  // display
+  ROS_INFO_STREAM("TargetTrajectories node is setting up ...");
 
-	// display
-	ROS_INFO_STREAM("TargetTrajectories node is setting up ...");
+  mpcTargetTrajectoriesPublisher_ =
+      nodeHandle_->advertise<ocs2_comm_interfaces::mpc_target_trajectories>(robotName_ + "_mpc_target", 1, false);
 
-	// setup ROS
-	::ros::init(argc, argv, robotName_+"_mpc_target");
-	::ros::NodeHandle nodeHandler;
+  ros::spinOnce();
 
-	mpcTargetTrajectoriesPublisher_ = nodeHandler.advertise<ocs2_comm_interfaces::mpc_target_trajectories>(
-			robotName_ + "_mpc_target", 1, false);
-
-	ros::spinOnce();
-
-	// display
-	ROS_INFO_STREAM(robotName_ + " target trajectories command node is ready.");
+  // display
+  ROS_INFO_STREAM(robotName_ + " target trajectories command node is ready.");
 }
 
-} // namespace ocs2
+}  // namespace ocs2

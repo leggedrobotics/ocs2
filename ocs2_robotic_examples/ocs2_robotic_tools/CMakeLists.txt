@@ -48,11 +48,10 @@ find_package(cmake_clang_tools QUIET)
 if(cmake_clang_tools_FOUND)
   message(STATUS "Run clang tooling for target " ${PROJECT_NAME}_lintTarget)
   add_clang_tooling(
-    TARGET ${PROJECT_NAME}_lintTarget
+    TARGETS ${PROJECT_NAME}_lintTarget
     SOURCE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/src ${CMAKE_CURRENT_SOURCE_DIR}/include/command ${CMAKE_CURRENT_SOURCE_DIR}/include/common
     CT_HEADER_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/include
     CF_QUIET # temporarily set to quiet, because the current amount of warning crashes the buildserver
-    CT_QUIET
     # CF_FIX # temporarily disabled
   )
 endif(cmake_clang_tools_FOUND)

@@ -33,15 +33,15 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 using namespace ocs2;
 
-class TestLogicRules : public LogicRulesBase
+class TestLogicRules : public HybridLogicRules
 {
 public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-	typedef LogicRulesBase BASE;
-	typedef LogicRulesBase::scalar_t scalar_t;
-	typedef LogicRulesBase::scalar_array_t scalar_array_t;
-	typedef LogicRulesBase::size_array_t size_array_t;
+	typedef HybridLogicRules BASE;
+	typedef BASE::scalar_t scalar_t;
+	typedef BASE::scalar_array_t scalar_array_t;
+	typedef BASE::size_array_t size_array_t;
 
 	TestLogicRules() {}
 
@@ -58,6 +58,12 @@ public:
 			const scalar_t& upperBoundTime) override
 	{}
 
+ protected:
+  void insertModeSequenceTemplate(
+		  const logic_template_type& modeSequenceTemplate,
+		  const scalar_t& startTime,
+		  const scalar_t& finalTime) override {};
+
 private:
 
 };
@@ -65,15 +71,15 @@ private:
 
 TEST(testEventTimeIndexer, test_0)
 {
-	TestLogicRules logicRules;
-	LogicRulesMachine<TestLogicRules> logicRulesMachine(logicRules);
+	std::shared_ptr<TestLogicRules> logicRules(new TestLogicRules());
+	HybridLogicRulesMachine logicRulesMachine(logicRules);
 
 	// Times
 	std::vector<double> partitioningTimes{0.5,1.5,2.5};
 	std::vector<double> logicRulesEventTimes = std::vector<double>{0.25, 0.75, 1.25, 1.75, 2.25, 2.75};
 
 	// Set logic
-	logicRules.set(logicRulesEventTimes);
+	logicRules->set(logicRulesEventTimes);
 	logicRulesMachine.setLogicRules(logicRules);
 	logicRulesMachine.updateLogicRules(partitioningTimes);
 
@@ -125,15 +131,15 @@ TEST(testEventTimeIndexer, test_0)
 
 TEST(testEventTimeIndexer, test_1)
 {
-	TestLogicRules logicRules;
-	LogicRulesMachine<TestLogicRules> logicRulesMachine(logicRules);
+	std::shared_ptr<TestLogicRules> logicRules(new TestLogicRules());
+	HybridLogicRulesMachine logicRulesMachine(logicRules);
 
 	// Times
 	std::vector<double> partitioningTimes{1, 2, 3};
 	std::vector<double> logicRulesEventTimes = std::vector<double>{0, 1, 2, 3, 4};
 
 	// Set logic
-	logicRules.set(logicRulesEventTimes);
+	logicRules->set(logicRulesEventTimes);
 	logicRulesMachine.setLogicRules(logicRules);
 	logicRulesMachine.updateLogicRules(partitioningTimes);
 
@@ -182,15 +188,15 @@ TEST(testEventTimeIndexer, test_1)
 
 TEST(testEventTimeIndexer, test_2)
 {
-	TestLogicRules logicRules;
-	LogicRulesMachine<TestLogicRules> logicRulesMachine(logicRules);
+	std::shared_ptr<TestLogicRules> logicRules(new TestLogicRules());
+	HybridLogicRulesMachine logicRulesMachine(logicRules);
 
 	// Times
 	std::vector<double> partitioningTimes{1, 2, 3, 4, 5};
 	std::vector<double> logicRulesEventTimes = std::vector<double>{0, 4.1};
 
 	// Set logic
-	logicRules.set(logicRulesEventTimes);
+	logicRules->set(logicRulesEventTimes);
 	logicRulesMachine.setLogicRules(logicRules);
 	logicRulesMachine.updateLogicRules(partitioningTimes);
 
@@ -230,15 +236,15 @@ TEST(testEventTimeIndexer, test_2)
 
 TEST(testEventTimeIndexer, test_3)
 {
-	TestLogicRules logicRules;
-	LogicRulesMachine<TestLogicRules> logicRulesMachine(logicRules);
+	std::shared_ptr<TestLogicRules> logicRules(new TestLogicRules());
+	HybridLogicRulesMachine logicRulesMachine(logicRules);
 
 	// Times
 	std::vector<double> partitioningTimes{1, 2.5, 3, 5};
 	std::vector<double> logicRulesEventTimes = std::vector<double>{1.0, 1.5, 2.0, 3.5, 4.0};
 
 	// Set logic
-	logicRules.set(logicRulesEventTimes);
+	logicRules->set(logicRulesEventTimes);
 	logicRulesMachine.setLogicRules(logicRules);
 	logicRulesMachine.updateLogicRules(partitioningTimes);
 

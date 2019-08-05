@@ -44,7 +44,7 @@ namespace testCppADCG_cost
 
 /******************************************************************************/
 /******************************************************************************/
-/******************************************************************************/
+/***************************************************************************** */
 template <size_t STATE_DIM, size_t INPUT_DIM>
 void checkCostFunction(
 		const size_t numTests,
@@ -215,7 +215,7 @@ TEST(testCppADCG_cost, quadratic_cost_test)
 
 	typedef ocs2::CostFunctionBase<state_dim_, input_dim_>      base_cost_t;
 	typedef ocs2::QuadraticCostFunction<state_dim_, input_dim_> quadratic_cost_t;
-	typedef ocs2::QuadraticCostFunctionAD<state_dim_, input_dim_, ocs2::NullLogicRules> ad_quadratic_cost_t;
+	typedef ocs2::QuadraticCostFunctionAD<state_dim_, input_dim_> ad_quadratic_cost_t;
 
 	cost_parameters costParam;
 
@@ -253,7 +253,7 @@ TEST(testCppADCG_cost, clone_test)
 
 	typedef ocs2::CostFunctionBase<state_dim_, input_dim_>      base_cost_t;
 	typedef ocs2::QuadraticCostFunction<state_dim_, input_dim_> quadratic_cost_t;
-	typedef ocs2::QuadraticCostFunctionAD<state_dim_, input_dim_, ocs2::NullLogicRules> ad_quadratic_cost_t;
+	typedef ocs2::QuadraticCostFunctionAD<state_dim_, input_dim_> ad_quadratic_cost_t;
 
 	cost_parameters costParam;
 
@@ -293,7 +293,7 @@ TEST(testCppADCG_cost, multithread_test)
 
 	typedef ocs2::CostFunctionBase<state_dim_, input_dim_>      base_cost_t;
 	typedef ocs2::QuadraticCostFunction<state_dim_, input_dim_> quadratic_cost_t;
-	typedef ocs2::QuadraticCostFunctionAD<state_dim_, input_dim_, ocs2::NullLogicRules> ad_quadratic_cost_t;
+	typedef ocs2::QuadraticCostFunctionAD<state_dim_, input_dim_> ad_quadratic_cost_t;
 
 	cost_parameters costParam;
 

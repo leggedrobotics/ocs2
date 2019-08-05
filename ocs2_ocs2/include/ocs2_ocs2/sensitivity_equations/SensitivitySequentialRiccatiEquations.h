@@ -34,7 +34,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <Eigen/Dense>
 
 #include <ocs2_core/Dimensions.h>
-#include <ocs2_core/integration/ODE_Base.h>
+#include <ocs2_core/integration/OdeBase.h>
 #include <ocs2_core/misc/LinearInterpolation.h>
 
 namespace ocs2{
@@ -44,9 +44,9 @@ namespace ocs2{
  *
  * @tparam STATE_DIM: Dimension of the state space.
  * @tparam INPUT_DIM: Dimension of the control input space.
- */
+  */
 template <size_t STATE_DIM, size_t INPUT_DIM>
-class SensitivitySequentialRiccatiEquations : public ODE_Base<STATE_DIM*(STATE_DIM+1)/2+STATE_DIM+1>
+class SensitivitySequentialRiccatiEquations : public OdeBase<STATE_DIM*(STATE_DIM+1)/2+STATE_DIM+1>
 {
 public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
@@ -56,27 +56,27 @@ public:
 		S_DIM_ = STATE_DIM*(STATE_DIM+1)/2+STATE_DIM+1
 	};
 
-	typedef ODE_Base<S_DIM_> BASE;
+	typedef OdeBase<S_DIM_> BASE;
 
 	typedef Dimensions<STATE_DIM, INPUT_DIM> DIMENSIONS;
-	typedef typename DIMENSIONS::controller_t controller_t;
-	typedef typename DIMENSIONS::scalar_t       scalar_t;
-	typedef typename DIMENSIONS::scalar_array_t scalar_array_t;
-	typedef typename DIMENSIONS::eigen_scalar_t       eigen_scalar_t;
-	typedef typename DIMENSIONS::eigen_scalar_array_t eigen_scalar_array_t;
-	typedef typename DIMENSIONS::state_vector_t       state_vector_t;
-	typedef typename DIMENSIONS::state_vector_array_t state_vector_array_t;
-	typedef typename DIMENSIONS::input_vector_t       input_vector_t;
-	typedef typename DIMENSIONS::input_vector_array_t input_vector_array_t;
-	typedef typename DIMENSIONS::input_state_matrix_t       input_state_matrix_t;
-	typedef typename DIMENSIONS::input_state_matrix_array_t input_state_matrix_array_t;
-	typedef typename DIMENSIONS::state_matrix_t       state_matrix_t;
-	typedef typename DIMENSIONS::state_matrix_array_t state_matrix_array_t;
-	typedef typename DIMENSIONS::input_matrix_t       input_matrix_t;
-	typedef typename DIMENSIONS::input_matrix_array_t input_matrix_array_t;
-	typedef typename DIMENSIONS::state_input_matrix_t       state_input_matrix_t;
-	typedef typename DIMENSIONS::state_input_matrix_array_t state_input_matrix_array_t;
-	typedef typename DIMENSIONS::dynamic_vector_t dynamic_vector_t;
+	using controller_t = typename DIMENSIONS::controller_t;
+	using scalar_t = typename DIMENSIONS::scalar_t;
+	using scalar_array_t = typename DIMENSIONS::scalar_array_t;
+	using eigen_scalar_t = typename DIMENSIONS::eigen_scalar_t;
+	using eigen_scalar_array_t = typename DIMENSIONS::eigen_scalar_array_t;
+	using state_vector_t = typename DIMENSIONS::state_vector_t;
+	using state_vector_array_t = typename DIMENSIONS::state_vector_array_t;
+	using input_vector_t = typename DIMENSIONS::input_vector_t;
+	using input_vector_array_t = typename DIMENSIONS::input_vector_array_t;
+	using input_state_matrix_t = typename DIMENSIONS::input_state_matrix_t;
+	using input_state_matrix_array_t = typename DIMENSIONS::input_state_matrix_array_t;
+	using state_matrix_t = typename DIMENSIONS::state_matrix_t;
+	using state_matrix_array_t = typename DIMENSIONS::state_matrix_array_t;
+	using input_matrix_t = typename DIMENSIONS::input_matrix_t;
+	using input_matrix_array_t = typename DIMENSIONS::input_matrix_array_t;
+	using state_input_matrix_t = typename DIMENSIONS::state_input_matrix_t;
+	using state_input_matrix_array_t = typename DIMENSIONS::state_input_matrix_array_t;
+	using dynamic_vector_t = typename DIMENSIONS::dynamic_vector_t;
 
 	typedef Eigen::Matrix<scalar_t, S_DIM_,1> s_vector_t;
 	typedef std::vector<s_vector_t, Eigen::aligned_allocator<s_vector_t> > s_vector_array_t;
@@ -254,25 +254,26 @@ public:
 		BASE::numFunctionCalls_++;
 
 		// denormalized time
-		const scalar_t t = switchingTimeFinal_ - scalingFactor_*z;
+//		const scalar_t t = switchingTimeFinal_ - scalingFactor_*z;
+		const scalar_t t = -z;
 
 		convert2Matrix(allSs, nabla_Sm_, nabla_Sv_, nabla_s_);
 
-		auto greatestLessTimeStampIndex = SvFunc_.interpolate(t, Sv_);
-		SmFunc_.interpolate(t, Sm_, greatestLessTimeStampIndex);
+		auto indexAlpha = SvFunc_.interpolate(t, Sv_);
+		SmFunc_.interpolate(indexAlpha,  Sm_);
 
-		greatestLessTimeStampIndex = AmFunc_.interpolate(t, Am_);
-		BmFunc_.interpolate(t, Bm_, greatestLessTimeStampIndex);
+		indexAlpha = AmFunc_.interpolate(t, Am_);
+		BmFunc_.interpolate(indexAlpha,  Bm_);
 		qFunc_.interpolate(t, q_);
-		QvFunc_.interpolate(t, Qv_, greatestLessTimeStampIndex);
-		QmFunc_.interpolate(t, Qm_, greatestLessTimeStampIndex);
-		RvFunc_.interpolate(t, Rv_, greatestLessTimeStampIndex);
-		RmInverseFunc_.interpolate(t, invRm_, greatestLessTimeStampIndex);
-		RmFunc_.interpolate(t, Rm_, greatestLessTimeStampIndex);
-		PmFunc_.interpolate(t, Pm_, greatestLessTimeStampIndex);
-		nabla_qFunc_.interpolate(t, nabla_q_, greatestLessTimeStampIndex);
-		nabla_QvFunc_.interpolate(t, nabla_Qv_, greatestLessTimeStampIndex);
-		nabla_RvFunc_.interpolate(t, nabla_Rv_, greatestLessTimeStampIndex);
+		QvFunc_.interpolate(indexAlpha,  Qv_);
+		QmFunc_.interpolate(indexAlpha,  Qm_);
+		RvFunc_.interpolate(indexAlpha,  Rv_);
+		RmInverseFunc_.interpolate(indexAlpha,  invRm_);
+		RmFunc_.interpolate(indexAlpha,  Rm_);
+		PmFunc_.interpolate(indexAlpha,  Pm_);
+		nabla_qFunc_.interpolate(indexAlpha,  nabla_q_);
+		nabla_QvFunc_.interpolate(indexAlpha,  nabla_Qv_);
+		nabla_RvFunc_.interpolate(indexAlpha,  nabla_Rv_);
 
 		Lv_ = invRm_ * (Rv_ + Bm_.transpose()*Sv_);
 		Lm_ = invRm_ * (Pm_ + Bm_.transpose()*Sm_);
@@ -305,9 +306,9 @@ public:
 				(nabla_Lv_.transpose()*Rm_*Lv_ + Lv_.transpose()*Rm_*nabla_Lv_);
 
 		// switching time gradient for the equivalent system
-		nabla_dSmdz_ = scalingFactor_ * (nabla_dSmdt_ + multiplier_*dSmdt_);
-		nabla_dSvdz_ = scalingFactor_ * (nabla_dSvdt_ + multiplier_*dSvdt_);
-		nabla_dsdz_  = scalingFactor_ * (nabla_dsdt_ + multiplier_*dsdt_);
+		nabla_dSmdz_ = nabla_dSmdt_ + multiplier_*dSmdt_;
+		nabla_dSvdz_ = nabla_dSvdt_ + multiplier_*dSvdt_;
+		nabla_dsdz_  = nabla_dsdt_ + multiplier_*dsdt_;
 
 		convert2Vector(nabla_dSmdz_, nabla_dSvdz_, nabla_dsdz_, derivatives);
 	}

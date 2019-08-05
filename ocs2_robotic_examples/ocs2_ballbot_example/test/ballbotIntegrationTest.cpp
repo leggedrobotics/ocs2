@@ -6,9 +6,9 @@
 
 #include "ocs2_ballbot_example/BallbotInterface.h"
 #include "ocs2_ballbot_example/definitions.h"
-#include "ocs2_ballbot_example/ros_comm/MPC_ROS_Ballbot.h"
 #include "ocs2_ballbot_example/ros_comm/MRT_ROS_Ballbot.h"
 #include "ocs2_ballbot_example/ros_comm/MRT_ROS_Dummy_Ballbot.h"
+#include "ocs2_comm_interfaces/ocs2_ros_interfaces/mpc/MPC_ROS_Interface.h"
 
 using namespace ocs2;
 using namespace ballbot;
@@ -18,11 +18,11 @@ TEST(BallbotIntegrationTest, createDummyMRT) {
   BallbotInterface ballbotInterface(taskFileFolderName);
 
   typedef MRT_ROS_Ballbot mrt_t;
-  typedef mrt_t::BASE::Ptr mrt_base_ptr_t;
+  typedef mrt_t::Ptr mrt_ptr_t;
   typedef mrt_t::scalar_t scalar_t;
   typedef mrt_t::system_observation_t system_observation_t;
 
-  mrt_base_ptr_t mrtPtr(new mrt_t("ballbot"));
+  mrt_ptr_t mrtPtr(new mrt_t("ballbot"));
 
   // Dummy ballbot
   MRT_ROS_Dummy_Ballbot dummyBallbot(
@@ -42,7 +42,7 @@ TEST(BallbotIntegrationTest, createMPC) {
   BallbotInterface ballbotInterface(taskFileFolderName);
 
   // Launch MPC ROS node
-  MPC_ROS_Ballbot mpcNode(*ballbotInterface.getMPCPtrSpecialized(), "ballbot");
+  MPC_ROS_Interface<STATE_DIM_, INPUT_DIM_> mpcNode(ballbotInterface.getMPCPtr().get(), "ballbot");
 
   ASSERT_TRUE(true);
 }

@@ -47,28 +47,6 @@ enum
 
 TEST(exp1_slq_test, Exp1_slq_test)
 {
-
-	// system dynamics
-	EXP1_System systemDynamics;
-
-	// system derivatives
-	EXP1_SystemDerivative systemDerivative;
-
-	// system constraints
-	EXP1_SystemConstraint systemConstraint;
-
-	// system cost functions
-	EXP1_CostFunction systemCostFunction;
-
-	// system operatingTrajectories
-	Eigen::Matrix<double,STATE_DIM,1> stateOperatingPoint = Eigen::Matrix<double,STATE_DIM,1>::Zero();
-	Eigen::Matrix<double,INPUT_DIM,1> inputOperatingPoint = Eigen::Matrix<double,INPUT_DIM,1>::Zero();
-	EXP1_SystemOperatingTrajectories operatingTrajectories(stateOperatingPoint, inputOperatingPoint);
-
-
-	/******************************************************************************************************/
-	/******************************************************************************************************/
-	/******************************************************************************************************/
 	SLQ_Settings slqSettings;
 	slqSettings.useNominalTimeForBackwardPass_ = true;
 	slqSettings.ddpSettings_.displayInfo_ = false;
@@ -87,8 +65,9 @@ TEST(exp1_slq_test, Exp1_slq_test)
 	slqSettings.rolloutSettings_.maxNumStepsPerSecond_ = 10000;
 
 	// switching times
-	std::vector<double> switchingTimes {0.2262, 1.0176};
-	EXP1_LogicRules logicRules(switchingTimes);
+	std::vector<double> eventTimes {0.2262, 1.0176};
+	std::vector<size_t> subsystemsSequence{0, 1, 2};
+	std::shared_ptr<EXP1_LogicRules> logicRules(new EXP1_LogicRules(eventTimes, subsystemsSequence));
 
 	double startTime = 0.0;
 	double finalTime = 3.0;
@@ -96,8 +75,8 @@ TEST(exp1_slq_test, Exp1_slq_test)
 	// partitioning times
 	std::vector<double> partitioningTimes;
 	partitioningTimes.push_back(startTime);
-	partitioningTimes.push_back(switchingTimes[0]);
-	partitioningTimes.push_back(switchingTimes[1]);
+	partitioningTimes.push_back(eventTimes[0]);
+	partitioningTimes.push_back(eventTimes[1]);
 	partitioningTimes.push_back(finalTime);
 
 	Eigen::Vector2d initState(2.0, 3.0);
@@ -106,24 +85,48 @@ TEST(exp1_slq_test, Exp1_slq_test)
 	/******************************************************************************************************/
 	/******************************************************************************************************/
 	/******************************************************************************************************/
+
+
+	// system dynamics
+	EXP1_System systemDynamics(logicRules);
+
+	// system derivatives
+	EXP1_SystemDerivative systemDerivative(logicRules);
+
+	// system constraints
+	EXP1_SystemConstraint systemConstraint;
+
+	// system cost functions
+	EXP1_CostFunction systemCostFunction(logicRules);
+
+	// system operatingTrajectories
+	Eigen::Matrix<double,STATE_DIM,1> stateOperatingPoint = Eigen::Matrix<double,STATE_DIM,1>::Zero();
+	Eigen::Matrix<double,INPUT_DIM,1> inputOperatingPoint = Eigen::Matrix<double,INPUT_DIM,1>::Zero();
+	EXP1_SystemOperatingTrajectories operatingTrajectories(stateOperatingPoint, inputOperatingPoint);
+
+
+	/******************************************************************************************************/
+	/******************************************************************************************************/
+	/******************************************************************************************************/
+
 	// SLQ - single core version
-	SLQ<STATE_DIM, INPUT_DIM, EXP1_LogicRules> slqST(
+	SLQ<STATE_DIM, INPUT_DIM> slqST(
 			&systemDynamics, &systemDerivative,
 			&systemConstraint, &systemCostFunction,
-			&operatingTrajectories, slqSettings, &logicRules);
+			&operatingTrajectories, slqSettings, logicRules);
 
-	// SLQ - multi-core version
+	// SLQ - multi-threaded version
 //	SLQ_MP<STATE_DIM, INPUT_DIM, EXP1_LogicRules> slqMT(
 //			&systemDynamics, &systemDerivative,
 //			&systemConstraint, &systemCostFunction,
-//			&operatingTrajectories, slqSettings, &logicRules);
+//			&operatingTrajectories, slqSettings, logicRules);
 
-	// run single core SLQ
+	// run single-threaded SLQ
 	if (slqSettings.ddpSettings_.displayInfo_ || slqSettings.ddpSettings_.displayShortSummary_)
 		std::cerr << "\n>>> single-core SLQ" << std::endl;
 	slqST.run(startTime, initState, finalTime, partitioningTimes);
 
-	// run multi-core SLQ
+	// run multi-threaded SLQ
 //	if (slqSettings.ddpSettings_.displayInfo_ || slqSettings.ddpSettings_.displayShortSummary_)
 //		std::cerr << "\n>>> multi-core SLQ" << std::endl;
 //	slqMT.run(startTime, initState, finalTime, partitioningTimes);
@@ -132,8 +135,8 @@ TEST(exp1_slq_test, Exp1_slq_test)
 	/******************************************************************************************************/
 	/******************************************************************************************************/
 	// get controller
-	SLQ_BASE<STATE_DIM, INPUT_DIM, EXP1_LogicRules>::controller_ptr_array_t controllersPtrStockST = slqST.getController();
-//	SLQ_BASE<STATE_DIM, INPUT_DIM, EXP1_LogicRules>::controller_ptr_array_t controllersPtrStockMT = slqMT.getController();
+	SLQ_BASE<STATE_DIM, INPUT_DIM>::controller_ptr_array_t controllersPtrStockST = slqST.getController();
+//	SLQ_BASE<STATE_DIM, INPUT_DIM>::controller_ptr_array_t controllersPtrStockMT = slqMT.getController();
 
 	// get performance indices
 	double totalCostST, totalCostMT;
@@ -147,21 +150,21 @@ TEST(exp1_slq_test, Exp1_slq_test)
 	/******************************************************************************************************/
 	const double expectedCost = 5.4399;
 	ASSERT_LT(fabs(totalCostST - expectedCost), 10*slqSettings.ddpSettings_.minRelCost_) <<
-			"MESSAGE: SLQ failed in the EXP1's cost test!";
+			"MESSAGE: single-threaded SLQ failed in the EXP1's cost test!";
 //	ASSERT_LT(fabs(totalCostMT - expectedCost), 10*slqSettings.ddpSettings_.minRelCost_) <<
-//			"MESSAGE: SLQ_MP failed in the EXP1's cost test!";
+//			"MESSAGE: multi-threaded SLQ failed in the EXP1's cost test!";
 
 	const double expectedISE1 = 0.0;
 	ASSERT_LT(fabs(constraint1ISE_ST - expectedISE1), 10*slqSettings.ddpSettings_.minRelConstraint1ISE_) <<
-			"MESSAGE: SLQ failed in the EXP1's type-1 constraint ISE test!";
+			"MESSAGE: single-threaded SLQ failed in the EXP1's type-1 constraint ISE test!";
 //	ASSERT_LT(fabs(constraint1ISE_MT - expectedISE1), 10*slqSettings.ddpSettings_.minRelConstraint1ISE_) <<
-//			"MESSAGE: SLQ_MP failed in the EXP1's type-1 constraint ISE test!";
+//			"MESSAGE: multi-threaded SLQ failed in the EXP1's type-1 constraint ISE test!";
 
 	const double expectedISE2 = 0.0;
 	ASSERT_LT(fabs(constraint2ISE_ST - expectedISE2), 10*slqSettings.ddpSettings_.minRelConstraint1ISE_) <<
-			"MESSAGE: SLQ failed in the EXP1's type-2 constraint ISE test!";
+			"MESSAGE: single-threaded SLQ failed in the EXP1's type-2 constraint ISE test!";
 //	ASSERT_LT(fabs(constraint2ISE_MT - expectedISE2), 10*slqSettings.ddpSettings_.minRelConstraint1ISE_) <<
-//			"MESSAGE: SLQ_MP failed in the EXP1's type-2 constraint ISE test!";
+//			"MESSAGE: multi-threaded SLQ failed in the EXP1's type-2 constraint ISE test!";
 }
 
 

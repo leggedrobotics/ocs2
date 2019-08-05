@@ -32,9 +32,8 @@ namespace ocs2{
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <class LOGIC_RULES_T>
 void EventTimeIndexer::set(
-		const LogicRulesMachine<LOGIC_RULES_T>& logicRulesMachine) {
+		const HybridLogicRulesMachine& logicRulesMachine) {
 
 	// total number of event times
 	numEventTimes_ = logicRulesMachine.getLogicRulesPtr()->eventTimes().size();

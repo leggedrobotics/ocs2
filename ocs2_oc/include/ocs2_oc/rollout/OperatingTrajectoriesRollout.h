@@ -43,156 +43,130 @@ namespace ocs2 {
  *
  * @tparam STATE_DIM: Dimension of the state space.
  * @tparam INPUT_DIM: Dimension of the control input space.
- * @tparam LOGIC_RULES_T: Logic Rules type (default NullLogicRules).
  */
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T=NullLogicRules>
-class OperatingTrajectoriesRollout : public RolloutBase<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>
-{
-public:
-	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+template <size_t STATE_DIM, size_t INPUT_DIM>
+class OperatingTrajectoriesRollout : public RolloutBase<STATE_DIM, INPUT_DIM> {
+ public:
+  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-	static_assert(std::is_base_of<LogicRulesBase, LOGIC_RULES_T>::value,
-			"LOGIC_RULES_T must inherit from LogicRulesBase");
+  typedef RolloutBase<STATE_DIM, INPUT_DIM> BASE;
 
-	typedef RolloutBase<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> BASE;
+  using controller_t = typename BASE::controller_t;
+  using size_array_t = typename BASE::size_array_t;
+  using scalar_t = typename BASE::scalar_t;
+  using scalar_array_t = typename BASE::scalar_array_t;
+  using state_vector_t = typename BASE::state_vector_t;
+  using state_vector_array_t = typename BASE::state_vector_array_t;
+  using input_vector_t = typename BASE::input_vector_t;
+  using input_vector_array_t = typename BASE::input_vector_array_t;
 
-	using controller_t = typename BASE::controller_t;
-	using size_array_t = typename BASE::size_array_t;
-	using scalar_t = typename BASE::scalar_t;
-	using scalar_array_t = typename BASE::scalar_array_t;
-	using state_vector_t = typename BASE::state_vector_t;
-	using state_vector_array_t = typename BASE::state_vector_array_t;
-	using input_vector_t = typename BASE::input_vector_t;
-	using input_vector_array_t = typename BASE::input_vector_array_t;
+  typedef SystemOperatingTrajectoriesBase<STATE_DIM, INPUT_DIM> operating_trajectories_t;
 
-	typedef SystemOperatingTrajectoriesBase<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> operating_trajectories_t;
+  using logic_rules_machine_t = HybridLogicRulesMachine;
 
-	using logic_rules_machine_t = LogicRulesMachine<LOGIC_RULES_T>;
+  /**
+   * Constructor.
+   *
+   * @param [in] operatingTrajectories: The operating trajectories used for initialization.
+   * @param [in] rolloutSettings: The rollout settings.
+   * @param [in] algorithmName: The algorithm that calls this class (default not defined).
+   */
+  OperatingTrajectoriesRollout(const operating_trajectories_t& operatingTrajectories,
+                               const Rollout_Settings& rolloutSettings = Rollout_Settings(), const char* algorithmName = nullptr)
 
-	/**
-	 * Constructor.
-	 *
-	 * @param [in] operatingTrajectories: The operating trajectories used for initialization.
-	 * @param [in] rolloutSettings: The rollout settings.
-	 * @param [in] algorithmName: The algorithm that calls this class (default not defined).
-	 */
-	OperatingTrajectoriesRollout(
-			const operating_trajectories_t& operatingTrajectories,
-			const Rollout_Settings& rolloutSettings = Rollout_Settings(),
-			const char* algorithmName = nullptr)
+      : BASE(rolloutSettings, algorithmName), operatingTrajectoriesPtr_(operatingTrajectories.clone()) {}
 
-	: BASE(rolloutSettings, algorithmName)
-	, operatingTrajectoriesPtr_(operatingTrajectories.clone())
-	{}
+  /**
+   * Default destructor.
+   */
+  ~OperatingTrajectoriesRollout() = default;
 
-	/**
-	 * Default destructor.
-	 */
-	~OperatingTrajectoriesRollout() = default;
+  /**
+   * Getting the operating trajectories for the time period [initTime, finalTime] with
+   * user defined operating trajectories.
+   *
+   * @param [in] partitionIndex: Time partition index.
+   * @param [in] initTime: The initial time.
+   * @param [in] initState: The initial state.
+   * @param [in] finalTime: The final time.
+   * @param [in] controller: control policy.
+   * @param [in] logicRulesMachine: logic rules machine.
+   * @param [out] timeTrajectory: The time trajectory stamp.
+   * @param [out] eventsPastTheEndIndeces: Indices containing past-the-end index of events trigger.
+   * @param [out] stateTrajectory: The state trajectory.
+   * @param [out] inputTrajectory: The control input trajectory.
+   *
+   * @return The final state (state jump is considered if it took place)
+   */
+  state_vector_t run(size_t partitionIndex, scalar_t initTime, const state_vector_t& initState, scalar_t finalTime,
+                     controller_t* controller, logic_rules_machine_t& logicRulesMachine, scalar_array_t& timeTrajectory,
+                     size_array_t& eventsPastTheEndIndeces, state_vector_array_t& stateTrajectory,
+                     input_vector_array_t& inputTrajectory) override {
+    if (initTime > finalTime) {
+      throw std::runtime_error("Initial time should be less-equal to final time.");
+    }
 
-	/**
-	 * Getting the operating trajectories for the time period [initTime, finalTime] with
-	 * user defined operating trajectories.
-	 *
-	 * @param [in] partitionIndex: Time partition index.
-	 * @param [in] initTime: The initial time.
-	 * @param [in] initState: The initial state.
-	 * @param [in] finalTime: The final time.
-	 * @param [in] controller: control policy.
-	 * @param [in] logicRulesMachine: logic rules machine.
-	 * @param [out] timeTrajectory: The time trajectory stamp.
-	 * @param [out] eventsPastTheEndIndeces: Indices containing past-the-end index of events trigger.
-	 * @param [out] stateTrajectory: The state trajectory.
-	 * @param [out] inputTrajectory: The control input trajectory.
-	 *
-	 * @return The final state (state jump is considered if it took place)
-	 */
-	state_vector_t run(
-			const size_t& partitionIndex,
-			const scalar_t& initTime,
-			const state_vector_t& initState,
-			const scalar_t& finalTime,
-			controller_t* controller,
-			logic_rules_machine_t& logicRulesMachine,
-			scalar_array_t& timeTrajectory,
-			size_array_t& eventsPastTheEndIndeces,
-			state_vector_array_t& stateTrajectory,
-			input_vector_array_t& inputTrajectory) override {
+    if (controller != nullptr) {
+      throw std::runtime_error("Incorrect usage of Operating trajectory; A controller is available.");
+    }
 
-		if (initTime > finalTime) {
-			throw std::runtime_error("Initial time should be less-equal to final time.");
-		}
+    const size_t numEvents = logicRulesMachine.getNumEvents(partitionIndex);
+    const size_t numSubsystems = logicRulesMachine.getNumEventCounters(partitionIndex);
+    const scalar_array_t& switchingTimes = logicRulesMachine.getSwitchingTimes(partitionIndex);
 
-		if (controller != nullptr) {
-			throw std::runtime_error("Incorrect usage of Operating trajectory; A controller is available.");
-		}
+    // index of the first subsystem
+    size_t beginItr = lookup::findActiveIntervalInTimeArray(switchingTimes, initTime);
+    // index of the last subsystem
+    size_t finalItr = lookup::findActiveIntervalInTimeArray(switchingTimes, finalTime);
 
-		const size_t numEvents = logicRulesMachine.getNumEvents(partitionIndex);
-		const size_t numSubsystems = logicRulesMachine.getNumEventCounters(partitionIndex);
-		const scalar_array_t& switchingTimes = logicRulesMachine.getSwitchingTimes(partitionIndex);
+    // clearing the output trajectories
+    timeTrajectory.clear();
+    timeTrajectory.reserve(2 * numSubsystems);
+    stateTrajectory.clear();
+    stateTrajectory.reserve(2 * numSubsystems);
+    inputTrajectory.clear();
+    inputTrajectory.reserve(2 * numSubsystems);
+    eventsPastTheEndIndeces.clear();
+    eventsPastTheEndIndeces.reserve(2 * numSubsystems);
 
-		// index of the first subsystem
-		size_t beginItr = findActiveIntervalIndex(switchingTimes, initTime, 0);
-		// index of the last subsystem
-		size_t finalItr = findActiveIntervalIndex(switchingTimes, finalTime, numSubsystems-1);
+    state_vector_t beginState = initState;
+    scalar_t beginTime, endTime;
+    for (size_t i = beginItr; i <= finalItr; i++) {
+      beginTime = i == beginItr ? initTime : switchingTimes[i];
+      endTime = i == finalItr ? finalTime : switchingTimes[i + 1];
 
-		// clearing the output trajectories
-		timeTrajectory.clear();
-		timeTrajectory.reserve(2*numSubsystems);
-		stateTrajectory.clear();
-		stateTrajectory.reserve(2*numSubsystems);
-		inputTrajectory.clear();
-		inputTrajectory.reserve(2*numSubsystems);
-		eventsPastTheEndIndeces.clear();
-		eventsPastTheEndIndeces.reserve(2*numSubsystems);
+      // in order to correctly detect the next subsystem (right limit)
+      beginTime += 10 * OCS2NumericTraits<scalar_t>::weakEpsilon();
 
-		// initialize operatingTrajectories
-		operatingTrajectoriesPtr_->initializeModel(
-				logicRulesMachine,
-				partitionIndex,
-				BASE::algorithmName());
+      // get operating trajectories
+      operatingTrajectoriesPtr_->getSystemOperatingTrajectories(beginState, beginTime, endTime, timeTrajectory, stateTrajectory,
+                                                                inputTrajectory, true);
 
-		state_vector_t beginState = initState;
-		scalar_t beginTime, endTime;
-		for (size_t i=beginItr; i<=finalItr; i++) {
+      if (i < finalItr) {
+        eventsPastTheEndIndeces.push_back(stateTrajectory.size());
+        beginState = stateTrajectory.back();
+      }
 
-			beginTime = i==beginItr ? initTime  : switchingTimes[i];
-			endTime   = i==finalItr ? finalTime : switchingTimes[i+1];
+    }  // end of i loop
 
-			// get operating trajectories
-			operatingTrajectoriesPtr_->getSystemOperatingTrajectories(
-					beginState, beginTime, endTime,
-					timeTrajectory,
-					stateTrajectory,
-					inputTrajectory,
-					true);
+    // If an event has happened at the final time push it to the eventsPastTheEndIndeces
+    // numEvents>finalItr means that there the final active subsystem is before an event time.
+    // Note: we don't push the state because the input is not yet defined since the next control
+    // policy is available)
+    bool eventAtFinalTime = numEvents > finalItr && logicRulesMachine.getEventTimes(partitionIndex)[finalItr] <
+                                                        finalTime + OCS2NumericTraits<scalar_t>::limitEpsilon();
 
-			if (i<finalItr) {
-				eventsPastTheEndIndeces.push_back( stateTrajectory.size() );
-				beginState = stateTrajectory.back();
-			}
+    if (eventAtFinalTime) {
+      eventsPastTheEndIndeces.push_back(stateTrajectory.size());
+    }
 
-		}  // end of i loop
+    return stateTrajectory.back();
+  }
 
-		// If an event has happened at the final time push it to the eventsPastTheEndIndeces
-		// numEvents>finalItr means that there the final active subsystem is before an event time.
-		// Note: we don't push the state because the input is not yet defined since the next control
-		// policy is available)
-		bool eventAtFinalTime = numEvents>finalItr &&
-				logicRulesMachine.getEventTimes(partitionIndex)[finalItr]<finalTime+OCS2NumericTraits<scalar_t>::limit_epsilon();
-
-		if (eventAtFinalTime) {
-			eventsPastTheEndIndeces.push_back( stateTrajectory.size() );
-		}
-
-		return stateTrajectory.back();
-	}
-
-private:
-	std::unique_ptr<operating_trajectories_t> operatingTrajectoriesPtr_;
-
+ private:
+  std::unique_ptr<operating_trajectories_t> operatingTrajectoriesPtr_;
 };
 
-} // namespace ocs2
+}  // namespace ocs2
 
 #endif /* OPERATINGTRAJECTORIES_ROLLOUT_OCS2_H_ */

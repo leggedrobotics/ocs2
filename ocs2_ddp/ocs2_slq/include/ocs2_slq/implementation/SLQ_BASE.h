@@ -599,7 +599,7 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM>::integrateRiccatiEquationNominalTime(
   const size_t nominalTimeSize = nominalTimeTrajectory.size();
   const size_t numEvents = nominalEventsPastTheEndIndices.size();
   auto partitionDuration = nominalTimeTrajectory.back() - nominalTimeTrajectory.front();
-  const auto maxNumSteps = static_cast<size_t>(BASE::ddpSettings_.maxNumStepsPerSecond_ * partitionDuration);
+  const auto maxNumSteps = static_cast<size_t>(BASE::ddpSettings_.maxNumStepsPerSecond_ * std::max(1.0, partitionDuration));
 
   // Normalize time
   SsNormalizedTime.resize(nominalTimeSize);
@@ -656,7 +656,7 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM>::integrateRiccatiEquationAdaptiveTime(
   const size_t nominalTimeSize = nominalTimeTrajectory.size();
   const size_t numEvents = nominalEventsPastTheEndIndices.size();
   auto partitionDuration = nominalTimeTrajectory.back() - nominalTimeTrajectory.front();
-  const auto maxNumSteps = static_cast<size_t>(BASE::ddpSettings_.maxNumStepsPerSecond_ * partitionDuration);
+  const auto maxNumSteps = static_cast<size_t>(BASE::ddpSettings_.maxNumStepsPerSecond_ * std::max(1.0, partitionDuration));
 
   // Extract switching times from eventIndices and normalize them
   scalar_array_t SsNormalizedSwitchingTimes;
@@ -762,8 +762,8 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM>::solveErrorRiccatiEquationWorker(size_t work
   errorEquationPtrStock_[workerIndex]->setData(&nominalTimeTrajectory, &GvTrajectory, &GmTrajectory);
 
   // max number of steps of integration
-  const auto maxNumSteps =
-      static_cast<size_t>(BASE::ddpSettings_.maxNumStepsPerSecond_ * (nominalTimeTrajectory.back() - nominalTimeTrajectory.front()));
+  auto partitionDuration = nominalTimeTrajectory.back() - nominalTimeTrajectory.front();
+  const auto maxNumSteps = static_cast<size_t>(BASE::ddpSettings_.maxNumStepsPerSecond_ * std::max(1.0, partitionDuration));
 
   // clear output
   SveTrajectory.clear();

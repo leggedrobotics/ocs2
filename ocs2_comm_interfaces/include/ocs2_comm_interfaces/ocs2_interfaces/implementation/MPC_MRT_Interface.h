@@ -1,22 +1,22 @@
 
-#include <ocs2_comm_interfaces/ocs2_interfaces/MPC_Interface.h>
+#include <ocs2_comm_interfaces/ocs2_interfaces/MPC_MRT_Interface.h>
 #include <ocs2_core/control/FeedforwardController.h>
 
 namespace ocs2 {
 
 template <size_t STATE_DIM, size_t INPUT_DIM>
-MPC_Interface<STATE_DIM, INPUT_DIM>::MPC_Interface(mpc_t* mpc, std::shared_ptr<HybridLogicRules> logicRules)
+MPC_MRT_Interface<STATE_DIM, INPUT_DIM>::MPC_MRT_Interface(mpc_t* mpc, std::shared_ptr<HybridLogicRules> logicRules)
     : Base(std::move(logicRules)), mpcPtr_(std::move(mpc)), numMpcIterations_(0) {}
 
 template <size_t STATE_DIM, size_t INPUT_DIM>
-void MPC_Interface<STATE_DIM, INPUT_DIM>::resetMpcNode(const cost_desired_trajectories_t& initCostDesiredTrajectories) {
+void MPC_MRT_Interface<STATE_DIM, INPUT_DIM>::resetMpcNode(const cost_desired_trajectories_t& initCostDesiredTrajectories) {
   numMpcIterations_ = 0;
   mpcPtr_->reset();
   setTargetTrajectories(initCostDesiredTrajectories);
 }
 
 template <size_t STATE_DIM, size_t INPUT_DIM>
-void MPC_Interface<STATE_DIM, INPUT_DIM>::setTargetTrajectories(const cost_desired_trajectories_t& targetTrajectories) {
+void MPC_MRT_Interface<STATE_DIM, INPUT_DIM>::setTargetTrajectories(const cost_desired_trajectories_t& targetTrajectories) {
   if (mpcPtr_->settings().debugPrint_) {
     std::cerr << "### The target position is updated to" << std::endl;
     targetTrajectories.display();
@@ -25,18 +25,18 @@ void MPC_Interface<STATE_DIM, INPUT_DIM>::setTargetTrajectories(const cost_desir
 }
 
 template <size_t STATE_DIM, size_t INPUT_DIM>
-void MPC_Interface<STATE_DIM, INPUT_DIM>::setCurrentObservation(const system_observation_t& currentObservation) {
+void MPC_MRT_Interface<STATE_DIM, INPUT_DIM>::setCurrentObservation(const system_observation_t& currentObservation) {
   std::lock_guard<std::mutex> lock(observationMutex_);
   currentObservation_ = currentObservation;
 }
 
 template <size_t STATE_DIM, size_t INPUT_DIM>
-void MPC_Interface<STATE_DIM, INPUT_DIM>::setModeSequence(const mode_sequence_template_t& modeSequenceTemplate) {
+void MPC_MRT_Interface<STATE_DIM, INPUT_DIM>::setModeSequence(const mode_sequence_template_t& modeSequenceTemplate) {
   mpcPtr_->setNewLogicRulesTemplate(modeSequenceTemplate);
 }
 
 template <size_t STATE_DIM, size_t INPUT_DIM>
-void MPC_Interface<STATE_DIM, INPUT_DIM>::advanceMpc() {
+void MPC_MRT_Interface<STATE_DIM, INPUT_DIM>::advanceMpc() {
   std::chrono::time_point<std::chrono::steady_clock> startTime, finishTime;
   if (mpcPtr_->settings().debugPrint_) {
     startTime = std::chrono::steady_clock::now();
@@ -68,7 +68,7 @@ void MPC_Interface<STATE_DIM, INPUT_DIM>::advanceMpc() {
 }
 
 template <size_t STATE_DIM, size_t INPUT_DIM>
-void MPC_Interface<STATE_DIM, INPUT_DIM>::fillMpcOutputBuffers(system_observation_t mpcInitObservation) {
+void MPC_MRT_Interface<STATE_DIM, INPUT_DIM>::fillMpcOutputBuffers(system_observation_t mpcInitObservation) {
   const controller_ptr_array_t* controllerPtrs(nullptr);
   const std::vector<scalar_array_t>* timeTrajectoriesPtr(nullptr);
   const state_vector_array2_t* stateTrajectoriesPtr(nullptr);
@@ -144,7 +144,7 @@ void MPC_Interface<STATE_DIM, INPUT_DIM>::fillMpcOutputBuffers(system_observatio
 }
 
 template <size_t STATE_DIM, size_t INPUT_DIM>
-bool MPC_Interface<STATE_DIM, INPUT_DIM>::updatePolicy() {
+bool MPC_MRT_Interface<STATE_DIM, INPUT_DIM>::updatePolicy() {
   if (Base::updatePolicy()) {
     // additionally update variables only present in this child class
     std::lock_guard<std::mutex> lock(this->policyBufferMutex_);
@@ -156,19 +156,20 @@ bool MPC_Interface<STATE_DIM, INPUT_DIM>::updatePolicy() {
 }
 
 template <size_t STATE_DIM, size_t INPUT_DIM>
-const typename MPC_Interface<STATE_DIM, INPUT_DIM>::state_vector_array_t& MPC_Interface<STATE_DIM, INPUT_DIM>::getMpcStateTrajectory()
-    const {
+const typename MPC_MRT_Interface<STATE_DIM, INPUT_DIM>::state_vector_array_t&
+MPC_MRT_Interface<STATE_DIM, INPUT_DIM>::getMpcStateTrajectory() const {
   return this->mpcStateTrajectory_;
 }
 
 template <size_t STATE_DIM, size_t INPUT_DIM>
-const typename MPC_Interface<STATE_DIM, INPUT_DIM>::input_vector_array_t& MPC_Interface<STATE_DIM, INPUT_DIM>::getMpcInputTrajectory()
-    const {
+const typename MPC_MRT_Interface<STATE_DIM, INPUT_DIM>::input_vector_array_t&
+MPC_MRT_Interface<STATE_DIM, INPUT_DIM>::getMpcInputTrajectory() const {
   return mpcInputTrajectory_;
 }
 
 template <size_t STATE_DIM, size_t INPUT_DIM>
-const typename MPC_Interface<STATE_DIM, INPUT_DIM>::scalar_array_t& MPC_Interface<STATE_DIM, INPUT_DIM>::getMpcTimeTrajectory() const {
+const typename MPC_MRT_Interface<STATE_DIM, INPUT_DIM>::scalar_array_t& MPC_MRT_Interface<STATE_DIM, INPUT_DIM>::getMpcTimeTrajectory()
+    const {
   return this->mpcTimeTrajectory_;
 }
 

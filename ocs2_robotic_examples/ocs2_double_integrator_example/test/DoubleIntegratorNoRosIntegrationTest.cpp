@@ -3,13 +3,13 @@
 //
 #include <gtest/gtest.h>
 #include <cmath>
-#include "ocs2_comm_interfaces/ocs2_interfaces/MPC_Interface.h"
+#include "ocs2_comm_interfaces/ocs2_interfaces/MPC_MRT_Interface.h"
 #include "ocs2_double_integrator_example/DoubleIntegratorInterface.h"
 
 using namespace ocs2;
 using namespace double_integrator;
 using dim_t = ocs2::Dimensions<STATE_DIM_, INPUT_DIM_>;
-typedef MPC_Interface<dim_t::STATE_DIM_, dim_t::INPUT_DIM_> mpc_t;
+typedef MPC_MRT_Interface<dim_t::STATE_DIM_, dim_t::INPUT_DIM_> mpc_t;
 
 TEST(DoubleIntegratorIntegrationTest, synchronousTracking) {
   std::string taskFileFolderName = "mpc";

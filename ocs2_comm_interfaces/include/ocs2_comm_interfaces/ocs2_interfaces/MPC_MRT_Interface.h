@@ -26,13 +26,13 @@ namespace ocs2 {
  * @tparam INPUT_DIM
  */
 template <size_t STATE_DIM, size_t INPUT_DIM>
-class MPC_Interface final : public MRT_BASE<STATE_DIM, INPUT_DIM> {
+class MPC_MRT_Interface final : public MRT_BASE<STATE_DIM, INPUT_DIM> {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
   using Base = MRT_BASE<STATE_DIM, INPUT_DIM>;
 
-  typedef std::shared_ptr<MPC_Interface<STATE_DIM, INPUT_DIM>> Ptr;
+  typedef std::shared_ptr<MPC_MRT_Interface<STATE_DIM, INPUT_DIM>> Ptr;
 
   using mpc_t = MPC_BASE<STATE_DIM, INPUT_DIM>;
 
@@ -63,12 +63,12 @@ class MPC_Interface final : public MRT_BASE<STATE_DIM, INPUT_DIM> {
    * @param[in] mpc the underlying MPC class to be used
    * @param[in] logicRules (optional)
    */
-  MPC_Interface(mpc_t* mpc, std::shared_ptr<HybridLogicRules> logicRules = nullptr);
+  MPC_MRT_Interface(mpc_t* mpc, std::shared_ptr<HybridLogicRules> logicRules = nullptr);
 
   /**
    * Destructor.
    */
-  virtual ~MPC_Interface() = default;
+  virtual ~MPC_MRT_Interface() = default;
 
   void resetMpcNode(const cost_desired_trajectories_t& initCostDesiredTrajectories) override;
 
@@ -142,4 +142,4 @@ class MPC_Interface final : public MRT_BASE<STATE_DIM, INPUT_DIM> {
 
 }  // namespace ocs2
 
-#include "implementation/MPC_Interface.h"
+#include "implementation/MPC_MRT_Interface.h"

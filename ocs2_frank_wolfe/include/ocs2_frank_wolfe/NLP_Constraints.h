@@ -27,24 +27,17 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#ifndef FRANK_WOLFE_OCS2_H_
-#define FRANK_WOLFE_OCS2_H_
-
-#include <memory>
-
-// GNU Linear Programming Kit
-#include <glpk.h>
+#ifndef NLP_CONSTRAINTS_OCS2_H_
+#define NLP_CONSTRAINTS_OCS2_H_
 
 #include <ocs2_core/Dimensions.h>
 
 namespace ocs2 {
 
 /**
- * This class implements the Frank-Wolfe algorithm for computing the gradient
- * respecting linear equalities and inequalities. For more discussion on this
- * algorithm, the reader should refer to \cite jaggi13 .
+ * This class is an interface to a NLP constraints.
  */
-class FrankWolfeGradient
+class NLP_Constraints
 {
 public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
@@ -56,71 +49,63 @@ public:
 	using dynamic_matrix_t = typename DIMENSIONS::dynamic_matrix_t;
 
 	/**
-	 * Constructor.
+	 * Default constructor.
 	 */
-	FrankWolfeGradient();
+	NLP_Constraints() = default;
 
 	/**
 	 * Default destructor.
 	 */
-	~FrankWolfeGradient() = default;
+	virtual ~NLP_Constraints() = default;
 
 	/**
-	 * Calculates the coefficients of the linear equality constraints. \n
-	 * \f$ A_m \theta + B_v = 0\f$
+	 * Sets the current parameter vector.
 	 *
-	 * @param [out] Am: The \f$ A_m\f$ matrix.
-	 * @param [out] Bv: THe \f$ B_v \f$ vector.
+	 * @param [in] x: The value of parameter vector.
 	 */
-	virtual void calculateLinearEqualityConstraint(
-			dynamic_matrix_t& Am,
-			dynamic_vector_t& Bv) = 0;
+	virtual void setCurrentParameter(const dynamic_vector_t& x) {}
 
 	/**
-	 * Calculates the coefficients of the linear inequality constraints. \n
-	 * \f$ C_m \theta + D_v < 0\f$
+	 * Gets the linear equality constraints. \n
+	 * \f$ g_v = A_m x_v + b_v = 0\f$
 	 *
-	 * @param [out] Cm: The \f$ C_m\f$ matrix.
-	 * @param [out] Dv: THe \f$ D_v \f$ vector.
+	 * @param [out] g: The evaluation of the equality constraints, \f$ g_v \f$ vector.
 	 */
-	virtual void calculateLinearInequalityConstraint(
-			dynamic_matrix_t& Cm,
-			dynamic_vector_t& Dv) = 0;
+	virtual void getLinearEqualityConstraint(dynamic_vector_t& g) {
+		g.resize(0);
+	}
 
 	/**
-	 * Calculates the Frank-Wolfe gradient.
+	 * Gets the derivative of the linear equality constraints. \n
+	 * \f$ g_v = A_m x_v + b_v = 0\f$
 	 *
-	 * @param [in] parameter: The value of parameter vector.
-	 * @param [in] gradient: The gradient at the current parameter vector.
-	 * @param [out] fwGradient: The Frank-Wolfe gradient at the current parameter vector.
+	 * @param [out] dgdx: The Jacobian of the equality constraints, \f$ A_m \f$ vector.
 	 */
-	void getFrankWolfeGradient(
-			const dynamic_vector_t& parameter,
-			const dynamic_vector_t& gradient,
-			dynamic_vector_t& fwGradient);
-
-private:
-	/**
-	 * Instantiates GLPK solver
-	 */
-	void instantiateGLPK();
+	virtual void getLinearEqualityConstraintDerivative(dynamic_matrix_t& dgdx) {
+		dgdx.resize(0, 0);
+	}
 
 	/**
-	 * Sets up Frank-Wolfe linear program.
+	 * Gets the linear inequality constraints. \n
+	 * \f$ h_v = C_m x_v + d_v \geq 0\f$
+	 *
+	 * @param [out] h: The evaluation of the inequality constraints, \f$ h_v \f$ vector.
 	 */
-	void setupLP(
-			const scalar_array_t& parameter,
-			const dynamic_vector_t& gradient);
+	virtual void getLinearInequalityConstraint(dynamic_vector_t& h) {
+		h.resize(0);
+	}
 
-	/***********
-	 * Variables
-	 **********/
-	std::unique_ptr<glp_prob, void(*)(glp_prob*)> lpPtr_;
-
+	/**
+	 * Gets the derivative of the linear inequality constraints. \n
+	 * \f$ h_v = C_m x_v + d_v \geq 0\f$
+	 *
+	 * @param [out] dhdx: The Jacobian of the inequality constraints, \f$ C_m \f$ vector.
+	 */
+	virtual void getLinearInequalityConstraintDerivative(dynamic_matrix_t& dhdx) {
+		dhdx.resize(0, 0);
+	}
 };
 
 }  // namespace ocs2
 
-#include "implementation/FrankWolfeGradient.h"
-
-#endif /* FRANK_WOLFE_OCS2_H_ */
+#endif /* NLP_CONSTRAINTS_OCS2_H_ */

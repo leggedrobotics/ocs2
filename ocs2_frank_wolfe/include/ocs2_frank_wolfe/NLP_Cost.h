@@ -27,46 +27,78 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#ifndef NLP_SETTINGS_OCS2_H_
-#define NLP_SETTINGS_OCS2_H_
+#ifndef NLP_COST_OCS2_H_
+#define NLP_COST_OCS2_H_
 
-#include <iostream>
+#include <ocs2_core/Dimensions.h>
 
 namespace ocs2 {
 
 /**
- * This structure contains the settings for the gradient-descent algorithm.
+ * This class is an interface to a NLP cost.
  */
-class NLP_Settings
+class NLP_Cost
 {
 public:
-	NLP_Settings()
-	: displayGradientDescent_(true)
-	, maxIterations_(1000)
-	, minRelCost_(1e-6)
-	, maxLearningRate_(1.0)
-	, minLearningRate_(0.05)
-	, useAscendingLineSearchNLP_(true)
-	{}
+	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-	/** This value determines to display the log output.*/
-	bool displayGradientDescent_;
-	/** This value determines the maximum number of algorithm iterations.*/
-	size_t maxIterations_;
-	/** This value determines the termination condition based on the minimum relative changes of the cost.*/
-	double minRelCost_;
-	/** This value determines the maximum step size for the line search scheme.*/
-	double maxLearningRate_;
-	/** This value determines the minimum step size for the line search scheme.*/
-	double minLearningRate_;
+	using DIMENSIONS = Dimensions<0, 0>;
+	using scalar_t = typename DIMENSIONS::scalar_t;
+	using scalar_array_t = typename DIMENSIONS::scalar_array_t;
+	using dynamic_vector_t = typename DIMENSIONS::dynamic_vector_t;
+	using dynamic_matrix_t = typename DIMENSIONS::dynamic_matrix_t;
+
 	/**
-	 * This value determines the line search scheme to be used. \n
-	 * - \b Ascending: The step size eventually increases from the minimum value to the maximum. \n
-	 * - \b Descending: The step size eventually decreases from the minimum value to the maximum.
-	 * */
-	bool useAscendingLineSearchNLP_;
+	 * Default constructor.
+	 */
+	NLP_Cost() = default;
+
+	/**
+	 * Default destructor.
+	 */
+	virtual ~NLP_Cost() = default;
+
+	/**
+	 * Sets the current parameter vector.
+	 *
+	 * @param [in] x: The value of parameter vector.
+	 * @return id: It returns a number which identifies the cached data.
+	 */
+	virtual size_t setCurrentParameter(const dynamic_vector_t& x) = 0;
+
+	/**
+	 * Gets the cost value.
+	 *
+	 * @param [in] id: The ID of the cached data.
+	 * @param [out] f: The value of the cost.
+	 * @return status: whether the cost computation was successful.
+	 */
+	virtual bool getCost(size_t id, scalar_t& f) = 0;
+
+	/**
+	 * Gets the gradient of the cost w.r.t. parameter vector.
+	 *
+	 * @param [in] id: The ID of the cached data.
+	 * @param [out] g: The gradient of the cost.
+	 */
+	virtual void getCostDerivative(size_t id, dynamic_vector_t& g) = 0;
+
+	/**
+	 * Gets the Hessian of the cost w.r.t. parameter vector.
+	 *
+	 * @param [in] id: The ID of the cached data.
+	 * @param [out] H: The Hessian of the cost.
+	 */
+	virtual void getCostSecondDerivative(size_t id, dynamic_matrix_t& H) = 0;
+
+	/**
+	 * Clears the cache.
+	 */
+	virtual void clearCache() = 0;
+
+
 };
 
-}  // end of ocs2 namespace
+}  // namespace ocs2
 
-#endif /* NLP_SETTINGS_OCS2_H_ */
+#endif /* NLP_COST_OCS2_H_ */

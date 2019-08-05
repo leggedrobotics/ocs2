@@ -4,6 +4,7 @@ project (ocs2_frank_wolfe)
 ## Find catkin macros and libraries
 find_package(catkin REQUIRED COMPONENTS
   cmake_modules
+  ocs2_core
 )
 
 find_package(Eigen3 3.3 REQUIRED NO_MODULE)
@@ -18,6 +19,8 @@ catkin_package(
    INCLUDE_DIRS 
      include
      ${EIGEN3_INCLUDE_DIRS}
+   CATKIN_DEPENDS 
+     ocs2_core 
    DEPENDS
 )
 
@@ -49,13 +52,13 @@ install(DIRECTORY include/${PROJECT_NAME}/
 ## to see the summary of unit test results run
 ## $ catkin_test_results ../../../build/ocs2_frank_wolfe
 
-catkin_add_gtest(quadratic_test 
-  test/QuadraticTest.cpp
-)
-target_link_libraries(quadratic_test
-  ${catkin_LIBRARIES}
-  glpk
-)
+#catkin_add_gtest(quadratic_test 
+#  test/QuadraticTest.cpp
+#)
+#target_link_libraries(quadratic_test
+#  ${catkin_LIBRARIES}
+#  glpk
+#)
 
 catkin_add_gtest(matyas_test 
   test/MatyasTest.cpp

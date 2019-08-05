@@ -28,36 +28,23 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
 namespace ocs2 {
-namespace nlp {
-
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <typename SCALAR_T>
-GradientDescent<SCALAR_T>::GradientDescent() {
+GradientDescent::GradientDescent(
+		const NLP_Settings& nlpSettings)
 
-	adjustOptions();
+	: nlpSettings_(nlpSettings)
+	, frankWolfeDescentDirectionPtr_(new FrankWolfeDescentDirection(nlpSettings.displayGradientDescent_))
+{
 	CleanFmtDisplay_ = Eigen::IOFormat(3, 0, ", ", "\n", "[", "]");
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <typename SCALAR_T>
-void GradientDescent<SCALAR_T>::adjustOptions() {
-
-	numLineSearch_ =
-			floor(log2(nlpSettings_.maxLearningRate_/nlpSettings_.minLearningRate_)) + 1;
-	nlpSettings_.minLearningRate_ =
-			(nlpSettings_.maxLearningRate_- 2*std::numeric_limits<SCALAR_T>::epsilon()) / pow(2,numLineSearch_-1);
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-template <typename SCALAR_T>
-void GradientDescent<SCALAR_T>::getCost(SCALAR_T& cost) {
+void GradientDescent::getCost(scalar_t& cost) {
 
 	cost = optimizedCost_;
 }
@@ -65,10 +52,7 @@ void GradientDescent<SCALAR_T>::getCost(SCALAR_T& cost) {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <typename SCALAR_T>
-template <typename Derived>
-void GradientDescent<SCALAR_T>::getParameters(
-		Eigen::MatrixBase<Derived>& parameters) const {
+void GradientDescent::getParameters(dynamic_vector_t& parameters) const {
 
 	parameters = optimizedParameters_;
 }
@@ -76,33 +60,7 @@ void GradientDescent<SCALAR_T>::getParameters(
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <typename SCALAR_T>
-void GradientDescent<SCALAR_T>::calculateLinearEqualityConstraint(
-		dynamic_matrix_t& Am,
-		dynamic_vector_t& Bv)  {
-
-	Am.resize(0,numParameters_);
-	Bv.resize(0);
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-template <typename SCALAR_T>
-void GradientDescent<SCALAR_T>::calculateLinearInequalityConstraint(
-		dynamic_matrix_t& Cm,
-		dynamic_vector_t& Dv)  {
-
-	Cm.resize(0,numParameters_);
-	Dv.resize(0);
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-template <typename SCALAR_T>
-void GradientDescent<SCALAR_T>::getIterationsLog(
-		eigen_scalar_array_t& iterationCost) const {
+void GradientDescent::getIterationsLog(eigen_scalar_array_t& iterationCost) const {
 
 	iterationCost = iterationCost_;
 }
@@ -110,17 +68,15 @@ void GradientDescent<SCALAR_T>::getIterationsLog(
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <typename SCALAR_T>
-const size_t& GradientDescent<SCALAR_T>::optimalSolutionID() const {
+void GradientDescent::optimalSolutionID(size_t& optimizedID) const {
 
-	return optimizedID_;
+	optimizedID = optimizedID_;
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <typename SCALAR_T>
-NLP_Settings& GradientDescent<SCALAR_T>::nlpSettings() {
+NLP_Settings& GradientDescent::nlpSettings() {
 
 	return nlpSettings_;
 }
@@ -128,429 +84,188 @@ NLP_Settings& GradientDescent<SCALAR_T>::nlpSettings() {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <typename SCALAR_T>
-const size_t& GradientDescent<SCALAR_T>::numParameters() const {
-
-	return numParameters_;
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-template <typename SCALAR_T>
-const size_t& GradientDescent<SCALAR_T>::numConstraints() const {
-
-	return numActiveConstraints_;
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-template <typename SCALAR_T>
-const size_t& GradientDescent<SCALAR_T>::numLineSearch() const {
-
-	return numLineSearch_;
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-template <typename SCALAR_T>
-bool GradientDescent<SCALAR_T>::calculateNumericalGradient(
-		const size_t& id,
+void GradientDescent::lineSearch(
 		const dynamic_vector_t& parameters,
-		dynamic_vector_t& gradient) {
-
-	bool status;
-	SCALAR_T cost;
-	status = calculateCost(id, parameters, cost);
-	numFuntionCall_++;
-	gradient.resize(parameters.rows());
-	for (size_t i=0; i<parameters.rows(); i++)  {
-		SCALAR_T h = sqrt(std::numeric_limits<SCALAR_T>::epsilon()) * std::max(parameters(i), 1.0);
-		dynamic_vector_t parametersPlus = parameters;
-		parametersPlus(i) += h;
-		SCALAR_T costPlus;
-		bool statusPlus = calculateCost(id, parametersPlus, costPlus);
-		numFuntionCall_++;
-		gradient(i) = (costPlus-cost)/h;
-		status = status && statusPlus;
-	}  // end of i loop
-
-	return status;
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-template <typename SCALAR_T>
-void GradientDescent<SCALAR_T>::ascendingLineSearch(
 		const dynamic_vector_t& gradient,
-		SCALAR_T& learningRateStar) {
+		NLP_Cost* costPtr,
+		NLP_Constraints* constraintsPtr,
+		dynamic_vector_t& optimizedParameters,
+		scalar_t& optimizedCost,
+		size_t& optimizedID,
+		scalar_t& optimizedLearningRate) {
 
-	learningRateStar = 0.0;
-	optimizedID_ = 0;
-	const dynamic_vector_t initParameters = optimizedParameters_;
-	SCALAR_T learningRate = nlpSettings_.minLearningRate_;
-	size_t id = 1;
+	scalar_t learningRate, contractionRate;
+	if (nlpSettings_.useAscendingLineSearchNLP_==true) {
+		learningRate = nlpSettings_.minLearningRate_;
+		contractionRate = 2.0;
+	} else {
+		learningRate = nlpSettings_.maxLearningRate_;
+		contractionRate = 0.5;
+	}
 
-	while (learningRate<=nlpSettings_.maxLearningRate_)  {
+	// if no better learning rate is found
+	optimizedLearningRate = 0.0;
 
-		// lineSerach parameter
-		dynamic_vector_t lsParameters = initParameters - learningRate*gradient;
-
-		// display
-		if (nlpSettings_.displayGradientDescent_) {
-			SCALAR_T lsMaxConstriant = 0.0;
-			if (linearEqualityConstraintBv_.size()>0)
-				lsMaxConstriant = (linearEqualityConstraintAm_*lsParameters + linearEqualityConstraintBv_).maxCoeff();
-			if (linearInequalityConstraintDv_.size()>0)
-				lsMaxConstriant = std::max(lsMaxConstriant, (linearInequalityConstraintCm_*lsParameters + linearInequalityConstraintDv_).maxCoeff());
-			std::cerr << "\t [" << id <<"] learningRate: " << learningRate << "\t max NLP constraint: " << lsMaxConstriant << std::endl;
-			std::cerr << "\t     parameters:   " << lsParameters.transpose().format(CleanFmtDisplay_) << std::endl;
-		}
-
-		// calculate cost function
-		SCALAR_T lsCost;
-		bool status = calculateCost(id, lsParameters, lsCost);
-
-		// increment the number of function calls
-		numFuntionCall_++;
-
-		// skip it if status is not OK
-		if (status==false) {
-			if (nlpSettings_.displayGradientDescent_)
-				std::cerr << "\t     cost:         " << lsCost << " (rejected)" << std::endl;
-			learningRate *= 2.0;
-			id++;
-			continue;
-		}
-
-		// display
-		if (nlpSettings_.displayGradientDescent_)
-			std::cerr << "\t     cost:         " << lsCost << std::endl;
-
-		if (lsCost>optimizedCost_*(1.0-learningRate*1e-3))  break;
-
-		optimizedCost_ = lsCost;
-		optimizedParameters_ = lsParameters;
-		optimizedID_ = id;
-		learningRateStar = learningRate;
-
-		learningRate *= 2.0;
-		id++;
-
-	}  // end of while loop
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-template <typename SCALAR_T>
-void GradientDescent<SCALAR_T>::decreasingLineSearch(
-		const dynamic_vector_t& gradient,
-		SCALAR_T& learningRateStar) {
-
-	learningRateStar = 0.0;
-	optimizedID_ = 0;
-	const dynamic_vector_t initParameters = optimizedParameters_;
-	SCALAR_T learningRate = nlpSettings_.maxLearningRate_;
-
-	size_t id = numLineSearch_;
+	// return if gradient is zero
+	if (gradient.isZero()) {
+		std::cerr << "Line search is skipped since the gradient was zero." << std::endl;
+		return;
+	}
 
 	while (learningRate>=nlpSettings_.minLearningRate_)  {
 
 		// lineSerach parameter
-		dynamic_vector_t lsParameters = initParameters - learningRate*gradient;
+		dynamic_vector_t lsParameters = parameters - learningRate*gradient;
 
-		// display
-		if (nlpSettings_.displayGradientDescent_) {
-			SCALAR_T lsMaxConstriant = 0.0;
-			if (linearEqualityConstraintBv_.size()>0)
-				lsMaxConstriant = (linearEqualityConstraintAm_*lsParameters + linearEqualityConstraintBv_).maxCoeff();
-			if (linearInequalityConstraintDv_.size()>0)
-				lsMaxConstriant = std::max(lsMaxConstriant, (linearInequalityConstraintCm_*lsParameters + linearInequalityConstraintDv_).maxCoeff());
-			std::cerr << "\t [" << id <<"] learningRate: " << learningRate << "\t maxNlpConstraint: " << lsMaxConstriant << std::endl;
-			std::cerr << "\t     parameters:   " << lsParameters.transpose().format(CleanFmtDisplay_) << std::endl;
-		}
+		// set the parameter
+		size_t lsID = costPtr->setCurrentParameter(lsParameters);
 
 		// calculate cost function
-		SCALAR_T lsCost;
-		bool status = calculateCost(id, lsParameters, lsCost);
+		scalar_t lsCost;
+		bool status = costPtr->getCost(lsID, lsCost);
 
 		// increment the number of function calls
 		numFuntionCall_++;
 
 		// skip it if status is not OK
 		if (status==false) {
-			if (nlpSettings_.displayGradientDescent_)
-				std::cerr << "\t     cost:         " << lsCost << " (rejected)" << std::endl;
-			learningRate /= 2.0;
-			id--;
+			// display
+			if (nlpSettings_.displayGradientDescent_) {
+				std::cerr << "\t learningRate: " << learningRate;
+				std::cerr << "\t cost: " << lsCost << " (rejected)" << std::endl;
+			}
+			learningRate *= contractionRate;
 			continue;
 		}
 
-		if (nlpSettings_.displayGradientDescent_)
-			std::cerr << "\t     cost:         " << lsCost << std::endl;
-
 		// display
-		if (lsCost<optimizedCost_*(1.0-learningRate*1e-3))  {
-			optimizedCost_ = lsCost;
-			optimizedParameters_ = lsParameters;
-			optimizedID_ = id;
-			learningRateStar = learningRate;
-			break;
-		}
-
-		learningRate /= 2.0;
-		id--;
-
-	}  // end of while loop
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-template <typename SCALAR_T>
-void GradientDescent<SCALAR_T>::setupLP() {
-	// create a LP object
-	lpPtr_ = glp_create_prob();
-	glp_set_prob_name(lpPtr_, "FrankWolfe");
-
-	// set it as a Minimization problem
-	glp_set_obj_dir(lpPtr_, GLP_MIN);
-
-	// set parameters limits
-	glp_add_cols(lpPtr_, numParameters_);
-	for (size_t i=0; i<numParameters_; i++)
-		glp_set_col_bnds(lpPtr_, i+1, GLP_FR, 0.0, 0.0);
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-template <typename SCALAR_T>
-void GradientDescent<SCALAR_T>::setConstraints(
-		const dynamic_vector_t& parameters,
-		size_t& numActiveConstraints) {
-
-	// find active inequalities
-	dynamic_vector_t activeInequalities = linearInequalityConstraintCm_ * parameters + linearInequalityConstraintDv_;
-
-	const size_t numActiveEqualities   = linearEqualityConstraintBv_.size();
-	const size_t numActiveInequalities = (activeInequalities.array()>=0).count();
-
-	numActiveConstraints = numActiveEqualities + numActiveInequalities;
-
-	// return if the problem is unconstrained
-	if (numActiveConstraints==0) return;
-
-	// set the constraint limits
-	glp_add_rows(lpPtr_, numActiveConstraints);
-	size_t itr = 0;
-	// equalities
-	for (; itr<numActiveEqualities; itr++) {
-		glp_set_row_bnds(lpPtr_, itr+1, GLP_UP, 0.0, -linearEqualityConstraintBv_(itr));
-	}
-	// inequalities
-	for (size_t i=0; i<linearInequalityConstraintDv_.size(); i++) {
-		if (activeInequalities(i)>=0) {
-			glp_set_row_bnds(lpPtr_, itr+1, GLP_UP, 0.0, -linearInequalityConstraintDv_(i));
-			itr++;
-		}
-	}
-
-	// set the constraint coefficients
-	std::vector<SCALAR_T> values;
-	std::vector<int> xIndices, yIndices;
-	values.push_back(0.0);   // the 0 index is not used
-	xIndices.push_back(-1);  // the 0 index is not used
-	yIndices.push_back(-1);  // the 0 index is not used
-
-	// equalities
-	itr = 0;
-	for (; itr<numActiveEqualities; itr++)
-		for (size_t j=0; j<numParameters_; j++)
-			if (fabs(linearEqualityConstraintAm_(itr,j)) > Eigen::NumTraits<SCALAR_T>::epsilon()) {
-				values.push_back(linearEqualityConstraintAm_(itr,j));
-				xIndices.push_back(itr+1);
-				yIndices.push_back(j+1);
+		if (nlpSettings_.displayGradientDescent_) {
+			scalar_t equalitySE(0.0), inequalitySE(0.0);
+			if (constraintsPtr) {
+				dynamic_vector_t g, h;
+				constraintsPtr->setCurrentParameter(lsParameters);
+				constraintsPtr->getLinearEqualityConstraint(g);
+				equalitySE = (g.size()>0) ? g.squaredNorm() : 0.0;
+				constraintsPtr->getLinearInequalityConstraint(h);
+				inequalitySE = (h.size()>0) ? h.dot(h.cwiseMin(0.0)) : 0.0;
+				std:: cerr << "\t h: " << h.transpose().format(CleanFmtDisplay_) << std::endl;
 			}
-
-	// inequalities
-	for (size_t i=0; i<linearInequalityConstraintDv_.size(); i++)
-		if (activeInequalities(i)>=0) {
-			for (size_t j=0; j<numParameters_; j++)
-				if (fabs(linearInequalityConstraintCm_(i,j)) > Eigen::NumTraits<SCALAR_T>::epsilon()) {
-					values.push_back(linearInequalityConstraintCm_(i,j));
-					xIndices.push_back(itr+1);
-					yIndices.push_back(j+1);
-					itr++;
-				}
+			std::cerr << "\t learningRate: " << learningRate;
+			std::cerr << "\t cost: " << lsCost;
+			std::cerr << "\t equality SE: " << equalitySE;
+			std::cerr << "\t inequality SE: " << inequalitySE << std::endl;
 		}
 
-	size_t numNonZeroCoeff = values.size()-1;
+		// termination check
+		if (nlpSettings_.useAscendingLineSearchNLP_==true) {
+			if (lsCost>optimizedCost_*(1.0-learningRate*1e-3)) {
+				break;
+			}
+			optimizedParameters = lsParameters;
+			optimizedCost = lsCost;
+			optimizedID = lsID;
+			optimizedLearningRate = learningRate;
 
-	glp_load_matrix(lpPtr_, numNonZeroCoeff, xIndices.data(), yIndices.data(), values.data());
+		} else {
+			if (lsCost<optimizedCost_*(1.0-learningRate*1e-3))  {
+				optimizedParameters = lsParameters;
+				optimizedCost = lsCost;
+				optimizedID = lsID;
+				optimizedLearningRate = learningRate;
+				break;
+			}
+		}
+
+		learningRate *= contractionRate;
+	}  // end of while loop
+
+	if (nlpSettings_.displayGradientDescent_) {
+		std::cerr << "Line search terminates with learning rate: " << optimizedLearningRate << std::endl;
+	}
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <typename SCALAR_T>
-void GradientDescent<SCALAR_T>::frankWolfeGradient(
-		const size_t& id,
-		const dynamic_vector_t& parameters,
-		dynamic_vector_t& gradient) {
+void GradientDescent::run(
+		const dynamic_vector_t& initParameters,
+		const dynamic_vector_t& maxGradientInverse,
+		NLP_Cost* costPtr,
+		NLP_Constraints* constraintsPtr /* = nullptr*/)  {
 
-	// check the gradient size
-	if (gradient.rows() != numParameters_)
-		throw std::runtime_error("size of the gradient vector is not equal to the size of parameters vector.");
+	if (!costPtr) {
+		throw std::runtime_error("Cost function pointer is null.");
+	}
 
-	// return if no constraints are defined
-	if (numActiveConstraints_==0)  return;
-
-	// set the LP of Frank-Wolfe algorithm cost function
-	for (size_t i=0; i<numParameters_; i++)
-		glp_set_obj_coef(lpPtr_, i+1, gradient(i));
-
-	// set LP options
-	glp_smcp lpOptions;
-	glp_init_smcp(&lpOptions);
-	if (nlpSettings_.displayGradientDescent_==false)
-		lpOptions.msg_lev = GLP_MSG_ERR;
-
-	// solve LP
-	glp_simplex(lpPtr_, &lpOptions);
-
-	// get the solution
-	dynamic_vector_t parametersLp(numParameters_);
-	for (size_t i=0; i<numParameters_; i++)
-		parametersLp(i) = glp_get_col_prim(lpPtr_, i+1);
-
-	// Frank-Wolfe gradient
-	if (gradient.dot(parameters - parametersLp) <= 0)
-		throw std::runtime_error("The Frank-Wolfe gradient is not in the descent direction.");
-
-	gradient = parameters - parametersLp;
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-template <typename SCALAR_T>
-bool GradientDescent<SCALAR_T>::calculateGradient(
-		const size_t& id,
-		const dynamic_vector_t& parameters,
-		dynamic_vector_t& gradient) {
-
-	return calculateNumericalGradient(id, parameters, gradient);
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-template <typename SCALAR_T>
-void GradientDescent<SCALAR_T>::run(const dynamic_vector_t& initParameters)  {
-
-	optimizedParameters_ = initParameters;
 	numFuntionCall_ = 0;
-
-	numParameters_ = initParameters.rows();
 	iterationCost_.clear();
+	optimizedParameters_ = initParameters;
 
 	// display
-	if (nlpSettings_.displayGradientDescent_) std::cerr << std::endl << "### Initial iteration " << std::endl;
+	if (nlpSettings_.displayGradientDescent_)
+		std::cerr << std::endl << "### Initial iteration " << std::endl;
 
 	// initial cost
-	optimizedID_ = 0;
-	calculateCost(optimizedID_, optimizedParameters_, optimizedCost_);
+	optimizedID_ = costPtr->setCurrentParameter(optimizedParameters_);
+	bool status = costPtr->getCost(optimizedID_, optimizedCost_);
 	numFuntionCall_++;
-	std::cerr << "\t     parameters:   " << optimizedParameters_.transpose().format(CleanFmtDisplay_) << std::endl;
-	if (nlpSettings_.displayGradientDescent_) std::cerr << "\t cost:             " << optimizedCost_ << std::endl;
 
-	iterationCost_.push_back( (dynamic_vector_t(1) << optimizedCost_).finished() );
+	if (nlpSettings_.displayGradientDescent_) {
+		std::cerr << "cost:         " << optimizedCost_ << std::endl;
+		std::cerr << "parameters:   " << optimizedParameters_.transpose().format(CleanFmtDisplay_) << std::endl;
+	}
 
-	// call user getSolution function
-	getSolution(0);
-
-	// linear equality constraint
-	calculateLinearEqualityConstraint(linearEqualityConstraintAm_, linearEqualityConstraintBv_);
-	if (linearEqualityConstraintAm_.rows() != linearEqualityConstraintBv_.size())
-		throw std::runtime_error("Number of rows in linearEqualityConstraintAm and linearEqualityConstraintBv are not equal.");
-	if (linearEqualityConstraintAm_.cols() != numParameters_)
-		throw std::runtime_error("Number of columns in linearEqualityConstraintAm is not equal to the size of parameters vector.");
-
-	// linear inequality constraint
-	calculateLinearInequalityConstraint(linearInequalityConstraintCm_, linearInequalityConstraintDv_);
-	if (linearInequalityConstraintCm_.rows() != linearInequalityConstraintDv_.rows())
-		throw std::runtime_error("Number of rows in linearInequalityConstraintCm and linearInequalityConstraintDv are not equal.");
-	if (linearInequalityConstraintCm_.cols() != numParameters_)
-		throw std::runtime_error("Number of columns in linearInequalityConstraintCm is not equal to the size of parameters vector.");
-
-//	// number of constraints
-//	numActiveConstraints_ = linearEqualityConstraintAm_.rows();
-//
-//	// softening the constraint
-//	if (numConstraints_>0)
-//		linearEqualityConstraintBv_ += nlpSettings_.minDisToBoundary_*dynamic_vector_t::Ones(numConstraints_);
-
-	// setup LP solver
-	setupLP();
+	iterationCost_.emplace_back(optimizedCost_);
 
 	size_t iteration = 0;
 	bool isCostFunctionConverged = false;
-	SCALAR_T relCost = std::numeric_limits<SCALAR_T>::max();
-	SCALAR_T learningRateStar;
+	scalar_t relCost = std::numeric_limits<scalar_t>::max();
+	scalar_t optimizedLearningRate = 0.0;
 
 	while (iteration<nlpSettings_.maxIterations_ && isCostFunctionConverged==false)  {
 
 		// display
-		if (nlpSettings_.displayGradientDescent_) std::cerr << std::endl << "### Iteration " << iteration+1 << std::endl;
+		if (nlpSettings_.displayGradientDescent_)
+			std::cerr << std::endl << "### Iteration " << iteration+1 << std::endl;
 
-		SCALAR_T cashedCost = optimizedCost_;
-
-		// set constraints
-		setConstraints(optimizedParameters_, numActiveConstraints_);
+		scalar_t cachedCost = optimizedCost_;
 
 		// compute the gradient
-		calculateGradient(optimizedID_, optimizedParameters_, optimizedGradient_);
+		costPtr->getCostDerivative(optimizedID_, optimizedGradient_);
 		if (nlpSettings_.displayGradientDescent_)
-			std::cerr << "True gradient:      " << optimizedGradient_.transpose().format(CleanFmtDisplay_) << std::endl;
+			std::cerr << "Gradient:             " << optimizedGradient_.transpose().format(CleanFmtDisplay_) << std::endl;
 
 		// compute the projected gradient
-		frankWolfeGradient(optimizedID_, optimizedParameters_, optimizedGradient_);
-		if (nlpSettings_.displayGradientDescent_)
-			std::cerr << "Projected gradient: " << optimizedGradient_.transpose().format(CleanFmtDisplay_) << std::endl;
+		if (constraintsPtr) {
+			dynamic_vector_t fwDescentDirection;
+			frankWolfeDescentDirectionPtr_->run(
+					optimizedParameters_, optimizedGradient_, maxGradientInverse, constraintsPtr, fwDescentDirection);
+			optimizedGradient_ = -fwDescentDirection;
+			// display
+			if (nlpSettings_.displayGradientDescent_) {
+				std::cerr << "Frank-Wolfe gradient: " << optimizedGradient_.transpose().format(CleanFmtDisplay_) << std::endl;
+			}
+		}
 
 		// line search
-		if (nlpSettings_.useAscendingLineSearchNLP_==true)
-			ascendingLineSearch(optimizedGradient_, learningRateStar);
-		else
-			decreasingLineSearch(optimizedGradient_, learningRateStar);
-
-		// call user getSolution function
-		if (learningRateStar>0)
-			getSolution(optimizedID_);
+		lineSearch(optimizedParameters_, optimizedGradient_, costPtr, constraintsPtr,
+				optimizedParameters_, optimizedCost_, optimizedID_, optimizedLearningRate);
 
 		// loop variables
-		relCost = fabs(optimizedCost_-cashedCost);
-		isCostFunctionConverged = (learningRateStar==0) || optimizedGradient_.isZero() || (relCost<nlpSettings_.minRelCost_);
+		relCost = std::fabs(optimizedCost_-cachedCost);
+		isCostFunctionConverged = (optimizedLearningRate==0) || optimizedGradient_.isZero() || (relCost<nlpSettings_.minRelCost_);
 		iteration++;
 
 		iterationCost_.push_back( (dynamic_vector_t(1) << optimizedCost_).finished() );
 
 		// display
 		if (nlpSettings_.displayGradientDescent_) {
-			std::cerr << "cost[" << optimizedID_ << "]:           " << optimizedCost_ << std::endl;
-			std::cerr << "learningRateStar:  " << learningRateStar << std::endl;
-			std::cerr << "parameters:        " << optimizedParameters_.transpose().format(CleanFmtDisplay_) << std::endl;
+			std::cerr << "cost:         " << optimizedCost_ << std::endl;
+			std::cerr << "parameters:   " << optimizedParameters_.transpose().format(CleanFmtDisplay_) << std::endl;
+			std::cerr << "solution ID:  " << optimizedID_ << std::endl;
 		}
 
 	}  // end of while loop
-
-	// delete the glpk object
-	glp_delete_prob(lpPtr_);
 
 	// display
 	if (nlpSettings_.displayGradientDescent_) {
@@ -558,10 +273,10 @@ void GradientDescent<SCALAR_T>::run(const dynamic_vector_t& initParameters)  {
 		std::cerr <<   "++++++ NLP Solver is terminated ++++" << std::endl;
 		std::cerr <<   "++++++++++++++++++++++++++++++++++++" << std::endl;
 		if (isCostFunctionConverged) {
-			if (learningRateStar==0)
-				std::cerr << "NLP successfully terminates as learningRate reduced to zero." << std::endl;
-			else if (optimizedGradient_.isZero())
+			if (optimizedGradient_.isZero())
 				std::cerr << "NLP successfully terminates as gradient reduced to zero." << std::endl;
+			else if (optimizedLearningRate==0)
+				std::cerr << "NLP successfully terminates as learningRate reduced to zero." << std::endl;
 			else
 				std::cerr << "NLP successfully terminates as cost relative change (relCost=" << relCost <<") reached to the minimum value." << std::endl;
 		} else
@@ -571,6 +286,5 @@ void GradientDescent<SCALAR_T>::run(const dynamic_vector_t& initParameters)  {
 	}
 }
 
-}  // end of nlp namespace
 }  // end of ocs2 namespace
 

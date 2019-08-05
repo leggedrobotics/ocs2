@@ -125,6 +125,13 @@ class MRT_BASE {
    */
   virtual bool updatePolicy();
 
+  /**
+   * Reseats the logic rules in the logic rules machine
+   *
+   * @param [in] logicRules : pointer to the shared logic rules.
+   */
+  void setLogicRules(std::shared_ptr<HybridLogicRules> logicRules);
+
  protected:
   /**
    * The updatePolicy() method will call this method which allows the user to

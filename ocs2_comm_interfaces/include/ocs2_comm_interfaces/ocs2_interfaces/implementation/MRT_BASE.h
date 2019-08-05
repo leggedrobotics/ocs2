@@ -200,6 +200,16 @@ bool MRT_BASE<STATE_DIM, INPUT_DIM>::updatePolicy() {
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
+void MRT_BASE<STATE_DIM, INPUT_DIM>::setLogicRules(std::shared_ptr<HybridLogicRules> logicRules) {
+  std::lock_guard<std::mutex> lock(policyBufferMutex_);
+  logicMachinePtr_->setLogicRules(std::move(logicRules));
+  logicMachinePtr_->logicRulesUpdated();
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+template <size_t STATE_DIM, size_t INPUT_DIM>
 void MRT_BASE<STATE_DIM, INPUT_DIM>::partitioningTimesUpdate(scalar_t time, scalar_array_t& partitioningTimes) const {
   partitioningTimes.resize(2);
   partitioningTimes[0] = (policyReceivedEver_) ? initPlanObservation_.time() : time;

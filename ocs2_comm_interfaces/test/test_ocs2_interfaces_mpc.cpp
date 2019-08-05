@@ -27,18 +27,18 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  ******************************************************************************/
 
-#include "ocs2_double_integrator_example/command/TargetTrajectories_Keyboard_Double_Integrator.h"
+#include <gtest/gtest.h>
+#include <ocs2_comm_interfaces/ocs2_interfaces/MPC_MRT_Interface.h>
+#include <ocs2_mpc/MPC_SLQ.h>
 
 using namespace ocs2;
-using namespace double_integrator;
 
-int main(int argc, char* argv[]) {
-  TargetTrajectories_Keyboard_Double_Integrator<double> targetPoseCommand(argc, argv, "double_integrator");
-  targetPoseCommand.launchNodes();
+TEST(testOcs2InterfacesMpc, instantiation) {
+  MPC_SLQ<1, 1> mpcSlq;
+  MPC_MRT_Interface<1, 1> mpcInterface(&mpcSlq);
+}
 
-  const std::string commadMsg = "Enter displacement and velocity for the double-integrator, separated by spaces";
-  targetPoseCommand.getKeyboardCommand(commadMsg);
-
-  // Successful exit
-  return 0;
+int main(int argc, char** argv) {
+  testing::InitGoogleTest(&argc, argv);
+  return RUN_ALL_TESTS();
 }

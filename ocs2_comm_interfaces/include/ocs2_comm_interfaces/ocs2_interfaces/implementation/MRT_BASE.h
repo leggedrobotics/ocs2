@@ -56,7 +56,6 @@ void MRT_BASE<STATE_DIM, INPUT_DIM>::reset() {
   policyReceivedEver_ = false;
   newPolicyInBuffer_ = false;
 
-  logicUpdated_ = false;
   policyUpdated_ = false;
   policyUpdatedBuffer_ = false;
 
@@ -94,7 +93,8 @@ void MRT_BASE<STATE_DIM, INPUT_DIM>::evaluatePolicy(scalar_t currentTime, const 
                                                     input_vector_t& mpcInput, size_t& subsystem) {
   if (currentTime > mpcTimeTrajectory_.back()) {
     std::cerr << "The requested currentTime is greater than the received plan: " + std::to_string(currentTime) + ">" +
-                    std::to_string(mpcTimeTrajectory_.back()) << std::endl;
+                     std::to_string(mpcTimeTrajectory_.back())
+              << std::endl;
   }
 
   mpcInput = mpcController_->computeInput(currentTime, currentState);
@@ -111,8 +111,9 @@ template <size_t STATE_DIM, size_t INPUT_DIM>
 void MRT_BASE<STATE_DIM, INPUT_DIM>::rolloutPolicy(scalar_t currentTime, const state_vector_t& currentState, const scalar_t& timeStep,
                                                    state_vector_t& mpcState, input_vector_t& mpcInput, size_t& subsystem) {
   if (currentTime > mpcTimeTrajectory_.back()) {
-	  std::cerr << "The requested currentTime is greater than the received plan: " + std::to_string(currentTime) + ">" +
-                    std::to_string(mpcTimeTrajectory_.back()) << std::endl;
+    std::cerr << "The requested currentTime is greater than the received plan: " + std::to_string(currentTime) + ">" +
+                     std::to_string(mpcTimeTrajectory_.back())
+              << std::endl;
   }
 
   if (!rolloutPtr_) {
@@ -164,22 +165,22 @@ bool MRT_BASE<STATE_DIM, INPUT_DIM>::updatePolicy() {
   mpcController_.swap(mpcControllerBuffer_);
 
   // check whether logic rules needs to be updated
-  logicUpdated_ = false;
+  bool logicUpdated = false;
   if (subsystemsSequence_ != subsystemsSequenceBuffer_) {
     subsystemsSequence_.swap(subsystemsSequenceBuffer_);
-    logicUpdated_ = true;
+    logicUpdated = true;
   }
   if (eventTimes_ != eventTimesBuffer_) {
     eventTimes_.swap(eventTimesBuffer_);
-    logicUpdated_ = true;
+    logicUpdated = true;
   }
   if (partitioningTimes_ != partitioningTimesBuffer_) {
     partitioningTimes_.swap(partitioningTimesBuffer_);
-    logicUpdated_ = true;
+    logicUpdated = true;
   }
 
   // update logic rules
-  if (logicUpdated_) {
+  if (logicUpdated) {
     // set mode sequence
     logicMachinePtr_->getLogicRulesPtr()->setModeSequence(subsystemsSequence_, eventTimes_);
     // Tell logicMachine that logicRules are modified
@@ -192,7 +193,7 @@ bool MRT_BASE<STATE_DIM, INPUT_DIM>::updatePolicy() {
     findActiveSubsystemFnc_ = std::move(logicMachinePtr_->getHandleToFindActiveEventCounter(partitionIndex));
   }
 
-  modifyPolicy(logicUpdated_, *mpcController_, mpcTimeTrajectory_, mpcStateTrajectory_, eventTimes_, subsystemsSequence_);
+  modifyPolicy(logicUpdated, *mpcController_, mpcTimeTrajectory_, mpcStateTrajectory_, eventTimes_, subsystemsSequence_);
 
   return true;
 }

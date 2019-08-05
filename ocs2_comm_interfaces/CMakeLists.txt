@@ -152,3 +152,14 @@ install(DIRECTORY include/${PROJECT_NAME}/
 
 ## Add folders to be run by python nosetests
 # catkin_add_nosetests(test)
+
+catkin_add_gtest(ocs2_interface_mpc_test
+  test/test_ocs2_interfaces_mpc.cpp
+  )
+add_dependencies(ocs2_interface_mpc_test
+  ${catkin_EXPORTED_TARGETS}
+  )
+target_link_libraries(ocs2_interface_mpc_test
+  ${catkin_LIBRARIES}
+  ${Boost_LIBRARIES}
+  )

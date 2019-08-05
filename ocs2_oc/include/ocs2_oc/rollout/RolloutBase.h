@@ -212,7 +212,7 @@ class RolloutBase {
 
         controller->display();
 
-        exit(0);
+        throw;
       }
     }  // end of i loop
   }

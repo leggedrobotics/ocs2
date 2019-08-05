@@ -30,8 +30,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifndef TARGETTRAJECTORIES_KEYBOARD_DOUBLE_INTEGRATOR_OCS2_H_
 #define TARGETTRAJECTORIES_KEYBOARD_DOUBLE_INTEGRATOR_OCS2_H_
 
-#include <ocs2_robotic_tools/command/TargetTrajectories_Keyboard_Interface.h>
 #include <ocs2_robotic_tools/command/TargetPoseTransformation.h>
+#include <ocs2_robotic_tools/command/TargetTrajectories_Keyboard_Interface.h>
 
 namespace ocs2 {
 namespace double_integrator {
@@ -42,72 +42,59 @@ namespace double_integrator {
  * @tparam SCALAR_T: scalar type.
  */
 template <typename SCALAR_T>
-class TargetTrajectories_Keyboard_Double_Integrator: public ocs2::TargetTrajectories_Keyboard_Interface<SCALAR_T>
-{
-public:
-	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+class TargetTrajectories_Keyboard_Double_Integrator : public ocs2::TargetTrajectories_Keyboard_Interface<SCALAR_T> {
+ public:
+  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-	enum
-	{
-		command_dim_ = 2
-	};
+  enum { command_dim_ = 2 };
 
-	using BASE = ocs2::TargetTrajectories_Keyboard_Interface<SCALAR_T>;
-	using scalar_t = typename BASE::scalar_t;
-	using scalar_array_t = typename BASE::scalar_array_t;
-	using dynamic_vector_t = typename BASE::dynamic_vector_t;
-	using dynamic_vector_array_t = typename BASE::dynamic_vector_array_t;
-	using cost_desired_trajectories_t = typename BASE::cost_desired_trajectories_t;
+  using BASE = ocs2::TargetTrajectories_Keyboard_Interface<SCALAR_T>;
+  using scalar_t = typename BASE::scalar_t;
+  using scalar_array_t = typename BASE::scalar_array_t;
+  using dynamic_vector_t = typename BASE::dynamic_vector_t;
+  using dynamic_vector_array_t = typename BASE::dynamic_vector_array_t;
+  using cost_desired_trajectories_t = typename BASE::cost_desired_trajectories_t;
 
-	/**
-	 * Constructor.
-	 *
-	 * @param robotName: The robot's name.
-	 * @param goalPoseLimit: Limits for the input command. It has size 2 with following entries.
-	 *
-	 * goalPoseLimit(0): X
-	 * goalPoseLimit(1): V_X
-	 */
-	TargetTrajectories_Keyboard_Double_Integrator(
-	    int argc, char* argv[],
-				const std::string& robotName = "robot",
-				const scalar_array_t& goalPoseLimit = scalar_array_t{10.0, 10.0})
-	: BASE(argc, argv, robotName, command_dim_, goalPoseLimit)
-	{}
+  /**
+   * Constructor.
+   *
+   * @param robotName: The robot's name.
+   * @param goalPoseLimit: Limits for the input command. It has size 2 with following entries.
+   *
+   * goalPoseLimit(0): X
+   * goalPoseLimit(1): V_X
+   */
+  TargetTrajectories_Keyboard_Double_Integrator(int argc, char* argv[], const std::string& robotName = "robot",
+                                                const scalar_array_t& goalPoseLimit = scalar_array_t{10.0, 10.0})
+      : BASE(argc, argv, robotName, command_dim_, goalPoseLimit) {}
 
-	/**
-	* Default destructor
-	*/
-	~TargetTrajectories_Keyboard_Double_Integrator() override = default;
+  /**
+   * Default destructor
+   */
+  ~TargetTrajectories_Keyboard_Double_Integrator() override = default;
 
-	/**
-	 * From command line loaded command to desired time, state, and input.
-	 *
-	 * @param [out] commadLineTarget: The loaded command target.
-	 * @param [in] desiredTime: Desired time to be published.
-	 * @param [in] desiredState: Desired state to be published.
-	 * @param [in] desiredInput: Desired input to be published.
-	 */
-	void toCostDesiredTimeStateInput(
-			const scalar_array_t& commadLineTarget,
-			scalar_t& desiredTime,
-			dynamic_vector_t& desiredState,
-			dynamic_vector_t& desiredInput) final {
+  /**
+   * From command line loaded command to desired time, state, and input.
+   *
+   * @param [out] commadLineTarget: The loaded command target.
+   * @param [in] desiredTime: Desired time to be published.
+   * @param [in] desiredState: Desired state to be published.
+   * @param [in] desiredInput: Desired input to be published.
+   */
+  void toCostDesiredTimeStateInput(const scalar_array_t& commadLineTarget, scalar_t& desiredTime, dynamic_vector_t& desiredState,
+                                   dynamic_vector_t& desiredInput) final {
+    // time
+    desiredTime = 0.0;
+    // state
+    desiredState = Eigen::Map<const dynamic_vector_t>(commadLineTarget.data(), command_dim_);
+    // input
+    desiredInput = dynamic_vector_t::Zero(1);
+  }
 
-		// time
-		desiredTime = 0.0;
-		// state
-		desiredState = Eigen::Map<const dynamic_vector_t>(commadLineTarget.data(), command_dim_);
-		// input
-		desiredInput = dynamic_vector_t::Zero(1);
-	}
-
-private:
-
+ private:
 };
 
-} // namespace double_integrator
-} // namespace ocs2
+}  // namespace double_integrator
+}  // namespace ocs2
 
 #endif /* TARGETTRAJECTORIES_KEYBOARD_DOUBLE_INTEGRATOR_OCS2_H_ */
-

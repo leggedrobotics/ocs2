@@ -754,7 +754,7 @@ void GLQP<STATE_DIM, INPUT_DIM>::solveRiccatiEquationsWorker(size_t workerIndex,
           std::cerr << "s[" << SsTimeTrajectoryStock_[partitionIndex][kp] << "]: \t"
                     << sTrajectoryStock_[partitionIndex][kp].transpose().norm() << std::endl;
         }
-        exit(0);
+        throw;
       }
     }
 }

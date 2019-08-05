@@ -64,6 +64,14 @@ class ControllerBase {
   virtual void unFlatten(const scalar_array_t& timeArray, const std::vector<float_array_t const*>& flatArray2) = 0;
 
   /**
+   * @brief Merges this controller with another controller that comes active later in time
+   * This method is typically used to merge controllers from multiple time partitions.
+   * @note Only controllers of the same type can be merged
+   * @param[in] nextController: The control law to be appended
+   */
+  virtual void concatenate(const ControllerBase* nextController) = 0;
+
+  /**
    * @brief Prints the type of controller
    * @return ControllerType: what type of controller this is
    */

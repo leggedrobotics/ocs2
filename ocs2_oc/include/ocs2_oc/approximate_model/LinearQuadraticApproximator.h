@@ -210,7 +210,7 @@ class LinearQuadraticApproximator {
         std::cerr << "what(): " << error.what() << " at time " << time << " [sec]." << std::endl;
         std::cerr << "Am: \n" << Am << std::endl;
         std::cerr << "Bm: \n" << Bm << std::endl;
-        exit(0);
+        throw;
       }
     }
   }
@@ -300,7 +300,7 @@ class LinearQuadraticApproximator {
         std::cerr << "Dm: \n" << Dm.topRows(ncEqStateInput) << std::endl;
         std::cerr << "Hv: " << Hv.head(ncEqStateOnly).transpose() << std::endl;
         std::cerr << "Fm: \n" << Fm.topRows(ncEqStateOnly) << std::endl;
-        exit(0);
+        throw;
       }
     }
   }
@@ -375,7 +375,7 @@ class LinearQuadraticApproximator {
         std::cerr << "Rv: " << Rv.transpose() << std::endl;
         std::cerr << "Rm: \n" << Rm << std::endl;
         std::cerr << "Pm: \n" << Pm << std::endl;
-        exit(0);
+        throw;
       }
     }
   }

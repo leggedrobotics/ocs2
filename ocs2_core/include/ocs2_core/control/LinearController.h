@@ -163,6 +163,20 @@ class LinearController final : public ControllerBase<STATE_DIM, INPUT_DIM> {
     }
   }
 
+  void concatenate(const Base* nextController) override {
+    if (auto nextLinCtrl = dynamic_cast<const LinearController*>(nextController)) {
+      if (timeStamp_.back() > nextLinCtrl->timeStamp_.front()) {
+        throw std::runtime_error("Concatenate requires that the nextController comes later in time.");
+      }
+      timeStamp_.insert(timeStamp_.end(), nextLinCtrl->timeStamp_.begin(), nextLinCtrl->timeStamp_.end());
+      biasArray_.insert(biasArray_.end(), nextLinCtrl->biasArray_.begin(), nextLinCtrl->biasArray_.end());
+      deltaBiasArray_.insert(deltaBiasArray_.end(), nextLinCtrl->deltaBiasArray_.begin(), nextLinCtrl->deltaBiasArray_.end());
+      gainArray_.insert(gainArray_.end(), nextLinCtrl->gainArray_.begin(), nextLinCtrl->gainArray_.end());
+    } else {
+      throw std::runtime_error("Concatenate only works with controllers of the same type.");
+    }
+  }
+
   ControllerType getType() const override { return ControllerType::LINEAR; }
 
   void clear() override {

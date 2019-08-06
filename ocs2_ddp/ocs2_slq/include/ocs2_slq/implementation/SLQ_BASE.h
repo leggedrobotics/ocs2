@@ -27,6 +27,8 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
+#include <ocs2_slq/SLQ_BASE.h>
+
 namespace ocs2 {
 
 /******************************************************************************************************/
@@ -325,68 +327,61 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM>::approximateConstrainedLQWorker(size_t worke
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculateStateInputConstraintLagrangian(
-		const scalar_t& time,
-		const state_vector_t& state,
-		dynamic_vector_t& nu) const {
+template <size_t STATE_DIM, size_t INPUT_DIM>
+void SLQ_BASE<STATE_DIM, INPUT_DIM>::calculateStateInputConstraintLagrangian(scalar_t time, const state_vector_t& state,
+                                                                             dynamic_vector_t& nu) const {
+  size_t activeSubsystem = lookup::findBoundedActiveIntervalInTimeArray(BASE::partitioningTimes_, time);
 
-	size_t activeSubsystem = BASE::findActivePartitionIndex(BASE::partitioningTimes_, time);
+  state_vector_t xNominal;
+  EigenLinearInterpolation<state_vector_t> xNominalFunc(&BASE::nominalTimeTrajectoriesStock_[activeSubsystem],
+                                                        &BASE::nominalStateTrajectoriesStock_[activeSubsystem]);
+  const auto indexAlpha = xNominalFunc.interpolate(time, xNominal);
 
-	state_vector_t xNominal;
-	EigenLinearInterpolation<state_vector_t> xNominalFunc(
-			&BASE::nominalTimeTrajectoriesStock_[activeSubsystem], &BASE::nominalStateTrajectoriesStock_[activeSubsystem]);
-	auto greatestLessTimeStampIndex = xNominalFunc.interpolate(time, xNominal);
+  state_input_matrix_t Bm;
+  EigenLinearInterpolation<state_input_matrix_t> BmFunc(&BASE::nominalTimeTrajectoriesStock_[activeSubsystem],
+                                                        &BASE::BmTrajectoryStock_[activeSubsystem]);
+  BmFunc.interpolate(indexAlpha, Bm);
 
-	state_input_matrix_t Bm;
-	EigenLinearInterpolation<state_input_matrix_t> BmFunc(
-			&BASE::nominalTimeTrajectoriesStock_[activeSubsystem], &BASE::BmTrajectoryStock_[activeSubsystem]);
-	BmFunc.interpolate(time, Bm, greatestLessTimeStampIndex);
+  input_state_matrix_t Pm;
+  EigenLinearInterpolation<input_state_matrix_t> PmFunc(&BASE::nominalTimeTrajectoriesStock_[activeSubsystem],
+                                                        &BASE::PmTrajectoryStock_[activeSubsystem]);
+  PmFunc.interpolate(indexAlpha, Pm);
 
-	input_state_matrix_t Pm;
-	EigenLinearInterpolation<input_state_matrix_t> PmFunc(
-			&BASE::nominalTimeTrajectoriesStock_[activeSubsystem], &BASE::PmTrajectoryStock_[activeSubsystem]);
-	PmFunc.interpolate(time, Pm, greatestLessTimeStampIndex);
+  input_vector_t Rv;
+  EigenLinearInterpolation<input_vector_t> RvFunc(&BASE::nominalTimeTrajectoriesStock_[activeSubsystem],
+                                                  &BASE::RvTrajectoryStock_[activeSubsystem]);
+  RvFunc.interpolate(indexAlpha, Rv);
 
-	input_vector_t Rv;
-	EigenLinearInterpolation<input_vector_t> RvFunc(
-			&BASE::nominalTimeTrajectoriesStock_[activeSubsystem], &BASE::RvTrajectoryStock_[activeSubsystem]);
-	RvFunc.interpolate(time, Rv, greatestLessTimeStampIndex);
+  input_matrix_t Rm;
+  EigenLinearInterpolation<input_matrix_t> RmFunc(&BASE::nominalTimeTrajectoriesStock_[activeSubsystem],
+                                                  &BASE::RmTrajectoryStock_[activeSubsystem]);
+  RmFunc.interpolate(indexAlpha, Rm);
 
-	input_matrix_t Rm;
-	EigenLinearInterpolation<input_matrix_t> RmFunc(
-			&BASE::nominalTimeTrajectoriesStock_[activeSubsystem], &BASE::RmTrajectoryStock_[activeSubsystem]);
-	RmFunc.interpolate(time, Rm, greatestLessTimeStampIndex);
+  input_vector_t EvProjected;
+  EigenLinearInterpolation<input_vector_t> EvProjectedFunc(&BASE::nominalTimeTrajectoriesStock_[activeSubsystem],
+                                                           &EvProjectedTrajectoryStock_[activeSubsystem]);
+  EvProjectedFunc.interpolate(indexAlpha, EvProjected);
 
-	input_vector_t EvProjected;
-	EigenLinearInterpolation<input_vector_t> EvProjectedFunc(
-			&BASE::nominalTimeTrajectoriesStock_[activeSubsystem], &EvProjectedTrajectoryStock_[activeSubsystem]);
-	EvProjectedFunc.interpolate(time, EvProjected, greatestLessTimeStampIndex);
+  input_state_matrix_t CmProjected;
+  EigenLinearInterpolation<input_state_matrix_t> CmProjectedFunc(&BASE::nominalTimeTrajectoriesStock_[activeSubsystem],
+                                                                 &CmProjectedTrajectoryStock_[activeSubsystem]);
+  CmProjectedFunc.interpolate(indexAlpha, CmProjected);
 
-	input_state_matrix_t CmProjected;
-	EigenLinearInterpolation<input_state_matrix_t> CmProjectedFunc(
-			&BASE::nominalTimeTrajectoriesStock_[activeSubsystem], &CmProjectedTrajectoryStock_[activeSubsystem]);
-	CmProjectedFunc.interpolate(time, CmProjected, greatestLessTimeStampIndex);
+  input_constraint1_matrix_t DmDager;
+  EigenLinearInterpolation<input_constraint1_matrix_t> DmDagerFunc(&BASE::nominalTimeTrajectoriesStock_[activeSubsystem],
+                                                                   &DmDagerTrajectoryStock_[activeSubsystem]);
+  DmDagerFunc.interpolate(indexAlpha, DmDager);
 
-	input_constraint1_matrix_t DmDager;
-	EigenLinearInterpolation<input_constraint1_matrix_t> DmDagerFunc(
-			&BASE::nominalTimeTrajectoriesStock_[activeSubsystem], &DmDagerTrajectoryStock_[activeSubsystem]);
-	DmDagerFunc.interpolate(time, DmDager, greatestLessTimeStampIndex);
+  state_vector_t costate;
+  BASE::getValueFunctionStateDerivative(time, xNominal, costate);
 
-	state_vector_t costate;
-	BASE::getValueFunctionStateDerivative(time, xNominal, costate);
+  const size_t nc1 = BASE::nc1TrajectoriesStock_[activeSubsystem][std::max(0, std::get<0>(indexAlpha))];
+  state_vector_t deltaX = state - xNominal;
+  deltaX.setZero();
+  dynamic_input_matrix_t DmDagerTransRm = DmDager.leftCols(nc1).transpose() * Rm;
 
-	if(greatestLessTimeStampIndex < 0){
-		greatestLessTimeStampIndex = 0;
-	}
-
-	const size_t nc1 = BASE::nc1TrajectoriesStock_[activeSubsystem][greatestLessTimeStampIndex];
-	state_vector_t deltaX = state - xNominal;
-	deltaX.setZero();
-	dynamic_input_matrix_t DmDagerTransRm = DmDager.leftCols(nc1).transpose() * Rm;
-
-	nu = DmDagerTransRm * (CmProjected*deltaX+EvProjected) -
-			DmDager.leftCols(nc1).transpose() * (Pm*deltaX + Bm.transpose()*costate+Rv);
+  nu = DmDagerTransRm * (CmProjected * deltaX + EvProjected) -
+       DmDager.leftCols(nc1).transpose() * (Pm * deltaX + Bm.transpose() * costate + Rv);
 }
 
 /******************************************************************************************************/

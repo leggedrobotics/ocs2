@@ -4,7 +4,7 @@ from distutils.core import setup
 from catkin_pkg.python_setup import generate_distutils_setup
 
 setup_args = generate_distutils_setup(
-     packages=['ocs2_double_integrator_noros_example'],
+     packages=['ocs2_double_integrator_example'],
      package_dir={'': 'src'}
 )
 

@@ -30,7 +30,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #pragma once
 
 // C++
-#include <stdlib.h>
+#include <cstdlib>
 #include <iostream>
 #include <string>
 
@@ -66,7 +66,7 @@ class DoubleIntegratorInterface : public RobotInterfaceBase<double_integrator::S
    * Constructor
    * @param [in] taskFileFolderName: The name of the folder containing task file
    */
-  DoubleIntegratorInterface(const std::string& taskFileFolderName);
+  explicit DoubleIntegratorInterface(const std::string& taskFileFolderName);
 
   /**
    * Destructor
@@ -87,20 +87,15 @@ class DoubleIntegratorInterface : public RobotInterfaceBase<double_integrator::S
    */
   SLQ_Settings& slqSettings();
 
-  /**
-   * Gets a pointer to the internal SLQ-MPC class.
-   *
-   * @return Pointer to the internal MPC
-   */
-  mpc_t::Ptr& getMPCPtr();
+  mpc_t* getMpcPtr() override;
 
   const dim_t::state_vector_t& getXFinal() { return xFinal_; }
 
-  DoubleIntegratorDynamics const * getDynamicsPtr() override { return linearSystemDynamicsPtr_.get(); }
+  DoubleIntegratorDynamics* getDynamicsPtr() override { return linearSystemDynamicsPtr_.get(); }
 
-  DoubleIntegratorDynamicsDerivatives const * getDynamicsDerivativesPtr() override { return linearSystemDynamicsDerivativesPtr_.get(); }
+  DoubleIntegratorDynamicsDerivatives const* getDynamicsDerivativesPtr() override { return linearSystemDynamicsDerivativesPtr_.get(); }
 
-  DoubleIntegratorCost const * getCostPtr() override { return linearSystemCostPtr_.get(); }
+  DoubleIntegratorCost const* getCostPtr() override { return linearSystemCostPtr_.get(); }
 
  protected:
   /**
@@ -117,7 +112,7 @@ class DoubleIntegratorInterface : public RobotInterfaceBase<double_integrator::S
   std::string libraryFolder_;
 
   SLQ_Settings slqSettings_;
-  mpc_t::Ptr mpcPtr_;
+  std::unique_ptr<mpc_t> mpcPtr_;
 
   DoubleIntegratorDynamics::Ptr linearSystemDynamicsPtr_;
   DoubleIntegratorDynamicsDerivatives::Ptr linearSystemDynamicsDerivativesPtr_;

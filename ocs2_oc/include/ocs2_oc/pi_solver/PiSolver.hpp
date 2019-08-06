@@ -35,6 +35,7 @@ class PiSolver final : public Solver_BASE<STATE_DIM, INPUT_DIM> {
   using typename Base::controller_ptr_array_t;
   using typename Base::cost_desired_trajectories_t;
   using typename Base::dynamic_vector_array_t;
+  using typename Base::dynamic_vector_t;
   using typename Base::eigen_scalar_array_t;
   using typename Base::input_matrix_t;
   using typename Base::input_state_matrix_array_t;
@@ -88,7 +89,7 @@ class PiSolver final : public Solver_BASE<STATE_DIM, INPUT_DIM> {
 
   ~PiSolver() override = default;
 
-  virtual void reset() override {
+  void reset() override {
     this->costDesiredTrajectories_.clear();
     this->costDesiredTrajectoriesBuffer_.clear();
     nominalTimeTrajectoriesStock_.clear();
@@ -98,8 +99,7 @@ class PiSolver final : public Solver_BASE<STATE_DIM, INPUT_DIM> {
     numIterations_ = 0;
   }
 
-  virtual void run(scalar_t initTime, const state_vector_t& initState, scalar_t finalTime,
-                   const scalar_array_t& partitioningTimes) override {
+  void run(scalar_t initTime, const state_vector_t& initState, scalar_t finalTime, const scalar_array_t& partitioningTimes) override {
     numIterations_++;
 
     this->updateCostDesiredTrajectories();
@@ -307,71 +307,71 @@ class PiSolver final : public Solver_BASE<STATE_DIM, INPUT_DIM> {
     }
   }
 
-  virtual void run(scalar_t initTime, const state_vector_t& initState, scalar_t finalTime, const scalar_array_t& partitioningTimes,
-                   const controller_ptr_array_t& controllersStock) override {
+  void run(scalar_t initTime, const state_vector_t& initState, scalar_t finalTime, const scalar_array_t& partitioningTimes,
+           const controller_ptr_array_t& controllersStock) override {
     throw std::runtime_error("not implemented.");
   }
 
-  virtual void blockwiseMovingHorizon(bool flag) override {
+  void blockwiseMovingHorizon(bool flag) override {
     if (flag) {
       std::cerr << "[PiSolver] BlockwiseMovingHorizon enabled." << std::endl;
     }
   }
 
-  virtual void getPerformanceIndeces(scalar_t& costFunction, scalar_t& constraint1ISE, scalar_t& constraint2ISE) const override {
+  void getPerformanceIndeces(scalar_t& costFunction, scalar_t& constraint1ISE, scalar_t& constraint2ISE) const override {
     throw std::runtime_error("not implemented.");
   }
 
-  virtual size_t getNumIterations() const override { return numIterations_; }
+  size_t getNumIterations() const override { return numIterations_; }
 
-  virtual void getIterationsLog(eigen_scalar_array_t& iterationCost, eigen_scalar_array_t& iterationISE1,
-                                eigen_scalar_array_t& iterationISE2) const override {
+  void getIterationsLog(eigen_scalar_array_t& iterationCost, eigen_scalar_array_t& iterationISE1,
+                        eigen_scalar_array_t& iterationISE2) const override {
     throw std::runtime_error("not implemented.");
   }
 
-  virtual void getIterationsLogPtr(const eigen_scalar_array_t*& iterationCostPtr, const eigen_scalar_array_t*& iterationISE1Ptr,
-                                   const eigen_scalar_array_t*& iterationISE2Ptr) const override {
+  void getIterationsLogPtr(const eigen_scalar_array_t*& iterationCostPtr, const eigen_scalar_array_t*& iterationISE1Ptr,
+                           const eigen_scalar_array_t*& iterationISE2Ptr) const override {
     throw std::runtime_error("not implemented.");
   }
 
-  virtual scalar_t getFinalTime() const override { throw std::runtime_error("not implemented."); }
+  scalar_t getFinalTime() const override { throw std::runtime_error("not implemented."); }
 
   /**
    * Returns the final time of optimization.
    *
    * @return finalTime
    */
-  virtual const scalar_array_t& getPartitioningTimes() const override { throw std::runtime_error("not implemented."); }
+  const scalar_array_t& getPartitioningTimes() const override { throw std::runtime_error("not implemented."); }
 
-  virtual const controller_ptr_array_t& getController() const override { return nominalControllersPtrStock_; }
+  const controller_ptr_array_t& getController() const override { return nominalControllersPtrStock_; }
 
-  virtual void getControllerPtr(const controller_ptr_array_t*& controllersStockPtr) const override {
+  void getControllerPtr(const controller_ptr_array_t*& controllersStockPtr) const override {
     controllersStockPtr = &nominalControllersPtrStock_;
   }
 
-  virtual const std::vector<scalar_array_t>& getNominalTimeTrajectories() const override { throw std::runtime_error("not implemented."); }
+  const std::vector<scalar_array_t>& getNominalTimeTrajectories() const override { throw std::runtime_error("not implemented."); }
 
-  virtual const state_vector_array2_t& getNominalStateTrajectories() const override { throw std::runtime_error("not implemented."); }
+  const state_vector_array2_t& getNominalStateTrajectories() const override { throw std::runtime_error("not implemented."); }
 
-  virtual const input_vector_array2_t& getNominalInputTrajectories() const override { throw std::runtime_error("not implemented."); }
+  const input_vector_array2_t& getNominalInputTrajectories() const override { throw std::runtime_error("not implemented."); }
 
-  virtual void getNominalTrajectoriesPtr(const std::vector<scalar_array_t>*& nominalTimeTrajectoriesStockPtr,
-                                         const state_vector_array2_t*& nominalStateTrajectoriesStockPtr,
-                                         const input_vector_array2_t*& nominalInputTrajectoriesStockPtr) const override {
+  void getNominalTrajectoriesPtr(const std::vector<scalar_array_t>*& nominalTimeTrajectoriesStockPtr,
+                                 const state_vector_array2_t*& nominalStateTrajectoriesStockPtr,
+                                 const input_vector_array2_t*& nominalInputTrajectoriesStockPtr) const override {
     nominalTimeTrajectoriesStockPtr = &nominalTimeTrajectoriesStock_;
     nominalStateTrajectoriesStockPtr = &nominalStateTrajectoriesStock_;
     nominalInputTrajectoriesStockPtr = &nominalInputTrajectoriesStock_;
   }
 
-  virtual void swapNominalTrajectories(std::vector<scalar_array_t>& nominalTimeTrajectoriesStock,
-                                       state_vector_array2_t& nominalStateTrajectoriesStock,
-                                       input_vector_array2_t& nominalInputTrajectoriesStock) override {
+  void swapNominalTrajectories(std::vector<scalar_array_t>& nominalTimeTrajectoriesStock,
+                               state_vector_array2_t& nominalStateTrajectoriesStock,
+                               input_vector_array2_t& nominalInputTrajectoriesStock) override {
     throw std::runtime_error("not implemented.");
   }
 
-  virtual void rewindOptimizer(size_t firstIndex) override {}
+  void rewindOptimizer(size_t firstIndex) override {}
 
-  virtual const unsigned long long int& getRewindCounter() const override { throw std::runtime_error("not implemented."); }
+  const unsigned long long int& getRewindCounter() const override { throw std::runtime_error("not implemented."); }
 
   void printIterationDebug(scalar_t initTime, const state_vector_array2_t& state_vector_array2,
                            const input_vector_array2_t& input_vector_array2, const scalar_array2_t& J) {
@@ -416,6 +416,18 @@ class PiSolver final : public Solver_BASE<STATE_DIM, INPUT_DIM> {
       nominalControllersPtrStock_.push_back(&controller);
     }
   }
+
+  scalar_t getValueFuntion(scalar_t time, const state_vector_t& state) const override { throw std::runtime_error("Not implemented."); }
+
+  void getValueFunctionStateDerivative(scalar_t time, const state_vector_t& state, state_vector_t& Vx) const override {
+    throw std::runtime_error("Not implemented.");
+  }
+
+  void calculateStateInputConstraintLagrangian(scalar_t time, const state_vector_t& state, dynamic_vector_t& nu) const override {
+    throw std::runtime_error("Not implemented.");
+  }
+
+  void getLinearFeedbackGain(scalar_t time, input_state_matrix_t& K) const override { throw std::runtime_error("Not implemented."); }
 
  protected:
   PI_Settings settings_;  //! path integral settings

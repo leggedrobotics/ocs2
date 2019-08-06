@@ -21,6 +21,15 @@ find_package(Boost REQUIRED COMPONENTS
 
 find_package(Eigen3 3.3 REQUIRED NO_MODULE)
 
+# Pybind11
+option(USE_PYBIND_PYTHON_3 "Use python3-compatible python bindings" ON)
+if(USE_PYBIND_PYTHON_3)
+  set(PYTHON_EXECUTABLE /usr/bin/python3)
+  set(PYBIND11_PYTHON_VERSION 3.6 CACHE STRING "")
+endif(USE_PYBIND_PYTHON_3)
+find_package(pybind11 QUIET)
+message(WARNING "PYTHON_INCLUDE_DIRS ${PYTHON_INCLUDE_DIRS}")
+
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread -fopenmp -Wfatal-errors -Wl,--no-as-needed")
 set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -117,6 +126,49 @@ target_link_libraries(double_integrator_target
         ${Boost_LIBRARIES}
         )
 
+# Pybindings Cpp library
+add_library(DoubleIntegratorPyBindings_Cpp
+  src/DoubleIntegratorPyBindings.cpp
+)
+add_dependencies(DoubleIntegratorPyBindings_Cpp
+  double_integrator_interface
+  ${catkin_EXPORTED_TARGETS}
+)
+target_link_libraries(DoubleIntegratorPyBindings_Cpp
+  double_integrator_interface
+  ${catkin_LIBRARIES}
+)
+
+# Build python bindings if possible
+if(${pybind11_FOUND})
+  message(WARNING "python executable originally ${PYTHON_EXECUTABLE} and pybind11PythonVersion ${PYBIND11_PYTHON_VERSION}")
+
+  pybind11_add_module(DoubleIntegratorPyBindings SHARED
+    src/pyBindModule.cpp
+  )
+  add_dependencies(DoubleIntegratorPyBindings
+    DoubleIntegratorPyBindings_Cpp
+    ${catkin_EXPORTED_TARGETS}
+  )
+  target_link_libraries(DoubleIntegratorPyBindings PRIVATE
+    DoubleIntegratorPyBindings_Cpp
+    ${catkin_LIBRARIES}
+  )
+
+  if(USE_PYBIND_PYTHON_3)
+    # unfortunately this appears not to be discoverable yet because the sourcing process assumes python2.7
+    set_target_properties(DoubleIntegratorPyBindings
+      PROPERTIES LIBRARY_OUTPUT_DIRECTORY ${CATKIN_DEVEL_PREFIX}/lib/python3.6/dist-packages/${PROJECT_NAME}
+    )
+  else(USE_PYBIND_PYTHON_3)
+    set_target_properties(DoubleIntegratorPyBindings
+        PROPERTIES LIBRARY_OUTPUT_DIRECTORY ${CATKIN_DEVEL_PREFIX}/${CATKIN_PACKAGE_PYTHON_DESTINATION}
+    )
+  endif(USE_PYBIND_PYTHON_3)
+
+  catkin_python_setup()
+endif()
+
 #########################
 ###   CLANG TOOLING   ###
 #########################
@@ -140,7 +192,7 @@ endif(cmake_clang_tools_FOUND)
 ## Install ##
 #############
 
-install(TARGETS double_integrator_interface
+install(TARGETS double_integrator_interface DoubleIntegratorPyBindings_Cpp
         ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
         LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
         RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
@@ -158,6 +210,14 @@ install(DIRECTORY urdf launch config rviz
         DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
         )
 
+if(${pybind11_FOUND})
+  # TODO handle python2/3 case properly
+  install(TARGETS DoubleIntegratorPyBindings
+          ARCHIVE DESTINATION ${CATKIN_PACKAGE_PYTHON_DESTINATION}
+          LIBRARY DESTINATION ${CATKIN_PACKAGE_PYTHON_DESTINATION}
+          )
+endif()
+
 #############
 ## Testing ##
 #############
@@ -170,5 +230,17 @@ add_dependencies(ocs2_double_integrator_no_ros_integration_test
   )
 target_link_libraries(ocs2_double_integrator_no_ros_integration_test
   double_integrator_interface
+  ${catkin_LIBRARIES}
+  )
+
+catkin_add_gtest(ocs2_double_integrator_pybinding_test
+  test/DoubleIntegratorPyBindingTest.cpp
+  )
+add_dependencies(ocs2_double_integrator_pybinding_test
+  DoubleIntegratorPyBindings_Cpp
+  ${catkin_EXPORTED_TARGETS}
+  )
+target_link_libraries(ocs2_double_integrator_pybinding_test
+  DoubleIntegratorPyBindings_Cpp
   ${catkin_LIBRARIES}
   )

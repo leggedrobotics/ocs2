@@ -27,6 +27,8 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
+#include <ocs2_ddp_base/DDP_BASE.h>
+
 namespace ocs2 {
 
 /******************************************************************************************************/
@@ -1119,96 +1121,83 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::adjustController(const scalar_array_t& newE
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
-void DDP_BASE<STATE_DIM, INPUT_DIM>::getValueFuntion(scalar_t time, const state_vector_t& state, scalar_t& valueFuntion) {
+typename DDP_BASE<STATE_DIM, INPUT_DIM>::scalar_t DDP_BASE<STATE_DIM, INPUT_DIM>::getValueFuntion(scalar_t time,
+                                                                                                  const state_vector_t& state) const {
   size_t activeSubsystem = lookup::findBoundedActiveIntervalInTimeArray(partitioningTimes_, time);
 
   state_matrix_t Sm;
-  EigenLinearInterpolation<state_matrix_t> SmFunc(&SsTimeTrajectoryStock_[activeSubsystem],
-                                                                                       &SmTrajectoryStock_[activeSubsystem]);
+  EigenLinearInterpolation<state_matrix_t> SmFunc(&SsTimeTrajectoryStock_[activeSubsystem], &SmTrajectoryStock_[activeSubsystem]);
   const auto indexAlpha = SmFunc.interpolate(time, Sm);
 
   state_vector_t Sv;
-  EigenLinearInterpolation<state_vector_t> SvFunc(&SsTimeTrajectoryStock_[activeSubsystem],
-                                                                                       &SvTrajectoryStock_[activeSubsystem]);
+  EigenLinearInterpolation<state_vector_t> SvFunc(&SsTimeTrajectoryStock_[activeSubsystem], &SvTrajectoryStock_[activeSubsystem]);
   SvFunc.interpolate(indexAlpha, Sv);
 
-	state_vector_t Sve;
-	if(SveTrajectoryStock_[activeSubsystem].empty()){
-		Sve.setZero();
-	} else {
-		EigenLinearInterpolation<state_vector_t> SveFunc(
-				&SsTimeTrajectoryStock_[activeSubsystem], &SveTrajectoryStock_[activeSubsystem]);
-		SveFunc.interpolate(time, Sve, greatestLessTimeStampIndex);
-	}
-  
+  state_vector_t Sve;
+  if (SveTrajectoryStock_[activeSubsystem].empty()) {
+    Sve.setZero();
+  } else {
+    EigenLinearInterpolation<state_vector_t> SveFunc(&SsTimeTrajectoryStock_[activeSubsystem], &SveTrajectoryStock_[activeSubsystem]);
+    SveFunc.interpolate(indexAlpha, Sve);
+  }
+
   eigen_scalar_t s;
-  EigenLinearInterpolation<eigen_scalar_t> sFunc(&SsTimeTrajectoryStock_[activeSubsystem],
-                                                                                      &sTrajectoryStock_[activeSubsystem]);
+  EigenLinearInterpolation<eigen_scalar_t> sFunc(&SsTimeTrajectoryStock_[activeSubsystem], &sTrajectoryStock_[activeSubsystem]);
   sFunc.interpolate(indexAlpha, s);
 
   state_vector_t xNominal;
-  EigenLinearInterpolation<state_vector_t> xNominalFunc(
-      &nominalTimeTrajectoriesStock_[activeSubsystem], &nominalStateTrajectoriesStock_[activeSubsystem]);
+  EigenLinearInterpolation<state_vector_t> xNominalFunc(&nominalTimeTrajectoriesStock_[activeSubsystem],
+                                                        &nominalStateTrajectoriesStock_[activeSubsystem]);
   xNominalFunc.interpolate(time, xNominal);
 
   state_vector_t deltaX = state - xNominal;
 
-  valueFuntion = s(0) + deltaX.dot(Sv+Sve) + 0.5*deltaX.dot(Sm*deltaX); //! @todo(jcarius) +Sve correct?
+  return s(0) + deltaX.dot(Sv + Sve) + 0.5 * deltaX.dot(Sm * deltaX);  //! @todo(jcarius) +Sve correct?
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void DDP_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::getValueFunctionStateDerivative(
-		const scalar_t& time,
-		const state_vector_t& state,
-		state_vector_t& Vx) const {
+template <size_t STATE_DIM, size_t INPUT_DIM>
+void DDP_BASE<STATE_DIM, INPUT_DIM>::getValueFunctionStateDerivative(scalar_t time, const state_vector_t& state, state_vector_t& Vx) const {
+  size_t activeSubsystem = lookup::findBoundedActiveIntervalInTimeArray(partitioningTimes_, time);
 
-	size_t activeSubsystem = BASE::findActivePartitionIndex(partitioningTimes_, time);
+  state_matrix_t Sm;
+  EigenLinearInterpolation<state_matrix_t> SmFunc(&SsTimeTrajectoryStock_[activeSubsystem], &SmTrajectoryStock_[activeSubsystem]);
+  const auto indexAlpha = SmFunc.interpolate(time, Sm);
 
-	state_matrix_t Sm;
-	EigenLinearInterpolation<state_matrix_t> SmFunc(
-			&SsTimeTrajectoryStock_[activeSubsystem], &SmTrajectoryStock_[activeSubsystem]);
-	const auto greatestLessTimeStampIndex = SmFunc.interpolate(time, Sm);
+  state_vector_t Sv;
+  EigenLinearInterpolation<state_vector_t> SvFunc(&SsTimeTrajectoryStock_[activeSubsystem], &SvTrajectoryStock_[activeSubsystem]);
+  SvFunc.interpolate(indexAlpha, Sv);
 
-	state_vector_t Sv;
-	EigenLinearInterpolation<state_vector_t> SvFunc(
-			&SsTimeTrajectoryStock_[activeSubsystem], &SvTrajectoryStock_[activeSubsystem]);
-	SvFunc.interpolate(time, Sv, greatestLessTimeStampIndex);
+  state_vector_t Sve;
+  if (SveTrajectoryStock_[activeSubsystem].empty()) {
+    Sve.setZero();
+  } else {
+    EigenLinearInterpolation<state_vector_t> SveFunc(&SsTimeTrajectoryStock_[activeSubsystem], &SveTrajectoryStock_[activeSubsystem]);
+    SveFunc.interpolate(indexAlpha, Sve);
+  }
 
-	state_vector_t Sve;
-	if(SveTrajectoryStock_[activeSubsystem].empty()){
-		Sve.setZero();
-	} else {
-		EigenLinearInterpolation<state_vector_t> SveFunc(
-				&SsTimeTrajectoryStock_[activeSubsystem], &SveTrajectoryStock_[activeSubsystem]);
-		SveFunc.interpolate(time, Sve, greatestLessTimeStampIndex);
-	}
+  state_vector_t xNominal;
+  EigenLinearInterpolation<state_vector_t> xNominalFunc(&nominalTimeTrajectoriesStock_[activeSubsystem],
+                                                        &nominalStateTrajectoriesStock_[activeSubsystem]);
+  xNominalFunc.interpolate(time, xNominal);
 
-	state_vector_t xNominal;
-	EigenLinearInterpolation<state_vector_t> xNominalFunc(
-			&nominalTimeTrajectoriesStock_[activeSubsystem], &nominalStateTrajectoriesStock_[activeSubsystem]);
-	xNominalFunc.interpolate(time, xNominal);
+  state_vector_t deltaX = state - xNominal;
 
-	state_vector_t deltaX = state - xNominal;
-
-	Vx = Sm * deltaX + Sv + Sve;
+  Vx = Sm * deltaX + Sv + Sve;
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void DDP_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::getLinearFeedbackGain(
-		const scalar_t& time,
-		input_state_matrix_t& K) const {
+template <size_t STATE_DIM, size_t INPUT_DIM>
+void DDP_BASE<STATE_DIM, INPUT_DIM>::getLinearFeedbackGain(scalar_t time, input_state_matrix_t& K) const {
+  size_t activeSubsystem = lookup::findBoundedActiveIntervalInTimeArray(partitioningTimes_, time);
 
-	size_t activeSubsystem = BASE::findActivePartitionIndex(partitioningTimes_, time);
-
-	EigenLinearInterpolation<input_state_matrix_t> kFunc(
-			&nominalControllersStock_[activeSubsystem].timeStamp_, &nominalControllersStock_[activeSubsystem].gainArray_);
-	kFunc.interpolate(time, K);
+  EigenLinearInterpolation<input_state_matrix_t> kFunc(&nominalControllersStock_[activeSubsystem].timeStamp_,
+                                                       &nominalControllersStock_[activeSubsystem].gainArray_);
+  kFunc.interpolate(time, K);
 }
 
 /******************************************************************************************************/

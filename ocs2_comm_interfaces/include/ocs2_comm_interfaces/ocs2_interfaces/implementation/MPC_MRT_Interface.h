@@ -173,21 +173,20 @@ const typename MPC_MRT_Interface<STATE_DIM, INPUT_DIM>::scalar_array_t& MPC_MRT_
   return this->mpcTimeTrajectory_;
 }
 
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void MPC_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::getValueFunctionStateDerivative(scalar_t time, const state_vector_t& state, state_vector_t& Vx){
+template <size_t STATE_DIM, size_t INPUT_DIM>
+void MPC_MRT_Interface<STATE_DIM, INPUT_DIM>::getValueFunctionStateDerivative(scalar_t time, const state_vector_t& state,
+                                                                              state_vector_t& Vx) {
   mpcPtr_->getSolverPtr()->getValueFunctionStateDerivative(time, state, Vx);
 }
 
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void MPC_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::getLinearFeedbackGain(scalar_t time, input_state_matrix_t& K){
+template <size_t STATE_DIM, size_t INPUT_DIM>
+void MPC_MRT_Interface<STATE_DIM, INPUT_DIM>::getLinearFeedbackGain(scalar_t time, input_state_matrix_t& K) {
   mpcPtr_->getSolverPtr()->getLinearFeedbackGain(time, K);
 }
 
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void MPC_Interface<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculateStateInputConstraintLagrangian(
-            const scalar_t& time,
-            const state_vector_t& state,
-    dynamic_vector_t& nu) const {
+template <size_t STATE_DIM, size_t INPUT_DIM>
+void MPC_MRT_Interface<STATE_DIM, INPUT_DIM>::calculateStateInputConstraintLagrangian(const scalar_t& time, const state_vector_t& state,
+                                                                                      dynamic_vector_t& nu) const {
   mpcPtr_->getSolverPtr()->calculateStateInputConstraintLagrangian(time, state, nu);
 }
 

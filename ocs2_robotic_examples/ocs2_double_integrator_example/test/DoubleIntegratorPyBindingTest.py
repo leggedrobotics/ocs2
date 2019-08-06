@@ -1,9 +1,9 @@
-# import ocs2_double_integrator_noros_example # works with python2.7, should be working with python3, too
+# import ocs2_double_integrator_example # works with python2.7, should be working with python3, too
 
 # python 3 workaround
 import sys
-sys.path.append("/home/jcarius/catkin_ws/devel/lib/python3.6/dist-packages/ocs2_double_integrator_noros_example")
-from DoubleIntegratorPyBindings3 import mpc_interface, scalar_array, state_vector_array, input_vector_array_t
+sys.path.append("/home/jcarius/catkin_ws/devel/lib/python3.6/dist-packages/ocs2_double_integrator_example")
+from DoubleIntegratorPyBindings import mpc_interface, scalar_array, state_vector_array, input_vector_array_t
 
 import numpy as np
 

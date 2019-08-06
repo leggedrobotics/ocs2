@@ -1,6 +1,6 @@
 #include <gtest/gtest.h>
 
-#include <ocs2_double_integrator_noros_example/DoubleIntegratorPyBindings.hpp>
+#include <ocs2_double_integrator_example/DoubleIntegratorPyBindings.hpp>
 
 TEST(DoubleIntegratorTest, pyBindings) {
   using bindings_t = ocs2::double_integrator::DoubleIntegratorPyBindings;
@@ -26,7 +26,6 @@ TEST(DoubleIntegratorTest, pyBindings) {
   auto x_arr = state_vector_array_t();
   auto u_arr = input_vector_array_t();
   auto sigmaX_arr = state_matrix_array_t();
-
 
   bindings.getMpcSolution(t_arr, x_arr, u_arr, sigmaX_arr);
 

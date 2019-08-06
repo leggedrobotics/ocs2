@@ -49,6 +49,7 @@ class MPC_MRT_Interface final : public MRT_BASE<STATE_DIM, INPUT_DIM> {
   using controller_ptr_array_t = typename mpc_t::controller_ptr_array_t;
   using input_state_matrix_t = typename mpc_t::input_state_matrix_t;
   using input_state_matrix_array_t = typename mpc_t::input_state_matrix_array_t;
+  using dynamic_vector_t = typename mpc_t::dynamic_vector_t;
 
   using cost_desired_trajectories_t = typename mpc_t::cost_desired_trajectories_t;
   using mode_sequence_template_t = typename mpc_t::mode_sequence_template_t;
@@ -96,24 +97,20 @@ class MPC_MRT_Interface final : public MRT_BASE<STATE_DIM, INPUT_DIM> {
   void advanceMpc();
 
   /**
-    * @brief Calculates the state derivative of the value function
-    * @param [in] time the query time
-    * @param [out] Vx partial derivative of the value function at requested time at nominal state
-    */
-   void getValueFunctionStateDerivative(scalar_t time, const state_vector_t& state, state_vector_t& Vx);
+   * @brief Calculates the state derivative of the value function
+   * @param [in] time the query time
+   * @param [out] Vx partial derivative of the value function at requested time at nominal state
+   */
+  void getValueFunctionStateDerivative(scalar_t time, const state_vector_t& state, state_vector_t& Vx);
 
-   /**
-    * @brief getLinearFeedbackGain retrieves K matrix from solver
-    * @param[in] time
-    * @param[out] K
-    */
-   void getLinearFeedbackGain(scalar_t time, input_state_matrix_t& K);
+  /**
+   * @brief getLinearFeedbackGain retrieves K matrix from solver
+   * @param[in] time
+   * @param[out] K
+   */
+  void getLinearFeedbackGain(scalar_t time, input_state_matrix_t& K);
 
-
-   void calculateStateInputConstraintLagrangian(
-               const scalar_t& time,
-               const state_vector_t& state,
-               dynamic_vector_t& nu) const;
+  void calculateStateInputConstraintLagrangian(const scalar_t& time, const state_vector_t& state, dynamic_vector_t& nu) const;
 
   /**
    * @brief Access the currently in-use time trajectory.

@@ -141,14 +141,10 @@ void ILQR_BASE<STATE_DIM, INPUT_DIM>::discreteLQWorker(size_t workerIndex, size_
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void ILQR_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::calculateStateInputConstraintLagrangian(
-			const scalar_t& time,
-			const state_vector_t& state,
-			dynamic_vector_t& nu) const {
-
-	// no constraints
-	nu.resize(0);
+template <size_t STATE_DIM, size_t INPUT_DIM>
+void ILQR_BASE<STATE_DIM, INPUT_DIM>::calculateStateInputConstraintLagrangian(const scalar_t& time, const state_vector_t& state,
+                                                                              dynamic_vector_t& nu) const {
+  throw std::runtime_error("Not implemented");
 }
 
 /******************************************************************************************************/

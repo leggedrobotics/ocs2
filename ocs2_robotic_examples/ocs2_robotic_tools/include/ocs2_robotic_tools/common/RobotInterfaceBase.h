@@ -27,20 +27,19 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  ******************************************************************************/
 
-#ifndef ROBOTINTERFACEBASE_OCS2_H_
-#define ROBOTINTERFACEBASE_OCS2_H_
+#pragma once
 
 // C++
 #include <string>
 #include <iostream>
-#include <stdlib.h>
+#include <cstdlib>
 
 // OCS2
 #include <ocs2_core/Dimensions.h>
 #include <ocs2_slq/SLQ_Settings.h>
 #include <ocs2_mpc/MPC_Settings.h>
 #include <ocs2_core/misc/loadEigenMatrix.h>
-#include <ocs2_core/logic/rules/LogicRulesBase.h>
+#include <ocs2_core/logic/rules/HybridLogicRules.h>
 #include <ocs2_core/dynamics/ControlledSystemBase.h>
 #include <ocs2_core/dynamics/DerivativesBase.h>
 #include <ocs2_core/cost/CostFunctionBase.h>
@@ -81,11 +80,11 @@ public:
 	using dynamic_vector_t = typename DIMENSIONS::dynamic_vector_t;
 	using dynamic_vector_array_t = typename DIMENSIONS::dynamic_vector_array_t;
 
-	typedef ControlledSystemBase<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>  dynamics_t;
-	typedef DerivativesBase<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>       dynamics_derivatives_t;
-	using cost_t = CostFunctionBase<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>;
-	using constraint_t = ConstraintBase<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>;
-	using mpc_t = MPC_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>;
+	using dynamics_t = ControlledSystemBase<STATE_DIM, INPUT_DIM>;
+	using dynamics_derivatives_t =  DerivativesBase<STATE_DIM, INPUT_DIM>;
+	using cost_t = CostFunctionBase<STATE_DIM, INPUT_DIM>;
+	using constraint_t = ConstraintBase<STATE_DIM, INPUT_DIM>;
+	using mpc_t = MPC_BASE<STATE_DIM, INPUT_DIM>;
 
 	/**
 	 * Constructor
@@ -115,19 +114,19 @@ public:
 	 * @brief getLogicRulesPtr
 	 * @return Pointer to the internal logic rules
 	 */
-	virtual LogicRulesBase* getLogicRulesPtr() { return nullptr; }
+	virtual std::shared_ptr<HybridLogicRules> getLogicRulesPtr() { return nullptr; }
 
 	/**
-	 * @brief getMPCPtr
+	 * @brief getMpcPtr
 	 * @return pointer to internal mpc instance
 	 */
-	virtual mpc_t* getMPCPtr() = 0;
+	virtual mpc_t * getMpcPtr() = 0;
 
 	/**
 	 * @brief getDynamicsPtr
 	 * @return a pointer to the interal system dynamics
 	 */
-	virtual dynamics_t const * getDynamicsPtr() = 0;
+	virtual dynamics_t * getDynamicsPtr() = 0;
 
 	/**
 	 * @brief getDynamicsDerivativesPtr
@@ -139,7 +138,7 @@ public:
 	 * @brief getCostPtr
 	 * @return pointer to internal cost function
 	 */
-	virtual cost_t* getCostPtr() = 0;
+	virtual cost_t const * getCostPtr() = 0;
 
 	/**
 	 * @brief getConstraintPtr
@@ -218,5 +217,3 @@ protected:
 } // namespace ocs2
 
 #include "implementation/RobotInterfaceBase.h"
-
-#endif /* ROBOTINTERFACEBASE_OCS2_H_ */

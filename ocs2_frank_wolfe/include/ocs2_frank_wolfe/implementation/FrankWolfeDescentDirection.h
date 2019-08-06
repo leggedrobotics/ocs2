@@ -166,7 +166,9 @@ void FrankWolfeDescentDirection::run(
 		dynamic_vector_t& fwDescentDirection) {
 
 	if (gradient.size() != parameter.size())
-		throw std::runtime_error("The gradient vector size is in compatible with parameter size.");
+		throw std::runtime_error("The gradient vector size is incompatible to the parameter size.");
+	if (maxGradientInverse.size() != gradient.size())
+		throw std::runtime_error("The gradient limit size is incompatible to the gradient size.");
 
 	// instantiate GLPK
 	instantiateGLPK();

@@ -67,6 +67,8 @@ public:
 
 	/**
 	 * Constructor.
+	 *
+	 * @param [in] nlpSettings: Structure containing the settings for the NLP algorithm.
 	 */
 	GradientDescent(const NLP_Settings& nlpSettings);
 

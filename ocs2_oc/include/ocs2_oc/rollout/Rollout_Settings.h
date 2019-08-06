@@ -59,8 +59,8 @@ class Rollout_Settings {
    * @param [in] reconstructInputTrajectory: Whether to run controller again after integration to construct input trajectory
    */
   explicit Rollout_Settings(double absTolODE = 1e-9, double relTolODE = 1e-6, size_t maxNumStepsPerSecond = 5000, double minTimeStep = 1e-3,
-                   IntegratorType integratorType = IntegratorType::ODE45, bool checkNumericalStability = false,
-                   bool reconstructInputTrajectory = true)
+                            IntegratorType integratorType = IntegratorType::ODE45, bool checkNumericalStability = false,
+                            bool reconstructInputTrajectory = true)
       : absTolODE_(absTolODE),
         relTolODE_(relTolODE),
         maxNumStepsPerSecond_(maxNumStepsPerSecond),

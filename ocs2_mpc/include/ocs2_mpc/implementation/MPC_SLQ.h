@@ -148,7 +148,7 @@ void MPC_SLQ<STATE_DIM, INPUT_DIM>::calculateController(const scalar_t& initTime
   //*****************************************************************************************
   // calculate controller
   //*****************************************************************************************
-  if (BASE::mpcSettings_.coldStart_|| BASE::initRun_) {
+  if (BASE::mpcSettings_.coldStart_ || BASE::initRun_) {
     if (BASE::mpcSettings_.debugPrint_) {
       std::cerr << "### Using cold initialization." << std::endl;
     }

@@ -130,7 +130,7 @@ void MPC_ILQR<STATE_DIM, INPUT_DIM>::calculateController(const scalar_t& initTim
 
   // use parallel Riccati solver at each call of realtime-iteration ILQR
   if (!BASE::initRun_) {
-    ilqrPtr_->useParallelRiccatiSolverFromInitItr(BASE::mpcSettings_.useParallelRiccatiSolver_ &&  BASE::mpcSettings_.recedingHorizon_);
+    ilqrPtr_->useParallelRiccatiSolverFromInitItr(BASE::mpcSettings_.useParallelRiccatiSolver_ && BASE::mpcSettings_.recedingHorizon_);
   } else {
     ilqrPtr_->useParallelRiccatiSolverFromInitItr(false);
   }

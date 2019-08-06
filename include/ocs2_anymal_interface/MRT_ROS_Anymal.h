@@ -14,25 +14,22 @@
 
 namespace anymal {
 
-class MRT_ROS_Anymal : public switched_model::MRT_ROS_Quadruped<12>
-{
-public:
-	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+class MRT_ROS_Anymal : public switched_model::MRT_ROS_Quadruped<12> {
+ public:
+  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-	typedef std::shared_ptr<MRT_ROS_Anymal> Ptr;
+  typedef std::shared_ptr<MRT_ROS_Anymal> Ptr;
 
-	typedef switched_model::MRT_ROS_Quadruped<12> BASE;
+  typedef switched_model::MRT_ROS_Quadruped<12> BASE;
 
-	typedef OCS2AnymalInterface ocs2_anymal_interface_t;
+  typedef OCS2AnymalInterface ocs2_anymal_interface_t;
 
-	MRT_ROS_Anymal(const std::string& pathToConfigFolder) : BASE(ocs2_anymal_interface_t::Ptr( new ocs2_anymal_interface_t(pathToConfigFolder) ), "anymal")
-	{}
-  ;
+  MRT_ROS_Anymal(const std::string& pathToConfigFolder)
+      : BASE(ocs2_anymal_interface_t::Ptr(new ocs2_anymal_interface_t(pathToConfigFolder)), "anymal"){};
 
-	~MRT_ROS_Anymal() = default;
-
+  ~MRT_ROS_Anymal() = default;
 };
 
-} // end of namespace anymal
+}  // end of namespace anymal
 
 #endif /* MRT_ROS_ANYMAL_H_ */

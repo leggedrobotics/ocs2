@@ -33,8 +33,7 @@ namespace ocs2 {
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
-GDDP<STATE_DIM, INPUT_DIM>::GDDP(
-		const GDDP_Settings& gddpSettings /*= GDDP_Settings()*/)
+GDDP<STATE_DIM, INPUT_DIM>::GDDP(const GDDP_Settings& gddpSettings /*= GDDP_Settings()*/)
 	: gddpSettings_(gddpSettings)
 {
 	bvpSensitivityEquationsPtrStock_.clear();
@@ -121,8 +120,7 @@ GDDP<STATE_DIM, INPUT_DIM>::GDDP(
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
-void GDDP<STATE_DIM, INPUT_DIM>::setupOptimizer(
-		const size_t& numPartitions) {
+void GDDP<STATE_DIM, INPUT_DIM>::setupOptimizer(const size_t& numPartitions) {
 
 	if (numPartitions==0)
 		throw std::runtime_error("The number of partitions cannot be zero!");
@@ -603,8 +601,7 @@ void GDDP<STATE_DIM, INPUT_DIM>::propagateRolloutSensitivity(
 
 				// finding the current active subsystem
 				scalar_t midTime = 0.5 * (*beginTimeItr+*(endTimeItr-1));
-				size_t activeSubsystem = findActiveSubsystemIndex(
-						eventTimes_, midTime);
+				size_t activeSubsystem = findActiveSubsystemIndex(eventTimes_, midTime);
 
 				// compute multiplier of the equivalent system
 				scalar_t multiplier;

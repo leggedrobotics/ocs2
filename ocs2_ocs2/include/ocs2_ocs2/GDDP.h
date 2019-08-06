@@ -186,8 +186,8 @@ public:
     /**
      * Runs the GSLQ to compute the gradient of the cost function w.r.t. the event times.
      *
-     * eventTimes [in]: The event times vector.
-     * dcPtr [in]: A constant pointer to SLQ data collector which already collected the SLQ variables.
+     * @param [in] eventTimes: The event times vector.
+	 * @param [in] dcPtr: A constant pointer to SLQ data collector which already collected the SLQ variables.
      */
 	void run(
 			const scalar_array_t& eventTimes,

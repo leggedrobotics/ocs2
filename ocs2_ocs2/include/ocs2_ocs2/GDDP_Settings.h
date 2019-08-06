@@ -53,7 +53,6 @@ public:
 	 */
 	GDDP_Settings()
 	: displayInfo_(false)
-	, displayShortSummary_(false)
 	, checkNumericalStability_(true)
 	, warmStart_(false)
 	, useLQForDerivatives_(false)
@@ -106,8 +105,6 @@ public:
 
 	/** This value determines to display the log output DDP. */
 	bool displayInfo_;
-	/** This value determines to display the a summary log of DDP. */
-	bool displayShortSummary_;
 
 	/** Check the numerical stability of the algorithms for debugging purpose. */
 	bool checkNumericalStability_;
@@ -175,16 +172,6 @@ inline void GDDP_Settings::loadSettings(const std::string& filename, const std::
 	}
 	catch (const std::exception& e){
 		if (verbose) {  std::cerr << " #### Option loader : option 'displayInfo' ......................... " << displayInfo_ << "   \t(default)" << std::endl;
-		}
-	}
-
-	try	{
-		displayShortSummary_ = pt.get<bool>(fieldName + ".displayShortSummary");
-		if (verbose) {  std::cerr << " #### Option loader : option 'displayShortSummary' ................. " << displayShortSummary_ << std::endl;
-		}
-	}
-	catch (const std::exception& e){
-		if (verbose) {  std::cerr << " #### Option loader : option 'displayShortSummary' ................. " << displayShortSummary_ << "   \t(default)" << std::endl;
 		}
 	}
 

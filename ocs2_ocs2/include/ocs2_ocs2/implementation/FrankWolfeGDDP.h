@@ -33,179 +33,76 @@ namespace ocs2 {
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
-ProjectedGDDP<STATE_DIM, INPUT_DIM>::ProjectedGDDP(
-		const GDDP_Settings& gddpSettings /*= GDDP_Settings()*/)
+FrankWolfeGDDP<STATE_DIM, INPUT_DIM>::FrankWolfeGDDP(const GDDP_Settings& gddpSettings)
 	: BASE(gddpSettings)
-	, lpPtr_(glp_create_prob(), glp_delete_prob)
+	, frankWolfeDescentDirectionPtr_(new FrankWolfeDescentDirection(gddpSettings.displayInfo_))
 {}
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM>
-void ProjectedGDDP<STATE_DIM, INPUT_DIM>::eventTimesConstraint(
-		const scalar_array_t& eventTimes,
-		const size_t& activeEventTimeBeginIndex,
-		const size_t& activeEventTimeEndIndex,
-		const scalar_t& startTime,
-		const scalar_t& finalTime,
-		dynamic_matrix_t& Cm,
-		dynamic_vector_t& Dv) const {
-
-	const size_t numActiveEventTimes = activeEventTimeEndIndex-activeEventTimeBeginIndex;
-
-	// return if there is no event times
-	if (numActiveEventTimes==0) return;
-
-	Cm = dynamic_matrix_t::Zero(numActiveEventTimes+1, eventTimes.size());
-	for (size_t i=activeEventTimeBeginIndex; i<activeEventTimeEndIndex+1; i++) {
-
-		if (i < activeEventTimeEndIndex)
-			Cm(i-activeEventTimeBeginIndex,i)  = -1.0;
-
-		if (i > activeEventTimeBeginIndex)
-			Cm(i-activeEventTimeBeginIndex,i-1) = 1.0;
-	}
-
-	Dv = dynamic_vector_t::Zero(numActiveEventTimes+1);
-	Dv(0) = startTime;
-	Dv(numActiveEventTimes) = -finalTime;
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM>
-void ProjectedGDDP<STATE_DIM, INPUT_DIM>::setupGLPK() {
-
-	// erase the solver
-	glp_erase_prob(lpPtr_.get());
-
-	// name
-	glp_set_prob_name(lpPtr_.get(), "FrankWolfe");
-
-	// set it as a minimization problem
-	glp_set_obj_dir(lpPtr_.get(), GLP_MIN);
-}
+//template <size_t STATE_DIM, size_t INPUT_DIM>
+//void FrankWolfeGDDP<STATE_DIM, INPUT_DIM>::eventTimesConstraint(
+//		const scalar_array_t& eventTimes,
+//		const size_t& activeEventTimeBeginIndex,
+//		const size_t& activeEventTimeEndIndex,
+//		const scalar_t& startTime,
+//		const scalar_t& finalTime,
+//		dynamic_matrix_t& Cm,
+//		dynamic_vector_t& Dv) const {
+//
+//	const size_t numActiveEventTimes = activeEventTimeEndIndex-activeEventTimeBeginIndex;
+//
+//	// return if there is no event times
+//	if (numActiveEventTimes==0) return;
+//
+//	Cm = dynamic_matrix_t::Zero(numActiveEventTimes+1, eventTimes.size());
+//	for (size_t i=activeEventTimeBeginIndex; i<activeEventTimeEndIndex+1; i++) {
+//
+//		if (i < activeEventTimeEndIndex)
+//			Cm(i-activeEventTimeBeginIndex,i)  = -1.0;
+//
+//		if (i > activeEventTimeBeginIndex)
+//			Cm(i-activeEventTimeBeginIndex,i-1) = 1.0;
+//	}
+//
+//	Dv = dynamic_vector_t::Zero(numActiveEventTimes+1);
+//	Dv(0) = startTime;
+//	Dv(numActiveEventTimes) = -finalTime;
+//}
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
-void ProjectedGDDP<STATE_DIM, INPUT_DIM>::setupLP(
-		const scalar_array_t& eventTimes,
-		const dynamic_vector_t& gradient,
-		const size_t& activeEventTimeBeginIndex,
-		const size_t& activeEventTimeEndIndex,
-		const dynamic_matrix_t& Cm,
-		const dynamic_vector_t& Dv) {
-
-	const size_t numEventTimes = Cm.cols();
-	const size_t numActiveConstraints = Cm.rows();
-
-	// return if there is no event times
-	if (numEventTimes==0) return;
-
-	// setup GLPK
-	setupGLPK();
-
-	// set parameters limits
-	glp_add_cols(lpPtr_.get(), numEventTimes);
-	for (size_t i=0; i<numEventTimes; i++) {
-		if (activeEventTimeBeginIndex<=i && i<activeEventTimeEndIndex) {
-			if (gradient(i)>0)
-				glp_set_col_bnds(lpPtr_.get(), i+1, GLP_LO, eventTimes[i]-gradient(i), 0.0);
-			else
-				glp_set_col_bnds(lpPtr_.get(), i+1, GLP_UP, 0.0, eventTimes[i]-gradient(i));
-		} else {
-			glp_set_col_bnds(lpPtr_.get(), i+1, GLP_FX, eventTimes[i], eventTimes[i]);
-		}
-	}  // end of i loop
-
-	// set the constraint limits (the other half is set later )
-	glp_add_rows(lpPtr_.get(), numActiveConstraints);
-	for (size_t i=0; i<numActiveConstraints; i++)
-		glp_set_row_bnds(lpPtr_.get(), i+1, GLP_UP, 0.0, -Dv(i));
-
-	// set the constraint coefficients
-	scalar_array_t values;
-	std::vector<int> xIndices, yIndices;
-	values.push_back(0.0);   // the 0 index is not used
-	xIndices.push_back(-1);  // the 0 index is not used
-	yIndices.push_back(-1);  // the 0 index is not used
-	for (size_t i=0; i<numActiveConstraints; i++)
-		for (size_t j=0; j<numEventTimes; j++)
-			if (fabs(Cm(i,j)) > Eigen::NumTraits<scalar_t>::epsilon()) {
-				values.push_back(Cm(i,j));
-				xIndices.push_back(i+1);
-				yIndices.push_back(j+1);
-			}
-	size_t numNonZeroCoeff = values.size()-1;
-
-	glp_load_matrix(lpPtr_.get(), numNonZeroCoeff, xIndices.data(), yIndices.data(), values.data());
-}
-
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM>
-void ProjectedGDDP<STATE_DIM, INPUT_DIM>::frankWolfeProblem(
-		const dynamic_vector_t& gradient,
-		scalar_array_t& eventTimesOptimized) {
-
-	// return if no constraints are defined
-	if (gradient.size()==0)  return;
-
-	// set the LP of Frank-Wolfe algorithm cost function
-	for (size_t i=0; i<gradient.size(); i++)
-		glp_set_obj_coef(lpPtr_.get(), i+1, gradient(i));
-
-	// set LP options
-	glp_smcp lpOptions;
-	glp_init_smcp(&lpOptions);
-	if (BASE::gddpSettings_.displayGradientDescent_ == false)
-		lpOptions.msg_lev = GLP_MSG_ERR;
-
-	// solve LP
-	glp_simplex(lpPtr_.get(), &lpOptions);
-
-	// get the solution
-	eventTimesOptimized.resize(gradient.size());
-	for (size_t i=0; i<gradient.size(); i++)
-		eventTimesOptimized[i] = glp_get_col_prim(lpPtr_.get(), i+1);
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM>
-void ProjectedGDDP<STATE_DIM, INPUT_DIM>::run(
+void FrankWolfeGDDP<STATE_DIM, INPUT_DIM>::run(
 		scalar_array_t eventTimes,
 		const slq_data_collector_t* dcPtr,
-		scalar_array_t& eventTimesOptimized,
-		const scalar_t& maxStepSize /*= 1.0*/)  {
+		const dynamic_vector_t& maxGradientInverse,
+		const NLP_Constraints* eventTimeConstraintPtr)  {
 
-	// run the base method which will calculate the raw gradient
-	BASE::run(eventTimes, dcPtr);
+	// run the base method which will calculate the gradient
+	this->run(eventTimes, dcPtr);
 
-	dynamic_vector_t gradient = maxStepSize * BASE::nominalCostFuntionDerivative_.normalized();
+	// no need for using frank-Wolfe if there is no constraint
+	if (!eventTimeConstraintPtr)
+		return;
 
-	// Event time constraints
-	dynamic_matrix_t Cm;
-	dynamic_vector_t Dv;
-	eventTimesConstraint(eventTimes,
-			BASE::activeEventTimeBeginIndex_, BASE::activeEventTimeEndIndex_,
-			dcPtr->initTime_, dcPtr->finalTime_,
-			Cm, Dv);
+	// display
+	if (gddpSettings.displayInfo_)
+		std::cerr << "Gradient:             " << this->nominalCostFuntionDerivative_.transpose() << std::endl;
 
-	// setup LP problem
-	setupLP(eventTimes, gradient,
-			BASE::activeEventTimeBeginIndex_, BASE::activeEventTimeEndIndex_,
-			Cm, Dv);
+	// compute the projected gradient
+	dynamic_vector_t fwDescentDirection;
+	frankWolfeDescentDirectionPtr_->run(eventTimes, this->nominalCostFuntionDerivative_, maxGradientInverse, eventTimeConstraintPtr,
+			fwDescentDirection);
+	// since it is gradient not the descent direction
+	this->nominalCostFuntionDerivative_ = -fwDescentDirection;
 
-	// Frank-Wolfe solution
-	frankWolfeProblem(gradient, eventTimesOptimized);
+	// display
+	if (gddpSettings.displayInfo_) {
+		std::cerr << "Frank-Wolfe gradient: " << this->nominalCostFuntionDerivative_.transpose() << std::endl;
+	}
 }
 
 } // namespace ocs2

@@ -107,7 +107,7 @@ void MPC_ILQR<STATE_DIM, INPUT_DIM>::calculateController(const scalar_t& initTim
   //*****************************************************************************************
   // cost goal check
   //*****************************************************************************************
-  if (BASE::initRun_ == true && ilqrPtr_->costDesiredTrajectoriesUpdated() == false) {
+  if (BASE::initRun_ && !ilqrPtr_->costDesiredTrajectoriesUpdated()) {
     std::cerr << "### WARNING: The initial desired trajectories are not set. "
                  "This may cause undefined behavior. Use the MPC_ILQR::setCostDesiredTrajectories() "
                  "method to provide appropriate goal trajectories."
@@ -118,7 +118,7 @@ void MPC_ILQR<STATE_DIM, INPUT_DIM>::calculateController(const scalar_t& initTim
   // updating real-time iteration settings
   //*****************************************************************************************
   // number of iterations
-  if (BASE::initRun_ == true /*|| ilqrPtr_->getController().at(BASE::finalActivePartitionIndex_).empty()==true*/) {
+  if (BASE::initRun_ /*|| ilqrPtr_->getController().at(BASE::finalActivePartitionIndex_).empty()*/) {
     ilqrPtr_->ddpSettings().maxNumIterations_ = BASE::mpcSettings_.initMaxNumIterations_;
     ilqrPtr_->ddpSettings().maxLearningRate_ = BASE::mpcSettings_.initMaxLearningRate_;
     ilqrPtr_->ddpSettings().minLearningRate_ = BASE::mpcSettings_.initMinLearningRate_;
@@ -129,12 +129,8 @@ void MPC_ILQR<STATE_DIM, INPUT_DIM>::calculateController(const scalar_t& initTim
   }
 
   // use parallel Riccati solver at each call of realtime-iteration ILQR
-  if (BASE::initRun_ == false) {
-    if (BASE::mpcSettings_.useParallelRiccatiSolver_ == true && BASE::mpcSettings_.recedingHorizon_ == true) {
-      ilqrPtr_->useParallelRiccatiSolverFromInitItr(true);
-    } else {
-      ilqrPtr_->useParallelRiccatiSolverFromInitItr(false);
-    }
+  if (!BASE::initRun_) {
+    ilqrPtr_->useParallelRiccatiSolverFromInitItr(BASE::mpcSettings_.useParallelRiccatiSolver_ &&  BASE::mpcSettings_.recedingHorizon_);
   } else {
     ilqrPtr_->useParallelRiccatiSolverFromInitItr(false);
   }
@@ -142,7 +138,7 @@ void MPC_ILQR<STATE_DIM, INPUT_DIM>::calculateController(const scalar_t& initTim
   //*****************************************************************************************
   // calculate controller
   //*****************************************************************************************
-  if (BASE::mpcSettings_.coldStart_ == true || BASE::initRun_ == true) {
+  if (BASE::mpcSettings_.coldStart_ || BASE::initRun_) {
     if (BASE::mpcSettings_.debugPrint_) {
       std::cerr << "### Using cold initialization." << std::endl;
     }

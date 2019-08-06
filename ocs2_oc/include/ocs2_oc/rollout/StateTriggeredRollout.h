@@ -53,7 +53,7 @@ class StateTriggeredRollout : public RolloutBase<STATE_DIM, INPUT_DIM> {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-  typedef RolloutBase<STATE_DIM, INPUT_DIM> BASE;
+  using BASE = RolloutBase<STATE_DIM, INPUT_DIM>;
 
   using controller_t = typename BASE::controller_t;
   using size_array_t = typename BASE::size_array_t;
@@ -66,7 +66,7 @@ class StateTriggeredRollout : public RolloutBase<STATE_DIM, INPUT_DIM> {
 
   using event_handler_t = SystemEventHandler<STATE_DIM>;
   using state_triggered_event_handler_t = StateTriggeredEventHandler<STATE_DIM>;
-  typedef ControlledSystemBase<STATE_DIM, INPUT_DIM> controlled_system_base_t;
+  using controlled_system_base_t = ControlledSystemBase<STATE_DIM, INPUT_DIM>;
 
   using logic_rules_machine_t = HybridLogicRulesMachine;
   //	using hybrid_logic_rules_machine_t = HybridLogicRulesMachine;

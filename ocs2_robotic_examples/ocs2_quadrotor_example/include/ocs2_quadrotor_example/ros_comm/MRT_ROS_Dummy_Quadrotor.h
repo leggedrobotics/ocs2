@@ -43,7 +43,7 @@ class MRT_ROS_Dummy_Quadrotor : public MRT_ROS_Dummy_Loop<quadrotor::STATE_DIM_,
 public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-	typedef MRT_ROS_Dummy_Loop<quadrotor::STATE_DIM_, quadrotor::INPUT_DIM_> BASE;
+	using BASE = MRT_ROS_Dummy_Loop<quadrotor::STATE_DIM_, quadrotor::INPUT_DIM_>;
 
 	/**
 	 * Constructor.

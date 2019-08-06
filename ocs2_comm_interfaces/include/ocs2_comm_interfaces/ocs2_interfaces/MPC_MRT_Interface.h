@@ -32,7 +32,7 @@ class MPC_MRT_Interface final : public MRT_BASE<STATE_DIM, INPUT_DIM> {
 
   using Base = MRT_BASE<STATE_DIM, INPUT_DIM>;
 
-  typedef std::shared_ptr<MPC_MRT_Interface<STATE_DIM, INPUT_DIM>> Ptr;
+  using Ptr = std::shared_ptr<MPC_MRT_Interface<STATE_DIM, INPUT_DIM>>;
 
   using mpc_t = MPC_BASE<STATE_DIM, INPUT_DIM>;
 

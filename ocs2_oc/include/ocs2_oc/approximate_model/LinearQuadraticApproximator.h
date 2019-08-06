@@ -55,10 +55,10 @@ class LinearQuadraticApproximator {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-  typedef Dimensions<STATE_DIM, INPUT_DIM> DIMENSIONS;
-  typedef DerivativesBase<STATE_DIM, INPUT_DIM> derivatives_base_t;
-  typedef ConstraintBase<STATE_DIM, INPUT_DIM> constraint_base_t;
-  typedef CostFunctionBase<STATE_DIM, INPUT_DIM> cost_function_base_t;
+  using DIMENSIONS = Dimensions<STATE_DIM, INPUT_DIM>;
+  using derivatives_base_t = DerivativesBase<STATE_DIM, INPUT_DIM>;
+  using constraint_base_t = ConstraintBase<STATE_DIM, INPUT_DIM>;
+  using cost_function_base_t = CostFunctionBase<STATE_DIM, INPUT_DIM>;
 
   using scalar_t = typename DIMENSIONS::scalar_t;
   using scalar_array_t = typename DIMENSIONS::scalar_array_t;

@@ -57,13 +57,13 @@ class CartPoleInterface : public RobotInterfaceBase<cartpole::STATE_DIM_, cartpo
 public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-	typedef RobotInterfaceBase<cartpole::STATE_DIM_, cartpole::INPUT_DIM_> BASE;
+	using BASE = RobotInterfaceBase<cartpole::STATE_DIM_, cartpole::INPUT_DIM_>;
 
 	using dim_t = Dimensions<cartpole::STATE_DIM_, cartpole::INPUT_DIM_>;
 	using CartPoleConstraint = ConstraintBase<cartpole::STATE_DIM_, cartpole::INPUT_DIM_>;
 	using CartPoleOperatingPoint = SystemOperatingPoint<cartpole::STATE_DIM_, cartpole::INPUT_DIM_>;
 
-	typedef MPC_SLQ<cartpole::STATE_DIM_, cartpole::INPUT_DIM_> mpc_t;
+	using mpc_t = MPC_SLQ<cartpole::STATE_DIM_, cartpole::INPUT_DIM_>;
 
 	/**
 	 * Constructor

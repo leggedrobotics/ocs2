@@ -797,7 +797,7 @@ class DDP_BASE : public Solver_BASE<STATE_DIM, INPUT_DIM> {
   benchmark::RepeatedTimer linearQuadraticApproximationTimer_;
   benchmark::RepeatedTimer backwardPassTimer_;
   benchmark::RepeatedTimer computeControllerTimer_;
-  benchmark::RepeatedTimer finalRolloutTimer_;
+  benchmark::RepeatedTimer linesearchTimer_;
 };
 
 }  // namespace ocs2

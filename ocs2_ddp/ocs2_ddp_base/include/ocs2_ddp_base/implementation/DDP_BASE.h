@@ -98,24 +98,23 @@ DDP_BASE<STATE_DIM, INPUT_DIM>::~DDP_BASE() {
   auto linearQuadraticApproximationTotal = linearQuadraticApproximationTimer_.getTotalInMilliseconds();
   auto backwardPassTotal = backwardPassTimer_.getTotalInMilliseconds();
   auto computeControllerTotal = computeControllerTimer_.getTotalInMilliseconds();
-  auto finalRolloutTotal = finalRolloutTimer_.getTotalInMilliseconds();
+  auto finalRolloutTotal = linesearchTimer_.getTotalInMilliseconds();
 
   auto benchmarkTotal =
       forwardPassTotal + linearQuadraticApproximationTotal + backwardPassTotal + computeControllerTotal + finalRolloutTotal;
 
   if (benchmarkTotal > 0 && (ddpSettings_.displayInfo_ || ddpSettings_.displayShortSummary_)) {
-    std::cerr << std::endl << "#####################################################" << std::endl;
-    std::cerr << "Benchmarking over " << backwardPassTimer_.getNumTimedIntervals() << " samples. Average time [ms]   (% of total runtime)"
-              << std::endl;
+    std::cerr << "\n################################################################\n";
+    std::cerr << "Benchmarking         :\tAverage time [ms]   (% of total runtime)\n";
     std::cerr << "\tForward Pass       :\t" << forwardPassTimer_.getAverageInMilliseconds() << " [ms] \t("
-              << forwardPassTotal / benchmarkTotal * 100 << "%)" << std::endl;
+              << forwardPassTotal / benchmarkTotal * 100 << "%)\n";
     std::cerr << "\tLQ Approximation   :\t" << linearQuadraticApproximationTimer_.getAverageInMilliseconds() << " [ms] \t("
-              << linearQuadraticApproximationTotal / benchmarkTotal * 100 << "%)" << std::endl;
+              << linearQuadraticApproximationTotal / benchmarkTotal * 100 << "%)\n";
     std::cerr << "\tBackward Pass      :\t" << backwardPassTimer_.getAverageInMilliseconds() << " [ms] \t("
-              << backwardPassTotal / benchmarkTotal * 100 << "%)" << std::endl;
+              << backwardPassTotal / benchmarkTotal * 100 << "%)\n";
     std::cerr << "\tCompute Controller :\t" << computeControllerTimer_.getAverageInMilliseconds() << " [ms] \t("
-              << computeControllerTotal / benchmarkTotal * 100 << "%)" << std::endl;
-    std::cerr << "\tFinal rollout      :\t" << finalRolloutTimer_.getAverageInMilliseconds() << " [ms] \t("
+              << computeControllerTotal / benchmarkTotal * 100 << "%)\n";
+    std::cerr << "\tLinesearch         :\t" << linesearchTimer_.getAverageInMilliseconds() << " [ms] \t("
               << finalRolloutTotal / benchmarkTotal * 100 << "%)" << std::endl;
   }
 }
@@ -159,7 +158,7 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::reset() {
   linearQuadraticApproximationTimer_.reset();
   backwardPassTimer_.reset();
   computeControllerTimer_.reset();
-  finalRolloutTimer_.reset();
+  linesearchTimer_.reset();
 }
 
 /******************************************************************************************************/
@@ -1508,9 +1507,9 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::runIteration() {
 
   // finding the optimal learningRate
   maxLearningRate_ = ddpSettings_.maxLearningRate_;
-  forwardPassTimer_.startTimer();
+  linesearchTimer_.startTimer();
   lineSearch(computeISEs);
-  forwardPassTimer_.endTimer();
+  linesearchTimer_.endTimer();
 
   // linearizing the dynamics and quadratizing the cost function along nominal trajectories
   linearQuadraticApproximationTimer_.startTimer();
@@ -1756,9 +1755,9 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::run(scalar_t initTime, const state_vector_t
 
   // finding the final optimal learningRate and getting the optimal trajectories and controller
   maxLearningRate_ = ddpSettings_.maxLearningRate_;
-  finalRolloutTimer_.startTimer();
+  linesearchTimer_.startTimer();
   lineSearch(computeISEs);
-  finalRolloutTimer_.endTimer();
+  linesearchTimer_.endTimer();
 
   updateNominalControllerPtrStock();
 

@@ -94,19 +94,29 @@ DDP_BASE<STATE_DIM, INPUT_DIM>::DDP_BASE(const controlled_system_base_t* systemD
 /***************************************************************************************************** */
 template <size_t STATE_DIM, size_t INPUT_DIM>
 DDP_BASE<STATE_DIM, INPUT_DIM>::~DDP_BASE() {
-#ifdef BENCHMARK
-  auto BENCHMARK_total = BENCHMARK_tAvgFP_ + BENCHMARK_tAvgBP_ + BENCHMARK_tAvgLQ_;
-  if (BENCHMARK_total > 0 && (ddpSettings_.displayInfo_ || ddpSettings_.displayShortSummary_)) {
-    std::cerr << std::endl << "#####################################################" << std::endl;
-    std::cerr << "Benchmarking over " << BENCHMARK_nIterationsBP_ << " samples." << std::endl;
-    std::cerr << "Average time for Forward Pass:      " << BENCHMARK_tAvgFP_ / 1000.0 << " [ms] \t("
-              << BENCHMARK_tAvgFP_ / BENCHMARK_total * 100 << "%)" << std::endl;
-    std::cerr << "Average time for Backward Pass:     " << BENCHMARK_tAvgBP_ / 1000.0 << " [ms] \t("
-              << BENCHMARK_tAvgBP_ / BENCHMARK_total * 100 << "%)" << std::endl;
-    std::cerr << "Average time for LQ Approximation:  " << BENCHMARK_tAvgLQ_ / 1000.0 << " [ms] \t("
-              << BENCHMARK_tAvgLQ_ / BENCHMARK_total * 100 << "%)" << std::endl;
+  auto forwardPassTotal = forwardPassTimer_.getTotalInMilliseconds();
+  auto linearQuadraticApproximationTotal = linearQuadraticApproximationTimer_.getTotalInMilliseconds();
+  auto backwardPassTotal = backwardPassTimer_.getTotalInMilliseconds();
+  auto computeControllerTotal = computeControllerTimer_.getTotalInMilliseconds();
+  auto finalRolloutTotal = linesearchTimer_.getTotalInMilliseconds();
+
+  auto benchmarkTotal =
+      forwardPassTotal + linearQuadraticApproximationTotal + backwardPassTotal + computeControllerTotal + finalRolloutTotal;
+
+  if (benchmarkTotal > 0 && (ddpSettings_.displayInfo_ || ddpSettings_.displayShortSummary_)) {
+    std::cerr << "\n################################################################\n";
+    std::cerr << "Benchmarking         :\tAverage time [ms]   (% of total runtime)\n";
+    std::cerr << "\tForward Pass       :\t" << forwardPassTimer_.getAverageInMilliseconds() << " [ms] \t("
+              << forwardPassTotal / benchmarkTotal * 100 << "%)\n";
+    std::cerr << "\tLQ Approximation   :\t" << linearQuadraticApproximationTimer_.getAverageInMilliseconds() << " [ms] \t("
+              << linearQuadraticApproximationTotal / benchmarkTotal * 100 << "%)\n";
+    std::cerr << "\tBackward Pass      :\t" << backwardPassTimer_.getAverageInMilliseconds() << " [ms] \t("
+              << backwardPassTotal / benchmarkTotal * 100 << "%)\n";
+    std::cerr << "\tCompute Controller :\t" << computeControllerTimer_.getAverageInMilliseconds() << " [ms] \t("
+              << computeControllerTotal / benchmarkTotal * 100 << "%)\n";
+    std::cerr << "\tLinesearch         :\t" << linesearchTimer_.getAverageInMilliseconds() << " [ms] \t("
+              << finalRolloutTotal / benchmarkTotal * 100 << "%)" << std::endl;
   }
-#endif
 }
 
 /******************************************************************************************************/
@@ -142,6 +152,13 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::reset() {
     sFinalStock_[i] = eigen_scalar_t::Zero();
     xFinalStock_[i] = state_vector_t::Zero();
   }  // end of i loop
+
+  // reset timers
+  forwardPassTimer_.reset();
+  linearQuadraticApproximationTimer_.reset();
+  backwardPassTimer_.reset();
+  computeControllerTimer_.reset();
+  linesearchTimer_.reset();
 }
 
 /******************************************************************************************************/
@@ -245,7 +262,7 @@ typename DDP_BASE<STATE_DIM, INPUT_DIM>::scalar_t DDP_BASE<STATE_DIM, INPUT_DIM>
   }
 
   // average time step
-  return (finalTime - initTime) / (scalar_t)numSteps;
+  return (finalTime - initTime) / numSteps;
 }
 
 /******************************************************************************************************/
@@ -1427,28 +1444,15 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::setupOptimizer(size_t numPartitions) {
 /***************************************************************************************************** */
 template <size_t STATE_DIM, size_t INPUT_DIM>
 void DDP_BASE<STATE_DIM, INPUT_DIM>::runInit() {
-#ifdef BENCHMARK
-  // Benchmarking
-  BENCHMARK_nIterationsLQ_++;
-  BENCHMARK_nIterationsBP_++;
-  BENCHMARK_nIterationsFP_++;
-  BENCHMARK_start_ = std::chrono::steady_clock::now();
-#endif
-
   // initial controller rollout
+  forwardPassTimer_.startTimer();
   avgTimeStepFP_ =
       rolloutTrajectory(initTime_, initState_, finalTime_, partitioningTimes_, nominalControllersStock_, nominalTimeTrajectoriesStock_,
                         nominalEventsPastTheEndIndecesStock_, nominalStateTrajectoriesStock_, nominalInputTrajectoriesStock_);
-
-#ifdef BENCHMARK
-  BENCHMARK_end_ = std::chrono::steady_clock::now();
-  auto BENCHMARK_diff_ = BENCHMARK_end_ - BENCHMARK_start_;
-  BENCHMARK_tAvgFP_ = ((1.0 - 1.0 / BENCHMARK_nIterationsFP_) * BENCHMARK_tAvgFP_) +
-                      (1.0 / BENCHMARK_nIterationsFP_) * std::chrono::duration_cast<std::chrono::microseconds>(BENCHMARK_diff_).count();
-  BENCHMARK_start_ = std::chrono::steady_clock::now();
-#endif
+  forwardPassTimer_.endTimer();
 
   // linearizing the dynamics and quadratizing the cost function along nominal trajectories
+  linearQuadraticApproximationTimer_.startTimer();
   approximateOptimalControlProblem();
 
   // to check convergence of the main loop, we need to compute the total cost and ISEs
@@ -1472,30 +1476,21 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::runInit() {
     nominalConstraint1ISE_ = nominalConstraint1MaxNorm_ = 0.0;
     nominalConstraint2ISE_ = nominalConstraint2MaxNorm_ = 0.0;
   }
-
-#ifdef BENCHMARK
-  BENCHMARK_end_ = std::chrono::steady_clock::now();
-  BENCHMARK_diff_ = BENCHMARK_end_ - BENCHMARK_start_;
-  BENCHMARK_tAvgLQ_ = ((1.0 - 1.0 / BENCHMARK_nIterationsLQ_) * BENCHMARK_tAvgLQ_) +
-                      (1.0 / BENCHMARK_nIterationsLQ_) * std::chrono::duration_cast<std::chrono::microseconds>(BENCHMARK_diff_).count();
-  BENCHMARK_start_ = std::chrono::steady_clock::now();
-#endif
+  linearQuadraticApproximationTimer_.endTimer();
 
   // solve Riccati equations
+  backwardPassTimer_.startTimer();
   avgTimeStepBP_ = solveSequentialRiccatiEquations(SmHeuristics_, SvHeuristics_, sHeuristics_);
+  backwardPassTimer_.endTimer();
+
   // calculate controller
+  computeControllerTimer_.startTimer();
   if (ddpSettings_.useRiccatiSolver_) {
     calculateController();
   } else {
     throw std::runtime_error("useRiccatiSolver=false is not valid.");
   }
-
-#ifdef BENCHMARK
-  BENCHMARK_end_ = std::chrono::steady_clock::now();
-  BENCHMARK_diff_ = BENCHMARK_end_ - BENCHMARK_start_;
-  BENCHMARK_tAvgBP_ = ((1.0 - 1.0 / BENCHMARK_nIterationsBP_) * BENCHMARK_tAvgBP_) +
-                      (1.0 / BENCHMARK_nIterationsBP_) * std::chrono::duration_cast<std::chrono::microseconds>(BENCHMARK_diff_).count();
-#endif
+  computeControllerTimer_.endTimer();
 
   // display
   if (ddpSettings_.displayInfo_) {
@@ -1508,29 +1503,16 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::runInit() {
 /***************************************************************************************************** */
 template <size_t STATE_DIM, size_t INPUT_DIM>
 void DDP_BASE<STATE_DIM, INPUT_DIM>::runIteration() {
-#ifdef BENCHMARK
-  // Benchmarking
-  BENCHMARK_nIterationsLQ_++;
-  BENCHMARK_nIterationsBP_++;
-  BENCHMARK_nIterationsFP_++;
-  BENCHMARK_start_ = std::chrono::steady_clock::now();
-#endif
-
   bool computeISEs = ddpSettings_.displayInfo_ || !ddpSettings_.noStateConstraints_;
 
   // finding the optimal learningRate
   maxLearningRate_ = ddpSettings_.maxLearningRate_;
+  linesearchTimer_.startTimer();
   lineSearch(computeISEs);
-
-#ifdef BENCHMARK
-  BENCHMARK_end_ = std::chrono::steady_clock::now();
-  BENCHMARK_diff_ = BENCHMARK_end_ - BENCHMARK_start_;
-  BENCHMARK_tAvgFP_ = ((1.0 - 1.0 / BENCHMARK_nIterationsFP_) * BENCHMARK_tAvgFP_) +
-                      (1.0 / BENCHMARK_nIterationsFP_) * std::chrono::duration_cast<std::chrono::microseconds>(BENCHMARK_diff_).count();
-  BENCHMARK_start_ = std::chrono::steady_clock::now();
-#endif
+  linesearchTimer_.endTimer();
 
   // linearizing the dynamics and quadratizing the cost function along nominal trajectories
+  linearQuadraticApproximationTimer_.startTimer();
   approximateOptimalControlProblem();
 
   // to check convergence of the main loop, we need to compute ISEs
@@ -1546,30 +1528,21 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::runIteration() {
       nominalConstraint2ISE_ = nominalConstraint2MaxNorm_ = 0.0;
     }
   }
-
-#ifdef BENCHMARK
-  BENCHMARK_end_ = std::chrono::steady_clock::now();
-  BENCHMARK_diff_ = BENCHMARK_end_ - BENCHMARK_start_;
-  BENCHMARK_tAvgLQ_ = ((1.0 - 1.0 / BENCHMARK_nIterationsLQ_) * BENCHMARK_tAvgLQ_) +
-                      (1.0 / BENCHMARK_nIterationsLQ_) * std::chrono::duration_cast<std::chrono::microseconds>(BENCHMARK_diff_).count();
-  BENCHMARK_start_ = std::chrono::steady_clock::now();
-#endif
+  linearQuadraticApproximationTimer_.endTimer();
 
   // solve Riccati equations
+  backwardPassTimer_.startTimer();
   avgTimeStepBP_ = solveSequentialRiccatiEquations(SmHeuristics_, SvHeuristics_, sHeuristics_);
+  backwardPassTimer_.endTimer();
+
   // calculate controller
+  computeControllerTimer_.startTimer();
   if (ddpSettings_.useRiccatiSolver_) {
     calculateController();
   } else {
     throw std::runtime_error("useRiccatiSolver=false is not valid.");
   }
-
-#ifdef BENCHMARK
-  BENCHMARK_end_ = std::chrono::steady_clock::now();
-  BENCHMARK_diff_ = BENCHMARK_end_ - BENCHMARK_start_;
-  BENCHMARK_tAvgBP_ = ((1.0 - 1.0 / BENCHMARK_nIterationsBP_) * BENCHMARK_tAvgBP_) +
-                      (1.0 / BENCHMARK_nIterationsBP_) * std::chrono::duration_cast<std::chrono::microseconds>(BENCHMARK_diff_).count();
-#endif
+  computeControllerTimer_.endTimer();
 
   // display
   if (ddpSettings_.displayInfo_) {
@@ -1778,23 +1751,13 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::run(scalar_t initTime, const state_vector_t
     std::cerr << "\n#### Final rollout" << std::endl;
   }
 
-#ifdef BENCHMARK
-  BENCHMARK_nIterationsFP_++;
-  BENCHMARK_start_ = std::chrono::steady_clock::now();
-#endif
-
   bool computeISEs = !ddpSettings_.noStateConstraints_ || ddpSettings_.displayInfo_ || ddpSettings_.displayShortSummary_;
 
   // finding the final optimal learningRate and getting the optimal trajectories and controller
   maxLearningRate_ = ddpSettings_.maxLearningRate_;
+  linesearchTimer_.startTimer();
   lineSearch(computeISEs);
-
-#ifdef BENCHMARK
-  BENCHMARK_end_ = std::chrono::steady_clock::now();
-  BENCHMARK_diff_ = BENCHMARK_end_ - BENCHMARK_start_;
-  BENCHMARK_tAvgFP_ = ((1.0 - 1.0 / BENCHMARK_nIterationsFP_) * BENCHMARK_tAvgFP_) +
-                      (1.0 / BENCHMARK_nIterationsFP_) * std::chrono::duration_cast<std::chrono::microseconds>(BENCHMARK_diff_).count();
-#endif
+  linesearchTimer_.endTimer();
 
   updateNominalControllerPtrStock();
 

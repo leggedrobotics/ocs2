@@ -52,13 +52,13 @@ install(DIRECTORY include/${PROJECT_NAME}/
 ## to see the summary of unit test results run
 ## $ catkin_test_results ../../../build/ocs2_frank_wolfe
 
-#catkin_add_gtest(quadratic_test 
-#  test/QuadraticTest.cpp
-#)
-#target_link_libraries(quadratic_test
-#  ${catkin_LIBRARIES}
-#  glpk
-#)
+catkin_add_gtest(quadratic_test 
+  test/QuadraticTest.cpp
+)
+target_link_libraries(quadratic_test
+  ${catkin_LIBRARIES}
+  glpk
+)
 
 catkin_add_gtest(matyas_test 
   test/MatyasTest.cpp
@@ -68,10 +68,10 @@ target_link_libraries(matyas_test
   glpk
 )
 
-#catkin_add_gtest(glpk_test 
-#  test/testGLPK.cpp
-#)
-#target_link_libraries(glpk_test
-#  ${catkin_LIBRARIES}
-#  glpk
-#)
+catkin_add_gtest(glpk_test 
+  test/testGLPK.cpp
+)
+target_link_libraries(glpk_test
+  ${catkin_LIBRARIES}
+  glpk
+)

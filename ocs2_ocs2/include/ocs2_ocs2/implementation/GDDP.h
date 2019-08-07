@@ -1304,6 +1304,11 @@ void GDDP<STATE_DIM, INPUT_DIM>::calculateCostDerivative(
 template <size_t STATE_DIM, size_t INPUT_DIM>
 void GDDP<STATE_DIM, INPUT_DIM>::runLQBasedMethod()  {
 
+	// display
+	if (gddpSettings_.displayInfo_) {
+		std::cerr << "LQ-based method is used for computing the gradient." << std::endl;
+	}
+
 	// resizing
 	nablaLvTrajectoriesStockSet_.resize(numEventTimes_);
 	sensitivityStateTrajectoriesStockSet_.resize(numEventTimes_);
@@ -1404,6 +1409,11 @@ void GDDP<STATE_DIM, INPUT_DIM>::runLQBasedMethod()  {
 template <size_t STATE_DIM, size_t INPUT_DIM>
 void GDDP<STATE_DIM, INPUT_DIM>::runSweepingBVPMethod()  {
 
+	// display
+	if (gddpSettings_.displayInfo_) {
+		std::cerr << "BVP-based method is used for computing the gradient." << std::endl;
+	}
+
 	// calculate costate
 	calculateRolloutCostate(dcPtr_->nominalTimeTrajectoriesStock_,
 			nominalCostateTrajectoriesStock_);
@@ -1476,6 +1486,13 @@ void GDDP<STATE_DIM, INPUT_DIM>::run(
 		const scalar_array_t& eventTimes,
 		const slq_data_collector_t* dcPtr)  {
 
+	// display
+	if (gddpSettings_.displayInfo_) {
+		std::cerr << "\n++++++++++++++++++++++++++++++++++++++++++++++++++++++" << std::endl;
+		std::cerr <<   "+++++++++++++++ GDDP is initialized ++++++++++++++++++" << std::endl;
+		std::cerr <<   "++++++++++++++++++++++++++++++++++++++++++++++++++++++" << std::endl;
+	}
+
 	// event time an number of event and subsystems
 	eventTimes_ = eventTimes;
 	numEventTimes_ = eventTimes_.size();
@@ -1493,15 +1510,19 @@ void GDDP<STATE_DIM, INPUT_DIM>::run(
 	activeEventTimeBeginIndex_ = findActiveSubsystemIndex(eventTimes_, dcPtr_->initTime_);
 	activeEventTimeEndIndex_   = findActiveSubsystemIndex(eventTimes_, dcPtr_->finalTime_);
 
-	// display
-	if (gddpSettings_.displayInfo_)
-		std::cerr << "\n#### Calculating cost function sensitivity ..." << std::endl;
-
 	// use the LQ-based method or Sweeping-BVP method
 	if (gddpSettings_.useLQForDerivatives_==true) {
 		runLQBasedMethod();
 	} else {
 		runSweepingBVPMethod();
+	}
+
+	if (gddpSettings_.displayInfo_) {
+		std::cerr << "\n++++++++++++++++++++++++++++++++++++++++++++++++++++++" << std::endl;
+		std::cerr <<   "++++++++++++++++ GDDP is terminated ++++++++++++++++++" << std::endl;
+		std::cerr <<   "++++++++++++++++++++++++++++++++++++++++++++++++++++++" << std::endl;
+		std::cerr << "GDDP gradient: " << nominalCostFuntionDerivative_.transpose() << std::endl;
+		std::cerr << std::endl;
 	}
 }
 

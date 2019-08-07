@@ -41,39 +41,6 @@ FrankWolfeGDDP<STATE_DIM, INPUT_DIM>::FrankWolfeGDDP(const GDDP_Settings& gddpSe
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-//template <size_t STATE_DIM, size_t INPUT_DIM>
-//void FrankWolfeGDDP<STATE_DIM, INPUT_DIM>::eventTimesConstraint(
-//		const scalar_array_t& eventTimes,
-//		const size_t& activeEventTimeBeginIndex,
-//		const size_t& activeEventTimeEndIndex,
-//		const scalar_t& startTime,
-//		const scalar_t& finalTime,
-//		dynamic_matrix_t& Cm,
-//		dynamic_vector_t& Dv) const {
-//
-//	const size_t numActiveEventTimes = activeEventTimeEndIndex-activeEventTimeBeginIndex;
-//
-//	// return if there is no event times
-//	if (numActiveEventTimes==0) return;
-//
-//	Cm = dynamic_matrix_t::Zero(numActiveEventTimes+1, eventTimes.size());
-//	for (size_t i=activeEventTimeBeginIndex; i<activeEventTimeEndIndex+1; i++) {
-//
-//		if (i < activeEventTimeEndIndex)
-//			Cm(i-activeEventTimeBeginIndex,i)  = -1.0;
-//
-//		if (i > activeEventTimeBeginIndex)
-//			Cm(i-activeEventTimeBeginIndex,i-1) = 1.0;
-//	}
-//
-//	Dv = dynamic_vector_t::Zero(numActiveEventTimes+1);
-//	Dv(0) = startTime;
-//	Dv(numActiveEventTimes) = -finalTime;
-//}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
 void FrankWolfeGDDP<STATE_DIM, INPUT_DIM>::run(
 		scalar_array_t eventTimes,
@@ -84,7 +51,7 @@ void FrankWolfeGDDP<STATE_DIM, INPUT_DIM>::run(
 	// run the base method which will calculate the gradient
 	this->run(eventTimes, dcPtr);
 
-	// no need for using frank-Wolfe if there is no constraint
+	// no need for using Frank-Wolfe if there is no constraint
 	if (!eventTimeConstraintPtr)
 		return;
 

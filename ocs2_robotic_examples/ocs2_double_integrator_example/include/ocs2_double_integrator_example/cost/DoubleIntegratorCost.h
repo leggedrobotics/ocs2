@@ -27,86 +27,55 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  ******************************************************************************/
 
-#ifndef DOUBLE_INTEGRATOR_COST_OCS2_H_
-#define DOUBLE_INTEGRATOR_COST_OCS2_H_
+#pragma once
 
 #include <ocs2_core/cost/QuadraticCostFunction.h>
-#include <ocs2_core/logic/rules/NullLogicRules.h>
 
 #include "ocs2_double_integrator_example/definitions.h"
 
 namespace ocs2 {
 namespace double_integrator {
 
-class DoubleIntegratorCost : public QuadraticCostFunction<double_integrator::STATE_DIM_, double_integrator::INPUT_DIM_>
-{
-public:
-	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+class DoubleIntegratorCost : public QuadraticCostFunction<double_integrator::STATE_DIM_, double_integrator::INPUT_DIM_> {
+ public:
+  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-	using Ptr = std::shared_ptr<DoubleIntegratorCost>;
-	using ConstPtr = std::shared_ptr<const DoubleIntegratorCost>;
+  using Ptr = std::shared_ptr<DoubleIntegratorCost>;
+  using ConstPtr = std::shared_ptr<const DoubleIntegratorCost>;
 
-	typedef QuadraticCostFunction<double_integrator::STATE_DIM_, double_integrator::INPUT_DIM_> BASE;
-	using scalar_t = typename BASE::scalar_t;
-	using state_vector_t = typename BASE::state_vector_t;
-	using state_matrix_t = typename BASE::state_matrix_t;
-	using input_vector_t = typename BASE::input_vector_t;
+  using BASE = QuadraticCostFunction<double_integrator::STATE_DIM_, double_integrator::INPUT_DIM_>;
+  using typename BASE::input_vector_t;
+  using typename BASE::scalar_t;
+  using typename BASE::state_matrix_t;
+  using typename BASE::state_vector_t;
 
-	/**
-	 * Constructor for the running and final cost function defined as the following:
-	 * - \f$ L = 0.5(x-x_{nominal})' Q (x-x_{nominal}) + 0.5(u-u_{nominal})' R (u-u_{nominal}) \f$
-	 * - \f$ \Phi = 0.5(x-x_{final})' Q_{final} (x-x_{final}) \f$.
-	 * @param [in] Q: \f$ Q \f$
-	 * @param [in] R: \f$ R \f$
-	 * @param [in] QFinal: \f$ Q_{final}\f$
-	 */
-	DoubleIntegratorCost(
-			const state_matrix_t& Q,
-			const input_matrix_t& R,
-			const state_matrix_t& Q_final)
-	:QuadraticCostFunction(Q, R, state_vector_t::Zero(), input_vector_t::Zero(), Q_final, state_vector_t::Zero())
-	{}
+  /**
+   * Constructor for the running and final cost function defined as the following:
+   * - \f$ L = 0.5(x-x_{nominal})' Q (x-x_{nominal}) + 0.5(u-u_{nominal})' R (u-u_{nominal}) \f$
+   * - \f$ \Phi = 0.5(x-x_{final})' Q_{final} (x-x_{final}) \f$.
+   * @param [in] Q: \f$ Q \f$
+   * @param [in] R: \f$ R \f$
+   * @param [in] QFinal: \f$ Q_{final}\f$
+   */
+  DoubleIntegratorCost(const state_matrix_t& Q, const input_matrix_t& R, const state_matrix_t& Q_final)
+      : QuadraticCostFunction(Q, R, state_vector_t::Zero(), input_vector_t::Zero(), Q_final, state_vector_t::Zero()) {}
 
-	/**
-	 * Destructor
-	 */
-	~DoubleIntegratorCost() override = default;
+  /**
+   * Destructor
+   */
+  ~DoubleIntegratorCost() override = default;
 
-    /**
-     * Returns pointer to the class.
-     *
-     * @return A raw pointer to the class.
-     */
-	DoubleIntegratorCost* clone() const override {
+  DoubleIntegratorCost* clone() const override { return new DoubleIntegratorCost(*this); }
 
-		return new DoubleIntegratorCost(*this);
-	}
+  void setCurrentStateAndControl(const scalar_t& t, const state_vector_t& x, const input_vector_t& u) final {
+    dynamic_vector_t xNominalDynamic(state_vector_t::Zero());
+    BASE::xNominalFunc_.interpolate(t, xNominalDynamic);
+    dynamic_vector_t uNominalDynamic(input_vector_t::Zero());
+    BASE::uNominalFunc_.interpolate(t, uNominalDynamic);
 
-	/**
-	 * Sets the current time, state, and control input.
-	 *
-	 * @param [in] t: Current time.
-	 * @param [in] x: Current state vector.
-	 * @param [in] u: Current input vector.
-	 */
-	void setCurrentStateAndControl(
-			const scalar_t& t,
-			const state_vector_t& x,
-			const input_vector_t& u) final {
-
-		dynamic_vector_t xNominalDynamic;
-		BASE::xNominalFunc_.interpolate(t, xNominalDynamic);
-		dynamic_vector_t uNominalDynamic;
-		BASE::uNominalFunc_.interpolate(t, uNominalDynamic);
-
-		BASE::setCurrentStateAndControl(t, x, u, xNominalDynamic, uNominalDynamic, xNominalDynamic);
-	}
-
-private:
-
+    BASE::setCurrentStateAndControl(t, x, u, xNominalDynamic, uNominalDynamic, xNominalDynamic);
+  }
 };
 
-} // namespace double_integrator
-} //namespace ocs2
-
-#endif /* DOUBLE_INTEGRATOR_COST_OCS2_H_ */
+}  // namespace double_integrator
+}  // namespace ocs2

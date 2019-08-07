@@ -30,9 +30,10 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifndef HYBRIDLOGICRULES_OCS2_H_
 #define HYBRIDLOGICRULES_OCS2_H_
 
-#include <ocs2_core/Dimensions.h>
 #include <iostream>
-#include <vector>
+
+#include <ocs2_core/Dimensions.h>
+#include <ocs2_core/misc/Lookup.h>
 
 namespace ocs2 {
 
@@ -267,17 +268,12 @@ class HybridLogicRules {
    *				   t0     t1              t(n-1)
    *  count     0        1      2   ...  (n-1)   n
    *
-   *  If time equal equal to a switch time is requested, the lower limit is taken
+   *  If time equal equal to a switch time is requested, the lower count is taken
    *
    *  @param [in] time
    *  @return count of the event the input time belongs to
    */
-  size_t getEventTimeCount(scalar_t time) const {
-    // TODO (Ruben): Add a unit test for this function. Currently it seems we don't need a max, min to protect for out of bounds
-    // Previously, the partition index was used to assign before or after the event time count in case the + epsilon was forgotten.
-    auto firstLargerValueIterator = std::lower_bound(eventTimes_.begin(), eventTimes_.end(), time);
-    return static_cast<size_t>(firstLargerValueIterator - eventTimes_.begin());
-  };
+  size_t getEventTimeCount(scalar_t time) const { return lookup::findIndexInTimeArray(eventTimes_, time); };
 
  protected:
   /**

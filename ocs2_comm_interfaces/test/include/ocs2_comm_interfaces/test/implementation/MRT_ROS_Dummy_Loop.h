@@ -98,7 +98,7 @@ void MRT_ROS_Dummy_Loop<STATE_DIM, INPUT_DIM>::run(
 	while (::ros::ok() && ::ros::master::check()) {
 		mrtPtr_->spinMRT();
 		// for initial plan
-		mrtPtr_->publishObservation(initObservation);
+		mrtPtr_->setCurrentObservation(initObservation);
 		if (mrtPtr_->initialPolicyReceived()==true)
 			break;
 		else
@@ -119,7 +119,7 @@ void MRT_ROS_Dummy_Loop<STATE_DIM, INPUT_DIM>::run(
 			policyUpdated = mrtPtr_->updatePolicy();
 
 		} else if (loopCounter%frequencyRatio==0) {
-			while(::ros::ok()) {
+			while(::ros::ok() && ::ros::master::check()) {
 				policyUpdated = mrtPtr_->updatePolicy();
 				if (policyUpdated==true)
 					break;
@@ -151,10 +151,10 @@ void MRT_ROS_Dummy_Loop<STATE_DIM, INPUT_DIM>::run(
 
 		// publish observation
 		if(realtimeLoop_ == true) {
-			mrtPtr_->publishObservation(observation_);
+			mrtPtr_->setCurrentObservation(observation_);
 
 		} else if (loopCounter%frequencyRatio==0) {
-			mrtPtr_->publishObservation(observation_);
+			mrtPtr_->setCurrentObservation(observation_);
 			std::cout << ">>> Observation is published at " << time << std::endl;
 		}
 

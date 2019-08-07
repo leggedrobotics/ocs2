@@ -45,7 +45,7 @@ namespace double_integrator {
  */
 using MRT_ROS_Double_Integrator = MRT_ROS_Interface<double_integrator::STATE_DIM_, double_integrator::INPUT_DIM_>;
 
-} // namespace double_integrator
-} // namespace ocs2
+}  // namespace double_integrator
+}  // namespace ocs2
 
 #endif /* MRT_ROS_DOUBLE_INTEGRATOR_OCS2_H_ */

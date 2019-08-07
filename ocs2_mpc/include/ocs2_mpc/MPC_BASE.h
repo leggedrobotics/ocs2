@@ -31,7 +31,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define MPC_BASE_OCS2_H_
 
 #include <Eigen/Dense>
-#include <chrono>
 #include <cstddef>
 #include <memory>
 #include <vector>
@@ -43,6 +42,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_core/cost/CostDesiredTrajectories.h>
 #include <ocs2_core/logic/machine/HybridLogicRulesMachine.h>
 #include <ocs2_core/logic/rules/HybridLogicRules.h>
+#include <ocs2_core/misc/Benchmark.h>
 
 #include "ocs2_mpc/MPC_Settings.h"
 
@@ -59,9 +59,9 @@ class MPC_BASE {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-  typedef std::shared_ptr<MPC_BASE<STATE_DIM, INPUT_DIM>> Ptr;
+  using Ptr = std::shared_ptr<MPC_BASE<STATE_DIM, INPUT_DIM>>;
 
-  typedef Dimensions<STATE_DIM, INPUT_DIM> DIMENSIONS;
+  using DIMENSIONS = Dimensions<STATE_DIM, INPUT_DIM>;
 
   using scalar_t = typename DIMENSIONS::scalar_t;
   using scalar_array_t = typename DIMENSIONS::scalar_array_t;
@@ -171,13 +171,6 @@ class MPC_BASE {
   virtual void getPartitioningTimes(scalar_array_t& partitioningTimes) const;
 
   /**
-   * Sets logic rules.
-   *
-   * @param logicRules
-   */
-  virtual void setLogicRules(std::shared_ptr<HybridLogicRules> logicRules);
-
-  /**
    * Gets a constant pointer to the logic rules.
    *
    * @return a constant pointer to the logic rules.
@@ -223,40 +216,6 @@ class MPC_BASE {
    */
   virtual void getCostDesiredTrajectoriesPtr(const cost_desired_trajectories_t*& costDesiredTrajectoriesPtr) const;
 
-  /**
-   * Sets the cost function desired trajectories.
-   *
-   * @param [in] costDesiredTrajectories: The cost function desired trajectories
-   */
-  virtual void setCostDesiredTrajectories(const cost_desired_trajectories_t& costDesiredTrajectories);
-
-  /**
-   * Sets the cost function desired trajectories.
-   *
-   * @param [in] desiredTimeTrajectory: The desired time trajectory for cost.
-   * @param [in] desiredStateTrajectory: The desired state trajectory for cost.
-   * @param [in] desiredInputTrajectory: The desired input trajectory for cost.
-   */
-  virtual void setCostDesiredTrajectories(const scalar_array_t& desiredTimeTrajectory, const dynamic_vector_array_t& desiredStateTrajectory,
-                                          const dynamic_vector_array_t& desiredInputTrajectory);
-
-  /**
-   * Swaps the cost function desired trajectories.
-   *
-   * @param [in] costDesiredTrajectories: The cost function desired trajectories
-   */
-  virtual void swapCostDesiredTrajectories(cost_desired_trajectories_t& costDesiredTrajectories);
-
-  /**
-   * Swaps the cost function desired trajectories.
-   *
-   * @param [in] desiredTimeTrajectory: The desired time trajectory for cost.
-   * @param [in] desiredStateTrajectory: The desired state trajectory for cost.
-   * @param [in] desiredInputTrajectory: The desired input trajectory for cost.
-   */
-  virtual void swapCostDesiredTrajectories(scalar_array_t& desiredTimeTrajectory, dynamic_vector_array_t& desiredStateTrajectory,
-                                           dynamic_vector_array_t& desiredInputTrajectory);
-
  protected:
   /**
    * Sets pointer of the base solver. This method should be called in the constructor of
@@ -292,6 +251,7 @@ class MPC_BASE {
 
   // user command variables
   std::atomic<bool> logicRulesTemplateUpdated_;
+  std::mutex newLogicRulesTemplateMutex_;
   mode_sequence_template_t newLogicRulesTemplate_;
 
   const controller_ptr_array_t* optimizedControllersStockPtr_;
@@ -299,8 +259,7 @@ class MPC_BASE {
   const state_vector_array2_t* optimizedStateTrajectoriesStockPtr_;
   const input_vector_array2_t* optimizedInputTrajectoriesStockPtr_;
 
-  std::chrono::milliseconds measuredRuntimeMS_;
-  std::chrono::high_resolution_clock::time_point mpcStratTime_;
+  benchmark::RepeatedTimer mpcTimer_;
 
   size_t initnumPartitions_;
   scalar_array_t initPartitioningTimes_;

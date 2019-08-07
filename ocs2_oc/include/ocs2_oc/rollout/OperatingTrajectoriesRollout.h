@@ -98,7 +98,7 @@ class OperatingTrajectoriesRollout : public RolloutBase<STATE_DIM, INPUT_DIM> {
    *
    * @return The final state (state jump is considered if it took place)
    */
-  state_vector_t run(const size_t& partitionIndex, const scalar_t& initTime, const state_vector_t& initState, const scalar_t& finalTime,
+  state_vector_t run(size_t partitionIndex, scalar_t initTime, const state_vector_t& initState, scalar_t finalTime,
                      controller_t* controller, logic_rules_machine_t& logicRulesMachine, scalar_array_t& timeTrajectory,
                      size_array_t& eventsPastTheEndIndeces, state_vector_array_t& stateTrajectory,
                      input_vector_array_t& inputTrajectory) override {
@@ -115,9 +115,9 @@ class OperatingTrajectoriesRollout : public RolloutBase<STATE_DIM, INPUT_DIM> {
     const scalar_array_t& switchingTimes = logicRulesMachine.getSwitchingTimes(partitionIndex);
 
     // index of the first subsystem
-    size_t beginItr = findActiveIntervalIndex(switchingTimes, initTime, 0);
+    size_t beginItr = lookup::findActiveIntervalInTimeArray(switchingTimes, initTime);
     // index of the last subsystem
-    size_t finalItr = findActiveIntervalIndex(switchingTimes, finalTime, numSubsystems - 1);
+    size_t finalItr = lookup::findActiveIntervalInTimeArray(switchingTimes, finalTime);
 
     // clearing the output trajectories
     timeTrajectory.clear();

@@ -64,6 +64,14 @@ class ControllerBase {
   virtual void unFlatten(const scalar_array_t& timeArray, const std::vector<float_array_t const*>& flatArray2) = 0;
 
   /**
+   * @brief Merges this controller with another controller that comes active later in time
+   * This method is typically used to merge controllers from multiple time partitions.
+   * @note Only controllers of the same type can be merged
+   * @param[in] nextController: The control law to be appended
+   */
+  virtual void concatenate(const ControllerBase* nextController) = 0;
+
+  /**
    * @brief Prints the type of controller
    * @return ControllerType: what type of controller this is
    */
@@ -86,6 +94,13 @@ class ControllerBase {
    * @return true if it contains no information, false otherwise.
    */
   virtual bool empty() const = 0;
+
+  /**
+   * @brief Create a deep copy of the object.
+   * @warning Cloning implies that the caller takes ownership and deletes the created object.
+   * @return Pointer to a new instance.
+   */
+  virtual ControllerBase* clone() { throw std::runtime_error("Not implemented"); }
 
   /**
    * Displays controller's data.

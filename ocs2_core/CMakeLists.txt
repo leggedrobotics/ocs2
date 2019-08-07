@@ -64,7 +64,7 @@ find_package(cmake_clang_tools QUIET)
 if(cmake_clang_tools_FOUND)
   message(STATUS "Run clang tooling for target " ${PROJECT_NAME}_lintTarget)
   add_clang_tooling(
-    TARGET ${PROJECT_NAME}_lintTarget ocs2_core_logic
+    TARGETS ${PROJECT_NAME}_lintTarget ocs2_core_logic
     SOURCE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/src ${CMAKE_CURRENT_SOURCE_DIR}/include/ocs2_core
     CT_HEADER_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/include/ocs2_core
     CF_FIX
@@ -190,7 +190,7 @@ target_link_libraries(test_loopshapingFilterDynamics
   ${Boost_LIBRARIES}
   ${catkin_LIBRARIES}
   -lstdc++fs
-  )
+)
 
 catkin_add_gtest(test_LinearAlgebra
   test/misc/testLinearAlgebra.cpp
@@ -198,11 +198,15 @@ catkin_add_gtest(test_LinearAlgebra
 target_link_libraries(test_LinearAlgebra
   ${Boost_LIBRARIES}
   ${catkin_LIBRARIES}
-  )
+)
+
+catkin_add_gtest(test_lookup
+        test/misc/testLookup.cpp
+)
 
 catkin_add_gtest(derivative_checker_unittest
         test/testSystemDynamicsLinearizer.cpp
-        )
+)
 target_link_libraries(derivative_checker_unittest
         ${catkin_LIBRARIES}
-        )
+)

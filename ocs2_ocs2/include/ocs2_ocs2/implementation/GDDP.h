@@ -1084,7 +1084,7 @@ void GDDP<STATE_DIM, INPUT_DIM>::solveSensitivityBVP(
 						std::cerr << "Mve[" << dcPtr_->SsTimeTrajectoriesStock_[i][kp] <<
 								"]:\t"<< MveTrajectoriesStock[i][kp].transpose().norm() << std::endl;
 					}
-					exit(0);
+					throw;
 				}
 			}
 

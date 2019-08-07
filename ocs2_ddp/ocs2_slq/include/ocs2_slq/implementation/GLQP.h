@@ -240,13 +240,13 @@ void GLQP<STATE_DIM, INPUT_DIM>::findOperatingPoints(const scalar_t& initTime, c
 //		systemDynamicsPtrStock_[i]->setController(controllersStock[i]);
 //		// simulate subsystem i
 //		dynamicsIntegratorsStockPtr_[i]->integrate(x0, partitioningTimes_[i], partitioningTimes_[i+1], stateTrajectoriesStock[i],
-//timeTrajectoriesStock[i], 1e-3);
+// timeTrajectoriesStock[i], 1e-3);
 //
 //		// compute control trajectory for subsystem i
 //		inputTrajectoriesStock[i].resize(timeTrajectoriesStock[i].size());
 //		for (int k=0; k<timeTrajectoriesStock[i].size(); k++)   {
 //			systemDynamicsPtrStock_[i]->computeInput(timeTrajectoriesStock[i][k], stateTrajectoriesStock[i][k],
-//inputTrajectoriesStock[i][k]);
+// inputTrajectoriesStock[i][k]);
 //		}
 //
 //		// reset the initial state
@@ -273,26 +273,29 @@ void GLQP<STATE_DIM, INPUT_DIM>::findOperatingPoints(const scalar_t& initTime, c
 //		for (int k=0; k<timeTrajectoriesStock[i].size()-1; k++) {
 //
 //			if (k==0) {
-//				costFunctionsPtrStock_[i]->setCurrentStateAndControl(timeTrajectoriesStock[i][k], stateTrajectoriesStock[i][k],
-//inputTrajectoriesStock[i][k]); 				costFunctionsPtrStock_[i]->evaluate(currentIntermediateCost); 			} else { 				currentIntermediateCost =
-//nextIntermediateCost;
+//				costFunctionsPtrStock_[i]->setCurrentStateAndControl(timeTrajectoriesStock[i][k],
+// stateTrajectoriesStock[i][k], inputTrajectoriesStock[i][k]);
+// costFunctionsPtrStock_[i]->evaluate(currentIntermediateCost); 			} else {
+// currentIntermediateCost = nextIntermediateCost;
 //			}
 //
 //			// feed next state and control to cost function
 //			costFunctionsPtrStock_[i]->setCurrentStateAndControl(timeTrajectoriesStock[i][k+1], stateTrajectoriesStock[i][k+1],
-//inputTrajectoriesStock[i][k+1]);
+// inputTrajectoriesStock[i][k+1]);
 //			// evaluate intermediate cost for next time step
 //			costFunctionsPtrStock_[i]->evaluate(nextIntermediateCost);
 //
 //			totalCost +=
-//0.5*(currentIntermediateCost+nextIntermediateCost)*(timeTrajectoriesStock[i][k+1]-timeTrajectoriesStock[i][k]);
+// 0.5*(currentIntermediateCost+nextIntermediateCost)*(timeTrajectoriesStock[i][k+1]-timeTrajectoriesStock[i][k]);
 //		}
 //
 //		// terminal cost
 //		if (i==numPartitions_-1)  {
 //			scalar_t finalCost;
-//			costFunctionsPtrStock_[i]->setCurrentStateAndControl(timeTrajectoriesStock[i].back(), stateTrajectoriesStock[i].back(),
-//inputTrajectoriesStock[i].back()); 			costFunctionsPtrStock_[i]->terminalCost(finalCost); 			totalCost += finalCost;
+//			costFunctionsPtrStock_[i]->setCurrentStateAndControl(timeTrajectoriesStock[i].back(),
+// stateTrajectoriesStock[i].back(), inputTrajectoriesStock[i].back());
+// costFunctionsPtrStock_[i]->terminalCost(finalCost);
+// totalCost += finalCost;
 //		}
 //	}
 //
@@ -456,10 +459,10 @@ void GLQP<STATE_DIM, INPUT_DIM>::approximateLQWorker(size_t workerIndex, const s
 //		for (int k=0; k<SsTimeTrajectoryStock_[i].size(); k++) {
 //
 //			controllersStock[i].k_[k]    = -RmInverseStock_[i] * (PmStock_[i] +
-//BmStock_[i].transpose()*SmTrajectoryStock_[i][k]); 			controllersStock[i].uff_[k]  = -learningRate * RmInverseStock_[i] * (RvStock_[i]  +
-//BmStock_[i].transpose()*SvTrajectoryStock_[i][k])
+// BmStock_[i].transpose()*SmTrajectoryStock_[i][k]); 			controllersStock[i].uff_[k]  = -learningRate * RmInverseStock_[i] *
+// (RvStock_[i]  + BmStock_[i].transpose()*SvTrajectoryStock_[i][k])
 //								+ inputOperatingPointsStock_[i] -
-//controllersStock[i].k_[k]*stateOperatingPointsStock_[i];
+// controllersStock[i].k_[k]*stateOperatingPointsStock_[i];
 //		}
 //
 //		if (settings_.displayInfo_ ) {
@@ -467,8 +470,9 @@ void GLQP<STATE_DIM, INPUT_DIM>::approximateLQWorker(size_t workerIndex, const s
 //			std::cout << "learningRate " << learningRate << std::endl;
 //			std::cout << "time: " << controllersStock[i].time_.front() << std::endl;
 //			std::cout << "delta_uff: " <<  (controllersStock[i].uff_[0] +
-//controllersStock[i].k_[0]*stateOperatingPointsStock_[i]).transpose() << std::endl; 			std::cout << "u0: " <<
-//inputOperatingPointsStock_[i].transpose() << std::endl; 			std::cout << "k: \n" <<  controllersStock[i].k_.front() << std::endl << std::endl;
+// controllersStock[i].k_[0]*stateOperatingPointsStock_[i]).transpose() << std::endl; 			std::cout << "u0: " <<
+// inputOperatingPointsStock_[i].transpose() << std::endl; 			std::cout << "k: \n" <<  controllersStock[i].k_.front() <<
+// std::endl << std::endl;
 //		}
 //	}
 //}
@@ -482,9 +486,10 @@ void GLQP<STATE_DIM, INPUT_DIM>::approximateLQWorker(size_t workerIndex, const s
 //	for (int i=0; i<numPartitions_; i++)
 //		for (int k=0; k<SsTimeTrajectoryStock_[i].size(); k++) {
 //
-//			sTrajectoryStock_[i][k] = sTrajectoryStock_[i][k] - stateOperatingPointsStock_[i].transpose()*SvTrajectoryStock_[i][k]
-//+ 					0.5*stateOperatingPointsStock_[i].transpose()*SmTrajectoryStock_[i][k]*stateOperatingPointsStock_[i]; 			SvTrajectoryStock_[i][k] =
-//SvTrajectoryStock_[i][k] - SmTrajectoryStock_[i][k]*stateOperatingPointsStock_[i];
+//			sTrajectoryStock_[i][k] = sTrajectoryStock_[i][k] -
+// stateOperatingPointsStock_[i].transpose()*SvTrajectoryStock_[i][k]
+//+ 0.5*stateOperatingPointsStock_[i].transpose()*SmTrajectoryStock_[i][k]*stateOperatingPointsStock_[i]; SvTrajectoryStock_[i][k] =
+// SvTrajectoryStock_[i][k] - SmTrajectoryStock_[i][k]*stateOperatingPointsStock_[i];
 //		}
 //}
 
@@ -598,8 +603,8 @@ void GLQP<STATE_DIM, INPUT_DIM>::getController(controller_array_t& controllersSt
 //		ODE45<riccati_equations_t::S_DIM_> ode45(riccatiEquationsPtr);
 //		scalar_array_t normalizedTimeTrajectory;
 //		std::vector<Eigen::Matrix<double,riccati_equations_t::S_DIM_,1>,
-//Eigen::aligned_allocator<Eigen::Matrix<double,riccati_equations_t::S_DIM_,1>> > allSsTrajectory; 		ode45.integrate(allSsFinal, i, i+1,
-//allSsTrajectory, normalizedTimeTrajectory);
+// Eigen::aligned_allocator<Eigen::Matrix<double,riccati_equations_t::S_DIM_,1>> > allSsTrajectory; 		ode45.integrate(allSsFinal,
+// i, i+1, allSsTrajectory, normalizedTimeTrajectory);
 //
 //		// denormalizing time and constructing 'Sm', 'Sv', and 's'
 //		int N = normalizedTimeTrajectory.size();
@@ -610,7 +615,7 @@ void GLQP<STATE_DIM, INPUT_DIM>::getController(controller_array_t& controllersSt
 //		for (int k=0; k<N; k++) {
 //
 //			riccati_equations_t::convert2Matrix(allSsTrajectory[N-1-k], SmTrajectoryStock_[i][k], SvTrajectoryStock_[i][k],
-//sTrajectoryStock_[i][k]); 			SsTimeTrajectoryStock_[i][k] =
+// sTrajectoryStock_[i][k]); 			SsTimeTrajectoryStock_[i][k] =
 //(partitioningTimes_[i]-partitioningTimes_[i+1])*(normalizedTimeTrajectory[N-1-k]-i) + partitioningTimes_[i+1];
 //		}
 //
@@ -624,10 +629,10 @@ void GLQP<STATE_DIM, INPUT_DIM>::getController(controller_array_t& controllersSt
 //			catch(std::exception const& error)
 //			{
 //				std::cerr << "what(): " << error.what() << " at time " << SsTimeTrajectoryStock_[i][k] << " [sec]." <<
-//std::endl; 				for (int kp=k; kp<k+10; kp++)  { 					if (kp >= N) continue; 					std::cerr << "Sm[" << SsTimeTrajectoryStock_[i][kp] << "]:\n"<<
-//SmTrajectoryStock_[i][kp].transpose() << std::endl; 					std::cerr << "Sv[" << SsTimeTrajectoryStock_[i][kp] << "]:\t"<<
-//SvTrajectoryStock_[i][kp].transpose() << std::endl; 					std::cerr << "s[" << SsTimeTrajectoryStock_[i][kp] << "]: \t"<<
-//sTrajectoryStock_[i][kp].transpose() << std::endl;
+// std::endl; 				for (int kp=k; kp<k+10; kp++)  { 					if (kp >= N) continue;
+// std::cerr << "Sm[" << SsTimeTrajectoryStock_[i][kp] << "]:\n"<< SmTrajectoryStock_[i][kp].transpose() << std::endl;
+// std::cerr << "Sv[" << SsTimeTrajectoryStock_[i][kp] << "]:\t"<< SvTrajectoryStock_[i][kp].transpose() << std::endl;
+// std::cerr << "s[" << SsTimeTrajectoryStock_[i][kp] << "]: \t"<< sTrajectoryStock_[i][kp].transpose() << std::endl;
 //				}
 //				exit(1);
 //			}
@@ -749,7 +754,7 @@ void GLQP<STATE_DIM, INPUT_DIM>::solveRiccatiEquationsWorker(size_t workerIndex,
           std::cerr << "s[" << SsTimeTrajectoryStock_[partitionIndex][kp] << "]: \t"
                     << sTrajectoryStock_[partitionIndex][kp].transpose().norm() << std::endl;
         }
-        exit(0);
+        throw;
       }
     }
 }

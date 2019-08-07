@@ -119,7 +119,7 @@ find_package(cmake_clang_tools QUIET)
 if(cmake_clang_tools_FOUND)
     message(STATUS "Run clang tooling for target " ${PROJECT_NAME}_lintTarget)
     add_clang_tooling(
-            TARGET ${PROJECT_NAME}_lintTarget
+    TARGETS ${PROJECT_NAME}_lintTarget
             SOURCE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/src ${CMAKE_CURRENT_SOURCE_DIR}/include
             CT_HEADER_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/include
             CF_FIX
@@ -152,3 +152,14 @@ install(DIRECTORY include/${PROJECT_NAME}/
 
 ## Add folders to be run by python nosetests
 # catkin_add_nosetests(test)
+
+catkin_add_gtest(ocs2_interface_mpc_test
+  test/test_ocs2_interfaces_mpc.cpp
+  )
+add_dependencies(ocs2_interface_mpc_test
+  ${catkin_EXPORTED_TARGETS}
+  )
+target_link_libraries(ocs2_interface_mpc_test
+  ${catkin_LIBRARIES}
+  ${Boost_LIBRARIES}
+  )

@@ -33,7 +33,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <Eigen/Dense>
 #include <array>
 #include <atomic>
-#include <chrono>
 #include <condition_variable>
 #include <csignal>
 #include <ctime>
@@ -50,6 +49,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <ocs2_core/control/FeedforwardController.h>
 #include <ocs2_core/control/LinearController.h>
+#include <ocs2_core/misc/Benchmark.h>
 
 #include <ocs2_mpc/MPC_BASE.h>
 
@@ -81,33 +81,32 @@ class MPC_ROS_Interface {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-  typedef std::shared_ptr<MPC_ROS_Interface<STATE_DIM, INPUT_DIM>> Ptr;
+  using Ptr = std::shared_ptr<MPC_ROS_Interface<STATE_DIM, INPUT_DIM>>;
 
-  typedef MPC_BASE<STATE_DIM, INPUT_DIM> mpc_t;
+  using mpc_t = MPC_BASE<STATE_DIM, INPUT_DIM>;
 
-  typedef typename mpc_t::scalar_t scalar_t;
-  typedef typename mpc_t::scalar_array_t scalar_array_t;
-  typedef typename mpc_t::size_array_t size_array_t;
-  typedef typename mpc_t::state_vector_t state_vector_t;
-  typedef typename mpc_t::state_vector_array_t state_vector_array_t;
-  typedef typename mpc_t::state_vector_array2_t state_vector_array2_t;
-  typedef typename mpc_t::input_vector_t input_vector_t;
-  typedef typename mpc_t::input_vector_array_t input_vector_array_t;
-  typedef typename mpc_t::input_vector_array2_t input_vector_array2_t;
-  typedef typename mpc_t::input_state_matrix_t input_state_matrix_t;
-  typedef typename mpc_t::input_state_matrix_array_t input_state_matrix_array_t;
+  using scalar_t = typename mpc_t::scalar_t;
+  using scalar_array_t = typename mpc_t::scalar_array_t;
+  using size_array_t = typename mpc_t::size_array_t;
+  using state_vector_t = typename mpc_t::state_vector_t;
+  using state_vector_array_t = typename mpc_t::state_vector_array_t;
+  using state_vector_array2_t = typename mpc_t::state_vector_array2_t;
+  using input_vector_t = typename mpc_t::input_vector_t;
+  using input_vector_array_t = typename mpc_t::input_vector_array_t;
+  using input_vector_array2_t = typename mpc_t::input_vector_array2_t;
+  using input_state_matrix_t = typename mpc_t::input_state_matrix_t;
+  using input_state_matrix_array_t = typename mpc_t::input_state_matrix_array_t;
 
-  typedef typename mpc_t::cost_desired_trajectories_t cost_desired_trajectories_t;
-  typedef typename mpc_t::mode_sequence_template_t mode_sequence_template_t;
+  using cost_desired_trajectories_t = typename mpc_t::cost_desired_trajectories_t;
+  using mode_sequence_template_t = typename mpc_t::mode_sequence_template_t;
 
-  typedef SystemObservation<STATE_DIM, INPUT_DIM> system_observation_t;
+  using system_observation_t = SystemObservation<STATE_DIM, INPUT_DIM>;
 
-  typedef ControllerBase<STATE_DIM, INPUT_DIM> controller_t;
-  typedef std::vector<controller_t*> controller_ptr_array_t;
+  using controller_t = ControllerBase<STATE_DIM, INPUT_DIM>;
+  using controller_ptr_array_t = std::vector<controller_t*>;
 
-  typedef RosMsgConversions<STATE_DIM, INPUT_DIM> ros_msg_conversions_t;
-
-  typedef typename TaskListenerBase<scalar_t>::shared_ptr_array_t task_listener_ptr_array_t;
+  using ros_msg_conversions_t = RosMsgConversions<STATE_DIM, INPUT_DIM>;
+  using task_listener_ptr_array_t = typename TaskListenerBase<scalar_t>::shared_ptr_array_t;
 
   /**
    * Default constructor
@@ -117,11 +116,11 @@ class MPC_ROS_Interface {
   /**
    * Constructor.
    *
-   * @param [in] mpc: The MPC object to be interfaced.
+   * @param [in] mpcPtr: The MPC pointer to be interfaced.
    * @param [in] robotName: The robot's name.
    * @param [in] taskListenerArray: An array of the shared_ptr to task listeners.
    */
-  explicit MPC_ROS_Interface(mpc_t& mpc, const std::string& robotName = "robot",
+  explicit MPC_ROS_Interface(mpc_t* mpcPtr, const std::string& robotName = "robot",
                              const task_listener_ptr_array_t& taskListenerArray = task_listener_ptr_array_t());
 
   /**
@@ -132,10 +131,10 @@ class MPC_ROS_Interface {
   /**
    * Sets the class as its constructor.
    *
-   * @param [in] mpcPtr: The MPC object to be interfaced.
+   * @param [in] mpcPtr: The MPC pointer to be interfaced.
    * @param [in] robotName: The robot's name.
    */
-  void set(mpc_t& mpc, const std::string& robotName = "robot");
+  void set(mpc_t* mpcPtr, const std::string& robotName = "robot");
 
   /**
    * Resets the class to its instantiation state.
@@ -195,23 +194,6 @@ class MPC_ROS_Interface {
    * @param [in] initObservation: The observation after the very fist call of the class or after call to reset().
    */
   virtual void initModeSequence(const system_observation_t& initObservation) {}
-
-  /**
-   * Adjusts the user-defined target trajectories for the cost based on the current observation.
-   *
-   * @param [in] currentObservation: The current observation.
-   * @param costDesiredTrajectories: The received user-defined target trajectories which can be modified based on the current observation.
-   */
-  virtual void adjustTargetTrajectories(const system_observation_t& currentObservation,
-                                        cost_desired_trajectories_t& costDesiredTrajectories) {}
-
-  /**
-   * Adjusts the user-defined mode sequence for time-triggered hybrid systems based on the current observation.
-   *
-   * @param [in] currentObservation: The current observation.
-   * @param newLogicRulesTemplate: New logicRules template which can be modified based on the current observation.
-   */
-  virtual void adjustModeSequence(const system_observation_t& currentObservation, mode_sequence_template_t& newLogicRulesTemplate) {}
 
  protected:
   /**
@@ -312,19 +294,8 @@ class MPC_ROS_Interface {
   std::mutex publisherMutex_;
   std::condition_variable msgReady_;
 
-  size_t numIterations_;
-  scalar_t maxDelay_;
-  scalar_t meanDelay_;
+  benchmark::RepeatedTimer mpcTimer_;
   scalar_t currentDelay_;
-
-  std::chrono::time_point<std::chrono::steady_clock> startTimePoint_;
-  std::chrono::time_point<std::chrono::steady_clock> finalTimePoint_;
-
-  std::atomic<bool> desiredTrajectoriesUpdated_;
-  std::atomic<bool> modeSequenceUpdated_;
-  cost_desired_trajectories_t costDesiredTrajectories_;
-  cost_desired_trajectories_t defaultCostDesiredTrajectories_;
-  mode_sequence_template_t modeSequenceTemplate_;
 
   // MPC reset
   bool initialCall_;

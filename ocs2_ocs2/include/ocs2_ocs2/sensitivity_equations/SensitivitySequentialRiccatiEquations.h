@@ -254,7 +254,8 @@ public:
 		BASE::numFunctionCalls_++;
 
 		// denormalized time
-		const scalar_t t = switchingTimeFinal_ - scalingFactor_*z;
+//		const scalar_t t = switchingTimeFinal_ - scalingFactor_*z;
+		const scalar_t t = -z;
 
 		convert2Matrix(allSs, nabla_Sm_, nabla_Sv_, nabla_s_);
 
@@ -305,9 +306,9 @@ public:
 				(nabla_Lv_.transpose()*Rm_*Lv_ + Lv_.transpose()*Rm_*nabla_Lv_);
 
 		// switching time gradient for the equivalent system
-		nabla_dSmdz_ = scalingFactor_ * (nabla_dSmdt_ + multiplier_*dSmdt_);
-		nabla_dSvdz_ = scalingFactor_ * (nabla_dSvdt_ + multiplier_*dSvdt_);
-		nabla_dsdz_  = scalingFactor_ * (nabla_dsdt_ + multiplier_*dsdt_);
+		nabla_dSmdz_ = nabla_dSmdt_ + multiplier_*dSmdt_;
+		nabla_dSvdz_ = nabla_dSvdt_ + multiplier_*dSvdt_;
+		nabla_dsdz_  = nabla_dsdt_ + multiplier_*dsdt_;
 
 		convert2Vector(nabla_dSmdz_, nabla_dSvdz_, nabla_dsdz_, derivatives);
 	}

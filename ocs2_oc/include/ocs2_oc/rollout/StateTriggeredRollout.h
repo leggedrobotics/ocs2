@@ -110,7 +110,7 @@ class StateTriggeredRollout : public RolloutBase<STATE_DIM, INPUT_DIM> {
    *
    * @return The final state (state jump is considered if it took place)
    */
-  state_vector_t run(const size_t& partitionIndex, const scalar_t& initTime, const state_vector_t& initState, const scalar_t& finalTime,
+  state_vector_t run(size_t partitionIndex, scalar_t initTime, const state_vector_t& initState, scalar_t finalTime,
                      controller_t* controller, logic_rules_machine_t& hybridLlogicRulesMachine, scalar_array_t& timeTrajectory,
                      size_array_t& eventsPastTheEndIndeces, state_vector_array_t& stateTrajectory,
                      input_vector_array_t& inputTrajectory) override {
@@ -198,8 +198,8 @@ class StateTriggeredRollout : public RolloutBase<STATE_DIM, INPUT_DIM> {
     //				eventTimes.push_back(timeTrajectory.back());
     //				subsystemID.push_back(eventID);
     //
-    //				static_cast<hybrid_logic_rules_machine_t>(hybridLlogicRulesMachine).push_back(partitionIndex, timeTrajectory.back(),
-    //eventID);
+    //				static_cast<hybrid_logic_rules_machine_t>(hybridLlogicRulesMachine).push_back(partitionIndex,
+    // timeTrajectory.back(), eventID);
     ////				static_cast<hybrid_logic_rules_machine_t>(hybridLlogicRulesMachine).display();
     //			}
     //

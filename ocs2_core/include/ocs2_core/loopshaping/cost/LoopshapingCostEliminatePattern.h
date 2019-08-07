@@ -53,7 +53,8 @@ class LoopshapingCostEliminatePattern final
     auto& gamma = loopshapingDefinition_->gamma_;
     auto& s_filter = loopshapingDefinition_->getInputFilter();
     dLdxx.block(0, 0, SYSTEM_STATE_DIM, SYSTEM_STATE_DIM) = gamma * Q_filter_ + (1.0 - gamma) * Q_system_;
-    dLdxx.block(0, SYSTEM_STATE_DIM, SYSTEM_STATE_DIM, FILTER_STATE_DIM) = (1.0 - gamma) * P_system_.transpose() * s_filter.getC();
+    dLdxx.block(0, SYSTEM_STATE_DIM, SYSTEM_STATE_DIM, FILTER_STATE_DIM).noalias() =
+        (1.0 - gamma) * P_system_.transpose() * s_filter.getC();
     dLdxx.block(SYSTEM_STATE_DIM, 0, FILTER_STATE_DIM, SYSTEM_STATE_DIM) =
         dLdxx.block(0, SYSTEM_STATE_DIM, SYSTEM_STATE_DIM, FILTER_STATE_DIM).transpose();
     dLdxx.block(SYSTEM_STATE_DIM, SYSTEM_STATE_DIM, FILTER_STATE_DIM, FILTER_STATE_DIM).noalias() =
@@ -71,15 +72,17 @@ class LoopshapingCostEliminatePattern final
     this->computeApproximation();
     const auto& gamma = loopshapingDefinition_->gamma_;
     auto& s_filter = loopshapingDefinition_->getInputFilter();
-    dLduu.block(0, 0, FILTER_INPUT_DIM, FILTER_INPUT_DIM) =
-        gamma * R_filter_ + (1.0 - gamma) * s_filter.getD().transpose() * R_system_ * s_filter.getD();
+    dLduu.block(0, 0, FILTER_INPUT_DIM, FILTER_INPUT_DIM) = gamma * R_filter_;
+    dLduu.block(0, 0, FILTER_INPUT_DIM, FILTER_INPUT_DIM).noalias() +=
+        (1.0 - gamma) * s_filter.getD().transpose() * R_system_ * s_filter.getD();
   };
 
   void getIntermediateCostDerivativeInputState(input_state_matrix_t& dLdux) override {
     this->computeApproximation();
     const auto& gamma = loopshapingDefinition_->gamma_;
     auto& s_filter = loopshapingDefinition_->getInputFilter();
-    dLdux.block(0, 0, FILTER_INPUT_DIM, SYSTEM_STATE_DIM) = gamma * P_filter_ + (1.0 - gamma) * s_filter.getD().transpose() * P_system_;
+    dLdux.block(0, 0, FILTER_INPUT_DIM, SYSTEM_STATE_DIM) = gamma * P_filter_;
+    dLdux.block(0, 0, FILTER_INPUT_DIM, SYSTEM_STATE_DIM).noalias() += (1.0 - gamma) * s_filter.getD().transpose() * P_system_;
     dLdux.block(0, SYSTEM_STATE_DIM, FILTER_INPUT_DIM, FILTER_STATE_DIM).noalias() =
         (1.0 - gamma) * s_filter.getD().transpose() * R_system_ * s_filter.getC();
   };

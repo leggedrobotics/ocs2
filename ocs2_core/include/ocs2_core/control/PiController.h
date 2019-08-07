@@ -47,23 +47,16 @@ class PiController final : public ControllerBase<STATE_DIM, INPUT_DIM> {
    * It will be extracted from the PI solver to avoid re-computing some quantities.
    */
   struct PiControllerEvaluationData {
-    scalar_t t_;        //! time of evaluation
-    state_vector_t x_;  //! state
-    input_vector_t u_;  //! calculated input
-    scalar_t V_;
-    input_matrix_t R_;
-    input_matrix_t Rinv_;
-    input_vector_t r_;
-    dynamic_vector_t c_;
-    dynamic_matrix_t Ddagger_;
-    input_matrix_t Dtilde_;
-    input_vector_t noiseInput_;
+    scalar_t t_;          //! time of evaluation
+    state_vector_t x_;    //! state
+    input_vector_t u_;    //! calculated input (including noise)
+    scalar_t stageCost_;  //! running cost (intermediate) incurred
   };
 
   /**
    * Constructor with full options
    * @param[in] constraints Pointer to constraint function. Assumes persistence as long as controller survives
-   * @param[in] consts Pointer to cost function. Assumes persistence as long as controller survives
+   * @param[in] costs Pointer to cost function. Assumes persistence as long as controller survives
    * @param[in] rollout_dt Time step to use in rollout
    * @param[in] noiseScaling The level of noise (temperature)
    */
@@ -78,9 +71,6 @@ class PiController final : public ControllerBase<STATE_DIM, INPUT_DIM> {
       return standardNormalDistribution_(generator_);
     };  // dummy argument required by Eigen
 
-    linInterpolateXNominal_.setZero();
-    linInterpolateUff_.setZero();
-
     // check constraints
     if (constraints_->numStateOnlyConstraint(0.0)) {
       throw std::runtime_error("PiController does not support state-only constraints");
@@ -89,6 +79,15 @@ class PiController final : public ControllerBase<STATE_DIM, INPUT_DIM> {
       throw std::runtime_error("PiController does not support inequality constraints");
     }
   }
+
+  /**
+   * Copy constructor
+   */
+  PiController(const PiController& other) : PiController(other.constraints_, other.costs_, other.rollout_dt_, other.gamma_) {
+    samplingPolicy_.reset(other.samplingPolicy_->clone());
+  }
+
+  PiController<STATE_DIM, INPUT_DIM>* clone() override { return new PiController<STATE_DIM, INPUT_DIM>(*this); }
 
   /**
    * Default destructor.
@@ -104,16 +103,15 @@ class PiController final : public ControllerBase<STATE_DIM, INPUT_DIM> {
    */
   virtual input_vector_t computeInput(const scalar_t& t, const state_vector_t& x) override {
     // extract cost terms
-    scalar_t V;
     costs_->setCurrentStateAndControl(t, x, input_vector_t::Zero());
-    costs_->getIntermediateCost(V);  // must have set zero input before
     input_matrix_t R, Rinv;
-    costs_->getIntermediateCostSecondDerivativeInput(R);  // TODO(jcarius) do we need a R *= 2; here?
+    costs_->getIntermediateCostSecondDerivativeInput(R);
     Rinv = R.ldlt().solve(input_matrix_t::Identity());
     input_vector_t r;
     costs_->getIntermediateCostDerivativeInput(r);  // must have set zero input before
 
     // extract constraint terms and calculate auxiliary quantities
+    // TODO(jcarius) Use Ruben's functions to do these projections
     dynamic_vector_t c;
     dynamic_matrix_t Ddagger;
     input_matrix_t Dtilde;
@@ -135,7 +133,8 @@ class PiController final : public ControllerBase<STATE_DIM, INPUT_DIM> {
       Dtilde.setZero();
     }
 
-    input_matrix_t QQt = gamma_ * (input_matrix_t::Identity() - Dtilde) * Rinv;
+    // noise covariance
+    const input_matrix_t QQt = gamma_ * (input_matrix_t::Identity() - Dtilde) * Rinv;
     input_matrix_t Q;
     if (!QQt.isZero()) {
       Q = QQt.llt().matrixL();
@@ -143,118 +142,80 @@ class PiController final : public ControllerBase<STATE_DIM, INPUT_DIM> {
       Q.setZero();
     }
 
-    const input_vector_t constrainedInput = -(input_matrix_t::Identity() - Dtilde) * Rinv * r - Ddagger * c;
+    // compute input
+    const input_vector_t defaultInput = -(input_matrix_t::Identity() - Dtilde) * Rinv * r - Ddagger * c;
+
+    input_vector_t policyInput;
+    if (samplingPolicy_) {
+      policyInput = (input_matrix_t::Identity() - Dtilde) * samplingPolicy_->computeInput(t, x) - Ddagger * c;
+    } else {
+      policyInput = defaultInput;
+    }
+
     const input_vector_t noiseInput = Q / std::sqrt(rollout_dt_) * input_vector_t::NullaryExpr(eigenRandomNormalNullaryExpr_);
-
-    input_vector_t uff;
-    linInterpolateUff_.interpolate(t, uff);
-
-    const input_vector_t result = constrainedInput + noiseInput + uff;
+    const input_vector_t totalInput = policyInput + noiseInput;
 
     if (cacheResults_) {
+      // compute running cost incurred
+      scalar_t V;
+      costs_->getIntermediateCost(V);  // must have set zero input before
+      scalar_t stageCost = 0.5 * policyInput.dot(R * policyInput) + r.dot(policyInput) + V;
+      if (samplingPolicy_) {
+        stageCost += (policyInput - defaultInput).dot(R * noiseInput);
+      }
+
       cacheData_.emplace_back(PiControllerEvaluationData());
       auto& data = cacheData_.back();
       data.t_ = t;
       data.x_ = x;
-      data.u_ = result;
-      data.V_ = V;
-      data.R_ = R;
-      data.Rinv_ = Rinv;
-      data.r_ = r;
-      data.c_ = c;
-      data.Ddagger_ = Ddagger;
-      data.Dtilde_ = Dtilde;
-      data.noiseInput_ = noiseInput;
+      data.u_ = totalInput;
+      data.stageCost_ = stageCost;
     }
 
-    return result;
+    return totalInput;
   }
 
   virtual void flatten(const scalar_array_t& timeArray, const std::vector<float_array_t*>& flatArray2) const override {
     throw std::runtime_error("not implemented");
-
-    //      flatArray.clear();
-    //      flatArray.reserve(time_.size() * (1+STATE_DIM+INPUT_DIM));
-
-    //      std::copy(time_.begin(), time_.end(), std::back_inserter(flatArray));
-
-    //      for(const auto& x : xNominal_){
-    //          for(size_t i=0; i<STATE_DIM; i++){
-    //                flatArray.push_back(x(i));
-    //          }
-    //      }
-
-    //      for(const auto& u: uff_){
-    //          for(size_t i=0; i<INPUT_DIM; i++){
-    //              flatArray.push_back(u(i));
-    //          }
-    //      }
   }
 
   virtual void unFlatten(const scalar_array_t& timeArray, const std::vector<float_array_t const*>& flatArray2) override {
     throw std::runtime_error("not implemented");
-
-    //      const auto size = flatArray.size() / (1+STATE_DIM+INPUT_DIM);
-
-    //      time_.clear();
-    //      time_.reserve(size);
-    //      time_.assign(flatArray.begin(), flatArray.begin()+size);
-
-    //      xNominal_.clear();
-    //      xNominal_.reserve(size);
-    //      for(size_t i=0; i<size; i++){
-    //          xNominal_.emplace_back(state_vector_t(flatArray.data() + size + i * STATE_DIM));
-    //      }
-
-    //      uff_.clear();
-    //      uff_.reserve(size);
-    //      for(size_t i=0; i<size; i++){
-    //          uff_.emplace_back(input_vector_t(flatArray.data() + size + size * STATE_DIM + i * INPUT_DIM));
-    //      }
-
-    //      linInterpolateXNominal_.setTimeStamp(&time_);
-    //      linInterpolateXNominal_.setData(&xNominal_);
-    //      linInterpolateUff_.setTimeStamp(&time_);
-    //      linInterpolateUff_.setData(&uff_);
   }
 
-  /**
-   * @brief setFeedforwardInputAndState: Assign
-   * @param[in] time Time trajectory
-   * @param[in] xNominal Nominal state trajectory
-   * @param[in] uff Feedforward input trajectory
-   */
-  void setFeedforwardInputAndState(const scalar_array_t& time, const state_vector_array_t& xNominal, const input_vector_array_t& uff) {
-    if ((time.size() != xNominal.size()) or (time.size() != uff.size())) {
-      throw std::runtime_error("PiController::setFeedforwardInputAndState -- Sizes don't match.");
-    }
-    time_ = time;
-    xNominal_ = xNominal;
-    uff_ = uff;
+  void concatenate(const Base* nextController) override { throw std::runtime_error("not implemented"); }
 
-    linInterpolateXNominal_.setData(&time_, &xNominal_);
-    linInterpolateUff_.setData(&time_, &uff_);
+  /**
+   * @brief setSamplingPolicy Allows setting a controller for importance sampling (warm-starting)
+   * @param samplingPolicy Unique pointer to the policy
+   */
+  void setSamplingPolicy(std::unique_ptr<ControllerBase<STATE_DIM, INPUT_DIM>> samplingPolicy) {
+    samplingPolicy_ = std::move(samplingPolicy);
   }
 
   virtual void swap(PiController<STATE_DIM, INPUT_DIM>& other) { throw std::runtime_error("not implemented"); }
 
   virtual ControllerType getType() const override { return ControllerType::PATH_INTEGRAL; }
 
-  virtual void clear() override {
-    time_.clear();
-    xNominal_.clear();
-    uff_.clear();
-  }
+  virtual void clear() override { samplingPolicy_.reset(); }
 
   virtual void setZero() override {
-    linInterpolateXNominal_.setZero();
-    linInterpolateUff_.setZero();
+    samplingPolicy_.reset();
     gamma_ = 0.0;
   }
 
-  virtual bool empty() const override { return time_.empty(); }
+  virtual bool empty() const override { return samplingPolicy_ == nullptr; }
 
   void setRandomSeed(unsigned int seed) { generator_.seed(seed); }
+
+  void display() const override {
+    if (samplingPolicy_) {
+      std::cerr << "Sampling policy:" << std::endl;
+      samplingPolicy_->display();
+    } else {
+      std::cerr << "Sampling policy empty." << std::endl;
+    }
+  }
 
  public:
   scalar_t gamma_;     //! scaling of noise
@@ -265,17 +226,12 @@ class PiController final : public ControllerBase<STATE_DIM, INPUT_DIM> {
  protected:
   constraint_t* constraints_;  //! pointer to constraint from solver
   cost_function_t* costs_;     //! pointer to cost function from solver
-  scalar_t rollout_dt_;
+  scalar_t rollout_dt_;        //! time step during rollout
 
-  scalar_array_t time_;                                              //! time array for uff and xNominal
-  state_vector_array_t xNominal_;                                    //! nominal state trajectory w/out noise
-  input_vector_array_t uff_;                                         //! feedforward inputs
-  EigenLinearInterpolation<state_vector_t> linInterpolateXNominal_;  //! interpolation of xNominal_
-  EigenLinearInterpolation<input_vector_t> linInterpolateUff_;       //! interpolation of uff_
+  std::unique_ptr<ControllerBase<STATE_DIM, INPUT_DIM>> samplingPolicy_;  //! the underlying policy to be used
 
-  // random number generator
   // TODO(jcarius) thread safety of these objects??
-  std::default_random_engine generator_;
+  std::default_random_engine generator_;  //! random number generator
   std::normal_distribution<scalar_t> standardNormalDistribution_;
   std::function<scalar_t(scalar_t)> eigenRandomNormalNullaryExpr_;
 };

@@ -52,11 +52,13 @@ class LoopshapingFilterDynamics {
     const auto& filter = loopshapingDefinition_->getInputFilter();
     switch (loopshapingDefinition_->getType()) {
       case LoopshapingType::outputpattern:
-        filterStateDerivative = filter.getA() * filter_state + filter.getB() * input;
+        filterStateDerivative.noalias() = filter.getA() * filter_state;
+        filterStateDerivative.noalias() += filter.getB() * input;
         break;
       case LoopshapingType::inputpattern:
       case LoopshapingType::eliminatepattern:
-        filterStateDerivative = filter.getA() * filter_state + filter.getB() * input.tail(FILTER_INPUT_DIM);
+        filterStateDerivative.noalias() = filter.getA() * filter_state;
+        filterStateDerivative.noalias() += filter.getB() * input.tail(FILTER_INPUT_DIM);
         break;
     }
   }

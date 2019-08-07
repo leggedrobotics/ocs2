@@ -40,6 +40,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_slq/SLQ_Settings.h>
 #include <ocs2_mpc/MPC_Settings.h>
 
+
 namespace ocs2{
 
 /**

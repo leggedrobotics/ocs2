@@ -59,7 +59,7 @@ class SequentialRiccatiEquationsNormalized final : public OdeBase<STATE_DIM*(STA
 
   using BASE = OdeBase<S_DIM_>;
 
-  typedef Dimensions<STATE_DIM, INPUT_DIM> DIMENSIONS;
+  using DIMENSIONS = Dimensions<STATE_DIM, INPUT_DIM>;
   using scalar_t = typename DIMENSIONS::scalar_t;
   using scalar_array_t = typename DIMENSIONS::scalar_array_t;
   using size_array_t = typename DIMENSIONS::size_array_t;
@@ -82,21 +82,15 @@ class SequentialRiccatiEquationsNormalized final : public OdeBase<STATE_DIM*(STA
   using dynamic_matrix_array_t = typename DIMENSIONS::dynamic_matrix_array_t;
   using dynamic_vector_array_t = typename DIMENSIONS::dynamic_vector_array_t;
 
-  typedef Eigen::Matrix<scalar_t, S_DIM_, 1> s_vector_t;
-  typedef std::vector<s_vector_t, Eigen::aligned_allocator<s_vector_t> > s_vector_array_t;
+  using s_vector_t = Eigen::Matrix<scalar_t, S_DIM_, 1>;
+  using s_vector_array_t = std::vector<s_vector_t, Eigen::aligned_allocator<s_vector_t> >;
 
   /**
    * Constructor.
    */
-  SequentialRiccatiEquationsNormalized(const bool& useMakePSD, const scalar_t& addedRiccatiDiagonal, bool normalizeTime,
-                                       bool preComputeRiccatiTerms = true)
-
+  SequentialRiccatiEquationsNormalized(const bool& useMakePSD, const scalar_t& addedRiccatiDiagonal, bool preComputeRiccatiTerms = true)
       : useMakePSD_(useMakePSD),
         addedRiccatiDiagonal_(addedRiccatiDiagonal),
-        switchingTimeStart_(0.0),
-        switchingTimeFinal_(1.0),
-        scalingFactor_(1.0),
-        normalizeTime_(normalizeTime),
         preComputeRiccatiTerms_(preComputeRiccatiTerms),
         Sm_(state_matrix_t::Zero()),
         Sv_(state_vector_t::Zero()),
@@ -109,9 +103,7 @@ class SequentialRiccatiEquationsNormalized final : public OdeBase<STATE_DIM*(STA
         Am_(state_matrix_t::Zero()),
         Bm_(state_input_matrix_t::Zero()),
         Rv_(input_vector_t::Zero()),
-        Pm_(input_state_matrix_t::Zero()),
-        Lm_(input_state_matrix_t::Zero()),
-        Lv_(input_vector_t::Zero()) {}
+        Pm_(input_state_matrix_t::Zero()) {}
 
   /**
    * Default destructor.
@@ -173,9 +165,6 @@ class SequentialRiccatiEquationsNormalized final : public OdeBase<STATE_DIM*(STA
   /**
    * Sets coefficients of the model.
    *
-   * @param [in] learningRate: The learning rate.
-   * @param [in] switchingTimeStart: The start time of the subsystem.
-   * @param [in] switchingTimeFinal: The final time of the subsystem.
    * @param [in] timeStampPtr: A pointer to the time stamp trajectory.
    * @param [in] AmPtr: A pointer to the trajectory of \f$ A_m(t) \f$ .
    * @param [in] BmPtr: A pointer to the trajectory of \f$ B_m(t) \f$ .
@@ -187,22 +176,12 @@ class SequentialRiccatiEquationsNormalized final : public OdeBase<STATE_DIM*(STA
    * @param [in] RmPtr: A pointer to the trajectory of \f$ R_m(t) \f$ .
    * @param [in] PmPtr: A pointer to the trajectory of \f$ P_m(t) \f$ .
    */
-  void setData(const scalar_t& switchingTimeStart, const scalar_t& switchingTimeFinal, const scalar_array_t* timeStampPtr,
-               const state_matrix_array_t* AmPtr, const state_input_matrix_array_t* BmPtr, const eigen_scalar_array_t* qPtr,
-               const state_vector_array_t* QvPtr, const state_matrix_array_t* QmPtr, const input_vector_array_t* RvPtr,
-               const dynamic_matrix_array_t* RinvCholPtr, const input_state_matrix_array_t* PmPtr,
+  void setData(const scalar_array_t* timeStampPtr, const state_matrix_array_t* AmPtr, const state_input_matrix_array_t* BmPtr,
+               const eigen_scalar_array_t* qPtr, const state_vector_array_t* QvPtr, const state_matrix_array_t* QmPtr,
+               const input_vector_array_t* RvPtr, const dynamic_matrix_array_t* RinvCholPtr, const input_state_matrix_array_t* PmPtr,
                const size_array_t* eventsPastTheEndIndecesPtr, const eigen_scalar_array_t* qFinalPtr,
                const state_vector_array_t* QvFinalPtr, const state_matrix_array_t* QmFinalPtr) {
     BASE::resetNumFunctionCalls();
-
-    switchingTimeStart_ = switchingTimeStart;
-    switchingTimeFinal_ = switchingTimeFinal;
-
-    if (normalizeTime_) {
-      scalingFactor_ = switchingTimeFinal - switchingTimeStart;
-    } else {
-      scalingFactor_ = 1.0;
-    }
 
     eventTimes_.clear();
     eventTimes_.reserve(eventsPastTheEndIndecesPtr->size());
@@ -244,7 +223,6 @@ class SequentialRiccatiEquationsNormalized final : public OdeBase<STATE_DIM*(STA
         // Modify the constraints in place
         Qm_minus_P_Rinv_P_array_[i].noalias() -= PmT_RinvChol * PmT_RinvChol.transpose();
         Qv_minus_P_Rinv_Rv_array_[i].noalias() -= PmT_RinvChol * RinvCholT_Rv_array_[i];
-        q_minus_half_Rv_Rinv_Rv_array_[i].noalias() -= 0.5 * RinvCholT_Rv_array_[i].transpose() * RinvCholT_Rv_array_[i];
       }
 
       // Set the data to the interpolator (array pointer would be the same, but time pointer might change)
@@ -274,10 +252,10 @@ class SequentialRiccatiEquationsNormalized final : public OdeBase<STATE_DIM*(STA
    * @param [out] mappedState: mapped state after transition
    */
   void computeJumpMap(const scalar_t& z, const s_vector_t& state, s_vector_t& mappedState) override {
-    scalar_t time = switchingTimeFinal_ - scalingFactor_ * z;
+    scalar_t time = -z;
 
     // epsilon is set to include times past event times which have been artificially increased in the rollout
-    size_t index = Lookup::findFirstIndexWithinTol(eventTimes_, time, 1e-5);
+    size_t index = lookup::findFirstIndexWithinTol(eventTimes_, time, 1e-5);
 
     s_vector_t allSsJump;
     convert2Vector((*QmFinalPtr_)[index], (*QvFinalPtr_)[index], (*qFinalPtr_)[index], allSsJump);
@@ -303,7 +281,7 @@ class SequentialRiccatiEquationsNormalized final : public OdeBase<STATE_DIM*(STA
     BASE::numFunctionCalls_++;
 
     // denormalized time
-    const scalar_t t = switchingTimeFinal_ - scalingFactor_ * z;
+    const scalar_t t = -z;
 
     convert2Matrix(allSs, Sm_, Sv_, s_);
 
@@ -327,12 +305,11 @@ class SequentialRiccatiEquationsNormalized final : public OdeBase<STATE_DIM*(STA
 
       // dSvdt,  Qv_ used instead of temporary
       Qv_.noalias() += AmT_minus_P_Rinv_Bm_ * Sv_;
-      RinvCholT_BmT_Sv_.noalias() = B_RinvChol_.transpose() * Sv_;
-      Qv_.noalias() -= SmT_B_RinvChol_ * (RinvCholT_Rv_ + RinvCholT_BmT_Sv_);
+      RinvCholT_Rv_.noalias() += B_RinvChol_.transpose() * Sv_;
+      Qv_.noalias() -= SmT_B_RinvChol_ * RinvCholT_Rv_;
 
       // dsdt,   q_ used instead of temporary
-      q_.noalias() -= RinvCholT_BmT_Sv_.transpose() * RinvCholT_Rv_;
-      q_.noalias() -= 0.5 * RinvCholT_BmT_Sv_.transpose() * RinvCholT_BmT_Sv_;
+      q_.noalias() -= 0.5 * RinvCholT_Rv_.transpose() * RinvCholT_Rv_;
     } else {
       const auto indexAlpha = QmFunc_.interpolate(t, Qm_);
       QvFunc_.interpolate(indexAlpha, Qv_);
@@ -344,42 +321,35 @@ class SequentialRiccatiEquationsNormalized final : public OdeBase<STATE_DIM*(STA
       RvFunc_.interpolate(indexAlpha, Rv_);
 
       Pm_.noalias() += Bm_.transpose() * Sm_;  // ! Pm is changed to avoid an extra temporary
-      Lm_.noalias() = RinvChol_.transpose() * Pm_;
+      SmT_B_RinvChol_.noalias() = RinvChol_.transpose() * Pm_;
       Rv_.noalias() += Bm_.transpose() * Sv_;  // ! Rv is changed to avoid an extra temporary
-      Lv_.noalias() = RinvChol_.transpose() * Rv_;
+      RinvCholT_Rv_.noalias() = RinvChol_.transpose() * Rv_;
 
       AmT_Sm_.noalias() = Am_.transpose() * Sm_.transpose();
 
       // dSmdt,  Qm_ used instead of temporary
       Qm_ += AmT_Sm_ + AmT_Sm_.transpose();
-      Qm_.noalias() -= Lm_.transpose() * Lm_;
+      Qm_.noalias() -= SmT_B_RinvChol_.transpose() * SmT_B_RinvChol_;
 
       // dSvdt,  Qv_ used instead of temporary
       Qv_.noalias() += Am_.transpose() * Sv_;
-      Qv_.noalias() -= Lm_.transpose() * Lv_;
+      Qv_.noalias() -= SmT_B_RinvChol_.transpose() * RinvCholT_Rv_;
 
       // dsdt,   q_ used instead of temporary
-      q_.noalias() -= 0.5 * Lv_.transpose() * Lv_;
+      q_.noalias() -= 0.5 * RinvCholT_Rv_.transpose() * RinvCholT_Rv_;
     }
 
     if (!useMakePSD_) {
       Qm_.diagonal().array() += addedRiccatiDiagonal_;
     }
 
-    Qm_ *= scalingFactor_;
-    Qv_ *= scalingFactor_;
-    q_ *= scalingFactor_;
     convert2Vector(Qm_, Qv_, q_, derivatives);
   }
 
  private:
   bool useMakePSD_;
-  bool normalizeTime_;
   bool preComputeRiccatiTerms_;
   scalar_t addedRiccatiDiagonal_;
-  scalar_t switchingTimeStart_;
-  scalar_t switchingTimeFinal_;
-  scalar_t scalingFactor_;
 
   // Interpolation
   EigenLinearInterpolation<state_matrix_t> QmFunc_;
@@ -418,15 +388,12 @@ class SequentialRiccatiEquationsNormalized final : public OdeBase<STATE_DIM*(STA
   dynamic_matrix_t B_RinvChol_;
   dynamic_vector_t RinvCholT_Rv_;
   dynamic_matrix_t SmT_B_RinvChol_;
-  dynamic_vector_t RinvCholT_BmT_Sv_;
   state_matrix_t AmT_Sm_;
   state_matrix_t Am_;
   state_input_matrix_t Bm_;
   input_vector_t Rv_;
   dynamic_matrix_t RinvChol_;
   input_state_matrix_t Pm_;
-  dynamic_matrix_t Lm_;
-  dynamic_vector_t Lv_;
 
   scalar_array_t eventTimes_;
   const eigen_scalar_array_t* qFinalPtr_;

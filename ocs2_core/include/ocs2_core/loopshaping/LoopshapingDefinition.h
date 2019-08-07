@@ -47,7 +47,9 @@ class LoopshapingDefinition {
         systemInput = input.head(systemInput.size());
         break;
       case LoopshapingType::eliminatepattern:
-        systemInput = filter_.getC() * state.tail(filter_.getNumStates()) + filter_.getD() * input;
+        // u = C*x + D*v
+        systemInput.noalias() = filter_.getC() * state.tail(filter_.getNumStates());
+        systemInput.noalias() += filter_.getD() * input;
         break;
     }
   };

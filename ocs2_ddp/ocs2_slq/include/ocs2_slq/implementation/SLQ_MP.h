@@ -106,9 +106,10 @@ void SLQ_MP<STATE_DIM, INPUT_DIM>::lineSearch(bool computeISEs) {
   alphaBestFound_ = false;
   lsWorkerCompleted_ = 0;
 
-  size_t maxNumOfLineSearches = (int)(log(BASE::ddpSettings_.minLearningRate_ / BASE::ddpSettings_.maxLearningRate_) /
-                                      log(BASE::ddpSettings_.lineSearchContractionRate_)) +
-                                1;
+  auto maxNumOfLineSearches = static_cast<size_t>(std::log(BASE::ddpSettings_.minLearningRate_ / BASE::ddpSettings_.maxLearningRate_) /
+                                                      std::log(BASE::ddpSettings_.lineSearchContractionRate_) +
+                                                  1);
+
   alphaExpMax_ = maxNumOfLineSearches;
   alphaExpBest_ = maxNumOfLineSearches;
   alphaProcessed_ = std::vector<bool>(maxNumOfLineSearches, false);
@@ -186,9 +187,9 @@ void SLQ_MP<STATE_DIM, INPUT_DIM>::threadWork(size_t threadId) {
 
     // display
     if (BASE::ddpSettings_.debugPrintMT_) {
-      BASE::printString("[MT]: [Thread " + std::to_string(threadId) + "]: previous procId: " + std::to_string(uniqueProcessID) +
-                        ", current procId: " +
-                        std::to_string(generateUniqueProcessID(iteration_local, (int)workerTask_local, (int)subsystemProcessed_local)));
+      BASE::printString(
+          "[MT]: [Thread " + std::to_string(threadId) + "]: previous procId: " + std::to_string(uniqueProcessID) +
+          ", current procId: " + std::to_string(generateUniqueProcessID(iteration_local, workerTask_local, subsystemProcessed_local)));
     }
 
     /* We want to put the worker to sleep if
@@ -196,7 +197,7 @@ void SLQ_MP<STATE_DIM, INPUT_DIM>::threadWork(size_t threadId) {
      * - or we are finished both workerTask_ is not yet reset, thus the process ID is still the same
      * */
     if (workerTask_local == IDLE ||
-        uniqueProcessID == generateUniqueProcessID(iteration_local, (int)workerTask_local, (int)subsystemProcessed_local)) {
+        uniqueProcessID == generateUniqueProcessID(iteration_local, workerTask_local, subsystemProcessed_local)) {
       if (BASE::ddpSettings_.debugPrintMT_) {
         BASE::printString("[MT]: [Thread " + std::to_string(threadId) + "]: going to sleep !");
       }
@@ -204,7 +205,7 @@ void SLQ_MP<STATE_DIM, INPUT_DIM>::threadWork(size_t threadId) {
       // sleep until the state is not IDLE any more and we have a different process ID than before
       std::unique_lock<std::mutex> waitLock(workerWakeUpMutex_);
       while (workerTask_ == IDLE ||
-             (uniqueProcessID == generateUniqueProcessID(BASE::iteration_, (int)workerTask_.load(), (int)subsystemProcessed_.load()))) {
+             (uniqueProcessID == generateUniqueProcessID(BASE::iteration_, workerTask_.load(), subsystemProcessed_.load()))) {
         workerWakeUpCondition_.wait(waitLock);
       }
       waitLock.unlock();
@@ -279,7 +280,7 @@ void SLQ_MP<STATE_DIM, INPUT_DIM>::threadWork(size_t threadId) {
 /******************************************************************************************************/
 /***************************************************************************************************** */
 template <size_t STATE_DIM, size_t INPUT_DIM>
-void SLQ_MP<STATE_DIM, INPUT_DIM>::approximatePartitionLQ(const size_t& partitionIndex) {
+void SLQ_MP<STATE_DIM, INPUT_DIM>::approximatePartitionLQ(size_t partitionIndex) {
   subsystemProcessed_ = partitionIndex;
 
   size_t N = BASE::nominalTimeTrajectoriesStock_[partitionIndex].size();
@@ -327,7 +328,7 @@ void SLQ_MP<STATE_DIM, INPUT_DIM>::approximatePartitionLQ(const size_t& partitio
 /******************************************************************************************************/
 /***************************************************************************************************** */
 template <size_t STATE_DIM, size_t INPUT_DIM>
-void SLQ_MP<STATE_DIM, INPUT_DIM>::executeApproximatePartitionLQWorker(size_t threadId, const size_t& partitionIndex) {
+void SLQ_MP<STATE_DIM, INPUT_DIM>::executeApproximatePartitionLQWorker(size_t threadId, size_t partitionIndex) {
   size_t kCompleted_local = 0;
   int N = BASE::nominalTimeTrajectoriesStock_[partitionIndex].size();
   int k = -1;  // to make use that the while loop runs at least once
@@ -379,7 +380,7 @@ void SLQ_MP<STATE_DIM, INPUT_DIM>::executeApproximatePartitionLQWorker(size_t th
 /******************************************************************************************************/
 /***************************************************************************************************** */
 template <size_t STATE_DIM, size_t INPUT_DIM>
-void SLQ_MP<STATE_DIM, INPUT_DIM>::calculatePartitionController(const size_t& partitionIndex) {
+void SLQ_MP<STATE_DIM, INPUT_DIM>::calculatePartitionController(size_t partitionIndex) {
   subsystemProcessed_ = partitionIndex;
 
   size_t N = BASE::SsTimeTrajectoryStock_[partitionIndex].size();
@@ -425,7 +426,7 @@ void SLQ_MP<STATE_DIM, INPUT_DIM>::calculatePartitionController(const size_t& pa
 /******************************************************************************************************/
 /***************************************************************************************************** */
 template <size_t STATE_DIM, size_t INPUT_DIM>
-void SLQ_MP<STATE_DIM, INPUT_DIM>::executeCalculatePartitionController(size_t threadId, const size_t& partitionIndex) {
+void SLQ_MP<STATE_DIM, INPUT_DIM>::executeCalculatePartitionController(size_t threadId, size_t partitionIndex) {
   size_t kCompleted_local = 0;
   int N = BASE::SsTimeTrajectoryStock_[partitionIndex].size();
   int k = -1;  // to make use that the while loop runs at least once
@@ -495,7 +496,7 @@ void SLQ_MP<STATE_DIM, INPUT_DIM>::executeLineSearchWorker(size_t threadId) {
     scalar_t learningRate = BASE::maxLearningRate_ * std::pow(BASE::ddpSettings_.lineSearchContractionRate_, alphaExp);
 
     // break condition
-    if (learningRate < BASE::ddpSettings_.minLearningRate_ || alphaBestFound_.load()) {
+    if (!Numerics::almost_ge(learningRate, BASE::ddpSettings_.minLearningRate_) || alphaBestFound_.load()) {
       // display
       if (BASE::ddpSettings_.debugPrintMT_) {
         if (alphaBestFound_.load()) {
@@ -653,7 +654,7 @@ typename SLQ_MP<STATE_DIM, INPUT_DIM>::scalar_t SLQ_MP<STATE_DIM, INPUT_DIM>::so
   // solve it sequentially for the first time when useParallelRiccatiSolverFromInitItr_ is false
   if (BASE::iteration_ == 0 && !BASE::useParallelRiccatiSolverFromInitItr_) {
     for (int i = BASE::numPartitions_ - 1; i >= 0; i--) {
-      if (i < (signed)BASE::initActivePartition_ || i > (signed)BASE::finalActivePartition_) {
+      if (i < BASE::initActivePartition_ || i > BASE::finalActivePartition_) {
         BASE::SsTimeTrajectoryStock_[i].clear();
         BASE::SsNormalizedTimeTrajectoryStock_[i].clear();
         BASE::SsNormalizedEventsPastTheEndIndecesStock_[i].clear();
@@ -725,7 +726,7 @@ typename SLQ_MP<STATE_DIM, INPUT_DIM>::scalar_t SLQ_MP<STATE_DIM, INPUT_DIM>::so
   }
 
   // average time step
-  return (BASE::finalTime_ - BASE::initTime_) / (scalar_t)numSteps;
+  return (BASE::finalTime_ - BASE::initTime_) / numSteps;
 }
 
 /******************************************************************************************************/
@@ -739,7 +740,7 @@ void SLQ_MP<STATE_DIM, INPUT_DIM>::executeRiccatiSolver(size_t threadId) {
     }
 
     // for inactive subsystems
-    if (i < (signed)BASE::initActivePartition_ || i > (signed)BASE::finalActivePartition_) {
+    if (i < BASE::initActivePartition_ || i > BASE::finalActivePartition_) {
       BASE::SsTimeTrajectoryStock_[i].clear();
       BASE::SmTrajectoryStock_[i].clear();
       BASE::SvTrajectoryStock_[i].clear();

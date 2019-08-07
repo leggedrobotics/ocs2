@@ -279,7 +279,7 @@ void ILQR_MT<STATE_DIM, INPUT_DIM>::threadWork(size_t threadId) {
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
-void ILQR_MT<STATE_DIM, INPUT_DIM>::approximatePartitionLQ(const size_t& partitionIndex) {
+void ILQR_MT<STATE_DIM, INPUT_DIM>::approximatePartitionLQ(size_t partitionIndex) {
   subsystemProcessed_ = partitionIndex;
 
   size_t N = BASE::nominalTimeTrajectoriesStock_[partitionIndex].size();
@@ -327,7 +327,7 @@ void ILQR_MT<STATE_DIM, INPUT_DIM>::approximatePartitionLQ(const size_t& partiti
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
-void ILQR_MT<STATE_DIM, INPUT_DIM>::executeApproximatePartitionLQWorker(size_t threadId, const size_t& partitionIndex) {
+void ILQR_MT<STATE_DIM, INPUT_DIM>::executeApproximatePartitionLQWorker(size_t threadId, size_t partitionIndex) {
   size_t kCompleted_local = 0;
   int N = BASE::nominalTimeTrajectoriesStock_[partitionIndex].size();
   int k = -1;  // to make use that the while loop runs at least once
@@ -379,7 +379,7 @@ void ILQR_MT<STATE_DIM, INPUT_DIM>::executeApproximatePartitionLQWorker(size_t t
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
-void ILQR_MT<STATE_DIM, INPUT_DIM>::calculatePartitionController(const size_t& partitionIndex) {
+void ILQR_MT<STATE_DIM, INPUT_DIM>::calculatePartitionController(size_t partitionIndex) {
   subsystemProcessed_ = partitionIndex;
 
   size_t N = BASE::SsTimeTrajectoryStock_[partitionIndex].size();
@@ -425,7 +425,7 @@ void ILQR_MT<STATE_DIM, INPUT_DIM>::calculatePartitionController(const size_t& p
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
-void ILQR_MT<STATE_DIM, INPUT_DIM>::executeCalculatePartitionController(size_t threadId, const size_t& partitionIndex) {
+void ILQR_MT<STATE_DIM, INPUT_DIM>::executeCalculatePartitionController(size_t threadId, size_t partitionIndex) {
   size_t kCompleted_local = 0;
   int N = BASE::SsTimeTrajectoryStock_[partitionIndex].size();
   int k = -1;  // to make use that the while loop runs at least once
@@ -495,7 +495,7 @@ void ILQR_MT<STATE_DIM, INPUT_DIM>::executeLineSearchWorker(size_t threadId) {
     scalar_t learningRate = BASE::maxLearningRate_ * std::pow(BASE::ddpSettings_.lineSearchContractionRate_, alphaExp);
 
     // break condition
-    if (learningRate < BASE::ddpSettings_.minLearningRate_ || alphaBestFound_.load()) {
+    if (!Numerics::almost_ge(learningRate, BASE::ddpSettings_.minLearningRate_) || alphaBestFound_.load()) {
       // display
       if (BASE::ddpSettings_.debugPrintMT_) {
         if (alphaBestFound_.load()) {

@@ -42,9 +42,6 @@ DDP_BASE<STATE_DIM, INPUT_DIM>::DDP_BASE(const controlled_system_base_t* systemD
       ddpSettings_(ddpSettings),
       rolloutSettings_(rolloutSettings),
       algorithmName_(algorithmName),
-      costDesiredTrajectories_(),
-      costDesiredTrajectoriesBuffer_(),
-      costDesiredTrajectoriesUpdated_(false),
       rewindCounter_(0),
       iteration_(0) {
   // Dynamics, Constraints, derivatives, and cost
@@ -97,19 +94,29 @@ DDP_BASE<STATE_DIM, INPUT_DIM>::DDP_BASE(const controlled_system_base_t* systemD
 /***************************************************************************************************** */
 template <size_t STATE_DIM, size_t INPUT_DIM>
 DDP_BASE<STATE_DIM, INPUT_DIM>::~DDP_BASE() {
-#ifdef BENCHMARK
-  auto BENCHMARK_total = BENCHMARK_tAvgFP_ + BENCHMARK_tAvgBP_ + BENCHMARK_tAvgLQ_;
-  if (BENCHMARK_total > 0 && (ddpSettings_.displayInfo_ || ddpSettings_.displayShortSummary_)) {
-    std::cerr << std::endl << "#####################################################" << std::endl;
-    std::cerr << "Benchmarking over " << BENCHMARK_nIterationsBP_ << " samples." << std::endl;
-    std::cerr << "Average time for Forward Pass:      " << BENCHMARK_tAvgFP_ << " [ms] \t(" << BENCHMARK_tAvgFP_ / BENCHMARK_total * 100
-              << "%)" << std::endl;
-    std::cerr << "Average time for Backward Pass:     " << BENCHMARK_tAvgBP_ << " [ms] \t(" << BENCHMARK_tAvgBP_ / BENCHMARK_total * 100
-              << "%)" << std::endl;
-    std::cerr << "Average time for LQ Approximation:  " << BENCHMARK_tAvgLQ_ << " [ms] \t(" << BENCHMARK_tAvgLQ_ / BENCHMARK_total * 100
-              << "%)" << std::endl;
+  auto forwardPassTotal = forwardPassTimer_.getTotalInMilliseconds();
+  auto linearQuadraticApproximationTotal = linearQuadraticApproximationTimer_.getTotalInMilliseconds();
+  auto backwardPassTotal = backwardPassTimer_.getTotalInMilliseconds();
+  auto computeControllerTotal = computeControllerTimer_.getTotalInMilliseconds();
+  auto finalRolloutTotal = linesearchTimer_.getTotalInMilliseconds();
+
+  auto benchmarkTotal =
+      forwardPassTotal + linearQuadraticApproximationTotal + backwardPassTotal + computeControllerTotal + finalRolloutTotal;
+
+  if (benchmarkTotal > 0 && (ddpSettings_.displayInfo_ || ddpSettings_.displayShortSummary_)) {
+    std::cerr << "\n################################################################\n";
+    std::cerr << "Benchmarking         :\tAverage time [ms]   (% of total runtime)\n";
+    std::cerr << "\tForward Pass       :\t" << forwardPassTimer_.getAverageInMilliseconds() << " [ms] \t("
+              << forwardPassTotal / benchmarkTotal * 100 << "%)\n";
+    std::cerr << "\tLQ Approximation   :\t" << linearQuadraticApproximationTimer_.getAverageInMilliseconds() << " [ms] \t("
+              << linearQuadraticApproximationTotal / benchmarkTotal * 100 << "%)\n";
+    std::cerr << "\tBackward Pass      :\t" << backwardPassTimer_.getAverageInMilliseconds() << " [ms] \t("
+              << backwardPassTotal / benchmarkTotal * 100 << "%)\n";
+    std::cerr << "\tCompute Controller :\t" << computeControllerTimer_.getAverageInMilliseconds() << " [ms] \t("
+              << computeControllerTotal / benchmarkTotal * 100 << "%)\n";
+    std::cerr << "\tLinesearch         :\t" << linesearchTimer_.getAverageInMilliseconds() << " [ms] \t("
+              << finalRolloutTotal / benchmarkTotal * 100 << "%)" << std::endl;
   }
-#endif
 }
 
 /******************************************************************************************************/
@@ -127,9 +134,12 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::reset() {
   blockwiseMovingHorizon_ = false;
   useParallelRiccatiSolverFromInitItr_ = false;
 
-  costDesiredTrajectories_.clear();
-  costDesiredTrajectoriesBuffer_.clear();
-  costDesiredTrajectoriesUpdated_ = false;
+  this->costDesiredTrajectories_.clear();
+  {
+    std::lock_guard<std::mutex> lock(this->costDesiredTrajectoriesBufferMutex_);
+    this->costDesiredTrajectoriesBuffer_.clear();
+    this->costDesiredTrajectoriesUpdated_ = false;
+  }
 
   for (size_t i = 0; i < numPartitions_; i++) {
     // very important :)
@@ -142,6 +152,13 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::reset() {
     sFinalStock_[i] = eigen_scalar_t::Zero();
     xFinalStock_[i] = state_vector_t::Zero();
   }  // end of i loop
+
+  // reset timers
+  forwardPassTimer_.reset();
+  linearQuadraticApproximationTimer_.reset();
+  backwardPassTimer_.reset();
+  computeControllerTimer_.reset();
+  linesearchTimer_.reset();
 }
 
 /******************************************************************************************************/
@@ -149,7 +166,7 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::reset() {
 /***************************************************************************************************** */
 template <size_t STATE_DIM, size_t INPUT_DIM>
 typename DDP_BASE<STATE_DIM, INPUT_DIM>::scalar_t DDP_BASE<STATE_DIM, INPUT_DIM>::rolloutTrajectory(
-    const scalar_t& initTime, const state_vector_t& initState, const scalar_t& finalTime, const scalar_array_t& partitioningTimes,
+    scalar_t initTime, const state_vector_t& initState, scalar_t finalTime, const scalar_array_t& partitioningTimes,
     linear_controller_array_t& controllersStock, scalar_array2_t& timeTrajectoriesStock, size_array2_t& eventsPastTheEndIndecesStock,
     state_vector_array2_t& stateTrajectoriesStock, input_vector_array2_t& inputTrajectoriesStock, size_t threadId /*= 0*/) {
   size_t numPartitions = partitioningTimes.size() - 1;
@@ -164,9 +181,9 @@ typename DDP_BASE<STATE_DIM, INPUT_DIM>::scalar_t DDP_BASE<STATE_DIM, INPUT_DIM>
   inputTrajectoriesStock.resize(numPartitions);
 
   // finding the active subsystem index at initTime
-  size_t initActivePartition = BASE::findActivePartitionIndex(partitioningTimes, initTime);
+  auto initActivePartition = lookup::findBoundedActiveIntervalInTimeArray(partitioningTimes, initTime);
   // finding the active subsystem index at initTime
-  size_t finalActivePartition = BASE::findActivePartitionIndex(partitioningTimes, finalTime);
+  auto finalActivePartition = lookup::findBoundedActiveIntervalInTimeArray(partitioningTimes, finalTime);
 
   scalar_t t0 = initTime;
   state_vector_t x0 = initState;
@@ -189,7 +206,7 @@ typename DDP_BASE<STATE_DIM, INPUT_DIM>::scalar_t DDP_BASE<STATE_DIM, INPUT_DIM>
     // the first rollout of the partition. However for the very first run of the algorithm,
     // it will still use operating trajectories if an initial controller is not provided.
     linear_controller_t* controllerPtrTemp = &controllersStock[i];
-    if (blockwiseMovingHorizon_ == false) {
+    if (!blockwiseMovingHorizon_) {
       if (controllerPtrTemp->empty() && i > 0 && !controllersStock[i - 1].empty()) {
         controllerPtrTemp = &controllersStock[i - 1];
       }
@@ -245,14 +262,14 @@ typename DDP_BASE<STATE_DIM, INPUT_DIM>::scalar_t DDP_BASE<STATE_DIM, INPUT_DIM>
   }
 
   // average time step
-  return (finalTime - initTime) / (scalar_t)numSteps;
+  return (finalTime - initTime) / numSteps;
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /***************************************************************************************************** */
 template <size_t STATE_DIM, size_t INPUT_DIM>
-void DDP_BASE<STATE_DIM, INPUT_DIM>::rolloutFinalState(const scalar_t& initTime, const state_vector_t& initState, const scalar_t& finalTime,
+void DDP_BASE<STATE_DIM, INPUT_DIM>::rolloutFinalState(scalar_t initTime, const state_vector_t& initState, scalar_t finalTime,
                                                        const scalar_array_t& partitioningTimes,
                                                        const linear_controller_array_t& controllersStock, state_vector_t& finalState,
                                                        input_vector_t& finalInput, size_t& finalActivePartition, size_t threadId /*= 0*/) {
@@ -268,8 +285,8 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::rolloutFinalState(const scalar_t& initTime,
   input_vector_t inputTrajectory;
 
   // finding the active subsystem index at initTime and final time
-  size_t initActivePartition = BASE::findActivePartitionIndex(partitioningTimes, initTime);
-  finalActivePartition = BASE::findActivePartitionIndex(partitioningTimes, finalTime);
+  auto initActivePartition = lookup::findBoundedActiveIntervalInTimeArray(partitioningTimes, initTime);
+  finalActivePartition = lookup::findBoundedActiveIntervalInTimeArray(partitioningTimes, finalTime);
 
   scalar_t t0 = initTime, tf;
   state_vector_t x0 = initState;
@@ -319,7 +336,7 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::rolloutFinalState(const scalar_t& initTime,
 /***************************************************************************************************** */
 template <size_t STATE_DIM, size_t INPUT_DIM>
 void DDP_BASE<STATE_DIM, INPUT_DIM>::calculateConstraintsWorker(
-    size_t workerIndex, const size_t& partitionIndex, const scalar_array_t& timeTrajectory, const size_array_t& eventsPastTheEndIndeces,
+    size_t workerIndex, size_t partitionIndex, const scalar_array_t& timeTrajectory, const size_array_t& eventsPastTheEndIndeces,
     const state_vector_array_t& stateTrajectory, const input_vector_array_t& inputTrajectory, size_array_t& nc1Trajectory,
     constraint1_vector_array_t& EvTrajectory, size_array_t& nc2Trajectory, constraint2_vector_array_t& HvTrajectory,
     size_array_t& ncIneqTrajectory, scalar_array2_t& hTrajectory, size_array_t& nc2Finals, constraint2_vector_array_t& HvFinals) {
@@ -432,14 +449,14 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::calculateRolloutConstraints(
 /******************************************************************************************************/
 /***************************************************************************************************** */
 template <size_t STATE_DIM, size_t INPUT_DIM>
-void DDP_BASE<STATE_DIM, INPUT_DIM>::calculateCostWorker(size_t workerIndex, const size_t& partitionIndex,
-                                                         const scalar_array_t& timeTrajectory, const size_array_t& eventsPastTheEndIndeces,
+void DDP_BASE<STATE_DIM, INPUT_DIM>::calculateCostWorker(size_t workerIndex, size_t partitionIndex, const scalar_array_t& timeTrajectory,
+                                                         const size_array_t& eventsPastTheEndIndeces,
                                                          const state_vector_array_t& stateTrajectory,
                                                          const input_vector_array_t& inputTrajectory, scalar_t& totalCost) {
   cost_function_base_t& costFunction = linearQuadraticApproximatorPtrStock_[workerIndex]->costFunction();
 
   // set desired trajectories
-  costFunction.setCostDesiredTrajectories(costDesiredTrajectories_);
+  costFunction.setCostDesiredTrajectories(this->costDesiredTrajectories_);
 
   totalCost = 0.0;
   auto eventsPastTheEndItr = eventsPastTheEndIndeces.begin();
@@ -493,7 +510,7 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::calculateRolloutCost(const scalar_array2_t&
 
   // calculate the Heuristics function at the final time
   // set desired trajectories
-  heuristicsFunctionsPtrStock_[threadId]->setCostDesiredTrajectories(costDesiredTrajectories_);
+  heuristicsFunctionsPtrStock_[threadId]->setCostDesiredTrajectories(this->costDesiredTrajectories_);
   // set state-input
   heuristicsFunctionsPtrStock_[threadId]->setCurrentStateAndControl(timeTrajectoriesStock[finalActivePartition_].back(),
                                                                     stateTrajectoriesStock[finalActivePartition_].back(),
@@ -508,11 +525,13 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::calculateRolloutCost(const scalar_array2_t&
 /******************************************************************************************************/
 /***************************************************************************************************** */
 template <size_t STATE_DIM, size_t INPUT_DIM>
-void DDP_BASE<STATE_DIM, INPUT_DIM>::calculateRolloutCost(
-    const scalar_array2_t& timeTrajectoriesStock, const size_array2_t& eventsPastTheEndIndecesStock,
-    const state_vector_array2_t& stateTrajectoriesStock, const input_vector_array2_t& inputTrajectoriesStock,
-    const scalar_t& constraint2ISE, const scalar_t& inequalityConstraintPenalty, const size_array2_t& nc2FinalStock,
-    const constraint2_vector_array2_t& HvFinalStock, scalar_t& totalCost, size_t threadId /*= 0*/) {
+void DDP_BASE<STATE_DIM, INPUT_DIM>::calculateRolloutCost(const scalar_array2_t& timeTrajectoriesStock,
+                                                          const size_array2_t& eventsPastTheEndIndecesStock,
+                                                          const state_vector_array2_t& stateTrajectoriesStock,
+                                                          const input_vector_array2_t& inputTrajectoriesStock, scalar_t constraint2ISE,
+                                                          scalar_t inequalityConstraintPenalty, const size_array2_t& nc2FinalStock,
+                                                          const constraint2_vector_array2_t& HvFinalStock, scalar_t& totalCost,
+                                                          size_t threadId /*= 0*/) {
   calculateRolloutCost(timeTrajectoriesStock, eventsPastTheEndIndecesStock, stateTrajectoriesStock, inputTrajectoriesStock, totalCost,
                        threadId);
 
@@ -529,7 +548,7 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::calculateRolloutCost(
   if (!ddpSettings_.noStateConstraints_) {
     for (size_t i = 0; i < numPartitions_; i++) {
       for (size_t k = 0; k < nc2FinalStock[i].size(); k++) {
-        const size_t& nc2Final = nc2FinalStock[i][k];
+        auto nc2Final = nc2FinalStock[i][k];
         totalCost += 0.5 * stateConstraintPenalty * HvFinalStock[i][k].head(nc2Final).squaredNorm();
       }  // end of k loop
     }    // end of i loop
@@ -543,7 +562,7 @@ template <size_t STATE_DIM, size_t INPUT_DIM>
 void DDP_BASE<STATE_DIM, INPUT_DIM>::approximateOptimalControlProblem() {
   for (size_t i = 0; i < numPartitions_; i++) {
     // number of the intermediate LQ variables
-    size_t N = nominalTimeTrajectoriesStock_[i].size();
+    auto N = nominalTimeTrajectoriesStock_[i].size();
 
     // system dynamics
     AmTrajectoryStock_[i].resize(N);
@@ -591,7 +610,7 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::approximateOptimalControlProblem() {
     if (N > 0) {
       for (size_t j = 0; j < ddpSettings_.nThreads_; j++) {
         // set desired trajectories
-        linearQuadraticApproximatorPtrStock_[j]->costFunction().setCostDesiredTrajectories(costDesiredTrajectories_);
+        linearQuadraticApproximatorPtrStock_[j]->costFunction().setCostDesiredTrajectories(this->costDesiredTrajectories_);
       }  // end of j loop
 
       // perform the approximateSubsystemLQ for partition i
@@ -601,7 +620,7 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::approximateOptimalControlProblem() {
   }  // end of i loop
 
   // calculate the Heuristics function at the final time
-  heuristicsFunctionsPtrStock_[0]->setCostDesiredTrajectories(costDesiredTrajectories_);
+  heuristicsFunctionsPtrStock_[0]->setCostDesiredTrajectories(this->costDesiredTrajectories_);
   heuristicsFunctionsPtrStock_[0]->setCurrentStateAndControl(nominalTimeTrajectoriesStock_[finalActivePartition_].back(),
                                                              nominalStateTrajectoriesStock_[finalActivePartition_].back(),
                                                              nominalInputTrajectoriesStock_[finalActivePartition_].back());
@@ -617,7 +636,7 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::approximateOptimalControlProblem() {
 /******************************************************************************************************/
 /***************************************************************************************************** */
 template <size_t STATE_DIM, size_t INPUT_DIM>
-void DDP_BASE<STATE_DIM, INPUT_DIM>::approximateUnconstrainedLQWorker(size_t workerIndex, const size_t& i, const size_t& k) {
+void DDP_BASE<STATE_DIM, INPUT_DIM>::approximateUnconstrainedLQWorker(size_t workerIndex, size_t i, size_t k) {
   linearQuadraticApproximatorPtrStock_[workerIndex]->approximateUnconstrainedLQProblem(
       nominalTimeTrajectoriesStock_[i][k], nominalStateTrajectoriesStock_[i][k], nominalInputTrajectoriesStock_[i][k],
       AmTrajectoryStock_[i][k], BmTrajectoryStock_[i][k], nc1TrajectoriesStock_[i][k], EvTrajectoryStock_[i][k], CmTrajectoryStock_[i][k],
@@ -636,8 +655,7 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::approximateUnconstrainedLQWorker(size_t wor
 /******************************************************************************************************/
 /***************************************************************************************************** */
 template <size_t STATE_DIM, size_t INPUT_DIM>
-void DDP_BASE<STATE_DIM, INPUT_DIM>::approximateEventsLQWorker(size_t workerIndex, const size_t& i, const size_t& k,
-                                                               const scalar_t& stateConstraintPenalty) {
+void DDP_BASE<STATE_DIM, INPUT_DIM>::approximateEventsLQWorker(size_t workerIndex, size_t i, size_t k, scalar_t stateConstraintPenalty) {
   // if a switch took place calculate switch related variables
   size_t NE = nominalEventsPastTheEndIndecesStock_[i].size();
   for (size_t ke = 0; ke < NE; ke++) {
@@ -659,7 +677,7 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::approximateEventsLQWorker(size_t workerInde
        * Modify the unconstrained LQ coefficients to constrained ones
        */
       // final constraint type 2 coefficients
-      const size_t& nc2 = nc2FinalStock_[i][ke];
+      size_t nc2 = nc2FinalStock_[i][ke];
       if (nc2 > 0) {
         qFinalStock_[i][ke] += 0.5 * stateConstraintPenalty * HvFinalStock_[i][ke].head(nc2).transpose() * HvFinalStock_[i][ke].head(nc2);
         QvFinalStock_[i][ke] += stateConstraintPenalty * FmFinalStock_[i][ke].topRows(nc2).transpose() * HvFinalStock_[i][ke].head(nc2);
@@ -843,8 +861,7 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::calculateMeritFunction(const scalar_array2_
                                                             const size_array2_t& nc1TrajectoriesStock,
                                                             const constraint1_vector_array2_t& EvTrajectoryStock,
                                                             const std::vector<std::vector<Eigen::VectorXd>>& lagrangeTrajectoriesStock,
-                                                            const scalar_t& totalCost, scalar_t& meritFunctionValue,
-                                                            scalar_t& constraintISE) {
+                                                            scalar_t totalCost, scalar_t& meritFunctionValue, scalar_t& constraintISE) {
   // add cost function
   meritFunctionValue = totalCost;
 
@@ -900,7 +917,7 @@ typename DDP_BASE<STATE_DIM, INPUT_DIM>::scalar_t DDP_BASE<STATE_DIM, INPUT_DIM>
 
     for (size_t k = 0; k + 1 < timeTrajectoriesStock[i].size(); k++) {
       if (k == 0) {
-        const size_t& nc1 = nc1TrajectoriesStock[i][0];
+        size_t nc1 = nc1TrajectoriesStock[i][0];
         if (nc1 > 0) {
           currentSquaredNormError = EvTrajectoriesStock[i][0].head(nc1).squaredNorm();
         } else {
@@ -912,7 +929,7 @@ typename DDP_BASE<STATE_DIM, INPUT_DIM>::scalar_t DDP_BASE<STATE_DIM, INPUT_DIM>
 
       maxConstraintNorm = ((maxConstraintNorm < currentSquaredNormError) ? currentSquaredNormError : maxConstraintNorm);
 
-      const size_t& nc1 = nc1TrajectoriesStock[i][k + 1];
+      size_t nc1 = nc1TrajectoriesStock[i][k + 1];
       if (nc1 > 0) {
         nextSquaredNormError = EvTrajectoriesStock[i][k + 1].head(nc1).squaredNorm();
       } else {
@@ -980,7 +997,7 @@ typename DDP_BASE<STATE_DIM, INPUT_DIM>::scalar_t DDP_BASE<STATE_DIM, INPUT_DIM>
 /******************************************************************************************************/
 /***************************************************************************************************** */
 template <size_t STATE_DIM, size_t INPUT_DIM>
-void DDP_BASE<STATE_DIM, INPUT_DIM>::truncateConterller(const scalar_array_t& partitioningTimes, const double& initTime,
+void DDP_BASE<STATE_DIM, INPUT_DIM>::truncateController(const scalar_array_t& partitioningTimes, double initTime,
                                                         linear_controller_array_t& controllersStock, size_t& initActivePartition,
                                                         linear_controller_array_t& deletedcontrollersStock) {
   deletedcontrollersStock.resize(numPartitions_);
@@ -989,7 +1006,7 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::truncateConterller(const scalar_array_t& pa
   }
 
   // finding the active subsystem index at initTime_
-  initActivePartition = BASE::findActivePartitionIndex(partitioningTimes, initTime);
+  initActivePartition = lookup::findBoundedActiveIntervalInTimeArray(partitioningTimes, initTime);
 
   // saving the deleting part and clearing controllersStock
   for (size_t i = 0; i < initActivePartition; i++) {
@@ -1119,8 +1136,8 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::adjustController(const scalar_array_t& newE
 /******************************************************************************************************/
 /***************************************************************************************************** */
 template <size_t STATE_DIM, size_t INPUT_DIM>
-void DDP_BASE<STATE_DIM, INPUT_DIM>::getValueFuntion(const scalar_t& time, const state_vector_t& state, scalar_t& valueFuntion) {
-  size_t activeSubsystem = BASE::findActivePartitionIndex(partitioningTimes_, time);
+void DDP_BASE<STATE_DIM, INPUT_DIM>::getValueFuntion(scalar_t time, const state_vector_t& state, scalar_t& valueFuntion) {
+  size_t activeSubsystem = lookup::findBoundedActiveIntervalInTimeArray(partitioningTimes_, time);
 
   state_matrix_t Sm;
   LinearInterpolation<state_matrix_t, Eigen::aligned_allocator<state_matrix_t>> SmFunc(&SsTimeTrajectoryStock_[activeSubsystem],
@@ -1283,7 +1300,7 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::swapNominalTrajectories(scalar_array2_t& no
 /******************************************************************************************************/
 /***************************************************************************************************** */
 template <size_t STATE_DIM, size_t INPUT_DIM>
-const typename DDP_BASE<STATE_DIM, INPUT_DIM>::scalar_t& DDP_BASE<STATE_DIM, INPUT_DIM>::getFinalTime() const {
+typename DDP_BASE<STATE_DIM, INPUT_DIM>::scalar_t DDP_BASE<STATE_DIM, INPUT_DIM>::getFinalTime() const {
   return finalTime_;
 }
 
@@ -1299,67 +1316,7 @@ const typename DDP_BASE<STATE_DIM, INPUT_DIM>::scalar_array_t& DDP_BASE<STATE_DI
 /******************************************************************************************************/
 /***************************************************************************************************** */
 template <size_t STATE_DIM, size_t INPUT_DIM>
-void DDP_BASE<STATE_DIM, INPUT_DIM>::getCostDesiredTrajectoriesPtr(const cost_desired_trajectories_t*& costDesiredTrajectoriesPtr) const {
-  costDesiredTrajectoriesPtr = &costDesiredTrajectories_;
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/***************************************************************************************************** */
-template <size_t STATE_DIM, size_t INPUT_DIM>
-void DDP_BASE<STATE_DIM, INPUT_DIM>::setCostDesiredTrajectories(const cost_desired_trajectories_t& costDesiredTrajectories) {
-  costDesiredTrajectoriesUpdated_ = true;
-  costDesiredTrajectoriesBuffer_ = costDesiredTrajectories;
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/***************************************************************************************************** */
-template <size_t STATE_DIM, size_t INPUT_DIM>
-void DDP_BASE<STATE_DIM, INPUT_DIM>::setCostDesiredTrajectories(const scalar_array_t& desiredTimeTrajectory,
-                                                                const dynamic_vector_array_t& desiredStateTrajectory,
-                                                                const dynamic_vector_array_t& desiredInputTrajectory) {
-  costDesiredTrajectoriesUpdated_ = true;
-  costDesiredTrajectoriesBuffer_.desiredTimeTrajectory() = desiredTimeTrajectory;
-  costDesiredTrajectoriesBuffer_.desiredStateTrajectory() = desiredStateTrajectory;
-  costDesiredTrajectoriesBuffer_.desiredInputTrajectory() = desiredInputTrajectory;
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/***************************************************************************************************** */
-template <size_t STATE_DIM, size_t INPUT_DIM>
-void DDP_BASE<STATE_DIM, INPUT_DIM>::swapCostDesiredTrajectories(cost_desired_trajectories_t& costDesiredTrajectories) {
-  costDesiredTrajectoriesUpdated_ = true;
-  costDesiredTrajectoriesBuffer_.swap(costDesiredTrajectories);
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/***************************************************************************************************** */
-template <size_t STATE_DIM, size_t INPUT_DIM>
-void DDP_BASE<STATE_DIM, INPUT_DIM>::swapCostDesiredTrajectories(scalar_array_t& desiredTimeTrajectory,
-                                                                 dynamic_vector_array_t& desiredStateTrajectory,
-                                                                 dynamic_vector_array_t& desiredInputTrajectory) {
-  costDesiredTrajectoriesUpdated_ = true;
-  costDesiredTrajectoriesBuffer_.desiredTimeTrajectory().swap(desiredTimeTrajectory);
-  costDesiredTrajectoriesBuffer_.desiredStateTrajectory().swap(desiredStateTrajectory);
-  costDesiredTrajectoriesBuffer_.desiredInputTrajectory().swap(desiredInputTrajectory);
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/***************************************************************************************************** */
-template <size_t STATE_DIM, size_t INPUT_DIM>
-bool DDP_BASE<STATE_DIM, INPUT_DIM>::costDesiredTrajectoriesUpdated() const {
-  return costDesiredTrajectoriesUpdated_;
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/***************************************************************************************************** */
-template <size_t STATE_DIM, size_t INPUT_DIM>
-void DDP_BASE<STATE_DIM, INPUT_DIM>::rewindOptimizer(const size_t& firstIndex) {
+void DDP_BASE<STATE_DIM, INPUT_DIM>::rewindOptimizer(size_t firstIndex) {
   // No rewind is needed
   if (firstIndex == 0) {
     return;
@@ -1406,7 +1363,7 @@ const unsigned long long int& DDP_BASE<STATE_DIM, INPUT_DIM>::getRewindCounter()
 /******************************************************************************************************/
 /***************************************************************************************************** */
 template <size_t STATE_DIM, size_t INPUT_DIM>
-void DDP_BASE<STATE_DIM, INPUT_DIM>::setupOptimizer(const size_t& numPartitions) {
+void DDP_BASE<STATE_DIM, INPUT_DIM>::setupOptimizer(size_t numPartitions) {
   if (numPartitions == 0) {
     throw std::runtime_error("Number of partitions cannot be zero!");
   }
@@ -1487,28 +1444,15 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::setupOptimizer(const size_t& numPartitions)
 /***************************************************************************************************** */
 template <size_t STATE_DIM, size_t INPUT_DIM>
 void DDP_BASE<STATE_DIM, INPUT_DIM>::runInit() {
-#ifdef BENCHMARK
-  // Benchmarking
-  BENCHMARK_nIterationsLQ_++;
-  BENCHMARK_nIterationsBP_++;
-  BENCHMARK_nIterationsFP_++;
-  BENCHMARK_start_ = std::chrono::steady_clock::now();
-#endif
-
   // initial controller rollout
+  forwardPassTimer_.startTimer();
   avgTimeStepFP_ =
       rolloutTrajectory(initTime_, initState_, finalTime_, partitioningTimes_, nominalControllersStock_, nominalTimeTrajectoriesStock_,
                         nominalEventsPastTheEndIndecesStock_, nominalStateTrajectoriesStock_, nominalInputTrajectoriesStock_);
-
-#ifdef BENCHMARK
-  BENCHMARK_end_ = std::chrono::steady_clock::now();
-  auto BENCHMARK_diff_ = BENCHMARK_end_ - BENCHMARK_start_;
-  BENCHMARK_tAvgFP_ = ((1.0 - 1.0 / BENCHMARK_nIterationsFP_) * BENCHMARK_tAvgFP_) +
-                      (1.0 / BENCHMARK_nIterationsFP_) * std::chrono::duration_cast<std::chrono::milliseconds>(BENCHMARK_diff_).count();
-  BENCHMARK_start_ = std::chrono::steady_clock::now();
-#endif
+  forwardPassTimer_.endTimer();
 
   // linearizing the dynamics and quadratizing the cost function along nominal trajectories
+  linearQuadraticApproximationTimer_.startTimer();
   approximateOptimalControlProblem();
 
   // to check convergence of the main loop, we need to compute the total cost and ISEs
@@ -1532,30 +1476,21 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::runInit() {
     nominalConstraint1ISE_ = nominalConstraint1MaxNorm_ = 0.0;
     nominalConstraint2ISE_ = nominalConstraint2MaxNorm_ = 0.0;
   }
-
-#ifdef BENCHMARK
-  BENCHMARK_end_ = std::chrono::steady_clock::now();
-  BENCHMARK_diff_ = BENCHMARK_end_ - BENCHMARK_start_;
-  BENCHMARK_tAvgLQ_ = ((1.0 - 1.0 / BENCHMARK_nIterationsLQ_) * BENCHMARK_tAvgLQ_) +
-                      (1.0 / BENCHMARK_nIterationsLQ_) * std::chrono::duration_cast<std::chrono::milliseconds>(BENCHMARK_diff_).count();
-  BENCHMARK_start_ = std::chrono::steady_clock::now();
-#endif
+  linearQuadraticApproximationTimer_.endTimer();
 
   // solve Riccati equations
+  backwardPassTimer_.startTimer();
   avgTimeStepBP_ = solveSequentialRiccatiEquations(SmHeuristics_, SvHeuristics_, sHeuristics_);
+  backwardPassTimer_.endTimer();
+
   // calculate controller
+  computeControllerTimer_.startTimer();
   if (ddpSettings_.useRiccatiSolver_) {
     calculateController();
   } else {
     throw std::runtime_error("useRiccatiSolver=false is not valid.");
   }
-
-#ifdef BENCHMARK
-  BENCHMARK_end_ = std::chrono::steady_clock::now();
-  BENCHMARK_diff_ = BENCHMARK_end_ - BENCHMARK_start_;
-  BENCHMARK_tAvgBP_ = ((1.0 - 1.0 / BENCHMARK_nIterationsBP_) * BENCHMARK_tAvgBP_) +
-                      (1.0 / BENCHMARK_nIterationsBP_) * std::chrono::duration_cast<std::chrono::milliseconds>(BENCHMARK_diff_).count();
-#endif
+  computeControllerTimer_.endTimer();
 
   // display
   if (ddpSettings_.displayInfo_) {
@@ -1568,29 +1503,16 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::runInit() {
 /***************************************************************************************************** */
 template <size_t STATE_DIM, size_t INPUT_DIM>
 void DDP_BASE<STATE_DIM, INPUT_DIM>::runIteration() {
-#ifdef BENCHMARK
-  // Benchmarking
-  BENCHMARK_nIterationsLQ_++;
-  BENCHMARK_nIterationsBP_++;
-  BENCHMARK_nIterationsFP_++;
-  BENCHMARK_start_ = std::chrono::steady_clock::now();
-#endif
-
   bool computeISEs = ddpSettings_.displayInfo_ || !ddpSettings_.noStateConstraints_;
 
   // finding the optimal learningRate
   maxLearningRate_ = ddpSettings_.maxLearningRate_;
+  linesearchTimer_.startTimer();
   lineSearch(computeISEs);
-
-#ifdef BENCHMARK
-  BENCHMARK_end_ = std::chrono::steady_clock::now();
-  BENCHMARK_diff_ = BENCHMARK_end_ - BENCHMARK_start_;
-  BENCHMARK_tAvgFP_ = ((1.0 - 1.0 / BENCHMARK_nIterationsFP_) * BENCHMARK_tAvgFP_) +
-                      (1.0 / BENCHMARK_nIterationsFP_) * std::chrono::duration_cast<std::chrono::milliseconds>(BENCHMARK_diff_).count();
-  BENCHMARK_start_ = std::chrono::steady_clock::now();
-#endif
+  linesearchTimer_.endTimer();
 
   // linearizing the dynamics and quadratizing the cost function along nominal trajectories
+  linearQuadraticApproximationTimer_.startTimer();
   approximateOptimalControlProblem();
 
   // to check convergence of the main loop, we need to compute ISEs
@@ -1606,30 +1528,21 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::runIteration() {
       nominalConstraint2ISE_ = nominalConstraint2MaxNorm_ = 0.0;
     }
   }
-
-#ifdef BENCHMARK
-  BENCHMARK_end_ = std::chrono::steady_clock::now();
-  BENCHMARK_diff_ = BENCHMARK_end_ - BENCHMARK_start_;
-  BENCHMARK_tAvgLQ_ = ((1.0 - 1.0 / BENCHMARK_nIterationsLQ_) * BENCHMARK_tAvgLQ_) +
-                      (1.0 / BENCHMARK_nIterationsLQ_) * std::chrono::duration_cast<std::chrono::milliseconds>(BENCHMARK_diff_).count();
-  BENCHMARK_start_ = std::chrono::steady_clock::now();
-#endif
+  linearQuadraticApproximationTimer_.endTimer();
 
   // solve Riccati equations
+  backwardPassTimer_.startTimer();
   avgTimeStepBP_ = solveSequentialRiccatiEquations(SmHeuristics_, SvHeuristics_, sHeuristics_);
+  backwardPassTimer_.endTimer();
+
   // calculate controller
+  computeControllerTimer_.startTimer();
   if (ddpSettings_.useRiccatiSolver_) {
     calculateController();
   } else {
     throw std::runtime_error("useRiccatiSolver=false is not valid.");
   }
-
-#ifdef BENCHMARK
-  BENCHMARK_end_ = std::chrono::steady_clock::now();
-  BENCHMARK_diff_ = BENCHMARK_end_ - BENCHMARK_start_;
-  BENCHMARK_tAvgBP_ = ((1.0 - 1.0 / BENCHMARK_nIterationsBP_) * BENCHMARK_tAvgBP_) +
-                      (1.0 / BENCHMARK_nIterationsBP_) * std::chrono::duration_cast<std::chrono::milliseconds>(BENCHMARK_diff_).count();
-#endif
+  computeControllerTimer_.endTimer();
 
   // display
   if (ddpSettings_.displayInfo_) {
@@ -1662,7 +1575,7 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::runExit() {
 /******************************************************************************************************/
 /***************************************************************************************************** */
 template <size_t STATE_DIM, size_t INPUT_DIM>
-void DDP_BASE<STATE_DIM, INPUT_DIM>::run(const scalar_t& initTime, const state_vector_t& initState, const scalar_t& finalTime,
+void DDP_BASE<STATE_DIM, INPUT_DIM>::run(scalar_t initTime, const state_vector_t& initState, scalar_t finalTime,
                                          const scalar_array_t& partitioningTimes) {
   const size_t numPartitions = partitioningTimes.size() - 1;
 
@@ -1680,7 +1593,7 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::run(const scalar_t& initTime, const state_v
 /******************************************************************************************************/
 /***************************************************************************************************** */
 template <size_t STATE_DIM, size_t INPUT_DIM>
-void DDP_BASE<STATE_DIM, INPUT_DIM>::run(const scalar_t& initTime, const state_vector_t& initState, const scalar_t& finalTime,
+void DDP_BASE<STATE_DIM, INPUT_DIM>::run(scalar_t initTime, const state_vector_t& initState, scalar_t finalTime,
                                          const scalar_array_t& partitioningTimes, const controller_ptr_array_t& controllersPtrStock) {
   if (ddpSettings_.displayInfo_) {
     std::cerr << std::endl;
@@ -1738,11 +1651,7 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::run(const scalar_t& initTime, const state_v
     }
   }
 
-  // set desired trajectories of cost if it is updated
-  if (costDesiredTrajectoriesUpdated_) {
-    costDesiredTrajectoriesUpdated_ = false;
-    costDesiredTrajectories_.swap(costDesiredTrajectoriesBuffer_);
-  }
+  this->updateCostDesiredTrajectories();
 
   // update the logic rules in the beginning of the run routine
   bool logicRulesModified = BASE::getLogicRulesMachinePtr()->updateLogicRules(partitioningTimes_);
@@ -1765,10 +1674,10 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::run(const scalar_t& initTime, const state_v
   iterationISE2_.clear();
 
   // finding the initial active partition index and truncating the controller
-  truncateConterller(partitioningTimes_, initTime_, nominalControllersStock_, initActivePartition_, deletedcontrollersStock_);
+  truncateController(partitioningTimes_, initTime_, nominalControllersStock_, initActivePartition_, deletedcontrollersStock_);
 
   // the final active partition index.
-  finalActivePartition_ = BASE::findActivePartitionIndex(partitioningTimes_, finalTime_);
+  finalActivePartition_ = lookup::findBoundedActiveIntervalInTimeArray(partitioningTimes_, finalTime_);
 
   // check if after the truncation the internal controller is empty
   bool isInitInternalControllerEmpty = false;
@@ -1842,23 +1751,13 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::run(const scalar_t& initTime, const state_v
     std::cerr << "\n#### Final rollout" << std::endl;
   }
 
-#ifdef BENCHMARK
-  BENCHMARK_nIterationsFP_++;
-  BENCHMARK_start_ = std::chrono::steady_clock::now();
-#endif
-
   bool computeISEs = !ddpSettings_.noStateConstraints_ || ddpSettings_.displayInfo_ || ddpSettings_.displayShortSummary_;
 
   // finding the final optimal learningRate and getting the optimal trajectories and controller
   maxLearningRate_ = ddpSettings_.maxLearningRate_;
+  linesearchTimer_.startTimer();
   lineSearch(computeISEs);
-
-#ifdef BENCHMARK
-  BENCHMARK_end_ = std::chrono::steady_clock::now();
-  BENCHMARK_diff_ = BENCHMARK_end_ - BENCHMARK_start_;
-  BENCHMARK_tAvgFP_ = ((1.0 - 1.0 / BENCHMARK_nIterationsFP_) * BENCHMARK_tAvgFP_) +
-                      (1.0 / BENCHMARK_nIterationsFP_) * std::chrono::duration_cast<std::chrono::milliseconds>(BENCHMARK_diff_).count();
-#endif
+  linesearchTimer_.endTimer();
 
   updateNominalControllerPtrStock();
 

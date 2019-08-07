@@ -203,12 +203,12 @@ protected:
 				tfBroadcasterPtr_->sendTransform(ball_transform);
 
 				// Broadcast transformation from odom to command
-				const Eigen::Vector3d desiredPositionWorldToTarget = Eigen::Vector3d(costDesiredTrajectories.desiredStateTrajectory()[1](0),
-						costDesiredTrajectories.desiredStateTrajectory()[1](1),
+				const Eigen::Vector3d desiredPositionWorldToTarget = Eigen::Vector3d(costDesiredTrajectories.desiredStateTrajectory().back()(0),
+						costDesiredTrajectories.desiredStateTrajectory().back()(1),
 						0.0);
-				const Eigen::Quaterniond desiredQuaternionBaseToWorld = Eigen::AngleAxisd{costDesiredTrajectories.desiredStateTrajectory()[1](2), Eigen::Vector3d{0, 0, 1}}*
-						Eigen::AngleAxisd{costDesiredTrajectories.desiredStateTrajectory()[1](3), Eigen::Vector3d{0, 1, 0}}*
-						Eigen::AngleAxisd{costDesiredTrajectories.desiredStateTrajectory()[1](4), Eigen::Vector3d{1, 0, 0}};
+				const Eigen::Quaterniond desiredQuaternionBaseToWorld = Eigen::AngleAxisd{costDesiredTrajectories.desiredStateTrajectory().back()(2), Eigen::Vector3d{0, 0, 1}}*
+						Eigen::AngleAxisd{costDesiredTrajectories.desiredStateTrajectory().back()(3), Eigen::Vector3d{0, 1, 0}}*
+						Eigen::AngleAxisd{costDesiredTrajectories.desiredStateTrajectory().back()(4), Eigen::Vector3d{1, 0, 0}};
 						geometry_msgs::TransformStamped command_frame_transform;
 						command_frame_transform.header.frame_id = "odom";
 						command_frame_transform.child_frame_id = "command";

@@ -38,6 +38,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 namespace ocs2 {
 
+// TODO(all) : stop using these functions and use those in lookup.h instead
+
 /**
  * This function finds the interval in the input timeIntervals vector to which the input time belongs
  * to it. For an input timeIntervals vector of size n, we have n-1 intervals indexed from 0 to n-2.

@@ -27,8 +27,7 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  ******************************************************************************/
 
-#ifndef DOUBLE_INTEGRATOR_DYNAMICS_DERIVATIVES_OCS2_H_
-#define DOUBLE_INTEGRATOR_DYNAMICS_DERIVATIVES_OCS2_H_
+#pragma once
 
 #include <ocs2_core/dynamics/DerivativesBase.h>
 
@@ -39,74 +38,41 @@ namespace double_integrator {
 
 class DoubleIntegratorDynamicsDerivatives : public DerivativesBase<double_integrator::STATE_DIM_, double_integrator::INPUT_DIM_> {
  public:
-	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-	using Ptr = std::shared_ptr<DoubleIntegratorDynamicsDerivatives>;
-	using ConstPtr = std::shared_ptr<const DoubleIntegratorDynamicsDerivatives>;
+  using Ptr = std::shared_ptr<DoubleIntegratorDynamicsDerivatives>;
+  using ConstPtr = std::shared_ptr<const DoubleIntegratorDynamicsDerivatives>;
 
-	using BASE = DerivativesBase<double_integrator::STATE_DIM_, double_integrator::INPUT_DIM_>;
-	using scalar_t = typename BASE::scalar_t;
-	using state_vector_t = typename BASE::state_vector_t;
-	using state_matrix_t = typename BASE::state_matrix_t;
-	using input_vector_t = typename BASE::input_vector_t;
-	using state_input_matrix_t = typename BASE::state_input_matrix_t;
+  using BASE = DerivativesBase<double_integrator::STATE_DIM_, double_integrator::INPUT_DIM_>;
+  using scalar_t = typename BASE::scalar_t;
+  using state_vector_t = typename BASE::state_vector_t;
+  using state_matrix_t = typename BASE::state_matrix_t;
+  using input_vector_t = typename BASE::input_vector_t;
+  using state_input_matrix_t = typename BASE::state_input_matrix_t;
 
-	/**
-	 * Constructor
-	 *
-   * @param [in] mass: the inertia of the particle
-	 */
-  DoubleIntegratorDynamicsDerivatives(double mass) {
-    A_ << 0.0, 1.0, 0.0, 0.0;
-    B_ << 0.0, 1.0 / mass;
-  }
+  /**
+   * Constructor
+   *
+   * @param [in] A: \f$ A(t) \f$ matrix.
+   * @param [in] B: \f$ B(t) \f$ matrix.
+   */
+  DoubleIntegratorDynamicsDerivatives(state_matrix_t A, state_input_matrix_t B) : A_(std::move(A)), B_(std::move(B)) {}
 
-	/**
-	 * Destructor
-	 */
-	~DoubleIntegratorDynamicsDerivatives() override = default;
+  /**
+   * Destructor
+   */
+  ~DoubleIntegratorDynamicsDerivatives() override = default;
 
-	/**
-	 * Returns pointer to the class.
-	 *
-	 * @return A raw pointer to the class.
-	 */
-    DoubleIntegratorDynamicsDerivatives* clone() const override { return new DoubleIntegratorDynamicsDerivatives(*this); }
+  DoubleIntegratorDynamicsDerivatives* clone() const override { return new DoubleIntegratorDynamicsDerivatives(*this); }
 
-	/**
-	 * Sets the current time, state, and control input.
-	 *
-	 * @param [in] t: Current time.
-	 * @param [in] x: Current state.
-	 * @param [in] u: Current input.
-	 */
-   void setCurrentStateAndControl(const scalar_t& t, const state_vector_t& x, const input_vector_t& u) override {
-		// BASE class method
-		BASE::setCurrentStateAndControl(t, x, u);
-	}
-
-	/**
-	 * Get the A matrix at a given operating point for the linearized system flow map.
-	 * \f$ dx/dt = A(t) \delta x + B(t) \delta u \f$.
-	 *
-	 * @param [out] A: \f$ A(t) \f$ matrix.
-	 */
   void getFlowMapDerivativeState(state_matrix_t& A) override { A = A_; }
 
-	/**
-	 * Get the B matrix at a given operating point for the linearized system flow map.
-	 * \f$ dx/dt = A(t) \delta x + B(t) \delta u \f$.
-	 *
-	 * @param [out] B: \f$ B(t) \f$ matrix.
-	 */
   void getFlowMapDerivativeInput(state_input_matrix_t& B) override { B = B_; }
 
  private:
-	state_matrix_t A_;
-	state_input_matrix_t B_;
+  state_matrix_t A_;
+  state_input_matrix_t B_;
 };
 
-} // namespace double_integrator
+}  // namespace double_integrator
 }  // namespace ocs2
-
-#endif /* DOUBLE_INTEGRATOR_DYNAMICS_DERIVATIVES_OCS2_H_ */

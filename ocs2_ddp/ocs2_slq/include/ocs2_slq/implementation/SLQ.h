@@ -53,7 +53,7 @@ SLQ<STATE_DIM, INPUT_DIM>::~SLQ() = default;
 /******************************************************************************************************/
 /***************************************************************************************************** */
 template <size_t STATE_DIM, size_t INPUT_DIM>
-void SLQ<STATE_DIM, INPUT_DIM>::approximatePartitionLQ(const size_t& partitionIndex) {
+void SLQ<STATE_DIM, INPUT_DIM>::approximatePartitionLQ(size_t partitionIndex) {
   const size_t threadId = 0;
   size_t N = BASE::nominalTimeTrajectoriesStock_[partitionIndex].size();
 
@@ -69,7 +69,7 @@ void SLQ<STATE_DIM, INPUT_DIM>::approximatePartitionLQ(const size_t& partitionIn
 /******************************************************************************************************/
 /***************************************************************************************************** */
 template <size_t STATE_DIM, size_t INPUT_DIM>
-void SLQ<STATE_DIM, INPUT_DIM>::calculatePartitionController(const size_t& partitionIndex) {
+void SLQ<STATE_DIM, INPUT_DIM>::calculatePartitionController(size_t partitionIndex) {
   const size_t threadId = 0;
   size_t N = BASE::SsTimeTrajectoryStock_[partitionIndex].size();
 
@@ -119,7 +119,7 @@ void SLQ<STATE_DIM, INPUT_DIM>::lineSearch(bool computeISEs) {
   state_vector_array2_t lsStateTrajectoriesStock(BASE::numPartitions_);
   input_vector_array2_t lsInputTrajectoriesStock(BASE::numPartitions_);
 
-  while (learningRate >= BASE::ddpSettings_.minLearningRate_) {
+  while (Numerics::almost_ge(learningRate, BASE::ddpSettings_.minLearningRate_)) {
     // do a line search
     lsControllersStock = BASE::initLScontrollersStock_;
     BASE::lineSearchWorker(workerIndex, learningRate, lsTotalCost, lsConstraint1ISE, lsConstraint1MaxNorm, lsConstraint2ISE,

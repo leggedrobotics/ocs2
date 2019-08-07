@@ -45,8 +45,8 @@ namespace switched_model {
 
 class TargetPoseCommand {
  public:
-  typedef double scalar_t;
-  typedef std::vector<scalar_t> scalar_array_t;
+  using scalar_t = double;
+  using scalar_array_t = std::vector<scalar_t>;
 
   TargetPoseCommand(const std::string& robotName, const scalar_array_t& goalPoseLimit = scalar_array_t{2.0, 1.0, 0.3, 45.0, 45.0, 360.0})
 

@@ -48,8 +48,8 @@ class EXP5_Sys1 : public ControlledSystemBase<4,2>
 public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-	typedef Eigen::Matrix<double, 4, 1> state_vector_t;
-	typedef Eigen::Matrix<double, 2, 1> input_vector_t;
+	using state_vector_t = Eigen::Matrix<double, 4, 1>;
+	using input_vector_t = Eigen::Matrix<double, 2, 1>;
 
 
 	EXP5_Sys1() {

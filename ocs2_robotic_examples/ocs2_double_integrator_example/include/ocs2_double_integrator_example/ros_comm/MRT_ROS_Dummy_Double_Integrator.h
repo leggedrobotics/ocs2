@@ -44,7 +44,7 @@ class MRT_ROS_Dummy_Linear_System : public MRT_ROS_Dummy_Loop<double_integrator:
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-  typedef MRT_ROS_Dummy_Loop<double_integrator::STATE_DIM_, double_integrator::INPUT_DIM_> BASE;
+  using BASE = MRT_ROS_Dummy_Loop<double_integrator::STATE_DIM_, double_integrator::INPUT_DIM_>;
 
   /**
    * Constructor.

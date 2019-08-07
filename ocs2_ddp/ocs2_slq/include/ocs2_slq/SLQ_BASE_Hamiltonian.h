@@ -63,7 +63,7 @@ class SLQ_BASE : public DDP_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-  typedef DDP_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> BASE;
+  using BASE = DDP_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>;
 
   using DIMENSIONS = typename BASE::DIMENSIONS;
   using controller_t = typename BASE::controller_t;
@@ -147,7 +147,7 @@ class SLQ_BASE : public DDP_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> {
   using riccati_equations_t = SequentialRiccatiEquationsNormalized<STATE_DIM, INPUT_DIM>;
   using error_equation_t = SequentialErrorEquationNormalized<STATE_DIM, INPUT_DIM>;
 
-  typedef StateTriggeredRollout<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> state_triggered_rollout_t;
+  using state_triggered_rollout_t = StateTriggeredRollout<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>;
 
   /**
    * class for collecting SLQ data

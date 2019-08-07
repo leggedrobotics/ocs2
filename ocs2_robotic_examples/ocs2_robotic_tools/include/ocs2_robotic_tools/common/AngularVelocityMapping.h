@@ -30,9 +30,9 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifndef ANGULAR_VELOCITY_MAPPING_OCS2_H_
 #define ANGULAR_VELOCITY_MAPPING_OCS2_H_
 
-#include <cmath>
-#include <array>
 #include <Eigen/Core>
+#include <array>
+#include <cmath>
 
 namespace ocs2 {
 
@@ -47,25 +47,22 @@ namespace ocs2 {
  * @return M: matrix that does the transformation
  */
 template <typename SCALAR_T>
-inline Eigen::Matrix<SCALAR_T,3,3> AngularVelocitiesToEulerAngleDerivativesMatrix (
-		const Eigen::Matrix<SCALAR_T,3,1>& eulerAngles) {
+inline Eigen::Matrix<SCALAR_T, 3, 3> AngularVelocitiesToEulerAngleDerivativesMatrix(const Eigen::Matrix<SCALAR_T, 3, 1>& eulerAngles) {
+  Eigen::Matrix<SCALAR_T, 3, 3> M;
+  SCALAR_T sinPsi = sin(eulerAngles(2));
+  SCALAR_T cosPsi = cos(eulerAngles(2));
+  SCALAR_T sinTheta = sin(eulerAngles(1));
+  SCALAR_T cosTheta = cos(eulerAngles(1));
 
-	Eigen::Matrix<SCALAR_T,3,3> M;
-	SCALAR_T sinPsi = sin(eulerAngles(2));
-	SCALAR_T cosPsi = cos(eulerAngles(2));
-	SCALAR_T sinTheta = sin(eulerAngles(1));
-	SCALAR_T cosTheta = cos(eulerAngles(1));
+  M << cosPsi / cosTheta, -sinPsi / cosTheta, 0, sinPsi, cosPsi, 0, -cosPsi * sinTheta / cosTheta, sinTheta * sinPsi / cosTheta, 1;
 
-	M << 	cosPsi/cosTheta,          -sinPsi/cosTheta,          0,
-			sinPsi, 				   cosPsi,                   0,
-			-cosPsi*sinTheta/cosTheta,  sinTheta*sinPsi/cosTheta, 1;
-
-	return M;
+  return M;
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
+
 /**
  * to map local angular velocity \omega_W expressed in body coordinates, to changes in Euler Angles expressed in an inertial frame q_I
  * we have to map them via \dot{q}_I = H \omega_W, where H is the matrix defined in kindr getMappingFromLocalAngularVelocityToDiff.
@@ -77,56 +74,57 @@ inline Eigen::Matrix<SCALAR_T,3,3> AngularVelocitiesToEulerAngleDerivativesMatri
  * @return
  */
 template <typename SCALAR_T>
-inline Eigen::Matrix<SCALAR_T,6,3> JacobianOfAngularVelocityMapping(
-		const Eigen::Matrix<SCALAR_T,3,1>& eulerAnglesXyz,
-		const Eigen::Matrix<SCALAR_T,3,1>& angularVelocity) {
+inline Eigen::Matrix<SCALAR_T, 6, 3> JacobianOfAngularVelocityMapping(const Eigen::Matrix<SCALAR_T, 3, 1>& eulerAnglesXyz,
+                                                                      const Eigen::Matrix<SCALAR_T, 3, 1>& angularVelocity) {
+  using std::cos;
+  using std::sin;
 
-	using namespace std;
+  Eigen::Matrix<SCALAR_T, 6, 1> xAD;
+  xAD << eulerAnglesXyz, angularVelocity;
+  const SCALAR_T* x = xAD.data();
 
-	Eigen::Matrix<SCALAR_T,6,1> xAD;
-	xAD << eulerAnglesXyz, angularVelocity;
-	const SCALAR_T* x = xAD.data();
+  std::array<SCALAR_T, 10> v;
 
-	std::array<SCALAR_T, 10> v;
+  Eigen::Matrix<SCALAR_T, 6, 3> jac;
+  SCALAR_T* y = jac.data();
 
-	Eigen::Matrix<SCALAR_T,6,3> jac;
-	SCALAR_T* y = jac.data();
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "cppcoreguidelines-pro-bounds-pointer-arithmetic"
+  y[9] = sin(x[2]);
+  y[10] = cos(x[2]);
+  v[0] = cos(x[1]);
+  v[1] = 1 / v[0];
+  y[3] = v[1] * y[10];
+  v[2] = sin(x[1]);
+  y[1] = 0 - (0 - (0 - x[4] * y[9] + x[3] * y[10]) * 1 / v[0] * v[1]) * v[2];
+  v[3] = sin(x[2]);
+  v[4] = 0 - v[1];
+  y[4] = v[4] * y[9];
+  v[5] = y[10];
+  y[2] = 0 - x[3] * v[1] * v[3] + x[4] * v[4] * v[5];
+  y[8] = 0 - x[4] * v[3] + x[3] * v[5];
+  v[6] = v[1] * y[9];
+  v[7] = v[4] * y[10];
+  v[8] = v[2];
+  y[15] = v[7] * v[8];
+  y[16] = v[6] * v[8];
+  v[9] = x[4] * v[8];
+  v[8] = x[3] * v[8];
+  y[13] = (x[4] * v[6] + x[3] * v[7]) * v[0] - (0 - (v[9] * y[9] - v[8] * y[10]) * 1 / v[0] * v[1]) * v[2];
+  y[14] = 0 - v[8] * v[4] * v[3] + v[9] * v[1] * v[5];
+  // dependent variables without operations
+  y[0] = 0;
+  y[5] = 0;
+  y[6] = 0;
+  y[7] = 0;
+  y[11] = 0;
+  y[12] = 0;
+  y[17] = 1;
+#pragma clang diagnostic pop
 
-	y[9] = sin(x[2]);
-	y[10] = cos(x[2]);
-	v[0] = cos(x[1]);
-	v[1] = 1 / v[0];
-	y[3] = v[1] * y[10];
-	v[2] = sin(x[1]);
-	y[1] = 0 - (0 - (0 - x[4] * y[9] + x[3] * y[10]) * 1 / v[0] * v[1]) * v[2];
-	v[3] = sin(x[2]);
-	v[4] = 0 - v[1];
-	y[4] = v[4] * y[9];
-	v[5] = y[10];
-	y[2] = 0 - x[3] * v[1] * v[3] + x[4] * v[4] * v[5];
-	y[8] = 0 - x[4] * v[3] + x[3] * v[5];
-	v[6] = v[1] * y[9];
-	v[7] = v[4] * y[10];
-	v[8] = v[2];
-	y[15] = v[7] * v[8];
-	y[16] = v[6] * v[8];
-	v[9] = x[4] * v[8];
-	v[8] = x[3] * v[8];
-	y[13] = (x[4] * v[6] + x[3] * v[7]) * v[0] - (0 - (v[9] * y[9] - v[8] * y[10]) * 1 / v[0] * v[1]) * v[2];
-	y[14] = 0 - v[8] * v[4] * v[3] + v[9] * v[1] * v[5];
-	// dependent variables without operations
-	y[0] = 0;
-	y[5] = 0;
-	y[6] = 0;
-	y[7] = 0;
-	y[11] = 0;
-	y[12] = 0;
-	y[17] = 1;
-
-
-	return jac;
+  return jac;
 }
 
-} // namespace ocs2
+}  // namespace ocs2
 
 #endif /* ANGULAR_VELOCITY_MAPPING_OCS2_H_ */

@@ -52,7 +52,7 @@ class TimeTriggeredRollout : public RolloutBase<STATE_DIM, INPUT_DIM> {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-  typedef RolloutBase<STATE_DIM, INPUT_DIM> BASE;
+  using BASE = RolloutBase<STATE_DIM, INPUT_DIM>;
 
   using controller_t = typename BASE::controller_t;
   using size_array_t = typename BASE::size_array_t;
@@ -64,7 +64,7 @@ class TimeTriggeredRollout : public RolloutBase<STATE_DIM, INPUT_DIM> {
   using input_vector_array_t = typename BASE::input_vector_array_t;
 
   using event_handler_t = SystemEventHandler<STATE_DIM>;
-  typedef ControlledSystemBase<STATE_DIM, INPUT_DIM> controlled_system_base_t;
+  using controlled_system_base_t = ControlledSystemBase<STATE_DIM, INPUT_DIM>;
 
   using logic_rules_machine_t = HybridLogicRulesMachine;
 
@@ -77,8 +77,8 @@ class TimeTriggeredRollout : public RolloutBase<STATE_DIM, INPUT_DIM> {
    * @param [in] rolloutSettings: The rollout settings.
    * @param [in] algorithmName: The algorithm that calls this class (default not defined).
    */
-  TimeTriggeredRollout(const controlled_system_base_t& systemDynamics, const Rollout_Settings& rolloutSettings = Rollout_Settings(),
-                       const char algorithmName[] = nullptr)
+  explicit TimeTriggeredRollout(const controlled_system_base_t& systemDynamics,
+                                const Rollout_Settings& rolloutSettings = Rollout_Settings(), const char algorithmName[] = nullptr)
 
       : BASE(rolloutSettings, algorithmName),
         systemDynamicsPtr_(systemDynamics.clone()),

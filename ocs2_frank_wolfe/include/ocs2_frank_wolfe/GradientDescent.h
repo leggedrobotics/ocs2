@@ -62,15 +62,15 @@ class GradientDescent
 public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-	typedef std::shared_ptr<GradientDescent> Ptr;
+	using Ptr = std::shared_ptr<GradientDescent>;
 	const SCALAR_T plusInf_  =  1e12;
 	const SCALAR_T minusInf_ = -1e12;
 
-	typedef SCALAR_T scalar_t;
-	typedef Eigen::Matrix<SCALAR_T, Eigen::Dynamic, 1>              dynamic_vector_t;
-	typedef Eigen::Matrix<SCALAR_T, Eigen::Dynamic, Eigen::Dynamic> dynamic_matrix_t;
-	typedef Eigen::Matrix<SCALAR_T, 1, 1>                                         eigen_scalar_t;
-	typedef std::vector<eigen_scalar_t, Eigen::aligned_allocator<eigen_scalar_t>> eigen_scalar_array_t;
+	using scalar_t = SCALAR_T;
+	using dynamic_vector_t = Eigen::Matrix<SCALAR_T, Eigen::Dynamic, 1>             ;
+	using dynamic_matrix_t = Eigen::Matrix<SCALAR_T, Eigen::Dynamic, Eigen::Dynamic>;
+	using eigen_scalar_t = Eigen::Matrix<SCALAR_T, 1, 1>                                        ;
+	using eigen_scalar_array_t = std::vector<eigen_scalar_t, Eigen::aligned_allocator<eigen_scalar_t>>;
 
 	/**
 	 * Default constructor.

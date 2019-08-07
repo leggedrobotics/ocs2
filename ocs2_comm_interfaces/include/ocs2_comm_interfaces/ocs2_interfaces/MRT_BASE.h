@@ -185,7 +185,7 @@ class MRT_BASE {
    * Checks the data buffer for an update of the MPC policy. If a new policy
    * is available on the buffer this method will load it to the in-use policy.
    * This method also calls the modifyPolicy() method.
-   * This implementation method does not lock the policyBufferMutex_.
+   * This implementation method assumes that the policyBufferMutex_ is locked.
    *
    * @return True if the policy is updated.
    */

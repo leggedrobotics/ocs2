@@ -56,14 +56,12 @@ public:
 	, checkNumericalStability_(true)
 	, warmStart_(false)
 	, useLQForDerivatives_(false)
-	, maxNumIterationForLQ_(3)
-	, displayGradientDescent_(false)
+	, maxNumIterationForLQ_(10)
 	, tolGradientDescent_(1e-2)
 	, acceptableTolGradientDescent_(1e-1)
 	, maxIterationGradientDescent_(20)
 	, minLearningRateNLP_(0.05)
 	, maxLearningRateNLP_(1.0)
-	, useAscendingLineSearchNLP_(true)
 	, minEventTimeDifference_(0.0)
 	, nThreads_(4)
 
@@ -116,8 +114,6 @@ public:
 	/** Maximum number of iterations for LQ-based method  */
 	size_t maxNumIterationForLQ_;
 
-	/** This value determines to display the log output of GGDDP. */
-	bool displayGradientDescent_;
 	double tolGradientDescent_;
 	/** This value determines the termination condition for OCS2 based on the minimum relative changes of the cost.*/
 	double acceptableTolGradientDescent_;
@@ -127,12 +123,6 @@ public:
 	double minLearningRateNLP_;
 	/** This value determines the maximum step size for the line search scheme in OCS2 algorithm.*/
 	double maxLearningRateNLP_;
-	/**
-	 * This value determines the the line search scheme to be used in OCS2. \n
-	 * - \b Ascending: The step size eventually increases from the minimum value to the maximum. \n
-	 * - \b Descending: The step size eventually decreases from the minimum value to the maximum.
-	 * */
-	bool useAscendingLineSearchNLP_;
 	/** This value determines the minimum accepted difference between to consecutive events times.*/
 	double minEventTimeDifference_;
 
@@ -216,16 +206,6 @@ inline void GDDP_Settings::loadSettings(const std::string& filename, const std::
 	}
 
 	try	{
-		displayGradientDescent_ = pt.get<bool>(fieldName + ".displayGradientDescent");
-		if (verbose) {  std::cerr << " #### Option loader : option 'displayGradientDescent' .............. " << displayGradientDescent_ << std::endl;
-		}
-	}
-	catch (const std::exception& e){
-		if (verbose) {  std::cerr << " #### Option loader : option 'displayGradientDescent' .............. " << displayGradientDescent_ << "   \t(default)" << std::endl;
-		}
-	}
-
-	try	{
 		tolGradientDescent_ = pt.get<double>(fieldName + ".tolGradientDescent");
 		if (verbose) {  std::cerr << " #### Option loader : option 'tolGradientDescent' .................. " << tolGradientDescent_ << std::endl;
 		}
@@ -272,16 +252,6 @@ inline void GDDP_Settings::loadSettings(const std::string& filename, const std::
 	}
 	catch (const std::exception& e){
 		if (verbose) {  std::cerr << " #### Option loader : option 'maxLearningRateNLP' .................. " << maxLearningRateNLP_ << "   \t(default)" << std::endl;
-		}
-	}
-
-	try	{
-		useAscendingLineSearchNLP_ = pt.get<bool>(fieldName + ".useAscendingLineSearchNLP");
-		if (verbose) {  std::cerr << " #### Option loader : option 'useAscendingLineSearchNLP' ........... " << useAscendingLineSearchNLP_ << std::endl;
-		}
-	}
-	catch (const std::exception& e){
-		if (verbose) {  std::cerr << " #### Option loader : option 'useAscendingLineSearchNLP' ........... " << useAscendingLineSearchNLP_ << "   \t(default)" << std::endl;
 		}
 	}
 

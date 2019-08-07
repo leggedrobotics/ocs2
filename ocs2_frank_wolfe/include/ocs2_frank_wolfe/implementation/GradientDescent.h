@@ -36,7 +36,7 @@ GradientDescent::GradientDescent(
 		const NLP_Settings& nlpSettings)
 
 	: nlpSettings_(nlpSettings)
-	, frankWolfeDescentDirectionPtr_(new FrankWolfeDescentDirection(nlpSettings.displayGradientDescent_))
+	, frankWolfeDescentDirectionPtr_(new FrankWolfeDescentDirection(nlpSettings.displayInfo_))
 {
 	CleanFmtDisplay_ = Eigen::IOFormat(3, 0, ", ", "\n", "[", "]");
 }
@@ -108,7 +108,9 @@ void GradientDescent::lineSearch(
 
 	// return if gradient is zero
 	if (gradient.isZero()) {
-		std::cerr << "Line search is skipped since the gradient was zero." << std::endl;
+		if (nlpSettings_.displayInfo_) {
+			std::cerr << "Line search is skipped since the gradient was zero." << std::endl;
+		}
 		return;
 	}
 
@@ -130,7 +132,7 @@ void GradientDescent::lineSearch(
 		// skip it if status is not OK
 		if (status==false) {
 			// display
-			if (nlpSettings_.displayGradientDescent_) {
+			if (nlpSettings_.displayInfo_) {
 				std::cerr << "\t learningRate: " << learningRate;
 				std::cerr << "\t cost: " << lsCost << " (rejected)" << std::endl;
 			}
@@ -139,7 +141,7 @@ void GradientDescent::lineSearch(
 		}
 
 		// display
-		if (nlpSettings_.displayGradientDescent_) {
+		if (nlpSettings_.displayInfo_) {
 			scalar_t equalitySE(0.0), inequalitySE(0.0);
 			if (constraintsPtr) {
 				dynamic_vector_t g, h;
@@ -179,7 +181,7 @@ void GradientDescent::lineSearch(
 		learningRate *= contractionRate;
 	}  // end of while loop
 
-	if (nlpSettings_.displayGradientDescent_) {
+	if (nlpSettings_.displayInfo_) {
 		std::cerr << "Line search terminates with learning rate: " << optimizedLearningRate << std::endl;
 	}
 }
@@ -193,6 +195,13 @@ void GradientDescent::run(
 		NLP_Cost* costPtr,
 		NLP_Constraints* constraintsPtr /* = nullptr*/)  {
 
+	// display
+	if (nlpSettings_.displayInfo_) {
+		std::cerr << "\n++++++++++++++++++++++++++++++++++++++++++++++++++++++" << std::endl;
+		std::cerr <<   "+++++++++++++ NLP Solver is initialized ++++++++++++++" << std::endl;
+		std::cerr <<   "++++++++++++++++++++++++++++++++++++++++++++++++++++++" << std::endl;
+	}
+
 	if (!costPtr) {
 		throw std::runtime_error("Cost function pointer is null.");
 	}
@@ -202,7 +211,7 @@ void GradientDescent::run(
 	optimizedParameters_ = initParameters;
 
 	// display
-	if (nlpSettings_.displayGradientDescent_)
+	if (nlpSettings_.displayInfo_)
 		std::cerr << std::endl << "### Initial iteration " << std::endl;
 
 	// initial cost
@@ -210,7 +219,7 @@ void GradientDescent::run(
 	bool status = costPtr->getCost(optimizedID_, optimizedCost_);
 	numFuntionCall_++;
 
-	if (nlpSettings_.displayGradientDescent_) {
+	if (nlpSettings_.displayInfo_) {
 		std::cerr << "cost:         " << optimizedCost_ << std::endl;
 		std::cerr << "parameters:   " << optimizedParameters_.transpose().format(CleanFmtDisplay_) << std::endl;
 	}
@@ -225,14 +234,14 @@ void GradientDescent::run(
 	while (iteration<nlpSettings_.maxIterations_ && isCostFunctionConverged==false)  {
 
 		// display
-		if (nlpSettings_.displayGradientDescent_)
+		if (nlpSettings_.displayInfo_)
 			std::cerr << std::endl << "### Iteration " << iteration+1 << std::endl;
 
 		scalar_t cachedCost = optimizedCost_;
 
 		// compute the gradient
 		costPtr->getCostDerivative(optimizedID_, optimizedGradient_);
-		if (nlpSettings_.displayGradientDescent_)
+		if (nlpSettings_.displayInfo_)
 			std::cerr << "Gradient:             " << optimizedGradient_.transpose().format(CleanFmtDisplay_) << std::endl;
 
 		// compute the projected gradient
@@ -242,7 +251,7 @@ void GradientDescent::run(
 					optimizedParameters_, optimizedGradient_, maxGradientInverse, constraintsPtr, fwDescentDirection);
 			optimizedGradient_ = -fwDescentDirection;
 			// display
-			if (nlpSettings_.displayGradientDescent_) {
+			if (nlpSettings_.displayInfo_) {
 				std::cerr << "Frank-Wolfe gradient: " << optimizedGradient_.transpose().format(CleanFmtDisplay_) << std::endl;
 			}
 		}
@@ -259,7 +268,7 @@ void GradientDescent::run(
 		iterationCost_.push_back( (dynamic_vector_t(1) << optimizedCost_).finished() );
 
 		// display
-		if (nlpSettings_.displayGradientDescent_) {
+		if (nlpSettings_.displayInfo_) {
 			std::cerr << "cost:         " << optimizedCost_ << std::endl;
 			std::cerr << "parameters:   " << optimizedParameters_.transpose().format(CleanFmtDisplay_) << std::endl;
 			std::cerr << "solution ID:  " << optimizedID_ << std::endl;
@@ -268,10 +277,10 @@ void GradientDescent::run(
 	}  // end of while loop
 
 	// display
-	if (nlpSettings_.displayGradientDescent_) {
-		std::cerr << "\n++++++++++++++++++++++++++++++++++++" << std::endl;
-		std::cerr <<   "++++++ NLP Solver is terminated ++++" << std::endl;
-		std::cerr <<   "++++++++++++++++++++++++++++++++++++" << std::endl;
+	if (nlpSettings_.displayInfo_) {
+		std::cerr << "\n++++++++++++++++++++++++++++++++++++++++++++++++++++++" << std::endl;
+		std::cerr <<   "++++++++++++++ NLP Solver is terminated ++++++++++++++" << std::endl;
+		std::cerr <<   "++++++++++++++++++++++++++++++++++++++++++++++++++++++" << std::endl;
 		if (isCostFunctionConverged) {
 			if (optimizedGradient_.isZero())
 				std::cerr << "NLP successfully terminates as gradient reduced to zero." << std::endl;
@@ -283,6 +292,7 @@ void GradientDescent::run(
 			std::cerr << "Maximum number of iterations has reached." << std::endl;
 
 		std::cerr << "number of function calls:\t" << numFuntionCall_ << std::endl;
+		std::cerr << std::endl;
 	}
 }
 

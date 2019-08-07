@@ -41,7 +41,7 @@ class NLP_Settings
 {
 public:
 	NLP_Settings()
-	: displayGradientDescent_(true)
+	: displayInfo_(true)
 	, maxIterations_(1000)
 	, minRelCost_(1e-6)
 	, maxLearningRate_(1.0)
@@ -50,7 +50,7 @@ public:
 	{}
 
 	/** This value determines to display the log output.*/
-	bool displayGradientDescent_;
+	bool displayInfo_;
 	/** This value determines the maximum number of algorithm iterations.*/
 	size_t maxIterations_;
 	/** This value determines the termination condition based on the minimum relative changes of the cost.*/

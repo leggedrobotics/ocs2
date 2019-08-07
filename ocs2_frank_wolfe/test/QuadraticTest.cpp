@@ -127,7 +127,7 @@ private:
 TEST(QuadraticTest, QuadraticTest)
 {
 	NLP_Settings nlpSettings;
-	nlpSettings.displayGradientDescent_ = true;
+	nlpSettings.displayInfo_     = true;
 	nlpSettings.maxIterations_ 	 = 500;
 	nlpSettings.minRelCost_    	 = 1e-6;
 	nlpSettings.maxLearningRate_ = 1.0;

@@ -49,7 +49,7 @@ namespace ocs2 {
  */
 enum class IntegratorType { EULER, MODIFIED_MIDPOINT, RK4, RK5_VARIABLE, ODE45, ADAMS_BASHFORTH, BULIRSCH_STOER, ADAMS_BASHFORTH_MOULTON };
 
-std::string toString(IntegratorType integratorType) {
+static std::string toString(IntegratorType integratorType) {
   switch (integratorType) {
     case IntegratorType::EULER:
       return std::string("EULER");

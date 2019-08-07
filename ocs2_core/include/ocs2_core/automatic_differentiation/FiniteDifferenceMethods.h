@@ -29,6 +29,7 @@
 
 #ifndef FINITEDIFFERENCEMETHODS_H
 #define FINITEDIFFERENCEMETHODS_H
+
 #include <random>
 
 #include "ocs2_core/Dimensions.h"
@@ -41,30 +42,66 @@ namespace ocs2 {
 /**
  * OCS2 Derivative Check Class
  * @tparam class ControlledSystemBase
- * @tparam class DerivativesBase
  */
 template <class ControlledSystemBase>
 class FiniteDifferenceMethods {
-
-public:
+ public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-  typedef FiniteDifferenceMethods<ControlledSystemBase> finite_difference_method_t;
-  typedef ControlledSystemBase controlled_system_base_t;
-  typedef DerivativesBase<controlled_system_base_t::DIMENSIONS::DIMS::STATE_DIM_, controlled_system_base_t::DIMENSIONS::DIMS::INPUT_DIM_> derivatives_base_t;
-  using scalar_t             = typename derivatives_base_t::DIMENSIONS::scalar_t;
-  using state_vector_t       = typename derivatives_base_t::state_vector_t;
-  using input_vector_t       = typename derivatives_base_t::input_vector_t;
-  using state_matrix_t       = typename derivatives_base_t::state_matrix_t;
+  static constexpr size_t STATE_DIM = ControlledSystemBase::DIMENSIONS::STATE_DIM_;
+  static constexpr size_t INPUT_DIM = ControlledSystemBase::DIMENSIONS::INPUT_DIM_;
+
+  using finite_difference_method_t = FiniteDifferenceMethods<ControlledSystemBase>;
+  using controlled_system_base_t = ControlledSystemBase;
+  using derivatives_base_t = DerivativesBase<STATE_DIM, INPUT_DIM>;
+
+  using scalar_t = typename derivatives_base_t::scalar_t;
+  using state_vector_t = typename derivatives_base_t::state_vector_t;
+  using input_vector_t = typename derivatives_base_t::input_vector_t;
+  using state_matrix_t = typename derivatives_base_t::state_matrix_t;
   using state_input_matrix_t = typename derivatives_base_t::state_input_matrix_t;
 
-public:
-  static inline void finiteDifferenceDerivativeState(controlled_system_base_t* csb_p, scalar_t eps, const state_vector_t& x, const input_vector_t& u, const scalar_t t, const state_vector_t& f_, state_matrix_t &A, bool doubleSidedDerivative, bool isSecondOrderSystem) {
+ public:
+  FiniteDifferenceMethods(std::shared_ptr<controlled_system_base_t> controlledSystem, scalar_t eps = Eigen::NumTraits<scalar_t>::epsilon(),
+                          scalar_t tolerance = sqrt(Eigen::NumTraits<scalar_t>::epsilon()), bool doubleSidedDerivative = true,
+                          bool isSecondOrderSystem = false)
+      : eps_(eps),
+        tolerance_(tolerance),
+        controlledSystem_(std::move(controlledSystem)),
+        doubleSidedDerivative_(doubleSidedDerivative),
+        isSecondOrderSystem_(isSecondOrderSystem) {
+    if (!controlledSystem_) {
+      throw std::invalid_argument("The passed controlled system cannot be null");
+    }
+  };
 
-    const auto STATE_DIM = ControlledSystemBase::DIMENSIONS::STATE_DIM_;
-    const auto INPUT_DIM = ControlledSystemBase::DIMENSIONS::INPUT_DIM_;
+  /**
+   * Copy constructor
+   *
+   * @param [in] other: Instance of the other class.
+   */
+  FiniteDifferenceMethods(const FiniteDifferenceMethods& other)
+      : controlledSystem_(other.controlledSystem_->clone()),
+        eps_(other.eps_),
+        tolerance_(other.tolerance_),
+        doubleSidedDerivative_(other.doubleSidedDerivative_),
+        isSecondOrderSystem_(other.isSecondOrderSystem_){};
+
+  FiniteDifferenceMethods& operator=(const FiniteDifferenceMethods& other) {
+    eps_ = other.eps_;
+    controlledSystem_(other.controlledSystem_.clone());
+    doubleSidedDerivative_ = other.doubleSidedDerivative_;
+    isSecondOrderSystem_ = other.isSecondOrderSystem_;
+  }
+
+  static void finiteDifferenceDerivativeState(controlled_system_base_t& system, scalar_t eps, bool doubleSidedDerivative,
+                                              bool isSecondOrderSystem, scalar_t t, const state_vector_t& x, const input_vector_t& u,
+                                              state_matrix_t& A) {
+    // evaluation of f0 = f(x0,u0)
+    state_vector_t f;
+    system.computeFlowMap(t, x, u, f);
+
     for (size_t i = 0; i < STATE_DIM; ++i) {
-
       // inspired from
       // http://en.wikipedia.org/wiki/Numerical_differentiation#Practical_considerations_using_floating_point_arithmetic
       scalar_t h = eps * std::max(fabs(x(i)), 1.0);
@@ -74,55 +111,49 @@ public:
 
       // get evaluation of f(x,u)
       state_vector_t fPlusPerturbed;
-      csb_p->computeFlowMap(t, xPlusPerturbed, u, fPlusPerturbed);
+      system.computeFlowMap(t, xPlusPerturbed, u, fPlusPerturbed);
 
       if (doubleSidedDerivative) {
-
         state_vector_t xMinusPerturbed = x;
         xMinusPerturbed(i) -= h;
 
         state_vector_t fMinusPerturbed;
-        csb_p->computeFlowMap(t, xMinusPerturbed, u, fMinusPerturbed);
+        system.computeFlowMap(t, xMinusPerturbed, u, fMinusPerturbed);
 
         if (isSecondOrderSystem) {
-            std::cout << STATE_DIM;
+          std::cout << STATE_DIM;
           A.template topLeftCorner<STATE_DIM / 2, STATE_DIM / 2>().setZero();
-          A.template topRightCorner<STATE_DIM / 2, STATE_DIM / 2>()
-              .setIdentity();
+          A.template topRightCorner<STATE_DIM / 2, STATE_DIM / 2>().setIdentity();
           A.template block<STATE_DIM / 2, 1>(STATE_DIM / 2, i) =
-              (fPlusPerturbed.template tail<STATE_DIM / 2>() -
-               fMinusPerturbed.template tail<STATE_DIM / 2>()) /
-              (2.0 * h);
+              (fPlusPerturbed.template tail<STATE_DIM / 2>() - fMinusPerturbed.template tail<STATE_DIM / 2>()) / (2.0 * h);
         } else {
           A.col(i) = (fPlusPerturbed - fMinusPerturbed) / (2.0 * h);
         }
       } else {
         if (isSecondOrderSystem) {
           A.template topLeftCorner<STATE_DIM / 2, STATE_DIM / 2>().setZero();
-          A.template topRightCorner<STATE_DIM / 2, STATE_DIM / 2>()
-              .setIdentity();
+          A.template topRightCorner<STATE_DIM / 2, STATE_DIM / 2>().setIdentity();
           A.template block<STATE_DIM / 2, 1>(STATE_DIM / 2, i) =
-              (fPlusPerturbed.template tail<STATE_DIM / 2>() -
-               f_.template tail<STATE_DIM / 2>()) /
-              h;
+              (fPlusPerturbed.template tail<STATE_DIM / 2>() - f.template tail<STATE_DIM / 2>()) / h;
         } else {
-          A.col(i) = (fPlusPerturbed - f_) / h;
+          A.col(i) = (fPlusPerturbed - f) / h;
         }
       }
-    } // end of i loop
+    }  // end of i loop
   }
 
-  inline void finiteDifferenceDerivativeState(const state_vector_t& x,  const input_vector_t& u, const scalar_t t, state_matrix_t &A) {
-    return finiteDifferenceDerivativeState(this->csb_p_.get(), this->eps_, x, u, t, this->f_,  A, this->doubleSidedDerivative_, this->isSecondOrderSystem_);
+  void finiteDifferenceDerivativeState(scalar_t t, const state_vector_t& x, const input_vector_t& u, state_matrix_t& A) {
+    return finiteDifferenceDerivativeState(*controlledSystem_, eps_, doubleSidedDerivative_, isSecondOrderSystem_, t, x, u, A);
   }
 
-  static inline void finiteDifferenceDerivativeInput(controlled_system_base_t* csb_p, const scalar_t eps, const input_vector_t& u, const state_vector_t& x, const scalar_t t, const state_vector_t& f_, state_input_matrix_t &Bout, bool doubleSidedDerivative, bool isSecondOrderSystem) {
-
-    const auto STATE_DIM = ControlledSystemBase::DIMENSIONS::STATE_DIM_;
-    const auto INPUT_DIM = ControlledSystemBase::DIMENSIONS::INPUT_DIM_;
+  static void finiteDifferenceDerivativeInput(controlled_system_base_t& system, scalar_t eps, bool doubleSidedDerivative,
+                                              bool isSecondOrderSystem, scalar_t t, const state_vector_t& x, const input_vector_t& u,
+                                              state_input_matrix_t& B) {
+    // evaluation of f0 = f(x0,u0)
+    state_vector_t f;
+    system.computeFlowMap(t, x, u, f);
 
     for (size_t i = 0; i < INPUT_DIM; ++i) {
-
       // inspired from
       // http://en.wikipedia.org/wiki/Numerical_differentiation#Practical_considerations_using_floating_point_arithmetic
       scalar_t h = eps * std::max(fabs(u(i)), 1.0);
@@ -132,42 +163,36 @@ public:
 
       // get evaluation of f(x,u)
       state_vector_t fPlusPerturbed;
-      csb_p->computeFlowMap(t, x, uPlusPerturbed, fPlusPerturbed);
+      system.computeFlowMap(t, x, uPlusPerturbed, fPlusPerturbed);
 
       if (doubleSidedDerivative) {
-
         input_vector_t uMinusPerturbed = u;
         uMinusPerturbed(i) -= h;
 
         state_vector_t fMinusPerturbed;
-        csb_p->computeFlowMap(t, x, uMinusPerturbed,
-                                            fMinusPerturbed);
+        system.computeFlowMap(t, x, uMinusPerturbed, fMinusPerturbed);
 
         if (isSecondOrderSystem) {
-          Bout.template topRows<STATE_DIM / 2>().setZero();
-          Bout.template block<STATE_DIM / 2, 1>(STATE_DIM / 2, i) =
-              (fPlusPerturbed.template tail<STATE_DIM / 2>() -
-               fMinusPerturbed.template tail<STATE_DIM / 2>()) /
-              (2.0 * h);
+          B.template topRows<STATE_DIM / 2>().setZero();
+          B.template block<STATE_DIM / 2, 1>(STATE_DIM / 2, i) =
+              (fPlusPerturbed.template tail<STATE_DIM / 2>() - fMinusPerturbed.template tail<STATE_DIM / 2>()) / (2.0 * h);
         } else {
-          Bout.col(i) = (fPlusPerturbed - fMinusPerturbed) / (2.0 * h);
+          B.col(i) = (fPlusPerturbed - fMinusPerturbed) / (2.0 * h);
         }
       } else {
         if (isSecondOrderSystem) {
-          Bout.template topRows<STATE_DIM / 2>().setZero();
-          Bout.template block<STATE_DIM / 2, 1>(STATE_DIM / 2, i) =
-              (fPlusPerturbed.template tail<STATE_DIM / 2>() -
-               f_.template tail<STATE_DIM / 2>()) /
-              h;
+          B.template topRows<STATE_DIM / 2>().setZero();
+          B.template block<STATE_DIM / 2, 1>(STATE_DIM / 2, i) =
+              (fPlusPerturbed.template tail<STATE_DIM / 2>() - f.template tail<STATE_DIM / 2>()) / h;
         } else {
-          Bout.col(i) = (fPlusPerturbed - f_) / h;
+          B.col(i) = (fPlusPerturbed - f) / h;
         }
       }
-    } // end of i loop
+    }  // end of i loop
   }
 
-  inline void finiteDifferenceDerivativeInput(const input_vector_t& u, const state_vector_t& x, const scalar_t t, state_input_matrix_t& Bout) {
-    return finiteDifferenceDerivativeInput(this->csb_p_.get(), this->eps_, u, x, t, this->f_, Bout, this->doubleSidedDerivative_, this->isSecondOrderSystem_);
+  void finiteDifferenceDerivativeInput(scalar_t t, const state_vector_t& x, const input_vector_t& u, state_input_matrix_t& B) {
+    return finiteDifferenceDerivativeInput(*controlledSystem_, eps_, doubleSidedDerivative_, isSecondOrderSystem_, t, x, u, B);
   }
 
   /**
@@ -186,114 +211,37 @@ public:
    * @return whether the error is less than the tolerance specified in @property
    * tolerance_
    */
-
-  static bool derivativeChecker(const std::shared_ptr<controlled_system_base_t>& nonlinearSystemPtr, 
-      const std::shared_ptr<derivatives_base_t>& derivativesBasePtr,
-      const scalar_t t, const state_vector_t &x, const input_vector_t &u,
-      state_matrix_t &A_error, state_input_matrix_t &B_error,
-      scalar_t eps, scalar_t tolerance,
-      bool doubleSidedDerivative, bool isSecondOrderSystem)
-  {
-    state_vector_t flowmap;
-    derivativesBasePtr->setCurrentStateAndControl(t, x, u);
-    nonlinearSystemPtr->computeFlowMap(t, x, u, flowmap);
-
+  static bool derivativeChecker(controlled_system_base_t& nonlinearSystem, derivatives_base_t& derivativesBase, scalar_t eps,
+                                scalar_t tolerance, bool doubleSidedDerivative, bool isSecondOrderSystem, scalar_t t,
+                                const state_vector_t& x, const input_vector_t& u, state_matrix_t& A_error, state_input_matrix_t& B_error) {
     state_matrix_t A;
     state_input_matrix_t B;
-    derivativesBasePtr->getFlowMapDerivativeState(A);
-    derivativesBasePtr->getFlowMapDerivativeInput(B);
+    derivativesBase.setCurrentStateAndControl(t, x, u);
+    derivativesBase.getFlowMapDerivativeState(A);
+    derivativesBase.getFlowMapDerivativeInput(B);
 
-    finite_difference_method_t::finiteDifferenceDerivativeState(nonlinearSystemPtr.get(), eps, x, u, t, flowmap, A_error, doubleSidedDerivative, isSecondOrderSystem);
-    finite_difference_method_t::finiteDifferenceDerivativeInput(nonlinearSystemPtr.get(), eps, u, x, t, flowmap, B_error, doubleSidedDerivative, isSecondOrderSystem);
+    finiteDifferenceDerivativeState(nonlinearSystem, eps, doubleSidedDerivative, isSecondOrderSystem, t, x, u, A_error);
+    finiteDifferenceDerivativeInput(nonlinearSystem, eps, doubleSidedDerivative, isSecondOrderSystem, t, x, u, B_error);
 
     A_error -= A;
     B_error -= B;
-    // A_error.cwiseAbs();
-    // B_error.cwiseAbs();
-    return tolerance > std::fmax(A_error.template lpNorm<Eigen::Infinity>(),
-                                 B_error.template lpNorm<Eigen::Infinity>());
+    return tolerance > std::fmax(A_error.template lpNorm<Eigen::Infinity>(), B_error.template lpNorm<Eigen::Infinity>());
   }
 
-  bool derivativeChecker(
-      const std::shared_ptr<derivatives_base_t>& derivativesBasePtr,
-      const scalar_t t, const state_vector_t &x, const input_vector_t &u,
-      state_matrix_t &A_error, state_input_matrix_t &B_error)
-  {
-    derivativesBasePtr->setCurrentStateAndControl(t, x, u);
-    csb_p_->computeFlowMap(t, x, u, f_);
-
-    state_matrix_t A;
-    state_input_matrix_t B;
-    derivativesBasePtr->getFlowMapDerivativeState(A);
-    derivativesBasePtr->getFlowMapDerivativeInput(B);
-
-    this->finiteDifferenceDerivativeState(x, u, t, A_error);
-    this->finiteDifferenceDerivativeInput(u, x, t, B_error);
-
-    A_error -= A;
-    B_error -= B;
-    // A_error.cwiseAbs();
-    // B_error.cwiseAbs();
-    return tolerance_ > std::fmax(A_error.template lpNorm<Eigen::Infinity>(),
-                                 B_error.template lpNorm<Eigen::Infinity>());
+  bool derivativeChecker(derivatives_base_t& derivativesBase, scalar_t t, const state_vector_t& x, const input_vector_t& u,
+                         state_matrix_t& A_error, state_input_matrix_t& B_error) {
+    return derivativeChecker(*controlledSystem_, derivativesBase, eps_, tolerance_, doubleSidedDerivative_, isSecondOrderSystem_, t, x, u,
+                             A_error, B_error);
   }
 
-  /**********************************************************************************************
-   *                                Constructors and Destructors *
-   **********************************************************************************************/
-
-  FiniteDifferenceMethods(
-      const scalar_t eps         = Eigen::NumTraits<scalar_t>::epsilon(),
-      const scalar_t tolerance   = sqrt(Eigen::NumTraits<scalar_t>::epsilon()),
-      const std::shared_ptr<controlled_system_base_t>& csb_p = nullptr,
-      bool doubleSidedDerivative = true, bool isSecondOrderSystem = false
-      )
-      : eps_(eps), tolerance_(tolerance), csb_p_(csb_p),
-        doubleSidedDerivative_(doubleSidedDerivative),
-        isSecondOrderSystem_(isSecondOrderSystem){};
-
-  // FiniteDifferenceMethods(
-  //     const scalar_t eps = Eigen::NumTraits<scalar_t>::epsilon(),
-  //     const scalar_t tolerance = sqrt(Eigen::NumTraits<scalar_t>::epsilon()),
-  //     SystemDynamicsLinearizer <ControlledSystemBase::DIMENSIONS::DIMS.STATE_DIM_, ControlledSystemBase::DIMENSIONS::DIMS.INPUT_DIM_>* sdl
-  //     )
-  //     : csb_p(sdl->csb_p), eps_(eps), tolerance_(tolerance), f_(sdl->f_),
-  //       doubleSidedDerivative_(sdl->doubleSidedDerivative),
-  //       isSecondOrderSystem_(sdl->isSecondOrderSystem)
-  // {};
-
-      /**
-       * Copy constructor
-       *
-       * @param [in] other: Instance of the other class.
-       */
-      FiniteDifferenceMethods(const FiniteDifferenceMethods& other) :
-        csb_p_(other.csb_p_->clone()), eps_(other.eps_), tolerance_(other.tolerance_), f_(other.f_),
-        doubleSidedDerivative_(other.doubleSidedDerivative_),
-        isSecondOrderSystem_(other.isSecondOrderSystem_)
-  {};
-
-      FiniteDifferenceMethods& operator=(const FiniteDifferenceMethods& other)  {
-        eps_ = other.eps_;
-        csb_p_ = other.csb_p_.clone();
-        f_ = other.f_;
-        doubleSidedDerivative_ = other.doubleSidedDerivative_;
-        isSecondOrderSystem_ = other.isSecondOrderSystem_;
-      }
-
-  virtual ~FiniteDifferenceMethods(){};
-
-private:
-  const std::shared_ptr<controlled_system_base_t> csb_p_;
+ private:
+  std::shared_ptr<controlled_system_base_t> controlledSystem_;
   scalar_t eps_;
   scalar_t tolerance_;
-  state_vector_t f_;
   bool doubleSidedDerivative_;
   bool isSecondOrderSystem_;
+};
 
-
-}; // FiniteDifferenceMethods
-//
-} // namespace ocs2
+}  // namespace ocs2
 
 #endif /* ifndef FINITEDIFFERENCEMETHODS_H */

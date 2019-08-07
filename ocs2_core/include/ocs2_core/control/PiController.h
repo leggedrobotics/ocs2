@@ -101,7 +101,7 @@ class PiController final : public ControllerBase<STATE_DIM, INPUT_DIM> {
    * @param [in] x: Current state.
    * @return Current input.
    */
-  virtual input_vector_t computeInput(const scalar_t& t, const state_vector_t& x) override {
+  input_vector_t computeInput(const scalar_t& t, const state_vector_t& x) override {
     // extract cost terms
     costs_->setCurrentStateAndControl(t, x, input_vector_t::Zero());
     input_matrix_t R, Rinv;
@@ -175,11 +175,11 @@ class PiController final : public ControllerBase<STATE_DIM, INPUT_DIM> {
     return totalInput;
   }
 
-  virtual void flatten(const scalar_array_t& timeArray, const std::vector<float_array_t*>& flatArray2) const override {
+  void flatten(const scalar_array_t& timeArray, const std::vector<float_array_t*>& flatArray2) const override {
     throw std::runtime_error("not implemented");
   }
 
-  virtual void unFlatten(const scalar_array_t& timeArray, const std::vector<float_array_t const*>& flatArray2) override {
+  void unFlatten(const scalar_array_t& timeArray, const std::vector<float_array_t const*>& flatArray2) override {
     throw std::runtime_error("not implemented");
   }
 
@@ -195,16 +195,16 @@ class PiController final : public ControllerBase<STATE_DIM, INPUT_DIM> {
 
   virtual void swap(PiController<STATE_DIM, INPUT_DIM>& other) { throw std::runtime_error("not implemented"); }
 
-  virtual ControllerType getType() const override { return ControllerType::PATH_INTEGRAL; }
+  ControllerType getType() const override { return ControllerType::PATH_INTEGRAL; }
 
-  virtual void clear() override { samplingPolicy_.reset(); }
+  void clear() override { samplingPolicy_.reset(); }
 
-  virtual void setZero() override {
+  void setZero() override {
     samplingPolicy_.reset();
     gamma_ = 0.0;
   }
 
-  virtual bool empty() const override { return samplingPolicy_ == nullptr; }
+  bool empty() const override { return samplingPolicy_ == nullptr; }
 
   void setRandomSeed(unsigned int seed) { generator_.seed(seed); }
 

@@ -94,6 +94,8 @@ public:
 	 */
 	mpc_t::Ptr& getMPCPtr();
 
+	QuadrotorSystemDynamics * getDynamicsPtr() { return quadrotorSystemDynamicsPtr_.get(); }
+
 protected:
 	/**
 	 * Load the settings from the path file.

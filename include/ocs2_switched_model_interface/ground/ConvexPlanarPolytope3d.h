@@ -9,6 +9,7 @@
 #include <Eigen/StdVector>
 
 #include <geometry_msgs/PolygonStamped.h>
+#include <visualization_msgs/Marker.h>
 #include <ros/ros.h>
 
 namespace switched_model {
@@ -27,6 +28,14 @@ using ConvexPlanarPolytope3dArray = std::vector<ConvexPlanarPolytope3d, Eigen::a
  * @return ROS PolygonsStamped message
  */
 geometry_msgs::PolygonStamped toRos(const ConvexPlanarPolytope3d& polytope, std::string frame_id);
+
+/**
+ * Convert polytope to ROS Marker message
+ * @param polytope
+ * @param frame_id
+ * @return ROS Marker message
+ */
+visualization_msgs::Marker toRosMarker(const ConvexPlanarPolytope3d& polytope, std::string frame_id, int objectId);
 
 /**
  * Returns a single halvespace definition [w | b] such that
@@ -54,7 +63,7 @@ Eigen::Matrix<double, 4, 1> getSingleHalveSpace(const Eigen::Vector3d& p0, const
  */
 Eigen::MatrixXd toHalfSpaces(const ConvexPlanarPolytope3d& polytope);
 
-ConvexPlanarPolytope3d createSquare(double scale, Eigen::Vector3d offset);
+ConvexPlanarPolytope3d createPolytope(int numPoints, double scale, double rotation, Eigen::Vector3d offset);
 
 }  // namespace switched_model
 

@@ -141,8 +141,6 @@ target_link_libraries(DoubleIntegratorPyBindings_Cpp
 
 # Build python bindings if possible
 if(${pybind11_FOUND})
-  message(WARNING "python executable originally ${PYTHON_EXECUTABLE} and pybind11PythonVersion ${PYBIND11_PYTHON_VERSION}")
-
   pybind11_add_module(DoubleIntegratorPyBindings SHARED
     src/pyBindModule.cpp
   )

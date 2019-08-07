@@ -23,8 +23,12 @@ find_package(Boost REQUIRED COMPONENTS
 
 find_package(Eigen3 3.3 REQUIRED NO_MODULE)
 
-set(PYTHON_EXECUTABLE /usr/bin/python3)
-set(PYBIND11_PYTHON_VERSION 3.6 CACHE STRING "")
+# Pybind11
+option(USE_PYBIND_PYTHON_3 "Use python3-compatible python bindings" ON)
+if(USE_PYBIND_PYTHON_3)
+  set(PYTHON_EXECUTABLE /usr/bin/python3)
+  set(PYBIND11_PYTHON_VERSION 3.6 CACHE STRING "")
+endif(USE_PYBIND_PYTHON_3)
 find_package(pybind11 QUIET)
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread -fopenmp -std=c++11 -Wfatal-errors -Wl,--no-as-needed")
@@ -109,36 +113,45 @@ target_link_libraries(ballbot_target
         ${Boost_LIBRARIES}
         )
 
-# PyBindings library
-add_library(ballbotPyBindings
+# Pybindings Cpp library
+add_library(ballbotPyBindings_cpp
   src/BallbotPyBindings.cpp
 )
-add_dependencies(ballbotPyBindings
+add_dependencies(ballbotPyBindings_cpp
   ballbot_interface
   ${catkin_EXPORTED_TARGETS}
 )
-target_link_libraries(ballbotPyBindings
+target_link_libraries(ballbotPyBindings_cpp
   ballbot_interface
   ${catkin_LIBRARIES}
 )
 
+# Build python bindings if possible
 if(${pybind11_FOUND})
-  # build and install for python3.XX
-  pybind11_add_module(BallbotPyBindings3 SHARED
-    src/pyBindModule3.cpp
+  pybind11_add_module(BallbotPyBindings SHARED
+    src/pyBindModule.cpp
   )
-  add_dependencies(BallbotPyBindings3
-    ballbotPyBindings
+  add_dependencies(BallbotPyBindings
+    ballbotPyBindings_cpp
     ${catkin_EXPORTED_TARGETS}
   )
-  target_link_libraries(BallbotPyBindings3 PRIVATE
-    ballbotPyBindings
+  target_link_libraries(BallbotPyBindings PRIVATE
+    ballbotPyBindings_cpp
     ${catkin_LIBRARIES}
   )
-  set_target_properties(BallbotPyBindings3
-    PROPERTIES LIBRARY_OUTPUT_DIRECTORY ${CATKIN_DEVEL_PREFIX}/lib/python3.6/dist-packages/${PROJECT_NAME}
-  )
-  #catkin_python_setup()
+
+  if(USE_PYBIND_PYTHON_3)
+    # unfortunately this appears not to be discoverable yet because the sourcing process assumes python2.7
+    set_target_properties(BallbotPyBindings
+      PROPERTIES LIBRARY_OUTPUT_DIRECTORY ${CATKIN_DEVEL_PREFIX}/lib/python3.6/dist-packages/${PROJECT_NAME}
+    )
+  else(USE_PYBIND_PYTHON_3)
+    set_target_properties(BallbotPyBindings
+        PROPERTIES LIBRARY_OUTPUT_DIRECTORY ${CATKIN_DEVEL_PREFIX}/${CATKIN_PACKAGE_PYTHON_DESTINATION}
+    )
+  endif(USE_PYBIND_PYTHON_3)
+
+  catkin_python_setup()
 endif()
 
 
@@ -149,7 +162,7 @@ find_package(cmake_clang_tools QUIET)
 if(cmake_clang_tools_FOUND)
   message(STATUS "Run clang tooling for target ballbot_mpc")
   add_clang_tooling(
-    TARGET ballbot_mpc
+    TARGETS ballbot_interface ballbot_mpc ballbot_dummy_test ballbot_target ballbotPyBindings_cpp
     SOURCE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/src ${CMAKE_CURRENT_SOURCE_DIR}/include
     CT_HEADER_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/include
     CT_HEADER_EXCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/include/${PROJECT_NAME}/generated
@@ -162,7 +175,7 @@ endif(cmake_clang_tools_FOUND)
 ## Install ##
 #############
 
-install(TARGETS ballbot_interface
+install(TARGETS ballbot_interface ballbotPyBindings_cpp
         ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
         LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
         RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
@@ -191,13 +204,13 @@ target_link_libraries(ballbot_integration_test
         ${Boost_LIBRARIES}
         )
 
-if(${pybind11_FOUND})
-  catkin_add_gtest(ballbot_pybindings_test
-    test/PyBindingsTest.cpp
-    )
-  target_link_libraries(ballbot_pybindings_test
-    ballbotPyBindings
-    ${catkin_LIBRARIES}
-    ${Boost_LIBRARIES}
-    )
-endif()
+
+catkin_add_gtest(ballbot_pybindings_test
+  test/PyBindingsTest.cpp
+  )
+target_link_libraries(ballbot_pybindings_test
+  ballbotPyBindings_cpp
+  ${catkin_LIBRARIES}
+  ${Boost_LIBRARIES}
+  )
+

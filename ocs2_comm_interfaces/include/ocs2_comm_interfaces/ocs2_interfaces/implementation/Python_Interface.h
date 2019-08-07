@@ -93,7 +93,7 @@ template <size_t STATE_DIM, size_t INPUT_DIM>
 void PythonInterface<STATE_DIM, INPUT_DIM>::getMpcSolution(scalar_array_t& t, state_vector_array_t& x, input_vector_array_t& u,
                                                            state_matrix_array_t& sigmaX) {
   if (run_mpc_async_) {
-    // make sure MPC is done
+    // make sure MPC is done before we continue
     std::unique_lock<std::mutex> lk(run_mpc_mutex_);
     run_mpc_cv_.wait(lk, [this] { return this->run_mpc_done_; });
     run_mpc_done_ = false;

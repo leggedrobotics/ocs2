@@ -144,7 +144,7 @@ class MRT_BASE {
    *
    * @return True if the policy is updated.
    */
-  virtual bool updatePolicy();
+  bool updatePolicy();
 
   /**
    * Reseats the logic rules in the logic rules machine
@@ -188,12 +188,11 @@ class MRT_BASE {
   /**
    * Checks the data buffer for an update of the MPC policy. If a new policy
    * is available on the buffer this method will load it to the in-use policy.
-   * This method also calls the modifyPolicy() method.
    * This implementation method assumes that the policyBufferMutex_ is locked.
    *
    * @return True if the policy is updated.
    */
-  bool updatePolicyImpl();
+  virtual bool updatePolicyImpl();
 
  protected:
   // flags on state of the class

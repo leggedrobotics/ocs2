@@ -140,8 +140,7 @@ void MPC_MRT_Interface<STATE_DIM, INPUT_DIM>::fillMpcOutputBuffers(system_observ
 }
 
 template <size_t STATE_DIM, size_t INPUT_DIM>
-bool MPC_MRT_Interface<STATE_DIM, INPUT_DIM>::updatePolicy() {
-  std::lock_guard<std::mutex> lock(this->policyBufferMutex_);
+bool MPC_MRT_Interface<STATE_DIM, INPUT_DIM>::updatePolicyImpl() {
   if (Base::updatePolicyImpl()) {
     // additionally update variables only present in this child class
     mpcInputTrajectory_.swap(mpcInputTrajectoryBuffer_);

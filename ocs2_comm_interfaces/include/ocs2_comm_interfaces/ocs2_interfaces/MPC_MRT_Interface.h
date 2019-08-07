@@ -101,9 +101,10 @@ class MPC_MRT_Interface final : public MRT_BASE<STATE_DIM, INPUT_DIM> {
    */
   const input_vector_array_t& getMpcInputTrajectory() const;
 
-  bool updatePolicy() override;
-
  protected:
+
+  bool updatePolicyImpl() override;
+
   /**
    * @brief fillMpcOutputBuffers updates the *Buffer variables from the MPC object.
    * This method is automatically called by advanceMpc()

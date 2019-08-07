@@ -167,12 +167,9 @@ class Solver_BASE {
    * are possible: either the internal controller is already set (such as the MPC case where the warm starting option is set true) or the
    * internal controller is empty in which instead of performing a rollout the operating trajectories will be used.
    */
-	virtual void run(
-			const scalar_t& initTime,
-			const state_vector_t& initState,
-			const scalar_t& finalTime,
-			const scalar_array_t& partitioningTimes,
-			const controller_ptr_array_t& controllersPtrStock) = 0;
+  virtual void run(scalar_t initTime, const state_vector_t& initState, scalar_t finalTime, const scalar_array_t& partitioningTimes,
+                   const controller_ptr_array_t& controllersPtrStock) = 0;
+
 
 	/**
    * MPC_BASE activates this if the final time of the MPC will increase by the length of a time partition instead

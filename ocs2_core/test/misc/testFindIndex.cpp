@@ -32,7 +32,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <iostream>
 #include <algorithm>
 
-#include "ocs2_core/misc/Lookup.h"
+#include "ocs2_core/misc/FindActiveIntervalIndex.h"
 
 #include <gtest/gtest.h>
 
@@ -64,7 +64,7 @@ TEST(testFindIndex, single_event_time)
 		index = std::max(index, 0);
 		index = std::min(index, (int)timeIntervals.size()-2);
 
-		index = Lookup::findActiveIntervalIndex(timeIntervals, testTimes[i], index);
+		index = findActiveIntervalIndex(timeIntervals, testTimes[i], index);
 
 		std::cout << "time: " << testTimes[i] << " \t activeIntervalIndex: "
 				<< index << " \t correct solution is: " << activeIntervalIndeces[i] << std::endl;
@@ -79,7 +79,7 @@ TEST(testFindIndex, single_event_time)
 		index = std::max(index, 0);
 		index = std::min(index, (int)timeIntervals.size()-2);
 
-		index = Lookup::findActiveIntervalIndex(timeIntervals, testTimes[i], index);
+		index = findActiveIntervalIndex(timeIntervals, testTimes[i], index);
 
 		std::cout << "time: " << testTimes[i] << " \t activeIntervalIndex: "
 				<< index << " \t correct solution is: " << activeIntervalIndeces[i] << std::endl;
@@ -117,7 +117,7 @@ TEST(testFindIndex, testFindIndex_ceiling)
 		index = std::max(index, 0);
 		index = std::min(index, (int)timeIntervals.size()-2);
 
-		index = Lookup::findActiveIntervalIndex(timeIntervals, testTimes[i], index);
+		index = findActiveIntervalIndex(timeIntervals, testTimes[i], index);
 
 		std::cout << "time: " << testTimes[i] << " \t activeIntervalIndex: "
 				<< index << " \t correct solution is: " << activeIntervalIndeces[i] << std::endl;
@@ -132,7 +132,7 @@ TEST(testFindIndex, testFindIndex_ceiling)
 		index = std::max(index, 0);
 		index = std::min(index, (int)timeIntervals.size()-2);
 
-		index = Lookup::findActiveIntervalIndex(timeIntervals, testTimes[i], index);
+		index = findActiveIntervalIndex(timeIntervals, testTimes[i], index);
 
 		std::cout << "time: " << testTimes[i] << " \t activeIntervalIndex: "
 				<< index << " \t correct solution is: " << activeIntervalIndeces[i] << std::endl;
@@ -170,7 +170,7 @@ TEST(testFindIndex, testFindIndex_floor)
 		index = std::max(index, 0);
 		index = std::min(index, (int)timeIntervals.size()-2);
 
-		index = Lookup::findActiveIntervalIndex(timeIntervals, testTimes[i], index,
+		index = findActiveIntervalIndex(timeIntervals, testTimes[i], index,
 				-OCS2NumericTraits<double>::weakEpsilon());
 
 		std::cout << "time: " << testTimes[i] << " \t activeIntervalIndex: "
@@ -186,7 +186,7 @@ TEST(testFindIndex, testFindIndex_floor)
 		index = std::max(index, 0);
 		index = std::min(index, (int)timeIntervals.size()-2);
 
-		index = Lookup::findActiveIntervalIndex(timeIntervals, testTimes[i], index,
+		index = findActiveIntervalIndex(timeIntervals, testTimes[i], index,
 				-OCS2NumericTraits<double>::weakEpsilon());
 
 		std::cout << "time: " << testTimes[i] << " \t activeIntervalIndex: "

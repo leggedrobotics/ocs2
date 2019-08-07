@@ -44,7 +44,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <ocs2_core/Dimensions.h>
 #include <ocs2_core/integration/Integrator.h>
-#include <ocs2_core/misc/Lookup.h>
+#include <ocs2_core/misc/FindActiveIntervalIndex.h>
 #include <ocs2_core/misc/LinearInterpolation.h>
 
 #include <ocs2_slq/SLQ_DataCollector.h>

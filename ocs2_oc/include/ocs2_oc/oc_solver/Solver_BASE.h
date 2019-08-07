@@ -170,8 +170,7 @@ class Solver_BASE {
   virtual void run(scalar_t initTime, const state_vector_t& initState, scalar_t finalTime, const scalar_array_t& partitioningTimes,
                    const controller_ptr_array_t& controllersPtrStock) = 0;
 
-
-	/**
+  /**
    * MPC_BASE activates this if the final time of the MPC will increase by the length of a time partition instead
    * of commonly used scheme where the final time is gradually increased.
    *

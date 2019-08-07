@@ -402,9 +402,9 @@ size_t GDDP<STATE_DIM, INPUT_DIM>::findActiveSubsystemIndex(
 
 	int activeSubsystemIndex;
 	if (ceilingFunction==true)
-		activeSubsystemIndex = Lookup::findActiveIntervalIndex(partitioningTimes, time, 0);
+		activeSubsystemIndex = findActiveIntervalIndex(partitioningTimes, time, 0);
 	else
-		activeSubsystemIndex = Lookup::findActiveIntervalIndex(partitioningTimes, time, 0,
+		activeSubsystemIndex = findActiveIntervalIndex(partitioningTimes, time, 0,
 				-OCS2NumericTraits<scalar_t>::weakEpsilon());
 
 	return (size_t)activeSubsystemIndex;
@@ -421,9 +421,9 @@ size_t GDDP<STATE_DIM, INPUT_DIM>::findActivePartitionIndex(
 
 	int activeSubsystemIndex;
 	if (ceilingFunction==true)
-		activeSubsystemIndex = Lookup::findActiveIntervalIndex(partitioningTimes, time, 0);
+		activeSubsystemIndex = findActiveIntervalIndex(partitioningTimes, time, 0);
 	else
-		activeSubsystemIndex = Lookup::findActiveIntervalIndex(partitioningTimes, time, 0,
+		activeSubsystemIndex = findActiveIntervalIndex(partitioningTimes, time, 0,
 				-OCS2NumericTraits<scalar_t>::weakEpsilon());
 
 	if (activeSubsystemIndex < 0) {

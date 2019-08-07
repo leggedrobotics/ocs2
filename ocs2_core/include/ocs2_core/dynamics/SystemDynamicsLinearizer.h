@@ -35,112 +35,94 @@
 #include <cmath>
 #include <memory>
 
+#include "ocs2_core/automatic_differentiation/FiniteDifferenceMethods.h"
 #include "ocs2_core/dynamics/ControlledSystemBase.h"
 #include "ocs2_core/dynamics/DerivativesBase.h"
-#include "ocs2_core/automatic_differentiation/FiniteDifferenceMethods.h"
 
 namespace ocs2 {
 
+/**
+ * A class for linearizing system dynamics. The linearized system dynamics is defined as: \n
+ *
+ * - Linearized system:   \f$ dx/dt = A(t) \delta x + B(t) \delta u \f$ \n
+ *
+ * @tparam STATE_DIM: Dimension of the state space.
+ * @tparam INPUT_DIM: Dimension of the control input space.
+ */
+template <size_t STATE_DIM, size_t INPUT_DIM>
+class SystemDynamicsLinearizer : public DerivativesBase<STATE_DIM, INPUT_DIM> {
+ public:
+  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+
+  using Base = DerivativesBase<STATE_DIM, INPUT_DIM>;
+  using controlled_system_base_t = ControlledSystemBase<STATE_DIM, INPUT_DIM>;
+  using finite_difference_methods_t = FiniteDifferenceMethods<controlled_system_base_t>;
+
+  using typename Base::scalar_t;
+  using typename Base::state_vector_t;
+  using typename Base::state_matrix_t;
+  using typename Base::input_vector_t;
+  using typename Base::state_input_matrix_t;
+
   /**
-   * A class for linearizing system dynamics. The linearized system dynamics is defined as: \n
-   *
-   * - Linearized system:                        \f$ dx/dt = A(t) \delta x + B(t) \delta u \f$ \n
-   *
-   * @tparam STATE_DIM: Dimension of the state space.
-   * @tparam INPUT_DIM: Dimension of the control input space.
+   * Constructor
    */
-  template <size_t STATE_DIM, size_t INPUT_DIM>
-    class SystemDynamicsLinearizer : public DerivativesBase<STATE_DIM, INPUT_DIM>, public FiniteDifferenceMethods<ControlledSystemBase<STATE_DIM, INPUT_DIM>>
-  {
-    public:
-      EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+  SystemDynamicsLinearizer(std::shared_ptr<controlled_system_base_t> nonlinearSystemPtr, bool doubleSidedDerivative = true,
+                           bool isSecondOrderSystem = false)
+      : finiteDifferenceMethods_(std::move(nonlinearSystemPtr), Eigen::NumTraits<scalar_t>::epsilon(),
+                                 std::numeric_limits<scalar_t>::infinity(), doubleSidedDerivative, isSecondOrderSystem) {}
 
-      typedef DerivativesBase<STATE_DIM, INPUT_DIM> Base;
-      typedef ControlledSystemBase<STATE_DIM, INPUT_DIM> controlled_system_base_t;
-      typedef FiniteDifferenceMethods<controlled_system_base_t> finite_difference_methods_t;
-      using scalar_t = typename Base::scalar_t;
-      using state_vector_t = typename Base::state_vector_t;
-      using state_matrix_t = typename Base::state_matrix_t;
-      using input_vector_t = typename Base::input_vector_t;
-      using state_input_matrix_t = typename Base::state_input_matrix_t;
+  /**
+   * Copy constructor
+   *
+   * @param [in] other: Instance of the other class.
+   */
+  SystemDynamicsLinearizer(const SystemDynamicsLinearizer& other) = default;
 
-      /**
-       * Constructor
-       */
-      SystemDynamicsLinearizer(const std::shared_ptr<controlled_system_base_t>& nonlinearSystemPtr,
-	  bool doubleSidedDerivative=true, bool isSecondOrderSystem=false)
-	: finite_difference_methods_t(Eigen::NumTraits<scalar_t>::epsilon(),
-	    std::numeric_limits<scalar_t>::infinity(),
-	    nonlinearSystemPtr,
-	    doubleSidedDerivative, isSecondOrderSystem)    {}
+  /**
+   * operator=
+   *
+   * @param [in] other: Instance of the other class.
+   * @return SystemDynamicsLinearizer&:
+   */
+  SystemDynamicsLinearizer& operator=(const SystemDynamicsLinearizer& other) = default;
 
-      /**
-       * Copy constructor
-       *
-       * @param [in] other: Instance of the other class.
-       */
-      SystemDynamicsLinearizer(const SystemDynamicsLinearizer& other) = default;
+  /**
+   * Default destructor
+   */
+  virtual ~SystemDynamicsLinearizer() = default;
 
-      /**
-       * operator=
-       *
-       * @param [in] other: Instance of the other class.
-       * @return SystemDynamicsLinearizer&:
-       */
-      SystemDynamicsLinearizer& operator=(const SystemDynamicsLinearizer& other)  = default;
+  /**
+   * The A matrix at a given operating point for the linearized system,
+   * \f$ dx/dt = A(t) \delta x + B(t) \delta u \f$.
+   *
+   * @param [out] A: \f$ A(t) \f$ matrix.
+   */
+  void getFlowMapDerivativeState(state_matrix_t& A) override {
+    finiteDifferenceMethods_.finiteDifferenceDerivativeState(this->t_, this->x_, this->u_,  A);
+  }
 
+  /**
+   * The B matrix at a given operating point for the linearized system,
+   * \f$ dx/dt = A(t) \delta x + B(t) \delta u \f$.
+   *
+   * @param [out] B: \f$ B(t) \f$ matrix.
+   */
+  void getFlowMapDerivativeInput(state_input_matrix_t& B) override {
+    finiteDifferenceMethods_.finiteDifferenceDerivativeInput(this->t_, this->x_, this->u_, B);
+  }
 
-      /**
-       * Default destructor
-       */
-      virtual ~SystemDynamicsLinearizer()= default;
+  /**
+   * Returns pointer to the class.
+   *
+   * @return A raw pointer to the class.
+   */
+  SystemDynamicsLinearizer<STATE_DIM, INPUT_DIM>* clone() const override {
+    return new SystemDynamicsLinearizer<STATE_DIM, INPUT_DIM>(*this);
+  }
 
-
-      /**
-       * The A matrix at a given operating point for the linearized system,
-       * \f$ dx/dt = A(t) \delta x + B(t) \delta u \f$.
-       *
-       * @param [out] A: \f$ A(t) \f$ matrix.
-       */
-      void getFlowMapDerivativeState(state_matrix_t& A) override {
-	return this->finiteDifferenceDerivativeState(this->x_, this->u_, this->t_, A);
-      }
-
-      /**
-       * The B matrix at a given operating point for the linearized system,
-       * \f$ dx/dt = A(t) \delta x + B(t) \delta u \f$.
-       *
-       * @param [out] B: \f$ B(t) \f$ matrix.
-       */
-      void getFlowMapDerivativeInput(state_input_matrix_t& B) override {
-	return this->finiteDifferenceDerivativeInput(this->u_, this->x_, this->t_, B);
-      }
-
-      // It is not logical to call the function from the SystemDynamicsLinearizer
-      static bool derivativeChecker(const std::shared_ptr<controlled_system_base_t>& nonlinearSystemPtr, 
-	  const std::shared_ptr<Base>& derivativesBasePtr,
-	  const scalar_t t, const state_vector_t &x, const input_vector_t &u,
-	  state_matrix_t &A_error, state_input_matrix_t &B_error,
-	  scalar_t tolerance) = delete;
-
-      /**
-       * Returns pointer to the class.
-       *
-       * @return A raw pointer to the class.
-       */
-      SystemDynamicsLinearizer<STATE_DIM, INPUT_DIM>* clone() const override {
-      return new SystemDynamicsLinearizer<STATE_DIM, INPUT_DIM>(*this);
-      }
-
-
-    private:
-
-      // typename controlled_system_base_t::Ptr nonlinearSystemPtr_;
-      // bool doubleSidedDerivative_;
-      // bool isSecondOrderSystem_;
-      // state_vector_t f_;
-      // friend class FiniteDifferenceMethods;
-
+ private:
+  finite_difference_methods_t finiteDifferenceMethods_;
 };
 
 }  // namespace ocs2

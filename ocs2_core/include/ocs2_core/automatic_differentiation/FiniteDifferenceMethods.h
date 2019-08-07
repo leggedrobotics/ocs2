@@ -62,9 +62,10 @@ class FiniteDifferenceMethods {
   using state_input_matrix_t = typename derivatives_base_t::state_input_matrix_t;
 
  public:
-  FiniteDifferenceMethods(std::shared_ptr<controlled_system_base_t> controlledSystem, scalar_t eps = Eigen::NumTraits<scalar_t>::epsilon(),
-                          scalar_t tolerance = sqrt(Eigen::NumTraits<scalar_t>::epsilon()), bool doubleSidedDerivative = true,
-                          bool isSecondOrderSystem = false)
+  explicit FiniteDifferenceMethods(std::shared_ptr<controlled_system_base_t> controlledSystem,
+                                   scalar_t eps = Eigen::NumTraits<scalar_t>::epsilon(),
+                                   scalar_t tolerance = sqrt(Eigen::NumTraits<scalar_t>::epsilon()), bool doubleSidedDerivative = true,
+                                   bool isSecondOrderSystem = false)
       : eps_(eps),
         tolerance_(tolerance),
         controlledSystem_(std::move(controlledSystem)),

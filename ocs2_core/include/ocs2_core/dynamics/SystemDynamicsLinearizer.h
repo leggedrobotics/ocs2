@@ -58,17 +58,17 @@ class SystemDynamicsLinearizer : public DerivativesBase<STATE_DIM, INPUT_DIM> {
   using controlled_system_base_t = ControlledSystemBase<STATE_DIM, INPUT_DIM>;
   using finite_difference_methods_t = FiniteDifferenceMethods<controlled_system_base_t>;
 
-  using typename Base::scalar_t;
-  using typename Base::state_vector_t;
-  using typename Base::state_matrix_t;
   using typename Base::input_vector_t;
+  using typename Base::scalar_t;
   using typename Base::state_input_matrix_t;
+  using typename Base::state_matrix_t;
+  using typename Base::state_vector_t;
 
   /**
    * Constructor
    */
-  SystemDynamicsLinearizer(std::shared_ptr<controlled_system_base_t> nonlinearSystemPtr, bool doubleSidedDerivative = true,
-                           bool isSecondOrderSystem = false)
+  explicit SystemDynamicsLinearizer(std::shared_ptr<controlled_system_base_t> nonlinearSystemPtr, bool doubleSidedDerivative = true,
+                                    bool isSecondOrderSystem = false)
       : finiteDifferenceMethods_(std::move(nonlinearSystemPtr), Eigen::NumTraits<scalar_t>::epsilon(),
                                  std::numeric_limits<scalar_t>::infinity(), doubleSidedDerivative, isSecondOrderSystem) {}
 
@@ -99,7 +99,7 @@ class SystemDynamicsLinearizer : public DerivativesBase<STATE_DIM, INPUT_DIM> {
    * @param [out] A: \f$ A(t) \f$ matrix.
    */
   void getFlowMapDerivativeState(state_matrix_t& A) override {
-    finiteDifferenceMethods_.finiteDifferenceDerivativeState(this->t_, this->x_, this->u_,  A);
+    finiteDifferenceMethods_.finiteDifferenceDerivativeState(this->t_, this->x_, this->u_, A);
   }
 
   /**

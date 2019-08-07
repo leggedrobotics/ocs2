@@ -41,6 +41,21 @@ class MRT_BASE {
   using controller_t = ControllerBase<STATE_DIM, INPUT_DIM>;
   using state_linear_interpolation_t = EigenLinearInterpolation<typename dim_t::state_vector_t>;
 
+  struct CommandData {
+    EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+    SystemObservation<STATE_DIM, INPUT_DIM> mpcInitObservation_;
+    CostDesiredTrajectories<scalar_t> mpcCostDesiredTrajectories_;
+  };
+
+  struct PolicyData {
+    EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+    scalar_array_t mpcTimeTrajectory_;
+    state_vector_array_t mpcStateTrajectory_;
+    std::unique_ptr<controller_t> mpcController_;
+    scalar_array_t eventTimes_;
+    size_array_t subsystemsSequence_;
+  };
+
   /**
    * @brief MRT_BASE constructor
    * @param[in] logicRules: Optional pointer to the logic rules.
@@ -76,24 +91,18 @@ class MRT_BASE {
   virtual void setCurrentObservation(const SystemObservation<STATE_DIM, INPUT_DIM>& observation) = 0;
 
   /**
-   * Gets a reference to CostDesiredTrajectories for which the current policy is optimized for.
+   * Gets a reference to the command data corresponding to the current policy.
    * @warning access to the returned reference is not threadsafe. Read access and calls to updatePolicy() must be synced by the user.
    *
-   * @return a constant reference to CostDesiredTrajectories of the policy.
+   * @return a constant reference to command data.
    */
-  const CostDesiredTrajectories<scalar_t>& mpcCostDesiredTrajectories() const;
+  const CommandData& getCommand() const;
 
   /**
-   * Gets a reference to time trajectory for which the current policy is optimized.
-   * @return constant reference to the time trajectory of the policy.
+   * Gets a reference to current optimized policy.
+   * @return constant reference to the policy data.
    */
-  const scalar_array_t& mpcTimeTrajectory() const;
-
-  /**
-   * Gets a reference to state trajectory of the current policy.
-   * @return constant reference to the state trajectory of the policy.
-   */
-  const state_vector_array_t& mpcStateTrajectory() const;
+  const PolicyData& getPolicy() const;
 
   /**
    * Initializes rollout class to roll out a feedback policy
@@ -155,33 +164,16 @@ class MRT_BASE {
    * methods which runs on a separate thread which directly modifies the received
    * policy messages on the data buffer.
    *
-   * @param logicUpdated: Whether eventTimes or subsystemsSequence are updated form the last call.
-   * @param mpcController: The optimized control policy of MPC.
-   * @param mpcTimeTrajectory: The optimized time trajectory of the policy message on the buffer.
-   * @param mpcStateTrajectory: The optimized state trajectory of the policy message on the buffer.
-   * @param eventTimes: The event times of the policy.
-   * @param subsystemsSequence: The subsystems sequence of the policy.
    */
-  virtual void modifyPolicy(bool logicUpdated, controller_t& mpcController, scalar_array_t& mpcTimeTrajectory,
-                            state_vector_array_t& mpcStateTrajectory, scalar_array_t& eventTimes, size_array_t& subsystemsSequence) {}
+  virtual void modifyPolicy(const CommandData& command, PolicyData& policy) {}
 
   /**
-   * This method can be used to modify the policy on the buffer without inputting the
-   * main thread. Note that the variables that are on the buffer have the suffix Buffer. It is
-   * important if any new variables are added to the policy also obey this rule. These buffer
-   * variables can be later, in the modifyPolicy() method, swept to the in-use policy memory.
+   * This method can be used to modify the policy on the buffer without inputting the main thread.
    *
-   * @param [in] mpcInitObservationBuffer: The observation of the policy message on the buffer.
-   * @param mpcControllerBuffer: The optimized controller of the policy message on the buffer.
-   * @param mpcTimeTrajectoryBuffer: The optimized time trajectory of the policy message on the buffer.
-   * @param mpcStateTrajectoryBuffer: The optimized state trajectory of the policy message on the buffer.
-   * @param eventTimesBuffer: The event times of the policy message on the buffer.
-   * @param subsystemsSequenceBuffer: The subsystems sequence of the policy message on the buffer.
+   * @param [in] commandBuffer: buffered command data.
+   * @param policyBuffer: policy message on the buffer.
    */
-  virtual void modifyBufferPolicy(const SystemObservation<STATE_DIM, INPUT_DIM>& mpcInitObservationBuffer,
-                                  controller_t& mpcControllerBuffer, scalar_array_t& mpcTimeTrajectoryBuffer,
-                                  state_vector_array_t& mpcStateTrajectoryBuffer, scalar_array_t& eventTimesBuffer,
-                                  size_array_t& subsystemsSequenceBuffer) {}
+  virtual void modifyBufferPolicy(const CommandData& commandBuffer, PolicyData& policyBuffer) {}
 
   /**
    * Constructs a partitioningTimes vector with 2 elements: minimum of the already
@@ -211,23 +203,10 @@ class MRT_BASE {
   // variables related to the MPC output
   std::atomic_bool policyUpdated_;  //! Whether the policy was updated by MPC (i.e., MPC succeeded)
   bool policyUpdatedBuffer_;        //! Whether the policy in buffer was upated by MPC (i.e., MPC succeeded)
-  std::unique_ptr<controller_t> mpcController_;
-  std::unique_ptr<controller_t> mpcControllerBuffer_;
-  scalar_array_t mpcTimeTrajectory_;
-  scalar_array_t mpcTimeTrajectoryBuffer_;
-  state_vector_array_t mpcStateTrajectory_;
-  state_vector_array_t mpcStateTrajectoryBuffer_;
-  state_linear_interpolation_t mpcLinInterpolateState_;
-  CostDesiredTrajectories<scalar_t> mpcCostDesiredTrajectories_;
-  CostDesiredTrajectories<scalar_t> mpcCostDesiredTrajectoriesBuffer_;
-  scalar_array_t eventTimes_;
-  scalar_array_t eventTimesBuffer_;
-  size_array_t subsystemsSequence_;
-  size_array_t subsystemsSequenceBuffer_;
-  scalar_array_t partitioningTimes_;
-  scalar_array_t partitioningTimesBuffer_;
-  SystemObservation<STATE_DIM, INPUT_DIM> mpcInitObservation_;
-  SystemObservation<STATE_DIM, INPUT_DIM> mpcInitObservationBuffer_;
+  std::unique_ptr<PolicyData> currentPolicy_;
+  std::unique_ptr<PolicyData> policyBuffer_;
+  std::unique_ptr<CommandData> currentCommand_;
+  std::unique_ptr<CommandData> commandBuffer_;
 
   // thread safety
   mutable std::mutex policyBufferMutex_;  // for policy variables WITH suffix (*Buffer_)
@@ -238,7 +217,10 @@ class MRT_BASE {
   HybridLogicRulesMachine::Ptr logicMachinePtr_;
 
   // Varia
+  scalar_array_t partitioningTimes_;
+  scalar_array_t partitioningTimesBuffer_;
   SystemObservation<STATE_DIM, INPUT_DIM> initPlanObservation_;  //! The initial observation of the first plan ever received
+  state_linear_interpolation_t mpcLinInterpolateState_;
 };
 
 }  // namespace ocs2

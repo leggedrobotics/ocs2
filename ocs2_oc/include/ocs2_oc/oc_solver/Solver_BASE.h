@@ -268,7 +268,7 @@ class Solver_BASE {
    *
    * @param [out] costDesiredTrajectories: A pointer to the cost function desired trajectories
    */
-  void getCostDesiredTrajectoriesPtr(const cost_desired_trajectories_t*& costDesiredTrajectoriesPtr) const;
+  const cost_desired_trajectories_t& getCostDesiredTrajectories() const;
 
   /**
    * Sets the cost function desired trajectories.

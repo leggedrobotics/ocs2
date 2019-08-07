@@ -60,8 +60,11 @@ class MRT_ROS_Dummy_Loop {
   using input_state_matrix_array_t = typename mrt_t::input_state_matrix_array_t;
 
   using system_observation_t = typename mrt_t::system_observation_t;
-  using controlled_system_base_t = ControlledSystemBase<STATE_DIM, INPUT_DIM>;
   using cost_desired_trajectories_t = typename mrt_t::cost_desired_trajectories_t;
+  using commandData_t = typename mrt_t::CommandData;
+  using policyData_t = typename mrt_t::PolicyData;
+
+  using controlled_system_base_t = ControlledSystemBase<STATE_DIM, INPUT_DIM>;
 
   /**
    * Constructor.
@@ -118,10 +121,10 @@ class MRT_ROS_Dummy_Loop {
    * Visualizes the current observation.
    *
    * @param [in] observation: The current observation.
-   * @param [in] costDesiredTrajectories: The commanded target trajectory or point.
+   * @param [in] command: Contains costdesired trajectory and init observation.
+   * @param [in] policy: Contains the optimized mpc policy.
    */
-  virtual void publishVisualizer(const system_observation_t& observation, const cost_desired_trajectories_t& costDesiredTrajectories,
-                                 const scalar_array_t& mpcTimeTrajectory, const state_vector_array_t& mpcStateTrajectory) {}
+  virtual void publishVisualizer(const system_observation_t& observation, const commandData_t& command, const policyData_t& policy) {}
 
  protected:
   /*

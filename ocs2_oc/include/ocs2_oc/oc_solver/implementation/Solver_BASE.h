@@ -77,9 +77,9 @@ void Solver_BASE<STATE_DIM, INPUT_DIM>::swapCostDesiredTrajectories(scalar_array
 }
 
 template <size_t STATE_DIM, size_t INPUT_DIM>
-void Solver_BASE<STATE_DIM, INPUT_DIM>::getCostDesiredTrajectoriesPtr(
-    const cost_desired_trajectories_t*& costDesiredTrajectoriesPtr) const {
-  costDesiredTrajectoriesPtr = &costDesiredTrajectories_;
+const typename Solver_BASE<STATE_DIM, INPUT_DIM>::cost_desired_trajectories_t&
+Solver_BASE<STATE_DIM, INPUT_DIM>::getCostDesiredTrajectories() const {
+  return costDesiredTrajectories_;
 }
 
 template <size_t STATE_DIM, size_t INPUT_DIM>

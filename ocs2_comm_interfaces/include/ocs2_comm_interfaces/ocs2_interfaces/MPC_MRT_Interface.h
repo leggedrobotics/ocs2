@@ -63,7 +63,7 @@ class MPC_MRT_Interface final : public MRT_BASE<STATE_DIM, INPUT_DIM> {
    * @param[in] mpc the underlying MPC class to be used
    * @param[in] logicRules (optional)
    */
-  MPC_MRT_Interface(mpc_t* mpc, std::shared_ptr<HybridLogicRules> logicRules = nullptr);
+  explicit MPC_MRT_Interface(mpc_t* mpc, std::shared_ptr<HybridLogicRules> logicRules = nullptr);
 
   /**
    * Destructor.
@@ -94,18 +94,6 @@ class MPC_MRT_Interface final : public MRT_BASE<STATE_DIM, INPUT_DIM> {
    * They will evaluate the control law that was up-to-date at the last updatePolicy() call
    */
   void advanceMpc();
-
-  /**
-   * @brief Access the currently in-use time trajectory.
-   * @note To get the latest policy from MPC, call updatePolicy() first
-   */
-  const scalar_array_t& getMpcTimeTrajectory() const;
-
-  /**
-   * @brief Access the currently in-use state trajectory.
-   * @note To get the latest policy from MPC, call updatePolicy() first
-   */
-  const state_vector_array_t& getMpcStateTrajectory() const;
 
   /**
    * @brief Access the currently in-use input trajectory.

@@ -84,6 +84,18 @@ class MRT_BASE {
   const CostDesiredTrajectories<scalar_t>& mpcCostDesiredTrajectories() const;
 
   /**
+   * Gets a reference to time trajectory for which the current policy is optimized.
+   * @return constant reference to the time trajectory of the policy.
+   */
+  const scalar_array_t& mpcTimeTrajectory() const;
+
+  /**
+   * Gets a reference to state trajectory of the current policy.
+   * @return constant reference to the state trajectory of the policy.
+   */
+  const state_vector_array_t& mpcStateTrajectory() const;
+
+  /**
    * Initializes rollout class to roll out a feedback policy
    *
    * @param [in] controlledSystemBase: System to roll out.

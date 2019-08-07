@@ -144,19 +144,17 @@ void MRT_ROS_Dummy_Loop<STATE_DIM, INPUT_DIM>::run(const system_observation_t& i
     modifyObservation(observation_);
 
     // publish observation
-    if (realtimeLoop_ == true) {
+    if (realtimeLoop_) {
       mrtPtr_->setCurrentObservation(observation_);
-
     } else if (loopCounter % frequencyRatio == 0) {
       mrtPtr_->setCurrentObservation(observation_);
       std::cout << ">>> Observation is published at " << time << std::endl;
     }
 
     // Visualization
-    publishVisualizer(observation_, mrtPtr_->mpcCostDesiredTrajectories());
+    publishVisualizer(observation_,  mrtPtr_->mpcCostDesiredTrajectories(), mrtPtr_->mpcTimeTrajectory(), mrtPtr_->mpcStateTrajectory());
 
     rosRate.sleep();
-
   }  // end of while loop
 }
 

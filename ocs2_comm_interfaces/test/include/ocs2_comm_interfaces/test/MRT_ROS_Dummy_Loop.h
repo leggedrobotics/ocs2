@@ -120,7 +120,8 @@ class MRT_ROS_Dummy_Loop {
    * @param [in] observation: The current observation.
    * @param [in] costDesiredTrajectories: The commanded target trajectory or point.
    */
-  virtual void publishVisualizer(const system_observation_t& observation, const cost_desired_trajectories_t& costDesiredTrajectories) {}
+  virtual void publishVisualizer(const system_observation_t& observation, const cost_desired_trajectories_t& costDesiredTrajectories,
+                                 const scalar_array_t& mpcTimeTrajectory, const state_vector_array_t& mpcStateTrajectory) {}
 
  protected:
   /*

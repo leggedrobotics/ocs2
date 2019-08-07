@@ -205,7 +205,7 @@ catkin_add_gtest(test_lookup
 )
 
 catkin_add_gtest(derivative_checker_unittest
-        test/testSystemDynamicsLinearizer.cpp
+        test/dynamics/testSystemDynamicsLinearizer.cpp
 )
 target_link_libraries(derivative_checker_unittest
         ${catkin_LIBRARIES}

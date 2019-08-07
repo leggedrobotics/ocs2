@@ -82,13 +82,19 @@ void FrankWolfeDescentDirection::setupLP(
 	// set descent directions reciprocal element-wise max
 	const dynamic_vector_t Ev = maxGradientInverse.cwiseAbs();
 	for (size_t i=0; i<parameterDim; i++) {
-		if (Ev(i) > Eigen::NumTraits<scalar_t>::epsilon()) {
-			glp_set_col_bnds(lpPtr_.get(), i+1, GLP_DB, -1.0/Ev(i), 1.0/Ev(i));
-		}
 		// if the gradient is zero in one direction
 		if (std::fabs(gradient(i)) < Eigen::NumTraits<scalar_t>::epsilon()) {
 			glp_set_col_bnds(lpPtr_.get(), i+1, GLP_FX, 0.0, 0.0);
+
+		// if the gradient should be limited
+		} else if (Ev(i) > Eigen::NumTraits<scalar_t>::epsilon()) {
+			glp_set_col_bnds(lpPtr_.get(), i+1, GLP_DB, -1.0/Ev(i), 1.0/Ev(i));
+
+		// if free
+		} else {
+			glp_set_col_bnds(lpPtr_.get(), i+1, GLP_FR, 0.0, 0.0);
 		}
+
 	}  // end of i loop
 
 	// set the current parameter vector.

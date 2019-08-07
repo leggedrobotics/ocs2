@@ -47,7 +47,7 @@ class ILQR_BASE : public DDP_BASE<STATE_DIM, INPUT_DIM> {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-  typedef DDP_BASE<STATE_DIM, INPUT_DIM> BASE;
+  using BASE = DDP_BASE<STATE_DIM, INPUT_DIM>;
 
   using DIMENSIONS = typename BASE::DIMENSIONS;
   using controller_t = typename BASE::controller_t;

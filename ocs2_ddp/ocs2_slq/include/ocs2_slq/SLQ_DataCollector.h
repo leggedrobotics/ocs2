@@ -48,9 +48,9 @@ class SLQ_DataCollector {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-  typedef SLQ_BASE<STATE_DIM, INPUT_DIM> slq_t;
+  using slq_t = SLQ_BASE<STATE_DIM, INPUT_DIM>;
 
-  typedef std::shared_ptr<SLQ_DataCollector<STATE_DIM, INPUT_DIM>> Ptr;
+  using Ptr = std::shared_ptr<SLQ_DataCollector<STATE_DIM, INPUT_DIM>>;
 
   using linear_controller_array_t = typename slq_t::linear_controller_array_t;
   using size_array_t = typename slq_t::size_array_t;
@@ -93,8 +93,8 @@ class SLQ_DataCollector {
   using constraint2_state_matrix_array2_t = typename slq_t::constraint2_state_matrix_array2_t;
   using dynamic_matrix_array2_t = typename slq_t::dynamic_matrix_array2_t;
 
-  typedef std::vector<constraint1_vector_array2_t, Eigen::aligned_allocator<constraint1_vector_array2_t>> constraint1_vector_array3_t;
-  typedef std::vector<constraint2_vector_array2_t, Eigen::aligned_allocator<constraint2_vector_array2_t>> constraint2_vector_array3_t;
+  using constraint1_vector_array3_t = std::vector<constraint1_vector_array2_t, Eigen::aligned_allocator<constraint1_vector_array2_t>>;
+  using constraint2_vector_array3_t = std::vector<constraint2_vector_array2_t, Eigen::aligned_allocator<constraint2_vector_array2_t>>;
 
   using controlled_system_base_t = typename slq_t::controlled_system_base_t;
   using derivatives_base_t = typename slq_t::derivatives_base_t;

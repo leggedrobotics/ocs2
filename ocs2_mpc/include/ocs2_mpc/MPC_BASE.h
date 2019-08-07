@@ -98,7 +98,7 @@ class MPC_BASE {
    *
    * @param [in] mpcSettings: Structure containing the settings for the MPC algorithm.
    */
-  MPC_BASE(const scalar_array_t& partitioningTimes, const MPC_Settings& mpcSettings = MPC_Settings());
+  explicit MPC_BASE(const scalar_array_t& partitioningTimes, const MPC_Settings& mpcSettings = MPC_Settings());
 
   /**
    * destructor.

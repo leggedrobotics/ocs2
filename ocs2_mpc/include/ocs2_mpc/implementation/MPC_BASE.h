@@ -268,7 +268,7 @@ bool MPC_BASE<STATE_DIM, INPUT_DIM>::run(const scalar_t& currentTime, const stat
   //*****************************************************************************************
   // Update logicRules if new logicRulesTemplate is set
   //*****************************************************************************************
-  if (logicRulesTemplateUpdated_ == true) {
+  if (logicRulesTemplateUpdated_) {
     // set new templates
     if (!solverPtr_->getLogicRulesPtr()) {
       throw std::runtime_error("MPC Base: solverPtr_->getLogicRulesPtr() must not be nullptr.");

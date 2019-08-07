@@ -128,7 +128,7 @@ void MRT_BASE<STATE_DIM, INPUT_DIM>::rolloutPolicy(scalar_t currentTime, const s
   input_vector_array_t inputTrajectory;
 
   // perform a rollout
-  if (policyUpdated_ == true) {
+  if (policyUpdated_) {
     rolloutPtr_->run(activePartitionIndex, currentTime, currentState, finalTime, mpcController_.get(), *logicMachinePtr_, timeTrajectory,
                      eventsPastTheEndIndeces, stateTrajectory, inputTrajectory);
   } else {

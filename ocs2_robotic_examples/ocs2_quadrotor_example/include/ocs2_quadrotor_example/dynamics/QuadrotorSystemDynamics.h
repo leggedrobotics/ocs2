@@ -44,14 +44,14 @@ class QuadrotorSystemDynamics : public ControlledSystemBase<quadrotor::STATE_DIM
 public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-	typedef std::shared_ptr<QuadrotorSystemDynamics> Ptr;
-	typedef std::shared_ptr<const QuadrotorSystemDynamics> ConstPtr;
+	using Ptr = std::shared_ptr<QuadrotorSystemDynamics>;
+	using ConstPtr = std::shared_ptr<const QuadrotorSystemDynamics>;
 
-	typedef ControlledSystemBase<quadrotor::STATE_DIM_, quadrotor::INPUT_DIM_> BASE;
-	typedef typename BASE::scalar_t       scalar_t;
-	typedef typename BASE::state_vector_t state_vector_t;
-	typedef typename BASE::input_vector_t input_vector_t;
-	typedef QuadrotorParameters<scalar_t> quadrotor_parameters_t;
+	using BASE = ControlledSystemBase<quadrotor::STATE_DIM_, quadrotor::INPUT_DIM_>;
+	using scalar_t = typename BASE::scalar_t      ;
+	using state_vector_t = typename BASE::state_vector_t;
+	using input_vector_t = typename BASE::input_vector_t;
+	using quadrotor_parameters_t = QuadrotorParameters<scalar_t>;
 
 	/**
 	 * Constructor

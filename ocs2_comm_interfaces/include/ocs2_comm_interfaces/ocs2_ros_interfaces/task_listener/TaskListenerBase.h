@@ -45,10 +45,10 @@ namespace ocs2 {
 template <typename SCALAR_T = float>
 class TaskListenerBase {
  public:
-  typedef SCALAR_T scalar_t;
+  using scalar_t = SCALAR_T;
 
-  typedef std::shared_ptr<TaskListenerBase<SCALAR_T>> shared_ptr_t;
-  typedef std::vector<shared_ptr_t> shared_ptr_array_t;
+  using shared_ptr_t = std::shared_ptr<TaskListenerBase<SCALAR_T>>;
+  using shared_ptr_array_t = std::vector<shared_ptr_t>;
 
   /**
    * Default constructor.

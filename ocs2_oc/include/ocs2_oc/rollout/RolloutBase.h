@@ -136,7 +136,7 @@ class RolloutBase {
    * @param [in] inputTrajectory: The control input trajectory.
    */
   static void display(const size_t& partitionIndex, const scalar_array_t& timeTrajectory, const size_array_t& eventsPastTheEndIndeces,
-                      const state_vector_array_t& stateTrajectory, const input_vector_array_t& inputTrajectory) {
+                      const state_vector_array_t& stateTrajectory, const input_vector_array_t* const inputTrajectory) {
     std::cerr << std::endl << "++++++++++++++++++++++++++++++" << std::endl;
     std::cerr << "Partition: " << partitionIndex;
     std::cerr << std::endl << "++++++++++++++++++++++++++++++" << std::endl;
@@ -158,7 +158,9 @@ class RolloutBase {
         std::cerr << "k:     " << k << std::endl;
         std::cerr << "Time:  " << std::setprecision(9) << timeTrajectory[k] << std::endl;
         std::cerr << "State: " << std::setprecision(3) << stateTrajectory[k].transpose() << std::endl;
-        std::cerr << "Input: " << std::setprecision(3) << inputTrajectory[k].transpose() << std::endl;
+        if (inputTrajectory) {
+          std::cerr << "Input: " << std::setprecision(3) << (*inputTrajectory)[k].transpose() << std::endl;
+        }
 
         if (i < eventsPastTheEndIndeces.size() && k + 1 == eventsPastTheEndIndeces[i]) {
           std::cerr << "+++ event took place +++" << std::endl;
@@ -206,13 +208,13 @@ class RolloutBase {
           stateTrajectoryTemp.push_back(stateTrajectory[j]);
           if (rolloutSettings_.reconstructInputTrajectory_) {
             inputTrajectoryTemp.push_back(inputTrajectory[j]);
-          } else {
-            inputTrajectoryTemp.push_back(input_vector_t::Constant(NAN));
           }
         }
 
         // display
-        display(partitionIndex, timeTrajectoryTemp, eventsPastTheEndIndeces, stateTrajectoryTemp, inputTrajectoryTemp);
+        const input_vector_array_t* const inputTrajectoryTempPtr =
+            rolloutSettings_.reconstructInputTrajectory_ ? &inputTrajectoryTemp : nullptr;
+        display(partitionIndex, timeTrajectoryTemp, eventsPastTheEndIndeces, stateTrajectoryTemp, inputTrajectoryTempPtr);
 
         controller->display();
 

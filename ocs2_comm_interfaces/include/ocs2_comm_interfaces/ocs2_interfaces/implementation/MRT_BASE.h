@@ -74,22 +74,6 @@ void MRT_BASE<STATE_DIM, INPUT_DIM>::reset() {
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
-const typename MRT_BASE<STATE_DIM, INPUT_DIM>::CommandData& MRT_BASE<STATE_DIM, INPUT_DIM>::getCommand() const {
-  return *currentCommand_;
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM>
-const typename MRT_BASE<STATE_DIM, INPUT_DIM>::PolicyData& MRT_BASE<STATE_DIM, INPUT_DIM>::getPolicy() const {
-  return *currentPolicy_;
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM>
 void MRT_BASE<STATE_DIM, INPUT_DIM>::initRollout(const ControlledSystemBase<STATE_DIM, INPUT_DIM>& controlSystemBase,
                                                  const Rollout_Settings& rolloutSettings) {
   rolloutPtr_.reset(new TimeTriggeredRollout<STATE_DIM, INPUT_DIM>(controlSystemBase, rolloutSettings, "mrt"));

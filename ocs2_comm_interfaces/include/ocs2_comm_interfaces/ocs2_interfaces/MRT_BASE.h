@@ -96,13 +96,13 @@ class MRT_BASE {
    *
    * @return a constant reference to command data.
    */
-  const CommandData& getCommand() const;
+  const CommandData& getCommand() const { return *currentCommand_; };
 
   /**
    * Gets a reference to current optimized policy.
    * @return constant reference to the policy data.
    */
-  const PolicyData& getPolicy() const;
+  const PolicyData& getPolicy() const { return *currentPolicy_; };
 
   /**
    * Initializes rollout class to roll out a feedback policy

@@ -150,10 +150,4 @@ bool MPC_MRT_Interface<STATE_DIM, INPUT_DIM>::updatePolicyImpl() {
   return false;
 }
 
-template <size_t STATE_DIM, size_t INPUT_DIM>
-const typename MPC_MRT_Interface<STATE_DIM, INPUT_DIM>::input_vector_array_t&
-MPC_MRT_Interface<STATE_DIM, INPUT_DIM>::getMpcInputTrajectory() const {
-  return mpcInputTrajectory_;
-}
-
 }  // namespace ocs2

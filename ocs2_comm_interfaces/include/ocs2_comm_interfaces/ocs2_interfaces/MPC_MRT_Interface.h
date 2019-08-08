@@ -99,7 +99,7 @@ class MPC_MRT_Interface final : public MRT_BASE<STATE_DIM, INPUT_DIM> {
    * @brief Access the currently in-use input trajectory.
    * @note To get the latest policy from MPC, call updatePolicy() first
    */
-  const input_vector_array_t& getMpcInputTrajectory() const;
+  const input_vector_array_t& getMpcInputTrajectory() const { return mpcInputTrajectory_; };
 
  protected:
   bool updatePolicyImpl() override;

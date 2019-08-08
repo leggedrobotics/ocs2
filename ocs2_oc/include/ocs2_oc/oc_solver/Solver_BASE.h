@@ -268,7 +268,7 @@ class Solver_BASE {
    *
    * @param [out] costDesiredTrajectories: A pointer to the cost function desired trajectories
    */
-  const cost_desired_trajectories_t& getCostDesiredTrajectories() const;
+  const cost_desired_trajectories_t& getCostDesiredTrajectories() const { return costDesiredTrajectories_; };
 
   /**
    * Sets the cost function desired trajectories.
@@ -309,7 +309,7 @@ class Solver_BASE {
    *
    * @return true if it is updated.
    */
-  bool costDesiredTrajectoriesUpdated() const;
+  bool costDesiredTrajectoriesUpdated() const { return costDesiredTrajectoriesUpdated_; };
 
   /**
    * Returns an array of pointer to the optimal control policies.

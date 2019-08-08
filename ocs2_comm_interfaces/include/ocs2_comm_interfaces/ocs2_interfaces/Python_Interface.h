@@ -40,7 +40,7 @@ class PythonInterface {
    * @brief Constructor
    * @param[in] async: Whether or not to run MPC in a separate thread
    */
-  PythonInterface(bool async = false);
+  explicit PythonInterface(bool async = false);
 
   //! @brief Destructor
   virtual ~PythonInterface();

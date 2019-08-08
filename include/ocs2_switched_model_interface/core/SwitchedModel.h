@@ -119,9 +119,9 @@ inline Eigen::Matrix<SCALAR_T, 3, 3> CrossProductMatrix(const Eigen::DenseBase<D
 	if (in.innerSize()!=3 || in.outerSize()!=1)  throw std::runtime_error("Input argument should be a 3-by-1 vector.");
 
 	Eigen::Matrix<SCALAR_T, 3, 3> out;
-	out <<   0.0,   -in(2), +in(1),
-			+in(2),  0.0,   -in(0),
-			-in(1), +in(0),  0.0;
+	out <<   SCALAR_T(0.0),   -in(2), +in(1),
+			+in(2),  SCALAR_T(0.0),   -in(0),
+			-in(1), +in(0),  SCALAR_T(0.0);
 	return out;
 }
 

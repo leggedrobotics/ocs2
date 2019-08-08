@@ -351,8 +351,7 @@ void MPC_ROS_Interface<STATE_DIM, INPUT_DIM>::mpcObservationCallback(const ocs2_
   mpcPtr_->getOptimizedTrajectoriesPtr(timeTrajectoriesStockPtr, stateTrajectoriesStockPtr, inputTrajectoriesStockPtr);
 
   // get a pointer to CostDesiredTrajectories
-  const cost_desired_trajectories_t* costDesiredTrajectoriesPtr;
-  mpcPtr_->getCostDesiredTrajectoriesPtr(costDesiredTrajectoriesPtr);
+  const cost_desired_trajectories_t* costDesiredTrajectoriesPtr = &mpcPtr_->getSolverPtr()->getCostDesiredTrajectories();
 
   // get a pointer to event times and motion sequence
   const scalar_array_t* eventTimesPtr(nullptr);

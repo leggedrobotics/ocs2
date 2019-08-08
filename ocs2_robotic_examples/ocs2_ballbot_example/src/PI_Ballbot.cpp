@@ -5,7 +5,7 @@
 //#include <cfenv>
 
 int main(int argc, char* argv[]) {
-//  feenableexcept(FE_DIVBYZERO | FE_INVALID | FE_OVERFLOW);
+  //  feenableexcept(FE_DIVBYZERO | FE_INVALID | FE_OVERFLOW);
 
   // task file
   if (argc <= 1) {

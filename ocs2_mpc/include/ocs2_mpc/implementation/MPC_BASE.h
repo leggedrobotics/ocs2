@@ -378,14 +378,6 @@ void MPC_BASE<STATE_DIM, INPUT_DIM>::setNewLogicRulesTemplate(const mode_sequenc
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
-void MPC_BASE<STATE_DIM, INPUT_DIM>::getCostDesiredTrajectoriesPtr(const cost_desired_trajectories_t*& costDesiredTrajectoriesPtr) const {
-  solverPtr_->getCostDesiredTrajectoriesPtr(costDesiredTrajectoriesPtr);
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM>
 typename MPC_BASE<STATE_DIM, INPUT_DIM>::controller_ptr_array_t const* MPC_BASE<STATE_DIM, INPUT_DIM>::getOptimizedControllerPtr() const {
   return optimizedControllersStockPtr_;
 }

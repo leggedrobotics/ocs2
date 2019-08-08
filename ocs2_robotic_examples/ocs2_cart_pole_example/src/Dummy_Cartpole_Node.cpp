@@ -53,7 +53,6 @@ int main(int argc, char **argv)
 	mrt_ptr_t mrtPtr(new mrt_t("cartpole"));
 
 	// Dummy cartpole
-	const double mrtLoopFrequency = 100;
 	MRT_ROS_Dummy_Cartpole dummyCartpole(
 			mrtPtr,
 			cartPoleInterface.mpcSettings().mrtDesiredFrequency_,

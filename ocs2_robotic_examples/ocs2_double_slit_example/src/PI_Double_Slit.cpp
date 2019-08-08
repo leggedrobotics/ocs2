@@ -18,7 +18,7 @@ int main(int argc, char* argv[]) {
   ocs2::double_slit::DoubleSlitInterface doubleSlitInterface(argv[1]);  // NOLINT(cppcoreguidelines-pro-bounds-pointer-arithmetic)
 
   // MPC ROS Node
-  ocs2::MPC_ROS_Interface<ocs2::double_slit::STATE_DIM_, ocs2::double_slit::INPUT_DIM_> mpcNode(doubleSlitInterface.getPiMpcPtr(),
+  ocs2::MPC_ROS_Interface<ocs2::double_slit::STATE_DIM_, ocs2::double_slit::INPUT_DIM_> mpcNode(doubleSlitInterface.getMpcPtr(),
                                                                                                 "double_slit");
   mpcNode.launchNodes(argc, argv);
 

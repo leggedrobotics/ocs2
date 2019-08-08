@@ -56,7 +56,7 @@ void FrankWolfeGDDP<STATE_DIM, INPUT_DIM>::run(
 		return;
 
 	// display
-	if (gddpSettings.displayInfo_)
+	if (this->gddpSettings_.displayInfo_)
 		std::cerr << "Gradient:             " << this->nominalCostFuntionDerivative_.transpose() << std::endl;
 
 	// compute the projected gradient
@@ -67,7 +67,7 @@ void FrankWolfeGDDP<STATE_DIM, INPUT_DIM>::run(
 	this->nominalCostFuntionDerivative_ = -fwDescentDirection;
 
 	// display
-	if (gddpSettings.displayInfo_) {
+	if (this->gddpSettings_.displayInfo_) {
 		std::cerr << "Frank-Wolfe gradient: " << this->nominalCostFuntionDerivative_.transpose() << std::endl;
 	}
 }

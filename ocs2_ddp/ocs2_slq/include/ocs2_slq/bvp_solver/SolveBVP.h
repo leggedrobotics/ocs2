@@ -156,7 +156,7 @@ class SolveBVP {
           std::cerr << "Mm[" << timeTrajectory[kp] << "]:\n" << MmTrajectory[kp].transpose() << std::endl;
           std::cerr << "Sv[" << timeTrajectory[kp] << "]:\t" << SvTrajectory[kp].transpose() << std::endl;
         }
-        exit(1);
+        throw;
       }
 
     }  // end of k loop
@@ -213,7 +213,7 @@ class SolveBVP {
           std::cerr << "Mm[" << *(timeTrajectoryBeginItr + kp) << "]:\n" << MmTrajectory[kp].transpose() << std::endl;
           std::cerr << "Sv[" << *(timeTrajectoryBeginItr + kp) << "]:\t" << SvTrajectory[kp].transpose() << std::endl;
         }
-        exit(1);
+        throw;
       }
 
     }  // end of k loop

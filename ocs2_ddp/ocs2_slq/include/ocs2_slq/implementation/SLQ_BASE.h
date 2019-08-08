@@ -485,7 +485,7 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM>::solveSlqRiccatiEquationsWorker(size_t worke
           std::cerr << "s[" << BASE::SsTimeTrajectoryStock_[partitionIndex][kp] << "]:  \t"
                     << BASE::sTrajectoryStock_[partitionIndex][kp].transpose().norm() << std::endl;
         }
-        exit(0);
+        throw;
       }
     }
   }

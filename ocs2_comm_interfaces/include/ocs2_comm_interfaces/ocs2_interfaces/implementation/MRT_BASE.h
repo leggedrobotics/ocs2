@@ -148,7 +148,13 @@ void MRT_BASE<STATE_DIM, INPUT_DIM>::rolloutPolicy(scalar_t currentTime, const s
 template <size_t STATE_DIM, size_t INPUT_DIM>
 bool MRT_BASE<STATE_DIM, INPUT_DIM>::updatePolicy() {
   std::lock_guard<std::mutex> lock(policyBufferMutex_);
-
+  return updatePolicyImpl();
+}
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+template <size_t STATE_DIM, size_t INPUT_DIM>
+bool MRT_BASE<STATE_DIM, INPUT_DIM>::updatePolicyImpl() {
   if (!policyUpdatedBuffer_ or !newPolicyInBuffer_) {
     return false;
   }

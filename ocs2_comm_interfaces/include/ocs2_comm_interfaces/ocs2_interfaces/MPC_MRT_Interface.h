@@ -102,7 +102,6 @@ class MPC_MRT_Interface final : public MRT_BASE<STATE_DIM, INPUT_DIM> {
   const input_vector_array_t& getMpcInputTrajectory() const;
 
  protected:
-
   bool updatePolicyImpl() override;
 
   /**

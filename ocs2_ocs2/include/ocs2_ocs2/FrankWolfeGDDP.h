@@ -57,6 +57,13 @@ public:
 	using typename BASE::slq_data_collector_t;
 
 	/**
+	 * Default constructor.
+	 */
+	FrankWolfeGDDP()
+	: FrankWolfeGDDP(GDDP_Settings())
+	{}
+
+	/**
      * Constructor.
      *
      * @param [in] settings: Structure containing the settings for the SLQ algorithm.

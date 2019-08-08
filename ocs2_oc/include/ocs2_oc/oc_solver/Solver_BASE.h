@@ -162,7 +162,7 @@ class Solver_BASE {
    * @param [in] initState: The initial state.
    * @param [in] finalTime: The final time.
    * @param [in] partitioningTimes: The time partitioning.
-   * @param [in] controllersPtrStock: controllersPtrStock: Array of pointers to the initial control policies. If you want to use the control
+   * @param [in] controllersPtrStock: Array of pointers to the initial control policies. If you want to use the control
    * policy which was designed by the previous call of the "run" routine, you should pass an empty array. In the this case, two scenarios
    * are possible: either the internal controller is already set (such as the MPC case where the warm starting option is set true) or the
    * internal controller is empty in which instead of performing a rollout the operating trajectories will be used.

@@ -32,7 +32,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <ocs2_slq/GLQP.h>
 
-#include "ocs2_ocs2/GSLQ.h"
+#include "ocs2_ocs2/GDDP.h"
 
 namespace ocs2{
 

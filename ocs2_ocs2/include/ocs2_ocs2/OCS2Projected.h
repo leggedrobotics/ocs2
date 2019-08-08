@@ -57,10 +57,6 @@ class OCS2Projected : private nlp::GradientDescent<double>
 public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-
-
-	typedef std::shared_ptr<OCS2Projected<STATE_DIM, INPUT_DIM>> Ptr;
-
 	typedef nlp::GradientDescent<double> BASE;
 
 	typedef SLQ_BASE<STATE_DIM, INPUT_DIM>  slq_base_t;
@@ -80,7 +76,6 @@ public:
 	typedef typename slq_base_t::cost_function_base_t          cost_function_base_t;
 	typedef typename slq_base_t::cost_desired_trajectories_t   cost_desired_trajectories_t;
 	typedef typename slq_base_t::operating_trajectories_base_t operating_trajectories_base_t;
-
 
 	typedef Dimensions<STATE_DIM, INPUT_DIM> DIMENSIONS;
 

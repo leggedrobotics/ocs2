@@ -27,63 +27,58 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <gtest/gtest.h>
+#ifndef MODESEQUENCE_OCS2_H_
+#define MODESEQUENCE_OCS2_H_
 
-#include <glpk.h>
+#include <iostream>
+#include <vector>
 
-TEST(testGLPK, glpk)
-{
-	glp_prob *lp;
-	int ia[1+1000], ja[1+1000];
-	double ar[1+1000], z, x1, x2, x3;
-	lp = glp_create_prob();
-	glp_set_prob_name(lp, "FrankWolfe");
-	glp_set_obj_dir(lp, GLP_MAX);
+namespace ocs2 {
 
+/**
+ * Mode sequence template.
+ *
+ */
+template <typename scalar_t = double>
+struct ModeSequenceTemplate {
+  ModeSequenceTemplate() : templateSwitchingTimes_(0), templateSubsystemsSequence_(0) {}
 
-	glp_add_rows(lp, 3);
-	glp_set_row_bnds(lp, 1, GLP_UP, 0.0, 100.0);
-	glp_set_row_bnds(lp, 2, GLP_UP, 0.0, 600.0);
-	glp_set_row_bnds(lp, 3, GLP_UP, 0.0, 300.0);
+  /**
+   * Defined as [t_0=0, t_1, .., t_n, t_(n+1)=T], where T is the overall duration
+   * of the template logic. t_1 to t_n are the event moments.
+   */
+  std::vector<scalar_t> templateSwitchingTimes_;
 
-	glp_add_cols(lp, 3);
-	glp_set_col_bnds(lp, 1, GLP_LO, 0.0, 0.0);
-	glp_set_obj_coef(lp, 1, 10.0);
-	glp_set_col_bnds(lp, 2, GLP_LO, 0.0, 0.0);
-	glp_set_obj_coef(lp, 2, 6.0);
-	glp_set_col_bnds(lp, 3, GLP_LO, 0.0, 0.0);
-	glp_set_obj_coef(lp, 3, 4.0);
+  /**
+   * Defined as [sys_0, sys_n], are the switching systems IDs. Here sys_i is
+   * active in period [t_i, t_(i+1)]
+   */
+  std::vector<size_t> templateSubsystemsSequence_;
 
-	ia[1] = 1, ja[1] = 1, ar[1] =  1.0; /* a[1,1] =  1 */
-	ia[2] = 1, ja[2] = 2, ar[2] =  1.0; /* a[1,2] =  1 */
-	ia[3] = 1, ja[3] = 3, ar[3] =  1.0; /* a[1,3] =  1 */
-	ia[4] = 2, ja[4] = 1, ar[4] = 10.0; /* a[2,1] = 10 */
-	ia[5] = 3, ja[5] = 1, ar[5] =  2.0; /* a[3,1] =  2 */
-	ia[6] = 2, ja[6] = 2, ar[6] =  4.0; /* a[2,2] =  4 */
-	ia[7] = 3, ja[7] = 2, ar[7] =  2.0; /* a[3,2] =  2 */
-	ia[8] = 2, ja[8] = 3, ar[8] =  5.0; /* a[2,3] =  5 */
-	ia[9] = 3, ja[9] = 3, ar[9] =  6.0; /* a[3,3] =  6 */
-	glp_load_matrix(lp, 9, ia, ja, ar);
+  /**
+   * Displays template information.
+   */
+  void display() const {
+    std::cerr << std::endl << "Template switching times:\n\t {";
+    for (auto& s : templateSwitchingTimes_) {
+      std::cerr << s << ", ";
+    }
+    if (!templateSwitchingTimes_.empty()) {
+      std::cerr << "\b\b";
+    }
+    std::cerr << "}" << std::endl;
 
-	glp_smcp lpOptions_;
-	glp_init_smcp(&lpOptions_);
-	lpOptions_.msg_lev = GLP_MSG_ERR;
+    std::cerr << "Template subsystem sequence:\n\t {";
+    for (auto& s : templateSubsystemsSequence_) {
+      std::cerr << s << ", ";
+    }
+    if (!templateSubsystemsSequence_.empty()) {
+      std::cerr << "\b\b";
+    }
+    std::cerr << "}" << std::endl;
+  }
+};
 
-	glp_simplex(lp, &lpOptions_);
-	z = glp_get_obj_val(lp);
-	x1 = glp_get_col_prim(lp, 1);
-	x2 = glp_get_col_prim(lp, 2);
-	x3 = glp_get_col_prim(lp, 3);
+}  // namespace ocs2
 
-	printf("z = %g; x1 = %g; x2 = %g; x3 = %g\n",	z, x1, x2, x3);
-
-	glp_delete_prob(lp);
-}
-
-int main(int argc, char** argv)
-{
-	testing::InitGoogleTest(&argc, argv);
-	return RUN_ALL_TESTS();
-}
+#endif /* MODESEQUENCE_OCS2_H_ */

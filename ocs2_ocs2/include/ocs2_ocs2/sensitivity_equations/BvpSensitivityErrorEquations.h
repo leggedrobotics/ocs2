@@ -100,8 +100,6 @@ public:
 	 * Sets Data
 	 */
 	void setData(
-			const scalar_t& switchingTimeStart,
-			const scalar_t& switchingTimeFinal,
 			const scalar_array_t* timeStampPtr,
 			const state_input_matrix_array_t* BmPtr,
 			const state_matrix_array_t* AmConstrainedPtr,
@@ -114,12 +112,7 @@ public:
 			const scalar_array_t* SmTimeStampPtr,
 			const state_matrix_array_t* SmPtr)  {
 
-
 		BASE::resetNumFunctionCalls();
-
-		switchingTimeStart_ = switchingTimeStart;
-		switchingTimeFinal_ = switchingTimeFinal;
-		scalingFactor_      = switchingTimeFinal - switchingTimeStart;
 
 		BmFunc_.setData(timeStampPtr, BmPtr);
 		AmConstrainedFunc_.setData(timeStampPtr, AmConstrainedPtr);
@@ -153,7 +146,7 @@ public:
 		BASE::numFunctionCalls_++;
 
 		// denormalized time
-		const scalar_t t = switchingTimeFinal_ - scalingFactor_*z;
+		const scalar_t t = -z;
 
 		auto indexAlpha = BmFunc_.interpolate(t, Bm_);
 		AmConstrainedFunc_.interpolate(indexAlpha,  AmConstrained_);
@@ -170,18 +163,12 @@ public:
 		// TODO: Double check if equations are correct after change to cholesky decomposition approach
 		Lm_ = RinvChol_.transpose() *(Pm_+Bm_.transpose()*Sm_);
 
-		dMvedt_ = (AmConstrained_ - Bm_*RinvChol_*Lm_).transpose()*Mve +
+		dMvedz = (AmConstrained_ - Bm_*RinvChol_*Lm_).transpose()*Mve +
 				(CmProjected_-RinvChol_*Lm_).transpose()*Rm_*EvDevProjected_;
-
-		dMvedz = scalingFactor_ * dMvedt_;
 	}
 
 
 private:
-	scalar_t switchingTimeStart_ = 0.0;
-	scalar_t switchingTimeFinal_ = 1.0;
-	scalar_t scalingFactor_ = 1.0;
-
 	scalar_t multiplier_ = 0.0;
 
 	LinearInterpolation<state_input_matrix_t,Eigen::aligned_allocator<state_input_matrix_t>> BmFunc_;
@@ -204,8 +191,6 @@ private:
 	input_vector_t EvDevProjected_;
 	state_matrix_t Sm_;
   	dynamic_matrix_t Lm_;
-
-	state_vector_t dMvedt_;
 };
 
 } // namespace ocs2

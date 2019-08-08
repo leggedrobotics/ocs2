@@ -33,55 +33,119 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ocs2_frank_wolfe/GradientDescent.h"
 
 using namespace ocs2;
-using namespace nlp;
 
 /*
  * refer to: https://en.wikipedia.org/wiki/Test_functions_for_optimization
  */
-class MatyasGradientDescent : public GradientDescent<double>
+class MatyasCost final : public NLP_Cost
 {
 public:
+	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-	MatyasGradientDescent() {}
-	~MatyasGradientDescent() {}
+	MatyasCost() = default;
+	~MatyasCost() = default;
 
-	bool calculateCost(const size_t& id, const Eigen::VectorXd& parameters, double& cost) override {
+	size_t setCurrentParameter(const dynamic_vector_t& x) override {
 
-		cost = 0.26 * (pow(parameters(0),2) + pow(parameters(1),2)) - 0.48 * parameters(0) * parameters(1);
+		x_ = x;
+		return 0;
+	}
+
+	bool getCost(size_t id, scalar_t& f) override {
+
+		f = 0.26 * (pow(x_(0),2) + pow(x_(1),2)) - 0.48 * x_(0) * x_(1);
 		return true;
 	}
 
-	void calculateLinearInequalityConstraint(Eigen::MatrixXd& Cm, Eigen::VectorXd& Dv) override {
-		const double maxX = 10.0;
-		const double minX = -10.0;
+	void getCostDerivative(size_t id, dynamic_vector_t& g) override {
 
-		Cm.resize(2*numParameters(),numParameters());
-		Dv.resize(2*numParameters());
-
-		Cm.topRows(numParameters())    =  Eigen::MatrixXd::Identity(numParameters(), numParameters());
-		Cm.bottomRows(numParameters()) = -Eigen::MatrixXd::Identity(numParameters(), numParameters());
-
-		Dv.head(numParameters()) = -maxX * Eigen::VectorXd::Ones(numParameters());
-		Dv.tail(numParameters()) =  minX * Eigen::VectorXd::Ones(numParameters());
-
-		std::cout << "C\n" << Cm << std::endl;
-		std::cout << "D\n" << Dv << std::endl;
+		g.resize(2);
+		g(0) = 0.26 * 2.0 * x_(0) - 0.48 * x_(1);
+		g(1) = 0.26 * 2.0 * x_(1) - 0.48 * x_(0);
 	}
 
+	void getCostSecondDerivative(size_t id, dynamic_matrix_t& H) override {
+
+		H.setIdentity(2, 2);
+	}
+
+	void clearCache() override {}
+
+private:
+	dynamic_vector_t x_;
 };
+
+
+class MatyasConstraints final : public NLP_Constraints
+{
+public:
+	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+
+	MatyasConstraints(Eigen::VectorXd minX, Eigen::VectorXd maxX) {
+
+		size_t numParameters = maxX.size();
+
+		Cm_.resize(2*numParameters,numParameters);
+		Dv_.resize(2*numParameters);
+
+		Cm_.topRows(numParameters)    = -Eigen::MatrixXd::Identity(numParameters, numParameters);
+		Cm_.bottomRows(numParameters) =  Eigen::MatrixXd::Identity(numParameters, numParameters);
+
+		Dv_.head(numParameters) =  maxX;
+		Dv_.tail(numParameters) = -minX;
+	}
+
+	~MatyasConstraints() = default;
+
+	void setCurrentParameter(const dynamic_vector_t& x) override {
+
+		x_ = x;
+	}
+
+	void getLinearInequalityConstraint(dynamic_vector_t& h) override {
+
+		h = Cm_*x_ + Dv_;
+	}
+
+	void getLinearInequalityConstraintDerivative(dynamic_matrix_t& dhdx) override {
+
+		dhdx = Cm_;
+	}
+
+private:
+	dynamic_vector_t x_;
+	dynamic_matrix_t Cm_;
+	dynamic_vector_t Dv_;
+};
+
 
 TEST(MatyasTest, MatyasTest)
 {
 
-	MatyasGradientDescent matyasGradientDescent;
+	NLP_Settings nlpSettings;
+	nlpSettings.displayInfo_      = true;
+	nlpSettings.maxIterations_ 	  = 500;
+	nlpSettings.minRelCost_    	  = 1e-6;
+	nlpSettings.maxLearningRate_  = 1.0;
+	nlpSettings.minLearningRate_  = 1e-4;
+	nlpSettings.useAscendingLineSearchNLP_ = false;
 
-	Eigen::Vector2d parameters = 2*Eigen::Vector2d::Ones();
+	GradientDescent nlpSolver(nlpSettings);
+	std::unique_ptr<MatyasCost> costPtr(new MatyasCost);
 
-	matyasGradientDescent.run(parameters);
+	Eigen::VectorXd maxX = Eigen::Vector2d(10.0, 10.0);
+	Eigen::VectorXd minX = Eigen::Vector2d(-10.0, -10.0);
+	std::unique_ptr<MatyasConstraints> constraintsPtr(
+			new MatyasConstraints(minX, maxX));
+
+	Eigen::Vector2d initParameters = 0.5*(maxX+minX) +
+			0.5*(maxX-minX).cwiseProduct(Eigen::Vector2d::Random());
+	nlpSolver.run(initParameters, 0.01*Eigen::Vector2d::Ones(), costPtr.get(), constraintsPtr.get());
 
 	double cost;
-	matyasGradientDescent.getCost(cost);
-	matyasGradientDescent.getParameters(parameters);
+	nlpSolver.getCost(cost);
+	Eigen::VectorXd parameters;
+	nlpSolver.getParameters(parameters);
 
 	std::cout << "cost: " << cost << std::endl;
 	std::cout << "parameters: " << parameters.transpose() << std::endl;
@@ -89,7 +153,7 @@ TEST(MatyasTest, MatyasTest)
 	const double optimalCost = 0.0;
 	const Eigen::Vector2d optimalParameters = Eigen::Vector2d::Ones();
 
-	ASSERT_NEAR(cost, optimalCost, 1e-3) <<
+	ASSERT_NEAR(cost, optimalCost, 10*nlpSettings.minRelCost_) <<
 			"MESSAGE: Frank_Wolfe failed in the Quadratic test!";
 }
 

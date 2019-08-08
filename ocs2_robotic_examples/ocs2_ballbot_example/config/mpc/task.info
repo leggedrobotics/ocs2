@@ -48,7 +48,7 @@ slq
         meritFunctionRho               50.0
         constraintStepSize             1.0    ; 1.0
         displayInfo                    0
-        displayShortSummary            0
+        displayShortSummary            1
     
         AbsTolODE                      1e-5     ;1e-6
         RelTolODE                      1e-3     ;1e-4
@@ -61,7 +61,7 @@ slq
         minRelConstraint1ISE           5e-6
         checkNumericalStability        0
     
-        useMultiThreading              0
+        useMultiThreading              1
         nThreads                       4
         debugPrintMT                   0
         lsStepsizeGreedy               1
@@ -174,12 +174,12 @@ R
 ; final state weight matrix
 Q_final
 {
-    scaling 1e+2
+    scaling 1e+0
 
-  (0,0) 10.0	; px
-  (1,1) 10.0	; py
-  (2,2) 50.0	; thetaz
-  (3,3) 50.0	; thetay
+  (0,0) 10.0  ; px
+  (1,1) 10.0  ; py
+  (2,2) 50.0  ; thetaz
+  (3,3) 50.0  ; thetay
   (4,4) 50.0  ; thetax
 
   (5,5) 10.0 ; px_dot

@@ -1344,10 +1344,9 @@ template <size_t STATE_DIM, size_t INPUT_DIM>
 void DDP_BASE<STATE_DIM, INPUT_DIM>::swapNominalTrajectories(scalar_array2_t& nominalTimeTrajectoriesStock,
                                                              state_vector_array2_t& nominalStateTrajectoriesStock,
                                                              input_vector_array2_t& nominalInputTrajectoriesStock) {
-  // TODO(jcarius) temporary hack (copying) such that getValueFunctionDerivative method still works
-  nominalTimeTrajectoriesStock = nominalTimeTrajectoriesStock_;
-  nominalStateTrajectoriesStock = nominalStateTrajectoriesStock_;
-  nominalInputTrajectoriesStock = nominalInputTrajectoriesStock_;
+  nominalTimeTrajectoriesStock.swap(nominalTimeTrajectoriesStock_);
+  nominalStateTrajectoriesStock.swap(nominalStateTrajectoriesStock_);
+  nominalInputTrajectoriesStock.swap(nominalInputTrajectoriesStock_);
 }
 
 /******************************************************************************************************/

@@ -33,13 +33,11 @@ TEST(Ballbot, PyBindings) {
   auto t_arr = scalar_array_t();
   auto x_arr = state_vector_array_t();
   auto u_arr = input_vector_array_t();
-  auto sigmaX_arr = state_matrix_array_t();
 
-  bindings.getMpcSolution(t_arr, x_arr, u_arr, sigmaX_arr);
+  bindings.getMpcSolution(t_arr, x_arr, u_arr);
 
   EXPECT_EQ(t_arr.size(), x_arr.size());
   EXPECT_EQ(t_arr.size(), u_arr.size());
-  EXPECT_EQ(t_arr.size(), sigmaX_arr.size());
 
   std::cout << "t\t\tx\t\tu" << std::endl;
   for (size_t i = 0; i < t_arr.size(); i++) {
@@ -61,9 +59,6 @@ TEST(Ballbot, PyBindings) {
   auto dLdu = bindings.getRunningCostDerivativeInput(t_arr[0], x_arr[0], u_arr[0]);
 
   std::cout << "L: " << L << "\ndLdx: " << dLdx.transpose() << "\ndLdu: " << dLdu.transpose() << std::endl;
-
-  auto Vx = bindings.getValueFunctionStateDerivative(t_arr[0], x_arr[0]);
-  std::cout << "Vx: " << Vx.transpose() << std::endl;
 
   bindings.reset(costDesiredTraj);
   bindings.setObservation(0.0, initState);

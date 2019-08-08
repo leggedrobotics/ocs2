@@ -82,9 +82,8 @@ class PythonInterface {
    * @param[out] t time array
    * @param[out] x state array
    * @param[out] u input array
-   * @param[out] sigmaX pseudoinverse_of_K array
    */
-  void getMpcSolution(scalar_array_t& t, state_vector_array_t& x, input_vector_array_t& u, state_matrix_array_t& sigmaX);
+  void getMpcSolution(scalar_array_t& t, state_vector_array_t& x, input_vector_array_t& u);
 
   /**
    * @brief Access to system dynamics flow map

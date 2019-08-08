@@ -64,7 +64,7 @@ class MPC_MRT_Interface final : public MRT_BASE<STATE_DIM, INPUT_DIM> {
    * @param[in] mpc the underlying MPC class to be used
    * @param[in] logicRules (optional)
    */
-  MPC_MRT_Interface(mpc_t* mpc, std::shared_ptr<HybridLogicRules> logicRules = nullptr);
+  explicit MPC_MRT_Interface(mpc_t* mpc, std::shared_ptr<HybridLogicRules> logicRules = nullptr);
 
   /**
    * Destructor.
@@ -110,7 +110,13 @@ class MPC_MRT_Interface final : public MRT_BASE<STATE_DIM, INPUT_DIM> {
    */
   void getLinearFeedbackGain(scalar_t time, input_state_matrix_t& K);
 
-  void calculateStateInputConstraintLagrangian(const scalar_t& time, const state_vector_t& state, dynamic_vector_t& nu) const;
+  /**
+   * @brief Computes the Lagrange multiplier related to the state-input constraints
+   * @param[in] time: query time
+   * @param[in] state: query state
+   * @param[out] nu: the Lagrange multiplier
+   */
+  void calculateStateInputConstraintLagrangian(scalar_t time, const state_vector_t& state, dynamic_vector_t& nu) const;
 
   /**
    * @brief Access the currently in-use time trajectory.

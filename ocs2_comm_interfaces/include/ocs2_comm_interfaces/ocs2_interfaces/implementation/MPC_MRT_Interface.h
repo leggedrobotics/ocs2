@@ -185,7 +185,7 @@ void MPC_MRT_Interface<STATE_DIM, INPUT_DIM>::getLinearFeedbackGain(scalar_t tim
 }
 
 template <size_t STATE_DIM, size_t INPUT_DIM>
-void MPC_MRT_Interface<STATE_DIM, INPUT_DIM>::calculateStateInputConstraintLagrangian(const scalar_t& time, const state_vector_t& state,
+void MPC_MRT_Interface<STATE_DIM, INPUT_DIM>::calculateStateInputConstraintLagrangian(scalar_t time, const state_vector_t& state,
                                                                                       dynamic_vector_t& nu) const {
   mpcPtr_->getSolverPtr()->calculateStateInputConstraintLagrangian(time, state, nu);
 }

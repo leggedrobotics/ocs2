@@ -61,8 +61,7 @@ using namespace pybind11::literals;
         .def("setTargetTrajectories", &PY_INTERFACE::setTargetTrajectories, "targetTrajectories"_a)                                       \
         .def("reset", &PY_INTERFACE::reset, "targetTrajectories"_a)                                                                       \
         .def("advanceMpc", &PY_INTERFACE::advanceMpc)                                                                                     \
-        .def("getMpcSolution", &PY_INTERFACE::getMpcSolution, "t"_a.noconvert(), "x"_a.noconvert(), "u"_a.noconvert(),                    \
-             "sigmaX"_a.noconvert())                                                                                                      \
+        .def("getMpcSolution", &PY_INTERFACE::getMpcSolution, "t"_a.noconvert(), "x"_a.noconvert(), "u"_a.noconvert())                    \
         .def("computeFlowMap", &PY_INTERFACE::computeFlowMap, "t"_a, "x"_a.noconvert(), "u"_a.noconvert())                                \
         .def("setFlowMapDerivativeStateAndControl", &PY_INTERFACE::setFlowMapDerivativeStateAndControl, "t"_a, "x"_a.noconvert(),         \
              "u"_a.noconvert())                                                                                                           \

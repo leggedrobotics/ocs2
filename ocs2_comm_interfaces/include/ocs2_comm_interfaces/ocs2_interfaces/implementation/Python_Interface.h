@@ -90,8 +90,7 @@ void PythonInterface<STATE_DIM, INPUT_DIM>::runMpcAsync() {
 }
 
 template <size_t STATE_DIM, size_t INPUT_DIM>
-void PythonInterface<STATE_DIM, INPUT_DIM>::getMpcSolution(scalar_array_t& t, state_vector_array_t& x, input_vector_array_t& u,
-                                                           state_matrix_array_t& sigmaX) {
+void PythonInterface<STATE_DIM, INPUT_DIM>::getMpcSolution(scalar_array_t& t, state_vector_array_t& x, input_vector_array_t& u) {
   if (run_mpc_async_) {
     // make sure MPC is done before we continue
     std::unique_lock<std::mutex> lk(run_mpc_mutex_);
@@ -100,45 +99,11 @@ void PythonInterface<STATE_DIM, INPUT_DIM>::getMpcSolution(scalar_array_t& t, st
     lk.unlock();
   }
 
-  if (!mpcMrtInterface_->updatePolicy()) {
-    std::cerr << "Warning: updatePolicy() returned false. This should never happen." << std::endl;
-  }
-  // TODO(jcarius): should we interpolate here to expose constant time steps?!
+  mpcMrtInterface_->updatePolicy();
+
   t = mpcMrtInterface_->getMpcTimeTrajectory();
   x = mpcMrtInterface_->getMpcStateTrajectory();
   u = mpcMrtInterface_->getMpcInputTrajectory();
-
-  sigmaX.clear();
-  sigmaX.reserve(t.size());
-  for (const auto& ti : t) {
-    input_state_matrix_t ki;
-    mpcMrtInterface_->getLinearFeedbackGain(ti, ki);
-
-#ifdef NDEBUG
-    Eigen::JacobiSVD<input_state_matrix_t> ki_svd(ki, Eigen::ComputeThinU | Eigen::ComputeThinV);
-#else
-    Eigen::JacobiSVD<input_state_matrix_t> ki_svd(ki, Eigen::ComputeFullU | Eigen::ComputeFullV);
-#endif
-
-    auto sv = ki_svd.singularValues();
-    Eigen::VectorXd svInv = (sv.array().abs() > 1e-2).select(sv.array().inverse(), 0.0);
-    state_input_matrix_t svInvMat;
-    svInvMat.setZero();
-    svInvMat.topLeftCorner(sv.size(), sv.size()) = svInv.asDiagonal();
-    state_input_matrix_t kDagger = ki_svd.matrixV() * svInvMat * ki_svd.matrixU().adjoint();
-
-    // std::cerr << "ki\n" << ki << std::endl;
-    // std::cerr << "singularValues: " << sv.transpose() << std::endl;
-    // std::cerr << "singularValuesInv: " << svInv.transpose() << std::endl;
-    // std::cerr << "ki_svd.matrixV()\n" << ki_svd.matrixV() << "\nki_svd.matrixU().adjoint()\n" << ki_svd.matrixU().adjoint() <<
-    // std::endl; std::cerr << "kDagger\n" << kDagger << std::endl; std::cerr << "pyInterfaceCpp: k =\n" << ki << "\nkDagger\n" <<
-    // kDagger << std::endl; std::cerr << "pyInterface k =\n" << ki << std::endl;
-
-    // double beta = 0.01;  // fraction of u_max that corresponds to one std.dev.
-    // input_vector_t uMaxSquared = input_vector_t::Constant(pow(100.0, 2));
-    sigmaX.emplace_back(kDagger * kDagger.transpose());
-    // std::cerr << "sigmaX\n" << sigmaX.back() << std::endl;
-  }
 }
 
 template <size_t STATE_DIM, size_t INPUT_DIM>

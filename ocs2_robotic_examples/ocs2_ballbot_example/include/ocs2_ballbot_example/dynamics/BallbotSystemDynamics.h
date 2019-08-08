@@ -78,7 +78,7 @@ public:
 	 *
 	 * @param [in] dynamicLibraryIsCompiled: Whether a library is already complied.
 	 */
-	BallbotSystemDynamics(const bool& dynamicLibraryIsCompiled = false)
+	explicit BallbotSystemDynamics(const bool& dynamicLibraryIsCompiled = false)
 	: BASE(dynamicLibraryIsCompiled)
 	{
 	    wheelRadius_ = param_.wheelRadius_;

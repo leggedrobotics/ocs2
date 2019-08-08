@@ -17,7 +17,7 @@ class PI_Settings {
   /**
    * @brief PI_Settings constructor with default values
    */
-  PI_Settings(double rollout_dt = 1e-3, double gamma = 0.1, size_t numSamples = 100, int debugPrint = 0)
+  explicit PI_Settings(double gamma = 0.1, size_t numSamples = 100, int debugPrint = 0)
       : gamma_(gamma), numSamples_(numSamples), debugPrint_(debugPrint) {}
 
   /**

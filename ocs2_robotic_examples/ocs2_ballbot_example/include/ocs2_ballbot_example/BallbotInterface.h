@@ -40,6 +40,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_core/constraint/ConstraintBase.h>
 #include <ocs2_core/initialization/SystemOperatingPoint.h>
 #include <ocs2_core/misc/loadEigenMatrix.h>
+#include <ocs2_mpc/MPC_PI.h>
 #include <ocs2_mpc/MPC_SLQ.h>
 #include <ocs2_robotic_tools/common/RobotInterfaceBase.h>
 
@@ -66,12 +67,13 @@ class BallbotInterface final : public RobotInterfaceBase<ballbot::STATE_DIM_, ba
   using ballbotOperatingPoint_t = SystemOperatingPoint<ballbot::STATE_DIM_, ballbot::INPUT_DIM_>;
 
   using mpc_t = ocs2::MPC_SLQ<ballbot::STATE_DIM_, ballbot::INPUT_DIM_>;
+  using mpc_pi_t = MPC_PI<ballbot::STATE_DIM_, ballbot::INPUT_DIM_>;
 
   /**
    * Constructor
    * @param [in] taskFileFolderName: The name of the folder containing task file
    */
-  BallbotInterface(const std::string& taskFileFolderName);
+  explicit BallbotInterface(const std::string& taskFileFolderName);
 
   /**
    * Destructor
@@ -88,6 +90,12 @@ class BallbotInterface final : public RobotInterfaceBase<ballbot::STATE_DIM_, ba
   SLQ_Settings& slqSettings();
 
   mpc_t* getMpcPtr() override { return mpcPtr_.get(); }
+
+  /**
+   * @brief getMpcPiPtr
+   * @return pointer to the internal path integral MPC
+   */
+  mpc_pi_t* getMpcPiPtr() { return mpcPi_.get(); }
 
   BallbotSystemDynamics* getDynamicsPtr() override { return ballbotSystemDynamicsPtr_.get(); }
   BallbotSystemDynamics const* getDynamicsDerivativesPtr() override { return ballbotSystemDynamicsPtr_.get(); }
@@ -109,7 +117,9 @@ class BallbotInterface final : public RobotInterfaceBase<ballbot::STATE_DIM_, ba
   std::string libraryFolder_;
 
   SLQ_Settings slqSettings_;
+  PI_Settings piSettings_;
   std::unique_ptr<mpc_t> mpcPtr_;
+  std::unique_ptr<mpc_pi_t> mpcPi_;
 
   BallbotSystemDynamics::Ptr ballbotSystemDynamicsPtr_;
   BallbotCost::Ptr ballbotCostPtr_;

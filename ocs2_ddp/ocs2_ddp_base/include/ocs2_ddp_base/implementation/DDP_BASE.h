@@ -259,7 +259,7 @@ typename DDP_BASE<STATE_DIM, INPUT_DIM>::scalar_t DDP_BASE<STATE_DIM, INPUT_DIM>
   if (ddpSettings_.debugPrintRollout_) {
     for (size_t i = 0; i < numPartitions; i++) {
       rollout_base_t::display(i, timeTrajectoriesStock[i], eventsPastTheEndIndecesStock[i], stateTrajectoriesStock[i],
-                              inputTrajectoriesStock[i]);
+                              &inputTrajectoriesStock[i]);
     }
   }
 

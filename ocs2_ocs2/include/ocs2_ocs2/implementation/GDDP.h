@@ -207,7 +207,6 @@ void GDDP<STATE_DIM, INPUT_DIM>::calculateRolloutCostate(
 			SveFunc_.interpolate(indexAlpha,  Sve);
 
 			costateTrajectoriesStock[i][k] = Sve + Sv;
-
 		}  // end of k loop
 	}  // end of i loop
 }
@@ -380,7 +379,6 @@ void GDDP<STATE_DIM, INPUT_DIM>::calculateNominalRolloutLagrangeMultiplier(
 			lagrangeTrajectoriesStock[i][k].head(nc1) = DmDager.leftCols(nc1).transpose() * (
 					Rm*EvProjected - Rv - Bm.transpose()*costate );
 			lagrangeTrajectoriesStock[i][k].tail(DIMENSIONS::MAX_CONSTRAINT1_DIM_-nc1).setZero();
-
 		}  // end of k loop
 	}  // end of i loop
 }
@@ -779,8 +777,6 @@ void GDDP<STATE_DIM, INPUT_DIM>::solveSensitivityRiccatiEquations(
 		riccatiSensitivityEquationsPtrStock_[workerIndex]->reset();
 		riccatiSensitivityEquationsPtrStock_[workerIndex]->setData(
 				learningRate,
-				dcPtr_->partitioningTimes_[i],
-				dcPtr_->partitioningTimes_[i+1],
 				&dcPtr_->SsTimeTrajectoriesStock_[i],
 				&dcPtr_->SmTrajectoriesStock_[i],
 				&dcPtr_->SvTrajectoriesStock_[i],
@@ -828,7 +824,7 @@ void GDDP<STATE_DIM, INPUT_DIM>::solveSensitivityRiccatiEquations(
 
 				// finding the current active subsystem
 				scalar_t midNormalizedTime = 0.5 * (*beginTimeItr+*(endTimeItr-1));
-				scalar_t midTime = dcPtr_->partitioningTimes_[i+1] - (dcPtr_->partitioningTimes_[i+1]-dcPtr_->partitioningTimes_[i])*midNormalizedTime;
+				scalar_t midTime = -midNormalizedTime;
 				size_t activeSubsystem = findActiveSubsystemIndex(eventTimes_, midTime);
 
 				// compute multiplier of the equivalent system
@@ -923,8 +919,6 @@ void GDDP<STATE_DIM, INPUT_DIM>::solveSensitivityBVP(
 		bvpSensitivityEquationsPtrStock_[workerIndex]->reset();
 		bvpSensitivityEquationsPtrStock_[workerIndex]->resetNumFunctionCalls();
 		bvpSensitivityEquationsPtrStock_[workerIndex]->setData(
-				dcPtr_->partitioningTimes_[i],
-				dcPtr_->partitioningTimes_[i+1],
 				&dcPtr_->nominalTimeTrajectoriesStock_[i],
 				&dcPtr_->AmTrajectoriesStock_[i],
 				&dcPtr_->BmTrajectoriesStock_[i],
@@ -943,8 +937,6 @@ void GDDP<STATE_DIM, INPUT_DIM>::solveSensitivityBVP(
 		bvpSensitivityErrorEquationsPtrStock_[workerIndex]->reset();
 		bvpSensitivityErrorEquationsPtrStock_[workerIndex]->resetNumFunctionCalls();
 		bvpSensitivityErrorEquationsPtrStock_[workerIndex]->setData(
-				dcPtr_->partitioningTimes_[i],
-				dcPtr_->partitioningTimes_[i+1],
 				&dcPtr_->nominalTimeTrajectoriesStock_[i],
 				&dcPtr_->BmTrajectoriesStock_[i],
 				&dcPtr_->AmConstrainedTrajectoriesStock_[i],
@@ -992,7 +984,7 @@ void GDDP<STATE_DIM, INPUT_DIM>::solveSensitivityBVP(
 
 				// finding the current active subsystem
 				scalar_t midNormalizedTime = 0.5 * (*beginTimeItr+*(endTimeItr-1));
-				scalar_t midTime = dcPtr_->partitioningTimes_[i+1] - (dcPtr_->partitioningTimes_[i+1]-dcPtr_->partitioningTimes_[i])*midNormalizedTime;
+				scalar_t midTime = -midNormalizedTime;
 				size_t activeSubsystem = findActiveSubsystemIndex(eventTimes_, midTime);
 
 				// compute multiplier of the equivalent system
@@ -1031,7 +1023,6 @@ void GDDP<STATE_DIM, INPUT_DIM>::solveSensitivityBVP(
 //				MvFinalInternal += dcPtr_->QvFinalStock_[i][NE-1-j];
 				MveFinalInternal = rMveTrajectory.back();
 			}
-
 		}  // end of j loop
 
 		// final value of the next partition
@@ -1397,7 +1388,6 @@ void GDDP<STATE_DIM, INPUT_DIM>::runLQBasedMethod()  {
 				nablaSmTrajectoriesStockSet_[index].clear();
 				nominalCostFuntionDerivative_(index) = 0.0;
 			}
-
 		}  // end of index loop
 
 	}  // end of while loop

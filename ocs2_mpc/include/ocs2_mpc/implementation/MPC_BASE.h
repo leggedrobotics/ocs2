@@ -29,8 +29,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 namespace ocs2 {
 
-using namespace std::chrono;
-
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
@@ -43,7 +41,6 @@ MPC_BASE<STATE_DIM, INPUT_DIM>::MPC_BASE()
       optimizedTimeTrajectoriesStockPtr_(nullptr),
       optimizedStateTrajectoriesStockPtr_(nullptr),
       optimizedInputTrajectoriesStockPtr_(nullptr),
-      measuredRuntimeMS_(0),
       initnumPartitions_(0),
       initPartitioningTimes_(0),
       numPartitions_(0),
@@ -68,7 +65,6 @@ MPC_BASE<STATE_DIM, INPUT_DIM>::MPC_BASE(const scalar_array_t& partitioningTimes
       optimizedTimeTrajectoriesStockPtr_(nullptr),
       optimizedStateTrajectoriesStockPtr_(nullptr),
       optimizedInputTrajectoriesStockPtr_(nullptr),
-      measuredRuntimeMS_(0),
       initnumPartitions_(partitioningTimes.size() - 1),
       initPartitioningTimes_(partitioningTimes),
       numPartitions_(0),
@@ -108,12 +104,13 @@ MPC_BASE<STATE_DIM, INPUT_DIM>::MPC_BASE(const scalar_array_t& partitioningTimes
 template <size_t STATE_DIM, size_t INPUT_DIM>
 void MPC_BASE<STATE_DIM, INPUT_DIM>::reset() {
   initRun_ = true;
-  measuredRuntimeMS_ = std::chrono::milliseconds(0);
   logicRulesTemplateUpdated_ = false;
   optimizedControllersStockPtr_ = nullptr;
   optimizedTimeTrajectoriesStockPtr_ = nullptr;
   optimizedStateTrajectoriesStockPtr_ = nullptr;
   optimizedInputTrajectoriesStockPtr_ = nullptr;
+
+  mpcTimer_.reset();
 
   solverPtr_->reset();
   // reset it if time is reset in MRT
@@ -155,11 +152,10 @@ void MPC_BASE<STATE_DIM, INPUT_DIM>::rewind() {
   // is updated as well the update method will be called automatically.
   if (solverPtr_->getLogicRulesPtr()) {
     const scalar_array_t& eventTimes = solverPtr_->getLogicRulesPtr()->eventTimes();
-    if (eventTimes.size() > 0 && eventTimes.back() <= partitioningTimes_.back())
+    if (eventTimes.size() > 0 && eventTimes.back() <= partitioningTimes_.back()) {
       solverPtr_->getLogicRulesPtr()->rewind(partitioningTimes_.front(), partitioningTimes_.back());
+    }
   }
-  //	if (solverPtr_->getLogicRulesMachinePtr())
-  //		solverPtr_->getLogicRulesMachinePtr()->logicRulesUpdated();
 }
 
 /******************************************************************************************************/
@@ -171,8 +167,8 @@ void MPC_BASE<STATE_DIM, INPUT_DIM>::adjustmentTimeHorizon(const scalar_array_t&
   // current active subsystem
   initActivePartitionIndex = lookup::findBoundedActiveIntervalInTimeArray(partitioningTimes, initTime);
 
-  if (initTime > partitioningTimes[initActivePartitionIndex + 1] - 4e-3) {
-    initTime = partitioningTimes[initActivePartitionIndex + 1] + 1e-5;
+  if (initTime > partitioningTimes[initActivePartitionIndex + 1] - 4e-3) {  //! @badcode magic epsilon
+    initTime = partitioningTimes[initActivePartitionIndex + 1] + 1e-5;      //! @badcode magic epsilon
     initActivePartitionIndex++;
   }
 
@@ -182,11 +178,11 @@ void MPC_BASE<STATE_DIM, INPUT_DIM>::adjustmentTimeHorizon(const scalar_array_t&
   // if it is at the very beginning of the partition (4e-3) reduce the final time to
   // last partition final time otherwise set to the final time of the current partition
   // (if blockwiseMovingHorizon is active)
-  if (finalTime < partitioningTimes[finalActivePartitionIndex] + 4e-3) {
+  if (finalTime < partitioningTimes[finalActivePartitionIndex] + 4e-3) {  //! @badcode magic epsilon
     finalTime = partitioningTimes[finalActivePartitionIndex];
     finalActivePartitionIndex--;
   } else {
-    if (mpcSettings_.blockwiseMovingHorizon_ == true) {
+    if (mpcSettings_.blockwiseMovingHorizon_) {
       finalTime = partitioningTimes[finalActivePartitionIndex + 1];
     }
   }
@@ -224,7 +220,7 @@ bool MPC_BASE<STATE_DIM, INPUT_DIM>::run(const scalar_t& currentTime, const stat
     std::cerr << std::endl << "#####################################################" << std::endl;
     std::cerr << "### MPC is called at time:  " << currentTime << " [s]." << std::endl;
     // CPU time at the beginning MPC
-    mpcStratTime_ = high_resolution_clock::now();
+    mpcTimer_.startTimer();
   }
 
   /******************************************************************************************
@@ -232,7 +228,7 @@ bool MPC_BASE<STATE_DIM, INPUT_DIM>::run(const scalar_t& currentTime, const stat
    ******************************************************************************************/
   scalar_t initTime = currentTime;
   scalar_t finalTime;
-  if (mpcSettings_.recedingHorizon_ == true) {
+  if (mpcSettings_.recedingHorizon_) {
     finalTime = currentTime + getTimeHorizon();
   } else {
     size_t N = currentTime / getFinalTime();
@@ -272,7 +268,7 @@ bool MPC_BASE<STATE_DIM, INPUT_DIM>::run(const scalar_t& currentTime, const stat
   //*****************************************************************************************
   // Update logicRules if new logicRulesTemplate is set
   //*****************************************************************************************
-  if (logicRulesTemplateUpdated_ == true) {
+  if (logicRulesTemplateUpdated_) {
     // set new templates
     if (!solverPtr_->getLogicRulesPtr()) {
       throw std::runtime_error("MPC Base: solverPtr_->getLogicRulesPtr() must not be nullptr.");
@@ -298,8 +294,11 @@ bool MPC_BASE<STATE_DIM, INPUT_DIM>::run(const scalar_t& currentTime, const stat
   // display
   if (mpcSettings_.debugPrint_) {
     // updating runtime of the MPC for adaptive frequency
-    measuredRuntimeMS_ = duration_cast<milliseconds>(high_resolution_clock::now() - mpcStratTime_);
-    std::cerr << "### Measured runtime delay: " << measuredRuntimeMS_.count() << "[ms]." << std::endl;
+    mpcTimer_.endTimer();
+    std::cerr << "### MPC runtime " << std::endl;
+    std::cerr << "###   Maximum : " << mpcTimer_.getMaxIntervalInMilliseconds() << "[ms]." << std::endl;
+    std::cerr << "###   Average : " << mpcTimer_.getAverageInMilliseconds() << "[ms]." << std::endl;
+    std::cerr << "###   Latest  : " << mpcTimer_.getLastIntervalInMilliseconds() << "[ms]." << std::endl;
   }
 
   return true;
@@ -318,7 +317,7 @@ typename MPC_BASE<STATE_DIM, INPUT_DIM>::scalar_t MPC_BASE<STATE_DIM, INPUT_DIM>
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
 typename MPC_BASE<STATE_DIM, INPUT_DIM>::scalar_t MPC_BASE<STATE_DIM, INPUT_DIM>::getFinalTime() const {
-  if (mpcSettings_.recedingHorizon_ == true) {
+  if (mpcSettings_.recedingHorizon_) {
     return lastControlDesignTime_ + getTimeHorizon();
   } else {
     return initPartitioningTimes_.back();
@@ -330,7 +329,7 @@ typename MPC_BASE<STATE_DIM, INPUT_DIM>::scalar_t MPC_BASE<STATE_DIM, INPUT_DIM>
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
 typename MPC_BASE<STATE_DIM, INPUT_DIM>::scalar_t MPC_BASE<STATE_DIM, INPUT_DIM>::getTimeHorizon() const {
-  if (mpcSettings_.recedingHorizon_ == true) {
+  if (mpcSettings_.recedingHorizon_) {
     return initPartitioningTimes_.back() - initPartitioningTimes_.front();
   } else {
     return initPartitioningTimes_.back() - lastControlDesignTime_;

@@ -29,9 +29,6 @@ class PiSolver final : public Solver_BASE<STATE_DIM, INPUT_DIM> {
 
   using Base = Solver_BASE<STATE_DIM, INPUT_DIM>;
 
-  using typename Base::scalar_array_t;
-  using typename Base::scalar_t;
-  using scalar_array2_t = std::vector<scalar_array_t>;
   using typename Base::controller_ptr_array_t;
   using typename Base::cost_desired_trajectories_t;
   using typename Base::dynamic_vector_array_t;
@@ -43,12 +40,15 @@ class PiSolver final : public Solver_BASE<STATE_DIM, INPUT_DIM> {
   using typename Base::input_vector_array2_t;
   using typename Base::input_vector_array_t;
   using typename Base::input_vector_t;
+  using typename Base::scalar_array_t;
+  using typename Base::scalar_t;
   using typename Base::state_input_matrix_t;
   using typename Base::state_matrix_t;
   using typename Base::state_vector_array2_t;
   using typename Base::state_vector_array_t;
   using typename Base::state_vector_t;
 
+  using scalar_array2_t = std::vector<scalar_array_t>;
   using controlled_system_base_t = ControlledSystemBase<STATE_DIM, INPUT_DIM>;
   using cost_function_t = CostFunctionBase<STATE_DIM, INPUT_DIM>;
   using rollout_t = TimeTriggeredRollout<STATE_DIM, INPUT_DIM>;
@@ -79,8 +79,9 @@ class PiSolver final : public Solver_BASE<STATE_DIM, INPUT_DIM> {
     // TODO(jcarius) how to ensure that we are given a suitable cost function?
     // TODO(jcarius) how to ensure that the constraint is input-affine and full row-rank D?
 
-    // TODO(jcarius) enforce euler forward method in rollout and extract rollout_dt_
-    // see Euler-Maruyama method (https://infoscience.epfl.ch/record/143450/files/sde_tutorial.pdf)
+    if (settings_.rolloutSettings_.integratorType_ != IntegratorType::EULER) {
+      throw std::runtime_error("PiSolver only works with Euler Integration.");
+    }
 
     auto seed = static_cast<unsigned int>(time(nullptr));
     std::cerr << "Setting random seed to controller: " << seed << std::endl;
@@ -131,6 +132,7 @@ class PiSolver final : public Solver_BASE<STATE_DIM, INPUT_DIM> {
         typename rollout_t::input_vector_array_t inputTrajectory;
         rollout_.run(0, initTime, initState, finalTime, &controller_, *Base::getLogicRulesMachinePtr(), timeTrajectory,
                      eventsPastTheEndIndeces, stateTrajectory, inputTrajectory);
+        // see Euler-Maruyama method (https://infoscience.epfl.ch/record/143450/files/sde_tutorial.pdf)
       }
 
       if (controller_.cacheData_.size() != numSteps - 1) {
@@ -179,6 +181,11 @@ class PiSolver final : public Solver_BASE<STATE_DIM, INPUT_DIM> {
       if (std::isfinite(J[sample][numSteps - 1]) && J[sample][numSteps - 1] > maxJ_currStep) {
         maxJ_currStep = J[sample][numSteps - 1];
       }
+    }
+
+    if (maxJ_currStep - minJ_currStep < 1.0) {
+      // the purpose of maxJ is to smoothe the softmax
+      maxJ_currStep = minJ_currStep + 1.0;
     }
 
     // initialize psi
@@ -336,17 +343,20 @@ class PiSolver final : public Solver_BASE<STATE_DIM, INPUT_DIM> {
 
   scalar_t getFinalTime() const override { throw std::runtime_error("not implemented."); }
 
-  /**
-   * Returns the final time of optimization.
-   *
-   * @return finalTime
-   */
   const scalar_array_t& getPartitioningTimes() const override { throw std::runtime_error("not implemented."); }
 
   const controller_ptr_array_t& getController() const override { return nominalControllersPtrStock_; }
 
   void getControllerPtr(const controller_ptr_array_t*& controllersStockPtr) const override {
     controllersStockPtr = &nominalControllersPtrStock_;
+  }
+
+  /**
+   * @brief Sets the initial sampling policy for path integral rollouts
+   * @param The control policy to sample around
+   */
+  void setSamplingPolicy(std::unique_ptr<ControllerBase<STATE_DIM, INPUT_DIM>> samplingPolicy) {
+    controller_.setSamplingPolicy(std::move(samplingPolicy));
   }
 
   const std::vector<scalar_array_t>& getNominalTimeTrajectories() const override { throw std::runtime_error("not implemented."); }

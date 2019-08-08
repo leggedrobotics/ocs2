@@ -53,7 +53,7 @@ class QuadrotorInterface : public RobotInterfaceBase<quadrotor::STATE_DIM_, quad
 public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-	typedef RobotInterfaceBase<quadrotor::STATE_DIM_, quadrotor::INPUT_DIM_> BASE;
+	using BASE = RobotInterfaceBase<quadrotor::STATE_DIM_, quadrotor::INPUT_DIM_>;
 
 	using dim_t = Dimensions<quadrotor::STATE_DIM_, quadrotor::INPUT_DIM_>;
 	using QuadrotorConstraint = ConstraintBase<quadrotor::STATE_DIM_, quadrotor::INPUT_DIM_>;
@@ -100,6 +100,8 @@ public:
 	QuadrotorDynamicsDerivatives const * getDynamicsDerivativesPtr() override { return quadrotorDynamicsDerivativesPtr_.get(); }
 
 	void* getCostPtr() override { return quadrotorCostPtr_.get(); }
+
+	QuadrotorSystemDynamics * getDynamicsPtr() { return quadrotorSystemDynamicsPtr_.get(); }
 
 protected:
 	/**

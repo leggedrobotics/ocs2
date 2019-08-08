@@ -44,15 +44,15 @@ class CartPoleCost final : public QuadraticCostFunction<cartpole::STATE_DIM_, ca
 public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-	typedef std::shared_ptr<CartPoleCost> Ptr;
-	typedef std::shared_ptr<const CartPoleCost> ConstPtr;
+	using Ptr = std::shared_ptr<CartPoleCost>;
+	using ConstPtr = std::shared_ptr<const CartPoleCost>;
 
-	typedef QuadraticCostFunction<cartpole::STATE_DIM_, cartpole::INPUT_DIM_> BASE;
-	typedef typename BASE::scalar_t scalar_t;
-	typedef typename BASE::state_vector_t state_vector_t;
-	typedef typename BASE::state_matrix_t state_matrix_t;
-	typedef typename BASE::input_vector_t input_vector_t;
-	typedef typename BASE::input_matrix_t input_matrix_t;
+	using BASE = QuadraticCostFunction<cartpole::STATE_DIM_, cartpole::INPUT_DIM_>;
+	using scalar_t = typename BASE::scalar_t;
+	using state_vector_t = typename BASE::state_vector_t;
+	using state_matrix_t = typename BASE::state_matrix_t;
+	using input_vector_t = typename BASE::input_vector_t;
+	using input_matrix_t = typename BASE::input_matrix_t;
 
 	/**
 	 * Constructor for the running and final cost function defined as the following:

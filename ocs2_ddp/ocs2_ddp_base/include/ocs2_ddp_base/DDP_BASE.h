@@ -38,6 +38,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_core/dynamics/ControlledSystemBase.h>
 #include <ocs2_core/dynamics/DerivativesBase.h>
 #include <ocs2_core/initialization/SystemOperatingTrajectoriesBase.h>
+#include <ocs2_core/misc/Benchmark.h>
 #include <ocs2_core/misc/LinearInterpolation.h>
 #include <ocs2_core/misc/TrajectorySpreadingController.h>
 
@@ -49,8 +50,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_oc/rollout/TimeTriggeredRollout.h>
 
 #include <ocs2_ddp_base/DDP_Settings.h>
-
-#define BENCHMARK
 
 namespace ocs2 {
 
@@ -64,7 +63,7 @@ template <size_t STATE_DIM, size_t INPUT_DIM>
 class DDP_BASE : public Solver_BASE<STATE_DIM, INPUT_DIM> {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-  typedef Solver_BASE<STATE_DIM, INPUT_DIM> BASE;
+  using BASE = Solver_BASE<STATE_DIM, INPUT_DIM>;
 
   using DIMENSIONS = typename BASE::DIMENSIONS;
   using controller_t = typename BASE::controller_t;
@@ -792,18 +791,11 @@ class DDP_BASE : public Solver_BASE<STATE_DIM, INPUT_DIM> {
   state_vector_t SvHeuristics_;
   state_matrix_t SmHeuristics_;
 
-#ifdef BENCHMARK
-  // Benchmarking
-  size_t BENCHMARK_nIterationsLQ_ = 0;
-  size_t BENCHMARK_nIterationsBP_ = 0;
-  size_t BENCHMARK_nIterationsFP_ = 0;
-  scalar_t BENCHMARK_tAvgLQ_ = 0.0;
-  scalar_t BENCHMARK_tAvgBP_ = 0.0;
-  scalar_t BENCHMARK_tAvgFP_ = 0.0;
-  std::chrono::time_point<std::chrono::steady_clock> BENCHMARK_start_;
-  std::chrono::time_point<std::chrono::steady_clock> BENCHMARK_end_;
-  std::chrono::duration<double> BENCHMARK_diff_;
-#endif
+  benchmark::RepeatedTimer forwardPassTimer_;
+  benchmark::RepeatedTimer linearQuadraticApproximationTimer_;
+  benchmark::RepeatedTimer backwardPassTimer_;
+  benchmark::RepeatedTimer computeControllerTimer_;
+  benchmark::RepeatedTimer linesearchTimer_;
 };
 
 }  // namespace ocs2

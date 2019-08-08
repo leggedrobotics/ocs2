@@ -49,7 +49,7 @@ class OperatingTrajectoriesRollout : public RolloutBase<STATE_DIM, INPUT_DIM> {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-  typedef RolloutBase<STATE_DIM, INPUT_DIM> BASE;
+  using BASE = RolloutBase<STATE_DIM, INPUT_DIM>;
 
   using controller_t = typename BASE::controller_t;
   using size_array_t = typename BASE::size_array_t;
@@ -60,7 +60,7 @@ class OperatingTrajectoriesRollout : public RolloutBase<STATE_DIM, INPUT_DIM> {
   using input_vector_t = typename BASE::input_vector_t;
   using input_vector_array_t = typename BASE::input_vector_array_t;
 
-  typedef SystemOperatingTrajectoriesBase<STATE_DIM, INPUT_DIM> operating_trajectories_t;
+  using operating_trajectories_t = SystemOperatingTrajectoriesBase<STATE_DIM, INPUT_DIM>;
 
   using logic_rules_machine_t = HybridLogicRulesMachine;
 

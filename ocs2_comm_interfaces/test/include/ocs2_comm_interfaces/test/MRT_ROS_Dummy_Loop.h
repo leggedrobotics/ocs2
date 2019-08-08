@@ -41,111 +41,102 @@ namespace ocs2 {
  * @tparam INPUT_DIM: Dimension of the control input space.
  */
 template <size_t STATE_DIM, size_t INPUT_DIM>
-class MRT_ROS_Dummy_Loop
-{
-public:
-	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+class MRT_ROS_Dummy_Loop {
+ public:
+  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-	typedef ocs2::MRT_ROS_Interface<STATE_DIM, INPUT_DIM> mrt_t;
-	typedef typename mrt_t::Ptr	mrt_ptr_t;
+  using mrt_t = ocs2::MRT_ROS_Interface<STATE_DIM, INPUT_DIM>;
+  using mrt_ptr_t = typename mrt_t::Ptr;
 
-	typedef typename mrt_t::controller_t               controller_t;
-	typedef typename mrt_t::scalar_t                   scalar_t;
-	typedef typename mrt_t::scalar_array_t             scalar_array_t;
-	typedef typename mrt_t::size_array_t               size_array_t;
-	typedef typename mrt_t::state_vector_t             state_vector_t;
-	typedef typename mrt_t::state_vector_array_t       state_vector_array_t;
-	typedef typename mrt_t::input_vector_t             input_vector_t;
-	typedef typename mrt_t::input_vector_array_t       input_vector_array_t;
-	typedef typename mrt_t::input_state_matrix_t       input_state_matrix_t;
-	typedef typename mrt_t::input_state_matrix_array_t input_state_matrix_array_t;
+  using controller_t = typename mrt_t::controller_t;
+  using scalar_t = typename mrt_t::scalar_t;
+  using scalar_array_t = typename mrt_t::scalar_array_t;
+  using size_array_t = typename mrt_t::size_array_t;
+  using state_vector_t = typename mrt_t::state_vector_t;
+  using state_vector_array_t = typename mrt_t::state_vector_array_t;
+  using input_vector_t = typename mrt_t::input_vector_t;
+  using input_vector_array_t = typename mrt_t::input_vector_array_t;
+  using input_state_matrix_t = typename mrt_t::input_state_matrix_t;
+  using input_state_matrix_array_t = typename mrt_t::input_state_matrix_array_t;
 
-	typedef typename mrt_t::system_observation_t system_observation_t;
-	typedef ControlledSystemBase<STATE_DIM, INPUT_DIM> controlled_system_base_t;
-	typedef typename mrt_t::cost_desired_trajectories_t cost_desired_trajectories_t;
+  using system_observation_t = typename mrt_t::system_observation_t;
+  using controlled_system_base_t = ControlledSystemBase<STATE_DIM, INPUT_DIM>;
+  using cost_desired_trajectories_t = typename mrt_t::cost_desired_trajectories_t;
 
-	/**
-	 * Constructor.
-	 *
-	 * @param [in] mrtPtr
-	 * @param [in] mrtDesiredFrequency: MRT loop frequency in Hz. This should always set to a positive number.
-	 * @param [in] mpcDesiredFrequency: MPC loop frequency in Hz. If set to a positive number, MPC loop
-	 * will be simulated to run by this frequency. Note that this might not be the MPC's real-time frequency.
-	 * @param [in] systemPtr: Optional pointer to the system dynamics. If provided, the dummy will roll out the
-	 * received controller using these dynamics instead of just sending back a planned state.
-	 * @param [in] rolloutSettings settings to use when dummy rolls out the received controller
-	 */
-	MRT_ROS_Dummy_Loop(
-			const mrt_ptr_t& mrtPtr,
-			const scalar_t& mrtDesiredFrequency = 100,
-			const scalar_t& mpcDesiredFrequency = -1,
-			controlled_system_base_t* systemPtr = nullptr,
-			Rollout_Settings rolloutSettings = Rollout_Settings());
+  /**
+   * Constructor.
+   *
+   * @param [in] mrtPtr
+   * @param [in] mrtDesiredFrequency: MRT loop frequency in Hz. This should always set to a positive number.
+   * @param [in] mpcDesiredFrequency: MPC loop frequency in Hz. If set to a positive number, MPC loop
+   * will be simulated to run by this frequency. Note that this might not be the MPC's real-time frequency.
+   * @param [in] systemPtr: Optional pointer to the system dynamics. If provided, the dummy will roll out the
+   * received controller using these dynamics instead of just sending back a planned state.
+   * @param [in] rolloutSettings settings to use when dummy rolls out the received controller
+   */
+  MRT_ROS_Dummy_Loop(const mrt_ptr_t& mrtPtr, const scalar_t& mrtDesiredFrequency = 100, const scalar_t& mpcDesiredFrequency = -1,
+                     controlled_system_base_t* systemPtr = nullptr, Rollout_Settings rolloutSettings = Rollout_Settings());
 
-	/**
-	 * Destructor.
-	 */
-	virtual ~MRT_ROS_Dummy_Loop() = default;
+  /**
+   * Destructor.
+   */
+  virtual ~MRT_ROS_Dummy_Loop() = default;
 
-	/**
-	 * Initializes the MRT node and visualization node.
-	 *
-	 * @param [in] argc: command line number of inputs.
-	 * @param [in] argv: command line inputs' value.
-	 */
-	void launchNodes(int argc, char* argv[]);
+  /**
+   * Initializes the MRT node and visualization node.
+   *
+   * @param [in] argc: command line number of inputs.
+   * @param [in] argv: command line inputs' value.
+   */
+  void launchNodes(int argc, char* argv[]);
 
-	/**
-	 * Runs the dummy MRT loop.
-	 *
-	 * @param [in] initObservation: The initial observation.
-	 * @param [in] initCostDesiredTrajectories: The initial desired cost trajectories.
-	 */
-	void run(
-			const system_observation_t& initObservation,
-			const cost_desired_trajectories_t& initCostDesiredTrajectories);
+  /**
+   * Runs the dummy MRT loop.
+   *
+   * @param [in] initObservation: The initial observation.
+   * @param [in] initCostDesiredTrajectories: The initial desired cost trajectories.
+   */
+  void run(const system_observation_t& initObservation, const cost_desired_trajectories_t& initCostDesiredTrajectories);
 
-protected:
-	/**
-	 * A user-defined function which modifies the observation before publishing.
-	 *
-	 * @param [in] observation: The current observation.
-	 */
-	virtual void modifyObservation(system_observation_t& observation) {}
+ protected:
+  /**
+   * A user-defined function which modifies the observation before publishing.
+   *
+   * @param [in] observation: The current observation.
+   */
+  virtual void modifyObservation(system_observation_t& observation) {}
 
-	/**
-	 * Launches the visualization node
-	 *
-	 * @param [in] argc: command line number of inputs.
-	 * @param [in] argv: command line inputs' value.
-	 */
-	virtual void launchVisualizerNode(int argc, char* argv[]) {}
+  /**
+   * Launches the visualization node
+   *
+   * @param [in] argc: command line number of inputs.
+   * @param [in] argv: command line inputs' value.
+   */
+  virtual void launchVisualizerNode(int argc, char* argv[]) {}
 
-	/**
-	 * Visualizes the current observation.
-	 *
-	 * @param [in] observation: The current observation.
-	 * @param [in] costDesiredTrajectories: The commanded target trajectory or point.
-	 */
-	virtual void publishVisualizer(
-			const system_observation_t& observation,
-			const cost_desired_trajectories_t& costDesiredTrajectories) {}
+  /**
+   * Visualizes the current observation.
+   *
+   * @param [in] observation: The current observation.
+   * @param [in] costDesiredTrajectories: The commanded target trajectory or point.
+   */
+  virtual void publishVisualizer(const system_observation_t& observation, const cost_desired_trajectories_t& costDesiredTrajectories) {}
 
-protected:
-	/*
-	 * Variables
-	 */
-	mrt_ptr_t mrtPtr_;
-	scalar_t mrtDesiredFrequency_;
-	scalar_t mpcDesiredFrequency_;
-	controlled_system_base_t* systemPtr_;
+ protected:
+  /*
+   * Variables
+   */
+  mrt_ptr_t mrtPtr_;
+  scalar_t mrtDesiredFrequency_;
+  scalar_t mpcDesiredFrequency_;
+  controlled_system_base_t* systemPtr_;
 
-	bool realtimeLoop_;
+  bool realtimeLoop_;
 
-	system_observation_t observation_;
+  system_observation_t observation_;
 };
 
-} // namespace ocs2
+}  // namespace ocs2
 
 #include "implementation/MRT_ROS_Dummy_Loop.h"
 

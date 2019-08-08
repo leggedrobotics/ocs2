@@ -64,9 +64,9 @@ class Solver_BASE {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-  typedef std::shared_ptr<Solver_BASE<STATE_DIM, INPUT_DIM>> Ptr;
+  using Ptr = std::shared_ptr<Solver_BASE<STATE_DIM, INPUT_DIM>>;
 
-  typedef Dimensions<STATE_DIM, INPUT_DIM> DIMENSIONS;
+  using DIMENSIONS = Dimensions<STATE_DIM, INPUT_DIM>;
 
   using size_array_t = typename DIMENSIONS::size_array_t;
   using size_array2_t = typename DIMENSIONS::size_array2_t;
@@ -130,7 +130,7 @@ class Solver_BASE {
   using logic_rules_machine_t = HybridLogicRulesMachine;
   using logic_rules_machine_ptr_t = typename logic_rules_machine_t::Ptr;
 
-  typedef ControllerBase<STATE_DIM, INPUT_DIM> controller_t;
+  using controller_t = ControllerBase<STATE_DIM, INPUT_DIM>;
   using controller_ptr_array_t = std::vector<controller_t*>;
 
   explicit Solver_BASE(std::shared_ptr<HybridLogicRules> logicRulesPtr = nullptr);

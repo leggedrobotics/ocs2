@@ -54,12 +54,12 @@ class TargetTrajectories_ROS_Interface {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-  typedef SCALAR_T scalar_t;
+  using scalar_t = SCALAR_T;
 
-  typedef CostDesiredTrajectories<scalar_t> cost_desired_trajectories_t;
-  typedef typename cost_desired_trajectories_t::scalar_array_t scalar_array_t;
-  typedef typename cost_desired_trajectories_t::dynamic_vector_t dynamic_vector_t;
-  typedef typename cost_desired_trajectories_t::dynamic_vector_array_t dynamic_vector_array_t;
+  using cost_desired_trajectories_t = CostDesiredTrajectories<scalar_t>;
+  using scalar_array_t = typename cost_desired_trajectories_t::scalar_array_t;
+  using dynamic_vector_t = typename cost_desired_trajectories_t::dynamic_vector_t;
+  using dynamic_vector_array_t = typename cost_desired_trajectories_t::dynamic_vector_array_t;
 
   /**
    * Constructor.

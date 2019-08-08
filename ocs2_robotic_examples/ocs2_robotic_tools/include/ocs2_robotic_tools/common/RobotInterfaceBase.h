@@ -66,7 +66,7 @@ public:
 		input_dim_ = INPUT_DIM
 	};
 
-	typedef Dimensions<STATE_DIM, INPUT_DIM> DIMENSIONS;
+	using DIMENSIONS = Dimensions<STATE_DIM, INPUT_DIM>;
 
 	using size_array_t = typename DIMENSIONS::size_array_t;
 	using scalar_t = typename DIMENSIONS::scalar_t;

@@ -44,7 +44,7 @@ namespace ocs2 {
  */
 class DDP_Settings {
  public:
-  typedef Dimensions<0, 0>::RiccatiIntegratorType RICCATI_INTEGRATOR_TYPE;
+  using RICCATI_INTEGRATOR_TYPE = Dimensions<0, 0>::RiccatiIntegratorType;
 
   /**
    * Default constructor.

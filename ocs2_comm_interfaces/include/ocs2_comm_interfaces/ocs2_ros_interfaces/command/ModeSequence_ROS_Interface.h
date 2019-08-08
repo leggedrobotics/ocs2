@@ -54,8 +54,8 @@ class ModeSequence_ROS_Interface {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-  typedef SCALAR_T scalar_t;
-  typedef ModeSequenceTemplate<SCALAR_T> mode_sequence_template_t;
+  using scalar_t = SCALAR_T;
+  using mode_sequence_template_t = ModeSequenceTemplate<SCALAR_T>;
 
   /**
    * Constructor.

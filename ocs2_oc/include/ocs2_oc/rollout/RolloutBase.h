@@ -60,9 +60,9 @@ class RolloutBase {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-  typedef std::shared_ptr<RolloutBase<STATE_DIM, INPUT_DIM>> Ptr;
+  using Ptr = std::shared_ptr<RolloutBase<STATE_DIM, INPUT_DIM>>;
 
-  typedef Dimensions<STATE_DIM, INPUT_DIM> DIMENSIONS;
+  using DIMENSIONS = Dimensions<STATE_DIM, INPUT_DIM>;
 
   using size_array_t = typename DIMENSIONS::size_array_t;
   using scalar_t = typename DIMENSIONS::scalar_t;
@@ -74,7 +74,7 @@ class RolloutBase {
 
   using logic_rules_machine_t = HybridLogicRulesMachine;
 
-  typedef ControllerBase<STATE_DIM, INPUT_DIM> controller_t;
+  using controller_t = ControllerBase<STATE_DIM, INPUT_DIM>;
 
   /**
    * Default constructor.
@@ -82,7 +82,7 @@ class RolloutBase {
    * @param [in] rolloutSettings: The rollout settings.
    * @param [in] algorithmName: The algorithm that calls this class (default not defined).
    */
-  RolloutBase(const Rollout_Settings& rolloutSettings = Rollout_Settings(), const char* algorithmName = nullptr)
+  explicit RolloutBase(const Rollout_Settings& rolloutSettings = Rollout_Settings(), const char* algorithmName = nullptr)
 
       : rolloutSettings_(rolloutSettings), algorithmName_(algorithmName) {}
 

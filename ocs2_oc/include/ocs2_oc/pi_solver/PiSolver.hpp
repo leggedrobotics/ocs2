@@ -157,6 +157,10 @@ class PiSolver final : public Solver_BASE<STATE_DIM, INPUT_DIM> {
       noisyInputVector_array2[sample][numSteps - 1] = controller_.cacheData_.back().u_;
       costFunction_->setCurrentStateAndControl(finalTime, stateTrajectory.back(), input_vector_t::Zero());
       costFunction_->getTerminalCost(stageCost[sample][numSteps - 1]);
+
+      // interpret NaN in cost as infinity
+      std::for_each(stageCost[sample].begin(), stageCost[sample].end(),
+                    [](scalar_t& in) { in = std::isnan(in) ? std::numeric_limits<scalar_t>::infinity() : in; });
     }
 
     // -------------------------------------------------------------------------
@@ -183,7 +187,7 @@ class PiSolver final : public Solver_BASE<STATE_DIM, INPUT_DIM> {
     }
 
     if (maxJ_currStep - minJ_currStep < 1.0) {
-      // the purpose of maxJ is to smoothe the softmax
+      // the purpose of maxJ is to smooth the softmax
       maxJ_currStep = minJ_currStep + 1.0;
     }
 

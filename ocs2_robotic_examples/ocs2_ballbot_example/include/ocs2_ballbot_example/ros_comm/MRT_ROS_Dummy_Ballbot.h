@@ -57,8 +57,9 @@ class MRT_ROS_Dummy_Ballbot : public MRT_ROS_Dummy_Loop<ballbot::STATE_DIM_, bal
    * @param [in] mpcDesiredFrequency: MPC loop frequency in Hz. If set to a positive number, MPC loop
    * will be simulated to run by this frequency. Note that this might not be the MPC's realtime frequency.
    */
-  MRT_ROS_Dummy_Ballbot(const mrt_ptr_t& mrtPtr, const scalar_t& mrtDesiredFrequency, const scalar_t& mpcDesiredFrequency)
-      : BASE(mrtPtr, mrtDesiredFrequency, mpcDesiredFrequency) {}
+  MRT_ROS_Dummy_Ballbot(const mrt_ptr_t& mrtPtr, const scalar_t& mrtDesiredFrequency, const scalar_t& mpcDesiredFrequency,
+                        controlled_system_base_t* systemPtr = nullptr, Rollout_Settings rolloutSettings = Rollout_Settings())
+      : BASE(mrtPtr, mrtDesiredFrequency, mpcDesiredFrequency, systemPtr, rolloutSettings) {}
 
   /**
    * Destructor.
@@ -66,12 +67,6 @@ class MRT_ROS_Dummy_Ballbot : public MRT_ROS_Dummy_Loop<ballbot::STATE_DIM_, bal
   ~MRT_ROS_Dummy_Ballbot() override = default;
 
  protected:
-  /**
-   * Launches the visualization node
-   *
-   * @param [in] argc: command line number of inputs.
-   * @param [in] argv: command line inputs' value.
-   */
   void launchVisualizerNode(int argc, char* argv[]) override {
     ros::init(argc, argv, "ballbot_visualization_node");
 

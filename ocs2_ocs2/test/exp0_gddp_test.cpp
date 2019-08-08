@@ -46,11 +46,12 @@ enum {
 	INPUT_DIM = 1
 };
 
-TEST(exp0_gddp_test, DISABLED_optimum_gradient_test)
+TEST(exp0_gddp_test, optimum_gradient_test)
 {
 	SLQ_Settings slqSettings;
 	slqSettings.ddpSettings_.displayInfo_ = false;
 	slqSettings.ddpSettings_.displayShortSummary_ = false;
+	slqSettings.preComputeRiccatiTerms_ = true;
 	slqSettings.ddpSettings_.absTolODE_ = 1e-10;
 	slqSettings.ddpSettings_.relTolODE_ = 1e-7;
 	slqSettings.ddpSettings_.maxNumStepsPerSecond_ = 10000;
@@ -151,16 +152,13 @@ TEST(exp0_gddp_test, DISABLED_optimum_gradient_test)
 	/******************************************************************************************************/
 	/******************************************************************************************************/
 	/******************************************************************************************************/
-	std::cerr << "### Optimum event times are: [" << optimumEventTimes[0] << "]\n";
-
 	std::cerr << "### Optimum cost is: " << costFunction << "\n";
-
-	std::cerr << "### Optimum cost derivative LQ method:  [" << costFunctionDerivative_LQ(0) << "]\n";
-	std::cerr << "### Optimum cost derivative BVP method: [" << costFunctionDerivative_BVP(0) << "]\n";
+	std::cerr << "### Optimum event times are:            [" << Eigen::Map<Eigen::VectorXd>(optimumEventTimes.data(), optimumEventTimes.size()).transpose() << "]\n";
+	std::cerr << "### Optimum cost derivative LQ method:  [" << costFunctionDerivative_LQ.transpose() << "]\n";
+	std::cerr << "### Optimum cost derivative BVP method: [" << costFunctionDerivative_BVP.transpose()<< "]\n";
 
 	ASSERT_LT(costFunctionDerivative_LQ.norm()/fabs(costFunction), 10*slqSettings.ddpSettings_.minRelCost_) <<
 			"MESSAGE: GDDP failed in the EXP0's cost derivative LQ test!";
-
 	ASSERT_LT(costFunctionDerivative_BVP.norm()/fabs(costFunction), 10*slqSettings.ddpSettings_.minRelCost_) <<
 			"MESSAGE: GDDP failed in the EXP0's cost derivative BVP test!";
 }

@@ -191,7 +191,7 @@ class RolloutBase {
         if (!stateTrajectory[i].allFinite()) {
           throw std::runtime_error("Rollout: state is not finite");
         }
-        if (!inputTrajectory[i].allFinite()) {
+        if (rolloutSettings_.reconstructInputTrajectory_ && !inputTrajectory[i].allFinite()) {
           throw std::runtime_error("Rollout: input is not finite");
         }
       } catch (const std::exception& error) {
@@ -204,7 +204,11 @@ class RolloutBase {
         for (size_t j = 0; j <= i; j++) {
           timeTrajectoryTemp.push_back(timeTrajectory[j]);
           stateTrajectoryTemp.push_back(stateTrajectory[j]);
-          inputTrajectoryTemp.push_back(inputTrajectory[j]);
+          if (rolloutSettings_.reconstructInputTrajectory_) {
+            inputTrajectoryTemp.push_back(inputTrajectory[j]);
+          } else {
+            inputTrajectoryTemp.push_back(input_vector_t::Constant(NAN));
+          }
         }
 
         // display

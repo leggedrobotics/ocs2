@@ -70,13 +70,14 @@ size_t NumGDDP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::findActiveSubsystemIndex(
 		partitioningTimes[i+1] = eventTimes[i];
 
 	int activeSubsystemIndex;
-	if (ceilingFunction==true)
+	if (ceilingFunction) {
 		activeSubsystemIndex = findActiveIntervalIndex(partitioningTimes, time, 0);
-	else
+	} else {
 		activeSubsystemIndex = findActiveIntervalIndex(partitioningTimes, time, 0,
 				-OCS2NumericTraits<scalar_t>::weakEpsilon());
+	}
 
-	return (size_t)activeSubsystemIndex;
+	return static_cast<size_t>(activeSubsystemIndex);
 }
 
 /******************************************************************************************************/

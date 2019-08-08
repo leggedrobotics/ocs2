@@ -61,7 +61,7 @@ public:
      *
      * @param [in] settings: Structure containing the settings for the SLQ algorithm.
      */
-    FrankWolfeGDDP(const GDDP_Settings& gddpSettings);
+	explicit FrankWolfeGDDP(const GDDP_Settings& gddpSettings);
 
 	/**
 	 * Default destructor.

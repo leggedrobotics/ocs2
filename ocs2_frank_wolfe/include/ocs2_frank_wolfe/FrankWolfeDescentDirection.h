@@ -61,7 +61,7 @@ public:
 	 *
 	 * @param [in] display:
 	 */
-	FrankWolfeDescentDirection(bool display);
+	explicit FrankWolfeDescentDirection(bool display);
 
 	/**
 	 * Default destructor.

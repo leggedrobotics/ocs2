@@ -70,7 +70,7 @@ public:
 	 *
 	 * @param [in] nlpSettings: Structure containing the settings for the NLP algorithm.
 	 */
-	GradientDescent(const NLP_Settings& nlpSettings);
+	explicit GradientDescent(const NLP_Settings& nlpSettings);
 
 	/**
 	 * Default destructor.

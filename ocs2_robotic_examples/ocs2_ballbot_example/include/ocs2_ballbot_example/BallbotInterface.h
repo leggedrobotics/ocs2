@@ -40,6 +40,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_core/misc/loadEigenMatrix.h>
 #include <ocs2_core/constraint/ConstraintBase.h>
 #include <ocs2_core/initialization/SystemOperatingPoint.h>
+#include <ocs2_mpc/MPC_PI.h>
 #include <ocs2_mpc/MPC_SLQ.h>
 #include <ocs2_robotic_tools/common/RobotInterfaceBase.h>
 
@@ -55,7 +56,7 @@ namespace ballbot {
  * BallbotInterface class
  * General interface for mpc implementation on the ballbot model
  */
-class BallbotInterface : public RobotInterfaceBase<ballbot::STATE_DIM_, ballbot::INPUT_DIM_>
+class BallbotInterface final : public RobotInterfaceBase<ballbot::STATE_DIM_, ballbot::INPUT_DIM_>
 {
 public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
@@ -66,13 +67,14 @@ public:
 	using ballbotConstraint_t = ConstraintBase<ballbot::STATE_DIM_, ballbot::INPUT_DIM_>;
 	using ballbotOperatingPoint_t = SystemOperatingPoint<ballbot::STATE_DIM_, ballbot::INPUT_DIM_>;
 
-	using mpc_t = ocs2::MPC_SLQ<ballbot::STATE_DIM_, ballbot::INPUT_DIM_>;
+	using mpc_t = MPC_SLQ<ballbot::STATE_DIM_, ballbot::INPUT_DIM_>;
+	using mpc_pi_t = MPC_PI<ballbot::STATE_DIM_, ballbot::INPUT_DIM_>;
 
 	/**
 	 * Constructor
 	 * @param [in] taskFileFolderName: The name of the folder containing task file
 	 */
-	BallbotInterface(const std::string& taskFileFolderName);
+	explicit BallbotInterface(const std::string& taskFileFolderName);
 
 	/**
 	 * Destructor
@@ -84,7 +86,7 @@ public:
 	 *
 	 * @param [in] taskFile: Task's file full path.
 	 */
-	void setupOptimizer(const std::string& taskFile) final;
+	void setupOptimizer(const std::string& taskFile);
 
 	/**
 	 * Gets SLQ settings.
@@ -99,6 +101,14 @@ public:
 	 * @return Pointer to the internal MPC
 	 */
 	mpc_t::Ptr& getMPCPtr();
+
+	/**
+	 * @brief getMpcPiPtr
+	 * @return pointer to the internal path integral MPC
+	 */
+	mpc_pi_t* getMpcPiPtr() { return mpcPi_.get(); }
+
+	BallbotSystemDynamics * getDynamicsPtr() { return  ballbotSystemDynamicsPtr_.get(); }
 
 protected:
 	/**
@@ -115,7 +125,9 @@ protected:
 	std::string libraryFolder_;
 
 	SLQ_Settings slqSettings_;
+	PI_Settings piSettings_;
 	mpc_t::Ptr mpcPtr_;
+	std::unique_ptr<mpc_pi_t> mpcPi_;
 
 	BallbotSystemDynamics::Ptr ballbotSystemDynamicsPtr_;
 	BallbotCost::Ptr ballbotCostPtr_;

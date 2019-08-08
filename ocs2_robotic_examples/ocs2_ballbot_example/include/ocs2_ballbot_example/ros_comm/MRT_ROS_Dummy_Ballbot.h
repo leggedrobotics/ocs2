@@ -61,8 +61,10 @@ public:
 	MRT_ROS_Dummy_Ballbot(
 			const mrt_ptr_t& mrtPtr,
 			const scalar_t& mrtDesiredFrequency,
-			const scalar_t& mpcDesiredFrequency)
-	: BASE(mrtPtr, mrtDesiredFrequency, mpcDesiredFrequency)
+			const scalar_t& mpcDesiredFrequency,
+			controlled_system_base_t* systemPtr = nullptr,
+			Rollout_Settings rolloutSettings = Rollout_Settings())
+	: BASE(mrtPtr, mrtDesiredFrequency, mpcDesiredFrequency, systemPtr, rolloutSettings)
 	{}
 
 	/**
@@ -72,12 +74,6 @@ public:
 
 
 protected:
-	/**
-	 * Launches the visualization node
-	 *
-	 * @param [in] argc: command line number of inputs.
-	 * @param [in] argv: command line inputs' value.
-	 */
 	void launchVisualizerNode(int argc, char* argv[]) override {
 
 		ros::init(argc, argv, "ballbot_visualization_node");
@@ -93,12 +89,6 @@ protected:
 		tfBroadcasterPtr_.reset(new tf::TransformBroadcaster);
 	}
 
-	/**
-	 * Visualizes the current observation.
-	 *
-	 * @param [in] observation: The current observation.
-	 * @param [in] costDesiredTrajectories: The commanded target trajectory or point.
-	 */
 	void publishVisualizer(
 			const system_observation_t& observation,
 			const cost_desired_trajectories_t& costDesiredTrajectories) override {

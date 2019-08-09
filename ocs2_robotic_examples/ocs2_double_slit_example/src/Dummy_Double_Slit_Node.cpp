@@ -27,7 +27,7 @@ int main(int argc, char* argv[]) {
 
   // Dummy double_slit
   MrtRosDummyDoubleSlit dummyDoubleSlit(mrtPtr, double_slitInterface.mpcSettings().mrtDesiredFrequency_,
-                                        double_slitInterface.mpcSettings().mpcDesiredFrequency_, double_slitInterface.getDynamicsPtr(),
+                                        double_slitInterface.mpcSettings().mpcDesiredFrequency_, &double_slitInterface.getDynamics(),
                                         ocs2::Rollout_Settings(1e-9, 1e-6, 5000, rollout_dt, ocs2::IntegratorType::EULER, false, true));
 
   dummyDoubleSlit.launchNodes(argc, argv);

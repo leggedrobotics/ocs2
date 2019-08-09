@@ -84,13 +84,13 @@ class CartPoleInterface final : public RobotInterfaceBase<cartpole::STATE_DIM_, 
    */
   SLQ_Settings& slqSettings();
 
-  mpc_t* getMpcPtr() override { return mpcPtr_.get(); }
+  mpc_t& getMpc() override { return *mpcPtr_; }
 
-  CartPoleSytemDynamics* getDynamicsPtr() override { return cartPoleSystemDynamicsPtr_.get(); }
+  const CartPoleSytemDynamics& getDynamics() const override { return *cartPoleSystemDynamicsPtr_; }
 
-  CartPoleSytemDynamics const* getDynamicsDerivativesPtr() override { return cartPoleSystemDynamicsPtr_.get(); }
+  const CartPoleSytemDynamics& getDynamicsDerivatives() const override { return *cartPoleSystemDynamicsPtr_; }
 
-  CartPoleCost const* getCostPtr() override { return cartPoleCostPtr_.get(); }
+  const CartPoleCost& getCost() const override { return *cartPoleCostPtr_; }
 
  protected:
   /**

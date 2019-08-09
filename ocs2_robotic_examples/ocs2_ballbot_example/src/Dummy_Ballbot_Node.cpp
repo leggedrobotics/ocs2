@@ -57,7 +57,7 @@ int main(int argc, char **argv)
 			mrtPtr,
 			ballbotInterface.mpcSettings().mrtDesiredFrequency_,
 			ballbotInterface.mpcSettings().mpcDesiredFrequency_,
-			ballbotInterface.getDynamicsPtr());
+			&ballbotInterface.getDynamics());
 
 	dummyBallbot.launchNodes(argc, argv);
 

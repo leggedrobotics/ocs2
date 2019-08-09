@@ -89,18 +89,18 @@ class BallbotInterface final : public RobotInterfaceBase<ballbot::STATE_DIM_, ba
    */
   SLQ_Settings& slqSettings();
 
-  mpc_t* getMpcPtr() override { return mpcPtr_.get(); }
+  mpc_t& getMpc() override { return *mpcPtr_; }
 
   /**
-   * @brief getMpcPiPtr
-   * @return pointer to the internal path integral MPC
+   * @brief getMpcPi
+   * @return reference to the internal path integral MPC
    */
-  mpc_pi_t* getMpcPiPtr() { return mpcPi_.get(); }
+  mpc_pi_t& getMpcPi() { return *mpcPi_; }
 
-  BallbotSystemDynamics* getDynamicsPtr() override { return ballbotSystemDynamicsPtr_.get(); }
-  BallbotSystemDynamics const* getDynamicsDerivativesPtr() override { return ballbotSystemDynamicsPtr_.get(); }
+  const BallbotSystemDynamics& getDynamics() const override { return *ballbotSystemDynamicsPtr_; }
+  const BallbotSystemDynamics& getDynamicsDerivatives() const override { return *ballbotSystemDynamicsPtr_; }
 
-  BallbotCost* getCostPtr() override { return ballbotCostPtr_.get(); }
+  const BallbotCost& getCost() const override { return *ballbotCostPtr_; }
 
  protected:
   /**

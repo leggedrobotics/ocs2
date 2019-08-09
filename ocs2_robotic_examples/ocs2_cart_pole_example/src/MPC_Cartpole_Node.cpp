@@ -46,7 +46,7 @@ int main(int argc, char **argv)
 	CartPoleInterface cartPoleInterface(taskFileFolderName);
 
 	// Launch MPC ROS node
-	MPC_ROS_Cartpole mpcNode(*cartPoleInterface.getMpcPtr(), "cartpole");
+	MPC_ROS_Cartpole mpcNode(cartPoleInterface.getMpc(), "cartpole");
 	mpcNode.launchNodes(argc, argv);
 
 	// Successful exit

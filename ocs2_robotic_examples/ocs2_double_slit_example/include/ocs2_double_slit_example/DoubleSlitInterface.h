@@ -46,15 +46,15 @@ class DoubleSlitInterface final : public RobotInterfaceBase<DoubleSlit::STATE_DI
 
   void setupOptimizer(const std::string& taskFile) override;
 
-  pi_mpc_t* getMpcPtr() override { return piMpcPtr_.get(); }
+  pi_mpc_t& getMpc() override { return *piMpcPtr_; }
 
-  DoubleSlitDynamics* getDynamicsPtr() override { return linearSystemDynamicsPtr_.get(); }
+  const DoubleSlitDynamics& getDynamics() const override { return *linearSystemDynamicsPtr_; }
 
-  DerivativesBase<dim_t::STATE_DIM_, dim_t::INPUT_DIM_> const* getDynamicsDerivativesPtr() override {
+  const DerivativesBase<dim_t::STATE_DIM_, dim_t::INPUT_DIM_>& getDynamicsDerivatives() const override {
     throw std::runtime_error("Not implemented");
   }
 
-  DoubleSlitBarrierCost const* getCostPtr() override { return costPtr_.get(); }
+  const DoubleSlitBarrierCost& getCost() const override { return *costPtr_; }
 
   /**
    * @brief doubleSlitPotentialWall models the potential wall of our problem

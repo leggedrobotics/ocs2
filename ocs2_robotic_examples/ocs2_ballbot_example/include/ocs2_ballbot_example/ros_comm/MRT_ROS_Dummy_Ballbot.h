@@ -62,7 +62,7 @@ public:
 			const mrt_ptr_t& mrtPtr,
 			const scalar_t& mrtDesiredFrequency,
 			const scalar_t& mpcDesiredFrequency,
-			controlled_system_base_t* systemPtr = nullptr,
+			const controlled_system_base_t* systemPtr = nullptr,
 			Rollout_Settings rolloutSettings = Rollout_Settings())
 	: BASE(mrtPtr, mrtDesiredFrequency, mpcDesiredFrequency, systemPtr, rolloutSettings)
 	{}

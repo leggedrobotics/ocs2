@@ -33,7 +33,7 @@ namespace ocs2 {
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <typename SCALAR_T>
-ModeSequence_ROS_Interface<SCALAR_T>::ModeSequence_ROS_Interface(const std::string& robotName /*= "robot"*/) : robotName_(robotName) {}
+ModeSequence_ROS_Interface<SCALAR_T>::ModeSequence_ROS_Interface(std::string robotName /*= "robot"*/) : robotName_(std::move(robotName)) {}
 
 /******************************************************************************************************/
 /******************************************************************************************************/
@@ -48,7 +48,7 @@ ModeSequence_ROS_Interface<SCALAR_T>::~ModeSequence_ROS_Interface() {
 /******************************************************************************************************/
 template <typename SCALAR_T>
 void ModeSequence_ROS_Interface<SCALAR_T>::publishModeSequenceTemplate(const mode_sequence_template_t& modeSequenceTemplate) {
-  RosMsgConversions<0, 0>::CreateModeSequenceTemplateMsg(modeSequenceTemplate, modeSequenceTemplateMsg_);
+  RosMsgConversions<0, 0>::createModeSequenceTemplateMsg(modeSequenceTemplate, modeSequenceTemplateMsg_);
 
   mpcModeSequencePublisher_.publish(modeSequenceTemplateMsg_);
 }
@@ -76,7 +76,7 @@ void ModeSequence_ROS_Interface<SCALAR_T>::launchNodes(int argc, char* argv[]) {
   ::ros::init(argc, argv, robotName_ + "_mpc_mode_sequence");
   ::ros::NodeHandle nodeHandler;
 
-  mpcModeSequencePublisher_ = nodeHandler.advertise<ocs2_comm_interfaces::mode_sequence>(robotName_ + "_mpc_mode_sequence", 1, true);
+  mpcModeSequencePublisher_ = nodeHandler.advertise<ocs2_msgs::mode_sequence>(robotName_ + "_mpc_mode_sequence", 1, true);
 
   ros::spinOnce();
 

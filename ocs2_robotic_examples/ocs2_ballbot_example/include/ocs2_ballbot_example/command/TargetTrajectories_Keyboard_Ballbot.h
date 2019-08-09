@@ -32,8 +32,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <ocs2_ballbot_example/definitions.h>
 #include <ocs2_comm_interfaces/SystemObservation.h>
-#include <ocs2_comm_interfaces/mpc_observation.h>
 #include <ocs2_comm_interfaces/ocs2_ros_interfaces/common/RosMsgConversions.h>
+#include <ocs2_msgs/mpc_observation.h>
 #include <ocs2_robotic_tools/command/TargetPoseTransformation.h>
 #include <ocs2_robotic_tools/command/TargetTrajectories_Keyboard_Interface.h>
 #include <mutex>
@@ -95,7 +95,7 @@ class TargetTrajectories_Keyboard_Ballbot : public TargetTrajectories_Keyboard_I
     ::ros::spinOnce();
     {
       std::lock_guard<std::mutex> lock(latestObservationMutex_);
-      RosMsgConversions<ballbot::STATE_DIM_, ballbot::INPUT_DIM_>::ReadObservationMsg(*latestObservation_, observation);
+      RosMsgConversions<ballbot::STATE_DIM_, ballbot::INPUT_DIM_>::readObservationMsg(*latestObservation_, observation);
     }
 
     // desired state from command line (position is relative, velocity absolute)
@@ -133,7 +133,7 @@ class TargetTrajectories_Keyboard_Ballbot : public TargetTrajectories_Keyboard_I
     return costDesiredTrajectories;
   }
 
-  void observationCallback(const ocs2_comm_interfaces::mpc_observation::ConstPtr& msg) {
+  void observationCallback(const ocs2_msgs::mpc_observation::ConstPtr& msg) {
     std::lock_guard<std::mutex> lock(latestObservationMutex_);
     latestObservation_ = msg;
   }
@@ -142,7 +142,7 @@ class TargetTrajectories_Keyboard_Ballbot : public TargetTrajectories_Keyboard_I
   ros::Subscriber observationSubscriber_;
 
   std::mutex latestObservationMutex_;
-  ocs2_comm_interfaces::mpc_observation::ConstPtr latestObservation_;
+  ocs2_msgs::mpc_observation::ConstPtr latestObservation_;
 };
 
 }  // namespace ballbot

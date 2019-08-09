@@ -47,10 +47,10 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_core/logic/rules/NullLogicRules.h>
 
 // MPC messages
-#include <ocs2_comm_interfaces/dummy.h>
-#include <ocs2_comm_interfaces/mpc_flattened_controller.h>
 #include <ocs2_comm_interfaces/ocs2_ros_interfaces/common/RosMsgConversions.h>
-#include <ocs2_comm_interfaces/reset.h>
+#include <ocs2_msgs/dummy.h>
+#include <ocs2_msgs/mpc_flattened_controller.h>
+#include <ocs2_msgs/reset.h>
 
 #define PUBLISH_THREAD
 
@@ -164,7 +164,7 @@ class MRT_ROS_Interface : public MRT_BASE<STATE_DIM, INPUT_DIM> {
    *
    * @param [in] msg: A constant pointer to the message
    */
-  void mpcPolicyCallback(const ocs2_comm_interfaces::mpc_flattened_controller::ConstPtr& msg);
+  void mpcPolicyCallback(const ocs2_msgs::mpc_flattened_controller::ConstPtr& msg);
 
   /**
    * A thread function which sends the current state and checks for a new MPC update.
@@ -183,8 +183,8 @@ class MRT_ROS_Interface : public MRT_BASE<STATE_DIM, INPUT_DIM> {
   ::ros::ServiceClient mpcResetServiceClient_;
 
   // ROS messages
-  ocs2_comm_interfaces::mpc_observation mpcObservationMsg_;
-  ocs2_comm_interfaces::mpc_observation mpcObservationMsgBuffer_;
+  ocs2_msgs::mpc_observation mpcObservationMsg_;
+  ocs2_msgs::mpc_observation mpcObservationMsgBuffer_;
 
   ::ros::CallbackQueue mrtCallbackQueue_;
 

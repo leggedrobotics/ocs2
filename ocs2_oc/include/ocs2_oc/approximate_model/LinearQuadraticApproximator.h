@@ -373,7 +373,7 @@ class LinearQuadraticApproximator {
         std::cerr << "Qv: " << Qv.transpose() << std::endl;
         std::cerr << "Qm: \n" << Qm << std::endl;
         std::cerr << "Qm eigenvalues : " << Qm.eigenvalues().transpose() << std::endl;
-        std::cerr << "Rv: " << Rv << std::endl;
+        std::cerr << "Rv: " << Rv.transpose() << std::endl;
         std::cerr << "Rm: \n" << Rm << std::endl;
         std::cerr << "Rm eigenvalues : " << Rm.eigenvalues().transpose() << std::endl;
         std::cerr << "Pm: \n" << Pm << std::endl;

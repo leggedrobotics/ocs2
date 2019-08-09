@@ -122,18 +122,20 @@ void TrajectorySpreadingController<STATE_DIM, INPUT_DIM>::adjustController(const
   }
 
   // Finds the indices of the new event times
-  findsIndicesEventTimes(eventTimes, controllersStock, eventsIndices_);
+  std::vector<index_t> eventsIndices;
+  findsIndicesEventTimes(eventTimes, controllersStock, eventsIndices);
 
   // Finds the indices of the controller event times
-  findsIndicesEventTimes(controllerEventTimes, controllersStock, controllerEventsIndices_);
+  std::vector<index_t> controllerEventsIndices;
+  findsIndicesEventTimes(controllerEventTimes, controllersStock, controllerEventsIndices);
 
   const size_t NE = std::min(eventTimes.size(), controllerEventTimes.size());
 
   // adjust controller. Here we assume the event times at same indices are associated.
   for (size_t j = 0; j < NE; j++) {
-    spreadController(eventTimes[j],                // new event times
-                     eventsIndices_[j],            // new event times indices
-                     controllerEventsIndices_[j],  // old event times indices
+    spreadController(eventTimes[j],               // new event times
+                     eventsIndices[j],            // new event times indices
+                     controllerEventsIndices[j],  // old event times indices
                      controllersStock);
   }  // end of j loop
 }

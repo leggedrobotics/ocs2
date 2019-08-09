@@ -83,11 +83,11 @@ void FrankWolfeDescentDirection::setupLP(
 	const dynamic_vector_t Ev = maxGradientInverse.cwiseAbs();
 	for (size_t i=0; i<parameterDim; i++) {
 		// if the gradient is zero in one direction
-		if (std::fabs(gradient(i)) < Eigen::NumTraits<scalar_t>::epsilon()) {
+		if (numerics::almost_eq(gradient(i), 0.0)) {
 			glp_set_col_bnds(lpPtr_.get(), i+1, GLP_FX, 0.0, 0.0);
 
 		// if the gradient should be limited
-		} else if (Ev(i) > Eigen::NumTraits<scalar_t>::epsilon()) {
+		} else if (!numerics::almost_eq(Ev(i), 0.0)) {
 			glp_set_col_bnds(lpPtr_.get(), i+1, GLP_DB, -1.0/Ev(i), 1.0/Ev(i));
 
 		// if free
@@ -133,7 +133,7 @@ void FrankWolfeDescentDirection::setupLP(
 	// domain equality constraints
 	for (size_t i=0; i<g.size(); i++) {
 		for (size_t j=0; j<parameterDim; j++) {
-			if (std::fabs(dgdx(i,j)) < std::numeric_limits<scalar_t>::epsilon()) {
+			if (numerics::almost_eq(dgdx(i,j), 0.0)) {
 				continue;
 			}
 			values.push_back(dgdx(i,j));
@@ -146,7 +146,7 @@ void FrankWolfeDescentDirection::setupLP(
 	// domain inequality constraints
 	for (size_t i=0; i<h.size(); i++) {
 		for (size_t j=0; j<parameterDim; j++) {
-			if (std::fabs(dhdx(i,j)) < std::numeric_limits<scalar_t>::epsilon()) {
+			if (numerics::almost_eq(dhdx(i,j), 0.0)) {
 				continue;
 			}
 			values.push_back(dhdx(i,j));

@@ -118,9 +118,6 @@ class TrajectorySpreadingController {
    ***********/
   int initActivePartition_ = 0;
   int finalActivePartition_ = 0;
-
-  std::vector<index_t> eventsIndices_;
-  std::vector<index_t> controllerEventsIndices_;
 };
 
 }  // namespace ocs2

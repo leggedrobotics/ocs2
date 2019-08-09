@@ -1,17 +1,19 @@
 cmake_minimum_required(VERSION 3.0)
 project(ocs2_comm_interfaces)
 
+set(CATKIN_PACKAGE_DEPENDENCIES
+        roscpp
+        ocs2_msgs
+        ocs2_core
+        ocs2_slq
+        ocs2_ocs2
+        ocs2_mpc
+)
+
 ## Find catkin macros and libraries
 find_package(catkin REQUIRED COMPONENTS
   cmake_modules
-  roscpp
-  message_generation
-  message_runtime
-  std_msgs
-  ocs2_core
-  ocs2_slq
-  ocs2_ocs2
-  ocs2_mpc
+  ${CATKIN_PACKAGE_DEPENDENCIES}
 )
 
 find_package(Eigen3 3.3 REQUIRED NO_MODULE)
@@ -22,40 +24,8 @@ find_package(Boost REQUIRED COMPONENTS
 
 # Generate compile_commands.json for clang tools
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
-
+set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread -fopenmp -std=c++11 -Wfatal-errors -Wl,--no-as-needed")
-
-###################################
-## Generate messages 
-###################################
-## Add messages
-add_message_files(
-  DIRECTORY 
-    include/ocs2_comm_interfaces/ocs2_ros_interfaces/msg
-  FILES
-    dummy.msg
-    mpc_state.msg
-    mpc_input.msg
-    mode_sequence.msg
-    mpc_observation.msg
-    mpc_target_trajectories.msg
-    controller_data.msg
-    mpc_flattened_controller.msg
-)
-
-## Add services
-add_service_files(
-  DIRECTORY 
-    include/ocs2_comm_interfaces/ocs2_ros_interfaces/srv
-  FILES
-    reset.srv
-)
-
-## Generate added messages and services
-generate_messages(
-  DEPENDENCIES
-    std_msgs
-)
 
 ###################################
 ## catkin specific configuration ##
@@ -65,16 +35,8 @@ catkin_package(
     include 
     test/include
     ${EIGEN3_INCLUDE_DIRS}
-#  LIBRARIES ocs2_quadruped_interface
-  CATKIN_DEPENDS 
-    roscpp
-    message_generation 
-    message_runtime 
-    std_msgs
-    ocs2_core 
-    ocs2_slq 
-    ocs2_ocs2 
-    ocs2_mpc 
+  CATKIN_DEPENDS
+    ${CATKIN_PACKAGE_DEPENDENCIES}
   DEPENDS 
     Boost
 )

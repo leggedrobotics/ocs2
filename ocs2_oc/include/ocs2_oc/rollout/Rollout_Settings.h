@@ -107,7 +107,7 @@ class Rollout_Settings {
   IntegratorType integratorType_;
   /** Whether to check that the rollout is numerically stable */
   bool checkNumericalStability_;
-  /** Whether to run controller again after integration to contstruct input trajectory */
+  /** Whether to run controller again after integration to construct input trajectory */
   bool reconstructInputTrajectory_;
 
 };  // end of Rollout_Settings class

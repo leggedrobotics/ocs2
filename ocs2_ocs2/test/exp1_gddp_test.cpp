@@ -46,13 +46,55 @@ enum {
 	INPUT_DIM = 1
 };
 
-TEST(exp1_gddp_test, DISABLED_optimum_gradient_test)
+TEST(exp1_gddp_test, optimum_gradient_test)
 {
-	// event times
+	SLQ_Settings slqSettings;
+	slqSettings.ddpSettings_.displayInfo_ = false;
+	slqSettings.ddpSettings_.displayShortSummary_ = true;
+	slqSettings.preComputeRiccatiTerms_ = true;
+	slqSettings.useNominalTimeForBackwardPass_ = true;
+	slqSettings.ddpSettings_.maxNumIterations_ = 30;
+	slqSettings.ddpSettings_.nThreads_ = 3;
+	slqSettings.ddpSettings_.maxNumIterations_ = 30;
+	slqSettings.ddpSettings_.lsStepsizeGreedy_ = true;
+	slqSettings.ddpSettings_.noStateConstraints_ = true;
+	slqSettings.ddpSettings_.checkNumericalStability_ = false;
+	slqSettings.ddpSettings_.absTolODE_ = 1e-10;
+	slqSettings.ddpSettings_.relTolODE_ = 1e-7;
+	slqSettings.ddpSettings_.maxNumStepsPerSecond_ = 10000;
+	slqSettings.rolloutSettings_.absTolODE_ = 1e-10;
+	slqSettings.rolloutSettings_.relTolODE_ = 1e-7;
+	slqSettings.rolloutSettings_.maxNumStepsPerSecond_ = 10000;
+
+	GDDP_Settings gddpSettings;
+	gddpSettings.displayInfo_ = true;
+	gddpSettings.checkNumericalStability_ = false;
+	gddpSettings.nThreads_ = 3;
+	gddpSettings.useLQForDerivatives_ = false;
+	gddpSettings.absTolODE_ = 1e-10;
+	gddpSettings.relTolODE_ = 1e-7;
+	gddpSettings.maxNumStepsPerSecond_ = 10000;
+
+	// logic rule
 	std::vector<double> optimumEventTimes {0.2262, 1.0176};
 	std::vector<size_t> subsystemsSequence{0, 1, 2};
 	std::shared_ptr<EXP1_LogicRules> logicRules(new EXP1_LogicRules(optimumEventTimes, subsystemsSequence));
 
+	double startTime = 0.0;
+	double finalTime = 3.0;
+
+	// partitioning times
+	std::vector<double> partitioningTimes;
+	partitioningTimes.push_back(startTime);
+	partitioningTimes.push_back(1.0);
+	partitioningTimes.push_back(2.0);
+	partitioningTimes.push_back(finalTime);
+
+	Eigen::Vector2d initState(2.0, 3.0);
+
+	/******************************************************************************************************/
+	/******************************************************************************************************/
+	/******************************************************************************************************/
 	// system dynamics
 	EXP1_System systemDynamics(logicRules);
 
@@ -70,48 +112,6 @@ TEST(exp1_gddp_test, DISABLED_optimum_gradient_test)
 	Eigen::Matrix<double,INPUT_DIM,1> inputOperatingPoint = Eigen::Matrix<double,INPUT_DIM,1>::Zero();
 	EXP1_SystemOperatingTrajectories operatingTrajectories(stateOperatingPoint, inputOperatingPoint);
 
-
-	/******************************************************************************************************/
-	/******************************************************************************************************/
-	/******************************************************************************************************/
-	SLQ_Settings slqSettings;
-	slqSettings.useNominalTimeForBackwardPass_ = true;
-	slqSettings.ddpSettings_.displayInfo_ = false;
-	slqSettings.ddpSettings_.displayShortSummary_ = true;
-	slqSettings.ddpSettings_.maxNumIterations_ = 30;
-	slqSettings.ddpSettings_.nThreads_ = 3;
-	slqSettings.ddpSettings_.maxNumIterations_ = 30;
-	slqSettings.ddpSettings_.lsStepsizeGreedy_ = true;
-	slqSettings.ddpSettings_.noStateConstraints_ = true;
-	slqSettings.ddpSettings_.checkNumericalStability_ = false;
-	slqSettings.ddpSettings_.absTolODE_ = 1e-10;
-	slqSettings.ddpSettings_.relTolODE_ = 1e-7;
-	slqSettings.ddpSettings_.maxNumStepsPerSecond_ = 10000;
-	slqSettings.rolloutSettings_.absTolODE_ = 1e-10;
-	slqSettings.rolloutSettings_.relTolODE_ = 1e-7;
-	slqSettings.rolloutSettings_.maxNumStepsPerSecond_ = 10000;
-
-	GDDP_Settings gddpSettings;
-	gddpSettings.displayInfo_ = true;
-	gddpSettings.displayShortSummary_ = true;
-	gddpSettings.checkNumericalStability_ = false;
-	gddpSettings.nThreads_ = 3;
-	gddpSettings.useLQForDerivatives_ = false;
-	gddpSettings.absTolODE_ = 1e-10;
-	gddpSettings.relTolODE_ = 1e-7;
-	gddpSettings.maxNumStepsPerSecond_ = 10000;
-
-	double startTime = 0.0;
-	double finalTime = 3.0;
-
-	// partitioning times
-	std::vector<double> partitioningTimes;
-	partitioningTimes.push_back(startTime);
-	partitioningTimes.push_back(1.0);
-	partitioningTimes.push_back(2.0);
-	partitioningTimes.push_back(finalTime);
-
-	Eigen::Vector2d initState(2.0, 3.0);
 
 	/******************************************************************************************************/
 	/******************************************************************************************************/
@@ -140,39 +140,26 @@ TEST(exp1_gddp_test, DISABLED_optimum_gradient_test)
 	gddp.settings().useLQForDerivatives_ = true;
 	gddp.run(optimumEventTimes, &slqDataCollector);
 	// cost derivative
-	Eigen::Matrix<double,1,1> costFunctionDerivative_LQ;
+	Eigen::Matrix<double,2,1> costFunctionDerivative_LQ;
 	gddp.getCostFuntionDerivative(costFunctionDerivative_LQ);
 
 	// run GDDP using BVP
 	gddp.settings().useLQForDerivatives_ = false;
 	gddp.run(optimumEventTimes, &slqDataCollector);
 	// cost derivative
-	Eigen::Matrix<double,1,1> costFunctionDerivative_BVP;
+	Eigen::Matrix<double,2,1> costFunctionDerivative_BVP;
 	gddp.getCostFuntionDerivative(costFunctionDerivative_BVP);
 
 	/******************************************************************************************************/
 	/******************************************************************************************************/
 	/******************************************************************************************************/
-	std::cerr << "### Optimum event times are: [" << optimumEventTimes[0] << ", ";
-	for (size_t i=1; i<optimumEventTimes.size()-1; i++)
-		std::cerr << optimumEventTimes[i] << ", ";
-	std::cerr << optimumEventTimes.back() << "]\n";
-
 	std::cerr << "### Optimum cost is: " << costFunction << "\n";
-
-	std::cerr << "### Optimum cost derivative LQ method:  [" << costFunctionDerivative_LQ(0) << ", ";
-	for (size_t i=1; i<costFunctionDerivative_LQ.size()-1; i++)
-		std::cerr << costFunctionDerivative_LQ(i) << ", ";
-	std::cerr << costFunctionDerivative_LQ.tail<1>()(0) << "]\n";
-
-	std::cerr << "### Optimum cost derivative BVP method: [" << costFunctionDerivative_BVP(0) << ", ";
-	for (size_t i=1; i<costFunctionDerivative_BVP.size()-1; i++)
-		std::cerr << costFunctionDerivative_BVP(i) << ", ";
-	std::cerr << costFunctionDerivative_BVP.tail<1>()(0) << "]\n";
+	std::cerr << "### Optimum event times are:            [" << Eigen::Map<Eigen::VectorXd>(optimumEventTimes.data(), optimumEventTimes.size()).transpose() << "]\n";
+	std::cerr << "### Optimum cost derivative LQ method:  [" << costFunctionDerivative_LQ.transpose() << "]\n";
+	std::cerr << "### Optimum cost derivative BVP method: [" << costFunctionDerivative_BVP.transpose()<< "]\n";
 
 	ASSERT_LT(costFunctionDerivative_LQ.norm()/fabs(costFunction), 50*slqSettings.ddpSettings_.minRelCost_ /*0.05*/) <<
 			"MESSAGE: GDDP failed in the EXP1's cost derivative LQ test!";
-
 	ASSERT_LT(costFunctionDerivative_BVP.norm()/fabs(costFunction), 50*slqSettings.ddpSettings_.minRelCost_ /*0.05*/) <<
 			"MESSAGE: GDDP failed in the EXP1's cost derivative BVP test!";
 }

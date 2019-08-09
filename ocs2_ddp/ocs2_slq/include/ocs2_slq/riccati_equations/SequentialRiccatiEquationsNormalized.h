@@ -88,9 +88,8 @@ class SequentialRiccatiEquationsNormalized final : public OdeBase<STATE_DIM*(STA
   /**
    * Constructor.
    */
-  SequentialRiccatiEquationsNormalized(const bool& useMakePSD, const scalar_t& addedRiccatiDiagonal, bool preComputeRiccatiTerms = true)
+  SequentialRiccatiEquationsNormalized(bool useMakePSD, bool preComputeRiccatiTerms = true)
       : useMakePSD_(useMakePSD),
-        addedRiccatiDiagonal_(addedRiccatiDiagonal),
         preComputeRiccatiTerms_(preComputeRiccatiTerms),
         Sm_(state_matrix_t::Zero()),
         Sv_(state_vector_t::Zero()),
@@ -339,17 +338,12 @@ class SequentialRiccatiEquationsNormalized final : public OdeBase<STATE_DIM*(STA
       q_.noalias() -= 0.5 * RinvCholT_Rv_.transpose() * RinvCholT_Rv_;
     }
 
-    if (!useMakePSD_) {
-      Qm_.diagonal().array() += addedRiccatiDiagonal_;
-    }
-
     convert2Vector(Qm_, Qv_, q_, derivatives);
   }
 
  private:
   bool useMakePSD_;
   bool preComputeRiccatiTerms_;
-  scalar_t addedRiccatiDiagonal_;
 
   // Interpolation
   EigenLinearInterpolation<state_matrix_t> QmFunc_;

@@ -209,13 +209,6 @@ class MPC_BASE {
    */
   MPC_Settings& settings();
 
-  /**
-   * Gets the cost function desired trajectories.
-   *
-   * @param [out] costDesiredTrajectories: A pointer to the cost function desired trajectories
-   */
-  virtual void getCostDesiredTrajectoriesPtr(const cost_desired_trajectories_t*& costDesiredTrajectoriesPtr) const;
-
  protected:
   /**
    * Sets pointer of the base solver. This method should be called in the constructor of

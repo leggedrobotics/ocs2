@@ -650,6 +650,8 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::approximateUnconstrainedLQWorker(size_t wor
   // making sure that constrained Qm is PSD
   if (ddpSettings_.useMakePSD_) {
     LinearAlgebra::makePSD(QmTrajectoryStock_[i][k]);
+  } else {
+    QmTrajectoryStock_[i][k].diagonal().array() += ddpSettings_.addedRiccatiDiagonal_;
   }
 }
 

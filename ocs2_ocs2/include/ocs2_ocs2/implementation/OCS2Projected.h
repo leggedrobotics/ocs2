@@ -424,7 +424,6 @@ void OCS2Projected<STATE_DIM, INPUT_DIM>::run(
 
 	// run the gradient descent algorithm
 	BASE::run(initParameters);
-
 }
 
 

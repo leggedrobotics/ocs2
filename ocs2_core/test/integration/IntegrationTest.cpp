@@ -36,10 +36,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ocs2_core/dynamics/LinearSystemDynamics.h"
 #include "ocs2_core/control/LinearController.h"
 
-#include <ocs2_core/misc/FindActiveIntervalIndex.h>
-
 using namespace ocs2;
-
 
 TEST(IntegrationTest, SecondOrderSystem_ODE45)
 {

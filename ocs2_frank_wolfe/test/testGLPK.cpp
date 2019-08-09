@@ -29,9 +29,11 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <gtest/gtest.h>
+
 #include <glpk.h>
 
-int main()
+TEST(testGLPK, glpk)
 {
 	glp_prob *lp;
 	int ia[1+1000], ja[1+1000];
@@ -78,5 +80,10 @@ int main()
 	printf("z = %g; x1 = %g; x2 = %g; x3 = %g\n",	z, x1, x2, x3);
 
 	glp_delete_prob(lp);
+}
 
+int main(int argc, char** argv)
+{
+	testing::InitGoogleTest(&argc, argv);
+	return RUN_ALL_TESTS();
 }

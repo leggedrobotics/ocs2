@@ -81,13 +81,8 @@ class MRT_ROS_Dummy_Linear_System : public MRT_ROS_Dummy_Loop<double_integrator:
     ROS_INFO_STREAM("Visualization subscriber is connected.");
   }
 
-  /**
-   * Visualizes the current observation.
-   *
-   * @param [in] observation: The current observation.
-   * @param [in] costDesiredTrajectories: The commanded target trajectory or point.
-   */
-  void publishVisualizer(const system_observation_t& observation, const cost_desired_trajectories_t& costDesiredTrajectories) override {
+  void publishVisualizer(const system_observation_t& observation, const commandData_t& command, const policyData_t& policy) override {
+    const auto& costDesiredTrajectories = command.mpcCostDesiredTrajectories_;
     sensor_msgs::JointState joint_state;
     joint_state.header.stamp = ros::Time::now();
     joint_state.name.resize(2);

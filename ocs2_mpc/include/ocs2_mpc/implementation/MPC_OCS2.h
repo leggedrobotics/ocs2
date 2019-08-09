@@ -109,7 +109,9 @@ void MPC_OCS2<STATE_DIM, INPUT_DIM>::runOCS2() {
 
     subsystemsSequenceOptimized_ = slqDataCollectorPtr_->subsystemsSequence_;
 
-    gddpPtr_->run(slqDataCollectorPtr_->eventTimes_, slqDataCollectorPtr_.get(), eventTimesOptimized_, BASE::mpcSettings_.maxTimeStep_);
+    // TODO: fix me
+    //    gddpPtr_->run(slqDataCollectorPtr_->eventTimes_, slqDataCollectorPtr_.get(), eventTimesOptimized_,
+    //    BASE::mpcSettings_.maxTimeStep_);
 
     if (BASE::mpcSettings_.debugPrint_) {
       std::cerr << "### OCS2 finished. " << std::endl;

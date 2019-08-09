@@ -32,15 +32,14 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 using namespace ocs2;
 using namespace ballbot;
 
-int main( int argc, char* argv[] )
-{
-	TargetTrajectories_Keyboard_Ballbot<double> targetPoseCommand(argc, argv, "ballbot");
+int main(int argc, char* argv[]) {
+  TargetTrajectories_Keyboard_Ballbot<double> targetPoseCommand(argc, argv, "ballbot");
 
-	targetPoseCommand.launchNodes();
+  targetPoseCommand.launchNodes();
 
-	const std::string commadMsg = "Enter XY displacement and Yaw for the robot, separated by spaces";
-	targetPoseCommand.getKeyboardCommand(commadMsg);
+  const std::string commadMsg = "Enter XY displacement and Yaw for the robot, separated by spaces";
+  targetPoseCommand.getKeyboardCommand(commadMsg);
 
-	// Successful exit
-	return 0;
+  // Successful exit
+  return 0;
 }

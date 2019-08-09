@@ -119,26 +119,14 @@ class MPC_MRT_Interface final : public MRT_BASE<STATE_DIM, INPUT_DIM> {
   void calculateStateInputConstraintLagrangian(scalar_t time, const state_vector_t& state, dynamic_vector_t& nu) const;
 
   /**
-   * @brief Access the currently in-use time trajectory.
-   * @note To get the latest policy from MPC, call updatePolicy() first
-   */
-  const scalar_array_t& getMpcTimeTrajectory() const;
-
-  /**
-   * @brief Access the currently in-use state trajectory.
-   * @note To get the latest policy from MPC, call updatePolicy() first
-   */
-  const state_vector_array_t& getMpcStateTrajectory() const;
-
-  /**
    * @brief Access the currently in-use input trajectory.
    * @note To get the latest policy from MPC, call updatePolicy() first
    */
-  const input_vector_array_t& getMpcInputTrajectory() const;
-
-  bool updatePolicy() override;
+  const input_vector_array_t& getMpcInputTrajectory() const { return mpcInputTrajectory_; };
 
  protected:
+  bool updatePolicyImpl() override;
+
   /**
    * @brief fillMpcOutputBuffers updates the *Buffer variables from the MPC object.
    * This method is automatically called by advanceMpc()

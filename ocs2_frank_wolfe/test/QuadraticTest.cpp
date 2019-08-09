@@ -33,60 +33,123 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ocs2_frank_wolfe/GradientDescent.h"
 
 using namespace ocs2;
-using namespace nlp;
 
-class QuadraticGradientDescent : public GradientDescent<double>
+class QuadraticCost final : public NLP_Cost
 {
 public:
+	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-	QuadraticGradientDescent() {}
-	~QuadraticGradientDescent() {}
+	QuadraticCost() = default;
+	~QuadraticCost() = default;
 
-	bool calculateCost(const size_t& id, const Eigen::VectorXd& parameters, double& cost) override {
+	size_t setCurrentParameter(const dynamic_vector_t& x) override {
 
-		cost = 0.5 * parameters.squaredNorm();
+		x_ = x;
+		return 0;
+	}
+
+	bool getCost(size_t id, scalar_t& f) override {
+
+		f = 0.5 * x_.dot(x_);
 		return true;
 	}
 
-	void calculateLinearInequalityConstraint(Eigen::MatrixXd& Cm, Eigen::VectorXd& Dv) override {
-		const double maxX = 3.0;
-		const double minX = 1.0;
+	void getCostDerivative(size_t id, dynamic_vector_t& g) override {
 
-		Cm.resize(2*numParameters(),numParameters());
-		Dv.resize(2*numParameters());
-
-		Cm.topRows(numParameters())    =  Eigen::MatrixXd::Identity(numParameters(), numParameters());
-		Cm.bottomRows(numParameters()) = -Eigen::MatrixXd::Identity(numParameters(), numParameters());
-
-		Dv.head(numParameters()) = -maxX * Eigen::VectorXd::Ones(numParameters());
-		Dv.tail(numParameters()) =  minX * Eigen::VectorXd::Ones(numParameters());
-
-		std::cout << "C\n" << Cm << std::endl;
-		std::cout << "D\n" << Dv << std::endl;
+		g = x_;
 	}
 
+	void getCostSecondDerivative(size_t id, dynamic_matrix_t& H) override {
+
+		H.setIdentity(x_.size(), x_.size());
+	}
+
+	void clearCache() override {}
+
+private:
+	dynamic_vector_t x_;
 };
 
-TEST(QuadraticTest, DISABLED_QuadraticTest)
+
+class QuadraticConstraints final : public NLP_Constraints
 {
+public:
+	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-	QuadraticGradientDescent quadraticGradientDescent;
+	QuadraticConstraints(Eigen::VectorXd minX, Eigen::VectorXd maxX) {
 
-	quadraticGradientDescent.nlpSettings().displayGradientDescent_ = true;
-	quadraticGradientDescent.nlpSettings().maxIterations_ 	 = 3;
-	quadraticGradientDescent.nlpSettings().minRelCost_    	 = 1e-6;
-	quadraticGradientDescent.nlpSettings().maxLearningRate_  = 1.0;
-	quadraticGradientDescent.nlpSettings().minLearningRate_  = 0.05;
-	quadraticGradientDescent.nlpSettings().minDisToBoundary_ = 0.0;
-	quadraticGradientDescent.nlpSettings().useAscendingLineSearchNLP_ = false;
+		size_t numParameters = maxX.size();
 
-	Eigen::Vector2d parameters = 2*Eigen::Vector2d::Ones();
+		Cm_.resize(2*numParameters,numParameters);
+		Dv_.resize(2*numParameters);
 
-	quadraticGradientDescent.run(parameters);
+		Cm_.topRows(numParameters)    = -Eigen::MatrixXd::Identity(numParameters, numParameters);
+		Cm_.bottomRows(numParameters) =  Eigen::MatrixXd::Identity(numParameters, numParameters);
+
+		Dv_.head(numParameters) =  maxX;
+		Dv_.tail(numParameters) = -minX;
+	}
+
+	~QuadraticConstraints() = default;
+
+	void setCurrentParameter(const dynamic_vector_t& x) override {
+
+		x_ = x;
+	}
+
+//	virtual void getLinearEqualityConstraint(dynamic_vector_t& g) {
+//		g.resize(1);
+//		g(0) = x_(1) - 2.0;
+//	}
+//
+//	virtual void getLinearEqualityConstraintDerivative(dynamic_matrix_t& dgdx) {
+//		dgdx.setZero(1, 2);
+//		dgdx(0,1) = 1.0;
+//	}
+
+	void getLinearInequalityConstraint(dynamic_vector_t& h) override {
+
+		h = Cm_*x_ + Dv_;
+	}
+
+	void getLinearInequalityConstraintDerivative(dynamic_matrix_t& dhdx) override {
+
+		dhdx = Cm_;
+	}
+
+private:
+	dynamic_vector_t x_;
+	dynamic_matrix_t Cm_;
+	dynamic_vector_t Dv_;
+};
+
+
+TEST(QuadraticTest, QuadraticTest)
+{
+	NLP_Settings nlpSettings;
+	nlpSettings.displayInfo_     = true;
+	nlpSettings.maxIterations_ 	 = 500;
+	nlpSettings.minRelCost_    	 = 1e-6;
+	nlpSettings.maxLearningRate_ = 1.0;
+	nlpSettings.minLearningRate_ = 1e-4;
+	nlpSettings.useAscendingLineSearchNLP_ = false;
+
+	GradientDescent nlpSolver(nlpSettings);
+	std::unique_ptr<QuadraticCost> costPtr(new QuadraticCost);
+
+	Eigen::VectorXd maxX = Eigen::Vector2d(3.0, 3.0);
+	Eigen::VectorXd minX = Eigen::Vector2d(1.0, 1.0);
+	std::unique_ptr<QuadraticConstraints> constraintsPtr(
+			new QuadraticConstraints(minX, maxX));
+
+	Eigen::Vector2d initParameters = 0.5*(maxX+minX) +
+			0.5*(maxX-minX).cwiseProduct(Eigen::Vector2d::Random());
+	nlpSolver.run(initParameters, 0.1*Eigen::Vector2d::Ones(), costPtr.get(), constraintsPtr.get());
 
 	double cost;
-	quadraticGradientDescent.getCost(cost);
-	quadraticGradientDescent.getParameters(parameters);
+	nlpSolver.getCost(cost);
+	Eigen::VectorXd parameters;
+	nlpSolver.getParameters(parameters);
 
 	std::cout << "cost: " << cost << std::endl;
 	std::cout << "parameters: " << parameters.transpose() << std::endl;
@@ -94,7 +157,7 @@ TEST(QuadraticTest, DISABLED_QuadraticTest)
 	const double optimalCost = 1.0;
 	const Eigen::Vector2d optimalParameters = Eigen::Vector2d::Ones();
 
-	ASSERT_NEAR(cost, optimalCost, 1e-3) <<
+	ASSERT_NEAR(cost, optimalCost, nlpSettings.minRelCost_) <<
 			"MESSAGE: Frank_Wolfe failed in the Quadratic test!";
 }
 

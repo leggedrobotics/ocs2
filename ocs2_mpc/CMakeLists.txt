@@ -47,8 +47,11 @@ include_directories(
 )
 
 add_executable(${PROJECT_NAME}_lintTarget
-        src/lintTarget.cpp
-        )
+  src/lintTarget.cpp
+)
+target_link_libraries(${PROJECT_NAME}_lintTarget
+  ${catkin_LIBRARIES}
+)
 
 #########################
 ###   CLANG TOOLING   ###
@@ -77,10 +80,11 @@ install(DIRECTORY include/${PROJECT_NAME}/
 #############
 
 catkin_add_gtest(testMPC_OCS2
-        test/testMPC_OCS2.cpp
-        )
+  test/testMPC_OCS2.cpp
+)
 target_link_libraries(testMPC_OCS2
-        ${catkin_LIBRARIES}
-        )
+  ${catkin_LIBRARIES}
+  ${Boost_LIBRARIES}
+)
 
 

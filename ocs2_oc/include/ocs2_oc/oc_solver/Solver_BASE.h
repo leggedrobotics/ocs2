@@ -163,7 +163,7 @@ class Solver_BASE {
    * @param [in] initState: The initial state.
    * @param [in] finalTime: The final time.
    * @param [in] partitioningTimes: The time partitioning.
-   * @param [in] controllersPtrStock: controllersPtrStock: Array of pointers to the initial control policies. If you want to use the control
+   * @param [in] controllersPtrStock: Array of pointers to the initial control policies. If you want to use the control
    * policy which was designed by the previous call of the "run" routine, you should pass an empty array. In the this case, two scenarios
    * are possible: either the internal controller is already set (such as the MPC case where the warm starting option is set true) or the
    * internal controller is empty in which instead of performing a rollout the operating trajectories will be used.
@@ -269,7 +269,7 @@ class Solver_BASE {
    *
    * @param [out] costDesiredTrajectories: A pointer to the cost function desired trajectories
    */
-  void getCostDesiredTrajectoriesPtr(const cost_desired_trajectories_t*& costDesiredTrajectoriesPtr) const;
+  const cost_desired_trajectories_t& getCostDesiredTrajectories() const { return costDesiredTrajectories_; };
 
   /**
    * Sets the cost function desired trajectories.
@@ -310,7 +310,7 @@ class Solver_BASE {
    *
    * @return true if it is updated.
    */
-  bool costDesiredTrajectoriesUpdated() const;
+  bool costDesiredTrajectoriesUpdated() const { return costDesiredTrajectoriesUpdated_; };
 
   /**
    * Returns an array of pointer to the optimal control policies.

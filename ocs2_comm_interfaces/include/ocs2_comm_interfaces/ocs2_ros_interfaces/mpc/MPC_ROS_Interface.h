@@ -54,12 +54,12 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_mpc/MPC_BASE.h>
 
 // MPC messages
-#include <ocs2_comm_interfaces/dummy.h>
-#include <ocs2_comm_interfaces/mode_sequence.h>
-#include <ocs2_comm_interfaces/mpc_flattened_controller.h>
-#include <ocs2_comm_interfaces/mpc_observation.h>
-#include <ocs2_comm_interfaces/mpc_target_trajectories.h>
-#include <ocs2_comm_interfaces/reset.h>
+#include <ocs2_msgs/dummy.h>
+#include <ocs2_msgs/mode_sequence.h>
+#include <ocs2_msgs/mpc_flattened_controller.h>
+#include <ocs2_msgs/mpc_observation.h>
+#include <ocs2_msgs/mpc_target_trajectories.h>
+#include <ocs2_msgs/reset.h>
 
 #include "ocs2_comm_interfaces/SystemObservation.h"
 #include "ocs2_comm_interfaces/ocs2_ros_interfaces/common/RosMsgConversions.h"
@@ -209,7 +209,7 @@ class MPC_ROS_Interface {
    * @param req: Service request.
    * @param res: Service response.
    */
-  bool resetMpcCallback(ocs2_comm_interfaces::reset::Request& req, ocs2_comm_interfaces::reset::Response& res);
+  bool resetMpcCallback(ocs2_msgs::reset::Request& req, ocs2_msgs::reset::Response& res);
 
   /**
    * Dummy publisher for network debugging.
@@ -246,21 +246,21 @@ class MPC_ROS_Interface {
    *
    * @param [in] msg: The observation message.
    */
-  void mpcObservationCallback(const ocs2_comm_interfaces::mpc_observation::ConstPtr& msg);
+  void mpcObservationCallback(const ocs2_msgs::mpc_observation::ConstPtr& msg);
 
   /**
    * The callback method which receives the user-defined target trajectories message.
    *
    * @param [in] msg: The target trajectories message.
    */
-  void mpcTargetTrajectoriesCallback(const ocs2_comm_interfaces::mpc_target_trajectories::ConstPtr& msg);
+  void mpcTargetTrajectoriesCallback(const ocs2_msgs::mpc_target_trajectories::ConstPtr& msg);
 
   /**
    * The callback method which receives the user-defined mode sequence message.
    *
    * @param [in] msg: The mode sequence message.
    */
-  void mpcModeSequenceCallback(const ocs2_comm_interfaces::mode_sequence::ConstPtr& msg);
+  void mpcModeSequenceCallback(const ocs2_msgs::mode_sequence::ConstPtr& msg);
 
  protected:
   /*
@@ -284,8 +284,8 @@ class MPC_ROS_Interface {
   ::ros::ServiceServer mpcResetServiceServer_;
 
   // ROS messages
-  ocs2_comm_interfaces::mpc_flattened_controller mpcPolicyMsg_;
-  ocs2_comm_interfaces::mpc_flattened_controller mpcPolicyMsgBuffer_;
+  ocs2_msgs::mpc_flattened_controller mpcPolicyMsg_;
+  ocs2_msgs::mpc_flattened_controller mpcPolicyMsgBuffer_;
 
   // multi-threading for publishers
   bool terminateThread_;

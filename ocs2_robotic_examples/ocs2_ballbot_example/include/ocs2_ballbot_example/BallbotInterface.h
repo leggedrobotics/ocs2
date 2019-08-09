@@ -66,7 +66,7 @@ class BallbotInterface final : public RobotInterfaceBase<ballbot::STATE_DIM_, ba
   using ballbotConstraint_t = ConstraintBase<ballbot::STATE_DIM_, ballbot::INPUT_DIM_>;
   using ballbotOperatingPoint_t = SystemOperatingPoint<ballbot::STATE_DIM_, ballbot::INPUT_DIM_>;
 
-  using mpc_t = ocs2::MPC_SLQ<ballbot::STATE_DIM_, ballbot::INPUT_DIM_>;
+  using mpc_t = MPC_SLQ<ballbot::STATE_DIM_, ballbot::INPUT_DIM_>;
   using mpc_pi_t = MPC_PI<ballbot::STATE_DIM_, ballbot::INPUT_DIM_>;
 
   /**

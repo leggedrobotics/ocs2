@@ -44,7 +44,7 @@ namespace ballbot {
  */
 using MRT_ROS_Ballbot = MRT_ROS_Interface<ballbot::STATE_DIM_, ballbot::INPUT_DIM_>;
 
-} // namespace ballbot
-} // namespace ocs2
+}  // namespace ballbot
+}  // namespace ocs2
 
 #endif /* MRT_ROS_BALLBOT_OCS2_H_ */

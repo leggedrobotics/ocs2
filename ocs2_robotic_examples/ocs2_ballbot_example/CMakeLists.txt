@@ -183,8 +183,7 @@ if(cmake_clang_tools_FOUND)
     SOURCE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/src ${CMAKE_CURRENT_SOURCE_DIR}/include
     CT_HEADER_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/include
     CT_HEADER_EXCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/include/${PROJECT_NAME}/generated
-    CF_QUIET # temporarily set to quiet, because the current amount of warning crashes the buildserver
-    # CF_FIX # temporarily disabled
+    CF_FIX
   )
 endif(cmake_clang_tools_FOUND)
 

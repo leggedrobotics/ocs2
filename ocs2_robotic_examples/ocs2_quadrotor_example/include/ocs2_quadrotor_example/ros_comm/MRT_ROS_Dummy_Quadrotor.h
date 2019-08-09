@@ -65,7 +65,8 @@ class MRT_ROS_Dummy_Quadrotor : public MRT_ROS_Dummy_Loop<quadrotor::STATE_DIM_,
   virtual ~MRT_ROS_Dummy_Quadrotor() = default;
 
  protected:
-  void publishVisualizer(const system_observation_t& observation, const cost_desired_trajectories_t& costDesiredTrajectories) override {
+  void publishVisualizer(const system_observation_t& observation, const commandData_t& command, const policyData_t& policy) override {
+    const auto& costDesiredTrajectories = command.mpcCostDesiredTrajectories_;
     static tf::TransformBroadcaster transformBroadcaster;
     tf::Transform transform;
     transform.setOrigin(tf::Vector3(observation.state()(0), observation.state()(1), observation.state()(2)));

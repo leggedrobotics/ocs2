@@ -35,45 +35,42 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 using namespace ocs2;
 using namespace ballbot;
 
-int main(int argc, char **argv)
-{
-	// task file
-	if (argc <= 1) { throw std::runtime_error("No task file specified. Aborting.");
-	}
-	std::string taskFileFolderName = std::string(argv[1]);
+int main(int argc, char** argv) {
+  // task file
+  if (argc <= 1) {
+    throw std::runtime_error("No task file specified. Aborting.");
+  }
+  std::string taskFileFolderName = std::string(argv[1]);
 
-	// ballbotInterface
-	BallbotInterface ballbotInterface(taskFileFolderName);
+  // ballbotInterface
+  BallbotInterface ballbotInterface(taskFileFolderName);
 
-	using mrt_t = MRT_ROS_Ballbot;
-	using mrt_ptr_t = mrt_t::Ptr;
-	using scalar_t = mrt_t::scalar_t;
-	using system_observation_t = mrt_t::system_observation_t;
+  using mrt_t = MRT_ROS_Ballbot;
+  using mrt_ptr_t = mrt_t::Ptr;
+  using scalar_t = mrt_t::scalar_t;
+  using system_observation_t = mrt_t::system_observation_t;
 
-	mrt_ptr_t mrtPtr(new mrt_t("ballbot"));
+  mrt_ptr_t mrtPtr(new mrt_t("ballbot"));
 
-	// Dummy ballbot
-	MRT_ROS_Dummy_Ballbot dummyBallbot(
-			mrtPtr,
-			ballbotInterface.mpcSettings().mrtDesiredFrequency_,
-			ballbotInterface.mpcSettings().mpcDesiredFrequency_,
-			&ballbotInterface.getDynamics());
+  // Dummy ballbot
+  MRT_ROS_Dummy_Ballbot dummyBallbot(mrtPtr, ballbotInterface.mpcSettings().mrtDesiredFrequency_,
+                                     ballbotInterface.mpcSettings().mpcDesiredFrequency_, &ballbotInterface.getDynamics());
 
-	dummyBallbot.launchNodes(argc, argv);
+  dummyBallbot.launchNodes(argc, argv);
 
-	// initial state
-	MRT_ROS_Dummy_Ballbot::system_observation_t initObservation;
-	ballbotInterface.getInitialState(initObservation.state());
+  // initial state
+  MRT_ROS_Dummy_Ballbot::system_observation_t initObservation;
+  ballbotInterface.getInitialState(initObservation.state());
 
-	// initial command
-	MRT_ROS_Dummy_Ballbot::cost_desired_trajectories_t initCostDesiredTrajectories;
-	initCostDesiredTrajectories.desiredTimeTrajectory().push_back(initObservation.time());
-	initCostDesiredTrajectories.desiredStateTrajectory().push_back(initObservation.state());
-	initCostDesiredTrajectories.desiredInputTrajectory().push_back(initObservation.input());
+  // initial command
+  MRT_ROS_Dummy_Ballbot::cost_desired_trajectories_t initCostDesiredTrajectories;
+  initCostDesiredTrajectories.desiredTimeTrajectory().push_back(initObservation.time());
+  initCostDesiredTrajectories.desiredStateTrajectory().push_back(initObservation.state());
+  initCostDesiredTrajectories.desiredInputTrajectory().push_back(initObservation.input());
 
-	// run dummy
-	dummyBallbot.run(initObservation, initCostDesiredTrajectories);
+  // run dummy
+  dummyBallbot.run(initObservation, initCostDesiredTrajectories);
 
-	// Successful exit
-	return 0;
+  // Successful exit
+  return 0;
 }

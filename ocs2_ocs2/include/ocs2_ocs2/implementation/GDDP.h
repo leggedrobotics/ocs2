@@ -33,8 +33,7 @@ namespace ocs2 {
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
-GDDP<STATE_DIM, INPUT_DIM>::GDDP(
-		const GDDP_Settings& gddpSettings /*= GDDP_Settings()*/)
+GDDP<STATE_DIM, INPUT_DIM>::GDDP(const GDDP_Settings& gddpSettings /*= GDDP_Settings()*/)
 	: gddpSettings_(gddpSettings)
 {
 	bvpSensitivityEquationsPtrStock_.clear();
@@ -59,25 +58,10 @@ GDDP<STATE_DIM, INPUT_DIM>::GDDP(
 
 	for (size_t i=0; i<gddpSettings_.nThreads_; i++)  {
 
-		typedef Eigen::aligned_allocator<bvp_sensitivity_equations_t> bvp_sensitivity_equations_alloc_t;
-		bvpSensitivityEquationsPtrStock_.push_back( std::move(
-				std::allocate_shared<bvp_sensitivity_equations_t, bvp_sensitivity_equations_alloc_t>(
-						bvp_sensitivity_equations_alloc_t()) ) );
-
-		typedef Eigen::aligned_allocator<bvp_sensitivity_error_equations_t> bvp_sensitivity_error_equations_alloc_t;
-		bvpSensitivityErrorEquationsPtrStock_.push_back( std::move(
-				std::allocate_shared<bvp_sensitivity_error_equations_t, bvp_sensitivity_error_equations_alloc_t>(
-						bvp_sensitivity_error_equations_alloc_t()) ) );
-
-		typedef Eigen::aligned_allocator<rollout_sensitivity_equations_t> rollout_sensitivity_equations_alloc_t;
-		rolloutSensitivityEquationsPtrStock_.push_back( std::move(
-				std::allocate_shared<rollout_sensitivity_equations_t, rollout_sensitivity_equations_alloc_t>(
-						rollout_sensitivity_equations_alloc_t()) ) );
-
-		typedef Eigen::aligned_allocator<riccati_sensitivity_equations_t> riccati_sensitivity_equations_alloc_t;
-		riccatiSensitivityEquationsPtrStock_.push_back( std::move(
-				std::allocate_shared<riccati_sensitivity_equations_t, riccati_sensitivity_equations_alloc_t>(
-						riccati_sensitivity_equations_alloc_t()) ) );
+		bvpSensitivityEquationsPtrStock_.emplace_back(new bvp_sensitivity_equations_t);
+		bvpSensitivityErrorEquationsPtrStock_.emplace_back(new bvp_sensitivity_error_equations_t);
+		rolloutSensitivityEquationsPtrStock_.emplace_back(new rollout_sensitivity_equations_t);
+		riccatiSensitivityEquationsPtrStock_.emplace_back(new riccati_sensitivity_equations_t);
 
 		switch(gddpSettings_.RiccatiIntegratorType_) {
 
@@ -136,8 +120,7 @@ GDDP<STATE_DIM, INPUT_DIM>::GDDP(
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
-void GDDP<STATE_DIM, INPUT_DIM>::setupOptimizer(
-		const size_t& numPartitions) {
+void GDDP<STATE_DIM, INPUT_DIM>::setupOptimizer(const size_t& numPartitions) {
 
 	if (numPartitions==0)
 		throw std::runtime_error("The number of partitions cannot be zero!");
@@ -224,7 +207,6 @@ void GDDP<STATE_DIM, INPUT_DIM>::calculateRolloutCostate(
 			SveFunc_.interpolate(indexAlpha,  Sve);
 
 			costateTrajectoriesStock[i][k] = Sve + Sv;
-
 		}  // end of k loop
 	}  // end of i loop
 }
@@ -397,7 +379,6 @@ void GDDP<STATE_DIM, INPUT_DIM>::calculateNominalRolloutLagrangeMultiplier(
 			lagrangeTrajectoriesStock[i][k].head(nc1) = DmDager.leftCols(nc1).transpose() * (
 					Rm*EvProjected - Rv - Bm.transpose()*costate );
 			lagrangeTrajectoriesStock[i][k].tail(DIMENSIONS::MAX_CONSTRAINT1_DIM_-nc1).setZero();
-
 		}  // end of k loop
 	}  // end of i loop
 }
@@ -618,8 +599,7 @@ void GDDP<STATE_DIM, INPUT_DIM>::propagateRolloutSensitivity(
 
 				// finding the current active subsystem
 				scalar_t midTime = 0.5 * (*beginTimeItr+*(endTimeItr-1));
-				size_t activeSubsystem = findActiveSubsystemIndex(
-						eventTimes_, midTime);
+				size_t activeSubsystem = findActiveSubsystemIndex(eventTimes_, midTime);
 
 				// compute multiplier of the equivalent system
 				scalar_t multiplier;
@@ -780,7 +760,7 @@ void GDDP<STATE_DIM, INPUT_DIM>::solveSensitivityRiccatiEquations(
 	// output containers which is reverse
 	s_vector_array_t allSsTrajectory;
 
-	for (int i=numSubsystems_-1; i>=0; i--) {
+	for (int i=numEventTimes_; i>=0; i--) {
 
 		// skip inactive partitions
 		if (i<dcPtr_->initActivePartition_ || i>dcPtr_->finalActivePartition_) {
@@ -797,8 +777,6 @@ void GDDP<STATE_DIM, INPUT_DIM>::solveSensitivityRiccatiEquations(
 		riccatiSensitivityEquationsPtrStock_[workerIndex]->reset();
 		riccatiSensitivityEquationsPtrStock_[workerIndex]->setData(
 				learningRate,
-				dcPtr_->partitioningTimes_[i],
-				dcPtr_->partitioningTimes_[i+1],
 				&dcPtr_->SsTimeTrajectoriesStock_[i],
 				&dcPtr_->SmTrajectoriesStock_[i],
 				&dcPtr_->SvTrajectoriesStock_[i],
@@ -846,7 +824,7 @@ void GDDP<STATE_DIM, INPUT_DIM>::solveSensitivityRiccatiEquations(
 
 				// finding the current active subsystem
 				scalar_t midNormalizedTime = 0.5 * (*beginTimeItr+*(endTimeItr-1));
-				scalar_t midTime = dcPtr_->partitioningTimes_[i+1] - (dcPtr_->partitioningTimes_[i+1]-dcPtr_->partitioningTimes_[i])*midNormalizedTime;
+				scalar_t midTime = -midNormalizedTime;
 				size_t activeSubsystem = findActiveSubsystemIndex(eventTimes_, midTime);
 
 				// compute multiplier of the equivalent system
@@ -941,8 +919,6 @@ void GDDP<STATE_DIM, INPUT_DIM>::solveSensitivityBVP(
 		bvpSensitivityEquationsPtrStock_[workerIndex]->reset();
 		bvpSensitivityEquationsPtrStock_[workerIndex]->resetNumFunctionCalls();
 		bvpSensitivityEquationsPtrStock_[workerIndex]->setData(
-				dcPtr_->partitioningTimes_[i],
-				dcPtr_->partitioningTimes_[i+1],
 				&dcPtr_->nominalTimeTrajectoriesStock_[i],
 				&dcPtr_->AmTrajectoriesStock_[i],
 				&dcPtr_->BmTrajectoriesStock_[i],
@@ -961,8 +937,6 @@ void GDDP<STATE_DIM, INPUT_DIM>::solveSensitivityBVP(
 		bvpSensitivityErrorEquationsPtrStock_[workerIndex]->reset();
 		bvpSensitivityErrorEquationsPtrStock_[workerIndex]->resetNumFunctionCalls();
 		bvpSensitivityErrorEquationsPtrStock_[workerIndex]->setData(
-				dcPtr_->partitioningTimes_[i],
-				dcPtr_->partitioningTimes_[i+1],
 				&dcPtr_->nominalTimeTrajectoriesStock_[i],
 				&dcPtr_->BmTrajectoriesStock_[i],
 				&dcPtr_->AmConstrainedTrajectoriesStock_[i],
@@ -1010,7 +984,7 @@ void GDDP<STATE_DIM, INPUT_DIM>::solveSensitivityBVP(
 
 				// finding the current active subsystem
 				scalar_t midNormalizedTime = 0.5 * (*beginTimeItr+*(endTimeItr-1));
-				scalar_t midTime = dcPtr_->partitioningTimes_[i+1] - (dcPtr_->partitioningTimes_[i+1]-dcPtr_->partitioningTimes_[i])*midNormalizedTime;
+				scalar_t midTime = -midNormalizedTime;
 				size_t activeSubsystem = findActiveSubsystemIndex(eventTimes_, midTime);
 
 				// compute multiplier of the equivalent system
@@ -1049,7 +1023,6 @@ void GDDP<STATE_DIM, INPUT_DIM>::solveSensitivityBVP(
 //				MvFinalInternal += dcPtr_->QvFinalStock_[i][NE-1-j];
 				MveFinalInternal = rMveTrajectory.back();
 			}
-
 		}  // end of j loop
 
 		// final value of the next partition
@@ -1108,7 +1081,7 @@ void GDDP<STATE_DIM, INPUT_DIM>::calculateLQSensitivityControllerForward(
 	// resizing
 	nablaLvTrajectoriesStock.resize(numPartitions_);
 
-	for (size_t i=0; i<numSubsystems_; i++) {
+	for (size_t i=0; i<numEventTimes_ + 1; i++) {
 
 		// skip inactive partitions
 		if (i<dcPtr_->initActivePartition_ || i>dcPtr_->finalActivePartition_) {
@@ -1322,7 +1295,10 @@ void GDDP<STATE_DIM, INPUT_DIM>::calculateCostDerivative(
 template <size_t STATE_DIM, size_t INPUT_DIM>
 void GDDP<STATE_DIM, INPUT_DIM>::runLQBasedMethod()  {
 
-	const size_t maxNumIteration = 3;
+	// display
+	if (gddpSettings_.displayInfo_) {
+		std::cerr << "LQ-based method is used for computing the gradient." << std::endl;
+	}
 
 	// resizing
 	nablaLvTrajectoriesStockSet_.resize(numEventTimes_);
@@ -1341,7 +1317,7 @@ void GDDP<STATE_DIM, INPUT_DIM>::runLQBasedMethod()  {
 	nominalCostFuntionDerivative_.resize(numEventTimes_);
 
 	size_t iteration = 0;
-	while (iteration++ < maxNumIteration) {
+	while (iteration++ < gddpSettings_.maxNumIterationForLQ_) {
 
 		// for each active event time
 		for (size_t index=0; index<numEventTimes_; index++) {
@@ -1412,7 +1388,6 @@ void GDDP<STATE_DIM, INPUT_DIM>::runLQBasedMethod()  {
 				nablaSmTrajectoriesStockSet_[index].clear();
 				nominalCostFuntionDerivative_(index) = 0.0;
 			}
-
 		}  // end of index loop
 
 	}  // end of while loop
@@ -1423,6 +1398,11 @@ void GDDP<STATE_DIM, INPUT_DIM>::runLQBasedMethod()  {
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
 void GDDP<STATE_DIM, INPUT_DIM>::runSweepingBVPMethod()  {
+
+	// display
+	if (gddpSettings_.displayInfo_) {
+		std::cerr << "BVP-based method is used for computing the gradient." << std::endl;
+	}
 
 	// calculate costate
 	calculateRolloutCostate(dcPtr_->nominalTimeTrajectoriesStock_,
@@ -1496,10 +1476,16 @@ void GDDP<STATE_DIM, INPUT_DIM>::run(
 		const scalar_array_t& eventTimes,
 		const slq_data_collector_t* dcPtr)  {
 
+	// display
+	if (gddpSettings_.displayInfo_) {
+		std::cerr << "\n++++++++++++++++++++++++++++++++++++++++++++++++++++++" << std::endl;
+		std::cerr <<   "+++++++++++++++ GDDP is initialized ++++++++++++++++++" << std::endl;
+		std::cerr <<   "++++++++++++++++++++++++++++++++++++++++++++++++++++++" << std::endl;
+	}
+
 	// event time an number of event and subsystems
 	eventTimes_ = eventTimes;
 	numEventTimes_ = eventTimes_.size();
-	numSubsystems_ = numEventTimes_ + 1;
 
 	// data collector pointer
 	dcPtr_ = dcPtr;
@@ -1514,15 +1500,19 @@ void GDDP<STATE_DIM, INPUT_DIM>::run(
 	activeEventTimeBeginIndex_ = findActiveSubsystemIndex(eventTimes_, dcPtr_->initTime_);
 	activeEventTimeEndIndex_   = findActiveSubsystemIndex(eventTimes_, dcPtr_->finalTime_);
 
-	// display
-	if (gddpSettings_.displayInfo_)
-		std::cerr << "\n#### Calculating cost function sensitivity ..." << std::endl;
-
 	// use the LQ-based method or Sweeping-BVP method
 	if (gddpSettings_.useLQForDerivatives_==true) {
 		runLQBasedMethod();
 	} else {
 		runSweepingBVPMethod();
+	}
+
+	if (gddpSettings_.displayInfo_) {
+		std::cerr << "\n++++++++++++++++++++++++++++++++++++++++++++++++++++++" << std::endl;
+		std::cerr <<   "++++++++++++++++ GDDP is terminated ++++++++++++++++++" << std::endl;
+		std::cerr <<   "++++++++++++++++++++++++++++++++++++++++++++++++++++++" << std::endl;
+		std::cerr << "GDDP gradient: " << nominalCostFuntionDerivative_.transpose() << std::endl;
+		std::cerr << std::endl;
 	}
 }
 

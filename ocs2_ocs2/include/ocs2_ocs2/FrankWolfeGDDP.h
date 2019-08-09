@@ -27,27 +27,23 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#ifndef PROJECTED_DDP_OCS2_H_
-#define PROJECTED_DDP_OCS2_H_
+#ifndef FRANK_WOLFE_DDP_OCS2_H_
+#define FRANK_WOLFE_DDP_OCS2_H_
 
 #include <array>
 #include <memory>
 #include <iterator>
 #include <algorithm>
 
-// GNU Linear Programming Kit
-#include <glpk.h>
-
-#include <ocs2_slq/SLQ_BASE.h>
-#include <ocs2_slq/SLQ.h>
-#include <ocs2_slq/SLQ_MP.h>
+#include <ocs2_frank_wolfe/NLP_Constraints.h>
+#include <ocs2_frank_wolfe/FrankWolfeDescentDirection.h>
 
 #include "ocs2_ocs2/GDDP.h"
 
 namespace ocs2 {
 
 template <size_t STATE_DIM, size_t INPUT_DIM>
-class ProjectedGDDP : public GDDP<STATE_DIM, INPUT_DIM>
+class FrankWolfeGDDP : public GDDP<STATE_DIM, INPUT_DIM>
 {
 public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
@@ -58,90 +54,53 @@ public:
 	using typename BASE::scalar_array_t;
 	using typename BASE::dynamic_vector_t;
 	using typename BASE::dynamic_matrix_t;
-    using typename BASE::eigen_scalar_array3_t;
-    using typename BASE::state_vector_array3_t;
-    using typename BASE::input_vector_array3_t;
-    using typename BASE::state_matrix_array3_t;
-    using typename BASE::input_matrix_array3_t;
 	using typename BASE::slq_data_collector_t;
+
+	/**
+	 * Default constructor.
+	 */
+	FrankWolfeGDDP()
+	: FrankWolfeGDDP(GDDP_Settings())
+	{}
 
 	/**
      * Constructor.
      *
      * @param [in] settings: Structure containing the settings for the SLQ algorithm.
      */
-    ProjectedGDDP(const GDDP_Settings& gddpSettings = GDDP_Settings());
+	explicit FrankWolfeGDDP(const GDDP_Settings& gddpSettings);
 
 	/**
 	 * Default destructor.
 	 */
-	~ProjectedGDDP() = default;
+	~FrankWolfeGDDP() = default;
 
 	/**
-	 * Runs the GSLQ to compute the gradient of the cost function w.r.t. the event times.
+	 * Runs the GDDP to compute the gradient of the cost function w.r.t. the event times while respecting
+	 * the provided constraints.
 	 *
-	 * eventTimes [in]: The event times vector.
-	 * dcPtr [in]: A constant pointer to SLQ data collector which already collected the SLQ variables.
+	 * @param [in] eventTimes: The event times vector.
+	 * @param [in] dcPtr: A constant pointer to SLQ data collector which already collected the SLQ variables.
+	 * @param [in] maxGradientInverse: descent directions element-wise maximum inverse. Note that if there is no
+	 * limit for a direction set associated element to zero.
+	 * @param [in] eventTimeConstraintPtr: A pointer to the NLP constraints for event times.
 	 */
 	void run(
 			scalar_array_t eventTimes,
 			const slq_data_collector_t* dcPtr,
-			scalar_array_t& eventTimesOptimized,
-			const scalar_t& maxStepSize = 1.0);
+			const dynamic_vector_t& maxGradientInverse,
+			const NLP_Constraints* eventTimeConstraintPtr);
 
 protected:
-	/**
-	 *
-	 * @param gradient
-	 * @param eventTimesOptimized
-	 */
-	void frankWolfeProblem(
-			const dynamic_vector_t& gradient,
-			scalar_array_t& eventTimesOptimized);
-
-	/**
-	 *
-	 * @param numEvents
-	 * @param startTime
-	 * @param finalTime
-	 * @param Cm
-	 * @param Dv
-	 */
-	void eventTimesConstraint(
-			const scalar_array_t& eventTimes,
-			const size_t& activeEventTimeBeginIndex,
-			const size_t& activeEventTimeEndIndex,
-			const scalar_t& startTime,
-			const scalar_t& finalTime,
-			dynamic_matrix_t& Cm,
-			dynamic_vector_t& Dv) const;
-
-	/**
-	 *
-	 */
-	void setupGLPK();
-
-	/**
-	 *
-	 * @param Cm
-	 * @param Dv
-	 */
-	void setupLP(
-			const scalar_array_t& eventTimes,
-			const dynamic_vector_t& gradient,
-			const size_t& activeEventTimeBeginIndex,
-			const size_t& activeEventTimeEndIndex,
-			const dynamic_matrix_t& Cm,
-			const dynamic_vector_t& Dv);
 
 	/***********
 	 * Variables
 	 **********/
-	std::unique_ptr<glp_prob, void(*)(glp_prob*)> lpPtr_;
+	std::unique_ptr<FrankWolfeDescentDirection> frankWolfeDescentDirectionPtr_;
 };
 
 } // namespace ocs2
 
-#include "implementation/ProjectedGDDP.h"
+#include "implementation/FrankWolfeGDDP.h"
 
-#endif /* PROJECTED_DDP_OCS2_H_ */
+#endif /* FRANK_WOLFE_DDP_OCS2_H_ */

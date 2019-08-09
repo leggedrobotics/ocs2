@@ -81,6 +81,17 @@ target_link_libraries(ballbot_mpc
         ${catkin_LIBRARIES}
         )
 
+# Path integral mpc
+add_executable(ballbot_pi_mpc
+  src/PI_Ballbot.cpp)
+add_dependencies(ballbot_pi_mpc
+        ${catkin_EXPORTED_TARGETS}
+        )
+target_link_libraries(ballbot_pi_mpc
+        ballbot_interface
+        ${catkin_LIBRARIES}
+        )
+
 # Dummy node
 add_executable(ballbot_dummy_test
         src/Dummy_Ballbot_Node.cpp
@@ -112,12 +123,16 @@ find_package(cmake_clang_tools QUIET)
 if(cmake_clang_tools_FOUND)
   message(STATUS "Run clang tooling for target ballbot_mpc")
   add_clang_tooling(
-    TARGET ballbot_mpc
+    TARGETS
+        ballbot_interface
+        ballbot_mpc
+        ballbot_pi_mpc
+        ballbot_dummy_test
+        ballbot_target
     SOURCE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/src ${CMAKE_CURRENT_SOURCE_DIR}/include
     CT_HEADER_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/include
     CT_HEADER_EXCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/include/${PROJECT_NAME}/generated
-    CF_QUIET # temporarily set to quiet, because the current amount of warning crashes the buildserver
-    # CF_FIX # temporarily disabled
+    CF_FIX
   )
 endif(cmake_clang_tools_FOUND)
 

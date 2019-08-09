@@ -27,6 +27,8 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
+#include <ocs2_oc/oc_solver/Solver_BASE.h>
+
 namespace ocs2 {
 
 /******************************************************************************************************/
@@ -76,8 +78,7 @@ SLQ_BASE<STATE_DIM, INPUT_DIM>::SLQ_BASE(const controlled_system_base_t* systemD
   for (size_t i = 0; i < BASE::ddpSettings_.nThreads_; i++) {
     using riccati_equations_alloc_t = Eigen::aligned_allocator<riccati_equations_t>;
     riccatiEquationsPtrStock_.emplace_back(std::allocate_shared<riccati_equations_t, riccati_equations_alloc_t>(
-        riccati_equations_alloc_t(), BASE::ddpSettings_.useMakePSD_, BASE::ddpSettings_.addedRiccatiDiagonal_,
-        settings_.preComputeRiccatiTerms_));
+        riccati_equations_alloc_t(), BASE::ddpSettings_.useMakePSD_, settings_.preComputeRiccatiTerms_));
 
     using error_equation_alloc_t = Eigen::aligned_allocator<error_equation_t>;
     errorEquationPtrStock_.emplace_back(std::allocate_shared<error_equation_t, error_equation_alloc_t>(error_equation_alloc_t()));
@@ -251,8 +252,10 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM>::approximateConstrainedLQWorker(size_t worke
         std::cerr << "q: " << BASE::qTrajectoryStock_[i][k] << std::endl;
         std::cerr << "Qv: " << BASE::QvTrajectoryStock_[i][k].transpose() << std::endl;
         std::cerr << "Qm: \n" << BASE::QmTrajectoryStock_[i][k] << std::endl;
+        std::cerr << "Qm eigenvalues : " << BASE::QmTrajectoryStock_[i][k].eigenvalues().transpose() << std::endl;
         std::cerr << "Rv: " << BASE::RvTrajectoryStock_[i][k].transpose() << std::endl;
         std::cerr << "Rm: \n" << BASE::RmTrajectoryStock_[i][k] << std::endl;
+        std::cerr << "Rm eigenvalues : " << BASE::RmTrajectoryStock_[i][k].eigenvalues().transpose() << std::endl;
         std::cerr << "Pm: \n" << BASE::PmTrajectoryStock_[i][k] << std::endl;
         throw;
       }
@@ -485,7 +488,7 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM>::solveSlqRiccatiEquationsWorker(size_t worke
           std::cerr << "s[" << BASE::SsTimeTrajectoryStock_[partitionIndex][kp] << "]:  \t"
                     << BASE::sTrajectoryStock_[partitionIndex][kp].transpose().norm() << std::endl;
         }
-        exit(0);
+        throw;
       }
     }
   }

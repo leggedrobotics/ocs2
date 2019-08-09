@@ -38,7 +38,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_core/logic/rules/HybridLogicRules.h>
 
 // MPC messages
-#include <ocs2_comm_interfaces/mode_sequence.h>
+#include <ocs2_msgs/mode_sequence.h>
 
 #include "ocs2_comm_interfaces/ocs2_ros_interfaces/common/RosMsgConversions.h"
 
@@ -54,15 +54,15 @@ class ModeSequence_ROS_Interface {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-  typedef SCALAR_T scalar_t;
-  typedef ModeSequenceTemplate<SCALAR_T> mode_sequence_template_t;
+  using scalar_t = SCALAR_T;
+  using mode_sequence_template_t = ModeSequenceTemplate<SCALAR_T>;
 
   /**
    * Constructor.
    *
    * @param [in] robotName: The robot's name.
    */
-  ModeSequence_ROS_Interface(const std::string& robotName = "robot");
+  explicit ModeSequence_ROS_Interface(std::string robotName = "robot");
 
   /**
    * Destructor.
@@ -102,7 +102,7 @@ class ModeSequence_ROS_Interface {
   ::ros::Publisher mpcModeSequencePublisher_;
 
   // ROS messages
-  ocs2_comm_interfaces::mode_sequence modeSequenceTemplateMsg_;
+  ocs2_msgs::mode_sequence modeSequenceTemplateMsg_;
 };
 
 }  // namespace ocs2

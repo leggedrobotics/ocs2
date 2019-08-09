@@ -33,29 +33,27 @@ namespace ocs2 {
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
-MRT_ROS_Dummy_Loop<STATE_DIM, INPUT_DIM>::MRT_ROS_Dummy_Loop(
-		const mrt_ptr_t& mrtPtr,
-		const scalar_t& mrtDesiredFrequency /*= 100*/,
-		const scalar_t& mpcDesiredFrequency /*= -1*/,
-		controlled_system_base_t* systemPtr /* = nullptr*/,
-		Rollout_Settings rolloutSettings /*= Rollout_Settings()*/)
-
-	: mrtPtr_(mrtPtr)
-	, mrtDesiredFrequency_(mrtDesiredFrequency)
-	, mpcDesiredFrequency_(mpcDesiredFrequency)
-	, systemPtr_(systemPtr)
-	, realtimeLoop_(mpcDesiredFrequency<=0) // true if mpcDesiredFrequency is not set or it is negative
+MRT_ROS_Dummy_Loop<STATE_DIM, INPUT_DIM>::MRT_ROS_Dummy_Loop(const mrt_ptr_t& mrtPtr, const scalar_t& mrtDesiredFrequency /*= 100*/,
+                                                             const scalar_t& mpcDesiredFrequency /*= -1*/,
+                                                             controlled_system_base_t* systemPtr /* = nullptr*/,
+                                                             Rollout_Settings rolloutSettings /*= Rollout_Settings()*/)
+    : mrtPtr_(mrtPtr),
+      mrtDesiredFrequency_(mrtDesiredFrequency),
+      mpcDesiredFrequency_(mpcDesiredFrequency),
+      systemPtr_(systemPtr),
+      realtimeLoop_(mpcDesiredFrequency <= 0)  // true if mpcDesiredFrequency is not set or it is negative
 {
-	if (mrtDesiredFrequency_<0)
-		throw std::runtime_error("MRT loop frequency should be a positive number.");
+  if (mrtDesiredFrequency_ < 0) {
+    throw std::runtime_error("MRT loop frequency should be a positive number.");
+  }
 
-	if (mpcDesiredFrequency_>0)
-		ROS_WARN_STREAM("MPC loop is not realtime! "
-				"For realtime setting, set mpcDesiredFrequency to any negative number.");
+  if (mpcDesiredFrequency_ > 0) {
+    ROS_WARN_STREAM("MPC loop is not realtime! For realtime setting, set mpcDesiredFrequency to any negative number.");
+  }
 
-	if (systemPtr_){
-		mrtPtr_->initRollout(*systemPtr_, rolloutSettings);
-	}
+  if (systemPtr_) {
+    mrtPtr_->initRollout(*systemPtr_, rolloutSettings);
+  }
 }
 
 /******************************************************************************************************/
@@ -63,108 +61,101 @@ MRT_ROS_Dummy_Loop<STATE_DIM, INPUT_DIM>::MRT_ROS_Dummy_Loop(
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
 void MRT_ROS_Dummy_Loop<STATE_DIM, INPUT_DIM>::launchNodes(int argc, char* argv[]) {
-
-	mrtPtr_->launchNodes(argc, argv);
-
-	launchVisualizerNode(argc, argv);
+  mrtPtr_->launchNodes(argc, argv);
+  launchVisualizerNode(argc, argv);
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
-void MRT_ROS_Dummy_Loop<STATE_DIM, INPUT_DIM>::run(
-		const system_observation_t& initObservation,
-		const cost_desired_trajectories_t& initCostDesiredTrajectories) {
+void MRT_ROS_Dummy_Loop<STATE_DIM, INPUT_DIM>::run(const system_observation_t& initObservation,
+                                                   const cost_desired_trajectories_t& initCostDesiredTrajectories) {
+  ::ros::Rate rosRate(mrtDesiredFrequency_);  // in Hz
 
-	::ros::Rate rosRate(mrtDesiredFrequency_); // in Hz
+  // time step
+  const scalar_t timeStep = (1.0 / mrtDesiredFrequency_);
 
-	// time step
-	const scalar_t timeStep = (1.0/mrtDesiredFrequency_);
+  // set the frequency ratio between MRT loop and MPC loop in the case of non realtime test
+  size_t frequencyRatio = 1;
+  if (!realtimeLoop_) {
+    frequencyRatio = mrtDesiredFrequency_ / mpcDesiredFrequency_;
+  }
 
-	// set the frequency ratio between MRT loop and MPC loop in the case of non realtime test
-	size_t frequencyRatio = 1;
-	if (realtimeLoop_==false)
-		frequencyRatio = mrtDesiredFrequency_/mpcDesiredFrequency_;
+  size_t loopCounter = 0;
+  scalar_t time = initObservation.time();
 
-	size_t loopCounter = 0;
-	scalar_t time = initObservation.time();
+  // reset MPC node
+  mrtPtr_->resetMpcNode(initCostDesiredTrajectories);
 
-	// reset MPC node
-	mrtPtr_->resetMpcNode(initCostDesiredTrajectories);
+  // wait for the initial MPC plan
+  ROS_INFO_STREAM("Waiting for the initial policy ...");
+  while (::ros::ok() && ::ros::master::check()) {
+    mrtPtr_->spinMRT();
+    // for initial plan
+    mrtPtr_->setCurrentObservation(initObservation);
+    if (mrtPtr_->initialPolicyReceived()) {
+      break;
+    } else {
+      ::ros::Duration(timeStep).sleep();
+    }
+  }
+  ROS_INFO_STREAM("Initial policy has been received.");
 
-	// wait for the initial MPC plan
-	ROS_INFO_STREAM("Waiting for the initial policy ...");
-	while (::ros::ok() && ::ros::master::check()) {
-		mrtPtr_->spinMRT();
-		// for initial plan
-		mrtPtr_->setCurrentObservation(initObservation);
-		if (mrtPtr_->initialPolicyReceived()==true)
-			break;
-		else
-			::ros::Duration(timeStep).sleep();
-	}
-	ROS_INFO_STREAM("Initial policy has been received.");
+  observation_ = initObservation;
 
-	observation_ = initObservation;
+  while (::ros::ok() && ::ros::master::check()) {
+    // this should be called before updatePolicy()
+    mrtPtr_->spinMRT();
 
-	while(::ros::ok() && ::ros::master::check()) {
+    // Checks for new policy and updates the policy
+    bool policyUpdated = false;
+    if (realtimeLoop_) {
+      policyUpdated = mrtPtr_->updatePolicy();
 
-		// this should be called before updatePolicy()
-    	mrtPtr_->spinMRT();
+    } else if (loopCounter % frequencyRatio == 0) {
+      while (::ros::ok() && ::ros::master::check()) {
+        policyUpdated = mrtPtr_->updatePolicy();
+        if (policyUpdated) {
+          break;
+        } else {
+          mrtPtr_->spinMRT();
+        }
+      }
+      std::cout << "<<< Message received at " << time << std::endl;
+    }
 
-		// Checks for new policy and updates the policy
-		bool policyUpdated = false;
-		if (realtimeLoop_ == true) {
-			policyUpdated = mrtPtr_->updatePolicy();
+    std::cout << "### Current time " << time << std::endl;
 
-		} else if (loopCounter%frequencyRatio==0) {
-			while(::ros::ok() && ::ros::master::check()) {
-				policyUpdated = mrtPtr_->updatePolicy();
-				if (policyUpdated==true)
-					break;
-				else
-					mrtPtr_->spinMRT();
-			}
-			std::cout << "<<< Message received at " << time << std::endl;
-		}
+    // integrate nominal dynamics if available, otherwise fake simulation
+    state_vector_t stateTemp = observation_.state();
+    if (systemPtr_) {
+      mrtPtr_->rolloutPolicy(time, stateTemp, timeStep, observation_.state(), observation_.input(), observation_.subsystem());
+    } else {
+      mrtPtr_->evaluatePolicy(time + timeStep, stateTemp, observation_.state(), observation_.input(), observation_.subsystem());
+    }
 
-		std::cout << "### Current time " << time << std::endl;
+    // time and loop counter increment
+    loopCounter++;
+    time += timeStep;
+    observation_.time() = time;
 
-		// integrate nominal dynamics if available, otherwise fake simulation
-		state_vector_t stateTemp = observation_.state();
-		if(systemPtr_){
-			mrtPtr_->rolloutPolicy(time, stateTemp, timeStep,
-					observation_.state(), observation_.input(), observation_.subsystem());
-		} else {
-			mrtPtr_->evaluatePolicy(time+timeStep, stateTemp,
-					observation_.state(), observation_.input(), observation_.subsystem());
-		}
+    // user-defined modifications before publishing
+    modifyObservation(observation_);
 
-		// time and loop counter increment
-		loopCounter++;
-		time += timeStep;
-		observation_.time() = time;
+    // publish observation
+    if (realtimeLoop_) {
+      mrtPtr_->setCurrentObservation(observation_);
+    } else if (loopCounter % frequencyRatio == 0) {
+      mrtPtr_->setCurrentObservation(observation_);
+      std::cout << ">>> Observation is published at " << time << std::endl;
+    }
 
-		// user-defined modifications before publishing
-		modifyObservation(observation_);
+    // Visualization
+    publishVisualizer(observation_,  mrtPtr_->getCommand(), mrtPtr_->getPolicy());
 
-		// publish observation
-		if(realtimeLoop_ == true) {
-			mrtPtr_->setCurrentObservation(observation_);
-
-		} else if (loopCounter%frequencyRatio==0) {
-			mrtPtr_->setCurrentObservation(observation_);
-			std::cout << ">>> Observation is published at " << time << std::endl;
-		}
-
-		// Visualization
-		publishVisualizer(observation_, mrtPtr_->mpcCostDesiredTrajectories());
-
-		rosRate.sleep();
-
-	}  // end of while loop
-
+    rosRate.sleep();
+  }  // end of while loop
 }
 
-} // namespace ocs2
+}  // namespace ocs2

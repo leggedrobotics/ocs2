@@ -56,26 +56,26 @@ class BVPEquations : public OdeBase<STATE_DIM * STATE_DIM + STATE_DIM> {
     Full_ODE_VECTOR_DIM = STATE_DIM * STATE_DIM + STATE_DIM
   };
 
-  typedef double scalar_t;
-  typedef Eigen::Matrix<scalar_t, Full_ODE_VECTOR_DIM, 1> full_ode_vector_t;
-  typedef std::vector<full_ode_vector_t, Eigen::aligned_allocator<full_ode_vector_t> > full_ode_vector_array_t;
+  using scalar_t = double;
+  using full_ode_vector_t = Eigen::Matrix<scalar_t, Full_ODE_VECTOR_DIM, 1>;
+  using full_ode_vector_array_t = std::vector<full_ode_vector_t, Eigen::aligned_allocator<full_ode_vector_t> >;
 
-  typedef Eigen::Matrix<scalar_t, 1, 1> eigen_scalar_t;
-  typedef Eigen::Matrix<scalar_t, STATE_DIM, 1> state_vector_t;
-  typedef Eigen::Matrix<scalar_t, INPUT_DIM, 1> input_vector_t;
-  typedef Eigen::Matrix<scalar_t, STATE_DIM, STATE_DIM> state_state_matrix_t;
-  typedef Eigen::Matrix<scalar_t, INPUT_DIM, INPUT_DIM> input_input_matrix_t;
-  typedef Eigen::Matrix<scalar_t, INPUT_DIM, STATE_DIM> input_state_matrix_t;
-  typedef Eigen::Matrix<scalar_t, STATE_DIM, INPUT_DIM> state_input_matrix_t;
+  using eigen_scalar_t = Eigen::Matrix<scalar_t, 1, 1>;
+  using state_vector_t = Eigen::Matrix<scalar_t, STATE_DIM, 1>;
+  using input_vector_t = Eigen::Matrix<scalar_t, INPUT_DIM, 1>;
+  using state_state_matrix_t = Eigen::Matrix<scalar_t, STATE_DIM, STATE_DIM>;
+  using input_input_matrix_t = Eigen::Matrix<scalar_t, INPUT_DIM, INPUT_DIM>;
+  using input_state_matrix_t = Eigen::Matrix<scalar_t, INPUT_DIM, STATE_DIM>;
+  using state_input_matrix_t = Eigen::Matrix<scalar_t, STATE_DIM, INPUT_DIM>;
 
-  typedef std::vector<scalar_t> scalar_array_t;
-  typedef std::vector<eigen_scalar_t, Eigen::aligned_allocator<eigen_scalar_t> > eigen_scalar_array_t;
-  typedef std::vector<state_vector_t, Eigen::aligned_allocator<state_vector_t> > state_vector_array_t;
-  typedef std::vector<input_vector_t, Eigen::aligned_allocator<input_vector_t> > input_vector_array_t;
-  typedef std::vector<state_state_matrix_t, Eigen::aligned_allocator<state_state_matrix_t> > state_state_matrix_array_t;
-  typedef std::vector<input_input_matrix_t, Eigen::aligned_allocator<input_input_matrix_t> > input_input_matrix_array_t;
-  typedef std::vector<input_state_matrix_t, Eigen::aligned_allocator<input_state_matrix_t> > input_state_matrix_array_t;
-  typedef std::vector<state_input_matrix_t, Eigen::aligned_allocator<state_input_matrix_t> > state_input_matrix_array_t;
+  using scalar_array_t = std::vector<scalar_t>;
+  using eigen_scalar_array_t = std::vector<eigen_scalar_t, Eigen::aligned_allocator<eigen_scalar_t> >;
+  using state_vector_array_t = std::vector<state_vector_t, Eigen::aligned_allocator<state_vector_t> >;
+  using input_vector_array_t = std::vector<input_vector_t, Eigen::aligned_allocator<input_vector_t> >;
+  using state_state_matrix_array_t = std::vector<state_state_matrix_t, Eigen::aligned_allocator<state_state_matrix_t> >;
+  using input_input_matrix_array_t = std::vector<input_input_matrix_t, Eigen::aligned_allocator<input_input_matrix_t> >;
+  using input_state_matrix_array_t = std::vector<input_state_matrix_t, Eigen::aligned_allocator<input_state_matrix_t> >;
+  using state_input_matrix_array_t = std::vector<state_input_matrix_t, Eigen::aligned_allocator<state_input_matrix_t> >;
 
   /**
    * Default constructor.

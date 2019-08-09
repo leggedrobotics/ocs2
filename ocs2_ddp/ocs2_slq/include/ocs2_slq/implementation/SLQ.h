@@ -181,7 +181,7 @@ typename SLQ<STATE_DIM, INPUT_DIM>::scalar_t SLQ<STATE_DIM, INPUT_DIM>::solveSeq
   BASE::sFinalStock_[BASE::finalActivePartition_] = sFinal;
 
   for (int i = BASE::numPartitions_ - 1; i >= 0; i--) {
-    if (i < (signed)BASE::initActivePartition_ || i > (signed)BASE::finalActivePartition_) {
+    if (i < BASE::initActivePartition_ || i > BASE::finalActivePartition_) {
       BASE::SsTimeTrajectoryStock_[i].clear();
       BASE::SsNormalizedTimeTrajectoryStock_[i].clear();
       BASE::SsNormalizedEventsPastTheEndIndecesStock_[i].clear();

@@ -31,6 +31,9 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 namespace ocs2 {
 
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
 Solver_BASE<STATE_DIM, INPUT_DIM>::Solver_BASE(std::shared_ptr<HybridLogicRules> logicRulesPtr /*= nullptr */)
     : costDesiredTrajectoriesUpdated_(false) {
@@ -40,6 +43,9 @@ Solver_BASE<STATE_DIM, INPUT_DIM>::Solver_BASE(std::shared_ptr<HybridLogicRules>
   logicRulesMachinePtr_ = logic_rules_machine_ptr_t(new logic_rules_machine_t(std::move(logicRulesPtr)));
 }
 
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
 void Solver_BASE<STATE_DIM, INPUT_DIM>::setCostDesiredTrajectories(const cost_desired_trajectories_t& costDesiredTrajectories) {
   std::lock_guard<std::mutex> lock(costDesiredTrajectoriesBufferMutex_);
@@ -47,6 +53,9 @@ void Solver_BASE<STATE_DIM, INPUT_DIM>::setCostDesiredTrajectories(const cost_de
   costDesiredTrajectoriesUpdated_ = true;
 }
 
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
 void Solver_BASE<STATE_DIM, INPUT_DIM>::setCostDesiredTrajectories(const scalar_array_t& desiredTimeTrajectory,
                                                                    const dynamic_vector_array_t& desiredStateTrajectory,
@@ -58,6 +67,9 @@ void Solver_BASE<STATE_DIM, INPUT_DIM>::setCostDesiredTrajectories(const scalar_
   costDesiredTrajectoriesUpdated_ = true;
 }
 
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
 void Solver_BASE<STATE_DIM, INPUT_DIM>::swapCostDesiredTrajectories(cost_desired_trajectories_t& costDesiredTrajectories) {
   std::lock_guard<std::mutex> lock(costDesiredTrajectoriesBufferMutex_);
@@ -65,6 +77,9 @@ void Solver_BASE<STATE_DIM, INPUT_DIM>::swapCostDesiredTrajectories(cost_desired
   costDesiredTrajectoriesUpdated_ = true;
 }
 
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
 void Solver_BASE<STATE_DIM, INPUT_DIM>::swapCostDesiredTrajectories(scalar_array_t& desiredTimeTrajectory,
                                                                     dynamic_vector_array_t& desiredStateTrajectory,
@@ -76,12 +91,9 @@ void Solver_BASE<STATE_DIM, INPUT_DIM>::swapCostDesiredTrajectories(scalar_array
   costDesiredTrajectoriesUpdated_ = true;
 }
 
-template <size_t STATE_DIM, size_t INPUT_DIM>
-void Solver_BASE<STATE_DIM, INPUT_DIM>::getCostDesiredTrajectoriesPtr(
-    const cost_desired_trajectories_t*& costDesiredTrajectoriesPtr) const {
-  costDesiredTrajectoriesPtr = &costDesiredTrajectories_;
-}
-
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
 bool Solver_BASE<STATE_DIM, INPUT_DIM>::updateCostDesiredTrajectories() {
   if (costDesiredTrajectoriesUpdated_) {
@@ -93,11 +105,9 @@ bool Solver_BASE<STATE_DIM, INPUT_DIM>::updateCostDesiredTrajectories() {
   return false;
 }
 
-template <size_t STATE_DIM, size_t INPUT_DIM>
-bool Solver_BASE<STATE_DIM, INPUT_DIM>::costDesiredTrajectoriesUpdated() const {
-  return costDesiredTrajectoriesUpdated_;
-}
-
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
 void Solver_BASE<STATE_DIM, INPUT_DIM>::printString(const std::string& text) {
   std::lock_guard<std::mutex> outputDisplayGuard(outputDisplayGuardMutex_);

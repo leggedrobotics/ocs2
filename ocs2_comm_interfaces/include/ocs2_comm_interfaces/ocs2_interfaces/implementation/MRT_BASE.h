@@ -37,8 +37,7 @@ namespace ocs2 {
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
-MRT_BASE<STATE_DIM, INPUT_DIM>::MRT_BASE(std::shared_ptr<HybridLogicRules> logicRules)
-    : mpcLinInterpolateState_(&mpcTimeTrajectory_, &mpcStateTrajectory_) {
+MRT_BASE<STATE_DIM, INPUT_DIM>::MRT_BASE(std::shared_ptr<HybridLogicRules> logicRules) {
   reset();
   if (!logicRules) {
     logicRules.reset(new NullLogicRules());
@@ -53,19 +52,20 @@ template <size_t STATE_DIM, size_t INPUT_DIM>
 void MRT_BASE<STATE_DIM, INPUT_DIM>::reset() {
   std::lock_guard<std::mutex> lock(policyBufferMutex_);
 
+  currentPolicy_.reset(new PolicyData());
+  policyBuffer_.reset(new PolicyData());
+
+  currentCommand_.reset(new CommandData());
+  commandBuffer_.reset(new CommandData());
+
   policyReceivedEver_ = false;
   newPolicyInBuffer_ = false;
 
   policyUpdated_ = false;
   policyUpdatedBuffer_ = false;
 
-  mpcController_.reset();
   mpcLinInterpolateState_.setZero();
 
-  eventTimes_.clear();
-  eventTimesBuffer_.clear();
-  subsystemsSequence_.clear();
-  subsystemsSequenceBuffer_.clear();
   partitioningTimesUpdate(0.0, partitioningTimes_);
   partitioningTimesUpdate(0.0, partitioningTimesBuffer_);
 }
@@ -73,12 +73,6 @@ void MRT_BASE<STATE_DIM, INPUT_DIM>::reset() {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM>
-const CostDesiredTrajectories<typename MRT_BASE<STATE_DIM, INPUT_DIM>::scalar_t>&
-MRT_BASE<STATE_DIM, INPUT_DIM>::mpcCostDesiredTrajectories() const {
-  return mpcCostDesiredTrajectories_;
-}
-
 template <size_t STATE_DIM, size_t INPUT_DIM>
 void MRT_BASE<STATE_DIM, INPUT_DIM>::initRollout(const ControlledSystemBase<STATE_DIM, INPUT_DIM>& controlSystemBase,
                                                  const Rollout_Settings& rolloutSettings) {
@@ -91,13 +85,13 @@ void MRT_BASE<STATE_DIM, INPUT_DIM>::initRollout(const ControlledSystemBase<STAT
 template <size_t STATE_DIM, size_t INPUT_DIM>
 void MRT_BASE<STATE_DIM, INPUT_DIM>::evaluatePolicy(scalar_t currentTime, const state_vector_t& currentState, state_vector_t& mpcState,
                                                     input_vector_t& mpcInput, size_t& subsystem) {
-  if (currentTime > mpcTimeTrajectory_.back()) {
+  if (currentTime > currentPolicy_->mpcTimeTrajectory_.back()) {
     std::cerr << "The requested currentTime is greater than the received plan: " + std::to_string(currentTime) + ">" +
-                     std::to_string(mpcTimeTrajectory_.back())
+                     std::to_string(currentPolicy_->mpcTimeTrajectory_.back())
               << std::endl;
   }
 
-  mpcInput = mpcController_->computeInput(currentTime, currentState);
+  mpcInput = currentPolicy_->mpcController_->computeInput(currentTime, currentState);
   mpcLinInterpolateState_.interpolate(currentTime, mpcState);
 
   size_t index = findActiveSubsystemFnc_(currentTime);
@@ -110,9 +104,9 @@ void MRT_BASE<STATE_DIM, INPUT_DIM>::evaluatePolicy(scalar_t currentTime, const 
 template <size_t STATE_DIM, size_t INPUT_DIM>
 void MRT_BASE<STATE_DIM, INPUT_DIM>::rolloutPolicy(scalar_t currentTime, const state_vector_t& currentState, const scalar_t& timeStep,
                                                    state_vector_t& mpcState, input_vector_t& mpcInput, size_t& subsystem) {
-  if (currentTime > mpcTimeTrajectory_.back()) {
+  if (currentTime > currentPolicy_->mpcTimeTrajectory_.back()) {
     std::cerr << "The requested currentTime is greater than the received plan: " + std::to_string(currentTime) + ">" +
-                     std::to_string(mpcTimeTrajectory_.back())
+                     std::to_string(currentPolicy_->mpcTimeTrajectory_.back())
               << std::endl;
   }
 
@@ -128,9 +122,9 @@ void MRT_BASE<STATE_DIM, INPUT_DIM>::rolloutPolicy(scalar_t currentTime, const s
   input_vector_array_t inputTrajectory;
 
   // perform a rollout
-  if (policyUpdated_ == true) {
-    rolloutPtr_->run(activePartitionIndex, currentTime, currentState, finalTime, mpcController_.get(), *logicMachinePtr_, timeTrajectory,
-                     eventsPastTheEndIndeces, stateTrajectory, inputTrajectory);
+  if (policyUpdated_) {
+    rolloutPtr_->run(activePartitionIndex, currentTime, currentState, finalTime, currentPolicy_->mpcController_.get(), *logicMachinePtr_,
+                     timeTrajectory, eventsPastTheEndIndeces, stateTrajectory, inputTrajectory);
   } else {
     throw std::runtime_error("MRT_ROS_interface: policy should be updated before rollout.");
   }
@@ -148,7 +142,13 @@ void MRT_BASE<STATE_DIM, INPUT_DIM>::rolloutPolicy(scalar_t currentTime, const s
 template <size_t STATE_DIM, size_t INPUT_DIM>
 bool MRT_BASE<STATE_DIM, INPUT_DIM>::updatePolicy() {
   std::lock_guard<std::mutex> lock(policyBufferMutex_);
-
+  return updatePolicyImpl();
+}
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+template <size_t STATE_DIM, size_t INPUT_DIM>
+bool MRT_BASE<STATE_DIM, INPUT_DIM>::updatePolicyImpl() {
   if (!policyUpdatedBuffer_ or !newPolicyInBuffer_) {
     return false;
   }
@@ -157,43 +157,21 @@ bool MRT_BASE<STATE_DIM, INPUT_DIM>::updatePolicy() {
 
   // update the current policy from buffer
   policyUpdated_ = policyUpdatedBuffer_;
-  mpcInitObservation_.swap(mpcInitObservationBuffer_);
-  mpcCostDesiredTrajectories_.swap(mpcCostDesiredTrajectoriesBuffer_);
-  mpcTimeTrajectory_.swap(mpcTimeTrajectoryBuffer_);
-  mpcStateTrajectory_.swap(mpcStateTrajectoryBuffer_);
-  mpcLinInterpolateState_.setData(&mpcTimeTrajectory_, &mpcStateTrajectory_);
-  mpcController_.swap(mpcControllerBuffer_);
-
-  // check whether logic rules needs to be updated
-  bool logicUpdated = false;
-  if (subsystemsSequence_ != subsystemsSequenceBuffer_) {
-    subsystemsSequence_.swap(subsystemsSequenceBuffer_);
-    logicUpdated = true;
-  }
-  if (eventTimes_ != eventTimesBuffer_) {
-    eventTimes_.swap(eventTimesBuffer_);
-    logicUpdated = true;
-  }
-  if (partitioningTimes_ != partitioningTimesBuffer_) {
-    partitioningTimes_.swap(partitioningTimesBuffer_);
-    logicUpdated = true;
-  }
+  currentCommand_.swap(commandBuffer_);
+  currentPolicy_.swap(policyBuffer_);
+  mpcLinInterpolateState_.setData(&currentPolicy_->mpcTimeTrajectory_, &currentPolicy_->mpcStateTrajectory_);
+  partitioningTimes_.swap(partitioningTimesBuffer_);
 
   // update logic rules
-  if (logicUpdated) {
-    // set mode sequence
-    logicMachinePtr_->getLogicRulesPtr()->setModeSequence(subsystemsSequence_, eventTimes_);
-    // Tell logicMachine that logicRules are modified
-    logicMachinePtr_->logicRulesUpdated();
-    // update logicMachine
-    logicMachinePtr_->updateLogicRules(partitioningTimes_);
+  logicMachinePtr_->getLogicRulesPtr()->setModeSequence(currentPolicy_->subsystemsSequence_, currentPolicy_->eventTimes_);
+  logicMachinePtr_->logicRulesUpdated();
+  logicMachinePtr_->updateLogicRules(partitioningTimes_);
 
-    // function for finding active subsystem
-    const size_t partitionIndex = 0;  // we assume only one partition
-    findActiveSubsystemFnc_ = std::move(logicMachinePtr_->getHandleToFindActiveEventCounter(partitionIndex));
-  }
+  // function for finding active subsystem
+  const size_t partitionIndex = 0;  // we assume only one partition
+  findActiveSubsystemFnc_ = std::move(logicMachinePtr_->getHandleToFindActiveEventCounter(partitionIndex));
 
-  modifyPolicy(logicUpdated, *mpcController_, mpcTimeTrajectory_, mpcStateTrajectory_, eventTimes_, subsystemsSequence_);
+  modifyPolicy(*currentCommand_, *currentPolicy_);
 
   return true;
 }

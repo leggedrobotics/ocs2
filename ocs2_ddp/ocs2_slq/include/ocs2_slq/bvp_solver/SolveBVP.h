@@ -53,28 +53,28 @@ class SolveBVP {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-  typedef BVPEquations<STATE_DIM, INPUT_DIM> bvp_equations_t;
+  using bvp_equations_t = BVPEquations<STATE_DIM, INPUT_DIM>;
 
-  typedef typename bvp_equations_t::full_ode_vector_t full_ode_vector_t;
-  typedef typename bvp_equations_t::full_ode_vector_array_t full_ode_vector_array_t;
+  using full_ode_vector_t = typename bvp_equations_t::full_ode_vector_t;
+  using full_ode_vector_array_t = typename bvp_equations_t::full_ode_vector_array_t;
 
-  typedef typename bvp_equations_t::eigen_scalar_t eigen_scalar_t;
-  typedef typename bvp_equations_t::state_vector_t state_vector_t;
-  typedef typename bvp_equations_t::input_vector_t input_vector_t;
-  typedef typename bvp_equations_t::state_state_matrix_t state_state_matrix_t;
-  typedef typename bvp_equations_t::input_input_matrix_t input_input_matrix_t;
-  typedef typename bvp_equations_t::input_state_matrix_t input_state_matrix_t;
-  typedef typename bvp_equations_t::state_input_matrix_t state_input_matrix_t;
+  using eigen_scalar_t = typename bvp_equations_t::eigen_scalar_t;
+  using state_vector_t = typename bvp_equations_t::state_vector_t;
+  using input_vector_t = typename bvp_equations_t::input_vector_t;
+  using state_state_matrix_t = typename bvp_equations_t::state_state_matrix_t;
+  using input_input_matrix_t = typename bvp_equations_t::input_input_matrix_t;
+  using input_state_matrix_t = typename bvp_equations_t::input_state_matrix_t;
+  using state_input_matrix_t = typename bvp_equations_t::state_input_matrix_t;
 
-  typedef typename bvp_equations_t::scalar_t scalar_t;
-  typedef typename bvp_equations_t::scalar_array_t scalar_array_t;
-  typedef typename bvp_equations_t::eigen_scalar_array_t eigen_scalar_array_t;
-  typedef typename bvp_equations_t::state_vector_array_t state_vector_array_t;
-  typedef typename bvp_equations_t::input_vector_array_t input_vector_array_t;
-  typedef typename bvp_equations_t::state_state_matrix_array_t state_state_matrix_array_t;
-  typedef typename bvp_equations_t::input_input_matrix_array_t input_input_matrix_array_t;
-  typedef typename bvp_equations_t::input_state_matrix_array_t input_state_matrix_array_t;
-  typedef typename bvp_equations_t::state_input_matrix_array_t state_input_matrix_array_t;
+  using scalar_t = typename bvp_equations_t::scalar_t;
+  using scalar_array_t = typename bvp_equations_t::scalar_array_t;
+  using eigen_scalar_array_t = typename bvp_equations_t::eigen_scalar_array_t;
+  using state_vector_array_t = typename bvp_equations_t::state_vector_array_t;
+  using input_vector_array_t = typename bvp_equations_t::input_vector_array_t;
+  using state_state_matrix_array_t = typename bvp_equations_t::state_state_matrix_array_t;
+  using input_input_matrix_array_t = typename bvp_equations_t::input_input_matrix_array_t;
+  using input_state_matrix_array_t = typename bvp_equations_t::input_state_matrix_array_t;
+  using state_input_matrix_array_t = typename bvp_equations_t::state_input_matrix_array_t;
 
   /**
    * Default constructor.
@@ -156,7 +156,7 @@ class SolveBVP {
           std::cerr << "Mm[" << timeTrajectory[kp] << "]:\n" << MmTrajectory[kp].transpose() << std::endl;
           std::cerr << "Sv[" << timeTrajectory[kp] << "]:\t" << SvTrajectory[kp].transpose() << std::endl;
         }
-        exit(1);
+        throw;
       }
 
     }  // end of k loop
@@ -213,7 +213,7 @@ class SolveBVP {
           std::cerr << "Mm[" << *(timeTrajectoryBeginItr + kp) << "]:\n" << MmTrajectory[kp].transpose() << std::endl;
           std::cerr << "Sv[" << *(timeTrajectoryBeginItr + kp) << "]:\t" << SvTrajectory[kp].transpose() << std::endl;
         }
-        exit(1);
+        throw;
       }
 
     }  // end of k loop

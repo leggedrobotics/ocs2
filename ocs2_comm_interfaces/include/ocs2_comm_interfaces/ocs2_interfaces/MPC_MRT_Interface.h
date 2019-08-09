@@ -32,7 +32,7 @@ class MPC_MRT_Interface final : public MRT_BASE<STATE_DIM, INPUT_DIM> {
 
   using Base = MRT_BASE<STATE_DIM, INPUT_DIM>;
 
-  typedef std::shared_ptr<MPC_MRT_Interface<STATE_DIM, INPUT_DIM>> Ptr;
+  using Ptr = std::shared_ptr<MPC_MRT_Interface<STATE_DIM, INPUT_DIM>>;
 
   using mpc_t = MPC_BASE<STATE_DIM, INPUT_DIM>;
 
@@ -63,7 +63,7 @@ class MPC_MRT_Interface final : public MRT_BASE<STATE_DIM, INPUT_DIM> {
    * @param[in] mpc the underlying MPC class to be used
    * @param[in] logicRules (optional)
    */
-  MPC_MRT_Interface(mpc_t* mpc, std::shared_ptr<HybridLogicRules> logicRules = nullptr);
+  explicit MPC_MRT_Interface(mpc_t* mpc, std::shared_ptr<HybridLogicRules> logicRules = nullptr);
 
   /**
    * Destructor.
@@ -96,26 +96,14 @@ class MPC_MRT_Interface final : public MRT_BASE<STATE_DIM, INPUT_DIM> {
   void advanceMpc();
 
   /**
-   * @brief Access the currently in-use time trajectory.
-   * @note To get the latest policy from MPC, call updatePolicy() first
-   */
-  const scalar_array_t& getMpcTimeTrajectory() const;
-
-  /**
-   * @brief Access the currently in-use state trajectory.
-   * @note To get the latest policy from MPC, call updatePolicy() first
-   */
-  const state_vector_array_t& getMpcStateTrajectory() const;
-
-  /**
    * @brief Access the currently in-use input trajectory.
    * @note To get the latest policy from MPC, call updatePolicy() first
    */
-  const input_vector_array_t& getMpcInputTrajectory() const;
-
-  bool updatePolicy() override;
+  const input_vector_array_t& getMpcInputTrajectory() const { return mpcInputTrajectory_; };
 
  protected:
+  bool updatePolicyImpl() override;
+
   /**
    * @brief fillMpcOutputBuffers updates the *Buffer variables from the MPC object.
    * This method is automatically called by advanceMpc()

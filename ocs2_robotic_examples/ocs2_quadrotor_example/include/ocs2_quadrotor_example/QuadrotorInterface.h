@@ -53,13 +53,13 @@ class QuadrotorInterface : public RobotInterfaceBase<quadrotor::STATE_DIM_, quad
 public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-	typedef RobotInterfaceBase<quadrotor::STATE_DIM_, quadrotor::INPUT_DIM_> BASE;
+	using BASE = RobotInterfaceBase<quadrotor::STATE_DIM_, quadrotor::INPUT_DIM_>;
 
 	using dim_t = Dimensions<quadrotor::STATE_DIM_, quadrotor::INPUT_DIM_>;
 	using QuadrotorConstraint = ConstraintBase<quadrotor::STATE_DIM_, quadrotor::INPUT_DIM_>;
 	using QuadrotorOperatingPoint = SystemOperatingPoint<quadrotor::STATE_DIM_, quadrotor::INPUT_DIM_>;
 
-	typedef MPC_ILQR<quadrotor::STATE_DIM_, quadrotor::INPUT_DIM_> mpc_t;
+	using mpc_t = MPC_ILQR<quadrotor::STATE_DIM_, quadrotor::INPUT_DIM_>;
 
 	/**
 	 * Constructor
@@ -93,6 +93,8 @@ public:
 	 * @return Pointer to the internal MPC
 	 */
 	mpc_t::Ptr& getMPCPtr();
+
+	QuadrotorSystemDynamics * getDynamicsPtr() { return quadrotorSystemDynamicsPtr_.get(); }
 
 protected:
 	/**

@@ -29,9 +29,6 @@ class PiSolver final : public Solver_BASE<STATE_DIM, INPUT_DIM> {
 
   using Base = Solver_BASE<STATE_DIM, INPUT_DIM>;
 
-  using typename Base::scalar_array_t;
-  using typename Base::scalar_t;
-  using scalar_array2_t = std::vector<scalar_array_t>;
   using typename Base::controller_ptr_array_t;
   using typename Base::cost_desired_trajectories_t;
   using typename Base::dynamic_vector_array_t;
@@ -42,12 +39,15 @@ class PiSolver final : public Solver_BASE<STATE_DIM, INPUT_DIM> {
   using typename Base::input_vector_array2_t;
   using typename Base::input_vector_array_t;
   using typename Base::input_vector_t;
+  using typename Base::scalar_array_t;
+  using typename Base::scalar_t;
   using typename Base::state_input_matrix_t;
   using typename Base::state_matrix_t;
   using typename Base::state_vector_array2_t;
   using typename Base::state_vector_array_t;
   using typename Base::state_vector_t;
 
+  using scalar_array2_t = std::vector<scalar_array_t>;
   using controlled_system_base_t = ControlledSystemBase<STATE_DIM, INPUT_DIM>;
   using cost_function_t = CostFunctionBase<STATE_DIM, INPUT_DIM>;
   using rollout_t = TimeTriggeredRollout<STATE_DIM, INPUT_DIM>;
@@ -78,8 +78,9 @@ class PiSolver final : public Solver_BASE<STATE_DIM, INPUT_DIM> {
     // TODO(jcarius) how to ensure that we are given a suitable cost function?
     // TODO(jcarius) how to ensure that the constraint is input-affine and full row-rank D?
 
-    // TODO(jcarius) enforce euler forward method in rollout and extract rollout_dt_
-    // see Euler-Maruyama method (https://infoscience.epfl.ch/record/143450/files/sde_tutorial.pdf)
+    if (settings_.rolloutSettings_.integratorType_ != IntegratorType::EULER) {
+      throw std::runtime_error("PiSolver only works with Euler Integration.");
+    }
 
     auto seed = static_cast<unsigned int>(time(nullptr));
     std::cerr << "Setting random seed to controller: " << seed << std::endl;
@@ -88,7 +89,7 @@ class PiSolver final : public Solver_BASE<STATE_DIM, INPUT_DIM> {
 
   ~PiSolver() override = default;
 
-  virtual void reset() override {
+  void reset() override {
     this->costDesiredTrajectories_.clear();
     this->costDesiredTrajectoriesBuffer_.clear();
     nominalTimeTrajectoriesStock_.clear();
@@ -98,8 +99,7 @@ class PiSolver final : public Solver_BASE<STATE_DIM, INPUT_DIM> {
     numIterations_ = 0;
   }
 
-  virtual void run(scalar_t initTime, const state_vector_t& initState, scalar_t finalTime,
-                   const scalar_array_t& partitioningTimes) override {
+  void run(scalar_t initTime, const state_vector_t& initState, scalar_t finalTime, const scalar_array_t& partitioningTimes) override {
     numIterations_++;
 
     this->updateCostDesiredTrajectories();
@@ -131,6 +131,7 @@ class PiSolver final : public Solver_BASE<STATE_DIM, INPUT_DIM> {
         typename rollout_t::input_vector_array_t inputTrajectory;
         rollout_.run(0, initTime, initState, finalTime, &controller_, *Base::getLogicRulesMachinePtr(), timeTrajectory,
                      eventsPastTheEndIndeces, stateTrajectory, inputTrajectory);
+        // see Euler-Maruyama method (https://infoscience.epfl.ch/record/143450/files/sde_tutorial.pdf)
       }
 
       if (controller_.cacheData_.size() != numSteps - 1) {
@@ -156,6 +157,10 @@ class PiSolver final : public Solver_BASE<STATE_DIM, INPUT_DIM> {
       noisyInputVector_array2[sample][numSteps - 1] = controller_.cacheData_.back().u_;
       costFunction_->setCurrentStateAndControl(finalTime, stateTrajectory.back(), input_vector_t::Zero());
       costFunction_->getTerminalCost(stageCost[sample][numSteps - 1]);
+
+      // interpret NaN in cost as infinity
+      std::for_each(stageCost[sample].begin(), stageCost[sample].end(),
+                    [](scalar_t& in) { in = std::isnan(in) ? std::numeric_limits<scalar_t>::infinity() : in; });
     }
 
     // -------------------------------------------------------------------------
@@ -179,6 +184,11 @@ class PiSolver final : public Solver_BASE<STATE_DIM, INPUT_DIM> {
       if (std::isfinite(J[sample][numSteps - 1]) && J[sample][numSteps - 1] > maxJ_currStep) {
         maxJ_currStep = J[sample][numSteps - 1];
       }
+    }
+
+    if (maxJ_currStep - minJ_currStep < 1.0) {
+      // the purpose of maxJ is to smooth the softmax
+      maxJ_currStep = minJ_currStep + 1.0;
     }
 
     // initialize psi
@@ -307,71 +317,74 @@ class PiSolver final : public Solver_BASE<STATE_DIM, INPUT_DIM> {
     }
   }
 
-  virtual void run(scalar_t initTime, const state_vector_t& initState, scalar_t finalTime, const scalar_array_t& partitioningTimes,
-                   const controller_ptr_array_t& controllersStock) override {
+  void run(scalar_t initTime, const state_vector_t& initState, scalar_t finalTime, const scalar_array_t& partitioningTimes,
+           const controller_ptr_array_t& controllersStock) override {
     throw std::runtime_error("not implemented.");
   }
 
-  virtual void blockwiseMovingHorizon(bool flag) override {
+  void blockwiseMovingHorizon(bool flag) override {
     if (flag) {
       std::cerr << "[PiSolver] BlockwiseMovingHorizon enabled." << std::endl;
     }
   }
 
-  virtual void getPerformanceIndeces(scalar_t& costFunction, scalar_t& constraint1ISE, scalar_t& constraint2ISE) const override {
+  void getPerformanceIndeces(scalar_t& costFunction, scalar_t& constraint1ISE, scalar_t& constraint2ISE) const override {
     throw std::runtime_error("not implemented.");
   }
 
-  virtual size_t getNumIterations() const override { return numIterations_; }
+  size_t getNumIterations() const override { return numIterations_; }
 
-  virtual void getIterationsLog(eigen_scalar_array_t& iterationCost, eigen_scalar_array_t& iterationISE1,
-                                eigen_scalar_array_t& iterationISE2) const override {
+  void getIterationsLog(eigen_scalar_array_t& iterationCost, eigen_scalar_array_t& iterationISE1,
+                        eigen_scalar_array_t& iterationISE2) const override {
     throw std::runtime_error("not implemented.");
   }
 
-  virtual void getIterationsLogPtr(const eigen_scalar_array_t*& iterationCostPtr, const eigen_scalar_array_t*& iterationISE1Ptr,
-                                   const eigen_scalar_array_t*& iterationISE2Ptr) const override {
+  void getIterationsLogPtr(const eigen_scalar_array_t*& iterationCostPtr, const eigen_scalar_array_t*& iterationISE1Ptr,
+                           const eigen_scalar_array_t*& iterationISE2Ptr) const override {
     throw std::runtime_error("not implemented.");
   }
 
-  virtual scalar_t getFinalTime() const override { throw std::runtime_error("not implemented."); }
+  scalar_t getFinalTime() const override { throw std::runtime_error("not implemented."); }
 
-  /**
-   * Returns the final time of optimization.
-   *
-   * @return finalTime
-   */
-  virtual const scalar_array_t& getPartitioningTimes() const override { throw std::runtime_error("not implemented."); }
+  const scalar_array_t& getPartitioningTimes() const override { throw std::runtime_error("not implemented."); }
 
-  virtual const controller_ptr_array_t& getController() const override { return nominalControllersPtrStock_; }
+  const controller_ptr_array_t& getController() const override { return nominalControllersPtrStock_; }
 
-  virtual void getControllerPtr(const controller_ptr_array_t*& controllersStockPtr) const override {
+  void getControllerPtr(const controller_ptr_array_t*& controllersStockPtr) const override {
     controllersStockPtr = &nominalControllersPtrStock_;
   }
 
-  virtual const std::vector<scalar_array_t>& getNominalTimeTrajectories() const override { throw std::runtime_error("not implemented."); }
+  /**
+   * @brief Sets the initial sampling policy for path integral rollouts
+   * @param The control policy to sample around
+   */
+  void setSamplingPolicy(std::unique_ptr<ControllerBase<STATE_DIM, INPUT_DIM>> samplingPolicy) {
+    controller_.setSamplingPolicy(std::move(samplingPolicy));
+  }
 
-  virtual const state_vector_array2_t& getNominalStateTrajectories() const override { throw std::runtime_error("not implemented."); }
+  const std::vector<scalar_array_t>& getNominalTimeTrajectories() const override { throw std::runtime_error("not implemented."); }
 
-  virtual const input_vector_array2_t& getNominalInputTrajectories() const override { throw std::runtime_error("not implemented."); }
+  const state_vector_array2_t& getNominalStateTrajectories() const override { throw std::runtime_error("not implemented."); }
 
-  virtual void getNominalTrajectoriesPtr(const std::vector<scalar_array_t>*& nominalTimeTrajectoriesStockPtr,
-                                         const state_vector_array2_t*& nominalStateTrajectoriesStockPtr,
-                                         const input_vector_array2_t*& nominalInputTrajectoriesStockPtr) const override {
+  const input_vector_array2_t& getNominalInputTrajectories() const override { throw std::runtime_error("not implemented."); }
+
+  void getNominalTrajectoriesPtr(const std::vector<scalar_array_t>*& nominalTimeTrajectoriesStockPtr,
+                                 const state_vector_array2_t*& nominalStateTrajectoriesStockPtr,
+                                 const input_vector_array2_t*& nominalInputTrajectoriesStockPtr) const override {
     nominalTimeTrajectoriesStockPtr = &nominalTimeTrajectoriesStock_;
     nominalStateTrajectoriesStockPtr = &nominalStateTrajectoriesStock_;
     nominalInputTrajectoriesStockPtr = &nominalInputTrajectoriesStock_;
   }
 
-  virtual void swapNominalTrajectories(std::vector<scalar_array_t>& nominalTimeTrajectoriesStock,
-                                       state_vector_array2_t& nominalStateTrajectoriesStock,
-                                       input_vector_array2_t& nominalInputTrajectoriesStock) override {
+  void swapNominalTrajectories(std::vector<scalar_array_t>& nominalTimeTrajectoriesStock,
+                               state_vector_array2_t& nominalStateTrajectoriesStock,
+                               input_vector_array2_t& nominalInputTrajectoriesStock) override {
     throw std::runtime_error("not implemented.");
   }
 
-  virtual void rewindOptimizer(size_t firstIndex) override {}
+  void rewindOptimizer(size_t firstIndex) override {}
 
-  virtual const unsigned long long int& getRewindCounter() const override { throw std::runtime_error("not implemented."); }
+  const unsigned long long int& getRewindCounter() const override { throw std::runtime_error("not implemented."); }
 
   void printIterationDebug(scalar_t initTime, const state_vector_array2_t& state_vector_array2,
                            const input_vector_array2_t& input_vector_array2, const scalar_array2_t& J) {

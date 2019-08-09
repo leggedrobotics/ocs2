@@ -44,7 +44,7 @@ class MRT_ROS_Dummy_Cartpole : public MRT_ROS_Dummy_Loop<cartpole::STATE_DIM_, c
 public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-	typedef MRT_ROS_Dummy_Loop<cartpole::STATE_DIM_, cartpole::INPUT_DIM_> BASE;
+	using BASE = MRT_ROS_Dummy_Loop<cartpole::STATE_DIM_, cartpole::INPUT_DIM_>;
 
 	/**
 	 * Constructor.
@@ -86,25 +86,16 @@ protected:
     ROS_INFO_STREAM("Visualization subscriber is connected.");
   }
 
-	/**
-	 * Visualizes the current observation.
-	 *
-	 * @param [in] observation: The current observation.
-	 * @param [in] costDesiredTrajectories: The commanded target trajectory or point.
-	 */
-  virtual void publishVisualizer(
-		  const system_observation_t& observation,
-		  const cost_desired_trajectories_t& costDesiredTrajectories) override {
-
-	  sensor_msgs::JointState joint_state;
-	  joint_state.header.stamp = ros::Time::now();
-	  joint_state.name.resize(2);
-	  joint_state.position.resize(2);
-	  joint_state.name[0] ="slider_to_cart";
-	  joint_state.name[1] ="cart_to_pole";
-	  joint_state.position[0] = observation.state()(1);
-	  joint_state.position[1] = observation.state()(0);
-	  jointPublisher_.publish(joint_state);
+  void publishVisualizer(const system_observation_t& observation, const commandData_t& command, const policyData_t& policy) override {
+    sensor_msgs::JointState joint_state;
+    joint_state.header.stamp = ros::Time::now();
+    joint_state.name.resize(2);
+    joint_state.position.resize(2);
+    joint_state.name[0] ="slider_to_cart";
+    joint_state.name[1] ="cart_to_pole";
+    joint_state.position[0] = observation.state()(1);
+    joint_state.position[1] = observation.state()(0);
+    jointPublisher_.publish(joint_state);
   }
 
   ros::Publisher jointPublisher_;

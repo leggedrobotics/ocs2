@@ -98,7 +98,7 @@ class MPC_BASE {
    *
    * @param [in] mpcSettings: Structure containing the settings for the MPC algorithm.
    */
-  MPC_BASE(const scalar_array_t& partitioningTimes, const MPC_Settings& mpcSettings = MPC_Settings());
+  explicit MPC_BASE(const scalar_array_t& partitioningTimes, const MPC_Settings& mpcSettings = MPC_Settings());
 
   /**
    * destructor.
@@ -208,13 +208,6 @@ class MPC_BASE {
    * @return structure which details MPC settings
    */
   MPC_Settings& settings();
-
-  /**
-   * Gets the cost function desired trajectories.
-   *
-   * @param [out] costDesiredTrajectories: A pointer to the cost function desired trajectories
-   */
-  virtual void getCostDesiredTrajectoriesPtr(const cost_desired_trajectories_t*& costDesiredTrajectoriesPtr) const;
 
  protected:
   /**

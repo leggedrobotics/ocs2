@@ -47,10 +47,10 @@ class SystemObservation {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-  typedef Dimensions<STATE_DIM, INPUT_DIM> DIMENSIONS;
-  typedef typename DIMENSIONS::scalar_t scalar_t;
-  typedef typename DIMENSIONS::state_vector_t state_vector_t;
-  typedef typename DIMENSIONS::input_vector_t input_vector_t;
+  using DIMENSIONS = Dimensions<STATE_DIM, INPUT_DIM>;
+  using scalar_t = typename DIMENSIONS::scalar_t;
+  using state_vector_t = typename DIMENSIONS::state_vector_t;
+  using input_vector_t = typename DIMENSIONS::input_vector_t;
 
   /**
    * Constructor

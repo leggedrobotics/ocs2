@@ -257,7 +257,7 @@ typename DDP_BASE<STATE_DIM, INPUT_DIM>::scalar_t DDP_BASE<STATE_DIM, INPUT_DIM>
   if (ddpSettings_.debugPrintRollout_) {
     for (size_t i = 0; i < numPartitions; i++) {
       rollout_base_t::display(i, timeTrajectoriesStock[i], eventsPastTheEndIndecesStock[i], stateTrajectoriesStock[i],
-                              inputTrajectoriesStock[i]);
+                              &inputTrajectoriesStock[i]);
     }
   }
 
@@ -648,6 +648,8 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::approximateUnconstrainedLQWorker(size_t wor
   // making sure that constrained Qm is PSD
   if (ddpSettings_.useMakePSD_) {
     LinearAlgebra::makePSD(QmTrajectoryStock_[i][k]);
+  } else {
+    QmTrajectoryStock_[i][k].diagonal().array() += ddpSettings_.addedRiccatiDiagonal_;
   }
 }
 

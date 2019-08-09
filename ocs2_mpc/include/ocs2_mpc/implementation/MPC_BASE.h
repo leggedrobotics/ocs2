@@ -268,7 +268,7 @@ bool MPC_BASE<STATE_DIM, INPUT_DIM>::run(const scalar_t& currentTime, const stat
   //*****************************************************************************************
   // Update logicRules if new logicRulesTemplate is set
   //*****************************************************************************************
-  if (logicRulesTemplateUpdated_ == true) {
+  if (logicRulesTemplateUpdated_) {
     // set new templates
     if (!solverPtr_->getLogicRulesPtr()) {
       throw std::runtime_error("MPC Base: solverPtr_->getLogicRulesPtr() must not be nullptr.");
@@ -372,14 +372,6 @@ void MPC_BASE<STATE_DIM, INPUT_DIM>::setNewLogicRulesTemplate(const mode_sequenc
   newLogicRulesTemplate_ = newLogicRulesTemplate;
   std::cerr << "### The mode sequence is updated to " << std::endl;
   newLogicRulesTemplate.display();
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM>
-void MPC_BASE<STATE_DIM, INPUT_DIM>::getCostDesiredTrajectoriesPtr(const cost_desired_trajectories_t*& costDesiredTrajectoriesPtr) const {
-  solverPtr_->getCostDesiredTrajectoriesPtr(costDesiredTrajectoriesPtr);
 }
 
 /******************************************************************************************************/

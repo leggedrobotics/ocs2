@@ -55,12 +55,12 @@ public:
 		command_dim_ = 12
 	};
 
-	typedef ocs2::TargetTrajectories_Keyboard_Interface<SCALAR_T> BASE;
-	typedef typename BASE::scalar_t scalar_t;
-	typedef typename BASE::scalar_array_t scalar_array_t;
-	typedef typename BASE::dynamic_vector_t dynamic_vector_t;
-	typedef typename BASE::dynamic_vector_array_t dynamic_vector_array_t;
-	typedef typename BASE::cost_desired_trajectories_t cost_desired_trajectories_t;
+	using BASE = ocs2::TargetTrajectories_Keyboard_Interface<SCALAR_T>;
+	using scalar_t = typename BASE::scalar_t;
+	using scalar_array_t = typename BASE::scalar_array_t;
+	using dynamic_vector_t = typename BASE::dynamic_vector_t;
+	using dynamic_vector_array_t = typename BASE::dynamic_vector_array_t;
+	using cost_desired_trajectories_t = typename BASE::cost_desired_trajectories_t;
 
 	/**
 	 * Constructor.
@@ -100,7 +100,7 @@ public:
 	*/
 	~TargetTrajectories_Keyboard_Quadrotor() = default;
 
-	void observationCallback(const ocs2_comm_interfaces::mpc_observation::ConstPtr& msg){
+	void observationCallback(const ocs2_msgs::mpc_observation::ConstPtr& msg){
 	  std::lock_guard<std::mutex> lock(latestObservationMutex_);
 	  latestObservation_ = msg;
 	}
@@ -110,7 +110,7 @@ public:
 	  ::ros::spinOnce();
 	  {
 	    std::lock_guard<std::mutex> lock(latestObservationMutex_);
-	    RosMsgConversions<quadrotor::STATE_DIM_, quadrotor::INPUT_DIM_>::ReadObservationMsg(*latestObservation_, observation);
+	    RosMsgConversions<quadrotor::STATE_DIM_, quadrotor::INPUT_DIM_>::readObservationMsg(*latestObservation_, observation);
 	  }
 
 	  // reversing the order of the position and orientation.
@@ -185,7 +185,7 @@ private:
   ros::Subscriber observationSubscriber_;
 
   std::mutex latestObservationMutex_;
-  ocs2_comm_interfaces::mpc_observation::ConstPtr latestObservation_;
+  ocs2_msgs::mpc_observation::ConstPtr latestObservation_;
 
 };
 

@@ -75,13 +75,13 @@ GLQP<STATE_DIM, INPUT_DIM>::GLQP(const controlled_system_base_t* systemDynamicsP
       heuristicsFunctionsPtrStock_.emplace_back(costFunctionPtr->clone());
 
     // initialize events
-    typedef Eigen::aligned_allocator<event_handler_t> event_handler_alloc_t;
+    using event_handler_alloc_t = Eigen::aligned_allocator<event_handler_t>;
     systemEventHandlersPtrStock_.push_back(
         std::move(std::allocate_shared<event_handler_t, event_handler_alloc_t>(event_handler_alloc_t())));
 
     // initialize integrators
-    typedef ODE45<STATE_DIM> ode_t;
-    typedef Eigen::aligned_allocator<ode_t> ode_alloc_t;
+    using ode_t = ODE45<STATE_DIM>;
+    using ode_alloc_t = Eigen::aligned_allocator<ode_t>;
     dynamicsIntegratorsStockPtr_.push_back(std::move(
         std::allocate_shared<ode_t, ode_alloc_t>(ode_alloc_t(), systemDynamicsPtrStock_.back(), systemEventHandlersPtrStock_.back())));
 
@@ -94,7 +94,7 @@ GLQP<STATE_DIM, INPUT_DIM>::GLQP(const controlled_system_base_t* systemDynamicsP
   riccatiIntegratorPtrStock_.reserve(settings_.nThreads_);
 
   for (size_t i = 0; i < settings_.nThreads_; i++) {
-    typedef Eigen::aligned_allocator<riccati_equations_t> riccati_equations_alloc_t;
+    using riccati_equations_alloc_t = Eigen::aligned_allocator<riccati_equations_t>;
     riccatiEquationsPtrStock_.push_back(std::move(
         std::allocate_shared<riccati_equations_t, riccati_equations_alloc_t>(riccati_equations_alloc_t(), settings_.useMakePSD_)));
 

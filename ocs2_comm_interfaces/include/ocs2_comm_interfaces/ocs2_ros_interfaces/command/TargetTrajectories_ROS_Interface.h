@@ -38,7 +38,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_core/cost/CostDesiredTrajectories.h>
 
 // MPC messages
-#include <ocs2_comm_interfaces/mpc_target_trajectories.h>
+#include <ocs2_msgs/mpc_target_trajectories.h>
 
 #include "ocs2_comm_interfaces/ocs2_ros_interfaces/common/RosMsgConversions.h"
 
@@ -54,12 +54,12 @@ class TargetTrajectories_ROS_Interface {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-  typedef SCALAR_T scalar_t;
+  using scalar_t = SCALAR_T;
 
-  typedef CostDesiredTrajectories<scalar_t> cost_desired_trajectories_t;
-  typedef typename cost_desired_trajectories_t::scalar_array_t scalar_array_t;
-  typedef typename cost_desired_trajectories_t::dynamic_vector_t dynamic_vector_t;
-  typedef typename cost_desired_trajectories_t::dynamic_vector_array_t dynamic_vector_array_t;
+  using cost_desired_trajectories_t = CostDesiredTrajectories<scalar_t>;
+  using scalar_array_t = typename cost_desired_trajectories_t::scalar_array_t;
+  using dynamic_vector_t = typename cost_desired_trajectories_t::dynamic_vector_t;
+  using dynamic_vector_array_t = typename cost_desired_trajectories_t::dynamic_vector_array_t;
 
   /**
    * Constructor.
@@ -68,7 +68,7 @@ class TargetTrajectories_ROS_Interface {
    * @param [in] argv: Command line arguments
    * @param [in] robotName: The robot's name.
    */
-  TargetTrajectories_ROS_Interface(int argc, char* argv[], const std::string& robotName = "robot");
+  TargetTrajectories_ROS_Interface(int argc, char* argv[], std::string robotName = "robot");
 
   /**
    * Destructor.
@@ -107,7 +107,7 @@ class TargetTrajectories_ROS_Interface {
   ::ros::Publisher mpcTargetTrajectoriesPublisher_;
 
   // ROS messages
-  ocs2_comm_interfaces::mpc_target_trajectories mpcTargetTrajectoriesMsg_;
+  ocs2_msgs::mpc_target_trajectories mpcTargetTrajectoriesMsg_;
 };
 
 }  // namespace ocs2

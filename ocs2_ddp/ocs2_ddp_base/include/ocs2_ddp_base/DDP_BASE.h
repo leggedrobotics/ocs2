@@ -351,7 +351,7 @@ class DDP_BASE : public Solver_BASE<STATE_DIM, INPUT_DIM> {
    */
   void adjustController(const scalar_array_t& newEventTimes, const scalar_array_t& controllerEventTimes);
 
-  scalar_t getValueFuntion(scalar_t time, const state_vector_t& state) const override;
+  scalar_t getValueFunction(scalar_t time, const state_vector_t& state) const override;
 
   void getValueFunctionStateDerivative(scalar_t time, const state_vector_t& state, state_vector_t& Vx) const override;
 

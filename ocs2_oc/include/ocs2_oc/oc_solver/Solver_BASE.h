@@ -383,7 +383,7 @@ class Solver_BASE {
    * @param [in] state: The inquiry state.
    * @return value at the inquiry time and state.
    */
-  virtual scalar_t getValueFuntion(scalar_t time, const state_vector_t& state) const = 0;
+  virtual scalar_t getValueFunction(scalar_t time, const state_vector_t& state) const = 0;
 
   /**
    * Calculates the value function state derivative at the given time and state.

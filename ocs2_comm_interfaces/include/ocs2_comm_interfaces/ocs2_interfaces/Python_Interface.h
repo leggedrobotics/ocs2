@@ -69,7 +69,7 @@ class PythonInterface {
    * @brief setTargetTrajectories
    * @param targetTrajectories
    */
-  void setTargetTrajectories(const cost_desired_trajectories_t& targetTrajectories);
+  void setTargetTrajectories(cost_desired_trajectories_t targetTrajectories);
 
   /**
    * @brief run MPC

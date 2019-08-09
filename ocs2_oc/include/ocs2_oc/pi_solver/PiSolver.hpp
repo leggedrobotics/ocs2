@@ -431,7 +431,7 @@ class PiSolver final : public Solver_BASE<STATE_DIM, INPUT_DIM> {
     }
   }
 
-  scalar_t getValueFuntion(scalar_t time, const state_vector_t& state) const override { throw std::runtime_error("Not implemented."); }
+  scalar_t getValueFunction(scalar_t time, const state_vector_t& state) const override { throw std::runtime_error("Not implemented."); }
 
   void getValueFunctionStateDerivative(scalar_t time, const state_vector_t& state, state_vector_t& Vx) const override {
     throw std::runtime_error("Not implemented.");

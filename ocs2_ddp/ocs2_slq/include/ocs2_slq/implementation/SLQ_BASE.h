@@ -333,49 +333,34 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM>::calculateStateInputConstraintLagrangian(sca
   size_t activeSubsystem = lookup::findBoundedActiveIntervalInTimeArray(BASE::partitioningTimes_, time);
 
   state_vector_t xNominal;
-  EigenLinearInterpolation<state_vector_t> xNominalFunc(&BASE::nominalTimeTrajectoriesStock_[activeSubsystem],
-                                                        &BASE::nominalStateTrajectoriesStock_[activeSubsystem]);
-  const auto indexAlpha = xNominalFunc.interpolate(time, xNominal);
+  const auto indexAlpha = EigenLinearInterpolation<state_vector_t>::interpolate(
+      time, xNominal, &BASE::nominalTimeTrajectoriesStock_[activeSubsystem], &BASE::nominalStateTrajectoriesStock_[activeSubsystem]);
 
   state_input_matrix_t Bm;
-  EigenLinearInterpolation<state_input_matrix_t> BmFunc(&BASE::nominalTimeTrajectoriesStock_[activeSubsystem],
-                                                        &BASE::BmTrajectoryStock_[activeSubsystem]);
-  BmFunc.interpolate(indexAlpha, Bm);
+  EigenLinearInterpolation<state_input_matrix_t>::interpolate(indexAlpha, Bm, &BASE::BmTrajectoryStock_[activeSubsystem]);
 
   input_state_matrix_t Pm;
-  EigenLinearInterpolation<input_state_matrix_t> PmFunc(&BASE::nominalTimeTrajectoriesStock_[activeSubsystem],
-                                                        &BASE::PmTrajectoryStock_[activeSubsystem]);
-  PmFunc.interpolate(indexAlpha, Pm);
+  EigenLinearInterpolation<input_state_matrix_t>::interpolate(indexAlpha, Pm, &BASE::PmTrajectoryStock_[activeSubsystem]);
 
   input_vector_t Rv;
-  EigenLinearInterpolation<input_vector_t> RvFunc(&BASE::nominalTimeTrajectoriesStock_[activeSubsystem],
-                                                  &BASE::RvTrajectoryStock_[activeSubsystem]);
-  RvFunc.interpolate(indexAlpha, Rv);
+  EigenLinearInterpolation<input_vector_t>::interpolate(indexAlpha, Rv, &BASE::RvTrajectoryStock_[activeSubsystem]);
 
   input_matrix_t Rm;
-  EigenLinearInterpolation<input_matrix_t> RmFunc(&BASE::nominalTimeTrajectoriesStock_[activeSubsystem],
-                                                  &BASE::RmTrajectoryStock_[activeSubsystem]);
-  RmFunc.interpolate(indexAlpha, Rm);
+  EigenLinearInterpolation<input_matrix_t>::interpolate(indexAlpha, Rm, &BASE::RmTrajectoryStock_[activeSubsystem]);
 
   input_vector_t EvProjected;
-  EigenLinearInterpolation<input_vector_t> EvProjectedFunc(&BASE::nominalTimeTrajectoriesStock_[activeSubsystem],
-                                                           &EvProjectedTrajectoryStock_[activeSubsystem]);
-  EvProjectedFunc.interpolate(indexAlpha, EvProjected);
+  EigenLinearInterpolation<input_vector_t>::interpolate(indexAlpha, EvProjected, &EvProjectedTrajectoryStock_[activeSubsystem]);
 
   input_state_matrix_t CmProjected;
-  EigenLinearInterpolation<input_state_matrix_t> CmProjectedFunc(&BASE::nominalTimeTrajectoriesStock_[activeSubsystem],
-                                                                 &CmProjectedTrajectoryStock_[activeSubsystem]);
-  CmProjectedFunc.interpolate(indexAlpha, CmProjected);
+  EigenLinearInterpolation<input_state_matrix_t>::interpolate(indexAlpha, CmProjected, &CmProjectedTrajectoryStock_[activeSubsystem]);
 
   input_constraint1_matrix_t DmDager;
-  EigenLinearInterpolation<input_constraint1_matrix_t> DmDagerFunc(&BASE::nominalTimeTrajectoriesStock_[activeSubsystem],
-                                                                   &DmDagerTrajectoryStock_[activeSubsystem]);
-  DmDagerFunc.interpolate(indexAlpha, DmDager);
+  EigenLinearInterpolation<input_constraint1_matrix_t>::interpolate(indexAlpha, DmDager, &DmDagerTrajectoryStock_[activeSubsystem]);
 
   state_vector_t costate;
   BASE::getValueFunctionStateDerivative(time, xNominal, costate);
 
-  const size_t nc1 = BASE::nc1TrajectoriesStock_[activeSubsystem][std::max(0, std::get<0>(indexAlpha))];
+  const size_t nc1 = BASE::nc1TrajectoriesStock_[activeSubsystem][std::get<0>(indexAlpha)];
   state_vector_t deltaX = state - xNominal;
   deltaX.setZero();
   dynamic_input_matrix_t DmDagerTransRm = DmDager.leftCols(nc1).transpose() * Rm;

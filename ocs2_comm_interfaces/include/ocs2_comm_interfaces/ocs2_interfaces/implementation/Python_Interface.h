@@ -56,10 +56,10 @@ void PythonInterface<STATE_DIM, INPUT_DIM>::setObservation(double t, Eigen::Ref<
 }
 
 template <size_t STATE_DIM, size_t INPUT_DIM>
-void PythonInterface<STATE_DIM, INPUT_DIM>::setTargetTrajectories(const cost_desired_trajectories_t& targetTrajectories) {
-  targetTrajectories_ = targetTrajectories;
+void PythonInterface<STATE_DIM, INPUT_DIM>::setTargetTrajectories(cost_desired_trajectories_t targetTrajectories) {
+  targetTrajectories_ = std::move(targetTrajectories);
   cost_->setCostDesiredTrajectories(targetTrajectories_);
-  mpcMrtInterface_->setTargetTrajectories(targetTrajectories);
+  mpcMrtInterface_->setTargetTrajectories(targetTrajectories_);
 }
 
 template <size_t STATE_DIM, size_t INPUT_DIM>

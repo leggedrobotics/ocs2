@@ -33,11 +33,11 @@ template <size_t STATE_DIM, size_t INPUT_DIM>
 void PythonInterface<STATE_DIM, INPUT_DIM>::init(const std::string& taskFileFolder) {
   initRobotInterface(taskFileFolder);
 
-  mpcMrtInterface_.reset(new MPC_MRT_Interface<STATE_DIM, INPUT_DIM>(robotInterface_->getMpcPtr(), robotInterface_->getLogicRulesPtr()));
+  mpcMrtInterface_.reset(new MPC_MRT_Interface<STATE_DIM, INPUT_DIM>(robotInterface_->getMpc(), robotInterface_->getLogicRulesPtr()));
 
-  dynamics_.reset(robotInterface_->getDynamicsPtr()->clone());
-  dynamicsDerivatives_.reset(robotInterface_->getDynamicsDerivativesPtr()->clone());
-  cost_.reset(robotInterface_->getCostPtr()->clone());
+  dynamics_.reset(robotInterface_->getDynamics().clone());
+  dynamicsDerivatives_.reset(robotInterface_->getDynamicsDerivatives().clone());
+  cost_.reset(robotInterface_->getCost().clone());
   if (robotInterface_->getConstraintPtr()) {
     constraints_.reset(robotInterface_->getConstraintPtr()->clone());
   }

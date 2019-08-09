@@ -64,7 +64,7 @@ class MPC_MRT_Interface final : public MRT_BASE<STATE_DIM, INPUT_DIM> {
    * @param[in] mpc the underlying MPC class to be used
    * @param[in] logicRules (optional)
    */
-  explicit MPC_MRT_Interface(mpc_t* mpc, std::shared_ptr<HybridLogicRules> logicRules = nullptr);
+  explicit MPC_MRT_Interface(mpc_t& mpc, std::shared_ptr<HybridLogicRules> logicRules = nullptr);
 
   /**
    * Destructor.
@@ -147,7 +147,7 @@ class MPC_MRT_Interface final : public MRT_BASE<STATE_DIM, INPUT_DIM> {
   void fillMpcOutputBuffers(system_observation_t mpcInitObservation);
 
  protected:
-  mpc_t* mpcPtr_;
+  mpc_t& mpc_;
 
   size_t numMpcIterations_;
   scalar_t maxDelay_ = 0;

@@ -35,12 +35,12 @@ namespace ocs2 {
 template <size_t STATE_DIM, size_t INPUT_DIM>
 MRT_ROS_Dummy_Loop<STATE_DIM, INPUT_DIM>::MRT_ROS_Dummy_Loop(const mrt_ptr_t& mrtPtr, const scalar_t& mrtDesiredFrequency /*= 100*/,
                                                              const scalar_t& mpcDesiredFrequency /*= -1*/,
-                                                             controlled_system_base_t* systemPtr /* = nullptr*/,
+                                                             const controlled_system_base_t* systemPtr /* = nullptr*/,
                                                              Rollout_Settings rolloutSettings /*= Rollout_Settings()*/)
     : mrtPtr_(mrtPtr),
       mrtDesiredFrequency_(mrtDesiredFrequency),
       mpcDesiredFrequency_(mpcDesiredFrequency),
-      systemPtr_(systemPtr),
+      systemPtr_(systemPtr->clone()),
       realtimeLoop_(mpcDesiredFrequency <= 0)  // true if mpcDesiredFrequency is not set or it is negative
 {
   if (mrtDesiredFrequency_ < 0) {

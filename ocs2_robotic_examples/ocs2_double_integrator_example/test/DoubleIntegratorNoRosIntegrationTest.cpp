@@ -11,7 +11,7 @@ typedef MPC_MRT_Interface<dim_t::STATE_DIM_, dim_t::INPUT_DIM_> mpc_t;
 TEST(DoubleIntegratorIntegrationTest, synchronousTracking) {
   std::string taskFileFolderName = "mpc";
   DoubleIntegratorInterface doubleIntegratorInterface(taskFileFolderName);
-  mpc_t mpcInterface(doubleIntegratorInterface.getMpcPtr());
+  mpc_t mpcInterface(doubleIntegratorInterface.getMpc());
 
   double time = 1234.5;  // start from a random time
 
@@ -69,7 +69,7 @@ TEST(DoubleIntegratorIntegrationTest, asynchronousTracking) {
   std::string taskFileFolderName = "mpc";
 
   DoubleIntegratorInterface doubleIntegratorInterface(taskFileFolderName);
-  mpc_t mpcInterface(doubleIntegratorInterface.getMpcPtr());
+  mpc_t mpcInterface(doubleIntegratorInterface.getMpc());
 
   double time = 1234.5;  // start from a random time
 

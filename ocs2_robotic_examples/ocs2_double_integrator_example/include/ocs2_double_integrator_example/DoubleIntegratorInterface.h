@@ -51,7 +51,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 namespace ocs2 {
 namespace double_integrator {
 
-class DoubleIntegratorInterface : public RobotInterfaceBase<double_integrator::STATE_DIM_, double_integrator::INPUT_DIM_> {
+class DoubleIntegratorInterface final : public RobotInterfaceBase<double_integrator::STATE_DIM_, double_integrator::INPUT_DIM_> {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
@@ -87,15 +87,15 @@ class DoubleIntegratorInterface : public RobotInterfaceBase<double_integrator::S
    */
   SLQ_Settings& slqSettings();
 
-  mpc_t* getMpcPtr() override;
+  mpc_t& getMpc() override { return *mpcPtr_; }
 
   const dim_t::state_vector_t& getXFinal() { return xFinal_; }
 
-  DoubleIntegratorDynamics* getDynamicsPtr() override { return linearSystemDynamicsPtr_.get(); }
+  const DoubleIntegratorDynamics& getDynamics() const override { return *linearSystemDynamicsPtr_; }
 
-  DoubleIntegratorDynamicsDerivatives const* getDynamicsDerivativesPtr() override { return linearSystemDynamicsDerivativesPtr_.get(); }
+  const DoubleIntegratorDynamicsDerivatives& getDynamicsDerivatives() const override { return *linearSystemDynamicsDerivativesPtr_; }
 
-  DoubleIntegratorCost const* getCostPtr() override { return linearSystemCostPtr_.get(); }
+  const DoubleIntegratorCost& getCost() const override { return *linearSystemCostPtr_; }
 
  protected:
   /**

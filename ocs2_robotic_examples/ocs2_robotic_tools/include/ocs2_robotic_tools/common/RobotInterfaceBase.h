@@ -117,34 +117,34 @@ public:
 	virtual std::shared_ptr<HybridLogicRules> getLogicRulesPtr() { return nullptr; }
 
 	/**
-	 * @brief getMpcPtr
-	 * @return pointer to internal mpc instance
+	 * @brief getMpc
+	 * @return reference to internal mpc instance
 	 */
-	virtual mpc_t * getMpcPtr() = 0;
+	virtual mpc_t& getMpc() = 0;
 
 	/**
-	 * @brief getDynamicsPtr
-	 * @return a pointer to the interal system dynamics
+	 * @brief getDynamics
+	 * @return a reference to the interal system dynamics
 	 */
-	virtual dynamics_t * getDynamicsPtr() = 0;
+	virtual const dynamics_t& getDynamics() const = 0;
 
 	/**
-	 * @brief getDynamicsDerivativesPtr
-	 * @return a pointer to the internal system dynamics derivatives
+	 * @brief getDynamicsDerivatives
+	 * @return a reference to the internal system dynamics derivatives
 	 */
-	virtual dynamics_derivatives_t const * getDynamicsDerivativesPtr() = 0;
+	virtual const dynamics_derivatives_t& getDynamicsDerivatives() const = 0;
 
 	/**
-	 * @brief getCostPtr
-	 * @return pointer to internal cost function
+	 * @brief getCost
+	 * @return reference to internal cost function
 	 */
-	virtual cost_t const * getCostPtr() = 0;
+	virtual const cost_t& getCost() const = 0;
 
 	/**
 	 * @brief getConstraintPtr
-	 * @return pointer to internal constraint object
+	 * @return pointer to internal constraint object. Can be nullptr in case of zero constraints
 	 */
-	virtual constraint_t* getConstraintPtr() { return nullptr; }
+	virtual const constraint_t* getConstraintPtr() const { return nullptr; }
 
 	/**
 	 * Setups all optimizers which you require.

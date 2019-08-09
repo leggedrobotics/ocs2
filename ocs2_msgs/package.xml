@@ -1,0 +1,22 @@
+<?xml version="1.0"?>
+
+<package format="2">
+
+    <name>ocs2_msgs</name>
+    <version>0.0.0</version>
+    <description>OCS2 message and service definitions.</description>
+
+    <license>TODO</license>
+    <maintainer email="farbod.farshidian@gmail.com">Farbod Farshidian</maintainer>
+    <maintainer email="jcarius@ethz.ch">Jan Carius</maintainer>
+    <maintainer email="rgrandia@ethz.ch">Ruben Grandia</maintainer>
+
+    <buildtool_depend>catkin</buildtool_depend>
+
+    <build_depend>message_generation</build_depend>
+
+    <depend>std_msgs</depend>
+
+    <exec_depend>message_runtime</exec_depend>
+
+</package>

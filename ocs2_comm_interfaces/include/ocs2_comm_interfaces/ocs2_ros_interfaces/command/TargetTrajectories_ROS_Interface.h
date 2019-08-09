@@ -38,7 +38,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_core/cost/CostDesiredTrajectories.h>
 
 // MPC messages
-#include <ocs2_comm_interfaces/mpc_target_trajectories.h>
+#include <ocs2_msgs/mpc_target_trajectories.h>
 
 #include "ocs2_comm_interfaces/ocs2_ros_interfaces/common/RosMsgConversions.h"
 
@@ -68,7 +68,7 @@ class TargetTrajectories_ROS_Interface {
    * @param [in] argv: Command line arguments
    * @param [in] robotName: The robot's name.
    */
-  TargetTrajectories_ROS_Interface(int argc, char* argv[], const std::string& robotName = "robot");
+  TargetTrajectories_ROS_Interface(int argc, char* argv[], std::string robotName = "robot");
 
   /**
    * Destructor.
@@ -107,7 +107,7 @@ class TargetTrajectories_ROS_Interface {
   ::ros::Publisher mpcTargetTrajectoriesPublisher_;
 
   // ROS messages
-  ocs2_comm_interfaces::mpc_target_trajectories mpcTargetTrajectoriesMsg_;
+  ocs2_msgs::mpc_target_trajectories mpcTargetTrajectoriesMsg_;
 };
 
 }  // namespace ocs2

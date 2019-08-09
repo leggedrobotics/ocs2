@@ -34,8 +34,8 @@ namespace ocs2 {
 /***************************************************************************************************** */
 template <size_t STATE_DIM, size_t INPUT_DIM>
 template <class ContainerAllocator>
-void RosMsgConversions<STATE_DIM, INPUT_DIM>::CreateObservationMsg(
-    const system_observation_t& observation, ocs2_comm_interfaces::mpc_observation_<ContainerAllocator>& observationMsg) {
+void RosMsgConversions<STATE_DIM, INPUT_DIM>::createObservationMsg(const system_observation_t& observation,
+                                                                   ocs2_msgs::mpc_observation_<ContainerAllocator>& observationMsg) {
   observationMsg.time = observation.time();
 
   observationMsg.state.value.resize(STATE_DIM);
@@ -56,8 +56,8 @@ void RosMsgConversions<STATE_DIM, INPUT_DIM>::CreateObservationMsg(
 /***************************************************************************************************** */
 template <size_t STATE_DIM, size_t INPUT_DIM>
 template <class ContainerAllocator>
-void RosMsgConversions<STATE_DIM, INPUT_DIM>::ReadObservationMsg(
-    const ocs2_comm_interfaces::mpc_observation_<ContainerAllocator>& observationMsg, system_observation_t& observation) {
+void RosMsgConversions<STATE_DIM, INPUT_DIM>::readObservationMsg(const ocs2_msgs::mpc_observation_<ContainerAllocator>& observationMsg,
+                                                                 system_observation_t& observation) {
   observation.time() = observationMsg.time;
 
   observation.state() =
@@ -74,9 +74,9 @@ void RosMsgConversions<STATE_DIM, INPUT_DIM>::ReadObservationMsg(
 /***************************************************************************************************** */
 template <size_t STATE_DIM, size_t INPUT_DIM>
 template <class ContainerAllocator>
-void RosMsgConversions<STATE_DIM, INPUT_DIM>::CreateModeSequenceMsg(
-    const scalar_array_t& eventTimes, const size_array_t& subsystemsSequence,
-    ocs2_comm_interfaces::mode_sequence_<ContainerAllocator>& modeSequenceMsg) {
+void RosMsgConversions<STATE_DIM, INPUT_DIM>::createModeSequenceMsg(const scalar_array_t& eventTimes,
+                                                                    const size_array_t& subsystemsSequence,
+                                                                    ocs2_msgs::mode_sequence_<ContainerAllocator>& modeSequenceMsg) {
   // event time sequence
   modeSequenceMsg.eventTimes.clear();
   modeSequenceMsg.eventTimes.reserve(eventTimes.size());
@@ -97,9 +97,8 @@ void RosMsgConversions<STATE_DIM, INPUT_DIM>::CreateModeSequenceMsg(
 /***************************************************************************************************** */
 template <size_t STATE_DIM, size_t INPUT_DIM>
 template <class ContainerAllocator>
-void RosMsgConversions<STATE_DIM, INPUT_DIM>::ReadModeSequenceMsg(
-    const ocs2_comm_interfaces::mode_sequence_<ContainerAllocator>& modeSequenceMsg, scalar_array_t& eventTimes,
-    size_array_t& subsystemsSequence) {
+void RosMsgConversions<STATE_DIM, INPUT_DIM>::readModeSequenceMsg(const ocs2_msgs::mode_sequence_<ContainerAllocator>& modeSequenceMsg,
+                                                                  scalar_array_t& eventTimes, size_array_t& subsystemsSequence) {
   const size_t numSubsystems = modeSequenceMsg.subsystems.size();
   if (modeSequenceMsg.eventTimes.size() != numSubsystems - 1) {
     throw std::runtime_error(
@@ -127,8 +126,8 @@ void RosMsgConversions<STATE_DIM, INPUT_DIM>::ReadModeSequenceMsg(
 /***************************************************************************************************** */
 template <size_t STATE_DIM, size_t INPUT_DIM>
 template <class ContainerAllocator>
-void RosMsgConversions<STATE_DIM, INPUT_DIM>::CreateModeSequenceTemplateMsg(
-    const mode_sequence_template_t& modeSequenceTemplate, ocs2_comm_interfaces::mode_sequence_<ContainerAllocator>& modeSequenceMsg) {
+void RosMsgConversions<STATE_DIM, INPUT_DIM>::createModeSequenceTemplateMsg(
+    const mode_sequence_template_t& modeSequenceTemplate, ocs2_msgs::mode_sequence_<ContainerAllocator>& modeSequenceMsg) {
   // event time sequence
   modeSequenceMsg.eventTimes.clear();
   modeSequenceMsg.eventTimes.reserve(modeSequenceTemplate.templateSwitchingTimes_.size());
@@ -149,8 +148,8 @@ void RosMsgConversions<STATE_DIM, INPUT_DIM>::CreateModeSequenceTemplateMsg(
 /***************************************************************************************************** */
 template <size_t STATE_DIM, size_t INPUT_DIM>
 template <class ContainerAllocator>
-void RosMsgConversions<STATE_DIM, INPUT_DIM>::ReadModeSequenceTemplateMsg(
-    const ocs2_comm_interfaces::mode_sequence_<ContainerAllocator>& modeSequenceMsg, mode_sequence_template_t& modeSequenceTemplate) {
+void RosMsgConversions<STATE_DIM, INPUT_DIM>::readModeSequenceTemplateMsg(
+    const ocs2_msgs::mode_sequence_<ContainerAllocator>& modeSequenceMsg, mode_sequence_template_t& modeSequenceTemplate) {
   const size_t numSubsystems = modeSequenceMsg.subsystems.size();
   if (modeSequenceMsg.eventTimes.size() != numSubsystems + 1) {
     throw std::runtime_error(
@@ -178,9 +177,9 @@ void RosMsgConversions<STATE_DIM, INPUT_DIM>::ReadModeSequenceTemplateMsg(
 /***************************************************************************************************** */
 template <size_t STATE_DIM, size_t INPUT_DIM>
 template <class ContainerAllocator>
-void RosMsgConversions<STATE_DIM, INPUT_DIM>::CreateTargetTrajectoriesMsg(
+void RosMsgConversions<STATE_DIM, INPUT_DIM>::createTargetTrajectoriesMsg(
     const cost_desired_trajectories_t& costDesiredTrajectories,
-    ocs2_comm_interfaces::mpc_target_trajectories_<ContainerAllocator>& targetTrajectoriesMsg) {
+    ocs2_msgs::mpc_target_trajectories_<ContainerAllocator>& targetTrajectoriesMsg) {
   const scalar_array_t& desiredTimeTrajectory = costDesiredTrajectories.desiredTimeTrajectory();
   const dynamic_vector_array_t& desiredStateTrajectory = costDesiredTrajectories.desiredStateTrajectory();
   const dynamic_vector_array_t& desiredInputTrajectory = costDesiredTrajectories.desiredInputTrajectory();
@@ -210,8 +209,8 @@ void RosMsgConversions<STATE_DIM, INPUT_DIM>::CreateTargetTrajectoriesMsg(
 /***************************************************************************************************** */
 template <size_t STATE_DIM, size_t INPUT_DIM>
 template <class ContainerAllocator>
-void RosMsgConversions<STATE_DIM, INPUT_DIM>::ReadTargetTrajectoriesMsg(
-    const ocs2_comm_interfaces::mpc_target_trajectories_<ContainerAllocator>& targetTrajectoriesMsg,
+void RosMsgConversions<STATE_DIM, INPUT_DIM>::readTargetTrajectoriesMsg(
+    const ocs2_msgs::mpc_target_trajectories_<ContainerAllocator>& targetTrajectoriesMsg,
     cost_desired_trajectories_t& costDesiredTrajectories) {
   scalar_array_t& desiredTimeTrajectory = costDesiredTrajectories.desiredTimeTrajectory();
   dynamic_vector_array_t& desiredStateTrajectory = costDesiredTrajectories.desiredStateTrajectory();

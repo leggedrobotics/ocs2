@@ -253,8 +253,10 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM>::approximateConstrainedLQWorker(size_t worke
         std::cerr << "q: " << BASE::qTrajectoryStock_[i][k] << std::endl;
         std::cerr << "Qv: " << BASE::QvTrajectoryStock_[i][k].transpose() << std::endl;
         std::cerr << "Qm: \n" << BASE::QmTrajectoryStock_[i][k] << std::endl;
+        std::cerr << "Qm eigenvalues : " << BASE::QmTrajectoryStock_[i][k].eigenvalues().transpose() << std::endl;
         std::cerr << "Rv: " << BASE::RvTrajectoryStock_[i][k].transpose() << std::endl;
         std::cerr << "Rm: \n" << BASE::RmTrajectoryStock_[i][k] << std::endl;
+        std::cerr << "Rm eigenvalues : " << BASE::RmTrajectoryStock_[i][k].eigenvalues().transpose() << std::endl;
         std::cerr << "Pm: \n" << BASE::PmTrajectoryStock_[i][k] << std::endl;
         throw;
       }

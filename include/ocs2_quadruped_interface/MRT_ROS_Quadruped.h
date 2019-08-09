@@ -27,46 +27,48 @@ class MRT_ROS_Quadruped : public ocs2::MRT_ROS_Interface<STATE_DIM, INPUT_DIM> {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-  typedef std::shared_ptr<MRT_ROS_Quadruped<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>> Ptr;
+  using Ptr = std::shared_ptr<MRT_ROS_Quadruped<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>>;
 
-  typedef OCS2QuadrupedInterface<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM> quadruped_interface_t;
-  typedef typename quadruped_interface_t::Ptr quadruped_interface_ptr_t;
-  typedef typename quadruped_interface_t::contact_flag_t contact_flag_t;
-  typedef typename quadruped_interface_t::generalized_coordinate_t generalized_coordinate_t;
-  typedef typename quadruped_interface_t::joint_coordinate_t joint_coordinate_t;
-  typedef typename quadruped_interface_t::base_coordinate_t base_coordinate_t;
-  typedef typename quadruped_interface_t::rbd_state_vector_t rbd_state_vector_t;
+  using quadruped_interface_t = OCS2QuadrupedInterface<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>;
+  using quadruped_interface_ptr_t = typename quadruped_interface_t::Ptr;
+  using contact_flag_t = typename quadruped_interface_t::contact_flag_t;
+  using generalized_coordinate_t = typename quadruped_interface_t::generalized_coordinate_t;
+  using joint_coordinate_t = typename quadruped_interface_t::joint_coordinate_t;
+  using base_coordinate_t = typename quadruped_interface_t::base_coordinate_t;
+  using rbd_state_vector_t = typename quadruped_interface_t::rbd_state_vector_t;
 
   enum { rbd_state_dim_ = quadruped_interface_t::rbd_state_dim_ };
 
-  typedef ocs2::MRT_ROS_Interface<STATE_DIM, INPUT_DIM> BASE;
-  typedef typename BASE::system_observation_t system_observation_t;
-  typedef typename BASE::scalar_t scalar_t;
-  typedef typename BASE::scalar_array_t scalar_array_t;
-  typedef typename BASE::size_array_t size_array_t;
-  typedef typename BASE::state_vector_t state_vector_t;
-  typedef typename BASE::state_vector_array_t state_vector_array_t;
-  typedef typename BASE::input_vector_t input_vector_t;
-  typedef typename BASE::input_vector_array_t input_vector_array_t;
-  typedef typename BASE::input_state_matrix_t input_state_matrix_t;
-  typedef typename BASE::input_state_matrix_array_t input_state_matrix_array_t;
+  using BASE = ocs2::MRT_ROS_Interface<STATE_DIM, INPUT_DIM>;
+  using typename BASE::system_observation_t;
+  using typename BASE::scalar_t;
+  using typename BASE::scalar_array_t;
+  using typename BASE::size_array_t;
+  using typename BASE::state_vector_t;
+  using typename BASE::state_vector_array_t;
+  using typename BASE::input_vector_t;
+  using typename BASE::input_vector_array_t;
+  using typename BASE::input_state_matrix_t;
+  using typename BASE::input_state_matrix_array_t;
+  using typename BASE::CommandData;
+  using typename BASE::PolicyData;
 
-  typedef typename BASE::controller_t controller_t;
+  using controller_t = typename BASE::controller_t;
 
-  typedef FeetZDirectionPlanner<scalar_t, SplineCPG<scalar_t>> feet_z_planner_t;
-  typedef typename feet_z_planner_t::Ptr feet_z_planner_ptr_t;
+  using feet_z_planner_t = FeetZDirectionPlanner<scalar_t, SplineCPG<scalar_t>>;
+  using feet_z_planner_ptr_t = typename feet_z_planner_t::Ptr;
 
   // The base class for SplineCPG which is the return type of SwitchedModelPlannerLogicRules::getMotionPhaseLogics.
-  typedef CPG_BASE<scalar_t> cpg_t;
-  typedef typename cpg_t::Ptr cpg_ptr_t;
-  typedef CubicSpline<scalar_t> cubic_spline_t;
-  typedef typename cubic_spline_t::Ptr cubic_spline_ptr_t;
+  using cpg_t = CPG_BASE<scalar_t>;
+  using cpg_ptr_t = typename cpg_t::Ptr;
+  using cubic_spline_t = CubicSpline<scalar_t>;
+  using cubic_spline_ptr_t = typename cubic_spline_t::Ptr;
 
-  typedef typename quadruped_interface_t::logic_rules_t logic_rules_t;
-  typedef typename logic_rules_t::Ptr logic_rules_ptr_t;
+  using logic_rules_t = typename quadruped_interface_t::logic_rules_t;
+  using logic_rules_ptr_t = typename logic_rules_t::Ptr;
 
-  typedef Eigen::Matrix<scalar_t, 3, 1> vector_3d_t;
-  typedef std::array<vector_3d_t, 4> vector_3d_array_t;
+  using vector_3d_t = Eigen::Matrix<scalar_t, 3, 1>;
+  using vector_3d_array_t = std::array<vector_3d_t, 4>;
 
   /**
    * Constructor
@@ -149,12 +151,9 @@ class MRT_ROS_Quadruped : public ocs2::MRT_ROS_Interface<STATE_DIM, INPUT_DIM> {
   void findsIndicesEventTimes(const scalar_array_t& eventTimes, const scalar_array_t& timeTrajectory,
                               std::vector<int>& eventsIndices) const;
 
-  void modifyBufferPolicy(const system_observation_t& mpcInitObservationBuffer, controller_t& mpcControllerBuffer,
-                          scalar_array_t& mpcTimeTrajectoryBuffer, state_vector_array_t& mpcStateTrajectoryBuffer,
-                          scalar_array_t& eventTimesBuffer, size_array_t& subsystemsSequenceBuffer) override;
+  void modifyPolicy(const CommandData& command, PolicyData& policy) override;
 
-  void modifyPolicy(bool logicUpdated, controller_t& mpcController, scalar_array_t& mpcTimeTrajectory,
-                    state_vector_array_t& mpcStateTrajectory, scalar_array_t& eventTimes, size_array_t& subsystemsSequence) override;
+  void modifyBufferPolicy(const CommandData& commandBuffer, PolicyData& policyBuffer) override;
 
   /**
    * Updates feet trajectories.

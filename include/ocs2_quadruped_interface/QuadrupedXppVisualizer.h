@@ -22,24 +22,24 @@ namespace switched_model {
     public:
         EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-        typedef OCS2QuadrupedInterface<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM> quadruped_interface_t;
-        typedef typename quadruped_interface_t::Ptr quadruped_interface_ptr_t;
+        using quadruped_interface_t = OCS2QuadrupedInterface<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>;
+        using quadruped_interface_ptr_t = typename quadruped_interface_t::Ptr;
+        using contact_flag_t = typename quadruped_interface_t::contact_flag_t;
+        using generalized_coordinate_t = typename quadruped_interface_t::generalized_coordinate_t;
+        using joint_coordinate_t = typename quadruped_interface_t::joint_coordinate_t;
+        using base_coordinate_t = typename quadruped_interface_t::base_coordinate_t;
+        using rbd_state_vector_t = typename quadruped_interface_t::rbd_state_vector_t;
+        using scalar_t = typename quadruped_interface_t::scalar_t;
+        using state_vector_t = typename quadruped_interface_t::state_vector_t;
+        using scalar_array_t = typename quadruped_interface_t::scalar_array_t;
+        using state_vector_array_t = typename quadruped_interface_t::state_vector_array_t;
+        using input_vector_t = typename quadruped_interface_t::input_vector_t;
+        using cost_desired_trajectories_t = typename quadruped_interface_t::cost_desired_trajectories_t;
 
-        typedef typename quadruped_interface_t::contact_flag_t			contact_flag_t;
-        typedef typename quadruped_interface_t::generalized_coordinate_t generalized_coordinate_t;
-        typedef typename quadruped_interface_t::joint_coordinate_t 		joint_coordinate_t;
-        typedef typename quadruped_interface_t::base_coordinate_t 		base_coordinate_t;
-        typedef typename quadruped_interface_t::rbd_state_vector_t		rbd_state_vector_t;
-
-        typedef ocs2::Dimensions<STATE_DIM, INPUT_DIM> DIMENSIONS;
-        typedef typename DIMENSIONS::scalar_t   scalar_t;
-        typedef typename DIMENSIONS::state_vector_t   state_vector_t;
-        typedef typename DIMENSIONS::input_vector_t   input_vector_t;
-        typedef ocs2::SystemObservation<STATE_DIM, INPUT_DIM> system_observation_t;
-        typedef std::vector<system_observation_t, Eigen::aligned_allocator<system_observation_t>> system_observation_array_t;
-
-        typedef Eigen::Matrix<scalar_t, 3, 1>	vector_3d_t;
-        typedef std::array<vector_3d_t, 4>	vector_3d_array_t;
+        using system_observation_t = ocs2::SystemObservation<STATE_DIM, INPUT_DIM>;
+        using system_observation_array_t = std::vector<system_observation_t, Eigen::aligned_allocator<system_observation_t>>;
+        using vector_3d_t = Eigen::Matrix<scalar_t, 3, 1>;
+        using vector_3d_array_t = std::array<vector_3d_t, 4>;
 
         QuadrupedXppVisualizer(const quadruped_interface_ptr_t& ocs2QuadrupedInterfacePtr,
                                const std::string& robotName = "robot",
@@ -84,6 +84,9 @@ namespace switched_model {
          */
         void publishTrajectory(const system_observation_array_t& system_observation_array, double speed = 1.0);
 
+        void publishDesiredTrajectory(scalar_t startTime, const cost_desired_trajectories_t& costDesiredTrajectory);
+
+        void publishOptimizedStateTrajectory(const scalar_array_t& mpcTimeTrajectory, const state_vector_array_t& mpcStateTrajectory);
 
     private:
      /**
@@ -122,6 +125,9 @@ namespace switched_model {
         std::string rosbagFile_;
 
         ros::Publisher visualizationPublisher_;
+        ros::Publisher costDesiredPublisher_;
+        ros::Publisher stateOptimizedPublisher_;
+        ros::Publisher feetOptimizedPublisher_;
         ros::Time startTime_;
 
         rosbag::Bag bag_;

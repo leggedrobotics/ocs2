@@ -101,8 +101,8 @@ void PythonInterface<STATE_DIM, INPUT_DIM>::getMpcSolution(scalar_array_t& t, st
 
   mpcMrtInterface_->updatePolicy();
 
-  t = mpcMrtInterface_->getMpcTimeTrajectory();
-  x = mpcMrtInterface_->getMpcStateTrajectory();
+  t = mpcMrtInterface_->getPolicy().mpcTimeTrajectory_;
+  x = mpcMrtInterface_->getPolicy().mpcStateTrajectory_;
   u = mpcMrtInterface_->getMpcInputTrajectory();
 }
 

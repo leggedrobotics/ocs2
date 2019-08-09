@@ -56,73 +56,73 @@ class OCS2QuadrupedInterface : public ocs2::RobotInterfaceBase<STATE_DIM, INPUT_
 
   enum { state_dim_ = STATE_DIM, input_dim_ = INPUT_DIM, rbd_state_dim_ = 12 + 2 * JOINT_COORD_SIZE };
 
-  typedef ocs2::RobotInterfaceBase<STATE_DIM, INPUT_DIM> BASE;
+  using BASE = ocs2::RobotInterfaceBase<STATE_DIM, INPUT_DIM>;
 
-  typedef std::shared_ptr<OCS2QuadrupedInterface<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>> Ptr;
+  using Ptr = std::shared_ptr<OCS2QuadrupedInterface<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>>;
 
-  typedef ComModelBase<JOINT_COORD_SIZE> com_model_t;
-  typedef KinematicsModelBase<JOINT_COORD_SIZE> kinematic_model_t;
+  using com_model_t = ComModelBase<JOINT_COORD_SIZE>;
+  using kinematic_model_t = KinematicsModelBase<JOINT_COORD_SIZE>;
 
-  typedef SwitchedModelStateEstimator<JOINT_COORD_SIZE> state_estimator_t;
+  using state_estimator_t = SwitchedModelStateEstimator<JOINT_COORD_SIZE>;
 
-  typedef typename BASE::DIMENSIONS dimension_t;
-  typedef typename dimension_t::scalar_t scalar_t;
-  typedef typename dimension_t::scalar_array_t scalar_array_t;
-  typedef typename dimension_t::size_array_t size_array_t;
-  typedef typename dimension_t::state_vector_t state_vector_t;
-  typedef typename dimension_t::state_vector_array_t state_vector_array_t;
-  typedef typename dimension_t::state_vector_array2_t state_vector_array2_t;
-  typedef typename dimension_t::input_vector_t input_vector_t;
-  typedef typename dimension_t::input_vector_array_t input_vector_array_t;
-  typedef typename dimension_t::input_vector_array2_t input_vector_array2_t;
-  typedef typename dimension_t::eigen_scalar_t eigen_scalar_t;
-  typedef typename dimension_t::eigen_scalar_array_t eigen_scalar_array_t;
-  typedef typename dimension_t::state_matrix_t state_matrix_t;
-  typedef typename dimension_t::input_matrix_t input_matrix_t;
-  typedef typename dimension_t::input_state_matrix_t input_state_matrix_t;
-  typedef typename dimension_t::input_state_matrix_array_t input_state_matrix_array_t;
+  using dimension_t = typename BASE::DIMENSIONS;
+  using scalar_t = typename dimension_t::scalar_t;
+  using scalar_array_t = typename dimension_t::scalar_array_t;
+  using size_array_t = typename dimension_t::size_array_t;
+  using state_vector_t = typename dimension_t::state_vector_t;
+  using state_vector_array_t = typename dimension_t::state_vector_array_t;
+  using state_vector_array2_t = typename dimension_t::state_vector_array2_t;
+  using input_vector_t = typename dimension_t::input_vector_t;
+  using input_vector_array_t = typename dimension_t::input_vector_array_t;
+  using input_vector_array2_t = typename dimension_t::input_vector_array2_t;
+  using eigen_scalar_t = typename dimension_t::eigen_scalar_t;
+  using eigen_scalar_array_t = typename dimension_t::eigen_scalar_array_t;
+  using state_matrix_t = typename dimension_t::state_matrix_t;
+  using input_matrix_t = typename dimension_t::input_matrix_t;
+  using input_state_matrix_t = typename dimension_t::input_state_matrix_t;
+  using input_state_matrix_array_t = typename dimension_t::input_state_matrix_array_t;
 
-  typedef ocs2::CostDesiredTrajectories<scalar_t> cost_desired_trajectories_t;
+  using cost_desired_trajectories_t = ocs2::CostDesiredTrajectories<scalar_t>;
 
-  typedef SwitchedModel<JOINT_COORD_SIZE> switched_model_t;
-  typedef typename switched_model_t::contact_flag_t contact_flag_t;
-  typedef typename switched_model_t::generalized_coordinate_t generalized_coordinate_t;
-  typedef typename switched_model_t::joint_coordinate_t joint_coordinate_t;
-  typedef typename switched_model_t::base_coordinate_t base_coordinate_t;
-  typedef Eigen::Matrix<scalar_t, rbd_state_dim_, 1> rbd_state_vector_t;
+  using switched_model_t = SwitchedModel<JOINT_COORD_SIZE>;
+  using contact_flag_t = typename switched_model_t::contact_flag_t;
+  using generalized_coordinate_t = typename switched_model_t::generalized_coordinate_t;
+  using joint_coordinate_t = typename switched_model_t::joint_coordinate_t;
+  using base_coordinate_t = typename switched_model_t::base_coordinate_t;
+  using rbd_state_vector_t = Eigen::Matrix<scalar_t, rbd_state_dim_, 1>;
 
-  typedef GroundProfileBase<scalar_t> ground_profile_t;
-  typedef typename ground_profile_t::Ptr ground_profile_ptr_t;
-  typedef FlatGroundProfile<scalar_t> flat_ground_profile_t;
-  typedef typename flat_ground_profile_t::Ptr flat_ground_profile_ptr_t;
+  using ground_profile_t = GroundProfileBase<scalar_t>;
+  using ground_profile_ptr_t = typename ground_profile_t::Ptr;
+  using flat_ground_profile_t = FlatGroundProfile<scalar_t>;
+  using flat_ground_profile_ptr_t = typename flat_ground_profile_t::Ptr;
 
-  typedef SplineCPG<scalar_t> cpg_t;
-  typedef FeetZDirectionPlanner<scalar_t, cpg_t> feet_z_planner_t;
-  typedef typename feet_z_planner_t::Ptr feet_z_planner_ptr_t;
+  using cpg_t = SplineCPG<scalar_t>;
+  using feet_z_planner_t = FeetZDirectionPlanner<scalar_t, cpg_t>;
+  using feet_z_planner_ptr_t = typename feet_z_planner_t::Ptr;
 
-  typedef SwitchedModelPlannerLogicRules<JOINT_COORD_SIZE> logic_rules_t;
-  typedef typename logic_rules_t::Ptr logic_rules_ptr_t;
+  using logic_rules_t = SwitchedModelPlannerLogicRules<JOINT_COORD_SIZE>;
+  using logic_rules_ptr_t = typename logic_rules_t::Ptr;
 
-  typedef ocs2::ModeSequenceTemplate<scalar_t> mode_sequence_template_t;
+  using mode_sequence_template_t = ocs2::ModeSequenceTemplate<scalar_t>;
 
-  typedef ocs2::SLQ_BASE<STATE_DIM, INPUT_DIM> slq_base_t;
-  typedef ocs2::SLQ<STATE_DIM, INPUT_DIM> slq_t;
-  typedef ocs2::SLQ_MP<STATE_DIM, INPUT_DIM> slq_mp_t;
-  //	typedef ocs2::OCS2Projected<STATE_DIM, INPUT_DIM> 			ocs2_t;
-  typedef ocs2::MPC_SLQ<STATE_DIM, INPUT_DIM> mpc_t;
+  using slq_base_t = ocs2::SLQ_BASE<STATE_DIM, INPUT_DIM>;
+  using slq_t = ocs2::SLQ<STATE_DIM, INPUT_DIM>;
+  using slq_mp_t = ocs2::SLQ_MP<STATE_DIM, INPUT_DIM>;
+  //	using 			ocs2_t = ocs2::OCS2Projected<STATE_DIM, INPUT_DIM>;
+  using mpc_t = ocs2::MPC_SLQ<STATE_DIM, INPUT_DIM>;
 
-  typedef typename slq_base_t::Ptr slq_base_ptr_t;
-  typedef typename slq_t::Ptr slq_ptr_t;
-  typedef typename slq_mp_t::Ptr slq_mp_ptr_t;
-  //	typedef typename ocs2_t::Ptr 		ocs2_ptr_t;
-  typedef typename mpc_t::Ptr mpc_ptr_t;
+  using slq_base_ptr_t = typename slq_base_t::Ptr;
+  using slq_ptr_t = typename slq_t::Ptr;
+  using slq_mp_ptr_t = typename slq_mp_t::Ptr;
+  //	using 		ocs2_ptr_t = typename ocs2_t::Ptr;
+  using mpc_ptr_t = typename mpc_t::Ptr;
 
-  typedef typename slq_base_t::linear_controller_t linear_controller_t;
-  typedef typename slq_base_t::controller_ptr_array_t controller_ptr_array_t;
-  typedef std::vector<linear_controller_t*> linear_controller_ptr_array_t;
+  using linear_controller_t = typename slq_base_t::linear_controller_t;
+  using controller_ptr_array_t = typename slq_base_t::controller_ptr_array_t;
+  using linear_controller_ptr_array_t = std::vector<linear_controller_t*>;
 
-  typedef ocs2::ControlledSystemBase<STATE_DIM, INPUT_DIM> controlled_system_base_t;
-  typedef typename controlled_system_base_t::Ptr controlled_system_base_ptr_t;
+  using controlled_system_base_t = ocs2::ControlledSystemBase<STATE_DIM, INPUT_DIM>;
+  using controlled_system_base_ptr_t = typename controlled_system_base_t::Ptr;
 
   /**
    * Default constructor

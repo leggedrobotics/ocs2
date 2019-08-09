@@ -78,8 +78,7 @@ SLQ_BASE<STATE_DIM, INPUT_DIM>::SLQ_BASE(const controlled_system_base_t* systemD
   for (size_t i = 0; i < BASE::ddpSettings_.nThreads_; i++) {
     using riccati_equations_alloc_t = Eigen::aligned_allocator<riccati_equations_t>;
     riccatiEquationsPtrStock_.emplace_back(std::allocate_shared<riccati_equations_t, riccati_equations_alloc_t>(
-        riccati_equations_alloc_t(), BASE::ddpSettings_.useMakePSD_, BASE::ddpSettings_.addedRiccatiDiagonal_,
-        settings_.preComputeRiccatiTerms_));
+        riccati_equations_alloc_t(), BASE::ddpSettings_.useMakePSD_, settings_.preComputeRiccatiTerms_));
 
     using error_equation_alloc_t = Eigen::aligned_allocator<error_equation_t>;
     errorEquationPtrStock_.emplace_back(std::allocate_shared<error_equation_t, error_equation_alloc_t>(error_equation_alloc_t()));

@@ -140,6 +140,12 @@ void MPC_MRT_Interface<STATE_DIM, INPUT_DIM>::fillMpcOutputBuffers(system_observ
 }
 
 template <size_t STATE_DIM, size_t INPUT_DIM>
+void MPC_MRT_Interface<STATE_DIM, INPUT_DIM>::getValueFunctionStateDerivative(scalar_t time, const state_vector_t& state,
+                                                                              state_vector_t& Vx) {
+  mpc_.getSolverPtr()->getValueFunctionStateDerivative(time, state, Vx);
+}
+
+template <size_t STATE_DIM, size_t INPUT_DIM>
 bool MPC_MRT_Interface<STATE_DIM, INPUT_DIM>::updatePolicyImpl() {
   if (Base::updatePolicyImpl()) {
     // additionally update variables only present in this child class

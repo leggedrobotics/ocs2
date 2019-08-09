@@ -77,11 +77,16 @@ void MRT_ROS_Quadruped<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::findsIndicesEven
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM>
-void MRT_ROS_Quadruped<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::modifyBufferPolicy(
-    const system_observation_t& mpcInitObservationBuffer, controller_t& mpcControllerBuffer, scalar_array_t& mpcTimeTrajectoryBuffer,
-    state_vector_array_t& mpcStateTrajectoryBuffer, scalar_array_t& eventTimesBuffer, size_array_t& subsystemsSequenceBuffer) {
+void MRT_ROS_Quadruped<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::modifyBufferPolicy(const CommandData& commandBuffer, PolicyData& policyBuffer) {
+  const auto& mpcInitObservationBuffer = commandBuffer.mpcInitObservation_;
+  const auto& mpcTimeTrajectoryBuffer = policyBuffer.mpcTimeTrajectory_;
+  const auto& mpcStateTrajectoryBuffer = policyBuffer.mpcStateTrajectory_;
+  const auto& eventTimesBuffer = policyBuffer.eventTimes_;
+  const auto& subsystemsSequenceBuffer = policyBuffer.subsystemsSequence_;
+  auto& mpcControllerBuffer = policyBuffer.mpcController_;
+
   // only continue if we are using feedforward policy
-  if (mpcControllerBuffer.getType() != ocs2::ControllerType::FEEDFORWARD) {
+  if (mpcControllerBuffer->getType() != ocs2::ControllerType::FEEDFORWARD) {
     return;
   }
 
@@ -94,11 +99,11 @@ void MRT_ROS_Quadruped<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::modifyBufferPoli
   touchdownInputStockBuffer_.reserve(NE + 1);
 
   // for the first point
-  scalar_t& t_init = mpcTimeTrajectoryBuffer.front();
-  state_vector_t& x_init = mpcStateTrajectoryBuffer.front();
+  scalar_t t_init = mpcTimeTrajectoryBuffer.front();
+  state_vector_t x_init = mpcStateTrajectoryBuffer.front();
   touchdownTimeStockBuffer_.push_back(t_init);
   touchdownStateStockBuffer_.push_back(x_init);
-  touchdownInputStockBuffer_.push_back(mpcControllerBuffer.computeInput(t_init, x_init));
+  touchdownInputStockBuffer_.push_back(mpcControllerBuffer->computeInput(t_init, x_init));
   // making the reference and the measured EE velocity the same
   touchdownInputStockBuffer_.front().template segment<JOINT_COORD_SIZE>(12) =
       mpcInitObservationBuffer.input().template segment<JOINT_COORD_SIZE>(12);
@@ -118,36 +123,37 @@ void MRT_ROS_Quadruped<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::modifyBufferPoli
       break;
     }
 
-    scalar_t& t = mpcTimeTrajectoryBuffer[eventsIndice + 1];
-    state_vector_t& x = mpcStateTrajectoryBuffer[eventsIndice + 1];
+    const auto& t = mpcTimeTrajectoryBuffer[eventsIndice + 1];
+    const auto& x = mpcStateTrajectoryBuffer[eventsIndice + 1];
     touchdownTimeStockBuffer_.push_back(t);
     touchdownStateStockBuffer_.push_back(x);
-    touchdownInputStockBuffer_.push_back(mpcControllerBuffer.computeInput(t, x));
+    touchdownInputStockBuffer_.push_back(mpcControllerBuffer->computeInput(t, x));
   }
 
   // for the last point
-  scalar_t& t_final = mpcTimeTrajectoryBuffer.back();
-  state_vector_t& x_final = mpcStateTrajectoryBuffer.back();
+  const auto& t_final = mpcTimeTrajectoryBuffer.back();
+  const auto& x_final = mpcStateTrajectoryBuffer.back();
   touchdownTimeStockBuffer_.push_back(t_final);
   touchdownStateStockBuffer_.push_back(x_final);
-  touchdownInputStockBuffer_.push_back(mpcControllerBuffer.computeInput(t_final, x_final));
+  touchdownInputStockBuffer_.push_back(mpcControllerBuffer->computeInput(t_final, x_final));
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM>
-void MRT_ROS_Quadruped<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::modifyPolicy(bool logicUpdated, controller_t& mpcController,
-                                                                             scalar_array_t& mpcTimeTrajectory,
-                                                                             state_vector_array_t& mpcStateTrajectory,
-                                                                             scalar_array_t& eventTimes, size_array_t& subsystemsSequence) {
+void MRT_ROS_Quadruped<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::modifyPolicy(const CommandData& command, PolicyData& policy) {
+  const auto& mpcController = policy.mpcController_;
+  const auto& eventTimes = policy.eventTimes_;
+  const auto& subsystemsSequence = policy.subsystemsSequence_;
+
   // only continue if we are using feedforward policy
-  if (mpcController.getType() != ocs2::ControllerType::FEEDFORWARD) {
+  if (mpcController->getType() != ocs2::ControllerType::FEEDFORWARD) {
     return;
   }
 
   // display
-  if (logicUpdated && ocs2QuadrupedInterfacePtr_->mpcSettings().debugPrint_) {
+  if (ocs2QuadrupedInterfacePtr_->mpcSettings().debugPrint_) {
     std::cerr << "touchdownTimeStock: {";
     for (const auto& t : touchdownTimeStockBuffer_) {
       std::cerr << t << ", ";

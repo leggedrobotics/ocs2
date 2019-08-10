@@ -154,7 +154,7 @@ public:
 	  ::ros::spinOnce();
 	  {
 		  std::lock_guard<std::mutex> lock(latestObservationMutex_);
-		  ocs2::RosMsgConversions<STATE_DIM, INPUT_DIM>::ReadObservationMsg(*latestObservation_, observation);
+		  ocs2::RosMsgConversions<STATE_DIM, INPUT_DIM>::readObservationMsg(*latestObservation_, observation);
 	  }
 
 	  // Convert commandline target to base desired
@@ -206,7 +206,7 @@ public:
 	  return costDesiredTrajectories;
   }
 
-  void observationCallback(const ocs2_comm_interfaces::mpc_observation::ConstPtr& msg) {
+  void observationCallback(const ocs2_msgs::mpc_observation::ConstPtr& msg) {
 	  std::lock_guard<std::mutex> lock(latestObservationMutex_);
 	  latestObservation_ = msg;
   }
@@ -227,7 +227,7 @@ public:
   ros::Subscriber observationSubscriber_;
 
   std::mutex latestObservationMutex_;
-  ocs2_comm_interfaces::mpc_observation::ConstPtr latestObservation_;
+  ocs2_msgs::mpc_observation::ConstPtr latestObservation_;
   scalar_t initZHeight_;
   joint_coordinates_t defaultJointCoordinates_;
 

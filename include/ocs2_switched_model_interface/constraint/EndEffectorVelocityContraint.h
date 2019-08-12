@@ -66,10 +66,11 @@ class EndEffectorVelocityConstraint final : public ocs2::ConstraintTerm<STATE_DI
                                          ad_kinematic_model_t& adKinematicsModel, bool generateModels)
       : BASE(ocs2::ConstraintOrder::Linear), legNumber_(legNumber), settings_(std::move(settings)), libName_("EEVelocityConstraint_" + std::to_string(legNumber_)) {
     setAdInterface(adComModel, adKinematicsModel);
+    std::string libFolder = "/tmp/ocs2/";
     if (generateModels){
-      cppAdCodeGenClass_->createModels(libName_, "");
+      cppAdCodeGenClass_->createModels(libName_, libFolder);
     } else {
-      cppAdCodeGenClass_->loadModels(libName_);
+      cppAdCodeGenClass_->loadModels(libName_, libFolder);
     };
   }
 

@@ -32,8 +32,8 @@ namespace ocs2 {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-NumGDDP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::NumGDDP(
+template <size_t STATE_DIM, size_t INPUT_DIM>
+NumGDDP<STATE_DIM, INPUT_DIM>::NumGDDP(
 		const controlled_system_base_t* systemDynamicsPtr,
 		const derivatives_base_t* systemDerivativesPtr,
 		const constraint_base_t* systemConstraintsPtr,
@@ -57,35 +57,9 @@ NumGDDP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::NumGDDP(
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-size_t NumGDDP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::findActiveSubsystemIndex(
-		const scalar_array_t& eventTimes,
-		const scalar_t& time,
-		bool ceilingFunction /*= true*/) const {
-
-	scalar_array_t partitioningTimes(eventTimes.size()+2);
-	partitioningTimes.front() = std::numeric_limits<scalar_t>::lowest();
-	partitioningTimes.back()  = std::numeric_limits<scalar_t>::max();
-	for (size_t i=0; i<eventTimes.size(); i++)
-		partitioningTimes[i+1] = eventTimes[i];
-
-	int activeSubsystemIndex;
-	if (ceilingFunction) {
-		activeSubsystemIndex = findActiveIntervalIndex(partitioningTimes, time, 0);
-	} else {
-		activeSubsystemIndex = findActiveIntervalIndex(partitioningTimes, time, 0,
-				-OCS2NumericTraits<scalar_t>::weakEpsilon());
-	}
-
-	return static_cast<size_t>(activeSubsystemIndex);
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
+template <size_t STATE_DIM, size_t INPUT_DIM>
 template <typename Derived>
-void NumGDDP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::getCostFuntionDerivative(
+void NumGDDP<STATE_DIM, INPUT_DIM>::getCostFuntionDerivative(
 		Eigen::MatrixBase<Derived> const& costFunctionDerivative) const {
 
 	// refer to Eigen documentation under the topic "Writing Functions Taking Eigen Types as Parameters"
@@ -95,8 +69,8 @@ void NumGDDP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::getCostFuntionDerivative(
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void NumGDDP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::setSolverEventTime(
+template <size_t STATE_DIM, size_t INPUT_DIM>
+void NumGDDP<STATE_DIM, INPUT_DIM>::setSolverEventTime(
 		const scalar_array_t& eventTimes) {
 
 	BASE::getLogicRulesPtr()->setEventTimes(eventTimes);
@@ -106,8 +80,8 @@ void NumGDDP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::setSolverEventTime(
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void NumGDDP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::run(
+template <size_t STATE_DIM, size_t INPUT_DIM>
+void NumGDDP<STATE_DIM, INPUT_DIM>::run(
 		const scalar_t& initTime,
 		const state_vector_t& initState,
 		const scalar_t& finalTime,
@@ -115,8 +89,8 @@ void NumGDDP<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::run(
 		const scalar_array_t& eventTimes)  {
 
 	// find active event times range: [activeEventTimeBeginIndex_, activeEventTimeEndIndex_)
-	activeEventTimeBeginIndex_ = findActiveSubsystemIndex(eventTimes, initTime);
-	activeEventTimeEndIndex_   = findActiveSubsystemIndex(eventTimes, finalTime);
+	activeEventTimeBeginIndex_ = static_cast<size_t>(lookup::findIndexInTimeArray(eventTimes, initTime));
+	activeEventTimeEndIndex_   = static_cast<size_t>(lookup::findIndexInTimeArray(eventTimes, finalTime));
 
 	// set the event time
 	setSolverEventTime(eventTimes);

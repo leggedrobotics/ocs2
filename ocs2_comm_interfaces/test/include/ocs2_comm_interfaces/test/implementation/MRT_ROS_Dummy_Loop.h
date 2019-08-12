@@ -40,7 +40,6 @@ MRT_ROS_Dummy_Loop<STATE_DIM, INPUT_DIM>::MRT_ROS_Dummy_Loop(const mrt_ptr_t& mr
     : mrtPtr_(mrtPtr),
       mrtDesiredFrequency_(mrtDesiredFrequency),
       mpcDesiredFrequency_(mpcDesiredFrequency),
-      systemPtr_(systemPtr->clone()),
       realtimeLoop_(mpcDesiredFrequency <= 0)  // true if mpcDesiredFrequency is not set or it is negative
 {
   if (mrtDesiredFrequency_ < 0) {
@@ -51,7 +50,8 @@ MRT_ROS_Dummy_Loop<STATE_DIM, INPUT_DIM>::MRT_ROS_Dummy_Loop(const mrt_ptr_t& mr
     ROS_WARN_STREAM("MPC loop is not realtime! For realtime setting, set mpcDesiredFrequency to any negative number.");
   }
 
-  if (systemPtr_) {
+  if (systemPtr) {
+    systemPtr_.reset(systemPtr->clone());
     mrtPtr_->initRollout(*systemPtr_, rolloutSettings);
   }
 }

@@ -100,7 +100,7 @@ class ControllerBase {
    * @warning Cloning implies that the caller takes ownership and deletes the created object.
    * @return Pointer to a new instance.
    */
-  virtual ControllerBase* clone() { throw std::runtime_error("Not implemented"); }
+  virtual ControllerBase* clone() const { throw std::runtime_error("Not implemented"); }
 
   /**
    * Displays controller's data.

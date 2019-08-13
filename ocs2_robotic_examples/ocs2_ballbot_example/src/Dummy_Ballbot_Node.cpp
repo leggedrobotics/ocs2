@@ -54,7 +54,7 @@ int main(int argc, char** argv) {
 
   // Dummy ballbot
   MRT_ROS_Dummy_Ballbot dummyBallbot(mrtPtr, ballbotInterface.mpcSettings().mrtDesiredFrequency_,
-                                     ballbotInterface.mpcSettings().mpcDesiredFrequency_, ballbotInterface.getDynamicsPtr());
+                                     ballbotInterface.mpcSettings().mpcDesiredFrequency_, &ballbotInterface.getDynamics());
 
   dummyBallbot.launchNodes(argc, argv);
 

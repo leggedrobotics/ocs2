@@ -112,18 +112,21 @@ class LinearInterpolation {
    *
    * @param [in]  enquiryTime: The enquiry time for interpolation.
    * @param [out] enquiryData: The value of the trajectory at the requested time.
+   * @param [in] timeStampPtr: Pointer to vector of times
+   * @param [in] dataPtr: Pointer to vector of data
    * @return {index, alpha}: The greatest smaller time stamp index and the interpolation coefficient [1, 0]
    */
-  std::pair<int, scalar_t> interpolate(const scalar_t& enquiryTime, Data_T& enquiryData) const {
-    if (timeStampPtr_ != nullptr) {
-      if (timeStampPtr_->size() > 1) {
+  static std::pair<int, scalar_t> interpolate(scalar_t enquiryTime, Data_T& enquiryData, const std::vector<scalar_t>* timeStampPtr,
+                                              const std::vector<Data_T, Alloc>* dataPtr) {
+    if (timeStampPtr != nullptr) {
+      if (timeStampPtr->size() > 1) {
         // Normal interpolation case, time vector has at least two elements
-        const auto indexAlpha = getIndexAlpha(*timeStampPtr_, enquiryTime);
-        interpolate(indexAlpha, enquiryData);
+        const auto indexAlpha = getIndexAlpha(*timeStampPtr, enquiryTime);
+        interpolate(indexAlpha, enquiryData, dataPtr);
         return indexAlpha;
-      } else if (timeStampPtr_->size() == 1) {
+      } else if (timeStampPtr->size() == 1) {
         // Time vector has only 1 element -> Constant function
-        enquiryData = dataPtr_->front();
+        enquiryData = dataPtr->front();
         return {0, scalar_t(0.0)};
       } else {
         // Time empty -> zero function
@@ -138,21 +141,35 @@ class LinearInterpolation {
   }
 
   /**
+   * Linearly interpolates at the given time. When duplicate values exist the lower range is selected s.t. ( ]
+   * Example: t = [0.0, 1.0, 1.0, 2.0]
+   * when querying tk = 1.0, the range (0.0, 1.0] is selected
+   *
+   * @param [in]  enquiryTime: The enquiry time for interpolation.
+   * @param [out] enquiryData: The value of the trajectory at the requested time.
+   * @return {index, alpha}: The greatest smaller time stamp index and the interpolation coefficient [1, 0]
+   */
+  std::pair<int, scalar_t> interpolate(scalar_t enquiryTime, Data_T& enquiryData) const {
+    return interpolate(enquiryTime, enquiryData, timeStampPtr_, dataPtr_);
+  }
+
+  /**
    * Directly uses the index and interpolation coefficient provided by the user
    *
    * @param [in] indexAlpha : index and interpolation coefficient (alpha) pair
    * @param [out] enquiryData : result of the interpolation
+   * @param [in] dataPtr: Pointer to vector of data
    */
-  void interpolate(std::pair<int, scalar_t> indexAlpha, Data_T& enquiryData) const {
-    if (dataPtr_ != nullptr) {
-      if (dataPtr_->size() > 1) {
+  static void interpolate(std::pair<int, scalar_t> indexAlpha, Data_T& enquiryData, const std::vector<Data_T, Alloc>* dataPtr) {
+    if (dataPtr != nullptr) {
+      if (dataPtr->size() > 1) {
         // Normal interpolation case
         int index = indexAlpha.first;
         scalar_t alpha = indexAlpha.second;
-        enquiryData = alpha * (*dataPtr_)[index] + (scalar_t(1.0) - alpha) * (*dataPtr_)[index + 1];
-      } else if (dataPtr_->size() == 1) {
+        enquiryData = alpha * (*dataPtr)[index] + (scalar_t(1.0) - alpha) * (*dataPtr)[index + 1];
+      } else if (dataPtr->size() == 1) {
         // Time vector has only 1 element -> Constant function
-        enquiryData = dataPtr_->front();
+        enquiryData = dataPtr->front();
       } else {
         // Time empty -> zero function
         enquiryData.setZero();
@@ -162,6 +179,14 @@ class LinearInterpolation {
       enquiryData.setZero();
     }
   }
+
+  /**
+   * Directly uses the index and interpolation coefficient provided by the user
+   *
+   * @param [in] indexAlpha : index and interpolation coefficient (alpha) pair
+   * @param [out] enquiryData : result of the interpolation
+   */
+  void interpolate(std::pair<int, scalar_t> indexAlpha, Data_T& enquiryData) const { interpolate(indexAlpha, enquiryData, dataPtr_); }
 
  private:
   /**

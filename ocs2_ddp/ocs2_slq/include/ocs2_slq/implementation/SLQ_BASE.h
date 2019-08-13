@@ -27,7 +27,7 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#include <ocs2_oc/oc_solver/Solver_BASE.h>
+#include <ocs2_slq/SLQ_BASE.h>
 
 namespace ocs2 {
 
@@ -323,6 +323,51 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM>::approximateConstrainedLQWorker(size_t worke
   if (BASE::ddpSettings_.useMakePSD_) {
     LinearAlgebra::makePSD(QmConstrainedTrajectoryStock_[i][k]);
   }
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+template <size_t STATE_DIM, size_t INPUT_DIM>
+void SLQ_BASE<STATE_DIM, INPUT_DIM>::getStateInputConstraintLagrangian(scalar_t time, const state_vector_t& state,
+                                                                       dynamic_vector_t& nu) const {
+  const auto activeSubsystem = lookup::findBoundedActiveIntervalInTimeArray(BASE::partitioningTimes_, time);
+
+  state_vector_t xNominal;
+  const auto indexAlpha = EigenLinearInterpolation<state_vector_t>::interpolate(
+      time, xNominal, &BASE::nominalTimeTrajectoriesStock_[activeSubsystem], &BASE::nominalStateTrajectoriesStock_[activeSubsystem]);
+
+  state_input_matrix_t Bm;
+  EigenLinearInterpolation<state_input_matrix_t>::interpolate(indexAlpha, Bm, &BASE::BmTrajectoryStock_[activeSubsystem]);
+
+  input_state_matrix_t Pm;
+  EigenLinearInterpolation<input_state_matrix_t>::interpolate(indexAlpha, Pm, &BASE::PmTrajectoryStock_[activeSubsystem]);
+
+  input_vector_t Rv;
+  EigenLinearInterpolation<input_vector_t>::interpolate(indexAlpha, Rv, &BASE::RvTrajectoryStock_[activeSubsystem]);
+
+  input_matrix_t Rm;
+  EigenLinearInterpolation<input_matrix_t>::interpolate(indexAlpha, Rm, &BASE::RmTrajectoryStock_[activeSubsystem]);
+
+  input_vector_t EvProjected;
+  EigenLinearInterpolation<input_vector_t>::interpolate(indexAlpha, EvProjected, &EvProjectedTrajectoryStock_[activeSubsystem]);
+
+  input_state_matrix_t CmProjected;
+  EigenLinearInterpolation<input_state_matrix_t>::interpolate(indexAlpha, CmProjected, &CmProjectedTrajectoryStock_[activeSubsystem]);
+
+  input_constraint1_matrix_t DmDager;
+  EigenLinearInterpolation<input_constraint1_matrix_t>::interpolate(indexAlpha, DmDager, &DmDagerTrajectoryStock_[activeSubsystem]);
+
+  state_vector_t costate;
+  BASE::getValueFunctionStateDerivative(time, xNominal, costate);
+
+  const auto nc1 = BASE::nc1TrajectoriesStock_[activeSubsystem][std::get<0>(indexAlpha)];
+  state_vector_t deltaX = state - xNominal;
+  deltaX.setZero();
+  dynamic_input_matrix_t DmDagerTransRm = DmDager.leftCols(nc1).transpose() * Rm;
+
+  nu = DmDagerTransRm * (CmProjected * deltaX + EvProjected) -
+       DmDager.leftCols(nc1).transpose() * (Pm * deltaX + Bm.transpose() * costate + Rv);
 }
 
 /******************************************************************************************************/

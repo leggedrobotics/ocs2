@@ -1,27 +1,28 @@
 
 #include <ocs2_comm_interfaces/ocs2_interfaces/MPC_MRT_Interface.h>
 #include <ocs2_core/control/FeedforwardController.h>
+#include <ocs2_core/control/LinearController.h>
 
 namespace ocs2 {
 
 template <size_t STATE_DIM, size_t INPUT_DIM>
-MPC_MRT_Interface<STATE_DIM, INPUT_DIM>::MPC_MRT_Interface(mpc_t* mpc, std::shared_ptr<HybridLogicRules> logicRules)
-    : Base(std::move(logicRules)), mpcPtr_(mpc), numMpcIterations_(0) {}
+MPC_MRT_Interface<STATE_DIM, INPUT_DIM>::MPC_MRT_Interface(mpc_t& mpc, std::shared_ptr<HybridLogicRules> logicRules)
+    : Base(std::move(logicRules)), mpc_(mpc), numMpcIterations_(0) {}
 
 template <size_t STATE_DIM, size_t INPUT_DIM>
 void MPC_MRT_Interface<STATE_DIM, INPUT_DIM>::resetMpcNode(const cost_desired_trajectories_t& initCostDesiredTrajectories) {
   numMpcIterations_ = 0;
-  mpcPtr_->reset();
+  mpc_.reset();
   setTargetTrajectories(initCostDesiredTrajectories);
 }
 
 template <size_t STATE_DIM, size_t INPUT_DIM>
 void MPC_MRT_Interface<STATE_DIM, INPUT_DIM>::setTargetTrajectories(const cost_desired_trajectories_t& targetTrajectories) {
-  if (mpcPtr_->settings().debugPrint_) {
+  if (mpc_.settings().debugPrint_) {
     std::cerr << "### The target position is updated to" << std::endl;
     targetTrajectories.display();
   }
-  mpcPtr_->getSolverPtr()->setCostDesiredTrajectories(targetTrajectories);
+  mpc_.getSolverPtr()->setCostDesiredTrajectories(targetTrajectories);
 }
 
 template <size_t STATE_DIM, size_t INPUT_DIM>
@@ -32,13 +33,13 @@ void MPC_MRT_Interface<STATE_DIM, INPUT_DIM>::setCurrentObservation(const system
 
 template <size_t STATE_DIM, size_t INPUT_DIM>
 void MPC_MRT_Interface<STATE_DIM, INPUT_DIM>::setModeSequence(const mode_sequence_template_t& modeSequenceTemplate) {
-  mpcPtr_->setNewLogicRulesTemplate(modeSequenceTemplate);
+  mpc_.setNewLogicRulesTemplate(modeSequenceTemplate);
 }
 
 template <size_t STATE_DIM, size_t INPUT_DIM>
 void MPC_MRT_Interface<STATE_DIM, INPUT_DIM>::advanceMpc() {
   std::chrono::time_point<std::chrono::steady_clock> startTime, finishTime;
-  if (mpcPtr_->settings().debugPrint_) {
+  if (mpc_.settings().debugPrint_) {
     startTime = std::chrono::steady_clock::now();
   }
 
@@ -48,14 +49,14 @@ void MPC_MRT_Interface<STATE_DIM, INPUT_DIM>::advanceMpc() {
     mpcInitObservation = currentObservation_;
   }
 
-  mpcPtr_->run(mpcInitObservation.time(), mpcInitObservation.state());
+  mpc_.run(mpcInitObservation.time(), mpcInitObservation.state());
   fillMpcOutputBuffers(std::move(mpcInitObservation));
 
   // Incrementing numIterations must happen after fillMpcOutputBuffers
   numMpcIterations_++;
 
   // measure the delay
-  if (mpcPtr_->settings().debugPrint_) {
+  if (mpc_.settings().debugPrint_) {
     finishTime = std::chrono::steady_clock::now();
     auto currentDelay = std::chrono::duration<scalar_t, std::milli>(finishTime - startTime).count();
     meanDelay_ += (currentDelay - meanDelay_) / numMpcIterations_;
@@ -73,7 +74,7 @@ void MPC_MRT_Interface<STATE_DIM, INPUT_DIM>::fillMpcOutputBuffers(system_observ
   const std::vector<scalar_array_t>* timeTrajectoriesPtr;
   const state_vector_array2_t* stateTrajectoriesPtr;
   const input_vector_array2_t* inputTrajectoriesPtr;
-  mpcPtr_->getOptimizedTrajectoriesPtr(timeTrajectoriesPtr, stateTrajectoriesPtr, inputTrajectoriesPtr);
+  mpc_.getOptimizedTrajectoriesPtr(timeTrajectoriesPtr, stateTrajectoriesPtr, inputTrajectoriesPtr);
 
   // update buffers, i.e., copy MPC results into our buffers
   std::lock_guard<std::mutex> policyBufferLock(this->policyBufferMutex_);
@@ -107,8 +108,8 @@ void MPC_MRT_Interface<STATE_DIM, INPUT_DIM>::fillMpcOutputBuffers(system_observ
     inputBuffer.insert(std::end(inputBuffer), std::begin((*inputTrajectoriesPtr)[i]), std::end((*inputTrajectoriesPtr)[i]));
   }
 
-  auto controllerPtrs = mpcPtr_->getOptimizedControllerPtr();
-  if (mpcPtr_->settings().useFeedbackPolicy_) {
+  auto controllerPtrs = mpc_.getOptimizedControllerPtr();
+  if (mpc_.settings().useFeedbackPolicy_) {
     // concatenate controller stock into a single controller
     controlBuffer.reset();
     for (auto controllerPtr : *controllerPtrs) {
@@ -126,9 +127,9 @@ void MPC_MRT_Interface<STATE_DIM, INPUT_DIM>::fillMpcOutputBuffers(system_observ
     controlBuffer.reset(new FeedforwardController<STATE_DIM, INPUT_DIM>(timeBuffer, inputBuffer));
   }
 
-  eventBuffer = mpcPtr_->getLogicRulesPtr()->eventTimes();
-  subsystemBuffer = mpcPtr_->getLogicRulesPtr()->subsystemsSequence();
-  costDesiredBuffer = mpcPtr_->getSolverPtr()->getCostDesiredTrajectories();
+  eventBuffer = mpc_.getLogicRulesPtr()->eventTimes();
+  subsystemBuffer = mpc_.getLogicRulesPtr()->subsystemsSequence();
+  costDesiredBuffer = mpc_.getSolverPtr()->getCostDesiredTrajectories();
   this->partitioningTimesUpdate(initObservationBuffer.time(), this->partitioningTimesBuffer_);
 
   // allow user to modify the buffer
@@ -137,6 +138,24 @@ void MPC_MRT_Interface<STATE_DIM, INPUT_DIM>::fillMpcOutputBuffers(system_observ
   // Flags to be set last:
   this->newPolicyInBuffer_ = true;
   this->policyReceivedEver_ = true;
+}
+
+template <size_t STATE_DIM, size_t INPUT_DIM>
+void MPC_MRT_Interface<STATE_DIM, INPUT_DIM>::getLinearFeedbackGain(scalar_t time, input_state_matrix_t& K) {
+  if (!mpc_.settings().useFeedbackPolicy_) {
+    throw std::runtime_error("Feedback gains only available with useFeedbackPolicy setting");
+  }
+  auto controller = dynamic_cast<LinearController<STATE_DIM, INPUT_DIM>*>(this->currentPolicy_->mpcController_.get());
+  if (!controller) {
+    throw std::runtime_error("Feedback gains only available with linear controller");
+  }
+  controller->getFeedbackGain(time, K);
+}
+
+template <size_t STATE_DIM, size_t INPUT_DIM>
+void MPC_MRT_Interface<STATE_DIM, INPUT_DIM>::getValueFunctionStateDerivative(scalar_t time, const state_vector_t& state,
+                                                                              state_vector_t& Vx) {
+  mpc_.getSolverPtr()->getValueFunctionStateDerivative(time, state, Vx);
 }
 
 template <size_t STATE_DIM, size_t INPUT_DIM>

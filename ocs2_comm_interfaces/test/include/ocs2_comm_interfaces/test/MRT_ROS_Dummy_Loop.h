@@ -78,7 +78,7 @@ class MRT_ROS_Dummy_Loop {
    * @param [in] rolloutSettings settings to use when dummy rolls out the received controller
    */
   MRT_ROS_Dummy_Loop(const mrt_ptr_t& mrtPtr, const scalar_t& mrtDesiredFrequency = 100, const scalar_t& mpcDesiredFrequency = -1,
-                     controlled_system_base_t* systemPtr = nullptr, Rollout_Settings rolloutSettings = Rollout_Settings());
+                     const controlled_system_base_t* systemPtr = nullptr, Rollout_Settings rolloutSettings = Rollout_Settings());
 
   /**
    * Destructor.
@@ -133,7 +133,7 @@ class MRT_ROS_Dummy_Loop {
   mrt_ptr_t mrtPtr_;
   scalar_t mrtDesiredFrequency_;
   scalar_t mpcDesiredFrequency_;
-  controlled_system_base_t* systemPtr_;
+  std::unique_ptr<controlled_system_base_t> systemPtr_;
 
   bool realtimeLoop_;
 

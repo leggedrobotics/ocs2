@@ -49,6 +49,7 @@ class MPC_MRT_Interface final : public MRT_BASE<STATE_DIM, INPUT_DIM> {
   using controller_ptr_array_t = typename mpc_t::controller_ptr_array_t;
   using input_state_matrix_t = typename mpc_t::input_state_matrix_t;
   using input_state_matrix_array_t = typename mpc_t::input_state_matrix_array_t;
+  using dynamic_vector_t = typename mpc_t::dynamic_vector_t;
 
   using cost_desired_trajectories_t = typename mpc_t::cost_desired_trajectories_t;
   using mode_sequence_template_t = typename mpc_t::mode_sequence_template_t;
@@ -63,7 +64,7 @@ class MPC_MRT_Interface final : public MRT_BASE<STATE_DIM, INPUT_DIM> {
    * @param[in] mpc the underlying MPC class to be used
    * @param[in] logicRules (optional)
    */
-  explicit MPC_MRT_Interface(mpc_t* mpc, std::shared_ptr<HybridLogicRules> logicRules = nullptr);
+  explicit MPC_MRT_Interface(mpc_t& mpc, std::shared_ptr<HybridLogicRules> logicRules = nullptr);
 
   /**
    * Destructor.
@@ -96,6 +97,28 @@ class MPC_MRT_Interface final : public MRT_BASE<STATE_DIM, INPUT_DIM> {
   void advanceMpc();
 
   /**
+   * @brief Calculates the state derivative of the value function
+   * @param [in] time the query time
+   * @param [out] Vx partial derivative of the value function at requested time at nominal state
+   */
+  void getValueFunctionStateDerivative(scalar_t time, const state_vector_t& state, state_vector_t& Vx);
+
+  /**
+   * @brief getLinearFeedbackGain retrieves K matrix from solver
+   * @param[in] time
+   * @param[out] K
+   */
+  void getLinearFeedbackGain(scalar_t time, input_state_matrix_t& K);
+
+  /**
+   * @brief Computes the Lagrange multiplier related to the state-input constraints
+   * @param[in] time: query time
+   * @param[in] state: query state
+   * @param[out] nu: the Lagrange multiplier
+   */
+  void calculateStateInputConstraintLagrangian(scalar_t time, const state_vector_t& state, dynamic_vector_t& nu) const;
+
+  /**
    * @brief Access the currently in-use input trajectory.
    * @note To get the latest policy from MPC, call updatePolicy() first
    */
@@ -112,7 +135,7 @@ class MPC_MRT_Interface final : public MRT_BASE<STATE_DIM, INPUT_DIM> {
   void fillMpcOutputBuffers(system_observation_t mpcInitObservation);
 
  protected:
-  mpc_t* mpcPtr_;
+  mpc_t& mpc_;
 
   size_t numMpcIterations_;
   scalar_t maxDelay_ = 0;

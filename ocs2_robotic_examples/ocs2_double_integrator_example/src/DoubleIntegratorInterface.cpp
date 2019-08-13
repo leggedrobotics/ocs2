@@ -110,7 +110,5 @@ void DoubleIntegratorInterface::setupOptimizer(const std::string& taskFile) {
                           mpcSettings_));
 }
 
-DoubleIntegratorInterface::mpc_t::Ptr& DoubleIntegratorInterface::getMPCPtr() { return mpcPtr_; }
-
 }  // namespace double_integrator
 }  // namespace ocs2

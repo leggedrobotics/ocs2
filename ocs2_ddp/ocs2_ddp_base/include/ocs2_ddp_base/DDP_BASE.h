@@ -122,6 +122,7 @@ class DDP_BASE : public Solver_BASE<STATE_DIM, INPUT_DIM> {
   using dynamic_matrix_t = typename BASE::dynamic_matrix_t;
   using dynamic_vector_array_t = typename BASE::dynamic_vector_array_t;
   using dynamic_matrix_array2_t = typename BASE::dynamic_matrix_array2_t;
+  using dynamic_input_matrix_t = typename BASE::dynamic_input_matrix_t;
 
   using controller_ptr_array_t = typename BASE::controller_ptr_array_t;
   using linear_controller_t = LinearController<STATE_DIM, INPUT_DIM>;
@@ -350,14 +351,9 @@ class DDP_BASE : public Solver_BASE<STATE_DIM, INPUT_DIM> {
    */
   void adjustController(const scalar_array_t& newEventTimes, const scalar_array_t& controllerEventTimes);
 
-  /**
-   * Calculates the value function at the given time and state.
-   *
-   * @param [in] time: The inquiry time
-   * @param [in] state: The inquiry state.
-   * @param [out] valueFuntion: value function at the inquiry time and state.
-   */
-  virtual void getValueFuntion(scalar_t time, const state_vector_t& state, scalar_t& valueFuntion);
+  scalar_t getValueFunction(scalar_t time, const state_vector_t& state) const override;
+
+  void getValueFunctionStateDerivative(scalar_t time, const state_vector_t& state, state_vector_t& Vx) const override;
 
   /**
    * Upon activation in the multi-thread DDP class (DDP_MT), the parallelization of the backward pass takes

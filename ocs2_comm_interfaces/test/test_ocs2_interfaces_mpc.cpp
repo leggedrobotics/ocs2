@@ -35,7 +35,7 @@ using namespace ocs2;
 
 TEST(testOcs2InterfacesMpc, instantiation) {
   MPC_SLQ<1, 1> mpcSlq;
-  MPC_MRT_Interface<1, 1> mpcInterface(&mpcSlq);
+  MPC_MRT_Interface<1, 1> mpcInterface(mpcSlq);
 }
 
 int main(int argc, char** argv) {

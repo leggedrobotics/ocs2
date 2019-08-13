@@ -189,6 +189,8 @@ class ILQR_BASE : public DDP_BASE<STATE_DIM, INPUT_DIM> {
    */
   void approximateOptimalControlProblem() override;
 
+  void getStateInputConstraintLagrangian(scalar_t time, const state_vector_t& state, dynamic_vector_t& nu) const override;
+
   /**
    * Calculates the controller. This method uses the following variables:
    * - constrained, linearized model

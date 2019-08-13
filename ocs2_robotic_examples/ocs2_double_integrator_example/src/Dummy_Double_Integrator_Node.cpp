@@ -55,7 +55,7 @@ int main(int argc, char** argv) {
   // Dummy double_integrator
   MRT_ROS_Dummy_Linear_System dummyDoubleIntegrator(mrtPtr, double_integratorInterface.mpcSettings().mrtDesiredFrequency_,
                                                     double_integratorInterface.mpcSettings().mpcDesiredFrequency_,
-                                                    double_integratorInterface.getDynamicsPtr().get());
+                                                    &double_integratorInterface.getDynamics());
 
   dummyDoubleIntegrator.launchNodes(argc, argv);
 

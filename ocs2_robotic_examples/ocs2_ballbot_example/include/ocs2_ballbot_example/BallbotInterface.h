@@ -31,7 +31,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define BALLBOTINTERFACE_OCS2_BALLBOT_OCS2_H_
 
 // C++
-#include <stdlib.h>
+#include <cstdlib>
 #include <iostream>
 #include <string>
 
@@ -80,12 +80,7 @@ class BallbotInterface final : public RobotInterfaceBase<ballbot::STATE_DIM_, ba
    */
   ~BallbotInterface() = default;
 
-  /**
-   * setup all optimizes.
-   *
-   * @param [in] taskFile: Task's file full path.
-   */
-  void setupOptimizer(const std::string& taskFile);
+  void setupOptimizer(const std::string& taskFile) override;
 
   /**
    * Gets SLQ settings.
@@ -94,20 +89,18 @@ class BallbotInterface final : public RobotInterfaceBase<ballbot::STATE_DIM_, ba
    */
   SLQ_Settings& slqSettings();
 
-  /**
-   * Gets a pointer to the internal SLQ-MPC class.
-   *
-   * @return Pointer to the internal MPC
-   */
-  mpc_t::Ptr& getMPCPtr();
+  mpc_t& getMpc() override { return *mpcPtr_; }
 
   /**
-   * @brief getMpcPiPtr
-   * @return pointer to the internal path integral MPC
+   * @brief getMpcPi
+   * @return reference to the internal path integral MPC
    */
-  mpc_pi_t* getMpcPiPtr() { return mpcPi_.get(); }
+  mpc_pi_t& getMpcPi() { return *mpcPi_; }
 
-  BallbotSystemDynamics* getDynamicsPtr() { return ballbotSystemDynamicsPtr_.get(); }
+  const BallbotSystemDynamics& getDynamics() const override { return *ballbotSystemDynamicsPtr_; }
+  const BallbotSystemDynamics& getDynamicsDerivatives() const override { return *ballbotSystemDynamicsPtr_; }
+
+  const BallbotCost& getCost() const override { return *ballbotCostPtr_; }
 
  protected:
   /**
@@ -125,7 +118,7 @@ class BallbotInterface final : public RobotInterfaceBase<ballbot::STATE_DIM_, ba
 
   SLQ_Settings slqSettings_;
   PI_Settings piSettings_;
-  mpc_t::Ptr mpcPtr_;
+  std::unique_ptr<mpc_t> mpcPtr_;
   std::unique_ptr<mpc_pi_t> mpcPi_;
 
   BallbotSystemDynamics::Ptr ballbotSystemDynamicsPtr_;

@@ -27,6 +27,8 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
+#include <ocs2_ddp_base/DDP_BASE.h>
+
 namespace ocs2 {
 
 /******************************************************************************************************/
@@ -1136,34 +1138,66 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::adjustController(const scalar_array_t& newE
 
 /******************************************************************************************************/
 /******************************************************************************************************/
-/***************************************************************************************************** */
+/******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
-void DDP_BASE<STATE_DIM, INPUT_DIM>::getValueFuntion(scalar_t time, const state_vector_t& state, scalar_t& valueFuntion) {
-  size_t activeSubsystem = lookup::findBoundedActiveIntervalInTimeArray(partitioningTimes_, time);
+typename DDP_BASE<STATE_DIM, INPUT_DIM>::scalar_t DDP_BASE<STATE_DIM, INPUT_DIM>::getValueFunction(scalar_t time,
+                                                                                                   const state_vector_t& state) const {
+  const auto partition = lookup::findBoundedActiveIntervalInTimeArray(partitioningTimes_, time);
 
   state_matrix_t Sm;
-  LinearInterpolation<state_matrix_t, Eigen::aligned_allocator<state_matrix_t>> SmFunc(&SsTimeTrajectoryStock_[activeSubsystem],
-                                                                                       &SmTrajectoryStock_[activeSubsystem]);
-  const auto indexAlpha = SmFunc.interpolate(time, Sm);
+  const auto indexAlpha =
+      EigenLinearInterpolation<state_matrix_t>::interpolate(time, Sm, &SsTimeTrajectoryStock_[partition], &SmTrajectoryStock_[partition]);
 
   state_vector_t Sv;
-  LinearInterpolation<state_vector_t, Eigen::aligned_allocator<state_vector_t>> SvFunc(&SsTimeTrajectoryStock_[activeSubsystem],
-                                                                                       &SvTrajectoryStock_[activeSubsystem]);
-  SvFunc.interpolate(indexAlpha, Sv);
+  EigenLinearInterpolation<state_vector_t>::interpolate(indexAlpha, Sv, &SvTrajectoryStock_[partition]);
+
+  state_vector_t Sve;
+  if (SveTrajectoryStock_[partition].empty()) {
+    Sve.setZero();
+  } else {
+    EigenLinearInterpolation<state_vector_t>::interpolate(indexAlpha, Sve, &SveTrajectoryStock_[partition]);
+  }
 
   eigen_scalar_t s;
-  LinearInterpolation<eigen_scalar_t, Eigen::aligned_allocator<eigen_scalar_t>> sFunc(&SsTimeTrajectoryStock_[activeSubsystem],
-                                                                                      &sTrajectoryStock_[activeSubsystem]);
-  sFunc.interpolate(indexAlpha, s);
+  EigenLinearInterpolation<eigen_scalar_t>::interpolate(indexAlpha, s, &sTrajectoryStock_[partition]);
 
   state_vector_t xNominal;
-  LinearInterpolation<state_vector_t, Eigen::aligned_allocator<state_vector_t>> xNominalFunc(
-      &nominalTimeTrajectoriesStock_[activeSubsystem], &nominalStateTrajectoriesStock_[activeSubsystem]);
-  xNominalFunc.interpolate(time, xNominal);
+  EigenLinearInterpolation<state_vector_t>::interpolate(time, xNominal, &nominalTimeTrajectoriesStock_[partition],
+                                                        &nominalStateTrajectoriesStock_[partition]);
 
   state_vector_t deltaX = state - xNominal;
 
-  valueFuntion = (s + deltaX.transpose() * Sv + 0.5 * deltaX.transpose() * Sm * deltaX).eval()(0);
+  return s(0) + deltaX.dot(Sv + Sve) + 0.5 * deltaX.dot(Sm * deltaX);
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+template <size_t STATE_DIM, size_t INPUT_DIM>
+void DDP_BASE<STATE_DIM, INPUT_DIM>::getValueFunctionStateDerivative(scalar_t time, const state_vector_t& state, state_vector_t& Vx) const {
+  const auto partition = lookup::findBoundedActiveIntervalInTimeArray(partitioningTimes_, time);
+
+  state_matrix_t Sm;
+  const auto indexAlpha =
+      EigenLinearInterpolation<state_matrix_t>::interpolate(time, Sm, &SsTimeTrajectoryStock_[partition], &SmTrajectoryStock_[partition]);
+
+  state_vector_t Sv;
+  EigenLinearInterpolation<state_vector_t>::interpolate(indexAlpha, Sv, &SvTrajectoryStock_[partition]);
+
+  state_vector_t Sve;
+  if (SveTrajectoryStock_[partition].empty()) {
+    Sve.setZero();
+  } else {
+    EigenLinearInterpolation<state_vector_t>::interpolate(indexAlpha, Sve, &SveTrajectoryStock_[partition]);
+  }
+
+  state_vector_t xNominal;
+  EigenLinearInterpolation<state_vector_t>::interpolate(time, xNominal, &nominalTimeTrajectoriesStock_[partition],
+                                                        &nominalStateTrajectoriesStock_[partition]);
+
+  state_vector_t deltaX = state - xNominal;
+
+  Vx = Sm * deltaX + Sv + Sve;
 }
 
 /******************************************************************************************************/

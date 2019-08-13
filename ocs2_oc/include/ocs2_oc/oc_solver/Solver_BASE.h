@@ -123,6 +123,7 @@ class Solver_BASE {
   using dynamic_matrix_t = typename DIMENSIONS::dynamic_matrix_t;
   using dynamic_vector_array_t = typename DIMENSIONS::dynamic_vector_array_t;
   using dynamic_matrix_array2_t = typename DIMENSIONS::dynamic_matrix_array2_t;
+  using dynamic_input_matrix_t = typename DIMENSIONS::dynamic_input_matrix_t;
 
   using cost_desired_trajectories_t = CostDesiredTrajectories<scalar_t>;
 
@@ -374,6 +375,33 @@ class Solver_BASE {
    * @return true if updated (i.e., something new was swapped in), false otherwise
    */
   bool updateCostDesiredTrajectories();
+
+  /**
+   * Calculates the value function at the given time and state.
+   *
+   * @param [in] time: The inquiry time
+   * @param [in] state: The inquiry state.
+   * @return value at the inquiry time and state.
+   */
+  virtual scalar_t getValueFunction(scalar_t time, const state_vector_t& state) const = 0;
+
+  /**
+   * Calculates the value function state derivative at the given time and state.
+   *
+   * @param [in] time: The inquiry time
+   * @param [in] state: The inquiry state.
+   * @param [out] Vx: value function at the inquiry time and state.
+   */
+  virtual void getValueFunctionStateDerivative(scalar_t time, const state_vector_t& state, state_vector_t& Vx) const = 0;
+
+  /**
+   * Calculates the Lagrange multiplier of the state-input equality constraints at the given time and state.
+   *
+   * @param [in] time: The inquiry time
+   * @param [in] state: The inquiry state.
+   * @param [out] nu: The Lagrange multiplier of the state-input equality constraints.
+   */
+  virtual void getStateInputConstraintLagrangian(scalar_t time, const state_vector_t& state, dynamic_vector_t& nu) const = 0;
 
   /**
    * Rewinds optimizer internal variables.

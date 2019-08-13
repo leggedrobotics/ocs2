@@ -76,6 +76,7 @@ class SLQ_BASE : public DDP_BASE<STATE_DIM, INPUT_DIM> {
   using typename BASE::constraint2_vector_array_t;
   using typename BASE::constraint2_vector_t;
   using typename BASE::controller_t;
+  using typename BASE::dynamic_input_matrix_t;
   using typename BASE::dynamic_matrix_array2_t;
   using typename BASE::dynamic_matrix_t;
   using typename BASE::dynamic_vector_array_t;
@@ -209,6 +210,8 @@ class SLQ_BASE : public DDP_BASE<STATE_DIM, INPUT_DIM> {
    *
    */
   void approximateOptimalControlProblem() override;
+
+  void getStateInputConstraintLagrangian(scalar_t time, const state_vector_t& state, dynamic_vector_t& nu) const override;
 
   /**
    * Calculates the controller. This method uses the following variables:

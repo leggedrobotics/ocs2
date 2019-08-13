@@ -32,6 +32,7 @@ class PiSolver final : public Solver_BASE<STATE_DIM, INPUT_DIM> {
   using typename Base::controller_ptr_array_t;
   using typename Base::cost_desired_trajectories_t;
   using typename Base::dynamic_vector_array_t;
+  using typename Base::dynamic_vector_t;
   using typename Base::eigen_scalar_array_t;
   using typename Base::input_matrix_t;
   using typename Base::input_state_matrix_array_t;
@@ -428,6 +429,16 @@ class PiSolver final : public Solver_BASE<STATE_DIM, INPUT_DIM> {
     for (auto& controller : nominalControllersStock_) {
       nominalControllersPtrStock_.push_back(&controller);
     }
+  }
+
+  scalar_t getValueFunction(scalar_t time, const state_vector_t& state) const override { throw std::runtime_error("Not implemented."); }
+
+  void getValueFunctionStateDerivative(scalar_t time, const state_vector_t& state, state_vector_t& Vx) const override {
+    throw std::runtime_error("Not implemented.");
+  }
+
+  void getStateInputConstraintLagrangian(scalar_t time, const state_vector_t& state, dynamic_vector_t& nu) const override {
+    throw std::runtime_error("Not implemented.");
   }
 
  protected:

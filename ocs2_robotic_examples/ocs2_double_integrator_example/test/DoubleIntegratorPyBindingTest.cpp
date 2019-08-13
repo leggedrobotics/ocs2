@@ -26,16 +26,19 @@ TEST(DoubleIntegratorTest, pyBindings) {
   auto t_arr = scalar_array_t();
   auto x_arr = state_vector_array_t();
   auto u_arr = input_vector_array_t();
+  auto sigmaX_arr = state_matrix_array_t();
 
   bindings.getMpcSolution(t_arr, x_arr, u_arr);
+  bindings.getLinearFeedbackGainsInverses(sigmaX_arr);
 
   EXPECT_EQ(t_arr.size(), x_arr.size());
   EXPECT_EQ(t_arr.size(), u_arr.size());
+  EXPECT_EQ(t_arr.size(), sigmaX_arr.size());
 
-  std::cout << "t\t\tx\t\tu" << std::endl;
+  std::cout << "t\t\tx\t\tu\t\tsigmaX" << std::endl;
   for (size_t i = 0; i < t_arr.size(); i++) {
     std::cout << std::setprecision(4);
-    std::cout << t_arr[i] << "\t\t" << x_arr[i].transpose() << "\t\t" << u_arr[i].transpose() << std::endl;
+    std::cout << t_arr[i] << "\t\t" << x_arr[i].transpose() << "\t\t" << u_arr[i].transpose() << "\t\t" << sigmaX_arr[i] << std::endl;
   }
 
   auto dxdt = bindings.computeFlowMap(t_arr[0], x_arr[0], u_arr[0]);
@@ -53,9 +56,11 @@ TEST(DoubleIntegratorTest, pyBindings) {
 
   std::cout << "L: " << L << "\ndLdx: " << dLdx.transpose() << "\ndLdu: " << dLdu.transpose() << std::endl;
 
-  // only possible with enabled useFeedbackPolicy setting
-  //  auto K = bindings.getLinearFeedbackGain(t_arr[0]);
-  //  std::cout << "K: " << K << std::endl;
+  auto Vx = bindings.getValueFunctionStateDerivative(t_arr[0], x_arr[0]);
+  std::cout << "Vx: " << Vx.transpose() << std::endl;
+
+  auto K = bindings.getLinearFeedbackGain(t_arr[0]);
+  std::cout << "K: " << K << std::endl;
 }
 
 int main(int argc, char** argv) {

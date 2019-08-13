@@ -116,7 +116,7 @@ class MPC_MRT_Interface final : public MRT_BASE<STATE_DIM, INPUT_DIM> {
    * @param[in] state: query state
    * @param[out] nu: the Lagrange multiplier
    */
-  void calculateStateInputConstraintLagrangian(scalar_t time, const state_vector_t& state, dynamic_vector_t& nu) const;
+  void getStateInputConstraintLagrangian(scalar_t time, const state_vector_t& state, dynamic_vector_t& nu) const;
 
   /**
    * @brief Access the currently in-use input trajectory.

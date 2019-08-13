@@ -159,6 +159,12 @@ void MPC_MRT_Interface<STATE_DIM, INPUT_DIM>::getValueFunctionStateDerivative(sc
 }
 
 template <size_t STATE_DIM, size_t INPUT_DIM>
+void MPC_MRT_Interface<STATE_DIM, INPUT_DIM>::getStateInputConstraintLagrangian(scalar_t time, const state_vector_t& state,
+                                                                                dynamic_vector_t& nu) const {
+  mpc_.getSolverPtr()->getStateInputConstraintLagrangian(time, state, nu);
+}
+
+template <size_t STATE_DIM, size_t INPUT_DIM>
 bool MPC_MRT_Interface<STATE_DIM, INPUT_DIM>::updatePolicyImpl() {
   if (Base::updatePolicyImpl()) {
     // additionally update variables only present in this child class

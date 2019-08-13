@@ -115,6 +115,41 @@ typename PythonInterface<STATE_DIM, INPUT_DIM>::input_state_matrix_t PythonInter
 }
 
 template <size_t STATE_DIM, size_t INPUT_DIM>
+void PythonInterface<STATE_DIM, INPUT_DIM>::getLinearFeedbackGainsInverses(state_matrix_array_t& sigmaX) {
+  const auto& t = mpcMrtInterface_->getPolicy().mpcTimeTrajectory_;
+
+  sigmaX.clear();
+  sigmaX.reserve(t.size());
+
+  for (const auto& ti : t) {
+    input_state_matrix_t ki;
+    mpcMrtInterface_->getLinearFeedbackGain(ti, ki);
+
+#ifdef NDEBUG
+    Eigen::JacobiSVD<input_state_matrix_t> ki_svd(ki, Eigen::ComputeThinU | Eigen::ComputeThinV);
+#else
+    Eigen::JacobiSVD<input_state_matrix_t> ki_svd(ki, Eigen::ComputeFullU | Eigen::ComputeFullV);
+#endif
+
+    auto sv = ki_svd.singularValues();
+    Eigen::VectorXd svInv = (sv.array().abs() > 1e-2).select(sv.array().inverse(), 0.0);
+    state_input_matrix_t svInvMat;
+    svInvMat.setZero();
+    svInvMat.topLeftCorner(sv.size(), sv.size()) = svInv.asDiagonal();
+    state_input_matrix_t kDagger = ki_svd.matrixV() * svInvMat * ki_svd.matrixU().adjoint();
+    sigmaX.emplace_back(kDagger * kDagger.transpose());
+
+    // std::cerr << "ki\n" << ki << std::endl;
+    // std::cerr << "singularValues: " << sv.transpose() << std::endl;
+    // std::cerr << "singularValuesInv: " << svInv.transpose() << std::endl;
+    // std::cerr << "ki_svd.matrixV()\n" << ki_svd.matrixV() << "\nki_svd.matrixU().adjoint()\n" << ki_svd.matrixU().adjoint() <<
+    // std::endl; std::cerr << "kDagger\n" << kDagger << std::endl; std::cerr << "pyInterfaceCpp: k =\n" << ki << "\nkDagger\n" <<
+    // kDagger << std::endl; std::cerr << "pyInterface k =\n" << ki << std::endl;
+    // std::cerr << "sigmaX\n" << sigmaX.back() << std::endl;
+  }
+}
+
+template <size_t STATE_DIM, size_t INPUT_DIM>
 typename PythonInterface<STATE_DIM, INPUT_DIM>::state_vector_t PythonInterface<STATE_DIM, INPUT_DIM>::computeFlowMap(
     double t, Eigen::Ref<const state_vector_t> x, Eigen::Ref<const input_vector_t> u) {
   state_vector_t dxdt;
@@ -201,7 +236,7 @@ template <size_t STATE_DIM, size_t INPUT_DIM>
 typename PythonInterface<STATE_DIM, INPUT_DIM>::dynamic_vector_t PythonInterface<STATE_DIM, INPUT_DIM>::getStateInputConstraintLagrangian(
     double t, Eigen::Ref<const state_vector_t> x) {
   dynamic_vector_t nu;
-  mpcMrtInterface_->calculateStateInputConstraintLagrangian(t, x, nu);
+  mpcMrtInterface_->getStateInputConstraintLagrangian(t, x, nu);
   return nu;
 }
 

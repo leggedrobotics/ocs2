@@ -94,6 +94,12 @@ class PythonInterface {
   input_state_matrix_t getLinearFeedbackGain(scalar_t time);
 
   /**
+   * @brief getLinearFeedbackGainsInverses
+   * @param[out] sigmaX: array of pseudoinverses of the linearFeedbackGain corresponding to each time of the mpc solution
+   */
+  void getLinearFeedbackGainsInverses(state_matrix_array_t& sigmaX);
+
+  /**
    * @brief Access to system dynamics flow map
    * @param[in] t time
    * @param[in] x state

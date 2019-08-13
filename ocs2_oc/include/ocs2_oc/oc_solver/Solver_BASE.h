@@ -401,15 +401,7 @@ class Solver_BASE {
    * @param [in] state: The inquiry state.
    * @param [out] nu: The Lagrange multiplier of the state-input equality constraints.
    */
-  virtual void calculateStateInputConstraintLagrangian(scalar_t time, const state_vector_t& state, dynamic_vector_t& nu) const = 0;
-
-  /**
-   * Calculates the linear feedback gain at the given time.
-   *
-   * @param [in] time: The inquiry time
-   * @param [out] k: value function at the inquiry time and state.
-   */
-  virtual void getLinearFeedbackGain(scalar_t time, input_state_matrix_t& K) const = 0;
+  virtual void getStateInputConstraintLagrangian(scalar_t time, const state_vector_t& state, dynamic_vector_t& nu) const = 0;
 
   /**
    * Rewinds optimizer internal variables.

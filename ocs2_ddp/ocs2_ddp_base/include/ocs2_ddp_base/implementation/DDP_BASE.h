@@ -1142,7 +1142,7 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::adjustController(const scalar_array_t& newE
 template <size_t STATE_DIM, size_t INPUT_DIM>
 typename DDP_BASE<STATE_DIM, INPUT_DIM>::scalar_t DDP_BASE<STATE_DIM, INPUT_DIM>::getValueFunction(scalar_t time,
                                                                                                    const state_vector_t& state) const {
-  size_t partition = lookup::findBoundedActiveIntervalInTimeArray(partitioningTimes_, time);
+  const auto partition = lookup::findBoundedActiveIntervalInTimeArray(partitioningTimes_, time);
 
   state_matrix_t Sm;
   const auto indexAlpha =
@@ -1175,7 +1175,7 @@ typename DDP_BASE<STATE_DIM, INPUT_DIM>::scalar_t DDP_BASE<STATE_DIM, INPUT_DIM>
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
 void DDP_BASE<STATE_DIM, INPUT_DIM>::getValueFunctionStateDerivative(scalar_t time, const state_vector_t& state, state_vector_t& Vx) const {
-  size_t partition = lookup::findBoundedActiveIntervalInTimeArray(partitioningTimes_, time);
+  const auto partition = lookup::findBoundedActiveIntervalInTimeArray(partitioningTimes_, time);
 
   state_matrix_t Sm;
   const auto indexAlpha =
@@ -1198,18 +1198,6 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::getValueFunctionStateDerivative(scalar_t ti
   state_vector_t deltaX = state - xNominal;
 
   Vx = Sm * deltaX + Sv + Sve;
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM>
-void DDP_BASE<STATE_DIM, INPUT_DIM>::getLinearFeedbackGain(scalar_t time, input_state_matrix_t& K) const {
-  size_t partition = lookup::findBoundedActiveIntervalInTimeArray(partitioningTimes_, time);
-
-  EigenLinearInterpolation<input_state_matrix_t> kFunc(&nominalControllersStock_[partition].timeStamp_,
-                                                       &nominalControllersStock_[partition].gainArray_);
-  kFunc.interpolate(time, K);
 }
 
 /******************************************************************************************************/

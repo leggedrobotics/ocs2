@@ -437,11 +437,9 @@ class PiSolver final : public Solver_BASE<STATE_DIM, INPUT_DIM> {
     throw std::runtime_error("Not implemented.");
   }
 
-  void calculateStateInputConstraintLagrangian(scalar_t time, const state_vector_t& state, dynamic_vector_t& nu) const override {
+  void getStateInputConstraintLagrangian(scalar_t time, const state_vector_t& state, dynamic_vector_t& nu) const override {
     throw std::runtime_error("Not implemented.");
   }
-
-  void getLinearFeedbackGain(scalar_t time, input_state_matrix_t& K) const override { throw std::runtime_error("Not implemented."); }
 
  protected:
   PI_Settings settings_;  //! path integral settings

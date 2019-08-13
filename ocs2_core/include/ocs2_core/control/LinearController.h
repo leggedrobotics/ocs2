@@ -84,6 +84,8 @@ class LinearController final : public ControllerBase<STATE_DIM, INPUT_DIM> {
    */
   virtual ~LinearController() = default;
 
+  virtual LinearController* clone() const override { return new LinearController(*this); }
+
   /**
    * @brief setController Assign control law
    * @param [in] controllerTime: Time stamp array of the controller
@@ -221,6 +223,13 @@ class LinearController final : public ControllerBase<STATE_DIM, INPUT_DIM> {
    * @return the size of the controller.
    */
   size_t size() const { return timeStamp_.size(); }
+
+  /**
+   * @brief getFeedbackGain: Extracts the feedback matrix at the requested time
+   * @param[in] time
+   * @param[out] K linear feedback gain
+   */
+  void getFeedbackGain(scalar_t time, input_state_matrix_t& K) const { linInterpolateGain_.interpolate(time, K); }
 
  public:
   scalar_array_t timeStamp_;

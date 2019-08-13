@@ -11,6 +11,7 @@ TEST(DoubleIntegratorTest, pyBindings) {
   using input_vector_array_t = bindings_t::input_vector_array_t;
   using input_state_matrix_array_t = bindings_t::input_state_matrix_array_t;
   using cost_desired_trajectories_t = bindings_t::cost_desired_trajectories_t;
+  using input_state_matrix_t = bindings_t::input_state_matrix_t;
 
   bindings_t bindings("mpc", false);
 
@@ -51,6 +52,10 @@ TEST(DoubleIntegratorTest, pyBindings) {
   auto dLdu = bindings.getRunningCostDerivativeInput(t_arr[0], x_arr[0], u_arr[0]);
 
   std::cout << "L: " << L << "\ndLdx: " << dLdx.transpose() << "\ndLdu: " << dLdu.transpose() << std::endl;
+
+  // only possible with enabled useFeedbackPolicy setting
+  //  auto K = bindings.getLinearFeedbackGain(t_arr[0]);
+  //  std::cout << "K: " << K << std::endl;
 }
 
 int main(int argc, char** argv) {

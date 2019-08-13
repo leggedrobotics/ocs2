@@ -355,8 +355,6 @@ class DDP_BASE : public Solver_BASE<STATE_DIM, INPUT_DIM> {
 
   void getValueFunctionStateDerivative(scalar_t time, const state_vector_t& state, state_vector_t& Vx) const override;
 
-  virtual void getLinearFeedbackGain(scalar_t time, input_state_matrix_t& K) const override;
-
   /**
    * Upon activation in the multi-thread DDP class (DDP_MT), the parallelization of the backward pass takes
    * place from the the first iteration which normally become effective after the first iteration.

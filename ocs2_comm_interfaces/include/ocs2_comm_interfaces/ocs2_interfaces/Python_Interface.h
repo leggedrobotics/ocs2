@@ -19,6 +19,7 @@ template <size_t STATE_DIM, size_t INPUT_DIM>
 class PythonInterface {
  public:
   using dim_t = ocs2::Dimensions<STATE_DIM, INPUT_DIM>;
+  using scalar_t = typename dim_t::scalar_t;
   using state_vector_t = typename dim_t::state_vector_t;
   using input_vector_t = typename dim_t::input_vector_t;
   using scalar_array_t = typename dim_t::scalar_array_t;
@@ -84,6 +85,13 @@ class PythonInterface {
    * @param[out] u input array
    */
   void getMpcSolution(scalar_array_t& t, state_vector_array_t& x, input_vector_array_t& u);
+
+  /**
+   * @brief Obtains feedback gain matrix, if the underlying MPC algorithm computes it
+   * @param[in] time: Query time
+   * @return State-feedback matrix
+   */
+  input_state_matrix_t getLinearFeedbackGain(scalar_t time);
 
   /**
    * @brief Access to system dynamics flow map

@@ -329,9 +329,9 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM>::approximateConstrainedLQWorker(size_t worke
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
-void SLQ_BASE<STATE_DIM, INPUT_DIM>::calculateStateInputConstraintLagrangian(scalar_t time, const state_vector_t& state,
-                                                                             dynamic_vector_t& nu) const {
-  size_t activeSubsystem = lookup::findBoundedActiveIntervalInTimeArray(BASE::partitioningTimes_, time);
+void SLQ_BASE<STATE_DIM, INPUT_DIM>::getStateInputConstraintLagrangian(scalar_t time, const state_vector_t& state,
+                                                                       dynamic_vector_t& nu) const {
+  const auto activeSubsystem = lookup::findBoundedActiveIntervalInTimeArray(BASE::partitioningTimes_, time);
 
   state_vector_t xNominal;
   const auto indexAlpha = EigenLinearInterpolation<state_vector_t>::interpolate(
@@ -361,7 +361,7 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM>::calculateStateInputConstraintLagrangian(sca
   state_vector_t costate;
   BASE::getValueFunctionStateDerivative(time, xNominal, costate);
 
-  const size_t nc1 = BASE::nc1TrajectoriesStock_[activeSubsystem][std::get<0>(indexAlpha)];
+  const auto nc1 = BASE::nc1TrajectoriesStock_[activeSubsystem][std::get<0>(indexAlpha)];
   state_vector_t deltaX = state - xNominal;
   deltaX.setZero();
   dynamic_input_matrix_t DmDagerTransRm = DmDager.leftCols(nc1).transpose() * Rm;

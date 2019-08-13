@@ -88,7 +88,7 @@ class PiController final : public ControllerBase<STATE_DIM, INPUT_DIM> {
     samplingPolicy_.reset(other.samplingPolicy_->clone());
   }
 
-  PiController<STATE_DIM, INPUT_DIM>* clone() override { return new PiController<STATE_DIM, INPUT_DIM>(*this); }
+  PiController<STATE_DIM, INPUT_DIM>* clone() const override { return new PiController<STATE_DIM, INPUT_DIM>(*this); }
 
   /**
    * Default destructor.

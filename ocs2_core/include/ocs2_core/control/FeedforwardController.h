@@ -199,7 +199,7 @@ class FeedforwardController final : public ControllerBase<STATE_DIM, INPUT_DIM> 
     swap(uffArray_, other.uffArray_);
   }
 
-  FeedforwardController<STATE_DIM, INPUT_DIM>* clone() override { return new FeedforwardController<STATE_DIM, INPUT_DIM>(*this); }
+  FeedforwardController<STATE_DIM, INPUT_DIM>* clone() const override { return new FeedforwardController<STATE_DIM, INPUT_DIM>(*this); }
 
   /**
    * Returns the size of the controller (in particular the time stamp).

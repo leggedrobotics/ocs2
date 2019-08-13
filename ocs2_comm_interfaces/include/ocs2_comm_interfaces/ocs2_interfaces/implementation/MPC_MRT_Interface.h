@@ -1,6 +1,7 @@
 
 #include <ocs2_comm_interfaces/ocs2_interfaces/MPC_MRT_Interface.h>
 #include <ocs2_core/control/FeedforwardController.h>
+#include <ocs2_core/control/LinearController.h>
 
 namespace ocs2 {
 
@@ -137,6 +138,18 @@ void MPC_MRT_Interface<STATE_DIM, INPUT_DIM>::fillMpcOutputBuffers(system_observ
   // Flags to be set last:
   this->newPolicyInBuffer_ = true;
   this->policyReceivedEver_ = true;
+}
+
+template <size_t STATE_DIM, size_t INPUT_DIM>
+void MPC_MRT_Interface<STATE_DIM, INPUT_DIM>::getLinearFeedbackGain(scalar_t time, input_state_matrix_t& K) {
+  if (!mpc_.settings().useFeedbackPolicy_) {
+    throw std::runtime_error("Feedback gains only available with useFeedbackPolicy setting");
+  }
+  auto controller = dynamic_cast<LinearController<STATE_DIM, INPUT_DIM>*>(this->currentPolicy_->mpcController_.get());
+  if (!controller) {
+    throw std::runtime_error("Feedback gains only available with linear controller");
+  }
+  controller->getFeedbackGain(time, K);
 }
 
 template <size_t STATE_DIM, size_t INPUT_DIM>

@@ -67,13 +67,13 @@ class EndEffectorPositionConstraint final : public ocs2::ConstraintTerm<STATE_DI
       : BASE(ocs2::ConstraintOrder::Linear),
         legNumber_(legNumber),
         settings_(std::move(settings)),
-        libName_("EEPositionConstraint_" + std::to_string(legNumber_)) {
+        libName_("EEPositionConstraint_" + std::to_string(legNumber_)),
+        libFolder_("/tmp/ocs2") {
     setAdInterface(adComModel, adKinematicsModel);
-    std::string libFolder = "/tmp/ocs2/";
     if (generateModels){
-      cppAdCodeGenClass_->createModels(libName_, libFolder);
+      cppAdCodeGenClass_->createModels(libName_, libFolder_);
     } else {
-      cppAdCodeGenClass_->loadModels(libName_, libFolder);
+      cppAdCodeGenClass_->loadModels(libName_, libFolder_);
     };
   }
 
@@ -82,8 +82,9 @@ class EndEffectorPositionConstraint final : public ocs2::ConstraintTerm<STATE_DI
         legNumber_(rhs.legNumber_),
         settings_(rhs.settings_),
         libName_(rhs.libName_),
+        libFolder_(rhs.libFolder_),
         cppAdCodeGenClass_(rhs.cppAdCodeGenClass_->clone()) {
-    cppAdCodeGenClass_->loadModels(libName_);
+    cppAdCodeGenClass_->loadModels(libName_, libFolder_);
   }
 
   EndEffectorPositionConstraint* clone() const override {
@@ -226,6 +227,7 @@ class EndEffectorPositionConstraint final : public ocs2::ConstraintTerm<STATE_DI
   int legNumber_;
   EndEffectorPositionConstraintSettings settings_;
   std::string libName_;
+  std::string libFolder_;
   std::unique_ptr<ad_interface_t> cppAdCodeGenClass_;
 };
 }  // namespace switched_model

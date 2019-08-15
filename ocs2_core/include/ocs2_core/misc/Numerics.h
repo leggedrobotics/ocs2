@@ -10,7 +10,7 @@
 #include <type_traits>
 
 namespace ocs2 {
-namespace Numerics {
+namespace numerics {
 
 /**
  * Almost equal which uses machine epsilon to compare floating-point values for equality.
@@ -56,7 +56,7 @@ typename std::enable_if<!std::numeric_limits<T>::is_integer, bool>::type almost_
   return x > y || almost_eq(x, y);
 }
 
-}  // namespace Numerics
+}  // namespace numerics
 }  // namespace ocs2
 
 #endif  // OCS2_NUMERICS_H

@@ -36,6 +36,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <glpk.h>
 
 #include <ocs2_core/Dimensions.h>
+#include <ocs2_core/misc/Numerics.h>
 #include <ocs2_frank_wolfe/NLP_Constraints.h>
 
 namespace ocs2 {

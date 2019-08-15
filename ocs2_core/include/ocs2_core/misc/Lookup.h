@@ -5,9 +5,11 @@
 #ifndef OCS2_CTRL_LOOKUP_H
 #define OCS2_CTRL_LOOKUP_H
 
+#include <algorithm>
 #include <sstream>
 #include <vector>
 
+#include "ocs2_core/misc/Numerics.h"
 #include "ocs2_core/OCS2NumericTraits.h"
 
 namespace ocs2 {
@@ -49,7 +51,7 @@ size_t findFirstIndexWithinTol(const std::vector<scalar_t>& dataArray, scalar_t 
  *
  *  Corner cases:
  *     - If time equal to a time in the timeArray is requested, the lower index is taken (e.g. t = t1 -> index = 1)
- *     - If multiple times in the timeArray are equal, the index before the first occurance is taken.
+ *     - If multiple times in the timeArray are equal, the index before the first occurrence is taken.
  *       for example: if t1 = t2 = t3  and the requested time t <= t3 -> index = 1
  *
  *
@@ -60,7 +62,8 @@ size_t findFirstIndexWithinTol(const std::vector<scalar_t>& dataArray, scalar_t 
  */
 template <typename scalar_t = double>
 int findIndexInTimeArray(const std::vector<scalar_t>& timeArray, scalar_t time) {
-  auto firstLargerValueIterator = std::lower_bound(timeArray.begin(), timeArray.end(), time);
+  auto lessOperator = [](scalar_t element, scalar_t value){ return !numerics::almost_ge(element, value); };
+  auto firstLargerValueIterator = std::lower_bound(timeArray.begin(), timeArray.end(), time, lessOperator);
   return static_cast<int>(firstLargerValueIterator - timeArray.begin());
 }
 
@@ -97,7 +100,7 @@ int findIntervalInTimeArray(const std::vector<scalar_t>& timeArray, scalar_t tim
  */
 template <typename scalar_t = double>
 int findActiveIntervalInTimeArray(const std::vector<scalar_t>& timeArray, scalar_t time) {
-  if (!timeArray.empty() && time != timeArray.front()) {
+  if (!timeArray.empty() && !numerics::almost_eq(time, timeArray.front())) {
     return findIntervalInTimeArray(timeArray, time);
   } else {  // t = t0
     return 0;

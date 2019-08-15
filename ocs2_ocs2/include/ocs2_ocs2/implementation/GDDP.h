@@ -383,62 +383,6 @@ void GDDP<STATE_DIM, INPUT_DIM>::calculateNominalRolloutLagrangeMultiplier(
 	}  // end of i loop
 }
 
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM>
-size_t GDDP<STATE_DIM, INPUT_DIM>::findActiveSubsystemIndex(
-		const scalar_array_t& eventTimes,
-		const scalar_t& time,
-		bool ceilingFunction /*= true*/) const {
-
-	scalar_array_t partitioningTimes(eventTimes.size()+2);
-	partitioningTimes.front() = std::numeric_limits<scalar_t>::lowest();
-	partitioningTimes.back()  = std::numeric_limits<scalar_t>::max();
-	for (size_t i=0; i<eventTimes.size(); i++)
-		partitioningTimes[i+1] = eventTimes[i];
-
-	int activeSubsystemIndex;
-	if (ceilingFunction==true)
-		activeSubsystemIndex = findActiveIntervalIndex(partitioningTimes, time, 0);
-	else
-		activeSubsystemIndex = findActiveIntervalIndex(partitioningTimes, time, 0,
-				-OCS2NumericTraits<scalar_t>::weakEpsilon());
-
-	return (size_t)activeSubsystemIndex;
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM>
-size_t GDDP<STATE_DIM, INPUT_DIM>::findActivePartitionIndex(
-		const scalar_array_t& partitioningTimes,
-		const scalar_t& time,
-		bool ceilingFunction /*= true*/) const {
-
-	int activeSubsystemIndex;
-	if (ceilingFunction==true)
-		activeSubsystemIndex = findActiveIntervalIndex(partitioningTimes, time, 0);
-	else
-		activeSubsystemIndex = findActiveIntervalIndex(partitioningTimes, time, 0,
-				-OCS2NumericTraits<scalar_t>::weakEpsilon());
-
-	if (activeSubsystemIndex < 0) {
-		std::string mesg = "Given time is less than the start time (i.e. givenTime < partitioningTimes.front()): "
-				+ std::to_string(time) + " < " + std::to_string(partitioningTimes.front());
-		throw std::runtime_error(mesg);
-	}
-
-	if (activeSubsystemIndex == partitioningTimes.size()-1) {
-		std::string mesg = "Given time is greater than the final time (i.e. partitioningTimes.back() < givenTime): "
-				+ std::to_string(partitioningTimes.back()) + " < " + std::to_string(time);
-		throw std::runtime_error(mesg);
-	}
-
-	return (size_t)activeSubsystemIndex;
-}
-
 /*****************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
@@ -599,7 +543,7 @@ void GDDP<STATE_DIM, INPUT_DIM>::propagateRolloutSensitivity(
 
 				// finding the current active subsystem
 				scalar_t midTime = 0.5 * (*beginTimeItr+*(endTimeItr-1));
-				size_t activeSubsystem = findActiveSubsystemIndex(eventTimes_, midTime);
+				size_t activeSubsystem = static_cast<size_t>(lookup::findIndexInTimeArray(eventTimes_, midTime));
 
 				// compute multiplier of the equivalent system
 				scalar_t multiplier;
@@ -825,7 +769,7 @@ void GDDP<STATE_DIM, INPUT_DIM>::solveSensitivityRiccatiEquations(
 				// finding the current active subsystem
 				scalar_t midNormalizedTime = 0.5 * (*beginTimeItr+*(endTimeItr-1));
 				scalar_t midTime = -midNormalizedTime;
-				size_t activeSubsystem = findActiveSubsystemIndex(eventTimes_, midTime);
+				size_t activeSubsystem = static_cast<size_t>(lookup::findIndexInTimeArray(eventTimes_, midTime));
 
 				// compute multiplier of the equivalent system
 				scalar_t multiplier;
@@ -985,7 +929,7 @@ void GDDP<STATE_DIM, INPUT_DIM>::solveSensitivityBVP(
 				// finding the current active subsystem
 				scalar_t midNormalizedTime = 0.5 * (*beginTimeItr+*(endTimeItr-1));
 				scalar_t midTime = -midNormalizedTime;
-				size_t activeSubsystem = findActiveSubsystemIndex(eventTimes_, midTime);
+				size_t activeSubsystem = static_cast<size_t>(lookup::findIndexInTimeArray(eventTimes_, midTime));
 
 				// compute multiplier of the equivalent system
 				scalar_t multiplier;
@@ -1193,13 +1137,13 @@ void GDDP<STATE_DIM, INPUT_DIM>::getValueFuntionDerivative(
 	EigenLinearInterpolation<state_vector_t> nablaSvFunc;
 	EigenLinearInterpolation<state_matrix_t> nablaSmFunc;
 
-	size_t activePartition = findActivePartitionIndex(dcPtr_->partitioningTimes_, time);
+	size_t activePartition = static_cast<size_t>(lookup::findBoundedActiveIntervalInTimeArray(dcPtr_->partitioningTimes_, time));
 
 	state_vector_t nominalState;
 	state_vector_t deltsState;
 	eigen_scalar_t nablas;
 	state_vector_t nablaSv;
-	state_matrix_t nablaSm;;
+	state_matrix_t nablaSm;
 
 	nominalStateFunc.setData(&dcPtr_->nominalTimeTrajectoriesStock_[activePartition], &dcPtr_->nominalStateTrajectoriesStock_[activePartition]);
 	nominalStateFunc.interpolate(time, nominalState);
@@ -1254,7 +1198,7 @@ void GDDP<STATE_DIM, INPUT_DIM>::calculateCostDerivative(
 				// finding the current active subsystem
 				scalar_t midTime = 0.5 * ( dcPtr_->nominalTimeTrajectoriesStock_[i][beginIndex] +
 						dcPtr_->nominalTimeTrajectoriesStock_[i][endIndex-1]);
-				size_t activeSubsystem = findActiveSubsystemIndex(eventTimes_, midTime);
+				size_t activeSubsystem = static_cast<size_t>(lookup::findIndexInTimeArray(eventTimes_, midTime));
 
 				// compute multiplier of the equivalent system
 				scalar_t multiplier;
@@ -1497,8 +1441,8 @@ void GDDP<STATE_DIM, INPUT_DIM>::run(
 	}
 
 	// find active event times range: [activeEventTimeBeginIndex_, activeEventTimeEndIndex_)
-	activeEventTimeBeginIndex_ = findActiveSubsystemIndex(eventTimes_, dcPtr_->initTime_);
-	activeEventTimeEndIndex_   = findActiveSubsystemIndex(eventTimes_, dcPtr_->finalTime_);
+	activeEventTimeBeginIndex_ = static_cast<size_t>(lookup::findIndexInTimeArray(eventTimes_, dcPtr_->initTime_));
+	activeEventTimeEndIndex_   = static_cast<size_t>(lookup::findIndexInTimeArray(eventTimes_, dcPtr_->finalTime_));
 
 	// use the LQ-based method or Sweeping-BVP method
 	if (gddpSettings_.useLQForDerivatives_==true) {

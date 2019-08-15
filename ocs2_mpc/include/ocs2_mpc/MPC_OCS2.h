@@ -60,8 +60,6 @@ class MPC_OCS2 : public MPC_SLQ<STATE_DIM, INPUT_DIM> {
   using BASE = MPC_SLQ<STATE_DIM, INPUT_DIM>;
 
   using DIMENSIONS = Dimensions<STATE_DIM, INPUT_DIM>;
-  using controller_t = typename DIMENSIONS::controller_t;
-  using controller_array_t = typename DIMENSIONS::controller_array_t;
   using scalar_t = typename DIMENSIONS::scalar_t;
   using scalar_array_t = typename DIMENSIONS::scalar_array_t;
   using size_array_t = typename DIMENSIONS::size_array_t;

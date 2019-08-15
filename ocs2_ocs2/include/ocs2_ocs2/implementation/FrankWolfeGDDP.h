@@ -46,7 +46,7 @@ void FrankWolfeGDDP<STATE_DIM, INPUT_DIM>::run(
 		scalar_array_t eventTimes,
 		const slq_data_collector_t* dcPtr,
 		const dynamic_vector_t& maxGradientInverse,
-		const NLP_Constraints* eventTimeConstraintPtr)  {
+		NLP_Constraints* eventTimeConstraintPtr)  {
 
 	// run the base method which will calculate the gradient
 	this->run(eventTimes, dcPtr);

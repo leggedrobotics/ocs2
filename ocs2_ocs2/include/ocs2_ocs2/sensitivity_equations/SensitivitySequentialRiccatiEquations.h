@@ -61,7 +61,6 @@ public:
 	typedef OdeBase<S_DIM_> BASE;
 
 	typedef Dimensions<STATE_DIM, INPUT_DIM> DIMENSIONS;
-	using controller_t = typename DIMENSIONS::controller_t;
 	using scalar_t = typename DIMENSIONS::scalar_t;
 	using scalar_array_t = typename DIMENSIONS::scalar_array_t;
 	using eigen_scalar_t = typename DIMENSIONS::eigen_scalar_t;

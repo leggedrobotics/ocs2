@@ -5,8 +5,7 @@
  *      Author: farbod
  */
 
-#ifndef OCS2ANYMALINTERFACE_H_
-#define OCS2ANYMALINTERFACE_H_
+#pragma once
 
 #include <ocs2_anymal_switched_model/constraint/AnymalComKinoConstraint.h>
 #include <ocs2_anymal_switched_model/cost/AnymalCost.h>
@@ -21,41 +20,34 @@
 
 namespace anymal {
 
-class OCS2AnymalInterface : public switched_model::OCS2QuadrupedInterface<12> {
+class OCS2AnymalInterface final : public switched_model::OCS2QuadrupedInterface<12> {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-  typedef std::shared_ptr<OCS2AnymalInterface> Ptr;
+  using Ptr = std::shared_ptr<OCS2AnymalInterface>;
 
-  typedef switched_model::OCS2QuadrupedInterface<12> BASE;
+  using BASE = switched_model::OCS2QuadrupedInterface<12>;
 
-  typedef AnymalComKinoDynamics system_dynamics_t;
-  typedef AnymalComKinoDynamicsDerivative system_dynamics_derivative_t;
-  typedef AnymalComKinoConstraint constraint_t;
-  typedef AnymalCost cost_funtion_t;
-  typedef AnymalComKinoOperatingPoints operating_point_t;
+  using system_dynamics_t = AnymalComKinoDynamics;
+  using system_dynamics_derivative_t = AnymalComKinoDynamicsDerivative;
+  using constraint_t = AnymalComKinoConstraint;
+  using cost_funtion_t = AnymalCost;
+  using operating_point_t = AnymalComKinoOperatingPoints;
 
-  OCS2AnymalInterface(const std::string& pathToConfigFolder);
+  explicit OCS2AnymalInterface(const std::string& pathToConfigFolder);
 
-  virtual ~OCS2AnymalInterface() = default;
+  ~OCS2AnymalInterface() override = default;
 
-  /**
-   * setup all optimizes
-   */
   void setupOptimizer(const logic_rules_ptr_t& logicRulesPtr, const mode_sequence_template_t* modeSequenceTemplatePtr,
                       slq_base_ptr_t& slqPtr, mpc_ptr_t& mpcPtr) override;
 
-  /**
-   * Designs weight compensating input.
-   *
-   * @param [in] switchedState: Switched model state.
-   * @param [out] uForWeightCompensation: Weight compensating input.
-   */
   void designWeightCompensatingInput(const state_vector_t& switchedState, input_vector_t& uForWeightCompensation) override;
 
-  controlled_system_base_ptr_t getSystemDynamicsPtr() override {
-    return controlled_system_base_ptr_t(new system_dynamics_t(modelSettings_));
-  }
+  const system_dynamics_t& getDynamics() const override { return *dynamicsPtr_; }
+
+  const system_dynamics_derivative_t& getDynamicsDerivatives() const override { return *dynamicsDerivativesPtr_; }
+
+  const cost_funtion_t& getCost() const override { return *costFunctionPtr_; }
 
  protected:
   // dynamics
@@ -73,5 +65,3 @@ class OCS2AnymalInterface : public switched_model::OCS2QuadrupedInterface<12> {
 };
 
 }  // end of namespace anymal
-
-#endif /* OCS2ANYMALINTERFACE_H_ */

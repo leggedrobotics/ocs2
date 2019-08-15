@@ -38,6 +38,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // OCS2
 #include <ocs2_core/Dimensions.h>
 #include <ocs2_core/constraint/ConstraintBase.h>
+#include <ocs2_core/constraint/LinearConstraint.h>
 #include <ocs2_core/initialization/SystemOperatingPoint.h>
 #include <ocs2_core/misc/loadEigenMatrix.h>
 #include <ocs2_mpc/MPC_PI.h>
@@ -63,7 +64,8 @@ class BallbotInterface final : public RobotInterfaceBase<ballbot::STATE_DIM_, ba
   using BASE = RobotInterfaceBase<ballbot::STATE_DIM_, ballbot::INPUT_DIM_>;
 
   using dim_t = Dimensions<ballbot::STATE_DIM_, ballbot::INPUT_DIM_>;
-  using ballbotConstraint_t = ConstraintBase<ballbot::STATE_DIM_, ballbot::INPUT_DIM_>;
+  using ballbotConstraint_t = LinearConstraint<ballbot::STATE_DIM_, ballbot::INPUT_DIM_>;
+  //  using ballbotConstraint_t = ConstraintBase<ballbot::STATE_DIM_, ballbot::INPUT_DIM_>;
   using ballbotOperatingPoint_t = SystemOperatingPoint<ballbot::STATE_DIM_, ballbot::INPUT_DIM_>;
 
   using mpc_t = MPC_SLQ<ballbot::STATE_DIM_, ballbot::INPUT_DIM_>;
@@ -101,6 +103,8 @@ class BallbotInterface final : public RobotInterfaceBase<ballbot::STATE_DIM_, ba
   const BallbotSystemDynamics& getDynamicsDerivatives() const override { return *ballbotSystemDynamicsPtr_; }
 
   const BallbotCost& getCost() const override { return *ballbotCostPtr_; }
+
+  const ballbotConstraint_t* getConstraintPtr() const override { return ballbotConstraintPtr_.get(); }
 
  protected:
   /**

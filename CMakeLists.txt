@@ -17,8 +17,12 @@ find_package(Boost REQUIRED COMPONENTS
   filesystem
 )
 
-set(PYTHON_EXECUTABLE /usr/bin/python3)
-set(PYBIND11_PYTHON_VERSION 3.6 CACHE STRING "")
+# Pybind11
+option(USE_PYBIND_PYTHON_3 "Use python3-compatible python bindings" ON)
+if(USE_PYBIND_PYTHON_3)
+  set(PYTHON_EXECUTABLE /usr/bin/python3)
+  set(PYBIND11_PYTHON_VERSION 3.6 CACHE STRING "")
+endif(USE_PYBIND_PYTHON_3)
 find_package(pybind11 QUIET)
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread -fopenmp -std=c++11 -Wfatal-errors -ffast-math -fPIC")
@@ -147,36 +151,45 @@ target_link_libraries(dummy_mrt_node
 )
 
 
-# PyBindings library
-add_library(anymalPyBindings
+# PyBindings library (c++ side)
+add_library(anymalPyBindings_cpp
   src/AnymalPyBindings.cpp
 )
-add_dependencies(anymalPyBindings
+add_dependencies(anymalPyBindings_cpp
   ocs2_anymal_interface
   ${catkin_EXPORTED_TARGETS}
 )
-target_link_libraries(anymalPyBindings
+target_link_libraries(anymalPyBindings_cpp
   ocs2_anymal_interface
   ${catkin_LIBRARIES}
 )
 
+# Build python bindings if possible
 if(${pybind11_FOUND})
-  # build and install for python3.XX
-  pybind11_add_module(AnymalPyBindings3 SHARED
-    src/pyBindModule3.cpp
+  pybind11_add_module(AnymalPyBindings SHARED
+    src/pyBindModule.cpp
   )
-  add_dependencies(AnymalPyBindings3
-    anymalPyBindings
+  add_dependencies(AnymalPyBindings
+    anymalPyBindings_cpp
     ${catkin_EXPORTED_TARGETS}
   )
-  target_link_libraries(AnymalPyBindings3 PRIVATE
-    anymalPyBindings
+  target_link_libraries(AnymalPyBindings PRIVATE
+    anymalPyBindings_cpp
     ${catkin_LIBRARIES}
   )
-  set_target_properties(AnymalPyBindings3
-    PROPERTIES LIBRARY_OUTPUT_DIRECTORY ${CATKIN_DEVEL_PREFIX}/lib/python3.6/dist-packages/${PROJECT_NAME}
-  )
-  #catkin_python_setup()
+
+  if(USE_PYBIND_PYTHON_3)
+    # unfortunately this appears not to be discoverable yet because the sourcing process assumes python2.7
+    set_target_properties(AnymalPyBindings
+      PROPERTIES LIBRARY_OUTPUT_DIRECTORY ${CATKIN_DEVEL_PREFIX}/lib/python3.6/dist-packages/${PROJECT_NAME}
+    )
+  else(USE_PYBIND_PYTHON_3)
+    set_target_properties(AnymalPyBindings
+        PROPERTIES LIBRARY_OUTPUT_DIRECTORY ${CATKIN_DEVEL_PREFIX}/${CATKIN_PACKAGE_PYTHON_DESTINATION}
+    )
+  endif(USE_PYBIND_PYTHON_3)
+
+  catkin_python_setup()
 endif()
 
 #############

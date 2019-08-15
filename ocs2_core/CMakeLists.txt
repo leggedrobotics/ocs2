@@ -67,7 +67,6 @@ if(cmake_clang_tools_FOUND)
     TARGETS ${PROJECT_NAME}_lintTarget ocs2_core_logic
     SOURCE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/src ${CMAKE_CURRENT_SOURCE_DIR}/include/ocs2_core
     CT_HEADER_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/include/ocs2_core
-    CF_FIX
     CF_WERROR
   )
 endif(cmake_clang_tools_FOUND)

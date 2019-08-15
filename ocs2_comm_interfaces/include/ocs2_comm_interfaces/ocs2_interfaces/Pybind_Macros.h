@@ -62,15 +62,19 @@ using namespace pybind11::literals;
         .def("reset", &PY_INTERFACE::reset, "targetTrajectories"_a)                                                                       \
         .def("advanceMpc", &PY_INTERFACE::advanceMpc)                                                                                     \
         .def("getMpcSolution", &PY_INTERFACE::getMpcSolution, "t"_a.noconvert(), "x"_a.noconvert(), "u"_a.noconvert())                    \
+        .def("getLinearFeedbackGain", &PY_INTERFACE::getLinearFeedbackGain, "t"_a.noconvert())                                            \
         .def("getLinearFeedbackGainsInverses", &PY_INTERFACE::getLinearFeedbackGainsInverses, "sigmaX"_a.noconvert())                     \
         .def("computeFlowMap", &PY_INTERFACE::computeFlowMap, "t"_a, "x"_a.noconvert(), "u"_a.noconvert())                                \
         .def("setFlowMapDerivativeStateAndControl", &PY_INTERFACE::setFlowMapDerivativeStateAndControl, "t"_a, "x"_a.noconvert(),         \
              "u"_a.noconvert())                                                                                                           \
         .def("computeFlowMapDerivativeState", &PY_INTERFACE::computeFlowMapDerivativeState)                                               \
         .def("computeFlowMapDerivativeInput", &PY_INTERFACE::computeFlowMapDerivativeInput)                                               \
-        .def("getRunningCost", &PY_INTERFACE::getRunningCost, "t"_a, "x"_a.noconvert(), "u"_a.noconvert())                                \
-        .def("getRunningCostDerivativeState", &PY_INTERFACE::getRunningCostDerivativeState, "t"_a, "x"_a.noconvert(), "u"_a.noconvert())  \
-        .def("getRunningCostDerivativeInput", &PY_INTERFACE::getRunningCostDerivativeInput, "t"_a, "x"_a.noconvert(), "u"_a.noconvert())  \
+        .def("getIntermediateCost", &PY_INTERFACE::getIntermediateCost, "t"_a, "x"_a.noconvert(), "u"_a.noconvert())                      \
+        .def("getIntermediateCostDerivativeState", &PY_INTERFACE::getIntermediateCostDerivativeState, "t"_a, "x"_a.noconvert(),           \
+             "u"_a.noconvert())                                                                                                           \
+        .def("getIntermediateCostDerivativeInput", &PY_INTERFACE::getIntermediateCostDerivativeInput, "t"_a, "x"_a.noconvert(),           \
+             "u"_a.noconvert())                                                                                                           \
+        .def("getValueFunction", &PY_INTERFACE::getValueFunction, "t"_a, "x"_a.noconvert())                                               \
         .def("getValueFunctionStateDerivative", &PY_INTERFACE::getValueFunctionStateDerivative, "t"_a, "x"_a.noconvert())                 \
         .def("getStateInputConstraint", &PY_INTERFACE::getStateInputConstraint, "t"_a, "x"_a.noconvert(), "u"_a.noconvert())              \
         .def("getStateInputConstraintDerivativeControl", &PY_INTERFACE::getStateInputConstraintDerivativeControl, "t"_a,                  \

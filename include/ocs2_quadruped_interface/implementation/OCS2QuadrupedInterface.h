@@ -5,6 +5,8 @@
  *      Author: farbod
  */
 
+#include "ocs2_quadruped_interface/OCS2QuadrupedInterface.h"
+
 namespace switched_model {
 
 /******************************************************************************************************/
@@ -156,15 +158,6 @@ void OCS2QuadrupedInterface<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::loadSetting
 template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM>
 ocs2::SLQ_Settings& OCS2QuadrupedInterface<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::slqSettings() {
   return slqSettings_;
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM>
-const std::shared_ptr<typename OCS2QuadrupedInterface<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::logic_rules_t>&
-OCS2QuadrupedInterface<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::getLogicRules() const {
-  return logicRulesPtr_;
 }
 
 /******************************************************************************************************/
@@ -345,15 +338,6 @@ template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM>
 typename OCS2QuadrupedInterface<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::slq_base_ptr_t&
 OCS2QuadrupedInterface<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::getSLQPtr() {
   return slqPtr_;
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM>
-typename OCS2QuadrupedInterface<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::mpc_ptr_t&
-OCS2QuadrupedInterface<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::getMPCPtr() {
-  return mpcPtr_;
 }
 
 /******************************************************************************************************/

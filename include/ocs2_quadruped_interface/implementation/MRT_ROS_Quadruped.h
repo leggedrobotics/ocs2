@@ -16,14 +16,14 @@ MRT_ROS_Quadruped<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::MRT_ROS_Quadruped(con
 
     : BASE(robotName), ocs2QuadrupedInterfacePtr_(ocs2QuadrupedInterfacePtr), modelSettings_(ocs2QuadrupedInterfacePtr->modelSettings()) {
   // take a copy of the logic rules to make sure we don't share it with the MPC node
-  logic_rules_mrt_.reset(new logic_rules_t(*ocs2QuadrupedInterfacePtr->getLogicRules()));
+  logic_rules_mrt_.reset(new logic_rules_t(dynamic_cast<logic_rules_t&>(*ocs2QuadrupedInterfacePtr->getLogicRulesPtr())));
 
   // share logic rules with the Base
   BASE::setLogicRules(logic_rules_mrt_);
 
   // set up the rollout
   if (ocs2QuadrupedInterfacePtr->mpcSettings().useFeedbackPolicy_) {
-    BASE::initRollout(*(ocs2QuadrupedInterfacePtr_->getSystemDynamicsPtr()), ocs2QuadrupedInterfacePtr_->slqSettings().rolloutSettings_);
+    BASE::initRollout(ocs2QuadrupedInterfacePtr_->getDynamics(), ocs2QuadrupedInterfacePtr_->slqSettings().rolloutSettings_);
   }
 }
 

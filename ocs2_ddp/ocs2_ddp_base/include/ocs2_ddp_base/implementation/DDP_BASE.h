@@ -1095,8 +1095,8 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::updateNominalControllerPtrStock() {
   nominalControllerPtrStock_.clear();
   nominalControllerPtrStock_.reserve(nominalControllersStock_.size());
 
-  for (linear_controller_t& controller : nominalControllersStock_) {
-    nominalControllerPtrStock_.push_back(&controller);
+  for (linear_controller_t& controller_i : nominalControllersStock_) {
+    nominalControllerPtrStock_.push_back(&controller_i);
   }
 }
 
@@ -1408,7 +1408,7 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::setupOptimizer(size_t numPartitions) {
    * nominal trajectories
    */
   nominalControllersStock_.resize(numPartitions);
-  updateNominalControllerPtrStock();
+  nominalControllerPtrStock_.resize(numPartitions);
   nominalTimeTrajectoriesStock_.resize(numPartitions);
   nominalEventsPastTheEndIndecesStock_.resize(numPartitions);
   nominalStateTrajectoriesStock_.resize(numPartitions);
@@ -1591,6 +1591,10 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::runIteration() {
 /***************************************************************************************************** */
 template <size_t STATE_DIM, size_t INPUT_DIM>
 void DDP_BASE<STATE_DIM, INPUT_DIM>::runExit() {
+
+	// update the controller pointer array
+	updateNominalControllerPtrStock();
+
   //	// add the deleted parts of the controller
   //	for (size_t i=0; i<initActivePartition_; i++)
   //		nominalControllersStock_[i].swap(deletedcontrollersStock_[i]);
@@ -1794,8 +1798,6 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::run(scalar_t initTime, const state_vector_t
   linesearchTimer_.startTimer();
   lineSearch(computeISEs);
   linesearchTimer_.endTimer();
-
-  updateNominalControllerPtrStock();
 
   /*
    * adds the deleted controller parts

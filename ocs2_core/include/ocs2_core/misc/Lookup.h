@@ -9,8 +9,8 @@
 #include <sstream>
 #include <vector>
 
-#include "ocs2_core/misc/Numerics.h"
 #include "ocs2_core/OCS2NumericTraits.h"
+#include "ocs2_core/misc/Numerics.h"
 
 namespace ocs2 {
 namespace lookup {
@@ -62,7 +62,7 @@ size_t findFirstIndexWithinTol(const std::vector<scalar_t>& dataArray, scalar_t 
  */
 template <typename scalar_t = double>
 int findIndexInTimeArray(const std::vector<scalar_t>& timeArray, scalar_t time) {
-  auto lessOperator = [](scalar_t element, scalar_t value){ return !numerics::almost_ge(element, value); };
+  auto lessOperator = [](scalar_t element, scalar_t value) { return !numerics::almost_ge(element, value); };
   auto firstLargerValueIterator = std::lower_bound(timeArray.begin(), timeArray.end(), time, lessOperator);
   return static_cast<int>(firstLargerValueIterator - timeArray.begin());
 }

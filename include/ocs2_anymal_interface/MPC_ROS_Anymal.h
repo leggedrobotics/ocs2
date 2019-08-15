@@ -10,26 +10,9 @@
 
 #include <ocs2_quadruped_interface/MPC_ROS_Quadruped.h>
 
-#include "ocs2_anymal_interface/OCS2AnymalInterface.h"
-
 namespace anymal {
 
-class MPC_ROS_Anymal : public switched_model::MPC_ROS_Quadruped<12>
-{
-public:
-	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-
-	typedef std::shared_ptr<MPC_ROS_Anymal> Ptr;
-
-	typedef switched_model::MPC_ROS_Quadruped<12> BASE;
-
-	typedef OCS2AnymalInterface ocs2_anymal_interface_t;
-
-	MPC_ROS_Anymal(const std::string& pathToConfigFolder);
-
-	~MPC_ROS_Anymal() = default;
-
-};
+using MPC_ROS_Anymal = switched_model::MPC_ROS_Quadruped<12>;
 
 } // end of namespace anymal
 

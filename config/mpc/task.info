@@ -37,9 +37,10 @@ model_settings
   impulseSigmeFactor            0.1
 
   mpcGoalCommandDelay           0.1
-  strideTime                    0.4		; 0.8
-  mpcStrideLength               0.2
-  numPhasesInfullGaitCycle      2
+
+  targetDisplacementVelocity    0.5;
+  targetRotationVelocity        0.3;
+
   useFeetTrajectoryFiltering    0
   feetFilterFrequency           1000.0
 

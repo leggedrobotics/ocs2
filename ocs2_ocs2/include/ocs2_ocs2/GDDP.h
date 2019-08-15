@@ -404,7 +404,7 @@ protected:
      * @param [in] state: The inquired state.
      * @param [out] valueFunctionDerivative: The value function's derivative w.r.t. an event time.
      */
-	void getValueFuntionDerivative(
+	void getValueFuntionSensitivity(
 			const size_t& eventTimeIndex,
 			const scalar_t& time,
 			const state_vector_t& state,

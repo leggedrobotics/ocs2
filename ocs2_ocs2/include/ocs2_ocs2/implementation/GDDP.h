@@ -988,7 +988,7 @@ void GDDP<STATE_DIM, INPUT_DIM>::calculateBVPSensitivityControllerForward(
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
-void GDDP<STATE_DIM, INPUT_DIM>::getValueFuntionDerivative(
+void GDDP<STATE_DIM, INPUT_DIM>::getValueFuntionSensitivity(
 		const size_t& eventTimeIndex,
 		const scalar_t& time,
 		const state_vector_t& state,
@@ -1180,7 +1180,7 @@ void GDDP<STATE_DIM, INPUT_DIM>::runLQBasedMethod()  {
 						nablaLvTrajectoriesStockSet_[index]);
 
 				// calculate the value function derivatives w.r.t. event times
-				getValueFuntionDerivative(index, dcPtr_->initTime_, dcPtr_->initState_,
+				getValueFuntionSensitivity(index, dcPtr_->initTime_, dcPtr_->initState_,
 						nominalCostFuntionDerivative_(index));
 
 			} else if (iteration == 1) {

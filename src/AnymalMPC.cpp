@@ -32,6 +32,6 @@ int main(int argc, char* argv[]) {
   anymal::OCS2AnymalInterface anymalInterface(taskFolder);
 
   // launch MPC nodes
-  anymal::MPC_ROS_Anymal ocs2AnymalMPC(anymalInterface.getMPCPtr().get(), "anymal");
+  anymal::MPC_ROS_Anymal ocs2AnymalMPC(&anymalInterface.getMpc(), "anymal");
   ocs2AnymalMPC.launchNodes(argc, argv);
 }

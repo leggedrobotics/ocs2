@@ -363,7 +363,6 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM>::getStateInputConstraintLagrangian(scalar_t 
 
   const auto nc1 = BASE::nc1TrajectoriesStock_[activeSubsystem][std::get<0>(indexAlpha)];
   state_vector_t deltaX = state - xNominal;
-  deltaX.setZero();
   dynamic_input_matrix_t DmDagerTransRm = DmDager.leftCols(nc1).transpose() * Rm;
 
   nu = DmDagerTransRm * (CmProjected * deltaX + EvProjected) -

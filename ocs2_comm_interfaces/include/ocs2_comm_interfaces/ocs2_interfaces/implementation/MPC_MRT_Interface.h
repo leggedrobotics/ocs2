@@ -153,6 +153,12 @@ void MPC_MRT_Interface<STATE_DIM, INPUT_DIM>::getLinearFeedbackGain(scalar_t tim
 }
 
 template <size_t STATE_DIM, size_t INPUT_DIM>
+typename MPC_MRT_Interface<STATE_DIM, INPUT_DIM>::scalar_t MPC_MRT_Interface<STATE_DIM, INPUT_DIM>::getValueFunction(
+    scalar_t time, const state_vector_t& state) {
+  return mpc_.getSolverPtr()->getValueFunction(time, state);
+}
+
+template <size_t STATE_DIM, size_t INPUT_DIM>
 void MPC_MRT_Interface<STATE_DIM, INPUT_DIM>::getValueFunctionStateDerivative(scalar_t time, const state_vector_t& state,
                                                                               state_vector_t& Vx) {
   mpc_.getSolverPtr()->getValueFunctionStateDerivative(time, state, Vx);

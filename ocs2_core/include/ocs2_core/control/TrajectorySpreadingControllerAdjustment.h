@@ -27,8 +27,7 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#ifndef TRAJECTORY_SPREADING_CONTROLLER_OCS2_H_
-#define TRAJECTORY_SPREADING_CONTROLLER_OCS2_H_
+#pragma once
 
 #include <algorithm>
 #include <iostream>
@@ -41,7 +40,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 namespace ocs2 {
 
 template <size_t STATE_DIM, size_t INPUT_DIM>
-class TrajectorySpreadingController {
+class TrajectorySpreadingControllerAdjustment {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
@@ -67,12 +66,12 @@ class TrajectorySpreadingController {
   /**
    * Constructor
    */
-  TrajectorySpreadingController() = default;
+  TrajectorySpreadingControllerAdjustment() = default;
 
   /**
    * Destructor
    */
-  ~TrajectorySpreadingController() = default;
+  ~TrajectorySpreadingControllerAdjustment() = default;
 
   /**
    * Adjust the controller based on the last changes in the logic rules.
@@ -132,6 +131,5 @@ class TrajectorySpreadingController {
 
 }  // namespace ocs2
 
-#include "implementation/TrajectorySpreadingController.h"
+#include "implementation/TrajectorySpreadingControllerAdjustment.h"
 
-#endif /* TRAJECTORY_SPREADING_CONTROLLER_OCS2_H_ */

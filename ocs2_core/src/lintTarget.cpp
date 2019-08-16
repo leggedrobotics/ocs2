@@ -17,6 +17,7 @@
 #include <ocs2_core/control/ControllerType.h>
 #include <ocs2_core/control/FeedforwardController.h>
 #include <ocs2_core/control/LinearController.h>
+#include <ocs2_core/control/TrajectorySpreadingControllerAdjustment.h>
 
 // Cost
 #include <ocs2_core/cost/CostDesiredTrajectories.h>
@@ -64,7 +65,6 @@
 #include <ocs2_core/misc/LoadData.h>
 #include <ocs2_core/misc/Lookup.h>
 #include <ocs2_core/misc/SetThreadPriority.h>
-#include <ocs2_core/misc/TrajectorySpreadingController.h>
 #include <ocs2_core/misc/randomMatrices.h>
 
 // dummy target for clang toolchain

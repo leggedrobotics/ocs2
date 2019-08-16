@@ -64,7 +64,7 @@ void TrajectorySpreadingController<STATE_DIM, INPUT_DIM>::findEventTimesIndices(
       if (lower != controllersStock[p].timeStamp_.end()) {
         ie.first = p;
         ie.second = lower - controllersStock[p].timeStamp_.begin();
-        break; // breaks p loop
+        break;  // breaks p loop
       }
 
     }  // end of p loop
@@ -109,7 +109,7 @@ void TrajectorySpreadingController<STATE_DIM, INPUT_DIM>::adjustController(const
                                                                            controller_array_t& controllersStock) {
   const size_t numEvents = eventTimes.size();
   if (controllerEventTimes.size() != numEvents) {
-	  throw std::runtime_error("Number of events in controller is different from number of eventTimes.");
+    throw std::runtime_error("Number of events in controller is different from number of eventTimes.");
   }
 
   initActivePartitionIndex_ = 0;
@@ -135,7 +135,7 @@ void TrajectorySpreadingController<STATE_DIM, INPUT_DIM>::adjustController(const
   findEventTimesIndices(controllerEventTimes, controllersStock, controllerEventsIndices);
 
   // adjust controller. Here we assume the event times at same indices are associated.
-  for (size_t j=0; j<numEvents; j++) {
+  for (size_t j = 0; j < numEvents; j++) {
     spreadController(eventTimes[j],               // new event times
                      eventsIndices[j],            // new event times indices
                      controllerEventsIndices[j],  // old event times indices
@@ -147,17 +147,16 @@ void TrajectorySpreadingController<STATE_DIM, INPUT_DIM>::adjustController(const
 /******************************************************************************************************/
 /***************************************************************************************************** */
 template <size_t STATE_DIM, size_t INPUT_DIM>
-typename TrajectorySpreadingController<STATE_DIM, INPUT_DIM>::index_t TrajectorySpreadingController<STATE_DIM, INPUT_DIM>::findPreviousIndex(
-		index_t index, const controller_array_t& controllersStock) const {
-
+typename TrajectorySpreadingController<STATE_DIM, INPUT_DIM>::index_t
+TrajectorySpreadingController<STATE_DIM, INPUT_DIM>::findPreviousIndex(index_t index, const controller_array_t& controllersStock) const {
   index_t prevIndex;
   if (index.second > 0) {
     prevIndex.first = index.first;
     prevIndex.second = index.second - 1;
-  } else if (index.first > initActivePartitionIndex_){
+  } else if (index.first > initActivePartitionIndex_) {
     prevIndex.first = index.first - 1;
     prevIndex.second = controllersStock[prevIndex.first].timeStamp_.size() - 1;
-  }	else {
+  } else {
     prevIndex = index;
   }
 
@@ -202,7 +201,7 @@ void TrajectorySpreadingController<STATE_DIM, INPUT_DIM>::spreadController(scala
   index_t finalIndex;
   input_vector_t uffSpread;
   input_state_matrix_t kSpread;
-  if (isSmallerEqual(eventTimeIndex, controlerEventTimeIndex)) { // if the event time moved to an earlier time
+  if (isSmallerEqual(eventTimeIndex, controlerEventTimeIndex)) {  // if the event time moved to an earlier time
     startIndex = eventTimeIndex;
     finalIndex = controlerEventTimeIndex;
 
@@ -212,7 +211,7 @@ void TrajectorySpreadingController<STATE_DIM, INPUT_DIM>::spreadController(scala
 
     controllersStock[eventTimeIndex.first].timeStamp_[eventTimeIndex.second] = eventTime;
 
-  } else { // if the event time moved to a later time
+  } else {  // if the event time moved to a later time
     startIndex = controlerEventTimeIndex;
     finalIndex = eventTimePrevIndex;
 

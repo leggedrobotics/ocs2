@@ -78,20 +78,7 @@ initialModeSequenceTemplate
     [6]  LF_RH
     [7]  RF_LH
     [8]  LF_RH
-    [9]  RF_LH
-    [10]  LF_RH
-    [11]  RF_LH
-    [12]  LF_RH
-    [13]  RF_LH
-    [14]  LF_RH
-    [15]  RF_LH
-    [16]  LF_RH
-    [17]  RF_LH
-    [18]  LF_RH
-    [19]  RF_LH
-    [20]  LF_RH
-    [21]  RF_LH
-    [22]  LF_RH
+    [9]  STANCE
   }
   templateSwitchingTimes
   {
@@ -106,20 +93,7 @@ initialModeSequenceTemplate
     [7]  2.1
     [8]  2.45
     [9]  2.8
-    [10]  3.15
-    [11]  3.5
-    [12]  3.85
-    [13]  4.2
-    [14]  4.55
-    [15]  4.9
-    [16]  5.25
-    [17]  5.6
-    [18]  5.95
-    [19]  6.3
-    [20]  6.65
-    [21]  7.0
-    [22]  7.35
-    [23]  7.7
+    [10]  10.0
   }
 }
 
@@ -205,7 +179,7 @@ mpc
 
   useParallelRiccatiSolver        1	; use disjoint riccati solver in MP case and recedingHorizon fashion
 
-  useFeedbackPolicy               0
+  useFeedbackPolicy               1
   forwardSimulationTime           28	; [ms] MRT time
 
   rosMsgTimeWindow                200	; [ms]

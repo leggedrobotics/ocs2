@@ -31,8 +31,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define AUTOMATICDIFFERENTIATIONBASE_OCS2_H_
 
 #include <Eigen/Core>
-#include <cppad/cg.hpp>
-#include <functional>
 
 namespace ocs2 {
 

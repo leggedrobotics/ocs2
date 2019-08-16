@@ -31,11 +31,23 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define CPPADCODEGENINTERFACE_OCS2_H_
 
 #include <functional>  // Missing include in external cg.hpp
-
-#include <cppad/cg.hpp>
 #include <memory>
 
+#include <cppad/cg.hpp>
+
 #include <ocs2_core/automatic_differentiation/AutomaticDifferentiationBase.h>
+
+// Explicity instantiate doubles in separate source file
+extern template class CppAD::cg::GccCompiler<double>;
+extern template class CppAD::cg::DynamicLib<double>;
+extern template class CppAD::cg::GenericModel<double>;
+extern template class CppAD::cg::LinuxDynamicLib<double>;
+extern template class CppAD::cg::ModelCSourceGen<double>;
+extern template class CppAD::cg::ModelLibraryCSourceGen<double>;
+extern template class CppAD::cg::SaveFilesModelLibraryProcessor<double>;
+extern template class CppAD::cg::DynamicModelLibraryProcessor<double>;
+extern template void CppAD::Independent<Eigen::Matrix<CppAD::AD<CppAD::cg::CG<double>>, Eigen::Dynamic, 1>>(
+    Eigen::Matrix<CppAD::AD<CppAD::cg::CG<double>>, Eigen::Dynamic, 1>&);
 
 namespace ocs2 {
 

@@ -78,9 +78,9 @@ void ModelLibraryCSourceGen<Base>::saveSources(const std::string& sourcesFolder)
     system::createFolder(sourcesFolder);
 
     // save/generate model sources
-    for (const auto& it : _models) {
-        saveSources(sourcesFolder, it.second->getSources());
-    }
+//    for (const auto& it : _models) {
+//        saveSources(sourcesFolder, it.second->getSources());
+//    }
 
     // save/generate library sources
     saveSources(sourcesFolder, getLibrarySources());

@@ -203,11 +203,12 @@ private:
 		cerr << "at line " << line << " in the file " << endl;
 		cerr << "    "     << file                    << endl;
 
-		// terminate program execution
-		assert(false);
-
-		// termination when NDEBUG is defined
-		std::exit(1);
+//		// terminate program execution
+//		assert(false);
+//
+//		// termination when NDEBUG is defined
+//		std::exit(1);
+		throw std::runtime_error("Error in CppAd");
 	}
 
 	// current error handler

@@ -28,6 +28,7 @@ catkin_package(
     ${EIGEN3_INCLUDE_DIRS}
   LIBRARIES
     ocs2_core_logic
+    cppad_explicit_double
 
   DEPENDS 
     Boost
@@ -51,6 +52,10 @@ add_library(ocs2_core_logic
         )
 target_link_libraries(ocs2_core_logic
         ${catkin_LIBRARIES}
+        )
+
+add_library(cppad_explicit_double
+        src/automatic_differentation/CppAdExplicitDouble.cpp
         )
 
 add_executable(${PROJECT_NAME}_lintTarget
@@ -77,6 +82,7 @@ endif(cmake_clang_tools_FOUND)
 
 install(TARGETS
           ocs2_core_logic
+          cppad_explicit_double
         ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
         LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
         RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}

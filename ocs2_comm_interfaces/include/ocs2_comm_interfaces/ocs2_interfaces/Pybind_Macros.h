@@ -27,6 +27,36 @@ using namespace pybind11::literals;
       .def("__iter__", [](VTYPE& v) { return pybind11::make_iterator(v.begin(), v.end()); }, \
            pybind11::keep_alive<0, 1>()); /* Keep vector alive while iterator is used */
 
+#ifdef ROBOT_EQUAL_STATE_INPUT_DIMS
+
+#define MAKE_OPAQUE_ARRAY_TYPES(PY_INTERFACE)              \
+  PYBIND11_MAKE_OPAQUE(PY_INTERFACE::scalar_array_t)       \
+  PYBIND11_MAKE_OPAQUE(PY_INTERFACE::state_vector_array_t) \
+  PYBIND11_MAKE_OPAQUE(PY_INTERFACE::state_matrix_array_t) \
+  PYBIND11_MAKE_OPAQUE(PY_INTERFACE::dynamic_vector_array_t)
+#define BIND_VECTOR_TYPES(PY_INTERFACE)                                         \
+  VECTOR_TYPE_BINDING(PY_INTERFACE::scalar_array_t, "scalar_array")             \
+  VECTOR_TYPE_BINDING(PY_INTERFACE::state_vector_array_t, "state_vector_array") \
+  VECTOR_TYPE_BINDING(PY_INTERFACE::state_matrix_array_t, "state_matrix_array") \
+  VECTOR_TYPE_BINDING(PY_INTERFACE::dynamic_vector_array_t, "dynamic_vector_array")
+
+#else
+
+#define MAKE_OPAQUE_ARRAY_TYPES(PY_INTERFACE)              \
+  PYBIND11_MAKE_OPAQUE(PY_INTERFACE::scalar_array_t)       \
+  PYBIND11_MAKE_OPAQUE(PY_INTERFACE::state_vector_array_t) \
+  PYBIND11_MAKE_OPAQUE(PY_INTERFACE::input_vector_array_t) \
+  PYBIND11_MAKE_OPAQUE(PY_INTERFACE::state_matrix_array_t) \
+  PYBIND11_MAKE_OPAQUE(PY_INTERFACE::dynamic_vector_array_t)
+#define BIND_VECTOR_TYPES(PY_INTERFACE)                                         \
+  VECTOR_TYPE_BINDING(PY_INTERFACE::scalar_array_t, "scalar_array")             \
+  VECTOR_TYPE_BINDING(PY_INTERFACE::state_vector_array_t, "state_vector_array") \
+  VECTOR_TYPE_BINDING(PY_INTERFACE::input_vector_array_t, "input_vector_array") \
+  VECTOR_TYPE_BINDING(PY_INTERFACE::state_matrix_array_t, "state_matrix_array") \
+  VECTOR_TYPE_BINDING(PY_INTERFACE::dynamic_vector_array_t, "dynamic_vector_array")
+
+#endif
+
 /**
  * @brief Convenience macro to bind robot interface with all required vectors.
  * @note LIB_NAME must match target name in CMakeLists
@@ -34,19 +64,11 @@ using namespace pybind11::literals;
  */
 #define CREATE_ROBOT_PYTHON_BINDINGS(PY_INTERFACE, LIB_NAME)                                                                              \
   /* make vector types opaque so they are not converted to python lists */                                                                \
-  PYBIND11_MAKE_OPAQUE(PY_INTERFACE::scalar_array_t)                                                                                      \
-  PYBIND11_MAKE_OPAQUE(PY_INTERFACE::state_vector_array_t)                                                                                \
-  PYBIND11_MAKE_OPAQUE(PY_INTERFACE::input_vector_array_t)                                                                                \
-  PYBIND11_MAKE_OPAQUE(PY_INTERFACE::state_matrix_array_t)                                                                                \
-  PYBIND11_MAKE_OPAQUE(PY_INTERFACE::dynamic_vector_array_t)                                                                              \
+  MAKE_OPAQUE_ARRAY_TYPES(PY_INTERFACE)                                                                                                   \
   /* create a python module */                                                                                                            \
   PYBIND11_MODULE(LIB_NAME, m) {                                                                                                          \
     /* bind vector types so they can be used natively in python */                                                                        \
-    VECTOR_TYPE_BINDING(PY_INTERFACE::scalar_array_t, "scalar_array")                                                                     \
-    VECTOR_TYPE_BINDING(PY_INTERFACE::state_vector_array_t, "state_vector_array")                                                         \
-    VECTOR_TYPE_BINDING(PY_INTERFACE::input_vector_array_t, "input_vector_array")                                                         \
-    VECTOR_TYPE_BINDING(PY_INTERFACE::state_matrix_array_t, "state_matrix_array")                                                         \
-    VECTOR_TYPE_BINDING(PY_INTERFACE::dynamic_vector_array_t, "dynamic_vector_array")                                                     \
+    BIND_VECTOR_TYPES(PY_INTERFACE)                                                                                                       \
     /* bind cost desired trajectories class */                                                                                            \
     pybind11::class_<PY_INTERFACE::cost_desired_trajectories_t>(m, "cost_desired_trajectories")                                           \
         .def(pybind11::init<PY_INTERFACE::scalar_array_t, PY_INTERFACE::dynamic_vector_array_t, PY_INTERFACE::dynamic_vector_array_t>()); \

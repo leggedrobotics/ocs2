@@ -208,24 +208,6 @@ class DDP_BASE : public Solver_BASE<STATE_DIM, INPUT_DIM> {
                              size_t threadId = 0);
 
   /**
-   * The class for performing rollout. It uses the given control policies and initial state,
-   * to integrate the system dynamics in time period [initTime, finalTime] and only return the final state.
-   *
-   * @param [in] initTime: The initial time.
-   * @param [in] initState: The initial state.
-   * @param [in] finalTime: The final time.
-   * @param [in] partitioningTimes: Time partitioning
-   * @param [in] controllersStock: Array of control policies.
-   * @param [out] finalState: Final state.
-   * @param [out] finalInput: Final control input.
-   * @param [out] finalActiveSubsystemIndex: The final active subsystem.
-   * @param [in] threadId: Working thread (default is 0).
-   */
-  void rolloutFinalState(scalar_t initTime, const state_vector_t& initState, scalar_t finalTime, const scalar_array_t& partitioningTimes,
-                         const linear_controller_array_t& controllersStock, state_vector_t& finalState, input_vector_t& finalInput,
-                         size_t& finalActivePartition, size_t threadId = 0);
-
-  /**
    * Calculates a rollout constraints. It uses the given rollout trajectories and calculate the constraints.
    *
    * @param [in] timeTrajectoriesStock: Array of trajectories containing the output time trajectory stamp.

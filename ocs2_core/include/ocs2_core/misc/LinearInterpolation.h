@@ -102,9 +102,9 @@ public:
         timeStampPtr_ = timeStampPtr;
         dataPtr_ = dataPtr;
 
-        // if (timeStampPtr_->empty() || dataPtr_->size() != timeStampPtr_->size()) {
-        //   throw std::runtime_error("LinearInterpolation.h : Sizes not suitable for interpolation.");
-        // }
+        if (timeStampPtr_->empty() || dataPtr_->size() != timeStampPtr_->size()) {
+          throw std::runtime_error("LinearInterpolation.h : Sizes not suitable for interpolation.");
+        }
     }
 
     /**

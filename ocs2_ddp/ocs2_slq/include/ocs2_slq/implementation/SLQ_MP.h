@@ -651,10 +651,10 @@ void SLQ_MP<STATE_DIM, INPUT_DIM>::executeLineSearchWorker(size_t threadId)
 
 		if (allPreviousAlphasProcessed)  {
 			alphaBestFound_ = true;
-			// event_handler_t::activateKillIntegration();	// kill all integrators
-			// if (BASE::ddpSettings_.displayInfo_) {
-			// 	BASE::printString("\t LS: terminate other rollouts with different alphas. alpha_best found or terminating without improvement.");
-			// }
+			event_handler_t::activateKillIntegration();	// kill all integrators
+			if (BASE::ddpSettings_.displayInfo_) {
+				BASE::printString("\t LS: terminate other rollouts with different alphas. alpha_best found or terminating without improvement.");
+			}
 		}
 
 		lineSearchResultMutex_.unlock();

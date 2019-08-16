@@ -34,7 +34,7 @@ namespace ocs2 {
 /***************************************************************************************************** */
 template <size_t STATE_DIM, size_t INPUT_DIM>
 void TrajectorySpreadingControllerAdjustment<STATE_DIM, INPUT_DIM>::findEventTimesIndices(const scalar_array_t& eventTimes,
-                                                                                const controller_array_t& controllersStock,
+                                                                                const linear_controller_array_t& controllersStock,
                                                                                 std::vector<index_t>& eventsIndices) const {
   // vector of (partition, index).
   eventsIndices.clear();
@@ -106,7 +106,7 @@ bool TrajectorySpreadingControllerAdjustment<STATE_DIM, INPUT_DIM>::isSmallerEqu
 template <size_t STATE_DIM, size_t INPUT_DIM>
 void TrajectorySpreadingControllerAdjustment<STATE_DIM, INPUT_DIM>::adjustController(const scalar_array_t& eventTimes,
                                                                            const scalar_array_t& controllerEventTimes,
-                                                                           controller_array_t& controllersStock) {
+                                                                           linear_controller_array_t& controllersStock) {
   const size_t numEvents = eventTimes.size();
   if (controllerEventTimes.size() != numEvents) {
     throw std::runtime_error("Number of events in controller is different from number of eventTimes.");
@@ -148,7 +148,7 @@ void TrajectorySpreadingControllerAdjustment<STATE_DIM, INPUT_DIM>::adjustContro
 /***************************************************************************************************** */
 template <size_t STATE_DIM, size_t INPUT_DIM>
 typename TrajectorySpreadingControllerAdjustment<STATE_DIM, INPUT_DIM>::index_t
-TrajectorySpreadingControllerAdjustment<STATE_DIM, INPUT_DIM>::findPreviousIndex(index_t index, const controller_array_t& controllersStock) const {
+TrajectorySpreadingControllerAdjustment<STATE_DIM, INPUT_DIM>::findPreviousIndex(index_t index, const linear_controller_array_t& controllersStock) const {
   index_t prevIndex;
   if (index.second > 0) {
     prevIndex.first = index.first;
@@ -169,7 +169,7 @@ TrajectorySpreadingControllerAdjustment<STATE_DIM, INPUT_DIM>::findPreviousIndex
 template <size_t STATE_DIM, size_t INPUT_DIM>
 void TrajectorySpreadingControllerAdjustment<STATE_DIM, INPUT_DIM>::spreadController(scalar_t eventTime, index_t eventTimeIndex,
                                                                            index_t controlerEventTimeIndex,
-                                                                           controller_array_t& controllersStock) const {
+                                                                           linear_controller_array_t& controllersStock) const {
   // events before the controller start time
   if (eventTimeIndex == index_t(initActivePartitionIndex_, 0) || controlerEventTimeIndex == index_t(initActivePartitionIndex_, 0)) {
     return;

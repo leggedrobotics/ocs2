@@ -60,6 +60,28 @@ class LinearConstraint final : public ConstraintBase<STATE_DIM, INPUT_DIM> {
   using typename BASE::state_vector_t;
 
   /**
+   * @brief Constructor that sets the number constraints for all types to 0
+   */
+  LinearConstraint()
+      : numStateInputConstraint_(0),
+        e_(constraint1_vector_t::Zero()),
+        C_(constraint1_state_matrix_t::Zero()),
+        D_(constraint1_input_matrix_t::Zero()),
+        numStateOnlyConstraint_(0),
+        h_(constraint2_vector_t::Zero()),
+        F_(constraint2_state_matrix_t::Zero()),
+        numStateOnlyFinalConstraint_(0),
+        h_f_(constraint2_vector_t::Zero()),
+        F_f_(constraint2_state_matrix_t::Zero()),
+        numInequalityConstraint_(0),
+        h0_(),
+        dhdx_(),
+        dhdu_(),
+        ddhdxdx_(),
+        ddhdudu_(),
+        ddhdudx_() {}
+
+  /**
    * @brief Constructor for only equality constraints
    *
    * @param[in] numStateInputConstraint: Number of state-input equality constraints
@@ -185,7 +207,7 @@ class LinearConstraint final : public ConstraintBase<STATE_DIM, INPUT_DIM> {
 
   void getFinalConstraint2DerivativesState(constraint2_state_matrix_t& F_f) override { F_f = F_f_; }
 
- private:
+ public:
   size_t numStateInputConstraint_;
   constraint1_vector_t e_;
   constraint1_state_matrix_t C_;

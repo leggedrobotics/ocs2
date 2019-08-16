@@ -359,7 +359,7 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM>::getStateInputConstraintLagrangian(scalar_t 
   EigenLinearInterpolation<input_constraint1_matrix_t>::interpolate(indexAlpha, DmDager, &DmDagerTrajectoryStock_[activeSubsystem]);
 
   state_vector_t costate;
-  BASE::getValueFunctionStateDerivative(time, xNominal, costate);
+  BASE::getValueFunctionStateDerivative(time, state, costate);
 
   const auto nc1 = BASE::nc1TrajectoriesStock_[activeSubsystem][std::get<0>(indexAlpha)];
   state_vector_t deltaX = state - xNominal;

@@ -142,15 +142,15 @@ Q
 {
     scaling 1e+0
 
-   (0,0) 30.0	; px
-   (1,1) 30.0	; py
-   (2,2) 400.0	; thetaz
+   (0,0) 110.0	; px
+   (1,1) 110.0	; py
+   (2,2) 600.0	; thetaz
    (3,3) 0.0	; thetay
    (4,4) 0.0  ; thetax
    
    (5,5) 30.0 ; px_dot
    (6,6) 30.0 ; py_dot
-   (7,7) 20.0 ; thetaz_dot
+   (7,7) 40.0 ; thetaz_dot
    (8,8) 20.0 ; thetay_dot
    (9,9) 20.0 ; thetax_dot
 }

@@ -237,7 +237,7 @@ if(${pybind11_FOUND})
     test/PyBindingsTest.cpp
     )
   target_link_libraries(anymal_pybindings_test
-    anymalPyBindings
+    anymalPyBindings_cpp
     ${catkin_LIBRARIES}
     ${Boost_LIBRARIES}
     )

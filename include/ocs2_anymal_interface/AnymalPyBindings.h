@@ -5,11 +5,9 @@
 
 namespace anymal {
 
-class AnymalPyBindings final : public ocs2::PythonInterface<OCS2AnymalInterface::BASE::state_dim_, OCS2AnymalInterface::BASE::input_dim_,
-                                                            OCS2AnymalInterface::BASE::logic_rules_t> {
+class AnymalPyBindings final : public ocs2::PythonInterface<OCS2AnymalInterface::BASE::state_dim_, OCS2AnymalInterface::BASE::input_dim_> {
  public:
-  using Base = ocs2::PythonInterface<OCS2AnymalInterface::BASE::state_dim_, OCS2AnymalInterface::BASE::input_dim_,
-                                     OCS2AnymalInterface::BASE::logic_rules_t>;
+  using Base = ocs2::PythonInterface<OCS2AnymalInterface::BASE::state_dim_, OCS2AnymalInterface::BASE::input_dim_>;
 
   AnymalPyBindings(const std::string& taskFileFolder, bool async = false);
 

@@ -1,4 +1,5 @@
 #include <gtest/gtest.h>
+#include <ros/package.h>
 
 #include <ocs2_anymal_interface/AnymalPyBindings.h>
 
@@ -13,7 +14,8 @@ TEST(Anymal, PyBindings) {
   using input_state_matrix_array_t = bindings_t::input_state_matrix_array_t;
   using cost_desired_trajectories_t = bindings_t::cost_desired_trajectories_t;
 
-  bindings_t bindings("/home/jcarius/catkin_ws/src/ocs2_anymal_interface/config/mpc", false);
+  const std::string taskFile = ros::package::getPath("ocs2_anymal_interface") + "/config/mpc";
+  bindings_t bindings(taskFile, false);
 
   state_vector_t initState = state_vector_t::Zero();
   initState(5) = 0.495;  // base z
@@ -49,13 +51,11 @@ TEST(Anymal, PyBindings) {
   auto t_arr = scalar_array_t();
   auto x_arr = state_vector_array_t();
   auto u_arr = input_vector_array_t();
-  auto sigmaX_arr = state_matrix_array_t();
 
-  bindings.getMpcSolution(t_arr, x_arr, u_arr, sigmaX_arr);
+  bindings.getMpcSolution(t_arr, x_arr, u_arr);
 
   EXPECT_EQ(t_arr.size(), x_arr.size());
   EXPECT_EQ(t_arr.size(), u_arr.size());
-  EXPECT_EQ(t_arr.size(), sigmaX_arr.size());
 
   std::cout << "t\t\tx(3)\tx(14)" << std::endl;
   for (size_t i = 0; i < t_arr.size(); i++) {
@@ -67,7 +67,7 @@ TEST(Anymal, PyBindings) {
   for (int i = 0; i < 301; i++) {
     bindings.setObservation(t, initState);
     bindings.advanceMpc();
-    bindings.getMpcSolution(t_arr, x_arr, u_arr, sigmaX_arr);
+    bindings.getMpcSolution(t_arr, x_arr, u_arr);
     t += 0.01;
   }
 
@@ -82,9 +82,9 @@ TEST(Anymal, PyBindings) {
 
   std::cout << "A\n" << A << "\nB\n" << B << std::endl;
 
-  auto L = bindings.getRunningCost(t_arr[0], x_arr[0], u_arr[0]);
-  auto dLdx = bindings.getRunningCostDerivativeState(t_arr[0], x_arr[0], u_arr[0]);
-  auto dLdu = bindings.getRunningCostDerivativeInput(t_arr[0], x_arr[0], u_arr[0]);
+  auto L = bindings.getIntermediateCost(t_arr[0], x_arr[0], u_arr[0]);
+  auto dLdx = bindings.getIntermediateCostDerivativeState(t_arr[0], x_arr[0], u_arr[0]);
+  auto dLdu = bindings.getIntermediateCostDerivativeInput(t_arr[0], x_arr[0], u_arr[0]);
 
   std::cout << "L: " << L << "\ndLdx: " << dLdx.transpose() << "\ndLdu: " << dLdu.transpose() << std::endl;
 
@@ -106,7 +106,7 @@ TEST(Anymal, PyBindings) {
   for (int i = 0; i < 301; i++) {
     bindings.setObservation(t, initState);
     bindings.advanceMpc();
-    bindings.getMpcSolution(t_arr, x_arr, u_arr, sigmaX_arr);
+    bindings.getMpcSolution(t_arr, x_arr, u_arr);
     t += 0.01;
   }
 

@@ -49,6 +49,8 @@ class OCS2AnymalInterface final : public switched_model::OCS2QuadrupedInterface<
 
   const cost_funtion_t& getCost() const override { return *costFunctionPtr_; }
 
+  const constraint_t* getConstraintPtr() const override { return constraintsPtr_.get(); }
+
  protected:
   // dynamics
   std::unique_ptr<system_dynamics_t> dynamicsPtr_;

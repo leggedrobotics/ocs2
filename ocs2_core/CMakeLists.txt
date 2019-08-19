@@ -28,7 +28,6 @@ catkin_package(
     ${EIGEN3_INCLUDE_DIRS}
   LIBRARIES
     ocs2_core_logic
-    cppad_explicit_double
 
   DEPENDS 
     Boost
@@ -54,8 +53,9 @@ target_link_libraries(ocs2_core_logic
         ${catkin_LIBRARIES}
         )
 
-add_library(cppad_explicit_double
-        src/automatic_differentation/CppAdExplicitDouble.cpp
+add_library(cppad_interface
+        src/automatic_differentation/CppAdInterface.cpp
+        src/automatic_differentation/CppAdSparsity.cpp
         )
 
 add_executable(${PROJECT_NAME}_lintTarget
@@ -82,7 +82,6 @@ endif(cmake_clang_tools_FOUND)
 
 install(TARGETS
           ocs2_core_logic
-          cppad_explicit_double
         ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
         LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
         RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
@@ -140,6 +139,24 @@ if (NOT ${CMAKE_BUILD_TYPE_UPPER} STREQUAL DEBUG)
     ${catkin_LIBRARIES} -lm -ldl
   )
 endif(NOT ${CMAKE_BUILD_TYPE_UPPER} STREQUAL DEBUG)
+
+catkin_add_gtest(testSparsityHelpers
+        test/cppad_cg/testSparsityHelpers.cpp
+)
+target_link_libraries(testSparsityHelpers
+        cppad_interface
+        ${Boost_LIBRARIES}
+        dl
+        )
+
+catkin_add_gtest(testCppAdInterface
+        test/cppad_cg/testCppAdInterface.cpp
+)
+target_link_libraries(testCppAdInterface
+        cppad_interface
+        ${Boost_LIBRARIES}
+        dl
+)
 
 catkin_add_gtest(test_transferfunctionbase
   test/dynamics/testTransferfunctionBase.cpp

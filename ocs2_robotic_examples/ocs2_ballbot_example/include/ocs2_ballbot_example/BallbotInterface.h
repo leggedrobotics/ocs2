@@ -40,11 +40,11 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_core/constraint/ConstraintBase.h>
 #include <ocs2_core/initialization/SystemOperatingPoint.h>
 #include <ocs2_core/misc/loadEigenMatrix.h>
-#include <ocs2_mpc/MPC_PI.h>
-#include <ocs2_mpc/MPC_SLQ.h>
 #include <ocs2_robotic_tools/common/RobotInterfaceBase.h>
 
 // Ballbot
+#include "ocs2_ballbot_example/solvers/BallbotPI.h"
+#include "ocs2_ballbot_example/solvers/BallbotSLQ.h"
 #include "ocs2_ballbot_example/cost/BallbotCost.h"
 #include "ocs2_ballbot_example/definitions.h"
 #include "ocs2_ballbot_example/dynamics/BallbotSystemDynamics.h"

@@ -135,14 +135,6 @@ class DerivativesBase {
   virtual void getJumpMapDerivativeState(state_matrix_t& G) { G.setIdentity(); }
 
   /**
-   * Get the H matrix at a given operating point for the linearized system jump map.
-   * \f$ x^+ = G \delta x + H \delta u \f$.
-   *
-   * @param [out] H: \f$ H \f$ matrix.
-   */
-  virtual void getJumpMapDerivativeInput(state_input_matrix_t& H) { H.setZero(); }
-
-  /**
    * Get at a given operating point the derivative of the guard surfaces w.r.t. input vector.
    *
    * @param [out] D_t_gamma: Derivative of the guard surfaces w.r.t. time.
@@ -156,15 +148,6 @@ class DerivativesBase {
    */
   virtual void getGuardSurfacesDerivativeState(dynamic_state_matrix_t& D_x_gamma) {
     D_x_gamma = dynamic_state_matrix_t::Zero(1, STATE_DIM);
-  }
-
-  /**
-   * Get at a given operating point the derivative of the guard surfaces w.r.t. input vector.
-   *
-   * @param [out] D_u_gamma: Derivative of the guard surfaces w.r.t. input vector.
-   */
-  virtual void getGuardSurfacesDerivativeInput(dynamic_input_matrix_t& D_u_gamma) {
-    D_u_gamma = dynamic_input_matrix_t::Zero(1, INPUT_DIM);
   }
 
   /**

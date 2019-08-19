@@ -28,6 +28,7 @@ catkin_package(
     ${EIGEN3_INCLUDE_DIRS}
   LIBRARIES
     ocs2_core_logic
+    cppad_interface
 
   DEPENDS 
     Boost
@@ -61,6 +62,9 @@ add_library(cppad_interface
 add_executable(${PROJECT_NAME}_lintTarget
   src/lintTarget.cpp
 )
+target_link_libraries(${PROJECT_NAME}_lintTarget
+        ${Boost_LIBRARIES}
+        )
 
 #########################
 ###   CLANG TOOLING   ###
@@ -82,6 +86,7 @@ endif(cmake_clang_tools_FOUND)
 
 install(TARGETS
           ocs2_core_logic
+          cppad_interface
         ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
         LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
         RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}

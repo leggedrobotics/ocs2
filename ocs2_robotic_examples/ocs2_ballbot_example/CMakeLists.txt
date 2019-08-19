@@ -65,6 +65,24 @@ include_directories(
         ${catkin_INCLUDE_DIRS}
 )
 
+add_library(ballbot_PI
+        src/solvers/BallbotPI.cpp)
+add_dependencies(ballbot_PI
+        ${catkin_EXPORTED_TARGETS}
+        )
+target_link_libraries(ballbot_PI
+        ${catkin_LIBRARIES}
+        )
+
+add_library(ballbot_SLQ
+        src/solvers/BallbotSLQ.cpp)
+add_dependencies(ballbot_SLQ
+        ${catkin_EXPORTED_TARGETS}
+        )
+target_link_libraries(ballbot_SLQ
+        ${catkin_LIBRARIES}
+        )
+
 # Ballbot interface library
 add_library(ballbot_interface
         src/BallbotInterface.cpp)
@@ -72,6 +90,8 @@ add_dependencies(ballbot_interface
         ${catkin_EXPORTED_TARGETS}
         )
 target_link_libraries(ballbot_interface
+        ballbot_SLQ
+        ballbot_PI
         ${catkin_LIBRARIES}
         ${Boost_LIBRARIES}
         dl
@@ -191,7 +211,7 @@ endif(cmake_clang_tools_FOUND)
 ## Install ##
 #############
 
-install(TARGETS ballbot_interface ballbotPyBindings_cpp
+install(TARGETS ballbot_interface ballbot_PI ballbot_SLQ ballbotPyBindings_cpp
         ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
         LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
         RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}

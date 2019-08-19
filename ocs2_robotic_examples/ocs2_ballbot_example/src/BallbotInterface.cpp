@@ -74,7 +74,8 @@ void BallbotInterface::loadSettings(const std::string& taskFile) {
   boost::property_tree::read_info(taskFile_, pt);
   libraryFilesAreGenerated_ = pt.get<bool>("ballbot_interface.libraryFilesAreGenerated");
 
-  ballbotSystemDynamicsPtr_.reset(new BallbotSystemDynamics("ballbot_dynamics", libraryFolder_, !libraryFilesAreGenerated_));
+  ballbotSystemDynamicsPtr_.reset(new BallbotSystemDynamics());
+  ballbotSystemDynamicsPtr_->initialize("ballbot_dynamics", libraryFolder_, !libraryFilesAreGenerated_, true);
 
   /*
    * Cost function

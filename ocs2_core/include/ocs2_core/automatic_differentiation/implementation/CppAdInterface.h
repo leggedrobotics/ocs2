@@ -23,6 +23,9 @@ CppAdInterface<scalar_t>::CppAdInterface(ad_parameterized_function_t adFunction,
   setFolderNames();
 }
 
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
 template <typename scalar_t>
 CppAdInterface<scalar_t>::CppAdInterface(ad_function_t adFunction, int rangeDim, int variableDim, std::string modelName,
                                          std::string folderName, std::vector<std::string> compileFlags)
@@ -38,6 +41,9 @@ CppAdInterface<scalar_t>::CppAdInterface(const CppAdInterface& rhs)
   }
 };
 
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
 template <typename scalar_t>
 void CppAdInterface<scalar_t>::createModels(bool computeForwardModel, bool computeJacobian, bool computeHessian, bool verbose) {
   createFolderStructure();
@@ -87,6 +93,9 @@ void CppAdInterface<scalar_t>::createModels(bool computeForwardModel, bool compu
   model_.reset(dynamicLib_->model(modelName_));
 }
 
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
 template <typename scalar_t>
 void CppAdInterface<scalar_t>::loadModels(bool verbose) {
   if (verbose) {
@@ -96,6 +105,9 @@ void CppAdInterface<scalar_t>::loadModels(bool verbose) {
   model_.reset(dynamicLib_->model(modelName_));
 }
 
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
 template <typename scalar_t>
 void CppAdInterface<scalar_t>::loadModelsIfAvailable(bool computeForwardModel, bool computeJacobian, bool computeHessian, bool verbose) {
   if (isLibraryAvailable()) {
@@ -105,6 +117,9 @@ void CppAdInterface<scalar_t>::loadModelsIfAvailable(bool computeForwardModel, b
   }
 }
 
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
 template <typename scalar_t>
 typename CppAdInterface<scalar_t>::dynamic_vector_t CppAdInterface<scalar_t>::getFunctionValue(const dynamic_vector_t& x,
                                                                                                const dynamic_vector_t& p) const {
@@ -114,9 +129,13 @@ typename CppAdInterface<scalar_t>::dynamic_vector_t CppAdInterface<scalar_t>::ge
   dynamic_vector_t functionValue(rangeDim_);
 
   model_->ForwardZero(xp.data(), xp.size(), functionValue.data(), functionValue.size());
+  assert(functionValue.isFinite());
   return functionValue;
 }
 
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
 template <typename scalar_t>
 typename CppAdInterface<scalar_t>::dynamic_matrix_t CppAdInterface<scalar_t>::getJacobian(const dynamic_vector_t& x,
                                                                                           const dynamic_vector_t& p) const {
@@ -126,26 +145,44 @@ typename CppAdInterface<scalar_t>::dynamic_matrix_t CppAdInterface<scalar_t>::ge
   // CppAd fills the Jacobian as a column vector per output, i.e. transpose of our convention where each row represents and output
   dynamic_matrix_t jacobian = dynamic_matrix_t::Zero(variableDim_ + parameterDim_, rangeDim_);
   model_->SparseJacobian(xp.data(), xp.size(), jacobian.data(), jacobian.size());
+  assert(jacobian.isFinite());
   return jacobian.topRows(variableDim_).transpose();
 }
 
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
 template <typename scalar_t>
 typename CppAdInterface<scalar_t>::dynamic_matrix_t CppAdInterface<scalar_t>::getHessian(size_t outputIndex, const dynamic_vector_t& x,
                                                                                          const dynamic_vector_t& p) const {
-  dynamic_vector_t xp(variableDim_ + parameterDim_);
-  xp << x, p;
-
   dynamic_vector_t w = dynamic_vector_t::Zero(rangeDim_);
   w[outputIndex] = 1.0;
+
+  return getHessian(w, x, p);
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+template <typename scalar_t>
+typename CppAdInterface<scalar_t>::dynamic_matrix_t CppAdInterface<scalar_t>::getHessian(const dynamic_vector_t& w,
+                                                                                         const dynamic_vector_t& x,
+                                                                                         const dynamic_vector_t& p) const {
+  assert(w.size() == rangeDim_);
+  dynamic_vector_t xp(variableDim_ + parameterDim_);
+  xp << x, p;
 
   // Fills hessian transpose: we requested upper triangular sparsity, but lower triangular is filled
   dynamic_matrix_t hessian = dynamic_matrix_t::Zero(variableDim_ + parameterDim_, variableDim_ + parameterDim_);
   model_->SparseHessian(xp.data(), xp.size(), w.data(), w.size(), hessian.data(), hessian.size());
   hessian.template triangularView<Eigen::StrictlyUpper>() = hessian.template triangularView<Eigen::StrictlyLower>().transpose();
-
+  assert(hessian.isFinite());
   return hessian.topLeftCorner(variableDim_, variableDim_);
 }
 
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
 template <typename scalar_t>
 void CppAdInterface<scalar_t>::setFolderNames() {
   if (!folderName_.empty()) {
@@ -157,17 +194,26 @@ void CppAdInterface<scalar_t>::setFolderNames() {
   libraryName_ = libraryFolder_ + "/" + modelName_ + "_lib";
 }
 
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
 template <typename scalar_t>
 bool CppAdInterface<scalar_t>::isLibraryAvailable() const {
   return boost::filesystem::exists(libraryName_ + CppAD::cg::system::SystemInfo<>::DYNAMIC_LIB_EXTENSION);
 }
 
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
 template <typename scalar_t>
 void CppAdInterface<scalar_t>::createFolderStructure() const {
   boost::filesystem::create_directories(libraryFolder_);
   boost::filesystem::create_directories(tmpFolder_);
 }
 
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
 template <typename scalar_t>
 std::string CppAdInterface<scalar_t>::getUniqueTemporaryFolderName() const {
   // Add random string to tmp folder to avoid race condition on the temporary objects
@@ -175,6 +221,9 @@ std::string CppAdInterface<scalar_t>::getUniqueTemporaryFolderName() const {
   return std::string("cppadcg_tmp") + std::to_string(randomFromClock) + std::to_string(getpid());
 }
 
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
 template <typename scalar_t>
 void CppAdInterface<scalar_t>::setCompilerOptions(CppAD::cg::GccCompiler<scalar_t>& compiler) const {
   if (!compileFlags_.empty()) {
@@ -192,6 +241,9 @@ void CppAdInterface<scalar_t>::setCompilerOptions(CppAD::cg::GccCompiler<scalar_
   compiler.setSaveToDiskFirst(true);
 }
 
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
 template <typename scalar_t>
 typename CppAdInterface<scalar_t>::SparsityPattern CppAdInterface<scalar_t>::createJacobianSparsity(ad_fun_t& fun) const {
   auto trueSparsity = cppad_sparsity::getJacobianSparsityPattern(fun);
@@ -199,6 +251,9 @@ typename CppAdInterface<scalar_t>::SparsityPattern CppAdInterface<scalar_t>::cre
   return cppad_sparsity::getIntersection(trueSparsity, variableSparsity);
 }
 
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
 template <typename scalar_t>
 typename CppAdInterface<scalar_t>::SparsityPattern CppAdInterface<scalar_t>::createHessianSparsity(ad_fun_t& fun) const {
   auto trueSparsity = cppad_sparsity::getHessianSparsityPattern(fun);

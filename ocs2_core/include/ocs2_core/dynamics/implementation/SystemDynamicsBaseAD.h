@@ -33,18 +33,11 @@ namespace ocs2 {
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <class Derived, size_t STATE_DIM, size_t INPUT_DIM, size_t NUM_MODES>
-SystemDynamicsBaseAD<Derived, STATE_DIM, INPUT_DIM, NUM_MODES>::SystemDynamicsBaseAD(const std::string& modelName, const std::string& modelFolder, bool recompileLibraries, bool verbose)
+SystemDynamicsBaseAD<Derived, STATE_DIM, INPUT_DIM, NUM_MODES>::SystemDynamicsBaseAD()
     : BASE(),
       flowJacobian_(state_timeStateInput_matrix_t::Zero()),
       jumpJacobian_(state_timeState_matrix_t::Zero()),
-      guardJacobian_(mode_timeState_matrix_t::Zero()) {
-  setADInterfaces(modelName, modelFolder);
-  if (recompileLibraries) {
-    createModels(verbose);
-  } else {
-    loadModelsIfAvailable(verbose);
-  }
-};
+      guardJacobian_(mode_timeState_matrix_t::Zero()) {};
 
 /******************************************************************************************************/
 /******************************************************************************************************/
@@ -58,7 +51,22 @@ SystemDynamicsBaseAD<Derived, STATE_DIM, INPUT_DIM, NUM_MODES>::SystemDynamicsBa
       flowJacobian_(state_timeStateInput_matrix_t::Zero()),
       jumpJacobian_(state_timeState_matrix_t::Zero()),
       guardJacobian_(mode_timeState_matrix_t::Zero())
-{ }
+{
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+template <class Derived, size_t STATE_DIM, size_t INPUT_DIM, size_t NUM_MODES>
+void SystemDynamicsBaseAD<Derived, STATE_DIM, INPUT_DIM, NUM_MODES>::initialize(const std::string& modelName, const std::string& modelFolder, bool recompileLibraries, bool verbose)
+{
+  setADInterfaces(modelName, modelFolder);
+  if (recompileLibraries) {
+    createModels(verbose);
+  } else {
+    loadModelsIfAvailable(verbose);
+  }
+};
 
 /******************************************************************************************************/
 /******************************************************************************************************/
@@ -106,12 +114,15 @@ void SystemDynamicsBaseAD<Derived, STATE_DIM, INPUT_DIM, NUM_MODES>::setCurrentS
                                                                                                const input_vector_t& input) {
   BASE::setCurrentStateAndControl(time, state, input);
 
-  dynamic_vector_t tapedInput(1 + STATE_DIM + INPUT_DIM);
-  tapedInput << time, state, input;
+  dynamic_vector_t tapedTimeStateInput(1 + STATE_DIM + INPUT_DIM);
+  tapedTimeStateInput << time, state, input;
 
-  flowJacobian_ = flowMapADInterfacePtr_->getJacobian(tapedInput);
-  jumpJacobian_ = jumpMapADInterfacePtr_->getJacobian(tapedInput);
-  guardJacobian_ = guardSurfacesADInterfacePtr_->getJacobian(tapedInput);
+  dynamic_vector_t tapedTimeState(1 + STATE_DIM);
+  tapedTimeState << time, state;
+
+  flowJacobian_ = flowMapADInterfacePtr_->getJacobian(tapedTimeStateInput);
+  jumpJacobian_ = jumpMapADInterfacePtr_->getJacobian(tapedTimeState);
+  guardJacobian_ = guardSurfacesADInterfacePtr_->getJacobian(tapedTimeState);
 }
 
 /******************************************************************************************************/

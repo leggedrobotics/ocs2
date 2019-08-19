@@ -80,14 +80,8 @@ class SystemDynamicsBaseAD : public SystemDynamicsBase<STATE_DIM, INPUT_DIM, NUM
   using state_timeState_matrix_t = Eigen::Matrix<scalar_t, STATE_DIM, 1 + state_dim_>;
   using mode_timeState_matrix_t = Eigen::Matrix<scalar_t, NUM_MODES, 1 + state_dim_>;
 
-  /**
-   *
-   * @param modelName : name of the generate model library
-   * @param modelFolder : folder to save the model library files to
-   * @param recompileLibraries : If true, the model library will be newly compiled. If false, an existing library will be loaded if available.
-   * @param verbose : print information.
-   */
-  explicit SystemDynamicsBaseAD(const std::string& modelName, const std::string& modelFolder = "/tmp/ocs2", bool recompileLibraries = true, bool verbose = true);
+
+  SystemDynamicsBaseAD();
 
   /**
    * Copy constructor
@@ -105,6 +99,15 @@ class SystemDynamicsBaseAD : public SystemDynamicsBase<STATE_DIM, INPUT_DIM, NUM
    * @return A raw pointer to the derived class.
    */
   SystemDynamicsBaseAD* clone() const final { return new Derived(static_cast<Derived const&>(*this)); };
+
+  /**
+  *
+  * @param modelName : name of the generate model library
+  * @param modelFolder : folder to save the model library files to
+  * @param recompileLibraries : If true, the model library will be newly compiled. If false, an existing library will be loaded if available.
+  * @param verbose : print information.
+  */
+  void initialize(const std::string& modelName, const std::string& modelFolder = "/tmp/ocs2", bool recompileLibraries = true, bool verbose = true);
 
   void computeFlowMap(const scalar_t& time, const state_vector_t& state, const input_vector_t& input,
                               state_vector_t& stateDerivative) final;

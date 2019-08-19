@@ -125,6 +125,16 @@ class CppAdInterface {
    */
   dynamic_matrix_t getHessian(size_t outputIndex, const dynamic_vector_t& x, const dynamic_vector_t& p = dynamic_vector_t(0)) const;
 
+  /**
+   * Weighted hessian
+   *
+   * @param w: vector of weights of size rangeDim
+   * @param x : input vector of size variableDim
+   * @param p : parameter vector of size parameterDim
+   * @return dd/dxdx(sum_i  w_i*f_i(x,p) )
+   */
+  dynamic_matrix_t getHessian(const dynamic_vector_t& w, const dynamic_vector_t& x, const dynamic_vector_t& p = dynamic_vector_t(0)) const;
+
  private:
   /**
    * Defines library folder names

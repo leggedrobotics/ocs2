@@ -34,92 +34,84 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <ocs2_core/Dimensions.h>
 
-namespace ocs2{
+namespace ocs2 {
 
 /**
  * This class implements single thread SLQ algorithm.
  *
  * @tparam STATE_DIM: Dimension of the state space.
  * @tparam INPUT_DIM: Dimension of the control input space.
-  */
+ */
 template <size_t STATE_DIM, size_t INPUT_DIM>
-class SystemObservation
-{
-public:
-	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+class SystemObservation {
+ public:
+  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-	typedef Dimensions<STATE_DIM, INPUT_DIM> DIMENSIONS;
-	typedef typename DIMENSIONS::scalar_t			scalar_t;
-	typedef typename DIMENSIONS::state_vector_t 	state_vector_t;
-	typedef typename DIMENSIONS::input_vector_t 	input_vector_t;
+  using DIMENSIONS = Dimensions<STATE_DIM, INPUT_DIM>;
+  using scalar_t = typename DIMENSIONS::scalar_t;
+  using state_vector_t = typename DIMENSIONS::state_vector_t;
+  using input_vector_t = typename DIMENSIONS::input_vector_t;
 
-	/**
-	 * Constructor
-	 */
-	SystemObservation()
-	: subsystem_(0)
-	, time_(0.0)
-	, state_(state_vector_t::Zero())
-	, input_(input_vector_t::Zero())
-	{}
+  /**
+   * Constructor
+   */
+  SystemObservation() : subsystem_(0), time_(0.0), state_(state_vector_t::Zero()), input_(input_vector_t::Zero()) {}
 
-	/**
-	 * Destructor
-	 */
-	~SystemObservation() = default;
+  /**
+   * Destructor
+   */
+  ~SystemObservation() = default;
 
-	/**
-	 * Swap with other.
-	 * @param other
-	 */
-	void swap(SystemObservation<STATE_DIM, INPUT_DIM>& other) {
+  /**
+   * Swap with other.
+   * @param other
+   */
+  void swap(SystemObservation<STATE_DIM, INPUT_DIM>& other) {
+    std::swap(time_, other.time_);
+    std::swap(state_, other.state_);
+    std::swap(input_, other.input_);
+    std::swap(subsystem_, other.subsystem_);
+  }
 
-		std::swap(time_, other.time_);
-		std::swap(state_, other.state_);
-		std::swap(input_, other.input_);
-		std::swap(subsystem_, other.subsystem_);
-	}
+  inline scalar_t& time() { return time_; };
+  inline const scalar_t& time() const { return time_; };
 
-	inline scalar_t& time() { return time_; };
-	inline const scalar_t& time() const { return time_; };
+  inline state_vector_t& state() { return state_; };
+  inline const state_vector_t& state() const { return state_; };
+  inline scalar_t& state(const size_t& i) { return state_(i); };
+  inline const scalar_t& state(const size_t& i) const { return state_(i); };
 
-	inline state_vector_t& state() { return state_; };
-	inline const state_vector_t& state() const { return state_; };
-	inline scalar_t& state(const size_t& i) { return state_(i); };
-	inline const scalar_t& state(const size_t& i) const { return state_(i); };
+  inline input_vector_t& input() { return input_; };
+  inline const input_vector_t& input() const { return input_; };
+  inline scalar_t& input(const size_t& i) { return input_(i); };
+  inline const scalar_t& input(const size_t& i) const { return input_(i); };
 
-	inline input_vector_t& input() { return input_; };
-	inline const input_vector_t& input() const { return input_; };
-	inline scalar_t& input(const size_t& i) { return input_(i); };
-	inline const scalar_t& input(const size_t& i) const { return input_(i); };
+  inline size_t& subsystem() { return subsystem_; };
+  inline const size_t& subsystem() const { return subsystem_; };
 
-	inline size_t& subsystem() { return subsystem_; };
-	inline const size_t& subsystem() const { return subsystem_; };
+  inline void display() const {
+    std::cerr << "Observation: " << std::endl;
+    std::cerr << "\t time:      " << time_ << std::endl;
+    std::cerr << "\t subsystem: " << subsystem_ << std::endl;
+    std::cerr << "\t state:    [";
+    for (int i = 0; i < state_.size() - 1; i++) {
+      std::cerr << state_(i) << ", ";
+    }
+    std::cerr << state_(state_.size() - 1) << "]" << std::endl;
+    std::cerr << "\t input:    [";
+    for (int i = 0; i < input_.size() - 1; i++) {
+      std::cerr << input_(i) << ", ";
+    }
+    std::cerr << input_(input_.size() - 1) << "]" << std::endl;
+  }
 
-	inline void display() const {
-		std::cerr << "Observation: " << std::endl;
-		std::cerr << "\t time:      " << time_ << std::endl;
-		std::cerr << "\t subsystem: " << subsystem_ << std::endl;
-		std::cerr << "\t state:    [";
-		for (int i=0; i<state_.size()-1; i++) {
-			std::cerr << state_(i) << ", ";
-		}
-		std::cerr << state_(state_.size()-1) << "]" << std::endl;
-		std::cerr << "\t input:    [";
-		for (int i=0; i<input_.size()-1; i++) {
-			std::cerr << input_(i) << ", ";
-		}
-		std::cerr << input_(input_.size()-1) << "]" << std::endl;
-	}
-
-private:
-	size_t   subsystem_;
-	scalar_t time_;
-	state_vector_t state_;
-	input_vector_t input_;
-
+ private:
+  size_t subsystem_;
+  scalar_t time_;
+  state_vector_t state_;
+  input_vector_t input_;
 };
 
-} // namespace ocs2
+}  // namespace ocs2
 
 #endif /* SYSTEMOBSERVATION_OCS2_H_ */

@@ -30,55 +30,14 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifndef HYBRIDLOGICRULES_OCS2_H_
 #define HYBRIDLOGICRULES_OCS2_H_
 
-#include <ocs2_core/Dimensions.h>
 #include <iostream>
-#include <vector>
+
+#include <ocs2_core/Dimensions.h>
+#include <ocs2_core/misc/Lookup.h>
+
+#include "ocs2_core/logic/rules/ModeSequenceTemplate.h"
 
 namespace ocs2 {
-
-/**
- * Mode sequence template.
- *
- */
-template <typename scalar_t = double>
-struct ModeSequenceTemplate {
-  ModeSequenceTemplate() : templateSwitchingTimes_(0), templateSubsystemsSequence_(0) {}
-
-  /**
-   * Defined as [t_0=0, t_1, .., t_n, t_(n+1)=T], where T is the overall duration
-   * of the template logic. t_1 to t_n are the event moments.
-   */
-  std::vector<scalar_t> templateSwitchingTimes_;
-
-  /**
-   * Defined as [sys_0, sys_n], are the switching systems IDs. Here sys_i is
-   * active in period [t_i, t_(i+1)]
-   */
-  std::vector<size_t> templateSubsystemsSequence_;
-
-  /**
-   * Displays template information.
-   */
-  void display() const {
-    std::cerr << std::endl << "Template switching times:\n\t {";
-    for (auto& s : templateSwitchingTimes_) {
-      std::cerr << s << ", ";
-    }
-    if (!templateSwitchingTimes_.empty()) {
-      std::cerr << "\b\b";
-    }
-    std::cerr << "}" << std::endl;
-
-    std::cerr << "Template subsystem sequence:\n\t {";
-    for (auto& s : templateSubsystemsSequence_) {
-      std::cerr << s << ", ";
-    }
-    if (!templateSubsystemsSequence_.empty()) {
-      std::cerr << "\b\b";
-    }
-    std::cerr << "}" << std::endl;
-  }
-};
 
 /**
  * Hybrid logic rules base class
@@ -267,17 +226,12 @@ class HybridLogicRules {
    *				   t0     t1              t(n-1)
    *  count     0        1      2   ...  (n-1)   n
    *
-   *  If time equal equal to a switch time is requested, the lower limit is taken
+   *  If time equal equal to a switch time is requested, the lower count is taken
    *
    *  @param [in] time
    *  @return count of the event the input time belongs to
    */
-  size_t getEventTimeCount(scalar_t time) const {
-    // TODO (Ruben): Add a unit test for this function. Currently it seems we don't need a max, min to protect for out of bounds
-    // Previously, the partition index was used to assign before or after the event time count in case the + epsilon was forgotten.
-    auto firstLargerValueIterator = std::lower_bound(eventTimes_.begin(), eventTimes_.end(), time);
-    return static_cast<size_t>(firstLargerValueIterator - eventTimes_.begin());
-  };
+  size_t getEventTimeCount(scalar_t time) const { return lookup::findIndexInTimeArray(eventTimes_, time); };
 
  protected:
   /**

@@ -37,14 +37,12 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <iostream>
 #include <Eigen/Dense>
 
-// GNU Linear Programming Kit
-#include <glpk.h>
-
-#include <ocs2_frank_wolfe/NLP_Settings.h>
+#include "ocs2_frank_wolfe/NLP_Settings.h"
+#include "ocs2_frank_wolfe/NLP_Cost.h"
+#include "ocs2_frank_wolfe/NLP_Constraints.h"
+#include "ocs2_frank_wolfe/FrankWolfeDescentDirection.h"
 
 namespace ocs2 {
-namespace nlp {
-
 
 /**
  * This class implements the Frank-Wolfe algorithm which is an iterative first-order gradient descent
@@ -54,28 +52,25 @@ namespace nlp {
  * User should override three methods namely:
  * calculateCost, calculateGradient, calculateLinearEqualityConstraint, and getSolution.
  *
- * @tparam SCALAR_T: Floating point type.
  */
-template <typename SCALAR_T=double>
 class GradientDescent
 {
 public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-	typedef std::shared_ptr<GradientDescent> Ptr;
-	const SCALAR_T plusInf_  =  1e12;
-	const SCALAR_T minusInf_ = -1e12;
-
-	typedef SCALAR_T scalar_t;
-	typedef Eigen::Matrix<SCALAR_T, Eigen::Dynamic, 1>              dynamic_vector_t;
-	typedef Eigen::Matrix<SCALAR_T, Eigen::Dynamic, Eigen::Dynamic> dynamic_matrix_t;
-	typedef Eigen::Matrix<SCALAR_T, 1, 1>                                         eigen_scalar_t;
-	typedef std::vector<eigen_scalar_t, Eigen::aligned_allocator<eigen_scalar_t>> eigen_scalar_array_t;
+	using DIMENSIONS = Dimensions<0, 0>;
+	using scalar_t = typename DIMENSIONS::scalar_t;
+	using scalar_array_t = typename DIMENSIONS::scalar_array_t;
+	using eigen_scalar_array_t = typename DIMENSIONS::eigen_scalar_array_t;
+	using dynamic_vector_t = typename DIMENSIONS::dynamic_vector_t;
+	using dynamic_matrix_t = typename DIMENSIONS::dynamic_matrix_t;
 
 	/**
-	 * Default constructor.
+	 * Constructor.
+	 *
+	 * @param [in] nlpSettings: Structure containing the settings for the NLP algorithm.
 	 */
-	GradientDescent();
+	explicit GradientDescent(const NLP_Settings& nlpSettings);
 
 	/**
 	 * Default destructor.
@@ -84,19 +79,17 @@ public:
 
 	/**
 	 * Gets the cost.
+	 *
 	 * @param [out] cost value
 	 */
-	void getCost(SCALAR_T& cost);
+	void getCost(scalar_t& cost);
 
 	/**
 	 * Gets the parameter vector.
 	 *
-	 * @tparam Derived
 	 * @param [out] parameters: the parameter vector
 	 */
-	template <typename Derived>
-	void getParameters(
-			Eigen::MatrixBase<Derived>& parameters) const;
+	void getParameters(dynamic_vector_t& parameters) const;
 
 	/**
 	 * Gets the iteration cost log.
@@ -108,9 +101,9 @@ public:
 	/**
 	 * Gets a constant reference to the optimal solver's ID.
 	 *
-	 * @return A constant reference to the optimal solver's ID.
+	 * @param [out] optimizedID: The optimal solver's ID.
 	 */
-	const size_t& optimalSolutionID() const;
+	void optimalSolutionID(size_t& optimizedID) const;
 
 	/**
 	 * Gets a constant reference to the NLP of settings.
@@ -120,178 +113,56 @@ public:
 	NLP_Settings& nlpSettings();
 
 	/**
-	 * Gets a constant reference to the number of parameters.
+	 * This method runs the Frank-Wolfe algorithm which the initial parameters
+	 * which respects the domain constraints as well as element-wise maximum of
+	 * the descent direction which defined as: \n
+	 * \f$ | diag[e_v] d_v | \leq 1 0\f$.
 	 *
-	 * @return A constant reference to the number of parameters.
-	 */
-	const size_t& numParameters() const;
-
-	/**
-	 * Gets a constant reference to the number of constraints.
+	 * Note that if there is no limit for a direction set associated
+	 * element of \f$ e_v \f$ to zero.
 	 *
-	 * @return A constant reference to the number of constraints.
+	 * @param [in] initParameters: The value of parameter vector.
+	 * @param [in] maxGradientInverse: descent directions element-wise maximum inverse, \f$ e_v \f$.
+	 * @param [in] costPtr: A pointer to the NLP cost.
+	 * @param [in] constraintsPtr: A pointer to the NLP constraints.
 	 */
-	const size_t& numConstraints() const;
-
-	/**
-	 * Gets a constant reference to the maximum allowed number of line-searches.
-	 *
-	 * @return A constant reference to the maximum allowed number of line-searches.
-	 */
-	const size_t& numLineSearch() const;
-
-	/**
-	 * This method runs the Frank-Wolfe algorithm which the initial parameter \f$\theta_0\f$.
-	 *
-	 * @param [in] initParameters: The initial parameter vector (\f$\theta_0\f$)
-	 */
-	void run(const dynamic_vector_t& initParameters);
+	void run(
+			const dynamic_vector_t& initParameters,
+			const dynamic_vector_t& maxGradientInverse,
+			NLP_Cost* costPtr,
+			NLP_Constraints* constraintsPtr = nullptr);
 
 protected:
-	/**
-	 * Calculates the coefficients of the linear equality constraints. \n
-	 * \f$ A_m \theta + B_v = 0\f$
-	 *
-	 * @param [out] Am: The \f$ A_m\f$ matrix.
-	 * @param [out] Bv: THe \f$ B_v \f$ vector.
-	 */
-	virtual void calculateLinearEqualityConstraint(
-			dynamic_matrix_t& Am,
-			dynamic_vector_t& Bv);
-
-	/**
-	 * Calculates the coefficients of the linear inequality constraints. \n
-	 * \f$ C_m \theta + D_v < 0\f$
-	 *
-	 * @param [out] Cm: The \f$ C_m\f$ matrix.
-	 * @param [out] Dv: THe \f$ D_v \f$ vector.
-	 */
-	virtual void calculateLinearInequalityConstraint(
-			dynamic_matrix_t& Cm,
-			dynamic_vector_t& Dv);
-
-	/**
-	 * Calculates the cost function.
-	 *
-	 * @param [in] id: Solver ID
-	 * @param [in] parameters: The current parameter vector.
-	 * @param [in] cost: The cost for the current parameter vector.
-	 * @return boolean: The success flag.
-	 */
-	virtual bool calculateCost(
-			const size_t& id,
-			const dynamic_vector_t& parameters,
-			SCALAR_T& cost) = 0;
-
-	/**
-	 * Calculates the gradient direction.
-	 *
-	 * @param [in] id: solver ID
-	 * @param [in] parameters: The current parameter vector.
-	 * @param [in] gradient: Gradient at the current parameter vector.
-	 * @return boolean: The success flag.
-	 */
-	virtual bool calculateGradient(
-			const size_t& id,
-			const dynamic_vector_t& parameters,
-			dynamic_vector_t& gradient);
-
-	/**
-	 * Gets the solution ID.
-	 *
-	 * @param [in] idStar: The ID of the best solution.
-	 */
-	virtual void getSolution(size_t idStar)  {}
-
-	/**
-	 * Calculate the Frank Wolfe gradient.
-	 *
-	 * @param [in] id: solver ID
-	 * @param [in] parameters: The current parameter vector.
-	 * @param [out] gradient: The Frank-Wolfe gradient at the current parameter vector.
-	 */
-	void frankWolfeGradient(
-			const size_t& id,
-			const dynamic_vector_t& parameters,
-			dynamic_vector_t& gradient);
-
-	/**
-	 * Line search to find the best learning rate using ascending scheme where the step size eventually increases
-	 * from the minimum value to the maximum.
-	 *
-	 * @param [in] gradient: The current gradient.
-	 * @param [out] learningRateStar: The best learning rate.
-	 */
-	void ascendingLineSearch(
-			const dynamic_vector_t& gradient,
-			SCALAR_T& learningRateStar);
-
 	/**
 	 * Line search to find the best learning rate using decreasing scheme where the step size eventually decreases
 	 * from the maximum value to the minimum.
 	 *
+	 * @param [in] parameters: The current parameter vector.
 	 * @param [in] gradient: The current gradient.
-	 * @param [out] learningRateStar: The best learning rate.
+	 * @param [in] costPtr: A pointer to the NLP cost.
+	 * @param [in] constraintsPtr: A pointer to the NLP constraints.
+	 * @param [out] optimizedParameters: The parameter vector.
+	 * @param [out] optimizedCost: The optimized cost.
+	 * @param [out] optimizedID: The ID of the optimized solution.
+	 * @param [out] optimizedLearningRate: The optimized learning rate.
 	 */
-	void decreasingLineSearch(
+	void lineSearch(
+			const dynamic_vector_t& parameters,
 			const dynamic_vector_t& gradient,
-			SCALAR_T& learningRateStar);
+			NLP_Cost* costPtr,
+			NLP_Constraints* constraintsPtr,
+			dynamic_vector_t& optimizedParameters,
+			scalar_t& optimizedCost,
+			size_t& optimizedID,
+			scalar_t& optimizedLearningRate);
 
-	/**
-	 * Set up the Linear Programming problem in the Frank-Wolfe algorithm.
-	 */
-	void setupLP();
-
-	/**
-	 * Sets the linear equality and active inequality to GLPK.
-	 *
-	 * @param [in] parameters: The current parameter vector.
-	 * @param [out] numActiveConstraints: The number of active constraints.
-	 */
-	void setConstraints(
-			const dynamic_vector_t& parameters,
-			size_t& numActiveConstraints);
-
-	/**
-	 * Calculate the gradient numerically
-	 *
-	 * @param [in] id: Solver ID
-	 * @param [in] parameters: The current parameter vector.
-	 * @param [out] gradient: Gradient at the current parameter vector.
-	 * @return boolean: The success flag.
-	 */
-	bool calculateNumericalGradient(
-			const size_t& id,
-			const dynamic_vector_t& parameters,
-			dynamic_vector_t& gradient);
-
-	/**
-	 * Updates the learning rate and line search
-	 */
-	void adjustOptions();
-
-	/**
-	 * Formatting eigen display
-	 */
-	Eigen::IOFormat CleanFmtDisplay_;
-
-private:
 	/*
 	 * Variables
 	 */
 	NLP_Settings nlpSettings_;
+	std::unique_ptr<FrankWolfeDescentDirection> frankWolfeDescentDirectionPtr_;
 
-	dynamic_matrix_t linearEqualityConstraintAm_;
-	dynamic_vector_t linearEqualityConstraintBv_;
-	dynamic_matrix_t linearInequalityConstraintCm_;
-	dynamic_vector_t linearInequalityConstraintDv_;
-
-	size_t numParameters_;
-	size_t numLineSearch_;
-	size_t numActiveConstraints_;
-
-
-	SCALAR_T optimizedCost_;
+	scalar_t optimizedCost_;
 	size_t optimizedID_;
 	dynamic_vector_t optimizedParameters_;
 	dynamic_vector_t optimizedGradient_;
@@ -299,12 +170,10 @@ private:
 
 	eigen_scalar_array_t iterationCost_;
 
-private:
-	glp_prob* lpPtr_;
+	Eigen::IOFormat CleanFmtDisplay_;
 };
 
-}  // end of nlp namespace
-}  // end of ocs2 namespace
+}  // namespace ocs2
 
 #include "implementation/GradientDescent.h"
 

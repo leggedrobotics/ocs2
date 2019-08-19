@@ -30,52 +30,48 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifndef TASK_LISTENER_BASE_OCS2_H_
 #define TASK_LISTENER_BASE_OCS2_H_
 
-#include <memory>
-#include <Eigen/StdVector>
-#include <vector>
 #include <ros/ros.h>
+#include <Eigen/StdVector>
+#include <memory>
+#include <vector>
 
-
-namespace ocs2{
+namespace ocs2 {
 
 /**
  * The class task listener interface class.
  *
  * @tparam SCALAR_T: scalar type.
  */
-template <typename SCALAR_T=float>
-class TaskListenerBase
-{
-public:
-	typedef SCALAR_T scalar_t;
+template <typename SCALAR_T = float>
+class TaskListenerBase {
+ public:
+  using scalar_t = SCALAR_T;
 
-	typedef std::shared_ptr<TaskListenerBase<SCALAR_T>> shared_ptr_t;
-	typedef std::vector<shared_ptr_t> shared_ptr_array_t;
+  using shared_ptr_t = std::shared_ptr<TaskListenerBase<SCALAR_T>>;
+  using shared_ptr_array_t = std::vector<shared_ptr_t>;
 
-	/**
-	 * Default constructor.
-	 *
-	 */
-	TaskListenerBase() = default;
+  /**
+   * Default constructor.
+   *
+   */
+  TaskListenerBase() = default;
 
-	/**
-	 * Default destructor.
-	 */
-	virtual ~TaskListenerBase() = default;
+  /**
+   * Default destructor.
+   */
+  virtual ~TaskListenerBase() = default;
 
-	/**
-	 * This method should swap the active variables with the buffer variables.
-	 */
-	virtual void update() = 0;
+  /**
+   * This method should swap the active variables with the buffer variables.
+   */
+  virtual void update() = 0;
 
-	/**
-	 * Gets a ROS node handle to for subscribing a topic.
-	 */
-	virtual void subscribe(::ros::NodeHandle& nodeHandle) = 0;
-
+  /**
+   * Gets a ROS node handle to for subscribing a topic.
+   */
+  virtual void subscribe(::ros::NodeHandle& nodeHandle) = 0;
 };
 
-} // namespace ocs2
-
+}  // namespace ocs2
 
 #endif /* TASK_LISTENER_BASE_OCS2_H_ */

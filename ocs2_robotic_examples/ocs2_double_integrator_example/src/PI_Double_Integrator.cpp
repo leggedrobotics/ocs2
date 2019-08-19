@@ -1,8 +1,8 @@
 #include <ocs2_oc/pi_solver/PiSolver.hpp>
 
+#include <ocs2_comm_interfaces/ocs2_ros_interfaces/mpc/MPC_ROS_Interface.h>
 #include <ocs2_double_integrator_example/cost/DoubleIntegratorCost.h>
 #include <ocs2_double_integrator_example/dynamics/DoubleIntegratorDynamics.h>
-#include <ocs2_double_integrator_example/ros_comm/MPC_ROS_Double_Integrator.h>
 #include <ocs2_mpc/MPC_PI.h>
 #include <ocs2_mpc/MPC_Settings.h>
 #include <ocs2_oc/pi_solver/PI_Settings.h>
@@ -17,8 +17,7 @@ int main(int argc, char** argv) {
     throw std::runtime_error("No task file specified. Aborting.");
   }
 
-  std::string taskFile =
-      ros::package::getPath("ocs2_double_integrator_example") + "/config/" + std::string(argv[1]) + "/task.info";
+  std::string taskFile = ros::package::getPath("ocs2_double_integrator_example") + "/config/" + std::string(argv[1]) + "/task.info";
 
   using dynamics_t = ocs2::double_integrator::DoubleIntegratorDynamics;
   constexpr auto STATE_DIM = dynamics_t::DIMENSIONS::STATE_DIM_;
@@ -26,9 +25,11 @@ int main(int argc, char** argv) {
   using solver_t = ocs2::PiSolver<STATE_DIM, INPUT_DIM>;
 
   // Dynamics
-  dynamics_t::scalar_t mass;
-  ocs2::loadScalar(taskFile, "systemParameters.mass", mass);
-  dynamics_t::Ptr dynamics(new dynamics_t(mass));
+  dynamics_t::DIMENSIONS::state_matrix_t A;
+  A << 0.0, 1.0, 0.0, 0.0;
+  dynamics_t::DIMENSIONS::state_input_matrix_t B;
+  B << 0.0, 1.0;
+  dynamics_t::Ptr dynamics(new dynamics_t(A, B));
 
   // Initial state
   dynamics_t::DIMENSIONS::state_vector_t xInitial;
@@ -83,8 +84,8 @@ int main(int argc, char** argv) {
   ocs2::PI_Settings piSettings;
   piSettings.loadSettings(taskFile);
   ocs2::MPC_PI<STATE_DIM, INPUT_DIM> mpc_pi(dynamics, std::move(cost), constraint, partitioningTimes, mpcSettings, piSettings);
-  mpc_pi.setCostDesiredTrajectories(costDesiredTraj);
-  ocs2::double_integrator::MPC_ROS_Linear_System mpcNode(mpc_pi, "double_integrator");
+  mpc_pi.getSolverPtr()->setCostDesiredTrajectories(costDesiredTraj);
+  ocs2::MPC_ROS_Interface<STATE_DIM, INPUT_DIM> mpcNode(&mpc_pi, "double_integrator");
 
   mpcNode.launchNodes(argc, argv);
 

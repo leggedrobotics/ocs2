@@ -47,8 +47,11 @@ include_directories(
 )
 
 add_executable(${PROJECT_NAME}_lintTarget
-        src/lintTarget.cpp
-        )
+  src/lintTarget.cpp
+)
+target_link_libraries(${PROJECT_NAME}_lintTarget
+  ${catkin_LIBRARIES}
+)
 
 #########################
 ###   CLANG TOOLING   ###
@@ -57,11 +60,10 @@ find_package(cmake_clang_tools QUIET)
 if(cmake_clang_tools_FOUND)
     message(STATUS "Run clang tooling for target " ${PROJECT_NAME}_lintTarget)
     add_clang_tooling(
-            TARGET ${PROJECT_NAME}_lintTarget
+    TARGETS ${PROJECT_NAME}_lintTarget
             SOURCE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/src ${CMAKE_CURRENT_SOURCE_DIR}/include
             CT_HEADER_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/include
-            CF_QUIET # temporarily set to quiet, because the current amount of warning crashes the buildserver
-            # CF_FIX # temporarily disabled
+            CF_WERROR
     )
 endif(cmake_clang_tools_FOUND)
 
@@ -77,10 +79,11 @@ install(DIRECTORY include/${PROJECT_NAME}/
 #############
 
 catkin_add_gtest(testMPC_OCS2
-        test/testMPC_OCS2.cpp
-        )
+  test/testMPC_OCS2.cpp
+)
 target_link_libraries(testMPC_OCS2
-        ${catkin_LIBRARIES}
-        )
+  ${catkin_LIBRARIES}
+  ${Boost_LIBRARIES}
+)
 
 

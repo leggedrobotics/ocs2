@@ -38,7 +38,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_core/dynamics/DerivativesBase.h>
 #include <ocs2_core/constraint/ConstraintBase.h>
 #include <ocs2_core/cost/CostFunctionBase.h>
-#include <ocs2_core/misc/FindActiveIntervalIndex.h>
 #include <ocs2_core/initialization/SystemOperatingPoint.h>
 
 
@@ -52,7 +51,7 @@ class EXP0_LogicRules : public HybridLogicRules
 public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-	typedef HybridLogicRules BASE;
+	using BASE = HybridLogicRules;
 
 	EXP0_LogicRules() = default;
 
@@ -141,7 +140,7 @@ class EXP0_System : public ControlledSystemBase<2,1>
 public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-	typedef ControlledSystemBase<2,1> Base;
+	using Base = ControlledSystemBase<2,1>;
 
 	explicit EXP0_System(std::shared_ptr<const EXP0_LogicRules> logicRulesPtr) :
 	logicRulesPtr_(std::move(logicRulesPtr)),
@@ -228,7 +227,7 @@ class EXP0_SystemDerivative : public DerivativesBase<2,1>
 public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-	typedef DerivativesBase<2,1> Base;
+	using Base = DerivativesBase<2,1>;
 
 	explicit EXP0_SystemDerivative(std::shared_ptr<const EXP0_LogicRules> logicRulesPtr) :
 			logicRulesPtr_(std::move(logicRulesPtr)),
@@ -353,7 +352,7 @@ class EXP0_CostFunction : public CostFunctionBase<2,1>
 public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-	typedef CostFunctionBase<2,1> Base;
+	using Base = CostFunctionBase<2,1>;
 
 	explicit EXP0_CostFunction(std::shared_ptr<const EXP0_LogicRules> logicRulesPtr) :
         logicRulesPtr_(std::move(logicRulesPtr)),

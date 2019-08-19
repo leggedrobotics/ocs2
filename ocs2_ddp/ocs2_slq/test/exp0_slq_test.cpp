@@ -47,6 +47,7 @@ enum {
 TEST(exp0_slq_test, exp0_slq_test) {
 
   SLQ_Settings slqSettings;
+  slqSettings.useNominalTimeForBackwardPass_ = false;
   slqSettings.ddpSettings_.displayInfo_ = true;
   slqSettings.ddpSettings_.displayShortSummary_ = true;
   slqSettings.ddpSettings_.absTolODE_ = 1e-10;

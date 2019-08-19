@@ -27,307 +27,287 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-namespace ocs2{
+namespace ocs2 {
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <int DOMAIN_DIM, int RANGE_DIM, typename SCALAR_T, int VARIABLE_DIM>
-CppAdCodeGenInterface<DOMAIN_DIM, RANGE_DIM, SCALAR_T, VARIABLE_DIM>::CppAdCodeGenInterface(
-		const ad_funtion_t& adFunction,
-		const range_domain_matrix_t& sparsityPattern)
+CppAdCodeGenInterface<DOMAIN_DIM, RANGE_DIM, SCALAR_T, VARIABLE_DIM>::CppAdCodeGenInterface(const ad_funtion_t& adFunction,
+                                                                                            const range_domain_matrix_t& sparsityPattern)
 
-    : CppAdCodeGenInterface(DOMAIN_DIM, RANGE_DIM, VARIABLE_DIM, adFunction, sparsityPattern)
-{
-//	CppadParallelSetting::initParallel(2 + 1);
+    : CppAdCodeGenInterface(DOMAIN_DIM, RANGE_DIM, VARIABLE_DIM, adFunction, sparsityPattern) {
+  //	CppadParallelSetting::initParallel(2 + 1);
 
-	if (BASE::domainDim_<0) {
-		throw std::runtime_error("Use the overloaded method which takes the domain and range dimensions "
-				"since the domain dimension is not defined by the template.");
-	}
+  if (BASE::domainDim_ < 0) {
+    throw std::runtime_error(
+        "Use the overloaded method which takes the domain and range dimensions "
+        "since the domain dimension is not defined by the template.");
+  }
 
-	if (BASE::rangeDim_<0) {
-		throw std::runtime_error("Use the overloaded method which takes the domain and range dimensions "
-				"since the range dimension is not defined by the template.");
-	}
+  if (BASE::rangeDim_ < 0) {
+    throw std::runtime_error(
+        "Use the overloaded method which takes the domain and range dimensions "
+        "since the range dimension is not defined by the template.");
+  }
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <int DOMAIN_DIM, int RANGE_DIM, typename SCALAR_T, int VARIABLE_DIM>
-CppAdCodeGenInterface<DOMAIN_DIM, RANGE_DIM, SCALAR_T, VARIABLE_DIM>::CppAdCodeGenInterface(
-		int domainDim,
-		int rangeDim,
-		int variableDim,
-		const ad_funtion_t& adFunction,
-		const range_domain_matrix_t& sparsityPattern)
+CppAdCodeGenInterface<DOMAIN_DIM, RANGE_DIM, SCALAR_T, VARIABLE_DIM>::CppAdCodeGenInterface(int domainDim, int rangeDim, int variableDim,
+                                                                                            const ad_funtion_t& adFunction,
+                                                                                            const range_domain_matrix_t& sparsityPattern)
 
-    : BASE(domainDim, rangeDim, variableDim)
-    , adFunction_(adFunction)
-    , sparsityPattern_(sparsityPattern)
-    , modelFullDerivatives_((sparsityPattern.array()>0).all())
-    , computeForwardModel_(false)
-    , computeJacobianModel_(false)
-    , computeHessianModel_(false)
-    , rowsJacobian_(0)
-    , colsJacobian_(0)
-    , rowsHessian_(0)
-    , colsHessian_(0)
-    , zeroCountHessian_(domainDim)
-    , relatedDependent_(0)
-    , compiler_()
-    , hessianWeight_(rangeDim)
-{
-//	CppadParallelSetting::initParallel(2 + 1);
+    : BASE(domainDim, rangeDim, variableDim),
+      adFunction_(adFunction),
+      sparsityPattern_(sparsityPattern),
+      modelFullDerivatives_((sparsityPattern.array() > 0).all()),
+      computeForwardModel_(false),
+      computeJacobianModel_(false),
+      computeHessianModel_(false),
+      rowsJacobian_(0),
+      colsJacobian_(0),
+      rowsHessian_(0),
+      colsHessian_(0),
+      zeroCountHessian_(domainDim),
+      relatedDependent_(0),
+      compiler_(),
+      hessianWeight_(rangeDim) {
+  //	CppadParallelSetting::initParallel(2 + 1);
 
-    // Hessian
-    domain_vector_t sparsityPatternSum = sparsityPattern.colwise().maxCoeff().transpose();
-    size_t zeroCount = 0;
-    for (size_t i=0; i<domainDim; i++) {
-    	// zero count
-    	if (sparsityPatternSum(i)<1e-3) {  ++zeroCount;
-}
-    	zeroCountHessian_[i] = zeroCount;
+  // Hessian
+  domain_vector_t sparsityPatternSum = sparsityPattern.colwise().maxCoeff().transpose();
+  size_t zeroCount = 0;
+  for (size_t i = 0; i < domainDim; i++) {
+    // zero count
+    if (sparsityPatternSum(i) < 1e-3) {
+      ++zeroCount;
     }
+    zeroCountHessian_[i] = zeroCount;
+  }
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <int DOMAIN_DIM, int RANGE_DIM, typename SCALAR_T, int VARIABLE_DIM>
-CppAdCodeGenInterface<DOMAIN_DIM, RANGE_DIM, SCALAR_T, VARIABLE_DIM>::CppAdCodeGenInterface(
-		const CppAdCodeGenInterface& rhs)
+CppAdCodeGenInterface<DOMAIN_DIM, RANGE_DIM, SCALAR_T, VARIABLE_DIM>::CppAdCodeGenInterface(const CppAdCodeGenInterface& rhs)
 
-    : CppAdCodeGenInterface(rhs.domainDim_, rhs.rangeDim_, rhs.variableDim_, rhs.adFunction_, rhs.sparsityPattern_)
-{}
+    : CppAdCodeGenInterface(rhs.domainDim_, rhs.rangeDim_, rhs.variableDim_, rhs.adFunction_, rhs.sparsityPattern_) {}
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <int DOMAIN_DIM, int RANGE_DIM, typename SCALAR_T, int VARIABLE_DIM>
-CppAdCodeGenInterface<DOMAIN_DIM, RANGE_DIM, SCALAR_T, VARIABLE_DIM>* CppAdCodeGenInterface<DOMAIN_DIM, RANGE_DIM, SCALAR_T, VARIABLE_DIM>::clone() const {
-
-	return new CppAdCodeGenInterface(adFunction_, sparsityPattern_);
+CppAdCodeGenInterface<DOMAIN_DIM, RANGE_DIM, SCALAR_T, VARIABLE_DIM>*
+CppAdCodeGenInterface<DOMAIN_DIM, RANGE_DIM, SCALAR_T, VARIABLE_DIM>::clone() const {
+  return new CppAdCodeGenInterface(adFunction_, sparsityPattern_);
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <int DOMAIN_DIM, int RANGE_DIM, typename SCALAR_T, int VARIABLE_DIM>
-void CppAdCodeGenInterface<DOMAIN_DIM, RANGE_DIM, SCALAR_T, VARIABLE_DIM>::computeForwardModel(
-		bool computeForwardModel) {
-
-	computeForwardModel_ = computeForwardModel;
+void CppAdCodeGenInterface<DOMAIN_DIM, RANGE_DIM, SCALAR_T, VARIABLE_DIM>::computeForwardModel(bool computeForwardModel) {
+  computeForwardModel_ = computeForwardModel;
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <int DOMAIN_DIM, int RANGE_DIM, typename SCALAR_T, int VARIABLE_DIM>
-void CppAdCodeGenInterface<DOMAIN_DIM, RANGE_DIM, SCALAR_T, VARIABLE_DIM>::computeJacobianModel(
-		bool computeJacobianModel) {
-
-	computeJacobianModel_ = computeJacobianModel;
+void CppAdCodeGenInterface<DOMAIN_DIM, RANGE_DIM, SCALAR_T, VARIABLE_DIM>::computeJacobianModel(bool computeJacobianModel) {
+  computeJacobianModel_ = computeJacobianModel;
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <int DOMAIN_DIM, int RANGE_DIM, typename SCALAR_T, int VARIABLE_DIM>
-void CppAdCodeGenInterface<DOMAIN_DIM, RANGE_DIM, SCALAR_T, VARIABLE_DIM>::computeHessianModel(
-		bool computeHessianModel) {
-
-	computeHessianModel_ = computeHessianModel;
+void CppAdCodeGenInterface<DOMAIN_DIM, RANGE_DIM, SCALAR_T, VARIABLE_DIM>::computeHessianModel(bool computeHessianModel) {
+  computeHessianModel_ = computeHessianModel;
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <int DOMAIN_DIM, int RANGE_DIM, typename SCALAR_T, int VARIABLE_DIM>
-void CppAdCodeGenInterface<DOMAIN_DIM, RANGE_DIM, SCALAR_T, VARIABLE_DIM>::createModels(
-		const std::string& modelName,
-		const std::string& libraryFolder /* = "" */,
-		const bool verbose /* = true */,
-		bool cgJIT /*= true*/) {
+void CppAdCodeGenInterface<DOMAIN_DIM, RANGE_DIM, SCALAR_T, VARIABLE_DIM>::createModels(const std::string& modelName,
+                                                                                        const std::string& libraryFolder /* = "" */,
+                                                                                        const bool verbose /* = true */,
+                                                                                        bool cgJIT /*= true*/) {
+  if (BASE::domainDim_ < 0) {
+    throw std::runtime_error(
+        "Use the overloaded method which takes the domain and range dimensions "
+        "since the domain dimension is not defined by the template.");
+  }
 
-	if (BASE::domainDim_<0) {
-		throw std::runtime_error("Use the overloaded method which takes the domain and range dimensions "
-				"since the domain dimension is not defined by the template.");
-}
+  if (BASE::rangeDim_ < 0) {
+    throw std::runtime_error(
+        "Use the overloaded method which takes the domain and range dimensions "
+        "since the range dimension is not defined by the template.");
+  }
 
-	if (BASE::rangeDim_<0) {
-		throw std::runtime_error("Use the overloaded method which takes the domain and range dimensions "
-				"since the range dimension is not defined by the template.");
-}
-
-	createModels(DOMAIN_DIM, RANGE_DIM, modelName, libraryFolder, verbose, cgJIT);
+  createModels(DOMAIN_DIM, RANGE_DIM, modelName, libraryFolder, verbose, cgJIT);
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <int DOMAIN_DIM, int RANGE_DIM, typename SCALAR_T, int VARIABLE_DIM>
-void CppAdCodeGenInterface<DOMAIN_DIM, RANGE_DIM, SCALAR_T, VARIABLE_DIM>::createModels(
-		const int& domainDim,
-		const int& rangeDim,
-		const std::string& modelName,
-		const std::string& libraryFolder /* = "" */,
-		bool verbose /* = true */,
-		bool cgJIT /*= true*/) {
-
+void CppAdCodeGenInterface<DOMAIN_DIM, RANGE_DIM, SCALAR_T, VARIABLE_DIM>::createModels(const int& domainDim, const int& rangeDim,
+                                                                                        const std::string& modelName,
+                                                                                        const std::string& libraryFolder /* = "" */,
+                                                                                        bool verbose /* = true */, bool cgJIT /*= true*/) {
   BASE::domainDim_ = domainDim;
-	BASE::rangeDim_  = rangeDim;
+  BASE::rangeDim_ = rangeDim;
 
-	if (BASE::domainDim_<0) {
-		throw std::runtime_error("Use the overloaded method which takes the domain and range dimensions "
-				"since the domain dimension is not defined by the template.");
-}
+  if (BASE::domainDim_ < 0) {
+    throw std::runtime_error(
+        "Use the overloaded method which takes the domain and range dimensions "
+        "since the domain dimension is not defined by the template.");
+  }
 
-	if (BASE::rangeDim_<0) {
-		throw std::runtime_error("Use the overloaded method which takes the domain and range dimensions "
-				"since the range dimension is not defined by the template.");
-}
+  if (BASE::rangeDim_ < 0) {
+    throw std::runtime_error(
+        "Use the overloaded method which takes the domain and range dimensions "
+        "since the range dimension is not defined by the template.");
+  }
 
-    //***************************************************************************
-    //                               create folder
-    //***************************************************************************
-	if (!libraryFolder.empty()) {
-		CppAD::cg::system::createFolder(libraryFolder);
-}
+  //***************************************************************************
+  //                               create folder
+  //***************************************************************************
+  if (!libraryFolder.empty()) {
+    CppAD::cg::system::createFolder(libraryFolder);
+  }
 
-	if (!libraryFolder.empty()) {
-		CppAD::cg::system::createFolder(libraryFolder + "/" + modelName);
-	} else {
-		CppAD::cg::system::createFolder(modelName);
-	}
+  if (!libraryFolder.empty()) {
+    CppAD::cg::system::createFolder(libraryFolder + "/" + modelName);
+  } else {
+    CppAD::cg::system::createFolder(modelName);
+  }
 
-    //***************************************************************************
-    //                               the model
-    //***************************************************************************
-    // set and declare independent variables and start tape recording
-	ad_dynamic_vector_t x(BASE::domainDim_);
-    x.setZero();
-    CppAD::Independent(x);
-    // dependent variable vector
-    ad_dynamic_vector_t y(BASE::rangeDim_);
-    // the model equation
-    adFunction_(x, y);
-    // create f: x -> y and stop tape recording
-    ad_fun_t fun(x, y);
-    // Optimize the operation sequence
-    fun.optimize();
+  //***************************************************************************
+  //                               the model
+  //***************************************************************************
+  // set and declare independent variables and start tape recording
+  ad_dynamic_vector_t x(BASE::domainDim_);
+  x.setZero();
+  CppAD::Independent(x);
+  // dependent variable vector
+  ad_dynamic_vector_t y(BASE::rangeDim_);
+  // the model equation
+  adFunction_(x, y);
+  // create f: x -> y and stop tape recording
+  ad_fun_t fun(x, y);
+  // Optimize the operation sequence
+  fun.optimize();
 
-    //**************************************************************************
-    //                              Sparsity Pattern
-    //**************************************************************************
-    BASE::extractSparsityPattern(
-    		sparsityPattern_,
-    		rowsJacobian_, colsJacobian_,
-    		rowsHessian_, colsHessian_);
+  //**************************************************************************
+  //                              Sparsity Pattern
+  //**************************************************************************
+  BASE::extractSparsityPattern(sparsityPattern_, rowsJacobian_, colsJacobian_, rowsHessian_, colsHessian_);
 
-    if (VARIABLE_DIM != DOMAIN_DIM) {
-    	if (zeroCountHessian_.back()+VARIABLE_DIM != DOMAIN_DIM) {
-    		throw std::runtime_error("VARIABLE_DIM is incorrect. It should be either " + std::to_string(DOMAIN_DIM) +
-    				" or " + std::to_string(DOMAIN_DIM-zeroCountHessian_.back()) + ".");
-}
-}
-
-    if (verbose) { std::cerr << "Sparsity pattern of " << modelName <<
-    		" model: \n" << sparsityPattern_ << std::endl;
-}
-    //*************************************************************************
-    //                      Create the dynamic library
-    //                 (generates and compiles source code)
-    //*************************************************************************
-    // generates source code
-    CppAD::cg::ModelCSourceGen<SCALAR_T> cgen(fun, modelName);
-
-    // set the options
-    cgen.setCreateForwardZero(computeForwardModel_);
-
-    if (modelFullDerivatives_) {
-    	cgen.setCreateJacobian(computeJacobianModel_);
-
-    } else {
-    	cgen.setCreateSparseJacobian(computeJacobianModel_);
-    	cgen.setCustomSparseJacobianElements(rowsJacobian_, colsJacobian_);
-    	cgen.setRelatedDependents(relatedDependent_);
+  if (VARIABLE_DIM != DOMAIN_DIM) {
+    if (zeroCountHessian_.back() + VARIABLE_DIM != DOMAIN_DIM) {
+      throw std::runtime_error("VARIABLE_DIM is incorrect. It should be either " + std::to_string(DOMAIN_DIM) + " or " +
+                               std::to_string(DOMAIN_DIM - zeroCountHessian_.back()) + ".");
     }
+  }
 
-    if (modelFullDerivatives_) {
-    	cgen.setCreateHessian(computeHessianModel_);
+  if (verbose) {
+    std::cerr << "Sparsity pattern of " << modelName << " model: \n" << sparsityPattern_ << std::endl;
+  }
+  //*************************************************************************
+  //                      Create the dynamic library
+  //                 (generates and compiles source code)
+  //*************************************************************************
+  // generates source code
+  CppAD::cg::ModelCSourceGen<SCALAR_T> cgen(fun, modelName);
 
-    } else {
-    	cgen.setCreateSparseHessian(computeHessianModel_);
-    	cgen.setCustomSparseHessianElements(rowsHessian_, colsHessian_);
-    	cgen.setRelatedDependents(relatedDependent_);
-    }
-    //
-    CppAD::cg::ModelLibraryCSourceGen<SCALAR_T> libcgen(cgen);
+  // set the options
+  cgen.setCreateForwardZero(computeForwardModel_);
 
-    // save to files (not really required)
-    CppAD::cg::SaveFilesModelLibraryProcessor<SCALAR_T> p2(libcgen);
+  if (modelFullDerivatives_) {
+    cgen.setCreateJacobian(computeJacobianModel_);
+
+  } else {
+    cgen.setCreateSparseJacobian(computeJacobianModel_);
+    cgen.setCustomSparseJacobianElements(rowsJacobian_, colsJacobian_);
+    cgen.setRelatedDependents(relatedDependent_);
+  }
+
+  if (modelFullDerivatives_) {
+    cgen.setCreateHessian(computeHessianModel_);
+
+  } else {
+    cgen.setCreateSparseHessian(computeHessianModel_);
+    cgen.setCustomSparseHessianElements(rowsHessian_, colsHessian_);
+    cgen.setRelatedDependents(relatedDependent_);
+  }
+  //
+  CppAD::cg::ModelLibraryCSourceGen<SCALAR_T> libcgen(cgen);
+
+  // save to files (not really required)
+  CppAD::cg::SaveFilesModelLibraryProcessor<SCALAR_T> p2(libcgen);
+  if (!libraryFolder.empty()) {
+    p2.saveSourcesTo(libraryFolder + "/" + modelName + "/cppad_generated");
+  } else {
+    p2.saveSourcesTo(modelName + "/cppad_generated");
+  }
+  if (cgJIT) {
+    // compile source code
+    std::string libraryName;
     if (!libraryFolder.empty()) {
-    	p2.saveSourcesTo(libraryFolder + "/" + modelName + "/cppad_generated");
+      libraryName = libraryFolder + "/" + modelName + "/cppad_generated/" + modelName + "_lib";
     } else {
-    	p2.saveSourcesTo(modelName + "/cppad_generated");
+      libraryName = modelName + "_lib";
     }
-    if (cgJIT) {
-    	// compile source code
-    	std::string libraryName;
-    	if (!libraryFolder.empty()) {
-    		libraryName = libraryFolder + "/" + modelName + "/cppad_generated/" + modelName + "_lib";
-    	} else {
-    		libraryName = modelName + "_lib";
-}
-    	CppAD::cg::DynamicModelLibraryProcessor<SCALAR_T> p(libcgen, libraryName);
-    	if (verbose) {
-    		std::cerr << "Compiled Shared Library: " << p.getLibraryName() +
-    				CppAD::cg::system::SystemInfo<>::DYNAMIC_LIB_EXTENSION << std::endl;
-    	}
-
-    	// Add random string to tmp folder to avoid race condition on the temporary objects
-    	int randomFromClock = std::chrono::high_resolution_clock::now().time_since_epoch().count() % 1000;
-    	std::string tmpFolder = std::string("cppadcg_tmp") + std::to_string(randomFromClock) + std::to_string(getpid());
-    	compiler_.setTemporaryFolder(tmpFolder);
-
-    	dynamicLib_.reset(p.createDynamicLibrary(compiler_));
-    	// get model
-    	model_.reset(dynamicLib_->model(modelName));
-
-    } else {
-    	// TODO(unknown):
+    CppAD::cg::DynamicModelLibraryProcessor<SCALAR_T> p(libcgen, libraryName);
+    if (verbose) {
+      std::cerr << "Compiled Shared Library: " << p.getLibraryName() + CppAD::cg::system::SystemInfo<>::DYNAMIC_LIB_EXTENSION << std::endl;
     }
+
+    // Add random string to tmp folder to avoid race condition on the temporary objects
+    int randomFromClock = std::chrono::high_resolution_clock::now().time_since_epoch().count() % 1000;
+    std::string tmpFolder = std::string("cppadcg_tmp") + std::to_string(randomFromClock) + std::to_string(getpid());
+    compiler_.setTemporaryFolder(tmpFolder);
+
+    dynamicLib_.reset(p.createDynamicLibrary(compiler_));
+    // get model
+    model_.reset(dynamicLib_->model(modelName));
+
+  } else {
+    // TODO(unknown):
+  }
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <int DOMAIN_DIM, int RANGE_DIM, typename SCALAR_T, int VARIABLE_DIM>
-bool CppAdCodeGenInterface<DOMAIN_DIM, RANGE_DIM, SCALAR_T, VARIABLE_DIM>::loadModels(
-		const std::string& modelName,
-		const std::string& libraryFolder /* = "" */,
-		bool verbose /* = true */) {
+bool CppAdCodeGenInterface<DOMAIN_DIM, RANGE_DIM, SCALAR_T, VARIABLE_DIM>::loadModels(const std::string& modelName,
+                                                                                      const std::string& libraryFolder /* = "" */,
+                                                                                      bool verbose /* = true */) {
+  // load dynamic library
+  std::string libraryName;
+  if (!libraryFolder.empty()) {
+    libraryName = libraryFolder + "/" + modelName + "/cppad_generated/" + modelName + "_lib";
+  } else {
+    libraryName = modelName + "_lib";
+  }
 
-	// load dynamic library
-	std::string libraryName;
-	if (!libraryFolder.empty()) {
-		libraryName = libraryFolder + "/" + modelName + "/cppad_generated/" + modelName + "_lib";
-	} else {
-		libraryName = modelName + "_lib";
-}
+  dynamicLib_.reset(new CppAD::cg::LinuxDynamicLib<SCALAR_T>(libraryName + CppAD::cg::system::SystemInfo<>::DYNAMIC_LIB_EXTENSION));
 
-	dynamicLib_.reset( new CppAD::cg::LinuxDynamicLib<SCALAR_T>(
-			libraryName + CppAD::cg::system::SystemInfo<>::DYNAMIC_LIB_EXTENSION) );
-
-	// get model
-	if (dynamicLib_) {
-		model_.reset(dynamicLib_->model(modelName));
-		return true;
-	} else {
-		return false;
-	}
+  // get model
+  if (dynamicLib_) {
+    model_.reset(dynamicLib_->model(modelName));
+    return true;
+  } else {
+    return false;
+  }
 }
 
 /******************************************************************************************************/
@@ -335,130 +315,118 @@ bool CppAdCodeGenInterface<DOMAIN_DIM, RANGE_DIM, SCALAR_T, VARIABLE_DIM>::loadM
 /******************************************************************************************************/
 template <int DOMAIN_DIM, int RANGE_DIM, typename SCALAR_T, int VARIABLE_DIM>
 void CppAdCodeGenInterface<DOMAIN_DIM, RANGE_DIM, SCALAR_T, VARIABLE_DIM>::getSparsityPattern(
-		range_domain_matrix_t& sparsityPattern) const {
-
-	sparsityPattern = sparsityPattern_;
+    range_domain_matrix_t& sparsityPattern) const {
+  sparsityPattern = sparsityPattern_;
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <int DOMAIN_DIM, int RANGE_DIM, typename SCALAR_T, int VARIABLE_DIM>
-bool CppAdCodeGenInterface<DOMAIN_DIM, RANGE_DIM, SCALAR_T, VARIABLE_DIM>::getFunctionValue(
-		const domain_vector_t& x,
-		range_vector_t& funcValue) {
+bool CppAdCodeGenInterface<DOMAIN_DIM, RANGE_DIM, SCALAR_T, VARIABLE_DIM>::getFunctionValue(const domain_vector_t& x,
+                                                                                            range_vector_t& funcValue) {
+  dynamic_vector_map_t xDynamic(const_cast<SCALAR_T*>(x.data()), BASE::domainDim_);
+  funcValue.resize(BASE::rangeDim_);
+  dynamic_vector_map_t funcValueDynamic(funcValue.data(), BASE::rangeDim_);
 
-	dynamic_vector_map_t xDynamic(const_cast<SCALAR_T*>(x.data()), BASE::domainDim_);
-	funcValue.resize(BASE::rangeDim_);
-	dynamic_vector_map_t funcValueDynamic(funcValue.data(), BASE::rangeDim_);
+  if (model_->isForwardZeroAvailable()) {
+    model_->ForwardZero(xDynamic, funcValueDynamic);
 
-	if (model_->isForwardZeroAvailable()) {
+    return true;
 
-		model_->ForwardZero(xDynamic, funcValueDynamic);
-
-		return true;
-
-	} else {
-		return false;
-	}
+  } else {
+    return false;
+  }
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <int DOMAIN_DIM, int RANGE_DIM, typename SCALAR_T, int VARIABLE_DIM>
-bool CppAdCodeGenInterface<DOMAIN_DIM, RANGE_DIM, SCALAR_T, VARIABLE_DIM>::getJacobian(
-		const domain_vector_t& x,
-		domain_range_matrix_t& jacobian) {
+bool CppAdCodeGenInterface<DOMAIN_DIM, RANGE_DIM, SCALAR_T, VARIABLE_DIM>::getJacobian(const domain_vector_t& x,
+                                                                                       domain_range_matrix_t& jacobian) {
+  dynamic_vector_map_t xDynamic(const_cast<SCALAR_T*>(x.data()), BASE::domainDim_);
+  jacobian.resize(BASE::domainDim_, BASE::rangeDim_);
+  dynamic_vector_map_t jacobianDynamic(jacobian.data(), BASE::domainDim_ * BASE::rangeDim_);
 
-	dynamic_vector_map_t xDynamic(const_cast<SCALAR_T*>(x.data()), BASE::domainDim_);
-	jacobian.resize(BASE::domainDim_, BASE::rangeDim_);
-	dynamic_vector_map_t jacobianDynamic(jacobian.data(), BASE::domainDim_*BASE::rangeDim_);
+  if (modelFullDerivatives_) {
+    if (model_->isJacobianAvailable()) {
+      model_->Jacobian(xDynamic, jacobianDynamic);
+      return true;
+    }
 
-	if (modelFullDerivatives_) {
-		if(model_->isJacobianAvailable()) {
-			model_->Jacobian(xDynamic, jacobianDynamic);
-			return true;
-		}
+  } else {
+    if (model_->isSparseJacobianAvailable()) {
+      model_->SparseJacobian(xDynamic, jacobianDynamic);
+      return true;
+    }
+  }
 
-	} else {
-		if(model_->isSparseJacobianAvailable()) {
-			model_->SparseJacobian(xDynamic, jacobianDynamic);
-			return true;
-		}
-	}
-
-	return false;
+  return false;
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <int DOMAIN_DIM, int RANGE_DIM, typename SCALAR_T, int VARIABLE_DIM>
-bool CppAdCodeGenInterface<DOMAIN_DIM, RANGE_DIM, SCALAR_T, VARIABLE_DIM>::getHessian(
-		const domain_vector_t& x,
-		variable_matrix_t& hessian,
-		size_t outputIndex /*=0*/) {
+bool CppAdCodeGenInterface<DOMAIN_DIM, RANGE_DIM, SCALAR_T, VARIABLE_DIM>::getHessian(const domain_vector_t& x, variable_matrix_t& hessian,
+                                                                                      size_t outputIndex /*=0*/) {
+  hessianWeight_ = std::vector<SCALAR_T>(BASE::rangeDim_, 0.0);
+  hessianWeight_[outputIndex] = 1.0;
 
-	hessianWeight_ = std::vector<SCALAR_T>(BASE::rangeDim_, 0.0);
-	hessianWeight_[outputIndex] = 1.0;
+  hessian.resize(BASE::variableDim_, BASE::variableDim_);
 
-	hessian.resize(BASE::variableDim_, BASE::variableDim_);
+  if (modelFullDerivatives_) {
+    if (model_->isHessianAvailable()) {
+      dynamic_vector_map_t xDynamic(const_cast<SCALAR_T*>(x.data()), BASE::domainDim_);
+      dynamic_vector_map_t weightDynamic(hessianWeight_.data(), BASE::rangeDim_);
+      dynamic_vector_map_t hessianDynamic(hessian.data(), hessian.size());
 
-	if (modelFullDerivatives_) {
-		if (model_->isHessianAvailable()) {
+      model_->Hessian(xDynamic, weightDynamic, hessianDynamic);
+      return true;
+    }
 
-			dynamic_vector_map_t xDynamic(const_cast<SCALAR_T*>(x.data()), BASE::domainDim_);
-			dynamic_vector_map_t weightDynamic(hessianWeight_.data(), BASE::rangeDim_);
-			dynamic_vector_map_t hessianDynamic(hessian.data(), hessian.size());
+  } else {
+    if (model_->isSparseHessianAvailable()) {
+      //			dynamic_vector_map_t xDynamic(const_cast<SCALAR_T*>(x.data()), BASE::domain_dim_);
+      //			dynamic_vector_map_t weightDynamic(hessianWeight_.data(), BASE::range_dim_);
+      //			dynamic_vector_map_t hessianDynamic(hessian.data(), hessian.size());
+      //			model_->SparseHessian(xDynamic.data(), xDynamic.size(), weightDynamic.data(), weightDynamic.size(),
+      //					hessianDynamic.data(), hessianDynamic.size());
+      //			hessian.template triangularView<Eigen::StrictlyUpper>() = hessian.template
+      // triangularView<Eigen::StrictlyLower>().transpose();
 
-			model_->Hessian(xDynamic, weightDynamic, hessianDynamic);
-			return true;
-		}
+      std::vector<SCALAR_T> xVec(const_cast<SCALAR_T*>(x.data()), const_cast<SCALAR_T*>(x.data()) + BASE::domainDim_);
+      std::vector<SCALAR_T> hessianVec;
 
-	} else {
-		if (model_->isSparseHessianAvailable()) {
-//			dynamic_vector_map_t xDynamic(const_cast<SCALAR_T*>(x.data()), BASE::domain_dim_);
-//			dynamic_vector_map_t weightDynamic(hessianWeight_.data(), BASE::range_dim_);
-//			dynamic_vector_map_t hessianDynamic(hessian.data(), hessian.size());
-//			model_->SparseHessian(xDynamic.data(), xDynamic.size(), weightDynamic.data(), weightDynamic.size(),
-//					hessianDynamic.data(), hessianDynamic.size());
-//			hessian.template triangularView<Eigen::StrictlyUpper>() = hessian.template triangularView<Eigen::StrictlyLower>().transpose();
+      std::vector<size_t> row;
+      std::vector<size_t> col;
+      model_->SparseHessian(const_cast<SCALAR_T*>(x.data()), BASE::domainDim_, hessianWeight_.data(), BASE::rangeDim_, hessianVec, row,
+                            col);
 
-			std::vector<SCALAR_T> xVec(const_cast<SCALAR_T*>(x.data()), const_cast<SCALAR_T*>(x.data())+BASE::domainDim_);
-			std::vector<SCALAR_T> hessianVec;
+      hessian.setZero();
+      for (size_t i = 0; i < hessianVec.size(); i++) {
+        size_t rowIndex = row[i] - zeroCountHessian_[row[i]];
+        size_t colIndex = col[i] - zeroCountHessian_[col[i]];
 
-			std::vector<size_t> row;
-			std::vector<size_t> col;
-			model_->SparseHessian(
-					const_cast<SCALAR_T*>(x.data()), BASE::domainDim_,
-					hessianWeight_.data(), BASE::rangeDim_,
-					hessianVec, row, col);
+        // use compact format
+        if (zeroCountHessian_.back() + VARIABLE_DIM == DOMAIN_DIM) {
+          rowIndex = row[i] - zeroCountHessian_[row[i]];
+          colIndex = col[i] - zeroCountHessian_[col[i]];
+        } else {
+          rowIndex = row[i];
+          colIndex = col[i];
+        }
 
-			hessian.setZero();
-			for (size_t i=0; i<hessianVec.size(); i++) {
+        hessian(rowIndex, colIndex) = hessianVec[i];
+      }
+      hessian.template triangularView<Eigen::StrictlyLower>() = hessian.template triangularView<Eigen::StrictlyUpper>().transpose();
 
-				size_t rowIndex = row[i]-zeroCountHessian_[row[i]];
-				size_t colIndex = col[i]-zeroCountHessian_[col[i]];
+      return true;
+    }
+  }
 
-				// use compact format
-				if (zeroCountHessian_.back()+VARIABLE_DIM == DOMAIN_DIM) {
-					rowIndex = row[i]-zeroCountHessian_[row[i]];
-					colIndex = col[i]-zeroCountHessian_[col[i]];
-				} else {
-					rowIndex = row[i];
-					colIndex = col[i];
-				}
-
-				hessian(rowIndex, colIndex) = hessianVec[i];
-			}
-			hessian.template triangularView<Eigen::StrictlyLower>() = hessian.template triangularView<Eigen::StrictlyUpper>().transpose();
-
-			return true;
-		}
-	}
-
-	return false;
+  return false;
 }
 
-} // namespace ocs2
+}  // namespace ocs2

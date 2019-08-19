@@ -30,122 +30,112 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifndef TARGETPOSECOMMAND_H_
 #define TARGETPOSECOMMAND_H_
 
-#include <vector>
+#include <Eigen/Core>
+#include <Eigen/Geometry>
 #include <csignal>
 #include <iostream>
 #include <string>
-#include <Eigen/Core>
-#include <Eigen/Geometry>
+#include <vector>
 
+#include <geometry_msgs/Pose.h>
 #include <ros/ros.h>
 #include <sensor_msgs/Joy.h>
-#include <geometry_msgs/Pose.h>
 
 namespace switched_model {
 
-class TargetPoseCommand
-{
-public:
-	typedef double 					scalar_t;
-	typedef std::vector<scalar_t> 	scalar_array_t;
+class TargetPoseCommand {
+ public:
+  using scalar_t = double;
+  using scalar_array_t = std::vector<scalar_t>;
 
-	TargetPoseCommand(
-			const std::string& robotName,
-			const scalar_array_t& goalPoseLimit = scalar_array_t{2.0, 1.0, 0.3, 45.0, 45.0, 360.0})
+  explicit TargetPoseCommand(std::string robotName, scalar_array_t goalPoseLimit = scalar_array_t{2.0, 1.0, 0.3, 45.0, 45.0, 360.0})
 
-	: robotName_(robotName)
-	, goalPoseLimit_(goalPoseLimit)
-	{
-		if (goalPoseLimit_.size() != maxCommandSize_) {
-			throw std::runtime_error("The goal pose limit should be of size 6.");
-		}
-	}
+      : robotName_(std::move(robotName)), goalPoseLimit_(std::move(goalPoseLimit)) {
+    if (goalPoseLimit_.size() != maxCommandSize_) {
+      throw std::runtime_error("The goal pose limit should be of size 6.");
+    }
+  }
 
-	~TargetPoseCommand() = default;
+  ~TargetPoseCommand() = default;
 
-	void launchNodes(int argc, char* argv[]) {
+  void launchNodes(int argc, char* argv[]) {
+    ros::init(argc, argv, "target_pose");
+    ros::NodeHandle nodeHandler;
+    gaolPublisher_ = nodeHandler.advertise<geometry_msgs::Pose>(robotName_ + "_target", 1);
+    ros::spinOnce();
 
-		ros::init(argc, argv, "target_pose");
-		ros::NodeHandle nodeHandler;
-		gaolPublisher_ = nodeHandler.advertise<geometry_msgs::Pose>(robotName_ + "_target", 1);
-		ros::spinOnce();
+    // display
+    ROS_INFO_STREAM(robotName_ + " 	command node is ready.");
+  }
 
-		// display
-		ROS_INFO_STREAM(robotName_ + " 	command node is ready.");
-	}
+  void run() {
+    auto deg2rad = [](const scalar_t& deg) { return (deg * M_PI / 180); };
+    auto rad2deg = [](const scalar_t& rad) { return (rad * 180 / M_PI); };
 
-	void run() {
+    while (ros::ok()) {
+      commadInput_.clear();
 
-		auto deg2rad = [](const scalar_t& deg) { return (deg*M_PI/180); };
-		auto rad2deg = [](const scalar_t& rad) { return (rad*180/M_PI); };
+      std::cout << "Enter XYZ displacement for the robot, separated by spaces: ";
+      std::string line;
+      std::getline(std::cin, line);
+      std::istringstream stream(line);
+      scalar_t in;
+      while (stream >> in) {
+        commadInput_.push_back(in);
+      }
 
-		while (ros::ok()) {
+      if (commadInput_.size() > maxCommandSize_) {
+        commadInput_.erase(commadInput_.begin() + maxCommandSize_, commadInput_.end());
+      }
 
-			commadInput_.clear();
+      for (size_t i = 0; i < maxCommandSize_; i++) {
+        if (i + 1 > commadInput_.size()) {
+          commadInput_.push_back(0.0);
+          continue;
+        }
+        if (std::abs(commadInput_[i]) > goalPoseLimit_[i]) {
+          commadInput_[i] = (commadInput_[i] > 0) ? goalPoseLimit_[i] : -goalPoseLimit_[i];
+        }
+      }  // end of i loop
 
-			std::cout << "Enter XYZ displacement for the robot, separated by spaces: ";
-			std::string line;
-			std::getline(std::cin, line);
-			std::istringstream stream(line);
-			scalar_t in;
-			while (stream >> in) {
-				commadInput_.push_back(in);
-			}
+      // creat the message
+      geometry_msgs::Pose basePoseMsg;
+      basePoseMsg.position.x = commadInput_[0];
+      basePoseMsg.position.y = commadInput_[1];
+      basePoseMsg.position.z = commadInput_[2];
 
-			if (commadInput_.size() > maxCommandSize_) {
-				commadInput_.erase(commadInput_.begin()+maxCommandSize_, commadInput_.end());
-			}
+      Eigen::Quaternion<scalar_t> qxyz = Eigen::AngleAxis<scalar_t>(deg2rad(commadInput_[3]), Eigen::Vector3d::UnitX()) *  // roll
+                                         Eigen::AngleAxis<scalar_t>(deg2rad(commadInput_[4]), Eigen::Vector3d::UnitY()) *  // pitch
+                                         Eigen::AngleAxis<scalar_t>(deg2rad(commadInput_[5]), Eigen::Vector3d::UnitZ());   // yaw
 
-			for (size_t i=0; i<maxCommandSize_; i++) {
-				if (i+1 > commadInput_.size()) {
-					commadInput_.push_back(0.0);
-					continue;
-				}
-				if (std::abs(commadInput_[i]) > goalPoseLimit_[i]) {
-					commadInput_[i] = (commadInput_[i] > 0) ? goalPoseLimit_[i] : -goalPoseLimit_[i];
-				}
-			}  // end of i loop
+      basePoseMsg.orientation.x = qxyz.x();
+      basePoseMsg.orientation.y = qxyz.y();
+      basePoseMsg.orientation.z = qxyz.z();
+      basePoseMsg.orientation.w = qxyz.w();
 
-			// creat the message
-			geometry_msgs::Pose basePoseMsg;
-			basePoseMsg.position.x = commadInput_[0];
-			basePoseMsg.position.y = commadInput_[1];
-			basePoseMsg.position.z = commadInput_[2];
+      gaolPublisher_.publish(basePoseMsg);
 
-			Eigen::Quaternion<scalar_t> qxyz =
-					Eigen::AngleAxis<scalar_t>(deg2rad(commadInput_[3]), Eigen::Vector3d::UnitX()) *  // roll
-					Eigen::AngleAxis<scalar_t>(deg2rad(commadInput_[4]), Eigen::Vector3d::UnitY()) *  // pitch
-					Eigen::AngleAxis<scalar_t>(deg2rad(commadInput_[5]), Eigen::Vector3d::UnitZ());   // yaw
+      std::cout << "The following position displacement is published: [";
+      for (size_t i = 0; i < maxCommandSize_; i++) {
+        std::cout << commadInput_[i] << ", ";
+      }
+      std::cout << "\b\b]" << std::endl << std::endl;
 
-			basePoseMsg.orientation.x = qxyz.x();
-			basePoseMsg.orientation.y = qxyz.y();
-			basePoseMsg.orientation.z = qxyz.z();
-			basePoseMsg.orientation.w = qxyz.w();
+    }  // enf of while loop
+  }
 
-			gaolPublisher_.publish(basePoseMsg);
+ private:
+  const size_t maxCommandSize_ = 6;
 
-			std::cout << "The following position displacement is published: [";
-			for (size_t i=0; i<maxCommandSize_; i++) {
-				std::cout << commadInput_[i] << ", ";
-			}
-			std::cout << "\b\b]" << std::endl << std::endl;
+  std::string robotName_;
 
-		}  // enf of while loop
-	}
+  scalar_array_t goalPoseLimit_;
 
+  ros::Publisher gaolPublisher_;
 
-private:
-	const size_t maxCommandSize_ = 6;
-
-	std::string robotName_;
-
-	scalar_array_t goalPoseLimit_;
-
-	ros::Publisher gaolPublisher_;
-
-	scalar_array_t commadInput_;
+  scalar_array_t commadInput_;
 };
 
-} // end of namespace switched_model
+}  // end of namespace switched_model
 
 #endif /* TARGETPOSECOMMAND_H_ */

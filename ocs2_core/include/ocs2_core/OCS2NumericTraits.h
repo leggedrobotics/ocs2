@@ -30,29 +30,27 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifndef OCS2NUMERICTRAITS_OCS2_H_
 #define OCS2NUMERICTRAITS_OCS2_H_
 
-namespace ocs2{
+namespace ocs2 {
 /**
  * Holds information about the various numeric traits.
  */
-template<typename T=double>
-class OCS2NumericTraits
-{
-public:
+template <typename T = double>
+class OCS2NumericTraits {
+ public:
+  /**
+   * If a floating number v is in limit epsilon vicinity of w, then we assume that v approaches to w.
+   * This limit_epsilon value should be greater week_epsilon value.
+   *
+   * @return limit epsilon value.
+   */
+  static inline T limitEpsilon() { return T(1e-6); }
 
-	/**
-	 * If a floating number v is in limit epsilon vicinity of w, then we assume that v approaches to w.
-	 * This limit_epsilon value should be greater week_epsilon value.
-	 *
-	 * @return limit epsilon value.
-	 */
-	static inline T limitEpsilon() { return T(1e-6); }
-
-	/**
-	 * Defines the precision during comparison.
-	 *
-	 * @return weak epsilon value
-	 */
-	static inline T weakEpsilon() { return T(1e-9); }
+  /**
+   * Defines the precision during comparison.
+   *
+   * @return weak epsilon value
+   */
+  static inline T weakEpsilon() { return T(1e-9); }
 };
 
 }  // namespace ocs2

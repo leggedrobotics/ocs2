@@ -6,7 +6,7 @@ CMakeCache.txt
 *.so
 Makefile
 .project
-*.idea*
+.idea/
 .cproject
 *~
 *.settings*
@@ -16,4 +16,6 @@ Doxyfile
 *.tag
 *.tmp
 *.swp
+__pycache__
+*.pyc
 ocs2_core/test/cppad_cg/testCppADCG_generated/

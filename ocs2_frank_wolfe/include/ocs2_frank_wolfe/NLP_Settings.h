@@ -33,7 +33,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <iostream>
 
 namespace ocs2 {
-namespace nlp {
 
 /**
  * This structure contains the settings for the gradient-descent algorithm.
@@ -42,17 +41,16 @@ class NLP_Settings
 {
 public:
 	NLP_Settings()
-	: displayGradientDescent_(true)
+	: displayInfo_(true)
 	, maxIterations_(1000)
 	, minRelCost_(1e-6)
 	, maxLearningRate_(1.0)
 	, minLearningRate_(0.05)
 	, useAscendingLineSearchNLP_(true)
-	, minDisToBoundary_(0.0)
 	{}
 
 	/** This value determines to display the log output.*/
-	bool displayGradientDescent_;
+	bool displayInfo_;
 	/** This value determines the maximum number of algorithm iterations.*/
 	size_t maxIterations_;
 	/** This value determines the termination condition based on the minimum relative changes of the cost.*/
@@ -67,11 +65,8 @@ public:
 	 * - \b Descending: The step size eventually decreases from the minimum value to the maximum.
 	 * */
 	bool useAscendingLineSearchNLP_;
-	/** This value determines the minimum allowable difference between to consecutive switching times.*/
-	double minDisToBoundary_;
 };
 
-}  // end of nlp namespace
 }  // end of ocs2 namespace
 
 #endif /* NLP_SETTINGS_OCS2_H_ */

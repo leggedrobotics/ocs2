@@ -30,53 +30,47 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifndef BALLBOT_PARAMETERS_OCS2_H_
 #define BALLBOT_PARAMETERS_OCS2_H_
 
-#include <vector>
-#include <string>
 #include <iostream>
+#include <string>
+#include <vector>
 
-#include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/info_parser.hpp>
+#include <boost/property_tree/ptree.hpp>
 
 namespace ocs2 {
 namespace ballbot {
 
-template<typename SCALAR_T>
-class BallbotParameters
-{
-public:
-	/**
-	 * Constructor.
-	 */
-	BallbotParameters()
-	: ballRadius_(0.125)
-	, wheelRadius_(0.064)
-	, heightBallCenterToBase_(0.275)
-	{}
+template <typename SCALAR_T>
+class BallbotParameters {
+ public:
+  /**
+   * Constructor.
+   */
+  BallbotParameters() : ballRadius_(0.125), wheelRadius_(0.064), heightBallCenterToBase_(0.275) {}
 
-	/**
-	 * Default destructor.
-	 */
-	~BallbotParameters() = default;
+  /**
+   * Default destructor.
+   */
+  ~BallbotParameters() = default;
 
-	/**
-	 * Displays the ballbot's parameters.
-	 */
-	inline void display() {
-		std::cerr << "Ballbot parameters: " << std::endl;
-		std::cerr << "ballRadius:   " << ballRadius_ << std::endl;
-		std::cerr << "wheelRadius:   " << wheelRadius_ << std::endl;
-        std::cerr << "heightBallCenterToBase:   " << heightBallCenterToBase_ << std::endl;
-	}
+  /**
+   * Displays the ballbot's parameters.
+   */
+  inline void display() {
+    std::cerr << "Ballbot parameters: " << std::endl;
+    std::cerr << "ballRadius:   " << ballRadius_ << std::endl;
+    std::cerr << "wheelRadius:   " << wheelRadius_ << std::endl;
+    std::cerr << "heightBallCenterToBase:   " << heightBallCenterToBase_ << std::endl;
+  }
 
-public:
-	// For safety, these parameters cannot be modified
-	SCALAR_T ballRadius_; // [m]
-    SCALAR_T wheelRadius_; // [m]
-	SCALAR_T heightBallCenterToBase_; // [m]
-
+ public:
+  // For safety, these parameters cannot be modified
+  SCALAR_T ballRadius_;              // [m]
+  SCALAR_T wheelRadius_;             // [m]
+  SCALAR_T heightBallCenterToBase_;  // [m]
 };
 
-} // namespace ballbot
-} // namespace ocs2
+}  // namespace ballbot
+}  // namespace ocs2
 
-#endif // BALLBOT_PARAMETERS_OCS2_H_
+#endif  // BALLBOT_PARAMETERS_OCS2_H_

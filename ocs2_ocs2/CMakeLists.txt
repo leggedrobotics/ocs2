@@ -12,9 +12,6 @@ find_package(Boost REQUIRED COMPONENTS
   filesystem 
 )
 
-list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_LIST_DIR}/cmake)
-find_package(glpk REQUIRED)
-
 find_package(Eigen3 3.3 REQUIRED NO_MODULE)
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread -fopenmp -std=c++11 -Wfatal-errors -Wl,--no-as-needed")
@@ -33,7 +30,6 @@ catkin_package(
     ocs2_frank_wolfe
   DEPENDS 
     Boost
-    glpk
 )
 
 ###########
@@ -77,7 +73,6 @@ catkin_add_gtest(exp0_gddp_test
 target_link_libraries(exp0_gddp_test
   ${catkin_LIBRARIES}
   ${Boost_LIBRARIES}
-  glpk
 )
 
 catkin_add_gtest(exp1_gddp_test
@@ -86,24 +81,21 @@ catkin_add_gtest(exp1_gddp_test
 target_link_libraries(exp1_gddp_test
   ${catkin_LIBRARIES}
   ${Boost_LIBRARIES}
-  glpk
 )
 
-#catkin_add_gtest(exp0_ocs2_test
-#  test/exp0_ocs2_test.cpp
-#)
-#target_link_libraries(exp0_ocs2_test
-#  ${catkin_LIBRARIES}
-#  ${Boost_LIBRARIES}
-#  glpk
-#)
-#
-#catkin_add_gtest(exp1_ocs2_test
-#  test/exp1_ocs2_test.cpp
-#)
-#target_link_libraries(exp1_ocs2_test
-#  ${catkin_LIBRARIES}
-#  ${Boost_LIBRARIES}
-#  glpk
-#)
+catkin_add_gtest(exp0_ocs2_test
+  test/exp0_ocs2_test.cpp
+)
+target_link_libraries(exp0_ocs2_test
+  ${catkin_LIBRARIES}
+  ${Boost_LIBRARIES}
+)
+
+catkin_add_gtest(exp1_ocs2_test
+  test/exp1_ocs2_test.cpp
+)
+target_link_libraries(exp1_ocs2_test
+  ${catkin_LIBRARIES}
+  ${Boost_LIBRARIES}
+)
 

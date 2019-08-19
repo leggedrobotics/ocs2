@@ -32,165 +32,123 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "ocs2_core/dynamics/SystemDynamicsBase.h"
 
-namespace ocs2{
+namespace ocs2 {
 
 template <size_t STATE_DIM, size_t INPUT_DIM>
-class LinearSystemDynamics : public SystemDynamicsBase<STATE_DIM, INPUT_DIM>
-{
-public:
-	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+class LinearSystemDynamics : public SystemDynamicsBase<STATE_DIM, INPUT_DIM> {
+ public:
+  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-	using Ptr = std::shared_ptr<LinearSystemDynamics<STATE_DIM, INPUT_DIM> >;
-	using ConstPtr = std::shared_ptr<const LinearSystemDynamics<STATE_DIM, INPUT_DIM> >;
+  using Ptr = std::shared_ptr<LinearSystemDynamics<STATE_DIM, INPUT_DIM> >;
+  using ConstPtr = std::shared_ptr<const LinearSystemDynamics<STATE_DIM, INPUT_DIM> >;
 
-	using BASE = SystemDynamicsBase<STATE_DIM, INPUT_DIM>;
-	using typename BASE::scalar_t;
-	using typename BASE::state_vector_t;
-	using typename BASE::state_matrix_t;
-	using typename BASE::input_vector_t;
-	using typename BASE::state_input_matrix_t;
+  using BASE = SystemDynamicsBase<STATE_DIM, INPUT_DIM>;
+  using typename BASE::input_vector_t;
+  using typename BASE::scalar_t;
+  using typename BASE::state_input_matrix_t;
+  using typename BASE::state_matrix_t;
+  using typename BASE::state_vector_t;
 
-	LinearSystemDynamics(
-			const state_matrix_t& A,
-			const state_input_matrix_t& B,
-			const state_matrix_t& G = state_matrix_t::Zero(),
-			const state_input_matrix_t& H = state_input_matrix_t::Zero())
-	: A_(A)
-	, B_(B)
-	, G_(G)
-	, H_(H)
-	{}
+  LinearSystemDynamics(const state_matrix_t& A, const state_input_matrix_t& B, const state_matrix_t& G = state_matrix_t::Zero(),
+                       const state_input_matrix_t& H = state_input_matrix_t::Zero())
+      : A_(A), B_(B), G_(G), H_(H) {}
 
-	virtual ~LinearSystemDynamics() = default;
+  virtual ~LinearSystemDynamics() = default;
 
-	/**
-	 * Returns pointer to the base class.
-	 *
-	 * @return A raw pointer to the class.
-	 */
-	LinearSystemDynamics<STATE_DIM, INPUT_DIM>* clone() const override {
+  /**
+   * Returns pointer to the base class.
+   *
+   * @return A raw pointer to the class.
+   */
+  LinearSystemDynamics<STATE_DIM, INPUT_DIM>* clone() const override { return new LinearSystemDynamics<STATE_DIM, INPUT_DIM>(*this); }
 
-		return new LinearSystemDynamics<STATE_DIM, INPUT_DIM>(*this);
-	}
+  /**
+   * Interface method to the state flow map of the hybrid system.
+   *
+   * @param [in] t: time.
+   * @param [in] x: state vector.
+   * @param [in] u: input vector
+   * @param [out] dxdt: state vector time derivative.
+   */
+  void computeFlowMap(const scalar_t& t, const state_vector_t& x, const input_vector_t& u, state_vector_t& dxdt) override {
+    dxdt = A_ * x + B_ * u;
+  }
 
-	/**
-	 * Interface method to the state flow map of the hybrid system.
-	 *
-	 * @param [in] t: time.
-	 * @param [in] x: state vector.
-	 * @param [in] u: input vector
-	 * @param [out] dxdt: state vector time derivative.
-	 */
-	void computeFlowMap(
-			const scalar_t& t,
-			const state_vector_t& x,
-			const input_vector_t& u,
-			state_vector_t& dxdt) override {
+  /**
+   * Interface method to the state jump map of the hybrid system.
+   *
+   * @param [in] t: time.
+   * @param [in] x: state vector.
+   * @param [out] xp: jumped state.
+   */
+  void computeJumpMap(const scalar_t& t, const state_vector_t& x, state_vector_t& xp) override {
+    xp = G_ * x;  //+ H_*u;
+  }
 
-		dxdt = A_*x + B_*u;
-	}
+  /**
+   * Sets the current time, state, and control input.
+   *
+   * @param [in] t: Current time
+   * @param [in] x: Current state vector
+   * @param [in] u: Current input vector
+   */
+  void setCurrentStateAndControl(const scalar_t& t, const state_vector_t& x, const input_vector_t& u) override {
+    BASE::setCurrentStateAndControl(t, x, u);
+  }
 
-	/**
-	 * Interface method to the state jump map of the hybrid system.
-	 *
-	 * @param [in] t: time.
-	 * @param [in] x: state vector.
-	 * @param [out] xp: jumped state.
-	 */
-	void computeJumpMap(
-			const scalar_t& t,
-			const state_vector_t& x,
-			state_vector_t& xp)  override {
+  /**
+   * Get the flow map value.
+   *
+   * @param [out] f: The flow map value.
+   */
+  virtual void getFlowMap(state_vector_t& f) { f = A_ * BASE::x_ + B_ * BASE::u_; }
 
-		xp = G_*x; //+ H_*u;
-	}
+  /**
+   * Get the jump map value.
+   *
+   * @param [out] g: The jump map value.
+   */
+  virtual void getJumpMap(state_vector_t& g) { g = G_ * BASE::x_ + H_ * BASE::u_; }
 
-	/**
-	 * Sets the current time, state, and control input.
-	 *
-	 * @param [in] t: Current time
-	 * @param [in] x: Current state vector
-	 * @param [in] u: Current input vector
-	 */
-	void setCurrentStateAndControl(
-			const scalar_t& t,
-			const state_vector_t& x,
-			const input_vector_t& u) override {
+  /**
+   * The A matrix at a given operating point for the linearized system flow map.
+   * \f$ dx/dt = A(t) \delta x + B(t) \delta u \f$.
+   *
+   * @param [out] A: \f$ A(t) \f$ matrix.
+   */
+  void getFlowMapDerivativeState(state_matrix_t& A) override { A = A_; }
 
-		BASE::setCurrentStateAndControl(t, x, u);
-	}
+  /**
+   * The B matrix at a given operating point for the linearized system flow map.
+   * \f$ dx/dt = A(t) \delta x + B(t) \delta u \f$.
+   *
+   * @param [out] B: \f$ B(t) \f$ matrix.
+   */
+  void getFlowMapDerivativeInput(state_input_matrix_t& B) override { B = B_; }
 
-	/**
-	 * Get the flow map value.
-	 *
-	 * @param [out] f: The flow map value.
-	 */
-	virtual void getFlowMap(state_vector_t& f) {
+  /**
+   * The G matrix at a given operating point for the linearized system jump map.
+   * \f$ x^+ = G \delta x + H \delta u \f$.
+   *
+   * @param [out] G: \f$ G \f$ matrix.
+   */
+  void getJumpMapDerivativeState(state_matrix_t& G) override { G = G_; }
 
-		f = A_ * BASE::x_ + B_ * BASE::u_;
-	}
+  /**
+   * The H matrix at a given operating point for the linearized system jump map.
+   * \f$ x^+ = G \delta x + H \delta u \f$.
+   *
+   * @param [out] H: \f$ H \f$ matrix.
+   */
+  void getJumpMapDerivativeInput(state_input_matrix_t& H) override { H = H_; }
 
-	/**
-	 * Get the jump map value.
-	 *
-	 * @param [out] g: The jump map value.
-	 */
-	virtual void getJumpMap(state_vector_t& g) {
-
-		g = G_ * BASE::x_ + H_ * BASE::u_;
-	}
-
-	/**
-	 * The A matrix at a given operating point for the linearized system flow map.
-	 * \f$ dx/dt = A(t) \delta x + B(t) \delta u \f$.
-	 *
-	 * @param [out] A: \f$ A(t) \f$ matrix.
-	 */
-	void getFlowMapDerivativeState(state_matrix_t& A) override {
-
-		A = A_;
-	}
-
-	/**
-	 * The B matrix at a given operating point for the linearized system flow map.
-	 * \f$ dx/dt = A(t) \delta x + B(t) \delta u \f$.
-	 *
-	 * @param [out] B: \f$ B(t) \f$ matrix.
-	 */
-	void getFlowMapDerivativeInput(state_input_matrix_t& B) override {
-
-		B = B_;
-	}
-
-	/**
-	 * The G matrix at a given operating point for the linearized system jump map.
-	 * \f$ x^+ = G \delta x + H \delta u \f$.
-	 *
-	 * @param [out] G: \f$ G \f$ matrix.
-	 */
-	void getJumpMapDerivativeState(state_matrix_t& G) override {
-
-		G = G_;
-	}
-
-	/**
-	 * The H matrix at a given operating point for the linearized system jump map.
-	 * \f$ x^+ = G \delta x + H \delta u \f$.
-	 *
-	 * @param [out] H: \f$ H \f$ matrix.
-	 */
-	void getJumpMapDerivativeInput(state_input_matrix_t& H) override {
-
-		H = H_;
-	}
-
-private:
-	state_matrix_t       A_;
-	state_input_matrix_t B_;
-	state_matrix_t       G_;
-	state_input_matrix_t H_;
+ private:
+  state_matrix_t A_;
+  state_input_matrix_t B_;
+  state_matrix_t G_;
+  state_input_matrix_t H_;
 };
 
-} // namespace ocs2
+}  // namespace ocs2
 
 #endif /* LINEARSYSTEMDYNAMICS_OCS2_H_ */

@@ -38,11 +38,11 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_core/logic/rules/HybridLogicRules.h>
 
 // MPC messages
-#include <ocs2_comm_interfaces/mode_sequence.h>
+#include <ocs2_msgs/mode_sequence.h>
 
 #include "ocs2_comm_interfaces/ocs2_ros_interfaces/common/RosMsgConversions.h"
 
-namespace ocs2{
+namespace ocs2 {
 
 /**
  * This class implements ModeSequence communication interface using ROS.
@@ -50,65 +50,62 @@ namespace ocs2{
  * @tparam SCALAR_T: scalar type.
  */
 template <typename SCALAR_T>
-class ModeSequence_ROS_Interface
-{
-public:
-	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+class ModeSequence_ROS_Interface {
+ public:
+  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-	typedef SCALAR_T scalar_t;
-	typedef ModeSequenceTemplate<SCALAR_T> mode_sequence_template_t;
+  using scalar_t = SCALAR_T;
+  using mode_sequence_template_t = ModeSequenceTemplate<SCALAR_T>;
 
-	/**
-	 * Constructor.
-	 *
-	 * @param [in] robotName: The robot's name.
-	 */
-	ModeSequence_ROS_Interface(
-			const std::string& robotName = "robot");
+  /**
+   * Constructor.
+   *
+   * @param [in] robotName: The robot's name.
+   */
+  explicit ModeSequence_ROS_Interface(std::string robotName = "robot");
 
-	/**
-	 * Destructor.
-	 */
-	virtual ~ModeSequence_ROS_Interface();
+  /**
+   * Destructor.
+   */
+  virtual ~ModeSequence_ROS_Interface();
 
-	/**
-	 * Resets the class to its instantiate state.
-	 */
-	virtual void reset() {}
+  /**
+   * Resets the class to its instantiate state.
+   */
+  virtual void reset() {}
 
-	/**
-	 * ShutdownNodes publisher nodes.
-	 */
-	void shutdownNodes();
+  /**
+   * ShutdownNodes publisher nodes.
+   */
+  void shutdownNodes();
 
-	/**
-	 * This is the main routine which launches the publisher node for MPC's
-	 * desired trajectories.
-	 *
-	 * @param [in] argc: Command line number of arguments.
-	 * @param [in] argv: Command line vector of arguments.
-	 */
-	void launchNodes(int argc, char* argv[]);
+  /**
+   * This is the main routine which launches the publisher node for MPC's
+   * desired trajectories.
+   *
+   * @param [in] argc: Command line number of arguments.
+   * @param [in] argv: Command line vector of arguments.
+   */
+  void launchNodes(int argc, char* argv[]);
 
-	/**
-	 * Publishes the mode sequence template.
-	 *
-	 * @param [in] modeSequenceTemplate: The mode sequence template.
-	 */
-	void publishModeSequenceTemplate(
-			const mode_sequence_template_t& modeSequenceTemplate);
+  /**
+   * Publishes the mode sequence template.
+   *
+   * @param [in] modeSequenceTemplate: The mode sequence template.
+   */
+  void publishModeSequenceTemplate(const mode_sequence_template_t& modeSequenceTemplate);
 
-protected:
-	std::string robotName_;
+ protected:
+  std::string robotName_;
 
-	// Publisher
-	::ros::Publisher mpcModeSequencePublisher_;
+  // Publisher
+  ::ros::Publisher mpcModeSequencePublisher_;
 
-	// ROS messages
-	ocs2_comm_interfaces::mode_sequence modeSequenceTemplateMsg_;
+  // ROS messages
+  ocs2_msgs::mode_sequence modeSequenceTemplateMsg_;
 };
 
-} // namespace ocs2
+}  // namespace ocs2
 
 #include "implementation/ModeSequence_ROS_Interface.h"
 

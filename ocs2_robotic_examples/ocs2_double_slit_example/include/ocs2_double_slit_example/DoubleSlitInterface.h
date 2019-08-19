@@ -31,7 +31,6 @@ class DoubleSlitInterface final : public RobotInterfaceBase<DoubleSlit::STATE_DI
   using DoubleSlitConstraint = ocs2::ConstraintBase<dim_t::STATE_DIM_, dim_t::INPUT_DIM_>;
   using DoubleSlitOperatingPoint = ocs2::SystemOperatingPoint<dim_t::STATE_DIM_, dim_t::INPUT_DIM_>;
 
-  using mpc_t = ocs2::MPC_SLQ<dim_t::STATE_DIM_, dim_t::INPUT_DIM_>;
   using pi_mpc_t = ocs2::MPC_PI<dim_t::STATE_DIM_, dim_t::INPUT_DIM_>;
 
   /**
@@ -47,24 +46,15 @@ class DoubleSlitInterface final : public RobotInterfaceBase<DoubleSlit::STATE_DI
 
   void setupOptimizer(const std::string& taskFile) override;
 
-  /**
-   * Gets a pointer to the internal SLQ-MPC class.
-   *
-   * @return Pointer to the internal MPC
-   */
-  mpc_t::Ptr getMPCPtr() { return mpcPtr_; }
+  pi_mpc_t& getMpc() override { return *piMpcPtr_; }
 
-  /**
-   * @brief getDynamicsPtr
-   * @return pointer to the internal system dynamics
-   */
-  DoubleSlitDynamics::Ptr getDynamicsPtr() { return linearSystemDynamicsPtr_; }
+  const DoubleSlitDynamics& getDynamics() const override { return *linearSystemDynamicsPtr_; }
 
-  /**
-   * Gets a pointer to the internal PI-MPC class
-   * @return Pointer to PI MPC
-   */
-  pi_mpc_t* getPiMpcPtr() { return piMpcPtr_.get(); }
+  const DerivativesBase<dim_t::STATE_DIM_, dim_t::INPUT_DIM_>& getDynamicsDerivatives() const override {
+    throw std::runtime_error("Not implemented");
+  }
+
+  const DoubleSlitBarrierCost& getCost() const override { return *costPtr_; }
 
   /**
    * @brief doubleSlitPotentialWall models the potential wall of our problem
@@ -81,7 +71,6 @@ class DoubleSlitInterface final : public RobotInterfaceBase<DoubleSlit::STATE_DI
    **************/
   std::string taskFile_;
 
-  mpc_t::Ptr mpcPtr_;
   std::unique_ptr<pi_mpc_t> piMpcPtr_;
 
   DoubleSlitDynamics::Ptr linearSystemDynamicsPtr_;

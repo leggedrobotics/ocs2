@@ -33,7 +33,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "ocs2_core/initialization/SystemOperatingTrajectoriesBase.h"
 
-namespace ocs2{
+namespace ocs2 {
 
 /**
  * This is base class for initializing the SLQ-based algorithms.
@@ -42,97 +42,81 @@ namespace ocs2{
  * @tparam INPUT_DIM: Dimension of the control input space.
  */
 template <size_t STATE_DIM, size_t INPUT_DIM>
-class SystemOperatingPoint : public SystemOperatingTrajectoriesBase<STATE_DIM, INPUT_DIM>
-{
-public:
-	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+class SystemOperatingPoint : public SystemOperatingTrajectoriesBase<STATE_DIM, INPUT_DIM> {
+ public:
+  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-	using Ptr = std::shared_ptr<SystemOperatingPoint<STATE_DIM, INPUT_DIM>>;
+  using Ptr = std::shared_ptr<SystemOperatingPoint<STATE_DIM, INPUT_DIM>>;
 
-	using Base = SystemOperatingTrajectoriesBase<STATE_DIM, INPUT_DIM>;
-	using typename Base::scalar_t;
-	using typename Base::scalar_array_t;
-	using typename Base::size_array_t;
-	using typename Base::state_vector_t;
-	using typename Base::state_vector_array_t;
-	using typename Base::input_vector_t;
-	using typename Base::input_vector_array_t;
+  using Base = SystemOperatingTrajectoriesBase<STATE_DIM, INPUT_DIM>;
+  using typename Base::input_vector_array_t;
+  using typename Base::input_vector_t;
+  using typename Base::scalar_array_t;
+  using typename Base::scalar_t;
+  using typename Base::size_array_t;
+  using typename Base::state_vector_array_t;
+  using typename Base::state_vector_t;
 
-	/**
-	 * Default constructor
-	 */
-	SystemOperatingPoint()
-	: SystemOperatingPoint(state_vector_t::Zero(), input_vector_t::Zero())
-	{}
+  /**
+   * Default constructor
+   */
+  SystemOperatingPoint() : SystemOperatingPoint(state_vector_t::Zero(), input_vector_t::Zero()) {}
 
-	/**
-	 * Constructor
-	 */
-	SystemOperatingPoint(const state_vector_t& stateOperatingPoint, const input_vector_t& inputOperatingPoint)
-	: stateOperatingPoint_(stateOperatingPoint),
-	  inputOperatingPoint_(inputOperatingPoint)
-	{}
+  /**
+   * Constructor
+   */
+  SystemOperatingPoint(const state_vector_t& stateOperatingPoint, const input_vector_t& inputOperatingPoint)
+      : stateOperatingPoint_(stateOperatingPoint), inputOperatingPoint_(inputOperatingPoint) {}
 
-	/**
-	 * Default destructor.
-	 */
-	virtual ~SystemOperatingPoint() = default;
+  /**
+   * Default destructor.
+   */
+  virtual ~SystemOperatingPoint() = default;
 
-	/**
-	 * Returns pointer to the class.
-	 *
-	 * @return A raw pointer to the class.
-	 */
-	SystemOperatingPoint<STATE_DIM, INPUT_DIM>* clone() const override {
+  /**
+   * Returns pointer to the class.
+   *
+   * @return A raw pointer to the class.
+   */
+  SystemOperatingPoint<STATE_DIM, INPUT_DIM>* clone() const override { return new SystemOperatingPoint<STATE_DIM, INPUT_DIM>(*this); }
 
-		return new SystemOperatingPoint<STATE_DIM, INPUT_DIM>(*this);
-	}
+  /**
+   * Gets the operating points for the system in time interval [startTime, finalTime] where there is
+   * no intermediate switches except possibly the end time.
+   *
+   * @param [in] initialState: Initial state.
+   * @param [in] startTime: Initial time.
+   * @param [in] finalTime: Final time.
+   * @param [out] timeTrajectory: Output time stamp trajectory.
+   * @param [out] stateTrajectory: Output state trajectory.
+   * @param [out] inputTrajectory: Output control input trajectory.
+   * @param [in] concatOutput: Whether to concatenate the output to the input trajectories or
+   * override (default).
+   */
+  void getSystemOperatingTrajectories(const state_vector_t& initialState, const scalar_t& startTime, const scalar_t& finalTime,
+                                      scalar_array_t& timeTrajectory, state_vector_array_t& stateTrajectory,
+                                      input_vector_array_t& inputTrajectory, bool concatOutput = false) override {
+    if (!concatOutput) {
+      timeTrajectory.clear();
+      stateTrajectory.clear();
+      inputTrajectory.clear();
+    }
 
-	/**
-	 * Gets the operating points for the system in time interval [startTime, finalTime] where there is
-	 * no intermediate switches except possibly the end time.
-	 *
-	 * @param [in] initialState: Initial state.
-	 * @param [in] startTime: Initial time.
-	 * @param [in] finalTime: Final time.
-	 * @param [out] timeTrajectory: Output time stamp trajectory.
-	 * @param [out] stateTrajectory: Output state trajectory.
-	 * @param [out] inputTrajectory: Output control input trajectory.
-	 * @param [in] concatOutput: Whether to concatenate the output to the input trajectories or
-	 * override (default).
-	 */
-	void getSystemOperatingTrajectories(
-			const state_vector_t& initialState,
-			const scalar_t& startTime,
-			const scalar_t& finalTime,
-			scalar_array_t& timeTrajectory,
-			state_vector_array_t& stateTrajectory,
-			input_vector_array_t& inputTrajectory,
-			bool concatOutput = false) override {
+    timeTrajectory.emplace_back(startTime);
+    timeTrajectory.emplace_back(finalTime);
 
-		if (!concatOutput) {
-			timeTrajectory.clear();
-			stateTrajectory.clear();
-			inputTrajectory.clear();
-		}
+    stateTrajectory.emplace_back(stateOperatingPoint_);
+    stateTrajectory.emplace_back(stateOperatingPoint_);
 
-		timeTrajectory.emplace_back(startTime);
-		timeTrajectory.emplace_back(finalTime);
+    inputTrajectory.emplace_back(inputOperatingPoint_);
+    inputTrajectory.emplace_back(inputOperatingPoint_);
+  }
 
-		stateTrajectory.emplace_back(stateOperatingPoint_);
-		stateTrajectory.emplace_back(stateOperatingPoint_);
-
-		inputTrajectory.emplace_back(inputOperatingPoint_);
-		inputTrajectory.emplace_back(inputOperatingPoint_);
-	}
-
-
-protected:
-	state_vector_t stateOperatingPoint_;
-	input_vector_t inputOperatingPoint_;
-
+ protected:
+  state_vector_t stateOperatingPoint_;
+  input_vector_t inputOperatingPoint_;
 };
 
-} // namespace ocs2
+}  // namespace ocs2
 
 #endif /* SYSTEMOPERATINGPOINT_OCS2_H_ */

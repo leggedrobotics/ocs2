@@ -27,26 +27,24 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  ******************************************************************************/
 
+#include <ocs2_comm_interfaces/ocs2_ros_interfaces/mpc/MPC_ROS_Interface.h>
 #include "ocs2_ballbot_example/BallbotInterface.h"
-#include "ocs2_ballbot_example/ros_comm/MPC_ROS_Ballbot.h"
 
 using namespace ocs2;
-using namespace ballbot;
 
-int main(int argc, char **argv)
-{
-	// task file
-	if (argc <= 1) { throw std::runtime_error("No task file specified. Aborting.");
+int main(int argc, char** argv) {
+  // task file
+  if (argc <= 1) {
+    throw std::runtime_error("No task file specified. Aborting.");
+  }
+  std::string taskFileFolderName = std::string(argv[1]);
+
+  ballbot::BallbotInterface ballbotInterface(taskFileFolderName);
+
+  // Launch MPC ROS node
+  MPC_ROS_Interface<ballbot::STATE_DIM_, ballbot::INPUT_DIM_> mpcNode(&ballbotInterface.getMpc(), "ballbot");
+  mpcNode.launchNodes(argc, argv);
+
+  // Successful exit
+  return 0;
 }
-	std::string taskFileFolderName = std::string(argv[1]);
-
-	BallbotInterface ballbotInterface(taskFileFolderName);
-
-	// Launch MPC ROS node
-	MPC_ROS_Ballbot mpcNode(*ballbotInterface.getMPCPtr(), "ballbot");
-	mpcNode.launchNodes(argc, argv);
-
-	// Successful exit
-	return 0;
-}
-

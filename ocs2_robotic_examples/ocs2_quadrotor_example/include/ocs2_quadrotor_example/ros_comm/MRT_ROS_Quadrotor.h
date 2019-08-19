@@ -42,66 +42,7 @@ namespace quadrotor {
  * @tparam quadrotor::STATE_DIM_: Dimension of the state space.
  * @tparam quadrotor::INPUT_DIM_: Dimension of the control input space.
  */
-
-class MRT_ROS_Quadrotor : public MRT_ROS_Interface<quadrotor::STATE_DIM_, quadrotor::INPUT_DIM_>
-{
-public:
-	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-
-	typedef MRT_ROS_Interface<quadrotor::STATE_DIM_, quadrotor::INPUT_DIM_> BASE;
-
-	typedef Dimensions<quadrotor::STATE_DIM_, quadrotor::INPUT_DIM_> DIMENSIONS;
-	typedef typename DIMENSIONS::controller_t				controller_t;
-	typedef typename DIMENSIONS::scalar_t					scalar_t;
-	typedef typename DIMENSIONS::scalar_array_t				scalar_array_t;
-	typedef typename DIMENSIONS::size_array_t				size_array_t;
-	typedef typename DIMENSIONS::state_vector_t 			state_vector_t;
-	typedef typename DIMENSIONS::state_vector_array_t		state_vector_array_t;
-	typedef typename DIMENSIONS::input_vector_t 		 	input_vector_t;
-	typedef typename DIMENSIONS::input_vector_array_t  	input_vector_array_t;
-	typedef typename DIMENSIONS::input_state_matrix_t 	input_state_matrix_t;
-	typedef typename DIMENSIONS::input_state_matrix_array_t input_state_matrix_array_t;
-
-	typedef SystemObservation<quadrotor::STATE_DIM_, quadrotor::INPUT_DIM_> system_observation_t;
-
-	typedef RosMsgConversions<quadrotor::STATE_DIM_, quadrotor::INPUT_DIM_> ros_msg_conversions_t;
-
-	typedef LinearInterpolation<state_vector_t, Eigen::aligned_allocator<state_vector_t> > state_linear_interpolation_t;
-	typedef LinearInterpolation<input_vector_t, Eigen::aligned_allocator<input_vector_t> > input_linear_interpolation_t;
-	typedef LinearInterpolation<input_state_matrix_t, Eigen::aligned_allocator<input_state_matrix_t>> gain_linear_interpolation_t;
-
-	/**
-	 * Default constructor
-	 */
-	MRT_ROS_Quadrotor() = default;
-
-	/**
-	 * Constructor
-	 *
-	 * @param [in] logicRules: A logic rule class of derived from the hybrid logicRules base.
-	 * @param [in] useFeedforwardPolicy: Whether to receive the MPC feedforward (true) or MPC feedback policy (false).
-	 * @param [in] robotName: The robot's name.
-	 */
-	MRT_ROS_Quadrotor(const std::string& robotName = "robot")
-
-	: BASE(robotName)
-	{}
-
-	/**
-	 * Destructor
-	 */
-	virtual ~MRT_ROS_Quadrotor() = default;
-
-	/**
-	 * This method will be called either after the very fist call of the class or after a call to reset().
-	 * Users can use this function for any sort of initialization that they may need in the first call.
-	 *
-	 * @param [in] planObservation: The observation of the policy.
-	 */
-	virtual void initCall(
-			const system_observation_t& planObservation) override {}
-
-};
+using MRT_ROS_Quadrotor = MRT_ROS_Interface<quadrotor::STATE_DIM_, quadrotor::INPUT_DIM_>;
 
 } // namespace quadrotor
 } // namespace ocs2

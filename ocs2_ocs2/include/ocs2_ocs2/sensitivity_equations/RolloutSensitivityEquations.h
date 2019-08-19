@@ -37,6 +37,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_core/dynamics/ControlledSystemBase.h>
 #include <ocs2_core/control/LinearController.h>
 #include <ocs2_core/misc/LinearInterpolation.h>
+#include <ocs2_core/misc/Numerics.h>
 
 namespace ocs2{
 
@@ -146,11 +147,11 @@ public:
 			const input_vector_t& nabla_u,
 			state_vector_t& derivative) {
 
-		auto greatestLessTimeStampIndex = AmFunc_.interpolate(t, Am_);
-		BmFunc_.interpolate(t, Bm_, greatestLessTimeStampIndex);
+		auto indexAlpha = AmFunc_.interpolate(t, Am_);
+		BmFunc_.interpolate(indexAlpha,  Bm_);
 
-		if (std::abs(multiplier_) > 1e-9) {
-			flowMapFunc_.interpolate(t, flowMap_, greatestLessTimeStampIndex);
+		if (!numerics::almost_eq(multiplier_, 0.0)) {
+			flowMapFunc_.interpolate(indexAlpha,  flowMap_);
 			derivative = Am_*nabla_x + Bm_*nabla_u + multiplier_*flowMap_;
 		} else {
 			derivative = Am_*nabla_x + Bm_*nabla_u;

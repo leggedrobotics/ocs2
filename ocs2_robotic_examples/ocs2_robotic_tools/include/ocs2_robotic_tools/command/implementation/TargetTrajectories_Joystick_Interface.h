@@ -34,10 +34,12 @@ namespace ocs2{
 /******************************************************************************************************/
 template <typename SCALAR_T>
 TargetTrajectories_Joystick_Interface<SCALAR_T>::TargetTrajectories_Joystick_Interface(
-		const std::string& robotName /*= "robot"*/,
+        int argc,
+        char* argv[],
+        const std::string& robotName /*= "robot"*/,
 		const size_t targetCommandSize /*= 0*/,
 		const scalar_array_t& targetCommandLimits /*= scalar_array_t()*/)
-	: BASE(robotName)
+	: BASE(argc, argv, robotName)
 	, targetCommandSize_(targetCommandSize)
 	, targetCommandLimits_(targetCommandLimits)
 {

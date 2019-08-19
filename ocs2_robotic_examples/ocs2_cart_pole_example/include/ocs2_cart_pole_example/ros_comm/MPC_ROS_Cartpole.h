@@ -41,26 +41,26 @@ class MPC_ROS_Cartpole : public MPC_ROS_Interface<cartpole::STATE_DIM_, cartpole
 public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-	typedef MPC_ROS_Interface<cartpole::STATE_DIM_, cartpole::INPUT_DIM_> BASE;
+	using BASE = MPC_ROS_Interface<cartpole::STATE_DIM_, cartpole::INPUT_DIM_>;
 
-	typedef typename mpc_t::scalar_t scalar_t;
-	typedef typename mpc_t::scalar_array_t scalar_array_t;
-	typedef typename mpc_t::size_array_t size_array_t;
-	typedef typename mpc_t::state_vector_t state_vector_t;
-	typedef typename mpc_t::state_vector_array_t state_vector_array_t;
-	typedef typename mpc_t::state_vector_array2_t state_vector_array2_t;
-	typedef typename mpc_t::input_vector_t input_vector_t;
-	typedef typename mpc_t::input_vector_array_t input_vector_array_t;
-	typedef typename mpc_t::input_vector_array2_t input_vector_array2_t;
-	typedef typename mpc_t::controller_t controller_t;
-	typedef typename mpc_t::input_state_matrix_t input_state_matrix_t;
-	typedef typename mpc_t::input_state_matrix_array_t input_state_matrix_array_t;
+	using scalar_t = typename mpc_t::scalar_t;
+	using scalar_array_t = typename mpc_t::scalar_array_t;
+	using size_array_t = typename mpc_t::size_array_t;
+	using state_vector_t = typename mpc_t::state_vector_t;
+	using state_vector_array_t = typename mpc_t::state_vector_array_t;
+	using state_vector_array2_t = typename mpc_t::state_vector_array2_t;
+	using input_vector_t = typename mpc_t::input_vector_t;
+	using input_vector_array_t = typename mpc_t::input_vector_array_t;
+	using input_vector_array2_t = typename mpc_t::input_vector_array2_t;
+	using controller_t = typename mpc_t::controller_t;
+	using input_state_matrix_t = typename mpc_t::input_state_matrix_t;
+	using input_state_matrix_array_t = typename mpc_t::input_state_matrix_array_t;
 
-	typedef CostDesiredTrajectories<scalar_t> cost_desired_trajectories_t;
+	using cost_desired_trajectories_t = CostDesiredTrajectories<scalar_t>;
 
-	typedef SystemObservation<cartpole::STATE_DIM_, cartpole::INPUT_DIM_> system_observation_t;
+	using system_observation_t = SystemObservation<cartpole::STATE_DIM_, cartpole::INPUT_DIM_>;
 
-	typedef RosMsgConversions<cartpole::STATE_DIM_, cartpole::INPUT_DIM_> ros_msg_conversions_t;
+	using ros_msg_conversions_t = RosMsgConversions<cartpole::STATE_DIM_, cartpole::INPUT_DIM_>;
 
 	/**
 	 * Default constructor
@@ -76,7 +76,7 @@ public:
 	MPC_ROS_Cartpole(
 			mpc_t &mpc,
 			const std::string &nodeName = "robot_mpc")
-	: BASE(mpc, nodeName) {}
+	: BASE(&mpc, nodeName) {}
 
 	/**
 	 * Default destructor.

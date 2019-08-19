@@ -30,137 +30,101 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifndef AUTOMATICDIFFERENTIATIONBASE_OCS2_H_
 #define AUTOMATICDIFFERENTIATIONBASE_OCS2_H_
 
-#include <functional>
 #include <Eigen/Core>
 #include <cppad/cg.hpp>
+#include <functional>
 
-namespace ocs2{
+namespace ocs2 {
 
-template <int DOMAIN_DIM, int RANGE_DIM, typename SCALAR_T, int VARIABLE_DIM=DOMAIN_DIM>
-class AutomaticDifferentiationBase
-{
-public:
-	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+template <int DOMAIN_DIM, int RANGE_DIM, typename SCALAR_T, int VARIABLE_DIM = DOMAIN_DIM>
+class AutomaticDifferentiationBase {
+ public:
+  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-	using domain_vector_t = Eigen::Matrix<SCALAR_T, DOMAIN_DIM, 1>;
-	using domain_matrix_t = Eigen::Matrix<SCALAR_T, DOMAIN_DIM, DOMAIN_DIM>;
-	using range_vector_t = Eigen::Matrix<SCALAR_T, RANGE_DIM, 1>;
-	using range_matrix_t = Eigen::Matrix<SCALAR_T, RANGE_DIM, RANGE_DIM>;
-	using variable_vector_t = Eigen::Matrix<SCALAR_T, VARIABLE_DIM, 1>;
-	using variable_matrix_t = Eigen::Matrix<SCALAR_T, VARIABLE_DIM, VARIABLE_DIM>;
-	using range_domain_matrix_t = Eigen::Matrix<SCALAR_T, RANGE_DIM, DOMAIN_DIM>;
-	using domain_range_matrix_t = Eigen::Matrix<SCALAR_T, DOMAIN_DIM, RANGE_DIM>;
+  using domain_vector_t = Eigen::Matrix<SCALAR_T, DOMAIN_DIM, 1>;
+  using domain_matrix_t = Eigen::Matrix<SCALAR_T, DOMAIN_DIM, DOMAIN_DIM>;
+  using range_vector_t = Eigen::Matrix<SCALAR_T, RANGE_DIM, 1>;
+  using range_matrix_t = Eigen::Matrix<SCALAR_T, RANGE_DIM, RANGE_DIM>;
+  using variable_vector_t = Eigen::Matrix<SCALAR_T, VARIABLE_DIM, 1>;
+  using variable_matrix_t = Eigen::Matrix<SCALAR_T, VARIABLE_DIM, VARIABLE_DIM>;
+  using range_domain_matrix_t = Eigen::Matrix<SCALAR_T, RANGE_DIM, DOMAIN_DIM>;
+  using domain_range_matrix_t = Eigen::Matrix<SCALAR_T, DOMAIN_DIM, RANGE_DIM>;
 
-	explicit AutomaticDifferentiationBase(
-			int domainDim = DOMAIN_DIM,
-			int rangeDim = RANGE_DIM,
-			int variableDim = VARIABLE_DIM)
+  explicit AutomaticDifferentiationBase(int domainDim = DOMAIN_DIM, int rangeDim = RANGE_DIM, int variableDim = VARIABLE_DIM)
 
-	: domainDim_(domainDim)
-	, rangeDim_(rangeDim)
-	, variableDim_(variableDim)
-	{}
+      : domainDim_(domainDim), rangeDim_(rangeDim), variableDim_(variableDim) {}
 
-	virtual ~AutomaticDifferentiationBase() = default;
+  virtual ~AutomaticDifferentiationBase() = default;
 
-	inline size_t domain() {
-		return domainDim_;
-	}
+  inline size_t domain() { return domainDim_; }
 
-	inline size_t range() {
-		return rangeDim_;
-	}
+  inline size_t range() { return rangeDim_; }
 
-	virtual void computeForwardModel(bool computeForwardModel) = 0;
+  virtual void computeForwardModel(bool computeForwardModel) = 0;
 
-	virtual void computeJacobianModel(bool computeJacobianModel) = 0;
+  virtual void computeJacobianModel(bool computeJacobianModel) = 0;
 
-	virtual void computeHessianModel(bool computeHessianModel) = 0;
+  virtual void computeHessianModel(bool computeHessianModel) = 0;
 
-	virtual AutomaticDifferentiationBase* clone() const = 0;
+  virtual AutomaticDifferentiationBase* clone() const = 0;
 
-	virtual void createModels(
-			const int& domainDim,
-			const int& rangeDim,
-			const std::string& modelName,
-			const std::string& libraryFolder = "",
-			bool verbose = true,
-			bool cgJIT = true) = 0;
+  virtual void createModels(const int& domainDim, const int& rangeDim, const std::string& modelName, const std::string& libraryFolder = "",
+                            bool verbose = true, bool cgJIT = true) = 0;
 
-	virtual void createModels(
-			const std::string& modelName,
-			const std::string& libraryFolder = "",
-			bool verbose = true,
-			bool cgJIT = true) = 0;
+  virtual void createModels(const std::string& modelName, const std::string& libraryFolder = "", bool verbose = true,
+                            bool cgJIT = true) = 0;
 
-	virtual bool loadModels(
-			const std::string& modelName,
-			const std::string& libraryFolder = "",
-			bool verbose = true) = 0;
+  virtual bool loadModels(const std::string& modelName, const std::string& libraryFolder = "", bool verbose = true) = 0;
 
-	virtual void getSparsityPattern(
-			range_domain_matrix_t& sparsityPattern) const = 0;
+  virtual void getSparsityPattern(range_domain_matrix_t& sparsityPattern) const = 0;
 
-	virtual bool getFunctionValue(
-			const domain_vector_t& x,
-			range_vector_t& funcValue) = 0;
+  virtual bool getFunctionValue(const domain_vector_t& x, range_vector_t& funcValue) = 0;
 
-	virtual bool getJacobian(
-			const domain_vector_t& x,
-			domain_range_matrix_t& jacobian) = 0;
+  virtual bool getJacobian(const domain_vector_t& x, domain_range_matrix_t& jacobian) = 0;
 
-	virtual bool getHessian(
-			const domain_vector_t& x,
-			variable_matrix_t& hessian, size_t outputIndex=0) = 0;
+  virtual bool getHessian(const domain_vector_t& x, variable_matrix_t& hessian, size_t outputIndex = 0) = 0;
 
+ protected:
+  inline void extractSparsityPattern(const range_domain_matrix_t& sparsityPattern, std::vector<size_t>& rowsJacobian,
+                                     std::vector<size_t>& colsJacobian, std::vector<size_t>& rowsHessian,
+                                     std::vector<size_t>& colsHessian) {
+    // Jacobian
+    rowsJacobian.clear();
+    colsJacobian.clear();
 
-protected:
-	inline void extractSparsityPattern(
-			const range_domain_matrix_t& sparsityPattern,
-			std::vector<size_t>& rowsJacobian,
-			std::vector<size_t>& colsJacobian,
-			std::vector<size_t>& rowsHessian,
-			std::vector<size_t>& colsHessian)  {
+    for (size_t i = 0; i < rangeDim_; i++) {
+      for (size_t j = 0; j < domainDim_; j++) {
+        if (sparsityPattern(i, j) > 0) {
+          rowsJacobian.push_back(i);
+          colsJacobian.push_back(j);
+        }
+      }
+    }
 
-		// Jacobian
-		rowsJacobian.clear();
-		colsJacobian.clear();
+    // Hessian
+    domain_vector_t sparsityPatternSum = sparsityPattern.colwise().maxCoeff().transpose();
 
-		for (size_t i=0; i<rangeDim_; i++) {
-			for (size_t j=0; j<domainDim_; j++) {
-				if (sparsityPattern(i,j)>0) {
-					rowsJacobian.push_back(i);
-					colsJacobian.push_back(j);
-				}
-			}
-		}
+    rowsHessian.clear();
+    colsHessian.clear();
 
-		// Hessian
-		domain_vector_t sparsityPatternSum = sparsityPattern.colwise().maxCoeff().transpose();
+    for (size_t i = 0; i < domainDim_; i++) {
+      for (size_t j = i; j < domainDim_; j++) {
+        if (sparsityPatternSum(i) > 0 && sparsityPatternSum(j) > 0) {
+          rowsHessian.push_back(i);
+          colsHessian.push_back(j);
+        }
+      }
+    }
+  }
 
-		rowsHessian.clear();
-		colsHessian.clear();
-
-		for (size_t i=0; i<domainDim_; i++) {
-			for (size_t j=i; j<domainDim_; j++) {
-				if (sparsityPatternSum(i)>0 && sparsityPatternSum(j)>0) {
-					rowsHessian.push_back(i);
-					colsHessian.push_back(j);
-				}
-			}
-		}
-
-	}
-
-	/*************
-	 * Variables
-	 *************/
-	int domainDim_;
-	int rangeDim_;
-	int variableDim_;
-
+  /*************
+   * Variables
+   *************/
+  int domainDim_;
+  int rangeDim_;
+  int variableDim_;
 };
 
-} // namespace ocs2
+}  // namespace ocs2
 
 #endif /* AUTOMATICDIFFERENTIATIONBASE_OCS2_H_ */

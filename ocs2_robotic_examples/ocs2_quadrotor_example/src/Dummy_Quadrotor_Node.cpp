@@ -31,54 +31,41 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "ocs2_quadrotor_example/QuadrotorInterface.h"
 #include "ocs2_quadrotor_example/definitions.h"
-#include "ocs2_quadrotor_example/ros_comm/MRT_ROS_Quadrotor.h"
 #include "ocs2_quadrotor_example/ros_comm/MRT_ROS_Dummy_Quadrotor.h"
+#include "ocs2_quadrotor_example/ros_comm/MRT_ROS_Quadrotor.h"
 
 using namespace ocs2;
 using namespace quadrotor;
 
-int main(int argc, char **argv)
-{
-	// task file
-	if (argc <= 1) throw std::runtime_error("No task file specified. Aborting.");
-	std::string taskFileFolderName = std::string(argv[1]);
+int main(int argc, char** argv) {
+  // task file
+  if (argc <= 1) {
+    throw std::runtime_error("No task file specified. Aborting.");
+  }
+  std::string taskFileFolderName = std::string(argv[1]);  // NOLINT(cppcoreguidelines-pro-bounds-pointer-arithmetic)
 
-	// quadrotorInterface
-	QuadrotorInterface quadrotorInterface(taskFileFolderName);
+  QuadrotorInterface quadrotorInterface(taskFileFolderName);
 
-	typedef MRT_ROS_Quadrotor mrt_t;
-	typedef mrt_t::BASE::Ptr mrt_ptr_t;
-	typedef mrt_t::scalar_t scalar_t;
-	typedef mrt_t::system_observation_t system_observation_t;
+  MRT_ROS_Quadrotor::Ptr mrtPtr(new MRT_ROS_Quadrotor("quadrotor"));
 
-	mrt_ptr_t mrtPtr(new mrt_t("quadrotor"));
+  // Dummy quadrotor
+  MRT_ROS_Dummy_Quadrotor dummyQuadrotor(mrtPtr, quadrotorInterface.mpcSettings().mrtDesiredFrequency_,
+                                         quadrotorInterface.mpcSettings().mpcDesiredFrequency_, &quadrotorInterface.getDynamics());
 
-	// Dummy quadrotor
-	MRT_ROS_Dummy_Quadrotor dummyQuadrotor(
-			mrtPtr,
-			quadrotorInterface.mpcSettings().mrtDesiredFrequency_,
-			quadrotorInterface.mpcSettings().mpcDesiredFrequency_);
+  dummyQuadrotor.launchNodes(argc, argv);
 
-	dummyQuadrotor.launchNodes(argc, argv);
+  // initial state
+  MRT_ROS_Dummy_Quadrotor::system_observation_t initObservation;
+  quadrotorInterface.getInitialState(initObservation.state());
 
-	// initial state
-	MRT_ROS_Dummy_Quadrotor::system_observation_t initObservation;
-	quadrotorInterface.getInitialState(initObservation.state());
+  // initial command
+  MRT_ROS_Dummy_Quadrotor::cost_desired_trajectories_t initCostDesiredTrajectories;
+  initCostDesiredTrajectories.desiredTimeTrajectory().push_back(initObservation.time());
+  initCostDesiredTrajectories.desiredStateTrajectory().push_back(initObservation.state());
+  initCostDesiredTrajectories.desiredInputTrajectory().push_back(initObservation.input());
 
-	// initial command
-	MRT_ROS_Dummy_Quadrotor::cost_desired_trajectories_t initCostDesiredTrajectories;
-	initCostDesiredTrajectories.desiredTimeTrajectory().resize(1);
-	initCostDesiredTrajectories.desiredStateTrajectory().resize(1);
-	initCostDesiredTrajectories.desiredInputTrajectory().resize(1);
-	MRT_ROS_Dummy_Quadrotor::scalar_array_t targetPoseDisplacementVelocity(12, 0.0);
-	TargetPoseTransformation<MRT_ROS_Dummy_Quadrotor::scalar_t>::toCostDesiredState(
-			targetPoseDisplacementVelocity, initCostDesiredTrajectories.desiredStateTrajectory().front());
+  // run dummy
+  dummyQuadrotor.run(initObservation, initCostDesiredTrajectories);
 
-	// run dummy
-	dummyQuadrotor.run(initObservation, initCostDesiredTrajectories);
-
-	// Successful exit
-	return 0;
+  return 0;
 }
-
-

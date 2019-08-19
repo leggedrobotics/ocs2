@@ -1,6 +1,5 @@
 void modelName_atomic_functions(const char*** names, unsigned long* n) {
-   static const char* atomic[0] = {};
-   *names = atomic;
-   *n = 0;
+  static const char* atomic[0] = {};
+  *names = atomic;
+  *n = 0;
 }
-

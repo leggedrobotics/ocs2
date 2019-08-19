@@ -38,66 +38,45 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 namespace ocs2 {
 namespace quadrotor {
 
-class MRT_ROS_Dummy_Quadrotor : public MRT_ROS_Dummy_Loop<quadrotor::STATE_DIM_, quadrotor::INPUT_DIM_>
-{
-public:
-	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+class MRT_ROS_Dummy_Quadrotor : public MRT_ROS_Dummy_Loop<quadrotor::STATE_DIM_, quadrotor::INPUT_DIM_> {
+ public:
+  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-	typedef MRT_ROS_Dummy_Loop<quadrotor::STATE_DIM_, quadrotor::INPUT_DIM_> BASE;
+  using BASE = MRT_ROS_Dummy_Loop<quadrotor::STATE_DIM_, quadrotor::INPUT_DIM_>;
 
-	/**
-	 * Constructor.
-	 *
-	 * @param [in] mrtPtr: A pointer to MRT.
-	 * @param [in] mrtDesiredFrequency: MRT loop frequency in Hz. This should always set to a positive number.
-	 * @param [in] mpcDesiredFrequency: MPC loop frequency in Hz. If set to a positive number, MPC loop
-	 * will be simulated to run by this frequency. Note that this might not be the MPC's realtime frequency.
-	 */
-	MRT_ROS_Dummy_Quadrotor(
-			const mrt_ptr_t& mrtPtr,
-			const scalar_t& mrtDesiredFrequency,
-			const scalar_t& mpcDesiredFrequency)
-	: BASE(mrtPtr, mrtDesiredFrequency, mpcDesiredFrequency)
-	{}
+  /**
+   * Constructor.
+   *
+   * @param [in] mrtPtr: A pointer to MRT.
+   * @param [in] mrtDesiredFrequency: MRT loop frequency in Hz. This should always set to a positive number.
+   * @param [in] mpcDesiredFrequency: MPC loop frequency in Hz. If set to a positive number, MPC loop
+   * will be simulated to run by this frequency. Note that this might not be the MPC's realtime frequency.
+   * @param [in] systemPtr: Optional pointer to the system dynamics. If provided, the dummy will roll out the
+   * received controller using these dynamics instead of just sending back a planned state.
+   * @param [in] rolloutSettings settings to use when dummy rolls out the received controller
+   */
+  MRT_ROS_Dummy_Quadrotor(const mrt_ptr_t& mrtPtr, const scalar_t& mrtDesiredFrequency, const scalar_t& mpcDesiredFrequency,
+                          const controlled_system_base_t* systemPtr = nullptr, Rollout_Settings rolloutSettings = Rollout_Settings())
+      : BASE(mrtPtr, mrtDesiredFrequency, mpcDesiredFrequency, systemPtr, rolloutSettings) {}
 
-	/**
-	 * Default destructor.
-	 */
-	virtual ~MRT_ROS_Dummy_Quadrotor() = default;
+  /**
+   * Default destructor.
+   */
+  virtual ~MRT_ROS_Dummy_Quadrotor() = default;
 
-protected:
-	/**
-	 * Launches the visualization node
-	 *
-	 * @param [in] argc: command line number of inputs.
-	 * @param [in] argv: command line inputs' value.
-	 */
-	virtual void launchVisualizerNode(int argc, char* argv[]) override {
-	}
-
-	/**
-	 * Visualizes the current observation.
-	 *
-	 * @param [in] observation: The current observation.
-	 * @param [in] costDesiredTrajectories: The commanded target trajectory or point.
-	 */
-	virtual void publishVisualizer(
-			const system_observation_t& observation,
-			const cost_desired_trajectories_t& costDesiredTrajectories) override {
-
-		static tf::TransformBroadcaster transformBroadcaster;
-		tf::Transform transform;
-		transform.setOrigin(tf::Vector3(observation.state()(0), observation.state()(1), observation.state()(2)));
-		tf::Quaternion q = tf::createQuaternionFromRPY(observation.state()(3),
-				observation.state()(4),
-				observation.state()(5));
-		transform.setRotation(q);
-		transformBroadcaster.sendTransform(tf::StampedTransform(transform, ros::Time::now(), "world", "base"));
-	}
-
+ protected:
+  void publishVisualizer(const system_observation_t& observation, const commandData_t& command, const policyData_t& policy) override {
+    const auto& costDesiredTrajectories = command.mpcCostDesiredTrajectories_;
+    static tf::TransformBroadcaster transformBroadcaster;
+    tf::Transform transform;
+    transform.setOrigin(tf::Vector3(observation.state()(0), observation.state()(1), observation.state()(2)));
+    tf::Quaternion q = tf::createQuaternionFromRPY(observation.state()(3), observation.state()(4), observation.state()(5));
+    transform.setRotation(q);
+    transformBroadcaster.sendTransform(tf::StampedTransform(transform, ros::Time::now(), "world", "base"));
+  }
 };
 
-} // namespace quadrotor
-} // namespace ocs2
+}  // namespace quadrotor
+}  // namespace ocs2
 
 #endif /* MRT_ROS_DUMMY_QUADROTOR_OCS2_H_ */

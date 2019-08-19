@@ -121,6 +121,21 @@ ballbot_interface
 	useCostAD                      0    ;
 }
 
+pathIntegral
+{
+  gamma 0.01 ; temperature/level of noise
+  numSamples 200 ; how many trajectories to sample
+  debugPrint 0 ; verbosity level
+
+  rollout_settings
+  {
+    minTimeStep 0.01; will be used as time step in PI
+    integratorType 0; must be Euler (0) for PI to function
+    checkNumericalStability 0
+    reconstructInputTrajectory false; must be false for PI to function
+  }
+}
+
 ; initial state
 initialState
 {
@@ -158,7 +173,7 @@ Q
 ; control weight matrix
 R
 {
-   scaling 1e+0
+   scaling 1e+1
 
    (0,0)  2.0  ; torque wheel1
    (1,1)  2.0  ; torque wheel2
@@ -169,13 +184,13 @@ R
 Q_final
 {
     scaling 1e+0
-	
+
    (0,0) 0.0  ; px
    (1,1) 0.0  ; py
    (2,2) 0.0  ; thetaz
    (3,3) 0.0  ; thetay
    (4,4) 0.0  ; thetax
-   
+
    (5,5) 0.0 ; px_dot
    (6,6) 0.0 ; py_dot
    (7,7) 0.0 ; thetaz_dot

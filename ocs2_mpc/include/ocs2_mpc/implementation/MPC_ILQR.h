@@ -35,58 +35,48 @@ namespace ocs2 {
 template <size_t STATE_DIM, size_t INPUT_DIM>
 MPC_ILQR<STATE_DIM, INPUT_DIM>::MPC_ILQR()
 
-	: BASE()
-	, optimizedTimeTrajectoriesStock_(0)
-	, optimizedStateTrajectoriesStock_(0)
-	, optimizedInputTrajectoriesStock_(0)
-{}
+    : BASE(), optimizedTimeTrajectoriesStock_(0), optimizedStateTrajectoriesStock_(0), optimizedInputTrajectoriesStock_(0) {}
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
-MPC_ILQR<STATE_DIM, INPUT_DIM>::MPC_ILQR(
-		const controlled_system_base_t* systemDynamicsPtr,
-		const derivatives_base_t* systemDerivativesPtr,
-		const constraint_base_t* systemConstraintsPtr,
-		const cost_function_base_t* costFunctionPtr,
-		const operating_trajectories_base_t* operatingTrajectoriesPtr,
-		const scalar_array_t& partitioningTimes,
-		const ILQR_Settings& ilqrSettings /* = ILQR_Settings()*/,
-		const MPC_Settings& mpcSettings /* = MPC_Settings()*/,
-		std::shared_ptr<HybridLogicRules> logicRulesPtr /* = nullptr*/,
-		const mode_sequence_template_t* modeSequenceTemplatePtr /* = nullptr*/,
-		const cost_function_base_t* heuristicsFunctionPtr /*= nullptr*/)
+MPC_ILQR<STATE_DIM, INPUT_DIM>::MPC_ILQR(const controlled_system_base_t* systemDynamicsPtr, const derivatives_base_t* systemDerivativesPtr,
+                                         const constraint_base_t* systemConstraintsPtr, const cost_function_base_t* costFunctionPtr,
+                                         const operating_trajectories_base_t* operatingTrajectoriesPtr,
+                                         const scalar_array_t& partitioningTimes, const ILQR_Settings& ilqrSettings /* = ILQR_Settings()*/,
+                                         const MPC_Settings& mpcSettings /* = MPC_Settings()*/,
+                                         std::shared_ptr<HybridLogicRules> logicRulesPtr /* = nullptr*/,
+                                         const mode_sequence_template_t* modeSequenceTemplatePtr /* = nullptr*/,
+                                         const cost_function_base_t* heuristicsFunctionPtr /*= nullptr*/)
 
-	: BASE(partitioningTimes, mpcSettings)
-	, optimizedTimeTrajectoriesStock_(0)
-	, optimizedStateTrajectoriesStock_(0)
-	, optimizedInputTrajectoriesStock_(0)
+    : BASE(partitioningTimes, mpcSettings),
+      optimizedTimeTrajectoriesStock_(0),
+      optimizedStateTrajectoriesStock_(0),
+      optimizedInputTrajectoriesStock_(0)
 
 {
-	// ILQR
-	if (ilqrSettings.ddpSettings_.useMultiThreading_) {
-		ilqrPtr_.reset( new ilqr_mp_t(
-				systemDynamicsPtr, systemDerivativesPtr, systemConstraintsPtr, costFunctionPtr, operatingTrajectoriesPtr,
-				ilqrSettings, logicRulesPtr, heuristicsFunctionPtr) );
-	} else {
-		ilqrPtr_.reset( new ilqr_t(
-				systemDynamicsPtr, systemDerivativesPtr, systemConstraintsPtr, costFunctionPtr, operatingTrajectoriesPtr,
-				ilqrSettings, logicRulesPtr, heuristicsFunctionPtr) );
-	}
+  // ILQR
+  if (ilqrSettings.ddpSettings_.useMultiThreading_) {
+    ilqrPtr_.reset(new ilqr_mp_t(systemDynamicsPtr, systemDerivativesPtr, systemConstraintsPtr, costFunctionPtr, operatingTrajectoriesPtr,
+                                 ilqrSettings, logicRulesPtr, heuristicsFunctionPtr));
+  } else {
+    ilqrPtr_.reset(new ilqr_t(systemDynamicsPtr, systemDerivativesPtr, systemConstraintsPtr, costFunctionPtr, operatingTrajectoriesPtr,
+                              ilqrSettings, logicRulesPtr, heuristicsFunctionPtr));
+  }
 
-	// set base solver's pointer
-	BASE::setBaseSolverPtr(ilqrPtr_.get());
+  // set base solver's pointer
+  BASE::setBaseSolverPtr(ilqrPtr_.get());
 
-	// set mode sequence template
-	if (modeSequenceTemplatePtr) {
-		ilqrPtr_->getLogicRulesPtr()->setModeSequenceTemplate(*modeSequenceTemplatePtr);
+  // set mode sequence template
+  if (modeSequenceTemplatePtr) {
+    ilqrPtr_->getLogicRulesPtr()->setModeSequenceTemplate(*modeSequenceTemplatePtr);
 
-		if (mpcSettings.recedingHorizon_) {
-			const scalar_t timeHorizon = BASE::initPartitioningTimes_.back() - BASE::initPartitioningTimes_.front();
-			ilqrPtr_->getLogicRulesPtr()->insertInternalModeSequenceTemplate(timeHorizon, 2.0*timeHorizon);
-		}
-	}
+    if (mpcSettings.recedingHorizon_) {
+      const scalar_t timeHorizon = BASE::initPartitioningTimes_.back() - BASE::initPartitioningTimes_.front();
+      ilqrPtr_->getLogicRulesPtr()->insertInternalModeSequenceTemplate(timeHorizon, 2.0 * timeHorizon);
+    }
+  }
 }
 
 /******************************************************************************************************/
@@ -94,102 +84,85 @@ MPC_ILQR<STATE_DIM, INPUT_DIM>::MPC_ILQR(
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
 ILQR_Settings& MPC_ILQR<STATE_DIM, INPUT_DIM>::ilqrSettings() {
-
-	return ilqrPtr_->settings();
+  return ilqrPtr_->settings();
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
-typename MPC_ILQR<STATE_DIM, INPUT_DIM>::ilqr_base_t*
-MPC_ILQR<STATE_DIM, INPUT_DIM>::getSolverPtr() {
-
-	return ilqrPtr_.get();
+typename MPC_ILQR<STATE_DIM, INPUT_DIM>::ilqr_base_t* MPC_ILQR<STATE_DIM, INPUT_DIM>::getSolverPtr() {
+  return ilqrPtr_.get();
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
-void MPC_ILQR<STATE_DIM, INPUT_DIM>::calculateController(
-		const scalar_t& initTime,
-		const state_vector_t& initState,
-		const scalar_t& finalTime,
-		const scalar_array2_t*& timeTrajectoriesStockPtr,
-		const state_vector_array2_t*& stateTrajectoriesStockPtr,
-		const input_vector_array2_t*& inputTrajectoriesStockPtr,
-		const controller_ptr_array_t*& controllerStockPtr)  {
+void MPC_ILQR<STATE_DIM, INPUT_DIM>::calculateController(const scalar_t& initTime, const state_vector_t& initState,
+                                                         const scalar_t& finalTime, const scalar_array2_t*& timeTrajectoriesStockPtr,
+                                                         const state_vector_array2_t*& stateTrajectoriesStockPtr,
+                                                         const input_vector_array2_t*& inputTrajectoriesStockPtr,
+                                                         const controller_ptr_array_t*& controllerStockPtr) {
+  //*****************************************************************************************
+  // cost goal check
+  //*****************************************************************************************
+  if (BASE::initRun_ && !ilqrPtr_->costDesiredTrajectoriesUpdated()) {
+    std::cerr << "### WARNING: The initial desired trajectories are not set. "
+                 "This may cause undefined behavior. Use the MPC_ILQR::setCostDesiredTrajectories() "
+                 "method to provide appropriate goal trajectories."
+              << std::endl;
+  }
 
-	//*****************************************************************************************
-	// cost goal check
-	//*****************************************************************************************
-	if (BASE::initRun_==true && ilqrPtr_->costDesiredTrajectoriesUpdated()==false) {
-		std::cerr << "### WARNING: The initial desired trajectories are not set. "
-				"This may cause undefined behavior. Use the MPC_ILQR::setCostDesiredTrajectories() "
-				"method to provide appropriate goal trajectories." << std::endl;
-	}
+  //*****************************************************************************************
+  // updating real-time iteration settings
+  //*****************************************************************************************
+  // number of iterations
+  if (BASE::initRun_ /*|| ilqrPtr_->getController().at(BASE::finalActivePartitionIndex_).empty()*/) {
+    ilqrPtr_->ddpSettings().maxNumIterations_ = BASE::mpcSettings_.initMaxNumIterations_;
+    ilqrPtr_->ddpSettings().maxLearningRate_ = BASE::mpcSettings_.initMaxLearningRate_;
+    ilqrPtr_->ddpSettings().minLearningRate_ = BASE::mpcSettings_.initMinLearningRate_;
+  } else {
+    ilqrPtr_->ddpSettings().maxNumIterations_ = BASE::mpcSettings_.runtimeMaxNumIterations_;
+    ilqrPtr_->ddpSettings().maxLearningRate_ = BASE::mpcSettings_.runtimeMaxLearningRate_;
+    ilqrPtr_->ddpSettings().minLearningRate_ = BASE::mpcSettings_.runtimeMinLearningRate_;
+  }
 
-	//*****************************************************************************************
-	// updating real-time iteration settings
-	//*****************************************************************************************
-	// number of iterations
-	if (BASE::initRun_==true /*|| ilqrPtr_->getController().at(BASE::finalActivePartitionIndex_).empty()==true*/) {
-		ilqrPtr_->ddpSettings().maxNumIterations_  = BASE::mpcSettings_.initMaxNumIterations_;
-		ilqrPtr_->ddpSettings().maxLearningRate_ = BASE::mpcSettings_.initMaxLearningRate_;
-		ilqrPtr_->ddpSettings().minLearningRate_ = BASE::mpcSettings_.initMinLearningRate_;
-	} else {
-		ilqrPtr_->ddpSettings().maxNumIterations_  = BASE::mpcSettings_.runtimeMaxNumIterations_;
-		ilqrPtr_->ddpSettings().maxLearningRate_ = BASE::mpcSettings_.runtimeMaxLearningRate_;
-		ilqrPtr_->ddpSettings().minLearningRate_ = BASE::mpcSettings_.runtimeMinLearningRate_;
-	}
+  // use parallel Riccati solver at each call of realtime-iteration ILQR
+  if (!BASE::initRun_) {
+    ilqrPtr_->useParallelRiccatiSolverFromInitItr(BASE::mpcSettings_.useParallelRiccatiSolver_ && BASE::mpcSettings_.recedingHorizon_);
+  } else {
+    ilqrPtr_->useParallelRiccatiSolverFromInitItr(false);
+  }
 
-	// use parallel Riccati solver at each call of realtime-iteration ILQR
-	if (BASE::initRun_==false) {
-		if (BASE::mpcSettings_.useParallelRiccatiSolver_==true && BASE::mpcSettings_.recedingHorizon_==true) {
-			ilqrPtr_->useParallelRiccatiSolverFromInitItr(true);
-		} else {
-			ilqrPtr_->useParallelRiccatiSolverFromInitItr(false);
-		}
-	} else {
-		ilqrPtr_->useParallelRiccatiSolverFromInitItr(false);
-	}
+  //*****************************************************************************************
+  // calculate controller
+  //*****************************************************************************************
+  if (BASE::mpcSettings_.coldStart_ || BASE::initRun_) {
+    if (BASE::mpcSettings_.debugPrint_) {
+      std::cerr << "### Using cold initialization." << std::endl;
+    }
 
-	//*****************************************************************************************
-	// calculate controller
-	//*****************************************************************************************
-	if (BASE::mpcSettings_.coldStart_==true || BASE::initRun_==true) {
+    ilqrPtr_->run(initTime, initState, finalTime, BASE::partitioningTimes_);
 
-		if (BASE::mpcSettings_.debugPrint_) {
-			std::cerr << "### Using cold initialization." << std::endl;
-		}
+  } else {
+    ilqrPtr_->run(initTime, initState, finalTime, BASE::partitioningTimes_, typename ilqr_base_t::controller_ptr_array_t());
+  }
 
-		ilqrPtr_->run(initTime, initState, finalTime, BASE::partitioningTimes_);
+  //*****************************************************************************************
+  // Get optimized outputs
+  //*****************************************************************************************
+  // swap the optimized trajectories
+  optimizedTimeTrajectoriesStock_.clear();
+  optimizedStateTrajectoriesStock_.clear();
+  optimizedInputTrajectoriesStock_.clear();
+  ilqrPtr_->swapNominalTrajectories(optimizedTimeTrajectoriesStock_, optimizedStateTrajectoriesStock_, optimizedInputTrajectoriesStock_);
+  timeTrajectoriesStockPtr = &optimizedTimeTrajectoriesStock_;
+  stateTrajectoriesStockPtr = &optimizedStateTrajectoriesStock_;
+  inputTrajectoriesStockPtr = &optimizedInputTrajectoriesStock_;
 
-	} else {
-		ilqrPtr_->run(initTime, initState, finalTime, BASE::partitioningTimes_,
-				typename ilqr_base_t::controller_ptr_array_t());
-	}
-
-	//*****************************************************************************************
-	// Get optimized outputs
-	//*****************************************************************************************
-	// swap the optimized trajectories
-	optimizedTimeTrajectoriesStock_.clear();
-	optimizedStateTrajectoriesStock_.clear();
-	optimizedInputTrajectoriesStock_.clear();
-	ilqrPtr_->swapNominalTrajectories(
-			optimizedTimeTrajectoriesStock_,
-			optimizedStateTrajectoriesStock_,
-			optimizedInputTrajectoriesStock_);
-	timeTrajectoriesStockPtr  = &optimizedTimeTrajectoriesStock_;
-	stateTrajectoriesStockPtr = &optimizedStateTrajectoriesStock_;
-	inputTrajectoriesStockPtr = &optimizedInputTrajectoriesStock_;
-
-	// get the optimal controller
-	ilqrPtr_->getControllerPtr(controllerStockPtr);
-
+  // get the optimal controller
+  ilqrPtr_->getControllerPtr(controllerStockPtr);
 }
 
-} // namespace ocs2
-
+}  // namespace ocs2

@@ -55,24 +55,26 @@ public:
 	typedef OdeBase<STATE_DIM> BASE;
 
 	typedef Dimensions<STATE_DIM, INPUT_DIM> DIMENSIONS;
-	using scalar_t = typename DIMENSIONS::scalar_t;
-	using scalar_array_t = typename DIMENSIONS::scalar_array_t;
-	using state_vector_t = typename DIMENSIONS::state_vector_t;
-	using state_vector_array_t = typename DIMENSIONS::state_vector_array_t;
-	using input_vector_t = typename DIMENSIONS::input_vector_t;
-	using input_vector_array_t = typename DIMENSIONS::input_vector_array_t;
-	using input_state_matrix_t = typename DIMENSIONS::input_state_matrix_t;
-	using input_state_matrix_array_t = typename DIMENSIONS::input_state_matrix_array_t;
-	using state_matrix_t = typename DIMENSIONS::state_matrix_t;
-	using state_matrix_array_t = typename DIMENSIONS::state_matrix_array_t ;
-	using input_matrix_t = typename DIMENSIONS::input_matrix_t;
-	using input_matrix_array_t = typename DIMENSIONS::input_matrix_array_t;
-	using state_input_matrix_t = typename DIMENSIONS::state_input_matrix_t;
-	using state_input_matrix_array_t = typename DIMENSIONS::state_input_matrix_array_t;
-	using constraint1_vector_t = typename DIMENSIONS::constraint1_vector_t;
-	using constraint1_vector_array_t = typename DIMENSIONS::constraint1_vector_array_t;
-	using constraint1_state_matrix_t = typename DIMENSIONS::constraint1_state_matrix_t;
-	using constraint1_state_matrix_array_t = typename DIMENSIONS::constraint1_state_matrix_array_t;
+	typedef typename DIMENSIONS::scalar_t       scalar_t;
+	typedef typename DIMENSIONS::scalar_array_t scalar_array_t;
+	typedef typename DIMENSIONS::state_vector_t       state_vector_t;
+	typedef typename DIMENSIONS::state_vector_array_t state_vector_array_t;
+	typedef typename DIMENSIONS::input_vector_t       input_vector_t;
+	typedef typename DIMENSIONS::input_vector_array_t input_vector_array_t;
+	typedef typename DIMENSIONS::input_state_matrix_t       input_state_matrix_t;
+	typedef typename DIMENSIONS::input_state_matrix_array_t input_state_matrix_array_t;
+	typedef typename DIMENSIONS::state_matrix_t       state_matrix_t;
+	typedef typename DIMENSIONS::state_matrix_array_t state_matrix_array_t;
+	typedef typename DIMENSIONS::input_matrix_t       input_matrix_t;
+	typedef typename DIMENSIONS::input_matrix_array_t input_matrix_array_t;
+	typedef typename DIMENSIONS::state_input_matrix_t 		state_input_matrix_t;
+	typedef typename DIMENSIONS::state_input_matrix_array_t state_input_matrix_array_t;
+	typedef typename DIMENSIONS::constraint1_vector_t       constraint1_vector_t;
+	typedef typename DIMENSIONS::constraint1_vector_array_t constraint1_vector_array_t;
+	typedef typename DIMENSIONS::constraint1_state_matrix_t       constraint1_state_matrix_t;
+	typedef typename DIMENSIONS::constraint1_state_matrix_array_t constraint1_state_matrix_array_t;
+	typedef typename DIMENSIONS::dynamic_matrix_t dynamic_matrix_t;
+	typedef typename DIMENSIONS::dynamic_matrix_array_t dynamic_matrix_array_t;
 
 	/**
 	 * Constructor.
@@ -98,8 +100,6 @@ public:
 	 * Sets Data
 	 */
 	void setData(
-			const scalar_t& switchingTimeStart,
-			const scalar_t& switchingTimeFinal,
 			const scalar_array_t* timeStampPtr,
 			const state_input_matrix_array_t* BmPtr,
 			const state_matrix_array_t* AmConstrainedPtr,
@@ -107,17 +107,12 @@ public:
 			const input_state_matrix_array_t* PmPtr,
 			const input_matrix_array_t* RmPtr,
 			const input_matrix_array_t* RmInversePtr,
-			const input_matrix_array_t* RmConstrainedPtr,
+			const dynamic_matrix_array_t *RinvCholPtr,
 			const input_vector_array_t* EvDevProjectedPtr,
 			const scalar_array_t* SmTimeStampPtr,
 			const state_matrix_array_t* SmPtr)  {
 
-
 		BASE::resetNumFunctionCalls();
-
-		switchingTimeStart_ = switchingTimeStart;
-		switchingTimeFinal_ = switchingTimeFinal;
-		scalingFactor_      = switchingTimeFinal - switchingTimeStart;
 
 		BmFunc_.setData(timeStampPtr, BmPtr);
 		AmConstrainedFunc_.setData(timeStampPtr, AmConstrainedPtr);
@@ -125,7 +120,7 @@ public:
 		PmFunc_.setData(timeStampPtr, PmPtr);
 		RmFunc_.setData(timeStampPtr, RmPtr);
 		RmInverseFunc_.setData(timeStampPtr, RmInversePtr);
-		RmConstrainedFunc_.setData(timeStampPtr, RmConstrainedPtr);
+		RinvChol_Func_.setData(timeStampPtr, RinvCholPtr);
 		EvDevProjectedFunc_.setData(timeStampPtr, EvDevProjectedPtr);
 		SmFunc_.setData(SmTimeStampPtr, SmPtr);
 	}
@@ -151,45 +146,40 @@ public:
 		BASE::numFunctionCalls_++;
 
 		// denormalized time
-		const scalar_t t = switchingTimeFinal_ - scalingFactor_*z;
+		const scalar_t t = -z;
 
-		auto greatestLessTimeStampIndex = BmFunc_.interpolate(t, Bm_);
-		AmConstrainedFunc_.interpolate(t, AmConstrained_, greatestLessTimeStampIndex);
-		CmProjectedFunc_.interpolate(t, CmProjected_, greatestLessTimeStampIndex);
-		PmFunc_.interpolate(t, Pm_, greatestLessTimeStampIndex);
-		RmFunc_.interpolate(t, Rm_, greatestLessTimeStampIndex);
-		RmInverseFunc_.interpolate(t, RmInverse_, greatestLessTimeStampIndex);
-		RmConstrainedFunc_.interpolate(t, RmConstrained_, greatestLessTimeStampIndex);
-		EvDevProjectedFunc_.interpolate(t, EvDevProjected_, greatestLessTimeStampIndex);
+		auto indexAlpha = BmFunc_.interpolate(t, Bm_);
+		AmConstrainedFunc_.interpolate(indexAlpha,  AmConstrained_);
+		CmProjectedFunc_.interpolate(indexAlpha,  CmProjected_);
+		PmFunc_.interpolate(indexAlpha,  Pm_);
+		RmFunc_.interpolate(indexAlpha,  Rm_);
+		RmInverseFunc_.interpolate(indexAlpha,  RmInverse_);
+		RinvChol_Func_.interpolate(indexAlpha,  RinvChol_);
+		EvDevProjectedFunc_.interpolate(indexAlpha,  EvDevProjected_);
 
 		SmFunc_.interpolate(t, Sm_);
 
 		// Lm
-		Lm_ = RmInverse_*(Pm_+Bm_.transpose()*Sm_);
+		// TODO: Double check if equations are correct after change to cholesky decomposition approach
+		Lm_ = RinvChol_.transpose() *(Pm_+Bm_.transpose()*Sm_);
 
-		dMvedt_ = (AmConstrained_ - Bm_*RmInverse_*RmConstrained_*Lm_).transpose()*Mve +
-				(CmProjected_-Lm_).transpose()*Rm_*EvDevProjected_;
-
-		dMvedz = scalingFactor_ * dMvedt_;
+		dMvedz = (AmConstrained_ - Bm_*RinvChol_*Lm_).transpose()*Mve +
+				(CmProjected_-RinvChol_*Lm_).transpose()*Rm_*EvDevProjected_;
 	}
 
 
 private:
-	scalar_t switchingTimeStart_ = 0.0;
-	scalar_t switchingTimeFinal_ = 1.0;
-	scalar_t scalingFactor_ = 1.0;
-
 	scalar_t multiplier_ = 0.0;
 
-	EigenLinearInterpolation<state_input_matrix_t> BmFunc_;
-	EigenLinearInterpolation<state_matrix_t> AmConstrainedFunc_;
-	EigenLinearInterpolation<input_state_matrix_t> CmProjectedFunc_;
-	EigenLinearInterpolation<input_state_matrix_t> PmFunc_;
-	EigenLinearInterpolation<input_matrix_t> RmFunc_;
-	EigenLinearInterpolation<input_matrix_t> RmInverseFunc_;
-	EigenLinearInterpolation<input_matrix_t> RmConstrainedFunc_;
-	EigenLinearInterpolation<input_vector_t> EvDevProjectedFunc_;
-	EigenLinearInterpolation<state_matrix_t> SmFunc_;
+	LinearInterpolation<state_input_matrix_t,Eigen::aligned_allocator<state_input_matrix_t>> BmFunc_;
+	LinearInterpolation<state_matrix_t,Eigen::aligned_allocator<state_matrix_t>> AmConstrainedFunc_;
+	LinearInterpolation<input_state_matrix_t,Eigen::aligned_allocator<input_state_matrix_t>> CmProjectedFunc_;
+	LinearInterpolation<input_state_matrix_t,Eigen::aligned_allocator<input_state_matrix_t>> PmFunc_;
+	LinearInterpolation<input_matrix_t,Eigen::aligned_allocator<input_matrix_t>> RmFunc_;
+  	LinearInterpolation<input_matrix_t,Eigen::aligned_allocator<input_matrix_t>> RmInverseFunc_;
+  	EigenLinearInterpolation <dynamic_matrix_t> RinvChol_Func_;
+	LinearInterpolation<input_vector_t,Eigen::aligned_allocator<input_vector_t>> EvDevProjectedFunc_;
+	LinearInterpolation<state_matrix_t,Eigen::aligned_allocator<state_matrix_t>> SmFunc_;
 
 	state_input_matrix_t Bm_;
 	state_matrix_t AmConstrained_;
@@ -197,12 +187,10 @@ private:
 	input_state_matrix_t Pm_;
 	input_matrix_t Rm_;
 	input_matrix_t RmInverse_;
-	input_matrix_t RmConstrained_;
+  	dynamic_matrix_t RinvChol_;
 	input_vector_t EvDevProjected_;
 	state_matrix_t Sm_;
-	input_state_matrix_t Lm_;
-
-	state_vector_t dMvedt_;
+  	dynamic_matrix_t Lm_;
 };
 
 } // namespace ocs2

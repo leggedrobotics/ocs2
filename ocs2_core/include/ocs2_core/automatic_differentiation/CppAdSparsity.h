@@ -5,8 +5,8 @@
 #pragma once
 
 #include <algorithm>
+#include <functional>  // missing header in cg.hpp
 #include <vector>
-#include <functional> // missing header in cg.hpp
 
 #include <cppad/cg.hpp>
 

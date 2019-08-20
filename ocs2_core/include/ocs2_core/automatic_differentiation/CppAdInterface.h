@@ -22,6 +22,8 @@ namespace ocs2 {
 template <typename scalar_t>
 class CppAdInterface {
  public:
+  enum class ApproximationOrder { Zero, First, Second };
+
   using ad_base_t = CppAD::cg::CG<scalar_t>;
   using ad_scalar_t = CppAD::AD<ad_base_t>;
   using dynamic_vector_t = Eigen::Matrix<scalar_t, Eigen::Dynamic, 1>;
@@ -82,22 +84,18 @@ class CppAdInterface {
   /**
    * Creates models, compiles them, and saves them to disk
    *
-   * @param computeForwardModel : Whether or not the function itself should be included into the model
-   * @param computeJacobian : Whether or not the Jacobian should be generated
-   * @param computeHessian : Whether or not the Hessian should be generated
+   * @param approximationOrder : Order of derivatives to generate
    * @param verbose : Print out extra information
    */
-  void createModels(bool computeForwardModel = true, bool computeJacobian = true, bool computeHessian = true, bool verbose = true);
+  void createModels(ApproximationOrder approximationOrder = ApproximationOrder::Second, bool verbose = true);
 
   /**
    * Load models if they are available on disk. Creates a new library otherwise.
    *
-   * @param computeForwardModel : Whether or not the function itself should be included into the model
-   * @param computeJacobian : Whether or not the Jacobian should be generated
-   * @param computeHessian : Whether or not the Hessian should be generated
+   * @param approximationOrder : Order of derivatives to generate
    * @param verbose : Print out extra information
    */
-  void loadModelsIfAvailable(bool computeForwardModel = true, bool computeJacobian = true, bool computeHessian = true, bool verbose = true);
+  void loadModelsIfAvailable(ApproximationOrder approximationOrder = ApproximationOrder::Second, bool verbose = true);
 
   /**
    * @param x : input vector of size variableDim
@@ -165,6 +163,14 @@ class CppAdInterface {
   void setCompilerOptions(CppAD::cg::GccCompiler<scalar_t>& compiler) const;
 
   /**
+   * Configure the approximation order for the source generator
+   * @param approximationOrder
+   * @param sourceGen
+   * @param fun
+   */
+  void setApproximationOrder(ApproximationOrder approximationOrder, CppAD::cg::ModelCSourceGen<scalar_t>& sourceGen, ad_fun_t& fun) const;
+
+  /**
    * Creates sparsity pattern for the Jacobian that will be generated
    * @param fun : taped ad function
    * @return Sparsity pattern that contains entries for variables only, not for parameters
@@ -198,7 +204,8 @@ class CppAdInterface {
 
 }  // namespace ocs2
 
-#include <ocs2_core/automatic_differentiation/implementation/CppAdInterface.h>
-
+/**
+ *  Explicit instantiation, for instantiation additional types, include the implementation file instead of this one.
+ */
 extern template class ocs2::CppAdInterface<double>;
 extern template class ocs2::CppAdInterface<float>;

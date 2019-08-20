@@ -60,8 +60,8 @@ add_library(cppad_interface
         )
 
 add_executable(${PROJECT_NAME}_lintTarget
-  src/lintTarget.cpp
-)
+        src/lintTarget.cpp
+        )
 target_link_libraries(${PROJECT_NAME}_lintTarget
         ${Boost_LIBRARIES}
         )
@@ -73,7 +73,7 @@ find_package(cmake_clang_tools QUIET)
 if(cmake_clang_tools_FOUND)
   message(STATUS "Run clang tooling for target " ${PROJECT_NAME}_lintTarget)
   add_clang_tooling(
-    TARGETS ${PROJECT_NAME}_lintTarget ocs2_core_logic
+    TARGETS ${PROJECT_NAME}_lintTarget ocs2_core_logic cppad_interface
     SOURCE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/src ${CMAKE_CURRENT_SOURCE_DIR}/include/ocs2_core
     CT_HEADER_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/include/ocs2_core
     CF_WERROR
@@ -84,14 +84,11 @@ endif(cmake_clang_tools_FOUND)
 ## Install ##
 #############
 
-install(TARGETS
-          ocs2_core_logic
-          cppad_interface
+install(TARGETS ocs2_core_logic cppad_interface
         ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
         LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
         RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
-        )
-
+)
 
 install(DIRECTORY include/${PROJECT_NAME}/
         DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION})
@@ -124,10 +121,10 @@ target_link_libraries(interpolation_unittest
   ${catkin_LIBRARIES}
 )
 
-catkin_add_gtest(logic_rules_machin_unittest
+catkin_add_gtest(logic_rules_machine_unittest
   test/logic/testLogicRulesMachine.cpp
 )
-target_link_libraries(logic_rules_machin_unittest
+target_link_libraries(logic_rules_machine_unittest
   ocs2_core_logic
   ${catkin_LIBRARIES}
   ${Boost_LIBRARIES}

@@ -51,13 +51,6 @@ class SystemDynamicsBaseAD : public SystemDynamicsBase<STATE_DIM, INPUT_DIM, NUM
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-  enum {
-    num_modes_ = NUM_MODES,
-    state_dim_ = STATE_DIM,
-    input_dim_ = INPUT_DIM,
-    domain_dim_ = 1 + state_dim_ + input_dim_,
-  };
-
   using Ptr = std::shared_ptr<SystemDynamicsBaseAD<Derived, STATE_DIM, INPUT_DIM, NUM_MODES> >;
   using ConstPtr = std::shared_ptr<const SystemDynamicsBaseAD<Derived, STATE_DIM, INPUT_DIM, NUM_MODES> >;
 
@@ -76,9 +69,9 @@ class SystemDynamicsBaseAD : public SystemDynamicsBase<STATE_DIM, INPUT_DIM, NUM
   using ad_scalar_t = typename ad_interface_t::ad_scalar_t;
   using ad_dynamic_vector_t = typename ad_interface_t::ad_dynamic_vector_t;
 
-  using state_timeStateInput_matrix_t = Eigen::Matrix<scalar_t, STATE_DIM, domain_dim_>;
-  using state_timeState_matrix_t = Eigen::Matrix<scalar_t, STATE_DIM, 1 + state_dim_>;
-  using mode_timeState_matrix_t = Eigen::Matrix<scalar_t, NUM_MODES, 1 + state_dim_>;
+  using state_timeStateInput_matrix_t = Eigen::Matrix<scalar_t, STATE_DIM, 1 + STATE_DIM + INPUT_DIM>;
+  using state_timeState_matrix_t = Eigen::Matrix<scalar_t, STATE_DIM, 1 + STATE_DIM>;
+  using mode_timeState_matrix_t = Eigen::Matrix<scalar_t, NUM_MODES, 1 + STATE_DIM>;
 
   SystemDynamicsBaseAD();
 
@@ -122,18 +115,18 @@ class SystemDynamicsBaseAD : public SystemDynamicsBase<STATE_DIM, INPUT_DIM, NUM
 
   void getFlowMapDerivativeTime(state_vector_t& df) final { df = flowJacobian_.template leftCols<1>(); };
 
-  void getFlowMapDerivativeState(state_matrix_t& A) final { A = flowJacobian_.template middleCols<state_dim_>(1); };
+  void getFlowMapDerivativeState(state_matrix_t& A) final { A = flowJacobian_.template middleCols<STATE_DIM>(1); };
 
-  void getFlowMapDerivativeInput(state_input_matrix_t& B) final { B = flowJacobian_.template rightCols<input_dim_>(); };
+  void getFlowMapDerivativeInput(state_input_matrix_t& B) final { B = flowJacobian_.template rightCols<INPUT_DIM>(); };
 
   void getJumpMapDerivativeTime(state_vector_t& dg) final { dg = jumpJacobian_.template leftCols<1>(); };
 
-  void getJumpMapDerivativeState(state_matrix_t& G) final { G = jumpJacobian_.template rightCols<state_dim_>(); };
+  void getJumpMapDerivativeState(state_matrix_t& G) final { G = jumpJacobian_.template rightCols<STATE_DIM>(); };
 
   void getGuardSurfacesDerivativeTime(dynamic_vector_t& D_t_gamma) final { D_t_gamma = guardJacobian_.template leftCols<1>(); };
 
   void getGuardSurfacesDerivativeState(dynamic_state_matrix_t& D_x_gamma) final {
-    D_x_gamma = guardJacobian_.template rightCols<state_dim_>();
+    D_x_gamma = guardJacobian_.template rightCols<STATE_DIM>();
   };
 
  protected:

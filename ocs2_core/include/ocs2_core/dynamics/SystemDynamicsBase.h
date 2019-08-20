@@ -54,12 +54,6 @@ class SystemDynamicsBase : public DerivativesBase<STATE_DIM, INPUT_DIM>, public 
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-  enum {
-    num_modes_ = NUM_MODES,
-    state_dim_ = STATE_DIM,
-    input_dim_ = INPUT_DIM,
-  };
-
   using Ptr = std::shared_ptr<SystemDynamicsBase<STATE_DIM, INPUT_DIM> >;
   using ConstPtr = std::shared_ptr<const SystemDynamicsBase<STATE_DIM, INPUT_DIM> >;
 
@@ -103,11 +97,11 @@ class SystemDynamicsBase : public DerivativesBase<STATE_DIM, INPUT_DIM>, public 
   virtual SystemDynamicsBase<STATE_DIM, INPUT_DIM>* clone() const = 0;
 
   /**
-  * Gets the number of the modes in the hybrid system.
-  * The minimum is one.
-  *
-  * @return Number of the modes in the hybrid system.
-  */
+   * Gets the number of the modes in the hybrid system.
+   * The minimum is one.
+   *
+   * @return Number of the modes in the hybrid system.
+   */
   size_t getNumModes() const { return NUM_MODES; }
 };
 

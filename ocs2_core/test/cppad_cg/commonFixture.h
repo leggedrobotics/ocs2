@@ -110,12 +110,12 @@ class CommonCppAdParameterizedFixture : public ::testing::Test {
 
     jacobianSparsity_.resize(rangeDim_);
     jacobianSparsity_[0] = {0, 1, 2};
-    jacobianSparsity_[1] = {1};
+    jacobianSparsity_[1] = {0, 1};
 
     hessianSparsity_.resize(variableDim_ + parameterDim_);
-    hessianSparsity_[0] = {1};
-    hessianSparsity_[1] = {0};
-    hessianSparsity_[2] = {};
+    hessianSparsity_[0] = {0, 1};
+    hessianSparsity_[1] = {0, 1, 2};
+    hessianSparsity_[2] = {1};
   }
 
   static void funImpl(const ad_dynamic_vector_t& x, const ad_dynamic_vector_t& p, ad_dynamic_vector_t& y) {

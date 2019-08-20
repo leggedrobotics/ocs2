@@ -33,8 +33,7 @@ namespace ocs2 {
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <class Derived, size_t STATE_DIM, size_t INPUT_DIM>
-ConstraintBaseAD<Derived, STATE_DIM, INPUT_DIM>::ConstraintBaseAD()
-    : BASE() {};
+ConstraintBaseAD<Derived, STATE_DIM, INPUT_DIM>::ConstraintBaseAD() : BASE(){};
 
 /******************************************************************************************************/
 /******************************************************************************************************/
@@ -45,15 +44,14 @@ ConstraintBaseAD<Derived, STATE_DIM, INPUT_DIM>::ConstraintBaseAD(const Constrai
     : BASE(rhs),
       stateInputADInterfacePtr_(new ad_interface_t(*rhs.stateInputADInterfacePtr_)),
       stateOnlyADInterfacePtr_(new ad_interface_t(*rhs.stateOnlyADInterfacePtr_)),
-      stateOnlyFinalADInterfacePtr_(new ad_interface_t(*rhs.stateOnlyFinalADInterfacePtr_))
-{}
+      stateOnlyFinalADInterfacePtr_(new ad_interface_t(*rhs.stateOnlyFinalADInterfacePtr_)) {}
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <class Derived, size_t STATE_DIM, size_t INPUT_DIM>
-void ConstraintBaseAD<Derived, STATE_DIM, INPUT_DIM>::initialize(const std::string& modelName, const std::string& modelFolder, bool recompileLibraries, bool verbose)
-{
+void ConstraintBaseAD<Derived, STATE_DIM, INPUT_DIM>::initialize(const std::string& modelName, const std::string& modelFolder,
+                                                                 bool recompileLibraries, bool verbose) {
   setADInterfaces(modelName, modelFolder);
   if (recompileLibraries) {
     createModels(verbose);
@@ -89,28 +87,31 @@ void ConstraintBaseAD<Derived, STATE_DIM, INPUT_DIM>::setCurrentStateAndControl(
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <class Derived, size_t STATE_DIM, size_t INPUT_DIM>
-void ConstraintBaseAD<Derived, STATE_DIM, INPUT_DIM>::setADInterfaces(const std::string& modelName, const std::string& modelFolder)  {
-  auto stateInputConstraintAD = [this](const ad_dynamic_vector_t& x, ad_dynamic_vector_t&y) {
+void ConstraintBaseAD<Derived, STATE_DIM, INPUT_DIM>::setADInterfaces(const std::string& modelName, const std::string& modelFolder) {
+  auto stateInputConstraintAD = [this](const ad_dynamic_vector_t& x, ad_dynamic_vector_t& y) {
     auto time = x(0);
     auto state = x.template segment<state_dim_>(1);
     auto input = x.template segment<input_dim_>(1 + state_dim_);
     this->stateInputConstraint(time, state, input, y);
   };
-  stateInputADInterfacePtr_.reset(new ad_interface_t(stateInputConstraintAD, MAX_CONSTRAINT_DIM_, 1 + state_dim_ + input_dim_, modelName + "_stateInput", modelFolder));
+  stateInputADInterfacePtr_.reset(
+      new ad_interface_t(stateInputConstraintAD, MAX_CONSTRAINT_DIM_, 1 + state_dim_ + input_dim_, modelName + "_stateInput", modelFolder));
 
-  auto stateOnlyConstraintAD = [this](const ad_dynamic_vector_t& x, ad_dynamic_vector_t&y) {
+  auto stateOnlyConstraintAD = [this](const ad_dynamic_vector_t& x, ad_dynamic_vector_t& y) {
     auto time = x(0);
     auto state = x.template segment<state_dim_>(1);
     this->stateOnlyConstraint(time, state, y);
   };
-  stateOnlyADInterfacePtr_.reset(new ad_interface_t(stateOnlyConstraintAD, MAX_CONSTRAINT_DIM_, 1 + state_dim_, modelName + "_stateOnly", modelFolder));
+  stateOnlyADInterfacePtr_.reset(
+      new ad_interface_t(stateOnlyConstraintAD, MAX_CONSTRAINT_DIM_, 1 + state_dim_, modelName + "_stateOnly", modelFolder));
 
-  auto stateOnlyConstraintFinalAD = [this](const ad_dynamic_vector_t& x, ad_dynamic_vector_t&y) {
+  auto stateOnlyConstraintFinalAD = [this](const ad_dynamic_vector_t& x, ad_dynamic_vector_t& y) {
     auto time = x(0);
     auto state = x.template segment<state_dim_>(1);
     this->stateOnlyFinalConstraint(time, state, y);
   };
-  stateOnlyFinalADInterfacePtr_.reset(new ad_interface_t(stateOnlyConstraintFinalAD, MAX_CONSTRAINT_DIM_, 1 + state_dim_, modelName + "_stateOnlyFinal", modelFolder));
+  stateOnlyFinalADInterfacePtr_.reset(
+      new ad_interface_t(stateOnlyConstraintFinalAD, MAX_CONSTRAINT_DIM_, 1 + state_dim_, modelName + "_stateOnlyFinal", modelFolder));
 }
 
 /******************************************************************************************************/
@@ -118,9 +119,9 @@ void ConstraintBaseAD<Derived, STATE_DIM, INPUT_DIM>::setADInterfaces(const std:
 /******************************************************************************************************/
 template <class Derived, size_t STATE_DIM, size_t INPUT_DIM>
 void ConstraintBaseAD<Derived, STATE_DIM, INPUT_DIM>::createModels(bool verbose) {
-  stateInputADInterfacePtr_->createModels(true, true, false, verbose);
-  stateOnlyADInterfacePtr_->createModels(true, true, false, verbose);
-  stateOnlyFinalADInterfacePtr_->createModels(true, true, false, verbose);
+  stateInputADInterfacePtr_->createModels(ad_interface_t::ApproximationOrder::First, verbose);
+  stateOnlyADInterfacePtr_->createModels(ad_interface_t::ApproximationOrder::First, verbose);
+  stateOnlyFinalADInterfacePtr_->createModels(ad_interface_t::ApproximationOrder::First, verbose);
 }
 
 /******************************************************************************************************/
@@ -128,9 +129,9 @@ void ConstraintBaseAD<Derived, STATE_DIM, INPUT_DIM>::createModels(bool verbose)
 /******************************************************************************************************/
 template <class Derived, size_t STATE_DIM, size_t INPUT_DIM>
 void ConstraintBaseAD<Derived, STATE_DIM, INPUT_DIM>::loadModelsIfAvailable(bool verbose) {
-  stateInputADInterfacePtr_->loadModelsIfAvailable(true, true, false, verbose);
-  stateOnlyADInterfacePtr_->loadModelsIfAvailable(true, true, false, verbose);
-  stateOnlyFinalADInterfacePtr_->loadModelsIfAvailable(true, true, false, verbose);
+  stateInputADInterfacePtr_->loadModelsIfAvailable(ad_interface_t::ApproximationOrder::First, verbose);
+  stateOnlyADInterfacePtr_->loadModelsIfAvailable(ad_interface_t::ApproximationOrder::First, verbose);
+  stateOnlyFinalADInterfacePtr_->loadModelsIfAvailable(ad_interface_t::ApproximationOrder::First, verbose);
 }
 
 }  // namespace ocs2

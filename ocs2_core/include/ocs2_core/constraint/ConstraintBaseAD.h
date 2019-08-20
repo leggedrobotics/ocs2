@@ -82,7 +82,7 @@ class ConstraintBaseAD : public ConstraintBase<STATE_DIM, INPUT_DIM> {
   using ad_dynamic_vector_t = typename ad_interface_t::ad_dynamic_vector_t;
   using dynamic_vector_t = typename ad_interface_t::dynamic_vector_t;
 
-  using constraint_timeStateInput_matrix_t = Eigen::Matrix<scalar_t, -1, domain_dim_>;
+  using constraint_timeStateInput_matrix_t = Eigen::Matrix<scalar_t, -1, 1 + STATE_DIM + INPUT_DIM>;
   using constraint_timeState_matrix_t = Eigen::Matrix<scalar_t, -1, 1 + STATE_DIM>;
 
   /**
@@ -128,13 +128,9 @@ class ConstraintBaseAD : public ConstraintBase<STATE_DIM, INPUT_DIM> {
 
   void getFinalConstraint2(constraint2_vector_t& h_f) final { h_f = stateOnlyFinalValues_; };
 
-  void getConstraint1DerivativesState(constraint1_state_matrix_t& C) final {
-    C = stateInputJacobian_.template middleCols<STATE_DIM>(1);
-  };
+  void getConstraint1DerivativesState(constraint1_state_matrix_t& C) final { C = stateInputJacobian_.template middleCols<STATE_DIM>(1); };
 
-  void getConstraint1DerivativesControl(constraint1_input_matrix_t& D) final {
-    D = stateInputJacobian_.template rightCols<INPUT_DIM>();
-  };
+  void getConstraint1DerivativesControl(constraint1_input_matrix_t& D) final { D = stateInputJacobian_.template rightCols<INPUT_DIM>(); };
 
   void getConstraint2DerivativesState(constraint2_state_matrix_t& F) final { F = stateOnlyJacobian_.template rightCols<STATE_DIM>(); };
 

@@ -65,9 +65,7 @@ class testCppADCG_dynamicsFixture : public ::testing::Test {
     std::string libraryFolder = filePath.parent_path().generic_string() + "/testCppADCG_generated";
     adLinearSystem_.reset(new ad_system_dynamics_t(A, B, G));
 
-    int randomFromClock = std::chrono::high_resolution_clock::now().time_since_epoch().count() % 1000;
-    adLinearSystem_->initialize("testCppADCG_dynamics_" + std::to_string(randomFromClock) + std::to_string(getpid()), libraryFolder, true,
-                                true);
+    adLinearSystem_->initialize("testCppADCG_dynamics", libraryFolder, true, true);
   }
 
   std::unique_ptr<system_dynamics_t> linearSystem_;

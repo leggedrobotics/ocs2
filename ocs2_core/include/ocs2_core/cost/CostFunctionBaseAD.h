@@ -68,7 +68,7 @@ class CostFunctionBaseAD : public CostFunctionBase<STATE_DIM, INPUT_DIM> {
   using ad_dynamic_vector_t = typename ad_interface_t::ad_dynamic_vector_t;
 
   using timeStateInput_vector_t = Eigen::Matrix<scalar_t, 1 + STATE_DIM + INPUT_DIM, 1>;
-  using timeStateInput_rowVector_t = Eigen::Matrix<scalar_t, 1,  1 + STATE_DIM + INPUT_DIM>;
+  using timeStateInput_rowVector_t = Eigen::Matrix<scalar_t, 1, 1 + STATE_DIM + INPUT_DIM>;
   using timeStateInput_matrix_t = Eigen::Matrix<scalar_t, 1 + STATE_DIM + INPUT_DIM, 1 + STATE_DIM + INPUT_DIM>;
 
   using timeState_vector_t = Eigen::Matrix<scalar_t, 1 + STATE_DIM, 1>;

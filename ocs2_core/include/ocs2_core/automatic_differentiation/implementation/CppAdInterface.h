@@ -45,7 +45,7 @@ CppAdInterface<scalar_t>::CppAdInterface(const CppAdInterface& rhs)
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <typename scalar_t>
-void CppAdInterface<scalar_t>::createModels(bool computeForwardModel, bool computeJacobian, bool computeHessian, bool verbose) {
+void CppAdInterface<scalar_t>::createModels(ApproximationOrder approximationOrder, bool verbose) {
   createFolderStructure();
 
   // set and declare independent variables and start tape recording
@@ -67,15 +67,7 @@ void CppAdInterface<scalar_t>::createModels(bool computeForwardModel, bool compu
 
   // generates source code
   CppAD::cg::ModelCSourceGen<scalar_t> sourceGen(fun, modelName_);
-
-  // set the options
-  sourceGen.setCreateSparseJacobian(true);
-  sourceGen.setCustomSparseJacobianElements(createJacobianSparsity(fun));
-  sourceGen.setCreateSparseHessian(true);
-  sourceGen.setCustomSparseHessianElements(createHessianSparsity(fun));
-  sourceGen.setCreateForwardZero(computeForwardModel);
-  sourceGen.setCreateJacobian(computeJacobian);
-  sourceGen.setCreateHessian(computeHessian);
+  setApproximationOrder(approximationOrder, sourceGen, fun);
 
   // Compiler objects
   CppAD::cg::ModelLibraryCSourceGen<scalar_t> libraryCSourceGen(sourceGen);
@@ -109,11 +101,11 @@ void CppAdInterface<scalar_t>::loadModels(bool verbose) {
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <typename scalar_t>
-void CppAdInterface<scalar_t>::loadModelsIfAvailable(bool computeForwardModel, bool computeJacobian, bool computeHessian, bool verbose) {
+void CppAdInterface<scalar_t>::loadModelsIfAvailable(ApproximationOrder approximationOrder, bool verbose) {
   if (isLibraryAvailable()) {
     loadModels(verbose);
   } else {
-    createModels(computeForwardModel, computeJacobian, computeHessian, verbose);
+    createModels(approximationOrder, verbose);
   }
 }
 
@@ -267,6 +259,28 @@ void CppAdInterface<scalar_t>::setCompilerOptions(CppAD::cg::GccCompiler<scalar_
   // Save sources
   compiler.setSourcesFolder(libraryFolder_);
   compiler.setSaveToDiskFirst(true);
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+template <typename scalar_t>
+void CppAdInterface<scalar_t>::setApproximationOrder(ApproximationOrder approximationOrder, CppAD::cg::ModelCSourceGen<scalar_t>& sourceGen,
+                                                     ad_fun_t& fun) const {
+  switch (approximationOrder) {
+    case ApproximationOrder::Second:
+      sourceGen.setCreateSparseHessian(true);
+      sourceGen.setCustomSparseHessianElements(createHessianSparsity(fun));
+      // Intentional fall through
+    case ApproximationOrder::First:
+      sourceGen.setCreateSparseJacobian(true);
+      sourceGen.setCustomSparseJacobianElements(createJacobianSparsity(fun));
+      // Intentional fall through
+    case ApproximationOrder::Zero:
+      break;
+    default:
+      throw std::runtime_error("CppAdInterface: Invalid approximation order");
+  }
 }
 
 /******************************************************************************************************/

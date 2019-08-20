@@ -72,8 +72,7 @@ class testCppADCG_costFixture : public ::testing::Test {
     std::string libraryFolder = filePath.parent_path().generic_string() + "/testCppADCG_generated";
     adQuadraticCost_.reset(new ad_quadratic_cost_t(Q, R, xNominal, uNominal, QFinal, xNominal, P));
 
-    int randomFromClock = std::chrono::high_resolution_clock::now().time_since_epoch().count() % 1000;
-    adQuadraticCost_->initialize("testCppADCG_cost_" + std::to_string(randomFromClock) + std::to_string(getpid()), libraryFolder, true, true);
+    adQuadraticCost_->initialize("testCppADCG_cost", libraryFolder, true, true);
   }
 
   std::unique_ptr<quadratic_cost_t> quadraticCost_;

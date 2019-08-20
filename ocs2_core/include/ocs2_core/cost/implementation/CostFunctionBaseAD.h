@@ -245,8 +245,8 @@ void CostFunctionBaseAD<Derived, STATE_DIM, INPUT_DIM>::setADInterfaces(const st
 /******************************************************************************************************/
 template <class Derived, size_t STATE_DIM, size_t INPUT_DIM>
 void CostFunctionBaseAD<Derived, STATE_DIM, INPUT_DIM>::createModels(bool verbose) {
-  intermediateADInterfacePtr_->createModels(true, true, true, verbose);
-  terminalADInterfacePtr_->createModels(true, true, true, verbose);
+  intermediateADInterfacePtr_->createModels(ad_interface_t::ApproximationOrder::Second, verbose);
+  terminalADInterfacePtr_->createModels(ad_interface_t::ApproximationOrder::Second, verbose);
 }
 
 /******************************************************************************************************/
@@ -254,8 +254,8 @@ void CostFunctionBaseAD<Derived, STATE_DIM, INPUT_DIM>::createModels(bool verbos
 /******************************************************************************************************/
 template <class Derived, size_t STATE_DIM, size_t INPUT_DIM>
 void CostFunctionBaseAD<Derived, STATE_DIM, INPUT_DIM>::loadModelsIfAvailable(bool verbose) {
-  intermediateADInterfacePtr_->loadModelsIfAvailable(true, true, true, verbose);
-  terminalADInterfacePtr_->loadModelsIfAvailable(true, true, true, verbose);
+  intermediateADInterfacePtr_->loadModelsIfAvailable(ad_interface_t::ApproximationOrder::Second, verbose);
+  terminalADInterfacePtr_->loadModelsIfAvailable(ad_interface_t::ApproximationOrder::Second, verbose);
 }
 
 }  // namespace ocs2

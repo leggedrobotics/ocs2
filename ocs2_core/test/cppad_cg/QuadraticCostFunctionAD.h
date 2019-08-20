@@ -88,7 +88,6 @@ class QuadraticCostFunctionAD : public CostFunctionBaseAD<QuadraticCostFunctionA
     costValue = 0.5 * xDeviation.dot(Q_.template cast<ad_scalar_t>() * xDeviation) +
                 0.5 * uDeviation.dot(R_.template cast<ad_scalar_t>() * uDeviation) +
                 uDeviation.dot(P_.template cast<ad_scalar_t>() * xDeviation);
-    ;
   }
 
   void terminalCostFunction(ad_scalar_t time, const ad_dynamic_vector_t& state, const ad_dynamic_vector_t& parameters,

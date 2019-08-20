@@ -33,77 +33,58 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_core/dynamics/SystemDynamicsBaseAD.h>
 #include <ocs2_core/logic/rules/NullLogicRules.h>
 
-#include "ocs2_cart_pole_example/definitions.h"
 #include "ocs2_cart_pole_example/CartPoleParameters.h"
+#include "ocs2_cart_pole_example/definitions.h"
 
 namespace ocs2 {
 namespace cartpole {
 
-class CartPoleSytemDynamics
-		: public SystemDynamicsBaseAD<CartPoleSytemDynamics, cartpole::STATE_DIM_, cartpole::INPUT_DIM_, 1>
-{
-public:
-	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+class CartPoleSytemDynamics : public SystemDynamicsBaseAD<CartPoleSytemDynamics, cartpole::STATE_DIM_, cartpole::INPUT_DIM_, 1> {
+ public:
+  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-	using Ptr = std::shared_ptr<CartPoleSytemDynamics>;
-	using ConstPtr = std::shared_ptr<const CartPoleSytemDynamics>;
+  using Ptr = std::shared_ptr<CartPoleSytemDynamics>;
+  using ConstPtr = std::shared_ptr<const CartPoleSytemDynamics>;
 
-	using BASE = SystemDynamicsBaseAD<CartPoleSytemDynamics, cartpole::STATE_DIM_, cartpole::INPUT_DIM_, 1>;
-	using scalar_t = typename BASE::scalar_t;
-	using state_vector_t = typename BASE::state_vector_t;
-	using state_matrix_t = typename BASE::state_matrix_t;
-	using input_vector_t = typename BASE::input_vector_t;
-	using state_input_matrix_t = typename BASE::state_input_matrix_t;
-	using cart_pole_parameters_t = CartPoleParameters<scalar_t>;
+  using BASE = SystemDynamicsBaseAD<CartPoleSytemDynamics, cartpole::STATE_DIM_, cartpole::INPUT_DIM_, 1>;
+  using typename BASE::scalar_t;
+  using typename BASE::state_vector_t;
+  using typename BASE::state_matrix_t;
+  using typename BASE::input_vector_t;
+  using typename BASE::state_input_matrix_t;
 
-	CartPoleSytemDynamics(const cart_pole_parameters_t& cartPoleParameters)
-	: param_(cartPoleParameters)
-	{}
+  using cart_pole_parameters_t = CartPoleParameters<scalar_t>;
 
-	~CartPoleSytemDynamics() = default;
+  CartPoleSytemDynamics(const cart_pole_parameters_t& cartPoleParameters) : param_(cartPoleParameters) {}
 
-	/**
-	 * Interface method to the state flow map of the hybrid system. This method should be implemented by the derived class.
-	 *
-	 * @tparam scalar type. All the floating point operations should be with this type.
-	 * @param [in] time: time.
-	 * @param [in] state: state vector.
-	 * @param [in] input: input vector
-	 * @param [out] stateDerivative: state vector time derivative.
-	 */
-	template <typename SCALAR_T>
-	void systemFlowMap(
-			const SCALAR_T& time,
-			const Eigen::Matrix<SCALAR_T, BASE::state_dim_, 1>& state,
-			const Eigen::Matrix<SCALAR_T, BASE::input_dim_, 1>& input,
-			Eigen::Matrix<SCALAR_T, BASE::state_dim_, 1>& stateDerivative) {
+  ~CartPoleSytemDynamics() = default;
 
-		const SCALAR_T cosTheta = cos(state(0));
-		const SCALAR_T sinTheta = sin(state(0));
+  void systemFlowMap(ad_scalar_t time, const ad_dynamic_vector_t& state, const ad_dynamic_vector_t& input,
+                     ad_dynamic_vector_t& stateDerivative) override {
+    const ad_scalar_t cosTheta = cos(state(0));
+    const ad_scalar_t sinTheta = sin(state(0));
 
-		// Inertia tensor
-		Eigen::Matrix<SCALAR_T, 2, 2> I;
-		I << 	static_cast<SCALAR_T>(param_.poleSteinerMoi_),
-				static_cast<SCALAR_T>(-param_.poleMass_*param_.poleHalfLength_*cosTheta),
-				static_cast<SCALAR_T>(-param_.poleMass_*param_.poleHalfLength_*cosTheta),
-				static_cast<SCALAR_T>(param_.cartMass_ + param_.poleMass_);
+    // Inertia tensor
+    Eigen::Matrix<ad_scalar_t, 2, 2> I;
+    I << static_cast<ad_scalar_t>(param_.poleSteinerMoi_), static_cast<ad_scalar_t>(-param_.poleMass_ * param_.poleHalfLength_ * cosTheta),
+        static_cast<ad_scalar_t>(-param_.poleMass_ * param_.poleHalfLength_ * cosTheta),
+        static_cast<ad_scalar_t>(param_.cartMass_ + param_.poleMass_);
 
-		// RHS
-		Eigen::Matrix<SCALAR_T, 2, 1> rhs(
-				param_.poleMass_*param_.poleHalfLength_*param_.gravity_*sinTheta,
-				input(0) - param_.poleMass_*param_.poleHalfLength_*pow(state(2),2)*sinTheta);
+    // RHS
+    Eigen::Matrix<ad_scalar_t, 2, 1> rhs(param_.poleMass_ * param_.poleHalfLength_ * param_.gravity_ * sinTheta,
+                                         input(0) - param_.poleMass_ * param_.poleHalfLength_ * pow(state(2), 2) * sinTheta);
 
-		// dxdt
-		stateDerivative(0) = state(2);
-		stateDerivative(1) = state(3);
-		stateDerivative.template tail<2>() = I.inverse()*rhs;
-	}
+    // dxdt
+    stateDerivative(0) = state(2);
+    stateDerivative(1) = state(3);
+    stateDerivative.template tail<2>() = I.inverse() * rhs;
+  }
 
-private:
-	cart_pole_parameters_t param_;
+ private:
+  cart_pole_parameters_t param_;
 };
 
-} // namespace cartpole
-} // namespace ocs2
+}  // namespace cartpole
+}  // namespace ocs2
 
-#endif //CART_POLE_SYSTEM_DYNAMICS_OCS2_H_
+#endif  // CART_POLE_SYSTEM_DYNAMICS_OCS2_H_

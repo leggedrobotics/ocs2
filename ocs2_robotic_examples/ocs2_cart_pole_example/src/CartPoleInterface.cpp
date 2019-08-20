@@ -77,7 +77,7 @@ void CartPoleInterface::loadSettings(const std::string& taskFile) {
 	 * Dynamics
 	 */
 	cartPoleSystemDynamicsPtr_.reset(new CartPoleSytemDynamics(cartPoleParameters));
-	cartPoleSystemDynamicsPtr_->createModels("cartpole_dynamics", libraryFolder_);
+	cartPoleSystemDynamicsPtr_->initialize("cartpole_dynamics", libraryFolder_, true, true);
 
 	/*
 	 * Cost function

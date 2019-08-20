@@ -49,9 +49,8 @@ class LinearSystemDynamics : public SystemDynamicsBase<STATE_DIM, INPUT_DIM> {
   using typename BASE::state_matrix_t;
   using typename BASE::state_vector_t;
 
-  LinearSystemDynamics(const state_matrix_t& A, const state_input_matrix_t& B, const state_matrix_t& G = state_matrix_t::Zero(),
-                       const state_input_matrix_t& H = state_input_matrix_t::Zero())
-      : A_(A), B_(B), G_(G), H_(H) {}
+  LinearSystemDynamics(const state_matrix_t& A, const state_input_matrix_t& B, const state_matrix_t& G = state_matrix_t::Zero())
+      : A_(A), B_(B), G_(G) {}
 
   virtual ~LinearSystemDynamics() = default;
 
@@ -82,7 +81,7 @@ class LinearSystemDynamics : public SystemDynamicsBase<STATE_DIM, INPUT_DIM> {
    * @param [out] xp: jumped state.
    */
   void computeJumpMap(const scalar_t& t, const state_vector_t& x, state_vector_t& xp) override {
-    xp = G_ * x;  //+ H_*u;
+    xp = G_ * x;
   }
 
   /**
@@ -134,19 +133,10 @@ class LinearSystemDynamics : public SystemDynamicsBase<STATE_DIM, INPUT_DIM> {
    */
   void getJumpMapDerivativeState(state_matrix_t& G) override { G = G_; }
 
-  /**
-   * The H matrix at a given operating point for the linearized system jump map.
-   * \f$ x^+ = G \delta x + H \delta u \f$.
-   *
-   * @param [out] H: \f$ H \f$ matrix.
-   */
-  void getJumpMapDerivativeInput(state_input_matrix_t& H) override { H = H_; }
-
  private:
   state_matrix_t A_;
   state_input_matrix_t B_;
   state_matrix_t G_;
-  state_input_matrix_t H_;
 };
 
 }  // namespace ocs2

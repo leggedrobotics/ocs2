@@ -133,17 +133,32 @@ target_link_libraries(logic_rules_machin_unittest
   ${Boost_LIBRARIES}
 )
 
-## if not in debug mode
-string(TOUPPER ${CMAKE_BUILD_TYPE} CMAKE_BUILD_TYPE_UPPER)
-if (NOT ${CMAKE_BUILD_TYPE_UPPER} STREQUAL DEBUG) 
-  catkin_add_gtest(cppadcg_unittest
-    test/cppad_cg/testCppADCG.cpp
-  )
-  target_link_libraries(cppadcg_unittest
-    ${Boost_LIBRARIES}
-    ${catkin_LIBRARIES} -lm -ldl
-  )
-endif(NOT ${CMAKE_BUILD_TYPE_UPPER} STREQUAL DEBUG)
+catkin_add_gtest(cppadcg_constraint_unittest
+  test/cppad_cg/testCppADCG_constraint.cpp
+)
+target_link_libraries(cppadcg_constraint_unittest
+  cppad_interface
+  ${Boost_LIBRARIES}
+  ${catkin_LIBRARIES} -lm -ldl
+)
+
+catkin_add_gtest(cppadcg_cost_unittest
+        test/cppad_cg/testCppADCG_cost.cpp
+        )
+target_link_libraries(cppadcg_cost_unittest
+        cppad_interface
+        ${Boost_LIBRARIES}
+        ${catkin_LIBRARIES} -lm -ldl
+        )
+
+catkin_add_gtest(cppadcg_dynamics_unittest
+        test/cppad_cg/testCppADCG_dynamics.cpp
+        )
+target_link_libraries(cppadcg_dynamics_unittest
+        cppad_interface
+        ${Boost_LIBRARIES}
+        ${catkin_LIBRARIES} -lm -ldl
+        )
 
 catkin_add_gtest(testSparsityHelpers
         test/cppad_cg/testSparsityHelpers.cpp

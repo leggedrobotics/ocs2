@@ -76,10 +76,9 @@ class SystemDynamicsBaseAD : public SystemDynamicsBase<STATE_DIM, INPUT_DIM, NUM
   using ad_scalar_t = typename ad_interface_t::ad_scalar_t;
   using ad_dynamic_vector_t = typename ad_interface_t::ad_dynamic_vector_t;
 
-  using state_timeStateInput_matrix_t =  Eigen::Matrix<scalar_t, STATE_DIM, domain_dim_>;
+  using state_timeStateInput_matrix_t = Eigen::Matrix<scalar_t, STATE_DIM, domain_dim_>;
   using state_timeState_matrix_t = Eigen::Matrix<scalar_t, STATE_DIM, 1 + state_dim_>;
   using mode_timeState_matrix_t = Eigen::Matrix<scalar_t, NUM_MODES, 1 + state_dim_>;
-
 
   SystemDynamicsBaseAD();
 
@@ -94,23 +93,26 @@ class SystemDynamicsBaseAD : public SystemDynamicsBase<STATE_DIM, INPUT_DIM, NUM
   ~SystemDynamicsBaseAD() override = default;
 
   /**
-   * Returns a deep copy of the derived class.
+   * Returns a deep copy
    *
-   * @return A raw pointer to the derived class.
+   * @return A raw pointer to the base class.
    */
-  SystemDynamicsBaseAD* clone() const final { return new Derived(static_cast<Derived const&>(*this)); };
+  BASE* clone() const final { return new Derived(static_cast<Derived const&>(*this)); };
 
   /**
-  *
-  * @param modelName : name of the generate model library
-  * @param modelFolder : folder to save the model library files to
-  * @param recompileLibraries : If true, the model library will be newly compiled. If false, an existing library will be loaded if available.
-  * @param verbose : print information.
-  */
-  void initialize(const std::string& modelName, const std::string& modelFolder = "/tmp/ocs2", bool recompileLibraries = true, bool verbose = true);
+   * Initializes model libraries
+   *
+   * @param modelName : name of the generate model library
+   * @param modelFolder : folder to save the model library files to
+   * @param recompileLibraries : If true, the model library will be newly compiled. If false, an existing library will be loaded if
+   * available.
+   * @param verbose : print information.
+   */
+  void initialize(const std::string& modelName, const std::string& modelFolder = "/tmp/ocs2", bool recompileLibraries = true,
+                  bool verbose = true);
 
   void computeFlowMap(const scalar_t& time, const state_vector_t& state, const input_vector_t& input,
-                              state_vector_t& stateDerivative) final;
+                      state_vector_t& stateDerivative) final;
 
   void computeJumpMap(const scalar_t& time, const state_vector_t& state, state_vector_t& jumpedState) final;
 
@@ -130,37 +132,42 @@ class SystemDynamicsBaseAD : public SystemDynamicsBase<STATE_DIM, INPUT_DIM, NUM
 
   void getGuardSurfacesDerivativeTime(dynamic_vector_t& D_t_gamma) final { D_t_gamma = guardJacobian_.template leftCols<1>(); };
 
-  void getGuardSurfacesDerivativeState(dynamic_state_matrix_t& D_x_gamma) final {  D_x_gamma = guardJacobian_.template rightCols<state_dim_>(); };
+  void getGuardSurfacesDerivativeState(dynamic_state_matrix_t& D_x_gamma) final {
+    D_x_gamma = guardJacobian_.template rightCols<state_dim_>();
+  };
 
  protected:
   /**
-  * Interface method to the state flow map of the hybrid system. This method should be implemented by the derived class.
-  *
-  * @param [in] time: time.
-  * @param [in] state: state vector.
-  * @param [in] input: input vector.
-  * @param [out] stateDerivative: state vector time derivative.
-  */
-  virtual void systemFlowMap(ad_scalar_t time, const ad_dynamic_vector_t& state, const ad_dynamic_vector_t& input, ad_dynamic_vector_t& stateDerivative) = 0;
+   * Interface method to the state flow map of the hybrid system. This method should be implemented by the derived class.
+   *
+   * @param [in] time: time.
+   * @param [in] state: state vector.
+   * @param [in] input: input vector.
+   * @param [out] stateDerivative: state vector time derivative.
+   */
+  virtual void systemFlowMap(ad_scalar_t time, const ad_dynamic_vector_t& state, const ad_dynamic_vector_t& input,
+                             ad_dynamic_vector_t& stateDerivative) = 0;
 
   /**
-  * Interface method to the state jump map of the hybrid system. This method can be implemented by the derived class.
-  *
-  * @param [in] time: time.
-  * @param [in] state: state vector.
-  * @param [out] jumpedState: jumped state.
-  */
+   * Interface method to the state jump map of the hybrid system. This method can be implemented by the derived class.
+   *
+   * @param [in] time: time.
+   * @param [in] state: state vector.
+   * @param [out] jumpedState: jumped state.
+   */
   virtual void systemJumpMap(ad_scalar_t time, const ad_dynamic_vector_t& state, ad_dynamic_vector_t& jumpedState) { jumpedState = state; };
 
   /**
-  * Interface method to the guard surfaces. This method can be implemented by the derived class.
-  *
-  * @param [in] time: time.
-  * @param [in] state: state.
-  * @param [in] input: input vector
-  * @param [out] guardSurfacesValue: A vector of guard surfaces values
-  */
-  virtual void systemGuardSurfaces(ad_scalar_t time, const ad_dynamic_vector_t& state, ad_dynamic_vector_t& guardSurfacesValue) { guardSurfacesValue = -ad_dynamic_vector_t::Ones(1); };
+   * Interface method to the guard surfaces. This method can be implemented by the derived class.
+   *
+   * @param [in] time: time.
+   * @param [in] state: state.
+   * @param [in] input: input vector
+   * @param [out] guardSurfacesValue: A vector of guard surfaces values
+   */
+  virtual void systemGuardSurfaces(ad_scalar_t time, const ad_dynamic_vector_t& state, ad_dynamic_vector_t& guardSurfacesValue) {
+    guardSurfacesValue = -ad_dynamic_vector_t::Ones(1);
+  };
 
  private:
   /**
@@ -169,14 +176,14 @@ class SystemDynamicsBaseAD : public SystemDynamicsBase<STATE_DIM, INPUT_DIM, NUM
   void setADInterfaces(const std::string& modelName, const std::string& modelFolder);
 
   /**
-   * Create the forward model, and the Jacobian model.
+   * Create the forward model and derivatives.
    *
    * @param [in] verbose: display information.
    */
   void createModels(bool verbose);
 
   /**
-   * Loads the forward model and the Jacobian model if available. Constructs them otherwise.
+   * Loads the forward model and derivatives if available. Constructs them otherwise.
    *
    * @param [in] verbose: display information
    */

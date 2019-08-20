@@ -129,7 +129,7 @@ typename CppAdInterface<scalar_t>::dynamic_vector_t CppAdInterface<scalar_t>::ge
   dynamic_vector_t functionValue(rangeDim_);
 
   model_->ForwardZero(xp.data(), xp.size(), functionValue.data(), functionValue.size());
-  assert(functionValue.isFinite());
+  assert(functionValue.allFinite());
   return functionValue;
 }
 
@@ -139,14 +139,27 @@ typename CppAdInterface<scalar_t>::dynamic_vector_t CppAdInterface<scalar_t>::ge
 template <typename scalar_t>
 typename CppAdInterface<scalar_t>::dynamic_matrix_t CppAdInterface<scalar_t>::getJacobian(const dynamic_vector_t& x,
                                                                                           const dynamic_vector_t& p) const {
+  // Concatenate input
   dynamic_vector_t xp(variableDim_ + parameterDim_);
   xp << x, p;
 
-  // CppAd fills the Jacobian as a column vector per output, i.e. transpose of our convention where each row represents and output
-  dynamic_matrix_t jacobian = dynamic_matrix_t::Zero(variableDim_ + parameterDim_, rangeDim_);
-  model_->SparseJacobian(xp.data(), xp.size(), jacobian.data(), jacobian.size());
-  assert(jacobian.isFinite());
-  return jacobian.topRows(variableDim_).transpose();
+  // Call SparseJacobian with std::vector. Other CppAd functions allocate internal vectors that are incompatible with multithreading.
+  std::vector<scalar_t> xp_v(xp.data(), xp.data() + xp.size());
+  std::vector<scalar_t> sparseJacobian;
+  std::vector<size_t> rows;
+  std::vector<size_t> cols;
+  model_->SparseJacobian(xp_v, sparseJacobian, rows, cols);
+
+  // Write sparse elements into Eigen type. Only jacobian w.r.t. variables was requested, so cols should not contain elements corresponding
+  // to parameters
+  dynamic_matrix_t jacobian = dynamic_matrix_t::Zero(rangeDim_, variableDim_);
+  int numNonZeros = rows.size();
+  for (int i = 0; i < numNonZeros; ++i) {
+    jacobian(rows[i], cols[i]) = sparseJacobian[i];
+  }
+
+  assert(jacobian.allFinite());
+  return jacobian;
 }
 
 /******************************************************************************************************/
@@ -168,16 +181,31 @@ template <typename scalar_t>
 typename CppAdInterface<scalar_t>::dynamic_matrix_t CppAdInterface<scalar_t>::getHessian(const dynamic_vector_t& w,
                                                                                          const dynamic_vector_t& x,
                                                                                          const dynamic_vector_t& p) const {
+  // Concatenate input
   assert(w.size() == rangeDim_);
   dynamic_vector_t xp(variableDim_ + parameterDim_);
   xp << x, p;
 
-  // Fills hessian transpose: we requested upper triangular sparsity, but lower triangular is filled
-  dynamic_matrix_t hessian = dynamic_matrix_t::Zero(variableDim_ + parameterDim_, variableDim_ + parameterDim_);
-  model_->SparseHessian(xp.data(), xp.size(), w.data(), w.size(), hessian.data(), hessian.size());
-  hessian.template triangularView<Eigen::StrictlyUpper>() = hessian.template triangularView<Eigen::StrictlyLower>().transpose();
-  assert(hessian.isFinite());
-  return hessian.topLeftCorner(variableDim_, variableDim_);
+  // Call SparseHessian with std::vector. Other CppAd functions allocate internal vectors that are incompatible with multithreading.
+  std::vector<scalar_t> xp_v(xp.data(), xp.data() + xp.size());
+  std::vector<scalar_t> w_v(w.data(), w.data() + w.size());
+  std::vector<scalar_t> sparseHessian;
+  std::vector<size_t> rows;
+  std::vector<size_t> cols;
+  model_->SparseHessian(xp_v, w_v, sparseHessian, rows, cols);
+
+  // Fills upper triangular sparsity of hessian w.r.t variables.
+  dynamic_matrix_t hessian = dynamic_matrix_t::Zero(variableDim_, variableDim_);
+  int numNonZeros = rows.size();
+  for (int i = 0; i < numNonZeros; ++i) {
+    hessian(rows[i], cols[i]) = sparseHessian[i];
+  }
+
+  // Copy upper triangular to lower triangular part
+  hessian.template triangularView<Eigen::StrictlyLower>() = hessian.template triangularView<Eigen::StrictlyUpper>().transpose();
+
+  assert(hessian.allFinite());
+  return hessian;
 }
 
 /******************************************************************************************************/

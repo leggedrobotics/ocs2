@@ -51,8 +51,7 @@ SystemDynamicsBaseAD<Derived, STATE_DIM, INPUT_DIM, NUM_MODES>::SystemDynamicsBa
       flowJacobian_(state_timeStateInput_matrix_t::Zero()),
       jumpJacobian_(state_timeState_matrix_t::Zero()),
       guardJacobian_(mode_timeState_matrix_t::Zero())
-{
-}
+{}
 
 /******************************************************************************************************/
 /******************************************************************************************************/

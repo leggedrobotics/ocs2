@@ -33,12 +33,8 @@ namespace ocs2 {
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <class Derived, size_t STATE_DIM, size_t INPUT_DIM>
-ConstraintBaseAD<Derived, STATE_DIM, INPUT_DIM>::ConstraintBaseAD(const bool& dynamicLibraryIsCompiled /*= false*/)
-    : BASE(), dynamicLibraryIsCompiled_(dynamicLibraryIsCompiled), modelName_(""), libraryFolder_("") {
-  if (dynamicLibraryIsCompiled) {
-    setADInterfaces();
-  }
-};
+ConstraintBaseAD<Derived, STATE_DIM, INPUT_DIM>::ConstraintBaseAD()
+    : BASE() {};
 
 /******************************************************************************************************/
 /******************************************************************************************************/
@@ -47,72 +43,24 @@ template <class Derived, size_t STATE_DIM, size_t INPUT_DIM>
 ConstraintBaseAD<Derived, STATE_DIM, INPUT_DIM>::ConstraintBaseAD(const ConstraintBaseAD& rhs)
 
     : BASE(rhs),
-      dynamicLibraryIsCompiled_(rhs.dynamicLibraryIsCompiled_),
-      modelName_(rhs.modelName_),
-      libraryFolder_(rhs.libraryFolder_),
-      stateInputADInterfacePtr_(rhs.stateInputADInterfacePtr_->clone()),
-      stateOnlyADInterfacePtr_(rhs.stateOnlyADInterfacePtr_->clone()),
-      stateOnlyFinalADInterfacePtr_(rhs.stateOnlyFinalADInterfacePtr_->clone())
+      stateInputADInterfacePtr_(new ad_interface_t(*rhs.stateInputADInterfacePtr_)),
+      stateOnlyADInterfacePtr_(new ad_interface_t(*rhs.stateOnlyADInterfacePtr_)),
+      stateOnlyFinalADInterfacePtr_(new ad_interface_t(*rhs.stateOnlyFinalADInterfacePtr_))
+{}
 
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+template <class Derived, size_t STATE_DIM, size_t INPUT_DIM>
+void ConstraintBaseAD<Derived, STATE_DIM, INPUT_DIM>::initialize(const std::string& modelName, const std::string& modelFolder, bool recompileLibraries, bool verbose)
 {
-  if (static_cast<bool>(rhs.dynamicLibraryIsCompiled_)) {
-    loadModels(false);
-  }
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-template <class Derived, size_t STATE_DIM, size_t INPUT_DIM>
-typename ConstraintBaseAD<Derived, STATE_DIM, INPUT_DIM>::BASE* ConstraintBaseAD<Derived, STATE_DIM, INPUT_DIM>::clone() const {
-  return new Derived(static_cast<Derived const&>(*this));
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-template <class Derived, size_t STATE_DIM, size_t INPUT_DIM>
-void ConstraintBaseAD<Derived, STATE_DIM, INPUT_DIM>::createModels(const std::string& modelName, const std::string& libraryFolder) {
-  modelName_ = modelName;
-  libraryFolder_ = libraryFolder;
-
-  createModels(true);
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-template <class Derived, size_t STATE_DIM, size_t INPUT_DIM>
-void ConstraintBaseAD<Derived, STATE_DIM, INPUT_DIM>::loadModels(const std::string& modelName, const std::string& libraryFolder) {
-  modelName_ = modelName;
-  libraryFolder_ = libraryFolder;
-
-  if (dynamicLibraryIsCompiled_) {
-    bool libraryLoaded = loadModels(false);
-    if (!libraryLoaded) {
-      throw std::runtime_error("Constraint library is not found!");
-    }
-
+  setADInterfaces(modelName, modelFolder);
+  if (recompileLibraries) {
+    createModels(verbose);
   } else {
-    throw std::runtime_error("Constraint library has not been compiled!");
+    loadModelsIfAvailable(verbose);
   }
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-template <class Derived, size_t STATE_DIM, size_t INPUT_DIM>
-const bool& ConstraintBaseAD<Derived, STATE_DIM, INPUT_DIM>::isDynamicLibraryCompiled() const {
-  return dynamicLibraryIsCompiled_;
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-template <class Derived, size_t STATE_DIM, size_t INPUT_DIM>
-std::string ConstraintBaseAD<Derived, STATE_DIM, INPUT_DIM>::getModelName() const {
-  return modelName_;
-}
+};
 
 /******************************************************************************************************/
 /******************************************************************************************************/
@@ -122,166 +70,47 @@ void ConstraintBaseAD<Derived, STATE_DIM, INPUT_DIM>::setCurrentStateAndControl(
                                                                                 const input_vector_t& u) {
   BASE::setCurrentStateAndControl(t, x, u);
 
-  tapedInput_ << t, x, u;
+  dynamic_vector_t tapedTimeStateInput(1 + STATE_DIM + INPUT_DIM);
+  tapedTimeStateInput << t, x, u;
 
-  stateInputADInterfacePtr_->getJacobian(tapedInput_, stateInputJacobian_);
-  stateOnlyADInterfacePtr_->getJacobian(tapedInput_, stateOnlyJacobian_);
-  stateOnlyFinalADInterfacePtr_->getJacobian(tapedInput_, stateOnlyFinalJacobian_);
+  dynamic_vector_t tapedTimeState(1 + STATE_DIM);
+  tapedTimeState << t, x;
+
+  stateInputValues_ = stateInputADInterfacePtr_->getFunctionValue(tapedTimeStateInput);
+  stateOnlyValues_ = stateOnlyADInterfacePtr_->getFunctionValue(tapedTimeState);
+  stateOnlyFinalValues_ = stateOnlyFinalADInterfacePtr_->getFunctionValue(tapedTimeState);
+
+  stateInputJacobian_ = stateInputADInterfacePtr_->getJacobian(tapedTimeStateInput);
+  stateOnlyJacobian_ = stateOnlyADInterfacePtr_->getJacobian(tapedTimeState);
+  stateOnlyFinalJacobian_ = stateOnlyFinalADInterfacePtr_->getJacobian(tapedTimeState);
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <class Derived, size_t STATE_DIM, size_t INPUT_DIM>
-void ConstraintBaseAD<Derived, STATE_DIM, INPUT_DIM>::getConstraint1(constraint1_vector_t& e) {
-  stateInputADInterfacePtr_->getFunctionValue(tapedInput_, e);
-}
+void ConstraintBaseAD<Derived, STATE_DIM, INPUT_DIM>::setADInterfaces(const std::string& modelName, const std::string& modelFolder)  {
+  auto stateInputConstraintAD = [this](const ad_dynamic_vector_t& x, ad_dynamic_vector_t&y) {
+    auto time = x(0);
+    auto state = x.template segment<state_dim_>(1);
+    auto input = x.template segment<input_dim_>(1 + state_dim_);
+    this->stateInputConstraint(time, state, input, y);
+  };
+  stateInputADInterfacePtr_.reset(new ad_interface_t(stateInputConstraintAD, MAX_CONSTRAINT_DIM_, 1 + state_dim_ + input_dim_, modelName + "_stateInput", modelFolder));
 
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-template <class Derived, size_t STATE_DIM, size_t INPUT_DIM>
-void ConstraintBaseAD<Derived, STATE_DIM, INPUT_DIM>::getConstraint2(constraint2_vector_t& h) {
-  stateOnlyADInterfacePtr_->getFunctionValue(tapedInput_, h);
-}
+  auto stateOnlyConstraintAD = [this](const ad_dynamic_vector_t& x, ad_dynamic_vector_t&y) {
+    auto time = x(0);
+    auto state = x.template segment<state_dim_>(1);
+    this->stateOnlyConstraint(time, state, y);
+  };
+  stateOnlyADInterfacePtr_.reset(new ad_interface_t(stateOnlyConstraintAD, MAX_CONSTRAINT_DIM_, 1 + state_dim_, modelName + "_stateOnly", modelFolder));
 
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-template <class Derived, size_t STATE_DIM, size_t INPUT_DIM>
-void ConstraintBaseAD<Derived, STATE_DIM, INPUT_DIM>::getFinalConstraint2(constraint2_vector_t& h_f) {
-  stateOnlyFinalADInterfacePtr_->getFunctionValue(tapedInput_, h_f);
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-template <class Derived, size_t STATE_DIM, size_t INPUT_DIM>
-void ConstraintBaseAD<Derived, STATE_DIM, INPUT_DIM>::getConstraint1DerivativesState(constraint1_state_matrix_t& C) {
-  C = stateInputJacobian_.template block<state_dim_, MAX_CONSTRAINT_DIM_>(1, 0).transpose();
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-template <class Derived, size_t STATE_DIM, size_t INPUT_DIM>
-void ConstraintBaseAD<Derived, STATE_DIM, INPUT_DIM>::getConstraint1DerivativesControl(constraint1_input_matrix_t& D) {
-  D = stateInputJacobian_.template block<input_dim_, MAX_CONSTRAINT_DIM_>(1 + state_dim_, 0).transpose();
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-template <class Derived, size_t STATE_DIM, size_t INPUT_DIM>
-void ConstraintBaseAD<Derived, STATE_DIM, INPUT_DIM>::getConstraint2DerivativesState(constraint2_state_matrix_t& F) {
-  F = stateOnlyJacobian_.template block<state_dim_, MAX_CONSTRAINT_DIM_>(1, 0).transpose();
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-template <class Derived, size_t STATE_DIM, size_t INPUT_DIM>
-void ConstraintBaseAD<Derived, STATE_DIM, INPUT_DIM>::getFinalConstraint2DerivativesState(constraint2_state_matrix_t& F_f) {
-  F_f = stateOnlyFinalJacobian_.template block<state_dim_, MAX_CONSTRAINT_DIM_>(1, 0).transpose();
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-template <class Derived, size_t STATE_DIM, size_t INPUT_DIM>
-void ConstraintBaseAD<Derived, STATE_DIM, INPUT_DIM>::stateInputConstraintAD(const ad_dynamic_vector_t& tapedInput,
-                                                                             ad_dynamic_vector_t& g1) {
-  auto& t = const_cast<ad_scalar_t&>(tapedInput(0));
-  Eigen::Matrix<ad_scalar_t, STATE_DIM, 1> x = tapedInput.segment(1, STATE_DIM);
-  Eigen::Matrix<ad_scalar_t, INPUT_DIM, 1> u = tapedInput.segment(1 + STATE_DIM, INPUT_DIM);
-
-  g1.resize(MAX_CONSTRAINT_DIM_);
-  static_cast<Derived*>(this)->template stateInputConstraint<ad_scalar_t>(t, x, u, g1);
-
-  if (g1.size() > MAX_CONSTRAINT_DIM_) {
-    throw std::runtime_error("The max number of constraints is exceeded!");
-  }
-
-  g1.conservativeResize(MAX_CONSTRAINT_DIM_);
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-template <class Derived, size_t STATE_DIM, size_t INPUT_DIM>
-void ConstraintBaseAD<Derived, STATE_DIM, INPUT_DIM>::stateOnlyConstraintAD(const ad_dynamic_vector_t& tapedInput,
-                                                                            ad_dynamic_vector_t& g2) {
-  auto& t = const_cast<ad_scalar_t&>(tapedInput(0));
-  Eigen::Matrix<ad_scalar_t, STATE_DIM, 1> x = tapedInput.segment(1, STATE_DIM);
-
-  g2.resize(MAX_CONSTRAINT_DIM_);
-  static_cast<Derived*>(this)->template stateOnlyConstraint<ad_scalar_t>(t, x, g2);
-
-  if (g2.size() > MAX_CONSTRAINT_DIM_) {
-    throw std::runtime_error("The max number of constraints is exceeded!");
-  }
-
-  g2.conservativeResize(MAX_CONSTRAINT_DIM_);
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-template <class Derived, size_t STATE_DIM, size_t INPUT_DIM>
-void ConstraintBaseAD<Derived, STATE_DIM, INPUT_DIM>::stateOnlyConstraintFinalAD(const ad_dynamic_vector_t& tapedInput,
-                                                                                 ad_dynamic_vector_t& g2Final) {
-  auto& t = const_cast<ad_scalar_t&>(tapedInput(0));
-  Eigen::Matrix<ad_scalar_t, STATE_DIM, 1> x = tapedInput.segment(1, STATE_DIM);
-
-  g2Final.resize(MAX_CONSTRAINT_DIM_);
-  static_cast<Derived*>(this)->template stateOnlyFinalConstraint<ad_scalar_t>(t, x, g2Final);
-
-  if (g2Final.size() > MAX_CONSTRAINT_DIM_) {
-    throw std::runtime_error("The max number of constraints is exceeded!");
-  }
-
-  g2Final.conservativeResize(MAX_CONSTRAINT_DIM_);
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-template <class Derived, size_t STATE_DIM, size_t INPUT_DIM>
-void ConstraintBaseAD<Derived, STATE_DIM, INPUT_DIM>::setADInterfaces() {
-  stateInputConstraintAD_ = [this](const ad_dynamic_vector_t& x, ad_dynamic_vector_t& y) { this->stateInputConstraintAD(x, y); };
-
-  stateOnlyConstraintAD_ = [this](const ad_dynamic_vector_t& x, ad_dynamic_vector_t& y) { this->stateOnlyConstraintAD(x, y); };
-
-  stateOnlyConstraintFinalAD_ = [this](const ad_dynamic_vector_t& x, ad_dynamic_vector_t& y) { this->stateOnlyConstraintFinalAD(x, y); };
-
-  stateInputSparsityPattern_.setOnes();
-  stateInputSparsityPattern_.col(0).setZero();
-
-  stateOnlySparsityPattern_.setOnes();
-  stateOnlySparsityPattern_.col(0).setZero();
-  stateOnlySparsityPattern_.template rightCols<input_dim_>().setZero();
-
-  stateOnlyFinalSparsityPattern_.setOnes();
-  stateOnlyFinalSparsityPattern_.col(0).setZero();
-  stateOnlyFinalSparsityPattern_.template rightCols<input_dim_>().setZero();
-
-  stateInputADInterfacePtr_.reset(new ad_interface_t(stateInputConstraintAD_, stateInputSparsityPattern_));
-
-  stateOnlyADInterfacePtr_.reset(new ad_interface_t(stateOnlyConstraintAD_, stateOnlySparsityPattern_));
-
-  stateOnlyFinalADInterfacePtr_.reset(new ad_interface_t(stateOnlyConstraintFinalAD_, stateOnlyFinalSparsityPattern_));
-
-  stateInputADInterfacePtr_->computeForwardModel(true);
-  stateInputADInterfacePtr_->computeJacobianModel(true);
-  stateInputADInterfacePtr_->computeHessianModel(false);
-
-  stateOnlyADInterfacePtr_->computeForwardModel(true);
-  stateOnlyADInterfacePtr_->computeJacobianModel(true);
-  stateOnlyADInterfacePtr_->computeHessianModel(false);
-
-  stateOnlyFinalADInterfacePtr_->computeForwardModel(true);
-  stateOnlyFinalADInterfacePtr_->computeJacobianModel(true);
-  stateOnlyFinalADInterfacePtr_->computeHessianModel(false);
+  auto stateOnlyConstraintFinalAD = [this](const ad_dynamic_vector_t& x, ad_dynamic_vector_t&y) {
+    auto time = x(0);
+    auto state = x.template segment<state_dim_>(1);
+    this->stateOnlyFinalConstraint(time, state, y);
+  };
+  stateOnlyFinalADInterfacePtr_.reset(new ad_interface_t(stateOnlyConstraintFinalAD, MAX_CONSTRAINT_DIM_, 1 + state_dim_, modelName + "_stateOnlyFinal", modelFolder));
 }
 
 /******************************************************************************************************/
@@ -289,28 +118,19 @@ void ConstraintBaseAD<Derived, STATE_DIM, INPUT_DIM>::setADInterfaces() {
 /******************************************************************************************************/
 template <class Derived, size_t STATE_DIM, size_t INPUT_DIM>
 void ConstraintBaseAD<Derived, STATE_DIM, INPUT_DIM>::createModels(bool verbose) {
-  // sets all the required CppAdCodeGenInterfaces
-  setADInterfaces();
-
-  stateInputADInterfacePtr_->createModels(modelName_ + "_stateInput", libraryFolder_, verbose);
-  stateOnlyADInterfacePtr_->createModels(modelName_ + "_stateOnly", libraryFolder_, verbose);
-  stateOnlyFinalADInterfacePtr_->createModels(modelName_ + "_stateOnlyFinal", libraryFolder_, verbose);
-
-  dynamicLibraryIsCompiled_ = true;
+  stateInputADInterfacePtr_->createModels(true, true, false, verbose);
+  stateOnlyADInterfacePtr_->createModels(true, true, false, verbose);
+  stateOnlyFinalADInterfacePtr_->createModels(true, true, false, verbose);
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <class Derived, size_t STATE_DIM, size_t INPUT_DIM>
-bool ConstraintBaseAD<Derived, STATE_DIM, INPUT_DIM>::loadModels(bool verbose) {
-  bool stateInputLoaded = stateInputADInterfacePtr_->loadModels(modelName_ + "_stateInput", libraryFolder_, verbose);
-
-  bool stateOnlyLoaded = stateOnlyADInterfacePtr_->loadModels(modelName_ + "_stateOnly", libraryFolder_, verbose);
-
-  bool stateOnlyFinalLoaded = stateOnlyFinalADInterfacePtr_->loadModels(modelName_ + "_stateOnlyFinal", libraryFolder_, verbose);
-
-  return (stateInputLoaded && stateOnlyLoaded && stateOnlyFinalLoaded);
+void ConstraintBaseAD<Derived, STATE_DIM, INPUT_DIM>::loadModelsIfAvailable(bool verbose) {
+  stateInputADInterfacePtr_->loadModelsIfAvailable(true, true, false, verbose);
+  stateOnlyADInterfacePtr_->loadModelsIfAvailable(true, true, false, verbose);
+  stateOnlyFinalADInterfacePtr_->loadModelsIfAvailable(true, true, false, verbose);
 }
 
 }  // namespace ocs2

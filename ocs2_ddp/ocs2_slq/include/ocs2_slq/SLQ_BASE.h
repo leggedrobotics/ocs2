@@ -59,7 +59,6 @@ class SLQ_BASE : public DDP_BASE<STATE_DIM, INPUT_DIM> {
 
   using BASE = DDP_BASE<STATE_DIM, INPUT_DIM>;
 
-  using typename BASE::DIMENSIONS;
   using typename BASE::constraint1_input_matrix_array2_t;
   using typename BASE::constraint1_input_matrix_array_t;
   using typename BASE::constraint1_input_matrix_t;
@@ -75,6 +74,7 @@ class SLQ_BASE : public DDP_BASE<STATE_DIM, INPUT_DIM> {
   using typename BASE::constraint2_vector_array2_t;
   using typename BASE::constraint2_vector_array_t;
   using typename BASE::constraint2_vector_t;
+  using typename BASE::DIMENSIONS;
   using typename BASE::dynamic_input_matrix_t;
   using typename BASE::dynamic_matrix_array2_t;
   using typename BASE::dynamic_matrix_t;
@@ -117,12 +117,12 @@ class SLQ_BASE : public DDP_BASE<STATE_DIM, INPUT_DIM> {
   using typename BASE::state_vector_array_t;
   using typename BASE::state_vector_t;
 
-  using typename BASE::controller_t;
   using typename BASE::controller_array_t;
   using typename BASE::controller_ptr_array_t;
-  using typename BASE::linear_controller_t;
+  using typename BASE::controller_t;
   using typename BASE::linear_controller_array_t;
   using typename BASE::linear_controller_ptr_array_t;
+  using typename BASE::linear_controller_t;
 
   using typename BASE::constraint_base_t;
   using typename BASE::controlled_system_base_t;

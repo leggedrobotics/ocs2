@@ -1526,9 +1526,8 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::runIteration() {
 /***************************************************************************************************** */
 template <size_t STATE_DIM, size_t INPUT_DIM>
 void DDP_BASE<STATE_DIM, INPUT_DIM>::runExit() {
-
-	// update the controller pointer array
-	updateNominalControllerPtrStock();
+  // update the controller pointer array
+  updateNominalControllerPtrStock();
 
   //	// add the deleted parts of the controller
   //	for (size_t i=0; i<initActivePartition_; i++)

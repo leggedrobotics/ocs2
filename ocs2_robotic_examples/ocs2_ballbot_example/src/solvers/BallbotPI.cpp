@@ -2,8 +2,8 @@
 // Created by rgrandia on 19.08.19.
 //
 
-#include "ocs2_ballbot_example/definitions.h"
 #include <ocs2_mpc/MPC_PI.h>
+#include "ocs2_ballbot_example/definitions.h"
 
 // PI
 template class ocs2::Solver_BASE<ocs2::ballbot::STATE_DIM_, ocs2::ballbot::INPUT_DIM_>;

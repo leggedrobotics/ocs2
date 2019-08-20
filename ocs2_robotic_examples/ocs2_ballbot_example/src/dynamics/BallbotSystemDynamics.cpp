@@ -17,9 +17,7 @@
 namespace ocs2 {
 namespace ballbot {
 
-void BallbotSystemDynamics::systemFlowMap(ad_scalar_t time,
-                                          const ad_dynamic_vector_t& state,
-                                          const ad_dynamic_vector_t& input,
+void BallbotSystemDynamics::systemFlowMap(ad_scalar_t time, const ad_dynamic_vector_t& state, const ad_dynamic_vector_t& input,
                                           ad_dynamic_vector_t& stateDerivative) {
   // compute actuationMatrix S_transposed which appears in the equations: M(q)\dot v + h = S^(transpose)\tau
   Eigen::Matrix<ad_scalar_t, 5, 3> S_transposed = Eigen::Matrix<ad_scalar_t, 5, 3>::Zero();
@@ -74,4 +72,4 @@ void BallbotSystemDynamics::systemFlowMap(ad_scalar_t time,
 }
 
 }  // namespace ballbot
-}
+}  // namespace ocs2

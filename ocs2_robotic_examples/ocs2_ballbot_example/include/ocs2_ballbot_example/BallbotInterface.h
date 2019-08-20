@@ -43,11 +43,11 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_robotic_tools/common/RobotInterfaceBase.h>
 
 // Ballbot
-#include "ocs2_ballbot_example/solvers/BallbotPI.h"
-#include "ocs2_ballbot_example/solvers/BallbotSLQ.h"
 #include "ocs2_ballbot_example/cost/BallbotCost.h"
 #include "ocs2_ballbot_example/definitions.h"
 #include "ocs2_ballbot_example/dynamics/BallbotSystemDynamics.h"
+#include "ocs2_ballbot_example/solvers/BallbotPI.h"
+#include "ocs2_ballbot_example/solvers/BallbotSLQ.h"
 
 namespace ocs2 {
 namespace ballbot {

@@ -136,9 +136,6 @@ class BallbotInterface final : public RobotInterfaceBase<ballbot::STATE_DIM_, ba
 
   size_t numPartitions_ = 0;
   dim_t::scalar_array_t partitioningTimes_;
-
-  // flag to generate dynamic files
-  bool libraryFilesAreGenerated_ = false;
 };
 
 }  // namespace ballbot

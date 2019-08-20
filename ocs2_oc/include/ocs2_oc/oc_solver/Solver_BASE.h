@@ -130,6 +130,7 @@ class Solver_BASE {
   using logic_rules_machine_ptr_t = typename logic_rules_machine_t::Ptr;
 
   using controller_t = ControllerBase<STATE_DIM, INPUT_DIM>;
+  using controller_array_t = typename controller_t::array_t;
   using controller_ptr_array_t = std::vector<controller_t*>;
 
   explicit Solver_BASE(std::shared_ptr<HybridLogicRules> logicRulesPtr = nullptr);

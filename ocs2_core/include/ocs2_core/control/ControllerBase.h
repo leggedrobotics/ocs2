@@ -30,6 +30,9 @@ class ControllerBase {
   using state_vector_t = typename dimensions_t::state_vector_t;
   using input_vector_t = typename dimensions_t::input_vector_t;
 
+  using self_t = ControllerBase<STATE_DIM, INPUT_DIM>;
+  using array_t = std::vector<self_t, Eigen::aligned_allocator<self_t>>;
+
   /**
    * Default constructor.
    */

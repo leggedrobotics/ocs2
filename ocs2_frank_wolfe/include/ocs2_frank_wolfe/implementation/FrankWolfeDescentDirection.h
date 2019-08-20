@@ -133,12 +133,11 @@ void FrankWolfeDescentDirection::setupLP(
 	// domain equality constraints
 	for (size_t i=0; i<g.size(); i++) {
 		for (size_t j=0; j<parameterDim; j++) {
-			if (numerics::almost_eq(dgdx(i,j), 0.0)) {
-				continue;
+			if (!numerics::almost_eq(dgdx(i,j), 0.0)) {
+				values.push_back(dgdx(i,j));
+				xIndices.push_back(i+1);
+				yIndices.push_back(j+1);
 			}
-			values.push_back(dgdx(i,j));
-			xIndices.push_back(i+1);
-			yIndices.push_back(j+1);
 		}
 		glp_set_row_bnds(lpPtr_.get(), i+1, GLP_FX, -g(i), -g(i));
 	}
@@ -146,12 +145,11 @@ void FrankWolfeDescentDirection::setupLP(
 	// domain inequality constraints
 	for (size_t i=0; i<h.size(); i++) {
 		for (size_t j=0; j<parameterDim; j++) {
-			if (numerics::almost_eq(dhdx(i,j), 0.0)) {
-				continue;
+			if (!numerics::almost_eq(dhdx(i,j), 0.0)) {
+				values.push_back(dhdx(i,j));
+				xIndices.push_back(i+1);
+				yIndices.push_back(j+1);
 			}
-			values.push_back(dhdx(i,j));
-			xIndices.push_back(i+1);
-			yIndices.push_back(j+1);
 		}
 		glp_set_row_bnds(lpPtr_.get(), i+1, GLP_LO, -h(i), 0.0);
 	}

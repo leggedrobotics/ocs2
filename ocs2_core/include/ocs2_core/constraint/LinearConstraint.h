@@ -95,19 +95,20 @@ class LinearConstraint final : public ConstraintBase<STATE_DIM, INPUT_DIM> {
    * @param[in] h_f: Constant term in F_f * x + h_f = 0 (at final time)
    * @param[in] F_f: x factor in F_f * x + h_f = 0 (at final time)
    */
-  LinearConstraint(size_t numStateInputConstraint, constraint1_vector_t e, constraint1_state_matrix_t C, constraint1_input_matrix_t D,
-                   size_t numStateOnlyConstraint, constraint2_vector_t h, constraint2_state_matrix_t F, size_t numStateOnlyFinalConstraint,
-                   constraint2_vector_t h_f, constraint2_state_matrix_t F_f)
+  LinearConstraint(size_t numStateInputConstraint, const constraint1_vector_t& e, const constraint1_state_matrix_t& C,
+                   const constraint1_input_matrix_t& D, size_t numStateOnlyConstraint, const constraint2_vector_t& h,
+                   const constraint2_state_matrix_t& F, size_t numStateOnlyFinalConstraint, const constraint2_vector_t& h_f,
+                   const constraint2_state_matrix_t& F_f)
       : numStateInputConstraint_(std::move(numStateInputConstraint)),
-        e_(std::move(e)),
-        C_(std::move(C)),
-        D_(std::move(D)),
+        e_(e),
+        C_(C),
+        D_(D),
         numStateOnlyConstraint_(std::move(numStateOnlyConstraint)),
-        h_(std::move(h)),
-        F_(std::move(F)),
+        h_(h),
+        F_(F),
         numStateOnlyFinalConstraint_(std::move(numStateOnlyFinalConstraint)),
-        h_f_(std::move(h_f)),
-        F_f_(std::move(F_f)),
+        h_f_(h_f),
+        F_f_(F_f),
         numInequalityConstraint_(0) {}
 
   /**
@@ -133,28 +134,29 @@ class LinearConstraint final : public ConstraintBase<STATE_DIM, INPUT_DIM> {
    * @param[in] ddhdudu: Quadratic u multiplier in inequality constraint
    * @param[in] ddhdudx: Quadratic mixed term in inequality constraint
    */
-  LinearConstraint(size_t numStateInputConstraint, constraint1_vector_t e, constraint1_state_matrix_t C, constraint1_input_matrix_t D,
-                   size_t numStateOnlyConstraint, constraint2_vector_t h, constraint2_state_matrix_t F, size_t numStateOnlyFinalConstraint,
-                   constraint2_vector_t h_f, constraint2_state_matrix_t F_f, size_t numInequalityConstraint, scalar_array_t h0,
-                   state_vector_array_t dhdx, input_vector_array_t dhdu, state_matrix_array_t ddhdxdx, input_matrix_array_t ddhdudu,
-                   input_state_matrix_array_t ddhdudx)
+  LinearConstraint(size_t numStateInputConstraint, const constraint1_vector_t& e, const constraint1_state_matrix_t& C,
+                   const constraint1_input_matrix_t& D, size_t numStateOnlyConstraint, const constraint2_vector_t& h,
+                   const constraint2_state_matrix_t& F, size_t numStateOnlyFinalConstraint, const constraint2_vector_t& h_f,
+                   const constraint2_state_matrix_t& F_f, size_t numInequalityConstraint, const scalar_array_t& h0,
+                   const state_vector_array_t& dhdx, const input_vector_array_t& dhdu, const state_matrix_array_t& ddhdxdx,
+                   const input_matrix_array_t& ddhdudu, const input_state_matrix_array_t& ddhdudx)
       : numStateInputConstraint_(std::move(numStateInputConstraint)),
-        e_(std::move(e)),
-        C_(std::move(C)),
-        D_(std::move(D)),
+        e_(e),
+        C_(C),
+        D_(D),
         numStateOnlyConstraint_(std::move(numStateOnlyConstraint)),
-        h_(std::move(h)),
-        F_(std::move(F)),
+        h_(h),
+        F_(F),
         numStateOnlyFinalConstraint_(std::move(numStateOnlyFinalConstraint)),
-        h_f_(std::move(h_f)),
-        F_f_(std::move(F_f)),
+        h_f_(h_f),
+        F_f_(F_f),
         numInequalityConstraint_(std::move(numInequalityConstraint)),
-        h0_(std::move(h0)),
-        dhdx_(std::move(dhdx)),
-        dhdu_(std::move(dhdu)),
-        ddhdxdx_(std::move(ddhdxdx)),
-        ddhdudu_(std::move(ddhdudu)),
-        ddhdudx_(std::move(ddhdudx)) {}
+        h0_(h0),
+        dhdx_(dhdx),
+        dhdu_(dhdu),
+        ddhdxdx_(ddhdxdx),
+        ddhdudu_(ddhdudu),
+        ddhdudx_(ddhdudx) {}
 
   virtual ~LinearConstraint() = default;
 
@@ -231,4 +233,3 @@ class LinearConstraint final : public ConstraintBase<STATE_DIM, INPUT_DIM> {
 };
 
 }  // namespace ocs2
-

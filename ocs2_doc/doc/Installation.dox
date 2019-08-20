@@ -15,6 +15,7 @@ library versions as provided in the package sources.
  	 \code{.sh}
 	sudo apt-get install libglpk-dev
 	\endcode
+ - catkin-pkg package for python 2 and 3. Install with `pip install catkin-pkg`
 
 \section ocs2_doc_install Installation
 \subsection ocs2_doc_build_lib Build the library

@@ -51,17 +51,7 @@ SLQ_BASE<STATE_DIM, INPUT_DIM>::SLQ_BASE(const controlled_system_base_t* systemD
     state_dynamicsForwardRolloutPtrStock_[i].reset(new state_triggered_rollout_t(*systemDynamicsPtr, BASE::rolloutSettings_, "SLQ"));
   }  // end of i loop
 
-  // for controller design
-  BmFunc_.resize(BASE::ddpSettings_.nThreads_);
-  PmFunc_.resize(BASE::ddpSettings_.nThreads_);
-  RmInverseFunc_.resize(BASE::ddpSettings_.nThreads_);
-  RvFunc_.resize(BASE::ddpSettings_.nThreads_);
-  EvProjectedFunc_.resize(BASE::ddpSettings_.nThreads_);
-  CmProjectedFunc_.resize(BASE::ddpSettings_.nThreads_);
-  DmProjectedFunc_.resize(BASE::ddpSettings_.nThreads_);
-
   // Riccati Solver
-  SmFuncs_.resize(BASE::ddpSettings_.nThreads_);
   riccatiEquationsPtrStock_.clear();
   riccatiEquationsPtrStock_.reserve(BASE::ddpSettings_.nThreads_);
   errorEquationPtrStock_.clear();
@@ -398,13 +388,6 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM>::calculateController() {
       // functions for controller
       BASE::nominalStateFunc_[j].setData(&(BASE::nominalTimeTrajectoriesStock_[i]), &(BASE::nominalStateTrajectoriesStock_[i]));
       BASE::nominalInputFunc_[j].setData(&(BASE::nominalTimeTrajectoriesStock_[i]), &(BASE::nominalInputTrajectoriesStock_[i]));
-      BmFunc_[j].setData(&(BASE::nominalTimeTrajectoriesStock_[i]), &(BASE::BmTrajectoryStock_[i]));
-      PmFunc_[j].setData(&(BASE::nominalTimeTrajectoriesStock_[i]), &(BASE::PmTrajectoryStock_[i]));
-      RmInverseFunc_[j].setData(&(BASE::nominalTimeTrajectoriesStock_[i]), &(RmInverseTrajectoryStock_[i]));
-      RvFunc_[j].setData(&(BASE::nominalTimeTrajectoriesStock_[i]), &(BASE::RvTrajectoryStock_[i]));
-      EvProjectedFunc_[j].setData(&(BASE::nominalTimeTrajectoriesStock_[i]), &(EvProjectedTrajectoryStock_[i]));
-      CmProjectedFunc_[j].setData(&(BASE::nominalTimeTrajectoriesStock_[i]), &(CmProjectedTrajectoryStock_[i]));
-      DmProjectedFunc_[j].setData(&(BASE::nominalTimeTrajectoriesStock_[i]), &(DmProjectedTrajectoryStock_[i]));
     }  // end of j loop
 
     // current partition update
@@ -441,13 +424,14 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM>::calculateControllerWorker(size_t workerInde
   // interpolate
   const auto indexAlpha = BASE::nominalStateFunc_[workerIndex].interpolate(time, nominalState);
   BASE::nominalInputFunc_[workerIndex].interpolate(indexAlpha, nominalInput);
-  BmFunc_[workerIndex].interpolate(indexAlpha, Bm);
-  PmFunc_[workerIndex].interpolate(indexAlpha, Pm);
-  RvFunc_[workerIndex].interpolate(indexAlpha, Rv);
-  RmInverseFunc_[workerIndex].interpolate(indexAlpha, RmInverse);
-  EvProjectedFunc_[workerIndex].interpolate(indexAlpha, EvProjected);
-  CmProjectedFunc_[workerIndex].interpolate(indexAlpha, CmProjected);
-  DmProjectedFunc_[workerIndex].interpolate(indexAlpha, DmProjected);
+
+  EigenLinearInterpolation<state_input_matrix_t>::interpolate(indexAlpha, Bm, &(BASE::BmTrajectoryStock_[i]));
+  EigenLinearInterpolation<input_state_matrix_t>::interpolate(indexAlpha, Pm, &(BASE::PmTrajectoryStock_[i]));
+  EigenLinearInterpolation<input_vector_t>::interpolate(indexAlpha, Rv, &(BASE::RvTrajectoryStock_[i]));
+  EigenLinearInterpolation<input_matrix_t>::interpolate(indexAlpha, RmInverse, &(RmInverseTrajectoryStock_[i]));
+  EigenLinearInterpolation<input_vector_t>::interpolate(indexAlpha, EvProjected, &(EvProjectedTrajectoryStock_[i]));
+  EigenLinearInterpolation<input_state_matrix_t>::interpolate(indexAlpha, CmProjected, &(CmProjectedTrajectoryStock_[i]));
+  EigenLinearInterpolation<input_matrix_t>::interpolate(indexAlpha, DmProjected, &(DmProjectedTrajectoryStock_[i]));
 
   // Lm
   Pm.noalias() += Bm.transpose() * BASE::SmTrajectoryStock_[i][k];  // Avoid temporary in the product
@@ -784,7 +768,6 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM>::solveErrorRiccatiEquationWorker(size_t work
   /*
    * Calculating the coefficients of the error equation
    */
-  SmFuncs_[workerIndex].setData(&SsTimeTrajectory, &SmTrajectory);
   state_vector_array_t GvTrajectory(nominalTimeSize);
   state_matrix_array_t GmTrajectory(nominalTimeSize);
   state_matrix_t Sm;
@@ -792,7 +775,7 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM>::solveErrorRiccatiEquationWorker(size_t work
   input_vector_t RmEv;
   for (int k = static_cast<int>(nominalTimeSize) - 1; k >= 0; k--) {
     // Sm
-    SmFuncs_[workerIndex].interpolate(nominalTimeTrajectory[k], Sm);
+    EigenLinearInterpolation<state_matrix_t>::interpolate(nominalTimeTrajectory[k], Sm, &SsTimeTrajectory, &SmTrajectory);
     // Lm
     Lm = PmTrajectory[k];
     Lm.noalias() += BmTrajectory[k].transpose() * Sm;

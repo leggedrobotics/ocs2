@@ -43,6 +43,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <Eigen/Dense>
 
 #include <ocs2_core/Dimensions.h>
+#include <ocs2_core/control/LinearController.h>
 #include <ocs2_core/integration/Integrator.h>
 #include <ocs2_core/misc/Lookup.h>
 #include <ocs2_core/misc/LinearInterpolation.h>
@@ -76,12 +77,10 @@ public:
 	using rollout_sensitivity_equations_t = RolloutSensitivityEquations<STATE_DIM, INPUT_DIM>;
 	using riccati_sensitivity_equations_t = SensitivitySequentialRiccatiEquations<STATE_DIM, INPUT_DIM>;
 
+	using linear_controller_t = LinearController<STATE_DIM, INPUT_DIM>;
+	using linear_controller_array_t = typename linear_controller_t::array_t;
+
 	using DIMENSIONS = Dimensions<STATE_DIM, INPUT_DIM>;
-	using controller_t = typename DIMENSIONS::controller_t;
-	using controller_array_t = typename DIMENSIONS::controller_array_t;
-	using linear_controller_array_t = typename slq_data_collector_t::linear_controller_array_t;
-	using lagrange_t = typename DIMENSIONS::lagrange_t;
-	using lagrange_array_t = typename DIMENSIONS::lagrange_array_t;
 	using size_array_t = typename DIMENSIONS::size_array_t;
 	using scalar_t = typename DIMENSIONS::scalar_t;
 	using scalar_array_t = typename DIMENSIONS::scalar_array_t;
@@ -241,31 +240,6 @@ protected:
 	void calculateRolloutCostate(
 			const std::vector<scalar_array_t>& timeTrajectoriesStock,
 			state_vector_array2_t& costateTrajectoriesStock);
-
-	/**
-	 * Calculates the linear function approximation of the state-input constraint Lagrangian.
-	 * This method uses the following variables:
-	 *
-	 * @param [out] lagrangeMultiplierFunctionsStock: the linear function approximation of the type-1 constraint Lagrangian.
-	 * @param [in] learningRate: the learning rate.
-	 */
-	void calculateInputConstraintLagrangian(
-			lagrange_array_t& lagrangeMultiplierFunctionsStock,
-			scalar_t learningRate = 0.0);
-
-	/**
-	 * Computes the Lagrange multiplier of the state-input constraint over the given rollout.
-	 *
-	 * @param [in] timeTrajectoriesStock: the inquiry rollout time
-	 * @param [in] stateTrajectoriesStock: the inquiry rollout state
-	 * @param [in] lagrangeMultiplierFunctionsStock: the coefficients of the linear function for lagrangeMultiplier
-	 * @param [out] lagrangeTrajectoriesStock: lagrangeMultiplier value over the given trajectory
-	 */
-	void calculateRolloutLagrangeMultiplier(
-			const std::vector<scalar_array_t>& timeTrajectoriesStock,
-			const state_vector_array2_t& stateTrajectoriesStock,
-			const lagrange_array_t& lagrangeMultiplierFunctionsStock,
-			constraint1_vector_array2_t& lagrangeTrajectoriesStock);
 
 	/**
 	 * Computes the Lagrange multiplier of the state-input constraint over the given time trajectory.
@@ -430,7 +404,7 @@ protected:
      * @param [in] state: The inquired state.
      * @param [out] valueFunctionDerivative: The value function's derivative w.r.t. an event time.
      */
-	void getValueFuntionDerivative(
+	void getValueFuntionSensitivity(
 			const size_t& eventTimeIndex,
 			const scalar_t& time,
 			const state_vector_t& state,

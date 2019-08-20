@@ -155,6 +155,7 @@ class LinearInterpolation {
 
   /**
    * Directly uses the index and interpolation coefficient provided by the user
+   * @note If sizes in data array are not equal, the interpolation will snap to the data point closest to the query time
    *
    * @param [in] indexAlpha : index and interpolation coefficient (alpha) pair
    * @param [out] enquiryData : result of the interpolation
@@ -166,7 +167,13 @@ class LinearInterpolation {
         // Normal interpolation case
         int index = indexAlpha.first;
         scalar_t alpha = indexAlpha.second;
-        enquiryData = alpha * (*dataPtr)[index] + (scalar_t(1.0) - alpha) * (*dataPtr)[index + 1];
+        auto& lhs = (*dataPtr)[index];
+        auto& rhs = (*dataPtr)[index + 1];
+        if (lhs.rows() == rhs.rows() && lhs.cols() == rhs.cols()) {
+          enquiryData = alpha * lhs + (scalar_t(1.0) - alpha) * rhs;
+        } else {
+          enquiryData = (alpha > 0.5) ? lhs : rhs;
+        }
       } else if (dataPtr->size() == 1) {
         // Time vector has only 1 element -> Constant function
         enquiryData = dataPtr->front();

@@ -52,6 +52,9 @@ class SLQ_DataCollector {
 
   using Ptr = std::shared_ptr<SLQ_DataCollector<STATE_DIM, INPUT_DIM>>;
 
+  using controller_t = typename slq_t::controller_t;
+  using controller_ptr_array_t = typename slq_t::controller_ptr_array_t;
+  using linear_controller_t = typename slq_t::linear_controller_t;
   using linear_controller_array_t = typename slq_t::linear_controller_array_t;
   using size_array_t = typename slq_t::size_array_t;
   using scalar_t = typename slq_t::scalar_t;

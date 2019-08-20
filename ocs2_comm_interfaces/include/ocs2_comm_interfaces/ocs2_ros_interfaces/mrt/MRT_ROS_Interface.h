@@ -112,7 +112,7 @@ class MRT_ROS_Interface : public MRT_BASE<STATE_DIM, INPUT_DIM> {
    *
    * @param [in] planObservation: The observation of the policy.
    */
-  virtual void initCall(const SystemObservation<STATE_DIM, INPUT_DIM>& planObservation) {}
+  virtual void initCall(const system_observation_t& planObservation) {}
 
   /**
    * Shut down the ROS nodes.

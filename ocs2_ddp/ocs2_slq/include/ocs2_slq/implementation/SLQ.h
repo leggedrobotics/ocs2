@@ -47,12 +47,6 @@ SLQ<STATE_DIM, INPUT_DIM>::SLQ(const controlled_system_base_t* systemDynamicsPtr
 /******************************************************************************************************/
 /***************************************************************************************************** */
 template <size_t STATE_DIM, size_t INPUT_DIM>
-SLQ<STATE_DIM, INPUT_DIM>::~SLQ() = default;
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/***************************************************************************************************** */
-template <size_t STATE_DIM, size_t INPUT_DIM>
 void SLQ<STATE_DIM, INPUT_DIM>::approximatePartitionLQ(size_t partitionIndex) {
   const size_t threadId = 0;
   size_t N = BASE::nominalTimeTrajectoriesStock_[partitionIndex].size();

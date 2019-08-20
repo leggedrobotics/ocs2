@@ -215,141 +215,6 @@ void GDDP<STATE_DIM, INPUT_DIM>::calculateRolloutCostate(
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
-void GDDP<STATE_DIM, INPUT_DIM>::calculateInputConstraintLagrangian(
-		lagrange_array_t& lagrangeMultiplierFunctionsStock,
-		scalar_t learningRate /*= 0.0*/) {
-
-	// functions for controller and Lagrange multiplier
-	EigenLinearInterpolation<state_vector_t> xFunc;
-	EigenLinearInterpolation<state_input_matrix_t> BmFunc;
-	EigenLinearInterpolation<input_state_matrix_t> PmFunc;
-	EigenLinearInterpolation<input_vector_t> RvFunc;
-	EigenLinearInterpolation<input_matrix_t> RmFunc;
-	EigenLinearInterpolation<input_vector_t> EvProjectedFunc;
-	EigenLinearInterpolation<input_state_matrix_t> CmProjectedFunc;
-	EigenLinearInterpolation<input_constraint1_matrix_t> DmDagerFunc;
-
-	lagrangeMultiplierFunctionsStock.resize(numPartitions_);
-
-	for (size_t i=0; i<numPartitions_; i++) {
-
-		// skip the inactive partitions
-		if (i<dcPtr_->initActivePartition_ || i>dcPtr_->finalActivePartition_) {
-			lagrangeMultiplierFunctionsStock[i].clear();
-			continue;
-		}
-
-		xFunc.setData(&dcPtr_->nominalTimeTrajectoriesStock_[i], &dcPtr_->nominalStateTrajectoriesStock_[i]);
-		BmFunc.setData(&dcPtr_->nominalTimeTrajectoriesStock_[i], &dcPtr_->BmTrajectoriesStock_[i]);
-		PmFunc.setData(&dcPtr_->nominalTimeTrajectoriesStock_[i], &dcPtr_->PmTrajectoriesStock_[i]);
-		RvFunc.setData(&dcPtr_->nominalTimeTrajectoriesStock_[i], &dcPtr_->RvTrajectoriesStock_[i]);
-		RmFunc.setData(&dcPtr_->nominalTimeTrajectoriesStock_[i], &dcPtr_->RmTrajectoriesStock_[i]);
-		EvProjectedFunc.setData(&dcPtr_->nominalTimeTrajectoriesStock_[i], &dcPtr_->EvProjectedTrajectoriesStock_[i]);
-		CmProjectedFunc.setData(&dcPtr_->nominalTimeTrajectoriesStock_[i], &dcPtr_->CmProjectedTrajectoriesStock_[i]);
-		DmDagerFunc.setData(&dcPtr_->nominalTimeTrajectoriesStock_[i], &dcPtr_->DmDagerTrajectoriesStock_[i]);
-
-		const size_t N = dcPtr_->SsTimeTrajectoriesStock_[i].size();
-
-		lagrangeMultiplierFunctionsStock[i].time_ = dcPtr_->SsTimeTrajectoriesStock_[i];
-		lagrangeMultiplierFunctionsStock[i].k_.resize(N);
-		lagrangeMultiplierFunctionsStock[i].uff_.resize(N);
-		lagrangeMultiplierFunctionsStock[i].deltaUff_.resize(N);
-
-		for (size_t k=0; k<N; k++) {
-
-			const scalar_t& time = dcPtr_->SsTimeTrajectoriesStock_[i][k];
-
-			state_vector_t nominalState;
-			const auto indexAlpha = xFunc.interpolate(time, nominalState);
-			state_input_matrix_t Bm;
-			BmFunc.interpolate(indexAlpha, Bm);
-			input_state_matrix_t Pm;
-			PmFunc.interpolate(indexAlpha, Pm);
-			input_vector_t Rv;
-			RvFunc.interpolate(indexAlpha, Rv);
-			input_vector_t EvProjected;
-			EvProjectedFunc.interpolate(indexAlpha, EvProjected);
-			input_state_matrix_t CmProjected;
-			CmProjectedFunc.interpolate(indexAlpha, CmProjected);
-			input_matrix_t Rm;
-			RmFunc.interpolate(indexAlpha, Rm);
-			input_constraint1_matrix_t DmDager;
-			DmDagerFunc.interpolate(indexAlpha, DmDager);
-
-			const auto greatestLessTimeStampIndex = indexAlpha.first;
-			const size_t& nc1 = dcPtr_->nc1TrajectoriesStock_[i][greatestLessTimeStampIndex];
-
-			const state_matrix_t& Sm  = dcPtr_->SmTrajectoriesStock_[i][k];
-			const state_vector_t& Sv  = dcPtr_->SvTrajectoriesStock_[i][k];
-			const state_vector_t& Sve = dcPtr_->SveTrajectoriesStock_[i][k];
-
-			dynamic_input_matrix_t DmDagerTransRm = DmDager.leftCols(nc1).transpose() * Rm;
-
-			constraint1_state_matrix_t& K  = lagrangeMultiplierFunctionsStock[i].k_[k];
-			constraint1_vector_t& uff      = lagrangeMultiplierFunctionsStock[i].uff_[k];
-			constraint1_vector_t& deltaUff = lagrangeMultiplierFunctionsStock[i].deltaUff_[k];
-
-			K.topRows(nc1) = learningRate * ( DmDagerTransRm*CmProjected
-					- DmDager.leftCols(nc1).transpose()*(Pm + Bm.transpose()*Sm) );
-			K.bottomRows(DIMENSIONS::MAX_CONSTRAINT1_DIM_-nc1).setZero();
-
-			uff.head(nc1) = DmDagerTransRm*EvProjected
-					- DmDager.leftCols(nc1).transpose()*(Rv + Bm.transpose()*(Sv+Sve))
-					- K.topRows(nc1)*nominalState;
-			uff.tail(DIMENSIONS::MAX_CONSTRAINT1_DIM_-nc1).setZero();
-
-			deltaUff.setZero();
-
-		}  // end of k loop
-	}  // end of i loop
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM>
-void GDDP<STATE_DIM, INPUT_DIM>::calculateRolloutLagrangeMultiplier(
-		const std::vector<scalar_array_t>& timeTrajectoriesStock,
-		const state_vector_array2_t& stateTrajectoriesStock,
-		const lagrange_array_t& lagrangeMultiplierFunctionsStock,
-		constraint1_vector_array2_t& lagrangeTrajectoriesStock)  {
-
-	EigenLinearInterpolation<constraint1_vector_t> vffFunc;
-	EigenLinearInterpolation<constraint1_state_matrix_t> vfbFunc;
-
-	lagrangeTrajectoriesStock.resize(numPartitions_);
-
-	for (size_t i=0; i<numPartitions_; i++) {
-
-		// skip the inactive partitions
-		if (i<dcPtr_->initActivePartition_ || i>dcPtr_->finalActivePartition_) {
-			lagrangeTrajectoriesStock[i].clear();
-			continue;
-		}
-
-		vffFunc.setData(&lagrangeMultiplierFunctionsStock[i].time_, &lagrangeMultiplierFunctionsStock[i].uff_);
-		vfbFunc.setData(&lagrangeMultiplierFunctionsStock[i].time_, &lagrangeMultiplierFunctionsStock[i].k_);
-
-		size_t N = timeTrajectoriesStock[i].size();
-		lagrangeTrajectoriesStock[i].resize(N);
-		for (size_t k=0; k<N; k++) {
-
-			constraint1_vector_t vff;
-			const auto indexAlpha = vffFunc.interpolate(timeTrajectoriesStock[i][k], vff);
-
-			constraint1_state_matrix_t vfb;
-			vfbFunc.interpolate(indexAlpha, vfb);
-
-			lagrangeTrajectoriesStock[i][k] = vff + vfb*stateTrajectoriesStock[i][k];
-
-		}  // end of k loop
-	}  // end of i loop
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM>
 void GDDP<STATE_DIM, INPUT_DIM>::calculateNominalRolloutLagrangeMultiplier(
 		const std::vector<scalar_array_t>& timeTrajectoriesStock,
 		constraint1_vector_array2_t& lagrangeTrajectoriesStock)  {
@@ -1123,7 +988,7 @@ void GDDP<STATE_DIM, INPUT_DIM>::calculateBVPSensitivityControllerForward(
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
-void GDDP<STATE_DIM, INPUT_DIM>::getValueFuntionDerivative(
+void GDDP<STATE_DIM, INPUT_DIM>::getValueFuntionSensitivity(
 		const size_t& eventTimeIndex,
 		const scalar_t& time,
 		const state_vector_t& state,
@@ -1315,7 +1180,7 @@ void GDDP<STATE_DIM, INPUT_DIM>::runLQBasedMethod()  {
 						nablaLvTrajectoriesStockSet_[index]);
 
 				// calculate the value function derivatives w.r.t. event times
-				getValueFuntionDerivative(index, dcPtr_->initTime_, dcPtr_->initState_,
+				getValueFuntionSensitivity(index, dcPtr_->initTime_, dcPtr_->initState_,
 						nominalCostFuntionDerivative_(index));
 
 			} else if (iteration == 1) {

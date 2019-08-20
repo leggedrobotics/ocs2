@@ -49,7 +49,7 @@ OCS2<STATE_DIM, INPUT_DIM>::OCS2(
 		, ulCostPtr_( new upper_level_cost_t(systemDynamicsPtr, systemDerivativesPtr, systemConstraintsPtr, costFunctionPtr,
 				operatingTrajectoriesPtr, settings, logicRulesPtr, heuristicsFunctionPtr, nlpSettings.displayInfo_, gddpSettings) )
 		, ulConstraintsPtr_( new upper_level_constraints_t )
-{}\
+{}
 
 /******************************************************************************************************/
 /******************************************************************************************************/

@@ -41,5 +41,13 @@ SparsityPattern getHessianVariableSparsity(int variableDim, int parameterDim) {
   return hessianSparsity;
 }
 
+size_t getNumberOfNonZeros(const SparsityPattern& sparsityPattern) {
+  size_t nnz = 0;
+  for (const auto& row : sparsityPattern) {
+    nnz += row.size();
+  }
+  return nnz;
+}
+
 }  // namespace cppad_sparsity
 }  // namespace ocs2

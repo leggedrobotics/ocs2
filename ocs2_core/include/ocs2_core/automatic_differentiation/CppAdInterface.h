@@ -28,6 +28,7 @@ class CppAdInterface {
   using ad_scalar_t = CppAD::AD<ad_base_t>;
   using dynamic_vector_t = Eigen::Matrix<scalar_t, Eigen::Dynamic, 1>;
   using dynamic_matrix_t = Eigen::Matrix<scalar_t, Eigen::Dynamic, Eigen::Dynamic>;
+  using dynamic_rowMajor_matrix_t = Eigen::Matrix<scalar_t, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>;
   using ad_dynamic_vector_t = Eigen::Matrix<ad_scalar_t, Eigen::Dynamic, 1>;
   using ad_function_t = std::function<void(const ad_dynamic_vector_t&, ad_dynamic_vector_t&)>;
   using ad_parameterized_function_t = std::function<void(const ad_dynamic_vector_t&, const ad_dynamic_vector_t&, ad_dynamic_vector_t&)>;
@@ -171,6 +172,11 @@ class CppAdInterface {
   void setApproximationOrder(ApproximationOrder approximationOrder, CppAD::cg::ModelCSourceGen<scalar_t>& sourceGen, ad_fun_t& fun) const;
 
   /**
+   * Stores the sparisty nonzeros
+   */
+  void setSparsityNonzeros();
+
+  /**
    * Creates sparsity pattern for the Jacobian that will be generated
    * @param fun : taped ad function
    * @return Sparsity pattern that contains entries for variables only, not for parameters
@@ -193,6 +199,8 @@ class CppAdInterface {
   int rangeDim_;
   int variableDim_;
   int parameterDim_;
+  size_t nnzJacobian_;
+  size_t nnzHessian_;
 
   // Names
   std::string modelName_;

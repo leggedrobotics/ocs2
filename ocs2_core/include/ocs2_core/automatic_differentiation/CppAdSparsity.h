@@ -65,5 +65,13 @@ SparsityPattern getJacobianVariableSparsity(int rangeDim, int variableDim);
  */
 SparsityPattern getHessianVariableSparsity(int variableDim, int parameterDim);
 
+/**
+ * Get number of nonzeros in sparsity pattern
+ *
+ * @param sparsityPattern
+ * @return number of nonzero elements
+ */
+size_t getNumberOfNonZeros(const SparsityPattern& sparsityPattern);
+
 }  // namespace cppad_sparsity
 }  // namespace ocs2

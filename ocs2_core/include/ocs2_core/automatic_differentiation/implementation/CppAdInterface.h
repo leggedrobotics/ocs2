@@ -83,6 +83,8 @@ void CppAdInterface<scalar_t>::createModels(ApproximationOrder approximationOrde
   // Compile and store the library
   dynamicLib_.reset(libraryProcessor.createDynamicLibrary(gccCompiler));
   model_.reset(dynamicLib_->model(modelName_));
+
+  setSparsityNonzeros();
 }
 
 /******************************************************************************************************/
@@ -95,6 +97,8 @@ void CppAdInterface<scalar_t>::loadModels(bool verbose) {
   }
   dynamicLib_.reset(new CppAD::cg::LinuxDynamicLib<scalar_t>(libraryName_ + CppAD::cg::system::SystemInfo<>::DYNAMIC_LIB_EXTENSION));
   model_.reset(dynamicLib_->model(modelName_));
+
+  setSparsityNonzeros();
 }
 
 /******************************************************************************************************/
@@ -135,18 +139,16 @@ typename CppAdInterface<scalar_t>::dynamic_matrix_t CppAdInterface<scalar_t>::ge
   dynamic_vector_t xp(variableDim_ + parameterDim_);
   xp << x, p;
 
-  // Call SparseJacobian with std::vector. Other CppAd functions allocate internal vectors that are incompatible with multithreading.
-  std::vector<scalar_t> xp_v(xp.data(), xp.data() + xp.size());
-  std::vector<scalar_t> sparseJacobian;
-  std::vector<size_t> rows;
-  std::vector<size_t> cols;
-  model_->SparseJacobian(xp_v, sparseJacobian, rows, cols);
+  std::vector<scalar_t> sparseJacobian(nnzJacobian_);
+  size_t const* rows;
+  size_t const* cols;
+  // Call this particular SparseJacobian. Other CppAd functions allocate internal vectors that are incompatible with multithreading.
+  model_->SparseJacobian(xp.data(), xp.size(), sparseJacobian.data(), &rows, &cols, nnzJacobian_);
 
   // Write sparse elements into Eigen type. Only jacobian w.r.t. variables was requested, so cols should not contain elements corresponding
-  // to parameters
-  dynamic_matrix_t jacobian = dynamic_matrix_t::Zero(rangeDim_, variableDim_);
-  int numNonZeros = rows.size();
-  for (int i = 0; i < numNonZeros; ++i) {
+  // to parameters. Write to rowMajor type because sparsity is specified as row major.
+  dynamic_rowMajor_matrix_t jacobian = dynamic_rowMajor_matrix_t::Zero(rangeDim_, variableDim_);
+  for (size_t i = 0; i < nnzJacobian_; i++) {
     jacobian(rows[i], cols[i]) = sparseJacobian[i];
   }
 
@@ -174,22 +176,18 @@ typename CppAdInterface<scalar_t>::dynamic_matrix_t CppAdInterface<scalar_t>::ge
                                                                                          const dynamic_vector_t& x,
                                                                                          const dynamic_vector_t& p) const {
   // Concatenate input
-  assert(w.size() == rangeDim_);
   dynamic_vector_t xp(variableDim_ + parameterDim_);
   xp << x, p;
 
-  // Call SparseHessian with std::vector. Other CppAd functions allocate internal vectors that are incompatible with multithreading.
-  std::vector<scalar_t> xp_v(xp.data(), xp.data() + xp.size());
-  std::vector<scalar_t> w_v(w.data(), w.data() + w.size());
-  std::vector<scalar_t> sparseHessian;
-  std::vector<size_t> rows;
-  std::vector<size_t> cols;
-  model_->SparseHessian(xp_v, w_v, sparseHessian, rows, cols);
+  std::vector<scalar_t> sparseHessian(nnzHessian_);
+  size_t const* rows;
+  size_t const* cols;
+  // Call this particular SparseHessian. Other CppAd functions allocate internal vectors that are incompatible with multithreading.
+  model_->SparseHessian(xp.data(), xp.size(), w.data(), w.size(), sparseHessian.data(), &rows, &cols, nnzHessian_);
 
-  // Fills upper triangular sparsity of hessian w.r.t variables.
-  dynamic_matrix_t hessian = dynamic_matrix_t::Zero(variableDim_, variableDim_);
-  int numNonZeros = rows.size();
-  for (int i = 0; i < numNonZeros; ++i) {
+  // Fills upper triangular sparsity of hessian w.r.t variables. Write to rowMajor type because sparsity is specified as row major.
+  dynamic_rowMajor_matrix_t hessian = dynamic_rowMajor_matrix_t::Zero(variableDim_, variableDim_);
+  for (size_t i = 0; i < nnzHessian_; i++) {
     hessian(rows[i], cols[i]) = sparseHessian[i];
   }
 
@@ -280,6 +278,18 @@ void CppAdInterface<scalar_t>::setApproximationOrder(ApproximationOrder approxim
       break;
     default:
       throw std::runtime_error("CppAdInterface: Invalid approximation order");
+  }
+}
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+template <typename scalar_t>
+void CppAdInterface<scalar_t>::setSparsityNonzeros() {
+  if (model_->isJacobianSparsityAvailable()) {
+    nnzJacobian_ = cppad_sparsity::getNumberOfNonZeros(model_->JacobianSparsitySet());
+  }
+  if (model_->isHessianSparsityAvailable()) {
+    nnzHessian_ = cppad_sparsity::getNumberOfNonZeros(model_->HessianSparsitySet());
   }
 }
 

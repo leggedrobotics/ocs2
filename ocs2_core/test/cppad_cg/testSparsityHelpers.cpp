@@ -1,6 +1,4 @@
-//
-// Created by rgrandia on 16.08.19.
-//
+
 
 #include <gtest/gtest.h>
 

@@ -1,6 +1,4 @@
-//
-// Created by rgrandia on 07.05.19.
-//
+
 
 #ifndef OCS2_LOOPSHAPINGPROPERTYTREE_H
 #define OCS2_LOOPSHAPINGPROPERTYTREE_H

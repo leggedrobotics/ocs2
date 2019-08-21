@@ -1,6 +1,4 @@
-//
-// Created by rgrandia on 16.05.19.
-//
+
 
 #include <gtest/gtest.h>
 #include <ocs2_core/misc/LinearInterpolation.h>

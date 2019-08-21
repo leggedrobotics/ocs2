@@ -39,14 +39,14 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 namespace ocs2 {
 namespace cartpole {
 
-class CartPoleSytemDynamics : public SystemDynamicsBaseAD<CartPoleSytemDynamics, cartpole::STATE_DIM_, cartpole::INPUT_DIM_, 1> {
+class CartPoleSytemDynamics : public SystemDynamicsBaseAD<cartpole::STATE_DIM_, cartpole::INPUT_DIM_, 1> {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
   using Ptr = std::shared_ptr<CartPoleSytemDynamics>;
   using ConstPtr = std::shared_ptr<const CartPoleSytemDynamics>;
 
-  using BASE = SystemDynamicsBaseAD<CartPoleSytemDynamics, cartpole::STATE_DIM_, cartpole::INPUT_DIM_, 1>;
+  using BASE = SystemDynamicsBaseAD<cartpole::STATE_DIM_, cartpole::INPUT_DIM_, 1>;
   using typename BASE::scalar_t;
   using typename BASE::state_vector_t;
   using typename BASE::state_matrix_t;
@@ -59,8 +59,10 @@ class CartPoleSytemDynamics : public SystemDynamicsBaseAD<CartPoleSytemDynamics,
 
   ~CartPoleSytemDynamics() = default;
 
+  CartPoleSytemDynamics(const CartPoleSytemDynamics& rhs) : BASE(rhs), param_(rhs.param_) {}
+
   void systemFlowMap(ad_scalar_t time, const ad_dynamic_vector_t& state, const ad_dynamic_vector_t& input,
-                     ad_dynamic_vector_t& stateDerivative) override {
+                     ad_dynamic_vector_t& stateDerivative) const override {
     const ad_scalar_t cosTheta = cos(state(0));
     const ad_scalar_t sinTheta = sin(state(0));
 

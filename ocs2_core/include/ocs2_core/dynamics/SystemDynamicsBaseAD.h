@@ -103,21 +103,21 @@ class SystemDynamicsBaseAD : public SystemDynamicsBase<STATE_DIM, INPUT_DIM, NUM
 
   void setCurrentStateAndControl(const scalar_t& time, const state_vector_t& state, const input_vector_t& input) final;
 
-  void getFlowMapDerivativeTime(state_vector_t& df) final { df = flowJacobian_.template leftCols<1>(); };
+  void getFlowMapDerivativeTime(state_vector_t& df) final { df = flowJacobian_.template leftCols<1>(); }
 
-  void getFlowMapDerivativeState(state_matrix_t& A) final { A = flowJacobian_.template middleCols<STATE_DIM>(1); };
+  void getFlowMapDerivativeState(state_matrix_t& A) final { A = flowJacobian_.template middleCols<STATE_DIM>(1); }
 
-  void getFlowMapDerivativeInput(state_input_matrix_t& B) final { B = flowJacobian_.template rightCols<INPUT_DIM>(); };
+  void getFlowMapDerivativeInput(state_input_matrix_t& B) final { B = flowJacobian_.template rightCols<INPUT_DIM>(); }
 
-  void getJumpMapDerivativeTime(state_vector_t& dg) final { dg = jumpJacobian_.template leftCols<1>(); };
+  void getJumpMapDerivativeTime(state_vector_t& dg) final { dg = jumpJacobian_.template leftCols<1>(); }
 
-  void getJumpMapDerivativeState(state_matrix_t& G) final { G = jumpJacobian_.template rightCols<STATE_DIM>(); };
+  void getJumpMapDerivativeState(state_matrix_t& G) final { G = jumpJacobian_.template rightCols<STATE_DIM>(); }
 
-  void getGuardSurfacesDerivativeTime(dynamic_vector_t& D_t_gamma) final { D_t_gamma = guardJacobian_.template leftCols<1>(); };
+  void getGuardSurfacesDerivativeTime(dynamic_vector_t& D_t_gamma) final { D_t_gamma = guardJacobian_.template leftCols<1>(); }
 
   void getGuardSurfacesDerivativeState(dynamic_state_matrix_t& D_x_gamma) final {
     D_x_gamma = guardJacobian_.template rightCols<STATE_DIM>();
-  };
+  }
 
  protected:
   /**
@@ -140,7 +140,7 @@ class SystemDynamicsBaseAD : public SystemDynamicsBase<STATE_DIM, INPUT_DIM, NUM
    */
   virtual void systemJumpMap(ad_scalar_t time, const ad_dynamic_vector_t& state, ad_dynamic_vector_t& jumpedState) const {
     jumpedState = state;
-  };
+  }
 
   /**
    * Interface method to the guard surfaces. This method can be implemented by the derived class.
@@ -152,7 +152,7 @@ class SystemDynamicsBaseAD : public SystemDynamicsBase<STATE_DIM, INPUT_DIM, NUM
    */
   virtual void systemGuardSurfaces(ad_scalar_t time, const ad_dynamic_vector_t& state, ad_dynamic_vector_t& guardSurfacesValue) const {
     guardSurfacesValue = -ad_dynamic_vector_t::Ones(1);
-  };
+  }
 
  private:
   /**

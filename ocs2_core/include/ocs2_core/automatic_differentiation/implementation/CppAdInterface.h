@@ -1,6 +1,4 @@
-//
-// Created by rgrandia on 19.08.19.
-//
+
 
 #pragma once
 
@@ -29,7 +27,7 @@ CppAdInterface<scalar_t>::CppAdInterface(ad_parameterized_function_t adFunction,
 template <typename scalar_t>
 CppAdInterface<scalar_t>::CppAdInterface(ad_function_t adFunction, int rangeDim, int variableDim, std::string modelName,
                                          std::string folderName, std::vector<std::string> compileFlags)
-    : CppAdInterface([=](const ad_dynamic_vector_t& x, const ad_dynamic_vector_t& p, ad_dynamic_vector_t& y) { adFunction(x, y); },
+    : CppAdInterface([adFunction](const ad_dynamic_vector_t& x, const ad_dynamic_vector_t& p, ad_dynamic_vector_t& y) { adFunction(x, y); },
                      rangeDim, variableDim, 0, std::move(modelName), std::move(folderName), std::move(compileFlags)){};
 
 template <typename scalar_t>

@@ -130,7 +130,7 @@ class CostFunctionBaseAD : public CostFunctionBase<STATE_DIM, INPUT_DIM> {
    * @param [in] time: Current time.
    * @return The cost function parameters at a certain time
    */
-  virtual dynamic_vector_t getIntermediateParameters(scalar_t time) const { return dynamic_vector_t(0); };
+  virtual dynamic_vector_t getIntermediateParameters(scalar_t time) const { return dynamic_vector_t(0); }
 
   /**
    * Number of parameters for the intermediate cost function.
@@ -138,14 +138,14 @@ class CostFunctionBaseAD : public CostFunctionBase<STATE_DIM, INPUT_DIM> {
    *
    * @return number of parameters
    */
-  virtual size_t getNumIntermediateParameters() const { return 0; };
+  virtual size_t getNumIntermediateParameters() const { return 0; }
 
   /**
    * Gets a user-defined cost parameters, applied to the terminal costs
    *
    * @return The cost function parameters at a certain time
    */
-  virtual dynamic_vector_t getTerminalParameters() const { return dynamic_vector_t(0); };
+  virtual dynamic_vector_t getTerminalParameters() const { return dynamic_vector_t(0); }
 
   /**
    * Number of parameters for the terminal cost function.
@@ -153,7 +153,7 @@ class CostFunctionBaseAD : public CostFunctionBase<STATE_DIM, INPUT_DIM> {
    *
    * @return number of parameters
    */
-  virtual size_t getNumTerminalParameters() const { return 0; };
+  virtual size_t getNumTerminalParameters() const { return 0; }
 
   /**
    * Interface method to the intermediate cost function. This method should be implemented by the derived class.
@@ -183,7 +183,7 @@ class CostFunctionBaseAD : public CostFunctionBase<STATE_DIM, INPUT_DIM> {
   virtual void terminalCostFunction(ad_scalar_t time, const ad_dynamic_vector_t& state, const ad_dynamic_vector_t& parameters,
                                     ad_scalar_t& costValue) const {
     costValue = 0;
-  };
+  }
 
  private:
   /**

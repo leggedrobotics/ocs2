@@ -1,6 +1,4 @@
-//
-// Created by rgrandia on 04.04.19.
-//
+
 
 #include <gtest/gtest.h>
 #include "testLoopshapingDynamics.h"

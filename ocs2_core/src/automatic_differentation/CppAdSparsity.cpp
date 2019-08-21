@@ -1,6 +1,4 @@
-//
-// Created by rgrandia on 16.08.19.
-//
+
 
 #include <ocs2_core/automatic_differentiation/CppAdSparsity.h>
 

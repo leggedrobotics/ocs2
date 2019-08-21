@@ -87,7 +87,7 @@ SLQ_BASE<STATE_DIM, INPUT_DIM>::SLQ_BASE(const controlled_system_base_t* systemD
       case DIMENSIONS::RiccatiIntegratorType::ODE45: {
         riccatiIntegratorPtrStock_.emplace_back(
             new ODE45<riccati_equations_t::S_DIM_>(riccatiEquationsPtrStock_.back(), riccatiEventPtrStock_.back()));
-        errorIntegratorPtrStock_.emplace_back(new ODE45<STATE_DIM>(errorEquationPtrStock_.back(), errorEventPtrStock_.back()));
+        errorIntegratorPtrStock_.emplace_back(new ODE45<STATE_DIM>(errorEquationPtrStock_.back(), nullptr));
         break;
       }
       /*note: this case is not yet working. It would most likely work if we had an adaptive time adams-bashforth integrator */
@@ -99,7 +99,7 @@ SLQ_BASE<STATE_DIM, INPUT_DIM>::SLQ_BASE(const controlled_system_base_t* systemD
         riccatiIntegratorPtrStock_.emplace_back(
             new IntegratorBulirschStoer<riccati_equations_t::S_DIM_>(riccatiEquationsPtrStock_.back(), riccatiEventPtrStock_.back()));
         errorIntegratorPtrStock_.emplace_back(
-            new IntegratorBulirschStoer<STATE_DIM>(errorEquationPtrStock_.back(), errorEventPtrStock_.back()));
+            new IntegratorBulirschStoer<STATE_DIM>(errorEquationPtrStock_.back(), nullptr));
         break;
       }
       default:

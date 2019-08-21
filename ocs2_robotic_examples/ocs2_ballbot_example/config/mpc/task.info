@@ -59,7 +59,7 @@ slq
         RelTolODE                      1e-3    ;1e-4
         minTimeStep                    1e-3
         maxNumStepsPerSecond           50000
-        simulationIsConstrained        0
+        simulationIsConstrained        1
         noStateConstraints             1
         useMakePSD                     0
         addedRiccatiDiagonal           1e-3
@@ -67,7 +67,7 @@ slq
         minRelConstraint1ISE           5e-6
         checkNumericalStability        0
 
-        useMultiThreading              1
+        useMultiThreading              0
         nThreads                       4
         threadPriority                 0
         debugPrintMP                   0

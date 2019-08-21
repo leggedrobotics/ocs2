@@ -85,7 +85,7 @@ public:
 	/**
 	 * Sets cost trajectories from input desired state, and publishes cost desired trajectories
 	 */
-	void publishTargetTrajectoriesFromDesiredState(dynamic_vector_t desiredState);
+	void publishTargetTrajectoriesFromDesiredState(cost_desired_trajectories_t costDesiredTrajectories);
 
 
 protected:

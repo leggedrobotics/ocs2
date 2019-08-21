@@ -27,8 +27,8 @@ catkin_package(
     include/external
     ${EIGEN3_INCLUDE_DIRS}
   LIBRARIES
-    ocs2_core_logic
-    cppad_interface
+    ${PROJECT_NAME}_logic
+    ${PROJECT_NAME}_cppad_interface
 
   DEPENDS 
     Boost
@@ -47,14 +47,14 @@ include_directories(
 )
 
 # Declare a C++ library
-add_library(ocs2_core_logic
+add_library(${PROJECT_NAME}_logic
         src/logic/machine/HybridLogicRulesMachine.cpp
         )
 target_link_libraries(ocs2_core_logic
         ${catkin_LIBRARIES}
         )
 
-add_library(cppad_interface
+add_library(${PROJECT_NAME}_cppad_interface
         src/automatic_differentation/CppAdInterface.cpp
         src/automatic_differentation/CppAdSparsity.cpp
         )
@@ -73,7 +73,7 @@ find_package(cmake_clang_tools QUIET)
 if(cmake_clang_tools_FOUND)
   message(STATUS "Run clang tooling for target " ${PROJECT_NAME}_lintTarget)
   add_clang_tooling(
-    TARGETS ${PROJECT_NAME}_lintTarget ocs2_core_logic cppad_interface
+    TARGETS ${PROJECT_NAME}_lintTarget ${PROJECT_NAME}_logic ${PROJECT_NAME}_cppad_interface
     SOURCE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/src ${CMAKE_CURRENT_SOURCE_DIR}/include/ocs2_core
     CT_HEADER_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/include/ocs2_core
     CF_WERROR
@@ -84,7 +84,7 @@ endif(cmake_clang_tools_FOUND)
 ## Install ##
 #############
 
-install(TARGETS ocs2_core_logic cppad_interface
+install(TARGETS ${PROJECT_NAME}_logic ${PROJECT_NAME}_cppad_interface
         ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
         LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
         RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
@@ -125,7 +125,7 @@ catkin_add_gtest(logic_rules_machine_unittest
   test/logic/testLogicRulesMachine.cpp
 )
 target_link_libraries(logic_rules_machine_unittest
-  ocs2_core_logic
+  ${PROJECT_NAME}_logic
   ${catkin_LIBRARIES}
   ${Boost_LIBRARIES}
 )
@@ -134,7 +134,7 @@ catkin_add_gtest(cppadcg_constraint_unittest
   test/cppad_cg/testCppADCG_constraint.cpp
 )
 target_link_libraries(cppadcg_constraint_unittest
-  cppad_interface
+  ${PROJECT_NAME}_cppad_interface
   ${Boost_LIBRARIES}
   ${catkin_LIBRARIES} -lm -ldl
 )
@@ -143,7 +143,7 @@ catkin_add_gtest(cppadcg_cost_unittest
         test/cppad_cg/testCppADCG_cost.cpp
         )
 target_link_libraries(cppadcg_cost_unittest
-        cppad_interface
+        ${PROJECT_NAME}_cppad_interface
         ${Boost_LIBRARIES}
         ${catkin_LIBRARIES} -lm -ldl
         )
@@ -152,7 +152,7 @@ catkin_add_gtest(cppadcg_dynamics_unittest
         test/cppad_cg/testCppADCG_dynamics.cpp
         )
 target_link_libraries(cppadcg_dynamics_unittest
-        cppad_interface
+        ${PROJECT_NAME}_cppad_interface
         ${Boost_LIBRARIES}
         ${catkin_LIBRARIES} -lm -ldl
         )
@@ -161,7 +161,7 @@ catkin_add_gtest(testSparsityHelpers
         test/cppad_cg/testSparsityHelpers.cpp
 )
 target_link_libraries(testSparsityHelpers
-        cppad_interface
+        ${PROJECT_NAME}_cppad_interface
         ${Boost_LIBRARIES}
         dl
         )
@@ -170,7 +170,7 @@ catkin_add_gtest(testCppAdInterface
         test/cppad_cg/testCppAdInterface.cpp
 )
 target_link_libraries(testCppAdInterface
-        cppad_interface
+        ${PROJECT_NAME}_cppad_interface
         ${Boost_LIBRARIES}
         dl
 )

@@ -47,11 +47,6 @@ MRT_ROS_Dummy_Loop<STATE_DIM, INPUT_DIM>::MRT_ROS_Dummy_Loop(const mrt_ptr_t& mr
   if (mpcDesiredFrequency_ > 0) {
     ROS_WARN_STREAM("MPC loop is not realtime! For realtime setting, set mpcDesiredFrequency to any negative number.");
   }
-
-  if (systemPtr) {
-    systemPtr_.reset(systemPtr->clone());
-    mrtPtr_->initRollout(*systemPtr_, rolloutSettings);
-  }
 }
 
 /******************************************************************************************************/
@@ -150,7 +145,7 @@ void MRT_ROS_Dummy_Loop<STATE_DIM, INPUT_DIM>::run(const system_observation_t& i
     }
 
     // Visualization
-    publishVisualizer(observation_,  mrtPtr_->getCommand(), mrtPtr_->getPolicy());
+    publishVisualizer(observation_, mrtPtr_->getCommand(), mrtPtr_->getPolicy());
 
     rosRate.sleep();
   }  // end of while loop

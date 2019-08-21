@@ -80,9 +80,7 @@ class TimeTriggeredRollout : public RolloutBase<STATE_DIM, INPUT_DIM> {
   explicit TimeTriggeredRollout(const controlled_system_base_t& systemDynamics,
                                 const Rollout_Settings& rolloutSettings = Rollout_Settings(), const char algorithmName[] = nullptr)
 
-      : BASE(rolloutSettings, algorithmName),
-        systemDynamicsPtr_(systemDynamics.clone()),
-        systemEventHandlersPtr_(new event_handler_t) {
+      : BASE(rolloutSettings, algorithmName), systemDynamicsPtr_(systemDynamics.clone()), systemEventHandlersPtr_(new event_handler_t) {
     switch (rolloutSettings.integratorType_) {
       case (IntegratorType::EULER): {
         dynamicsIntegratorsPtr_.reset(new IntegratorEuler<STATE_DIM>(systemDynamicsPtr_, systemEventHandlersPtr_));

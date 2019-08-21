@@ -47,6 +47,7 @@ class PiController final : public ControllerBase<STATE_DIM, INPUT_DIM> {
    * It will be extracted from the PI solver to avoid re-computing some quantities.
    */
   struct PiControllerEvaluationData {
+    EIGEN_MAKE_ALIGNED_OPERATOR_NEW
     scalar_t t_;          //! time of evaluation
     state_vector_t x_;    //! state
     input_vector_t u_;    //! calculated input (including noise)
@@ -87,21 +88,14 @@ class PiController final : public ControllerBase<STATE_DIM, INPUT_DIM> {
     samplingPolicy_.reset(other.samplingPolicy_->clone());
   }
 
-  PiController<STATE_DIM, INPUT_DIM>* clone() override { return new PiController<STATE_DIM, INPUT_DIM>(*this); }
+  PiController<STATE_DIM, INPUT_DIM>* clone() const override { return new PiController<STATE_DIM, INPUT_DIM>(*this); }
 
   /**
    * Default destructor.
    */
   virtual ~PiController() = default;
 
-  /**
-   * Computes noisy control command that keeps the system within the constraints
-   *
-   * @param [in] t: Current time.
-   * @param [in] x: Current state.
-   * @return Current input.
-   */
-  virtual input_vector_t computeInput(const scalar_t& t, const state_vector_t& x) override {
+  input_vector_t computeInput(const scalar_t& t, const state_vector_t& x) override {
     // extract cost terms
     costs_->setCurrentStateAndControl(t, x, input_vector_t::Zero());
     input_matrix_t R, Rinv;
@@ -125,8 +119,8 @@ class PiController final : public ControllerBase<STATE_DIM, INPUT_DIM> {
       constraints_->getConstraint1DerivativesControl(D_full);
       dynamic_matrix_t D = D_full.topRows(nc);
 
-      Ddagger = Rinv * D.transpose() * (D * Rinv * D.transpose()).ldlt().solve(dynamic_matrix_t::Identity(nc, nc));
-      Dtilde = Ddagger * D;
+      Ddagger.noalias() = Rinv * D.transpose() * (D * Rinv * D.transpose()).ldlt().solve(dynamic_matrix_t::Identity(nc, nc));
+      Dtilde.noalias() = Ddagger * D;
     } else {
       c = constraint1_vector_t::Zero();
       Ddagger = input_constraint1_matrix_t::Zero();
@@ -175,13 +169,15 @@ class PiController final : public ControllerBase<STATE_DIM, INPUT_DIM> {
     return totalInput;
   }
 
-  virtual void flatten(const scalar_array_t& timeArray, const std::vector<float_array_t*>& flatArray2) const override {
+  void flatten(const scalar_array_t& timeArray, const std::vector<float_array_t*>& flatArray2) const override {
     throw std::runtime_error("not implemented");
   }
 
-  virtual void unFlatten(const scalar_array_t& timeArray, const std::vector<float_array_t const*>& flatArray2) override {
+  void unFlatten(const scalar_array_t& timeArray, const std::vector<float_array_t const*>& flatArray2) override {
     throw std::runtime_error("not implemented");
   }
+
+  void concatenate(const Base* nextController) override { throw std::runtime_error("not implemented"); }
 
   /**
    * @brief setSamplingPolicy Allows setting a controller for importance sampling (warm-starting)
@@ -193,16 +189,16 @@ class PiController final : public ControllerBase<STATE_DIM, INPUT_DIM> {
 
   virtual void swap(PiController<STATE_DIM, INPUT_DIM>& other) { throw std::runtime_error("not implemented"); }
 
-  virtual ControllerType getType() const override { return ControllerType::PATH_INTEGRAL; }
+  ControllerType getType() const override { return ControllerType::PATH_INTEGRAL; }
 
-  virtual void clear() override { samplingPolicy_.reset(); }
+  void clear() override { samplingPolicy_.reset(); }
 
-  virtual void setZero() override {
+  void setZero() override {
     samplingPolicy_.reset();
     gamma_ = 0.0;
   }
 
-  virtual bool empty() const override { return samplingPolicy_ == nullptr; }
+  bool empty() const override { return samplingPolicy_ == nullptr; }
 
   void setRandomSeed(unsigned int seed) { generator_.seed(seed); }
 

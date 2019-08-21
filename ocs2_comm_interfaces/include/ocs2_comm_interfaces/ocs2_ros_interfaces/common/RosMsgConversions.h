@@ -37,9 +37,9 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ocs2_comm_interfaces/SystemObservation.h"
 
 // MPC messages
-#include <ocs2_comm_interfaces/mode_sequence.h>
-#include <ocs2_comm_interfaces/mpc_observation.h>
-#include <ocs2_comm_interfaces/mpc_target_trajectories.h>
+#include <ocs2_msgs/mode_sequence.h>
+#include <ocs2_msgs/mpc_observation.h>
+#include <ocs2_msgs/mpc_target_trajectories.h>
 
 namespace ocs2 {
 
@@ -54,17 +54,17 @@ class RosMsgConversions {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-  typedef Dimensions<STATE_DIM, INPUT_DIM> DIMENSIONS;
-  typedef typename DIMENSIONS::scalar_t scalar_t;
-  typedef typename DIMENSIONS::scalar_array_t scalar_array_t;
-  typedef typename DIMENSIONS::size_array_t size_array_t;
-  typedef typename DIMENSIONS::dynamic_vector_t dynamic_vector_t;
-  typedef typename DIMENSIONS::dynamic_vector_array_t dynamic_vector_array_t;
+  using DIMENSIONS = Dimensions<STATE_DIM, INPUT_DIM>;
+  using scalar_t = typename DIMENSIONS::scalar_t;
+  using scalar_array_t = typename DIMENSIONS::scalar_array_t;
+  using size_array_t = typename DIMENSIONS::size_array_t;
+  using dynamic_vector_t = typename DIMENSIONS::dynamic_vector_t;
+  using dynamic_vector_array_t = typename DIMENSIONS::dynamic_vector_array_t;
 
-  typedef SystemObservation<STATE_DIM, INPUT_DIM> system_observation_t;
+  using system_observation_t = SystemObservation<STATE_DIM, INPUT_DIM>;
 
-  typedef CostDesiredTrajectories<scalar_t> cost_desired_trajectories_t;
-  typedef ModeSequenceTemplate<scalar_t> mode_sequence_template_t;
+  using cost_desired_trajectories_t = CostDesiredTrajectories<scalar_t>;
+  using mode_sequence_template_t = ModeSequenceTemplate<scalar_t>;
 
   /**
    * Default constructor.
@@ -83,8 +83,8 @@ class RosMsgConversions {
    * @param [out] observationMsg: The observation message.
    */
   template <class ContainerAllocator>
-  static void CreateObservationMsg(const system_observation_t& observation,
-                                   ocs2_comm_interfaces::mpc_observation_<ContainerAllocator>& observationMsg);
+  static void createObservationMsg(const system_observation_t& observation,
+                                   ocs2_msgs::mpc_observation_<ContainerAllocator>& observationMsg);
 
   /**
    * Reads the observation message.
@@ -93,8 +93,7 @@ class RosMsgConversions {
    * @param [out] observation: The observation structure.
    */
   template <class ContainerAllocator>
-  static void ReadObservationMsg(const ocs2_comm_interfaces::mpc_observation_<ContainerAllocator>& observationMsg,
-                                 system_observation_t& observation);
+  static void readObservationMsg(const ocs2_msgs::mpc_observation_<ContainerAllocator>& observationMsg, system_observation_t& observation);
 
   /**
    * Creates the mode sequence message.
@@ -104,8 +103,8 @@ class RosMsgConversions {
    * @param [out] modeSequenceMsg: The mode sequence message.
    */
   template <class ContainerAllocator>
-  static void CreateModeSequenceMsg(const scalar_array_t& eventTimes, const size_array_t& subsystemsSequence,
-                                    ocs2_comm_interfaces::mode_sequence_<ContainerAllocator>& modeSequenceMsg);
+  static void createModeSequenceMsg(const scalar_array_t& eventTimes, const size_array_t& subsystemsSequence,
+                                    ocs2_msgs::mode_sequence_<ContainerAllocator>& modeSequenceMsg);
 
   /**
    * Reads the mode sequence message.
@@ -115,8 +114,8 @@ class RosMsgConversions {
    * @param [out] subsystemsSequence: The subsystems sequence.
    */
   template <class ContainerAllocator>
-  static void ReadModeSequenceMsg(const ocs2_comm_interfaces::mode_sequence_<ContainerAllocator>& modeSequenceMsg,
-                                  scalar_array_t& eventTimes, size_array_t& subsystemsSequence);
+  static void readModeSequenceMsg(const ocs2_msgs::mode_sequence_<ContainerAllocator>& modeSequenceMsg, scalar_array_t& eventTimes,
+                                  size_array_t& subsystemsSequence);
 
   /**
    * Creates the mode sequence template message.
@@ -125,8 +124,8 @@ class RosMsgConversions {
    * @param [out] modeSequenceMsg: The mode sequence message.
    */
   template <class ContainerAllocator>
-  static void CreateModeSequenceTemplateMsg(const mode_sequence_template_t& modeSequenceTemplate,
-                                            ocs2_comm_interfaces::mode_sequence_<ContainerAllocator>& modeSequenceMsg);
+  static void createModeSequenceTemplateMsg(const mode_sequence_template_t& modeSequenceTemplate,
+                                            ocs2_msgs::mode_sequence_<ContainerAllocator>& modeSequenceMsg);
 
   /**
    * Reads the mode sequence template message.
@@ -135,7 +134,7 @@ class RosMsgConversions {
    * @param [out] modeSequenceTemplate: The mode sequence template.
    */
   template <class ContainerAllocator>
-  static void ReadModeSequenceTemplateMsg(const ocs2_comm_interfaces::mode_sequence_<ContainerAllocator>& modeSequenceMsg,
+  static void readModeSequenceTemplateMsg(const ocs2_msgs::mode_sequence_<ContainerAllocator>& modeSequenceMsg,
                                           mode_sequence_template_t& modeSequenceTemplate);
 
   /**
@@ -145,8 +144,8 @@ class RosMsgConversions {
    * @param [out] targetTrajectoriesMsg: The target trajectories message.
    */
   template <class ContainerAllocator>
-  static void CreateTargetTrajectoriesMsg(const cost_desired_trajectories_t& costDesiredTrajectories,
-                                          ocs2_comm_interfaces::mpc_target_trajectories_<ContainerAllocator>& targetTrajectoriesMsg);
+  static void createTargetTrajectoriesMsg(const cost_desired_trajectories_t& costDesiredTrajectories,
+                                          ocs2_msgs::mpc_target_trajectories_<ContainerAllocator>& targetTrajectoriesMsg);
 
   /**
    * Reads the target trajectories message.
@@ -155,7 +154,7 @@ class RosMsgConversions {
    * @param [out] costDesiredTrajectories: The desired trajectory of the cost.
    */
   template <class ContainerAllocator>
-  static void ReadTargetTrajectoriesMsg(const ocs2_comm_interfaces::mpc_target_trajectories_<ContainerAllocator>& targetTrajectoriesMsg,
+  static void readTargetTrajectoriesMsg(const ocs2_msgs::mpc_target_trajectories_<ContainerAllocator>& targetTrajectoriesMsg,
                                         cost_desired_trajectories_t& costDesiredTrajectories);
 };
 

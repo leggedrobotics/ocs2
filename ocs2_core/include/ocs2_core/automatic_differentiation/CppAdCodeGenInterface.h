@@ -30,6 +30,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifndef CPPADCODEGENINTERFACE_OCS2_H_
 #define CPPADCODEGENINTERFACE_OCS2_H_
 
+#include <functional>  // Missing include in external cg.hpp
+
 #include <cppad/cg.hpp>
 #include <memory>
 

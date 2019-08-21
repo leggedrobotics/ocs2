@@ -60,7 +60,6 @@ int main(int argc, char* argv[]) {
   initialInput(0) = quadrotorParameters.quadrotorMass_ * quadrotorParameters.gravity_;
   using operatingpoint_t = ocs2::SystemOperatingPoint<ocs2::quadrotor::STATE_DIM_, ocs2::quadrotor::INPUT_DIM_>;
   operatingpoint_t::Ptr operatingPt(new operatingpoint_t(xInit, initialInput));
-  //! @todo Use this initialization in the PI solver
 
   double timeHorizon;
   dim_t::scalar_array_t partitioningTimes;
@@ -75,6 +74,10 @@ int main(int argc, char* argv[]) {
 
   ocs2::MPC_PI<ocs2::quadrotor::STATE_DIM_, ocs2::quadrotor::INPUT_DIM_> mpc_pi(dynamics, std::move(quadrotorCost), quadrotorConstraint,
                                                                                 partitioningTimes, mpcSettings, piSettings);
+
+  using ffwd_ctrl_t = ocs2::FeedforwardController<ocs2::quadrotor::STATE_DIM_, ocs2::quadrotor::INPUT_DIM_>;
+  std::unique_ptr<ffwd_ctrl_t> initPolicy(new ffwd_ctrl_t(dim_t::scalar_array_t{0.0}, dim_t::input_vector_array_t{initialInput}));
+  mpc_pi.getSolverPtr()->setSamplingPolicy(std::move(initPolicy));
 
   // cost desired trajectories
   using cost_desired_trajectories_t = ocs2::PiSolver<ocs2::quadrotor::STATE_DIM_, ocs2::quadrotor::INPUT_DIM_>::cost_desired_trajectories_t;
@@ -93,6 +96,5 @@ int main(int argc, char* argv[]) {
 
   mpcNode.launchNodes(argc, argv);
 
-  // Successful exit
   return 0;
 }

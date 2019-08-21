@@ -47,7 +47,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_core/cost/CostDesiredTrajectories.h>
 #include <ocs2_core/logic/machine/HybridLogicRulesMachine.h>
 #include <ocs2_core/logic/rules/NullLogicRules.h>
-#include <ocs2_core/misc/FindActiveIntervalIndex.h>
 #include <ocs2_core/misc/LinearAlgebra.h>
 #include <ocs2_core/misc/Numerics.h>
 
@@ -64,9 +63,9 @@ class Solver_BASE {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-  typedef std::shared_ptr<Solver_BASE<STATE_DIM, INPUT_DIM>> Ptr;
+  using Ptr = std::shared_ptr<Solver_BASE<STATE_DIM, INPUT_DIM>>;
 
-  typedef Dimensions<STATE_DIM, INPUT_DIM> DIMENSIONS;
+  using DIMENSIONS = Dimensions<STATE_DIM, INPUT_DIM>;
 
   using size_array_t = typename DIMENSIONS::size_array_t;
   using size_array2_t = typename DIMENSIONS::size_array2_t;
@@ -123,13 +122,15 @@ class Solver_BASE {
   using dynamic_matrix_t = typename DIMENSIONS::dynamic_matrix_t;
   using dynamic_vector_array_t = typename DIMENSIONS::dynamic_vector_array_t;
   using dynamic_matrix_array2_t = typename DIMENSIONS::dynamic_matrix_array2_t;
+  using dynamic_input_matrix_t = typename DIMENSIONS::dynamic_input_matrix_t;
 
   using cost_desired_trajectories_t = CostDesiredTrajectories<scalar_t>;
 
   using logic_rules_machine_t = HybridLogicRulesMachine;
   using logic_rules_machine_ptr_t = typename logic_rules_machine_t::Ptr;
 
-  typedef ControllerBase<STATE_DIM, INPUT_DIM> controller_t;
+  using controller_t = ControllerBase<STATE_DIM, INPUT_DIM>;
+  using controller_array_t = typename controller_t::array_t;
   using controller_ptr_array_t = std::vector<controller_t*>;
 
   explicit Solver_BASE(std::shared_ptr<HybridLogicRules> logicRulesPtr = nullptr);
@@ -162,7 +163,7 @@ class Solver_BASE {
    * @param [in] initState: The initial state.
    * @param [in] finalTime: The final time.
    * @param [in] partitioningTimes: The time partitioning.
-   * @param [in] controllersPtrStock: controllersPtrStock: Array of pointers to the initial control policies. If you want to use the control
+   * @param [in] controllersPtrStock: Array of pointers to the initial control policies. If you want to use the control
    * policy which was designed by the previous call of the "run" routine, you should pass an empty array. In the this case, two scenarios
    * are possible: either the internal controller is already set (such as the MPC case where the warm starting option is set true) or the
    * internal controller is empty in which instead of performing a rollout the operating trajectories will be used.
@@ -268,7 +269,7 @@ class Solver_BASE {
    *
    * @param [out] costDesiredTrajectories: A pointer to the cost function desired trajectories
    */
-  void getCostDesiredTrajectoriesPtr(const cost_desired_trajectories_t*& costDesiredTrajectoriesPtr) const;
+  const cost_desired_trajectories_t& getCostDesiredTrajectories() const { return costDesiredTrajectories_; };
 
   /**
    * Sets the cost function desired trajectories.
@@ -309,7 +310,7 @@ class Solver_BASE {
    *
    * @return true if it is updated.
    */
-  bool costDesiredTrajectoriesUpdated() const;
+  bool costDesiredTrajectoriesUpdated() const { return costDesiredTrajectoriesUpdated_; };
 
   /**
    * Returns an array of pointer to the optimal control policies.
@@ -374,6 +375,33 @@ class Solver_BASE {
    * @return true if updated (i.e., something new was swapped in), false otherwise
    */
   bool updateCostDesiredTrajectories();
+
+  /**
+   * Calculates the value function at the given time and state.
+   *
+   * @param [in] time: The inquiry time
+   * @param [in] state: The inquiry state.
+   * @return value at the inquiry time and state.
+   */
+  virtual scalar_t getValueFunction(scalar_t time, const state_vector_t& state) const = 0;
+
+  /**
+   * Calculates the value function state derivative at the given time and state.
+   *
+   * @param [in] time: The inquiry time
+   * @param [in] state: The inquiry state.
+   * @param [out] Vx: value function at the inquiry time and state.
+   */
+  virtual void getValueFunctionStateDerivative(scalar_t time, const state_vector_t& state, state_vector_t& Vx) const = 0;
+
+  /**
+   * Calculates the Lagrange multiplier of the state-input equality constraints at the given time and state.
+   *
+   * @param [in] time: The inquiry time
+   * @param [in] state: The inquiry state.
+   * @param [out] nu: The Lagrange multiplier of the state-input equality constraints.
+   */
+  virtual void getStateInputConstraintLagrangian(scalar_t time, const state_vector_t& state, dynamic_vector_t& nu) const = 0;
 
   /**
    * Rewinds optimizer internal variables.

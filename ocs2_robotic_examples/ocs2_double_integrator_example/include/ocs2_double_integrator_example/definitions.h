@@ -35,13 +35,12 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 namespace ocs2 {
 namespace double_integrator {
 
-enum double_integrator : size_t
-{
+enum double_integrator : size_t {
   STATE_DIM_ = 2,
   INPUT_DIM_ = 1,
 };
 
-} // namespace double_integrator
-} // namespace ocs2
+}  // namespace double_integrator
+}  // namespace ocs2
 
-#endif // DOUBLE_INTEGRATOR_DEFINITIONS_OCS2_H_
+#endif  // DOUBLE_INTEGRATOR_DEFINITIONS_OCS2_H_

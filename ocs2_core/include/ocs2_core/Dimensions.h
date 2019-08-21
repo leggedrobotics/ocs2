@@ -34,8 +34,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <Eigen/StdVector>
 #include <vector>
 
-#include "ocs2_core/misc/LinearFunction.h"
-
 namespace ocs2 {
 
 /**
@@ -95,6 +93,8 @@ class Dimensions {
   using eigen_scalar_array_t = std::vector<eigen_scalar_t, Eigen::aligned_allocator<eigen_scalar_t>>;
   /** Array of eigen scalar trajectory type. */
   using eigen_scalar_array2_t = std::vector<eigen_scalar_array_t, Eigen::aligned_allocator<eigen_scalar_array_t>>;
+  /** Array of arrays of eigen scalar trajectory type. */
+  using eigen_scalar_array3_t = std::vector<eigen_scalar_array2_t, Eigen::aligned_allocator<eigen_scalar_array2_t>>;
 
   /** Fixed-size state vector type with size \f$ n_x \f$ . */
   using state_vector_t = Eigen::Matrix<scalar_t, STATE_DIM, 1>;
@@ -247,35 +247,6 @@ class Dimensions {
   /** Array of constraint2_state matrix trajectory type. */
   using constraint2_state_matrix_array2_t =
       std::vector<constraint2_state_matrix_array_t, Eigen::aligned_allocator<constraint2_state_matrix_array_t>>;
-
-  /**
-   * Affine function class in the form \f$ u_{ff}(t) + K(t) x \f$ where \f$ u_{ff} \f$ is a vector of size \f$ d_1 \f$ and
-   * \f$ K \f$ is a matrix of size \f$ d_1 * n_x \f$.
-   *
-   * @tparam DIM1: \f$ d_1 \f$.
-   */
-  template <int DIM1, int DIM2 = 1>
-  using LinearFunction_t = LinearFunction<STATE_DIM, DIM1, DIM2, scalar_t>;
-  /** Array of LinearFunction_t */
-  template <int DIM1, int DIM2 = 1>
-  using linearFunction_array_t = std::vector<LinearFunction_t<DIM1, DIM2>, Eigen::aligned_allocator<LinearFunction_t<DIM1, DIM2>>>;
-  /** 2D array of LinearFunction_t */
-  template <int DIM1, int DIM2 = 1>
-  using linearFunction_array2_t =
-      std::vector<linearFunction_array_t<DIM1, DIM2>, Eigen::aligned_allocator<linearFunction_array_t<DIM1, DIM2>>>;
-
-  // TODO(unknown): Why do these still exist? Should use the linear controller classes
-  /** Linear control policy in the form \f$ u_{ff}(t) + K(t) \f$. */
-  using controller_t = LinearFunction_t<INPUT_DIM, 1>;
-  /** Array of linear control policy. */
-  using controller_array_t = linearFunction_array_t<INPUT_DIM, 1>;
-  /** 2D array of linear control policy. */
-  using controller_array2_t = linearFunction_array2_t<INPUT_DIM, 1>;
-
-  /** Linear function for lagrange multiplier */
-  using lagrange_t = LinearFunction_t<MAX_CONSTRAINT1_DIM_, 1>;
-  /** Array of lagrange multiplier */
-  using lagrange_array_t = linearFunction_array_t<MAX_CONSTRAINT1_DIM_, 1>;
 };
 
 }  // namespace ocs2

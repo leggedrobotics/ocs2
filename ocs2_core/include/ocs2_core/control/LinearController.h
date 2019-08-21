@@ -84,6 +84,8 @@ class LinearController final : public ControllerBase<STATE_DIM, INPUT_DIM> {
    */
   virtual ~LinearController() = default;
 
+  virtual LinearController* clone() const override { return new LinearController(*this); }
+
   /**
    * @brief setController Assign control law
    * @param [in] controllerTime: Time stamp array of the controller
@@ -163,6 +165,20 @@ class LinearController final : public ControllerBase<STATE_DIM, INPUT_DIM> {
     }
   }
 
+  void concatenate(const Base* nextController) override {
+    if (auto nextLinCtrl = dynamic_cast<const LinearController*>(nextController)) {
+      if (timeStamp_.back() > nextLinCtrl->timeStamp_.front()) {
+        throw std::runtime_error("Concatenate requires that the nextController comes later in time.");
+      }
+      timeStamp_.insert(timeStamp_.end(), nextLinCtrl->timeStamp_.begin(), nextLinCtrl->timeStamp_.end());
+      biasArray_.insert(biasArray_.end(), nextLinCtrl->biasArray_.begin(), nextLinCtrl->biasArray_.end());
+      deltaBiasArray_.insert(deltaBiasArray_.end(), nextLinCtrl->deltaBiasArray_.begin(), nextLinCtrl->deltaBiasArray_.end());
+      gainArray_.insert(gainArray_.end(), nextLinCtrl->gainArray_.begin(), nextLinCtrl->gainArray_.end());
+    } else {
+      throw std::runtime_error("Concatenate only works with controllers of the same type.");
+    }
+  }
+
   ControllerType getType() const override { return ControllerType::LINEAR; }
 
   void clear() override {
@@ -207,6 +223,13 @@ class LinearController final : public ControllerBase<STATE_DIM, INPUT_DIM> {
    * @return the size of the controller.
    */
   size_t size() const { return timeStamp_.size(); }
+
+  /**
+   * @brief getFeedbackGain: Extracts the feedback matrix at the requested time
+   * @param[in] time
+   * @param[out] K linear feedback gain
+   */
+  void getFeedbackGain(scalar_t time, input_state_matrix_t& K) const { linInterpolateGain_.interpolate(time, K); }
 
  public:
   scalar_array_t timeStamp_;

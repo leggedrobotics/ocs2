@@ -44,16 +44,16 @@ class QuadrotorDynamicsDerivatives : public DerivativesBase<quadrotor::STATE_DIM
 public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-	typedef std::shared_ptr<QuadrotorDynamicsDerivatives> Ptr;
-	typedef std::shared_ptr<const QuadrotorDynamicsDerivatives> ConstPtr;
+	using Ptr = std::shared_ptr<QuadrotorDynamicsDerivatives>;
+	using ConstPtr = std::shared_ptr<const QuadrotorDynamicsDerivatives>;
 
-	typedef DerivativesBase<quadrotor::STATE_DIM_, quadrotor::INPUT_DIM_> BASE;
-	typedef typename BASE::scalar_t               scalar_t;
-	typedef typename BASE::state_vector_t         state_vector_t;
-	typedef typename BASE::state_matrix_t         state_matrix_t;
-	typedef typename BASE::input_vector_t         input_vector_t;
-	typedef typename BASE::state_input_matrix_t  	state_input_matrix_t;
-	typedef QuadrotorParameters<scalar_t>         quadrotor_parameters_t;
+	using BASE = DerivativesBase<quadrotor::STATE_DIM_, quadrotor::INPUT_DIM_>;
+	using scalar_t = typename BASE::scalar_t              ;
+	using state_vector_t = typename BASE::state_vector_t        ;
+	using state_matrix_t = typename BASE::state_matrix_t        ;
+	using input_vector_t = typename BASE::input_vector_t        ;
+	using 	state_input_matrix_t = typename BASE::state_input_matrix_t ;
+	using quadrotor_parameters_t = QuadrotorParameters<scalar_t>        ;
 
 	QuadrotorDynamicsDerivatives(const quadrotor_parameters_t& quadrotorParameters)
 	: param_(quadrotorParameters)

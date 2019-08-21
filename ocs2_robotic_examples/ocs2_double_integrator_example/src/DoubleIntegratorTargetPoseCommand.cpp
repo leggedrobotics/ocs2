@@ -32,14 +32,13 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 using namespace ocs2;
 using namespace double_integrator;
 
-int main( int argc, char* argv[] )
-{
-	TargetTrajectories_Keyboard_Double_Integrator<double> targetPoseCommand(argc, argv, "double_integrator");
-	targetPoseCommand.launchNodes();
+int main(int argc, char* argv[]) {
+  TargetTrajectories_Keyboard_Double_Integrator<double> targetPoseCommand(argc, argv, "double_integrator");
+  targetPoseCommand.launchNodes();
 
-	const std::string commadMsg = "Enter displacement and velocity for the double-integrator, separated by spaces";
-	targetPoseCommand.getKeyboardCommand(commadMsg);
+  const std::string commadMsg = "Enter displacement and velocity for the double-integrator, separated by spaces";
+  targetPoseCommand.getKeyboardCommand(commadMsg);
 
-	// Successful exit
-	return 0;
+  // Successful exit
+  return 0;
 }

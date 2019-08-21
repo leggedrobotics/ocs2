@@ -495,7 +495,7 @@ void ILQR_MT<STATE_DIM, INPUT_DIM>::executeLineSearchWorker(size_t threadId) {
     scalar_t learningRate = BASE::maxLearningRate_ * std::pow(BASE::ddpSettings_.lineSearchContractionRate_, alphaExp);
 
     // break condition
-    if (!Numerics::almost_ge(learningRate, BASE::ddpSettings_.minLearningRate_) || alphaBestFound_.load()) {
+    if (!numerics::almost_ge(learningRate, BASE::ddpSettings_.minLearningRate_) || alphaBestFound_.load()) {
       // display
       if (BASE::ddpSettings_.debugPrintMT_) {
         if (alphaBestFound_.load()) {

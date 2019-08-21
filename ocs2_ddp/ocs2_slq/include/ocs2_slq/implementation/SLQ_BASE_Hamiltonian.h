@@ -284,7 +284,7 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::approximateConstrainedLQWork
         std::cerr << "Rv: " << BASE::RvTrajectoryStock_[i][k].transpose() << std::endl;
         std::cerr << "Rm: \n" << BASE::RmTrajectoryStock_[i][k] << std::endl;
         std::cerr << "Pm: \n" << BASE::PmTrajectoryStock_[i][k] << std::endl;
-        exit(0);
+        throw;
       }
     }
   }
@@ -599,7 +599,7 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::solveRiccatiEquationsWorker(
           std::cerr << "s[" << BASE::SsTimeTrajectoryStock_[partitionIndex][kp] << "]: \t"
                     << BASE::sTrajectoryStock_[partitionIndex][kp].transpose().norm() << std::endl;
         }
-        exit(0);
+        throw;
       }
     }
   }
@@ -735,7 +735,7 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::solveRiccatiEquationsForNomi
           std::cerr << "s[" << BASE::SsTimeTrajectoryStock_[partitionIndex][kp] << "]:\t"
                     << BASE::sTrajectoryStock_[partitionIndex][kp].transpose().norm() << std::endl;
         }
-        exit(0);
+        throw;
       }
     }
   }
@@ -870,7 +870,7 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::solveErrorRiccatiEquationWor
           std::cerr << "Gv[" << BASE::SsTimeTrajectoryStock_[partitionIndex][kp] << "]:\t" << GvTrajectory[kp].transpose().norm()
                     << std::endl;
         }
-        exit(0);
+        throw;
       }
     }  // end of k loop
   }
@@ -1132,7 +1132,7 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::fullRiccatiBackwardSweepWork
           std::cerr << "s[" << BASE::SsTimeTrajectoryStock_[partitionIndex][kp] << "]: \t"
                     << BASE::sTrajectoryStock_[partitionIndex][kp].transpose().norm() << std::endl;
         }
-        exit(0);
+        throw;
       }
 
       // checking the numerical stability of the controller parameters
@@ -1149,7 +1149,7 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::fullRiccatiBackwardSweepWork
       } catch (const std::exception& error) {
         std::cerr << "what(): " << error.what() << " at time " << BASE::nominalControllersStock_[partitionIndex].timeStamp_[k] << " [sec]."
                   << std::endl;
-        exit(0);
+        throw;
       }
     }
   }

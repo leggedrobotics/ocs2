@@ -109,7 +109,7 @@ class ControlledSystemBase : public OdeBase<STATE_DIM> {
    * @param [in] x: Current state.
    * @param [out] dxdt: Current state time derivative.
    */
-  void computeFlowMap(const scalar_t& t, const state_vector_t& x, state_vector_t& dxdt) {
+  void computeFlowMap(const scalar_t& t, const state_vector_t& x, state_vector_t& dxdt) override {
     BASE::numFunctionCalls_++;
     input_vector_t u = controllerPtr_->computeInput(t, x);
     computeFlowMap(t, x, u, dxdt);
@@ -131,28 +131,6 @@ class ControlledSystemBase : public OdeBase<STATE_DIM> {
    * @param [out] dxdt: Current state time derivative.
    */
   virtual void computeFlowMap(const scalar_t& t, const state_vector_t& x, const input_vector_t& u, state_vector_t& dxdt) = 0;
-
-  /**
-   * State map at the transition time
-   *
-   * @param [in] time: transition time
-   * @param [in] state: transition state
-   * @param [out] mappedState: mapped state after transition
-   */
-  void computeJumpMap(const scalar_t& time, const state_vector_t& state, state_vector_t& mappedState) override {
-    BASE::computeJumpMap(time, state, mappedState);
-  }
-
-  /**
-   * Interface method to the guard surfaces.
-   *
-   * @param [in] time: transition time
-   * @param [in] state: transition state
-   * @param [out] guardSurfacesValue: An array of guard surfaces values
-   */
-  void computeGuardSurfaces(const scalar_t& time, const state_vector_t& state, dynamic_vector_t& guardSurfacesValue) override {
-    BASE::computeGuardSurfaces(time, state, guardSurfacesValue);
-  }
 
   /**
    * Returns the controller pointer.

@@ -34,7 +34,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <mutex>
 #include <thread>
 
-#include <ocs2_ocs2/ProjectedGDDP.h>
+#include <ocs2_ocs2/FrankWolfeGDDP.h>
 #include <ocs2_slq/SLQ_DataCollector.h>
 
 #include "ocs2_mpc/MPC_SLQ.h"
@@ -55,13 +55,11 @@ class MPC_OCS2 : public MPC_SLQ<STATE_DIM, INPUT_DIM> {
   using Ptr = std::shared_ptr<MPC_OCS2<STATE_DIM, INPUT_DIM>>;
 
   using slq_data_collector_t = SLQ_DataCollector<STATE_DIM, INPUT_DIM>;
-  using gddp_t = ProjectedGDDP<STATE_DIM, INPUT_DIM>;
+  using gddp_t = FrankWolfeGDDP<STATE_DIM, INPUT_DIM>;
 
   using BASE = MPC_SLQ<STATE_DIM, INPUT_DIM>;
 
   using DIMENSIONS = Dimensions<STATE_DIM, INPUT_DIM>;
-  using controller_t = typename DIMENSIONS::controller_t;
-  using controller_array_t = typename DIMENSIONS::controller_array_t;
   using scalar_t = typename DIMENSIONS::scalar_t;
   using scalar_array_t = typename DIMENSIONS::scalar_array_t;
   using size_array_t = typename DIMENSIONS::size_array_t;

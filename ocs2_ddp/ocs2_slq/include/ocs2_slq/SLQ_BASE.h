@@ -59,7 +59,6 @@ class SLQ_BASE : public DDP_BASE<STATE_DIM, INPUT_DIM> {
 
   using BASE = DDP_BASE<STATE_DIM, INPUT_DIM>;
 
-  using DIMENSIONS = typename BASE::DIMENSIONS;
   using typename BASE::constraint1_input_matrix_array2_t;
   using typename BASE::constraint1_input_matrix_array_t;
   using typename BASE::constraint1_input_matrix_t;
@@ -75,7 +74,8 @@ class SLQ_BASE : public DDP_BASE<STATE_DIM, INPUT_DIM> {
   using typename BASE::constraint2_vector_array2_t;
   using typename BASE::constraint2_vector_array_t;
   using typename BASE::constraint2_vector_t;
-  using typename BASE::controller_t;
+  using typename BASE::DIMENSIONS;
+  using typename BASE::dynamic_input_matrix_t;
   using typename BASE::dynamic_matrix_array2_t;
   using typename BASE::dynamic_matrix_t;
   using typename BASE::dynamic_vector_array_t;
@@ -117,15 +117,19 @@ class SLQ_BASE : public DDP_BASE<STATE_DIM, INPUT_DIM> {
   using typename BASE::state_vector_array_t;
   using typename BASE::state_vector_t;
 
+  using typename BASE::controller_array_t;
+  using typename BASE::controller_ptr_array_t;
+  using typename BASE::controller_t;
+  using typename BASE::linear_controller_array_t;
+  using typename BASE::linear_controller_ptr_array_t;
+  using typename BASE::linear_controller_t;
+
   using typename BASE::constraint_base_t;
   using typename BASE::controlled_system_base_t;
-  using typename BASE::controller_ptr_array_t;
   using typename BASE::cost_desired_trajectories_t;
   using typename BASE::cost_function_base_t;
   using typename BASE::derivatives_base_t;
   using typename BASE::event_handler_t;
-  using typename BASE::linear_controller_array_t;
-  using typename BASE::linear_controller_t;
   using typename BASE::linear_quadratic_approximator_t;
   using typename BASE::logic_rules_machine_ptr_t;
   using typename BASE::logic_rules_machine_t;
@@ -209,6 +213,8 @@ class SLQ_BASE : public DDP_BASE<STATE_DIM, INPUT_DIM> {
    *
    */
   void approximateOptimalControlProblem() override;
+
+  void getStateInputConstraintLagrangian(scalar_t time, const state_vector_t& state, dynamic_vector_t& nu) const override;
 
   /**
    * Calculates the controller. This method uses the following variables:
@@ -307,18 +313,6 @@ class SLQ_BASE : public DDP_BASE<STATE_DIM, INPUT_DIM> {
   std::vector<std::shared_ptr<error_equation_t>> errorEquationPtrStock_;
   std::vector<std::shared_ptr<SystemEventHandler<STATE_DIM>>> errorEventPtrStock_;
   std::vector<std::shared_ptr<IntegratorBase<STATE_DIM>>> errorIntegratorPtrStock_;
-
-  // functions for controller and lagrange multiplier
-  std::vector<EigenLinearInterpolation<state_input_matrix_t>> BmFunc_;
-  std::vector<EigenLinearInterpolation<input_state_matrix_t>> PmFunc_;
-  std::vector<EigenLinearInterpolation<input_matrix_t>> RmInverseFunc_;
-  std::vector<EigenLinearInterpolation<input_vector_t>> RvFunc_;
-  std::vector<EigenLinearInterpolation<input_vector_t>> EvProjectedFunc_;
-  std::vector<EigenLinearInterpolation<input_state_matrix_t>> CmProjectedFunc_;
-  std::vector<EigenLinearInterpolation<input_matrix_t>> DmProjectedFunc_;
-
-  // function for Riccati error equation
-  std::vector<EigenLinearInterpolation<state_matrix_t>> SmFuncs_;
 
  private:
   /**

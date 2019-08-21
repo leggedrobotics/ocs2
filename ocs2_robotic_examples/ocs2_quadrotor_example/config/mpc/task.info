@@ -105,7 +105,7 @@ mpc
 pathIntegral
 {
   gamma 1e-5 ; temperature/level of noise
-  numSamples 2 ; how many trajectories to sample
+  numSamples 1000 ; how many trajectories to sample
   debugPrint 1
 
   rollout_settings
@@ -141,7 +141,7 @@ Q
 
    (0,0)   100.0    ; x
    (1,1)   100.0    ; y
-   (2,2)   100.0    ; z
+   (2,2)   1000.0    ; z
    (3,3)   50.0    ; phi
    (4,4)   50.0    ; theta
    (5,5)   50.0    ; psi
@@ -157,12 +157,12 @@ Q
 ; control weight matrix
 R
 {
-   scaling 1e+0
+   scaling 1e+1
 
    (0,0)  1.0   ; Fz
-   (1,1)  5.0   ; Mx
-   (2,2)  5.0   ; My
-   (3,3)  5.0   ; Mz
+   (1,1)  50.0   ; Mx
+   (2,2)  50.0   ; My
+   (3,3)  50.0   ; Mz
 }
 
 

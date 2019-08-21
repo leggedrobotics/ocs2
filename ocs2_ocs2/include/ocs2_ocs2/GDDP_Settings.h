@@ -53,17 +53,15 @@ public:
 	 */
 	GDDP_Settings()
 	: displayInfo_(false)
-	, displayShortSummary_(false)
 	, checkNumericalStability_(true)
 	, warmStart_(false)
 	, useLQForDerivatives_(false)
-	, displayGradientDescent_(false)
+	, maxNumIterationForLQ_(10)
 	, tolGradientDescent_(1e-2)
 	, acceptableTolGradientDescent_(1e-1)
 	, maxIterationGradientDescent_(20)
 	, minLearningRateNLP_(0.05)
 	, maxLearningRateNLP_(1.0)
-	, useAscendingLineSearchNLP_(true)
 	, minEventTimeDifference_(0.0)
 	, nThreads_(4)
 
@@ -105,8 +103,6 @@ public:
 
 	/** This value determines to display the log output DDP. */
 	bool displayInfo_;
-	/** This value determines to display the a summary log of DDP. */
-	bool displayShortSummary_;
 
 	/** Check the numerical stability of the algorithms for debugging purpose. */
 	bool checkNumericalStability_;
@@ -115,9 +111,9 @@ public:
 	bool warmStart_;
 	/** This value determines to use LQ-based method or sweeping method for calculating cost gradients w.r.t. switching times. */
 	bool useLQForDerivatives_;
+	/** Maximum number of iterations for LQ-based method  */
+	size_t maxNumIterationForLQ_;
 
-	/** This value determines to display the log output of GGDDP. */
-	bool displayGradientDescent_;
 	double tolGradientDescent_;
 	/** This value determines the termination condition for OCS2 based on the minimum relative changes of the cost.*/
 	double acceptableTolGradientDescent_;
@@ -127,12 +123,6 @@ public:
 	double minLearningRateNLP_;
 	/** This value determines the maximum step size for the line search scheme in OCS2 algorithm.*/
 	double maxLearningRateNLP_;
-	/**
-	 * This value determines the the line search scheme to be used in OCS2. \n
-	 * - \b Ascending: The step size eventually increases from the minimum value to the maximum. \n
-	 * - \b Descending: The step size eventually decreases from the minimum value to the maximum.
-	 * */
-	bool useAscendingLineSearchNLP_;
 	/** This value determines the minimum accepted difference between to consecutive events times.*/
 	double minEventTimeDifference_;
 
@@ -176,16 +166,6 @@ inline void GDDP_Settings::loadSettings(const std::string& filename, const std::
 	}
 
 	try	{
-		displayShortSummary_ = pt.get<bool>(fieldName + ".displayShortSummary");
-		if (verbose) {  std::cerr << " #### Option loader : option 'displayShortSummary' ................. " << displayShortSummary_ << std::endl;
-		}
-	}
-	catch (const std::exception& e){
-		if (verbose) {  std::cerr << " #### Option loader : option 'displayShortSummary' ................. " << displayShortSummary_ << "   \t(default)" << std::endl;
-		}
-	}
-
-	try	{
 		checkNumericalStability_ = pt.get<bool>(fieldName + ".checkNumericalStability");
 		if (verbose) {  std::cerr << " #### Option loader : option 'checkNumericalStability' ............. " << checkNumericalStability_ << std::endl;
 		}
@@ -216,12 +196,12 @@ inline void GDDP_Settings::loadSettings(const std::string& filename, const std::
 	}
 
 	try	{
-		displayGradientDescent_ = pt.get<bool>(fieldName + ".displayGradientDescent");
-		if (verbose) {  std::cerr << " #### Option loader : option 'displayGradientDescent' .............. " << displayGradientDescent_ << std::endl;
+		maxNumIterationForLQ_ = pt.get<size_t>(fieldName + ".maxNumIterationForLQ");
+		if (verbose) {  std::cerr << " #### Option loader : option 'maxNumIterationForLQ' ................ " << maxNumIterationForLQ_ << std::endl;
 		}
 	}
 	catch (const std::exception& e){
-		if (verbose) {  std::cerr << " #### Option loader : option 'displayGradientDescent' .............. " << displayGradientDescent_ << "   \t(default)" << std::endl;
+		if (verbose) {  std::cerr << " #### Option loader : option 'maxNumIterationForLQ' ................ " << maxNumIterationForLQ_ << "   \t(default)" << std::endl;
 		}
 	}
 
@@ -272,16 +252,6 @@ inline void GDDP_Settings::loadSettings(const std::string& filename, const std::
 	}
 	catch (const std::exception& e){
 		if (verbose) {  std::cerr << " #### Option loader : option 'maxLearningRateNLP' .................. " << maxLearningRateNLP_ << "   \t(default)" << std::endl;
-		}
-	}
-
-	try	{
-		useAscendingLineSearchNLP_ = pt.get<bool>(fieldName + ".useAscendingLineSearchNLP");
-		if (verbose) {  std::cerr << " #### Option loader : option 'useAscendingLineSearchNLP' ........... " << useAscendingLineSearchNLP_ << std::endl;
-		}
-	}
-	catch (const std::exception& e){
-		if (verbose) {  std::cerr << " #### Option loader : option 'useAscendingLineSearchNLP' ........... " << useAscendingLineSearchNLP_ << "   \t(default)" << std::endl;
 		}
 	}
 

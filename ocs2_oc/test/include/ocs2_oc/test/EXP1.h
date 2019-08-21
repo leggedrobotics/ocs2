@@ -50,7 +50,7 @@ class EXP1_LogicRules : public HybridLogicRules
 public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-	typedef HybridLogicRules BASE;
+	using BASE = HybridLogicRules;
 
 	EXP1_LogicRules() = default;
 
@@ -154,7 +154,7 @@ class EXP1_System : public ControlledSystemBase<2,1>
 public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-	typedef ControlledSystemBase<2,1> Base;
+	using Base = ControlledSystemBase<2,1>;
 
 	EXP1_System(std::shared_ptr<const EXP1_LogicRules> logicRulesPtr) :
 			logicRulesPtr_(std::move(logicRulesPtr)),
@@ -275,7 +275,7 @@ class EXP1_SystemDerivative : public DerivativesBase<2,1>
 public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-	typedef DerivativesBase<2,1> Base;
+	using Base = DerivativesBase<2,1>;
 
 	EXP1_SystemDerivative(std::shared_ptr<const EXP1_LogicRules> logicRulesPtr) :
 			logicRulesPtr_(std::move(logicRulesPtr)),
@@ -428,7 +428,7 @@ class EXP1_CostFunction : public CostFunctionBase<2,1>
 public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-	typedef CostFunctionBase<2,1> Base;
+	using Base = CostFunctionBase<2,1>;
 
 	explicit EXP1_CostFunction(std::shared_ptr<const EXP1_LogicRules> logicRulesPtr) :
 			logicRulesPtr_(std::move(logicRulesPtr)),

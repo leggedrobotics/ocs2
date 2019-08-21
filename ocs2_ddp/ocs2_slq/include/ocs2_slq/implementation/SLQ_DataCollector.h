@@ -307,6 +307,14 @@ void SLQ_DataCollector<STATE_DIM, INPUT_DIM>::resizeDataContainer(const size_t& 
   HvFinalStock_.resize(numPartitions);
   FmFinalStock_.resize(numPartitions);
 
+  ncIneqTrajectoriesStock_.resize(numPartitions);
+  hTrajectoryStock_.resize(numPartitions);
+  dhdxTrajectoryStock_.resize(numPartitions);
+  ddhdxdxTrajectoryStock_.resize(numPartitions);
+  dhduTrajectoryStock_.resize(numPartitions);
+  ddhduduTrajectoryStock_.resize(numPartitions);
+  ddhdudxTrajectoryStock_.resize(numPartitions);
+
   // cost quadratic approximation coefficients
   qFinalStock_.resize(numPartitions);
   QvFinalStock_.resize(numPartitions);

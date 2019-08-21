@@ -30,6 +30,9 @@ class ControllerBase {
   using state_vector_t = typename dimensions_t::state_vector_t;
   using input_vector_t = typename dimensions_t::input_vector_t;
 
+  using self_t = ControllerBase<STATE_DIM, INPUT_DIM>;
+  using array_t = std::vector<self_t, Eigen::aligned_allocator<self_t>>;
+
   /**
    * Default constructor.
    */
@@ -64,6 +67,14 @@ class ControllerBase {
   virtual void unFlatten(const scalar_array_t& timeArray, const std::vector<float_array_t const*>& flatArray2) = 0;
 
   /**
+   * @brief Merges this controller with another controller that comes active later in time
+   * This method is typically used to merge controllers from multiple time partitions.
+   * @note Only controllers of the same type can be merged
+   * @param[in] nextController: The control law to be appended
+   */
+  virtual void concatenate(const ControllerBase* nextController) = 0;
+
+  /**
    * @brief Prints the type of controller
    * @return ControllerType: what type of controller this is
    */
@@ -92,7 +103,7 @@ class ControllerBase {
    * @warning Cloning implies that the caller takes ownership and deletes the created object.
    * @return Pointer to a new instance.
    */
-  virtual ControllerBase* clone() { throw std::runtime_error("Not implemented"); }
+  virtual ControllerBase* clone() const { throw std::runtime_error("Not implemented"); }
 
   /**
    * Displays controller's data.

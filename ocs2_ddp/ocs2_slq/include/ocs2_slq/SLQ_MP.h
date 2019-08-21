@@ -51,66 +51,66 @@ class SLQ_MP : public SLQ_BASE<STATE_DIM, INPUT_DIM> {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-  typedef SLQ_BASE<STATE_DIM, INPUT_DIM> BASE;
+  using BASE = SLQ_BASE<STATE_DIM, INPUT_DIM>;
 
-  using DIMENSIONS = typename BASE::DIMENSIONS;
+  using typename BASE::constraint1_input_matrix_array2_t;
+  using typename BASE::constraint1_input_matrix_array_t;
+  using typename BASE::constraint1_input_matrix_t;
+  using typename BASE::constraint1_state_matrix_array2_t;
+  using typename BASE::constraint1_state_matrix_array_t;
+  using typename BASE::constraint1_state_matrix_t;
+  using typename BASE::constraint1_vector_array2_t;
+  using typename BASE::constraint1_vector_array_t;
+  using typename BASE::constraint1_vector_t;
+  using typename BASE::constraint2_state_matrix_array2_t;
+  using typename BASE::constraint2_state_matrix_array_t;
+  using typename BASE::constraint2_state_matrix_t;
+  using typename BASE::constraint2_vector_array2_t;
+  using typename BASE::constraint2_vector_array_t;
+  using typename BASE::constraint2_vector_t;
+  using typename BASE::eigen_scalar_array2_t;
+  using typename BASE::eigen_scalar_array_t;
+  using typename BASE::eigen_scalar_t;
+  using typename BASE::input_constraint1_matrix_array2_t;
+  using typename BASE::input_constraint1_matrix_array_t;
+  using typename BASE::input_constraint1_matrix_t;
+  using typename BASE::input_matrix_array2_t;
+  using typename BASE::input_matrix_array_t;
+  using typename BASE::input_matrix_t;
+  using typename BASE::input_state_matrix_array2_t;
+  using typename BASE::input_state_matrix_array_t;
+  using typename BASE::input_state_matrix_t;
+  using typename BASE::input_vector_array2_t;
+  using typename BASE::input_vector_array_t;
+  using typename BASE::input_vector_t;
+  using typename BASE::scalar_array2_t;
+  using typename BASE::scalar_array_t;
+  using typename BASE::scalar_t;
+  using typename BASE::size_array2_t;
+  using typename BASE::size_array_t;
+  using typename BASE::state_input_matrix_array2_t;
+  using typename BASE::state_input_matrix_array_t;
+  using typename BASE::state_input_matrix_t;
+  using typename BASE::state_matrix_array2_t;
+  using typename BASE::state_matrix_array_t;
+  using typename BASE::state_matrix_t;
+  using typename BASE::state_vector_array2_t;
+  using typename BASE::state_vector_array_t;
+  using typename BASE::state_vector_t;
 
-  using lagrange_t = typename DIMENSIONS::template LinearFunction_t<Eigen::Dynamic>;
-  using size_array_t = typename DIMENSIONS::size_array_t;
-  using size_array2_t = typename DIMENSIONS::size_array2_t;
-  using scalar_t = typename DIMENSIONS::scalar_t;
-  using scalar_array_t = typename DIMENSIONS::scalar_array_t;
-  using scalar_array2_t = typename DIMENSIONS::scalar_array2_t;
-  using eigen_scalar_t = typename DIMENSIONS::eigen_scalar_t;
-  using eigen_scalar_array_t = typename DIMENSIONS::eigen_scalar_array_t;
-  using eigen_scalar_array2_t = typename DIMENSIONS::eigen_scalar_array2_t;
-  using state_vector_t = typename DIMENSIONS::state_vector_t;
-  using state_vector_array_t = typename DIMENSIONS::state_vector_array_t;
-  using state_vector_array2_t = typename DIMENSIONS::state_vector_array2_t;
-  using input_vector_t = typename DIMENSIONS::input_vector_t;
-  using input_vector_array_t = typename DIMENSIONS::input_vector_array_t;
-  using input_vector_array2_t = typename DIMENSIONS::input_vector_array2_t;
-  using input_state_matrix_t = typename DIMENSIONS::input_state_matrix_t;
-  using input_state_matrix_array_t = typename DIMENSIONS::input_state_matrix_array_t;
-  using input_state_matrix_array2_t = typename DIMENSIONS::input_state_matrix_array2_t;
-  using state_matrix_t = typename DIMENSIONS::state_matrix_t;
-  using state_matrix_array_t = typename DIMENSIONS::state_matrix_array_t;
-  using state_matrix_array2_t = typename DIMENSIONS::state_matrix_array2_t;
-  using input_matrix_t = typename DIMENSIONS::input_matrix_t;
-  using input_matrix_array_t = typename DIMENSIONS::input_matrix_array_t;
-  using input_matrix_array2_t = typename DIMENSIONS::input_matrix_array2_t;
-  using state_input_matrix_t = typename DIMENSIONS::state_input_matrix_t;
-  using state_input_matrix_array_t = typename DIMENSIONS::state_input_matrix_array_t;
-  using state_input_matrix_array2_t = typename DIMENSIONS::state_input_matrix_array2_t;
-  using constraint1_vector_t = typename DIMENSIONS::constraint1_vector_t;
-  using constraint1_vector_array_t = typename DIMENSIONS::constraint1_vector_array_t;
-  using constraint1_vector_array2_t = typename DIMENSIONS::constraint1_vector_array2_t;
-  using constraint1_state_matrix_t = typename DIMENSIONS::constraint1_state_matrix_t;
-  using constraint1_state_matrix_array_t = typename DIMENSIONS::constraint1_state_matrix_array_t;
-  using constraint1_state_matrix_array2_t = typename DIMENSIONS::constraint1_state_matrix_array2_t;
-  using constraint1_input_matrix_t = typename DIMENSIONS::constraint1_input_matrix_t;
-  using constraint1_input_matrix_array_t = typename DIMENSIONS::constraint1_input_matrix_array_t;
-  using constraint1_input_matrix_array2_t = typename DIMENSIONS::constraint1_input_matrix_array2_t;
-  using input_constraint1_matrix_t = typename DIMENSIONS::input_constraint1_matrix_t;
-  using input_constraint1_matrix_array_t = typename DIMENSIONS::input_constraint1_matrix_array_t;
-  using input_constraint1_matrix_array2_t = typename DIMENSIONS::input_constraint1_matrix_array2_t;
-  using constraint2_vector_t = typename DIMENSIONS::constraint2_vector_t;
-  using constraint2_vector_array_t = typename DIMENSIONS::constraint2_vector_array_t;
-  using constraint2_vector_array2_t = typename DIMENSIONS::constraint2_vector_array2_t;
-  using constraint2_state_matrix_t = typename DIMENSIONS::constraint2_state_matrix_t;
-  using constraint2_state_matrix_array_t = typename DIMENSIONS::constraint2_state_matrix_array_t;
-  using constraint2_state_matrix_array2_t = typename DIMENSIONS::constraint2_state_matrix_array2_t;
+  using typename BASE::controller_array_t;
+  using typename BASE::controller_ptr_array_t;
+  using typename BASE::controller_t;
+  using typename BASE::linear_controller_array_t;
+  using typename BASE::linear_controller_ptr_array_t;
+  using typename BASE::linear_controller_t;
 
-  using controlled_system_base_t = typename BASE::controlled_system_base_t;
-  using event_handler_t = typename BASE::event_handler_t;
-  using derivatives_base_t = typename BASE::derivatives_base_t;
-  using constraint_base_t = typename BASE::constraint_base_t;
-  using cost_function_base_t = typename BASE::cost_function_base_t;
-  using operating_trajectories_base_t = typename BASE::operating_trajectories_base_t;
-
-  using controller_ptr_array_t = typename BASE::controller_ptr_array_t;
-  using linear_controller_t = typename BASE::linear_controller_t;
-  using linear_controller_array_t = typename BASE::linear_controller_array_t;
+  using typename BASE::constraint_base_t;
+  using typename BASE::controlled_system_base_t;
+  using typename BASE::cost_function_base_t;
+  using typename BASE::derivatives_base_t;
+  using typename BASE::event_handler_t;
+  using typename BASE::operating_trajectories_base_t;
 
   /**
    * worker state enum
@@ -141,7 +141,7 @@ class SLQ_MP : public SLQ_BASE<STATE_DIM, INPUT_DIM> {
          std::shared_ptr<HybridLogicRules> logicRulesPtr = nullptr, const cost_function_base_t* heuristicsFunctionPtr = nullptr);
 
   /**
-   * Default destructor.
+   * Destructor.
    */
   ~SLQ_MP();
 
@@ -294,13 +294,6 @@ class SLQ_MP : public SLQ_BASE<STATE_DIM, INPUT_DIM> {
   std::atomic_bool alphaBestFound_;
   std::atomic_size_t lsWorkerCompleted_;
   std::vector<bool> alphaProcessed_;
-
-  // needed for lineSearch
-  std::vector<lagrange_t> initLSlagrangeMultiplierFunctionsStock_;
-
- public:
-  template <size_t GSLQP_STATE_DIM, size_t GSLQP_INPUT_DIM>
-  friend class GSLQP;
 };
 
 }  // namespace ocs2

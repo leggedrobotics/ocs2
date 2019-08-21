@@ -67,7 +67,6 @@ if(cmake_clang_tools_FOUND)
     TARGETS ${PROJECT_NAME}_lintTarget ocs2_core_logic
     SOURCE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/src ${CMAKE_CURRENT_SOURCE_DIR}/include/ocs2_core
     CT_HEADER_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/include/ocs2_core
-    CF_FIX
     CF_WERROR
   )
 endif(cmake_clang_tools_FOUND)
@@ -108,14 +107,6 @@ target_link_libraries(integration_unittest
   ${Boost_LIBRARIES}
 )
 
-catkin_add_gtest(findIndex_unittest
-  test/misc/testFindIndex.cpp
-)
-target_link_libraries(findIndex_unittest
-  ${catkin_LIBRARIES}
-  ${Boost_LIBRARIES}
-)
-
 catkin_add_gtest(interpolation_unittest
   test/misc/testInterpolation.cpp
 )
@@ -132,13 +123,17 @@ target_link_libraries(logic_rules_machin_unittest
   ${Boost_LIBRARIES}
 )
 
-catkin_add_gtest(cppadcg_unittest
-  test/cppad_cg/testCppADCG.cpp
-)
-target_link_libraries(cppadcg_unittest
-  ${Boost_LIBRARIES}
-  ${catkin_LIBRARIES} -lm -ldl
-)
+## if not in debug mode
+string(TOUPPER ${CMAKE_BUILD_TYPE} CMAKE_BUILD_TYPE_UPPER)
+if (NOT ${CMAKE_BUILD_TYPE_UPPER} STREQUAL DEBUG) 
+  catkin_add_gtest(cppadcg_unittest
+    test/cppad_cg/testCppADCG.cpp
+  )
+  target_link_libraries(cppadcg_unittest
+    ${Boost_LIBRARIES}
+    ${catkin_LIBRARIES} -lm -ldl
+  )
+endif(NOT ${CMAKE_BUILD_TYPE_UPPER} STREQUAL DEBUG)
 
 catkin_add_gtest(test_transferfunctionbase
   test/dynamics/testTransferfunctionBase.cpp
@@ -201,5 +196,9 @@ target_link_libraries(test_LinearAlgebra
 )
 
 catkin_add_gtest(test_lookup
-        test/misc/testLookup.cpp
+  test/misc/testLookup.cpp
+)
+target_link_libraries(test_lookup
+  ${Boost_LIBRARIES}
+  ${catkin_LIBRARIES}
 )

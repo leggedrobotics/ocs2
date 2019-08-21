@@ -32,10 +32,12 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <array>
 #include <Eigen/Dense>
+#include <limits>
 
 #include <ocs2_core/Dimensions.h>
 #include <ocs2_core/integration/OdeBase.h>
 #include <ocs2_core/misc/LinearInterpolation.h>
+#include <ocs2_core/misc/Numerics.h>
 
 namespace ocs2{
 
@@ -59,7 +61,6 @@ public:
 	typedef OdeBase<S_DIM_> BASE;
 
 	typedef Dimensions<STATE_DIM, INPUT_DIM> DIMENSIONS;
-	using controller_t = typename DIMENSIONS::controller_t;
 	using scalar_t = typename DIMENSIONS::scalar_t;
 	using scalar_array_t = typename DIMENSIONS::scalar_array_t;
 	using eigen_scalar_t = typename DIMENSIONS::eigen_scalar_t;
@@ -178,8 +179,6 @@ public:
      */
 	void setData(
 			const scalar_t& learningRate,
-			const scalar_t& switchingTimeStart,
-			const scalar_t& switchingTimeFinal,
 			const scalar_array_t* SsTimePtr,
 			const state_matrix_array_t* SmPtr,
 			const state_vector_array_t* SvPtr,
@@ -200,10 +199,6 @@ public:
 		BASE::resetNumFunctionCalls();
 
 		alpha_ = learningRate;
-
-		switchingTimeStart_ = switchingTimeStart;
-		switchingTimeFinal_ = switchingTimeFinal;
-		scalingFactor_      = switchingTimeFinal - switchingTimeStart;
 
 		SvFunc_.setData(SsTimePtr, SvPtr);
 		SmFunc_.setData(SsTimePtr, SmPtr);
@@ -254,7 +249,6 @@ public:
 		BASE::numFunctionCalls_++;
 
 		// denormalized time
-//		const scalar_t t = switchingTimeFinal_ - scalingFactor_*z;
 		const scalar_t t = -z;
 
 		convert2Matrix(allSs, nabla_Sm_, nabla_Sv_, nabla_s_);
@@ -282,7 +276,7 @@ public:
 		nabla_Lm_ = invRm_ * Bm_.transpose() * nabla_Sm_;
 
 		// Riccati equations
-		if (std::abs(multiplier_) > 1e-9) {
+		if (!numerics::almost_eq(multiplier_, 0.0)) {
 			dSmdt_ = Qm_ + Am_.transpose()*Sm_ + Sm_.transpose()*Am_ - Lm_.transpose()*Rm_*Lm_;
 			dSmdt_ = 0.5*(dSmdt_+dSmdt_.transpose()).eval();
 			dSvdt_ = Qv_ + Am_.transpose()*Sv_ - Lm_.transpose()*Rm_*Lv_;
@@ -316,10 +310,6 @@ public:
 
 private:
 	scalar_t alpha_ = 0.0;
-	scalar_t switchingTimeStart_ = 0.0;
-	scalar_t switchingTimeFinal_ = 1.0;
-	scalar_t scalingFactor_ = 1.0;
-
 	scalar_t multiplier_ = 0.0;
 
 	state_matrix_t nabla_Sm_;

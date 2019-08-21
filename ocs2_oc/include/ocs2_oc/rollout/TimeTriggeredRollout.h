@@ -77,10 +77,10 @@ class TimeTriggeredRollout : public RolloutBase<STATE_DIM, INPUT_DIM> {
    * @param [in] rolloutSettings: The rollout settings.
    * @param [in] algorithmName: The algorithm that calls this class (default not defined).
    */
-  TimeTriggeredRollout(const controlled_system_base_t& systemDynamics, Rollout_Settings rolloutSettings = Rollout_Settings(),
-                       const char algorithmName[] = nullptr)
+  explicit TimeTriggeredRollout(const controlled_system_base_t& systemDynamics,
+                                const Rollout_Settings& rolloutSettings = Rollout_Settings(), const char algorithmName[] = nullptr)
 
-      : BASE(std::move(rolloutSettings), std::move(algorithmName)),
+      : BASE(rolloutSettings, algorithmName),
         systemDynamicsPtr_(systemDynamics.clone()),
         systemEventHandlersPtr_(new event_handler_t) {
     switch (rolloutSettings.integratorType_) {

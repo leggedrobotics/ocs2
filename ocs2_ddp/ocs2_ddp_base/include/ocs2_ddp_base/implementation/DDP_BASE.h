@@ -27,6 +27,8 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
+#include <ocs2_ddp_base/DDP_BASE.h>
+
 namespace ocs2 {
 
 /******************************************************************************************************/
@@ -94,19 +96,29 @@ DDP_BASE<STATE_DIM, INPUT_DIM>::DDP_BASE(const controlled_system_base_t* systemD
 /***************************************************************************************************** */
 template <size_t STATE_DIM, size_t INPUT_DIM>
 DDP_BASE<STATE_DIM, INPUT_DIM>::~DDP_BASE() {
-#ifdef BENCHMARK
-  auto BENCHMARK_total = BENCHMARK_tAvgFP_ + BENCHMARK_tAvgBP_ + BENCHMARK_tAvgLQ_;
-  if (BENCHMARK_total > 0 && (ddpSettings_.displayInfo_ || ddpSettings_.displayShortSummary_)) {
-    std::cerr << std::endl << "#####################################################" << std::endl;
-    std::cerr << "Benchmarking over " << BENCHMARK_nIterationsBP_ << " samples." << std::endl;
-    std::cerr << "Average time for Forward Pass:      " << BENCHMARK_tAvgFP_ / 1000.0 << " [ms] \t("
-              << BENCHMARK_tAvgFP_ / BENCHMARK_total * 100 << "%)" << std::endl;
-    std::cerr << "Average time for Backward Pass:     " << BENCHMARK_tAvgBP_ / 1000.0 << " [ms] \t("
-              << BENCHMARK_tAvgBP_ / BENCHMARK_total * 100 << "%)" << std::endl;
-    std::cerr << "Average time for LQ Approximation:  " << BENCHMARK_tAvgLQ_ / 1000.0 << " [ms] \t("
-              << BENCHMARK_tAvgLQ_ / BENCHMARK_total * 100 << "%)" << std::endl;
+  auto forwardPassTotal = forwardPassTimer_.getTotalInMilliseconds();
+  auto linearQuadraticApproximationTotal = linearQuadraticApproximationTimer_.getTotalInMilliseconds();
+  auto backwardPassTotal = backwardPassTimer_.getTotalInMilliseconds();
+  auto computeControllerTotal = computeControllerTimer_.getTotalInMilliseconds();
+  auto finalRolloutTotal = linesearchTimer_.getTotalInMilliseconds();
+
+  auto benchmarkTotal =
+      forwardPassTotal + linearQuadraticApproximationTotal + backwardPassTotal + computeControllerTotal + finalRolloutTotal;
+
+  if (benchmarkTotal > 0 && (ddpSettings_.displayInfo_ || ddpSettings_.displayShortSummary_)) {
+    std::cerr << "\n################################################################\n";
+    std::cerr << "Benchmarking         :\tAverage time [ms]   (% of total runtime)\n";
+    std::cerr << "\tForward Pass       :\t" << forwardPassTimer_.getAverageInMilliseconds() << " [ms] \t("
+              << forwardPassTotal / benchmarkTotal * 100 << "%)\n";
+    std::cerr << "\tLQ Approximation   :\t" << linearQuadraticApproximationTimer_.getAverageInMilliseconds() << " [ms] \t("
+              << linearQuadraticApproximationTotal / benchmarkTotal * 100 << "%)\n";
+    std::cerr << "\tBackward Pass      :\t" << backwardPassTimer_.getAverageInMilliseconds() << " [ms] \t("
+              << backwardPassTotal / benchmarkTotal * 100 << "%)\n";
+    std::cerr << "\tCompute Controller :\t" << computeControllerTimer_.getAverageInMilliseconds() << " [ms] \t("
+              << computeControllerTotal / benchmarkTotal * 100 << "%)\n";
+    std::cerr << "\tLinesearch         :\t" << linesearchTimer_.getAverageInMilliseconds() << " [ms] \t("
+              << finalRolloutTotal / benchmarkTotal * 100 << "%)" << std::endl;
   }
-#endif
 }
 
 /******************************************************************************************************/
@@ -142,6 +154,13 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::reset() {
     sFinalStock_[i] = eigen_scalar_t::Zero();
     xFinalStock_[i] = state_vector_t::Zero();
   }  // end of i loop
+
+  // reset timers
+  forwardPassTimer_.reset();
+  linearQuadraticApproximationTimer_.reset();
+  backwardPassTimer_.reset();
+  computeControllerTimer_.reset();
+  linesearchTimer_.reset();
 }
 
 /******************************************************************************************************/
@@ -240,78 +259,12 @@ typename DDP_BASE<STATE_DIM, INPUT_DIM>::scalar_t DDP_BASE<STATE_DIM, INPUT_DIM>
   if (ddpSettings_.debugPrintRollout_) {
     for (size_t i = 0; i < numPartitions; i++) {
       rollout_base_t::display(i, timeTrajectoriesStock[i], eventsPastTheEndIndecesStock[i], stateTrajectoriesStock[i],
-                              inputTrajectoriesStock[i]);
+                              &inputTrajectoriesStock[i]);
     }
   }
 
   // average time step
-  return (finalTime - initTime) / (scalar_t)numSteps;
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/***************************************************************************************************** */
-template <size_t STATE_DIM, size_t INPUT_DIM>
-void DDP_BASE<STATE_DIM, INPUT_DIM>::rolloutFinalState(scalar_t initTime, const state_vector_t& initState, scalar_t finalTime,
-                                                       const scalar_array_t& partitioningTimes,
-                                                       const linear_controller_array_t& controllersStock, state_vector_t& finalState,
-                                                       input_vector_t& finalInput, size_t& finalActivePartition, size_t threadId /*= 0*/) {
-  size_t numPartitions = partitioningTimes.size() - 1;
-
-  if (controllersStock.size() != numPartitions) {
-    throw std::runtime_error("controllersStock has less controllers then the number of subsystems");
-  }
-
-  scalar_array_t timeTrajectory;
-  size_array_t eventsPastTheEndIndeces;
-  state_vector_array_t stateTrajectory;
-  input_vector_t inputTrajectory;
-
-  // finding the active subsystem index at initTime and final time
-  auto initActivePartition = lookup::findBoundedActiveIntervalInTimeArray(partitioningTimes, initTime);
-  finalActivePartition = lookup::findBoundedActiveIntervalInTimeArray(partitioningTimes, finalTime);
-
-  scalar_t t0 = initTime, tf;
-  state_vector_t x0 = initState;
-  for (size_t i = initActivePartition; i <= finalActivePartition; i++) {
-    timeTrajectory.clear();
-    stateTrajectory.clear();
-    inputTrajectory.clear();
-
-    // final time
-    tf = (i != finalActivePartition) ? partitioningTimes[i + 1] : finalTime;
-
-    // if blockwiseMovingHorizon_ is not set, use the previous partition's controller for
-    // the first rollout of the partition. However for the very first run of the algorithm,
-    // it will still use operating trajectories if an initial controller is not provided.
-    const controller_t* controllerPtrTemp = &controllersStock[i];
-    if (blockwiseMovingHorizon_) {
-      if (controllerPtrTemp->empty() && i > 0 && !controllersStock[i - 1].empty()) {
-        controllerPtrTemp = &controllersStock[i - 1];
-      }
-    }
-
-    // call rollout worker for the partition 'i' on the thread 'threadId'
-    if (!controllerPtrTemp->empty()) {
-      x0 = dynamicsForwardRolloutPtrStock_[threadId]->run(i, t0, x0, tf, *controllerPtrTemp, *BASE::getLogicRulesMachinePtr(),
-                                                          timeTrajectory, eventsPastTheEndIndeces, stateTrajectory, inputTrajectory);
-
-    } else {
-      x0 = operatingTrajectoriesRolloutPtrStock_[threadId]->run(i, t0, x0, tf, *controllerPtrTemp, *BASE::getLogicRulesMachinePtr(),
-                                                                timeTrajectory, eventsPastTheEndIndeces, stateTrajectory, inputTrajectory);
-    }
-
-    // reset the initial time
-    t0 = timeTrajectory.back();
-  }
-
-  if (x0 != x0) {
-    throw std::runtime_error("System became unstable during the rollout.");
-  }
-
-  // final state and input
-  finalState = stateTrajectory.back();
-  finalInput = inputTrajectory.back();
+  return (finalTime - initTime) / numSteps;
 }
 
 /******************************************************************************************************/
@@ -631,6 +584,8 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::approximateUnconstrainedLQWorker(size_t wor
   // making sure that constrained Qm is PSD
   if (ddpSettings_.useMakePSD_) {
     LinearAlgebra::makePSD(QmTrajectoryStock_[i][k]);
+  } else {
+    QmTrajectoryStock_[i][k].diagonal().array() += ddpSettings_.addedRiccatiDiagonal_;
   }
 }
 
@@ -1074,8 +1029,8 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::updateNominalControllerPtrStock() {
   nominalControllerPtrStock_.clear();
   nominalControllerPtrStock_.reserve(nominalControllersStock_.size());
 
-  for (linear_controller_t& controller : nominalControllersStock_) {
-    nominalControllerPtrStock_.push_back(&controller);
+  for (linear_controller_t& controller_i : nominalControllersStock_) {
+    nominalControllerPtrStock_.push_back(&controller_i);
   }
 }
 
@@ -1117,34 +1072,66 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::adjustController(const scalar_array_t& newE
 
 /******************************************************************************************************/
 /******************************************************************************************************/
-/***************************************************************************************************** */
+/******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
-void DDP_BASE<STATE_DIM, INPUT_DIM>::getValueFuntion(scalar_t time, const state_vector_t& state, scalar_t& valueFuntion) {
-  size_t activeSubsystem = lookup::findBoundedActiveIntervalInTimeArray(partitioningTimes_, time);
+typename DDP_BASE<STATE_DIM, INPUT_DIM>::scalar_t DDP_BASE<STATE_DIM, INPUT_DIM>::getValueFunction(scalar_t time,
+                                                                                                   const state_vector_t& state) const {
+  const auto partition = lookup::findBoundedActiveIntervalInTimeArray(partitioningTimes_, time);
 
   state_matrix_t Sm;
-  LinearInterpolation<state_matrix_t, Eigen::aligned_allocator<state_matrix_t>> SmFunc(&SsTimeTrajectoryStock_[activeSubsystem],
-                                                                                       &SmTrajectoryStock_[activeSubsystem]);
-  const auto indexAlpha = SmFunc.interpolate(time, Sm);
+  const auto indexAlpha =
+      EigenLinearInterpolation<state_matrix_t>::interpolate(time, Sm, &SsTimeTrajectoryStock_[partition], &SmTrajectoryStock_[partition]);
 
   state_vector_t Sv;
-  LinearInterpolation<state_vector_t, Eigen::aligned_allocator<state_vector_t>> SvFunc(&SsTimeTrajectoryStock_[activeSubsystem],
-                                                                                       &SvTrajectoryStock_[activeSubsystem]);
-  SvFunc.interpolate(indexAlpha, Sv);
+  EigenLinearInterpolation<state_vector_t>::interpolate(indexAlpha, Sv, &SvTrajectoryStock_[partition]);
+
+  state_vector_t Sve;
+  if (SveTrajectoryStock_[partition].empty()) {
+    Sve.setZero();
+  } else {
+    EigenLinearInterpolation<state_vector_t>::interpolate(indexAlpha, Sve, &SveTrajectoryStock_[partition]);
+  }
 
   eigen_scalar_t s;
-  LinearInterpolation<eigen_scalar_t, Eigen::aligned_allocator<eigen_scalar_t>> sFunc(&SsTimeTrajectoryStock_[activeSubsystem],
-                                                                                      &sTrajectoryStock_[activeSubsystem]);
-  sFunc.interpolate(indexAlpha, s);
+  EigenLinearInterpolation<eigen_scalar_t>::interpolate(indexAlpha, s, &sTrajectoryStock_[partition]);
 
   state_vector_t xNominal;
-  LinearInterpolation<state_vector_t, Eigen::aligned_allocator<state_vector_t>> xNominalFunc(
-      &nominalTimeTrajectoriesStock_[activeSubsystem], &nominalStateTrajectoriesStock_[activeSubsystem]);
-  xNominalFunc.interpolate(time, xNominal);
+  EigenLinearInterpolation<state_vector_t>::interpolate(time, xNominal, &nominalTimeTrajectoriesStock_[partition],
+                                                        &nominalStateTrajectoriesStock_[partition]);
 
   state_vector_t deltaX = state - xNominal;
 
-  valueFuntion = (s + deltaX.transpose() * Sv + 0.5 * deltaX.transpose() * Sm * deltaX).eval()(0);
+  return s(0) + deltaX.dot(Sv + Sve) + 0.5 * deltaX.dot(Sm * deltaX);
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+template <size_t STATE_DIM, size_t INPUT_DIM>
+void DDP_BASE<STATE_DIM, INPUT_DIM>::getValueFunctionStateDerivative(scalar_t time, const state_vector_t& state, state_vector_t& Vx) const {
+  const auto partition = lookup::findBoundedActiveIntervalInTimeArray(partitioningTimes_, time);
+
+  state_matrix_t Sm;
+  const auto indexAlpha =
+      EigenLinearInterpolation<state_matrix_t>::interpolate(time, Sm, &SsTimeTrajectoryStock_[partition], &SmTrajectoryStock_[partition]);
+
+  state_vector_t Sv;
+  EigenLinearInterpolation<state_vector_t>::interpolate(indexAlpha, Sv, &SvTrajectoryStock_[partition]);
+
+  state_vector_t Sve;
+  if (SveTrajectoryStock_[partition].empty()) {
+    Sve.setZero();
+  } else {
+    EigenLinearInterpolation<state_vector_t>::interpolate(indexAlpha, Sve, &SveTrajectoryStock_[partition]);
+  }
+
+  state_vector_t xNominal;
+  EigenLinearInterpolation<state_vector_t>::interpolate(time, xNominal, &nominalTimeTrajectoriesStock_[partition],
+                                                        &nominalStateTrajectoriesStock_[partition]);
+
+  state_vector_t deltaX = state - xNominal;
+
+  Vx = Sm * deltaX + Sv + Sve;
 }
 
 /******************************************************************************************************/
@@ -1355,7 +1342,7 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::setupOptimizer(size_t numPartitions) {
    * nominal trajectories
    */
   nominalControllersStock_.resize(numPartitions);
-  updateNominalControllerPtrStock();
+  nominalControllerPtrStock_.resize(numPartitions);
   nominalTimeTrajectoriesStock_.resize(numPartitions);
   nominalEventsPastTheEndIndecesStock_.resize(numPartitions);
   nominalStateTrajectoriesStock_.resize(numPartitions);
@@ -1427,28 +1414,15 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::setupOptimizer(size_t numPartitions) {
 /***************************************************************************************************** */
 template <size_t STATE_DIM, size_t INPUT_DIM>
 void DDP_BASE<STATE_DIM, INPUT_DIM>::runInit() {
-#ifdef BENCHMARK
-  // Benchmarking
-  BENCHMARK_nIterationsLQ_++;
-  BENCHMARK_nIterationsBP_++;
-  BENCHMARK_nIterationsFP_++;
-  BENCHMARK_start_ = std::chrono::steady_clock::now();
-#endif
-
   // initial controller rollout
+  forwardPassTimer_.startTimer();
   avgTimeStepFP_ =
       rolloutTrajectory(initTime_, initState_, finalTime_, partitioningTimes_, nominalControllersStock_, nominalTimeTrajectoriesStock_,
                         nominalEventsPastTheEndIndecesStock_, nominalStateTrajectoriesStock_, nominalInputTrajectoriesStock_);
-
-#ifdef BENCHMARK
-  BENCHMARK_end_ = std::chrono::steady_clock::now();
-  auto BENCHMARK_diff_ = BENCHMARK_end_ - BENCHMARK_start_;
-  BENCHMARK_tAvgFP_ = ((1.0 - 1.0 / BENCHMARK_nIterationsFP_) * BENCHMARK_tAvgFP_) +
-                      (1.0 / BENCHMARK_nIterationsFP_) * std::chrono::duration_cast<std::chrono::microseconds>(BENCHMARK_diff_).count();
-  BENCHMARK_start_ = std::chrono::steady_clock::now();
-#endif
+  forwardPassTimer_.endTimer();
 
   // linearizing the dynamics and quadratizing the cost function along nominal trajectories
+  linearQuadraticApproximationTimer_.startTimer();
   approximateOptimalControlProblem();
 
   // to check convergence of the main loop, we need to compute the total cost and ISEs
@@ -1472,30 +1446,21 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::runInit() {
     nominalConstraint1ISE_ = nominalConstraint1MaxNorm_ = 0.0;
     nominalConstraint2ISE_ = nominalConstraint2MaxNorm_ = 0.0;
   }
-
-#ifdef BENCHMARK
-  BENCHMARK_end_ = std::chrono::steady_clock::now();
-  BENCHMARK_diff_ = BENCHMARK_end_ - BENCHMARK_start_;
-  BENCHMARK_tAvgLQ_ = ((1.0 - 1.0 / BENCHMARK_nIterationsLQ_) * BENCHMARK_tAvgLQ_) +
-                      (1.0 / BENCHMARK_nIterationsLQ_) * std::chrono::duration_cast<std::chrono::microseconds>(BENCHMARK_diff_).count();
-  BENCHMARK_start_ = std::chrono::steady_clock::now();
-#endif
+  linearQuadraticApproximationTimer_.endTimer();
 
   // solve Riccati equations
+  backwardPassTimer_.startTimer();
   avgTimeStepBP_ = solveSequentialRiccatiEquations(SmHeuristics_, SvHeuristics_, sHeuristics_);
+  backwardPassTimer_.endTimer();
+
   // calculate controller
+  computeControllerTimer_.startTimer();
   if (ddpSettings_.useRiccatiSolver_) {
     calculateController();
   } else {
     throw std::runtime_error("useRiccatiSolver=false is not valid.");
   }
-
-#ifdef BENCHMARK
-  BENCHMARK_end_ = std::chrono::steady_clock::now();
-  BENCHMARK_diff_ = BENCHMARK_end_ - BENCHMARK_start_;
-  BENCHMARK_tAvgBP_ = ((1.0 - 1.0 / BENCHMARK_nIterationsBP_) * BENCHMARK_tAvgBP_) +
-                      (1.0 / BENCHMARK_nIterationsBP_) * std::chrono::duration_cast<std::chrono::microseconds>(BENCHMARK_diff_).count();
-#endif
+  computeControllerTimer_.endTimer();
 
   // display
   if (ddpSettings_.displayInfo_) {
@@ -1508,29 +1473,16 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::runInit() {
 /***************************************************************************************************** */
 template <size_t STATE_DIM, size_t INPUT_DIM>
 void DDP_BASE<STATE_DIM, INPUT_DIM>::runIteration() {
-#ifdef BENCHMARK
-  // Benchmarking
-  BENCHMARK_nIterationsLQ_++;
-  BENCHMARK_nIterationsBP_++;
-  BENCHMARK_nIterationsFP_++;
-  BENCHMARK_start_ = std::chrono::steady_clock::now();
-#endif
-
   bool computeISEs = ddpSettings_.displayInfo_ || !ddpSettings_.noStateConstraints_;
 
   // finding the optimal learningRate
   maxLearningRate_ = ddpSettings_.maxLearningRate_;
+  linesearchTimer_.startTimer();
   lineSearch(computeISEs);
-
-#ifdef BENCHMARK
-  BENCHMARK_end_ = std::chrono::steady_clock::now();
-  BENCHMARK_diff_ = BENCHMARK_end_ - BENCHMARK_start_;
-  BENCHMARK_tAvgFP_ = ((1.0 - 1.0 / BENCHMARK_nIterationsFP_) * BENCHMARK_tAvgFP_) +
-                      (1.0 / BENCHMARK_nIterationsFP_) * std::chrono::duration_cast<std::chrono::microseconds>(BENCHMARK_diff_).count();
-  BENCHMARK_start_ = std::chrono::steady_clock::now();
-#endif
+  linesearchTimer_.endTimer();
 
   // linearizing the dynamics and quadratizing the cost function along nominal trajectories
+  linearQuadraticApproximationTimer_.startTimer();
   approximateOptimalControlProblem();
 
   // to check convergence of the main loop, we need to compute ISEs
@@ -1546,30 +1498,21 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::runIteration() {
       nominalConstraint2ISE_ = nominalConstraint2MaxNorm_ = 0.0;
     }
   }
-
-#ifdef BENCHMARK
-  BENCHMARK_end_ = std::chrono::steady_clock::now();
-  BENCHMARK_diff_ = BENCHMARK_end_ - BENCHMARK_start_;
-  BENCHMARK_tAvgLQ_ = ((1.0 - 1.0 / BENCHMARK_nIterationsLQ_) * BENCHMARK_tAvgLQ_) +
-                      (1.0 / BENCHMARK_nIterationsLQ_) * std::chrono::duration_cast<std::chrono::microseconds>(BENCHMARK_diff_).count();
-  BENCHMARK_start_ = std::chrono::steady_clock::now();
-#endif
+  linearQuadraticApproximationTimer_.endTimer();
 
   // solve Riccati equations
+  backwardPassTimer_.startTimer();
   avgTimeStepBP_ = solveSequentialRiccatiEquations(SmHeuristics_, SvHeuristics_, sHeuristics_);
+  backwardPassTimer_.endTimer();
+
   // calculate controller
+  computeControllerTimer_.startTimer();
   if (ddpSettings_.useRiccatiSolver_) {
     calculateController();
   } else {
     throw std::runtime_error("useRiccatiSolver=false is not valid.");
   }
-
-#ifdef BENCHMARK
-  BENCHMARK_end_ = std::chrono::steady_clock::now();
-  BENCHMARK_diff_ = BENCHMARK_end_ - BENCHMARK_start_;
-  BENCHMARK_tAvgBP_ = ((1.0 - 1.0 / BENCHMARK_nIterationsBP_) * BENCHMARK_tAvgBP_) +
-                      (1.0 / BENCHMARK_nIterationsBP_) * std::chrono::duration_cast<std::chrono::microseconds>(BENCHMARK_diff_).count();
-#endif
+  computeControllerTimer_.endTimer();
 
   // display
   if (ddpSettings_.displayInfo_) {
@@ -1582,6 +1525,9 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::runIteration() {
 /***************************************************************************************************** */
 template <size_t STATE_DIM, size_t INPUT_DIM>
 void DDP_BASE<STATE_DIM, INPUT_DIM>::runExit() {
+  // update the controller pointer array
+  updateNominalControllerPtrStock();
+
   //	// add the deleted parts of the controller
   //	for (size_t i=0; i<initActivePartition_; i++)
   //		nominalControllersStock_[i].swap(deletedcontrollersStock_[i]);
@@ -1778,25 +1724,13 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::run(scalar_t initTime, const state_vector_t
     std::cerr << "\n#### Final rollout" << std::endl;
   }
 
-#ifdef BENCHMARK
-  BENCHMARK_nIterationsFP_++;
-  BENCHMARK_start_ = std::chrono::steady_clock::now();
-#endif
-
   bool computeISEs = !ddpSettings_.noStateConstraints_ || ddpSettings_.displayInfo_ || ddpSettings_.displayShortSummary_;
 
   // finding the final optimal learningRate and getting the optimal trajectories and controller
   maxLearningRate_ = ddpSettings_.maxLearningRate_;
+  linesearchTimer_.startTimer();
   lineSearch(computeISEs);
-
-#ifdef BENCHMARK
-  BENCHMARK_end_ = std::chrono::steady_clock::now();
-  BENCHMARK_diff_ = BENCHMARK_end_ - BENCHMARK_start_;
-  BENCHMARK_tAvgFP_ = ((1.0 - 1.0 / BENCHMARK_nIterationsFP_) * BENCHMARK_tAvgFP_) +
-                      (1.0 / BENCHMARK_nIterationsFP_) * std::chrono::duration_cast<std::chrono::microseconds>(BENCHMARK_diff_).count();
-#endif
-
-  updateNominalControllerPtrStock();
+  linesearchTimer_.endTimer();
 
   /*
    * adds the deleted controller parts

@@ -25,7 +25,7 @@ class MrtRosDummyDoubleSlit final : public MRT_ROS_Dummy_Loop<double_slit::STATE
    * will be simulated to run by this frequency. Note that this might not be the MPC's realtime frequency.
    */
   MrtRosDummyDoubleSlit(const mrt_ptr_t& mrtPtr, const scalar_t& mrtDesiredFrequency, const scalar_t& mpcDesiredFrequency,
-                        controlled_system_base_t* system = nullptr, Rollout_Settings rolloutSettings = Rollout_Settings())
+                        const controlled_system_base_t* system = nullptr, Rollout_Settings rolloutSettings = Rollout_Settings())
       : BASE(mrtPtr, mrtDesiredFrequency, mpcDesiredFrequency, system, rolloutSettings) {}
 
   /**
@@ -51,13 +51,8 @@ class MrtRosDummyDoubleSlit final : public MRT_ROS_Dummy_Loop<double_slit::STATE
     ROS_INFO_STREAM("Visualization subscriber is connected.");
   }
 
-  /**
-   * Visualizes the current observation.
-   *
-   * @param [in] observation: The current observation.
-   * @param [in] costDesiredTrajectories: The commanded target trajectory or point.
-   */
-  void publishVisualizer(const system_observation_t& observation, const cost_desired_trajectories_t& costDesiredTrajectories) override {
+  void publishVisualizer(const system_observation_t& observation, const commandData_t& command, const policyData_t& policy) override {
+    const auto& costDesiredTrajectories = command.mpcCostDesiredTrajectories_;
     sensor_msgs::JointState joint_state;
     joint_state.header.stamp = ros::Time::now();
     joint_state.name.resize(2);

@@ -31,7 +31,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define MPC_BASE_OCS2_H_
 
 #include <Eigen/Dense>
-#include <chrono>
 #include <cstddef>
 #include <memory>
 #include <vector>
@@ -43,6 +42,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_core/cost/CostDesiredTrajectories.h>
 #include <ocs2_core/logic/machine/HybridLogicRulesMachine.h>
 #include <ocs2_core/logic/rules/HybridLogicRules.h>
+#include <ocs2_core/misc/Benchmark.h>
 
 #include "ocs2_mpc/MPC_Settings.h"
 
@@ -59,9 +59,9 @@ class MPC_BASE {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-  typedef std::shared_ptr<MPC_BASE<STATE_DIM, INPUT_DIM>> Ptr;
+  using Ptr = std::shared_ptr<MPC_BASE<STATE_DIM, INPUT_DIM>>;
 
-  typedef Dimensions<STATE_DIM, INPUT_DIM> DIMENSIONS;
+  using DIMENSIONS = Dimensions<STATE_DIM, INPUT_DIM>;
 
   using scalar_t = typename DIMENSIONS::scalar_t;
   using scalar_array_t = typename DIMENSIONS::scalar_array_t;
@@ -98,7 +98,7 @@ class MPC_BASE {
    *
    * @param [in] mpcSettings: Structure containing the settings for the MPC algorithm.
    */
-  MPC_BASE(const scalar_array_t& partitioningTimes, const MPC_Settings& mpcSettings = MPC_Settings());
+  explicit MPC_BASE(const scalar_array_t& partitioningTimes, const MPC_Settings& mpcSettings = MPC_Settings());
 
   /**
    * destructor.
@@ -209,13 +209,6 @@ class MPC_BASE {
    */
   MPC_Settings& settings();
 
-  /**
-   * Gets the cost function desired trajectories.
-   *
-   * @param [out] costDesiredTrajectories: A pointer to the cost function desired trajectories
-   */
-  virtual void getCostDesiredTrajectoriesPtr(const cost_desired_trajectories_t*& costDesiredTrajectoriesPtr) const;
-
  protected:
   /**
    * Sets pointer of the base solver. This method should be called in the constructor of
@@ -259,8 +252,7 @@ class MPC_BASE {
   const state_vector_array2_t* optimizedStateTrajectoriesStockPtr_;
   const input_vector_array2_t* optimizedInputTrajectoriesStockPtr_;
 
-  std::chrono::milliseconds measuredRuntimeMS_;
-  std::chrono::high_resolution_clock::time_point mpcStratTime_;
+  benchmark::RepeatedTimer mpcTimer_;
 
   size_t initnumPartitions_;
   scalar_array_t initPartitioningTimes_;

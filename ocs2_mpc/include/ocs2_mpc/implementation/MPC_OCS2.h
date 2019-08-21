@@ -109,7 +109,9 @@ void MPC_OCS2<STATE_DIM, INPUT_DIM>::runOCS2() {
 
     subsystemsSequenceOptimized_ = slqDataCollectorPtr_->subsystemsSequence_;
 
-    gddpPtr_->run(slqDataCollectorPtr_->eventTimes_, slqDataCollectorPtr_.get(), eventTimesOptimized_, BASE::mpcSettings_.maxTimeStep_);
+    // TODO: fix me
+    //    gddpPtr_->run(slqDataCollectorPtr_->eventTimes_, slqDataCollectorPtr_.get(), eventTimesOptimized_,
+    //    BASE::mpcSettings_.maxTimeStep_);
 
     if (BASE::mpcSettings_.debugPrint_) {
       std::cerr << "### OCS2 finished. " << std::endl;
@@ -132,7 +134,7 @@ bool MPC_OCS2<STATE_DIM, INPUT_DIM>::run(const scalar_t& currentTime, const stat
     bool modeSequenceUpdated = subsystemsSequenceOptimized_ != BASE::slqPtr_->getLogicRulesPtr()->subsystemsSequence();
     if (!rewaindTookPlace && !modeSequenceUpdated) {
       // adjust the SLQ internal controller using trajectory spreading approach
-      if (BASE::slqPtr_->getLogicRulesPtr()->eventTimes().empty() == false) {
+      if (!BASE::slqPtr_->getLogicRulesPtr()->eventTimes().empty()) {
         BASE::slqPtr_->adjustController(eventTimesOptimized_, BASE::slqPtr_->getLogicRulesPtr()->eventTimes());
       }
 

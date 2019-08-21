@@ -33,8 +33,7 @@ namespace ocs2 {
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
-GDDP<STATE_DIM, INPUT_DIM>::GDDP(
-		const GDDP_Settings& gddpSettings /*= GDDP_Settings()*/)
+GDDP<STATE_DIM, INPUT_DIM>::GDDP(const GDDP_Settings& gddpSettings /*= GDDP_Settings()*/)
 	: gddpSettings_(gddpSettings)
 {
 	bvpSensitivityEquationsPtrStock_.clear();
@@ -59,25 +58,10 @@ GDDP<STATE_DIM, INPUT_DIM>::GDDP(
 
 	for (size_t i=0; i<gddpSettings_.nThreads_; i++)  {
 
-		typedef Eigen::aligned_allocator<bvp_sensitivity_equations_t> bvp_sensitivity_equations_alloc_t;
-		bvpSensitivityEquationsPtrStock_.push_back( std::move(
-				std::allocate_shared<bvp_sensitivity_equations_t, bvp_sensitivity_equations_alloc_t>(
-						bvp_sensitivity_equations_alloc_t()) ) );
-
-		typedef Eigen::aligned_allocator<bvp_sensitivity_error_equations_t> bvp_sensitivity_error_equations_alloc_t;
-		bvpSensitivityErrorEquationsPtrStock_.push_back( std::move(
-				std::allocate_shared<bvp_sensitivity_error_equations_t, bvp_sensitivity_error_equations_alloc_t>(
-						bvp_sensitivity_error_equations_alloc_t()) ) );
-
-		typedef Eigen::aligned_allocator<rollout_sensitivity_equations_t> rollout_sensitivity_equations_alloc_t;
-		rolloutSensitivityEquationsPtrStock_.push_back( std::move(
-				std::allocate_shared<rollout_sensitivity_equations_t, rollout_sensitivity_equations_alloc_t>(
-						rollout_sensitivity_equations_alloc_t()) ) );
-
-		typedef Eigen::aligned_allocator<riccati_sensitivity_equations_t> riccati_sensitivity_equations_alloc_t;
-		riccatiSensitivityEquationsPtrStock_.push_back( std::move(
-				std::allocate_shared<riccati_sensitivity_equations_t, riccati_sensitivity_equations_alloc_t>(
-						riccati_sensitivity_equations_alloc_t()) ) );
+		bvpSensitivityEquationsPtrStock_.emplace_back(new bvp_sensitivity_equations_t);
+		bvpSensitivityErrorEquationsPtrStock_.emplace_back(new bvp_sensitivity_error_equations_t);
+		rolloutSensitivityEquationsPtrStock_.emplace_back(new rollout_sensitivity_equations_t);
+		riccatiSensitivityEquationsPtrStock_.emplace_back(new riccati_sensitivity_equations_t);
 
 		switch(gddpSettings_.RiccatiIntegratorType_) {
 
@@ -136,8 +120,7 @@ GDDP<STATE_DIM, INPUT_DIM>::GDDP(
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
-void GDDP<STATE_DIM, INPUT_DIM>::setupOptimizer(
-		const size_t& numPartitions) {
+void GDDP<STATE_DIM, INPUT_DIM>::setupOptimizer(const size_t& numPartitions) {
 
 	if (numPartitions==0)
 		throw std::runtime_error("The number of partitions cannot be zero!");
@@ -224,142 +207,6 @@ void GDDP<STATE_DIM, INPUT_DIM>::calculateRolloutCostate(
 			SveFunc_.interpolate(indexAlpha,  Sve);
 
 			costateTrajectoriesStock[i][k] = Sve + Sv;
-
-		}  // end of k loop
-	}  // end of i loop
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM>
-void GDDP<STATE_DIM, INPUT_DIM>::calculateInputConstraintLagrangian(
-		lagrange_array_t& lagrangeMultiplierFunctionsStock,
-		scalar_t learningRate /*= 0.0*/) {
-
-	// functions for controller and Lagrange multiplier
-	EigenLinearInterpolation<state_vector_t> xFunc;
-	EigenLinearInterpolation<state_input_matrix_t> BmFunc;
-	EigenLinearInterpolation<input_state_matrix_t> PmFunc;
-	EigenLinearInterpolation<input_vector_t> RvFunc;
-	EigenLinearInterpolation<input_matrix_t> RmFunc;
-	EigenLinearInterpolation<input_vector_t> EvProjectedFunc;
-	EigenLinearInterpolation<input_state_matrix_t> CmProjectedFunc;
-	EigenLinearInterpolation<input_constraint1_matrix_t> DmDagerFunc;
-
-	lagrangeMultiplierFunctionsStock.resize(numPartitions_);
-
-	for (size_t i=0; i<numPartitions_; i++) {
-
-		// skip the inactive partitions
-		if (i<dcPtr_->initActivePartition_ || i>dcPtr_->finalActivePartition_) {
-			lagrangeMultiplierFunctionsStock[i].clear();
-			continue;
-		}
-
-		xFunc.setData(&dcPtr_->nominalTimeTrajectoriesStock_[i], &dcPtr_->nominalStateTrajectoriesStock_[i]);
-		BmFunc.setData(&dcPtr_->nominalTimeTrajectoriesStock_[i], &dcPtr_->BmTrajectoriesStock_[i]);
-		PmFunc.setData(&dcPtr_->nominalTimeTrajectoriesStock_[i], &dcPtr_->PmTrajectoriesStock_[i]);
-		RvFunc.setData(&dcPtr_->nominalTimeTrajectoriesStock_[i], &dcPtr_->RvTrajectoriesStock_[i]);
-		RmFunc.setData(&dcPtr_->nominalTimeTrajectoriesStock_[i], &dcPtr_->RmTrajectoriesStock_[i]);
-		EvProjectedFunc.setData(&dcPtr_->nominalTimeTrajectoriesStock_[i], &dcPtr_->EvProjectedTrajectoriesStock_[i]);
-		CmProjectedFunc.setData(&dcPtr_->nominalTimeTrajectoriesStock_[i], &dcPtr_->CmProjectedTrajectoriesStock_[i]);
-		DmDagerFunc.setData(&dcPtr_->nominalTimeTrajectoriesStock_[i], &dcPtr_->DmDagerTrajectoriesStock_[i]);
-
-		const size_t N = dcPtr_->SsTimeTrajectoriesStock_[i].size();
-
-		lagrangeMultiplierFunctionsStock[i].time_ = dcPtr_->SsTimeTrajectoriesStock_[i];
-		lagrangeMultiplierFunctionsStock[i].k_.resize(N);
-		lagrangeMultiplierFunctionsStock[i].uff_.resize(N);
-		lagrangeMultiplierFunctionsStock[i].deltaUff_.resize(N);
-
-		for (size_t k=0; k<N; k++) {
-
-			const scalar_t& time = dcPtr_->SsTimeTrajectoriesStock_[i][k];
-
-			state_vector_t nominalState;
-			const auto indexAlpha = xFunc.interpolate(time, nominalState);
-			state_input_matrix_t Bm;
-			BmFunc.interpolate(indexAlpha, Bm);
-			input_state_matrix_t Pm;
-			PmFunc.interpolate(indexAlpha, Pm);
-			input_vector_t Rv;
-			RvFunc.interpolate(indexAlpha, Rv);
-			input_vector_t EvProjected;
-			EvProjectedFunc.interpolate(indexAlpha, EvProjected);
-			input_state_matrix_t CmProjected;
-			CmProjectedFunc.interpolate(indexAlpha, CmProjected);
-			input_matrix_t Rm;
-			RmFunc.interpolate(indexAlpha, Rm);
-			input_constraint1_matrix_t DmDager;
-			DmDagerFunc.interpolate(indexAlpha, DmDager);
-
-			const auto greatestLessTimeStampIndex = indexAlpha.first;
-			const size_t& nc1 = dcPtr_->nc1TrajectoriesStock_[i][greatestLessTimeStampIndex];
-
-			const state_matrix_t& Sm  = dcPtr_->SmTrajectoriesStock_[i][k];
-			const state_vector_t& Sv  = dcPtr_->SvTrajectoriesStock_[i][k];
-			const state_vector_t& Sve = dcPtr_->SveTrajectoriesStock_[i][k];
-
-			dynamic_input_matrix_t DmDagerTransRm = DmDager.leftCols(nc1).transpose() * Rm;
-
-			constraint1_state_matrix_t& K  = lagrangeMultiplierFunctionsStock[i].k_[k];
-			constraint1_vector_t& uff      = lagrangeMultiplierFunctionsStock[i].uff_[k];
-			constraint1_vector_t& deltaUff = lagrangeMultiplierFunctionsStock[i].deltaUff_[k];
-
-			K.topRows(nc1) = learningRate * ( DmDagerTransRm*CmProjected
-					- DmDager.leftCols(nc1).transpose()*(Pm + Bm.transpose()*Sm) );
-			K.bottomRows(DIMENSIONS::MAX_CONSTRAINT1_DIM_-nc1).setZero();
-
-			uff.head(nc1) = DmDagerTransRm*EvProjected
-					- DmDager.leftCols(nc1).transpose()*(Rv + Bm.transpose()*(Sv+Sve))
-					- K.topRows(nc1)*nominalState;
-			uff.tail(DIMENSIONS::MAX_CONSTRAINT1_DIM_-nc1).setZero();
-
-			deltaUff.setZero();
-
-		}  // end of k loop
-	}  // end of i loop
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM>
-void GDDP<STATE_DIM, INPUT_DIM>::calculateRolloutLagrangeMultiplier(
-		const std::vector<scalar_array_t>& timeTrajectoriesStock,
-		const state_vector_array2_t& stateTrajectoriesStock,
-		const lagrange_array_t& lagrangeMultiplierFunctionsStock,
-		constraint1_vector_array2_t& lagrangeTrajectoriesStock)  {
-
-	EigenLinearInterpolation<constraint1_vector_t> vffFunc;
-	EigenLinearInterpolation<constraint1_state_matrix_t> vfbFunc;
-
-	lagrangeTrajectoriesStock.resize(numPartitions_);
-
-	for (size_t i=0; i<numPartitions_; i++) {
-
-		// skip the inactive partitions
-		if (i<dcPtr_->initActivePartition_ || i>dcPtr_->finalActivePartition_) {
-			lagrangeTrajectoriesStock[i].clear();
-			continue;
-		}
-
-		vffFunc.setData(&lagrangeMultiplierFunctionsStock[i].time_, &lagrangeMultiplierFunctionsStock[i].uff_);
-		vfbFunc.setData(&lagrangeMultiplierFunctionsStock[i].time_, &lagrangeMultiplierFunctionsStock[i].k_);
-
-		size_t N = timeTrajectoriesStock[i].size();
-		lagrangeTrajectoriesStock[i].resize(N);
-		for (size_t k=0; k<N; k++) {
-
-			constraint1_vector_t vff;
-			const auto indexAlpha = vffFunc.interpolate(timeTrajectoriesStock[i][k], vff);
-
-			constraint1_state_matrix_t vfb;
-			vfbFunc.interpolate(indexAlpha, vfb);
-
-			lagrangeTrajectoriesStock[i][k] = vff + vfb*stateTrajectoriesStock[i][k];
-
 		}  // end of k loop
 	}  // end of i loop
 }
@@ -397,65 +244,8 @@ void GDDP<STATE_DIM, INPUT_DIM>::calculateNominalRolloutLagrangeMultiplier(
 			lagrangeTrajectoriesStock[i][k].head(nc1) = DmDager.leftCols(nc1).transpose() * (
 					Rm*EvProjected - Rv - Bm.transpose()*costate );
 			lagrangeTrajectoriesStock[i][k].tail(DIMENSIONS::MAX_CONSTRAINT1_DIM_-nc1).setZero();
-
 		}  // end of k loop
 	}  // end of i loop
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM>
-size_t GDDP<STATE_DIM, INPUT_DIM>::findActiveSubsystemIndex(
-		const scalar_array_t& eventTimes,
-		const scalar_t& time,
-		bool ceilingFunction /*= true*/) const {
-
-	scalar_array_t partitioningTimes(eventTimes.size()+2);
-	partitioningTimes.front() = std::numeric_limits<scalar_t>::lowest();
-	partitioningTimes.back()  = std::numeric_limits<scalar_t>::max();
-	for (size_t i=0; i<eventTimes.size(); i++)
-		partitioningTimes[i+1] = eventTimes[i];
-
-	int activeSubsystemIndex;
-	if (ceilingFunction==true)
-		activeSubsystemIndex = findActiveIntervalIndex(partitioningTimes, time, 0);
-	else
-		activeSubsystemIndex = findActiveIntervalIndex(partitioningTimes, time, 0,
-				-OCS2NumericTraits<scalar_t>::weakEpsilon());
-
-	return (size_t)activeSubsystemIndex;
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM>
-size_t GDDP<STATE_DIM, INPUT_DIM>::findActivePartitionIndex(
-		const scalar_array_t& partitioningTimes,
-		const scalar_t& time,
-		bool ceilingFunction /*= true*/) const {
-
-	int activeSubsystemIndex;
-	if (ceilingFunction==true)
-		activeSubsystemIndex = findActiveIntervalIndex(partitioningTimes, time, 0);
-	else
-		activeSubsystemIndex = findActiveIntervalIndex(partitioningTimes, time, 0,
-				-OCS2NumericTraits<scalar_t>::weakEpsilon());
-
-	if (activeSubsystemIndex < 0) {
-		std::string mesg = "Given time is less than the start time (i.e. givenTime < partitioningTimes.front()): "
-				+ std::to_string(time) + " < " + std::to_string(partitioningTimes.front());
-		throw std::runtime_error(mesg);
-	}
-
-	if (activeSubsystemIndex == partitioningTimes.size()-1) {
-		std::string mesg = "Given time is greater than the final time (i.e. partitioningTimes.back() < givenTime): "
-				+ std::to_string(partitioningTimes.back()) + " < " + std::to_string(time);
-		throw std::runtime_error(mesg);
-	}
-
-	return (size_t)activeSubsystemIndex;
 }
 
 /*****************************************************************************************************/
@@ -618,8 +408,7 @@ void GDDP<STATE_DIM, INPUT_DIM>::propagateRolloutSensitivity(
 
 				// finding the current active subsystem
 				scalar_t midTime = 0.5 * (*beginTimeItr+*(endTimeItr-1));
-				size_t activeSubsystem = findActiveSubsystemIndex(
-						eventTimes_, midTime);
+				size_t activeSubsystem = static_cast<size_t>(lookup::findIndexInTimeArray(eventTimes_, midTime));
 
 				// compute multiplier of the equivalent system
 				scalar_t multiplier;
@@ -780,7 +569,7 @@ void GDDP<STATE_DIM, INPUT_DIM>::solveSensitivityRiccatiEquations(
 	// output containers which is reverse
 	s_vector_array_t allSsTrajectory;
 
-	for (int i=numSubsystems_-1; i>=0; i--) {
+	for (int i=numEventTimes_; i>=0; i--) {
 
 		// skip inactive partitions
 		if (i<dcPtr_->initActivePartition_ || i>dcPtr_->finalActivePartition_) {
@@ -797,8 +586,6 @@ void GDDP<STATE_DIM, INPUT_DIM>::solveSensitivityRiccatiEquations(
 		riccatiSensitivityEquationsPtrStock_[workerIndex]->reset();
 		riccatiSensitivityEquationsPtrStock_[workerIndex]->setData(
 				learningRate,
-				dcPtr_->partitioningTimes_[i],
-				dcPtr_->partitioningTimes_[i+1],
 				&dcPtr_->SsTimeTrajectoriesStock_[i],
 				&dcPtr_->SmTrajectoriesStock_[i],
 				&dcPtr_->SvTrajectoriesStock_[i],
@@ -846,8 +633,8 @@ void GDDP<STATE_DIM, INPUT_DIM>::solveSensitivityRiccatiEquations(
 
 				// finding the current active subsystem
 				scalar_t midNormalizedTime = 0.5 * (*beginTimeItr+*(endTimeItr-1));
-				scalar_t midTime = dcPtr_->partitioningTimes_[i+1] - (dcPtr_->partitioningTimes_[i+1]-dcPtr_->partitioningTimes_[i])*midNormalizedTime;
-				size_t activeSubsystem = findActiveSubsystemIndex(eventTimes_, midTime);
+				scalar_t midTime = -midNormalizedTime;
+				size_t activeSubsystem = static_cast<size_t>(lookup::findIndexInTimeArray(eventTimes_, midTime));
 
 				// compute multiplier of the equivalent system
 				scalar_t multiplier;
@@ -941,8 +728,6 @@ void GDDP<STATE_DIM, INPUT_DIM>::solveSensitivityBVP(
 		bvpSensitivityEquationsPtrStock_[workerIndex]->reset();
 		bvpSensitivityEquationsPtrStock_[workerIndex]->resetNumFunctionCalls();
 		bvpSensitivityEquationsPtrStock_[workerIndex]->setData(
-				dcPtr_->partitioningTimes_[i],
-				dcPtr_->partitioningTimes_[i+1],
 				&dcPtr_->nominalTimeTrajectoriesStock_[i],
 				&dcPtr_->AmTrajectoriesStock_[i],
 				&dcPtr_->BmTrajectoriesStock_[i],
@@ -961,8 +746,6 @@ void GDDP<STATE_DIM, INPUT_DIM>::solveSensitivityBVP(
 		bvpSensitivityErrorEquationsPtrStock_[workerIndex]->reset();
 		bvpSensitivityErrorEquationsPtrStock_[workerIndex]->resetNumFunctionCalls();
 		bvpSensitivityErrorEquationsPtrStock_[workerIndex]->setData(
-				dcPtr_->partitioningTimes_[i],
-				dcPtr_->partitioningTimes_[i+1],
 				&dcPtr_->nominalTimeTrajectoriesStock_[i],
 				&dcPtr_->BmTrajectoriesStock_[i],
 				&dcPtr_->AmConstrainedTrajectoriesStock_[i],
@@ -1010,8 +793,8 @@ void GDDP<STATE_DIM, INPUT_DIM>::solveSensitivityBVP(
 
 				// finding the current active subsystem
 				scalar_t midNormalizedTime = 0.5 * (*beginTimeItr+*(endTimeItr-1));
-				scalar_t midTime = dcPtr_->partitioningTimes_[i+1] - (dcPtr_->partitioningTimes_[i+1]-dcPtr_->partitioningTimes_[i])*midNormalizedTime;
-				size_t activeSubsystem = findActiveSubsystemIndex(eventTimes_, midTime);
+				scalar_t midTime = -midNormalizedTime;
+				size_t activeSubsystem = static_cast<size_t>(lookup::findIndexInTimeArray(eventTimes_, midTime));
 
 				// compute multiplier of the equivalent system
 				scalar_t multiplier;
@@ -1049,7 +832,6 @@ void GDDP<STATE_DIM, INPUT_DIM>::solveSensitivityBVP(
 //				MvFinalInternal += dcPtr_->QvFinalStock_[i][NE-1-j];
 				MveFinalInternal = rMveTrajectory.back();
 			}
-
 		}  // end of j loop
 
 		// final value of the next partition
@@ -1084,7 +866,7 @@ void GDDP<STATE_DIM, INPUT_DIM>::solveSensitivityBVP(
 						std::cerr << "Mve[" << dcPtr_->SsTimeTrajectoriesStock_[i][kp] <<
 								"]:\t"<< MveTrajectoriesStock[i][kp].transpose().norm() << std::endl;
 					}
-					exit(0);
+					throw;
 				}
 			}
 
@@ -1108,7 +890,7 @@ void GDDP<STATE_DIM, INPUT_DIM>::calculateLQSensitivityControllerForward(
 	// resizing
 	nablaLvTrajectoriesStock.resize(numPartitions_);
 
-	for (size_t i=0; i<numSubsystems_; i++) {
+	for (size_t i=0; i<numEventTimes_ + 1; i++) {
 
 		// skip inactive partitions
 		if (i<dcPtr_->initActivePartition_ || i>dcPtr_->finalActivePartition_) {
@@ -1206,7 +988,7 @@ void GDDP<STATE_DIM, INPUT_DIM>::calculateBVPSensitivityControllerForward(
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
-void GDDP<STATE_DIM, INPUT_DIM>::getValueFuntionDerivative(
+void GDDP<STATE_DIM, INPUT_DIM>::getValueFuntionSensitivity(
 		const size_t& eventTimeIndex,
 		const scalar_t& time,
 		const state_vector_t& state,
@@ -1220,13 +1002,13 @@ void GDDP<STATE_DIM, INPUT_DIM>::getValueFuntionDerivative(
 	EigenLinearInterpolation<state_vector_t> nablaSvFunc;
 	EigenLinearInterpolation<state_matrix_t> nablaSmFunc;
 
-	size_t activePartition = findActivePartitionIndex(dcPtr_->partitioningTimes_, time);
+	size_t activePartition = static_cast<size_t>(lookup::findBoundedActiveIntervalInTimeArray(dcPtr_->partitioningTimes_, time));
 
 	state_vector_t nominalState;
 	state_vector_t deltsState;
 	eigen_scalar_t nablas;
 	state_vector_t nablaSv;
-	state_matrix_t nablaSm;;
+	state_matrix_t nablaSm;
 
 	nominalStateFunc.setData(&dcPtr_->nominalTimeTrajectoriesStock_[activePartition], &dcPtr_->nominalStateTrajectoriesStock_[activePartition]);
 	nominalStateFunc.interpolate(time, nominalState);
@@ -1281,7 +1063,7 @@ void GDDP<STATE_DIM, INPUT_DIM>::calculateCostDerivative(
 				// finding the current active subsystem
 				scalar_t midTime = 0.5 * ( dcPtr_->nominalTimeTrajectoriesStock_[i][beginIndex] +
 						dcPtr_->nominalTimeTrajectoriesStock_[i][endIndex-1]);
-				size_t activeSubsystem = findActiveSubsystemIndex(eventTimes_, midTime);
+				size_t activeSubsystem = static_cast<size_t>(lookup::findIndexInTimeArray(eventTimes_, midTime));
 
 				// compute multiplier of the equivalent system
 				scalar_t multiplier;
@@ -1322,7 +1104,10 @@ void GDDP<STATE_DIM, INPUT_DIM>::calculateCostDerivative(
 template <size_t STATE_DIM, size_t INPUT_DIM>
 void GDDP<STATE_DIM, INPUT_DIM>::runLQBasedMethod()  {
 
-	const size_t maxNumIteration = 3;
+	// display
+	if (gddpSettings_.displayInfo_) {
+		std::cerr << "LQ-based method is used for computing the gradient." << std::endl;
+	}
 
 	// resizing
 	nablaLvTrajectoriesStockSet_.resize(numEventTimes_);
@@ -1341,7 +1126,7 @@ void GDDP<STATE_DIM, INPUT_DIM>::runLQBasedMethod()  {
 	nominalCostFuntionDerivative_.resize(numEventTimes_);
 
 	size_t iteration = 0;
-	while (iteration++ < maxNumIteration) {
+	while (iteration++ < gddpSettings_.maxNumIterationForLQ_) {
 
 		// for each active event time
 		for (size_t index=0; index<numEventTimes_; index++) {
@@ -1395,7 +1180,7 @@ void GDDP<STATE_DIM, INPUT_DIM>::runLQBasedMethod()  {
 						nablaLvTrajectoriesStockSet_[index]);
 
 				// calculate the value function derivatives w.r.t. event times
-				getValueFuntionDerivative(index, dcPtr_->initTime_, dcPtr_->initState_,
+				getValueFuntionSensitivity(index, dcPtr_->initTime_, dcPtr_->initState_,
 						nominalCostFuntionDerivative_(index));
 
 			} else if (iteration == 1) {
@@ -1412,7 +1197,6 @@ void GDDP<STATE_DIM, INPUT_DIM>::runLQBasedMethod()  {
 				nablaSmTrajectoriesStockSet_[index].clear();
 				nominalCostFuntionDerivative_(index) = 0.0;
 			}
-
 		}  // end of index loop
 
 	}  // end of while loop
@@ -1423,6 +1207,11 @@ void GDDP<STATE_DIM, INPUT_DIM>::runLQBasedMethod()  {
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
 void GDDP<STATE_DIM, INPUT_DIM>::runSweepingBVPMethod()  {
+
+	// display
+	if (gddpSettings_.displayInfo_) {
+		std::cerr << "BVP-based method is used for computing the gradient." << std::endl;
+	}
 
 	// calculate costate
 	calculateRolloutCostate(dcPtr_->nominalTimeTrajectoriesStock_,
@@ -1496,10 +1285,16 @@ void GDDP<STATE_DIM, INPUT_DIM>::run(
 		const scalar_array_t& eventTimes,
 		const slq_data_collector_t* dcPtr)  {
 
+	// display
+	if (gddpSettings_.displayInfo_) {
+		std::cerr << "\n++++++++++++++++++++++++++++++++++++++++++++++++++++++" << std::endl;
+		std::cerr <<   "+++++++++++++++ GDDP is initialized ++++++++++++++++++" << std::endl;
+		std::cerr <<   "++++++++++++++++++++++++++++++++++++++++++++++++++++++" << std::endl;
+	}
+
 	// event time an number of event and subsystems
 	eventTimes_ = eventTimes;
 	numEventTimes_ = eventTimes_.size();
-	numSubsystems_ = numEventTimes_ + 1;
 
 	// data collector pointer
 	dcPtr_ = dcPtr;
@@ -1511,18 +1306,22 @@ void GDDP<STATE_DIM, INPUT_DIM>::run(
 	}
 
 	// find active event times range: [activeEventTimeBeginIndex_, activeEventTimeEndIndex_)
-	activeEventTimeBeginIndex_ = findActiveSubsystemIndex(eventTimes_, dcPtr_->initTime_);
-	activeEventTimeEndIndex_   = findActiveSubsystemIndex(eventTimes_, dcPtr_->finalTime_);
-
-	// display
-	if (gddpSettings_.displayInfo_)
-		std::cerr << "\n#### Calculating cost function sensitivity ..." << std::endl;
+	activeEventTimeBeginIndex_ = static_cast<size_t>(lookup::findIndexInTimeArray(eventTimes_, dcPtr_->initTime_));
+	activeEventTimeEndIndex_   = static_cast<size_t>(lookup::findIndexInTimeArray(eventTimes_, dcPtr_->finalTime_));
 
 	// use the LQ-based method or Sweeping-BVP method
 	if (gddpSettings_.useLQForDerivatives_==true) {
 		runLQBasedMethod();
 	} else {
 		runSweepingBVPMethod();
+	}
+
+	if (gddpSettings_.displayInfo_) {
+		std::cerr << "\n++++++++++++++++++++++++++++++++++++++++++++++++++++++" << std::endl;
+		std::cerr <<   "++++++++++++++++ GDDP is terminated ++++++++++++++++++" << std::endl;
+		std::cerr <<   "++++++++++++++++++++++++++++++++++++++++++++++++++++++" << std::endl;
+		std::cerr << "GDDP gradient: " << nominalCostFuntionDerivative_.transpose() << std::endl;
+		std::cerr << std::endl;
 	}
 }
 

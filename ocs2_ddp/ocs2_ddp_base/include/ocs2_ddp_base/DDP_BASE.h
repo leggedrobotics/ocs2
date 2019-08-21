@@ -38,6 +38,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_core/dynamics/ControlledSystemBase.h>
 #include <ocs2_core/dynamics/DerivativesBase.h>
 #include <ocs2_core/initialization/SystemOperatingTrajectoriesBase.h>
+#include <ocs2_core/misc/Benchmark.h>
 #include <ocs2_core/misc/LinearInterpolation.h>
 #include <ocs2_core/misc/TrajectorySpreadingController.h>
 
@@ -49,8 +50,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_oc/rollout/TimeTriggeredRollout.h>
 
 #include <ocs2_ddp_base/DDP_Settings.h>
-
-#define BENCHMARK
 
 namespace ocs2 {
 
@@ -64,69 +63,75 @@ template <size_t STATE_DIM, size_t INPUT_DIM>
 class DDP_BASE : public Solver_BASE<STATE_DIM, INPUT_DIM> {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-  typedef Solver_BASE<STATE_DIM, INPUT_DIM> BASE;
+  using BASE = Solver_BASE<STATE_DIM, INPUT_DIM>;
 
-  using DIMENSIONS = typename BASE::DIMENSIONS;
-  using controller_t = typename BASE::controller_t;
-  using size_array_t = typename BASE::size_array_t;
-  using size_array2_t = typename BASE::size_array2_t;
-  using scalar_t = typename BASE::scalar_t;
-  using scalar_array_t = typename BASE::scalar_array_t;
-  using scalar_array2_t = typename BASE::scalar_array2_t;
-  using scalar_array3_t = typename BASE::scalar_array3_t;
-  using eigen_scalar_t = typename BASE::eigen_scalar_t;
-  using eigen_scalar_array_t = typename BASE::eigen_scalar_array_t;
-  using eigen_scalar_array2_t = typename BASE::eigen_scalar_array2_t;
-  using state_vector_t = typename BASE::state_vector_t;
-  using state_vector_array_t = typename BASE::state_vector_array_t;
-  using state_vector_array2_t = typename BASE::state_vector_array2_t;
-  using state_vector_array3_t = typename BASE::state_vector_array3_t;
-  using input_vector_t = typename BASE::input_vector_t;
-  using input_vector_array_t = typename BASE::input_vector_array_t;
-  using input_vector_array2_t = typename BASE::input_vector_array2_t;
-  using input_vector_array3_t = typename BASE::input_vector_array3_t;
-  using input_state_matrix_t = typename BASE::input_state_matrix_t;
-  using input_state_matrix_array_t = typename BASE::input_state_matrix_array_t;
-  using input_state_matrix_array2_t = typename BASE::input_state_matrix_array2_t;
-  using input_state_matrix_array3_t = typename BASE::input_state_matrix_array3_t;
-  using state_matrix_t = typename BASE::state_matrix_t;
-  using state_matrix_array_t = typename BASE::state_matrix_array_t;
-  using state_matrix_array2_t = typename BASE::state_matrix_array2_t;
-  using state_matrix_array3_t = typename BASE::state_matrix_array3_t;
-  using input_matrix_t = typename BASE::input_matrix_t;
-  using input_matrix_array_t = typename BASE::input_matrix_array_t;
-  using input_matrix_array2_t = typename BASE::input_matrix_array2_t;
-  using input_matrix_array3_t = typename BASE::input_matrix_array3_t;
-  using state_input_matrix_t = typename BASE::state_input_matrix_t;
-  using state_input_matrix_array_t = typename BASE::state_input_matrix_array_t;
-  using state_input_matrix_array2_t = typename BASE::state_input_matrix_array2_t;
-  using state_input_matrix_array3_t = typename BASE::state_input_matrix_array3_t;
-  using constraint1_vector_t = typename BASE::constraint1_vector_t;
-  using constraint1_vector_array_t = typename BASE::constraint1_vector_array_t;
-  using constraint1_vector_array2_t = typename BASE::constraint1_vector_array2_t;
-  using constraint1_state_matrix_t = typename BASE::constraint1_state_matrix_t;
-  using constraint1_state_matrix_array_t = typename BASE::constraint1_state_matrix_array_t;
-  using constraint1_state_matrix_array2_t = typename BASE::constraint1_state_matrix_array2_t;
-  using constraint1_input_matrix_t = typename BASE::constraint1_input_matrix_t;
-  using constraint1_input_matrix_array_t = typename BASE::constraint1_input_matrix_array_t;
-  using constraint1_input_matrix_array2_t = typename BASE::constraint1_input_matrix_array2_t;
-  using input_constraint1_matrix_t = typename BASE::input_constraint1_matrix_t;
-  using input_constraint1_matrix_array_t = typename BASE::input_constraint1_matrix_array_t;
-  using input_constraint1_matrix_array2_t = typename BASE::input_constraint1_matrix_array2_t;
-  using constraint2_vector_t = typename BASE::constraint2_vector_t;
-  using constraint2_vector_array_t = typename BASE::constraint2_vector_array_t;
-  using constraint2_vector_array2_t = typename BASE::constraint2_vector_array2_t;
-  using constraint2_state_matrix_t = typename BASE::constraint2_state_matrix_t;
-  using constraint2_state_matrix_array_t = typename BASE::constraint2_state_matrix_array_t;
-  using constraint2_state_matrix_array2_t = typename BASE::constraint2_state_matrix_array2_t;
-  using dynamic_vector_t = typename BASE::dynamic_vector_t;
-  using dynamic_matrix_t = typename BASE::dynamic_matrix_t;
-  using dynamic_vector_array_t = typename BASE::dynamic_vector_array_t;
-  using dynamic_matrix_array2_t = typename BASE::dynamic_matrix_array2_t;
+  using typename BASE::constraint1_input_matrix_array2_t;
+  using typename BASE::constraint1_input_matrix_array_t;
+  using typename BASE::constraint1_input_matrix_t;
+  using typename BASE::constraint1_state_matrix_array2_t;
+  using typename BASE::constraint1_state_matrix_array_t;
+  using typename BASE::constraint1_state_matrix_t;
+  using typename BASE::constraint1_vector_array2_t;
+  using typename BASE::constraint1_vector_array_t;
+  using typename BASE::constraint1_vector_t;
+  using typename BASE::constraint2_state_matrix_array2_t;
+  using typename BASE::constraint2_state_matrix_array_t;
+  using typename BASE::constraint2_state_matrix_t;
+  using typename BASE::constraint2_vector_array2_t;
+  using typename BASE::constraint2_vector_array_t;
+  using typename BASE::constraint2_vector_t;
+  using typename BASE::DIMENSIONS;
+  using typename BASE::dynamic_input_matrix_t;
+  using typename BASE::dynamic_matrix_array2_t;
+  using typename BASE::dynamic_matrix_t;
+  using typename BASE::dynamic_vector_array_t;
+  using typename BASE::dynamic_vector_t;
+  using typename BASE::eigen_scalar_array2_t;
+  using typename BASE::eigen_scalar_array_t;
+  using typename BASE::eigen_scalar_t;
+  using typename BASE::input_constraint1_matrix_array2_t;
+  using typename BASE::input_constraint1_matrix_array_t;
+  using typename BASE::input_constraint1_matrix_t;
+  using typename BASE::input_matrix_array2_t;
+  using typename BASE::input_matrix_array3_t;
+  using typename BASE::input_matrix_array_t;
+  using typename BASE::input_matrix_t;
+  using typename BASE::input_state_matrix_array2_t;
+  using typename BASE::input_state_matrix_array3_t;
+  using typename BASE::input_state_matrix_array_t;
+  using typename BASE::input_state_matrix_t;
+  using typename BASE::input_vector_array2_t;
+  using typename BASE::input_vector_array3_t;
+  using typename BASE::input_vector_array_t;
+  using typename BASE::input_vector_t;
+  using typename BASE::scalar_array2_t;
+  using typename BASE::scalar_array3_t;
+  using typename BASE::scalar_array_t;
+  using typename BASE::scalar_t;
+  using typename BASE::size_array2_t;
+  using typename BASE::size_array_t;
+  using typename BASE::state_input_matrix_array2_t;
+  using typename BASE::state_input_matrix_array3_t;
+  using typename BASE::state_input_matrix_array_t;
+  using typename BASE::state_input_matrix_t;
+  using typename BASE::state_matrix_array2_t;
+  using typename BASE::state_matrix_array3_t;
+  using typename BASE::state_matrix_array_t;
+  using typename BASE::state_matrix_t;
+  using typename BASE::state_vector_array2_t;
+  using typename BASE::state_vector_array3_t;
+  using typename BASE::state_vector_array_t;
+  using typename BASE::state_vector_t;
 
-  using controller_ptr_array_t = typename BASE::controller_ptr_array_t;
+  using typename BASE::cost_desired_trajectories_t;
+
+  using typename BASE::controller_array_t;
+  using typename BASE::controller_ptr_array_t;
+  using typename BASE::controller_t;
+
   using linear_controller_t = LinearController<STATE_DIM, INPUT_DIM>;
   using linear_controller_array_t = typename linear_controller_t::array_t;
+  using linear_controller_ptr_array_t = std::vector<linear_controller_t*>;
 
   using event_handler_t = SystemEventHandler<STATE_DIM>;
   using controlled_system_base_t = ControlledSystemBase<STATE_DIM, INPUT_DIM>;
@@ -141,8 +146,6 @@ class DDP_BASE : public Solver_BASE<STATE_DIM, INPUT_DIM> {
   using linear_quadratic_approximator_t = LinearQuadraticApproximator<STATE_DIM, INPUT_DIM>;
   using operating_trajectorie_rollout_t = OperatingTrajectoriesRollout<STATE_DIM, INPUT_DIM>;
 
-  using cost_desired_trajectories_t = typename BASE::cost_desired_trajectories_t;
-
   using logic_rules_machine_t = HybridLogicRulesMachine;
   using logic_rules_machine_ptr_t = typename logic_rules_machine_t::Ptr;
 
@@ -154,16 +157,25 @@ class DDP_BASE : public Solver_BASE<STATE_DIM, INPUT_DIM> {
   /**
    * Constructor
    *
-   * @param [in] systemDynamicsPtr: The system dynamics which possibly includes some subsystems.
-   * @param [in] systemDerivativesPtr: The system dynamics derivatives for subsystems of the system.
-   * @param [in] systemConstraintsPtr: The system constraint function and its derivatives for subsystems.
-   * @param [in] costFunctionPtr: The cost function (intermediate and terminal costs) and its derivatives for subsystems.
-   * @param [in] operatingTrajectoriesPtr: The operating trajectories of system which will be used for initialization.
-   * @param [in] ddpSettings: Structure containing the settings for the DDP algorithm.
-   * @param [in] rolloutSettings: Structure containing the settings for the rollout.
-   * @param [in] logicRulesPtr: The logic rules used for implementing mixed-logic dynamical systems.
-   * @param [in] heuristicsFunctionPtr: Heuristic function used in the infinite time optimal control formulation. If it is not
-   * defined, we will use the terminal cost function defined in costFunctionPtr.
+   * @param [in] systemDynamicsPtr: The system dynamics which possibly includes
+   * some subsystems.
+   * @param [in] systemDerivativesPtr: The system dynamics derivatives for
+   * subsystems of the system.
+   * @param [in] systemConstraintsPtr: The system constraint function and its
+   * derivatives for subsystems.
+   * @param [in] costFunctionPtr: The cost function (intermediate and terminal
+   * costs) and its derivatives for subsystems.
+   * @param [in] operatingTrajectoriesPtr: The operating trajectories of system
+   * which will be used for initialization.
+   * @param [in] ddpSettings: Structure containing the settings for the DDP
+   * algorithm.
+   * @param [in] rolloutSettings: Structure containing the settings for the
+   * rollout.
+   * @param [in] logicRulesPtr: The logic rules used for implementing
+   * mixed-logic dynamical systems.
+   * @param [in] heuristicsFunctionPtr: Heuristic function used in the infinite
+   * time optimal control formulation. If it is not defined, we will use the
+   * terminal cost function defined in costFunctionPtr.
    */
   DDP_BASE(const controlled_system_base_t* systemDynamicsPtr, const derivatives_base_t* systemDerivativesPtr,
            const constraint_base_t* systemConstraintsPtr, const cost_function_base_t* costFunctionPtr,
@@ -182,18 +194,23 @@ class DDP_BASE : public Solver_BASE<STATE_DIM, INPUT_DIM> {
   void reset() override;
 
   /**
-   * Forward integrate the system dynamics with given controller. It uses the given control policies and initial state,
-   * to integrate the system dynamics in time period [initTime, finalTime].
+   * Forward integrate the system dynamics with given controller. It uses the
+   * given control policies and initial state, to integrate the system dynamics
+   * in time period [initTime, finalTime].
    *
    * @param [in] initTime: The initial time.
    * @param [in] initState: The initial state.
    * @param [in] finalTime: The final time.
    * @param [in] partitioningTimes: Time partitioning
    * @param [in] controllersStock: Array of control policies.
-   * @param [out] timeTrajectoriesStock: Array of trajectories containing the output time trajectory stamp.
-   * @param [out] eventsPastTheEndIndecesStock: Array of indices containing past-the-end index of events trigger.
-   * @param [out] stateTrajectoriesStock: Array of trajectories containing the output state trajectory.
-   * @param [out] inputTrajectoriesStock: Array of trajectories containing the output control input trajectory.
+   * @param [out] timeTrajectoriesStock: Array of trajectories containing the
+   * output time trajectory stamp.
+   * @param [out] eventsPastTheEndIndecesStock: Array of indices containing
+   * past-the-end index of events trigger.
+   * @param [out] stateTrajectoriesStock: Array of trajectories containing the
+   * output state trajectory.
+   * @param [out] inputTrajectoriesStock: Array of trajectories containing the
+   * output control input trajectory.
    * @param [in] threadId: Working thread (default is 0).
    *
    * @return average time step.
@@ -205,37 +222,30 @@ class DDP_BASE : public Solver_BASE<STATE_DIM, INPUT_DIM> {
                              size_t threadId = 0);
 
   /**
-   * The class for performing rollout. It uses the given control policies and initial state,
-   * to integrate the system dynamics in time period [initTime, finalTime] and only return the final state.
+   * Calculates a rollout constraints. It uses the given rollout trajectories
+   * and calculate the constraints.
    *
-   * @param [in] initTime: The initial time.
-   * @param [in] initState: The initial state.
-   * @param [in] finalTime: The final time.
-   * @param [in] partitioningTimes: Time partitioning
-   * @param [in] controllersStock: Array of control policies.
-   * @param [out] finalState: Final state.
-   * @param [out] finalInput: Final control input.
-   * @param [out] finalActiveSubsystemIndex: The final active subsystem.
-   * @param [in] threadId: Working thread (default is 0).
-   */
-  void rolloutFinalState(scalar_t initTime, const state_vector_t& initState, scalar_t finalTime, const scalar_array_t& partitioningTimes,
-                         const linear_controller_array_t& controllersStock, state_vector_t& finalState, input_vector_t& finalInput,
-                         size_t& finalActivePartition, size_t threadId = 0);
-
-  /**
-   * Calculates a rollout constraints. It uses the given rollout trajectories and calculate the constraints.
-   *
-   * @param [in] timeTrajectoriesStock: Array of trajectories containing the output time trajectory stamp.
-   * @param [in] eventsPastTheEndIndecesStock: Array of indices containing past-the-end index of events trigger.
-   * @param [in] stateTrajectoriesStock: Array of trajectories containing the output state trajectory.
-   * @param [in] inputTrajectoriesStock: Array of trajectories containing the output control input trajectory.
-   * @param [out] nc1TrajectoriesStock: Array of trajectories containing the number of the active state-input constraints.
-   * @param [out] EvTrajectoryStock: Array of trajectories containing the value of the state-input constraints (if the
-   * rollout is constrained the value is always zero otherwise it is nonzero).
-   * @param [out] nc2TrajectoriesStock: Array of trajectories containing the number of the active state-only constraints.
-   * @param [out] HvTrajectoryStock: Array of trajectories containing the value of the state-only constraints.
-   * @param [out] nc2FinalStock: Array containing the number of the active final state-only constraints.
-   * @param [out] HvFinalStock: Array containing the value of the final state-only constraints.
+   * @param [in] timeTrajectoriesStock: Array of trajectories containing the
+   * output time trajectory stamp.
+   * @param [in] eventsPastTheEndIndecesStock: Array of indices containing
+   * past-the-end index of events trigger.
+   * @param [in] stateTrajectoriesStock: Array of trajectories containing the
+   * output state trajectory.
+   * @param [in] inputTrajectoriesStock: Array of trajectories containing the
+   * output control input trajectory.
+   * @param [out] nc1TrajectoriesStock: Array of trajectories containing the
+   * number of the active state-input constraints.
+   * @param [out] EvTrajectoryStock: Array of trajectories containing the value
+   * of the state-input constraints (if the rollout is constrained the value is
+   * always zero otherwise it is nonzero).
+   * @param [out] nc2TrajectoriesStock: Array of trajectories containing the
+   * number of the active state-only constraints.
+   * @param [out] HvTrajectoryStock: Array of trajectories containing the value
+   * of the state-only constraints.
+   * @param [out] nc2FinalStock: Array containing the number of the active final
+   * state-only constraints.
+   * @param [out] HvFinalStock: Array containing the value of the final
+   * state-only constraints.
    * @param [in] threadId: Working thread (default is 0).
    */
   void calculateRolloutConstraints(const scalar_array2_t& timeTrajectoriesStock, const size_array2_t& eventsPastTheEndIndecesStock,
@@ -249,10 +259,14 @@ class DDP_BASE : public Solver_BASE<STATE_DIM, INPUT_DIM> {
    * Calculates cost of a rollout.
    *
    * @param [in] threadId: Working thread.
-   * @param [in] timeTrajectoriesStock: Array of trajectories containing the time trajectory stamp of a rollout.
-   * @param [in] eventsPastTheEndIndecesStock: Array of indices containing past-the-end index of events trigger.
-   * @param [in] stateTrajectoriesStock: Array of trajectories containing the state trajectory of a rollout.
-   * @param [in] inputTrajectoriesStock: Array of trajectories containing the control input trajectory of a rollout.
+   * @param [in] timeTrajectoriesStock: Array of trajectories containing the
+   * time trajectory stamp of a rollout.
+   * @param [in] eventsPastTheEndIndecesStock: Array of indices containing
+   * past-the-end index of events trigger.
+   * @param [in] stateTrajectoriesStock: Array of trajectories containing the
+   * state trajectory of a rollout.
+   * @param [in] inputTrajectoriesStock: Array of trajectories containing the
+   * control input trajectory of a rollout.
    * @param [out] totalCost: The total cost of the rollout.
    * @param [in] threadId: Working thread (default is 0).
    */
@@ -261,16 +275,24 @@ class DDP_BASE : public Solver_BASE<STATE_DIM, INPUT_DIM> {
                             scalar_t& totalCost, size_t threadId = 0);
 
   /**
-   * Calculates the cost function plus penalty for state-only constraints of a rollout.
+   * Calculates the cost function plus penalty for state-only constraints of a
+   * rollout.
    *
    * @param [in] threadId: Working thread.
-   * @param [in] timeTrajectoriesStock: Array of trajectories containing the time trajectory stamp of a rollout.
-   * @param [in] eventsPastTheEndIndecesStock: Array of indices containing past-the-end index of events trigger.
-   * @param [in] stateTrajectoriesStock: Array of trajectories containing the state trajectory of a rollout.
-   * @param [in] inputTrajectoriesStock: Array of trajectories containing the control input trajectory of a rollout.
-   * @param [in] constraint2ISE: Type-2 constraint's ISE (Integral Squared Error).
-   * @param [in] nc2FinalStock: Array containing the number of the active final state-only constraints.
-   * @param [in] HvFinalStock: Array containing the value of the final state-only constraints.
+   * @param [in] timeTrajectoriesStock: Array of trajectories containing the
+   * time trajectory stamp of a rollout.
+   * @param [in] eventsPastTheEndIndecesStock: Array of indices containing
+   * past-the-end index of events trigger.
+   * @param [in] stateTrajectoriesStock: Array of trajectories containing the
+   * state trajectory of a rollout.
+   * @param [in] inputTrajectoriesStock: Array of trajectories containing the
+   * control input trajectory of a rollout.
+   * @param [in] constraint2ISE: Type-2 constraint's ISE (Integral Squared
+   * Error).
+   * @param [in] nc2FinalStock: Array containing the number of the active final
+   * state-only constraints.
+   * @param [in] HvFinalStock: Array containing the value of the final
+   * state-only constraints.
    * @param [out] totalCost: The total cost plus state-only constraints penalty.
    * @param [in] threadId: Working thread (default is 0).
    */
@@ -280,8 +302,9 @@ class DDP_BASE : public Solver_BASE<STATE_DIM, INPUT_DIM> {
                             const constraint2_vector_array2_t& HvFinalStock, scalar_t& totalCost, size_t threadId = 0);
 
   /**
-   * Approximates the nonlinear problem as a linear-quadratic problem around the nominal
-   * state and control trajectories. This method updates the following variables:
+   * Approximates the nonlinear problem as a linear-quadratic problem around the
+   * nominal state and control trajectories. This method updates the following
+   * variables:
    * 	- linearized system model and constraints
    * 	- \f$ dxdt = A_m(t)x + B_m(t)u \f$.
    * 	- s.t. \f$ C_m(t)x + D_m(t)u + E_v(t) = 0 \f$ \\
@@ -295,7 +318,8 @@ class DDP_BASE : public Solver_BASE<STATE_DIM, INPUT_DIM> {
    * 	- HvTrajectoryStock_: \f$ H_v\f$ vector.
    *
    * 	- quadratized intermediate cost function
-   * 	- intermediate cost: \f$ q(t) + 0.5 xQ_m(t)x + x'Q_v(t) + u'P_m(t)x + 0.5u'R_m(t)u + u'R_v(t) \f$
+   * 	- intermediate cost: \f$ q(t) + 0.5 xQ_m(t)x + x'Q_v(t) + u'P_m(t)x +
+   * 0.5u'R_m(t)u + u'R_v(t) \f$
    * 	- qTrajectoryStock_:  \f$ q\f$
    * 	- QvTrajectoryStock_: \f$ Q_v\f$ vector.
    * 	- QmTrajectoryStock_:\f$  Q_m\f$ matrix.
@@ -317,17 +341,21 @@ class DDP_BASE : public Solver_BASE<STATE_DIM, INPUT_DIM> {
    * - constrained, quadratized cost
    *
    * The method modifies:
-   * - nominalControllersStock_: the controller that stabilizes the system around the new nominal trajectory and
-   * 					improves the constraints as well as the increment to the feed-forward control input.
+   * - nominalControllersStock_: the controller that stabilizes the system
+   * around the new nominal trajectory and improves the constraints as well as
+   * the increment to the feed-forward control input.
    */
   virtual void calculateController() = 0;
 
   /**
-   * Line search on the feedforward parts of the controller. It uses the following approach for line search:
-   * The constraint TYPE-1 correction term is directly added through a user defined stepSize (defined in settings_.constraintStepSize_).
-   * But the cost minimization term is optimized through a line-search strategy defined in ILQR settings.
+   * Line search on the feedforward parts of the controller. It uses the
+   * following approach for line search: The constraint TYPE-1 correction term
+   * is directly added through a user defined stepSize (defined in
+   * settings_.constraintStepSize_). But the cost minimization term is optimized
+   * through a line-search strategy defined in ILQR settings.
    *
-   * @param [in] computeISEs: Whether lineSearch needs to calculate ISEs indices for type_1 and type-2 constraints.
+   * @param [in] computeISEs: Whether lineSearch needs to calculate ISEs indices
+   * for type_1 and type-2 constraints.
    */
   virtual void lineSearch(bool computeISEs) = 0;
 
@@ -351,20 +379,17 @@ class DDP_BASE : public Solver_BASE<STATE_DIM, INPUT_DIM> {
    */
   void adjustController(const scalar_array_t& newEventTimes, const scalar_array_t& controllerEventTimes);
 
-  /**
-   * Calculates the value function at the given time and state.
-   *
-   * @param [in] time: The inquiry time
-   * @param [in] state: The inquiry state.
-   * @param [out] valueFuntion: value function at the inquiry time and state.
-   */
-  virtual void getValueFuntion(scalar_t time, const state_vector_t& state, scalar_t& valueFuntion);
+  scalar_t getValueFunction(scalar_t time, const state_vector_t& state) const override;
+
+  void getValueFunctionStateDerivative(scalar_t time, const state_vector_t& state, state_vector_t& Vx) const override;
 
   /**
-   * Upon activation in the multi-thread DDP class (DDP_MT), the parallelization of the backward pass takes
-   * place from the the first iteration which normally become effective after the first iteration.
+   * Upon activation in the multi-thread DDP class (DDP_MT), the parallelization
+   * of the backward pass takes place from the the first iteration which
+   * normally become effective after the first iteration.
    *
-   * @param [in] flag: If set true, the parallel Riccati solver will be used from the first iteration.
+   * @param [in] flag: If set true, the parallel Riccati solver will be used
+   * from the first iteration.
    */
   void useParallelRiccatiSolverFromInitItr(bool flag);
 
@@ -428,9 +453,10 @@ class DDP_BASE : public Solver_BASE<STATE_DIM, INPUT_DIM> {
   virtual void runExit();
 
   /**
-   * The main routine of DDP which runs DDP for a given initial state, initial time, and final time. In order
-   * to retrieve the initial nominal trajectories in the forward pass, DDP will use the given operatingTrajectories
-   * in the constructor.
+   * The main routine of DDP which runs DDP for a given initial state, initial
+   * time, and final time. In order to retrieve the initial nominal trajectories
+   * in the forward pass, DDP will use the given operatingTrajectories in the
+   * constructor.
    *
    * @param [in] initTime: The initial time.
    * @param [in] initState: The initial state.
@@ -440,20 +466,23 @@ class DDP_BASE : public Solver_BASE<STATE_DIM, INPUT_DIM> {
   void run(scalar_t initTime, const state_vector_t& initState, scalar_t finalTime, const scalar_array_t& partitioningTimes) override;
 
   /**
-   * The main routine of DDP which runs DDP for a given initial state, initial time, and final time. In order
-   * to retrieve the initial nominal trajectories in the forward pass, DDP will use the provided control policy.
-   * If you want to use the control policy which was designed by the previous call of the "run" routine, you
-   * should pass DDP_BASE::INTERNAL_CONTROLLER().
+   * The main routine of DDP which runs DDP for a given initial state, initial
+   * time, and final time. In order to retrieve the initial nominal trajectories
+   * in the forward pass, DDP will use the provided control policy. If you want
+   * to use the control policy which was designed by the previous call of the
+   * "run" routine, you should pass DDP_BASE::INTERNAL_CONTROLLER().
    *
    * @param [in] initTime: The initial time.
    * @param [in] initState: The initial state.
    * @param [in] finalTime: The final time.
    * @param [in] partitioningTimes: The time partitioning.
-   * @param [in] controllersPtrStock: Array of pointers to the initial control policies. If you want to use the control policy
-   * which was designed by the previous call of the "run" routine, you should pass an empty array.
-   * In the this case, two scenarios are possible: either the internal controller is already set (such as the MPC case
-   * where the warm starting option is set true) or the internal controller is empty in which instead of performing
-   * a rollout the operating trajectories will be used.
+   * @param [in] controllersPtrStock: Array of pointers to the initial control
+   * policies. If you want to use the control policy which was designed by the
+   * previous call of the "run" routine, you should pass an empty array. In the
+   * this case, two scenarios are possible: either the internal controller is
+   * already set (such as the MPC case where the warm starting option is set
+   * true) or the internal controller is empty in which instead of performing a
+   * rollout the operating trajectories will be used.
    */
   void run(scalar_t initTime, const state_vector_t& initState, scalar_t finalTime, const scalar_array_t& partitioningTimes,
            const controller_ptr_array_t& controllersPtrStock) override;
@@ -481,7 +510,8 @@ class DDP_BASE : public Solver_BASE<STATE_DIM, INPUT_DIM> {
   virtual void calculatePartitionController(size_t partitionIndex) = 0;
 
   /**
-   * Calculates an LQ approximate of the optimal control problem at a given partition and a node.
+   * Calculates an LQ approximate of the optimal control problem at a given
+   * partition and a node.
    *
    * @param [in] workerIndex: Working agent index.
    * @param [in] partitionIndex: Time partition index.
@@ -495,12 +525,15 @@ class DDP_BASE : public Solver_BASE<STATE_DIM, INPUT_DIM> {
    * @param [in] workerIndex: Working agent index.
    * @param [in] partitionIndex: Time partition index.
    * @param [in] timeTrajectory: The time trajectory stamp.
-   * @param [in] eventsPastTheEndIndeces: Indices containing past-the-end index of events trigger.
+   * @param [in] eventsPastTheEndIndeces: Indices containing past-the-end index
+   * of events trigger.
    * @param [in] stateTrajectory: The state trajectory.
    * @param [in] inputTrajectory: The control input trajectory.
-   * @param [out] nc1Trajectory: Trajectory containing number of active type-1 constraints.
+   * @param [out] nc1Trajectory: Trajectory containing number of active type-1
+   * constraints.
    * @param [out] EvTrajectory: Type-1 constraints trajectory.
-   * @param [out] nc2Trajectory: Trajectory containing number of active type-2 constraints.
+   * @param [out] nc2Trajectory: Trajectory containing number of active type-2
+   * constraints.
    * @param [out] HvTrajectory: Type-2 constraints trajectory.
    * @param [out] nc2Finals: Number of active final type-2 constraints.
    * @param [out] HvFinals: Final type-2 constraints.
@@ -518,7 +551,8 @@ class DDP_BASE : public Solver_BASE<STATE_DIM, INPUT_DIM> {
    * @param [in] workerIndex: Working agent index.
    * @param [in] partitionIndex: Time partition index.
    * @param [in] timeTrajectory: The time trajectory stamp.
-   * @param [in] eventsPastTheEndIndeces: Indices containing past-the-end index of events trigger.
+   * @param [in] eventsPastTheEndIndeces: Indices containing past-the-end index
+   * of events trigger.
    * @param [in] stateTrajectory: The state trajectory.
    * @param [in] inputTrajectory: The control input trajectory.
    * @param [out] totalCost: The total cost.
@@ -528,7 +562,8 @@ class DDP_BASE : public Solver_BASE<STATE_DIM, INPUT_DIM> {
                                    const input_vector_array_t& inputTrajectory, scalar_t& totalCost);
 
   /**
-   * Calculates an LQ approximate of the unconstrained optimal control problem at a given partition and a node.
+   * Calculates an LQ approximate of the unconstrained optimal control problem
+   * at a given partition and a node.
    *
    * @param [in] workerIndex: Working agent index.
    * @param [in] i: Time partition index.
@@ -556,9 +591,11 @@ class DDP_BASE : public Solver_BASE<STATE_DIM, INPUT_DIM> {
   virtual void calculateControllerWorker(size_t workerIndex, size_t partitionIndex, size_t timeIndex) = 0;
 
   /**
-   * Performs one rollout while the input correction for the type-1 constraint is considered.
+   * Performs one rollout while the input correction for the type-1 constraint
+   * is considered.
    *
-   * @param [in] computeISEs: Whether needs to calculate ISEs indices for type_1 and type-2 constraints.
+   * @param [in] computeISEs: Whether needs to calculate ISEs indices for type_1
+   * and type-2 constraints.
    */
   virtual void lineSearchBase(bool computeISEs);
 
@@ -591,11 +628,14 @@ class DDP_BASE : public Solver_BASE<STATE_DIM, INPUT_DIM> {
    * compute the merit function for given rollout
    *
    * @param [in] timeTrajectoriesStock: simulation time trajectory
-   * @param [in] nc1TrajectoriesStock: rollout's number of active constraints in each time step
+   * @param [in] nc1TrajectoriesStock: rollout's number of active constraints in
+   * each time step
    * @param [in] EvTrajectoryStock: rollout's constraints value
-   * @param [in] lagrangeTrajectoriesStock: constraint Lagrange multiplier for the given rollout
+   * @param [in] lagrangeTrajectoriesStock: constraint Lagrange multiplier for
+   * the given rollout
    * @param [in] totalCost: the total cost of the trajectory
-   * @param [out] meritFunctionValue: the total merit function value of the trajectory
+   * @param [out] meritFunctionValue: the total merit function value of the
+   * trajectory
    * @param [out] constraintISE: Integral of Square Error (ISE)
    */
   void calculateMeritFunction(const scalar_array2_t& timeTrajectoriesStock, const size_array2_t& nc1TrajectoriesStock,
@@ -604,11 +644,15 @@ class DDP_BASE : public Solver_BASE<STATE_DIM, INPUT_DIM> {
                               scalar_t& meritFunctionValue, scalar_t& constraintISE);
 
   /**
-   * Calculates state-input constraints ISE (Integral of Square Error). It also return the maximum norm of the constraints.
+   * Calculates state-input constraints ISE (Integral of Square Error). It also
+   * return the maximum norm of the constraints.
    *
-   * @param [in] timeTrajectoriesStock: Array of trajectories containing the time trajectory stamp.
-   * @param [in] nc1TrajectoriesStock: Array of trajectories containing the number of the active state-input constraints.
-   * @param [in] EvTrajectoriesStock: Array of trajectories containing the value of the state-input constraints.
+   * @param [in] timeTrajectoriesStock: Array of trajectories containing the
+   * time trajectory stamp.
+   * @param [in] nc1TrajectoriesStock: Array of trajectories containing the
+   * number of the active state-input constraints.
+   * @param [in] EvTrajectoriesStock: Array of trajectories containing the value
+   * of the state-input constraints.
    * @param [out] constraintISE: The state-input constraints ISE.
    * @return maximum norm of the constraints.
    */
@@ -619,9 +663,12 @@ class DDP_BASE : public Solver_BASE<STATE_DIM, INPUT_DIM> {
   /**
    * Calculate integrated penalty from inequality constraints.
    *
-   * @param [in] timeTrajectoriesStock: Array of trajectories containing the time trajectory stamp.
-   * @param [in] ncIneqTrajectoriesStock: Array of trajectories containing the number of inequalityConstraints
-   * @param [in] hTrajectoriesStock: Array of trajectories containing the value of the inequality constraints.
+   * @param [in] timeTrajectoriesStock: Array of trajectories containing the
+   * time trajectory stamp.
+   * @param [in] ncIneqTrajectoriesStock: Array of trajectories containing the
+   * number of inequalityConstraints
+   * @param [in] hTrajectoriesStock: Array of trajectories containing the value
+   * of the inequality constraints.
    * @param [in] penaltyPtrStock: Array of penalty function pointers.
    * @return constraintPenalty: The inequality constraints penalty.
    */
@@ -634,7 +681,8 @@ class DDP_BASE : public Solver_BASE<STATE_DIM, INPUT_DIM> {
    * @param [in] initTime: Initial time.
    * @param [out] controllersStock: Truncated array of the control policies.
    * @param [out] initActivePartition: Initial active subsystems.
-   * @param [out] deletedcontrollersStock: The deleted part of the control policies.
+   * @param [out] deletedcontrollersStock: The deleted part of the control
+   * policies.
    */
   void truncateController(const scalar_array_t& partitioningTimes, double initTime, linear_controller_array_t& controllersStock,
                           size_t& initActivePartition, linear_controller_array_t& deletedcontrollersStock);
@@ -648,7 +696,8 @@ class DDP_BASE : public Solver_BASE<STATE_DIM, INPUT_DIM> {
   void calculateControllerUpdateMaxNorm(scalar_t& maxDeltaUffNorm, scalar_t& maxDeltaUeeNorm);
 
   /**
-   * Updates pointers in nominalControllerPtrStock from memory location of nominalControllersStock_ members.
+   * Updates pointers in nominalControllerPtrStock from memory location of
+   * nominalControllersStock_ members.
    */
   void updateNominalControllerPtrStock();
 
@@ -666,7 +715,8 @@ class DDP_BASE : public Solver_BASE<STATE_DIM, INPUT_DIM> {
   unsigned long long int rewindCounter_;
 
   bool useParallelRiccatiSolverFromInitItr_ = false;
-  // If true the final time of the MPC will increase by a time partition instead of common gradual increase.
+  // If true the final time of the MPC will increase by a time partition instead
+  // of common gradual increase.
   bool blockwiseMovingHorizon_ = false;
 
   scalar_t initTime_;
@@ -683,13 +733,14 @@ class DDP_BASE : public Solver_BASE<STATE_DIM, INPUT_DIM> {
   const input_vector_array2_t* desiredInputTrajectoryStockPtr_;
 
   scalar_t learningRateStar_ = 1.0;  // The optimal learning rate.
-  scalar_t maxLearningRate_ = 1.0;   // The maximum permitted learning rate (settings_.maxLearningRateSLQ_).
+  scalar_t maxLearningRate_ = 1.0;   // The maximum permitted learning rate
+                                     // (settings_.maxLearningRateSLQ_).
   scalar_t constraintStepSize_ = 1.0;
 
-  // It is true if an initial controller is not provided for a partition which causes that the first
-  // iteration of SLQ to design an initial controller (LQR). In this case:
-  // 1) The feedforward component and the type-1 constraint input are set to zero
-  // 2) Final cost will be ignored
+  // It is true if an initial controller is not provided for a partition which
+  // causes that the first iteration of SLQ to design an initial controller
+  // (LQR). In this case: 1) The feedforward component and the type-1 constraint
+  // input are set to zero 2) Final cost will be ignored
   std::vector<bool> initialControllerDesignStock_;
 
   // trajectory spreading
@@ -727,7 +778,8 @@ class DDP_BASE : public Solver_BASE<STATE_DIM, INPUT_DIM> {
   state_vector_array2_t nominalStateTrajectoriesStock_;
   input_vector_array2_t nominalInputTrajectoriesStock_;
 
-  // Used for catching the nominal trajectories for which the LQ problem is constructed and solved before terminating run()
+  // Used for catching the nominal trajectories for which the LQ problem is
+  // constructed and solved before terminating run()
   scalar_array2_t nominalPrevTimeTrajectoriesStock_;
   size_array2_t nominalPrevEventsPastTheEndIndecesStock_;
   state_vector_array2_t nominalPrevStateTrajectoriesStock_;
@@ -736,7 +788,8 @@ class DDP_BASE : public Solver_BASE<STATE_DIM, INPUT_DIM> {
   bool lsComputeISEs_;                                // whether lineSearch routine needs to calculate ISEs
   linear_controller_array_t initLScontrollersStock_;  // needed for lineSearch
 
-  linear_controller_array_t deletedcontrollersStock_;  // needed for concatenating the new controller to the old one
+  linear_controller_array_t deletedcontrollersStock_;  // needed for concatenating the new controller
+                                                       // to the old one
 
   std::vector<EigenLinearInterpolation<state_vector_t>> nominalStateFunc_;
   std::vector<EigenLinearInterpolation<input_vector_t>> nominalInputFunc_;
@@ -794,18 +847,11 @@ class DDP_BASE : public Solver_BASE<STATE_DIM, INPUT_DIM> {
   state_vector_t SvHeuristics_;
   state_matrix_t SmHeuristics_;
 
-#ifdef BENCHMARK
-  // Benchmarking
-  size_t BENCHMARK_nIterationsLQ_ = 0;
-  size_t BENCHMARK_nIterationsBP_ = 0;
-  size_t BENCHMARK_nIterationsFP_ = 0;
-  scalar_t BENCHMARK_tAvgLQ_ = 0.0;
-  scalar_t BENCHMARK_tAvgBP_ = 0.0;
-  scalar_t BENCHMARK_tAvgFP_ = 0.0;
-  std::chrono::time_point<std::chrono::steady_clock> BENCHMARK_start_;
-  std::chrono::time_point<std::chrono::steady_clock> BENCHMARK_end_;
-  std::chrono::duration<double> BENCHMARK_diff_;
-#endif
+  benchmark::RepeatedTimer forwardPassTimer_;
+  benchmark::RepeatedTimer linearQuadraticApproximationTimer_;
+  benchmark::RepeatedTimer backwardPassTimer_;
+  benchmark::RepeatedTimer computeControllerTimer_;
+  benchmark::RepeatedTimer linesearchTimer_;
 };
 
 }  // namespace ocs2

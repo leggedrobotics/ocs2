@@ -135,13 +135,13 @@ class SystemEventHandler : public EventHandlerBase<STATE_DIM> {
   static void deactivateKillIntegration() { killIntegration_ = false; }
 
  protected:
-  static bool killIntegration_; /*=false*/
+  static std::atomic<bool> killIntegration_; /*=false*/
   int maxNumSteps_;
   int eventID_;
 };
 
 template <int STATE_DIM>
-bool SystemEventHandler<STATE_DIM>::killIntegration_ = false;
+std::atomic<bool> SystemEventHandler<STATE_DIM>::killIntegration_(false);
 
 }  // namespace ocs2
 

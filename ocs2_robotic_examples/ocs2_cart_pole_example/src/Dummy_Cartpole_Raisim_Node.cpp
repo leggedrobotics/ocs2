@@ -44,6 +44,11 @@ Eigen::VectorXd inputToRaisimGeneralizedForce(
   return generalizedForce;
 }
 
+void extractMassMatrix(const raisim::ArticulatedSystem& sys) {
+  Eigen::MatrixXd M = sys.getMassMatrix().e();
+  std::cout << "M\n" << M << std::endl;
+}
+
 int main(int argc, char* argv[]) {
   // task file
   if (argc <= 1) throw std::runtime_error("No task file specified. Aborting.");
@@ -53,7 +58,7 @@ int main(int argc, char* argv[]) {
   using sim_rollout_t = ocs2::RaisimRollout<ocs2::cartpole::STATE_DIM_, ocs2::cartpole::INPUT_DIM_>;
   std::unique_ptr<sim_rollout_t> simRollout(new sim_rollout_t(ros::package::getPath("ocs2_cart_pole_example") + "/urdf/cartpole.urdf",
                                                               &stateToRaisimGenCoordGenVel, &raisimGenCoordGenVelToState,
-                                                              &inputToRaisimGeneralizedForce));
+                                                              &inputToRaisimGeneralizedForce, &extractMassMatrix));
   ocs2::cartpole::MRT_ROS_Cartpole::Ptr mrtPtr(new ocs2::cartpole::MRT_ROS_Cartpole("cartpole"));
   mrtPtr->initRollout(std::move(simRollout));
 

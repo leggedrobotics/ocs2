@@ -32,25 +32,30 @@ class RaisimRollout final : public RolloutBase<STATE_DIM, INPUT_DIM> {
   using state_to_raisim_gen_coord_gen_vel_t = std::function<std::pair<Eigen::VectorXd, Eigen::VectorXd>(state_vector_t)>;
   using raisim_gen_coord_gen_vel_to_state_t = std::function<state_vector_t(const Eigen::VectorXd&, const Eigen::VectorXd&)>;
   using input_to_raisim_generalized_force_t = std::function<Eigen::VectorXd(const input_vector_t&, const state_vector_t&)>;
+  using data_extraction_callback_t = std::function<void(const raisim::ArticulatedSystem&)>;
 
   /**
    * @brief Constructor
-   * @param pathToUrdf: Full file path to the urdf description for initializing the simulator
-   * @param stateToRaisimGenCoordGenVel: Transformation function that converts ocs2 state to generalized coordinate and generalized velocity
-   * used by RAIsim
-   * @param raisimGenCoordGenVelToState: Transformation function that converts RAIsim generalized coordinates and velocities to ocs2 state
-   * @param inputToRaisimGeneralizedForce: Tranformation function that converts ocs2 control input to RAIsim generalized force
-   * @param rolloutSettings
-   * @param algorithmName
+   * @param[in] pathToUrdf: Full file path to the urdf description for initializing the simulator
+   * @param[in] stateToRaisimGenCoordGenVel: Transformation function that converts ocs2 state to generalized coordinate and generalized
+   * velocity used by RAIsim
+   * @param[in] raisimGenCoordGenVelToState: Transformation function that converts RAIsim generalized coordinates and velocities to ocs2
+   * state
+   * @param[in] inputToRaisimGeneralizedForce: Tranformation function that converts ocs2 control input to RAIsim generalized force
+   * @param[in] dataExtractionCallback: Optional callback function to extract user-defined information from the simulation at each timestep
+   * @param[in] rolloutSettings
+   * @param[in] algorithmName
    */
   RaisimRollout(const std::string& pathToUrdf, state_to_raisim_gen_coord_gen_vel_t stateToRaisimGenCoordGenVel,
                 raisim_gen_coord_gen_vel_to_state_t raisimGenCoordGenVelToState,
-                input_to_raisim_generalized_force_t inputToRaisimGeneralizedForce, Rollout_Settings rolloutSettings = Rollout_Settings(),
+                input_to_raisim_generalized_force_t inputToRaisimGeneralizedForce,
+                data_extraction_callback_t dataExtractionCallback = nullptr, Rollout_Settings rolloutSettings = Rollout_Settings(),
                 char algorithmName[] = nullptr)
       : Base(std::move(rolloutSettings), std::move(algorithmName)),
         stateToRaisimGenCoordGenVel_(std::move(stateToRaisimGenCoordGenVel)),
         raisimGenCoordGenVelToState_(std::move(raisimGenCoordGenVelToState)),
-        inputToRaisimGeneralizedForce_(std::move(inputToRaisimGeneralizedForce)) {
+        inputToRaisimGeneralizedForce_(std::move(inputToRaisimGeneralizedForce)),
+        dataExtractionCallback_(dataExtractionCallback) {
     system_ = world_.addArticulatedSystem(pathToUrdf);
     ground_ = world_.addGround();
     world_.setTimeStep(this->settings().minTimeStep_);
@@ -76,10 +81,11 @@ class RaisimRollout final : public RolloutBase<STATE_DIM, INPUT_DIM> {
 
     // Forward simulate
     for (int i = 0; i < numSteps; i++) {
-      world_.integrate1();  //! prepares all dynamical quantities for current time step
+      world_.integrate1();  // prepares all dynamical quantities for current time step
 
-      //! @todo(jcarius) extract additional quantities (mass matrix, jacobians, contact points) here
-      // Eigen::MatrixXd M = system_->getMassMatrix().e();
+      if (dataExtractionCallback_) {
+        dataExtractionCallback_(*system_);
+      }
 
       Eigen::VectorXd raisim_q, raisim_dq;
       system_->getState(raisim_q, raisim_dq);
@@ -100,9 +106,15 @@ class RaisimRollout final : public RolloutBase<STATE_DIM, INPUT_DIM> {
     // also push back final state and input
     timeTrajectory.push_back(initTime + numSteps * this->settings().minTimeStep_);
 
+    world_.integrate1();
+
     Eigen::VectorXd raisim_q, raisim_dq;
     system_->getState(raisim_q, raisim_dq);
     stateTrajectory.emplace_back(raisimGenCoordGenVelToState_(raisim_q, raisim_dq));
+
+    if (dataExtractionCallback_) {
+      dataExtractionCallback_(*system_);
+    }
 
     input_vector_t input = controller->computeInput(timeTrajectory.back(), stateTrajectory.back());
     inputTrajectory.emplace_back(input);
@@ -118,6 +130,8 @@ class RaisimRollout final : public RolloutBase<STATE_DIM, INPUT_DIM> {
   state_to_raisim_gen_coord_gen_vel_t stateToRaisimGenCoordGenVel_;
   raisim_gen_coord_gen_vel_to_state_t raisimGenCoordGenVelToState_;
   input_to_raisim_generalized_force_t inputToRaisimGeneralizedForce_;
+
+  data_extraction_callback_t dataExtractionCallback_;
 };
 
 }  // namespace ocs2

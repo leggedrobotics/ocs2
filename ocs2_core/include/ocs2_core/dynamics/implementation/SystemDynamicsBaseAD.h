@@ -32,8 +32,8 @@ namespace ocs2 {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <class Derived, size_t STATE_DIM, size_t INPUT_DIM, size_t NUM_MODES>
-SystemDynamicsBaseAD<Derived, STATE_DIM, INPUT_DIM, NUM_MODES>::SystemDynamicsBaseAD()
+template <size_t STATE_DIM, size_t INPUT_DIM, size_t NUM_MODES>
+SystemDynamicsBaseAD<STATE_DIM, INPUT_DIM, NUM_MODES>::SystemDynamicsBaseAD()
     : BASE(),
       flowJacobian_(state_timeStateInput_matrix_t::Zero()),
       jumpJacobian_(state_timeState_matrix_t::Zero()),
@@ -42,8 +42,8 @@ SystemDynamicsBaseAD<Derived, STATE_DIM, INPUT_DIM, NUM_MODES>::SystemDynamicsBa
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <class Derived, size_t STATE_DIM, size_t INPUT_DIM, size_t NUM_MODES>
-SystemDynamicsBaseAD<Derived, STATE_DIM, INPUT_DIM, NUM_MODES>::SystemDynamicsBaseAD(const SystemDynamicsBaseAD& rhs)
+template <size_t STATE_DIM, size_t INPUT_DIM, size_t NUM_MODES>
+SystemDynamicsBaseAD<STATE_DIM, INPUT_DIM, NUM_MODES>::SystemDynamicsBaseAD(const SystemDynamicsBaseAD& rhs)
     : BASE(rhs),
       flowMapADInterfacePtr_(new ad_interface_t(*rhs.flowMapADInterfacePtr_)),
       jumpMapADInterfacePtr_(new ad_interface_t(*rhs.jumpMapADInterfacePtr_)),
@@ -55,10 +55,9 @@ SystemDynamicsBaseAD<Derived, STATE_DIM, INPUT_DIM, NUM_MODES>::SystemDynamicsBa
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <class Derived, size_t STATE_DIM, size_t INPUT_DIM, size_t NUM_MODES>
-void SystemDynamicsBaseAD<Derived, STATE_DIM, INPUT_DIM, NUM_MODES>::initialize(const std::string& modelName,
-                                                                                const std::string& modelFolder, bool recompileLibraries,
-                                                                                bool verbose) {
+template <size_t STATE_DIM, size_t INPUT_DIM, size_t NUM_MODES>
+void SystemDynamicsBaseAD<STATE_DIM, INPUT_DIM, NUM_MODES>::initialize(const std::string& modelName, const std::string& modelFolder,
+                                                                       bool recompileLibraries, bool verbose) {
   setADInterfaces(modelName, modelFolder);
   if (recompileLibraries) {
     createModels(verbose);
@@ -70,10 +69,9 @@ void SystemDynamicsBaseAD<Derived, STATE_DIM, INPUT_DIM, NUM_MODES>::initialize(
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <class Derived, size_t STATE_DIM, size_t INPUT_DIM, size_t NUM_MODES>
-void SystemDynamicsBaseAD<Derived, STATE_DIM, INPUT_DIM, NUM_MODES>::computeFlowMap(const scalar_t& time, const state_vector_t& state,
-                                                                                    const input_vector_t& input,
-                                                                                    state_vector_t& stateDerivative) {
+template <size_t STATE_DIM, size_t INPUT_DIM, size_t NUM_MODES>
+void SystemDynamicsBaseAD<STATE_DIM, INPUT_DIM, NUM_MODES>::computeFlowMap(const scalar_t& time, const state_vector_t& state,
+                                                                           const input_vector_t& input, state_vector_t& stateDerivative) {
   dynamic_vector_t tapedInput(1 + STATE_DIM + INPUT_DIM);
   tapedInput << time, state, input;
 
@@ -83,9 +81,9 @@ void SystemDynamicsBaseAD<Derived, STATE_DIM, INPUT_DIM, NUM_MODES>::computeFlow
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <class Derived, size_t STATE_DIM, size_t INPUT_DIM, size_t NUM_MODES>
-void SystemDynamicsBaseAD<Derived, STATE_DIM, INPUT_DIM, NUM_MODES>::computeJumpMap(const scalar_t& time, const state_vector_t& state,
-                                                                                    state_vector_t& jumpedState) {
+template <size_t STATE_DIM, size_t INPUT_DIM, size_t NUM_MODES>
+void SystemDynamicsBaseAD<STATE_DIM, INPUT_DIM, NUM_MODES>::computeJumpMap(const scalar_t& time, const state_vector_t& state,
+                                                                           state_vector_t& jumpedState) {
   dynamic_vector_t tapedInput(1 + STATE_DIM);
   tapedInput << time, state;
 
@@ -95,9 +93,9 @@ void SystemDynamicsBaseAD<Derived, STATE_DIM, INPUT_DIM, NUM_MODES>::computeJump
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <class Derived, size_t STATE_DIM, size_t INPUT_DIM, size_t NUM_MODES>
-void SystemDynamicsBaseAD<Derived, STATE_DIM, INPUT_DIM, NUM_MODES>::computeGuardSurfaces(const scalar_t& time, const state_vector_t& state,
-                                                                                          dynamic_vector_t& guardSurfacesValue) {
+template <size_t STATE_DIM, size_t INPUT_DIM, size_t NUM_MODES>
+void SystemDynamicsBaseAD<STATE_DIM, INPUT_DIM, NUM_MODES>::computeGuardSurfaces(const scalar_t& time, const state_vector_t& state,
+                                                                                 dynamic_vector_t& guardSurfacesValue) {
   dynamic_vector_t tapedInput(1 + STATE_DIM);
   tapedInput << time, state;
 
@@ -107,10 +105,9 @@ void SystemDynamicsBaseAD<Derived, STATE_DIM, INPUT_DIM, NUM_MODES>::computeGuar
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <class Derived, size_t STATE_DIM, size_t INPUT_DIM, size_t NUM_MODES>
-void SystemDynamicsBaseAD<Derived, STATE_DIM, INPUT_DIM, NUM_MODES>::setCurrentStateAndControl(const scalar_t& time,
-                                                                                               const state_vector_t& state,
-                                                                                               const input_vector_t& input) {
+template <size_t STATE_DIM, size_t INPUT_DIM, size_t NUM_MODES>
+void SystemDynamicsBaseAD<STATE_DIM, INPUT_DIM, NUM_MODES>::setCurrentStateAndControl(const scalar_t& time, const state_vector_t& state,
+                                                                                      const input_vector_t& input) {
   BASE::setCurrentStateAndControl(time, state, input);
 
   dynamic_vector_t tapedTimeStateInput(1 + STATE_DIM + INPUT_DIM);
@@ -127,9 +124,8 @@ void SystemDynamicsBaseAD<Derived, STATE_DIM, INPUT_DIM, NUM_MODES>::setCurrentS
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <class Derived, size_t STATE_DIM, size_t INPUT_DIM, size_t NUM_MODES>
-void SystemDynamicsBaseAD<Derived, STATE_DIM, INPUT_DIM, NUM_MODES>::setADInterfaces(const std::string& modelName,
-                                                                                     const std::string& modelFolder) {
+template <size_t STATE_DIM, size_t INPUT_DIM, size_t NUM_MODES>
+void SystemDynamicsBaseAD<STATE_DIM, INPUT_DIM, NUM_MODES>::setADInterfaces(const std::string& modelName, const std::string& modelFolder) {
   auto tapedFlowMap = [this](const ad_dynamic_vector_t& x, ad_dynamic_vector_t& y) {
     auto time = x(0);
     auto state = x.template segment<STATE_DIM>(1);
@@ -158,8 +154,8 @@ void SystemDynamicsBaseAD<Derived, STATE_DIM, INPUT_DIM, NUM_MODES>::setADInterf
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <class Derived, size_t STATE_DIM, size_t INPUT_DIM, size_t NUM_MODES>
-void SystemDynamicsBaseAD<Derived, STATE_DIM, INPUT_DIM, NUM_MODES>::createModels(bool verbose) {
+template <size_t STATE_DIM, size_t INPUT_DIM, size_t NUM_MODES>
+void SystemDynamicsBaseAD<STATE_DIM, INPUT_DIM, NUM_MODES>::createModels(bool verbose) {
   flowMapADInterfacePtr_->createModels(ad_interface_t::ApproximationOrder::First, verbose);
   jumpMapADInterfacePtr_->createModels(ad_interface_t::ApproximationOrder::First, verbose);
   guardSurfacesADInterfacePtr_->createModels(ad_interface_t::ApproximationOrder::First, verbose);
@@ -168,8 +164,8 @@ void SystemDynamicsBaseAD<Derived, STATE_DIM, INPUT_DIM, NUM_MODES>::createModel
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <class Derived, size_t STATE_DIM, size_t INPUT_DIM, size_t NUM_MODES>
-void SystemDynamicsBaseAD<Derived, STATE_DIM, INPUT_DIM, NUM_MODES>::loadModelsIfAvailable(bool verbose) {
+template <size_t STATE_DIM, size_t INPUT_DIM, size_t NUM_MODES>
+void SystemDynamicsBaseAD<STATE_DIM, INPUT_DIM, NUM_MODES>::loadModelsIfAvailable(bool verbose) {
   flowMapADInterfacePtr_->loadModelsIfAvailable(ad_interface_t::ApproximationOrder::First, verbose);
   jumpMapADInterfacePtr_->loadModelsIfAvailable(ad_interface_t::ApproximationOrder::First, verbose);
   guardSurfacesADInterfacePtr_->loadModelsIfAvailable(ad_interface_t::ApproximationOrder::First, verbose);

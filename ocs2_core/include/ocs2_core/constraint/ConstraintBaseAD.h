@@ -44,27 +44,17 @@ namespace ocs2 {
  * The linearized final state-only constraint is defined as: \n
  * \f$ 0 = F_f \delta x + h_f \f$ \n
  *
- * @tparam Derived: Derived class type.
  * @tparam STATE_DIM: Dimension of the state space.
  * @tparam INPUT_DIM: Dimension of the control input space.
  */
-template <class Derived, size_t STATE_DIM, size_t INPUT_DIM>
+template <size_t STATE_DIM, size_t INPUT_DIM>
 class ConstraintBaseAD : public ConstraintBase<STATE_DIM, INPUT_DIM> {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-  enum {
-    state_dim_ = STATE_DIM,
-    input_dim_ = INPUT_DIM,
-    domain_dim_ = 1 + state_dim_ + input_dim_,
-  };
-
-  using Ptr = std::shared_ptr<ConstraintBaseAD<Derived, STATE_DIM, INPUT_DIM> >;
-  using ConstPtr = std::shared_ptr<const ConstraintBaseAD<Derived, STATE_DIM, INPUT_DIM> >;
+  static constexpr size_t MAX_CONSTRAINT_DIM_ = INPUT_DIM;
 
   using BASE = ConstraintBase<STATE_DIM, INPUT_DIM>;
-
-  enum { MAX_CONSTRAINT_DIM_ = INPUT_DIM };
 
   using typename BASE::constraint1_input_matrix_t;
   using typename BASE::constraint1_state_matrix_t;
@@ -100,13 +90,6 @@ class ConstraintBaseAD : public ConstraintBase<STATE_DIM, INPUT_DIM> {
    * Default destructor
    */
   ~ConstraintBaseAD() override = default;
-
-  /**
-   * Returns a deep copy
-   *
-   * @return A raw pointer to the base class.
-   */
-  ConstraintBaseAD* clone() const final { return new Derived(static_cast<Derived const&>(*this)); };
 
   /**
    * Initializes model libraries
@@ -148,7 +131,7 @@ class ConstraintBaseAD : public ConstraintBase<STATE_DIM, INPUT_DIM> {
    * @param [out] constraintVector: constraints vector.
    */
   virtual void stateInputConstraint(ad_scalar_t time, const ad_dynamic_vector_t& state, const ad_dynamic_vector_t& input,
-                                    ad_dynamic_vector_t& constraintVector) {
+                                    ad_dynamic_vector_t& constraintVector) const {
     constraintVector = ad_dynamic_vector_t(0);
   }
 
@@ -159,7 +142,7 @@ class ConstraintBaseAD : public ConstraintBase<STATE_DIM, INPUT_DIM> {
    * @param [in] state: state vector.
    * @param [out] constraintVector: constraint vector.
    */
-  virtual void stateOnlyConstraint(ad_scalar_t time, const ad_dynamic_vector_t& state, ad_dynamic_vector_t& constraintVector) {
+  virtual void stateOnlyConstraint(ad_scalar_t time, const ad_dynamic_vector_t& state, ad_dynamic_vector_t& constraintVector) const {
     constraintVector = ad_dynamic_vector_t(0);
   }
 
@@ -170,7 +153,7 @@ class ConstraintBaseAD : public ConstraintBase<STATE_DIM, INPUT_DIM> {
    * @param [in] state: state vector.
    * @param [out] constraintVector: constraint vector.
    */
-  virtual void stateOnlyFinalConstraint(ad_scalar_t time, const ad_dynamic_vector_t& state, ad_dynamic_vector_t& constraintVector) {
+  virtual void stateOnlyFinalConstraint(ad_scalar_t time, const ad_dynamic_vector_t& state, ad_dynamic_vector_t& constraintVector) const {
     constraintVector = ad_dynamic_vector_t(0);
   }
 

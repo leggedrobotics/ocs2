@@ -211,8 +211,8 @@ TEST_F(testCppADCG_costFixture, clone_test) {
 /******************************************************************************/
 /******************************************************************************/
 TEST_F(testCppADCG_costFixture, multithread_test) {
-  base_cost_t::Ptr quadraticCostPtr(quadraticCost_->clone());
-  base_cost_t::Ptr adQuadraticCostPtr(adQuadraticCost_->clone());
+  std::unique_ptr<base_cost_t> quadraticCostPtr(quadraticCost_->clone());
+  std::unique_ptr<base_cost_t> adQuadraticCostPtr(adQuadraticCost_->clone());
 
   bool success = false;
   std::thread thread1(checkCostFunction<state_dim_, input_dim_>, 10000, quadraticCost_.get(), adQuadraticCost_.get(), std::ref(success));

@@ -46,13 +46,10 @@ namespace ocs2 {
  * @tparam STATE_DIM: Dimension of the state space.
  * @tparam INPUT_DIM: Dimension of the control input space.
  */
-template <class Derived, size_t STATE_DIM, size_t INPUT_DIM, size_t NUM_MODES = 1>
+template <size_t STATE_DIM, size_t INPUT_DIM, size_t NUM_MODES = 1>
 class SystemDynamicsBaseAD : public SystemDynamicsBase<STATE_DIM, INPUT_DIM, NUM_MODES> {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-
-  using Ptr = std::shared_ptr<SystemDynamicsBaseAD<Derived, STATE_DIM, INPUT_DIM, NUM_MODES> >;
-  using ConstPtr = std::shared_ptr<const SystemDynamicsBaseAD<Derived, STATE_DIM, INPUT_DIM, NUM_MODES> >;
 
   using BASE = SystemDynamicsBase<STATE_DIM, INPUT_DIM, NUM_MODES>;
 
@@ -84,13 +81,6 @@ class SystemDynamicsBaseAD : public SystemDynamicsBase<STATE_DIM, INPUT_DIM, NUM
    * Default destructor
    */
   ~SystemDynamicsBaseAD() override = default;
-
-  /**
-   * Returns a deep copy
-   *
-   * @return A raw pointer to the base class.
-   */
-  BASE* clone() const final { return new Derived(static_cast<Derived const&>(*this)); };
 
   /**
    * Initializes model libraries
@@ -139,7 +129,7 @@ class SystemDynamicsBaseAD : public SystemDynamicsBase<STATE_DIM, INPUT_DIM, NUM
    * @param [out] stateDerivative: state vector time derivative.
    */
   virtual void systemFlowMap(ad_scalar_t time, const ad_dynamic_vector_t& state, const ad_dynamic_vector_t& input,
-                             ad_dynamic_vector_t& stateDerivative) = 0;
+                             ad_dynamic_vector_t& stateDerivative) const = 0;
 
   /**
    * Interface method to the state jump map of the hybrid system. This method can be implemented by the derived class.
@@ -148,7 +138,9 @@ class SystemDynamicsBaseAD : public SystemDynamicsBase<STATE_DIM, INPUT_DIM, NUM
    * @param [in] state: state vector.
    * @param [out] jumpedState: jumped state.
    */
-  virtual void systemJumpMap(ad_scalar_t time, const ad_dynamic_vector_t& state, ad_dynamic_vector_t& jumpedState) { jumpedState = state; };
+  virtual void systemJumpMap(ad_scalar_t time, const ad_dynamic_vector_t& state, ad_dynamic_vector_t& jumpedState) const {
+    jumpedState = state;
+  };
 
   /**
    * Interface method to the guard surfaces. This method can be implemented by the derived class.
@@ -158,7 +150,7 @@ class SystemDynamicsBaseAD : public SystemDynamicsBase<STATE_DIM, INPUT_DIM, NUM
    * @param [in] input: input vector
    * @param [out] guardSurfacesValue: A vector of guard surfaces values
    */
-  virtual void systemGuardSurfaces(ad_scalar_t time, const ad_dynamic_vector_t& state, ad_dynamic_vector_t& guardSurfacesValue) {
+  virtual void systemGuardSurfaces(ad_scalar_t time, const ad_dynamic_vector_t& state, ad_dynamic_vector_t& guardSurfacesValue) const {
     guardSurfacesValue = -ad_dynamic_vector_t::Ones(1);
   };
 

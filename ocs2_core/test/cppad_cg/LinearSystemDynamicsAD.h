@@ -34,14 +34,11 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 namespace ocs2 {
 
 template <size_t STATE_DIM, size_t INPUT_DIM>
-class LinearSystemDynamicsAD : public SystemDynamicsBaseAD<LinearSystemDynamicsAD<STATE_DIM, INPUT_DIM>, STATE_DIM, INPUT_DIM> {
+class LinearSystemDynamicsAD : public SystemDynamicsBaseAD<STATE_DIM, INPUT_DIM> {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-  using Ptr = std::shared_ptr<LinearSystemDynamicsAD>;
-  using ConstPtr = std::shared_ptr<const LinearSystemDynamicsAD>;
-
-  using BASE = SystemDynamicsBaseAD<LinearSystemDynamicsAD, STATE_DIM, INPUT_DIM>;
+  using BASE = SystemDynamicsBaseAD<STATE_DIM, INPUT_DIM>;
   using typename BASE::ad_dynamic_vector_t;
   using typename BASE::ad_scalar_t;
   using typename BASE::input_vector_t;
@@ -50,18 +47,21 @@ class LinearSystemDynamicsAD : public SystemDynamicsBaseAD<LinearSystemDynamicsA
   using typename BASE::state_matrix_t;
   using typename BASE::state_vector_t;
 
-  LinearSystemDynamicsAD(const state_matrix_t& A, const state_input_matrix_t& B, const state_matrix_t& G)
-      : A_(A), B_(B), G_(G) {}
+  LinearSystemDynamicsAD(const state_matrix_t& A, const state_input_matrix_t& B, const state_matrix_t& G) : A_(A), B_(B), G_(G) {}
 
   ~LinearSystemDynamicsAD() = default;
 
+  LinearSystemDynamicsAD(const LinearSystemDynamicsAD& rhs) : BASE(rhs), A_(rhs.A_), B_(rhs.B_), G_(rhs.G_) {}
+
+  LinearSystemDynamicsAD* clone() const override { return new LinearSystemDynamicsAD(*this); }
+
  protected:
   void systemFlowMap(ad_scalar_t time, const ad_dynamic_vector_t& state, const ad_dynamic_vector_t& input,
-                     ad_dynamic_vector_t& stateDerivative) override {
+                     ad_dynamic_vector_t& stateDerivative) const override {
     stateDerivative = A_.template cast<ad_scalar_t>() * state + B_.template cast<ad_scalar_t>() * input;
   }
 
-  void systemJumpMap(ad_scalar_t time, const ad_dynamic_vector_t& state, ad_dynamic_vector_t& jumpedState) override {
+  void systemJumpMap(ad_scalar_t time, const ad_dynamic_vector_t& state, ad_dynamic_vector_t& jumpedState) const override {
     jumpedState = G_.template cast<ad_scalar_t>() * state;
   }
 
@@ -72,4 +72,3 @@ class LinearSystemDynamicsAD : public SystemDynamicsBaseAD<LinearSystemDynamicsA
 };
 
 }  // namespace ocs2
-

@@ -34,14 +34,11 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 namespace ocs2 {
 
 template <size_t STATE_DIM, size_t INPUT_DIM>
-class LinearConstraintAD : public ConstraintBaseAD<LinearConstraintAD<STATE_DIM, INPUT_DIM>, STATE_DIM, INPUT_DIM> {
+class LinearConstraintAD : public ConstraintBaseAD<STATE_DIM, INPUT_DIM> {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-  using Ptr = std::shared_ptr<LinearConstraintAD>;
-  using ConstPtr = std::shared_ptr<const LinearConstraintAD>;
-
-  using BASE = ConstraintBaseAD<LinearConstraintAD, STATE_DIM, INPUT_DIM>;
+  using BASE = ConstraintBaseAD<STATE_DIM, INPUT_DIM>;
   using typename BASE::ad_dynamic_vector_t;
   using typename BASE::ad_scalar_t;
   using typename BASE::constraint1_input_matrix_t;
@@ -73,6 +70,21 @@ class LinearConstraintAD : public ConstraintBaseAD<LinearConstraintAD<STATE_DIM,
 
   ~LinearConstraintAD() override = default;
 
+  LinearConstraintAD(const LinearConstraintAD& rhs)
+      : BASE(rhs),
+        numStateInputConstraint_(rhs.numStateInputConstraint_),
+        e_(rhs.e_),
+        C_(rhs.C_),
+        D_(rhs.D_),
+        numStateOnlyConstraint_(rhs.numStateOnlyConstraint_),
+        h_(rhs.h_),
+        F_(rhs.F_),
+        numStateOnlyFinalConstraint_(rhs.numStateOnlyFinalConstraint_),
+        h_f_(rhs.h_f_),
+        F_f_(rhs.F_f_) {}
+
+  LinearConstraintAD* clone() const override { return new LinearConstraintAD(*this); }
+
   size_t numStateInputConstraint(const scalar_t& time) override { return numStateInputConstraint_; }
 
   size_t numStateOnlyConstraint(const scalar_t& time) override { return numStateOnlyConstraint_; }
@@ -81,15 +93,15 @@ class LinearConstraintAD : public ConstraintBaseAD<LinearConstraintAD<STATE_DIM,
 
  protected:
   void stateInputConstraint(ad_scalar_t time, const ad_dynamic_vector_t& state, const ad_dynamic_vector_t& input,
-                            ad_dynamic_vector_t& constraintVector) override {
+                            ad_dynamic_vector_t& constraintVector) const override {
     constraintVector = e_.template cast<ad_scalar_t>() + C_.template cast<ad_scalar_t>() * state + D_.template cast<ad_scalar_t>() * input;
   }
 
-  void stateOnlyConstraint(ad_scalar_t time, const ad_dynamic_vector_t& state, ad_dynamic_vector_t& constraintVector) override {
+  void stateOnlyConstraint(ad_scalar_t time, const ad_dynamic_vector_t& state, ad_dynamic_vector_t& constraintVector) const override {
     constraintVector = h_.template cast<ad_scalar_t>() + F_.template cast<ad_scalar_t>() * state;
   }
 
-  void stateOnlyFinalConstraint(ad_scalar_t time, const ad_dynamic_vector_t& state, ad_dynamic_vector_t& constraintVector) override {
+  void stateOnlyFinalConstraint(ad_scalar_t time, const ad_dynamic_vector_t& state, ad_dynamic_vector_t& constraintVector) const override {
     constraintVector = h_f_.template cast<ad_scalar_t>() + F_f_.template cast<ad_scalar_t>() * state;
   }
 

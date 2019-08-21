@@ -34,15 +34,15 @@ namespace ocs2 {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <class Derived, size_t STATE_DIM, size_t INPUT_DIM>
-CostFunctionBaseAD<Derived, STATE_DIM, INPUT_DIM>::CostFunctionBaseAD()
+template <size_t STATE_DIM, size_t INPUT_DIM>
+CostFunctionBaseAD<STATE_DIM, INPUT_DIM>::CostFunctionBaseAD()
     : BASE(), intermediateDerivativesComputed_(false), terminalDerivativesComputed_(false) {}
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <class Derived, size_t STATE_DIM, size_t INPUT_DIM>
-CostFunctionBaseAD<Derived, STATE_DIM, INPUT_DIM>::CostFunctionBaseAD(const CostFunctionBaseAD& rhs)
+template <size_t STATE_DIM, size_t INPUT_DIM>
+CostFunctionBaseAD<STATE_DIM, INPUT_DIM>::CostFunctionBaseAD(const CostFunctionBaseAD& rhs)
     : BASE(rhs),
       intermediateADInterfacePtr_(new ad_interface_t(*rhs.intermediateADInterfacePtr_)),
       terminalADInterfacePtr_(new ad_interface_t(*rhs.terminalADInterfacePtr_)),
@@ -52,9 +52,9 @@ CostFunctionBaseAD<Derived, STATE_DIM, INPUT_DIM>::CostFunctionBaseAD(const Cost
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <class Derived, size_t STATE_DIM, size_t INPUT_DIM>
-void CostFunctionBaseAD<Derived, STATE_DIM, INPUT_DIM>::initialize(const std::string& modelName, const std::string& modelFolder,
-                                                                   bool recompileLibraries, bool verbose) {
+template <size_t STATE_DIM, size_t INPUT_DIM>
+void CostFunctionBaseAD<STATE_DIM, INPUT_DIM>::initialize(const std::string& modelName, const std::string& modelFolder,
+                                                          bool recompileLibraries, bool verbose) {
   setADInterfaces(modelName, modelFolder);
   if (recompileLibraries) {
     createModels(verbose);
@@ -66,9 +66,9 @@ void CostFunctionBaseAD<Derived, STATE_DIM, INPUT_DIM>::initialize(const std::st
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <class Derived, size_t STATE_DIM, size_t INPUT_DIM>
-void CostFunctionBaseAD<Derived, STATE_DIM, INPUT_DIM>::setCurrentStateAndControl(const scalar_t& t, const state_vector_t& x,
-                                                                                  const input_vector_t& u) {
+template <size_t STATE_DIM, size_t INPUT_DIM>
+void CostFunctionBaseAD<STATE_DIM, INPUT_DIM>::setCurrentStateAndControl(const scalar_t& t, const state_vector_t& x,
+                                                                         const input_vector_t& u) {
   BASE::setCurrentStateAndControl(t, x, u);
 
   tapedTimeState_ << t, x;
@@ -83,8 +83,8 @@ void CostFunctionBaseAD<Derived, STATE_DIM, INPUT_DIM>::setCurrentStateAndContro
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <class Derived, size_t STATE_DIM, size_t INPUT_DIM>
-void CostFunctionBaseAD<Derived, STATE_DIM, INPUT_DIM>::getIntermediateCost(scalar_t& L) {
+template <size_t STATE_DIM, size_t INPUT_DIM>
+void CostFunctionBaseAD<STATE_DIM, INPUT_DIM>::getIntermediateCost(scalar_t& L) {
   auto costValue = intermediateADInterfacePtr_->getFunctionValue(tapedTimeStateInput_, intermediateParameters_);
   L = costValue(0);
 }
@@ -92,8 +92,8 @@ void CostFunctionBaseAD<Derived, STATE_DIM, INPUT_DIM>::getIntermediateCost(scal
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <class Derived, size_t STATE_DIM, size_t INPUT_DIM>
-void CostFunctionBaseAD<Derived, STATE_DIM, INPUT_DIM>::getIntermediateCostDerivativeTime(scalar_t& dLdt) {
+template <size_t STATE_DIM, size_t INPUT_DIM>
+void CostFunctionBaseAD<STATE_DIM, INPUT_DIM>::getIntermediateCostDerivativeTime(scalar_t& dLdt) {
   if (!intermediateDerivativesComputed_) {
     intermediateJacobian_ = intermediateADInterfacePtr_->getJacobian(tapedTimeStateInput_, intermediateParameters_);
     intermediateHessian_ = intermediateADInterfacePtr_->getHessian(0, tapedTimeStateInput_, intermediateParameters_);
@@ -105,8 +105,8 @@ void CostFunctionBaseAD<Derived, STATE_DIM, INPUT_DIM>::getIntermediateCostDeriv
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <class Derived, size_t STATE_DIM, size_t INPUT_DIM>
-void CostFunctionBaseAD<Derived, STATE_DIM, INPUT_DIM>::getIntermediateCostDerivativeState(state_vector_t& dLdx) {
+template <size_t STATE_DIM, size_t INPUT_DIM>
+void CostFunctionBaseAD<STATE_DIM, INPUT_DIM>::getIntermediateCostDerivativeState(state_vector_t& dLdx) {
   if (!intermediateDerivativesComputed_) {
     intermediateJacobian_ = intermediateADInterfacePtr_->getJacobian(tapedTimeStateInput_, intermediateParameters_);
     intermediateHessian_ = intermediateADInterfacePtr_->getHessian(0, tapedTimeStateInput_, intermediateParameters_);
@@ -118,8 +118,8 @@ void CostFunctionBaseAD<Derived, STATE_DIM, INPUT_DIM>::getIntermediateCostDeriv
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <class Derived, size_t STATE_DIM, size_t INPUT_DIM>
-void CostFunctionBaseAD<Derived, STATE_DIM, INPUT_DIM>::getIntermediateCostSecondDerivativeState(state_matrix_t& dLdxx) {
+template <size_t STATE_DIM, size_t INPUT_DIM>
+void CostFunctionBaseAD<STATE_DIM, INPUT_DIM>::getIntermediateCostSecondDerivativeState(state_matrix_t& dLdxx) {
   if (!intermediateDerivativesComputed_) {
     intermediateJacobian_ = intermediateADInterfacePtr_->getJacobian(tapedTimeStateInput_, intermediateParameters_);
     intermediateHessian_ = intermediateADInterfacePtr_->getHessian(0, tapedTimeStateInput_, intermediateParameters_);
@@ -131,8 +131,8 @@ void CostFunctionBaseAD<Derived, STATE_DIM, INPUT_DIM>::getIntermediateCostSecon
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <class Derived, size_t STATE_DIM, size_t INPUT_DIM>
-void CostFunctionBaseAD<Derived, STATE_DIM, INPUT_DIM>::getIntermediateCostDerivativeInput(input_vector_t& dLdu) {
+template <size_t STATE_DIM, size_t INPUT_DIM>
+void CostFunctionBaseAD<STATE_DIM, INPUT_DIM>::getIntermediateCostDerivativeInput(input_vector_t& dLdu) {
   if (!intermediateDerivativesComputed_) {
     intermediateJacobian_ = intermediateADInterfacePtr_->getJacobian(tapedTimeStateInput_, intermediateParameters_);
     intermediateHessian_ = intermediateADInterfacePtr_->getHessian(0, tapedTimeStateInput_, intermediateParameters_);
@@ -144,8 +144,8 @@ void CostFunctionBaseAD<Derived, STATE_DIM, INPUT_DIM>::getIntermediateCostDeriv
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <class Derived, size_t STATE_DIM, size_t INPUT_DIM>
-void CostFunctionBaseAD<Derived, STATE_DIM, INPUT_DIM>::getIntermediateCostSecondDerivativeInput(input_matrix_t& dLduu) {
+template <size_t STATE_DIM, size_t INPUT_DIM>
+void CostFunctionBaseAD<STATE_DIM, INPUT_DIM>::getIntermediateCostSecondDerivativeInput(input_matrix_t& dLduu) {
   if (!intermediateDerivativesComputed_) {
     intermediateJacobian_ = intermediateADInterfacePtr_->getJacobian(tapedTimeStateInput_, intermediateParameters_);
     intermediateHessian_ = intermediateADInterfacePtr_->getHessian(0, tapedTimeStateInput_, intermediateParameters_);
@@ -157,8 +157,8 @@ void CostFunctionBaseAD<Derived, STATE_DIM, INPUT_DIM>::getIntermediateCostSecon
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <class Derived, size_t STATE_DIM, size_t INPUT_DIM>
-void CostFunctionBaseAD<Derived, STATE_DIM, INPUT_DIM>::getIntermediateCostDerivativeInputState(input_state_matrix_t& dLdux) {
+template <size_t STATE_DIM, size_t INPUT_DIM>
+void CostFunctionBaseAD<STATE_DIM, INPUT_DIM>::getIntermediateCostDerivativeInputState(input_state_matrix_t& dLdux) {
   if (!intermediateDerivativesComputed_) {
     intermediateJacobian_ = intermediateADInterfacePtr_->getJacobian(tapedTimeStateInput_, intermediateParameters_);
     intermediateHessian_ = intermediateADInterfacePtr_->getHessian(0, tapedTimeStateInput_, intermediateParameters_);
@@ -170,8 +170,8 @@ void CostFunctionBaseAD<Derived, STATE_DIM, INPUT_DIM>::getIntermediateCostDeriv
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <class Derived, size_t STATE_DIM, size_t INPUT_DIM>
-void CostFunctionBaseAD<Derived, STATE_DIM, INPUT_DIM>::getTerminalCost(scalar_t& Phi) {
+template <size_t STATE_DIM, size_t INPUT_DIM>
+void CostFunctionBaseAD<STATE_DIM, INPUT_DIM>::getTerminalCost(scalar_t& Phi) {
   auto costValue = terminalADInterfacePtr_->getFunctionValue(tapedTimeState_, getTerminalParameters());
   Phi = costValue(0);
 }
@@ -179,8 +179,8 @@ void CostFunctionBaseAD<Derived, STATE_DIM, INPUT_DIM>::getTerminalCost(scalar_t
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <class Derived, size_t STATE_DIM, size_t INPUT_DIM>
-void CostFunctionBaseAD<Derived, STATE_DIM, INPUT_DIM>::getTerminalCostDerivativeTime(scalar_t& dPhidt) {
+template <size_t STATE_DIM, size_t INPUT_DIM>
+void CostFunctionBaseAD<STATE_DIM, INPUT_DIM>::getTerminalCostDerivativeTime(scalar_t& dPhidt) {
   if (!terminalDerivativesComputed_) {
     terminalJacobian_ = terminalADInterfacePtr_->getJacobian(tapedTimeState_, getTerminalParameters());
     terminalHessian_ = terminalADInterfacePtr_->getHessian(0, tapedTimeState_, getTerminalParameters());
@@ -192,8 +192,8 @@ void CostFunctionBaseAD<Derived, STATE_DIM, INPUT_DIM>::getTerminalCostDerivativ
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <class Derived, size_t STATE_DIM, size_t INPUT_DIM>
-void CostFunctionBaseAD<Derived, STATE_DIM, INPUT_DIM>::getTerminalCostDerivativeState(state_vector_t& dPhidx) {
+template <size_t STATE_DIM, size_t INPUT_DIM>
+void CostFunctionBaseAD<STATE_DIM, INPUT_DIM>::getTerminalCostDerivativeState(state_vector_t& dPhidx) {
   if (!terminalDerivativesComputed_) {
     terminalJacobian_ = terminalADInterfacePtr_->getJacobian(tapedTimeState_, getTerminalParameters());
     terminalHessian_ = terminalADInterfacePtr_->getHessian(0, tapedTimeState_, getTerminalParameters());
@@ -205,8 +205,8 @@ void CostFunctionBaseAD<Derived, STATE_DIM, INPUT_DIM>::getTerminalCostDerivativ
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <class Derived, size_t STATE_DIM, size_t INPUT_DIM>
-void CostFunctionBaseAD<Derived, STATE_DIM, INPUT_DIM>::getTerminalCostSecondDerivativeState(state_matrix_t& dPhidxx) {
+template <size_t STATE_DIM, size_t INPUT_DIM>
+void CostFunctionBaseAD<STATE_DIM, INPUT_DIM>::getTerminalCostSecondDerivativeState(state_matrix_t& dPhidxx) {
   if (!terminalDerivativesComputed_) {
     terminalJacobian_ = terminalADInterfacePtr_->getJacobian(tapedTimeState_, getTerminalParameters());
     terminalHessian_ = terminalADInterfacePtr_->getHessian(0, tapedTimeState_, getTerminalParameters());
@@ -218,8 +218,8 @@ void CostFunctionBaseAD<Derived, STATE_DIM, INPUT_DIM>::getTerminalCostSecondDer
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <class Derived, size_t STATE_DIM, size_t INPUT_DIM>
-void CostFunctionBaseAD<Derived, STATE_DIM, INPUT_DIM>::setADInterfaces(const std::string& modelName, const std::string& modelFolder) {
+template <size_t STATE_DIM, size_t INPUT_DIM>
+void CostFunctionBaseAD<STATE_DIM, INPUT_DIM>::setADInterfaces(const std::string& modelName, const std::string& modelFolder) {
   auto intermediateCostAd = [this](const ad_dynamic_vector_t& x, const ad_dynamic_vector_t& p, ad_dynamic_vector_t& y) {
     auto time = x(0);
     auto state = x.template segment<STATE_DIM>(1);
@@ -243,8 +243,8 @@ void CostFunctionBaseAD<Derived, STATE_DIM, INPUT_DIM>::setADInterfaces(const st
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <class Derived, size_t STATE_DIM, size_t INPUT_DIM>
-void CostFunctionBaseAD<Derived, STATE_DIM, INPUT_DIM>::createModels(bool verbose) {
+template <size_t STATE_DIM, size_t INPUT_DIM>
+void CostFunctionBaseAD<STATE_DIM, INPUT_DIM>::createModels(bool verbose) {
   intermediateADInterfacePtr_->createModels(ad_interface_t::ApproximationOrder::Second, verbose);
   terminalADInterfacePtr_->createModels(ad_interface_t::ApproximationOrder::Second, verbose);
 }
@@ -252,8 +252,8 @@ void CostFunctionBaseAD<Derived, STATE_DIM, INPUT_DIM>::createModels(bool verbos
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <class Derived, size_t STATE_DIM, size_t INPUT_DIM>
-void CostFunctionBaseAD<Derived, STATE_DIM, INPUT_DIM>::loadModelsIfAvailable(bool verbose) {
+template <size_t STATE_DIM, size_t INPUT_DIM>
+void CostFunctionBaseAD<STATE_DIM, INPUT_DIM>::loadModelsIfAvailable(bool verbose) {
   intermediateADInterfacePtr_->loadModelsIfAvailable(ad_interface_t::ApproximationOrder::Second, verbose);
   terminalADInterfacePtr_->loadModelsIfAvailable(ad_interface_t::ApproximationOrder::Second, verbose);
 }

@@ -71,16 +71,16 @@ class testCppADCG_constraintFixture : public ::testing::Test {
     linearConstraint_.reset(
         new linear_constraint_t(numStateInputConstraint, e, C, D, numStateOnlyConstraint, h, F, numStateOnlyFinalConstraint, h_f, F_f));
 
-    ad_linearConstraint_.reset(
+    adLinearConstraint.reset(
         new ad_linear_constraint_t(numStateInputConstraint, e, C, D, numStateOnlyConstraint, h, F, numStateOnlyFinalConstraint, h_f, F_f));
 
     boost::filesystem::path filePath(__FILE__);
     std::string libraryFolder = filePath.parent_path().generic_string() + "/testCppADCG_generated";
-    ad_linearConstraint_->initialize("testCppADCG_constraint", libraryFolder, true, true);
+    adLinearConstraint->initialize("testCppADCG_constraint", libraryFolder, true, true);
   }
 
   std::unique_ptr<linear_constraint_t> linearConstraint_;
-  std::unique_ptr<ad_linear_constraint_t> ad_linearConstraint_;
+  std::unique_ptr<ad_linear_constraint_t> adLinearConstraint;
 };
 
 template <size_t STATE_DIM, size_t INPUT_DIM>
@@ -190,7 +190,7 @@ bool checkConstraints(const size_t numTests, ocs2::ConstraintBase<STATE_DIM, INP
 /******************************************************************************/
 TEST_F(testCppADCG_constraintFixture, constraint_test) {
   bool success;
-  checkConstraints(100, linearConstraint_.get(), ad_linearConstraint_.get(), success);
+  checkConstraints(100, linearConstraint_.get(), adLinearConstraint.get(), success);
   ASSERT_TRUE(success);
 }
 
@@ -198,7 +198,7 @@ TEST_F(testCppADCG_constraintFixture, constraint_test) {
 /******************************************************************************/
 /******************************************************************************/
 TEST_F(testCppADCG_constraintFixture, clone_test) {
-  constraint_t::Ptr ad_cloneConstraint(ad_linearConstraint_->clone());
+  constraint_t::Ptr ad_cloneConstraint(adLinearConstraint->clone());
   bool success;
   checkConstraints(100, linearConstraint_.get(), ad_cloneConstraint.get(), success);
   ASSERT_TRUE(success);
@@ -208,11 +208,11 @@ TEST_F(testCppADCG_constraintFixture, clone_test) {
 /******************************************************************************/
 /******************************************************************************/
 TEST_F(testCppADCG_constraintFixture, multithread_test) {
-  constraint_t::Ptr cloneConstraint(linearConstraint_->clone());
-  constraint_t::Ptr ad_cloneConstraint(ad_linearConstraint_->clone());
+  std::unique_ptr<constraint_t> cloneConstraint(linearConstraint_->clone());
+  std::unique_ptr<constraint_t> ad_cloneConstraint(adLinearConstraint->clone());
 
   bool success = false;
-  std::thread thread1(checkConstraints<state_dim_, input_dim_>, 10000, linearConstraint_.get(), ad_linearConstraint_.get(),
+  std::thread thread1(checkConstraints<state_dim_, input_dim_>, 10000, linearConstraint_.get(), adLinearConstraint.get(),
                       std::ref(success));
 
   bool successClone = false;

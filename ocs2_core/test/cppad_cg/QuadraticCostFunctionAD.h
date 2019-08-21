@@ -34,14 +34,11 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 namespace ocs2 {
 
 template <size_t STATE_DIM, size_t INPUT_DIM>
-class QuadraticCostFunctionAD : public CostFunctionBaseAD<QuadraticCostFunctionAD<STATE_DIM, INPUT_DIM>, STATE_DIM, INPUT_DIM> {
+class QuadraticCostFunctionAD : public CostFunctionBaseAD<STATE_DIM, INPUT_DIM> {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-  using Ptr = std::shared_ptr<QuadraticCostFunctionAD>;
-  using ConstPtr = std::shared_ptr<const QuadraticCostFunctionAD>;
-
-  using BASE = CostFunctionBaseAD<QuadraticCostFunctionAD, STATE_DIM, INPUT_DIM>;
+  using BASE = CostFunctionBaseAD<STATE_DIM, INPUT_DIM>;
   using typename BASE::ad_dynamic_vector_t;
   using typename BASE::ad_scalar_t;
   using typename BASE::dynamic_vector_t;
@@ -56,30 +53,39 @@ class QuadraticCostFunctionAD : public CostFunctionBaseAD<QuadraticCostFunctionA
   using typename BASE::state_vector_t;
 
   QuadraticCostFunctionAD(const state_matrix_t& Q, const input_matrix_t& R, const state_vector_t& xNominal, const input_vector_t& uNominal,
-                          const state_matrix_t& QFinal, const state_vector_t& xFinal, const input_state_matrix_t& P = input_state_matrix_t::Zero())
+                          const state_matrix_t& QFinal, const state_vector_t& xFinal,
+                          const input_state_matrix_t& P = input_state_matrix_t::Zero())
       : BASE(), Q_(Q), R_(R), P_(P), QFinal_(QFinal), xNominal_(xNominal), uNominal_(uNominal), xFinal_(xFinal) {}
 
-  QuadraticCostFunctionAD(const QuadraticCostFunctionAD& rhs) : BASE(rhs),
-                                                                Q_(rhs.Q_), R_(rhs.R_), P_(rhs.P_), QFinal_(rhs.QFinal_), xNominal_(rhs.xNominal_),
-                                                                uNominal_(rhs.uNominal_), xFinal_(rhs.xFinal_) {};
+  QuadraticCostFunctionAD(const QuadraticCostFunctionAD& rhs)
+      : BASE(rhs),
+        Q_(rhs.Q_),
+        R_(rhs.R_),
+        P_(rhs.P_),
+        QFinal_(rhs.QFinal_),
+        xNominal_(rhs.xNominal_),
+        uNominal_(rhs.uNominal_),
+        xFinal_(rhs.xFinal_){};
 
   ~QuadraticCostFunctionAD() override = default;
 
+  QuadraticCostFunctionAD* clone() const override { return new QuadraticCostFunctionAD(*this); }
+
  protected:
-  dynamic_vector_t getIntermediateParameters(scalar_t time) override {
+  dynamic_vector_t getIntermediateParameters(scalar_t time) const override {
     dynamic_vector_t parameters(STATE_DIM + INPUT_DIM);
     parameters << xNominal_, uNominal_;
     return parameters;
   }
 
-  size_t getNumIntermediateParameters() override { return STATE_DIM + INPUT_DIM; };
+  size_t getNumIntermediateParameters() const override { return STATE_DIM + INPUT_DIM; };
 
-  dynamic_vector_t getTerminalParameters() override { return xFinal_; }
+  dynamic_vector_t getTerminalParameters() const override { return xFinal_; }
 
-  size_t getNumTerminalParameters() override { return STATE_DIM; };
+  size_t getNumTerminalParameters() const override { return STATE_DIM; };
 
   void intermediateCostFunction(ad_scalar_t time, const ad_dynamic_vector_t& state, const ad_dynamic_vector_t& input,
-                                const ad_dynamic_vector_t& parameters, ad_scalar_t& costValue) {
+                                const ad_dynamic_vector_t& parameters, ad_scalar_t& costValue) const {
     ad_dynamic_vector_t stateDesired = parameters.template head<STATE_DIM>();
     ad_dynamic_vector_t inputDesired = parameters.template tail<INPUT_DIM>();
     ad_dynamic_vector_t xDeviation = state - stateDesired;
@@ -91,7 +97,7 @@ class QuadraticCostFunctionAD : public CostFunctionBaseAD<QuadraticCostFunctionA
   }
 
   void terminalCostFunction(ad_scalar_t time, const ad_dynamic_vector_t& state, const ad_dynamic_vector_t& parameters,
-                            ad_scalar_t& costValue) {
+                            ad_scalar_t& costValue) const {
     ad_dynamic_vector_t stateDesired = parameters.template head<STATE_DIM>();
     ad_dynamic_vector_t xDeviation = state - stateDesired;
     costValue = 0.5 * xDeviation.dot(QFinal_.template cast<ad_scalar_t>() * xDeviation);

@@ -49,14 +49,14 @@ namespace ballbot {
  * torque_anypulator_joint1, torque_anypulator_joint2, torque_anypulator_joint3) The transformation from wheels torques to joint
  * accelerations is computed through Mathematica computations and has been tested on the robot
  */
-class BallbotSystemDynamics : public SystemDynamicsBaseAD<BallbotSystemDynamics, ballbot::STATE_DIM_, ballbot::INPUT_DIM_> {
+class BallbotSystemDynamics : public SystemDynamicsBaseAD<ballbot::STATE_DIM_, ballbot::INPUT_DIM_> {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
   using Ptr = std::shared_ptr<BallbotSystemDynamics>;
   using ConstPtr = std::shared_ptr<const BallbotSystemDynamics>;
 
-  using BASE = ocs2::SystemDynamicsBaseAD<BallbotSystemDynamics, ballbot::STATE_DIM_, ballbot::INPUT_DIM_>;
+  using BASE = ocs2::SystemDynamicsBaseAD<ballbot::STATE_DIM_, ballbot::INPUT_DIM_>;
   using scalar_t = typename BASE::scalar_t;
   using ad_scalar_t = typename BASE::ad_scalar_t;
   using ad_dynamic_vector_t = typename BASE::ad_dynamic_vector_t;
@@ -79,8 +79,13 @@ class BallbotSystemDynamics : public SystemDynamicsBaseAD<BallbotSystemDynamics,
    */
   ~BallbotSystemDynamics() override = default;
 
+  BallbotSystemDynamics(const BallbotSystemDynamics& rhs)
+      : BASE(rhs), param_(rhs.param_), wheelRadius_(rhs.wheelRadius_), ballRadius_(rhs.ballRadius_) {}
+
+  BallbotSystemDynamics* clone() const override { return new BallbotSystemDynamics(*this); }
+
   void systemFlowMap(ad_scalar_t time, const ad_dynamic_vector_t& state, const ad_dynamic_vector_t& input,
-                     ad_dynamic_vector_t& stateDerivative) override;
+                     ad_dynamic_vector_t& stateDerivative) const override;
 
  private:
   ballbot_parameters_t param_;

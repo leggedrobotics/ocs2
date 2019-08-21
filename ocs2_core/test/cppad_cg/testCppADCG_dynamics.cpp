@@ -41,7 +41,7 @@ class testCppADCG_dynamicsFixture : public ::testing::Test {
   static const size_t state_dim_ = 4;
   static const size_t input_dim_ = 2;
 
-  using base_cost_t = ocs2::DerivativesBase<state_dim_, input_dim_>;
+  using base_dynamics_t = ocs2::DerivativesBase<state_dim_, input_dim_>;
   using system_dynamics_t = ocs2::LinearSystemDynamics<state_dim_, input_dim_>;
   using ad_system_dynamics_t = ocs2::LinearSystemDynamicsAD<state_dim_, input_dim_>;
 
@@ -143,7 +143,7 @@ TEST_F(testCppADCG_dynamicsFixture, system_dynamics_test) {
 /******************************************************************************/
 /******************************************************************************/
 TEST_F(testCppADCG_dynamicsFixture, clone_test) {
-  base_cost_t::Ptr adLinearSystemPtr(adLinearSystem_->clone());
+  std::unique_ptr<base_dynamics_t> adLinearSystemPtr(adLinearSystem_->clone());
 
   bool success;
   checkSystemDynamics(100, linearSystem_.get(), adLinearSystemPtr.get(), success);
@@ -155,8 +155,8 @@ TEST_F(testCppADCG_dynamicsFixture, clone_test) {
 /******************************************************************************/
 /******************************************************************************/
 TEST_F(testCppADCG_dynamicsFixture, multithread_test) {
-  base_cost_t::Ptr linearSystemPtr(linearSystem_->clone());
-  base_cost_t::Ptr adLinearSystemPtr(adLinearSystem_->clone());
+  std::unique_ptr<base_dynamics_t> linearSystemPtr(linearSystem_->clone());
+  std::unique_ptr<base_dynamics_t> adLinearSystemPtr(adLinearSystem_->clone());
 
   bool success = false;
   std::thread thread1(checkSystemDynamics<state_dim_, input_dim_>, 10000, linearSystem_.get(), adLinearSystem_.get(), std::ref(success));

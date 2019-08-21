@@ -37,17 +37,13 @@ namespace ocs2 {
 /**
  * Cost Function Base with Algorithmic Differentiation (i.e. Auto Differentiation).
  *
- * @tparam Derived: Derived class type.
  * @tparam STATE_DIM: Dimension of the state space.
  * @tparam INPUT_DIM: Dimension of the control input space.
  */
-template <class Derived, size_t STATE_DIM, size_t INPUT_DIM>
+template <size_t STATE_DIM, size_t INPUT_DIM>
 class CostFunctionBaseAD : public CostFunctionBase<STATE_DIM, INPUT_DIM> {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-
-  using Ptr = std::shared_ptr<CostFunctionBaseAD>;
-  using ConstPtr = std::shared_ptr<const CostFunctionBaseAD>;
 
   using BASE = CostFunctionBase<STATE_DIM, INPUT_DIM>;
   using typename BASE::dynamic_vector_array_t;
@@ -92,13 +88,6 @@ class CostFunctionBaseAD : public CostFunctionBase<STATE_DIM, INPUT_DIM> {
   virtual ~CostFunctionBaseAD() = default;
 
   /**
-   * Returns a deep copy
-   *
-   * @return A raw pointer to the base class.
-   */
-  BASE* clone() const final { return new Derived(static_cast<Derived const&>(*this)); };
-
-  /**
    * Initializes model libraries
    *
    * @param modelName : name of the generate model library
@@ -141,18 +130,30 @@ class CostFunctionBaseAD : public CostFunctionBase<STATE_DIM, INPUT_DIM> {
    * @param [in] time: Current time.
    * @return The cost function parameters at a certain time
    */
-  virtual dynamic_vector_t getIntermediateParameters(scalar_t time) { return dynamic_vector_t(0); };
+  virtual dynamic_vector_t getIntermediateParameters(scalar_t time) const { return dynamic_vector_t(0); };
 
-  virtual size_t getNumIntermediateParameters() { return 0; };
+  /**
+   * Number of parameters for the intermediate cost function.
+   * This number must be remain constant after the model libraries are created
+   *
+   * @return number of parameters
+   */
+  virtual size_t getNumIntermediateParameters() const { return 0; };
 
   /**
    * Gets a user-defined cost parameters, applied to the terminal costs
    *
    * @return The cost function parameters at a certain time
    */
-  virtual dynamic_vector_t getTerminalParameters() { return dynamic_vector_t(0); };
+  virtual dynamic_vector_t getTerminalParameters() const { return dynamic_vector_t(0); };
 
-  virtual size_t getNumTerminalParameters() { return 0; };
+  /**
+   * Number of parameters for the terminal cost function.
+   * This number must be remain constant after the model libraries are created
+   *
+   * @return number of parameters
+   */
+  virtual size_t getNumTerminalParameters() const { return 0; };
 
   /**
    * Interface method to the intermediate cost function. This method should be implemented by the derived class.
@@ -167,7 +168,7 @@ class CostFunctionBaseAD : public CostFunctionBase<STATE_DIM, INPUT_DIM> {
    * @param [out] costValue: cost value.
    */
   virtual void intermediateCostFunction(ad_scalar_t time, const ad_dynamic_vector_t& state, const ad_dynamic_vector_t& input,
-                                        const ad_dynamic_vector_t& parameters, ad_scalar_t& costValue) = 0;
+                                        const ad_dynamic_vector_t& parameters, ad_scalar_t& costValue) const = 0;
 
   /**
    * Interface method to the terminal cost function. This method should be implemented by the derived class.
@@ -180,7 +181,7 @@ class CostFunctionBaseAD : public CostFunctionBase<STATE_DIM, INPUT_DIM> {
    * @param [out] costValue: cost value.
    */
   virtual void terminalCostFunction(ad_scalar_t time, const ad_dynamic_vector_t& state, const ad_dynamic_vector_t& parameters,
-                                    ad_scalar_t& costValue) {
+                                    ad_scalar_t& costValue) const {
     costValue = 0;
   };
 

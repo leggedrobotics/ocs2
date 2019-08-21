@@ -75,6 +75,7 @@ void CostFunctionBaseAD<STATE_DIM, INPUT_DIM>::setCurrentStateAndControl(const s
   tapedTimeStateInput_ << t, x, u;
 
   intermediateParameters_ = getIntermediateParameters(t);
+  terminalParameters_ = getTerminalParameters(t);
 
   intermediateDerivativesComputed_ = false;
   terminalDerivativesComputed_ = false;
@@ -172,7 +173,7 @@ void CostFunctionBaseAD<STATE_DIM, INPUT_DIM>::getIntermediateCostDerivativeInpu
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
 void CostFunctionBaseAD<STATE_DIM, INPUT_DIM>::getTerminalCost(scalar_t& Phi) {
-  auto costValue = terminalADInterfacePtr_->getFunctionValue(tapedTimeState_, getTerminalParameters());
+  auto costValue = terminalADInterfacePtr_->getFunctionValue(tapedTimeState_, terminalParameters_);
   Phi = costValue(0);
 }
 
@@ -182,8 +183,8 @@ void CostFunctionBaseAD<STATE_DIM, INPUT_DIM>::getTerminalCost(scalar_t& Phi) {
 template <size_t STATE_DIM, size_t INPUT_DIM>
 void CostFunctionBaseAD<STATE_DIM, INPUT_DIM>::getTerminalCostDerivativeTime(scalar_t& dPhidt) {
   if (!terminalDerivativesComputed_) {
-    terminalJacobian_ = terminalADInterfacePtr_->getJacobian(tapedTimeState_, getTerminalParameters());
-    terminalHessian_ = terminalADInterfacePtr_->getHessian(0, tapedTimeState_, getTerminalParameters());
+    terminalJacobian_ = terminalADInterfacePtr_->getJacobian(tapedTimeState_, terminalParameters_);
+    terminalHessian_ = terminalADInterfacePtr_->getHessian(0, tapedTimeState_, terminalParameters_);
     terminalDerivativesComputed_ = true;
   }
   dPhidt = terminalJacobian_(0);
@@ -195,8 +196,8 @@ void CostFunctionBaseAD<STATE_DIM, INPUT_DIM>::getTerminalCostDerivativeTime(sca
 template <size_t STATE_DIM, size_t INPUT_DIM>
 void CostFunctionBaseAD<STATE_DIM, INPUT_DIM>::getTerminalCostDerivativeState(state_vector_t& dPhidx) {
   if (!terminalDerivativesComputed_) {
-    terminalJacobian_ = terminalADInterfacePtr_->getJacobian(tapedTimeState_, getTerminalParameters());
-    terminalHessian_ = terminalADInterfacePtr_->getHessian(0, tapedTimeState_, getTerminalParameters());
+    terminalJacobian_ = terminalADInterfacePtr_->getJacobian(tapedTimeState_, terminalParameters_);
+    terminalHessian_ = terminalADInterfacePtr_->getHessian(0, tapedTimeState_, terminalParameters_);
     terminalDerivativesComputed_ = true;
   }
   dPhidx = terminalJacobian_.template segment<STATE_DIM>(1).transpose();
@@ -208,8 +209,8 @@ void CostFunctionBaseAD<STATE_DIM, INPUT_DIM>::getTerminalCostDerivativeState(st
 template <size_t STATE_DIM, size_t INPUT_DIM>
 void CostFunctionBaseAD<STATE_DIM, INPUT_DIM>::getTerminalCostSecondDerivativeState(state_matrix_t& dPhidxx) {
   if (!terminalDerivativesComputed_) {
-    terminalJacobian_ = terminalADInterfacePtr_->getJacobian(tapedTimeState_, getTerminalParameters());
-    terminalHessian_ = terminalADInterfacePtr_->getHessian(0, tapedTimeState_, getTerminalParameters());
+    terminalJacobian_ = terminalADInterfacePtr_->getJacobian(tapedTimeState_, terminalParameters_);
+    terminalHessian_ = terminalADInterfacePtr_->getHessian(0, tapedTimeState_, terminalParameters_);
     terminalDerivativesComputed_ = true;
   }
   dPhidxx = terminalHessian_.template block<STATE_DIM, STATE_DIM>(1, 1);

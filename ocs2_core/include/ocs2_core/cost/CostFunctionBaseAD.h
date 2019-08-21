@@ -143,9 +143,10 @@ class CostFunctionBaseAD : public CostFunctionBase<STATE_DIM, INPUT_DIM> {
   /**
    * Gets a user-defined cost parameters, applied to the terminal costs
    *
+   * @param [in] time: Current time.
    * @return The cost function parameters at a certain time
    */
-  virtual dynamic_vector_t getTerminalParameters() const { return dynamic_vector_t(0); }
+  virtual dynamic_vector_t getTerminalParameters(scalar_t time) const { return dynamic_vector_t(0); }
 
   /**
    * Number of parameters for the terminal cost function.
@@ -156,28 +157,25 @@ class CostFunctionBaseAD : public CostFunctionBase<STATE_DIM, INPUT_DIM> {
   virtual size_t getNumTerminalParameters() const { return 0; }
 
   /**
-   * Interface method to the intermediate cost function. This method should be implemented by the derived class.
+   * Interface method to the intermediate cost function. This method must be implemented by the derived class.
    *
    * @tparam scalar type. All the floating point operations should be with this type.
    * @param [in] time: time.
    * @param [in] state: state vector.
    * @param [in] input: input vector.
-   * @param [in] stateDesired: desired state vector.
-   * @param [in] inputDesired: desired input vector.
-   * @param [in] logicVariable: logic variable vector.
+   * @param [in] parameters: parameter vector.
    * @param [out] costValue: cost value.
    */
   virtual void intermediateCostFunction(ad_scalar_t time, const ad_dynamic_vector_t& state, const ad_dynamic_vector_t& input,
                                         const ad_dynamic_vector_t& parameters, ad_scalar_t& costValue) const = 0;
 
   /**
-   * Interface method to the terminal cost function. This method should be implemented by the derived class.
+   * Interface method to the terminal cost function. This method can be implemented by the derived class.
    *
    * @tparam scalar type. All the floating point operations should be with this type.
    * @param [in] time: time.
    * @param [in] state: state vector.
-   * @param [in] stateDesired: desired state vector.
-   * @param [in] logicVariable: logic variable vector.
+   * @param [in] parameters: parameter vector.
    * @param [out] costValue: cost value.
    */
   virtual void terminalCostFunction(ad_scalar_t time, const ad_dynamic_vector_t& state, const ad_dynamic_vector_t& parameters,
@@ -208,16 +206,16 @@ class CostFunctionBaseAD : public CostFunctionBase<STATE_DIM, INPUT_DIM> {
   std::unique_ptr<ad_interface_t> terminalADInterfacePtr_;
   std::unique_ptr<ad_interface_t> intermediateADInterfacePtr_;
 
-  dynamic_vector_t intermediateParameters_;
-
   // Intermediate cost
   bool intermediateDerivativesComputed_;
+  dynamic_vector_t intermediateParameters_;
   timeStateInput_vector_t tapedTimeStateInput_;
   timeStateInput_rowVector_t intermediateJacobian_;
   timeStateInput_matrix_t intermediateHessian_;
 
   // Final cost
   bool terminalDerivativesComputed_;
+  dynamic_vector_t terminalParameters_;
   timeState_vector_t tapedTimeState_;
   timeState_rowVector_t terminalJacobian_;
   timeState_matrix_t terminalHessian_;

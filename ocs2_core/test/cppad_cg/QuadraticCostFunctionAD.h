@@ -80,7 +80,7 @@ class QuadraticCostFunctionAD : public CostFunctionBaseAD<STATE_DIM, INPUT_DIM> 
 
   size_t getNumIntermediateParameters() const override { return STATE_DIM + INPUT_DIM; };
 
-  dynamic_vector_t getTerminalParameters() const override { return xFinal_; }
+  dynamic_vector_t getTerminalParameters(scalar_t time) const override { return xFinal_; }
 
   size_t getNumTerminalParameters() const override { return STATE_DIM; };
 

@@ -27,15 +27,14 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#ifndef LINEARCONSTRAINT_H_
-#define LINEARCONSTRAINT_OCS2_H_
+#pragma once
 
 #include "ocs2_core/constraint/ConstraintBase.h"
 
 namespace ocs2 {
 
 template <size_t STATE_DIM, size_t INPUT_DIM>
-class LinearConstraint : public ConstraintBase<STATE_DIM, INPUT_DIM> {
+class LinearConstraint final : public ConstraintBase<STATE_DIM, INPUT_DIM> {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
@@ -60,39 +59,98 @@ class LinearConstraint : public ConstraintBase<STATE_DIM, INPUT_DIM> {
   using typename BASE::state_vector_array_t;
   using typename BASE::state_vector_t;
 
-  LinearConstraint(const size_t& numStateInputConstraint, const constraint1_vector_t& e, const constraint1_state_matrix_t& C,
-                   const constraint1_input_matrix_t& D, const size_t& numStateOnlyConstraint, const constraint2_vector_t& h,
-                   const constraint2_state_matrix_t& F, const size_t& numStateOnlyFinalConstraint, const constraint2_vector_t& h_f,
+  /**
+   * @brief Constructor that sets the number constraints for all types to 0
+   */
+  LinearConstraint()
+      : numStateInputConstraint_(0),
+        e_(constraint1_vector_t::Zero()),
+        C_(constraint1_state_matrix_t::Zero()),
+        D_(constraint1_input_matrix_t::Zero()),
+        numStateOnlyConstraint_(0),
+        h_(constraint2_vector_t::Zero()),
+        F_(constraint2_state_matrix_t::Zero()),
+        numStateOnlyFinalConstraint_(0),
+        h_f_(constraint2_vector_t::Zero()),
+        F_f_(constraint2_state_matrix_t::Zero()),
+        numInequalityConstraint_(0),
+        h0_(),
+        dhdx_(),
+        dhdu_(),
+        ddhdxdx_(),
+        ddhdudu_(),
+        ddhdudx_() {}
+
+  /**
+   * @brief Constructor for only equality constraints
+   *
+   * @param[in] numStateInputConstraint: Number of state-input equality constraints
+   * @param[in] e: Constant term in C * x + D * u + e = 0
+   * @param[in] C: x factor in C * x + D * u + e = 0
+   * @param[in] D: u factor in C * x + D * u + e = 0
+   * @param[in] numStateOnlyConstraint: Number of state-only equality constraints
+   * @param[in] h: Constant term in F * x + h = 0
+   * @param[in] F: x factor in F * x + h = 0
+   * @param[in] numStateOnlyFinalConstraint: Number of final time state-only equality constrains
+   * @param[in] h_f: Constant term in F_f * x + h_f = 0 (at final time)
+   * @param[in] F_f: x factor in F_f * x + h_f = 0 (at final time)
+   */
+  LinearConstraint(size_t numStateInputConstraint, const constraint1_vector_t& e, const constraint1_state_matrix_t& C,
+                   const constraint1_input_matrix_t& D, size_t numStateOnlyConstraint, const constraint2_vector_t& h,
+                   const constraint2_state_matrix_t& F, size_t numStateOnlyFinalConstraint, const constraint2_vector_t& h_f,
                    const constraint2_state_matrix_t& F_f)
-
-      : numStateInputConstraint_(numStateInputConstraint),
+      : numStateInputConstraint_(std::move(numStateInputConstraint)),
         e_(e),
         C_(C),
         D_(D),
-        numStateOnlyConstraint_(numStateOnlyConstraint),
+        numStateOnlyConstraint_(std::move(numStateOnlyConstraint)),
         h_(h),
         F_(F),
-        numStateOnlyFinalConstraint_(numStateOnlyFinalConstraint),
-        h_f_(h_f),
-        F_f_(F_f) {}
-
-  LinearConstraint(const size_t& numStateInputConstraint, const constraint1_vector_t& e, const constraint1_state_matrix_t& C,
-                   const constraint1_input_matrix_t& D, const size_t& numStateOnlyConstraint, const constraint2_vector_t& h,
-                   const constraint2_state_matrix_t& F, const size_t& numStateOnlyFinalConstraint, const constraint2_vector_t& h_f,
-                   const constraint2_state_matrix_t& F_f, const size_t& numInequalityConstraint, const scalar_array_t& h0,
-                   const state_vector_array_t& dhdx, const input_vector_array_t& dhdu, const state_matrix_array_t& ddhdxdx,
-                   const input_matrix_array_t& ddhdudu, const input_state_matrix_array_t& ddhdudx)
-      : numStateInputConstraint_(numStateInputConstraint),
-        e_(e),
-        C_(C),
-        D_(D),
-        numStateOnlyConstraint_(numStateOnlyConstraint),
-        h_(h),
-        F_(F),
-        numStateOnlyFinalConstraint_(numStateOnlyFinalConstraint),
+        numStateOnlyFinalConstraint_(std::move(numStateOnlyFinalConstraint)),
         h_f_(h_f),
         F_f_(F_f),
-        numInequalityConstraint_(numInequalityConstraint),
+        numInequalityConstraint_(0) {}
+
+  /**
+   * @brief General constructor for equality and inequality constraints
+   * @note The inequality constraint can be quadratic of the form
+   * h0 + x^T * dhdx + u^T * dhdu + x^T * ddhdxdx * x + u^T * ddhdudu * u + u^T * ddhdudx * x >= 0
+   *
+   * @param[in] numStateInputConstraint: Number of state-input equality constraints
+   * @param[in] e: Constant term in C * x + D * u + e = 0
+   * @param[in] C: x factor in C * x + D * u + e = 0
+   * @param[in] D: u factor in C * x + D * u + e = 0
+   * @param[in] numStateOnlyConstraint: Number of state-only equality constraints
+   * @param[in] h: Constant term in F * x + h = 0
+   * @param[in] F: x factor in F * x + h = 0
+   * @param[in] numStateOnlyFinalConstraint: Number of final time state-only equality constrains
+   * @param[in] h_f: Constant term in F_f * x + h_f = 0 (at final time)
+   * @param[in] F_f: x factor in F_f * x + h_f = 0 (at final time)
+   * @param[in] numInequalityConstraint: Number of inequality constraints
+   * @param[in] h0: Constant term in inequality constraint
+   * @param[in] dhdx: Linear x multiplier in inequality constraint
+   * @param[in] dhdu: Linear u multiplier in inequality constraint
+   * @param[in] ddhdxdx: Quadratic x multiplier in inequality constraint
+   * @param[in] ddhdudu: Quadratic u multiplier in inequality constraint
+   * @param[in] ddhdudx: Quadratic mixed term in inequality constraint
+   */
+  LinearConstraint(size_t numStateInputConstraint, const constraint1_vector_t& e, const constraint1_state_matrix_t& C,
+                   const constraint1_input_matrix_t& D, size_t numStateOnlyConstraint, const constraint2_vector_t& h,
+                   const constraint2_state_matrix_t& F, size_t numStateOnlyFinalConstraint, const constraint2_vector_t& h_f,
+                   const constraint2_state_matrix_t& F_f, size_t numInequalityConstraint, const scalar_array_t& h0,
+                   const state_vector_array_t& dhdx, const input_vector_array_t& dhdu, const state_matrix_array_t& ddhdxdx,
+                   const input_matrix_array_t& ddhdudu, const input_state_matrix_array_t& ddhdudx)
+      : numStateInputConstraint_(std::move(numStateInputConstraint)),
+        e_(e),
+        C_(C),
+        D_(D),
+        numStateOnlyConstraint_(std::move(numStateOnlyConstraint)),
+        h_(h),
+        F_(F),
+        numStateOnlyFinalConstraint_(std::move(numStateOnlyFinalConstraint)),
+        h_f_(h_f),
+        F_f_(F_f),
+        numInequalityConstraint_(std::move(numInequalityConstraint)),
         h0_(h0),
         dhdx_(dhdx),
         dhdu_(dhdu),
@@ -102,102 +160,33 @@ class LinearConstraint : public ConstraintBase<STATE_DIM, INPUT_DIM> {
 
   virtual ~LinearConstraint() = default;
 
-  /**
-   * Returns pointer to the base class.
-   *
-   * @return A raw pointer to the class.
-   */
   LinearConstraint<STATE_DIM, INPUT_DIM>* clone() const override { return new LinearConstraint<STATE_DIM, INPUT_DIM>(*this); }
 
-  /**
-   * Sets the current time, state, and control input.
-   *
-   * @param [in] t: Current time
-   * @param [in] x: Current state vector
-   * @param [in] u: Current input vector
-   */
-  void setCurrentStateAndControl(const scalar_t& t, const state_vector_t& x, const input_vector_t& u) override {
-    BASE::setCurrentStateAndControl(t, x, u);
-  }
-
-  /**
-   * Computes the state-input equality constraints.
-   *
-   * @param [out] g1: The state-input equality constraints value.
-   */
   void getConstraint1(constraint1_vector_t& g1) override { g1 = e_ + C_ * BASE::x_ + D_ * BASE::u_; }
 
-  /**
-   * Get the number of state-input active equality constraints.
-   *
-   * @param [in] time: time.
-   * @return number of state-input active equality constraints.
-   */
   size_t numStateInputConstraint(const scalar_t& time) override { return numStateInputConstraint_; }
 
-  /**
-   * Compute the state-only equality constraints.
-   *
-   * @param [out] g2: The state-only equality constraints value.
-   */
   void getConstraint2(constraint2_vector_t& g2) override { g2 = h_ + F_ * BASE::x_; }
 
-  /**
-   * Get the number of state-only active equality constraints.
-   *
-   * @param [in] time: time.
-   * @return number of state-only active equality constraints.
-   */
   size_t numStateOnlyConstraint(const scalar_t& time) override { return numStateOnlyConstraint_; }
 
   void getInequalityConstraint(scalar_array_t& h) override {
     h.clear();
     for (size_t i = 0; i < numInequalityConstraint_; i++) {
-      h.push_back(h0_[i] + dhdx_[i].transpose() * BASE::x_ + dhdu_[i].transpose() * BASE::u_ +
-                  0.5 * BASE::x_.transpose() * ddhdxdx_[i] * BASE::x_ + 0.5 * BASE::u_.transpose() * ddhdudu_[i] * BASE::u_ +
-                  BASE::u_.transpose() * ddhdudx_[i] * BASE::x_);
+      h.emplace_back(h0_[i] + dhdx_[i].dot(BASE::x_) + dhdu_[i].dot(BASE::u_) + 0.5 * BASE::x_.dot(ddhdxdx_[i] * BASE::x_) +
+                     0.5 * BASE::u_.dot(ddhdudu_[i] * BASE::u_) + BASE::u_.dot(ddhdudx_[i] * BASE::x_));
     }
-  };
+  }
 
   size_t numInequalityConstraint(const scalar_t& time) override { return numInequalityConstraint_; };
 
-  /**
-   * Compute the final state-only equality constraints.
-   *
-   * @param [out] g2Final: The final state-only equality constraints value.
-   */
   void getFinalConstraint2(constraint2_vector_t& g2Final) override { g2Final = h_f_ + F_f_ * BASE::x_; }
 
-  /**
-   * Get the number of final state-only active equality constraints.
-   *
-   * @param [in] time: time.
-   * @return number of final state-only active equality constraints.
-   */
   size_t numStateOnlyFinalConstraint(const scalar_t& time) override { return numStateOnlyFinalConstraint_; }
 
-  /**
-   * The C matrix at a given operating point for the linearized state-input constraints,
-   * \f$ C(t) \delta x + D(t) \delta u + e(t) = 0 \f$.
-   *
-   * @param [out] C: \f$ C(t) \f$ matrix.
-   */
   void getConstraint1DerivativesState(constraint1_state_matrix_t& C) override { C = C_; }
-
-  /**
-   * The D matrix at a given operating point for the linearized state-input constraints,
-   * \f$ C(t) \delta x + D(t) \delta u + e(t) = 0 \f$.
-   *
-   * @param [out] D: \f$ D(t) \f$ matrix.
-   */
   void getConstraint1DerivativesControl(constraint1_input_matrix_t& D) override { D = D_; }
 
-  /**
-   * The F matrix at a given operating point for the linearized state-only constraints,
-   * \f$ F(t) \delta x + h(t) = 0 \f$.
-   *
-   * @param [out] F: \f$ F(t) \f$ matrix.
-   */
   void getConstraint2DerivativesState(constraint2_state_matrix_t& F) override { F = F_; }
 
   void getInequalityConstraintDerivativesState(state_vector_array_t& dhdx) override {
@@ -205,26 +194,22 @@ class LinearConstraint : public ConstraintBase<STATE_DIM, INPUT_DIM> {
     for (size_t i = 0; i < numInequalityConstraint_; i++) {
       dhdx.push_back(dhdx_[i] + ddhdxdx_[i] * BASE::x_ + ddhdudx_[i].transpose() * BASE::u_);
     }
-  };
+  }
+
   void getInequalityConstraintDerivativesInput(input_vector_array_t& dhdu) override {
     dhdu.clear();
     for (size_t i = 0; i < numInequalityConstraint_; i++) {
       dhdu.push_back(dhdu_[i] + ddhdudu_[i] * BASE::u_ + ddhdudx_[i] * BASE::x_);
     }
-  };
-  void getInequalityConstraintSecondDerivativesState(state_matrix_array_t& ddhdxdx) override { ddhdxdx = ddhdxdx_; };
-  void getInequalityConstraintSecondDerivativesInput(input_matrix_array_t& ddhdudu) override { ddhdudu = ddhdudu_; };
-  void getInequalityConstraintDerivativesInputState(input_state_matrix_array_t& ddhdudx) override { ddhdudx = ddhdudx_; };
+  }
 
-  /**
-   * The F matrix at a given operating point for the linearized terminal state-only constraints,
-   * \f$ F_f(t) \delta x + h_f(t) = 0 \f$.
-   *
-   * @param [out] F_f: \f$ F_f(t) \f$ matrix.
-   */
+  void getInequalityConstraintSecondDerivativesState(state_matrix_array_t& ddhdxdx) override { ddhdxdx = ddhdxdx_; }
+  void getInequalityConstraintSecondDerivativesInput(input_matrix_array_t& ddhdudu) override { ddhdudu = ddhdudu_; }
+  void getInequalityConstraintDerivativesInputState(input_state_matrix_array_t& ddhdudx) override { ddhdudx = ddhdudx_; }
+
   void getFinalConstraint2DerivativesState(constraint2_state_matrix_t& F_f) override { F_f = F_f_; }
 
- private:
+ public:
   size_t numStateInputConstraint_;
   constraint1_vector_t e_;
   constraint1_state_matrix_t C_;
@@ -248,5 +233,3 @@ class LinearConstraint : public ConstraintBase<STATE_DIM, INPUT_DIM> {
 };
 
 }  // namespace ocs2
-
-#endif /* LINEARCONSTRAINT_H_ */

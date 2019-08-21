@@ -43,9 +43,6 @@ class CartPoleSytemDynamics : public SystemDynamicsBaseAD<cartpole::STATE_DIM_, 
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-  using Ptr = std::shared_ptr<CartPoleSytemDynamics>;
-  using ConstPtr = std::shared_ptr<const CartPoleSytemDynamics>;
-
   using BASE = SystemDynamicsBaseAD<cartpole::STATE_DIM_, cartpole::INPUT_DIM_, 1>;
   using typename BASE::scalar_t;
   using typename BASE::state_vector_t;
@@ -60,6 +57,8 @@ class CartPoleSytemDynamics : public SystemDynamicsBaseAD<cartpole::STATE_DIM_, 
   ~CartPoleSytemDynamics() = default;
 
   CartPoleSytemDynamics(const CartPoleSytemDynamics& rhs) : BASE(rhs), param_(rhs.param_) {}
+
+  CartPoleSytemDynamics* clone() const override { return new CartPoleSytemDynamics(*this); }
 
   void systemFlowMap(ad_scalar_t time, const ad_dynamic_vector_t& state, const ad_dynamic_vector_t& input,
                      ad_dynamic_vector_t& stateDerivative) const override {

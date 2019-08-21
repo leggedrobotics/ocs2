@@ -122,8 +122,8 @@ void BallbotInterface::setupOptimizer(const std::string& taskFile) {
                           ballbotCostPtr_.get(), ballbotOperatingPointPtr_.get(), partitioningTimes_, slqSettings_, mpcSettings_));
 
   std::unique_ptr<BallbotCost> cost(ballbotCostPtr_->clone());
-  mpcPi_.reset(
-      new mpc_pi_t(ballbotSystemDynamicsPtr_, std::move(cost), *ballbotConstraintPtr_, partitioningTimes_, mpcSettings_, piSettings_));
+  mpcPi_.reset(new mpc_pi_t(std::shared_ptr<BallbotSystemDynamics>(ballbotSystemDynamicsPtr_->clone()), std::move(cost),
+                            *ballbotConstraintPtr_, partitioningTimes_, mpcSettings_, piSettings_));
 }
 
 /******************************************************************************************************/

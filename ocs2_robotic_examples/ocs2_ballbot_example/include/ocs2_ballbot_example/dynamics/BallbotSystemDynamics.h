@@ -53,9 +53,6 @@ class BallbotSystemDynamics : public SystemDynamicsBaseAD<ballbot::STATE_DIM_, b
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-  using Ptr = std::shared_ptr<BallbotSystemDynamics>;
-  using ConstPtr = std::shared_ptr<const BallbotSystemDynamics>;
-
   using BASE = ocs2::SystemDynamicsBaseAD<ballbot::STATE_DIM_, ballbot::INPUT_DIM_>;
   using scalar_t = typename BASE::scalar_t;
   using ad_scalar_t = typename BASE::ad_scalar_t;

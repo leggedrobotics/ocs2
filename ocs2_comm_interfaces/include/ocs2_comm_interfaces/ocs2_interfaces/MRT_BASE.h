@@ -159,6 +159,12 @@ class MRT_BASE {
    */
   void setLogicRules(std::shared_ptr<HybridLogicRules> logicRules);
 
+  /**
+   * @brief rolloutSet: Whether or not the internal rollout object has been set
+   * @return True if a rollout object is available.
+   */
+  bool rolloutSet() const { return rolloutPtr_.get(); }
+
  protected:
   /**
    * The updatePolicy() method will call this method which allows the user to

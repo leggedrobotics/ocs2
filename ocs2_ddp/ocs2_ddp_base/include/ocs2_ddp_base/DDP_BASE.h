@@ -746,7 +746,7 @@ class DDP_BASE : public Solver_BASE<STATE_DIM, INPUT_DIM> {
   // trajectory spreading
   TrajectorySpreadingController<STATE_DIM, INPUT_DIM> trajectorySpreadingController_;
 
-  std::atomic<size_t> iteration_;
+  std::atomic_size_t iteration_;
   eigen_scalar_array_t iterationCost_;
   eigen_scalar_array_t iterationISE1_;
   eigen_scalar_array_t iterationISE2_;

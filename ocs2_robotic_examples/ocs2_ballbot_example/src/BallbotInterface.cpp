@@ -91,7 +91,6 @@ void BallbotInterface::loadSettings(const std::string& taskFile) {
   ocs2::loadEigenMatrix(taskFile, "R", R_);
   ocs2::loadEigenMatrix(taskFile, "Q_final", QFinal_);
   ocs2::loadEigenMatrix(taskFile, "x_final", xFinal_);
-  //	xNominal_ = dim_t::state_vector_t::Zero();
   xNominal_ = xFinal_;
   uNominal_ = dim_t::input_vector_t::Zero();
 
@@ -128,11 +127,10 @@ void BallbotInterface::setupOptimizer(const std::string& taskFile) {
                           ballbotCostPtr_.get(), ballbotOperatingPointPtr_.get(), partitioningTimes_, slqSettings_, mpcSettings_));
 
   std::unique_ptr<BallbotCost> cost(ballbotCostPtr_->clone());
-  if (initMpcPi_){
-      mpcPi_.reset(
-              new mpc_pi_t(ballbotSystemDynamicsPtr_, std::move(cost), *ballbotConstraintPtr_, partitioningTimes_, mpcSettings_, piSettings_));
+  if (initMpcPi_) {
+    mpcPi_.reset(
+        new mpc_pi_t(ballbotSystemDynamicsPtr_, std::move(cost), *ballbotConstraintPtr_, partitioningTimes_, mpcSettings_, piSettings_));
   }
-
 }
 
 /******************************************************************************************************/

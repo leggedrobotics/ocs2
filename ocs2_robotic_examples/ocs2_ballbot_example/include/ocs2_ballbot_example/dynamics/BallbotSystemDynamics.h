@@ -79,7 +79,6 @@ class BallbotSystemDynamics : public SystemDynamicsBaseAD<BallbotSystemDynamics,
   BallbotSystemDynamics(const bool& dynamicLibraryIsCompiled = false) : BASE(dynamicLibraryIsCompiled) {
     wheelRadius_ = param_.wheelRadius_;
     ballRadius_ = param_.ballRadius_;
-    squaredRadiusRatio_ = (ballRadius_ - wheelRadius_) / (pow(2, 0.5) * wheelRadius_);
   }
 
   /**
@@ -165,7 +164,6 @@ class BallbotSystemDynamics : public SystemDynamicsBaseAD<BallbotSystemDynamics,
   ballbot_parameters_t param_;
   scalar_t wheelRadius_;
   scalar_t ballRadius_;
-  scalar_t squaredRadiusRatio_;
 };
 
 }  // namespace ballbot

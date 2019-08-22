@@ -200,6 +200,18 @@ class PythonInterface {
    */
   dynamic_vector_t getStateInputConstraintLagrangian(double t, Eigen::Ref<const state_vector_t> x);
 
+  /**
+   * @brief Visualize the time-state-input trajectory
+   * @param[in] t Array of times
+   * @param[in] x Array of states
+   * @param[in] u (Optional) Array of inputs
+   * @param[in] speed (Optional) Factor compared to real time playback (>1 ==> slow motion)
+   */
+  virtual void visualizeTrajectory(const scalar_array_t& t, const state_vector_array_t& x,
+                                   const input_vector_array_t& u = input_vector_array_t(), double speed = 1.0) {
+    throw std::runtime_error("PythonInterface::visualizeTrajectory must be implemented by robot-specific derived class.");
+  }
+
  protected:
   /**
    * @brief initRobotInterface Must be implemented by a derived class to instantiate

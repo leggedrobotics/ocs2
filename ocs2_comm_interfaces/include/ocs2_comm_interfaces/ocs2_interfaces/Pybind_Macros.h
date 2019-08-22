@@ -12,6 +12,7 @@ using namespace pybind11::literals;
       .def(pybind11::init<>())                                                               \
       .def("clear", &VTYPE::clear)                                                           \
       .def("pop_back", &VTYPE::pop_back)                                                     \
+      .def("push_back", [](VTYPE& v, const VTYPE::value_type& val) { v.push_back(val); })    \
       .def("resize", [](VTYPE& v, size_t i) { v.resize(i); })                                \
       .def("__getitem__",                                                                    \
            [](const VTYPE& v, size_t i) {                                                    \
@@ -101,5 +102,7 @@ using namespace pybind11::literals;
         .def("getStateInputConstraint", &PY_INTERFACE::getStateInputConstraint, "t"_a, "x"_a.noconvert(), "u"_a.noconvert())              \
         .def("getStateInputConstraintDerivativeControl", &PY_INTERFACE::getStateInputConstraintDerivativeControl, "t"_a,                  \
              "x"_a.noconvert(), "u"_a.noconvert())                                                                                        \
-        .def("getStateInputConstraintLagrangian", &PY_INTERFACE::getStateInputConstraintLagrangian, "t"_a, "x"_a.noconvert());            \
+        .def("getStateInputConstraintLagrangian", &PY_INTERFACE::getStateInputConstraintLagrangian, "t"_a, "x"_a.noconvert())             \
+        .def("visualizeTrajectory", &PY_INTERFACE::visualizeTrajectory, "t"_a.noconvert(), "x"_a.noconvert(), "u"_a.noconvert(),          \
+             "speed"_a);                                                                                                                  \
   }

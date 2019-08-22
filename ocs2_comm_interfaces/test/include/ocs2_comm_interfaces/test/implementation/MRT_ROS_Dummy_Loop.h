@@ -134,7 +134,7 @@ void MRT_ROS_Dummy_Loop<STATE_DIM, INPUT_DIM>::run(const system_observation_t& i
     } else {
       mrtPtr_->evaluatePolicy(time + timeStep, stateTemp, observation_.state(), observation_.input(), observation_.subsystem());
     }
-
+    std::cout << "### current observation " << observation_.input().transpose() << std::endl;
     // time and loop counter increment
     loopCounter++;
     time += timeStep;

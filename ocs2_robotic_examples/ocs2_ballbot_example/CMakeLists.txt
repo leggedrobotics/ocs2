@@ -31,6 +31,8 @@ if(USE_PYBIND_PYTHON_3)
 endif(USE_PYBIND_PYTHON_3)
 find_package(pybind11 QUIET)
 
+find_package(Torch QUIET)
+
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread -fopenmp -std=c++11 -Wfatal-errors -Wl,--no-as-needed")
 
 ###################################
@@ -63,6 +65,7 @@ include_directories(
         ${EIGEN3_INCLUDE_DIRS}
         ${Boost_INCLUDE_DIRS}
         ${catkin_INCLUDE_DIRS}
+        ${TORCH_INCLUDE_DIRS}
 )
 
 # Ballbot interface library
@@ -165,6 +168,22 @@ if(${pybind11_FOUND})
   catkin_python_setup()
 endif()
 
+if (${Torch_FOUND})
+  message(WARNING "compiling network interface")
+    add_executable(ballbot_mrt_network_interface
+      src/MRT_Network_Interface.cpp
+      )
+    add_dependencies(ballbot_mrt_network_interface
+      ${catkin_EXPORTED_TARGETS}
+      )
+    target_link_libraries(ballbot_mrt_network_interface
+      ballbot_interface
+      ${catkin_LIBRARIES}
+      ${TORCH_LIBRARIES}
+      )
+else(${Torch_FOUND})
+    message(WARNING "torch not found")
+endif(${Torch_FOUND})
 
 #########################
 ###   CLANG TOOLING   ###
@@ -230,3 +249,14 @@ target_link_libraries(ballbot_pybindings_test
   ${Boost_LIBRARIES}
   )
 
+if (${Torch_FOUND})
+  catkin_add_gtest(ballbot_network_interface_test
+    test/MRTNetworkInterfaceTest.cpp)
+  add_dependencies(ballbot_network_interface_test
+    ${catkin_EXPORTED_TARGETS})
+#  target_link_libraries(ballbot_network_interface_test
+#    ballbot_interface
+#    ballbot_mrt_network_interface
+#    ${catkin_LIBRARIES}
+#    ${Boost_LIBRARIES})
+endif(${Torch_FOUND})

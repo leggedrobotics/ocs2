@@ -73,6 +73,8 @@ void BallbotInterface::loadSettings(const std::string& taskFile) {
   boost::property_tree::ptree pt;
   boost::property_tree::read_info(taskFile_, pt);
   libraryFilesAreGenerated_ = pt.get<bool>("ballbot_interface.libraryFilesAreGenerated");
+  initMpcPi_ = pt.get<bool>("ballbot_interface.initMpcPi");
+  std::cout << "initMpcPi: " << initMpcPi_ << std::endl;
 
   ballbotSystemDynamicsPtr_.reset(new BallbotSystemDynamics(libraryFilesAreGenerated_));
 
@@ -126,8 +128,11 @@ void BallbotInterface::setupOptimizer(const std::string& taskFile) {
                           ballbotCostPtr_.get(), ballbotOperatingPointPtr_.get(), partitioningTimes_, slqSettings_, mpcSettings_));
 
   std::unique_ptr<BallbotCost> cost(ballbotCostPtr_->clone());
-  mpcPi_.reset(
-      new mpc_pi_t(ballbotSystemDynamicsPtr_, std::move(cost), *ballbotConstraintPtr_, partitioningTimes_, mpcSettings_, piSettings_));
+  if (initMpcPi_){
+      mpcPi_.reset(
+              new mpc_pi_t(ballbotSystemDynamicsPtr_, std::move(cost), *ballbotConstraintPtr_, partitioningTimes_, mpcSettings_, piSettings_));
+  }
+
 }
 
 /******************************************************************************************************/

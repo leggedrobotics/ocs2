@@ -139,6 +139,8 @@ class BallbotInterface final : public RobotInterfaceBase<ballbot::STATE_DIM_, ba
 
   // flag to generate dynamic files
   bool libraryFilesAreGenerated_ = false;
+  // flag to reset the mpc pi pointer
+  bool initMpcPi_ = false;
 };
 
 }  // namespace ballbot

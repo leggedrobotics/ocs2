@@ -1,7 +1,6 @@
 #pragma once
 
 #include <ocs2_core/control/ControllerBase.h>
-
 #include <torch/script.h>
 
 namespace ocs2 {
@@ -25,7 +24,9 @@ class NetworkController final : public ControllerBase<STATE_DIM, INPUT_DIM> {
 
   NetworkController() = default;
 
-  void loadNetwork(std::string filePath) { policyNet_ = torch::jit::load(filePath);}
+  explicit NetworkController(const std::string& networkFilePath) { loadNetwork(networkFilePath); }
+
+  void loadNetwork(const std::string& filePath) { policyNet_ = torch::jit::load(filePath); }
 
   input_vector_t computeInput(const scalar_t& t, const state_vector_t& x) override {
     std::vector<torch::jit::IValue> inputs;
@@ -46,9 +47,11 @@ class NetworkController final : public ControllerBase<STATE_DIM, INPUT_DIM> {
     throw std::runtime_error("not implemented.");
   }
 
+  void concatenate(const ControllerBase<STATE_DIM, INPUT_DIM>* nextController) override { throw std::runtime_error("not implemented."); }
+
   ControllerType getType() const override { return ControllerType::NETWORK; }
 
-  void clear() override { }
+  void clear() override {}
 
   void setZero() override { throw std::runtime_error("not implemented."); }
 

@@ -96,7 +96,7 @@ mpc
 
 	useParallelRiccatiSolver    1    ; use disjoint riccati solver in MP case and recedingHorizon fashion
 
-	useFeedbackPolicy           0
+	useFeedbackPolicy           1
 	forwardSimulationTime       28   ; [ms] MRT time
 
 	rosMsgTimeWindow            200  ; [ms]

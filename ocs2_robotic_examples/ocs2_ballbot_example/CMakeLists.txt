@@ -168,23 +168,6 @@ if(${pybind11_FOUND})
   catkin_python_setup()
 endif()
 
-if (${Torch_FOUND})
-  message(WARNING "compiling network interface")
-    add_executable(ballbot_mrt_network_interface
-      src/MRT_Network_Interface.cpp
-      )
-    add_dependencies(ballbot_mrt_network_interface
-      ${catkin_EXPORTED_TARGETS}
-      )
-    target_link_libraries(ballbot_mrt_network_interface
-      ballbot_interface
-      ${catkin_LIBRARIES}
-      ${TORCH_LIBRARIES}
-      )
-else(${Torch_FOUND})
-    message(WARNING "torch not found")
-endif(${Torch_FOUND})
-
 #########################
 ###   CLANG TOOLING   ###
 #########################
@@ -254,9 +237,9 @@ if (${Torch_FOUND})
     test/MRTNetworkInterfaceTest.cpp)
   add_dependencies(ballbot_network_interface_test
     ${catkin_EXPORTED_TARGETS})
-#  target_link_libraries(ballbot_network_interface_test
-#    ballbot_interface
-#    ballbot_mrt_network_interface
-#    ${catkin_LIBRARIES}
-#    ${Boost_LIBRARIES})
+  target_link_libraries(ballbot_network_interface_test
+    ballbot_interface
+    ${catkin_LIBRARIES}
+    ${Boost_LIBRARIES}
+    ${TORCH_LIBRARIES})
 endif(${Torch_FOUND})

@@ -153,7 +153,7 @@ class CppAdInterface {
    * Creates a random temporary folder name
    * @return folder name
    */
-  std::string getUniqueTemporaryFolderName() const;
+  std::string getUniqueTemporaryName() const;
 
   /**
    * Configures the compiler that compiles the model library
@@ -204,6 +204,7 @@ class CppAdInterface {
   std::string modelName_;
   std::string folderName_;
   std::string libraryFolder_;
+  std::string tmpName_;
   std::string tmpFolder_;
   std::string libraryName_;
 };

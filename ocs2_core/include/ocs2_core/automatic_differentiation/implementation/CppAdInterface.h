@@ -67,14 +67,14 @@ void CppAdInterface<scalar_t>::createModels(ApproximationOrder approximationOrde
   CppAD::cg::ModelCSourceGen<scalar_t> sourceGen(fun, modelName_);
   setApproximationOrder(approximationOrder, sourceGen, fun);
 
-  // Compiler objects
+  // Compiler objects, compile to temporary shared library file to avoid interference between processes
   CppAD::cg::ModelLibraryCSourceGen<scalar_t> libraryCSourceGen(sourceGen);
   CppAD::cg::GccCompiler<scalar_t> gccCompiler;
-  CppAD::cg::DynamicModelLibraryProcessor<scalar_t> libraryProcessor(libraryCSourceGen, libraryName_);
+  CppAD::cg::DynamicModelLibraryProcessor<scalar_t> libraryProcessor(libraryCSourceGen, libraryName_ + tmpName_);
   setCompilerOptions(gccCompiler);
 
   if (verbose) {
-    std::cerr << "Compiling Shared Library: " << libraryProcessor.getLibraryName() + CppAD::cg::system::SystemInfo<>::DYNAMIC_LIB_EXTENSION
+    std::cerr << "Compiling Shared Library: " << libraryName_ + tmpName_ + CppAD::cg::system::SystemInfo<>::DYNAMIC_LIB_EXTENSION
               << std::endl;
   }
 
@@ -83,6 +83,14 @@ void CppAdInterface<scalar_t>::createModels(ApproximationOrder approximationOrde
   model_.reset(dynamicLib_->model(modelName_));
 
   setSparsityNonzeros();
+
+  // Rename generated library after loading
+  if (verbose) {
+    std::cerr << "Renaming " << libraryName_ + tmpName_ + CppAD::cg::system::SystemInfo<>::DYNAMIC_LIB_EXTENSION << " to "
+              << libraryName_ + CppAD::cg::system::SystemInfo<>::DYNAMIC_LIB_EXTENSION << std::endl;
+  }
+  boost::filesystem::rename(libraryName_ + tmpName_ + CppAD::cg::system::SystemInfo<>::DYNAMIC_LIB_EXTENSION,
+                            libraryName_ + CppAD::cg::system::SystemInfo<>::DYNAMIC_LIB_EXTENSION);
 }
 
 /******************************************************************************************************/
@@ -206,7 +214,8 @@ void CppAdInterface<scalar_t>::setFolderNames() {
   } else {
     libraryFolder_ = modelName_ + "/cppad_generated";
   }
-  tmpFolder_ = libraryFolder_ + "/" + getUniqueTemporaryFolderName();
+  tmpName_ = getUniqueTemporaryName();
+  tmpFolder_ = libraryFolder_ + "/" + tmpName_;
   libraryName_ = libraryFolder_ + "/" + modelName_ + "_lib";
 }
 
@@ -231,8 +240,8 @@ void CppAdInterface<scalar_t>::createFolderStructure() const {
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <typename scalar_t>
-std::string CppAdInterface<scalar_t>::getUniqueTemporaryFolderName() const {
-  // Add random string to tmp folder to avoid race condition on the temporary objects
+std::string CppAdInterface<scalar_t>::getUniqueTemporaryName() const {
+  // Random string should be unique for each process and time of calling.
   int randomFromClock = std::chrono::high_resolution_clock::now().time_since_epoch().count() % 1000;
   return std::string("cppadcg_tmp") + std::to_string(randomFromClock) + std::to_string(getpid());
 }

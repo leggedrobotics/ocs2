@@ -1,6 +1,4 @@
-//
-// Created by rgrandia on 06.02.19.
-//
+
 
 #ifndef RELAXEDBARRIERPENALTY_OCS2_H
 #define RELAXEDBARRIERPENALTY_OCS2_H

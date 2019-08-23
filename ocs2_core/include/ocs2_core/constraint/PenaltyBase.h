@@ -1,6 +1,4 @@
-//
-// Created by rgrandia on 06.02.19.
-//
+
 
 #ifndef PENALTYBASE_OCS2_H
 #define PENALTYBASE_OCS2_H

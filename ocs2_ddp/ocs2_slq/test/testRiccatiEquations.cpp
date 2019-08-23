@@ -1,6 +1,4 @@
-//
-// Created by rgrandia on 29.07.19.
-//
+
 
 #include <gtest/gtest.h>
 #include <ocs2_slq/riccati_equations/SequentialRiccatiEquationsNormalized.h>

@@ -40,14 +40,14 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_core/constraint/ConstraintBase.h>
 #include <ocs2_core/initialization/SystemOperatingPoint.h>
 #include <ocs2_core/misc/loadEigenMatrix.h>
-#include <ocs2_mpc/MPC_PI.h>
-#include <ocs2_mpc/MPC_SLQ.h>
 #include <ocs2_robotic_tools/common/RobotInterfaceBase.h>
 
 // Ballbot
 #include "ocs2_ballbot_example/cost/BallbotCost.h"
 #include "ocs2_ballbot_example/definitions.h"
 #include "ocs2_ballbot_example/dynamics/BallbotSystemDynamics.h"
+#include "ocs2_ballbot_example/solvers/BallbotPI.h"
+#include "ocs2_ballbot_example/solvers/BallbotSLQ.h"
 
 namespace ocs2 {
 namespace ballbot {
@@ -121,10 +121,10 @@ class BallbotInterface final : public RobotInterfaceBase<ballbot::STATE_DIM_, ba
   std::unique_ptr<mpc_t> mpcPtr_;
   std::unique_ptr<mpc_pi_t> mpcPi_;
 
-  BallbotSystemDynamics::Ptr ballbotSystemDynamicsPtr_;
-  BallbotCost::Ptr ballbotCostPtr_;
-  ballbotConstraint_t::Ptr ballbotConstraintPtr_;
-  ballbotOperatingPoint_t::Ptr ballbotOperatingPointPtr_;
+  std::unique_ptr<BallbotSystemDynamics> ballbotSystemDynamicsPtr_;
+  std::unique_ptr<BallbotCost> ballbotCostPtr_;
+  std::unique_ptr<ballbotConstraint_t> ballbotConstraintPtr_;
+  std::unique_ptr<ballbotOperatingPoint_t> ballbotOperatingPointPtr_;
 
   // cost parameters
   dim_t::state_matrix_t Q_;
@@ -136,9 +136,6 @@ class BallbotInterface final : public RobotInterfaceBase<ballbot::STATE_DIM_, ba
 
   size_t numPartitions_ = 0;
   dim_t::scalar_array_t partitioningTimes_;
-
-  // flag to generate dynamic files
-  bool libraryFilesAreGenerated_ = false;
   // flag to reset the mpc pi pointer
   bool initMpcPi_ = false;
 };

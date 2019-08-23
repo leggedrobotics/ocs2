@@ -309,13 +309,13 @@ bool abs_geq(const cg::CG<Base>& x, const cg::CG<Base>& y);
 
 // The identical property functions, see identical.hpp
 template<class Base>
-inline bool IdenticalPar(const cg::CG<Base>& x) throw (cg::CGException);
+inline bool IdenticalPar(const cg::CG<Base>& x) ;
 
 template<class Base>
-bool IdenticalZero(const cg::CG<Base>& x) throw (cg::CGException);
+bool IdenticalZero(const cg::CG<Base>& x) ;
 
 template<class Base>
-bool IdenticalOne(const cg::CG<Base>& x) throw (cg::CGException);
+bool IdenticalOne(const cg::CG<Base>& x) ;
 
 template<class Base>
 bool IdenticalEqualPar(const cg::CG<Base>& x, const cg::CG<Base>& y);

@@ -1,6 +1,4 @@
-//
-// Created by rgrandia on 09.05.19.
-//
+
 
 #include <gtest/gtest.h>
 #include <ocs2_mpc/MPC_OCS2.h>

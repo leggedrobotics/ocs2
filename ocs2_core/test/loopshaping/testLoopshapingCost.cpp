@@ -1,6 +1,4 @@
-//
-// Created by rgrandia on 10.04.19.
-//
+
 
 #include "testLoopshapingCost.h"
 

@@ -67,6 +67,27 @@ include_directories(
         ${catkin_INCLUDE_DIRS}
 )
 
+add_library(ballbot_PI
+        src/solvers/BallbotPI.cpp)
+add_dependencies(ballbot_PI
+        ${catkin_EXPORTED_TARGETS}
+        )
+target_link_libraries(ballbot_PI
+        ${catkin_LIBRARIES}
+        )
+
+add_library(ballbot_SLQ
+        src/solvers/BallbotSLQ.cpp)
+add_dependencies(ballbot_SLQ
+        ${catkin_EXPORTED_TARGETS}
+        )
+target_link_libraries(ballbot_SLQ
+        ${catkin_LIBRARIES}
+        )
+
+add_library(ballbot_dynamics
+        src/dynamics/BallbotSystemDynamics.cpp)
+
 # Ballbot interface library
 add_library(ballbot_interface
         src/BallbotInterface.cpp)
@@ -74,6 +95,9 @@ add_dependencies(ballbot_interface
         ${catkin_EXPORTED_TARGETS}
         )
 target_link_libraries(ballbot_interface
+        ballbot_SLQ
+        ballbot_PI
+        ballbot_dynamics
         ${catkin_LIBRARIES}
         ${Boost_LIBRARIES}
         dl
@@ -185,6 +209,7 @@ if(cmake_clang_tools_FOUND)
     SOURCE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/src ${CMAKE_CURRENT_SOURCE_DIR}/include
     CT_HEADER_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/include
     CT_HEADER_EXCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/include/${PROJECT_NAME}/generated
+    CF_FIX
     CF_WERROR
   )
 endif(cmake_clang_tools_FOUND)
@@ -193,7 +218,7 @@ endif(cmake_clang_tools_FOUND)
 ## Install ##
 #############
 
-install(TARGETS ballbot_interface ballbotPyBindings_cpp
+install(TARGETS ballbot_interface ballbot_PI ballbot_SLQ ballbot_dynamics ballbotPyBindings_cpp
         ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
         LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
         RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}

@@ -2,8 +2,8 @@
 #include <ocs2_core/OCS2NumericTraits.h>
 
 // Automatic Differentation
-#include <ocs2_core/automatic_differentiation/AutomaticDifferentiationBase.h>
-#include <ocs2_core/automatic_differentiation/CppAdCodeGenInterface.h>
+#include <ocs2_core/automatic_differentiation/CppAdInterface.h>
+#include <ocs2_core/automatic_differentiation/CppAdSparsity.h>
 
 // Constraint
 #include <ocs2_core/constraint/ConstraintBase.h>

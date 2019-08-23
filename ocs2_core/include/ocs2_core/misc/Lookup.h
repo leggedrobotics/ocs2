@@ -1,6 +1,4 @@
-//
-// Created by rgrandia on 20.06.19.
-//
+
 
 #ifndef OCS2_CTRL_LOOKUP_H
 #define OCS2_CTRL_LOOKUP_H

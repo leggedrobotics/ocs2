@@ -1,6 +1,4 @@
-//
-// Created by rgrandia on 24.06.19.
-//
+
 
 #ifndef OCS2_CTRL_RANDOMMATRICES_H
 #define OCS2_CTRL_RANDOMMATRICES_H

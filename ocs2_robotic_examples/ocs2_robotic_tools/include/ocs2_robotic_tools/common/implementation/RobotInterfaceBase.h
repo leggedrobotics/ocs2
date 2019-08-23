@@ -85,11 +85,8 @@ void RobotInterfaceBase<STATE_DIM, INPUT_DIM>::loadMpcTimeHorizon(
 		size_t& numPartitions,
 		bool verbose /*= false*/) {
 
-	boost::property_tree::ptree pt;
-	boost::property_tree::read_info(taskFile, pt);
-
-	timeHorizon   = pt.get<scalar_t>("mpcTimeHorizon.timehorizon");
-	numPartitions = pt.get<size_t>("mpcTimeHorizon.numPartitions");
+	loadData::loadCppDataType(taskFile, "mpcTimeHorizon.timehorizon", timeHorizon);
+	loadData::loadCppDataType(taskFile, "mpcTimeHorizon.numPartitions", numPartitions);
 
 	if (verbose) {
 		std::cerr<<"Time Horizon Settings: " << std::endl;

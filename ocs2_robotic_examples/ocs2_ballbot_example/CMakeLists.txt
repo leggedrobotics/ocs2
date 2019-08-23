@@ -147,6 +147,20 @@ target_link_libraries(ballbot_target
         ${catkin_LIBRARIES}
         ${Boost_LIBRARIES}
         )
+        
+# Simple example
+add_executable(ballbot_simple_example
+  src/BallbotSimpleExample.cpp)
+add_dependencies(ballbot_simple_example
+  ${catkin_EXPORTED_TARGETS}
+)
+target_link_libraries(ballbot_simple_example
+  ballbot_SLQ
+  ballbot_dynamics
+  ${catkin_LIBRARIES}
+  ${Boost_LIBRARIES}
+  dl
+)
 
 # Pybindings Cpp library
 add_library(ballbotPyBindings_cpp

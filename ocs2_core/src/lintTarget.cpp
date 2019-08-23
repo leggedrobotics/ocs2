@@ -64,7 +64,7 @@
 #include <ocs2_core/misc/Lookup.h>
 #include <ocs2_core/misc/SetThreadPriority.h>
 #include <ocs2_core/misc/TrajectorySpreadingController.h>
-#include <ocs2_core/misc/loadEigenMatrix.h>
+#include <ocs2_core/misc/LoadData.h>
 #include <ocs2_core/misc/randomMatrices.h>
 
 // dummy target for clang toolchain

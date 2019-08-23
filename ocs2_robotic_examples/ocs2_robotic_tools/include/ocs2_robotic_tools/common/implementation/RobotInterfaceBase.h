@@ -107,10 +107,7 @@ void RobotInterfaceBase<STATE_DIM, INPUT_DIM>::loadInitialState(
 		const std::string& taskFile,
 		state_vector_t& initialState) {
 
-	boost::property_tree::ptree pt;
-	boost::property_tree::read_info(taskFile, pt);
-
-	loadEigenMatrix(taskFile, "initialState", initialState);
+	loadData::loadEigenMatrix(taskFile, "initialState", initialState);
 }
 
 }  // namespace ocs2

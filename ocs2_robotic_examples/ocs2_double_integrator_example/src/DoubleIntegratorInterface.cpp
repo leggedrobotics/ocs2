@@ -33,6 +33,9 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 namespace ocs2 {
 namespace double_integrator {
 
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
 DoubleIntegratorInterface::DoubleIntegratorInterface(const std::string& taskFileFolderName) {
   taskFile_ = ros::package::getPath("ocs2_double_integrator_example") + "/config/" + taskFileFolderName + "/task.info";
   std::cerr << "Loading task file: " << taskFile_ << std::endl;
@@ -47,6 +50,9 @@ DoubleIntegratorInterface::DoubleIntegratorInterface(const std::string& taskFile
   setupOptimizer(taskFile_);
 }
 
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
 void DoubleIntegratorInterface::loadSettings(const std::string& taskFile) {
   /*
    * Default initial condition
@@ -72,10 +78,10 @@ void DoubleIntegratorInterface::loadSettings(const std::string& taskFile) {
   /*
    * Cost function
    */
-  loadEigenMatrix(taskFile, "Q", Q_);
-  loadEigenMatrix(taskFile, "R", R_);
-  loadEigenMatrix(taskFile, "Q_final", QFinal_);
-  loadEigenMatrix(taskFile, "x_final", xFinal_);
+  loadData::loadEigenMatrix(taskFile, "Q", Q_);
+  loadData::loadEigenMatrix(taskFile, "R", R_);
+  loadData::loadEigenMatrix(taskFile, "Q_final", QFinal_);
+  loadData::loadEigenMatrix(taskFile, "x_final", xFinal_);
   xNominal_ = dim_t::state_vector_t::Zero();
   uNominal_ = dim_t::input_vector_t::Zero();
 
@@ -104,6 +110,9 @@ void DoubleIntegratorInterface::loadSettings(const std::string& taskFile) {
   definePartitioningTimes(taskFile, timeHorizon, numPartitions_, partitioningTimes_, true);
 }
 
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
 void DoubleIntegratorInterface::setupOptimizer(const std::string& taskFile) {
   mpcPtr_.reset(new mpc_t(linearSystemDynamicsPtr_.get(), linearSystemDynamicsDerivativesPtr_.get(), linearSystemConstraintPtr_.get(),
                           linearSystemCostPtr_.get(), linearSystemOperatingPointPtr_.get(), partitioningTimes_, slqSettings_,

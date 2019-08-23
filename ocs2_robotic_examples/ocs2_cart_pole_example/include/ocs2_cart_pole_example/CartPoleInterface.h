@@ -109,10 +109,10 @@ class CartPoleInterface final : public RobotInterfaceBase<cartpole::STATE_DIM_, 
   SLQ_Settings slqSettings_;
   std::unique_ptr<mpc_t> mpcPtr_;
 
-  CartPoleSytemDynamics::Ptr cartPoleSystemDynamicsPtr_;
-  CartPoleCost::Ptr cartPoleCostPtr_;
-  CartPoleConstraint::Ptr cartPoleConstraintPtr_;
-  CartPoleOperatingPoint::Ptr cartPoleOperatingPointPtr_;
+  std::unique_ptr<CartPoleSytemDynamics> cartPoleSystemDynamicsPtr_;
+  std::unique_ptr<CartPoleCost> cartPoleCostPtr_;
+  std::unique_ptr<CartPoleConstraint> cartPoleConstraintPtr_;
+  std::unique_ptr<CartPoleOperatingPoint> cartPoleOperatingPointPtr_;
 
   // cost parameters
   dim_t::state_matrix_t Q_;

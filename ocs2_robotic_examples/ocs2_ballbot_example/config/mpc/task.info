@@ -109,7 +109,7 @@ mpc
 ; ballbot interface settings
 ballbot_interface
 {
-	libraryFilesAreGenerated       0    ; put this flag to 1 if dynamic libraries are already generated
+	recompileLibraries       0    ; put this flag to 1 to force recompilation of dynamics library
 }
 
 pathIntegral

@@ -62,84 +62,22 @@ class LinearSystemDynamics : public SystemDynamicsBase<STATE_DIM, INPUT_DIM> {
    */
   LinearSystemDynamics<STATE_DIM, INPUT_DIM>* clone() const override { return new LinearSystemDynamics<STATE_DIM, INPUT_DIM>(*this); }
 
-  /**
-   * Interface method to the state flow map of the hybrid system.
-   *
-   * @param [in] t: time.
-   * @param [in] x: state vector.
-   * @param [in] u: input vector
-   * @param [out] dxdt: state vector time derivative.
-   */
   void computeFlowMap(const scalar_t& t, const state_vector_t& x, const input_vector_t& u, state_vector_t& dxdt) override {
     dxdt = A_ * x + B_ * u;
   }
 
-  /**
-   * Interface method to the state jump map of the hybrid system.
-   *
-   * @param [in] t: time.
-   * @param [in] x: state vector.
-   * @param [out] xp: jumped state.
-   */
-  void computeJumpMap(const scalar_t& t, const state_vector_t& x, state_vector_t& xp) override {
-    xp = G_ * x;  //+ H_*u;
-  }
+  void computeJumpMap(const scalar_t& t, const state_vector_t& x, state_vector_t& xp) override { xp = G_ * x; }
 
-  /**
-   * Sets the current time, state, and control input.
-   *
-   * @param [in] t: Current time
-   * @param [in] x: Current state vector
-   * @param [in] u: Current input vector
-   */
   void setCurrentStateAndControl(const scalar_t& t, const state_vector_t& x, const input_vector_t& u) override {
     BASE::setCurrentStateAndControl(t, x, u);
   }
 
-  /**
-   * Get the flow map value.
-   *
-   * @param [out] f: The flow map value.
-   */
-  virtual void getFlowMap(state_vector_t& f) { f = A_ * BASE::x_ + B_ * BASE::u_; }
-
-  /**
-   * Get the jump map value.
-   *
-   * @param [out] g: The jump map value.
-   */
-  virtual void getJumpMap(state_vector_t& g) { g = G_ * BASE::x_ + H_ * BASE::u_; }
-
-  /**
-   * The A matrix at a given operating point for the linearized system flow map.
-   * \f$ dx/dt = A(t) \delta x + B(t) \delta u \f$.
-   *
-   * @param [out] A: \f$ A(t) \f$ matrix.
-   */
   void getFlowMapDerivativeState(state_matrix_t& A) override { A = A_; }
 
-  /**
-   * The B matrix at a given operating point for the linearized system flow map.
-   * \f$ dx/dt = A(t) \delta x + B(t) \delta u \f$.
-   *
-   * @param [out] B: \f$ B(t) \f$ matrix.
-   */
   void getFlowMapDerivativeInput(state_input_matrix_t& B) override { B = B_; }
 
-  /**
-   * The G matrix at a given operating point for the linearized system jump map.
-   * \f$ x^+ = G \delta x + H \delta u \f$.
-   *
-   * @param [out] G: \f$ G \f$ matrix.
-   */
   void getJumpMapDerivativeState(state_matrix_t& G) override { G = G_; }
 
-  /**
-   * The H matrix at a given operating point for the linearized system jump map.
-   * \f$ x^+ = G \delta x + H \delta u \f$.
-   *
-   * @param [out] H: \f$ H \f$ matrix.
-   */
   void getJumpMapDerivativeInput(state_input_matrix_t& H) override { H = H_; }
 
  private:

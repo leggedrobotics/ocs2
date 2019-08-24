@@ -49,10 +49,9 @@ using namespace ocs2;
 using namespace ballbot;
 
 int main(int argc, char** argv) {
-
-  using dim_t = Dimensions<ballbot::STATE_DIM_, ballbot::INPUT_DIM_>;
-  using ballbotConstraint_t = ConstraintBase<ballbot::STATE_DIM_, ballbot::INPUT_DIM_>;
-  using ballbotOperatingPoint_t = SystemOperatingPoint<ballbot::STATE_DIM_, ballbot::INPUT_DIM_>;
+  using dim_t = Dimensions<STATE_DIM_, INPUT_DIM_>;
+  using ballbotConstraint_t = ConstraintBase<STATE_DIM_, INPUT_DIM_>;
+  using ballbotOperatingPoint_t = SystemOperatingPoint<STATE_DIM_, INPUT_DIM_>;
 
   /*
    * Setting paths
@@ -63,7 +62,6 @@ int main(int argc, char** argv) {
   // path to save auto-generated libraries
   std::string libraryFolder = ros::package::getPath("ocs2_ballbot_example") + "/auto_generated";
   std::cerr << "Generated library path: " << libraryFolder << std::endl;
-
 
   /*
    * SLQ-MPC settings
@@ -81,15 +79,15 @@ int main(int argc, char** argv) {
    * Cost function
    */
   dim_t::state_matrix_t Q;
-  ocs2::loadData::loadEigenMatrix(taskFile, "Q", Q);
+  loadData::loadEigenMatrix(taskFile, "Q", Q);
   dim_t::input_matrix_t R;
-  ocs2::loadData::loadEigenMatrix(taskFile, "R", R);
+  loadData::loadEigenMatrix(taskFile, "R", R);
   dim_t::state_matrix_t QFinal;
-  ocs2::loadData::loadEigenMatrix(taskFile, "Q_final", QFinal);
+  loadData::loadEigenMatrix(taskFile, "Q_final", QFinal);
   dim_t::state_vector_t xFinal;
-  ocs2::loadData::loadEigenMatrix(taskFile, "x_final", xFinal);
+  loadData::loadEigenMatrix(taskFile, "x_final", xFinal);
   dim_t::state_vector_t xInit;
-  ocs2::loadData::loadEigenMatrix(taskFile, "initialState", xInit);
+  loadData::loadEigenMatrix(taskFile, "initialState", xInit);
   dim_t::state_vector_t xNominal = xInit;
   dim_t::input_vector_t uNominal = dim_t::input_vector_t::Zero();
 
@@ -112,19 +110,18 @@ int main(int argc, char** argv) {
   loadData::loadCppDataType(taskFile, "mpcTimeHorizon.timehorizon", timeHorizon);
   size_t numPartitions;
   loadData::loadCppDataType(taskFile, "mpcTimeHorizon.numPartitions", numPartitions);
-  dim_t::scalar_array_t partitioningTimes(numPartitions+1);
+  dim_t::scalar_array_t partitioningTimes(numPartitions + 1);
   partitioningTimes[0] = 0.0;
-  for (size_t i=0; i<numPartitions; i++) {
-	  partitioningTimes[i+1] = partitioningTimes[i] + timeHorizon/numPartitions;
+  for (size_t i = 0; i < numPartitions; i++) {
+    partitioningTimes[i + 1] = partitioningTimes[i] + timeHorizon / numPartitions;
   }
   partitioningTimes[numPartitions] = timeHorizon;
 
   /*
    * define solver and run
    */
-  SLQ<ballbot::STATE_DIM_, ballbot::INPUT_DIM_> slqST(
-		  ballbotSystemDynamicsPtr.get(), ballbotSystemDynamicsPtr.get(), ballbotConstraintPtr.get(),
-		  ballbotCostPtr.get(), ballbotOperatingPointPtr.get(), slqSettings);
+  SLQ<STATE_DIM_, INPUT_DIM_> slqST(ballbotSystemDynamicsPtr.get(), ballbotSystemDynamicsPtr.get(), ballbotConstraintPtr.get(),
+                                    ballbotCostPtr.get(), ballbotOperatingPointPtr.get(), slqSettings);
   slqST.run(0.0, xInit, timeHorizon, partitioningTimes);
 
   /*
@@ -136,4 +133,3 @@ int main(int argc, char** argv) {
 
   return 0;
 }
-

@@ -83,7 +83,7 @@ void BallbotInterface::loadSettings(const std::string& taskFile) {
   ocs2::loadData::loadEigenMatrix(taskFile, "R", R_);
   ocs2::loadData::loadEigenMatrix(taskFile, "Q_final", QFinal_);
   ocs2::loadData::loadEigenMatrix(taskFile, "x_final", xFinal_);
-  xNominal_ = xFinal_; // dim_t::state_vector_t::Zero();
+  xNominal_ = xFinal_;  // dim_t::state_vector_t::Zero();
   uNominal_ = dim_t::input_vector_t::Zero();
 
   std::cerr << "Q:  \n" << Q_ << std::endl;
@@ -126,7 +126,9 @@ void BallbotInterface::setupOptimizer(const std::string& taskFile) {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-SLQ_Settings& BallbotInterface::slqSettings() { return slqSettings_; }
+SLQ_Settings& BallbotInterface::slqSettings() {
+  return slqSettings_;
+}
 
 }  // namespace ballbot
 }  // namespace ocs2

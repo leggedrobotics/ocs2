@@ -45,16 +45,22 @@ void HybridLogicRulesMachine::setLogicRules(std::shared_ptr<HybridLogicRules> lo
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void HybridLogicRulesMachine::logicRulesUpdated() { logicRulesModified_ = true; }
+void HybridLogicRulesMachine::logicRulesUpdated() {
+  logicRulesModified_ = true;
+}
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-HybridLogicRules* HybridLogicRulesMachine::getLogicRulesPtr() { return logicRules_.get(); }
+HybridLogicRules* HybridLogicRulesMachine::getLogicRulesPtr() {
+  return logicRules_.get();
+}
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-const HybridLogicRules* HybridLogicRulesMachine::getLogicRulesPtr() const { return logicRules_.get(); }
+const HybridLogicRules* HybridLogicRulesMachine::getLogicRulesPtr() const {
+  return logicRules_.get();
+}
 
 /******************************************************************************************************/
 /******************************************************************************************************/
@@ -80,7 +86,9 @@ const typename HybridLogicRulesMachine::scalar_array_t& HybridLogicRulesMachine:
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-const typename HybridLogicRulesMachine::scalar_array_t& HybridLogicRulesMachine::getPartitioningTimes() const { return partitioningTimes_; }
+const typename HybridLogicRulesMachine::scalar_array_t& HybridLogicRulesMachine::getPartitioningTimes() const {
+  return partitioningTimes_;
+}
 
 /******************************************************************************************************/
 /******************************************************************************************************/
@@ -104,16 +112,22 @@ std::function<size_t(typename HybridLogicRulesMachine::scalar_t)> HybridLogicRul
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-size_t HybridLogicRulesMachine::getNumEventCounters(size_t partitionIndex) const { return eventCountersStock_[partitionIndex].size(); }
+size_t HybridLogicRulesMachine::getNumEventCounters(size_t partitionIndex) const {
+  return eventCountersStock_[partitionIndex].size();
+}
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-size_t HybridLogicRulesMachine::getNumEvents(size_t partitionIndex) const { return eventTimesStock_[partitionIndex].size(); }
+size_t HybridLogicRulesMachine::getNumEvents(size_t partitionIndex) const {
+  return eventTimesStock_[partitionIndex].size();
+}
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-const size_t& HybridLogicRulesMachine::getNumPartitions() const { return numPartitions_; }
+const size_t& HybridLogicRulesMachine::getNumPartitions() const {
+  return numPartitions_;
+}
 
 /******************************************************************************************************/
 /******************************************************************************************************/

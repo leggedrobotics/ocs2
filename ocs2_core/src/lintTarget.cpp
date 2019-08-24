@@ -68,4 +68,6 @@
 #include <ocs2_core/misc/randomMatrices.h>
 
 // dummy target for clang toolchain
-int main() { return 0; }
+int main() {
+  return 0;
+}

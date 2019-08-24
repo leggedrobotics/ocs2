@@ -40,8 +40,8 @@ namespace ocs2 {
 namespace loadData {
 
 /**
- * An auxiliary function which loads value of the c++ data types from a file. The file uses property tree data structure with INFO format (refer to
- * www.goo.gl/fV3yWA).
+ * An auxiliary function which loads value of the c++ data types from a file. The file uses property tree data structure with INFO format
+ * (refer to https://www.boost.org/doc/libs/1_65_1/doc/html/property_tree.html).
  *
  * @param [in] filename: File name which contains the configuration data.
  * @param [in] dataName: The key name assigned to the data in the config file.

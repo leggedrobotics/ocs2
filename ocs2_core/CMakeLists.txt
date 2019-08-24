@@ -48,23 +48,23 @@ include_directories(
 
 # Declare a C++ library
 add_library(${PROJECT_NAME}_logic
-        src/logic/machine/HybridLogicRulesMachine.cpp
-        )
+  src/logic/machine/HybridLogicRulesMachine.cpp
+)
 target_link_libraries(ocs2_core_logic
-        ${catkin_LIBRARIES}
-        )
+  ${catkin_LIBRARIES}
+)
 
 add_library(${PROJECT_NAME}_cppad_interface
-        src/automatic_differentation/CppAdInterface.cpp
-        src/automatic_differentation/CppAdSparsity.cpp
-        )
+  src/automatic_differentation/CppAdInterface.cpp
+  src/automatic_differentation/CppAdSparsity.cpp
+)
 
 add_executable(${PROJECT_NAME}_lintTarget
-        src/lintTarget.cpp
-        )
+  src/lintTarget.cpp
+)
 target_link_libraries(${PROJECT_NAME}_lintTarget
-        ${Boost_LIBRARIES}
-        )
+  ${Boost_LIBRARIES}
+)
 
 #########################
 ###   CLANG TOOLING   ###
@@ -140,39 +140,39 @@ target_link_libraries(cppadcg_constraint_unittest
 )
 
 catkin_add_gtest(cppadcg_cost_unittest
-        test/cppad_cg/testCppADCG_cost.cpp
-        )
+  test/cppad_cg/testCppADCG_cost.cpp
+)
 target_link_libraries(cppadcg_cost_unittest
-        ${PROJECT_NAME}_cppad_interface
-        ${Boost_LIBRARIES}
-        ${catkin_LIBRARIES} -lm -ldl
-        )
+  ${PROJECT_NAME}_cppad_interface
+  ${Boost_LIBRARIES}
+  ${catkin_LIBRARIES} -lm -ldl
+)
 
 catkin_add_gtest(cppadcg_dynamics_unittest
-        test/cppad_cg/testCppADCG_dynamics.cpp
-        )
+  test/cppad_cg/testCppADCG_dynamics.cpp
+)
 target_link_libraries(cppadcg_dynamics_unittest
-        ${PROJECT_NAME}_cppad_interface
-        ${Boost_LIBRARIES}
-        ${catkin_LIBRARIES} -lm -ldl
-        )
+  ${PROJECT_NAME}_cppad_interface
+  ${Boost_LIBRARIES}
+  ${catkin_LIBRARIES} -lm -ldl
+)
 
 catkin_add_gtest(testSparsityHelpers
-        test/cppad_cg/testSparsityHelpers.cpp
+  test/cppad_cg/testSparsityHelpers.cpp
 )
 target_link_libraries(testSparsityHelpers
-        ${PROJECT_NAME}_cppad_interface
-        ${Boost_LIBRARIES}
-        dl
-        )
+  ${PROJECT_NAME}_cppad_interface
+  ${Boost_LIBRARIES}
+  dl
+)
 
 catkin_add_gtest(testCppAdInterface
-        test/cppad_cg/testCppAdInterface.cpp
+  test/cppad_cg/testCppAdInterface.cpp
 )
 target_link_libraries(testCppAdInterface
-        ${PROJECT_NAME}_cppad_interface
-        ${Boost_LIBRARIES}
-        dl
+  ${PROJECT_NAME}_cppad_interface
+  ${Boost_LIBRARIES}
+  dl
 )
 
 catkin_add_gtest(test_transferfunctionbase

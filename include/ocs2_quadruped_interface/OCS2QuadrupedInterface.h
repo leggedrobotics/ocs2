@@ -18,8 +18,6 @@
 #include <string>
 #include <vector>
 
-#include <ocs2_core/misc/loadEigenMatrix.h>
-
 #include <ocs2_slq/SLQ.h>
 #include <ocs2_slq/SLQ_MP.h>
 #include <ocs2_slq/SLQ_Settings.h>

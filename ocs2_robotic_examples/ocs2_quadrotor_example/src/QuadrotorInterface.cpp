@@ -82,10 +82,10 @@ void QuadrotorInterface::loadSettings(const std::string& taskFile) {
 	/*
 	 * Cost function
 	 */
-	loadEigenMatrix(taskFile, "Q", Q_);
-	loadEigenMatrix(taskFile, "R", R_);
-	loadEigenMatrix(taskFile, "Q_final", QFinal_);
-	loadEigenMatrix(taskFile, "x_final", xFinal_);
+	loadData::loadEigenMatrix(taskFile, "Q", Q_);
+	loadData::loadEigenMatrix(taskFile, "R", R_);
+	loadData::loadEigenMatrix(taskFile, "Q_final", QFinal_);
+	loadData::loadEigenMatrix(taskFile, "x_final", xFinal_);
 	xNominal_ = dim_t::state_vector_t::Zero();
 	uNominal_ = dim_t::input_vector_t::Zero();
 

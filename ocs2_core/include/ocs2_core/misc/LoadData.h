@@ -37,21 +37,22 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <boost/property_tree/ptree.hpp>
 
 namespace ocs2 {
+namespace loadData {
 
 /**
- * An auxiliary function which loads a scalar value from a file. The file uses property tree data structure with INFO format (refer to
- * www.goo.gl/fV3yWA).
+ * An auxiliary function which loads value of the c++ data types from a file. The file uses property tree data structure with INFO format
+ * (refer to https://www.boost.org/doc/libs/1_65_1/doc/html/property_tree.html).
  *
  * @param [in] filename: File name which contains the configuration data.
- * @param [in] scalarName: The key name assigned to the scalar in the config file.
+ * @param [in] dataName: The key name assigned to the data in the config file.
  * @param [out] value: The loaded value.
  */
-template <typename scalar_t>
-inline void loadScalar(const std::string& filename, const std::string& scalarName, scalar_t& value) {
+template <typename cpp_data_t>
+inline void loadCppDataType(const std::string& filename, const std::string& dataName, cpp_data_t& value) {
   boost::property_tree::ptree pt;
   boost::property_tree::read_info(filename, pt);
 
-  value = pt.get<scalar_t>(scalarName);
+  value = pt.get<cpp_data_t>(dataName);
 }
 
 /**
@@ -105,6 +106,7 @@ inline void loadEigenMatrix(const std::string& filename, const std::string& matr
   }
 }
 
+}  // namespace loadData
 }  // namespace ocs2
 
 #endif /* OCS2_LOADEIGENMATRIX_H_ */

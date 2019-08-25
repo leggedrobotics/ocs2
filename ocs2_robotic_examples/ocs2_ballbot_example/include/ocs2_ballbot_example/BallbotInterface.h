@@ -39,7 +39,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_core/Dimensions.h>
 #include <ocs2_core/constraint/ConstraintBase.h>
 #include <ocs2_core/initialization/SystemOperatingPoint.h>
-#include <ocs2_core/misc/loadEigenMatrix.h>
 #include <ocs2_robotic_tools/common/RobotInterfaceBase.h>
 
 // Ballbot
@@ -136,8 +135,6 @@ class BallbotInterface final : public RobotInterfaceBase<ballbot::STATE_DIM_, ba
 
   size_t numPartitions_ = 0;
   dim_t::scalar_array_t partitioningTimes_;
-  // flag to reset the mpc pi pointer
-  bool initMpcPi_ = false;
 };
 
 }  // namespace ballbot

@@ -70,11 +70,8 @@ void BallbotInterface::loadSettings(const std::string& taskFile) {
    * Dynamics
    */
   // load the flag to generate library files from taskFile
-  boost::property_tree::ptree pt;
-  boost::property_tree::read_info(taskFile_, pt);
-  auto recompileLibraries = pt.get<bool>("ballbot_interface.recompileLibraries");
-  initMpcPi_ = pt.get<bool>("ballbot_interface.initMpcPi");
-  std::cout << "initMpcPi: " << initMpcPi_ << std::endl;
+  bool recompileLibraries;
+  ocs2::loadData::loadCppDataType(taskFile_, "ballbot_interface.recompileLibraries", recompileLibraries);
 
   ballbotSystemDynamicsPtr_.reset(new BallbotSystemDynamics());
   ballbotSystemDynamicsPtr_->initialize("ballbot_dynamics", libraryFolder_, recompileLibraries, true);
@@ -82,11 +79,11 @@ void BallbotInterface::loadSettings(const std::string& taskFile) {
   /*
    * Cost function
    */
-  ocs2::loadEigenMatrix(taskFile, "Q", Q_);
-  ocs2::loadEigenMatrix(taskFile, "R", R_);
-  ocs2::loadEigenMatrix(taskFile, "Q_final", QFinal_);
-  ocs2::loadEigenMatrix(taskFile, "x_final", xFinal_);
-  xNominal_ = xFinal_;
+  ocs2::loadData::loadEigenMatrix(taskFile, "Q", Q_);
+  ocs2::loadData::loadEigenMatrix(taskFile, "R", R_);
+  ocs2::loadData::loadEigenMatrix(taskFile, "Q_final", QFinal_);
+  ocs2::loadData::loadEigenMatrix(taskFile, "x_final", xFinal_);
+  xNominal_ = xFinal_;  // dim_t::state_vector_t::Zero();
   uNominal_ = dim_t::input_vector_t::Zero();
 
   std::cerr << "Q:  \n" << Q_ << std::endl;
@@ -121,8 +118,11 @@ void BallbotInterface::setupOptimizer(const std::string& taskFile) {
   mpcPtr_.reset(new mpc_t(ballbotSystemDynamicsPtr_.get(), ballbotSystemDynamicsPtr_.get(), ballbotConstraintPtr_.get(),
                           ballbotCostPtr_.get(), ballbotOperatingPointPtr_.get(), partitioningTimes_, slqSettings_, mpcSettings_));
 
-  std::unique_ptr<BallbotCost> cost(ballbotCostPtr_->clone());
-  if (initMpcPi_) {
+  // load the flag to reset the mpc pi pointer
+  bool initMpcPi = false;
+  ocs2::loadData::loadCppDataType(taskFile_, "ballbot_interface.initMpcPi", initMpcPi);
+  std::cout << "initMpcPi: " << initMpcPi << std::endl;
+  if (initMpcPi) {
     std::unique_ptr<BallbotCost> cost(ballbotCostPtr_->clone());
     mpcPi_.reset(new mpc_pi_t(std::shared_ptr<BallbotSystemDynamics>(ballbotSystemDynamicsPtr_->clone()), std::move(cost),
                               *ballbotConstraintPtr_, partitioningTimes_, mpcSettings_, piSettings_));
@@ -132,7 +132,9 @@ void BallbotInterface::setupOptimizer(const std::string& taskFile) {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-SLQ_Settings& BallbotInterface::slqSettings() { return slqSettings_; }
+SLQ_Settings& BallbotInterface::slqSettings() {
+  return slqSettings_;
+}
 
 }  // namespace ballbot
 }  // namespace ocs2

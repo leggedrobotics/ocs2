@@ -16,4 +16,6 @@
 #include <ocs2_oc/rollout/TimeTriggeredRollout.h>
 
 // dummy target for clang toolchain
-int main() { return 0; }
+int main() {
+  return 0;
+}

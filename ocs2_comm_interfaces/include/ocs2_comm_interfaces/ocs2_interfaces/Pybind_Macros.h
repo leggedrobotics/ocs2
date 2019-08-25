@@ -86,7 +86,6 @@ using namespace pybind11::literals;
         .def("advanceMpc", &PY_INTERFACE::advanceMpc)                                                                                     \
         .def("getMpcSolution", &PY_INTERFACE::getMpcSolution, "t"_a.noconvert(), "x"_a.noconvert(), "u"_a.noconvert())                    \
         .def("getLinearFeedbackGain", &PY_INTERFACE::getLinearFeedbackGain, "t"_a.noconvert())                                            \
-        .def("getLinearFeedbackGainsInverses", &PY_INTERFACE::getLinearFeedbackGainsInverses, "sigmaX"_a.noconvert())                     \
         .def("computeFlowMap", &PY_INTERFACE::computeFlowMap, "t"_a, "x"_a.noconvert(), "u"_a.noconvert())                                \
         .def("setFlowMapDerivativeStateAndControl", &PY_INTERFACE::setFlowMapDerivativeStateAndControl, "t"_a, "x"_a.noconvert(),         \
              "u"_a.noconvert())                                                                                                           \

@@ -60,8 +60,8 @@ TEST(Ballbot, PyBindings) {
 
   std::cout << "L: " << L << "\ndLdx: " << dLdx.transpose() << "\ndLdu: " << dLdu.transpose() << std::endl;
 
-  auto Vx = bindings.getValueFunctionStateDerivative(t_arr[0], x_arr[0]);
-  std::cout << "Vx: " << Vx.transpose() << std::endl;
+//  auto Vx = bindings.getValueFunctionStateDerivative(t_arr[0], x_arr[0]);
+//  std::cout << "Vx: " << Vx.transpose() << std::endl;
 
   bindings.reset(costDesiredTraj);
   bindings.setObservation(0.0, initState);

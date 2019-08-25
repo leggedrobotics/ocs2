@@ -66,8 +66,3 @@ dLdx = mpc.getRunningCostDerivativeState(t_result[0], x_result[0], u_result[0])
 print("dLdx", dLdx)
 dLdu = mpc.getRunningCostDerivativeInput(t_result[0], x_result[0], u_result[0])
 print("dLdu", dLdu)
-
-print("\n### Testing Feedback gains")
-sigma_X = state_matrix_array()
-mpc.getLinearFeedbackGainsInverses(sigma_X)
-print("sigmaX", sigma_X[0])

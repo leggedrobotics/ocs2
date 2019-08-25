@@ -24,7 +24,7 @@ find_package(Boost REQUIRED COMPONENTS
 find_package(Eigen3 3.3 REQUIRED NO_MODULE)
 
 # Pybind11
-option(USE_PYBIND_PYTHON_3 "Use python3-compatible python bindings" ON)
+option(USE_PYBIND_PYTHON_3 "Use python3-compatible python bindings" OFF)
 if(USE_PYBIND_PYTHON_3)
   set(PYTHON_EXECUTABLE /usr/bin/python3)
   set(PYBIND11_PYTHON_VERSION 3.6 CACHE STRING "")
@@ -246,6 +246,14 @@ install(TARGETS ballbot_mpc ballbot_dummy_test ballbot_target
 install(DIRECTORY urdf launch config rviz
         DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
         )
+
+if(${pybind11_FOUND})
+  # TODO handle python2/3 case properly
+  install(TARGETS BallbotPyBindings
+          ARCHIVE DESTINATION ${CATKIN_PACKAGE_PYTHON_DESTINATION}
+          LIBRARY DESTINATION ${CATKIN_PACKAGE_PYTHON_DESTINATION}
+          )
+endif()
 
 #############
 ## Testing ##

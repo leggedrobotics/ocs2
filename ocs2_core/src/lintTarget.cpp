@@ -2,8 +2,8 @@
 #include <ocs2_core/OCS2NumericTraits.h>
 
 // Automatic Differentation
-#include <ocs2_core/automatic_differentiation/AutomaticDifferentiationBase.h>
-#include <ocs2_core/automatic_differentiation/CppAdCodeGenInterface.h>
+#include <ocs2_core/automatic_differentiation/CppAdInterface.h>
+#include <ocs2_core/automatic_differentiation/CppAdSparsity.h>
 
 // Constraint
 #include <ocs2_core/constraint/ConstraintBase.h>
@@ -61,11 +61,13 @@
 #include <ocs2_core/misc/LTI_Equations.h>
 #include <ocs2_core/misc/LinearFunction.h>
 #include <ocs2_core/misc/LinearInterpolation.h>
+#include <ocs2_core/misc/LoadData.h>
 #include <ocs2_core/misc/Lookup.h>
 #include <ocs2_core/misc/SetThreadPriority.h>
 #include <ocs2_core/misc/TrajectorySpreadingController.h>
-#include <ocs2_core/misc/loadEigenMatrix.h>
 #include <ocs2_core/misc/randomMatrices.h>
 
 // dummy target for clang toolchain
-int main() { return 0; }
+int main() {
+  return 0;
+}

@@ -1,6 +1,4 @@
-//
-// Created by rgrandia on 08.05.19.
-//
+
 
 #ifndef OCS2_ODE_FUNC_H
 #define OCS2_ODE_FUNC_H

@@ -8,7 +8,6 @@
 #include <ocs2_core/Dimensions.h>
 #include <ocs2_core/constraint/ConstraintBase.h>
 #include <ocs2_core/initialization/SystemOperatingPoint.h>
-#include <ocs2_core/misc/loadEigenMatrix.h>
 #include <ocs2_mpc/MPC_PI.h>
 #include <ocs2_mpc/MPC_SLQ.h>
 #include <ocs2_robotic_tools/common/RobotInterfaceBase.h>

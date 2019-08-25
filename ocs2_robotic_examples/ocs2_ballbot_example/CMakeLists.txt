@@ -68,6 +68,27 @@ include_directories(
         ${TORCH_INCLUDE_DIRS}
 )
 
+add_library(ballbot_PI
+        src/solvers/BallbotPI.cpp)
+add_dependencies(ballbot_PI
+        ${catkin_EXPORTED_TARGETS}
+        )
+target_link_libraries(ballbot_PI
+        ${catkin_LIBRARIES}
+        )
+
+add_library(ballbot_SLQ
+        src/solvers/BallbotSLQ.cpp)
+add_dependencies(ballbot_SLQ
+        ${catkin_EXPORTED_TARGETS}
+        )
+target_link_libraries(ballbot_SLQ
+        ${catkin_LIBRARIES}
+        )
+
+add_library(ballbot_dynamics
+        src/dynamics/BallbotSystemDynamics.cpp)
+
 # Ballbot interface library
 add_library(ballbot_interface
         src/BallbotInterface.cpp)
@@ -75,6 +96,9 @@ add_dependencies(ballbot_interface
         ${catkin_EXPORTED_TARGETS}
         )
 target_link_libraries(ballbot_interface
+        ballbot_SLQ
+        ballbot_PI
+        ballbot_dynamics
         ${catkin_LIBRARIES}
         ${Boost_LIBRARIES}
         dl
@@ -126,6 +150,20 @@ target_link_libraries(ballbot_target
         ${catkin_LIBRARIES}
         ${Boost_LIBRARIES}
         )
+        
+# Simple example
+add_executable(ballbot_simple_example
+  src/BallbotSimpleExample.cpp)
+add_dependencies(ballbot_simple_example
+  ${catkin_EXPORTED_TARGETS}
+)
+target_link_libraries(ballbot_simple_example
+  ballbot_SLQ
+  ballbot_dynamics
+  ${catkin_LIBRARIES}
+  ${Boost_LIBRARIES}
+  dl
+)
 
 # Pybindings Cpp library
 add_library(ballbotPyBindings_cpp
@@ -193,7 +231,7 @@ endif(cmake_clang_tools_FOUND)
 ## Install ##
 #############
 
-install(TARGETS ballbot_interface ballbotPyBindings_cpp
+install(TARGETS ballbot_interface ballbot_PI ballbot_SLQ ballbot_dynamics ballbotPyBindings_cpp
         ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
         LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
         RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}

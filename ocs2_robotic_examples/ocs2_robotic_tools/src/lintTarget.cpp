@@ -4,4 +4,6 @@
 #include <ocs2_robotic_tools/common/RobotInterfaceBase.h>
 
 // dummy target for clang toolchain
-int main() { return 0; }
+int main() {
+  return 0;
+}

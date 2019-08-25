@@ -1,6 +1,4 @@
-//
-// Created by rgrandia on 06.02.19.
-//
+
 
 #include <ocs2_core/constraint/PenaltyBase.h>
 

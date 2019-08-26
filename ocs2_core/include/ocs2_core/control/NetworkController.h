@@ -29,8 +29,12 @@ class NetworkController final : public ControllerBase<STATE_DIM, INPUT_DIM> {
   void loadNetwork(const std::string& filePath) { policyNet_ = torch::jit::load(filePath); }
 
   input_vector_t computeInput(const scalar_t& t, const state_vector_t& x) override {
+    Eigen::Matrix<float, STATE_DIM + 1, 1> tx_float;
+    tx_float << t, x.template cast<float>();
+    auto torch_tx = torch::from_blob(tx_float.data(), tx_float.size());
+
     std::vector<torch::jit::IValue> inputs;
-    inputs.push_back(torch::ones({STATE_DIM + 1}));
+    inputs.push_back(torch_tx);
 
     auto outputs = policyNet_.forward(inputs).toTuple();
     torch::Tensor p = outputs->elements()[0].toTensor();

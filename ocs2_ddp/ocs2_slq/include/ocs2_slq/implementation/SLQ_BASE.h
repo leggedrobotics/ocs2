@@ -355,8 +355,13 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM>::getStateInputConstraintLagrangian(scalar_t 
   state_vector_t deltaX = state - xNominal;
   dynamic_input_matrix_t DmDagerTransRm = DmDager.leftCols(nc1).transpose() * Rm;
 
-  nu = DmDagerTransRm * (CmProjected * deltaX + EvProjected) -
-       DmDager.leftCols(nc1).transpose() * (Pm * deltaX + Bm.transpose() * costate + Rv);
+  //  nu = DmDagerTransRm * (CmProjected * deltaX + EvProjected) -
+  //       DmDager.leftCols(nc1).transpose() * (Pm * deltaX + Bm.transpose() * costate + Rv);
+  //  std::cerr << "previous cpp nu " << nu.transpose() << std::endl;
+
+  //  dynamic_vector_t alternativeNu =
+  nu = DmDager.leftCols(nc1).transpose() * (Rm * DmDager.leftCols(nc1).transpose() * CmProjected * deltaX - Rv - Bm.transpose() * costate);
+  //  std::cerr << "alternative cpp nu " << alternativeNu.transpose() << std::endl;
 }
 
 /******************************************************************************************************/

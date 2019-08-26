@@ -171,6 +171,16 @@ typename PythonInterface<STATE_DIM, INPUT_DIM>::input_vector_t PythonInterface<S
 }
 
 template <size_t STATE_DIM, size_t INPUT_DIM>
+typename PythonInterface<STATE_DIM, INPUT_DIM>::input_matrix_t
+PythonInterface<STATE_DIM, INPUT_DIM>::getIntermediateCostSecondDerivativeInput(double t, Eigen::Ref<const state_vector_t> x,
+                                                                                Eigen::Ref<const input_vector_t> u) {
+  cost_->setCurrentStateAndControl(t, x, u);
+  input_matrix_t ddLduu;
+  cost_->getIntermediateCostSecondDerivativeInput(ddLduu);
+  return ddLduu;
+}
+
+template <size_t STATE_DIM, size_t INPUT_DIM>
 double PythonInterface<STATE_DIM, INPUT_DIM>::getValueFunction(double t, Eigen::Ref<const state_vector_t> x) {
   return mpcMrtInterface_->getValueFunction(t, x);
 }

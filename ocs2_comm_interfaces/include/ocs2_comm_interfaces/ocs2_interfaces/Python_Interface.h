@@ -150,6 +150,15 @@ class PythonInterface {
   input_vector_t getIntermediateCostDerivativeInput(double t, Eigen::Ref<const state_vector_t> x, Eigen::Ref<const input_vector_t> u);
 
   /**
+   * @brief Access to second input derivative of intermediate cost (L)
+   * @param[in] t time
+   * @param[in] x state
+   * @param[in] u input
+   * @return d^2L/du^2 at provided t-x-u
+   */
+  input_matrix_t getIntermediateCostSecondDerivativeInput(double t, Eigen::Ref<const state_vector_t> x, Eigen::Ref<const input_vector_t> u);
+
+  /**
    * @brief Access the solver's internal value function
    * @param t query time
    * @param x query state

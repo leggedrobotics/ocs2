@@ -96,6 +96,8 @@ using namespace pybind11::literals;
              "u"_a.noconvert())                                                                                                           \
         .def("getIntermediateCostDerivativeInput", &PY_INTERFACE::getIntermediateCostDerivativeInput, "t"_a, "x"_a.noconvert(),           \
              "u"_a.noconvert())                                                                                                           \
+        .def("getIntermediateCostSecondDerivativeInput", &PY_INTERFACE::getIntermediateCostSecondDerivativeInput, "t"_a,                  \
+             "x"_a.noconvert(), "u"_a.noconvert())                                                                                        \
         .def("getValueFunction", &PY_INTERFACE::getValueFunction, "t"_a, "x"_a.noconvert())                                               \
         .def("getValueFunctionStateDerivative", &PY_INTERFACE::getValueFunctionStateDerivative, "t"_a, "x"_a.noconvert())                 \
         .def("getStateInputConstraint", &PY_INTERFACE::getStateInputConstraint, "t"_a, "x"_a.noconvert(), "u"_a.noconvert())              \

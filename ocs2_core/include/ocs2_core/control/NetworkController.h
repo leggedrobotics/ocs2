@@ -30,13 +30,15 @@ class NetworkController final : public ControllerBase<STATE_DIM, INPUT_DIM> {
 
   input_vector_t computeInput(const scalar_t& t, const state_vector_t& x) override {
     std::vector<torch::jit::IValue> inputs;
-    inputs.push_back(torch::ones({1, 3, 224, 224}));
+    inputs.push_back(torch::ones({STATE_DIM + 1}));
 
-    // Execute the model and turn its output into a tensor.
-    at::Tensor output = policyNet_.forward(inputs).toTensor();
+    auto outputs = policyNet_.forward(inputs).toTuple();
+    torch::Tensor p = outputs->elements()[0].toTensor();
+    torch::Tensor u_1 = outputs->elements()[1].toTensor();
 
-    input_vector_t u = Eigen::Map<input_vector_t>(output.data<scalar_t>(), INPUT_DIM);
-    return u;
+    Eigen::Matrix<float, INPUT_DIM, 1> u_float = Eigen::Map<Eigen::Matrix<float, INPUT_DIM, 1>>(u_1.data<float>(), INPUT_DIM);
+
+    return u_float.template cast<scalar_t>();
   }
 
   void flatten(const scalar_array_t& timeArray, const std::vector<float_array_t*>& flatArray2) const override {

@@ -28,15 +28,15 @@ class MRT_Network_Interface final : public MRT_BASE<STATE_DIM, INPUT_DIM> {
 
     this->mpcLinInterpolateState_.setData(&this->currentPolicy_->mpcTimeTrajectory_, &this->currentPolicy_->mpcStateTrajectory_);
 
+    this->findActiveSubsystemFnc_ = [](scalar_t) { return 0; };
+
     this->policyReceivedEver_ = true;
     this->policyUpdated_ = true;
   }
 
   virtual ~MRT_Network_Interface() = default;
 
-  void resetMpcNode(const CostDesiredTrajectories<scalar_t>& initCostDesiredTrajectories) override {
-    throw std::runtime_error("MRT_Network_Interface: Cannot reset MPC. There is no underlying MPC running.");
-  }
+  void resetMpcNode(const CostDesiredTrajectories<scalar_t>& initCostDesiredTrajectories) override {}
 
   void setCurrentObservation(const SystemObservation<STATE_DIM, INPUT_DIM>& observation) override {}
 

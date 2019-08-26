@@ -12,15 +12,21 @@ TEST(Ballbot, MRTNetworkInterface) {
   using input_vector_t = dim_t::input_vector_t;
 
   std::cout << "creating interface " << __LINE__ << std::endl;
-  MRT_Network_Interface<ballbot::STATE_DIM_, ballbot::INPUT_DIM_> network_interface("/tmp/mpcPolicy_2019-08-22_120549_script.pt");
+  MRT_Network_Interface<ballbot::STATE_DIM_, ballbot::INPUT_DIM_> network_interface(
+      "/home/jcarius/Desktop/mpc_policy_learning_data/2019-08-26_ballbot_empty_policy_script.pt");
   std::cout << "creating interface success " << __LINE__ << std::endl;
   ballbot::BallbotSystemDynamics dynamics;
+  dynamics.initialize("ballbotDynamics");
   network_interface.initRollout(dynamics, Rollout_Settings());
   std::cout << "init rollout success " << __LINE__ << std::endl;
 
   state_vector_t nextState;
   input_vector_t nextInput;
   size_t subsystem;
+
+  std::cout << "evaluate policy " << std::endl;
+  network_interface.evaluatePolicy(0.0, state_vector_t::Zero(), nextState, nextInput, subsystem);
+
   std::cout << "rollout policy " << __LINE__ << std::endl;
   network_interface.rolloutPolicy(0.0, state_vector_t::Zero(), 1.0, nextState, nextInput, subsystem);
 }

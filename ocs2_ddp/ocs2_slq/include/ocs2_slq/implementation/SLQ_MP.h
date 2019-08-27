@@ -43,7 +43,8 @@ SLQ_MP<STATE_DIM, INPUT_DIM>::SLQ_MP(const controlled_system_base_t* systemDynam
     : BASE(systemDynamicsPtr, systemDerivativesPtr, systemConstraintsPtr, costFunctionPtr, operatingTrajectoriesPtr, settings,
            std::move(logicRulesPtr), heuristicsFunctionPtr),
       workerTask_(IDLE),
-      subsystemProcessed_(0) {
+      subsystemProcessed_(0),
+      workerException_(false) {
   Eigen::initParallel();
 
   // initialize threads
@@ -223,51 +224,57 @@ void SLQ_MP<STATE_DIM, INPUT_DIM>::threadWork(size_t threadId) {
       break;
     }
 
-    switch (workerTask_local) {
-      case APPROXIMATE_LQ: {
-        if (BASE::ddpSettings_.debugPrintMT_) {
-          BASE::printString("[MT]: [Thread " + std::to_string(threadId) + "]: is busy with APPROXIMATE_LQ on partition " +
-                            std::to_string(subsystemProcessed_local));
-        }
+    try {
+      switch (workerTask_local) {
+        case APPROXIMATE_LQ: {
+          if (BASE::ddpSettings_.debugPrintMT_) {
+            BASE::printString("[MT]: [Thread " + std::to_string(threadId) + "]: is busy with APPROXIMATE_LQ on partition " +
+                              std::to_string(subsystemProcessed_local));
+          }
 
-        executeApproximatePartitionLQWorker(threadId, subsystemProcessed_local);
-        uniqueProcessID = generateUniqueProcessID(iteration_local, APPROXIMATE_LQ, subsystemProcessed_local);
+          executeApproximatePartitionLQWorker(threadId, subsystemProcessed_local);
+          uniqueProcessID = generateUniqueProcessID(iteration_local, APPROXIMATE_LQ, subsystemProcessed_local);
 
-        break;
-      }
-      case CALCULATE_CONTROLLER: {
-        if (BASE::ddpSettings_.debugPrintMT_) {
-          BASE::printString("[MT]: [Thread " + std::to_string(threadId) + "]: now busy with CALCULATE_CONTROLLER !");
+          break;
         }
+        case CALCULATE_CONTROLLER: {
+          if (BASE::ddpSettings_.debugPrintMT_) {
+            BASE::printString("[MT]: [Thread " + std::to_string(threadId) + "]: now busy with CALCULATE_CONTROLLER !");
+          }
 
-        executeCalculatePartitionController(threadId, subsystemProcessed_local);
-        uniqueProcessID = generateUniqueProcessID(iteration_local, CALCULATE_CONTROLLER, subsystemProcessed_local);
+          executeCalculatePartitionController(threadId, subsystemProcessed_local);
+          uniqueProcessID = generateUniqueProcessID(iteration_local, CALCULATE_CONTROLLER, subsystemProcessed_local);
 
-        break;
-      }
-      case LINE_SEARCH: {
-        if (BASE::ddpSettings_.debugPrintMT_) {
-          BASE::printString("[MT]: [Thread " + std::to_string(threadId) + "]: now busy with LINE_SEARCH !");
+          break;
         }
+        case LINE_SEARCH: {
+          if (BASE::ddpSettings_.debugPrintMT_) {
+            BASE::printString("[MT]: [Thread " + std::to_string(threadId) + "]: now busy with LINE_SEARCH !");
+          }
 
-        executeLineSearchWorker(threadId);
-        uniqueProcessID = generateUniqueProcessID(iteration_local, LINE_SEARCH, subsystemProcessed_local);
-        break;
-      }
-      case SOLVE_RICCATI: {
-        if (BASE::ddpSettings_.debugPrintMT_) {
-          BASE::printString("[MT]: [Thread " + std::to_string(threadId) + "]: now busy with RiccatiSolver!");
+          executeLineSearchWorker(threadId);
+          uniqueProcessID = generateUniqueProcessID(iteration_local, LINE_SEARCH, subsystemProcessed_local);
+          break;
         }
-        uniqueProcessID = generateUniqueProcessID(iteration_local, SOLVE_RICCATI, subsystemProcessed_local);
-        executeRiccatiSolver(threadId);
-        break;
-      }
-      case SHUTDOWN: {
-        if (BASE::ddpSettings_.debugPrintMT_) {
-          BASE::printString("[MT]: [Thread " + std::to_string(threadId) + "]: now shutting down!");
+        case SOLVE_RICCATI: {
+          if (BASE::ddpSettings_.debugPrintMT_) {
+            BASE::printString("[MT]: [Thread " + std::to_string(threadId) + "]: now busy with RiccatiSolver!");
+          }
+          uniqueProcessID = generateUniqueProcessID(iteration_local, SOLVE_RICCATI, subsystemProcessed_local);
+          executeRiccatiSolver(threadId);
+          break;
         }
-        return;
+        case SHUTDOWN: {
+          if (BASE::ddpSettings_.debugPrintMT_) {
+            BASE::printString("[MT]: [Thread " + std::to_string(threadId) + "]: now shutting down!");
+          }
+          return;
+        }
       }
+    } catch (const std::runtime_error& err) {
+      std::cerr << "Caught runtime error while doing thread work (workerTask_local " << workerTask_local << ")\n" << err.what();
+      workerException_ = true;
+      workerExceptionMessage_ = err.what();
     }
 
     if (BASE::ddpSettings_.debugPrintMT_) {
@@ -885,6 +892,11 @@ void SLQ_MP<STATE_DIM, INPUT_DIM>::runIteration() {
 
   // run BASE routine
   BASE::runIteration();
+
+  if (workerException_) {
+    throw std::runtime_error("A worker encountered an exception: " + workerExceptionMessage_);
+    workerException_ = false;
+  }
 
   // restore default Eigen thread number
   Eigen::setNbThreads(0);

@@ -294,6 +294,9 @@ class SLQ_MP : public SLQ_BASE<STATE_DIM, INPUT_DIM> {
   std::atomic_bool alphaBestFound_;
   std::atomic_size_t lsWorkerCompleted_;
   std::vector<bool> alphaProcessed_;
+
+  bool workerException_;
+  std::string workerExceptionMessage_;
 };
 
 }  // namespace ocs2

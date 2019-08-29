@@ -86,8 +86,8 @@ class EventHandlerBase {
   /**
    * Checks if an event is activated.
    *
-   * @param [in] state: Current state vector.
-   * @param [in] time: Current time.
+   * @param [in] state: The current state vector.
+   * @param [in] time: The current time.
    * @return boolean: Whether an event is active.
    */
   virtual bool checkEvent(const state_vector_t& state, const scalar_t& time) = 0;

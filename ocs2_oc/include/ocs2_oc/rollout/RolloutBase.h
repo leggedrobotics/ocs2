@@ -118,7 +118,7 @@ class RolloutBase {
    * @param [out] eventsPastTheEndIndeces: Indices containing past-the-end index of events trigger.
    * @param [out] stateTrajectory: The state trajectory.
    * @param [out] inputTrajectory: The control input trajectory.
-   * @return The final state (state jump is considered if it took place)
+   * @return The final state (state jump should be considered if it took place)
    */
   virtual state_vector_t run(size_t partitionIndex, scalar_t initTime, const state_vector_t& initState, scalar_t finalTime,
                              controller_t* controller, logic_rules_machine_t& logicRulesMachine, scalar_array_t& timeTrajectory,

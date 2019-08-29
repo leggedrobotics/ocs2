@@ -106,4 +106,7 @@ using namespace pybind11::literals;
         .def("getStateInputConstraintLagrangian", &PY_INTERFACE::getStateInputConstraintLagrangian, "t"_a, "x"_a.noconvert())             \
         .def("visualizeTrajectory", &PY_INTERFACE::visualizeTrajectory, "t"_a.noconvert(), "x"_a.noconvert(), "u"_a.noconvert(),          \
              "speed"_a);                                                                                                                  \
+    pybind11::class_<AnymalModel>(m, "AnymalModel")                                                                                       \
+        .def(pybind11::init<>())                                                                                                          \
+        .def("getFootHeights", &AnymalModel::getFootHeights, "x"_a.noconvert());                                                          \
   }

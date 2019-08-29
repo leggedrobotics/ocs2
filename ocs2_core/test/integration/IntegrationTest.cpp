@@ -69,17 +69,21 @@ TEST(IntegrationTest, SecondOrderSystem_ODE45)
 	std::vector<double> timeTrajectory1, timeTrajectory2;
 	std::vector<Eigen::Matrix<double,2,1>, Eigen::aligned_allocator<Eigen::Matrix<double,2,1>> > stateTrajectory1, stateTrajectory2, stateTrajectory3;
 
-	Eigen::Matrix<double,2,1> x0, x02;
+	Eigen::Matrix<double,2,1> x0;
 	x0.setZero();
-	x02.setZero();
 
+	// integrate adaptive
+	sys->resetNumFunctionCalls();
 	odeAdaptive.integrate(x0, 0.0, 10.0, stateTrajectory1, timeTrajectory1); // integrate adaptive
 
+	//integrate const
 	double dt = 0.05;
-	odeConst.integrate(x02, 0.0, 10.0, dt, stateTrajectory2, timeTrajectory2); //integrate const
+	sys->resetNumFunctionCalls();
+	odeConst.integrate(x0, 0.0, 10.0, dt, stateTrajectory2, timeTrajectory2); //integrate const
 
+	// integrate with a given time trajectory
+	sys->resetNumFunctionCalls();
 	odeTime.integrate(x0, timeTrajectory1.begin(), timeTrajectory1.end(), stateTrajectory3); // integrate with given time trajectory
-
 
 	if(fabs(timeTrajectory1.back() - 10.0) > 1e-6)
 		resultsGood = false;
@@ -228,6 +232,47 @@ TEST(IntegrationTest, SecondOrderSystem_AdamsBashfortMoulton)
 }
 
 #endif
+
+TEST(IntegrationTest, model_data_test)
+{
+	Eigen::Matrix2d A;
+	A << -2, -1, 1, 0;
+	Eigen::Vector2d B;
+	B << 1, 0;
+
+	typedef LinearSystemDynamics<2,1> SecondOrderSystem;
+	ControlledSystemBase<2,1>::Ptr sys = ControlledSystemBase<2,1>::Ptr(new SecondOrderSystem(A, B));
+
+	SecondOrderSystem::scalar_array_t cntTimeStamp {0, 10};
+	SecondOrderSystem::input_vector_array_t uff(2, SecondOrderSystem::input_vector_t::Ones());
+	SecondOrderSystem::input_state_matrix_array_t k(2, SecondOrderSystem::input_state_matrix_t::Zero());
+
+    using controller_t = ocs2::LinearController<2,1>;
+    auto controller = std::unique_ptr<controller_t>(new controller_t(cntTimeStamp, uff, k));
+    sys->setController(controller.get());
+
+	ODE45<2> odeAdaptive(sys); // integrate adaptive
+
+	std::vector<double> timeTrajectory;
+	std::vector<Eigen::Matrix<double,2,1>, Eigen::aligned_allocator<Eigen::Matrix<double,2,1>> > stateTrajectory;
+
+	Eigen::Matrix<double,2,1> x0;
+	x0.setZero();
+
+	// integrate adaptive
+	sys->resetNumFunctionCalls();
+	ODE45<2>::model_data_array_t modelDataTrajectory;
+	odeAdaptive.setModelDataTrajectoryPtr(&modelDataTrajectory);
+	odeAdaptive.integrate(x0, 0.0, 10.0, stateTrajectory, timeTrajectory); // integrate adaptive
+
+	ASSERT_EQ(modelDataTrajectory.size(), stateTrajectory.size()) <<
+			"MESSAGE: ModelData trajectory size is not equal to state trajectory size!";
+
+	for (int i=0; i<stateTrajectory.size(); i++) {
+		ASSERT_FLOAT_EQ(modelDataTrajectory[i].time_, timeTrajectory[i]) <<
+				"MESSAGE: ModelData trajectory time does not match the time trajectory!";
+	}
+}
 
 int main(int argc, char** argv)
 {

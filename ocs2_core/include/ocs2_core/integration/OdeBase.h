@@ -31,8 +31,11 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define ODE_BASE_OCS2_H_
 
 #include <Eigen/Dense>
+#include <list>
+#include <memory>
 
 #include "ocs2_core/Dimensions.h"
+#include "ocs2_core/model_data/ModelDataBase.h"
 
 namespace ocs2 {
 
@@ -54,7 +57,16 @@ class OdeBase {
   /**
    * Default constructor
    */
-  OdeBase() : numFunctionCalls_(0) {}
+  OdeBase(const ModelDataBase* modelDataPtr = new ModelDataBase)
+      : numFunctionCalls_(0), defaultModelDataArraySize_(7), modelDataPtrArray_(defaultModelDataArraySize_) {
+    if (modelDataPtr) {
+      for (auto& modelPtr_i : modelDataPtrArray_) {
+        modelPtr_i.reset(modelDataPtr->clone());
+      }
+    }
+
+    nextModelDataPtrIterator() = beginModelDataPtrIterator();
+  }
 
   /**
    * Default destructor
@@ -64,7 +76,7 @@ class OdeBase {
   /**
    * Default copy constructor
    */
-  OdeBase(const OdeBase& rhs) : numFunctionCalls_(0) {}
+  OdeBase(const OdeBase& rhs) : OdeBase(*rhs.modelDataPtrArray_.front()) {}
 
   /**
    * Gets the number of function calls.
@@ -78,6 +90,36 @@ class OdeBase {
    *
    */
   void resetNumFunctionCalls() { numFunctionCalls_ = 0; }
+
+  /**
+   * Returns the iterator pointing to the next free model data.
+   * @return iterator to the next free model data.
+   */
+  std::list<std::shared_ptr<ModelDataBase>>::iterator& nextModelDataPtrIterator() { return nextModelDataPtrIterator_; }
+
+  /**
+   * Returns the iterator to begin()
+   * @return modelDataPtrArray_.begin()
+   */
+  std::list<std::shared_ptr<ModelDataBase>>::iterator beginModelDataPtrIterator() { return modelDataPtrArray_.begin(); }
+
+  /**
+   * Returns the iterator to end()
+   * @return modelDataPtrArray_.end()
+   */
+  std::list<std::shared_ptr<ModelDataBase>>::iterator endModelDataPtrIterator() { return modelDataPtrArray_.end(); }
+
+  /**
+   * Resizes the internal model data array.
+   *
+   */
+  void resizeInternalModelDataPtrArray() {
+    --nextModelDataPtrIterator_;  // since next will change
+    for (int i = 0; i < defaultModelDataArraySize_; i++) {
+      modelDataPtrArray_.emplace_back(modelDataPtrArray_.front()->clone());
+    }
+    ++nextModelDataPtrIterator_;  // new next
+  }
 
   /**
    * Computes the autonomous system dynamics.
@@ -109,6 +151,10 @@ class OdeBase {
 
  protected:
   int numFunctionCalls_;
+
+  const int defaultModelDataArraySize_;
+  std::list<std::shared_ptr<ModelDataBase>> modelDataPtrArray_;
+  std::list<std::shared_ptr<ModelDataBase>>::iterator nextModelDataPtrIterator_;
 };
 
 }  // namespace ocs2

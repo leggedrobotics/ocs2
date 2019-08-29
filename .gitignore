@@ -18,4 +18,5 @@ Doxyfile
 *.swp
 __pycache__
 *.pyc
+*.pydevproject
 ocs2_core/test/cppad_cg/testCppADCG_generated/

@@ -54,6 +54,7 @@ class TimeTriggeredRollout : public RolloutBase<STATE_DIM, INPUT_DIM> {
   using BASE = RolloutBase<STATE_DIM, INPUT_DIM>;
 
   using controller_t = typename BASE::controller_t;
+  using logic_rules_machine_t = typename BASE::logic_rules_machine_t;
   using size_array_t = typename BASE::size_array_t;
   using scalar_t = typename BASE::scalar_t;
   using scalar_array_t = typename BASE::scalar_array_t;
@@ -64,8 +65,6 @@ class TimeTriggeredRollout : public RolloutBase<STATE_DIM, INPUT_DIM> {
 
   using event_handler_t = SystemEventHandler<STATE_DIM>;
   using controlled_system_base_t = ControlledSystemBase<STATE_DIM, INPUT_DIM>;
-
-  using logic_rules_machine_t = HybridLogicRulesMachine;
 
   using ode_base_t = IntegratorBase<STATE_DIM>;
 

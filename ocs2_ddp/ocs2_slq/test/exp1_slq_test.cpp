@@ -60,7 +60,7 @@ TEST(exp1_slq_test, Exp1_slq_test) {
   slqSettings.rolloutSettings_.relTolODE_ = 1e-7;
   slqSettings.rolloutSettings_.maxNumStepsPerSecond_ = 10000;
 
-  // switching times
+  // event times
   std::vector<double> eventTimes{0.2262, 1.0176};
   std::vector<size_t> subsystemsSequence{0, 1, 2};
   std::shared_ptr<EXP1_LogicRules> logicRules(new EXP1_LogicRules(eventTimes, subsystemsSequence));
@@ -169,3 +169,4 @@ int main(int argc, char** argv) {
   testing::InitGoogleTest(&argc, argv);
   return RUN_ALL_TESTS();
 }
+

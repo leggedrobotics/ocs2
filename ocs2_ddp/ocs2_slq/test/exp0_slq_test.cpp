@@ -61,7 +61,7 @@ TEST(exp0_slq_test, exp0_slq_test) {
   slqSettings.rolloutSettings_.relTolODE_ = 1e-7;
   slqSettings.rolloutSettings_.maxNumStepsPerSecond_ = 10000;
 
-  // switching times
+  // event times
   std::vector<double> eventTimes{0.1897};
   std::vector<size_t> subsystemsSequence{0, 1};
   std::shared_ptr<EXP0_LogicRules> logicRules(new EXP0_LogicRules(eventTimes, subsystemsSequence));

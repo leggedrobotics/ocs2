@@ -27,8 +27,7 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#ifndef LOGICRULESMACHINE_OCS2_H_
-#define LOGICRULESMACHINE_OCS2_H_
+#pragma once
 
 #include <atomic>
 #include <functional>
@@ -236,5 +235,3 @@ class HybridLogicRulesMachine {
 };
 
 }  // namespace ocs2
-
-#endif /* LOGICRULESMACHINE_OCS2_H_ */

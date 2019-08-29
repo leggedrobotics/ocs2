@@ -35,8 +35,11 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <string>
 #include <vector>
 
+#include "ocs2_core/Dimensions.h"
 #include "ocs2_core/integration/OdeBase.h"
 #include "ocs2_core/integration/SystemEventHandler.h"
+#include "ocs2_core/misc/Numerics.h"
+#include "ocs2_core/model_data/ModelDataBase.h"
 
 namespace ocs2 {
 
@@ -52,33 +55,63 @@ class Observer {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-  using scalar_t = double;
+  using scalar_t = typename Dimensions<STATE_DIM, 0>::scalar_t;
   using scalar_array_t = std::vector<scalar_t>;
   using state_vector_t = Eigen::Matrix<scalar_t, STATE_DIM, 1>;
   using state_vector_array_t = std::vector<state_vector_t, Eigen::aligned_allocator<state_vector_t>>;
+
+  using model_data_t = ModelDataBase;
+  using model_data_array_t = model_data_t::array_t;
 
   /**
    * Constructor
    * @param [in] eventHandler
    */
   explicit Observer(const std::shared_ptr<SystemEventHandler<STATE_DIM>>& eventHandlerPtr = nullptr)
-
-      : observeWrap_([this](const state_vector_t& x, const scalar_t& t) { this->observe(x, t); }),
-        eventHandlerPtr_(eventHandlerPtr),
-        timeTrajectoryPtr_(nullptr) {}
+      : eventHandlerPtr_(eventHandlerPtr),
+        timeTrajectoryPtr_(nullptr),
+        stateTrajectoryPtr_(nullptr),
+        modelDataTrajectoryPtr_(nullptr),
+        initialCall_(false) {}
 
   /**
    * Observe function to retrieve the variable of interest.
    * @param [in] x: Current state.
    * @param [in] t: Current time.
    */
-  void observe(const state_vector_t& x, const scalar_t& t) {
+  void observe(std::shared_ptr<OdeBase<STATE_DIM>> systemPtr, const state_vector_t& x, const scalar_t& t) {
     // Store data
-    stateTrajectoryPtr_->push_back(x);
-    timeTrajectoryPtr_->push_back(t);
+    if (stateTrajectoryPtr_) {
+      stateTrajectoryPtr_->push_back(x);
+    }
+    if (timeTrajectoryPtr_) {
+      timeTrajectoryPtr_->push_back(t);
+    }
+
+    // extract model data
+    if (modelDataTrajectoryPtr_) {
+      // check for initial call
+      if (initialCall_) {
+        model_data_t* modelDataPtr = systemPtr->beginModelDataPtrIterator()->get();
+        modelDataTrajectoryPtr_->emplace_back(*modelDataPtr);
+      }
+      initialCall_ = systemPtr->nextModelDataPtrIterator() == systemPtr->beginModelDataPtrIterator();
+
+      // get the model data
+      while (systemPtr->nextModelDataPtrIterator() != systemPtr->beginModelDataPtrIterator()) {
+        --systemPtr->nextModelDataPtrIterator();
+        model_data_t* modelDataPtr = systemPtr->nextModelDataPtrIterator()->get();
+        if (modelDataTrajectoryPtr_ && numerics::almost_eq(modelDataPtr->time_, t)) {
+          modelDataTrajectoryPtr_->emplace_back(*modelDataPtr);
+          systemPtr->nextModelDataPtrIterator() = systemPtr->beginModelDataPtrIterator();
+          break;
+        }
+      }
+    }
+    systemPtr->nextModelDataPtrIterator() = systemPtr->beginModelDataPtrIterator();
 
     // Check events
-    if (eventHandlerPtr_ && eventHandlerPtr_->checkEvent(x, t)) {
+    if (stateTrajectoryPtr_ && timeTrajectoryPtr_ && eventHandlerPtr_ && eventHandlerPtr_->checkEvent(x, t)) {
       // Act on the event
       int eventID = eventHandlerPtr_->handleEvent(*stateTrajectoryPtr_, *timeTrajectoryPtr_);
 
@@ -103,29 +136,34 @@ class Observer {
   }
 
   /**
-   * Lambda to pass to odeint (odeint takes copies of the observer so we can't pass the class
-   */
-  std::function<void(const state_vector_t& x, const scalar_t& t)> observeWrap_;
-
-  /**
    * Set state trajectory pointer to observer.
    *
-   * @param stateTrajectoryPtr
+   * @param stateTrajectoryPtr: A pointer to state trajectory.
    */
   void setStateTrajectory(state_vector_array_t* stateTrajectoryPtr) { stateTrajectoryPtr_ = stateTrajectoryPtr; }
 
   /**
    * Set time trajectory pointer to observer.
    *
-   * @param timeTrajectoryPtr
+   * @param timeTrajectoryPtr: A pointer to time trajectory.
    */
   void setTimeTrajectory(scalar_array_t* timeTrajectoryPtr) { timeTrajectoryPtr_ = timeTrajectoryPtr; }
+
+  /**
+   * Sets a pointer to model data trajectory.
+   *
+   * @param modelDataTrajectoryPtr: A pointer to model data trajectory
+   */
+  void setModelDataTrajectory(model_data_array_t* modelDataTrajectoryPtr) { modelDataTrajectoryPtr_ = modelDataTrajectoryPtr; }
 
  private:
   std::shared_ptr<SystemEventHandler<STATE_DIM>> eventHandlerPtr_;
 
   scalar_array_t* timeTrajectoryPtr_;
   state_vector_array_t* stateTrajectoryPtr_;
+  model_data_array_t* modelDataTrajectoryPtr_;
+
+  bool initialCall_;
 };
 
 }  // namespace ocs2

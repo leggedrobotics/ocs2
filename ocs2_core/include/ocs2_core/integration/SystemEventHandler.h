@@ -77,26 +77,7 @@ class SystemEventHandler : public EventHandlerBase<STATE_DIM> {
    */
   virtual ~SystemEventHandler() = default;
 
-  /**
-   * Resets the class.
-   */
-  void reset() override {}
-
-  /**
-   * Sets the maximum number of integration points per a second for ode solvers.
-   *
-   * @param [in] maxNumSteps: maximum number of integration points
-   */
-  void setMaxNumSteps(int maxNumSteps) { maxNumSteps_ = maxNumSteps; }
-
-  /**
-   * Checks if an event is activated.
-   *
-   * @param [in] state: Current state vector.
-   * @param [in] time: Current time.
-   * @return boolean:
-   */
-  bool checkEvent(const state_vector_t& state, const scalar_t& time) override {
+  virtual bool checkEvent(const state_vector_t& state, const scalar_t& time) override {
     bool terminateFlag = false;
 
     if (killIntegration_) {
@@ -112,17 +93,16 @@ class SystemEventHandler : public EventHandlerBase<STATE_DIM> {
     return terminateFlag;
   }
 
-  /**
-   * If an event is activated, it will terminates the integration. The method gets references to the time and state
-   * trajectories. The current time and state are the last elements of their respective container.
-   * The method should also return a "Non-Negative" ID which indicates the a unique ID for the active events.
-   * Note that will the negative return values are reserved to handle internal events for the program.
-   *
-   * @param [out] stateTrajectory: The state trajectory which contains the current state vector as its last element.
-   * @param [out] timeTrajectory: The time trajectory which contains the current time as its last element.
-   * @return boolean: A non-negative unique ID for the active events.
-   */
+  virtual void reset() override {}
+
   int handleEvent(state_vector_array_t& stateTrajectory, scalar_array_t& timeTrajectory) override { return eventID_; }
+
+  /**
+   * Sets the maximum number of integration points per a second for ode solvers.
+   *
+   * @param [in] maxNumSteps: maximum number of integration points
+   */
+  void setMaxNumSteps(int maxNumSteps) { maxNumSteps_ = maxNumSteps; }
 
   /**
    * Activate KillIntegrationEvent.

@@ -103,6 +103,7 @@ class Integrator : public IntegratorBase<STATE_DIM> {
    */
   ~Integrator() = default;
 
+ private:
   /**
    * Equidistant integration based on initial and final time as well as step length.
    *
@@ -112,11 +113,10 @@ class Integrator : public IntegratorBase<STATE_DIM> {
    * @param [in] dt: Time step.
    * @param [out] stateTrajectory: Output state trajectory.
    * @param [out] timeTrajectory: Output time stamp trajectory.
-   * @param [in] concatOutput: Whether to concatenate the output to the input
-   * trajectories or override (default).
+   * @param [in] concatOutput: Whether to concatenate the output to the input trajectories or override.
    */
-  void integrate(const state_vector_t& initialState, const scalar_t& startTime, const scalar_t& finalTime, scalar_t dt,
-                 state_vector_array_t& stateTrajectory, scalar_array_t& timeTrajectory, bool concatOutput = false) final;
+  void runIntegration(const state_vector_t& initialState, const scalar_t& startTime, const scalar_t& finalTime, scalar_t dt,
+                      state_vector_array_t& stateTrajectory, scalar_array_t& timeTrajectory, bool concatOutput) final;
 
   /**
    * Adaptive time integration based on start time and final time. This method can
@@ -135,12 +135,11 @@ class Integrator : public IntegratorBase<STATE_DIM> {
    * @param [in] RelTol: The relative tolerance error for ode solver.
    * @param [in] maxNumSteps: The maximum number of integration points per a
    * second for ode solver.
-   * @param [in] concatOutput: Whether to concatenate the output to the input
-   * trajectories or override (default).
+   * @param [in] concatOutput: Whether to concatenate the output to the input trajectories or override.
    */
-  void integrate(const state_vector_t& initialState, const scalar_t& startTime, const scalar_t& finalTime,
-                 state_vector_array_t& stateTrajectory, scalar_array_t& timeTrajectory, scalar_t dtInitial = 0.01, scalar_t AbsTol = 1e-6,
-                 scalar_t RelTol = 1e-3, int maxNumSteps = std::numeric_limits<int>::max(), bool concatOutput = false) final;
+  void runIntegration(const state_vector_t& initialState, const scalar_t& startTime, const scalar_t& finalTime,
+                      state_vector_array_t& stateTrajectory, scalar_array_t& timeTrajectory, scalar_t dtInitial, scalar_t AbsTol,
+                      scalar_t RelTol, int maxNumSteps, bool concatOutput) final;
 
   /**
    * Output integration based on a given time trajectory. This method can solve ODEs
@@ -159,19 +158,11 @@ class Integrator : public IntegratorBase<STATE_DIM> {
    * @param [in] RelTol: The relative tolerance error for ode solver.
    * @param [in] maxNumSteps: The maximum number of integration points per a second
    * for ode solver.
-   * @param [in] concatOutput: Whether to concatenate the output to the input trajectories
-   * or override (default).
+   * @param [in] concatOutput: Whether to concatenate the output to the input trajectories or override.
    */
-  void integrate(const state_vector_t& initialState, typename scalar_array_t::const_iterator beginTimeItr,
-                 typename scalar_array_t::const_iterator endTimeItr, state_vector_array_t& stateTrajectory, scalar_t dtInitial = 0.01,
-                 scalar_t AbsTol = 1e-9, scalar_t RelTol = 1e-6, int maxNumSteps = std::numeric_limits<int>::max(),
-                 bool concatOutput = false) final;
-
- private:
-  /**
-   * Setup System
-   */
-  void setupSystem();
+  void runIntegration(const state_vector_t& initialState, typename scalar_array_t::const_iterator beginTimeItr,
+                      typename scalar_array_t::const_iterator endTimeItr, state_vector_array_t& stateTrajectory, scalar_t dtInitial,
+                      scalar_t AbsTol, scalar_t RelTol, int maxNumSteps, bool concatOutput) final;
 
   /**
    * Initializes the integrator.
@@ -283,9 +274,11 @@ class Integrator : public IntegratorBase<STATE_DIM> {
   /********
    * Variables
    ********/
-  std::function<void(const Eigen::Matrix<scalar_t, STATE_DIM, 1>&, Eigen::Matrix<scalar_t, STATE_DIM, 1>&, scalar_t)> systemFunction_;
+  std::unique_ptr<Stepper> stepperPtr_;
+  std::unique_ptr<Observer<STATE_DIM>> observerPtr_;  // observer for saving the variable of interest.
 
-  Stepper stepper_;
+  std::function<void(const state_vector_t&, const scalar_t&)> observerFunction_;
+  std::function<void(const state_vector_t&, state_vector_t&, const scalar_t&)> systemFunction_;
 
 #if (BOOST_VERSION / 100000 == 1 && BOOST_VERSION / 100 % 1000 > 60)
   std::unique_ptr<boost::numeric::odeint::max_step_checker> maxStepCheckerPtr_;

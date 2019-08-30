@@ -52,7 +52,7 @@ class NetworkController final : public ControllerBase<STATE_DIM, INPUT_DIM> {
     auto tt = timeTransformStaticWalk(t);
     //    ttx_float << std::get<0>(tt), std::get<1>(tt), x.template cast<float>();
     ttx_float << tt[0], tt[1], tt[2], tt[3], x.template cast<float>();
-    std::cout << "timeTransform " << tt[0] << " | " << tt[1] << " | " << tt[2] << " | " << tt[3] << std::endl;
+    //    std::cout << "timeTransform " << tt[0] << " | " << tt[1] << " | " << tt[2] << " | " << tt[3] << std::endl;
     auto torch_tx = torch::from_blob(ttx_float.data(), ttx_float.size());
 
     std::vector<torch::jit::IValue> inputs;

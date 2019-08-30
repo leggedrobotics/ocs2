@@ -36,10 +36,23 @@ class NetworkController final : public ControllerBase<STATE_DIM, INPUT_DIM> {
     }
   }
 
+  static std::array<double, 4> timeTransformStaticWalk(double t) {
+    std::array<double, 4> res = {0.0, 0.0, 0.0, 0.0};
+    if (t < 2.8) {
+      t = std::fmod(t, 1.4);
+      res[static_cast<int>(t / 0.35)] = std::abs(sin(2.0 * M_PI * t / 0.7));
+    }
+    return res;
+  }
+
   input_vector_t computeInput(const scalar_t& t, const state_vector_t& x) override {
-    Eigen::Matrix<float, STATE_DIM + 2, 1> ttx_float;
-    auto tt = timeTransform(t);
-    ttx_float << std::get<0>(tt), std::get<1>(tt), x.template cast<float>();
+    //    Eigen::Matrix<float, STATE_DIM + 2, 1> ttx_float;
+    Eigen::Matrix<float, STATE_DIM + 4, 1> ttx_float;
+    // auto tt = timeTransform(t);
+    auto tt = timeTransformStaticWalk(t);
+    //    ttx_float << std::get<0>(tt), std::get<1>(tt), x.template cast<float>();
+    ttx_float << tt[0], tt[1], tt[2], tt[3], x.template cast<float>();
+    std::cout << "timeTransform " << tt[0] << " | " << tt[1] << " | " << tt[2] << " | " << tt[3] << std::endl;
     auto torch_tx = torch::from_blob(ttx_float.data(), ttx_float.size());
 
     std::vector<torch::jit::IValue> inputs;

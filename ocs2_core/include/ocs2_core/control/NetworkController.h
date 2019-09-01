@@ -46,12 +46,12 @@ class NetworkController final : public ControllerBase<STATE_DIM, INPUT_DIM> {
   }
 
   input_vector_t computeInput(const scalar_t& t, const state_vector_t& x) override {
-    //    Eigen::Matrix<float, STATE_DIM + 2, 1> ttx_float;
-    Eigen::Matrix<float, STATE_DIM + 4, 1> ttx_float;
-    // auto tt = timeTransform(t);
-    auto tt = timeTransformStaticWalk(t);
-    //    ttx_float << std::get<0>(tt), std::get<1>(tt), x.template cast<float>();
-    ttx_float << tt[0], tt[1], tt[2], tt[3], x.template cast<float>();
+    Eigen::Matrix<float, STATE_DIM + 2, 1> ttx_float;
+    //    Eigen::Matrix<float, STATE_DIM + 4, 1> ttx_float;
+    auto tt = timeTransform(t);
+    //    auto tt = timeTransformStaticWalk(t);
+    ttx_float << std::get<0>(tt), std::get<1>(tt), x.template cast<float>();
+    //    ttx_float << tt[0], tt[1], tt[2], tt[3], x.template cast<float>();
     //    std::cout << "timeTransform " << tt[0] << " | " << tt[1] << " | " << tt[2] << " | " << tt[3] << std::endl;
     auto torch_tx = torch::from_blob(ttx_float.data(), ttx_float.size());
 

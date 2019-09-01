@@ -5,6 +5,7 @@
 #include <ocs2_core/dynamics/ControlledSystemBase.h>
 #include <ocs2_core/dynamics/DerivativesBase.h>
 #include <ocs2_robotic_tools/common/RobotInterfaceBase.h>
+#include <ocs2_core/constraint/RelaxedBarrierPenalty.h>
 
 namespace ocs2 {
 
@@ -36,6 +37,7 @@ class PythonInterface {
   using dynamic_vector_t = typename dim_t::dynamic_vector_t;
   using dynamic_vector_array_t = typename dim_t::dynamic_vector_array_t;
   using dynamic_matrix_t = typename dim_t::dynamic_matrix_t;
+  using input_matrix_array_t = typename dim_t::input_matrix_array_t;
 
   /**
    * @brief Constructor
@@ -240,6 +242,8 @@ class PythonInterface {
 
   std::unique_ptr<cost_t> cost_;
   cost_desired_trajectories_t targetTrajectories_;
+
+  std::unique_ptr<PenaltyBase<STATE_DIM, INPUT_DIM>> penalty_;
 
   // multithreading helper variables
   bool run_mpc_async_;

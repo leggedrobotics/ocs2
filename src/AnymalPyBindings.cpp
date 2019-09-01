@@ -2,10 +2,17 @@
 
 namespace anymal {
 
-AnymalPyBindings::AnymalPyBindings(const std::string& taskFileFolder, bool async) : Base(async) { init(taskFileFolder); }
+AnymalPyBindings::AnymalPyBindings(const std::string& taskFileFolder, bool async) : Base(async) {
+  init(taskFileFolder);
+}
 
 void AnymalPyBindings::initRobotInterface(const std::string& taskFileFolder) {
   robotInterface_.reset(new OCS2AnymalInterface(taskFileFolder));
+
+  const auto& slqSettings = dynamic_cast<OCS2AnymalInterface*>(robotInterface_.get())->slqSettings();
+
+  penalty_.reset(new ocs2::RelaxedBarrierPenalty<24, 24>(slqSettings.ddpSettings_.inequalityConstraintMu_,
+                                                         slqSettings.ddpSettings_.inequalityConstraintDelta_));
 
   std::shared_ptr<OCS2AnymalInterface> interface_for_visualizer(new OCS2AnymalInterface(taskFileFolder));
   visualizer_.reset(new visualizer_t(interface_for_visualizer, "anymal", false));

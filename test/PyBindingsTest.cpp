@@ -1,3 +1,7 @@
+#ifdef NDEBUG
+#undef NDEBUG
+#endif
+
 #include <gtest/gtest.h>
 #include <ros/package.h>
 
@@ -83,10 +87,9 @@ TEST(Anymal, PyBindings) {
   std::cout << "A\n" << A << "\nB\n" << B << std::endl;
 
   auto L = bindings.getIntermediateCost(t_arr[0], x_arr[0], u_arr[0]);
-  auto dLdx = bindings.getIntermediateCostDerivativeState(t_arr[0], x_arr[0], u_arr[0]);
   auto dLdu = bindings.getIntermediateCostDerivativeInput(t_arr[0], x_arr[0], u_arr[0]);
 
-  std::cout << "L: " << L << "\ndLdx: " << dLdx.transpose() << "\ndLdu: " << dLdu.transpose() << std::endl;
+  std::cout << "L: " << L << "\ndLdu: " << dLdu.transpose() << std::endl;
 
   auto Vx = bindings.getValueFunctionStateDerivative(t_arr[0], x_arr[0]);
   std::cout << "Vx: " << Vx.transpose() << std::endl;

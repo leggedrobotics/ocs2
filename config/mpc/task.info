@@ -70,14 +70,14 @@ initialModeSequenceTemplate
   templateSubsystemsSequence
   {
     [0]  STANCE
-    [1]  LF_RF_RH ; RF_LH
-    [2]  RF_LH_RH ; LF_RH
-    [3]  LF_RF_LH ; RF_LH
-    [4]  LF_LH_RH ; LF_RH
-    [5]  LF_RF_RH ; RF_LH
-    [6]  RF_LH_RH ; LF_RH
-    [7]  LF_RF_LH ; RF_LH
-    [8]  LF_LH_RH ; LF_RH
+    [1]  RF_LH ; LF_RF_RH ; RF_LH
+    [2]  LF_RH ; RF_LH_RH ; LF_RH
+    [3]  RF_LH ; LF_RF_LH ; RF_LH
+    [4]  LF_RH ; LF_LH_RH ; LF_RH
+    [5]  RF_LH ; LF_RF_RH ; RF_LH
+    [6]  LF_RH ; RF_LH_RH ; LF_RH
+    [7]  RF_LH ; LF_RF_LH ; RF_LH
+    [8]  LF_RH ; LF_LH_RH ; LF_RH
     [9]  STANCE
   }
   templateSwitchingTimes

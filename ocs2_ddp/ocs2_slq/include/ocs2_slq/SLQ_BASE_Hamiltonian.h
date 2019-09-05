@@ -30,11 +30,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 /*
  *  !! Copy of SLQ_BASE with the unfinished Hamiltonian implementation for the backward pass !!
  */
-
-#ifndef SLQ_BASE_HAMILTONIAN_OCS2_H_
-#define SLQ_BASE_HAMILTONIAN_OCS2_H_
-
-#include <ocs2_ddp_base/DDP_BASE.h>
+#pragma once
 
 #include <ocs2_core/integration/Integrator.h>
 #include <ocs2_core/integration/StateTriggeredEventHandler.h>
@@ -42,10 +38,9 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_core/misc/LTI_Equations.h>
 #include <ocs2_core/misc/LinearAlgebra.h>
 
-#include <ocs2_oc/rollout/StateTriggeredRollout.h>
+#include <ocs2_ddp_base/DDP_BASE.h>
 
 #include <ocs2_slq/SLQ_Settings.h>
-
 #include <ocs2_slq/riccati_equations/SequentialErrorEquationNormalized.h>
 #include <ocs2_slq/riccati_equations/SequentialRiccatiEquationsNormalized.h>
 
@@ -56,14 +51,13 @@ namespace ocs2 {
  *
  * @tparam STATE_DIM: Dimension of the state space.
  * @tparam INPUT_DIM: Dimension of the control input space.
- * @tparam LOGIC_RULES_T: Logic Rules type (default NullLogicRules).
  */
 template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T = NullLogicRules>
-class SLQ_BASE : public DDP_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> {
+class SLQ_BASE_Hamiltonian : public DDP_BASE<STATE_DIM, INPUT_DIM> {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-  using BASE = DDP_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>;
+  using BASE = DDP_BASE<STATE_DIM, INPUT_DIM>;
 
   using DIMENSIONS = typename BASE::DIMENSIONS;
   using controller_t = typename BASE::controller_t;
@@ -147,25 +141,12 @@ class SLQ_BASE : public DDP_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> {
   using riccati_equations_t = SequentialRiccatiEquationsNormalized<STATE_DIM, INPUT_DIM>;
   using error_equation_t = SequentialErrorEquationNormalized<STATE_DIM, INPUT_DIM>;
 
-  using state_triggered_rollout_t = StateTriggeredRollout<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>;
-
-  /**
-   * class for collecting SLQ data
-   */
-  template <size_t OTHER_STATE_DIM, size_t OTHER_INPUT_DIM, class OTHER_LOGIC_RULES_T>
-  friend class SLQ_DataCollector;
-
- public:
-  void rolloutStateTriggeredTrajectory(const scalar_t& initTime, const state_vector_t& initState, const scalar_t& finalTime,
-                                       const scalar_array_t& partitioningTimes, const linear_controller_array_t& controllersStock,
-                                       scalar_array2_t& timeTrajectoriesStock, size_array2_t& eventsPastTheEndIndecesStock,
-                                       state_vector_array2_t& stateTrajectoriesStock, input_vector_array2_t& inputTrajectoriesStock,
-                                       size_t threadId = 0);
+  using state_triggered_rollout_t = StateTriggeredRollout<STATE_DIM, INPUT_DIM>;
 
   /**
    * Default constructor.
    */
-  SLQ_BASE() = default;
+  SLQ_BASE_Hamiltonian() = default;
 
   /**
    * Constructor
@@ -180,15 +161,15 @@ class SLQ_BASE : public DDP_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> {
    * @param [in] heuristicsFunctionPtr: Heuristic function used in the infinite time optimal control formulation. If it is not
    * defined, we will use the terminal cost function defined in costFunctionPtr.
    */
-  SLQ_BASE(const controlled_system_base_t* systemDynamicsPtr, const derivatives_base_t* systemDerivativesPtr,
-           const constraint_base_t* systemConstraintsPtr, const cost_function_base_t* costFunctionPtr,
-           const operating_trajectories_base_t* operatingTrajectoriesPtr, const SLQ_Settings& settings = SLQ_Settings(),
-           const LOGIC_RULES_T* logicRulesPtr = nullptr, const cost_function_base_t* heuristicsFunctionPtr = nullptr);
+  SLQ_BASE_Hamiltonian(const controlled_system_base_t* systemDynamicsPtr, const derivatives_base_t* systemDerivativesPtr,
+                       const constraint_base_t* systemConstraintsPtr, const cost_function_base_t* costFunctionPtr,
+                       const operating_trajectories_base_t* operatingTrajectoriesPtr, const SLQ_Settings& settings = SLQ_Settings(),
+                       const LOGIC_RULES_T* logicRulesPtr = nullptr, const cost_function_base_t* heuristicsFunctionPtr = nullptr);
 
   /**
    * Default destructor.
    */
-  virtual ~SLQ_BASE() = default;
+  virtual ~SLQ_BASE_Hamiltonian() = default;
 
   /**
    * Approximates the nonlinear problem as a linear-quadratic problem around the nominal
@@ -448,5 +429,3 @@ class SLQ_BASE : public DDP_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> {
 }  // namespace ocs2
 
 #include "implementation/SLQ_BASE_Hamiltonian.h"
-
-#endif /* SLQ_BASE_HAMILTONIAN_OCS2_H_ */

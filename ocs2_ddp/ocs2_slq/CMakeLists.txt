@@ -46,8 +46,8 @@ include_directories(
 )
 
 add_executable(${PROJECT_NAME}_lintTarget
-        src/lintTarget.cpp
-        )
+  src/lintTarget.cpp
+)
 
 #########################
 ###   CLANG TOOLING   ###
@@ -60,7 +60,7 @@ if(cmake_clang_tools_FOUND)
     SOURCE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/src ${CMAKE_CURRENT_SOURCE_DIR}/include
     CT_HEADER_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/include
     CF_WERROR
-  )
+)
 endif(cmake_clang_tools_FOUND)
 
 #############
@@ -105,6 +105,6 @@ target_link_libraries(exp2_slq_test
 )
 
 catkin_add_gtest(testRiccatiEquations
-        test/testRiccatiEquations.cpp
-        )
+  test/testRiccatiEquations.cpp
+)
 

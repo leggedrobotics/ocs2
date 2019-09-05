@@ -161,17 +161,25 @@ class TimeTriggeredRollout : public RolloutBase<STATE_DIM, INPUT_DIM> {
       throw std::runtime_error("The input controller is not set.");
     }
 
+    const scalar_t epsilone = 10 * OCS2NumericTraits<scalar_t>::weakEpsilon();
+
     const size_t numEvents = logicRulesMachine.getNumEvents(partitionIndex);
     const scalar_array_t& switchingTimes = logicRulesMachine.getSwitchingTimes(partitionIndex);
 
+    // index of the first subsystem
+    const size_t beginItr = lookup::findActiveIntervalInTimeArray(switchingTimes, initTime);
+    // index of the last subsystem
+    const size_t finalItr = lookup::findActiveIntervalInTimeArray(switchingTimes, finalTime + epsilone);
+
+    // If an event has happened at the final time push it to the eventsPastTheEndIndeces.
+    // numEvents>finalItr means that there the final active subsystem is before an event time.
+    // Note: you should not push the state because its input is not yet defined (due to the fact
+    // that the next control policy is available)
+    const bool eventAtFinalTime = numEvents > finalItr && logicRulesMachine.getEventTimes(partitionIndex)[finalItr] <
+                                                              finalTime + OCS2NumericTraits<scalar_t>::limitEpsilon();
+
     // max number of steps for integration
     const size_t maxNumSteps = BASE::settings().maxNumStepsPerSecond_ * std::max(1.0, finalTime - initTime);
-
-    // index of the first subsystem
-    size_t beginItr = lookup::findActiveIntervalInTimeArray(switchingTimes, initTime);
-    // index of the last subsystem
-    size_t finalItr = lookup::findActiveIntervalInTimeArray(switchingTimes, finalTime);
-
     // clearing the output trajectories
     timeTrajectory.clear();
     timeTrajectory.reserve(maxNumSteps + 1);
@@ -199,7 +207,7 @@ class TimeTriggeredRollout : public RolloutBase<STATE_DIM, INPUT_DIM> {
       endTime = i == finalItr ? finalTime : switchingTimes[i + 1];
 
       // in order to correctly detect the next subsystem (right limit)
-      beginTime += 10 * OCS2NumericTraits<scalar_t>::weakEpsilon();
+      beginTime += epsilone;
 
       // integrate controlled system
       dynamicsIntegratorsPtr_->integrate(beginState, beginTime, endTime, stateTrajectory, timeTrajectory, BASE::settings().minTimeStep_,
@@ -218,13 +226,6 @@ class TimeTriggeredRollout : public RolloutBase<STATE_DIM, INPUT_DIM> {
       }
 
     }  // end of i loop
-
-    // If an event has happened at the final time push it to the eventsPastTheEndIndeces
-    // numEvents>finalItr means that there the final active subsystem is before an event time.
-    // Note: we don't push the state because the input is not yet defined since the next control
-    // policy is available)
-    bool eventAtFinalTime = numEvents > finalItr && logicRulesMachine.getEventTimes(partitionIndex)[finalItr] <
-                                                        finalTime + OCS2NumericTraits<scalar_t>::limitEpsilon();
 
     // terminal state and event
     state_vector_t terminalState;

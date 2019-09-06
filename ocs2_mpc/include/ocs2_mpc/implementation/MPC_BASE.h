@@ -412,18 +412,6 @@ const typename MPC_BASE<STATE_DIM, INPUT_DIM>::input_vector_array2_t* MPC_BASE<S
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
-void MPC_BASE<STATE_DIM, INPUT_DIM>::getOptimizedTrajectoriesPtr(const scalar_array2_t*& optimizedTimeTrajectoriesStockPtr,
-                                                                 const state_vector_array2_t*& optimizedStateTrajectoriesStockPtr,
-                                                                 const input_vector_array2_t*& optimizedInputTrajectoriesStockPtr) const {
-  optimizedTimeTrajectoriesStockPtr = optimizedTimeTrajectoriesStockPtr_;
-  optimizedStateTrajectoriesStockPtr = optimizedStateTrajectoriesStockPtr_;
-  optimizedInputTrajectoriesStockPtr = optimizedInputTrajectoriesStockPtr_;
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM>
 MPC_Settings& MPC_BASE<STATE_DIM, INPUT_DIM>::settings() {
   return mpcSettings_;
 }

@@ -214,17 +214,6 @@ class MPC_BASE {
   const input_vector_array2_t* getOptimizedInputTrajectoryPtr() const;
 
   /**
-   * Gets a pointer to the optimized trajectories.
-   *
-   * @param [out] optimizedTimeTrajectoriesStockPtr: A pointer to an array of trajectories containing the output time trajectory stamp.
-   * @param [out] optimizedStateTrajectoriesStockPtr: A pointer to an array of trajectories containing the output state trajectory.
-   * @param [out] optimizedInputTrajectoriesStockPtr: A pointer to an array of trajectories containing the output control input trajectory.
-   */
-  void getOptimizedTrajectoriesPtr(const scalar_array2_t*& optimizedTimeTrajectoriesStockPtr,
-                                   const state_vector_array2_t*& optimizedStateTrajectoriesStockPtr,
-                                   const input_vector_array2_t*& optimizedInputTrajectoriesStockPtr) const;
-
-  /**
    * Gets the MPC settings.
    *
    * @return structure which details MPC settings

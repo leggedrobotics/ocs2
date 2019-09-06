@@ -29,6 +29,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <ocs2_comm_interfaces/ocs2_interfaces/MRT_BASE.h>
 
+#include <ocs2_core/logic/rules/NullLogicRules.h>
 #include <ocs2_oc/rollout/TimeTriggeredRollout.h>
 
 namespace ocs2 {

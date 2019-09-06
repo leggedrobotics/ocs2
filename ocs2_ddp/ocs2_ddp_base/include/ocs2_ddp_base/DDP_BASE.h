@@ -126,6 +126,7 @@ class DDP_BASE : public Solver_BASE<STATE_DIM, INPUT_DIM> {
   using typename BASE::cost_desired_trajectories_t;
 
   using typename BASE::controller_array_t;
+  using typename BASE::controller_const_ptr_array_t;
   using typename BASE::controller_ptr_array_t;
   using typename BASE::controller_t;
 
@@ -410,7 +411,7 @@ class DDP_BASE : public Solver_BASE<STATE_DIM, INPUT_DIM> {
    */
   DDP_Settings& ddpSettings();
 
-  const controller_ptr_array_t* getOptimizedControllerPtr() const override;
+  controller_const_ptr_array_t getOptimizedControllerPtr() const override;
 
   const scalar_array2_t* getOptimizedTimeTrajectoryPtr() const override;
 
@@ -687,12 +688,6 @@ class DDP_BASE : public Solver_BASE<STATE_DIM, INPUT_DIM> {
   void calculateControllerUpdateMaxNorm(scalar_t& maxDeltaUffNorm, scalar_t& maxDeltaUeeNorm);
 
   /**
-   * Updates pointers in nominalControllerPtrStock from memory location of
-   * nominalControllersStock_ members.
-   */
-  void updateNominalControllerPtrStock();
-
-  /**
    * Display rollout info and scores.
    */
   void printRolloutInfo();
@@ -762,7 +757,6 @@ class DDP_BASE : public Solver_BASE<STATE_DIM, INPUT_DIM> {
   std::vector<std::shared_ptr<penalty_base_t>> penaltyPtrStock_;
 
   linear_controller_array_t nominalControllersStock_;
-  controller_ptr_array_t nominalControllerPtrStock_;
 
   std::vector<scalar_array_t> nominalTimeTrajectoriesStock_;
   std::vector<size_array_t> nominalEventsPastTheEndIndecesStock_;

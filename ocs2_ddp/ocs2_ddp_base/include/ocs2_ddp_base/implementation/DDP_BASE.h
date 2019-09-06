@@ -1025,19 +1025,6 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::calculateControllerUpdateMaxNorm(scalar_t& 
 /******************************************************************************************************/
 /***************************************************************************************************** */
 template <size_t STATE_DIM, size_t INPUT_DIM>
-void DDP_BASE<STATE_DIM, INPUT_DIM>::updateNominalControllerPtrStock() {
-  nominalControllerPtrStock_.clear();
-  nominalControllerPtrStock_.reserve(nominalControllersStock_.size());
-
-  for (linear_controller_t& controller_i : nominalControllersStock_) {
-    nominalControllerPtrStock_.push_back(&controller_i);
-  }
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/***************************************************************************************************** */
-template <size_t STATE_DIM, size_t INPUT_DIM>
 void DDP_BASE<STATE_DIM, INPUT_DIM>::printRolloutInfo() {
   std::cerr << "optimization cost:         " << nominalTotalCost_ << std::endl;
   std::cerr << "constraint type-1 ISE:     " << nominalConstraint1ISE_ << std::endl;
@@ -1204,9 +1191,14 @@ DDP_Settings& DDP_BASE<STATE_DIM, INPUT_DIM>::ddpSettings() {
 /******************************************************************************************************/
 /***************************************************************************************************** */
 template <size_t STATE_DIM, size_t INPUT_DIM>
-const typename DDP_BASE<STATE_DIM, INPUT_DIM>::controller_ptr_array_t* DDP_BASE<STATE_DIM, INPUT_DIM>::getOptimizedControllerPtr() const {
-  // updateNominalControllerPtrStock(); // cannot be done in const member
-  return &nominalControllerPtrStock_;
+typename DDP_BASE<STATE_DIM, INPUT_DIM>::controller_const_ptr_array_t DDP_BASE<STATE_DIM, INPUT_DIM>::getOptimizedControllerPtr() const {
+  controller_const_ptr_array_t nominalControllerPtrStock(0);
+  nominalControllerPtrStock.reserve(nominalControllersStock_.size());
+  for (const linear_controller_t& controller_i : nominalControllersStock_) {
+    nominalControllerPtrStock.push_back(&controller_i);
+  }
+
+  return nominalControllerPtrStock;
 }
 
 /******************************************************************************************************/
@@ -1286,8 +1278,6 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::rewindOptimizer(size_t firstIndex) {
       xFinalStock_[i].setZero();
     }
   }
-
-  updateNominalControllerPtrStock();
 }
 
 /******************************************************************************************************/
@@ -1311,7 +1301,6 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::setupOptimizer(size_t numPartitions) {
    * nominal trajectories
    */
   nominalControllersStock_.resize(numPartitions);
-  nominalControllerPtrStock_.resize(numPartitions);
   nominalTimeTrajectoriesStock_.resize(numPartitions);
   nominalEventsPastTheEndIndecesStock_.resize(numPartitions);
   nominalStateTrajectoriesStock_.resize(numPartitions);
@@ -1494,9 +1483,6 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::runIteration() {
 /***************************************************************************************************** */
 template <size_t STATE_DIM, size_t INPUT_DIM>
 void DDP_BASE<STATE_DIM, INPUT_DIM>::runExit() {
-  // update the controller pointer array
-  updateNominalControllerPtrStock();
-
   //	// add the deleted parts of the controller
   //	for (size_t i=0; i<initActivePartition_; i++)
   //		nominalControllersStock_[i].swap(deletedcontrollersStock_[i]);

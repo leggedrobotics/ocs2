@@ -1204,66 +1204,35 @@ DDP_Settings& DDP_BASE<STATE_DIM, INPUT_DIM>::ddpSettings() {
 /******************************************************************************************************/
 /***************************************************************************************************** */
 template <size_t STATE_DIM, size_t INPUT_DIM>
-const typename DDP_BASE<STATE_DIM, INPUT_DIM>::controller_ptr_array_t& DDP_BASE<STATE_DIM, INPUT_DIM>::getController() const {
+const typename DDP_BASE<STATE_DIM, INPUT_DIM>::controller_ptr_array_t* DDP_BASE<STATE_DIM, INPUT_DIM>::getOptimizedControllerPtr() const {
   // updateNominalControllerPtrStock(); // cannot be done in const member
-  return nominalControllerPtrStock_;
+  return &nominalControllerPtrStock_;
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /***************************************************************************************************** */
 template <size_t STATE_DIM, size_t INPUT_DIM>
-void DDP_BASE<STATE_DIM, INPUT_DIM>::getControllerPtr(const controller_ptr_array_t*& controllersPtrStock) const {
-  // updateNominalControllerPtrStock(); // cannot be done in const member
-  controllersPtrStock = &nominalControllerPtrStock_;
+const typename DDP_BASE<STATE_DIM, INPUT_DIM>::scalar_array2_t* DDP_BASE<STATE_DIM, INPUT_DIM>::getOptimizedTimeTrajectoryPtr() const {
+  return &nominalTimeTrajectoriesStock_;
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /***************************************************************************************************** */
 template <size_t STATE_DIM, size_t INPUT_DIM>
-const typename DDP_BASE<STATE_DIM, INPUT_DIM>::scalar_array2_t& DDP_BASE<STATE_DIM, INPUT_DIM>::getNominalTimeTrajectories() const {
-  return nominalTimeTrajectoriesStock_;
+const typename DDP_BASE<STATE_DIM, INPUT_DIM>::state_vector_array2_t* DDP_BASE<STATE_DIM, INPUT_DIM>::getOptimizedStateTrajectoryPtr()
+    const {
+  return &nominalStateTrajectoriesStock_;
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /***************************************************************************************************** */
 template <size_t STATE_DIM, size_t INPUT_DIM>
-const typename DDP_BASE<STATE_DIM, INPUT_DIM>::state_vector_array2_t& DDP_BASE<STATE_DIM, INPUT_DIM>::getNominalStateTrajectories() const {
-  return nominalStateTrajectoriesStock_;
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/***************************************************************************************************** */
-template <size_t STATE_DIM, size_t INPUT_DIM>
-const typename DDP_BASE<STATE_DIM, INPUT_DIM>::input_vector_array2_t& DDP_BASE<STATE_DIM, INPUT_DIM>::getNominalInputTrajectories() const {
-  return nominalInputTrajectoriesStock_;
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/***************************************************************************************************** */
-template <size_t STATE_DIM, size_t INPUT_DIM>
-void DDP_BASE<STATE_DIM, INPUT_DIM>::getNominalTrajectoriesPtr(const scalar_array2_t*& nominalTimeTrajectoriesStockPtr,
-                                                               const state_vector_array2_t*& nominalStateTrajectoriesStockPtr,
-                                                               const input_vector_array2_t*& nominalInputTrajectoriesStockPtr) const {
-  nominalTimeTrajectoriesStockPtr = &nominalTimeTrajectoriesStock_;
-  nominalStateTrajectoriesStockPtr = &nominalStateTrajectoriesStock_;
-  nominalInputTrajectoriesStockPtr = &nominalInputTrajectoriesStock_;
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/***************************************************************************************************** */
-template <size_t STATE_DIM, size_t INPUT_DIM>
-void DDP_BASE<STATE_DIM, INPUT_DIM>::swapNominalTrajectories(scalar_array2_t& nominalTimeTrajectoriesStock,
-                                                             state_vector_array2_t& nominalStateTrajectoriesStock,
-                                                             input_vector_array2_t& nominalInputTrajectoriesStock) {
-  nominalTimeTrajectoriesStock.swap(nominalTimeTrajectoriesStock_);
-  nominalStateTrajectoriesStock.swap(nominalStateTrajectoriesStock_);
-  nominalInputTrajectoriesStock.swap(nominalInputTrajectoriesStock_);
+const typename DDP_BASE<STATE_DIM, INPUT_DIM>::input_vector_array2_t* DDP_BASE<STATE_DIM, INPUT_DIM>::getOptimizedInputTrajectoryPtr()
+    const {
+  return &nominalInputTrajectoriesStock_;
 }
 
 /******************************************************************************************************/

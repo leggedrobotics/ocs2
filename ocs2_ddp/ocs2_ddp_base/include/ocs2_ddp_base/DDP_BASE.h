@@ -410,22 +410,13 @@ class DDP_BASE : public Solver_BASE<STATE_DIM, INPUT_DIM> {
    */
   DDP_Settings& ddpSettings();
 
-  const controller_ptr_array_t& getController() const override;
+  const controller_ptr_array_t* getOptimizedControllerPtr() const override;
 
-  void getControllerPtr(const controller_ptr_array_t*& controllersPtrStock) const override;
+  const scalar_array2_t* getOptimizedTimeTrajectoryPtr() const override;
 
-  const scalar_array2_t& getNominalTimeTrajectories() const override;
+  const state_vector_array2_t* getOptimizedStateTrajectoryPtr() const override;
 
-  const state_vector_array2_t& getNominalStateTrajectories() const override;
-
-  const input_vector_array2_t& getNominalInputTrajectories() const override;
-
-  void getNominalTrajectoriesPtr(const scalar_array2_t*& nominalTimeTrajectoriesStockPtr,
-                                 const state_vector_array2_t*& nominalStateTrajectoriesStockPtr,
-                                 const input_vector_array2_t*& nominalInputTrajectoriesStockPtr) const override;
-
-  void swapNominalTrajectories(scalar_array2_t& nominalTimeTrajectoriesStock, state_vector_array2_t& nominalStateTrajectoriesStock,
-                               input_vector_array2_t& nominalInputTrajectoriesStock) override;
+  const input_vector_array2_t* getOptimizedInputTrajectoryPtr() const override;
 
   scalar_t getFinalTime() const override;
 

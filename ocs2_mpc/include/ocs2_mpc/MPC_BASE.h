@@ -81,6 +81,7 @@ class MPC_BASE {
 
   using controller_t = ControllerBase<STATE_DIM, INPUT_DIM>;
   using controller_ptr_array_t = std::vector<controller_t*>;
+  using controller_const_ptr_array_t = std::vector<const controller_t*>;
 
   using cost_desired_trajectories_t = CostDesiredTrajectories<scalar_t>;
   using mode_sequence_template_t = ModeSequenceTemplate<scalar_t>;
@@ -127,13 +128,13 @@ class MPC_BASE {
    * @param [out] timeTrajectoriesStockPtr: A pointer to the optimized time trajectories.
    * @param [out] stateTrajectoriesStockPtr: A pointer to the optimized state trajectories.
    * @param [out] inputTrajectoriesStockPtr: A pointer to the optimized input trajectories.
-   * @param [out] controllerStockPtr: A pointer to the optimized control policy.
+   * @param [out] controllersPtrStock: An array of pointers to the optimized control policies.
    */
   virtual void calculateController(const scalar_t& initTime, const state_vector_t& initState, const scalar_t& finalTime,
                                    const scalar_array2_t*& timeTrajectoriesStockPtr,
                                    const state_vector_array2_t*& stateTrajectoriesStockPtr,
                                    const input_vector_array2_t*& inputTrajectoriesStockPtr,
-                                   const controller_ptr_array_t*& controllerStockPtr) = 0;
+                                   controller_const_ptr_array_t& controllersPtrStock) = 0;
 
   /**
    * Gets a pointer to the underlying solver used in the MPC.
@@ -185,11 +186,32 @@ class MPC_BASE {
   virtual void setNewLogicRulesTemplate(const mode_sequence_template_t& newLogicRulesTemplate);
 
   /**
-   * Gets a pointer to the optimal array of the control policies.
+   * @brief Returns An array of pointers to the optimal control policies.
    *
-   * @return A pointer to the optimal array of the control policies
+   * @return An array of pointers to the optimized control policies.
    */
-  controller_ptr_array_t const* getOptimizedControllerPtr() const;
+  controller_const_ptr_array_t getOptimizedControllersPtr() const;
+
+  /**
+   * @brief Returns a pointer to the optimized time trajectories.
+   *
+   * @return A pointer to the optimized time trajectories containing the output time stamp for state and input trajectories.
+   */
+  const scalar_array2_t* getOptimizedTimeTrajectoryPtr() const;
+
+  /**
+   * @brief Returns a pointer to the optimized state trajectories.
+   *
+   * @return A pointer to the optimized state trajectories.
+   */
+  const state_vector_array2_t* getOptimizedStateTrajectoryPtr() const;
+
+  /**
+   * @brief Returns a pointer to the optimized input trajectories.
+   *
+   * @return A pointer to the optimized input trajectories.
+   */
+  const input_vector_array2_t* getOptimizedInputTrajectoryPtr() const;
 
   /**
    * Gets a pointer to the optimized trajectories.
@@ -247,7 +269,7 @@ class MPC_BASE {
   std::mutex newLogicRulesTemplateMutex_;
   mode_sequence_template_t newLogicRulesTemplate_;
 
-  const controller_ptr_array_t* optimizedControllersStockPtr_;
+  controller_const_ptr_array_t optimizedControllersPtrStock_;
   const scalar_array2_t* optimizedTimeTrajectoriesStockPtr_;
   const state_vector_array2_t* optimizedStateTrajectoriesStockPtr_;
   const input_vector_array2_t* optimizedInputTrajectoriesStockPtr_;

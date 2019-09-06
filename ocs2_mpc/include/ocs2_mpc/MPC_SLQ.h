@@ -75,6 +75,7 @@ class MPC_SLQ : public MPC_BASE<STATE_DIM, INPUT_DIM> {
   using cost_desired_trajectories_t = typename BASE::cost_desired_trajectories_t;
   using mode_sequence_template_t = typename BASE::mode_sequence_template_t;
   using controller_ptr_array_t = typename BASE::controller_ptr_array_t;
+  using controller_const_ptr_array_t = typename BASE::controller_const_ptr_array_t;
 
   using linear_controller_t = LinearController<STATE_DIM, INPUT_DIM>;
   using linear_controller_array_t = typename linear_controller_t::array_t;
@@ -140,31 +141,16 @@ class MPC_SLQ : public MPC_BASE<STATE_DIM, INPUT_DIM> {
    */
   slq_base_t* getSolverPtr() override;
 
-  /**
-   * Solves the optimal control problem for the given state and time period ([initTime,finalTime]).
-   *
-   * @param [out] initTime: Initial time.
-   * @param [in] initState: Initial state.
-   * @param [out] finalTime: Final time.
-   * @param [out] timeTrajectoriesStock: A pointer to the optimized time trajectories.
-   * @param [out] stateTrajectoriesStock: A pointer to the optimized state trajectories.
-   * @param [out] inputTrajectoriesStock: A pointer to the optimized input trajectories.
-   * @param [out] controllerStock_out: A pointer to the optimized control policy.
-   */
   void calculateController(const scalar_t& initTime, const state_vector_t& initState, const scalar_t& finalTime,
                            const scalar_array2_t*& timeTrajectoriesStockPtr, const state_vector_array2_t*& stateTrajectoriesStockPtr,
                            const input_vector_array2_t*& inputTrajectoriesStockPtr,
-                           const controller_ptr_array_t*& controllerStockPtr) override;
+                           controller_const_ptr_array_t& controllersPtrStock) override;
 
  protected:
   /***********
    * Variables
    ***********/
   std::unique_ptr<slq_base_t> slqPtr_;
-
-  scalar_array2_t optimizedTimeTrajectoriesStock_;
-  state_vector_array2_t optimizedStateTrajectoriesStock_;
-  input_vector_array2_t optimizedInputTrajectoriesStock_;
 };
 
 }  // namespace ocs2

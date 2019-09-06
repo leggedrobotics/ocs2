@@ -35,7 +35,7 @@ namespace ocs2 {
 template <size_t STATE_DIM, size_t INPUT_DIM>
 MPC_ILQR<STATE_DIM, INPUT_DIM>::MPC_ILQR()
 
-    : BASE(), optimizedTimeTrajectoriesStock_(0), optimizedStateTrajectoriesStock_(0), optimizedInputTrajectoriesStock_(0) {}
+    : BASE() {}
 
 /******************************************************************************************************/
 /******************************************************************************************************/
@@ -50,10 +50,7 @@ MPC_ILQR<STATE_DIM, INPUT_DIM>::MPC_ILQR(const controlled_system_base_t* systemD
                                          const mode_sequence_template_t* modeSequenceTemplatePtr /* = nullptr*/,
                                          const cost_function_base_t* heuristicsFunctionPtr /*= nullptr*/)
 
-    : BASE(partitioningTimes, mpcSettings),
-      optimizedTimeTrajectoriesStock_(0),
-      optimizedStateTrajectoriesStock_(0),
-      optimizedInputTrajectoriesStock_(0)
+    : BASE(partitioningTimes, mpcSettings)
 
 {
   // ILQR
@@ -103,7 +100,7 @@ void MPC_ILQR<STATE_DIM, INPUT_DIM>::calculateController(const scalar_t& initTim
                                                          const scalar_t& finalTime, const scalar_array2_t*& timeTrajectoriesStockPtr,
                                                          const state_vector_array2_t*& stateTrajectoriesStockPtr,
                                                          const input_vector_array2_t*& inputTrajectoriesStockPtr,
-                                                         const controller_ptr_array_t*& controllerStockPtr) {
+                                                         controller_const_ptr_array_t& controllersPtrStock) {
   //*****************************************************************************************
   // cost goal check
   //*****************************************************************************************
@@ -152,17 +149,12 @@ void MPC_ILQR<STATE_DIM, INPUT_DIM>::calculateController(const scalar_t& initTim
   //*****************************************************************************************
   // Get optimized outputs
   //*****************************************************************************************
-  // swap the optimized trajectories
-  optimizedTimeTrajectoriesStock_.clear();
-  optimizedStateTrajectoriesStock_.clear();
-  optimizedInputTrajectoriesStock_.clear();
-  ilqrPtr_->swapNominalTrajectories(optimizedTimeTrajectoriesStock_, optimizedStateTrajectoriesStock_, optimizedInputTrajectoriesStock_);
-  timeTrajectoriesStockPtr = &optimizedTimeTrajectoriesStock_;
-  stateTrajectoriesStockPtr = &optimizedStateTrajectoriesStock_;
-  inputTrajectoriesStockPtr = &optimizedInputTrajectoriesStock_;
-
+  // get the optimized trajectories
+  timeTrajectoriesStockPtr = ilqrPtr_->getOptimizedTimeTrajectoriesPtr();
+  stateTrajectoriesStockPtr = ilqrPtr_->getOptimizedStateTrajectoriesPtr();
+  inputTrajectoriesStockPtr = ilqrPtr_->getOptimizedInputTrajectoriesPtr();
   // get the optimal controller
-  ilqrPtr_->getControllerPtr(controllerStockPtr);
+  controllersPtrStock = ilqrPtr_->getOptimizedControllersPtr();
 }
 
 }  // namespace ocs2

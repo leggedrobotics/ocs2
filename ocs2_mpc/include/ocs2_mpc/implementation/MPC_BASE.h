@@ -37,7 +37,7 @@ MPC_BASE<STATE_DIM, INPUT_DIM>::MPC_BASE()
 
     : initRun_(true),
       logicRulesTemplateUpdated_(false),
-      optimizedControllersStockPtr_(nullptr),
+      optimizedControllersPtrStock_(0),
       optimizedTimeTrajectoriesStockPtr_(nullptr),
       optimizedStateTrajectoriesStockPtr_(nullptr),
       optimizedInputTrajectoriesStockPtr_(nullptr),
@@ -61,7 +61,7 @@ MPC_BASE<STATE_DIM, INPUT_DIM>::MPC_BASE(const scalar_array_t& partitioningTimes
     : mpcSettings_(mpcSettings),
       initRun_(true),
       logicRulesTemplateUpdated_(false),
-      optimizedControllersStockPtr_(nullptr),
+      optimizedControllersPtrStock_(0),
       optimizedTimeTrajectoriesStockPtr_(nullptr),
       optimizedStateTrajectoriesStockPtr_(nullptr),
       optimizedInputTrajectoriesStockPtr_(nullptr),
@@ -105,7 +105,7 @@ template <size_t STATE_DIM, size_t INPUT_DIM>
 void MPC_BASE<STATE_DIM, INPUT_DIM>::reset() {
   initRun_ = true;
   logicRulesTemplateUpdated_ = false;
-  optimizedControllersStockPtr_ = nullptr;
+  optimizedControllersPtrStock_.clear();
   optimizedTimeTrajectoriesStockPtr_ = nullptr;
   optimizedStateTrajectoriesStockPtr_ = nullptr;
   optimizedInputTrajectoriesStockPtr_ = nullptr;
@@ -286,7 +286,7 @@ bool MPC_BASE<STATE_DIM, INPUT_DIM>::run(const scalar_t& currentTime, const stat
    ******************************************************************************************/
   // calculate the MPC controller
   calculateController(initTime, currentState, finalTime, optimizedTimeTrajectoriesStockPtr_, optimizedStateTrajectoriesStockPtr_,
-                      optimizedInputTrajectoriesStockPtr_, optimizedControllersStockPtr_);
+                      optimizedInputTrajectoriesStockPtr_, optimizedControllersPtrStock_);
 
   // set initRun flag to false
   initRun_ = false;
@@ -378,8 +378,34 @@ void MPC_BASE<STATE_DIM, INPUT_DIM>::setNewLogicRulesTemplate(const mode_sequenc
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
-typename MPC_BASE<STATE_DIM, INPUT_DIM>::controller_ptr_array_t const* MPC_BASE<STATE_DIM, INPUT_DIM>::getOptimizedControllerPtr() const {
-  return optimizedControllersStockPtr_;
+typename MPC_BASE<STATE_DIM, INPUT_DIM>::controller_const_ptr_array_t MPC_BASE<STATE_DIM, INPUT_DIM>::getOptimizedControllersPtr() const {
+  return optimizedControllersPtrStock_;
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+template <size_t STATE_DIM, size_t INPUT_DIM>
+const typename MPC_BASE<STATE_DIM, INPUT_DIM>::scalar_array2_t* MPC_BASE<STATE_DIM, INPUT_DIM>::getOptimizedTimeTrajectoryPtr() const {
+  return optimizedTimeTrajectoriesStockPtr_;
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+template <size_t STATE_DIM, size_t INPUT_DIM>
+const typename MPC_BASE<STATE_DIM, INPUT_DIM>::state_vector_array2_t* MPC_BASE<STATE_DIM, INPUT_DIM>::getOptimizedStateTrajectoryPtr()
+    const {
+  return optimizedStateTrajectoriesStockPtr_;
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+template <size_t STATE_DIM, size_t INPUT_DIM>
+const typename MPC_BASE<STATE_DIM, INPUT_DIM>::input_vector_array2_t* MPC_BASE<STATE_DIM, INPUT_DIM>::getOptimizedInputTrajectoryPtr()
+    const {
+  return optimizedInputTrajectoriesStockPtr_;
 }
 
 /******************************************************************************************************/

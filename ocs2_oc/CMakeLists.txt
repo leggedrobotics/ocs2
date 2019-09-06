@@ -49,8 +49,8 @@ include_directories(
 )
 
 add_executable(${PROJECT_NAME}_lintTarget
-        src/lintTarget.cpp
-        )
+  src/lintTarget.cpp
+)
 
 #########################
 ###   CLANG TOOLING   ###

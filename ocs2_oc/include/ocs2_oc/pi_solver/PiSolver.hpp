@@ -357,21 +357,21 @@ class PiSolver final : public Solver_BASE<STATE_DIM, INPUT_DIM> {
     controller_.setSamplingPolicy(std::move(samplingPolicy));
   }
 
-  controller_const_ptr_array_t getOptimizedControllerPtr() const override {
-    controller_ptr_array_t nominalControllerPtrStock(0);
-    nominalControllerPtrStock.reserve(nominalControllersStock_.size());
+  controller_const_ptr_array_t getOptimizedControllersPtr() const override {
+    controller_ptr_array_t nominalControllerPtrsStock(0);
+    nominalControllerPtrsStock.reserve(nominalControllersStock_.size());
     for (const pi_controller_t& controller_i : nominalControllersStock_) {
-      nominalControllerPtrStock.push_back(&controller_i);
+      nominalControllerPtrsStock.push_back(&controller_i);
     }
 
-    return nominalControllerPtrStock;
+    return nominalControllerPtrsStock;
   }
 
-  const scalar_array2_t* getOptimizedTimeTrajectoryPtr() const override { return &nominalTimeTrajectoriesStock_; }
+  const scalar_array2_t* getOptimizedTimeTrajectoriesPtr() const override { return &nominalTimeTrajectoriesStock_; }
 
-  const state_vector_array2_t* getOptimizedStateTrajectoryPtr() const override { return &nominalStateTrajectoriesStock_; }
+  const state_vector_array2_t* getOptimizedStateTrajectoriesPtr() const override { return &nominalStateTrajectoriesStock_; }
 
-  const input_vector_array2_t* getOptimizedInputTrajectoryPtr() const override { return &nominalInputTrajectoriesStock_; }
+  const input_vector_array2_t* getOptimizedInputTrajectoriesPtr() const override { return &nominalInputTrajectoriesStock_; }
 
   void rewindOptimizer(size_t firstIndex) override {}
 

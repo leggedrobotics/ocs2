@@ -411,13 +411,13 @@ class DDP_BASE : public Solver_BASE<STATE_DIM, INPUT_DIM> {
    */
   DDP_Settings& ddpSettings();
 
-  controller_const_ptr_array_t getOptimizedControllerPtr() const override;
+  controller_const_ptr_array_t getOptimizedControllersPtr() const override;
 
-  const scalar_array2_t* getOptimizedTimeTrajectoryPtr() const override;
+  const scalar_array2_t* getOptimizedTimeTrajectoriesPtr() const override;
 
-  const state_vector_array2_t* getOptimizedStateTrajectoryPtr() const override;
+  const state_vector_array2_t* getOptimizedStateTrajectoriesPtr() const override;
 
-  const input_vector_array2_t* getOptimizedInputTrajectoryPtr() const override;
+  const input_vector_array2_t* getOptimizedInputTrajectoriesPtr() const override;
 
   scalar_t getFinalTime() const override;
 

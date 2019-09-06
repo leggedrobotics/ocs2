@@ -320,32 +320,32 @@ class Solver_BASE {
   bool updateCostDesiredTrajectories();
 
   /**
-   * @brief Returns a pointer to the array of pointer to the optimal control policies.
+   * @brief Returns An array of pointers to the optimal control policies.
    *
-   * @return A pointer to the array of pointers to the optimized control policies.
+   * @return An array of pointers to the optimized control policies.
    */
-  virtual controller_const_ptr_array_t getOptimizedControllerPtr() const = 0;
+  virtual controller_const_ptr_array_t getOptimizedControllersPtr() const = 0;
 
   /**
-   * @brief Returns a pointer to the optimized time trajectory.
+   * @brief Returns a pointer to the optimized time trajectories.
    *
-   * @return A pointer to the optimized time trajectory containing the output time stamp for state and input trajectories.
+   * @return A pointer to the optimized time trajectories containing the output time stamp for state and input trajectories.
    */
-  virtual const scalar_array2_t* getOptimizedTimeTrajectoryPtr() const = 0;
+  virtual const scalar_array2_t* getOptimizedTimeTrajectoriesPtr() const = 0;
 
   /**
-   * @brief Returns a pointer to the optimized state trajectory.
+   * @brief Returns a pointer to the optimized state trajectories.
    *
-   * @return A pointer to the optimized state trajectory.
+   * @return A pointer to the optimized state trajectories.
    */
-  virtual const state_vector_array2_t* getOptimizedStateTrajectoryPtr() const = 0;
+  virtual const state_vector_array2_t* getOptimizedStateTrajectoriesPtr() const = 0;
 
   /**
-   * @brief Returns a pointer to the optimized input trajectory.
+   * @brief Returns a pointer to the optimized input trajectories.
    *
-   * @return A pointer to the optimized state trajectory.
+   * @return A pointer to the optimized input trajectories.
    */
-  virtual const input_vector_array2_t* getOptimizedInputTrajectoryPtr() const = 0;
+  virtual const input_vector_array2_t* getOptimizedInputTrajectoriesPtr() const = 0;
 
   /**
    * Calculates the value function at the given time and state.

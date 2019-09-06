@@ -349,12 +349,6 @@ class PiSolver final : public Solver_BASE<STATE_DIM, INPUT_DIM> {
 
   const scalar_array_t& getPartitioningTimes() const override { throw std::runtime_error("not implemented."); }
 
-  const controller_ptr_array_t& getController() const override { return nominalControllersPtrStock_; }
-
-  void getControllerPtr(const controller_ptr_array_t*& controllersStockPtr) const override {
-    controllersStockPtr = &nominalControllersPtrStock_;
-  }
-
   /**
    * @brief Sets the initial sampling policy for path integral rollouts
    * @param The control policy to sample around
@@ -363,25 +357,13 @@ class PiSolver final : public Solver_BASE<STATE_DIM, INPUT_DIM> {
     controller_.setSamplingPolicy(std::move(samplingPolicy));
   }
 
-  const std::vector<scalar_array_t>& getNominalTimeTrajectories() const override { throw std::runtime_error("not implemented."); }
+  const controller_ptr_array_t* getOptimizedControllerPtr() const override { return &nominalControllersPtrStock_; }
 
-  const state_vector_array2_t& getNominalStateTrajectories() const override { throw std::runtime_error("not implemented."); }
+  const scalar_array2_t* getOptimizedTimeTrajectoryPtr() const override { return &nominalTimeTrajectoriesStock_; }
 
-  const input_vector_array2_t& getNominalInputTrajectories() const override { throw std::runtime_error("not implemented."); }
+  const state_vector_array2_t* getOptimizedStateTrajectoryPtr() const override { return &nominalStateTrajectoriesStock_; }
 
-  void getNominalTrajectoriesPtr(const std::vector<scalar_array_t>*& nominalTimeTrajectoriesStockPtr,
-                                 const state_vector_array2_t*& nominalStateTrajectoriesStockPtr,
-                                 const input_vector_array2_t*& nominalInputTrajectoriesStockPtr) const override {
-    nominalTimeTrajectoriesStockPtr = &nominalTimeTrajectoriesStock_;
-    nominalStateTrajectoriesStockPtr = &nominalStateTrajectoriesStock_;
-    nominalInputTrajectoriesStockPtr = &nominalInputTrajectoriesStock_;
-  }
-
-  void swapNominalTrajectories(std::vector<scalar_array_t>& nominalTimeTrajectoriesStock,
-                               state_vector_array2_t& nominalStateTrajectoriesStock,
-                               input_vector_array2_t& nominalInputTrajectoriesStock) override {
-    throw std::runtime_error("not implemented.");
-  }
+  const input_vector_array2_t* getOptimizedInputTrajectoryPtr() const override { return &nominalInputTrajectoriesStock_; }
 
   void rewindOptimizer(size_t firstIndex) override {}
 

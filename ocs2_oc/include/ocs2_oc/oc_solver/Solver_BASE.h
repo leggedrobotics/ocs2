@@ -310,71 +310,41 @@ class Solver_BASE {
    *
    * @return true if it is updated.
    */
-  bool costDesiredTrajectoriesUpdated() const { return costDesiredTrajectoriesUpdated_; };
-
-  /**
-   * Returns an array of pointer to the optimal control policies.
-   *
-   * @return An array of pointers to the optimized control policies.
-   */
-  virtual const controller_ptr_array_t& getController() const = 0;
-
-  /**
-   * Gets an array of pointer to the optimal control policies.
-   *
-   * @param [out] controllersStockPtr: An array of pointers to the optimized control policies.
-   */
-  virtual void getControllerPtr(const controller_ptr_array_t*& controllersPtrStock) const = 0;
-
-  /**
-   * Returns the nominal time trajectories.
-   *
-   * @return nominalTimeTrajectoriesStock: Array of trajectories containing the output time trajectory stamp.
-   */
-  virtual const std::vector<scalar_array_t>& getNominalTimeTrajectories() const = 0;
-
-  /**
-   * Returns the nominal state trajectories.
-   *
-   * @return nominalStateTrajectoriesStock: Array of trajectories containing the output state trajectory.
-   */
-  virtual const state_vector_array2_t& getNominalStateTrajectories() const = 0;
-
-  /**
-   * Returns the nominal input trajectories.
-   *
-   * @return nominalInputTrajectoriesStock: Array of trajectories containing the output control input trajectory.
-   */
-  virtual const input_vector_array2_t& getNominalInputTrajectories() const = 0;
-
-  /**
-   * Gets a pointer to the nominal time, state, and input trajectories.
-   *
-   * @param [out] nominalTimeTrajectoriesStockPtr: A pointer to an array of trajectories containing the output time trajectory stamp.
-   * @param [out] nominalStateTrajectoriesStockPtr: A pointer to an array of trajectories containing the output state trajectory.
-   * @param [out] nominalInputTrajectoriesStockPtr: A pointer to an array of trajectories containing the output control input trajectory.
-   */
-  virtual void getNominalTrajectoriesPtr(const std::vector<scalar_array_t>*& nominalTimeTrajectoriesStockPtr,
-                                         const state_vector_array2_t*& nominalStateTrajectoriesStockPtr,
-                                         const input_vector_array2_t*& nominalInputTrajectoriesStockPtr) const = 0;
-
-  /**
-   * Swaps the the outputs with the nominal trajectories.
-   * Care should be take since this method modifies the internal variable.
-   *
-   * @param [out] nominalTimeTrajectoriesStock: Array of trajectories containing the output time trajectory stamp.
-   * @param [out] nominalStateTrajectoriesStock: Array of trajectories containing the output state trajectory.
-   * @param [out] nominalInputTrajectoriesStock: Array of trajectories containing the output control input trajectory.
-   */
-  virtual void swapNominalTrajectories(std::vector<scalar_array_t>& nominalTimeTrajectoriesStock,
-                                       state_vector_array2_t& nominalStateTrajectoriesStock,
-                                       input_vector_array2_t& nominalInputTrajectoriesStock) = 0;
+  bool costDesiredTrajectoriesUpdated() const;
 
   /**
    * @brief updateCostDesiredTrajectories: Swap buffered costDesiredTrajectories to the in-use ones.
    * @return true if updated (i.e., something new was swapped in), false otherwise
    */
   bool updateCostDesiredTrajectories();
+
+  /**
+   * @brief Returns a pointer to the array of pointer to the optimal control policies.
+   *
+   * @return A pointer to the array of pointers to the optimized control policies.
+   */
+  virtual const controller_ptr_array_t* getOptimizedControllerPtr() const = 0;
+
+  /**
+   * @brief Returns a pointer to the optimized time trajectory.
+   *
+   * @return A pointer to the optimized time trajectory containing the output time stamp for state and input trajectories.
+   */
+  virtual const scalar_array2_t* getOptimizedTimeTrajectortPtr() const = 0;
+
+  /**
+   * @brief Returns a pointer to the optimized state trajectory.
+   *
+   * @return A pointer to the optimized state trajectory.
+   */
+  virtual const state_vector_array2_t* getOptimizedStateTrajectoryPtr() const = 0;
+
+  /**
+   * @brief Returns a pointer to the optimized input trajectory.
+   *
+   * @return A pointer to the optimized state trajectory.
+   */
+  virtual const input_vector_array2_t* getOptimizedInputTrajectoryPtr() const = 0;
 
   /**
    * Calculates the value function at the given time and state.

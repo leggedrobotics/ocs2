@@ -132,6 +132,7 @@ class Solver_BASE {
   using controller_t = ControllerBase<STATE_DIM, INPUT_DIM>;
   using controller_array_t = typename controller_t::array_t;
   using controller_ptr_array_t = std::vector<controller_t*>;
+  using controller_const_ptr_array_t = std::vector<const controller_t*>;
 
   explicit Solver_BASE(std::shared_ptr<HybridLogicRules> logicRulesPtr = nullptr);
 
@@ -323,14 +324,14 @@ class Solver_BASE {
    *
    * @return A pointer to the array of pointers to the optimized control policies.
    */
-  virtual const controller_ptr_array_t* getOptimizedControllerPtr() const = 0;
+  virtual controller_const_ptr_array_t getOptimizedControllerPtr() const = 0;
 
   /**
    * @brief Returns a pointer to the optimized time trajectory.
    *
    * @return A pointer to the optimized time trajectory containing the output time stamp for state and input trajectories.
    */
-  virtual const scalar_array2_t* getOptimizedTimeTrajectortPtr() const = 0;
+  virtual const scalar_array2_t* getOptimizedTimeTrajectoryPtr() const = 0;
 
   /**
    * @brief Returns a pointer to the optimized state trajectory.

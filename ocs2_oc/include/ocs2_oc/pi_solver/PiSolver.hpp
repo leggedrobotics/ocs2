@@ -29,6 +29,7 @@ class PiSolver final : public Solver_BASE<STATE_DIM, INPUT_DIM> {
 
   using Base = Solver_BASE<STATE_DIM, INPUT_DIM>;
 
+  using typename Base::controller_const_ptr_array_t;
   using typename Base::controller_ptr_array_t;
   using typename Base::cost_desired_trajectories_t;
   using typename Base::dynamic_vector_array_t;
@@ -282,7 +283,6 @@ class PiSolver final : public Solver_BASE<STATE_DIM, INPUT_DIM> {
     // controller for ROS transmission
     nominalControllersStock_.clear();
     nominalControllersStock_.emplace_back(pi_controller_t(controller_));
-    updateNominalControllerPtrStock();
 
     // prepare local controller for next iteration
     controller_.gamma_ = settings_.gamma_;
@@ -357,7 +357,15 @@ class PiSolver final : public Solver_BASE<STATE_DIM, INPUT_DIM> {
     controller_.setSamplingPolicy(std::move(samplingPolicy));
   }
 
-  const controller_ptr_array_t* getOptimizedControllerPtr() const override { return &nominalControllersPtrStock_; }
+  controller_const_ptr_array_t getOptimizedControllerPtr() const override {
+    controller_ptr_array_t nominalControllerPtrStock(0);
+    nominalControllerPtrStock.reserve(nominalControllersStock_.size());
+    for (const pi_controller_t& controller_i : nominalControllersStock_) {
+      nominalControllerPtrStock.push_back(&controller_i);
+    }
+
+    return nominalControllerPtrStock;
+  }
 
   const scalar_array2_t* getOptimizedTimeTrajectoryPtr() const override { return &nominalTimeTrajectoriesStock_; }
 
@@ -401,18 +409,6 @@ class PiSolver final : public Solver_BASE<STATE_DIM, INPUT_DIM> {
     std::cerr << std::setprecision(defaultPrecision);
   }
 
-  /**
-   * @brief updates pointers in nominalControllerPtrStock from memory location of nominalControllersStock_ members
-   */
-  void updateNominalControllerPtrStock() {
-    nominalControllersPtrStock_.clear();
-    nominalControllersPtrStock_.reserve(nominalControllersStock_.size());
-
-    for (auto& controller : nominalControllersStock_) {
-      nominalControllersPtrStock_.push_back(&controller);
-    }
-  }
-
   scalar_t getValueFunction(scalar_t time, const state_vector_t& state) const override { throw std::runtime_error("Not implemented."); }
 
   void getValueFunctionStateDerivative(scalar_t time, const state_vector_t& state, state_vector_t& Vx) const override {
@@ -441,8 +437,6 @@ class PiSolver final : public Solver_BASE<STATE_DIM, INPUT_DIM> {
   state_vector_array2_t nominalStateTrajectoriesStock_;
   input_vector_array2_t nominalInputTrajectoriesStock_;
   std::vector<pi_controller_t> nominalControllersStock_;
-
-  controller_ptr_array_t nominalControllersPtrStock_;
 };
 
 }  // namespace ocs2

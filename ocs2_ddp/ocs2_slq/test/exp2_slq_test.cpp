@@ -121,7 +121,7 @@ TEST(exp2_slq_test, DISABLED_Exp2_slq_test)
 	/******************************************************************************************************/
 	/******************************************************************************************************/
 	// get controller
-	SLQ_BASE<STATE_DIM, INPUT_DIM>::controller_ptr_array_t controllersPtrStock = slq.getController();
+	SLQ_BASE<STATE_DIM, INPUT_DIM>::controller_const_ptr_array_t controllersPtrStock = slq.getOptimizedControllerPtr();
 
 	// get performance indices
 	double totalCost, totalCost_mp;

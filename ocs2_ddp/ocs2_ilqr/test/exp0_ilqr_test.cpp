@@ -113,7 +113,7 @@ TEST(exp0_ilqr_test, exp0_ilqr_test) {
       &operatingTrajectories, ilqrSettings, logicRules);
 
   // ILQR - multi-threaded version
-//  ILQR_MT<STATE_DIM, INPUT_DIM, EXP0_LogicRules> ilqrMT(
+//  ILQR_MT<STATE_DIM, INPUT_DIM> ilqrMT(
 //		  &systemDynamics, &systemDerivative,
 //		  &systemConstraint, &systemCostFunction,
 //		  &operatingTrajectories, ilqrSettings, logicRules);
@@ -132,8 +132,8 @@ TEST(exp0_ilqr_test, exp0_ilqr_test) {
   /******************************************************************************************************/
   /******************************************************************************************************/
   // get controller
-  ILQR_BASE<STATE_DIM, INPUT_DIM>::controller_ptr_array_t controllersStockST = ilqrST.getController();
-//  ILQR_BASE<STATE_DIM, INPUT_DIM, EXP0_LogicRules>::controller_ptr_array_t controllersStockMT = ilqrMT.getController();
+  ILQR_BASE<STATE_DIM, INPUT_DIM>::controller_const_ptr_array_t controllersStockST = ilqrST.getOptimizedControllerPtr();
+//  ILQR_BASE<STATE_DIM, INPUT_DIM>::controller_const_ptr_array_t controllersStockMT = ilqrMT.getOptimizedControllerPtr();
 
   // get performance indices
   double totalCost_st, totalCost_mt;

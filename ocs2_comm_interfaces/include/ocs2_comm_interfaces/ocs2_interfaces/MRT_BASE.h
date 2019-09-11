@@ -7,13 +7,16 @@
 #include <memory>
 #include <mutex>
 
-#include <ocs2_comm_interfaces/SystemObservation.h>
 #include <ocs2_core/Dimensions.h>
 #include <ocs2_core/control/ControllerBase.h>
 #include <ocs2_core/cost/CostDesiredTrajectories.h>
 #include <ocs2_core/dynamics/ControlledSystemBase.h>
 #include <ocs2_core/misc/LinearInterpolation.h>
 #include <ocs2_oc/rollout/RolloutBase.h>
+#include <ocs2_oc/oc_data/PolicyData.h>
+
+#include "ocs2_comm_interfaces/CommandData.h"
+#include "ocs2_comm_interfaces/SystemObservation.h"
 
 namespace ocs2 {
 
@@ -39,22 +42,11 @@ class MRT_BASE {
   using input_vector_array_t = typename dim_t::input_vector_array_t;
 
   using controller_t = ControllerBase<STATE_DIM, INPUT_DIM>;
-  using state_linear_interpolation_t = EigenLinearInterpolation<typename dim_t::state_vector_t>;
+  using state_linear_interpolation_t = EigenLinearInterpolation<state_vector_t>;
+  using input_linear_interpolation_t = EigenLinearInterpolation<input_vector_t>;
 
-  struct CommandData {
-    EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-    SystemObservation<STATE_DIM, INPUT_DIM> mpcInitObservation_;
-    CostDesiredTrajectories<scalar_t> mpcCostDesiredTrajectories_;
-  };
-
-  struct PolicyData {
-    EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-    scalar_array_t mpcTimeTrajectory_;
-    state_vector_array_t mpcStateTrajectory_;
-    std::unique_ptr<controller_t> mpcController_;
-    scalar_array_t eventTimes_;
-    size_array_t subsystemsSequence_;
-  };
+  using policy_data_t = PolicyData<STATE_DIM, INPUT_DIM>;
+  using command_data_t = CommandData<STATE_DIM, INPUT_DIM>;
 
   /**
    * @brief MRT_BASE constructor
@@ -96,13 +88,13 @@ class MRT_BASE {
    *
    * @return a constant reference to command data.
    */
-  const CommandData& getCommand() const { return *currentCommand_; };
+  const command_data_t& getCommand() const { return *currentCommand_; };
 
   /**
    * Gets a reference to current optimized policy.
    * @return constant reference to the policy data.
    */
-  const PolicyData& getPolicy() const { return *currentPolicy_; };
+  const policy_data_t& getPolicy() const { return *currentPolicy_; };
 
   /**
    * Initializes rollout class to roll out a feedback policy
@@ -165,7 +157,7 @@ class MRT_BASE {
    * policy messages on the data buffer.
    *
    */
-  virtual void modifyPolicy(const CommandData& command, PolicyData& policy) {}
+  virtual void modifyPolicy(const command_data_t& command, policy_data_t& policy) {}
 
   /**
    * This method can be used to modify the policy on the buffer without inputting the main thread.
@@ -173,7 +165,7 @@ class MRT_BASE {
    * @param [in] commandBuffer: buffered command data.
    * @param policyBuffer: policy message on the buffer.
    */
-  virtual void modifyBufferPolicy(const CommandData& commandBuffer, PolicyData& policyBuffer) {}
+  virtual void modifyBufferPolicy(const command_data_t& commandBuffer, policy_data_t& policyBuffer) {}
 
   /**
    * Constructs a partitioningTimes vector with 2 elements: minimum of the already
@@ -192,7 +184,7 @@ class MRT_BASE {
    *
    * @return True if the policy is updated.
    */
-  virtual bool updatePolicyImpl();
+  bool updatePolicyImpl();
 
  protected:
   // flags on state of the class
@@ -202,10 +194,10 @@ class MRT_BASE {
   // variables related to the MPC output
   std::atomic_bool policyUpdated_;  //! Whether the policy was updated by MPC (i.e., MPC succeeded)
   bool policyUpdatedBuffer_;        //! Whether the policy in buffer was upated by MPC (i.e., MPC succeeded)
-  std::unique_ptr<PolicyData> currentPolicy_;
-  std::unique_ptr<PolicyData> policyBuffer_;
-  std::unique_ptr<CommandData> currentCommand_;
-  std::unique_ptr<CommandData> commandBuffer_;
+  std::unique_ptr<policy_data_t> currentPolicy_;
+  std::unique_ptr<policy_data_t> policyBuffer_;
+  std::unique_ptr<command_data_t> currentCommand_;
+  std::unique_ptr<command_data_t> commandBuffer_;
 
   // thread safety
   mutable std::mutex policyBufferMutex_;  // for policy variables WITH suffix (*Buffer_)
@@ -215,11 +207,12 @@ class MRT_BASE {
   std::unique_ptr<RolloutBase<STATE_DIM, INPUT_DIM>> rolloutPtr_;
   HybridLogicRulesMachine::Ptr logicMachinePtr_;
 
-  // Varia
+  // variables
   scalar_array_t partitioningTimes_;
   scalar_array_t partitioningTimesBuffer_;
   SystemObservation<STATE_DIM, INPUT_DIM> initPlanObservation_;  //! The initial observation of the first plan ever received
   state_linear_interpolation_t mpcLinInterpolateState_;
+  input_linear_interpolation_t mpcLinInterpolateInput_;
 };
 
 }  // namespace ocs2

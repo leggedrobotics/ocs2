@@ -52,11 +52,11 @@ template <size_t STATE_DIM, size_t INPUT_DIM>
 void MRT_BASE<STATE_DIM, INPUT_DIM>::reset() {
   std::lock_guard<std::mutex> lock(policyBufferMutex_);
 
-  currentPolicy_.reset(new PolicyData());
-  policyBuffer_.reset(new PolicyData());
+  currentPolicy_.reset(new policy_data_t());
+  policyBuffer_.reset(new policy_data_t());
 
-  currentCommand_.reset(new CommandData());
-  commandBuffer_.reset(new CommandData());
+  currentCommand_.reset(new command_data_t());
+  commandBuffer_.reset(new command_data_t());
 
   policyReceivedEver_ = false;
   newPolicyInBuffer_ = false;
@@ -65,6 +65,7 @@ void MRT_BASE<STATE_DIM, INPUT_DIM>::reset() {
   policyUpdatedBuffer_ = false;
 
   mpcLinInterpolateState_.setZero();
+  mpcLinInterpolateInput_.setZero();
 
   partitioningTimesUpdate(0.0, partitioningTimes_);
   partitioningTimesUpdate(0.0, partitioningTimesBuffer_);
@@ -142,24 +143,25 @@ void MRT_BASE<STATE_DIM, INPUT_DIM>::rolloutPolicy(scalar_t currentTime, const s
 template <size_t STATE_DIM, size_t INPUT_DIM>
 bool MRT_BASE<STATE_DIM, INPUT_DIM>::updatePolicy() {
   std::lock_guard<std::mutex> lock(policyBufferMutex_);
+
+  if (!policyUpdatedBuffer_ || !newPolicyInBuffer_) {
+    return false;
+  }
+  newPolicyInBuffer_ = false;  // make sure we don't swap in the old policy again
   return updatePolicyImpl();
 }
+
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
 bool MRT_BASE<STATE_DIM, INPUT_DIM>::updatePolicyImpl() {
-  if (!policyUpdatedBuffer_ or !newPolicyInBuffer_) {
-    return false;
-  }
-
-  newPolicyInBuffer_ = false;  // make sure we don't swap in the old policy again
-
   // update the current policy from buffer
   policyUpdated_ = policyUpdatedBuffer_;
   currentCommand_.swap(commandBuffer_);
   currentPolicy_.swap(policyBuffer_);
   mpcLinInterpolateState_.setData(&currentPolicy_->mpcTimeTrajectory_, &currentPolicy_->mpcStateTrajectory_);
+  mpcLinInterpolateInput_.setData(&currentPolicy_->mpcTimeTrajectory_, &currentPolicy_->mpcInputTrajectory_);
   partitioningTimes_.swap(partitioningTimesBuffer_);
 
   // update logic rules

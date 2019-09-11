@@ -110,15 +110,14 @@ mpc
     rosMsgTimeWindow               200   ; [ms]
     adaptiveRosMsgTimeWindow       0
 
-    mpcDesiredFrequency            -1   ; [Hz]
-    mrtDesiredFrequency            400  ; [Hz]
+    mpcDesiredFrequency            100   ; [Hz]
+    mrtDesiredFrequency            400   ; [Hz]
 }
 
 ; ballbot interface settings
 ballbot_interface
 {
 	recompileLibraries       0    ; put this flag to 1 to force recompilation of dynamics library
-	initMpcPi                0    ;
 }
 
 pathIntegral

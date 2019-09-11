@@ -89,7 +89,6 @@ target_link_libraries(double_integrator_mpc
         )
 
 add_executable(double_integrator_pi
-  # src/double_integrator/DoubleIntegratorInterface.cpp
   src/PI_Double_Integrator.cpp
 )
 add_dependencies(double_integrator_pi

@@ -12,8 +12,8 @@
 #include <ocs2_core/cost/CostDesiredTrajectories.h>
 #include <ocs2_core/dynamics/ControlledSystemBase.h>
 #include <ocs2_core/misc/LinearInterpolation.h>
-#include <ocs2_oc/rollout/RolloutBase.h>
 #include <ocs2_oc/oc_data/PolicyData.h>
+#include <ocs2_oc/rollout/RolloutBase.h>
 
 #include "ocs2_comm_interfaces/CommandData.h"
 #include "ocs2_comm_interfaces/SystemObservation.h"

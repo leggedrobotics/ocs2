@@ -38,6 +38,7 @@ class MPC_MRT_Interface final : public MRT_BASE<STATE_DIM, INPUT_DIM> {
 
   using scalar_t = typename mpc_t::scalar_t;
   using scalar_array_t = typename mpc_t::scalar_array_t;
+  using scalar_array2_t = typename mpc_t::scalar_array2_t;
   using size_array_t = typename mpc_t::size_array_t;
   using state_vector_t = typename mpc_t::state_vector_t;
   using state_vector_array_t = typename mpc_t::state_vector_array_t;
@@ -126,15 +127,7 @@ class MPC_MRT_Interface final : public MRT_BASE<STATE_DIM, INPUT_DIM> {
    */
   void getStateInputConstraintLagrangian(scalar_t time, const state_vector_t& state, dynamic_vector_t& nu) const;
 
-  /**
-   * @brief Access the currently in-use input trajectory.
-   * @note To get the latest policy from MPC, call updatePolicy() first
-   */
-  const input_vector_array_t& getMpcInputTrajectory() const { return mpcInputTrajectory_; };
-
  protected:
-  bool updatePolicyImpl() override;
-
   /**
    * @brief fillMpcOutputBuffers updates the *Buffer variables from the MPC object.
    * This method is automatically called by advanceMpc()
@@ -152,11 +145,6 @@ class MPC_MRT_Interface final : public MRT_BASE<STATE_DIM, INPUT_DIM> {
   // MPC inputs
   system_observation_t currentObservation_;
   std::mutex observationMutex_;
-
-  // MPC outputs (additional to the buffer variables in Base)
-  input_vector_array_t mpcInputTrajectoryBuffer_;
-  input_vector_array_t mpcInputTrajectory_;
-  input_linear_interpolation_t mpcLinInterpolateInput_;
 };
 
 }  // namespace ocs2

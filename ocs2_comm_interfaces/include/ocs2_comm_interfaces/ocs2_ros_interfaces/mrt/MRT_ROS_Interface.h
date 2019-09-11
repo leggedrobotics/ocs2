@@ -97,7 +97,8 @@ class MRT_ROS_Interface : public MRT_BASE<STATE_DIM, INPUT_DIM> {
    * @param [in] robotName: The robot's name.
    * @param [in] logicRules: A logic rule class of derived from the hybrid logicRules base.
    */
-  explicit MRT_ROS_Interface(std::string robotName = "robot", std::shared_ptr<HybridLogicRules> logicRules = nullptr, bool useUdp = false);
+  explicit MRT_ROS_Interface(std::string robotName = "robot", std::shared_ptr<HybridLogicRules> logicRules = nullptr,
+                             ros::TransportHints mrtTransportHints = ::ros::TransportHints().tcpNoDelay());
 
   /**
    * Destructor
@@ -188,7 +189,7 @@ class MRT_ROS_Interface : public MRT_BASE<STATE_DIM, INPUT_DIM> {
 
   ::ros::CallbackQueue mrtCallbackQueue_;
 
-  bool useUdp_;
+  ::ros::TransportHints mrtTransportHints_;
 
   // Multi-threading for publishers
   bool terminateThread_;

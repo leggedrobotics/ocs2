@@ -40,8 +40,8 @@ namespace ocs2 {
 template <size_t STATE_DIM, size_t INPUT_DIM>
 MRT_ROS_Interface<STATE_DIM, INPUT_DIM>::MRT_ROS_Interface(std::string robotName /*= "robot"*/,
                                                            std::shared_ptr<HybridLogicRules> logicRules /*= nullptr*/,
-                                                           bool useUdp /*= false*/)
-    : Base(std::move(logicRules)), robotName_(std::move(robotName)), useUdp_(useUdp) {
+                                                           ros::TransportHints mrtTransportHints)
+    : Base(std::move(logicRules)), robotName_(std::move(robotName)), mrtTransportHints_(mrtTransportHints) {
 // Start thread for publishing
 #ifdef PUBLISH_THREAD
   // Close old thread if it is already running
@@ -316,12 +316,8 @@ void MRT_ROS_Interface<STATE_DIM, INPUT_DIM>::launchNodes(int argc, char* argv[]
   mpcObservationPublisher_ = mrtRosNodeHandlePtr_->advertise<ocs2_msgs::mpc_observation>(robotName_ + "_mpc_observation", 1);
 
   // SLQ-MPC subscriber
-  if (useUdp_) {
-    mpcPolicySubscriber_ = mrtRosNodeHandlePtr_->subscribe(robotName_ + "_mpc_policy", 1, &MRT_ROS_Interface::mpcPolicyCallback, this);
-  } else {
-    mpcPolicySubscriber_ = mrtRosNodeHandlePtr_->subscribe(robotName_ + "_mpc_policy", 1, &MRT_ROS_Interface::mpcPolicyCallback, this,
-                                                           ::ros::TransportHints().tcpNoDelay());
-  }
+  mpcPolicySubscriber_ =
+      mrtRosNodeHandlePtr_->subscribe(robotName_ + "_mpc_policy", 1, &MRT_ROS_Interface::mpcPolicyCallback, this, mrtTransportHints_);
 
   // dummy publisher
   dummyPublisher_ = mrtRosNodeHandlePtr_->advertise<ocs2_msgs::dummy>("ping", 1, true);

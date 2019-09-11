@@ -40,7 +40,7 @@ namespace ocs2 {
 template <size_t STATE_DIM, size_t INPUT_DIM>
 MRT_ROS_Interface<STATE_DIM, INPUT_DIM>::MRT_ROS_Interface(std::string robotName /*= "robot"*/,
                                                            std::shared_ptr<HybridLogicRules> logicRules /*= nullptr*/,
-                                                           ros::TransportHints mrtTransportHints)
+                                                           ros::TransportHints mrtTransportHints /* = ::ros::TransportHints().tcpNoDelay()*/)
     : Base(std::move(logicRules)), robotName_(std::move(robotName)), mrtTransportHints_(mrtTransportHints) {
 // Start thread for publishing
 #ifdef PUBLISH_THREAD

@@ -188,7 +188,6 @@ class MRT_ROS_Interface : public MRT_BASE<STATE_DIM, INPUT_DIM> {
   ocs2_msgs::mpc_observation mpcObservationMsgBuffer_;
 
   ::ros::CallbackQueue mrtCallbackQueue_;
-
   ::ros::TransportHints mrtTransportHints_;
 
   // Multi-threading for publishers

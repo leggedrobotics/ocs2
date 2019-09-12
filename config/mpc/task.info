@@ -70,30 +70,11 @@ initialModeSequenceTemplate
   templateSubsystemsSequence
   {
     [0]  STANCE
-    [1]  RF_LH ; LF_RF_RH ; RF_LH
-    [2]  LF_RH ; RF_LH_RH ; LF_RH
-    [3]  RF_LH ; LF_RF_LH ; RF_LH
-    [4]  LF_RH ; LF_LH_RH ; LF_RH
-    [5]  RF_LH ; LF_RF_RH ; RF_LH
-    [6]  LF_RH ; RF_LH_RH ; LF_RH
-    [7]  RF_LH ; LF_RF_LH ; RF_LH
-    [8]  LF_RH ; LF_LH_RH ; LF_RH
-    [9]  STANCE
   }
   templateSwitchingTimes
   {
     [0]  0.0
-    ;[1]  10.0
-    [1]  0.001
-    [2]  0.35
-    [3]  0.7
-    [4]  1.05
-    [5]  1.4
-    [6]  1.75
-    [7]  2.1
-    [8]  2.45
-    [9]  2.8
-    [10]  10.0
+    [1]  1.0
   }
 }
 
@@ -129,7 +110,7 @@ slq
     meritFunctionRho              50.0
     constraintStepSize            1.0
     displayInfo                   0
-    displayShortSummary           0
+    displayShortSummary           1
     debugPrintRollout             0
 
     AbsTolODE                     1e-5  ;1e-6
@@ -254,11 +235,11 @@ Q
    ; orientation
    (0,0) 1000.0     ; x
    (1,1) 2000.0     ; y
-   (2,2) 100.0     ; z
+   (2,2) 2000.0     ; z
 
    ; positon
-   (3,3) 100.0      ; x
-   (4,4) 100.0      ; y
+   (3,3) 1000.0      ; x
+   (4,4) 1000.0      ; y
    (5,5) 1500.0      ; z
 
    ; angular velocity

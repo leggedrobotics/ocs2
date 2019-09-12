@@ -18,7 +18,7 @@ find_package(Boost REQUIRED COMPONENTS
 )
 
 # Pybind11
-option(USE_PYBIND_PYTHON_3 "Use python3-compatible python bindings" ON)
+option(USE_PYBIND_PYTHON_3 "Use python3-compatible python bindings" OFF)
 if(USE_PYBIND_PYTHON_3)
   set(PYTHON_EXECUTABLE /usr/bin/python3)
   set(PYBIND11_PYTHON_VERSION 3.6 CACHE STRING "")

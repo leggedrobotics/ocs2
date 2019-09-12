@@ -29,10 +29,20 @@ class Jacobians {
 
         typedef JointState<Scalar> JState;
 
+        class Type_fr_base0_J_fr_control : public JacobianT<Scalar, 5, Type_fr_base0_J_fr_control>
+        {
+        public:
+            EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+            Type_fr_base0_J_fr_control();
+            const Type_fr_base0_J_fr_control& update(const JState&);
+        protected:
+        };
+        
     public:
         Jacobians();
         void updateParameters();
     public:
+        Type_fr_base0_J_fr_control fr_base0_J_fr_control;
 
     protected:
 

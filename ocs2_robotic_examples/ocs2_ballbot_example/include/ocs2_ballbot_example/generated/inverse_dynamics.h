@@ -9,8 +9,8 @@
 
 #include "declarations.h"
 #include "inertia_properties.h"
-#include "link_data_map.h"
 #include "transforms.h"
+#include "link_data_map.h"
 
 namespace iit {
 namespace Ballbot {

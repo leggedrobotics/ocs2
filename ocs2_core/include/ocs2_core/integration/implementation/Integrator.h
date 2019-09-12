@@ -123,12 +123,7 @@ void Integrator<STATE_DIM, Stepper>::integrate(const state_vector_t& initialStat
 
   BASE::setOutputTrajectoryPtrToObserver(&stateTrajectory);
 
-  try {
-    integrate_times_specialized<Stepper>(internalStartState, beginTimeItr, endTimeItr, dtInitial, AbsTol, RelTol);
-  } catch (const boost::numeric::odeint::no_progress_error& err) {
-    std::cerr << "Caught boost no_progress_error in integrate_times_specialized: " << err.what() << std::endl;
-    throw std::runtime_error(err.what());
-  }
+  integrate_times_specialized<Stepper>(internalStartState, beginTimeItr, endTimeItr, dtInitial, AbsTol, RelTol);
 }
 
 /******************************************************************************************************/

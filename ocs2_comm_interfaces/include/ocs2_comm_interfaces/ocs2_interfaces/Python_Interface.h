@@ -1,11 +1,11 @@
 #pragma once
 
 #include <ocs2_comm_interfaces/ocs2_interfaces/MPC_MRT_Interface.h>
+#include <ocs2_core/constraint/RelaxedBarrierPenalty.h>
 #include <ocs2_core/cost/CostFunctionBase.h>
 #include <ocs2_core/dynamics/ControlledSystemBase.h>
 #include <ocs2_core/dynamics/DerivativesBase.h>
 #include <ocs2_robotic_tools/common/RobotInterfaceBase.h>
-#include <ocs2_core/constraint/RelaxedBarrierPenalty.h>
 
 namespace ocs2 {
 

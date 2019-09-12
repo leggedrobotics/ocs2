@@ -4,11 +4,11 @@
 #include <iit/rbd/rbd.h>
 #include <iit/rbd/StateDependentMatrix.h>
 
+#include "declarations.h"
+#include "transforms.h"
+#include "inertia_properties.h"
 #include <iit/rbd/robcogen_commons.h>
 #include <iit/rbd/traits/DoubleTrait.h>
-#include "declarations.h"
-#include "inertia_properties.h"
-#include "transforms.h"
 
 
 namespace iit {

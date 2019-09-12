@@ -36,7 +36,7 @@ class NeuralNetworkController final : public ControllerBase<STATE_DIM, INPUT_DIM
   void loadNetwork(const std::string& filePath) { policyNet_ = torch::jit::load(filePath); }
 
   input_vector_t computeInput(const scalar_t& t, const state_vector_t& x) override {
-    auto net_input_float = state_in_transform_fct_(t, x);
+    Eigen::VectorXf net_input_float = state_in_transform_fct_(t, x);
     auto input_torch = torch::from_blob(net_input_float.data(), net_input_float.size());
     std::vector<torch::jit::IValue> inputs;
     inputs.push_back(input_torch);

@@ -97,21 +97,7 @@ void BallbotInterface::loadSettings(const std::string& taskFile) {
   /*
    * Constraints
    */
-  constexpr size_t numStateInputConstraints = 1;
-  dim_t::constraint1_vector_t constraint_e = dim_t::constraint1_vector_t::Zero();
-  dim_t::constraint1_state_matrix_t constraint_C = dim_t::constraint1_state_matrix_t::Zero();
-  dim_t::constraint1_input_matrix_t constraint_D = dim_t::constraint1_input_matrix_t::Zero();
-  constraint_D.row(0).setOnes();
-  constexpr size_t numStateOnlyConstraints = 0;
-  dim_t::constraint2_vector_t constraint_h = dim_t::constraint2_vector_t::Zero();
-  dim_t::constraint2_state_matrix_t constraint_F = dim_t::constraint2_state_matrix_t::Zero();
-  constexpr size_t numStateOnlyFinalConstraint = 0;
-  dim_t::constraint2_vector_t constraint_h_f = dim_t::constraint2_vector_t::Zero();
-  dim_t::constraint2_state_matrix_t constraint_F_f = dim_t::constraint2_state_matrix_t::Zero();
-  ballbotConstraintPtr_.reset(new ballbotConstraint_t(numStateInputConstraints, constraint_e, constraint_C, constraint_D,
-                                                      numStateOnlyConstraints, constraint_h, constraint_F, numStateOnlyFinalConstraint,
-                                                      constraint_h_f, constraint_F_f));
-  //  ballbotConstraintPtr_.reset(new ConstraintBase<ballbot::STATE_DIM_, ballbot::INPUT_DIM_>());
+  ballbotConstraintPtr_.reset(new ballbotConstraint_t);
 
   /*
    * Initialization

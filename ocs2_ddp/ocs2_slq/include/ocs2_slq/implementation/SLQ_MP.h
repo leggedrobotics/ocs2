@@ -896,8 +896,8 @@ void SLQ_MP<STATE_DIM, INPUT_DIM>::runIteration() {
   BASE::runIteration();
 
   if (workerException_) {
-    throw std::runtime_error("A worker encountered an exception: " + workerExceptionMessage_);
     workerException_ = false;
+    throw std::runtime_error("A worker encountered an exception: " + workerExceptionMessage_);
   }
 
   // restore default Eigen thread number

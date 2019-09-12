@@ -31,9 +31,6 @@ if(USE_PYBIND_PYTHON_3)
 endif(USE_PYBIND_PYTHON_3)
 find_package(pybind11 QUIET)
 
-list(APPEND CMAKE_PREFIX_PATH "/home/jcarius/pytorch/torch")
-find_package(Torch QUIET)
-
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread -fopenmp -std=c++11 -Wfatal-errors -Wl,--no-as-needed")
 
 ###################################

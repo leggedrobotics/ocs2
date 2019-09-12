@@ -52,7 +52,7 @@ model_settings
   gaitOptimization              0
 }
 
-defaultModeSequenceTemplate
+initialModeSequenceTemplate
 {
   templateSubsystemsSequence
   {
@@ -65,7 +65,7 @@ defaultModeSequenceTemplate
   }
 }
 
-initialModeSequenceTemplate
+defaultModeSequenceTemplate
 {
   templateSubsystemsSequence
   {

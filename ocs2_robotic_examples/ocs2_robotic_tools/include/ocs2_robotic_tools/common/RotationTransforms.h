@@ -40,7 +40,9 @@ namespace ocs2 {
  *
  * @param [in] eeQuaternion: measured end effector quaternion.
  * @param [in] commandQuaternion: desired end effector quaternion.
- * @return The desired input at the given time.
+ * @return A 3x1 vector representing the quaternion distance.
+ * In particular, if Qd and Qe are the desired and the measured end-effector quaternions,
+ * the measured and desired frames are aligned if this vector is 0.
  */
 template <typename SCALAR_T>
 Eigen::Matrix<SCALAR_T, 3, 1> quaternionDistance(const Eigen::Quaternion<SCALAR_T>& eeQuaternion,

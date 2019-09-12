@@ -63,7 +63,6 @@ include_directories(
         ${EIGEN3_INCLUDE_DIRS}
         ${Boost_INCLUDE_DIRS}
         ${catkin_INCLUDE_DIRS}
-        ${TORCH_INCLUDE_DIRS}
 )
 
 add_library(ballbot_PI
@@ -275,15 +274,3 @@ target_link_libraries(ballbot_pybindings_test
   ${catkin_LIBRARIES}
   ${Boost_LIBRARIES}
   )
-
-if (${Torch_FOUND})
-  catkin_add_gtest(ballbot_network_interface_test
-    test/MRTNetworkInterfaceTest.cpp)
-  add_dependencies(ballbot_network_interface_test
-    ${catkin_EXPORTED_TARGETS})
-  target_link_libraries(ballbot_network_interface_test
-    ballbot_interface
-    ${catkin_LIBRARIES}
-    ${Boost_LIBRARIES}
-    ${TORCH_LIBRARIES})
-endif(${Torch_FOUND})

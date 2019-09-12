@@ -12,6 +12,7 @@ using namespace pybind11::literals;
       .def(pybind11::init<>())                                                               \
       .def("clear", &VTYPE::clear)                                                           \
       .def("pop_back", &VTYPE::pop_back)                                                     \
+      .def("push_back", [](VTYPE& v, const VTYPE::value_type& val) { v.push_back(val); })    \
       .def("resize", [](VTYPE& v, size_t i) { v.resize(i); })                                \
       .def("__getitem__",                                                                    \
            [](const VTYPE& v, size_t i) {                                                    \
@@ -27,6 +28,36 @@ using namespace pybind11::literals;
       .def("__iter__", [](VTYPE& v) { return pybind11::make_iterator(v.begin(), v.end()); }, \
            pybind11::keep_alive<0, 1>()); /* Keep vector alive while iterator is used */
 
+#ifdef ROBOT_EQUAL_STATE_INPUT_DIMS
+
+#define MAKE_OPAQUE_ARRAY_TYPES(PY_INTERFACE)              \
+  PYBIND11_MAKE_OPAQUE(PY_INTERFACE::scalar_array_t)       \
+  PYBIND11_MAKE_OPAQUE(PY_INTERFACE::state_vector_array_t) \
+  PYBIND11_MAKE_OPAQUE(PY_INTERFACE::state_matrix_array_t) \
+  PYBIND11_MAKE_OPAQUE(PY_INTERFACE::dynamic_vector_array_t)
+#define BIND_VECTOR_TYPES(PY_INTERFACE)                                         \
+  VECTOR_TYPE_BINDING(PY_INTERFACE::scalar_array_t, "scalar_array")             \
+  VECTOR_TYPE_BINDING(PY_INTERFACE::state_vector_array_t, "state_vector_array") \
+  VECTOR_TYPE_BINDING(PY_INTERFACE::state_matrix_array_t, "state_matrix_array") \
+  VECTOR_TYPE_BINDING(PY_INTERFACE::dynamic_vector_array_t, "dynamic_vector_array")
+
+#else
+
+#define MAKE_OPAQUE_ARRAY_TYPES(PY_INTERFACE)              \
+  PYBIND11_MAKE_OPAQUE(PY_INTERFACE::scalar_array_t)       \
+  PYBIND11_MAKE_OPAQUE(PY_INTERFACE::state_vector_array_t) \
+  PYBIND11_MAKE_OPAQUE(PY_INTERFACE::input_vector_array_t) \
+  PYBIND11_MAKE_OPAQUE(PY_INTERFACE::state_matrix_array_t) \
+  PYBIND11_MAKE_OPAQUE(PY_INTERFACE::dynamic_vector_array_t)
+#define BIND_VECTOR_TYPES(PY_INTERFACE)                                         \
+  VECTOR_TYPE_BINDING(PY_INTERFACE::scalar_array_t, "scalar_array")             \
+  VECTOR_TYPE_BINDING(PY_INTERFACE::state_vector_array_t, "state_vector_array") \
+  VECTOR_TYPE_BINDING(PY_INTERFACE::input_vector_array_t, "input_vector_array") \
+  VECTOR_TYPE_BINDING(PY_INTERFACE::state_matrix_array_t, "state_matrix_array") \
+  VECTOR_TYPE_BINDING(PY_INTERFACE::dynamic_vector_array_t, "dynamic_vector_array")
+
+#endif
+
 /**
  * @brief Convenience macro to bind robot interface with all required vectors.
  * @note LIB_NAME must match target name in CMakeLists
@@ -34,19 +65,11 @@ using namespace pybind11::literals;
  */
 #define CREATE_ROBOT_PYTHON_BINDINGS(PY_INTERFACE, LIB_NAME)                                                                              \
   /* make vector types opaque so they are not converted to python lists */                                                                \
-  PYBIND11_MAKE_OPAQUE(PY_INTERFACE::scalar_array_t)                                                                                      \
-  PYBIND11_MAKE_OPAQUE(PY_INTERFACE::state_vector_array_t)                                                                                \
-  PYBIND11_MAKE_OPAQUE(PY_INTERFACE::input_vector_array_t)                                                                                \
-  PYBIND11_MAKE_OPAQUE(PY_INTERFACE::state_matrix_array_t)                                                                                \
-  PYBIND11_MAKE_OPAQUE(PY_INTERFACE::dynamic_vector_array_t)                                                                              \
+  MAKE_OPAQUE_ARRAY_TYPES(PY_INTERFACE)                                                                                                   \
   /* create a python module */                                                                                                            \
   PYBIND11_MODULE(LIB_NAME, m) {                                                                                                          \
     /* bind vector types so they can be used natively in python */                                                                        \
-    VECTOR_TYPE_BINDING(PY_INTERFACE::scalar_array_t, "scalar_array")                                                                     \
-    VECTOR_TYPE_BINDING(PY_INTERFACE::state_vector_array_t, "state_vector_array")                                                         \
-    VECTOR_TYPE_BINDING(PY_INTERFACE::input_vector_array_t, "input_vector_array")                                                         \
-    VECTOR_TYPE_BINDING(PY_INTERFACE::state_matrix_array_t, "state_matrix_array")                                                         \
-    VECTOR_TYPE_BINDING(PY_INTERFACE::dynamic_vector_array_t, "dynamic_vector_array")                                                     \
+    BIND_VECTOR_TYPES(PY_INTERFACE)                                                                                                       \
     /* bind cost desired trajectories class */                                                                                            \
     pybind11::class_<PY_INTERFACE::cost_desired_trajectories_t>(m, "cost_desired_trajectories")                                           \
         .def(pybind11::init<PY_INTERFACE::scalar_array_t, PY_INTERFACE::dynamic_vector_array_t, PY_INTERFACE::dynamic_vector_array_t>()); \
@@ -62,17 +85,23 @@ using namespace pybind11::literals;
         .def("reset", &PY_INTERFACE::reset, "targetTrajectories"_a)                                                                       \
         .def("advanceMpc", &PY_INTERFACE::advanceMpc)                                                                                     \
         .def("getMpcSolution", &PY_INTERFACE::getMpcSolution, "t"_a.noconvert(), "x"_a.noconvert(), "u"_a.noconvert())                    \
+        .def("getLinearFeedbackGain", &PY_INTERFACE::getLinearFeedbackGain, "t"_a.noconvert())                                            \
         .def("computeFlowMap", &PY_INTERFACE::computeFlowMap, "t"_a, "x"_a.noconvert(), "u"_a.noconvert())                                \
         .def("setFlowMapDerivativeStateAndControl", &PY_INTERFACE::setFlowMapDerivativeStateAndControl, "t"_a, "x"_a.noconvert(),         \
              "u"_a.noconvert())                                                                                                           \
         .def("computeFlowMapDerivativeState", &PY_INTERFACE::computeFlowMapDerivativeState)                                               \
         .def("computeFlowMapDerivativeInput", &PY_INTERFACE::computeFlowMapDerivativeInput)                                               \
-        .def("getRunningCost", &PY_INTERFACE::getRunningCost, "t"_a, "x"_a.noconvert(), "u"_a.noconvert())                                \
-        .def("getRunningCostDerivativeState", &PY_INTERFACE::getRunningCostDerivativeState, "t"_a, "x"_a.noconvert(), "u"_a.noconvert())  \
-        .def("getRunningCostDerivativeInput", &PY_INTERFACE::getRunningCostDerivativeInput, "t"_a, "x"_a.noconvert(), "u"_a.noconvert())  \
+        .def("getIntermediateCost", &PY_INTERFACE::getIntermediateCost, "t"_a, "x"_a.noconvert(), "u"_a.noconvert())                      \
+        .def("getIntermediateCostDerivativeState", &PY_INTERFACE::getIntermediateCostDerivativeState, "t"_a, "x"_a.noconvert(),           \
+             "u"_a.noconvert())                                                                                                           \
+        .def("getIntermediateCostDerivativeInput", &PY_INTERFACE::getIntermediateCostDerivativeInput, "t"_a, "x"_a.noconvert(),           \
+             "u"_a.noconvert())                                                                                                           \
+        .def("getValueFunction", &PY_INTERFACE::getValueFunction, "t"_a, "x"_a.noconvert())                                               \
         .def("getValueFunctionStateDerivative", &PY_INTERFACE::getValueFunctionStateDerivative, "t"_a, "x"_a.noconvert())                 \
         .def("getStateInputConstraint", &PY_INTERFACE::getStateInputConstraint, "t"_a, "x"_a.noconvert(), "u"_a.noconvert())              \
         .def("getStateInputConstraintDerivativeControl", &PY_INTERFACE::getStateInputConstraintDerivativeControl, "t"_a,                  \
              "x"_a.noconvert(), "u"_a.noconvert())                                                                                        \
-        .def("getStateInputConstraintLagrangian", &PY_INTERFACE::getStateInputConstraintLagrangian, "t"_a, "x"_a.noconvert());            \
+        .def("getStateInputConstraintLagrangian", &PY_INTERFACE::getStateInputConstraintLagrangian, "t"_a, "x"_a.noconvert())             \
+        .def("visualizeTrajectory", &PY_INTERFACE::visualizeTrajectory, "t"_a.noconvert(), "x"_a.noconvert(), "u"_a.noconvert(),          \
+             "speed"_a);                                                                                                                  \
   }

@@ -144,8 +144,8 @@ PythonInterface<STATE_DIM, INPUT_DIM>::computeFlowMapDerivativeInput() {
 }
 
 template <size_t STATE_DIM, size_t INPUT_DIM>
-double PythonInterface<STATE_DIM, INPUT_DIM>::getRunningCost(double t, Eigen::Ref<const state_vector_t> x,
-                                                             Eigen::Ref<const input_vector_t> u) {
+double PythonInterface<STATE_DIM, INPUT_DIM>::getIntermediateCost(double t, Eigen::Ref<const state_vector_t> x,
+                                                                  Eigen::Ref<const input_vector_t> u) {
   cost_->setCurrentStateAndControl(t, x, u);
   double L;
   cost_->getIntermediateCost(L);
@@ -153,7 +153,7 @@ double PythonInterface<STATE_DIM, INPUT_DIM>::getRunningCost(double t, Eigen::Re
 }
 
 template <size_t STATE_DIM, size_t INPUT_DIM>
-typename PythonInterface<STATE_DIM, INPUT_DIM>::state_vector_t PythonInterface<STATE_DIM, INPUT_DIM>::getRunningCostDerivativeState(
+typename PythonInterface<STATE_DIM, INPUT_DIM>::state_vector_t PythonInterface<STATE_DIM, INPUT_DIM>::getIntermediateCostDerivativeState(
     double t, Eigen::Ref<const state_vector_t> x, Eigen::Ref<const input_vector_t> u) {
   cost_->setCurrentStateAndControl(t, x, u);
   state_vector_t dLdx;
@@ -162,12 +162,17 @@ typename PythonInterface<STATE_DIM, INPUT_DIM>::state_vector_t PythonInterface<S
 }
 
 template <size_t STATE_DIM, size_t INPUT_DIM>
-typename PythonInterface<STATE_DIM, INPUT_DIM>::input_vector_t PythonInterface<STATE_DIM, INPUT_DIM>::getRunningCostDerivativeInput(
+typename PythonInterface<STATE_DIM, INPUT_DIM>::input_vector_t PythonInterface<STATE_DIM, INPUT_DIM>::getIntermediateCostDerivativeInput(
     double t, Eigen::Ref<const state_vector_t> x, Eigen::Ref<const input_vector_t> u) {
   cost_->setCurrentStateAndControl(t, x, u);
   input_vector_t dLdu;
   cost_->getIntermediateCostDerivativeInput(dLdu);
   return dLdu;
+}
+
+template <size_t STATE_DIM, size_t INPUT_DIM>
+double PythonInterface<STATE_DIM, INPUT_DIM>::getValueFunction(double t, Eigen::Ref<const state_vector_t> x) {
+  return mpcMrtInterface_->getValueFunction(t, x);
 }
 
 template <size_t STATE_DIM, size_t INPUT_DIM>
@@ -201,7 +206,7 @@ template <size_t STATE_DIM, size_t INPUT_DIM>
 typename PythonInterface<STATE_DIM, INPUT_DIM>::dynamic_vector_t PythonInterface<STATE_DIM, INPUT_DIM>::getStateInputConstraintLagrangian(
     double t, Eigen::Ref<const state_vector_t> x) {
   dynamic_vector_t nu;
-  mpcMrtInterface_->calculateStateInputConstraintLagrangian(t, x, nu);
+  mpcMrtInterface_->getStateInputConstraintLagrangian(t, x, nu);
   return nu;
 }
 

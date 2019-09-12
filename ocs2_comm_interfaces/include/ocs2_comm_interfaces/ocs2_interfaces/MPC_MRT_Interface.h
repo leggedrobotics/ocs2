@@ -97,6 +97,14 @@ class MPC_MRT_Interface final : public MRT_BASE<STATE_DIM, INPUT_DIM> {
   void advanceMpc();
 
   /**
+   * @brief Access the solver's internal value function
+   * @param time query time
+   * @param state query state
+   * @return value of the given state at the given time
+   */
+  scalar_t getValueFunction(scalar_t time, const state_vector_t& state);
+
+  /**
    * @brief Calculates the state derivative of the value function
    * @param [in] time the query time
    * @param [out] Vx partial derivative of the value function at requested time at nominal state
@@ -116,7 +124,7 @@ class MPC_MRT_Interface final : public MRT_BASE<STATE_DIM, INPUT_DIM> {
    * @param[in] state: query state
    * @param[out] nu: the Lagrange multiplier
    */
-  void calculateStateInputConstraintLagrangian(scalar_t time, const state_vector_t& state, dynamic_vector_t& nu) const;
+  void getStateInputConstraintLagrangian(scalar_t time, const state_vector_t& state, dynamic_vector_t& nu) const;
 
   /**
    * @brief Access the currently in-use input trajectory.

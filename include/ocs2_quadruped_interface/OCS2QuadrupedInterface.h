@@ -18,8 +18,6 @@
 #include <string>
 #include <vector>
 
-#include <ocs2_core/misc/loadEigenMatrix.h>
-
 #include <ocs2_slq/SLQ.h>
 #include <ocs2_slq/SLQ_MP.h>
 #include <ocs2_slq/SLQ_Settings.h>
@@ -115,7 +113,7 @@ class OCS2QuadrupedInterface : public ocs2::RobotInterfaceBase<STATE_DIM, INPUT_
   using slq_ptr_t = typename slq_t::Ptr;
   using slq_mp_ptr_t = typename slq_mp_t::Ptr;
   //	using 		ocs2_ptr_t = typename ocs2_t::Ptr;
-  using mpc_ptr_t = typename mpc_t::Ptr;
+  using mpc_ptr_t = std::shared_ptr<mpc_t>;
 
   using linear_controller_t = typename slq_base_t::linear_controller_t;
   using controller_ptr_array_t = typename slq_base_t::controller_ptr_array_t;
@@ -156,11 +154,6 @@ class OCS2QuadrupedInterface : public ocs2::RobotInterfaceBase<STATE_DIM, INPUT_
   virtual void designWeightCompensatingInput(const state_vector_t& switchedState, input_vector_t& uForWeightCompensation) = 0;
 
   /**
-   * get base class pointer to systemdynamics implementation
-   */
-  virtual controlled_system_base_ptr_t getSystemDynamicsPtr() = 0;
-
-  /**
    * Run the SLQ algorithm.
    *
    * @param initTime: Initial time.
@@ -189,12 +182,7 @@ class OCS2QuadrupedInterface : public ocs2::RobotInterfaceBase<STATE_DIM, INPUT_
    */
   void runOCS2(const scalar_t& initTime, const rbd_state_vector_t& initState, const scalar_array_t& switchingTimes = scalar_array_t());
 
-  /**
-   * Gets a const reference to the internal logicRules.
-   *
-   * @return const reference to the internal logicRules.
-   */
-  const std::shared_ptr<logic_rules_t>& getLogicRules() const;
+  std::shared_ptr<ocs2::HybridLogicRules> getLogicRulesPtr() override { return logicRulesPtr_; }
 
   /**
    * Updates the logicMachine.
@@ -281,12 +269,7 @@ class OCS2QuadrupedInterface : public ocs2::RobotInterfaceBase<STATE_DIM, INPUT_
    */
   slq_base_ptr_t& getSLQPtr();
 
-  /**
-   * Gets a pointer to the internal SLQ-MPC class.
-   *
-   * @return Pointer to the internal MPC
-   */
-  mpc_ptr_t& getMPCPtr();
+  mpc_t& getMpc() override { return *mpcPtr_; }
 
   /**
    * Gets the cost function and ISEs of the type-1 and type-2 constraints at the initial time.

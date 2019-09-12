@@ -5,6 +5,9 @@
  *      Author: farbod
  */
 
+#include "ocs2_quadruped_interface/OCS2QuadrupedInterface.h"
+#include <ocs2_core/misc/LoadData.h>
+
 namespace switched_model {
 
 /******************************************************************************************************/
@@ -56,13 +59,13 @@ void OCS2QuadrupedInterface<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::loadSetting
   finalTime_ = timeHorizon_;
 
   // initial state of the switched system
-  ocs2::loadEigenMatrix(pathToConfigFile, "initialRobotState", initRbdState_);
+  ocs2::loadData::loadEigenMatrix(pathToConfigFile, "initialRobotState", initRbdState_);
   computeSwitchedModelState(initRbdState_, initialState_);
 
   // cost function components
-  ocs2::loadEigenMatrix(pathToConfigFile, "Q", Q_);
-  ocs2::loadEigenMatrix(pathToConfigFile, "R", R_);
-  ocs2::loadEigenMatrix(pathToConfigFile, "Q_final", QFinal_);
+  ocs2::loadData::loadEigenMatrix(pathToConfigFile, "Q", Q_);
+  ocs2::loadData::loadEigenMatrix(pathToConfigFile, "R", R_);
+  ocs2::loadData::loadEigenMatrix(pathToConfigFile, "Q_final", QFinal_);
   // costs over Cartesian velocities
   Eigen::Matrix<double, 12, 12> J_allFeet;
   kinematicModelPtr_->update(initRbdState_.template segment<18>(0));
@@ -87,7 +90,7 @@ void OCS2QuadrupedInterface<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::loadSetting
 
   // target state
   base_coordinate_t comFinalPose;
-  ocs2::loadEigenMatrix(pathToConfigFile, "CoM_final_pose", comFinalPose);
+  ocs2::loadData::loadEigenMatrix(pathToConfigFile, "CoM_final_pose", comFinalPose);
   xFinal_ = initialState_;
   xFinal_.template head<6>() += comFinalPose;
 
@@ -156,15 +159,6 @@ void OCS2QuadrupedInterface<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::loadSetting
 template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM>
 ocs2::SLQ_Settings& OCS2QuadrupedInterface<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::slqSettings() {
   return slqSettings_;
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM>
-const std::shared_ptr<typename OCS2QuadrupedInterface<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::logic_rules_t>&
-OCS2QuadrupedInterface<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::getLogicRules() const {
-  return logicRulesPtr_;
 }
 
 /******************************************************************************************************/
@@ -345,15 +339,6 @@ template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM>
 typename OCS2QuadrupedInterface<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::slq_base_ptr_t&
 OCS2QuadrupedInterface<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::getSLQPtr() {
   return slqPtr_;
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM>
-typename OCS2QuadrupedInterface<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::mpc_ptr_t&
-OCS2QuadrupedInterface<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::getMPCPtr() {
-  return mpcPtr_;
 }
 
 /******************************************************************************************************/

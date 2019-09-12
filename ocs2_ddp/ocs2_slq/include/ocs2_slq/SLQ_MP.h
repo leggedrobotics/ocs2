@@ -295,7 +295,7 @@ class SLQ_MP : public SLQ_BASE<STATE_DIM, INPUT_DIM> {
   std::atomic_size_t lsWorkerCompleted_;
   std::vector<bool> alphaProcessed_;
 
-  bool workerException_;
+  std::atomic_bool workerException_;
   std::string workerExceptionMessage_;
 };
 

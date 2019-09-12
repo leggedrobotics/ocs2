@@ -275,6 +275,8 @@ void SLQ_MP<STATE_DIM, INPUT_DIM>::threadWork(size_t threadId) {
       std::cerr << "Caught runtime error while doing thread work (workerTask_local " << workerTask_local << ")\n" << err.what();
       workerException_ = true;
       workerExceptionMessage_ = err.what();
+      std::lock_guard<std::mutex> lock(riccatiSolverBarrierMutex_);
+      riccatiSolverCompletedCondition_.notify_one();
     }
 
     if (BASE::ddpSettings_.debugPrintMT_) {
@@ -712,7 +714,7 @@ typename SLQ_MP<STATE_DIM, INPUT_DIM>::scalar_t SLQ_MP<STATE_DIM, INPUT_DIM>::so
     }
 
     std::unique_lock<std::mutex> waitLock(riccatiSolverBarrierMutex_);
-    while (numSubsystemsProcessed_.load() < BASE::numPartitions_) {
+    while (numSubsystemsProcessed_.load() < BASE::numPartitions_ && !workerException_) {
       riccatiSolverCompletedCondition_.wait(waitLock);
     }
     waitLock.unlock();

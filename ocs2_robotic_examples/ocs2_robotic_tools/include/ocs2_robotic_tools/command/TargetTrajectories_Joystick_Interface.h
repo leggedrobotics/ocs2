@@ -67,10 +67,8 @@ public:
 	 * @param [in] targetCommandLimits: The limits of the loaded command from
 	 * command-line (for safety purposes).
 	 */
-	TargetTrajectories_Joystick_Interface(
-			const std::string& robotName = "robot",
-			const size_t targetCommandSize = 0,
-			const scalar_array_t& targetCommandLimits = scalar_array_t());
+	TargetTrajectories_Joystick_Interface(int argc, char* argv[], const std::string& robotName = "robot",const size_t targetCommandSize = 0,
+	                                      const scalar_array_t& targetCommandLimits = scalar_array_t());
 
 	/**
 	 * Default destructor
@@ -87,7 +85,7 @@ public:
 	/**
 	 * Sets cost trajectories from input desired state, and publishes cost desired trajectories
 	 */
-	void publishTargetTrajectoriesFromDesiredState(dynamic_vector_t desiredState);
+	void publishTargetTrajectoriesFromDesiredState(cost_desired_trajectories_t costDesiredTrajectories);
 
 
 protected:

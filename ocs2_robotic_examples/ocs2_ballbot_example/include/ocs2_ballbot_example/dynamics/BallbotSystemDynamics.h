@@ -42,12 +42,10 @@ namespace ballbot {
 
 /**
  * BallbotSystemDynamics class
- * This class implements the dynamics for the rezero robot.
+ * This class implements the dynamics for the ballbot.
  * The equations of motion are generated through robcogen, using the following set of generalized coordinates:
- * (ballPosition_x, ballPosition_y, eulerAnglesZyx theta_z, eulerAnglesZyx theta_y, eulerAnglesZyx theta_x, anypulator_joint_1 qa1,
- * anypulator_joint_2 qa2, anypulator_joint_3 qa3) The control input are u = (torque_wheel1, torque_wheel2, torque_wheel3,
- * torque_anypulator_joint1, torque_anypulator_joint2, torque_anypulator_joint3) The transformation from wheels torques to joint
- * accelerations is computed through Mathematica computations and has been tested on the robot
+ * (ballPosition_x, ballPosition_y, eulerAnglesZyx theta_z, eulerAnglesZyx theta_y, eulerAnglesZyx theta_x)
+ * The control input are u = (torque_wheel1, torque_wheel2, torque_wheel3)
  */
 class BallbotSystemDynamics : public SystemDynamicsBaseAD<ballbot::STATE_DIM_, ballbot::INPUT_DIM_> {
  public:

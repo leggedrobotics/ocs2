@@ -224,6 +224,11 @@ double PythonInterface<STATE_DIM, INPUT_DIM>::getValueFunction(double t, Eigen::
 }
 
 template <size_t STATE_DIM, size_t INPUT_DIM>
+double PythonInterface<STATE_DIM, INPUT_DIM>::getValueFunction(double t, Eigen::Ref<const state_vector_t> x) {
+  return mpcMrtInterface_->getValueFunction(t, x);
+}
+
+template <size_t STATE_DIM, size_t INPUT_DIM>
 typename PythonInterface<STATE_DIM, INPUT_DIM>::state_vector_t PythonInterface<STATE_DIM, INPUT_DIM>::getValueFunctionStateDerivative(
     double t, Eigen::Ref<const state_vector_t> x) {
   state_vector_t dVdx;

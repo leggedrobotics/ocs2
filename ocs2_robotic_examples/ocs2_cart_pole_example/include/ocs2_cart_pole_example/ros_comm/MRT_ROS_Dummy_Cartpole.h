@@ -86,7 +86,7 @@ protected:
     ROS_INFO_STREAM("Visualization subscriber is connected.");
   }
 
-  void publishVisualizer(const system_observation_t& observation, const commandData_t& command, const policyData_t& policy) override {
+  void publishVisualizer(const system_observation_t& observation, const policy_data_t& policy, const command_data_t& command) override {
     sensor_msgs::JointState joint_state;
     joint_state.header.stamp = ros::Time::now();
     joint_state.name.resize(2);

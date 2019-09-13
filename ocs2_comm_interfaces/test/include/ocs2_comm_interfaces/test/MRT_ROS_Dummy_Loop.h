@@ -47,6 +47,8 @@ class MRT_ROS_Dummy_Loop {
 
   using mrt_t = ocs2::MRT_ROS_Interface<STATE_DIM, INPUT_DIM>;
   using mrt_ptr_t = typename mrt_t::Ptr;
+  using policy_data_t = typename mrt_t::policy_data_t;
+  using command_data_t = typename mrt_t::command_data_t;
 
   using controller_t = typename mrt_t::controller_t;
   using scalar_t = typename mrt_t::scalar_t;
@@ -61,8 +63,6 @@ class MRT_ROS_Dummy_Loop {
 
   using system_observation_t = typename mrt_t::system_observation_t;
   using cost_desired_trajectories_t = typename mrt_t::cost_desired_trajectories_t;
-  using commandData_t = typename mrt_t::CommandData;
-  using policyData_t = typename mrt_t::PolicyData;
 
   using controlled_system_base_t = ControlledSystemBase<STATE_DIM, INPUT_DIM>;
 
@@ -124,7 +124,7 @@ class MRT_ROS_Dummy_Loop {
    * @param [in] command: Contains costdesired trajectory and init observation.
    * @param [in] policy: Contains the optimized mpc policy.
    */
-  virtual void publishVisualizer(const system_observation_t& observation, const commandData_t& command, const policyData_t& policy) {}
+  virtual void publishVisualizer(const system_observation_t& observation, const policy_data_t& policy, const command_data_t& command) {}
 
  protected:
   /*

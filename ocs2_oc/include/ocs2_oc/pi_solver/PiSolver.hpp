@@ -358,7 +358,7 @@ class PiSolver final : public Solver_BASE<STATE_DIM, INPUT_DIM> {
   }
 
   controller_const_ptr_array_t getOptimizedControllersPtr() const override {
-    controller_ptr_array_t nominalControllerPtrsStock(0);
+    controller_const_ptr_array_t nominalControllerPtrsStock(0);
     nominalControllerPtrsStock.reserve(nominalControllersStock_.size());
     for (const pi_controller_t& controller_i : nominalControllersStock_) {
       nominalControllerPtrsStock.push_back(&controller_i);

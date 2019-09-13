@@ -37,66 +37,63 @@ namespace ocs2 {
 /**
  * This class is an interface to a NLP cost.
  */
-class NLP_Cost
-{
-public:
-	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+class NLP_Cost {
+ public:
+  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-	using DIMENSIONS = Dimensions<0, 0>;
-	using scalar_t = typename DIMENSIONS::scalar_t;
-	using scalar_array_t = typename DIMENSIONS::scalar_array_t;
-	using dynamic_vector_t = typename DIMENSIONS::dynamic_vector_t;
-	using dynamic_matrix_t = typename DIMENSIONS::dynamic_matrix_t;
+  using DIMENSIONS = Dimensions<0, 0>;
+  using scalar_t = typename DIMENSIONS::scalar_t;
+  using scalar_array_t = typename DIMENSIONS::scalar_array_t;
+  using dynamic_vector_t = typename DIMENSIONS::dynamic_vector_t;
+  using dynamic_matrix_t = typename DIMENSIONS::dynamic_matrix_t;
 
-	/**
-	 * Default constructor.
-	 */
-	NLP_Cost() = default;
+  /**
+   * Default constructor.
+   */
+  NLP_Cost() = default;
 
-	/**
-	 * Default destructor.
-	 */
-	virtual ~NLP_Cost() = default;
+  /**
+   * Default destructor.
+   */
+  virtual ~NLP_Cost() = default;
 
-	/**
-	 * Sets the current parameter vector.
-	 *
-	 * @param [in] x: The value of parameter vector.
-	 * @return id: It returns a number which identifies the cached data.
-	 */
-	virtual size_t setCurrentParameter(const dynamic_vector_t& x) = 0;
+  /**
+   * Sets the current parameter vector.
+   *
+   * @param [in] x: The value of parameter vector.
+   * @return id: It returns a number which identifies the cached data.
+   */
+  virtual size_t setCurrentParameter(const dynamic_vector_t& x) = 0;
 
-	/**
-	 * Gets the cost value.
-	 *
-	 * @param [in] id: The ID of the cached data.
-	 * @param [out] f: The value of the cost.
-	 * @return status: whether the cost computation was successful.
-	 */
-	virtual bool getCost(size_t id, scalar_t& f) = 0;
+  /**
+   * Gets the cost value.
+   *
+   * @param [in] id: The ID of the cached data.
+   * @param [out] f: The value of the cost.
+   * @return status: whether the cost computation was successful.
+   */
+  virtual bool getCost(size_t id, scalar_t& f) = 0;
 
-	/**
-	 * Gets the gradient of the cost w.r.t. parameter vector.
-	 *
-	 * @param [in] id: The ID of the cached data.
-	 * @param [out] g: The gradient of the cost.
-	 */
-	virtual void getCostDerivative(size_t id, dynamic_vector_t& g) = 0;
+  /**
+   * Gets the gradient of the cost w.r.t. parameter vector.
+   *
+   * @param [in] id: The ID of the cached data.
+   * @param [out] g: The gradient of the cost.
+   */
+  virtual void getCostDerivative(size_t id, dynamic_vector_t& g) = 0;
 
-	/**
-	 * Gets the Hessian of the cost w.r.t. parameter vector.
-	 *
-	 * @param [in] id: The ID of the cached data.
-	 * @param [out] H: The Hessian of the cost.
-	 */
-	virtual void getCostSecondDerivative(size_t id, dynamic_matrix_t& H) = 0;
+  /**
+   * Gets the Hessian of the cost w.r.t. parameter vector.
+   *
+   * @param [in] id: The ID of the cached data.
+   * @param [out] H: The Hessian of the cost.
+   */
+  virtual void getCostSecondDerivative(size_t id, dynamic_matrix_t& H) = 0;
 
-	/**
-	 * Clears the cache.
-	 */
-	virtual void clearCache() = 0;
-
-
+  /**
+   * Clears the cache.
+   */
+  virtual void clearCache() = 0;
 };
 
 }  // namespace ocs2

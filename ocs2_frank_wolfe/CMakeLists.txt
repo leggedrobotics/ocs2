@@ -23,6 +23,8 @@ catkin_package(
      ${EIGEN3_INCLUDE_DIRS}
    CATKIN_DEPENDS 
      ocs2_core 
+   LIBRARIES
+     ${PROJECT_NAME}
    DEPENDS
      GLPK
 )
@@ -36,6 +38,14 @@ include_directories(
     include
     ${EIGEN3_INCLUDE_DIRS}
     ${catkin_INCLUDE_DIRS}
+)
+
+add_library(${PROJECT_NAME}
+  src/FrankWolfeDescentDirection.cpp
+  src/GradientDescent.cpp
+)
+target_link_libraries(${PROJECT_NAME}
+  ${catkin_LIBRARIES}
 )
 
 #############
@@ -59,6 +69,7 @@ catkin_add_gtest(quadratic_test
   test/QuadraticTest.cpp
 )
 target_link_libraries(quadratic_test
+  ${PROJECT_NAME}
   ${catkin_LIBRARIES}
   GLPK::GLPK
 )
@@ -67,6 +78,7 @@ catkin_add_gtest(matyas_test
   test/MatyasTest.cpp
 )
 target_link_libraries(matyas_test
+  ${PROJECT_NAME}
   ${catkin_LIBRARIES}
   GLPK::GLPK
 )
@@ -75,6 +87,7 @@ catkin_add_gtest(glpk_test
   test/testGLPK.cpp
 )
 target_link_libraries(glpk_test
+  ${PROJECT_NAME}
   ${catkin_LIBRARIES}
   GLPK::GLPK
 )

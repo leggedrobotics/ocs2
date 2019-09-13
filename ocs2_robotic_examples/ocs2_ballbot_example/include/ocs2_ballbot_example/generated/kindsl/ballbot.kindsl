@@ -1,15 +1,14 @@
 Robot Ballbot
 {
 /*
- * A The kinematic chain referring to Rezero without the arm
- * This model has been checked against the mathematica model, and the two models match
+ * A The kinematic chain of the ballbot 
 */
 
 RobotBase base0 {
     inertia_properties {
         mass = 0.001
         CoM = (0.0, 0.0, 0.0)
-        Iy=0.0001  Ix=0.0001  Ixy=0.0 Iz=0.0  Ixz=0.0 Iyz=0.0
+        Iy=0.0001  Ix=0.0001  Ixy=0.0 Iz=0.0001  Ixz=0.0 Iyz=0.0
     }
     children {
         dummy_ball1 via jball_x
@@ -20,7 +19,7 @@ link dummy_ball1 {
     id = 1
     inertia_properties {
         mass = 0.001
-        CoM = (0.0, .0, .0)
+        CoM = (0.0, 0.0, 0.0)
         Ix=0.0001 Iy=0.0001  Iz=0.0001  Ixy=0.0  Ixz=0.0  Iyz=0.0
     }
     children {
@@ -31,9 +30,9 @@ link dummy_ball1 {
 link ball {
     id = 2
     inertia_properties {
-        mass = 5.0
-        CoM = (-0.125, 0.0, 0.0)
-        Ix=0.1020  Iy=0.1020  Iz=0.1020  Ixy=0.0  Ixz=0.0  Iyz=0.0
+        mass = 5.45
+        CoM = (0.0, 0.0, 0.0)
+        Ix=0.0341 Iy= 0.0341  Iz= 0.0341  Ixy=0.0  Ixz=0.0  Iyz=0.0
     }
     children {dummy_base1 via jbase_z}
 }
@@ -62,16 +61,22 @@ link dummy_base2 {
 link base {
     id = 5
     inertia_properties {
-        mass = 16.94
-        CoM = (-0.2376, 0.0053, 0.002)
-        Ix=1.1241  Iy=2.7611  Iz=2.7574  Ixy=0.0  Ixz=0.0  Iyz=0.0
+        mass = 16.944
+        CoM = (-0.1956, 0.0033, 0.003)
+        Ix=0.1670  Iy=2.4521  Iz=2.4483 Ixy=-0.0099  Ixz=-0.0099  Iyz=0.0002
     }
     children {}
+    frames {
+		fr_control {
+			translation = (-0.275, 0.0, 0.0)
+			rotation = (0.0, -PI/2.0, 0.0)
+		}
+	}
 }
 
 p_joint jball_x {
     ref_frame {
-        translation = (0.0, 0.0, 0.0)
+        translation = (0.0, 0.0, 0.125)
         rotation = (0.0, PI/2.0, 0.0)
     }
 }
@@ -85,7 +90,7 @@ p_joint jball_y {
 
 r_joint jbase_z {
     ref_frame {
-        translation = (-0.125, 0.0, 0.0)
+        translation = (0.0, 0.0, 0.0)
         rotation = (0.0, -PI/2.0, 0.0)
     }
 }
@@ -106,4 +111,3 @@ r_joint jbase_x {
 
 
 }
-

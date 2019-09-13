@@ -24,7 +24,7 @@ find_package(Boost REQUIRED COMPONENTS
 find_package(Eigen3 3.3 REQUIRED NO_MODULE)
 
 # Pybind11
-option(USE_PYBIND_PYTHON_3 "Use python3-compatible python bindings" ON)
+option(USE_PYBIND_PYTHON_3 "Use python3-compatible python bindings" OFF)
 if(USE_PYBIND_PYTHON_3)
   set(PYTHON_EXECUTABLE /usr/bin/python3)
   set(PYBIND11_PYTHON_VERSION 3.6 CACHE STRING "")
@@ -65,6 +65,27 @@ include_directories(
         ${catkin_INCLUDE_DIRS}
 )
 
+add_library(ballbot_PI
+        src/solvers/BallbotPI.cpp)
+add_dependencies(ballbot_PI
+        ${catkin_EXPORTED_TARGETS}
+        )
+target_link_libraries(ballbot_PI
+        ${catkin_LIBRARIES}
+        )
+
+add_library(ballbot_SLQ
+        src/solvers/BallbotSLQ.cpp)
+add_dependencies(ballbot_SLQ
+        ${catkin_EXPORTED_TARGETS}
+        )
+target_link_libraries(ballbot_SLQ
+        ${catkin_LIBRARIES}
+        )
+
+add_library(ballbot_dynamics
+        src/dynamics/BallbotSystemDynamics.cpp)
+
 # Ballbot interface library
 add_library(ballbot_interface
         src/BallbotInterface.cpp)
@@ -72,6 +93,9 @@ add_dependencies(ballbot_interface
         ${catkin_EXPORTED_TARGETS}
         )
 target_link_libraries(ballbot_interface
+        ballbot_SLQ
+        ballbot_PI
+        ballbot_dynamics
         ${catkin_LIBRARIES}
         ${Boost_LIBRARIES}
         dl
@@ -123,6 +147,20 @@ target_link_libraries(ballbot_target
         ${catkin_LIBRARIES}
         ${Boost_LIBRARIES}
         )
+        
+# Simple example
+add_executable(ballbot_simple_example
+  src/BallbotSimpleExample.cpp)
+add_dependencies(ballbot_simple_example
+  ${catkin_EXPORTED_TARGETS}
+)
+target_link_libraries(ballbot_simple_example
+  ballbot_SLQ
+  ballbot_dynamics
+  ${catkin_LIBRARIES}
+  ${Boost_LIBRARIES}
+  dl
+)
 
 # Pybindings Cpp library
 add_library(ballbotPyBindings_cpp
@@ -191,7 +229,7 @@ endif(cmake_clang_tools_FOUND)
 ## Install ##
 #############
 
-install(TARGETS ballbot_interface ballbotPyBindings_cpp
+install(TARGETS ballbot_interface ballbot_PI ballbot_SLQ ballbot_dynamics ballbotPyBindings_cpp
         ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
         LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
         RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
@@ -206,6 +244,14 @@ install(TARGETS ballbot_mpc ballbot_dummy_test ballbot_target
 install(DIRECTORY urdf launch config rviz
         DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
         )
+
+if(${pybind11_FOUND})
+  # TODO handle python2/3 case properly
+  install(TARGETS BallbotPyBindings
+          ARCHIVE DESTINATION ${CATKIN_PACKAGE_PYTHON_DESTINATION}
+          LIBRARY DESTINATION ${CATKIN_PACKAGE_PYTHON_DESTINATION}
+          )
+endif()
 
 #############
 ## Testing ##

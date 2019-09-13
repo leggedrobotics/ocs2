@@ -1,6 +1,4 @@
-//
-// Created by rgrandia on 08.05.19.
-//
+
 
 #ifndef OCS2_LOOPSHAPINGFILTERDYNAMICS_H
 #define OCS2_LOOPSHAPINGFILTERDYNAMICS_H

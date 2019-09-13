@@ -47,15 +47,17 @@ TEST(DoubleIntegratorTest, pyBindings) {
 
   std::cout << "A\n" << A << "\nB\n" << B << std::endl;
 
-  auto L = bindings.getRunningCost(t_arr[0], x_arr[0], u_arr[0]);
-  auto dLdx = bindings.getRunningCostDerivativeState(t_arr[0], x_arr[0], u_arr[0]);
-  auto dLdu = bindings.getRunningCostDerivativeInput(t_arr[0], x_arr[0], u_arr[0]);
+  auto L = bindings.getIntermediateCost(t_arr[0], x_arr[0], u_arr[0]);
+  auto dLdx = bindings.getIntermediateCostDerivativeState(t_arr[0], x_arr[0], u_arr[0]);
+  auto dLdu = bindings.getIntermediateCostDerivativeInput(t_arr[0], x_arr[0], u_arr[0]);
 
   std::cout << "L: " << L << "\ndLdx: " << dLdx.transpose() << "\ndLdu: " << dLdu.transpose() << std::endl;
 
-  // only possible with enabled useFeedbackPolicy setting
-  //  auto K = bindings.getLinearFeedbackGain(t_arr[0]);
-  //  std::cout << "K: " << K << std::endl;
+  //  auto Vx = bindings.getValueFunctionStateDerivative(t_arr[0], x_arr[0]);
+  //  std::cout << "Vx: " << Vx.transpose() << std::endl;
+
+  auto K = bindings.getLinearFeedbackGain(t_arr[0]);
+  std::cout << "K: " << K << std::endl;
 }
 
 int main(int argc, char** argv) {

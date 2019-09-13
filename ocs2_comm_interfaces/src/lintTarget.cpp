@@ -20,4 +20,6 @@
 #include <ocs2_comm_interfaces/ocs2_ros_interfaces/task_listener/TaskListenerBase.h>
 
 // dummy target for clang toolchain
-int main() { return 0; }
+int main() {
+  return 0;
+}

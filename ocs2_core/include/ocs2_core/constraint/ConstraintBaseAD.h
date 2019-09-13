@@ -30,7 +30,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifndef CONSTRAINTBASEAD_OCS2_H_
 #define CONSTRAINTBASEAD_OCS2_H_
 
-#include <ocs2_core/automatic_differentiation/CppAdCodeGenInterface.h>
+#include <ocs2_core/automatic_differentiation/CppAdInterface.h>
 #include "ocs2_core/constraint/ConstraintBase.h"
 
 namespace ocs2 {
@@ -44,27 +44,17 @@ namespace ocs2 {
  * The linearized final state-only constraint is defined as: \n
  * \f$ 0 = F_f \delta x + h_f \f$ \n
  *
- * @tparam Derived: Derived class type.
  * @tparam STATE_DIM: Dimension of the state space.
  * @tparam INPUT_DIM: Dimension of the control input space.
  */
-template <class Derived, size_t STATE_DIM, size_t INPUT_DIM>
+template <size_t STATE_DIM, size_t INPUT_DIM>
 class ConstraintBaseAD : public ConstraintBase<STATE_DIM, INPUT_DIM> {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-  enum {
-    state_dim_ = STATE_DIM,
-    input_dim_ = INPUT_DIM,
-    domain_dim_ = 1 + state_dim_ + input_dim_,
-  };
-
-  using Ptr = std::shared_ptr<ConstraintBaseAD<Derived, STATE_DIM, INPUT_DIM> >;
-  using ConstPtr = std::shared_ptr<const ConstraintBaseAD<Derived, STATE_DIM, INPUT_DIM> >;
+  static constexpr size_t MAX_CONSTRAINT_DIM_ = INPUT_DIM;
 
   using BASE = ConstraintBase<STATE_DIM, INPUT_DIM>;
-
-  enum { MAX_CONSTRAINT_DIM_ = INPUT_DIM };
 
   using typename BASE::constraint1_input_matrix_t;
   using typename BASE::constraint1_state_matrix_t;
@@ -77,12 +67,19 @@ class ConstraintBaseAD : public ConstraintBase<STATE_DIM, INPUT_DIM> {
   using typename BASE::state_matrix_t;
   using typename BASE::state_vector_t;
 
+  using ad_interface_t = CppAdInterface<scalar_t>;
+  using ad_scalar_t = typename ad_interface_t::ad_scalar_t;
+  using ad_dynamic_vector_t = typename ad_interface_t::ad_dynamic_vector_t;
+  using dynamic_vector_t = typename ad_interface_t::dynamic_vector_t;
+
+  using constraint_timeStateInput_matrix_t = Eigen::Matrix<scalar_t, -1, 1 + STATE_DIM + INPUT_DIM>;
+  using constraint_timeState_matrix_t = Eigen::Matrix<scalar_t, -1, 1 + STATE_DIM>;
+
   /**
    * Default constructor.
    *
-   * @param [in] dynamicLibraryIsCompiled: Whether a library is already complied.
    */
-  explicit ConstraintBaseAD(const bool& dynamicLibraryIsCompiled = false);
+  ConstraintBaseAD();
 
   /**
    * Copy constructor
@@ -91,248 +88,105 @@ class ConstraintBaseAD : public ConstraintBase<STATE_DIM, INPUT_DIM> {
 
   /**
    * Default destructor
-   */
-  virtual ~ConstraintBaseAD() = default;
+   *
+  ~ConstraintBaseAD() override = default;
 
+  /**
+   * Initializes model libraries
+   *
+   * @param modelName : name of the generate model library
+   * @param modelFolder : folder to save the model library files to
+   * @param recompileLibraries : If true, the model library will be newly compiled. If false, an existing library will be loaded if
+   * available.
+   * @param verbose : print information.
+   */
+  void initialize(const std::string& modelName, const std::string& modelFolder = "/tmp/ocs2", bool recompileLibraries = true,
+                  bool verbose = true);
+
+  void setCurrentStateAndControl(const scalar_t& t, const state_vector_t& x, const input_vector_t& u) final;
+
+  void getConstraint1(constraint1_vector_t& e) final { e = stateInputValues_; }
+
+  void getConstraint2(constraint2_vector_t& h) final { h = stateOnlyValues_; }
+
+  void getFinalConstraint2(constraint2_vector_t& h_f) final { h_f = stateOnlyFinalValues_; }
+
+  void getConstraint1DerivativesState(constraint1_state_matrix_t& C) final { C = stateInputJacobian_.template middleCols<STATE_DIM>(1); }
+
+  void getConstraint1DerivativesControl(constraint1_input_matrix_t& D) final { D = stateInputJacobian_.template rightCols<INPUT_DIM>(); }
+
+  void getConstraint2DerivativesState(constraint2_state_matrix_t& F) final { F = stateOnlyJacobian_.template rightCols<STATE_DIM>(); }
+
+  void getFinalConstraint2DerivativesState(constraint2_state_matrix_t& F_f) final {
+    F_f = stateOnlyFinalJacobian_.template rightCols<STATE_DIM>();
+  }
+
+ protected:
   /**
    * Interface method to the state-input equality constraints. This method should be implemented by the derived class.
    *
-   * @tparam scalar type. All the floating point operations should be with this type.
    * @param [in] time: time.
    * @param [in] state: state vector.
    * @param [in] input: input vector
    * @param [out] constraintVector: constraints vector.
    */
-  template <typename SCALAR_T>
-  void stateInputConstraint(const SCALAR_T& time, const Eigen::Matrix<SCALAR_T, STATE_DIM, 1>& state,
-                            const Eigen::Matrix<SCALAR_T, INPUT_DIM, 1>& input,
-                            Eigen::Matrix<SCALAR_T, Eigen::Dynamic, 1>& constraintVector) {}
-
-  /**
-   * Get the number of state-input active equality constraints.
-   *
-   * @param [in] time: time.
-   * @return number of state-input active equality constraints.
-   */
-  size_t numStateInputConstraint(const scalar_t& time) override { return 0; }
+  virtual void stateInputConstraint(ad_scalar_t time, const ad_dynamic_vector_t& state, const ad_dynamic_vector_t& input,
+                                    ad_dynamic_vector_t& constraintVector) const {
+    constraintVector = ad_dynamic_vector_t(0);
+  }
 
   /**
    * Interface method to the state-only equality constraints. This method should be implemented by the derived class.
    *
-   * @tparam scalar type. All the floating point operations should be with this type.
    * @param [in] time: time.
    * @param [in] state: state vector.
    * @param [out] constraintVector: constraint vector.
    */
-  template <typename SCALAR_T>
-  void stateOnlyConstraint(const SCALAR_T& time, const Eigen::Matrix<SCALAR_T, STATE_DIM, 1>& state,
-                           Eigen::Matrix<SCALAR_T, Eigen::Dynamic, 1>& constraintVector) {}
-
-  /**
-   * Get the number of state-only active equality constraints.
-   *
-   * @param [in] time: time.
-   * @return number of state-only active equality constraints.
-   */
-  size_t numStateOnlyConstraint(const scalar_t& time) override { return 0; }
+  virtual void stateOnlyConstraint(ad_scalar_t time, const ad_dynamic_vector_t& state, ad_dynamic_vector_t& constraintVector) const {
+    constraintVector = ad_dynamic_vector_t(0);
+  }
 
   /**
    * Interface method to the state-only final equality constraints. This method should be implemented by the derived class.
    *
-   * @tparam scalar type. All the floating point operations should be with this type.
    * @param [in] time: time.
    * @param [in] state: state vector.
    * @param [out] constraintVector: constraint vector.
    */
-  template <typename SCALAR_T>
-  void stateOnlyFinalConstraint(const SCALAR_T& time, const Eigen::Matrix<SCALAR_T, STATE_DIM, 1>& state,
-                                Eigen::Matrix<SCALAR_T, Eigen::Dynamic, 1>& constraintVector) {}
+  virtual void stateOnlyFinalConstraint(ad_scalar_t time, const ad_dynamic_vector_t& state, ad_dynamic_vector_t& constraintVector) const {
+    constraintVector = ad_dynamic_vector_t(0);
+  }
 
-  /**
-   * Get the number of final state-only active equality constraints.
-   *
-   * @param [in] time: time.
-   * @return number of final state-only active equality constraints.
-   */
-  size_t numStateOnlyFinalConstraint(const scalar_t& time) override { return 0; }
-
-  /**
-   * creates the forward model, the Jacobian model, and the Hessian model.
-   *
-   * @param modelName
-   * @param libraryFolder
-   * @param verbose
-   */
-  void createModels(const std::string& modelName, const std::string& libraryFolder);
-
-  /**
-   * Loads the forward model, the Jacobian model, and the Hessian model.
-   *
-   * @param modelName
-   * @param libraryFolder
-   * @param verbose
-   */
-  void loadModels(const std::string& modelName, const std::string& libraryFolder);
-
-  /**
-   * Whether or not the dynamic library is compiled.
-   *
-   * @return true if the dynamic library is compiled
-   */
-  const bool& isDynamicLibraryCompiled() const;
-
-  /**
-   * Gets model name.
-   *
-   * @return model name
-   */
-  std::string getModelName() const;
-
-  /**
-   * Sets the current time, state, and control input.
-   *
-   * @param [in] t: Current time
-   * @param [in] x: Current state vector
-   * @param [in] u: Current input vector
-   */
-  virtual void setCurrentStateAndControl(const scalar_t& t, const state_vector_t& x, const input_vector_t& u) final;
-
-  /**
-   * Computes the state-input equality constraints.
-   *
-   * @param [out] e: The state-input equality constraints value.
-   */
-  virtual void getConstraint1(constraint1_vector_t& e) final;
-
-  /**
-   * Compute the state-only equality constraints.
-   *
-   * @param [out] h: The state-only equality constraints value.
-   */
-  virtual void getConstraint2(constraint2_vector_t& h) final;
-
-  /**
-   * Compute the final state-only equality constraints.
-   *
-   * @param [out] h_f: The final state-only equality constraints value.
-   */
-  virtual void getFinalConstraint2(constraint2_vector_t& h_f) final;
-
-  /**
-   * The C matrix at a given operating point for the linearized state-input constraints,
-   * \f$ C(t) \delta x + D(t) \delta u + e(t) = 0 \f$.
-   *
-   * @param [out] C: \f$ C(t) \f$ matrix.
-   */
-  virtual void getConstraint1DerivativesState(constraint1_state_matrix_t& C) final;
-
-  /**
-   * The D matrix at a given operating point for the linearized state-input constraints,
-   * \f$ C(t) \delta x + D(t) \delta u + e(t) = 0 \f$.
-   *
-   * @param [out] D: \f$ D(t) \f$ matrix.
-   */
-  virtual void getConstraint1DerivativesControl(constraint1_input_matrix_t& D) final;
-
-  /**
-   * The F matrix at a given operating point for the linearized state-only constraints,
-   * \f$ F(t) \delta x + h(t) = 0 \f$.
-   *
-   * @param [out] F: \f$ F(t) \f$ matrix.
-   */
-  virtual void getConstraint2DerivativesState(constraint2_state_matrix_t& F) final;
-
-  /**
-   * The F matrix at a given operating point for the linearized terminal state-only constraints,
-   * \f$ F_f(t) \delta x + h_f(t) = 0 \f$.
-   *
-   * @param [out] F_f: \f$ F_f(t) \f$ matrix.
-   */
-  virtual void getFinalConstraint2DerivativesState(constraint2_state_matrix_t& F_f) final;
-
-  /**
-   * Returns pointer to the base class.
-   *
-   * @return A raw pointer to the class.
-   */
-  virtual BASE* clone() const final;
-
- protected:
-  using ad_interface_t = ocs2::CppAdCodeGenInterface<domain_dim_, MAX_CONSTRAINT_DIM_, scalar_t>;
-  using ad_scalar_t = typename ad_interface_t::ad_scalar_t;
-  using ad_dynamic_vector_t = typename ad_interface_t::ad_dynamic_vector_t;
-  using ad_funtion_t = typename ad_interface_t::ad_funtion_t;
-  using domain_vector_t = typename ad_interface_t::domain_vector_t;
-  using domain_matrix_t = typename ad_interface_t::domain_matrix_t;
-  using domain_range_matrix_t = typename ad_interface_t::domain_range_matrix_t;
-  using range_domain_matrix_t = typename ad_interface_t::range_domain_matrix_t;
-
-  /**
-   * The intermediate cost function specialized with AD type.
-   *
-   * @param [in] tapedInput: concatenated input vector
-   * @param [out] g1: The flow map value
-   */
-  void stateInputConstraintAD(const ad_dynamic_vector_t& tapedInput, ad_dynamic_vector_t& g1);
-
-  /**
-   * The terminal cost function specialized with AD type.
-   *
-   * @param [in] tapedInput: concatenated input vector
-   * @param [out] g2: The jump map value
-   */
-  void stateOnlyConstraintAD(const ad_dynamic_vector_t& tapedInput, ad_dynamic_vector_t& g2);
-
-  /**
-   * The terminal cost function specialized with AD type.
-   *
-   * @param [in] tapedInput: concatenated input vector
-   * @param [out] g2Final: The jump map value
-   */
-  void stateOnlyConstraintFinalAD(const ad_dynamic_vector_t& tapedInput, ad_dynamic_vector_t& g2Final);
-
+ private:
   /**
    * Sets all the required CppAdCodeGenInterfaces
    */
-  void setADInterfaces();
+  void setADInterfaces(const std::string& modelName, const std::string& modelFolder);
 
   /**
-   * Create the forward model, the Jacobian model, and the Hessian model.
+   * Create the forward model and derivatives.
    *
    * @param [in] verbose: display information.
    */
   void createModels(bool verbose);
 
   /**
-   * Loads the forward model, the Jacobian model, and the Hessian model.
+   * Loads the forward model and derivatives if available. Constructs them otherwise.
    *
    * @param [in] verbose: display information
-   * @return true if it successfully loads the library.
    */
-  bool loadModels(bool verbose);
-
- private:
-  bool dynamicLibraryIsCompiled_;
-  std::string modelName_;
-  std::string libraryFolder_;
-
-  ad_funtion_t stateInputConstraintAD_;
-  ad_funtion_t stateOnlyConstraintAD_;
-  ad_funtion_t stateOnlyConstraintFinalAD_;
-
-  range_domain_matrix_t stateInputSparsityPattern_;
-  range_domain_matrix_t stateOnlySparsityPattern_;
-  range_domain_matrix_t stateOnlyFinalSparsityPattern_;
+  void loadModelsIfAvailable(bool verbose);
 
   std::unique_ptr<ad_interface_t> stateInputADInterfacePtr_;
   std::unique_ptr<ad_interface_t> stateOnlyADInterfacePtr_;
   std::unique_ptr<ad_interface_t> stateOnlyFinalADInterfacePtr_;
 
-  domain_vector_t tapedInput_;
-
-  domain_range_matrix_t stateInputJacobian_;
-  domain_range_matrix_t stateOnlyJacobian_;
-  domain_range_matrix_t stateOnlyFinalJacobian_;
+  constraint_timeStateInput_matrix_t stateInputJacobian_;
+  constraint_timeState_matrix_t stateOnlyJacobian_;
+  constraint_timeState_matrix_t stateOnlyFinalJacobian_;
+  constraint1_vector_t stateInputValues_;
+  constraint2_vector_t stateOnlyValues_;
+  constraint2_vector_t stateOnlyFinalValues_;
 };
 
 }  // namespace ocs2

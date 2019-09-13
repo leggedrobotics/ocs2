@@ -9,7 +9,7 @@
 
 #include <ros/package.h>
 
-#include <ocs2_core/misc/loadEigenMatrix.h>
+#include <ocs2_core/misc/LoadData.h>
 
 int main(int argc, char** argv) {
   // task file
@@ -33,18 +33,18 @@ int main(int argc, char** argv) {
 
   // Initial state
   dynamics_t::DIMENSIONS::state_vector_t xInitial;
-  ocs2::loadEigenMatrix(taskFile, "initialState", xInitial);
+  ocs2::loadData::loadEigenMatrix(taskFile, "initialState", xInitial);
 
   // Cost function
   dynamics_t::DIMENSIONS::state_matrix_t Q, QFinal;
-  ocs2::loadEigenMatrix(taskFile, "Q", Q);
-  ocs2::loadEigenMatrix(taskFile, "Q_final", QFinal);
+  ocs2::loadData::loadEigenMatrix(taskFile, "Q", Q);
+  ocs2::loadData::loadEigenMatrix(taskFile, "Q_final", QFinal);
 
   dynamics_t::DIMENSIONS::input_matrix_t R;
-  ocs2::loadEigenMatrix(taskFile, "R", R);
+  ocs2::loadData::loadEigenMatrix(taskFile, "R", R);
 
   dynamics_t::DIMENSIONS::state_vector_t xFinal;
-  ocs2::loadEigenMatrix(taskFile, "x_final", xFinal);
+  ocs2::loadData::loadEigenMatrix(taskFile, "x_final", xFinal);
 
   dynamics_t::DIMENSIONS::input_vector_t uNominal;
   uNominal.setZero();
@@ -61,7 +61,7 @@ int main(int argc, char** argv) {
   // cost desired trajectories
   const dynamics_t::scalar_t initTime(0.0);
   dynamics_t::scalar_t finalTime;
-  ocs2::loadScalar(taskFile, "mpcTimeHorizon.timehorizon", finalTime);
+  ocs2::loadData::loadCppDataType(taskFile, "mpcTimeHorizon.timehorizon", finalTime);
   using cost_desired_trajectories_t = solver_t::cost_desired_trajectories_t;
   cost_desired_trajectories_t::scalar_array_t desiredTimeArray{initTime, finalTime};
   cost_desired_trajectories_t::dynamic_vector_array_t desiredStateArray(2), desiredInputArray(2);

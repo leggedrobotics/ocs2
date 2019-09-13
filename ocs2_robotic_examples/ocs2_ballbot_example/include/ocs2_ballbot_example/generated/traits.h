@@ -1,14 +1,14 @@
 #ifndef IIT_ROBOGEN__BALLBOT_TRAITS_H_
 #define IIT_ROBOGEN__BALLBOT_TRAITS_H_
 
-#include <iit/rbd/traits/TraitSelector.h>
 #include "declarations.h"
-#include "forward_dynamics.h"
-#include "inertia_properties.h"
-#include "inverse_dynamics.h"
-#include "jacobians.h"
-#include "jsim.h"
 #include "transforms.h"
+#include "inverse_dynamics.h"
+#include "forward_dynamics.h"
+#include "jsim.h"
+#include "inertia_properties.h"
+#include "jacobians.h"
+#include <iit/rbd/traits/TraitSelector.h>
 
 
 namespace iit {

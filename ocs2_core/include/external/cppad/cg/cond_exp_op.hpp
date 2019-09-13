@@ -38,7 +38,7 @@ template<class Base>
 inline cg::CodeHandler<Base>* findCodeHandler(const cg::CG<Base>& left,
                                               const cg::CG<Base>& right,
                                               const cg::CG<Base>& trueCase,
-                                              const cg::CG<Base>& falseCase) throw (cg::CGException) {
+                                              const cg::CG<Base>& falseCase) {
     cg::CodeHandler<Base>* handler;
     
     cg::CodeHandler<Base>* lh = left.getCodeHandler();

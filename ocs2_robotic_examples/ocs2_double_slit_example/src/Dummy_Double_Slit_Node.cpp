@@ -17,7 +17,7 @@ int main(int argc, char* argv[]) {
   // double_slitInterface
   DoubleSlitInterface double_slitInterface(taskFileFolderName);
   double rollout_dt;
-  ocs2::loadScalar(double_slitInterface.taskFile_, "pathIntegral.rollout_settings.minTimeStep", rollout_dt);
+  ocs2::loadData::loadCppDataType(double_slitInterface.taskFile_, "pathIntegral.rollout_settings.minTimeStep", rollout_dt);
 
   using mrt_ptr_t = mrt_t::Ptr;
   using scalar_t = mrt_t::scalar_t;

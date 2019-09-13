@@ -32,7 +32,7 @@ class RaisimRollout final : public RolloutBase<STATE_DIM, INPUT_DIM> {
   using state_to_raisim_gen_coord_gen_vel_t = std::function<std::pair<Eigen::VectorXd, Eigen::VectorXd>(state_vector_t)>;
   using raisim_gen_coord_gen_vel_to_state_t = std::function<state_vector_t(const Eigen::VectorXd&, const Eigen::VectorXd&)>;
   using input_to_raisim_generalized_force_t = std::function<Eigen::VectorXd(const input_vector_t&, const state_vector_t&)>;
-  using data_extraction_callback_t = std::function<void(const raisim::ArticulatedSystem&)>;
+  using data_extraction_callback_t = std::function<void(double, const raisim::ArticulatedSystem&)>;
 
   /**
    * @brief Constructor
@@ -83,15 +83,15 @@ class RaisimRollout final : public RolloutBase<STATE_DIM, INPUT_DIM> {
     for (int i = 0; i < numSteps; i++) {
       world_.integrate1();  // prepares all dynamical quantities for current time step
 
-      if (dataExtractionCallback_) {
-        dataExtractionCallback_(*system_);
-      }
-
       Eigen::VectorXd raisim_q, raisim_dq;
       system_->getState(raisim_q, raisim_dq);
 
       const auto time = initTime + i * this->settings().minTimeStep_;
       timeTrajectory.push_back(time);
+
+      if (dataExtractionCallback_) {
+        dataExtractionCallback_(time, *system_);
+      }
 
       stateTrajectory.emplace_back(raisimGenCoordGenVelToState_(raisim_q, raisim_dq));
 
@@ -113,7 +113,7 @@ class RaisimRollout final : public RolloutBase<STATE_DIM, INPUT_DIM> {
     stateTrajectory.emplace_back(raisimGenCoordGenVelToState_(raisim_q, raisim_dq));
 
     if (dataExtractionCallback_) {
-      dataExtractionCallback_(*system_);
+      dataExtractionCallback_(timeTrajectory.back(), *system_);
     }
 
     input_vector_t input = controller->computeInput(timeTrajectory.back(), stateTrajectory.back());

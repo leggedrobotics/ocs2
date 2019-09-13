@@ -45,7 +45,7 @@ Eigen::VectorXd inputToRaisimGeneralizedForce(
 }
 
 //! Exemplary extraction of the mass matrix. Not really used, just for demonstration.
-void extractMassMatrix(const raisim::ArticulatedSystem& sys) {
+void extractMassMatrix(double time, const raisim::ArticulatedSystem& sys) {
   Eigen::MatrixXd M = sys.getMassMatrix().e();
   //  std::cout << "M\n" << M << std::endl;
 }

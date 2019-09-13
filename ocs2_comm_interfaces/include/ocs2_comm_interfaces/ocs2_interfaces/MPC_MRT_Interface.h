@@ -31,6 +31,8 @@ class MPC_MRT_Interface final : public MRT_BASE<STATE_DIM, INPUT_DIM> {
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
   using Base = MRT_BASE<STATE_DIM, INPUT_DIM>;
+  using policy_data_t = typename Base::policy_data_t;
+  using command_data_t = typename Base::command_data_t;
 
   using Ptr = std::shared_ptr<MPC_MRT_Interface<STATE_DIM, INPUT_DIM>>;
 
@@ -62,8 +64,8 @@ class MPC_MRT_Interface final : public MRT_BASE<STATE_DIM, INPUT_DIM> {
 
   /**
    * Constructor
-   * @param[in] mpc the underlying MPC class to be used
-   * @param[in] logicRules (optional)
+   * @param [in] mpc the underlying MPC class to be used
+   * @param [in] logicRules (optional)
    */
   explicit MPC_MRT_Interface(mpc_t& mpc, std::shared_ptr<HybridLogicRules> logicRules = nullptr);
 
@@ -86,7 +88,7 @@ class MPC_MRT_Interface final : public MRT_BASE<STATE_DIM, INPUT_DIM> {
   /**
    * Set a new mode sequence template
    * It is safe to set a new value while the MPC optimization is running
-   * @param modeSequenceTemplate
+   * @param [in] modeSequenceTemplate
    */
   void setModeSequence(const mode_sequence_template_t& modeSequenceTemplate);
 
@@ -114,16 +116,16 @@ class MPC_MRT_Interface final : public MRT_BASE<STATE_DIM, INPUT_DIM> {
 
   /**
    * @brief getLinearFeedbackGain retrieves K matrix from solver
-   * @param[in] time
-   * @param[out] K
+   * @param [in] time
+   * @param [out] K
    */
   void getLinearFeedbackGain(scalar_t time, input_state_matrix_t& K);
 
   /**
    * @brief Computes the Lagrange multiplier related to the state-input constraints
-   * @param[in] time: query time
-   * @param[in] state: query state
-   * @param[out] nu: the Lagrange multiplier
+   * @param [in] time: query time
+   * @param [in] state: query state
+   * @param [out] nu: the Lagrange multiplier
    */
   void getStateInputConstraintLagrangian(scalar_t time, const state_vector_t& state, dynamic_vector_t& nu) const;
 
@@ -131,9 +133,13 @@ class MPC_MRT_Interface final : public MRT_BASE<STATE_DIM, INPUT_DIM> {
   /**
    * @brief fillMpcOutputBuffers updates the *Buffer variables from the MPC object.
    * This method is automatically called by advanceMpc()
-   * @param[in] mpcInitObservation the observation used to run the mpc
+   * @param [in] mpcInitObservation: The observation used to run the MPC.
+   * @param [in] mpc: A reference to the MPC instance.
+   * @param [out] policyDataPtr: The policy data of the MPC.
+   * @param [out] commandDataPtr: The command data of the MPC.
    */
-  void fillMpcOutputBuffers(system_observation_t mpcInitObservation);
+  void fillMpcOutputBuffers(system_observation_t mpcInitObservation, mpc_t& mpc, policy_data_t* policyDataPtr,
+                            command_data_t* commandDataPtr);
 
  protected:
   mpc_t& mpc_;

@@ -68,7 +68,7 @@ void MPC_MRT_Interface<STATE_DIM, INPUT_DIM>::advanceMpc() {
   }
 
   mpc_.run(mpcInitObservation.time(), mpcInitObservation.state());
-  fillMpcOutputBuffers(std::move(mpcInitObservation));
+  fillMpcOutputBuffers(std::move(mpcInitObservation), mpc_, this->policyBuffer_.get(), this->commandBuffer_.get());
 
   // Incrementing numIterations must happen after fillMpcOutputBuffers
   numMpcIterations_++;
@@ -90,36 +90,36 @@ void MPC_MRT_Interface<STATE_DIM, INPUT_DIM>::advanceMpc() {
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
-void MPC_MRT_Interface<STATE_DIM, INPUT_DIM>::fillMpcOutputBuffers(system_observation_t mpcInitObservation) {
-	// buffer policy mutex
-	std::lock_guard<std::mutex> policyBufferLock(this->policyBufferMutex_);
+void MPC_MRT_Interface<STATE_DIM, INPUT_DIM>::fillMpcOutputBuffers(system_observation_t mpcInitObservation, mpc_t& mpc,
+                                                                   policy_data_t* policyDataPtr, command_data_t* commandDataPtr) {
+  // buffer policy mutex
+  std::lock_guard<std::mutex> policyBufferLock(this->policyBufferMutex_);
 
-	// policy
-	const scalar_array2_t* timeTrajectoriesPtr = mpc_.getOptimizedTimeTrajectoryPtr();
-	const state_vector_array2_t* stateTrajectoriesPtr = mpc_.getOptimizedStateTrajectoryPtr();
-	const input_vector_array2_t* inputTrajectoriesPtr = mpc_.getOptimizedInputTrajectoryPtr();
-	if (mpc_.settings().useFeedbackPolicy_) {
-		this->policyBuffer_->fill(timeTrajectoriesPtr, stateTrajectoriesPtr, inputTrajectoriesPtr,
-				mpc_.getLogicRulesPtr()->eventTimes(), mpc_.getLogicRulesPtr()->subsystemsSequence(),
-				mpc_.getOptimizedControllersPtr());
-	} else {
-		this->policyBuffer_->fill(timeTrajectoriesPtr, stateTrajectoriesPtr, inputTrajectoriesPtr,
-				mpc_.getLogicRulesPtr()->eventTimes(), mpc_.getLogicRulesPtr()->subsystemsSequence());
-	}
+  // policy
+  const scalar_array2_t* timeTrajectoriesPtr = mpc.getOptimizedTimeTrajectoryPtr();
+  const state_vector_array2_t* stateTrajectoriesPtr = mpc.getOptimizedStateTrajectoryPtr();
+  const input_vector_array2_t* inputTrajectoriesPtr = mpc.getOptimizedInputTrajectoryPtr();
+  if (mpc.settings().useFeedbackPolicy_) {
+    policyDataPtr->fill(timeTrajectoriesPtr, stateTrajectoriesPtr, inputTrajectoriesPtr, mpc.getLogicRulesPtr()->eventTimes(),
+                        mpc.getLogicRulesPtr()->subsystemsSequence(), mpc.getOptimizedControllersPtr());
+  } else {
+    policyDataPtr->fill(timeTrajectoriesPtr, stateTrajectoriesPtr, inputTrajectoriesPtr, mpc.getLogicRulesPtr()->eventTimes(),
+                        mpc.getLogicRulesPtr()->subsystemsSequence());
+  }
 
-	// command
-	this->commandBuffer_->fill(mpcInitObservation, mpc_.getSolverPtr()->getCostDesiredTrajectories());
+  // command
+  commandDataPtr->fill(mpcInitObservation, mpc.getSolverPtr()->getCostDesiredTrajectories());
 
-	// logic
-	this->partitioningTimesUpdate(mpcInitObservation.time(), this->partitioningTimesBuffer_);
+  // logic
+  this->partitioningTimesUpdate(mpcInitObservation.time(), this->partitioningTimesBuffer_);
 
-	// allow user to modify the buffer
-	this->modifyBufferPolicy(*this->commandBuffer_, *this->policyBuffer_);
+  // allow user to modify the buffer
+  this->modifyBufferPolicy(*commandDataPtr, *policyDataPtr);
 
-	// Flags to be set last:
-	this->newPolicyInBuffer_ = true;
-	this->policyReceivedEver_ = true;
-	this->policyUpdatedBuffer_ = true;
+  // Flags to be set last:
+  this->newPolicyInBuffer_ = true;
+  this->policyReceivedEver_ = true;
+  this->policyUpdatedBuffer_ = true;
 }
 
 /******************************************************************************************************/

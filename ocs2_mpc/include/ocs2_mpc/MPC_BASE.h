@@ -220,6 +220,13 @@ class MPC_BASE {
    */
   MPC_Settings& settings();
 
+  /**
+   * Gets the MPC settings.
+   *
+   * @return structure which details MPC settings
+   */
+  const MPC_Settings& settings() const;
+
  protected:
   /**
    * Sets pointer of the base solver. This method should be called in the constructor of

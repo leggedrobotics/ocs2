@@ -57,9 +57,6 @@ class MPC_Settings {
         coldStart_(false),
         recedingHorizon_(true),
         blockwiseMovingHorizon_(false),
-        forwardSimulationTime_(0)  // [ms]
-        ,
-        useFeedbackPolicy_(false),
         useParallelRiccatiSolver_(false),
         rosMsgTimeWindow_(1e+8),
         adaptiveRosMsgTimeWindow_(false),
@@ -104,11 +101,6 @@ class MPC_Settings {
   /** If true the final time of the MPC will increase by the length of a time partition
    * instead of commonly used scheme where the final time is gradual increased. */
   bool blockwiseMovingHorizon_;
-  /** in [ms] */
-  int forwardSimulationTime_;
-  /** Use either the optimized control policy (true) or the optimized state-input trajectory
-   * (false). */
-  bool useFeedbackPolicy_;
   /** If set true, the parallel Riccati solver will be used from the first iteration of SLQ
    * solver. */
   bool useParallelRiccatiSolver_;
@@ -249,28 +241,6 @@ inline void MPC_Settings::loadSettings(const std::string& filename, bool verbose
   } catch (const std::exception& e) {
     if (verbose) {
       std::cerr << " #### Option loader : option 'blockwiseMovingHorizon' ..... " << blockwiseMovingHorizon_ << " (default)" << std::endl;
-    }
-  }
-
-  try {
-    forwardSimulationTime_ = pt.get<int>("mpc.forwardSimulationTime");
-    if (verbose) {
-      std::cerr << " #### Option loader : option 'forwardSimulationTime' ...... " << forwardSimulationTime_ << std::endl;
-    }
-  } catch (const std::exception& e) {
-    if (verbose) {
-      std::cerr << " #### Option loader : option 'forwardSimulationTime' ...... " << forwardSimulationTime_ << " (default)" << std::endl;
-    }
-  }
-
-  try {
-    useFeedbackPolicy_ = pt.get<bool>("mpc.useFeedbackPolicy");
-    if (verbose) {
-      std::cerr << " #### Option loader : option 'useFeedbackPolicy' .......... " << useFeedbackPolicy_ << std::endl;
-    }
-  } catch (const std::exception& e) {
-    if (verbose) {
-      std::cerr << " #### Option loader : option 'useFeedbackPolicy' .......... " << useFeedbackPolicy_ << " (default)" << std::endl;
     }
   }
 

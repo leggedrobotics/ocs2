@@ -54,7 +54,7 @@ class MPC_ILQR : public MPC_BASE<STATE_DIM, INPUT_DIM> {
 
   using BASE = MPC_BASE<STATE_DIM, INPUT_DIM>;
 
-  using DIMENSIONS = Dimensions<STATE_DIM, INPUT_DIM>;
+  using typename BASE::DIMENSIONS;
   using scalar_t = typename DIMENSIONS::scalar_t;
   using scalar_array_t = typename DIMENSIONS::scalar_array_t;
   using scalar_array2_t = typename DIMENSIONS::scalar_array2_t;
@@ -72,10 +72,11 @@ class MPC_ILQR : public MPC_BASE<STATE_DIM, INPUT_DIM> {
   using dynamic_vector_t = typename DIMENSIONS::dynamic_vector_t;
   using dynamic_vector_array_t = typename DIMENSIONS::dynamic_vector_array_t;
 
-  using cost_desired_trajectories_t = typename BASE::cost_desired_trajectories_t;
-  using mode_sequence_template_t = typename BASE::mode_sequence_template_t;
-  using controller_ptr_array_t = typename BASE::controller_ptr_array_t;
-  using controller_const_ptr_array_t = typename BASE::controller_const_ptr_array_t;
+  using typename BASE::controller_const_ptr_array_t;
+  using typename BASE::controller_ptr_array_t;
+  using typename BASE::cost_desired_trajectories_t;
+  using typename BASE::mode_sequence_template_t;
+  using typename BASE::policy_data_t;
 
   using linear_controller_t = LinearController<STATE_DIM, INPUT_DIM>;
   using linear_controller_array_t = typename linear_controller_t::array_t;
@@ -134,17 +135,11 @@ class MPC_ILQR : public MPC_BASE<STATE_DIM, INPUT_DIM> {
    */
   virtual ILQR_Settings& ilqrSettings();
 
-  /**
-   * Gets a pointer to the underlying solver used in the MPC.
-   *
-   * @return A pointer to the underlying solver used in the MPC
-   */
   ilqr_base_t* getSolverPtr() override;
 
-  void calculateController(const scalar_t& initTime, const state_vector_t& initState, const scalar_t& finalTime,
-                           const scalar_array2_t*& timeTrajectoriesStockPtr, const state_vector_array2_t*& stateTrajectoriesStockPtr,
-                           const input_vector_array2_t*& inputTrajectoriesStockPtr,
-                           controller_const_ptr_array_t& controllersPtrStock) override;
+  const ilqr_base_t* getSolverPtr() const override;
+
+  void calculateController(const scalar_t& initTime, const state_vector_t& initState, const scalar_t& finalTime) override;
 
  protected:
   /***********

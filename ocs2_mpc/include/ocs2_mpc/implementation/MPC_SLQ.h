@@ -104,11 +104,16 @@ typename MPC_SLQ<STATE_DIM, INPUT_DIM>::slq_base_t* MPC_SLQ<STATE_DIM, INPUT_DIM
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
+const typename MPC_SLQ<STATE_DIM, INPUT_DIM>::slq_base_t* MPC_SLQ<STATE_DIM, INPUT_DIM>::getSolverPtr() const {
+  return slqPtr_.get();
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+template <size_t STATE_DIM, size_t INPUT_DIM>
 void MPC_SLQ<STATE_DIM, INPUT_DIM>::calculateController(const scalar_t& initTime, const state_vector_t& initState,
-                                                        const scalar_t& finalTime, const scalar_array2_t*& timeTrajectoriesStockPtr,
-                                                        const state_vector_array2_t*& stateTrajectoriesStockPtr,
-                                                        const input_vector_array2_t*& inputTrajectoriesStockPtr,
-                                                        controller_const_ptr_array_t& controllersPtrStock) {
+                                                        const scalar_t& finalTime) {
   //*****************************************************************************************
   // cost goal check
   //*****************************************************************************************
@@ -153,16 +158,6 @@ void MPC_SLQ<STATE_DIM, INPUT_DIM>::calculateController(const scalar_t& initTime
   } else {
     slqPtr_->run(initTime, initState, finalTime, BASE::partitioningTimes_, typename slq_base_t::controller_ptr_array_t());
   }
-
-  //*****************************************************************************************
-  // Get optimized outputs
-  //*****************************************************************************************
-  // get the optimized trajectories
-  timeTrajectoriesStockPtr = slqPtr_->getOptimizedTimeTrajectoriesPtr();
-  stateTrajectoriesStockPtr = slqPtr_->getOptimizedStateTrajectoriesPtr();
-  inputTrajectoriesStockPtr = slqPtr_->getOptimizedInputTrajectoriesPtr();
-  // get the optimal controller
-  controllersPtrStock = slqPtr_->getOptimizedControllersPtr();
 }
 
 }  // namespace ocs2

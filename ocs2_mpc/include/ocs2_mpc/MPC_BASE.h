@@ -87,6 +87,7 @@ class MPC_BASE {
   using mode_sequence_template_t = ModeSequenceTemplate<scalar_t>;
 
   using solver_base_t = Solver_BASE<STATE_DIM, INPUT_DIM>;
+  using policy_data_t = typename solver_base_t::policy_data_t;
   using solver_base_ptr_t = typename solver_base_t::Ptr;
 
   /**
@@ -124,17 +125,9 @@ class MPC_BASE {
    *
    * @param [out] initTime: Initial time. This value can be adjusted by the optimizer.
    * @param [in] initState: Initial state.
-   * @param [out] finalTime: Final time. This value can be adjusted by the optimizer.
-   * @param [out] timeTrajectoriesStockPtr: A pointer to the optimized time trajectories.
-   * @param [out] stateTrajectoriesStockPtr: A pointer to the optimized state trajectories.
-   * @param [out] inputTrajectoriesStockPtr: A pointer to the optimized input trajectories.
-   * @param [out] controllersPtrStock: An array of pointers to the optimized control policies.
+   * @param [in] finalTime: Final time. This value can be adjusted by the optimizer.
    */
-  virtual void calculateController(const scalar_t& initTime, const state_vector_t& initState, const scalar_t& finalTime,
-                                   const scalar_array2_t*& timeTrajectoriesStockPtr,
-                                   const state_vector_array2_t*& stateTrajectoriesStockPtr,
-                                   const input_vector_array2_t*& inputTrajectoriesStockPtr,
-                                   controller_const_ptr_array_t& controllersPtrStock) = 0;
+  virtual void calculateController(const scalar_t& initTime, const state_vector_t& initState, const scalar_t& finalTime) = 0;
 
   /**
    * Gets a pointer to the underlying solver used in the MPC.
@@ -142,6 +135,13 @@ class MPC_BASE {
    * @return A pointer to the underlying solver used in the MPC
    */
   virtual solver_base_t* getSolverPtr() = 0;
+
+  /**
+   * Gets a const pointer to the underlying solver used in the MPC.
+   *
+   * @return A const pointer to the underlying solver used in the MPC
+   */
+  virtual const solver_base_t* getSolverPtr() const = 0;
 
   /**
    * Returns the initial time for which the optimizer is called.
@@ -184,34 +184,6 @@ class MPC_BASE {
    * @param [in] newLogicRulesTemplate: New logicRules template
    */
   virtual void setNewLogicRulesTemplate(const mode_sequence_template_t& newLogicRulesTemplate);
-
-  /**
-   * @brief Returns An array of pointers to the optimal control policies.
-   *
-   * @return An array of pointers to the optimized control policies.
-   */
-  controller_const_ptr_array_t getOptimizedControllersPtr() const;
-
-  /**
-   * @brief Returns a pointer to the optimized time trajectories.
-   *
-   * @return A pointer to the optimized time trajectories containing the output time stamp for state and input trajectories.
-   */
-  const scalar_array2_t* getOptimizedTimeTrajectoryPtr() const;
-
-  /**
-   * @brief Returns a pointer to the optimized state trajectories.
-   *
-   * @return A pointer to the optimized state trajectories.
-   */
-  const state_vector_array2_t* getOptimizedStateTrajectoryPtr() const;
-
-  /**
-   * @brief Returns a pointer to the optimized input trajectories.
-   *
-   * @return A pointer to the optimized input trajectories.
-   */
-  const input_vector_array2_t* getOptimizedInputTrajectoryPtr() const;
 
   /**
    * Gets the MPC settings.
@@ -264,11 +236,6 @@ class MPC_BASE {
   std::atomic<bool> logicRulesTemplateUpdated_;
   std::mutex newLogicRulesTemplateMutex_;
   mode_sequence_template_t newLogicRulesTemplate_;
-
-  controller_const_ptr_array_t optimizedControllersPtrStock_;
-  const scalar_array2_t* optimizedTimeTrajectoriesStockPtr_;
-  const state_vector_array2_t* optimizedStateTrajectoriesStockPtr_;
-  const input_vector_array2_t* optimizedInputTrajectoriesStockPtr_;
 
   benchmark::RepeatedTimer mpcTimer_;
 

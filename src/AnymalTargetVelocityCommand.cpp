@@ -5,7 +5,7 @@
  *      Author: farbod
  */
 
-#include <ocs2_core/misc/loadEigenMatrix.h>
+#include <ocs2_core/misc/LoadData.h>
 #include <ocs2_quadruped_interface/TargetTrajectories_Keyboard_Quadruped.h>
 #include <ocs2_switched_model_interface/core/Model_Settings.h>
 
@@ -21,7 +21,7 @@ int main(int argc, char* argv[]) {
   modelSettings.loadSettings(taskFile);
 
   Eigen::Matrix<double, 36, 1> initRbdState_;
-  ocs2::loadEigenMatrix(taskFile, "initialRobotState", initRbdState_);
+  ocs2::loadData::loadEigenMatrix(taskFile, "initialRobotState", initRbdState_);
 
   double comHeightOffset = -0.056;  // TODO(Ruben) get from model
   double initZHeight = initRbdState_[5] + comHeightOffset;

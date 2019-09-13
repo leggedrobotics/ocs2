@@ -120,6 +120,19 @@ class MRT_ROS_Quadruped : public ocs2::MRT_ROS_Interface<STATE_DIM, INPUT_DIM> {
                      base_coordinate_t& o_comVelocityRef, base_coordinate_t& o_comAccelerationRef, contact_flag_t& stanceLegs);
 
   /**
+   * @brief Rolls out the control policy from the current time and state to get the next state and input using the MPC policy.
+   *
+   * @param [in] currentTime: start time of the rollout.
+   * @param [in] currentState: state to start rollout from.
+   * @param [in] timeStep: duration of the forward rollout.
+   * @param [out] mpcState: the new forwarded state of MPC.
+   * @param [out] mpcInput: the new control input of MPC.
+   * @param [out] subsystem: the active subsystem.
+   */
+  void rolloutPolicy(scalar_t time, const state_vector_t& state, rbd_state_vector_t& rbdState, joint_coordinate_t& rbdInput,
+                     size_t& subsystem);
+
+  /**
    * Get the swing phase progress for a requested leg.
    *
    * @param [in] legIndex: Leg index.

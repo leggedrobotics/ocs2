@@ -5,6 +5,12 @@
  *      Author: farbod
  */
 
+#include <ocs2_robotic_tools/rbd_libraries/robcogen/iit/rbd/rbd.h>
+
+#include "ocs2_anymal_switched_model/generated/transforms.h"
+#include "ocs2_anymal_switched_model/generated/inertia_properties.h"
+#include "ocs2_anymal_switched_model/generated/inverse_dynamics.h"
+
 namespace switched_model {
 
 /******************************************************************************************************/
@@ -393,6 +399,68 @@ void MRT_ROS_Quadruped<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::rolloutPolicy(
 
   // calculate CoM pose, velocity, and acceleration in the origin frame.
   ocs2QuadrupedInterfacePtr_->computeComStateInOrigin(stateRef, inputRef, o_comPoseRef, o_comVelocityRef, o_comAccelerationRef);
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM>
+void MRT_ROS_Quadruped<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::rolloutPolicy(
+	scalar_t time, const state_vector_t& state, rbd_state_vector_t& rbdState, joint_coordinate_t& rbdInput, size_t& subsystem) {
+
+  // optimal switched model state and input
+  state_vector_t stateRef;
+  input_vector_t inputRef;
+  BASE::evaluatePolicy(time, state, stateRef, inputRef, subsystem);
+
+  // calculate rbd state.
+  ocs2QuadrupedInterfacePtr_->computeRbdModelState(stateRef, inputRef, rbdState);
+  base_coordinate_t qBase     = rbdState.template segment<6>(0);
+  joint_coordinate_t qJoints  = rbdState.template segment<12>(6);
+  base_coordinate_t qdBase    = rbdState.template segment<6>(18);
+  joint_coordinate_t qdJoints = rbdState.template segment<12>(24);
+
+  // look one dt ahead to obtain acceleration
+  const scalar_t dt = 1.0 / ocs2QuadrupedInterfacePtr_->modelSettings().feetFilterFrequency_;
+  state_vector_t stateRef_ahead;
+  input_vector_t inputRef_ahead;
+  size_t subsystem_ahead;
+  BASE::rolloutPolicy(time, state, dt, stateRef_ahead, inputRef_ahead, subsystem_ahead);
+  vector_3d_array_t o_feetPositionRef_ahead, o_feetVelocityRef_ahead;
+  vector_3d_array_t o_contactForces_ahead;
+  joint_coordinate_t qddJoints = (inputRef_ahead.template tail<JOINT_COORD_SIZE>() - inputRef.template tail<JOINT_COORD_SIZE>()) / dt;
+
+  // inverse dynamics
+  // RBD homogeneous transforms of feet
+  ocs2QuadrupedInterfacePtr_->getKinematicModel().update(qBase, qJoints);
+  // force transformed in the lowerLeg coordinate
+  iit::rbd::ForceVector extForceBase[4];
+  for (size_t j=0; j<4; j++) {
+	  vector_3d_t b_footPosition;
+	  ocs2QuadrupedInterfacePtr_->getKinematicModel().footPositionBaseFrame(j, b_footPosition);
+	  extForceBase[j].head<3>() = b_footPosition.cross(inputRef.template segment<3>(3*j));
+	  extForceBase[j].tail<3>() = inputRef.template segment<3>(3*j);
+  }
+  iit::ANYmal::ForceTransforms forceTransforms;
+  iit::ANYmal::LinkDataMap<iit::rbd::ForceVector> extForces;
+//  for (size_t j=0; j<iit::ANYmal::linksCount; j++)  {
+//	  extForces[iit::ANYmal::orderedLinkIDs[j]] = iit::rbd::ForceVector::Zero();
+//  }
+  extForces[iit::ANYmal::LF_SHANK] = forceTransforms.fr_LF_SHANK_COM_X_fr_base(qJoints) * extForceBase[0];
+  extForces[iit::ANYmal::RF_SHANK] = forceTransforms.fr_RF_SHANK_COM_X_fr_base(qJoints) * extForceBase[1];
+  extForces[iit::ANYmal::LH_SHANK] = forceTransforms.fr_LH_SHANK_COM_X_fr_base(qJoints) * extForceBase[2];
+  extForces[iit::ANYmal::RH_SHANK] = forceTransforms.fr_RH_SHANK_COM_X_fr_base(qJoints) * extForceBase[3];
+
+  // gravity vetor in the base frame
+  iit::rbd::Vector6D g;
+  Eigen::Matrix3d b_R_o = ocs2QuadrupedInterfacePtr_->getKinematicModel().rotationMatrixOrigintoBase();
+  g << vector_3d_t::Zero(), b_R_o*vector_3d_t(0.0,0.0,-9.81);
+
+  iit::ANYmal::dyn::InertiaProperties inertias;
+  iit::ANYmal::MotionTransforms transforms;
+  base_coordinate_t qddBase;
+  iit::ANYmal::dyn::InverseDynamics inverseDynamics(inertias, transforms);
+  inverseDynamics.id(rbdInput, qddBase, g, qdBase, qJoints, qdJoints, qddJoints, extForces);
 }
 
 /******************************************************************************************************/

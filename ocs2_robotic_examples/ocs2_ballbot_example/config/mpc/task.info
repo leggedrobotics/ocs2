@@ -41,7 +41,6 @@ slq
 
     ddp
     {
-
         maxNumIterations               10    ; 50
         minLearningRate                1.0   ; 0.1
         maxLearningRate                1.0
@@ -72,7 +71,8 @@ slq
         threadPriority                 0
         debugPrintMP                   0
         lsStepsizeGreedy               1
-
+        
+        useFeedbackPolicy              0
         useRiccatiSolver               1
 
     }
@@ -104,7 +104,6 @@ mpc
 
     useParallelRiccatiSolver       1     ; use disjoint riccati solver in MP case and recedingHorizon fashion
 
-    useFeedbackPolicy              0
     forwardSimulationTime          28    ; [ms] MRT time
 
     rosMsgTimeWindow               200   ; [ms]

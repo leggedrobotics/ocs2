@@ -75,7 +75,7 @@ slq
         debugPrintMT                 0
         lsStepsizeGreedy             1
         
-        
+        useFeedbackPolicy            0
         useRiccatiSolver             1
         
         minEventTimeDifference       0.01
@@ -108,7 +108,6 @@ mpc
 
     useParallelRiccatiSolver    0       ; use disjoint riccati solver in MP case and recedingHorizon fashion
 
-    useFeedbackPolicy           0
     forwardSimulationTime       28      ; [ms] MRT time
 
     rosMsgTimeWindow            1e+5    ; [ms]

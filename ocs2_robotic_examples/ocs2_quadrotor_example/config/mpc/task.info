@@ -61,6 +61,7 @@ ilqr
         debugPrintMT                     0
         lsStepsizeGreedy                 1
 
+        useFeedbackPolicy                0
         useRiccatiSolver                 1
     }
 
@@ -91,7 +92,6 @@ mpc
 
     useParallelRiccatiSolver    1       ; use parallel riccati solver in MP case and recedingHorizon fashion
 
-    useFeedbackPolicy           0
     forwardSimulationTime       28      ; [ms] MRT time
 
     rosMsgTimeWindow            500     ; [ms]
@@ -107,6 +107,7 @@ pathIntegral
   gamma 1e-5 ; temperature/level of noise
   numSamples 1000 ; how many trajectories to sample
   debugPrint 1
+  useFeedbackPolicy 0 
 
   rollout_settings
   {

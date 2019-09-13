@@ -90,22 +90,13 @@ void MPC_MRT_Interface<STATE_DIM, INPUT_DIM>::advanceMpc() {
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
-void MPC_MRT_Interface<STATE_DIM, INPUT_DIM>::fillMpcOutputBuffers(system_observation_t mpcInitObservation, mpc_t& mpc,
+void MPC_MRT_Interface<STATE_DIM, INPUT_DIM>::fillMpcOutputBuffers(system_observation_t mpcInitObservation, const mpc_t& mpc,
                                                                    policy_data_t* policyDataPtr, command_data_t* commandDataPtr) {
   // buffer policy mutex
   std::lock_guard<std::mutex> policyBufferLock(this->policyBufferMutex_);
 
-  // policy
-  const scalar_array2_t* timeTrajectoriesPtr = mpc.getOptimizedTimeTrajectoryPtr();
-  const state_vector_array2_t* stateTrajectoriesPtr = mpc.getOptimizedStateTrajectoryPtr();
-  const input_vector_array2_t* inputTrajectoriesPtr = mpc.getOptimizedInputTrajectoryPtr();
-  if (mpc.settings().useFeedbackPolicy_) {
-    policyDataPtr->fill(timeTrajectoriesPtr, stateTrajectoriesPtr, inputTrajectoriesPtr, mpc.getLogicRulesPtr()->eventTimes(),
-                        mpc.getLogicRulesPtr()->subsystemsSequence(), mpc.getOptimizedControllersPtr());
-  } else {
-    policyDataPtr->fill(timeTrajectoriesPtr, stateTrajectoriesPtr, inputTrajectoriesPtr, mpc.getLogicRulesPtr()->eventTimes(),
-                        mpc.getLogicRulesPtr()->subsystemsSequence());
-  }
+  // get solution
+  mpc.getSolverPtr()->getSolutionPtr(policyDataPtr);
 
   // command
   commandDataPtr->fill(mpcInitObservation, mpc.getSolverPtr()->getCostDesiredTrajectories());
@@ -127,9 +118,6 @@ void MPC_MRT_Interface<STATE_DIM, INPUT_DIM>::fillMpcOutputBuffers(system_observ
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
 void MPC_MRT_Interface<STATE_DIM, INPUT_DIM>::getLinearFeedbackGain(scalar_t time, input_state_matrix_t& K) {
-  if (!mpc_.settings().useFeedbackPolicy_) {
-    throw std::runtime_error("Feedback gains only available with useFeedbackPolicy setting");
-  }
   auto controller = dynamic_cast<LinearController<STATE_DIM, INPUT_DIM>*>(this->currentPolicy_->mpcController_.get());
   if (!controller) {
     throw std::runtime_error("Feedback gains only available with linear controller");

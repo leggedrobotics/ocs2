@@ -138,7 +138,7 @@ class MPC_MRT_Interface final : public MRT_BASE<STATE_DIM, INPUT_DIM> {
    * @param [out] policyDataPtr: The policy data of the MPC.
    * @param [out] commandDataPtr: The command data of the MPC.
    */
-  void fillMpcOutputBuffers(system_observation_t mpcInitObservation, mpc_t& mpc, policy_data_t* policyDataPtr,
+  void fillMpcOutputBuffers(system_observation_t mpcInitObservation, const mpc_t& mpc, policy_data_t* policyDataPtr,
                             command_data_t* commandDataPtr);
 
  protected:

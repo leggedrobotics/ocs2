@@ -33,7 +33,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <ocs2_core/Dimensions.h>
 #include <ocs2_core/control/ControllerBase.h>
-#include <ocs2_core/control/FeedforwardController.h>
 
 namespace ocs2 {
 
@@ -49,18 +48,14 @@ struct PolicyData {
 
   using dim_t = Dimensions<STATE_DIM, INPUT_DIM>;
   using size_array_t = typename dim_t::size_array_t;
+  using scalar_t = typename dim_t::scalar_t;
   using scalar_array_t = typename dim_t::scalar_array_t;
-  using scalar_array2_t = typename dim_t::scalar_array2_t;
   using state_vector_t = typename dim_t::state_vector_t;
   using state_vector_array_t = typename dim_t::state_vector_array_t;
-  using state_vector_array2_t = typename dim_t::state_vector_array2_t;
   using input_vector_t = typename dim_t::input_vector_t;
   using input_vector_array_t = typename dim_t::input_vector_array_t;
-  using input_vector_array2_t = typename dim_t::input_vector_array2_t;
 
   using controller_t = ControllerBase<STATE_DIM, INPUT_DIM>;
-  using controller_const_ptr_array_t = std::vector<const controller_t*>;
-  using feedforward_controller_t = FeedforwardController<STATE_DIM, INPUT_DIM>;
 
   scalar_array_t mpcTimeTrajectory_;
   state_vector_array_t mpcStateTrajectory_;
@@ -68,63 +63,6 @@ struct PolicyData {
   scalar_array_t eventTimes_;
   size_array_t subsystemsSequence_;
   std::unique_ptr<controller_t> mpcController_;
-
-  /**'
-   * Fills the data.
-   * @param [in] timeTrajectoriesPtr: A pointer to the time trajectories containing the output time stamp for state and input trajectories.
-   * @param [in] stateTrajectoriesPtr: A pointer to the state trajectories.
-   * @param [in] inputTrajectoriesPtr: A pointer to the input trajectories.
-   * @param [in] eventTimes: The event time array.
-   * @param [in] subsystemsSequencePtr: The subsystem array.
-   * @param [in] controllerPtrs: An array of pointers to the controller.
-   */
-  void fill(const scalar_array2_t* timeTrajectoriesPtr, const state_vector_array2_t* stateTrajectoriesPtr,
-            const input_vector_array2_t* inputTrajectoriesPtr, scalar_array_t eventTimes, size_array_t subsystemsSequence,
-            controller_const_ptr_array_t controllerPtrs = controller_const_ptr_array_t()) {
-    // total number of nodes
-    int N = 0;
-    for (int i = 0; i < timeTrajectoriesPtr->size(); i++) {
-      N += (*timeTrajectoriesPtr)[i].size();
-    }
-
-    // fill trajectories
-    mpcTimeTrajectory_.clear();
-    mpcTimeTrajectory_.reserve(N);
-    mpcStateTrajectory_.clear();
-    mpcStateTrajectory_.reserve(N);
-    mpcInputTrajectory_.clear();
-    mpcInputTrajectory_.reserve(N);
-    for (int i = 0; i < timeTrajectoriesPtr->size(); i++) {
-      mpcTimeTrajectory_.insert(std::end(mpcTimeTrajectory_), std::begin((*timeTrajectoriesPtr)[i]), std::end((*timeTrajectoriesPtr)[i]));
-      mpcStateTrajectory_.insert(std::end(mpcStateTrajectory_), std::begin((*stateTrajectoriesPtr)[i]),
-                                 std::end((*stateTrajectoriesPtr)[i]));
-      mpcInputTrajectory_.insert(std::end(mpcInputTrajectory_), std::begin((*inputTrajectoriesPtr)[i]),
-                                 std::end((*inputTrajectoriesPtr)[i]));
-    }
-
-    // fill controller
-    if (!controllerPtrs.empty()) {
-      mpcController_.reset();
-      // concatenate controller stock into a single controller
-      for (auto controllerPtr : controllerPtrs) {
-        if (controllerPtr->empty()) {
-          continue;  // some time partitions may be unused
-        }
-
-        if (mpcController_) {
-          mpcController_->concatenate(controllerPtr);
-        } else {
-          mpcController_.reset(controllerPtr->clone());
-        }
-      }
-    } else {
-      mpcController_.reset(new feedforward_controller_t(mpcTimeTrajectory_, mpcInputTrajectory_));
-    }
-
-    // fill logic
-    eventTimes_ = std::move(eventTimes);
-    subsystemsSequence_ = std::move(subsystemsSequence);
-  }
 };
 
 }  // namespace ocs2

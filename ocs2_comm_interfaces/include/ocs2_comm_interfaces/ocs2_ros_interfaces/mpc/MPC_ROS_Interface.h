@@ -50,8 +50,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_core/control/FeedforwardController.h>
 #include <ocs2_core/control/LinearController.h>
 #include <ocs2_core/misc/Benchmark.h>
-
 #include <ocs2_mpc/MPC_BASE.h>
+#include <ocs2_oc/oc_data/PolicyData.h>
 
 // MPC messages
 #include <ocs2_msgs/dummy.h>
@@ -61,6 +61,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_msgs/mpc_target_trajectories.h>
 #include <ocs2_msgs/reset.h>
 
+#include "ocs2_comm_interfaces/CommandData.h"
 #include "ocs2_comm_interfaces/SystemObservation.h"
 #include "ocs2_comm_interfaces/ocs2_ros_interfaces/common/RosMsgConversions.h"
 #include "ocs2_comm_interfaces/ocs2_ros_interfaces/task_listener/TaskListenerBase.h"
@@ -87,6 +88,7 @@ class MPC_ROS_Interface {
 
   using scalar_t = typename mpc_t::scalar_t;
   using scalar_array_t = typename mpc_t::scalar_array_t;
+  using scalar_array2_t = typename mpc_t::scalar_array2_t;
   using size_array_t = typename mpc_t::size_array_t;
   using state_vector_t = typename mpc_t::state_vector_t;
   using state_vector_array_t = typename mpc_t::state_vector_array_t;
@@ -101,6 +103,9 @@ class MPC_ROS_Interface {
   using mode_sequence_template_t = typename mpc_t::mode_sequence_template_t;
 
   using system_observation_t = SystemObservation<STATE_DIM, INPUT_DIM>;
+
+  using policy_data_t = PolicyData<STATE_DIM, INPUT_DIM>;
+  using command_data_t = CommandData<STATE_DIM, INPUT_DIM>;
 
   using controller_t = ControllerBase<STATE_DIM, INPUT_DIM>;
   using controller_ptr_array_t = std::vector<controller_t*>;
@@ -219,26 +224,31 @@ class MPC_ROS_Interface {
   /**
    * Publishes the MPC policy.
    *
-   * @param [in] currentObservation: The observation that MPC designed from.
    * @param [in] controllerIsUpdated: Whether the policy is updated.
-   * @param [in] costDesiredTrajectoriesPtr: The target trajectories that MPC optimized.
+   * @param [in] policyDataPtr: The policy data of the MPC.
+   * @param [in] commandDataPtr: The command data of the MPC.
    * @param [in] controllerStockPtr: A pointer to the MPC optimized control policy.
    * @param [in] timeTrajectoriesStockPtr: A pointer to the MPC optimized time trajectory.
    * @param [in] stateTrajectoriesStockPtr: A pointer to the  MPC optimized state trajectory.
    * @param [in] inputTrajectoriesStockPtr: A pointer to the  MPC optimized input trajectory.
-   * @param [in] eventTimesPtr: A pointer to the event time sequence.
-   * @param [in] subsystemsSequencePtr: A pointer to the subsystem sequence.
    */
-  void publishPolicy(const system_observation_t& currentObservation, const bool& controllerIsUpdated,
-                     const cost_desired_trajectories_t*& costDesiredTrajectoriesPtr, const controller_ptr_array_t*& controllerStockPtr,
-                     const std::vector<scalar_array_t>*& timeTrajectoriesStockPtr, const state_vector_array2_t*& stateTrajectoriesStockPtr,
-                     const input_vector_array2_t*& inputTrajectoriesStockPtr, const scalar_array_t*& eventTimesPtr,
-                     const size_array_t*& subsystemsSequencePtr);
+  void publishPolicy(bool controllerIsUpdated, policy_data_t policyData, command_data_t commandData);
 
   /**
    * Handles ROS publishing thread.
    */
   void publisherWorkerThread();
+
+  /**
+   * @brief fillMpcOutputBuffers updates the *Buffer variables from the MPC object.
+   * This method is automatically called by advanceMpc()
+   * @param [in] mpcInitObservation: The observation used to run the MPC.
+   * @param [in] mpc: A reference to the MPC instance.
+   * @param [out] policyDataPtr: The policy data of the MPC.
+   * @param [out] commandDataPtr: The command data of the MPC.
+   */
+  void fillMpcOutputBuffers(system_observation_t mpcInitObservation, mpc_t& mpc, policy_data_t* policyDataPtr,
+                            command_data_t* commandDataPtr);
 
   /**
    * The callback method which receives the current observation, invokes the MPC algorithm,

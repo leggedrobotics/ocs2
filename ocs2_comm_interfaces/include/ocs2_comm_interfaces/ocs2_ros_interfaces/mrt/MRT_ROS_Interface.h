@@ -68,6 +68,8 @@ class MRT_ROS_Interface : public MRT_BASE<STATE_DIM, INPUT_DIM> {
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
   using Base = MRT_BASE<STATE_DIM, INPUT_DIM>;
+  using policy_data_t = typename Base::policy_data_t;
+  using command_data_t = typename Base::command_data_t;
 
   using Ptr = std::shared_ptr<MRT_ROS_Interface<STATE_DIM, INPUT_DIM>>;
 

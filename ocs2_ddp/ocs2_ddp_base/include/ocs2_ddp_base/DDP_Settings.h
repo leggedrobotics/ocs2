@@ -88,6 +88,9 @@ class DDP_Settings {
         useRiccatiSolver_(true)
 
         ,
+        useFeedbackPolicy_(false)
+
+        ,
         debugPrintRollout_(false)
 
   {}
@@ -190,6 +193,9 @@ class DDP_Settings {
 
   /** If true, DDP uses ode solver to solve the Riccati equations. Otherwise it uses matrix exponential to solve it. */
   bool useRiccatiSolver_;
+
+  /** Use either the optimized control policy (true) or the optimized state-input trajectory (false). */
+  bool useFeedbackPolicy_;
 
   /** Printing rollout trajectory for debugging. */
   bool debugPrintRollout_;
@@ -542,6 +548,18 @@ inline void DDP_Settings::loadSettings(const std::string& filename, const std::s
   } catch (const std::exception& e) {
     if (verbose) {
       std::cerr << " #### Option loader : option 'useRiccatiSolver' .................... " << useRiccatiSolver_ << "   \t(default)"
+                << std::endl;
+    }
+  }
+
+  try {
+    useFeedbackPolicy_ = pt.get<bool>(fieldName + ".useFeedbackPolicy");
+    if (verbose) {
+      std::cerr << " #### Option loader : option 'useFeedbackPolicy' ................... " << useFeedbackPolicy_ << std::endl;
+    }
+  } catch (const std::exception& e) {
+    if (verbose) {
+      std::cerr << " #### Option loader : option 'useFeedbackPolicy' ................... " << useFeedbackPolicy_ << " (default)"
                 << std::endl;
     }
   }

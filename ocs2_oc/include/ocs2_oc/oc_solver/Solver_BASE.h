@@ -44,11 +44,14 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <ocs2_core/Dimensions.h>
 #include <ocs2_core/control/ControllerBase.h>
+#include <ocs2_core/control/FeedforwardController.h>
 #include <ocs2_core/cost/CostDesiredTrajectories.h>
 #include <ocs2_core/logic/machine/HybridLogicRulesMachine.h>
 #include <ocs2_core/logic/rules/NullLogicRules.h>
 #include <ocs2_core/misc/LinearAlgebra.h>
 #include <ocs2_core/misc/Numerics.h>
+
+#include "ocs2_oc/oc_data/PolicyData.h"
 
 namespace ocs2 {
 
@@ -126,6 +129,8 @@ class Solver_BASE {
 
   using cost_desired_trajectories_t = CostDesiredTrajectories<scalar_t>;
 
+  using policy_data_t = PolicyData<STATE_DIM, INPUT_DIM>;
+
   using logic_rules_machine_t = HybridLogicRulesMachine;
   using logic_rules_machine_ptr_t = typename logic_rules_machine_t::Ptr;
 
@@ -133,6 +138,7 @@ class Solver_BASE {
   using controller_array_t = typename controller_t::array_t;
   using controller_ptr_array_t = std::vector<controller_t*>;
   using controller_const_ptr_array_t = std::vector<const controller_t*>;
+  using feedforward_controller_t = FeedforwardController<STATE_DIM, INPUT_DIM>;
 
   explicit Solver_BASE(std::shared_ptr<HybridLogicRules> logicRulesPtr = nullptr);
 
@@ -320,32 +326,18 @@ class Solver_BASE {
   bool updateCostDesiredTrajectories();
 
   /**
-   * @brief Returns An array of pointers to the optimal control policies.
+   * @brief Returns the optimized policy data.
    *
-   * @return An array of pointers to the optimized control policies.
+   * @param [out] policyDataPtr: The optimized policy data.
    */
-  virtual controller_const_ptr_array_t getOptimizedControllersPtr() const = 0;
+  virtual void getSolutionPtr(policy_data_t* policyDataPtr) const = 0;
 
   /**
-   * @brief Returns a pointer to the optimized time trajectories.
+   * @brief Returns the optimized policy data.
    *
-   * @return A pointer to the optimized time trajectories containing the output time stamp for state and input trajectories.
+   * @return: The optimized policy data.
    */
-  virtual const scalar_array2_t* getOptimizedTimeTrajectoriesPtr() const = 0;
-
-  /**
-   * @brief Returns a pointer to the optimized state trajectories.
-   *
-   * @return A pointer to the optimized state trajectories.
-   */
-  virtual const state_vector_array2_t* getOptimizedStateTrajectoriesPtr() const = 0;
-
-  /**
-   * @brief Returns a pointer to the optimized input trajectories.
-   *
-   * @return A pointer to the optimized input trajectories.
-   */
-  virtual const input_vector_array2_t* getOptimizedInputTrajectoriesPtr() const = 0;
+  policy_data_t getSolution() const;
 
   /**
    * Calculates the value function at the given time and state.

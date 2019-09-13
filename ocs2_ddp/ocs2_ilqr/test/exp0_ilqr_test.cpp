@@ -131,9 +131,9 @@ TEST(exp0_ilqr_test, exp0_ilqr_test) {
   /******************************************************************************************************/
   /******************************************************************************************************/
   /******************************************************************************************************/
-  // get controller
-  ILQR_BASE<STATE_DIM, INPUT_DIM>::controller_const_ptr_array_t controllersStockST = ilqrST.getOptimizedControllersPtr();
-//  ILQR_BASE<STATE_DIM, INPUT_DIM>::controller_const_ptr_array_t controllersStockMT = ilqrMT.getOptimizedControllersPtr();
+  // get solution
+  ILQR_BASE<STATE_DIM, INPUT_DIM>::policy_data_t solutionST = ilqrST.getSolution();
+//  ILQR_BASE<STATE_DIM, INPUT_DIM>::policy_data_t solutionMT = ilqrMT.getSolution();
 
   // get performance indices
   double totalCost_st, totalCost_mt;

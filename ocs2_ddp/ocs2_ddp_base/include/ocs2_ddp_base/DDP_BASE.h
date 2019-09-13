@@ -123,12 +123,13 @@ class DDP_BASE : public Solver_BASE<STATE_DIM, INPUT_DIM> {
   using typename BASE::state_vector_array_t;
   using typename BASE::state_vector_t;
 
-  using typename BASE::cost_desired_trajectories_t;
-
   using typename BASE::controller_array_t;
   using typename BASE::controller_const_ptr_array_t;
   using typename BASE::controller_ptr_array_t;
   using typename BASE::controller_t;
+  using typename BASE::cost_desired_trajectories_t;
+  using typename BASE::feedforward_controller_t;
+  using typename BASE::policy_data_t;
 
   using linear_controller_t = LinearController<STATE_DIM, INPUT_DIM>;
   using linear_controller_array_t = typename linear_controller_t::array_t;
@@ -411,13 +412,12 @@ class DDP_BASE : public Solver_BASE<STATE_DIM, INPUT_DIM> {
    */
   DDP_Settings& ddpSettings();
 
-  controller_const_ptr_array_t getOptimizedControllersPtr() const override;
+  /**
+   * Const access to ddp settings
+   */
+  const DDP_Settings& ddpSettings() const;
 
-  const scalar_array2_t* getOptimizedTimeTrajectoriesPtr() const override;
-
-  const state_vector_array2_t* getOptimizedStateTrajectoriesPtr() const override;
-
-  const input_vector_array2_t* getOptimizedInputTrajectoriesPtr() const override;
+  void getSolutionPtr(policy_data_t* policyDataPtr) const override;
 
   scalar_t getFinalTime() const override;
 

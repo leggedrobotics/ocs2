@@ -117,6 +117,16 @@ bool Solver_BASE<STATE_DIM, INPUT_DIM>::updateCostDesiredTrajectories() {
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
+typename Solver_BASE<STATE_DIM, INPUT_DIM>::policy_data_t Solver_BASE<STATE_DIM, INPUT_DIM>::getSolution() const {
+  policy_data_t policyData;
+  getSolutionPtr(&policyData);
+  return std::move(policyData);
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+template <size_t STATE_DIM, size_t INPUT_DIM>
 void Solver_BASE<STATE_DIM, INPUT_DIM>::printString(const std::string& text) {
   std::lock_guard<std::mutex> outputDisplayGuard(outputDisplayGuardMutex_);
   std::cerr << text << std::endl;

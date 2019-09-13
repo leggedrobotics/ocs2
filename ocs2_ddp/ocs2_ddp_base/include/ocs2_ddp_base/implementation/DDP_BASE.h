@@ -1191,40 +1191,60 @@ DDP_Settings& DDP_BASE<STATE_DIM, INPUT_DIM>::ddpSettings() {
 /******************************************************************************************************/
 /***************************************************************************************************** */
 template <size_t STATE_DIM, size_t INPUT_DIM>
-typename DDP_BASE<STATE_DIM, INPUT_DIM>::controller_const_ptr_array_t DDP_BASE<STATE_DIM, INPUT_DIM>::getOptimizedControllersPtr() const {
-  controller_const_ptr_array_t nominalControllerPtrsStock(0);
-  nominalControllerPtrsStock.reserve(nominalControllersStock_.size());
-  for (const linear_controller_t& controller_i : nominalControllersStock_) {
-    nominalControllerPtrsStock.push_back(&controller_i);
+const DDP_Settings& DDP_BASE<STATE_DIM, INPUT_DIM>::ddpSettings() const {
+  return ddpSettings_;
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/***************************************************************************************************** */
+template <size_t STATE_DIM, size_t INPUT_DIM>
+void DDP_BASE<STATE_DIM, INPUT_DIM>::getSolutionPtr(policy_data_t* policyDataPtr) const {
+  // total number of nodes
+  int N = 0;
+  for (const scalar_array_t& timeTrajectory_i : nominalTimeTrajectoriesStock_) {
+    N += timeTrajectory_i.size();
   }
 
-  return nominalControllerPtrsStock;
-}
+  // fill trajectories
+  policyDataPtr->mpcTimeTrajectory_.clear();
+  policyDataPtr->mpcTimeTrajectory_.reserve(N);
+  policyDataPtr->mpcStateTrajectory_.clear();
+  policyDataPtr->mpcStateTrajectory_.reserve(N);
+  policyDataPtr->mpcInputTrajectory_.clear();
+  policyDataPtr->mpcInputTrajectory_.reserve(N);
+  for (int i = 0; i < nominalTimeTrajectoriesStock_.size(); i++) {
+    policyDataPtr->mpcTimeTrajectory_.insert(policyDataPtr->mpcTimeTrajectory_.end(), nominalTimeTrajectoriesStock_[i].begin(),
+                                             nominalTimeTrajectoriesStock_[i].end());
+    policyDataPtr->mpcStateTrajectory_.insert(policyDataPtr->mpcStateTrajectory_.end(), nominalStateTrajectoriesStock_[i].begin(),
+                                              nominalStateTrajectoriesStock_[i].end());
+    policyDataPtr->mpcInputTrajectory_.insert(policyDataPtr->mpcInputTrajectory_.end(), nominalInputTrajectoriesStock_[i].begin(),
+                                              nominalInputTrajectoriesStock_[i].end());
+  }
 
-/******************************************************************************************************/
-/******************************************************************************************************/
-/***************************************************************************************************** */
-template <size_t STATE_DIM, size_t INPUT_DIM>
-const typename DDP_BASE<STATE_DIM, INPUT_DIM>::scalar_array2_t* DDP_BASE<STATE_DIM, INPUT_DIM>::getOptimizedTimeTrajectoriesPtr() const {
-  return &nominalTimeTrajectoriesStock_;
-}
+  // fill controller
+  if (ddpSettings_.useFeedbackPolicy_) {
+    policyDataPtr->mpcController_.reset();
+    // concatenate controller stock into a single controller
+    for (const linear_controller_t& controller_i : nominalControllersStock_) {
+      if (controller_i.empty()) {
+        continue;  // some time partitions may be unused
+      }
 
-/******************************************************************************************************/
-/******************************************************************************************************/
-/***************************************************************************************************** */
-template <size_t STATE_DIM, size_t INPUT_DIM>
-const typename DDP_BASE<STATE_DIM, INPUT_DIM>::state_vector_array2_t* DDP_BASE<STATE_DIM, INPUT_DIM>::getOptimizedStateTrajectoriesPtr()
-    const {
-  return &nominalStateTrajectoriesStock_;
-}
+      if (policyDataPtr->mpcController_) {
+        policyDataPtr->mpcController_->concatenate(&controller_i);
+      } else {
+        policyDataPtr->mpcController_.reset(controller_i.clone());
+      }
+    }
+  } else {
+    policyDataPtr->mpcController_.reset(
+        new feedforward_controller_t(policyDataPtr->mpcTimeTrajectory_, policyDataPtr->mpcInputTrajectory_));
+  }
 
-/******************************************************************************************************/
-/******************************************************************************************************/
-/***************************************************************************************************** */
-template <size_t STATE_DIM, size_t INPUT_DIM>
-const typename DDP_BASE<STATE_DIM, INPUT_DIM>::input_vector_array2_t* DDP_BASE<STATE_DIM, INPUT_DIM>::getOptimizedInputTrajectoriesPtr()
-    const {
-  return &nominalInputTrajectoriesStock_;
+  // fill logic
+  policyDataPtr->eventTimes_ = this->getLogicRulesPtr()->eventTimes();
+  policyDataPtr->subsystemsSequence_ = this->getLogicRulesPtr()->subsystemsSequence();
 }
 
 /******************************************************************************************************/

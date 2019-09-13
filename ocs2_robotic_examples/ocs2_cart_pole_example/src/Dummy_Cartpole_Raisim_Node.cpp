@@ -44,15 +44,18 @@ Eigen::VectorXd inputToRaisimGeneralizedForce(
   return generalizedForce;
 }
 
+//! Exemplary extraction of the mass matrix. Not really used, just for demonstration.
 void extractMassMatrix(const raisim::ArticulatedSystem& sys) {
   Eigen::MatrixXd M = sys.getMassMatrix().e();
-  std::cout << "M\n" << M << std::endl;
+  //  std::cout << "M\n" << M << std::endl;
 }
 
 int main(int argc, char* argv[]) {
   // task file
-  if (argc <= 1) throw std::runtime_error("No task file specified. Aborting.");
-  std::string taskFileFolderName = std::string(argv[1]);
+  if (argc <= 1) {
+    throw std::runtime_error("No task file specified. Aborting.");
+  }
+  std::string taskFileFolderName = std::string(argv[1]);  // NOLINT(cppcoreguidelines-pro-bounds-pointer-arithmetic)
 
   // setup MRT with simulator rollouts
   using sim_rollout_t = ocs2::RaisimRollout<ocs2::cartpole::STATE_DIM_, ocs2::cartpole::INPUT_DIM_>;
@@ -63,8 +66,8 @@ int main(int argc, char* argv[]) {
   mrtPtr->initRollout(std::move(simRollout));
 
   ocs2::cartpole::CartPoleInterface cartPoleInterface(taskFileFolderName);
-  ocs2::cartpole::MRT_ROS_Dummy_Cartpole dummyCartpole(mrtPtr, cartPoleInterface.mpcSettings().mrtDesiredFrequency_,
-                                                       cartPoleInterface.mpcSettings().mpcDesiredFrequency_);
+  ocs2::cartpole::MrtRosDummyCartpole dummyCartpole(mrtPtr, cartPoleInterface.mpcSettings().mrtDesiredFrequency_,
+                                                    cartPoleInterface.mpcSettings().mpcDesiredFrequency_);
   dummyCartpole.launchNodes(argc, argv);
 
   // initial state

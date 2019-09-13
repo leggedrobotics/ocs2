@@ -44,7 +44,7 @@ namespace cartpole {
  */
 using MRT_ROS_Cartpole = MRT_ROS_Interface<cartpole::STATE_DIM_, cartpole::INPUT_DIM_>;
 
-} // namespace cartpole
-} // namespace ocs2
+}  // namespace cartpole
+}  // namespace ocs2
 
 #endif /* MRT_ROS_CARTPOLE_OCS2_H_ */

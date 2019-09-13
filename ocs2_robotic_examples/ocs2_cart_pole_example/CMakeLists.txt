@@ -1,6 +1,9 @@
 cmake_minimum_required(VERSION 3.0)
 project(ocs2_cart_pole_example)
 
+# Generate compile_commands.json for clang tools
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+
 find_package(catkin REQUIRED COMPONENTS
         roslib
         ocs2_core
@@ -89,18 +92,6 @@ target_link_libraries(cartpole_dummy_test
         ${catkin_LIBRARIES}
         )
 
-# Dummy node with simulator rollout
-add_executable(cartpole_dummy_simulator
-        src/Dummy_Cartpole_Simulator_Node.cpp
-        )
-add_dependencies(cartpole_dummy_simulator
-        ${catkin_EXPORTED_TARGETS}
-        )
-target_link_libraries(cartpole_dummy_simulator
-        cartpole_interface
-        ${catkin_LIBRARIES}
-        )
-
 # Dummy node with raisim rollout
 if(raisim_FOUND)
   add_executable(cartpole_dummy_raisim
@@ -115,6 +106,25 @@ if(raisim_FOUND)
     raisim::raisim
   )
 endif(raisim_FOUND)
+
+#########################
+###   CLANG TOOLING   ###
+#########################
+find_package(cmake_clang_tools QUIET)
+if(cmake_clang_tools_FOUND)
+  message(STATUS "Running clang tooling.")
+  add_clang_tooling(
+    TARGETS
+        cartpole_interface
+        cartpole_mpc
+        cartpole_dummy_test
+    SOURCE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/src ${CMAKE_CURRENT_SOURCE_DIR}/include
+    CT_HEADER_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/include
+    CT_HEADER_EXCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/include/${PROJECT_NAME}/generated
+    CF_WERROR
+    CT_WERROR
+  )
+endif(cmake_clang_tools_FOUND)
 
 #############
 ## Install ##

@@ -10,5 +10,5 @@
           output="screen" args="$(arg task_name)" launch-prefix="gnome-terminal --"/>
 
     <node pkg="ocs2_cart_pole_example" type="cartpole_dummy_raisim" name="cartpole_dummy_raisim"
-          output="screen" args="$(arg task_name)" launch-prefix="gnome-terminal -- gdb -ex run --args"/>
+          output="screen" args="$(arg task_name)" launch-prefix="gnome-terminal --"/>
 </launch>

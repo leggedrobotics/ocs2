@@ -28,59 +28,49 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  ******************************************************************************/
 
 #include "ocs2_cart_pole_example/CartPoleInterface.h"
+#include "ocs2_cart_pole_example/definitions.h"
 #include "ocs2_cart_pole_example/ros_comm/MRT_ROS_Cartpole.h"
 #include "ocs2_cart_pole_example/ros_comm/MRT_ROS_Dummy_Cartpole.h"
-#include "ocs2_cart_pole_example/definitions.h"
 
-using namespace ocs2;
-using namespace cartpole;
+int main(int argc, char** argv) {
+  // task file
+  if (argc <= 1) {
+    throw std::runtime_error("No task file specified. Aborting.");
+  }
+  std::string taskFileFolderName = std::string(argv[1]);  // NOLINT(cppcoreguidelines-pro-bounds-pointer-arithmetic)
 
-int main(int argc, char **argv)
-{
-	// task file
-	if (argc <= 1) throw std::runtime_error("No task file specified. Aborting.");
-	std::string taskFileFolderName = std::string(argv[1]);
+  ocs2::cartpole::CartPoleInterface cartPoleInterface(taskFileFolderName);
 
-	// CartPoleInterface
-	CartPoleInterface cartPoleInterface(taskFileFolderName);
+  using mrt_t = ocs2::cartpole::MRT_ROS_Cartpole;
+  using mrt_ptr_t = mrt_t::Ptr;
+  using scalar_t = mrt_t::scalar_t;
+  using system_observation_t = mrt_t::system_observation_t;
 
-	typedef MRT_ROS_Cartpole mrt_t;
-	typedef mrt_t::Ptr mrt_ptr_t;
-	typedef mrt_t::scalar_t scalar_t;
-	typedef mrt_t::system_observation_t system_observation_t;
-	typedef Dimensions<4, 1> dim_t;
+  mrt_ptr_t mrtPtr(new mrt_t("cartpole"));
 
-	mrt_ptr_t mrtPtr(new mrt_t("cartpole"));
+  // Dummy cartpole
+  ocs2::cartpole::MrtRosDummyCartpole dummyCartpole(mrtPtr, cartPoleInterface.mpcSettings().mrtDesiredFrequency_,
+                                                    cartPoleInterface.mpcSettings().mpcDesiredFrequency_);
+  dummyCartpole.launchNodes(argc, argv);
 
-	// Dummy cartpole
-	MRT_ROS_Dummy_Cartpole dummyCartpole(
-			mrtPtr,
-			cartPoleInterface.mpcSettings().mrtDesiredFrequency_,
-			cartPoleInterface.mpcSettings().mpcDesiredFrequency_);
+  // initial state
+  mrt_t::system_observation_t initObservation;
+  cartPoleInterface.getInitialState(initObservation.state());
 
-	dummyCartpole.launchNodes(argc, argv);
+  // initial command
+  mrt_t::cost_desired_trajectories_t initCostDesiredTrajectories;
+  initCostDesiredTrajectories.desiredTimeTrajectory().resize(2);
+  initCostDesiredTrajectories.desiredTimeTrajectory().at(0) = 0.0;
+  initCostDesiredTrajectories.desiredTimeTrajectory().at(1) = 1.0;
+  initCostDesiredTrajectories.desiredStateTrajectory().resize(2);
+  initCostDesiredTrajectories.desiredStateTrajectory().at(0) = mrt_t::state_vector_t::Zero();
+  initCostDesiredTrajectories.desiredStateTrajectory().at(1) = mrt_t::state_vector_t::Zero();
+  initCostDesiredTrajectories.desiredInputTrajectory().resize(2);
+  initCostDesiredTrajectories.desiredInputTrajectory().at(0) = mrt_t::input_vector_t::Zero();
+  initCostDesiredTrajectories.desiredInputTrajectory().at(1) = mrt_t::input_vector_t::Zero();
 
-	// initial state
-	MRT_ROS_Dummy_Cartpole::system_observation_t initObservation;
-	cartPoleInterface.getInitialState(initObservation.state());
+  // run dummy
+  dummyCartpole.run(initObservation, initCostDesiredTrajectories);
 
-	// initial command
-	MRT_ROS_Dummy_Cartpole::cost_desired_trajectories_t initCostDesiredTrajectories;
-	initCostDesiredTrajectories.desiredTimeTrajectory().resize(2);
-	initCostDesiredTrajectories.desiredTimeTrajectory().at(0) = 0.0;
-	initCostDesiredTrajectories.desiredTimeTrajectory().at(1) = 1.0;
-	initCostDesiredTrajectories.desiredStateTrajectory().resize(2);
-	initCostDesiredTrajectories.desiredStateTrajectory().at(0) = MRT_ROS_Dummy_Cartpole::state_vector_t::Zero();
-	initCostDesiredTrajectories.desiredStateTrajectory().at(1) = MRT_ROS_Dummy_Cartpole::state_vector_t::Zero();
-	initCostDesiredTrajectories.desiredInputTrajectory().resize(2);
-	initCostDesiredTrajectories.desiredInputTrajectory().at(0) = MRT_ROS_Dummy_Cartpole::input_vector_t::Zero();
-	initCostDesiredTrajectories.desiredInputTrajectory().at(1) = MRT_ROS_Dummy_Cartpole::input_vector_t::Zero();
-
-	// run dummy
-	dummyCartpole.run(initObservation, initCostDesiredTrajectories);
-
-	// Successful exit
-	return 0;
+  return 0;
 }
-
-

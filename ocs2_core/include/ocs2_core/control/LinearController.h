@@ -165,19 +165,22 @@ class LinearController final : public ControllerBase<STATE_DIM, INPUT_DIM> {
     }
   }
 
-  void concatenate(const Base* nextController) override {
+  void concatenate(const Base* nextController, int first, int last) override {
     if (auto nextLinCtrl = dynamic_cast<const LinearController*>(nextController)) {
-      if (timeStamp_.back() > nextLinCtrl->timeStamp_.front()) {
+      if (!timeStamp_.empty() && timeStamp_.back() > nextLinCtrl->timeStamp_.front()) {
         throw std::runtime_error("Concatenate requires that the nextController comes later in time.");
       }
-      timeStamp_.insert(timeStamp_.end(), nextLinCtrl->timeStamp_.begin(), nextLinCtrl->timeStamp_.end());
-      biasArray_.insert(biasArray_.end(), nextLinCtrl->biasArray_.begin(), nextLinCtrl->biasArray_.end());
-      deltaBiasArray_.insert(deltaBiasArray_.end(), nextLinCtrl->deltaBiasArray_.begin(), nextLinCtrl->deltaBiasArray_.end());
-      gainArray_.insert(gainArray_.end(), nextLinCtrl->gainArray_.begin(), nextLinCtrl->gainArray_.end());
+      timeStamp_.insert(timeStamp_.end(), nextLinCtrl->timeStamp_.begin() + first, nextLinCtrl->timeStamp_.begin() + last);
+      biasArray_.insert(biasArray_.end(), nextLinCtrl->biasArray_.begin() + first, nextLinCtrl->biasArray_.begin() + last);
+      deltaBiasArray_.insert(deltaBiasArray_.end(), nextLinCtrl->deltaBiasArray_.begin() + first,
+                             nextLinCtrl->deltaBiasArray_.begin() + last);
+      gainArray_.insert(gainArray_.end(), nextLinCtrl->gainArray_.begin() + first, nextLinCtrl->gainArray_.begin() + last);
     } else {
       throw std::runtime_error("Concatenate only works with controllers of the same type.");
     }
   }
+
+  int size() const override { return timeStamp_.size(); }
 
   ControllerType getType() const override { return ControllerType::LINEAR; }
 
@@ -216,13 +219,6 @@ class LinearController final : public ControllerBase<STATE_DIM, INPUT_DIM> {
     swap(deltaBiasArray_, other.deltaBiasArray_);
     swap(gainArray_, other.gainArray_);
   }
-
-  /**
-   * Returns the size of the controller (in particular the time stamp).
-   *
-   * @return the size of the controller.
-   */
-  size_t size() const { return timeStamp_.size(); }
 
   /**
    * @brief getFeedbackGain: Extracts the feedback matrix at the requested time

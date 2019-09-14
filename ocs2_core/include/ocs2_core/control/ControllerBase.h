@@ -69,10 +69,31 @@ class ControllerBase {
   /**
    * @brief Merges this controller with another controller that comes active later in time
    * This method is typically used to merge controllers from multiple time partitions.
-   * @note Only controllers of the same type can be merged
-   * @param[in] nextController: The control law to be appended
+   * Indices specifying a range of elements. Copies of the elements in the range [first,last) are inserted at the end.
+   *
+   * @note Only controllers of the same type can be merged.
+   *
+   * @param[in] otherController: The control law to be appended.
+   * @param[in] first: The first index
+   * @param[in] last: The last index.
    */
-  virtual void concatenate(const ControllerBase* nextController) = 0;
+  virtual void concatenate(const ControllerBase* otherController, int first, int last) = 0;
+
+  /**
+   * @brief Merges this controller with another controller that comes active later in time
+   * This method is typically used to merge controllers from multiple time partitions.
+   * @note Only controllers of the same type can be merged.
+   *
+   * @param[in] otherController: The control law to be appended.
+   */
+  void concatenate(const ControllerBase* otherController) { concatenate(otherController, 0, otherController->size()); }
+
+  /**
+   * @brief Returns the size of the controller.
+   *
+   * @return The size of the controller.
+   */
+  virtual int size() const = 0;
 
   /**
    * @brief Prints the type of controller

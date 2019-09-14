@@ -27,10 +27,10 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  ******************************************************************************/
 
-#include <iostream>
+#include <gtest/gtest.h>
 #include <cstdlib>
 #include <ctime>
-#include <gtest/gtest.h>
+#include <iostream>
 
 #include <ocs2_slq/SLQ.h>
 #include <ocs2_slq/SLQ_MP.h>
@@ -39,106 +39,94 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 using namespace ocs2;
 
-enum
-{
-	STATE_DIM = 2,
-	INPUT_DIM = 2
-};
+enum { STATE_DIM = 2, INPUT_DIM = 2 };
 
 // This test have problem. It does not converge properly.
-TEST(exp2_slq_test, DISABLED_Exp2_slq_test)
-{
-	SLQ_Settings slqSettings;
-	slqSettings.useNominalTimeForBackwardPass_ = false;
-	slqSettings.ddpSettings_.displayInfo_ = true;
-	slqSettings.ddpSettings_.displayShortSummary_ = true;
-	slqSettings.ddpSettings_.maxNumIterations_ = 200;
-	slqSettings.ddpSettings_.absTolODE_ = 1e-10;
-	slqSettings.ddpSettings_.relTolODE_ = 1e-7;
-	slqSettings.ddpSettings_.constraintStepSize_ = 0.1;
-	slqSettings.ddpSettings_.maxNumStepsPerSecond_ = 10000;
-	slqSettings.ddpSettings_.nThreads_ = 3;
-	slqSettings.ddpSettings_.useMakePSD_ = true;
-	slqSettings.ddpSettings_.lsStepsizeGreedy_ = true;
-	slqSettings.ddpSettings_.noStateConstraints_ = true;
-	slqSettings.ddpSettings_.checkNumericalStability_ = true;
+TEST(exp2_slq_test, DISABLED_Exp2_slq_test) {
+  SLQ_Settings slqSettings;
+  slqSettings.useNominalTimeForBackwardPass_ = false;
+  slqSettings.ddpSettings_.displayInfo_ = true;
+  slqSettings.ddpSettings_.displayShortSummary_ = true;
+  slqSettings.ddpSettings_.maxNumIterations_ = 200;
+  slqSettings.ddpSettings_.absTolODE_ = 1e-10;
+  slqSettings.ddpSettings_.relTolODE_ = 1e-7;
+  slqSettings.ddpSettings_.constraintStepSize_ = 0.1;
+  slqSettings.ddpSettings_.maxNumStepsPerSecond_ = 10000;
+  slqSettings.ddpSettings_.nThreads_ = 3;
+  slqSettings.ddpSettings_.useMakePSD_ = true;
+  slqSettings.ddpSettings_.lsStepsizeGreedy_ = true;
+  slqSettings.ddpSettings_.noStateConstraints_ = true;
+  slqSettings.ddpSettings_.checkNumericalStability_ = true;
 
-	// switching times
-	std::vector<double> eventTimes {0.2, 1.2};
-	std::vector<size_t> subsystemsSequence{0, 1, 2};
-	std::shared_ptr<EXP2_LogicRules> logicRules(new EXP2_LogicRules(eventTimes, subsystemsSequence));
+  // switching times
+  std::vector<double> eventTimes{0.2, 1.2};
+  std::vector<size_t> subsystemsSequence{0, 1, 2};
+  std::shared_ptr<EXP2_LogicRules> logicRules(new EXP2_LogicRules(eventTimes, subsystemsSequence));
 
-	double startTime = 0.0;
-	double finalTime = 3.0;
+  double startTime = 0.0;
+  double finalTime = 3.0;
 
-	// partitioning times
-	std::vector<double> partitioningTimes;
-	partitioningTimes.push_back(startTime);
-	partitioningTimes.push_back(1.0);
-	partitioningTimes.push_back(2.0);
-	partitioningTimes.push_back(finalTime);
+  // partitioning times
+  std::vector<double> partitioningTimes;
+  partitioningTimes.push_back(startTime);
+  partitioningTimes.push_back(1.0);
+  partitioningTimes.push_back(2.0);
+  partitioningTimes.push_back(finalTime);
 
-	Eigen::Vector2d initState(2.0, 3.0);
+  EXP2_System::state_vector_t initState(2.0, 3.0);
 
-	/******************************************************************************************************/
-	/******************************************************************************************************/
-	/******************************************************************************************************/
+  /******************************************************************************************************/
+  /******************************************************************************************************/
+  /******************************************************************************************************/
+  // system dynamics
+  EXP2_System systemDynamics(logicRules);
 
-	// system dynamics
-	EXP2_System systemDynamics(logicRules);
+  // system derivatives
+  EXP2_SystemDerivative systemDerivative(logicRules);
 
-	// system derivatives
-	EXP2_SystemDerivative systemDerivative(logicRules);
+  // system constraints
+  EXP2_constraint systemConstraint(logicRules);
 
-	// system constraints
-	EXP2_constraint systemConstraint(logicRules);
+  // system cost functions
+  EXP2_CostFunction systemCostFunction(logicRules);
 
-	// system cost functions
-	EXP2_CostFunction systemCostFunction(logicRules);
+  // system operatingTrajectories
+  Eigen::Matrix<double, STATE_DIM, 1> stateOperatingPoint = Eigen::Matrix<double, STATE_DIM, 1>::Zero();
+  Eigen::Matrix<double, INPUT_DIM, 1> inputOperatingPoint = Eigen::Matrix<double, INPUT_DIM, 1>::Zero();
+  EXP2_SystemOperatingTrajectories operatingTrajectories(stateOperatingPoint, inputOperatingPoint);
 
-	// system operatingTrajectories
-	Eigen::Matrix<double,STATE_DIM,1> stateOperatingPoint = Eigen::Matrix<double,STATE_DIM,1>::Zero();
-	Eigen::Matrix<double,INPUT_DIM,1> inputOperatingPoint = Eigen::Matrix<double,INPUT_DIM,1>::Zero();
-	EXP2_SystemOperatingTrajectories operatingTrajectories(stateOperatingPoint, inputOperatingPoint);
+  /******************************************************************************************************/
+  /******************************************************************************************************/
+  /******************************************************************************************************/
 
+  // SLQ - single core version
+  SLQ<STATE_DIM, INPUT_DIM> slq(&systemDynamics, &systemDerivative, &systemConstraint, &systemCostFunction, &operatingTrajectories,
+                                slqSettings, logicRules);
 
-	/******************************************************************************************************/
-	/******************************************************************************************************/
-	/******************************************************************************************************/
+  // run single core SLQ
+  if (slqSettings.ddpSettings_.displayInfo_ || slqSettings.ddpSettings_.displayShortSummary_)
+    std::cerr << "\n>>> single-core SLQ" << std::endl;
+  slq.run(startTime, initState, finalTime, partitioningTimes);
 
-	// SLQ - single core version
-	SLQ<STATE_DIM, INPUT_DIM> slq(
-			&systemDynamics, &systemDerivative,
-			&systemConstraint, &systemCostFunction,
-			&operatingTrajectories, slqSettings, logicRules);
+  /******************************************************************************************************/
+  /******************************************************************************************************/
+  /******************************************************************************************************/
+  // get solution
+  SLQ_BASE<STATE_DIM, INPUT_DIM>::policy_data_t solution = slq.getSolution(finalTime);
 
-	// run single core SLQ
-	if (slqSettings.ddpSettings_.displayInfo_ || slqSettings.ddpSettings_.displayShortSummary_)
-		std::cerr << "\n>>> single-core SLQ" << std::endl;
-	slq.run(startTime, initState, finalTime, partitioningTimes);
+  // get performance indices
+  double totalCost, totalCost_mp;
+  double constraint1ISE, constraint1ISE_mp;
+  double constraint2ISE, constraint2ISE_mp;
+  slq.getPerformanceIndeces(totalCost, constraint1ISE, constraint2ISE);
+  slq.getPerformanceIndeces(totalCost_mp, constraint1ISE_mp, constraint2ISE_mp);
 
-	/******************************************************************************************************/
-	/******************************************************************************************************/
-	/******************************************************************************************************/
-	// get solution
-	SLQ_BASE<STATE_DIM, INPUT_DIM>::policy_data_t solution = slq.getSolution();
-
-	// get performance indices
-	double totalCost, totalCost_mp;
-	double constraint1ISE, constraint1ISE_mp;
-	double constraint2ISE, constraint2ISE_mp;
-	slq.getPerformanceIndeces(totalCost, constraint1ISE, constraint2ISE);
-	slq.getPerformanceIndeces(totalCost_mp, constraint1ISE_mp, constraint2ISE_mp);
-
-	/******************************************************************************************************/
-	/******************************************************************************************************/
-	/******************************************************************************************************/
+  /******************************************************************************************************/
+  /******************************************************************************************************/
+  /******************************************************************************************************/
 }
 
-
-int main(int argc, char** argv)
-{
-	testing::InitGoogleTest(&argc, argv);
-	return RUN_ALL_TESTS();
+int main(int argc, char** argv) {
+  testing::InitGoogleTest(&argc, argv);
+  return RUN_ALL_TESTS();
 }
-

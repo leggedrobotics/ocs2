@@ -417,7 +417,7 @@ class DDP_BASE : public Solver_BASE<STATE_DIM, INPUT_DIM> {
    */
   const DDP_Settings& ddpSettings() const;
 
-  void getSolutionPtr(policy_data_t* policyDataPtr) const override;
+  void getSolutionPtr(scalar_t finalTime, policy_data_t* policyDataPtr) const final;
 
   scalar_t getFinalTime() const override;
 

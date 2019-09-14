@@ -1,9 +1,9 @@
 
 
 #include <gtest/gtest.h>
-#include <ocs2_slq/riccati_equations/SequentialRiccatiEquationsNormalized.h>
-#include <ocs2_core/misc/randomMatrices.h>
 #include <ocs2_core/misc/LinearAlgebra.h>
+#include <ocs2_core/misc/randomMatrices.h>
+#include <ocs2_slq/riccati_equations/SequentialRiccatiEquationsNormalized.h>
 
 TEST(testRiccatiEquations, compareImplementations) {
   constexpr size_t STATE_DIM = 4;
@@ -25,7 +25,8 @@ TEST(testRiccatiEquations, compareImplementations) {
   using input_vector_t = SequentialRiccatiEquationsNormalized_t::input_vector_t;
   using s_vector_t = SequentialRiccatiEquationsNormalized_t::s_vector_t;
 
-  state_matrix_t A = state_matrix_t::Random();;
+  state_matrix_t A = state_matrix_t::Random();
+  ;
   state_input_matrix_t B = state_input_matrix_t::Random();
   eigen_scalar_t q_ = eigen_scalar_t::Random();
   state_vector_t qv = state_vector_t::Random();
@@ -50,12 +51,10 @@ TEST(testRiccatiEquations, compareImplementations) {
   SequentialRiccatiEquationsNormalized_t::state_vector_array_t QvFinal;
   SequentialRiccatiEquationsNormalized_t::state_matrix_array_t QmFinal;
 
-  riccatiEquationPrecompute.setData(&timeStamp,
-                                    &Am, &Bm, &q, &Qv, &Qm, &Rv, &RinvChol, &Pm,
-                                    &eventsPastTheEndIndeces, &qFinal, &QvFinal, &QmFinal);
-  riccatiEquationNoPrecompute.setData(&timeStamp,
-                                      &Am, &Bm, &q, &Qv, &Qm, &Rv, &RinvChol, &Pm,
-                                      &eventsPastTheEndIndeces, &qFinal, &QvFinal, &QmFinal);
+  riccatiEquationPrecompute.setData(&timeStamp, &Am, &Bm, &q, &Qv, &Qm, &Rv, &RinvChol, &Pm, &eventsPastTheEndIndeces, &qFinal, &QvFinal,
+                                    &QmFinal);
+  riccatiEquationNoPrecompute.setData(&timeStamp, &Am, &Bm, &q, &Qv, &Qm, &Rv, &RinvChol, &Pm, &eventsPastTheEndIndeces, &qFinal, &QvFinal,
+                                      &QmFinal);
 
   s_vector_t S = s_vector_t::Random();
   s_vector_t dSdz_precompute, dSdz_noPrecompute;
@@ -65,7 +64,7 @@ TEST(testRiccatiEquations, compareImplementations) {
   ASSERT_LE((dSdz_precompute - dSdz_noPrecompute).array().abs().maxCoeff(), 1e-9);
 }
 
-int main(int argc, char **argv) {
+int main(int argc, char** argv) {
   testing::InitGoogleTest(&argc, argv);
   return RUN_ALL_TESTS();
 }

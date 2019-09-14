@@ -27,10 +27,10 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#include <iostream>
+#include <gtest/gtest.h>
 #include <cstdlib>
 #include <ctime>
-#include <gtest/gtest.h>
+#include <iostream>
 
 #include <ocs2_slq/SLQ.h>
 #include <ocs2_slq/SLQ_MP.h>
@@ -39,13 +39,9 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 using namespace ocs2;
 
-enum {
-  STATE_DIM = 2,
-  INPUT_DIM = 1
-};
+enum { STATE_DIM = 2, INPUT_DIM = 1 };
 
 TEST(exp0_slq_test, exp0_slq_test) {
-
   SLQ_Settings slqSettings;
   slqSettings.useNominalTimeForBackwardPass_ = false;
   slqSettings.ddpSettings_.displayInfo_ = true;
@@ -60,6 +56,7 @@ TEST(exp0_slq_test, exp0_slq_test) {
   slqSettings.ddpSettings_.minLearningRate_ = 0.0001;
   slqSettings.ddpSettings_.minRelCost_ = 5e-4;
   slqSettings.ddpSettings_.checkNumericalStability_ = false;
+  slqSettings.ddpSettings_.useFeedbackPolicy_ = true;
   slqSettings.rolloutSettings_.absTolODE_ = 1e-10;
   slqSettings.rolloutSettings_.relTolODE_ = 1e-7;
   slqSettings.rolloutSettings_.maxNumStepsPerSecond_ = 10000;
@@ -78,7 +75,7 @@ TEST(exp0_slq_test, exp0_slq_test) {
   partitioningTimes.push_back(eventTimes[0]);
   partitioningTimes.push_back(finalTime);
 
-  Eigen::Vector2d initState(0.0, 2.0);
+  EXP0_System::state_vector_t initState(0.0, 2.0);
 
   /******************************************************************************************************/
   /******************************************************************************************************/
@@ -101,22 +98,18 @@ TEST(exp0_slq_test, exp0_slq_test) {
   Eigen::Matrix<double, 1, 1> inputOperatingPoint = Eigen::Matrix<double, 1, 1>::Zero();
   EXP0_SystemOperatingTrajectories operatingTrajectories(stateOperatingPoint, inputOperatingPoint);
 
-
   /******************************************************************************************************/
   /******************************************************************************************************/
   /******************************************************************************************************/
-
   // SLQ - single-thread version
-  SLQ<STATE_DIM, INPUT_DIM> slqST(
-      &systemDynamics, &systemDerivative,
-      &systemConstraint, &systemCostFunction,
-      &operatingTrajectories, slqSettings, logicRules);
+  SLQ<STATE_DIM, INPUT_DIM> slqST(&systemDynamics, &systemDerivative, &systemConstraint, &systemCostFunction, &operatingTrajectories,
+                                  slqSettings, logicRules);
 
   // SLQ - multi-thread version
-//  SLQ_MP<STATE_DIM, INPUT_DIM> slqMT(
-//		  &systemDynamics, &systemDerivative,
-//		  &systemConstraint, &systemCostFunction,
-//		  &operatingTrajectories, slqSettings, logicRules);
+  //  SLQ_MP<STATE_DIM, INPUT_DIM> slqMT(
+  //		  &systemDynamics, &systemDerivative,
+  //		  &systemConstraint, &systemCostFunction,
+  //		  &operatingTrajectories, slqSettings, logicRules);
 
   // run single core SLQ
   if (slqSettings.ddpSettings_.displayInfo_ || slqSettings.ddpSettings_.displayShortSummary_)
@@ -124,47 +117,55 @@ TEST(exp0_slq_test, exp0_slq_test) {
   slqST.run(startTime, initState, finalTime, partitioningTimes);
 
   // run multi-core SLQ
-//  if (slqSettings.ddpSettings_.displayInfo_ || slqSettings.ddpSettings_.displayShortSummary_)
-//	  std::cerr << "\n>>> multi-core SLQ" << std::endl;
-//  slqMT.run(startTime, initState, finalTime, partitioningTimes);
+  //  if (slqSettings.ddpSettings_.displayInfo_ || slqSettings.ddpSettings_.displayShortSummary_)
+  //	  std::cerr << "\n>>> multi-core SLQ" << std::endl;
+  //  slqMT.run(startTime, initState, finalTime, partitioningTimes);
 
   /******************************************************************************************************/
   /******************************************************************************************************/
   /******************************************************************************************************/
   // get solution
-  SLQ_BASE<STATE_DIM, INPUT_DIM>::policy_data_t solutionST = slqST.getSolution();
-//  SLQ_BASE<STATE_DIM, INPUT_DIM>::policy_data_t solutionMT = slqMT.getSolution();
+  SLQ_BASE<STATE_DIM, INPUT_DIM>::policy_data_t solutionST = slqST.getSolution(finalTime);
+  //  SLQ_BASE<STATE_DIM, INPUT_DIM>::policy_data_t solutionMT = slqMT.getSolution(finalTime);
 
   // get performance indices
   double totalCostST, totalCostMT;
   double constraint1ISE_ST, constraint1ISE_MT;
   double constraint2ISE_ST, constraint2ISE_MT;
   slqST.getPerformanceIndeces(totalCostST, constraint1ISE_ST, constraint2ISE_ST);
-//  slqMT.getPerformanceIndeces(totalCostMT, constraint1ISE_MT, constraint2ISE_MT);
+  //  slqMT.getPerformanceIndeces(totalCostMT, constraint1ISE_MT, constraint2ISE_MT);
 
   /******************************************************************************************************/
   /******************************************************************************************************/
   /******************************************************************************************************/
   const double expectedCost = 9.7667;
-  ASSERT_LT(fabs(totalCostST - expectedCost), 10 * slqSettings.ddpSettings_.minRelCost_) <<
-		  "MESSAGE: SLQ failed in the EXP0's cost test!";
-//  ASSERT_LT(fabs(totalCostMT - expectedCost), 10*slqSettings.ddpSettings_.minRelCost_) <<
-//		  "MESSAGE: SLQ_MP failed in the EXP1's cost test!";
+  ASSERT_LT(fabs(totalCostST - expectedCost), 10 * slqSettings.ddpSettings_.minRelCost_) << "MESSAGE: SLQ failed in the EXP0's cost test!";
+  //  ASSERT_LT(fabs(totalCostMT - expectedCost), 10*slqSettings.ddpSettings_.minRelCost_) <<
+  //		  "MESSAGE: SLQ_MP failed in the EXP1's cost test!";
 
   const double expectedISE1 = 0.0;
-  ASSERT_LT(fabs(constraint1ISE_ST - expectedISE1), 10 * slqSettings.ddpSettings_.minRelConstraint1ISE_) <<
-		  "MESSAGE: SLQ failed in the EXP0's type-1 constraint ISE test!";
-//  ASSERT_LT(fabs(constraint1ISE_MT - expectedISE1), 10*slqSettings.ddpSettings_.minRelConstraint1ISE_) <<
-//		  "MESSAGE: SLQ_MP failed in the EXP1's type-1 constraint ISE test!";
+  ASSERT_LT(fabs(constraint1ISE_ST - expectedISE1), 10 * slqSettings.ddpSettings_.minRelConstraint1ISE_)
+      << "MESSAGE: SLQ failed in the EXP0's type-1 constraint ISE test!";
+  //  ASSERT_LT(fabs(constraint1ISE_MT - expectedISE1), 10*slqSettings.ddpSettings_.minRelConstraint1ISE_) <<
+  //		  "MESSAGE: SLQ_MP failed in the EXP1's type-1 constraint ISE test!";
 
   const double expectedISE2 = 0.0;
-  ASSERT_LT(fabs(constraint2ISE_ST - expectedISE2), 10 * slqSettings.ddpSettings_.minRelConstraint1ISE_) <<
-		  "MESSAGE: SLQ failed in the EXP0's type-2 constraint ISE test!";
-//  ASSERT_LT(fabs(constraint2ISE_MT - expectedISE2), 10*slqSettings.ddpSettings_.minRelConstraint1ISE_) <<
-//		  "MESSAGE: SLQ_MP failed in the EXP1's type-2 constraint ISE test!";
+  ASSERT_LT(fabs(constraint2ISE_ST - expectedISE2), 10 * slqSettings.ddpSettings_.minRelConstraint1ISE_)
+      << "MESSAGE: SLQ failed in the EXP0's type-2 constraint ISE test!";
+  //  ASSERT_LT(fabs(constraint2ISE_MT - expectedISE2), 10*slqSettings.ddpSettings_.minRelConstraint1ISE_) <<
+  //		  "MESSAGE: SLQ_MP failed in the EXP1's type-2 constraint ISE test!";
+
+  double ctrlFinalTime;
+  if (slqSettings.ddpSettings_.useFeedbackPolicy_) {
+    ctrlFinalTime = dynamic_cast<SLQ<STATE_DIM, INPUT_DIM>::linear_controller_t*>(solutionST.mpcController_.get())->timeStamp_.back();
+  } else {
+    ctrlFinalTime = dynamic_cast<SLQ<STATE_DIM, INPUT_DIM>::feedforward_controller_t*>(solutionST.mpcController_.get())->timeStamp_.back();
+  }
+  ASSERT_DOUBLE_EQ(solutionST.mpcTimeTrajectory_.back(), finalTime) << "MESSAGE: ILQR_ST failed in policy final time of trajectory!";
+  ASSERT_DOUBLE_EQ(ctrlFinalTime, finalTime) << "MESSAGE: ILQR_ST failed in policy final time of controller!";
 }
 
-int main(int argc, char **argv) {
+int main(int argc, char** argv) {
   testing::InitGoogleTest(&argc, argv);
   return RUN_ALL_TESTS();
 }

@@ -1199,12 +1199,17 @@ const DDP_Settings& DDP_BASE<STATE_DIM, INPUT_DIM>::ddpSettings() const {
 /******************************************************************************************************/
 /***************************************************************************************************** */
 template <size_t STATE_DIM, size_t INPUT_DIM>
-void DDP_BASE<STATE_DIM, INPUT_DIM>::getSolutionPtr(policy_data_t* policyDataPtr) const {
+void DDP_BASE<STATE_DIM, INPUT_DIM>::getSolutionPtr(scalar_t finalTime, policy_data_t* policyDataPtr) const {
   // total number of nodes
   int N = 0;
   for (const scalar_array_t& timeTrajectory_i : nominalTimeTrajectoriesStock_) {
     N += timeTrajectory_i.size();
   }
+
+  auto upperBound = [](const scalar_array_t& array, scalar_t value) {
+    auto firstLargerValueIterator = std::upper_bound(array.begin(), array.end(), value);
+    return static_cast<int>(firstLargerValueIterator - array.begin());
+  };
 
   // fill trajectories
   policyDataPtr->mpcTimeTrajectory_.clear();
@@ -1213,29 +1218,35 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::getSolutionPtr(policy_data_t* policyDataPtr
   policyDataPtr->mpcStateTrajectory_.reserve(N);
   policyDataPtr->mpcInputTrajectory_.clear();
   policyDataPtr->mpcInputTrajectory_.reserve(N);
-  for (int i = 0; i < nominalTimeTrajectoriesStock_.size(); i++) {
+  for (size_t i = initActivePartition_; i <= finalActivePartition_; i++) {
+    // break if the start time of the partition is greater than the final time
+    if (nominalTimeTrajectoriesStock_[i].front() > finalTime) {
+      break;
+    }
+    // length of the copy
+    const int length = upperBound(nominalTimeTrajectoriesStock_[i], finalTime);
+
     policyDataPtr->mpcTimeTrajectory_.insert(policyDataPtr->mpcTimeTrajectory_.end(), nominalTimeTrajectoriesStock_[i].begin(),
-                                             nominalTimeTrajectoriesStock_[i].end());
+                                             nominalTimeTrajectoriesStock_[i].begin() + length);
     policyDataPtr->mpcStateTrajectory_.insert(policyDataPtr->mpcStateTrajectory_.end(), nominalStateTrajectoriesStock_[i].begin(),
-                                              nominalStateTrajectoriesStock_[i].end());
+                                              nominalStateTrajectoriesStock_[i].begin() + length);
     policyDataPtr->mpcInputTrajectory_.insert(policyDataPtr->mpcInputTrajectory_.end(), nominalInputTrajectoriesStock_[i].begin(),
-                                              nominalInputTrajectoriesStock_[i].end());
+                                              nominalInputTrajectoriesStock_[i].begin() + length);
   }
 
   // fill controller
   if (ddpSettings_.useFeedbackPolicy_) {
-    policyDataPtr->mpcController_.reset();
+    policyDataPtr->mpcController_.reset(new linear_controller_t);
     // concatenate controller stock into a single controller
-    for (const linear_controller_t& controller_i : nominalControllersStock_) {
-      if (controller_i.empty()) {
-        continue;  // some time partitions may be unused
+    for (size_t i = initActivePartition_; i <= finalActivePartition_; i++) {
+      // break if the start time of the partition is greater than the final time
+      if (nominalControllersStock_[i].timeStamp_.front() > finalTime) {
+        break;
       }
+      // length of the copy
+      const int length = upperBound(nominalControllersStock_[i].timeStamp_, finalTime);
 
-      if (policyDataPtr->mpcController_) {
-        policyDataPtr->mpcController_->concatenate(&controller_i);
-      } else {
-        policyDataPtr->mpcController_.reset(controller_i.clone());
-      }
+      policyDataPtr->mpcController_->concatenate(&(nominalControllersStock_[i]), 0, length);
     }
   } else {
     policyDataPtr->mpcController_.reset(

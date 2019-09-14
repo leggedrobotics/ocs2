@@ -328,16 +328,18 @@ class Solver_BASE {
   /**
    * @brief Returns the optimized policy data.
    *
+   * @param [in] finalTime: The final time.
    * @param [out] policyDataPtr: The optimized policy data.
    */
-  virtual void getSolutionPtr(policy_data_t* policyDataPtr) const = 0;
+  virtual void getSolutionPtr(scalar_t finalTime, policy_data_t* policyDataPtr) const = 0;
 
   /**
    * @brief Returns the optimized policy data.
    *
+   * @param [in] finalTime: The final time.
    * @return: The optimized policy data.
    */
-  policy_data_t getSolution() const;
+  policy_data_t getSolution(scalar_t finalTime) const;
 
   /**
    * Calculates the value function at the given time and state.

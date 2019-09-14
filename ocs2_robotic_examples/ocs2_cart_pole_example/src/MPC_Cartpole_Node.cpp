@@ -37,19 +37,17 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 using namespace ocs2;
 using namespace cartpole;
 
-int main(int argc, char **argv)
-{
-	// task file
-	if (argc <= 1) throw std::runtime_error("No task file specified. Aborting.");
-	std::string taskFileFolderName = std::string(argv[1]);
+int main(int argc, char** argv) {
+  // task file
+  if (argc <= 1) throw std::runtime_error("No task file specified. Aborting.");
+  std::string taskFileFolderName = std::string(argv[1]);
 
-	CartPoleInterface cartPoleInterface(taskFileFolderName);
+  CartPoleInterface cartPoleInterface(taskFileFolderName);
 
-	// Launch MPC ROS node
-	MPC_ROS_Cartpole mpcNode(cartPoleInterface.getMpc(), "cartpole");
-	mpcNode.launchNodes(argc, argv);
+  // Launch MPC ROS node
+  MPC_ROS_Cartpole mpcNode(cartPoleInterface.getMpc(), "cartpole");
+  mpcNode.launchNodes(argc, argv);
 
-	// Successful exit
-	return 0;
+  // Successful exit
+  return 0;
 }
-

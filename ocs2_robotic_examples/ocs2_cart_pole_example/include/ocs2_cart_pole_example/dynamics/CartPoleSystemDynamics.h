@@ -44,11 +44,11 @@ class CartPoleSytemDynamics : public SystemDynamicsBaseAD<cartpole::STATE_DIM_, 
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
   using BASE = SystemDynamicsBaseAD<cartpole::STATE_DIM_, cartpole::INPUT_DIM_, 1>;
-  using typename BASE::scalar_t;
-  using typename BASE::state_vector_t;
-  using typename BASE::state_matrix_t;
   using typename BASE::input_vector_t;
+  using typename BASE::scalar_t;
   using typename BASE::state_input_matrix_t;
+  using typename BASE::state_matrix_t;
+  using typename BASE::state_vector_t;
 
   using cart_pole_parameters_t = CartPoleParameters<scalar_t>;
 

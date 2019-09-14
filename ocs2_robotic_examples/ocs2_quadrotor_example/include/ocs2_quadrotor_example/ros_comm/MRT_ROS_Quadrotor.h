@@ -44,7 +44,7 @@ namespace quadrotor {
  */
 using MRT_ROS_Quadrotor = MRT_ROS_Interface<quadrotor::STATE_DIM_, quadrotor::INPUT_DIM_>;
 
-} // namespace quadrotor
-} // namespace ocs2
+}  // namespace quadrotor
+}  // namespace ocs2
 
 #endif /* MRT_ROS_QUADROTOR_OCS2_H_ */

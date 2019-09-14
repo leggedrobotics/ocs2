@@ -34,143 +34,121 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <array>
 
 #include <ocs2_core/Dimensions.h>
-#include <ocs2_core/dynamics/ControlledSystemBase.h>
 #include <ocs2_core/control/LinearController.h>
+#include <ocs2_core/dynamics/ControlledSystemBase.h>
 #include <ocs2_core/misc/LinearInterpolation.h>
 #include <ocs2_core/misc/Numerics.h>
 
-namespace ocs2{
+namespace ocs2 {
 
 /**
  * Rollout sensitivity equations class
  *
  * @tparam STATE_DIM: Dimension of the state space.
  * @tparam INPUT_DIM: Dimension of the control input space.
-  */
+ */
 template <size_t STATE_DIM, size_t INPUT_DIM>
-class RolloutSensitivityEquations : public ControlledSystemBase<STATE_DIM, INPUT_DIM>
-{
-public:
-	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+class RolloutSensitivityEquations : public ControlledSystemBase<STATE_DIM, INPUT_DIM> {
+ public:
+  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-	typedef ControlledSystemBase<STATE_DIM, INPUT_DIM> BASE;
+  typedef ControlledSystemBase<STATE_DIM, INPUT_DIM> BASE;
 
-	typedef Dimensions<STATE_DIM, INPUT_DIM> DIMENSIONS;
-	using scalar_t = typename DIMENSIONS::scalar_t;
-	using scalar_array_t = typename DIMENSIONS::scalar_array_t;
-	using state_vector_t = typename DIMENSIONS::state_vector_t;
-	using state_vector_array_t = typename DIMENSIONS::state_vector_array_t;
-	using input_vector_t = typename DIMENSIONS::input_vector_t;
-	using input_vector_array_t = typename DIMENSIONS::input_vector_array_t;
-	using state_matrix_t = typename DIMENSIONS::state_matrix_t;
-	using state_matrix_array_t = typename DIMENSIONS::state_matrix_array_t;
-	using state_input_matrix_t = typename DIMENSIONS::state_input_matrix_t;
-	using state_input_matrix_array_t = typename DIMENSIONS::state_input_matrix_array_t;
-	using input_state_matrix_t = typename DIMENSIONS::input_state_matrix_t;
-	using input_state_matrix_array_t = typename DIMENSIONS::input_state_matrix_array_t;
+  typedef Dimensions<STATE_DIM, INPUT_DIM> DIMENSIONS;
+  using scalar_t = typename DIMENSIONS::scalar_t;
+  using scalar_array_t = typename DIMENSIONS::scalar_array_t;
+  using state_vector_t = typename DIMENSIONS::state_vector_t;
+  using state_vector_array_t = typename DIMENSIONS::state_vector_array_t;
+  using input_vector_t = typename DIMENSIONS::input_vector_t;
+  using input_vector_array_t = typename DIMENSIONS::input_vector_array_t;
+  using state_matrix_t = typename DIMENSIONS::state_matrix_t;
+  using state_matrix_array_t = typename DIMENSIONS::state_matrix_array_t;
+  using state_input_matrix_t = typename DIMENSIONS::state_input_matrix_t;
+  using state_input_matrix_array_t = typename DIMENSIONS::state_input_matrix_array_t;
+  using input_state_matrix_t = typename DIMENSIONS::input_state_matrix_t;
+  using input_state_matrix_array_t = typename DIMENSIONS::input_state_matrix_array_t;
 
-	using linear_controller_t = LinearController<STATE_DIM, INPUT_DIM>;
+  using linear_controller_t = LinearController<STATE_DIM, INPUT_DIM>;
 
-	/**
-	 * The default constructor.
-	 */
-	RolloutSensitivityEquations() = default;
+  /**
+   * The default constructor.
+   */
+  RolloutSensitivityEquations() = default;
 
-	/**
-	 * Default destructor.
-	 */
-	virtual ~RolloutSensitivityEquations() = default;
+  /**
+   * Default destructor.
+   */
+  virtual ~RolloutSensitivityEquations() = default;
 
-	/**
-	 * Returns pointer to the class.
-	 *
-	 * @return A raw pointer to the class.
-	 */
-	virtual RolloutSensitivityEquations<STATE_DIM, INPUT_DIM>* clone() const {
+  /**
+   * Returns pointer to the class.
+   *
+   * @return A raw pointer to the class.
+   */
+  virtual RolloutSensitivityEquations<STATE_DIM, INPUT_DIM>* clone() const {
+    return new RolloutSensitivityEquations<STATE_DIM, INPUT_DIM>(*this);
+  }
 
-		return new RolloutSensitivityEquations<STATE_DIM, INPUT_DIM>(*this);
-	}
+  /**
+   * Sets Data
+   */
+  void setData(const scalar_array_t* timeTrajectoryPtr, const state_matrix_array_t* AmTrajectoryPtr,
+               const state_input_matrix_array_t* BmTrajectoryPtr, const state_vector_array_t* flowMapTrajectoryPtr,
+               const scalar_array_t* sensitivityControllerTimePtr, const input_vector_array_t* sensitivityControllerFeedforwardPtr,
+               const input_state_matrix_array_t* sensitivityControllerFeedbackPtr) {
+    AmFunc_.setData(timeTrajectoryPtr, AmTrajectoryPtr);
+    BmFunc_.setData(timeTrajectoryPtr, BmTrajectoryPtr);
+    flowMapFunc_.setData(timeTrajectoryPtr, flowMapTrajectoryPtr);
 
-	/**
-	 * Sets Data
-	 */
-	void setData(
-			const scalar_array_t* timeTrajectoryPtr,
-			const state_matrix_array_t* AmTrajectoryPtr,
-			const state_input_matrix_array_t* BmTrajectoryPtr,
-			const state_vector_array_t* flowMapTrajectoryPtr,
-			const scalar_array_t* sensitivityControllerTimePtr,
-			const input_vector_array_t* sensitivityControllerFeedforwardPtr,
-			const input_state_matrix_array_t* sensitivityControllerFeedbackPtr)  {
+    linearController_.setController(*sensitivityControllerTimePtr, *sensitivityControllerFeedforwardPtr, *sensitivityControllerFeedbackPtr);
 
-		AmFunc_.setData(timeTrajectoryPtr, AmTrajectoryPtr);
-		BmFunc_.setData(timeTrajectoryPtr, BmTrajectoryPtr);
-		flowMapFunc_.setData(timeTrajectoryPtr, flowMapTrajectoryPtr);
+    this->setController(&linearController_);
+  }
 
-		linearController_.setController(
-				*sensitivityControllerTimePtr,
-				*sensitivityControllerFeedforwardPtr,
-				*sensitivityControllerFeedbackPtr);
+  /**
+   * Reset the Riccati equation
+   */
+  void reset() {}
 
-		this->setController(&linearController_);
-	}
+  /**
+   * Sets the multiplier of exogenous part of the equation. It is either zero
+   * or plus-minus 1/(s_{i+1}-s_{i})
+   *
+   * @param [in] multiplier: the multiplier of exogenous part of the equation.
+   */
+  void setMultiplier(const scalar_t& multiplier) { multiplier_ = multiplier; }
 
-	/**
-	 * Reset the Riccati equation
-	 */
-	void reset() {
+  /**
+   * Computes Derivative
+   *
+   * @param [in] t: time
+   * @param [in] nabla_Xv: state sensitivity vector
+   * @param [in] nabla_Uv: input sensitivity vector which is computed by using sensitivity controller.
+   * @param [out] derivatives: time derivative of the state sensitivity vector
+   */
+  void computeFlowMap(const scalar_t& t, const state_vector_t& nabla_x, const input_vector_t& nabla_u, state_vector_t& derivative) {
+    auto indexAlpha = AmFunc_.interpolate(t, Am_);
+    BmFunc_.interpolate(indexAlpha, Bm_);
 
-	}
+    if (!numerics::almost_eq(multiplier_, 0.0)) {
+      flowMapFunc_.interpolate(indexAlpha, flowMap_);
+      derivative = Am_ * nabla_x + Bm_ * nabla_u + multiplier_ * flowMap_;
+    } else {
+      derivative = Am_ * nabla_x + Bm_ * nabla_u;
+    }
+  }
 
-	/**
-	 * Sets the multiplier of exogenous part of the equation. It is either zero
-	 * or plus-minus 1/(s_{i+1}-s_{i})
-	 *
-	 * @param [in] multiplier: the multiplier of exogenous part of the equation.
-	 */
-	void setMultiplier(const scalar_t& multiplier) {
+ protected:
+  scalar_t multiplier_ = 0.0;
+  linear_controller_t linearController_;
 
-		multiplier_ = multiplier;
-	}
+  state_matrix_t Am_;
+  state_input_matrix_t Bm_;
+  state_vector_t flowMap_;
 
-	/**
-	 * Computes Derivative
-	 *
-	 * @param [in] t: time
-	 * @param [in] nabla_Xv: state sensitivity vector
-	 * @param [in] nabla_Uv: input sensitivity vector which is computed by using sensitivity controller.
-	 * @param [out] derivatives: time derivative of the state sensitivity vector
-	 */
-	void computeFlowMap(
-			const scalar_t& t,
-			const state_vector_t& nabla_x,
-			const input_vector_t& nabla_u,
-			state_vector_t& derivative) {
-
-		auto indexAlpha = AmFunc_.interpolate(t, Am_);
-		BmFunc_.interpolate(indexAlpha,  Bm_);
-
-		if (!numerics::almost_eq(multiplier_, 0.0)) {
-			flowMapFunc_.interpolate(indexAlpha,  flowMap_);
-			derivative = Am_*nabla_x + Bm_*nabla_u + multiplier_*flowMap_;
-		} else {
-			derivative = Am_*nabla_x + Bm_*nabla_u;
-		}
-	}
-
-
-protected:
-	scalar_t multiplier_ = 0.0;
-	linear_controller_t linearController_;
-
-	state_matrix_t       Am_;
-	state_input_matrix_t Bm_;
-	state_vector_t       flowMap_;
-
-	EigenLinearInterpolation<state_matrix_t> AmFunc_;
-	EigenLinearInterpolation<state_input_matrix_t> BmFunc_;
-	EigenLinearInterpolation<state_vector_t> flowMapFunc_;
+  EigenLinearInterpolation<state_matrix_t> AmFunc_;
+  EigenLinearInterpolation<state_input_matrix_t> BmFunc_;
+  EigenLinearInterpolation<state_vector_t> flowMapFunc_;
 };
 
-} // namespace ocs2
-
+}  // namespace ocs2

@@ -36,55 +36,51 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 namespace ocs2 {
 namespace cartpole {
 
-class MPC_ROS_Cartpole : public MPC_ROS_Interface<cartpole::STATE_DIM_, cartpole::INPUT_DIM_>
-{
-public:
-	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+class MPC_ROS_Cartpole : public MPC_ROS_Interface<cartpole::STATE_DIM_, cartpole::INPUT_DIM_> {
+ public:
+  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-	using BASE = MPC_ROS_Interface<cartpole::STATE_DIM_, cartpole::INPUT_DIM_>;
+  using BASE = MPC_ROS_Interface<cartpole::STATE_DIM_, cartpole::INPUT_DIM_>;
 
-	using scalar_t = typename mpc_t::scalar_t;
-	using scalar_array_t = typename mpc_t::scalar_array_t;
-	using size_array_t = typename mpc_t::size_array_t;
-	using state_vector_t = typename mpc_t::state_vector_t;
-	using state_vector_array_t = typename mpc_t::state_vector_array_t;
-	using state_vector_array2_t = typename mpc_t::state_vector_array2_t;
-	using input_vector_t = typename mpc_t::input_vector_t;
-	using input_vector_array_t = typename mpc_t::input_vector_array_t;
-	using input_vector_array2_t = typename mpc_t::input_vector_array2_t;
-	using controller_t = typename mpc_t::controller_t;
-	using input_state_matrix_t = typename mpc_t::input_state_matrix_t;
-	using input_state_matrix_array_t = typename mpc_t::input_state_matrix_array_t;
+  using scalar_t = typename mpc_t::scalar_t;
+  using scalar_array_t = typename mpc_t::scalar_array_t;
+  using size_array_t = typename mpc_t::size_array_t;
+  using state_vector_t = typename mpc_t::state_vector_t;
+  using state_vector_array_t = typename mpc_t::state_vector_array_t;
+  using state_vector_array2_t = typename mpc_t::state_vector_array2_t;
+  using input_vector_t = typename mpc_t::input_vector_t;
+  using input_vector_array_t = typename mpc_t::input_vector_array_t;
+  using input_vector_array2_t = typename mpc_t::input_vector_array2_t;
+  using controller_t = typename mpc_t::controller_t;
+  using input_state_matrix_t = typename mpc_t::input_state_matrix_t;
+  using input_state_matrix_array_t = typename mpc_t::input_state_matrix_array_t;
 
-	using cost_desired_trajectories_t = CostDesiredTrajectories<scalar_t>;
+  using cost_desired_trajectories_t = CostDesiredTrajectories<scalar_t>;
 
-	using system_observation_t = SystemObservation<cartpole::STATE_DIM_, cartpole::INPUT_DIM_>;
+  using system_observation_t = SystemObservation<cartpole::STATE_DIM_, cartpole::INPUT_DIM_>;
 
-	using ros_msg_conversions_t = RosMsgConversions<cartpole::STATE_DIM_, cartpole::INPUT_DIM_>;
+  using ros_msg_conversions_t = RosMsgConversions<cartpole::STATE_DIM_, cartpole::INPUT_DIM_>;
 
-	/**
-	 * Default constructor
-	 */
-	MPC_ROS_Cartpole() = default;
+  /**
+   * Default constructor
+   */
+  MPC_ROS_Cartpole() = default;
 
-	/**
-	 * Constructor.
-	 *
-	 * @param [in] mpcPtr: The MPC object to be interfaced.
-	 * @param [in] nodeName: The node's name.
-	 */
-	MPC_ROS_Cartpole(
-			mpc_t &mpc,
-			const std::string &nodeName = "robot_mpc")
-	: BASE(&mpc, nodeName) {}
+  /**
+   * Constructor.
+   *
+   * @param [in] mpcPtr: The MPC object to be interfaced.
+   * @param [in] nodeName: The node's name.
+   */
+  MPC_ROS_Cartpole(mpc_t& mpc, const std::string& nodeName = "robot_mpc") : BASE(&mpc, nodeName) {}
 
-	/**
-	 * Default destructor.
-	 */
-	virtual ~MPC_ROS_Cartpole() = default;
+  /**
+   * Default destructor.
+   */
+  virtual ~MPC_ROS_Cartpole() = default;
 };
 
-} // namespace cartpole
-} // namespace ocs2
+}  // namespace cartpole
+}  // namespace ocs2
 
 #endif /* MPC_ROS_CARTPOLE_OCS2_H_ */

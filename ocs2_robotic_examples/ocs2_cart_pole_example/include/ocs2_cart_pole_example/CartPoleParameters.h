@@ -30,132 +30,115 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifndef CART_POLE_PARAMETERS_OCS2_H_
 #define CART_POLE_PARAMETERS_OCS2_H_
 
-#include <vector>
-#include <string>
 #include <iostream>
+#include <string>
+#include <vector>
 
-#include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/info_parser.hpp>
+#include <boost/property_tree/ptree.hpp>
 
 namespace ocs2 {
 namespace cartpole {
 
-template<typename SCALAR_T>
-class CartPoleParameters
-{
-public:
-	/**
-	 * Constructor.
-	 */
-	CartPoleParameters(
-			SCALAR_T cartMass = 1.0,
-			SCALAR_T poleMass = 1.0,
-			SCALAR_T poleLength = 1.0,
-			SCALAR_T poleWidth = 0.05,
-			SCALAR_T gravity = 9.8)
+template <typename SCALAR_T>
+class CartPoleParameters {
+ public:
+  /**
+   * Constructor.
+   */
+  CartPoleParameters(SCALAR_T cartMass = 1.0, SCALAR_T poleMass = 1.0, SCALAR_T poleLength = 1.0, SCALAR_T poleWidth = 0.05,
+                     SCALAR_T gravity = 9.8)
 
-	: cartMass_(cartMass)
-	, poleMass_(poleMass)
-	, poleLength_(poleLength)
-	, poleWidth_(poleWidth)
-	, gravity_(gravity)
-	{
-		computeInertiaTerms();
-	}
+      : cartMass_(cartMass), poleMass_(poleMass), poleLength_(poleLength), poleWidth_(poleWidth), gravity_(gravity) {
+    computeInertiaTerms();
+  }
 
-	/**
-	 * Default destructor.
-	 */
-	~CartPoleParameters() = default;
+  /**
+   * Default destructor.
+   */
+  ~CartPoleParameters() = default;
 
-	/**
-	 * Displays the Cart-Pole's parameters.
-	 */
-	inline void display() {
-		std::cerr << "Cart-pole parameters: " << std::endl;
-		std::cerr << "cartMass:   " << cartMass_ << std::endl;
-		std::cerr << "poleMass:   " << poleMass_ << std::endl;
-		std::cerr << "poleLength: " << poleLength_ << std::endl;
-		std::cerr << "poleWidth:  " << poleWidth_ << std::endl;
-		std::cerr << "poleMoi:    " << poleMoi_ << std::endl;
-		std::cerr << "gravity:    " << gravity_ << std::endl;
-	}
+  /**
+   * Displays the Cart-Pole's parameters.
+   */
+  inline void display() {
+    std::cerr << "Cart-pole parameters: " << std::endl;
+    std::cerr << "cartMass:   " << cartMass_ << std::endl;
+    std::cerr << "poleMass:   " << poleMass_ << std::endl;
+    std::cerr << "poleLength: " << poleLength_ << std::endl;
+    std::cerr << "poleWidth:  " << poleWidth_ << std::endl;
+    std::cerr << "poleMoi:    " << poleMoi_ << std::endl;
+    std::cerr << "gravity:    " << gravity_ << std::endl;
+  }
 
-	/**
-	 * Loads the Cart-Pole's parameters.
-	 */
-	inline void loadSettings(const std::string& filename, bool verbose = true) {
+  /**
+   * Loads the Cart-Pole's parameters.
+   */
+  inline void loadSettings(const std::string& filename, bool verbose = true) {
+    boost::property_tree::ptree pt;
+    boost::property_tree::read_info(filename, pt);
 
-		boost::property_tree::ptree pt;
-		boost::property_tree::read_info(filename, pt);
+    if (verbose) std::cerr << "\n #### Cart-pole Parameters:" << std::endl;
+    if (verbose) std::cerr << " #### =========================================" << std::endl;
 
-		if (verbose) std::cerr << "\n #### Cart-pole Parameters:" << std::endl;
-		if (verbose) std::cerr << " #### =========================================" << std::endl;
+    try {
+      cartMass_ = pt.get<SCALAR_T>("CartPoleParameters.cartMass");
+      if (verbose) std::cerr << " #### cartMass ......... " << cartMass_ << std::endl;
+    } catch (const std::exception& e) {
+      if (verbose) std::cerr << " #### cartMass ......... " << cartMass_ << "\t(default)" << std::endl;
+    }
 
-		try {
-			cartMass_ = pt.get<SCALAR_T>("CartPoleParameters.cartMass");
-			if (verbose) std::cerr << " #### cartMass ......... " << cartMass_ << std::endl;
-		}
-		catch (const std::exception &e) {
-			if (verbose) std::cerr << " #### cartMass ......... " << cartMass_ << "\t(default)" << std::endl;
-		}
+    try {
+      poleMass_ = pt.get<SCALAR_T>("CartPoleParameters.poleMass");
+      if (verbose) std::cerr << " #### poleMass ......... " << poleMass_ << std::endl;
+    } catch (const std::exception& e) {
+      if (verbose) std::cerr << " #### poleMass ......... " << poleMass_ << "\t(default)" << std::endl;
+    }
 
-		try {
-			poleMass_ = pt.get<SCALAR_T>("CartPoleParameters.poleMass");
-			if (verbose) std::cerr << " #### poleMass ......... " << poleMass_ << std::endl;
-		}
-		catch (const std::exception &e) {
-			if (verbose) std::cerr << " #### poleMass ......... " << poleMass_ << "\t(default)" << std::endl;
-		}
+    try {
+      poleLength_ = pt.get<SCALAR_T>("CartPoleParameters.poleLength");
+      if (verbose) std::cerr << " #### poleLength ....... " << poleLength_ << std::endl;
+    } catch (const std::exception& e) {
+      if (verbose) std::cerr << " #### poleLength ....... " << poleLength_ << "\t(default)" << std::endl;
+    }
 
-		try {
-			poleLength_ = pt.get<SCALAR_T>("CartPoleParameters.poleLength");
-			if (verbose) std::cerr << " #### poleLength ....... " << poleLength_ << std::endl;
-		}
-		catch (const std::exception &e) {
-			if (verbose) std::cerr << " #### poleLength ....... " << poleLength_ << "\t(default)" << std::endl;
-		}
+    try {
+      poleWidth_ = pt.get<SCALAR_T>("CartPoleParameters.poleWidth");
+      if (verbose) std::cerr << " #### poleWidth ........ " << poleWidth_ << std::endl;
+    } catch (const std::exception& e) {
+      if (verbose) std::cerr << " #### poleWidth ........ " << poleWidth_ << "\t(default)" << std::endl;
+    }
 
-		try {
-			poleWidth_ = pt.get<SCALAR_T>("CartPoleParameters.poleWidth");
-			if (verbose) std::cerr << " #### poleWidth ........ " << poleWidth_ << std::endl;
-		}
-		catch (const std::exception &e) {
-			if (verbose) std::cerr << " #### poleWidth ........ " << poleWidth_ << "\t(default)" << std::endl;
-		}
+    try {
+      gravity_ = pt.get<SCALAR_T>("CartPoleParameters.gravity");
+      if (verbose) std::cerr << " #### gravity .......... " << gravity_ << std::endl;
+    } catch (const std::exception& e) {
+      if (verbose) std::cerr << " #### gravity .......... " << gravity_ << "\t(default)" << std::endl;
+    }
 
-		try {
-			gravity_ = pt.get<SCALAR_T>("CartPoleParameters.gravity");
-			if (verbose) std::cerr << " #### gravity .......... " << gravity_ << std::endl;
-		}
-		catch (const std::exception &e) {
-			if (verbose) std::cerr << " #### gravity .......... " << gravity_ << "\t(default)" << std::endl;
-		}
+    computeInertiaTerms();
+  }
 
-		computeInertiaTerms();
-	}
+ public:
+  // For safety, these parameters cannot be modified
+  SCALAR_T cartMass_;        // [kg]
+  SCALAR_T poleMass_;        // [kg]
+  SCALAR_T poleLength_;      // [m]
+  SCALAR_T poleWidth_;       // [m]
+  SCALAR_T poleHalfLength_;  // [m]
+  SCALAR_T poleMoi_;         // [kg*m^2]
+  SCALAR_T poleSteinerMoi_;  // [kg*m^2]
+  SCALAR_T gravity_;         // [m/s^2]
 
-public:
-	// For safety, these parameters cannot be modified
-	SCALAR_T cartMass_; // [kg]
-	SCALAR_T poleMass_; // [kg]
-	SCALAR_T poleLength_; // [m]
-	SCALAR_T poleWidth_; // [m]
-	SCALAR_T poleHalfLength_; // [m]
-	SCALAR_T poleMoi_; // [kg*m^2]
-	SCALAR_T poleSteinerMoi_; // [kg*m^2]
-	SCALAR_T gravity_; // [m/s^2]
-
-private:
-
-	void computeInertiaTerms() {
-		poleHalfLength_ = poleLength_ / 2.0;
-		poleMoi_ = 1.0 / 12.0 * poleMass_ * (poleWidth_*poleWidth_ + poleLength_*poleLength_);
-		poleSteinerMoi_ = poleMoi_ + poleMass_*poleHalfLength_*poleHalfLength_;
-	}
+ private:
+  void computeInertiaTerms() {
+    poleHalfLength_ = poleLength_ / 2.0;
+    poleMoi_ = 1.0 / 12.0 * poleMass_ * (poleWidth_ * poleWidth_ + poleLength_ * poleLength_);
+    poleSteinerMoi_ = poleMoi_ + poleMass_ * poleHalfLength_ * poleHalfLength_;
+  }
 };
 
-} //namespace cartpole
-} // namespace ocs2
+}  // namespace cartpole
+}  // namespace ocs2
 
-#endif // CART_POLE_PARAMETERS_OCS2_H_
+#endif  // CART_POLE_PARAMETERS_OCS2_H_

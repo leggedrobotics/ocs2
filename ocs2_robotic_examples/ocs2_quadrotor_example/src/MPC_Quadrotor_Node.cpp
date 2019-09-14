@@ -27,24 +27,22 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  ******************************************************************************/
 
-#include "ocs2_quadrotor_example/QuadrotorInterface.h"
 #include <ocs2_comm_interfaces/ocs2_ros_interfaces/mpc/MPC_ROS_Interface.h>
+#include "ocs2_quadrotor_example/QuadrotorInterface.h"
 
 using namespace ocs2;
 
-int main(int argc, char **argv)
-{
-	// task file
-	if (argc <= 1) throw std::runtime_error("No task file specified. Aborting.");
-	std::string taskFileFolderName = std::string(argv[1]);
+int main(int argc, char** argv) {
+  // task file
+  if (argc <= 1) throw std::runtime_error("No task file specified. Aborting.");
+  std::string taskFileFolderName = std::string(argv[1]);
 
-	quadrotor::QuadrotorInterface quadrotorInterface(taskFileFolderName);
+  quadrotor::QuadrotorInterface quadrotorInterface(taskFileFolderName);
 
-	// Launch MPC ROS node
-	MPC_ROS_Interface<quadrotor::STATE_DIM_, quadrotor::INPUT_DIM_> mpcNode(&quadrotorInterface.getMpc(), "quadrotor");
-	mpcNode.launchNodes(argc, argv);
+  // Launch MPC ROS node
+  MPC_ROS_Interface<quadrotor::STATE_DIM_, quadrotor::INPUT_DIM_> mpcNode(&quadrotorInterface.getMpc(), "quadrotor");
+  mpcNode.launchNodes(argc, argv);
 
-	// Successful exit
-	return 0;
+  // Successful exit
+  return 0;
 }
-

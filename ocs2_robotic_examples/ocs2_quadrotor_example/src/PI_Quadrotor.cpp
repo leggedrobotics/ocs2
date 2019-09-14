@@ -1,12 +1,12 @@
 #include <cfenv>
 
+#include <ocs2_comm_interfaces/ocs2_ros_interfaces/mpc/MPC_ROS_Interface.h>
 #include <ocs2_core/Dimensions.h>
 #include <ocs2_core/initialization/SystemOperatingPoint.h>
 #include <ocs2_mpc/MPC_PI.h>
 #include <ocs2_mpc/MPC_Settings.h>
 #include <ocs2_robotic_tools/common/RobotInterfaceBase.h>
 #include <ocs2_oc/pi_solver/PiSolver.hpp>
-#include <ocs2_comm_interfaces/ocs2_ros_interfaces/mpc/MPC_ROS_Interface.h>
 
 #include <ocs2_quadrotor_example/cost/QuadrotorCost.h>
 #include <ocs2_quadrotor_example/definitions.h>

@@ -35,13 +35,12 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 namespace ocs2 {
 namespace quadrotor {
 
-enum quadrotor : size_t
-{
-	STATE_DIM_ = 12,
-	INPUT_DIM_ = 4,
+enum quadrotor : size_t {
+  STATE_DIM_ = 12,
+  INPUT_DIM_ = 4,
 };
 
-} // namespace quadrotor
-} // namespace ocs2
+}  // namespace quadrotor
+}  // namespace ocs2
 
-#endif // DEFINITIONS_OCS2_H_
+#endif  // DEFINITIONS_OCS2_H_

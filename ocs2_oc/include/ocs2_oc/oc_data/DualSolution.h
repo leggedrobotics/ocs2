@@ -29,21 +29,18 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
-#include <memory>
-
 #include <ocs2_core/Dimensions.h>
-#include <ocs2_core/control/ControllerBase.h>
 
 namespace ocs2 {
 
 /**
- * This class contains the primal problem's solution.
+ * This class contains the dual problem's solution.
  *
  * @tparam STATE_DIM: Dimension of the state space.
  * @tparam INPUT_DIM: Dimension of the control input space.
  */
 template <size_t STATE_DIM, size_t INPUT_DIM>
-struct PrimalSolution {
+struct DualSolution {
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
   using dim_t = Dimensions<STATE_DIM, INPUT_DIM>;
@@ -51,15 +48,6 @@ struct PrimalSolution {
   using scalar_array_t = typename dim_t::scalar_array_t;
   using state_vector_array_t = typename dim_t::state_vector_array_t;
   using input_vector_array_t = typename dim_t::input_vector_array_t;
-
-  using controller_t = ControllerBase<STATE_DIM, INPUT_DIM>;
-
-  scalar_array_t timeTrajectory_;
-  state_vector_array_t stateTrajectory_;
-  input_vector_array_t inputTrajectory_;
-  scalar_array_t eventTimes_;
-  size_array_t subsystemsSequence_;
-  std::unique_ptr<controller_t> controllerPtr_;
 };
 
 }  // namespace ocs2

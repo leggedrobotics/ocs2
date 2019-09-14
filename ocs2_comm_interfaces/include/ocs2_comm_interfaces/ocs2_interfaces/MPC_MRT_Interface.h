@@ -1,8 +1,5 @@
 #pragma once
 
-#include <ocs2_comm_interfaces/ocs2_interfaces/MRT_BASE.h>
-
-#include <chrono>
 #include <condition_variable>
 #include <csignal>
 #include <ctime>
@@ -10,9 +7,11 @@
 #include <string>
 #include <thread>
 
-#include <ocs2_comm_interfaces/SystemObservation.h>
 #include <ocs2_core/logic/machine/HybridLogicRulesMachine.h>
+#include <ocs2_core/misc/Benchmark.h>
 #include <ocs2_mpc/MPC_BASE.h>
+
+#include "ocs2_comm_interfaces/ocs2_interfaces/MRT_BASE.h"
 
 // For RosWarnStream, can be removed if std::cout is used instead
 #include <ros/ros.h>
@@ -144,9 +143,7 @@ class MPC_MRT_Interface final : public MRT_BASE<STATE_DIM, INPUT_DIM> {
  protected:
   mpc_t& mpc_;
 
-  size_t numMpcIterations_;
-  scalar_t maxDelay_ = 0;
-  scalar_t meanDelay_ = 0;
+  benchmark::RepeatedTimer mpcTimer_;
 
   // MPC inputs
   system_observation_t currentObservation_;

@@ -10,15 +10,22 @@ namespace ocs2 {
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
 MPC_MRT_Interface<STATE_DIM, INPUT_DIM>::MPC_MRT_Interface(mpc_t& mpc, std::shared_ptr<HybridLogicRules> logicRules)
-    : Base(std::move(logicRules)), mpc_(mpc), numMpcIterations_(0) {}
+    : Base(std::move(logicRules)), mpc_(mpc) {
+  // correcting solutionTimeWindow
+  if (!mpc_.settings().recedingHorizon_) {
+    mpc_.settings().solutionTimeWindow_ = -1;
+  }
+
+  mpcTimer_.reset();
+}
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
 void MPC_MRT_Interface<STATE_DIM, INPUT_DIM>::resetMpcNode(const cost_desired_trajectories_t& initCostDesiredTrajectories) {
-  numMpcIterations_ = 0;
   mpc_.reset();
+  mpcTimer_.reset();
   setTargetTrajectories(initCostDesiredTrajectories);
 }
 
@@ -56,33 +63,35 @@ void MPC_MRT_Interface<STATE_DIM, INPUT_DIM>::setModeSequence(const mode_sequenc
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
 void MPC_MRT_Interface<STATE_DIM, INPUT_DIM>::advanceMpc() {
-  std::chrono::time_point<std::chrono::steady_clock> startTime, finishTime;
-  if (mpc_.settings().debugPrint_) {
-    startTime = std::chrono::steady_clock::now();
+  // measure the delay in running MPC
+  mpcTimer_.startTimer();
+
+  std::unique_lock<std::mutex> lock(observationMutex_);
+  system_observation_t currentObservation = currentObservation_;
+  lock.unlock();
+
+  mpc_.run(currentObservation.time(), currentObservation.state());
+  fillMpcOutputBuffers(currentObservation, mpc_, this->policyBuffer_.get(), this->commandBuffer_.get());
+
+  // measure the delay for sending ROS messages
+  mpcTimer_.endTimer();
+
+  // check MPC delay and solution window compatibility
+  scalar_t timeWindow = mpc_.settings().solutionTimeWindow_;
+  if (mpc_.settings().solutionTimeWindow_ < 0) {
+    timeWindow = mpc_.getSolverPtr()->getFinalTime() - currentObservation.time();
   }
-
-  system_observation_t mpcInitObservation;
-  {
-    std::lock_guard<std::mutex> lock(observationMutex_);
-    mpcInitObservation = currentObservation_;
+  if (timeWindow < 2.0 * mpcTimer_.getAverageInMilliseconds() * 1e-3) {
+    std::cerr << "WARNING: The solution time window might be shorter than the MPC delay!" << std::endl;
   }
-
-  mpc_.run(mpcInitObservation.time(), mpcInitObservation.state());
-  fillMpcOutputBuffers(std::move(mpcInitObservation), mpc_, this->policyBuffer_.get(), this->commandBuffer_.get());
-
-  // Incrementing numIterations must happen after fillMpcOutputBuffers
-  numMpcIterations_++;
 
   // measure the delay
   if (mpc_.settings().debugPrint_) {
-    finishTime = std::chrono::steady_clock::now();
-    auto currentDelay = std::chrono::duration<scalar_t, std::milli>(finishTime - startTime).count();
-    meanDelay_ += (currentDelay - meanDelay_) / numMpcIterations_;
-    maxDelay_ = std::max(maxDelay_, currentDelay);
-
     std::cerr << std::endl;
-    std::cerr << "### Average duration of MPC optimization is: " << meanDelay_ << " [ms]." << std::endl;
-    std::cerr << "### Maximum duration of MPC optimization is: " << maxDelay_ << " [ms]." << std::endl;
+    std::cerr << "### MPC ROS runtime " << std::endl;
+    std::cerr << "###   Maximum : " << mpcTimer_.getMaxIntervalInMilliseconds() << "[ms]." << std::endl;
+    std::cerr << "###   Average : " << mpcTimer_.getAverageInMilliseconds() << "[ms]." << std::endl;
+    std::cerr << "###   Latest  : " << mpcTimer_.getLastIntervalInMilliseconds() << "[ms]." << std::endl;
   }
 }
 
@@ -96,8 +105,11 @@ void MPC_MRT_Interface<STATE_DIM, INPUT_DIM>::fillMpcOutputBuffers(system_observ
   std::lock_guard<std::mutex> policyBufferLock(this->policyBufferMutex_);
 
   // get solution
-  const scalar_t startTime = mpcInitObservation.time();
-  const scalar_t finalTime = startTime + mpc.settings().solutionTimeWindow_ * 1e-3;
+  scalar_t startTime = mpcInitObservation.time();
+  scalar_t finalTime = startTime + mpc.settings().solutionTimeWindow_;
+  if (mpc.settings().solutionTimeWindow_ < 0) {
+    finalTime = mpc.getSolverPtr()->getFinalTime();
+  }
   mpc.getSolverPtr()->getSolutionPtr(finalTime, policyDataPtr);
 
   // command

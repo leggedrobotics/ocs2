@@ -58,7 +58,6 @@ void MPC_ROS_Interface<STATE_DIM, INPUT_DIM>::set(mpc_t* mpcPtr, const std::stri
   }
 
   mpcPtr_ = mpcPtr;
-  mpcSettings_ = mpcPtr->settings();
   robotName_ = robotName;
 
   terminateThread_ = false;
@@ -68,12 +67,11 @@ void MPC_ROS_Interface<STATE_DIM, INPUT_DIM>::set(mpc_t* mpcPtr, const std::stri
   resetRequestedEver_ = false;
 
   // correcting solutionTimeWindow
-  if (!mpcSettings_.recedingHorizon_) {
-    mpcSettings_.solutionTimeWindow_ = 1e+6;
+  if (!mpcPtr_->settings().recedingHorizon_) {
+    mpcPtr_->settings().solutionTimeWindow_ = -1;
   }
 
   mpcTimer_.reset();
-  currentDelay_ = 0.0;
 
   // Start thread for publishing
 #ifdef PUBLISH_THREAD
@@ -107,7 +105,6 @@ void MPC_ROS_Interface<STATE_DIM, INPUT_DIM>::reset(const cost_desired_trajector
   mpcPtr_->getSolverPtr()->setCostDesiredTrajectories(initCostDesiredTrajectories);
 
   mpcTimer_.reset();
-  currentDelay_ = 0.0;
 
   terminateThread_ = false;
   readyToPublish_ = false;
@@ -199,13 +196,6 @@ void MPC_ROS_Interface<STATE_DIM, INPUT_DIM>::publishPolicy(bool controllerIsUpd
   ocs2_msgs::mpc_input mpcInput;
   mpcInput.value.resize(INPUT_DIM);
 
-  // The message truncation time
-  const scalar_t t0 = commandData.mpcInitObservation_.time() + currentDelay_ * 1e-3;
-  const scalar_t tf = commandData.mpcInitObservation_.time() + mpcSettings_.solutionTimeWindow_ * 1e-3;
-  if (tf < t0 + 2.0 * mpcTimer_.getAverageInMilliseconds() * 1e-3) {
-    std::cerr << "WARNING: Message publishing time-horizon is shorter than the MPC delay!" << std::endl;
-  }
-
   const scalar_array_t& timeTrajectory = policyData.mpcTimeTrajectory_;
   const state_vector_array_t& stateTrajectory = policyData.mpcStateTrajectory_;
   const input_vector_array_t& inputTrajectory = policyData.mpcInputTrajectory_;
@@ -276,8 +266,10 @@ template <size_t STATE_DIM, size_t INPUT_DIM>
 void MPC_ROS_Interface<STATE_DIM, INPUT_DIM>::fillMpcOutputBuffers(system_observation_t mpcInitObservation, const mpc_t& mpc,
                                                                    policy_data_t* policyDataPtr, command_data_t* commandDataPtr) {
   // get solution
-  const scalar_t startTime = mpcInitObservation.time();
-  const scalar_t finalTime = startTime + mpc.settings().solutionTimeWindow_ * 1e-3;
+  scalar_t finalTime = mpcInitObservation.time() + mpc.settings().solutionTimeWindow_;
+  if (mpc.settings().solutionTimeWindow_ < 0) {
+    finalTime = mpc.getSolverPtr()->getFinalTime();
+  }
   mpc.getSolverPtr()->getSolutionPtr(finalTime, policyDataPtr);
 
   // command
@@ -301,12 +293,11 @@ void MPC_ROS_Interface<STATE_DIM, INPUT_DIM>::mpcObservationCallback(const ocs2_
   system_observation_t currentObservation;
   ros_msg_conversions_t::readObservationMsg(*msg, currentObservation);
 
-  if (mpcSettings_.adaptiveRosMsgTimeWindow_ || mpcSettings_.debugPrint_) {
-    mpcTimer_.startTimer();
-  }
+  // measure the delay in running MPC
+  mpcTimer_.startTimer();
 
+  // after each reset, perform user defined operation if specialized
   if (initialCall_) {
-    // after each reset, perform user defined operation if specialized
     initCall(currentObservation);
   }
 
@@ -315,26 +306,26 @@ void MPC_ROS_Interface<STATE_DIM, INPUT_DIM>::mpcObservationCallback(const ocs2_
     taskListener->update();
   }
 
-  // run SLQ-MPC
+  // run MPC
   bool controllerIsUpdated = mpcPtr_->run(currentObservation.time(), currentObservation.state());
   policy_data_t policyData;
   command_data_t commandData;
   fillMpcOutputBuffers(currentObservation, *mpcPtr_, &policyData, &commandData);
 
   // measure the delay for sending ROS messages
-  if (mpcSettings_.adaptiveRosMsgTimeWindow_ || mpcSettings_.debugPrint_) {
-    mpcTimer_.endTimer();
-  }
+  mpcTimer_.endTimer();
 
-  // measure the delay for sending ROS messages
-  if (mpcSettings_.adaptiveRosMsgTimeWindow_) {
-    currentDelay_ = std::min(mpcTimer_.getLastIntervalInMilliseconds(), mpcTimer_.getAverageInMilliseconds() * 0.9);
-  } else {
-    currentDelay_ = 0.0;
+  // check MPC delay and solution window compatibility
+  scalar_t timeWindow = mpcPtr_->settings().solutionTimeWindow_;
+  if (mpcPtr_->settings().solutionTimeWindow_ < 0) {
+    timeWindow = mpcPtr_->getSolverPtr()->getFinalTime() - currentObservation.time();
+  }
+  if (timeWindow < 2.0 * mpcTimer_.getAverageInMilliseconds() * 1e-3) {
+    std::cerr << "WARNING: The solution time window might be shorter than the MPC delay!" << std::endl;
   }
 
   // display
-  if (mpcSettings_.debugPrint_) {
+  if (mpcPtr_->settings().debugPrint_) {
     std::cerr << std::endl;
     std::cerr << "### MPC ROS runtime " << std::endl;
     std::cerr << "###   Maximum : " << mpcTimer_.getMaxIntervalInMilliseconds() << "[ms]." << std::endl;
@@ -363,14 +354,14 @@ void MPC_ROS_Interface<STATE_DIM, INPUT_DIM>::mpcObservationCallback(const ocs2_
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
 void MPC_ROS_Interface<STATE_DIM, INPUT_DIM>::mpcTargetTrajectoriesCallback(const ocs2_msgs::mpc_target_trajectories::ConstPtr& msg) {
-  if (!mpcSettings_.recedingHorizon_) {
+  if (!mpcPtr_->settings().recedingHorizon_) {
     throw std::runtime_error("Target trajectories can only be updated in receding horizon mode.");
   }
 
   cost_desired_trajectories_t costDesiredTrajectories;
   RosMsgConversions<STATE_DIM, INPUT_DIM>::readTargetTrajectoriesMsg(*msg, costDesiredTrajectories);
 
-  if (mpcSettings_.debugPrint_) {
+  if (mpcPtr_->settings().debugPrint_) {
     std::cerr << "### The target position is updated to " << std::endl;
     costDesiredTrajectories.display();
   }

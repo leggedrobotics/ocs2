@@ -58,12 +58,9 @@ class MPC_Settings {
         recedingHorizon_(true),
         blockwiseMovingHorizon_(false),
         useParallelRiccatiSolver_(false),
-        solutionTimeWindow_(1e+8),
-        adaptiveRosMsgTimeWindow_(false),
-        mpcDesiredFrequency_(-1)  // [Hz]
-        ,
-        mrtDesiredFrequency_(100)  // [Hz]
-        ,
+        solutionTimeWindow_(-1),    // [s]
+        mpcDesiredFrequency_(-1),   // [Hz]
+        mrtDesiredFrequency_(100),  // [Hz]
         maxTimeStep_(1e-3) {}
 
   /**
@@ -106,8 +103,6 @@ class MPC_Settings {
   bool useParallelRiccatiSolver_;
   /** The time window for retrieving the optimized output (controller and trajectory). */
   double solutionTimeWindow_;
-  /** Use an adaptive scheme to estimate the time window for broadcasting the optimized output. */
-  bool adaptiveRosMsgTimeWindow_;
   /**
    * MPC loop frequency in Hz. This setting is only used in Dummy_Loop for testing.
    * If set to a positive number, MPC loop of test will be simulated to run by this
@@ -263,17 +258,6 @@ inline void MPC_Settings::loadSettings(const std::string& filename, bool verbose
   } catch (const std::exception& e) {
     if (verbose) {
       std::cerr << " #### Option loader : option 'solutionTimeWindow' ......... " << solutionTimeWindow_ << " (default)" << std::endl;
-    }
-  }
-
-  try {
-    adaptiveRosMsgTimeWindow_ = pt.get<bool>("mpc.adaptiveRosMsgTimeWindow");
-    if (verbose) {
-      std::cerr << " #### Option loader : option 'adaptiveRosMsgTimeWindow' ... " << adaptiveRosMsgTimeWindow_ << std::endl;
-    }
-  } catch (const std::exception& e) {
-    if (verbose) {
-      std::cerr << " #### Option loader : option 'adaptiveRosMsgTimeWindow' ... " << adaptiveRosMsgTimeWindow_ << " (default)" << std::endl;
     }
   }
 

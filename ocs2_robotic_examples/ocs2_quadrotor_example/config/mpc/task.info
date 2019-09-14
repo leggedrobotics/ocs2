@@ -80,25 +80,17 @@ mpc
 {
     runtimeMaxNumIterations     1
     initMaxNumIterations        10
-
     runtimeMaxLearningRate      1.0
     runtimeMinLearningRate      1.0
     initMinLearningRate         0.1
     initMaxLearningRate         1.0
-
-    debugPrint                  1
     coldStart                   0
     recedingHorizon             1       ; use receding horizon MPC
-
     useParallelRiccatiSolver    1       ; use parallel riccati solver in MP case and recedingHorizon fashion
-
-    forwardSimulationTime       28      ; [ms] MRT time
-
-    solutionTimeWindow          500     ; [ms]
-    adaptiveRosMsgTimeWindow    0
-
+    solutionTimeWindow          0.5     ; [s]
     mpcDesiredFrequency         100     ; [Hz] 
     mrtDesiredFrequency         400     ; [Hz]  
+    debugPrint                  1
 }
 
 

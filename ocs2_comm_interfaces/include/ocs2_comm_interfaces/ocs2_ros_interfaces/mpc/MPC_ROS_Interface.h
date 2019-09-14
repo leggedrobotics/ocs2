@@ -27,8 +27,7 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#ifndef MPC_ROS_INTERFACE_OCS2_H_
-#define MPC_ROS_INTERFACE_OCS2_H_
+#pragma once
 
 #include <Eigen/Dense>
 #include <array>
@@ -277,7 +276,6 @@ class MPC_ROS_Interface {
    * Variables
    */
   mpc_t* mpcPtr_;
-  MPC_Settings mpcSettings_;
 
   std::string robotName_;
 
@@ -305,16 +303,13 @@ class MPC_ROS_Interface {
   std::condition_variable msgReady_;
 
   benchmark::RepeatedTimer mpcTimer_;
-  scalar_t currentDelay_;
 
   // MPC reset
   bool initialCall_;
   std::mutex resetMutex_;
-  std::atomic<bool> resetRequestedEver_;
+  std::atomic_bool resetRequestedEver_;
 };
 
 }  // namespace ocs2
 
 #include "implementation/MPC_ROS_Interface.h"
-
-#endif /* MPC_ROS_INTERFACE_OCS2_H_ */

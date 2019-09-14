@@ -13,9 +13,6 @@
 
 #include "ocs2_comm_interfaces/ocs2_interfaces/MRT_BASE.h"
 
-// For RosWarnStream, can be removed if std::cout is used instead
-#include <ros/ros.h>
-
 namespace ocs2 {
 
 /**

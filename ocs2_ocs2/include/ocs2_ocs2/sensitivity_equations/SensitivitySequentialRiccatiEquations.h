@@ -27,11 +27,11 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#ifndef SENSITIVITYSEQUENTIALRICCATIEQUATIONS_OCS2_H_
-#define SENSITIVITYSEQUENTIALRICCATIEQUATIONS_OCS2_H_
+#pragma once
+
+#include <Eigen/Dense>
 
 #include <array>
-#include <Eigen/Dense>
 #include <limits>
 
 #include <ocs2_core/Dimensions.h>
@@ -369,7 +369,3 @@ private:
 };
 
 } // namespace ocs2
-
-
-
-#endif /* SENSITIVITYSEQUENTIALRICCATIEQUATIONS_OCS2_H_ */

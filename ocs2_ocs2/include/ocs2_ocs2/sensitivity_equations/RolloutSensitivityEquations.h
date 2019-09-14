@@ -27,11 +27,11 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#ifndef ROLLOUTSENSITIVITYEQUATIONS_OCS2_H_
-#define ROLLOUTSENSITIVITYEQUATIONS_OCS2_H_
+#pragma once
+
+#include <Eigen/Dense>
 
 #include <array>
-#include <Eigen/Dense>
 
 #include <ocs2_core/Dimensions.h>
 #include <ocs2_core/dynamics/ControlledSystemBase.h>
@@ -173,6 +173,4 @@ protected:
 };
 
 } // namespace ocs2
-
-#endif /* ROLLOUTSENSITIVITYEQUATIONS_OCS2_H_ */
 

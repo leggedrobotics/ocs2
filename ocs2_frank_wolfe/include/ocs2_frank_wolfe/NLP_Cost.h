@@ -27,8 +27,7 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#ifndef NLP_COST_OCS2_H_
-#define NLP_COST_OCS2_H_
+#pragma once
 
 #include <ocs2_core/Dimensions.h>
 
@@ -100,5 +99,3 @@ public:
 };
 
 }  // namespace ocs2
-
-#endif /* NLP_COST_OCS2_H_ */

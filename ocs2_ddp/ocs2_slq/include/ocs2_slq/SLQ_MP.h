@@ -27,8 +27,7 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#ifndef SLQ_MP_OCS2_H_
-#define SLQ_MP_OCS2_H_
+#pragma once
 
 #include <atomic>
 #include <condition_variable>
@@ -303,5 +302,3 @@ class SLQ_MP : public SLQ_BASE<STATE_DIM, INPUT_DIM> {
 }  // namespace ocs2
 
 #include "implementation/SLQ_MP.h"
-
-#endif /* SLQ_MP_H_ */

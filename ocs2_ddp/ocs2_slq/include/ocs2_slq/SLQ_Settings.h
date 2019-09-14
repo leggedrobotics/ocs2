@@ -27,8 +27,7 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#ifndef SLQ_SETTINGS_OCS2_H_
-#define SLQ_SETTINGS_OCS2_H_
+#pragma once
 
 #include <boost/property_tree/info_parser.hpp>
 #include <boost/property_tree/ptree.hpp>
@@ -173,5 +172,3 @@ inline void SLQ_Settings::loadSettings(const std::string& filename, const std::s
 }
 
 }  // namespace ocs2
-
-#endif /* SLQ_SETTINGS_OCS2_H_ */

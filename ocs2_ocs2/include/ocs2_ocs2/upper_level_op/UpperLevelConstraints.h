@@ -27,8 +27,7 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#ifndef UPPER_LEVEL_CONSTRAINTS_OCS2_H_
-#define UPPER_LEVEL_CONSTRAINTS_OCS2_H_
+#pragma once
 
 #include <ocs2_frank_wolfe/NLP_Constraints.h>
 
@@ -132,5 +131,3 @@ private:
 };
 
 }  // namespace ocs2
-
-#endif /* UPPER_LEVEL_CONSTRAINTS_OCS2_H_ */

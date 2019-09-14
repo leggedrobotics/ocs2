@@ -27,8 +27,7 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#ifndef GSLQSOLVER_OCS2_H_
-#define GSLQSOLVER_OCS2_H_
+#pragma once
 
 #include <ocs2_slq/GLQP.h>
 
@@ -175,5 +174,3 @@ private:
 } // namespace ocs2
 
 #include "implementation/GSLQSolver.h"
-
-#endif /* GSLQSOLVER_H_ */

@@ -27,8 +27,7 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#ifndef MPC_SLQ_OCS2_H_
-#define MPC_SLQ_OCS2_H_
+#pragma once
 
 #include <ocs2_core/Dimensions.h>
 #include <ocs2_ddp_base/DDP_BASE.h>
@@ -150,5 +149,3 @@ class MPC_SLQ : public MPC_BASE<STATE_DIM, INPUT_DIM> {
 }  // namespace ocs2
 
 #include "implementation/MPC_SLQ.h"
-
-#endif /* MPC_SLQ_OCS2_H_ */

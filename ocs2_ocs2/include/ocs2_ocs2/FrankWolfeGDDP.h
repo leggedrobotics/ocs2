@@ -27,8 +27,7 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#ifndef FRANK_WOLFE_DDP_OCS2_H_
-#define FRANK_WOLFE_DDP_OCS2_H_
+#pragma once
 
 #include <array>
 #include <memory>
@@ -102,5 +101,3 @@ protected:
 } // namespace ocs2
 
 #include "implementation/FrankWolfeGDDP.h"
-
-#endif /* FRANK_WOLFE_DDP_OCS2_H_ */

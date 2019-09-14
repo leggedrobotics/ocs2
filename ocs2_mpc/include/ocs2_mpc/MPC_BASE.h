@@ -27,8 +27,7 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#ifndef MPC_BASE_OCS2_H_
-#define MPC_BASE_OCS2_H_
+#pragma once
 
 #include <Eigen/Dense>
 #include <cstddef>
@@ -256,5 +255,3 @@ class MPC_BASE {
 }  // namespace ocs2
 
 #include "implementation/MPC_BASE.h"
-
-#endif /* MPC_BASE_OCS2_H_ */

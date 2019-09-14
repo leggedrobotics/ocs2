@@ -27,8 +27,7 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#ifndef SYSTEMOBSERVATION_OCS2_H_
-#define SYSTEMOBSERVATION_OCS2_H_
+#pragma once
 
 #include <iostream>
 
@@ -113,5 +112,3 @@ class SystemObservation {
 };
 
 }  // namespace ocs2
-
-#endif /* SYSTEMOBSERVATION_OCS2_H_ */

@@ -27,11 +27,11 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#ifndef TARGETPOSECOMMAND_H_
-#define TARGETPOSECOMMAND_H_
+#pragma once
 
 #include <Eigen/Core>
 #include <Eigen/Geometry>
+
 #include <csignal>
 #include <iostream>
 #include <string>
@@ -137,5 +137,3 @@ class TargetPoseCommand {
 };
 
 }  // end of namespace switched_model
-
-#endif /* TARGETPOSECOMMAND_H_ */

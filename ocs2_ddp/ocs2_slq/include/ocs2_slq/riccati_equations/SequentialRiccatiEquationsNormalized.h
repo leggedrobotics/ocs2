@@ -27,8 +27,7 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  ******************************************************************************/
 
-#ifndef SEQUENTIALRICCATIEQUATIONSNORMALIZED_OCS2_H_
-#define SEQUENTIALRICCATIEQUATIONSNORMALIZED_OCS2_H_
+#pragma once
 
 #include <Eigen/Dense>
 #include <Eigen/StdVector>
@@ -396,5 +395,3 @@ class SequentialRiccatiEquationsNormalized final : public OdeBase<STATE_DIM*(STA
 };
 
 }  // namespace ocs2
-
-#endif /* SEQUENTIALRICCATIEQUATIONSNORMALIZED_OCS2_H_ */

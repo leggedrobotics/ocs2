@@ -27,8 +27,7 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#ifndef SOLVER_BASE_OCS2_H_
-#define SOLVER_BASE_OCS2_H_
+#pragma once
 
 #include <Eigen/Dense>
 #include <Eigen/StdVector>
@@ -404,5 +403,3 @@ class Solver_BASE {
 }  // namespace ocs2
 
 #include "implementation/Solver_BASE.h"
-
-#endif /* SOLVER_BASE_OCS2_H_ */

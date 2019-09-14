@@ -125,8 +125,8 @@ TEST(exp0_slq_test, exp0_slq_test) {
   /******************************************************************************************************/
   /******************************************************************************************************/
   // get solution
-  SLQ_BASE<STATE_DIM, INPUT_DIM>::policy_data_t solutionST = slqST.getSolution(finalTime);
-  //  SLQ_BASE<STATE_DIM, INPUT_DIM>::policy_data_t solutionMT = slqMT.getSolution(finalTime);
+  SLQ_BASE<STATE_DIM, INPUT_DIM>::primal_solution_t solutionST = slqST.getPrimalSolution(finalTime);
+  //  SLQ_BASE<STATE_DIM, INPUT_DIM>::primal_solution_t solutionMT = slqMT.getPrimalSolution(finalTime);
 
   // get performance indices
   double totalCostST, totalCostMT;
@@ -157,12 +157,12 @@ TEST(exp0_slq_test, exp0_slq_test) {
 
   double ctrlFinalTime;
   if (slqSettings.ddpSettings_.useFeedbackPolicy_) {
-    ctrlFinalTime = dynamic_cast<SLQ<STATE_DIM, INPUT_DIM>::linear_controller_t*>(solutionST.mpcController_.get())->timeStamp_.back();
+    ctrlFinalTime = dynamic_cast<SLQ<STATE_DIM, INPUT_DIM>::linear_controller_t*>(solutionST.controllerPtr_.get())->timeStamp_.back();
   } else {
-    ctrlFinalTime = dynamic_cast<SLQ<STATE_DIM, INPUT_DIM>::feedforward_controller_t*>(solutionST.mpcController_.get())->timeStamp_.back();
+    ctrlFinalTime = dynamic_cast<SLQ<STATE_DIM, INPUT_DIM>::feedforward_controller_t*>(solutionST.controllerPtr_.get())->timeStamp_.back();
   }
-  ASSERT_DOUBLE_EQ(solutionST.mpcTimeTrajectory_.back(), finalTime) << "MESSAGE: ILQR_ST failed in policy final time of trajectory!";
-  ASSERT_DOUBLE_EQ(ctrlFinalTime, finalTime) << "MESSAGE: ILQR_ST failed in policy final time of controller!";
+  ASSERT_DOUBLE_EQ(solutionST.timeTrajectory_.back(), finalTime) << "MESSAGE: SLQ_ST failed in policy final time of trajectory!";
+  ASSERT_DOUBLE_EQ(ctrlFinalTime, finalTime) << "MESSAGE: SLQ_ST failed in policy final time of controller!";
 }
 
 int main(int argc, char** argv) {

@@ -126,8 +126,8 @@ TEST(exp0_ilqr_test, exp0_ilqr_test) {
   /******************************************************************************************************/
   /******************************************************************************************************/
   // get solution
-  ILQR_BASE<STATE_DIM, INPUT_DIM>::policy_data_t solutionST = ilqrST.getSolution(finalTime);
-  //  ILQR_BASE<STATE_DIM, INPUT_DIM>::policy_data_t solutionMT = ilqrMT.getSolution(finalTime);
+  ILQR_BASE<STATE_DIM, INPUT_DIM>::primal_solution_t solutionST = ilqrST.getPrimalSolution(finalTime);
+  //  ILQR_BASE<STATE_DIM, INPUT_DIM>::primal_solution_t solutionMT = ilqrMT.getPrimalSolution(finalTime);
 
   // get performance indices
   double totalCost_st, totalCost_mt;
@@ -159,11 +159,11 @@ TEST(exp0_ilqr_test, exp0_ilqr_test) {
 
   double ctrlFinalTime;
   if (ilqrSettings.ddpSettings_.useFeedbackPolicy_) {
-	  ctrlFinalTime = dynamic_cast<ILQR_ST<STATE_DIM, INPUT_DIM>::linear_controller_t*>(solutionST.mpcController_.get())->timeStamp_.back();
+	  ctrlFinalTime = dynamic_cast<ILQR_ST<STATE_DIM, INPUT_DIM>::linear_controller_t*>(solutionST.controllerPtr_.get())->timeStamp_.back();
   } else {
-	  ctrlFinalTime = dynamic_cast<ILQR_ST<STATE_DIM, INPUT_DIM>::feedforward_controller_t*>(solutionST.mpcController_.get())->timeStamp_.back();
+	  ctrlFinalTime = dynamic_cast<ILQR_ST<STATE_DIM, INPUT_DIM>::feedforward_controller_t*>(solutionST.controllerPtr_.get())->timeStamp_.back();
   }
-  ASSERT_DOUBLE_EQ(solutionST.mpcTimeTrajectory_.back(), finalTime) << "MESSAGE: ILQR_ST failed in policy final time of trajectory!";
+  ASSERT_DOUBLE_EQ(solutionST.timeTrajectory_.back(), finalTime) << "MESSAGE: ILQR_ST failed in policy final time of trajectory!";
   ASSERT_DOUBLE_EQ(ctrlFinalTime, finalTime) << "MESSAGE: ILQR_ST failed in policy final time of controller!";
 }
 

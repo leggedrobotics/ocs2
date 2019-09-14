@@ -76,7 +76,6 @@ class MPC_ILQR : public MPC_BASE<STATE_DIM, INPUT_DIM> {
   using typename BASE::controller_ptr_array_t;
   using typename BASE::cost_desired_trajectories_t;
   using typename BASE::mode_sequence_template_t;
-  using typename BASE::policy_data_t;
 
   using linear_controller_t = LinearController<STATE_DIM, INPUT_DIM>;
   using linear_controller_array_t = typename linear_controller_t::array_t;

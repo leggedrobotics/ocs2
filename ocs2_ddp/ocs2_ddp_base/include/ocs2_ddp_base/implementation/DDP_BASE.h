@@ -1199,7 +1199,7 @@ const DDP_Settings& DDP_BASE<STATE_DIM, INPUT_DIM>::ddpSettings() const {
 /******************************************************************************************************/
 /***************************************************************************************************** */
 template <size_t STATE_DIM, size_t INPUT_DIM>
-void DDP_BASE<STATE_DIM, INPUT_DIM>::getSolutionPtr(scalar_t finalTime, policy_data_t* policyDataPtr) const {
+void DDP_BASE<STATE_DIM, INPUT_DIM>::getPrimalSolutionPtr(scalar_t finalTime, primal_solution_t* primalSolutionPtr) const {
   // total number of nodes
   int N = 0;
   for (const scalar_array_t& timeTrajectory_i : nominalTimeTrajectoriesStock_) {
@@ -1212,12 +1212,12 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::getSolutionPtr(scalar_t finalTime, policy_d
   };
 
   // fill trajectories
-  policyDataPtr->mpcTimeTrajectory_.clear();
-  policyDataPtr->mpcTimeTrajectory_.reserve(N);
-  policyDataPtr->mpcStateTrajectory_.clear();
-  policyDataPtr->mpcStateTrajectory_.reserve(N);
-  policyDataPtr->mpcInputTrajectory_.clear();
-  policyDataPtr->mpcInputTrajectory_.reserve(N);
+  primalSolutionPtr->timeTrajectory_.clear();
+  primalSolutionPtr->timeTrajectory_.reserve(N);
+  primalSolutionPtr->stateTrajectory_.clear();
+  primalSolutionPtr->stateTrajectory_.reserve(N);
+  primalSolutionPtr->inputTrajectory_.clear();
+  primalSolutionPtr->inputTrajectory_.reserve(N);
   for (size_t i = initActivePartition_; i <= finalActivePartition_; i++) {
     // break if the start time of the partition is greater than the final time
     if (nominalTimeTrajectoriesStock_[i].front() > finalTime) {
@@ -1226,17 +1226,17 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::getSolutionPtr(scalar_t finalTime, policy_d
     // length of the copy
     const int length = upperBound(nominalTimeTrajectoriesStock_[i], finalTime);
 
-    policyDataPtr->mpcTimeTrajectory_.insert(policyDataPtr->mpcTimeTrajectory_.end(), nominalTimeTrajectoriesStock_[i].begin(),
-                                             nominalTimeTrajectoriesStock_[i].begin() + length);
-    policyDataPtr->mpcStateTrajectory_.insert(policyDataPtr->mpcStateTrajectory_.end(), nominalStateTrajectoriesStock_[i].begin(),
-                                              nominalStateTrajectoriesStock_[i].begin() + length);
-    policyDataPtr->mpcInputTrajectory_.insert(policyDataPtr->mpcInputTrajectory_.end(), nominalInputTrajectoriesStock_[i].begin(),
-                                              nominalInputTrajectoriesStock_[i].begin() + length);
+    primalSolutionPtr->timeTrajectory_.insert(primalSolutionPtr->timeTrajectory_.end(), nominalTimeTrajectoriesStock_[i].begin(),
+                                              nominalTimeTrajectoriesStock_[i].begin() + length);
+    primalSolutionPtr->stateTrajectory_.insert(primalSolutionPtr->stateTrajectory_.end(), nominalStateTrajectoriesStock_[i].begin(),
+                                               nominalStateTrajectoriesStock_[i].begin() + length);
+    primalSolutionPtr->inputTrajectory_.insert(primalSolutionPtr->inputTrajectory_.end(), nominalInputTrajectoriesStock_[i].begin(),
+                                               nominalInputTrajectoriesStock_[i].begin() + length);
   }
 
   // fill controller
   if (ddpSettings_.useFeedbackPolicy_) {
-    policyDataPtr->mpcController_.reset(new linear_controller_t);
+    primalSolutionPtr->controllerPtr_.reset(new linear_controller_t);
     // concatenate controller stock into a single controller
     for (size_t i = initActivePartition_; i <= finalActivePartition_; i++) {
       // break if the start time of the partition is greater than the final time
@@ -1246,16 +1246,16 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::getSolutionPtr(scalar_t finalTime, policy_d
       // length of the copy
       const int length = upperBound(nominalControllersStock_[i].timeStamp_, finalTime);
 
-      policyDataPtr->mpcController_->concatenate(&(nominalControllersStock_[i]), 0, length);
+      primalSolutionPtr->controllerPtr_->concatenate(&(nominalControllersStock_[i]), 0, length);
     }
   } else {
-    policyDataPtr->mpcController_.reset(
-        new feedforward_controller_t(policyDataPtr->mpcTimeTrajectory_, policyDataPtr->mpcInputTrajectory_));
+    primalSolutionPtr->controllerPtr_.reset(
+        new feedforward_controller_t(primalSolutionPtr->timeTrajectory_, primalSolutionPtr->inputTrajectory_));
   }
 
   // fill logic
-  policyDataPtr->eventTimes_ = this->getLogicRulesPtr()->eventTimes();
-  policyDataPtr->subsystemsSequence_ = this->getLogicRulesPtr()->subsystemsSequence();
+  primalSolutionPtr->eventTimes_ = this->getLogicRulesPtr()->eventTimes();
+  primalSolutionPtr->subsystemsSequence_ = this->getLogicRulesPtr()->subsystemsSequence();
 }
 
 /******************************************************************************************************/

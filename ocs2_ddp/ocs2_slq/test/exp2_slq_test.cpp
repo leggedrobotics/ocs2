@@ -112,7 +112,7 @@ TEST(exp2_slq_test, DISABLED_Exp2_slq_test) {
   /******************************************************************************************************/
   /******************************************************************************************************/
   // get solution
-  SLQ_BASE<STATE_DIM, INPUT_DIM>::policy_data_t solution = slq.getSolution(finalTime);
+  SLQ_BASE<STATE_DIM, INPUT_DIM>::primal_solution_t solution = slq.getPrimalSolution(finalTime);
 
   // get performance indices
   double totalCost, totalCost_mp;

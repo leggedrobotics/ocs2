@@ -41,7 +41,7 @@ class PiSolver final : public Solver_BASE<STATE_DIM, INPUT_DIM> {
   using typename Base::input_vector_array2_t;
   using typename Base::input_vector_array_t;
   using typename Base::input_vector_t;
-  using typename Base::policy_data_t;
+  using typename Base::primal_solution_t;
   using typename Base::scalar_array_t;
   using typename Base::scalar_t;
   using typename Base::state_input_matrix_t;
@@ -347,9 +347,9 @@ class PiSolver final : public Solver_BASE<STATE_DIM, INPUT_DIM> {
     throw std::runtime_error("not implemented.");
   }
 
-  scalar_t getFinalTime() const override { throw std::runtime_error("not implemented."); }
+  scalar_t getFinalTime() const final { throw std::runtime_error("not implemented."); }
 
-  const scalar_array_t& getPartitioningTimes() const override { throw std::runtime_error("not implemented."); }
+  const scalar_array_t& getPartitioningTimes() const final { throw std::runtime_error("not implemented."); }
 
   /**
    * @brief Sets the initial sampling policy for path integral rollouts
@@ -359,7 +359,7 @@ class PiSolver final : public Solver_BASE<STATE_DIM, INPUT_DIM> {
     controller_.setSamplingPolicy(std::move(samplingPolicy));
   }
 
-  void getSolutionPtr(scalar_t finalTime, policy_data_t* policyDataPtr) const final {
+  void getPrimalSolutionPtr(scalar_t finalTime, primal_solution_t* primalSolutionPtr) const final {
     // total number of nodes
     int N = 0;
     for (const scalar_array_t& timeTrajectory_i : nominalTimeTrajectoriesStock_) {
@@ -367,44 +367,44 @@ class PiSolver final : public Solver_BASE<STATE_DIM, INPUT_DIM> {
     }
 
     // fill trajectories
-    policyDataPtr->mpcTimeTrajectory_.clear();
-    policyDataPtr->mpcTimeTrajectory_.reserve(N);
-    policyDataPtr->mpcStateTrajectory_.clear();
-    policyDataPtr->mpcStateTrajectory_.reserve(N);
-    policyDataPtr->mpcInputTrajectory_.clear();
-    policyDataPtr->mpcInputTrajectory_.reserve(N);
+    primalSolutionPtr->timeTrajectory_.clear();
+    primalSolutionPtr->timeTrajectory_.reserve(N);
+    primalSolutionPtr->stateTrajectory_.clear();
+    primalSolutionPtr->stateTrajectory_.reserve(N);
+    primalSolutionPtr->inputTrajectory_.clear();
+    primalSolutionPtr->inputTrajectory_.reserve(N);
     for (int i = 0; i < nominalTimeTrajectoriesStock_.size(); i++) {
-      policyDataPtr->mpcTimeTrajectory_.insert(policyDataPtr->mpcTimeTrajectory_.end(), nominalTimeTrajectoriesStock_[i].begin(),
-                                               nominalTimeTrajectoriesStock_[i].end());
-      policyDataPtr->mpcStateTrajectory_.insert(policyDataPtr->mpcStateTrajectory_.end(), nominalStateTrajectoriesStock_[i].begin(),
-                                                nominalStateTrajectoriesStock_[i].end());
-      policyDataPtr->mpcInputTrajectory_.insert(policyDataPtr->mpcInputTrajectory_.end(), nominalInputTrajectoriesStock_[i].begin(),
-                                                nominalInputTrajectoriesStock_[i].end());
+      primalSolutionPtr->timeTrajectory_.insert(primalSolutionPtr->timeTrajectory_.end(), nominalTimeTrajectoriesStock_[i].begin(),
+                                                nominalTimeTrajectoriesStock_[i].end());
+      primalSolutionPtr->stateTrajectory_.insert(primalSolutionPtr->stateTrajectory_.end(), nominalStateTrajectoriesStock_[i].begin(),
+                                                 nominalStateTrajectoriesStock_[i].end());
+      primalSolutionPtr->inputTrajectory_.insert(primalSolutionPtr->inputTrajectory_.end(), nominalInputTrajectoriesStock_[i].begin(),
+                                                 nominalInputTrajectoriesStock_[i].end());
     }
 
     // fill controller
     if (piSettings_.useFeedbackPolicy_) {
-      policyDataPtr->mpcController_.reset();
+      primalSolutionPtr->controllerPtr_.reset();
       // concatenate controller stock into a single controller
       for (const pi_controller_t& controller_i : nominalControllersStock_) {
         if (controller_i.empty()) {
           continue;  // some time partitions may be unused
         }
 
-        if (policyDataPtr->mpcController_) {
-          policyDataPtr->mpcController_->concatenate(&controller_i);
+        if (primalSolutionPtr->controllerPtr_) {
+          primalSolutionPtr->controllerPtr_->concatenate(&controller_i);
         } else {
-          policyDataPtr->mpcController_.reset(controller_i.clone());
+          primalSolutionPtr->controllerPtr_.reset(controller_i.clone());
         }
       }
     } else {
-      policyDataPtr->mpcController_.reset(
-          new feedforward_controller_t(policyDataPtr->mpcTimeTrajectory_, policyDataPtr->mpcInputTrajectory_));
+      primalSolutionPtr->controllerPtr_.reset(
+          new feedforward_controller_t(primalSolutionPtr->timeTrajectory_, primalSolutionPtr->inputTrajectory_));
     }
 
     // fill logic
-    policyDataPtr->eventTimes_ = this->getLogicRulesPtr()->eventTimes();
-    policyDataPtr->subsystemsSequence_ = this->getLogicRulesPtr()->subsystemsSequence();
+    primalSolutionPtr->eventTimes_ = this->getLogicRulesPtr()->eventTimes();
+    primalSolutionPtr->subsystemsSequence_ = this->getLogicRulesPtr()->subsystemsSequence();
   }
 
   void rewindOptimizer(size_t firstIndex) override {}

@@ -22,7 +22,6 @@ class MPC_PI final : public MPC_BASE<STATE_DIM, INPUT_DIM> {
 
   using controller_ptr_array_t = typename BASE::controller_ptr_array_t;
   using controller_const_ptr_array_t = typename BASE::controller_const_ptr_array_t;
-  using typename BASE::policy_data_t;
 
   using solver_t = PiSolver<STATE_DIM, INPUT_DIM>;
   using constraint_t = typename solver_t::constraint_t;

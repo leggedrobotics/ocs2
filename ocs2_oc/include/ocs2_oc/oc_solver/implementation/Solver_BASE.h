@@ -117,10 +117,11 @@ bool Solver_BASE<STATE_DIM, INPUT_DIM>::updateCostDesiredTrajectories() {
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
-typename Solver_BASE<STATE_DIM, INPUT_DIM>::policy_data_t Solver_BASE<STATE_DIM, INPUT_DIM>::getSolution(scalar_t finalTime) const {
-  policy_data_t policyData;
-  getSolutionPtr(finalTime, &policyData);
-  return std::move(policyData);
+typename Solver_BASE<STATE_DIM, INPUT_DIM>::primal_solution_t Solver_BASE<STATE_DIM, INPUT_DIM>::getPrimalSolution(
+    scalar_t finalTime) const {
+  primal_solution_t primalSolution;
+  getPrimalSolutionPtr(finalTime, &primalSolution);
+  return std::move(primalSolution);
 }
 
 /******************************************************************************************************/

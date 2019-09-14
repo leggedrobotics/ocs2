@@ -87,7 +87,7 @@ class MPC_BASE {
   using mode_sequence_template_t = ModeSequenceTemplate<scalar_t>;
 
   using solver_base_t = Solver_BASE<STATE_DIM, INPUT_DIM>;
-  using policy_data_t = typename solver_base_t::policy_data_t;
+  using primal_solution_t = typename solver_base_t::primal_solution_t;
   using solver_base_ptr_t = typename solver_base_t::Ptr;
 
   /**

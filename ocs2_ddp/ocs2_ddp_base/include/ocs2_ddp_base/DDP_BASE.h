@@ -27,8 +27,7 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#ifndef DDP_BASE_OCS2_H_
-#define DDP_BASE_OCS2_H_
+#pragma once
 
 #include <ocs2_core/constraint/ConstraintBase.h>
 #include <ocs2_core/constraint/RelaxedBarrierPenalty.h>
@@ -129,7 +128,7 @@ class DDP_BASE : public Solver_BASE<STATE_DIM, INPUT_DIM> {
   using typename BASE::controller_t;
   using typename BASE::cost_desired_trajectories_t;
   using typename BASE::feedforward_controller_t;
-  using typename BASE::policy_data_t;
+  using typename BASE::primal_solution_t;
 
   using linear_controller_t = LinearController<STATE_DIM, INPUT_DIM>;
   using linear_controller_array_t = typename linear_controller_t::array_t;
@@ -417,7 +416,7 @@ class DDP_BASE : public Solver_BASE<STATE_DIM, INPUT_DIM> {
    */
   const DDP_Settings& ddpSettings() const;
 
-  void getSolutionPtr(scalar_t finalTime, policy_data_t* policyDataPtr) const final;
+  void getPrimalSolutionPtr(scalar_t finalTime, primal_solution_t* primalSolutionPtr) const final;
 
   scalar_t getFinalTime() const override;
 
@@ -842,5 +841,3 @@ class DDP_BASE : public Solver_BASE<STATE_DIM, INPUT_DIM> {
 }  // namespace ocs2
 
 #include "implementation/DDP_BASE.h"
-
-#endif /* DDP_BASE_OCS2_H_ */

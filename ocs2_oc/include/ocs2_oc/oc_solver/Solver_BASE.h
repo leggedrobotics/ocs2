@@ -32,6 +32,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <Eigen/Dense>
 #include <Eigen/StdVector>
+#include <unsupported/Eigen/MatrixFunctions>
+
 #include <algorithm>
 #include <array>
 #include <chrono>
@@ -39,7 +41,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <mutex>
 #include <numeric>
 #include <type_traits>
-#include <unsupported/Eigen/MatrixFunctions>
 #include <vector>
 
 #include <ocs2_core/Dimensions.h>
@@ -51,7 +52,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_core/misc/LinearAlgebra.h>
 #include <ocs2_core/misc/Numerics.h>
 
-#include "ocs2_oc/oc_data/PolicyData.h"
+#include "ocs2_oc/oc_data/PrimalSolution.h"
 
 namespace ocs2 {
 
@@ -129,7 +130,7 @@ class Solver_BASE {
 
   using cost_desired_trajectories_t = CostDesiredTrajectories<scalar_t>;
 
-  using policy_data_t = PolicyData<STATE_DIM, INPUT_DIM>;
+  using primal_solution_t = PrimalSolution<STATE_DIM, INPUT_DIM>;
 
   using logic_rules_machine_t = HybridLogicRulesMachine;
   using logic_rules_machine_ptr_t = typename logic_rules_machine_t::Ptr;
@@ -329,17 +330,17 @@ class Solver_BASE {
    * @brief Returns the optimized policy data.
    *
    * @param [in] finalTime: The final time.
-   * @param [out] policyDataPtr: The optimized policy data.
+   * @param [out] primalSolutionPtr: The primal problem's solution.
    */
-  virtual void getSolutionPtr(scalar_t finalTime, policy_data_t* policyDataPtr) const = 0;
+  virtual void getPrimalSolutionPtr(scalar_t finalTime, primal_solution_t* primalSolutionPtr) const = 0;
 
   /**
    * @brief Returns the optimized policy data.
    *
    * @param [in] finalTime: The final time.
-   * @return: The optimized policy data.
+   * @return: The primal problem's solution.
    */
-  policy_data_t getSolution(scalar_t finalTime) const;
+  primal_solution_t getPrimalSolution(scalar_t finalTime) const;
 
   /**
    * Calculates the value function at the given time and state.

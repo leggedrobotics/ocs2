@@ -58,7 +58,7 @@ class MPC_Settings {
         recedingHorizon_(true),
         blockwiseMovingHorizon_(false),
         useParallelRiccatiSolver_(false),
-        rosMsgTimeWindow_(1e+8),
+        solutionTimeWindow_(1e+8),
         adaptiveRosMsgTimeWindow_(false),
         mpcDesiredFrequency_(-1)  // [Hz]
         ,
@@ -104,8 +104,8 @@ class MPC_Settings {
   /** If set true, the parallel Riccati solver will be used from the first iteration of SLQ
    * solver. */
   bool useParallelRiccatiSolver_;
-  /** The time window for broadcasting the optimized output (controller and trajectory). */
-  double rosMsgTimeWindow_;
+  /** The time window for retrieving the optimized output (controller and trajectory). */
+  double solutionTimeWindow_;
   /** Use an adaptive scheme to estimate the time window for broadcasting the optimized output. */
   bool adaptiveRosMsgTimeWindow_;
   /**
@@ -256,13 +256,13 @@ inline void MPC_Settings::loadSettings(const std::string& filename, bool verbose
   }
 
   try {
-    rosMsgTimeWindow_ = pt.get<double>("mpc.rosMsgTimeWindow");
+    solutionTimeWindow_ = pt.get<double>("mpc.solutionTimeWindow");
     if (verbose) {
-      std::cerr << " #### Option loader : option 'rosMsgTimeWindow' ........... " << rosMsgTimeWindow_ << std::endl;
+      std::cerr << " #### Option loader : option 'solutionTimeWindow' ......... " << solutionTimeWindow_ << std::endl;
     }
   } catch (const std::exception& e) {
     if (verbose) {
-      std::cerr << " #### Option loader : option 'rosMsgTimeWindow' ........... " << rosMsgTimeWindow_ << " (default)" << std::endl;
+      std::cerr << " #### Option loader : option 'solutionTimeWindow' ......... " << solutionTimeWindow_ << " (default)" << std::endl;
     }
   }
 

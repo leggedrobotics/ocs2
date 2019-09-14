@@ -94,7 +94,7 @@ mpc
 
     forwardSimulationTime       28      ; [ms] MRT time
 
-    rosMsgTimeWindow            500     ; [ms]
+    solutionTimeWindow          500     ; [ms]
     adaptiveRosMsgTimeWindow    0
 
     mpcDesiredFrequency         100     ; [Hz] 

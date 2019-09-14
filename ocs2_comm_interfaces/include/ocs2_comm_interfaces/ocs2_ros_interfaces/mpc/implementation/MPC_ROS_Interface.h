@@ -67,9 +67,9 @@ void MPC_ROS_Interface<STATE_DIM, INPUT_DIM>::set(mpc_t* mpcPtr, const std::stri
   initialCall_ = false;
   resetRequestedEver_ = false;
 
-  // correcting rosMsgTimeWindow
+  // correcting solutionTimeWindow
   if (!mpcSettings_.recedingHorizon_) {
-    mpcSettings_.rosMsgTimeWindow_ = 1e+6;
+    mpcSettings_.solutionTimeWindow_ = 1e+6;
   }
 
   mpcTimer_.reset();
@@ -201,7 +201,7 @@ void MPC_ROS_Interface<STATE_DIM, INPUT_DIM>::publishPolicy(bool controllerIsUpd
 
   // The message truncation time
   const scalar_t t0 = commandData.mpcInitObservation_.time() + currentDelay_ * 1e-3;
-  const scalar_t tf = commandData.mpcInitObservation_.time() + mpcSettings_.rosMsgTimeWindow_ * 1e-3;
+  const scalar_t tf = commandData.mpcInitObservation_.time() + mpcSettings_.solutionTimeWindow_ * 1e-3;
   if (tf < t0 + 2.0 * mpcTimer_.getAverageInMilliseconds() * 1e-3) {
     std::cerr << "WARNING: Message publishing time-horizon is shorter than the MPC delay!" << std::endl;
   }
@@ -215,16 +215,7 @@ void MPC_ROS_Interface<STATE_DIM, INPUT_DIM>::publishPolicy(bool controllerIsUpd
   std::vector<std::vector<float>*> policyMsgDataPointers;
   policyMsgDataPointers.reserve(N);
 
-  for (size_t k = 0; k < N; k++) {  // loop through time
-    // continue if elapsed time is smaller than computation time delay
-    if (k < N - 1 && timeTrajectory[k + 1] < t0) {
-      continue;
-    }
-    // break if the time exceed rosMsgTimeWindow
-    if (k > 0 && timeTrajectory[k - 1] > tf) {
-      break;
-    }
-
+  for (size_t k = 0; k < N; k++) {
     for (size_t j = 0; j < STATE_DIM; j++) {
       mpcState.value[j] = stateTrajectory[k](j);
     }
@@ -285,10 +276,13 @@ template <size_t STATE_DIM, size_t INPUT_DIM>
 void MPC_ROS_Interface<STATE_DIM, INPUT_DIM>::fillMpcOutputBuffers(system_observation_t mpcInitObservation, const mpc_t& mpc,
                                                                    policy_data_t* policyDataPtr, command_data_t* commandDataPtr) {
   // get solution
-  mpc.getSolverPtr()->getSolutionPtr(policyDataPtr);
+  const scalar_t startTime = mpcInitObservation.time();
+  const scalar_t finalTime = startTime + mpc.settings().solutionTimeWindow_ * 1e-3;
+  mpc.getSolverPtr()->getSolutionPtr(finalTime, policyDataPtr);
 
   // command
-  commandDataPtr->fill(mpcInitObservation, mpc.getSolverPtr()->getCostDesiredTrajectories());
+  commandDataPtr->mpcInitObservation_ = std::move(mpcInitObservation);
+  commandDataPtr->mpcCostDesiredTrajectories_ = mpc.getSolverPtr()->getCostDesiredTrajectories();
 }
 
 /******************************************************************************************************/

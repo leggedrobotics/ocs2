@@ -96,13 +96,16 @@ void MPC_MRT_Interface<STATE_DIM, INPUT_DIM>::fillMpcOutputBuffers(system_observ
   std::lock_guard<std::mutex> policyBufferLock(this->policyBufferMutex_);
 
   // get solution
-  mpc.getSolverPtr()->getSolutionPtr(policyDataPtr);
+  const scalar_t startTime = mpcInitObservation.time();
+  const scalar_t finalTime = startTime + mpc.settings().solutionTimeWindow_ * 1e-3;
+  mpc.getSolverPtr()->getSolutionPtr(finalTime, policyDataPtr);
 
   // command
-  commandDataPtr->fill(mpcInitObservation, mpc.getSolverPtr()->getCostDesiredTrajectories());
+  commandDataPtr->mpcInitObservation_ = std::move(mpcInitObservation);
+  commandDataPtr->mpcCostDesiredTrajectories_ = mpc.getSolverPtr()->getCostDesiredTrajectories();
 
   // logic
-  this->partitioningTimesUpdate(mpcInitObservation.time(), this->partitioningTimesBuffer_);
+  this->partitioningTimesUpdate(startTime, this->partitioningTimesBuffer_);
 
   // allow user to modify the buffer
   this->modifyBufferPolicy(*commandDataPtr, *policyDataPtr);

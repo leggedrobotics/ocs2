@@ -52,17 +52,6 @@ struct CommandData {
 
   SystemObservation<STATE_DIM, INPUT_DIM> mpcInitObservation_;
   CostDesiredTrajectories<scalar_t> mpcCostDesiredTrajectories_;
-  ;
-
-  /**'
-   * Fills the data.
-   * @param [in] mpcInitObservation: Solver's initial observation.
-   * @param [in] costDesiredTrajectories: The cost desired trajectories used by solver.
-   */
-  void fill(SystemObservation<STATE_DIM, INPUT_DIM> mpcInitObservation, CostDesiredTrajectories<scalar_t> costDesiredTrajectories) {
-    mpcInitObservation_ = std::move(mpcInitObservation);
-    mpcCostDesiredTrajectories_.swap(costDesiredTrajectories);
-  }
 };
 
 }  // namespace ocs2

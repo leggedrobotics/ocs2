@@ -27,8 +27,8 @@ class MPC_MRT_Interface final : public MRT_BASE<STATE_DIM, INPUT_DIM> {
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
   using Base = MRT_BASE<STATE_DIM, INPUT_DIM>;
-  using policy_data_t = typename Base::policy_data_t;
-  using command_data_t = typename Base::command_data_t;
+  using typename Base::command_data_t;
+  using typename Base::primal_solution_t;
 
   using Ptr = std::shared_ptr<MPC_MRT_Interface<STATE_DIM, INPUT_DIM>>;
 
@@ -131,10 +131,10 @@ class MPC_MRT_Interface final : public MRT_BASE<STATE_DIM, INPUT_DIM> {
    * This method is automatically called by advanceMpc()
    * @param [in] mpcInitObservation: The observation used to run the MPC.
    * @param [in] mpc: A reference to the MPC instance.
-   * @param [out] policyDataPtr: The policy data of the MPC.
+   * @param [out] primalSolutionPtr: The primal problem solution.
    * @param [out] commandDataPtr: The command data of the MPC.
    */
-  void fillMpcOutputBuffers(system_observation_t mpcInitObservation, const mpc_t& mpc, policy_data_t* policyDataPtr,
+  void fillMpcOutputBuffers(system_observation_t mpcInitObservation, const mpc_t& mpc, primal_solution_t* primalSolutionPtr,
                             command_data_t* commandDataPtr);
 
  protected:

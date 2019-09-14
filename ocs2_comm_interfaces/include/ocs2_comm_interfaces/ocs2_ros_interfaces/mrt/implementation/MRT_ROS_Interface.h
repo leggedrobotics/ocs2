@@ -154,12 +154,12 @@ void MRT_ROS_Interface<STATE_DIM, INPUT_DIM>::mpcPolicyCallback(const ocs2_msgs:
   //	std::cout << "\t Plan is received at time: " << msg->initObservation.time << std::endl;
 
   std::lock_guard<std::mutex> lk(this->policyBufferMutex_);
-  auto& timeBuffer = this->policyBuffer_->mpcTimeTrajectory_;
-  auto& stateBuffer = this->policyBuffer_->mpcStateTrajectory_;
-  auto& inputBuffer = this->policyBuffer_->mpcInputTrajectory_;
-  auto& controlBuffer = this->policyBuffer_->mpcController_;
-  auto& eventBuffer = this->policyBuffer_->eventTimes_;
-  auto& subsystemBuffer = this->policyBuffer_->subsystemsSequence_;
+  auto& timeBuffer = this->primalSolutionBuffer_->timeTrajectory_;
+  auto& stateBuffer = this->primalSolutionBuffer_->stateTrajectory_;
+  auto& inputBuffer = this->primalSolutionBuffer_->inputTrajectory_;
+  auto& controlBuffer = this->primalSolutionBuffer_->controllerPtr_;
+  auto& eventBuffer = this->primalSolutionBuffer_->eventTimes_;
+  auto& subsystemBuffer = this->primalSolutionBuffer_->subsystemsSequence_;
   auto& initObservationBuffer = this->commandBuffer_->mpcInitObservation_;
   auto& costDesiredBuffer = this->commandBuffer_->mpcCostDesiredTrajectories_;
 
@@ -236,7 +236,7 @@ void MRT_ROS_Interface<STATE_DIM, INPUT_DIM>::mpcPolicyCallback(const ocs2_msgs:
   controlBuffer->unFlatten(timeBuffer, controllerDataPtrArray);
 
   // allow user to modify the buffer
-  this->modifyBufferPolicy(*this->commandBuffer_, *this->policyBuffer_);
+  this->modifyBufferPolicy(*this->commandBuffer_, *this->primalSolutionBuffer_);
 
   if (!this->policyReceivedEver_ && this->policyUpdatedBuffer_) {
     this->policyReceivedEver_ = true;

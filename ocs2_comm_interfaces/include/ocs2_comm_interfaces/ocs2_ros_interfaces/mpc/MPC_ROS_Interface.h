@@ -50,7 +50,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_core/control/LinearController.h>
 #include <ocs2_core/misc/Benchmark.h>
 #include <ocs2_mpc/MPC_BASE.h>
-#include <ocs2_oc/oc_data/PolicyData.h>
+#include <ocs2_oc/oc_data/PrimalSolution.h>
 
 // MPC messages
 #include <ocs2_msgs/dummy.h>
@@ -103,7 +103,7 @@ class MPC_ROS_Interface {
 
   using system_observation_t = SystemObservation<STATE_DIM, INPUT_DIM>;
 
-  using policy_data_t = PolicyData<STATE_DIM, INPUT_DIM>;
+  using primal_solution_t = PrimalSolution<STATE_DIM, INPUT_DIM>;
   using command_data_t = CommandData<STATE_DIM, INPUT_DIM>;
 
   using controller_t = ControllerBase<STATE_DIM, INPUT_DIM>;
@@ -231,7 +231,7 @@ class MPC_ROS_Interface {
    * @param [in] stateTrajectoriesStockPtr: A pointer to the  MPC optimized state trajectory.
    * @param [in] inputTrajectoriesStockPtr: A pointer to the  MPC optimized input trajectory.
    */
-  void publishPolicy(bool controllerIsUpdated, policy_data_t policyData, command_data_t commandData);
+  void publishPolicy(bool controllerIsUpdated, primal_solution_t policyData, command_data_t commandData);
 
   /**
    * Handles ROS publishing thread.
@@ -243,10 +243,10 @@ class MPC_ROS_Interface {
    * This method is automatically called by advanceMpc()
    * @param [in] mpcInitObservation: The observation used to run the MPC.
    * @param [in] mpc: A reference to the MPC instance.
-   * @param [out] policyDataPtr: The policy data of the MPC.
+   * @param [out] primalSolution: The primal problem's solution.
    * @param [out] commandDataPtr: The command data of the MPC.
    */
-  void fillMpcOutputBuffers(system_observation_t mpcInitObservation, const mpc_t& mpc, policy_data_t* policyDataPtr,
+  void fillMpcOutputBuffers(system_observation_t mpcInitObservation, const mpc_t& mpc, primal_solution_t* primalSolution,
                             command_data_t* commandDataPtr);
 
   /**

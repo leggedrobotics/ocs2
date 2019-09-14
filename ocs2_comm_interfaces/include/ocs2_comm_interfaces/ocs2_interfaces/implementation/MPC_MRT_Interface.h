@@ -71,7 +71,7 @@ void MPC_MRT_Interface<STATE_DIM, INPUT_DIM>::advanceMpc() {
   lock.unlock();
 
   mpc_.run(currentObservation.time(), currentObservation.state());
-  fillMpcOutputBuffers(currentObservation, mpc_, this->policyBuffer_.get(), this->commandBuffer_.get());
+  fillMpcOutputBuffers(currentObservation, mpc_, this->primalSolutionBuffer_.get(), this->commandBuffer_.get());
 
   // measure the delay for sending ROS messages
   mpcTimer_.endTimer();
@@ -100,7 +100,7 @@ void MPC_MRT_Interface<STATE_DIM, INPUT_DIM>::advanceMpc() {
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
 void MPC_MRT_Interface<STATE_DIM, INPUT_DIM>::fillMpcOutputBuffers(system_observation_t mpcInitObservation, const mpc_t& mpc,
-                                                                   policy_data_t* policyDataPtr, command_data_t* commandDataPtr) {
+                                                                   primal_solution_t* primalSolutionPtr, command_data_t* commandDataPtr) {
   // buffer policy mutex
   std::lock_guard<std::mutex> policyBufferLock(this->policyBufferMutex_);
 
@@ -110,7 +110,7 @@ void MPC_MRT_Interface<STATE_DIM, INPUT_DIM>::fillMpcOutputBuffers(system_observ
   if (mpc.settings().solutionTimeWindow_ < 0) {
     finalTime = mpc.getSolverPtr()->getFinalTime();
   }
-  mpc.getSolverPtr()->getSolutionPtr(finalTime, policyDataPtr);
+  mpc.getSolverPtr()->getPrimalSolutionPtr(finalTime, primalSolutionPtr);
 
   // command
   commandDataPtr->mpcInitObservation_ = std::move(mpcInitObservation);
@@ -120,7 +120,7 @@ void MPC_MRT_Interface<STATE_DIM, INPUT_DIM>::fillMpcOutputBuffers(system_observ
   this->partitioningTimesUpdate(startTime, this->partitioningTimesBuffer_);
 
   // allow user to modify the buffer
-  this->modifyBufferPolicy(*commandDataPtr, *policyDataPtr);
+  this->modifyBufferPolicy(*commandDataPtr, *primalSolutionPtr);
 
   // Flags to be set last:
   this->newPolicyInBuffer_ = true;
@@ -133,7 +133,7 @@ void MPC_MRT_Interface<STATE_DIM, INPUT_DIM>::fillMpcOutputBuffers(system_observ
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
 void MPC_MRT_Interface<STATE_DIM, INPUT_DIM>::getLinearFeedbackGain(scalar_t time, input_state_matrix_t& K) {
-  auto controller = dynamic_cast<LinearController<STATE_DIM, INPUT_DIM>*>(this->currentPolicy_->mpcController_.get());
+  auto controller = dynamic_cast<LinearController<STATE_DIM, INPUT_DIM>*>(this->currentPrimalSolution_->controllerPtr_.get());
   if (!controller) {
     throw std::runtime_error("Feedback gains only available with linear controller");
   }
@@ -149,6 +149,9 @@ typename MPC_MRT_Interface<STATE_DIM, INPUT_DIM>::scalar_t MPC_MRT_Interface<STA
   return mpc_.getSolverPtr()->getValueFunction(time, state);
 }
 
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
 void MPC_MRT_Interface<STATE_DIM, INPUT_DIM>::getValueFunctionStateDerivative(scalar_t time, const state_vector_t& state,
                                                                               state_vector_t& Vx) {

@@ -44,9 +44,13 @@ int main(int argc, char** argv) {
   }
   std::string taskFileFolderName = std::string(argv[1]);  // NOLINT(cppcoreguidelines-pro-bounds-pointer-arithmetic)
 
+  // QuadrotorInterface
   QuadrotorInterface quadrotorInterface(taskFileFolderName);
 
-  MRT_ROS_Quadrotor::Ptr mrtPtr(new MRT_ROS_Quadrotor("quadrotor"));
+  using mrt_base_ptr_t = MRT_ROS_Dummy_Quadrotor::mrt_ptr_t;
+  using system_observation_t = MRT_ROS_Dummy_Quadrotor::system_observation_t;
+
+  mrt_base_ptr_t mrtPtr(new MRT_ROS_Quadrotor("quadrotor"));
 
   // Dummy quadrotor
   MRT_ROS_Dummy_Quadrotor dummyQuadrotor(mrtPtr, quadrotorInterface.mpcSettings().mrtDesiredFrequency_,

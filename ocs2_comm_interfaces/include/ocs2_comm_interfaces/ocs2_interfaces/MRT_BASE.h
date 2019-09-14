@@ -12,7 +12,7 @@
 #include <ocs2_core/cost/CostDesiredTrajectories.h>
 #include <ocs2_core/dynamics/ControlledSystemBase.h>
 #include <ocs2_core/misc/LinearInterpolation.h>
-#include <ocs2_oc/oc_data/PolicyData.h>
+#include <ocs2_oc/oc_data/PrimalSolution.h>
 #include <ocs2_oc/rollout/RolloutBase.h>
 
 #include "ocs2_comm_interfaces/CommandData.h"
@@ -45,7 +45,7 @@ class MRT_BASE {
   using state_linear_interpolation_t = EigenLinearInterpolation<state_vector_t>;
   using input_linear_interpolation_t = EigenLinearInterpolation<input_vector_t>;
 
-  using policy_data_t = PolicyData<STATE_DIM, INPUT_DIM>;
+  using primal_solution_t = PrimalSolution<STATE_DIM, INPUT_DIM>;
   using command_data_t = CommandData<STATE_DIM, INPUT_DIM>;
 
   /**
@@ -94,7 +94,7 @@ class MRT_BASE {
    * Gets a reference to current optimized policy.
    * @return constant reference to the policy data.
    */
-  const policy_data_t& getPolicy() const { return *currentPolicy_; };
+  const primal_solution_t& getPolicy() const { return *currentPrimalSolution_; };
 
   /**
    * Initializes rollout class to roll out a feedback policy
@@ -157,15 +157,15 @@ class MRT_BASE {
    * policy messages on the data buffer.
    *
    */
-  virtual void modifyPolicy(const command_data_t& command, policy_data_t& policy) {}
+  virtual void modifyPolicy(const command_data_t& command, primal_solution_t& primalSolution) {}
 
   /**
    * This method can be used to modify the policy on the buffer without inputting the main thread.
    *
    * @param [in] commandBuffer: buffered command data.
-   * @param policyBuffer: policy message on the buffer.
+   * @param primalSolutionBuffer: The primal problem's solution on the buffer.
    */
-  virtual void modifyBufferPolicy(const command_data_t& commandBuffer, policy_data_t& policyBuffer) {}
+  virtual void modifyBufferPolicy(const command_data_t& commandBuffer, primal_solution_t& primalSolutionBuffer) {}
 
   /**
    * Constructs a partitioningTimes vector with 2 elements: minimum of the already
@@ -194,8 +194,8 @@ class MRT_BASE {
   // variables related to the MPC output
   std::atomic_bool policyUpdated_;  //! Whether the policy was updated by MPC (i.e., MPC succeeded)
   bool policyUpdatedBuffer_;        //! Whether the policy in buffer was upated by MPC (i.e., MPC succeeded)
-  std::unique_ptr<policy_data_t> currentPolicy_;
-  std::unique_ptr<policy_data_t> policyBuffer_;
+  std::unique_ptr<primal_solution_t> currentPrimalSolution_;
+  std::unique_ptr<primal_solution_t> primalSolutionBuffer_;
   std::unique_ptr<command_data_t> currentCommand_;
   std::unique_ptr<command_data_t> commandBuffer_;
 

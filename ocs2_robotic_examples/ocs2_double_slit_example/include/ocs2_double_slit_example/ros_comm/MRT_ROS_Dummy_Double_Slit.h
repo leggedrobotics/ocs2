@@ -51,7 +51,7 @@ class MrtRosDummyDoubleSlit final : public MRT_ROS_Dummy_Loop<double_slit::STATE
     ROS_INFO_STREAM("Visualization subscriber is connected.");
   }
 
-  void publishVisualizer(const system_observation_t& observation, const policy_data_t& policy, const command_data_t& command) override {
+  void publishVisualizer(const system_observation_t& observation, const primal_solution_t& policy, const command_data_t& command) override {
     const auto& costDesiredTrajectories = command.mpcCostDesiredTrajectories_;
     sensor_msgs::JointState joint_state;
     joint_state.header.stamp = ros::Time::now();

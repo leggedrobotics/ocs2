@@ -150,7 +150,7 @@ void MPC_ROS_Interface<STATE_DIM, INPUT_DIM>::publishDummy() {
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
-void MPC_ROS_Interface<STATE_DIM, INPUT_DIM>::publishPolicy(bool controllerIsUpdated, policy_data_t policyData,
+void MPC_ROS_Interface<STATE_DIM, INPUT_DIM>::publishPolicy(bool controllerIsUpdated, primal_solution_t primalSolution,
                                                             command_data_t commandData) {
 #ifdef PUBLISH_THREAD
   std::unique_lock<std::mutex> lk(publisherMutex_);
@@ -161,9 +161,9 @@ void MPC_ROS_Interface<STATE_DIM, INPUT_DIM>::publishPolicy(bool controllerIsUpd
   ros_msg_conversions_t::createObservationMsg(commandData.mpcInitObservation_, mpcPolicyMsg_.initObservation);
   ros_msg_conversions_t::createTargetTrajectoriesMsg(commandData.mpcCostDesiredTrajectories_, mpcPolicyMsg_.planTargetTrajectories);
 
-  ros_msg_conversions_t::createModeSequenceMsg(policyData.eventTimes_, policyData.subsystemsSequence_, mpcPolicyMsg_.modeSequence);
+  ros_msg_conversions_t::createModeSequenceMsg(primalSolution.eventTimes_, primalSolution.subsystemsSequence_, mpcPolicyMsg_.modeSequence);
 
-  ControllerType controllerType = policyData.mpcController_->getType();
+  ControllerType controllerType = primalSolution.controllerPtr_->getType();
 
   // translate controllerType enum into message enum
   switch (controllerType) {
@@ -182,7 +182,7 @@ void MPC_ROS_Interface<STATE_DIM, INPUT_DIM>::publishPolicy(bool controllerIsUpd
   }
 
   // maximum length of the message
-  size_t N = policyData.mpcTimeTrajectory_.size();
+  size_t N = primalSolution.timeTrajectory_.size();
 
   mpcPolicyMsg_.timeTrajectory.clear();
   mpcPolicyMsg_.timeTrajectory.reserve(N);
@@ -196,10 +196,10 @@ void MPC_ROS_Interface<STATE_DIM, INPUT_DIM>::publishPolicy(bool controllerIsUpd
   ocs2_msgs::mpc_input mpcInput;
   mpcInput.value.resize(INPUT_DIM);
 
-  const scalar_array_t& timeTrajectory = policyData.mpcTimeTrajectory_;
-  const state_vector_array_t& stateTrajectory = policyData.mpcStateTrajectory_;
-  const input_vector_array_t& inputTrajectory = policyData.mpcInputTrajectory_;
-  const controller_t* controller = policyData.mpcController_.get();
+  const scalar_array_t& timeTrajectory = primalSolution.timeTrajectory_;
+  const state_vector_array_t& stateTrajectory = primalSolution.stateTrajectory_;
+  const input_vector_array_t& inputTrajectory = primalSolution.inputTrajectory_;
+  const controller_t* controller = primalSolution.controllerPtr_.get();
 
   scalar_array_t timeTrajectoryTruncated;
   std::vector<std::vector<float>*> policyMsgDataPointers;
@@ -264,13 +264,13 @@ void MPC_ROS_Interface<STATE_DIM, INPUT_DIM>::publisherWorkerThread() {
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
 void MPC_ROS_Interface<STATE_DIM, INPUT_DIM>::fillMpcOutputBuffers(system_observation_t mpcInitObservation, const mpc_t& mpc,
-                                                                   policy_data_t* policyDataPtr, command_data_t* commandDataPtr) {
+                                                                   primal_solution_t* primalSolution, command_data_t* commandDataPtr) {
   // get solution
   scalar_t finalTime = mpcInitObservation.time() + mpc.settings().solutionTimeWindow_;
   if (mpc.settings().solutionTimeWindow_ < 0) {
     finalTime = mpc.getSolverPtr()->getFinalTime();
   }
-  mpc.getSolverPtr()->getSolutionPtr(finalTime, policyDataPtr);
+  mpc.getSolverPtr()->getPrimalSolutionPtr(finalTime, primalSolution);
 
   // command
   commandDataPtr->mpcInitObservation_ = std::move(mpcInitObservation);
@@ -308,9 +308,9 @@ void MPC_ROS_Interface<STATE_DIM, INPUT_DIM>::mpcObservationCallback(const ocs2_
 
   // run MPC
   bool controllerIsUpdated = mpcPtr_->run(currentObservation.time(), currentObservation.state());
-  policy_data_t policyData;
+  primal_solution_t primalSolution;
   command_data_t commandData;
-  fillMpcOutputBuffers(currentObservation, *mpcPtr_, &policyData, &commandData);
+  fillMpcOutputBuffers(currentObservation, *mpcPtr_, &primalSolution, &commandData);
 
   // measure the delay for sending ROS messages
   mpcTimer_.endTimer();
@@ -341,7 +341,7 @@ void MPC_ROS_Interface<STATE_DIM, INPUT_DIM>::mpcObservationCallback(const ocs2_
 #else
 
   // publish optimized output
-  publishPolicy(controllerIsUpdated, std::move(policyData), std::move(commandData));
+  publishPolicy(controllerIsUpdated, std::move(primalSolution), std::move(commandData));
 
 #endif
 

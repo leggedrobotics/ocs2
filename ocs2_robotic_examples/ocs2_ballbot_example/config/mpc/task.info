@@ -102,7 +102,7 @@ mpc
     solutionTimeWindow             0.2   ; [s]
     mpcDesiredFrequency            100   ; [Hz]
     mrtDesiredFrequency            400   ; [Hz]
-    debugPrint                     1
+    debugPrint                     0
 }
 
 ; ballbot interface settings

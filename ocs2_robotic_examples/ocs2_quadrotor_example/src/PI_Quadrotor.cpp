@@ -91,7 +91,7 @@ int main(int argc, char* argv[]) {
   desiredInputArray[1].setZero(ocs2::quadrotor::INPUT_DIM_);
   cost_desired_trajectories_t costDesiredTraj(desiredTimeArray, desiredStateArray, desiredInputArray);
   mpc_pi.getSolverPtr()->setCostDesiredTrajectories(costDesiredTraj);
-  ocs2::MPC_ROS_Interface<ocs2::quadrotor::STATE_DIM_, ocs2::quadrotor::INPUT_DIM_> mpcNode(&mpc_pi, "quadrotor");
+  ocs2::MPC_ROS_Interface<ocs2::quadrotor::STATE_DIM_, ocs2::quadrotor::INPUT_DIM_> mpcNode(mpc_pi, "quadrotor");
 
   mpcNode.launchNodes(argc, argv);
 

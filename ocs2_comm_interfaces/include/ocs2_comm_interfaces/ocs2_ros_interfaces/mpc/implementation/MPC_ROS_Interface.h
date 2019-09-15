@@ -34,10 +34,10 @@ namespace ocs2 {
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
 MPC_ROS_Interface<STATE_DIM, INPUT_DIM>::MPC_ROS_Interface(
-    mpc_t* mpcPtr, const std::string& robotName /*= "robot"*/,
+    mpc_t& mpc, const std::string& robotName /*= "robot"*/,
     const task_listener_ptr_array_t& taskListenerArray /*= task_listener_ptr_array_t()*/)
-    : taskListenerArray_(taskListenerArray) {
-  set(mpcPtr, robotName);
+    : mpc_(mpc), robotName_(robotName), taskListenerArray_(taskListenerArray) {
+  set();
 }
 
 /******************************************************************************************************/
@@ -52,14 +52,7 @@ MPC_ROS_Interface<STATE_DIM, INPUT_DIM>::~MPC_ROS_Interface() {
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
-void MPC_ROS_Interface<STATE_DIM, INPUT_DIM>::set(mpc_t* mpcPtr, const std::string& robotName /*= "robot"*/) {
-  if (!mpcPtr) {
-    throw std::runtime_error("MPC pointer should be provided.");
-  }
-
-  mpcPtr_ = mpcPtr;
-  robotName_ = robotName;
-
+void MPC_ROS_Interface<STATE_DIM, INPUT_DIM>::set() {
   currentPrimalSolution_.reset(new primal_solution_t());
   primalSolutionBuffer_.reset(new primal_solution_t());
 
@@ -95,14 +88,12 @@ template <size_t STATE_DIM, size_t INPUT_DIM>
 void MPC_ROS_Interface<STATE_DIM, INPUT_DIM>::reset(const cost_desired_trajectories_t& initCostDesiredTrajectories) {
   std::lock_guard<std::mutex> resetLock(resetMutex_);
 
-  if (mpcPtr_ != nullptr) {
-    mpcPtr_->reset();
-  }
+  mpc_.reset();
 
   initialCall_ = true;
   resetRequestedEver_ = true;
 
-  mpcPtr_->getSolverPtr()->setCostDesiredTrajectories(initCostDesiredTrajectories);
+  mpc_.getSolverPtr()->setCostDesiredTrajectories(initCostDesiredTrajectories);
 
   mpcTimer_.reset();
 
@@ -274,7 +265,7 @@ void MPC_ROS_Interface<STATE_DIM, INPUT_DIM>::fillMpcOutputBuffers(system_observ
   if (mpc.settings().solutionTimeWindow_ < 0) {
     finalTime = mpc.getSolverPtr()->getFinalTime();
   }
-  mpc.getSolverPtr()->getPrimalSolution(finalTime, primalSolutionBuffer_.get());
+  mpc.getSolverPtr()->getPrimalSolutionPtr(finalTime, primalSolutionBuffer_.get());
 
   // command
   commandBuffer_->mpcInitObservation_ = std::move(mpcInitObservation);

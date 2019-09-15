@@ -27,25 +27,23 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  ******************************************************************************/
 
-// OCS2
-#include <ocs2_mpc/MPC_SLQ.h>
+#include <ocs2_comm_interfaces/ocs2_ros_interfaces/mpc/MPC_ROS_Interface.h>
 
-// CartPole
 #include "ocs2_cart_pole_example/CartPoleInterface.h"
-#include "ocs2_cart_pole_example/ros_comm/MPC_ROS_Cartpole.h"
 
 using namespace ocs2;
-using namespace cartpole;
 
 int main(int argc, char** argv) {
   // task file
-  if (argc <= 1) throw std::runtime_error("No task file specified. Aborting.");
+  if (argc <= 1) {
+    throw std::runtime_error("No task file specified. Aborting.");
+  }
   std::string taskFileFolderName = std::string(argv[1]);
 
-  CartPoleInterface cartPoleInterface(taskFileFolderName);
+  cartpole::CartPoleInterface cartPoleInterface(taskFileFolderName);
 
   // Launch MPC ROS node
-  MPC_ROS_Cartpole mpcNode(cartPoleInterface.getMpc(), "cartpole");
+  MPC_ROS_Interface<cartpole::STATE_DIM_, cartpole::INPUT_DIM_> mpcNode(cartPoleInterface.getMpc(), "cartpole");
   mpcNode.launchNodes(argc, argv);
 
   // Successful exit

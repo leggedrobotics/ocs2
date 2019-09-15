@@ -28,6 +28,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  ******************************************************************************/
 
 #include <ocs2_comm_interfaces/ocs2_ros_interfaces/mpc/MPC_ROS_Interface.h>
+
 #include "ocs2_ballbot_example/BallbotInterface.h"
 
 using namespace ocs2;
@@ -42,7 +43,7 @@ int main(int argc, char** argv) {
   ballbot::BallbotInterface ballbotInterface(taskFileFolderName);
 
   // Launch MPC ROS node
-  MPC_ROS_Interface<ballbot::STATE_DIM_, ballbot::INPUT_DIM_> mpcNode(&ballbotInterface.getMpc(), "ballbot");
+  MPC_ROS_Interface<ballbot::STATE_DIM_, ballbot::INPUT_DIM_> mpcNode(ballbotInterface.getMpc(), "ballbot");
   mpcNode.launchNodes(argc, argv);
 
   // Successful exit

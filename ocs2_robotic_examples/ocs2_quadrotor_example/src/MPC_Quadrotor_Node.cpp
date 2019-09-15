@@ -34,13 +34,15 @@ using namespace ocs2;
 
 int main(int argc, char** argv) {
   // task file
-  if (argc <= 1) throw std::runtime_error("No task file specified. Aborting.");
-  std::string taskFileFolderName = std::string(argv[1]);
+  if (argc <= 1) {
+    throw std::runtime_error("No task file specified. Aborting.");
+  }
+  std::string taskFileFolderName(argv[1]);
 
   quadrotor::QuadrotorInterface quadrotorInterface(taskFileFolderName);
 
   // Launch MPC ROS node
-  MPC_ROS_Interface<quadrotor::STATE_DIM_, quadrotor::INPUT_DIM_> mpcNode(&quadrotorInterface.getMpc(), "quadrotor");
+  MPC_ROS_Interface<quadrotor::STATE_DIM_, quadrotor::INPUT_DIM_> mpcNode(quadrotorInterface.getMpc(), "quadrotor");
   mpcNode.launchNodes(argc, argv);
 
   // Successful exit

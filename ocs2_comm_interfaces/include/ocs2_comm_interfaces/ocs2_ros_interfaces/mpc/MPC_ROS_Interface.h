@@ -221,17 +221,15 @@ class MPC_ROS_Interface {
   void publishDummy();
 
   /**
-   * Publishes the MPC policy.
+   * Creates MPC Policy message.
    *
    * @param [in] controllerIsUpdated: Whether the policy is updated.
-   * @param [in] policyDataPtr: The policy data of the MPC.
+   * @param [in] primalSolution: The policy data of the MPC.
    * @param [in] commandDataPtr: The command data of the MPC.
-   * @param [in] controllerStockPtr: A pointer to the MPC optimized control policy.
-   * @param [in] timeTrajectoriesStockPtr: A pointer to the MPC optimized time trajectory.
-   * @param [in] stateTrajectoriesStockPtr: A pointer to the  MPC optimized state trajectory.
-   * @param [in] inputTrajectoriesStockPtr: A pointer to the  MPC optimized input trajectory.
+   * @return MPC policy message.
    */
-  void publishPolicy(bool controllerIsUpdated, primal_solution_t policyData, command_data_t commandData);
+  static ocs2_msgs::mpc_flattened_controller createMpcPolicyMsg(bool controllerIsUpdated, const primal_solution_t& primalSolution,
+                                                                const command_data_t& commandData);
 
   /**
    * Handles ROS publishing thread.
@@ -243,11 +241,8 @@ class MPC_ROS_Interface {
    * This method is automatically called by advanceMpc()
    * @param [in] mpcInitObservation: The observation used to run the MPC.
    * @param [in] mpc: A reference to the MPC instance.
-   * @param [out] primalSolution: The primal problem's solution.
-   * @param [out] commandDataPtr: The command data of the MPC.
    */
-  void fillMpcOutputBuffers(system_observation_t mpcInitObservation, const mpc_t& mpc, primal_solution_t* primalSolution,
-                            command_data_t* commandDataPtr);
+  void fillMpcOutputBuffers(system_observation_t mpcInitObservation, const mpc_t& mpc);
 
   /**
    * The callback method which receives the current observation, invokes the MPC algorithm,
@@ -291,9 +286,12 @@ class MPC_ROS_Interface {
   ::ros::Publisher dummyPublisher_;
   ::ros::ServiceServer mpcResetServiceServer_;
 
-  // ROS messages
-  ocs2_msgs::mpc_flattened_controller mpcPolicyMsg_;
-  ocs2_msgs::mpc_flattened_controller mpcPolicyMsgBuffer_;
+  std::unique_ptr<primal_solution_t> currentPrimalSolution_;
+  std::unique_ptr<primal_solution_t> primalSolutionBuffer_;
+  std::unique_ptr<command_data_t> currentCommand_;
+  std::unique_ptr<command_data_t> commandBuffer_;
+
+  mutable std::mutex policyBufferMutex_;  // for policy variables WITH suffix (*Buffer_)
 
   // multi-threading for publishers
   bool terminateThread_;

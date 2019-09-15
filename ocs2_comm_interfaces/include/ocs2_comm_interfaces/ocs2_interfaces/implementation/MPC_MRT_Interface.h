@@ -70,8 +70,11 @@ void MPC_MRT_Interface<STATE_DIM, INPUT_DIM>::advanceMpc() {
   system_observation_t currentObservation = currentObservation_;
   lock.unlock();
 
-  mpc_.run(currentObservation.time(), currentObservation.state());
-  fillMpcOutputBuffers(currentObservation, mpc_, this->primalSolutionBuffer_.get(), this->commandBuffer_.get());
+  bool controllerIsUpdated = mpc_.run(currentObservation.time(), currentObservation.state());
+  if (!controllerIsUpdated) {
+    return;
+  }
+  fillMpcOutputBuffers(currentObservation, mpc_);
 
   // measure the delay for sending ROS messages
   mpcTimer_.endTimer();
@@ -99,8 +102,7 @@ void MPC_MRT_Interface<STATE_DIM, INPUT_DIM>::advanceMpc() {
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
-void MPC_MRT_Interface<STATE_DIM, INPUT_DIM>::fillMpcOutputBuffers(system_observation_t mpcInitObservation, const mpc_t& mpc,
-                                                                   primal_solution_t* primalSolutionPtr, command_data_t* commandDataPtr) {
+void MPC_MRT_Interface<STATE_DIM, INPUT_DIM>::fillMpcOutputBuffers(system_observation_t mpcInitObservation, const mpc_t& mpc) {
   // buffer policy mutex
   std::lock_guard<std::mutex> policyBufferLock(this->policyBufferMutex_);
 
@@ -110,17 +112,17 @@ void MPC_MRT_Interface<STATE_DIM, INPUT_DIM>::fillMpcOutputBuffers(system_observ
   if (mpc.settings().solutionTimeWindow_ < 0) {
     finalTime = mpc.getSolverPtr()->getFinalTime();
   }
-  mpc.getSolverPtr()->getPrimalSolutionPtr(finalTime, primalSolutionPtr);
+  mpc.getSolverPtr()->getPrimalSolutionPtr(finalTime, this->primalSolutionBuffer_.get());
 
   // command
-  commandDataPtr->mpcInitObservation_ = std::move(mpcInitObservation);
-  commandDataPtr->mpcCostDesiredTrajectories_ = mpc.getSolverPtr()->getCostDesiredTrajectories();
+  this->commandBuffer_->mpcInitObservation_ = std::move(mpcInitObservation);
+  this->commandBuffer_->mpcCostDesiredTrajectories_ = mpc.getSolverPtr()->getCostDesiredTrajectories();
 
   // logic
   this->partitioningTimesUpdate(startTime, this->partitioningTimesBuffer_);
 
   // allow user to modify the buffer
-  this->modifyBufferPolicy(*commandDataPtr, *primalSolutionPtr);
+  this->modifyBufferPolicy(*this->commandBuffer_, *this->primalSolutionBuffer_);
 
   // Flags to be set last:
   this->newPolicyInBuffer_ = true;

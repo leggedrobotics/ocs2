@@ -60,6 +60,12 @@ void MPC_ROS_Interface<STATE_DIM, INPUT_DIM>::set(mpc_t* mpcPtr, const std::stri
   mpcPtr_ = mpcPtr;
   robotName_ = robotName;
 
+  currentPrimalSolution_.reset(new primal_solution_t());
+  primalSolutionBuffer_.reset(new primal_solution_t());
+
+  currentCommand_.reset(new command_data_t());
+  commandBuffer_.reset(new command_data_t());
+
   terminateThread_ = false;
   readyToPublish_ = false;
 
@@ -150,29 +156,28 @@ void MPC_ROS_Interface<STATE_DIM, INPUT_DIM>::publishDummy() {
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
-void MPC_ROS_Interface<STATE_DIM, INPUT_DIM>::publishPolicy(bool controllerIsUpdated, primal_solution_t primalSolution,
-                                                            command_data_t commandData) {
-#ifdef PUBLISH_THREAD
-  std::unique_lock<std::mutex> lk(publisherMutex_);
-#endif
+ocs2_msgs::mpc_flattened_controller MPC_ROS_Interface<STATE_DIM, INPUT_DIM>::createMpcPolicyMsg(bool controllerIsUpdated,
+                                                                                                const primal_solution_t& primalSolution,
+                                                                                                const command_data_t& commandData) {
+  ocs2_msgs::mpc_flattened_controller mpcPolicyMsg;
 
-  mpcPolicyMsg_.controllerIsUpdated = controllerIsUpdated;
+  mpcPolicyMsg.controllerIsUpdated = controllerIsUpdated;
 
-  ros_msg_conversions_t::createObservationMsg(commandData.mpcInitObservation_, mpcPolicyMsg_.initObservation);
-  ros_msg_conversions_t::createTargetTrajectoriesMsg(commandData.mpcCostDesiredTrajectories_, mpcPolicyMsg_.planTargetTrajectories);
+  ros_msg_conversions_t::createObservationMsg(commandData.mpcInitObservation_, mpcPolicyMsg.initObservation);
+  ros_msg_conversions_t::createTargetTrajectoriesMsg(commandData.mpcCostDesiredTrajectories_, mpcPolicyMsg.planTargetTrajectories);
 
-  ros_msg_conversions_t::createModeSequenceMsg(primalSolution.eventTimes_, primalSolution.subsystemsSequence_, mpcPolicyMsg_.modeSequence);
+  ros_msg_conversions_t::createModeSequenceMsg(primalSolution.eventTimes_, primalSolution.subsystemsSequence_, mpcPolicyMsg.modeSequence);
 
   ControllerType controllerType = primalSolution.controllerPtr_->getType();
 
   // translate controllerType enum into message enum
   switch (controllerType) {
     case ControllerType::FEEDFORWARD: {
-      mpcPolicyMsg_.controllerType = ocs2_msgs::mpc_flattened_controller::CONTROLLER_FEEDFORWARD;
+      mpcPolicyMsg.controllerType = ocs2_msgs::mpc_flattened_controller::CONTROLLER_FEEDFORWARD;
       break;
     }
     case ControllerType::LINEAR: {
-      mpcPolicyMsg_.controllerType = ocs2_msgs::mpc_flattened_controller::CONTROLLER_LINEAR;
+      mpcPolicyMsg.controllerType = ocs2_msgs::mpc_flattened_controller::CONTROLLER_LINEAR;
       break;
     }
     default: {
@@ -184,12 +189,12 @@ void MPC_ROS_Interface<STATE_DIM, INPUT_DIM>::publishPolicy(bool controllerIsUpd
   // maximum length of the message
   size_t N = primalSolution.timeTrajectory_.size();
 
-  mpcPolicyMsg_.timeTrajectory.clear();
-  mpcPolicyMsg_.timeTrajectory.reserve(N);
-  mpcPolicyMsg_.stateTrajectory.clear();
-  mpcPolicyMsg_.stateTrajectory.reserve(N);
-  mpcPolicyMsg_.data.clear();
-  mpcPolicyMsg_.data.reserve(N);
+  mpcPolicyMsg.timeTrajectory.clear();
+  mpcPolicyMsg.timeTrajectory.reserve(N);
+  mpcPolicyMsg.stateTrajectory.clear();
+  mpcPolicyMsg.stateTrajectory.reserve(N);
+  mpcPolicyMsg.data.clear();
+  mpcPolicyMsg.data.reserve(N);
 
   ocs2_msgs::mpc_state mpcState;
   mpcState.value.resize(STATE_DIM);
@@ -213,24 +218,18 @@ void MPC_ROS_Interface<STATE_DIM, INPUT_DIM>::publishPolicy(bool controllerIsUpd
       mpcInput.value[j] = inputTrajectory[k](j);
     }
 
-    mpcPolicyMsg_.timeTrajectory.push_back(timeTrajectory[k]);
-    mpcPolicyMsg_.stateTrajectory.push_back(mpcState);
-    mpcPolicyMsg_.inputTrajectory.push_back(mpcInput);
-    mpcPolicyMsg_.data.emplace_back(ocs2_msgs::controller_data());
+    mpcPolicyMsg.timeTrajectory.push_back(timeTrajectory[k]);
+    mpcPolicyMsg.stateTrajectory.push_back(mpcState);
+    mpcPolicyMsg.inputTrajectory.push_back(mpcInput);
+    mpcPolicyMsg.data.emplace_back(ocs2_msgs::controller_data());
 
-    policyMsgDataPointers.push_back(&mpcPolicyMsg_.data.back().data);
+    policyMsgDataPointers.push_back(&mpcPolicyMsg.data.back().data);
     timeTrajectoryTruncated.push_back(timeTrajectory[k]);
   }  // end of k loop
 
   controller->flatten(timeTrajectoryTruncated, policyMsgDataPointers);
 
-#ifdef PUBLISH_THREAD
-  readyToPublish_ = true;
-  lk.unlock();
-  msgReady_.notify_one();
-#else
-  mpcPolicyPublisher_.publish(mpcPolicyMsg_);
-#endif
+  return mpcPolicyMsg;
 }
 
 /******************************************************************************************************/
@@ -247,15 +246,20 @@ void MPC_ROS_Interface<STATE_DIM, INPUT_DIM>::publisherWorkerThread() {
       break;
     }
 
-    mpcPolicyMsgBuffer_ = std::move(mpcPolicyMsg_);
+    {
+      std::lock_guard<std::mutex> policyBufferLock(policyBufferMutex_);
+      currentPrimalSolution_.swap(primalSolutionBuffer_);
+      currentCommand_.swap(commandBuffer_);
+    }
 
-    readyToPublish_ = false;
-
-    lk.unlock();
-    msgReady_.notify_one();
+    ocs2_msgs::mpc_flattened_controller mpcPolicyMsg = createMpcPolicyMsg(true, *currentPrimalSolution_, *currentCommand_);
 
     // publish the message
-    mpcPolicyPublisher_.publish(mpcPolicyMsgBuffer_);
+    mpcPolicyPublisher_.publish(mpcPolicyMsg);
+
+    readyToPublish_ = false;
+    lk.unlock();
+    msgReady_.notify_one();
   }
 }
 
@@ -263,18 +267,20 @@ void MPC_ROS_Interface<STATE_DIM, INPUT_DIM>::publisherWorkerThread() {
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
-void MPC_ROS_Interface<STATE_DIM, INPUT_DIM>::fillMpcOutputBuffers(system_observation_t mpcInitObservation, const mpc_t& mpc,
-                                                                   primal_solution_t* primalSolution, command_data_t* commandDataPtr) {
+void MPC_ROS_Interface<STATE_DIM, INPUT_DIM>::fillMpcOutputBuffers(system_observation_t mpcInitObservation, const mpc_t& mpc) {
+  // buffer policy mutex
+  std::lock_guard<std::mutex> policyBufferLock(policyBufferMutex_);
+
   // get solution
   scalar_t finalTime = mpcInitObservation.time() + mpc.settings().solutionTimeWindow_;
   if (mpc.settings().solutionTimeWindow_ < 0) {
     finalTime = mpc.getSolverPtr()->getFinalTime();
   }
-  mpc.getSolverPtr()->getPrimalSolutionPtr(finalTime, primalSolution);
+  mpc.getSolverPtr()->getPrimalSolutionPtr(finalTime, primalSolutionBuffer_.get());
 
   // command
-  commandDataPtr->mpcInitObservation_ = std::move(mpcInitObservation);
-  commandDataPtr->mpcCostDesiredTrajectories_ = mpc.getSolverPtr()->getCostDesiredTrajectories();
+  commandBuffer_->mpcInitObservation_ = std::move(mpcInitObservation);
+  commandBuffer_->mpcCostDesiredTrajectories_ = mpc.getSolverPtr()->getCostDesiredTrajectories();
 }
 
 /******************************************************************************************************/
@@ -308,9 +314,10 @@ void MPC_ROS_Interface<STATE_DIM, INPUT_DIM>::mpcObservationCallback(const ocs2_
 
   // run MPC
   bool controllerIsUpdated = mpcPtr_->run(currentObservation.time(), currentObservation.state());
-  primal_solution_t primalSolution;
-  command_data_t commandData;
-  fillMpcOutputBuffers(currentObservation, *mpcPtr_, &primalSolution, &commandData);
+  if (!controllerIsUpdated) {
+    return;
+  }
+  fillMpcOutputBuffers(currentObservation, *mpcPtr_);
 
   // measure the delay for sending ROS messages
   mpcTimer_.endTimer();
@@ -334,14 +341,20 @@ void MPC_ROS_Interface<STATE_DIM, INPUT_DIM>::mpcObservationCallback(const ocs2_
   }
 
 #ifdef PUBLISH_DUMMY
-
   // publish dummy for test
   publishDummy();
-
 #else
 
-  // publish optimized output
-  publishPolicy(controllerIsUpdated, std::move(primalSolution), std::move(commandData));
+#ifdef PUBLISH_THREAD
+  std::unique_lock<std::mutex> lk(publisherMutex_);
+  readyToPublish_ = true;
+  lk.unlock();
+  msgReady_.notify_one();
+
+#else
+  ocs2_msgs::mpc_flattened_controller mpcPolicyMsg = createMpcPolicyMsg(true, *primalSolutionBuffer_, *commandBuffer_);
+  mpcPolicyPublisher_.publish(mpcPolicyMsg);
+#endif
 
 #endif
 

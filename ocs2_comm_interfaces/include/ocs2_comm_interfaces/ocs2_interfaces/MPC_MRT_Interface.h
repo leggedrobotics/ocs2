@@ -160,11 +160,8 @@ class MPC_MRT_Interface final : public MRT_BASE<STATE_DIM, INPUT_DIM> {
    * This method is automatically called by advanceMpc()
    * @param [in] mpcInitObservation: The observation used to run the MPC.
    * @param [in] mpc: A reference to the MPC instance.
-   * @param [out] primalSolutionPtr: The primal problem solution.
-   * @param [out] commandDataPtr: The command data of the MPC.
    */
-  void fillMpcOutputBuffers(system_observation_t mpcInitObservation, const mpc_t& mpc, primal_solution_t* primalSolutionPtr,
-                            command_data_t* commandDataPtr);
+  void fillMpcOutputBuffers(system_observation_t mpcInitObservation, const mpc_t& mpc);
 
  protected:
   mpc_t& mpc_;

@@ -39,6 +39,12 @@ namespace ocs2 {
 template <size_t STATE_DIM, size_t INPUT_DIM>
 MRT_BASE<STATE_DIM, INPUT_DIM>::MRT_BASE(std::shared_ptr<HybridLogicRules> logicRules) {
   reset();
+  currentPrimalSolution_.reset(new primal_solution_t());
+  primalSolutionBuffer_.reset(new primal_solution_t());
+
+  currentCommand_.reset(new command_data_t());
+  commandBuffer_.reset(new command_data_t());
+
   if (!logicRules) {
     logicRules.reset(new NullLogicRules());
   }
@@ -51,12 +57,6 @@ MRT_BASE<STATE_DIM, INPUT_DIM>::MRT_BASE(std::shared_ptr<HybridLogicRules> logic
 template <size_t STATE_DIM, size_t INPUT_DIM>
 void MRT_BASE<STATE_DIM, INPUT_DIM>::reset() {
   std::lock_guard<std::mutex> lock(policyBufferMutex_);
-
-  currentPrimalSolution_.reset(new primal_solution_t());
-  primalSolutionBuffer_.reset(new primal_solution_t());
-
-  currentCommand_.reset(new command_data_t());
-  commandBuffer_.reset(new command_data_t());
 
   policyReceivedEver_ = false;
   newPolicyInBuffer_ = false;

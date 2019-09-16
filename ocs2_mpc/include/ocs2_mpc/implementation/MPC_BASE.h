@@ -48,9 +48,7 @@ MPC_BASE<STATE_DIM, INPUT_DIM>::MPC_BASE()
       initActivePartitionIndex_(0),
       finalActivePartitionIndex_(0),
       lastControlDesignTime_(0.0),
-      solverPtr_(nullptr)
-
-{}
+      solverPtr_(nullptr) {}
 
 /******************************************************************************************************/
 /******************************************************************************************************/
@@ -72,9 +70,7 @@ MPC_BASE<STATE_DIM, INPUT_DIM>::MPC_BASE(const scalar_array_t& partitioningTimes
       initActivePartitionIndex_(0),
       finalActivePartitionIndex_(0),
       lastControlDesignTime_(partitioningTimes.front()),
-      solverPtr_(nullptr)
-
-{
+      solverPtr_(nullptr) {
   if (partitioningTimes.size() < 2) {
     throw std::runtime_error("There should be at least one time partition.");
   }

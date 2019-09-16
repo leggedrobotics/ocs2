@@ -76,7 +76,7 @@ namespace ocs2 {
  * @tparam STATE_DIM: Dimension of the state space.
  * @tparam INPUT_DIM: Dimension of the control input space.
  */
-template<size_t STATE_DIM, size_t INPUT_DIM>
+template <size_t STATE_DIM, size_t INPUT_DIM>
 class MPC_ROS_Interface {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
@@ -103,7 +103,7 @@ class MPC_ROS_Interface {
   using system_observation_t = SystemObservation<STATE_DIM, INPUT_DIM>;
 
   using controller_t = ControllerBase<STATE_DIM, INPUT_DIM>;
-  using controller_ptr_array_t = std::vector<controller_t *>;
+  using controller_ptr_array_t = std::vector<controller_t*>;
 
   using ros_msg_conversions_t = RosMsgConversions<STATE_DIM, INPUT_DIM>;
 
@@ -123,7 +123,7 @@ class MPC_ROS_Interface {
    * @param [in] mpcPtr: The MPC pointer to be interfaced.
    * @param [in] robotName: The robot's name.
    */
-  explicit MPC_ROS_Interface(mpc_t *mpcPtr, const std::string &robotName = "robot");
+  explicit MPC_ROS_Interface(mpc_t* mpcPtr, const std::string& robotName = "robot");
 
   /**
    * Destructor.
@@ -136,18 +136,18 @@ class MPC_ROS_Interface {
    * @param [in] mpcPtr: The MPC pointer to be interfaced.
    * @param [in] robotName: The robot's name.
    */
-  void set(mpc_t *mpcPtr, const std::string &robotName = "robot");
+  void set(mpc_t* mpcPtr, const std::string& robotName = "robot");
 
   /**
    * Resets the class to its instantiation state.
    *
    * @param [in] initCostDesiredTrajectories: The initial desired cost trajectories.
    */
-  virtual void reset(const cost_desired_trajectories_t &initCostDesiredTrajectories);
+  virtual void reset(const cost_desired_trajectories_t& initCostDesiredTrajectories);
 
   /**
-  * Set all modules that need to be synchronized with the mpc. Each module is updated once before solving an mpc problem
-  */
+   * Set all modules that need to be synchronized with the mpc. Each module is updated once before solving an mpc problem
+   */
   void setMpcSynchronizedModules(mpc_synchronized_ros_module_array_t mpcSynchronizedRosModules);
 
   /**
@@ -161,14 +161,14 @@ class MPC_ROS_Interface {
    * @param [in] argc: Command line number of arguments.
    * @param [in] argv: Command line vector of arguments.
    */
-  void initializeNode(int argc, char *argv[]);
+  void initializeNode(int argc, char* argv[]);
 
   /**
    * Returns a shared pointer to the node handle.
    *
    * @return shared pointer to the node handle.
    */
-  std::shared_ptr<ros::NodeHandle> &nodeHandlePtr();
+  std::shared_ptr<ros::NodeHandle>& nodeHandlePtr();
 
   /**
    * Spins ROS.
@@ -185,7 +185,7 @@ class MPC_ROS_Interface {
    * @param [in] argc: Command line number of arguments.
    * @param [in] argv: Command line vector of arguments.
    */
-  void launchNodes(int argc, char *argv[]);
+  void launchNodes(int argc, char* argv[]);
 
   /**
    * This method will be called either after the very fist call of the class or after a call to reset().
@@ -193,14 +193,14 @@ class MPC_ROS_Interface {
    *
    * @param [in] initObservation: The observation after the very fist call of the class or after call to reset().
    */
-  virtual void initCall(const system_observation_t &initObservation) {}
+  virtual void initCall(const system_observation_t& initObservation) {}
 
   /**
    * Provides the initial mode sequence for time-triggered hybrid systems.
    *
    * @param [in] initObservation: The observation after the very fist call of the class or after call to reset().
    */
-  virtual void initModeSequence(const system_observation_t &initObservation) {}
+  virtual void initModeSequence(const system_observation_t& initObservation) {}
 
  protected:
   /**
@@ -216,7 +216,7 @@ class MPC_ROS_Interface {
    * @param req: Service request.
    * @param res: Service response.
    */
-  bool resetMpcCallback(ocs2_msgs::reset::Request &req, ocs2_msgs::reset::Response &res);
+  bool resetMpcCallback(ocs2_msgs::reset::Request& req, ocs2_msgs::reset::Response& res);
 
   /**
    * Dummy publisher for network debugging.
@@ -236,15 +236,11 @@ class MPC_ROS_Interface {
    * @param [in] eventTimesPtr: A pointer to the event time sequence.
    * @param [in] subsystemsSequencePtr: A pointer to the subsystem sequence.
    */
-  void publishPolicy(const system_observation_t &currentObservation,
-                     const bool &controllerIsUpdated,
-                     const cost_desired_trajectories_t *&costDesiredTrajectoriesPtr,
-                     const controller_ptr_array_t *&controllerStockPtr,
-                     const std::vector<scalar_array_t> *&timeTrajectoriesStockPtr,
-                     const state_vector_array2_t *&stateTrajectoriesStockPtr,
-                     const input_vector_array2_t *&inputTrajectoriesStockPtr,
-                     const scalar_array_t *&eventTimesPtr,
-                     const size_array_t *&subsystemsSequencePtr);
+  void publishPolicy(const system_observation_t& currentObservation, const bool& controllerIsUpdated,
+                     const cost_desired_trajectories_t*& costDesiredTrajectoriesPtr, const controller_ptr_array_t*& controllerStockPtr,
+                     const std::vector<scalar_array_t>*& timeTrajectoriesStockPtr, const state_vector_array2_t*& stateTrajectoriesStockPtr,
+                     const input_vector_array2_t*& inputTrajectoriesStockPtr, const scalar_array_t*& eventTimesPtr,
+                     const size_array_t*& subsystemsSequencePtr);
 
   /**
    * Handles ROS publishing thread.
@@ -257,27 +253,27 @@ class MPC_ROS_Interface {
    *
    * @param [in] msg: The observation message.
    */
-  void mpcObservationCallback(const ocs2_msgs::mpc_observation::ConstPtr &msg);
+  void mpcObservationCallback(const ocs2_msgs::mpc_observation::ConstPtr& msg);
 
   /**
    * The callback method which receives the user-defined target trajectories message.
    *
    * @param [in] msg: The target trajectories message.
    */
-  void mpcTargetTrajectoriesCallback(const ocs2_msgs::mpc_target_trajectories::ConstPtr &msg);
+  void mpcTargetTrajectoriesCallback(const ocs2_msgs::mpc_target_trajectories::ConstPtr& msg);
 
   /**
    * The callback method which receives the user-defined mode sequence message.
    *
    * @param [in] msg: The mode sequence message.
    */
-  void mpcModeSequenceCallback(const ocs2_msgs::mode_sequence::ConstPtr &msg);
+  void mpcModeSequenceCallback(const ocs2_msgs::mode_sequence::ConstPtr& msg);
 
  protected:
   /*
    * Variables
    */
-  mpc_t *mpcPtr_;
+  mpc_t* mpcPtr_;
   MPC_Settings mpcSettings_;
 
   std::string robotName_;

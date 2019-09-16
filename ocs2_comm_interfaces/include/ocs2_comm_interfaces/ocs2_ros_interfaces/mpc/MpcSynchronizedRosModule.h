@@ -51,4 +51,3 @@ class MpcSynchronizedRosModule : public MpcSynchronizedModule<STATE_DIM, scalar_
 };
 
 }  // namespace ocs2
-

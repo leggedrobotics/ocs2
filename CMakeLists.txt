@@ -17,6 +17,8 @@ find_package(Boost REQUIRED COMPONENTS
   filesystem
 )
 
+find_package(raisim CONFIG QUIET)
+
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread -fopenmp -std=c++11 -Wfatal-errors -ffast-math -fPIC")
 
 ###################################
@@ -141,6 +143,22 @@ target_link_libraries(dummy_mrt_node
   ocs2_anymal_interface
   ${catkin_LIBRARIES}
 )
+
+# Dummy node with raisim rollout
+if(raisim_FOUND)
+  add_executable(anymal_dummy_raisim
+    src/AnymalRaisimConversions.cpp
+    src/AnymalRaisimDummy.cpp
+  )
+  add_dependencies(anymal_dummy_raisim
+    ${catkin_EXPORTED_TARGETS}
+  )
+  target_link_libraries(anymal_dummy_raisim
+    ocs2_anymal_interface
+    ${catkin_LIBRARIES}
+    raisim::raisim
+  )
+endif(raisim_FOUND)
 
 
 #############

@@ -147,6 +147,11 @@ class MRT_BASE {
   bool updatePolicy();
 
   /**
+   *  Returns time difference with the time at which the initObservation that produced the current policy was published
+   */
+   scalar_t getPolicyDelay(scalar_t time) { return time - currentCommand_->mpcInitObservation_.time(); };
+
+  /**
    * Reseats the logic rules in the logic rules machine
    *
    * @param [in] logicRules : pointer to the shared logic rules.

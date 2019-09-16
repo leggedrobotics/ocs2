@@ -27,51 +27,28 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#ifndef TASK_LISTENER_BASE_OCS2_H_
-#define TASK_LISTENER_BASE_OCS2_H_
+#pragma once
 
 #include <ros/ros.h>
-#include <Eigen/StdVector>
-#include <memory>
-#include <vector>
+
+#include <ocs2_mpc/MpcSynchronizedModule.h>
 
 namespace ocs2 {
 
 /**
- * The class task listener interface class.
- *
- * @tparam SCALAR_T: scalar type.
+ * MpcSynchronizedRosModule adds ROS functionality to an MpcSynchronizedModule.
+ * @tparam STATE_DIM : State dimension
+ * @tparam scalar_t : scalar numerical type
  */
-template <typename SCALAR_T = float>
-class TaskListenerBase {
+template <size_t STATE_DIM, typename scalar_t = float>
+class MpcSynchronizedRosModule : public MpcSynchronizedModule<STATE_DIM, scalar_t> {
  public:
-  using scalar_t = SCALAR_T;
+  //! Default destructor
+  virtual ~MpcSynchronizedRosModule() = default;
 
-  using shared_ptr_t = std::shared_ptr<TaskListenerBase<SCALAR_T>>;
-  using shared_ptr_array_t = std::vector<shared_ptr_t>;
-
-  /**
-   * Default constructor.
-   *
-   */
-  TaskListenerBase() = default;
-
-  /**
-   * Default destructor.
-   */
-  virtual ~TaskListenerBase() = default;
-
-  /**
-   * This method should swap the active variables with the buffer variables.
-   */
-  virtual void update() = 0;
-
-  /**
-   * Gets a ROS node handle to for subscribing a topic.
-   */
+  //! Get node handle to subscribe to topics
   virtual void subscribe(::ros::NodeHandle& nodeHandle) = 0;
 };
 
 }  // namespace ocs2
 
-#endif /* TASK_LISTENER_BASE_OCS2_H_ */

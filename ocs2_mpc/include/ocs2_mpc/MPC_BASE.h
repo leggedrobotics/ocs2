@@ -35,6 +35,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <memory>
 #include <vector>
 
+#include <ocs2_mpc/MpcSynchronizedModule.h>
+
 #include <ocs2_oc/oc_solver/Solver_BASE.h>
 
 #include <ocs2_core/Dimensions.h>
@@ -88,6 +90,9 @@ class MPC_BASE {
   using solver_base_t = Solver_BASE<STATE_DIM, INPUT_DIM>;
   using solver_base_ptr_t = typename solver_base_t::Ptr;
 
+  using mpc_synchronized_module_t = MpcSynchronizedModule<STATE_DIM, scalar_t>;
+  using mpc_synchronized_module_array_t = std::vector<std::shared_ptr<mpc_synchronized_module_t>>;
+
   /**
    * Default constructor.
    */
@@ -134,6 +139,11 @@ class MPC_BASE {
                                    const state_vector_array2_t*& stateTrajectoriesStockPtr,
                                    const input_vector_array2_t*& inputTrajectoriesStockPtr,
                                    const controller_ptr_array_t*& controllerStockPtr) = 0;
+
+  /**
+   * Set all modules that need to be synchronized with the mpc. Each module is updated once before solving an mpc problem
+   */
+  void setMpcSynchronizedModules(mpc_synchronized_module_array_t mpcSynchronizedModules);
 
   /**
    * Gets a pointer to the underlying solver used in the MPC.
@@ -266,6 +276,7 @@ class MPC_BASE {
 
  private:
   solver_base_t* solverPtr_;
+  mpc_synchronized_module_array_t mpcSynchronizedModules_;
 };
 
 }  // namespace ocs2

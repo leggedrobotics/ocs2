@@ -282,6 +282,13 @@ bool MPC_BASE<STATE_DIM, INPUT_DIM>::run(const scalar_t& currentTime, const stat
   }
 
   /******************************************************************************************
+   * Update all synchronized modules
+   ******************************************************************************************/
+  for (auto& module : mpcSynchronizedModules_) {
+    module->update(initTime, finalTime, currentState, solverPtr_->getCostDesiredTrajectories(), solverPtr_->getLogicRulesPtr());
+  }
+
+  /******************************************************************************************
    * Calculate controller
    ******************************************************************************************/
   // calculate the MPC controller
@@ -303,6 +310,14 @@ bool MPC_BASE<STATE_DIM, INPUT_DIM>::run(const scalar_t& currentTime, const stat
 
   return true;
 }
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+template <size_t STATE_DIM, size_t INPUT_DIM>
+void MPC_BASE<STATE_DIM, INPUT_DIM>::setMpcSynchronizedModules(mpc_synchronized_module_array_t mpcSynchronizedModules) {
+  mpcSynchronizedModules_ = std::move(mpcSynchronizedModules);
+};
 
 /******************************************************************************************************/
 /******************************************************************************************************/

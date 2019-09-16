@@ -285,6 +285,16 @@ bool MPC_BASE<STATE_DIM, INPUT_DIM>::run(const scalar_t& currentTime, const stat
   }
 
   /******************************************************************************************
+   * cost goal check
+   ******************************************************************************************/
+  if (initRun_ && solverPtr_->getCostDesiredTrajectories().empty()) {
+    std::cerr << "### WARNING: The initial desired trajectories are not set. "
+                 "This may cause undefined behavior. Use the MPC_SLQ::setCostDesiredTrajectories() "
+                 "method to provide appropriate goal trajectories."
+              << std::endl;
+  }
+
+  /******************************************************************************************
    * Calculate controller
    ******************************************************************************************/
   // calculate the MPC controller

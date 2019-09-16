@@ -306,13 +306,6 @@ class Solver_BASE {
                                    dynamic_vector_array_t& desiredInputTrajectory);
 
   /**
-   * Whether the cost function desired trajectories is updated.
-   *
-   * @return true if it is updated.
-   */
-  bool costDesiredTrajectoriesUpdated() const { return costDesiredTrajectoriesUpdated_; };
-
-  /**
    * Returns an array of pointer to the optimal control policies.
    *
    * @return An array of pointers to the optimized control policies.
@@ -369,13 +362,6 @@ class Solver_BASE {
   virtual void swapNominalTrajectories(std::vector<scalar_array_t>& nominalTimeTrajectoriesStock,
                                        state_vector_array2_t& nominalStateTrajectoriesStock,
                                        input_vector_array2_t& nominalInputTrajectoriesStock) = 0;
-
-  /**
-   * @brief updateCostDesiredTrajectories: Swap buffered costDesiredTrajectories to the in-use ones.
-   * @return true if updated (i.e., something new was swapped in), false otherwise
-   */
-  bool updateCostDesiredTrajectories();
-
   /**
    * Calculates the value function at the given time and state.
    *
@@ -425,10 +411,7 @@ class Solver_BASE {
   void printString(const std::string& text);
 
  protected:
-  cost_desired_trajectories_t costDesiredTrajectoriesBuffer_;
   cost_desired_trajectories_t costDesiredTrajectories_;
-  std::atomic_bool costDesiredTrajectoriesUpdated_;
-  std::mutex costDesiredTrajectoriesBufferMutex_;
 
  private:
   std::mutex outputDisplayGuardMutex_;

@@ -308,6 +308,10 @@ class MPC_ROS_Interface {
   bool initialCall_;
   std::mutex resetMutex_;
   std::atomic<bool> resetRequestedEver_;
+
+  std::mutex costDesiredTrajectoriesBufferMutex_;
+  std::atomic_bool costDesiredTrajectoriesBufferUpdated_;
+  cost_desired_trajectories_t costDesiredTrajectoriesBuffer_;
 };
 
 }  // namespace ocs2

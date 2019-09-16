@@ -152,6 +152,9 @@ class MPC_MRT_Interface final : public MRT_BASE<STATE_DIM, INPUT_DIM> {
   // MPC inputs
   system_observation_t currentObservation_;
   std::mutex observationMutex_;
+  std::mutex costDesiredTrajectoriesBufferMutex_;
+  std::atomic_bool costDesiredTrajectoriesBufferUpdated_;
+  cost_desired_trajectories_t costDesiredTrajectoriesBuffer_;
 
   // MPC outputs (additional to the buffer variables in Base)
   input_vector_array_t mpcInputTrajectoryBuffer_;

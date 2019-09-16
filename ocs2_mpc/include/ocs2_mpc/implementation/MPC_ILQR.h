@@ -105,16 +105,6 @@ void MPC_ILQR<STATE_DIM, INPUT_DIM>::calculateController(const scalar_t& initTim
                                                          const input_vector_array2_t*& inputTrajectoriesStockPtr,
                                                          const controller_ptr_array_t*& controllerStockPtr) {
   //*****************************************************************************************
-  // cost goal check
-  //*****************************************************************************************
-  if (BASE::initRun_ && !ilqrPtr_->costDesiredTrajectoriesUpdated()) {
-    std::cerr << "### WARNING: The initial desired trajectories are not set. "
-                 "This may cause undefined behavior. Use the MPC_ILQR::setCostDesiredTrajectories() "
-                 "method to provide appropriate goal trajectories."
-              << std::endl;
-  }
-
-  //*****************************************************************************************
   // updating real-time iteration settings
   //*****************************************************************************************
   // number of iterations

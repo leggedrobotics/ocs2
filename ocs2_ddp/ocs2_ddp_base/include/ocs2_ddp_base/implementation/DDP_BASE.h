@@ -137,11 +137,6 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::reset() {
   useParallelRiccatiSolverFromInitItr_ = false;
 
   this->costDesiredTrajectories_.clear();
-  {
-    std::lock_guard<std::mutex> lock(this->costDesiredTrajectoriesBufferMutex_);
-    this->costDesiredTrajectoriesBuffer_.clear();
-    this->costDesiredTrajectoriesUpdated_ = false;
-  }
 
   for (size_t i = 0; i < numPartitions_; i++) {
     // very important :)
@@ -1623,8 +1618,6 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::run(scalar_t initTime, const state_vector_t
       throw std::runtime_error("The internal controller is not compatible with the number of partitions.");
     }
   }
-
-  this->updateCostDesiredTrajectories();
 
   // update the logic rules in the beginning of the run routine
   bool logicRulesModified = BASE::getLogicRulesMachinePtr()->updateLogicRules(partitioningTimes_);

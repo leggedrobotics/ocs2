@@ -7,7 +7,7 @@ namespace ocs2 {
 
 template <size_t STATE_DIM, size_t INPUT_DIM>
 MPC_MRT_Interface<STATE_DIM, INPUT_DIM>::MPC_MRT_Interface(mpc_t& mpc, std::shared_ptr<HybridLogicRules> logicRules)
-    : Base(std::move(logicRules)), mpc_(mpc), numMpcIterations_(0) {}
+    : Base(std::move(logicRules)), mpc_(mpc), numMpcIterations_(0), costDesiredTrajectoriesBufferUpdated_(false) {}
 
 template <size_t STATE_DIM, size_t INPUT_DIM>
 void MPC_MRT_Interface<STATE_DIM, INPUT_DIM>::resetMpcNode(const cost_desired_trajectories_t& initCostDesiredTrajectories) {
@@ -18,11 +18,9 @@ void MPC_MRT_Interface<STATE_DIM, INPUT_DIM>::resetMpcNode(const cost_desired_tr
 
 template <size_t STATE_DIM, size_t INPUT_DIM>
 void MPC_MRT_Interface<STATE_DIM, INPUT_DIM>::setTargetTrajectories(const cost_desired_trajectories_t& targetTrajectories) {
-  if (mpc_.settings().debugPrint_) {
-    std::cerr << "### The target position is updated to" << std::endl;
-    targetTrajectories.display();
-  }
-  mpc_.getSolverPtr()->setCostDesiredTrajectories(targetTrajectories);
+  std::lock_guard<std::mutex> lock(costDesiredTrajectoriesBufferMutex_);
+  costDesiredTrajectoriesBuffer_ = targetTrajectories;
+  costDesiredTrajectoriesBufferUpdated_ = true;
 }
 
 template <size_t STATE_DIM, size_t INPUT_DIM>
@@ -47,6 +45,18 @@ void MPC_MRT_Interface<STATE_DIM, INPUT_DIM>::advanceMpc() {
   {
     std::lock_guard<std::mutex> lock(observationMutex_);
     mpcInitObservation = currentObservation_;
+  }
+
+  // Set latest cost desired trajectories
+  if (costDesiredTrajectoriesBufferUpdated_) {
+    std::lock_guard<std::mutex> lock(costDesiredTrajectoriesBufferMutex_);
+    mpc_.getSolverPtr()->swapCostDesiredTrajectories(costDesiredTrajectoriesBuffer_);
+    costDesiredTrajectoriesBufferUpdated_ = false;
+
+    if (mpc_.settings().debugPrint_) {
+      std::cerr << "### The target position is updated to " << std::endl;
+      mpc_.getSolverPtr()->getCostDesiredTrajectories().display();
+    }
   }
 
   mpc_.run(mpcInitObservation.time(), mpcInitObservation.state());

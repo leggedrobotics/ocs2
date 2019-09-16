@@ -92,7 +92,6 @@ class PiSolver final : public Solver_BASE<STATE_DIM, INPUT_DIM> {
 
   void reset() override {
     this->costDesiredTrajectories_.clear();
-    this->costDesiredTrajectoriesBuffer_.clear();
     nominalTimeTrajectoriesStock_.clear();
     nominalStateTrajectoriesStock_.clear();
     nominalInputTrajectoriesStock_.clear();
@@ -103,7 +102,6 @@ class PiSolver final : public Solver_BASE<STATE_DIM, INPUT_DIM> {
   void run(scalar_t initTime, const state_vector_t& initState, scalar_t finalTime, const scalar_array_t& partitioningTimes) override {
     numIterations_++;
 
-    this->updateCostDesiredTrajectories();
     costFunction_->setCostDesiredTrajectories(this->costDesiredTrajectories_);
 
     const auto numSteps = static_cast<size_t>(std::round((finalTime - initTime) / settings_.rolloutSettings_.minTimeStep_)) + 1;

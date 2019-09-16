@@ -33,7 +33,8 @@ namespace ocs2 {
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
-MPC_ROS_Interface<STATE_DIM, INPUT_DIM>::MPC_ROS_Interface(mpc_t* mpcPtr, const std::string& robotName /*= "robot"*/) {
+MPC_ROS_Interface<STATE_DIM, INPUT_DIM>::MPC_ROS_Interface(mpc_t* mpcPtr, const std::string& robotName /*= "robot"*/)
+    : costDesiredTrajectoriesBufferUpdated_(false) {
   set(mpcPtr, robotName);
 }
 
@@ -102,6 +103,7 @@ void MPC_ROS_Interface<STATE_DIM, INPUT_DIM>::reset(const cost_desired_trajector
   resetRequestedEver_ = true;
 
   mpcPtr_->getSolverPtr()->setCostDesiredTrajectories(initCostDesiredTrajectories);
+  costDesiredTrajectoriesBufferUpdated_ = false;
 
   mpcTimer_.reset();
   currentDelay_ = 0.0;
@@ -347,6 +349,18 @@ void MPC_ROS_Interface<STATE_DIM, INPUT_DIM>::mpcObservationCallback(const ocs2_
     initCall(currentObservation);
   }
 
+  // Set latest cost desired trajectories
+  if (costDesiredTrajectoriesBufferUpdated_) {
+    std::lock_guard<std::mutex> lock(costDesiredTrajectoriesBufferMutex_);
+    mpcPtr_->getSolverPtr()->swapCostDesiredTrajectories(costDesiredTrajectoriesBuffer_);
+    costDesiredTrajectoriesBufferUpdated_ = false;
+
+    if (mpcSettings_.debugPrint_) {
+      std::cerr << "### The target position is updated to " << std::endl;
+      mpcPtr_->getSolverPtr()->getCostDesiredTrajectories().display();
+    }
+  }
+
   // run SLQ-MPC
   bool controllerIsUpdated = mpcPtr_->run(currentObservation.time(), currentObservation.state());
 
@@ -414,15 +428,9 @@ void MPC_ROS_Interface<STATE_DIM, INPUT_DIM>::mpcTargetTrajectoriesCallback(cons
     throw std::runtime_error("Target trajectories can only be updated in receding horizon mode.");
   }
 
-  cost_desired_trajectories_t costDesiredTrajectories;
-  RosMsgConversions<STATE_DIM, INPUT_DIM>::readTargetTrajectoriesMsg(*msg, costDesiredTrajectories);
-
-  if (mpcSettings_.debugPrint_) {
-    std::cerr << "### The target position is updated to " << std::endl;
-    costDesiredTrajectories.display();
-  }
-
-  mpcPtr_->getSolverPtr()->swapCostDesiredTrajectories(costDesiredTrajectories);
+  std::lock_guard<std::mutex> lock(costDesiredTrajectoriesBufferMutex_);
+  RosMsgConversions<STATE_DIM, INPUT_DIM>::readTargetTrajectoriesMsg(*msg, costDesiredTrajectoriesBuffer_);
+  costDesiredTrajectoriesBufferUpdated_ = true;
 }
 
 /******************************************************************************************************/

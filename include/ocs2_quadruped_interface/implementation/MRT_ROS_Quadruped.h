@@ -10,6 +10,7 @@
 #include "ocs2_anymal_switched_model/generated/transforms.h"
 #include "ocs2_anymal_switched_model/generated/inertia_properties.h"
 #include "ocs2_anymal_switched_model/generated/inverse_dynamics.h"
+#include "ocs2_anymal_switched_model/generated/jsim.h"
 
 namespace switched_model {
 
@@ -404,6 +405,82 @@ void MRT_ROS_Quadruped<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::rolloutPolicy(
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
+//template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM>
+//void MRT_ROS_Quadruped<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::rolloutPolicy(
+//	scalar_t time, const state_vector_t& state, rbd_state_vector_t& rbdState, joint_coordinate_t& rbdInput, size_t& subsystem) {
+//
+//  // optimal switched model state and input
+//  state_vector_t stateRef;
+//  input_vector_t inputRef;
+//  BASE::evaluatePolicy(time, state, stateRef, inputRef, subsystem);
+//
+//  // calculate rbd state.
+//  ocs2QuadrupedInterfacePtr_->computeRbdModelState(stateRef, inputRef, rbdState);
+//  base_coordinate_t qBase     = rbdState.template segment<6>(0);
+//  joint_coordinate_t qJoints  = rbdState.template segment<12>(6);
+//  base_coordinate_t qdBase    = rbdState.template segment<6>(18);
+//  joint_coordinate_t qdJoints = rbdState.template segment<12>(24);
+//
+//  // look one dt ahead to obtain acceleration
+//  const scalar_t dt = 1.0 / ocs2QuadrupedInterfacePtr_->modelSettings().feetFilterFrequency_;
+//  state_vector_t stateRef_ahead;
+//  input_vector_t inputRef_ahead;
+//  size_t subsystem_ahead;
+//  BASE::rolloutPolicy(time, state, dt, stateRef_ahead, inputRef_ahead, subsystem_ahead);
+//  vector_3d_array_t o_feetPositionRef_ahead, o_feetVelocityRef_ahead;
+//  vector_3d_array_t o_contactForces_ahead;
+//  joint_coordinate_t qddJoints = (inputRef_ahead.template tail<JOINT_COORD_SIZE>() - inputRef.template tail<JOINT_COORD_SIZE>()) / dt;
+//
+//  // inverse dynamics
+//  // RBD homogeneous transforms of feet
+//  ocs2QuadrupedInterfacePtr_->getKinematicModel().update(qBase, qJoints);
+//  // force transformed in the lowerLeg coordinate
+//  iit::rbd::ForceVector extForceBase[4];
+//  for (size_t j=0; j<4; j++) {
+//	  vector_3d_t b_footPosition;
+//	  ocs2QuadrupedInterfacePtr_->getKinematicModel().footPositionBaseFrame(j, b_footPosition);
+//	  extForceBase[j].head<3>() = b_footPosition.cross(inputRef.template segment<3>(3*j));
+//	  extForceBase[j].tail<3>() = inputRef.template segment<3>(3*j);
+//  }
+//  iit::ANYmal::ForceTransforms forceTransforms;
+//  iit::ANYmal::LinkDataMap<iit::rbd::ForceVector> extForces;
+//  for (size_t j=0; j<iit::ANYmal::linksCount; j++)  {
+//	  extForces[iit::ANYmal::orderedLinkIDs[j]] = iit::rbd::ForceVector::Zero();
+//  }
+//  extForces[iit::ANYmal::LF_SHANK] = forceTransforms.fr_LF_SHANK_COM_X_fr_base(qJoints) * extForceBase[0];
+//  extForces[iit::ANYmal::RF_SHANK] = forceTransforms.fr_RF_SHANK_COM_X_fr_base(qJoints) * extForceBase[1];
+//  extForces[iit::ANYmal::LH_SHANK] = forceTransforms.fr_LH_SHANK_COM_X_fr_base(qJoints) * extForceBase[2];
+//  extForces[iit::ANYmal::RH_SHANK] = forceTransforms.fr_RH_SHANK_COM_X_fr_base(qJoints) * extForceBase[3];
+//
+//  // gravity vetor in the base frame
+//  iit::rbd::Vector6D g;
+//  Eigen::Matrix3d b_R_o = ocs2QuadrupedInterfacePtr_->getKinematicModel().rotationMatrixOrigintoBase();
+//  g << vector_3d_t::Zero(), b_R_o*vector_3d_t(0.0,0.0,-9.81);
+//
+//  iit::ANYmal::dyn::InertiaProperties inertias;
+//  iit::ANYmal::MotionTransforms transforms;
+//  base_coordinate_t qddBase;
+//  iit::ANYmal::dyn::InverseDynamics inverseDynamics(inertias, transforms);
+//  inverseDynamics.id(rbdInput, qddBase, g, qdBase, qJoints, qdJoints, qddJoints, extForces);
+//
+//  for (size_t i=0; i<4; i++) {
+//	  Eigen::Matrix<double,6,JOINT_COORD_SIZE> footJacobain;
+//	  ocs2QuadrupedInterfacePtr_->getKinematicModel().footJacobainBaseFrame(i, footJacobain);
+//	  joint_coordinate_t tau = footJacobain.template bottomRows<3>().transpose() * inputRef.template segment<3>(3*i);
+//	  std::cout << "True torque " << i << ":      " << rbdInput.template segment<3>(3*i).transpose() << std::endl;
+//	  std::cout << "Estimated torque " << i << ": " << tau.template segment<3>(3*i).transpose() << std::endl;
+//	  std::cout << "extForceBase " << i << ": " << extForceBase[i].transpose() << std::endl;
+//	  switch (i) {
+//	  case 0: std::cout << "extForces " << i << ": " << extForces[iit::ANYmal::LF_SHANK].transpose() << std::endl << std::endl; break;
+//	  case 1: std::cout << "extForces " << i << ": " << extForces[iit::ANYmal::RF_SHANK].transpose() << std::endl << std::endl; break;
+//	  case 2: std::cout << "extForces " << i << ": " << extForces[iit::ANYmal::LH_SHANK].transpose() << std::endl << std::endl; break;
+//	  case 3: std::cout << "extForces " << i << ": " << extForces[iit::ANYmal::RH_SHANK].transpose() << std::endl << std::endl; break;
+//	  }
+//  }
+//}
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
 template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM>
 void MRT_ROS_Quadruped<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::rolloutPolicy(
 	scalar_t time, const state_vector_t& state, rbd_state_vector_t& rbdState, joint_coordinate_t& rbdInput, size_t& subsystem) {
@@ -441,26 +518,63 @@ void MRT_ROS_Quadruped<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::rolloutPolicy(
 	  extForceBase[j].head<3>() = b_footPosition.cross(inputRef.template segment<3>(3*j));
 	  extForceBase[j].tail<3>() = inputRef.template segment<3>(3*j);
   }
-  iit::ANYmal::ForceTransforms forceTransforms;
-  iit::ANYmal::LinkDataMap<iit::rbd::ForceVector> extForces;
-//  for (size_t j=0; j<iit::ANYmal::linksCount; j++)  {
-//	  extForces[iit::ANYmal::orderedLinkIDs[j]] = iit::rbd::ForceVector::Zero();
-//  }
-  extForces[iit::ANYmal::LF_SHANK] = forceTransforms.fr_LF_SHANK_COM_X_fr_base(qJoints) * extForceBase[0];
-  extForces[iit::ANYmal::RF_SHANK] = forceTransforms.fr_RF_SHANK_COM_X_fr_base(qJoints) * extForceBase[1];
-  extForces[iit::ANYmal::LH_SHANK] = forceTransforms.fr_LH_SHANK_COM_X_fr_base(qJoints) * extForceBase[2];
-  extForces[iit::ANYmal::RH_SHANK] = forceTransforms.fr_RH_SHANK_COM_X_fr_base(qJoints) * extForceBase[3];
-
-  // gravity vetor in the base frame
-  iit::rbd::Vector6D g;
-  Eigen::Matrix3d b_R_o = ocs2QuadrupedInterfacePtr_->getKinematicModel().rotationMatrixOrigintoBase();
-  g << vector_3d_t::Zero(), b_R_o*vector_3d_t(0.0,0.0,-9.81);
+  joint_coordinate_t extForceJoint[4];
+  for (size_t j=0; j<4; j++) {
+	  Eigen::Matrix<double,6,JOINT_COORD_SIZE> b_footJacobain;
+	  ocs2QuadrupedInterfacePtr_->getKinematicModel().footJacobainBaseFrame(j, b_footJacobain);
+	  extForceJoint[j] = b_footJacobain.template bottomRows<3>().transpose() * inputRef.template segment<3>(3*j);
+  }
 
   iit::ANYmal::dyn::InertiaProperties inertias;
-  iit::ANYmal::MotionTransforms transforms;
-  base_coordinate_t qddBase;
-  iit::ANYmal::dyn::InverseDynamics inverseDynamics(inertias, transforms);
-  inverseDynamics.id(rbdInput, qddBase, g, qdBase, qJoints, qdJoints, qddJoints, extForces);
+  iit::ANYmal::MotionTransforms MotionTransforms;
+  iit::ANYmal::ForceTransforms forceTransforms;
+
+  iit::ANYmal::dyn::JSIM Mm(inertias, forceTransforms);
+  Mm.update(qJoints);
+
+  iit::ANYmal::dyn::InverseDynamics inverseDynamics(inertias, MotionTransforms);
+  inverseDynamics.setJointStatus(qJoints);
+
+  generalized_coordinate_t Gv;
+  {
+	  // gravity vetor in the base frame
+	  iit::rbd::Vector6D gravity;
+	  Eigen::Matrix3d b_R_o = ocs2QuadrupedInterfacePtr_->getKinematicModel().rotationMatrixOrigintoBase();
+	  gravity << vector_3d_t::Zero(), b_R_o*vector_3d_t(0.0,0.0,-9.81);
+
+	  iit::rbd::Vector6D baseWrench;
+	  joint_coordinate_t jForces;
+	  inverseDynamics.G_terms_fully_actuated(baseWrench, jForces, gravity);
+	  Gv << baseWrench, jForces;
+  }
+
+  generalized_coordinate_t Cv;
+  {
+	  iit::rbd::Vector6D baseWrench;
+	  joint_coordinate_t jForces;
+	  inverseDynamics.C_terms_fully_actuated(baseWrench, jForces, qdBase, qdJoints);
+	  Cv << baseWrench, jForces;
+  }
+
+  // compute Base local acceleration about Base frame
+  base_coordinate_t comLocalAcceleration = -Mm. template topRightCorner<6,JOINT_COORD_SIZE>()*qddJoints
+		  - Cv.template head<6>() - Gv.template head<6>();
+  for (size_t j=0; j<4; j++) { comLocalAcceleration += extForceBase[j]; }
+  comLocalAcceleration = Mm. template topLeftCorner<6,6>().ldlt().solve(comLocalAcceleration);
+
+  // compute joint torque
+  rbdInput = Mm. template bottomLeftCorner<JOINT_COORD_SIZE,6>()*comLocalAcceleration
+		  + Mm. template bottomRightCorner<JOINT_COORD_SIZE,JOINT_COORD_SIZE>()*qddJoints
+		  + Cv.template tail<JOINT_COORD_SIZE>() + Gv.template tail<JOINT_COORD_SIZE>();
+  for (size_t j=0; j<4; j++) { rbdInput -= extForceJoint[j]; }
+
+//  for (size_t i=0; i<4; i++) {
+//	  Eigen::Matrix<double,6,JOINT_COORD_SIZE> footJacobain;
+//	  ocs2QuadrupedInterfacePtr_->getKinematicModel().footJacobainBaseFrame(i, footJacobain);
+//	  joint_coordinate_t tau = footJacobain.template bottomRows<3>().transpose() * inputRef.template segment<3>(3*i);
+//	  std::cout << "True torque " << i << ":      " << rbdInput.template segment<3>(3*i).transpose() << std::endl;
+//	  std::cout << "Estimated torque " << i << ": " << -tau.template segment<3>(3*i).transpose() << std::endl;
+//  }
 }
 
 /******************************************************************************************************/

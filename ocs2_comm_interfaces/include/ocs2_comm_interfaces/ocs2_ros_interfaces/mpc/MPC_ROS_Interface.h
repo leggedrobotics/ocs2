@@ -146,8 +146,8 @@ class MPC_ROS_Interface {
   virtual void reset(const cost_desired_trajectories_t &initCostDesiredTrajectories);
 
   /**
- * Set all modules that need to be synchronized with the mpc. Each module is updated once before solving an mpc problem
- */
+  * Set all modules that need to be synchronized with the mpc. Each module is updated once before solving an mpc problem
+  */
   void setMpcSynchronizedModules(mpc_synchronized_ros_module_array_t mpcSynchronizedRosModules);
 
   /**

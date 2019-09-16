@@ -125,7 +125,7 @@ void MPC_ROS_Interface<STATE_DIM, INPUT_DIM>::setMpcSynchronizedModules(mpc_sync
     mpcSynchronizedModules.emplace_back(module);
   }
 
-  mpcPtr_->setMpcSynchronizedModules(mpcSynchronizedModules);
+  mpcPtr_->setMpcSynchronizedModules(std::move(mpcSynchronizedModules));
 }
 
 /******************************************************************************************************/
@@ -557,6 +557,10 @@ void MPC_ROS_Interface<STATE_DIM, INPUT_DIM>::launchNodes(int argc, char *argv[]
   // MPC reset service server
   mpcResetServiceServer_ =
       nodeHandlerPtr_->advertiseService(robotName_ + "_mpc_reset", &MPC_ROS_Interface::resetMpcCallback, this);
+
+  for (auto& module : mpcSynchronizedRosModules_){
+    module->subscribe(*nodeHandlerPtr_);
+  }
 
   // display
 #ifdef PUBLISH_THREAD

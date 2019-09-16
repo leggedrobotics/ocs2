@@ -359,7 +359,7 @@ class PiSolver final : public Solver_BASE<STATE_DIM, INPUT_DIM> {
     controller_.setSamplingPolicy(std::move(samplingPolicy));
   }
 
-  void getPrimalSolutionPtr(scalar_t finalTime, primal_solution_t* primalSolutionPtr) const final {
+  void getPrimalSolution(scalar_t finalTime, primal_solution_t* primalSolutionPtr) const {
     // total number of nodes
     int N = 0;
     for (const scalar_array_t& timeTrajectory_i : nominalTimeTrajectoriesStock_) {

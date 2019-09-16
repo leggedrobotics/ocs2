@@ -196,38 +196,42 @@ ocs2_msgs::mpc_flattened_controller MPC_ROS_Interface<STATE_DIM, INPUT_DIM>::cre
   mpcPolicyMsg.data.clear();
   mpcPolicyMsg.data.reserve(N);
 
-  ocs2_msgs::mpc_state mpcState;
-  mpcState.value.resize(STATE_DIM);
-  ocs2_msgs::mpc_input mpcInput;
-  mpcInput.value.resize(INPUT_DIM);
+  // time
+  for (size_t k = 0; k < N; k++) {
+    mpcPolicyMsg.timeTrajectory.push_back(primalSolution.timeTrajectory_[k]);
+  }  // end of k loop
 
-  const scalar_array_t& timeTrajectory = primalSolution.timeTrajectory_;
-  const state_vector_array_t& stateTrajectory = primalSolution.stateTrajectory_;
-  const input_vector_array_t& inputTrajectory = primalSolution.inputTrajectory_;
-  const controller_t* controller = primalSolution.controllerPtr_.get();
+  // state
+  for (size_t k = 0; k < N; k++) {
+    ocs2_msgs::mpc_state mpcState;
+    mpcState.value.resize(STATE_DIM);
+    for (size_t j = 0; j < STATE_DIM; j++) {
+      mpcState.value[j] = primalSolution.stateTrajectory_[k](j);
+    }
+    mpcPolicyMsg.stateTrajectory.push_back(mpcState);
+  }  // end of k loop
 
+  // input
+  for (size_t k = 0; k < N; k++) {
+    ocs2_msgs::mpc_input mpcInput;
+    mpcInput.value.resize(INPUT_DIM);
+    for (size_t j = 0; j < INPUT_DIM; j++) {
+      mpcInput.value[j] = primalSolution.inputTrajectory_[k](j);
+    }
+    mpcPolicyMsg.inputTrajectory.push_back(mpcInput);
+  }  // end of k loop
+
+  // controller
   scalar_array_t timeTrajectoryTruncated;
   std::vector<std::vector<float>*> policyMsgDataPointers;
   policyMsgDataPointers.reserve(N);
-
   for (size_t k = 0; k < N; k++) {
-    for (size_t j = 0; j < STATE_DIM; j++) {
-      mpcState.value[j] = stateTrajectory[k](j);
-    }
-    for (size_t j = 0; j < INPUT_DIM; j++) {
-      mpcInput.value[j] = inputTrajectory[k](j);
-    }
-
-    mpcPolicyMsg.timeTrajectory.push_back(timeTrajectory[k]);
-    mpcPolicyMsg.stateTrajectory.push_back(mpcState);
-    mpcPolicyMsg.inputTrajectory.push_back(mpcInput);
     mpcPolicyMsg.data.emplace_back(ocs2_msgs::controller_data());
 
     policyMsgDataPointers.push_back(&mpcPolicyMsg.data.back().data);
-    timeTrajectoryTruncated.push_back(timeTrajectory[k]);
+    timeTrajectoryTruncated.push_back(primalSolution.timeTrajectory_[k]);
   }  // end of k loop
-
-  controller->flatten(timeTrajectoryTruncated, policyMsgDataPointers);
+  primalSolution.controllerPtr_->flatten(timeTrajectoryTruncated, policyMsgDataPointers);
 
   return mpcPolicyMsg;
 }
@@ -276,7 +280,7 @@ void MPC_ROS_Interface<STATE_DIM, INPUT_DIM>::fillMpcOutputBuffers(system_observ
   if (mpc.settings().solutionTimeWindow_ < 0) {
     finalTime = mpc.getSolverPtr()->getFinalTime();
   }
-  mpc.getSolverPtr()->getPrimalSolutionPtr(finalTime, primalSolutionBuffer_.get());
+  mpc.getSolverPtr()->getPrimalSolution(finalTime, primalSolutionBuffer_.get());
 
   // command
   commandBuffer_->mpcInitObservation_ = std::move(mpcInitObservation);

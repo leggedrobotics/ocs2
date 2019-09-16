@@ -331,7 +331,7 @@ class Solver_BASE {
    * @param [in] finalTime: The final time.
    * @param [out] primalSolutionPtr: The primal problem's solution.
    */
-  virtual void getPrimalSolutionPtr(scalar_t finalTime, primal_solution_t* primalSolutionPtr) const = 0;
+  virtual void getPrimalSolution(scalar_t finalTime, primal_solution_t* primalSolutionPtr) const = 0;
 
   /**
    * @brief Returns the optimized policy data.

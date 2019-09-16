@@ -416,7 +416,7 @@ class DDP_BASE : public Solver_BASE<STATE_DIM, INPUT_DIM> {
    */
   const DDP_Settings& ddpSettings() const;
 
-  void getPrimalSolutionPtr(scalar_t finalTime, primal_solution_t* primalSolutionPtr) const final;
+  void getPrimalSolution(scalar_t finalTime, primal_solution_t* primalSolutionPtr) const final;
 
   scalar_t getFinalTime() const override;
 

@@ -66,9 +66,11 @@ void MPC_MRT_Interface<STATE_DIM, INPUT_DIM>::advanceMpc() {
   // measure the delay in running MPC
   mpcTimer_.startTimer();
 
-  std::unique_lock<std::mutex> lock(observationMutex_);
-  system_observation_t currentObservation = currentObservation_;
-  lock.unlock();
+  system_observation_t currentObservation;
+  {
+    std::lock_guard<std::mutex> lock(observationMutex_);
+    currentObservation = currentObservation_;
+  }
 
   bool controllerIsUpdated = mpc_.run(currentObservation.time(), currentObservation.state());
   if (!controllerIsUpdated) {
@@ -112,7 +114,7 @@ void MPC_MRT_Interface<STATE_DIM, INPUT_DIM>::fillMpcOutputBuffers(system_observ
   if (mpc.settings().solutionTimeWindow_ < 0) {
     finalTime = mpc.getSolverPtr()->getFinalTime();
   }
-  mpc.getSolverPtr()->getPrimalSolutionPtr(finalTime, this->primalSolutionBuffer_.get());
+  mpc.getSolverPtr()->getPrimalSolution(finalTime, this->primalSolutionBuffer_.get());
 
   // command
   this->commandBuffer_->mpcInitObservation_ = std::move(mpcInitObservation);

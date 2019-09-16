@@ -1199,7 +1199,7 @@ const DDP_Settings& DDP_BASE<STATE_DIM, INPUT_DIM>::ddpSettings() const {
 /******************************************************************************************************/
 /***************************************************************************************************** */
 template <size_t STATE_DIM, size_t INPUT_DIM>
-void DDP_BASE<STATE_DIM, INPUT_DIM>::getPrimalSolutionPtr(scalar_t finalTime, primal_solution_t* primalSolutionPtr) const {
+void DDP_BASE<STATE_DIM, INPUT_DIM>::getPrimalSolution(scalar_t finalTime, primal_solution_t* primalSolutionPtr) const {
   // total number of nodes
   int N = 0;
   for (const scalar_array_t& timeTrajectory_i : nominalTimeTrajectoriesStock_) {

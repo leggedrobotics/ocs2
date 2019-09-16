@@ -206,15 +206,6 @@ class MRT_BASE {
    */
   void partitioningTimesUpdate(scalar_t time, scalar_array_t& partitioningTimes) const;
 
-  /**
-   * Checks the data buffer for an update of the MPC policy. If a new policy
-   * is available on the buffer this method will load it to the in-use policy.
-   * This implementation method assumes that the policyBufferMutex_ is locked.
-   *
-   * @return True if the policy is updated.
-   */
-  bool updatePolicyImpl();
-
  protected:
   // flags on state of the class
   std::atomic_bool policyReceivedEver_;

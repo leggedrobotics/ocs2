@@ -37,13 +37,12 @@ namespace ocs2 {
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
-MRT_BASE<STATE_DIM, INPUT_DIM>::MRT_BASE(std::shared_ptr<HybridLogicRules> logicRules) {
+MRT_BASE<STATE_DIM, INPUT_DIM>::MRT_BASE(std::shared_ptr<HybridLogicRules> logicRules)
+    : currentPrimalSolution_(new primal_solution_t),
+      primalSolutionBuffer_(new primal_solution_t),
+      currentCommand_(new command_data_t),
+      commandBuffer_(new command_data_t) {
   reset();
-  currentPrimalSolution_.reset(new primal_solution_t());
-  primalSolutionBuffer_.reset(new primal_solution_t());
-
-  currentCommand_.reset(new command_data_t());
-  commandBuffer_.reset(new command_data_t());
 
   if (!logicRules) {
     logicRules.reset(new NullLogicRules());
@@ -148,14 +147,7 @@ bool MRT_BASE<STATE_DIM, INPUT_DIM>::updatePolicy() {
     return false;
   }
   newPolicyInBuffer_ = false;  // make sure we don't swap in the old policy again
-  return updatePolicyImpl();
-}
 
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM>
-bool MRT_BASE<STATE_DIM, INPUT_DIM>::updatePolicyImpl() {
   // update the current policy from buffer
   policyUpdated_ = policyUpdatedBuffer_;
   currentCommand_.swap(commandBuffer_);

@@ -149,7 +149,7 @@ class MRT_BASE {
   /**
    *  Returns time difference with the time at which the initObservation that produced the current policy was published
    */
-  scalar_t getPolicyDelay(scalar_t time) { return time - currentCommand_->mpcInitObservation_.time(); };
+  scalar_t getPolicyDelay(scalar_t time) const { return time - currentCommand_->mpcInitObservation_.time(); };
 
   /**
    * Reseats the logic rules in the logic rules machine

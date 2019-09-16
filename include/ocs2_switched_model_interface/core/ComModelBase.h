@@ -140,7 +140,7 @@ public:
 	 * Calculates the Base local velocities based on the current joint coordinates
 	 * joint velocities, and CoM local velocities (comLocalVelocities).
 	 * The Base local velocities (baseLocalVelocities) consists of angular and
-	 * linear velocities in World frame (inertia frame coincide at Base frame)
+	 * linear velocities in base frame (inertia frame coincide at Base frame)
 	 * (6-states)
 	 */
 	void calculateBaseLocalVelocities(const joint_coordinate_t& qJoints,

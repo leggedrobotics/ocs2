@@ -114,8 +114,9 @@ void MPC_ROS_Interface<STATE_DIM, INPUT_DIM>::reset(const cost_desired_trajector
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
-void MPC_ROS_Interface<STATE_DIM, INPUT_DIM>::setMpcSynchronizedModules(mpc_synchronized_ros_module_array_t mpcSynchronizedRosModules) {
-  mpcSynchronizedRosModules_ = std::move(mpcSynchronizedRosModules);
+void MPC_ROS_Interface<STATE_DIM, INPUT_DIM>::setMpcSynchronizedModules(
+    const mpc_synchronized_ros_module_array_t& mpcSynchronizedRosModules) {
+  mpcSynchronizedRosModules_ = mpcSynchronizedRosModules;
 
   // Create shared pointers to non-ros interface
   mpc_synchronized_module_array_t mpcSynchronizedModules;
@@ -123,7 +124,7 @@ void MPC_ROS_Interface<STATE_DIM, INPUT_DIM>::setMpcSynchronizedModules(mpc_sync
     mpcSynchronizedModules.emplace_back(module);
   }
 
-  mpcPtr_->setMpcSynchronizedModules(std::move(mpcSynchronizedModules));
+  mpcPtr_->setMpcSynchronizedModules(mpcSynchronizedModules);
 }
 
 /******************************************************************************************************/

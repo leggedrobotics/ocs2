@@ -148,7 +148,7 @@ class MPC_ROS_Interface {
   /**
    * Set all modules that need to be synchronized with the mpc. Each module is updated once before solving an mpc problem
    */
-  void setMpcSynchronizedModules(mpc_synchronized_ros_module_array_t mpcSynchronizedRosModules);
+  void setMpcSynchronizedModules(const mpc_synchronized_ros_module_array_t& mpcSynchronizedRosModules);
 
   /**
    * Shutdowns the ROS node.

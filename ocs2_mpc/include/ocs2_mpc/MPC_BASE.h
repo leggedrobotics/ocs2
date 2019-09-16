@@ -143,7 +143,7 @@ class MPC_BASE {
   /**
    * Set all modules that need to be synchronized with the mpc. Each module is updated once before solving an mpc problem
    */
-  void setMpcSynchronizedModules(mpc_synchronized_module_array_t mpcSynchronizedModules);
+  void setMpcSynchronizedModules(const mpc_synchronized_module_array_t& mpcSynchronizedModules);
 
   /**
    * Gets a pointer to the underlying solver used in the MPC.

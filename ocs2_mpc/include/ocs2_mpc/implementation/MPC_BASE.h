@@ -311,8 +311,8 @@ bool MPC_BASE<STATE_DIM, INPUT_DIM>::run(const scalar_t& currentTime, const stat
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
-void MPC_BASE<STATE_DIM, INPUT_DIM>::setMpcSynchronizedModules(mpc_synchronized_module_array_t mpcSynchronizedModules) {
-  mpcSynchronizedModules_ = std::move(mpcSynchronizedModules);
+void MPC_BASE<STATE_DIM, INPUT_DIM>::setMpcSynchronizedModules(const mpc_synchronized_module_array_t& mpcSynchronizedModules) {
+  mpcSynchronizedModules_ = mpcSynchronizedModules;
 };
 
 /******************************************************************************************************/

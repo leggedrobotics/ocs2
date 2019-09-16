@@ -29,9 +29,10 @@ class RaisimRollout final : public RolloutBase<STATE_DIM, INPUT_DIM> {
 
   using logic_rules_machine_t = HybridLogicRulesMachine;
 
-  using state_to_raisim_gen_coord_gen_vel_t = std::function<std::pair<Eigen::VectorXd, Eigen::VectorXd>(state_vector_t)>;
+  using state_to_raisim_gen_coord_gen_vel_t =
+      std::function<std::pair<Eigen::VectorXd, Eigen::VectorXd>(const state_vector_t&, const input_vector_t&)>;
   using raisim_gen_coord_gen_vel_to_state_t = std::function<state_vector_t(const Eigen::VectorXd&, const Eigen::VectorXd&)>;
-  using input_to_raisim_generalized_force_t = std::function<Eigen::VectorXd(const input_vector_t&, const state_vector_t&)>;
+  using input_to_raisim_generalized_force_t = std::function<Eigen::VectorXd(double, const input_vector_t&, const state_vector_t&)>;
   using data_extraction_callback_t = std::function<void(double, const raisim::ArticulatedSystem&)>;
 
   /**
@@ -76,7 +77,8 @@ class RaisimRollout final : public RolloutBase<STATE_DIM, INPUT_DIM> {
 
     // Set inital state to simulation
     Eigen::VectorXd q_init, dq_init;
-    std::tie(q_init, dq_init) = stateToRaisimGenCoordGenVel_(initState);
+    std::tie(q_init, dq_init) = stateToRaisimGenCoordGenVel_(initState, controller->computeInput(initTime, initState));
+    assert(system_->getGeneralizedCoordinateDim() == q_init.rows());
     system_->setState(q_init, dq_init);
 
     // Forward simulate
@@ -97,7 +99,7 @@ class RaisimRollout final : public RolloutBase<STATE_DIM, INPUT_DIM> {
 
       input_vector_t input = controller->computeInput(time, stateTrajectory.back());
       inputTrajectory.emplace_back(input);
-      system_->setGeneralizedForce(inputToRaisimGeneralizedForce_(input, stateTrajectory.back()));
+      system_->setGeneralizedForce(inputToRaisimGeneralizedForce_(time, input, stateTrajectory.back()));
 
       world_.integrate2();
     }

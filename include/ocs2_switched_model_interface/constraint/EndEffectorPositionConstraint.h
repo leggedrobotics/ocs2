@@ -1,6 +1,4 @@
-//
-// Created by rgrandia on 08.07.19.
-//
+
 
 #ifndef OCS2_CTRL_ENDEFFECTORPOSITIONCONSTRAINT_H
 #define OCS2_CTRL_ENDEFFECTORPOSITIONCONSTRAINT_H
@@ -73,8 +71,12 @@ class EndEffectorPositionConstraint final : public ocs2::ConstraintTerm<STATE_DI
     if (generateModels){
       cppAdCodeGenClass_->createModels(libName_, libFolder_);
     } else {
-      cppAdCodeGenClass_->loadModels(libName_, libFolder_);
-    };
+      try {
+        cppAdCodeGenClass_->loadModels(libName_, libFolder_);
+      } catch (...) {
+        cppAdCodeGenClass_->createModels(libName_, libFolder_);
+      }
+    }
   }
 
   EndEffectorPositionConstraint(const EndEffectorPositionConstraint& rhs)

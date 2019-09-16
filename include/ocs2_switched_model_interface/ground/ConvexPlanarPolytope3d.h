@@ -1,6 +1,4 @@
-//
-// Created by rgrandia on 08.07.19.
-//
+
 
 #ifndef OCS2_CTRL_CONVEXPLANARPOLYTOPE3D_H
 #define OCS2_CTRL_CONVEXPLANARPOLYTOPE3D_H

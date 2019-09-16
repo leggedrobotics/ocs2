@@ -1,6 +1,4 @@
-//
-// Created by rgrandia on 03.07.19.
-//
+
 
 #ifndef OCS2_CTRL_ZEROFORCECONSTRAINT_H
 #define OCS2_CTRL_ZEROFORCECONSTRAINT_H

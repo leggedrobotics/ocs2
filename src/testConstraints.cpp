@@ -1,6 +1,4 @@
-//
-// Created by rgrandia on 30.06.19.
-//
+
 
 
 #include <ocs2_switched_model_interface/constraint/EndEffectorVelocityContraint.h>

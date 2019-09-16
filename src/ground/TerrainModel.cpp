@@ -1,6 +1,4 @@
-//
-// Created by rgrandia on 27.07.19.
-//
+
 
 #include "ocs2_switched_model_interface/ground/TerrainModel.h"
 #include "ocs2_core/misc/Lookup.h"

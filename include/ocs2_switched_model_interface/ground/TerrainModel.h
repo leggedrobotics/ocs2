@@ -1,6 +1,4 @@
-//
-// Created by rgrandia on 27.07.19.
-//
+
 
 #ifndef OCS2_CTRL_TERRAINMODEL_H
 #define OCS2_CTRL_TERRAINMODEL_H

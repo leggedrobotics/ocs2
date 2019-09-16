@@ -1,6 +1,4 @@
-//
-// Created by rgrandia on 08.07.19.
-//
+
 
 #include "ros/ros.h"
 #include "geometry_msgs/PolygonStamped.h"

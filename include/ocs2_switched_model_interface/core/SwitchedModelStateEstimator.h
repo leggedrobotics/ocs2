@@ -81,8 +81,8 @@ public:
 	void estimateComState(const rbd_model_state_t& rbdState, com_model_state_t& comState) {
 
 		// Joints' velocities
-		Eigen::VectorBlock<const rbd_model_state_t,12> qJoints = rbdState.template segment<JOINT_COORD_SIZE>(6);
-		Eigen::VectorBlock<const rbd_model_state_t,12> dqJoints = rbdState.template tail<JOINT_COORD_SIZE>();
+                joint_coordinate_t qJoints = rbdState.template segment<JOINT_COORD_SIZE>(6);
+		joint_coordinate_t dqJoints = rbdState.template tail<JOINT_COORD_SIZE>();
 		// Rotation matrix from Base frame (or the coincided frame world frame) to Origin frame (global world).
 		Eigen::Matrix3d o_R_b = RotationMatrixBasetoOrigin(rbdState.template head<3>());
 		// base to CoM displacement in the CoM frame
@@ -116,9 +116,9 @@ public:
 
 		typedef Eigen::Matrix<scalar_t, 6, 1> base_coordinate_t;
 
-		Eigen::VectorBlock<const comkino_model_state_t,6> comPose = comkinoState.template segment<6>(0);
-		Eigen::VectorBlock<const comkino_model_state_t,6> comLocalVelocities = comkinoState.template segment<6>(6);
-		Eigen::VectorBlock<const comkino_model_state_t,12> qJoints = comkinoState.template segment<JOINT_COORD_SIZE>(12);
+                base_coordinate_t comPose = comkinoState.template segment<6>(0);
+                base_coordinate_t comLocalVelocities = comkinoState.template segment<6>(6);
+		joint_coordinate_t qJoints = comkinoState.template segment<JOINT_COORD_SIZE>(12);
 
 		base_coordinate_t basePose;
 		comModelPtr_->calculateBasePose(qJoints, comPose, basePose);

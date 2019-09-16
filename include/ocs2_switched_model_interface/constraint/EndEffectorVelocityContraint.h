@@ -1,6 +1,4 @@
-//
-// Created by rgrandia on 30.06.19.
-//
+
 
 #ifndef OCS2_CTRL_ENDEFFECTORVELOCITYCONTRAINT_H
 #define OCS2_CTRL_ENDEFFECTORVELOCITYCONTRAINT_H
@@ -69,8 +67,12 @@ class EndEffectorVelocityConstraint final : public ocs2::ConstraintTerm<STATE_DI
     if (generateModels){
       cppAdCodeGenClass_->createModels(libName_, libFolder_);
     } else {
-      cppAdCodeGenClass_->loadModels(libName_, libFolder_);
-    };
+      try {
+        cppAdCodeGenClass_->loadModels(libName_, libFolder_);
+      } catch (...) {
+        cppAdCodeGenClass_->createModels(libName_, libFolder_);
+      }
+    }
   }
 
   EndEffectorVelocityConstraint(const EndEffectorVelocityConstraint&rhs) :

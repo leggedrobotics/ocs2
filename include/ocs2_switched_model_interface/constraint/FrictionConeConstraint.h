@@ -1,6 +1,4 @@
-//
-// Created by rgrandia on 28.06.19.
-//
+
 
 #ifndef OCS2_CTRL_FRICTIONCONECONSTRAINT_H
 #define OCS2_CTRL_FRICTIONCONECONSTRAINT_H

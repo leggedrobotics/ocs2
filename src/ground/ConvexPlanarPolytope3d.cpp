@@ -1,6 +1,4 @@
-//
-// Created by rgrandia on 08.07.19.
-//
+
 
 #include "ocs2_switched_model_interface/ground/ConvexPlanarPolytope3d.h"
 

@@ -5,44 +5,25 @@
  *      Author: farbod
  */
 
-#ifndef ANYMAL_ANYMALCOST_H_
-#define ANYMAL_ANYMALCOST_H_
+#pragma once
 
 #include <ocs2_switched_model_interface/cost/SwitchedModelCostBase.h>
-#include "ocs2_anymal_switched_model/dynamics/AnymalCom.h"
-#include "ocs2_anymal_switched_model/kinematics/AnymalKinematics.h"
 
 namespace anymal {
 
-class AnymalCost : public switched_model::SwitchedModelCostBase<12>
-{
-public:
-	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+class AnymalCost : public switched_model::SwitchedModelCostBase<12> {
+ public:
+  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-	using Base = SwitchedModelCostBase<12>;
-  	using logic_rules_t = switched_model::SwitchedModelPlannerLogicRules<12, double>;
+  using Base = SwitchedModelCostBase<12>;
+  using Base::logic_rules_t;
 
-	AnymalCost(
-			std::shared_ptr<const logic_rules_t> logicRulesPtr,
-			const state_matrix_t& Q,
-			const input_matrix_t& R,
-			const state_matrix_t& QFinal,
-			const state_vector_t& xFinal,
-			const scalar_t& copWeightMax = 0.0,
-			const state_matrix_t& QIntermediate = state_matrix_t::Zero(),
-			const state_vector_t& xNominalIntermediate = state_vector_t::Zero(),
-			const scalar_t& sigma = 1,
-			const scalar_t& tp = 0);
+  AnymalCost(std::shared_ptr<const logic_rules_t> logicRulesPtr, const state_matrix_t& Q, const input_matrix_t& R,
+             const state_matrix_t& QFinal);
 
-	AnymalCost(const AnymalCost& rhs);
+  AnymalCost(const AnymalCost& rhs);
 
-	~AnymalCost() {}
-
-private:
-
+  ~AnymalCost() override = default;
 };
 
-} //end of namespace anymal
-
-
-#endif /* ANYMAL_ANYMALCOST_H_ */
+}  // end of namespace anymal

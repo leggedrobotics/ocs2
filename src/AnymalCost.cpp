@@ -6,31 +6,15 @@
  */
 
 #include "ocs2_anymal_switched_model/cost/AnymalCost.h"
+#include "ocs2_anymal_switched_model/dynamics/AnymalCom.h"
 
 namespace anymal {
 
-AnymalCost::AnymalCost(
-		std::shared_ptr<const logic_rules_t> logicRulesPtr,
-		const state_matrix_t& Q,
-		const input_matrix_t& R,
-		const state_matrix_t& QFinal,
-		const state_vector_t& xFinal,
-		const scalar_t& copWeightMax /*=0.0*/,
-		const state_matrix_t& QIntermediate /*=state_matrix_t::Zero()*/,
-		const state_vector_t& xNominalIntermediate /*=state_vector_t::Zero()*/,
-		const scalar_t& sigma /*=1*/,
-		const scalar_t& tp /*=0*/)
+AnymalCost::AnymalCost(std::shared_ptr<const logic_rules_t> logicRulesPtr, const state_matrix_t& Q, const input_matrix_t& R,
+                       const state_matrix_t& QFinal)
 
-	: Base(AnymalKinematics(), AnymalCom(), std::move(logicRulesPtr),
-		Q, R, QFinal, xFinal, copWeightMax, QIntermediate, xNominalIntermediate, sigma, tp)
-{}
+    : Base(AnymalCom(), std::move(logicRulesPtr), Q, R, QFinal) {}
 
+AnymalCost::AnymalCost(const AnymalCost& rhs) : Base(rhs) {}
 
-AnymalCost::AnymalCost(const AnymalCost& rhs)
-	: Base(rhs)
-{}
-
-} //end of namespace anymal
-
-
-
+}  // end of namespace anymal

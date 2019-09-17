@@ -50,8 +50,8 @@ void SwitchedModelCostBase<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::setCurrentSt
   size_t index = logicRulesPtr_->getEventTimeCount(t);
   logicRulesPtr_->getContactFlags(index, stanceLegs);
 
-  Eigen::VectorXd xNominal;
-  Eigen::VectorXd uNominal;
+  dynamic_vector_t xNominal;
+  dynamic_vector_t uNominal;
   BASE::xNominalFunc_.interpolate(t, xNominal);
   inputFromContactFlags(stanceLegs, uNominal);
 
@@ -63,9 +63,9 @@ void SwitchedModelCostBase<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::setCurrentSt
 /******************************************************************************************************/
 template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM>
 void SwitchedModelCostBase<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::inputFromContactFlags(contact_flag_t contactFlags,
-                                                                                          input_vector_t& inputs) {
+                                                                                          dynamic_vector_t& inputs) {
   // Distribute total mass equally over active stance legs.
-  inputs.setZero();
+  inputs.setZero(INPUT_DIM);
 
   const scalar_t totalMass = comModelPtr_->totalMass() * 9.81;
   const size_t numEE(4);

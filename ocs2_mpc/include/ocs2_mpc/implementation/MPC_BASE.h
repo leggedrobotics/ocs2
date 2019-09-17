@@ -88,6 +88,11 @@ MPC_BASE<STATE_DIM, INPUT_DIM>::MPC_BASE(const scalar_array_t& partitioningTimes
     numPartitions_ = initnumPartitions_;
     partitioningTimes_ = initPartitioningTimes_;
   }
+
+  // correcting solutionTimeWindow
+  if (mpcSettings_.recedingHorizon_) {
+    mpcSettings_.solutionTimeWindow_ = -1;
+  }
 }
 
 /******************************************************************************************************/
@@ -359,14 +364,6 @@ void MPC_BASE<STATE_DIM, INPUT_DIM>::setNewLogicRulesTemplate(const mode_sequenc
   newLogicRulesTemplate_ = newLogicRulesTemplate;
   std::cerr << "### The mode sequence is updated to " << std::endl;
   newLogicRulesTemplate.display();
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM>
-MPC_Settings& MPC_BASE<STATE_DIM, INPUT_DIM>::settings() {
-  return mpcSettings_;
 }
 
 /******************************************************************************************************/

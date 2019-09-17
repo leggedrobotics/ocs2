@@ -159,13 +159,14 @@ class FeedforwardController final : public ControllerBase<STATE_DIM, INPUT_DIM> 
     }
   }
 
-  void concatenate(const Base* nextController, int first, int last) override {
+  void concatenate(const Base* nextController, int index, int length) override {
     if (auto nextFfwdCtrl = dynamic_cast<const FeedforwardController*>(nextController)) {
       if (!timeStamp_.empty() && timeStamp_.back() > nextFfwdCtrl->timeStamp_.front()) {
         throw std::runtime_error("Concatenate requires that the nextController comes later in time.");
       }
-      timeStamp_.insert(timeStamp_.end(), nextFfwdCtrl->timeStamp_.begin() + first, nextFfwdCtrl->timeStamp_.begin() + last);
-      uffArray_.insert(uffArray_.end(), nextFfwdCtrl->uffArray_.begin() + first, nextFfwdCtrl->uffArray_.begin() + last);
+      int last = index + length;
+      timeStamp_.insert(timeStamp_.end(), nextFfwdCtrl->timeStamp_.begin() + index, nextFfwdCtrl->timeStamp_.begin() + last);
+      uffArray_.insert(uffArray_.end(), nextFfwdCtrl->uffArray_.begin() + index, nextFfwdCtrl->uffArray_.begin() + last);
     } else {
       throw std::runtime_error("Concatenate only works with controllers of the same type.");
     }

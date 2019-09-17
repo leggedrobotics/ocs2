@@ -199,10 +199,10 @@ void MRT_ROS_Interface<STATE_DIM, INPUT_DIM>::mpcPolicyCallback(const ocs2_msgs:
   inputBuffer.reserve(N);
 
   for (size_t i = 0; i < N; i++) {
-    timeBuffer.push_back(msg->timeTrajectory[i]);
-    stateBuffer.push_back(
+    timeBuffer.emplace_back(msg->timeTrajectory[i]);
+    stateBuffer.emplace_back(
         Eigen::Map<const Eigen::Matrix<float, STATE_DIM, 1>>(msg->stateTrajectory[i].value.data(), STATE_DIM).template cast<scalar_t>());
-    inputBuffer.push_back(
+    inputBuffer.emplace_back(
         Eigen::Map<const Eigen::Matrix<float, INPUT_DIM, 1>>(msg->inputTrajectory[i].value.data(), INPUT_DIM).template cast<scalar_t>());
   }  // end of i loop
 

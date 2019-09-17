@@ -189,13 +189,6 @@ class MPC_BASE {
    *
    * @return structure which details MPC settings
    */
-  MPC_Settings& settings();
-
-  /**
-   * Gets the MPC settings.
-   *
-   * @return structure which details MPC settings
-   */
   const MPC_Settings& settings() const;
 
  protected:

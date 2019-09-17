@@ -1245,7 +1245,6 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::getPrimalSolution(scalar_t finalTime, prima
       }
       // length of the copy
       const int length = upperBound(nominalControllersStock_[i].timeStamp_, finalTime);
-
       primalSolutionPtr->controllerPtr_->concatenate(&(nominalControllersStock_[i]), 0, length);
     }
   } else {

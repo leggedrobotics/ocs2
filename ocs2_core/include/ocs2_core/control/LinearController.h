@@ -165,16 +165,17 @@ class LinearController final : public ControllerBase<STATE_DIM, INPUT_DIM> {
     }
   }
 
-  void concatenate(const Base* nextController, int first, int last) override {
+  void concatenate(const Base* nextController, int index, int length) override {
     if (auto nextLinCtrl = dynamic_cast<const LinearController*>(nextController)) {
       if (!timeStamp_.empty() && timeStamp_.back() > nextLinCtrl->timeStamp_.front()) {
         throw std::runtime_error("Concatenate requires that the nextController comes later in time.");
       }
-      timeStamp_.insert(timeStamp_.end(), nextLinCtrl->timeStamp_.begin() + first, nextLinCtrl->timeStamp_.begin() + last);
-      biasArray_.insert(biasArray_.end(), nextLinCtrl->biasArray_.begin() + first, nextLinCtrl->biasArray_.begin() + last);
-      deltaBiasArray_.insert(deltaBiasArray_.end(), nextLinCtrl->deltaBiasArray_.begin() + first,
+      int last = index + length;
+      timeStamp_.insert(timeStamp_.end(), nextLinCtrl->timeStamp_.begin() + index, nextLinCtrl->timeStamp_.begin() + last);
+      biasArray_.insert(biasArray_.end(), nextLinCtrl->biasArray_.begin() + index, nextLinCtrl->biasArray_.begin() + last);
+      deltaBiasArray_.insert(deltaBiasArray_.end(), nextLinCtrl->deltaBiasArray_.begin() + index,
                              nextLinCtrl->deltaBiasArray_.begin() + last);
-      gainArray_.insert(gainArray_.end(), nextLinCtrl->gainArray_.begin() + first, nextLinCtrl->gainArray_.begin() + last);
+      gainArray_.insert(gainArray_.end(), nextLinCtrl->gainArray_.begin() + index, nextLinCtrl->gainArray_.begin() + last);
     } else {
       throw std::runtime_error("Concatenate only works with controllers of the same type.");
     }

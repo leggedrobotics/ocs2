@@ -71,12 +71,6 @@ void MPC_ROS_Interface<STATE_DIM, INPUT_DIM>::set(mpc_t* mpcPtr, const std::stri
 
   initialCall_ = false;
   resetRequestedEver_ = false;
-
-  // correcting solutionTimeWindow
-  if (!mpcPtr_->settings().recedingHorizon_) {
-    mpcPtr_->settings().solutionTimeWindow_ = -1;
-  }
-
   mpcTimer_.reset();
 
   // Start thread for publishing
@@ -198,7 +192,7 @@ ocs2_msgs::mpc_flattened_controller MPC_ROS_Interface<STATE_DIM, INPUT_DIM>::cre
 
   // time
   for (size_t k = 0; k < N; k++) {
-    mpcPolicyMsg.timeTrajectory.push_back(primalSolution.timeTrajectory_[k]);
+    mpcPolicyMsg.timeTrajectory.emplace_back(primalSolution.timeTrajectory_[k]);
   }  // end of k loop
 
   // state
@@ -208,7 +202,7 @@ ocs2_msgs::mpc_flattened_controller MPC_ROS_Interface<STATE_DIM, INPUT_DIM>::cre
     for (size_t j = 0; j < STATE_DIM; j++) {
       mpcState.value[j] = primalSolution.stateTrajectory_[k](j);
     }
-    mpcPolicyMsg.stateTrajectory.push_back(mpcState);
+    mpcPolicyMsg.stateTrajectory.emplace_back(mpcState);
   }  // end of k loop
 
   // input
@@ -218,7 +212,7 @@ ocs2_msgs::mpc_flattened_controller MPC_ROS_Interface<STATE_DIM, INPUT_DIM>::cre
     for (size_t j = 0; j < INPUT_DIM; j++) {
       mpcInput.value[j] = primalSolution.inputTrajectory_[k](j);
     }
-    mpcPolicyMsg.inputTrajectory.push_back(mpcInput);
+    mpcPolicyMsg.inputTrajectory.emplace_back(mpcInput);
   }  // end of k loop
 
   // controller

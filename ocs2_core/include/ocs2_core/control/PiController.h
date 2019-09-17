@@ -177,7 +177,7 @@ class PiController final : public ControllerBase<STATE_DIM, INPUT_DIM> {
     throw std::runtime_error("not implemented");
   }
 
-  void concatenate(const Base* nextController, int first, int last) override { throw std::runtime_error("not implemented"); }
+  void concatenate(const Base* nextController, int index, int length) override { throw std::runtime_error("not implemented"); }
 
   /**
    * @brief setSamplingPolicy Allows setting a controller for importance sampling (warm-starting)

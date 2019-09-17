@@ -11,11 +11,6 @@ namespace ocs2 {
 template <size_t STATE_DIM, size_t INPUT_DIM>
 MPC_MRT_Interface<STATE_DIM, INPUT_DIM>::MPC_MRT_Interface(mpc_t& mpc, std::shared_ptr<HybridLogicRules> logicRules)
     : Base(std::move(logicRules)), mpc_(mpc) {
-  // correcting solutionTimeWindow
-  if (!mpc_.settings().recedingHorizon_) {
-    mpc_.settings().solutionTimeWindow_ = -1;
-  }
-
   mpcTimer_.reset();
 }
 

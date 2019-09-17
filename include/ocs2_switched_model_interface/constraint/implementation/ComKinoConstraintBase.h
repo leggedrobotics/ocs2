@@ -251,14 +251,16 @@ size_t ComKinoConstraintBase<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::numStateOn
 /******************************************************************************************************/
 template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM>
 void ComKinoConstraintBase<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::getInequalityConstraint(scalar_array_t& h) {
-	h.clear();
+	h.resize(numInequalityConstraint(Base::t_));
+	int constraintIndex(0);
 	const scalar_t &mu = options_.frictionCoefficient_;
 	for (size_t i=0; i<NUM_CONTACT_POINTS_; i++){
 		if (stanceLegs_[i]){
 			const scalar_t Fx = Base::u_(3 * i + 0);
 			const scalar_t Fy = Base::u_(3 * i + 1);
 			const scalar_t Fz = Base::u_(3 * i + 2);
-			h.push_back( Fz*sqrt(mu*mu) - sqrt(Fx*Fx+Fy*Fy+25.0) );
+			h[constraintIndex] = Fz*sqrt(mu*mu) - sqrt(Fx*Fx+Fy*Fy+25.0);
+			constraintIndex++;
 		}
 	}
 }
@@ -509,11 +511,13 @@ void ComKinoConstraintBase<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::getConstrain
 template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM>
 void ComKinoConstraintBase<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::getInequalityConstraintDerivativesState(state_vector_array_t &dhdx) {
 
-	dhdx.clear();
+	dhdx.resize(numInequalityConstraint(Base::t_));
+	int constraintIndex(0);
 	for (size_t i=0; i<NUM_CONTACT_POINTS_; i++){
 		if (stanceLegs_[i]){
 			// Friction cone constraint is independent of state
-			dhdx.emplace_back(state_vector_t::Zero());
+			dhdx[constraintIndex].setZero();
+			constraintIndex++;
 		}
 	}
 }
@@ -526,21 +530,21 @@ template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM>
 void ComKinoConstraintBase<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::getInequalityConstraintDerivativesInput(
 		switched_model::ComKinoConstraintBase<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::input_vector_array_t &dhdu) {
 
-	dhdu.clear();
+	dhdu.resize(numInequalityConstraint(Base::t_));
+	int constraintIndex(0);
 	input_vector_t frictionConeDerivative;
 	const scalar_t &mu = options_.frictionCoefficient_;
 	for (size_t i=0; i<NUM_CONTACT_POINTS_; i++){
 		if (stanceLegs_[i]){
-			frictionConeDerivative.setZero();
+			dhdu[constraintIndex].setZero();
 			const scalar_t Fx = Base::u_(3 * i + 0);
 			const scalar_t Fy = Base::u_(3 * i + 1);
 			const scalar_t Fz = Base::u_(3 * i + 2);
 			const scalar_t F_norm = sqrt(Fx*Fx+Fy*Fy+25.0);
-			frictionConeDerivative(3 * i + 0) = -Fx / F_norm;
-			frictionConeDerivative(3 * i + 1) = -Fy / F_norm;
-			frictionConeDerivative(3 * i + 2) = sqrt(mu*mu);
-
-			dhdu.push_back( frictionConeDerivative );
+			dhdu[constraintIndex](3 * i + 0) = -Fx / F_norm;
+			dhdu[constraintIndex](3 * i + 1) = -Fy / F_norm;
+			dhdu[constraintIndex](3 * i + 2) = sqrt(mu*mu);
+			constraintIndex++;
 		}
 	}
 }
@@ -554,11 +558,13 @@ template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM>
 void ComKinoConstraintBase<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::getInequalityConstraintSecondDerivativesState(
 		switched_model::ComKinoConstraintBase<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::state_matrix_array_t &ddhdxdx) {
 
-	ddhdxdx.clear();
+	ddhdxdx.resize(numInequalityConstraint(Base::t_));
+	int constraintIndex(0);
 	for (size_t i=0; i<NUM_CONTACT_POINTS_; i++){
 		if (stanceLegs_[i]){
 			//  Friction cone constraint independent of state
-			ddhdxdx.emplace_back(state_matrix_t::Zero());
+			ddhdxdx[constraintIndex].setZero();
+			constraintIndex++;
 		}
 	}
 }
@@ -571,30 +577,30 @@ template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM>
 void ComKinoConstraintBase<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::getInequalityConstraintSecondDerivativesInput(
 		switched_model::ComKinoConstraintBase<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::input_matrix_array_t &ddhdudu) {
 
-	ddhdudu.clear();
+	ddhdudu.resize(numInequalityConstraint(Base::t_));
+	int constraintIndex(0);
 	input_matrix_t frictionConeHessian;
 	const scalar_t &mu = options_.frictionCoefficient_;
 	for (size_t i=0; i<NUM_CONTACT_POINTS_; i++){
 		if (stanceLegs_[i]){
 			//  d2/dudu ( sqrt(mu*mu + 1)*Fz >= sqrt(Fx*Fx + Fy*Fy + Fz*Fz) )
-			frictionConeHessian.setZero();
+			ddhdudu[constraintIndex].setZero();
 			const scalar_t Fx = Base::u_(3 * i + 0);
 			const scalar_t Fy = Base::u_(3 * i + 1);
 			const scalar_t Fz = Base::u_(3 * i + 2);
 			const scalar_t F_norm2 = Fx*Fx+Fy*Fy+ 25.0;
 
 			const scalar_t F_norm32 = pow(F_norm2, 1.5);
-			frictionConeHessian(3 * i + 0, 3 * i + 0) = -(Fy*Fy  + 25.0) / F_norm32;
-			frictionConeHessian(3 * i + 0, 3 * i + 1) = Fx * Fy / F_norm32;
-			frictionConeHessian(3 * i + 0, 3 * i + 2) = 0.0;
-			frictionConeHessian(3 * i + 1, 3 * i + 0) = Fx * Fy / F_norm32;
-			frictionConeHessian(3 * i + 1, 3 * i + 1) = -(Fx*Fx + 25.0) / F_norm32;
-			frictionConeHessian(3 * i + 1, 3 * i + 2) = 0.0;
-			frictionConeHessian(3 * i + 2, 3 * i + 0) = 0.0;
-			frictionConeHessian(3 * i + 2, 3 * i + 1) = 0.0;
-			frictionConeHessian(3 * i + 2, 3 * i + 2) = 0.0;
-
-			ddhdudu.push_back( frictionConeHessian );
+			ddhdudu[constraintIndex](3 * i + 0, 3 * i + 0) = -(Fy*Fy  + 25.0) / F_norm32;
+			ddhdudu[constraintIndex](3 * i + 0, 3 * i + 1) = Fx * Fy / F_norm32;
+			ddhdudu[constraintIndex](3 * i + 0, 3 * i + 2) = 0.0;
+			ddhdudu[constraintIndex](3 * i + 1, 3 * i + 0) = Fx * Fy / F_norm32;
+			ddhdudu[constraintIndex](3 * i + 1, 3 * i + 1) = -(Fx*Fx + 25.0) / F_norm32;
+			ddhdudu[constraintIndex](3 * i + 1, 3 * i + 2) = 0.0;
+			ddhdudu[constraintIndex](3 * i + 2, 3 * i + 0) = 0.0;
+			ddhdudu[constraintIndex](3 * i + 2, 3 * i + 1) = 0.0;
+			ddhdudu[constraintIndex](3 * i + 2, 3 * i + 2) = 0.0;
+			constraintIndex++;
 		}
 	}
 }
@@ -607,11 +613,13 @@ template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM>
 void ComKinoConstraintBase<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::getInequalityConstraintDerivativesInputState(
 		switched_model::ComKinoConstraintBase<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::input_state_matrix_array_t &ddhdudx) {
 
-	ddhdudx.clear();
+	ddhdudx.resize(numInequalityConstraint(Base::t_));
+	int constraintIndex(0);
 	for (size_t i=0; i<NUM_CONTACT_POINTS_; i++){
 		if (stanceLegs_[i]){
 			//  Friction cone constraint independent of state
-			ddhdudx.emplace_back(input_state_matrix_t::Zero());
+			ddhdudx[constraintIndex].setZero();
+			constraintIndex++;
 		}
 	}
 }

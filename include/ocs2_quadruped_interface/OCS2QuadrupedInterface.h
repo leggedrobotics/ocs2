@@ -40,7 +40,6 @@
 #include <ocs2_switched_model_interface/ground/FlatGroundProfile.h>
 #include <ocs2_switched_model_interface/initialization/ComKinoOperatingPointsBase.h>
 #include <ocs2_switched_model_interface/logic/SwitchedModelLogicRulesBase.h>
-#include <ocs2_switched_model_interface/misc/WeightCompensationForces.h>
 #include <ocs2_switched_model_interface/state_constraint/EllipticalConstraint.h>
 #include <ocs2_switched_model_interface/state_constraint/EndEffectorConstraintBase.h>
 #include <ocs2_switched_model_interface/state_constraint/EndEffectorConstraintsUtilities.h>
@@ -144,14 +143,6 @@ class OCS2QuadrupedInterface : public ocs2::RobotInterfaceBase<STATE_DIM, INPUT_
    */
   virtual void setupOptimizer(const logic_rules_ptr_t& logicRulesPtr, const mode_sequence_template_t* modeSequenceTemplatePtr,
                               slq_base_ptr_t& slqPtr, mpc_ptr_t& mpcPtr) = 0;
-
-  /**
-   * Designs weight compensating input.
-   *
-   * @param [in] switchedState: Switched model state.
-   * @param [out] uForWeightCompensation: Weight compensating input.
-   */
-  virtual void designWeightCompensatingInput(const state_vector_t& switchedState, input_vector_t& uForWeightCompensation) = 0;
 
   /**
    * Run the SLQ algorithm.

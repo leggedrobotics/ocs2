@@ -169,6 +169,7 @@ void OCS2QuadrupedInterface<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::computeSwit
                                                                                                state_vector_t& comkinoState) {
   typename state_estimator_t::comkino_model_state_t comKinoState_truesize;
   switchedModelStateEstimator_.estimateComkinoModelState(rbdState, comKinoState_truesize);
+  comkinoState.setZero();
   comkinoState.template segment<12 + JOINT_COORD_SIZE>(0) = comKinoState_truesize;
 }
 
@@ -491,10 +492,6 @@ template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM>
 void OCS2QuadrupedInterface<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::runSLQ(
     const scalar_t& initTime, const rbd_state_vector_t& initRbdState, const scalar_t& finalTime,
     const linear_controller_ptr_array_t& initialControllersStock /*=linear_controller_ptr_array_t()*/) {
-  // reference trajectories
-  input_vector_t uNominalForWeightCompensation;
-  designWeightCompensatingInput(initialState_, uNominalForWeightCompensation);
-
   // reference time
   costDesiredTrajectories_.desiredTimeTrajectory().resize(2);
   costDesiredTrajectories_.desiredTimeTrajectory().at(0) = initEventTimes_.front();
@@ -505,8 +502,9 @@ void OCS2QuadrupedInterface<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::runSLQ(
   costDesiredTrajectories_.desiredStateTrajectory().at(1) = xFinal_;
   // reference inputs for weight compensation
   costDesiredTrajectories_.desiredInputTrajectory().resize(2);
-  costDesiredTrajectories_.desiredInputTrajectory().at(0) = uNominalForWeightCompensation;
-  costDesiredTrajectories_.desiredInputTrajectory().at(1) = uNominalForWeightCompensation;
+  costDesiredTrajectories_.desiredInputTrajectory().at(0).setZero(INPUT_DIM);
+  costDesiredTrajectories_.desiredInputTrajectory().at(0).setZero(INPUT_DIM);
+  costDesiredTrajectories_.desiredInputTrajectory().at(1).setZero(INPUT_DIM);
 
   slqPtr_->setCostDesiredTrajectories(costDesiredTrajectories_);
 

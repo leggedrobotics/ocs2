@@ -203,7 +203,6 @@ if(${pybind11_FOUND})
   catkin_python_setup()
 endif()
 
-
 #########################
 ###   CLANG TOOLING   ###
 #########################
@@ -275,4 +274,3 @@ target_link_libraries(ballbot_pybindings_test
   ${catkin_LIBRARIES}
   ${Boost_LIBRARIES}
   )
-

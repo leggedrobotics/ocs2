@@ -1,6 +1,7 @@
 #pragma once
 
 #include <ocs2_comm_interfaces/ocs2_interfaces/MPC_MRT_Interface.h>
+#include <ocs2_core/constraint/RelaxedBarrierPenalty.h>
 #include <ocs2_core/cost/CostFunctionBase.h>
 #include <ocs2_core/dynamics/ControlledSystemBase.h>
 #include <ocs2_core/dynamics/DerivativesBase.h>
@@ -36,6 +37,7 @@ class PythonInterface {
   using dynamic_vector_t = typename dim_t::dynamic_vector_t;
   using dynamic_vector_array_t = typename dim_t::dynamic_vector_array_t;
   using dynamic_matrix_t = typename dim_t::dynamic_matrix_t;
+  using input_matrix_array_t = typename dim_t::input_matrix_array_t;
 
   /**
    * @brief Constructor
@@ -150,6 +152,15 @@ class PythonInterface {
   input_vector_t getIntermediateCostDerivativeInput(double t, Eigen::Ref<const state_vector_t> x, Eigen::Ref<const input_vector_t> u);
 
   /**
+   * @brief Access to second input derivative of intermediate cost (L)
+   * @param[in] t time
+   * @param[in] x state
+   * @param[in] u input
+   * @return d^2L/du^2 at provided t-x-u
+   */
+  input_matrix_t getIntermediateCostSecondDerivativeInput(double t, Eigen::Ref<const state_vector_t> x, Eigen::Ref<const input_vector_t> u);
+
+  /**
    * @brief Access the solver's internal value function
    * @param t query time
    * @param x query state
@@ -231,6 +242,8 @@ class PythonInterface {
 
   std::unique_ptr<cost_t> cost_;
   cost_desired_trajectories_t targetTrajectories_;
+
+  std::unique_ptr<PenaltyBase<STATE_DIM, INPUT_DIM>> penalty_;
 
   // multithreading helper variables
   bool run_mpc_async_;

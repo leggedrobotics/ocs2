@@ -149,7 +149,18 @@ double PythonInterface<STATE_DIM, INPUT_DIM>::getIntermediateCost(double t, Eige
   cost_->setCurrentStateAndControl(t, x, u);
   double L;
   cost_->getIntermediateCost(L);
-  return L;
+
+  double L_penalty = 0.0;
+  if (constraints_) {
+    constraints_->setCurrentStateAndControl(t, x, u);
+    if (constraints_->numInequalityConstraint(t) > 0) {
+      scalar_array_t h;
+      constraints_->getInequalityConstraint(h);
+      penalty_->getPenaltyCost(h, L_penalty);
+    }
+  }
+
+  return L + L_penalty;
 }
 
 template <size_t STATE_DIM, size_t INPUT_DIM>
@@ -158,7 +169,22 @@ typename PythonInterface<STATE_DIM, INPUT_DIM>::state_vector_t PythonInterface<S
   cost_->setCurrentStateAndControl(t, x, u);
   state_vector_t dLdx;
   cost_->getIntermediateCostDerivativeState(dLdx);
-  return dLdx;
+
+  state_vector_t dLdx_penalty;
+  dLdx_penalty.setZero();
+
+  if (constraints_) {
+    constraints_->setCurrentStateAndControl(t, x, u);
+    if (constraints_->numInequalityConstraint(t) > 0) {
+      scalar_array_t h;
+      constraints_->getInequalityConstraint(h);
+      state_vector_array_t dhdx;
+      constraints_->getInequalityConstraintDerivativesState(dhdx);
+      penalty_->getPenaltyCostDerivativeState(h, dhdx, dLdx_penalty);
+    }
+  }
+
+  return dLdx + dLdx_penalty;
 }
 
 template <size_t STATE_DIM, size_t INPUT_DIM>
@@ -167,7 +193,49 @@ typename PythonInterface<STATE_DIM, INPUT_DIM>::input_vector_t PythonInterface<S
   cost_->setCurrentStateAndControl(t, x, u);
   input_vector_t dLdu;
   cost_->getIntermediateCostDerivativeInput(dLdu);
-  return dLdu;
+
+  input_vector_t dLdu_penalty;
+  dLdu_penalty.setZero();
+
+  if (constraints_) {
+    constraints_->setCurrentStateAndControl(t, x, u);
+    if (constraints_->numInequalityConstraint(t) > 0) {
+      scalar_array_t h;
+      constraints_->getInequalityConstraint(h);
+      input_vector_array_t dhdu;
+      constraints_->getInequalityConstraintDerivativesInput(dhdu);
+      penalty_->getPenaltyCostDerivativeInput(h, dhdu, dLdu_penalty);
+    }
+  }
+
+  return dLdu + dLdu_penalty;
+}
+
+template <size_t STATE_DIM, size_t INPUT_DIM>
+typename PythonInterface<STATE_DIM, INPUT_DIM>::input_matrix_t
+PythonInterface<STATE_DIM, INPUT_DIM>::getIntermediateCostSecondDerivativeInput(double t, Eigen::Ref<const state_vector_t> x,
+                                                                                Eigen::Ref<const input_vector_t> u) {
+  cost_->setCurrentStateAndControl(t, x, u);
+  input_matrix_t ddLduu;
+  cost_->getIntermediateCostSecondDerivativeInput(ddLduu);
+
+  input_matrix_t ddLduu_penalty;
+  ddLduu_penalty.setZero();
+
+  if (constraints_) {
+    constraints_->setCurrentStateAndControl(t, x, u);
+    if (constraints_->numInequalityConstraint(t) > 0) {
+      scalar_array_t h;
+      constraints_->getInequalityConstraint(h);
+      input_vector_array_t dhdu;
+      constraints_->getInequalityConstraintDerivativesInput(dhdu);
+      input_matrix_array_t ddhduu;
+      constraints_->getInequalityConstraintSecondDerivativesInput(ddhduu);
+      penalty_->getPenaltyCostSecondDerivativeInput(h, dhdu, ddhduu, ddLduu_penalty);
+    }
+  }
+
+  return ddLduu + ddLduu_penalty;
 }
 
 template <size_t STATE_DIM, size_t INPUT_DIM>
@@ -186,6 +254,9 @@ typename PythonInterface<STATE_DIM, INPUT_DIM>::state_vector_t PythonInterface<S
 template <size_t STATE_DIM, size_t INPUT_DIM>
 typename PythonInterface<STATE_DIM, INPUT_DIM>::dynamic_vector_t PythonInterface<STATE_DIM, INPUT_DIM>::getStateInputConstraint(
     double t, Eigen::Ref<const state_vector_t> x, Eigen::Ref<const input_vector_t> u) {
+  if (!constraints_) {
+    throw std::runtime_error("Cannot getStateInputConstraint if system has no constraints.");
+  }
   constraints_->setCurrentStateAndControl(t, x, u);
   input_vector_t e;
   constraints_->getConstraint1(e);
@@ -196,6 +267,9 @@ template <size_t STATE_DIM, size_t INPUT_DIM>
 typename PythonInterface<STATE_DIM, INPUT_DIM>::dynamic_matrix_t
 PythonInterface<STATE_DIM, INPUT_DIM>::getStateInputConstraintDerivativeControl(double t, Eigen::Ref<const state_vector_t> x,
                                                                                 Eigen::Ref<const input_vector_t> u) {
+  if (!constraints_) {
+    throw std::runtime_error("Cannot getStateInputConstraint if system has no constraints.");
+  }
   constraints_->setCurrentStateAndControl(t, x, u);
   input_matrix_t D;
   constraints_->getConstraint1DerivativesControl(D);
@@ -206,7 +280,30 @@ template <size_t STATE_DIM, size_t INPUT_DIM>
 typename PythonInterface<STATE_DIM, INPUT_DIM>::dynamic_vector_t PythonInterface<STATE_DIM, INPUT_DIM>::getStateInputConstraintLagrangian(
     double t, Eigen::Ref<const state_vector_t> x) {
   dynamic_vector_t nu;
-  mpcMrtInterface_->getStateInputConstraintLagrangian(t, x, nu);
+  //  mpcMrtInterface_->getStateInputConstraintLagrangian(t, x, nu);
+  //  return nu;
+
+  input_vector_t zero_u;
+  zero_u.setZero();
+  dynamic_matrix_t Dm = getStateInputConstraintDerivativeControl(t, x, zero_u);
+
+  dynamic_vector_t c = getStateInputConstraint(t, x, zero_u);
+
+  input_matrix_t R = getIntermediateCostSecondDerivativeInput(t, x, zero_u);
+  input_vector_t r = getIntermediateCostDerivativeInput(t, x, zero_u);
+  input_matrix_t RinvChol;
+  LinearAlgebra::computeLinvTLinv(R, RinvChol);
+  dynamic_matrix_t DmDager, DdaggerT_R_Ddagger_Chol, RmInvConstrainedChol;
+  ocs2::LinearAlgebra::computeConstraintProjection(Dm, RinvChol, DmDager, DdaggerT_R_Ddagger_Chol, RmInvConstrainedChol);
+
+  dynamicsDerivatives_->setCurrentStateAndControl(t, x, zero_u);
+  state_input_matrix_t B;
+  dynamicsDerivatives_->getFlowMapDerivativeInput(B);
+
+  state_vector_t costate = getValueFunctionStateDerivative(t, x);
+
+  nu = DmDager.transpose() * (R * DmDager * c - r - B.transpose() * costate);
+
   return nu;
 }
 

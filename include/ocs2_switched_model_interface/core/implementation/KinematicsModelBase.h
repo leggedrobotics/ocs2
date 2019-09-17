@@ -29,7 +29,7 @@ void KinematicsModelBase<JOINT_COORD_SIZE, SCALAR_T>::update(const Eigen::DenseB
 
 	qBase_  = qBase;
 	qJoint_ = qJoint;
-	b_R_o_  = RotationMatrixOrigintoBase(qBase_.template head<3>());
+	b_R_o_  = RotationMatrixOrigintoBase<SCALAR_T>(qBase_.template head<3>());
 }
 
 /******************************************************************************************************/

@@ -51,7 +51,8 @@ int main(int argc, char** argv) {
 
   // Dummy quadrotor
   quadrotor::MRT_ROS_Dummy_Quadrotor dummyQuadrotor(mrtPtr, quadrotorInterface.mpcSettings().mrtDesiredFrequency_,
-                                         quadrotorInterface.mpcSettings().mpcDesiredFrequency_, &quadrotorInterface.getDynamics());
+                                                    quadrotorInterface.mpcSettings().mpcDesiredFrequency_,
+                                                    &quadrotorInterface.getDynamics());
 
   dummyQuadrotor.launchNodes(argc, argv);
 

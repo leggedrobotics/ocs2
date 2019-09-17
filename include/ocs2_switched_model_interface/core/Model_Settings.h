@@ -149,14 +149,6 @@ inline void Model_Settings::loadSettings(const std::string& filename, bool verbo
 	}
 
 	try {
-		copWeight_ = pt.get<double>("model_settings.copWeight");
-		if (verbose)  std::cerr << " #### copWeight .................... " << copWeight_ << std::endl;
-	}
-	catch (const std::exception& e){
-		if (verbose)  std::cerr << " #### copWeight .................... " << copWeight_ << "\t(default)" << std::endl;
-	}
-
-	try {
 		swingLegLiftOff_ = pt.get<double>("model_settings.swingLegLiftOff");
 		if (verbose)  std::cerr << " #### swingLegLiftOff .............. " << swingLegLiftOff_ << std::endl;
 	}

@@ -10,18 +10,18 @@ namespace switched_model {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-ComKinoOperatingPointsBase<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM, LOGIC_RULES_T>*
-	ComKinoOperatingPointsBase<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::clone() const {
+template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM>
+ComKinoOperatingPointsBase<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>*
+	ComKinoOperatingPointsBase<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::clone() const {
 
-	return new ComKinoOperatingPointsBase<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM, LOGIC_RULES_T>(*this);
+	return new ComKinoOperatingPointsBase<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>(*this);
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void ComKinoOperatingPointsBase<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::computeOperatingPoints(
+template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM>
+void ComKinoOperatingPointsBase<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::computeOperatingPoints(
 		const generalized_coordinate_t& defaultConfiguration,
 		std::vector<contact_flag_t>& possibleStanceLegs,
 		state_vector_array_t& stateOperatingPoints,
@@ -61,8 +61,8 @@ void ComKinoOperatingPointsBase<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM, LOGIC_RU
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void ComKinoOperatingPointsBase<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::computeInputOperatingPoints(
+template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM>
+void ComKinoOperatingPointsBase<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::computeInputOperatingPoints(
 		const state_vector_t& switchedState,
 		const contact_flag_t& stanceLegs,
 		input_vector_t& inputOperatingPoint) {
@@ -83,29 +83,8 @@ void ComKinoOperatingPointsBase<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM, LOGIC_RU
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void ComKinoOperatingPointsBase<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::initializeModel(
-		logic_rules_machine_t& logicRulesMachine,
-		const size_t& partitionIndex,
-		const char* algorithmName /*=NULL*/) {
-
-	Base::initializeModel(logicRulesMachine, partitionIndex, algorithmName);
-
-	findActiveSubsystemFnc_ = std::move( logicRulesMachine.getHandleToFindActiveEventCounter(partitionIndex) );
-
-	logicRulesPtr_ = logicRulesMachine.getLogicRulesPtr();
-
-	if (algorithmName!=NULL)
-		algorithmName_.assign(algorithmName);
-	else
-		algorithmName_.clear();
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void ComKinoOperatingPointsBase<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::getSystemOperatingTrajectories(
+template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM>
+void ComKinoOperatingPointsBase<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::getSystemOperatingTrajectories(
 		const state_vector_t& initialState,
 		const scalar_t& startTime,
 		const scalar_t& finalTime,
@@ -114,7 +93,7 @@ void ComKinoOperatingPointsBase<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM, LOGIC_RU
 		input_vector_array_t& inputTrajectory,
 		bool concatOutput /*= false*/) {
 
-	size_t index = findActiveSubsystemFnc_(0.5*(startTime+finalTime));
+	size_t index = logicRulesPtr_->getEventTimeCount(0.5*(startTime+finalTime));
 	logicRulesPtr_->getContactFlags(index, stanceLegs_);
 
 	// approach 1: using the default values

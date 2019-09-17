@@ -27,9 +27,8 @@ namespace switched_model {
 
 template <size_t JOINT_COORD_SIZE,
 		size_t STATE_DIM=12+JOINT_COORD_SIZE,
-		size_t INPUT_DIM=12+JOINT_COORD_SIZE,
-		class LOGIC_RULES_T=SwitchedModelPlannerLogicRules<JOINT_COORD_SIZE, double>>
-class ComKinoConstraintBase : public ocs2::ConstraintBase<12+JOINT_COORD_SIZE, 12+JOINT_COORD_SIZE, LOGIC_RULES_T>
+		size_t INPUT_DIM=12+JOINT_COORD_SIZE>
+class ComKinoConstraintBase : public ocs2::ConstraintBase<12+JOINT_COORD_SIZE, 12+JOINT_COORD_SIZE>
 {
 public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
@@ -41,13 +40,12 @@ public:
 		NUM_CONTACT_POINTS_ = SwitchedModel<JOINT_COORD_SIZE>::NUM_CONTACT_POINTS
 	};
 
-	typedef LOGIC_RULES_T logic_rules_t;
+	typedef SwitchedModelPlannerLogicRules<JOINT_COORD_SIZE, double> logic_rules_t;
 	typedef typename logic_rules_t::foot_cpg_t            foot_cpg_t;
 	typedef typename logic_rules_t::feet_cpg_ptr_t        feet_cpg_ptr_t;
 	typedef typename logic_rules_t::feet_cpg_const_ptr_t  feet_cpg_const_ptr_t;
-	typedef ocs2::LogicRulesMachine<logic_rules_t>        logic_rules_machine_t;
 
-	typedef ocs2::ConstraintBase<STATE_DIM, INPUT_DIM, logic_rules_t> Base;
+	typedef ocs2::ConstraintBase<STATE_DIM, INPUT_DIM> Base;
 
 	typedef ComModelBase<JOINT_COORD_SIZE> com_model_t;
 	typedef KinematicsModelBase<JOINT_COORD_SIZE> kinematic_model_t;
@@ -84,14 +82,19 @@ public:
 	ComKinoConstraintBase(
 			const kinematic_model_t& kinematicModel,
 			const com_model_t& comModel,
+			std::shared_ptr<const logic_rules_t> logicRulesPtr,
 			const Model_Settings& options = Model_Settings())
 
 	: Base()
 	, kinematicModelPtr_(kinematicModel.clone())
 	, comModelPtr_(comModel.clone())
-	, o_gravityVector_(0.0, 0.0, -options.gravitationalAcceleration_)
+	, logicRulesPtr_(std::move(logicRulesPtr))
 	, options_(options)
-	{}
+	{
+		if (!logicRulesPtr_) {
+			throw std::runtime_error("[ComKinoConstraintBase] logicRules cannot be a nullptr");
+		}
+	}
 
 	/**
 	 * copy constructor of ComKinoConstraintBase
@@ -101,31 +104,17 @@ public:
 	: Base(rhs)
 	, kinematicModelPtr_(rhs.kinematicModelPtr_->clone())
 	, comModelPtr_(rhs.comModelPtr_->clone())
-	, o_gravityVector_(rhs.o_gravityVector_)
+	, logicRulesPtr_(rhs.logicRulesPtr_)
 	, options_(rhs.options_)
 	{}
 
-	virtual ~ComKinoConstraintBase() = default;
+	~ComKinoConstraintBase() override = default;
 
 	/**
 	 * clone ComKinoConstraintBase class.
 	 */
-	virtual ComKinoConstraintBase<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM, LOGIC_RULES_T>* clone() const override;
-
-	/**
-	 * Initializes the system dynamics. This method should always be called at the very first call of the model.
-	 *
-	 * @param [in] logicRulesMachine: A class which contains and parse the logic rules e.g
-	 * method findActiveSubsystemHandle returns a Lambda expression which can be used to
-	 * find the ID of the current active subsystem.
-	 * @param [in] partitionIndex: index of the time partition.
-	 * @param [in] algorithmName: The algorithm that class this class (default not defined).
-	 */
-	virtual void initializeModel(
-			logic_rules_machine_t& logicRulesMachine,
-			const size_t& partitionIndex,
-			const char* algorithmName=NULL) override;
-
+	ComKinoConstraintBase<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>* clone() const override;
+	
 	/**
 	 * Set the current state and contact force input
 	 *
@@ -133,14 +122,14 @@ public:
 	 * @param x: current switched state vector (centroidal dynamics plus joints' angles)
 	 * @param u: current switched input vector (contact forces plus joints' velocities)
 	 */
-	virtual void setCurrentStateAndControl(const scalar_t& t, const state_vector_t& x, const input_vector_t& u) override;
+	void setCurrentStateAndControl(const scalar_t& t, const state_vector_t& x, const input_vector_t& u) override;
 
 	/**
 	 * Computes the state-input equality constraints.
 	 *
 	 * @param [out] e: The state-input equality constraints value.
 	 */
-	virtual void getConstraint1(constraint1_vector_t& e) override;
+	void getConstraint1(constraint1_vector_t& e) override;
 
 	/**
 	 * Get the number of state-input active equality constraints.
@@ -148,14 +137,14 @@ public:
 	 * @param [in] time: time.
 	 * @return number of state-input active equality constraints.
 	 */
-	virtual size_t numStateInputConstraint(const scalar_t& time) override;
+	size_t numStateInputConstraint(const scalar_t& time) override;
 
 	/**
 	 * get the state-only equality constraints.
 	 *
 	 * @param [out] h: The state-only equality constraints value.
 	 */
-	virtual void getConstraint2(constraint2_vector_t& h) override;
+	void getConstraint2(constraint2_vector_t& h) override;
 
 	/**
 	 * Get the number of state-only active equality constraints.
@@ -163,7 +152,7 @@ public:
 	 * @param [in] time: time.
 	 * @return number of state-only active equality constraints.
 	 */
-	virtual size_t numStateOnlyConstraint(const scalar_t& time) override;
+	size_t numStateOnlyConstraint(const scalar_t& time) override;
 
 	/**
  	* Gets the inequality constraints.
@@ -172,7 +161,7 @@ public:
  	*
  	* @param [out] h: The inequality constraints value.
  	*/
-	virtual void getInequalityConstraint(scalar_array_t& h) override;
+	void getInequalityConstraint(scalar_array_t& h) override;
 
 	/**
 	 * Get the number of inequality constraints.
@@ -180,14 +169,14 @@ public:
 	 * @param [in] time: time.
 	 * @return number of inequality constraints.
 	 */
-	virtual size_t numInequalityConstraint(const scalar_t& time) override;
+	size_t numInequalityConstraint(const scalar_t& time) override;
 
 	/**
 	 * Compute the final state-only equality constraints.
 	 *
 	 * @param [out] h_f: The final state-only equality constraints value.
 	 */
-	virtual void getFinalConstraint2(constraint2_vector_t& h_f) override;
+	void getFinalConstraint2(constraint2_vector_t& h_f) override;
 
 	/**
 	 * Get the number of final state-only active equality constraints.
@@ -195,7 +184,7 @@ public:
 	 * @param [in] time: time.
 	 * @return number of final state-only active equality constraints.
 	 */
-	virtual size_t numStateOnlyFinalConstraint(const scalar_t& time) override;
+	size_t numStateOnlyFinalConstraint(const scalar_t& time) override;
 
 	/**
 	 * calculate and retrieve the C matrix (i.e. the state derivative of the state-input constraints w.r.t. state vector).
@@ -203,7 +192,7 @@ public:
 	 *
 	 * @param C: a nc1-by-nx matrix
 	 */
-	virtual void getConstraint1DerivativesState(constraint1_state_matrix_t& C) override;
+	void getConstraint1DerivativesState(constraint1_state_matrix_t& C) override;
 
 	/**
 	 * calculate and retrieve the D matrix (i.e. the state derivative of the state-input constraints w.r.t. input vector).
@@ -211,7 +200,7 @@ public:
 	 *
 	 * @param D: a nc1-by-nu matrix
 	 */
-	virtual void getConstraint1DerivativesControl(constraint1_input_matrix_t& D) override;
+	void getConstraint1DerivativesControl(constraint1_input_matrix_t& D) override;
 
 	/**
 	 * calculate and retrieve the the derivative of the state-input constraints w.r.t. event times.
@@ -220,7 +209,7 @@ public:
 	 *
 	 * @param [out] g1DevArray: an array of nc1-by-1 vector.
 	 */
-	virtual void getConstraint1DerivativesEventTimes(constraint1_vector_array_t& g1DevArray) override;
+	void getConstraint1DerivativesEventTimes(constraint1_vector_array_t& g1DevArray) override;
 
 	/**
 	 * The dhdx matrix at a given operating point for the linearized inequality constraints,
@@ -228,7 +217,7 @@ public:
 	 *    + dhdx_i(t) \delta x + dhdu_i(t) \delta u + e(t) >= 0 \f$.
 	 * @param [out] dhdx: \f$ dhdx(t) \f$ matrix.
 	 */
-	virtual void getInequalityConstraintDerivativesState(state_vector_array_t& dhdx) override;
+	void getInequalityConstraintDerivativesState(state_vector_array_t& dhdx) override;
 
 	/**
 	 * The dhdu matrix at a given operating point for the linearized inequality constraints,
@@ -236,7 +225,7 @@ public:
 	 *    + dhdx_i(t) \delta x + dhdu_i(t) \delta u + e(t) >= 0 \f$.
 	 * @param [out] dhdu: \f$ dhdu(t) \f$ matrix.
 	 */
-	virtual void getInequalityConstraintDerivativesInput(input_vector_array_t& dhdu) override;
+	void getInequalityConstraintDerivativesInput(input_vector_array_t& dhdu) override;
 
 	/**
 	 * The ddhdxdx matrices at a given operating point for the linearized inequality constraints,
@@ -244,7 +233,7 @@ public:
 	 *    + dhdx_i(t) \delta x + dhdu_i(t) \delta u + e(t) >= 0 \f$.
 	 * @param [out] ddhdxdx: \f$ ddhdxdx(t) \f$ matrix.
 	 */
-	virtual void getInequalityConstraintSecondDerivativesState(state_matrix_array_t& ddhdxdx) override;
+	void getInequalityConstraintSecondDerivativesState(state_matrix_array_t& ddhdxdx) override;
 
 	/**
 	 * The ddhdudu matrices at a given operating point for the linearized inequality constraints,
@@ -252,7 +241,7 @@ public:
 	 *    + dhdx_i(t) \delta x + dhdu_i(t) \delta u + e(t) >= 0 \f$.
 	 * @param [out] ddhudu: \f$ ddhdudu(t) \f$ matrix.
 	 */
-	virtual void getInequalityConstraintSecondDerivativesInput(input_matrix_array_t& ddhdudu) override;
+	void getInequalityConstraintSecondDerivativesInput(input_matrix_array_t& ddhdudu) override;
 
 	/**
 	 * The ddhdudu matrices at a given operating point for the linearized inequality constraints,
@@ -260,7 +249,7 @@ public:
 	 *    + dhdx_i(t) \delta x + dhdu_i(t) \delta u + e(t) >= 0 \f$.
 	 * @param [out] ddhudu: \f$ ddhdudu(t) \f$ matrix.
 	 */
-	virtual void getInequalityConstraintDerivativesInputState(input_state_matrix_array_t& ddhdudx) override;
+	void getInequalityConstraintDerivativesInputState(input_state_matrix_array_t& ddhdudx) override;
 
 	/**
 	 * calculate and retrieve the F matrix (i.e. the state derivative of the state-only constraints w.r.t. state vector).
@@ -268,7 +257,7 @@ public:
 	 *
 	 * @param F: a nc2-by-nx matrix
 	 */
-	virtual void getConstraint2DerivativesState(constraint2_state_matrix_t& F) override;
+	void getConstraint2DerivativesState(constraint2_state_matrix_t& F) override;
 
 	/**
 	 * * calculate and retrieve the F matrix (i.e. the state derivative of the final state-only constraints w.r.t. state vector).
@@ -276,7 +265,7 @@ public:
 	 *
 	 * @param F_final: a nc2Final-by-nx matrix
 	 */
-	virtual void getFinalConstraint2DerivativesState(constraint2_state_matrix_t& F_final) override;
+	void getFinalConstraint2DerivativesState(constraint2_state_matrix_t& F_final) override;
 
 	/**
 	 * set the stance legs
@@ -292,12 +281,9 @@ public:
 private:
 	typename kinematic_model_t::Ptr kinematicModelPtr_;
 	typename com_model_t::Ptr comModelPtr_;
-	Eigen::Vector3d o_gravityVector_;
 	Model_Settings options_;
 
-	logic_rules_t* logicRulesPtr_;
-
-	std::function<size_t(scalar_t)> findActiveSubsystemFnc_;
+	std::shared_ptr<const logic_rules_t> logicRulesPtr_;
 
 	size_t numEventTimes_;
 
@@ -338,8 +324,6 @@ private:
 	Eigen::Matrix<double, 6, 6> M_;
 	Eigen::Matrix<double, 6, 6> dMdt_;
 	Eigen::Matrix<double, 6, 6> MInverse_;
-
-	std::string algorithmName_;
 };
 
 } // end of namespace switched_model

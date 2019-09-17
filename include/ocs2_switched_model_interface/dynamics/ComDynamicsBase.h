@@ -18,11 +18,12 @@
 #include "ocs2_switched_model_interface/core/ComModelBase.h"
 #include "ocs2_switched_model_interface/core/KinematicsModelBase.h"
 #include "ocs2_switched_model_interface/core/SwitchedModel.h"
+#include <ocs2_robotic_tools/common/AngularVelocityMapping.h>
 
 namespace switched_model {
 
 template <size_t JOINT_COORD_SIZE>
-class ComDynamicsBase : public ocs2::ControlledSystemBase<12, 12, ocs2::NullLogicRules>
+class ComDynamicsBase : public ocs2::ControlledSystemBase<12, 12>
 {
 public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
@@ -33,10 +34,7 @@ public:
 		INPUT_DIM = 12
 	};
 
-	typedef ocs2::NullLogicRules logic_rules_t;
-	typedef ocs2::LogicRulesMachine<logic_rules_t> logic_rules_machine_t;
-
-	typedef ocs2::ControlledSystemBase<STATE_DIM, INPUT_DIM, logic_rules_t> Base;
+	typedef ocs2::ControlledSystemBase<STATE_DIM, INPUT_DIM> Base;
 
 	typedef ComModelBase<JOINT_COORD_SIZE> com_model_t;
 	typedef KinematicsModelBase<JOINT_COORD_SIZE> kinematic_model_t;
@@ -49,22 +47,12 @@ public:
 
 
 	ComDynamicsBase(const kinematic_model_t& kinematicModel, const com_model_t& comModel,
-			const double& gravitationalAcceleration=9.81,
-									const bool& constrainedIntegration=true,
-									const bool& enforceFrictionConeConstraint=false,
-									const double& frictionCoefficient = 1.0,
-									const bool& enforceTorqueConstraint=false,
-									const double& torqueLimit = 40.0)
+			const double& gravitationalAcceleration=9.81)
 
 	: Base(),
 	  kinematicModelPtr_(kinematicModel.clone()),
 	  comModelPtr_(comModel.clone()),
-	  o_gravityVector_(0.0, 0.0, -gravitationalAcceleration),
-	  constrainedIntegration_(constrainedIntegration),
-		enforceFrictionConeConstraint_(enforceFrictionConeConstraint),
-		frictionCoefficient_(frictionCoefficient),
-		enforceTorqueConstraint_(enforceTorqueConstraint),
-		torqueLimit_(torqueLimit)
+	  o_gravityVector_(0.0, 0.0, -gravitationalAcceleration)
 	{
 		if (gravitationalAcceleration<0)  throw std::runtime_error("Gravitational acceleration should be a positive value.");
 	}
@@ -79,30 +67,13 @@ public:
 	: Base(rhs),
 	  kinematicModelPtr_(rhs.kinematicModelPtr_->clone()),
 	  comModelPtr_(rhs.comModelPtr_->clone()),
-	  o_gravityVector_(rhs.o_gravityVector_),
-	  constrainedIntegration_(rhs.constrainedIntegration_),
-		enforceFrictionConeConstraint_(rhs.enforceFrictionConeConstraint_),
-		frictionCoefficient_(rhs.frictionCoefficient_),
-		enforceTorqueConstraint_(rhs.enforceTorqueConstraint_),
-		torqueLimit_(rhs.torqueLimit_)
+	  o_gravityVector_(rhs.o_gravityVector_)
 	{}
 
 	/**
 	 * clone this class.
 	 */
 	virtual ComDynamicsBase<JOINT_COORD_SIZE>* clone() const  override;
-
-	/**
-	 * Initializes the system dynamics. This method should always be called at the very first call of the model.
-	 *
-	 * @param [in] logicRulesMachine: A class which contains and parse the logic rules e.g
-	 * method findActiveSubsystemHandle returns a Lambda expression which can be used to
-	 * find the ID of the current active subsystem.
-	 * @param [in] partitionIndex: index of the time partition.
-	 * @param [in] algorithmName: The algorithm that class this class (default not defined).
-	 */
-	virtual void initializeModel(logic_rules_machine_t& logicRulesMachine,
-			const size_t& partitionIndex, const char* algorithmName=NULL) override;
 
 	/**
 	 * Calculates the CoM state time evolution based on the current CoM state (x), contact forces input
@@ -133,9 +104,7 @@ public:
 	 * set joints' angel and angular velocity, and stance leg configuration. This data is
 	 * required in computeFlowMap() method.
 	 */
-	void setData(const std::array<bool,4>& stanceLegs,
-			const joint_coordinate_t& qJoints,
-			const joint_coordinate_t& dqJoints);
+	void setData(const joint_coordinate_t& qJoints,	const joint_coordinate_t& dqJoints);
 
 	/**
 	 * @brief Computes the matrix which transforms derivatives of angular velocities in the body frame to euler angles derivatives
@@ -144,11 +113,6 @@ public:
 	 * @return M: matrix that does the transformation
 	 */
 	static Eigen::Matrix3d AngularVelocitiesToEulerAngleDerivativesMatrix (const Eigen::Vector3d& eulerAngles);
-
-	/**
-	 * user interface for retrieving stance legs. Note this value is updated after each call of computeFlowMap() method.
-	 */
-	void getStanceLegs(std::array<bool,4>& stanceLegs) const;
 
 	/**
 	 * user interface for retrieving feet's positions. Note this value is updated after each call of computeFlowMap() method.
@@ -186,14 +150,6 @@ private:
 	typename com_model_t::Ptr comModelPtr_;
 	Eigen::Vector3d o_gravityVector_;
 
-	bool constrainedIntegration_;
-	bool enforceFrictionConeConstraint_;
-	double frictionCoefficient_;
-
-	bool enforceTorqueConstraint_;
-	double torqueLimit_;
-
-	std::array<bool,4> stanceLegs_;
 	base_coordinate_t  q_base_;
 	joint_coordinate_t qJoints_;
 	joint_coordinate_t dqJoints_;
@@ -210,9 +166,6 @@ private:
 	Eigen::Matrix<double, 6, 1> C_;
 	// gravity effect on CoM in CoM coordinate
 	Eigen::Matrix<double, 6, 1> MInverseG_;
-
-
-	std::string algorithmName_;
 };
 
 } //end of namespace switched_model

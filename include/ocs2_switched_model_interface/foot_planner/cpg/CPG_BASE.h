@@ -84,6 +84,9 @@ public:
 		return 0.0;
 	}
 
+  	scalar_t getTimeSinceStart(const scalar_t& time) const { return time - startTime_; };
+  	scalar_t getTimeTillEnd(const scalar_t& time) const { return finalTime_ - time; };
+
 protected:
 	scalar_t startTime_;
 	scalar_t finalTime_;

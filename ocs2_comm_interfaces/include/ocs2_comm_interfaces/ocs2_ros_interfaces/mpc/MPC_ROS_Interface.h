@@ -237,9 +237,8 @@ class MPC_ROS_Interface {
    * @brief fillMpcOutputBuffers updates the *Buffer variables from the MPC object.
    * This method is automatically called by advanceMpc()
    * @param [in] mpcInitObservation: The observation used to run the MPC.
-   * @param [in] mpc: A reference to the MPC instance.
    */
-  void fillMpcOutputBuffers(system_observation_t mpcInitObservation, const mpc_t& mpc);
+  void fillMpcOutputBuffers(system_observation_t mpcInitObservation);
 
   /**
    * The callback method which receives the current observation, invokes the MPC algorithm,

@@ -159,9 +159,8 @@ class MPC_MRT_Interface final : public MRT_BASE<STATE_DIM, INPUT_DIM> {
    * @brief fillMpcOutputBuffers updates the *Buffer variables from the MPC object.
    * This method is automatically called by advanceMpc()
    * @param [in] mpcInitObservation: The observation used to run the MPC.
-   * @param [in] mpc: A reference to the MPC instance.
    */
-  void fillMpcOutputBuffers(system_observation_t mpcInitObservation, const mpc_t& mpc);
+  void fillMpcOutputBuffers(system_observation_t mpcInitObservation);
 
  protected:
   mpc_t& mpc_;

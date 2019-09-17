@@ -36,7 +36,13 @@ template <size_t STATE_DIM, size_t INPUT_DIM>
 MPC_ROS_Interface<STATE_DIM, INPUT_DIM>::MPC_ROS_Interface(
     mpc_t& mpc, const std::string& robotName /*= "robot"*/,
     const task_listener_ptr_array_t& taskListenerArray /*= task_listener_ptr_array_t()*/)
-    : mpc_(mpc), robotName_(robotName), taskListenerArray_(taskListenerArray) {
+    : mpc_(mpc),
+      robotName_(robotName),
+      taskListenerArray_(taskListenerArray),
+      currentPrimalSolution_(new primal_solution_t()),
+      primalSolutionBuffer_(new primal_solution_t()),
+      currentCommand_(new command_data_t()),
+      commandBuffer_(new command_data_t()) {
   set();
 }
 
@@ -53,12 +59,6 @@ MPC_ROS_Interface<STATE_DIM, INPUT_DIM>::~MPC_ROS_Interface() {
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
 void MPC_ROS_Interface<STATE_DIM, INPUT_DIM>::set() {
-  currentPrimalSolution_.reset(new primal_solution_t());
-  primalSolutionBuffer_.reset(new primal_solution_t());
-
-  currentCommand_.reset(new command_data_t());
-  commandBuffer_.reset(new command_data_t());
-
   terminateThread_ = false;
   readyToPublish_ = false;
 
@@ -256,20 +256,20 @@ void MPC_ROS_Interface<STATE_DIM, INPUT_DIM>::publisherWorkerThread() {
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
-void MPC_ROS_Interface<STATE_DIM, INPUT_DIM>::fillMpcOutputBuffers(system_observation_t mpcInitObservation, const mpc_t& mpc) {
+void MPC_ROS_Interface<STATE_DIM, INPUT_DIM>::fillMpcOutputBuffers(system_observation_t mpcInitObservation) {
   // buffer policy mutex
   std::lock_guard<std::mutex> policyBufferLock(policyBufferMutex_);
 
   // get solution
-  scalar_t finalTime = mpcInitObservation.time() + mpc.settings().solutionTimeWindow_;
-  if (mpc.settings().solutionTimeWindow_ < 0) {
-    finalTime = mpc.getSolverPtr()->getFinalTime();
+  scalar_t finalTime = mpcInitObservation.time() + mpc_.settings().solutionTimeWindow_;
+  if (mpc_.settings().solutionTimeWindow_ < 0) {
+    finalTime = mpc_.getSolverPtr()->getFinalTime();
   }
-  mpc.getSolverPtr()->getPrimalSolutionPtr(finalTime, primalSolutionBuffer_.get());
+  mpc_.getSolverPtr()->getPrimalSolutionPtr(finalTime, primalSolutionBuffer_.get());
 
   // command
   commandBuffer_->mpcInitObservation_ = std::move(mpcInitObservation);
-  commandBuffer_->mpcCostDesiredTrajectories_ = mpc.getSolverPtr()->getCostDesiredTrajectories();
+  commandBuffer_->mpcCostDesiredTrajectories_ = mpc_.getSolverPtr()->getCostDesiredTrajectories();
 }
 
 /******************************************************************************************************/
@@ -302,26 +302,26 @@ void MPC_ROS_Interface<STATE_DIM, INPUT_DIM>::mpcObservationCallback(const ocs2_
   }
 
   // run MPC
-  bool controllerIsUpdated = mpcPtr_->run(currentObservation.time(), currentObservation.state());
+  bool controllerIsUpdated = mpc_.run(currentObservation.time(), currentObservation.state());
   if (!controllerIsUpdated) {
     return;
   }
-  fillMpcOutputBuffers(currentObservation, *mpcPtr_);
+  fillMpcOutputBuffers(currentObservation);
 
   // measure the delay for sending ROS messages
   mpcTimer_.endTimer();
 
   // check MPC delay and solution window compatibility
-  scalar_t timeWindow = mpcPtr_->settings().solutionTimeWindow_;
-  if (mpcPtr_->settings().solutionTimeWindow_ < 0) {
-    timeWindow = mpcPtr_->getSolverPtr()->getFinalTime() - currentObservation.time();
+  scalar_t timeWindow = mpc_.settings().solutionTimeWindow_;
+  if (mpc_.settings().solutionTimeWindow_ < 0) {
+    timeWindow = mpc_.getSolverPtr()->getFinalTime() - currentObservation.time();
   }
   if (timeWindow < 2.0 * mpcTimer_.getAverageInMilliseconds() * 1e-3) {
     std::cerr << "WARNING: The solution time window might be shorter than the MPC delay!" << std::endl;
   }
 
   // display
-  if (mpcPtr_->settings().debugPrint_) {
+  if (mpc_.settings().debugPrint_) {
     std::cerr << std::endl;
     std::cerr << "### MPC ROS runtime " << std::endl;
     std::cerr << "###   Maximum : " << mpcTimer_.getMaxIntervalInMilliseconds() << "[ms]." << std::endl;
@@ -356,19 +356,19 @@ void MPC_ROS_Interface<STATE_DIM, INPUT_DIM>::mpcObservationCallback(const ocs2_
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
 void MPC_ROS_Interface<STATE_DIM, INPUT_DIM>::mpcTargetTrajectoriesCallback(const ocs2_msgs::mpc_target_trajectories::ConstPtr& msg) {
-  if (!mpcPtr_->settings().recedingHorizon_) {
+  if (!mpc_.settings().recedingHorizon_) {
     throw std::runtime_error("Target trajectories can only be updated in receding horizon mode.");
   }
 
   cost_desired_trajectories_t costDesiredTrajectories;
   RosMsgConversions<STATE_DIM, INPUT_DIM>::readTargetTrajectoriesMsg(*msg, costDesiredTrajectories);
 
-  if (mpcPtr_->settings().debugPrint_) {
+  if (mpc_.settings().debugPrint_) {
     std::cerr << "### The target position is updated to " << std::endl;
     costDesiredTrajectories.display();
   }
 
-  mpcPtr_->getSolverPtr()->swapCostDesiredTrajectories(costDesiredTrajectories);
+  mpc_.getSolverPtr()->swapCostDesiredTrajectories(costDesiredTrajectories);
 }
 
 /******************************************************************************************************/
@@ -378,7 +378,7 @@ template <size_t STATE_DIM, size_t INPUT_DIM>
 void MPC_ROS_Interface<STATE_DIM, INPUT_DIM>::mpcModeSequenceCallback(const ocs2_msgs::mode_sequence::ConstPtr& msg) {
   mode_sequence_template_t modeSequenceTemplate;
   RosMsgConversions<STATE_DIM, INPUT_DIM>::readModeSequenceTemplateMsg(*msg, modeSequenceTemplate);
-  mpcPtr_->setNewLogicRulesTemplate(modeSequenceTemplate);
+  mpc_.setNewLogicRulesTemplate(modeSequenceTemplate);
 }
 
 /******************************************************************************************************/

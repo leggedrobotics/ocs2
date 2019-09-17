@@ -21,7 +21,6 @@ public:
 	, contactForceWeight_(0.1)
 	, zDirectionPositionWeight_(5.0)
 	, zDirectionVelocityWeight_(0.5)
-	, copWeight_(0.0)
 	, swingLegLiftOff_(0.3)
 	, liftOffVelocity_(0.0)
 	, touchDownVelocity_(0.0)
@@ -46,7 +45,6 @@ public:
 	double contactForceWeight_;
 	double zDirectionPositionWeight_;
 	double zDirectionVelocityWeight_;
-	double copWeight_;
 	double swingLegLiftOff_;
 	double liftOffVelocity_;
 	double touchDownVelocity_;
@@ -117,14 +115,6 @@ inline void Model_Settings::loadSettings(const std::string& filename, bool verbo
 	}
 	catch (const std::exception& e){
 		if (verbose)  std::cerr << " #### zDirectionVelocityWeight ..... " << zDirectionVelocityWeight_ << "\t(default)" << std::endl;
-	}
-
-	try {
-		copWeight_ = pt.get<double>("model_settings.copWeight");
-		if (verbose)  std::cerr << " #### copWeight .................... " << copWeight_ << std::endl;
-	}
-	catch (const std::exception& e){
-		if (verbose)  std::cerr << " #### copWeight .................... " << copWeight_ << "\t(default)" << std::endl;
 	}
 
 	try {

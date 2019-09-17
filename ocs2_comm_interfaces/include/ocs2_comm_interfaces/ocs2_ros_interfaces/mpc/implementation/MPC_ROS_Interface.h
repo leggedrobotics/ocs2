@@ -265,7 +265,7 @@ void MPC_ROS_Interface<STATE_DIM, INPUT_DIM>::fillMpcOutputBuffers(system_observ
   if (mpc_.settings().solutionTimeWindow_ < 0) {
     finalTime = mpc_.getSolverPtr()->getFinalTime();
   }
-  mpc_.getSolverPtr()->getPrimalSolutionPtr(finalTime, primalSolutionBuffer_.get());
+  mpc_.getSolverPtr()->getPrimalSolution(finalTime, primalSolutionBuffer_.get());
 
   // command
   commandBuffer_->mpcInitObservation_ = std::move(mpcInitObservation);

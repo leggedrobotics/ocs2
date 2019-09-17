@@ -111,7 +111,9 @@ GDDP<STATE_DIM, INPUT_DIM>::GDDP(const GDDP_Settings& gddpSettings /*= GDDP_Sett
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
 void GDDP<STATE_DIM, INPUT_DIM>::setupOptimizer(const size_t& numPartitions) {
-  if (numPartitions == 0) throw std::runtime_error("The number of partitions cannot be zero!");
+  if (numPartitions == 0) {
+    throw std::runtime_error("The number of partitions cannot be zero!");
+  }
 }
 
 /*****************************************************************************************************/
@@ -267,7 +269,9 @@ void GDDP<STATE_DIM, INPUT_DIM>::getRolloutSensitivity2EventTime(const size_t& e
                                                                  std::vector<scalar_array_t>& sensitivityTimeTrajectoriesStock,
                                                                  state_matrix_array2_t& sensitivityStateTrajectoriesStock,
                                                                  input_matrix_array2_t& sensitivityInputTrajectoriesStock) {
-  if (eventTimeIndex + 1 > numEventTimes_) throw std::runtime_error("The requested event index is out of bound.");
+  if (eventTimeIndex + 1 > numEventTimes_) {
+    throw std::runtime_error("The requested event index is out of bound.");
+  }
 
   sensitivityTimeTrajectoriesStock = dcPtr_->nominalTimeTrajectoriesStock_;
   sensitivityStateTrajectoriesStock = sensitivityStateTrajectoriesStockSet_[eventTimeIndex];
@@ -311,8 +315,9 @@ void GDDP<STATE_DIM, INPUT_DIM>::propagateRolloutSensitivity(size_t workerIndex,
                                                              const std::vector<size_array_t>& eventsPastTheEndIndecesStock,
                                                              state_vector_array2_t& sensitivityStateTrajectoriesStock,
                                                              input_vector_array2_t& sensitivityInputTrajectoriesStock) {
-  if (eventTimeIndex < activeEventTimeBeginIndex_ || eventTimeIndex >= activeEventTimeEndIndex_)
+  if (eventTimeIndex < activeEventTimeBeginIndex_ || eventTimeIndex >= activeEventTimeEndIndex_) {
     throw std::runtime_error("The index is associated to an inactive event or it is out of range.");
+  }
 
   // resizing
   sensitivityStateTrajectoriesStock.resize(numPartitions_);
@@ -483,8 +488,9 @@ void GDDP<STATE_DIM, INPUT_DIM>::solveSensitivityRiccatiEquations(
     size_t workerIndex, const size_t& eventTimeIndex, const scalar_t& learningRate, const eigen_scalar_t& nablasHeuristics,
     const state_vector_t& nablaSvHeuristics, const state_matrix_t& nablaSmHeuristics, eigen_scalar_array2_t& nablasTrajectoriesStock,
     state_vector_array2_t& nablaSvTrajectoriesStock, state_matrix_array2_t& nablaSmTrajectoriesStock) {
-  if (eventTimeIndex < activeEventTimeBeginIndex_ || eventTimeIndex >= activeEventTimeEndIndex_)
+  if (eventTimeIndex < activeEventTimeBeginIndex_ || eventTimeIndex >= activeEventTimeEndIndex_) {
     throw std::runtime_error("The index is associated to an inactive event or it is out of range.");
+  }
 
   typedef typename riccati_sensitivity_equations_t::s_vector_t s_vector_t;
   typedef typename riccati_sensitivity_equations_t::s_vector_array_t s_vector_array_t;
@@ -585,7 +591,9 @@ void GDDP<STATE_DIM, INPUT_DIM>::solveSensitivityRiccatiEquations(
     SsFinal = allSsTrajectory.back();
 
     // check size
-    if (allSsTrajectory.size() != NS) throw std::runtime_error("allSsTrajectory size is incorrect.");
+    if (allSsTrajectory.size() != NS) {
+      throw std::runtime_error("allSsTrajectory size is incorrect.");
+    }
 
     // construct 'nable_Sm', 'nable_Sv', and 'nable_s'
     nablasTrajectoriesStock[i].resize(NS);
@@ -606,8 +614,9 @@ template <size_t STATE_DIM, size_t INPUT_DIM>
 void GDDP<STATE_DIM, INPUT_DIM>::solveSensitivityBVP(size_t workerIndex, const size_t& eventTimeIndex, const state_vector_t& MvFinal,
                                                      const state_vector_t& MveFinal, state_vector_array2_t& MvTrajectoriesStock,
                                                      state_vector_array2_t& MveTrajectoriesStock) {
-  if (eventTimeIndex < activeEventTimeBeginIndex_ || eventTimeIndex >= activeEventTimeEndIndex_)
+  if (eventTimeIndex < activeEventTimeBeginIndex_ || eventTimeIndex >= activeEventTimeEndIndex_) {
     throw std::runtime_error("The index is associated to an inactive event or it is out of range.");
+  }
 
   // resizing
   MvTrajectoriesStock.resize(numPartitions_);
@@ -718,8 +727,12 @@ void GDDP<STATE_DIM, INPUT_DIM>::solveSensitivityBVP(size_t workerIndex, const s
     MveFinalInternal = rMveTrajectory.back();
 
     // check sizes
-    if (rMvTrajectory.size() != NS) throw std::runtime_error("MvTrajectory size is incorrect.");
-    if (rMveTrajectory.size() != NS) throw std::runtime_error("MveTrajectory size is incorrect.");
+    if (rMvTrajectory.size() != NS) {
+      throw std::runtime_error("MvTrajectory size is incorrect.");
+    }
+    if (rMveTrajectory.size() != NS) {
+      throw std::runtime_error("MveTrajectory size is incorrect.");
+    }
 
     // constructing 'Mv' and 'Mve'
     MvTrajectoriesStock[i].resize(NS);
@@ -728,16 +741,22 @@ void GDDP<STATE_DIM, INPUT_DIM>::solveSensitivityBVP(size_t workerIndex, const s
     std::reverse_copy(rMveTrajectory.begin(), rMveTrajectory.end(), MveTrajectoriesStock[i].begin());
 
     // testing the numerical stability of the Riccati equations
-    if (gddpSettings_.checkNumericalStability_)
+    if (gddpSettings_.checkNumericalStability_) {
       for (int k = NS - 1; k >= 0; k--) {
         try {
-          if (!MvTrajectoriesStock[i][k].allFinite()) throw std::runtime_error("Mv is unstable.");
-          if (!MveTrajectoriesStock[i][k].allFinite()) throw std::runtime_error("Mve is unstable.");
+          if (!MvTrajectoriesStock[i][k].allFinite()) {
+            throw std::runtime_error("Mv is unstable.");
+          }
+          if (!MveTrajectoriesStock[i][k].allFinite()) {
+            throw std::runtime_error("Mve is unstable.");
+          }
 
         } catch (const std::exception& error) {
           std::cerr << "what(): " << error.what() << " at time " << dcPtr_->SsTimeTrajectoriesStock_[i][k] << " [sec]." << std::endl;
           for (int kp = k; kp < k + 10; kp++) {
-            if (kp >= NS) continue;
+            if (kp >= NS) {
+              continue;
+            }
             std::cerr << "Mv[" << dcPtr_->SsTimeTrajectoriesStock_[i][kp] << "]:\t" << MvTrajectoriesStock[i][kp].transpose().norm()
                       << std::endl;
             std::cerr << "Mve[" << dcPtr_->SsTimeTrajectoriesStock_[i][kp] << "]:\t" << MveTrajectoriesStock[i][kp].transpose().norm()
@@ -745,7 +764,8 @@ void GDDP<STATE_DIM, INPUT_DIM>::solveSensitivityBVP(size_t workerIndex, const s
           }
           throw;
         }
-      }
+      }  // end of k loop
+    }
 
   }  // end of i loop
 }
@@ -758,8 +778,9 @@ void GDDP<STATE_DIM, INPUT_DIM>::calculateLQSensitivityControllerForward(size_t 
                                                                          const std::vector<scalar_array_t>& timeTrajectoriesStock,
                                                                          const state_vector_array2_t& nablaSvTrajectoriesStock,
                                                                          input_vector_array2_t& nablaLvTrajectoriesStock) {
-  if (eventTimeIndex < activeEventTimeBeginIndex_ || eventTimeIndex >= activeEventTimeEndIndex_)
+  if (eventTimeIndex < activeEventTimeBeginIndex_ || eventTimeIndex >= activeEventTimeEndIndex_) {
     throw std::runtime_error("The index is associated to an inactive event or it is out of range.");
+  }
 
   // resizing
   nablaLvTrajectoriesStock.resize(numPartitions_);
@@ -808,8 +829,9 @@ void GDDP<STATE_DIM, INPUT_DIM>::calculateBVPSensitivityControllerForward(size_t
                                                                           const state_vector_array2_t& MvTrajectoriesStock,
                                                                           const state_vector_array2_t& MveTrajectoriesStock,
                                                                           input_vector_array2_t& LvTrajectoriesStock) {
-  if (eventTimeIndex < activeEventTimeBeginIndex_ || eventTimeIndex >= activeEventTimeEndIndex_)
+  if (eventTimeIndex < activeEventTimeBeginIndex_ || eventTimeIndex >= activeEventTimeEndIndex_) {
     throw std::runtime_error("The index is associated to an inactive event or it is out of range.");
+  }
 
   // resizing
   LvTrajectoriesStock.resize(numPartitions_);
@@ -858,8 +880,9 @@ void GDDP<STATE_DIM, INPUT_DIM>::calculateBVPSensitivityControllerForward(size_t
 template <size_t STATE_DIM, size_t INPUT_DIM>
 void GDDP<STATE_DIM, INPUT_DIM>::getValueFuntionSensitivity(const size_t& eventTimeIndex, const scalar_t& time, const state_vector_t& state,
                                                             scalar_t& valueFunctionDerivative) {
-  if (eventTimeIndex < activeEventTimeBeginIndex_ || eventTimeIndex >= activeEventTimeEndIndex_)
+  if (eventTimeIndex < activeEventTimeBeginIndex_ || eventTimeIndex >= activeEventTimeEndIndex_) {
     throw std::runtime_error("The index is associated to an inactive event or it is out of range.");
+  }
 
   EigenLinearInterpolation<state_vector_t> nominalStateFunc;
   EigenLinearInterpolation<eigen_scalar_t> nablasFunc;
@@ -899,8 +922,9 @@ void GDDP<STATE_DIM, INPUT_DIM>::calculateCostDerivative(size_t workerIndex, con
                                                          const state_vector_array2_t& sensitivityStateTrajectoriesStock,
                                                          const input_vector_array2_t& sensitivityInputTrajectoriesStock,
                                                          scalar_t& costDerivative) const {
-  if (eventTimeIndex < activeEventTimeBeginIndex_ || eventTimeIndex >= activeEventTimeEndIndex_)
+  if (eventTimeIndex < activeEventTimeBeginIndex_ || eventTimeIndex >= activeEventTimeEndIndex_) {
     throw std::runtime_error("The index is associated to an inactive event or it is out of range.");
+  }
 
   costDerivative = 0.0;
   scalar_t prevIntermediatecostDev = 0.0;
@@ -927,8 +951,9 @@ void GDDP<STATE_DIM, INPUT_DIM>::calculateCostDerivative(size_t workerIndex, con
         computeEquivalentSystemMultiplier(eventTimeIndex, activeSubsystem, multiplier);
 
         for (size_t k = beginIndex; k < endIndex; k++) {
-          if (k > beginIndex) prevIntermediatecostDev = currIntermediatecostDev;
-
+          if (k > beginIndex) {
+            prevIntermediatecostDev = currIntermediatecostDev;
+          }
           currIntermediatecostDev = multiplier * dcPtr_->qTrajectoriesStock_[i][k](0) +
                                     sensitivityStateTrajectoriesStock[i][k].dot(dcPtr_->QvTrajectoriesStock_[i][k]) +
                                     sensitivityInputTrajectoriesStock[i][k].dot(dcPtr_->RvTrajectoriesStock_[i][k]);

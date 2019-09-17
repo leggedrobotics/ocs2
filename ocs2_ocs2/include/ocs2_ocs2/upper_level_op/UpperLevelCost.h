@@ -126,7 +126,7 @@ class UpperLevelCost final : public NLP_Cost {
       slqPtr_->run(initTime_, initState_, finalTime_, partitioningTimes_);
     } catch (const std::exception& e) {
       std::cerr << "\t     exception: " << e.what();
-      return false;
+      return 0;
     }
 
     // get the cost and constraints ISE

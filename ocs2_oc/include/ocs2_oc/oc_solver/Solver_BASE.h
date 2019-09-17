@@ -339,7 +339,7 @@ class Solver_BASE {
    * @param [in] finalTime: The final time.
    * @return: The primal problem's solution.
    */
-  primal_solution_t getPrimalSolution(scalar_t finalTime) const;
+  primal_solution_t primalSolution(scalar_t finalTime) const;
 
   /**
    * Calculates the value function at the given time and state.

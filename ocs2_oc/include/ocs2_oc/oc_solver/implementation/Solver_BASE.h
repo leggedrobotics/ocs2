@@ -117,8 +117,7 @@ bool Solver_BASE<STATE_DIM, INPUT_DIM>::updateCostDesiredTrajectories() {
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
-typename Solver_BASE<STATE_DIM, INPUT_DIM>::primal_solution_t Solver_BASE<STATE_DIM, INPUT_DIM>::getPrimalSolution(
-    scalar_t finalTime) const {
+typename Solver_BASE<STATE_DIM, INPUT_DIM>::primal_solution_t Solver_BASE<STATE_DIM, INPUT_DIM>::primalSolution(scalar_t finalTime) const {
   primal_solution_t primalSolution;
   getPrimalSolution(finalTime, &primalSolution);
   return primalSolution;

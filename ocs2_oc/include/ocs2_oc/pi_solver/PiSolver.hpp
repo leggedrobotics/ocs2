@@ -347,9 +347,9 @@ class PiSolver final : public Solver_BASE<STATE_DIM, INPUT_DIM> {
     throw std::runtime_error("not implemented.");
   }
 
-  scalar_t getFinalTime() const final { throw std::runtime_error("not implemented."); }
+  scalar_t getFinalTime() const override { nominalTimeTrajectoriesStock_.front().back(); }
 
-  const scalar_array_t& getPartitioningTimes() const final { throw std::runtime_error("not implemented."); }
+  const scalar_array_t& getPartitioningTimes() const override { throw std::runtime_error("not implemented."); }
 
   /**
    * @brief Sets the initial sampling policy for path integral rollouts

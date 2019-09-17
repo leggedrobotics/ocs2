@@ -27,6 +27,8 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
+#include "ocs2_slq/SLQ_MP.h"
+
 namespace ocs2 {
 
 /******************************************************************************************************/
@@ -44,7 +46,7 @@ SLQ_MP<STATE_DIM, INPUT_DIM>::SLQ_MP(const controlled_system_base_t* systemDynam
            std::move(logicRulesPtr), heuristicsFunctionPtr),
       workerTask_(IDLE),
       subsystemProcessed_(0),
-      workerException_(false) {
+      workerException_(nullptr) {
   Eigen::initParallel();
 
   // initialize threads
@@ -271,10 +273,13 @@ void SLQ_MP<STATE_DIM, INPUT_DIM>::threadWork(size_t threadId) {
           return;
         }
       }
-    } catch (const std::runtime_error& err) {
-      std::cerr << "Caught runtime error while doing thread work (workerTask_local " << workerTask_local << ")\n" << err.what();
-      workerException_ = true;
-      workerExceptionMessage_ = err.what();
+    } catch (...) {
+      std::cerr << "Caught runtime error while doing thread work (workerTask_local " << workerTask_local << ")" << std::endl;
+      {
+        std::lock_guard<std::mutex> lock(workerExceptionMutex_);
+        workerException_ = std::current_exception();
+      }
+
       std::lock_guard<std::mutex> lock(riccatiSolverBarrierMutex_);
       riccatiSolverCompletedCondition_.notify_one();
     }
@@ -892,16 +897,23 @@ void SLQ_MP<STATE_DIM, INPUT_DIM>::runIteration() {
   // disable Eigen multi-threading
   Eigen::setNbThreads(1);
 
+  {
+    std::lock_guard<std::mutex> lock(workerExceptionMutex_);
+    workerException_ = nullptr;
+  }
+
   // run BASE routine
   BASE::runIteration();
 
-  if (workerException_) {
-    workerException_ = false;
-    throw std::runtime_error("A worker encountered an exception: " + workerExceptionMessage_);
-  }
-
   // restore default Eigen thread number
   Eigen::setNbThreads(0);
+
+  {
+    std::lock_guard<std::mutex> lock(workerExceptionMutex_);
+    if (workerException_) {
+      std::rethrow_exception(workerException_);
+    }
+  }
 }
 
 /******************************************************************************************************/

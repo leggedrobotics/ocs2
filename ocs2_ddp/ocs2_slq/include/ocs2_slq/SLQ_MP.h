@@ -32,6 +32,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <atomic>
 #include <condition_variable>
+#include <exception>
 #include <thread>
 
 #include <ocs2_core/misc/SetThreadPriority.h>
@@ -295,8 +296,8 @@ class SLQ_MP : public SLQ_BASE<STATE_DIM, INPUT_DIM> {
   std::atomic_size_t lsWorkerCompleted_;
   std::vector<bool> alphaProcessed_;
 
-  std::atomic_bool workerException_;
-  std::string workerExceptionMessage_;
+  std::mutex workerExceptionMutex_;
+  std::exception_ptr workerException_;
 };
 
 }  // namespace ocs2

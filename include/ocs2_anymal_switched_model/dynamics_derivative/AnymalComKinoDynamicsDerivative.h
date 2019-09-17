@@ -8,7 +8,7 @@
 
 namespace anymal {
 
-class AnymalComKinoDynamicsDerivative : public switched_model::ComKinoDynamicsDerivativeBase<12>
+class AnymalComKinoDynamicsDerivative final : public switched_model::ComKinoDynamicsDerivativeBase<12>
 {
 public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW

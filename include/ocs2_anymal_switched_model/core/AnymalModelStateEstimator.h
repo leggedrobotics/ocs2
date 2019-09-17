@@ -13,7 +13,7 @@
 
 namespace anymal {
 
-class AnymalModelStateEstimator : public switched_model::SwitchedModelStateEstimator<12>
+class AnymalModelStateEstimator final : public switched_model::SwitchedModelStateEstimator<12>
 {
 public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW

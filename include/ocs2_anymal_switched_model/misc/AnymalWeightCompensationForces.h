@@ -17,7 +17,7 @@
 
 namespace anymal {
 
-class AnymalWeightCompensationForces : public switched_model::WeightCompensationForces<12>
+class AnymalWeightCompensationForces final : public switched_model::WeightCompensationForces<12>
 {
 public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW

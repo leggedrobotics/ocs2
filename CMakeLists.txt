@@ -29,7 +29,6 @@ catkin_package(
         ${EIGEN_INCLUDE_DIRS}
     LIBRARIES
         ${PROJECT_NAME}
-        generated_COM_lib
     CATKIN_DEPENDS
         ocs2_switched_model_interface
         ocs2_robotic_tools
@@ -48,17 +47,6 @@ include_directories(
   ${catkin_INCLUDE_DIRS}
 )
 
-add_library(generated_COM_lib
-  include/ocs2_anymal_switched_model/generated/miscellaneous.cpp
-)
-add_dependencies(generated_COM_lib
-  ${${PROJECT_NAME}_EXPORTED_TARGETS}
-  ${catkin_EXPORTED_TARGETS}
-)
-target_link_libraries(generated_COM_lib
-  ${catkin_LIBRARIES}
-)
-
 add_library(${PROJECT_NAME}
   src/AnymalComKinoDynamics.cpp
   src/AnymalComKinoDynamicsDerivative.cpp
@@ -75,8 +63,8 @@ add_dependencies(${PROJECT_NAME}
 )
 
 target_link_libraries(${PROJECT_NAME}
-  generated_COM_lib
   ${catkin_LIBRARIES}
+   dl
 )
 
 add_executable(debug_frictionCone
@@ -95,7 +83,7 @@ target_link_libraries(debug_frictionCone
 ## Install ##
 #############
 
-install(TARGETS generated_COM_lib ${PROJECT_NAME}
+install(TARGETS ${PROJECT_NAME}
         ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
         LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
         RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}

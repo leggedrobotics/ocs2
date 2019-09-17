@@ -11,7 +11,7 @@
 
 namespace anymal {
 
-class AnymalCost : public switched_model::SwitchedModelCostBase<12> {
+class AnymalCost final : public switched_model::SwitchedModelCostBase<12> {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 

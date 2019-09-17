@@ -19,10 +19,10 @@ AnymalCom<SCALAR_T>::AnymalCom()
 	, jointSpaceInertiaMatrix_(inertiaProperties_, forceTransforms_)
 {
 	joint_coordinate_t defaultJointConfig;
-	defaultJointConfig << -0.1,  0.7, -1.0,
-						0.1,  0.7, -1.0,
-						-0.1, -0.7,  1.0,
-						0.1, -0.7,  1.0;
+	defaultJointConfig << SCALAR_T(-0.1),  SCALAR_T(0.7), SCALAR_T(-1.0),
+						SCALAR_T(0.1),  SCALAR_T(0.7), SCALAR_T(-1.0),
+						SCALAR_T(-0.1), SCALAR_T(-0.7),  SCALAR_T(1.0),
+						SCALAR_T(0.1), SCALAR_T(-0.7),  SCALAR_T(1.0);
 
 	setJointConfiguration(defaultJointConfig);
 }
@@ -48,7 +48,7 @@ void AnymalCom<SCALAR_T>::setJointConfiguration(
 
 	comInertia_ = jointSpaceInertiaMatrix_.getWholeBodyInertia();
 	SCALAR_T& mass = comInertia_(5,5);
-	matrix3d_t crossComPositionBaseFrame = switched_model::CrossProductMatrix(comPositionBaseFrame_);
+	matrix3d_t crossComPositionBaseFrame = switched_model::CrossProductMatrix<SCALAR_T>(comPositionBaseFrame_);
 	comInertia_.template topLeftCorner<3,3>() += mass*crossComPositionBaseFrame*crossComPositionBaseFrame;
 	comInertia_.template topRightCorner<3,3>().setZero();
 	comInertia_.template bottomLeftCorner<3,3>().setZero();

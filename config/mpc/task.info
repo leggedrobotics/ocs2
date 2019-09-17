@@ -32,10 +32,6 @@ model_settings
   liftOffVelocity               0.0
   touchDownVelocity             -0.75
 
-  copWeight                     300.0    ; 600.0
-  impulseWeight                 0.0
-  impulseSigmeFactor            0.1
-
   mpcGoalCommandDelay           0.1
 
   targetDisplacementVelocity    0.5;
@@ -384,12 +380,3 @@ CoM_final_pose
    (5,0) 0.0 	  ; z
 }
 
-; set the endeffector's constraint information in ascending order
-;endeffector_constraint_0
-;{
-;  type  GAP
-;  xMin  0.7  ;0.7
-;  xMax  1.7  ;1.4
-;  yMin  -10.0
-;  yMax  10.0
-;}

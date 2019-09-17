@@ -17,6 +17,14 @@ find_package(Boost REQUIRED COMPONENTS
   filesystem
 )
 
+# Pybind11
+option(USE_PYBIND_PYTHON_3 "Use python3-compatible python bindings" OFF)
+if(USE_PYBIND_PYTHON_3)
+  set(PYTHON_EXECUTABLE /usr/bin/python3)
+  set(PYBIND11_PYTHON_VERSION 3.6 CACHE STRING "")
+endif(USE_PYBIND_PYTHON_3)
+find_package(pybind11 QUIET)
+
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread -fopenmp -std=c++11 -Wfatal-errors -ffast-math -fPIC")
 
 ###################################
@@ -143,6 +151,47 @@ target_link_libraries(dummy_mrt_node
 )
 
 
+# PyBindings library (c++ side)
+add_library(anymalPyBindings_cpp
+  src/AnymalPyBindings.cpp
+)
+add_dependencies(anymalPyBindings_cpp
+  ocs2_anymal_interface
+  ${catkin_EXPORTED_TARGETS}
+)
+target_link_libraries(anymalPyBindings_cpp
+  ocs2_anymal_interface
+  ${catkin_LIBRARIES}
+)
+
+# Build python bindings if possible
+if(${pybind11_FOUND})
+  pybind11_add_module(AnymalPyBindings SHARED
+    src/pyBindModule.cpp
+  )
+  add_dependencies(AnymalPyBindings
+    anymalPyBindings_cpp
+    ${catkin_EXPORTED_TARGETS}
+  )
+  target_link_libraries(AnymalPyBindings PRIVATE
+    anymalPyBindings_cpp
+    ${catkin_LIBRARIES}
+  )
+
+  if(USE_PYBIND_PYTHON_3)
+    # unfortunately this appears not to be discoverable yet because the sourcing process assumes python2.7
+    set_target_properties(AnymalPyBindings
+      PROPERTIES LIBRARY_OUTPUT_DIRECTORY ${CATKIN_DEVEL_PREFIX}/lib/python3.6/dist-packages/${PROJECT_NAME}
+    )
+  else(USE_PYBIND_PYTHON_3)
+    set_target_properties(AnymalPyBindings
+        PROPERTIES LIBRARY_OUTPUT_DIRECTORY ${CATKIN_DEVEL_PREFIX}/${CATKIN_PACKAGE_PYTHON_DESTINATION}
+    )
+  endif(USE_PYBIND_PYTHON_3)
+
+  catkin_python_setup()
+endif()
+
 #############
 ## Install ##
 #############
@@ -182,3 +231,14 @@ install(DIRECTORY config launch
 
 ## Add folders to be run by python nosetests
 # catkin_add_nosetests(test)
+
+if(${pybind11_FOUND})
+  catkin_add_gtest(anymal_pybindings_test
+    test/PyBindingsTest.cpp
+    )
+  target_link_libraries(anymal_pybindings_test
+    anymalPyBindings_cpp
+    ${catkin_LIBRARIES}
+    ${Boost_LIBRARIES}
+    )
+endif()

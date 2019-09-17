@@ -15,9 +15,9 @@ visualization
 model_settings
 {
   constrainedIntegration        1
-  
+
   gravitationalAcceleration     9.81
-  
+
   contactForceWeight            1.0
   zDirectionPositionWeight      0.0
   zDirectionVelocityWeight      0.5
@@ -43,7 +43,7 @@ model_settings
 
   useFeetTrajectoryFiltering    0
   feetFilterFrequency           1000.0
-  
+
   eps 	2e-4
   eta 	1e+2
 
@@ -84,7 +84,7 @@ slq
   useNominalTimeForBackwardPass 1
   RiccatiIntegratorType         1 		; ODE45 = 1, ADAMS_BASHFORTH = 2, BULIRSCH_STOER = 3, ADAMS_BASHFORTH_MOULTON = 4
   adams_integrator_dt           0.01
-  
+
   warmStartGSLQ                 1
   useLQForDerivatives           0
   displayGradientDescent        0
@@ -95,10 +95,10 @@ slq
   maxLearningRateNLP            0.6
   useAscendingLineSearchNLP     1
   minEventTimeDifference        0.01
-  
+
   ddp
   {
-  
+
     maxNumIterations              10      ;50
     minLearningRate               1e-4     ;0.1
     maxLearningRate               1.0
@@ -112,7 +112,7 @@ slq
     displayInfo                   0
     displayShortSummary           1
     debugPrintRollout             0
-    
+
     AbsTolODE                     1e-5  ;1e-6
     RelTolODE                     1e-3  ;1e-4
     minTimeStep                   1e-2
@@ -124,16 +124,16 @@ slq
     minAbsConstraint1ISE          5e-3
     minRelConstraint1ISE          5e-6
     checkNumericalStability       0
-    
+
     useMultiThreading             1
     nThreads                      5
     threadPriority                50
     debugPrintMP                  0
     lsStepsizeGreedy              1
-    
+
     useRiccatiSolver              1
   }
-  
+
   rollout
   {
     AbsTolODE                     1e-5  ;1e-6
@@ -147,20 +147,20 @@ slq
 mpc
 {
   runtimeMaxNumIterations         1
-  initMaxNumIterations            1
-	
+  initMaxNumIterations            10
+
   runtimeMinLearningRate          1e-2
   runtimeMaxLearningRate          1.0
   initMinLearningRate             1e-2
   initMaxLearningRate             1.0
 
-  debugPrint                      1
+  debugPrint                      0
   coldStart                       0
   recedingHorizon                 1	; use receding horizon MPC
 
   useParallelRiccatiSolver        1	; use disjoint riccati solver in MP case and recedingHorizon fashion
 
-  useFeedbackPolicy               0
+  useFeedbackPolicy               1
   forwardSimulationTime           28	; [ms] MRT time
 
   rosMsgTimeWindow                200	; [ms]
@@ -375,9 +375,9 @@ CoM_final_pose
 {
    ; orientation
    (0,0) 0.0     ; x
-   (1,0) 0.0     ; y 
+   (1,0) 0.0     ; y
    (2,0) 0.0     ; z
-                 
+
    ; position
    (3,0) 2.0      ; x ;1.0
    (4,0) 0.0      ; y

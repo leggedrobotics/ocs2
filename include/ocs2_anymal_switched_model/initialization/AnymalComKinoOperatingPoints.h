@@ -15,7 +15,7 @@
 
 namespace anymal {
 
-class AnymalComKinoOperatingPoints : public switched_model::ComKinoOperatingPointsBase<12>
+class AnymalComKinoOperatingPoints final : public switched_model::ComKinoOperatingPointsBase<12>
 {
 public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW

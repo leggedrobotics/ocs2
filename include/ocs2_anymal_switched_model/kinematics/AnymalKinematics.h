@@ -19,7 +19,7 @@ namespace anymal {
 namespace tpl {
 
 template <typename SCALAR_T>
-class AnymalKinematics : public switched_model::KinematicsModelBase<12, SCALAR_T>
+class AnymalKinematics final : public switched_model::KinematicsModelBase<12, SCALAR_T>
 {
 public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW

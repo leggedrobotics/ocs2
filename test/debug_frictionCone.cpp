@@ -1,6 +1,4 @@
-//
-// Created by rgrandia on 12.02.19.
-//
+
 
 #include <ocs2_switched_model_interface/foot_planner/cpg/SplineCPG.h>
 #include <ocs2_switched_model_interface/foot_planner/FeetZDirectionPlanner.h>

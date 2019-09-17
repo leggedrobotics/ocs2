@@ -34,7 +34,7 @@ void ComModelBase<JOINT_COORD_SIZE, SCALAR_T>::calculateBasePose(
 		base_coordinate_t& basePose) {
 
 	// Rotation matrix from Base frame (or the coincided frame world frame) to Origin frame (global world).
-	matrix3d_t o_R_b = RotationMatrixBasetoOrigin(comPose.template head<3>());
+	matrix3d_t o_R_b = RotationMatrixBasetoOrigin<SCALAR_T>(comPose.template head<3>());
 
 	// base to CoM displacement in the CoM frame
 	vector3d_t com_base2CoM = comPositionBaseFrame(qJoints);

@@ -7,6 +7,9 @@
 
 #include "ocs2_anymal_interface/OCS2AnymalInterface.h"
 
+#include <ocs2_anymal_switched_model/dynamics/AnymalCom.h>
+#include <ocs2_anymal_switched_model/kinematics/AnymalKinematics.h>
+
 namespace anymal {
 /******************************************************************************************************/
 /******************************************************************************************************/
@@ -20,27 +23,12 @@ OCS2AnymalInterface::OCS2AnymalInterface(const std::string& pathToConfigFolder)
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void OCS2AnymalInterface::designWeightCompensatingInput(const state_vector_t& switchedState, input_vector_t& uForWeightCompensation) {
-  static AnymalWeightCompensationForces::vector_3d_t gravity(0.0, 0.0, -modelSettings_.gravitationalAcceleration_);
-
-  AnymalWeightCompensationForces::vector_3d_array_t weightCompensatingForces;
-  weightCompensationForces_.computeCartesianForces(gravity, contact_flag_t{true, true, true, true} /*stanceLegSequene_*/,
-                                                   switchedState.tail<12>(), weightCompensatingForces);
-
-  for (size_t j = 0; j < 4; j++) uForWeightCompensation.segment<3>(3 * j) = weightCompensatingForces[j];
-  uForWeightCompensation.tail<12>().setZero();
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
 void OCS2AnymalInterface::setupOptimizer(const logic_rules_ptr_t& logicRulesPtr, const mode_sequence_template_t* modeSequenceTemplatePtr,
                                          slq_base_ptr_t& slqPtr, mpc_ptr_t& mpcPtr) {
   dynamicsPtr_ = std::unique_ptr<system_dynamics_t>(new system_dynamics_t(modelSettings_));
   dynamicsDerivativesPtr_ = std::unique_ptr<system_dynamics_derivative_t>(new system_dynamics_derivative_t(modelSettings_));
   constraintsPtr_ = std::unique_ptr<constraint_t>(new constraint_t(logicRulesPtr, modelSettings_));
-  costFunctionPtr_ =
-      std::unique_ptr<cost_funtion_t>(new cost_funtion_t(logicRulesPtr, Q_, R_, QFinal_, xFinal_, modelSettings_.copWeight_));
+  costFunctionPtr_ = std::unique_ptr<cost_function_t>(new cost_function_t(logicRulesPtr, Q_, R_, QFinal_));
 
   generalized_coordinate_t defaultCoordinate = initRbdState_.template head<18>();
   operatingPointsPtr_ = std::unique_ptr<operating_point_t>(new operating_point_t(logicRulesPtr, modelSettings_, defaultCoordinate));

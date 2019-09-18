@@ -25,8 +25,8 @@ OCS2AnymalInterface::OCS2AnymalInterface(const std::string& pathToConfigFolder)
 /******************************************************************************************************/
 void OCS2AnymalInterface::setupOptimizer(const logic_rules_ptr_t& logicRulesPtr, const mode_sequence_template_t* modeSequenceTemplatePtr,
                                          slq_base_ptr_t& slqPtr, mpc_ptr_t& mpcPtr) {
-  dynamicsPtr_ = std::unique_ptr<system_dynamics_t>(new system_dynamics_t(modelSettings_));
-  dynamicsDerivativesPtr_ = std::unique_ptr<system_dynamics_derivative_t>(new system_dynamics_derivative_t(modelSettings_));
+  dynamicsPtr_ = std::unique_ptr<system_dynamics_t>(new system_dynamics_t(modelSettings_.recompileLibraries_));
+  dynamicsDerivativesPtr_.reset(dynamicsPtr_->clone());
   constraintsPtr_ = std::unique_ptr<constraint_t>(new constraint_t(logicRulesPtr, modelSettings_));
   costFunctionPtr_ = std::unique_ptr<cost_function_t>(new cost_function_t(logicRulesPtr, Q_, R_, QFinal_));
 

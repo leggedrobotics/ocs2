@@ -15,13 +15,11 @@ TEST(BallbotIntegrationTest, createDummyMRT) {
   std::string taskFileFolderName = "mpc";
   ballbot::BallbotInterface ballbotInterface(taskFileFolderName);
 
-  ballbot::MRT_ROS_Dummy_Ballbot::mrt_ptr_t mrtPtr(new MRT_ROS_Interface<ballbot::STATE_DIM_, ballbot::INPUT_DIM_>("ballbot"));
+  MRT_ROS_Interface<ballbot::STATE_DIM_, ballbot::INPUT_DIM_> mrt("ballbot");
 
   // Dummy ballbot
-  ballbot::MRT_ROS_Dummy_Ballbot dummyBallbot(
-      mrtPtr,
-      ballbotInterface.mpcSettings().mrtDesiredFrequency_,
-      ballbotInterface.mpcSettings().mpcDesiredFrequency_);
+  ballbot::MRT_ROS_Dummy_Ballbot dummyBallbot(mrt, ballbotInterface.mpcSettings().mrtDesiredFrequency_,
+                                              ballbotInterface.mpcSettings().mpcDesiredFrequency_);
 
   // Initialize dummy
   ballbot::MRT_ROS_Dummy_Ballbot::system_observation_t initObservation;

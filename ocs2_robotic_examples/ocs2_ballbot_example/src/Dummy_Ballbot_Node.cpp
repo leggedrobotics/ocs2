@@ -45,11 +45,9 @@ int main(int argc, char** argv) {
   // ballbotInterface
   ballbot::BallbotInterface ballbotInterface(taskFileFolderName);
 
-  using mrt_base_ptr_t = ballbot::MRT_ROS_Dummy_Ballbot::mrt_ptr_t;
-  mrt_base_ptr_t mrtPtr(new MRT_ROS_Interface<ballbot::STATE_DIM_, ballbot::INPUT_DIM_>("ballbot"));
-
   // Dummy ballbot
-  ballbot::MRT_ROS_Dummy_Ballbot dummyBallbot(mrtPtr, ballbotInterface.mpcSettings().mrtDesiredFrequency_,
+  MRT_ROS_Interface<ballbot::STATE_DIM_, ballbot::INPUT_DIM_> mrt("ballbot");
+  ballbot::MRT_ROS_Dummy_Ballbot dummyBallbot(mrt, ballbotInterface.mpcSettings().mrtDesiredFrequency_,
                                               ballbotInterface.mpcSettings().mpcDesiredFrequency_, &ballbotInterface.getDynamics());
 
   dummyBallbot.launchNodes(argc, argv);

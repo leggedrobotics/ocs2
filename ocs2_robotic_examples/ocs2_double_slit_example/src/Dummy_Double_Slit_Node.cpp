@@ -45,16 +45,14 @@ int main(int argc, char* argv[]) {
   double_slit::DoubleSlitInterface doubleSlitInterface(taskFileFolderName);
 
   using mrt_base_ptr_t = double_slit::MrtRosDummyDoubleSlit::mrt_ptr_t;
-  using system_observation_t = double_slit::MrtRosDummyDoubleSlit::system_observation_t;
 
   double rollout_dt;
   loadData::loadCppDataType(doubleSlitInterface.taskFile_, "pathIntegral.rollout_settings.minTimeStep", rollout_dt);
 
-  mrt_base_ptr_t mrtPtr(new double_slit::MrtRosDoubleSlit("double_slit"));
-
   // Dummy double_slit
+  double_slit::MrtRosDoubleSlit mrt("double_slit");
   double_slit::MrtRosDummyDoubleSlit dummyDoubleSlit(
-      mrtPtr, doubleSlitInterface.mpcSettings().mrtDesiredFrequency_, doubleSlitInterface.mpcSettings().mpcDesiredFrequency_,
+      mrt, doubleSlitInterface.mpcSettings().mrtDesiredFrequency_, doubleSlitInterface.mpcSettings().mpcDesiredFrequency_,
       &doubleSlitInterface.getDynamics(), Rollout_Settings(1e-9, 1e-6, 5000, rollout_dt, IntegratorType::EULER, false, true));
 
   dummyDoubleSlit.launchNodes(argc, argv);

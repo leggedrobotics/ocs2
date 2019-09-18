@@ -45,11 +45,9 @@ int main(int argc, char** argv) {
   // CartPoleInterface
   cartpole::CartPoleInterface cartPoleInterface(taskFileFolderName);
 
-  using mrt_base_ptr_t = cartpole::MRT_ROS_Dummy_Cartpole::mrt_ptr_t;
-  mrt_base_ptr_t mrtPtr(new MRT_ROS_Interface<cartpole::STATE_DIM_, cartpole::INPUT_DIM_>("cartpole"));
-
   // Dummy cartpole
-  cartpole::MRT_ROS_Dummy_Cartpole dummyCartpole(mrtPtr, cartPoleInterface.mpcSettings().mrtDesiredFrequency_,
+  MRT_ROS_Interface<cartpole::STATE_DIM_, cartpole::INPUT_DIM_> mrt("cartpole");
+  cartpole::MRT_ROS_Dummy_Cartpole dummyCartpole(mrt, cartPoleInterface.mpcSettings().mrtDesiredFrequency_,
                                                  cartPoleInterface.mpcSettings().mpcDesiredFrequency_);
 
   dummyCartpole.launchNodes(argc, argv);

@@ -294,8 +294,8 @@ class MPC_ROS_Interface {
   mutable std::mutex policyBufferMutex_;  // for policy variables WITH suffix (*Buffer_)
 
   // multi-threading for publishers
-  bool terminateThread_;
-  bool readyToPublish_;
+  std::atomic_bool terminateThread_;
+  std::atomic_bool readyToPublish_;
   std::thread publisherWorker_;
   std::mutex publisherMutex_;
   std::condition_variable msgReady_;
